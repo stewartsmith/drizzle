@@ -75,6 +75,9 @@ public:
    */
   static const plugin::Function *get(const char *name, size_t len=0);
 
+  typedef boost::unordered_map<std::string, const plugin::Function *, util::insensitive_hash, util::insensitive_equal_to> UdfMap;
+
+  static const UdfMap &getMap();
 };
 
 template<class T>

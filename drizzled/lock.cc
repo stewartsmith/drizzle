@@ -569,13 +569,13 @@ static int unlock_external(Session *session, Table **table,uint32_t count)
 static DrizzleLock *get_lock_data(Session *session, Table **table_ptr, uint32_t count,
 				 bool should_lock, Table **write_lock_used)
 {
-  uint32_t i,tables,lock_count;
+  uint32_t tables,lock_count;
   DrizzleLock *sql_lock;
   THR_LOCK_DATA **locks, **locks_buf, **locks_start;
   Table **to, **table_buf;
 
   *write_lock_used=0;
-  for (i= tables= lock_count= 0 ; i < count ; i++)
+  for (uint32_t i= tables= lock_count= 0 ; i < count ; i++)
   {
     Table *t= table_ptr[i];
 
@@ -596,12 +596,14 @@ static DrizzleLock *get_lock_data(Session *session, Table **table_ptr, uint32_t 
 	malloc(sizeof(*sql_lock) +
                sizeof(THR_LOCK_DATA*) * tables * 2 +
                sizeof(table_ptr) * lock_count)))
+  {
     return NULL;
+  }
   locks= locks_buf= sql_lock->locks= (THR_LOCK_DATA**) (sql_lock + 1);
   to= table_buf= sql_lock->table= (Table**) (locks + tables * 2);
   sql_lock->table_count= lock_count;
 
-  for (i=0 ; i < count ; i++)
+  for (uint32_t i= 0; i < count ; i++)
   {
     Table *table;
     enum thr_lock_type lock_type;

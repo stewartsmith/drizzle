@@ -677,27 +677,27 @@ project_id	INTEGER	NO	0	NO
 show columns from container;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 container_id	INTEGER	NO		NO	
-context	BLOB	YES		YES	
+context	TEXT	YES		YES	
 parent_container	INTEGER	YES		YES	
 show columns from document;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 document_id	INTEGER	NO		NO	
-doctext	BLOB	YES		YES	
+doctext	TEXT	YES		YES	
 show columns from genstats_attributes;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 genstats_attributes_id	INTEGER	NO	0	NO	
-predicates	BLOB	NO		NO	
-attributes	BLOB	NO		NO	
+predicates	TEXT	NO		NO	
+attributes	TEXT	NO		NO	
 show columns from htmlcode;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 htmlcode_id	INTEGER	NO		NO	
-code	BLOB	YES		YES	
+code	TEXT	YES		YES	
 show columns from htmlpage;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 htmlpage_id	INTEGER	NO		NO	
 pagetype_nodetype	INTEGER	YES		YES	
 displaytype	VARCHAR	YES		YES	
-page	BLOB	YES		YES	
+page	TEXT	YES		YES	
 parent_container	INTEGER	YES		YES	
 ownedby_theme	INTEGER	NO	0	NO	
 permissionneeded	VARCHAR	NO	r	NO	
@@ -708,17 +708,17 @@ image_id	INTEGER	NO		NO
 src	VARCHAR	YES		YES	
 alt	VARCHAR	YES		YES	
 thumbsrc	VARCHAR	YES		YES	
-description	BLOB	YES		YES	
+description	TEXT	YES		YES	
 show columns from javascript;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 javascript_id	INTEGER	NO	0	NO	
-code	BLOB	NO		NO	
-comment	BLOB	NO		NO	
+code	TEXT	NO		NO	
+comment	TEXT	NO		NO	
 dynamic	INTEGER	NO	0	NO	
 show columns from knowledge_item;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 knowledge_item_id	INTEGER	NO	0	NO	
-item	BLOB	NO		NO	
+item	TEXT	NO		NO	
 question	INTEGER	NO	0	NO	
 show columns from links;
 Field	Type	Null	Default	Default_is_NULL	On_Update
@@ -763,8 +763,8 @@ orderby	INTEGER	YES		YES
 show columns from nodelet;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 nodelet_id	INTEGER	NO		NO	
-nltext	BLOB	YES		YES	
-nlcode	BLOB	YES		YES	
+nltext	TEXT	YES		YES	
+nlcode	TEXT	YES		YES	
 nlgoto	INTEGER	YES		YES	
 parent_container	INTEGER	YES		YES	
 lastupdate	INTEGER	NO	0	NO	
@@ -774,7 +774,7 @@ show columns from nodemethod;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 nodemethod_id	INTEGER	NO	0	NO	
 supports_nodetype	INTEGER	NO	0	NO	
-code	BLOB	NO		NO	
+code	TEXT	NO		NO	
 show columns from nodetype;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 nodetype_id	INTEGER	NO		NO	
@@ -797,12 +797,12 @@ canworkspace	INTEGER	NO	-1	NO
 show columns from project;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 project_id	INTEGER	NO	0	NO	
-description	BLOB	NO		NO	
+description	TEXT	NO		NO	
 last_update	TIMESTAMP	NO	CURRENT_TIMESTAMP	NO	CURRENT_TIMESTAMP
 short_description	VARCHAR	NO		NO	
 url_cvs	VARCHAR	NO		NO	
 url_faq	VARCHAR	NO		NO	
-long_description	BLOB	NO		NO	
+long_description	TEXT	NO		NO	
 show columns from project_document;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 project_document_id	INTEGER	NO	0	NO	
@@ -814,16 +814,16 @@ faq_id	INTEGER	NO	0	NO
 project_id	INTEGER	NO	0	NO	
 rank	INTEGER	NO	0	NO	
 orderby	INTEGER	NO	0	NO	
-description	BLOB	NO		NO	
+description	TEXT	NO		NO	
 show columns from redirects;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 redirects_id	INTEGER	NO	0	NO	
-url	BLOB	NO		NO	
+url	TEXT	NO		NO	
 show columns from releases;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 releases_id	INTEGER	NO	0	NO	
 branch_id	INTEGER	NO	0	NO	
-description	BLOB	YES		YES	
+description	TEXT	YES		YES	
 url_targz	VARCHAR	NO		NO	
 url_osx	VARCHAR	NO		NO	
 url_rpm	VARCHAR	NO		NO	
@@ -836,12 +836,12 @@ Field	Type	Null	Default	Default_is_NULL	On_Update
 node_id	INTEGER	NO	0	NO	
 inside_workspace	INTEGER	NO	0	NO	
 revision_id	INTEGER	NO	0	NO	
-xml	BLOB	NO		NO	
+xml	TEXT	NO		NO	
 tstamp	TIMESTAMP	NO	CURRENT_TIMESTAMP	NO	CURRENT_TIMESTAMP
 show columns from setting;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 setting_id	INTEGER	NO		NO	
-vars	BLOB	NO		NO	
+vars	TEXT	NO		NO	
 show columns from symlink;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 symlink_id	INTEGER	NO	0	NO	

@@ -13,11 +13,17 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
+/** @file
+ *
+ * @brief  SQL standard-compliant decimal number handling
+ *
+ * @note
+ * This library implements SQL standard "exact numeric" type
+ * and is not at all generic, but rather intentinally crippled to
+ * follow the standard :) 
+ */
+
 /*
-=======================================================================
-  NOTE: this library implements SQL standard "exact numeric" type
-  and is not at all generic, but rather intentinally crippled to
-  follow the standard :)
 =======================================================================
   Quoting the standard
   (SQL:2003, Part 2 Foundations, aka ISO/IEC 9075-2:2003)
@@ -182,7 +188,7 @@ int decimal_operation_results(int result)
   @param[in]   filler      what char to pad with (ZEROFILL et al.)
   @param[out]  *str        where to store the resulting string
 
-  @return error coce
+  @return error code
     @retval E_DEC_OK
     @retval E_DEC_TRUNCATED
     @retval E_DEC_OVERFLOW
@@ -218,25 +224,23 @@ int my_decimal2string(uint32_t mask, const my_decimal *d,
 }
 
 
-/*
-  Convert from decimal to binary representation
+/**
+  @brief  Convert from decimal to binary representation
 
-  SYNOPSIS
-    my_decimal2binary()
-    mask        error processing mask
-    d           number for conversion
-    bin         pointer to buffer where to write result
-    prec        overall number of decimal digits
-    scale       number of decimal digits after decimal point
+  @param[in]   mask        error processing mask
+  @param[in]   d           number for conversion
+  @param[out]  bin         pointer to buffer where to write result
+  @param[in]   prec        overall number of decimal digits
+  @param[in]   scale       number of decimal digits after decimal point
 
-  NOTE
+  @note
     Before conversion we round number if it need but produce truncation
     error in this case
 
-  RETURN
-    E_DEC_OK
-    E_DEC_TRUNCATED
-    E_DEC_OVERFLOW
+  @return error code
+   @retval E_DEC_OK
+   @retval E_DEC_TRUNCATED
+   @retval E_DEC_OVERFLOW
 */
 
 int my_decimal2binary(uint32_t mask, const my_decimal *d, unsigned char *bin, int prec,
@@ -259,23 +263,21 @@ int my_decimal2binary(uint32_t mask, const my_decimal *d, unsigned char *bin, in
 }
 
 
-/*
-  Convert string for decimal when string can be in some multibyte charset
+/**
+  @brief Convert string for decimal when string can be in some multibyte charset
 
-  SYNOPSIS
-    str2my_decimal()
-    mask            error processing mask
-    from            string to process
-    length          length of given string
-    charset         charset of given string
-    decimal_value   buffer for result storing
+  @param  mask            error processing mask
+  @param  from            string to process
+  @param  length          length of given string
+  @param  charset         charset of given string
+  @param  decimal_value   buffer for result storing
 
-  RESULT
-    E_DEC_OK
-    E_DEC_TRUNCATED
-    E_DEC_OVERFLOW
-    E_DEC_BAD_NUM
-    E_DEC_OOM
+  @return Error code
+   @retval E_DEC_OK
+   @retval E_DEC_TRUNCATED
+   @retval E_DEC_OVERFLOW
+   @retval E_DEC_BAD_NUM
+   @retval E_DEC_OOM
 */
 
 int str2my_decimal(uint32_t mask, const char *from, uint32_t length,
@@ -459,13 +461,11 @@ static const dec1 frac_max[DIG_PER_DEC1-1]={
 
 
 
-/*
-  Get maximum value for given precision and scale
+/**
+  @brief  Get maximum value for given precision and scale
 
-  SYNOPSIS
-    max_decimal()
-    precision/scale - see decimal_bin_size() below
-    to              - decimal where where the result will be stored
+  @param  precision/scale  see decimal_bin_size() below
+  @param  to              decimal where where the result will be stored
                       to->buf and to->len must be set.
 */
 
@@ -519,12 +519,10 @@ static dec1 *remove_leading_zeroes(const decimal_t *from, int *intg_result)
 }
 
 
-/*
-  Count actual length of fraction part (without ending zeroes)
+/**
+ @brief Count actual length of fraction part (without ending zeroes)
 
-  SYNOPSIS
-    decimal_actual_fraction()
-    from    number for processing
+ @param from    number for processing
 */
 
 int decimal_actual_fraction(decimal_t *from)
@@ -550,28 +548,27 @@ int decimal_actual_fraction(decimal_t *from)
 }
 
 
-/*
-  Convert decimal to its printable string representation
+/**
+ @brief  Convert decimal to its printable string representation
 
-  SYNOPSIS
-    decimal2string()
-      from            - value to convert
-      to              - points to buffer where string representation
-                        should be stored
-      *to_len         - in:  size of to buffer
-                        out: length of the actually written string
-      fixed_precision - 0 if representation can be variable length and
+ @param  from       value to convert
+ @param  to         points to buffer where string representation
+                    should be stored
+ @param  to_len     in:  size of to buffer
+                    out: length of the actually written string
+ @param  fixed_precision 0 if representation can be variable length and
                         fixed_decimals will not be checked in this case.
                         Put number as with fixed point position with this
                         number of digits (sign counted and decimal point is
                         counted)
-      fixed_decimals  - number digits after point.
-      filler          - character to fill gaps in case of fixed_precision > 0
+ @param  fixed_decimals  number digits after point.
+ @param  filler          character to fill gaps in case of fixed_precision > 0
 
-  RETURN VALUE
-    E_DEC_OK/E_DEC_TRUNCATED/E_DEC_OVERFLOW
+ @return error code
+   @retval E_DEC_OK
+   @retval E_DEC_TRUNCATED
+   @retval E_DEC_OVERFLOW
 */
-
 int decimal2string(const decimal_t *from, char *to, int *to_len,
                    int fixed_precision, int fixed_decimals,
                    char filler)
@@ -678,18 +675,15 @@ int decimal2string(const decimal_t *from, char *to, int *to_len,
 }
 
 
-/*
-  Return bounds of decimal digits in the number
+/**
+ @brief  Return bounds of decimal digits in the number
 
-  SYNOPSIS
-    digits_bounds()
-      from         - decimal number for processing
-      start_result - index (from 0 ) of first decimal digits will
-                     be written by this address
-      end_result   - index of position just after last decimal digit
+ @param  from  decimal number for processing
+ @param  start_result  index (from 0 ) of first decimal digits will
+                       be written by this address
+ @param  end_result   index of position just after last decimal digit
                      be written by this address
 */
-
 static void digits_bounds(decimal_t *from, int *start_result, int *end_result)
 {
   int start, stop, i;
@@ -743,20 +737,21 @@ static void digits_bounds(decimal_t *from, int *start_result, int *end_result)
 }
 
 
-/*
-  Left shift for alignment of data in buffer
+/**
+ @param Left shift for alignment of data in buffer
 
-  SYNOPSIS
-    do_mini_left_shift()
-    dec     pointer to decimal number which have to be shifted
-    shift   number of decimal digits on which it should be shifted
-    beg/end bounds of decimal digits (see digits_bounds())
+ @param  dec     pointer to decimal number which have to be shifted
+ @param  shift   number of decimal digits on which it should be shifted
+ @param  beg     beginning of decimal digits (see digits_bounds())
+ @param  end     end of decimal digits (see digits_bounds())
 
-  NOTE
-    Result fitting in the buffer should be garanted.
-    'shift' have to be from 1 to DIG_PER_DEC1-1 (inclusive)
+ @note
+   Result fitting in the buffer should be garanted.
+   'shift' have to be from 1 to DIG_PER_DEC1-1 (inclusive)
+   
+ @todo  Above note is unclear - is 'garanted' a typo for 'guaranteed'
+ or 'granted'?
 */
-
 static void do_mini_left_shift(decimal_t *dec, int shift, int beg, int last)
 {
   dec1 *from= dec->buf + ROUND_UP(beg + 1) - 1;
@@ -773,20 +768,18 @@ static void do_mini_left_shift(decimal_t *dec, int shift, int beg, int last)
 }
 
 
-/*
-  Right shift for alignment of data in buffer
+/**
+  @brief Right shift for alignment of data in buffer
 
-  SYNOPSIS
-    do_mini_left_shift()
-    dec     pointer to decimal number which have to be shifted
-    shift   number of decimal digits on which it should be shifted
-    beg/end bounds of decimal digits (see digits_bounds())
+  @param  dec     pointer to decimal number which have to be shifted
+  @param  shift   number of decimal digits on which it should be shifted
+  @param  beg     beginning of decimal digits (see digits_bounds())
+  @param  end     end of decimal digits (see digits_bounds())
 
-  NOTE
+  @note
     Result fitting in the buffer should be garanted.
     'shift' have to be from 1 to DIG_PER_DEC1-1 (inclusive)
 */
-
 static void do_mini_right_shift(decimal_t *dec, int shift, int beg, int last)
 {
   dec1 *from= dec->buf + ROUND_UP(last) - 1;
@@ -803,23 +796,22 @@ static void do_mini_right_shift(decimal_t *dec, int shift, int beg, int last)
 }
 
 
-/*
-  Shift of decimal digits in given number (with rounding if it need)
+/**
+  @brief  Shift of decimal digits in given number (with rounding if it need)
 
-  SYNOPSIS
-    decimal_shift()
-    dec       number to be shifted
-    shift     number of decimal positions
+  @param  dec       number to be shifted
+  @param  shift     number of decimal positions
               shift > 0 means shift to left shift
               shift < 0 meand right shift
-  NOTE
-    In fact it is multipling on 10^shift.
-  RETURN
-    E_DEC_OK          OK
-    E_DEC_OVERFLOW    operation lead to overflow, number is untoched
-    E_DEC_TRUNCATED   number was rounded to fit into buffer
-*/
 
+  @note
+    In fact it is multipling on 10^shift.
+
+  @return  Error code
+   @retval E_DEC_OK          OK
+   @retval E_DEC_OVERFLOW    operation lead to overflow, number is untoched
+   @retval E_DEC_TRUNCATED   number was rounded to fit into buffer
+*/
 static int decimal_shift(decimal_t *dec, int shift)
 {
   /* index of first non zero digit (all indexes from 0) */
@@ -1007,28 +999,25 @@ static int decimal_shift(decimal_t *dec, int shift)
 }
 
 
-/*
-  Convert string to decimal
+/**
+  @brief  Convert string to decimal
 
-  SYNOPSIS
-    internal_str2decl()
-      from    - value to convert. Doesn't have to be \0 terminated!
-      to      - decimal where where the result will be stored
+  @param  from    value to convert. Doesn't have to be \0 terminated!
+  @param  to      decimal where where the result will be stored
                 to->buf and to->len must be set.
-      end     - Pointer to pointer to end of string. Will on return be
+  @param  end     Pointer to pointer to end of string. Will on return be
 		set to the char after the last used character
-      fixed   - use to->intg, to->frac as limits for input number
+  @param  fixed   use to->intg, to->frac as limits for input number
 
-  NOTE
+  @note
     to->intg and to->frac can be modified even when fixed=1
     (but only decreased, in this case)
 
-  RETURN VALUE
+  @return
     E_DEC_OK/E_DEC_TRUNCATED/E_DEC_OVERFLOW/E_DEC_BAD_NUM/E_DEC_OOM
     In case of E_DEC_FATAL_ERROR *to is set to decimal zero
     (to make error handling easier)
 */
-
 int
 internal_str2dec(char *from, decimal_t *to, char **end, bool fixed)
 {
@@ -1178,15 +1167,13 @@ fatal_error:
 }
 
 
-/*
-  Convert decimal to double
+/**
+  @param Convert decimal to double
 
-  SYNOPSIS
-    decimal2double()
-      from    - value to convert
-      to      - result will be stored there
+  @param[in]   from   value to convert
+  @param[out]  to     result will be stored there
 
-  RETURN VALUE
+  @return
     E_DEC_OK/E_DEC_OVERFLOW/E_DEC_TRUNCATED
 */
 
@@ -1204,15 +1191,13 @@ int decimal2double(const decimal_t *from, double *to)
   return (rc != E_DEC_OK) ? rc : (error ? E_DEC_OVERFLOW : E_DEC_OK);
 }
 
-/*
-  Convert double to decimal
+/**
+ @param  Convert double to decimal
 
-  SYNOPSIS
-    double2decimal()
-      from    - value to convert
-      to      - result will be stored there
+ @param[in]  from    value to convert
+ @param[out] to      result will be stored there
 
-  RETURN VALUE
+ @return
     E_DEC_OK/E_DEC_OVERFLOW/E_DEC_TRUNCATED
 */
 
@@ -1336,24 +1321,11 @@ int decimal2int64_t(const decimal_t *from, int64_t *to)
   return E_DEC_OK;
 }
 
-/*
-  Convert decimal to its binary fixed-length representation
-  two representations of the same length can be compared with memcmp
-  with the correct -1/0/+1 result
+/**
+ @brief
+  Convert decimal to its binary fixed-length representation (suitable for
+  comparing with memcmp)
 
-  SYNOPSIS
-    decimal2bin()
-      from    - value to convert
-      to      - points to buffer where string representation should be stored
-      precision/scale - see decimal_bin_size() below
-
-  NOTE
-    the buffer is assumed to be of the size decimal_bin_size(precision, scale)
-
-  RETURN VALUE
-    E_DEC_OK/E_DEC_TRUNCATED/E_DEC_OVERFLOW
-
-  DESCRIPTION
     for storage decimal numbers are converted to the "binary" format.
 
     This format has the following properties:
@@ -1414,6 +1386,19 @@ int decimal2int64_t(const decimal_t *from, int64_t *to)
     And for -1234567890.1234 it would be
 
                 7E F2 04 37 2D FB 2D
+
+
+  @param from      value to convert
+  @param to        points to buffer where string representation should be stored
+  @param precision see decimal_bin_size() below
+  @param frac      see decimal_bin_size() below
+
+  @note
+    The buffer is assumed to be of the size decimal_bin_size(precision, scale)
+
+  @return
+    E_DEC_OK/E_DEC_TRUNCATED/E_DEC_OVERFLOW
+
 */
 int decimal2bin(const decimal_t *from, unsigned char *to, int precision, int frac)
 {
@@ -1533,23 +1518,21 @@ int decimal2bin(const decimal_t *from, unsigned char *to, int precision, int fra
   return error;
 }
 
-/*
-  Restores decimal from its binary fixed-length representation
+/**
+ @brief Restores decimal from its binary fixed-length representation
 
-  SYNOPSIS
-    bin2decimal()
-      from    - value to convert
-      to      - result
-      precision/scale - see decimal_bin_size() below
+ @param  from    value to convert
+ @param  to      result
+ @param  precision see decimal_bin_size() below
+ @param  scale     see decimal_bin_size() below
 
-  NOTE
+ @note
     see decimal2bin()
     the buffer is assumed to be of the size decimal_bin_size(precision, scale)
 
-  RETURN VALUE
+ @return
     E_DEC_OK/E_DEC_TRUNCATED/E_DEC_OVERFLOW
 */
-
 int bin2decimal(const unsigned char *from, decimal_t *to, int precision, int scale)
 {
   int error=E_DEC_OK, intg=precision-scale,
@@ -1652,13 +1635,11 @@ err:
   return(E_DEC_BAD_NUM);
 }
 
-/*
-  Returns the size of array to hold a binary representation of a decimal
+/**
+ @brief  Returns the size of array to hold a binary representation of a decimal
 
-  RETURN VALUE
-    size in bytes
+ @return  Size in bytes
 */
-
 int decimal_bin_size(int precision, int scale)
 {
   int intg=precision-scale,
@@ -1670,24 +1651,21 @@ int decimal_bin_size(int precision, int scale)
          frac0*sizeof(dec1)+dig2bytes[frac0x];
 }
 
-/*
-  Rounds the decimal to "scale" digits
+/**
+ @brief  Rounds the decimal to "scale" digits
 
-  SYNOPSIS
-    decimal_round()
-      from    - decimal to round,
-      to      - result buffer. from==to is allowed
-      scale   - to what position to round. can be negative!
-      mode    - round to nearest even or truncate
+ @param from    - decimal to round,
+ @param to      - result buffer. from==to is allowed
+ @param scale   - to what position to round. can be negative!
+ @param mode    - round to nearest even or truncate
 
-  NOTES
+ @note
     scale can be negative !
     one TRUNCATED error (line XXX below) isn't treated very logical :(
 
-  RETURN VALUE
+ @return
     E_DEC_OK/E_DEC_TRUNCATED
 */
-
 int
 decimal_round(const decimal_t *from, decimal_t *to, int scale,
               decimal_round_mode mode)
@@ -1797,7 +1775,7 @@ decimal_round(const decimal_t *from, decimal_t *to, int scale,
   }
   else
   {
-    /* TODO - fix this code as it won't work for CEILING mode */
+  /** @todo fix this code as it won't work for CEILING mode */
     int pos=frac0*DIG_PER_DEC1-scale-1;
     assert(frac0+intg0 > 0);
     x=*buf1 / powers10[pos];
@@ -2137,18 +2115,17 @@ int decimal_is_zero(const decimal_t *from)
   return 1;
 }
 
-/*
-  multiply two decimals
+/**
+ @brief multiply two decimals
 
-  SYNOPSIS
-    decimal_mul()
-      from1, from2 - factors
-      to      - product
+ @param[in]   from1  First factor
+ @param[in]   from2  Second factor
+ @param[out]  to     product
 
-  RETURN VALUE
+ @return
     E_DEC_OK/E_DEC_TRUNCATED/E_DEC_OVERFLOW;
 
-  NOTES
+ @note
     in this implementation, with sizeof(dec1)=4 we have DIG_PER_DEC1=9,
     and 63-digit number will take only 7 dec1 words (basically a 7-digit
     "base 999999999" number).  Thus there's no need in fast multiplication
@@ -2264,12 +2241,13 @@ int decimal_mul(const decimal_t *from1, const decimal_t *from2, decimal_t *to)
   return error;
 }
 
-/*
+/**
   naive division algorithm (Knuth's Algorithm D in 4.3.1) -
   it's ok for short numbers
   also we're using alloca() to allocate a temporary buffer
 
-  XXX if this library is to be used with huge numbers of thousands of
+  @todo
+  If this library is to be used with huge numbers of thousands of
   digits, fast division must be implemented and alloca should be
   changed to malloc (or at least fallback to malloc if alloca() fails)
   but then, decimal_mul() should be rewritten too :(
@@ -2516,55 +2494,50 @@ done:
   return error;
 }
 
-/*
-  division of two decimals
+/**
+ @brief  division of two decimals
 
-  SYNOPSIS
-    decimal_div()
-      from1   - dividend
-      from2   - divisor
-      to      - quotient
+ @param[in]  from1   dividend
+ @param[in]  from2   divisor
+ @param[out] to      quotient
 
-  RETURN VALUE
+ @return
     E_DEC_OK/E_DEC_TRUNCATED/E_DEC_OVERFLOW/E_DEC_DIV_ZERO;
 
-  NOTES
+ @note
     see do_div_mod()
 */
-
 int
 decimal_div(const decimal_t *from1, const decimal_t *from2, decimal_t *to, int scale_incr)
 {
   return do_div_mod(from1, from2, to, 0, scale_incr);
 }
 
-/*
-  modulus
+/**
+ @brief modulus
 
-  SYNOPSIS
-    decimal_mod()
-      from1   - dividend
-      from2   - divisor
-      to      - modulus
+ the modulus R in    R = M mod N
 
-  RETURN VALUE
+ is defined as
+
+ 0 <= |R| < |M|
+ sign R == sign M
+ R = M - k*N, where k is integer
+ 
+ thus, there's no requirement for M or N to be integers
+
+
+ @param from1   dividend
+ @param from2   divisor
+ @param to      modulus
+
+ @return
     E_DEC_OK/E_DEC_TRUNCATED/E_DEC_OVERFLOW/E_DEC_DIV_ZERO;
 
-  NOTES
+ @note
     see do_div_mod()
 
-  DESCRIPTION
-    the modulus R in    R = M mod N
-
-   is defined as
-
-     0 <= |R| < |M|
-     sign R == sign M
-     R = M - k*N, where k is integer
-
-   thus, there's no requirement for M or N to be integers
 */
-
 int decimal_mod(const decimal_t *from1, const decimal_t *from2, decimal_t *to)
 {
   return do_div_mod(from1, from2, 0, to, 0);

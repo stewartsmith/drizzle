@@ -134,7 +134,7 @@ drizzle_show_var StatusHelper::status_vars_defs[]=
   {"Aborted_connects",          (char*) offsetof(system_status_var, aborted_connects), SHOW_LONGLONG_STATUS},
   {"Bytes_received",            (char*) offsetof(system_status_var, bytes_received), SHOW_LONGLONG_STATUS},
   {"Bytes_sent",                (char*) offsetof(system_status_var, bytes_sent), SHOW_LONGLONG_STATUS},
-  {"Connections",               (char*) &global_thread_id, SHOW_INT_NOFLUSH},
+  {"Connections",               (char*) &current_global_counters.connections,  SHOW_LONGLONG},
   {"Created_tmp_disk_tables",   (char*) offsetof(system_status_var, created_tmp_disk_tables), SHOW_LONGLONG_STATUS},
   {"Created_tmp_tables",        (char*) offsetof(system_status_var, created_tmp_tables), SHOW_LONGLONG_STATUS},
   {"Flush_commands",            (char*) &refresh_version,    SHOW_INT_NOFLUSH},

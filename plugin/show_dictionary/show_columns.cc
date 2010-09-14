@@ -21,14 +21,17 @@
 #include "config.h"
 #include "plugin/show_dictionary/dictionary.h"
 #include "drizzled/identifier.h"
-
+#include <string>
 
 using namespace std;
 using namespace drizzled;
 
 static const string VARCHAR("VARCHAR");
+/* VARBINARY already defined elsewhere */
+static const string VARBIN("VARBINARY");
 static const string DOUBLE("DOUBLE");
 static const string BLOB("BLOB");
+static const string TEXT("TEXT");
 static const string ENUM("ENUM");
 static const string INTEGER("INTEGER");
 static const string BIGINT("BIGINT");
@@ -112,19 +115,19 @@ bool ShowColumns::Generator::populate()
   return true;
 }
 
-void ShowColumns::Generator::pushType(message::Table::Field::FieldType type)
+void ShowColumns::Generator::pushType(message::Table::Field::FieldType type, const string collation)
 {
   switch (type)
   {
   default:
   case message::Table::Field::VARCHAR:
-    push(VARCHAR);
+    push(collation.compare("binary") ? VARCHAR : VARBIN);
     break;
   case message::Table::Field::DOUBLE:
     push(DOUBLE);
     break;
   case message::Table::Field::BLOB:
-    push(BLOB);
+    push(collation.compare("binary") ? TEXT : BLOB);
     break;
   case message::Table::Field::ENUM:
     push(ENUM);
@@ -157,7 +160,7 @@ void ShowColumns::Generator::fill()
   push(column.name());
 
   /* Type */
-  pushType(column.type());
+  pushType(column.type(), column.string_options().collation());
 
   /* Null */
   push(column.constraints().is_nullable());

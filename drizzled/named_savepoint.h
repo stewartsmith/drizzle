@@ -29,6 +29,11 @@
 namespace drizzled
 {
 
+namespace message
+{
+class Transaction;
+}
+
 /**
  * This is a class which stores information about
  * a named savepoint in a transaction
@@ -41,7 +46,8 @@ public:
    */
   NamedSavepoint(const char *in_name, size_t in_name_length) :
     name(in_name, in_name_length),
-    resource_contexts()
+    resource_contexts(),
+    transaction_savepoint(NULL)
   {}
   ~NamedSavepoint()
   {}
@@ -66,12 +72,21 @@ public:
   {
     return name;
   }
+  message::Transaction *getTransactionSavepoint() const
+  {
+    return transaction_savepoint;
+  }
+  void setTransactionSavepoint(message::Transaction *in_transaction_savepoint)
+  {
+    transaction_savepoint= in_transaction_savepoint;
+  }
   NamedSavepoint(const NamedSavepoint &other)
   {
     name.assign(other.getName());
     const TransactionContext::ResourceContexts &other_resource_contexts= other.getResourceContexts();
     resource_contexts.assign(other_resource_contexts.begin(),
                              other_resource_contexts.end());
+    transaction_savepoint= other.getTransactionSavepoint();
   }
   NamedSavepoint &operator=(const NamedSavepoint &other)
   {
@@ -87,6 +102,7 @@ public:
 private:
   std::string name;
   TransactionContext::ResourceContexts resource_contexts;
+  message::Transaction *transaction_savepoint;
   NamedSavepoint();
 };
 

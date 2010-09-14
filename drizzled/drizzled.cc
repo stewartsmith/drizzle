@@ -391,22 +391,23 @@ void close_connections(void)
   plugin::Listen::shutdown();
 
   /* kill connection thread */
-  LOCK_thread_count.lock();
-
-  while (select_thread_in_use)
   {
-    struct timespec abstime;
-    int error;
+    boost::mutex::scoped_lock scopedLock(LOCK_thread_count);
 
-    set_timespec(abstime, 2);
-    for (uint32_t tmp=0 ; tmp < 10 && select_thread_in_use; tmp++)
+    while (select_thread_in_use)
     {
-      error= pthread_cond_timedwait(COND_thread_count.native_handle(),LOCK_thread_count.native_handle(), &abstime);
-      if (error != EINTR)
-        break;
+      boost::xtime xt; 
+      xtime_get(&xt, boost::TIME_UTC); 
+      xt.sec += 2; 
+
+      for (uint32_t tmp=0 ; tmp < 10 && select_thread_in_use; tmp++)
+      {
+        bool success= COND_thread_count.timed_wait(scopedLock, xt);
+        if (not success)
+          break;
+      }
     }
   }
-  LOCK_thread_count.unlock();
 
 
   /*
