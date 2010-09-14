@@ -205,16 +205,17 @@ public:
     (void) pthread_attr_setdetachstate(&thr_attr, PTHREAD_CREATE_DETACHED);
 
     // @todo fix spurious wakeup issue
-    (void) LOCK_thread_count.lock();
-    if ((error= pthread_create(&signal_thread, &thr_attr, signal_hand, 0)))
     {
-      errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("Can't create interrupt-thread (error %d, errno: %d)"),
-                    error,errno);
-      exit(1);
+      boost::mutex::scoped_lock scopedLock(LOCK_thread_count);
+      if ((error= pthread_create(&signal_thread, &thr_attr, signal_hand, 0)))
+      {
+        errmsg_printf(ERRMSG_LVL_ERROR,
+                      _("Can't create interrupt-thread (error %d, errno: %d)"),
+                      error,errno);
+        exit(1);
+      }
+      COND_thread_count.wait(scopedLock);
     }
-    pthread_cond_wait(COND_thread_count.native_handle(), LOCK_thread_count.native_handle());
-    LOCK_thread_count.unlock();
 
     (void) pthread_attr_destroy(&thr_attr);
   }
@@ -246,8 +247,8 @@ public:
 
 static int init(drizzled::module::Context& context)
 {
-  SignalHandler *handler= new SignalHandler;
-  context.add(handler);
+  context.add(new SignalHandler);
+
   return 0;
 }
 
