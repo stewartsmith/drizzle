@@ -234,8 +234,8 @@ ArchiveShare::ArchiveShare(const char *name):
 {
   memset(&archive_write, 0, sizeof(azio_stream));     /* Archive file we are working with */
   table_name.append(name);
-  internal::fn_format(data_file_name, table_name.c_str(), "",
-            ARZ, MY_REPLACE_EXT | MY_UNPACK_FILENAME);
+  data_file_name.assign(table_name);
+  data_file_name.append(ARZ);
   /*
     We will use this lock for rows.
   */
@@ -267,7 +267,7 @@ bool ArchiveShare::prime(uint64_t *auto_increment)
     anything but reading... open it for write and we will generate null
     compression writes).
   */
-  if (!(azopen(&archive_tmp, data_file_name, O_RDONLY,
+  if (!(azopen(&archive_tmp, data_file_name.c_str(), O_RDONLY,
                AZ_METHOD_BLOCK)))
     return false;
 
@@ -359,7 +359,7 @@ int ha_archive::init_archive_writer()
     a gzip file that can be both read and written we keep a writer open
     that is shared amoung all open tables.
   */
-  if (!(azopen(&(share->archive_write), share->data_file_name,
+  if (!(azopen(&(share->archive_write), share->data_file_name.c_str(),
                O_RDWR, AZ_METHOD_BLOCK)))
   {
     share->crashed= true;
@@ -396,7 +396,7 @@ int ha_archive::init_archive_reader()
     default:
       method= AZ_METHOD_BLOCK;
     }
-    if (!(azopen(&archive, share->data_file_name, O_RDONLY,
+    if (!(azopen(&archive, share->data_file_name.c_str(), O_RDONLY,
                  method)))
     {
       share->crashed= true;
@@ -503,7 +503,6 @@ int ArchiveEngine::doCreateTable(Session &,
                                  const drizzled::TableIdentifier &identifier,
                                  drizzled::message::Table& proto)
 {
-  char name_buff[FN_REFLEN];
   int error= 0;
   azio_stream create_stream;            /* Archive file we are working with */
   uint64_t auto_increment_value;
@@ -523,24 +522,22 @@ int ArchiveEngine::doCreateTable(Session &,
 
       if (!(field->flags & AUTO_INCREMENT_FLAG))
       {
-        error= -1;
-        goto error;
+        return -1;
       }
     }
   }
 
-  /*
-    We reuse name_buff since it is available.
-  */
-  internal::fn_format(name_buff, identifier.getPath().c_str(), "", ARZ,
-                      MY_REPLACE_EXT | MY_UNPACK_FILENAME);
+  std::string named_file= identifier.getPath();
+  named_file.append(ARZ);
 
   errno= 0;
-  if (azopen(&create_stream, name_buff, O_CREAT|O_RDWR,
+  if (azopen(&create_stream, named_file.c_str(), O_CREAT|O_RDWR,
              AZ_METHOD_BLOCK) == 0)
   {
     error= errno;
-    goto error2;
+    unlink(named_file.c_str());
+
+    return(error ? error : -1);
   }
 
   try {
@@ -548,13 +545,17 @@ int ArchiveEngine::doCreateTable(Session &,
   }
   catch (...)
   {
-    goto error2;
+    unlink(named_file.c_str());
+
+    return(error ? error : -1);
   }
 
   if (azwrite_frm(&create_stream, serialized_proto.c_str(),
                   serialized_proto.length()))
   {
-    goto error2;
+    unlink(named_file.c_str());
+
+    return(error ? error : -1);
   }
 
   if (proto.options().has_comment())
@@ -568,7 +569,9 @@ int ArchiveEngine::doCreateTable(Session &,
     if (write_length < 0)
     {
       error= errno;
-      goto error2;
+      unlink(named_file.c_str());
+
+      return(error ? error : -1);
     }
   }
 
@@ -582,17 +585,12 @@ int ArchiveEngine::doCreateTable(Session &,
   if (azclose(&create_stream))
   {
     error= errno;
-    goto error2;
+    unlink(named_file.c_str());
+
+    return(error ? error : -1);
   }
 
   return(0);
-
-error2:
-  unlink(name_buff);
-
-error:
-  /* Return error number, if we got one */
-  return(error ? error : -1);
 }
 
 /*
@@ -955,7 +953,6 @@ int ha_archive::optimize()
 {
   int rc= 0;
   azio_stream writer;
-  char writer_filename[FN_REFLEN];
 
   init_archive_reader();
 
@@ -975,10 +972,10 @@ int ha_archive::optimize()
   azread_frm(&archive, proto_string);
 
   /* Lets create a file to contain the new data */
-  internal::fn_format(writer_filename, share->table_name.c_str(), "", ARN,
-            MY_REPLACE_EXT | MY_UNPACK_FILENAME);
+  std::string writer_filename= share->table_name;
+  writer_filename.append(ARN);
 
-  if (!(azopen(&writer, writer_filename, O_CREAT|O_RDWR, AZ_METHOD_BLOCK)))
+  if (!(azopen(&writer, writer_filename.c_str(), O_CREAT|O_RDWR, AZ_METHOD_BLOCK)))
   {
     free(proto_string);
     return(HA_ERR_CRASHED_ON_USAGE);
@@ -1057,7 +1054,7 @@ int ha_archive::optimize()
   azclose(&archive);
 
   // make the file we just wrote be our data file
-  rc = internal::my_rename(writer_filename,share->data_file_name,MYF(0));
+  rc = internal::my_rename(writer_filename.c_str(), share->data_file_name.c_str(), MYF(0));
 
   free(proto_string);
   return(rc);
@@ -1148,7 +1145,7 @@ int ha_archive::info(uint32_t flag)
   {
     struct stat file_stat;  // Stat information for the data file
 
-    stat(share->data_file_name, &file_stat);
+    stat(share->data_file_name.c_str(), &file_stat);
 
     stats.mean_rec_length= table->getRecordLength()+ buffer.alloced_length();
     stats.data_file_length= file_stat.st_size;
