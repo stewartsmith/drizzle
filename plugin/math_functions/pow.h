@@ -37,4 +37,4 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* PLUGIN_MAITH_FUNCTIONS_POW_H */
+#endif /* PLUGIN_MATH_FUNCTIONS_POW_H */
