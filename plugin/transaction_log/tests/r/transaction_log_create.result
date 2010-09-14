@@ -4,13 +4,13 @@ CREATE TABLE t1(a INT NOT NULL, PRIMARY KEY(a));
 # check transaction_log
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
 FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
-transaction.log	230	2	2	1	2	START_TIMESTAMP	END_TIMESTAMP	73736
+transaction.log	232	2	2	1	2	START_TIMESTAMP	END_TIMESTAMP	73736
 
 Check transaction_log_entries
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
 0	TRANSACTION	75
-75	TRANSACTION	155
+75	TRANSACTION	157
 
 Check transaction_log_transactions
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
@@ -59,6 +59,7 @@ statement {
       type: STANDARD
       schema: "test"
       options {
+        has_user_set_auto_increment_value: false
         collation: "utf8_general_ci"
         collation_id: 45
       }
@@ -79,13 +80,13 @@ CREATE TABLE t1(a INT NOT NULL, b CHAR, c BLOB, d TEXT, e DATE NOT NULL, f BLOB 
 # check transaction_log
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
 FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
-transaction.log	356	2	2	1	2	START_TIMESTAMP	END_TIMESTAMP	73736
+transaction.log	358	2	2	1	2	START_TIMESTAMP	END_TIMESTAMP	73736
 
 Check transaction_log_entries
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
 0	TRANSACTION	75
-75	TRANSACTION	281
+75	TRANSACTION	283
 
 Check transaction_log_transactions
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
@@ -186,6 +187,7 @@ statement {
       type: STANDARD
       schema: "test"
       options {
+        has_user_set_auto_increment_value: false
         collation: "utf8_general_ci"
         collation_id: 45
       }
@@ -206,13 +208,13 @@ CREATE TABLE t1(a INT NOT NULL, b CHAR(25) NOT NULL DEFAULT 'this_is_a_default_v
 # check transaction_log
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
 FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
-transaction.log	294	2	2	1	2	START_TIMESTAMP	END_TIMESTAMP	73736
+transaction.log	296	2	2	1	2	START_TIMESTAMP	END_TIMESTAMP	73736
 
 Check transaction_log_entries
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
 0	TRANSACTION	75
-75	TRANSACTION	219
+75	TRANSACTION	221
 
 Check transaction_log_transactions
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
@@ -276,6 +278,7 @@ statement {
       type: STANDARD
       schema: "test"
       options {
+        has_user_set_auto_increment_value: false
         collation: "utf8_general_ci"
         collation_id: 45
       }
@@ -296,13 +299,13 @@ CREATE TABLE t1(a INT NOT NULL, b CHAR(25) NOT NULL DEFAULT 'this_is_a_default_v
 # check transaction_log
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
 FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
-transaction.log	332	2	2	1	2	START_TIMESTAMP	END_TIMESTAMP	73736
+transaction.log	334	2	2	1	2	START_TIMESTAMP	END_TIMESTAMP	73736
 
 Check transaction_log_entries
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
 0	TRANSACTION	75
-75	TRANSACTION	257
+75	TRANSACTION	259
 
 Check transaction_log_transactions
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
@@ -376,7 +379,7 @@ statement {
         }
         index_part {
           fieldnr: 1
-          compare_length: 100
+          compare_length: 25
         }
         index_part {
           fieldnr: 3
@@ -390,6 +393,7 @@ statement {
       type: STANDARD
       schema: "test"
       options {
+        has_user_set_auto_increment_value: false
         collation: "utf8_general_ci"
         collation_id: 45
       }
@@ -410,13 +414,13 @@ CREATE TABLE t1(a INT NOT NULL, b CHAR(25) NOT NULL DEFAULT 'this_is_a_default_v
 # check transaction_log
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
 FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
-transaction.log	322	2	2	1	2	START_TIMESTAMP	END_TIMESTAMP	73736
+transaction.log	324	2	2	1	2	START_TIMESTAMP	END_TIMESTAMP	73736
 
 Check transaction_log_entries
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
 0	TRANSACTION	75
-75	TRANSACTION	247
+75	TRANSACTION	249
 
 Check transaction_log_transactions
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
@@ -486,7 +490,7 @@ statement {
         key_length: 20
         index_part {
           fieldnr: 1
-          compare_length: 20
+          compare_length: 5
         }
         options {
           binary_pack_key: true
@@ -497,6 +501,7 @@ statement {
       type: STANDARD
       schema: "test"
       options {
+        has_user_set_auto_increment_value: false
         collation: "utf8_general_ci"
         collation_id: 45
       }
@@ -517,13 +522,13 @@ CREATE TABLE t1(a INT NOT NULL, b CHAR(25) NOT NULL DEFAULT 'this_is_a_default_v
 # check transaction_log
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
 FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
-transaction.log	375	2	2	1	2	START_TIMESTAMP	END_TIMESTAMP	73736
+transaction.log	377	2	2	1	2	START_TIMESTAMP	END_TIMESTAMP	73736
 
 Check transaction_log_entries
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
 0	TRANSACTION	75
-75	TRANSACTION	300
+75	TRANSACTION	302
 
 Check transaction_log_transactions
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
@@ -593,7 +598,7 @@ statement {
         key_length: 20
         index_part {
           fieldnr: 1
-          compare_length: 20
+          compare_length: 5
         }
         options {
           binary_pack_key: true
@@ -613,7 +618,7 @@ statement {
         }
         index_part {
           fieldnr: 1
-          compare_length: 40
+          compare_length: 10
         }
         index_part {
           fieldnr: 2
@@ -629,6 +634,7 @@ statement {
       type: STANDARD
       schema: "test"
       options {
+        has_user_set_auto_increment_value: false
         collation: "utf8_general_ci"
         collation_id: 45
       }
@@ -649,13 +655,13 @@ CREATE TABLE t1(a INT NOT NULL, b CHAR(25) NOT NULL DEFAULT 'this_is_a_default_v
 # check transaction_log
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
 FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
-transaction.log	366	2	2	1	2	START_TIMESTAMP	END_TIMESTAMP	73736
+transaction.log	368	2	2	1	2	START_TIMESTAMP	END_TIMESTAMP	73736
 
 Check transaction_log_entries
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
 0	TRANSACTION	75
-75	TRANSACTION	291
+75	TRANSACTION	293
 
 Check transaction_log_transactions
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
@@ -742,7 +748,7 @@ statement {
         }
         index_part {
           fieldnr: 1
-          compare_length: 80
+          compare_length: 20
         }
         index_part {
           fieldnr: 2
@@ -758,6 +764,7 @@ statement {
       type: STANDARD
       schema: "test"
       options {
+        has_user_set_auto_increment_value: false
         collation: "utf8_general_ci"
         collation_id: 45
       }
@@ -779,13 +786,13 @@ CREATE TABLE IF NOT EXISTS t1(a INT NOT NULL, PRIMARY KEY(a));
 # check transaction_log
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
 FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
-transaction.log	230	2	2	1	2	START_TIMESTAMP	END_TIMESTAMP	73736
+transaction.log	232	2	2	1	2	START_TIMESTAMP	END_TIMESTAMP	73736
 
 Check transaction_log_entries
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
 0	TRANSACTION	75
-75	TRANSACTION	155
+75	TRANSACTION	157
 
 Check transaction_log_transactions
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
@@ -834,6 +841,7 @@ statement {
       type: STANDARD
       schema: "test"
       options {
+        has_user_set_auto_increment_value: false
         collation: "utf8_general_ci"
         collation_id: 45
       }
@@ -852,13 +860,13 @@ Note	1050	Table 't1' already exists
 # check transaction_log
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
 FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
-transaction.log	230	2	2	1	2	START_TIMESTAMP	END_TIMESTAMP	73736
+transaction.log	232	2	2	1	2	START_TIMESTAMP	END_TIMESTAMP	73736
 
 Check transaction_log_entries
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
 0	TRANSACTION	75
-75	TRANSACTION	155
+75	TRANSACTION	157
 
 Check transaction_log_transactions
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
@@ -907,6 +915,7 @@ statement {
       type: STANDARD
       schema: "test"
       options {
+        has_user_set_auto_increment_value: false
         collation: "utf8_general_ci"
         collation_id: 45
       }
@@ -927,14 +936,14 @@ CREATE TABLE t1(a INT NOT NULL, b INT NOT NULL, PRIMARY KEY(a), KEY b_key1 (b));
 # check transaction_log
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
 FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
-transaction.log	345	3	3	1	3	START_TIMESTAMP	END_TIMESTAMP	73736
+transaction.log	347	3	3	1	3	START_TIMESTAMP	END_TIMESTAMP	73736
 
 Check transaction_log_entries
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
 0	TRANSACTION	75
 75	TRANSACTION	75
-150	TRANSACTION	195
+150	TRANSACTION	197
 
 Check transaction_log_transactions
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
@@ -1004,6 +1013,7 @@ statement {
       type: STANDARD
       schema: "test"
       options {
+        has_user_set_auto_increment_value: false
         collation: "utf8_general_ci"
         collation_id: 45
       }
@@ -1020,15 +1030,15 @@ CONSTRAINT fk_constraint_t2 FOREIGN KEY (b) REFERENCES t1(b) ON DELETE SET NULL 
 # check transaction_log
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
 FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
-transaction.log	541	4	4	1	4	START_TIMESTAMP	END_TIMESTAMP	73736
+transaction.log	581	4	4	1	4	START_TIMESTAMP	END_TIMESTAMP	73736
 
 Check transaction_log_entries
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
 0	TRANSACTION	75
 75	TRANSACTION	75
-150	TRANSACTION	195
-345	TRANSACTION	196
+150	TRANSACTION	197
+347	TRANSACTION	234
 
 Check transaction_log_transactions
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
@@ -1036,7 +1046,7 @@ ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMEN
 0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
 75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
 150	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
-345	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+347	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1099,7 +1109,17 @@ statement {
       }
       type: STANDARD
       schema: "test"
+      fk_constraint {
+        name: "fk_constraint_t2"
+        column_names: "b"
+        references_table_name: "t1"
+        references_columns: "b"
+        match: MATCH_UNDEFINED
+        update_option: OPTION_CASCADE
+        delete_option: OPTION_SET_NULL
+      }
       options {
+        has_user_set_auto_increment_value: false
         collation: "utf8_general_ci"
         collation_id: 45
       }
@@ -1121,14 +1141,14 @@ CREATE TABLE t1(a INT NOT NULL, b INT NOT NULL, PRIMARY KEY(a), KEY b_key1 (b));
 # check transaction_log
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
 FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
-transaction.log	345	3	3	1	3	START_TIMESTAMP	END_TIMESTAMP	73736
+transaction.log	347	3	3	1	3	START_TIMESTAMP	END_TIMESTAMP	73736
 
 Check transaction_log_entries
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
 0	TRANSACTION	75
 75	TRANSACTION	75
-150	TRANSACTION	195
+150	TRANSACTION	197
 
 Check transaction_log_transactions
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
@@ -1198,6 +1218,7 @@ statement {
       type: STANDARD
       schema: "test"
       options {
+        has_user_set_auto_increment_value: false
         collation: "utf8_general_ci"
         collation_id: 45
       }
@@ -1213,15 +1234,15 @@ CREATE TABLE t2 LIKE t1;
 # check transaction_log
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
 FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
-transaction.log	542	4	4	1	4	START_TIMESTAMP	END_TIMESTAMP	73736
+transaction.log	546	4	4	1	4	START_TIMESTAMP	END_TIMESTAMP	73736
 
 Check transaction_log_entries
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
 0	TRANSACTION	75
 75	TRANSACTION	75
-150	TRANSACTION	195
-345	TRANSACTION	197
+150	TRANSACTION	197
+347	TRANSACTION	199
 
 Check transaction_log_transactions
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
@@ -1229,7 +1250,7 @@ ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMEN
 0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
 75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
 150	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
-345	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+347	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1292,6 +1313,7 @@ statement {
       type: STANDARD
       schema: "test"
       options {
+        has_user_set_auto_increment_value: false
         collation: "utf8_general_ci"
         collation_id: 45
       }
@@ -1316,14 +1338,14 @@ Warning	1071	Specified key was too long; max key length is 1023 bytes
 # check transaction_log
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
 FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
-transaction.log	412	3	3	1	3	START_TIMESTAMP	END_TIMESTAMP	73736
+transaction.log	414	3	3	1	3	START_TIMESTAMP	END_TIMESTAMP	73736
 
 Check transaction_log_entries
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
 0	TRANSACTION	75
 75	TRANSACTION	75
-150	TRANSACTION	262
+150	TRANSACTION	264
 
 Check transaction_log_transactions
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
@@ -1402,7 +1424,7 @@ statement {
         key_length: 1020
         index_part {
           fieldnr: 1
-          compare_length: 1020
+          compare_length: 255
         }
         options {
           binary_pack_key: true
@@ -1413,6 +1435,7 @@ statement {
       type: STANDARD
       schema: "test"
       options {
+        has_user_set_auto_increment_value: false
         collation: "utf8_general_ci"
         collation_id: 45
       }
@@ -1433,14 +1456,14 @@ CREATE TABLE t1(a INT NOT NULL, b CHAR(1000) NOT NULL , c CHAR(1) COLLATE utf8_b
 # check transaction_log
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
 FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
-transaction.log	372	3	3	1	3	START_TIMESTAMP	END_TIMESTAMP	73736
+transaction.log	374	3	3	1	3	START_TIMESTAMP	END_TIMESTAMP	73736
 
 Check transaction_log_entries
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
 0	TRANSACTION	75
 75	TRANSACTION	75
-150	TRANSACTION	222
+150	TRANSACTION	224
 
 Check transaction_log_transactions
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
@@ -1514,6 +1537,7 @@ statement {
       type: STANDARD
       schema: "test"
       options {
+        has_user_set_auto_increment_value: false
         collation: "utf8_turkish_ci"
         collation_id: 233
       }
@@ -1534,14 +1558,14 @@ CREATE TABLE t1(a INT NOT NULL, b BLOB NOT NULL, c CHAR(1) DEFAULT '0', PRIMARY 
 # check transaction_log
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
 FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
-transaction.log	366	3	3	1	3	START_TIMESTAMP	END_TIMESTAMP	73736
+transaction.log	368	3	3	1	3	START_TIMESTAMP	END_TIMESTAMP	73736
 
 Check transaction_log_entries
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
 0	TRANSACTION	75
 75	TRANSACTION	75
-150	TRANSACTION	216
+150	TRANSACTION	218
 
 Check transaction_log_transactions
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
@@ -1614,6 +1638,505 @@ statement {
       type: STANDARD
       schema: "test"
       options {
+        has_user_set_auto_increment_value: false
+        collation: "utf8_general_ci"
+        collation_id: 45
+      }
+      CREATE_TIMESTAMP
+      UPDATE_TIMESTAMP
+    }
+  }
+}
+
+
+
+DROP TABLE t1;
+SET GLOBAL transaction_log_truncate_debug= true;
+
+Testing CREATE data-type / fields
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (
+autoinc_int_field INT NOT NULL AUTO_INCREMENT
+, null_int_field INT NULL
+, not_null_bigint_field BIGINT NOT NULL
+, null_bigint_field BIGINT NULL
+, not_null_int_field INT NOT NULL
+, null_varchar_field VARCHAR(100) NULL
+, not_null_varchar_field VARCHAR(100) NOT NULL
+, null_enum_field ENUM ('val1', 'val2') NULL
+, not_null_enum_field ENUM ('val1', 'val2') NOT NULL
+, null_date_field DATE NULL
+, not_null_date_field DATE NOT NULL
+, null_datetime_field DATETIME NULL
+, not_null_datetime_field DATETIME NOT NULL
+, null_blob_field BLOB NULL
+, not_null_blob_field BLOB NOT NULL
+, null_text_field TEXT NULL
+, not_null_text_field TEXT NOT NULL
+, null_timestamp_field TIMESTAMP NULL
+, not_null_timestamp_field TIMESTAMP NOT NULL
+, null_double_field DOUBLE NULL
+, not_null_double_field DOUBLE NOT NULL
+, null_decimal_field DECIMAL(10,2) NULL
+, not_null_decimal_field DECIMAL(10,2) NOT NULL
+, PRIMARY KEY (autoinc_int_field)
+);
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	1121	2	2	1	2	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	1046
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 2
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: CREATE_TABLE
+  START_TIMESTAMP
+  END_TIMESTAMP
+  create_table_statement {
+    table {
+      name: "t1"
+      engine {
+        name: "InnoDB"
+      }
+      field {
+        name: "autoinc_int_field"
+        type: INTEGER
+        constraints {
+          is_nullable: false
+        }
+        numeric_options {
+          is_autoincrement: true
+        }
+      }
+      field {
+        name: "null_int_field"
+        type: INTEGER
+        options {
+          default_null: true
+        }
+        constraints {
+          is_nullable: true
+        }
+      }
+      field {
+        name: "not_null_bigint_field"
+        type: BIGINT
+        constraints {
+          is_nullable: false
+        }
+      }
+      field {
+        name: "null_bigint_field"
+        type: BIGINT
+        options {
+          default_null: true
+        }
+        constraints {
+          is_nullable: true
+        }
+      }
+      field {
+        name: "not_null_int_field"
+        type: INTEGER
+        constraints {
+          is_nullable: false
+        }
+      }
+      field {
+        name: "null_varchar_field"
+        type: VARCHAR
+        options {
+          default_null: true
+        }
+        constraints {
+          is_nullable: true
+        }
+        string_options {
+          length: 100
+          collation_id: 45
+          collation: "utf8_general_ci"
+        }
+      }
+      field {
+        name: "not_null_varchar_field"
+        type: VARCHAR
+        constraints {
+          is_nullable: false
+        }
+        string_options {
+          length: 100
+          collation_id: 45
+          collation: "utf8_general_ci"
+        }
+      }
+      field {
+        name: "null_enum_field"
+        type: ENUM
+        options {
+          default_null: true
+        }
+        constraints {
+          is_nullable: true
+        }
+        enumeration_values {
+          collation_id: 45
+          collation: "utf8_general_ci"
+          field_value: "val1"
+          field_value: "val2"
+        }
+      }
+      field {
+        name: "not_null_enum_field"
+        type: ENUM
+        constraints {
+          is_nullable: false
+        }
+        enumeration_values {
+          collation_id: 45
+          collation: "utf8_general_ci"
+          field_value: "val1"
+          field_value: "val2"
+        }
+      }
+      field {
+        name: "null_date_field"
+        type: DATE
+        options {
+          default_null: true
+        }
+        constraints {
+          is_nullable: true
+        }
+      }
+      field {
+        name: "not_null_date_field"
+        type: DATE
+        constraints {
+          is_nullable: false
+        }
+      }
+      field {
+        name: "null_datetime_field"
+        type: DATETIME
+        options {
+          default_null: true
+        }
+        constraints {
+          is_nullable: true
+        }
+      }
+      field {
+        name: "not_null_datetime_field"
+        type: DATETIME
+        constraints {
+          is_nullable: false
+        }
+      }
+      field {
+        name: "null_blob_field"
+        type: BLOB
+        options {
+          default_null: true
+        }
+        constraints {
+          is_nullable: true
+        }
+        string_options {
+          collation_id: 63
+          collation: "binary"
+        }
+      }
+      field {
+        name: "not_null_blob_field"
+        type: BLOB
+        constraints {
+          is_nullable: false
+        }
+        string_options {
+          collation_id: 63
+          collation: "binary"
+        }
+      }
+      field {
+        name: "null_text_field"
+        type: BLOB
+        options {
+          default_null: true
+        }
+        constraints {
+          is_nullable: true
+        }
+        string_options {
+          collation_id: 45
+          collation: "utf8_general_ci"
+        }
+      }
+      field {
+        name: "not_null_text_field"
+        type: BLOB
+        constraints {
+          is_nullable: false
+        }
+        string_options {
+          collation_id: 45
+          collation: "utf8_general_ci"
+        }
+      }
+      field {
+        name: "null_timestamp_field"
+        type: TIMESTAMP
+        options {
+          default_null: true
+        }
+        constraints {
+          is_nullable: true
+        }
+      }
+      field {
+        name: "not_null_timestamp_field"
+        type: TIMESTAMP
+        constraints {
+          is_nullable: false
+        }
+      }
+      field {
+        name: "null_double_field"
+        type: DOUBLE
+        options {
+          default_null: true
+        }
+        constraints {
+          is_nullable: true
+        }
+      }
+      field {
+        name: "not_null_double_field"
+        type: DOUBLE
+        constraints {
+          is_nullable: false
+        }
+      }
+      field {
+        name: "null_decimal_field"
+        type: DECIMAL
+        options {
+          default_null: true
+        }
+        constraints {
+          is_nullable: true
+        }
+        numeric_options {
+          scale: 2
+          precision: 10
+        }
+      }
+      field {
+        name: "not_null_decimal_field"
+        type: DECIMAL
+        constraints {
+          is_nullable: false
+        }
+        numeric_options {
+          scale: 2
+          precision: 10
+        }
+      }
+      indexes {
+        name: "PRIMARY"
+        is_primary: true
+        is_unique: true
+        type: UNKNOWN_INDEX
+        key_length: 4
+        index_part {
+          fieldnr: 0
+          compare_length: 4
+        }
+        options {
+        }
+      }
+      type: STANDARD
+      schema: "test"
+      options {
+        has_user_set_auto_increment_value: false
+        collation: "utf8_general_ci"
+        collation_id: 45
+      }
+      CREATE_TIMESTAMP
+      UPDATE_TIMESTAMP
+    }
+  }
+}
+
+
+
+DROP TABLE t1;
+SET GLOBAL transaction_log_truncate_debug= true;
+
+Testing index generation 
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (
+id INT NOT NULL AUTO_INCREMENT PRIMARY KEY
+, key1 VARCHAR(10) NOT NULL
+, key2 DOUBLE NOT NULL
+, key3 BLOB NOT NULL
+, UNIQUE KEY (key1)
+, KEY named_key (key2)
+, KEY partial_key (key3(30))
+);
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	411	2	2	1	2	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	336
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 2
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: CREATE_TABLE
+  START_TIMESTAMP
+  END_TIMESTAMP
+  create_table_statement {
+    table {
+      name: "t1"
+      engine {
+        name: "InnoDB"
+      }
+      field {
+        name: "id"
+        type: INTEGER
+        constraints {
+          is_nullable: false
+        }
+        numeric_options {
+          is_autoincrement: true
+        }
+      }
+      field {
+        name: "key1"
+        type: VARCHAR
+        constraints {
+          is_nullable: false
+        }
+        string_options {
+          length: 10
+          collation_id: 45
+          collation: "utf8_general_ci"
+        }
+      }
+      field {
+        name: "key2"
+        type: DOUBLE
+        constraints {
+          is_nullable: false
+        }
+      }
+      field {
+        name: "key3"
+        type: BLOB
+        constraints {
+          is_nullable: false
+        }
+        string_options {
+          collation_id: 63
+          collation: "binary"
+        }
+      }
+      indexes {
+        name: "PRIMARY"
+        is_primary: true
+        is_unique: true
+        type: UNKNOWN_INDEX
+        key_length: 4
+        index_part {
+          fieldnr: 0
+          compare_length: 4
+        }
+        options {
+        }
+      }
+      indexes {
+        name: "key1"
+        is_primary: false
+        is_unique: true
+        type: UNKNOWN_INDEX
+        key_length: 40
+        index_part {
+          fieldnr: 1
+          compare_length: 10
+        }
+        options {
+          binary_pack_key: true
+          var_length_key: true
+        }
+      }
+      indexes {
+        name: "named_key"
+        is_primary: false
+        is_unique: false
+        type: UNKNOWN_INDEX
+        key_length: 8
+        index_part {
+          fieldnr: 2
+          compare_length: 8
+        }
+        options {
+        }
+      }
+      indexes {
+        name: "partial_key"
+        is_primary: false
+        is_unique: false
+        type: UNKNOWN_INDEX
+        key_length: 30
+        index_part {
+          fieldnr: 3
+          compare_length: 30
+        }
+        options {
+          binary_pack_key: true
+          var_length_key: true
+          has_partial_segments: true
+        }
+      }
+      type: STANDARD
+      schema: "test"
+      options {
+        has_user_set_auto_increment_value: false
         collation: "utf8_general_ci"
         collation_id: 45
       }
