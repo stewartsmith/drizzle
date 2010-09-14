@@ -2928,6 +2928,9 @@ simple_expr:
         | literal
         | variable
         | sum_expr
+          {
+            Lex->setSumExprUsed();
+          }
         | '+' simple_expr %prec NEG { $$= $2; }
         | '-' simple_expr %prec NEG
           { $$= new (YYSession->mem_root) Item_func_neg($2); }

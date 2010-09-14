@@ -742,18 +742,13 @@ TableShare::TableShare(TableIdentifier::Type type_arg,
     TableIdentifier::build_table_filename(_path, db.str, table_name.str, false);
   }
 
-  if (mem_root.multi_alloc_root(0,
-                                &path_buff, _path.length() + 1,
-                                NULL))
+  if ((path_buff= (char *)mem_root.alloc_root(_path.length() + 1)))
   {
     setPath(path_buff, _path.length());
     strcpy(path_buff, _path.c_str());
     setNormalizedPath(path_buff, _path.length());
 
     version= refresh_version;
-
-    pthread_mutex_init(&mutex, MY_MUTEX_INIT_FAST);
-    pthread_cond_init(&cond, NULL);
   }
   else
   {
@@ -789,13 +784,11 @@ TableShare::~TableShare()
     /* share->mutex is locked in release_table_share() */
     while (waiting_on_cond)
     {
-      pthread_cond_broadcast(&cond);
-      pthread_cond_wait(&cond, &mutex);
+      cond.notify_all();
+      pthread_cond_wait(cond.native_handle(), mutex.native_handle());
     }
     /* No thread refers to this anymore */
-    pthread_mutex_unlock(&mutex);
-    pthread_mutex_destroy(&mutex);
-    pthread_cond_destroy(&cond);
+    mutex.unlock();
   }
 
   storage_engine= NULL;
@@ -1331,7 +1324,6 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
 
     Table temp_table; /* Use this so that BLOB DEFAULT '' works */
-    memset(&temp_table, 0, sizeof(temp_table));
     temp_table.setShare(this);
     temp_table.in_use= &session;
     temp_table.getMutableShare()->db_low_byte_first= true; //Cursor->low_byte_first();
