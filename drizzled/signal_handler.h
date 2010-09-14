@@ -25,7 +25,7 @@
 
 #include <cstdlib>
 #include <cassert>
-
+static bool volatile signal_thread_in_use= false;
 extern "C" void drizzled_print_signal_warning(int sig);
 extern "C" void drizzled_handle_segfault(int sig);
 extern "C" void drizzled_end_thread_signal(int sig);

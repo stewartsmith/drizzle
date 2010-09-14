@@ -162,7 +162,6 @@ typedef Function drizzle_compentry_func_t;
 using namespace std;
 namespace po=boost::program_options;
 
-const string VER("14.14");
 /* Don't try to make a nice table if the data is too big */
 const uint32_t MAX_COLUMN_LENGTH= 1024;
 
@@ -296,7 +295,7 @@ static bool ignore_errors= false, quick= false,
   default_pager_set= false, opt_sigint_ignore= false,
   auto_vertical_output= false,
   show_warnings= false, executing_query= false, interrupted_query= false,
-  opt_mysql= false, opt_local_infile;
+  use_drizzle_protocol= false, opt_local_infile;
 static uint32_t show_progress_size= 0;
 static bool column_types_flag;
 static bool preserve_comments= false;
@@ -321,7 +320,8 @@ std::string current_db,
   current_user,
   opt_verbose,
   current_password,
-  opt_password;
+  opt_password,
+  opt_protocol;
 // TODO: Need to i18n these
 static const char *day_names[]= {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
 static const char *month_names[]= {"Jan","Feb","Mar","Apr","May","Jun","Jul",
@@ -523,15 +523,11 @@ static Commands commands[] = {
   Commands( "AUTO_INCREMENT", 0, 0, 0, ""),
   Commands( "AVG", 0, 0, 0, ""),
   Commands( "AVG_ROW_LENGTH", 0, 0, 0, ""),
-  Commands( "BACKUP", 0, 0, 0, ""),
-  Commands( "BDB", 0, 0, 0, ""),
   Commands( "BEFORE", 0, 0, 0, ""),
   Commands( "BEGIN", 0, 0, 0, ""),
-  Commands( "BERKELEYDB", 0, 0, 0, ""),
   Commands( "BETWEEN", 0, 0, 0, ""),
   Commands( "BIGINT", 0, 0, 0, ""),
   Commands( "BINARY", 0, 0, 0, ""),
-  Commands( "BINLOG", 0, 0, 0, ""),
   Commands( "BIT", 0, 0, 0, ""),
   Commands( "BLOB", 0, 0, 0, ""),
   Commands( "BOOL", 0, 0, 0, ""),
@@ -550,13 +546,10 @@ static Commands commands[] = {
   Commands( "CHANGED", 0, 0, 0, ""),
   Commands( "CHAR", 0, 0, 0, ""),
   Commands( "CHARACTER", 0, 0, 0, ""),
-  Commands( "CHARSET", 0, 0, 0, ""),
   Commands( "CHECK", 0, 0, 0, ""),
   Commands( "CHECKSUM", 0, 0, 0, ""),
-  Commands( "CIPHER", 0, 0, 0, ""),
   Commands( "CLIENT", 0, 0, 0, ""),
   Commands( "CLOSE", 0, 0, 0, ""),
-  Commands( "CODE", 0, 0, 0, ""),
   Commands( "COLLATE", 0, 0, 0, ""),
   Commands( "COLLATION", 0, 0, 0, ""),
   Commands( "COLUMN", 0, 0, 0, ""),
@@ -598,22 +591,17 @@ static Commands commands[] = {
   Commands( "DEFAULT", 0, 0, 0, ""),
   Commands( "DEFINER", 0, 0, 0, ""),
   Commands( "DELAYED", 0, 0, 0, ""),
-  Commands( "DELAY_KEY_WRITE", 0, 0, 0, ""),
   Commands( "DELETE", 0, 0, 0, ""),
   Commands( "DESC", 0, 0, 0, ""),
   Commands( "DESCRIBE", 0, 0, 0, ""),
-  Commands( "DES_KEY_FILE", 0, 0, 0, ""),
   Commands( "DETERMINISTIC", 0, 0, 0, ""),
-  Commands( "DIRECTORY", 0, 0, 0, ""),
   Commands( "DISABLE", 0, 0, 0, ""),
   Commands( "DISCARD", 0, 0, 0, ""),
   Commands( "DISTINCT", 0, 0, 0, ""),
   Commands( "DISTINCTROW", 0, 0, 0, ""),
   Commands( "DIV", 0, 0, 0, ""),
-  Commands( "DO", 0, 0, 0, ""),
   Commands( "DOUBLE", 0, 0, 0, ""),
   Commands( "DROP", 0, 0, 0, ""),
-  Commands( "DUAL", 0, 0, 0, ""),
   Commands( "DUMPFILE", 0, 0, 0, ""),
   Commands( "DUPLICATE", 0, 0, 0, ""),
   Commands( "DYNAMIC", 0, 0, 0, ""),
@@ -629,11 +617,8 @@ static Commands commands[] = {
   Commands( "ERRORS", 0, 0, 0, ""),
   Commands( "ESCAPE", 0, 0, 0, ""),
   Commands( "ESCAPED", 0, 0, 0, ""),
-  Commands( "EVENTS", 0, 0, 0, ""),
-  Commands( "EXECUTE", 0, 0, 0, ""),
   Commands( "EXISTS", 0, 0, 0, ""),
   Commands( "EXIT", 0, 0, 0, ""),
-  Commands( "EXPANSION", 0, 0, 0, ""),
   Commands( "EXPLAIN", 0, 0, 0, ""),
   Commands( "EXTENDED", 0, 0, 0, ""),
   Commands( "FALSE", 0, 0, 0, ""),
@@ -654,7 +639,6 @@ static Commands commands[] = {
   Commands( "FRAC_SECOND", 0, 0, 0, ""),
   Commands( "FROM", 0, 0, 0, ""),
   Commands( "FULL", 0, 0, 0, ""),
-  Commands( "FULLTEXT", 0, 0, 0, ""),
   Commands( "FUNCTION", 0, 0, 0, ""),
   Commands( "GLOBAL", 0, 0, 0, ""),
   Commands( "GRANT", 0, 0, 0, ""),
@@ -722,24 +706,7 @@ static Commands commands[] = {
   Commands( "LOCKS", 0, 0, 0, ""),
   Commands( "LOGS", 0, 0, 0, ""),
   Commands( "LONG", 0, 0, 0, ""),
-  Commands( "LONGTEXT", 0, 0, 0, ""),
   Commands( "LOOP", 0, 0, 0, ""),
-  Commands( "LOW_PRIORITY", 0, 0, 0, ""),
-  Commands( "MASTER", 0, 0, 0, ""),
-  Commands( "MASTER_CONNECT_RETRY", 0, 0, 0, ""),
-  Commands( "MASTER_HOST", 0, 0, 0, ""),
-  Commands( "MASTER_LOG_FILE", 0, 0, 0, ""),
-  Commands( "MASTER_LOG_POS", 0, 0, 0, ""),
-  Commands( "MASTER_PASSWORD", 0, 0, 0, ""),
-  Commands( "MASTER_PORT", 0, 0, 0, ""),
-  Commands( "MASTER_SERVER_ID", 0, 0, 0, ""),
-  Commands( "MASTER_SSL", 0, 0, 0, ""),
-  Commands( "MASTER_SSL_CA", 0, 0, 0, ""),
-  Commands( "MASTER_SSL_CAPATH", 0, 0, 0, ""),
-  Commands( "MASTER_SSL_CERT", 0, 0, 0, ""),
-  Commands( "MASTER_SSL_CIPHER", 0, 0, 0, ""),
-  Commands( "MASTER_SSL_KEY", 0, 0, 0, ""),
-  Commands( "MASTER_USER", 0, 0, 0, ""),
   Commands( "MATCH", 0, 0, 0, ""),
   Commands( "MAX_CONNECTIONS_PER_HOUR", 0, 0, 0, ""),
   Commands( "MAX_QUERIES_PER_HOUR", 0, 0, 0, ""),
@@ -747,10 +714,8 @@ static Commands commands[] = {
   Commands( "MAX_UPDATES_PER_HOUR", 0, 0, 0, ""),
   Commands( "MAX_USER_CONNECTIONS", 0, 0, 0, ""),
   Commands( "MEDIUM", 0, 0, 0, ""),
-  Commands( "MEDIUMTEXT", 0, 0, 0, ""),
   Commands( "MERGE", 0, 0, 0, ""),
   Commands( "MICROSECOND", 0, 0, 0, ""),
-  Commands( "MIDDLEINT", 0, 0, 0, ""),
   Commands( "MIGRATE", 0, 0, 0, ""),
   Commands( "MINUTE", 0, 0, 0, ""),
   Commands( "MINUTE_MICROSECOND", 0, 0, 0, ""),
@@ -769,20 +734,16 @@ static Commands commands[] = {
   Commands( "NAMES", 0, 0, 0, ""),
   Commands( "NATIONAL", 0, 0, 0, ""),
   Commands( "NATURAL", 0, 0, 0, ""),
-  Commands( "NDB", 0, 0, 0, ""),
-  Commands( "NDBCLUSTER", 0, 0, 0, ""),
   Commands( "NCHAR", 0, 0, 0, ""),
   Commands( "NEW", 0, 0, 0, ""),
   Commands( "NEXT", 0, 0, 0, ""),
   Commands( "NO", 0, 0, 0, ""),
   Commands( "NONE", 0, 0, 0, ""),
   Commands( "NOT", 0, 0, 0, ""),
-  Commands( "NO_WRITE_TO_BINLOG", 0, 0, 0, ""),
   Commands( "NULL", 0, 0, 0, ""),
   Commands( "NUMERIC", 0, 0, 0, ""),
   Commands( "NVARCHAR", 0, 0, 0, ""),
   Commands( "OFFSET", 0, 0, 0, ""),
-  Commands( "OLD_PASSWORD", 0, 0, 0, ""),
   Commands( "ON", 0, 0, 0, ""),
   Commands( "ONE", 0, 0, 0, ""),
   Commands( "ONE_SHOT", 0, 0, 0, ""),
@@ -799,8 +760,6 @@ static Commands commands[] = {
   Commands( "PARTIAL", 0, 0, 0, ""),
   Commands( "PASSWORD", 0, 0, 0, ""),
   Commands( "PHASE", 0, 0, 0, ""),
-  Commands( "POINT", 0, 0, 0, ""),
-  Commands( "POLYGON", 0, 0, 0, ""),
   Commands( "PRECISION", 0, 0, 0, ""),
   Commands( "PREPARE", 0, 0, 0, ""),
   Commands( "PREV", 0, 0, 0, ""),
@@ -820,16 +779,12 @@ static Commands commands[] = {
   Commands( "REDUNDANT", 0, 0, 0, ""),
   Commands( "REFERENCES", 0, 0, 0, ""),
   Commands( "REGEXP", 0, 0, 0, ""),
-  Commands( "RELAY_LOG_FILE", 0, 0, 0, ""),
-  Commands( "RELAY_LOG_POS", 0, 0, 0, ""),
-  Commands( "RELAY_THREAD", 0, 0, 0, ""),
   Commands( "RELEASE", 0, 0, 0, ""),
   Commands( "RELOAD", 0, 0, 0, ""),
   Commands( "RENAME", 0, 0, 0, ""),
   Commands( "REPAIR", 0, 0, 0, ""),
   Commands( "REPEATABLE", 0, 0, 0, ""),
   Commands( "REPLACE", 0, 0, 0, ""),
-  Commands( "REPLICATION", 0, 0, 0, ""),
   Commands( "REPEAT", 0, 0, 0, ""),
   Commands( "REQUIRE", 0, 0, 0, ""),
   Commands( "RESET", 0, 0, 0, ""),
@@ -868,7 +823,6 @@ static Commands commands[] = {
   Commands( "SIMPLE", 0, 0, 0, ""),
   Commands( "SLAVE", 0, 0, 0, ""),
   Commands( "SNAPSHOT", 0, 0, 0, ""),
-  Commands( "SMALLINT", 0, 0, 0, ""),
   Commands( "SOME", 0, 0, 0, ""),
   Commands( "SONAME", 0, 0, 0, ""),
   Commands( "SOUNDS", 0, 0, 0, ""),
@@ -917,12 +871,9 @@ static Commands commands[] = {
   Commands( "TIMESTAMP", 0, 0, 0, ""),
   Commands( "TIMESTAMPADD", 0, 0, 0, ""),
   Commands( "TIMESTAMPDIFF", 0, 0, 0, ""),
-  Commands( "TINYTEXT", 0, 0, 0, ""),
   Commands( "TO", 0, 0, 0, ""),
   Commands( "TRAILING", 0, 0, 0, ""),
   Commands( "TRANSACTION", 0, 0, 0, ""),
-  Commands( "TRIGGER", 0, 0, 0, ""),
-  Commands( "TRIGGERS", 0, 0, 0, ""),
   Commands( "TRUE", 0, 0, 0, ""),
   Commands( "TRUNCATE", 0, 0, 0, ""),
   Commands( "TYPE", 0, 0, 0, ""),
@@ -935,7 +886,6 @@ static Commands commands[] = {
   Commands( "UNIQUE", 0, 0, 0, ""),
   Commands( "UNKNOWN", 0, 0, 0, ""),
   Commands( "UNLOCK", 0, 0, 0, ""),
-  Commands( "UNSIGNED", 0, 0, 0, ""),
   Commands( "UNTIL", 0, 0, 0, ""),
   Commands( "UPDATE", 0, 0, 0, ""),
   Commands( "UPGRADE", 0, 0, 0, ""),
@@ -943,7 +893,6 @@ static Commands commands[] = {
   Commands( "USE", 0, 0, 0, ""),
   Commands( "USER", 0, 0, 0, ""),
   Commands( "USER_RESOURCES", 0, 0, 0, ""),
-  Commands( "USE_FRM", 0, 0, 0, ""),
   Commands( "USING", 0, 0, 0, ""),
   Commands( "UTC_DATE", 0, 0, 0, ""),
   Commands( "UTC_TIMESTAMP", 0, 0, 0, ""),
@@ -963,7 +912,6 @@ static Commands commands[] = {
   Commands( "WITH", 0, 0, 0, ""),
   Commands( "WORK", 0, 0, 0, ""),
   Commands( "WRITE", 0, 0, 0, ""),
-  Commands( "X509", 0, 0, 0, ""),
   Commands( "XOR", 0, 0, 0, ""),
   Commands( "XA", 0, 0, 0, ""),
   Commands( "YEAR", 0, 0, 0, ""),
@@ -972,14 +920,10 @@ static Commands commands[] = {
   Commands( "ABS", 0, 0, 0, ""),
   Commands( "ACOS", 0, 0, 0, ""),
   Commands( "ADDDATE", 0, 0, 0, ""),
-  Commands( "AES_ENCRYPT", 0, 0, 0, ""),
-  Commands( "AES_DECRYPT", 0, 0, 0, ""),
   Commands( "AREA", 0, 0, 0, ""),
   Commands( "ASIN", 0, 0, 0, ""),
   Commands( "ASBINARY", 0, 0, 0, ""),
   Commands( "ASTEXT", 0, 0, 0, ""),
-  Commands( "ASWKB", 0, 0, 0, ""),
-  Commands( "ASWKT", 0, 0, 0, ""),
   Commands( "ATAN", 0, 0, 0, ""),
   Commands( "ATAN2", 0, 0, 0, ""),
   Commands( "BENCHMARK", 0, 0, 0, ""),
@@ -1045,8 +989,6 @@ static Commands commands[] = {
   Commands( "GROUP_UNIQUE_USERS", 0, 0, 0, ""),
   Commands( "HEX", 0, 0, 0, ""),
   Commands( "IFNULL", 0, 0, 0, ""),
-  Commands( "INET_ATON", 0, 0, 0, ""),
-  Commands( "INET_NTOA", 0, 0, 0, ""),
   Commands( "INSTR", 0, 0, 0, ""),
   Commands( "INTERIORRINGN", 0, 0, 0, ""),
   Commands( "INTERSECTS", 0, 0, 0, ""),
@@ -1062,10 +1004,6 @@ static Commands commands[] = {
   Commands( "LEAST", 0, 0, 0, ""),
   Commands( "LENGTH", 0, 0, 0, ""),
   Commands( "LN", 0, 0, 0, ""),
-  Commands( "LINEFROMTEXT", 0, 0, 0, ""),
-  Commands( "LINEFROMWKB", 0, 0, 0, ""),
-  Commands( "LINESTRINGFROMTEXT", 0, 0, 0, ""),
-  Commands( "LINESTRINGFROMWKB", 0, 0, 0, ""),
   Commands( "LOAD_FILE", 0, 0, 0, ""),
   Commands( "LOCATE", 0, 0, 0, ""),
   Commands( "LOG", 0, 0, 0, ""),
@@ -1088,23 +1026,10 @@ static Commands commands[] = {
   Commands( "MD5", 0, 0, 0, ""),
   Commands( "MID", 0, 0, 0, ""),
   Commands( "MIN", 0, 0, 0, ""),
-  Commands( "MLINEFROMTEXT", 0, 0, 0, ""),
-  Commands( "MLINEFROMWKB", 0, 0, 0, ""),
-  Commands( "MPOINTFROMTEXT", 0, 0, 0, ""),
-  Commands( "MPOINTFROMWKB", 0, 0, 0, ""),
-  Commands( "MPOLYFROMTEXT", 0, 0, 0, ""),
-  Commands( "MPOLYFROMWKB", 0, 0, 0, ""),
   Commands( "MONTHNAME", 0, 0, 0, ""),
-  Commands( "MULTILINESTRINGFROMTEXT", 0, 0, 0, ""),
-  Commands( "MULTILINESTRINGFROMWKB", 0, 0, 0, ""),
-  Commands( "MULTIPOINTFROMTEXT", 0, 0, 0, ""),
-  Commands( "MULTIPOINTFROMWKB", 0, 0, 0, ""),
-  Commands( "MULTIPOLYGONFROMTEXT", 0, 0, 0, ""),
-  Commands( "MULTIPOLYGONFROMWKB", 0, 0, 0, ""),
   Commands( "NAME_CONST", 0, 0, 0, ""),
   Commands( "NOW", 0, 0, 0, ""),
   Commands( "NULLIF", 0, 0, 0, ""),
-  Commands( "NUMINTERIORRINGS", 0, 0, 0, ""),
   Commands( "NUMPOINTS", 0, 0, 0, ""),
   Commands( "OCTET_LENGTH", 0, 0, 0, ""),
   Commands( "OCT", 0, 0, 0, ""),
@@ -1113,13 +1038,7 @@ static Commands commands[] = {
   Commands( "PERIOD_ADD", 0, 0, 0, ""),
   Commands( "PERIOD_DIFF", 0, 0, 0, ""),
   Commands( "PI", 0, 0, 0, ""),
-  Commands( "POINTFROMTEXT", 0, 0, 0, ""),
-  Commands( "POINTFROMWKB", 0, 0, 0, ""),
   Commands( "POINTN", 0, 0, 0, ""),
-  Commands( "POLYFROMTEXT", 0, 0, 0, ""),
-  Commands( "POLYFROMWKB", 0, 0, 0, ""),
-  Commands( "POLYGONFROMTEXT", 0, 0, 0, ""),
-  Commands( "POLYGONFROMWKB", 0, 0, 0, ""),
   Commands( "POSITION", 0, 0, 0, ""),
   Commands( "POW", 0, 0, 0, ""),
   Commands( "POWER", 0, 0, 0, ""),
@@ -1222,9 +1141,9 @@ static bool server_shutdown(void)
 
   if (verbose)
   {
-    printf("shutting down drizzled");
+    printf(_("shutting down drizzled"));
     if (opt_drizzle_port > 0)
-      printf(" on port %d", opt_drizzle_port);
+      printf(_(" on port %d"), opt_drizzle_port);
     printf("... ");
   }
 
@@ -1233,13 +1152,13 @@ static bool server_shutdown(void)
   {
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
     {
-      fprintf(stderr, "shutdown failed; error: '%s'",
+      fprintf(stderr, _("shutdown failed; error: '%s'"),
               drizzle_result_error(&result));
       drizzle_result_free(&result);
     }
     else
     {
-      fprintf(stderr, "shutdown failed; error: '%s'",
+      fprintf(stderr, _("shutdown failed; error: '%s'"),
               drizzle_con_error(&con));
     }
     return false;
@@ -1248,7 +1167,7 @@ static bool server_shutdown(void)
   drizzle_result_free(&result);
 
   if (verbose)
-    printf("done\n");
+    printf(_("done\n"));
 
   return true;
 }
@@ -1269,19 +1188,19 @@ static bool server_ping(void)
   if (drizzle_ping(&con, &result, &ret) != NULL && ret == DRIZZLE_RETURN_OK)
   {
     if (opt_silent < 2)
-      printf("drizzled is alive\n");
+      printf(_("drizzled is alive\n"));
   }
   else
   {
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
     {
-      fprintf(stderr, "ping failed; error: '%s'",
+      fprintf(stderr, _("ping failed; error: '%s'"),
               drizzle_result_error(&result));
       drizzle_result_free(&result);
     }
     else
     {
-      fprintf(stderr, "drizzled won't answer to ping, error: '%s'",
+      fprintf(stderr, _("drizzled won't answer to ping, error: '%s'"),
               drizzle_con_error(&con));
     }
     return false;
@@ -1330,7 +1249,7 @@ static void check_timeout_value(uint32_t in_connect_timeout)
   opt_connect_timeout= 0;
   if (in_connect_timeout > 3600*12)
   {
-    cout << N_("Error: Invalid Value for connect_timeout"); 
+    cout << _("Error: Invalid Value for connect_timeout"); 
     exit(-1);
   }
   opt_connect_timeout= in_connect_timeout;
@@ -1341,7 +1260,7 @@ static void check_max_input_line(uint32_t in_max_input_line)
   opt_max_input_line= 0;
   if (in_max_input_line < 4096 || in_max_input_line > (int64_t)2*1024L*1024L*1024L)
   {
-    cout << N_("Error: Invalid Value for max_input_line");
+    cout << _("Error: Invalid Value for max_input_line");
     exit(-1);
   }
   opt_max_input_line= in_max_input_line - (in_max_input_line % 1024);
@@ -1351,6 +1270,7 @@ int main(int argc,char *argv[])
 {
 try
 {
+
 #if defined(ENABLE_NLS)
 # if defined(HAVE_LOCALE_H)
   setlocale(LC_ALL, "");
@@ -1359,7 +1279,7 @@ try
   textdomain("drizzle");
 #endif
 
-  po::options_description commandline_options("Options used only in command line");
+  po::options_description commandline_options(N_("Options used only in command line"));
   commandline_options.add_options()
   ("help,?",N_("Displays this help and exit."))
   ("batch,B",N_("Don't use history file. Disable interactive behavior. (Enables --silent)"))
@@ -1411,7 +1331,7 @@ try
   N_("Configuration file defaults are not used if no-defaults is set"))
   ;
 
-  po::options_description drizzle_options("Options specific to the drizzle client");
+  po::options_description drizzle_options(N_("Options specific to the drizzle client"));
   drizzle_options.add_options()
   ("auto-rehash", po::value<bool>(&opt_rehash)->default_value(true)->zero_tokens(),
   N_("Enable automatic rehashing. One doesn't need to use 'rehash' to get table and field completion, but startup and reconnecting may take a longer time. Disable with --disable-auto-rehash."))
@@ -1464,10 +1384,8 @@ try
   N_("Automatic limit for rows in a join when using --safe-updates"))
   ;
 
-  po::options_description client_options("Options specific to the client");
+  po::options_description client_options(N_("Options specific to the client"));
   client_options.add_options()
-  ("mysql,m", po::value<bool>(&opt_mysql)->default_value(true)->zero_tokens(),
-  N_("Use MySQL Protocol."))
   ("host,h", po::value<string>(&current_host)->default_value("localhost"),
   N_("Connect to host"))
   ("password,P", po::value<string>(&current_password)->default_value(PASSWORD_SENTINEL),
@@ -1476,11 +1394,11 @@ try
   N_("Port number to use for connection or 0 for default to, in order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default"))
   ("user,u", po::value<string>(&current_user)->default_value(""),
   N_("User for login if not current user."))
-  ("protocol",po::value<string>(),
-  N_("The protocol of connection (tcp,socket,pipe,memory)."))
+  ("protocol",po::value<string>(&opt_protocol)->default_value("mysql"),
+  N_("The protocol of connection (mysql or drizzle)."))
   ;
 
-  po::options_description long_options("Allowed Options");
+  po::options_description long_options(N_("Allowed Options"));
   long_options.add(commandline_options).add(drizzle_options).add(client_options);
 
   std::string system_config_dir_drizzle(SYSCONFDIR); 
@@ -1652,7 +1570,23 @@ try
 
   if (one_database)
     skip_updates= true;
-  
+
+  if (vm.count("protocol"))
+  {
+    std::transform(opt_protocol.begin(), opt_protocol.end(), 
+      opt_protocol.begin(), ::tolower);
+
+    if (not opt_protocol.compare("mysql"))
+      use_drizzle_protocol=false;
+    else if (not opt_protocol.compare("drizzle"))
+      use_drizzle_protocol=true;
+    else
+    {
+      cout << _("Error: Unknown protocol") << " '" << opt_protocol << "'" << endl;
+      exit(-1);
+    }
+  }
+ 
   if (vm.count("port"))
   {
     opt_drizzle_port= vm["port"].as<uint32_t>();
@@ -1705,29 +1639,22 @@ try
   {
     opt_silent++;
   }
-  if (vm.count("version"))
-  {
-    printf(_("drizzle  Ver %s Distrib %s, for %s-%s (%s) using readline %s\n"),
-           VER.c_str(), drizzle_version(),
-           HOST_VENDOR, HOST_OS, HOST_CPU,
-           rl_library_version);
-
-    exit(0);
-  }
   
-  if (vm.count("help"))
+  if (vm.count("help") || vm.count("version"))
   {
-    printf(_("drizzle  Ver %s Distrib %s, for %s-%s (%s) using readline %s\n"),
-           VER.c_str(), drizzle_version(),
+    printf(_("Drizzle client %s build %s, for %s-%s (%s) using readline %s\n"),
+           drizzle_version(), VERSION,
            HOST_VENDOR, HOST_OS, HOST_CPU,
            rl_library_version);
+    if (vm.count("version"))
+      exit(0);
     printf(_("Copyright (C) 2008 Sun Microsystems\n"
            "This software comes with ABSOLUTELY NO WARRANTY. "
            "This is free software,\n"
            "and you are welcome to modify and redistribute it "
            "under the GPL license\n"));
     printf(_("Usage: drizzle [OPTIONS] [database]\n"));
-    cout<<long_options;
+    cout << long_options;
     exit(0);
   }
  
@@ -1789,10 +1716,12 @@ try
   glob_buffer->reserve(512);
 
   snprintf(&output_buff[0], output_buff.size(),
-          _("Your Drizzle connection id is %u\nServer version: %s\n"),
+          _("Your Drizzle connection id is %u\nConnection protocol: %s\nServer version: %s\n"),
           drizzle_con_thread_id(&con),
+          opt_protocol.c_str(),
           server_version_string(&con));
   put_info(&output_buff[0], INFO_INFO, 0, 0);
+
 
   initialize_readline((char *)current_prompt.c_str());
   if (!status.getBatch() && !quick)
@@ -1842,7 +1771,7 @@ try
 
   catch(exception &err)
   {
-  cerr<<"Error:"<<err.what()<<endl;
+    cerr << _("Error:") << err.what() << endl;
   }
   return(0);        // Keep compiler happy
 }
@@ -1901,8 +1830,8 @@ void handle_sigint(int sig)
   }
 
   if (drizzle_con_add_tcp(&drizzle, &kill_drizzle, current_host.c_str(),
-                          opt_drizzle_port, current_user.c_str(), opt_password.c_str(), NULL,
-                          opt_mysql ? DRIZZLE_CON_MYSQL : DRIZZLE_CON_NONE) == NULL)
+    opt_drizzle_port, current_user.c_str(), opt_password.c_str(), NULL,
+    use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL) == NULL)
   {
     goto err;
   }
@@ -2771,7 +2700,11 @@ int drizzleclient_store_result_for_lazy(drizzle_result_st *result)
     return 0;
 
   if (drizzle_con_error(&con)[0])
-    return put_error(&con, result);
+  {
+    int ret= put_error(&con, result);
+    drizzle_result_free(result);
+    return ret;
+  }
   return 0;
 }
 
@@ -3006,7 +2939,7 @@ static void init_pager()
   {
     if (!(PAGER= popen(pager.c_str(), "w")))
     {
-      tee_fprintf(stdout, "popen() failed! defaulting PAGER to stdout!\n");
+      tee_fprintf(stdout,_( "popen() failed! defaulting PAGER to stdout!\n"));
       PAGER= stdout;
     }
   }
@@ -3028,12 +2961,12 @@ static void init_tee(const char *file_name)
     end_tee();
   if (!(new_outfile= fopen(file_name, "a")))
   {
-    tee_fprintf(stdout, "Error logging to file '%s'\n", file_name);
+    tee_fprintf(stdout, _("Error logging to file '%s'\n"), file_name);
     return;
   }
   OUTFILE = new_outfile;
   outfile.assign(file_name);
-  tee_fprintf(stdout, "Logging to file '%s'\n", file_name);
+  tee_fprintf(stdout, _("Logging to file '%s'\n"), file_name);
   opt_outfile= 1;
 
   return;
@@ -3117,7 +3050,7 @@ print_field_types(drizzle_result_st *result)
 
   while ((field = drizzle_column_next(result)))
   {
-    tee_fprintf(PAGER, "Field %3u:  `%s`\n"
+    tee_fprintf(PAGER, _("Field %3u:  `%s`\n"
                 "Catalog:    `%s`\n"
                 "Database:   `%s`\n"
                 "Table:      `%s`\n"
@@ -3127,7 +3060,7 @@ print_field_types(drizzle_result_st *result)
                 "Length:     %lu\n"
                 "Max_length: %lu\n"
                 "Decimals:   %u\n"
-                "Flags:      %s\n\n",
+                "Flags:      %s\n\n"),
                 ++i,
                 drizzle_column_name(field), drizzle_column_catalog(field),
                 drizzle_column_db(field), drizzle_column_table(field),
@@ -3584,12 +3517,12 @@ com_tee(string *, const char *line )
   {
     if (outfile.empty())
     {
-      printf("No previous outfile available, you must give a filename!\n");
+      printf(_("No previous outfile available, you must give a filename!\n"));
       return 0;
     }
     else if (opt_outfile)
     {
-      tee_fprintf(stdout, "Currently logging to file '%s'\n", outfile.c_str());
+      tee_fprintf(stdout, _("Currently logging to file '%s'\n"), outfile.c_str());
       return 0;
     }
     else
@@ -3609,7 +3542,7 @@ com_tee(string *, const char *line )
   end[0]= 0;
   if (end == file_name)
   {
-    printf("No outfile specified!\n");
+    printf(_("No outfile specified!\n"));
     return 0;
   }
   init_tee(file_name);
@@ -3622,7 +3555,7 @@ com_notee(string *, const char *)
 {
   if (opt_outfile)
     end_tee();
-  tee_fprintf(stdout, "Outfile disabled.\n");
+  tee_fprintf(stdout, _("Outfile disabled.\n"));
   return 0;
 }
 
@@ -3649,7 +3582,7 @@ com_pager(string *, const char *line)
   {
     if (!default_pager_set)
     {
-      tee_fprintf(stdout, "Default pager wasn't set, using stdout.\n");
+      tee_fprintf(stdout, _("Default pager wasn't set, using stdout.\n"));
       opt_nopager=1;
       pager.assign("stdout");
       PAGER= stdout;
@@ -3669,7 +3602,7 @@ com_pager(string *, const char *line)
     default_pager.assign(pager_name);
   }
   opt_nopager=0;
-  tee_fprintf(stdout, "PAGER set to '%s'\n", pager.c_str());
+  tee_fprintf(stdout, _("PAGER set to '%s'\n"), pager.c_str());
   return 0;
 }
 
@@ -3680,7 +3613,7 @@ com_nopager(string *, const char *)
   pager.assign("stdout");
   opt_nopager=1;
   PAGER= stdout;
-  tee_fprintf(stdout, "PAGER set to stdout\n");
+  tee_fprintf(stdout, _("PAGER set to stdout\n"));
   return 0;
 }
 
@@ -3763,10 +3696,10 @@ com_connect(string *buffer, const char *line)
 
   if (connected)
   {
-    sprintf(buff,"Connection id:    %u",drizzle_con_thread_id(&con));
+    sprintf(buff, _("Connection id:    %u"), drizzle_con_thread_id(&con));
     put_info(buff,INFO_INFO,0,0);
-    sprintf(buff,"Current database: %.128s\n",
-            !current_db.empty() ? current_db.c_str() : "*** NONE ***");
+    sprintf(buff, _("Current database: %.128s\n"),
+            !current_db.empty() ? current_db.c_str() : _("*** NONE ***"));
     put_info(buff,INFO_INFO,0,0);
   }
   return error;
@@ -3786,7 +3719,7 @@ static int com_source(string *, const char *line)
   while (isspace(*line))
     line++;
   if (!(param = strchr(line, ' ')))    // Skip command name
-    return put_info("Usage: \\. <filename> | source <filename>",
+    return put_info(_("Usage: \\. <filename> | source <filename>"),
                     INFO_ERROR, 0,0);
   while (isspace(*param))
     param++;
@@ -3801,7 +3734,7 @@ static int com_source(string *, const char *line)
   if (!(sql_file = fopen(source_name, "r")))
   {
     char buff[FN_REFLEN+60];
-    sprintf(buff,"Failed to open file '%s', error: %d", source_name,errno);
+    sprintf(buff, _("Failed to open file '%s', error: %d"), source_name,errno);
     return put_info(buff, INFO_ERROR, 0 ,0);
   }
 
@@ -3809,7 +3742,7 @@ static int com_source(string *, const char *line)
   if (line_buff == NULL)
   {
     fclose(sql_file);
-    return put_info("Can't initialize LineBuffer", INFO_ERROR, 0, 0);
+    return put_info(_("Can't initialize LineBuffer"), INFO_ERROR, 0, 0);
   }
 
   /* Save old status */
@@ -3845,7 +3778,7 @@ com_delimiter(string *, const char *line)
 
   if (!tmp || !*tmp)
   {
-    put_info("DELIMITER must be followed by a 'delimiter' character or string",
+    put_info(_("DELIMITER must be followed by a 'delimiter' character or string"),
              INFO_ERROR, 0, 0);
     return 0;
   }
@@ -3853,7 +3786,7 @@ com_delimiter(string *, const char *line)
   {
     if (strstr(tmp, "\\"))
     {
-      put_info("DELIMITER cannot contain a backslash character",
+      put_info(_("DELIMITER cannot contain a backslash character"),
                INFO_ERROR, 0, 0);
       return 0;
     }
@@ -3878,7 +3811,7 @@ com_use(string *, const char *line)
   tmp= get_arg(buff, 0);
   if (!tmp || !*tmp)
   {
-    put_info("USE must be followed by a database name", INFO_ERROR, 0, 0);
+    put_info(_("USE must be followed by a database name"), INFO_ERROR, 0, 0);
     return 0;
   }
   /*
@@ -3946,7 +3879,7 @@ com_use(string *, const char *line)
       build_completion_hash(opt_rehash, 1);
   }
 
-  put_info("Database changed",INFO_INFO, 0, 0);
+  put_info(_("Database changed"),INFO_INFO, 0, 0);
   return 0;
 }
 
@@ -3954,7 +3887,7 @@ static int
 com_warnings(string *, const char *)
 {
   show_warnings = 1;
-  put_info("Show warnings enabled.",INFO_INFO, 0, 0);
+  put_info(_("Show warnings enabled."),INFO_INFO, 0, 0);
   return 0;
 }
 
@@ -3962,7 +3895,7 @@ static int
 com_nowarnings(string *, const char *)
 {
   show_warnings = 0;
-  put_info("Show warnings disabled.",INFO_INFO, 0, 0);
+  put_info(_("Show warnings disabled."),INFO_INFO, 0, 0);
   return 0;
 }
 
@@ -4040,8 +3973,10 @@ sql_connect(const string &host, const string &database, const string &user, cons
     drizzle_free(&drizzle);
   }
   drizzle_create(&drizzle);
-  if (drizzle_con_add_tcp(&drizzle, &con, (char *)host.c_str(), opt_drizzle_port, (char *)user.c_str(),
-                          (char *)password.c_str(), (char *)database.c_str(), opt_mysql ? DRIZZLE_CON_MYSQL : DRIZZLE_CON_NONE) == NULL)
+  if (drizzle_con_add_tcp(&drizzle, &con, (char *)host.c_str(),
+    opt_drizzle_port, (char *)user.c_str(),
+    (char *)password.c_str(), (char *)database.c_str(),
+    use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL) == NULL)
   {
     (void) put_error(&con, NULL);
     (void) fflush(stdout);
@@ -4097,15 +4032,14 @@ com_status(string *, const char *)
   drizzle_return_t ret;
 
   tee_puts("--------------", stdout);
-  printf(_("drizzle  Ver %s Distrib %s, for %s-%s (%s) using readline %s\n"),
-  VER.c_str(), drizzle_version(),
-  HOST_VENDOR, HOST_OS, HOST_CPU,
-  rl_library_version);          /* Print version */
-
+  printf(_("Drizzle client %s build %s, for %s-%s (%s) using readline %s\n"),
+         drizzle_version(), VERSION,
+         HOST_VENDOR, HOST_OS, HOST_CPU,
+         rl_library_version);
 
   if (connected)
   {
-    tee_fprintf(stdout, "\nConnection id:\t\t%lu\n",drizzle_con_thread_id(&con));
+    tee_fprintf(stdout, _("\nConnection id:\t\t%lu\n"),drizzle_con_thread_id(&con));
     /*
       Don't remove "limit 1",
       it is protection againts SQL_SELECT_LIMIT=0
@@ -4117,54 +4051,55 @@ com_status(string *, const char *)
       drizzle_row_t cur=drizzle_row_next(&result);
       if (cur)
       {
-        tee_fprintf(stdout, "Current database:\t%s\n", cur[0] ? cur[0] : "");
-        tee_fprintf(stdout, "Current user:\t\t%s\n", cur[1]);
+        tee_fprintf(stdout, _("Current database:\t%s\n"), cur[0] ? cur[0] : "");
+        tee_fprintf(stdout, _("Current user:\t\t%s\n"), cur[1]);
       }
       drizzle_result_free(&result);
     }
     else if (ret == DRIZZLE_RETURN_ERROR_CODE)
       drizzle_result_free(&result);
-    tee_puts("SSL:\t\t\tNot in use", stdout);
+    tee_puts(_("SSL:\t\t\tNot in use"), stdout);
   }
   else
   {
     vidattr(A_BOLD);
-    tee_fprintf(stdout, "\nNo connection\n");
+    tee_fprintf(stdout, _("\nNo connection\n"));
     vidattr(A_NORMAL);
     return 0;
   }
   if (skip_updates)
   {
     vidattr(A_BOLD);
-    tee_fprintf(stdout, "\nAll updates ignored to this database\n");
+    tee_fprintf(stdout, _("\nAll updates ignored to this database\n"));
     vidattr(A_NORMAL);
   }
-  tee_fprintf(stdout, "Current pager:\t\t%s\n", pager.c_str());
-  tee_fprintf(stdout, "Using outfile:\t\t'%s'\n", opt_outfile ? outfile.c_str() : "");
-  tee_fprintf(stdout, "Using delimiter:\t%s\n", delimiter);
-  tee_fprintf(stdout, "Server version:\t\t%s\n", server_version_string(&con));
-  tee_fprintf(stdout, "Protocol version:\t%d\n", drizzle_con_protocol_version(&con));
-  tee_fprintf(stdout, "Connection:\t\t%s\n", drizzle_con_host(&con));
+  tee_fprintf(stdout, _("Current pager:\t\t%s\n"), pager.c_str());
+  tee_fprintf(stdout, _("Using outfile:\t\t'%s'\n"), opt_outfile ? outfile.c_str() : "");
+  tee_fprintf(stdout, _("Using delimiter:\t%s\n"), delimiter);
+  tee_fprintf(stdout, _("Server version:\t\t%s\n"), server_version_string(&con));
+  tee_fprintf(stdout, _("Protocol:\t\t%s\n"), opt_protocol.c_str());
+  tee_fprintf(stdout, _("Protocol version:\t%d\n"), drizzle_con_protocol_version(&con));
+  tee_fprintf(stdout, _("Connection:\t\t%s\n"), drizzle_con_host(&con));
 /* XXX need to save this from result
   if ((id= drizzleclient_insert_id(&drizzle)))
     tee_fprintf(stdout, "Insert id:\t\t%s\n", internal::llstr(id, buff));
 */
 
   if (drizzle_con_uds(&con))
-    tee_fprintf(stdout, "UNIX socket:\t\t%s\n", drizzle_con_uds(&con));
+    tee_fprintf(stdout, _("UNIX socket:\t\t%s\n"), drizzle_con_uds(&con));
   else
-    tee_fprintf(stdout, "TCP port:\t\t%d\n", drizzle_con_port(&con));
+    tee_fprintf(stdout, _("TCP port:\t\t%d\n"), drizzle_con_port(&con));
 
   if (safe_updates)
   {
     vidattr(A_BOLD);
-    tee_fprintf(stdout, "\nNote that you are running in safe_update_mode:\n");
+    tee_fprintf(stdout, _("\nNote that you are running in safe_update_mode:\n"));
     vidattr(A_NORMAL);
-    tee_fprintf(stdout, "\
+    tee_fprintf(stdout, _("\
 UPDATEs and DELETEs that don't use a key in the WHERE clause are not allowed.\n\
 (One can force an UPDATE/DELETE by adding LIMIT # at the end of the command.)\n \
 SELECT has an automatic 'LIMIT %lu' if LIMIT is not used.\n             \
-Max number of examined row combination in a join is set to: %lu\n\n",
+Max number of examined row combination in a join is set to: %lu\n\n"),
                 select_limit, max_join_size);
   }
   tee_puts("--------------\n", stdout);
@@ -4222,7 +4157,7 @@ put_info(const char *str,INFO_TYPE info_type, uint32_t error, const char *sqlsta
     if (info_type == INFO_ERROR)
     {
       (void) fflush(file);
-      fprintf(file,"ERROR");
+      fprintf(file,_("ERROR"));
       if (error)
       {
         if (sqlstate)
@@ -4265,12 +4200,12 @@ put_info(const char *str,INFO_TYPE info_type, uint32_t error, const char *sqlsta
       if (error)
       {
         if (sqlstate)
-          (void) tee_fprintf(file, "ERROR %d (%s): ", error, sqlstate);
+          (void) tee_fprintf(file, _("ERROR %d (%s): "), error, sqlstate);
         else
-          (void) tee_fprintf(file, "ERROR %d: ", error);
+          (void) tee_fprintf(file, _("ERROR %d: "), error);
       }
       else
-        tee_puts("ERROR: ", file);
+        tee_puts(_("ERROR: "), file);
     }
     else
       vidattr(A_BOLD);
@@ -4403,21 +4338,21 @@ static void nice_time(double sec,char *buff,bool part_second)
     tmp_buff_str << tmp;
 
     if (tmp > 1)
-      tmp_buff_str << " hours ";
+      tmp_buff_str << _(" hours ");
     else
-      tmp_buff_str << " hour ";
+      tmp_buff_str << _(" hour ");
   }
   if (sec >= 60.0)
   {
     tmp=(uint32_t) floor(sec/60.0);
     sec-=60.0*tmp;
-    tmp_buff_str << tmp << " min ";
+    tmp_buff_str << tmp << _(" min ");
   }
   if (part_second)
     tmp_buff_str.precision(2);
   else
     tmp_buff_str.precision(0);
-  tmp_buff_str << sec << " sec";
+  tmp_buff_str << sec << _(" sec");
   strcpy(buff, tmp_buff_str.str().c_str());
 }
 
@@ -4518,7 +4453,7 @@ static const char * construct_prompt()
         if (!full_username)
           init_username();
         processed_prompt->append(part_username ? part_username :
-                                 (!current_user.empty() ?  current_user : "(unknown)"));
+                                 (!current_user.empty() ?  current_user : _("(unknown)")));
         break;
       case PROMPT_CHAR:
         {
@@ -4638,17 +4573,17 @@ static int com_prompt(string *, const char *line)
 {
   const char *ptr=strchr(line, ' ');
   if (ptr == NULL)
-    tee_fprintf(stdout, "Returning to default PROMPT of %s\n",
+    tee_fprintf(stdout, _("Returning to default PROMPT of %s\n"),
                 default_prompt);
   prompt_counter = 0;
   char * tmpptr= strdup(ptr ? ptr+1 : default_prompt);
   if (tmpptr == NULL)
-    tee_fprintf(stdout, "Memory allocation error. Not changing prompt\n");
+    tee_fprintf(stdout, _("Memory allocation error. Not changing prompt\n"));
   else
   {
     current_prompt.erase();
     current_prompt= tmpptr;
-    tee_fprintf(stdout, "PROMPT set to '%s'\n", current_prompt.c_str());
+    tee_fprintf(stdout, _("PROMPT set to '%s'\n"), current_prompt.c_str());
   }
   return 0;
 }

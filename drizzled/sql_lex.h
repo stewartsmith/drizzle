@@ -939,8 +939,24 @@ public:
   {
     cacheable= val;
   }
+
+  void reset()
+  {
+    sum_expr_used= false;
+  }
+
+  void setSumExprUsed()
+  {
+    sum_expr_used= true;
+  }
+
+  bool isSumExprUsed()
+  {
+    return sum_expr_used;
+  }
 private: 
   bool cacheable;
+  bool sum_expr_used;
 };
 
 extern void lex_start(Session *session);

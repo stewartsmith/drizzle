@@ -198,6 +198,7 @@ TYPELIB tx_isolation_typelib= {array_elements(tx_isolation_names)-1,"",
 */
 bool opt_help= false;
 bool opt_help_extended= false;
+bool opt_print_defaults= false;
 
 arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
 {{&Arg_comparator::compare_string,     &Arg_comparator::compare_e_string},
@@ -390,22 +391,23 @@ void close_connections(void)
   plugin::Listen::shutdown();
 
   /* kill connection thread */
-  LOCK_thread_count.lock();
-
-  while (select_thread_in_use)
   {
-    struct timespec abstime;
-    int error;
+    boost::mutex::scoped_lock scopedLock(LOCK_thread_count);
 
-    set_timespec(abstime, 2);
-    for (uint32_t tmp=0 ; tmp < 10 && select_thread_in_use; tmp++)
+    while (select_thread_in_use)
     {
-      error= pthread_cond_timedwait(COND_thread_count.native_handle(),LOCK_thread_count.native_handle(), &abstime);
-      if (error != EINTR)
-        break;
+      boost::xtime xt; 
+      xtime_get(&xt, boost::TIME_UTC); 
+      xt.sec += 2; 
+
+      for (uint32_t tmp=0 ; tmp < 10 && select_thread_in_use; tmp++)
+      {
+        bool success= COND_thread_count.timed_wait(scopedLock, xt);
+        if (not success)
+          break;
+      }
     }
   }
-  LOCK_thread_count.unlock();
 
 
   /*
@@ -478,7 +480,7 @@ void unireg_abort(int exit_code)
 
   if (exit_code)
     errmsg_printf(ERRMSG_LVL_ERROR, _("Aborting\n"));
-  else if (opt_help || opt_help_extended)
+  else if (opt_help || opt_help_extended || opt_print_defaults)
     usage();
   clean_up(!opt_help && (exit_code));
   internal::my_end();
@@ -593,12 +595,12 @@ void set_user(const char *user, passwd *user_info_arg)
   initgroups((char*) user, user_info_arg->pw_gid);
   if (setgid(user_info_arg->pw_gid) == -1)
   {
-    sql_perror("setgid");
+    sql_perror(N_("Set process group ID failed"));
     unireg_abort(1);
   }
   if (setuid(user_info_arg->pw_uid) == -1)
   {
-    sql_perror("setuid");
+    sql_perror(N_("Set process user ID failed"));
     unireg_abort(1);
   }
 }
@@ -610,7 +612,7 @@ static void set_root(const char *path)
 {
   if ((chroot(path) == -1) || !chdir("/"))
   {
-    sql_perror("chroot");
+    sql_perror(N_("Process chroot failed"));
     unireg_abort(1);
   }
 }
@@ -710,7 +712,15 @@ int init_common_variables(const char *conf_file_name, int argc,
   internal::load_defaults(conf_file_name, groups, &argc, &argv);
   defaults_argv=argv;
   defaults_argc=argc;
+  string progname(argv[0]);
   get_options(&defaults_argc, defaults_argv);
+
+  if ((user_info= check_user(drizzled_user)))
+  {
+    set_user(drizzled_user, user_info);
+  }
+
+  fix_paths(progname);
 
   current_pid= getpid();		/* Save for later ref */
   init_time();				/* Init time-functions (read zone) */
@@ -726,6 +736,7 @@ int init_common_variables(const char *conf_file_name, int argc,
   if (!(default_charset_info=
         get_charset_by_csname(default_character_set_name, MY_CS_PRIMARY)))
   {
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Error getting default charset"));
     return 1;                           // Eof of the list
   }
 
@@ -751,7 +762,10 @@ int init_common_variables(const char *conf_file_name, int argc,
 
   if (not (character_set_filesystem=
            get_charset_by_csname(character_set_filesystem_name, MY_CS_PRIMARY)))
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Error setting collation"));
     return 1;
+  }
   global_system_variables.character_set_filesystem= character_set_filesystem;
 
   if (!(my_default_lc_time_names=
@@ -843,7 +857,10 @@ int init_server_components(module::Registry &plugins)
     all things are initialized so that unireg_abort() doesn't fail
   */
   if (table_cache_init())
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Could not initialize table cache\n"));
     unireg_abort(1);
+  }
   TableShare::cacheStart();
 
   setup_fpu();
@@ -852,7 +869,7 @@ int init_server_components(module::Registry &plugins)
 
   if (xid_cache_init())
   {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Out of memory"));
+    errmsg_printf(ERRMSG_LVL_ERROR, _("XA cache initialization failed: Out of memory\n"));
     unireg_abort(1);
   }
 
@@ -861,12 +878,12 @@ int init_server_components(module::Registry &plugins)
 
   if (plugin_init(plugins, &defaults_argc, defaults_argv, long_options))
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize plugins."));
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize plugins\n"));
     unireg_abort(1);
   }
 
 
-  if (opt_help || opt_help_extended)
+  if (opt_help || opt_help_extended || opt_print_defaults)
     unireg_abort(0);
 
   po::parsed_options parsed= po::command_line_parser(defaults_argc,
@@ -882,8 +899,8 @@ int init_server_components(module::Registry &plugins)
     exception here */
   if (unknown_options.size() > 0)
   {
-     fprintf(stderr,
-            _("%s: Too many arguments (first extra is '%s').\n"
+     errmsg_printf(ERRMSG_LVL_ERROR,
+            _("%s: Unknown options give (first unknown is '%s').\n"
               "Use --verbose --help to get a list of available options\n"),
             internal::my_progname, unknown_options[0].c_str());
       unireg_abort(1);
@@ -932,7 +949,7 @@ int init_server_components(module::Registry &plugins)
     engine= plugin::StorageEngine::findByName(name);
     if (engine == NULL)
     {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown/unsupported storage engine: %s"),
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown/unsupported storage engine: %s\n"),
                     default_storage_engine_str);
       unireg_abort(1);
     }
@@ -941,6 +958,7 @@ int init_server_components(module::Registry &plugins)
 
   if (plugin::XaResourceManager::recoverAllXids())
   {
+    /* This function alredy generates error messages */
     unireg_abort(1);
   }
 
@@ -1015,12 +1033,14 @@ enum options_drizzled
   OPT_PLUGIN_DIR,
   OPT_PORT_OPEN_TIMEOUT,
   OPT_SECURE_FILE_PRIV,
-  OPT_MIN_EXAMINED_ROW_LIMIT
+  OPT_MIN_EXAMINED_ROW_LIMIT,
+  OPT_PRINT_DEFAULTS
 };
 
 
 struct option my_long_options[] =
 {
+
   {"help", '?', N_("Display this help and exit."),
    (char**) &opt_help, (char**) &opt_help, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
    0, 0},
@@ -1028,6 +1048,10 @@ struct option my_long_options[] =
    N_("Display this help and exit after initializing plugins."),
    (char**) &opt_help_extended, (char**) &opt_help_extended,
    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
+  {"print-defaults", OPT_PRINT_DEFAULTS,
+   N_("Print the default settings and exit"),
+   (char**) &opt_print_defaults, (char**) &opt_print_defaults, 0, GET_BOOL,
+   NO_ARG, 0, 0, 0, 0, 0, 0},
   {"auto-increment-increment", OPT_AUTO_INCREMENT,
    N_("Auto-increment columns are incremented by this"),
    (char**) &global_system_variables.auto_increment_increment,
@@ -1374,19 +1398,20 @@ static void usage(void)
          "This software comes with ABSOLUTELY NO WARRANTY. "
          "This is free software,\n"
          "and you are welcome to modify and redistribute it under the GPL "
-         "license\n\n"
-         "Starts the Drizzle database server\n"));
+         "license\n\n"));
 
-  printf(_("Usage: %s [OPTIONS]\n"), internal::my_progname);
+  if (!opt_print_defaults)
   {
-     internal::print_defaults(DRIZZLE_CONFIG_NAME,load_default_groups);
-     puts("");
- 
-     /* Print out all the options including plugin supplied options */
-     my_print_help_inc_plugins(my_long_options, long_options);
-  }
-}
+    printf(_("Usage: %s [OPTIONS]\n"), internal::my_progname);
 
+    internal::print_defaults(DRIZZLE_CONFIG_NAME,load_default_groups);
+    puts("");
+  }
+ 
+  /* Print out all the options including plugin supplied options */
+  my_print_help_inc_plugins(my_long_options, long_options);
+
+}
 
 /**
   Initialize all Drizzle global variables to default values.
@@ -1603,8 +1628,6 @@ static void get_options(int *argc,char **argv)
 
   my_getopt_error_reporter= option_error_reporter;
 
-  string progname(argv[0]);
-
   /* Skip unknown options so that they may be processed later by plugins */
   my_getopt_skip_unknown= true;
 
@@ -1635,7 +1658,6 @@ static void get_options(int *argc,char **argv)
 
   if (drizzled_chroot)
     set_root(drizzled_chroot);
-  fix_paths(progname);
 
   /*
     Set some global variables from the global_system_variables
@@ -1753,7 +1775,7 @@ static void fix_paths(string &progname)
   internal::convert_dirname(buff,buff,NULL);
   (void) internal::my_load_path(language,language,buff);
 
-  if (not opt_help and not opt_help_extended)
+  if (not opt_help and not opt_help_extended and not opt_print_defaults)
   {
     char *tmp_string;
     struct stat buf;

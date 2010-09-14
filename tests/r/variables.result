@@ -336,11 +336,11 @@ c5 bigint);
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `c1` int DEFAULT NULL,
-  `c2` int DEFAULT NULL,
-  `c3` int DEFAULT NULL,
-  `c4` int DEFAULT NULL,
-  `c5` bigint DEFAULT NULL
+  `c1` INT DEFAULT NULL,
+  `c2` INT DEFAULT NULL,
+  `c3` INT DEFAULT NULL,
+  `c4` INT DEFAULT NULL,
+  `c5` BIGINT DEFAULT NULL
 ) ENGINE=MyISAM COLLATE = utf8_general_ci
 drop table t1;
 set @arg00= 8, @arg01= 8.8, @arg02= 'a string', @arg03= 0.2e0;
@@ -348,10 +348,10 @@ create temporary table t1 as select @arg00 as c1, @arg01 as c2, @arg02 as c3, @a
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `c1` bigint DEFAULT NULL,
-  `c2` decimal(65,30) DEFAULT NULL,
-  `c3` text,
-  `c4` double DEFAULT NULL
+  `c1` BIGINT DEFAULT NULL,
+  `c2` DECIMAL(65,30) DEFAULT NULL,
+  `c3` TEXT COLLATE utf8_general_ci,
+  `c4` DOUBLE DEFAULT NULL
 ) ENGINE=MyISAM COLLATE = utf8_general_ci
 drop table t1;
 SET GLOBAL table_open_cache=-1;

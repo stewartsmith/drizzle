@@ -229,6 +229,13 @@ int main(int argc, char **argv)
 
   google::protobuf::SetLogHandler(&GoogleProtoErrorThrower);
 
+  /*
+    init signals & alarm
+    After this we can't quit by a simple unireg_abort
+  */
+  error_handler_hook= my_message_sql;
+
+  /* Function generates error messages before abort */
   if (init_common_variables(DRIZZLE_CONFIG_NAME,
 			    argc, argv, load_default_groups))
     unireg_abort(1);				// Will do exit
@@ -248,11 +255,6 @@ int main(int argc, char **argv)
   data_home[0]=FN_CURLIB;		// all paths are relative from here
   data_home[1]=0;
   data_home_len= 2;
-
-  if ((user_info= check_user(drizzled_user)))
-  {
-    set_user(drizzled_user, user_info);
-  }
 
   if (server_id == 0)
   {
@@ -278,12 +280,6 @@ int main(int argc, char **argv)
 
   if (plugin::Listen::setup())
     unireg_abort(1);
-
-  /*
-    init signals & alarm
-    After this we can't quit by a simple unireg_abort
-  */
-  error_handler_hook= my_message_sql;
 
   assert(plugin::num_trx_monitored_objects > 0);
   if (drizzle_rm_tmp_tables() ||

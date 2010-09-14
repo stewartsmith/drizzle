@@ -78,13 +78,18 @@ bool Item_func_last_day::get_temporal(Date &to)
           return false;
         }
 
-        if (! temporal.from_string(res->c_ptr(), res->length()))
+        if (res != &tmp)
+        {
+          tmp.copy(*res);
+        }
+
+        if (! temporal.from_string(tmp.c_ptr(), tmp.length()))
         {
           /* 
           * Could not interpret the function argument as a temporal value, 
           * so throw an error and return 0
           */
-          my_error(ER_INVALID_DATETIME_VALUE, MYF(0), res->c_ptr());
+          my_error(ER_INVALID_DATETIME_VALUE, MYF(0), tmp.c_ptr());
           return false;
         }
       }
@@ -116,7 +121,12 @@ bool Item_func_last_day::get_temporal(Date &to)
           return false;
         }
 
-        my_error(ER_INVALID_DATETIME_VALUE, MYF(0), res->c_ptr());
+        if (res != &tmp)
+        {
+          tmp.copy(*res);
+        }
+
+        my_error(ER_INVALID_DATETIME_VALUE, MYF(0), tmp.c_ptr());
         return false;
       }
   }

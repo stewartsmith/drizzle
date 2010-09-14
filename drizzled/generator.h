@@ -23,6 +23,7 @@
 
 #include "drizzled/session.h"
 
+#include "drizzled/generator/functions.h"
 #include "drizzled/generator/schema.h"
 #include "drizzled/generator/table.h"
 #include "drizzled/generator/all_tables.h"

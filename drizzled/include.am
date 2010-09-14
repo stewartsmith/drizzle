@@ -92,6 +92,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/file_exchange.h \
 			      drizzled/filesort_info.h \
 			      drizzled/foreign_key.h \
+			      drizzled/function_container.h \
 			      drizzled/function/additive_op.h \
 			      drizzled/function/field.h \
 			      drizzled/function/find_in_set.h \
@@ -195,6 +196,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/generator.h \
 			      drizzled/generator/all_fields.h \
 			      drizzled/generator/all_tables.h \
+			      drizzled/generator/functions.h \
 			      drizzled/generator/schema.h \
 			      drizzled/generator/table.h \
 			      drizzled/gettext.h \
@@ -509,6 +511,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/file_exchange.cc \
 				 drizzled/filesort.cc \
 				 drizzled/foreign_key.cc \
+				 drizzled/function_container.cc \
 				 drizzled/function/additive_op.cc \
 				 drizzled/function/field.cc \
 				 drizzled/function/find_in_set.cc \
@@ -608,6 +611,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/function/user_var_as_out_param.cc \
 				 drizzled/generator/all_fields.cc \
 				 drizzled/generator/all_tables.cc \
+				 drizzled/generator/functions.cc \
 				 drizzled/generator/schema.cc \
 				 drizzled/generator/table.cc \
 				 drizzled/ha_commands.cc \
@@ -782,7 +786,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/transaction_services.cc \
 				 drizzled/tree.cc \
 				 drizzled/tztime.cc \
-				 drizzled/uniques.cc \
+				 drizzled/unique.cc \
 				 drizzled/user_var_entry.cc \
 				 drizzled/version.cc \
 				 drizzled/xid.cc

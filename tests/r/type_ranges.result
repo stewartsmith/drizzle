@@ -190,11 +190,11 @@ auto	BIGINT	NO		NO
 t1	INTEGER	NO		NO	
 t2	VARCHAR	NO		NO	
 t3	VARCHAR	YES		YES	
-t4	VARCHAR	YES		YES	
-t5	BLOB	YES		YES	
+t4	VARBINARY	YES		YES	
+t5	TEXT	YES		YES	
 t6	BLOB	YES		YES	
 t7	VARCHAR	NO		NO	
-t8	VARCHAR	YES		YES	
+t8	VARBINARY	YES		YES	
 select t1,t2,length(t3),length(t4),length(t5),length(t6),t7,t8 from t2;
 t1	t2	length(t3)	length(t4)	length(t5)	length(t6)	t7	t8
 1	a	256	256	4096	4096		

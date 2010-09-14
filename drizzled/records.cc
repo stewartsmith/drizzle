@@ -420,7 +420,6 @@ bool ReadRecord::init_rr_cache()
 
 static int rr_from_cache(ReadRecord *info)
 {
-  register uint32_t i;
   uint32_t length;
   internal::my_off_t rest_of_file;
   int16_t error;
@@ -460,7 +459,7 @@ static int rr_from_cache(ReadRecord *info)
     length/=info->ref_length;
     position=info->getCache();
     ref_position=info->read_positions;
-    for (i=0 ; i < length ; i++,position+=info->ref_length)
+    for (uint32_t i= 0 ; i < length ; i++,position+=info->ref_length)
     {
       memcpy(ref_position,position,(size_t) info->ref_length);
       ref_position+=MAX_REFLENGTH;
@@ -471,7 +470,7 @@ static int rr_from_cache(ReadRecord *info)
                        (qsort_cmp) rr_cmp);
 
     position=info->read_positions;
-    for (i=0 ; i < length ; i++)
+    for (uint32_t i= 0 ; i < length ; i++)
     {
       memcpy(info->ref_pos, position, (size_t)info->ref_length);
       position+=MAX_REFLENGTH;

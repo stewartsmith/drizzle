@@ -12,7 +12,7 @@ drop table if exists t1;
 
 create table t1 (a int not null auto_increment primary key, b char(20) default "default_value");
 insert into t1 values (126,"first"),(63, "middle"),(1,"last");
---error ER_DUP_ENTRY,1022
+--error ER_DUP_ENTRY, ER_DUP_KEY
 insert into t1 values (1,"error");
 replace into t1 values (1,"error");
 replace into t1 values (126,"first updated");

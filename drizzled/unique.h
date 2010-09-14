@@ -40,13 +40,9 @@ typedef struct st_io_cache IO_CACHE;
 
 class Unique : public memory::SqlAlloc
 {
-  DYNAMIC_ARRAY file_ptrs;
-  ulong max_elements;
   size_t max_in_memory_size;
-  internal::IO_CACHE *file;
   TREE tree;
   unsigned char *record_pointers;
-  bool flush();
   uint32_t size;
 
 public:
@@ -57,9 +53,7 @@ public:
   ulong elements_in_tree() { return tree.elements_in_tree; }
   inline bool unique_add(void *ptr)
   {
-    if (tree.elements_in_tree > max_elements && flush())
-      return(1);
-    return(!tree_insert(&tree, ptr, 0, tree.custom_arg));
+    return (not tree_insert(&tree, ptr, 0, tree.custom_arg));
   }
 
   bool get(Table *table);

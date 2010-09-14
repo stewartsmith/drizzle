@@ -70,6 +70,7 @@ public:
 
   void add(Module *module);
 
+  void remove(Module *module);
 
   std::vector<Module *> getList(bool active);
 
