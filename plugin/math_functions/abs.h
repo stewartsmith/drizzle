@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTION_MATH_ABS_H
-#define DRIZZLED_FUNCTION_MATH_ABS_H
+#ifndef PLUGIN_MATH_FUNCTIONS_ABS_H
+#define PLUGIN_MATH_FUNCTIONS_ABS_H
 
 #include <drizzled/function/func.h>
 #include <drizzled/function/num1.h>
@@ -40,4 +40,4 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FUNCTION_MATH_ABS_H */
+#endif /* PLUGIN_MATH_FUNCTIONS_ABS_H */
