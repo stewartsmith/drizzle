@@ -2579,8 +2579,6 @@ try
   /* Inverted Booleans */
 
   opt_drop= (vm.count("skip-drop-table")) ? false : true;
-  opt_create_db= opt_no_create_info= create_options=
-    (vm.count("skip-create")) ? false : true;
   opt_comments= (vm.count("skip-comments")) ? false : true;
   extended_insert= (vm.count("skip-extended-insert")) ? false : true;
   opt_dump_date= (vm.count("skip-dump-date")) ? false : true;
@@ -2703,7 +2701,12 @@ try
     string tmpptr(vm["ignore-table"].as<string>());
     ignore_table.insert(tmpptr); 
   }
-  
+
+  if (vm.count("skip-create"))
+  {
+    opt_create_db= opt_no_create_info= create_options= false;
+  }
+ 
   exit_code= get_options();
   if (exit_code)
   {
