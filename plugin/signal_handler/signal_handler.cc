@@ -200,20 +200,9 @@ public:
   {
     int error;
     pthread_attr_t thr_attr;
-    size_t my_thread_stack_size= 65536;
 
     (void) pthread_attr_init(&thr_attr);
-    pthread_attr_setscope(&thr_attr, PTHREAD_SCOPE_SYSTEM);
     (void) pthread_attr_setdetachstate(&thr_attr, PTHREAD_CREATE_DETACHED);
-#if defined(__ia64__) || defined(__ia64)
-    /*
-      Peculiar things with ia64 platforms - it seems we only have half the
-      stack size in reality, so we have to double it here
-    */
-    pthread_attr_setstacksize(&thr_attr, my_thread_stack_size*2);
-# else
-    pthread_attr_setstacksize(&thr_attr, my_thread_stack_size);
-#endif
 
     // @todo fix spurious wakeup issue
     (void) LOCK_thread_count.lock();
