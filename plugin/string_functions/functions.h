@@ -23,4 +23,4 @@
 
 #include "drizzled/plugin/function.h"
 
-#endif /* PLUGIN_STRING_FUNCTIONS_H */
+#endif /* PLUGIN_STRING_FUNCTIONS_FUNCTIONS_H */
