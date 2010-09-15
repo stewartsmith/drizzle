@@ -46,6 +46,8 @@
 #include <boost/program_options.hpp>
 #include <boost/regex.hpp>
 
+#include "drizzledump.h"
+
 using namespace std;
 using namespace drizzled;
 namespace po= boost::program_options;
@@ -77,10 +79,6 @@ namespace po= boost::program_options;
 #define IGNORE_DATA 0x01 /* don't dump data for this table */
 #define IGNORE_INSERT_DELAYED 0x02 /* table doesn't support INSERT DELAYED */
 
-static void add_load_option(string &str, const char *option,
-                            const string &option_value);
-
-static void field_escape(string &in, const string &from);
 static bool  verbose= false;
 static bool opt_no_create_info;
 static bool opt_no_data= false;
@@ -115,16 +113,17 @@ static bool opt_drop_database;
 static bool opt_replace_into= false;
 static bool opt_alltspcs= false;
 static uint32_t show_progress_size= 0;
-static uint64_t total_rows= 0;
+//static uint64_t total_rows= 0;
 static drizzle_st drizzle;
 static drizzle_con_st dcon;
 static string insert_pat;
-static char *order_by= NULL;
+//static char *order_by= NULL;
 static uint32_t opt_drizzle_port= 0;
 static int first_error= 0;
 static string extended_row;
 FILE *md_result_file= 0;
 FILE *stderror_file= 0;
+std::vector<DrizzleDumpDatabase*> database_store;
 
 const string progname= "drizzledump";
 
@@ -141,7 +140,7 @@ string password,
   opt_protocol,
   where;
 
-static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci;
+//static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci;
 
 boost::unordered_set<string> ignore_table;
 
@@ -149,27 +148,117 @@ static void maybe_exit(int error);
 static void die(int error, const char* reason, ...);
 static void maybe_die(int error, const char* reason, ...);
 static void write_header(FILE *sql_file, char *db_name);
-static void print_value(FILE *file, drizzle_result_st *result,
-                        drizzle_row_t row, const char *prefix, const char *name,
-                        int string_value);
-static const char* fetch_named_row(drizzle_result_st *result, drizzle_row_t row,
-                                   const char* name);
 static int dump_selected_tables(const string &db, const vector<string> &table_names);
-static int dump_all_tables_in_db(char *db);
-static int init_dumping_tables(char *);
-static int init_dumping(char *, int init_func(char*));
 static int dump_databases(const vector<string> &db_names);
 static int dump_all_databases(void);
-static char *quote_name(const char *name, char *buff, bool force);
 char check_if_ignore_table(const char *table_name, char *table_type);
-static char *primary_key_fields(const char *table_name);
 int get_server_type();
+void dump_all_tables(void);
+void generate_dump(void);
 
 enum server_type {
   SERVER_MYSQL_FOUND,
   SERVER_DRIZZLE_FOUND,
   SERVER_UNKNOWN_FOUND
 };
+
+int connected_server_type= SERVER_UNKNOWN_FOUND;
+
+bool DrizzleDumpDatabase::populateTables(drizzle_con_st &connection)
+{
+  drizzle_result_st result;
+  drizzle_row_t row;
+  drizzle_return_t ret;
+
+  if (drizzle_select_db(&connection, &result, getName().c_str(), &ret) == 
+    NULL || ret != DRIZZLE_RETURN_OK)
+  {
+    errmsg << _("Could not set db '") << getName() << "'";
+    return false;
+  }
+  drizzle_result_free(&result);
+
+  if (drizzle_query_str(&connection, &result, "SHOW TABLES", &ret) == NULL ||
+      ret != DRIZZLE_RETURN_OK)
+  {
+    if (ret == DRIZZLE_RETURN_ERROR_CODE)
+    {
+      errmsg << _("Could not get tables list due to error: ") <<
+        drizzle_result_error(&result);
+      drizzle_result_free(&result);
+    }
+    else
+    {
+      errmsg << _("Could not get tables list due to error: ") <<
+        drizzle_con_error(&connection);
+    }
+    return false;
+  }
+
+  if (drizzle_result_buffer(&result) != DRIZZLE_RETURN_OK)
+  {
+    errmsg << _("Could not get tables list due to error: ") <<
+        drizzle_con_error(&connection);
+    return false;
+  }
+
+  while ((row= drizzle_row_next(&result)))
+  {
+    std::string tableName(row[0]);
+    DrizzleDumpTable *table = new DrizzleDumpTable(tableName);
+    tables.push_back(table);
+  }
+
+  drizzle_result_free(&result);
+
+  return true;
+}
+
+ostream& operator <<(ostream &os,const DrizzleDumpDatabase &obj)
+{
+  os << "--" << endl
+     << "-- Current Database: `" << obj.getName() << "`" << endl
+     << "--" << endl << endl;
+
+  os << "CREATE DATABASE IF NOT EXISTS `" << obj.getName() << "` COLLATE = " << obj.getCollate() << ";" << endl << endl;
+
+  os << "USE `" << obj.getName() << "`;" << endl << endl;
+
+  std::vector<DrizzleDumpTable*>::iterator i;
+  std::vector<DrizzleDumpTable*> output_tables = obj.tables;
+  for (i= output_tables.begin(); i != output_tables.end(); ++i)
+  {
+    DrizzleDumpTable *table= *i;
+    os << "--" << endl
+       << "-- Table structure for table `" << table->getName() << "`" << endl
+       << "--" << endl << endl;
+
+    os << "DROP TABLE IF EXISTS `" << table->getName() <<  "`;" << endl;
+    os << "CREATE TABLE `" << table->getName() << "` (" << endl;
+  }
+ 
+
+  return os;
+}
+
+void dump_all_tables(void)
+{
+  std::vector<DrizzleDumpDatabase*>::iterator i;
+  for (i= database_store.begin(); i != database_store.end(); ++i)
+  {
+    (*i)->populateTables(dcon);
+  }
+}
+
+void generate_dump(void)
+{
+    std::vector<DrizzleDumpDatabase*>::iterator i;
+  for (i= database_store.begin(); i != database_store.end(); ++i)
+  {
+    DrizzleDumpDatabase *database= *i;
+    cout << *database;
+  }
+}
 
 /*
   Print the supplied message if in verbose mode
@@ -458,28 +547,6 @@ static int drizzleclient_query_with_error_report(drizzle_con_st *con,
   return 0;
 }
 
-/*
-  Open a new .sql file to dump the table or view into
-
-  SYNOPSIS
-  open_sql_file_for_table
-  name      name of the table or view
-
-  RETURN VALUES
-  0        Failed to open file
-  > 0      Handle of the open file
-*/
-static FILE* open_sql_file_for_table(const char* table)
-{
-  FILE* res;
-  char filename[FN_REFLEN], tmp_path[FN_REFLEN];
-  internal::convert_dirname(tmp_path,(char *)path.c_str(),NULL);
-  res= fopen(internal::fn_format(filename, table, tmp_path, ".sql", 4), "w");
-
-  return res;
-}
-
-
 static void free_resources(void)
 {
   if (md_result_file && md_result_file != stdout)
@@ -528,13 +595,16 @@ static int connect_to_db(string host, string user,string passwd)
   switch (found)
   {
     case SERVER_MYSQL_FOUND:
-     /* MySQL server found */
+     verbose_msg(_("-- Connected to a MySQL server\n"));
+     connected_server_type= SERVER_MYSQL_FOUND;
      break;
     case SERVER_DRIZZLE_FOUND:
-     /* Drizzle server found */
+     verbose_msg(_("-- Connected to a Drizzle server\n"));
+     connected_server_type= SERVER_DRIZZLE_FOUND;
      break;
     default:
-     /* Unknown server found */
+     verbose_msg(_("-- Connected to an unknown server type\n"));
+     connected_server_type= SERVER_DRIZZLE_FOUND;
      break;
   }
 
@@ -551,70 +621,6 @@ static void dbDisconnect(string &host)
   drizzle_con_free(&dcon);
   drizzle_free(&drizzle);
 } /* dbDisconnect */
-
-
-static void unescape(FILE *file,char *pos,uint32_t length)
-{
-  char *tmp;
-
-  if (!(tmp=(char*) malloc(length*2+1)))
-    die(EX_DRIZZLEERR, _("Couldn't allocate memory"));
-
-  drizzle_escape_string(tmp, pos, length);
-  fputc('\'', file);
-  fputs(tmp, file);
-  fputc('\'', file);
-  check_io(file);
-  free(tmp);
-  return;
-} /* unescape */
-
-
-static bool test_if_special_chars(const char *str)
-{
-  for ( ; *str ; str++)
-    if (!my_isvar(charset_info,*str) && *str != '$')
-      return 1;
-  return 0;
-} /* test_if_special_chars */
-
-
-
-/*
-  quote_name(name, buff, force)
-
-  Quotes char string, taking into account compatible mode
-
-  Args
-
-  name                 Unquoted string containing that which will be quoted
-  buff                 The buffer that contains the quoted value, also returned
-  force                Flag to make it ignore 'test_if_special_chars'
-
-  Returns
-
-  buff                 quoted string
-
-*/
-static char *quote_name(const char *name, char *buff, bool force)
-{
-  char *to= buff;
-  char qtype= '`';
-
-  if (!force && !opt_quoted && !test_if_special_chars(name))
-    return (char*) name;
-  *to++= qtype;
-  while (*name)
-  {
-    if (*name == qtype)
-      *to++= qtype;
-    *to++= *name++;
-  }
-  to[0]= qtype;
-  to[1]= 0;
-  return buff;
-} /* quote_name */
-
 
 /*
   Quote a table name so it can be used in "SHOW TABLES LIKE <tabname>"
@@ -659,1175 +665,27 @@ static char *quote_for_like(const char *name, char *buff)
   return buff;
 }
 
-
-/*
-  Quote and print a string.
-
-  SYNOPSIS
-  print_quoted_xml()
-  xml_file    - output file
-  str         - string to print
-  len         - its length
-
-  DESCRIPTION
-  Quote '<' '>' '&' '\"' chars and print a string to the xml_file.
-*/
-
-static void print_quoted_xml(FILE *xml_file, const char *str, uint32_t len)
-{
-  const char *end;
-
-  for (end= str + len; str != end; str++)
-  {
-    switch (*str) {
-    case '<':
-      fputs("&lt;", xml_file);
-      break;
-    case '>':
-      fputs("&gt;", xml_file);
-      break;
-    case '&':
-      fputs("&amp;", xml_file);
-      break;
-      case '\"':
-        fputs("&quot;", xml_file);
-      break;
-    default:
-      fputc(*str, xml_file);
-      break;
-    }
-  }
-  check_io(xml_file);
-}
-
-
-/*
-  Print xml tag. Optionally add attribute(s).
-
-  SYNOPSIS
-  print_xml_tag(xml_file, sbeg, send, tag_name, first_attribute_name,
-  ..., attribute_name_n, attribute_value_n, NULL)
-  xml_file              - output file
-  sbeg                  - line beginning
-  line_end              - line ending
-  tag_name              - XML tag name.
-  first_attribute_name  - tag and first attribute
-  first_attribute_value - (Implied) value of first attribute
-  attribute_name_n      - attribute n
-  attribute_value_n     - value of attribute n
-
-  DESCRIPTION
-  Print XML tag with any number of attribute="value" pairs to the xml_file.
-
-  Format is:
-  sbeg<tag_name first_attribute_name="first_attribute_value" ...
-  attribute_name_n="attribute_value_n">send
-  NOTE
-  Additional arguments must be present in attribute/value pairs.
-  The last argument should be the null character pointer.
-  All attribute_value arguments MUST be NULL terminated strings.
-  All attribute_value arguments will be quoted before output.
-*/
-
-static void print_xml_tag(FILE * xml_file, const char* sbeg,
-                          const char* line_end,
-                          const char* tag_name,
-                          const char* first_attribute_name, ...)
-{
-  va_list arg_list;
-  const char *attribute_name, *attribute_value;
-
-  fputs(sbeg, xml_file);
-  fputc('<', xml_file);
-  fputs(tag_name, xml_file);
-
-  va_start(arg_list, first_attribute_name);
-  attribute_name= first_attribute_name;
-  while (attribute_name != NULL)
-  {
-    attribute_value= va_arg(arg_list, char *);
-    assert(attribute_value != NULL);
-
-    fputc(' ', xml_file);
-    fputs(attribute_name, xml_file);
-    fputc('\"', xml_file);
-
-    print_quoted_xml(xml_file, attribute_value, strlen(attribute_value));
-    fputc('\"', xml_file);
-
-    attribute_name= va_arg(arg_list, char *);
-  }
-  va_end(arg_list);
-
-  fputc('>', xml_file);
-  fputs(line_end, xml_file);
-  check_io(xml_file);
-}
-
-
-/*
-  Print xml tag with for a field that is null
-
-  SYNOPSIS
-  print_xml_null_tag()
-  xml_file    - output file
-  sbeg        - line beginning
-  stag_atr    - tag and attribute
-  sval        - value of attribute
-  line_end        - line ending
-
-  DESCRIPTION
-  Print tag with one attribute to the xml_file. Format is:
-  <stag_atr="sval" xsi:nil="true"/>
-  NOTE
-  sval MUST be a NULL terminated string.
-  sval string will be qouted before output.
-*/
-
-static void print_xml_null_tag(FILE * xml_file, const char* sbeg,
-                               const char* stag_atr, const char* sval,
-                               const char* line_end)
-{
-  fputs(sbeg, xml_file);
-  fputs("<", xml_file);
-  fputs(stag_atr, xml_file);
-  fputs("\"", xml_file);
-  print_quoted_xml(xml_file, sval, strlen(sval));
-  fputs("\" xsi:nil=\"true\" />", xml_file);
-  fputs(line_end, xml_file);
-  check_io(xml_file);
-}
-
-
-/*
-  Print xml tag with many attributes.
-
-  SYNOPSIS
-  print_xml_row()
-  xml_file    - output file
-  row_name    - xml tag name
-  tableRes    - query result
-  row         - result row
-
-  DESCRIPTION
-  Print tag with many attribute to the xml_file. Format is:
-  \t\t<row_name Atr1="Val1" Atr2="Val2"... />
-  NOTE
-  All atributes and values will be quoted before output.
-*/
-
-static void print_xml_row(FILE *xml_file, const char *row_name,
-                          drizzle_result_st *tableRes, drizzle_row_t *row)
-{
-  uint32_t i;
-  drizzle_column_st *column;
-  size_t *lengths= drizzle_row_field_sizes(tableRes);
-
-  fprintf(xml_file, "\t\t<%s", row_name);
-  check_io(xml_file);
-  drizzle_column_seek(tableRes, 0);
-  for (i= 0; (column= drizzle_column_next(tableRes)); i++)
-  {
-    if ((*row)[i])
-    {
-      fputc(' ', xml_file);
-      print_quoted_xml(xml_file, drizzle_column_name(column),
-                       strlen(drizzle_column_name(column)));
-      fputs("=\"", xml_file);
-      print_quoted_xml(xml_file, (*row)[i], lengths[i]);
-      fputc('"', xml_file);
-      check_io(xml_file);
-    }
-  }
-  fputs(" />\n", xml_file);
-  check_io(xml_file);
-}
-
-
-/*
-  Print hex value for blob data.
-
-  SYNOPSIS
-  print_blob_as_hex()
-  output_file         - output file
-  str                 - string to print
-  len                 - its length
-
-  DESCRIPTION
-  Print hex value for blob data.
-*/
-
-static void print_blob_as_hex(FILE *output_file, const char *str, uint32_t len)
-{
-  /* sakaik got the idea to to provide blob's in hex notation. */
-  const char *ptr= str, *end= ptr + len;
-  for (; ptr < end ; ptr++)
-    fprintf(output_file, "%02X", *((unsigned char *)ptr));
-  check_io(output_file);
-}
-
-/*
-  get_table_structure -- retrievs database structure, prints out corresponding
-  CREATE statement and fills out insert_pat if the table is the type we will
-  be dumping.
-
-  ARGS
-  table       - table name
-  db          - db name
-  table_type  - table type, e.g. "MyISAM" or "InnoDB", but also "VIEW"
-  ignore_flag - what we must particularly ignore - see IGNORE_ defines above
-  num_fields  - number of fields in the table
-
-  RETURN
-  true if success, false if error
-*/
-
-static bool get_table_structure(char *table, char *db, char *table_type,
-                                char *ignore_flag, uint64_t *num_fields)
-{
-  bool    init=0, delayed, write_data, complete_insert;
-  char       *result_table, *opt_quoted_table;
-  const char *insert_option;
-  char	     name_buff[DRIZZLE_MAX_COLUMN_NAME_SIZE+3];
-  char       table_buff[DRIZZLE_MAX_COLUMN_NAME_SIZE*2+3];
-  char       table_buff2[DRIZZLE_MAX_TABLE_SIZE*2+3];
-  char       query_buff[QUERY_LENGTH];
-  FILE       *sql_file= md_result_file;
-  drizzle_result_st result;
-  drizzle_row_t  row;
-
-  *ignore_flag= check_if_ignore_table(table, table_type);
-
-  delayed= opt_delayed;
-  if (delayed && (*ignore_flag & IGNORE_INSERT_DELAYED))
-  {
-    delayed= 0;
-    verbose_msg(_("-- Warning: Unable to use delayed inserts for table '%s' "
-                  "because it's of type %s\n"), table, table_type);
-  }
-
-  complete_insert= 0;
-  if ((write_data= !(*ignore_flag & IGNORE_DATA)))
-  {
-    complete_insert= opt_complete_insert;
-    insert_pat.clear();
-  }
-
-  insert_option= ((delayed && opt_ignore) ? " DELAYED IGNORE " :
-                  delayed ? " DELAYED " : opt_ignore ? " IGNORE " : "");
-
-  verbose_msg(_("-- Retrieving table structure for table %s...\n"), table);
-
-  result_table=     quote_name(table, table_buff, 1);
-  opt_quoted_table= quote_name(table, table_buff2, 0);
-
-  if (opt_order_by_primary)
-  {
-    free(order_by);
-    order_by= primary_key_fields(result_table);
-  }
-
-  if (! opt_xml)
-  { 
-    /* using SHOW CREATE statement */
-    if (! opt_no_create_info)
-    { 
-      /* Make an sql-file, if path was given iow. option -T was given */
-      char buff[20+FN_REFLEN];
-      const drizzle_column_st *column;
-
-      snprintf(buff, sizeof(buff), "show create table %s", result_table);
-
-      if (drizzleclient_query_with_error_report(&dcon, &result, buff, false))
-        return false;
-
-      if (! path.empty())
-      {
-        if (!(sql_file= open_sql_file_for_table(table)))
-        {
-          drizzle_result_free(&result);
-          return false;
-        }
-
-        write_header(sql_file, db);
-      }
-      if (!opt_xml && opt_comments)
-      {
-        fprintf(sql_file, "\n--\n-- Table structure for table %s\n--\n\n",
-                result_table);
-        check_io(sql_file);
-      }
-      if (opt_drop)
-      { 
-        /*
-          Even if the "table" is a view, we do a DROP TABLE here.
-        */
-        fprintf(sql_file, "DROP TABLE IF EXISTS %s;\n", opt_quoted_table);
-        check_io(sql_file);
-      }
-
-      column= drizzle_column_index(&result, 0);
-
-      row= drizzle_row_next(&result);
-
-      fprintf(sql_file, "%s;\n", row[1]);
-
-      check_io(sql_file);
-      drizzle_result_free(&result);
-    }
-
-    snprintf(query_buff, sizeof(query_buff), "show fields from %s",
-             result_table);
-
-    if (drizzleclient_query_with_error_report(&dcon, &result, query_buff, false))
-    {
-      if (! path.empty())
-        fclose(sql_file);
-      return false;
-    }
-
-    /*
-      If write_data is true, then we build up insert statements for
-      the table's data. Note: in subsequent lines of code, this test
-      will have to be performed each time we are appending to
-      insert_pat.
-    */
-    if (write_data)
-    {
-      if (opt_replace_into)
-        insert_pat.append("REPLACE ");
-      else
-        insert_pat.append("INSERT ");
-      insert_pat.append(insert_option);
-      insert_pat.append("INTO ");
-      insert_pat.append(opt_quoted_table);
-      if (complete_insert)
-      {
-        insert_pat.append(" (");
-      }
-      else
-      {
-        insert_pat.append(" VALUES ");
-        if (!extended_insert)
-          insert_pat.append("(");
-      }
-    }
-
-    while ((row= drizzle_row_next(&result)))
-    {
-      if (complete_insert)
-      {
-        if (init)
-        {
-          insert_pat.append(", ");
-        }
-        init=1;
-        insert_pat.append(quote_name(row[SHOW_FIELDNAME], name_buff, 0));
-      }
-    }
-    *num_fields= drizzle_result_row_count(&result);
-    drizzle_result_free(&result);
-  }
-  else
-  {
-    verbose_msg(_("%s: Warning: Can't set SQL_QUOTE_SHOW_CREATE option (%s)\n"),
-                progname.c_str(), drizzle_con_error(&dcon));
-
-    snprintf(query_buff, sizeof(query_buff), "show fields from %s",
-             result_table);
-    if (drizzleclient_query_with_error_report(&dcon, &result, query_buff, false))
-      return false;
-
-    /* Make an sql-file, if path was given iow. option -T was given */
-    if (! opt_no_create_info)
-    {
-      if (! path.empty())
-      {
-        if (!(sql_file= open_sql_file_for_table(table)))
-        {
-          drizzle_result_free(&result);
-          return false;
-        }
-        write_header(sql_file, db);
-      }
-      if (!opt_xml && opt_comments)
-        fprintf(sql_file, "\n--\n-- Table structure for table %s\n--\n\n",
-                result_table);
-      if (opt_drop)
-        fprintf(sql_file, "DROP TABLE IF EXISTS %s;\n", result_table);
-      if (!opt_xml)
-        fprintf(sql_file, "CREATE TABLE %s (\n", result_table);
-      else
-        print_xml_tag(sql_file, "\t", "\n", "table_structure", "name=", table,
-                      NULL);
-      check_io(sql_file);
-    }
-
-    if (write_data)
-    {
-      if (opt_replace_into)
-        insert_pat.append("REPLACE ");
-      else
-        insert_pat.append("INSERT ");
-      insert_pat.append(insert_option);
-      insert_pat.append("INTO ");
-      insert_pat.append(result_table);
-      if (complete_insert)
-        insert_pat.append(" (");
-      else
-      {
-        insert_pat.append(" VALUES ");
-        if (!extended_insert)
-          insert_pat.append("(");
-      }
-    }
-
-    while ((row= drizzle_row_next(&result)))
-    {
-      size_t *lengths= drizzle_row_field_sizes(&result);
-      if (init)
-      {
-        if (!opt_xml && !opt_no_create_info)
-        {
-          fputs(",\n",sql_file);
-          check_io(sql_file);
-        }
-        if (complete_insert)
-          insert_pat.append(", ");
-      }
-      init=1;
-      if (complete_insert)
-        insert_pat.append(quote_name(row[SHOW_FIELDNAME], name_buff, 0));
-      if (!opt_no_create_info)
-      {
-        if (opt_xml)
-        {
-          print_xml_row(sql_file, "field", &result, &row);
-          continue;
-        }
-
-        if (opt_keywords)
-          fprintf(sql_file, "  %s.%s %s", result_table,
-                  quote_name(row[SHOW_FIELDNAME],name_buff, 0),
-                  row[SHOW_TYPE]);
-        else
-          fprintf(sql_file, "  %s %s", quote_name(row[SHOW_FIELDNAME],
-                                                  name_buff, 0),
-                  row[SHOW_TYPE]);
-        if (row[SHOW_DEFAULT])
-        {
-          fputs(" DEFAULT ", sql_file);
-          unescape(sql_file, row[SHOW_DEFAULT], lengths[SHOW_DEFAULT]);
-        }
-        if (!row[SHOW_NULL][0])
-          fputs(" NOT NULL", sql_file);
-        if (row[SHOW_EXTRA][0])
-          fprintf(sql_file, " %s",row[SHOW_EXTRA]);
-        check_io(sql_file);
-      }
-    }
-    *num_fields= drizzle_result_row_count(&result);
-    drizzle_result_free(&result);
-
-    if (!opt_no_create_info)
-    {
-      /* Make an sql-file, if path was given iow. option -T was given */
-      char buff[20+FN_REFLEN];
-      uint32_t keynr,primary_key;
-      snprintf(buff, sizeof(buff), "show keys from %s", result_table);
-      if (drizzleclient_query_with_error_report(&dcon, &result, buff, false))
-      {
-        fprintf(stderr, _("%s: Can't get keys for table %s\n"),
-                progname.c_str(), result_table);
-        if (! path.empty())
-          fclose(sql_file);
-        return false;
-      }
-
-      /* Find first which key is primary key */
-      keynr=0;
-      primary_key=INT_MAX;
-      while ((row= drizzle_row_next(&result)))
-      {
-        if (atoi(row[3]) == 1)
-        {
-          keynr++;
-#ifdef FORCE_PRIMARY_KEY
-          if (atoi(row[1]) == 0 && primary_key == INT_MAX)
-            primary_key=keynr;
-#endif
-          if (!strcmp(row[2],"PRIMARY"))
-          {
-            primary_key=keynr;
-            break;
-          }
-        }
-      }
-      drizzle_row_seek(&result,0);
-      keynr=0;
-      while ((row= drizzle_row_next(&result)))
-      {
-        if (opt_xml)
-        {
-          print_xml_row(sql_file, "key", &result, &row);
-          continue;
-        }
-
-        if (atoi(row[3]) == 1)
-        {
-          if (keynr++)
-            putc(')', sql_file);
-          if (atoi(row[1]))       /* Test if duplicate key */
-            /* Duplicate allowed */
-            fprintf(sql_file, ",\n  KEY %s (",quote_name(row[2],name_buff,0));
-          else if (keynr == primary_key)
-            fputs(",\n  PRIMARY KEY (",sql_file); /* First UNIQUE is primary */
-          else
-            fprintf(sql_file, ",\n  UNIQUE %s (",quote_name(row[2],name_buff,
-                                                            0));
-        }
-        else
-          putc(',', sql_file);
-        fputs(quote_name(row[4], name_buff, 0), sql_file);
-        if (row[7])
-          fprintf(sql_file, " (%s)",row[7]);      /* Sub key */
-        check_io(sql_file);
-      }
-      drizzle_result_free(&result);
-      if (!opt_xml)
-      {
-        if (keynr)
-          putc(')', sql_file);
-        fputs("\n)",sql_file);
-        check_io(sql_file);
-      }
-      /* Get DRIZZLE specific create options */
-      if (create_options)
-      {
-        char show_name_buff[DRIZZLE_MAX_COLUMN_NAME_SIZE*2+2+24];
-
-        /* Check memory for quote_for_like() */
-        snprintf(buff, sizeof(buff), "show table status like %s",
-                 quote_for_like(table, show_name_buff));
-
-        if (!drizzleclient_query_with_error_report(&dcon, &result, buff, false))
-        {
-          if (!(row= drizzle_row_next(&result)))
-          {
-            fprintf(stderr,
-                    _("Error: Couldn't read status information for table %s\n"),
-                    result_table);
-          }
-          else
-          {
-            if (opt_xml)
-              print_xml_row(sql_file, "options", &result, &row);
-            else
-            {
-              fputs("/*!",sql_file);
-              print_value(sql_file,&result,row,"engine=","Engine",0);
-              print_value(sql_file,&result,row,"","Create_options",0);
-              print_value(sql_file,&result,row,"comment=","Comment",1);
-
-              fputs(" */",sql_file);
-              check_io(sql_file);
-            }
-          }
-          drizzle_result_free(&result);
-        }
-      }
-      if (!opt_xml)
-        fputs(";\n", sql_file);
-      else
-        fputs("\t</table_structure>\n", sql_file);
-      check_io(sql_file);
-    }
-  }
-  if (complete_insert) {
-    insert_pat.append(") VALUES ");
-    if (!extended_insert)
-      insert_pat.append("(");
-  }
-  if (sql_file != md_result_file)
-  {
-    fputs("\n", sql_file);
-    write_footer(sql_file);
-    fclose(sql_file);
-  }
-  return true;
-} /* get_table_structure */
-
-static void add_load_option(string &str, const char *option,
-                            const string &option_value)
-{
-  if (option_value.empty())
-  {
-    /* Null value means we don't add this option. */
-    return;
-  }
-
-  str.append(option);
-
-  if (option_value.compare(0, 2, "0x") == 0)
-  {
-    /* It's a hex constant, don't escape */
-    str.append(option_value);
-  }
-  else
-  {
-    /* char constant; escape */
-    field_escape(str, option_value);
-  }
-}
-
-
-/*
-  Allow the user to specify field terminator strings like:
-  "'", "\", "\\" (escaped backslash), "\t" (tab), "\n" (newline)
-  This is done by doubling ' and add a end -\ if needed to avoid
-  syntax errors from the SQL parser.
-*/
-
-static void field_escape(string &in, const string &from)
-{
-  uint32_t end_backslashes= 0;
-
-  in.append("'");
-
-  string::const_iterator it= from.begin();
-  while (it != from.end())
-  {
-    in.push_back(*it);
-
-    if (*it == '\\')
-      end_backslashes^= 1;    /* find odd number of backslashes */
-    else
-    {
-      if (*it == '\'' && !end_backslashes)
-      {
-        /* We want a duplicate of "'" for DRIZZLE */
-        in.push_back('\'');
-      }
-      end_backslashes=0;
-    }
-    ++it;
-  }
-  /* Add missing backslashes if user has specified odd number of backs.*/
-  if (end_backslashes)
-    in.append("\\");
-
-  in.append("'");
-}
-
-
-
-/*
-
-  SYNOPSIS
-  dump_table()
-
-  dump_table saves database contents as a series of INSERT statements.
-
-  ARGS
-  table - table name
-  db    - db name
-
-  RETURNS
-  void
-*/
-
-
-static void dump_table(char *table, char *db)
-{
-  char ignore_flag;
-  char table_buff[DRIZZLE_MAX_TABLE_SIZE+3];
-  string query_string;
-  char table_type[DRIZZLE_MAX_TABLE_SIZE];
-  char *result_table, table_buff2[DRIZZLE_MAX_TABLE_SIZE*2+3], *opt_quoted_table;
-  int error= 0;
-  uint32_t rownr, row_break, total_length, init_length;
-  uint64_t num_fields= 0;
-  drizzle_return_t ret;
-  drizzle_result_st result;
-  drizzle_column_st *column;
-  drizzle_row_t row;
-
-
-  /*
-    Make sure you get the create table info before the following check for
-    --no-data flag below. Otherwise, the create table info won't be printed.
-  */
-  if (!get_table_structure(table, db, table_type, &ignore_flag, &num_fields))
-  {
-    maybe_die(EX_TABLE_STATUS, _("Error retrieving table structure for table: \"%s\""), table);
-    return;
-  }
-
-  /* Check --no-data flag */
-  if (opt_no_data)
-  {
-    verbose_msg(_("-- Skipping dump data for table '%s', --no-data was used\n"),
-                table);
-    return;
-  }
-
-  /*
-    If the table type is a merge table or any type that has to be
-    _completely_ ignored and no data dumped
-  */
-  if (ignore_flag & IGNORE_DATA)
-  {
-    verbose_msg(_("-- Warning: Skipping data for table '%s' because " \
-                  "it's of type %s\n"), table, table_type);
-    return;
-  }
-  /* Check that there are any fields in the table */
-  if (num_fields == 0)
-  {
-    verbose_msg(_("-- Skipping dump data for table '%s', it has no fields\n"),
-                table);
-    return;
-  }
-
-  result_table= quote_name(table,table_buff, 1);
-  opt_quoted_table= quote_name(table, table_buff2, 0);
-
-  verbose_msg(_("-- Sending SELECT query...\n"));
-
-  query_string.clear();
-  query_string.reserve(1024);
-
-  if (! path.empty())
-  {
-    char filename[FN_REFLEN], tmp_path[FN_REFLEN];
-
-    /*
-      Convert the path to native os format
-      and resolve to the full filepath.
-    */
-    internal::convert_dirname(tmp_path,(char *)path.c_str(),NULL);
-    internal::my_load_path(tmp_path, tmp_path, NULL);
-    internal::fn_format(filename, table, tmp_path, ".txt", MYF(MY_UNPACK_FILENAME));
-
-    /* Must delete the file that 'INTO OUTFILE' will write to */
-    internal::my_delete(filename, MYF(0));
-
-    /* now build the query string */
-
-    query_string.append( "SELECT * INTO OUTFILE '");
-    query_string.append( filename);
-    query_string.append( "'");
-
-    if (! fields_terminated.empty() || ! enclosed.empty() || ! opt_enclosed.empty() || ! escaped.empty())
-      query_string.append( " FIELDS");
-
-    add_load_option(query_string, " TERMINATED BY ", fields_terminated);
-    add_load_option(query_string, " ENCLOSED BY ", enclosed);
-    add_load_option(query_string, " OPTIONALLY ENCLOSED BY ", opt_enclosed);
-    add_load_option(query_string, " ESCAPED BY ", escaped);
-    add_load_option(query_string, " LINES TERMINATED BY ", lines_terminated);
-
-    query_string.append(" FROM ");
-    query_string.append(result_table);
-
-    if (! where.empty())
-    {
-      query_string.append(" WHERE ");
-      query_string.append(where);
-    }
-
-    if (order_by)
-    {
-      query_string.append(" ORDER BY ");
-      query_string.append(order_by);
-    }
-
-    if (drizzle_query(&dcon, &result, query_string.c_str(),
-                      query_string.length(), &ret) == NULL ||
-        ret != DRIZZLE_RETURN_OK)
-    {
-      DB_error(&result, ret, _("when executing 'SELECT INTO OUTFILE'"));
-
-      return;
-    }
-    drizzle_result_free(&result);
-  }
- 
-  else
-  {
-    if (!opt_xml && opt_comments)
-    {
-      fprintf(md_result_file,_("\n--\n-- Dumping data for table %s\n--\n"),
-              result_table);
-      check_io(md_result_file);
-    }
-
-    query_string.append( "SELECT * FROM ");
-    query_string.append( result_table);
-
-    if (! where.empty())
-    {
-      if (!opt_xml && opt_comments)
-      {
-        fprintf(md_result_file, "-- WHERE:  %s\n", where.c_str());
-        check_io(md_result_file);
-      }
-
-      query_string.append( " WHERE ");
-      query_string.append( (char *)where.c_str());
-    }
-    if (order_by)
-    {
-      if (!opt_xml && opt_comments)
-      {
-        fprintf(md_result_file, "-- ORDER BY:  %s\n", order_by);
-        check_io(md_result_file);
-      }
-      query_string.append( " ORDER BY ");
-      query_string.append( order_by);
-    }
-
-    if (!opt_xml && !opt_compact)
-    {
-      fputs("\n", md_result_file);
-      check_io(md_result_file);
-    }
-    if (drizzleclient_query_with_error_report(&dcon, &result,
-                                              query_string.c_str(), quick))
-    {
-      goto err;
-    }
-
-    verbose_msg(_("-- Retrieving rows...\n"));
-    if (drizzle_result_column_count(&result) != num_fields)
-    {
-      fprintf(stderr,_("%s: Error in field count for table: %s !  Aborting.\n"),
-              progname.c_str(), result_table);
-      error= EX_CONSCHECK;
-      drizzle_result_free(&result);
-      goto err;
-    }
-
-    /* Moved disable keys to after lock per bug 15977 */
-    if (opt_disable_keys)
-    {
-      fprintf(md_result_file, "ALTER TABLE %s DISABLE KEYS;\n",
-              opt_quoted_table);
-      check_io(md_result_file);
-    }
-    
-    total_length= DRIZZLE_MAX_LINE_LENGTH;                /* Force row break */
-    row_break=0;
-    rownr=0;
-    init_length=(uint32_t) insert_pat.length()+4;
-    if (opt_xml)
-      print_xml_tag(md_result_file, "\t", "\n", "table_data", "name=", table,
-                    NULL);
-    if (opt_autocommit)
-    {
-      fprintf(md_result_file, "set autocommit=0;\n");
-      check_io(md_result_file);
-    }
-
-    row= NULL;
-
-    while (1)
-    {
-      uint32_t i;
-      size_t *lengths;
-
-      if (quick)
-      {
-        if (row)
-          drizzle_row_free(&result, row);
-
-        row= drizzle_row_buffer(&result, &ret);
-        if (ret != DRIZZLE_RETURN_OK)
-        {
-          fprintf(stderr,
-                  _("%s: Error reading rows for table: %s (%d:%s) ! Aborting.\n"),
-                  progname.c_str(), result_table, ret, drizzle_con_error(&dcon));
-          drizzle_result_free(&result);
-          goto err;
-        }
-      }
-      else
-        row= drizzle_row_next(&result);
-
-      if (row == NULL)
-        break;
-
-      lengths= drizzle_row_field_sizes(&result);
-
-      rownr++;
-      if ((rownr % show_progress_size) == 0)
-      {
-        verbose_msg(_("-- %"PRIu32" of ~%"PRIu64" rows dumped for table %s\n"), rownr, total_rows, opt_quoted_table);
-      }
-      if (!extended_insert && !opt_xml)
-      {
-        fputs(insert_pat.c_str(),md_result_file);
-        check_io(md_result_file);
-      }
-      drizzle_column_seek(&result,0);
-
-      if (opt_xml)
-      {
-        fputs("\t<row>\n", md_result_file);
-        check_io(md_result_file);
-      }
-
-      for (i= 0; i < drizzle_result_column_count(&result); i++)
-      {
-        int is_blob;
-        uint32_t length= lengths[i];
-
-        if (!(column= drizzle_column_next(&result)))
-          die(EX_CONSCHECK,
-              _("Not enough fields from table %s! Aborting.\n"),
-              result_table);
-
-        /*
-          63 is my_charset_bin. If charsetnr is not 63,
-          we have not a BLOB but a TEXT column.
-          we'll dump in hex only BLOB columns.
-        */
-        is_blob= (opt_hex_blob && drizzle_column_charset(column) == 63 &&
-                  (drizzle_column_type(column) == DRIZZLE_COLUMN_TYPE_VARCHAR ||
-                   drizzle_column_type(column) == DRIZZLE_COLUMN_TYPE_BLOB)) ? 1 : 0;
-        if (extended_insert && !opt_xml)
-        {
-          if (i == 0)
-          {
-            extended_row.clear();
-            extended_row.append("(");
-          }
-          else
-            extended_row.append(",");
-
-          if (row[i])
-          {
-            if (length)
-            {
-              if (!(drizzle_column_flags(column) & DRIZZLE_COLUMN_FLAGS_NUM))
-              {
-                /*
-                  "length * 2 + 2" is OK for both HEX and non-HEX modes:
-                  - In HEX mode we need exactly 2 bytes per character
-                  plus 2 bytes for '0x' prefix.
-                  - In non-HEX mode we need up to 2 bytes per character,
-                  plus 2 bytes for leading and trailing '\'' characters.
-                  Also we need to reserve 1 byte for terminating '\0'.
-                */
-                char * tmp_str= (char *)malloc(length * 2 + 2 + 1);
-                memset(tmp_str, '\0', length * 2 + 2 + 1);
-                if (opt_hex_blob && is_blob)
-                {
-                  extended_row.append("0x");
-                  drizzle_hex_string(tmp_str, row[i], length);
-                  extended_row.append(tmp_str);
-                }
-                else
-                {
-                  extended_row.append("'");
-                  drizzle_escape_string(tmp_str, row[i],length);
-                  extended_row.append(tmp_str);
-                  extended_row.append("'");
-                }
-                free(tmp_str);
-              }
-              else
-              {
-                /* change any strings ("inf", "-inf", "nan") into NULL */
-                char *ptr= row[i];
-                if (my_isalpha(charset_info, *ptr) || (*ptr == '-' &&
-                                                       my_isalpha(charset_info, ptr[1])))
-                  extended_row.append( "NULL");
-                else
-                {
-                  extended_row.append( ptr);
-                }
-              }
-            }
-            else
-              extended_row.append("''");
-          }
-          else
-            extended_row.append("NULL");
-        }
-        else
-        {
-          if (i && !opt_xml)
-          {
-            fputc(',', md_result_file);
-            check_io(md_result_file);
-          }
-          if (row[i])
-          {
-            if (!(drizzle_column_flags(column) & DRIZZLE_COLUMN_FLAGS_NUM))
-            {
-              if (opt_xml)
-              {
-                if (opt_hex_blob && is_blob && length)
-                {
-                  /* Define xsi:type="xs:hexBinary" for hex encoded data */
-                  print_xml_tag(md_result_file, "\t\t", "", "field", "name=",
-                                drizzle_column_name(column), "xsi:type=", "xs:hexBinary", NULL);
-                  print_blob_as_hex(md_result_file, row[i], length);
-                }
-                else
-                {
-                  print_xml_tag(md_result_file, "\t\t", "", "field", "name=",
-                                drizzle_column_name(column), NULL);
-                  print_quoted_xml(md_result_file, row[i], length);
-                }
-                fputs("</field>\n", md_result_file);
-              }
-              else if (opt_hex_blob && is_blob && length)
-              {
-                fputs("0x", md_result_file);
-                print_blob_as_hex(md_result_file, row[i], length);
-              }
-              else
-                unescape(md_result_file, row[i], length);
-            }
-            else
-            {
-              /* change any strings ("inf", "-inf", "nan") into NULL */
-              char *ptr= row[i];
-              if (opt_xml)
-              {
-                print_xml_tag(md_result_file, "\t\t", "", "field", "name=",
-                              drizzle_column_name(column), NULL);
-                fputs(!my_isalpha(charset_info, *ptr) ? ptr: "NULL",
-                      md_result_file);
-                fputs("</field>\n", md_result_file);
-              }
-              else if (my_isalpha(charset_info, *ptr) ||
-                       (*ptr == '-' && my_isalpha(charset_info, ptr[1])))
-                fputs("NULL", md_result_file);
-              else
-                fputs(ptr, md_result_file);
-            }
-          }
-          else
-          {
-            /* The field value is NULL */
-            if (!opt_xml)
-              fputs("NULL", md_result_file);
-            else
-              print_xml_null_tag(md_result_file, "\t\t", "field name=",
-                                 drizzle_column_name(column), "\n");
-          }
-          check_io(md_result_file);
-        }
-      }
-
-      if (opt_xml)
-      {
-        fputs("\t</row>\n", md_result_file);
-        check_io(md_result_file);
-      }
-
-      if (extended_insert)
-      {
-        uint32_t row_length;
-        extended_row.append(")");
-        row_length= 2 + extended_row.length();
-        if (total_length + row_length < DRIZZLE_MAX_LINE_LENGTH)
-        {
-          total_length+= row_length;
-          fputc(',',md_result_file);            /* Always row break */
-          fputs(extended_row.c_str(),md_result_file);
-        }
-        else
-        {
-          if (row_break)
-            fputs(";\n", md_result_file);
-          row_break=1;                          /* This is first row */
-
-          fputs(insert_pat.c_str(),md_result_file);
-          fputs(extended_row.c_str(),md_result_file);
-          total_length= row_length+init_length;
-        }
-        check_io(md_result_file);
-      }
-      else if (!opt_xml)
-      {
-        fputs(");\n", md_result_file);
-        check_io(md_result_file);
-      }
-    }
-
-    /* XML - close table tag and supress regular output */
-    if (opt_xml)
-      fputs("\t</table_data>\n", md_result_file);
-    else if (extended_insert && row_break)
-      fputs(";\n", md_result_file);             /* If not empty table */
-    fflush(md_result_file);
-    check_io(md_result_file);
-
-    /* Moved enable keys to before unlock per bug 15977 */
-    if (opt_disable_keys)
-    {
-      fprintf(md_result_file,"ALTER TABLE %s ENABLE KEYS;\n",
-              opt_quoted_table);
-      check_io(md_result_file);
-    }
-    if (opt_autocommit)
-    {
-      fprintf(md_result_file, "commit;\n");
-      check_io(md_result_file);
-    }
-    drizzle_result_free(&result);
-  }
-  return;
-
-err:
-  maybe_exit(error);
-  return;
-} /* dump_table */
-
-
-static char *getTableName(int reset)
-{
-  static drizzle_result_st result;
-  static bool have_result= false;
-  drizzle_row_t row;
-
-  if (!have_result)
-  {
-    if (drizzleclient_query_with_error_report(&dcon, &result, "SHOW TABLES", false))
-      return NULL;
-    have_result= true;
-  }
-
-  if ((row= drizzle_row_next(&result)))
-    return row[0];
-
-  if (reset)
-    drizzle_row_seek(&result, 0);
-  else
-  {
-    drizzle_result_free(&result);
-    have_result= false;
-  }
-  return NULL;
-} /* getTableName */
-
-
 static int dump_all_databases()
 {
   drizzle_row_t row;
   drizzle_result_st tableres;
   int result=0;
+  std::string query;
 
-  if (drizzleclient_query_with_error_report(&dcon, &tableres, "SHOW DATABASES", false))
+  if (connected_server_type == SERVER_MYSQL_FOUND)
+    query= "SELECT SCHEMA_NAME, DEFAULT_COLLATION_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME NOT IN ('information_schema', 'performance_schema')";
+  else
+    query= "SELECT SCHEMA_NAME, DEFAULT_COLLATION_NAME FROM DATA_DICTIONARY.SCHEMAS WHERE SCHEMA_NAME NOT IN ('information_schema','data_dictionary')";
+
+  if (drizzleclient_query_with_error_report(&dcon, &tableres, query.c_str(), false))
     return 1;
   while ((row= drizzle_row_next(&tableres)))
   {
-    if (dump_all_tables_in_db(row[0]))
-      result=1;
+    std::string database_name(row[0]);
+    DrizzleDumpDatabase *database= new DrizzleDumpDatabase(database_name);
+    std::string collation(row[1]);
+    database->setCollate(collation);
+    database_store.push_back(database);
   }
   drizzle_result_free(&tableres);
   return result;
@@ -1842,300 +700,25 @@ static int dump_databases(const vector<string> &db_names)
   for (vector<string>::const_iterator it= db_names.begin(); it != db_names.end(); ++it)
   {
     temp= *it;
-    if (dump_all_tables_in_db((char *)temp.c_str()))
-      result=1;
+    DrizzleDumpDatabase *database= new DrizzleDumpDatabase(temp);
+    database_store.push_back(database);
   }
   return(result);
 } /* dump_databases */
 
-
-/*
-  Table Specific database initalization.
-
-  SYNOPSIS
-  init_dumping_tables
-  qdatabase      quoted name of the database
-
-  RETURN VALUES
-  0        Success.
-  1        Failure.
-*/
-
-int init_dumping_tables(char *qdatabase)
-{
-  if (!opt_create_db)
-  {
-    char qbuf[256];
-    drizzle_row_t row;
-    drizzle_result_st result;
-    drizzle_return_t ret;
-
-    snprintf(qbuf, sizeof(qbuf),
-             "SHOW CREATE DATABASE IF NOT EXISTS %s",
-             qdatabase);
-
-    if (drizzle_query_str(&dcon, &result, qbuf, &ret) == NULL ||
-        ret != DRIZZLE_RETURN_OK)
-    {
-      if (ret == DRIZZLE_RETURN_ERROR_CODE)
-        drizzle_result_free(&result);
-
-      /* Old server version, dump generic CREATE DATABASE */
-      if (opt_drop_database)
-        fprintf(md_result_file,
-                "\nDROP DATABASE IF EXISTS %s;\n",
-                qdatabase);
-      fprintf(md_result_file,
-              "\nCREATE DATABASE IF NOT EXISTS %s;\n",
-              qdatabase);
-    }
-    else
-    {
-      if (drizzle_result_buffer(&result) == DRIZZLE_RETURN_OK)
-      {
-        if (opt_drop_database)
-          fprintf(md_result_file,
-                  "\nDROP DATABASE IF EXISTS %s;\n",
-                  qdatabase);
-        row = drizzle_row_next(&result);
-        if (row != NULL && row[1])
-        {
-          fprintf(md_result_file,"\n%s;\n",row[1]);
-        }
-      }
-      drizzle_result_free(&result);
-    }
-  }
-  return(0);
-} /* init_dumping_tables */
-
-
-static int init_dumping(char *database, int init_func(char*))
-{
-  drizzle_result_st result;
-  drizzle_return_t ret;
-  char qbuf[512];
-  
-  /* If this DB contains non-standard tables we don't want it */
-
-  snprintf(qbuf, sizeof(qbuf), "SELECT TABLE_NAME FROM DATA_DICTIONARY.TABLES WHERE TABLE_SCHEMA='%s' AND TABLE_TYPE != 'STANDARD'", database);
-  
-  if (drizzle_query_str(&dcon, &result, qbuf, &ret) != NULL)
-  {
-    drizzle_result_buffer(&result);
-    if (drizzle_result_row_count(&result) > 0)
-    {
-      drizzle_result_free(&result);
-      return 1;
-    }
-  }
-
-  drizzle_result_free(&result);
-
-  if (drizzle_select_db(&dcon, &result, database, &ret) == NULL ||
-      ret != DRIZZLE_RETURN_OK)
-  {
-    DB_error(&result, ret, _("when executing 'SELECT INTO OUTFILE'"));
-    return 1;                   /* If --force */
-  }
-  drizzle_result_free(&result);
-
-  if (path.empty() && !opt_xml)
-  {
-    if (opt_databases || opt_alldbs)
-    {
-      /*
-        length of table name * 2 (if name contains quotes), 2 quotes and 0
-      */
-      char quoted_database_buf[DRIZZLE_MAX_DB_SIZE*2+3];
-      char *qdatabase= quote_name(database,quoted_database_buf,opt_quoted);
-      if (opt_comments)
-      {
-        fprintf(md_result_file,"\n--\n-- Current Database: %s\n--\n", qdatabase);
-        check_io(md_result_file);
-      }
-
-      /* Call the view or table specific function */
-      init_func(qdatabase);
-
-      fprintf(md_result_file,"\nUSE %s;\n", qdatabase);
-      check_io(md_result_file);
-    }
-  }
-  if (extended_insert)
-    extended_row.clear();
-  return 0;
-} /* init_dumping */
-
-
-/* Return 1 if we should copy the table */
-
-static bool include_table(const char *hash_key, size_t key_size)
-{
-  string match(hash_key, key_size);
-  boost::unordered_set<string>::iterator iter= ignore_table.find(match);
-  return (iter == ignore_table.end());
-}
-
-
-static int dump_all_tables_in_db(char *database)
-{
-  char *table;
-  char hash_key[DRIZZLE_MAX_DB_SIZE+DRIZZLE_MAX_TABLE_SIZE+2];  /* "db.tablename" */
-  char *afterdot;
-  drizzle_result_st result;
-  drizzle_return_t ret;
-
-  memset(hash_key, 0, DRIZZLE_MAX_DB_SIZE+DRIZZLE_MAX_TABLE_SIZE+2);
-  afterdot= strcpy(hash_key, database) + strlen(database);
-  *afterdot++= '.';
-
-  if (init_dumping(database, init_dumping_tables))
-    return(1);
-  if (opt_xml)
-    print_xml_tag(md_result_file, "", "\n", "database", "name=", database, NULL);
-  if (flush_logs)
-  {
-    if (drizzle_query_str(&dcon, &result, "FLUSH LOGS", &ret) == NULL ||
-        ret != DRIZZLE_RETURN_OK)
-    {
-      DB_error(&result, ret, _("when doing refresh"));
-      /* We shall continue here, if --force was given */
-    }
-    else
-      drizzle_result_free(&result);
-  }
-  while ((table= getTableName(0)))
-  {
-    char *end= strcpy(afterdot, table) + strlen(table);
-    if (include_table(hash_key, end - hash_key))
-    {
-      dump_table(table,database);
-      free(order_by);
-      order_by= 0;
-    }
-  }
-  if (opt_xml)
-  {
-    fputs("</database>\n", md_result_file);
-    check_io(md_result_file);
-  }
-
-  return 0;
-} /* dump_all_tables_in_db */
-
-
-/*
-  get_actual_table_name -- executes a SHOW TABLES LIKE '%s' to get the actual
-  table name from the server for the table name given on the command line.
-  we do this because the table name given on the command line may be a
-  different case (e.g.  T1 vs t1)
-
-  RETURN
-  pointer to the table name
-  0 if error
-*/
-
-static char *get_actual_table_name(const char *old_table_name,
-                                   drizzled::memory::Root *root)
-{
-  char *name= 0;
-  drizzle_result_st result;
-  drizzle_row_t  row;
-  char query[50 + 2*DRIZZLE_MAX_TABLE_SIZE];
-  char show_name_buff[FN_REFLEN];
-  uint64_t num_rows;
-
-
-  /* Check memory for quote_for_like() */
-  assert(2*sizeof(old_table_name) < sizeof(show_name_buff));
-  snprintf(query, sizeof(query), "SHOW TABLES LIKE %s",
-           quote_for_like(old_table_name, show_name_buff));
-
-  if (drizzleclient_query_with_error_report(&dcon, &result, query, false))
-    return NULL;
-
-  num_rows= drizzle_result_row_count(&result);
-  if (num_rows > 0)
-  {
-    size_t *lengths;
-    /*
-      Return first row
-      TODO-> Return all matching rows
-    */
-    row= drizzle_row_next(&result);
-    lengths= drizzle_row_field_sizes(&result);
-    name= root->strmake_root(row[0], lengths[0]);
-  }
-  drizzle_result_free(&result);
-
-  return(name);
-}
-
-
 static int dump_selected_tables(const string &db, const vector<string> &table_names)
 {
-  drizzled::memory::Root root;
-  char **dump_tables, **pos, **end;
-  drizzle_result_st result;
-  drizzle_return_t ret;
-
-
-  if (init_dumping((char *)db.c_str(), init_dumping_tables))
-    return(1);
-
-  root.init_alloc_root(8192);
-  if (!(dump_tables= pos= (char**) root.alloc_root(table_names.size() * sizeof(char *))))
-    die(EX_EOM, _("alloc_root failure."));
+  DrizzleDumpDatabase *database= new DrizzleDumpDatabase(db);
+  database_store.push_back(database); 
 
   for (vector<string>::const_iterator it= table_names.begin(); it != table_names.end(); ++it)
   {
     string temp= *it;
-    /* the table name passed on commandline may be wrong case */
-    if ((*pos= get_actual_table_name(temp.c_str(), &root)))
-    {
-      pos++;
-    }
-    else
-    {
-      if (!ignore_errors)
-      {
-        root.free_root(MYF(0));
-      }
-      maybe_die(EX_ILLEGAL_TABLE, _("Couldn't find table: \"%s\""),(char *) temp.c_str());
-      /* We shall countinue here, if --force was given */
-    }
+    DrizzleDumpTable *table= new DrizzleDumpTable(temp);
+    database->tables.push_back(table);
   }
-  end= pos;
+  database_store.push_back(database);
 
-  if (flush_logs)
-  {
-    if (drizzle_query_str(&dcon, &result, "FLUSH LOGS", &ret) == NULL ||
-        ret != DRIZZLE_RETURN_OK)
-    {
-      if (!ignore_errors)
-        root.free_root(MYF(0));
-      DB_error(&result, ret, _("when doing refresh"));
-      /* We shall countinue here, if --force was given */
-    }
-    else
-      drizzle_result_free(&result);
-  }
-  if (opt_xml)
-    print_xml_tag(md_result_file, "", "\n", "database", "name=", (char *)db.c_str(), NULL);
-
-  /* Dump each selected table */
-  for (pos= dump_tables; pos < end; pos++)
-    dump_table(*pos, (char *)db.c_str());
-
-  root.free_root(MYF(0));
-  free(order_by);
-  order_by= 0;
-  if (opt_xml)
-  {
-    fputs("</database>\n", md_result_file);
-    check_io(md_result_file);
-  }
   return 0;
 } /* dump_selected_tables */
 
@@ -2171,60 +754,6 @@ static int start_transaction(drizzle_con_st *drizzle_con)
 }
 
 
-/* Print a value with a prefix on file */
-static void print_value(FILE *file, drizzle_result_st  *result, drizzle_row_t row,
-                        const char *prefix, const char *name,
-                        int string_value)
-{
-  drizzle_column_st *column;
-  drizzle_column_seek(result, 0);
-
-  for ( ; (column= drizzle_column_next(result)) ; row++)
-  {
-    if (!strcmp(drizzle_column_name(column),name))
-    {
-      if (row[0] && row[0][0] && strcmp(row[0],"0")) /* Skip default */
-      {
-        fputc(' ',file);
-        fputs(prefix, file);
-        if (string_value)
-          unescape(file,row[0],(uint32_t) strlen(row[0]));
-        else
-          fputs(row[0], file);
-        check_io(file);
-        return;
-      }
-    }
-  }
-  return;                                       /* This shouldn't happen */
-} /* print_value */
-
-/**
- * Fetches a row from a result based on a field name
- * Returns const char* of the data in that row or NULL if not found
- */
-
-static const char* fetch_named_row(drizzle_result_st *result, drizzle_row_t row, const char *name)
-{
-  drizzle_column_st *column;
-  drizzle_column_seek(result, 0);
-
-  for ( ; (column= drizzle_column_next(result)) ; row++)
-  {
-    if (!strcmp(drizzle_column_name(column),name))
-    {
-      if (row[0] && row[0][0] && strcmp(row[0],"0")) /* Skip default */
-      {
-        drizzle_column_seek(result, 0);
-        return row[0];
-      }
-    }
-  }
-  drizzle_column_seek(result, 0);
-  return NULL;
-}
-
-
 /*
   SYNOPSIS
 
@@ -2253,7 +782,7 @@ char check_if_ignore_table(const char *table_name, char *table_type)
 {
   char result= IGNORE_NONE;
   char buff[FN_REFLEN+80], show_name_buff[FN_REFLEN];
-  const char *number_of_rows= NULL;
+  //const char *number_of_rows= NULL;
   drizzle_result_st res;
   drizzle_row_t row;
 
@@ -2275,10 +804,10 @@ char check_if_ignore_table(const char *table_name, char *table_type)
   }
   else
   {
-    if ((number_of_rows= fetch_named_row(&res, row, "Rows")) != NULL)
-    {
-      total_rows= strtoul(number_of_rows, NULL, 10);
-    }
+//    if ((number_of_rows= fetch_named_row(&res, row, "Rows")) != NULL)
+//    {
+//      total_rows= strtoul(number_of_rows, NULL, 10);
+//    }
   }
   /*
     If the table type matches any of these, we do support delayed inserts.
@@ -2299,114 +828,6 @@ char check_if_ignore_table(const char *table_name, char *table_type)
   }
   drizzle_result_free(&res);
   return(result);
-}
-
-
-/*
-  Get string of comma-separated primary key field names
-
-  SYNOPSIS
-  char *primary_key_fields(const char *table_name)
-  RETURNS     pointer to allocated buffer (must be freed by caller)
-  table_name  quoted table name
-
-  DESCRIPTION
-  Use SHOW KEYS FROM table_name, allocate a buffer to hold the
-  field names, and then build that string and return the pointer
-  to that buffer.
-
-  Returns NULL if there is no PRIMARY or UNIQUE key on the table,
-  or if there is some failure.  It is better to continue to dump
-  the table unsorted, rather than exit without dumping the data.
-*/
-
-static char *primary_key_fields(const char *table_name)
-{
-  drizzle_result_st res;
-  drizzle_return_t ret;
-  drizzle_row_t  row;
-  /* SHOW KEYS FROM + table name * 2 (escaped) + 2 quotes + \0 */
-  char show_keys_buff[15 + DRIZZLE_MAX_TABLE_SIZE * 2 + 3];
-  uint32_t result_length= 0;
-  char *result= 0;
-  char buff[DRIZZLE_MAX_TABLE_SIZE * 2 + 3];
-  char *quoted_field;
-
-  snprintf(show_keys_buff, sizeof(show_keys_buff),
-           "SHOW KEYS FROM %s", table_name);
-  if (drizzle_query_str(&dcon, &res, show_keys_buff, &ret) == NULL ||
-      ret != DRIZZLE_RETURN_OK)
-  {
-    if (ret == DRIZZLE_RETURN_ERROR_CODE)
-    {
-      fprintf(stderr, _("Warning: Couldn't read keys from table %s;"
-                        " records are NOT sorted (%s)\n"),
-              table_name, drizzle_result_error(&res));
-      drizzle_result_free(&res);
-    }
-    else
-    {
-      fprintf(stderr, _("Warning: Couldn't read keys from table %s;"
-                        " records are NOT sorted (%s)\n"),
-              table_name, drizzle_con_error(&dcon));
-    }
-
-    return result;
-  }
-
-  if (drizzle_result_buffer(&res) != DRIZZLE_RETURN_OK)
-  {
-    fprintf(stderr, _("Warning: Couldn't read keys from table %s;"
-                      " records are NOT sorted (%s)\n"),
-            table_name, drizzle_con_error(&dcon));
-    return result;
-  }
-
-  /*
-   * Figure out the length of the ORDER BY clause result.
-   * Note that SHOW KEYS is ordered:  a PRIMARY key is always the first
-   * row, and UNIQUE keys come before others.  So we only need to check
-   * the first key, not all keys.
- */
-  if ((row= drizzle_row_next(&res)) && atoi(row[1]) == 0)
-  {
-    /* Key is unique */
-    do
-    {
-      quoted_field= quote_name(row[4], buff, 0);
-      result_length+= strlen(quoted_field) + 1; /* + 1 for ',' or \0 */
-    } while ((row= drizzle_row_next(&res)) && atoi(row[3]) > 1);
-  }
-
-  /* Build the ORDER BY clause result */
-  if (result_length)
-  {
-    char *end;
-    /* result (terminating \0 is already in result_length) */
-
-    size_t result_length_alloc= result_length + 10;
-    result= (char *)malloc(result_length_alloc);
-    if (!result)
-    {
-      fprintf(stderr, _("Error: Not enough memory to store ORDER BY clause\n"));
-      drizzle_result_free(&res);
-      return result;
-    }
-    drizzle_row_seek(&res, 0);
-    row= drizzle_row_next(&res);
-    quoted_field= quote_name(row[4], buff, 0);
-    end= strcpy(result, quoted_field) + strlen(quoted_field);
-    result_length_alloc -= strlen(quoted_field);
-    while ((row= drizzle_row_next(&res)) && atoi(row[3]) > 1)
-    {
-      quoted_field= quote_name(row[4], buff, 0);
-      end+= snprintf(end, result_length_alloc, ",%s",quoted_field);
-      result_length_alloc -= strlen(quoted_field);
-    }
-  }
-
-  drizzle_result_free(&res);
-  return result;
 }
 
 int get_server_type()
@@ -2775,6 +1196,14 @@ try
     free_resources();
     exit(EX_DRIZZLEERR);
   }
+
+  if (connected_server_type == SERVER_MYSQL_FOUND)
+  {
+    if (drizzleclient_query_with_error_report(&dcon, &result, "SET NAMES 'utf8'", false))
+      goto err;
+    drizzle_result_free(&result);
+  }
+
   if (path.empty() && vm.count("database-used"))
   {
     string database_used= *vm["database-used"].as< vector<string> >().begin();
@@ -2798,6 +1227,7 @@ try
   if (opt_alldbs)
   {
     dump_all_databases();
+    dump_all_tables();
   }
   if (vm.count("database-used") && vm.count("Table-used") && ! opt_databases)
   {
@@ -2808,6 +1238,8 @@ try
 
   if (vm.count("Table-used") && opt_databases)
   {
+/*
+ * This is not valid!
     vector<string> database_used= vm["database-used"].as< vector<string> >();
     vector<string> table_used= vm["Table-used"].as< vector<string> >();
 
@@ -2818,12 +1250,17 @@ try
       database_used.insert(database_used.end(), *it);
     }
     dump_databases(database_used);
+    dump_tables();
+*/
   }
   
   if (vm.count("database-used") && ! vm.count("Table-used"))
   {
     dump_databases(vm["database-used"].as< vector<string> >());
+    dump_all_tables();
   }
+
+  generate_dump();
 
   /* ensure dumped data flushed */
   if (md_result_file && fflush(md_result_file))
