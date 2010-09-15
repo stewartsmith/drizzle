@@ -1423,7 +1423,7 @@ int init_server_components(module::Registry &plugins)
      errmsg_printf(ERRMSG_LVL_ERROR,
             _("%s: Unknown options given (first unknown is '%s').\n"
               "Use --help to get a list of available options\n"),
-            internal::my_progname, unknown_options[0].c_str());
+            internal::my_progname, final_unknown_options[0].c_str());
       unireg_abort(1);
   }
 
