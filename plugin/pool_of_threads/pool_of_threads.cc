@@ -209,14 +209,14 @@ void PoolOfThreadsScheduler::addSession(int Fd)
   char c;
   int count= 0;
 
-  pthread_mutex_lock(&LOCK_session_add);
+  LOCK_session_add.lock();
   while (! sessions_need_adding.empty())
   {
     /*
      Pop the first session off the queue 
     */
     Session* session= sessions_need_adding.front();
-    pthread_mutex_unlock(&LOCK_session_add);
+    LOCK_session_add.unlock();
 
     session_scheduler *sched= static_cast<session_scheduler *>(session->scheduler_arg);
     assert(sched);
@@ -244,7 +244,7 @@ void PoolOfThreadsScheduler::addSession(int Fd)
       }
     }
 
-    pthread_mutex_lock(&LOCK_session_add);
+    LOCK_session_add.lock();
     /*
      Pop until this session is already processed
     */
@@ -260,7 +260,7 @@ void PoolOfThreadsScheduler::addSession(int Fd)
     count++;
   }
   assert(count == 1);
-  pthread_mutex_unlock(&LOCK_session_add);
+  LOCK_session_add.unlock();
 }
 
 /**
@@ -336,7 +336,7 @@ void *PoolOfThreadsScheduler::mainLoop()
   for (;;)
   {
     Session *session= NULL;
-    (void) pthread_mutex_lock(&LOCK_event_loop);
+    LOCK_event_loop.lock();
 
     /* get session(s) to process */
     while (sessions_need_processing.empty())
@@ -344,7 +344,7 @@ void *PoolOfThreadsScheduler::mainLoop()
       if (kill_pool_threads)
       {
         /* the flag that we should die has been set */
-        (void) pthread_mutex_unlock(&LOCK_event_loop);
+        LOCK_event_loop.unlock();
         goto thread_exit;
       }
       event_loop(EVLOOP_ONCE);
@@ -355,7 +355,7 @@ void *PoolOfThreadsScheduler::mainLoop()
     sessions_need_processing.pop();
     session_scheduler *sched= (session_scheduler *)session->scheduler_arg;
 
-    (void) pthread_mutex_unlock(&LOCK_event_loop);
+    LOCK_event_loop.lock();
 
     /* now we process the connection (session) */
 
@@ -471,7 +471,7 @@ void libevent_session_add(Session* session)
 void PoolOfThreadsScheduler::sessionAddToQueue(session_scheduler *sched)
 {
   char c= 0;
-  pthread_mutex_lock(&LOCK_session_add);
+  boost::mutex::scoped_lock(LOCK_session_add);
   if (sessions_need_adding.empty())
   {
     /* notify libevent */
@@ -480,7 +480,6 @@ void PoolOfThreadsScheduler::sessionAddToQueue(session_scheduler *sched)
   }
   /* queue for libevent */
   sessions_need_adding.push(sched->session);
-  pthread_mutex_unlock(&LOCK_session_add);
 }
 
 
@@ -492,10 +491,6 @@ PoolOfThreadsScheduler::PoolOfThreadsScheduler(const char *name_arg)
   (void) pthread_attr_init(&attr);
   (void) pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
   pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
-
-  pthread_mutex_init(&LOCK_session_add, NULL);
-  pthread_mutex_init(&LOCK_event_loop, NULL);
-
 }
 
 
@@ -524,8 +519,6 @@ PoolOfThreadsScheduler::~PoolOfThreadsScheduler()
   close(session_kill_pipe[0]);
   close(session_kill_pipe[1]);
 
-  (void) pthread_mutex_destroy(&LOCK_event_loop);
-  (void) pthread_mutex_destroy(&LOCK_session_add);
   (void) pthread_attr_destroy(&attr);
 }
 
