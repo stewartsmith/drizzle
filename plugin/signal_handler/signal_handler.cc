@@ -27,12 +27,14 @@
 
 #include "drizzled/drizzled.h"
 
+#include <boost/thread/thread.hpp>
+
 #include <sys/stat.h>
 #include <fcntl.h>
 
 
 static bool kill_in_progress= false;
-extern "C" pthread_handler_t signal_hand(void *);
+void signal_hand(void);
 
 namespace drizzled
 {
@@ -107,7 +109,7 @@ static void create_pid_file()
 
 
 /** This threads handles all signals and alarms. */
-pthread_handler_t signal_hand(void *)
+void signal_hand()
 {
   sigset_t set;
   int sig;
@@ -163,7 +165,7 @@ pthread_handler_t signal_hand(void *)
       internal::my_thread_end();
       signal_thread_in_use= false;
 
-      return NULL;
+      return;
     }
     switch (sig) {
     case SIGTERM:
@@ -194,30 +196,17 @@ class SignalHandler :
 {
   SignalHandler(const SignalHandler &);
   SignalHandler& operator=(const SignalHandler &);
+  boost::thread thread;
+
 public:
-  SignalHandler()
-    : drizzled::plugin::Daemon("Signal Handler")
+  SignalHandler() :
+    drizzled::plugin::Daemon("Signal Handler")
   {
-    int error;
-    pthread_attr_t thr_attr;
-
-    (void) pthread_attr_init(&thr_attr);
-    (void) pthread_attr_setdetachstate(&thr_attr, PTHREAD_CREATE_DETACHED);
-
     // @todo fix spurious wakeup issue
-    {
-      boost::mutex::scoped_lock scopedLock(LOCK_thread_count);
-      if ((error= pthread_create(&signal_thread, &thr_attr, signal_hand, 0)))
-      {
-        errmsg_printf(ERRMSG_LVL_ERROR,
-                      _("Can't create interrupt-thread (error %d, errno: %d)"),
-                      error,errno);
-        exit(1);
-      }
-      COND_thread_count.wait(scopedLock);
-    }
-
-    (void) pthread_attr_destroy(&thr_attr);
+    boost::mutex::scoped_lock scopedLock(LOCK_thread_count);
+    thread= boost::thread(signal_hand);
+    signal_thread= thread.native_handle();
+    COND_thread_count.wait(scopedLock);
   }
 
   /**
