@@ -2325,12 +2325,6 @@ static void fix_paths(string progname)
     }
 
     assert(drizzle_tmpdir.size());
-    if (stat(drizzle_tmpdir.c_str(), &buf) || (S_ISDIR(buf.st_mode) == false))
-    {
-      perror(drizzle_tmpdir.c_str());
-      exit(1);
-    }
-
 
     if (mkdir(drizzle_tmpdir.c_str(), 0777) == -1)
     {
