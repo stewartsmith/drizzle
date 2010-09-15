@@ -625,7 +625,7 @@ drop table t1;
 
 --echo # --dump-date:
 --replace_regex /^[^-][^-].*$// /-- [^D][^u][^m][^p].*// /\/\*!.*// / on [0-9 :-]+/ on DATE/ /^-- DRI.*///
---exec $DRIZZLE_DUMP --dump-date test 
+--exec $DRIZZLE_DUMP test 
 
 --echo # --dump-date (default):
 --replace_regex /^[^-][^-].*$// /-- [^D][^u][^m][^p].*// /\/\*!.*// / on [0-9 :-]+/ on DATE/ /^-- DRI.*///
@@ -700,7 +700,7 @@ drop table words2;
 create database `test-database`;
 use `test-database`;
 create table test (a int);
---exec $DRIZZLE_DUMP --compact --opt --quote-names test-database
+--exec $DRIZZLE_DUMP --compact --opt test-database
 drop database `test-database`;
 use test;
 

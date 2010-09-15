@@ -305,6 +305,9 @@ static bool initTable()
 static int init(drizzled::module::Context &context)
 {
   const module::option_map &vm= context.getOptions();
+
+  sysvar_logging_stats_enabled= (vm.count("disable")) ? false : true;
+
   if (vm.count("max-user-count"))
   {
     if (sysvar_logging_stats_max_user_count < 100 || sysvar_logging_stats_max_user_count > 50000)
@@ -410,9 +413,7 @@ static void init_options(drizzled::module::option_context &context)
   context("scoreboard-size",
           po::value<uint32_t>(&sysvar_logging_stats_scoreboard_size)->default_value(2000),
           N_("Max number of concurrent sessions that will be logged"));
-  context("enable",
-          po::value<bool>(&sysvar_logging_stats_enabled)->default_value(true)->zero_tokens(),
-          N_("Enable Logging Statistics Collection"));
+  context("disable", N_("Enable Logging Statistics Collection"));
 }
 
 static drizzle_sys_var* system_var[]= {

@@ -1091,9 +1091,9 @@ int init_common_variables(int argc, char **argv)
   system_config_dir_drizzle.append("/drizzle/drizzle.cnf");
 
   long_options.add_options()
-  ("help-extended", po::value<bool>(&opt_help_extended)->default_value(false, "false")->zero_tokens()->multitoken(),
+  ("help-extended", po::value<bool>(&opt_help_extended)->default_value(false)->zero_tokens(),
   N_("Display this help and exit after initializing plugins."))
-  ("help,?", po::value<bool>(&opt_help)->default_value(false, "false")->zero_tokens()->multitoken(),
+  ("help,?", po::value<bool>(&opt_help)->default_value(false)->zero_tokens(),
   N_("Display this help and exit."))
   ("auto-increment-increment", po::value<uint64_t>(&global_system_variables.auto_increment_increment)->default_value(1)->notifier(&check_limits_aii),
   N_("Auto-increment columns are incremented by this"))
@@ -1117,7 +1117,7 @@ int init_common_variables(int argc, char **argv)
   N_("Set the default time zone."))
   ("exit-info,T", po::value<long>(),
   N_("Used for debugging;  Use at your own risk!"))
-  ("gdb", po::value<bool>(&opt_debugging)->default_value(false, "false")->zero_tokens()->multitoken(),
+  ("gdb", po::value<bool>(&opt_debugging)->default_value(false)->zero_tokens(),
   N_("Set up signals usable for debugging"))
   ("language,L", po::value<string>(),
   N_("(IGNORED)"))  
@@ -1138,9 +1138,9 @@ int init_common_variables(int argc, char **argv)
      "replication partners."))
   ("skip-stack-trace",  
   N_("Don't print a stack trace on failure."))
-  ("symbolic-links,s", po::value<bool>(&internal::my_use_symdir)->default_value(IF_PURIFY(0,1), IF_PURIFY("false", "true"))->zero_tokens()->multitoken(),
+  ("symbolic-links,s", po::value<bool>(&internal::my_use_symdir)->default_value(IF_PURIFY(false,true))->zero_tokens(),
   N_("Enable symbolic link support."))
-  ("timed-mutexes", po::value<bool>(&internal::timed_mutexes)->default_value(false, "false")->zero_tokens()->multitoken(),
+  ("timed-mutexes", po::value<bool>(&internal::timed_mutexes)->default_value(false)->zero_tokens(),
   N_("Specify whether to time mutexes (only InnoDB mutexes are currently "
      "supported)")) 
   ("tmpdir,t", po::value<string>(),
@@ -1191,11 +1191,9 @@ int init_common_variables(int argc, char **argv)
   ("min-examined-row-limit", po::value<uint64_t>(&global_system_variables.min_examined_row_limit)->default_value(0)->notifier(&check_limits_merl),
   N_("Don't log queries which examine less than min_examined_row_limit "
      "rows to file."))
-  ("optimizer-prune-level", po::value<bool>(&global_system_variables.optimizer_prune_level)->default_value(true, "true")->zero_tokens()->multitoken(),
-  N_("Controls the heuristic(s) applied during query optimization to prune "
-     "less-promising partial plans from the optimizer search space. Meaning: "
-     "false - do not apply any heuristic, thus perform exhaustive search; "
-     "true - prune plans based on number of retrieved rows."))
+  ("disable-optimizer-prune",
+  N_("Do not apply any heuristic(s) during query optimization to prune, "
+     "thus perform an exhaustive search from the optimizer search space."))
   ("optimizer-search-depth", po::value<uint32_t>(&global_system_variables.optimizer_search_depth)->default_value(0)->notifier(&check_limits_osd),
   N_("Maximum depth of search performed by the query optimizer. Values "
      "larger than the number of relations in a query result in better query "
@@ -1258,7 +1256,7 @@ int init_common_variables(int argc, char **argv)
   po::value<uint64_t>(&global_system_variables.tmp_table_size)->default_value(16*1024*1024L)->notifier(&check_limits_tmp_table_size),
   N_("If an internal in-memory temporary table exceeds this size, Drizzle will"
      " automatically convert it to an on-disk MyISAM table."))
-  ("no-defaults", po::value<bool>()->default_value(false, "false")->zero_tokens()->multitoken(),
+  ("no-defaults", po::value<bool>()->default_value(false)->zero_tokens(),
   N_("Configuration file defaults are not used if no-defaults is set"))
   ("defaults-file", po::value<string>()->default_value(system_config_dir_drizzle),
    N_("Configuration file to use"))
@@ -1289,6 +1287,11 @@ int init_common_variables(int argc, char **argv)
   po::notify(vm);
 
   get_options();
+
+  /* Inverted Booleans */
+
+  global_system_variables.optimizer_prune_level=
+    vm.count("disable-optimizer-prune") ? false : true;
 
   if ((user_info= check_user(drizzled_user)))
   {

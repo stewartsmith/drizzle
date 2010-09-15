@@ -2764,6 +2764,16 @@ static int embedded_innodb_init(drizzled::module::Context &context)
 {
 
   const module::option_map &vm= context.getOptions();
+
+  /* Inverted Booleans */
+
+  innobase_adaptive_hash_index= (vm.count("disable-adaptive-hash-index")) ? false : true;
+  srv_adaptive_flushing= (vm.count("disable-adaptive-flushing")) ? false : true;
+  innobase_use_checksums= (vm.count("disable-checksums")) ? false : true;
+  innobase_use_doublewrite= (vm.count("disable-doublewrite")) ? false : true;
+  innobase_print_verbose_log= (vm.count("disable-print-verbose-log")) ? false : true;
+  srv_use_sys_malloc= (vm.count("use-internal-malloc")) ? false : true;
+
   if (vm.count("additional-mem-pool-size"))
   { 
     if (innobase_additional_mem_pool_size > LONG_MAX || innobase_additional_mem_pool_size < 512*1024L)
@@ -3434,12 +3444,10 @@ static DRIZZLE_SYSVAR_BOOL(use_sys_malloc, srv_use_sys_malloc,
 
 static void init_options(drizzled::module::option_context &context)
 {
-  context("adaptive-hash-index", 
-          po::value<bool>(&innobase_adaptive_hash_index)->default_value(true)->zero_tokens()->multitoken(),
-          N_("Enable InnoDB adaptive hash index (enabled by default)."));
-  context("adaptive-flushing",
-          po::value<bool>(&srv_adaptive_flushing)->default_value(true)->zero_tokens()->multitoken(),
-          N_("Attempt flushing dirty pages to avoid IO bursts at checkpoints."));
+  context("disable-adaptive-hash-index", 
+          N_("Disable InnoDB adaptive hash index (enabled by default)."));
+  context("disable-adaptive-flushing",
+          N_("Do not attempt to flush dirty pages to avoid IO bursts at checkpoints."));
   context("additional-mem-pool-size",
           po::value<long>(&innobase_additional_mem_pool_size)->default_value(8*1024*1024L),
           N_("Size of a memory pool InnoDB uses to store data dictionary information and other internal data structures."));
@@ -3452,12 +3460,10 @@ static void init_options(drizzled::module::option_context &context)
   context("data-home-dir",
           po::value<string>(),
           N_("The common part for InnoDB table spaces."));
-  context("checksums",
-          po::value<bool>(&innobase_use_checksums)->default_value(true)->zero_tokens()->multitoken(),
-          N_("Enable InnoDB checksums validation (enabled by default)."));
-  context("doublewrite",
-          po::value<bool>(&innobase_use_doublewrite)->default_value(true)->zero_tokens()->multitoken(),
-          N_("Enable InnoDB doublewrite buffer (enabled by default)."));
+  context("disable-checksums",
+          N_("Disable InnoDB checksums validation (enabled by default)."));
+  context("disable-doublewrite",
+          N_("Disable InnoDB doublewrite buffer (enabled by default)."));
   context("io-capacity",
           po::value<unsigned long>(&srv_io_capacity)->default_value(200),
           N_("Number of IOPs the server can do. Tunes the background IO rate"));
@@ -3465,7 +3471,7 @@ static void init_options(drizzled::module::option_context &context)
           po::value<unsigned long>(&innobase_fast_shutdown)->default_value(1),
           N_("Speeds up the shutdown process of the InnoDB storage engine. Possible values are 0, 1 (faster) or 2 (fastest - crash-like)."));
   context("file-per-table", 
-          po::value<bool>(&srv_file_per_table)->default_value(false)->zero_tokens()->multitoken(),
+          po::value<bool>(&srv_file_per_table)->default_value(false)->zero_tokens(),
           N_("Stores each InnoDB table to an .ibd file in the database dir."));
   context("file-format",
           po::value<string>(),
@@ -3513,7 +3519,7 @@ static void init_options(drizzled::module::option_context &context)
           po::value<unsigned long>(&srv_max_purge_lag)->default_value(0),
           N_("Desired maximum length of the purge queue (0 = no limit)"));
   context("rollback-on-timeout",
-          po::value<bool>(&innobase_rollback_on_timeout)->default_value(false)->zero_tokens()->multitoken(),
+          po::value<bool>(&innobase_rollback_on_timeout)->default_value(false)->zero_tokens(),
           N_("Roll back the complete transaction on lock wait timeout, for 4.x compatibility (disabled by default)"));
   context("open-files",
           po::value<long>(&innobase_open_files)->default_value(300),
@@ -3524,18 +3530,16 @@ static void init_options(drizzled::module::option_context &context)
   context("write-io-threads",
           po::value<unsigned long>(&innobase_write_io_threads)->default_value(4),
           N_("Number of background write I/O threads in InnoDB."));
-  context("print-verbose-log",
-          po::value<bool>(&innobase_print_verbose_log)->default_value(true)->zero_tokens()->multitoken(),
+  context("disable-print-verbose-log",
           N_("Disable if you want to reduce the number of messages written to the log (default: enabled)."));
   context("status-file",
-          po::value<bool>(&innobase_create_status_file)->default_value(false)->zero_tokens()->multitoken(),
+          po::value<bool>(&innobase_create_status_file)->default_value(false)->zero_tokens(),
           N_("Enable SHOW INNODB STATUS output in the log"));
   context("sync-spin-loops",
           po::value<unsigned long>(&srv_n_spin_wait_rounds)->default_value(30L),
           N_("Count of spin-loop rounds in InnoDB mutexes (30 by default)"));
-  context("use-sys-malloc",
-          po::value<bool>(&srv_use_sys_malloc)->default_value(true)->zero_tokens()->multitoken(),
-          N_("Use OS memory allocator instead of InnoDB's internal memory allocator"));
+  context("use-internal-malloc",
+          N_("Use InnoDB's internal memory allocator instead of the OS memory allocator"));
 }
 
 static drizzle_sys_var* innobase_system_variables[]= {
