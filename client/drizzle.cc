@@ -1294,27 +1294,23 @@ try
   ("force,f", po::value<bool>(&ignore_errors)->default_value(false)->zero_tokens(),
   N_("Continue even if we get an sql error."))
   ("named-commands,G", po::value<bool>(&named_cmds)->default_value(false)->zero_tokens(),
-  N_("Enable named commands. Named commands mean this program's internal commands; see drizzle> help . When enabled, the named commands can be used from any line of the query, otherwise only from the first line, before an enter. Disable with --disable-named-commands. This option is disabled by default."))
-  ("no-named-commands,g",
-  N_("Named commands are disabled. Use \\* form only, or use named commands only in the beginning of a line ending with a semicolon (;) Since version 10.9 the client now starts with this option ENABLED by default! Disable with '-G'. Long format commands still work from the first line. WARNING: option deprecated; use --disable-named-commands instead."))
+  N_("Enable named commands. Named commands mean this program's internal commands; see drizzle> help . When enabled, the named commands can be used from any line of the query, otherwise only from the first line, before an enter."))
   ("ignore-spaces,i", N_("Ignore space after function names."))
   ("no-beep,b", po::value<bool>(&opt_nobeep)->default_value(false)->zero_tokens(),
   N_("Turn off beep on error."))
-  ("line-numbers", po::value<bool>(&line_numbers)->default_value(true)->zero_tokens(),
-  N_("Write line numbers for errors."))
+  ("disable-line-numbers", N_("Do not write line numbers for errors."))
   ("skip-line-numbers,L", 
   N_("Don't write line number for errors. WARNING: -L is deprecated, use long version of this option instead."))
-  ("column-name", po::value<bool>(&column_names)->default_value(true)->zero_tokens(),
-  N_("Write column names in results."))
+  ("disable-column-names", N_("Do not write column names in results."))
   ("skip-column-names,N", 
   N_("Don't write column names in results. WARNING: -N is deprecated, use long version of this options instead."))
   ("set-variable,O", po::value<string>(),
   N_("Change the value of a variable. Please note that this option is deprecated; you can set variables directly with --variable-name=value."))
   ("table,t", po::value<bool>(&output_tables)->default_value(false)->zero_tokens(),
   N_("Output in table format.")) 
-  ("safe-updates,U", po::value<bool>(&safe_updates)->default_value(0)->zero_tokens(),
+  ("safe-updates,U", po::value<bool>(&safe_updates)->default_value(false)->zero_tokens(),
   N_("Only allow UPDATE and DELETE that uses keys."))
-  ("i-am-a-dummy,U", po::value<bool>(&safe_updates)->default_value(0)->zero_tokens(),
+  ("i-am-a-dummy,U", po::value<bool>(&safe_updates)->default_value(false)->zero_tokens(),
   N_("Synonym for option --safe-updates, -U."))
   ("verbose,v", po::value<string>(&opt_verbose)->default_value(""),
   N_("-v vvv implies that verbose= 3, Used to specify verbose"))
@@ -1333,9 +1329,8 @@ try
 
   po::options_description drizzle_options(N_("Options specific to the drizzle client"));
   drizzle_options.add_options()
-  ("auto-rehash", po::value<bool>(&opt_rehash)->default_value(true)->zero_tokens(),
-  N_("Enable automatic rehashing. One doesn't need to use 'rehash' to get table and field completion, but startup and reconnecting may take a longer time. Disable with --disable-auto-rehash."))
-  ("no-auto-rehash,A",N_("No automatic rehashing. One has to use 'rehash' to get table and field completion. This gives a quicker start of drizzle_st and disables rehashing on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."))
+  ("disable-auto-rehash",
+  N_("Disable automatic rehashing. One doesn't need to use 'rehash' to get table and field completion, but startup and reconnecting may take a longer time."))
   ("auto-vertical-output", po::value<bool>(&auto_vertical_output)->default_value(false)->zero_tokens(),
   N_("Automatically switch to vertical output mode if the result is wider than the terminal width."))
   ("database,D", po::value<string>(&current_db)->default_value(""),
@@ -1347,7 +1342,7 @@ try
   ("execute,e", po::value<string>(),
   N_("Execute command and quit. (Disables --force and history file)"))
   ("local-infile", po::value<bool>(&opt_local_infile)->default_value(false)->zero_tokens(),
-  N_("Enable/disable LOAD DATA LOCAL INFILE."))
+  N_("Enable LOAD DATA LOCAL INFILE."))
   ("unbuffered,n", po::value<bool>(&unbuffered)->default_value(false)->zero_tokens(),
   N_("Flush buffer after each query."))
   ("sigint-ignore", po::value<bool>(&opt_sigint_ignore)->default_value(false)->zero_tokens(),
@@ -1364,8 +1359,7 @@ try
   N_("Don't cache result, print it row by row. This may slow down the server if the output is suspended. Doesn't use history file."))
   ("raw,r", po::value<bool>(&opt_raw_data)->default_value(false)->zero_tokens(),
   N_("Write fields without conversion. Used with --batch.")) 
-  ("reconnect", po::value<bool>(&opt_reconnect)->default_value(true)->zero_tokens(),
-  N_("Reconnect if the connection is lost. Disable with --disable-reconnect. This option is enabled by default."))
+  ("disable-reconnect", N_("Do not reconnect if the connection is lost."))
   ("shutdown", po::value<bool>(&opt_shutdown)->default_value(false)->zero_tokens(),
   N_("Shutdown the server"))
   ("silent,s", N_("Be more silent. Print results with a tab as separator, each row on new line."))
@@ -1493,6 +1487,13 @@ try
     else
       close(stdout_fileno_copy);             /* Clean up dup(). */
   }
+
+  /* Inverted Booleans */
+
+  line_numbers= (vm.count("disable-line-numbers")) ? false : true;
+  column_names= (vm.count("disable-column-names")) ? false : true;
+  opt_rehash= (vm.count("disable-auto-rehash")) ? false : true;
+  opt_reconnect= (vm.count("disable-reconnect")) ? false : true;
 
   if (vm.count("delimiter"))
   {

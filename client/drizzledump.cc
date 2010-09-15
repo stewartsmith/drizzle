@@ -2427,7 +2427,7 @@ try
   ("skip-comments", N_("Turn off Comments"))
   ("skip-create", N_("Turn off create-options"))
   ("skip-extended-insert", N_("Turn off extended-insert"))
-  ("skip-dump-date",N_( "Turn off dump-date"))
+  ("skip-dump-date",N_( "Turn off dump date at the end of the output"))
   ("no-defaults", N_("Do not read from the configuration files"))
   ;
 
@@ -2435,26 +2435,17 @@ try
   dump_options.add_options()
   ("add-drop-database", po::value<bool>(&opt_drop_database)->default_value(false)->zero_tokens(),
   N_("Add a 'DROP DATABASE' before each create."))
-  ("add-drop-table", po::value<bool>(&opt_drop)->default_value(true)->zero_tokens(),
-  N_("Add a 'drop table' before each create."))
+  ("skip-drop-table", N_("Do not add a 'drop table' before each create."))
   ("allow-keywords", po::value<bool>(&opt_keywords)->default_value(false)->zero_tokens(),
   N_("Allow creation of column names that are keywords."))
-  ("comments,i", po::value<bool>(&opt_comments)->default_value(true)->zero_tokens(),
-  N_("Write additional information."))
   ("compact", po::value<bool>(&opt_compact)->default_value(false)->zero_tokens(),
   N_("Give less verbose output (useful for debugging). Disables structure comments and header/footer constructs.  Enables options --skip-add-drop-table --no-set-names --skip-disable-keys --skip-add-locks"))
-  ("create-options", po::value<bool>(&create_options)->default_value(true)->zero_tokens(),
-  N_("Include all DRIZZLE specific create options."))
-  ("dump-date", po::value<bool>(&opt_dump_date)->default_value(true)->zero_tokens(),
-  N_("Put a dump date to the end of the output."))
   ("databases,B", po::value<bool>(&opt_databases)->default_value(false)->zero_tokens(),
   N_("To dump several databases. Note the difference in usage; In this case no tables are given. All name arguments are regarded as databasenames. 'USE db_name;' will be included in the output."))
   ("delayed-insert", po::value<bool>(&opt_delayed)->default_value(false)->zero_tokens(),
   N_("Insert rows with INSERT DELAYED;"))
-  ("disable-keys,K", po::value<bool>(&opt_disable_keys)->default_value(true)->zero_tokens(),
+  ("enable-keys,K",
   N_("'ALTER TABLE tb_name DISABLE KEYS; and 'ALTER TABLE tb_name ENABLE KEYS; will be put in the output."))
-  ("extended-insert,e", po::value<bool>(&extended_insert)->default_value(true)->zero_tokens(),
-  N_("Allows utilization of the new, much faster INSERT syntax."))
   ("fields-terminated-by", po::value<string>(&fields_terminated)->default_value(""),
   N_("Fields in the textfile are terminated by ..."))
   ("fields-enclosed-by", po::value<string>(&enclosed)->default_value(""),
@@ -2482,10 +2473,9 @@ try
   ("no-set-names,N", N_("Deprecated. Use --skip-set-charset instead."))
   ("set-charset", po::value<bool>(&opt_set_charset)->default_value(false)->zero_tokens(),
   N_("Enable set-name"))
-  ("quick,q", po::value<bool>(&quick)->default_value(true)->zero_tokens(),
-  N_("Don't buffer query, dump directly to stdout."))
-  ("quote-names,Q", po::value<bool>(&opt_quoted)->default_value(true)->zero_tokens(),
-  N_("Quote table and column names with backticks (`)."))
+  ("slow", N_("Buffer query instead of dumping directly to stdout."))
+  ("skip-quote-names",
+  N_("Do not quote table and column names with backticks (`)."))
   ("replace", po::value<bool>(&opt_replace_into)->default_value(false)->zero_tokens(),
   N_("Use REPLACE INTO instead of INSERT INTO."))
   ("result-file,r", po::value<string>(),
@@ -2585,6 +2575,16 @@ try
     else
       exit(1);
   }
+
+  /* Inverted Booleans */
+
+  opt_drop= (vm.count("skip-drop-table")) ? false : true;
+  opt_comments= (vm.count("skip-comments")) ? false : true;
+  extended_insert= (vm.count("skip-extended-insert")) ? false : true;
+  opt_dump_date= (vm.count("skip-dump-date")) ? false : true;
+  opt_disable_keys= (vm.count("enable-keys")) ? false : true;
+  quick= (vm.count("slow")) ? false : true;
+  opt_quoted= (vm.count("skip-quote-names")) ? false : true;
 
   if (vm.count("protocol"))
   {
@@ -2701,27 +2701,12 @@ try
     string tmpptr(vm["ignore-table"].as<string>());
     ignore_table.insert(tmpptr); 
   }
-  
+
   if (vm.count("skip-create"))
   {
     opt_create_db= opt_no_create_info= create_options= false;
   }
-
-  if (vm.count("skip-comments"))
-  {
-    opt_comments= false; 
-  }
-
-  if (vm.count("skip-extended-insert"))
-  {
-    extended_insert= false; 
-  }
-
-  if (vm.count("skip-dump-date"))
-  {
-    opt_dump_date= false; 
-  } 
-
+ 
   exit_code= get_options();
   if (exit_code)
   {
