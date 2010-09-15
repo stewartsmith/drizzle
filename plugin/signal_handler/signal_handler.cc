@@ -153,13 +153,17 @@ void signal_hand()
   for (;;)
   {
     int error;					// Used when debugging
+
     if (shutdown_in_progress && !abort_loop)
     {
       sig= SIGTERM;
       error=0;
     }
     else
+    {
       while ((error= sigwait(&set,&sig)) == EINTR) ;
+    }
+
     if (cleanup_done)
     {
       internal::my_thread_end();
@@ -219,18 +223,8 @@ public:
       Wait up to 100000 micro-seconds for signal thread to die. We use this mainly to
       avoid getting warnings that internal::my_thread_end has not been called
     */
-    for (uint32_t i= 0 ; i < 100 && signal_thread_in_use; i++)
-    {
-      if (pthread_kill(signal_thread, SIGTERM) != ESRCH)
-        break;
-
-      struct timespec tm;
-      tm.tv_sec= 0;
-      tm.tv_nsec= 100000;
-
-      nanosleep(&tm, NULL);				// Give it time to die
-    }
-
+    pthread_kill(signal_thread, SIGTERM);
+    thread.join();
   }
 };
 
