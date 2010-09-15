@@ -43,7 +43,7 @@ private:
   pthread_attr_t attr;
 
   pthread_mutex_t LOCK_session_add;    /* protects sessions_need_adding */
-  pthread_mutex_t LOCK_session_kill;    /* protects sessions_to_be_killed */
+  boost::mutex LOCK_session_kill;    /* protects sessions_to_be_killed */
   /**
    * LOCK_event_loop protects the non-thread safe libevent calls (event_add
    * and event_del) and sessions_need_processing and sessions_waiting_for_io.
