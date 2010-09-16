@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2010-07-20 16:06+0000\n"
-"PO-Revision-Date: 2010-09-12 14:27+0000\n"
-"Last-Translator: Matheus de Araújo <Unknown>\n"
+"PO-Revision-Date: 2010-09-16 02:24+0000\n"
+"Last-Translator: Miguel Lima <miguelcpjava@gmail.com>\n"
 "Language-Team: Brazilian Portuguese <pt_BR@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Launchpad-Export-Date: 2010-09-13 05:02+0000\n"
+"X-Launchpad-Export-Date: 2010-09-16 04:59+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 msgid "Synonym for `help'."
@@ -208,7 +208,7 @@ msgid "Ping the server to check if it's alive."
 msgstr "Pingar o servidor para verificar se está disponível"
 
 msgid "Configuration file defaults are not used if no-defaults is set"
-msgstr ""
+msgstr "Arquivo de configuração padrão não está definido."
 
 msgid ""
 "Enable automatic rehashing. One doesn't need to use 'rehash' to get table "
@@ -275,6 +275,8 @@ msgstr ""
 
 msgid "Disable pager and print to stdout. See interactive help (\\h) also."
 msgstr ""
+"Desabilita paginação e impressão na saída padrão. Veja também a ajuda "
+"interativa (\\h)."
 
 msgid "Set the drizzle prompt to this value."
 msgstr "Define o prompt do drizzle para este valor."
@@ -337,7 +339,7 @@ msgid "Use MySQL Protocol."
 msgstr "Utilização do protocolo MySQL"
 
 msgid "Connect to host"
-msgstr ""
+msgstr "Conectar ao servidor"
 
 msgid ""
 "Password to use when connecting to server. If password is not given it's "
@@ -350,12 +352,14 @@ msgid ""
 "Port number to use for connection or 0 for default to, in order of "
 "preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default"
 msgstr ""
+"Número da porta usada para conexão ou 0 para default, em ordem de "
+"preferência, dizzle.cnf, $DRIZZLE_TCP_PORT,por omissão"
 
 msgid "User for login if not current user."
 msgstr "Usuário para login, caso não seja o atual."
 
 msgid "The protocol of connection (tcp,socket,pipe,memory)."
-msgstr ""
+msgstr "O protocolo de Conexão (tcp,socket,pipe,memory)."
 
 #, c-format
 msgid ""
@@ -438,6 +442,9 @@ msgid ""
 "You can turn off this feature to get a quicker startup with -A\n"
 "\n"
 msgstr ""
+"Lendo informação para completar a tabela e nomes de colunas\n"
+"Você pode desativar esse recurso para obter uma inicialização rápida com -A\n"
+"\n"
 
 msgid "No connection. Trying to reconnect..."
 msgstr "Sem conexão. Tentando reconectar..."
@@ -674,17 +681,17 @@ msgid "Invalid mode to --compatible: %s\n"
 msgstr "Modo inválido para --compatible: %s\n"
 
 msgid "Error: Invalid Value for opt_max_connect_retries"
-msgstr ""
+msgstr "Erro: Valor Inválido para opt_max_connect_retries"
 
 msgid "Error: Invalid Value for opt_tail_lines"
-msgstr ""
+msgstr "Erro: Valor Inválido para opt_tail_lines"
 
 msgid "Error: Invalid Value for opt_sleep"
-msgstr ""
+msgstr "Erro: Valor Inválido para opt_sleep"
 
 #, c-format
 msgid "Could not open '%s' for reading: errno = %d"
-msgstr ""
+msgstr "Não poderia abrir '%s' para ler: errno = %d"
 
 #, c-format
 msgid "Out of memory"
@@ -771,7 +778,7 @@ msgid "Default completion type."
 msgstr "Tipo de completação padrão"
 
 msgid "Write core on errors."
-msgstr ""
+msgstr "Escreva núcleos de erros"
 
 msgid "Path to the database root."
 msgstr "Caminho para a raiz do banco de dados."
