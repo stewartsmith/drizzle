@@ -27,6 +27,8 @@
 
 #include "config.h"
 
+#include "drizzled/definitions.h"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -125,6 +127,7 @@ bool CachedDirectory::open(const string &in_path, set<string> &allowed_exts, enu
   while ((retcode= readdir_r(dirp, &buffer.entry, &result)) == 0 &&
          result != NULL)
   {
+    std::string buffered_fullpath;
     if (! allowed_exts.empty())
     {
       char *ptr= rindex(result->d_name, '.');
@@ -148,10 +151,16 @@ bool CachedDirectory::open(const string &in_path, set<string> &allowed_exts, enu
         {
           struct stat entrystat;
 
-          if (result->d_name[0] == '.')
+          if (result->d_name[0] == '.') // We don't pass back anything hidden at the moment.
             continue;
 
-          stat(result->d_name, &entrystat);
+          buffered_fullpath.append(in_path);
+          if (buffered_fullpath[buffered_fullpath.length()] != '/')
+            buffered_fullpath.append(1, FN_LIBCHAR);
+
+          buffered_fullpath.assign(result->d_name);
+
+          stat(buffered_fullpath.c_str(), &entrystat);
 
           if (S_ISDIR(entrystat.st_mode))
           {
@@ -163,7 +172,13 @@ bool CachedDirectory::open(const string &in_path, set<string> &allowed_exts, enu
         {
           struct stat entrystat;
 
-          stat(result->d_name, &entrystat);
+          buffered_fullpath.append(in_path);
+          if (buffered_fullpath[buffered_fullpath.length()] != '/')
+            buffered_fullpath.append(1, FN_LIBCHAR);
+
+          buffered_fullpath.assign(result->d_name);
+
+          stat(buffered_fullpath.c_str(), &entrystat);
 
           if (S_ISREG(entrystat.st_mode))
           {

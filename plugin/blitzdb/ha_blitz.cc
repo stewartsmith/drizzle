@@ -78,10 +78,6 @@ public:
                            const drizzled::TableIdentifier &identifier,
                            drizzled::message::Table &table_proto);
 
-  void doGetTableNames(drizzled::CachedDirectory &directory,
-                       const drizzled::SchemaIdentifier &schema_identifier,
-                       std::set<std::string>& set_of_names);
-
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                              const drizzled::SchemaIdentifier &schema_identifier,
                              drizzled::TableIdentifiers &set_of_identifiers);
@@ -288,35 +284,6 @@ int BlitzEngine::doGetTableDefinition(drizzled::Session &,
   free(proto_string);
 
   return EEXIST;
-}
-
-void BlitzEngine::doGetTableNames(drizzled::CachedDirectory &directory,
-                                  const drizzled::SchemaIdentifier &,
-                                  std::set<string> &set_of_names) {
-  drizzled::CachedDirectory::Entries entries = directory.getEntries();
-
-  for (drizzled::CachedDirectory::Entries::iterator entry_iter = entries.begin();
-       entry_iter != entries.end(); ++entry_iter) {
-
-    drizzled::CachedDirectory::Entry *entry = *entry_iter;
-    std::string *filename = &entry->filename;
-
-    assert(filename->size());
-
-    const char *ext = strchr(filename->c_str(), '.');
-
-    if (ext != NULL) {
-      char uname[NAME_LEN + 1];
-      uint32_t file_name_len;
-
-      file_name_len = TableIdentifier::filename_to_tablename(filename->c_str(),
-                                                             uname,
-                                                             sizeof(uname));
-
-      uname[file_name_len - sizeof(BLITZ_DATA_EXT) + 1]= '\0';
-      set_of_names.insert(uname);
-    }
-  }
 }
 
 void BlitzEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,

@@ -105,8 +105,6 @@ public:
                            const drizzled::TableIdentifier &identifier,
                            drizzled::message::Table &table_message);
 
-  void doGetTableNames(drizzled::CachedDirectory &directory, const drizzled::SchemaIdentifier&, std::set<std::string>& set_of_names);
-
   int doDropTable(drizzled::Session&, const drizzled::TableIdentifier &identifier);
 
   ArchiveShare *findOpenTable(const std::string table_name);

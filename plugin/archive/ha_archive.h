@@ -31,7 +31,7 @@ public:
   bool prime(uint64_t *auto_increment);
 
   std::string table_name;
-  char data_file_name[FN_REFLEN];
+  std::string data_file_name;
   uint32_t use_count;
   pthread_mutex_t _mutex;
   drizzled::THR_LOCK _lock;
