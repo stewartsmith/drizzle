@@ -126,9 +126,6 @@ public:
                            const TableIdentifier &identifier,
                            message::Table &table_message);
 
-  /* Temp only engine, so do not return values. */
-  void doGetTableNames(CachedDirectory &, const SchemaIdentifier &, set<string>&) { };
-
   uint32_t max_supported_keys()          const { return MI_MAX_KEY; }
   uint32_t max_supported_key_length()    const { return MI_MAX_KEY_LENGTH; }
   uint32_t max_supported_key_part_length() const { return MI_MAX_KEY_LENGTH; }
@@ -568,7 +565,7 @@ const char *ha_myisam::index_type(uint32_t )
 }
 
 /* Name is here without an extension */
-int ha_myisam::open(const char *name, int mode, uint32_t test_if_locked)
+int ha_myisam::doOpen(const drizzled::TableIdentifier &identifier, int mode, uint32_t test_if_locked)
 {
   MI_KEYDEF *keyinfo;
   MI_COLUMNDEF *recinfo= 0;
@@ -590,7 +587,7 @@ int ha_myisam::open(const char *name, int mode, uint32_t test_if_locked)
     open of a table that is in use by other threads already (if the
     MyISAM share exists already).
   */
-  if (!(file=mi_open(name, mode, test_if_locked)))
+  if (!(file= mi_open(identifier, mode, test_if_locked)))
     return (errno ? errno : -1);
 
   if (!table->getShare()->getType()) /* No need to perform a check for tmp table */

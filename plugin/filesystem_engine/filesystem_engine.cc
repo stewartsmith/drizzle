@@ -94,9 +94,6 @@ public:
                            const drizzled::TableIdentifier &,
                            drizzled::message::Table &);
 
-  /* Temp only engine, so do not return values. */
-  void doGetTableNames(drizzled::CachedDirectory &, const drizzled::SchemaIdentifier &, drizzled::plugin::TableNameList &);
-
   int doDropTable(Session&, const TableIdentifier &);
 
   /* operations on FilesystemTableShare */
@@ -152,13 +149,6 @@ void FilesystemEngine::getTableNamesFromFilesystem(drizzled::CachedDirectory &di
         set_of_identifiers->push_back(TableIdentifier(schema_identifier, uname));
     }
   }
-}
-
-void FilesystemEngine::doGetTableNames(drizzled::CachedDirectory &directory,
-                                       const drizzled::SchemaIdentifier &schema_identifier,
-                                       drizzled::plugin::TableNameList &set_of_names)
-{
-  getTableNamesFromFilesystem(directory, schema_identifier, &set_of_names, NULL);
 }
 
 void FilesystemEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,

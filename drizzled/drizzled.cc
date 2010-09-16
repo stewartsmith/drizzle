@@ -291,7 +291,6 @@ char glob_hostname[FN_REFLEN];
 char data_home_real[FN_REFLEN],
      language[FN_REFLEN], 
      *opt_tc_log_file;
-char data_home_real_unpacked[FN_REFLEN];
 const key_map key_map_empty(0);
 key_map key_map_full(0);                        // Will be initialized later
 
@@ -2233,7 +2232,6 @@ static void fix_paths(string progname)
   internal::convert_dirname(data_home_real,data_home_real,NULL);
   (void) internal::fn_format(buff, data_home_real, "", "",
                    (MY_RETURN_REAL_PATH|MY_RESOLVE_SYMLINKS));
-  (void) internal::unpack_dirname(data_home_real_unpacked, buff);
   internal::convert_dirname(language,language,NULL);
   (void) internal::my_load_path(drizzle_home, drizzle_home,""); // Resolve current dir
   (void) internal::my_load_path(data_home_real, data_home_real,drizzle_home);

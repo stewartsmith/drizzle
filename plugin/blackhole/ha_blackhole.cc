@@ -92,38 +92,6 @@ public:
                            const drizzled::TableIdentifier &identifier,
                            drizzled::message::Table &table_message);
 
-  void doGetTableNames(drizzled::CachedDirectory &directory,
-		       const SchemaIdentifier &,
-                       set<string>& set_of_names)
-  {
-    drizzled::CachedDirectory::Entries entries= directory.getEntries();
-
-    for (drizzled::CachedDirectory::Entries::iterator entry_iter= entries.begin();
-         entry_iter != entries.end(); ++entry_iter)
-    {
-      drizzled::CachedDirectory::Entry *entry= *entry_iter;
-      const string *filename= &entry->filename;
-
-      assert(filename->size());
-
-      const char *ext= strchr(filename->c_str(), '.');
-
-      if (ext == NULL || my_strcasecmp(system_charset_info, ext, BLACKHOLE_EXT) ||
-         (filename->compare(0, strlen(TMP_FILE_PREFIX), TMP_FILE_PREFIX) == 0))
-      {  }
-      else
-      {
-        char uname[NAME_LEN + 1];
-        uint32_t file_name_len;
-
-        file_name_len= TableIdentifier::filename_to_tablename(filename->c_str(), uname, sizeof(uname));
-        // TODO: Remove need for memory copy here
-        uname[file_name_len - sizeof(BLACKHOLE_EXT) + 1]= '\0'; // Subtract ending, place NULL
-        set_of_names.insert(uname);
-      }
-    }
-  }
-
   /* The following defines can be increased if necessary */
   uint32_t max_supported_keys()          const { return BLACKHOLE_MAX_KEY; }
   uint32_t max_supported_key_length()    const { return BLACKHOLE_MAX_KEY_LENGTH; }
