@@ -471,7 +471,7 @@ void libevent_session_add(Session* session)
 void PoolOfThreadsScheduler::sessionAddToQueue(session_scheduler *sched)
 {
   char c= 0;
-  boost::mutex::scoped_lock(LOCK_session_add);
+  boost::mutex::scoped_lock scopedLock(LOCK_session_add);
   if (sessions_need_adding.empty())
   {
     /* notify libevent */
