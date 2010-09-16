@@ -20,89 +20,98 @@
 #ifndef CLIENT_DRIZZLEDUMP_H
 #define CLIENT_DRIZZLEDUMP_H
 
+class DrizzleDumpDatabase;
+
 class DrizzleDumpField
 {
-  private:
-   std::string fieldName;
-
   public:
-   std::stringstream errmsg;
+    std::stringstream errmsg;
 
-   DrizzleDumpField() :
-    fieldName()
-   { }
+    DrizzleDumpField(std::string &field) :
+      fieldName(field)
+    { }
 
-  enum field_types
-  {
-    FIELD_TYPE_INT,
-    FIELD_TYPE_BIGINT,
-    FIELD_TYPE_VARCHAR,
-    FIELD_TYPE_VARBINARY,
-    FIELD_TYPE_ENUM,
-    FIELD_TYPE_BLOB,
-    FIELD_TYPE_DECIMAL,
-    FIELD_TYPE_DOUBLE,
-    FIELD_TYPE_DATE,
-    FIELD_TYPE_DATETIME,
-    FIELD_TYPE_TIMESTAMP,
-    FIELD_TYPE_NONE
-  };
+    friend std::ostream& operator <<(std::ostream &os, const DrizzleDumpField &obj);
+    std::string fieldName;
+  
+/*    enum field_types
+    {
+      FIELD_TYPE_INT,
+      FIELD_TYPE_BIGINT,
+      FIELD_TYPE_VARCHAR,
+      FIELD_TYPE_VARBINARY,
+      FIELD_TYPE_ENUM,
+      FIELD_TYPE_BLOB,
+      FIELD_TYPE_DECIMAL,
+      FIELD_TYPE_DOUBLE,
+      FIELD_TYPE_DATE,
+      FIELD_TYPE_DATETIME,
+      FIELD_TYPE_TIMESTAMP,
+      FIELD_TYPE_NONE
+    };
 
-  enum field_types type;
-  uint32_t length;
-  bool isNull;
-  bool isUnsigned;
-  bool isAutoIncrement;
-  std::string defaultValue;
-  bool quoteDefault;
-  std::string collation;
+    enum field_types type;
+*/
+    std::string type;
+    uint32_t length;
+    bool isNull;
+    bool isUnsigned;
+    bool isAutoIncrement;
+    bool isPrimary;
+    bool defaultIsNull;
+    std::string defaultValue;
+    std::string collation;
 
-  /* For enum type */
-  std::string enumValues;
+    /* For enum type */
+    std::string enumValues;
 
-  /* For decimal/double */
-  uint32_t decimalPrecision;
-  uint32_t decimalScale;
+    /* For decimal/double */
+    uint32_t decimalPrecision;
+    uint32_t decimalScale;
+
+    void setType(const char* raw_type, const char* collation);
 };
 
 class DrizzleDumpTable
 {
-  private:
-   const std::string tableName;
-
   public:
-   std::stringstream errmsg;
+    std::stringstream errmsg;
 
-   DrizzleDumpTable(std::string &table) :
-    tableName(table)
-   { }
-   bool populateFields(drizzle_con_st &connection);
-   std::vector<DrizzleDumpField*> fields;
+    DrizzleDumpTable(std::string &table) :
+      tableName(table)
+    { }
+    bool populateFields(drizzle_con_st &connection);
+    std::vector<DrizzleDumpField*> fields;
 
-   const std::string& getName() const { return tableName; }
+    friend std::ostream& operator <<(std::ostream &os, const DrizzleDumpTable &obj);
+    std::string tableName;
+    std::string engineName;
+    std::string collate;
+    void setCollate(const char* newCollate) { collate= newCollate; }
+    void setEngine(const char* newEngine) { engineName= newEngine; }
+
+    // Currently MySQL only, hard to do in Drizzle
+    uint64_t autoIncrement;
+    DrizzleDumpDatabase* database;
 };
 
 class DrizzleDumpDatabase
 {
-  private:
-   const std::string databaseName;
-   std::string collate;
-
   public:
-   std::stringstream errmsg;
+    std::stringstream errmsg;
 
-   DrizzleDumpDatabase(const std::string &database) :
-    databaseName(database)
-   { }
+    DrizzleDumpDatabase(const std::string &database) :
+      databaseName(database)
+    { }
 
-   friend std::ostream& operator <<(std::ostream &os, const DrizzleDumpDatabase &obj);
+    friend std::ostream& operator <<(std::ostream &os, const DrizzleDumpDatabase &obj);
 
-   bool populateTables(drizzle_con_st &connection);
-   std::vector<DrizzleDumpTable*> tables;
+    bool populateTables(drizzle_con_st &connection);
+    std::vector<DrizzleDumpTable*> tables;
 
-   const std::string& getName() const { return databaseName; }
-   const std::string& getCollate() const { return collate; }
-   void setCollate(std::string new_collate) { collate= new_collate; }
+    const std::string databaseName;
+    std::string collate;
+    void setCollate(const char* newCollate) { collate= newCollate; }
 };
 
 #endif /* CLIENT_DRIZZLEDUMP_H */
