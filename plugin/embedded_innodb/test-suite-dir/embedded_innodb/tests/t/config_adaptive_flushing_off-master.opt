@@ -1,1 +1,1 @@
---plugin-add=embedded_innodb --plugin-remove=innobase --innodb.disable-adaptive-flushing
+ --innodb.disable-adaptive-flushing
