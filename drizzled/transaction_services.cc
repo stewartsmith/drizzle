@@ -825,8 +825,13 @@ int TransactionServices::rollbackToSavepoint(Session *session, NamedSavepoint &s
     message::Transaction *savepoint_transaction= sv.getTransactionMessage();
     if (savepoint_transaction != NULL)
     {
+      /* Make a copy of the savepoint transaction, this is necessary to assure proper cleanup. 
+         Upon commit the savepoint_transaction_copy will be cleaned up by a call to 
+         cleanupTransactionMessage(). The Transaction message in NamedSavepoint will be cleaned
+         up when the savepoint is cleaned up. This avoids calling delete twice on the Transaction.
+      */ 
       message::Transaction *savepoint_transaction_copy= new message::Transaction(*sv.getTransactionMessage());
-      uint32_t num_statements = savepoint_transaction->statement_size();
+      uint32_t num_statements = savepoint_transaction_copy->statement_size();
       if (num_statements == 0)
       {    
         session->setStatementMessage(NULL);
