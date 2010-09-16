@@ -42,13 +42,13 @@ class PoolOfThreadsScheduler: public drizzled::plugin::Scheduler
 private:
   pthread_attr_t attr;
 
-  pthread_mutex_t LOCK_session_add;    /* protects sessions_need_adding */
-  pthread_mutex_t LOCK_session_kill;    /* protects sessions_to_be_killed */
+  boost::mutex LOCK_session_add;    /* protects sessions_need_adding */
+  boost::mutex LOCK_session_kill;    /* protects sessions_to_be_killed */
   /**
    * LOCK_event_loop protects the non-thread safe libevent calls (event_add
    * and event_del) and sessions_need_processing and sessions_waiting_for_io.
    */
-  pthread_mutex_t LOCK_event_loop;
+  boost::mutex LOCK_event_loop;
 
   std::queue<drizzled::Session *> sessions_need_adding; /* queue of sessions to add to libevent queue */
   std::queue<drizzled::Session *> sessions_to_be_killed; /* queue of sessions to be killed */

@@ -27,12 +27,14 @@
 
 #include "drizzled/drizzled.h"
 
+#include <boost/thread/thread.hpp>
+
 #include <sys/stat.h>
 #include <fcntl.h>
 
 
 static bool kill_in_progress= false;
-extern "C" pthread_handler_t signal_hand(void *);
+void signal_hand(void);
 
 namespace drizzled
 {
@@ -107,7 +109,7 @@ static void create_pid_file()
 
 
 /** This threads handles all signals and alarms. */
-pthread_handler_t signal_hand(void *)
+void signal_hand()
 {
   sigset_t set;
   int sig;
@@ -151,19 +153,23 @@ pthread_handler_t signal_hand(void *)
   for (;;)
   {
     int error;					// Used when debugging
+
     if (shutdown_in_progress && !abort_loop)
     {
       sig= SIGTERM;
       error=0;
     }
     else
+    {
       while ((error= sigwait(&set,&sig)) == EINTR) ;
+    }
+
     if (cleanup_done)
     {
       internal::my_thread_end();
       signal_thread_in_use= false;
 
-      return NULL;
+      return;
     }
     switch (sig) {
     case SIGTERM:
@@ -194,47 +200,17 @@ class SignalHandler :
 {
   SignalHandler(const SignalHandler &);
   SignalHandler& operator=(const SignalHandler &);
+  boost::thread thread;
+
 public:
-  SignalHandler()
-    : drizzled::plugin::Daemon("Signal Handler")
+  SignalHandler() :
+    drizzled::plugin::Daemon("Signal Handler")
   {
-    int error;
-    pthread_attr_t thr_attr;
-    size_t my_thread_stack_size= 65536;
-
-    (void) pthread_attr_init(&thr_attr);
-    pthread_attr_setscope(&thr_attr, PTHREAD_SCOPE_SYSTEM);
-    (void) pthread_attr_setdetachstate(&thr_attr, PTHREAD_CREATE_DETACHED);
-    {
-      struct sched_param tmp_sched_param;
-
-      memset(&tmp_sched_param, 0, sizeof(tmp_sched_param));
-      tmp_sched_param.sched_priority= INTERRUPT_PRIOR;
-      (void)pthread_attr_setschedparam(&thr_attr, &tmp_sched_param);
-    }
-#if defined(__ia64__) || defined(__ia64)
-    /*
-      Peculiar things with ia64 platforms - it seems we only have half the
-      stack size in reality, so we have to double it here
-    */
-    pthread_attr_setstacksize(&thr_attr, my_thread_stack_size*2);
-# else
-    pthread_attr_setstacksize(&thr_attr, my_thread_stack_size);
-#endif
-
     // @todo fix spurious wakeup issue
-    (void) LOCK_thread_count.lock();
-    if ((error= pthread_create(&signal_thread, &thr_attr, signal_hand, 0)))
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("Can't create interrupt-thread (error %d, errno: %d)"),
-                    error,errno);
-      exit(1);
-    }
-    pthread_cond_wait(COND_thread_count.native_handle(), LOCK_thread_count.native_handle());
-    LOCK_thread_count.unlock();
-
-    (void) pthread_attr_destroy(&thr_attr);
+    boost::mutex::scoped_lock scopedLock(LOCK_thread_count);
+    thread= boost::thread(signal_hand);
+    signal_thread= thread.native_handle();
+    COND_thread_count.wait(scopedLock);
   }
 
   /**
@@ -247,25 +223,15 @@ public:
       Wait up to 100000 micro-seconds for signal thread to die. We use this mainly to
       avoid getting warnings that internal::my_thread_end has not been called
     */
-    for (uint32_t i= 0 ; i < 100 && signal_thread_in_use; i++)
-    {
-      if (pthread_kill(signal_thread, SIGTERM) != ESRCH)
-        break;
-
-      struct timespec tm;
-      tm.tv_sec= 0;
-      tm.tv_nsec= 100000;
-
-      nanosleep(&tm, NULL);				// Give it time to die
-    }
-
+    pthread_kill(signal_thread, SIGTERM);
+    thread.join();
   }
 };
 
 static int init(drizzled::module::Context& context)
 {
-  SignalHandler *handler= new SignalHandler;
-  context.add(handler);
+  context.add(new SignalHandler);
+
   return 0;
 }
 

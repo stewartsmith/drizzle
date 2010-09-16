@@ -60,13 +60,11 @@ Schema::Schema():
   schema_cache_filled(false)
 {
   table_definition_ext= DEFAULT_FILE_EXTENSION;
-  pthread_rwlock_init(&schema_lock, NULL);
   prime();
 }
 
 Schema::~Schema()
 {
-  pthread_rwlock_destroy(&schema_lock);
 }
 
 void Schema::prime()
@@ -74,7 +72,7 @@ void Schema::prime()
   CachedDirectory directory(data_home, CachedDirectory::DIRECTORY);
   CachedDirectory::Entries files= directory.getEntries();
 
-  pthread_rwlock_wrlock(&schema_lock);
+  mutex.lock();
 
   for (CachedDirectory::Entries::iterator fileIter= files.begin();
        fileIter != files.end(); fileIter++)
@@ -98,12 +96,12 @@ void Schema::prime()
       }
     }
   }
-  pthread_rwlock_unlock(&schema_lock);
+  mutex.unlock();
 }
 
 void Schema::doGetSchemaIdentifiers(SchemaIdentifiers &set_of_names)
 {
-  if (not pthread_rwlock_rdlock(&schema_lock))
+  mutex.lock_shared();
   {
     for (SchemaCache::iterator iter= schema_cache.begin();
          iter != schema_cache.end();
@@ -111,45 +109,26 @@ void Schema::doGetSchemaIdentifiers(SchemaIdentifiers &set_of_names)
     {
       set_of_names.push_back(SchemaIdentifier((*iter).second.name()));
     }
-    pthread_rwlock_unlock(&schema_lock);
-
-    return;
   }
-
-  // If for some reason getting a lock should fail, we resort to disk
-
-  CachedDirectory directory(data_home, CachedDirectory::DIRECTORY);
-
-  CachedDirectory::Entries files= directory.getEntries();
-
-  for (CachedDirectory::Entries::iterator fileIter= files.begin();
-       fileIter != files.end(); fileIter++)
-  {
-    CachedDirectory::Entry *entry= *fileIter;
-    set_of_names.push_back(entry->filename);
-  }
+  mutex.unlock_shared();
 }
 
 bool Schema::doGetSchemaDefinition(const SchemaIdentifier &schema_identifier, message::Schema &schema_message)
 {
-  if (not pthread_rwlock_rdlock(&schema_lock))
+  mutex.lock_shared();
+  SchemaCache::iterator iter= schema_cache.find(schema_identifier.getPath());
+
+  if (iter != schema_cache.end())
   {
-    SchemaCache::iterator iter= schema_cache.find(schema_identifier.getPath());
-
-    if (iter != schema_cache.end())
-    {
-      schema_message.CopyFrom(((*iter).second));
-      pthread_rwlock_unlock(&schema_lock);
-      return true;
-    }
-    pthread_rwlock_unlock(&schema_lock);
-
-    return false;
+    schema_message.CopyFrom(((*iter).second));
+    mutex.unlock_shared();
+    return true;
   }
+  mutex.unlock_shared();
 
-  // Fail to disk based means
-  return readSchemaFile(schema_identifier.getPath(), schema_message);
+  return false;
 }
+
 
 bool Schema::doCreateSchema(const drizzled::message::Schema &schema_message)
 {
@@ -165,18 +144,18 @@ bool Schema::doCreateSchema(const drizzled::message::Schema &schema_message)
     return false;
   }
 
-  if (not pthread_rwlock_wrlock(&schema_lock))
+  mutex.lock();
   {
-      pair<SchemaCache::iterator, bool> ret=
-        schema_cache.insert(make_pair(schema_identifier.getPath(), schema_message));
+    pair<SchemaCache::iterator, bool> ret=
+      schema_cache.insert(make_pair(schema_identifier.getPath(), schema_message));
 
 
-      if (ret.second == false)
-      {
-        abort(); // If this has happened, something really bad is going down.
-      }
-    pthread_rwlock_unlock(&schema_lock);
+    if (ret.second == false)
+    {
+      abort(); // If this has happened, something really bad is going down.
+    }
   }
+  mutex.unlock();
 
   return true;
 }
@@ -214,11 +193,9 @@ bool Schema::doDropSchema(const SchemaIdentifier &schema_identifier)
     cerr << dir;
   }
 
-  if (not pthread_rwlock_wrlock(&schema_lock))
-  {
-    schema_cache.erase(schema_identifier.getPath());
-    pthread_rwlock_unlock(&schema_lock);
-  }
+  mutex.lock();
+  schema_cache.erase(schema_identifier.getPath());
+  mutex.unlock();
 
   return true;
 }
@@ -232,7 +209,7 @@ bool Schema::doAlterSchema(const drizzled::message::Schema &schema_message)
 
   if (writeSchemaFile(schema_identifier, schema_message))
   {
-    if (not pthread_rwlock_wrlock(&schema_lock))
+    mutex.lock();
     {
       schema_cache.erase(schema_identifier.getPath());
 
@@ -243,13 +220,8 @@ bool Schema::doAlterSchema(const drizzled::message::Schema &schema_message)
       {
         abort(); // If this has happened, something really bad is going down.
       }
-
-      pthread_rwlock_unlock(&schema_lock);
     }
-    else
-    {
-      abort(); // This would leave us out of sync, suck.
-    }
+    mutex.unlock();
   }
 
   return true;
