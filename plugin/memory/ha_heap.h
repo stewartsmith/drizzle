@@ -17,8 +17,8 @@
 
 /* class for the the heap Cursor */
 
-#ifndef PLUGIN_HEAP_HA_HEAP_H
-#define PLUGIN_HEAP_HA_HEAP_H
+#ifndef PLUGIN_MEMORY_HA_HEAP_H
+#define PLUGIN_MEMORY_HA_HEAP_H
 
 #include <drizzled/cursor.h>
 #include <drizzled/thr_lock.h>
@@ -96,4 +96,4 @@ private:
   void update_key_stats();
 };
 
-#endif /* PLUGIN_HEAP_HA_HEAP_H */
+#endif /* PLUGIN_MEMORY_HA_HEAP_H */
