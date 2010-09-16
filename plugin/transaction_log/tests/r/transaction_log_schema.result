@@ -99,10 +99,16 @@ transaction_context {
   END_TIMESTAMP
 }
 statement {
-  type: RAW_SQL
+  type: DROP_TABLE
   START_TIMESTAMP
   END_TIMESTAMP
-  sql: "DROP TABLE IF EXISTS `my_test_schema`.`t1`"
+  drop_table_statement {
+    table_metadata {
+      schema_name: "my_test_schema"
+      table_name: "t2"
+    }
+    if_exists_clause: true
+  }
 }
 
 Checking t2 DROP
@@ -115,10 +121,16 @@ transaction_context {
   END_TIMESTAMP
 }
 statement {
-  type: RAW_SQL
+  type: DROP_TABLE
   START_TIMESTAMP
   END_TIMESTAMP
-  sql: "DROP TABLE IF EXISTS `my_test_schema`.`t2`"
+  drop_table_statement {
+    table_metadata {
+      schema_name: "my_test_schema"
+      table_name: "t1"
+    }
+    if_exists_clause: true
+  }
 }
 
 Checking t3 DROP
@@ -131,16 +143,22 @@ transaction_context {
   END_TIMESTAMP
 }
 statement {
-  type: RAW_SQL
+  type: DROP_TABLE
   START_TIMESTAMP
   END_TIMESTAMP
-  sql: "DROP TABLE IF EXISTS `my_test_schema`.`t3`"
+  drop_table_statement {
+    table_metadata {
+      schema_name: "my_test_schema"
+      table_name: "t3"
+    }
+    if_exists_clause: true
+  }
 }
 
 # check transaction_log
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
 FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
-transaction.log	1011	8	8	1	8	START_TIMESTAMP	END_TIMESTAMP	73736
+transaction.log	960	8	8	1	8	START_TIMESTAMP	END_TIMESTAMP	73736
 
 Check transaction_log_entries
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
@@ -149,10 +167,10 @@ ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
 121	TRANSACTION	168
 289	TRANSACTION	170
 459	TRANSACTION	170
-629	TRANSACTION	102
-731	TRANSACTION	102
-833	TRANSACTION	102
-935	TRANSACTION	76
+629	TRANSACTION	85
+714	TRANSACTION	85
+799	TRANSACTION	85
+884	TRANSACTION	76
 
 Check transaction_log_transactions
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
@@ -162,9 +180,9 @@ ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMEN
 289	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
 459	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
 629	5	1	START_TIMESTAMP	END_TIMESTAMP	1	0
-731	6	1	START_TIMESTAMP	END_TIMESTAMP	1	0
-833	7	1	START_TIMESTAMP	END_TIMESTAMP	1	0
-935	8	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+714	6	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+799	7	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+884	8	1	START_TIMESTAMP	END_TIMESTAMP	1	0
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))

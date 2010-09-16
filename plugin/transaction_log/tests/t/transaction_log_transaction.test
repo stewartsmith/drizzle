@@ -73,7 +73,6 @@ INSERT INTO t2 (b) VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(100),(101);
 UPDATE t1 SET b = b*10 WHERE b%2=0;
 # this will cause implicit COMMIT
 CREATE TABLE t3 LIKE t1;
-SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',625);
 
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
