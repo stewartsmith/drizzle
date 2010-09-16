@@ -1,1 +1,1 @@
---plugin-add=embedded_innodb --plugin-remove=innobase --innodb.additional-mem-pool-size=33554432
+ --innodb.additional-mem-pool-size=33554432
