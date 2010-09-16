@@ -88,13 +88,22 @@ CREATE SCHEMA my_test_schema;
 CREATE TABLE my_test_schema.t1 (a int not null, primary key(a));
 CREATE TABLE my_test_schema.t2 LIKE my_test_schema.t1;
 CREATE TABLE my_test_schema.t3 LIKE my_test_schema.t2;
+We truncate the log to simplify test validation
+we are mainly concerned that we see 4 new entries 
+once we have issued the DROP SCHEMA statement
+SET GLOBAL transaction_log_truncate_debug= true;
+
 DROP SCHEMA my_test_schema;
-Checking t1 DROP
-SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(SELECT entry_offset FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS WHERE TRANSACTION_ID = 5));
-PRINT_TRANSACTION_MESSAGE('transaction.log',(SELECT entry_offset FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS WHERE TRANSACTION_ID = 5))
+The implied DROP TABLE statements for t1->t3
+do not come in any deterministic order t1 may or may not be first
+,therefore we have to satisfy ourselves that we have 4 items in the log
+after issuing the DROP SCHEMA
+We do check the first entry (OFFSET=0) as this should be the first of 3 DROP TABLE messages
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',0);
+PRINT_TRANSACTION_MESSAGE('transaction.log',0)
 transaction_context {
   server_id: 1
-  transaction_id: 5
+  transaction_id: 1
   START_TIMESTAMP
   END_TIMESTAMP
 }
@@ -105,51 +114,7 @@ statement {
   drop_table_statement {
     table_metadata {
       schema_name: "my_test_schema"
-      table_name: "t2"
-    }
-    if_exists_clause: true
-  }
-}
-
-Checking t2 DROP
-SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(SELECT entry_offset FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS WHERE TRANSACTION_ID = 6));
-PRINT_TRANSACTION_MESSAGE('transaction.log',(SELECT entry_offset FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS WHERE TRANSACTION_ID = 6))
-transaction_context {
-  server_id: 1
-  transaction_id: 6
-  START_TIMESTAMP
-  END_TIMESTAMP
-}
-statement {
-  type: DROP_TABLE
-  START_TIMESTAMP
-  END_TIMESTAMP
-  drop_table_statement {
-    table_metadata {
-      schema_name: "my_test_schema"
-      table_name: "t1"
-    }
-    if_exists_clause: true
-  }
-}
-
-Checking t3 DROP
-SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(SELECT entry_offset FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS WHERE TRANSACTION_ID = 7));
-PRINT_TRANSACTION_MESSAGE('transaction.log',(SELECT entry_offset FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS WHERE TRANSACTION_ID = 7))
-transaction_context {
-  server_id: 1
-  transaction_id: 7
-  START_TIMESTAMP
-  END_TIMESTAMP
-}
-statement {
-  type: DROP_TABLE
-  START_TIMESTAMP
-  END_TIMESTAMP
-  drop_table_statement {
-    table_metadata {
-      schema_name: "my_test_schema"
-      table_name: "t3"
+      table_name:  TABLE_NAME
     }
     if_exists_clause: true
   }
@@ -158,37 +123,29 @@ statement {
 # check transaction_log
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
 FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
-transaction.log	960	8	8	1	8	START_TIMESTAMP	END_TIMESTAMP	73736
+transaction.log	331	4	4	1	4	START_TIMESTAMP	END_TIMESTAMP	73736
 
 Check transaction_log_entries
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
-0	TRANSACTION	121
-121	TRANSACTION	168
-289	TRANSACTION	170
-459	TRANSACTION	170
-629	TRANSACTION	85
-714	TRANSACTION	85
-799	TRANSACTION	85
-884	TRANSACTION	76
+0	TRANSACTION	85
+85	TRANSACTION	85
+170	TRANSACTION	85
+255	TRANSACTION	76
 
 Check transaction_log_transactions
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
 0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
-121	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
-289	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
-459	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
-629	5	1	START_TIMESTAMP	END_TIMESTAMP	1	0
-714	6	1	START_TIMESTAMP	END_TIMESTAMP	1	0
-799	7	1	START_TIMESTAMP	END_TIMESTAMP	1	0
-884	8	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+85	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+170	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+255	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
 transaction_context {
   server_id: 1
-  transaction_id: 8
+  transaction_id: 4
   START_TIMESTAMP
   END_TIMESTAMP
 }

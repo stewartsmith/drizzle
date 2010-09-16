@@ -22,17 +22,24 @@ CREATE SCHEMA my_test_schema;
 CREATE TABLE my_test_schema.t1 (a int not null, primary key(a));
 CREATE TABLE my_test_schema.t2 LIKE my_test_schema.t1;
 CREATE TABLE my_test_schema.t3 LIKE my_test_schema.t2;
+
+--echo We truncate the log to simplify test validation
+--echo we are mainly concerned that we see 4 new entries 
+--echo once we have issued the DROP SCHEMA statement
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
+--echo
+
+
 DROP SCHEMA my_test_schema;
 # We check to see that t1,t2,t3 are DROPped as well
---echo Checking t1 DROP
---replace_regex /start_timestamp: [0-9]+/START_TIMESTAMP/  /end_timestamp: [0-9]+/END_TIMESTAMP/ /start_timestamp: [0-9]+/START_TIMESTAMP/  /end_timestamp: [0-9]+/END_TIMESTAMP/ /creation_timestamp: [0-9]+/CREATE_TIMESTAMP/  /update_timestamp: [0-9]+/UPDATE_TIMESTAMP/
-SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(SELECT entry_offset FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS WHERE TRANSACTION_ID = 5));
---echo Checking t2 DROP
---replace_regex /start_timestamp: [0-9]+/START_TIMESTAMP/  /end_timestamp: [0-9]+/END_TIMESTAMP/ /start_timestamp: [0-9]+/START_TIMESTAMP/  /end_timestamp: [0-9]+/END_TIMESTAMP/ /creation_timestamp: [0-9]+/CREATE_TIMESTAMP/  /update_timestamp: [0-9]+/UPDATE_TIMESTAMP/
-SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(SELECT entry_offset FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS WHERE TRANSACTION_ID = 6));
---echo Checking t3 DROP
---replace_regex /start_timestamp: [0-9]+/START_TIMESTAMP/  /end_timestamp: [0-9]+/END_TIMESTAMP/ /start_timestamp: [0-9]+/START_TIMESTAMP/  /end_timestamp: [0-9]+/END_TIMESTAMP/ /creation_timestamp: [0-9]+/CREATE_TIMESTAMP/  /update_timestamp: [0-9]+/UPDATE_TIMESTAMP/
-SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(SELECT entry_offset FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS WHERE TRANSACTION_ID = 7));
+--echo The implied DROP TABLE statements for t1->t3
+--echo do not come in any deterministic order t1 may or may not be first
+--echo ,therefore we have to satisfy ourselves that we have 4 items in the log
+--echo after issuing the DROP SCHEMA
+--echo We do check the first entry (OFFSET=0) as this should be the first of 3 DROP TABLE messages
+
+--replace_regex /start_timestamp: [0-9]+/START_TIMESTAMP/g /end_timestamp: [0-9]+/END_TIMESTAMP/g /creation_timestamp: [0-9]+/CREATE_TIMESTAMP/ /update_timestamp: [0-9]+/UPDATE_TIMESTAMP/ /table_name: "t[1|2|3]"/table_name:  TABLE_NAME/
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',0);
 
 
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
@@ -41,7 +48,6 @@ SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(SELECT entry_offset FROM DAT
 # Truncate the log file to reset for the next test
 --source ../plugin/transaction_log/tests/t/truncate_log.inc
 --echo
-
 
 --echo Testing simple CREATE SCHEMA
 CREATE SCHEMA my_test_schema;
