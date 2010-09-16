@@ -18,7 +18,6 @@
  */
 
 #include "config.h"
-#include <string>
 #include "drizzled/named_savepoint.h"
 #include "drizzled/message/transaction.pb.h"
 
