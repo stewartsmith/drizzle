@@ -77,15 +77,6 @@ public:
                            const drizzled::TableIdentifier &identifier,
                            drizzled::message::Table &table_proto);
 
-  void doGetTableNames(drizzled::CachedDirectory &directory,
-		       const SchemaIdentifier &,
-		       set<string>& set_of_names)
-  {
-    (void)directory;
-    set_of_names.insert("t1");
-
-  }
-
   /* The following defines can be increased if necessary */
   uint32_t max_supported_keys()          const { return 64; }
   uint32_t max_supported_key_length()    const { return 1000; }

@@ -83,7 +83,8 @@ void Schema::prime()
     if (not entry->filename.compare(GLOBAL_TEMPORARY_EXT))
       continue;
 
-    if (readSchemaFile(entry->filename, schema_message))
+    SchemaIdentifier filename(entry->filename);
+    if (readSchemaFile(filename, schema_message))
     {
       SchemaIdentifier schema_identifier(schema_message.name());
 
@@ -298,9 +299,9 @@ bool Schema::writeSchemaFile(const SchemaIdentifier &schema_identifier, const me
 }
 
 
-bool Schema::readSchemaFile(const std::string &schema_file_name, drizzled::message::Schema &schema_message)
+bool Schema::readSchemaFile(const drizzled::SchemaIdentifier &schema_identifier, drizzled::message::Schema &schema)
 {
-  string db_opt_path(schema_file_name);
+  string db_opt_path(schema_identifier.getPath());
 
   /*
     Pass an empty file name, and the database options file name as extension
@@ -318,13 +319,13 @@ bool Schema::readSchemaFile(const std::string &schema_file_name, drizzled::messa
   */
   if (input.good())
   {
-    if (schema_message.ParseFromIstream(&input))
+    if (schema.ParseFromIstream(&input))
     {
       return true;
     }
 
     my_error(ER_CORRUPT_SCHEMA_DEFINITION, MYF(0), db_opt_path.c_str(),
-             schema_message.InitializationErrorString().empty() ? "unknown" :  schema_message.InitializationErrorString().c_str());
+             schema.InitializationErrorString().empty() ? "unknown" :  schema.InitializationErrorString().c_str());
   }
   else
   {

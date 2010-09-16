@@ -71,10 +71,6 @@ public:
   bool doCanCreateTable(const drizzled::TableIdentifier &identifier);
 
 
-  void doGetTableNames(drizzled::CachedDirectory&, 
-                       const drizzled::SchemaIdentifier &schema_identifier,
-                       std::set<std::string> &set_of_names);
-
   int doGetTableDefinition(drizzled::Session &session,
                            const drizzled::TableIdentifier &identifier,
                            drizzled::message::Table &table_message);

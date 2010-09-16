@@ -130,9 +130,6 @@ public:
                            const drizzled::TableIdentifier &identifier,
                            drizzled::message::Table &table_message);
 
-  /* Temp only engine, so do not return values. */
-  void doGetTableNames(drizzled::CachedDirectory &, const SchemaIdentifier&, set<string>&) { };
-
   int doDropTable(Session&, const drizzled::TableIdentifier &identifier);
   TinaShare *findOpenTable(const string table_name);
   void addOpenTable(const string &table_name, TinaShare *);
@@ -186,19 +183,21 @@ int Tina::doDropTable(Session &session,
 {
   int error= 0;
   int enoent_or_zero= ENOENT;                   // Error if no file was deleted
-  char buff[FN_REFLEN];
 
   for (const char **ext= bas_ext(); *ext ; ext++)
   {
-    internal::fn_format(buff, identifier.getPath().c_str(), "", *ext,
-                        MY_UNPACK_FILENAME|MY_APPEND_EXT);
-    if (internal::my_delete_with_symlink(buff, MYF(0)))
+    std::string full_name= identifier.getPath();
+    full_name.append(*ext);
+
+    if (internal::my_delete_with_symlink(full_name.c_str(), MYF(0)))
     {
       if ((error= errno) != ENOENT)
 	break;
     }
     else
+    {
       enoent_or_zero= 0;                        // No error for ENOENT
+    }
     error= enoent_or_zero;
   }
 
@@ -254,14 +253,19 @@ static int tina_init_func(drizzled::module::Context &context)
 
 
 
-TinaShare::TinaShare(const char *table_name_arg)
-  : table_name(table_name_arg), use_count(0), saved_data_file_length(0),
-    update_file_opened(false), tina_write_opened(false),
-    crashed(false), rows_recorded(0), data_file_version(0)
+TinaShare::TinaShare(const std::string &table_name_arg) : 
+  table_name(table_name_arg),
+  data_file_name(table_name_arg),
+  use_count(0),
+  saved_data_file_length(0),
+  update_file_opened(false),
+  tina_write_opened(false),
+  crashed(false),
+  rows_recorded(0),
+  data_file_version(0)
 {
   thr_lock_init(&lock);
-  internal::fn_format(data_file_name, table_name_arg, "", CSV_EXT,
-            MY_REPLACE_EXT|MY_UNPACK_FILENAME);
+  data_file_name.append(CSV_EXT);
 }
 
 TinaShare::~TinaShare()
@@ -273,14 +277,14 @@ TinaShare::~TinaShare()
 /*
   Simple lock controls.
 */
-TinaShare *ha_tina::get_share(const char *table_name)
+TinaShare *ha_tina::get_share(const std::string &table_name)
 {
   pthread_mutex_lock(&tina_mutex);
 
   Tina *a_tina= static_cast<Tina *>(engine);
   share= a_tina->findOpenTable(table_name);
 
-  char meta_file_name[FN_REFLEN];
+  std::string meta_file_name;
   struct stat file_stat;
 
   /*
@@ -297,10 +301,10 @@ TinaShare *ha_tina::get_share(const char *table_name)
       return NULL;
     }
 
-    internal::fn_format(meta_file_name, table_name, "", CSM_EXT,
-              MY_REPLACE_EXT|MY_UNPACK_FILENAME);
+    meta_file_name.assign(table_name);
+    meta_file_name.append(CSM_EXT);
 
-    if (stat(share->data_file_name, &file_stat))
+    if (stat(share->data_file_name.c_str(), &file_stat))
     {
       pthread_mutex_unlock(&tina_mutex);
       delete share;
@@ -319,7 +323,7 @@ TinaShare *ha_tina::get_share(const char *table_name)
       Usually this will result in auto-repair, and we will get a good
       meta-file in the end.
     */
-    if ((share->meta_file= internal::my_open(meta_file_name,
+    if ((share->meta_file= internal::my_open(meta_file_name.c_str(),
                                              O_RDWR|O_CREAT, MYF(0))) == -1)
       share->crashed= true;
 
@@ -448,7 +452,7 @@ int ha_tina::init_tina_writer()
   (void)write_meta_file(share->meta_file, share->rows_recorded, true);
 
   if ((share->tina_write_filedes=
-        internal::my_open(share->data_file_name, O_RDWR|O_APPEND, MYF(0))) == -1)
+        internal::my_open(share->data_file_name.c_str(), O_RDWR|O_APPEND, MYF(0))) == -1)
   {
     share->crashed= true;
     return(1);
@@ -781,7 +785,7 @@ err:
 */
 int ha_tina::doOpen(const TableIdentifier &identifier, int , uint32_t )
 {
-  if (!(share= get_share(identifier.getPath().c_str())))
+  if (not (share= get_share(identifier.getPath().c_str())))
     return(ENOENT);
 
   if (share->crashed)
@@ -791,7 +795,7 @@ int ha_tina::doOpen(const TableIdentifier &identifier, int , uint32_t )
   }
 
   local_data_file_version= share->data_file_version;
-  if ((data_file= internal::my_open(share->data_file_name, O_RDONLY, MYF(0))) == -1)
+  if ((data_file= internal::my_open(share->data_file_name.c_str(), O_RDONLY, MYF(0))) == -1)
     return(0);
 
   /*
@@ -955,7 +959,7 @@ int ha_tina::init_data_file()
   {
     local_data_file_version= share->data_file_version;
     if (internal::my_close(data_file, MYF(0)) ||
-        (data_file= internal::my_open(share->data_file_name, O_RDONLY, MYF(0))) == -1)
+        (data_file= internal::my_open(share->data_file_name.c_str(), O_RDONLY, MYF(0))) == -1)
       return 1;
   }
   file_buff->init_buff(data_file);
@@ -1108,7 +1112,6 @@ bool ha_tina::get_write_pos(off_t *end_pos, vector< pair<off_t, off_t> >::iterat
 */
 int ha_tina::doEndTableScan()
 {
-  char updated_fname[FN_REFLEN];
   off_t file_buffer_start= 0;
 
   blobroot.free_root(MYF(0));
@@ -1193,16 +1196,15 @@ int ha_tina::doEndTableScan()
       Close opened fildes's. Then move updated file in place
       of the old datafile.
     */
+    std::string rename_file= share->table_name;
+    rename_file.append(CSN_EXT);
     if (internal::my_close(data_file, MYF(0)) ||
-        internal::my_rename(internal::fn_format(updated_fname,
-                                                share->table_name.c_str(),
-                                                "", CSN_EXT,
-                                                MY_REPLACE_EXT | MY_UNPACK_FILENAME),
-                            share->data_file_name, MYF(0)))
+        internal::my_rename(rename_file.c_str(),
+                            share->data_file_name.c_str(), MYF(0)))
       return(-1);
 
     /* Open the file again */
-    if (((data_file= internal::my_open(share->data_file_name, O_RDONLY, MYF(0))) == -1))
+    if (((data_file= internal::my_open(share->data_file_name.c_str(), O_RDONLY, MYF(0))) == -1))
       return(-1);
     /*
       As we reopened the data file, increase share->data_file_version
