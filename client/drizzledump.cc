@@ -336,7 +336,10 @@ void DrizzleDumpField::setType(const char* raw_type, const char* raw_collation)
   if (connected_server_type == SERVER_MYSQL_FOUND)
   {
     std::transform(old_type.begin(), old_type.end(), old_type.begin(), ::toupper);
-    cout << "Trying: '" << old_type << "' with extra '" << extra << "'" << endl;
+    if ((old_type.find("CHAR") != string::npos) or 
+      (old_type.find("TEXT") != string::npos))
+      setCollate(raw_collation);
+
     if ((old_type.compare("INT") == 0) and 
       ((extra.find("unsigned") != string::npos)))
     {
@@ -368,6 +371,18 @@ void DrizzleDumpField::setType(const char* raw_type, const char* raw_collation)
       return;
     }
 
+    if (old_type.compare("CHAR") == 0)
+    {
+      type= "VARCHAR";
+      return;
+    }
+
+    if (old_type.compare("BINARY") == 0)
+    {
+      type= "VARBINARY";
+      return;
+    }
+
     if (old_type.compare("ENUM") == 0)
     {
       type= old_type;
@@ -383,6 +398,57 @@ void DrizzleDumpField::setType(const char* raw_type, const char* raw_collation)
     type= old_type;
     return;
   }
+}
+
+void DrizzleDumpTable::setEngine(const char* newEngine)
+{
+  if (strcmp(newEngine, "MyISAM") == 0)
+    engineName= "InnoDB";
+  else
+    engineName= newEngine; 
+}
+
+void DrizzleDumpDatabase::setCollate(const char* newCollate)
+{
+  if (newCollate)
+  {
+    std::string tmpCollate(newCollate);
+    if (tmpCollate.find("utf8") != string::npos)
+    {
+      collate= tmpCollate;
+      return;
+    }
+  }
+  collate= "utf8_general_ci";
+}
+
+void DrizzleDumpTable::setCollate(const char* newCollate)
+{
+  if (newCollate)
+  {
+    std::string tmpCollate(newCollate);
+    if (tmpCollate.find("utf8") != string::npos)
+    {
+      collate= tmpCollate;
+      return;
+    }
+  }
+
+  collate= "utf8_general_ci";
+}
+
+void DrizzleDumpField::setCollate(const char* newCollate)
+{
+  if (newCollate)
+  {
+    std::string tmpCollate(newCollate);
+    if (tmpCollate.find("utf8") != string::npos)
+    {
+      collation= tmpCollate;
+      return;
+    }
+  }
+  collation= "utf8_general_ci";
 }
 
 ostream& operator <<(ostream &os,const DrizzleDumpField &obj)
@@ -916,8 +982,7 @@ static int dump_all_databases()
   {
     std::string database_name(row[0]);
     DrizzleDumpDatabase *database= new DrizzleDumpDatabase(database_name);
-    std::string collation(row[1]);
-    database->collate= collation;
+    database->setCollate(row[1]);
     database_store.push_back(database);
   }
   drizzle_result_free(&tableres);

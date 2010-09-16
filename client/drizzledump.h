@@ -69,6 +69,7 @@ class DrizzleDumpField
     uint32_t decimalPrecision;
     uint32_t decimalScale;
 
+    void setCollate(const char* newCollate);
     void setType(const char* raw_type, const char* collation);
 };
 
@@ -87,8 +88,9 @@ class DrizzleDumpTable
     std::string tableName;
     std::string engineName;
     std::string collate;
-    void setCollate(const char* newCollate) { collate= newCollate; }
-    void setEngine(const char* newEngine) { engineName= newEngine; }
+
+    void setCollate(const char* newCollate);
+    void setEngine(const char* newEngine);
 
     // Currently MySQL only, hard to do in Drizzle
     uint64_t autoIncrement;
@@ -109,9 +111,9 @@ class DrizzleDumpDatabase
     bool populateTables(drizzle_con_st &connection);
     std::vector<DrizzleDumpTable*> tables;
 
+    void setCollate(const char* newCollate);
     const std::string databaseName;
     std::string collate;
-    void setCollate(const char* newCollate) { collate= newCollate; }
 };
 
 #endif /* CLIENT_DRIZZLEDUMP_H */
