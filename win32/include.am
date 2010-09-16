@@ -18,5 +18,6 @@ noinst_HEADERS+= \
 
 EXTRA_DIST+= \
 	     win32/drizzle.sln \
-	     win32/libdrizzle.vcproj
+	     win32/libdrizzle.vcproj \
+	     win32/windows/errno.h
 
