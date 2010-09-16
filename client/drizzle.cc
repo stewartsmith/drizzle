@@ -523,15 +523,11 @@ static Commands commands[] = {
   Commands( "AUTO_INCREMENT", 0, 0, 0, ""),
   Commands( "AVG", 0, 0, 0, ""),
   Commands( "AVG_ROW_LENGTH", 0, 0, 0, ""),
-  Commands( "BACKUP", 0, 0, 0, ""),
-  Commands( "BDB", 0, 0, 0, ""),
   Commands( "BEFORE", 0, 0, 0, ""),
   Commands( "BEGIN", 0, 0, 0, ""),
-  Commands( "BERKELEYDB", 0, 0, 0, ""),
   Commands( "BETWEEN", 0, 0, 0, ""),
   Commands( "BIGINT", 0, 0, 0, ""),
   Commands( "BINARY", 0, 0, 0, ""),
-  Commands( "BINLOG", 0, 0, 0, ""),
   Commands( "BIT", 0, 0, 0, ""),
   Commands( "BLOB", 0, 0, 0, ""),
   Commands( "BOOL", 0, 0, 0, ""),
@@ -550,13 +546,10 @@ static Commands commands[] = {
   Commands( "CHANGED", 0, 0, 0, ""),
   Commands( "CHAR", 0, 0, 0, ""),
   Commands( "CHARACTER", 0, 0, 0, ""),
-  Commands( "CHARSET", 0, 0, 0, ""),
   Commands( "CHECK", 0, 0, 0, ""),
   Commands( "CHECKSUM", 0, 0, 0, ""),
-  Commands( "CIPHER", 0, 0, 0, ""),
   Commands( "CLIENT", 0, 0, 0, ""),
   Commands( "CLOSE", 0, 0, 0, ""),
-  Commands( "CODE", 0, 0, 0, ""),
   Commands( "COLLATE", 0, 0, 0, ""),
   Commands( "COLLATION", 0, 0, 0, ""),
   Commands( "COLUMN", 0, 0, 0, ""),
@@ -598,22 +591,17 @@ static Commands commands[] = {
   Commands( "DEFAULT", 0, 0, 0, ""),
   Commands( "DEFINER", 0, 0, 0, ""),
   Commands( "DELAYED", 0, 0, 0, ""),
-  Commands( "DELAY_KEY_WRITE", 0, 0, 0, ""),
   Commands( "DELETE", 0, 0, 0, ""),
   Commands( "DESC", 0, 0, 0, ""),
   Commands( "DESCRIBE", 0, 0, 0, ""),
-  Commands( "DES_KEY_FILE", 0, 0, 0, ""),
   Commands( "DETERMINISTIC", 0, 0, 0, ""),
-  Commands( "DIRECTORY", 0, 0, 0, ""),
   Commands( "DISABLE", 0, 0, 0, ""),
   Commands( "DISCARD", 0, 0, 0, ""),
   Commands( "DISTINCT", 0, 0, 0, ""),
   Commands( "DISTINCTROW", 0, 0, 0, ""),
   Commands( "DIV", 0, 0, 0, ""),
-  Commands( "DO", 0, 0, 0, ""),
   Commands( "DOUBLE", 0, 0, 0, ""),
   Commands( "DROP", 0, 0, 0, ""),
-  Commands( "DUAL", 0, 0, 0, ""),
   Commands( "DUMPFILE", 0, 0, 0, ""),
   Commands( "DUPLICATE", 0, 0, 0, ""),
   Commands( "DYNAMIC", 0, 0, 0, ""),
@@ -629,11 +617,8 @@ static Commands commands[] = {
   Commands( "ERRORS", 0, 0, 0, ""),
   Commands( "ESCAPE", 0, 0, 0, ""),
   Commands( "ESCAPED", 0, 0, 0, ""),
-  Commands( "EVENTS", 0, 0, 0, ""),
-  Commands( "EXECUTE", 0, 0, 0, ""),
   Commands( "EXISTS", 0, 0, 0, ""),
   Commands( "EXIT", 0, 0, 0, ""),
-  Commands( "EXPANSION", 0, 0, 0, ""),
   Commands( "EXPLAIN", 0, 0, 0, ""),
   Commands( "EXTENDED", 0, 0, 0, ""),
   Commands( "FALSE", 0, 0, 0, ""),
@@ -654,7 +639,6 @@ static Commands commands[] = {
   Commands( "FRAC_SECOND", 0, 0, 0, ""),
   Commands( "FROM", 0, 0, 0, ""),
   Commands( "FULL", 0, 0, 0, ""),
-  Commands( "FULLTEXT", 0, 0, 0, ""),
   Commands( "FUNCTION", 0, 0, 0, ""),
   Commands( "GLOBAL", 0, 0, 0, ""),
   Commands( "GRANT", 0, 0, 0, ""),
@@ -722,24 +706,7 @@ static Commands commands[] = {
   Commands( "LOCKS", 0, 0, 0, ""),
   Commands( "LOGS", 0, 0, 0, ""),
   Commands( "LONG", 0, 0, 0, ""),
-  Commands( "LONGTEXT", 0, 0, 0, ""),
   Commands( "LOOP", 0, 0, 0, ""),
-  Commands( "LOW_PRIORITY", 0, 0, 0, ""),
-  Commands( "MASTER", 0, 0, 0, ""),
-  Commands( "MASTER_CONNECT_RETRY", 0, 0, 0, ""),
-  Commands( "MASTER_HOST", 0, 0, 0, ""),
-  Commands( "MASTER_LOG_FILE", 0, 0, 0, ""),
-  Commands( "MASTER_LOG_POS", 0, 0, 0, ""),
-  Commands( "MASTER_PASSWORD", 0, 0, 0, ""),
-  Commands( "MASTER_PORT", 0, 0, 0, ""),
-  Commands( "MASTER_SERVER_ID", 0, 0, 0, ""),
-  Commands( "MASTER_SSL", 0, 0, 0, ""),
-  Commands( "MASTER_SSL_CA", 0, 0, 0, ""),
-  Commands( "MASTER_SSL_CAPATH", 0, 0, 0, ""),
-  Commands( "MASTER_SSL_CERT", 0, 0, 0, ""),
-  Commands( "MASTER_SSL_CIPHER", 0, 0, 0, ""),
-  Commands( "MASTER_SSL_KEY", 0, 0, 0, ""),
-  Commands( "MASTER_USER", 0, 0, 0, ""),
   Commands( "MATCH", 0, 0, 0, ""),
   Commands( "MAX_CONNECTIONS_PER_HOUR", 0, 0, 0, ""),
   Commands( "MAX_QUERIES_PER_HOUR", 0, 0, 0, ""),
@@ -747,10 +714,8 @@ static Commands commands[] = {
   Commands( "MAX_UPDATES_PER_HOUR", 0, 0, 0, ""),
   Commands( "MAX_USER_CONNECTIONS", 0, 0, 0, ""),
   Commands( "MEDIUM", 0, 0, 0, ""),
-  Commands( "MEDIUMTEXT", 0, 0, 0, ""),
   Commands( "MERGE", 0, 0, 0, ""),
   Commands( "MICROSECOND", 0, 0, 0, ""),
-  Commands( "MIDDLEINT", 0, 0, 0, ""),
   Commands( "MIGRATE", 0, 0, 0, ""),
   Commands( "MINUTE", 0, 0, 0, ""),
   Commands( "MINUTE_MICROSECOND", 0, 0, 0, ""),
@@ -769,20 +734,16 @@ static Commands commands[] = {
   Commands( "NAMES", 0, 0, 0, ""),
   Commands( "NATIONAL", 0, 0, 0, ""),
   Commands( "NATURAL", 0, 0, 0, ""),
-  Commands( "NDB", 0, 0, 0, ""),
-  Commands( "NDBCLUSTER", 0, 0, 0, ""),
   Commands( "NCHAR", 0, 0, 0, ""),
   Commands( "NEW", 0, 0, 0, ""),
   Commands( "NEXT", 0, 0, 0, ""),
   Commands( "NO", 0, 0, 0, ""),
   Commands( "NONE", 0, 0, 0, ""),
   Commands( "NOT", 0, 0, 0, ""),
-  Commands( "NO_WRITE_TO_BINLOG", 0, 0, 0, ""),
   Commands( "NULL", 0, 0, 0, ""),
   Commands( "NUMERIC", 0, 0, 0, ""),
   Commands( "NVARCHAR", 0, 0, 0, ""),
   Commands( "OFFSET", 0, 0, 0, ""),
-  Commands( "OLD_PASSWORD", 0, 0, 0, ""),
   Commands( "ON", 0, 0, 0, ""),
   Commands( "ONE", 0, 0, 0, ""),
   Commands( "ONE_SHOT", 0, 0, 0, ""),
@@ -799,8 +760,6 @@ static Commands commands[] = {
   Commands( "PARTIAL", 0, 0, 0, ""),
   Commands( "PASSWORD", 0, 0, 0, ""),
   Commands( "PHASE", 0, 0, 0, ""),
-  Commands( "POINT", 0, 0, 0, ""),
-  Commands( "POLYGON", 0, 0, 0, ""),
   Commands( "PRECISION", 0, 0, 0, ""),
   Commands( "PREPARE", 0, 0, 0, ""),
   Commands( "PREV", 0, 0, 0, ""),
@@ -820,16 +779,12 @@ static Commands commands[] = {
   Commands( "REDUNDANT", 0, 0, 0, ""),
   Commands( "REFERENCES", 0, 0, 0, ""),
   Commands( "REGEXP", 0, 0, 0, ""),
-  Commands( "RELAY_LOG_FILE", 0, 0, 0, ""),
-  Commands( "RELAY_LOG_POS", 0, 0, 0, ""),
-  Commands( "RELAY_THREAD", 0, 0, 0, ""),
   Commands( "RELEASE", 0, 0, 0, ""),
   Commands( "RELOAD", 0, 0, 0, ""),
   Commands( "RENAME", 0, 0, 0, ""),
   Commands( "REPAIR", 0, 0, 0, ""),
   Commands( "REPEATABLE", 0, 0, 0, ""),
   Commands( "REPLACE", 0, 0, 0, ""),
-  Commands( "REPLICATION", 0, 0, 0, ""),
   Commands( "REPEAT", 0, 0, 0, ""),
   Commands( "REQUIRE", 0, 0, 0, ""),
   Commands( "RESET", 0, 0, 0, ""),
@@ -868,7 +823,6 @@ static Commands commands[] = {
   Commands( "SIMPLE", 0, 0, 0, ""),
   Commands( "SLAVE", 0, 0, 0, ""),
   Commands( "SNAPSHOT", 0, 0, 0, ""),
-  Commands( "SMALLINT", 0, 0, 0, ""),
   Commands( "SOME", 0, 0, 0, ""),
   Commands( "SONAME", 0, 0, 0, ""),
   Commands( "SOUNDS", 0, 0, 0, ""),
@@ -917,12 +871,9 @@ static Commands commands[] = {
   Commands( "TIMESTAMP", 0, 0, 0, ""),
   Commands( "TIMESTAMPADD", 0, 0, 0, ""),
   Commands( "TIMESTAMPDIFF", 0, 0, 0, ""),
-  Commands( "TINYTEXT", 0, 0, 0, ""),
   Commands( "TO", 0, 0, 0, ""),
   Commands( "TRAILING", 0, 0, 0, ""),
   Commands( "TRANSACTION", 0, 0, 0, ""),
-  Commands( "TRIGGER", 0, 0, 0, ""),
-  Commands( "TRIGGERS", 0, 0, 0, ""),
   Commands( "TRUE", 0, 0, 0, ""),
   Commands( "TRUNCATE", 0, 0, 0, ""),
   Commands( "TYPE", 0, 0, 0, ""),
@@ -935,7 +886,6 @@ static Commands commands[] = {
   Commands( "UNIQUE", 0, 0, 0, ""),
   Commands( "UNKNOWN", 0, 0, 0, ""),
   Commands( "UNLOCK", 0, 0, 0, ""),
-  Commands( "UNSIGNED", 0, 0, 0, ""),
   Commands( "UNTIL", 0, 0, 0, ""),
   Commands( "UPDATE", 0, 0, 0, ""),
   Commands( "UPGRADE", 0, 0, 0, ""),
@@ -943,7 +893,6 @@ static Commands commands[] = {
   Commands( "USE", 0, 0, 0, ""),
   Commands( "USER", 0, 0, 0, ""),
   Commands( "USER_RESOURCES", 0, 0, 0, ""),
-  Commands( "USE_FRM", 0, 0, 0, ""),
   Commands( "USING", 0, 0, 0, ""),
   Commands( "UTC_DATE", 0, 0, 0, ""),
   Commands( "UTC_TIMESTAMP", 0, 0, 0, ""),
@@ -963,7 +912,6 @@ static Commands commands[] = {
   Commands( "WITH", 0, 0, 0, ""),
   Commands( "WORK", 0, 0, 0, ""),
   Commands( "WRITE", 0, 0, 0, ""),
-  Commands( "X509", 0, 0, 0, ""),
   Commands( "XOR", 0, 0, 0, ""),
   Commands( "XA", 0, 0, 0, ""),
   Commands( "YEAR", 0, 0, 0, ""),
@@ -972,14 +920,10 @@ static Commands commands[] = {
   Commands( "ABS", 0, 0, 0, ""),
   Commands( "ACOS", 0, 0, 0, ""),
   Commands( "ADDDATE", 0, 0, 0, ""),
-  Commands( "AES_ENCRYPT", 0, 0, 0, ""),
-  Commands( "AES_DECRYPT", 0, 0, 0, ""),
   Commands( "AREA", 0, 0, 0, ""),
   Commands( "ASIN", 0, 0, 0, ""),
   Commands( "ASBINARY", 0, 0, 0, ""),
   Commands( "ASTEXT", 0, 0, 0, ""),
-  Commands( "ASWKB", 0, 0, 0, ""),
-  Commands( "ASWKT", 0, 0, 0, ""),
   Commands( "ATAN", 0, 0, 0, ""),
   Commands( "ATAN2", 0, 0, 0, ""),
   Commands( "BENCHMARK", 0, 0, 0, ""),
@@ -1045,8 +989,6 @@ static Commands commands[] = {
   Commands( "GROUP_UNIQUE_USERS", 0, 0, 0, ""),
   Commands( "HEX", 0, 0, 0, ""),
   Commands( "IFNULL", 0, 0, 0, ""),
-  Commands( "INET_ATON", 0, 0, 0, ""),
-  Commands( "INET_NTOA", 0, 0, 0, ""),
   Commands( "INSTR", 0, 0, 0, ""),
   Commands( "INTERIORRINGN", 0, 0, 0, ""),
   Commands( "INTERSECTS", 0, 0, 0, ""),
@@ -1062,10 +1004,6 @@ static Commands commands[] = {
   Commands( "LEAST", 0, 0, 0, ""),
   Commands( "LENGTH", 0, 0, 0, ""),
   Commands( "LN", 0, 0, 0, ""),
-  Commands( "LINEFROMTEXT", 0, 0, 0, ""),
-  Commands( "LINEFROMWKB", 0, 0, 0, ""),
-  Commands( "LINESTRINGFROMTEXT", 0, 0, 0, ""),
-  Commands( "LINESTRINGFROMWKB", 0, 0, 0, ""),
   Commands( "LOAD_FILE", 0, 0, 0, ""),
   Commands( "LOCATE", 0, 0, 0, ""),
   Commands( "LOG", 0, 0, 0, ""),
@@ -1088,23 +1026,10 @@ static Commands commands[] = {
   Commands( "MD5", 0, 0, 0, ""),
   Commands( "MID", 0, 0, 0, ""),
   Commands( "MIN", 0, 0, 0, ""),
-  Commands( "MLINEFROMTEXT", 0, 0, 0, ""),
-  Commands( "MLINEFROMWKB", 0, 0, 0, ""),
-  Commands( "MPOINTFROMTEXT", 0, 0, 0, ""),
-  Commands( "MPOINTFROMWKB", 0, 0, 0, ""),
-  Commands( "MPOLYFROMTEXT", 0, 0, 0, ""),
-  Commands( "MPOLYFROMWKB", 0, 0, 0, ""),
   Commands( "MONTHNAME", 0, 0, 0, ""),
-  Commands( "MULTILINESTRINGFROMTEXT", 0, 0, 0, ""),
-  Commands( "MULTILINESTRINGFROMWKB", 0, 0, 0, ""),
-  Commands( "MULTIPOINTFROMTEXT", 0, 0, 0, ""),
-  Commands( "MULTIPOINTFROMWKB", 0, 0, 0, ""),
-  Commands( "MULTIPOLYGONFROMTEXT", 0, 0, 0, ""),
-  Commands( "MULTIPOLYGONFROMWKB", 0, 0, 0, ""),
   Commands( "NAME_CONST", 0, 0, 0, ""),
   Commands( "NOW", 0, 0, 0, ""),
   Commands( "NULLIF", 0, 0, 0, ""),
-  Commands( "NUMINTERIORRINGS", 0, 0, 0, ""),
   Commands( "NUMPOINTS", 0, 0, 0, ""),
   Commands( "OCTET_LENGTH", 0, 0, 0, ""),
   Commands( "OCT", 0, 0, 0, ""),
@@ -1113,13 +1038,7 @@ static Commands commands[] = {
   Commands( "PERIOD_ADD", 0, 0, 0, ""),
   Commands( "PERIOD_DIFF", 0, 0, 0, ""),
   Commands( "PI", 0, 0, 0, ""),
-  Commands( "POINTFROMTEXT", 0, 0, 0, ""),
-  Commands( "POINTFROMWKB", 0, 0, 0, ""),
   Commands( "POINTN", 0, 0, 0, ""),
-  Commands( "POLYFROMTEXT", 0, 0, 0, ""),
-  Commands( "POLYFROMWKB", 0, 0, 0, ""),
-  Commands( "POLYGONFROMTEXT", 0, 0, 0, ""),
-  Commands( "POLYGONFROMWKB", 0, 0, 0, ""),
   Commands( "POSITION", 0, 0, 0, ""),
   Commands( "POW", 0, 0, 0, ""),
   Commands( "POWER", 0, 0, 0, ""),
@@ -1375,27 +1294,23 @@ try
   ("force,f", po::value<bool>(&ignore_errors)->default_value(false)->zero_tokens(),
   N_("Continue even if we get an sql error."))
   ("named-commands,G", po::value<bool>(&named_cmds)->default_value(false)->zero_tokens(),
-  N_("Enable named commands. Named commands mean this program's internal commands; see drizzle> help . When enabled, the named commands can be used from any line of the query, otherwise only from the first line, before an enter. Disable with --disable-named-commands. This option is disabled by default."))
-  ("no-named-commands,g",
-  N_("Named commands are disabled. Use \\* form only, or use named commands only in the beginning of a line ending with a semicolon (;) Since version 10.9 the client now starts with this option ENABLED by default! Disable with '-G'. Long format commands still work from the first line. WARNING: option deprecated; use --disable-named-commands instead."))
+  N_("Enable named commands. Named commands mean this program's internal commands; see drizzle> help . When enabled, the named commands can be used from any line of the query, otherwise only from the first line, before an enter."))
   ("ignore-spaces,i", N_("Ignore space after function names."))
   ("no-beep,b", po::value<bool>(&opt_nobeep)->default_value(false)->zero_tokens(),
   N_("Turn off beep on error."))
-  ("line-numbers", po::value<bool>(&line_numbers)->default_value(true)->zero_tokens(),
-  N_("Write line numbers for errors."))
+  ("disable-line-numbers", N_("Do not write line numbers for errors."))
   ("skip-line-numbers,L", 
   N_("Don't write line number for errors. WARNING: -L is deprecated, use long version of this option instead."))
-  ("column-name", po::value<bool>(&column_names)->default_value(true)->zero_tokens(),
-  N_("Write column names in results."))
+  ("disable-column-names", N_("Do not write column names in results."))
   ("skip-column-names,N", 
   N_("Don't write column names in results. WARNING: -N is deprecated, use long version of this options instead."))
   ("set-variable,O", po::value<string>(),
   N_("Change the value of a variable. Please note that this option is deprecated; you can set variables directly with --variable-name=value."))
   ("table,t", po::value<bool>(&output_tables)->default_value(false)->zero_tokens(),
   N_("Output in table format.")) 
-  ("safe-updates,U", po::value<bool>(&safe_updates)->default_value(0)->zero_tokens(),
+  ("safe-updates,U", po::value<bool>(&safe_updates)->default_value(false)->zero_tokens(),
   N_("Only allow UPDATE and DELETE that uses keys."))
-  ("i-am-a-dummy,U", po::value<bool>(&safe_updates)->default_value(0)->zero_tokens(),
+  ("i-am-a-dummy,U", po::value<bool>(&safe_updates)->default_value(false)->zero_tokens(),
   N_("Synonym for option --safe-updates, -U."))
   ("verbose,v", po::value<string>(&opt_verbose)->default_value(""),
   N_("-v vvv implies that verbose= 3, Used to specify verbose"))
@@ -1414,9 +1329,8 @@ try
 
   po::options_description drizzle_options(N_("Options specific to the drizzle client"));
   drizzle_options.add_options()
-  ("auto-rehash", po::value<bool>(&opt_rehash)->default_value(true)->zero_tokens(),
-  N_("Enable automatic rehashing. One doesn't need to use 'rehash' to get table and field completion, but startup and reconnecting may take a longer time. Disable with --disable-auto-rehash."))
-  ("no-auto-rehash,A",N_("No automatic rehashing. One has to use 'rehash' to get table and field completion. This gives a quicker start of drizzle_st and disables rehashing on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."))
+  ("disable-auto-rehash",
+  N_("Disable automatic rehashing. One doesn't need to use 'rehash' to get table and field completion, but startup and reconnecting may take a longer time."))
   ("auto-vertical-output", po::value<bool>(&auto_vertical_output)->default_value(false)->zero_tokens(),
   N_("Automatically switch to vertical output mode if the result is wider than the terminal width."))
   ("database,D", po::value<string>(&current_db)->default_value(""),
@@ -1428,7 +1342,7 @@ try
   ("execute,e", po::value<string>(),
   N_("Execute command and quit. (Disables --force and history file)"))
   ("local-infile", po::value<bool>(&opt_local_infile)->default_value(false)->zero_tokens(),
-  N_("Enable/disable LOAD DATA LOCAL INFILE."))
+  N_("Enable LOAD DATA LOCAL INFILE."))
   ("unbuffered,n", po::value<bool>(&unbuffered)->default_value(false)->zero_tokens(),
   N_("Flush buffer after each query."))
   ("sigint-ignore", po::value<bool>(&opt_sigint_ignore)->default_value(false)->zero_tokens(),
@@ -1445,8 +1359,7 @@ try
   N_("Don't cache result, print it row by row. This may slow down the server if the output is suspended. Doesn't use history file."))
   ("raw,r", po::value<bool>(&opt_raw_data)->default_value(false)->zero_tokens(),
   N_("Write fields without conversion. Used with --batch.")) 
-  ("reconnect", po::value<bool>(&opt_reconnect)->default_value(true)->zero_tokens(),
-  N_("Reconnect if the connection is lost. Disable with --disable-reconnect. This option is enabled by default."))
+  ("disable-reconnect", N_("Do not reconnect if the connection is lost."))
   ("shutdown", po::value<bool>(&opt_shutdown)->default_value(false)->zero_tokens(),
   N_("Shutdown the server"))
   ("silent,s", N_("Be more silent. Print results with a tab as separator, each row on new line."))
@@ -1574,6 +1487,13 @@ try
     else
       close(stdout_fileno_copy);             /* Clean up dup(). */
   }
+
+  /* Inverted Booleans */
+
+  line_numbers= (vm.count("disable-line-numbers")) ? false : true;
+  column_names= (vm.count("disable-column-names")) ? false : true;
+  opt_rehash= (vm.count("disable-auto-rehash")) ? false : true;
+  opt_reconnect= (vm.count("disable-reconnect")) ? false : true;
 
   if (vm.count("delimiter"))
   {

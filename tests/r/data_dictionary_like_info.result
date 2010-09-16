@@ -191,7 +191,7 @@ table_schema='data_dictionary' and
  or DATA_TYPE = 'varchar')
 group by DATA_TYPE order by DATA_TYPE, num;
 DATA_TYPE	a	num
-VARCHAR	#	161
+VARCHAR	#	166
 Warnings:
 Warning	#	1 line(s) were cut by GROUP_CONCAT()
 create table t1(f1 char(1) not null, f2 char(9) not null);

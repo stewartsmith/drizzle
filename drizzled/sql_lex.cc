@@ -261,6 +261,8 @@ void lex_start(Session *session)
   lex->statement= NULL;
   
   lex->is_cross= false;
+
+  lex->reset();
 }
 
 void lex_end(LEX *lex)
@@ -1869,7 +1871,8 @@ LEX::LEX()
     sql_command(SQLCOM_END), 
     option_type(OPT_DEFAULT), 
     is_lex_started(0),
-    cacheable(true)
+    cacheable(true),
+    sum_expr_used(false)
 {
   reset_query_tables_list(true);
   statement= NULL;

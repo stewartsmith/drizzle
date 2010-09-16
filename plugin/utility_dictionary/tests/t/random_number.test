@@ -1,0 +1,14 @@
+--replace_column 1 #
+SELECT value from data_dictionary.random_number LIMIT 10;
+CREATE TABLE t1 SELECT value from data_dictionary.random_number LIMIT 20;
+SELECT count(*) from t1;
+INSERT INTO t1 SELECT value from data_dictionary.random_number LIMIT 10;
+SELECT count(*) from t1;
+
+# These two test that we won't just have runaway queries
+--replace_column 1 #
+SELECT value from data_dictionary.random_number GROUP BY value LIMIT 10;
+--replace_column 1 #
+select count(value) from data_dictionary.random_number;
+
+DROP TABLE t1;

@@ -33,6 +33,7 @@ extern struct global_counters current_global_counters;
 typedef struct global_counters
 {
   uint64_t max_used_connections;
+  uint64_t connections;
   uint64_t locks_immediate;
   uint64_t locks_waited;
 } global_counters;

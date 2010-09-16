@@ -197,11 +197,6 @@ namespace drizzled
 #define FLUSH_TIME		0		/**< Don't flush tables */
 #define MAX_CONNECT_ERRORS	10		///< errors before disabling host
 
-#define INTERRUPT_PRIOR 10
-#define CONNECT_PRIOR	9
-#define WAIT_PRIOR	8
-#define QUERY_PRIOR	6
-
 /* Bits from testflag */
 enum test_flag_bit
 {

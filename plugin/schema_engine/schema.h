@@ -25,8 +25,7 @@
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/data_home.h>
 #include <boost/unordered_map.hpp>
-
-#include <pthread.h>
+#include <boost/thread/shared_mutex.hpp>
 
 extern const drizzled::CHARSET_INFO *default_charset_info;
 
@@ -45,7 +44,7 @@ class Schema : public drizzled::plugin::StorageEngine
   SchemaCache schema_cache;
   bool schema_cache_filled;
 
-  pthread_rwlock_t schema_lock;
+  boost::shared_mutex mutex;
 
 public:
   Schema();

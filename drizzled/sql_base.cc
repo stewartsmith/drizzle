@@ -47,7 +47,6 @@
 #include "drizzled/cached_directory.h"
 #include <drizzled/field/timestamp.h>
 #include <drizzled/field/null.h>
-#include "drizzled/memory/multi_malloc.h"
 #include "drizzled/sql_table.h"
 #include "drizzled/global_charset_info.h"
 #include "drizzled/pthread_globals.h"
@@ -1081,8 +1080,6 @@ Table *Session::table_cache_insert_placeholder(const char *db_name, const char *
 
   /*
     Create a table entry with the right key and with an old refresh version
-    Note that we must use multi_malloc() here as this is freed by the
-    table cache
   */
   TableIdentifier identifier(db_name, table_name, message::Table::INTERNAL);
   TablePlaceholder *table= new TablePlaceholder(this, identifier);

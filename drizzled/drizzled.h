@@ -53,8 +53,7 @@ boost::program_options::variables_map &getVariablesMap();
 
 int init_thread_environment();
 int init_server_components(module::Registry &modules);
-int init_common_variables(const char *conf_file_name, int argc,
-                          char **argv, const char **groups);
+int init_common_variables(int argc, char **argv);
 
 passwd *check_user(const char *user);
 void set_user(const char *user, passwd *user_info_arg);

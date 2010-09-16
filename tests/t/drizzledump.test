@@ -544,12 +544,6 @@ insert into t2 (a, b) values (NULL, NULL),(10, NULL),(NULL, "twenty"),(30, "thir
 drop table t1, t2;
 
 --echo #
---echo # BUG#15328 Segmentation fault occured if my.cnf is invalid for escape sequence
---echo #
-
---exec $DRIZZLE_MY_PRINT_DEFAULTS --config-file=$DRIZZLE_TEST_DIR/std_data/bug15328.cnf mysqldump
-
---echo #
 --echo # BUG #19025 mysqldump doesn't correctly dump "auto_increment = [int]"
 --echo #
 
@@ -631,7 +625,7 @@ drop table t1;
 
 --echo # --dump-date:
 --replace_regex /^[^-][^-].*$// /-- [^D][^u][^m][^p].*// /\/\*!.*// / on [0-9 :-]+/ on DATE/ /^-- DRI.*///
---exec $DRIZZLE_DUMP --dump-date test 
+--exec $DRIZZLE_DUMP test 
 
 --echo # --dump-date (default):
 --replace_regex /^[^-][^-].*$// /-- [^D][^u][^m][^p].*// /\/\*!.*// / on [0-9 :-]+/ on DATE/ /^-- DRI.*///
@@ -706,7 +700,7 @@ drop table words2;
 create database `test-database`;
 use `test-database`;
 create table test (a int);
---exec $DRIZZLE_DUMP --compact --opt --quote-names test-database
+--exec $DRIZZLE_DUMP --compact --opt test-database
 drop database `test-database`;
 use test;
 
