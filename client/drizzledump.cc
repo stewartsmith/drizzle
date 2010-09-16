@@ -477,7 +477,6 @@ static void free_resources(void)
   if (md_result_file && md_result_file != stdout)
     fclose(md_result_file);
   opt_password.erase();
-  internal::my_end();
 }
 
 
