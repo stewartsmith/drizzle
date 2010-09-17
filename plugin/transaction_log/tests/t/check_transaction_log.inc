@@ -9,7 +9,7 @@
 # udf - PRINT_TRANSACTION_MESSAGE(transaction_log, <offset>)
 
 --echo # check transaction_log
---replace_column 7 START_TIMESTAMP 8 END_TIMESTAMP
+--replace_column 7 START_TIMESTAMP 8 END_TIMESTAMP 9 INDEX_SIZE
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
 --echo
 
