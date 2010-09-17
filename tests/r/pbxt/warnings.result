@@ -153,13 +153,11 @@ create table t1 (c_char char(255), c_varchar varchar(255), c_tinytext blob);
 set @c = repeat(' ', 256);
 set @q = repeat('q', 256);
 insert into t1 values(@c, @c, @c);
-Warnings:
-Note	1265	Data truncated for column 'c_char' at row 1
-Note	1265	Data truncated for column 'c_varchar' at row 1
+ERROR 22001: Data too long for column 'c_char' at row 1
 show warnings;
 Level	Code	Message
-Note	1265	Data truncated for column 'c_char' at row 1
-Note	1265	Data truncated for column 'c_varchar' at row 1
+Error	1406	Data too long for column 'c_char' at row 1
+Warning	1196	Some non-transactional changed tables couldn't be rolled back
 insert into t1 values(@q, NULL, NULL);
 ERROR 22001: Data too long for column 'c_char' at row 1
 insert into t1 values(NULL, @q, NULL);

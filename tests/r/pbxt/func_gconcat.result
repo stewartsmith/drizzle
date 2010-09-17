@@ -458,8 +458,8 @@ create table t2 select group_concat(a) as a from t1;
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `a` varchar(100) DEFAULT NULL
-) ENGINE=DEFAULT
+  `a` VARCHAR(100) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 select collation(group_concat(a,b)) from t1;
 collation(group_concat(a,b))
 utf8_general_ci

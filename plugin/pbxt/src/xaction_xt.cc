@@ -1459,6 +1459,8 @@ xtPublic int xt_xn_status(XTOpenTablePtr ot, xtXactID xn_id, xtRecordID XT_UNUSE
 		 * Because we are only here because the record was valid but not
 		 * clean (you can confirm this by looking at the code that
 		 * calls this function).
+		 *
+		 * See {RETRY-READ}
 		 */
 		return XT_XN_REREAD;
 	}
@@ -1644,7 +1646,7 @@ xtPublic xtWord8 xt_xn_bytes_to_sweep(XTDatabaseHPtr db, XTThreadPtr thread)
 			}
 			else {
 				xn_log_id = x_log_id;
-				x_log_offset = x_log_offset;
+				xn_log_offset = x_log_offset;
 			}
 		}
 		xn_id++;

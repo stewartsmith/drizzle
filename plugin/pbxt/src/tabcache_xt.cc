@@ -458,7 +458,7 @@ xtBool XTTabCache::xt_tc_lock_page(XT_ROW_REC_FILE_PTR file, XTTabCachePagePtr *
 }
 
 // Depending on platform 'thread->t_id' may not be used by TAB_CAC_WRITE_LOCK().
-void XTTabCache::xt_tc_unlock_page(XT_ROW_REC_FILE_PTR XT_UNUSED(file), XTTabCachePagePtr page, xtOpSeqNo *op_seq, XTThreadPtr thread  __attribute__((unused)))
+void XTTabCache::xt_tc_unlock_page(XT_ROW_REC_FILE_PTR XT_UNUSED(file), XTTabCachePagePtr page, xtOpSeqNo *op_seq, XTThreadPtr thread __attribute__((unused)))
 {
 	XTTabCacheSegPtr	seg;
 

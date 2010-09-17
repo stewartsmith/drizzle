@@ -278,23 +278,10 @@ class ha_pbxt: public handler
 	void	unlock_row();
 	int		delete_all_rows(void);
 	int		repair(THD* thd, HA_CHECK_OPT* check_opt);
-#ifdef DRIZZLED
 	int		analyze(THD* thd);
 	int		optimize(THD* thd);
 	int		check(THD* thd);
-#else
-	int		analyze(THD* thd, HA_CHECK_OPT* check_opt);
-	int		optimize(THD* thd, HA_CHECK_OPT* check_opt);
-	int		check(THD* thd, HA_CHECK_OPT* check_opt);
-#endif
 	ha_rows	records_in_range(uint inx, key_range *min_key, key_range *max_key);
-#ifndef DRIZZLED
-	int		delete_system_table(const char *table_path);
-	int		delete_table(const char *from);
-	int		rename_system_table(const char * from, const char * to);
-	int		rename_table(const char * from, const char * to);
-	int		create(const char *name, TABLE *form, HA_CREATE_INFO *create_info);				//required
-#endif
 
 	THR_LOCK_DATA **store_lock(THD *thd, THR_LOCK_DATA **to, enum thr_lock_type lock_type);		 //required
 
