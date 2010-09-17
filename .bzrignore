@@ -312,3 +312,6 @@ xid.gcno
 ylwrap
 po/stamp-it
 drizzle.pot
+pars0grm.c
+pars0lex.c
+pars0grm.h
