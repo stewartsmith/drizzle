@@ -1,5 +1,6 @@
 /* Copyright 2000-2008 MySQL AB, 2008, 2009 Sun Microsystems, Inc.
  * Copyright (C) 2010 Vijay Samuel
+ * Copyright (C) 2010 Andrew Hutchings
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -275,6 +276,8 @@ bool DrizzleDumpTable::populateFields(drizzle_con_st &connection)
   {
     std::string fieldName(row[0]);
     DrizzleDumpField *field = new DrizzleDumpField(fieldName);
+    /* Stop valgrind warning */
+    field->convertDateTime= false;
     /* Also sets collation */
     field->setType(row[1], row[8]);
     if (row[2])
@@ -672,8 +675,59 @@ ostream& operator <<(ostream &os,const DrizzleDumpDatabase &obj)
   {
     DrizzleDumpTable *table= *i;
     os << *table;
+    DrizzleDumpData *data= new DrizzleDumpData(dcon, table);
+    os << *data;
+    delete data;
   }
 
+  return os;
+}
+
+DrizzleDumpData::DrizzleDumpData(drizzle_con_st &conn, DrizzleDumpTable *dataTable) :
+ table(dataTable),
+ connection(&conn)
+{
+  drizzle_return_t ret;
+  std::string query;
+  query= "SELECT * FROM '";
+  query.append(table->tableName);
+  query.append("'");
+
+  if (drizzle_query_str(connection, &result, query.c_str(), &ret) == NULL ||
+      ret != DRIZZLE_RETURN_OK)
+  {
+    if (ret == DRIZZLE_RETURN_ERROR_CODE)
+    {
+      errmsg << _("Could not get tables list due to error: ") <<
+        drizzle_result_error(&result);
+      drizzle_result_free(&result);
+    }
+    else
+    {
+      errmsg << _("Could not get tables list due to error: ") <<
+        drizzle_con_error(connection);
+    }
+    return;
+  }
+
+  if (drizzle_result_buffer(&result) != DRIZZLE_RETURN_OK)
+  {
+    errmsg << _("Could not get tables list due to error: ") <<
+        drizzle_con_error(connection);
+    return;
+  }
+}
+DrizzleDumpData::~DrizzleDumpData()
+{
+  drizzle_result_free(&result);
+}
+ostream& operator <<(ostream &os,const DrizzleDumpData &obj)
+{
+  drizzle_row_t row;
+  while((row= drizzle_row_next(&result)))
+  {
+
+  }
   return os;
 }
 

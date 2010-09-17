@@ -31,6 +31,12 @@ class DrizzleDumpIndex
       indexName(index)
     { }
 
+    ~DrizzleDumpIndex()
+    {
+      columns.clear();
+    }
+
+
     bool isPrimary;
     bool isUnique;
     bool isHash;
@@ -81,6 +87,13 @@ class DrizzleDumpTable
     DrizzleDumpTable(std::string &table) :
       tableName(table)
     { }
+
+    ~DrizzleDumpTable()
+    {
+      fields.clear();
+      indexes.clear();
+    }
+
     bool populateFields(drizzle_con_st &connection);
     bool populateIndexes(drizzle_con_st &connection);
     std::vector<DrizzleDumpField*> fields;
@@ -108,6 +121,11 @@ class DrizzleDumpDatabase
       databaseName(database)
     { }
 
+    ~DrizzleDumpDatabase()
+    {
+      tables.clear();
+    }
+
     friend std::ostream& operator <<(std::ostream &os, const DrizzleDumpDatabase &obj);
 
     bool populateTables(drizzle_con_st &connection);
@@ -116,6 +134,24 @@ class DrizzleDumpDatabase
     void setCollate(const char* newCollate);
     const std::string databaseName;
     std::string collate;
+};
+
+class DrizzleDumpData
+{
+  DrizzleDumpTable *table;
+  drizzle_con_st *connection;
+  std::stringstream errmsg;
+  drizzle_result_st result;
+
+  public:
+    DrizzleDumpData(drizzle_con_st &conn, DrizzleDumpTable *dataTable);
+    ~DrizzleDumpData();
+    friend std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj);
+
+    /* For 0000-00-00 -> NULL conversion */
+    std::string convertDate(const char* oldDate);
+    /* For xx:xx:xx -> INT conversion */
+    std::string convertTime(const char* oldTime);
 };
 
 #endif /* CLIENT_DRIZZLEDUMP_H */
