@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTION_MATH_SQRT_H
-#define DRIZZLED_FUNCTION_MATH_SQRT_H
+#ifndef PLUGIN_MATH_FUNCTIONS_LN_H
+#define PLUGIN_MATH_FUNCTIONS_LN_H
 
 #include <drizzled/function/func.h>
 #include <drizzled/function/math/dec.h>
@@ -26,14 +26,15 @@
 namespace drizzled
 {
 
-class Item_func_sqrt :public Item_dec_func
+class Item_func_ln :public Item_dec_func
 {
 public:
-  Item_func_sqrt(Item *a) :Item_dec_func(a) {}
+  Item_func_ln() :Item_dec_func() {}
   double val_real();
-  const char *func_name() const { return "sqrt"; }
+  const char *func_name() const { return "ln"; }
+  bool check_argument_count(int n) { return n == 1; }
 };
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FUNCTION_MATH_SQRT_H */
+#endif /* PLUGIN_MATH_FUNCTIONS_LN_H */
