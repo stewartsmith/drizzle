@@ -3433,7 +3433,7 @@ static DRIZZLE_SYSVAR_BOOL(use_sys_malloc, srv_use_sys_malloc,
 
 static void init_options(drizzled::module::option_context &context)
 {
-  context("disable-adaptive-hash-index", 
+  context("disable-adaptive-hash-index",
           N_("Disable InnoDB adaptive hash index (enabled by default)."));
   context("disable-adaptive-flushing",
           N_("Do not attempt to flush dirty pages to avoid IO bursts at checkpoints."));
@@ -3459,7 +3459,7 @@ static void init_options(drizzled::module::option_context &context)
   context("fast-shutdown",
           po::value<unsigned long>(&innobase_fast_shutdown)->default_value(1),
           N_("Speeds up the shutdown process of the InnoDB storage engine. Possible values are 0, 1 (faster) or 2 (fastest - crash-like)."));
-  context("file-per-table", 
+  context("file-per-table",
           po::value<bool>(&srv_file_per_table)->default_value(false)->zero_tokens(),
           N_("Stores each InnoDB table to an .ibd file in the database dir."));
   context("file-format",
@@ -3473,7 +3473,7 @@ static void init_options(drizzled::module::option_context &context)
           N_("With which method to flush data."));
   context("force-recovery",
           po::value<long>(&innobase_force_recovery)->default_value(0),
-          N_("Helps to save your data in case the disk image of the database becomes corrupt."));        
+          N_("Helps to save your data in case the disk image of the database becomes corrupt."));
   context("data-file-path",
           po::value<string>(),
           N_("Path to individual files and their sizes."));
