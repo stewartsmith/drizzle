@@ -33,9 +33,6 @@
 #include "client_priv.h"
 #include <string>
 #include <iostream>
-#include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/m_string.h"
-#include "drizzled/charset_info.h"
 #include <stdarg.h>
 #include <boost/unordered_set.hpp>
 #include <algorithm>
@@ -815,10 +812,9 @@ static void write_footer(FILE *sql_file)
     {
       if (opt_dump_date)
       {
-        char time_str[20];
-        internal::get_date(time_str, GETDATE_DATE_TIME, 0);
+        boost::posix_time::ptime time(boost::posix_time::second_clock::local_time());
         fprintf(sql_file, "-- Dump completed on %s\n",
-                time_str);
+          boost::posix_time::to_simple_string(time).c_str());
       }
       else
         fprintf(sql_file, "-- Dump completed\n");
@@ -1009,7 +1005,6 @@ static void free_resources(void)
   if (md_result_file && md_result_file != stdout)
     fclose(md_result_file);
   opt_password.erase();
-  internal::my_end();
 }
 
 
@@ -1078,49 +1073,6 @@ static void dbDisconnect(string &host)
   drizzle_con_free(&dcon);
   drizzle_free(&drizzle);
 } /* dbDisconnect */
-
-/*
-  Quote a table name so it can be used in "SHOW TABLES LIKE <tabname>"
-
-  SYNOPSIS
-  quote_for_like()
-  name     name of the table
-  buff     quoted name of the table
-
-  DESCRIPTION
-  Quote \, _, ' and % characters
-
-Note: Because DRIZZLE uses the C escape syntax in strings
-(for example, '\n' to represent newline), you must double
-any '\' that you use in your LIKE  strings. For example, to
-search for '\n', specify it as '\\n'. To search for '\', specify
-it as '\\\\' (the backslashes are stripped once by the parser
-and another time when the pattern match is done, leaving a
-single backslash to be matched).
-
-Example: "t\1" => "t\\\\1"
-
-*/
-static char *quote_for_like(const char *name, char *buff)
-{
-  char *to= buff;
-  *to++= '\'';
-  while (*name)
-  {
-    if (*name == '\\')
-    {
-      *to++='\\';
-      *to++='\\';
-      *to++='\\';
-    }
-    else if (*name == '\'' || *name == '_'  || *name == '%')
-      *to++= '\\';
-    *to++= *name++;
-  }
-  to[0]= '\'';
-  to[1]= 0;
-  return buff;
-}
 
 static int dump_all_databases()
 {
@@ -1209,82 +1161,6 @@ static int start_transaction(drizzle_con_st *drizzle_con)
                                                 "WITH CONSISTENT SNAPSHOT", false));
 }
 
-
-/*
-  SYNOPSIS
-
-  Check if we the table is one of the table types that should be ignored:
-  MRG_ISAM, MRG_MYISAM, if opt_delayed, if that table supports delayed inserts.
-  If the table should be altogether ignored, it returns a true, false if it
-  should not be ignored. If the user has selected to use INSERT DELAYED, it
-  sets the value of the bool pointer supports_delayed_inserts to 0 if not
-  supported, 1 if it is supported.
-
-  ARGS
-
-  check_if_ignore_table()
-  table_name                  Table name to check
-  table_type                  Type of table
-
-  GLOBAL VARIABLES
-  drizzle                       Drizzle connection
-  verbose                     Write warning messages
-
-  RETURN
-  char (bit value)            See IGNORE_ values at top
-*/
-
-char check_if_ignore_table(const char *table_name, char *table_type)
-{
-  char result= IGNORE_NONE;
-  char buff[FN_REFLEN+80], show_name_buff[FN_REFLEN];
-  //const char *number_of_rows= NULL;
-  drizzle_result_st res;
-  drizzle_row_t row;
-
-  /* Check memory for quote_for_like() */
-  assert(2*sizeof(table_name) < sizeof(show_name_buff));
-  snprintf(buff, sizeof(buff), "show table status like %s",
-           quote_for_like(table_name, show_name_buff));
-  if (drizzleclient_query_with_error_report(&dcon, &res, buff, false))
-  {
-    return result;
-  }
-  if (!(row= drizzle_row_next(&res)))
-  {
-    fprintf(stderr,
-            _("Error: Couldn't read status information for table %s\n"),
-            table_name);
-    drizzle_result_free(&res);
-    return(result);                         /* assume table is ok */
-  }
-  else
-  {
-//    if ((number_of_rows= fetch_named_row(&res, row, "Rows")) != NULL)
-//    {
-//      total_rows= strtoul(number_of_rows, NULL, 10);
-//    }
-  }
-  /*
-    If the table type matches any of these, we do support delayed inserts.
-    Note-> we do not want to skip dumping this table if if is not one of
-    these types, but we do want to use delayed inserts in the dump if
-    the table type is _NOT_ one of these types
-  */
-  {
-    strncpy(table_type, row[1], DRIZZLE_MAX_TABLE_SIZE-1);
-    if (opt_delayed)
-    {
-      if (strcmp(table_type,"MyISAM") &&
-          strcmp(table_type,"ARCHIVE") &&
-          strcmp(table_type,"HEAP") &&
-          strcmp(table_type,"MEMORY"))
-        result= IGNORE_INSERT_DELAYED;
-    }
-  }
-  drizzle_result_free(&res);
-  return(result);
-}
 
 int get_server_type()
 {
