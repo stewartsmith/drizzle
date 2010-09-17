@@ -1,1 +1,1 @@
---plugin-add=embedded_innodb --plugin-remove=innobase --innodb.fast-shutdown=0
+ --innodb.fast-shutdown=0

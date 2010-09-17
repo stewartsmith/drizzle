@@ -286,11 +286,6 @@ public:
 
   int renameTable(Session &session, const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to);
 
-  // @todo move these to protected
-  virtual void doGetTableNames(CachedDirectory &directory,
-                               const drizzled::SchemaIdentifier &schema_identifier,
-                               TableNameList &set_of_names)= 0;
-
   virtual void doGetTableIdentifiers(CachedDirectory &directory,
                                      const drizzled::SchemaIdentifier &schema_identifier,
                                      TableIdentifiers &set_of_identifiers)= 0;

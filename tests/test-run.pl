@@ -149,7 +149,6 @@ our $exe_drizzleimport;
 our $exe_drizzle_fix_system_tables;
 our $exe_drizzletest;
 our $exe_slave_mysqld;
-our $exe_my_print_defaults;
 our $exe_perror;
 our $lib_udf_example;
 our $lib_example_plugin;
@@ -1169,15 +1168,13 @@ sub collect_mysqld_features () {
   my $tmpdir= tempdir(CLEANUP => 0); # Directory removed by this function
 
   #
-  # Execute "mysqld --help --verbose" to get a list
+  # Execute "drizzled --help" to get a list
   # list of all features and settings
   #
-  # --no-defaults and --skip-grant-tables are to avoid loading
+  # --no-defaults are to avoid loading
   # system-wide configs and plugins
   #
-  # --datadir must exist, mysqld will chdir into it
-  #
-  my $list= `$exe_drizzled --no-defaults --datadir=$tmpdir --skip-grant-tables --print-defaults`;
+  my $list= `$exe_drizzled --no-defaults --help`;
 
   foreach my $line (split('\n', $list))
   {
@@ -1195,46 +1192,9 @@ sub collect_mysqld_features () {
 	mtr_report("Drizzle Version $1.$2.$3");
       }
     }
-    else
-    {
-      if (!$found_variable_list_start)
-      {
-	# Look for start of variables list
-	if ( $line =~ /[\-]+\s[\-]+/ )
-	{
-	  $found_variable_list_start= 1;
-	}
-      }
-      else
-      {
-	# Put variables into hash
-	if ( $line =~ /^([\S]+)[ \t]+(.*?)\r?$/ )
-	{
-	  # print "$1=\"$2\"\n";
-	  $mysqld_variables{$1}= $2;
-	}
-	else
-	{
-	  # The variable list is ended with a blank line
-	  if ( $line =~ /^[\s]*$/ )
-	  {
-	    last;
-	  }
-	  else
-	  {
-	    # Send out a warning, we should fix the variables that has no
-	    # space between variable name and it's value
-	    # or should it be fixed width column parsing? It does not
-	    # look like that in function my_print_variables in my_getopt.c
-	    mtr_warning("Could not parse variable list line : $line");
-	  }
-	}
-      }
-    }
   }
   rmtree($tmpdir);
   mtr_error("Could not find version of Drizzle") unless $drizzle_version_id;
-  mtr_error("Could not find variabes list") unless $found_variable_list_start;
 
 }
 
@@ -1289,13 +1249,6 @@ sub executable_setup () {
       mtr_report("Using \"$exe_libtool\" when running valgrind or debugger");
     }
   }
-
-# Look for my_print_defaults
-  $exe_my_print_defaults=
-    mtr_exe_exists(
-        "$path_client_bindir/my_print_defaults",
-        "$glob_basedir/extra/my_print_defaults",
-        "$glob_builddir/extra/my_print_defaults");
 
 # Look for perror
   $exe_perror= "perror";
@@ -1624,11 +1577,6 @@ sub environment_setup () {
     $ENV{'DRIZZLE_FIX_SYSTEM_TABLES'}=  $cmdline_mysql_fix_system_tables;
 
   }
-
-  # ----------------------------------------------------
-  # Setup env so childs can execute my_print_defaults
-  # ----------------------------------------------------
-  $ENV{'DRIZZLE_MY_PRINT_DEFAULTS'}= mtr_native_path($exe_my_print_defaults);
 
   # ----------------------------------------------------
   # Setup env so childs can shutdown the server
@@ -2620,8 +2568,8 @@ sub mysqld_arguments ($$$$) {
                 $prefix, $path_vardir_trace, $mysqld->{'type'}, $sidx);
   }
 
-  mtr_add_arg($args, "%s--sort_buffer=256K", $prefix);
-  mtr_add_arg($args, "%s--max_heap_table_size=1M", $prefix);
+  mtr_add_arg($args, "%s--sort-buffer=256K", $prefix);
+  mtr_add_arg($args, "%s--max-heap-table-size=1M", $prefix);
 
   if ( $opt_warnings )
   {

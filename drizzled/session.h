@@ -378,6 +378,11 @@ public:
    */
   uint32_t id;
   LEX *lex; /**< parse tree descriptor */
+
+  LEX *getLex() 
+  {
+    return lex;
+  }
   /** query associated with this statement */
   std::string query;
 

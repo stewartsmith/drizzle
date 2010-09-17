@@ -102,10 +102,6 @@ public:
                                            const drizzled::SchemaIdentifier&,
                                            drizzled::TableIdentifiers&) {}
 
-	/* override */ void doGetTableNames(CachedDirectory&, 
-					const SchemaIdentifier&, 
-					std::set<std::string>&) {}
-
 	/* override */ bool doDoesTableExist(Session&, const TableIdentifier &identifier);
 
         ~PBXTStorageEngine();

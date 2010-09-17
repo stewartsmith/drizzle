@@ -5437,7 +5437,7 @@ try
   "Directory for log files")
   ("max-connect-retries", po::value<uint32_t>(&opt_max_connect_retries)->default_value(500)->notifier(&check_retries),
   "Max number of connection attempts when connecting to server")
-  ("quiet,s", po::value<bool>(&silent)->default_value(0)->zero_tokens(),
+  ("quiet,s", po::value<bool>(&silent)->default_value(false)->zero_tokens(),
   "Suppress all normal output.")
   ("record,r", "Record output of test_file into result file.")
   ("result-file,R", po::value<string>(&result_file_name)->default_value(""),
@@ -6642,14 +6642,23 @@ int reg_replace(char** buf_p, int* buf_len_p, char *pattern,
     /* Repeatedly replace the string with the matched regex */
     string subject(in_string);
     size_t replace_length= strlen(replace);
+    size_t length_of_replacement= strlen(replace);
     size_t current_position= 0;
     int rc= 0;
-    while(0 >= (rc= pcre_exec(re, NULL, subject.c_str() + current_position, subject.length() - current_position,
-                      0, 0, ovector, 3)))
+
+    while (true) 
     {
+      rc= pcre_exec(re, NULL, subject.c_str(), subject.length(), 
+                    current_position, 0, ovector, 3);
+      if (rc < 0)
+      {
+        break;
+      }
+
       current_position= static_cast<size_t>(ovector[0]);
       replace_length= static_cast<size_t>(ovector[1] - ovector[0]);
-      subject.replace(current_position, replace_length, replace, replace_length);
+      subject.replace(current_position, replace_length, replace, length_of_replacement);
+      current_position= current_position + length_of_replacement;
     }
 
     char *new_buf = (char *) malloc(subject.length() + 1);

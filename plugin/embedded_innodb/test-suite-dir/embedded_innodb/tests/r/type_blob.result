@@ -3,10 +3,10 @@ CREATE TABLE t1 (a blob, b text, c blob, d text, e text);
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 a	BLOB	YES		YES	
-b	BLOB	YES		YES	
+b	TEXT	YES		YES	
 c	BLOB	YES		YES	
-d	BLOB	YES		YES	
-e	BLOB	YES		YES	
+d	TEXT	YES		YES	
+e	TEXT	YES		YES	
 CREATE TABLE t2 (a varchar(255), b blob, c blob);
 CREATE TABLE t4 (c varchar(16383) not null);
 show columns from t2;

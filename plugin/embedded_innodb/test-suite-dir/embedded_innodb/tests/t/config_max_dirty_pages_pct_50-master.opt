@@ -1,1 +1,1 @@
---plugin-add=embedded_innodb --plugin-remove=innobase --innodb.max-dirty-pages-pct=50
+ --innodb.max-dirty-pages-pct=50

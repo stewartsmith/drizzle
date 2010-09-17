@@ -125,13 +125,12 @@ void MultiThreadScheduler::killSessionNow(Session *session)
 
 MultiThreadScheduler::~MultiThreadScheduler()
 {
-  LOCK_thread_count.lock();
+  boost::mutex::scoped_lock scopedLock(LOCK_thread_count);
   while (thread_count)
   {
-    pthread_cond_wait(COND_thread_count.native_handle(), LOCK_thread_count.native_handle());
+    COND_thread_count.wait(scopedLock);
   }
 
-  LOCK_thread_count.unlock();
   (void) pthread_attr_destroy(&attr);
 }
 
