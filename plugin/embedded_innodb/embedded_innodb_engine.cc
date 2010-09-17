@@ -1441,7 +1441,7 @@ void EmbeddedInnoDBEngine::getTableNamesInSchemaFromInnoDB(
 {
   ib_trx_t   transaction;
   ib_crsr_t  cursor;
-  /* 
+  /*
     Why not use getPath()?
   */
   string search_string(schema.getSchemaName());
@@ -2764,7 +2764,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
   srv_use_sys_malloc= (vm.count("use-internal-malloc")) ? false : true;
 
   if (vm.count("additional-mem-pool-size"))
-  { 
+  {
     if (innobase_additional_mem_pool_size > LONG_MAX || innobase_additional_mem_pool_size < 512*1024L)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of additional-mem-pool-size"));
@@ -2775,7 +2775,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
   }
 
   if (vm.count("autoextend-increment"))
-  { 
+  {
     if (srv_auto_extend_increment > 1000L || srv_auto_extend_increment < 1L)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of autoextend-increment"));
@@ -2784,7 +2784,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
   }
 
   if (vm.count("buffer-pool-size"))
-  { 
+  {
     if (innobase_buffer_pool_size > INT64_MAX || innobase_buffer_pool_size < 5*1024*1024L)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of buffer-pool-size"));
@@ -2795,7 +2795,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
   }
 
   if (vm.count("io-capacity"))
-  { 
+  {
     if (srv_io_capacity > (unsigned long)~0L || srv_io_capacity < 100)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of io-capacity"));
@@ -2804,7 +2804,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
   }
 
   if (vm.count("fast-shutdown"))
-  { 
+  {
     if (innobase_fast_shutdown > 2)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of fast-shutdown"));
@@ -2813,7 +2813,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
   }
 
   if (vm.count("flush-log-at-trx-commit"))
-  { 
+  {
     if (srv_flush_log_at_trx_commit > 2)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of flush-log-at-trx-commit"));
@@ -2822,7 +2822,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
   }
 
   if (vm.count("force-recovery"))
-  { 
+  {
     if (innobase_force_recovery > 6)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of force-recovery"));
@@ -2831,7 +2831,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
   }
 
   if (vm.count("log-file-size"))
-  { 
+  {
     if (innodb_log_file_size > INT64_MAX || innodb_log_file_size < 1*1024*1024L)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of log-file-size"));
@@ -2842,7 +2842,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
   }
 
   if (vm.count("log-files-in-group"))
-  { 
+  {
     if (innodb_log_files_in_group > 100 || innodb_log_files_in_group < 2)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of log-files-in-group"));
@@ -2851,7 +2851,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
   }
 
   if (vm.count("lock-wait-timeout"))
-  { 
+  {
     if (innobase_lock_wait_timeout > 1024*1024*1024 || innobase_lock_wait_timeout < 1)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of lock-wait-timeout"));
@@ -2860,7 +2860,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
   }
 
   if (vm.count("log-buffer-size"))
-  { 
+  {
     if (innobase_log_buffer_size > LONG_MAX || innobase_log_buffer_size < 256*1024L)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of log-buffer-size"));
@@ -2871,7 +2871,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
   }
 
   if (vm.count("lru-old-blocks-pct"))
-  { 
+  {
     if (innobase_lru_old_blocks_pct > 95 || innobase_lru_old_blocks_pct < 5)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of lru-old-blocks-pct"));
@@ -2880,7 +2880,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
   }
 
   if (vm.count("lru-block-access-recency"))
-  { 
+  {
     if (innobase_lru_block_access_recency > ULONG_MAX)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of lru-block-access-recency"));
@@ -2889,7 +2889,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
   }
 
   if (vm.count("max-dirty-pages-pct"))
-  { 
+  {
     if (srv_max_buf_pool_modified_pct > 99)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of max-dirty-pages-pct"));
@@ -2898,7 +2898,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
   }
 
   if (vm.count("max-purge-lag"))
-  { 
+  {
     if (srv_max_purge_lag > (unsigned long)~0L)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of max-purge-lag"));
@@ -2907,7 +2907,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
   }
 
   if (vm.count("open-files"))
-  { 
+  {
     if (innobase_open_files > LONG_MAX || innobase_open_files < 10L)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of open-files"));
@@ -2916,7 +2916,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
   }
 
   if (vm.count("read-io-threads"))
-  { 
+  {
     if (innobase_read_io_threads > 64 || innobase_read_io_threads < 1)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of read-io-threads"));
@@ -2925,7 +2925,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
   }
 
   if (vm.count("sync-spin-loops"))
-  { 
+  {
     if (srv_n_spin_wait_rounds > (unsigned long)~0L)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of sync_spin_loops"));
