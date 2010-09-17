@@ -22,6 +22,23 @@
 
 class DrizzleDumpDatabase;
 
+class DrizzleDumpIndex
+{
+  public:
+    std::string indexName;
+
+    DrizzleDumpIndex(std::string &index) :
+      indexName(index)
+    { }
+
+    bool isPrimary;
+    bool isUnique;
+    bool isHash;
+
+    std::vector<std::string> columns;
+    friend std::ostream& operator <<(std::ostream &os, const DrizzleDumpIndex &obj);
+};
+
 class DrizzleDumpField
 {
   public:
@@ -33,25 +50,7 @@ class DrizzleDumpField
 
     friend std::ostream& operator <<(std::ostream &os, const DrizzleDumpField &obj);
     std::string fieldName;
-  
-/*    enum field_types
-    {
-      FIELD_TYPE_INT,
-      FIELD_TYPE_BIGINT,
-      FIELD_TYPE_VARCHAR,
-      FIELD_TYPE_VARBINARY,
-      FIELD_TYPE_ENUM,
-      FIELD_TYPE_BLOB,
-      FIELD_TYPE_DECIMAL,
-      FIELD_TYPE_DOUBLE,
-      FIELD_TYPE_DATE,
-      FIELD_TYPE_DATETIME,
-      FIELD_TYPE_TIMESTAMP,
-      FIELD_TYPE_NONE
-    };
 
-    enum field_types type;
-*/
     std::string type;
     uint32_t length;
     bool isNull;
@@ -82,7 +81,9 @@ class DrizzleDumpTable
       tableName(table)
     { }
     bool populateFields(drizzle_con_st &connection);
+    bool populateIndexes(drizzle_con_st &connection);
     std::vector<DrizzleDumpField*> fields;
+    std::vector<DrizzleDumpIndex*> indexes;
 
     friend std::ostream& operator <<(std::ostream &os, const DrizzleDumpTable &obj);
     std::string tableName;

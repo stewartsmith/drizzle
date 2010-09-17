@@ -101,7 +101,6 @@ static bool opt_set_charset= false;
 static bool opt_dump_date= true;
 static bool opt_autocommit= false; 
 static bool opt_disable_keys= true;
-static bool opt_xml;
 static bool opt_single_transaction= false; 
 static bool opt_comments;
 static bool opt_compact;
@@ -227,6 +226,7 @@ bool DrizzleDumpDatabase::populateTables(drizzle_con_st &connection)
 
     table->database= this;
     table->populateFields(connection);
+    table->populateIndexes(connection);
     tables.push_back(table);
   }
 
@@ -294,6 +294,79 @@ bool DrizzleDumpTable::populateFields(drizzle_con_st &connection)
 
     fields.push_back(field);
   }
+
+  drizzle_result_free(&result);
+  return true;
+}
+
+bool DrizzleDumpTable::populateIndexes(drizzle_con_st &connection)
+{
+  drizzle_result_st result;
+  drizzle_row_t row;
+  drizzle_return_t ret;
+  std::string query;
+  std::string lastKey;
+  bool firstIndex= true;
+  DrizzleDumpIndex *index;
+
+  if (connected_server_type == SERVER_MYSQL_FOUND)
+    query="SHOW INDEXES FROM ";
+  else
+    query= "SELECT INDEX_NAME, COLUMN_NAME, IS_USED_IN_PRIMARY, IS_UNIQUE FROM DATA_DICTIONARY.INDEX_PARTS WHERE TABLE_NAME='";
+  query.append(tableName);
+  if (connected_server_type == SERVER_DRIZZLE_FOUND)
+    query.append("'");
+
+  if (drizzle_query_str(&connection, &result, query.c_str(), &ret) == NULL ||
+      ret != DRIZZLE_RETURN_OK)
+  {
+    if (ret == DRIZZLE_RETURN_ERROR_CODE)
+    {
+      errmsg << _("Could not get tables list due to error: ") <<
+        drizzle_result_error(&result);
+      drizzle_result_free(&result);
+    }
+    else
+    {
+      errmsg << _("Could not get tables list due to error: ") <<
+        drizzle_con_error(&connection);
+    }
+    return false;
+  }
+
+  if (drizzle_result_buffer(&result) != DRIZZLE_RETURN_OK)
+  {
+    errmsg << _("Could not get tables list due to error: ") <<
+        drizzle_con_error(&connection);
+    return false;
+  }
+  while ((row= drizzle_row_next(&result)))
+  {
+    std::string indexName((connected_server_type == SERVER_MYSQL_FOUND) ? row[2] : row[0]);
+    if (indexName.compare(lastKey) != 0)
+    {
+      if (!firstIndex)
+        indexes.push_back(index);
+      index = new DrizzleDumpIndex(indexName);
+      if (connected_server_type == SERVER_MYSQL_FOUND)
+      {
+        index->isPrimary= (strcmp(row[2], "PRIMARY") == 0);
+        index->isUnique= (strcmp(row[1], "0") == 0);
+        index->isHash= (strcmp(row[10], "HASH") == 0);
+      }
+      else
+      {
+        index->isPrimary= (strcmp(row[0], "PRIMARY") == 0);
+        index->isUnique= (strcmp(row[3], "YES") == 0);
+        index->isHash= 0;
+      }
+      lastKey= (connected_server_type == SERVER_MYSQL_FOUND) ? row[2] : row[0];
+      firstIndex= false;
+    }
+    index->columns.push_back((connected_server_type == SERVER_MYSQL_FOUND) ? row[4] : row[1]);
+  }
+  if (!firstIndex)
+    indexes.push_back(index);
 
   drizzle_result_free(&result);
   return true;
@@ -451,6 +524,38 @@ void DrizzleDumpField::setCollate(const char* newCollate)
   collation= "utf8_general_ci";
 }
 
+ostream& operator <<(ostream &os,const DrizzleDumpIndex &obj)
+{
+  if (obj.isPrimary)
+  {
+    os << "  PRIMARY KEY ";
+  }
+  else if (obj.isUnique)
+  {
+    os << "  UNIQUE KEY `" << obj.indexName << "` ";
+  }
+  else
+  {
+    os << "  KEY `" << obj.indexName << "` ";
+  }
+
+  os << "(";
+  
+  std::vector<std::string>::iterator i;
+  std::vector<std::string> fields = obj.columns;
+  for (i= fields.begin(); i != fields.end(); ++i)
+  {
+    if (i != fields.begin())
+      os << ",";
+    std::string field= *i;
+    os << "`" << field << "`";
+  }
+
+  os << ")";
+
+  return os;
+}
+
 ostream& operator <<(ostream &os,const DrizzleDumpField &obj)
 {
   os << "  `" << obj.fieldName << "` ";
@@ -525,12 +630,21 @@ ostream& operator <<(ostream &os,const DrizzleDumpTable &obj)
   std::vector<DrizzleDumpField*> output_fields = obj.fields;
   for (i= output_fields.begin(); i != output_fields.end(); ++i)
   {
+    if (i != output_fields.begin())
+      os << "," << endl;
     DrizzleDumpField *field= *i;
     os << *field;
-    if ((i + 1) != output_fields.end())
-      os << ",";
-    os << endl;
   }
+
+  std::vector<DrizzleDumpIndex*>::iterator j;
+  std::vector<DrizzleDumpIndex*> output_indexes = obj.indexes;
+  for (j= output_indexes.begin(); j != output_indexes.end(); ++j)
+  {
+    os << "," << endl;;
+    DrizzleDumpIndex *index= *j;
+    os << *index;
+  }
+  os << endl;
   os << ") ENGINE=" << obj.engineName << " ";
   if ((connected_server_type == SERVER_MYSQL_FOUND) and (obj.autoIncrement > 0))
     os << "AUTO_INCREMENT=" << obj.autoIncrement << " ";
@@ -597,20 +711,7 @@ static void check_io(FILE *file)
 
 static void write_header(FILE *sql_file, char *db_name)
 {
-  if (opt_xml)
-  {
-    fputs("<?xml version=\"1.0\"?>\n", sql_file);
-    /*
-      Schema reference.  Allows use of xsi:nil for NULL values and
-xsi:type to define an element's data type.
-    */
-    fputs("<drizzledump ", sql_file);
-    fputs("xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"",
-          sql_file);
-    fputs(">\n", sql_file);
-    check_io(sql_file);
-  }
-  else if (! opt_compact)
+  if (! opt_compact)
   { 
     if (opt_comments)
     {
@@ -640,12 +741,7 @@ xsi:type to define an element's data type.
 
 static void write_footer(FILE *sql_file)
 {
-  if (opt_xml)
-  {
-    fputs("</drizzledump>\n", sql_file);
-    check_io(sql_file);
-  }
-  else if (! opt_compact)
+  if (! opt_compact)
   {
     if (path.empty())
     {
@@ -1183,7 +1279,6 @@ try
   ("verbose,v", po::value<bool>(&verbose)->default_value(false)->zero_tokens(),
   N_("Print info about the various stages."))
   ("version,V", N_("Output version information and exit."))
-  ("xml,X", N_("Dump a database as well formed XML."))
   ("skip-comments", N_("Turn off Comments"))
   ("skip-create", N_("Turn off create-options"))
   ("skip-extended-insert", N_("Turn off extended-insert"))
@@ -1422,12 +1517,6 @@ try
     }
   }
 
-  if (vm.count("xml"))
-  { 
-    opt_xml= 1;
-    extended_insert= opt_drop= opt_disable_keys= opt_autocommit= opt_create_db= 0;
-  }
-  
   if (vm.count("skip-opt"))
   {
     extended_insert= opt_drop= quick= create_options= 0;
