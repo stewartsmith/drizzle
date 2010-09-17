@@ -19,19 +19,18 @@
 
 #include "config.h"
 #include <math.h>
-#include <drizzled/function/math/acos.h>
+#include "cos.h"
 
 namespace drizzled
 {
 
-double Item_func_acos::val_real()
+double Item_func_cos::val_real()
 {
   assert(fixed == 1);
-  // the volatile's for BUG #2338 to calm optimizer down (because of gcc's bug)
-  volatile double value= args[0]->val_real();
-  if ((null_value=(args[0]->null_value || (value < -1.0 || value > 1.0))))
+  double value= args[0]->val_real();
+  if ((null_value=args[0]->null_value))
     return 0.0;
-  return acos(value);
+  return cos(value);
 }
 
 } /* namespace drizzled */

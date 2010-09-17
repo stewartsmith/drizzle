@@ -30,6 +30,7 @@ namespace drizzled
 class Item_dec_func :public Item_real_func
 {
  public:
+  Item_dec_func(): Item_real_func() {}
   Item_dec_func(Item *a) :Item_real_func(a) {}
   Item_dec_func(Item *a,Item *b) :Item_real_func(a,b) {}
   void fix_length_and_dec()

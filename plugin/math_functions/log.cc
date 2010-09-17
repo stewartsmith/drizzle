@@ -19,7 +19,7 @@
 
 #include "config.h"
 #include <math.h>
-#include <drizzled/function/math/log.h>
+#include "log.h"
 
 namespace drizzled
 {

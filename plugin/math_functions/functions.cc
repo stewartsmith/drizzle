@@ -19,14 +19,60 @@
  */
 
 #include "config.h"
+#include <drizzled/plugin/function.h>
 #include "plugin/math_functions/functions.h"
+#include "plugin/math_functions/abs.h"
+#include "plugin/math_functions/acos.h"
+#include "plugin/math_functions/asin.h"
+#include "plugin/math_functions/atan.h"
+#include "plugin/math_functions/cos.h"
+#include "plugin/math_functions/log.h"
+#include "plugin/math_functions/sin.h"
+#include "plugin/math_functions/pow.h"
 
 using namespace drizzled;
 
+plugin::Create_function<drizzled::Item_func_abs> *abs_function= NULL;
+plugin::Create_function<drizzled::Item_func_acos> *acos_function= NULL;
+plugin::Create_function<drizzled::Item_func_asin> *asin_function= NULL;
+plugin::Create_function<drizzled::Item_func_atan> *atan_function= NULL;
+plugin::Create_function<drizzled::Item_func_atan> *atan2_function= NULL;
+plugin::Create_function<drizzled::Item_func_cos> *cos_function= NULL;
+plugin::Create_function<drizzled::Item_func_log> *log_function= NULL;
+plugin::Create_function<drizzled::Item_func_log2> *log2_function= NULL;
+plugin::Create_function<drizzled::Item_func_log10> *log10_function= NULL;
+plugin::Create_function<drizzled::Item_func_sin> *sin_function= NULL;
+plugin::Create_function<drizzled::Item_func_pow> *pow_function= NULL;
+plugin::Create_function<drizzled::Item_func_pow> *power_function= NULL;
+
 static int init(drizzled::module::Context &context)
 {
-  (void)context;
-  
+  abs_function= new plugin::Create_function<Item_func_abs>("abs");
+  acos_function= new plugin::Create_function<Item_func_acos>("acos");
+  asin_function= new plugin::Create_function<Item_func_asin>("asin");
+  atan_function= new plugin::Create_function<Item_func_atan>("atan");
+  atan2_function= new plugin::Create_function<Item_func_atan>("atan2");
+  cos_function= new plugin::Create_function<Item_func_cos>("cos");
+  log_function= new plugin::Create_function<Item_func_log>("log");
+  log2_function= new plugin::Create_function<Item_func_log2>("log2");
+  log10_function= new plugin::Create_function<Item_func_log10>("log10");
+  sin_function= new plugin::Create_function<Item_func_sin>("sin");
+  pow_function= new plugin::Create_function<Item_func_pow>("pow");
+  power_function= new plugin::Create_function<Item_func_pow>("power");
+
+  context.add(abs_function);
+  context.add(acos_function);
+  context.add(asin_function);
+  context.add(atan_function);
+  context.add(atan2_function);
+  context.add(cos_function);
+  context.add(log_function);
+  context.add(log2_function);
+  context.add(log10_function);
+  context.add(sin_function);
+  context.add(pow_function);
+  context.add(power_function);
+
   return 0;
 }
 

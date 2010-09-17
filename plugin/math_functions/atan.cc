@@ -17,23 +17,27 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTION_MATH_POW_H
-#define DRIZZLED_FUNCTION_MATH_POW_H
-
-#include <drizzled/function/func.h>
-#include <drizzled/function/math/dec.h>
+#include "config.h"
+#include <math.h>
+#include "atan.h"
 
 namespace drizzled
 {
 
-class Item_func_pow :public Item_dec_func
+double Item_func_atan::val_real()
 {
-public:
-  Item_func_pow(Item *a,Item *b) :Item_dec_func(a,b) {}
-  double val_real();
-  const char *func_name() const { return "pow"; }
-};
+  assert(fixed == 1);
+  double value= args[0]->val_real();
+  if ((null_value=args[0]->null_value))
+    return 0.0;
+  if (arg_count == 2)
+  {
+    double val2= args[1]->val_real();
+    if ((null_value=args[1]->null_value))
+      return 0.0;
+    return fix_result(atan2(value,val2));
+  }
+  return atan(value);
+}
 
 } /* namespace drizzled */
-
-#endif /* DRIZZLED_FUNCTION_MATH_POW_H */
