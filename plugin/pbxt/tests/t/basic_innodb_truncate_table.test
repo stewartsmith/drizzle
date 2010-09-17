@@ -1,3 +1,4 @@
+SET SESSION storage_engine=pbxt;
 CREATE TABLE t1 (a int PRIMARY KEY);
 insert into t1 values (1),(2),(3),(4);
 SELECT * FROM t1;

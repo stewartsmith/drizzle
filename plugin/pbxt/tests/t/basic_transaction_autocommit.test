@@ -1,3 +1,4 @@
+SET SESSION storage_engine=pbxt;
 connect (con1,localhost,root,,);
 connect (con2,localhost,root,,);
 connection con1;
