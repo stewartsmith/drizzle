@@ -19,7 +19,7 @@
 
 #include "config.h"
 #include <math.h>
-#include <drizzled/function/math/sqrt.h>
+#include "sqrt.h"
 
 namespace drizzled
 {
