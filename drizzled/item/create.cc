@@ -76,7 +76,6 @@
 #include <drizzled/function/math/int_val.h>
 #include <drizzled/function/math/integer.h>
 #include <drizzled/function/last_insert.h>
-#include <drizzled/function/math/ln.h>
 #include <drizzled/function/locate.h>
 #include <drizzled/function/min_max.h>
 #include <drizzled/function/num1.h>
@@ -707,22 +706,6 @@ protected:
   Create_func_least() {}
   virtual ~Create_func_least() {}
 };
-
-
-class Create_func_ln : public Create_func_arg1
-{
-public:
-  using Create_func_arg1::create;
-
-  virtual Item *create(Session *session, Item *arg1);
-
-  static Create_func_ln s_singleton;
-
-protected:
-  Create_func_ln() {}
-  virtual ~Create_func_ln() {}
-};
-
 
 class Create_func_load_file : public Create_func_arg1
 {
@@ -1810,16 +1793,6 @@ Create_func_least::create_native(Session *session, LEX_STRING name,
   return new (session->mem_root) Item_func_min(*item_list);
 }
 
-
-Create_func_ln Create_func_ln::s_singleton;
-
-Item*
-Create_func_ln::create(Session *session, Item *arg1)
-{
-  return new (session->mem_root) Item_func_ln(arg1);
-}
-
-
 Create_func_load_file Create_func_load_file::s_singleton;
 
 Item*
@@ -2246,7 +2219,6 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("LAST_INSERT_ID") }, BUILDER(Create_func_last_insert_id)},
   { { C_STRING_WITH_LEN("LCASE") }, BUILDER(Create_func_lcase)},
   { { C_STRING_WITH_LEN("LEAST") }, BUILDER(Create_func_least)},
-  { { C_STRING_WITH_LEN("LN") }, BUILDER(Create_func_ln)},
   { { C_STRING_WITH_LEN("LOAD_FILE") }, BUILDER(Create_func_load_file)},
   { { C_STRING_WITH_LEN("LOCATE") }, BUILDER(Create_func_locate)},
   { { C_STRING_WITH_LEN("LOWER") }, BUILDER(Create_func_lcase)},
