@@ -1,1 +1,1 @@
---plugin-add=embedded_innodb --plugin-remove=innobase --innodb.file-per-table=false
+--plugin-add=embedded_innodb --plugin-remove=innobase

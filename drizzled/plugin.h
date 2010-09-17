@@ -373,11 +373,9 @@ struct drizzle_value
 */
 
 extern bool plugin_init(module::Registry &registry,
-                        int *argc, char **argv,
                         boost::program_options::options_description &long_options);
 extern void plugin_finalize(module::Registry &registry);
-extern void my_print_help_inc_plugins(option *options,
-                                      boost::program_options::options_description &long_options);
+extern void my_print_help_inc_plugins(option *options);
 extern bool plugin_is_ready(const LEX_STRING *name, int type);
 extern void plugin_sessionvar_init(Session *session);
 extern void plugin_sessionvar_cleanup(Session *session);

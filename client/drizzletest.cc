@@ -5437,7 +5437,7 @@ try
   "Directory for log files")
   ("max-connect-retries", po::value<uint32_t>(&opt_max_connect_retries)->default_value(500)->notifier(&check_retries),
   "Max number of connection attempts when connecting to server")
-  ("quiet,s", po::value<bool>(&silent)->default_value(0)->zero_tokens(),
+  ("quiet,s", po::value<bool>(&silent)->default_value(false)->zero_tokens(),
   "Suppress all normal output.")
   ("record,r", "Record output of test_file into result file.")
   ("result-file,R", po::value<string>(&result_file_name)->default_value(""),
