@@ -19,25 +19,19 @@
 
 #include "config.h"
 #include <math.h>
-#include <drizzled/function/math/atan.h>
+#include "acos.h"
 
 namespace drizzled
 {
 
-double Item_func_atan::val_real()
+double Item_func_acos::val_real()
 {
   assert(fixed == 1);
-  double value= args[0]->val_real();
-  if ((null_value=args[0]->null_value))
+  // the volatile's for BUG #2338 to calm optimizer down (because of gcc's bug)
+  volatile double value= args[0]->val_real();
+  if ((null_value=(args[0]->null_value || (value < -1.0 || value > 1.0))))
     return 0.0;
-  if (arg_count == 2)
-  {
-    double val2= args[1]->val_real();
-    if ((null_value=args[1]->null_value))
-      return 0.0;
-    return fix_result(atan2(value,val2));
-  }
-  return atan(value);
+  return acos(value);
 }
 
 } /* namespace drizzled */

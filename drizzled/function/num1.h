@@ -29,6 +29,7 @@ namespace drizzled
 class Item_func_num1: public Item_func_numhybrid
 {
 public:
+  Item_func_num1(): Item_func_numhybrid() {}
   Item_func_num1(Item *a) :Item_func_numhybrid(a) {}
   Item_func_num1(Item *a, Item *b) :Item_func_numhybrid(a, b) {}
 

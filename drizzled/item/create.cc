@@ -63,13 +63,8 @@
 /* Function declarations */
 
 #include <drizzled/function/func.h>
-#include <drizzled/function/math/abs.h>
-#include <drizzled/function/math/acos.h>
 #include <drizzled/function/additive_op.h>
-#include <drizzled/function/math/asin.h>
-#include <drizzled/function/math/atan.h>
 #include <drizzled/function/math/ceiling.h>
-#include <drizzled/function/math/cos.h>
 #include <drizzled/function/math/dec.h>
 #include <drizzled/function/math/decimal_typecast.h>
 #include <drizzled/function/math/exp.h>
@@ -83,18 +78,15 @@
 #include <drizzled/function/last_insert.h>
 #include <drizzled/function/math/ln.h>
 #include <drizzled/function/locate.h>
-#include <drizzled/function/math/log.h>
 #include <drizzled/function/min_max.h>
 #include <drizzled/function/num1.h>
 #include <drizzled/function/num_op.h>
 #include <drizzled/function/numhybrid.h>
 #include <drizzled/function/math/ord.h>
-#include <drizzled/function/math/pow.h>
 #include <drizzled/function/math/real.h>
 #include <drizzled/function/row_count.h>
 #include <drizzled/function/set_user_var.h>
 #include <drizzled/function/sign.h>
-#include <drizzled/function/math/sin.h>
 #include <drizzled/function/math/sqrt.h>
 #include <drizzled/function/str/quote.h>
 #include <drizzled/function/math/tan.h>
@@ -257,61 +249,6 @@ protected:
   it helps to compare code between versions, and helps with merges conflicts.
 */
 
-class Create_func_abs : public Create_func_arg1
-{
-public:
-  using Create_func_arg1::create;
-
-  virtual Item *create(Session *session, Item *arg1);
-
-  static Create_func_abs s_singleton;
-
-protected:
-  Create_func_abs() {}
-  virtual ~Create_func_abs() {}
-};
-
-
-class Create_func_acos : public Create_func_arg1
-{
-public:
-  using Create_func_arg1::create;
-
-  virtual Item *create(Session *session, Item *arg1);
-
-  static Create_func_acos s_singleton;
-
-protected:
-  Create_func_acos() {}
-  virtual ~Create_func_acos() {}
-};
-
-class Create_func_asin : public Create_func_arg1
-{
-public:
-  using Create_func_arg1::create;
-
-  virtual Item *create(Session *session, Item *arg1);
-
-  static Create_func_asin s_singleton;
-
-protected:
-  Create_func_asin() {}
-  virtual ~Create_func_asin() {}
-};
-
-
-class Create_func_atan : public Create_native_func
-{
-public:
-  virtual Item *create_native(Session *session, LEX_STRING name, List<Item> *item_list);
-
-  static Create_func_atan s_singleton;
-
-protected:
-  Create_func_atan() {}
-  virtual ~Create_func_atan() {}
-};
 
 class Create_func_bin : public Create_func_arg1
 {
@@ -381,22 +318,6 @@ protected:
   Create_func_conv() {}
   virtual ~Create_func_conv() {}
 };
-
-
-class Create_func_cos : public Create_func_arg1
-{
-public:
-  using Create_func_arg1::create;
-
-  virtual Item *create(Session *session, Item *arg1);
-
-  static Create_func_cos s_singleton;
-
-protected:
-  Create_func_cos() {}
-  virtual ~Create_func_cos() {}
-};
-
 
 class Create_func_cot : public Create_func_arg1
 {
@@ -831,49 +752,6 @@ protected:
 };
 
 
-class Create_func_log : public Create_native_func
-{
-public:
-  virtual Item *create_native(Session *session, LEX_STRING name, List<Item> *item_list);
-
-  static Create_func_log s_singleton;
-
-protected:
-  Create_func_log() {}
-  virtual ~Create_func_log() {}
-};
-
-
-class Create_func_log10 : public Create_func_arg1
-{
-public:
-  using Create_func_arg1::create;
-
-  virtual Item *create(Session *session, Item *arg1);
-
-  static Create_func_log10 s_singleton;
-
-protected:
-  Create_func_log10() {}
-  virtual ~Create_func_log10() {}
-};
-
-
-class Create_func_log2 : public Create_func_arg1
-{
-public:
-  using Create_func_arg1::create;
-
-  virtual Item *create(Session *session, Item *arg1);
-
-  static Create_func_log2 s_singleton;
-
-protected:
-  Create_func_log2() {}
-  virtual ~Create_func_log2() {}
-};
-
-
 class Create_func_lpad : public Create_func_arg3
 {
 public:
@@ -1050,22 +928,6 @@ protected:
   virtual ~Create_func_pi() {}
 };
 
-
-class Create_func_pow : public Create_func_arg2
-{
-public:
-  using Create_func_arg2::create;
-
-  virtual Item *create(Session *session, Item *arg1, Item *arg2);
-
-  static Create_func_pow s_singleton;
-
-protected:
-  Create_func_pow() {}
-  virtual ~Create_func_pow() {}
-};
-
-
 class Create_func_quote : public Create_func_arg1
 {
 public:
@@ -1166,22 +1028,6 @@ protected:
   Create_func_sign() {}
   virtual ~Create_func_sign() {}
 };
-
-
-class Create_func_sin : public Create_func_arg1
-{
-public:
-  using Create_func_arg1::create;
-
-  virtual Item *create(Session *session, Item *arg1);
-
-  static Create_func_sin s_singleton;
-
-protected:
-  Create_func_sin() {}
-  virtual ~Create_func_sin() {}
-};
-
 
 class Create_func_space : public Create_func_arg1
 {
@@ -1510,69 +1356,6 @@ Create_func_arg3::create(Session *session, LEX_STRING name, List<Item> *item_lis
   return create(session, param_1, param_2, param_3);
 }
 
-
-Create_func_abs Create_func_abs::s_singleton;
-
-Item*
-Create_func_abs::create(Session *session, Item *arg1)
-{
-  return new (session->mem_root) Item_func_abs(arg1);
-}
-
-
-Create_func_acos Create_func_acos::s_singleton;
-
-Item*
-Create_func_acos::create(Session *session, Item *arg1)
-{
-  return new (session->mem_root) Item_func_acos(arg1);
-}
-
-Create_func_asin Create_func_asin::s_singleton;
-
-Item*
-Create_func_asin::create(Session *session, Item *arg1)
-{
-  return new (session->mem_root) Item_func_asin(arg1);
-}
-
-
-Create_func_atan Create_func_atan::s_singleton;
-
-Item*
-Create_func_atan::create_native(Session *session, LEX_STRING name,
-                                List<Item> *item_list)
-{
-  Item* func= NULL;
-  int arg_count= 0;
-
-  if (item_list != NULL)
-    arg_count= item_list->elements;
-
-  switch (arg_count) {
-  case 1:
-  {
-    Item *param_1= item_list->pop();
-    func= new (session->mem_root) Item_func_atan(param_1);
-    break;
-  }
-  case 2:
-  {
-    Item *param_1= item_list->pop();
-    Item *param_2= item_list->pop();
-    func= new (session->mem_root) Item_func_atan(param_1, param_2);
-    break;
-  }
-  default:
-  {
-    my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
-    break;
-  }
-  }
-
-  return func;
-}
-
 Create_func_bin Create_func_bin::s_singleton;
 
 Item*
@@ -1642,16 +1425,6 @@ Create_func_conv::create(Session *session, Item *arg1, Item *arg2, Item *arg3)
 {
   return new (session->mem_root) Item_func_conv(arg1, arg2, arg3);
 }
-
-
-Create_func_cos Create_func_cos::s_singleton;
-
-Item*
-Create_func_cos::create(Session *session, Item *arg1)
-{
-  return new (session->mem_root) Item_func_cos(arg1);
-}
-
 
 Create_func_cot Create_func_cot::s_singleton;
 
@@ -2096,62 +1869,6 @@ Create_func_locate::create_native(Session *session, LEX_STRING name,
   return func;
 }
 
-
-Create_func_log Create_func_log::s_singleton;
-
-Item*
-Create_func_log::create_native(Session *session, LEX_STRING name,
-                               List<Item> *item_list)
-{
-  Item *func= NULL;
-  int arg_count= 0;
-
-  if (item_list != NULL)
-    arg_count= item_list->elements;
-
-  switch (arg_count) {
-  case 1:
-  {
-    Item *param_1= item_list->pop();
-    func= new (session->mem_root) Item_func_log(param_1);
-    break;
-  }
-  case 2:
-  {
-    Item *param_1= item_list->pop();
-    Item *param_2= item_list->pop();
-    func= new (session->mem_root) Item_func_log(param_1, param_2);
-    break;
-  }
-  default:
-  {
-    my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
-    break;
-  }
-  }
-
-  return func;
-}
-
-
-Create_func_log10 Create_func_log10::s_singleton;
-
-Item*
-Create_func_log10::create(Session *session, Item *arg1)
-{
-  return new (session->mem_root) Item_func_log10(arg1);
-}
-
-
-Create_func_log2 Create_func_log2::s_singleton;
-
-Item*
-Create_func_log2::create(Session *session, Item *arg1)
-{
-  return new (session->mem_root) Item_func_log2(arg1);
-}
-
-
 Create_func_lpad Create_func_lpad::s_singleton;
 
 Item*
@@ -2266,15 +1983,6 @@ Create_func_pi::create(Session *session)
 }
 
 
-Create_func_pow Create_func_pow::s_singleton;
-
-Item*
-Create_func_pow::create(Session *session, Item *arg1, Item *arg2)
-{
-  return new (session->mem_root) Item_func_pow(arg1, arg2);
-}
-
-
 Create_func_quote Create_func_quote::s_singleton;
 
 Item*
@@ -2365,16 +2073,6 @@ Create_func_sign::create(Session *session, Item *arg1)
 {
   return new (session->mem_root) Item_func_sign(arg1);
 }
-
-
-Create_func_sin Create_func_sin::s_singleton;
-
-Item*
-Create_func_sin::create(Session *session, Item *arg1)
-{
-  return new (session->mem_root) Item_func_sin(arg1);
-}
-
 
 Create_func_space Create_func_space::s_singleton;
 
@@ -2516,18 +2214,12 @@ struct Native_func_registry
 
 static Native_func_registry func_array[] =
 {
-  { { C_STRING_WITH_LEN("ABS") }, BUILDER(Create_func_abs)},
-  { { C_STRING_WITH_LEN("ACOS") }, BUILDER(Create_func_acos)},
-  { { C_STRING_WITH_LEN("ASIN") }, BUILDER(Create_func_asin)},
-  { { C_STRING_WITH_LEN("ATAN") }, BUILDER(Create_func_atan)},
-  { { C_STRING_WITH_LEN("ATAN2") }, BUILDER(Create_func_atan)},
   { { C_STRING_WITH_LEN("BIN") }, BUILDER(Create_func_bin)},
   { { C_STRING_WITH_LEN("CEIL") }, BUILDER(Create_func_ceiling)},
   { { C_STRING_WITH_LEN("CEILING") }, BUILDER(Create_func_ceiling)},
   { { C_STRING_WITH_LEN("CONCAT") }, BUILDER(Create_func_concat)},
   { { C_STRING_WITH_LEN("CONCAT_WS") }, BUILDER(Create_func_concat_ws)},
   { { C_STRING_WITH_LEN("CONV") }, BUILDER(Create_func_conv)},
-  { { C_STRING_WITH_LEN("COS") }, BUILDER(Create_func_cos)},
   { { C_STRING_WITH_LEN("COT") }, BUILDER(Create_func_cot)},
   { { C_STRING_WITH_LEN("DATEDIFF") }, BUILDER(Create_func_datediff)},
   { { C_STRING_WITH_LEN("DATE_FORMAT") }, BUILDER(Create_func_date_format)},
@@ -2557,9 +2249,6 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("LN") }, BUILDER(Create_func_ln)},
   { { C_STRING_WITH_LEN("LOAD_FILE") }, BUILDER(Create_func_load_file)},
   { { C_STRING_WITH_LEN("LOCATE") }, BUILDER(Create_func_locate)},
-  { { C_STRING_WITH_LEN("LOG") }, BUILDER(Create_func_log)},
-  { { C_STRING_WITH_LEN("LOG10") }, BUILDER(Create_func_log10)},
-  { { C_STRING_WITH_LEN("LOG2") }, BUILDER(Create_func_log2)},
   { { C_STRING_WITH_LEN("LOWER") }, BUILDER(Create_func_lcase)},
   { { C_STRING_WITH_LEN("LPAD") }, BUILDER(Create_func_lpad)},
   { { C_STRING_WITH_LEN("LTRIM") }, BUILDER(Create_func_ltrim)},
@@ -2572,8 +2261,6 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("PERIOD_ADD") }, BUILDER(Create_func_period_add)},
   { { C_STRING_WITH_LEN("PERIOD_DIFF") }, BUILDER(Create_func_period_diff)},
   { { C_STRING_WITH_LEN("PI") }, BUILDER(Create_func_pi)},
-  { { C_STRING_WITH_LEN("POW") }, BUILDER(Create_func_pow)},
-  { { C_STRING_WITH_LEN("POWER") }, BUILDER(Create_func_pow)},
   { { C_STRING_WITH_LEN("QUOTE") }, BUILDER(Create_func_quote)},
   { { C_STRING_WITH_LEN("RADIANS") }, BUILDER(Create_func_radians)},
   { { C_STRING_WITH_LEN("ROUND") }, BUILDER(Create_func_round)},
@@ -2581,7 +2268,6 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("RPAD") }, BUILDER(Create_func_rpad)},
   { { C_STRING_WITH_LEN("RTRIM") }, BUILDER(Create_func_rtrim)},
   { { C_STRING_WITH_LEN("SIGN") }, BUILDER(Create_func_sign)},
-  { { C_STRING_WITH_LEN("SIN") }, BUILDER(Create_func_sin)},
   { { C_STRING_WITH_LEN("SPACE") }, BUILDER(Create_func_space)},
   { { C_STRING_WITH_LEN("SQRT") }, BUILDER(Create_func_sqrt)},
   { { C_STRING_WITH_LEN("STRCMP") }, BUILDER(Create_func_strcmp)},

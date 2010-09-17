@@ -17,21 +17,27 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include <math.h>
-#include <drizzled/function/math/sin.h>
+#ifndef PLUGIN_MATH_FUNCTIONS_ABS_H
+#define PLUGIN_MATH_FUNCTIONS_ABS_H
+
+#include <drizzled/function/func.h>
+#include <drizzled/function/num1.h>
 
 namespace drizzled
 {
 
-double Item_func_sin::val_real()
+class Item_func_abs :public Item_func_num1
 {
-  assert(fixed == 1);
-  double value= args[0]->val_real();
-  if ((null_value=args[0]->null_value))
-    return 0.0;
-  return sin(value);
-}
-
+public:
+  Item_func_abs() :Item_func_num1() {}
+  double real_op();
+  int64_t int_op();
+  my_decimal *decimal_op(my_decimal *);
+  const char *func_name() const { return "abs"; }
+  void fix_length_and_dec();
+  bool check_argument_count(int n) { return n == 1; }
+};
 
 } /* namespace drizzled */
+
+#endif /* PLUGIN_MATH_FUNCTIONS_ABS_H */

@@ -17,21 +17,24 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include <math.h>
-#include <drizzled/function/math/asin.h>
+#ifndef PLUGIN_MATH_FUNCTIONS_ATAN_H
+#define PLUGIN_MATH_FUNCTIONS_ATAN_H
+
+#include <drizzled/function/func.h>
+#include <drizzled/function/math/dec.h>
 
 namespace drizzled
 {
 
-double Item_func_asin::val_real()
+class Item_func_atan :public Item_dec_func
 {
-  assert(fixed == 1);
-  // the volatile's for BUG #2338 to calm optimizer down (because of gcc's bug)
-  volatile double value= args[0]->val_real();
-  if ((null_value=(args[0]->null_value || (value < -1.0 || value > 1.0))))
-    return 0.0;
-  return asin(value);
-}
+public:
+  Item_func_atan() :Item_dec_func() {}
+  double val_real();
+  const char *func_name() const { return "atan"; }
+  bool check_argument_count(int n) { return n == 1 || n == 2; }
+};
 
 } /* namespace drizzled */
+
+#endif /* PLUGIN_MATH_FUNCTIONS_ATAN_H */

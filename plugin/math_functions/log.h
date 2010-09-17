@@ -17,26 +17,43 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTION_MATH_ABS_H
-#define DRIZZLED_FUNCTION_MATH_ABS_H
+#ifndef PLUGIN_MATH_FUNCTIONS_LOG_H
+#define PLUGIN_MATH_FUNCTIONS_LOG_H
 
 #include <drizzled/function/func.h>
-#include <drizzled/function/num1.h>
+#include <drizzled/function/math/dec.h>
 
 namespace drizzled
 {
 
-class Item_func_abs :public Item_func_num1
+class Item_func_log :public Item_dec_func
 {
 public:
-  Item_func_abs(Item *a) :Item_func_num1(a) {}
-  double real_op();
-  int64_t int_op();
-  my_decimal *decimal_op(my_decimal *);
-  const char *func_name() const { return "abs"; }
-  void fix_length_and_dec();
+  Item_func_log() :Item_dec_func() {}
+  double val_real();
+  const char *func_name() const { return "log"; }
+  bool check_argument_count(int n) { return n == 1 || n == 2; }
+};
+
+class Item_func_log2 :public Item_dec_func
+{
+public:
+  Item_func_log2() :Item_dec_func() {}
+  double val_real();
+  const char *func_name() const { return "log2"; }
+  bool check_argument_count(int n) { return n == 1; }
+};
+
+
+class Item_func_log10 :public Item_dec_func
+{
+public:
+  Item_func_log10() :Item_dec_func() {}
+  double val_real();
+  const char *func_name() const { return "log10"; }
+  bool check_argument_count(int n) { return n == 1; }
 };
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FUNCTION_MATH_ABS_H */
+#endif /* PLUGIN_MATH_FUNCTIONS_LOG_H */

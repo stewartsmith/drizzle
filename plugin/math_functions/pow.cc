@@ -17,23 +17,21 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTION_MATH_COS_H
-#define DRIZZLED_FUNCTION_MATH_COS_H
-
-#include <drizzled/function/func.h>
-#include <drizzled/function/math/dec.h>
+#include "config.h"
+#include <math.h>
+#include "pow.h"
 
 namespace drizzled
 {
 
-class Item_func_cos :public Item_dec_func
+double Item_func_pow::val_real()
 {
-public:
-  Item_func_cos(Item *a) :Item_dec_func(a) {}
-  double val_real();
-  const char *func_name() const { return "cos"; }
-};
+  assert(fixed == 1);
+  double value= args[0]->val_real();
+  double val2= args[1]->val_real();
+  if ((null_value=(args[0]->null_value || args[1]->null_value)))
+    return 0.0;
+  return fix_result(pow(value,val2));
+}
 
 } /* namespace drizzled */
-
-#endif /* DRIZZLED_FUNCTION_MATH_COS_H */

@@ -17,41 +17,48 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTION_MATH_LOG_H
-#define DRIZZLED_FUNCTION_MATH_LOG_H
-
-#include <drizzled/function/func.h>
-#include <drizzled/function/math/dec.h>
+#include "config.h"
+#include <math.h>
+#include "abs.h"
 
 namespace drizzled
 {
 
-class Item_func_log :public Item_dec_func
+double Item_func_abs::real_op()
 {
-public:
-  Item_func_log(Item *a) :Item_dec_func(a) {}
-  Item_func_log(Item *a,Item *b) :Item_dec_func(a,b) {}
-  double val_real();
-  const char *func_name() const { return "log"; }
-};
-
-class Item_func_log2 :public Item_dec_func
-{
-public:
-  Item_func_log2(Item *a) :Item_dec_func(a) {}
-  double val_real();
-  const char *func_name() const { return "log2"; }
-};
+  double value= args[0]->val_real();
+  null_value= args[0]->null_value;
+  return fabs(value);
+}
 
 
-class Item_func_log10 :public Item_dec_func
+int64_t Item_func_abs::int_op()
 {
-public:
-  Item_func_log10(Item *a) :Item_dec_func(a) {}
-  double val_real();
-  const char *func_name() const { return "log10"; }
-};
+  int64_t value= args[0]->val_int();
+  if ((null_value= args[0]->null_value))
+    return 0;
+  return (value >= 0) || unsigned_flag ? value : -value;
+}
+
+
+my_decimal *Item_func_abs::decimal_op(my_decimal *decimal_value)
+{
+  my_decimal val, *value= args[0]->val_decimal(&val);
+  if (!(null_value= args[0]->null_value))
+  {
+    my_decimal2decimal(value, decimal_value);
+    if (decimal_value->sign())
+      my_decimal_neg(decimal_value);
+    return decimal_value;
+  }
+  return 0;
+}
+
+
+void Item_func_abs::fix_length_and_dec()
+{
+  Item_func_num1::fix_length_and_dec();
+  unsigned_flag= args[0]->unsigned_flag;
+}
 
 } /* namespace drizzled */
-
-#endif /* DRIZZLED_FUNCTION_MATH_LOG_H */
