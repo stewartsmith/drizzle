@@ -38,6 +38,7 @@ endif
 DIST_SUBDIRS = ${SUBDIRS} tests
 
 BUILT_SOURCES=
+BUILT_MAINT_SRC=
 EXTRA_DIST= \
 	    .quickly \
 	    DRIZZLE.FAQ \

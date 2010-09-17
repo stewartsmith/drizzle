@@ -846,7 +846,7 @@ else
 PCHHEADERS = 
 endif
 
-BUILT_MAINT_SRC= \
+BUILT_MAINT_SRC+= \
 		 drizzled/sql_yacc.cc \
 		 drizzled/sql_yacc.h
 

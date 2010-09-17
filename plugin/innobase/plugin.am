@@ -113,7 +113,6 @@ noinst_HEADERS+= \
                  plugin/innobase/include/page0zip.h \
                  plugin/innobase/include/page0zip.ic \
                  plugin/innobase/include/page0types.h \
-                 plugin/innobase/include/pars0grm.h \
                  plugin/innobase/include/pars0opt.h \
                  plugin/innobase/include/pars0opt.ic \
                  plugin/innobase/include/pars0pars.h \
@@ -350,6 +349,11 @@ plugin/innobase/pars/pars0lex.c: plugin/innobase/pars/pars0lex.l
 	     -e 's/^\(extern \)\?\(\(FILE\|char\) *\* *yy\)/static \2/' \
               < plugin/innobase/pars/_flex_tmp.c >> $@
 	@rm plugin/innobase/pars/_flex_tmp.c
+
+BUILT_MAINT_SRC+= \
+	     plugin/innobase/pars/pars0lex.c \
+	     plugin/innobase/pars/pars0grm.c \
+	     plugin/innobase/include/pars0grm.h
 
 EXTRA_DIST+= \
              plugin/innobase/CMakeLists.txt \
