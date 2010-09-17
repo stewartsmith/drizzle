@@ -186,10 +186,6 @@ private:
                                        drizzled::TableIdentifiers *identifiers);
 
 public:
-  void doGetTableNames(drizzled::CachedDirectory &,
-                       const drizzled::SchemaIdentifier &schema,
-                       drizzled::plugin::TableNameList &set_of_names);
-
   void doGetTableIdentifiers(drizzled::CachedDirectory &,
                              const drizzled::SchemaIdentifier &schema,
                              drizzled::TableIdentifiers &identifiers);
@@ -1512,13 +1508,6 @@ void EmbeddedInnoDBEngine::getTableNamesInSchemaFromInnoDB(
 
   innodb_err= ib_trx_commit(transaction);
   assert(innodb_err == DB_SUCCESS); // FIXME
-}
-
-void EmbeddedInnoDBEngine::doGetTableNames(drizzled::CachedDirectory &,
-                                           const drizzled::SchemaIdentifier &schema,
-                                           drizzled::plugin::TableNameList &set_of_names)
-{
-  getTableNamesInSchemaFromInnoDB(schema, &set_of_names, NULL);
 }
 
 void EmbeddedInnoDBEngine::doGetTableIdentifiers(drizzled::CachedDirectory &,
