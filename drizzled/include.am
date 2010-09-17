@@ -446,8 +446,8 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/visibility.h \
 			      drizzled/xid.h
 
-drizzled_drizzled_LDFLAGS= -export-dynamic
-drizzled_drizzled_LDADD= \
+drizzled_drizzled7_LDFLAGS= -export-dynamic
+drizzled_drizzled7_LDADD= \
 				drizzled/algorithm/libhash.la \
 				drizzled/util/libutil.la \
 				drizzled/internal/libinternal.la \
@@ -466,12 +466,13 @@ drizzled_drizzled_LDADD= \
 				$(BOOST_LIBS) \
 				$(GCOV_LIBS) 
 
-drizzled_drizzled_DEPENDENCIES= \
-                                      drizzled/message/libdrizzledmessage.la \
-                                      ${noinst_LTLIBRARIES} \
-                                      $(pandora_plugin_libs)
+drizzled_drizzled7_DEPENDENCIES= \
+				 drizzled/drizzled \
+				 drizzled/message/libdrizzledmessage.la \
+				 ${noinst_LTLIBRARIES} \
+				 $(pandora_plugin_libs)
 
-drizzled_drizzled_SOURCES= \
+drizzled_drizzled7_SOURCES= \
                            drizzled/main.cc \
 				 drizzled/alter_info.cc \
 				 drizzled/cached_item.cc \
@@ -786,7 +787,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/version.cc \
 				 drizzled/xid.cc
 
-sbin_PROGRAMS+= drizzled/drizzled
+sbin_PROGRAMS+= drizzled/drizzled7
 
 noinst_LTLIBRARIES+= \
 		     drizzled/libcached_directory.la \
@@ -870,7 +871,7 @@ CLEANFILES+= \
 	     $(nodist_drizzled_SOURCES)
 
 if DTRACE_NEEDS_OBJECTS
-drizzled_drizzled_SOURCES+= drizzled/probes.d
+drizzled_drizzled7_SOURCES+= drizzled/probes.d
 endif
 
 if HAVE_DTRACE
@@ -880,6 +881,7 @@ endif
 
 
 DISTCLEANFILES+= \
+		 drizzled/drizzled \
 		 $(EXTRA_PROGRAMS) \
 		 $(BUILT_MAINT_SRC)
 
@@ -901,6 +903,9 @@ if BUILD_GCC_PCH
 .h.gch:
 	$(CXXCOMPILE) -include config.h ${NO_UNUSED_MACROS} -c $<
 endif
+
+drizzled/drizzled:
+	$(LN_S) drizzled7 drizzled/drizzled
 
 drizzled/probes.o :  drizzled/probes.d $(DTRACEFILES) config.h
 
