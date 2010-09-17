@@ -45,7 +45,7 @@
 #include <drizzled/error.h>
 #include <boost/program_options.hpp>
 #include <boost/regex.hpp>
-
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include "drizzledump.h"
 
 using namespace std;
@@ -243,9 +243,9 @@ bool DrizzleDumpTable::populateFields(drizzle_con_st &connection)
   std::string query;
 
   if (connected_server_type == SERVER_MYSQL_FOUND)
-    query="SELECT COLUMN_NAME, COLUMN_TYPE, COLUMN_DEFAULT, 'NO', IS_NULLABLE, 'NO', CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE, COLLATION_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='";
+    query="SELECT COLUMN_NAME, COLUMN_TYPE, COLUMN_DEFAULT, 'NO', IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE, COLLATION_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='";
   else
-    query= "SELECT COLUMN_NAME, DATA_TYPE, COLUMN_DEFAULT, COLUMN_DEFAULT_IS_NULL, IS_NULLABLE, IS_USED_IN_PRIMARY, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE, COLLATION_NAME FROM DATA_DICTIONARY.COLUMNS WHERE TABLE_SCHEMA='";
+    query= "SELECT COLUMN_NAME, DATA_TYPE, COLUMN_DEFAULT, COLUMN_DEFAULT_IS_NULL, IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE, COLLATION_NAME FROM DATA_DICTIONARY.COLUMNS WHERE TABLE_SCHEMA='";
   query.append(database->databaseName);
   query.append("' AND TABLE_NAME='");
   query.append(tableName);
@@ -279,24 +279,65 @@ bool DrizzleDumpTable::populateFields(drizzle_con_st &connection)
     std::string fieldName(row[0]);
     DrizzleDumpField *field = new DrizzleDumpField(fieldName);
     /* Also sets collation */
-    field->setType(row[1], row[9]);
-    // Default conversion needed
-    field->defaultValue= (row[2]) ? row[2] : "";
+    field->setType(row[1], row[8]);
+    if (row[2])
+    {
+      if (field->convertDateTime)
+      {
+        field->dateTimeConvert(row[2]);
+      }
+      else
+        field->defaultValue= row[2];
+    }
+    else
+     field->defaultValue= "";
     if (connected_server_type == SERVER_MYSQL_FOUND)
       field->defaultIsNull= true;
     else
       field->defaultIsNull= (strcmp(row[3], "YES") == 0) ? true : false;
     field->isNull= (strcmp(row[4], "YES") == 0) ? true : false;
-    field->isPrimary= (strcmp(row[5], "YES") == 0) ? true : false;
-    field->length= (row[6]) ? boost::lexical_cast<uint32_t>(row[6]) : 0;
-    field->decimalPrecision= (row[7]) ? boost::lexical_cast<uint32_t>(row[7]) : 0;
-    field->decimalScale= (row[8]) ? boost::lexical_cast<uint32_t>(row[8]) : 0;
+    field->length= (row[5]) ? boost::lexical_cast<uint32_t>(row[5]) : 0;
+    field->decimalPrecision= (row[6]) ? boost::lexical_cast<uint32_t>(row[6]) : 0;
+    field->decimalScale= (row[7]) ? boost::lexical_cast<uint32_t>(row[7]) : 0;
 
     fields.push_back(field);
   }
 
   drizzle_result_free(&result);
   return true;
+}
+
+void DrizzleDumpField::dateTimeConvert(const char* oldDefault)
+{
+  boost::match_flag_type flags = boost::match_default;
+
+  if (strcmp(oldDefault, "CURRENT_TIMESTAMP") == 0)
+  {
+    defaultValue= oldDefault;
+    return;
+  }
+
+  if (type.compare("INT") == 0)
+  {
+    /* We were a TIME, now we are an INT */
+    std::string ts(oldDefault);
+    boost::posix_time::time_duration td(boost::posix_time::duration_from_string(ts));
+    defaultValue= boost::lexical_cast<string>(td.total_seconds());
+    return;
+  }
+
+  boost::regex date_regex("([0-9]{3}[1-9]-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01]))");
+
+  if (regex_search(oldDefault, date_regex, flags))
+  {
+    defaultValue= oldDefault;
+  }
+  else
+  {
+    defaultIsNull= true;
+    defaultValue="";
+  }
+
 }
 
 bool DrizzleDumpTable::populateIndexes(drizzle_con_st &connection)
@@ -463,11 +504,26 @@ void DrizzleDumpField::setType(const char* raw_type, const char* raw_collation)
       return;
     }
 
+    if ((old_type.find("TIME") != string::npos) or
+      (old_type.find("DATE") != string::npos))
+    {
+      /* Intended to catch TIME/DATE/TIMESTAMP/DATETIME 
+         We may have a default TIME/DATE which needs converting */
+      convertDateTime= true;
+    }
+
     if (old_type.compare("TIME") == 0)
     {
       type= "INT";
       return;
     }
+
+    if (old_type.compare("FLOAT") == 0)
+    {
+      type= "DOUBLE";
+      return;
+    }
+
     type= old_type;
     return;
   }
@@ -567,9 +623,15 @@ ostream& operator <<(ostream &os,const DrizzleDumpField &obj)
     os << "(" << obj.length << ")";
   }
 
+  if ((obj.type.compare("DECIMAL") == 0) or
+    (obj.type.compare("DOUBLE") == 0))
+  {
+    os << "(" << obj.decimalPrecision << "," << obj.decimalScale << ")";
+  }
+
   if (obj.type.compare("ENUM") == 0)
   {
-    //output fields
+    //output fields, currently broken in Drizzle
   }
 
   if (not obj.isNull)

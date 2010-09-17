@@ -56,8 +56,8 @@ class DrizzleDumpField
     bool isNull;
     bool isUnsigned;
     bool isAutoIncrement;
-    bool isPrimary;
     bool defaultIsNull;
+    bool convertDateTime;
     std::string defaultValue;
     std::string collation;
 
@@ -68,6 +68,7 @@ class DrizzleDumpField
     uint32_t decimalPrecision;
     uint32_t decimalScale;
 
+    void dateTimeConvert(const char* oldDefault);
     void setCollate(const char* newCollate);
     void setType(const char* raw_type, const char* collation);
 };
