@@ -30,6 +30,7 @@
 #include "plugin/math_functions/sin.h"
 #include "plugin/math_functions/pow.h"
 #include "plugin/math_functions/ln.h"
+#include "plugin/math_functions/sqrt.h"
 
 using namespace drizzled;
 
@@ -48,6 +49,7 @@ static int init(drizzled::module::Context &context)
   context.add(new plugin::Create_function<Item_func_pow>("pow"));
   context.add(new plugin::Create_function<Item_func_pow>("power"));
   context.add(new plugin::Create_function<Item_func_ln>("ln"));
+  context.add(new plugin::Create_function<Item_func_sqrt>("sqrt"));
 
   return 0;
 }

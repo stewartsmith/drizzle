@@ -86,7 +86,6 @@
 #include <drizzled/function/row_count.h>
 #include <drizzled/function/set_user_var.h>
 #include <drizzled/function/sign.h>
-#include <drizzled/function/math/sqrt.h>
 #include <drizzled/function/str/quote.h>
 #include <drizzled/function/math/tan.h>
 #include <drizzled/function/units.h>
@@ -482,6 +481,7 @@ protected:
 
 class Create_func_export_set : public Create_native_func
 {
+
 public:
   virtual Item *create_native(Session *session, LEX_STRING name, List<Item> *item_list);
 
@@ -1025,22 +1025,6 @@ protected:
   Create_func_space() {}
   virtual ~Create_func_space() {}
 };
-
-
-class Create_func_sqrt : public Create_func_arg1
-{
-public:
-  using Create_func_arg1::create;
-
-  virtual Item *create(Session *session, Item *arg1);
-
-  static Create_func_sqrt s_singleton;
-
-protected:
-  Create_func_sqrt() {}
-  virtual ~Create_func_sqrt() {}
-};
-
 
 class Create_func_strcmp : public Create_func_arg2
 {
@@ -2074,16 +2058,6 @@ Create_func_space::create(Session *session, Item *arg1)
   return new (session->mem_root) Item_func_repeat(*session, sp, arg1);
 }
 
-
-Create_func_sqrt Create_func_sqrt::s_singleton;
-
-Item*
-Create_func_sqrt::create(Session *session, Item *arg1)
-{
-  return new (session->mem_root) Item_func_sqrt(arg1);
-}
-
-
 Create_func_strcmp Create_func_strcmp::s_singleton;
 
 Item*
@@ -2241,7 +2215,6 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("RTRIM") }, BUILDER(Create_func_rtrim)},
   { { C_STRING_WITH_LEN("SIGN") }, BUILDER(Create_func_sign)},
   { { C_STRING_WITH_LEN("SPACE") }, BUILDER(Create_func_space)},
-  { { C_STRING_WITH_LEN("SQRT") }, BUILDER(Create_func_sqrt)},
   { { C_STRING_WITH_LEN("STRCMP") }, BUILDER(Create_func_strcmp)},
   { { C_STRING_WITH_LEN("TAN") }, BUILDER(Create_func_tan)},
   { { C_STRING_WITH_LEN("TIME_FORMAT") }, BUILDER(Create_func_time_format)},
