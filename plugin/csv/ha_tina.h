@@ -36,11 +36,11 @@ class TinaShare
   TinaShare(const TinaShare &);
   TinaShare& operator=(const TinaShare &);
 public:
-  explicit TinaShare(const char *name);
+  explicit TinaShare(const std::string &name);
   ~TinaShare();
 
   std::string table_name;
-  char data_file_name[FN_REFLEN];
+  std::string data_file_name;
   uint32_t use_count;
   /*
     Here we save the length of the file for readers. This is updated by
@@ -107,7 +107,7 @@ public:
   /* The next method will never be called */
   virtual bool fast_key_read() { return 1;}
   /*
-    TODO: return actual upper bound of number of records in the table.
+    @TODO return actual upper bound of number of records in the table.
     (e.g. save number of records seen on full table scan and/or use file size
     as upper bound)
   */
@@ -123,7 +123,7 @@ public:
   int rnd_next(unsigned char *buf);
   int rnd_pos(unsigned char * buf, unsigned char *pos);
   int doEndTableScan();
-  TinaShare *get_share(const char *table_name);
+  TinaShare *get_share(const std::string &table_name);
   int free_share();
   int repair(drizzled::Session* session, drizzled::HA_CHECK_OPT* check_opt);
   /* This is required for SQL layer to know that we support autorepair */

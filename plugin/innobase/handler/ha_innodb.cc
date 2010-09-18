@@ -456,10 +456,6 @@ public:
                            const TableIdentifier &identifier,
                            drizzled::message::Table &table_proto);
 
-  void doGetTableNames(drizzled::CachedDirectory &directory,
-                       const drizzled::SchemaIdentifier &schema_identifier,
-                       std::set<std::string> &set_of_names);
-
   bool doDoesTableExist(drizzled::Session& session, const TableIdentifier &identifier);
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
@@ -560,36 +556,6 @@ int InnobaseEngine::doGetTableDefinition(Session &session,
     return EEXIST;
 
   return ENOENT;
-}
-
-void InnobaseEngine::doGetTableNames(CachedDirectory &directory, const SchemaIdentifier&, set<string>& set_of_names)
-{
-  CachedDirectory::Entries entries= directory.getEntries();
-
-  for (CachedDirectory::Entries::iterator entry_iter= entries.begin(); 
-       entry_iter != entries.end(); ++entry_iter)
-  {
-    CachedDirectory::Entry *entry= *entry_iter;
-    const string *filename= &entry->filename;
-
-    assert(filename->size());
-
-    const char *ext= strchr(filename->c_str(), '.');
-
-    if (ext == NULL || my_strcasecmp(system_charset_info, ext, DEFAULT_FILE_EXTENSION) ||
-        (filename->compare(0, strlen(TMP_FILE_PREFIX), TMP_FILE_PREFIX) == 0))
-    { }
-    else
-    {
-      char uname[NAME_LEN + 1];
-      uint32_t file_name_len;
-
-      file_name_len= TableIdentifier::filename_to_tablename(filename->c_str(), uname, sizeof(uname));
-      // TODO: Remove need for memory copy here
-      uname[file_name_len - sizeof(DEFAULT_FILE_EXTENSION) + 1]= '\0'; // Subtract ending, place NULL 
-      set_of_names.insert(uname);
-    }
-  }
 }
 
 /** @brief Initialize the default value of innodb_commit_concurrency.
@@ -1851,6 +1817,16 @@ innobase_init(
   InnobaseEngine *actuall_engine_ptr;
   const module::option_map &vm= context.getOptions();
 
+  /* Inverted Booleans */
+
+  innobase_use_checksums= (vm.count("disable-checksums")) ? false : true;
+  innobase_use_doublewrite= (vm.count("disable-doublewrite")) ? false : true;
+  srv_adaptive_flushing= (vm.count("disable-adaptive-flushing")) ? false : true;
+  innobase_stats_on_metadata= (vm.count("disable-stats-on-metadata")) ? false : true;
+  srv_use_sys_malloc= (vm.count("use-internal-malloc")) ? false : true;
+  (SessionVAR(NULL,support_xa))= (vm.count("disable-xa")) ? false : true;
+  (SessionVAR(NULL,table_locks))= (vm.count("disable-table-locks")) ? false : true;
+
   if (vm.count("io-capacity"))
   {
     if (srv_io_capacity < 100)
@@ -2097,16 +2073,6 @@ innobase_init(
     }
   }
 
-  if (vm.count("support-xa"))
-  {
-    (SessionVAR(NULL,support_xa))= vm["support-xa"].as<bool>();
-  }
-
-  if (vm.count("table-locks"))
-  {
-    (SessionVAR(NULL,table_locks))= vm["table-locks"].as<bool>();
-  }
-
   if (vm.count("strict-mode"))
   {
     (SessionVAR(NULL,strict_mode))= vm["strict-mode"].as<bool>();
@@ -2179,9 +2145,6 @@ innobase_init(
   default_path = current_dir;
 
   ut_a(default_path);
-
-  srv_set_thread_priorities = TRUE;
-  srv_query_thread_priority = QUERY_PRIOR;
 
   /* Set InnoDB initialization parameters according to the values
     read from MySQL .cnf file */
@@ -8891,15 +8854,13 @@ static DRIZZLE_SYSVAR_ULONG(read_ahead_threshold, srv_read_ahead_threshold,
 
 static void init_options(drizzled::module::option_context &context)
 {
-  context("checksums",
-          po::value<bool>(&innobase_use_checksums)->default_value(true)->zero_tokens(),
-          "Enable InnoDB checksums validation.");
+  context("disable-checksums",
+          "Disable InnoDB checksums validation.");
   context("data-home-dir",
           po::value<string>(),
           "The common part for InnoDB table spaces.");
-  context("doublewrite",
-          po::value<bool>(&innobase_use_doublewrite)->default_value(true)->zero_tokens(),
-          "Enable InnoDB doublewrite buffer.");
+  context("disable-doublewrite",
+          "Disable InnoDB doublewrite buffer.");
   context("io-capacity",
           po::value<unsigned long>(&srv_io_capacity)->default_value(200),
           "Number of IOPs the server can do. Tunes the background IO rate");
@@ -8935,23 +8896,20 @@ static void init_options(drizzled::module::option_context &context)
   context("max-dirty-pages-pct",
           po::value<unsigned long>(&srv_max_buf_pool_modified_pct)->default_value(75),
           "Percentage of dirty pages allowed in bufferpool.");
-  context("adaptive-flushing",
-          po::value<bool>(&srv_adaptive_flushing)->default_value(true)->zero_tokens(),
-          "Attempt flushing dirty pages to avoid IO bursts at checkpoints.");
+  context("disable-adaptive-flushing",
+          "Do not attempt flushing dirty pages to avoid IO bursts at checkpoints.");
   context("max-purge-lag",
           po::value<unsigned long>(&srv_max_purge_lag)->default_value(0),
           "Desired maximum length of the purge queue (0 = no limit)");
   context("status-file",
           po::value<bool>(&innobase_create_status_file)->default_value(false)->zero_tokens(),
           "Enable SHOW INNODB STATUS output in the innodb_status.<pid> file");
-  context("stats-on-metadata",
-          po::value<bool>(&innobase_stats_on_metadata)->default_value(true)->zero_tokens(),
-          "Enable statistics gathering for metadata commands such as SHOW TABLE STATUS (on by default)");
+  context("disable-stats-on-metadata",
+          "Disable statistics gathering for metadata commands such as SHOW TABLE STATUS (on by default)");
   context("stats-sample-pages",
           po::value<uint64_t>(&srv_stats_sample_pages)->default_value(8),
           "The number of index pages to sample when calculating statistics (default 8)");
-  context("adaptive-hash-index",
-          po::value<bool>(&btr_search_enabled)->default_value(true)->zero_tokens(),
+  context("disable-adaptive-hash-index",
           "Enable InnoDB adaptive hash index (enabled by default)");
   context("replication-delay",
           po::value<unsigned long>(&srv_replication_delay)->default_value(0),
@@ -9016,21 +8974,18 @@ static void init_options(drizzled::module::option_context &context)
   context("version",
           po::value<string>()->default_value(INNODB_VERSION_STR),
           "InnoDB version");
-  context("use-sys-malloc",
-          po::value<bool>(&srv_use_sys_malloc)->default_value(true)->zero_tokens(),
-          "Use OS memory allocator instead of InnoDB's internal memory allocator");
+  context("use-internal-malloc",
+          "Use InnoDB's internal memory allocator instal of the OS memory allocator.");
   context("change-buffering",
           po::value<string>(),
           "Buffer changes to reduce random access: OFF, ON, inserting, deleting, changing, or purging.");
   context("read-ahead-threshold",
           po::value<unsigned long>(&srv_read_ahead_threshold)->default_value(56),
           "Number of pages that must be accessed sequentially for InnoDB to trigger a readahead.");
-  context("support-xa",
-          po::value<bool>()->default_value(true)->zero_tokens(),
-          "Enable InnoDB support for the XA two-phase commit");
-  context("table-locks",
-          po::value<bool>()->default_value(true)->zero_tokens(),
-          "Enable InnoDB locking in LOCK TABLES");
+  context("disable-xa",
+          "Disable InnoDB support for the XA two-phase commit");
+  context("disable-table-locks",
+          "Disable InnoDB locking in LOCK TABLES");
   context("strict-mode",
           po::value<bool>()->default_value(false)->zero_tokens(),
           "Use strict mode when evaluating create options.");

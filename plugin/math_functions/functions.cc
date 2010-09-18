@@ -19,14 +19,38 @@
  */
 
 #include "config.h"
+#include <drizzled/plugin/function.h>
 #include "plugin/math_functions/functions.h"
+#include "plugin/math_functions/abs.h"
+#include "plugin/math_functions/acos.h"
+#include "plugin/math_functions/asin.h"
+#include "plugin/math_functions/atan.h"
+#include "plugin/math_functions/cos.h"
+#include "plugin/math_functions/log.h"
+#include "plugin/math_functions/sin.h"
+#include "plugin/math_functions/pow.h"
+#include "plugin/math_functions/ln.h"
+#include "plugin/math_functions/sqrt.h"
 
 using namespace drizzled;
 
 static int init(drizzled::module::Context &context)
 {
-  (void)context;
-  
+  context.add(new plugin::Create_function<Item_func_abs>("abs"));
+  context.add(new plugin::Create_function<Item_func_acos>("acos"));
+  context.add(new plugin::Create_function<Item_func_asin>("asin"));
+  context.add(new plugin::Create_function<Item_func_atan>("atan"));
+  context.add(new plugin::Create_function<Item_func_atan>("atan2"));
+  context.add(new plugin::Create_function<Item_func_cos>("cos"));
+  context.add(new plugin::Create_function<Item_func_log>("log"));
+  context.add(new plugin::Create_function<Item_func_log2>("log2"));
+  context.add(new plugin::Create_function<Item_func_log10>("log10"));
+  context.add(new plugin::Create_function<Item_func_sin>("sin"));
+  context.add(new plugin::Create_function<Item_func_pow>("pow"));
+  context.add(new plugin::Create_function<Item_func_pow>("power"));
+  context.add(new plugin::Create_function<Item_func_ln>("ln"));
+  context.add(new plugin::Create_function<Item_func_sqrt>("sqrt"));
+
   return 0;
 }
 
