@@ -1,4 +1,9 @@
+*.bb
+*.bbg
+*.da
 *.dirstamp
+*.gcda
+*.gcno
 *.gmo
 *.gz
 *.la
