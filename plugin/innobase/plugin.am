@@ -327,6 +327,12 @@ plugin/innobase/pars/pars0grm.c: plugin/innobase/pars/pars0grm.y
 	@sed -e 's/pars0grm.tab.c/pars0grm.c/; s/^\(\(YYSTYPE\|int\) yy\(char\|nerrs\)\)/static \1/; s/\(\(YYSTYPE\|int\) yy\(lval\|parse\)\)/UNIV_INTERN \1/;' < plugin/innobase/pars/pars0grm.tab.c > plugin/innobase/pars/pars0grm.c
 	@rm plugin/innobase/pars/pars0grm.tab.c
 
+plugin/innobase/include/pars0grm.h: plugin/innobase/pars/pars0grm.c
+	@if test ! -f $@; then \
+	  rm -f $<; \
+	  $(MAKE) $(AM_MAKEFLAGS) $<; \
+	else :; fi
+
 plugin/innobase/pars/pars0lex.c: plugin/innobase/pars/pars0lex.l
 	$(AM_V_GEN)$(LEX) -o plugin/innobase/pars/_flex_tmp.c $<
 # AIX needs its includes done in a certain order, so include "univ.i" first
