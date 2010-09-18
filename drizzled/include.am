@@ -645,6 +645,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/my_getsystime.cc \
 				 drizzled/my_hash.cc \
 				 drizzled/name_resolution_context_state.cc \
+				 drizzled/named_savepoint.cc \
 				 drizzled/natural_join_column.cc \
 				 drizzled/optimizer/access_method/const.cc \
 				 drizzled/optimizer/access_method/index.cc \

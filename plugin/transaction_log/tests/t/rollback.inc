@@ -46,6 +46,7 @@ INSERT INTO t1 VALUES (2, "I hate testing.");
 RELEASE SAVEPOINT `savept2`;
 SAVEPOINT `savept3`;
 INSERT INTO t1 VALUES (3, "I love testing.");
+SAVEPOINT `savept4`;
 ROLLBACK TO SAVEPOINT savept3;
 COMMIT;
 
