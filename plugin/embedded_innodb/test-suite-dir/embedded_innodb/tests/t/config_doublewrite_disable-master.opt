@@ -1,1 +1,1 @@
---plugin-add=embedded_innodb --plugin-remove=innobase --innodb.doublewrite=false
+ --innodb.disable-doublewrite

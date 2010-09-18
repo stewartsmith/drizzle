@@ -42,7 +42,7 @@ class ha_myisam: public drizzled::Cursor
   int doEndIndexScan();
   uint32_t checksum() const;
 
-  int open(const char *name, int mode, uint32_t test_if_locked);
+  int doOpen(const drizzled::TableIdentifier &identifier, int mode, uint32_t test_if_locked);
   int close(void);
   int doInsertRecord(unsigned char * buf);
   int doUpdateRecord(const unsigned char * old_data, unsigned char * new_data);

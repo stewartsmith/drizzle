@@ -10,6 +10,9 @@ noinst_HEADERS += \
 		  unittests/plugin/plugin_stubs.h \
 		  unittests/temporal_generator.h
 
+EXTRA_DIST += \
+	      unittests/client_server.c
+
 unit: unittests/unittests
 	unittests/unittests
 

@@ -62,14 +62,6 @@ int Function::doGetTableDefinition(Session &,
   return EEXIST;
 }
 
-
-void Function::doGetTableNames(drizzled::CachedDirectory&, 
-                               const drizzled::SchemaIdentifier &schema_identifier,
-                               set<string> &set_of_names)
-{
-  drizzled::plugin::TableFunction::getNames(schema_identifier.getPath(), set_of_names);
-}
-
 void Function::doGetSchemaIdentifiers(SchemaIdentifiers& schemas)
 {
   schemas.push_back(INFORMATION_SCHEMA_IDENTIFIER);

@@ -16,7 +16,6 @@ SQLITE_PROGS= examples/sqlite_server
 endif
 
 noinst_PROGRAMS+= \
-	extra/mysql_password_hash \
 	examples/client \
 	examples/simple \
 	examples/simple_multi \

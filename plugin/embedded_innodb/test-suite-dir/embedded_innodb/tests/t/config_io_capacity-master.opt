@@ -1,1 +1,1 @@
---plugin-add=embedded_innodb --plugin-remove=innobase --innodb.io-capacity=500
+ --innodb.io-capacity=500

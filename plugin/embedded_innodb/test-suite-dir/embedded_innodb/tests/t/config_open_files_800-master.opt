@@ -1,1 +1,1 @@
---plugin-add=embedded_innodb --plugin-remove=innobase --innodb.open-files=800
+ --innodb.open-files=800

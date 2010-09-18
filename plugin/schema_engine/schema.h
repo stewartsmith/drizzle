@@ -25,8 +25,7 @@
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/data_home.h>
 #include <boost/unordered_map.hpp>
-
-#include <pthread.h>
+#include <boost/thread/shared_mutex.hpp>
 
 extern const drizzled::CHARSET_INFO *default_charset_info;
 
@@ -37,7 +36,7 @@ static const char *schema_exts[] = {
 class Schema : public drizzled::plugin::StorageEngine
 {
   bool writeSchemaFile(const drizzled::SchemaIdentifier &schema_identifier, const drizzled::message::Schema &db);
-  bool readSchemaFile(const std::string &schema_file_name, drizzled::message::Schema &schema);
+  bool readSchemaFile(const drizzled::SchemaIdentifier &schema_identifier, drizzled::message::Schema &schema);
 
   void prime();
 
@@ -45,7 +44,7 @@ class Schema : public drizzled::plugin::StorageEngine
   SchemaCache schema_cache;
   bool schema_cache_filled;
 
-  pthread_rwlock_t schema_lock;
+  boost::shared_mutex mutex;
 
 public:
   Schema();
@@ -76,13 +75,6 @@ public:
                            drizzled::message::Table&)
   {
     return ENOENT;
-  }
-
-
-  void doGetTableNames(drizzled::CachedDirectory&,
-                       const drizzled::SchemaIdentifier&,
-                       std::set<std::string>&)
-  {
   }
 
   bool doDoesTableExist(drizzled::Session&, const drizzled::TableIdentifier&)

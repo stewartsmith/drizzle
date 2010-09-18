@@ -1,0 +1,519 @@
+DROP TABLE IF EXISTS `அம்மா`;
+DROP TABLE IF EXISTS `தமிழ்`;
+DROP TABLE IF EXISTS `ஜன்னல்`;
+DROP TABLE IF EXISTS `உடை`;
+DROP TABLE IF EXISTS `வீடு`;
+DROP TABLE IF EXISTS `சட்டை`;
+DROP TABLE IF EXISTS `கண்`;
+DROP TABLE IF EXISTS `நட்ச்சத்திரம்`;
+DROP TABLE IF EXISTS `காத்தாடி`;
+DROP TABLE IF EXISTS `பள்ளி`;
+DROP TABLE IF EXISTS `ஊர்`;
+DROP TABLE IF EXISTS `நாள்`;
+DROP TABLE IF EXISTS `குடம்`;
+DROP TABLE IF EXISTS `கட்டில்`;
+DROP TABLE IF EXISTS `கடல்`;
+CREATE TABLE `அம்மா`(`பெயர்` char(1)) engine=INNODB;
+CREATE TABLE `தமிழ்`(`எழுத்து` char(1)) engine=INNODB;
+CREATE TABLE `சட்டை`(`நிறம்` char(1)) engine=INNODB;
+CREATE TABLE `கண்`(`நிறம்` char(1)) engine=INNODB;
+CREATE TABLE `ஊர்`(`பெயர்` char(1)) engine=INNODB;
+CREATE TABLE `நாள்`(`கிழமை` char(1)) engine=INNODB;
+CREATE TABLE IF NOT EXISTS `அம்மா`(`பெயர்` char(1)) engine=INNODB;
+Warnings:
+Note	1050	Table 'அம்மா' already exists
+CREATE TABLE IF NOT EXISTS `தமிழ்`(`எழுத்து` char(1)) engine=INNODB;
+Warnings:
+Note	1050	Table 'தமிழ்' already exists
+CREATE TABLE IF NOT EXISTS `சட்டை`(`நிறம்` char(1)) engine=INNODB;
+Warnings:
+Note	1050	Table 'சட்டை' already exists
+CREATE TABLE IF NOT EXISTS `கண்`(`நிறம்` char(1)) engine=INNODB;
+Warnings:
+Note	1050	Table 'கண்' already exists
+CREATE TABLE IF NOT EXISTS `ஊர்`(`பெயர்` char(1)) engine=INNODB;
+Warnings:
+Note	1050	Table 'ஊர்' already exists
+CREATE TABLE IF NOT EXISTS `நாள்`(`கிழமை` char(1)) engine=INNODB;
+Warnings:
+Note	1050	Table 'நாள்' already exists
+CREATE TABLE IF NOT EXISTS `ஜன்னல்`(`அகலம்` char(1)) engine=INNODB;
+CREATE TABLE IF NOT EXISTS `நட்ச்சத்திரம்`(`பெயர்` char(1)) engine=INNODB;
+CREATE TABLE IF NOT EXISTS `குடம்`(`நிறம்`char(1)) engine=INNODB;
+CREATE TEMPORARY TABLE `உடை`(`நிறம்` char(1)) engine=INNODB;
+CREATE TEMPORARY TABLE `வீடு`(`பெயர்` char(1)) engine=INNODB;
+CREATE TEMPORARY TABLE `காத்தாடி`(`நிறம்` char(1)) engine=INNODB;
+CREATE TEMPORARY TABLE `பள்ளி`(`பெயர்` char(1)) engine=INNODB;
+CREATE TEMPORARY TABLE `கட்டில்`(`அகலம்` char(1)) engine=INNODB;
+CREATE TEMPORARY TABLE `கடல்`(`பெயர்` char(1)) engine=INNODB;
+DESC `அம்மா`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+பெயர்	VARCHAR	YES		YES	
+DESC `தமிழ்`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+எழுத்து	VARCHAR	YES		YES	
+DESC `ஜன்னல்`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+அகலம்	VARCHAR	YES		YES	
+DESC `உடை`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+நிறம்	VARCHAR	YES		YES	
+DESC `வீடு`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+பெயர்	VARCHAR	YES		YES	
+DESC `சட்டை`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+நிறம்	VARCHAR	YES		YES	
+DESC `கண்`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+நிறம்	VARCHAR	YES		YES	
+DESC `நட்ச்சத்திரம்`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+பெயர்	VARCHAR	YES		YES	
+DESC `காத்தாடி`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+நிறம்	VARCHAR	YES		YES	
+DESC `பள்ளி`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+பெயர்	VARCHAR	YES		YES	
+DESC `ஊர்`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+பெயர்	VARCHAR	YES		YES	
+DESC `நாள்`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+கிழமை	VARCHAR	YES		YES	
+DESC `குடம்`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+நிறம்	VARCHAR	YES		YES	
+DESC `கட்டில்`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+அகலம்	VARCHAR	YES		YES	
+DESC `கடல்`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+பெயர்	VARCHAR	YES		YES	
+SHOW CREATE TABLE `அம்மா`;
+Table	Create Table
+அம்மா	CREATE TABLE `அம்மா` (
+  `பெயர்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+SHOW CREATE TABLE `தமிழ்`;
+Table	Create Table
+தமிழ்	CREATE TABLE `தமிழ்` (
+  `எழுத்து` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+SHOW CREATE TABLE `ஜன்னல்`;
+Table	Create Table
+ஜன்னல்	CREATE TABLE `ஜன்னல்` (
+  `அகலம்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+SHOW CREATE TABLE `உடை`;
+Table	Create Table
+உடை	CREATE TEMPORARY TABLE `உடை` (
+  `நிறம்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+SHOW CREATE TABLE `வீடு`;
+Table	Create Table
+வீடு	CREATE TEMPORARY TABLE `வீடு` (
+  `பெயர்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+SHOW CREATE TABLE `சட்டை`;
+Table	Create Table
+சட்டை	CREATE TABLE `சட்டை` (
+  `நிறம்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+SHOW CREATE TABLE `கண்`;
+Table	Create Table
+கண்	CREATE TABLE `கண்` (
+  `நிறம்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+SHOW CREATE TABLE `நட்ச்சத்திரம்`;
+Table	Create Table
+நட்ச்சத்திரம்	CREATE TABLE `நட்ச்சத்திரம்` (
+  `பெயர்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+SHOW CREATE TABLE `காத்தாடி`;
+Table	Create Table
+காத்தாடி	CREATE TEMPORARY TABLE `காத்தாடி` (
+  `நிறம்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+SHOW CREATE TABLE `பள்ளி`;
+Table	Create Table
+பள்ளி	CREATE TEMPORARY TABLE `பள்ளி` (
+  `பெயர்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+SHOW CREATE TABLE `ஊர்`;
+Table	Create Table
+ஊர்	CREATE TABLE `ஊர்` (
+  `பெயர்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+SHOW CREATE TABLE `நாள்`;
+Table	Create Table
+நாள்	CREATE TABLE `நாள்` (
+  `கிழமை` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+SHOW CREATE TABLE `குடம்`;
+Table	Create Table
+குடம்	CREATE TABLE `குடம்` (
+  `நிறம்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+SHOW CREATE TABLE `கட்டில்`;
+Table	Create Table
+கட்டில்	CREATE TEMPORARY TABLE `கட்டில்` (
+  `அகலம்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+SHOW CREATE TABLE `கடல்`;
+Table	Create Table
+கடல்	CREATE TEMPORARY TABLE `கடல்` (
+  `பெயர்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+DROP TABLE `அம்மா`;
+DROP TABLE `தமிழ்`;
+DROP TABLE `ஜன்னல்`;
+DROP TABLE `உடை`;
+DROP TABLE `வீடு`;
+DROP TABLE `சட்டை`;
+DROP TABLE `கண்`;
+DROP TABLE `நட்ச்சத்திரம்`;
+DROP TABLE `காத்தாடி`;
+DROP TABLE `பள்ளி`;
+DROP TABLE `ஊர்`;
+DROP TABLE `நாள்`;
+DROP TABLE `குடம்`;
+DROP TABLE `கட்டில்`;
+DROP TABLE `கடல்`;
+CREATE TEMPORARY TABLE `அம்மா`(`பெயர்` char(1)) engine=MyISAM;
+CREATE TEMPORARY TABLE `தமிழ்`(`எழுத்து` char(1)) engine=MyISAM;
+CREATE TEMPORARY TABLE `சட்டை`(`நிறம்` char(1)) engine=MyISAM;
+CREATE TEMPORARY TABLE `கண்`(`நிறம்` char(1)) engine=MyISAM;
+CREATE TEMPORARY TABLE `ஊர்`(`பெயர்` char(1)) engine=MyISAM;
+CREATE TEMPORARY TABLE `நாள்`(`கிழமை` char(1)) engine=MyISAM;
+CREATE TEMPORARY TABLE IF NOT EXISTS `அம்மா`(`பெயர்` char(1)) engine=MyISAM;
+Warnings:
+Note	1050	Table 'அம்மா' already exists
+CREATE TEMPORARY TABLE IF NOT EXISTS `தமிழ்`(`எழுத்து` char(1)) engine=MyISAM;
+Warnings:
+Note	1050	Table 'தமிழ்' already exists
+CREATE TEMPORARY TABLE IF NOT EXISTS `சட்டை`(`நிறம்` char(1)) engine=MyISAM;
+Warnings:
+Note	1050	Table 'சட்டை' already exists
+CREATE TEMPORARY TABLE IF NOT EXISTS `கண்`(`நிறம்` char(1)) engine=MyISAM;
+Warnings:
+Note	1050	Table 'கண்' already exists
+CREATE TEMPORARY TABLE IF NOT EXISTS `ஊர்`(`பெயர்` char(1)) engine=MyISAM;
+Warnings:
+Note	1050	Table 'ஊர்' already exists
+CREATE TEMPORARY TABLE IF NOT EXISTS `நாள்`(`கிழமை` char(1)) engine=MyISAM;
+Warnings:
+Note	1050	Table 'நாள்' already exists
+CREATE TEMPORARY TABLE IF NOT EXISTS `ஜன்னல்`(`அகலம்` char(1)) engine=MyISAM;
+CREATE TEMPORARY TABLE IF NOT EXISTS `நட்ச்சத்திரம்`(`பெயர்` char(1)) engine=MyISAM;
+CREATE TEMPORARY TABLE IF NOT EXISTS `குடம்`(`நிறம்`char(1)) engine=MyISAM;
+CREATE TEMPORARY TABLE `உடை`(`நிறம்` char(1)) engine=MyISAM;
+CREATE TEMPORARY TABLE `வீடு`(`பெயர்` char(1)) engine=MyISAM;
+CREATE TEMPORARY TABLE `காத்தாடி`(`நிறம்` char(1))  engine=MyISAM;
+CREATE TEMPORARY TABLE `பள்ளி`(`பெயர்` char(1))  engine=MyISAM;
+CREATE TEMPORARY TABLE `கட்டில்`(`அகலம்` char(1))  engine=MyISAM;
+CREATE TEMPORARY TABLE `கடல்`(`பெயர்` char(1))  engine=MyISAM;
+DESC `அம்மா`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+பெயர்	VARCHAR	YES		YES	
+DESC `தமிழ்`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+எழுத்து	VARCHAR	YES		YES	
+DESC `ஜன்னல்`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+அகலம்	VARCHAR	YES		YES	
+DESC `உடை`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+நிறம்	VARCHAR	YES		YES	
+DESC `வீடு`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+பெயர்	VARCHAR	YES		YES	
+DESC `சட்டை`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+நிறம்	VARCHAR	YES		YES	
+DESC `கண்`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+நிறம்	VARCHAR	YES		YES	
+DESC `நட்ச்சத்திரம்`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+பெயர்	VARCHAR	YES		YES	
+DESC `காத்தாடி`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+நிறம்	VARCHAR	YES		YES	
+DESC `பள்ளி`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+பெயர்	VARCHAR	YES		YES	
+DESC `ஊர்`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+பெயர்	VARCHAR	YES		YES	
+DESC `நாள்`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+கிழமை	VARCHAR	YES		YES	
+DESC `குடம்`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+நிறம்	VARCHAR	YES		YES	
+DESC `கட்டில்`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+அகலம்	VARCHAR	YES		YES	
+DESC `கடல்`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+பெயர்	VARCHAR	YES		YES	
+SHOW CREATE TABLE `அம்மா`;
+Table	Create Table
+அம்மா	CREATE TEMPORARY TABLE `அம்மா` (
+  `பெயர்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MyISAM COLLATE = utf8_general_ci
+SHOW CREATE TABLE `தமிழ்`;
+Table	Create Table
+தமிழ்	CREATE TEMPORARY TABLE `தமிழ்` (
+  `எழுத்து` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MyISAM COLLATE = utf8_general_ci
+SHOW CREATE TABLE `ஜன்னல்`;
+Table	Create Table
+ஜன்னல்	CREATE TEMPORARY TABLE `ஜன்னல்` (
+  `அகலம்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MyISAM COLLATE = utf8_general_ci
+SHOW CREATE TABLE `உடை`;
+Table	Create Table
+உடை	CREATE TEMPORARY TABLE `உடை` (
+  `நிறம்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MyISAM COLLATE = utf8_general_ci
+SHOW CREATE TABLE `வீடு`;
+Table	Create Table
+வீடு	CREATE TEMPORARY TABLE `வீடு` (
+  `பெயர்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MyISAM COLLATE = utf8_general_ci
+SHOW CREATE TABLE `சட்டை`;
+Table	Create Table
+சட்டை	CREATE TEMPORARY TABLE `சட்டை` (
+  `நிறம்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MyISAM COLLATE = utf8_general_ci
+SHOW CREATE TABLE `கண்`;
+Table	Create Table
+கண்	CREATE TEMPORARY TABLE `கண்` (
+  `நிறம்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MyISAM COLLATE = utf8_general_ci
+SHOW CREATE TABLE `நட்ச்சத்திரம்`;
+Table	Create Table
+நட்ச்சத்திரம்	CREATE TEMPORARY TABLE `நட்ச்சத்திரம்` (
+  `பெயர்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MyISAM COLLATE = utf8_general_ci
+SHOW CREATE TABLE `காத்தாடி`;
+Table	Create Table
+காத்தாடி	CREATE TEMPORARY TABLE `காத்தாடி` (
+  `நிறம்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MyISAM COLLATE = utf8_general_ci
+SHOW CREATE TABLE `பள்ளி`;
+Table	Create Table
+பள்ளி	CREATE TEMPORARY TABLE `பள்ளி` (
+  `பெயர்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MyISAM COLLATE = utf8_general_ci
+SHOW CREATE TABLE `ஊர்`;
+Table	Create Table
+ஊர்	CREATE TEMPORARY TABLE `ஊர்` (
+  `பெயர்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MyISAM COLLATE = utf8_general_ci
+SHOW CREATE TABLE `நாள்`;
+Table	Create Table
+நாள்	CREATE TEMPORARY TABLE `நாள்` (
+  `கிழமை` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MyISAM COLLATE = utf8_general_ci
+SHOW CREATE TABLE `குடம்`;
+Table	Create Table
+குடம்	CREATE TEMPORARY TABLE `குடம்` (
+  `நிறம்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MyISAM COLLATE = utf8_general_ci
+SHOW CREATE TABLE `கட்டில்`;
+Table	Create Table
+கட்டில்	CREATE TEMPORARY TABLE `கட்டில்` (
+  `அகலம்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MyISAM COLLATE = utf8_general_ci
+SHOW CREATE TABLE `கடல்`;
+Table	Create Table
+கடல்	CREATE TEMPORARY TABLE `கடல்` (
+  `பெயர்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MyISAM COLLATE = utf8_general_ci
+DROP TABLE `அம்மா`;
+DROP TABLE `தமிழ்`;
+DROP TABLE `ஜன்னல்`;
+DROP TABLE `உடை`;
+DROP TABLE `வீடு`;
+DROP TABLE `சட்டை`;
+DROP TABLE `கண்`;
+DROP TABLE `நட்ச்சத்திரம்`;
+DROP TABLE `காத்தாடி`;
+DROP TABLE `பள்ளி`;
+DROP TABLE `ஊர்`;
+DROP TABLE `நாள்`;
+DROP TABLE `குடம்`;
+DROP TABLE `கட்டில்`;
+DROP TABLE `கடல்`;
+CREATE TEMPORARY TABLE `அம்மா`(`பெயர்` char(1))  engine=MEMORY;
+CREATE TEMPORARY TABLE `தமிழ்`(`எழுத்து` char(1))  engine=MEMORY;
+CREATE TEMPORARY TABLE `சட்டை`(`நிறம்` char(1))  engine=MEMORY;
+CREATE TEMPORARY TABLE `கண்`(`நிறம்` char(1))  engine=MEMORY;
+CREATE TEMPORARY TABLE `ஊர்`(`பெயர்` char(1))  engine=MEMORY;
+CREATE TEMPORARY TABLE `நாள்`(`கிழமை` char(1))  engine=MEMORY;
+CREATE TEMPORARY TABLE IF NOT EXISTS `அம்மா`(`பெயர்` char(1))  engine=MEMORY;
+Warnings:
+Note	1050	Table 'அம்மா' already exists
+CREATE TEMPORARY TABLE IF NOT EXISTS `தமிழ்`(`எழுத்து` char(1))  engine=MEMORY;
+Warnings:
+Note	1050	Table 'தமிழ்' already exists
+CREATE TEMPORARY TABLE IF NOT EXISTS `சட்டை`(`நிறம்` char(1))  engine=MEMORY;
+Warnings:
+Note	1050	Table 'சட்டை' already exists
+CREATE TEMPORARY TABLE IF NOT EXISTS `கண்`(`நிறம்` char(1))  engine=MEMORY;
+Warnings:
+Note	1050	Table 'கண்' already exists
+CREATE TEMPORARY TABLE IF NOT EXISTS `ஊர்`(`பெயர்` char(1))  engine=MEMORY;
+Warnings:
+Note	1050	Table 'ஊர்' already exists
+CREATE TEMPORARY TABLE IF NOT EXISTS `நாள்`(`கிழமை` char(1))  engine=MEMORY;
+Warnings:
+Note	1050	Table 'நாள்' already exists
+CREATE TEMPORARY TABLE IF NOT EXISTS `ஜன்னல்`(`அகலம்` char(1))  engine=MEMORY;
+CREATE TEMPORARY TABLE IF NOT EXISTS `நட்ச்சத்திரம்`(`பெயர்` char(1))  engine=MEMORY;
+CREATE TEMPORARY TABLE IF NOT EXISTS `குடம்`(`நிறம்`char(1))  engine=MEMORY;
+CREATE TEMPORARY TABLE `உடை`(`நிறம்` char(1))  engine=MEMORY;
+CREATE TEMPORARY TABLE `வீடு`(`பெயர்` char(1))  engine=MEMORY;
+CREATE TEMPORARY TABLE `காத்தாடி`(`நிறம்` char(1))  engine=MEMORY;
+CREATE TEMPORARY TABLE `பள்ளி`(`பெயர்` char(1))  engine=MEMORY;
+CREATE TEMPORARY TABLE `கட்டில்`(`அகலம்` char(1))  engine=MEMORY;
+CREATE TEMPORARY TABLE `கடல்`(`பெயர்` char(1))  engine=MEMORY;
+DESC `அம்மா`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+பெயர்	VARCHAR	YES		YES	
+DESC `தமிழ்`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+எழுத்து	VARCHAR	YES		YES	
+DESC `ஜன்னல்`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+அகலம்	VARCHAR	YES		YES	
+DESC `உடை`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+நிறம்	VARCHAR	YES		YES	
+DESC `வீடு`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+பெயர்	VARCHAR	YES		YES	
+DESC `சட்டை`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+நிறம்	VARCHAR	YES		YES	
+DESC `கண்`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+நிறம்	VARCHAR	YES		YES	
+DESC `நட்ச்சத்திரம்`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+பெயர்	VARCHAR	YES		YES	
+DESC `காத்தாடி`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+நிறம்	VARCHAR	YES		YES	
+DESC `பள்ளி`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+பெயர்	VARCHAR	YES		YES	
+DESC `ஊர்`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+பெயர்	VARCHAR	YES		YES	
+DESC `நாள்`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+கிழமை	VARCHAR	YES		YES	
+DESC `குடம்`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+நிறம்	VARCHAR	YES		YES	
+DESC `கட்டில்`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+அகலம்	VARCHAR	YES		YES	
+DESC `கடல்`;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+பெயர்	VARCHAR	YES		YES	
+SHOW CREATE TABLE `அம்மா`;
+Table	Create Table
+அம்மா	CREATE TEMPORARY TABLE `அம்மா` (
+  `பெயர்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
+SHOW CREATE TABLE `தமிழ்`;
+Table	Create Table
+தமிழ்	CREATE TEMPORARY TABLE `தமிழ்` (
+  `எழுத்து` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
+SHOW CREATE TABLE `ஜன்னல்`;
+Table	Create Table
+ஜன்னல்	CREATE TEMPORARY TABLE `ஜன்னல்` (
+  `அகலம்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
+SHOW CREATE TABLE `உடை`;
+Table	Create Table
+உடை	CREATE TEMPORARY TABLE `உடை` (
+  `நிறம்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
+SHOW CREATE TABLE `வீடு`;
+Table	Create Table
+வீடு	CREATE TEMPORARY TABLE `வீடு` (
+  `பெயர்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
+SHOW CREATE TABLE `சட்டை`;
+Table	Create Table
+சட்டை	CREATE TEMPORARY TABLE `சட்டை` (
+  `நிறம்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
+SHOW CREATE TABLE `கண்`;
+Table	Create Table
+கண்	CREATE TEMPORARY TABLE `கண்` (
+  `நிறம்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
+SHOW CREATE TABLE `நட்ச்சத்திரம்`;
+Table	Create Table
+நட்ச்சத்திரம்	CREATE TEMPORARY TABLE `நட்ச்சத்திரம்` (
+  `பெயர்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
+SHOW CREATE TABLE `காத்தாடி`;
+Table	Create Table
+காத்தாடி	CREATE TEMPORARY TABLE `காத்தாடி` (
+  `நிறம்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
+SHOW CREATE TABLE `பள்ளி`;
+Table	Create Table
+பள்ளி	CREATE TEMPORARY TABLE `பள்ளி` (
+  `பெயர்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
+SHOW CREATE TABLE `ஊர்`;
+Table	Create Table
+ஊர்	CREATE TEMPORARY TABLE `ஊர்` (
+  `பெயர்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
+SHOW CREATE TABLE `நாள்`;
+Table	Create Table
+நாள்	CREATE TEMPORARY TABLE `நாள்` (
+  `கிழமை` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
+SHOW CREATE TABLE `குடம்`;
+Table	Create Table
+குடம்	CREATE TEMPORARY TABLE `குடம்` (
+  `நிறம்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
+SHOW CREATE TABLE `கட்டில்`;
+Table	Create Table
+கட்டில்	CREATE TEMPORARY TABLE `கட்டில்` (
+  `அகலம்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
+SHOW CREATE TABLE `கடல்`;
+Table	Create Table
+கடல்	CREATE TEMPORARY TABLE `கடல்` (
+  `பெயர்` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
+DROP TABLE `அம்மா`;
+DROP TABLE `தமிழ்`;
+DROP TABLE `ஜன்னல்`;
+DROP TABLE `உடை`;
+DROP TABLE `வீடு`;
+DROP TABLE `சட்டை`;
+DROP TABLE `கண்`;
+DROP TABLE `நட்ச்சத்திரம்`;
+DROP TABLE `காத்தாடி`;
+DROP TABLE `பள்ளி`;
+DROP TABLE `ஊர்`;
+DROP TABLE `நாள்`;
+DROP TABLE `குடம்`;
+DROP TABLE `கட்டில்`;
+DROP TABLE `கடல்`;
