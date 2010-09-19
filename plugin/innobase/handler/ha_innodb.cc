@@ -7520,17 +7520,10 @@ static INNOBASE_SHARE* get_share(const char* table_name)
         !strcmp(share->table_name, table_name));
 
   if (!share) {
-
-    uint length = (uint) strlen(table_name);
-
     /* TODO: invoke HASH_MIGRATE if innobase_open_tables
     grows too big */
 
-    share = (INNOBASE_SHARE *) malloc(sizeof(*share)+length+1);
-                memset(share, 0, sizeof(*share)+length+1);
-
-    share->table_name = (char*) memcpy(share + 1,
-               table_name, length + 1);
+    share= new INNOBASE_SHARE(table_name);
 
     HASH_INSERT(INNOBASE_SHARE, table_name_hash,
           innobase_open_tables, fold, share);
@@ -7566,7 +7559,7 @@ static void free_share(INNOBASE_SHARE* share)
     HASH_DELETE(INNOBASE_SHARE, table_name_hash,
           innobase_open_tables, fold, share);
     share->lock.deinit();
-    free(share);
+    delete share;
 
     /* TODO: invoke HASH_MIGRATE if innobase_open_tables
     shrinks too much */

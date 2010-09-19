@@ -228,7 +228,6 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
 
     /* Must be allocated separately for rename to work */
     share->name.append(name);
-    thr_lock_init(&share->lock);
     if (!create_info->internal_table)
     {
       heap_share_list.push_front(share);
@@ -319,7 +318,6 @@ void hp_free(HP_SHARE *share)
 {
   heap_share_list.remove(share);        /* If not internal table */
   hp_clear(share);			/* Remove blocks from memory */
-  share->lock.deinit();
   if (share->keydef)
     delete [] share->keydef->seg;
   delete [] share->keydef;

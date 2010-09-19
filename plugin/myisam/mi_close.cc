@@ -86,7 +86,6 @@ int mi_close(MI_INFO *info)
       free((unsigned char*) share->decode_trees);
       free((unsigned char*) share->decode_tables);
     }
-    share->lock.deinit();
     delete info->s->in_use;
     free((unsigned char*) info->s);
   }

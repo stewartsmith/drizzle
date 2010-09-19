@@ -57,6 +57,9 @@ TL_WRITE_CONCURRENT_INSERT lock at the same time as multiple read locks.
 #include "drizzled/internal/thread_var.h"
 #include "drizzled/statistics_variables.h"
 
+#include "drizzled/session.h"
+#include "drizzled/current_session.h"
+
 #include "thr_lock.h"
 #include "drizzled/internal/m_string.h"
 #include <errno.h>
@@ -145,7 +148,9 @@ static void wake_up_waiters(THR_LOCK *lock);
 
 static enum enum_thr_lock_result wait_for_lock(struct st_lock_list *wait, THR_LOCK_DATA *data, bool in_wait_list)
 {
-  internal::st_my_thread_var *thread_var= my_thread_var;
+  Session *session= current_session;
+  internal::st_my_thread_var *thread_var= session->getThreadVar();
+
   pthread_cond_t *cond= &thread_var->suspend;
   struct timespec wait_timeout;
   enum enum_thr_lock_result result= THR_LOCK_ABORTED;

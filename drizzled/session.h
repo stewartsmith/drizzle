@@ -503,7 +503,19 @@ public:
     chapter 'Miscellaneous functions', for functions GET_LOCK, RELEASE_LOCK.
   */
   uint32_t dbug_sentry; /**< watch for memory corruption */
+private:
   internal::st_my_thread_var *mysys_var;
+public:
+
+  internal::st_my_thread_var *getThreadVar()
+  {
+    return mysys_var;
+  }
+
+  void resetThreadVar()
+  {
+    mysys_var= NULL;
+  }
   /**
    * Type of current query: COM_STMT_PREPARE, COM_QUERY, etc. Set from
    * first byte of the packet in executeStatement()
