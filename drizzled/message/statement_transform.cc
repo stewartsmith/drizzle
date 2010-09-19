@@ -389,7 +389,6 @@ transformInsertRecordToSql(const InsertHeader &header,
     if (should_quote_field_value)
       destination.push_back('\'');
 
-
     if (record.is_null(x))
     {
       destination.append("NULL");
