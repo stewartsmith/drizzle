@@ -35,7 +35,7 @@ AC_DEFUN([_PANDORA_SEARCH_LIBINNODB],[
         ib_u64_t
         ib_api_version(void);
       ])
-      AS_IF([test "x{ac_cv_libinnodb}" = "xyes"],[
+      AS_IF([test "x${ac_cv_libinnodb}" = "xyes"],[
         AC_DEFINE([HAVE_INNODB_H],[1],[Do we have innodb.h])
         INNODB_LIBS="${LTLIBINNODB}"
         ac_cv_have_innodb=yes
