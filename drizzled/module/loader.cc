@@ -71,12 +71,11 @@ namespace drizzled
 class sys_var_pluginvar;
 static vector<sys_var_pluginvar *> plugin_sysvar_vec;
 
-char *opt_plugin_add= NULL;
-char *opt_plugin_remove= NULL;
-char *opt_plugin_load= NULL;
+static vector<string> opt_plugin_load;
+static vector<string> opt_plugin_add;
+static vector<string> opt_plugin_remove;
 char *opt_plugin_dir_ptr;
 char opt_plugin_dir[FN_REFLEN];
-const char *opt_plugin_load_default= PANDORA_PLUGIN_LIST;
 const char *builtin_plugins= PANDORA_BUILTIN_LIST;
 
 /* Note that 'int version' must be the first field of every plugin
@@ -356,6 +355,31 @@ static bool plugin_initialize(module::Registry &registry,
   return false;
 }
 
+static void compose_plugin_options(vector<string> &target,
+                                   vector<string> options)
+{
+  for (vector<string>::iterator it= options.begin();
+       it != options.end();
+       ++it)
+  {
+    tokenize(*it, target, ",", true);
+  }
+}
+
+void compose_plugin_add(vector<string> options)
+{
+  compose_plugin_options(opt_plugin_add, options);
+}
+
+void compose_plugin_remove(vector<string> options)
+{
+  compose_plugin_options(opt_plugin_remove, options);
+}
+
+void notify_plugin_load(string in_plugin_load)
+{
+  tokenize(in_plugin_load, opt_plugin_load, ",", true);
+}
 
 /*
   The logic is that we first load and initialize all compiled in plugins.
@@ -378,26 +402,18 @@ bool plugin_init(module::Registry &registry,
   tokenize(builtin_plugins, builtin_list, ",", true);
 
   bool load_failed= false;
-  vector<string> plugin_list;
-  if (opt_plugin_load)
+
+  if (opt_plugin_add.size() > 0)
   {
-    tokenize(opt_plugin_load, plugin_list, ",", true);
-  }
-  else
-  {
-    tokenize(opt_plugin_load_default, plugin_list, ",", true);
-  }
-  if (opt_plugin_add)
-  {
-    tokenize(opt_plugin_add, plugin_list, ",", true);
+    opt_plugin_load.insert(opt_plugin_load.end(),
+                           opt_plugin_add.begin(),
+                           opt_plugin_add.end());
   }
 
-  if (opt_plugin_remove)
+  if (opt_plugin_remove.size() > 0)
   {
-    vector<string> plugins_to_remove;
-    tokenize(opt_plugin_remove, plugins_to_remove, ",", true);
-    plugin_prune_list(plugin_list, plugins_to_remove);
-    plugin_prune_list(builtin_list, plugins_to_remove);
+    plugin_prune_list(opt_plugin_load, opt_plugin_remove);
+    plugin_prune_list(builtin_list, opt_plugin_remove);
   }
 
 
@@ -414,7 +430,8 @@ bool plugin_init(module::Registry &registry,
   }
 
   /* Uniquify the list */
-  const set<string> plugin_list_set(plugin_list.begin(), plugin_list.end());
+  const set<string> plugin_list_set(opt_plugin_load.begin(),
+                                    opt_plugin_load.end());
   
   /* Register all dynamic plugins */
   load_failed= plugin_load_list(registry, &tmp_root,

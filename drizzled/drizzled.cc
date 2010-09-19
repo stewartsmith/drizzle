@@ -61,6 +61,7 @@
 #include "plugin/myisam/myisam.h"
 #include "drizzled/drizzled.h"
 #include "drizzled/module/registry.h"
+#include "drizzled/module/load_list.h"
 
 #include <google/protobuf/stubs/common.h>
 
@@ -176,6 +177,7 @@ extern "C" int gethostname(char *name, int namelen);
 
 const char *first_keyword= "first";
 const char * const DRIZZLE_CONFIG_NAME= "drizzled";
+
 #define GET_HA_ROWS GET_ULL
 
 const char *tx_isolation_names[] =
@@ -1204,15 +1206,15 @@ int init_common_variables(int argc, char **argv)
      "testing/comparison)."))
   ("plugin-dir", po::value<string>(),
   N_("Directory for plugins."))
-  ("plugin-add", po::value<string>(),
+  ("plugin-add", po::value<vector<string> >()->composing()->notifier(&compose_plugin_add),
   N_("Optional comma separated list of plugins to load at startup in addition "
      "to the default list of plugins. "
      "[for example: --plugin_add=crc32,logger_gearman]"))    
-  ("plugin-remove", po::value<string>(),
+  ("plugin-remove", po::value<vector<string> >()->composing()->notifier(&compose_plugin_remove),
   N_("Optional comma separated list of plugins to not load at startup. Effectively "
      "removes a plugin from the list of plugins to be loaded. "
      "[for example: --plugin_remove=crc32,logger_gearman]"))
-  ("plugin-load", po::value<string>(),
+  ("plugin-load", po::value<string>()->notifier(&notify_plugin_load)->default_value(PANDORA_PLUGIN_LIST),
   N_("Optional comma separated list of plugins to load at starup instead of "
      "the default plugin load list. "
      "[for example: --plugin_load=crc32,logger_gearman]"))  
@@ -1816,19 +1818,19 @@ struct option my_long_options[] =
    N_("Optional comma separated list of plugins to load at startup in addition "
       "to the default list of plugins. "
       "[for example: --plugin_add=crc32,logger_gearman]"),
-   (char**) &opt_plugin_add, (char**) &opt_plugin_add, 0,
+   NULL, NULL, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"plugin_remove", OPT_PLUGIN_ADD,
    N_("Optional comma separated list of plugins to not load at startup. Effectively "
       "removes a plugin from the list of plugins to be loaded. "
       "[for example: --plugin_remove=crc32,logger_gearman]"),
-   (char**) &opt_plugin_remove, (char**) &opt_plugin_remove, 0,
+   NULL, NULL, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"plugin_load", OPT_PLUGIN_LOAD,
    N_("Optional comma separated list of plugins to load at starup instead of "
       "the default plugin load list. "
       "[for example: --plugin_load=crc32,logger_gearman]"),
-   (char**) &opt_plugin_load, (char**) &opt_plugin_load, 0,
+   NULL, NULL, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"preload_buffer_size", OPT_PRELOAD_BUFFER_SIZE,
    N_("The size of the buffer that is allocated when preloading indexes"),
@@ -2143,18 +2145,6 @@ static void get_options()
   }
 
   /* @TODO Make this all strings */
-  if (vm.count("plugin-remove"))
-  {
-    opt_plugin_remove= (char *)vm["plugin-remove"].as<string>().c_str();
-  }
-  if (vm.count("plugin-add"))
-  {
-    opt_plugin_add= (char *)vm["plugin-add"].as<string>().c_str();
-  }
-  if (vm.count("plugin-load"))
-  {
-    opt_plugin_load= (char *)vm["plugin-load"].as<string>().c_str();
-  }
   if (vm.count("default-storage-engine"))
   {
     default_storage_engine_str= (char *)vm["default-storage-engine"].as<string>().c_str();
