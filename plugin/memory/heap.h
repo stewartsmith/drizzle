@@ -193,7 +193,6 @@ typedef struct st_heap_share
 
 
   std::string name;			/* Name of "memory-file" */
-  drizzled::THR_LOCK lock;
   bool delete_on_close;
   uint32_t auto_key;
   uint32_t auto_key_type;			/* real type of the auto key segment */
