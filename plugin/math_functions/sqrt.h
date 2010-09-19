@@ -17,26 +17,24 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include <math.h>
-#include <drizzled/function/math/ln.h>
+#ifndef PLUGIN_MATH_FUNCTIONS_SQRT_H
+#define PLUGIN_MATH_FUNCTIONS_SQRT_H
+
+#include <drizzled/function/func.h>
+#include <drizzled/function/math/dec.h>
 
 namespace drizzled
 {
 
-/** Gateway to natural LOG function. */
-double Item_func_ln::val_real()
+class Item_func_sqrt :public Item_dec_func
 {
-  assert(fixed == 1);
-  double value= args[0]->val_real();
-  if ((null_value= args[0]->null_value))
-    return 0.0;
-  if (value <= 0.0)
-  {
-    signal_divide_by_null();
-    return 0.0;
-  }
-  return log(value);
-}
+public:
+  Item_func_sqrt() :Item_dec_func() {}
+  double val_real();
+  const char *func_name() const { return "sqrt"; }
+  bool check_argument_count(int n) { return n == 1; }
+};
 
 } /* namespace drizzled */
+
+#endif /* PLUGIN_MATH_FUNCTIONS_SQRT_H */

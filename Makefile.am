@@ -51,6 +51,7 @@ EXTRA_DIST= \
 	    extra/clean_source.sh \
 	    extra/cpplint.py \
 	    extra/run_cpplint.sh \
+	    po/Makefile.in.in \
 	    ${top_srcdir}/m4/pandora*m4
 
 

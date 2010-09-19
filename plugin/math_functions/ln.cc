@@ -17,23 +17,26 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTION_MATH_LN_H
-#define DRIZZLED_FUNCTION_MATH_LN_H
-
-#include <drizzled/function/func.h>
-#include <drizzled/function/math/dec.h>
+#include "config.h"
+#include <math.h>
+#include "ln.h"
 
 namespace drizzled
 {
 
-class Item_func_ln :public Item_dec_func
+/** Gateway to natural LOG function. */
+double Item_func_ln::val_real()
 {
-public:
-  Item_func_ln(Item *a) :Item_dec_func(a) {}
-  double val_real();
-  const char *func_name() const { return "ln"; }
-};
+  assert(fixed == 1);
+  double value= args[0]->val_real();
+  if ((null_value= args[0]->null_value))
+    return 0.0;
+  if (value <= 0.0)
+  {
+    signal_divide_by_null();
+    return 0.0;
+  }
+  return log(value);
+}
 
 } /* namespace drizzled */
-
-#endif /* DRIZZLED_FUNCTION_MATH_LN_H */

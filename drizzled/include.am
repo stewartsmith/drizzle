@@ -107,7 +107,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/function/math/int_divide.h \
 			      drizzled/function/math/int_val.h \
 			      drizzled/function/math/integer.h \
-			      drizzled/function/math/ln.h \
 			      drizzled/function/math/minus.h \
 			      drizzled/function/math/mod.h \
 			      drizzled/function/math/multiply.h \
@@ -116,7 +115,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/function/math/plus.h \
 			      drizzled/function/math/real.h \
 			      drizzled/function/math/round.h \
-			      drizzled/function/math/sqrt.h \
 			      drizzled/function/math/tan.h \
 			      drizzled/function/min_max.h \
 			      drizzled/function/num1.h \
@@ -517,7 +515,6 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/function/math/int_divide.cc \
 				 drizzled/function/math/int_val.cc \
 				 drizzled/function/math/integer.cc \
-				 drizzled/function/math/ln.cc \
 				 drizzled/function/math/minus.cc \
 				 drizzled/function/math/mod.cc \
 				 drizzled/function/math/multiply.cc \
@@ -526,7 +523,6 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/function/math/plus.cc \
 				 drizzled/function/math/real.cc \
 				 drizzled/function/math/round.cc \
-				 drizzled/function/math/sqrt.cc \
 				 drizzled/function/math/tan.cc \
 				 drizzled/function/min_max.cc \
 				 drizzled/function/num1.cc \
@@ -649,6 +645,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/my_getsystime.cc \
 				 drizzled/my_hash.cc \
 				 drizzled/name_resolution_context_state.cc \
+				 drizzled/named_savepoint.cc \
 				 drizzled/natural_join_column.cc \
 				 drizzled/optimizer/access_method/const.cc \
 				 drizzled/optimizer/access_method/index.cc \
