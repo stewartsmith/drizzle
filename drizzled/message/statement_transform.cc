@@ -1455,7 +1455,6 @@ bool shouldQuoteFieldValue(Table::Field::FieldType in_type)
   case Table::Field::DECIMAL:
   case Table::Field::INTEGER:
   case Table::Field::BIGINT:
-  case Table::Field::ENUM:
     return false;
   default:
     return true;
