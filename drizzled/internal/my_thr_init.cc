@@ -45,14 +45,10 @@ namespace internal
 {
 
 pthread_key_t THR_KEY_mysys;
-pthread_mutex_t THR_LOCK_lock;
-pthread_mutex_t THR_LOCK_threads;
+boost::mutex THR_LOCK_threads;
 pthread_cond_t  THR_COND_threads;
-uint32_t            THR_thread_count= 0;
+uint32_t THR_thread_count= 0;
 static uint32_t my_thread_end_wait_time= 5;
-#ifdef PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP
-pthread_mutexattr_t my_fast_mutexattr;
-#endif
 
 /*
   initialize thread environment
@@ -75,23 +71,6 @@ bool my_thread_global_init(void)
     return 1;
   }
 
-#ifdef PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP
-  /*
-    Set mutex type to "fast" a.k.a "adaptive"
-
-    In this case the thread may steal the mutex from some other thread
-    that is waiting for the same mutex.  This will save us some
-    context switches but may cause a thread to 'starve forever' while
-    waiting for the mutex (not likely if the code within the mutex is
-    short).
-  */
-  pthread_mutexattr_init(&my_fast_mutexattr);
-  pthread_mutexattr_settype(&my_fast_mutexattr,
-                            PTHREAD_MUTEX_ADAPTIVE_NP);
-#endif
-
-  pthread_mutex_init(&THR_LOCK_lock,MY_MUTEX_INIT_FAST);
-  pthread_mutex_init(&THR_LOCK_threads,MY_MUTEX_INIT_FAST);
   pthread_cond_init(&THR_COND_threads, NULL);
   if (my_thread_init())
   {
@@ -108,36 +87,32 @@ void my_thread_global_end(void)
   bool all_threads_killed= 1;
 
   set_timespec(abstime, my_thread_end_wait_time);
-  pthread_mutex_lock(&THR_LOCK_threads);
-  while (THR_thread_count > 0)
   {
-    int error= pthread_cond_timedwait(&THR_COND_threads, &THR_LOCK_threads,
-                                      &abstime);
-    if (error == ETIMEDOUT || error == ETIME)
+    boost::mutex::scoped_lock scopedLock(THR_LOCK_threads);
+    while (THR_thread_count > 0)
     {
-      /*
-        We shouldn't give an error here, because if we don't have
-        pthread_kill(), programs like mysqld can't ensure that all threads
-        are killed when we enter here.
-      */
-      if (THR_thread_count)
-        fprintf(stderr,
-                "Error in my_thread_global_end(): %d threads didn't exit\n",
-                THR_thread_count);
-      all_threads_killed= 0;
-      break;
+      int error= pthread_cond_timedwait(&THR_COND_threads, THR_LOCK_threads.native_handle(),
+                                        &abstime);
+      if (error == ETIMEDOUT || error == ETIME)
+      {
+        /*
+          We shouldn't give an error here, because if we don't have
+          pthread_kill(), programs like mysqld can't ensure that all threads
+          are killed when we enter here.
+        */
+        if (THR_thread_count)
+          fprintf(stderr,
+                  "Error in my_thread_global_end(): %d threads didn't exit\n",
+                  THR_thread_count);
+        all_threads_killed= 0;
+        break;
+      }
     }
   }
-  pthread_mutex_unlock(&THR_LOCK_threads);
 
   pthread_key_delete(THR_KEY_mysys);
-#ifdef PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP
-  pthread_mutexattr_destroy(&my_fast_mutexattr);
-#endif
-  pthread_mutex_destroy(&THR_LOCK_lock);
   if (all_threads_killed)
   {
-    pthread_mutex_destroy(&THR_LOCK_threads);
     pthread_cond_destroy(&THR_COND_threads);
   }
 }
@@ -160,24 +135,14 @@ bool my_thread_init(void)
   bool error=0;
   st_my_thread_var *tmp= NULL;
 
-#ifdef EXTRA_DEBUG_THREADS
-  fprintf(stderr,"my_thread_init(): thread_id: 0x%lx\n",
-          (uint32_t) pthread_self());
-#endif
-
+  // We should mever see my_thread_init()  called twice
   if (pthread_getspecific(THR_KEY_mysys))
-  {
-#ifdef EXTRA_DEBUG_THREADS
-    fprintf(stderr,"my_thread_init() called more than once in thread 0x%lx\n",
-            (long) pthread_self());
-#endif
-    goto end;
-  }
+    return 0;
+
   tmp= static_cast<st_my_thread_var *>(calloc(1, sizeof(*tmp)));
   if (tmp == NULL)
   {
-    error= 1;
-    goto end;
+    return 1;
   }
   pthread_setspecific(THR_KEY_mysys,tmp);
   tmp->pthread_self= pthread_self();
@@ -185,12 +150,10 @@ bool my_thread_init(void)
   pthread_cond_init(&tmp->suspend, NULL);
   tmp->init= 1;
 
-  pthread_mutex_lock(&THR_LOCK_threads);
+  boost::mutex::scoped_lock scopedLock(THR_LOCK_threads);
   tmp->id= ++thread_id;
   ++THR_thread_count;
-  pthread_mutex_unlock(&THR_LOCK_threads);
 
-end:
   return error;
 }
 
@@ -212,10 +175,6 @@ void my_thread_end(void)
   st_my_thread_var *tmp=
     static_cast<st_my_thread_var *>(pthread_getspecific(THR_KEY_mysys));
 
-#ifdef EXTRA_DEBUG_THREADS
-  fprintf(stderr,"my_thread_end(): tmp: 0x%lx  pthread_self: 0x%lx  thread_id: %ld\n",
-	  (long) tmp, (long) pthread_self(), tmp ? (long) tmp->id : 0L);
-#endif
   if (tmp && tmp->init)
   {
 #if !defined(__bsdi__) && !defined(__OpenBSD__)
@@ -231,11 +190,10 @@ void my_thread_end(void)
       my_thread_end and thus freed all memory they have allocated in
       my_thread_init()
     */
-    pthread_mutex_lock(&THR_LOCK_threads);
+    boost::mutex::scoped_lock scopedLock(THR_LOCK_threads);
     assert(THR_thread_count != 0);
     if (--THR_thread_count == 0)
       pthread_cond_signal(&THR_COND_threads);
-    pthread_mutex_unlock(&THR_LOCK_threads);
   }
 }
 
