@@ -19,7 +19,7 @@
 
 #include "config.h"
 #include <math.h>
-#include <drizzled/function/math/ceiling.h>
+#include "ceiling.h"
 
 namespace drizzled
 {

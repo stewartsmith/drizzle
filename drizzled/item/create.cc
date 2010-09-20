@@ -64,7 +64,6 @@
 
 #include <drizzled/function/func.h>
 #include <drizzled/function/additive_op.h>
-#include <drizzled/function/math/ceiling.h>
 #include <drizzled/function/math/dec.h>
 #include <drizzled/function/math/decimal_typecast.h>
 #include <drizzled/function/math/exp.h>
@@ -260,21 +259,6 @@ public:
 protected:
   Create_func_bin() {}
   virtual ~Create_func_bin() {}
-};
-
-
-class Create_func_ceiling : public Create_func_arg1
-{
-public:
-  using Create_func_arg1::create;
-
-  virtual Item *create(Session *session, Item *arg1);
-
-  static Create_func_ceiling s_singleton;
-
-protected:
-  Create_func_ceiling() {}
-  virtual ~Create_func_ceiling() {}
 };
 
 class Create_func_concat : public Create_native_func
@@ -1333,15 +1317,6 @@ Create_func_bin::create(Session *session, Item *arg1)
   return new (session->mem_root) Item_func_conv(arg1, i10, i2);
 }
 
-
-Create_func_ceiling Create_func_ceiling::s_singleton;
-
-Item*
-Create_func_ceiling::create(Session *session, Item *arg1)
-{
-  return new (session->mem_root) Item_func_ceiling(arg1);
-}
-
 Create_func_concat Create_func_concat::s_singleton;
 
 Item*
@@ -2162,8 +2137,6 @@ struct Native_func_registry
 static Native_func_registry func_array[] =
 {
   { { C_STRING_WITH_LEN("BIN") }, BUILDER(Create_func_bin)},
-  { { C_STRING_WITH_LEN("CEIL") }, BUILDER(Create_func_ceiling)},
-  { { C_STRING_WITH_LEN("CEILING") }, BUILDER(Create_func_ceiling)},
   { { C_STRING_WITH_LEN("CONCAT") }, BUILDER(Create_func_concat)},
   { { C_STRING_WITH_LEN("CONCAT_WS") }, BUILDER(Create_func_concat_ws)},
   { { C_STRING_WITH_LEN("CONV") }, BUILDER(Create_func_conv)},
