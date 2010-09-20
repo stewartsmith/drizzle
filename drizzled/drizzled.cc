@@ -1288,9 +1288,12 @@ int init_common_variables(int argc, char **argv)
   global_system_variables.optimizer_prune_level=
     vm.count("disable-optimizer-prune") ? false : true;
 
-  if ((user_info= check_user(drizzled_user)))
+  if (vm.count("help") == 0 && vm.count("help-extended") == 0)
   {
-    set_user(drizzled_user, user_info);
+    if ((user_info= check_user(drizzled_user)))
+    {
+      set_user(drizzled_user, user_info);
+    }
   }
 
   fix_paths(argv[0]);
