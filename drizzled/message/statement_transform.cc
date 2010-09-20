@@ -389,27 +389,27 @@ transformInsertRecordToSql(const InsertHeader &header,
     if (should_quote_field_value)
       destination.push_back('\'');
 
-    if (field_metadata.type() == Table::Field::BLOB)
+    if (record.is_null(x))
     {
-      /* 
-        * We do this here because BLOB data is returned
-        * in a string correctly, but calling append()
-        * without a length will result in only the string
-        * up to a \0 being output here.
-        */
-      string raw_data(record.insert_value(x));
-      destination.append(raw_data.c_str(), raw_data.size());
+      destination.append("NULL");
     }
     else
     {
-      if (record.is_null(x))
+      if (field_metadata.type() == Table::Field::BLOB)
       {
-        destination.append("NULL");
+        /*
+         * We do this here because BLOB data is returned
+         * in a string correctly, but calling append()
+         * without a length will result in only the string
+         * up to a \0 being output here.
+         */
+        string raw_data(record.insert_value(x));
+        destination.append(raw_data.c_str(), raw_data.size());
       }
-      else 
+      else
       {
         destination.append(record.insert_value(x));
-      } 
+      }
     }
 
     if (should_quote_field_value)
@@ -548,24 +548,24 @@ transformUpdateRecordToSql(const UpdateHeader &header,
     if (should_quote_field_value)
       destination.push_back('\'');
 
-    if (field_metadata.type() == Table::Field::BLOB)
+    if (record.is_null(x))
     {
-      /* 
-       * We do this here because BLOB data is returned
-       * in a string correctly, but calling append()
-       * without a length will result in only the string
-       * up to a \0 being output here.
-       */
-      string raw_data(record.after_value(x));
-      destination.append(raw_data.c_str(), raw_data.size());
+      destination.append("NULL");
     }
-    else
+    else 
     {
-      if (record.is_null(x))
+      if (field_metadata.type() == Table::Field::BLOB)
       {
-        destination.append("NULL");
+        /*
+         * We do this here because BLOB data is returned
+         * in a string correctly, but calling append()
+         * without a length will result in only the string
+         * up to a \0 being output here.
+         */
+        string raw_data(record.after_value(x));
+        destination.append(raw_data.c_str(), raw_data.size());
       }
-      else
+      else 
       {
         destination.append(record.after_value(x));
       }
