@@ -108,7 +108,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/function/math/mod.h \
 			      drizzled/function/math/multiply.h \
 			      drizzled/function/math/neg.h \
-			      drizzled/function/math/ord.h \
 			      drizzled/function/math/plus.h \
 			      drizzled/function/math/real.h \
 			      drizzled/function/math/round.h \
@@ -513,7 +512,6 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/function/math/mod.cc \
 				 drizzled/function/math/multiply.cc \
 				 drizzled/function/math/neg.cc \
-				 drizzled/function/math/ord.cc \
 				 drizzled/function/math/plus.cc \
 				 drizzled/function/math/real.cc \
 				 drizzled/function/math/round.cc \

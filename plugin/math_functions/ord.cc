@@ -19,7 +19,7 @@
 
 #include "config.h"
 
-#include <drizzled/function/math/ord.h>
+#include "ord.h"
 
 namespace drizzled
 {

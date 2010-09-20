@@ -34,6 +34,7 @@
 #include "plugin/math_functions/ceiling.h"
 #include "plugin/math_functions/exp.h"
 #include "plugin/math_functions/floor.h"
+#include "plugin/math_functions/ord.h"
 
 using namespace drizzled;
 
@@ -57,6 +58,7 @@ static int init(drizzled::module::Context &context)
   context.add(new plugin::Create_function<Item_func_ceiling>("ceiling"));
   context.add(new plugin::Create_function<Item_func_exp>("exp"));
   context.add(new plugin::Create_function<Item_func_floor>("floor"));
+  context.add(new plugin::Create_function<Item_func_ord>("ord"));
 
   return 0;
 }

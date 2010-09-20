@@ -78,7 +78,6 @@
 #include <drizzled/function/num1.h>
 #include <drizzled/function/num_op.h>
 #include <drizzled/function/numhybrid.h>
-#include <drizzled/function/math/ord.h>
 #include <drizzled/function/math/real.h>
 #include <drizzled/function/row_count.h>
 #include <drizzled/function/set_user_var.h>
@@ -800,22 +799,6 @@ protected:
   Create_func_oct() {}
   virtual ~Create_func_oct() {}
 };
-
-
-class Create_func_ord : public Create_func_arg1
-{
-public:
-  using Create_func_arg1::create;
-
-  virtual Item *create(Session *session, Item *arg1);
-
-  static Create_func_ord s_singleton;
-
-protected:
-  Create_func_ord() {}
-  virtual ~Create_func_ord() {}
-};
-
 
 class Create_func_period_add : public Create_func_arg2
 {
@@ -1824,16 +1807,6 @@ Create_func_oct::create(Session *session, Item *arg1)
   return new (session->mem_root) Item_func_conv(arg1, i10, i8);
 }
 
-
-Create_func_ord Create_func_ord::s_singleton;
-
-Item*
-Create_func_ord::create(Session *session, Item *arg1)
-{
-  return new (session->mem_root) Item_func_ord(arg1);
-}
-
-
 Create_func_period_add Create_func_period_add::s_singleton;
 
 Item*
@@ -2120,7 +2093,6 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("MONTHNAME") }, BUILDER(Create_func_monthname)},
   { { C_STRING_WITH_LEN("NULLIF") }, BUILDER(Create_func_nullif)},
   { { C_STRING_WITH_LEN("OCT") }, BUILDER(Create_func_oct)},
-  { { C_STRING_WITH_LEN("ORD") }, BUILDER(Create_func_ord)},
   { { C_STRING_WITH_LEN("PERIOD_ADD") }, BUILDER(Create_func_period_add)},
   { { C_STRING_WITH_LEN("PERIOD_DIFF") }, BUILDER(Create_func_period_diff)},
   { { C_STRING_WITH_LEN("PI") }, BUILDER(Create_func_pi)},
