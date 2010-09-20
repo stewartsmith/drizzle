@@ -324,8 +324,6 @@ SHOW_COMP_OPTION have_symlink;
 
 /* Thread specific variables */
 
-pthread_key_t THR_Mem_root;
-pthread_key_t THR_Session;
 boost::mutex LOCK_open;
 boost::mutex LOCK_global_system_variables;
 boost::mutex LOCK_thread_count;
@@ -1053,8 +1051,6 @@ int init_common_variables(int argc, char **argv)
   max_system_variables.pseudo_thread_id= UINT32_MAX;
   server_start_time= flush_status_time= curr_time;
 
-  if (init_thread_environment())
-    return 1;
   drizzle_init_variables();
 
   {
@@ -1359,17 +1355,6 @@ int init_common_variables(int argc, char **argv)
   return 0;
 }
 
-
-int init_thread_environment()
-{
-  if (pthread_key_create(&THR_Session,NULL) ||
-      pthread_key_create(&THR_Mem_root,NULL))
-  {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Can't create thread-keys"));
-    return 1;
-  }
-  return 0;
-}
 
 int init_server_components(module::Registry &plugins)
 {

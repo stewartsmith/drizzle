@@ -25,18 +25,27 @@
 namespace drizzled
 {
 
-extern pthread_key_t THR_Session;
-extern pthread_key_t THR_Mem_root;
+static MySessionVar THR_Session;
+static MyMemoryRootVar THR_Mem_root;
+
+MySessionVar &currentSession(void)
+{
+  return THR_Session;
+}
+
+MyMemoryRootVar &currentMemRoot(void)
+{
+  return THR_Mem_root;
+}
 
 Session *_current_session(void)
 {
-  return static_cast<Session *>(pthread_getspecific(THR_Session));
+  return THR_Session.get();
 }
-
 
 memory::Root *current_mem_root(void)
 {
-  return *(static_cast<memory::Root **>(pthread_getspecific(THR_Mem_root)));
+  return *(currentMemRoot().get());
 }
 
 } /* namespace drizzled */
