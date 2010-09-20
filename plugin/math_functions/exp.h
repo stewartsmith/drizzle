@@ -17,21 +17,23 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include <math.h>
-#include <drizzled/item/func.h>
-#include <drizzled/function/math/exp.h>
+#ifndef PLUGIN_MATH_FUNCTIONS_EXP_H
+#define PLUGIN_MATH_FUNCTIONS_EXP_H
+
+#include <drizzled/function/func.h>
+#include <drizzled/function/math/dec.h>
 
 namespace drizzled
 {
 
-double Item_func_exp::val_real()
+class Item_func_exp :public Item_dec_func
 {
-  assert(fixed == 1);
-  double value= args[0]->val_real();
-  if ((null_value=args[0]->null_value))
-    return 0.0;
-  return fix_result(exp(value));
-}
+public:
+  Item_func_exp() :Item_dec_func() {}
+  double val_real();
+  const char *func_name() const { return "exp"; }
+};
 
 } /* namespace drizzled */
+
+#endif /* PLUGIN_MATH_FUNCTIONS_EXP_H */

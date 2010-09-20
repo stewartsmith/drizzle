@@ -100,7 +100,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/function/math/dec.h \
 			      drizzled/function/math/decimal_typecast.h \
 			      drizzled/function/math/divide.h \
-			      drizzled/function/math/exp.h \
 			      drizzled/function/math/floor.h \
 			      drizzled/function/math/int.h \
 			      drizzled/function/math/int_divide.h \
@@ -507,7 +506,6 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/function/locate.cc \
 				 drizzled/function/math/decimal_typecast.cc \
 				 drizzled/function/math/divide.cc \
-				 drizzled/function/math/exp.cc \
 				 drizzled/function/math/floor.cc \
 				 drizzled/function/math/int.cc \
 				 drizzled/function/math/int_divide.cc \

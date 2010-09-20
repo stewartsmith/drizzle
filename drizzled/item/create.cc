@@ -66,7 +66,6 @@
 #include <drizzled/function/additive_op.h>
 #include <drizzled/function/math/dec.h>
 #include <drizzled/function/math/decimal_typecast.h>
-#include <drizzled/function/math/exp.h>
 #include <drizzled/function/field.h>
 #include <drizzled/function/find_in_set.h>
 #include <drizzled/function/math/floor.h>
@@ -446,22 +445,6 @@ protected:
   Create_func_elt() {}
   virtual ~Create_func_elt() {}
 };
-
-
-class Create_func_exp : public Create_func_arg1
-{
-public:
-  using Create_func_arg1::create;
-
-  virtual Item *create(Session *session, Item *arg1);
-
-  static Create_func_exp s_singleton;
-
-protected:
-  Create_func_exp() {}
-  virtual ~Create_func_exp() {}
-};
-
 
 class Create_func_export_set : public Create_native_func
 {
@@ -1465,16 +1448,6 @@ Create_func_elt::create_native(Session *session, LEX_STRING name,
   return new (session->mem_root) Item_func_elt(*item_list);
 }
 
-
-Create_func_exp Create_func_exp::s_singleton;
-
-Item*
-Create_func_exp::create(Session *session, Item *arg1)
-{
-  return new (session->mem_root) Item_func_exp(arg1);
-}
-
-
 Create_func_export_set Create_func_export_set::s_singleton;
 
 Item*
@@ -2149,7 +2122,6 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("DAYOFYEAR") }, BUILDER(Create_func_dayofyear)},
   { { C_STRING_WITH_LEN("DEGREES") }, BUILDER(Create_func_degrees)},
   { { C_STRING_WITH_LEN("ELT") }, BUILDER(Create_func_elt)},
-  { { C_STRING_WITH_LEN("EXP") }, BUILDER(Create_func_exp)},
   { { C_STRING_WITH_LEN("EXPORT_SET") }, BUILDER(Create_func_export_set)},
   { { C_STRING_WITH_LEN("FIELD") }, BUILDER(Create_func_field)},
   { { C_STRING_WITH_LEN("FIND_IN_SET") }, BUILDER(Create_func_find_in_set)},
