@@ -149,9 +149,9 @@ class DrizzleDumpData
     friend std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj);
 
     /* For 0000-00-00 -> NULL conversion */
-    std::string convertDate(const char* oldDate);
+    std::string convertDate(const char* oldDate) const;
     /* For xx:xx:xx -> INT conversion */
-    std::string convertTime(const char* oldTime);
+    long convertTime(const char* oldTime) const;
     std::string convertHex(const char* from, size_t from_size) const;
     std::string escape(const char* from, size_t from_size) const;
 };

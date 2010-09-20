@@ -779,21 +779,34 @@ ostream& operator <<(ostream &os,const DrizzleDumpData &obj)
     }
     for (uint32_t i= 0; i < drizzle_result_column_count(obj.result); i++)
     {
-      // time/date conversion probably needs to happen here
-      // need to handle blobs here too
-      // also need to escape text (drizzle_escape_string)
-      if (obj.table->fields[i]->type.compare("INT") != 0)
+      if (not row[i])
       {
-        if (opt_hex_blob and
-          ((obj.table->fields[i]->type.compare("BLOB") == 0) or
-          (obj.table->fields[i]->type.compare("VARBINARY") == 0)))
-          os << obj.convertHex(row[i], row_sizes[i]);
+        os << "NULL";
+      }
+      /* time/date conversion for MySQL connections */
+      else if ((connected_server_type == SERVER_MYSQL_FOUND) and
+        (obj.table->fields[i]->convertDateTime))
+      {
+        if (obj.table->fields[i]->type.compare("INT") == 0)
+          os << obj.convertTime(row[i]);
         else
-          os << "'" << obj.escape(row[i], row_sizes[i]) << "'";
+          os << obj.convertDate(row[i]);
       }
       else
-        os << row[i];
- 
+      {
+        if (obj.table->fields[i]->type.compare("INT") != 0)
+        {
+          /* Hex blob processing or escape text */
+          if (opt_hex_blob and
+            ((obj.table->fields[i]->type.compare("BLOB") == 0) or
+            (obj.table->fields[i]->type.compare("VARBINARY") == 0)))
+            os << obj.convertHex(row[i], row_sizes[i]);
+          else
+            os << "'" << obj.escape(row[i], row_sizes[i]) << "'";
+        }
+        else
+          os << row[i];
+      }
       if (i != obj.table->fields.size() - 1)
         os << ",";
     }
@@ -808,6 +821,32 @@ ostream& operator <<(ostream &os,const DrizzleDumpData &obj)
   }
   os << ");" << endl << endl;
   return os;
+}
+
+long DrizzleDumpData::convertTime(const char* oldTime) const
+{
+  std::string ts(oldTime);
+  boost::posix_time::time_duration td(boost::posix_time::duration_from_string(ts));
+  long seconds= td.total_seconds();
+  return seconds;
+}
+
+std::string DrizzleDumpData::convertDate(const char* oldDate) const
+{
+  boost::match_flag_type flags = boost::match_default;
+  std::string output;
+  boost::regex date_regex("([0-9]{3}[1-9]-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01]))");
+
+  if (regex_search(oldDate, date_regex, flags))
+  {
+    output.push_back('\'');
+    output.append(oldDate);
+    output.push_back('\'');
+  }
+  else
+    output= "NULL";
+
+  return output;
 }
 
 std::string DrizzleDumpData::convertHex(const char* from, size_t from_size) const
