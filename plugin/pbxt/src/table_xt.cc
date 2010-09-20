@@ -4976,10 +4976,10 @@ xtPublic int xt_tab_maybe_committed(XTOpenTablePtr ot, xtRecordID rec_id, xtXact
 	xtXactID				rec_xn_id = 0;
 	xtBool					wait = FALSE;
 	xtXactID				wait_xn_id = 0;
-	xtRowID					row_id;
+	xtRowID					row_id = 0;  // Initialized unnecessarily to satisfy (Drizzle) compile [-Wuninitialized]
 	xtRecordID				var_rec_id;
 	xtXactID				xn_id;
-	register XTTableHPtr	tab;
+	register XTTableHPtr	tab = NULL; // Initialized unnecessarily to satisfy (Drizzle) compile [-Wuninitialized]
 #ifdef TRACE_VARIATIONS_IN_DUP_CHECK
 	char					t_buf[500];
 	int						len;
