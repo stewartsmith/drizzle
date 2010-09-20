@@ -21,7 +21,7 @@
 #include "config.h"
 
 #include <assert.h>
-
+#include <boost/lexical_cast.hpp>
 #include "drizzled/identifier.h"
 #include "drizzled/session.h"
 #include "drizzled/internal/my_sys.h"

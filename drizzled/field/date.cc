@@ -19,6 +19,8 @@
  */
 
 #include "config.h"
+#include <boost/lexical_cast.hpp>
+
 #include "drizzled/field/date.h"
 #include "drizzled/error.h"
 #include "drizzled/table.h"
@@ -118,10 +120,11 @@ int Field_date::store(double from)
   if (from < 0.0 || from > 99991231235959.0)
   {
     /* Convert the double to a string using stringstream */
-    std::stringstream ss;
-    std::string tmp;
-    ss.precision(18); /* 18 places should be fine for error display of double input. */
-    ss << from; ss >> tmp;
+    //std::stringstream ss;
+    //std::string tmp;
+    //ss.precision(18); /* 18 places should be fine for error display of double input. */
+    //ss << from; ss >> tmp;
+    std::string tmp(boost::lexical_cast<std::string>(from));
 
     my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR), tmp.c_str());
     return 2;
@@ -140,9 +143,10 @@ int Field_date::store(int64_t from, bool)
   if (! temporal.from_int64_t(from))
   {
     /* Convert the integer to a string using stringstream */
-    std::stringstream ss;
-    std::string tmp;
-    ss << from; ss >> tmp;
+    //std::stringstream ss;
+    //std::string tmp;
+    //ss << from; ss >> tmp;
+    std::string tmp(boost::lexical_cast<std::string>(from)); 
 
     my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR), tmp.c_str());
     return 2;
