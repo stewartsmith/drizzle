@@ -1340,7 +1340,6 @@ int init_common_variables(int argc, char **argv)
     }
   }
 
-
   po::notify(vm);
   process_defaults_files();
 
@@ -1493,12 +1492,6 @@ int init_server_components(module::Registry &plugins)
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Duplicate entry for command line option\n"));
     unireg_abort(1);
-  }
-
-  if (not vm["no-defaults"].as<bool>())
-  {
-    ifstream system_drizzle_ifs(vm["defaults-file"].as<string>().c_str());
-    store(po::parse_config_file(system_drizzle_ifs, long_options), vm);
   }
 
   po::notify(vm);
