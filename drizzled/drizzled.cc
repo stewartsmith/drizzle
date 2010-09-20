@@ -1054,8 +1054,11 @@ static void process_defaults_files()
       file_location.push_back('/');
       file_location.append(*iter);
     }
+    else
+    {
+      file_location= *iter;
+    }
     ifstream input_defaults_file(file_location.c_str());
-    cout << "Going to check " << file_location << endl;
     store(po::parse_config_file(input_defaults_file, long_options), vm);
   }
 }
@@ -1313,6 +1316,30 @@ int init_common_variables(int argc, char **argv)
     defaults_file_list.insert(defaults_file_list.begin(),
                               system_config_file_drizzle);
   }
+
+  string config_conf_d_location(vm["config-dir"].as<string>());
+  config_conf_d_location.append("/conf.d");
+  CachedDirectory config_conf_d(config_conf_d_location);
+  if (not config_conf_d.fail())
+  {
+
+    for (CachedDirectory::Entries::const_iterator iter= config_conf_d.getEntries().begin();
+         iter != config_conf_d.getEntries().end();
+         ++iter)
+    {
+      string file_entry((*iter)->filename);
+          
+      if (not file_entry.empty()
+          && file_entry != "."
+          && file_entry != "..")
+      {
+        string the_entry(vm["config-dir"].as<string>());
+        the_entry.append(file_entry);
+        defaults_file_list.push_back(the_entry);
+      }
+    }
+  }
+
 
   po::notify(vm);
   process_defaults_files();
