@@ -19,7 +19,7 @@
 
 #include "config.h"
 #include <math.h>
-#include <drizzled/function/math/floor.h>
+#include "floor.h"
 
 namespace drizzled
 {

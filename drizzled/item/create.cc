@@ -68,7 +68,6 @@
 #include <drizzled/function/math/decimal_typecast.h>
 #include <drizzled/function/field.h>
 #include <drizzled/function/find_in_set.h>
-#include <drizzled/function/math/floor.h>
 #include <drizzled/function/found_rows.h>
 #include <drizzled/function/get_system_var.h>
 #include <drizzled/function/math/int_val.h>
@@ -486,22 +485,6 @@ protected:
   Create_func_find_in_set() {}
   virtual ~Create_func_find_in_set() {}
 };
-
-
-class Create_func_floor : public Create_func_arg1
-{
-public:
-  using Create_func_arg1::create;
-
-  virtual Item *create(Session *session, Item *arg1);
-
-  static Create_func_floor s_singleton;
-
-protected:
-  Create_func_floor() {}
-  virtual ~Create_func_floor() {}
-};
-
 
 class Create_func_format : public Create_func_arg2
 {
@@ -1530,16 +1513,6 @@ Create_func_find_in_set::create(Session *session, Item *arg1, Item *arg2)
   return new (session->mem_root) Item_func_find_in_set(arg1, arg2);
 }
 
-
-Create_func_floor Create_func_floor::s_singleton;
-
-Item*
-Create_func_floor::create(Session *session, Item *arg1)
-{
-  return new (session->mem_root) Item_func_floor(arg1);
-}
-
-
 Create_func_format Create_func_format::s_singleton;
 
 Item*
@@ -2125,7 +2098,6 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("EXPORT_SET") }, BUILDER(Create_func_export_set)},
   { { C_STRING_WITH_LEN("FIELD") }, BUILDER(Create_func_field)},
   { { C_STRING_WITH_LEN("FIND_IN_SET") }, BUILDER(Create_func_find_in_set)},
-  { { C_STRING_WITH_LEN("FLOOR") }, BUILDER(Create_func_floor)},
   { { C_STRING_WITH_LEN("FORMAT") }, BUILDER(Create_func_format)},
   { { C_STRING_WITH_LEN("FOUND_ROWS") }, BUILDER(Create_func_found_rows)},
   { { C_STRING_WITH_LEN("FROM_DAYS") }, BUILDER(Create_func_from_days)},
