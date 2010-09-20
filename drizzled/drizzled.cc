@@ -1058,8 +1058,36 @@ static void process_defaults_files()
     {
       file_location= *iter;
     }
+
     ifstream input_defaults_file(file_location.c_str());
-    store(po::parse_config_file(input_defaults_file, long_options), vm);
+    
+    po::parsed_options file_parsed=
+      po::parse_config_file(input_defaults_file, long_options, true);
+    vector<string> file_unknown= 
+      po::collect_unrecognized(file_parsed.options, po::include_positional);
+
+    for (vector<string>::iterator it= file_unknown.begin();
+         it != file_unknown.end();
+         ++it)
+    {
+      string new_unknown_opt("--");
+      new_unknown_opt.append(*it);
+      ++it;
+      if (it != file_unknown.end())
+      {
+        if ((*it) != "true")
+        {
+          new_unknown_opt.push_back('=');
+          new_unknown_opt.append(*it);
+        }
+      }
+      else
+      {
+        break;
+      }
+      unknown_options.push_back(new_unknown_opt);
+    }
+    store(file_parsed, vm);
   }
 }
 
@@ -1333,7 +1361,8 @@ int init_common_variables(int argc, char **argv)
           && file_entry != "."
           && file_entry != "..")
       {
-        string the_entry(vm["config-dir"].as<string>());
+        string the_entry(config_conf_d_location);
+        the_entry.push_back('/');
         the_entry.append(file_entry);
         defaults_file_list.push_back(the_entry);
       }
@@ -1342,6 +1371,7 @@ int init_common_variables(int argc, char **argv)
 
   po::notify(vm);
   process_defaults_files();
+  po::notify(vm);
 
   get_options();
 
@@ -1465,12 +1495,33 @@ int init_server_components(module::Registry &plugins)
   if (opt_help || opt_help_extended)
     unireg_abort(0);
 
-  po::parsed_options parsed= po::command_line_parser(unknown_options).
-    options(plugin_options).extra_parser(parse_size_arg).
-    allow_unregistered().run();
+  vector<string> final_unknown_options;
+  try
+  {
+    po::parsed_options parsed=
+      po::command_line_parser(unknown_options).
+      options(plugin_options).extra_parser(parse_size_arg).
+      allow_unregistered().run();
 
-  vector<string> final_unknown_options=
-    po::collect_unrecognized(parsed.options, po::include_positional);
+    final_unknown_options=
+      po::collect_unrecognized(parsed.options, po::include_positional);
+
+    po::store(parsed, vm);
+
+  }
+  catch (po::invalid_command_line_syntax &err)
+  {
+     errmsg_printf(ERRMSG_LVL_ERROR,
+            _("%s: %s.\n"
+              "Use --help to get a list of available options\n"),
+            internal::my_progname, err.what());
+      unireg_abort(1);
+  }
+  catch (...)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Duplicate entry for command line option\n"));
+    unireg_abort(1);
+  }
 
   /* we do want to exit if there are any other unknown options */
   /** @TODO: We should perhaps remove allowed_unregistered() and catch the
@@ -1482,16 +1533,6 @@ int init_server_components(module::Registry &plugins)
               "Use --help to get a list of available options\n"),
             internal::my_progname, final_unknown_options[0].c_str());
       unireg_abort(1);
-  }
-
-  try
-  {
-    po::store(parsed, vm);
-  }
-  catch (...)
-  {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Duplicate entry for command line option\n"));
-    unireg_abort(1);
   }
 
   po::notify(vm);
