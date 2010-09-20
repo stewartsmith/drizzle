@@ -386,6 +386,8 @@ bool DrizzleDumpTable::populateIndexes(drizzle_con_st &connection)
     std::string indexName((connected_server_type == SERVER_MYSQL_FOUND) ? row[2] : row[0]);
     if (indexName.compare(lastKey) != 0)
     {
+      if (strcmp(row[10], "FULLTEXT") == 0)
+        continue;
       if (!firstIndex)
         indexes.push_back(index);
       index = new DrizzleDumpIndex(indexName);
