@@ -141,7 +141,7 @@ class DrizzleDumpData
   DrizzleDumpTable *table;
   drizzle_con_st *connection;
   std::stringstream errmsg;
-  drizzle_result_st result;
+  drizzle_result_st *result;
 
   public:
     DrizzleDumpData(drizzle_con_st &conn, DrizzleDumpTable *dataTable);

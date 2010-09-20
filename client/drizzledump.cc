@@ -689,18 +689,19 @@ DrizzleDumpData::DrizzleDumpData(drizzle_con_st &conn, DrizzleDumpTable *dataTab
 {
   drizzle_return_t ret;
   std::string query;
-  query= "SELECT * FROM '";
+  query= "SELECT * FROM `";
   query.append(table->tableName);
-  query.append("'");
+  query.append("`");
+  result= new drizzle_result_st;
 
-  if (drizzle_query_str(connection, &result, query.c_str(), &ret) == NULL ||
+  if (drizzle_query_str(connection, result, query.c_str(), &ret) == NULL ||
       ret != DRIZZLE_RETURN_OK)
   {
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
     {
       errmsg << _("Could not get tables list due to error: ") <<
-        drizzle_result_error(&result);
-      drizzle_result_free(&result);
+        drizzle_result_error(result);
+      drizzle_result_free(result);
     }
     else
     {
@@ -710,7 +711,7 @@ DrizzleDumpData::DrizzleDumpData(drizzle_con_st &conn, DrizzleDumpTable *dataTab
     return;
   }
 
-  if (drizzle_result_buffer(&result) != DRIZZLE_RETURN_OK)
+  if (drizzle_result_buffer(result) != DRIZZLE_RETURN_OK)
   {
     errmsg << _("Could not get tables list due to error: ") <<
         drizzle_con_error(connection);
@@ -719,15 +720,60 @@ DrizzleDumpData::DrizzleDumpData(drizzle_con_st &conn, DrizzleDumpTable *dataTab
 }
 DrizzleDumpData::~DrizzleDumpData()
 {
-  drizzle_result_free(&result);
+  drizzle_result_free(result);
+  if (result) delete result;
 }
 ostream& operator <<(ostream &os,const DrizzleDumpData &obj)
 {
+  bool new_insert= true;
+  bool first= true;
   drizzle_row_t row;
-  while((row= drizzle_row_next(&result)))
-  {
 
+  if (drizzle_result_row_count(obj.result) < 1)
+  {
+    os << "--" << endl
+       << "-- No data to dump for table `" << obj.table->tableName << "`" << endl
+       << "--" << endl << endl;
+    return os;
   }
+  else
+  {
+    os << "--" << endl
+       << "-- Dumping data for table `" << obj.table->tableName << "`" << endl
+       << "--" << endl << endl;
+  }
+
+  while((row= drizzle_row_next(obj.result)))
+  {
+    if (not first)
+    {
+      if (extended_insert)
+        os << "),(";
+      else
+        os << ");" << endl;
+    }
+    else
+      first= false;
+
+    if (new_insert)
+    {
+      if (opt_replace_into)
+        os << "REPLACE ";
+      else
+        os << "INSERT ";
+      os << "INTO `" << obj.table->tableName << "` VALUES (";
+      if (extended_insert)
+        new_insert= false;
+    }
+    for (uint32_t i= 0; i < drizzle_result_column_count(obj.result); i++)
+    {
+      // time/date conversion probably needs to happen here
+      os << row[i];
+      if (i != obj.table->fields.size() - 1)
+        os << ",";
+    }
+  }
+  os << ");" << endl << endl;
   return os;
 }
 
