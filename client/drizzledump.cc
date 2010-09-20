@@ -2453,8 +2453,8 @@ try
   N_("Fields in the i.file are opt. enclosed by ..."))
   ("fields-escaped-by", po::value<string>(&escaped)->default_value(""),
   N_("Fields in the i.file are escaped by ..."))
-  ("hex-blob", po::value<bool>(&opt_hex_blob)->default_value(false)->zero_tokens(),
-  "Dump binary strings (BINARY, VARBINARY, BLOB) in hexadecimal format.")
+  ("skip-hex-blob",
+  "Do not dump binary strings (VARBINARY and BLOB) in hexadecimal format.")
   ("ignore-table", po::value<string>(),
   N_("Do not dump the specified table. To specify more than one table to ignore, use the directive multiple times, once for each table.  Each table must be specified with both database and table names, e.g. --ignore-table=database.table"))
   ("insert-ignore", po::value<bool>(&opt_ignore)->default_value(false)->zero_tokens(),
@@ -2584,6 +2584,7 @@ try
   opt_disable_keys= (vm.count("enable-keys")) ? false : true;
   quick= (vm.count("slow")) ? false : true;
   opt_quoted= (vm.count("skip-quote-names")) ? false : true;
+  opt_hex_blob= (vm.count("skip-hex-blob")) ? false : true;
 
   if (vm.count("protocol"))
   {
