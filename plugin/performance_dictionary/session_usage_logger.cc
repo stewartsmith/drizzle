@@ -18,36 +18,39 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_PERFORMANCE_DICTIONARY_PERFORMANCES_H
-#define PLUGIN_PERFORMANCE_DICTIONARY_PERFORMANCES_H
+#include "config.h"
+
+#include "plugin/performance_dictionary/dictionary.h"
+
+#include <drizzled/session.h>
+
+#include <sys/resource.h>
+
+using namespace drizzled;
+using namespace std;
 
 namespace performance_dictionary {
 
-class SessionUsage : public  drizzled::plugin::TableFunction
+bool SessionUsageLogger::pre(Session *session)
 {
+  session->setUsage(true);
 
-public:
-  SessionUsage();
+  return false;
+}
 
-  class Generator : public drizzled::plugin::TableFunction::Generator 
+bool SessionUsageLogger::post(Session *session)
+{
+  QueryUsage *usage_cache= dynamic_cast<QueryUsage *>(session->getProperty("query_usage"));
+
+  if (not usage_cache)
   {
-    Query_list::const_reverse_iterator query_iter;
-    QueryUsage *usage_cache;
-
-    void publish(const std::string &sql, const struct rusage &r_usage);
-
-  public:
-    Generator(drizzled::Field **arg);
-
-    bool populate();
-  };
-
-  Generator *generator(drizzled::Field **arg)
-  {
-    return new Generator(arg);
+    usage_cache= new QueryUsage;
+    session->setProperty("query_usage", usage_cache);
   }
-};
+
+  usage_cache->push(session->getQueryString(), session->getUsage());
+
+  return false;
+}
 
 } /* namespace performance_dictionary */
-
-#endif /* PLUGIN_PERFORMANCE_DICTIONARY_PERFORMANCES_H */

@@ -1,4 +1,4 @@
-/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2010 Brian Aker
@@ -18,36 +18,22 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_PERFORMANCE_DICTIONARY_PERFORMANCES_H
-#define PLUGIN_PERFORMANCE_DICTIONARY_PERFORMANCES_H
+#ifndef DRIZZLED_UTIL_STORABLE_H
+#define DRIZZLED_UTIL_STORABLE_H
 
-namespace performance_dictionary {
-
-class SessionUsage : public  drizzled::plugin::TableFunction
+namespace drizzled
 {
 
+namespace util
+{
+
+class Storable {
 public:
-  SessionUsage();
-
-  class Generator : public drizzled::plugin::TableFunction::Generator 
-  {
-    Query_list::const_reverse_iterator query_iter;
-    QueryUsage *usage_cache;
-
-    void publish(const std::string &sql, const struct rusage &r_usage);
-
-  public:
-    Generator(drizzled::Field **arg);
-
-    bool populate();
-  };
-
-  Generator *generator(drizzled::Field **arg)
-  {
-    return new Generator(arg);
-  }
+  virtual ~Storable()
+  { }
 };
 
-} /* namespace performance_dictionary */
+} /* namespace util */
+} /* namespace drizzled */
 
-#endif /* PLUGIN_PERFORMANCE_DICTIONARY_PERFORMANCES_H */
+#endif /* DRIZZLED_UTIL_STORABLE_H */

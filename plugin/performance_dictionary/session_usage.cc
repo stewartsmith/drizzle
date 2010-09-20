@@ -27,12 +27,6 @@
 
 #include <sys/resource.h>
 
-#ifdef RUSAGE_THREAD
-#define USAGE_VISABILITY RUSAGE_THREAD
-#else
-#define USAGE_VISABILITY  RUSAGE_SELF
-#endif
-
 using namespace drizzled;
 using namespace std;
 
@@ -42,10 +36,10 @@ performance_dictionary::SessionUsage::SessionUsage() :
   plugin::TableFunction("DATA_DICTIONARY", "SESSION_USAGE")
 {
   add_field("QUERY", plugin::TableFunction::STRING, FUNCTION_NAME_LEN, false);
-  add_field("USER_TIME_USED_SECONDS", plugin::TableFunction::STRING, FUNCTION_NAME_LEN, false);
-  add_field("USER_TIME_USED_MICRO_SECONDS", plugin::TableFunction::STRING, FUNCTION_NAME_LEN, false);
-  add_field("SYSTEM_TIME_USED_SECONDS", plugin::TableFunction::STRING, FUNCTION_NAME_LEN, false);
-  add_field("SYSTEM_TIME_USED_MICRO_SECONDS", plugin::TableFunction::STRING, FUNCTION_NAME_LEN, false);
+  add_field("USER_TIME_USED_SECONDS", plugin::TableFunction::NUMBER, false);
+  add_field("USER_TIME_USED_MICRO_SECONDS", plugin::TableFunction::NUMBER, false);
+  add_field("SYSTEM_TIME_USED_SECONDS", plugin::TableFunction::NUMBER, false);
+  add_field("SYSTEM_TIME_USED_MICRO_SECONDS", plugin::TableFunction::NUMBER, false);
   add_field("INTEGRAL_MAX_RESIDENT_SET_SIZE", plugin::TableFunction::NUMBER, 0, false);
   add_field("INTEGRAL_SHARED_TEXT_MEMORY_SIZE", plugin::TableFunction::NUMBER, 0, false);
   add_field("INTEGRAL_UNSHARED_DATA_SIZE", plugin::TableFunction::NUMBER, 0, false);
@@ -62,75 +56,86 @@ performance_dictionary::SessionUsage::SessionUsage() :
   add_field("INVOLUNTARY_CONTEXT_SWITCHES", plugin::TableFunction::NUMBER, 0, false);
 }
 
+
+performance_dictionary::SessionUsage::Generator::Generator(drizzled::Field **arg) :
+  drizzled::plugin::TableFunction::Generator(arg),
+  usage_cache(0)
+{ 
+  usage_cache= dynamic_cast<QueryUsage *>(getSession().getProperty("query_usage"));
+  if (usage_cache)
+    query_iter= usage_cache->list().rbegin();
+}
+
 bool performance_dictionary::SessionUsage::Generator::populate()
 {
-  struct rusage r_usage;
-
-  if (once)
+  if (not usage_cache)
     return false;
-  once= true;
 
-  if (getrusage(USAGE_VISABILITY, &r_usage))
-  {
+  if (query_iter ==  usage_cache->list().rend())
     return false;
-  }
 
-  /* USER_TIME_USED_SECONDS */
-  push("CONNECT");
-
-  /* USER_TIME_USED_SECONDS */
-  push(static_cast<int64_t>(r_usage.ru_utime.tv_sec));
-
-  /* USER_TIME_USED_MICRO_SECONDS */
-  push(static_cast<int64_t>(r_usage.ru_utime.tv_usec));
-
-  /* SYSTEM_TIME_USED_SECONDS */
-  push(static_cast<int64_t>(r_usage.ru_stime.tv_sec));
-
-  /* SYSTEM_TIME_USED_MICRO_SECONDS */
-  push(static_cast<int64_t>(r_usage.ru_stime.tv_usec));
-
-  /* INTEGRAL_MAX_RESIDENT_SET_SIZE */
-  push(static_cast<int64_t>(r_usage.ru_maxrss));
-
-  /* INTEGRAL_SHARED_TEXT_MEMORY_SIZE */
-  push(static_cast<int64_t>(r_usage.ru_ixrss));
-
-  /* INTEGRAL_UNSHARED_DATA_SIZE */
-  push(static_cast<int64_t>(r_usage.ru_idrss));
-
-  /* INTEGRAL_UNSHARED_STACK_SIZE */
-  push(static_cast<int64_t>(r_usage.ru_isrss));
-
-  /* PAGE_RECLAIMS */
-  push(static_cast<int64_t>(r_usage.ru_minflt));
-
-  /* PAGE_FAULTS */
-  push(static_cast<int64_t>(r_usage.ru_majflt));
-
-  /* SWAPS */
-  push(static_cast<int64_t>(r_usage.ru_nswap));
-
-  /* BLOCK_INPUT_OPERATIONS */
-  push(static_cast<int64_t>(r_usage.ru_inblock));
-
-  /* BLOCK_OUTPUT_OPERATIONS */
-  push(static_cast<int64_t>(r_usage.ru_oublock));
-
-  /* MESSAGES_SENT */
-  push(static_cast<int64_t>(r_usage.ru_msgsnd));
-
-  /* MESSAGES_RECEIVED */
-  push(static_cast<int64_t>(r_usage.ru_msgrcv));
-
-  /* SIGNALS_RECEIVED */
-  push(static_cast<int64_t>(r_usage.ru_nsignals));
-
-  /* VOLUNTARY_CONTEXT_SWITCHES */
-  push(static_cast<int64_t>(r_usage.ru_nvcsw));
-
-  /* INVOLUNTARY_CONTEXT_SWITCHES */
-  push(static_cast<int64_t>(r_usage.ru_nivcsw));
+  publish((*query_iter).query, (*query_iter).delta());
+  query_iter++;
 
   return true;
+}
+
+void performance_dictionary::SessionUsage::Generator::publish(const std::string &sql, const struct rusage &usage_arg)
+{
+  /* SQL */
+  push(sql);
+
+  /* USER_TIME_USED_SECONDS */
+  push(static_cast<int64_t>(usage_arg.ru_utime.tv_sec));
+
+  /* USER_TIME_USED_MICRO_SECONDS */
+  push(static_cast<int64_t>(usage_arg.ru_utime.tv_usec));
+
+  /* SYSTEM_TIME_USED_SECONDS */
+  push(static_cast<int64_t>(usage_arg.ru_stime.tv_sec));
+
+  /* SYSTEM_TIME_USED_MICRO_SECONDS */
+  push(static_cast<int64_t>(usage_arg.ru_stime.tv_usec));
+
+  /* INTEGRAL_MAX_RESIDENT_SET_SIZE */
+  push(static_cast<int64_t>(usage_arg.ru_maxrss));
+
+  /* INTEGRAL_SHARED_TEXT_MEMORY_SIZE */
+  push(static_cast<int64_t>(usage_arg.ru_ixrss));
+
+  /* INTEGRAL_UNSHARED_DATA_SIZE */
+  push(static_cast<int64_t>(usage_arg.ru_idrss));
+
+  /* INTEGRAL_UNSHARED_STACK_SIZE */
+  push(static_cast<int64_t>(usage_arg.ru_isrss));
+
+  /* PAGE_RECLAIMS */
+  push(static_cast<int64_t>(usage_arg.ru_minflt));
+
+  /* PAGE_FAULTS */
+  push(static_cast<int64_t>(usage_arg.ru_majflt));
+
+  /* SWAPS */
+  push(static_cast<int64_t>(usage_arg.ru_nswap));
+
+  /* BLOCK_INPUT_OPERATIONS */
+  push(static_cast<int64_t>(usage_arg.ru_inblock));
+
+  /* BLOCK_OUTPUT_OPERATIONS */
+  push(static_cast<int64_t>(usage_arg.ru_oublock));
+
+  /* MESSAGES_SENT */
+  push(static_cast<int64_t>(usage_arg.ru_msgsnd));
+
+  /* MESSAGES_RECEIVED */
+  push(static_cast<int64_t>(usage_arg.ru_msgrcv));
+
+  /* SIGNALS_RECEIVED */
+  push(static_cast<int64_t>(usage_arg.ru_nsignals));
+
+  /* VOLUNTARY_CONTEXT_SWITCHES */
+  push(static_cast<int64_t>(usage_arg.ru_nvcsw));
+
+  /* INVOLUNTARY_CONTEXT_SWITCHES */
+  push(static_cast<int64_t>(usage_arg.ru_nivcsw));
 }

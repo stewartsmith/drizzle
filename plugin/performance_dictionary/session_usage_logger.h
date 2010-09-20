@@ -18,36 +18,31 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_PERFORMANCE_DICTIONARY_PERFORMANCES_H
-#define PLUGIN_PERFORMANCE_DICTIONARY_PERFORMANCES_H
+#ifndef PLUGIN_PERFORMANCE_DICTIONARY_SESSION_USAGE_LOGGER_H
+#define PLUGIN_PERFORMANCE_DICTIONARY_SESSION_USAGE_LOGGER_H
+
+#include <sys/time.h>
+#include <sys/resource.h>
 
 namespace performance_dictionary {
 
-class SessionUsage : public  drizzled::plugin::TableFunction
+class SessionUsageLogger: public drizzled::plugin::Logging
 {
-
 public:
-  SessionUsage();
 
-  class Generator : public drizzled::plugin::TableFunction::Generator 
+  SessionUsageLogger() :
+    drizzled::plugin::Logging("session_usage_logger")
   {
-    Query_list::const_reverse_iterator query_iter;
-    QueryUsage *usage_cache;
-
-    void publish(const std::string &sql, const struct rusage &r_usage);
-
-  public:
-    Generator(drizzled::Field **arg);
-
-    bool populate();
-  };
-
-  Generator *generator(drizzled::Field **arg)
-  {
-    return new Generator(arg);
   }
+
+  ~SessionUsageLogger()
+  {
+  }
+
+  bool pre(drizzled::Session *);
+  bool post(drizzled::Session *);
 };
 
 } /* namespace performance_dictionary */
 
-#endif /* PLUGIN_PERFORMANCE_DICTIONARY_PERFORMANCES_H */
+#endif /* PLUGIN_PERFORMANCE_DICTIONARY_SESSION_USAGE_LOGGER_H */

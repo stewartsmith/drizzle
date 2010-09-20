@@ -26,6 +26,7 @@ using namespace drizzled;
 static int init(drizzled::module::Context &context)
 {
   context.add(new performance_dictionary::SessionUsage);
+  context.add(new performance_dictionary::SessionUsageLogger);
   
   return 0;
 }
