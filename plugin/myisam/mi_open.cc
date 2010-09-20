@@ -391,7 +391,6 @@ MI_INFO *mi_open(const drizzled::TableIdentifier &identifier, int mode, uint32_t
     disk_cache= NULL;
     mi_setup_functions(share);
     share->is_log_table= false;
-    thr_lock_init(&share->lock);
     if (myisam_concurrent_insert)
     {
       share->concurrent_insert=
@@ -495,7 +494,6 @@ MI_INFO *mi_open(const drizzled::TableIdentifier &identifier, int mode, uint32_t
   memset(info.rec_buff, 0, mi_get_rec_buff_len(&info, info.rec_buff));
 
   *m_info=info;
-  m_info->lock.init(&share->lock, (void*) m_info);
   myisam_open_list.push_front(m_info);
 
   THR_LOCK_myisam.unlock();

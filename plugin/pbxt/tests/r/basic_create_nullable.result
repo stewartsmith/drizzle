@@ -1,3 +1,4 @@
+SET SESSION storage_engine=pbxt;
 create table t1 (a int, b int not null, c int null, d int not null, pk int primary key);
 show create table t1;
 Table	Create Table
@@ -8,7 +9,7 @@ t1	CREATE TABLE `t1` (
   `d` INT NOT NULL,
   `pk` INT NOT NULL,
   PRIMARY KEY (`pk`)
-) ENGINE=InnoDB COLLATE = utf8_general_ci
+) ENGINE=PBXT COLLATE = utf8_general_ci
 insert into t1 values (0,0, 0, 0,0);
 insert into t1 values (NULL, NULL, NULL, NULL, 1);
 ERROR 23000: Column 'b' cannot be null

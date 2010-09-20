@@ -23,7 +23,7 @@ bin_PROGRAMS= \
 
 man_MANS= \
 	  client/drizzle.1 \
-	  client/drizzled.8 \
+	  client/drizzled7.8 \
 	  client/drizzledump.1 \
 	  client/drizzleimport.1 \
 	  client/drizzleslap.1

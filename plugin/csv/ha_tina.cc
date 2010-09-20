@@ -264,13 +264,11 @@ TinaShare::TinaShare(const std::string &table_name_arg) :
   rows_recorded(0),
   data_file_version(0)
 {
-  thr_lock_init(&lock);
   data_file_name.append(CSV_EXT);
 }
 
 TinaShare::~TinaShare()
 {
-  lock.deinit();
   pthread_mutex_destroy(&mutex);
 }
 
@@ -803,7 +801,6 @@ int ha_tina::doOpen(const TableIdentifier &identifier, int , uint32_t )
     so that they could save/update local_saved_data_file_length value
     during locking. This is needed to enable concurrent inserts.
   */
-  lock.init(&share->lock);
   ref_length=sizeof(off_t);
 
   return(0);
