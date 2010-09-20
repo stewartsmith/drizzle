@@ -437,6 +437,15 @@ void DrizzleDumpField::setType(const char* raw_type, const char* raw_collation)
       return;
     }
 
+    if (strcmp(raw_type, "VARCHAR") == 0)
+    {
+      if (strcmp(raw_collation, "binary") != 0)
+        type= "VARCHAR";
+      else
+        type= "VARBINARY";
+      return;
+    }
+
     if (strcmp(raw_type, "INTEGER") == 0)
     {
       type= "INT";
@@ -743,8 +752,11 @@ ostream& operator <<(ostream &os,const DrizzleDumpData &obj)
        << "--" << endl << endl;
   }
 
+  streampos out_position= os.tellp();
+
   while((row= drizzle_row_next(obj.result)))
   {
+    size_t* row_sizes= drizzle_row_field_sizes(obj.result);
     if (not first)
     {
       if (extended_insert)
@@ -768,13 +780,80 @@ ostream& operator <<(ostream &os,const DrizzleDumpData &obj)
     for (uint32_t i= 0; i < drizzle_result_column_count(obj.result); i++)
     {
       // time/date conversion probably needs to happen here
-      os << row[i];
+      // need to handle blobs here too
+      // also need to escape text (drizzle_escape_string)
+      if (obj.table->fields[i]->type.compare("INT") != 0)
+      {
+        if (opt_hex_blob and
+          ((obj.table->fields[i]->type.compare("BLOB") == 0) or
+          (obj.table->fields[i]->type.compare("VARBINARY") == 0)))
+          os << obj.convertHex(row[i], row_sizes[i]);
+        else
+          os << "'" << obj.escape(row[i], row_sizes[i]) << "'";
+      }
+      else
+        os << row[i];
+ 
       if (i != obj.table->fields.size() - 1)
         os << ",";
+    }
+    /* Break insert up if it is too long */
+    if (extended_insert and
+      ((os.tellp() - out_position) >= DRIZZLE_MAX_LINE_LENGTH))
+    {
+      os << ");" << endl;
+      new_insert= true;
+      out_position= os.tellp();
     }
   }
   os << ");" << endl << endl;
   return os;
+}
+
+std::string DrizzleDumpData::convertHex(const char* from, size_t from_size) const
+{
+  ostringstream output;
+  if (from_size > 0)
+    output << "0x";
+  while (from_size > 0)
+  {
+    output << uppercase << hex << setw(2) << setfill('0') << int(*from);
+    *from++;
+    from_size--;
+  }
+
+  return output.str();
+}
+
+/* Ripped out of libdrizzle, hopefully a little safer */
+std::string DrizzleDumpData::escape(const char* from, size_t from_size) const
+{
+  std::string output;
+
+  while (from_size > 0)
+  {
+    if (!(*from & 0x80))
+    {
+      switch (*from)
+      {
+         case 0:
+         case '\n':
+         case '\r':
+         case '\\':
+         case '\'':
+         case '"':
+         case '\032':
+           output.push_back('\\');
+         default:
+           break;
+       }
+    }
+    output.push_back(*from);
+    *from++;
+    from_size--;
+  }
+
+  return output;
 }
 
 ostream& operator <<(ostream &os,const DrizzleDumpTable &obj)

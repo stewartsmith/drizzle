@@ -152,6 +152,8 @@ class DrizzleDumpData
     std::string convertDate(const char* oldDate);
     /* For xx:xx:xx -> INT conversion */
     std::string convertTime(const char* oldTime);
+    std::string convertHex(const char* from, size_t from_size) const;
+    std::string escape(const char* from, size_t from_size) const;
 };
 
 #endif /* CLIENT_DRIZZLEDUMP_H */
