@@ -365,6 +365,7 @@ void close_connections(void);
 po::options_description long_options("Kernel Options");
 po::options_description plugin_options("Plugin Options");
 vector<string> unknown_options;
+vector<string> defaults_file_list;
 po::variables_map vm;
 
 po::variables_map &getVariablesMap()
@@ -1040,6 +1041,34 @@ static pair<string, string> parse_size_arg(string s)
   return make_pair(string(""), string(""));
 }
 
+static void process_defaults_files()
+{
+  for (vector<string>::iterator iter= defaults_file_list.begin();
+       iter != defaults_file_list.end();
+       ++iter)
+  {
+    string file_location(vm["config-dir"].as<string>());
+    if ((*iter)[0] != '/')
+    {
+      /* Relative path - add config dir */
+      file_location.push_back('/');
+      file_location.append(*iter);
+    }
+    ifstream input_defaults_file(file_location.c_str());
+    cout << "Going to check " << file_location << endl;
+    store(po::parse_config_file(input_defaults_file, long_options), vm);
+  }
+}
+
+static void compose_defaults_file_list(vector<string> in_options)
+{
+  for (vector<string>::iterator it= in_options.begin();
+       it != in_options.end();
+       ++it)
+  {
+    defaults_file_list.push_back(*it);
+  }
+}
 
 int init_common_variables(int argc, char **argv)
 {
@@ -1085,11 +1114,10 @@ int init_common_variables(int argc, char **argv)
     strncpy(pidfile_name, glob_hostname, sizeof(pidfile_name)-5);
   strcpy(internal::fn_ext(pidfile_name),".pid");		// Add proper extension
 
-
-
-
   std::string system_config_dir_drizzle(SYSCONFDIR);
-  system_config_dir_drizzle.append("/drizzle/drizzle.cnf");
+  system_config_dir_drizzle.append("/drizzle");
+
+  std::string system_config_file_drizzle("drizzled.cnf");
 
   long_options.add_options()
   ("help-extended", po::value<bool>(&opt_help_extended)->default_value(false)->zero_tokens(),
@@ -1259,8 +1287,10 @@ int init_common_variables(int argc, char **argv)
      " automatically convert it to an on-disk MyISAM table."))
   ("no-defaults", po::value<bool>()->default_value(false)->zero_tokens(),
   N_("Configuration file defaults are not used if no-defaults is set"))
-  ("defaults-file", po::value<string>()->default_value(system_config_dir_drizzle),
+  ("defaults-file", po::value<vector<string> >()->composing()->notifier(&compose_defaults_file_list),
    N_("Configuration file to use"))
+  ("config-dir", po::value<string>()->default_value(system_config_dir_drizzle),
+   N_("Base location for config files"))
   ;
 
   po::parsed_options parsed= po::command_line_parser(argc, argv).
@@ -1278,14 +1308,14 @@ int init_common_variables(int argc, char **argv)
     unireg_abort(1);
   }
 
-
-  if (! vm["no-defaults"].as<bool>())
+  if (not vm["no-defaults"].as<bool>())
   {
-    ifstream system_drizzle_ifs(vm["defaults-file"].as<string>().c_str());
-    store(po::parse_config_file(system_drizzle_ifs, long_options), vm);
+    defaults_file_list.insert(defaults_file_list.begin(),
+                              system_config_file_drizzle);
   }
 
   po::notify(vm);
+  process_defaults_files();
 
   get_options();
 
