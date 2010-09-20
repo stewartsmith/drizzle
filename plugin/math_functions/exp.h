@@ -32,6 +32,7 @@ public:
   Item_func_exp() :Item_dec_func() {}
   double val_real();
   const char *func_name() const { return "exp"; }
+  bool check_argument_count(int n) { return n == 1; }
 };
 
 } /* namespace drizzled */
