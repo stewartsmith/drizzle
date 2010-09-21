@@ -51,7 +51,7 @@ bool TransactionManager::remove(uint64_t trx_id)
 
 bool TransactionManager::contains(uint64_t trx_id)
 {
-  map< uint64_t, vector<string> >::const_iterator it= cache.find(trx_id);
+  boost::unordered_map< uint64_t, vector<string> >::const_iterator it= cache.find(trx_id);
 
   if (it != cache.end())
     return true;

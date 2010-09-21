@@ -159,7 +159,8 @@ static void printTransaction(const message::Transaction &transaction)
 
   /*
    * One way to determine when a new transaction begins is when the
-   * transaction id changes. We check that here.
+   * transaction id changes (if all transactions have their GPB messages
+   * grouped together, which this program will). We check that here.
    */
   if (trx.transaction_id() != last_trx_id)
     cout << "START TRANSACTION;" << endl;

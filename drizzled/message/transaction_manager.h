@@ -29,7 +29,7 @@
 #include "drizzled/message/transaction.pb.h"
 #include <string>
 #include <vector>
-#include <map>
+#include <boost/unordered_map.hpp>
 
 typedef std::vector<std::string> MsgBufferType;
 
@@ -120,7 +120,7 @@ private:
    * string format is convenient because it can be easily copied around
    * (GPB messages do not provide deep copying).
    */
-  std::map<uint64_t,MsgBufferType> cache;
+  boost::unordered_map<uint64_t,MsgBufferType> cache;
 };
 
 } /* namespace message */
