@@ -133,7 +133,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/function/str/load_file.h \
 			      drizzled/function/str/make_set.h \
 			      drizzled/function/str/pad.h \
-			      drizzled/function/str/quote.h \
 			      drizzled/function/str/repeat.h \
 			      drizzled/function/str/replace.h \
 			      drizzled/function/str/right.h \
@@ -534,7 +533,6 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/function/str/load_file.cc \
 				 drizzled/function/str/make_set.cc \
 				 drizzled/function/str/pad.cc \
-				 drizzled/function/str/quote.cc \
 				 drizzled/function/str/repeat.cc \
 				 drizzled/function/str/replace.cc \
 				 drizzled/function/str/right.cc \
