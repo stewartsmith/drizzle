@@ -37,6 +37,7 @@ ColumnsTool::ColumnsTool() :
   add_field("COLUMN_DEFAULT", plugin::TableFunction::VARBINARY, 65535, true);
   add_field("COLUMN_DEFAULT_IS_NULL", plugin::TableFunction::BOOLEAN, 0, false);
   add_field("COLUMN_DEFAULT_UPDATE");
+  add_field("IS_AUTO_INCREMENT", plugin::TableFunction::BOOLEAN, 0, false);
   add_field("IS_NULLABLE", plugin::TableFunction::BOOLEAN, 0, false);
   add_field("IS_INDEXED", plugin::TableFunction::BOOLEAN, 0, false);
   add_field("IS_USED_IN_PRIMARY", plugin::TableFunction::BOOLEAN, 0, false);
@@ -50,6 +51,8 @@ ColumnsTool::ColumnsTool() :
   add_field("CHARACTER_OCTET_LENGTH", plugin::TableFunction::NUMBER);
   add_field("NUMERIC_PRECISION", plugin::TableFunction::NUMBER);
   add_field("NUMERIC_SCALE", plugin::TableFunction::NUMBER);
+
+  add_field("ENUM_VALUES", plugin::TableFunction::STRING, 65535, true);
 
   add_field("COLLATION_NAME");
 
@@ -155,6 +158,9 @@ void ColumnsTool::Generator::fill()
   /* COLUMN_DEFAULT_UPDATE */
   push(column.options().update_expression());
 
+  /* IS_AUTO_INCREMENT */
+  push(column.numeric_options().is_autoincrement());
+
   /* IS_NULLABLE */
   push(column.constraints().is_nullable());
 
@@ -218,6 +224,27 @@ void ColumnsTool::Generator::fill()
 
  /* "NUMERIC_SCALE" */
   push(static_cast<int64_t>(column.numeric_options().scale()));
+
+ /* "ENUM_VALUES" */
+  if (column.type() == drizzled::message::Table::Field::ENUM)
+  {
+    string destination;
+    size_t num_field_values= column.enumeration_values().field_value_size();
+    for (size_t x= 0; x < num_field_values; ++x)
+    {
+      const string &type= column.enumeration_values().field_value(x);
+
+      if (x != 0)
+        destination.push_back(',');
+
+      destination.push_back('\'');
+      destination.append(type);
+      destination.push_back('\'');
+    }
+    push(destination);
+  }
+  else
+    push();
 
  /* "COLLATION_NAME" */
   push(column.string_options().collation());
