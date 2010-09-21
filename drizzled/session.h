@@ -678,7 +678,6 @@ public:
     create_sort_index(); may differ from examined_row_count.
   */
   uint32_t row_count;
-  pthread_t real_id; /**< For debugging */
   uint64_t thread_id;
   uint32_t tmp_table;
   uint32_t global_read_lock;
