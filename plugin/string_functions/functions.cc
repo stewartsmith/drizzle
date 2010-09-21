@@ -32,7 +32,7 @@ static int init(drizzled::module::Context &context)
 {
   context.add(new plugin::Create_function<Item_func_elt>("elt"));
   context.add(new plugin::Create_function<Item_func_format>("format"));
-  context.add(new plugin::Create_function<Item_func_format>("quote"));
+  context.add(new plugin::Create_function<Item_func_quote>("quote"));
 
   return 0;
 }
