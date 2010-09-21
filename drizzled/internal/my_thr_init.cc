@@ -50,9 +50,6 @@ namespace internal
 
 boost::thread_specific_ptr<st_my_thread_var> THR_KEY_mysys;
 boost::mutex THR_LOCK_threads;
-pthread_cond_t  THR_COND_threads;
-uint32_t THR_thread_count= 0;
-static uint32_t my_thread_end_wait_time= 5;
 
 /*
   initialize thread environment
@@ -67,7 +64,6 @@ static uint32_t my_thread_end_wait_time= 5;
 
 bool my_thread_global_init(void)
 {
-  pthread_cond_init(&THR_COND_threads, NULL);
   if (my_thread_init())
   {
     my_thread_global_end();			/* Clean up */
@@ -79,37 +75,6 @@ bool my_thread_global_init(void)
 
 void my_thread_global_end(void)
 {
-  struct timespec abstime;
-  bool all_threads_killed= 1;
-
-  set_timespec(abstime, my_thread_end_wait_time);
-  {
-    boost::mutex::scoped_lock scopedLock(THR_LOCK_threads);
-    while (THR_thread_count > 0)
-    {
-      int error= pthread_cond_timedwait(&THR_COND_threads, THR_LOCK_threads.native_handle(),
-                                        &abstime);
-      if (error == ETIMEDOUT || error == ETIME)
-      {
-        /*
-          We shouldn't give an error here, because if we don't have
-          pthread_kill(), programs like mysqld can't ensure that all threads
-          are killed when we enter here.
-        */
-        if (THR_thread_count)
-          fprintf(stderr,
-                  "Error in my_thread_global_end(): %d threads didn't exit\n",
-                  THR_thread_count);
-        all_threads_killed= 0;
-        break;
-      }
-    }
-  }
-
-  if (all_threads_killed)
-  {
-    pthread_cond_destroy(&THR_COND_threads);
-  }
 }
 
 static uint64_t thread_id= 0;
@@ -127,25 +92,21 @@ static uint64_t thread_id= 0;
 
 bool my_thread_init(void)
 {
-  bool error=0;
-  st_my_thread_var *tmp= NULL;
-
   // We should mever see my_thread_init()  called twice
   if (THR_KEY_mysys.get())
     return 0;
 
-  tmp= new st_my_thread_var;
+  st_my_thread_var *tmp= new st_my_thread_var;
   if (tmp == NULL)
   {
-    return 1;
+    return true;
   }
   THR_KEY_mysys.reset(tmp);
 
   boost::mutex::scoped_lock scopedLock(THR_LOCK_threads);
   tmp->id= ++thread_id;
-  ++THR_thread_count;
 
-  return error;
+  return false;
 }
 
 
@@ -169,17 +130,6 @@ void my_thread_end(void)
   {
     delete tmp;
     THR_KEY_mysys.release();
-
-    /*
-      Decrement counter for number of running threads. We are using this
-      in my_thread_global_end() to wait until all threads have called
-      my_thread_end and thus freed all memory they have allocated in
-      my_thread_init()
-    */
-    boost::mutex::scoped_lock scopedLock(THR_LOCK_threads);
-    assert(THR_thread_count != 0);
-    if (--THR_thread_count == 0)
-      pthread_cond_signal(&THR_COND_threads);
   }
 }
 
