@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2010-07-20 16:06+0000\n"
-"PO-Revision-Date: 2010-09-16 02:24+0000\n"
+"PO-Revision-Date: 2010-09-20 23:01+0000\n"
 "Last-Translator: Miguel Lima <miguelcpjava@gmail.com>\n"
 "Language-Team: Brazilian Portuguese <pt_BR@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Launchpad-Export-Date: 2010-09-17 04:49+0000\n"
+"X-Launchpad-Export-Date: 2010-09-21 04:58+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 msgid "Synonym for `help'."
@@ -299,7 +299,7 @@ msgstr ""
 "Esta opção é habilitada por padrão."
 
 msgid "Shutdown the server"
-msgstr ""
+msgstr "Desligar o servidor"
 
 msgid ""
 "Be more silent. Print results with a tab as separator, each row on new line."
@@ -670,7 +670,7 @@ msgstr ""
 "e você é bem-vindo para modifica-lo e redistribuí-lo sob a licença GPL\n"
 
 msgid "Dumps definitions and data from a Drizzle database server"
-msgstr ""
+msgstr "Definições de dumps e dados de um servidor de banco de dados Drizzle"
 
 #, c-format
 msgid "Illegal use of option --ignore-table=<database>.<table>\n"
@@ -785,6 +785,7 @@ msgstr "Caminho para a raiz do banco de dados."
 
 msgid "Set the default storage engine (table type) for tables."
 msgstr ""
+"Defina o motor de armazenamento padrão (O Tipo tabela) para as tabelas."
 
 msgid "Set the default time zone."
 msgstr "Configurar fuso-horário padrão"
@@ -793,7 +794,7 @@ msgid "Used for debugging;  Use at your own risk!"
 msgstr "Usaddo para debugação; Use por sua conta e risco!"
 
 msgid "Set up signals usable for debugging"
-msgstr ""
+msgstr "Crie sinais utilizáveis para depuração"
 
 msgid "(IGNORED)"
 msgstr "(IGNORADO)"
@@ -802,7 +803,7 @@ msgid "Set the language used for the month names and the days of the week."
 msgstr "Configure o idioma usado para os nomes de mês e dias da semana"
 
 msgid "Log some not critical warnings to the log file."
-msgstr ""
+msgstr "Algumas linhas de avisos não críticos para o arquivo de log."
 
 msgid "Pid file used by safe_mysqld."
 msgstr "Arquivo Pid usado por safe_mysqld"
@@ -823,6 +824,8 @@ msgid ""
 "Uniquely identifies the server instance in the community of replication "
 "partners."
 msgstr ""
+"Identidicador unico da instância do servidor na comunidade de parceiros de "
+"replicação."
 
 msgid "Don't print a stack trace on failure."
 msgstr "Não imprimir a sequência de passos ao falhar"
@@ -838,7 +841,7 @@ msgid "Path for temporary files."
 msgstr "Path para arquivos temporários"
 
 msgid "Default transaction isolation level."
-msgstr ""
+msgstr "Nivel de isolamento padrão para transação"
 
 msgid "Run drizzled daemon as user."
 msgstr "Rodar serviço drizzled como usuário"
@@ -856,13 +859,13 @@ msgstr ""
 
 msgid ""
 "Precision of the result of '/' operator will be increased on that value."
-msgstr ""
+msgstr "Resultado preciso do operador '/' será aumentado nesse valor."
 
 msgid "The maximum length of the result of function  group_concat."
 msgstr ""
 
 msgid "The size of the buffer that is used for full joins."
-msgstr ""
+msgstr "Tamanho do buffer que é utilizado para full joins"
 
 msgid "Max packetlength to send/receive from to server."
 msgstr ""
