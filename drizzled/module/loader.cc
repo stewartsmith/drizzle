@@ -71,9 +71,10 @@ namespace drizzled
 class sys_var_pluginvar;
 static vector<sys_var_pluginvar *> plugin_sysvar_vec;
 
-static vector<string> opt_plugin_load;
-static vector<string> opt_plugin_add;
-static vector<string> opt_plugin_remove;
+typedef vector<string> PluginOptions;
+static PluginOptions opt_plugin_load;
+static PluginOptions opt_plugin_add;
+static PluginOptions opt_plugin_remove;
 char *opt_plugin_dir_ptr;
 char opt_plugin_dir[FN_REFLEN];
 const char *builtin_plugins= PANDORA_BUILTIN_LIST;
@@ -398,7 +399,7 @@ bool plugin_init(module::Registry &registry,
 
   initialized= 1;
 
-  vector<string> builtin_list;
+  PluginOptions builtin_list;
   tokenize(builtin_plugins, builtin_list, ",", true);
 
   bool load_failed= false;
