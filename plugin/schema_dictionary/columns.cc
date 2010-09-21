@@ -52,7 +52,7 @@ ColumnsTool::ColumnsTool() :
   add_field("NUMERIC_PRECISION", plugin::TableFunction::NUMBER);
   add_field("NUMERIC_SCALE", plugin::TableFunction::NUMBER);
 
-  add_field("ENUM_VALUES", plugin::TableFunction::STRING, 65535, true);
+  add_field("ENUM_VALUES", plugin::TableFunction::STRING, 1024, true);
 
   add_field("COLLATION_NAME");
 
