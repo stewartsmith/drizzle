@@ -30,7 +30,6 @@
 #include <drizzled/function/str/binary.h>
 #include <drizzled/function/str/concat.h>
 #include <drizzled/function/str/conv.h>
-#include <drizzled/function/str/elt.h>
 #include <drizzled/function/str/export_set.h>
 #include <drizzled/function/str/format.h>
 #include <drizzled/function/str/load_file.h>
@@ -429,19 +428,6 @@ public:
 protected:
   Create_func_degrees() {}
   virtual ~Create_func_degrees() {}
-};
-
-
-class Create_func_elt : public Create_native_func
-{
-public:
-  virtual Item *create_native(Session *session, LEX_STRING name, List<Item> *item_list);
-
-  static Create_func_elt s_singleton;
-
-protected:
-  Create_func_elt() {}
-  virtual ~Create_func_elt() {}
 };
 
 class Create_func_export_set : public Create_native_func
@@ -1393,27 +1379,6 @@ Create_func_degrees::create(Session *session, Item *arg1)
                                              180/M_PI, 0.0);
 }
 
-
-Create_func_elt Create_func_elt::s_singleton;
-
-Item*
-Create_func_elt::create_native(Session *session, LEX_STRING name,
-                               List<Item> *item_list)
-{
-  int arg_count= 0;
-
-  if (item_list != NULL)
-    arg_count= item_list->elements;
-
-  if (arg_count < 2)
-  {
-    my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
-    return NULL;
-  }
-
-  return new (session->mem_root) Item_func_elt(*item_list);
-}
-
 Create_func_export_set Create_func_export_set::s_singleton;
 
 Item*
@@ -2067,7 +2032,6 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("DAYOFWEEK") }, BUILDER(Create_func_dayofweek)},
   { { C_STRING_WITH_LEN("DAYOFYEAR") }, BUILDER(Create_func_dayofyear)},
   { { C_STRING_WITH_LEN("DEGREES") }, BUILDER(Create_func_degrees)},
-  { { C_STRING_WITH_LEN("ELT") }, BUILDER(Create_func_elt)},
   { { C_STRING_WITH_LEN("EXPORT_SET") }, BUILDER(Create_func_export_set)},
   { { C_STRING_WITH_LEN("FIELD") }, BUILDER(Create_func_field)},
   { { C_STRING_WITH_LEN("FIND_IN_SET") }, BUILDER(Create_func_find_in_set)},

@@ -28,12 +28,13 @@ namespace drizzled
 class Item_func_elt :public Item_str_func
 {
 public:
-  Item_func_elt(List<Item> &list) :Item_str_func(list) {}
+  Item_func_elt() :Item_str_func() {}
   double val_real();
   int64_t val_int();
   String *val_str(String *str);
   void fix_length_and_dec();
   const char *func_name() const { return "elt"; }
+  bool check_argument_count(int n) { return n > 1; }
 };
 
 } /* namespace drizzled */

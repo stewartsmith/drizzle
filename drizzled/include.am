@@ -127,7 +127,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/function/str/concat.h \
 			      drizzled/function/str/conv.h \
 			      drizzled/function/str/conv_charset.h \
-			      drizzled/function/str/elt.h \
 			      drizzled/function/str/export_set.h \
 			      drizzled/function/str/format.h \
 			      drizzled/function/str/insert.h \
@@ -530,7 +529,6 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/function/str/concat.cc \
 				 drizzled/function/str/conv.cc \
 				 drizzled/function/str/conv_charset.cc \
-				 drizzled/function/str/elt.cc \
 				 drizzled/function/str/export_set.cc \
 				 drizzled/function/str/format.cc \
 				 drizzled/function/str/insert.cc \
