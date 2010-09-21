@@ -29,11 +29,13 @@ class Item_func_format :public Item_str_func
 {
   String tmp_str;
 public:
-  Item_func_format(Item *org, Item *dec);
+  Item_func_format(): Item_str_func() {}
+
   String *val_str(String *);
   void fix_length_and_dec();
   const char *func_name() const { return "format"; }
   virtual void print(String *str, enum_query_type query_type);
+  bool check_argument_count(int n) { return n == 2; }
 };
 
 } /* namespace drizzled */

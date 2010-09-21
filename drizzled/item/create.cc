@@ -31,7 +31,6 @@
 #include <drizzled/function/str/concat.h>
 #include <drizzled/function/str/conv.h>
 #include <drizzled/function/str/export_set.h>
-#include <drizzled/function/str/format.h>
 #include <drizzled/function/str/load_file.h>
 #include <drizzled/function/str/make_set.h>
 #include <drizzled/function/str/pad.h>
@@ -470,21 +469,6 @@ protected:
   Create_func_find_in_set() {}
   virtual ~Create_func_find_in_set() {}
 };
-
-class Create_func_format : public Create_func_arg2
-{
-public:
-  using Create_func_arg2::create;
-
-  virtual Item *create(Session *session, Item *arg1, Item *arg2);
-
-  static Create_func_format s_singleton;
-
-protected:
-  Create_func_format() {}
-  virtual ~Create_func_format() {}
-};
-
 
 class Create_func_found_rows : public Create_func_arg0
 {
@@ -1461,15 +1445,6 @@ Create_func_find_in_set::create(Session *session, Item *arg1, Item *arg2)
   return new (session->mem_root) Item_func_find_in_set(arg1, arg2);
 }
 
-Create_func_format Create_func_format::s_singleton;
-
-Item*
-Create_func_format::create(Session *session, Item *arg1, Item *arg2)
-{
-  return new (session->mem_root) Item_func_format(arg1, arg2);
-}
-
-
 Create_func_found_rows Create_func_found_rows::s_singleton;
 
 Item*
@@ -2035,7 +2010,6 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("EXPORT_SET") }, BUILDER(Create_func_export_set)},
   { { C_STRING_WITH_LEN("FIELD") }, BUILDER(Create_func_field)},
   { { C_STRING_WITH_LEN("FIND_IN_SET") }, BUILDER(Create_func_find_in_set)},
-  { { C_STRING_WITH_LEN("FORMAT") }, BUILDER(Create_func_format)},
   { { C_STRING_WITH_LEN("FOUND_ROWS") }, BUILDER(Create_func_found_rows)},
   { { C_STRING_WITH_LEN("FROM_DAYS") }, BUILDER(Create_func_from_days)},
   { { C_STRING_WITH_LEN("FROM_UNIXTIME") }, BUILDER(Create_func_from_unixtime)},

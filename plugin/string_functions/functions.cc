@@ -22,12 +22,14 @@
 #include "plugin/string_functions/functions.h"
 
 #include "elt.h"
+#include "format.h"
 
 using namespace drizzled;
 
 static int init(drizzled::module::Context &context)
 {
   context.add(new plugin::Create_function<Item_func_elt>("elt"));
+  context.add(new plugin::Create_function<Item_func_format>("format"));
 
   return 0;
 }
