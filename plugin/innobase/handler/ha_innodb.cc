@@ -187,7 +187,6 @@ static plugin::TableFunction* innodb_lock_waits_tool= NULL;
 
 static long innobase_mirrored_log_groups, innobase_log_files_in_group,
   innobase_log_buffer_size,
-  innobase_file_io_threads,
   innobase_force_recovery, innobase_open_files;
 static long innobase_additional_mem_pool_size= 8*1024*1024L;
 static ulong innobase_commit_concurrency = 0;
@@ -1958,15 +1957,6 @@ innobase_init(
     }
   }
 
-  if (vm.count("file-io-threads"))
-  {
-    if (innobase_file_io_threads < 4 || innobase_file_io_threads > 64)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for file-io-threads\n"));
-      exit(-1);
-    }
-  }
-
   if (vm.count("read-io-threads"))
   {
     if (innobase_read_io_threads < 1 || innobase_read_io_threads > 64)
@@ -2311,7 +2301,6 @@ innobase_change_buffering_inited_ok:
 
   srv_mem_pool_size = (ulint) innobase_additional_mem_pool_size;
 
-  srv_n_file_io_threads = (ulint) innobase_file_io_threads;
   srv_n_read_io_threads = (ulint) innobase_read_io_threads;
   srv_n_write_io_threads = (ulint) innobase_write_io_threads;
 
@@ -8753,11 +8742,6 @@ static DRIZZLE_SYSVAR_ULONG(concurrency_tickets, srv_n_free_tickets_to_enter,
   "Number of times a thread is allowed to enter InnoDB within the same SQL query after it has once got the ticket",
   NULL, NULL, 500L, 1L, ~0L, 0);
 
-static DRIZZLE_SYSVAR_LONG(file_io_threads, innobase_file_io_threads,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Number of file I/O threads in InnoDB.",
-  NULL, NULL, 4, 4, 64, 0);
-
 static DRIZZLE_SYSVAR_ULONG(read_io_threads, innobase_read_io_threads,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "Number of background read I/O threads in InnoDB.",
@@ -8922,9 +8906,6 @@ static void init_options(drizzled::module::option_context &context)
   context("concurrency-tickets",
           po::value<unsigned long>(&srv_n_free_tickets_to_enter)->default_value(500L),
           "Number of times a thread is allowed to enter InnoDB within the same SQL query after it has once got the ticket");
-  context("file-io-threads",
-          po::value<long>(&innobase_file_io_threads)->default_value(4),
-          "Number of file I/O threads in InnoDB.");
   context("read-io-threads",
           po::value<unsigned long>(&innobase_read_io_threads)->default_value(4),
           "Number of background read I/O threads in InnoDB.");
@@ -8998,7 +8979,6 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(data_home_dir),
   DRIZZLE_SYSVAR(doublewrite),
   DRIZZLE_SYSVAR(fast_shutdown),
-  DRIZZLE_SYSVAR(file_io_threads),
   DRIZZLE_SYSVAR(read_io_threads),
   DRIZZLE_SYSVAR(write_io_threads),
   DRIZZLE_SYSVAR(file_per_table),
