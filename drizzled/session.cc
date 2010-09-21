@@ -464,7 +464,6 @@ bool Session::storeGlobals()
     This allows us to move Session to different threads if needed.
   */
   mysys_var->id= thread_id;
-  real_id= pthread_self();                      // For debugging
 
   /*
     We have to call thr_lock_info_init() again here as Session may have been

@@ -39,12 +39,16 @@
 # endif
 #endif
 
+#include <boost/thread/thread.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/tss.hpp>
+
 namespace drizzled
 {
 namespace internal
 {
 
-pthread_key_t THR_KEY_mysys;
+boost::thread_specific_ptr<st_my_thread_var> THR_KEY_mysys;
 boost::mutex THR_LOCK_threads;
 pthread_cond_t  THR_COND_threads;
 uint32_t THR_thread_count= 0;
@@ -63,14 +67,6 @@ static uint32_t my_thread_end_wait_time= 5;
 
 bool my_thread_global_init(void)
 {
-  int pth_ret;
-
-  if ((pth_ret= pthread_key_create(&THR_KEY_mysys, NULL)) != 0)
-  {
-    fprintf(stderr,"Can't initialize threads: error %d\n", pth_ret);
-    return 1;
-  }
-
   pthread_cond_init(&THR_COND_threads, NULL);
   if (my_thread_init())
   {
@@ -110,7 +106,6 @@ void my_thread_global_end(void)
     }
   }
 
-  pthread_key_delete(THR_KEY_mysys);
   if (all_threads_killed)
   {
     pthread_cond_destroy(&THR_COND_threads);
@@ -136,19 +131,15 @@ bool my_thread_init(void)
   st_my_thread_var *tmp= NULL;
 
   // We should mever see my_thread_init()  called twice
-  if (pthread_getspecific(THR_KEY_mysys))
+  if (THR_KEY_mysys.get())
     return 0;
 
-  tmp= static_cast<st_my_thread_var *>(calloc(1, sizeof(*tmp)));
+  tmp= new st_my_thread_var;
   if (tmp == NULL)
   {
     return 1;
   }
-  pthread_setspecific(THR_KEY_mysys,tmp);
-  tmp->pthread_self= pthread_self();
-  pthread_mutex_init(&tmp->mutex,MY_MUTEX_INIT_FAST);
-  pthread_cond_init(&tmp->suspend, NULL);
-  tmp->init= 1;
+  THR_KEY_mysys.reset(tmp);
 
   boost::mutex::scoped_lock scopedLock(THR_LOCK_threads);
   tmp->id= ++thread_id;
@@ -172,17 +163,12 @@ bool my_thread_init(void)
 
 void my_thread_end(void)
 {
-  st_my_thread_var *tmp=
-    static_cast<st_my_thread_var *>(pthread_getspecific(THR_KEY_mysys));
+  st_my_thread_var *tmp= THR_KEY_mysys.get();
 
-  if (tmp && tmp->init)
+  if (tmp)
   {
-#if !defined(__bsdi__) && !defined(__OpenBSD__)
- /* bsdi and openbsd 3.5 dumps core here */
-    pthread_cond_destroy(&tmp->suspend);
-#endif
-    pthread_mutex_destroy(&tmp->mutex);
-    free(tmp);
+    delete tmp;
+    THR_KEY_mysys.release();
 
     /*
       Decrement counter for number of running threads. We are using this
@@ -199,8 +185,7 @@ void my_thread_end(void)
 
 struct st_my_thread_var *_my_thread_var(void)
 {
-  struct st_my_thread_var *tmp= (struct st_my_thread_var*)pthread_getspecific(THR_KEY_mysys);
-  return tmp;
+  return THR_KEY_mysys.get();
 }
 
 } /* namespace internal */
