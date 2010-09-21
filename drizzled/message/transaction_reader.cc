@@ -39,6 +39,7 @@
 #include <unistd.h>
 #include <drizzled/message/transaction.pb.h>
 #include <drizzled/message/statement_transform.h>
+#include <drizzled/message/transaction_manager.h>
 #include <drizzled/util/convert.h>
 
 #include <google/protobuf/io/coded_stream.h>
@@ -126,6 +127,27 @@ static bool isEndStatement(const message::Statement &statement)
   return true;
 }
 
+static bool isEndTransaction(const message::Transaction &transaction)
+{
+  const message::TransactionContext trx= transaction.transaction_context();
+
+  size_t num_statements= transaction.statement_size();
+
+  /*
+   * If any Statement is partial, then we can expect another Transaction
+   * message.
+   */
+  for (size_t x= 0; x < num_statements; ++x)
+  {
+    const message::Statement &statement= transaction.statement(x);
+
+    if (not isEndStatement(statement))
+      return false;
+  }
+
+  return true;
+}
+
 static void printTransaction(const message::Transaction &transaction)
 {
   static uint64_t last_trx_id= 0;
@@ -195,6 +217,8 @@ int main(int argc, char* argv[])
     if ("--checksum" == checksum_arg)
       do_checksum= true;
   }
+
+  message::TransactionManager trx_mgr;
 
   protobuf::io::ZeroCopyInputStream *raw_input= new protobuf::io::FileInputStream(file);
   protobuf::io::CodedInputStream *coded_input= new protobuf::io::CodedInputStream(raw_input);
@@ -276,8 +300,42 @@ int main(int argc, char* argv[])
       break;
     }
 
-    /* Print the transaction */
-    printTransaction(transaction);
+    if (not isEndTransaction(transaction))
+    {
+      trx_mgr.store(transaction);
+    }
+    else
+    {
+      const message::TransactionContext trx= transaction.transaction_context();
+      uint64_t transaction_id= trx.transaction_id();
+
+      /*
+       * If there are any previous Transaction messages for this transaction,
+       * store this one, then output all of them together.
+       */
+      if (trx_mgr.contains(transaction_id))
+      {
+        trx_mgr.store(transaction);
+
+        uint32_t size= trx_mgr.getTransactionBufferSize(transaction_id);
+        uint32_t idx= 0;
+
+        while (idx != size)
+        {
+          message::Transaction new_trx;
+          trx_mgr.getTransactionMessage(new_trx, transaction_id, idx);
+          printTransaction(new_trx);
+          idx++;
+        }
+
+        /* No longer need this transaction */
+        trx_mgr.remove(transaction_id);
+      }
+      else
+      {
+        printTransaction(transaction);
+      }
+    }
 
     /* Skip 4 byte checksum */
     coded_input->ReadLittleEndian32(&checksum);
@@ -291,10 +349,11 @@ int main(int argc, char* argv[])
     }
 
     previous_length= length;
-  }
+  } /* end while */
+
   if (buffer)
     free(buffer);
-  
+
   delete coded_input;
   delete raw_input;
 
