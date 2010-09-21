@@ -160,3 +160,7 @@ merge-clean:
 	find ./ | $(GREP) \~$$ | xargs rm -f
 	bzr unknowns
 
+install-exec-hook:
+	cd $(DESTDIR)$(sbindir) && \
+	mv -f drizzled$(EXEEXT) drizzled$(PACKAGE_VERSION)$(EXEEXT) && \
+	$(LN_S) drizzled$(PACKAGE_VERSION)$(EXEEXT) drizzled$(EXEEXT)
