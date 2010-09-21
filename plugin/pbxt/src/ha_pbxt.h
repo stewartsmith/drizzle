@@ -68,7 +68,9 @@ public:
 					HTON_FAST_KEY_READ | 
 					HTON_NULL_IN_KEY | 
 					HTON_CAN_INDEX_BLOBS |
-					HTON_AUTO_PART_KEY) 
+					HTON_AUTO_PART_KEY |
+					HTON_HAS_FOREIGN_KEYS |
+                    HTON_HAS_DOES_TRANSACTIONS) 
 	{}
 
 	void operator delete(void *) {}
