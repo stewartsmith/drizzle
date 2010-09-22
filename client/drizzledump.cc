@@ -241,9 +241,9 @@ bool DrizzleDumpTable::populateFields(drizzle_con_st &connection)
   std::string query;
 
   if (connected_server_type == SERVER_MYSQL_FOUND)
-    query="SELECT COLUMN_NAME, COLUMN_TYPE, COLUMN_DEFAULT, 'NO', IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE, COLLATION_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='";
+    query="SELECT COLUMN_NAME, COLUMN_TYPE, COLUMN_DEFAULT, 'NO', IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE, COLLATION_NAME, EXTRA FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='";
   else
-    query= "SELECT COLUMN_NAME, DATA_TYPE, COLUMN_DEFAULT, COLUMN_DEFAULT_IS_NULL, IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE, COLLATION_NAME FROM DATA_DICTIONARY.COLUMNS WHERE TABLE_SCHEMA='";
+    query= "SELECT COLUMN_NAME, DATA_TYPE, COLUMN_DEFAULT, COLUMN_DEFAULT_IS_NULL, IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE, COLLATION_NAME, IS_AUTO_INCREMENT, ENUM_VALUES FROM DATA_DICTIONARY.COLUMNS WHERE TABLE_SCHEMA='";
   query.append(database->databaseName);
   query.append("' AND TABLE_NAME='");
   query.append(tableName);
@@ -291,14 +291,23 @@ bool DrizzleDumpTable::populateFields(drizzle_con_st &connection)
     }
     else
      field->defaultValue= "";
-    if (connected_server_type == SERVER_MYSQL_FOUND)
-      field->defaultIsNull= true;
-    else
-      field->defaultIsNull= (strcmp(row[3], "YES") == 0) ? true : false;
+
     field->isNull= (strcmp(row[4], "YES") == 0) ? true : false;
+    if (connected_server_type == SERVER_MYSQL_FOUND)
+    {
+      field->isAutoIncrement= (strcmp(row[9], "auto_increment") == 0) ? true : false;
+      field->defaultIsNull= field->isNull;
+    }
+    else
+    {
+      field->isAutoIncrement= (strcmp(row[9], "YES") == 0) ? true : false;
+      field->defaultIsNull= (strcmp(row[3], "YES") == 0) ? true : false;
+      field->enumValues= (row[10]) ? row[10] : "";
+    }
     field->length= (row[5]) ? boost::lexical_cast<uint32_t>(row[5]) : 0;
     field->decimalPrecision= (row[6]) ? boost::lexical_cast<uint32_t>(row[6]) : 0;
     field->decimalScale= (row[7]) ? boost::lexical_cast<uint32_t>(row[7]) : 0;
+
 
     fields.push_back(field);
   }
@@ -386,8 +395,10 @@ bool DrizzleDumpTable::populateIndexes(drizzle_con_st &connection)
     std::string indexName((connected_server_type == SERVER_MYSQL_FOUND) ? row[2] : row[0]);
     if (indexName.compare(lastKey) != 0)
     {
-      if (strcmp(row[10], "FULLTEXT") == 0)
+      if ((connected_server_type == SERVER_MYSQL_FOUND) and
+        (strcmp(row[10], "FULLTEXT") == 0))
         continue;
+
       if (!firstIndex)
         indexes.push_back(index);
       index = new DrizzleDumpIndex(indexName);
@@ -511,7 +522,8 @@ void DrizzleDumpField::setType(const char* raw_type, const char* raw_collation)
     if (old_type.compare("ENUM") == 0)
     {
       type= old_type;
-      type.append(extra);
+      /* Strip out the braces, we add them again during output */
+      enumValues= extra.substr(1, extra.length()-2);
       return;
     }
 
@@ -623,7 +635,7 @@ ostream& operator <<(ostream &os,const DrizzleDumpIndex &obj)
   return os;
 }
 
-ostream& operator <<(ostream &os,const DrizzleDumpField &obj)
+ostream& operator <<(ostream &os, const DrizzleDumpField &obj)
 {
   os << "  `" << obj.fieldName << "` ";
   os << obj.type;
@@ -633,16 +645,14 @@ ostream& operator <<(ostream &os,const DrizzleDumpField &obj)
   {
     os << "(" << obj.length << ")";
   }
-
-  if ((obj.type.compare("DECIMAL") == 0) or
+  else if ((obj.type.compare("DECIMAL") == 0) or
     (obj.type.compare("DOUBLE") == 0))
   {
     os << "(" << obj.decimalPrecision << "," << obj.decimalScale << ")";
   }
-
-  if (obj.type.compare("ENUM") == 0)
+  else if (obj.type.compare("ENUM") == 0)
   {
-    //output fields, currently broken in Drizzle
+    os << "(" << obj.enumValues << ")";
   }
 
   if (not obj.isNull)
@@ -654,6 +664,9 @@ ostream& operator <<(ostream &os,const DrizzleDumpField &obj)
   {
     os << " COLLATE " << obj.collation;
   }
+
+  if (obj.isAutoIncrement)
+    os << " AUTO_INCREMENT";
 
   if (not obj.defaultValue.empty())
   {
@@ -1002,8 +1015,12 @@ static void write_header(FILE *sql_file, char *db_name)
               "");
       fputs("-- ------------------------------------------------------\n",
             sql_file);
-      fprintf(sql_file, "-- Server version\t%s\n",
+      fprintf(sql_file, "-- Server version\t%s",
               drizzle_con_server_version(&dcon));
+      if (connected_server_type == SERVER_MYSQL_FOUND)
+        fprintf(sql_file, " (MySQL server)");
+      else if (connected_server_type == SERVER_DRIZZLE_FOUND)
+        fprintf(sql_file, " (Drizzle server)");
     }
     if (opt_set_charset)
       fprintf(sql_file,
@@ -1011,7 +1028,7 @@ static void write_header(FILE *sql_file, char *db_name)
 
     if (path.empty())
     {
-      fprintf(md_result_file,"SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;\nSET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;\n");
+      fprintf(md_result_file,"\nSET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;\nSET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;\n");
     }
     check_io(sql_file);
   }
