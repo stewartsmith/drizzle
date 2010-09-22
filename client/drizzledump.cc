@@ -44,7 +44,9 @@
 #include <boost/program_options.hpp>
 #include <boost/regex.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include "drizzledump.h"
+#include "drizzledump_data.h"
+#include "drizzledump_mysql.h"
+#include "drizzledump_drizzle.h"
 
 using namespace std;
 using namespace drizzled;
@@ -70,7 +72,6 @@ namespace po= boost::program_options;
 
 /* Size of buffer for dump's select query */
 #define QUERY_LENGTH 1536
-#define DRIZZLE_MAX_LINE_LENGTH 1024*1024L-1025
 
 /* ignore table flags */
 #define IGNORE_NONE 0x00 /* no ignore */
@@ -78,14 +79,10 @@ namespace po= boost::program_options;
 #define IGNORE_INSERT_DELAYED 0x02 /* table doesn't support INSERT DELAYED */
 
 static bool  verbose= false;
-static bool opt_no_create_info;
-static bool opt_no_data= false;
 static bool use_drizzle_protocol= false;
 static bool quick= true;
-static bool extended_insert= true;
 static bool ignore_errors= false;
 static bool flush_logs= false;
-static bool opt_drop= true; 
 static bool opt_keywords= false;
 static bool opt_compress= false;
 static bool opt_delayed= false; 
@@ -93,12 +90,10 @@ static bool create_options= true;
 static bool opt_quoted= false;
 static bool opt_databases= false; 
 static bool opt_alldbs= false; 
-static bool opt_create_db= false;
 static bool opt_lock_all_tables= false;
 static bool opt_set_charset= false; 
 static bool opt_dump_date= true;
 static bool opt_autocommit= false; 
-static bool opt_disable_keys= true;
 static bool opt_single_transaction= false; 
 static bool opt_comments;
 static bool opt_compact;
@@ -107,12 +102,18 @@ static bool opt_order_by_primary=false;
 static bool opt_ignore= false;
 static bool opt_complete_insert= false;
 static bool opt_drop_database;
-static bool opt_replace_into= false;
 static bool opt_alltspcs= false;
-static uint32_t show_progress_size= 0;
+bool opt_no_create_info;
+bool opt_no_data= false;
+bool opt_create_db= false;
+bool opt_disable_keys= true;
+bool extended_insert= true;
+bool opt_replace_into= false;
+bool opt_drop= true; 
+uint32_t show_progress_size= 0;
 //static uint64_t total_rows= 0;
 static drizzle_st drizzle;
-static drizzle_con_st dcon;
+ drizzle_con_st dcon;
 static string insert_pat;
 //static char *order_by= NULL;
 static uint32_t opt_drizzle_port= 0;
@@ -121,6 +122,14 @@ static string extended_row;
 FILE *md_result_file= 0;
 FILE *stderror_file= 0;
 std::vector<DrizzleDumpDatabase*> database_store;
+
+enum server_type {
+  SERVER_MYSQL_FOUND,
+  SERVER_DRIZZLE_FOUND,
+  SERVER_UNKNOWN_FOUND
+};
+
+int connected_server_type= SERVER_UNKNOWN_FOUND;
 
 const string progname= "drizzledump";
 
@@ -153,832 +162,12 @@ int get_server_type();
 void dump_all_tables(void);
 void generate_dump(void);
 
-enum server_type {
-  SERVER_MYSQL_FOUND,
-  SERVER_DRIZZLE_FOUND,
-  SERVER_UNKNOWN_FOUND
-};
-
-int connected_server_type= SERVER_UNKNOWN_FOUND;
-
-bool DrizzleDumpDatabase::populateTables(drizzle_con_st &connection)
-{
-  drizzle_result_st result;
-  drizzle_row_t row;
-  drizzle_return_t ret;
-  std::string query;
-
-  if (drizzle_select_db(&connection, &result, databaseName.c_str(), &ret) == 
-    NULL || ret != DRIZZLE_RETURN_OK)
-  {
-    errmsg << _("Could not set db '") << databaseName << "'";
-    return false;
-  }
-  drizzle_result_free(&result);
-
-  if (connected_server_type == SERVER_MYSQL_FOUND)
-    query="SELECT TABLE_NAME, TABLE_COLLATION, ENGINE, AUTO_INCREMENT FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='";
-  else
-    query="SELECT TABLE_NAME, TABLE_COLLATION, ENGINE FROM DATA_DICTIONARY.TABLES WHERE TABLE_SCHEMA='";
-
-  query.append(databaseName);
-  query.append("' ORDER BY TABLE_NAME");
-
-  if (drizzle_query_str(&connection, &result, query.c_str(), &ret) == NULL ||
-      ret != DRIZZLE_RETURN_OK)
-  {
-    if (ret == DRIZZLE_RETURN_ERROR_CODE)
-    {
-      errmsg << _("Could not get tables list due to error: ") <<
-        drizzle_result_error(&result);
-      drizzle_result_free(&result);
-    }
-    else
-    {
-      errmsg << _("Could not get tables list due to error: ") <<
-        drizzle_con_error(&connection);
-    }
-    return false;
-  }
-
-  if (drizzle_result_buffer(&result) != DRIZZLE_RETURN_OK)
-  {
-    errmsg << _("Could not get tables list due to error: ") <<
-        drizzle_con_error(&connection);
-    return false;
-  }
-
-  while ((row= drizzle_row_next(&result)))
-  {
-    std::string tableName(row[0]);
-    DrizzleDumpTable *table = new DrizzleDumpTable(tableName);
-    table->setCollate(row[1]);
-    table->setEngine(row[2]);
-    if (connected_server_type == SERVER_MYSQL_FOUND)
-    {
-      if (row[3])
-        table->autoIncrement= boost::lexical_cast<uint64_t>(row[3]);
-      else
-        table->autoIncrement= 0;
-    }
-
-    table->database= this;
-    table->populateFields(connection);
-    table->populateIndexes(connection);
-    tables.push_back(table);
-  }
-
-  drizzle_result_free(&result);
-
-  return true;
-}
-
-bool DrizzleDumpTable::populateFields(drizzle_con_st &connection)
-{
-  drizzle_result_st result;
-  drizzle_row_t row;
-  drizzle_return_t ret;
-  std::string query;
-
-  if (connected_server_type == SERVER_MYSQL_FOUND)
-    query="SELECT COLUMN_NAME, COLUMN_TYPE, COLUMN_DEFAULT, 'NO', IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE, COLLATION_NAME, EXTRA FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='";
-  else
-    query= "SELECT COLUMN_NAME, DATA_TYPE, COLUMN_DEFAULT, COLUMN_DEFAULT_IS_NULL, IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE, COLLATION_NAME, IS_AUTO_INCREMENT, ENUM_VALUES FROM DATA_DICTIONARY.COLUMNS WHERE TABLE_SCHEMA='";
-  query.append(database->databaseName);
-  query.append("' AND TABLE_NAME='");
-  query.append(tableName);
-  query.append("' ORDER BY ORDINAL_POSITION");
-
-  if (drizzle_query_str(&connection, &result, query.c_str(), &ret) == NULL ||
-      ret != DRIZZLE_RETURN_OK)
-  {
-    if (ret == DRIZZLE_RETURN_ERROR_CODE)
-    {
-      errmsg << _("Could not get tables list due to error: ") <<
-        drizzle_result_error(&result);
-      drizzle_result_free(&result);
-    }
-    else
-    {
-      errmsg << _("Could not get tables list due to error: ") <<
-        drizzle_con_error(&connection);
-    }
-    return false;
-  }
-
-  if (drizzle_result_buffer(&result) != DRIZZLE_RETURN_OK)
-  {
-    errmsg << _("Could not get tables list due to error: ") <<
-        drizzle_con_error(&connection);
-    return false;
-  }
-  while ((row= drizzle_row_next(&result)))
-  {
-    std::string fieldName(row[0]);
-    DrizzleDumpField *field = new DrizzleDumpField(fieldName);
-    /* Stop valgrind warning */
-    field->convertDateTime= false;
-    /* Also sets collation */
-    field->setType(row[1], row[8]);
-    if (row[2])
-    {
-      if (field->convertDateTime)
-      {
-        field->dateTimeConvert(row[2]);
-      }
-      else
-        field->defaultValue= row[2];
-    }
-    else
-     field->defaultValue= "";
-
-    field->isNull= (strcmp(row[4], "YES") == 0) ? true : false;
-    if (connected_server_type == SERVER_MYSQL_FOUND)
-    {
-      field->isAutoIncrement= (strcmp(row[9], "auto_increment") == 0) ? true : false;
-      field->defaultIsNull= field->isNull;
-    }
-    else
-    {
-      field->isAutoIncrement= (strcmp(row[9], "YES") == 0) ? true : false;
-      field->defaultIsNull= (strcmp(row[3], "YES") == 0) ? true : false;
-      field->enumValues= (row[10]) ? row[10] : "";
-    }
-    field->length= (row[5]) ? boost::lexical_cast<uint32_t>(row[5]) : 0;
-    field->decimalPrecision= (row[6]) ? boost::lexical_cast<uint32_t>(row[6]) : 0;
-    field->decimalScale= (row[7]) ? boost::lexical_cast<uint32_t>(row[7]) : 0;
-
-
-    fields.push_back(field);
-  }
-
-  drizzle_result_free(&result);
-  return true;
-}
-
-void DrizzleDumpField::dateTimeConvert(const char* oldDefault)
-{
-  boost::match_flag_type flags = boost::match_default;
-
-  if (strcmp(oldDefault, "CURRENT_TIMESTAMP") == 0)
-  {
-    defaultValue= oldDefault;
-    return;
-  }
-
-  if (type.compare("INT") == 0)
-  {
-    /* We were a TIME, now we are an INT */
-    std::string ts(oldDefault);
-    boost::posix_time::time_duration td(boost::posix_time::duration_from_string(ts));
-    defaultValue= boost::lexical_cast<string>(td.total_seconds());
-    return;
-  }
-
-  boost::regex date_regex("([0-9]{3}[1-9]-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01]))");
-
-  if (regex_search(oldDefault, date_regex, flags))
-  {
-    defaultValue= oldDefault;
-  }
-  else
-  {
-    defaultIsNull= true;
-    defaultValue="";
-  }
-
-}
-
-bool DrizzleDumpTable::populateIndexes(drizzle_con_st &connection)
-{
-  drizzle_result_st result;
-  drizzle_row_t row;
-  drizzle_return_t ret;
-  std::string query;
-  std::string lastKey;
-  bool firstIndex= true;
-  DrizzleDumpIndex *index;
-
-  if (connected_server_type == SERVER_MYSQL_FOUND)
-    query="SHOW INDEXES FROM ";
-  else
-    query= "SELECT INDEX_NAME, COLUMN_NAME, IS_USED_IN_PRIMARY, IS_UNIQUE FROM DATA_DICTIONARY.INDEX_PARTS WHERE TABLE_NAME='";
-  query.append(tableName);
-  if (connected_server_type == SERVER_DRIZZLE_FOUND)
-    query.append("'");
-
-  if (drizzle_query_str(&connection, &result, query.c_str(), &ret) == NULL ||
-      ret != DRIZZLE_RETURN_OK)
-  {
-    if (ret == DRIZZLE_RETURN_ERROR_CODE)
-    {
-      errmsg << _("Could not get tables list due to error: ") <<
-        drizzle_result_error(&result);
-      drizzle_result_free(&result);
-    }
-    else
-    {
-      errmsg << _("Could not get tables list due to error: ") <<
-        drizzle_con_error(&connection);
-    }
-    return false;
-  }
-
-  if (drizzle_result_buffer(&result) != DRIZZLE_RETURN_OK)
-  {
-    errmsg << _("Could not get tables list due to error: ") <<
-        drizzle_con_error(&connection);
-    return false;
-  }
-  while ((row= drizzle_row_next(&result)))
-  {
-    std::string indexName((connected_server_type == SERVER_MYSQL_FOUND) ? row[2] : row[0]);
-    if (indexName.compare(lastKey) != 0)
-    {
-      if ((connected_server_type == SERVER_MYSQL_FOUND) and
-        (strcmp(row[10], "FULLTEXT") == 0))
-        continue;
-
-      if (!firstIndex)
-        indexes.push_back(index);
-      index = new DrizzleDumpIndex(indexName);
-      if (connected_server_type == SERVER_MYSQL_FOUND)
-      {
-        index->isPrimary= (strcmp(row[2], "PRIMARY") == 0);
-        index->isUnique= (strcmp(row[1], "0") == 0);
-        index->isHash= (strcmp(row[10], "HASH") == 0);
-      }
-      else
-      {
-        index->isPrimary= (strcmp(row[0], "PRIMARY") == 0);
-        index->isUnique= (strcmp(row[3], "YES") == 0);
-        index->isHash= 0;
-      }
-      lastKey= (connected_server_type == SERVER_MYSQL_FOUND) ? row[2] : row[0];
-      firstIndex= false;
-    }
-    index->columns.push_back((connected_server_type == SERVER_MYSQL_FOUND) ? row[4] : row[1]);
-  }
-  if (!firstIndex)
-    indexes.push_back(index);
-
-  drizzle_result_free(&result);
-  return true;
-}
-
-void DrizzleDumpField::setType(const char* raw_type, const char* raw_collation)
-{
-  std::string old_type(raw_type);
-  std::string extra;
-  size_t pos;
-  
-  if ((pos= old_type.find("(")) != string::npos)
-  {
-    extra= old_type.substr(pos);
-    old_type.erase(pos,string::npos);
-  }
-
-  if (connected_server_type == SERVER_DRIZZLE_FOUND)
-  {
-    collation= raw_collation;
-    if (strcmp(raw_type, "BLOB") == 0)
-    {
-      if (strcmp(raw_collation, "binary") != 0)
-        type= "TEXT";
-      else
-        type= raw_type;
-      return;
-    }
-
-    if (strcmp(raw_type, "VARCHAR") == 0)
-    {
-      if (strcmp(raw_collation, "binary") != 0)
-        type= "VARCHAR";
-      else
-        type= "VARBINARY";
-      return;
-    }
-
-    if (strcmp(raw_type, "INTEGER") == 0)
-    {
-      type= "INT";
-      return;
-    }
-
-    type= raw_type;
-    return;
-  }
-
-  if (connected_server_type == SERVER_MYSQL_FOUND)
-  {
-    std::transform(old_type.begin(), old_type.end(), old_type.begin(), ::toupper);
-    if ((old_type.find("CHAR") != string::npos) or 
-      (old_type.find("TEXT") != string::npos))
-      setCollate(raw_collation);
-
-    if ((old_type.compare("INT") == 0) and 
-      ((extra.find("unsigned") != string::npos)))
-    {
-      type= "BIGINT";
-      return;
-    }
-    
-    if ((old_type.compare("TINYINT") == 0) or
-      (old_type.compare("SMALLINT") == 0) or
-      (old_type.compare("MEDIUMINT") == 0))
-    {
-      type= "INT";
-      return;
-    }
-
-    if ((old_type.compare("TINYBLOB") == 0) or
-      (old_type.compare("MEDIUMBLOB") == 0) or
-      (old_type.compare("LONGBLOB") == 0))
-    {
-      type= "BLOB";
-      return;
-    }
-
-    if ((old_type.compare("TINYTEXT") == 0) or
-      (old_type.compare("MEDIUMTEXT") == 0) or
-      (old_type.compare("LONGTEXT") == 0))
-    {
-      type= "TEXT";
-      return;
-    }
-
-    if (old_type.compare("CHAR") == 0)
-    {
-      type= "VARCHAR";
-      return;
-    }
-
-    if (old_type.compare("BINARY") == 0)
-    {
-      type= "VARBINARY";
-      return;
-    }
-
-    if (old_type.compare("ENUM") == 0)
-    {
-      type= old_type;
-      /* Strip out the braces, we add them again during output */
-      enumValues= extra.substr(1, extra.length()-2);
-      return;
-    }
-
-    if ((old_type.find("TIME") != string::npos) or
-      (old_type.find("DATE") != string::npos))
-    {
-      /* Intended to catch TIME/DATE/TIMESTAMP/DATETIME 
-         We may have a default TIME/DATE which needs converting */
-      convertDateTime= true;
-    }
-
-    if (old_type.compare("TIME") == 0)
-    {
-      type= "INT";
-      return;
-    }
-
-    if (old_type.compare("FLOAT") == 0)
-    {
-      type= "DOUBLE";
-      return;
-    }
-
-    type= old_type;
-    return;
-  }
-}
-
-void DrizzleDumpTable::setEngine(const char* newEngine)
-{
-  if (strcmp(newEngine, "MyISAM") == 0)
-    engineName= "InnoDB";
-  else
-    engineName= newEngine; 
-}
-
-void DrizzleDumpDatabase::setCollate(const char* newCollate)
-{
-  if (newCollate)
-  {
-    std::string tmpCollate(newCollate);
-    if (tmpCollate.find("utf8") != string::npos)
-    {
-      collate= tmpCollate;
-      return;
-    }
-  }
-  collate= "utf8_general_ci";
-}
-
-void DrizzleDumpTable::setCollate(const char* newCollate)
-{
-  if (newCollate)
-  {
-    std::string tmpCollate(newCollate);
-    if (tmpCollate.find("utf8") != string::npos)
-    {
-      collate= tmpCollate;
-      return;
-    }
-  }
-
-  collate= "utf8_general_ci";
-}
-
-void DrizzleDumpField::setCollate(const char* newCollate)
-{
-  if (newCollate)
-  {
-    std::string tmpCollate(newCollate);
-    if (tmpCollate.find("utf8") != string::npos)
-    {
-      collation= tmpCollate;
-      return;
-    }
-  }
-  collation= "utf8_general_ci";
-}
-
-ostream& operator <<(ostream &os,const DrizzleDumpIndex &obj)
-{
-  if (obj.isPrimary)
-  {
-    os << "  PRIMARY KEY ";
-  }
-  else if (obj.isUnique)
-  {
-    os << "  UNIQUE KEY `" << obj.indexName << "` ";
-  }
-  else
-  {
-    os << "  KEY `" << obj.indexName << "` ";
-  }
-
-  os << "(";
-  
-  std::vector<std::string>::iterator i;
-  std::vector<std::string> fields = obj.columns;
-  for (i= fields.begin(); i != fields.end(); ++i)
-  {
-    if (i != fields.begin())
-      os << ",";
-    std::string field= *i;
-    os << "`" << field << "`";
-  }
-
-  os << ")";
-
-  return os;
-}
-
-ostream& operator <<(ostream &os, const DrizzleDumpField &obj)
-{
-  os << "  `" << obj.fieldName << "` ";
-  os << obj.type;
-  if (((obj.type.compare("VARCHAR") == 0) or
-   (obj.type.compare("VARBINARY") == 0)) and
-   (obj.length > 0))
-  {
-    os << "(" << obj.length << ")";
-  }
-  else if ((obj.type.compare("DECIMAL") == 0) or
-    (obj.type.compare("DOUBLE") == 0))
-  {
-    os << "(" << obj.decimalPrecision << "," << obj.decimalScale << ")";
-  }
-  else if (obj.type.compare("ENUM") == 0)
-  {
-    os << "(" << obj.enumValues << ")";
-  }
-
-  if (not obj.isNull)
-  {
-    os << " NOT NULL";
-  }
-
-  if ((not obj.collation.empty()) and (obj.collation.compare("binary") != 0))
-  {
-    os << " COLLATE " << obj.collation;
-  }
-
-  if (obj.isAutoIncrement)
-    os << " AUTO_INCREMENT";
-
-  if (not obj.defaultValue.empty())
-  {
-    if (obj.defaultValue.compare("CURRENT_TIMESTAMP") != 0)
-     os << " DEFAULT '" << obj.defaultValue << "'";
-    else
-     os << " DEFAULT CURRENT_TIMESTAMP";
-  }
-  else if ((obj.collation.empty()) and (obj.defaultIsNull))
-  {
-    os << " DEFAULT NULL";
-  }
-
-  return os;
-}
-
-ostream& operator <<(ostream &os,const DrizzleDumpDatabase &obj)
-{
-  os << "--" << endl
-     << "-- Current Database: `" << obj.databaseName << "`" << endl
-     << "--" << endl << endl;
-
-  /* Love that this variable is the opposite of its name */
-  if (not opt_create_db)
-  {
-    os << "CREATE DATABASE IF NOT EXISTS `" << obj.databaseName
-      << "` COLLATE = " << obj.collate << ";" << endl << endl;
-  }
-
-  os << "USE `" << obj.databaseName << "`;" << endl << endl;
-
-  std::vector<DrizzleDumpTable*>::iterator i;
-  std::vector<DrizzleDumpTable*> output_tables = obj.tables;
-  for (i= output_tables.begin(); i != output_tables.end(); ++i)
-  {
-    DrizzleDumpTable *table= *i;
-    if (not opt_no_create_info)
-      os << *table;
-    if (not opt_no_data)
-    {
-      DrizzleDumpData *data= new DrizzleDumpData(dcon, table);
-      os << *data;
-      delete data;
-    }
-  }
-
-  return os;
-}
-
-DrizzleDumpData::DrizzleDumpData(drizzle_con_st &conn, DrizzleDumpTable *dataTable) :
- table(dataTable),
- connection(&conn)
-{
-  drizzle_return_t ret;
-  std::string query;
-  query= "SELECT * FROM `";
-  query.append(table->tableName);
-  query.append("`");
-  result= new drizzle_result_st;
-
-  if (drizzle_query_str(connection, result, query.c_str(), &ret) == NULL ||
-      ret != DRIZZLE_RETURN_OK)
-  {
-    if (ret == DRIZZLE_RETURN_ERROR_CODE)
-    {
-      errmsg << _("Could not get tables list due to error: ") <<
-        drizzle_result_error(result);
-      drizzle_result_free(result);
-    }
-    else
-    {
-      errmsg << _("Could not get tables list due to error: ") <<
-        drizzle_con_error(connection);
-    }
-    return;
-  }
-
-  if (drizzle_result_buffer(result) != DRIZZLE_RETURN_OK)
-  {
-    errmsg << _("Could not get tables list due to error: ") <<
-        drizzle_con_error(connection);
-    return;
-  }
-}
-DrizzleDumpData::~DrizzleDumpData()
-{
-  drizzle_result_free(result);
-  if (result) delete result;
-}
-ostream& operator <<(ostream &os,const DrizzleDumpData &obj)
-{
-  bool new_insert= true;
-  bool first= true;
-  uint64_t rownr= 0;
-
-  drizzle_row_t row;
-
-  if (drizzle_result_row_count(obj.result) < 1)
-  {
-    os << "--" << endl
-       << "-- No data to dump for table `" << obj.table->tableName << "`" << endl
-       << "--" << endl << endl;
-    return os;
-  }
-  else
-  {
-    os << "--" << endl
-       << "-- Dumping data for table `" << obj.table->tableName << "`" << endl
-       << "--" << endl << endl;
-  }
-  if (opt_disable_keys)
-    os << "ALTER TABLE `" << obj.table->tableName << "` DISABLE KEYS;" << endl;
-
-  streampos out_position= os.tellp();
-
-  while((row= drizzle_row_next(obj.result)))
-  {
-    rownr++;
-    if ((rownr % show_progress_size) == 0)
-    {
-      cerr << "-- %" << rownr << _(" rows dumped for table ") << obj.table->tableName << endl;
-    }
-
-    size_t* row_sizes= drizzle_row_field_sizes(obj.result);
-    if (not first)
-    {
-      if (extended_insert)
-        os << "),(";
-      else
-        os << ");" << endl;
-    }
-    else
-      first= false;
-
-    if (new_insert)
-    {
-      if (opt_replace_into)
-        os << "REPLACE ";
-      else
-        os << "INSERT ";
-      os << "INTO `" << obj.table->tableName << "` VALUES (";
-      if (extended_insert)
-        new_insert= false;
-    }
-    for (uint32_t i= 0; i < drizzle_result_column_count(obj.result); i++)
-    {
-      if (not row[i])
-      {
-        os << "NULL";
-      }
-      /* time/date conversion for MySQL connections */
-      else if ((connected_server_type == SERVER_MYSQL_FOUND) and
-        (obj.table->fields[i]->convertDateTime))
-      {
-        if (obj.table->fields[i]->type.compare("INT") == 0)
-          os << obj.convertTime(row[i]);
-        else
-          os << obj.convertDate(row[i]);
-      }
-      else
-      {
-        if (obj.table->fields[i]->type.compare("INT") != 0)
-        {
-          /* Hex blob processing or escape text */
-          if (opt_hex_blob and
-            ((obj.table->fields[i]->type.compare("BLOB") == 0) or
-            (obj.table->fields[i]->type.compare("VARBINARY") == 0)))
-            os << obj.convertHex(row[i], row_sizes[i]);
-          else
-            os << "'" << obj.escape(row[i], row_sizes[i]) << "'";
-        }
-        else
-          os << row[i];
-      }
-      if (i != obj.table->fields.size() - 1)
-        os << ",";
-    }
-    /* Break insert up if it is too long */
-    if (extended_insert and
-      ((os.tellp() - out_position) >= DRIZZLE_MAX_LINE_LENGTH))
-    {
-      os << ");" << endl;
-      new_insert= true;
-      out_position= os.tellp();
-    }
-  }
-  os << ");" << endl;
-
-  if (opt_disable_keys)
-    os << "ALTER TABLE `" << obj.table->tableName << "` ENABLE KEYS;" << endl;
-
-  os << endl;
-
-  return os;
-}
-
-long DrizzleDumpData::convertTime(const char* oldTime) const
-{
-  std::string ts(oldTime);
-  boost::posix_time::time_duration td(boost::posix_time::duration_from_string(ts));
-  long seconds= td.total_seconds();
-  return seconds;
-}
-
-std::string DrizzleDumpData::convertDate(const char* oldDate) const
-{
-  boost::match_flag_type flags = boost::match_default;
-  std::string output;
-  boost::regex date_regex("([0-9]{3}[1-9]-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01]))");
-
-  if (regex_search(oldDate, date_regex, flags))
-  {
-    output.push_back('\'');
-    output.append(oldDate);
-    output.push_back('\'');
-  }
-  else
-    output= "NULL";
-
-  return output;
-}
-
-std::string DrizzleDumpData::convertHex(const char* from, size_t from_size) const
-{
-  ostringstream output;
-  if (from_size > 0)
-    output << "0x";
-  while (from_size > 0)
-  {
-    output << uppercase << hex << setw(2) << setfill('0') << int(*from);
-    *from++;
-    from_size--;
-  }
-
-  return output.str();
-}
-
-/* Ripped out of libdrizzle, hopefully a little safer */
-std::string DrizzleDumpData::escape(const char* from, size_t from_size) const
-{
-  std::string output;
-
-  while (from_size > 0)
-  {
-    if (!(*from & 0x80))
-    {
-      switch (*from)
-      {
-         case 0:
-         case '\n':
-         case '\r':
-         case '\\':
-         case '\'':
-         case '"':
-         case '\032':
-           output.push_back('\\');
-         default:
-           break;
-       }
-    }
-    output.push_back(*from);
-    *from++;
-    from_size--;
-  }
-
-  return output;
-}
-
-ostream& operator <<(ostream &os,const DrizzleDumpTable &obj)
-{
-  os << "--" << endl
-     << "-- Table structure for table `" << obj.tableName << "`" << endl
-     << "--" << endl << endl;
-
-  if (opt_drop)
-    os << "DROP TABLE IF EXISTS `" << obj.tableName <<  "`;" << endl;
-
-  os << "CREATE TABLE `" << obj.tableName << "` (" << endl;
-  std::vector<DrizzleDumpField*>::iterator i;
-  std::vector<DrizzleDumpField*> output_fields = obj.fields;
-  for (i= output_fields.begin(); i != output_fields.end(); ++i)
-  {
-    if (i != output_fields.begin())
-      os << "," << endl;
-    DrizzleDumpField *field= *i;
-    os << *field;
-  }
-
-  std::vector<DrizzleDumpIndex*>::iterator j;
-  std::vector<DrizzleDumpIndex*> output_indexes = obj.indexes;
-  for (j= output_indexes.begin(); j != output_indexes.end(); ++j)
-  {
-    os << "," << endl;;
-    DrizzleDumpIndex *index= *j;
-    os << *index;
-  }
-  os << endl;
-  os << ") ENGINE=" << obj.engineName << " ";
-  if ((connected_server_type == SERVER_MYSQL_FOUND) and (obj.autoIncrement > 0))
-    os << "AUTO_INCREMENT=" << obj.autoIncrement << " ";
-
-  os << "COLLATE = " << obj.collate << ";" << endl << endl;
-
-  return os;
-}
-
 void dump_all_tables(void)
 {
   std::vector<DrizzleDumpDatabase*>::iterator i;
   for (i= database_store.begin(); i != database_store.end(); ++i)
   {
-    (*i)->populateTables(dcon);
+    (*i)->populateTables();
   }
 }
 
@@ -1344,6 +533,7 @@ static int dump_all_databases()
   drizzle_result_st tableres;
   int result=0;
   std::string query;
+  DrizzleDumpDatabase *database;
 
   if (connected_server_type == SERVER_MYSQL_FOUND)
     query= "SELECT SCHEMA_NAME, DEFAULT_COLLATION_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME NOT IN ('information_schema', 'performance_schema')";
@@ -1355,7 +545,11 @@ static int dump_all_databases()
   while ((row= drizzle_row_next(&tableres)))
   {
     std::string database_name(row[0]);
-    DrizzleDumpDatabase *database= new DrizzleDumpDatabase(database_name);
+    if (connected_server_type == SERVER_MYSQL_FOUND)
+      database= new DrizzleDumpDatabaseMySQL(database_name);
+    else
+      database= new DrizzleDumpDatabaseDrizzle(database_name);
+
     database->setCollate(row[1]);
     database_store.push_back(database);
   }
@@ -1369,10 +563,15 @@ static int dump_databases(const vector<string> &db_names)
 {
   int result=0;
   string temp;
+  DrizzleDumpDatabase *database;
+
   for (vector<string>::const_iterator it= db_names.begin(); it != db_names.end(); ++it)
   {
     temp= *it;
-    DrizzleDumpDatabase *database= new DrizzleDumpDatabase(temp);
+    if (connected_server_type == SERVER_MYSQL_FOUND)
+      database= new DrizzleDumpDatabaseMySQL(temp);
+    else
+      database= new DrizzleDumpDatabaseDrizzle(temp);
     database_store.push_back(database);
   }
   return(result);
@@ -1380,13 +579,23 @@ static int dump_databases(const vector<string> &db_names)
 
 static int dump_selected_tables(const string &db, const vector<string> &table_names)
 {
-  DrizzleDumpDatabase *database= new DrizzleDumpDatabase(db);
+  DrizzleDumpDatabase *database;
+  DrizzleDumpTable *table;
+
+  if (connected_server_type == SERVER_MYSQL_FOUND)
+    database= new DrizzleDumpDatabaseMySQL(db);
+  else
+    database= new DrizzleDumpDatabaseDrizzle(db);
+
   database_store.push_back(database); 
 
   for (vector<string>::const_iterator it= table_names.begin(); it != table_names.end(); ++it)
   {
     string temp= *it;
-    DrizzleDumpTable *table= new DrizzleDumpTable(temp);
+    if (connected_server_type == SERVER_MYSQL_FOUND)
+      table= new DrizzleDumpTableMySQL(temp);
+    else
+      table= new DrizzleDumpTableDrizzle(temp);
     database->tables.push_back(table);
   }
   database_store.push_back(database);

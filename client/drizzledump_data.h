@@ -17,10 +17,19 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef CLIENT_DRIZZLEDUMP_H
-#define CLIENT_DRIZZLEDUMP_H
+#ifndef CLIENT_DRIZZLEDUMP_DATA_H
+#define CLIENT_DRIZZLEDUMP_DATA_H
+
+#define DRIZZLE_MAX_LINE_LENGTH 1024*1024L-1025
+#include "client_priv.h"
+#include <string>
+#include <iostream>
+#include <iomanip>
+#include <vector>
+#include <sstream>
 
 class DrizzleDumpDatabase;
+class DrizzleDumpData;
 
 class DrizzleDumpIndex
 {
@@ -31,11 +40,7 @@ class DrizzleDumpIndex
       indexName(index)
     { }
 
-    ~DrizzleDumpIndex()
-    {
-      columns.clear();
-    }
-
+    virtual ~DrizzleDumpIndex() { }
 
     bool isPrimary;
     bool isUnique;
@@ -48,11 +53,13 @@ class DrizzleDumpIndex
 class DrizzleDumpField
 {
   public:
-    std::stringstream errmsg;
-
     DrizzleDumpField(std::string &field) :
       fieldName(field)
     { }
+
+    virtual ~DrizzleDumpField() { }
+
+    std::stringstream errmsg;
 
     friend std::ostream& operator <<(std::ostream &os, const DrizzleDumpField &obj);
     std::string fieldName;
@@ -74,28 +81,24 @@ class DrizzleDumpField
     uint32_t decimalPrecision;
     uint32_t decimalScale;
 
-    void dateTimeConvert(const char* oldDefault);
-    void setCollate(const char* newCollate);
-    void setType(const char* raw_type, const char* collation);
+    virtual void setType(const char*, const char*) { }
+
 };
 
 class DrizzleDumpTable
 {
   public:
-    std::stringstream errmsg;
-
     DrizzleDumpTable(std::string &table) :
       tableName(table)
     { }
 
-    ~DrizzleDumpTable()
-    {
-      fields.clear();
-      indexes.clear();
-    }
+    virtual ~DrizzleDumpTable() { }
 
-    bool populateFields(drizzle_con_st &connection);
-    bool populateIndexes(drizzle_con_st &connection);
+    std::stringstream errmsg;
+
+    virtual bool populateFields() { return false; }
+    virtual bool populateIndexes() { return false; }
+    virtual DrizzleDumpData* getData() { return NULL; }
     std::vector<DrizzleDumpField*> fields;
     std::vector<DrizzleDumpIndex*> indexes;
 
@@ -103,9 +106,6 @@ class DrizzleDumpTable
     std::string tableName;
     std::string engineName;
     std::string collate;
-
-    void setCollate(const char* newCollate);
-    void setEngine(const char* newEngine);
 
     // Currently MySQL only, hard to do in Drizzle
     uint64_t autoIncrement;
@@ -115,45 +115,40 @@ class DrizzleDumpTable
 class DrizzleDumpDatabase
 {
   public:
-    std::stringstream errmsg;
-
     DrizzleDumpDatabase(const std::string &database) :
       databaseName(database)
     { }
 
-    ~DrizzleDumpDatabase()
-    {
-      tables.clear();
-    }
+    virtual ~DrizzleDumpDatabase() { }
+
+    std::stringstream errmsg;
 
     friend std::ostream& operator <<(std::ostream &os, const DrizzleDumpDatabase &obj);
 
-    bool populateTables(drizzle_con_st &connection);
+    virtual bool populateTables() { return false; }
+    virtual void setCollate(const char*) { }
     std::vector<DrizzleDumpTable*> tables;
 
-    void setCollate(const char* newCollate);
     const std::string databaseName;
     std::string collate;
 };
 
 class DrizzleDumpData
 {
-  DrizzleDumpTable *table;
-  drizzle_con_st *connection;
-  std::stringstream errmsg;
-  drizzle_result_st *result;
-
   public:
-    DrizzleDumpData(drizzle_con_st &conn, DrizzleDumpTable *dataTable);
-    ~DrizzleDumpData();
+    std::stringstream errmsg;
+    DrizzleDumpTable *table;
+    drizzle_result_st *result;
+    DrizzleDumpData(DrizzleDumpTable *dataTable) :
+      table(dataTable)
+    { }
+
+    virtual ~DrizzleDumpData() { }
     friend std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj);
 
-    /* For 0000-00-00 -> NULL conversion */
-    std::string convertDate(const char* oldDate) const;
-    /* For xx:xx:xx -> INT conversion */
-    long convertTime(const char* oldTime) const;
+    virtual std::ostream& checkDateTime(std::ostream &os, const char*, uint32_t) const { return os; }
     std::string convertHex(const char* from, size_t from_size) const;
     std::string escape(const char* from, size_t from_size) const;
 };
 
-#endif /* CLIENT_DRIZZLEDUMP_H */
+#endif /* CLIENT_DRIZZLEDUMP_DATA_H */
