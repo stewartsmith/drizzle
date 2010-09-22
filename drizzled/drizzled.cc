@@ -629,8 +629,6 @@ void Session::unlink(Session *session)
 
   delete session;
   LOCK_thread_count.unlock();
-
-  return;
 }
 
 
