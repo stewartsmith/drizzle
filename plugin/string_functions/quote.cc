@@ -19,7 +19,7 @@
 
 #include "config.h"
 
-#include <drizzled/function/str/quote.h>
+#include "quote.h"
 
 namespace drizzled
 {

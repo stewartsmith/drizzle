@@ -888,7 +888,7 @@ uint32_t calc_pack_length(enum_field_types type,uint32_t length)
 {
   switch (type) {
   case DRIZZLE_TYPE_VARCHAR: return (length + (length < 256 ? 1: 2));
-  case DRIZZLE_TYPE_DATE: return 3;
+  case DRIZZLE_TYPE_DATE:
   case DRIZZLE_TYPE_LONG: return 4;
   case DRIZZLE_TYPE_DOUBLE: return sizeof(double);
   case DRIZZLE_TYPE_DATETIME:

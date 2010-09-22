@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTION_MATH_CEILING_H
-#define DRIZZLED_FUNCTION_MATH_CEILING_H
+#ifndef PLUGIN_MATH_FUNCTIONS_CEILING_H
+#define PLUGIN_MATH_FUNCTIONS_CEILING_H
 
 #include <drizzled/function/func.h>
 #include <drizzled/function/math/int_val.h>
@@ -29,13 +29,14 @@ namespace drizzled
 class Item_func_ceiling :public Item_func_int_val
 {
 public:
-  Item_func_ceiling(Item *a) :Item_func_int_val(a) {}
+  Item_func_ceiling() :Item_func_int_val() {}
   const char *func_name() const { return "ceiling"; }
   int64_t int_op();
   double real_op();
   my_decimal *decimal_op(my_decimal *);
+  bool check_argument_count(int n) { return n == 1; }
 };
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FUNCTION_MATH_CEILING_H */
+#endif /* PLUGIN_MATH_FUNCTIONS_CEILING_H */

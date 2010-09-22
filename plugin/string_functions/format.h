@@ -17,35 +17,27 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#ifndef PLUGIN_STRING_FUNCTIONS_FORMAT_H
+#define PLUGIN_STRING_FUNCTIONS_FORMAT_H
 
-#include <drizzled/function/math/ord.h>
+#include <drizzled/function/str/strfunc.h>
 
 namespace drizzled
 {
 
-int64_t Item_func_ord::val_int()
+class Item_func_format :public Item_str_func
 {
-  assert(fixed == 1);
-  String *res=args[0]->val_str(&value);
-  if (!res)
-  {
-    null_value=1;
-    return 0;
-  }
-  null_value=0;
-  if (!res->length()) return 0;
-  if (use_mb(res->charset()))
-  {
-    register const char *str=res->ptr();
-    register uint32_t n=0, l=my_ismbchar(res->charset(),str,str+res->length());
-    if (!l)
-      return (int64_t)((unsigned char) *str);
-    while (l--)
-      n=(n<<8)|(uint32_t)((unsigned char) *str++);
-    return (int64_t) n;
-  }
-  return (int64_t) ((unsigned char) (*res)[0]);
-}
+  String tmp_str;
+public:
+  Item_func_format(): Item_str_func() {}
+
+  String *val_str(String *);
+  void fix_length_and_dec();
+  const char *func_name() const { return "format"; }
+  virtual void print(String *str, enum_query_type query_type);
+  bool check_argument_count(int n) { return n == 2; }
+};
 
 } /* namespace drizzled */
+
+#endif /* PLUGIN_STRING_FUNCTIONS_FORMAT_H */

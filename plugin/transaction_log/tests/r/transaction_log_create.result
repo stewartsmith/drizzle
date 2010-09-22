@@ -611,7 +611,7 @@ statement {
         is_primary: false
         is_unique: false
         type: UNKNOWN_INDEX
-        key_length: 47
+        key_length: 48
         index_part {
           fieldnr: 0
           compare_length: 4
@@ -622,7 +622,7 @@ statement {
         }
         index_part {
           fieldnr: 2
-          compare_length: 3
+          compare_length: 4
         }
         options {
           binary_pack_key: true
@@ -741,7 +741,7 @@ statement {
         is_primary: false
         is_unique: true
         type: UNKNOWN_INDEX
-        key_length: 87
+        key_length: 88
         index_part {
           fieldnr: 0
           compare_length: 4
@@ -752,7 +752,7 @@ statement {
         }
         index_part {
           fieldnr: 2
-          compare_length: 3
+          compare_length: 4
         }
         options {
           binary_pack_key: true

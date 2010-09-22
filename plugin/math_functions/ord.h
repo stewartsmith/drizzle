@@ -17,28 +17,25 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTION_STR_QUOTE_H
-#define DRIZZLED_FUNCTION_STR_QUOTE_H
+#ifndef PLUGIN_MATH_FUNCTIONS_ORD_H
+#define PLUGIN_MATH_FUNCTIONS_ORD_H
 
-#include <drizzled/function/str/strfunc.h>
+#include <drizzled/function/func.h>
+#include <drizzled/function/math/int.h>
 
 namespace drizzled
 {
 
-class Item_func_quote :public Item_str_func
+class Item_func_ord :public Item_int_func
 {
-  String tmp_value;
+  String value;
 public:
-  Item_func_quote(Item *a) :Item_str_func(a) {}
-  const char *func_name() const { return "quote"; }
-  String *val_str(String *);
-  void fix_length_and_dec()
-  {
-    collation.set(args[0]->collation);
-    max_length= args[0]->max_length * 2 + 2;
-  }
+  Item_func_ord() :Item_int_func() {}
+  int64_t val_int();
+  const char *func_name() const { return "ord"; }
+  bool check_argument_count(int n) { return n == 1; }
 };
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FUNCTION_STR_QUOTE_H */
+#endif /* PLUGIN_MATH_FUNCTIONS_ORD_H */
