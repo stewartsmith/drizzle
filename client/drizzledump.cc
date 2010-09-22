@@ -689,7 +689,12 @@ ostream& operator <<(ostream &os,const DrizzleDumpDatabase &obj)
      << "-- Current Database: `" << obj.databaseName << "`" << endl
      << "--" << endl << endl;
 
-  os << "CREATE DATABASE IF NOT EXISTS `" << obj.databaseName << "` COLLATE = " << obj.collate << ";" << endl << endl;
+  /* Love that this variable is the opposite of its name */
+  if (not opt_create_db)
+  {
+    os << "CREATE DATABASE IF NOT EXISTS `" << obj.databaseName
+      << "` COLLATE = " << obj.collate << ";" << endl << endl;
+  }
 
   os << "USE `" << obj.databaseName << "`;" << endl << endl;
 
@@ -698,10 +703,14 @@ ostream& operator <<(ostream &os,const DrizzleDumpDatabase &obj)
   for (i= output_tables.begin(); i != output_tables.end(); ++i)
   {
     DrizzleDumpTable *table= *i;
-    os << *table;
-    DrizzleDumpData *data= new DrizzleDumpData(dcon, table);
-    os << *data;
-    delete data;
+    if (not opt_no_create_info)
+      os << *table;
+    if (not opt_no_data)
+    {
+      DrizzleDumpData *data= new DrizzleDumpData(dcon, table);
+      os << *data;
+      delete data;
+    }
   }
 
   return os;
@@ -751,6 +760,8 @@ ostream& operator <<(ostream &os,const DrizzleDumpData &obj)
 {
   bool new_insert= true;
   bool first= true;
+  uint64_t rownr= 0;
+
   drizzle_row_t row;
 
   if (drizzle_result_row_count(obj.result) < 1)
@@ -766,11 +777,19 @@ ostream& operator <<(ostream &os,const DrizzleDumpData &obj)
        << "-- Dumping data for table `" << obj.table->tableName << "`" << endl
        << "--" << endl << endl;
   }
+  if (opt_disable_keys)
+    os << "ALTER TABLE `" << obj.table->tableName << "` DISABLE KEYS;" << endl;
 
   streampos out_position= os.tellp();
 
   while((row= drizzle_row_next(obj.result)))
   {
+    rownr++;
+    if ((rownr % show_progress_size) == 0)
+    {
+      cerr << "-- %" << rownr << _(" rows dumped for table ") << obj.table->tableName << endl;
+    }
+
     size_t* row_sizes= drizzle_row_field_sizes(obj.result);
     if (not first)
     {
@@ -834,7 +853,13 @@ ostream& operator <<(ostream &os,const DrizzleDumpData &obj)
       out_position= os.tellp();
     }
   }
-  os << ");" << endl << endl;
+  os << ");" << endl;
+
+  if (opt_disable_keys)
+    os << "ALTER TABLE `" << obj.table->tableName << "` ENABLE KEYS;" << endl;
+
+  os << endl;
+
   return os;
 }
 
@@ -916,7 +941,9 @@ ostream& operator <<(ostream &os,const DrizzleDumpTable &obj)
      << "-- Table structure for table `" << obj.tableName << "`" << endl
      << "--" << endl << endl;
 
-  os << "DROP TABLE IF EXISTS `" << obj.tableName <<  "`;" << endl;
+  if (opt_drop)
+    os << "DROP TABLE IF EXISTS `" << obj.tableName <<  "`;" << endl;
+
   os << "CREATE TABLE `" << obj.tableName << "` (" << endl;
   std::vector<DrizzleDumpField*>::iterator i;
   std::vector<DrizzleDumpField*> output_fields = obj.fields;
@@ -1474,16 +1501,8 @@ try
   N_("To dump several databases. Note the difference in usage; In this case no tables are given. All name arguments are regarded as databasenames. 'USE db_name;' will be included in the output."))
   ("delayed-insert", po::value<bool>(&opt_delayed)->default_value(false)->zero_tokens(),
   N_("Insert rows with INSERT DELAYED;"))
-  ("enable-keys,K",
-  N_("'ALTER TABLE tb_name DISABLE KEYS; and 'ALTER TABLE tb_name ENABLE KEYS; will be put in the output."))
-  ("fields-terminated-by", po::value<string>(&fields_terminated)->default_value(""),
-  N_("Fields in the textfile are terminated by ..."))
-  ("fields-enclosed-by", po::value<string>(&enclosed)->default_value(""),
-  N_("Fields in the importfile are enclosed by ..."))
-  ("fields-optionally-enclosed-by", po::value<string>(&opt_enclosed)->default_value(""),
-  N_("Fields in the i.file are opt. enclosed by ..."))
-  ("fields-escaped-by", po::value<string>(&escaped)->default_value(""),
-  N_("Fields in the i.file are escaped by ..."))
+  ("skip-disable-keys,K",
+  N_("'ALTER TABLE tb_name DISABLE KEYS; and 'ALTER TABLE tb_name ENABLE KEYS; will not be put in the output."))
   ("hex-blob", po::value<bool>(&opt_hex_blob)->default_value(false)->zero_tokens(),
   "Dump binary strings (BINARY, VARBINARY, BLOB) in hexadecimal format.")
   ("ignore-table", po::value<string>(),
@@ -1504,14 +1523,10 @@ try
   ("set-charset", po::value<bool>(&opt_set_charset)->default_value(false)->zero_tokens(),
   N_("Enable set-name"))
   ("slow", N_("Buffer query instead of dumping directly to stdout."))
-  ("skip-quote-names",
-  N_("Do not quote table and column names with backticks (`)."))
   ("replace", po::value<bool>(&opt_replace_into)->default_value(false)->zero_tokens(),
   N_("Use REPLACE INTO instead of INSERT INTO."))
   ("result-file,r", po::value<string>(),
   N_("Direct output to a given file. This option should be used in MSDOS, because it prevents new line '\\n' from being converted to '\\r\\n' (carriage return + line feed)."))
-  ("tab,T", po::value<string>(&path)->default_value(""),
-  N_("Creates tab separated textfile for each table to given path. (creates .sql and .txt files). NOTE: This only works if drizzledump is run on the same machine as the drizzled daemon."))
   ("where,w", po::value<string>(&where)->default_value(""),
   N_("Dump only selected records; QUOTES mandatory!"))
   ;
@@ -1612,7 +1627,7 @@ try
   opt_comments= (vm.count("skip-comments")) ? false : true;
   extended_insert= (vm.count("skip-extended-insert")) ? false : true;
   opt_dump_date= (vm.count("skip-dump-date")) ? false : true;
-  opt_disable_keys= (vm.count("enable-keys")) ? false : true;
+  opt_disable_keys= (vm.count("skip-disable-keys")) ? false : true;
   quick= (vm.count("slow")) ? false : true;
   opt_quoted= (vm.count("skip-quote-names")) ? false : true;
 
@@ -1678,18 +1693,6 @@ try
   if (! path.empty())
   { 
     opt_disable_keys= 0;
-
-    if (vm["tab"].as<string>().length() >= FN_REFLEN)
-    {
-      /*
-        This check is made because the some the file functions below
-        have FN_REFLEN sized stack allocated buffers and will cause
-        a crash even if the input destination buffer is large enough
-        to hold the output.
-      */
-      fprintf(stderr, _("Input filename too long: %s"), vm["tab"].as<string>().c_str());
-      exit(EXIT_ARGUMENT_INVALID);
-    }
   }
 
   if (vm.count("skip-opt"))
