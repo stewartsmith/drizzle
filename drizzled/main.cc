@@ -23,6 +23,9 @@
 #include <signal.h>
 #include <sys/resource.h>
 #include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -241,15 +244,29 @@ int main(int argc, char **argv)
   select_thread=pthread_self();
   select_thread_in_use=1;
 
-  if (chdir(data_home_real) && !opt_help)
+  if (not opt_help)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Data directory %s does not exist\n"), data_home_real);
-    unireg_abort(1);
+    if (chdir(getDataHome().c_str()))
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Data directory %s does not exist\n"),
+                    getDataHome().c_str());
+      unireg_abort(1);
+    }
+    if (mkdir("local", 0700))
+    {
+      /* We don't actually care */
+    }
+    if (chdir("local"))
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Local catalog %s/local does not exist\n"),
+                    getDataHome().c_str());
+      unireg_abort(1);
+    }
   }
-  data_home= data_home_buff;
-  data_home[0]=FN_CURLIB;		// all paths are relative from here
-  data_home[1]=0;
-  data_home_len= 2;
+
+
 
   if (server_id == 0)
   {

@@ -62,7 +62,7 @@ static size_t build_schema_filename(string &path, const string &db)
    
 
   int rootdir_len= strlen(FN_ROOTDIR);
-  path.append(data_home);
+  path.append(getDataHomeCatalog());
   ssize_t without_rootdir= path.length() - rootdir_len;
 
   /* Don't add FN_ROOTDIR if dirzzle_data_home already includes it */

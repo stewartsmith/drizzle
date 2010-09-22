@@ -258,14 +258,14 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
 #endif
     if (!internal::dirname_length(ex->file_name))
     {
-      strcpy(name, data_home_real);
-      strncat(name, tdb, FN_REFLEN-strlen(data_home_real)-1);
+      strcpy(name, getDataHome().c_str());
+      strncat(name, tdb, FN_REFLEN-getDataHome().size()-1);
       (void) internal::fn_format(name, ex->file_name, name, "",
 		       MY_RELATIVE_PATH | MY_UNPACK_FILENAME);
     }
     else
     {
-      (void) internal::fn_format(name, ex->file_name, data_home_real, "",
+      (void) internal::fn_format(name, ex->file_name, getDataHome().c_str(), "",
 		       MY_RELATIVE_PATH | MY_UNPACK_FILENAME);
 
       if (opt_secure_file_priv &&

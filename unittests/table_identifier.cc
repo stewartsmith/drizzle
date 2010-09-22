@@ -29,8 +29,8 @@ using namespace drizzled;
 TEST(table_identifier_test_standard, Create)
 {
   TableIdentifier identifier("test", "a");
-  EXPECT_EQ("test/a", identifier.getPath());
-  EXPECT_EQ("test.a", identifier.getSQLPath());
+  EXPECT_EQ("local/test/a", identifier.getPath());
+  EXPECT_EQ("local/test.a", identifier.getSQLPath());
 }
 
 TEST(table_identifier_test_temporary, Create)

@@ -2028,8 +2028,7 @@ static STRUCT_TABLE *my_open_table(XTThreadPtr self, XTDatabaseHPtr XT_UNUSED(db
 			message::Table::STANDARD);
 	}
 	else {
-		std::string n;
-		n.append(data_home);
+		std::string n(getDataHomeCatalog());
 		n.append("/");
 		n.append(database_name);
 		n.append("/");
