@@ -1132,7 +1132,6 @@ xtPublic u_int myxt_get_key_length(XTIndexPtr ind, xtWord1 *key_buf)
 #endif
 			case HA_KEYTYPE_LONG_INT:
 			case HA_KEYTYPE_ULONG_INT:
-			case HA_KEYTYPE_UINT24:
 			case HA_KEYTYPE_DOUBLE:
 			case HA_KEYTYPE_LONGLONG:
 			case HA_KEYTYPE_ULONGLONG:
@@ -1343,7 +1342,6 @@ xtPublic int myxt_compare_key(XTIndexPtr ind, int search_flags, uint key_length,
 				b += keyseg->length;
 				break;
 			}
-#endif
 			case HA_KEYTYPE_UINT24: {
 				int32_t l_1 = uint3korr(a);
 				int32_t l_2 = uint3korr(b);
@@ -1353,7 +1351,6 @@ xtPublic int myxt_compare_key(XTIndexPtr ind, int search_flags, uint key_length,
 				b += keyseg->length;
 				break;
 			}
-#ifndef DRIZZLED
 			case HA_KEYTYPE_FLOAT: {
 				float f_1, f_2;
 
@@ -1521,10 +1518,10 @@ xtPublic u_int myxt_key_seg_length(XTIndexSegRec *keyseg, u_int key_offset, xtWo
 		case HA_KEYTYPE_USHORT_INT:
 		case HA_KEYTYPE_INT24:
 		case HA_KEYTYPE_FLOAT:
+		case HA_KEYTYPE_UINT24:
 #endif		
 		case HA_KEYTYPE_LONG_INT:
 		case HA_KEYTYPE_ULONG_INT:
-		case HA_KEYTYPE_UINT24:
 		case HA_KEYTYPE_DOUBLE:
 			break;
 #ifndef DRIZZLED
@@ -2245,10 +2242,10 @@ static XTIndexPtr my_create_index(XTThreadPtr self, STRUCT_TABLE *table_arg, u_i
 #else
 					seg->type = HA_KEYTYPE_USHORT_INT;
 					break;
-#endif
 				case 3:
 					seg->type = HA_KEYTYPE_UINT24;
 					break;
+#endif
 			}
 		}
 #endif
