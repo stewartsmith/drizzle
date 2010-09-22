@@ -39,4 +39,4 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FUNCTION_MATH_CEILING_H */
+#endif /* PLUGIN_MATH_FUNCTIONS_CEILING_H */
