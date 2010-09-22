@@ -299,14 +299,13 @@ void Session::lockOnSys()
     return;
 
   setAbort(true);
-  pthread_mutex_lock(&mysys_var->mutex);
+  boost::mutex::scoped_lock scopedLock(mysys_var->mutex);
   if (mysys_var->current_cond)
   {
-    pthread_mutex_lock(mysys_var->current_mutex);
-    pthread_cond_broadcast(mysys_var->current_cond);
-    pthread_mutex_unlock(mysys_var->current_mutex);
+    mysys_var->current_mutex->lock();
+    pthread_cond_broadcast(mysys_var->current_cond->native_handle());
+    mysys_var->current_mutex->unlock();
   }
-  pthread_mutex_unlock(&mysys_var->mutex);
 }
 
 void Session::pop_internal_handler()
@@ -409,8 +408,9 @@ void Session::awake(Session::killed_state state_to_set)
   }
   if (mysys_var)
   {
-    pthread_mutex_lock(&mysys_var->mutex);
+    boost::mutex::scoped_lock scopedLock(mysys_var->mutex);
     /*
+      "
       This broadcast could be up in the air if the victim thread
       exits the cond in the time between read and broadcast, but that is
       ok since all we want to do is to make the victim thread get out
@@ -431,11 +431,10 @@ void Session::awake(Session::killed_state state_to_set)
     */
     if (mysys_var->current_cond && mysys_var->current_mutex)
     {
-      pthread_mutex_lock(mysys_var->current_mutex);
-      pthread_cond_broadcast(mysys_var->current_cond);
-      pthread_mutex_unlock(mysys_var->current_mutex);
+      mysys_var->current_mutex->lock();
+      pthread_cond_broadcast(mysys_var->current_cond->native_handle());
+      mysys_var->current_mutex->unlock();
     }
-    pthread_mutex_unlock(&mysys_var->mutex);
   }
 }
 
@@ -570,8 +569,8 @@ const char* Session::enter_cond(boost::condition_variable &cond, boost::mutex &m
 {
   const char* old_msg = get_proc_info();
   safe_mutex_assert_owner(mutex);
-  mysys_var->current_mutex = mutex.native_handle();
-  mysys_var->current_cond = cond.native_handle();
+  mysys_var->current_mutex = &mutex;
+  mysys_var->current_cond = &cond;
   this->set_proc_info(msg);
   return old_msg;
 }
@@ -584,12 +583,11 @@ void Session::exit_cond(const char* old_msg)
     locked (if that would not be the case, you'll get a deadlock if someone
     does a Session::awake() on you).
   */
-  pthread_mutex_unlock(mysys_var->current_mutex);
-  pthread_mutex_lock(&mysys_var->mutex);
+  mysys_var->current_mutex->unlock();
+  boost::mutex::scoped_lock scopedLock(mysys_var->mutex);
   mysys_var->current_mutex = 0;
   mysys_var->current_cond = 0;
   this->set_proc_info(old_msg);
-  pthread_mutex_unlock(&mysys_var->mutex);
 }
 
 bool Session::authenticate()
