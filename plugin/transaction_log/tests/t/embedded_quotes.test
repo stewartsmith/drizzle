@@ -1,0 +1,16 @@
+#
+# Tests for properly escaping embedded quotes when reading from the transaction log
+#
+
+CREATE TABLE t (a INT NOT NULL PRIMARY KEY, b VARCHAR(10));
+
+INSERT INTO t VALUES (1, "don't");
+
+# Read in the transaction.log.
+
+--exec ../drizzled/message/transaction_reader var/master-data/transaction.log
+
+DROP TABLE t;
+
+# Truncate the log file to reset for the next test
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
