@@ -61,6 +61,7 @@
 #include "plugin/myisam/myisam.h"
 #include "drizzled/drizzled.h"
 #include "drizzled/module/registry.h"
+#include "drizzled/module/load_list.h"
 
 #include <google/protobuf/stubs/common.h>
 
@@ -176,6 +177,7 @@ extern "C" int gethostname(char *name, int namelen);
 
 const char *first_keyword= "first";
 const char * const DRIZZLE_CONFIG_NAME= "drizzled";
+
 #define GET_HA_ROWS GET_ULL
 
 const char *tx_isolation_names[] =
@@ -361,6 +363,7 @@ void close_connections(void);
 po::options_description long_options("Kernel Options");
 po::options_description plugin_options("Plugin Options");
 vector<string> unknown_options;
+vector<string> defaults_file_list;
 po::variables_map vm;
 
 po::variables_map &getVariablesMap()
@@ -1034,6 +1037,65 @@ static pair<string, string> parse_size_arg(string s)
   return make_pair(string(""), string(""));
 }
 
+static void process_defaults_files()
+{
+  for (vector<string>::iterator iter= defaults_file_list.begin();
+       iter != defaults_file_list.end();
+       ++iter)
+  {
+    string file_location(vm["config-dir"].as<string>());
+    if ((*iter)[0] != '/')
+    {
+      /* Relative path - add config dir */
+      file_location.push_back('/');
+      file_location.append(*iter);
+    }
+    else
+    {
+      file_location= *iter;
+    }
+
+    ifstream input_defaults_file(file_location.c_str());
+    
+    po::parsed_options file_parsed=
+      po::parse_config_file(input_defaults_file, long_options, true);
+    vector<string> file_unknown= 
+      po::collect_unrecognized(file_parsed.options, po::include_positional);
+
+    for (vector<string>::iterator it= file_unknown.begin();
+         it != file_unknown.end();
+         ++it)
+    {
+      string new_unknown_opt("--");
+      new_unknown_opt.append(*it);
+      ++it;
+      if (it != file_unknown.end())
+      {
+        if ((*it) != "true")
+        {
+          new_unknown_opt.push_back('=');
+          new_unknown_opt.append(*it);
+        }
+      }
+      else
+      {
+        break;
+      }
+      unknown_options.push_back(new_unknown_opt);
+    }
+    store(file_parsed, vm);
+  }
+}
+
+static void compose_defaults_file_list(vector<string> in_options)
+{
+  for (vector<string>::iterator it= in_options.begin();
+       it != in_options.end();
+       ++it)
+  {
+    defaults_file_list.push_back(*it);
+  }
+}
 
 int init_common_variables(int argc, char **argv)
 {
@@ -1077,11 +1139,10 @@ int init_common_variables(int argc, char **argv)
     strncpy(pidfile_name, glob_hostname, sizeof(pidfile_name)-5);
   strcpy(internal::fn_ext(pidfile_name),".pid");		// Add proper extension
 
-
-
-
   std::string system_config_dir_drizzle(SYSCONFDIR);
-  system_config_dir_drizzle.append("/drizzle/drizzle.cnf");
+  system_config_dir_drizzle.append("/drizzle");
+
+  std::string system_config_file_drizzle("drizzled.cnf");
 
   long_options.add_options()
   ("help-extended", po::value<bool>(&opt_help_extended)->default_value(false)->zero_tokens(),
@@ -1198,15 +1259,15 @@ int init_common_variables(int argc, char **argv)
      "testing/comparison)."))
   ("plugin-dir", po::value<string>(),
   N_("Directory for plugins."))
-  ("plugin-add", po::value<string>(),
+  ("plugin-add", po::value<vector<string> >()->composing()->notifier(&compose_plugin_add),
   N_("Optional comma separated list of plugins to load at startup in addition "
      "to the default list of plugins. "
      "[for example: --plugin_add=crc32,logger_gearman]"))    
-  ("plugin-remove", po::value<string>(),
+  ("plugin-remove", po::value<vector<string> >()->composing()->notifier(&compose_plugin_remove),
   N_("Optional comma separated list of plugins to not load at startup. Effectively "
      "removes a plugin from the list of plugins to be loaded. "
      "[for example: --plugin_remove=crc32,logger_gearman]"))
-  ("plugin-load", po::value<string>(),
+  ("plugin-load", po::value<string>()->notifier(&notify_plugin_load)->default_value(PANDORA_PLUGIN_LIST),
   N_("Optional comma separated list of plugins to load at starup instead of "
      "the default plugin load list. "
      "[for example: --plugin_load=crc32,logger_gearman]"))  
@@ -1251,8 +1312,10 @@ int init_common_variables(int argc, char **argv)
      " automatically convert it to an on-disk MyISAM table."))
   ("no-defaults", po::value<bool>()->default_value(false)->zero_tokens(),
   N_("Configuration file defaults are not used if no-defaults is set"))
-  ("defaults-file", po::value<string>()->default_value(system_config_dir_drizzle),
+  ("defaults-file", po::value<vector<string> >()->composing()->notifier(&compose_defaults_file_list),
    N_("Configuration file to use"))
+  ("config-dir", po::value<string>()->default_value(system_config_dir_drizzle),
+   N_("Base location for config files"))
   ;
 
   po::parsed_options parsed= po::command_line_parser(argc, argv).
@@ -1270,13 +1333,38 @@ int init_common_variables(int argc, char **argv)
     unireg_abort(1);
   }
 
-
-  if (! vm["no-defaults"].as<bool>())
+  if (not vm["no-defaults"].as<bool>())
   {
-    ifstream system_drizzle_ifs(vm["defaults-file"].as<string>().c_str());
-    store(po::parse_config_file(system_drizzle_ifs, long_options), vm);
+    defaults_file_list.insert(defaults_file_list.begin(),
+                              system_config_file_drizzle);
   }
 
+  string config_conf_d_location(vm["config-dir"].as<string>());
+  config_conf_d_location.append("/conf.d");
+  CachedDirectory config_conf_d(config_conf_d_location);
+  if (not config_conf_d.fail())
+  {
+
+    for (CachedDirectory::Entries::const_iterator iter= config_conf_d.getEntries().begin();
+         iter != config_conf_d.getEntries().end();
+         ++iter)
+    {
+      string file_entry((*iter)->filename);
+          
+      if (not file_entry.empty()
+          && file_entry != "."
+          && file_entry != "..")
+      {
+        string the_entry(config_conf_d_location);
+        the_entry.push_back('/');
+        the_entry.append(file_entry);
+        defaults_file_list.push_back(the_entry);
+      }
+    }
+  }
+
+  po::notify(vm);
+  process_defaults_files();
   po::notify(vm);
 
   get_options();
@@ -1393,39 +1481,33 @@ int init_server_components(module::Registry &plugins)
   if (opt_help || opt_help_extended)
     unireg_abort(0);
 
-  po::parsed_options parsed= po::command_line_parser(unknown_options).
-    options(plugin_options).extra_parser(parse_size_arg).
-    allow_unregistered().run();
-
-  vector<string> final_unknown_options=
-    po::collect_unrecognized(parsed.options, po::include_positional);
-
-  /* we do want to exit if there are any other unknown options */
-  /** @TODO: We should perhaps remove allowed_unregistered() and catch the
-    exception here */
-  if (final_unknown_options.size() > 0)
-  {
-     errmsg_printf(ERRMSG_LVL_ERROR,
-            _("%s: Unknown options given (first unknown is '%s').\n"
-              "Use --help to get a list of available options\n"),
-            internal::my_progname, final_unknown_options[0].c_str());
-      unireg_abort(1);
-  }
-
+  vector<string> final_unknown_options;
   try
   {
+    po::parsed_options parsed=
+      po::command_line_parser(unknown_options).
+      options(plugin_options).extra_parser(parse_size_arg).run();
+
+    final_unknown_options=
+      po::collect_unrecognized(parsed.options, po::include_positional);
+
     po::store(parsed, vm);
+
   }
-  catch (...)
+  catch (po::invalid_command_line_syntax &err)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Duplicate entry for command line option\n"));
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("%s: %s.\n"
+                    "Use --help to get a list of available options\n"),
+                  internal::my_progname, err.what());
     unireg_abort(1);
   }
-
-  if (not vm["no-defaults"].as<bool>())
+  catch (po::unknown_option &err)
   {
-    ifstream system_drizzle_ifs(vm["defaults-file"].as<string>().c_str());
-    store(po::parse_config_file(system_drizzle_ifs, long_options), vm);
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("%s\nUse --help to get a list of available options\n"),
+                  err.what());
+    unireg_abort(1);
   }
 
   po::notify(vm);
@@ -1802,19 +1884,19 @@ struct option my_long_options[] =
    N_("Optional comma separated list of plugins to load at startup in addition "
       "to the default list of plugins. "
       "[for example: --plugin_add=crc32,logger_gearman]"),
-   (char**) &opt_plugin_add, (char**) &opt_plugin_add, 0,
+   NULL, NULL, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"plugin_remove", OPT_PLUGIN_ADD,
    N_("Optional comma separated list of plugins to not load at startup. Effectively "
       "removes a plugin from the list of plugins to be loaded. "
       "[for example: --plugin_remove=crc32,logger_gearman]"),
-   (char**) &opt_plugin_remove, (char**) &opt_plugin_remove, 0,
+   NULL, NULL, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"plugin_load", OPT_PLUGIN_LOAD,
    N_("Optional comma separated list of plugins to load at starup instead of "
       "the default plugin load list. "
       "[for example: --plugin_load=crc32,logger_gearman]"),
-   (char**) &opt_plugin_load, (char**) &opt_plugin_load, 0,
+   NULL, NULL, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"preload_buffer_size", OPT_PRELOAD_BUFFER_SIZE,
    N_("The size of the buffer that is allocated when preloading indexes"),
@@ -2129,18 +2211,6 @@ static void get_options()
   }
 
   /* @TODO Make this all strings */
-  if (vm.count("plugin-remove"))
-  {
-    opt_plugin_remove= (char *)vm["plugin-remove"].as<string>().c_str();
-  }
-  if (vm.count("plugin-add"))
-  {
-    opt_plugin_add= (char *)vm["plugin-add"].as<string>().c_str();
-  }
-  if (vm.count("plugin-load"))
-  {
-    opt_plugin_load= (char *)vm["plugin-load"].as<string>().c_str();
-  }
   if (vm.count("default-storage-engine"))
   {
     default_storage_engine_str= (char *)vm["default-storage-engine"].as<string>().c_str();
