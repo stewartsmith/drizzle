@@ -653,7 +653,7 @@ sub command_line_setup () {
   }
 
   if ( $opt_testdir and -d $opt_testdir and $opt_vardir and -d $opt_vardir
-         and -f "$opt_vardir/../../drizzled/drizzled7")
+         and -f "$opt_vardir/../../drizzled/drizzled")
   {
     # probably in a VPATH build
     $glob_builddir= "$opt_vardir/../..";
@@ -683,12 +683,12 @@ sub command_line_setup () {
 
   if (!$opt_extern)
   {
-    $exe_drizzled=       mtr_exe_exists ("$glob_basedir/drizzled/drizzled7",
-				       "$path_client_bindir/drizzled7",
-				       "$glob_basedir/libexec/drizzled7",
-				       "$glob_basedir/bin/drizzled7",
-				       "$glob_basedir/sbin/drizzled7",
-                                       "$glob_builddir/drizzled/drizzled7");
+    $exe_drizzled=       mtr_exe_exists ("$glob_basedir/drizzled/drizzled",
+				       "$path_client_bindir/drizzled",
+				       "$glob_basedir/libexec/drizzled",
+				       "$glob_basedir/bin/drizzled",
+				       "$glob_basedir/sbin/drizzled",
+                                       "$glob_builddir/drizzled/drizzled");
 
     # Use the drizzled found above to find out what features are available
     collect_mysqld_features();
