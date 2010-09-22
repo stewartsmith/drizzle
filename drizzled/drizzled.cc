@@ -1500,8 +1500,7 @@ int init_server_components(module::Registry &plugins)
   {
     po::parsed_options parsed=
       po::command_line_parser(unknown_options).
-      options(plugin_options).extra_parser(parse_size_arg).
-      allow_unregistered().run();
+      options(plugin_options).extra_parser(parse_size_arg).run();
 
     final_unknown_options=
       po::collect_unrecognized(parsed.options, po::include_positional);
@@ -1511,28 +1510,18 @@ int init_server_components(module::Registry &plugins)
   }
   catch (po::invalid_command_line_syntax &err)
   {
-     errmsg_printf(ERRMSG_LVL_ERROR,
-            _("%s: %s.\n"
-              "Use --help to get a list of available options\n"),
-            internal::my_progname, err.what());
-      unireg_abort(1);
-  }
-  catch (...)
-  {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Duplicate entry for command line option\n"));
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("%s: %s.\n"
+                    "Use --help to get a list of available options\n"),
+                  internal::my_progname, err.what());
     unireg_abort(1);
   }
-
-  /* we do want to exit if there are any other unknown options */
-  /** @TODO: We should perhaps remove allowed_unregistered() and catch the
-    exception here */
-  if (final_unknown_options.size() > 0)
+  catch (po::unknown_option &err)
   {
-     errmsg_printf(ERRMSG_LVL_ERROR,
-            _("%s: Unknown options given (first unknown is '%s').\n"
-              "Use --help to get a list of available options\n"),
-            internal::my_progname, final_unknown_options[0].c_str());
-      unireg_abort(1);
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("%s\nUse --help to get a list of available options\n"),
+                  err.what());
+    unireg_abort(1);
   }
 
   po::notify(vm);
