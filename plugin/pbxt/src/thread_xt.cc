@@ -258,11 +258,16 @@ static void thr_log_va(XTThreadPtr self, c_char *func, c_char *file, u_int line,
 #else
 	/* Use the buffer, unless it is too small */
 	va_list ap2;
+	int bufsize;
 
 	va_copy(ap2, ap);
-	if (vsnprintf(buffer, DEFAULT_LOG_BUFFER_SIZE, fmt, ap) >= DEFAULT_LOG_BUFFER_SIZE) {
-		if (vasprintf(&log_string, fmt, ap2) == -1)
+	bufsize = vsnprintf(buffer, DEFAULT_LOG_BUFFER_SIZE, fmt, ap);
+	if (bufsize >= DEFAULT_LOG_BUFFER_SIZE) {
+		log_string = (char *) malloc(bufsize + 1);
+		if (vsnprintf(log_string, bufsize + 1, fmt, ap2) > bufsize) {
+			free(log_string);
 			log_string = NULL;
+		}
 	}
 	else
 		log_string = buffer;
@@ -856,9 +861,7 @@ xtPublic void xt_register_tabcolerr(c_char *func, c_char *file, u_int line, int 
 	char buffer[XT_TABLE_NAME_BUF_SIZE];
 
 	xt_tab_make_table_name(tab_item, buffer, sizeof(buffer));
-	xt_strcat(sizeof(buffer), buffer, ".");
-	xt_strcat(sizeof(buffer), buffer, item2);
-	xt_register_ixterr(func, file, line, xt_err, buffer);
+	xt_register_i2xterr(func, file, line, xt_err, buffer, item2);
 }
 
 xtPublic void xt_register_taberr(c_char *func, c_char *file, u_int line, int xt_err, XTPathStrPtr tab_item)

@@ -106,7 +106,6 @@ static bool opt_xml;
 static bool opt_single_transaction= false; 
 static bool opt_comments;
 static bool opt_compact;
-static bool opt_hex_blob= false;
 static bool opt_order_by_primary=false; 
 static bool opt_ignore= false;
 static bool opt_complete_insert= false;
@@ -1568,7 +1567,7 @@ static void dump_table(char *table, char *db)
           we have not a BLOB but a TEXT column.
           we'll dump in hex only BLOB columns.
         */
-        is_blob= (opt_hex_blob && drizzle_column_charset(column) == 63 &&
+        is_blob= (drizzle_column_charset(column) == 63 &&
                   (drizzle_column_type(column) == DRIZZLE_COLUMN_TYPE_VARCHAR ||
                    drizzle_column_type(column) == DRIZZLE_COLUMN_TYPE_BLOB)) ? 1 : 0;
         if (extended_insert && !opt_xml)
@@ -1597,7 +1596,7 @@ static void dump_table(char *table, char *db)
                 */
                 char * tmp_str= (char *)malloc(length * 2 + 2 + 1);
                 memset(tmp_str, '\0', length * 2 + 2 + 1);
-                if (opt_hex_blob && is_blob)
+                if (is_blob)
                 {
                   extended_row.append("0x");
                   drizzle_hex_string(tmp_str, row[i], length);
@@ -1644,7 +1643,7 @@ static void dump_table(char *table, char *db)
             {
               if (opt_xml)
               {
-                if (opt_hex_blob && is_blob && length)
+                if (is_blob && length)
                 {
                   /* Define xsi:type="xs:hexBinary" for hex encoded data */
                   print_xml_tag(md_result_file, "\t\t", "", "field", "name=",
@@ -1659,7 +1658,7 @@ static void dump_table(char *table, char *db)
                 }
                 fputs("</field>\n", md_result_file);
               }
-              else if (opt_hex_blob && is_blob && length)
+              else if (is_blob && length)
               {
                 fputs("0x", md_result_file);
                 print_blob_as_hex(md_result_file, row[i], length);
@@ -2453,8 +2452,6 @@ try
   N_("Fields in the i.file are opt. enclosed by ..."))
   ("fields-escaped-by", po::value<string>(&escaped)->default_value(""),
   N_("Fields in the i.file are escaped by ..."))
-  ("hex-blob", po::value<bool>(&opt_hex_blob)->default_value(false)->zero_tokens(),
-  "Dump binary strings (BINARY, VARBINARY, BLOB) in hexadecimal format.")
   ("ignore-table", po::value<string>(),
   N_("Do not dump the specified table. To specify more than one table to ignore, use the directive multiple times, once for each table.  Each table must be specified with both database and table names, e.g. --ignore-table=database.table"))
   ("insert-ignore", po::value<bool>(&opt_ignore)->default_value(false)->zero_tokens(),

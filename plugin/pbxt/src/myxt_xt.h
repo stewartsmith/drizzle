@@ -68,18 +68,18 @@ void		myxt_free_dictionary(XTThreadPtr self, XTDictionary *dic);
 void		myxt_move_dictionary(XTDictionaryPtr dic, XTDictionaryPtr source_dic);
 XTDDTable	*myxt_create_table_from_table(XTThreadPtr self, STRUCT_TABLE *my_tab);
 
-void		myxt_static_convert_identifier(XTThreadPtr self, MX_CHARSET_INFO *cs, char *from, char *to, size_t to_len);
-char		*myxt_convert_identifier(XTThreadPtr self, MX_CHARSET_INFO *cs, char *from);
+void		myxt_static_convert_identifier(XTThreadPtr self, MX_CONST_CHARSET_INFO *cs, char *from, char *to, size_t to_len);
+char		*myxt_convert_identifier(XTThreadPtr self, MX_CONST_CHARSET_INFO *cs, char *from);
 void		myxt_static_convert_table_name(XTThreadPtr self, char *from, char *to, size_t to_len);
 void		myxt_static_convert_file_name(char *from, char *to, size_t to_len);
 char		*myxt_convert_table_name(XTThreadPtr self, char *from);
 xtBool		myxt_temp_table_name(const char *table);
 int			myxt_strcasecmp(char * a, char *b);
-int			myxt_isspace(MX_CHARSET_INFO *cs, char a);
-int			myxt_ispunct(MX_CHARSET_INFO *cs, char a);
-int			myxt_isdigit(MX_CHARSET_INFO *cs, char a);
+int			myxt_isspace(MX_CONST_CHARSET_INFO *cs, char a);
+int			myxt_ispunct(MX_CONST_CHARSET_INFO *cs, char a);
+int			myxt_isdigit(MX_CONST_CHARSET_INFO *cs, char a);
 
-MX_CHARSET_INFO *myxt_getcharset(bool convert);
+MX_CONST_CHARSET_INFO *myxt_getcharset(bool convert);
 
 xtBool		myxt_create_thread_possible();
 void		*myxt_create_thread();

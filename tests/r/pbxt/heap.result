@@ -7,7 +7,7 @@ Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_incr
 #	test	t1	TEMPORARY	MEMORY	#	#	#	#	#
 show keys from t1;
 Table	Unique	Key_name	Seq_in_index	Column_name
-t1	TRUE	PRIMARY	1	a
+t1	YES	PRIMARY	1	a
 select * from t1;
 a	b
 2	2
@@ -202,7 +202,7 @@ key a (a)
 INSERT INTO t1 VALUES (10), (10), (10);
 EXPLAIN SELECT * FROM t1 WHERE a=10;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	a	a	5	const	3	
+1	SIMPLE	t1	ref	a	a	5	const	3	Using where
 SELECT * FROM t1 WHERE a=10;
 a
 10
@@ -252,76 +252,79 @@ create temporary table t1 (v varchar(10), c char(10), t varchar(50));
 insert into t1 values('+ ', '+ ', '+ ');
 set @a=repeat(' ',20);
 insert into t1 values (concat('+',@a),concat('+',@a),concat('+',@a));
-Warnings:
-Note	1265	Data truncated for column 'v' at row 1
-Note	1265	Data truncated for column 'c' at row 1
+ERROR 22001: Data too long for column 'v' at row 1
+set @a=repeat(' ',10);
+insert into t1 values (concat('+',@a),concat('+',@a),concat('+',@a));
+ERROR 22001: Data too long for column 'v' at row 1
+set @a=repeat(' ',9);
+insert into t1 values (concat('+',@a),concat('+',@a),concat('+',@a));
 select concat('*',v,'*',c,'*',t,'*') from t1;
 concat('*',v,'*',c,'*',t,'*')
 *+ *+ *+ *
-*+         *+         *+                    *
+*+         *+         *+         *
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `v` varchar(10) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` varchar(50) DEFAULT NULL
-) ENGINE=MEMORY
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` VARCHAR(50) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 create temporary table t2 like t1;
 show create table t2;
 Table	Create Table
 t2	CREATE TEMPORARY TABLE `t2` (
-  `v` varchar(10) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` varchar(50) DEFAULT NULL
-) ENGINE=MEMORY
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` VARCHAR(50) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 create temporary table t3 select * from t1;
 show create table t3;
 Table	Create Table
 t3	CREATE TEMPORARY TABLE `t3` (
-  `v` varchar(10) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` varchar(50) DEFAULT NULL
-) ENGINE=MEMORY
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` VARCHAR(50) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 alter table t1 modify c varchar(10);
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `v` varchar(10) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` varchar(50) DEFAULT NULL
-) ENGINE=MEMORY
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` VARCHAR(50) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 alter table t1 modify v char(10);
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `v` varchar(10) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` varchar(50) DEFAULT NULL
-) ENGINE=MEMORY
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` VARCHAR(50) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 alter table t1 modify t varchar(50);
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `v` varchar(10) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` varchar(50) DEFAULT NULL
-) ENGINE=MEMORY
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` VARCHAR(50) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 select concat('*',v,'*',c,'*',t,'*') from t1;
 concat('*',v,'*',c,'*',t,'*')
 *+ *+ *+ *
-*+         *+         *+                    *
+*+         *+         *+         *
 drop table t1,t2,t3;
 create temporary table t1 (v varchar(10), c char(10), t varchar(50), key(v), key(c), key(t(10)));
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `v` varchar(10) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` varchar(50) DEFAULT NULL,
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` VARCHAR(50) COLLATE utf8_general_ci DEFAULT NULL,
   KEY `v` (`v`),
   KEY `c` (`c`),
   KEY `t` (`t`(10))
-) ENGINE=MEMORY
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 select count(*) from t1;
 count(*)
 270
@@ -528,7 +531,7 @@ ERROR 23000: Duplicate entry 'a ' for key 'a'
 insert into t1 values ('a     ');
 ERROR 23000: Duplicate entry 'a     ' for key 'a'
 insert into t1 values ('a          ');
-ERROR 23000: Duplicate entry 'a         ' for key 'a'
+ERROR 22001: Data too long for column 'a' at row 1
 insert into t1 values ('a ');
 ERROR 23000: Duplicate entry 'a ' for key 'a'
 update t1 set a='a      ' where a like 'a ';
@@ -538,13 +541,13 @@ create temporary table t1 (v varchar(10), c char(10), t varchar(50), key using b
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `v` varchar(10) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` varchar(50) DEFAULT NULL,
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` VARCHAR(50) COLLATE utf8_general_ci DEFAULT NULL,
   KEY `v` (`v`) USING BTREE,
   KEY `c` (`c`) USING BTREE,
   KEY `t` (`t`(10)) USING BTREE
-) ENGINE=MEMORY
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 select count(*) from t1;
 count(*)
 270
@@ -584,7 +587,7 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ref	t	t	43	const	#	Using where
 explain select count(*) from t1 where v like 'a%';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	v	v	43	NULL	#	Using where
+1	SIMPLE	t1	ALL	v	NULL	NULL	NULL	#	Using where
 explain select count(*) from t1 where v between 'a' and 'a ';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ref	v	v	43	const	#	Using where
@@ -619,7 +622,7 @@ ERROR 23000: Duplicate entry 'a ' for key 'a'
 insert into t1 values ('a     ');
 ERROR 23000: Duplicate entry 'a     ' for key 'a'
 insert into t1 values ('a          ');
-ERROR 23000: Duplicate entry 'a         ' for key 'a'
+ERROR 22001: Data too long for column 'a' at row 1
 insert into t1 values ('a ');
 ERROR 23000: Duplicate entry 'a ' for key 'a'
 update t1 set a='a      ' where a like 'a ';
@@ -629,21 +632,21 @@ create temporary table t1 (v varchar(10), c char(10), t varchar(50), key(v(5)), 
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `v` varchar(10) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` varchar(50) DEFAULT NULL,
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` VARCHAR(50) COLLATE utf8_general_ci DEFAULT NULL,
   KEY `v` (`v`(5)),
   KEY `c` (`c`(5)),
   KEY `t` (`t`(5))
-) ENGINE=MEMORY
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 drop table t1;
 create temporary table t1 (v varchar(16383), key(v(10)));
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `v` varchar(16383) DEFAULT NULL,
+  `v` VARCHAR(16383) COLLATE utf8_general_ci DEFAULT NULL,
   KEY `v` (`v`(10))
-) ENGINE=MEMORY
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 insert into t1 values(repeat('a',16383));
 select length(v) from t1 where v=repeat('a',16383);
 length(v)

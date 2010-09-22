@@ -1261,7 +1261,7 @@ xtBool XTDataLogBuffer::dlb_write_thru_log(xtLogID XT_NDEBUG_UNUSED(log_id), xtL
 	 */
 	dlb_data_log->dlf_log_eof += size;
 #ifdef DEBUG
-	if (log_offset + size > dlb_max_write_offset)
+	if (log_offset + (xtLogOffset) size > (xtLogOffset) dlb_max_write_offset)
 		dlb_max_write_offset = log_offset + size;
 #endif
 	dlb_flush_required = TRUE;
@@ -1303,7 +1303,7 @@ xtBool XTDataLogBuffer::dlb_append_log(xtLogID XT_NDEBUG_UNUSED(log_id), xtLogOf
 	if (!xt_pwrite_file(dlb_data_log->dlf_log_file, log_offset, size, data, &thread->st_statistics.st_data, thread))
 		return FAILED;
 #ifdef DEBUG
-	if (log_offset + size > dlb_max_write_offset)
+	if (log_offset + (xtLogOffset) size > (xtLogOffset) dlb_max_write_offset)
 		dlb_max_write_offset = log_offset + size;
 #endif
 	dlb_flush_required = TRUE;

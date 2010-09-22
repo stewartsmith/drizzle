@@ -478,6 +478,24 @@ typedef struct XTPathStr {
  */
 #define XT_XLOG_FLUSH_FREQ				1000
 
+/*
+ * Define here if you want to check (and correct) the table free list
+ * counts. The free list counts are not durable, because they are not
+ * written to the log.
+ *
+ * The row free count is most critical because it can be used to
+ * estimate the the of rows in the record.
+ */
+#define XT_CHECK_ROW_FREE_COUNT
+#ifdef DEBUG
+#define XT_CHECK_RECORD_FREE_COUNT
+#endif
+#define XT_CORRECT_TABLE_FREE_COUNT 
+
+#if defined(XT_CHECK_ROW_FREE_COUNT) && defined(XT_CORRECT_TABLE_FREE_COUNT)
+#define XT_ROW_COUNT_CORRECTED
+#endif
+
 /* ----------------------------------------------------------------------
  * GLOBAL CONSTANTS
  */
@@ -556,6 +574,14 @@ typedef struct XTPathStr {
  */
 
 /* Missing on some Solaris machines: */
+/* Drizzle compiles with this stuff defined here.
+ * Is there a reason why they should not go here?
+ * In general, this should come after the system
+ * headers, just in case they are defined in the 
+ * system headers. xt_defs.h should be included
+ * after the system headers. xt_config.h should be
+ * included before the system headers.
+ */
 #ifndef BIG_ENDIAN
 #define BIG_ENDIAN 4321
 #endif
@@ -934,8 +960,16 @@ namespace drizzled {
 class Session;
 }
 
+#define RECORD_0							getInsertRecord()
+#define TABLE_RECORD_0						getTable()->getInsertRecord()
+#define TABLE_FIELDS						table->getFields()
+#define MYSQL_LOCK(x)						x.lock
+#define MYSQL_UNLOCK(x)						x.unlock
+#define MYSQL_INIT_LOCK(x, y)				x.init(y)
+#define MYSQL_FREE_LOCK(x)					x.deinit()
 
 #else // DRIZZLED
+
 /* The MySQL case: */
 #if MYSQL_VERSION_ID >= 50404
 #define STRUCT_TABLE						struct TABLE
@@ -958,11 +992,23 @@ class Session;
 #define MX_ULONGLONG_T						ulonglong
 #define MX_LONGLONG_T						longlong
 #define MX_CHARSET_INFO						struct charset_info_st
-#define MX_CONST_CHARSET_INFO				struct charset_info_st			
+#ifdef MARIADB_BASE_VERSION
+#define MX_CONST_CHARSET_INFO				const struct charset_info_st
+#else
+#define MX_CONST_CHARSET_INFO				struct charset_info_st
+#endif			
 #define MX_CONST							
 #define MX_BITMAP							MY_BITMAP
 #define MX_BIT_SIZE()						n_bits
 #define MX_BIT_SET(x, y)					bitmap_set_bit(x, y)
+
+#define RECORD_0							record[0]
+#define TABLE_RECORD_0						table->record[0]
+#define TABLE_FIELDS						table->field
+#define MYSQL_LOCK(x)						pthread_mutex_lock(&x)
+#define MYSQL_UNLOCK(x)						pthread_mutex_unlock(&x)
+#define MYSQL_INIT_LOCK(x, y)				thr_lock_data_init(y, &x, NULL);
+#define MYSQL_FREE_LOCK(x)					thr_lock_delete(&x)
 
 #endif // DRIZZLED
 
