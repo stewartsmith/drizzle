@@ -43,5 +43,5 @@ unittests_unittests_SOURCES = \
 			      unittests/utf8_test.cc
 
 unittests_unittests_LDADD= \
-  $(filter-out drizzled/main.$(OBJEXT), ${am_drizzled_drizzled7_OBJECTS}) \
-  ${drizzled_drizzled7_LDADD} ${LTLIBGTEST} ${BOOST_LIBS}
+  $(filter-out drizzled/main.$(OBJEXT), ${am_drizzled_drizzled_OBJECTS}) \
+  ${drizzled_drizzled_LDADD} ${LTLIBGTEST} ${BOOST_LIBS}

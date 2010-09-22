@@ -160,3 +160,16 @@ merge-clean:
 	find ./ | $(GREP) \~$$ | xargs rm -f
 	bzr unknowns
 
+install-exec-hook:
+	cd $(DESTDIR)$(sbindir) && \
+	mv -f drizzled$(EXEEXT) drizzled$(PACKAGE_VERSION)$(EXEEXT) && \
+	$(LN_S) drizzled$(PACKAGE_VERSION)$(EXEEXT) drizzled$(EXEEXT)
+
+install-data-hook:
+	cd $(DESTDIR)$(man8dir) && \
+	mv -f drizzled.8 drizzled$(PACKAGE_VERSION).8 && \
+	$(LN_S) drizzled$(PACKAGE_VERSION).8 drizzled.8
+
+uninstall-hook:
+	rm $(DESTDIR)$(man8dir)/drizzled$(PACKAGE_VERSION).8
+	rm $(DESTDIR)$(sbindir)/drizzled$(PACKAGE_VERSION)$(EXEEXT)
