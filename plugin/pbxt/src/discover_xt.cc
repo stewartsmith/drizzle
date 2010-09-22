@@ -1147,7 +1147,7 @@ static bool mysql_create_table_no_lock(THD *thd,
     goto err;
   }
 
-  LOCK_open.lock;
+  MYSQL_LOCK(LOCK_open);
   if (!internal_tmp_table && !(create_info->options & HA_LEX_CREATE_TMP_TABLE))
   {
     if (!access(path,F_OK))
@@ -1261,7 +1261,7 @@ static bool mysql_create_table_no_lock(THD *thd,
    */
   error= FALSE;
 unlock_and_end:
-  LOCK_open.unlock;
+  MYSQL_UNLOCK(LOCK_open);
 
 err:
   thd_proc_info(thd, "After create");
@@ -1325,7 +1325,11 @@ int xt_create_table_frm(handlerton *hton, THD* thd, const char *db, const char *
 				COLUMN_FORMAT_TYPE_FIXED,
 #endif
 		       NULL /*default_value*/, NULL /*on_update_value*/, &comment, NULL /*change*/, 
-		       NULL /*interval_list*/, info->field_charset, 0 /*uint_geom_type*/)) 
+		       NULL /*interval_list*/, info->field_charset, 0 /*uint_geom_type*/
+#ifdef MARIADB_BASE_VERSION
+		       , NULL /*vcol_info*/, NULL /* create options */
+#endif
+		       )) 
 			goto error;
 
 
@@ -1349,8 +1353,16 @@ int xt_create_table_frm(handlerton *hton, THD* thd, const char *db, const char *
 	}
 	
 	/* Create an internal temp table */
+#ifdef WITH_PARTITION_STORAGE_ENGINE
+	partition_info *part_info;
+
+	part_info = thd->work_part_info;
+#endif
 	if (mysql_create_table_no_lock(thd, db, name, &mylex.create_info, &mylex.alter_info, 1, 0)) 
 		goto error;
+#ifdef WITH_PARTITION_STORAGE_ENGINE
+	thd->work_part_info = part_info;
+#endif
 
 	noerror:
 	err = 0;

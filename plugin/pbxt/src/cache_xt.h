@@ -33,6 +33,7 @@ struct XTIdxReadBuffer;
 
 #ifdef DEBUG
 //#define XT_USE_CACHE_DEBUG_SIZES
+//#define CHECK_BLOCK_TRAILERS
 #endif
 
 #ifdef XT_USE_CACHE_DEBUG_SIZES
@@ -109,6 +110,9 @@ typedef struct XTIndBlock {
 #else
 	xtWord1				cb_data[XT_INDEX_PAGE_SIZE];
 #endif
+#ifdef CHECK_BLOCK_TRAILERS
+	xtWord1				cp_check[4];
+#endif
 } XTIndBlockRec, *XTIndBlockPtr;
 
 typedef struct XTIndReference {
@@ -172,6 +176,10 @@ xtBool			xt_ind_copy_on_write(XTIndReferencePtr iref);
 
 XTIndHandlePtr	xt_ind_get_handle(struct XTOpenTable *ot, XTIndexPtr ind, XTIndReferencePtr iref);
 void			xt_ind_release_handle(XTIndHandlePtr handle, xtBool have_lock, XTThreadPtr thread);
+
+#ifdef CHECK_BLOCK_TRAILERS
+extern void check_block_trailers();
+#endif
 
 #ifdef DEBUG
 //#define DEBUG_CHECK_IND_CACHE

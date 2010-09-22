@@ -282,10 +282,17 @@ static xtBool idx_new_branch(XTOpenTablePtr ot, XTIndexPtr ind, xtIndexNodeID *a
 	}
 
 	if ((XT_NODE_ID(wrote_pos) = XT_NODE_ID(tab->tab_ind_free))) {
+		xtIndexNodeID next_node;
+
 		/* Use the block on the free list: */
-		if (!xt_ind_read_bytes(ot, ind, wrote_pos, sizeof(XTIndFreeBlockRec), (xtWord1 *) &free_block))
+		if (!xt_ind_read_bytes(ot, NULL, wrote_pos, sizeof(XTIndFreeBlockRec), (xtWord1 *) &free_block))
 			goto failed;
-		XT_NODE_ID(tab->tab_ind_free) = (xtIndexNodeID) XT_GET_DISK_8(free_block.if_next_block_8);
+		XT_NODE_ID(next_node) = (xtIndexNodeID) XT_GET_DISK_8(free_block.if_next_block_8);
+		if (XT_NODE_ID(next_node) >= XT_NODE_ID(tab->tab_ind_eof)) {
+			xt_register_taberr(XT_REG_CONTEXT, XT_ERR_INDEX_CORRUPTED, tab->tab_name);
+			goto failed;
+		}
+		XT_NODE_ID(tab->tab_ind_free) = XT_NODE_ID(next_node);
 		xt_unlock_mutex_ns(&tab->tab_ind_lock);
 		*address = wrote_pos;
 		TRACK_BLOCK_ALLOC(wrote_pos);
@@ -1566,39 +1573,54 @@ static xtBool idx_replace_node_key(XTOpenTablePtr ot, XTIndexPtr ind, IdxStackIt
 		if (idx_is_item_deleted(iref.ir_branch, &item->i_pos))
 			iref.ir_block->cp_del_count--;
 	}
-	memmove(&iref.ir_branch->tb_data[item->i_pos.i_item_offset + item_size],
-		&iref.ir_branch->tb_data[item->i_pos.i_item_offset + item->i_pos.i_item_size],
-		item->i_pos.i_total_size - item->i_pos.i_item_offset - item->i_pos.i_item_size);
-	memcpy(&iref.ir_branch->tb_data[item->i_pos.i_item_offset],
-		item_buf, item_size);
-	if (ind->mi_lazy_delete) {
-		if (idx_is_item_deleted(iref.ir_branch, &item->i_pos))
-			iref.ir_block->cp_del_count++;
-	}
-	item->i_pos.i_total_size = item->i_pos.i_total_size + item_size - item->i_pos.i_item_size;
-	XT_SET_DISK_2(iref.ir_branch->tb_size_2, XT_MAKE_NODE_SIZE(item->i_pos.i_total_size));
-	IDX_TRACE("%d-> %x\n", (int) XT_NODE_ID(current), (int) XT_GET_DISK_2(iref.ir_branch->tb_size_2));
+
+	if (item->i_pos.i_total_size + item_size - item->i_pos.i_item_size <= XT_INDEX_PAGE_DATA_SIZE) {
+		/* The new item is larger than the old, this can result
+		 * in overflow of the node!
+		 */
+		memmove(&iref.ir_branch->tb_data[item->i_pos.i_item_offset + item_size],
+			&iref.ir_branch->tb_data[item->i_pos.i_item_offset + item->i_pos.i_item_size],
+			item->i_pos.i_total_size - item->i_pos.i_item_offset - item->i_pos.i_item_size);
+		memcpy(&iref.ir_branch->tb_data[item->i_pos.i_item_offset],
+			item_buf, item_size);
+		if (ind->mi_lazy_delete) {
+			if (idx_is_item_deleted(iref.ir_branch, &item->i_pos))
+				iref.ir_block->cp_del_count++;
+		}
+		item->i_pos.i_total_size = item->i_pos.i_total_size + item_size - item->i_pos.i_item_size;
+		XT_SET_DISK_2(iref.ir_branch->tb_size_2, XT_MAKE_NODE_SIZE(item->i_pos.i_total_size));
+		IDX_TRACE("%d-> %x\n", (int) XT_NODE_ID(current), (int) XT_GET_DISK_2(iref.ir_branch->tb_size_2));
 #ifdef IND_OPT_DATA_WRITTEN
-	iref.ir_block->cb_header = TRUE;
-	if (item->i_pos.i_item_offset < iref.ir_block->cb_min_pos)
-		iref.ir_block->cb_min_pos = item->i_pos.i_item_offset;
-	iref.ir_block->cb_max_pos = item->i_pos.i_total_size;
-	ASSERT_NS(iref.ir_block->cb_min_pos <= iref.ir_block->cb_max_pos);
+		iref.ir_block->cb_header = TRUE;
+		if (item->i_pos.i_item_offset < iref.ir_block->cb_min_pos)
+			iref.ir_block->cb_min_pos = item->i_pos.i_item_offset;
+		iref.ir_block->cb_max_pos = item->i_pos.i_total_size;
+		ASSERT_NS(iref.ir_block->cb_min_pos <= iref.ir_block->cb_max_pos);
 #endif
-	iref.ir_updated = TRUE;
+		iref.ir_updated = TRUE;
 
 #ifdef DEBUG
-	if (ind->mi_lazy_delete)
 		ASSERT_NS(item->i_pos.i_total_size <= XT_INDEX_PAGE_DATA_SIZE);
 #endif
-	if (item->i_pos.i_total_size <= XT_INDEX_PAGE_DATA_SIZE)
 		return xt_ind_release(ot, ind, XT_UNLOCK_W_UPDATE, &iref);
+	}
 
 	/* The node has overflowed!! */
 #ifdef IND_SKEW_SPLIT_ON_APPEND
 	result.sr_last_item = FALSE;
 #endif
 	result.sr_item = item->i_pos;
+
+	memcpy(ot->ot_ind_wbuf.tb_data, iref.ir_branch->tb_data, item->i_pos.i_item_offset);	// First part of the buffer
+	memcpy(&ot->ot_ind_wbuf.tb_data[item->i_pos.i_item_offset], item_buf, item_size);		// The new item
+	memcpy(&ot->ot_ind_wbuf.tb_data[item->i_pos.i_item_offset + item_size],
+		&iref.ir_branch->tb_data[item->i_pos.i_item_offset + item->i_pos.i_item_size],
+		item->i_pos.i_total_size - item->i_pos.i_item_offset - item->i_pos.i_item_size);
+	item->i_pos.i_total_size += item_size - item->i_pos.i_item_size;
+	item->i_pos.i_item_size = item_size;
+	XT_SET_DISK_2(ot->ot_ind_wbuf.tb_size_2, XT_MAKE_LEAF_SIZE(item->i_pos.i_total_size));
+	IDX_TRACE("%d-> %x\n", (int) XT_NODE_ID(current), (int) XT_GET_DISK_2(ot->ot_ind_wbuf.tb_size_2));
+	ASSERT_NS(item->i_pos.i_total_size > XT_INDEX_PAGE_DATA_SIZE && item->i_pos.i_total_size <= XT_INDEX_PAGE_DATA_SIZE*2);
 
 	/* Adjust the stack (we want the parents of the delete node): */
 	for (;;) {
@@ -1609,7 +1631,7 @@ static xtBool idx_replace_node_key(XTOpenTablePtr ot, XTIndexPtr ind, IdxStackIt
 	/* We assume that value can be overwritten (which is the case) */
 	key_value.sv_flags = XT_SEARCH_WHOLE_KEY;
 	key_value.sv_key = key_buf;
-	if (!idx_get_middle_branch_item(ot, ind, iref.ir_branch, &key_value, &result))
+	if (!idx_get_middle_branch_item(ot, ind, &ot->ot_ind_wbuf, &key_value, &result))
 		goto failed_1;
 
 	if (!idx_new_branch(ot, ind, &new_branch))
@@ -1617,7 +1639,6 @@ static xtBool idx_replace_node_key(XTOpenTablePtr ot, XTIndexPtr ind, IdxStackIt
 
 	/* Split the node: */
 	new_size = result.sr_item.i_total_size - result.sr_item.i_item_offset - result.sr_item.i_item_size;
-	// TODO: Are 2 buffers now required?
 	new_branch_ptr = (XTIdxBranchDPtr) &ot->ot_ind_wbuf.tb_data[XT_INDEX_PAGE_DATA_SIZE];
 	memmove(new_branch_ptr->tb_data, &iref.ir_branch->tb_data[result.sr_item.i_item_offset + result.sr_item.i_item_size], new_size);
 
@@ -1627,8 +1648,9 @@ static xtBool idx_replace_node_key(XTOpenTablePtr ot, XTIndexPtr ind, IdxStackIt
 		goto failed_2;
 
 	/* Change the size of the old branch: */
-	XT_SET_DISK_2(iref.ir_branch->tb_size_2, XT_MAKE_NODE_SIZE(result.sr_item.i_item_offset));
-	IDX_TRACE("%d-> %x\n", (int) XT_NODE_ID(current), (int) XT_GET_DISK_2(iref.ir_branch->tb_size_2));
+	XT_SET_DISK_2(ot->ot_ind_wbuf.tb_size_2, XT_MAKE_NODE_SIZE(result.sr_item.i_item_offset));
+	IDX_TRACE("%d-> %x\n", (int) XT_NODE_ID(current), (int) XT_GET_DISK_2(ot->ot_ind_wbuf.tb_size_2));
+	memcpy(iref.ir_branch, &ot->ot_ind_wbuf, offsetof(XTIdxBranchDRec, tb_data) + result.sr_item.i_item_offset);
 #ifdef IND_OPT_DATA_WRITTEN
 	iref.ir_block->cb_header = TRUE;
 	if (result.sr_item.i_item_offset < iref.ir_block->cb_min_pos)
@@ -2402,6 +2424,11 @@ xtPublic xtBool xt_idx_insert(XTOpenTablePtr ot, XTIndexPtr ind, xtRowID row_id,
 	if (!idx_new_branch(ot, ind, &new_branch))
 		goto failed_1;
 
+	if (XT_NODE_ID(current) == XT_NODE_ID(new_branch)) {
+		xt_register_taberr(XT_REG_CONTEXT, XT_ERR_INDEX_CORRUPTED, ot->ot_table->tab_name);
+		goto failed_1;
+	}
+
 	/* Copy and write the rest of the data to the new node: */
 	new_size = result.sr_item.i_total_size - result.sr_item.i_item_offset - result.sr_item.i_item_size;
 	new_branch_ptr = (XTIdxBranchDPtr) &ot->ot_ind_wbuf.tb_data[XT_INDEX_PAGE_DATA_SIZE];
@@ -3077,6 +3104,10 @@ xtPublic xtBool xt_idx_search(XTOpenTablePtr ot, XTIndexPtr ind, register XTIdxS
 #endif
 	ASSERT_NS(iref.ir_xlock == 2);
 	ASSERT_NS(iref.ir_updated == 2);
+	if (ind->mi_key_corrupted) {
+		xt_register_taberr(XT_REG_CONTEXT, XT_ERR_INDEX_CORRUPTED, ot->ot_table->tab_name);
+		return FAILED;
+	}
 	return OK;
 
 	failed:
@@ -3228,6 +3259,10 @@ xtPublic xtBool xt_idx_search_prev(XTOpenTablePtr ot, XTIndexPtr ind, register X
 	//idx_check_index(ot, ind, TRUE);
 	//idx_check_on_key(ot);
 #endif
+	if (ind->mi_key_corrupted) {
+		xt_register_taberr(XT_REG_CONTEXT, XT_ERR_INDEX_CORRUPTED, ot->ot_table->tab_name);
+		return FAILED;
+	}
 	return OK;
 
 	failed:
@@ -3318,6 +3353,10 @@ xtPublic xtBool xt_idx_next(register XTOpenTablePtr ot, register XTIndexPtr ind,
 
 	if (!(XT_NODE_ID(current) = XT_NODE_ID(ind->mi_root))) {
 		XT_INDEX_UNLOCK(ind, ot);
+		if (ind->mi_key_corrupted) {
+			xt_register_taberr(XT_REG_CONTEXT, XT_ERR_INDEX_CORRUPTED, ot->ot_table->tab_name);
+			return FAILED;
+		}
 		return OK;
 	}
 
@@ -3425,6 +3464,10 @@ xtPublic xtBool xt_idx_next(register XTOpenTablePtr ot, register XTIndexPtr ind,
 		ot->ot_curr_rec_id = 0;
 		ot->ot_curr_row_id = 0;
 		XT_INDEX_UNLOCK(ind, ot);
+		if (ind->mi_key_corrupted) {
+			xt_register_taberr(XT_REG_CONTEXT, XT_ERR_INDEX_CORRUPTED, ot->ot_table->tab_name);
+			return FAILED;
+		}
 		return OK;
 	}
 
@@ -3466,6 +3509,10 @@ xtPublic xtBool xt_idx_next(register XTOpenTablePtr ot, register XTIndexPtr ind,
 	ot->ot_curr_row_id = result.sr_row_id;
 	ot->ot_ind_state = result.sr_item;
 
+	if (ind->mi_key_corrupted) {
+		xt_register_taberr(XT_REG_CONTEXT, XT_ERR_INDEX_CORRUPTED, ot->ot_table->tab_name);
+		return FAILED;
+	}
 	return OK;
 
 	failed:
@@ -3532,6 +3579,10 @@ xtPublic xtBool xt_idx_prev(register XTOpenTablePtr ot, register XTIndexPtr ind,
 
 	if (!(XT_NODE_ID(current) = XT_NODE_ID(ind->mi_root))) {
 		XT_INDEX_UNLOCK(ind, ot);
+		if (ind->mi_key_corrupted) {
+			xt_register_taberr(XT_REG_CONTEXT, XT_ERR_INDEX_CORRUPTED, ot->ot_table->tab_name);
+			return FAILED;
+		}
 		return OK;
 	}
 
@@ -3628,6 +3679,10 @@ xtPublic xtBool xt_idx_prev(register XTOpenTablePtr ot, register XTIndexPtr ind,
 	ot->ot_curr_row_id = 0;
 
 	XT_INDEX_UNLOCK(ind, ot);
+	if (ind->mi_key_corrupted) {
+		xt_register_taberr(XT_REG_CONTEXT, XT_ERR_INDEX_CORRUPTED, ot->ot_table->tab_name);
+		return FAILED;
+	}
 	return OK;
 
 	unlock_check_on_key:
@@ -3656,6 +3711,10 @@ xtPublic xtBool xt_idx_prev(register XTOpenTablePtr ot, register XTIndexPtr ind,
 	ot->ot_curr_rec_id = result.sr_rec_id;
 	ot->ot_curr_row_id = result.sr_row_id;
 	ot->ot_ind_state = result.sr_item;
+	if (ind->mi_key_corrupted) {
+		xt_register_taberr(XT_REG_CONTEXT, XT_ERR_INDEX_CORRUPTED, ot->ot_table->tab_name);
+		return FAILED;
+	}
 	return OK;
 
 	failed:
@@ -4344,7 +4403,7 @@ xtPublic void xt_check_indices(XTOpenTablePtr ot)
 #ifdef DUMP_INDEX
 			printf("%d ", (int) XT_NODE_ID(current));
 #endif
-			if (!xt_ind_read_bytes(ot, *ind, current, sizeof(XTIndFreeBlockRec), (xtWord1 *) &free_block)) {
+			if (!xt_ind_read_bytes(ot, NULL, current, sizeof(XTIndFreeBlockRec), (xtWord1 *) &free_block)) {
 				xt_log_and_clear_exception_ns();
 				break;
 			}
@@ -5144,13 +5203,24 @@ void XTIndexLogPool::ilp_init(struct XTThread *self, struct XTDatabase *db, size
 					if (!ilp_open_log(&il, log_id, FALSE, self))
 						goto failed;
 					if (il->il_tab_id && il->il_log_eof) {
+						char table_name[XT_IDENTIFIER_NAME_SIZE*3+3];
+
 						if (!il->il_open_table(&ot))
 							goto failed;
 						if (ot) {
-							if (!il->il_apply_log_write(ot))
-								goto failed;
-							if (!il->il_apply_log_flush(ot))
-								goto failed;
+							xt_tab_make_table_name(ot->ot_table->tab_name, table_name, sizeof(table_name));
+							xt_logf(XT_NT_INFO, "PBXT: Recovering index, table: %s, bytes to read: %llu\n", table_name, (u_llong) il->il_log_eof);
+							if (!il->il_apply_log_write(ot)) {
+								/* If recovery of an index fails, then it is corrupt! */
+								if (ot->ot_thread->t_exception.e_xt_err != XT_ERR_NO_INDEX_CACHE)
+									goto failed;
+								xt_tab_disable_index(ot->ot_table, XT_INDEX_CORRUPTED);
+								xt_log_and_clear_exception_ns();
+							}
+							else {
+								if (!il->il_apply_log_flush(ot))
+									goto failed;
+							}
 							ot->ot_thread = self;
 							il->il_close_table(ot);
 						}
@@ -5164,7 +5234,6 @@ void XTIndexLogPool::ilp_init(struct XTThread *self, struct XTDatabase *db, size
 	return;
 
 	failed:
-	/* TODO: Mark index as corrupted: */
 	if (ot && il)
 		il->il_close_table(ot);
 	if (il)
@@ -5697,8 +5766,7 @@ xtBool XTIndexLog::il_apply_log_write(struct XTOpenTable *ot)
 			/* Corrupt log?! */
 			if (il_buffer_len < req_size) {
 				xt_register_ixterr(XT_REG_CONTEXT, XT_ERR_INDEX_LOG_CORRUPT, xt_file_path(il_of));
-				xt_log_and_clear_exception_ns();
-				return OK;
+				return FAILED;
 			}
 			if (!xt_pread_file(il_of, offset, il_buffer_len, il_buffer_len, il_buffer, NULL, &ot->ot_thread->st_statistics.st_ilog, ot->ot_thread))
 				return FAILED;
@@ -5907,8 +5975,7 @@ xtBool XTIndexLog::il_apply_log_write(struct XTOpenTable *ot)
 						/* Corrupt log?! */
 						if (il_buffer_len < req_size) {
 							xt_register_ixterr(XT_REG_CONTEXT, XT_ERR_INDEX_LOG_CORRUPT, xt_file_path(il_of));
-							xt_log_and_clear_exception_ns();
-							return OK;
+							return FAILED;
 						}
 						if (!xt_pread_file(il_of, offset, il_buffer_len, il_buffer_len, il_buffer, NULL, &ot->ot_thread->st_statistics.st_ilog, ot->ot_thread))
 							return FAILED;
@@ -5997,8 +6064,7 @@ xtBool XTIndexLog::il_apply_log_write(struct XTOpenTable *ot)
 				break;
 			default:
 				xt_register_ixterr(XT_REG_CONTEXT, XT_ERR_INDEX_LOG_CORRUPT, xt_file_path(il_of));
-				xt_log_and_clear_exception_ns();
-				return OK;
+				return FAILED;
 		}
 #ifdef CHECK_IF_WRITE_WAS_OK
 		if (node_id) {

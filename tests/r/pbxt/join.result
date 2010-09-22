@@ -63,7 +63,7 @@ NULL	75
 explain select t1.id,t2.id from t2 left join t1 on t1.id>=74 and t1.id<=0 where t2.id=75 and t1.id is null;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	3	Using where
-1	SIMPLE	t1	ALL	PRIMARY	NULL	NULL	NULL	13	Using where; Not exists
+1	SIMPLE	t1	ALL	PRIMARY	NULL	NULL	NULL	12	Using where; Not exists
 explain select t1.id, t2.id from t1, t2 where t2.id = t1.id and t1.id <0 and t1.id > 0;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	3	Using where
@@ -600,30 +600,30 @@ c	b	a	y
 3	1	2	2
 select * from (t1 cross join t2) join (t3 cross join t4) on (a < y and t2.b < t3.c);
 c	b	a	b	b	c	y	c
-10	1	2	1	1	3	11	3
 10	1	2	1	1	10	11	3
-3	1	2	1	1	3	11	3
+10	1	2	1	1	3	11	3
 3	1	2	1	1	10	11	3
-3	2	2	1	1	3	11	3
+3	1	2	1	1	3	11	3
 3	2	2	1	1	10	11	3
+3	2	2	1	1	3	11	3
 select * from (t1, t2) join (t3, t4) on (a < y and t2.b < t3.c);
 c	b	a	b	b	c	y	c
-10	1	2	1	1	3	11	3
 10	1	2	1	1	10	11	3
-3	1	2	1	1	3	11	3
+10	1	2	1	1	3	11	3
 3	1	2	1	1	10	11	3
-3	2	2	1	1	3	11	3
+3	1	2	1	1	3	11	3
 3	2	2	1	1	10	11	3
+3	2	2	1	1	3	11	3
 select * from (t1 natural join t2) join (t3 natural join t4) on a = y;
 b	c	a	c	b	y
 1	10	2	3	1	2
 1	3	2	3	1	2
 select * from ((t3 join (t1 join t2 on c > a) on t3.b < t2.a) join t4 on y > t1.c) join t5 on z = t1.b + 3;
 b	c	c	b	a	b	y	c	y	z
-1	3	10	1	2	1	11	3	11	4
 1	10	10	1	2	1	11	3	11	4
-1	3	3	1	2	1	11	3	11	4
 1	10	3	1	2	1	11	3	11	4
+1	3	10	1	2	1	11	3	11	4
+1	3	3	1	2	1	11	3	11	4
 select * from t1 natural join t2 where t1.b > 0;
 b	c	a
 1	10	2
