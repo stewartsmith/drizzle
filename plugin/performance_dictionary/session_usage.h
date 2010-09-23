@@ -31,7 +31,7 @@ public:
 
   class Generator : public drizzled::plugin::TableFunction::Generator 
   {
-    Query_list::const_reverse_iterator query_iter;
+    Query_list::reverse_iterator query_iter;
     QueryUsage *usage_cache;
 
     void publish(const std::string &sql, const struct rusage &r_usage);
