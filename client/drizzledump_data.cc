@@ -23,6 +23,7 @@
 #include <string>
 #include <iostream>
 #include <boost/regex.hpp>
+#include <boost/unordered_set.hpp>
 
 extern bool opt_no_create_info;
 extern bool opt_no_data;
@@ -36,6 +37,8 @@ extern bool opt_databases;
 extern bool opt_alldbs; 
 extern uint32_t show_progress_size;
 
+extern boost::unordered_set<std::string> ignore_table;
+
 enum destinations {
   DESTINATION_DB,
   DESTINATION_FILES,
@@ -43,6 +46,17 @@ enum destinations {
 };
 
 extern int opt_destination;
+
+/* returns true on keep, false on ignore */
+bool DrizzleDumpDatabase::ignoreTable(std::string tableName)
+{
+  std::string dbTable(databaseName);
+  dbTable.append(".");
+  dbTable.append(tableName);
+
+  boost::unordered_set<std::string>::iterator iter= ignore_table.find(dbTable);
+  return (iter == ignore_table.end());
+}
 
 std::ostream& operator <<(std::ostream &os, const DrizzleDumpIndex &obj)
 {

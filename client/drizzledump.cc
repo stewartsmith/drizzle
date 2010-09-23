@@ -160,7 +160,6 @@ static void write_header(char *db_name);
 static int dump_selected_tables(const string &db, const vector<string> &table_names);
 static int dump_databases(const vector<string> &db_names);
 static int dump_all_databases(void);
-char check_if_ignore_table(const char *table_name, char *table_type);
 int get_server_type();
 void dump_all_tables(void);
 void generate_dump(void);

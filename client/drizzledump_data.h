@@ -138,6 +138,7 @@ class DrizzleDumpDatabase
     virtual bool populateTables(void) { return false; }
     virtual bool populateTables(const std::vector<std::string> &table_names) { return table_names.empty(); }
     virtual void setCollate(const char*) { }
+    bool ignoreTable(std::string tableName);
     std::vector<DrizzleDumpTable*> tables;
 
     const std::string databaseName;

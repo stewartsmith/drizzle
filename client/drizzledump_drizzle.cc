@@ -47,6 +47,9 @@ bool DrizzleDumpDatabaseDrizzle::populateTables()
   while ((row= drizzle_row_next(result)))
   {
     std::string tableName(row[0]);
+    if (not ignoreTable(tableName))
+      continue;
+
     DrizzleDumpTable *table = new DrizzleDumpTableDrizzle(tableName, dcon);
     table->collate= row[1];
     table->engineName= row[2];
@@ -75,6 +78,9 @@ bool DrizzleDumpDatabaseDrizzle::populateTables(const std::vector<std::string> &
   for (std::vector<std::string>::const_iterator it= table_names.begin(); it != table_names.end(); ++it)
   {
     std::string tableName= *it;
+    if (not ignoreTable(tableName))
+      continue;
+
     query="SELECT TABLE_NAME, TABLE_COLLATION, ENGINE FROM DATA_DICTIONARY.TABLES WHERE TABLE_SCHEMA='";
     query.append(databaseName);
     query.append("' AND TABLE_NAME = '");
@@ -85,8 +91,7 @@ bool DrizzleDumpDatabaseDrizzle::populateTables(const std::vector<std::string> &
 
     if ((row= drizzle_row_next(result)))
     {
-      DrizzleDumpTableMySQL *table = new DrizzleDumpTableMySQL(tableName, dcon);
-      DrizzleDumpTable *table = new DrizzleDumpTableDrizzle(tableName, dcon);
+      DrizzleDumpTableDrizzle *table = new DrizzleDumpTableDrizzle(tableName, dcon);
       table->collate= row[1];
       table->engineName= row[2];
       table->autoIncrement= 0;

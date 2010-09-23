@@ -48,6 +48,9 @@ bool DrizzleDumpDatabaseMySQL::populateTables()
   while ((row= drizzle_row_next(result)))
   {
     std::string tableName(row[0]);
+    if (not ignoreTable(tableName))
+      continue;
+
     DrizzleDumpTableMySQL *table = new DrizzleDumpTableMySQL(tableName, dcon);
     table->setCollate(row[1]);
     table->setEngine(row[2]);
@@ -80,6 +83,9 @@ bool DrizzleDumpDatabaseMySQL::populateTables(const std::vector<std::string> &ta
   for (std::vector<std::string>::const_iterator it= table_names.begin(); it != table_names.end(); ++it)
   {
     std::string tableName= *it;
+    if (not ignoreTable(tableName))
+      continue;
+
     query="SELECT TABLE_NAME, TABLE_COLLATION, ENGINE, AUTO_INCREMENT FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='";
     query.append(databaseName);
     query.append("' AND TABLE_NAME = '");
