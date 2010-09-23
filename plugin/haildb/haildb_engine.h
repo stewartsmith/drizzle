@@ -22,10 +22,10 @@
 #include <drizzled/cursor.h>
 #include <drizzled/atomics.h>
 
-class EmbeddedInnoDBTableShare
+class HailDBTableShare
 {
 public:
-  EmbeddedInnoDBTableShare(const char* name, bool hidden_primary_key);
+  HailDBTableShare(const char* name, bool hidden_primary_key);
 
   drizzled::THR_LOCK lock;
   int use_count;
@@ -36,11 +36,11 @@ public:
   bool has_hidden_primary_key;
 };
 
-class EmbeddedInnoDBCursor: public drizzled::Cursor
+class HailDBCursor: public drizzled::Cursor
 {
 public:
-  EmbeddedInnoDBCursor(drizzled::plugin::StorageEngine &engine, drizzled::TableShare &table_arg);
-  ~EmbeddedInnoDBCursor()
+  HailDBCursor(drizzled::plugin::StorageEngine &engine, drizzled::TableShare &table_arg);
+  ~HailDBCursor()
   {}
 
   /*
@@ -62,7 +62,7 @@ public:
   int index_read(unsigned char *buf, const unsigned char *key_ptr,
                  uint32_t key_len, drizzled::ha_rkey_function find_flag);
 
-  int innodb_index_read(unsigned char *buf,
+  int haildb_index_read(unsigned char *buf,
                         const unsigned char *key_ptr,
                         uint32_t key_len,
                         drizzled::ha_rkey_function find_flag,
@@ -70,7 +70,7 @@ public:
 
   uint32_t calculate_key_len(uint32_t key_position,
                              drizzled::key_part_map keypart_map_arg);
-  int innodb_index_read_map(unsigned char * buf,
+  int haildb_index_read_map(unsigned char * buf,
                             const unsigned char *key,
                             drizzled::key_part_map keypart_map,
                             drizzled::ha_rkey_function find_flag,
@@ -94,12 +94,12 @@ public:
   int doUpdateRecord(const unsigned char * old_data, unsigned char * new_data);
   int extra(drizzled::ha_extra_function operation);
 
-  EmbeddedInnoDBTableShare *get_share(const char *table_name,
-                                      bool has_hidden_primary_key,
-                                      int *rc);
+  HailDBTableShare *get_share(const char *table_name,
+                              bool has_hidden_primary_key,
+                              int *rc);
   int free_share();
 
-  EmbeddedInnoDBTableShare *share;
+  HailDBTableShare *share;
   drizzled::THR_LOCK_DATA lock;  /* lock for store_lock. this is ass. */
   drizzled::THR_LOCK_DATA **store_lock(drizzled::Session *,
                                        drizzled::THR_LOCK_DATA **to,

@@ -62,7 +62,7 @@ public:
 };
 
 LibInnoDBConfigTool::LibInnoDBConfigTool() :
-  plugin::TableFunction("DATA_DICTIONARY", "INNODB_CONFIGURATION")
+  plugin::TableFunction("DATA_DICTIONARY", "HAILDB_CONFIGURATION")
 {
   add_field("NAME");
   add_field("TYPE");

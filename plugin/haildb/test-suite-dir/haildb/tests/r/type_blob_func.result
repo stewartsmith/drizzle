@@ -42,7 +42,7 @@ SYS_FOREIGN_COLS Format: REDUNDANT Page size: 0 Columns: 7 Indexes: 1
   IDX: ID_IND
     IDXCOL: ID
     IDXCOL: POS
-data_dictionary/innodb_table_definitions Format: COMPACT Page size: 0 Columns: 5 Indexes: 1
+data_dictionary/haildb_table_definitions Format: COMPACT Page size: 0 Columns: 5 Indexes: 1
   COL: table_name
   COL: message
   COL: DB_ROW_ID

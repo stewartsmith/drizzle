@@ -118,27 +118,27 @@ using namespace std;
 using namespace google;
 using namespace drizzled;
 
-int read_row_from_innodb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, Table* table, bool has_hidden_primary_key, uint64_t *hidden_pkey, drizzled::memory::Root **blobroot= NULL);
+int read_row_from_haildb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, Table* table, bool has_hidden_primary_key, uint64_t *hidden_pkey, drizzled::memory::Root **blobroot= NULL);
 static void fill_ib_search_tpl_from_drizzle_key(ib_tpl_t search_tuple,
                                                 const drizzled::KeyInfo *key_info,
                                                 const unsigned char *key_ptr,
                                                 uint32_t key_len);
-static void store_key_value_from_innodb(KeyInfo *key_info, unsigned char* ref, int ref_len, const unsigned char *record);
+static void store_key_value_from_haildb(KeyInfo *key_info, unsigned char* ref, int ref_len, const unsigned char *record);
 
-#define EMBEDDED_INNODB_EXT ".EID"
+#define HAILDB_EXT ".EID"
 
-const char INNODB_TABLE_DEFINITIONS_TABLE[]= "data_dictionary/innodb_table_definitions";
+const char HAILDB_TABLE_DEFINITIONS_TABLE[]= "data_dictionary/haildb_table_definitions";
 const string statement_savepoint_name("STATEMENT");
 
 
-static const char *EmbeddedInnoDBCursor_exts[] = {
+static const char *HailDBCursor_exts[] = {
   NULL
 };
 
-class EmbeddedInnoDBEngine : public drizzled::plugin::TransactionalStorageEngine
+class HailDBEngine : public drizzled::plugin::TransactionalStorageEngine
 {
 public:
-  EmbeddedInnoDBEngine(const string &name_arg)
+  HailDBEngine(const string &name_arg)
    : drizzled::plugin::TransactionalStorageEngine(name_arg,
                                                   HTON_NULL_IN_KEY |
                                                   HTON_CAN_INDEX_BLOBS |
@@ -146,18 +146,18 @@ public:
                                                   HTON_PARTIAL_COLUMN_READ |
                                                   HTON_HAS_DOES_TRANSACTIONS)
   {
-    table_definition_ext= EMBEDDED_INNODB_EXT;
+    table_definition_ext= HAILDB_EXT;
   }
 
-  ~EmbeddedInnoDBEngine();
+  ~HailDBEngine();
 
   virtual Cursor *create(TableShare &table)
   {
-    return new EmbeddedInnoDBCursor(*this, table);
+    return new HailDBCursor(*this, table);
   }
 
   const char **bas_ext() const {
-    return EmbeddedInnoDBCursor_exts;
+    return HailDBCursor_exts;
   }
 
   bool validateCreateTableOption(const std::string &key,
@@ -181,7 +181,7 @@ public:
   bool doDoesTableExist(Session&, const TableIdentifier &identifier);
 
 private:
-  void getTableNamesInSchemaFromInnoDB(const drizzled::SchemaIdentifier &schema,
+  void getTableNamesInSchemaFromHailDB(const drizzled::SchemaIdentifier &schema,
                                        drizzled::plugin::TableNameList *set_of_names,
                                        drizzled::TableIdentifiers *identifiers);
 
@@ -217,23 +217,23 @@ public:
   virtual int doCommit(Session* session, bool all);
   virtual int doRollback(Session* session, bool all);
 
-  typedef std::map<std::string, EmbeddedInnoDBTableShare*> EmbeddedInnoDBMap;
-  EmbeddedInnoDBMap embedded_innodb_open_tables;
-  EmbeddedInnoDBTableShare *findOpenTable(const std::string table_name);
-  void addOpenTable(const std::string &table_name, EmbeddedInnoDBTableShare *);
+  typedef std::map<std::string, HailDBTableShare*> HailDBMap;
+  HailDBMap haildb_open_tables;
+  HailDBTableShare *findOpenTable(const std::string table_name);
+  void addOpenTable(const std::string &table_name, HailDBTableShare *);
   void deleteOpenTable(const std::string &table_name);
 
-  uint64_t getInitialAutoIncrementValue(EmbeddedInnoDBCursor *cursor);
-  uint64_t getHiddenPrimaryKeyInitialAutoIncrementValue(EmbeddedInnoDBCursor *cursor);
+  uint64_t getInitialAutoIncrementValue(HailDBCursor *cursor);
+  uint64_t getHiddenPrimaryKeyInitialAutoIncrementValue(HailDBCursor *cursor);
 
 };
 
-static drizzled::plugin::StorageEngine *embedded_innodb_engine= NULL;
+static drizzled::plugin::StorageEngine *haildb_engine= NULL;
 
 
 static ib_trx_t* get_trx(Session* session)
 {
-  return (ib_trx_t*) session->getEngineData(embedded_innodb_engine);
+  return (ib_trx_t*) session->getEngineData(haildb_engine);
 }
 
 /* This is a superset of the map from innobase plugin.
@@ -341,7 +341,7 @@ static ib_trx_level_t tx_isolation_to_ib_trx_level(enum_tx_isolation level)
   return IB_TRX_REPEATABLE_READ;
 }
 
-int EmbeddedInnoDBEngine::doStartTransaction(Session *session,
+int HailDBEngine::doStartTransaction(Session *session,
                                              start_transaction_option_t options)
 {
   ib_trx_t *transaction;
@@ -356,7 +356,7 @@ int EmbeddedInnoDBEngine::doStartTransaction(Session *session,
   return 0;
 }
 
-void EmbeddedInnoDBEngine::doStartStatement(Session *session)
+void HailDBEngine::doStartStatement(Session *session)
 {
   if(*get_trx(session) == NULL)
     doStartTransaction(session, START_TRANS_NO_OPTIONS);
@@ -365,12 +365,12 @@ void EmbeddedInnoDBEngine::doStartStatement(Session *session)
                     statement_savepoint_name.length());
 }
 
-void EmbeddedInnoDBEngine::doEndStatement(Session *session)
+void HailDBEngine::doEndStatement(Session *session)
 {
   doCommit(session, false);
 }
 
-int EmbeddedInnoDBEngine::doSetSavepoint(Session* session,
+int HailDBEngine::doSetSavepoint(Session* session,
                                          drizzled::NamedSavepoint &savepoint)
 {
   ib_trx_t *transaction= get_trx(session);
@@ -379,7 +379,7 @@ int EmbeddedInnoDBEngine::doSetSavepoint(Session* session,
   return 0;
 }
 
-int EmbeddedInnoDBEngine::doRollbackToSavepoint(Session* session,
+int HailDBEngine::doRollbackToSavepoint(Session* session,
                                                 drizzled::NamedSavepoint &savepoint)
 {
   ib_trx_t *transaction= get_trx(session);
@@ -391,7 +391,7 @@ int EmbeddedInnoDBEngine::doRollbackToSavepoint(Session* session,
   return ib_err_t_to_drizzle_error(err);
 }
 
-int EmbeddedInnoDBEngine::doReleaseSavepoint(Session* session,
+int HailDBEngine::doReleaseSavepoint(Session* session,
                                              drizzled::NamedSavepoint &savepoint)
 {
   ib_trx_t *transaction= get_trx(session);
@@ -405,7 +405,7 @@ int EmbeddedInnoDBEngine::doReleaseSavepoint(Session* session,
   return 0;
 }
 
-int EmbeddedInnoDBEngine::doCommit(Session* session, bool all)
+int HailDBEngine::doCommit(Session* session, bool all)
 {
   ib_err_t err;
   ib_trx_t *transaction= get_trx(session);
@@ -423,7 +423,7 @@ int EmbeddedInnoDBEngine::doCommit(Session* session, bool all)
   return 0;
 }
 
-int EmbeddedInnoDBEngine::doRollback(Session* session, bool all)
+int HailDBEngine::doRollback(Session* session, bool all)
 {
   ib_err_t err;
   ib_trx_t *transaction= get_trx(session);
@@ -448,30 +448,30 @@ int EmbeddedInnoDBEngine::doRollback(Session* session, bool all)
   return 0;
 }
 
-EmbeddedInnoDBTableShare *EmbeddedInnoDBEngine::findOpenTable(const string table_name)
+HailDBTableShare *HailDBEngine::findOpenTable(const string table_name)
 {
-  EmbeddedInnoDBMap::iterator find_iter=
-    embedded_innodb_open_tables.find(table_name);
+  HailDBMap::iterator find_iter=
+    haildb_open_tables.find(table_name);
 
-  if (find_iter != embedded_innodb_open_tables.end())
+  if (find_iter != haildb_open_tables.end())
     return (*find_iter).second;
   else
     return NULL;
 }
 
-void EmbeddedInnoDBEngine::addOpenTable(const string &table_name, EmbeddedInnoDBTableShare *share)
+void HailDBEngine::addOpenTable(const string &table_name, HailDBTableShare *share)
 {
-  embedded_innodb_open_tables[table_name]= share;
+  haildb_open_tables[table_name]= share;
 }
 
-void EmbeddedInnoDBEngine::deleteOpenTable(const string &table_name)
+void HailDBEngine::deleteOpenTable(const string &table_name)
 {
-  embedded_innodb_open_tables.erase(table_name);
+  haildb_open_tables.erase(table_name);
 }
 
-static pthread_mutex_t embedded_innodb_mutex= PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t haildb_mutex= PTHREAD_MUTEX_INITIALIZER;
 
-uint64_t EmbeddedInnoDBCursor::getHiddenPrimaryKeyInitialAutoIncrementValue()
+uint64_t HailDBCursor::getHiddenPrimaryKeyInitialAutoIncrementValue()
 {
   uint64_t nr;
   ib_err_t err;
@@ -495,7 +495,7 @@ uint64_t EmbeddedInnoDBCursor::getHiddenPrimaryKeyInitialAutoIncrementValue()
   return nr;
 }
 
-uint64_t EmbeddedInnoDBCursor::getInitialAutoIncrementValue()
+uint64_t HailDBCursor::getInitialAutoIncrementValue()
 {
   uint64_t nr;
   int error;
@@ -532,13 +532,13 @@ uint64_t EmbeddedInnoDBCursor::getInitialAutoIncrementValue()
   return nr;
 }
 
-EmbeddedInnoDBTableShare::EmbeddedInnoDBTableShare(const char* name, bool hidden_primary_key)
+HailDBTableShare::HailDBTableShare(const char* name, bool hidden_primary_key)
   : use_count(0), has_hidden_primary_key(hidden_primary_key)
 {
   table_name.assign(name);
 }
 
-uint64_t EmbeddedInnoDBEngine::getInitialAutoIncrementValue(EmbeddedInnoDBCursor *cursor)
+uint64_t HailDBEngine::getInitialAutoIncrementValue(HailDBCursor *cursor)
 {
   doStartTransaction(current_session, START_TRANS_NO_OPTIONS);
   uint64_t initial_auto_increment_value= cursor->getInitialAutoIncrementValue();
@@ -547,7 +547,7 @@ uint64_t EmbeddedInnoDBEngine::getInitialAutoIncrementValue(EmbeddedInnoDBCursor
   return initial_auto_increment_value;
 }
 
-uint64_t EmbeddedInnoDBEngine::getHiddenPrimaryKeyInitialAutoIncrementValue(EmbeddedInnoDBCursor *cursor)
+uint64_t HailDBEngine::getHiddenPrimaryKeyInitialAutoIncrementValue(HailDBCursor *cursor)
 {
   doStartTransaction(current_session, START_TRANS_NO_OPTIONS);
   uint64_t initial_auto_increment_value= cursor->getHiddenPrimaryKeyInitialAutoIncrementValue();
@@ -556,20 +556,20 @@ uint64_t EmbeddedInnoDBEngine::getHiddenPrimaryKeyInitialAutoIncrementValue(Embe
   return initial_auto_increment_value;
 }
 
-EmbeddedInnoDBTableShare *EmbeddedInnoDBCursor::get_share(const char *table_name, bool has_hidden_primary_key, int *rc)
+HailDBTableShare *HailDBCursor::get_share(const char *table_name, bool has_hidden_primary_key, int *rc)
 {
-  pthread_mutex_lock(&embedded_innodb_mutex);
+  pthread_mutex_lock(&haildb_mutex);
 
-  EmbeddedInnoDBEngine *a_engine= static_cast<EmbeddedInnoDBEngine *>(engine);
+  HailDBEngine *a_engine= static_cast<HailDBEngine *>(engine);
   share= a_engine->findOpenTable(table_name);
 
   if (!share)
   {
-    share= new EmbeddedInnoDBTableShare(table_name, has_hidden_primary_key);
+    share= new HailDBTableShare(table_name, has_hidden_primary_key);
 
     if (share == NULL)
     {
-      pthread_mutex_unlock(&embedded_innodb_mutex);
+      pthread_mutex_unlock(&haildb_mutex);
       *rc= HA_ERR_OUT_OF_MEM;
       return(NULL);
     }
@@ -593,27 +593,27 @@ EmbeddedInnoDBTableShare *EmbeddedInnoDBCursor::get_share(const char *table_name
   }
   share->use_count++;
 
-  pthread_mutex_unlock(&embedded_innodb_mutex);
+  pthread_mutex_unlock(&haildb_mutex);
 
   return(share);
 }
 
-int EmbeddedInnoDBCursor::free_share()
+int HailDBCursor::free_share()
 {
-  pthread_mutex_lock(&embedded_innodb_mutex);
+  pthread_mutex_lock(&haildb_mutex);
   if (!--share->use_count)
   {
-    EmbeddedInnoDBEngine *a_engine= static_cast<EmbeddedInnoDBEngine *>(engine);
+    HailDBEngine *a_engine= static_cast<HailDBEngine *>(engine);
     a_engine->deleteOpenTable(share->table_name);
     delete share;
   }
-  pthread_mutex_unlock(&embedded_innodb_mutex);
+  pthread_mutex_unlock(&haildb_mutex);
 
   return 0;
 }
 
 
-THR_LOCK_DATA **EmbeddedInnoDBCursor::store_lock(Session *session,
+THR_LOCK_DATA **HailDBCursor::store_lock(Session *session,
                                                  THR_LOCK_DATA **to,
                                                  thr_lock_type lock_type)
 {
@@ -628,7 +628,7 @@ THR_LOCK_DATA **EmbeddedInnoDBCursor::store_lock(Session *session,
 
   if(*get_trx(session) == NULL)
   {
-    static_cast<EmbeddedInnoDBEngine*>(getEngine())->
+    static_cast<HailDBEngine*>(getEngine())->
                     doStartTransaction(session, START_TRANS_NO_OPTIONS);
   }
 
@@ -674,7 +674,7 @@ THR_LOCK_DATA **EmbeddedInnoDBCursor::store_lock(Session *session,
   return to;
 }
 
-void EmbeddedInnoDBCursor::get_auto_increment(uint64_t, //offset,
+void HailDBCursor::get_auto_increment(uint64_t, //offset,
                                               uint64_t, //increment,
                                               uint64_t, //nb_dis,
                                               uint64_t *first_value,
@@ -695,7 +695,7 @@ fetch:
   *nb_reserved_values= 1;
 }
 
-static const char* table_path_to_innodb_name(const char* name)
+static const char* table_path_to_haildb_name(const char* name)
 {
   size_t l= strlen(name);
 
@@ -712,12 +712,12 @@ static const char* table_path_to_innodb_name(const char* name)
   return &name[l];
 }
 
-static void TableIdentifier_to_innodb_name(const TableIdentifier &identifier, std::string *str)
+static void TableIdentifier_to_haildb_name(const TableIdentifier &identifier, std::string *str)
 {
-  str->assign(table_path_to_innodb_name(identifier.getPath().c_str()));
+  str->assign(table_path_to_haildb_name(identifier.getPath().c_str()));
 }
 
-EmbeddedInnoDBCursor::EmbeddedInnoDBCursor(drizzled::plugin::StorageEngine &engine_arg,
+HailDBCursor::HailDBCursor(drizzled::plugin::StorageEngine &engine_arg,
                            TableShare &table_arg)
   :Cursor(engine_arg, table_arg),
    ib_lock_mode(IB_LOCK_NONE),
@@ -738,17 +738,17 @@ static unsigned int get_first_unique_index(drizzled::Table &table)
   return 0;
 }
 
-int EmbeddedInnoDBCursor::open(const char *name, int, uint32_t)
+int HailDBCursor::open(const char *name, int, uint32_t)
 {
-  const char* innodb_table_name= table_path_to_innodb_name(name);
-  ib_err_t err= ib_cursor_open_table(innodb_table_name, NULL, &cursor);
+  const char* haildb_table_name= table_path_to_haildb_name(name);
+  ib_err_t err= ib_cursor_open_table(haildb_table_name, NULL, &cursor);
   bool has_hidden_primary_key= false;
   ib_id_t idx_id;
 
   if (err != DB_SUCCESS)
     return ib_err_t_to_drizzle_error(err);
 
-  err= ib_index_get_id(innodb_table_name, "HIDDEN_PRIMARY", &idx_id);
+  err= ib_index_get_id(haildb_table_name, "HIDDEN_PRIMARY", &idx_id);
 
   if (err == DB_SUCCESS)
     has_hidden_primary_key= true;
@@ -773,7 +773,7 @@ int EmbeddedInnoDBCursor::open(const char *name, int, uint32_t)
   return(0);
 }
 
-int EmbeddedInnoDBCursor::close(void)
+int HailDBCursor::close(void)
 {
   ib_err_t err= ib_cursor_close(cursor);
   if (err != DB_SUCCESS)
@@ -787,7 +787,7 @@ int EmbeddedInnoDBCursor::close(void)
   return 0;
 }
 
-int EmbeddedInnoDBCursor::external_lock(Session* session, int lock_type)
+int HailDBCursor::external_lock(Session* session, int lock_type)
 {
   ib_cursor_stmt_begin(cursor);
 
@@ -881,7 +881,7 @@ static ib_err_t store_table_message(ib_trx_t transaction, const char* table_name
   ib_err_t err;
   string serialized_message;
 
-  err= ib_cursor_open_table(INNODB_TABLE_DEFINITIONS_TABLE, transaction, &cursor);
+  err= ib_cursor_open_table(HAILDB_TABLE_DEFINITIONS_TABLE, transaction, &cursor);
   if (err != DB_SUCCESS)
     return err;
 
@@ -916,7 +916,7 @@ cleanup:
   return err;
 }
 
-bool EmbeddedInnoDBEngine::validateCreateTableOption(const std::string &key,
+bool HailDBEngine::validateCreateTableOption(const std::string &key,
                                                      const std::string &state)
 {
   if (boost::iequals(key, "ROW_FORMAT"))
@@ -952,17 +952,17 @@ static ib_tbl_fmt_t parse_ib_table_format(const std::string &value)
   return IB_TBL_COMPACT;
 }
 
-int EmbeddedInnoDBEngine::doCreateTable(Session &session,
+int HailDBEngine::doCreateTable(Session &session,
                                         Table& table_obj,
                                         const drizzled::TableIdentifier &identifier,
                                         drizzled::message::Table& table_message)
 {
-  ib_tbl_sch_t innodb_table_schema= NULL;
-//  ib_idx_sch_t innodb_pkey= NULL;
-  ib_trx_t innodb_schema_transaction;
-  ib_id_t innodb_table_id;
-  ib_err_t innodb_err= DB_SUCCESS;
-  string innodb_table_name;
+  ib_tbl_sch_t haildb_table_schema= NULL;
+//  ib_idx_sch_t haildb_pkey= NULL;
+  ib_trx_t haildb_schema_transaction;
+  ib_id_t haildb_table_id;
+  ib_err_t haildb_err= DB_SUCCESS;
+  string haildb_table_name;
   bool has_explicit_pkey= false;
 
   (void)table_obj;
@@ -974,9 +974,9 @@ int EmbeddedInnoDBEngine::doCreateTable(Session &session,
       return -1;
   }
 
-  TableIdentifier_to_innodb_name(identifier, &innodb_table_name);
+  TableIdentifier_to_haildb_name(identifier, &haildb_table_name);
 
-  ib_tbl_fmt_t innodb_table_format= IB_TBL_COMPACT;
+  ib_tbl_fmt_t haildb_table_format= IB_TBL_COMPACT;
 
   const size_t num_engine_options= table_message.engine().options_size();
   for (size_t x= 0; x < num_engine_options; x++)
@@ -984,42 +984,42 @@ int EmbeddedInnoDBEngine::doCreateTable(Session &session,
     const message::Engine::Option &engine_option= table_message.engine().options(x);
     if (boost::iequals(engine_option.name(), "ROW_FORMAT"))
     {
-      innodb_table_format= parse_ib_table_format(engine_option.state());
+      haildb_table_format= parse_ib_table_format(engine_option.state());
     }
   }
 
-  innodb_err= ib_table_schema_create(innodb_table_name.c_str(),
-                                     &innodb_table_schema,
-                                     innodb_table_format, 0);
+  haildb_err= ib_table_schema_create(haildb_table_name.c_str(),
+                                     &haildb_table_schema,
+                                     haildb_table_format, 0);
 
-  if (innodb_err != DB_SUCCESS)
+  if (haildb_err != DB_SUCCESS)
   {
     push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                         ER_CANT_CREATE_TABLE,
-                        _("Cannot create table %s. InnoDB Error %d (%s)\n"),
-                        innodb_table_name.c_str(), innodb_err, ib_strerror(innodb_err));
-    return ib_err_t_to_drizzle_error(innodb_err);
+                        _("Cannot create table %s. HailDB Error %d (%s)\n"),
+                        haildb_table_name.c_str(), haildb_err, ib_strerror(haildb_err));
+    return ib_err_t_to_drizzle_error(haildb_err);
   }
 
   for (int colnr= 0; colnr < table_message.field_size() ; colnr++)
   {
     const message::Table::Field field = table_message.field(colnr);
 
-    int field_err= create_table_add_field(innodb_table_schema, field,
-                                          &innodb_err);
+    int field_err= create_table_add_field(haildb_table_schema, field,
+                                          &haildb_err);
 
-    if (innodb_err != DB_SUCCESS || field_err != 0)
-      ib_table_schema_delete(innodb_table_schema); /* cleanup */
+    if (haildb_err != DB_SUCCESS || field_err != 0)
+      ib_table_schema_delete(haildb_table_schema); /* cleanup */
 
-    if (innodb_err != DB_SUCCESS)
+    if (haildb_err != DB_SUCCESS)
     {
       push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                           ER_CANT_CREATE_TABLE,
                           _("Cannot create field %s on table %s."
-                            " InnoDB Error %d (%s)\n"),
-                          field.name().c_str(), innodb_table_name.c_str(),
-                          innodb_err, ib_strerror(innodb_err));
-      return ib_err_t_to_drizzle_error(innodb_err);
+                            " HailDB Error %d (%s)\n"),
+                          field.name().c_str(), haildb_table_name.c_str(),
+                          haildb_err, ib_strerror(haildb_err));
+      return ib_err_t_to_drizzle_error(haildb_err);
     }
     if (field_err != 0)
       return field_err;
@@ -1030,26 +1030,26 @@ int EmbeddedInnoDBEngine::doCreateTable(Session &session,
   {
     message::Table::Index *index = table_message.mutable_indexes(indexnr);
 
-    ib_idx_sch_t innodb_index;
+    ib_idx_sch_t haildb_index;
 
-    innodb_err= ib_table_schema_add_index(innodb_table_schema, index->name().c_str(),
-                                   &innodb_index);
-    if (innodb_err != DB_SUCCESS)
+    haildb_err= ib_table_schema_add_index(haildb_table_schema, index->name().c_str(),
+                                   &haildb_index);
+    if (haildb_err != DB_SUCCESS)
       goto schema_error;
 
     if (index->is_primary())
     {
       has_primary= true;
-      innodb_err= ib_index_schema_set_clustered(innodb_index);
+      haildb_err= ib_index_schema_set_clustered(haildb_index);
       has_explicit_pkey= true;
-      if (innodb_err != DB_SUCCESS)
+      if (haildb_err != DB_SUCCESS)
         goto schema_error;
     }
 
     if (index->is_unique())
     {
-      innodb_err= ib_index_schema_set_unique(innodb_index);
-      if (innodb_err != DB_SUCCESS)
+      haildb_err= ib_index_schema_set_unique(haildb_index);
+      if (haildb_err != DB_SUCCESS)
         goto schema_error;
     }
 
@@ -1066,18 +1066,18 @@ int EmbeddedInnoDBEngine::doCreateTable(Session &session,
           || part_type == message::Table::Field::VARCHAR)
         compare_length= part.compare_length();
 
-      innodb_err= ib_index_schema_add_col(innodb_index,
+      haildb_err= ib_index_schema_add_col(haildb_index,
                             table_message.field(part.fieldnr()).name().c_str(),
                                           compare_length);
-      if (innodb_err != DB_SUCCESS)
+      if (haildb_err != DB_SUCCESS)
         goto schema_error;
     }
 
     if (! has_primary && index->is_unique())
     {
-      innodb_err= ib_index_schema_set_clustered(innodb_index);
+      haildb_err= ib_index_schema_set_clustered(haildb_index);
       has_explicit_pkey= true;
-      if (innodb_err != DB_SUCCESS)
+      if (haildb_err != DB_SUCCESS)
         goto schema_error;
     }
 
@@ -1085,58 +1085,58 @@ int EmbeddedInnoDBEngine::doCreateTable(Session &session,
 
   if (! has_explicit_pkey)
   {
-    ib_idx_sch_t innodb_index;
+    ib_idx_sch_t haildb_index;
 
-    innodb_err= ib_table_schema_add_col(innodb_table_schema, "hidden_primary_key_col",
+    haildb_err= ib_table_schema_add_col(haildb_table_schema, "hidden_primary_key_col",
                                         IB_INT, IB_COL_NOT_NULL, 0, 8);
 
-    innodb_err= ib_table_schema_add_index(innodb_table_schema, "HIDDEN_PRIMARY",
-                                          &innodb_index);
-    if (innodb_err != DB_SUCCESS)
+    haildb_err= ib_table_schema_add_index(haildb_table_schema, "HIDDEN_PRIMARY",
+                                          &haildb_index);
+    if (haildb_err != DB_SUCCESS)
       goto schema_error;
 
-    innodb_err= ib_index_schema_set_clustered(innodb_index);
-    if (innodb_err != DB_SUCCESS)
+    haildb_err= ib_index_schema_set_clustered(haildb_index);
+    if (haildb_err != DB_SUCCESS)
       goto schema_error;
 
-    innodb_err= ib_index_schema_add_col(innodb_index, "hidden_primary_key_col", 0);
-    if (innodb_err != DB_SUCCESS)
+    haildb_err= ib_index_schema_add_col(haildb_index, "hidden_primary_key_col", 0);
+    if (haildb_err != DB_SUCCESS)
       goto schema_error;
   }
 
-  innodb_schema_transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
-  innodb_err= ib_schema_lock_exclusive(innodb_schema_transaction);
-  if (innodb_err != DB_SUCCESS)
+  haildb_schema_transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
+  haildb_err= ib_schema_lock_exclusive(haildb_schema_transaction);
+  if (haildb_err != DB_SUCCESS)
   {
-    ib_err_t rollback_err= ib_trx_rollback(innodb_schema_transaction);
-    ib_table_schema_delete(innodb_table_schema);
+    ib_err_t rollback_err= ib_trx_rollback(haildb_schema_transaction);
+    ib_table_schema_delete(haildb_table_schema);
 
     push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                         ER_CANT_CREATE_TABLE,
-                        _("Cannot Lock Embedded InnoDB Data Dictionary. InnoDB Error %d (%s)\n"),
-                        innodb_err, ib_strerror(innodb_err));
+                        _("Cannot Lock HailDB Data Dictionary. HailDB Error %d (%s)\n"),
+                        haildb_err, ib_strerror(haildb_err));
 
     assert (rollback_err == DB_SUCCESS);
 
     return HA_ERR_GENERIC;
   }
 
-  innodb_err= ib_table_create(innodb_schema_transaction, innodb_table_schema,
-                              &innodb_table_id);
+  haildb_err= ib_table_create(haildb_schema_transaction, haildb_table_schema,
+                              &haildb_table_id);
 
-  if (innodb_err != DB_SUCCESS)
+  if (haildb_err != DB_SUCCESS)
   {
-    ib_err_t rollback_err= ib_trx_rollback(innodb_schema_transaction);
-    ib_table_schema_delete(innodb_table_schema);
+    ib_err_t rollback_err= ib_trx_rollback(haildb_schema_transaction);
+    ib_table_schema_delete(haildb_table_schema);
 
-    if (innodb_err == DB_TABLE_IS_BEING_USED)
+    if (haildb_err == DB_TABLE_IS_BEING_USED)
       return EEXIST;
 
     push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                         ER_CANT_CREATE_TABLE,
-                        _("Cannot create table %s. InnoDB Error %d (%s)\n"),
-                        innodb_table_name.c_str(),
-                        innodb_err, ib_strerror(innodb_err));
+                        _("Cannot create table %s. HailDB Error %d (%s)\n"),
+                        haildb_table_name.c_str(),
+                        haildb_err, ib_strerror(haildb_err));
 
     assert (rollback_err == DB_SUCCESS);
     return HA_ERR_GENERIC;
@@ -1145,42 +1145,42 @@ int EmbeddedInnoDBEngine::doCreateTable(Session &session,
   if (table_message.type() == message::Table::TEMPORARY)
   {
     session.storeTableMessage(identifier, table_message);
-    innodb_err= DB_SUCCESS;
+    haildb_err= DB_SUCCESS;
   }
   else
-    innodb_err= store_table_message(innodb_schema_transaction,
-                                    innodb_table_name.c_str(),
+    haildb_err= store_table_message(haildb_schema_transaction,
+                                    haildb_table_name.c_str(),
                                     table_message);
 
-  if (innodb_err == DB_SUCCESS)
-    innodb_err= ib_trx_commit(innodb_schema_transaction);
+  if (haildb_err == DB_SUCCESS)
+    haildb_err= ib_trx_commit(haildb_schema_transaction);
   else
-    innodb_err= ib_trx_rollback(innodb_schema_transaction);
+    haildb_err= ib_trx_rollback(haildb_schema_transaction);
 
 schema_error:
-  ib_table_schema_delete(innodb_table_schema);
+  ib_table_schema_delete(haildb_table_schema);
 
-  if (innodb_err != DB_SUCCESS)
+  if (haildb_err != DB_SUCCESS)
   {
     push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                         ER_CANT_CREATE_TABLE,
-                        _("Cannot create table %s. InnoDB Error %d (%s)\n"),
-                        innodb_table_name.c_str(),
-                        innodb_err, ib_strerror(innodb_err));
-    return ib_err_t_to_drizzle_error(innodb_err);
+                        _("Cannot create table %s. HailDB Error %d (%s)\n"),
+                        haildb_table_name.c_str(),
+                        haildb_err, ib_strerror(haildb_err));
+    return ib_err_t_to_drizzle_error(haildb_err);
   }
 
   return 0;
 }
 
-static int delete_table_message_from_innodb(ib_trx_t transaction, const char* table_name)
+static int delete_table_message_from_haildb(ib_trx_t transaction, const char* table_name)
 {
   ib_crsr_t cursor;
   ib_tpl_t search_tuple;
   int res;
   ib_err_t err;
 
-  err= ib_cursor_open_table(INNODB_TABLE_DEFINITIONS_TABLE, transaction, &cursor);
+  err= ib_cursor_open_table(HAILDB_TABLE_DEFINITIONS_TABLE, transaction, &cursor);
   if (err != DB_SUCCESS)
     return err;
 
@@ -1209,25 +1209,25 @@ rollback:
   return err;
 }
 
-int EmbeddedInnoDBEngine::doDropTable(Session &session,
+int HailDBEngine::doDropTable(Session &session,
                                       const TableIdentifier &identifier)
 {
-  ib_trx_t innodb_schema_transaction;
-  ib_err_t innodb_err;
-  string innodb_table_name;
+  ib_trx_t haildb_schema_transaction;
+  ib_err_t haildb_err;
+  string haildb_table_name;
 
-  TableIdentifier_to_innodb_name(identifier, &innodb_table_name);
+  TableIdentifier_to_haildb_name(identifier, &haildb_table_name);
 
-  innodb_schema_transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
-  innodb_err= ib_schema_lock_exclusive(innodb_schema_transaction);
-  if (innodb_err != DB_SUCCESS)
+  haildb_schema_transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
+  haildb_err= ib_schema_lock_exclusive(haildb_schema_transaction);
+  if (haildb_err != DB_SUCCESS)
   {
-    ib_err_t rollback_err= ib_trx_rollback(innodb_schema_transaction);
+    ib_err_t rollback_err= ib_trx_rollback(haildb_schema_transaction);
 
     push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                         ER_CANT_DELETE_FILE,
-                        _("Cannot Lock Embedded InnoDB Data Dictionary. InnoDB Error %d (%s)\n"),
-                        innodb_err, ib_strerror(innodb_err));
+                        _("Cannot Lock HailDB Data Dictionary. HailDB Error %d (%s)\n"),
+                        haildb_err, ib_strerror(haildb_err));
 
     assert (rollback_err == DB_SUCCESS);
 
@@ -1237,53 +1237,53 @@ int EmbeddedInnoDBEngine::doDropTable(Session &session,
   if (identifier.getType() == message::Table::TEMPORARY)
   {
       session.removeTableMessage(identifier);
-      delete_table_message_from_innodb(innodb_schema_transaction,
-                                       innodb_table_name.c_str());
+      delete_table_message_from_haildb(haildb_schema_transaction,
+                                       haildb_table_name.c_str());
   }
   else
   {
-    if (delete_table_message_from_innodb(innodb_schema_transaction, innodb_table_name.c_str()) != DB_SUCCESS)
+    if (delete_table_message_from_haildb(haildb_schema_transaction, haildb_table_name.c_str()) != DB_SUCCESS)
     {
-      ib_schema_unlock(innodb_schema_transaction);
-      ib_err_t rollback_err= ib_trx_rollback(innodb_schema_transaction);
+      ib_schema_unlock(haildb_schema_transaction);
+      ib_err_t rollback_err= ib_trx_rollback(haildb_schema_transaction);
       assert(rollback_err == DB_SUCCESS);
       return HA_ERR_GENERIC;
     }
   }
 
-  innodb_err= ib_table_drop(innodb_schema_transaction, innodb_table_name.c_str());
+  haildb_err= ib_table_drop(haildb_schema_transaction, haildb_table_name.c_str());
 
-  if (innodb_err == DB_TABLE_NOT_FOUND)
+  if (haildb_err == DB_TABLE_NOT_FOUND)
   {
-    innodb_err= ib_trx_rollback(innodb_schema_transaction);
-    assert(innodb_err == DB_SUCCESS);
+    haildb_err= ib_trx_rollback(haildb_schema_transaction);
+    assert(haildb_err == DB_SUCCESS);
     return ENOENT;
   }
-  else if (innodb_err != DB_SUCCESS)
+  else if (haildb_err != DB_SUCCESS)
   {
-    ib_err_t rollback_err= ib_trx_rollback(innodb_schema_transaction);
+    ib_err_t rollback_err= ib_trx_rollback(haildb_schema_transaction);
 
     push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                         ER_CANT_DELETE_FILE,
-                        _("Cannot DROP table %s. InnoDB Error %d (%s)\n"),
-                        innodb_table_name.c_str(),
-                        innodb_err, ib_strerror(innodb_err));
+                        _("Cannot DROP table %s. HailDB Error %d (%s)\n"),
+                        haildb_table_name.c_str(),
+                        haildb_err, ib_strerror(haildb_err));
 
     assert(rollback_err == DB_SUCCESS);
 
     return HA_ERR_GENERIC;
   }
 
-  innodb_err= ib_trx_commit(innodb_schema_transaction);
-  if (innodb_err != DB_SUCCESS)
+  haildb_err= ib_trx_commit(haildb_schema_transaction);
+  if (haildb_err != DB_SUCCESS)
   {
-    ib_err_t rollback_err= ib_trx_rollback(innodb_schema_transaction);
+    ib_err_t rollback_err= ib_trx_rollback(haildb_schema_transaction);
 
     push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                         ER_CANT_DELETE_FILE,
-                        _("Cannot DROP table %s. InnoDB Error %d (%s)\n"),
-                        innodb_table_name.c_str(),
-                        innodb_err, ib_strerror(innodb_err));
+                        _("Cannot DROP table %s. HailDB Error %d (%s)\n"),
+                        haildb_table_name.c_str(),
+                        haildb_err, ib_strerror(haildb_err));
 
     assert(rollback_err == DB_SUCCESS);
     return HA_ERR_GENERIC;
@@ -1304,20 +1304,20 @@ static ib_err_t rename_table_message(ib_trx_t transaction, const TableIdentifier
   const char *message;
   ib_ulint_t message_len;
   drizzled::message::Table table_message;
-  string from_innodb_table_name;
-  string to_innodb_table_name;
+  string from_haildb_table_name;
+  string to_haildb_table_name;
   const char *from;
   const char *to;
   string serialized_message;
   ib_col_meta_t col_meta;
 
-  TableIdentifier_to_innodb_name(from_identifier, &from_innodb_table_name);
-  TableIdentifier_to_innodb_name(to_identifier, &to_innodb_table_name);
+  TableIdentifier_to_haildb_name(from_identifier, &from_haildb_table_name);
+  TableIdentifier_to_haildb_name(to_identifier, &to_haildb_table_name);
 
-  from= from_innodb_table_name.c_str();
-  to= to_innodb_table_name.c_str();
+  from= from_haildb_table_name.c_str();
+  to= to_haildb_table_name.c_str();
 
-  err= ib_cursor_open_table(INNODB_TABLE_DEFINITIONS_TABLE, transaction, &cursor);
+  err= ib_cursor_open_table(HAILDB_TABLE_DEFINITIONS_TABLE, transaction, &cursor);
   if (err != DB_SUCCESS)
   {
     rollback_err= ib_trx_rollback(transaction);
@@ -1382,14 +1382,14 @@ rollback:
   return err;
 }
 
-int EmbeddedInnoDBEngine::doRenameTable(drizzled::Session &session,
+int HailDBEngine::doRenameTable(drizzled::Session &session,
                                         const drizzled::TableIdentifier &from,
                                         const drizzled::TableIdentifier &to)
 {
-  ib_trx_t innodb_schema_transaction;
+  ib_trx_t haildb_schema_transaction;
   ib_err_t err;
-  string from_innodb_table_name;
-  string to_innodb_table_name;
+  string from_haildb_table_name;
+  string to_haildb_table_name;
 
   if (to.getType() == message::Table::TEMPORARY
       && from.getType() == message::Table::TEMPORARY)
@@ -1398,46 +1398,46 @@ int EmbeddedInnoDBEngine::doRenameTable(drizzled::Session &session,
     return 0;
   }
 
-  TableIdentifier_to_innodb_name(from, &from_innodb_table_name);
-  TableIdentifier_to_innodb_name(to, &to_innodb_table_name);
+  TableIdentifier_to_haildb_name(from, &from_haildb_table_name);
+  TableIdentifier_to_haildb_name(to, &to_haildb_table_name);
 
-  innodb_schema_transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
-  err= ib_schema_lock_exclusive(innodb_schema_transaction);
+  haildb_schema_transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
+  err= ib_schema_lock_exclusive(haildb_schema_transaction);
   if (err != DB_SUCCESS)
   {
     push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                         ER_CANT_DELETE_FILE,
-                        _("Cannot Lock Embedded InnoDB Data Dictionary. InnoDB Error %d (%s)\n"),
+                        _("Cannot Lock HailDB Data Dictionary. HailDB Error %d (%s)\n"),
                         err, ib_strerror(err));
 
     goto rollback;
   }
 
-  err= ib_table_rename(innodb_schema_transaction,
-                       from_innodb_table_name.c_str(),
-                       to_innodb_table_name.c_str());
+  err= ib_table_rename(haildb_schema_transaction,
+                       from_haildb_table_name.c_str(),
+                       to_haildb_table_name.c_str());
   if (err != DB_SUCCESS)
     goto rollback;
 
-  err= rename_table_message(innodb_schema_transaction, from, to);
+  err= rename_table_message(haildb_schema_transaction, from, to);
 
   if (err != DB_SUCCESS)
     goto rollback;
 
-  err= ib_trx_commit(innodb_schema_transaction);
+  err= ib_trx_commit(haildb_schema_transaction);
   if (err != DB_SUCCESS)
     goto rollback;
 
   return 0;
 rollback:
-  ib_err_t rollback_err= ib_schema_unlock(innodb_schema_transaction);
+  ib_err_t rollback_err= ib_schema_unlock(haildb_schema_transaction);
   assert(rollback_err == DB_SUCCESS);
-  rollback_err= ib_trx_rollback(innodb_schema_transaction);
+  rollback_err= ib_trx_rollback(haildb_schema_transaction);
   assert(rollback_err == DB_SUCCESS);
   return ib_err_t_to_drizzle_error(err);
 }
 
-void EmbeddedInnoDBEngine::getTableNamesInSchemaFromInnoDB(
+void HailDBEngine::getTableNamesInSchemaFromHailDB(
                                  const drizzled::SchemaIdentifier &schema,
                                  drizzled::plugin::TableNameList *set_of_names,
                                  drizzled::TableIdentifiers *identifiers)
@@ -1454,12 +1454,12 @@ void EmbeddedInnoDBEngine::getTableNamesInSchemaFromInnoDB(
   search_string.append("/");
 
   transaction = ib_trx_begin(IB_TRX_REPEATABLE_READ);
-  ib_err_t innodb_err= ib_schema_lock_exclusive(transaction);
-  assert(innodb_err == DB_SUCCESS); /* FIXME: doGetTableNames needs to be able to return error */
+  ib_err_t haildb_err= ib_schema_lock_exclusive(transaction);
+  assert(haildb_err == DB_SUCCESS); /* FIXME: doGetTableNames needs to be able to return error */
 
 
-  innodb_err= ib_cursor_open_table("SYS_TABLES", transaction, &cursor);
-  assert(innodb_err == DB_SUCCESS); /* FIXME */
+  haildb_err= ib_cursor_open_table("SYS_TABLES", transaction, &cursor);
+  assert(haildb_err == DB_SUCCESS); /* FIXME */
 
   ib_tpl_t read_tuple;
   ib_tpl_t search_tuple;
@@ -1467,17 +1467,17 @@ void EmbeddedInnoDBEngine::getTableNamesInSchemaFromInnoDB(
   read_tuple= ib_clust_read_tuple_create(cursor);
   search_tuple= ib_clust_search_tuple_create(cursor);
 
-  innodb_err= ib_col_set_value(search_tuple, 0, search_string.c_str(),
+  haildb_err= ib_col_set_value(search_tuple, 0, search_string.c_str(),
                                search_string.length());
-  assert (innodb_err == DB_SUCCESS); // FIXME
+  assert (haildb_err == DB_SUCCESS); // FIXME
 
   int res;
-  innodb_err = ib_cursor_moveto(cursor, search_tuple, IB_CUR_GE, &res);
+  haildb_err = ib_cursor_moveto(cursor, search_tuple, IB_CUR_GE, &res);
   // fixme: check error above
 
-  while (innodb_err == DB_SUCCESS)
+  while (haildb_err == DB_SUCCESS)
   {
-    innodb_err= ib_cursor_read_row(cursor, read_tuple);
+    haildb_err= ib_cursor_read_row(cursor, read_tuple);
 
     const char *table_name;
     int table_name_len;
@@ -1499,28 +1499,28 @@ void EmbeddedInnoDBEngine::getTableNamesInSchemaFromInnoDB(
     }
 
 
-    innodb_err= ib_cursor_next(cursor);
+    haildb_err= ib_cursor_next(cursor);
     read_tuple= ib_tuple_clear(read_tuple);
   }
 
   ib_tuple_delete(read_tuple);
   ib_tuple_delete(search_tuple);
 
-  innodb_err= ib_cursor_close(cursor);
-  assert(innodb_err == DB_SUCCESS); // FIXME
+  haildb_err= ib_cursor_close(cursor);
+  assert(haildb_err == DB_SUCCESS); // FIXME
 
-  innodb_err= ib_trx_commit(transaction);
-  assert(innodb_err == DB_SUCCESS); // FIXME
+  haildb_err= ib_trx_commit(transaction);
+  assert(haildb_err == DB_SUCCESS); // FIXME
 }
 
-void EmbeddedInnoDBEngine::doGetTableIdentifiers(drizzled::CachedDirectory &,
+void HailDBEngine::doGetTableIdentifiers(drizzled::CachedDirectory &,
                                                  const drizzled::SchemaIdentifier &schema,
                                                  drizzled::TableIdentifiers &identifiers)
 {
-  getTableNamesInSchemaFromInnoDB(schema, NULL, &identifiers);
+  getTableNamesInSchemaFromHailDB(schema, NULL, &identifiers);
 }
 
-static int read_table_message_from_innodb(const char* table_name, drizzled::message::Table *table_message)
+static int read_table_message_from_haildb(const char* table_name, drizzled::message::Table *table_message)
 {
   ib_trx_t transaction;
   ib_tpl_t search_tuple;
@@ -1542,7 +1542,7 @@ static int read_table_message_from_innodb(const char* table_name, drizzled::mess
     return err;
   }
 
-  err= ib_cursor_open_table(INNODB_TABLE_DEFINITIONS_TABLE, transaction, &cursor);
+  err= ib_cursor_open_table(HAILDB_TABLE_DEFINITIONS_TABLE, transaction, &cursor);
   if (err != DB_SUCCESS)
   {
     rollback_err= ib_trx_rollback(transaction);
@@ -1594,11 +1594,11 @@ rollback_close_err:
   rollback_err= ib_trx_rollback(transaction);
   assert(rollback_err == DB_SUCCESS);
 
-  if (strcmp(table_name, INNODB_TABLE_DEFINITIONS_TABLE) == 0)
+  if (strcmp(table_name, HAILDB_TABLE_DEFINITIONS_TABLE) == 0)
   {
     message::Engine *engine= table_message->mutable_engine();
     engine->set_name("InnoDB");
-    table_message->set_name("innodb_table_definitions");
+    table_message->set_name("haildb_table_definitions");
     table_message->set_schema("data_dictionary");
     table_message->set_type(message::Table::STANDARD);
     table_message->set_creation_timestamp(0);
@@ -1639,54 +1639,54 @@ rollback_close_err:
   return -1;
 }
 
-int EmbeddedInnoDBEngine::doGetTableDefinition(Session &session,
+int HailDBEngine::doGetTableDefinition(Session &session,
                                                const TableIdentifier &identifier,
                                                drizzled::message::Table &table)
 {
-  ib_crsr_t innodb_cursor= NULL;
-  string innodb_table_name;
+  ib_crsr_t haildb_cursor= NULL;
+  string haildb_table_name;
 
   /* Check temporary tables!? */
   if (session.getTableMessage(identifier, table))
     return EEXIST;
 
-  TableIdentifier_to_innodb_name(identifier, &innodb_table_name);
+  TableIdentifier_to_haildb_name(identifier, &haildb_table_name);
 
-  if (ib_cursor_open_table(innodb_table_name.c_str(), NULL, &innodb_cursor) != DB_SUCCESS)
+  if (ib_cursor_open_table(haildb_table_name.c_str(), NULL, &haildb_cursor) != DB_SUCCESS)
     return ENOENT;
 
-  ib_err_t err= ib_cursor_close(innodb_cursor);
+  ib_err_t err= ib_cursor_close(haildb_cursor);
 
   assert (err == DB_SUCCESS);
 
-  read_table_message_from_innodb(innodb_table_name.c_str(), &table);
+  read_table_message_from_haildb(haildb_table_name.c_str(), &table);
 
   return EEXIST;
 }
 
-bool EmbeddedInnoDBEngine::doDoesTableExist(Session &,
+bool HailDBEngine::doDoesTableExist(Session &,
                                             const TableIdentifier& identifier)
 {
-  ib_crsr_t innodb_cursor;
-  string innodb_table_name;
+  ib_crsr_t haildb_cursor;
+  string haildb_table_name;
 
-  TableIdentifier_to_innodb_name(identifier, &innodb_table_name);
+  TableIdentifier_to_haildb_name(identifier, &haildb_table_name);
 
-  if (ib_cursor_open_table(innodb_table_name.c_str(), NULL, &innodb_cursor) != DB_SUCCESS)
+  if (ib_cursor_open_table(haildb_table_name.c_str(), NULL, &haildb_cursor) != DB_SUCCESS)
     return false;
 
-  ib_err_t err= ib_cursor_close(innodb_cursor);
+  ib_err_t err= ib_cursor_close(haildb_cursor);
   assert(err == DB_SUCCESS);
 
   return true;
 }
 
-const char *EmbeddedInnoDBCursor::index_type(uint32_t)
+const char *HailDBCursor::index_type(uint32_t)
 {
   return("BTREE");
 }
 
-static ib_err_t write_row_to_innodb_tuple(Field **fields, ib_tpl_t tuple)
+static ib_err_t write_row_to_haildb_tuple(Field **fields, ib_tpl_t tuple)
 {
   int colnr= 0;
   ib_err_t err= DB_ERROR;
@@ -1783,7 +1783,7 @@ static uint64_t innobase_get_int_col_max_value(const Field* field)
   return(max_value);
 }
 
-int EmbeddedInnoDBCursor::doInsertRecord(unsigned char *record)
+int HailDBCursor::doInsertRecord(unsigned char *record)
 {
   ib_err_t err;
   int ret= 0;
@@ -1810,10 +1810,10 @@ int EmbeddedInnoDBCursor::doInsertRecord(unsigned char *record)
      * yuck.
      */
 
-    EmbeddedInnoDBEngine *innodb_engine= static_cast<EmbeddedInnoDBEngine*>(engine);
+    HailDBEngine *storage_engine= static_cast<HailDBEngine*>(engine);
     err= ib_cursor_reset(cursor);
-    innodb_engine->doCommit(current_session, true);
-    innodb_engine->doStartTransaction(current_session, START_TRANS_NO_OPTIONS);
+    storage_engine->doCommit(current_session, true);
+    storage_engine->doStartTransaction(current_session, START_TRANS_NO_OPTIONS);
     transaction= *get_trx(table->in_use);
     assert(err == DB_SUCCESS);
     ib_cursor_attach_trx(cursor, transaction);
@@ -1851,7 +1851,7 @@ int EmbeddedInnoDBCursor::doInsertRecord(unsigned char *record)
 
   }
 
-  write_row_to_innodb_tuple(table->getFields(), tuple);
+  write_row_to_haildb_tuple(table->getFields(), tuple);
 
   if (share->has_hidden_primary_key)
   {
@@ -1864,7 +1864,7 @@ int EmbeddedInnoDBCursor::doInsertRecord(unsigned char *record)
   {
     if (write_can_replace)
     {
-      store_key_value_from_innodb(table->key_info + table->getShare()->getPrimaryKey(),
+      store_key_value_from_haildb(table->key_info + table->getShare()->getPrimaryKey(),
                                   ref, ref_length, record);
 
       ib_tpl_t search_tuple= ib_clust_search_tuple_create(cursor);
@@ -1884,7 +1884,7 @@ int EmbeddedInnoDBCursor::doInsertRecord(unsigned char *record)
       err= ib_cursor_first(cursor);
       assert(err == DB_SUCCESS || err == DB_END_OF_INDEX);
 
-      write_row_to_innodb_tuple(table->getFields(), tuple);
+      write_row_to_haildb_tuple(table->getFields(), tuple);
 
       err= ib_cursor_insert_row(cursor, tuple);
       assert(err==DB_SUCCESS); // probably be nice and process errors
@@ -1902,7 +1902,7 @@ int EmbeddedInnoDBCursor::doInsertRecord(unsigned char *record)
   return ret;
 }
 
-int EmbeddedInnoDBCursor::doUpdateRecord(const unsigned char *,
+int HailDBCursor::doUpdateRecord(const unsigned char *,
                                          unsigned char *)
 {
   ib_tpl_t update_tuple;
@@ -1913,7 +1913,7 @@ int EmbeddedInnoDBCursor::doUpdateRecord(const unsigned char *,
   err= ib_tuple_copy(update_tuple, tuple);
   assert(err == DB_SUCCESS);
 
-  write_row_to_innodb_tuple(table->getFields(), update_tuple);
+  write_row_to_haildb_tuple(table->getFields(), update_tuple);
 
   err= ib_cursor_update_row(cursor, tuple, update_tuple);
 
@@ -1929,7 +1929,7 @@ int EmbeddedInnoDBCursor::doUpdateRecord(const unsigned char *,
     return -1;
 }
 
-int EmbeddedInnoDBCursor::doDeleteRecord(const unsigned char *)
+int HailDBCursor::doDeleteRecord(const unsigned char *)
 {
   ib_err_t err;
 
@@ -1941,11 +1941,11 @@ int EmbeddedInnoDBCursor::doDeleteRecord(const unsigned char *)
   return 0;
 }
 
-int EmbeddedInnoDBCursor::delete_all_rows(void)
+int HailDBCursor::delete_all_rows(void)
 {
   /* I *think* ib_truncate is non-transactional....
      so only support TRUNCATE and not DELETE FROM t;
-     (this is what ha_innodb does)
+     (this is what ha_haildb does)
   */
   if (session_sql_command(table->in_use) != SQLCOM_TRUNCATE)
     return HA_ERR_WRONG_COMMAND;
@@ -1964,7 +1964,7 @@ int EmbeddedInnoDBCursor::delete_all_rows(void)
 
     push_warning_printf(table->in_use, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                         ER_CANT_DELETE_FILE,
-                        _("Cannot Lock Embedded InnoDB Data Dictionary. InnoDB Error %d (%s)\n"),
+                        _("Cannot Lock HailDB Data Dictionary. HailDB Error %d (%s)\n"),
                         err, ib_strerror(err));
 
     assert (rollback_err == DB_SUCCESS);
@@ -1994,7 +1994,7 @@ err:
   return err;
 }
 
-int EmbeddedInnoDBCursor::doStartTableScan(bool)
+int HailDBCursor::doStartTableScan(bool)
 {
   ib_err_t err;
   ib_trx_t transaction;
@@ -2028,7 +2028,7 @@ int EmbeddedInnoDBCursor::doStartTableScan(bool)
   return(0);
 }
 
-int read_row_from_innodb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, Table* table, bool has_hidden_primary_key, uint64_t *hidden_pkey, drizzled::memory::Root **blobroot)
+int read_row_from_haildb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, Table* table, bool has_hidden_primary_key, uint64_t *hidden_pkey, drizzled::memory::Root **blobroot)
 {
   ib_err_t err;
   ptrdiff_t row_offset= buf - table->getInsertRecord();
@@ -2110,7 +2110,7 @@ int read_row_from_innodb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, T
   return 0;
 }
 
-int EmbeddedInnoDBCursor::rnd_next(unsigned char *buf)
+int HailDBCursor::rnd_next(unsigned char *buf)
 {
   ib_err_t err;
   int ret;
@@ -2122,7 +2122,7 @@ int EmbeddedInnoDBCursor::rnd_next(unsigned char *buf)
     err= ib_cursor_next(cursor);
 
   tuple= ib_tuple_clear(tuple);
-  ret= read_row_from_innodb(buf, cursor, tuple, table,
+  ret= read_row_from_haildb(buf, cursor, tuple, table,
                             share->has_hidden_primary_key,
                             &hidden_autoinc_pkey_position);
 
@@ -2130,7 +2130,7 @@ int EmbeddedInnoDBCursor::rnd_next(unsigned char *buf)
   return ret;
 }
 
-int EmbeddedInnoDBCursor::doEndTableScan()
+int HailDBCursor::doEndTableScan()
 {
   ib_err_t err;
 
@@ -2142,7 +2142,7 @@ int EmbeddedInnoDBCursor::doEndTableScan()
   return 0;
 }
 
-int EmbeddedInnoDBCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
+int HailDBCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
 {
   ib_err_t err;
   int res;
@@ -2179,7 +2179,7 @@ int EmbeddedInnoDBCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
   tuple= ib_tuple_clear(tuple);
 
   if (ret == 0)
-    ret= read_row_from_innodb(buf, cursor, tuple, table,
+    ret= read_row_from_haildb(buf, cursor, tuple, table,
                               share->has_hidden_primary_key,
                               &hidden_autoinc_pkey_position);
 
@@ -2188,7 +2188,7 @@ int EmbeddedInnoDBCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
   return(ret);
 }
 
-static void store_key_value_from_innodb(KeyInfo *key_info, unsigned char* ref, int ref_len, const unsigned char *record)
+static void store_key_value_from_haildb(KeyInfo *key_info, unsigned char* ref, int ref_len, const unsigned char *record)
 {
   KeyPartInfo* key_part= key_info->key_part;
   KeyPartInfo* end= key_info->key_part + key_info->key_parts;
@@ -2243,7 +2243,7 @@ static void store_key_value_from_innodb(KeyInfo *key_info, unsigned char* ref, i
   assert(ref == ref_start + ref_len);
 }
 
-void EmbeddedInnoDBCursor::position(const unsigned char *record)
+void HailDBCursor::position(const unsigned char *record)
 {
   if (share->has_hidden_primary_key)
     *((uint64_t*) ref)= hidden_autoinc_pkey_position;
@@ -2255,19 +2255,19 @@ void EmbeddedInnoDBCursor::position(const unsigned char *record)
     else
       keynr= get_first_unique_index(*table);
 
-    store_key_value_from_innodb(table->key_info + keynr,
+    store_key_value_from_haildb(table->key_info + keynr,
                                 ref, ref_length, record);
   }
 
   return;
 }
 
-double EmbeddedInnoDBCursor::scan_time()
+double HailDBCursor::scan_time()
 {
   return 0.1;
 }
 
-int EmbeddedInnoDBCursor::info(uint32_t flag)
+int HailDBCursor::info(uint32_t flag)
 {
   stats.records= 2;
 
@@ -2276,7 +2276,7 @@ int EmbeddedInnoDBCursor::info(uint32_t flag)
   return(0);
 }
 
-int EmbeddedInnoDBCursor::doStartIndexScan(uint32_t keynr, bool)
+int HailDBCursor::doStartIndexScan(uint32_t keynr, bool)
 {
   ib_trx_t transaction= *get_trx(table->in_use);
 
@@ -2292,7 +2292,7 @@ int EmbeddedInnoDBCursor::doStartIndexScan(uint32_t keynr, bool)
   {
     ib_err_t err;
     ib_id_t index_id;
-    err= ib_index_get_id(table_path_to_innodb_name(table_share->getPath()),
+    err= ib_index_get_id(table_path_to_haildb_name(table_share->getPath()),
                          table_share->getKeyInfo(keynr).name,
                          &index_id);
     if (err != DB_SUCCESS)
@@ -2420,7 +2420,7 @@ static void fill_ib_search_tpl_from_drizzle_key(ib_tpl_t search_tuple,
   assert(buff == key_ptr + key_len);
 }
 
-int EmbeddedInnoDBCursor::innodb_index_read(unsigned char *buf,
+int HailDBCursor::haildb_index_read(unsigned char *buf,
                                             const unsigned char *key_ptr,
                                             uint32_t key_len,
                                             drizzled::ha_rkey_function find_flag,
@@ -2458,7 +2458,7 @@ int EmbeddedInnoDBCursor::innodb_index_read(unsigned char *buf,
   }
 
   tuple= ib_tuple_clear(tuple);
-  ret= read_row_from_innodb(buf, cursor, tuple, table,
+  ret= read_row_from_haildb(buf, cursor, tuple, table,
                             share->has_hidden_primary_key,
                             &hidden_autoinc_pkey_position,
                             (allocate_blobs)? &blobroot : NULL);
@@ -2472,16 +2472,16 @@ int EmbeddedInnoDBCursor::innodb_index_read(unsigned char *buf,
   return ret;
 }
 
-int EmbeddedInnoDBCursor::index_read(unsigned char *buf,
+int HailDBCursor::index_read(unsigned char *buf,
                                      const unsigned char *key_ptr,
                                      uint32_t key_len,
                                      drizzled::ha_rkey_function find_flag)
 {
-  return innodb_index_read(buf, key_ptr, key_len, find_flag, false);
+  return haildb_index_read(buf, key_ptr, key_len, find_flag, false);
 }
 
 /* This is straight from cursor.cc, but it's private there :( */
-uint32_t EmbeddedInnoDBCursor::calculate_key_len(uint32_t key_position,
+uint32_t HailDBCursor::calculate_key_len(uint32_t key_position,
                                                  key_part_map keypart_map_arg)
 {
   /* works only with key prefixes */
@@ -2501,17 +2501,17 @@ uint32_t EmbeddedInnoDBCursor::calculate_key_len(uint32_t key_position,
 }
 
 
-int EmbeddedInnoDBCursor::innodb_index_read_map(unsigned char * buf,
+int HailDBCursor::haildb_index_read_map(unsigned char * buf,
                                                 const unsigned char *key,
                                                 key_part_map keypart_map,
                                                 enum ha_rkey_function find_flag,
                                                 bool allocate_blobs)
 {
   uint32_t key_len= calculate_key_len(active_index, keypart_map);
-  return  innodb_index_read(buf, key, key_len, find_flag, allocate_blobs);
+  return  haildb_index_read(buf, key, key_len, find_flag, allocate_blobs);
 }
 
-int EmbeddedInnoDBCursor::index_read_idx_map(unsigned char * buf,
+int HailDBCursor::index_read_idx_map(unsigned char * buf,
                                              uint32_t index,
                                              const unsigned char * key,
                                              key_part_map keypart_map,
@@ -2521,13 +2521,13 @@ int EmbeddedInnoDBCursor::index_read_idx_map(unsigned char * buf,
   error= doStartIndexScan(index, 0);
   if (!error)
   {
-    error= innodb_index_read_map(buf, key, keypart_map, find_flag, true);
+    error= haildb_index_read_map(buf, key, keypart_map, find_flag, true);
     error1= doEndIndexScan();
   }
   return error ?  error : error1;
 }
 
-int EmbeddedInnoDBCursor::reset()
+int HailDBCursor::reset()
 {
   if (blobroot)
     blobroot->free_root(MYF(0));
@@ -2535,7 +2535,7 @@ int EmbeddedInnoDBCursor::reset()
   return 0;
 }
 
-int EmbeddedInnoDBCursor::index_next(unsigned char *buf)
+int HailDBCursor::index_next(unsigned char *buf)
 {
   int ret= HA_ERR_END_OF_FILE;
 
@@ -2547,7 +2547,7 @@ int EmbeddedInnoDBCursor::index_next(unsigned char *buf)
   }
 
   tuple= ib_tuple_clear(tuple);
-  ret= read_row_from_innodb(buf, cursor, tuple, table,
+  ret= read_row_from_haildb(buf, cursor, tuple, table,
                             share->has_hidden_primary_key,
                             &hidden_autoinc_pkey_position);
 
@@ -2555,14 +2555,14 @@ int EmbeddedInnoDBCursor::index_next(unsigned char *buf)
   return ret;
 }
 
-int EmbeddedInnoDBCursor::doEndIndexScan()
+int HailDBCursor::doEndIndexScan()
 {
   active_index= MAX_KEY;
 
   return doEndTableScan();
 }
 
-int EmbeddedInnoDBCursor::index_prev(unsigned char *buf)
+int HailDBCursor::index_prev(unsigned char *buf)
 {
   int ret= HA_ERR_END_OF_FILE;
   ib_err_t err;
@@ -2580,7 +2580,7 @@ int EmbeddedInnoDBCursor::index_prev(unsigned char *buf)
   }
 
   tuple= ib_tuple_clear(tuple);
-  ret= read_row_from_innodb(buf, cursor, tuple, table,
+  ret= read_row_from_haildb(buf, cursor, tuple, table,
                             share->has_hidden_primary_key,
                             &hidden_autoinc_pkey_position);
 
@@ -2590,7 +2590,7 @@ int EmbeddedInnoDBCursor::index_prev(unsigned char *buf)
 }
 
 
-int EmbeddedInnoDBCursor::index_first(unsigned char *buf)
+int HailDBCursor::index_first(unsigned char *buf)
 {
   int ret= HA_ERR_END_OF_FILE;
   ib_err_t err;
@@ -2600,7 +2600,7 @@ int EmbeddedInnoDBCursor::index_first(unsigned char *buf)
     return ib_err_t_to_drizzle_error(err);
 
   tuple= ib_tuple_clear(tuple);
-  ret= read_row_from_innodb(buf, cursor, tuple, table,
+  ret= read_row_from_haildb(buf, cursor, tuple, table,
                             share->has_hidden_primary_key,
                             &hidden_autoinc_pkey_position);
 
@@ -2610,7 +2610,7 @@ int EmbeddedInnoDBCursor::index_first(unsigned char *buf)
 }
 
 
-int EmbeddedInnoDBCursor::index_last(unsigned char *buf)
+int HailDBCursor::index_last(unsigned char *buf)
 {
   int ret= HA_ERR_END_OF_FILE;
   ib_err_t err;
@@ -2620,7 +2620,7 @@ int EmbeddedInnoDBCursor::index_last(unsigned char *buf)
     return ib_err_t_to_drizzle_error(err);
 
   tuple= ib_tuple_clear(tuple);
-  ret= read_row_from_innodb(buf, cursor, tuple, table,
+  ret= read_row_from_haildb(buf, cursor, tuple, table,
                             share->has_hidden_primary_key,
                             &hidden_autoinc_pkey_position);
   advance_cursor= true;
@@ -2628,7 +2628,7 @@ int EmbeddedInnoDBCursor::index_last(unsigned char *buf)
   return ret;
 }
 
-int EmbeddedInnoDBCursor::extra(enum ha_extra_function operation)
+int HailDBCursor::extra(enum ha_extra_function operation)
 {
   switch (operation)
   {
@@ -2662,7 +2662,7 @@ static int create_table_message_table()
   if (create_db_err != IB_TRUE)
     return -1;
 
-  err= ib_table_schema_create(INNODB_TABLE_DEFINITIONS_TABLE, &schema,
+  err= ib_table_schema_create(HAILDB_TABLE_DEFINITIONS_TABLE, &schema,
                               IB_TBL_COMPACT, 0);
   if (err != DB_SUCCESS)
     return err;
@@ -2742,13 +2742,13 @@ static long innobase_open_files;
 static long innobase_additional_mem_pool_size;
 static long innobase_force_recovery;
 static long innobase_log_buffer_size;
-static char  default_innodb_data_file_path[]= "ibdata1:10M:autoextend";
-static char* innodb_data_file_path= NULL;
+static char  default_haildb_data_file_path[]= "ibdata1:10M:autoextend";
+static char* haildb_data_file_path= NULL;
 
-static int64_t innodb_log_file_size;
-static int64_t innodb_log_files_in_group;
+static int64_t haildb_log_file_size;
+static int64_t haildb_log_files_in_group;
 
-static int embedded_innodb_init(drizzled::module::Context &context)
+static int haildb_init(drizzled::module::Context &context)
 {
 
   const module::option_map &vm= context.getOptions();
@@ -2831,18 +2831,18 @@ static int embedded_innodb_init(drizzled::module::Context &context)
 
   if (vm.count("log-file-size"))
   {
-    if (innodb_log_file_size > INT64_MAX || innodb_log_file_size < 1*1024*1024L)
+    if (haildb_log_file_size > INT64_MAX || haildb_log_file_size < 1*1024*1024L)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of log-file-size"));
       exit(-1);
     }
-    innodb_log_file_size/= 1024*1024L;
-    innodb_log_file_size*= 1024*1024L;
+    haildb_log_file_size/= 1024*1024L;
+    haildb_log_file_size*= 1024*1024L;
   }
 
   if (vm.count("log-files-in-group"))
   {
-    if (innodb_log_files_in_group > 100 || innodb_log_files_in_group < 2)
+    if (haildb_log_files_in_group > 100 || haildb_log_files_in_group < 2)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of log-files-in-group"));
       exit(-1);
@@ -2954,31 +2954,31 @@ static int embedded_innodb_init(drizzled::module::Context &context)
 
   if (vm.count("data-file-path"))
   {
-    innodb_data_file_path= const_cast<char *>(vm["data-file-path"].as<string>().c_str());
+    haildb_data_file_path= const_cast<char *>(vm["data-file-path"].as<string>().c_str());
   }
 
   ib_err_t err;
 
   err= ib_init();
   if (err != DB_SUCCESS)
-    goto innodb_error;
+    goto haildb_error;
 
   if (innobase_data_home_dir)
   {
     err= ib_cfg_set_text("data_home_dir", innobase_data_home_dir);
     if (err != DB_SUCCESS)
-      goto innodb_error;
+      goto haildb_error;
   }
 
   if (innobase_log_group_home_dir)
   {
     err= ib_cfg_set_text("log_group_home_dir", innobase_log_group_home_dir);
     if (err != DB_SUCCESS)
-      goto innodb_error;
+      goto haildb_error;
   }
 
-  if (innodb_data_file_path == NULL)
-    innodb_data_file_path= default_innodb_data_file_path;
+  if (haildb_data_file_path == NULL)
+    haildb_data_file_path= default_haildb_data_file_path;
 
   if (innobase_print_verbose_log)
     err= ib_cfg_set_bool_on("print_verbose_log");
@@ -2986,7 +2986,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
     err= ib_cfg_set_bool_off("print_verbose_log");
 
   if (err != DB_SUCCESS)
-    goto innodb_error;
+    goto haildb_error;
 
   if (innobase_rollback_on_timeout)
     err= ib_cfg_set_bool_on("rollback_on_timeout");
@@ -2994,7 +2994,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
     err= ib_cfg_set_bool_off("rollback_on_timeout");
 
   if (err != DB_SUCCESS)
-    goto innodb_error;
+    goto haildb_error;
 
   if (innobase_use_doublewrite)
     err= ib_cfg_set_bool_on("doublewrite");
@@ -3002,7 +3002,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
     err= ib_cfg_set_bool_off("doublewrite");
 
   if (err != DB_SUCCESS)
-    goto innodb_error;
+    goto haildb_error;
 
   if (innobase_adaptive_hash_index)
     err= ib_cfg_set_bool_on("adaptive_hash_index");
@@ -3010,7 +3010,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
     err= ib_cfg_set_bool_off("adaptive_hash_index");
 
   if (err != DB_SUCCESS)
-    goto innodb_error;
+    goto haildb_error;
 
   if (srv_adaptive_flushing)
     err= ib_cfg_set_bool_on("adaptive_flushing");
@@ -3018,23 +3018,23 @@ static int embedded_innodb_init(drizzled::module::Context &context)
     err= ib_cfg_set_bool_off("adaptive_flushing");
 
   if (err != DB_SUCCESS)
-    goto innodb_error;
+    goto haildb_error;
 
   err= ib_cfg_set_int("additional_mem_pool_size", innobase_additional_mem_pool_size);
   if (err != DB_SUCCESS)
-    goto innodb_error;
+    goto haildb_error;
 
   err= ib_cfg_set_int("autoextend_increment", srv_auto_extend_increment);
   if (err != DB_SUCCESS)
-    goto innodb_error;
+    goto haildb_error;
 
   err= ib_cfg_set_int("buffer_pool_size", innobase_buffer_pool_size);
   if (err != DB_SUCCESS)
-    goto innodb_error;
+    goto haildb_error;
 
   err= ib_cfg_set_int("io_capacity", srv_io_capacity);
   if (err != DB_SUCCESS)
-    goto innodb_error;
+    goto haildb_error;
 
   if (srv_file_per_table)
     err= ib_cfg_set_bool_on("file_per_table");
@@ -3042,70 +3042,70 @@ static int embedded_innodb_init(drizzled::module::Context &context)
     err= ib_cfg_set_bool_off("file_per_table");
 
   if (err != DB_SUCCESS)
-    goto innodb_error;
+    goto haildb_error;
 
   err= ib_cfg_set_int("flush_log_at_trx_commit", srv_flush_log_at_trx_commit);
   if (err != DB_SUCCESS)
-    goto innodb_error;
+    goto haildb_error;
 
   if (innobase_unix_file_flush_method)
   {
     err= ib_cfg_set_text("flush_method", innobase_unix_file_flush_method);
     if (err != DB_SUCCESS)
-      goto innodb_error;
+      goto haildb_error;
   }
 
   err= ib_cfg_set_int("force_recovery", innobase_force_recovery);
   if (err != DB_SUCCESS)
-    goto innodb_error;
+    goto haildb_error;
 
-  err= ib_cfg_set_text("data_file_path", innodb_data_file_path);
+  err= ib_cfg_set_text("data_file_path", haildb_data_file_path);
   if (err != DB_SUCCESS)
-    goto innodb_error;
+    goto haildb_error;
 
-  err= ib_cfg_set_int("log_file_size", innodb_log_file_size);
+  err= ib_cfg_set_int("log_file_size", haildb_log_file_size);
   if (err != DB_SUCCESS)
-    goto innodb_error;
+    goto haildb_error;
 
   err= ib_cfg_set_int("log_buffer_size", innobase_log_buffer_size);
   if (err != DB_SUCCESS)
-    goto innodb_error;
+    goto haildb_error;
 
-  err= ib_cfg_set_int("log_files_in_group", innodb_log_files_in_group);
+  err= ib_cfg_set_int("log_files_in_group", haildb_log_files_in_group);
   if (err != DB_SUCCESS)
-    goto innodb_error;
+    goto haildb_error;
 
   err= ib_cfg_set_int("checksums", innobase_use_checksums);
   if (err != DB_SUCCESS)
-    goto innodb_error;
+    goto haildb_error;
 
   err= ib_cfg_set_int("lock_wait_timeout", innobase_lock_wait_timeout);
   if (err != DB_SUCCESS)
-    goto innodb_error;
+    goto haildb_error;
 
   err= ib_cfg_set_int("max_dirty_pages_pct", srv_max_buf_pool_modified_pct);
   if (err != DB_SUCCESS)
-    goto innodb_error;
+    goto haildb_error;
 
   err= ib_cfg_set_int("max_purge_lag", srv_max_purge_lag);
   if (err != DB_SUCCESS)
-    goto innodb_error;
+    goto haildb_error;
 
   err= ib_cfg_set_int("open_files", innobase_open_files);
   if (err != DB_SUCCESS)
-    goto innodb_error;
+    goto haildb_error;
 
   err= ib_cfg_set_int("read_io_threads", innobase_read_io_threads);
   if (err != DB_SUCCESS)
-    goto innodb_error;
+    goto haildb_error;
 
   err= ib_cfg_set_int("write_io_threads", innobase_write_io_threads);
   if (err != DB_SUCCESS)
-    goto innodb_error;
+    goto haildb_error;
 
   err= ib_cfg_set_int("sync_spin_loops", srv_n_spin_wait_rounds);
   if (err != DB_SUCCESS)
-    goto innodb_error;
+    goto haildb_error;
 
   if (srv_use_sys_malloc)
     err= ib_cfg_set_bool_on("use_sys_malloc");
@@ -3113,16 +3113,16 @@ static int embedded_innodb_init(drizzled::module::Context &context)
     err= ib_cfg_set_bool_off("use_sys_malloc");
 
   if (err != DB_SUCCESS)
-    goto innodb_error;
+    goto haildb_error;
 
   err= ib_startup(innobase_file_format_name);
   if (err != DB_SUCCESS)
-    goto innodb_error;
+    goto haildb_error;
 
   create_table_message_table();
 
-  embedded_innodb_engine= new EmbeddedInnoDBEngine("InnoDB");
-  context.add(embedded_innodb_engine);
+  haildb_engine= new HailDBEngine("InnoDB");
+  context.add(haildb_engine);
 
   haildb_version_func_initialize(context);
   haildb_datadict_dump_func_initialize(context);
@@ -3130,14 +3130,14 @@ static int embedded_innodb_init(drizzled::module::Context &context)
   status_table_function_initialize(context);
 
   return 0;
-innodb_error:
-  fprintf(stderr, _("Error starting Embedded InnoDB %d (%s)\n"),
+haildb_error:
+  fprintf(stderr, _("Error starting HailDB %d (%s)\n"),
           err, ib_strerror(err));
   return -1;
 }
 
 
-EmbeddedInnoDBEngine::~EmbeddedInnoDBEngine()
+HailDBEngine::~HailDBEngine()
 {
   ib_err_t err;
   ib_shutdown_t shutdown_flag= IB_SHUTDOWN_NORMAL;
@@ -3151,14 +3151,14 @@ EmbeddedInnoDBEngine::~EmbeddedInnoDBEngine()
 
   if (err != DB_SUCCESS)
   {
-    fprintf(stderr,"Error %d shutting down Embedded InnoDB!\n", err);
+    fprintf(stderr,"Error %d shutting down HailDB!\n", err);
   }
 
 }
 
-static char innodb_file_format_name_storage[100];
+static char haildb_file_format_name_storage[100];
 
-static int innodb_file_format_name_validate(Session*, drizzle_sys_var*,
+static int haildb_file_format_name_validate(Session*, drizzle_sys_var*,
                                             void *save,
                                             drizzle_value *value)
 {
@@ -3176,17 +3176,17 @@ static int innodb_file_format_name_validate(Session*, drizzle_sys_var*,
 
   if (err == DB_SUCCESS)
   {
-    strncpy(innodb_file_format_name_storage, format, sizeof(innodb_file_format_name_storage));;
-    innodb_file_format_name_storage[sizeof(innodb_file_format_name_storage)-1]= 0;
+    strncpy(haildb_file_format_name_storage, format, sizeof(haildb_file_format_name_storage));;
+    haildb_file_format_name_storage[sizeof(haildb_file_format_name_storage)-1]= 0;
 
-    *static_cast<const char**>(save)= innodb_file_format_name_storage;
+    *static_cast<const char**>(save)= haildb_file_format_name_storage;
     return 0;
   }
   else
     return 1;
 }
 
-static void innodb_file_format_name_update(Session*, drizzle_sys_var*,
+static void haildb_file_format_name_update(Session*, drizzle_sys_var*,
                                            void *var_ptr,
                                            const void *save)
 
@@ -3199,13 +3199,13 @@ static void innodb_file_format_name_update(Session*, drizzle_sys_var*,
   format= *static_cast<const char*const*>(save);
 
   /* Format is already set in validate */
-  memmove(innodb_file_format_name_storage, format, sizeof(innodb_file_format_name_storage));;
-  innodb_file_format_name_storage[sizeof(innodb_file_format_name_storage)-1]= 0;
+  memmove(haildb_file_format_name_storage, format, sizeof(haildb_file_format_name_storage));;
+  haildb_file_format_name_storage[sizeof(haildb_file_format_name_storage)-1]= 0;
 
-  *static_cast<const char**>(var_ptr)= innodb_file_format_name_storage;
+  *static_cast<const char**>(var_ptr)= haildb_file_format_name_storage;
 }
 
-static void innodb_lru_old_blocks_pct_update(Session*, drizzle_sys_var*,
+static void haildb_lru_old_blocks_pct_update(Session*, drizzle_sys_var*,
                                              void *,
                                              const void *save)
 
@@ -3219,7 +3219,7 @@ static void innodb_lru_old_blocks_pct_update(Session*, drizzle_sys_var*,
     innobase_lru_old_blocks_pct= pct;
 }
 
-static void innodb_lru_block_access_recency_update(Session*, drizzle_sys_var*,
+static void haildb_lru_block_access_recency_update(Session*, drizzle_sys_var*,
                                                    void *,
                                                    const void *save)
 
@@ -3234,7 +3234,7 @@ static void innodb_lru_block_access_recency_update(Session*, drizzle_sys_var*,
     innobase_lru_block_access_recency= ms;
 }
 
-static void innodb_status_file_update(Session*, drizzle_sys_var*,
+static void haildb_status_file_update(Session*, drizzle_sys_var*,
                                       void *,
                                       const void *save)
 
@@ -3256,7 +3256,7 @@ static void innodb_status_file_update(Session*, drizzle_sys_var*,
 
 static DRIZZLE_SYSVAR_BOOL(adaptive_hash_index, innobase_adaptive_hash_index,
   PLUGIN_VAR_NOCMDARG,
-  "Enable InnoDB adaptive hash index (enabled by default).  ",
+  "Enable HailDB adaptive hash index (enabled by default).  ",
   NULL, NULL, true);
 
 static DRIZZLE_SYSVAR_BOOL(adaptive_flushing, srv_adaptive_flushing,
@@ -3266,7 +3266,7 @@ static DRIZZLE_SYSVAR_BOOL(adaptive_flushing, srv_adaptive_flushing,
 
 static DRIZZLE_SYSVAR_LONG(additional_mem_pool_size, innobase_additional_mem_pool_size,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Size of a memory pool InnoDB uses to store data dictionary information and other internal data structures.",
+  "Size of a memory pool HailDB uses to store data dictionary information and other internal data structures.",
   NULL, NULL, 8*1024*1024L, 512*1024L, LONG_MAX, 1024);
 
 static DRIZZLE_SYSVAR_UINT(autoextend_increment, srv_auto_extend_increment,
@@ -3276,24 +3276,24 @@ static DRIZZLE_SYSVAR_UINT(autoextend_increment, srv_auto_extend_increment,
 
 static DRIZZLE_SYSVAR_LONGLONG(buffer_pool_size, innobase_buffer_pool_size,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "The size of the memory buffer InnoDB uses to cache data and indexes of its tables.",
+  "The size of the memory buffer HailDB uses to cache data and indexes of its tables.",
   NULL, NULL, 128*1024*1024L, 5*1024*1024L, INT64_MAX, 1024*1024L);
 
 static DRIZZLE_SYSVAR_BOOL(checksums, innobase_use_checksums,
   PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
-  "Enable InnoDB checksums validation (enabled by default). "
-  "Disable with --skip-innodb-checksums.",
+  "Enable HailDB checksums validation (enabled by default). "
+  "Disable with --skip-haildb-checksums.",
   NULL, NULL, true);
 
 static DRIZZLE_SYSVAR_STR(data_home_dir, innobase_data_home_dir,
   PLUGIN_VAR_READONLY,
-  "The common part for InnoDB table spaces.",
+  "The common part for HailDB table spaces.",
   NULL, NULL, NULL);
 
 static DRIZZLE_SYSVAR_BOOL(doublewrite, innobase_use_doublewrite,
   PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
-  "Enable InnoDB doublewrite buffer (enabled by default). "
-  "Disable with --skip-innodb-doublewrite.",
+  "Enable HailDB doublewrite buffer (enabled by default). "
+  "Disable with --skip-haildb-doublewrite.",
   NULL, NULL, true);
 
 static DRIZZLE_SYSVAR_ULONG(io_capacity, srv_io_capacity,
@@ -3303,7 +3303,7 @@ static DRIZZLE_SYSVAR_ULONG(io_capacity, srv_io_capacity,
 
 static DRIZZLE_SYSVAR_ULONG(fast_shutdown, innobase_fast_shutdown,
   PLUGIN_VAR_OPCMDARG,
-  "Speeds up the shutdown process of the InnoDB storage engine. Possible "
+  "Speeds up the shutdown process of the HailDB storage engine. Possible "
   "values are 0, 1 (faster)"
   " or 2 (fastest - crash-like)"
   ".",
@@ -3311,14 +3311,14 @@ static DRIZZLE_SYSVAR_ULONG(fast_shutdown, innobase_fast_shutdown,
 
 static DRIZZLE_SYSVAR_BOOL(file_per_table, srv_file_per_table,
   PLUGIN_VAR_NOCMDARG,
-  "Stores each InnoDB table to an .ibd file in the database dir.",
+  "Stores each HailDB table to an .ibd file in the database dir.",
   NULL, NULL, false);
 
 static DRIZZLE_SYSVAR_STR(file_format, innobase_file_format_name,
   PLUGIN_VAR_RQCMDARG,
   "File format to use for new tables in .ibd files.",
-  innodb_file_format_name_validate,
-  innodb_file_format_name_update, "Barracuda");
+  haildb_file_format_name_validate,
+  haildb_file_format_name_update, "Barracuda");
 
 static DRIZZLE_SYSVAR_ULONG(flush_log_at_trx_commit, srv_flush_log_at_trx_commit,
   PLUGIN_VAR_OPCMDARG,
@@ -3336,33 +3336,33 @@ static DRIZZLE_SYSVAR_LONG(force_recovery, innobase_force_recovery,
   "Helps to save your data in case the disk image of the database becomes corrupt.",
   NULL, NULL, 0, 0, 6, 0);
 
-static DRIZZLE_SYSVAR_STR(data_file_path, innodb_data_file_path,
+static DRIZZLE_SYSVAR_STR(data_file_path, haildb_data_file_path,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "Path to individual files and their sizes.",
   NULL, NULL, NULL);
 
 static DRIZZLE_SYSVAR_STR(log_group_home_dir, innobase_log_group_home_dir,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Path to InnoDB log files.", NULL, NULL, NULL);
+  "Path to HailDB log files.", NULL, NULL, NULL);
 
-static DRIZZLE_SYSVAR_LONGLONG(log_file_size, innodb_log_file_size,
+static DRIZZLE_SYSVAR_LONGLONG(log_file_size, haildb_log_file_size,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "Size of each log file in a log group.",
   NULL, NULL, 20*1024*1024L, 1*1024*1024L, INT64_MAX, 1024*1024L);
 
-static DRIZZLE_SYSVAR_LONGLONG(log_files_in_group, innodb_log_files_in_group,
+static DRIZZLE_SYSVAR_LONGLONG(log_files_in_group, haildb_log_files_in_group,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Number of log files in the log group. InnoDB writes to the files in a circular fashion. Value 3 is recommended here.",
+  "Number of log files in the log group. HailDB writes to the files in a circular fashion. Value 3 is recommended here.",
   NULL, NULL, 2, 2, 100, 0);
 
 static DRIZZLE_SYSVAR_ULONG(lock_wait_timeout, innobase_lock_wait_timeout,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Timeout in seconds an InnoDB transaction may wait for a lock before being rolled back. Values above 100000000 disable the timeout.",
+  "Timeout in seconds an HailDB transaction may wait for a lock before being rolled back. Values above 100000000 disable the timeout.",
   NULL, NULL, 5, 1, 1024 * 1024 * 1024, 0);
 
 static DRIZZLE_SYSVAR_LONG(log_buffer_size, innobase_log_buffer_size,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "The size of the buffer which InnoDB uses to write log to the log files on disk.",
+  "The size of the buffer which HailDB uses to write log to the log files on disk.",
   NULL, NULL, 8*1024*1024L, 256*1024L, LONG_MAX, 1024);
 
 static DRIZZLE_SYSVAR_ULONG(lru_old_blocks_pct, innobase_lru_old_blocks_pct,
@@ -3370,14 +3370,14 @@ static DRIZZLE_SYSVAR_ULONG(lru_old_blocks_pct, innobase_lru_old_blocks_pct,
   "Sets the point in the LRU list from where all pages are classified as "
   "old (Advanced users)",
   NULL,
-  innodb_lru_old_blocks_pct_update, 37, 5, 95, 0);
+  haildb_lru_old_blocks_pct_update, 37, 5, 95, 0);
 
 static DRIZZLE_SYSVAR_ULONG(lru_block_access_recency, innobase_lru_block_access_recency,
   PLUGIN_VAR_RQCMDARG,
   "Milliseconds between accesses to a block at which it is made young. "
   "0=disabled (Advanced users)",
   NULL,
-  innodb_lru_block_access_recency_update, 0, 0, ULONG_MAX, 0);
+  haildb_lru_block_access_recency_update, 0, 0, ULONG_MAX, 0);
 
 
 static DRIZZLE_SYSVAR_ULONG(max_dirty_pages_pct, srv_max_buf_pool_modified_pct,
@@ -3397,17 +3397,17 @@ static DRIZZLE_SYSVAR_BOOL(rollback_on_timeout, innobase_rollback_on_timeout,
 
 static DRIZZLE_SYSVAR_LONG(open_files, innobase_open_files,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "How many files at the maximum InnoDB keeps open at the same time.",
+  "How many files at the maximum HailDB keeps open at the same time.",
   NULL, NULL, 300L, 10L, LONG_MAX, 0);
 
 static DRIZZLE_SYSVAR_ULONG(read_io_threads, innobase_read_io_threads,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Number of background read I/O threads in InnoDB.",
+  "Number of background read I/O threads in HailDB.",
   NULL, NULL, 4, 1, 64, 0);
 
 static DRIZZLE_SYSVAR_ULONG(write_io_threads, innobase_write_io_threads,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Number of background write I/O threads in InnoDB.",
+  "Number of background write I/O threads in HailDB.",
   NULL, NULL, 4, 1, 64, 0);
 
 static DRIZZLE_SYSVAR_BOOL(print_verbose_log, innobase_print_verbose_log,
@@ -3417,50 +3417,50 @@ static DRIZZLE_SYSVAR_BOOL(print_verbose_log, innobase_print_verbose_log,
 
 static DRIZZLE_SYSVAR_BOOL(status_file, innobase_create_status_file,
   PLUGIN_VAR_OPCMDARG,
-  "Enable SHOW INNODB STATUS output in the log",
-  NULL, innodb_status_file_update, false);
+  "Enable SHOW HAILDB STATUS output in the log",
+  NULL, haildb_status_file_update, false);
 
 static DRIZZLE_SYSVAR_ULONG(sync_spin_loops, srv_n_spin_wait_rounds,
   PLUGIN_VAR_RQCMDARG,
-  "Count of spin-loop rounds in InnoDB mutexes (30 by default)",
+  "Count of spin-loop rounds in HailDB mutexes (30 by default)",
   NULL, NULL, 30L, 0L, ~0L, 0);
 
 static DRIZZLE_SYSVAR_BOOL(use_sys_malloc, srv_use_sys_malloc,
   PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
-  "Use OS memory allocator instead of InnoDB's internal memory allocator",
+  "Use OS memory allocator instead of HailDB's internal memory allocator",
   NULL, NULL, true);
 
 static void init_options(drizzled::module::option_context &context)
 {
   context("disable-adaptive-hash-index",
-          N_("Disable InnoDB adaptive hash index (enabled by default)."));
+          N_("Disable HailDB adaptive hash index (enabled by default)."));
   context("disable-adaptive-flushing",
           N_("Do not attempt to flush dirty pages to avoid IO bursts at checkpoints."));
   context("additional-mem-pool-size",
           po::value<long>(&innobase_additional_mem_pool_size)->default_value(8*1024*1024L),
-          N_("Size of a memory pool InnoDB uses to store data dictionary information and other internal data structures."));
+          N_("Size of a memory pool HailDB uses to store data dictionary information and other internal data structures."));
   context("autoextend-increment",
           po::value<unsigned int>(&srv_auto_extend_increment)->default_value(8L),
           N_("Data file autoextend increment in megabytes"));
   context("buffer-pool-size",
           po::value<int64_t>(&innobase_buffer_pool_size)->default_value(128*1024*1024L),
-          N_("The size of the memory buffer InnoDB uses to cache data and indexes of its tables."));
+          N_("The size of the memory buffer HailDB uses to cache data and indexes of its tables."));
   context("data-home-dir",
           po::value<string>(),
-          N_("The common part for InnoDB table spaces."));
+          N_("The common part for HailDB table spaces."));
   context("disable-checksums",
-          N_("Disable InnoDB checksums validation (enabled by default)."));
+          N_("Disable HailDB checksums validation (enabled by default)."));
   context("disable-doublewrite",
-          N_("Disable InnoDB doublewrite buffer (enabled by default)."));
+          N_("Disable HailDB doublewrite buffer (enabled by default)."));
   context("io-capacity",
           po::value<unsigned long>(&srv_io_capacity)->default_value(200),
           N_("Number of IOPs the server can do. Tunes the background IO rate"));
   context("fast-shutdown",
           po::value<unsigned long>(&innobase_fast_shutdown)->default_value(1),
-          N_("Speeds up the shutdown process of the InnoDB storage engine. Possible values are 0, 1 (faster) or 2 (fastest - crash-like)."));
+          N_("Speeds up the shutdown process of the HailDB storage engine. Possible values are 0, 1 (faster) or 2 (fastest - crash-like)."));
   context("file-per-table",
           po::value<bool>(&srv_file_per_table)->default_value(false)->zero_tokens(),
-          N_("Stores each InnoDB table to an .ibd file in the database dir."));
+          N_("Stores each HailDB table to an .ibd file in the database dir."));
   context("file-format",
           po::value<string>(),
           N_("File format to use for new tables in .ibd files."));
@@ -3481,19 +3481,19 @@ static void init_options(drizzled::module::option_context &context)
           N_("Path to individual files and their sizes."));
   context("log-group-home-dir",
           po::value<string>(),
-          N_("Path to InnoDB log files."));
+          N_("Path to HailDB log files."));
   context("log-file-size",
-          po::value<int64_t>(&innodb_log_file_size)->default_value(20*1024*1024L),
+          po::value<int64_t>(&haildb_log_file_size)->default_value(20*1024*1024L),
           N_("Size of each log file in a log group."));
-  context("innodb-log-files-in-group",
-          po::value<int64_t>(&innodb_log_files_in_group)->default_value(2),
-          N_("Number of log files in the log group. InnoDB writes to the files in a circular fashion. Value 3 is recommended here."));
+  context("haildb-log-files-in-group",
+          po::value<int64_t>(&haildb_log_files_in_group)->default_value(2),
+          N_("Number of log files in the log group. HailDB writes to the files in a circular fashion. Value 3 is recommended here."));
   context("lock-wait-timeout",
           po::value<unsigned long>(&innobase_lock_wait_timeout)->default_value(5),
-          N_("Timeout in seconds an InnoDB transaction may wait for a lock before being rolled back. Values above 100000000 disable the timeout."));
+          N_("Timeout in seconds an HailDB transaction may wait for a lock before being rolled back. Values above 100000000 disable the timeout."));
   context("log-buffer-size",
         po::value<long>(&innobase_log_buffer_size)->default_value(8*1024*1024L),
-        N_("The size of the buffer which InnoDB uses to write log to the log files on disk."));
+        N_("The size of the buffer which HailDB uses to write log to the log files on disk."));
   context("lru-old-blocks-pct",
           po::value<unsigned long>(&innobase_lru_old_blocks_pct)->default_value(37),
           N_("Sets the point in the LRU list from where all pages are classified as old (Advanced users)"));
@@ -3511,23 +3511,23 @@ static void init_options(drizzled::module::option_context &context)
           N_("Roll back the complete transaction on lock wait timeout, for 4.x compatibility (disabled by default)"));
   context("open-files",
           po::value<long>(&innobase_open_files)->default_value(300),
-          N_("How many files at the maximum InnoDB keeps open at the same time."));
+          N_("How many files at the maximum HailDB keeps open at the same time."));
   context("read-io-threads",
           po::value<unsigned long>(&innobase_read_io_threads)->default_value(4),
-          N_("Number of background read I/O threads in InnoDB."));
+          N_("Number of background read I/O threads in HailDB."));
   context("write-io-threads",
           po::value<unsigned long>(&innobase_write_io_threads)->default_value(4),
-          N_("Number of background write I/O threads in InnoDB."));
+          N_("Number of background write I/O threads in HailDB."));
   context("disable-print-verbose-log",
           N_("Disable if you want to reduce the number of messages written to the log (default: enabled)."));
   context("status-file",
           po::value<bool>(&innobase_create_status_file)->default_value(false)->zero_tokens(),
-          N_("Enable SHOW INNODB STATUS output in the log"));
+          N_("Enable SHOW HAILDB STATUS output in the log"));
   context("sync-spin-loops",
           po::value<unsigned long>(&srv_n_spin_wait_rounds)->default_value(30L),
-          N_("Count of spin-loop rounds in InnoDB mutexes (30 by default)"));
+          N_("Count of spin-loop rounds in HailDB mutexes (30 by default)"));
   context("use-internal-malloc",
-          N_("Use InnoDB's internal memory allocator instead of the OS memory allocator"));
+          N_("Use HailDB's internal memory allocator instead of the OS memory allocator"));
 }
 
 static drizzle_sys_var* innobase_system_variables[]= {
@@ -3573,9 +3573,9 @@ DRIZZLE_DECLARE_PLUGIN
   "INNODB",
   "1.0",
   "Stewart Smith",
-  "Transactional Storage Engine using the Embedded InnoDB Library",
+  "Transactional Storage Engine using the HailDB Library",
   PLUGIN_LICENSE_GPL,
-  embedded_innodb_init,     /* Plugin Init */
+  haildb_init,     /* Plugin Init */
   innobase_system_variables, /* system variables */
   init_options                /* config options   */
 }

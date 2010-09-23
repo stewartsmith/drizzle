@@ -111,7 +111,7 @@ static const char*      libinnodb_status_var_names[] = {
 };
 
 LibInnoDBStatusTool::LibInnoDBStatusTool() :
-  plugin::TableFunction("DATA_DICTIONARY", "INNODB_STATUS")
+  plugin::TableFunction("DATA_DICTIONARY", "HAILDB_STATUS")
 {
   add_field("NAME");
   add_field("VALUE", plugin::TableFunction::NUMBER);
