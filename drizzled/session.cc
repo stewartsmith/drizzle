@@ -71,8 +71,6 @@ char internal_table_name[2]= "*";
 char empty_c_string[1]= {0};    /* used for not defined db */
 
 const char * const Session::DEFAULT_WHERE= "field list";
-extern pthread_key_t THR_Session;
-extern pthread_key_t THR_Mem_root;
 
 bool Key_part_spec::operator==(const Key_part_spec& other) const
 {
@@ -388,7 +386,8 @@ Session::~Session()
   dbug_sentry= Session_SENTRY_GONE;
 
   main_mem_root.free_root(MYF(0));
-  pthread_setspecific(THR_Session,  0);
+  currentMemRoot().release();
+  currentSession().release();
 
   plugin::Logging::postEndDo(this);
   plugin::EventObserver::deregisterSessionEvents(*this); 
@@ -452,9 +451,11 @@ bool Session::storeGlobals()
   */
   assert(thread_stack);
 
-  if (pthread_setspecific(THR_Session,  this) ||
-      pthread_setspecific(THR_Mem_root, &mem_root))
-    return true;
+  currentSession().release();
+  currentSession().reset(this);
+
+  currentMemRoot().release();
+  currentMemRoot().reset(&mem_root);
 
   mysys_var=my_thread_var;
 
@@ -463,7 +464,6 @@ bool Session::storeGlobals()
     This allows us to move Session to different threads if needed.
   */
   mysys_var->id= thread_id;
-  real_id= pthread_self();                      // For debugging
 
   /*
     We have to call thr_lock_info_init() again here as Session may have been

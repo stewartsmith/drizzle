@@ -1296,15 +1296,9 @@ innobase_start_or_create_for_mysql(void)
 		return(DB_ERROR);
 	}
 
-	/* If user has set the value of innodb_file_io_threads then
-	we'll emit a message telling the user that this parameter
-	is now deprecated. */
-	if (srv_n_file_io_threads != 4) {
-		fprintf(stderr, "InnoDB: Warning:"
-			" innodb_file_io_threads is deprecated."
-			" Please use innodb_read_io_threads and"
-			" innodb_write_io_threads instead\n");
-	}
+	/* innodb_file_io_threads used to be user settable.
+           It is now just a combination of read_io_threads and
+           write_io_threads that is set by innodb internally. */
 
 	/* Now overwrite the value on srv_n_file_io_threads */
 	srv_n_file_io_threads = 2 + srv_n_read_io_threads

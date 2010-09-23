@@ -97,7 +97,6 @@ static bool opt_autocommit= false;
 static bool opt_single_transaction= false; 
 static bool opt_comments;
 static bool opt_compact;
-static bool opt_hex_blob= false;
 static bool opt_order_by_primary=false; 
 static bool opt_ignore= false;
 static bool opt_complete_insert= false;
@@ -522,8 +521,6 @@ try
   N_("Insert rows with INSERT DELAYED;"))
   ("skip-disable-keys,K",
   N_("'ALTER TABLE tb_name DISABLE KEYS; and 'ALTER TABLE tb_name ENABLE KEYS; will not be put in the output."))
-  ("hex-blob", po::value<bool>(&opt_hex_blob)->default_value(false)->zero_tokens(),
-  "Dump binary strings (BINARY, VARBINARY, BLOB) in hexadecimal format.")
   ("ignore-table", po::value<string>(),
   N_("Do not dump the specified table. To specify more than one table to ignore, use the directive multiple times, once for each table.  Each table must be specified with both database and table names, e.g. --ignore-table=database.table"))
   ("insert-ignore", po::value<bool>(&opt_ignore)->default_value(false)->zero_tokens(),

@@ -30,9 +30,7 @@
 #include <drizzled/function/str/binary.h>
 #include <drizzled/function/str/concat.h>
 #include <drizzled/function/str/conv.h>
-#include <drizzled/function/str/elt.h>
 #include <drizzled/function/str/export_set.h>
-#include <drizzled/function/str/format.h>
 #include <drizzled/function/str/load_file.h>
 #include <drizzled/function/str/make_set.h>
 #include <drizzled/function/str/pad.h>
@@ -64,13 +62,10 @@
 
 #include <drizzled/function/func.h>
 #include <drizzled/function/additive_op.h>
-#include <drizzled/function/math/ceiling.h>
 #include <drizzled/function/math/dec.h>
 #include <drizzled/function/math/decimal_typecast.h>
-#include <drizzled/function/math/exp.h>
 #include <drizzled/function/field.h>
 #include <drizzled/function/find_in_set.h>
-#include <drizzled/function/math/floor.h>
 #include <drizzled/function/found_rows.h>
 #include <drizzled/function/get_system_var.h>
 #include <drizzled/function/math/int_val.h>
@@ -81,12 +76,10 @@
 #include <drizzled/function/num1.h>
 #include <drizzled/function/num_op.h>
 #include <drizzled/function/numhybrid.h>
-#include <drizzled/function/math/ord.h>
 #include <drizzled/function/math/real.h>
 #include <drizzled/function/row_count.h>
 #include <drizzled/function/set_user_var.h>
 #include <drizzled/function/sign.h>
-#include <drizzled/function/str/quote.h>
 #include <drizzled/function/math/tan.h>
 #include <drizzled/function/units.h>
 
@@ -262,21 +255,6 @@ protected:
   virtual ~Create_func_bin() {}
 };
 
-
-class Create_func_ceiling : public Create_func_arg1
-{
-public:
-  using Create_func_arg1::create;
-
-  virtual Item *create(Session *session, Item *arg1);
-
-  static Create_func_ceiling s_singleton;
-
-protected:
-  Create_func_ceiling() {}
-  virtual ~Create_func_ceiling() {}
-};
-
 class Create_func_concat : public Create_native_func
 {
 public:
@@ -450,35 +428,6 @@ protected:
   virtual ~Create_func_degrees() {}
 };
 
-
-class Create_func_elt : public Create_native_func
-{
-public:
-  virtual Item *create_native(Session *session, LEX_STRING name, List<Item> *item_list);
-
-  static Create_func_elt s_singleton;
-
-protected:
-  Create_func_elt() {}
-  virtual ~Create_func_elt() {}
-};
-
-
-class Create_func_exp : public Create_func_arg1
-{
-public:
-  using Create_func_arg1::create;
-
-  virtual Item *create(Session *session, Item *arg1);
-
-  static Create_func_exp s_singleton;
-
-protected:
-  Create_func_exp() {}
-  virtual ~Create_func_exp() {}
-};
-
-
 class Create_func_export_set : public Create_native_func
 {
 
@@ -519,37 +468,6 @@ protected:
   Create_func_find_in_set() {}
   virtual ~Create_func_find_in_set() {}
 };
-
-
-class Create_func_floor : public Create_func_arg1
-{
-public:
-  using Create_func_arg1::create;
-
-  virtual Item *create(Session *session, Item *arg1);
-
-  static Create_func_floor s_singleton;
-
-protected:
-  Create_func_floor() {}
-  virtual ~Create_func_floor() {}
-};
-
-
-class Create_func_format : public Create_func_arg2
-{
-public:
-  using Create_func_arg2::create;
-
-  virtual Item *create(Session *session, Item *arg1, Item *arg2);
-
-  static Create_func_format s_singleton;
-
-protected:
-  Create_func_format() {}
-  virtual ~Create_func_format() {}
-};
-
 
 class Create_func_found_rows : public Create_func_arg0
 {
@@ -851,22 +769,6 @@ protected:
   virtual ~Create_func_oct() {}
 };
 
-
-class Create_func_ord : public Create_func_arg1
-{
-public:
-  using Create_func_arg1::create;
-
-  virtual Item *create(Session *session, Item *arg1);
-
-  static Create_func_ord s_singleton;
-
-protected:
-  Create_func_ord() {}
-  virtual ~Create_func_ord() {}
-};
-
-
 class Create_func_period_add : public Create_func_arg2
 {
 public:
@@ -910,21 +812,6 @@ protected:
   Create_func_pi() {}
   virtual ~Create_func_pi() {}
 };
-
-class Create_func_quote : public Create_func_arg1
-{
-public:
-  using Create_func_arg1::create;
-
-  virtual Item *create(Session *session, Item *arg1);
-
-  static Create_func_quote s_singleton;
-
-protected:
-  Create_func_quote() {}
-  virtual ~Create_func_quote() {}
-};
-
 
 class Create_func_radians : public Create_func_arg1
 {
@@ -1333,15 +1220,6 @@ Create_func_bin::create(Session *session, Item *arg1)
   return new (session->mem_root) Item_func_conv(arg1, i10, i2);
 }
 
-
-Create_func_ceiling Create_func_ceiling::s_singleton;
-
-Item*
-Create_func_ceiling::create(Session *session, Item *arg1)
-{
-  return new (session->mem_root) Item_func_ceiling(arg1);
-}
-
 Create_func_concat Create_func_concat::s_singleton;
 
 Item*
@@ -1469,37 +1347,6 @@ Create_func_degrees::create(Session *session, Item *arg1)
                                              180/M_PI, 0.0);
 }
 
-
-Create_func_elt Create_func_elt::s_singleton;
-
-Item*
-Create_func_elt::create_native(Session *session, LEX_STRING name,
-                               List<Item> *item_list)
-{
-  int arg_count= 0;
-
-  if (item_list != NULL)
-    arg_count= item_list->elements;
-
-  if (arg_count < 2)
-  {
-    my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
-    return NULL;
-  }
-
-  return new (session->mem_root) Item_func_elt(*item_list);
-}
-
-
-Create_func_exp Create_func_exp::s_singleton;
-
-Item*
-Create_func_exp::create(Session *session, Item *arg1)
-{
-  return new (session->mem_root) Item_func_exp(arg1);
-}
-
-
 Create_func_export_set Create_func_export_set::s_singleton;
 
 Item*
@@ -1581,25 +1428,6 @@ Create_func_find_in_set::create(Session *session, Item *arg1, Item *arg2)
 {
   return new (session->mem_root) Item_func_find_in_set(arg1, arg2);
 }
-
-
-Create_func_floor Create_func_floor::s_singleton;
-
-Item*
-Create_func_floor::create(Session *session, Item *arg1)
-{
-  return new (session->mem_root) Item_func_floor(arg1);
-}
-
-
-Create_func_format Create_func_format::s_singleton;
-
-Item*
-Create_func_format::create(Session *session, Item *arg1, Item *arg2)
-{
-  return new (session->mem_root) Item_func_format(arg1, arg2);
-}
-
 
 Create_func_found_rows Create_func_found_rows::s_singleton;
 
@@ -1903,16 +1731,6 @@ Create_func_oct::create(Session *session, Item *arg1)
   return new (session->mem_root) Item_func_conv(arg1, i10, i8);
 }
 
-
-Create_func_ord Create_func_ord::s_singleton;
-
-Item*
-Create_func_ord::create(Session *session, Item *arg1)
-{
-  return new (session->mem_root) Item_func_ord(arg1);
-}
-
-
 Create_func_period_add Create_func_period_add::s_singleton;
 
 Item*
@@ -1938,16 +1756,6 @@ Create_func_pi::create(Session *session)
 {
   return new (session->mem_root) Item_static_float_func("pi()", M_PI, 6, 8);
 }
-
-
-Create_func_quote Create_func_quote::s_singleton;
-
-Item*
-Create_func_quote::create(Session *session, Item *arg1)
-{
-  return new (session->mem_root) Item_func_quote(arg1);
-}
-
 
 Create_func_radians Create_func_radians::s_singleton;
 
@@ -2162,8 +1970,6 @@ struct Native_func_registry
 static Native_func_registry func_array[] =
 {
   { { C_STRING_WITH_LEN("BIN") }, BUILDER(Create_func_bin)},
-  { { C_STRING_WITH_LEN("CEIL") }, BUILDER(Create_func_ceiling)},
-  { { C_STRING_WITH_LEN("CEILING") }, BUILDER(Create_func_ceiling)},
   { { C_STRING_WITH_LEN("CONCAT") }, BUILDER(Create_func_concat)},
   { { C_STRING_WITH_LEN("CONCAT_WS") }, BUILDER(Create_func_concat_ws)},
   { { C_STRING_WITH_LEN("CONV") }, BUILDER(Create_func_conv)},
@@ -2175,13 +1981,9 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("DAYOFWEEK") }, BUILDER(Create_func_dayofweek)},
   { { C_STRING_WITH_LEN("DAYOFYEAR") }, BUILDER(Create_func_dayofyear)},
   { { C_STRING_WITH_LEN("DEGREES") }, BUILDER(Create_func_degrees)},
-  { { C_STRING_WITH_LEN("ELT") }, BUILDER(Create_func_elt)},
-  { { C_STRING_WITH_LEN("EXP") }, BUILDER(Create_func_exp)},
   { { C_STRING_WITH_LEN("EXPORT_SET") }, BUILDER(Create_func_export_set)},
   { { C_STRING_WITH_LEN("FIELD") }, BUILDER(Create_func_field)},
   { { C_STRING_WITH_LEN("FIND_IN_SET") }, BUILDER(Create_func_find_in_set)},
-  { { C_STRING_WITH_LEN("FLOOR") }, BUILDER(Create_func_floor)},
-  { { C_STRING_WITH_LEN("FORMAT") }, BUILDER(Create_func_format)},
   { { C_STRING_WITH_LEN("FOUND_ROWS") }, BUILDER(Create_func_found_rows)},
   { { C_STRING_WITH_LEN("FROM_DAYS") }, BUILDER(Create_func_from_days)},
   { { C_STRING_WITH_LEN("FROM_UNIXTIME") }, BUILDER(Create_func_from_unixtime)},
@@ -2203,11 +2005,9 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("MONTHNAME") }, BUILDER(Create_func_monthname)},
   { { C_STRING_WITH_LEN("NULLIF") }, BUILDER(Create_func_nullif)},
   { { C_STRING_WITH_LEN("OCT") }, BUILDER(Create_func_oct)},
-  { { C_STRING_WITH_LEN("ORD") }, BUILDER(Create_func_ord)},
   { { C_STRING_WITH_LEN("PERIOD_ADD") }, BUILDER(Create_func_period_add)},
   { { C_STRING_WITH_LEN("PERIOD_DIFF") }, BUILDER(Create_func_period_diff)},
   { { C_STRING_WITH_LEN("PI") }, BUILDER(Create_func_pi)},
-  { { C_STRING_WITH_LEN("QUOTE") }, BUILDER(Create_func_quote)},
   { { C_STRING_WITH_LEN("RADIANS") }, BUILDER(Create_func_radians)},
   { { C_STRING_WITH_LEN("ROUND") }, BUILDER(Create_func_round)},
   { { C_STRING_WITH_LEN("ROW_COUNT") }, BUILDER(Create_func_row_count)},

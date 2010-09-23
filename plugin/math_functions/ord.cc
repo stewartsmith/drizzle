@@ -17,25 +17,35 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTION_STR_ELT_H
-#define DRIZZLED_FUNCTION_STR_ELT_H
+#include "config.h"
 
-#include <drizzled/function/str/strfunc.h>
+#include "ord.h"
 
 namespace drizzled
 {
 
-class Item_func_elt :public Item_str_func
+int64_t Item_func_ord::val_int()
 {
-public:
-  Item_func_elt(List<Item> &list) :Item_str_func(list) {}
-  double val_real();
-  int64_t val_int();
-  String *val_str(String *str);
-  void fix_length_and_dec();
-  const char *func_name() const { return "elt"; }
-};
+  assert(fixed == 1);
+  String *res=args[0]->val_str(&value);
+  if (!res)
+  {
+    null_value=1;
+    return 0;
+  }
+  null_value=0;
+  if (!res->length()) return 0;
+  if (use_mb(res->charset()))
+  {
+    register const char *str=res->ptr();
+    register uint32_t n=0, l=my_ismbchar(res->charset(),str,str+res->length());
+    if (!l)
+      return (int64_t)((unsigned char) *str);
+    while (l--)
+      n=(n<<8)|(uint32_t)((unsigned char) *str++);
+    return (int64_t) n;
+  }
+  return (int64_t) ((unsigned char) (*res)[0]);
+}
 
 } /* namespace drizzled */
-
-#endif /* DRIZZLED_FUNCTION_STR_ELT_H */

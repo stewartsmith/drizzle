@@ -19,12 +19,12 @@
 
 #include "config.h"
 #include <math.h>
-#include <drizzled/function/math/floor.h>
+#include "ceiling.h"
 
 namespace drizzled
 {
 
-int64_t Item_func_floor::int_op()
+int64_t Item_func_ceiling::int_op()
 {
   int64_t result;
   switch (args[0]->result_type()) {
@@ -35,19 +35,19 @@ int64_t Item_func_floor::int_op()
   case DECIMAL_RESULT:
   {
     my_decimal dec_buf, *dec;
-    if ((dec= Item_func_floor::decimal_op(&dec_buf)))
+    if ((dec= Item_func_ceiling::decimal_op(&dec_buf)))
       my_decimal2int(E_DEC_FATAL_ERROR, dec, unsigned_flag, &result);
     else
       result= 0;
     break;
   }
   default:
-    result= (int64_t)Item_func_floor::real_op();
+    result= (int64_t)Item_func_ceiling::real_op();
   };
   return result;
 }
 
-double Item_func_floor::real_op()
+double Item_func_ceiling::real_op()
 {
   /*
     the volatile's for BUG #3051 to calm optimizer down (because of gcc's
@@ -55,16 +55,15 @@ double Item_func_floor::real_op()
   */
   volatile double value= args[0]->val_real();
   null_value= args[0]->null_value;
-  return floor(value);
+  return ceil(value);
 }
 
-
-my_decimal *Item_func_floor::decimal_op(my_decimal *decimal_value)
+my_decimal *Item_func_ceiling::decimal_op(my_decimal *decimal_value)
 {
   my_decimal val, *value= args[0]->val_decimal(&val);
   if (!(null_value= (args[0]->null_value ||
-                     my_decimal_floor(E_DEC_FATAL_ERROR, value,
-                                      decimal_value) > 1)))
+                     my_decimal_ceiling(E_DEC_FATAL_ERROR, value,
+                                        decimal_value) > 1)))
     return decimal_value;
   return 0;
 }

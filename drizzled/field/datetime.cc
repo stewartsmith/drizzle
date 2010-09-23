@@ -38,7 +38,6 @@ namespace drizzled
 ** datetime type
 ** In string context: YYYY-MM-DD HH:MM:DD
 ** In number context: YYYYMMDDHHMMDD
-** Stored as a 8 byte unsigned int. Should sometimes be change to a 6 byte int.
 ****************************************************************************/
 
 int Field_datetime::store(const char *from,
@@ -207,10 +206,10 @@ String *Field_datetime::val_str(String *val_buffer,
    * not null without a default value.
    */
   dt.from_int64_t(tmp, false); /* NOTE: this does *NOT* attempt convertion
-				        from formats such as 20090101 as
-					the stored value has already been
-					converted.
-			       */
+                                 from formats such as 20090101 as
+                                 the stored value has already been
+                                 converted.
+                               */
 
   int rlen;
   rlen= dt.to_string((char*)val_buffer->ptr(), DateTime::MAX_STRING_LENGTH);
