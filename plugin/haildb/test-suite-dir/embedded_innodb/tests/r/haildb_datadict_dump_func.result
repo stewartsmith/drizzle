@@ -1,8 +1,8 @@
 CREATE table t1 (a int primary key);
 CREATE TABLE t2 (a int primary key, b varchar(30), c bigint);
-SELECT LIBINNODB_datadict_dump();
-LIBINNODB_datadict_dump()
-InnoDB Data Dictionary Contents
+SELECT haildb_datadict_dump();
+haildb_datadict_dump()
+HailDB Data Dictionary Contents
 -------------------------------
 SYS_FOREIGN Format: REDUNDANT Page size: 0 Columns: 7 Indexes: 3
   COL: ID

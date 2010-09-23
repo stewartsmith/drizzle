@@ -35,10 +35,10 @@
 using namespace std;
 using namespace drizzled;
 
-class LibinnodbDatadictDumpFunction : public Item_str_func
+class HailDBDatadictDumpFunction : public Item_str_func
 {
 public:
-  LibinnodbDatadictDumpFunction() : Item_str_func() {}
+  HailDBDatadictDumpFunction() : Item_str_func() {}
   String *val_str(String*);
 
   void fix_length_and_dec()
@@ -48,7 +48,7 @@ public:
 
   const char *func_name() const
   {
-    return "libinnodb_datadict_dump";
+    return "haildb_datadict_dump";
   }
 
   bool check_argument_count(int n)
@@ -163,7 +163,7 @@ static int visit_tables(void* arg_param, const char *name, int len)
 }
 
 }
-String *LibinnodbDatadictDumpFunction::val_str(String *str)
+String *HailDBDatadictDumpFunction::val_str(String *str)
 {
   assert(fixed == true);
 
@@ -175,7 +175,7 @@ String *LibinnodbDatadictDumpFunction::val_str(String *str)
 
   null_value= false;
 
-  string dict_dump("InnoDB Data Dictionary Contents\n"
+  string dict_dump("HailDB Data Dictionary Contents\n"
                    "-------------------------------\n");
 
   struct schema_visitor_arg arg;
@@ -199,11 +199,11 @@ String *LibinnodbDatadictDumpFunction::val_str(String *str)
 }
 
 
-plugin::Create_function<LibinnodbDatadictDumpFunction> *libinnodb_datadict_dump_func= NULL;
+plugin::Create_function<HailDBDatadictDumpFunction> *haildb_datadict_dump_func= NULL;
 
-int libinnodb_datadict_dump_func_initialize(module::Context &context)
+int haildb_datadict_dump_func_initialize(module::Context &context)
 {
-  libinnodb_datadict_dump_func= new plugin::Create_function<LibinnodbDatadictDumpFunction>("libinnodb_datadict_dump");
-  context.add(libinnodb_datadict_dump_func);
+  haildb_datadict_dump_func= new plugin::Create_function<HailDBDatadictDumpFunction>("haildb_datadict_dump");
+  context.add(haildb_datadict_dump_func);
   return 0;
 }

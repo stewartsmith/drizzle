@@ -3122,7 +3122,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
   context.add(embedded_innodb_engine);
 
   libinnodb_version_func_initialize(context);
-  libinnodb_datadict_dump_func_initialize(context);
+  haildb_datadict_dump_func_initialize(context);
   config_table_function_initialize(context);
   status_table_function_initialize(context);
 
