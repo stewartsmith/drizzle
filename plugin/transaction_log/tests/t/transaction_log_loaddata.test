@@ -8,7 +8,7 @@ DROP TABLE IF EXISTS t1;
 --enable_warnings
 
 CREATE TABLE t1 (a INT NOT NULL AUTO_INCREMENT, b CHAR(50), PRIMARY KEY(a) );
-LOAD DATA INFILE '../std_data_ln/translogloaddata.dat' into table t1 ;
+LOAD DATA INFILE '../../std_data_ln/translogloaddata.dat' into table t1 ;
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
 

@@ -264,6 +264,8 @@ int main(int argc, char **argv)
                     getDataHome().c_str());
       unireg_abort(1);
     }
+    getDataHomeCatalog()= "./";
+    getDataHome()= "../";
   }
 
 
