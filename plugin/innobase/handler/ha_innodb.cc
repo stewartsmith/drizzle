@@ -3504,7 +3504,7 @@ ha_innobase::store_key_val_for_row(
       cs = field->charset();
 
       lenlen = (ulint)
-        (((Field_varstring*)field)->length_bytes);
+        (((Field_varstring*)field)->pack_length_no_ptr());
 
       data = row_mysql_read_true_varchar(&len,
         (byte*) (record
@@ -3844,7 +3844,7 @@ include_field:
 
     if (templ->mysql_type == DATA_MYSQL_TRUE_VARCHAR) {
       templ->mysql_length_bytes = (ulint)
-        (((Field_varstring*)field)->length_bytes);
+        (((Field_varstring*)field)->pack_length_no_ptr());
     }
 
     templ->charset = dtype_get_charset_coll(
@@ -4278,12 +4278,12 @@ calc_row_difference(
         o_ptr = row_mysql_read_true_varchar(
           &o_len, o_ptr,
           (ulint)
-          (((Field_varstring*)field)->length_bytes));
+          (((Field_varstring*)field)->pack_length_no_ptr()));
 
         n_ptr = row_mysql_read_true_varchar(
           &n_len, n_ptr,
           (ulint)
-          (((Field_varstring*)field)->length_bytes));
+          (((Field_varstring*)field)->pack_length_no_ptr()));
       }
 
       break;
@@ -5382,9 +5382,9 @@ create_table_def(
     long_true_varchar = 0;
 
     if (field->type() == DRIZZLE_TYPE_VARCHAR) {
-      col_len -= ((Field_varstring*)field)->length_bytes;
+      col_len -= ((Field_varstring*)field)->pack_length_no_ptr();
 
-      if (((Field_varstring*)field)->length_bytes == 2) {
+      if (((Field_varstring*)field)->pack_length_no_ptr() == 2) {
         long_true_varchar = DATA_LONG_TRUE_VARCHAR;
       }
     }
@@ -5490,7 +5490,7 @@ create_index(
         && field->type() != DRIZZLE_TYPE_VARCHAR)
       || (field->type() == DRIZZLE_TYPE_VARCHAR
         && key_part->length < field->pack_length()
-        - ((Field_varstring*)field)->length_bytes)) {
+        - ((Field_varstring*)field)->pack_length_no_ptr())) {
 
       prefix_len = key_part->length;
 
