@@ -32,10 +32,10 @@
 using namespace std;
 using namespace drizzled;
 
-class LibinnodbVersionFunction : public Item_str_func
+class HailDBVersionFunction : public Item_str_func
 {
 public:
-  LibinnodbVersionFunction() : Item_str_func() {}
+  HailDBVersionFunction() : Item_str_func() {}
   String *val_str(String*);
 
   void fix_length_and_dec()
@@ -45,7 +45,7 @@ public:
 
   const char *func_name() const
   {
-    return "libinnodb_version";
+    return "haildb_version";
   }
 
   bool check_argument_count(int n)
@@ -55,7 +55,7 @@ public:
 };
 
 
-String *LibinnodbVersionFunction::val_str(String *str)
+String *HailDBVersionFunction::val_str(String *str)
 {
   assert(fixed == true);
 
@@ -81,11 +81,11 @@ String *LibinnodbVersionFunction::val_str(String *str)
 }
 
 
-plugin::Create_function<LibinnodbVersionFunction> *libinnodb_version_func= NULL;
+plugin::Create_function<HailDBVersionFunction> *haildb_version_func= NULL;
 
-int libinnodb_version_func_initialize(module::Context &context)
+int haildb_version_func_initialize(module::Context &context)
 {
-  libinnodb_version_func= new plugin::Create_function<LibinnodbVersionFunction>("libinnodb_version");
-  context.add(libinnodb_version_func);
+  haildb_version_func= new plugin::Create_function<HailDBVersionFunction>("haildb_version");
+  context.add(haildb_version_func);
   return 0;
 }

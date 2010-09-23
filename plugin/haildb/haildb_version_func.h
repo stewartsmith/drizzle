@@ -19,6 +19,6 @@
 #ifndef PLUGIN_HAILDB_HAILDB_VERSION_FUNC_H
 #define PLUGIN_HAILDB_HAILDB_VERSION_FUNC_H
 
-int libinnodb_version_func_initialize(drizzled::module::Context &context);
+int haildb_version_func_initialize(drizzled::module::Context &context);
 
 #endif /* PLUGIN_HAILDB_HAILDB_VERSION_FUNC_H */
