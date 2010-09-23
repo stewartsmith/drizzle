@@ -28,7 +28,8 @@ class DrizzleDumpDataDrizzle;
 class DrizzleDumpIndexDrizzle : public DrizzleDumpIndex
 {
   public:
-    DrizzleDumpIndexDrizzle(std::string &index) : DrizzleDumpIndex(index)
+    DrizzleDumpIndexDrizzle(std::string &index, DrizzleDumpConnection *connection)
+    : DrizzleDumpIndex(index, connection)
     { }
 
     ~DrizzleDumpIndexDrizzle()
@@ -40,7 +41,8 @@ class DrizzleDumpIndexDrizzle : public DrizzleDumpIndex
 class DrizzleDumpFieldDrizzle : public DrizzleDumpField
 {
   public:
-    DrizzleDumpFieldDrizzle(std::string &field) : DrizzleDumpField(field)
+    DrizzleDumpFieldDrizzle(std::string &field, DrizzleDumpConnection *connection)
+    : DrizzleDumpField(field, connection)
     { }
 
     ~DrizzleDumpFieldDrizzle() { }
@@ -51,7 +53,8 @@ class DrizzleDumpFieldDrizzle : public DrizzleDumpField
 class DrizzleDumpTableDrizzle : public DrizzleDumpTable
 {
   public:
-    DrizzleDumpTableDrizzle(std::string &table) : DrizzleDumpTable(table)
+    DrizzleDumpTableDrizzle(std::string &table, DrizzleDumpConnection *connection)
+    : DrizzleDumpTable(table, connection)
     { }
 
     ~DrizzleDumpTableDrizzle()
@@ -67,7 +70,9 @@ class DrizzleDumpTableDrizzle : public DrizzleDumpTable
 class DrizzleDumpDatabaseDrizzle : public DrizzleDumpDatabase
 {
   public:
-    DrizzleDumpDatabaseDrizzle(const std::string &database) : DrizzleDumpDatabase(database)
+    DrizzleDumpDatabaseDrizzle(const std::string &database,
+      DrizzleDumpConnection *connection)
+    : DrizzleDumpDatabase(database, connection)
     { }
 
     ~DrizzleDumpDatabaseDrizzle()
@@ -82,7 +87,8 @@ class DrizzleDumpDatabaseDrizzle : public DrizzleDumpDatabase
 class DrizzleDumpDataDrizzle : public DrizzleDumpData
 {
   public:
-    DrizzleDumpDataDrizzle(DrizzleDumpTable *dataTable);
+    DrizzleDumpDataDrizzle(DrizzleDumpTable *dataTable,
+      DrizzleDumpConnection *connection);
     ~DrizzleDumpDataDrizzle();
 };
 

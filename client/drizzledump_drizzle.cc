@@ -25,55 +25,24 @@
 #include <drizzled/gettext.h>
 #include <boost/lexical_cast.hpp>
 
-extern drizzle_con_st dcon;
-
 bool DrizzleDumpDatabaseDrizzle::populateTables()
 {
-  drizzle_result_st result;
+  drizzle_result_st *result;
   drizzle_row_t row;
-  drizzle_return_t ret;
   std::string query;
 
-  if (drizzle_select_db(&dcon, &result, databaseName.c_str(), &ret) == 
-    NULL || ret != DRIZZLE_RETURN_OK)
-  {
-    errmsg << _("Could not set db '") << databaseName << "'";
-    return false;
-  }
-  drizzle_result_free(&result);
+  dcon->setDB(databaseName);
 
   query="SELECT TABLE_NAME, TABLE_COLLATION, ENGINE FROM DATA_DICTIONARY.TABLES WHERE TABLE_SCHEMA='";
   query.append(databaseName);
   query.append("' ORDER BY TABLE_NAME");
 
-  if (drizzle_query_str(&dcon, &result, query.c_str(), &ret) == NULL ||
-      ret != DRIZZLE_RETURN_OK)
-  {
-    if (ret == DRIZZLE_RETURN_ERROR_CODE)
-    {
-      errmsg << _("Could not get tables list due to error: ") <<
-        drizzle_result_error(&result);
-      drizzle_result_free(&result);
-    }
-    else
-    {
-      errmsg << _("Could not get tables list due to error: ") <<
-        drizzle_con_error(&dcon);
-    }
-    return false;
-  }
+  result= dcon->query(query);
 
-  if (drizzle_result_buffer(&result) != DRIZZLE_RETURN_OK)
-  {
-    errmsg << _("Could not get tables list due to error: ") <<
-        drizzle_con_error(&dcon);
-    return false;
-  }
-
-  while ((row= drizzle_row_next(&result)))
+  while ((row= drizzle_row_next(result)))
   {
     std::string tableName(row[0]);
-    DrizzleDumpTable *table = new DrizzleDumpTableDrizzle(tableName);
+    DrizzleDumpTable *table = new DrizzleDumpTableDrizzle(tableName, dcon);
     table->collate= row[1];
     table->engineName= row[2];
     table->autoIncrement= 0;
@@ -83,7 +52,7 @@ bool DrizzleDumpDatabaseDrizzle::populateTables()
     tables.push_back(table);
   }
 
-  drizzle_result_free(&result);
+  dcon->freeResult(result);
 
   return true;
 }
@@ -98,9 +67,8 @@ void DrizzleDumpDatabaseDrizzle::setCollate(const char* newCollate)
 
 bool DrizzleDumpTableDrizzle::populateFields()
 {
-  drizzle_result_st result;
+  drizzle_result_st *result;
   drizzle_row_t row;
-  drizzle_return_t ret;
   std::string query;
 
   query= "SELECT COLUMN_NAME, DATA_TYPE, COLUMN_DEFAULT, COLUMN_DEFAULT_IS_NULL, IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE, COLLATION_NAME, IS_AUTO_INCREMENT, ENUM_VALUES FROM DATA_DICTIONARY.COLUMNS WHERE TABLE_SCHEMA='";
@@ -109,33 +77,12 @@ bool DrizzleDumpTableDrizzle::populateFields()
   query.append(tableName);
   query.append("' ORDER BY ORDINAL_POSITION");
 
-  if (drizzle_query_str(&dcon, &result, query.c_str(), &ret) == NULL ||
-      ret != DRIZZLE_RETURN_OK)
-  {
-    if (ret == DRIZZLE_RETURN_ERROR_CODE)
-    {
-      errmsg << _("Could not get tables list due to error: ") <<
-        drizzle_result_error(&result);
-      drizzle_result_free(&result);
-    }
-    else
-    {
-      errmsg << _("Could not get tables list due to error: ") <<
-        drizzle_con_error(&dcon);
-    }
-    return false;
-  }
+  result= dcon->query(query);
 
-  if (drizzle_result_buffer(&result) != DRIZZLE_RETURN_OK)
-  {
-    errmsg << _("Could not get tables list due to error: ") <<
-        drizzle_con_error(&dcon);
-    return false;
-  }
-  while ((row= drizzle_row_next(&result)))
+  while ((row= drizzle_row_next(result)))
   {
     std::string fieldName(row[0]);
-    DrizzleDumpField *field = new DrizzleDumpFieldDrizzle(fieldName);
+    DrizzleDumpField *field = new DrizzleDumpFieldDrizzle(fieldName, dcon);
     /* Stop valgrind warning */
     field->convertDateTime= false;
     /* Also sets collation */
@@ -157,16 +104,15 @@ bool DrizzleDumpTableDrizzle::populateFields()
     fields.push_back(field);
   }
 
-  drizzle_result_free(&result);
+  dcon->freeResult(result);
   return true;
 }
 
 
 bool DrizzleDumpTableDrizzle::populateIndexes()
 {
-  drizzle_result_st result;
+  drizzle_result_st *result;
   drizzle_row_t row;
-  drizzle_return_t ret;
   std::string query;
   std::string lastKey;
   bool firstIndex= true;
@@ -176,37 +122,16 @@ bool DrizzleDumpTableDrizzle::populateIndexes()
   query.append(tableName);
   query.append("'");
 
-  if (drizzle_query_str(&dcon, &result, query.c_str(), &ret) == NULL ||
-      ret != DRIZZLE_RETURN_OK)
-  {
-    if (ret == DRIZZLE_RETURN_ERROR_CODE)
-    {
-      errmsg << _("Could not get tables list due to error: ") <<
-        drizzle_result_error(&result);
-      drizzle_result_free(&result);
-    }
-    else
-    {
-      errmsg << _("Could not get tables list due to error: ") <<
-        drizzle_con_error(&dcon);
-    }
-    return false;
-  }
+  result= dcon->query(query);
 
-  if (drizzle_result_buffer(&result) != DRIZZLE_RETURN_OK)
-  {
-    errmsg << _("Could not get tables list due to error: ") <<
-        drizzle_con_error(&dcon);
-    return false;
-  }
-  while ((row= drizzle_row_next(&result)))
+  while ((row= drizzle_row_next(result)))
   {
     std::string indexName(row[0]);
     if (indexName.compare(lastKey) != 0)
     {
       if (!firstIndex)
         indexes.push_back(index);
-      index = new DrizzleDumpIndexDrizzle(indexName);
+      index = new DrizzleDumpIndexDrizzle(indexName, dcon);
       index->isPrimary= (strcmp(row[0], "PRIMARY") == 0);
       index->isUnique= (strcmp(row[3], "YES") == 0);
       index->isHash= 0;
@@ -218,13 +143,13 @@ bool DrizzleDumpTableDrizzle::populateIndexes()
   if (!firstIndex)
     indexes.push_back(index);
 
-  drizzle_result_free(&result);
+  dcon->freeResult(result);
   return true;
 }
 
 DrizzleDumpData* DrizzleDumpTableDrizzle::getData(void)
 {
-  return new DrizzleDumpDataDrizzle(this);
+  return new DrizzleDumpDataDrizzle(this, dcon);
 }
 
 
@@ -258,43 +183,19 @@ void DrizzleDumpFieldDrizzle::setType(const char* raw_type, const char* raw_coll
   type= raw_type;
 }
 
-DrizzleDumpDataDrizzle::DrizzleDumpDataDrizzle(DrizzleDumpTable *dataTable) :
- DrizzleDumpData(dataTable)
+DrizzleDumpDataDrizzle::DrizzleDumpDataDrizzle(DrizzleDumpTable *dataTable,
+  DrizzleDumpConnection *connection)
+  : DrizzleDumpData(dataTable, connection)
 {
-  drizzle_return_t ret;
   std::string query;
   query= "SELECT * FROM `";
   query.append(table->tableName);
   query.append("`");
-  result= new drizzle_result_st;
 
-  if (drizzle_query_str(&dcon, result, query.c_str(), &ret) == NULL ||
-      ret != DRIZZLE_RETURN_OK)
-  {
-    if (ret == DRIZZLE_RETURN_ERROR_CODE)
-    {
-      errmsg << _("Could not get tables list due to error: ") <<
-        drizzle_result_error(result);
-      drizzle_result_free(result);
-    }
-    else
-    {
-      errmsg << _("Could not get tables list due to error: ") <<
-        drizzle_con_error(&dcon);
-    }
-    return;
-  }
-
-  if (drizzle_result_buffer(result) != DRIZZLE_RETURN_OK)
-  {
-    errmsg << _("Could not get tables list due to error: ") <<
-        drizzle_con_error(&dcon);
-    return;
-  }
+  result= dcon->query(query);
 }
 
 DrizzleDumpDataDrizzle::~DrizzleDumpDataDrizzle()
 {
-  drizzle_result_free(result);
-  if (result) delete result;
+  dcon->freeResult(result);
 }

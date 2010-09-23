@@ -112,8 +112,6 @@ bool opt_replace_into= false;
 bool opt_drop= true; 
 uint32_t show_progress_size= 0;
 //static uint64_t total_rows= 0;
-static drizzle_st drizzle;
- drizzle_con_st dcon;
 static string insert_pat;
 //static char *order_by= NULL;
 static uint32_t opt_drizzle_port= 0;
@@ -122,14 +120,7 @@ static string extended_row;
 FILE *md_result_file= 0;
 FILE *stderror_file= 0;
 std::vector<DrizzleDumpDatabase*> database_store;
-
-enum server_type {
-  SERVER_MYSQL_FOUND,
-  SERVER_DRIZZLE_FOUND,
-  SERVER_UNKNOWN_FOUND
-};
-
-int connected_server_type= SERVER_UNKNOWN_FOUND;
+DrizzleDumpConnection* db_connection;
 
 const string progname= "drizzledump";
 
@@ -152,7 +143,6 @@ boost::unordered_set<string> ignore_table;
 
 static void maybe_exit(int error);
 static void die(int error, const char* reason, ...);
-static void maybe_die(int error, const char* reason, ...);
 static void write_header(FILE *sql_file, char *db_name);
 static int dump_selected_tables(const string &db, const vector<string> &table_names);
 static int dump_databases(const vector<string> &db_names);
@@ -173,34 +163,15 @@ void dump_all_tables(void)
 
 void generate_dump(void)
 {
-    std::vector<DrizzleDumpDatabase*>::iterator i;
+  std::vector<DrizzleDumpDatabase*>::iterator i;
+  DrizzleStringBuf sbuf(1024);
+  std::ostream sout(&sbuf);
   for (i= database_store.begin(); i != database_store.end(); ++i)
   {
     DrizzleDumpDatabase *database= *i;
-    cout << *database;
+    
+    sout << *database;
   }
-}
-
-/*
-  Print the supplied message if in verbose mode
-
-  SYNOPSIS
-  verbose_msg()
-  fmt   format specifier
-  ...   variable number of parameters
-*/
-
-static void verbose_msg(const char *fmt, ...)
-{
-  va_list args;
-
-
-  if (!verbose)
-    return;
-
-  va_start(args, fmt);
-  vfprintf(stderr, fmt, args);
-  va_end(args);
 }
 
 /*
@@ -232,10 +203,10 @@ static void write_header(FILE *sql_file, char *db_name)
       fputs("-- ------------------------------------------------------\n",
             sql_file);
       fprintf(sql_file, "-- Server version\t%s",
-              drizzle_con_server_version(&dcon));
-      if (connected_server_type == SERVER_MYSQL_FOUND)
+              db_connection->getServerVersion());
+      if (db_connection->getServerType() == DrizzleDumpConnection::SERVER_MYSQL_FOUND)
         fprintf(sql_file, " (MySQL server)");
-      else if (connected_server_type == SERVER_DRIZZLE_FOUND)
+      else if (db_connection->getServerType() == DrizzleDumpConnection::SERVER_DRIZZLE_FOUND)
         fprintf(sql_file, " (Drizzle server)");
     }
     if (opt_set_charset)
@@ -313,28 +284,6 @@ static int get_options(void)
 
 
 /*
- ** DB_error -- prints DRIZZLE error message and exits the program.
-*/
-static void DB_error(drizzle_result_st *res, drizzle_return_t ret,
-                     const char *when)
-{
-  if (ret == DRIZZLE_RETURN_ERROR_CODE)
-  {
-    maybe_die(EX_DRIZZLEERR, _("Got error: %s (%d) %s"),
-              drizzle_result_error(res),
-              drizzle_result_error_code(res),
-              when);
-    drizzle_result_free(res);
-  }
-  else
-    maybe_die(EX_DRIZZLEERR, _("Got error: %d %s"), ret, when);
-
-  return;
-}
-
-
-
-/*
   Prints out an error message and kills the process.
 
   SYNOPSIS
@@ -362,97 +311,6 @@ static void die(int error_num, const char* fmt_reason, ...)
   maybe_exit(error_num);
 }
 
-
-/*
-  Prints out an error message and maybe kills the process.
-
-  SYNOPSIS
-  maybe_die()
-  error_num   - process return value
-  fmt_reason  - a format string for use by vsnprintf.
-  ...         - variable arguments for above fmt_reason string
-
-  DESCRIPTION
-  This call prints out the formatted error message to stderr and then
-  terminates the process, unless the --force command line option is used.
-
-  This call should be used for non-fatal errors (such as database
-  errors) that the code may still be able to continue to the next unit
-  of work.
-
-*/
-static void maybe_die(int error_num, const char* fmt_reason, ...)
-{
-  char buffer[1000];
-  va_list args;
-  va_start(args,fmt_reason);
-  vsnprintf(buffer, sizeof(buffer), fmt_reason, args);
-  va_end(args);
-
-  fprintf(stderr, "%s: %s\n", progname.c_str(), buffer);
-  fflush(stderr);
-
-  maybe_exit(error_num);
-}
-
-
-
-/*
-  Sends a query to server, optionally reads result, prints error message if
-  some.
-
-  SYNOPSIS
-  drizzleclient_query_with_error_report()
-  drizzle_con       connection to use
-  res             if non zero, result will be put there with
-  drizzleclient_store_result()
-  query           query to send to server
-
-  RETURN VALUES
-  0               query sending and (if res!=0) result reading went ok
-  1               error
-*/
-
-static int drizzleclient_query_with_error_report(drizzle_con_st *con,
-                                                 drizzle_result_st *result,
-                                                 const char *query_str,
-                                                 bool no_buffer)
-{
-  drizzle_return_t ret;
-
-  if (drizzle_query_str(con, result, query_str, &ret) == NULL ||
-      ret != DRIZZLE_RETURN_OK)
-  {
-    if (ret == DRIZZLE_RETURN_ERROR_CODE)
-    {
-      maybe_die(EX_DRIZZLEERR, _("Couldn't execute '%s': %s (%d)"),
-                query_str, drizzle_result_error(result),
-                drizzle_result_error_code(result));
-      drizzle_result_free(result);
-    }
-    else
-    {
-      maybe_die(EX_DRIZZLEERR, _("Couldn't execute '%s': %s (%d)"),
-                query_str, drizzle_con_error(con), ret);
-    }
-    return 1;
-  }
-
-  if (no_buffer)
-    ret= drizzle_column_buffer(result);
-  else
-    ret= drizzle_result_buffer(result);
-  if (ret != DRIZZLE_RETURN_OK)
-  {
-    drizzle_result_free(result);
-    maybe_die(EX_DRIZZLEERR, _("Couldn't execute '%s': %s (%d)"),
-              query_str, drizzle_con_error(con), ret);
-    return 1;
-  }
-
-  return 0;
-}
-
 static void free_resources(void)
 {
   if (md_result_file && md_result_file != stdout)
@@ -467,93 +325,37 @@ static void maybe_exit(int error)
     first_error= error;
   if (ignore_errors)
     return;
-  drizzle_con_free(&dcon);
-  drizzle_free(&drizzle);
+  delete db_connection;
   free_resources();
   exit(error);
 }
 
-
-/*
-  db_connect -- connects to the host and selects DB.
-*/
-
-static int connect_to_db(string host, string user,string passwd)
-{
-  drizzle_return_t ret;
-
-  verbose_msg(_("-- Connecting to %s, using protocol %s...\n"), ! host.empty() ? (char *)host.c_str() : "localhost", opt_protocol.c_str());
-  drizzle_create(&drizzle);
-  drizzle_con_create(&drizzle, &dcon);
-  drizzle_con_set_tcp(&dcon, (char *)host.c_str(), opt_drizzle_port);
-  drizzle_con_set_auth(&dcon, (char *)user.c_str(), (char *)passwd.c_str());
-  drizzle_con_add_options(&dcon, use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL);
-  ret= drizzle_con_connect(&dcon);
-  if (ret != DRIZZLE_RETURN_OK)
-  {
-    DB_error(NULL, ret, "when trying to connect");
-    return(1);
-  }
-
-  int found= get_server_type();
-
-  switch (found)
-  {
-    case SERVER_MYSQL_FOUND:
-     verbose_msg(_("-- Connected to a MySQL server\n"));
-     connected_server_type= SERVER_MYSQL_FOUND;
-     break;
-    case SERVER_DRIZZLE_FOUND:
-     verbose_msg(_("-- Connected to a Drizzle server\n"));
-     connected_server_type= SERVER_DRIZZLE_FOUND;
-     break;
-    default:
-     verbose_msg(_("-- Connected to an unknown server type\n"));
-     connected_server_type= SERVER_DRIZZLE_FOUND;
-     break;
-  }
-
-  return(0);
-} /* connect_to_db */
-
-
-/*
- ** dbDisconnect -- disconnects from the host.
-*/
-static void dbDisconnect(string &host)
-{
-  verbose_msg(_("-- Disconnecting from %s...\n"), ! host.empty() ? host.c_str() : "localhost");
-  drizzle_con_free(&dcon);
-  drizzle_free(&drizzle);
-} /* dbDisconnect */
-
 static int dump_all_databases()
 {
   drizzle_row_t row;
-  drizzle_result_st tableres;
+  drizzle_result_st *tableres;
   int result=0;
   std::string query;
   DrizzleDumpDatabase *database;
 
-  if (connected_server_type == SERVER_MYSQL_FOUND)
+  if (db_connection->getServerType() == DrizzleDumpConnection::SERVER_MYSQL_FOUND)
     query= "SELECT SCHEMA_NAME, DEFAULT_COLLATION_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME NOT IN ('information_schema', 'performance_schema')";
   else
     query= "SELECT SCHEMA_NAME, DEFAULT_COLLATION_NAME FROM DATA_DICTIONARY.SCHEMAS WHERE SCHEMA_NAME NOT IN ('information_schema','data_dictionary')";
 
-  if (drizzleclient_query_with_error_report(&dcon, &tableres, query.c_str(), false))
-    return 1;
-  while ((row= drizzle_row_next(&tableres)))
+  tableres= db_connection->query(query);
+  while ((row= drizzle_row_next(tableres)))
   {
     std::string database_name(row[0]);
-    if (connected_server_type == SERVER_MYSQL_FOUND)
-      database= new DrizzleDumpDatabaseMySQL(database_name);
+    if (db_connection->getServerType() == DrizzleDumpConnection::SERVER_MYSQL_FOUND)
+      database= new DrizzleDumpDatabaseMySQL(database_name, db_connection);
     else
-      database= new DrizzleDumpDatabaseDrizzle(database_name);
+      database= new DrizzleDumpDatabaseDrizzle(database_name, db_connection);
 
     database->setCollate(row[1]);
     database_store.push_back(database);
   }
-  drizzle_result_free(&tableres);
+  db_connection->freeResult(tableres);
   return result;
 }
 /* dump_all_databases */
@@ -568,10 +370,10 @@ static int dump_databases(const vector<string> &db_names)
   for (vector<string>::const_iterator it= db_names.begin(); it != db_names.end(); ++it)
   {
     temp= *it;
-    if (connected_server_type == SERVER_MYSQL_FOUND)
-      database= new DrizzleDumpDatabaseMySQL(temp);
+    if (db_connection->getServerType() == DrizzleDumpConnection::SERVER_MYSQL_FOUND)
+      database= new DrizzleDumpDatabaseMySQL(temp, db_connection);
     else
-      database= new DrizzleDumpDatabaseDrizzle(temp);
+      database= new DrizzleDumpDatabaseDrizzle(temp, db_connection);
     database_store.push_back(database);
   }
   return(result);
@@ -582,20 +384,20 @@ static int dump_selected_tables(const string &db, const vector<string> &table_na
   DrizzleDumpDatabase *database;
   DrizzleDumpTable *table;
 
-  if (connected_server_type == SERVER_MYSQL_FOUND)
-    database= new DrizzleDumpDatabaseMySQL(db);
+  if (db_connection->getServerType() == DrizzleDumpConnection::SERVER_MYSQL_FOUND)
+    database= new DrizzleDumpDatabaseMySQL(db, db_connection);
   else
-    database= new DrizzleDumpDatabaseDrizzle(db);
+    database= new DrizzleDumpDatabaseDrizzle(db, db_connection);
 
   database_store.push_back(database); 
 
   for (vector<string>::const_iterator it= table_names.begin(); it != table_names.end(); ++it)
   {
     string temp= *it;
-    if (connected_server_type == SERVER_MYSQL_FOUND)
-      table= new DrizzleDumpTableMySQL(temp);
+    if (db_connection->getServerType() == DrizzleDumpConnection::SERVER_MYSQL_FOUND)
+      table= new DrizzleDumpTableMySQL(temp, db_connection);
     else
-      table= new DrizzleDumpTableDrizzle(temp);
+      table= new DrizzleDumpTableDrizzle(temp, db_connection);
     database->tables.push_back(table);
   }
   database_store.push_back(database);
@@ -603,7 +405,7 @@ static int dump_selected_tables(const string &db, const vector<string> &table_na
   return 0;
 } /* dump_selected_tables */
 
-static int do_flush_tables_read_lock(drizzle_con_st *drizzle_con)
+static int do_flush_tables_read_lock()
 {
   /*
     We do first a FLUSH TABLES. If a long update is running, the FLUSH TABLES
@@ -613,44 +415,24 @@ static int do_flush_tables_read_lock(drizzle_con_st *drizzle_con)
     and most client connections are stalled. Of course, if a second long
     update starts between the two FLUSHes, we have that bad stall.
   */
-  return
-    ( drizzleclient_query_with_error_report(drizzle_con, 0, "FLUSH TABLES", false) ||
-      drizzleclient_query_with_error_report(drizzle_con, 0,
-                                            "FLUSH TABLES WITH READ LOCK", false) );
+
+   db_connection->queryNoResult("FLUSH TABLES");
+   db_connection->queryNoResult("FLUSH TABLES WITH READ LOCK");
+
+  return 0;
 }
 
-static int do_unlock_tables(drizzle_con_st *drizzle_con)
+static int do_unlock_tables()
 {
-  return drizzleclient_query_with_error_report(drizzle_con, 0, "UNLOCK TABLES", false);
+  db_connection->queryNoResult("UNLOCK TABLES");
+  return 0;
 }
 
-static int start_transaction(drizzle_con_st *drizzle_con)
+static int start_transaction()
 {
-  return (drizzleclient_query_with_error_report(drizzle_con, 0,
-                                                "SET SESSION TRANSACTION ISOLATION "
-                                                "LEVEL REPEATABLE READ", false) ||
-          drizzleclient_query_with_error_report(drizzle_con, 0,
-                                                "START TRANSACTION "
-                                                "WITH CONSISTENT SNAPSHOT", false));
-}
-
-
-int get_server_type()
-{
-  boost::match_flag_type flags = boost::match_default; 
-
-  boost::regex mysql_regex("(5\\.[0-9]+\\.[0-9]+)");
-  boost::regex drizzle_regex("(20[0-9]{2}\\.(0[1-9]|1[012])\\.[0-9]+)");
-
-  std::string version(drizzle_con_server_version(&dcon));
-
-  if (regex_search(version, mysql_regex, flags))
-    return SERVER_MYSQL_FOUND;
-  
-  if (regex_search(version, drizzle_regex, flags))
-    return SERVER_DRIZZLE_FOUND;
-
-  return SERVER_UNKNOWN_FOUND;
+  db_connection->queryNoResult("SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ");
+  db_connection->queryNoResult("START TRANSACTION WITH CONSISTENT SNAPSHOT");
+  return 0;
 }
 
 int main(int argc, char **argv)
@@ -658,7 +440,6 @@ int main(int argc, char **argv)
 try
 {
   int exit_code;
-  drizzle_result_st result;
 
   po::options_description commandline_options(N_("Options used only in command line"));
   commandline_options.add_options()
@@ -950,18 +731,11 @@ try
     exit(exit_code);
   }
 
-  if (connect_to_db(current_host, current_user, opt_password))
-  {
-    free_resources();
-    exit(EX_DRIZZLEERR);
-  }
+  db_connection = new DrizzleDumpConnection(current_host, opt_drizzle_port,
+    current_user, opt_password, use_drizzle_protocol);
 
-  if (connected_server_type == SERVER_MYSQL_FOUND)
-  {
-    if (drizzleclient_query_with_error_report(&dcon, &result, "SET NAMES 'utf8'", false))
-      goto err;
-    drizzle_result_free(&result);
-  }
+  if (db_connection->getServerType() == DrizzleDumpConnection::SERVER_MYSQL_FOUND)
+    db_connection->queryNoResult("SET NAMES 'utf8'");
 
   if (path.empty() && vm.count("database-used"))
   {
@@ -969,18 +743,13 @@ try
     write_header(md_result_file, (char *)database_used.c_str());
   }
 
-  if ((opt_lock_all_tables) && do_flush_tables_read_lock(&dcon))
+  if ((opt_lock_all_tables) && do_flush_tables_read_lock())
     goto err;
-  if (opt_single_transaction && start_transaction(&dcon))
+  if (opt_single_transaction && start_transaction())
     goto err;
   if (opt_lock_all_tables)
-  {
-    if (drizzleclient_query_with_error_report(&dcon, &result, "FLUSH LOGS", false))
-      goto err;
-    drizzle_result_free(&result);
-    flush_logs= 0; /* not anymore; that would not be sensible */
-  }
-  if (opt_single_transaction && do_unlock_tables(&dcon)) /* unlock but no commit! */
+    db_connection->queryNoResult("FLUSH LOGS");
+  if (opt_single_transaction && do_unlock_tables()) /* unlock but no commit! */
     goto err;
 
   if (opt_alldbs)
@@ -1036,7 +805,7 @@ try
     server.
   */
 err:
-  dbDisconnect(current_host);
+  delete db_connection;
   if (path.empty())
     write_footer(md_result_file);
   free_resources();

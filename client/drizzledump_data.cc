@@ -22,6 +22,7 @@
 #include <drizzled/gettext.h>
 #include <string>
 #include <iostream>
+#include <boost/regex.hpp>
 
 extern bool opt_no_create_info;
 extern bool opt_no_data;
@@ -31,13 +32,6 @@ extern bool extended_insert;
 extern bool opt_replace_into;
 extern bool opt_drop; 
 extern uint32_t show_progress_size;
-extern int connected_server_type;
-
-enum server_type {
-  SERVER_MYSQL_FOUND,
-  SERVER_DRIZZLE_FOUND,
-  SERVER_UNKNOWN_FOUND
-};
 
 std::ostream& operator <<(std::ostream &os, const DrizzleDumpIndex &obj)
 {
@@ -331,10 +325,157 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpTable &obj)
   }
   os << std::endl;
   os << ") ENGINE=" << obj.engineName << " ";
-  if ((connected_server_type == SERVER_MYSQL_FOUND) and (obj.autoIncrement > 0))
+  if ((obj.dcon->getServerType() == DrizzleDumpConnection::SERVER_MYSQL_FOUND)
+    and (obj.autoIncrement > 0))
+  {
     os << "AUTO_INCREMENT=" << obj.autoIncrement << " ";
+  }
 
   os << "COLLATE = " << obj.collate << ";" << std::endl << std::endl;
 
   return os;
+}
+
+DrizzleDumpConnection::DrizzleDumpConnection(std::string &host, uint16_t port, 
+  std::string &username, std::string &password, bool drizzle_protocol) :
+  hostName(host),
+  drizzleProtocol(drizzle_protocol)
+{
+  drizzle_return_t ret;
+
+  if (host.empty())
+    host= "localhost";
+
+  std::string protocol= (drizzle_protocol) ? "Drizzle" : "MySQL";
+
+  std::cerr << _("-- Connecting to ") << host  << _(" using protocol ")
+    << protocol << "..." << std::endl;
+  drizzle_create(&drizzle);
+  drizzle_con_create(&drizzle, &connection);
+  drizzle_con_set_tcp(&connection, (char *)host.c_str(), port);
+  drizzle_con_set_auth(&connection, (char *)username.c_str(),
+    (char *)password.c_str());
+  drizzle_con_add_options(&connection, 
+    drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL);
+  ret= drizzle_con_connect(&connection);
+  if (ret != DRIZZLE_RETURN_OK)
+  {
+    errorHandler(NULL, ret, "when trying to connect");
+    throw;
+  }
+
+  boost::match_flag_type flags = boost::match_default; 
+
+  boost::regex mysql_regex("(5\\.[0-9]+\\.[0-9]+)");
+  boost::regex drizzle_regex("(20[0-9]{2}\\.(0[1-9]|1[012])\\.[0-9]+)");
+
+  std::string version(getServerVersion());
+
+  if (regex_search(version, mysql_regex, flags))
+    serverType= SERVER_MYSQL_FOUND;
+  
+  if (regex_search(version, drizzle_regex, flags))
+    serverType= SERVER_DRIZZLE_FOUND;
+
+  serverType= SERVER_UNKNOWN_FOUND;
+}
+
+drizzle_result_st* DrizzleDumpConnection::query(std::string &str_query)
+{
+  drizzle_return_t ret;
+  drizzle_result_st* result= new drizzle_result_st;
+  if (drizzle_query_str(&connection, result, str_query.c_str(), &ret) == NULL ||
+      ret != DRIZZLE_RETURN_OK)
+  {
+    if (ret == DRIZZLE_RETURN_ERROR_CODE)
+    {
+      std::cerr << _("Error executing query: ") <<
+        drizzle_result_error(result);
+      drizzle_result_free(result);
+    }
+    else
+    {
+      std::cerr << _("Error executing query: ") <<
+        drizzle_con_error(&connection);
+    }
+    return NULL;
+  }
+
+  if (drizzle_result_buffer(result) != DRIZZLE_RETURN_OK)
+  {
+    std::cerr << _("Could not buffer result: ") <<
+        drizzle_con_error(&connection);
+    return NULL;
+  }
+  return result;
+}
+
+void DrizzleDumpConnection::freeResult(drizzle_result_st* result)
+{
+  drizzle_result_free(result);
+  delete result;
+}
+
+bool DrizzleDumpConnection::queryNoResult(std::string &str_query)
+{
+  drizzle_return_t ret;
+  drizzle_result_st result;
+
+  if (drizzle_query_str(&connection, &result, str_query.c_str(), &ret) == NULL ||
+      ret != DRIZZLE_RETURN_OK)
+  {
+    if (ret == DRIZZLE_RETURN_ERROR_CODE)
+    {
+      std::cerr << _("Error executing query: ") <<
+        drizzle_result_error(&result);
+      drizzle_result_free(&result);
+    }
+    else
+    {
+      std::cerr << _("Error executing query: ") <<
+        drizzle_con_error(&connection);
+    }
+    return false;
+  }
+
+  drizzle_result_free(&result);
+  return true;
+}
+
+bool DrizzleDumpConnection::setDB(std::string databaseName)
+{
+  drizzle_return_t ret;
+  drizzle_result_st result;
+  if (drizzle_select_db(&connection, &result, databaseName.c_str(), &ret) == 
+    NULL || ret != DRIZZLE_RETURN_OK)
+  {
+    std::cerr << _("Could not set db '") << databaseName << "'";
+    return false;
+  }
+  drizzle_result_free(&result);
+  return true;
+}
+
+void DrizzleDumpConnection::errorHandler(drizzle_result_st *res, drizzle_return_t ret,
+                     const char *when)
+{
+  if (ret == DRIZZLE_RETURN_ERROR_CODE)
+  {
+    std::cerr << _("Got error: ") << drizzle_result_error(res)
+      << " (" << drizzle_result_error_code(res) << ") " << when << std::endl;
+    drizzle_result_free(res);
+  }
+  else
+  {
+    std::cerr << _("Got error: ") << ret << " " << when << std::endl;
+  }
+
+  return;
+}
+
+DrizzleDumpConnection::~DrizzleDumpConnection()
+{
+  std::cerr << _("-- Disconnecting from ") << hostName << "..." << std::endl;
+  drizzle_con_free(&connection);
+  drizzle_free(&drizzle);
 }

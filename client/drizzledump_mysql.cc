@@ -26,56 +26,24 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <drizzled/gettext.h>
 
-extern drizzle_con_st dcon;
-
-
 bool DrizzleDumpDatabaseMySQL::populateTables()
 {
-  drizzle_result_st result;
+  drizzle_result_st *result;
   drizzle_row_t row;
-  drizzle_return_t ret;
   std::string query;
 
-  if (drizzle_select_db(&dcon, &result, databaseName.c_str(), &ret) == 
-    NULL || ret != DRIZZLE_RETURN_OK)
-  {
-    errmsg << _("Could not set db '") << databaseName << "'";
-    return false;
-  }
-  drizzle_result_free(&result);
+  dcon->setDB(databaseName);
 
   query="SELECT TABLE_NAME, TABLE_COLLATION, ENGINE, AUTO_INCREMENT FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='";
   query.append(databaseName);
   query.append("' ORDER BY TABLE_NAME");
 
-  if (drizzle_query_str(&dcon, &result, query.c_str(), &ret) == NULL ||
-      ret != DRIZZLE_RETURN_OK)
-  {
-    if (ret == DRIZZLE_RETURN_ERROR_CODE)
-    {
-      errmsg << _("Could not get tables list due to error: ") <<
-        drizzle_result_error(&result);
-      drizzle_result_free(&result);
-    }
-    else
-    {
-      errmsg << _("Could not get tables list due to error: ") <<
-        drizzle_con_error(&dcon);
-    }
-    return false;
-  }
+  result= dcon->query(query);
 
-  if (drizzle_result_buffer(&result) != DRIZZLE_RETURN_OK)
-  {
-    errmsg << _("Could not get tables list due to error: ") <<
-        drizzle_con_error(&dcon);
-    return false;
-  }
-
-  while ((row= drizzle_row_next(&result)))
+  while ((row= drizzle_row_next(result)))
   {
     std::string tableName(row[0]);
-    DrizzleDumpTableMySQL *table = new DrizzleDumpTableMySQL(tableName);
+    DrizzleDumpTableMySQL *table = new DrizzleDumpTableMySQL(tableName, dcon);
     table->setCollate(row[1]);
     table->setEngine(row[2]);
     if (row[3])
@@ -89,16 +57,15 @@ bool DrizzleDumpDatabaseMySQL::populateTables()
     tables.push_back(table);
   }
 
-  drizzle_result_free(&result);
+  dcon->freeResult(result);
 
   return true;
 }
 
 bool DrizzleDumpTableMySQL::populateFields()
 {
-  drizzle_result_st result;
+  drizzle_result_st *result;
   drizzle_row_t row;
-  drizzle_return_t ret;
   std::string query;
 
   query="SELECT COLUMN_NAME, COLUMN_TYPE, COLUMN_DEFAULT, IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE, COLLATION_NAME, EXTRA FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='";
@@ -107,33 +74,12 @@ bool DrizzleDumpTableMySQL::populateFields()
   query.append(tableName);
   query.append("' ORDER BY ORDINAL_POSITION");
 
-  if (drizzle_query_str(&dcon, &result, query.c_str(), &ret) == NULL ||
-      ret != DRIZZLE_RETURN_OK)
-  {
-    if (ret == DRIZZLE_RETURN_ERROR_CODE)
-    {
-      errmsg << _("Could not get tables list due to error: ") <<
-        drizzle_result_error(&result);
-      drizzle_result_free(&result);
-    }
-    else
-    {
-      errmsg << _("Could not get tables list due to error: ") <<
-        drizzle_con_error(&dcon);
-    }
-    return false;
-  }
+  result= dcon->query(query);
 
-  if (drizzle_result_buffer(&result) != DRIZZLE_RETURN_OK)
-  {
-    errmsg << _("Could not get tables list due to error: ") <<
-        drizzle_con_error(&dcon);
-    return false;
-  }
-  while ((row= drizzle_row_next(&result)))
+  while ((row= drizzle_row_next(result)))
   {
     std::string fieldName(row[0]);
-    DrizzleDumpFieldMySQL *field = new DrizzleDumpFieldMySQL(fieldName);
+    DrizzleDumpFieldMySQL *field = new DrizzleDumpFieldMySQL(fieldName, dcon);
     /* Stop valgrind warning */
     field->convertDateTime= false;
     /* Also sets collation */
@@ -161,7 +107,7 @@ bool DrizzleDumpTableMySQL::populateFields()
     fields.push_back(field);
   }
 
-  drizzle_result_free(&result);
+  dcon->freeResult(result);
   return true;
 }
 
@@ -201,9 +147,8 @@ void DrizzleDumpFieldMySQL::dateTimeConvert(const char* oldDefault)
 
 bool DrizzleDumpTableMySQL::populateIndexes()
 {
-  drizzle_result_st result;
+  drizzle_result_st *result;
   drizzle_row_t row;
-  drizzle_return_t ret;
   std::string query;
   std::string lastKey;
   bool firstIndex= true;
@@ -212,30 +157,9 @@ bool DrizzleDumpTableMySQL::populateIndexes()
   query="SHOW INDEXES FROM ";
   query.append(tableName);
 
-  if (drizzle_query_str(&dcon, &result, query.c_str(), &ret) == NULL ||
-      ret != DRIZZLE_RETURN_OK)
-  {
-    if (ret == DRIZZLE_RETURN_ERROR_CODE)
-    {
-      errmsg << _("Could not get tables list due to error: ") <<
-        drizzle_result_error(&result);
-      drizzle_result_free(&result);
-    }
-    else
-    {
-      errmsg << _("Could not get tables list due to error: ") <<
-        drizzle_con_error(&dcon);
-    }
-    return false;
-  }
+  result= dcon->query(query);
 
-  if (drizzle_result_buffer(&result) != DRIZZLE_RETURN_OK)
-  {
-    errmsg << _("Could not get tables list due to error: ") <<
-        drizzle_con_error(&dcon);
-    return false;
-  }
-  while ((row= drizzle_row_next(&result)))
+  while ((row= drizzle_row_next(result)))
   {
     std::string indexName(row[2]);
     if (indexName.compare(lastKey) != 0)
@@ -245,7 +169,7 @@ bool DrizzleDumpTableMySQL::populateIndexes()
 
       if (!firstIndex)
         indexes.push_back(index);
-      index = new DrizzleDumpIndexMySQL(indexName);
+      index = new DrizzleDumpIndexMySQL(indexName, dcon);
       index->isPrimary= (strcmp(row[2], "PRIMARY") == 0);
       index->isUnique= (strcmp(row[1], "0") == 0);
       index->isHash= (strcmp(row[10], "HASH") == 0);
@@ -257,7 +181,7 @@ bool DrizzleDumpTableMySQL::populateIndexes()
   if (!firstIndex)
     indexes.push_back(index);
 
-  drizzle_result_free(&result);
+  dcon->freeResult(result);
   return true;
 }
 
@@ -363,7 +287,7 @@ void DrizzleDumpTableMySQL::setEngine(const char* newEngine)
 
 DrizzleDumpData* DrizzleDumpTableMySQL::getData(void)
 {
-  return new DrizzleDumpDataMySQL(this);
+  return new DrizzleDumpDataMySQL(this, dcon);
 }
 
 void DrizzleDumpDatabaseMySQL::setCollate(const char* newCollate)
@@ -409,39 +333,16 @@ void DrizzleDumpFieldMySQL::setCollate(const char* newCollate)
   collation= "utf8_general_ci";
 }
 
-DrizzleDumpDataMySQL::DrizzleDumpDataMySQL(DrizzleDumpTable *dataTable) :
-  DrizzleDumpData(dataTable)
+DrizzleDumpDataMySQL::DrizzleDumpDataMySQL(DrizzleDumpTable *dataTable,
+  DrizzleDumpConnection *connection)
+  : DrizzleDumpData(dataTable, connection)
 {
-  drizzle_return_t ret;
   std::string query;
   query= "SELECT * FROM `";
   query.append(table->tableName);
   query.append("`");
-  result= new drizzle_result_st;
 
-  if (drizzle_query_str(&dcon, result, query.c_str(), &ret) == NULL ||
-      ret != DRIZZLE_RETURN_OK)
-  {
-    if (ret == DRIZZLE_RETURN_ERROR_CODE)
-    {
-      errmsg << _("Could not get tables list due to error: ") <<
-        drizzle_result_error(result);
-      drizzle_result_free(result);
-    }
-    else
-    {
-      errmsg << _("Could not get tables list due to error: ") <<
-        drizzle_con_error(&dcon);
-    }
-    return;
-  }
-
-  if (drizzle_result_buffer(result) != DRIZZLE_RETURN_OK)
-  {
-    errmsg << _("Could not get tables list due to error: ") <<
-        drizzle_con_error(&dcon);
-    return;
-  }
+  result= dcon->query(query);
 }
 
 DrizzleDumpDataMySQL::~DrizzleDumpDataMySQL()

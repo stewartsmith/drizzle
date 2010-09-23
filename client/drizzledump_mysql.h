@@ -28,7 +28,8 @@ class DrizzleDumpDataMySQL;
 class DrizzleDumpIndexMySQL : public DrizzleDumpIndex
 {
   public:
-    DrizzleDumpIndexMySQL(std::string &index) : DrizzleDumpIndex(index)
+    DrizzleDumpIndexMySQL(std::string &index, DrizzleDumpConnection *connection)
+    : DrizzleDumpIndex(index, connection)
     { }
 
     ~DrizzleDumpIndexMySQL()
@@ -41,7 +42,8 @@ class DrizzleDumpIndexMySQL : public DrizzleDumpIndex
 class DrizzleDumpFieldMySQL : public DrizzleDumpField
 {
   public:
-    DrizzleDumpFieldMySQL(std::string &field) : DrizzleDumpField(field)
+    DrizzleDumpFieldMySQL(std::string &field, DrizzleDumpConnection *connection)
+    : DrizzleDumpField(field, connection)
     { }
 
     ~DrizzleDumpFieldMySQL() { }
@@ -54,7 +56,8 @@ class DrizzleDumpFieldMySQL : public DrizzleDumpField
 class DrizzleDumpTableMySQL : public DrizzleDumpTable
 {
   public:
-    DrizzleDumpTableMySQL(std::string &table) : DrizzleDumpTable(table)
+    DrizzleDumpTableMySQL(std::string &table, DrizzleDumpConnection *connection)
+    : DrizzleDumpTable(table, connection)
     { }
 
     ~DrizzleDumpTableMySQL()
@@ -73,7 +76,9 @@ class DrizzleDumpTableMySQL : public DrizzleDumpTable
 class DrizzleDumpDatabaseMySQL : public DrizzleDumpDatabase
 {
   public:
-    DrizzleDumpDatabaseMySQL(const std::string &database) : DrizzleDumpDatabase(database)
+    DrizzleDumpDatabaseMySQL(const std::string &database,
+      DrizzleDumpConnection *connection)
+    : DrizzleDumpDatabase(database, connection)
     { }
     ~DrizzleDumpDatabaseMySQL()
     {
@@ -86,7 +91,8 @@ class DrizzleDumpDatabaseMySQL : public DrizzleDumpDatabase
 class DrizzleDumpDataMySQL : public DrizzleDumpData
 {
   public:
-    DrizzleDumpDataMySQL(DrizzleDumpTable *dataTable);
+    DrizzleDumpDataMySQL(DrizzleDumpTable *dataTable,
+      DrizzleDumpConnection *connection);
     ~DrizzleDumpDataMySQL();
 
     /* For 0000-00-00 -> NULL conversion */
