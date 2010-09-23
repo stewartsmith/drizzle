@@ -106,7 +106,9 @@ public:
 
 	/* override */ bool doDoesTableExist(Session&, const TableIdentifier &identifier);
 
-        ~PBXTStorageEngine();
+	virtual void shutdownPlugin();
+
+	~PBXTStorageEngine();
 };
 
 typedef PBXTStorageEngine handlerton;
