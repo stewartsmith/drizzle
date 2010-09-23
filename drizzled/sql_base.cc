@@ -422,8 +422,8 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
       If there is any table that has a lower refresh_version, wait until
       this is closed (or this thread is killed) before returning
     */
-    session->mysys_var->current_mutex= LOCK_open.native_handle();
-    session->mysys_var->current_cond= COND_refresh.native_handle();
+    session->mysys_var->current_mutex= &LOCK_open;
+    session->mysys_var->current_cond= &COND_refresh;
     session->set_proc_info("Flushing tables");
 
     session->close_old_data_files();
@@ -487,11 +487,10 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
 
   if (wait_for_refresh)
   {
-    pthread_mutex_lock(&session->mysys_var->mutex);
+    boost::mutex::scoped_lock scopedLock(session->mysys_var->mutex);
     session->mysys_var->current_mutex= 0;
     session->mysys_var->current_cond= 0;
     session->set_proc_info(0);
-    pthread_mutex_unlock(&session->mysys_var->mutex);
   }
 
   return result;
@@ -945,8 +944,8 @@ void Session::wait_for_condition(boost::mutex &mutex, boost::condition_variable 
 {
   /* Wait until the current table is up to date */
   const char *saved_proc_info;
-  mysys_var->current_mutex= mutex.native_handle();
-  mysys_var->current_cond= cond.native_handle();
+  mysys_var->current_mutex= &mutex;
+  mysys_var->current_cond= &cond;
   saved_proc_info= get_proc_info();
   set_proc_info("Waiting for table");
   if (!killed)
@@ -964,11 +963,10 @@ void Session::wait_for_condition(boost::mutex &mutex, boost::condition_variable 
   */
 
   pthread_mutex_unlock(mutex.native_handle());
-  pthread_mutex_lock(&mysys_var->mutex);
+  boost::mutex::scoped_lock (mysys_var->mutex);
   mysys_var->current_mutex= 0;
   mysys_var->current_cond= 0;
   set_proc_info(saved_proc_info);
-  pthread_mutex_unlock(&mysys_var->mutex);
 }
 
 

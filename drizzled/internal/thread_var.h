@@ -35,10 +35,10 @@ static pthread_t wrapper_pthread_self()
 
 struct st_my_thread_var
 {
-  pthread_cond_t suspend;
-  pthread_mutex_t mutex;
-  pthread_mutex_t * volatile current_mutex;
-  pthread_cond_t * volatile current_cond;
+  boost::condition_variable suspend;
+  boost::mutex mutex;
+  boost::mutex * volatile current_mutex;
+  boost::condition_variable * volatile current_cond;
   pthread_t pthread_self;
   uint64_t id;
   int volatile abort;
@@ -55,14 +55,10 @@ struct st_my_thread_var
     opt_info(0)
   { 
     pthread_self= wrapper_pthread_self();
-    pthread_mutex_init(&mutex, NULL);
-    pthread_cond_init(&suspend, NULL);
   }
 
   ~st_my_thread_var()
   {
-    pthread_cond_destroy(&suspend);
-    pthread_mutex_destroy(&mutex);
   }
 };
 
