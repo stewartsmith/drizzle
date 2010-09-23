@@ -83,7 +83,7 @@ bool performance_dictionary::SessionUsage::Generator::populate()
 void performance_dictionary::SessionUsage::Generator::publish(const std::string &sql, const struct rusage &usage_arg)
 {
   /* SQL */
-  push(sql);
+  push(sql.substr(0, FUNCTION_NAME_LEN));
 
   /* USER_TIME_USED_SECONDS */
   push(static_cast<int64_t>(usage_arg.ru_utime.tv_sec));
