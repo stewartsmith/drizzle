@@ -1,4 +1,4 @@
-/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2010 Brian Aker
@@ -18,36 +18,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_PERFORMANCE_DICTIONARY_SESSION_USAGE_H
-#define PLUGIN_PERFORMANCE_DICTIONARY_SESSION_USAGE_H
+/* Only Linux defines getrusage's RUSAGE_THREAD */
 
-namespace performance_dictionary {
+#ifndef DRIZZLED_INTERNAL_GETRUSAGE_H
+#define DRIZZLED_INTERNAL_GETRUSAGE_H
 
-class SessionUsage : public  drizzled::plugin::TableFunction
-{
+#include <sys/time.h>
+#include <sys/resource.h>
 
-public:
-  SessionUsage();
+#ifndef RUSAGE_THREAD
+#define RUSAGE_THREAD RUSAGE_SELF
+#endif
 
-  class Generator : public drizzled::plugin::TableFunction::Generator 
-  {
-    Query_list::const_reverse_iterator query_iter;
-    QueryUsage *usage_cache;
-
-    void publish(const std::string &sql, const struct rusage &r_usage);
-
-  public:
-    Generator(drizzled::Field **arg);
-
-    bool populate();
-  };
-
-  Generator *generator(drizzled::Field **arg)
-  {
-    return new Generator(arg);
-  }
-};
-
-} /* namespace performance_dictionary */
-
-#endif /* PLUGIN_PERFORMANCE_DICTIONARY_SESSION_USAGE_H */
+#endif /* DRIZZLED_INTERNAL_GETRUSAGE_H */

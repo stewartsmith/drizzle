@@ -46,8 +46,7 @@
 #include <bitset>
 #include <deque>
 
-#include <sys/time.h>
-#include <sys/resource.h>
+#include "drizzled/internal/getrusage.h"
 
 #include <drizzled/security_context.h>
 #include <drizzled/open_tables_state.h>

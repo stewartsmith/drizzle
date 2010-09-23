@@ -21,8 +21,7 @@
 #ifndef PLUGIN_PERFORMANCE_DICTIONARY_QUERY_USAGE_H
 #define PLUGIN_PERFORMANCE_DICTIONARY_QUERY_USAGE_H
 
-#include <sys/time.h>
-#include <sys/resource.h>
+#include "drizzled/internal/getrusage.h"
 
 #include "drizzled/session.h"
 
