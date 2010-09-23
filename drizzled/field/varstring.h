@@ -69,7 +69,7 @@ public:
   uint32_t sort_length() const
   {
     return (uint32_t) field_length + (field_charset == &my_charset_bin ?
-                                    length_bytes : 0);
+                                      length_bytes : 0);
   }
   int  store(const char *to,uint32_t length, const CHARSET_INFO * const charset);
 
