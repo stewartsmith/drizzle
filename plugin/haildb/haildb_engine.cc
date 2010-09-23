@@ -88,8 +88,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include "drizzled/global_charset_info.h"
 
-#include "libinnodb_version_func.h"
-#include "libinnodb_datadict_dump_func.h"
+#include "haildb_version_func.h"
+#include "haildb_datadict_dump_func.h"
 #include "config_table_function.h"
 #include "status_table_function.h"
 
@@ -99,7 +99,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 # include <embedded_innodb-1.0/innodb.h>
 #endif /* HAVE_HAILDB_H */
 
-#include "embedded_innodb_engine.h"
+#include "haildb_engine.h"
 
 #include <drizzled/field.h>
 #include "drizzled/field/timestamp.h" // needed for UPDATE NOW()

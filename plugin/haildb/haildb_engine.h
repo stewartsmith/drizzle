@@ -16,8 +16,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef PLUGIN_EMBEDDED_INNODB_EMBEDDED_INNODB_ENGINE_H
-#define PLUGIN_EMBEDDED_INNODB_EMBEDDED_INNODB_ENGINE_H
+#ifndef PLUGIN_HAILDB_HAILDB_ENGINE_H
+#define PLUGIN_HAILDB_HAILDB_ENGINE_H
 
 #include <drizzled/cursor.h>
 #include <drizzled/atomics.h>
@@ -130,4 +130,4 @@ private:
   bool in_table_scan;
 };
 
-#endif /* PLUGIN_EMBEDDED_INNODB_EMBEDDED_INNODB_ENGINE_H */
+#endif /* PLUGIN_HAILDB_HAILDB_ENGINE_H */

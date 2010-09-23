@@ -21,7 +21,7 @@
 #include <drizzled/item/func.h>
 #include "drizzled/charset.h"
 #include <drizzled/function/str/strfunc.h>
-#include "libinnodb_version_func.h"
+#include "haildb_version_func.h"
 
 #if defined(HAVE_HAILDB_H)
 # include <haildb.h>

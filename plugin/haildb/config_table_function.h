@@ -16,9 +16,9 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef PLUGIN_EMBEDDED_INNODB_LIBINNODB_DATADICT_DUMP_FUNC_H
-#define PLUGIN_EMBEDDED_INNODB_LIBINNODB_DATADICT_DUMP_FUNC_H
+#ifndef PLUGIN_HAILDB_CONFIG_TABLE_FUNCTION_H
+#define PLUGIN_HAILDB_CONFIG_TABLE_FUNCTION_H
 
-int libinnodb_datadict_dump_func_initialize(drizzled::module::Context &context);
+int config_table_function_initialize(drizzled::module::Context &context);
 
-#endif /* PLUGIN_EMBEDDED_INNODB_LIBINNODB_DATADICT_DUMP_FUNC_H */
+#endif /* PLUGIN_HAILDB_CONFIG_TABLE_FUNCTION_H */
