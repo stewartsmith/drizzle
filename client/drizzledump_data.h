@@ -218,10 +218,10 @@ class DrizzleStringBuf : public std::streambuf
         sync();
     }
 
-    void writeString(const std::string &str)
+    void writeString(std::string &str)
     {
-      //connection->queryNoResult(str);
-      std::cout << "query: \"" << str << "\"" << std::endl;
+      connection->queryNoResult(str);
+//      std::cout << "query: \"" << str << "\"" << std::endl;
     }
 
     void setConnection(DrizzleDumpConnection *conn) { connection= conn; }

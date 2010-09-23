@@ -137,6 +137,7 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpDatabase &obj)
       os << *table;
     if (not opt_no_data)
     {
+      obj.dcon->setDB(obj.databaseName);
       DrizzleDumpData *data= table->getData();
       os << *data;
       delete data;
@@ -373,11 +374,10 @@ DrizzleDumpConnection::DrizzleDumpConnection(std::string &host, uint16_t port,
 
   if (regex_search(version, mysql_regex, flags))
     serverType= SERVER_MYSQL_FOUND;
-  
-  if (regex_search(version, drizzle_regex, flags))
+  else if (regex_search(version, drizzle_regex, flags))
     serverType= SERVER_DRIZZLE_FOUND;
-
-  serverType= SERVER_UNKNOWN_FOUND;
+  else
+    serverType= SERVER_UNKNOWN_FOUND;
 }
 
 drizzle_result_st* DrizzleDumpConnection::query(std::string &str_query)

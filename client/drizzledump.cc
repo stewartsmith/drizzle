@@ -121,6 +121,20 @@ FILE *md_result_file= 0;
 FILE *stderror_file= 0;
 std::vector<DrizzleDumpDatabase*> database_store;
 DrizzleDumpConnection* db_connection;
+DrizzleDumpConnection* destination_connection;
+
+enum destinations {
+  DESTINATION_DB,
+  DESTINATION_FILES,
+  DESTINATION_STDOUT
+};
+
+int opt_destination= DESTINATION_STDOUT;
+std::string opt_destination_host;
+uint16_t opt_destination_port;
+std::string opt_destination_user;
+std::string opt_destination_password;
+std::string opt_destination_database;
 
 const string progname= "drizzledump";
 
@@ -151,6 +165,7 @@ char check_if_ignore_table(const char *table_name, char *table_type);
 int get_server_type();
 void dump_all_tables(void);
 void generate_dump(void);
+void generate_dump_db(void);
 
 void dump_all_tables(void)
 {
@@ -164,12 +179,25 @@ void dump_all_tables(void)
 void generate_dump(void)
 {
   std::vector<DrizzleDumpDatabase*>::iterator i;
+  for (i= database_store.begin(); i != database_store.end(); ++i)
+  {
+    DrizzleDumpDatabase *database= *i;
+    cout << *database;
+  }
+}
+
+void generate_dump_db(void)
+{
+  std::vector<DrizzleDumpDatabase*>::iterator i;
   DrizzleStringBuf sbuf(1024);
+  destination_connection= new DrizzleDumpConnection(opt_destination_host,
+    opt_destination_port, opt_destination_user, opt_destination_password,
+    false);
+  sbuf.setConnection(destination_connection);
   std::ostream sout(&sbuf);
   for (i= database_store.begin(); i != database_store.end(); ++i)
   {
     DrizzleDumpDatabase *database= *i;
-    
     sout << *database;
   }
 }
@@ -338,8 +366,9 @@ static int dump_all_databases()
   std::string query;
   DrizzleDumpDatabase *database;
 
+  /* Blocking the MySQL privilege tables too because we can't import them due to bug#646187 */
   if (db_connection->getServerType() == DrizzleDumpConnection::SERVER_MYSQL_FOUND)
-    query= "SELECT SCHEMA_NAME, DEFAULT_COLLATION_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME NOT IN ('information_schema', 'performance_schema')";
+    query= "SELECT SCHEMA_NAME, DEFAULT_COLLATION_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME NOT IN ('information_schema', 'performance_schema', 'mysql')";
   else
     query= "SELECT SCHEMA_NAME, DEFAULT_COLLATION_NAME FROM DATA_DICTIONARY.SCHEMAS WHERE SCHEMA_NAME NOT IN ('information_schema','data_dictionary')";
 
@@ -519,6 +548,18 @@ try
   N_("Direct output to a given file. This option should be used in MSDOS, because it prevents new line '\\n' from being converted to '\\r\\n' (carriage return + line feed)."))
   ("where,w", po::value<string>(&where)->default_value(""),
   N_("Dump only selected records; QUOTES mandatory!"))
+  ("destination-type", po::value<string>()->default_value("stdout"),
+  N_("Where to send output to (stdout|database"))
+  ("destination-host", po::value<string>(&opt_destination_host)->default_value("localhost"),
+  N_("Hostname for destination db server (requires --destination=database)"))
+  ("destination-port", po::value<uint16_t>(&opt_destination_port)->default_value(3306),
+  N_("Port number for destination db server (requires --destination=database)"))
+  ("destination-user", po::value<string>(&opt_destination_user),
+  N_("User name for destination db server (resquires --destination=database)"))
+  ("destination-password", po::value<string>(&opt_destination_password),
+  N_("Password for destination db server (requires --destination=database)"))
+  ("destination-database", po::value<string>(&opt_destination_database),
+  N_("The database in the destination db server (requires --destination=database, not for use with --all-databases)"))
   ;
 
   po::options_description client_options(N_("Options specific to the client"));
@@ -737,6 +778,18 @@ try
   if (db_connection->getServerType() == DrizzleDumpConnection::SERVER_MYSQL_FOUND)
     db_connection->queryNoResult("SET NAMES 'utf8'");
 
+  if (vm.count("destination-type"))
+  {
+    string tmp_destination(vm["destination-type"].as<string>());
+    if (tmp_destination.compare("database") == 0)
+      opt_destination= DESTINATION_DB;
+    else if (tmp_destination.compare("stdout") == 0)
+      opt_destination= DESTINATION_STDOUT;
+    else
+      exit(EXIT_ARGUMENT_INVALID);
+  }
+
+
   if (path.empty() && vm.count("database-used"))
   {
     string database_used= *vm["database-used"].as< vector<string> >().begin();
@@ -787,8 +840,10 @@ try
     dump_databases(vm["database-used"].as< vector<string> >());
     dump_all_tables();
   }
-
-  generate_dump();
+  if (opt_destination == DESTINATION_STDOUT)
+    generate_dump();
+  else
+    generate_dump_db();
 
   /* ensure dumped data flushed */
   if (md_result_file && fflush(md_result_file))

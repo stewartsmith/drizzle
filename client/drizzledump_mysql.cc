@@ -227,7 +227,8 @@ void DrizzleDumpFieldMySQL::setType(const char* raw_type, const char* raw_collat
 
   if ((old_type.compare("TINYTEXT") == 0) or
     (old_type.compare("MEDIUMTEXT") == 0) or
-    (old_type.compare("LONGTEXT") == 0))
+    (old_type.compare("LONGTEXT") == 0) or
+    (old_type.compare("SET") == 0))
   {
     type= "TEXT";
     return;
