@@ -1,1 +1,1 @@
---plugin-add=embedded_innodb --plugin-remove=innobase
+--plugin-add=haildb --plugin-remove=innobase
