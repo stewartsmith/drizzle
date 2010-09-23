@@ -57,13 +57,13 @@ Field_varstring::Field_varstring(unsigned char *ptr_arg,
                                  unsigned char null_bit_arg,
                                  const char *field_name_arg,
                                  TableShare *share,
-                                 const CHARSET_INFO * const cs)
-  :Field_str(ptr_arg,
-             len_arg,
-             null_ptr_arg,
-             null_bit_arg,
-             field_name_arg, cs),
-   length_bytes(length_bytes_arg)
+                                 const CHARSET_INFO * const cs) :
+  Field_str(ptr_arg,
+            len_arg,
+            null_ptr_arg,
+            null_bit_arg,
+            field_name_arg, cs),
+length_bytes(length_bytes_arg)
 {
   share->varchar_fields++;
 }
@@ -72,14 +72,14 @@ Field_varstring::Field_varstring(uint32_t len_arg,
                                  bool maybe_null_arg,
                                  const char *field_name_arg,
                                  TableShare *share,
-                                 const CHARSET_INFO * const cs)
-  :Field_str((unsigned char*) 0,
-             len_arg,
-             maybe_null_arg ? (unsigned char*) "": 0,
-             0,
-             field_name_arg,
-             cs),
-   length_bytes(len_arg < 256 ? 1 :2)
+                                 const CHARSET_INFO * const cs) :
+  Field_str((unsigned char*) 0,
+            len_arg,
+            maybe_null_arg ? (unsigned char*) "": 0,
+            0,
+            field_name_arg,
+            cs),
+  length_bytes(len_arg < 256 ? 1 :2)
 {
   share->varchar_fields++;
 }
@@ -120,11 +120,10 @@ int Field_varstring::store(int64_t nr, bool unsigned_val)
   char buff[64];
   uint32_t  length;
   length= (uint32_t) (field_charset->cset->int64_t10_to_str)(field_charset,
-                                                          buff,
-                                                          sizeof(buff),
-                                                          (unsigned_val ? 10:
-                                                           -10),
-                                                           nr);
+                                                             buff,
+                                                             sizeof(buff),
+                                                             (unsigned_val ? 10: -10),
+                                                             nr);
   return Field_varstring::store(buff, length, field_charset);
 }
 
@@ -224,7 +223,7 @@ int Field_varstring::key_cmp(const unsigned char *key_ptr, uint32_t max_key_leng
   uint32_t local_char_length= max_key_length / field_charset->mbmaxlen;
 
   local_char_length= my_charpos(field_charset, ptr + length_bytes,
-                          ptr + length_bytes + length, local_char_length);
+                                ptr + length_bytes + length, local_char_length);
   set_if_smaller(length, local_char_length);
   return field_charset->coll->strnncollsp(field_charset,
                                           ptr + length_bytes,
@@ -269,8 +268,8 @@ void Field_varstring::sort_string(unsigned char *to,uint32_t length)
   }
 
   tot_length= my_strnxfrm(field_charset,
-			  to, length, ptr + length_bytes,
-			  tot_length);
+                          to, length, ptr + length_bytes,
+                          tot_length);
   assert(tot_length == length);
 }
 

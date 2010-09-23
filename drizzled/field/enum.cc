@@ -38,39 +38,18 @@ namespace drizzled
 ** If one uses this string in a number context one gets the type number.
 ****************************************************************************/
 
-enum ha_base_keytype Field_enum::key_type() const
-{
-  switch (packlength)
-  {
-  case 1:
-    return HA_KEYTYPE_BINARY;
-  case 2:
-    return HA_KEYTYPE_ULONG_INT;
-  default:
-    assert(packlength <= 2);
-    return HA_KEYTYPE_ULONG_INT;
-  }
-}
-
 void Field_enum::store_type(uint64_t value)
 {
   value--; /* we store as starting from 0, although SQL starts from 1 */
 
-  switch (packlength) {
-  case 1: ptr[0]= (unsigned char) value;  break;
-  case 2:
 #ifdef WORDS_BIGENDIAN
   if (getTable()->s->db_low_byte_first)
   {
-    int2store(ptr,(unsigned short) value);
+    int4store(ptr, (unsigned short) value);
   }
   else
 #endif
-    shortstore(ptr,(unsigned short) value);
-  break;
-  default:
-    assert(packlength <= 2);
-  }
+    longstore(ptr, (unsigned short) value);
 }
 
 /**
@@ -152,24 +131,14 @@ int64_t Field_enum::val_int(void)
 {
   ASSERT_COLUMN_MARKED_FOR_READ;
 
-  switch (packlength) {
-  case 1:
-    return ((int64_t) ptr[0]) + 1; /* SQL is from 1, we store from 0 */
-  case 2:
-  {
-    uint16_t tmp;
+  uint16_t tmp;
 #ifdef WORDS_BIGENDIAN
-    if (getTable()->s->db_low_byte_first)
-      tmp=sint2korr(ptr);
-    else
+  if (getTable()->s->db_low_byte_first)
+    tmp= sint4korr(ptr);
+  else
 #endif
-      shortget(tmp,ptr);
-    return ((int64_t) tmp) + 1; /* SQL is from 1, we store from 0 */
-  }
-  default:
-    assert(packlength <= 2);
-  }
-  return 0;					// impossible
+    longget(tmp,ptr);
+  return ((int64_t) tmp) + 1; /* SQL is from 1, we store from 0 */
 }
 
 String *Field_enum::val_str(String *, String *val_ptr)
@@ -194,9 +163,9 @@ int Field_enum::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   unsigned char *old= ptr;
   ptr= (unsigned char*) a_ptr;
-  uint64_t a=Field_enum::val_int();
+  uint64_t a= Field_enum::val_int();
   ptr= (unsigned char*) b_ptr;
-  uint64_t b=Field_enum::val_int();
+  uint64_t b= Field_enum::val_int();
   ptr= old;
   return (a < b) ? -1 : (a > b) ? 1 : 0;
 }
@@ -204,8 +173,8 @@ int Field_enum::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 void Field_enum::sort_string(unsigned char *to,uint32_t )
 {
   uint64_t value=Field_enum::val_int()-1; /* SQL is 1 based, stored as 0 based*/
-  to+=packlength-1;
-  for (uint32_t i=0 ; i < packlength ; i++)
+  to+=pack_length() -1;
+  for (uint32_t i=0 ; i < pack_length() ; i++)
   {
     *to-- = (unsigned char) (value & 255);
     value>>=8;
