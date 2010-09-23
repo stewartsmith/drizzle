@@ -1,0 +1,2 @@
+#
+select count(*) from DATA_DICTIONARY.session_usage;

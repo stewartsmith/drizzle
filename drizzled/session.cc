@@ -177,7 +177,8 @@ Session::Session(plugin::Client *client_arg) :
   cached_table(0),
   transaction_message(NULL),
   statement_message(NULL),
-  session_event_observers(NULL)
+  session_event_observers(NULL),
+  use_usage(false)
 {
   memset(process_list_info, 0, PROCESS_LIST_WIDTH);
   client->setSession(this);
@@ -392,6 +393,12 @@ Session::~Session()
   plugin::Logging::postEndDo(this);
   plugin::EventObserver::deregisterSessionEvents(*this); 
 
+  for (PropertyMap::iterator iter= life_properties.begin(); iter != life_properties.end(); iter++)
+  {
+    delete (*iter).second;
+  }
+  life_properties.clear();
+
   /* Ensure that no one is using Session */
   LOCK_delete.unlock();
 }
@@ -494,6 +501,8 @@ void Session::prepareForQueries()
                                 variables.query_prealloc_size);
   transaction.xid_state.xid.null();
   transaction.xid_state.in_session=1;
+  if (use_usage)
+    resetUsage();
 }
 
 bool Session::initGlobals()
