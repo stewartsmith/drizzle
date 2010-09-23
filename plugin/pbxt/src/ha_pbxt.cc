@@ -1249,10 +1249,9 @@ static int pbxt_init(void *p)
 	XT_RETURN(1);
 }
 
-static int pbxt_end(void *)
+void PBXTStorageEngine::shutdownPlugin()
 {
-	XTThreadPtr		self;
-	int				err = 0;
+	XTThreadPtr self;
 
 	XT_TRACE_CALL();
 
@@ -1267,13 +1266,11 @@ static int pbxt_end(void *)
 			ha_exit(self);
 		}
 	}
-
-	XT_RETURN(err);
 }
 
 PBXTStorageEngine::~PBXTStorageEngine()
 {
-  pbxt_end(NULL);
+	/* We do nothing here, because it is now all done in shutdownPlugin(). */
 }
 
 /*
@@ -5666,9 +5663,16 @@ int PBXTStorageEngine::doStartTransaction(Session *thd, start_transaction_option
 	if (!self->st_database)
 		xt_ha_open_database_of_table(self, NULL);
 
-	if (!xt_xn_begin(self)) {
+	/* startTransaction() calls registerResourceForTransaction() calls engine->startTransaction(), and then
+	 * startTransaction() calls doStartTransaction()
+	 * Which leads to this function being called twice!?
+	 * So added the self->st_xact_data test below.
+	 */
+	if (!self->st_xact_data) {
+		if (!xt_xn_begin(self)) {
 			err = xt_ha_pbxt_thread_error_for_mysql(thd, self, /*pb_ignore_dup_key*/false);
 			//pb_ex_in_use = 0;
+		}
 	}
 
 	return err;

@@ -28,7 +28,11 @@
 #include "xt_defs.h"
 
 #ifdef DRIZZLED
+#include <drizzled/internal/my_pthread.h>
 #include <drizzled/plugin.h>
+#include <drizzled/plugin/client.h>
+#include <drizzled/plugin/null_client.h>
+#include <drizzled/plugin/listen.h>
 #include <drizzled/show.h>
 #include <drizzled/data_home.h>
 #include <drizzled/field/blob.h>
@@ -3062,7 +3066,20 @@ xtPublic xtBool myxt_create_thread_possible()
 xtPublic void *myxt_create_thread()
 {
 #ifdef DRIZZLED
-	return (void *) 1;
+	Client		*client;
+	Session		*session;
+
+	if (drizzled::internal::my_thread_init()) {
+		xt_register_error(XT_REG_CONTEXT, XT_ERR_MYSQL_ERROR, 0, "Unable to initialize MySQL threading");
+		return NULL;
+	}
+
+	if (!(client = new NullClient()))
+		return NULL;
+	session = new Session(client);
+	session->thread_stack = (char *) &session;
+	session->storeGlobals();
+	return (void *) session;
 #else
 	THD *new_thd;
 
@@ -3140,12 +3157,15 @@ xtPublic void *myxt_create_thread()
 }
 
 #ifdef DRIZZLED
-xtPublic void myxt_destroy_thread(void *, xtBool)
+xtPublic void myxt_destroy_thread(void *s, xtBool end_threads)
 {
-}
+	Session *session = (Session *) s;
 
-xtPublic void myxt_delete_remaining_thread()
-{
+	session->lockForDelete();
+	delete session;
+
+	if (end_threads)
+		drizzled::internal::my_thread_end();
 }
 #else
 xtPublic void myxt_destroy_thread(void *thread, xtBool end_threads)
@@ -3174,6 +3194,7 @@ xtPublic void myxt_destroy_thread(void *thread, xtBool end_threads)
 	if (end_threads)
 		my_thread_end();
 }
+#endif
 
 xtPublic void myxt_delete_remaining_thread()
 {
@@ -3182,7 +3203,6 @@ xtPublic void myxt_delete_remaining_thread()
 	if ((thd = current_thd))
 		myxt_destroy_thread((void *) thd, TRUE);
 }
-#endif
 
 xtPublic XTThreadPtr myxt_get_self()
 {
