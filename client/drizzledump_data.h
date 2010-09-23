@@ -135,7 +135,8 @@ class DrizzleDumpDatabase
 
     friend std::ostream& operator <<(std::ostream &os, const DrizzleDumpDatabase &obj);
 
-    virtual bool populateTables() { return false; }
+    virtual bool populateTables(void) { return false; }
+    virtual bool populateTables(const std::vector<std::string> &table_names) { return table_names.empty(); }
     virtual void setCollate(const char*) { }
     std::vector<DrizzleDumpTable*> tables;
 
@@ -221,7 +222,6 @@ class DrizzleStringBuf : public std::streambuf
     void writeString(std::string &str)
     {
       connection->queryNoResult(str);
-//      std::cout << "query: \"" << str << "\"" << std::endl;
     }
 
     void setConnection(DrizzleDumpConnection *conn) { connection= conn; }

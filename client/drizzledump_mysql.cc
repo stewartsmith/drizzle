@@ -26,6 +26,8 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <drizzled/gettext.h>
 
+extern bool  verbose;
+
 bool DrizzleDumpDatabaseMySQL::populateTables()
 {
   drizzle_result_st *result;
@@ -33,6 +35,9 @@ bool DrizzleDumpDatabaseMySQL::populateTables()
   std::string query;
 
   dcon->setDB(databaseName);
+
+  if (verbose)
+    std::cerr << _("-- Retrieving table structures for ") << databaseName << "..." << std::endl;
 
   query="SELECT TABLE_NAME, TABLE_COLLATION, ENGINE, AUTO_INCREMENT FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='";
   query.append(databaseName);
@@ -62,11 +67,62 @@ bool DrizzleDumpDatabaseMySQL::populateTables()
   return true;
 }
 
+bool DrizzleDumpDatabaseMySQL::populateTables(const std::vector<std::string> &table_names)
+{
+  drizzle_result_st *result;
+  drizzle_row_t row;
+  std::string query;
+
+  dcon->setDB(databaseName);
+
+  if (verbose)
+    std::cerr << _("-- Retrieving table structures for ") << databaseName << "..." << std::endl;
+  for (std::vector<std::string>::const_iterator it= table_names.begin(); it != table_names.end(); ++it)
+  {
+    std::string tableName= *it;
+    query="SELECT TABLE_NAME, TABLE_COLLATION, ENGINE, AUTO_INCREMENT FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='";
+    query.append(databaseName);
+    query.append("' AND TABLE_NAME = '");
+    query.append(tableName);
+    query.append("'");
+
+    result= dcon->query(query);
+
+    if ((row= drizzle_row_next(result)))
+    {
+      DrizzleDumpTableMySQL *table = new DrizzleDumpTableMySQL(tableName, dcon);
+      table->setCollate(row[1]);
+      table->setEngine(row[2]);
+      if (row[3])
+        table->autoIncrement= boost::lexical_cast<uint64_t>(row[3]);
+      else
+        table->autoIncrement= 0;
+
+      table->database= this;
+      table->populateFields();
+      table->populateIndexes();
+      tables.push_back(table);
+      dcon->freeResult(result);
+    }
+    else
+    {
+      dcon->freeResult(result);
+      return false;
+    }
+  }
+
+  return true;
+
+}
+
 bool DrizzleDumpTableMySQL::populateFields()
 {
   drizzle_result_st *result;
   drizzle_row_t row;
   std::string query;
+
+  if (verbose)
+    std::cerr << _("-- Retrieving fields for ") << tableName << "..." << std::endl;
 
   query="SELECT COLUMN_NAME, COLUMN_TYPE, COLUMN_DEFAULT, IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE, COLLATION_NAME, EXTRA FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='";
   query.append(database->databaseName);
@@ -153,6 +209,9 @@ bool DrizzleDumpTableMySQL::populateIndexes()
   std::string lastKey;
   bool firstIndex= true;
   DrizzleDumpIndex *index;
+
+  if (verbose)
+    std::cerr << _("-- Retrieving indexes for ") << tableName << "..." << std::endl;
 
   query="SHOW INDEXES FROM ";
   query.append(tableName);

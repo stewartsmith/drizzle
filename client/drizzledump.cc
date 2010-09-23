@@ -78,7 +78,7 @@ namespace po= boost::program_options;
 #define IGNORE_DATA 0x01 /* don't dump data for this table */
 #define IGNORE_INSERT_DELAYED 0x02 /* table doesn't support INSERT DELAYED */
 
-static bool  verbose= false;
+bool  verbose= false;
 static bool use_drizzle_protocol= false;
 static bool quick= true;
 static bool ignore_errors= false;
@@ -88,8 +88,8 @@ static bool opt_compress= false;
 static bool opt_delayed= false; 
 static bool create_options= true; 
 static bool opt_quoted= false;
-static bool opt_databases= false; 
-static bool opt_alldbs= false; 
+bool opt_databases= false; 
+bool opt_alldbs= false; 
 static bool opt_lock_all_tables= false;
 static bool opt_set_charset= false; 
 static bool opt_dump_date= true;
@@ -156,7 +156,7 @@ boost::unordered_set<string> ignore_table;
 
 static void maybe_exit(int error);
 static void die(int error, const char* reason, ...);
-static void write_header(FILE *sql_file, char *db_name);
+static void write_header(char *db_name);
 static int dump_selected_tables(const string &db, const vector<string> &table_names);
 static int dump_databases(const vector<string> &db_names);
 static int dump_all_databases(void);
@@ -178,11 +178,27 @@ void dump_all_tables(void)
 void generate_dump(void)
 {
   std::vector<DrizzleDumpDatabase*>::iterator i;
+  if (opt_set_charset)
+    cout << endl << "SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION;" << endl;
+
+  if (path.empty())
+  {
+    cout << endl << "SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;"
+      << endl << "SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;" << endl;
+  }
   for (i= database_store.begin(); i != database_store.end(); ++i)
   {
     DrizzleDumpDatabase *database= *i;
     cout << *database;
   }
+
+  if (path.empty())
+  {
+    cout << "SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;"
+      << endl << "SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;" << endl;
+  }
+  if (opt_set_charset)
+    cout << "SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION;" << endl;
 }
 
 void generate_dump_db(void)
@@ -194,11 +210,28 @@ void generate_dump_db(void)
     false);
   sbuf.setConnection(destination_connection);
   std::ostream sout(&sbuf);
+  if (opt_set_charset)
+    sout << "SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION;" << endl;
+
+  if (path.empty())
+  {
+    sout << "SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;" << endl;
+    sout << "SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;" << endl;
+  }
+
   for (i= database_store.begin(); i != database_store.end(); ++i)
   {
     DrizzleDumpDatabase *database= *i;
     sout << *database;
   }
+
+  if (path.empty())
+  {
+    sout << "SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;" << endl;
+    sout << "SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;" << endl;
+  }
+  if (opt_set_charset)
+    sout << "SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION;" << endl;
 }
 
 /*
@@ -215,36 +248,21 @@ static void check_io(FILE *file)
     die(EX_EOF, _("Got errno %d on write"), errno);
 }
 
-static void write_header(FILE *sql_file, char *db_name)
+static void write_header(char *db_name)
 {
-  if (! opt_compact)
-  { 
-    if (opt_comments)
-    {
-      fprintf(sql_file,
-              "-- drizzledump %s libdrizzle %s, for %s-%s (%s)\n--\n",
-              VERSION, drizzle_version(), HOST_VENDOR, HOST_OS, HOST_CPU);
-      fprintf(sql_file, "-- Host: %s    Database: %s\n",
-              ! current_host.empty() ? current_host.c_str() : "localhost", db_name ? db_name :
-              "");
-      fputs("-- ------------------------------------------------------\n",
-            sql_file);
-      fprintf(sql_file, "-- Server version\t%s",
-              db_connection->getServerVersion());
-      if (db_connection->getServerType() == DrizzleDumpConnection::SERVER_MYSQL_FOUND)
-        fprintf(sql_file, " (MySQL server)");
-      else if (db_connection->getServerType() == DrizzleDumpConnection::SERVER_DRIZZLE_FOUND)
-        fprintf(sql_file, " (Drizzle server)");
-    }
-    if (opt_set_charset)
-      fprintf(sql_file,
-              "\nSET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION;\n");
-
-    if (path.empty())
-    {
-      fprintf(md_result_file,"\nSET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;\nSET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;\n");
-    }
-    check_io(sql_file);
+  if ((not opt_compact) and (opt_comments))
+  {
+    cout << "-- drizzledump " << VERSION << " libdrizzle "
+      << drizzle_version() << ", for " << HOST_VENDOR << "-" << HOST_OS
+      << " (" << HOST_CPU << ")" << endl << "--" << endl;
+    cout << "-- Host: " << current_host << "    Database: " << db_name << endl;
+    cout << "-- ------------------------------------------------------" << endl;
+    cout << "-- Server version\t" << db_connection->getServerVersion();
+    if (db_connection->getServerType() == DrizzleDumpConnection::SERVER_MYSQL_FOUND)
+      cout << " (MySQL server)";
+    else if (db_connection->getServerType() == DrizzleDumpConnection::SERVER_DRIZZLE_FOUND)
+      cout << " (Drizzle server)";
+    cout << endl << endl;
   }
 } /* write_header */
 
@@ -253,12 +271,6 @@ static void write_footer(FILE *sql_file)
 {
   if (! opt_compact)
   {
-    if (path.empty())
-    {
-      fprintf(md_result_file,"SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;\nSET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;\n");
-    }
-    if (opt_set_charset)
-      fprintf(sql_file, "SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION;\n");
     if (opt_comments)
     {
       if (opt_dump_date)
@@ -353,6 +365,8 @@ static void maybe_exit(int error)
   if (ignore_errors)
     return;
   delete db_connection;
+  if (destination_connection)
+    delete destination_connection;
   free_resources();
   exit(error);
 }
@@ -364,6 +378,9 @@ static int dump_all_databases()
   int result=0;
   std::string query;
   DrizzleDumpDatabase *database;
+
+  if (verbose)
+    std::cerr << _("-- Retrieving database structures...") << std::endl;
 
   /* Blocking the MySQL privilege tables too because we can't import them due to bug#646187 */
   if (db_connection->getServerType() == DrizzleDumpConnection::SERVER_MYSQL_FOUND)
@@ -410,25 +427,15 @@ static int dump_databases(const vector<string> &db_names)
 static int dump_selected_tables(const string &db, const vector<string> &table_names)
 {
   DrizzleDumpDatabase *database;
-  DrizzleDumpTable *table;
 
   if (db_connection->getServerType() == DrizzleDumpConnection::SERVER_MYSQL_FOUND)
     database= new DrizzleDumpDatabaseMySQL(db, db_connection);
   else
     database= new DrizzleDumpDatabaseDrizzle(db, db_connection);
 
-  database_store.push_back(database); 
+  database->populateTables(table_names);
 
-  for (vector<string>::const_iterator it= table_names.begin(); it != table_names.end(); ++it)
-  {
-    string temp= *it;
-    if (db_connection->getServerType() == DrizzleDumpConnection::SERVER_MYSQL_FOUND)
-      table= new DrizzleDumpTableMySQL(temp, db_connection);
-    else
-      table= new DrizzleDumpTableDrizzle(temp, db_connection);
-    database->tables.push_back(table);
-  }
-  database_store.push_back(database);
+  database_store.push_back(database); 
 
   return 0;
 } /* dump_selected_tables */
@@ -790,7 +797,7 @@ try
   if (path.empty() && vm.count("database-used"))
   {
     string database_used= *vm["database-used"].as< vector<string> >().begin();
-    write_header(md_result_file, (char *)database_used.c_str());
+    write_header((char *)database_used.c_str());
   }
 
   if ((opt_lock_all_tables) && do_flush_tables_read_lock())
@@ -858,6 +865,8 @@ try
   */
 err:
   delete db_connection;
+  if (destination_connection)
+    delete destination_connection;
   if (path.empty())
     write_footer(md_result_file);
   free_resources();

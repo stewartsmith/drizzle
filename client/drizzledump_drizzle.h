@@ -79,7 +79,8 @@ class DrizzleDumpDatabaseDrizzle : public DrizzleDumpDatabase
     {
       tables.clear();
     }
-    bool populateTables();
+    bool populateTables(void);
+    bool populateTables(const std::vector<std::string> &table_names);
     void setCollate(const char* newCollate);
 
 };

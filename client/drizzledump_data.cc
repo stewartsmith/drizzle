@@ -31,7 +31,18 @@ extern bool opt_disable_keys;
 extern bool extended_insert;
 extern bool opt_replace_into;
 extern bool opt_drop; 
+extern bool  verbose;
+extern bool opt_databases; 
+extern bool opt_alldbs; 
 extern uint32_t show_progress_size;
+
+enum destinations {
+  DESTINATION_DB,
+  DESTINATION_FILES,
+  DESTINATION_STDOUT
+};
+
+extern int opt_destination;
 
 std::ostream& operator <<(std::ostream &os, const DrizzleDumpIndex &obj)
 {
@@ -115,18 +126,24 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpField &obj)
 
 std::ostream& operator <<(std::ostream &os, const DrizzleDumpDatabase &obj)
 {
-  os << "--" << std::endl
-     << "-- Current Database: `" << obj.databaseName << "`" << std::endl
-     << "--" << std::endl << std::endl;
-
-  /* Love that this variable is the opposite of its name */
-  if (not opt_create_db)
+  if ((opt_destination == DESTINATION_DB) or opt_databases or opt_alldbs)
   {
-    os << "CREATE DATABASE IF NOT EXISTS `" << obj.databaseName
-      << "` COLLATE = " << obj.collate << ";" << std::endl << std::endl;
-  }
+    os << "--" << std::endl
+       << "-- Current Database: `" << obj.databaseName << "`" << std::endl
+       << "--" << std::endl << std::endl;
 
-  os << "USE `" << obj.databaseName << "`;" << std::endl << std::endl;
+    /* Love that this variable is the opposite of its name */
+    if (not opt_create_db)
+    {
+      os << "CREATE DATABASE IF NOT EXISTS `" << obj.databaseName << "`";
+      if (not obj.collate.empty())
+       os << " COLLATE = " << obj.collate;
+
+      os << ";" << std::endl << std::endl;
+    }
+
+    os << "USE `" << obj.databaseName << "`;" << std::endl << std::endl;
+  }
 
   std::vector<DrizzleDumpTable*>::iterator i;
   std::vector<DrizzleDumpTable*> output_tables = obj.tables;
@@ -155,6 +172,9 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
   uint64_t rownr= 0;
 
   drizzle_row_t row;
+
+  if (verbose)
+    std::cerr << _("-- Retrieving data for ") << obj.table->tableName << "..." << std::endl;
 
   if (drizzle_result_row_count(obj.result) < 1)
   {
@@ -348,9 +368,11 @@ DrizzleDumpConnection::DrizzleDumpConnection(std::string &host, uint16_t port,
     host= "localhost";
 
   std::string protocol= (drizzle_protocol) ? "Drizzle" : "MySQL";
-
-  std::cerr << _("-- Connecting to ") << host  << _(" using protocol ")
-    << protocol << "..." << std::endl;
+  if (verbose)
+  {
+    std::cerr << _("-- Connecting to ") << host  << _(" using protocol ")
+      << protocol << "..." << std::endl;
+  }
   drizzle_create(&drizzle);
   drizzle_con_create(&drizzle, &connection);
   drizzle_con_set_tcp(&connection, (char *)host.c_str(), port);
@@ -390,13 +412,13 @@ drizzle_result_st* DrizzleDumpConnection::query(std::string &str_query)
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
     {
       std::cerr << _("Error executing query: ") <<
-        drizzle_result_error(result);
+        drizzle_result_error(result) << std::endl;
       drizzle_result_free(result);
     }
     else
     {
       std::cerr << _("Error executing query: ") <<
-        drizzle_con_error(&connection);
+        drizzle_con_error(&connection) << std::endl;
     }
     return NULL;
   }
@@ -404,7 +426,7 @@ drizzle_result_st* DrizzleDumpConnection::query(std::string &str_query)
   if (drizzle_result_buffer(result) != DRIZZLE_RETURN_OK)
   {
     std::cerr << _("Could not buffer result: ") <<
-        drizzle_con_error(&connection);
+        drizzle_con_error(&connection) << std::endl;
     return NULL;
   }
   return result;
@@ -427,13 +449,13 @@ bool DrizzleDumpConnection::queryNoResult(std::string &str_query)
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
     {
       std::cerr << _("Error executing query: ") <<
-        drizzle_result_error(&result);
+        drizzle_result_error(&result) << std::endl;
       drizzle_result_free(&result);
     }
     else
     {
       std::cerr << _("Error executing query: ") <<
-        drizzle_con_error(&connection);
+        drizzle_con_error(&connection) << std::endl;
     }
     return false;
   }
@@ -449,7 +471,7 @@ bool DrizzleDumpConnection::setDB(std::string databaseName)
   if (drizzle_select_db(&connection, &result, databaseName.c_str(), &ret) == 
     NULL || ret != DRIZZLE_RETURN_OK)
   {
-    std::cerr << _("Could not set db '") << databaseName << "'";
+    std::cerr << _("Could not set db '") << databaseName << "'" << std::endl;
     return false;
   }
   drizzle_result_free(&result);
@@ -475,7 +497,8 @@ void DrizzleDumpConnection::errorHandler(drizzle_result_st *res, drizzle_return_
 
 DrizzleDumpConnection::~DrizzleDumpConnection()
 {
-  std::cerr << _("-- Disconnecting from ") << hostName << "..." << std::endl;
+  if (verbose)
+    std::cerr << _("-- Disconnecting from ") << hostName << "..." << std::endl;
   drizzle_con_free(&connection);
   drizzle_free(&drizzle);
 }
