@@ -25,6 +25,7 @@
 #include <drizzled/session.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/plugin/table_function.h>
+#include <drizzled/identifier/schema.h>
 
 extern const drizzled::CHARSET_INFO *default_charset_info;
 
@@ -34,7 +35,6 @@ static const char *function_exts[] = {
 
 class Function : public drizzled::plugin::StorageEngine
 {
-
 public:
   Function(const std::string &name_arg);
 

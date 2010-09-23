@@ -1808,10 +1808,8 @@ innobase_init(
 /*==========*/
   module::Context &context) /*!< in: Drizzle Plugin Context */
 {
-  static char current_dir[3];   /*!< Set if using current lib */
   int   err;
   bool    ret;
-  char    *default_path;
   uint    format_id;
   InnobaseEngine *actuall_engine_ptr;
   const module::option_map &vm= context.getOptions();
@@ -2122,19 +2120,6 @@ innobase_init(
 
   os_innodb_umask = (ulint)internal::my_umask;
 
-  /* First calculate the default path for innodb_data_home_dir etc.,
-    in case the user has not given any value.
-
-    Note that when using the embedded server, the datadirectory is not
-    necessarily the current directory of this program. */
-
-  /* It's better to use current lib, to keep paths short */
-  current_dir[0] = FN_CURLIB;
-  current_dir[1] = FN_LIBCHAR;
-  current_dir[2] = 0;
-  default_path = current_dir;
-
-  ut_a(default_path);
 
   /* Set InnoDB initialization parameters according to the values
     read from MySQL .cnf file */
@@ -2143,8 +2128,8 @@ innobase_init(
 
   /* The default dir for data files is the datadir of MySQL */
 
-  srv_data_home = (innobase_data_home_dir ? innobase_data_home_dir :
-                   default_path);
+  srv_data_home = (char *)(innobase_data_home_dir ? innobase_data_home_dir :
+                   getDataHome().c_str());
 
   /* Set default InnoDB data file size to 10 MB and let it be
     auto-extending. Thus users can use InnoDB in >= 4.0 without having
@@ -2181,7 +2166,7 @@ mem_free_and_error:
   }
   else
   {
-    innobase_log_group_home_dir = default_path;
+    innobase_log_group_home_dir = const_cast<char *>(getDataHome().c_str());
   }
 
 #ifdef UNIV_LOG_ARCHIVE
@@ -6497,7 +6482,7 @@ ha_innobase::info(
     }
 
     snprintf(path, sizeof(path), "%s/%s%s",
-             data_home, ib_table->name, ".dfe");
+             getDataHomeCatalog().c_str(), ib_table->name, ".dfe");
 
     internal::unpack_filename(path,path);
 
