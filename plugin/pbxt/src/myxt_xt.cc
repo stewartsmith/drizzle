@@ -686,13 +686,13 @@ static char *mx_get_length_and_data(STRUCT_TABLE *table, Field *field, char *des
 		case MYSQL_TYPE_VARCHAR: {
 			uint length;
 
-			if (((Field_varstring *) field)->length_bytes == 1)
+			if (((Field_varstring *) field)->pack_length_no_ptr() == 1)
 				length = *((unsigned char *) from);
 			else
 				length = uint2korr(from);
 			
 			*len = length;
-			return from+((Field_varstring *) field)->length_bytes;
+			return from+((Field_varstring *) field)->pack_length_no_ptr();
 		}
 #ifndef DRIZZLED
 		case MYSQL_TYPE_DECIMAL:
@@ -798,13 +798,13 @@ static void mx_set_length_and_data(STRUCT_TABLE *table, Field *field, char *dest
 			return;
 #endif
 		case MYSQL_TYPE_VARCHAR:
-			if (((Field_varstring *) field)->length_bytes == 1)
+			if (((Field_varstring *) field)->pack_length_no_ptr() == 1)
 				*((unsigned char *) from) = (unsigned char) len;
 			else
 				int2store(from, len);
 			if (data) {
 				mx_set_notnull_in_record(table, field, dest);
-				memcpy(from+((Field_varstring *) field)->length_bytes, data, len);
+				memcpy(from+((Field_varstring *) field)->pack_length_no_ptr(), data, len);
 			}
 			return;
 #ifndef DRIZZLED
