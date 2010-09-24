@@ -76,6 +76,7 @@ public:
 	void operator delete(void *) {}
 	void operator delete[] (void *) {}
 
+	/* override */ uint32_t index_flags(enum  ha_key_alg) const;
 	/* override */ int close_connection(Session *);
 	/* override */ int commit(Session *, bool);
 	/* override */ int rollback(Session *, bool);
@@ -195,13 +196,6 @@ class ha_pbxt: public handler
 	 * handler.h
 	 */
 	MX_TABLE_TYPES_T table_flags() const;
-
-	/*
-	 * part is the key part to check. First key part is 0
-	 * If all_parts it's set, MySQL want to know the flags for the combined
-	 * index up to and including 'part'.
-	 */
-	MX_ULONG_T index_flags(uint inx, uint part, bool all_parts) const;
 
 	/*
 	 * unireg.cc will call the following to make sure that the storage engine can
