@@ -159,7 +159,7 @@ bool DrizzleDumpTableDrizzle::populateFields()
   query.append(database->databaseName);
   query.append("' AND TABLE_NAME='");
   query.append(tableName);
-  query.append("' ORDER BY ORDINAL_POSITION");
+  query.append("'");
 
   result= dcon->query(query);
 
