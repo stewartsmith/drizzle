@@ -17,37 +17,12 @@ INSERT INTO t1 VALUES ("1234567890123456789012345678901234567890"),
 DROP TABLE t1;
 
 --echo #
---echo # Bug #1707
---echo #
-
-CREATE TABLE t1 (`a"b"` char(2));
-INSERT INTO t1 VALUES ("1\""), ("\"2");
---exec $DRIZZLE_DUMP --compact --skip-create -X test t1
-DROP TABLE t1;
-
---echo #
 --echo # Bug #2592 'mysqldump doesn't quote "tricky" names correctly'
 --echo #
 
 create table ```a` (i int);
 --exec $DRIZZLE_DUMP --compact test
 drop table ```a`;
-
---echo #
---echo # Bug #2705 'mysqldump --tab extra output'
---echo #
-
-create table t1(a int);
-insert into t1 values (1),(2),(3);
---exec $DRIZZLE_DUMP --skip-comments --tab=$MYSQLTEST_VARDIR/tmp/ test
---cat_file $MYSQLTEST_VARDIR/tmp/t1.sql
---cat_file $MYSQLTEST_VARDIR/tmp/t1.txt
---remove_file $MYSQLTEST_VARDIR/tmp/t1.sql
---remove_file $MYSQLTEST_VARDIR/tmp/t1.txt
---exec $DRIZZLE_DUMP --tab=$MYSQLTEST_VARDIR/tmp/ test
---remove_file $MYSQLTEST_VARDIR/tmp/t1.sql
---remove_file $MYSQLTEST_VARDIR/tmp/t1.txt
-drop table t1;
 
 --echo #
 --echo # Bug #6101: create database problem
@@ -462,8 +437,6 @@ INSERT INTO t1 VALUES (1), (2);
 INSERT INTO t2 VALUES (1), (2);
 --exec $DRIZZLE_DUMP --skip-comments --no-data mysqldump_test_db
 --exec $DRIZZLE_DUMP --skip-comments --no-data mysqldump_test_db t1 t2
---exec $DRIZZLE_DUMP --skip-comments --skip-create --xml --no-data mysqldump_test_db
---exec $DRIZZLE_DUMP --skip-comments --skip-create --xml --no-data mysqldump_test_db t1 t2
 DROP TABLE t1, t2;
 DROP DATABASE mysqldump_test_db;
 
@@ -481,40 +454,40 @@ create table t3(a varchar(30) primary key, b int not null);
 --disable_query_log
 select '------ Testing with illegal table names ------' as test_sequence ;
 --enable_query_log
---error 6
+--error 2
 --exec $DRIZZLE_DUMP --compact --skip-comments mysqldump_test_db "\d-2-1.sql" 2>&1
 
---error 6
+--error 2
 --exec $DRIZZLE_DUMP --compact --skip-comments mysqldump_test_db  "\t1" 2>&1
 
---error 6
+--error 2
 --exec $DRIZZLE_DUMP --compact --skip-comments mysqldump_test_db  "\\t1" 2>&1
  
---error 6
+--error 2
 --exec $DRIZZLE_DUMP --compact --skip-comments mysqldump_test_db  "\\\\t1" 2>&1
 
---error 6
+--error 2
 --exec $DRIZZLE_DUMP --compact --skip-comments mysqldump_test_db  "t\1" 2>&1
 
---error 6
+--error 2
 --exec $DRIZZLE_DUMP --compact --skip-comments  mysqldump_test_db  "t\\1" 2>&1
 
---error 6
+--error 2
 --exec $DRIZZLE_DUMP --compact --skip-comments mysqldump_test_db  "t/1" 2>&1
 
---error 6
+--error 2
 --exec $DRIZZLE_DUMP --compact --skip-comments mysqldump_test_db "T_1" 2>&1
 
---error 6
+--error 2
 --exec $DRIZZLE_DUMP --compact --skip-comments mysqldump_test_db "T%1" 2>&1
 
---error 6
+--error 2
 --exec $DRIZZLE_DUMP --compact --skip-comments mysqldump_test_db "T'1" 2>&1
 
---error 6
+--error 2
 --exec $DRIZZLE_DUMP --compact --skip-comments mysqldump_test_db "T_1" 2>&1
 
---error 6
+--error 2
 --exec $DRIZZLE_DUMP --compact --skip-comments mysqldump_test_db "T_" 2>&1
 
 --disable_query_log
@@ -530,18 +503,6 @@ drop table t1, t2, t3;
 drop database mysqldump_test_db;
 use test;
 
-
---echo #
---echo # Bug #9657 mysqldump xml ( -x ) does not format NULL fields correctly
---echo #
-
-create table t1 (a int);
-create table t2 (pk int primary key auto_increment,
-a int, b varchar(30), c datetime, d blob, e text);
-insert into t1 values (NULL), (10), (20);
-insert into t2 (a, b) values (NULL, NULL),(10, NULL),(NULL, "twenty"),(30, "thirty");
---exec $DRIZZLE_DUMP  --skip-comments --xml --no-create-info test
-drop table t1, t2;
 
 --echo #
 --echo # BUG #19025 mysqldump doesn't correctly dump "auto_increment = [int]"
@@ -580,18 +541,9 @@ drop table `t1`;
 create table t1(a int);
 create table t2(a int);
 create table t3(a int);
---error 6
+--error 2
 --exec $DRIZZLE_DUMP --skip-comments --force --no-data test t3 t1 non_existing t2
 drop table t1, t2, t3;
-
---echo #
---echo # Bug #21288: mysqldump segmentation fault when using --where
---echo #
-
-create table t1 (a int);
---error 2
---exec $DRIZZLE_DUMP --skip-comments --force test t1 --where="xx xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" 2>&1
-drop table t1;
 
 --echo #
 --echo # BUG#13926: --order-by-primary fails if PKEY contains quote character
@@ -624,11 +576,11 @@ drop table t1;
 --exec $DRIZZLE_DUMP --skip-dump-date test
 
 --echo # --dump-date:
---replace_regex /^[^-][^-].*$// /-- [^D][^u][^m][^p].*// /\/\*!.*// / on [0-9 :-]+/ on DATE/ /^-- DRI.*///
+--replace_regex /^[^-][^-].*$// /-- [^D][^u][^m][^p].*// /\/\*!.*// / on [0-9a-zA-Z :-]+/ on DATE/ /^-- DRI.*///
 --exec $DRIZZLE_DUMP test 
 
 --echo # --dump-date (default):
---replace_regex /^[^-][^-].*$// /-- [^D][^u][^m][^p].*// /\/\*!.*// / on [0-9 :-]+/ on DATE/ /^-- DRI.*///
+--replace_regex /^[^-][^-].*$// /-- [^D][^u][^m][^p].*// /\/\*!.*// / on [0-9a-zA-Z :-]+/ on DATE/ /^-- DRI.*///
 --exec $DRIZZLE_DUMP test
 
 --echo #

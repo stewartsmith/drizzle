@@ -64,12 +64,13 @@ id	name
 3	first value
 4	first value
 5	first value
+
 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
-
-CREATE DATABASE IF NOT EXISTS `test` COLLATE = utf8_general_ci;
+CREATE DATABASE IF NOT EXISTS `test`;
 
 USE `test`;
+
 DROP TABLE IF EXISTS `t1`;
 CREATE TABLE `t1` (
   `id` INT DEFAULT NULL,
@@ -77,8 +78,9 @@ CREATE TABLE `t1` (
 ) ENGINE=InnoDB COLLATE = utf8_general_ci;
 
 ALTER TABLE `t1` DISABLE KEYS;
-INSERT  IGNORE INTO `t1` VALUES (1,'first value'),(2,'first value'),(3,'first value'),(4,'first value'),(5,'first value');
+INSERT IGNORE INTO `t1` VALUES (1,'first value'),(2,'first value'),(3,'first value'),(4,'first value'),(5,'first value');
 ALTER TABLE `t1` ENABLE KEYS;
+
 DROP TABLE IF EXISTS `t2`;
 CREATE TABLE `t2` (
   `id` INT DEFAULT NULL,
@@ -86,8 +88,9 @@ CREATE TABLE `t2` (
 ) ENGINE=ARCHIVE COLLATE = utf8_general_ci;
 
 ALTER TABLE `t2` DISABLE KEYS;
-INSERT  IGNORE INTO `t2` VALUES (1,'first value'),(2,'first value'),(3,'first value'),(4,'first value'),(5,'first value');
+INSERT IGNORE INTO `t2` VALUES (1,'first value'),(2,'first value'),(3,'first value'),(4,'first value'),(5,'first value');
 ALTER TABLE `t2` ENABLE KEYS;
+
 DROP TABLE IF EXISTS `t6`;
 CREATE TABLE `t6` (
   `id` INT DEFAULT NULL,
@@ -95,16 +98,18 @@ CREATE TABLE `t6` (
 ) ENGINE=InnoDB COLLATE = utf8_general_ci;
 
 ALTER TABLE `t6` DISABLE KEYS;
-INSERT  IGNORE INTO `t6` VALUES (1,'first value'),(2,'first value'),(3,'first value'),(4,'first value'),(5,'first value');
+INSERT IGNORE INTO `t6` VALUES (1,'first value'),(2,'first value'),(3,'first value'),(4,'first value'),(5,'first value');
 ALTER TABLE `t6` ENABLE KEYS;
+
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
+
 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
-
-CREATE DATABASE IF NOT EXISTS `test` COLLATE = utf8_general_ci;
+CREATE DATABASE IF NOT EXISTS `test`;
 
 USE `test`;
+
 DROP TABLE IF EXISTS `t1`;
 CREATE TABLE `t1` (
   `id` INT DEFAULT NULL,
@@ -114,6 +119,7 @@ CREATE TABLE `t1` (
 ALTER TABLE `t1` DISABLE KEYS;
 INSERT INTO `t1` VALUES (1,'first value'),(2,'first value'),(3,'first value'),(4,'first value'),(5,'first value');
 ALTER TABLE `t1` ENABLE KEYS;
+
 DROP TABLE IF EXISTS `t2`;
 CREATE TABLE `t2` (
   `id` INT DEFAULT NULL,
@@ -123,6 +129,7 @@ CREATE TABLE `t2` (
 ALTER TABLE `t2` DISABLE KEYS;
 INSERT INTO `t2` VALUES (1,'first value'),(2,'first value'),(3,'first value'),(4,'first value'),(5,'first value');
 ALTER TABLE `t2` ENABLE KEYS;
+
 DROP TABLE IF EXISTS `t6`;
 CREATE TABLE `t6` (
   `id` INT DEFAULT NULL,
@@ -132,6 +139,7 @@ CREATE TABLE `t6` (
 ALTER TABLE `t6` DISABLE KEYS;
 INSERT INTO `t6` VALUES (1,'first value'),(2,'first value'),(3,'first value'),(4,'first value'),(5,'first value');
 ALTER TABLE `t6` ENABLE KEYS;
+
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
 drop table t1;
