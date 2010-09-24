@@ -81,6 +81,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <string>
 #include <boost/algorithm/string.hpp>
+#include <boost/unordered_set.hpp>
+#include <boost/foreach.hpp>
 #include <map>
 #include <fstream>
 #include <drizzled/message/table.pb.h>
@@ -129,6 +131,8 @@ static void store_key_value_from_innodb(KeyInfo *key_info, unsigned char* ref, i
 
 const char INNODB_TABLE_DEFINITIONS_TABLE[]= "data_dictionary/innodb_table_definitions";
 const string statement_savepoint_name("STATEMENT");
+
+static boost::unordered_set<std::string> innodb_system_table_names;
 
 
 static const char *EmbeddedInnoDBCursor_exts[] = {
@@ -698,6 +702,18 @@ fetch:
 static const char* table_path_to_innodb_name(const char* name)
 {
   size_t l= strlen(name);
+  static string datadict_path("./data_dictionary/");
+  static string sys_prefix("./data_dictionary/innodb_");
+  static string sys_table_prefix("INNODB_");
+
+  if (strncmp(name, sys_prefix.c_str(), sys_prefix.length()) == 0)
+  {
+    string find_name(name+datadict_path.length());
+    std::transform(find_name.begin(), find_name.end(), find_name.begin(), ::toupper);
+    boost::unordered_set<string>::iterator iter= innodb_system_table_names.find(find_name);
+    if (iter != innodb_system_table_names.end())
+      return (*iter).c_str()+sys_table_prefix.length();
+  }
 
   int slashes= 2;
   while(slashes>0 && l > 0)
@@ -1454,6 +1470,24 @@ void EmbeddedInnoDBEngine::getTableNamesInSchemaFromInnoDB(
   ib_err_t innodb_err= ib_schema_lock_exclusive(transaction);
   assert(innodb_err == DB_SUCCESS); /* FIXME: doGetTableNames needs to be able to return error */
 
+  if (search_string.compare("data_dictionary/") == 0)
+  {
+    if (set_of_names)
+    {
+      BOOST_FOREACH(std::string table_name, innodb_system_table_names)
+      {
+        set_of_names->insert(table_name);
+      }
+    }
+    if (identifiers)
+    {
+      BOOST_FOREACH(std::string table_name, innodb_system_table_names)
+      {
+        identifiers->push_back(TableIdentifier(schema.getSchemaName(),
+                                               table_name));
+      }
+    }
+  }
 
   innodb_err= ib_cursor_open_table("SYS_TABLES", transaction, &cursor);
   assert(innodb_err == DB_SUCCESS); /* FIXME */
@@ -1656,7 +1690,11 @@ int EmbeddedInnoDBEngine::doGetTableDefinition(Session &session,
 
   assert (err == DB_SUCCESS);
 
-  read_table_message_from_innodb(innodb_table_name.c_str(), &table);
+  if (read_table_message_from_innodb(innodb_table_name.c_str(), &table) != 0)
+  {
+    if (get_innodb_system_table_message(innodb_table_name.c_str(), &table) == 0)
+      return EEXIST;
+  }
 
   return EEXIST;
 }
@@ -1668,6 +1706,10 @@ bool EmbeddedInnoDBEngine::doDoesTableExist(Session &,
   string innodb_table_name;
 
   TableIdentifier_to_innodb_name(identifier, &innodb_table_name);
+
+  boost::unordered_set<string>::iterator iter= innodb_system_table_names.find(identifier.getTableName());
+  if (iter != innodb_system_table_names.end())
+    return true;
 
   if (ib_cursor_open_table(innodb_table_name.c_str(), NULL, &innodb_cursor) != DB_SUCCESS)
     return false;
@@ -2751,6 +2793,12 @@ static int64_t innodb_log_files_in_group;
 
 static int embedded_innodb_init(drizzled::module::Context &context)
 {
+  innodb_system_table_names.insert(std::string("INNODB_SYS_TABLES"));
+  innodb_system_table_names.insert(std::string("INNODB_SYS_COLUMNS"));
+  innodb_system_table_names.insert(std::string("INNODB_SYS_INDEXES"));
+  innodb_system_table_names.insert(std::string("INNODB_SYS_FIELDS"));
+  innodb_system_table_names.insert(std::string("INNODB_SYS_FOREIGN"));
+  innodb_system_table_names.insert(std::string("INNODB_SYS_FOREIGN_COLS"));
 
   const module::option_map &vm= context.getOptions();
 
