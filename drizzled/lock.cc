@@ -1040,11 +1040,12 @@ void unlock_global_read_lock(Session *session)
 {
   uint32_t tmp;
 
-  LOCK_global_read_lock.lock();
-  tmp= --global_read_lock;
-  if (session->global_read_lock == MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT)
-    --global_read_lock_blocks_commit;
-  LOCK_global_read_lock.unlock();
+  {
+    boost::mutex::scoped_lock scopedLock(LOCK_global_read_lock);
+    tmp= --global_read_lock;
+    if (session->global_read_lock == MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT)
+      --global_read_lock_blocks_commit;
+  }
   /* Send the signal outside the mutex to avoid a context switch */
   if (!tmp)
   {

@@ -20,8 +20,6 @@
 #include "config.h"
 #include <drizzled/current_session.h>
 
-#include <pthread.h>
-
 namespace drizzled
 {
 
