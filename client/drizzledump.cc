@@ -154,7 +154,7 @@ string password,
 
 boost::unordered_set<string> ignore_table;
 
-static void maybe_exit(int error);
+void maybe_exit(int error);
 static void die(int error, const char* reason, ...);
 static void write_header(char *db_name);
 static int dump_selected_tables(const string &db, const vector<string> &table_names);
@@ -170,7 +170,8 @@ void dump_all_tables(void)
   std::vector<DrizzleDumpDatabase*>::iterator i;
   for (i= database_store.begin(); i != database_store.end(); ++i)
   {
-    (*i)->populateTables();
+    if (not (*i)->populateTables())
+      maybe_exit(EX_DRIZZLEERR);
   }
 }
 
@@ -357,7 +358,7 @@ static void free_resources(void)
 }
 
 
-static void maybe_exit(int error)
+void maybe_exit(int error)
 {
   if (!first_error)
     first_error= error;
@@ -432,7 +433,11 @@ static int dump_selected_tables(const string &db, const vector<string> &table_na
   else
     database= new DrizzleDumpDatabaseDrizzle(db, db_connection);
 
-  database->populateTables(table_names);
+  if (not database->populateTables(table_names))
+  {
+    delete database;
+    maybe_exit(EX_DRIZZLEERR);
+  }
 
   database_store.push_back(database); 
 
@@ -549,8 +554,6 @@ try
   N_("Use REPLACE INTO instead of INSERT INTO."))
   ("result-file,r", po::value<string>(),
   N_("Direct output to a given file. This option should be used in MSDOS, because it prevents new line '\\n' from being converted to '\\r\\n' (carriage return + line feed)."))
-  ("where,w", po::value<string>(&where)->default_value(""),
-  N_("Dump only selected records; QUOTES mandatory!"))
   ("destination-type", po::value<string>()->default_value("stdout"),
   N_("Where to send output to (stdout|database"))
   ("destination-host", po::value<string>(&opt_destination_host)->default_value("localhost"),

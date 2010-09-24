@@ -112,6 +112,7 @@ class DrizzleDumpTable
 
     friend std::ostream& operator <<(std::ostream &os, const DrizzleDumpTable &obj);
     std::string tableName;
+    std::string displayName;
     std::string engineName;
     std::string collate;
 
@@ -138,6 +139,7 @@ class DrizzleDumpDatabase
     virtual bool populateTables(void) { return false; }
     virtual bool populateTables(const std::vector<std::string> &table_names) { return table_names.empty(); }
     virtual void setCollate(const char*) { }
+    void cleanTableName(std::string &tableName);
     bool ignoreTable(std::string tableName);
     std::vector<DrizzleDumpTable*> tables;
 

@@ -33,7 +33,8 @@ bool DrizzleDumpDatabaseDrizzle::populateTables()
   drizzle_row_t row;
   std::string query;
 
-  dcon->setDB(databaseName);
+  if (not dcon->setDB(databaseName))
+    return false;
 
   if (verbose)
     std::cerr << _("-- Retrieving table structures for ") << databaseName << "..." << std::endl;
@@ -44,19 +45,28 @@ bool DrizzleDumpDatabaseDrizzle::populateTables()
 
   result= dcon->query(query);
 
+  if (result == NULL)
+    return false;
+
   while ((row= drizzle_row_next(result)))
   {
     std::string tableName(row[0]);
-    if (not ignoreTable(tableName))
+    std::string displayName(tableName);
+    cleanTableName(displayName);
+    if (not ignoreTable(displayName))
       continue;
 
     DrizzleDumpTable *table = new DrizzleDumpTableDrizzle(tableName, dcon);
+    table->displayName= displayName;
     table->collate= row[1];
     table->engineName= row[2];
     table->autoIncrement= 0;
     table->database= this;
-    table->populateFields();
-    table->populateIndexes();
+    if ((not table->populateFields()) or (not table->populateIndexes()))
+    {
+      delete table;
+      return false;
+    }
     tables.push_back(table);
   }
 
@@ -71,14 +81,17 @@ bool DrizzleDumpDatabaseDrizzle::populateTables(const std::vector<std::string> &
   drizzle_row_t row;
   std::string query;
 
-  dcon->setDB(databaseName);
+  if (not dcon->setDB(databaseName))
+    return false;
 
   if (verbose)
     std::cerr << _("-- Retrieving table structures for ") << databaseName << "..." << std::endl;
   for (std::vector<std::string>::const_iterator it= table_names.begin(); it != table_names.end(); ++it)
   {
     std::string tableName= *it;
-    if (not ignoreTable(tableName))
+    std::string displayName(tableName);
+    cleanTableName(displayName);
+    if (not ignoreTable(displayName))
       continue;
 
     query="SELECT TABLE_NAME, TABLE_COLLATION, ENGINE FROM DATA_DICTIONARY.TABLES WHERE TABLE_SCHEMA='";
@@ -89,20 +102,33 @@ bool DrizzleDumpDatabaseDrizzle::populateTables(const std::vector<std::string> &
 
     result= dcon->query(query);
 
+    if (result == NULL)
+    {
+      std::cerr << "Error: Could not obtain schema for table " << displayName << std::endl;
+      return false;
+    }
+
     if ((row= drizzle_row_next(result)))
     {
       DrizzleDumpTableDrizzle *table = new DrizzleDumpTableDrizzle(tableName, dcon);
+      table->displayName= displayName;
       table->collate= row[1];
       table->engineName= row[2];
       table->autoIncrement= 0;
       table->database= this;
-      table->populateFields();
-      table->populateIndexes();
+      if ((not table->populateFields()) or (not table->populateIndexes()))
+      {
+        std::cerr  << "Error: Could not get fields and/ot indexes for table " << displayName << std::endl;
+        delete table;
+        dcon->freeResult(result);
+        return false;
+      }
       tables.push_back(table);
       dcon->freeResult(result);
     }
     else
     {
+      std::cerr << "Error: Table " << displayName << " not found." << std::endl;
       dcon->freeResult(result);
       return false;
     }
@@ -136,6 +162,9 @@ bool DrizzleDumpTableDrizzle::populateFields()
   query.append("' ORDER BY ORDINAL_POSITION");
 
   result= dcon->query(query);
+
+  if (result == NULL)
+    return false;
 
   while ((row= drizzle_row_next(result)))
   {
@@ -185,6 +214,9 @@ bool DrizzleDumpTableDrizzle::populateIndexes()
 
   result= dcon->query(query);
 
+  if (result == NULL)
+    return false;
+
   while ((row= drizzle_row_next(result)))
   {
     std::string indexName(row[0]);
@@ -210,7 +242,14 @@ bool DrizzleDumpTableDrizzle::populateIndexes()
 
 DrizzleDumpData* DrizzleDumpTableDrizzle::getData(void)
 {
-  return new DrizzleDumpDataDrizzle(this, dcon);
+  try
+  {
+    return new DrizzleDumpDataDrizzle(this, dcon);
+  }
+  catch(...)
+  {
+    return NULL;
+  }
 }
 
 
@@ -250,10 +289,13 @@ DrizzleDumpDataDrizzle::DrizzleDumpDataDrizzle(DrizzleDumpTable *dataTable,
 {
   std::string query;
   query= "SELECT * FROM `";
-  query.append(table->tableName);
+  query.append(table->displayName);
   query.append("`");
 
   result= dcon->query(query);
+
+  if (result == NULL)
+    throw 1;
 }
 
 DrizzleDumpDataDrizzle::~DrizzleDumpDataDrizzle()

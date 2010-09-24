@@ -34,7 +34,8 @@ bool DrizzleDumpDatabaseMySQL::populateTables()
   drizzle_row_t row;
   std::string query;
 
-  dcon->setDB(databaseName);
+  if (not dcon->setDB(databaseName))
+    return false;
 
   if (verbose)
     std::cerr << _("-- Retrieving table structures for ") << databaseName << "..." << std::endl;
@@ -45,13 +46,19 @@ bool DrizzleDumpDatabaseMySQL::populateTables()
 
   result= dcon->query(query);
 
+  if (result == NULL)
+    return false;
+
   while ((row= drizzle_row_next(result)))
   {
     std::string tableName(row[0]);
-    if (not ignoreTable(tableName))
+    std::string displayName(tableName);
+    cleanTableName(displayName);
+    if (not ignoreTable(displayName))
       continue;
 
     DrizzleDumpTableMySQL *table = new DrizzleDumpTableMySQL(tableName, dcon);
+    table->displayName= displayName;
     table->setCollate(row[1]);
     table->setEngine(row[2]);
     if (row[3])
@@ -60,8 +67,11 @@ bool DrizzleDumpDatabaseMySQL::populateTables()
       table->autoIncrement= 0;
 
     table->database= this;
-    table->populateFields();
-    table->populateIndexes();
+    if ((not table->populateFields()) or (not table->populateIndexes()))
+    {
+      delete table;
+      return false;
+    }
     tables.push_back(table);
   }
 
@@ -76,14 +86,17 @@ bool DrizzleDumpDatabaseMySQL::populateTables(const std::vector<std::string> &ta
   drizzle_row_t row;
   std::string query;
 
-  dcon->setDB(databaseName);
+  if (not dcon->setDB(databaseName))
+    return false;
 
   if (verbose)
     std::cerr << _("-- Retrieving table structures for ") << databaseName << "..." << std::endl;
   for (std::vector<std::string>::const_iterator it= table_names.begin(); it != table_names.end(); ++it)
   {
     std::string tableName= *it;
-    if (not ignoreTable(tableName))
+    std::string displayName(tableName);
+    cleanTableName(displayName);
+    if (not ignoreTable(displayName))
       continue;
 
     query="SELECT TABLE_NAME, TABLE_COLLATION, ENGINE, AUTO_INCREMENT FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='";
@@ -94,9 +107,13 @@ bool DrizzleDumpDatabaseMySQL::populateTables(const std::vector<std::string> &ta
 
     result= dcon->query(query);
 
+    if (result == NULL)
+      return false;
+
     if ((row= drizzle_row_next(result)))
     {
       DrizzleDumpTableMySQL *table = new DrizzleDumpTableMySQL(tableName, dcon);
+      table->displayName= displayName;
       table->setCollate(row[1]);
       table->setEngine(row[2]);
       if (row[3])
@@ -105,8 +122,11 @@ bool DrizzleDumpDatabaseMySQL::populateTables(const std::vector<std::string> &ta
         table->autoIncrement= 0;
 
       table->database= this;
-      table->populateFields();
-      table->populateIndexes();
+      if ((not table->populateFields()) or (not table->populateIndexes()))
+      {
+        delete table;
+        return false;
+      }
       tables.push_back(table);
       dcon->freeResult(result);
     }
@@ -137,6 +157,9 @@ bool DrizzleDumpTableMySQL::populateFields()
   query.append("' ORDER BY ORDINAL_POSITION");
 
   result= dcon->query(query);
+
+  if (result == NULL)
+    return false;
 
   while ((row= drizzle_row_next(result)))
   {
@@ -223,6 +246,9 @@ bool DrizzleDumpTableMySQL::populateIndexes()
   query.append(tableName);
 
   result= dcon->query(query);
+
+  if (result == NULL)
+    return false;
 
   while ((row= drizzle_row_next(result)))
   {
@@ -353,7 +379,14 @@ void DrizzleDumpTableMySQL::setEngine(const char* newEngine)
 
 DrizzleDumpData* DrizzleDumpTableMySQL::getData(void)
 {
-  return new DrizzleDumpDataMySQL(this, dcon);
+  try
+  {
+    return new DrizzleDumpDataMySQL(this, dcon);
+  }
+  catch(...)
+  {
+    return NULL;
+  }
 }
 
 void DrizzleDumpDatabaseMySQL::setCollate(const char* newCollate)
@@ -405,10 +438,12 @@ DrizzleDumpDataMySQL::DrizzleDumpDataMySQL(DrizzleDumpTable *dataTable,
 {
   std::string query;
   query= "SELECT * FROM `";
-  query.append(table->tableName);
+  query.append(table->displayName);
   query.append("`");
 
   result= dcon->query(query);
+  if (result == NULL)
+    throw 1;
 }
 
 DrizzleDumpDataMySQL::~DrizzleDumpDataMySQL()

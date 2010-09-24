@@ -25,19 +25,22 @@
 #include <boost/regex.hpp>
 #include <boost/unordered_set.hpp>
 
+#define EX_DRIZZLEERR 2
+
 extern bool opt_no_create_info;
 extern bool opt_no_data;
 extern bool opt_create_db;
 extern bool opt_disable_keys;
 extern bool extended_insert;
 extern bool opt_replace_into;
-extern bool opt_drop; 
-extern bool  verbose;
-extern bool opt_databases; 
-extern bool opt_alldbs; 
+extern bool opt_drop;
+extern bool verbose;
+extern bool opt_databases;
+extern bool opt_alldbs;
 extern uint32_t show_progress_size;
 
 extern boost::unordered_set<std::string> ignore_table;
+extern void maybe_exit(int error);
 
 enum destinations {
   DESTINATION_DB,
@@ -56,6 +59,19 @@ bool DrizzleDumpDatabase::ignoreTable(std::string tableName)
 
   boost::unordered_set<std::string>::iterator iter= ignore_table.find(dbTable);
   return (iter == ignore_table.end());
+}
+
+void DrizzleDumpDatabase::cleanTableName(std::string &tableName)
+{
+  std::string replace("``");
+  std::string find("`");
+  size_t j = 0;
+  for (;(j = tableName.find(find, j)) != std::string::npos;)
+  {
+    tableName.replace(j, find.length(), replace);
+    j+= replace.length();
+  }
+
 }
 
 std::ostream& operator <<(std::ostream &os, const DrizzleDumpIndex &obj)
@@ -170,6 +186,11 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpDatabase &obj)
     {
       obj.dcon->setDB(obj.databaseName);
       DrizzleDumpData *data= table->getData();
+      if (data == NULL)
+      {
+        std::cerr << "Error: Could not get data for table " << table->displayName << std::endl;
+        maybe_exit(EX_DRIZZLEERR);
+      }
       os << *data;
       delete data;
     }
@@ -188,23 +209,23 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
   drizzle_row_t row;
 
   if (verbose)
-    std::cerr << _("-- Retrieving data for ") << obj.table->tableName << "..." << std::endl;
+    std::cerr << _("-- Retrieving data for ") << obj.table->displayName << "..." << std::endl;
 
   if (drizzle_result_row_count(obj.result) < 1)
   {
     os << "--" << std::endl
-       << "-- No data to dump for table `" << obj.table->tableName << "`" << std::endl
+       << "-- No data to dump for table `" << obj.table->displayName << "`" << std::endl
        << "--" << std::endl << std::endl;
     return os;
   }
   else
   {
     os << "--" << std::endl
-       << "-- Dumping data for table `" << obj.table->tableName << "`" << std::endl
+       << "-- Dumping data for table `" << obj.table->displayName << "`" << std::endl
        << "--" << std::endl << std::endl;
   }
   if (opt_disable_keys)
-    os << "ALTER TABLE `" << obj.table->tableName << "` DISABLE KEYS;" << std::endl;
+    os << "ALTER TABLE `" << obj.table->displayName << "` DISABLE KEYS;" << std::endl;
 
   std::streampos out_position= os.tellp();
 
@@ -213,7 +234,7 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
     rownr++;
     if ((rownr % show_progress_size) == 0)
     {
-      std::cerr << "-- %" << rownr << _(" rows dumped for table ") << obj.table->tableName << std::endl;
+      std::cerr << "-- %" << rownr << _(" rows dumped for table ") << obj.table->displayName << std::endl;
     }
 
     size_t* row_sizes= drizzle_row_field_sizes(obj.result);
@@ -233,7 +254,7 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
         os << "REPLACE ";
       else
         os << "INSERT ";
-      os << "INTO `" << obj.table->tableName << "` VALUES (";
+      os << "INTO `" << obj.table->displayName << "` VALUES (";
       if (extended_insert)
         new_insert= false;
     }
@@ -333,13 +354,13 @@ std::string DrizzleDumpData::escape(const char* from, size_t from_size) const
 std::ostream& operator <<(std::ostream &os, const DrizzleDumpTable &obj)
 {
   os << "--" << std::endl
-     << "-- Table structure for table `" << obj.tableName << "`" << std::endl
+     << "-- Table structure for table `" << obj.displayName << "`" << std::endl
      << "--" << std::endl << std::endl;
 
   if (opt_drop)
-    os << "DROP TABLE IF EXISTS `" << obj.tableName <<  "`;" << std::endl;
+    os << "DROP TABLE IF EXISTS `" << obj.displayName <<  "`;" << std::endl;
 
-  os << "CREATE TABLE `" << obj.tableName << "` (" << std::endl;
+  os << "CREATE TABLE `" << obj.displayName << "` (" << std::endl;
   std::vector<DrizzleDumpField*>::iterator i;
   std::vector<DrizzleDumpField*> output_fields = obj.fields;
   for (i= output_fields.begin(); i != output_fields.end(); ++i)
@@ -485,7 +506,9 @@ bool DrizzleDumpConnection::setDB(std::string databaseName)
   if (drizzle_select_db(&connection, &result, databaseName.c_str(), &ret) == 
     NULL || ret != DRIZZLE_RETURN_OK)
   {
-    std::cerr << _("Could not set db '") << databaseName << "'" << std::endl;
+    std::cerr << _("Error: Could not set db '") << databaseName << "'" << std::endl;
+    if (ret == DRIZZLE_RETURN_ERROR_CODE)
+      drizzle_result_free(&result);
     return false;
   }
   drizzle_result_free(&result);
