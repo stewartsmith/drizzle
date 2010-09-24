@@ -98,7 +98,7 @@ static bool opt_single_transaction= false;
 static bool opt_comments;
 static bool opt_compact;
 static bool opt_order_by_primary=false; 
-static bool opt_ignore= false;
+bool opt_ignore= false;
 static bool opt_complete_insert= false;
 static bool opt_drop_database;
 static bool opt_alltspcs= false;

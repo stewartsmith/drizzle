@@ -38,6 +38,7 @@ extern bool verbose;
 extern bool opt_databases;
 extern bool opt_alldbs;
 extern uint32_t show_progress_size;
+extern bool opt_ignore;
 
 extern boost::unordered_set<std::string> ignore_table;
 extern void maybe_exit(int error);
@@ -116,8 +117,9 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpField &obj)
   {
     os << "(" << obj.length << ")";
   }
-  else if ((obj.type.compare("DECIMAL") == 0) or
-    (obj.type.compare("DOUBLE") == 0))
+  else if (((obj.type.compare("DECIMAL") == 0) or
+    (obj.type.compare("DOUBLE") == 0)) and
+    ((obj.decimalPrecision + obj.decimalScale) > 0))
   {
     os << "(" << obj.decimalPrecision << "," << obj.decimalScale << ")";
   }
@@ -146,7 +148,7 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpField &obj)
     else
      os << " DEFAULT CURRENT_TIMESTAMP";
   }
-  else if ((obj.collation.empty()) and (obj.defaultIsNull))
+  else if ((obj.defaultIsNull))
   {
     os << " DEFAULT NULL";
   }
@@ -158,9 +160,12 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpDatabase &obj)
 {
   if ((opt_destination == DESTINATION_DB) or opt_databases or opt_alldbs)
   {
-    os << "--" << std::endl
-       << "-- Current Database: `" << obj.databaseName << "`" << std::endl
-       << "--" << std::endl << std::endl;
+    if (verbose)
+    {
+      std::cerr << "--" << std::endl
+        << "-- Current Database: `" << obj.databaseName << "`" << std::endl
+        << "--" << std::endl << std::endl;
+    }
 
     /* Love that this variable is the opposite of its name */
     if (not opt_create_db)
@@ -213,16 +218,19 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
 
   if (drizzle_result_row_count(obj.result) < 1)
   {
-    os << "--" << std::endl
-       << "-- No data to dump for table `" << obj.table->displayName << "`" << std::endl
-       << "--" << std::endl << std::endl;
+    if (verbose)
+    {
+      std::cerr << "--" << std::endl
+        << "-- No data to dump for table `" << obj.table->displayName << "`"
+        << std::endl << "--" << std::endl << std::endl;
+    }
     return os;
   }
-  else
+  else if (verbose)
   {
-    os << "--" << std::endl
-       << "-- Dumping data for table `" << obj.table->displayName << "`" << std::endl
-       << "--" << std::endl << std::endl;
+    std::cerr << "--" << std::endl
+      << "-- Dumping data for table `" << obj.table->displayName << "`"
+      << std::endl << "--" << std::endl << std::endl;
   }
   if (opt_disable_keys)
     os << "ALTER TABLE `" << obj.table->displayName << "` DISABLE KEYS;" << std::endl;
@@ -253,7 +261,11 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
       if (opt_replace_into)
         os << "REPLACE ";
       else
+      {
         os << "INSERT ";
+        if (opt_ignore)
+          os << "IGNORE ";
+      }
       os << "INTO `" << obj.table->displayName << "` VALUES (";
       if (extended_insert)
         new_insert= false;
@@ -276,7 +288,7 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
           /* Hex blob processing or escape text */
           if (((obj.table->fields[i]->type.compare("BLOB") == 0) or
             (obj.table->fields[i]->type.compare("VARBINARY") == 0)))
-            os << obj.convertHex(row[i], row_sizes[i]);
+            os << obj.convertHex((unsigned char*)row[i], row_sizes[i]);
           else
             os << "'" << obj.escape(row[i], row_sizes[i]) << "'";
         }
@@ -305,14 +317,15 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
   return os;
 }
 
-std::string DrizzleDumpData::convertHex(const char* from, size_t from_size) const
+std::string DrizzleDumpData::convertHex(const unsigned char* from, size_t from_size) const
 {
   std::ostringstream output;
   if (from_size > 0)
     output << "0x";
   while (from_size > 0)
   {
-    output << std::uppercase << std::hex << std::setw(2) << std::setfill('0') << int(*from);
+    /* Would be nice if std::hex liked uint8_t, ah well */
+    output << std::uppercase << std::hex << std::setw(2) << std::setfill('0') << (unsigned short)(*from);
     *from++;
     from_size--;
   }
@@ -353,9 +366,12 @@ std::string DrizzleDumpData::escape(const char* from, size_t from_size) const
 
 std::ostream& operator <<(std::ostream &os, const DrizzleDumpTable &obj)
 {
-  os << "--" << std::endl
-     << "-- Table structure for table `" << obj.displayName << "`" << std::endl
-     << "--" << std::endl << std::endl;
+  if (verbose)
+  {
+    std::cerr << "--" << std::endl
+      << "-- Table structure for table `" << obj.displayName << "`" << std::endl
+      << "--" << std::endl << std::endl;
+  }
 
   if (opt_drop)
     os << "DROP TABLE IF EXISTS `" << obj.displayName <<  "`;" << std::endl;

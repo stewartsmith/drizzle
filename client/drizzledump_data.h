@@ -163,7 +163,7 @@ class DrizzleDumpData
     friend std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj);
 
     virtual std::ostream& checkDateTime(std::ostream &os, const char*, uint32_t) const { return os; }
-    std::string convertHex(const char* from, size_t from_size) const;
+    std::string convertHex(const unsigned char* from, size_t from_size) const;
     std::string escape(const char* from, size_t from_size) const;
 };
 
