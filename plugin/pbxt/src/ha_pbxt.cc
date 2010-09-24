@@ -1274,6 +1274,62 @@ PBXTStorageEngine::~PBXTStorageEngine()
 }
 
 /*
+ * The following query from the DBT1 test is VERY slow
+ * if we do not set HA_READ_ORDER.
+ * The reason is that it must scan all duplicates, then
+ * sort.
+ *
+ * SELECT o_id, o_carrier_id, o_entry_d, o_ol_cnt
+ * FROM orders FORCE INDEX (o_w_id)
+ * WHERE o_w_id = 2
+   * AND o_d_id = 1
+   * AND o_c_id = 500
+ * ORDER BY o_id DESC limit 1;
+ *
+ */
+//#define FLAGS_ARE_READ_DYNAMICALLY
+
+uint32_t PBXTStorageEngine::index_flags(enum  ha_key_alg) const
+{
+	/* It would be nice if the dynamic version of this function works,
+	 * but it does not. MySQL loads this information when the table is openned,
+	 * and then it is fixed.
+	 *
+	 * The problem is, I have had to remove the HA_READ_ORDER option although
+	 * it applies to PBXT. PBXT returns entries in index order during an index
+	 * scan in _almost_ all cases.
+	 *
+	 * A number of cases are demostrated here: [(11)]
+	 *
+	 * If involves the following conditions:
+	 * - a SELECT FOR UPDATE, UPDATE or DELETE statement
+	 * - an ORDER BY, or join that requires the sort order
+	 * - another transaction which updates the index while it is being
+	 *   scanned.
+	 *
+	 * In this "obscure" case, the index scan may return index
+	 * entries in the wrong order.
+	 */
+#ifdef FLAGS_ARE_READ_DYNAMICALLY
+	/* If were are in an update (SELECT FOR UPDATE, UPDATE or DELETE), then
+	 * it may be that we return the rows from an index in the wrong
+	 * order! This is due to the fact that update reads wait for transactions
+	 * to commit and this means that index entries may change position during
+	 * the scan!
+	 */
+	if (pb_open_tab && pb_open_tab->ot_for_update)
+		return (HA_READ_NEXT | HA_READ_PREV | HA_READ_RANGE | HA_KEYREAD_ONLY);
+	/* If I understand HA_KEYREAD_ONLY then this means I do not
+	 * need to fetch the record associated with an index
+	 * key.
+	 */
+	return (HA_READ_NEXT | HA_READ_PREV | HA_READ_ORDER | HA_READ_RANGE | HA_KEYREAD_ONLY);
+#else
+	return (HA_READ_NEXT | HA_READ_PREV | HA_READ_RANGE | HA_KEYREAD_ONLY);
+#endif
+}
+
+/*
  * Kill the PBXT thread associated with the MySQL thread.
  */
 int PBXTStorageEngine::close_connection(Session *thd)
@@ -2060,62 +2116,6 @@ MX_TABLE_TYPES_T ha_pbxt::table_flags() const
 		HA_AUTO_PART_KEY);
 }
 #endif
-
-/*
- * The following query from the DBT1 test is VERY slow
- * if we do not set HA_READ_ORDER.
- * The reason is that it must scan all duplicates, then
- * sort.
- *
- * SELECT o_id, o_carrier_id, o_entry_d, o_ol_cnt
- * FROM orders FORCE INDEX (o_w_id)
- * WHERE o_w_id = 2
-   * AND o_d_id = 1
-   * AND o_c_id = 500
- * ORDER BY o_id DESC limit 1;
- *
- */
-#define FLAGS_ARE_READ_DYNAMICALLY
-
-MX_ULONG_T ha_pbxt::index_flags(uint XT_UNUSED(inx), uint XT_UNUSED(part), bool XT_UNUSED(all_parts)) const
-{
-	/* It would be nice if the dynamic version of this function works,
-	 * but it does not. MySQL loads this information when the table is openned,
-	 * and then it is fixed.
-	 *
-	 * The problem is, I have had to remove the HA_READ_ORDER option although
-	 * it applies to PBXT. PBXT returns entries in index order during an index
-	 * scan in _almost_ all cases.
-	 *
-	 * A number of cases are demostrated here: [(11)]
-	 *
-	 * If involves the following conditions:
-	 * - a SELECT FOR UPDATE, UPDATE or DELETE statement
-	 * - an ORDER BY, or join that requires the sort order
-	 * - another transaction which updates the index while it is being
-	 *   scanned.
-	 *
-	 * In this "obscure" case, the index scan may return index
-	 * entries in the wrong order.
-	 */
-#ifdef FLAGS_ARE_READ_DYNAMICALLY
-	/* If were are in an update (SELECT FOR UPDATE, UPDATE or DELETE), then
-	 * it may be that we return the rows from an index in the wrong
-	 * order! This is due to the fact that update reads wait for transactions
-	 * to commit and this means that index entries may change position during
-	 * the scan!
-	 */
-	if (pb_open_tab && pb_open_tab->ot_for_update)
-		return (HA_READ_NEXT | HA_READ_PREV | HA_READ_RANGE | HA_KEYREAD_ONLY);
-	/* If I understand HA_KEYREAD_ONLY then this means I do not
-	 * need to fetch the record associated with an index
-	 * key.
-	 */
-	return (HA_READ_NEXT | HA_READ_PREV | HA_READ_ORDER | HA_READ_RANGE | HA_KEYREAD_ONLY);
-#else
-	return (HA_READ_NEXT | HA_READ_PREV | HA_READ_RANGE | HA_KEYREAD_ONLY);
-#endif
-}
 
 void ha_pbxt::internal_close(THD *thd, struct XTThread *self)
 {
