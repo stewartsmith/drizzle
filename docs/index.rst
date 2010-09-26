@@ -21,6 +21,14 @@ Configuration:
    :maxdepth: 2
 
    configuration
+   options
+
+Plugins:
+
+.. toctree::
+   :maxdepth: 2
+
+   plugins/list
 
 Indices and tables
 ==================
