@@ -951,10 +951,12 @@ int main(int argc, char **argv)
     drizzle_con_st con;
     OptionString *eptr;
 
+    // Disable allow_guessing
+    int style = po::command_line_style::default_style & ~po::command_line_style::allow_guessing;
 
     po::variables_map vm;
     po::store(po::command_line_parser(argc, argv).options(long_options).
-            extra_parser(parse_password_arg).run(), vm);
+              style(style).extra_parser(parse_password_arg).run(), vm);
 
     std::string user_config_dir_slap(user_config_dir);
     user_config_dir_slap.append("/drizzle/drizzleslap.cnf"); 

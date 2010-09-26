@@ -1408,8 +1408,12 @@ try
   po::positional_options_description p;
   p.add("database", 1);
 
+  // Disable allow_guessing
+  int style = po::command_line_style::default_style & ~po::command_line_style::allow_guessing;
+
   po::store(po::command_line_parser(argc, argv).options(long_options).
-            positional(p).extra_parser(parse_password_arg).run(), vm);
+            style(style).positional(p).extra_parser(parse_password_arg).run(),
+            vm);
 
   if (! vm["no-defaults"].as<bool>())
   {
