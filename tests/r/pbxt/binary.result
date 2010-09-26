@@ -91,8 +91,8 @@ create table t1 (a char);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(1) DEFAULT NULL
-) ENGINE=DEFAULT
+  `a` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t2 (a varbinary);
 ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near ')' at line 1

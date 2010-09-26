@@ -578,7 +578,7 @@ result_t PBXTRestoreDriver::send_data(Buffer &buf)
 			/* This is safe because only one thread can restore a table at 
 			 * a time!
 			 */
-			rb_row_buf = (xtWord1 *) rd_my_table->getInsertRecord();
+			rb_row_buf = (xtWord1 *) rd_my_table->RECORD_0;
 			//if (rb_row_buf) {
 			//	xt_free(self, rb_row_buf);
 			//	rb_row_buf = NULL;

@@ -34,7 +34,6 @@ HP_INFO *heap_open_from_share(HP_SHARE *share, int mode)
   HP_INFO *info= new HP_INFO;
 
   share->open_count++;
-  info->lock.init(&share->lock);
   info->setShare(share);
   info->lastkey.resize(share->max_key_length);
   info->mode= mode;

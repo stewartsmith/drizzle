@@ -18,8 +18,9 @@
  */
 
 #include "config.h"
-#include <drizzled/configmake.h>
-#include <drizzled/atomics.h>
+#include "drizzled/configmake.h"
+#include "drizzled/atomics.h"
+#include "drizzled/data_home.h"
 
 #include <netdb.h>
 #include <sys/types.h>
@@ -61,6 +62,7 @@
 #include "plugin/myisam/myisam.h"
 #include "drizzled/drizzled.h"
 #include "drizzled/module/registry.h"
+#include "drizzled/module/load_list.h"
 
 #include <google/protobuf/stubs/common.h>
 
@@ -176,6 +178,7 @@ extern "C" int gethostname(char *name, int namelen);
 
 const char *first_keyword= "first";
 const char * const DRIZZLE_CONFIG_NAME= "drizzled";
+
 #define GET_HA_ROWS GET_ULL
 
 const char *tx_isolation_names[] =
@@ -288,14 +291,12 @@ time_t flush_status_time;
 char drizzle_home[FN_REFLEN], pidfile_name[FN_REFLEN], system_time_zone[30];
 char *default_tz_name;
 char glob_hostname[FN_REFLEN];
-char data_home_real[FN_REFLEN],
-     language[FN_REFLEN], 
+
+char language[FN_REFLEN], 
      *opt_tc_log_file;
 const key_map key_map_empty(0);
 key_map key_map_full(0);                        // Will be initialized later
 
-uint32_t data_home_len;
-char data_home_buff[2], *data_home=data_home_real;
 std::string drizzle_tmpdir;
 char *opt_drizzle_tmpdir= NULL;
 
@@ -324,8 +325,6 @@ SHOW_COMP_OPTION have_symlink;
 
 /* Thread specific variables */
 
-pthread_key_t THR_Mem_root;
-pthread_key_t THR_Session;
 boost::mutex LOCK_open;
 boost::mutex LOCK_global_system_variables;
 boost::mutex LOCK_thread_count;
@@ -363,11 +362,35 @@ void close_connections(void);
 po::options_description long_options("Kernel Options");
 po::options_description plugin_options("Plugin Options");
 vector<string> unknown_options;
+vector<string> defaults_file_list;
 po::variables_map vm;
+char * data_dir_ptr;
 
 po::variables_map &getVariablesMap()
 {
   return vm;
+}
+
+std::string& getDataHome()
+{
+  static string data_home(LOCALSTATEDIR);
+  return data_home;
+}
+
+std::string& getDataHomeCatalog()
+{
+  static string data_home_catalog(getDataHome());
+  return data_home_catalog;
+}
+
+char *getDatadir()
+{
+  return data_dir_ptr;
+}
+
+char **getDatadirPtr()
+{
+  return &data_dir_ptr;
 }
  
 /****************************************************************************
@@ -507,6 +530,8 @@ void clean_up(bool print_message)
   COND_server_end.notify_all();
   LOCK_thread_count.unlock();
 
+  char **data_home_ptr= getDatadirPtr();
+  delete[](*data_home_ptr);
   /*
     The following lines may never be executed as the main thread may have
     killed us
@@ -631,8 +656,6 @@ void Session::unlink(Session *session)
 
   delete session;
   LOCK_thread_count.unlock();
-
-  return;
 }
 
 
@@ -1038,6 +1061,65 @@ static pair<string, string> parse_size_arg(string s)
   return make_pair(string(""), string(""));
 }
 
+static void process_defaults_files()
+{
+  for (vector<string>::iterator iter= defaults_file_list.begin();
+       iter != defaults_file_list.end();
+       ++iter)
+  {
+    string file_location(vm["config-dir"].as<string>());
+    if ((*iter)[0] != '/')
+    {
+      /* Relative path - add config dir */
+      file_location.push_back('/');
+      file_location.append(*iter);
+    }
+    else
+    {
+      file_location= *iter;
+    }
+
+    ifstream input_defaults_file(file_location.c_str());
+    
+    po::parsed_options file_parsed=
+      po::parse_config_file(input_defaults_file, long_options, true);
+    vector<string> file_unknown= 
+      po::collect_unrecognized(file_parsed.options, po::include_positional);
+
+    for (vector<string>::iterator it= file_unknown.begin();
+         it != file_unknown.end();
+         ++it)
+    {
+      string new_unknown_opt("--");
+      new_unknown_opt.append(*it);
+      ++it;
+      if (it != file_unknown.end())
+      {
+        if ((*it) != "true")
+        {
+          new_unknown_opt.push_back('=');
+          new_unknown_opt.append(*it);
+        }
+      }
+      else
+      {
+        break;
+      }
+      unknown_options.push_back(new_unknown_opt);
+    }
+    store(file_parsed, vm);
+  }
+}
+
+static void compose_defaults_file_list(vector<string> in_options)
+{
+  for (vector<string>::iterator it= in_options.begin();
+       it != in_options.end();
+       ++it)
+  {
+    defaults_file_list.push_back(*it);
+  }
+}
 
 int init_common_variables(int argc, char **argv)
 {
@@ -1053,8 +1135,6 @@ int init_common_variables(int argc, char **argv)
   max_system_variables.pseudo_thread_id= UINT32_MAX;
   server_start_time= flush_status_time= curr_time;
 
-  if (init_thread_environment())
-    return 1;
   drizzle_init_variables();
 
   {
@@ -1083,11 +1163,10 @@ int init_common_variables(int argc, char **argv)
     strncpy(pidfile_name, glob_hostname, sizeof(pidfile_name)-5);
   strcpy(internal::fn_ext(pidfile_name),".pid");		// Add proper extension
 
-
-
-
   std::string system_config_dir_drizzle(SYSCONFDIR);
-  system_config_dir_drizzle.append("/drizzle/drizzle.cnf");
+  system_config_dir_drizzle.append("/drizzle");
+
+  std::string system_config_file_drizzle("drizzled.cnf");
 
   long_options.add_options()
   ("help-extended", po::value<bool>(&opt_help_extended)->default_value(false)->zero_tokens(),
@@ -1108,7 +1187,7 @@ int init_common_variables(int argc, char **argv)
   ("completion-type", po::value<uint32_t>(&global_system_variables.completion_type)->default_value(0)->notifier(&check_limits_completion_type),
   N_("Default completion type."))
   ("core-file",  N_("Write core on errors."))
-  ("datadir,h", po::value<string>(),
+  ("datadir", po::value<string>(),
   N_("Path to the database root."))
   ("default-storage-engine", po::value<string>(),
   N_("Set the default storage engine (table type) for tables."))
@@ -1125,7 +1204,7 @@ int init_common_variables(int argc, char **argv)
   ("log-warnings,W", po::value<string>(),
   N_("Log some not critical warnings to the log file."))  
   ("pid-file", po::value<string>(),
-  N_("Pid file used by safe_mysqld."))
+  N_("Pid file used by drizzled."))
   ("port-open-timeout", po::value<uint32_t>(&drizzled_bind_timeout)->default_value(0),
   N_("Maximum time in seconds to wait for the port to become free. "
      "(Default: no wait)"))
@@ -1204,15 +1283,15 @@ int init_common_variables(int argc, char **argv)
      "testing/comparison)."))
   ("plugin-dir", po::value<string>(),
   N_("Directory for plugins."))
-  ("plugin-add", po::value<string>(),
+  ("plugin-add", po::value<vector<string> >()->composing()->notifier(&compose_plugin_add),
   N_("Optional comma separated list of plugins to load at startup in addition "
      "to the default list of plugins. "
      "[for example: --plugin_add=crc32,logger_gearman]"))    
-  ("plugin-remove", po::value<string>(),
+  ("plugin-remove", po::value<vector<string> >()->composing()->notifier(&compose_plugin_remove),
   N_("Optional comma separated list of plugins to not load at startup. Effectively "
      "removes a plugin from the list of plugins to be loaded. "
      "[for example: --plugin_remove=crc32,logger_gearman]"))
-  ("plugin-load", po::value<string>(),
+  ("plugin-load", po::value<string>()->notifier(&notify_plugin_load)->default_value(PANDORA_PLUGIN_LIST),
   N_("Optional comma separated list of plugins to load at starup instead of "
      "the default plugin load list. "
      "[for example: --plugin_load=crc32,logger_gearman]"))  
@@ -1257,8 +1336,10 @@ int init_common_variables(int argc, char **argv)
      " automatically convert it to an on-disk MyISAM table."))
   ("no-defaults", po::value<bool>()->default_value(false)->zero_tokens(),
   N_("Configuration file defaults are not used if no-defaults is set"))
-  ("defaults-file", po::value<string>()->default_value(system_config_dir_drizzle),
+  ("defaults-file", po::value<vector<string> >()->composing()->notifier(&compose_defaults_file_list),
    N_("Configuration file to use"))
+  ("config-dir", po::value<string>()->default_value(system_config_dir_drizzle),
+   N_("Base location for config files"))
   ;
 
   po::parsed_options parsed= po::command_line_parser(argc, argv).
@@ -1276,13 +1357,38 @@ int init_common_variables(int argc, char **argv)
     unireg_abort(1);
   }
 
-
-  if (! vm["no-defaults"].as<bool>())
+  if (not vm["no-defaults"].as<bool>())
   {
-    ifstream system_drizzle_ifs(vm["defaults-file"].as<string>().c_str());
-    store(po::parse_config_file(system_drizzle_ifs, long_options), vm);
+    defaults_file_list.insert(defaults_file_list.begin(),
+                              system_config_file_drizzle);
   }
 
+  string config_conf_d_location(vm["config-dir"].as<string>());
+  config_conf_d_location.append("/conf.d");
+  CachedDirectory config_conf_d(config_conf_d_location);
+  if (not config_conf_d.fail())
+  {
+
+    for (CachedDirectory::Entries::const_iterator iter= config_conf_d.getEntries().begin();
+         iter != config_conf_d.getEntries().end();
+         ++iter)
+    {
+      string file_entry((*iter)->filename);
+          
+      if (not file_entry.empty()
+          && file_entry != "."
+          && file_entry != "..")
+      {
+        string the_entry(config_conf_d_location);
+        the_entry.push_back('/');
+        the_entry.append(file_entry);
+        defaults_file_list.push_back(the_entry);
+      }
+    }
+  }
+
+  po::notify(vm);
+  process_defaults_files();
   po::notify(vm);
 
   get_options();
@@ -1292,9 +1398,12 @@ int init_common_variables(int argc, char **argv)
   global_system_variables.optimizer_prune_level=
     vm.count("disable-optimizer-prune") ? false : true;
 
-  if ((user_info= check_user(drizzled_user)))
+  if (vm.count("help") == 0 && vm.count("help-extended") == 0)
   {
-    set_user(drizzled_user, user_info);
+    if ((user_info= check_user(drizzled_user)))
+    {
+      set_user(drizzled_user, user_info);
+    }
   }
 
   fix_paths(argv[0]);
@@ -1360,17 +1469,6 @@ int init_common_variables(int argc, char **argv)
 }
 
 
-int init_thread_environment()
-{
-  if (pthread_key_create(&THR_Session,NULL) ||
-      pthread_key_create(&THR_Mem_root,NULL))
-  {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Can't create thread-keys"));
-    return 1;
-  }
-  return 0;
-}
-
 int init_server_components(module::Registry &plugins)
 {
   /*
@@ -1407,39 +1505,33 @@ int init_server_components(module::Registry &plugins)
   if (opt_help || opt_help_extended)
     unireg_abort(0);
 
-  po::parsed_options parsed= po::command_line_parser(unknown_options).
-    options(plugin_options).extra_parser(parse_size_arg).
-    allow_unregistered().run();
-
-  vector<string> final_unknown_options=
-    po::collect_unrecognized(parsed.options, po::include_positional);
-
-  /* we do want to exit if there are any other unknown options */
-  /** @TODO: We should perhaps remove allowed_unregistered() and catch the
-    exception here */
-  if (final_unknown_options.size() > 0)
-  {
-     errmsg_printf(ERRMSG_LVL_ERROR,
-            _("%s: Unknown options given (first unknown is '%s').\n"
-              "Use --help to get a list of available options\n"),
-            internal::my_progname, final_unknown_options[0].c_str());
-      unireg_abort(1);
-  }
-
+  vector<string> final_unknown_options;
   try
   {
+    po::parsed_options parsed=
+      po::command_line_parser(unknown_options).
+      options(plugin_options).extra_parser(parse_size_arg).run();
+
+    final_unknown_options=
+      po::collect_unrecognized(parsed.options, po::include_positional);
+
     po::store(parsed, vm);
+
   }
-  catch (...)
+  catch (po::invalid_command_line_syntax &err)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Duplicate entry for command line option\n"));
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("%s: %s.\n"
+                    "Use --help to get a list of available options\n"),
+                  internal::my_progname, err.what());
     unireg_abort(1);
   }
-
-  if (not vm["no-defaults"].as<bool>())
+  catch (po::unknown_option &err)
   {
-    ifstream system_drizzle_ifs(vm["defaults-file"].as<string>().c_str());
-    store(po::parse_config_file(system_drizzle_ifs, long_options), vm);
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("%s\nUse --help to get a list of available options\n"),
+                  err.what());
+    unireg_abort(1);
   }
 
   po::notify(vm);
@@ -1618,8 +1710,7 @@ struct option my_long_options[] =
    NO_ARG, 0, 0, 0, 0, 0, 0},
   {"datadir", 'h',
    N_("Path to the database root."),
-   (char**) &data_home,
-   (char**) &data_home, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   NULL, NULL, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"default-storage-engine", OPT_STORAGE_ENGINE,
    N_("Set the default storage engine (table type) for tables."),
    (char**)&default_storage_engine_str, (char**)&default_storage_engine_str,
@@ -1653,7 +1744,7 @@ struct option my_long_options[] =
    (char**) &max_system_variables.log_warnings, 0, GET_BOOL, OPT_ARG, 1, 0, 0,
    0, 0, 0},
   {"pid-file", OPT_PID_FILE,
-   N_("Pid file used by safe_mysqld."),
+   N_("Pid file used by drizzled."),
    (char**) &pidfile_name_ptr, (char**) &pidfile_name_ptr, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"port-open-timeout", OPT_PORT_OPEN_TIMEOUT,
@@ -1816,19 +1907,19 @@ struct option my_long_options[] =
    N_("Optional comma separated list of plugins to load at startup in addition "
       "to the default list of plugins. "
       "[for example: --plugin_add=crc32,logger_gearman]"),
-   (char**) &opt_plugin_add, (char**) &opt_plugin_add, 0,
+   NULL, NULL, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"plugin_remove", OPT_PLUGIN_ADD,
    N_("Optional comma separated list of plugins to not load at startup. Effectively "
       "removes a plugin from the list of plugins to be loaded. "
       "[for example: --plugin_remove=crc32,logger_gearman]"),
-   (char**) &opt_plugin_remove, (char**) &opt_plugin_remove, 0,
+   NULL, NULL, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"plugin_load", OPT_PLUGIN_LOAD,
    N_("Optional comma separated list of plugins to load at starup instead of "
       "the default plugin load list. "
       "[for example: --plugin_load=crc32,logger_gearman]"),
-   (char**) &opt_plugin_load, (char**) &opt_plugin_load, 0,
+   NULL, NULL, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"preload_buffer_size", OPT_PRELOAD_BUFFER_SIZE,
    N_("The size of the buffer that is allocated when preloading indexes"),
@@ -1983,7 +2074,6 @@ static void drizzle_init_variables(void)
   drizzle_home_ptr= drizzle_home;
   pidfile_name_ptr= pidfile_name;
   language_ptr= language;
-  data_home= data_home_real;
   session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_SQL_NOTES);
   refresh_version= 1L;	/* Increments on each reload */
   global_thread_id= 1UL;
@@ -1991,11 +2081,6 @@ static void drizzle_init_variables(void)
 
   /* Set directory paths */
   strncpy(language, LANGUAGE, sizeof(language)-1);
-  strncpy(data_home_real, get_relative_path(LOCALSTATEDIR),
-          sizeof(data_home_real)-1);
-  data_home_buff[0]=FN_CURLIB;	// all paths are relative from here
-  data_home_buff[1]=0;
-  data_home_len= 2;
 
   /* Variables in libraries */
   default_character_set_name= "utf8";
@@ -2069,11 +2154,12 @@ static void get_options()
 
   if (vm.count("datadir"))
   {
-    strncpy(data_home_real,vm["datadir"].as<string>().c_str(), sizeof(data_home_real)-1);
-    /* Correct pointer set by my_getopt (for embedded library) */
-    data_home= data_home_real;
-    data_home_len= strlen(data_home);
+    getDataHome()= vm["datadir"].as<string>();
   }
+  string &data_home_catalog= getDataHomeCatalog();
+  data_home_catalog= getDataHome();
+  data_home_catalog.push_back('/');
+  data_home_catalog.append("local");
 
   if (vm.count("user"))
   {
@@ -2143,18 +2229,6 @@ static void get_options()
   }
 
   /* @TODO Make this all strings */
-  if (vm.count("plugin-remove"))
-  {
-    opt_plugin_remove= (char *)vm["plugin-remove"].as<string>().c_str();
-  }
-  if (vm.count("plugin-add"))
-  {
-    opt_plugin_add= (char *)vm["plugin-add"].as<string>().c_str();
-  }
-  if (vm.count("plugin-load"))
-  {
-    opt_plugin_load= (char *)vm["plugin-load"].as<string>().c_str();
-  }
   if (vm.count("default-storage-engine"))
   {
     default_storage_engine_str= (char *)vm["default-storage-engine"].as<string>().c_str();
@@ -2229,13 +2303,10 @@ static void fix_paths(string progname)
     pos[0]= FN_LIBCHAR;
     pos[1]= 0;
   }
-  internal::convert_dirname(data_home_real,data_home_real,NULL);
-  (void) internal::fn_format(buff, data_home_real, "", "",
-                   (MY_RETURN_REAL_PATH|MY_RESOLVE_SYMLINKS));
   internal::convert_dirname(language,language,NULL);
   (void) internal::my_load_path(drizzle_home, drizzle_home,""); // Resolve current dir
-  (void) internal::my_load_path(data_home_real, data_home_real,drizzle_home);
-  (void) internal::my_load_path(pidfile_name, pidfile_name,data_home_real);
+  (void) internal::my_load_path(pidfile_name, pidfile_name,
+                                getDataHome().c_str());
 
   if (opt_plugin_dir_ptr == NULL)
   {
@@ -2313,7 +2384,7 @@ static void fix_paths(string progname)
     }
     else if (tmp_string == NULL)
     {
-      drizzle_tmpdir.append(data_home);
+      drizzle_tmpdir.append(getDataHome());
       drizzle_tmpdir.push_back(FN_LIBCHAR);
       drizzle_tmpdir.append(GLOBAL_TEMPORARY_EXT);
     }

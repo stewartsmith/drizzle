@@ -1,7 +1,7 @@
 PBXT Release Notes
 ==================
 
-------- 1.1.01 Beta - Not yet released
+------- 1.1.01 RC - 2010-06-11
 
 RN1/17: Fixed bug #430637: 'ERROR -86: Too many threads' reported during concurrecy test. I have removed the maximum thread limit. The system variable pbxt_max_threads has been depricated, and will no longer be supported in 1.1.
 
@@ -36,7 +36,7 @@ RN1/5: Changes to index flushing:
 - When out of index cache, we now check other tables to see if the index cache needs to be flushed. This is not done if more than 1/4 of the entire index cache is dirty due to the current index. Tables are sorted, the one with the most dirty index pages is flushed first.
 - When out of index cache, if less than 1/4 of the entire index cache is dirty then no flushing is done. This can happen if another thread has cleaned the cache in the meantime.
 
-RN1/4: Added try lock variation for R/W locks (required to fix deadlock RN246).
+RN1/4: Added try lock variation for R/W locks (required to fix deadlock RN1/3).
 
 RN1/3: Fixed a deadlock that could occur during low index cache situations and added some checks for index corruption.
 
@@ -45,6 +45,97 @@ RN1/2: Added thread pool for executing asynchronous tasks.
 RN1/1: Added memory resident tables. You can create a memory resident table using "STORAGE MEMORY", for example:
 
 CREATE TABLE t1 (É) ENGINE=PBXT STORAGE MEMORY
+
+------- 1.0.11-7 Pre-GA - 2010-09-09
+
+RN336: Compiled and tested with MySQL 5.1.50.
+
+RN335: Fixed bug #523994: Deleting all records does not update table statistics. 
+
+RN334: Made a change to reduce the time that only temporary tables exist during the ALTER TABLE and REPAIR TABLE statements. This increases the chance of recovery if a crash occurs during these operations.
+
+RN333: Log name of table when PBXT recovers an index on startup. If an error occurs during index recovery, the index is set to "repair pending".
+
+RN332: Fixed an inifinite loop when a record in a row is corrupt. Added logging and set the table to "repair pending" in this case.
+
+RN331: Fixed bug #626890: Crash on truncate table operation.
+
+RN330: Added additional checks for corruption of the index free list.
+
+------- 1.0.11-6 Pre-GA - 2010-07-08
+
+RN329: Fixed bug #601245: make fails. PBXT did not compile if the partition engine was disabled in the MySQL build.
+
+------- 1.0.11-5 Pre-GA - 2010-06-18
+
+RN328: Fixed bug #595478: Compile fails (1.0.11-4).
+
+------- 1.0.11-4 Pre-GA - 2010-06-15
+
+RN327: Fixed a bug that caused a crash during delete on the index. The crash occurred due to memory overwrite when a long key is promoted after a shorter key is deleted, and the difference causes a node size overflow.
+
+------- 1.0.11-3 Pre-GA - 2010-06-11
+
+RN326: Fixed bug #587740: pbxt-1.0.11-pre2-ga first time create partition table error. This was not a new bug. The problem was the PBXT system table's .frm files are corrupted when the first PBXT table created is a partition table.
+
+RN325: Fixed the "to-sweep" column output in xtstat.
+
+------- 1.0.11-2 Pre-GA - 2010-05-26
+
+RN324: Fixed bug #584070:pbxt-1.0.11-pre-ga does not work with mysql 5.1.47. This bug fix removes a hack which was done to avoid running into the LOCK_plugin lock.
+
+------- 1.0.11-1 Pre-GA - 2010-05-19
+
+RN323: Detect corruption of a key length in an index page. This bug fix avoids a possible crash due to index page corruption. 
+
+------- 1.0.11 Pre-GA - 2010-05-11
+
+RN322: Creating a table the references a non-existing table can now only be done if you set: foreign_key_checks = 0. Also fixed a failure when creating tables with recursive foreign key declarations.
+
+RN321: Added "Extended record count" to the CHECK TABLE output. This indicates the number of records that have a data log component.
+
+RN320: All tests now run with MySQL 5.1.46.
+
+------- 1.0.10n RC4 - 2010-04-28
+
+RN319: Fix RN1/3 and RN1/4 back-ported from 1.1: Fixed a deadlock that could occur during low index cache situations and added some checks for index corruption, and added the try lock variation for R/W locks.
+
+RN318: Fixed a bug in the atomic R/W lock. This bug occurred on multi-core Linux when under extrem load. The affect was that an index lookup could fail. The index was not corrupted.
+
+------- 1.0.10m RC4 - 2010-03-29
+
+RN317: This change prevents a unscheduled checkpoint from occurring when the sweeper has work to do. Checkpoint required due to the Checkpoint threshold reached are done as usual.
+
+------- 1.0.10k RC4 - 2010-03-29
+
+RN316: Set the maximum delay, while waiting for previous transactions to commit to 1/100s. This situation occurs when cleanup begins of a long running transaction.
+
+RN315: Fixed a bug that could lead to a data log error, for example: Data log not found: '.../dlog-129602.xt'. This error occurred after a duplicate key error, dending on the table structure, because the row buffer was not restored after writing an extended record.
+
+RN314: Server startup time could be very long when data logs become large because the log size was not save in the header when a data log is full.
+
+------- 1.0.10j RC4 - 2010-03-24
+
+RN313: Fixed an error in the calculation of the handle data record (.xtd files) size when AVG_ROW_LENGTH is set explicitly to a value less than 12. For example:
+
+CREATE TABLE objs (
+  id int(10)  unsigned   NOT NULL,
+  objdata     mediumblob NOT NULL,
+  PRIMARY KEY (id)
+) ENGINE=PBXT AVG_ROW_LENGTH=10
+
+This table definition previously lead to corruption of the table because the handle data record was set to 24 (14+10), which is less than the minimum (for variable length records) handle data record size of 26.
+
+This minimum consists of 14 byte record header and 12 bytes reference to the extended record data (the part of the record in the data log).
+
+Tip: when setting AVG_ROW_LENGTH you should normally add 12 to the average row length estimate to ensure that the average length part of the record is always in the handle data file. This is important, for example if you wish to make sure that the rows used to build indexes are in the handle data file. CHECK TABLE tells you how many rows are in the "fixed length part" of the record (output in MySQL error log). In the example above, this would be AVG_ROW_LENGTH=17.
+
+The maximum size of a field can be calculated adding the maximum byte size as described here: http://dev.mysql.com/doc/refman/5.1/en/storage-requirements.html, and then add the following values, depending on the byte size:
+
+byte size <= 240, add 1
+byte size < 2^16 (65536), add 3
+byte size < 2^24 (16777216), add 4
+byte size > 2^24, add 5
 
 ------- 1.0.10i RC4 - 2010-03-17
 
@@ -72,9 +163,9 @@ RN304: Fixed bug #513012: On a table with a trigger the same record is updated m
 
 ------- 1.0.10f RC4 - 2010-01-29
 
-RN303: Fix back-ported from 1.1: Fixed a bug in the record cache that caused PBXT to think it had run out of cache memory. The effect was that PBXT used less and less cache over time. The bug occurs during heavy concurrent access on the record cache. The affect is the PBXT gets slower and slower.
+RN303: Fix RN1/10 back-ported from 1.1: Fixed a bug in the record cache that caused PBXT to think it had run out of cache memory. The effect was that PBXT used less and less cache over time. The bug occurs during heavy concurrent access on the record cache. The affect is the PBXT gets slower and slower.
 
-RN302: Fix back-ported from 1.1: Corrected a problem that sometimes caused a pause in activity when the record cache was full.
+RN302: Fix RN1/11 back-ported from 1.1: Corrected a problem that sometimes caused a pause in activity when the record cache was full.
 
 ------- 1.0.10e RC4 - 2010-01-25
 

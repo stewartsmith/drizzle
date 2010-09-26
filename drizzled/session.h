@@ -36,6 +36,7 @@
 #include "drizzled/query_id.h"
 #include "drizzled/named_savepoint.h"
 #include "drizzled/transaction_context.h"
+#include "drizzled/util/storable.h"
 
 #include "drizzled/my_hash.h"
 
@@ -44,6 +45,8 @@
 #include <string>
 #include <bitset>
 #include <deque>
+
+#include "drizzled/internal/getrusage.h"
 
 #include <drizzled/security_context.h>
 #include <drizzled/open_tables_state.h>
@@ -314,6 +317,9 @@ struct Ha_data
 class Session : public Open_tables_state
 {
 public:
+  // Plugin storage in Session.
+  typedef boost::unordered_map<std::string, util::Storable *, util::insensitive_hash, util::insensitive_equal_to> PropertyMap;
+
   /*
     MARK_COLUMNS_NONE:  Means mark_used_colums is not set and no indicator to
                         handler of fields used is set
@@ -503,7 +509,19 @@ public:
     chapter 'Miscellaneous functions', for functions GET_LOCK, RELEASE_LOCK.
   */
   uint32_t dbug_sentry; /**< watch for memory corruption */
+private:
   internal::st_my_thread_var *mysys_var;
+public:
+
+  internal::st_my_thread_var *getThreadVar()
+  {
+    return mysys_var;
+  }
+
+  void resetThreadVar()
+  {
+    mysys_var= NULL;
+  }
   /**
    * Type of current query: COM_STMT_PREPARE, COM_QUERY, etc. Set from
    * first byte of the packet in executeStatement()
@@ -666,7 +684,6 @@ public:
     create_sort_index(); may differ from examined_row_count.
   */
   uint32_t row_count;
-  pthread_t real_id; /**< For debugging */
   uint64_t thread_id;
   uint32_t tmp_table;
   uint32_t global_read_lock;
@@ -1549,8 +1566,19 @@ public:
   int lock_tables(TableList *tables, uint32_t count, bool *need_reopen);
 
   Table *create_virtual_tmp_table(List<CreateField> &field_list);
+  
+  drizzled::util::Storable *getProperty(const std::string &arg)
+  {
+    return life_properties[arg];
+  }
 
+  template<class T>
+  bool setProperty(const std::string &arg, T *value)
+  {
+    life_properties[arg]= value;
 
+    return true;
+  }
 
   /**
     Return the default storage engine
@@ -1571,11 +1599,36 @@ public:
 
   void get_xid(DRIZZLE_XID *xid); // Innodb only
 
-private:
-  std::vector<TableShareInstance *> temporary_shares;
-
-public:
   TableShareInstance *getTemporaryShare(TableIdentifier::Type type_arg);
+
+private:
+  bool resetUsage()
+  {
+    if (getrusage(RUSAGE_THREAD, &usage))
+    {
+      return false;
+    }
+
+    return true;
+  }
+public:
+
+  void setUsage(bool arg)
+  {
+    use_usage= arg;
+  }
+
+  const struct rusage &getUsage()
+  {
+    return usage;
+  }
+
+private:
+  // This lives throughout the life of Session
+  bool use_usage;
+  PropertyMap life_properties;
+  std::vector<TableShareInstance *> temporary_shares;
+  struct rusage usage;
 };
 
 class Join;

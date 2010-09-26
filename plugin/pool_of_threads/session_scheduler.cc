@@ -58,7 +58,7 @@ bool session_scheduler::thread_attach()
     return true;
   }
   errno= 0;
-  session->mysys_var->abort= 0;
+  session->getThreadVar()->abort= 0;
   thread_attached= true;
 
   return false;
@@ -73,7 +73,7 @@ void session_scheduler::thread_detach()
 {
   if (thread_attached)
   {
-    session->mysys_var= NULL;
+    session->resetThreadVar();
     thread_attached= false;
   }
 }

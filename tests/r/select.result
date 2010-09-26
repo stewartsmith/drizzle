@@ -3225,7 +3225,7 @@ AND t1.ts BETWEEN t2.dt1 AND t2.dt2
 AND t1.ts BETWEEN "2006-01-01" AND "2006-12-31";
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t2	const	PRIMARY	PRIMARY	4	const	1	
-1	SIMPLE	t1	range	ts	ts	5	NULL	1	Using where
+1	SIMPLE	t1	range	ts	ts	9	NULL	1	Using where
 SELECT * FROM t1 LEFT JOIN t2 ON (t1.a=t2.a) WHERE t1.a=30
 AND t1.ts BETWEEN t2.dt1 AND t2.dt2
 AND t1.ts BETWEEN "2006-01-01" AND "2006-12-31";

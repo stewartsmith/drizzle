@@ -126,8 +126,8 @@ bool ProcesslistTool::Generator::populate()
                 (tmp->command == COM_SLEEP ?
                  NULL : "Reading from net") :
                 tmp->get_proc_info() ? tmp->get_proc_info() :
-                tmp->mysys_var &&
-                tmp->mysys_var->current_cond ?
+                tmp->getThreadVar() &&
+                tmp->getThreadVar()->current_cond ?
                 "Waiting on cond" : NULL);
   val ? push(val) : push();
 

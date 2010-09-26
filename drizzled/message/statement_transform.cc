@@ -51,6 +51,20 @@ namespace drizzled
 namespace message
 {
 
+static void escapeEmbeddedQuotes(string &s, const char quote='\'')
+{
+  string::iterator it;
+
+  for (it= s.begin(); it != s.end(); ++it)
+  {
+    if (*it == quote)
+    {
+      it= s.insert(it, quote);
+      ++it;  // advance back to the quote
+    }
+  }
+}
+
 /* Incredibly similar to append_unescaped() in table.cc, but for std::string */
 static void append_escaped_string(std::string *res, const std::string &input, const char quote='\'')
 {
@@ -389,27 +403,29 @@ transformInsertRecordToSql(const InsertHeader &header,
     if (should_quote_field_value)
       destination.push_back('\'');
 
-    if (field_metadata.type() == Table::Field::BLOB)
+    if (record.is_null(x))
     {
-      /* 
-        * We do this here because BLOB data is returned
-        * in a string correctly, but calling append()
-        * without a length will result in only the string
-        * up to a \0 being output here.
-        */
-      string raw_data(record.insert_value(x));
-      destination.append(raw_data.c_str(), raw_data.size());
+      destination.append("NULL");
     }
     else
     {
-      if (record.is_null(x))
+      if (field_metadata.type() == Table::Field::BLOB)
       {
-        destination.append("NULL");
+        /*
+         * We do this here because BLOB data is returned
+         * in a string correctly, but calling append()
+         * without a length will result in only the string
+         * up to a \0 being output here.
+         */
+        string raw_data(record.insert_value(x));
+        destination.append(raw_data.c_str(), raw_data.size());
       }
-      else 
+      else
       {
-        destination.append(record.insert_value(x));
-      } 
+        string tmp(record.insert_value(x));
+        escapeEmbeddedQuotes(tmp);
+        destination.append(tmp);
+      }
     }
 
     if (should_quote_field_value)
@@ -472,7 +488,9 @@ transformInsertStatementToSql(const InsertHeader &header,
       }
       else
       {
-        destination.append(data.record(x).insert_value(y));
+        string tmp(data.record(x).insert_value(y));
+        escapeEmbeddedQuotes(tmp);
+        destination.append(tmp);
       }
 
       if (should_quote_field_value)
@@ -548,26 +566,28 @@ transformUpdateRecordToSql(const UpdateHeader &header,
     if (should_quote_field_value)
       destination.push_back('\'');
 
-    if (field_metadata.type() == Table::Field::BLOB)
+    if (record.is_null(x))
     {
-      /* 
-       * We do this here because BLOB data is returned
-       * in a string correctly, but calling append()
-       * without a length will result in only the string
-       * up to a \0 being output here.
-       */
-      string raw_data(record.after_value(x));
-      destination.append(raw_data.c_str(), raw_data.size());
+      destination.append("NULL");
     }
-    else
+    else 
     {
-      if (record.is_null(x))
+      if (field_metadata.type() == Table::Field::BLOB)
       {
-        destination.append("NULL");
+        /*
+         * We do this here because BLOB data is returned
+         * in a string correctly, but calling append()
+         * without a length will result in only the string
+         * up to a \0 being output here.
+         */
+        string raw_data(record.after_value(x));
+        destination.append(raw_data.c_str(), raw_data.size());
       }
-      else
+      else 
       {
-        destination.append(record.after_value(x));
+        string tmp(record.after_value(x));
+        escapeEmbeddedQuotes(tmp);
+        destination.append(tmp);
       }
     }
 
@@ -690,7 +710,9 @@ transformDeleteRecordToSql(const DeleteHeader &header,
     }
     else
     {
-      destination.append(record.key_value(x));
+      string tmp(record.key_value(x));
+      escapeEmbeddedQuotes(tmp);
+      destination.append(tmp);
     }
 
     if (should_quote_field_value)
@@ -759,7 +781,9 @@ transformDeleteStatementToSql(const DeleteHeader &header,
       }
       else
       {
-        destination.append(data.record(x).key_value(y));
+        string tmp(data.record(x).key_value(y));
+        escapeEmbeddedQuotes(tmp);
+        destination.append(tmp);
       }
 
       if (should_quote_field_value)
@@ -1455,7 +1479,6 @@ bool shouldQuoteFieldValue(Table::Field::FieldType in_type)
   case Table::Field::DECIMAL:
   case Table::Field::INTEGER:
   case Table::Field::BIGINT:
-  case Table::Field::ENUM:
     return false;
   default:
     return true;

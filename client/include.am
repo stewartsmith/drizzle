@@ -23,7 +23,7 @@ bin_PROGRAMS= \
 
 man_MANS= \
 	  client/drizzle.1 \
-	  client/drizzled7.8 \
+	  client/drizzled.8 \
 	  client/drizzledump.1 \
 	  client/drizzleimport.1 \
 	  client/drizzleslap.1
@@ -34,7 +34,10 @@ noinst_HEADERS+= \
 		 client/client_priv.h \
 		 client/errname.h \
 		 client/get_password.h \
-		 client/linebuffer.h
+		 client/linebuffer.h \
+                 client/drizzledump_data.h \
+                 client/drizzledump_mysql.h \
+                 client/drizzledump_drizzle.h
 
 
 client_drizzle_SOURCES=		client/drizzle.cc client/linebuffer.cc
@@ -44,7 +47,10 @@ client_drizzle_LDADD=		${READLINE_LIBS} ${BOOST_LIBS} \
 				$(LIBZ) \
 				client/libgetpassword.la
 
-client_drizzledump_SOURCES=	client/drizzledump.cc
+client_drizzledump_SOURCES=	client/drizzledump.cc \
+                                client/drizzledump_data.cc \
+                                client/drizzledump_mysql.cc \
+                                client/drizzledump_drizzle.cc
 client_drizzledump_LDADD=	${CLIENT_LDADD} ${BOOST_LIBS}
 
 client_drizzleimport_SOURCES=	client/drizzleimport.cc

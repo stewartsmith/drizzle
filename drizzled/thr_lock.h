@@ -18,6 +18,8 @@
 #ifndef DRIZZLED_THR_LOCK_H
 #define DRIZZLED_THR_LOCK_H
 
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/condition_variable.hpp>
 #include <pthread.h>
 
 namespace drizzled
@@ -108,7 +110,7 @@ struct THR_LOCK_DATA {
   THR_LOCK_OWNER *owner;
   struct THR_LOCK_DATA *next,**prev;
   struct THR_LOCK *lock;
-  pthread_cond_t *cond;
+  boost::condition_variable *cond;
   enum thr_lock_type type;
   void *status_param;			/* Param to status functions */
 
@@ -137,7 +139,7 @@ struct st_lock_list {
 
 struct THR_LOCK {
 private:
-  pthread_mutex_t mutex;
+  boost::mutex mutex;
 public:
   struct st_lock_list read_wait;
   struct st_lock_list read;
@@ -160,25 +162,23 @@ public:
 
   void lock()
   {
-    pthread_mutex_lock(&mutex);
+    mutex.lock();
   }
 
   void unlock()
   {
-    pthread_mutex_unlock(&mutex);
+    mutex.unlock();
   }
 
   void init()
   {
-    pthread_mutex_init(&mutex, NULL);
   }
 
   void deinit()
   {
-    pthread_mutex_destroy(&mutex);
   }
 
-  pthread_mutex_t *native_handle()
+  boost::mutex *native_handle()
   {
     return &mutex;
   }

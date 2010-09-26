@@ -90,7 +90,7 @@ static volatile XTOpenFilePtr	db_lock_file = NULL;
  * LOCK/UNLOCK INSTALLATION
  */
 
-xtPublic void xt_lock_installation(XTThreadPtr self, char *installation_path)
+xtPublic void xt_lock_installation(XTThreadPtr self, const char *installation_path)
 {
 	char			file_path[PATH_MAX];
 	char			buffer[101];
@@ -189,7 +189,7 @@ xtPublic void xt_lock_installation(XTThreadPtr self, char *installation_path)
 	cont_(a);
 }
 
-xtPublic void xt_unlock_installation(XTThreadPtr self, char *installation_path)
+xtPublic void xt_unlock_installation(XTThreadPtr self, const char *installation_path)
 {
 	if (db_lock_file) {
 		char lock_file[PATH_MAX];
@@ -451,7 +451,7 @@ xtPublic void xt_add_data_dir(size_t size, char *path)
  * Just the last component of the path (i.e. the database name) should be
  * sufficient!?
  */
-xtPublic XTDatabaseHPtr xt_get_database(XTThreadPtr self, char *path, xtBool multi_path)
+xtPublic XTDatabaseHPtr xt_get_database(XTThreadPtr self, const char *path, xtBool multi_path)
 {
 	XTDatabaseHPtr	db = NULL;
 	char			db_path[PATH_MAX];
@@ -649,7 +649,7 @@ xtPublic void xt_drop_database(XTThreadPtr self, XTDatabaseHPtr	db)
 /*
  * Open/use a database.
  */
-xtPublic void xt_open_database(XTThreadPtr self, char *path, xtBool multi_path)
+xtPublic void xt_open_database(XTThreadPtr self, const char *path, xtBool multi_path)
 {
 	XTDatabaseHPtr db;
 
