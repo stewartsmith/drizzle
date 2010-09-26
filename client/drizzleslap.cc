@@ -914,7 +914,7 @@ int main(int argc, char **argv)
       ("delimiter,F",po::value<string>(&delimiter)->default_value("\n"),
        "Delimiter to use in SQL statements supplied in file or command line")
       ("engine,e",po::value<string>(&default_engine)->default_value(""),
-       "Storage engien to use for creating the table")
+       "Storage engine to use for creating the table")
       ("set-random-seed",
        po::value<uint32_t>(&opt_set_random_seed)->default_value(0), 
        "Seed for random number generator (srandom(3)) ") 
