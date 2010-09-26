@@ -6,10 +6,21 @@
 Welcome to Drizzle's documentation!
 ===================================
 
-Contents:
+Drizzle is a community-driven open source project that
+is forked from the popular MySQL database.  
+
+The Drizzle team has removed non-essential code, re-factored the remaining
+code and modernized the code base moving to C++.
 
 .. toctree::
    :maxdepth: 2
+
+Configuration:
+
+.. toctree::
+   :maxdepth: 2
+
+   configuration
 
 Indices and tables
 ==================
