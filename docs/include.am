@@ -7,7 +7,7 @@ EXTRA_DIST+= \
 	     docs/_templates \
 	     docs/conf.py \
 	     docs/drizzled_header.html \
-	     docs/index.rst
+	     ${top_srcdir}/docs/*.rst
 
 # Makefile for Sphinx documentation
 #

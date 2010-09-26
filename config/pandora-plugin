@@ -200,7 +200,7 @@ def write_plugin_docs(plugin, doc_index):
     if not os.path.exists(os.path.join("docs/plugins",plugin["name"])):
       os.symlink(os.path.abspath(plugin["docs"]), os.path.join("docs/plugins",plugin["name"]))
     doc_index.write("""
-   %(name)s""" % plugin)
+   %(name)s/index""" % plugin)
 
 def write_plugin_ac(plugin, plugin_ac):
   #
@@ -499,6 +499,8 @@ EXTRA_DIST += %(rel_path)s/plugin.ini
       plugin_am.write("EXTRA_DIST += %(rel_path)s/%(testsuitedir)s\n" % plugin)
   if plugin.has_key('dist_testsuite') and plugin['dist_testsuite'] != "":
     plugin_am.write("EXTRA_DIST += %(rel_path)s/%(dist_testsuite)s\n" % plugin)
+  if plugin['docs'] is not None:
+    plugin_am.write("EXTRA_DIST += ${top_srcdir}/%(rel_path)s/docs/*.rst\n" % plugin)
   if plugin['static']:
     plugin_am.write("""
 %(root_plugin_dir)s_%(plugin_prefix)s%(name)s_dir=${top_srcdir}/%(rel_path)s
