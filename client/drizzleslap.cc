@@ -913,7 +913,7 @@ int main(int argc, char **argv)
        "Delay the startup of threads by a random number of microsends (the maximum of the delay")
       ("delimiter,F",po::value<string>(&delimiter)->default_value("\n"),
        "Delimiter to use in SQL statements supplied in file or command line")
-      ("engine ,e",po::value<string>(&default_engine)->default_value(""),
+      ("engine,e",po::value<string>(&default_engine)->default_value(""),
        "Storage engien to use for creating the table")
       ("set-random-seed",
        po::value<uint32_t>(&opt_set_random_seed)->default_value(0), 
