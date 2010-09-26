@@ -27,6 +27,8 @@ namespace drizzled
 
 std::string& getDataHome();
 std::string& getDataHomeCatalog();
+char *getDatadir();
+char **getDatadirPtr();
 
 } /* namespace drizzled */
 

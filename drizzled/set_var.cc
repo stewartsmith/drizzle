@@ -144,7 +144,7 @@ static sys_var_session_uint32_t	sys_completion_type(&vars, "completion_type",
                                                     fix_completion_type);
 static sys_var_collation_sv
 sys_collation_server(&vars, "collation_server", &system_variables::collation_server, &default_charset_info);
-static sys_var_const_str       sys_datadir(&vars, "datadir", getDataHome().c_str());
+static sys_var_const_str       sys_datadir(&vars, "datadir", getDatadir());
 
 static sys_var_session_uint64_t	sys_join_buffer_size(&vars, "join_buffer_size",
                                                      &system_variables::join_buff_size);

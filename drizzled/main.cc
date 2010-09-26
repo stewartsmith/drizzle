@@ -65,6 +65,7 @@ using namespace std;
 static pthread_t select_thread;
 static uint32_t thr_kill_signal;
 
+
 /**
   All global error messages are sent here where the first one is stored
   for the client.
@@ -264,6 +265,10 @@ int main(int argc, char **argv)
                     getDataHome().c_str());
       unireg_abort(1);
     }
+    /* TODO: This is a hack until we can properly support std::string in sys_var*/
+    char **data_home_ptr= getDatadirPtr();
+    *data_home_ptr= new char[getDataHome().size()+1] ();
+    memcpy(*data_home_ptr, getDataHome().c_str(), getDataHome().size());
     getDataHomeCatalog()= "./";
     getDataHome()= "../";
   }

@@ -364,6 +364,7 @@ po::options_description plugin_options("Plugin Options");
 vector<string> unknown_options;
 vector<string> defaults_file_list;
 po::variables_map vm;
+char * data_dir_ptr;
 
 po::variables_map &getVariablesMap()
 {
@@ -380,6 +381,16 @@ std::string& getDataHomeCatalog()
 {
   static string data_home_catalog(getDataHome());
   return data_home_catalog;
+}
+
+char *getDatadir()
+{
+  return data_dir_ptr;
+}
+
+char **getDatadirPtr()
+{
+  return &data_dir_ptr;
 }
  
 /****************************************************************************
@@ -519,6 +530,8 @@ void clean_up(bool print_message)
   COND_server_end.notify_all();
   LOCK_thread_count.unlock();
 
+  char **data_home_ptr= getDatadirPtr();
+  delete[](*data_home_ptr);
   /*
     The following lines may never be executed as the main thread may have
     killed us
