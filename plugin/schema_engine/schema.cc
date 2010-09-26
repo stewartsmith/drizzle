@@ -27,6 +27,7 @@
 #include "drizzled/charset.h"
 #include "drizzled/charset_info.h"
 #include "drizzled/cursor.h"
+#include "drizzled/data_home.h"
 
 #include "drizzled/internal/my_sys.h"
 
@@ -44,9 +45,6 @@
 using namespace std;
 using namespace drizzled;
 
-// This should always be the same value as GLOBAL_TEMPORARY_EXT but be
-// CASE_UP. --Brian
-static SchemaIdentifier TEMPORARY_IDENTIFIER(".TEMPORARY");
 
 #define MY_DB_OPT_FILE "db.opt"
 #define DEFAULT_FILE_EXTENSION ".dfe" // Deep Fried Elephant
@@ -69,7 +67,7 @@ Schema::~Schema()
 
 void Schema::prime()
 {
-  CachedDirectory directory(data_home, CachedDirectory::DIRECTORY);
+  CachedDirectory directory(getDataHomeCatalog(), CachedDirectory::DIRECTORY);
   CachedDirectory::Entries files= directory.getEntries();
 
   mutex.lock();
@@ -337,6 +335,12 @@ bool Schema::readSchemaFile(const drizzled::SchemaIdentifier &schema_identifier,
 
 bool Schema::doCanCreateTable(const drizzled::TableIdentifier &identifier)
 {
+
+  // This should always be the same value as GLOBAL_TEMPORARY_EXT but be
+  // CASE_UP. --Brian 
+  //
+  // This needs to be done static in here for ordering reasons
+  static SchemaIdentifier TEMPORARY_IDENTIFIER(".TEMPORARY");
   if (static_cast<const SchemaIdentifier&>(identifier) == TEMPORARY_IDENTIFIER)
   {
     return false;

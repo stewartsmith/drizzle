@@ -58,8 +58,11 @@
 #include <fcntl.h>
 #include <algorithm>
 #include <climits>
+#include "boost/filesystem.hpp" 
 
 using namespace std;
+
+namespace fs=boost::filesystem;
 namespace drizzled
 {
 
@@ -999,20 +1002,25 @@ static int create_file(Session *session, char *path, file_exchange *exchange, in
 
   if (!internal::dirname_length(exchange->file_name))
   {
-    strcpy(path, data_home_real);
+    strcpy(path, getDataHomeCatalog().c_str());
+    strncat(path, "/", 1);
     if (! session->db.empty())
-      strncat(path, session->db.c_str(), FN_REFLEN-strlen(data_home_real)-1);
+      strncat(path, session->db.c_str(), FN_REFLEN-getDataHomeCatalog().size());
     (void) internal::fn_format(path, exchange->file_name, path, "", option);
   }
   else
-    (void) internal::fn_format(path, exchange->file_name, data_home_real, "", option);
+    (void) internal::fn_format(path, exchange->file_name, getDataHomeCatalog().c_str(), "", option);
 
-  if (opt_secure_file_priv &&
-      strncmp(opt_secure_file_priv, path, strlen(opt_secure_file_priv)))
+  if (opt_secure_file_priv)
   {
-    /* Write only allowed to dir or subdir specified by secure_file_priv */
-    my_error(ER_OPTION_PREVENTS_STATEMENT, MYF(0), "--secure-file-priv");
-    return -1;
+    fs::path secure_file_path(fs::system_complete(fs::path(opt_secure_file_priv)));
+    fs::path target_path(fs::system_complete(fs::path(path)));
+    if (target_path.file_string().substr(0, secure_file_path.file_string().size()) != secure_file_path.file_string())
+    {
+      /* Write only allowed to dir or subdir specified by secure_file_priv */
+      my_error(ER_OPTION_PREVENTS_STATEMENT, MYF(0), "--secure-file-priv");
+      return -1;
+    }
   }
 
   if (!access(path, F_OK))
