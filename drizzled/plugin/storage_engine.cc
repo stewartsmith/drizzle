@@ -571,11 +571,11 @@ public:
 };
 
 
-static SchemaIdentifier INFORMATION_SCHEMA_IDENTIFIER("information_schema");
-static SchemaIdentifier DATA_DICTIONARY_IDENTIFIER("data_dictionary");
-
 void StorageEngine::getIdentifiers(Session &session, const SchemaIdentifier &schema_identifier, TableIdentifiers &set_of_identifiers)
 {
+  static SchemaIdentifier INFORMATION_SCHEMA_IDENTIFIER("information_schema");
+  static SchemaIdentifier DATA_DICTIONARY_IDENTIFIER("data_dictionary");
+
   CachedDirectory directory(schema_identifier.getPath(), set_of_table_definition_ext);
 
   if (schema_identifier == INFORMATION_SCHEMA_IDENTIFIER)

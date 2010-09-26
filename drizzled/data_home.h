@@ -20,13 +20,15 @@
 #ifndef DRIZZLED_DATA_HOME_H
 #define DRIZZLED_DATA_HOME_H
 
+#include <string>
+
 namespace drizzled
 {
 
-extern char *data_home;
-extern uint32_t data_home_len;
-extern char data_home_real[];
-extern char data_home_buff[];
+std::string& getDataHome();
+std::string& getDataHomeCatalog();
+char *getDatadir();
+char **getDatadirPtr();
 
 } /* namespace drizzled */
 

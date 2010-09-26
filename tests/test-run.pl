@@ -1796,11 +1796,11 @@ sub setup_vardir() {
   # Create new data dirs
   foreach my $data_dir (@data_dir_lst)
   {
-    mkpath("$data_dir/mysql");
-    system("$exe_schemawriter mysql $data_dir/mysql/db.opt");
+    mkpath("$data_dir/local/mysql");
+    system("$exe_schemawriter mysql $data_dir/local/mysql/db.opt");
 
-    mkpath("$data_dir/test");
-    system("$exe_schemawriter test $data_dir/test/db.opt");
+    mkpath("$data_dir/local/test");
+    system("$exe_schemawriter test $data_dir/local/test/db.opt");
   }
 
   # Make a link std_data_ln in var/ that points to std_data
@@ -2037,7 +2037,7 @@ sub mysql_install_db () {
 
   if ($max_master_num > 1)
   {
-    copy_install_db('master', $master->[1]->{'path_myddir'});
+    copy_install_db('master', $master->[1]->{'path_myddir'} . "/local");
   }
 
   # Install the number of slave databses needed

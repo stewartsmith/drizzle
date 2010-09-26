@@ -23,6 +23,9 @@
 #include <signal.h>
 #include <sys/resource.h>
 #include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -39,6 +42,7 @@
 # include <locale.h>
 #endif
 
+#include <boost/filesystem.hpp>
 
 #include "drizzled/plugin.h"
 #include "drizzled/gettext.h"
@@ -58,9 +62,11 @@
 
 using namespace drizzled;
 using namespace std;
+namespace fs=boost::filesystem;
 
 static pthread_t select_thread;
 static uint32_t thr_kill_signal;
+
 
 /**
   All global error messages are sent here where the first one is stored
@@ -241,15 +247,37 @@ int main(int argc, char **argv)
   select_thread=pthread_self();
   select_thread_in_use=1;
 
-  if (chdir(data_home_real) && !opt_help)
+  if (not opt_help)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Data directory %s does not exist\n"), data_home_real);
-    unireg_abort(1);
+    if (chdir(getDataHome().c_str()))
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Data directory %s does not exist\n"),
+                    getDataHome().c_str());
+      unireg_abort(1);
+    }
+    if (mkdir("local", 0700))
+    {
+      /* We don't actually care */
+    }
+    if (chdir("local"))
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Local catalog %s/local does not exist\n"),
+                    getDataHome().c_str());
+      unireg_abort(1);
+    }
+    /* TODO: This is a hack until we can properly support std::string in sys_var*/
+    char **data_home_ptr= getDatadirPtr();
+    *data_home_ptr= new char[getDataHome().size()+1] ();
+    fs::path full_data_home_path(fs::system_complete(fs::path(getDataHome())));
+    std::string full_data_home(full_data_home_path.file_string());
+    memcpy(*data_home_ptr, full_data_home.c_str(), full_data_home.size());
+    getDataHomeCatalog()= "./";
+    getDataHome()= "../";
   }
-  data_home= data_home_buff;
-  data_home[0]=FN_CURLIB;		// all paths are relative from here
-  data_home[1]=0;
-  data_home_len= 2;
+
+
 
   if (server_id == 0)
   {
