@@ -42,6 +42,7 @@
 # include <locale.h>
 #endif
 
+#include <boost/filesystem.hpp>
 
 #include "drizzled/plugin.h"
 #include "drizzled/gettext.h"
@@ -61,6 +62,7 @@
 
 using namespace drizzled;
 using namespace std;
+namespace fs=boost::filesystem;
 
 static pthread_t select_thread;
 static uint32_t thr_kill_signal;
@@ -268,7 +270,9 @@ int main(int argc, char **argv)
     /* TODO: This is a hack until we can properly support std::string in sys_var*/
     char **data_home_ptr= getDatadirPtr();
     *data_home_ptr= new char[getDataHome().size()+1] ();
-    memcpy(*data_home_ptr, getDataHome().c_str(), getDataHome().size());
+    fs::path full_data_home_path(fs::system_complete(fs::path(getDataHome())));
+    std::string full_data_home(full_data_home_path.file_string());
+    memcpy(*data_home_ptr, full_data_home.c_str(), full_data_home.size());
     getDataHomeCatalog()= "./";
     getDataHome()= "../";
   }

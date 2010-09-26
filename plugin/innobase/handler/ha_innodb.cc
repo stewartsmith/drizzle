@@ -1837,10 +1837,9 @@ innobase_init(
   {
     innobase_data_home_dir= strdup(vm["data-home-dir"].as<string>().c_str());
   }
-
   else
   {
-    innobase_data_home_dir= NULL;
+    innobase_data_home_dir= strdup(getDataHome().c_str());
   }
 
   if (vm.count("fast-shutdown"))
@@ -2128,8 +2127,7 @@ innobase_init(
 
   /* The default dir for data files is the datadir of MySQL */
 
-  srv_data_home = (char *)(innobase_data_home_dir ? innobase_data_home_dir :
-                   getDataHome().c_str());
+  srv_data_home = (char *)innobase_data_home_dir;
 
   /* Set default InnoDB data file size to 10 MB and let it be
     auto-extending. Thus users can use InnoDB in >= 4.0 without having
