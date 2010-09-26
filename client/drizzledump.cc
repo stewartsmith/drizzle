@@ -610,8 +610,12 @@ try
 
   po::variables_map vm;
 
-  po::store(po::command_line_parser(argc, argv).options(all_options).
-            positional(p).extra_parser(parse_password_arg).run(), vm);
+  // Disable allow_guessing
+  int style = po::command_line_style::default_style & ~po::command_line_style::allow_guessing;
+
+  po::store(po::command_line_parser(argc, argv).style(style).
+            options(all_options).positional(p).
+            extra_parser(parse_password_arg).run(), vm);
 
   if (! vm.count("no-defaults"))
   {
