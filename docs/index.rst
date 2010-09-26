@@ -30,6 +30,21 @@ Plugins:
 
    plugins/list
 
+Architecture:
+
+.. toctree::
+   :maxdepth: 2
+
+   protocol
+
+Clients:
+
+.. toctree::
+   :maxdepth: 2
+
+   clients/drizzle.rst
+   clients/drizzledump.rst
+
 Indices and tables
 ==================
 
