@@ -130,4 +130,7 @@ private:
   bool in_table_scan;
 };
 
+int get_innodb_system_table_message(const char* table_name, drizzled::message::Table *table_message);
+
+
 #endif /* PLUGIN_EMBEDDED_INNODB_EMBEDDED_INNODB_ENGINE_H */
