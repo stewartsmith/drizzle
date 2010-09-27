@@ -317,14 +317,21 @@ int FilesystemEngine::doGetTableDefinition(Session &,
   // then columns of this table are added dynamically here.
   FormatInfo format;
   format.parseFromTable(&table_proto);
-  if (!format.isTagFormat() || !format.isFileGiven())
+  if (!format.isTagFormat() || !format.isFileGiven()) {
+    close(fd);
     return EEXIST;
+  }
 
   vector< map<string, string> > vm;
-  if (parseTaggedFile(format, vm) != 0)
+  if (parseTaggedFile(format, vm) != 0) {
+    close(fd);
+
     return EEXIST;
-  if (vm.size() == 0)
+  }
+  if (vm.size() == 0) {
+    close(fd);
     return EEXIST;
+  }
 
   // we don't care what user provides, just clear them all
   table_proto.clear_field();
@@ -341,6 +348,8 @@ int FilesystemEngine::doGetTableDefinition(Session &,
     message::Table::Field::StringFieldOptions *stringoption= field->mutable_string_options();
     stringoption->set_length(iter->second.length() + 1);
   }
+
+  close(fd);
   return EEXIST;
 }
 
@@ -748,7 +757,7 @@ int FilesystemCursor::doEndTableScan()
       file_buffer_start= file_buff->read_next();
   }
   // close update file
-  if (::fsync(update_file_desc) ||
+  if (::fsync(update_file_desc) || 
       ::close(update_file_desc))
     goto error;
   share->update_file_opened= false;
@@ -759,18 +768,15 @@ int FilesystemCursor::doEndTableScan()
   if (::rename(update_file_name.c_str(), share->format.getFileName().c_str()))
     goto error;
 
-  // reopen the data file
-  file_desc= ::open(share->format.getFileName().c_str(), O_RDONLY);
   share->needs_reopen= true;
-  if (file_desc < 0)
-    goto error;
-  err= 0;
+
 error:
   err= errno;
   pthread_mutex_unlock(&share->mutex);
 
   if (thread_locked)
     critical_section_exit();
+
   return err;
 }
 
