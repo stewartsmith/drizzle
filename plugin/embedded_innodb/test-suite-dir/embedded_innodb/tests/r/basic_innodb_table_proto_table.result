@@ -12,6 +12,12 @@ show tables like 'innodb%';
 Tables_in_data_dictionary (innodb%)
 INNODB_CONFIGURATION
 INNODB_STATUS
+INNODB_SYS_COLUMNS
+INNODB_SYS_FIELDS
+INNODB_SYS_FOREIGN
+INNODB_SYS_FOREIGN_COLS
+INNODB_SYS_INDEXES
+INNODB_SYS_TABLES
 innodb_table_definitions
 use test;
 create table t1 (a int primary key);
