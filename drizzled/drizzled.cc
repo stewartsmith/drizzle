@@ -1407,6 +1407,8 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   process_defaults_files();
   /* TODO: here is where we should add a process_env_vars */
 
+  /* We need a notify here so that plugin_init will work properly */
+  po::notify(vm);
   /* At this point, we've read all the options we need to read from files and
      collected most of them into unknown options - now let's load everything
   */
