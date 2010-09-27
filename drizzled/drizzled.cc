@@ -1415,10 +1415,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   initial_options.add(config_options);
   initial_options.add(plugin_load_options);
 
-    int style = po::command_line_style::default_style & ~po::command_line_style::allow_guessing;
-    po::parsed_options parsed=
-      po::command_line_parser(unknown_options).style(style).
-      options(plugin_options).extra_parser(parse_size_arg).run();
+  int style = po::command_line_style::default_style & ~po::command_line_style::allow_guessing;
   /* Get options about where config files and the like are */
   po::parsed_options parsed= po::command_line_parser(argc, argv).style(style).
     options(initial_options).allow_unregistered().extra_parser(parse_size_arg).run();
@@ -2398,8 +2395,14 @@ static void fix_paths()
   }
   internal::convert_dirname(language,language,NULL);
   (void) internal::my_load_path(drizzle_home, drizzle_home,""); // Resolve current dir
-  (void) internal::my_load_path(pidfile_name, pidfile_name,
-                                getDataHome().c_str());
+
+  fs::path pid_file_path(pidfile_name);
+  if (pid_file_path.root_path().string() == "")
+  {
+    pid_file_path= fs::path(getDataHome());
+    pid_file_path /= pidfile_name;
+  }
+  strncpy(pidfile_name, pid_file_path.file_string().c_str(), sizeof(pidfile_name)-1);
 
 
   const char *sharedir= get_relative_path(PKGDATADIR);
