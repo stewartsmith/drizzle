@@ -702,8 +702,8 @@ fetch:
 static const char* table_path_to_innodb_name(const char* name)
 {
   size_t l= strlen(name);
-  static string datadict_path("./data_dictionary/");
-  static string sys_prefix("./data_dictionary/innodb_");
+  static string datadict_path("data_dictionary/");
+  static string sys_prefix("data_dictionary/innodb_");
   static string sys_table_prefix("INNODB_");
 
   if (strncmp(name, sys_prefix.c_str(), sys_prefix.length()) == 0)
