@@ -1435,7 +1435,31 @@ void TransactionServices::setUpdateHeader(message::Statement &statement,
 
     uint32_t field_length= current_field->pack_length(); /** @TODO This isn't always correct...check varchar diffs. */
 
-    if (memcmp(old_ptr, new_ptr, field_length) != 0)
+    bool old_value_is_null= current_field->is_null_in_record(old_record);
+    bool new_value_is_null= current_field->is_null_in_record(new_record);
+
+    bool isUpdated= false;
+    if (old_value_is_null != new_value_is_null)
+    {
+      if ((old_value_is_null) && (! new_value_is_null)) /* old value is NULL, new value is non NULL */
+      {
+        isUpdated= true;
+      }
+      else if ((! old_value_is_null) && (new_value_is_null)) /* old value is non NULL, new value is NULL */
+      {
+        isUpdated= true;
+      }
+    }
+
+    if (! isUpdated)
+    {
+      if (memcmp(old_ptr, new_ptr, field_length) != 0)
+      {
+        isUpdated= true;
+      }
+    }
+
+    if (isUpdated)
     {
       /* Field is changed from old to new */
       field_metadata= header->add_set_field_metadata();
@@ -1488,7 +1512,31 @@ void TransactionServices::updateRecord(Session *in_session,
 
     uint32_t field_length= current_field->pack_length(); /** @TODO This isn't always correct...check varchar diffs. */
 
-    if (memcmp(old_ptr, new_ptr, field_length) != 0)
+    bool old_value_is_null= current_field->is_null_in_record(old_record);
+    bool new_value_is_null= current_field->is_null_in_record(new_record);
+
+    bool isUpdated= false;
+    if (old_value_is_null != new_value_is_null)
+    {
+      if ((old_value_is_null) && (! new_value_is_null)) /* old value is NULL, new value is non NULL */
+      {
+        isUpdated= true;
+      }
+      else if ((! old_value_is_null) && (new_value_is_null)) /* old value is non NULL, new value is NULL */
+      {
+        isUpdated= true;
+      }
+    }
+
+    if (! isUpdated)
+    {
+      if (memcmp(old_ptr, new_ptr, field_length) != 0)
+      {
+        isUpdated= true;
+      }
+    }
+
+    if (isUpdated)
     {
       /* Store the original "read bit" for this field */
       bool is_read_set= current_field->isReadSet();
