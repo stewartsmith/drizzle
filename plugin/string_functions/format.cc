@@ -18,7 +18,7 @@
  */
 
 #include "config.h"
-#include <drizzled/function/str/format.h>
+#include "format.h"
 
 #include <limits>
 
@@ -34,11 +34,6 @@ namespace drizzled
 */
 
 const int FORMAT_MAX_DECIMALS= 30;
-
-Item_func_format::Item_func_format(Item *org, Item *dec)
-: Item_str_func(org, dec)
-{
-}
 
 void Item_func_format::fix_length_and_dec()
 {

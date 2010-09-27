@@ -456,9 +456,6 @@ uint64_t retrieve_auto_increment(MI_INFO *info,const unsigned char *record)
   case drizzled::HA_KEYTYPE_ULONG_INT:
     value=(uint64_t) uint4korr(key);
     break;
-  case drizzled::HA_KEYTYPE_UINT24:
-    value=(uint64_t) uint3korr(key);
-    break;
   case drizzled::HA_KEYTYPE_DOUBLE:                       /* This shouldn't be used */
   {
     double f_1;

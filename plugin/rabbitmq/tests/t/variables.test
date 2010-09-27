@@ -1,3 +1,1 @@
 SELECT * FROM data_dictionary.modules WHERE module_name = 'rabbitmq';
-SELECT * FROM data_dictionary.plugins WHERE module_name = 'rabbitmq';
-SELECT * FROM data_dictionary.replication_streams;

@@ -97,7 +97,7 @@ int ha_xtsys::open(const char *table_path, int XT_UNUSED(mode), uint XT_UNUSED(t
 		xt_ha_open_database_of_table(self, (XTPathStrPtr) table_path);
 
 		ha_open_tab = XTSystemTableShare::openSystemTable(self, table_path, table);
-		ha_lock.init(ha_open_tab->ost_share->sts_my_lock);
+		MYSQL_INIT_LOCK(ha_lock, ha_open_tab->ost_share->sts_my_lock);
 		ref_length = ha_open_tab->getRefLen();
 	}
 	catch_(a) {
@@ -149,7 +149,11 @@ int ha_xtsys::close(void)
 	return err;
 }
 
+#ifdef DRIZZLED
 int ha_xtsys::doStartTableScan(bool XT_UNUSED(scan))
+#else
+int ha_xtsys::rnd_init(bool XT_UNUSED(scan))
+#endif
 {
 	int err = 0;
 

@@ -17,25 +17,26 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTION_MATH_FLOOR_H
-#define DRIZZLED_FUNCTION_MATH_FLOOR_H
+#ifndef PLUGIN_STRING_FUNCTIONS_ELT_H
+#define PLUGIN_STRING_FUNCTIONS_ELT_H
 
-#include <drizzled/function/func.h>
-#include <drizzled/function/math/int_val.h>
+#include <drizzled/function/str/strfunc.h>
 
 namespace drizzled
 {
 
-class Item_func_floor :public Item_func_int_val
+class Item_func_elt :public Item_str_func
 {
 public:
-  Item_func_floor(Item *a) :Item_func_int_val(a) {}
-  const char *func_name() const { return "floor"; }
-  int64_t int_op();
-  double real_op();
-  my_decimal *decimal_op(my_decimal *);
+  Item_func_elt() :Item_str_func() {}
+  double val_real();
+  int64_t val_int();
+  String *val_str(String *str);
+  void fix_length_and_dec();
+  const char *func_name() const { return "elt"; }
+  bool check_argument_count(int n) { return n > 1; }
 };
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FUNCTION_MATH_FLOOR_H */
+#endif /* PLUGIN_STRING_FUNCTIONS_ELT_H */

@@ -579,6 +579,7 @@ int					xt_tab_compare_names(const char *n1, const char *n2);
 int					xt_tab_compare_paths(char *n1, char *n2);
 void				xt_tab_init_db(struct XTThread *self, struct XTDatabase *db);
 void				xt_tab_exit_db(struct XTThread *self, struct XTDatabase *db);
+void				xt_tab_check_free_lists(struct XTThread *self, XTOpenTablePtr ot, bool check_recs, bool correct_count);
 
 char				*xt_tab_file_to_name(size_t size, char *tab_name, char *file_name);
 

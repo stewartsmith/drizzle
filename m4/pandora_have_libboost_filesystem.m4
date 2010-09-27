@@ -11,13 +11,13 @@ AC_DEFUN([_PANDORA_SEARCH_BOOST_FILESYSTEM],[
   dnl --------------------------------------------------------------------
 
   AC_LANG_PUSH(C++)
-  AC_LIB_HAVE_LINKFLAGS(boost_filesystem-mt,,[
+  AC_LIB_HAVE_LINKFLAGS(boost_filesystem-mt,boost_system-mt,[
     #include <boost/filesystem.hpp>
   ],[
     boost::filesystem::path my_path("some_dir/file.txt");
   ])
   AS_IF([test "x${ac_cv_libboost_filesystem_mt}" = "xno"],[
-    AC_LIB_HAVE_LINKFLAGS(boost_filesystem,,[
+    AC_LIB_HAVE_LINKFLAGS(boost_filesystem,boost_system,[
       #include <boost/filesystem.hpp>
     ],[
       boost::filesystem::path my_path("some_dir/file.txt");

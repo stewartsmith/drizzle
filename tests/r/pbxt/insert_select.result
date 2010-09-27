@@ -570,8 +570,8 @@ replace into t1 select * from t2;
 select * from t1;
 a	b
 1	t1:1
-2	t2:2
 3	t2:3
+2	t2:2
 drop table t1,t2;
 CREATE TABLE t1 ( USID INTEGER, ServerID int, State ENUM ('unknown', 'Access-Granted', 'Session-Active', 'Session-Closed' ) NOT NULL DEFAULT 'unknown', SessionID CHAR(32), User CHAR(32) NOT NULL DEFAULT '<UNKNOWN>', NASAddr INTEGER, NASPort INTEGER, NASPortType INTEGER, ConnectSpeed INTEGER, CarrierType CHAR(32), CallingStationID CHAR(32), CalledStationID CHAR(32), AssignedAddr INTEGER, SessionTime INTEGER, PacketsIn INTEGER, OctetsIn INTEGER, PacketsOut INTEGER, OctetsOut INTEGER, TerminateCause INTEGER, UnauthTime int, AccessRequestTime DATETIME, AcctStartTime DATETIME, AcctLastTime DATETIME, LastModification TIMESTAMP NOT NULL);
 CREATE TABLE t2 ( USID INTEGER AUTO_INCREMENT, ServerID int, State ENUM ('unknown', 'Access-Granted', 'Session-Active', 'Session-Closed' ) NOT NULL DEFAULT 'unknown', SessionID CHAR(32), User TEXT NOT NULL, NASAddr INTEGER, NASPort INTEGER, NASPortType INTEGER, ConnectSpeed INTEGER, CarrierType CHAR(32), CallingStationID CHAR(32), CalledStationID CHAR(32), AssignedAddr INTEGER, SessionTime INTEGER, PacketsIn INTEGER, OctetsIn INTEGER, PacketsOut INTEGER, OctetsOut INTEGER, TerminateCause INTEGER, UnauthTime int, AccessRequestTime DATETIME, AcctStartTime DATETIME, AcctLastTime DATETIME, LastModification TIMESTAMP NOT NULL, INDEX(USID,ServerID,NASAddr,SessionID), INDEX(AssignedAddr));
@@ -646,13 +646,13 @@ a
 insert into t1 select a+1 from t2 on duplicate key update t1.a= t1.a + t2.b+1;
 select * from t1;
 a
-3
 5
+3
 insert into t1 select t3.c from t3 on duplicate key update a= a + t3.d;
 select * from t1;
 a
-5
 1
+5
 10
 insert into t1 select t2.a from t2 group by t2.a on duplicate key update a= a + 10;
 insert into t1 select t2.a from t2 on duplicate key update a= a + t2.b;

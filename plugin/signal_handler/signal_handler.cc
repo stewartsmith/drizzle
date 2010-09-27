@@ -114,6 +114,7 @@ void signal_hand()
   sigset_t set;
   int sig;
   internal::my_thread_init();				// Init new thread
+  boost::this_thread::at_thread_exit(&internal::my_thread_end);
   signal_thread_in_use= true;
 
   if ((test_flags.test(TEST_SIGINT)))
@@ -182,7 +183,6 @@ void signal_hand()
 
     if (cleanup_done)
     {
-      internal::my_thread_end();
       signal_thread_in_use= false;
 
       return;

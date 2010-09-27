@@ -38,7 +38,21 @@ namespace drizzled
 
 module::Registry::~Registry()
 {
-  map<string, plugin::Plugin *>::iterator plugin_iter= plugin_registry.begin();
+  map<string, plugin::Plugin *>::iterator plugin_iter;
+
+  /* Give all plugins a chance to cleanup, before
+   * all plugins are deleted.
+   * This can be used if shutdown code references
+   * other plugins.
+   */
+  plugin_iter= plugin_registry.begin();
+  while (plugin_iter != plugin_registry.end())
+  {
+    (*plugin_iter).second->shutdownPlugin();
+    ++plugin_iter;
+  }
+
+  plugin_iter= plugin_registry.begin();
   while (plugin_iter != plugin_registry.end())
   {
     delete (*plugin_iter).second;

@@ -355,7 +355,7 @@ bool CreateField::init(Session *,
     case DRIZZLE_TYPE_ENUM:
       {
         /* Should be safe. */
-        pack_length= get_enum_pack_length(fld_interval_list->elements);
+        pack_length= 4;
 
         List_iterator<String> it(*fld_interval_list);
         String *tmp;

@@ -85,7 +85,11 @@ public:
 
 	int		open(const char *name, int mode, uint test_if_locked);
 	int		close(void);
+#ifdef DRIZZLED
 	int		doStartTableScan(bool scan);
+#else
+	int		rnd_init(bool scan);
+#endif
 	int		rnd_next(byte *buf);
 	int		rnd_pos(byte * buf, byte *pos);
 	void	position(const byte *record);

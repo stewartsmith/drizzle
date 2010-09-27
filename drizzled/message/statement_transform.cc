@@ -51,6 +51,20 @@ namespace drizzled
 namespace message
 {
 
+static void escapeEmbeddedQuotes(string &s, const char quote='\'')
+{
+  string::iterator it;
+
+  for (it= s.begin(); it != s.end(); ++it)
+  {
+    if (*it == quote)
+    {
+      it= s.insert(it, quote);
+      ++it;  // advance back to the quote
+    }
+  }
+}
+
 /* Incredibly similar to append_unescaped() in table.cc, but for std::string */
 static void append_escaped_string(std::string *res, const std::string &input, const char quote='\'')
 {
@@ -408,7 +422,9 @@ transformInsertRecordToSql(const InsertHeader &header,
       }
       else
       {
-        destination.append(record.insert_value(x));
+        string tmp(record.insert_value(x));
+        escapeEmbeddedQuotes(tmp);
+        destination.append(tmp);
       }
     }
 
@@ -472,7 +488,9 @@ transformInsertStatementToSql(const InsertHeader &header,
       }
       else
       {
-        destination.append(data.record(x).insert_value(y));
+        string tmp(data.record(x).insert_value(y));
+        escapeEmbeddedQuotes(tmp);
+        destination.append(tmp);
       }
 
       if (should_quote_field_value)
@@ -567,7 +585,9 @@ transformUpdateRecordToSql(const UpdateHeader &header,
       }
       else 
       {
-        destination.append(record.after_value(x));
+        string tmp(record.after_value(x));
+        escapeEmbeddedQuotes(tmp);
+        destination.append(tmp);
       }
     }
 
@@ -690,7 +710,9 @@ transformDeleteRecordToSql(const DeleteHeader &header,
     }
     else
     {
-      destination.append(record.key_value(x));
+      string tmp(record.key_value(x));
+      escapeEmbeddedQuotes(tmp);
+      destination.append(tmp);
     }
 
     if (should_quote_field_value)
@@ -759,7 +781,9 @@ transformDeleteStatementToSql(const DeleteHeader &header,
       }
       else
       {
-        destination.append(data.record(x).key_value(y));
+        string tmp(data.record(x).key_value(y));
+        escapeEmbeddedQuotes(tmp);
+        destination.append(tmp);
       }
 
       if (should_quote_field_value)

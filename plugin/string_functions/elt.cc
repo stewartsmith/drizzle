@@ -19,7 +19,7 @@
 
 #include "config.h"
 
-#include <drizzled/function/str/elt.h>
+#include "elt.h"
 
 namespace drizzled
 {

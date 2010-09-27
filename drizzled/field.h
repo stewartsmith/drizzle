@@ -63,11 +63,6 @@ struct CacheField;
 
 int field_conv(Field *to,Field *from);
 
-inline uint32_t get_enum_pack_length(int elements)
-{
-  return elements < 256 ? 1 : 2;
-}
-
 /**
  * Class representing a Field in a Table
  *
