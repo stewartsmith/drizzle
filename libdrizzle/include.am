@@ -109,13 +109,3 @@ CLEANFILES+= \
 	libdrizzle/drizzle_server.h.gch \
 	libdrizzle/common.h.gch
 
-EXTRA_DIST+= \
-	PROTOCOL \
-	config/config.rpath \
-	docs/Doxyfile.api \
-	docs/Doxyfile.dev \
-        docs/Doxyfile.drizzled \
-	docs/dev_header.html \
-	docs/api_header.html \
-	docs/doxygen.h
-
