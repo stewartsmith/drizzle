@@ -654,7 +654,8 @@ int TransactionServices::rollbackTransaction(Session *session, bool normal_trans
      * a rollback statement with the corresponding transaction ID
      * to rollback.
      */
-    rollbackTransactionMessage(session);
+    if (normal_transaction)
+      rollbackTransactionMessage(session);
 
     if (is_real_trans)
       session->transaction.xid_state.xid.null();
