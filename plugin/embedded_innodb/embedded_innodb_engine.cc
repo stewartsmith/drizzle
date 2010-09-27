@@ -834,22 +834,9 @@ static int create_table_add_field(ib_tbl_sch_t schema,
                                   column_attr, 0, sizeof(double));
     break;
   case message::Table::Field::ENUM:
-  {
-    message::Table::Field::EnumerationValues field_options=
-      field.enumeration_values();
-
-    if (field_options.field_value_size() <= 256)
-      *err= ib_table_schema_add_col(schema, field.name().c_str(), IB_INT,
-                                    column_attr, 0, 1);
-    else if (field_options.field_value_size() > 256)
-      *err= ib_table_schema_add_col(schema, field.name().c_str(), IB_INT,
-                                    column_attr, 0, 2);
-    else
-    {
-      assert(field_options.field_value_size() <= Field_enum::max_supported_elements);
-    }
+    *err= ib_table_schema_add_col(schema, field.name().c_str(), IB_INT,
+                                  column_attr, 0, 4);
     break;
-  }
   case message::Table::Field::DATE:
     *err= ib_table_schema_add_col(schema, field.name().c_str(), IB_INT,
                                   column_attr, 0, 4);
@@ -1716,14 +1703,7 @@ static ib_err_t write_row_to_innodb_tuple(Field **fields, ib_tpl_t tuple)
     }
     else if ((**field).type() == DRIZZLE_TYPE_ENUM)
     {
-      if ((*field)->data_length() == 1)
-        err= ib_tuple_write_u8(tuple, colnr, *((ib_u8_t*)(*field)->ptr));
-      else if ((*field)->data_length() == 2)
-        err= ib_tuple_write_u16(tuple, colnr, *((ib_u16_t*)(*field)->ptr));
-      else
-      {
-        assert((*field)->data_length() <= 2);
-      }
+      err= ib_tuple_write_u32(tuple, colnr, *((ib_u32_t*)(*field)->ptr));
     }
     else if ((**field).type() == DRIZZLE_TYPE_DATE)
     {
