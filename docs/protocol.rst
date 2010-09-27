@@ -8,10 +8,10 @@
 # the COPYING file in this directory for full text.
 #
 
-STATUS: This is currently a proposed draft as of November 29, 2008
-
 Drizzle Protocol
-----------------
+================
+
+`This is currently a proposed draft as of November 29, 2008`
 
 The Drizzle protocol works over TCP, UDP, and Unix Domain Sockets
 (UDS, also known as IPC sockets), although there are limitations when
@@ -129,21 +129,33 @@ and support packets of any size. It also allows for a large packet
 to be aborted gracefully (without having to close the connection)
 in the event of an error.
 
-    |----------------------------- 32 Bits -----------------------------|
+   +-------------------------------------------------------------------------+
+   +                                  32 Bits                                +
+   +-------------------------------------------------------------------------+
+    
+   +-----+----------------+----------------+---------------------------------+
+   |   0 | Magic          | Protocol       | Command ID                      |
+   +-----+----------------+----------------+---------------------------------+
 
-    |----------------|----------------|---------------------------------|
-0   | Magic          | Protocol       | Command ID                      |
-    |----------------|----------------|---------------------------------|
-32  | Command / Result Code           | Client ID Length                |
-    |---------------------------------|---------------------------------|
-64  | Client ID (optional, variable length)                             |
-    |---------------------------------|---------------------------------|
-64+ | Chunk Length and Value Pairs (optional, variable length)          |
-    |---------------------------------|---------------------------------|
-64+ | Chunk Length = 0                |
-    |---------------------------------|---------------------------------|
-80+ | Checksum                                                          |
-    |-------------------------------------------------------------------|
+   +-----+---------------------------------+---------------------------------+
+   |  32 | Command / Result Code           | Client ID Length                |
+   +-----+---------------------------------+---------------------------------+
+
+   +-----+---------------------------------+---------------------------------+
+   |  64 | Client ID (optional, variable length)                             |
+   +-----+---------------------------------+---------------------------------+
+
+   +-----+---------------------------------+---------------------------------+
+   | 64+ | Chunk Length and Value Pairs (optional, variable length)          |
+   +-----+---------------------------------+---------------------------------+
+
+   +-----+---------------------------------+---------------------------------+
+   + 64+ | Chunk Length = 0                |                                 |
+   +-----+---------------------------------+---------------------------------+
+
+   +-----+---------------------------------+---------------------------------+
+   | 80+ | Checksum                                                          |
+   +-----+---------------------------------+---------------------------------+
 
 The first part of a packet is:
 
@@ -160,30 +172,38 @@ The first part of a packet is:
 
 2-byte Command/result code. For commands, this may be:
 
-       1  ECHO - The entire packet is simply echoed back to the caller.
-       2  SET - Set protocol options.
-       3  QUERY - Execute query.
-       4  QUERY_RO - Same as QUERY, but hints that this is a read-only
-          query. This is only useful for routers/proxies who may want
-          to redirect the request to a read slave.
+       1  ECHO
+         The entire packet is simply echoed back to the caller.
+       2  SET
+         Set protocol options.
+       3  QUERY
+         Execute query.
+       4  QUERY_RO
+         Same as QUERY, but hints that this is a read-only
+         query. This is only useful for routers/proxies who may want
+         to redirect the request to a read slave.
 
        Result codes may be:
 
-       1  OK - Single packet success response. No data associated
-          with the result besides parameters.
-       2  ERROR - Single packet error response.
-       3  DATA - Start of a multi-packet result set.
-       3  DATA_END - Mark the end of a series of data packets. This is
-          useful so a low level router or proxy can know when a
-          response is complete without inspecting the contents of
-          the packets.
+       1  OK
+         Single packet success response. No data associated
+         with the result besides parameters.
+       2  ERROR
+         Single packet error response.
+       3  DATA
+         Start of a multi-packet result set.
+       3  DATA_END
+         Mark the end of a series of data packets. This is
+         useful so a low level router or proxy can know when a
+         response is complete without inspecting the contents of
+         the packets.
 
 2-byte Client ID length.
-X-byte Client ID (length is value of client ID length). The client ID is
-       there for the client and routers/proxies to use. The server
-       treats this as opaque data, and will only preserve it to send
-       in responses. This can be used as a sharding key, to keep
-       state information in a proxy, or any other use.
+X-byte Client ID (length is value of client ID length).
+The client ID is there for the client and routers/proxies to use. The server
+treats this as opaque data, and will only preserve it to send
+in responses. This can be used as a sharding key, to keep
+state information in a proxy, or any other use.
 
 Next, zero or more chunks are given, terminated by a chunk length of
 0. Each chunk consist of a length and then that amount of data.
