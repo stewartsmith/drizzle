@@ -359,8 +359,12 @@ static void fix_paths(string progname);
 static void usage(void);
 void close_connections(void);
 
+po::options_description config_options("Config File Options");
 po::options_description long_options("Kernel Options");
+po::options_description plugin_load_options("Plugin Loading Options");
 po::options_description plugin_options("Plugin Options");
+po::options_description initial_options("Config and Plugin Loading");
+po::options_description full_options("Kernel and Plugin Loading and Plugin");
 vector<string> unknown_options;
 vector<string> defaults_file_list;
 po::variables_map vm;
@@ -1082,7 +1086,7 @@ static void process_defaults_files()
     ifstream input_defaults_file(file_location.c_str());
     
     po::parsed_options file_parsed=
-      po::parse_config_file(input_defaults_file, long_options, true);
+      po::parse_config_file(input_defaults_file, full_options, true);
     vector<string> file_unknown= 
       po::collect_unrecognized(file_parsed.options, po::include_positional);
 
@@ -1121,7 +1125,7 @@ static void compose_defaults_file_list(vector<string> in_options)
   }
 }
 
-int init_common_variables(int argc, char **argv)
+int init_common_variables(int argc, char **argv, module::Registry &plugins)
 {
   time_t curr_time;
   umask(((~internal::my_umask) & 0666));
@@ -1168,11 +1172,37 @@ int init_common_variables(int argc, char **argv)
 
   std::string system_config_file_drizzle("drizzled.cnf");
 
-  long_options.add_options()
+  config_options.add_options()
   ("help-extended", po::value<bool>(&opt_help_extended)->default_value(false)->zero_tokens(),
   N_("Display this help and exit after initializing plugins."))
   ("help,?", po::value<bool>(&opt_help)->default_value(false)->zero_tokens(),
   N_("Display this help and exit."))
+  ("no-defaults", po::value<bool>()->default_value(false)->zero_tokens(),
+  N_("Configuration file defaults are not used if no-defaults is set"))
+  ("defaults-file", po::value<vector<string> >()->composing()->notifier(&compose_defaults_file_list),
+   N_("Configuration file to use"))
+  ("config-dir", po::value<string>()->default_value(system_config_dir_drizzle),
+   N_("Base location for config files"))
+  ;
+
+  plugin_load_options.add_options()
+  ("plugin-dir", po::value<string>(),
+  N_("Directory for plugins."))
+  ("plugin-add", po::value<vector<string> >()->composing()->notifier(&compose_plugin_add),
+  N_("Optional comma separated list of plugins to load at startup in addition "
+     "to the default list of plugins. "
+     "[for example: --plugin_add=crc32,logger_gearman]"))    
+  ("plugin-remove", po::value<vector<string> >()->composing()->notifier(&compose_plugin_remove),
+  N_("Optional comma separated list of plugins to not load at startup. Effectively "
+     "removes a plugin from the list of plugins to be loaded. "
+     "[for example: --plugin_remove=crc32,logger_gearman]"))
+  ("plugin-load", po::value<string>()->notifier(&notify_plugin_load)->default_value(PANDORA_PLUGIN_LIST),
+  N_("Optional comma separated list of plugins to load at starup instead of "
+     "the default plugin load list. "
+     "[for example: --plugin_load=crc32,logger_gearman]"))
+  ;
+
+  long_options.add_options()
   ("auto-increment-increment", po::value<uint64_t>(&global_system_variables.auto_increment_increment)->default_value(1)->notifier(&check_limits_aii),
   N_("Auto-increment columns are incremented by this"))
   ("auto-increment-offset", po::value<uint64_t>(&global_system_variables.auto_increment_offset)->default_value(1)->notifier(&check_limits_aio),
@@ -1281,20 +1311,6 @@ int init_common_variables(int argc, char **argv)
      "automatically pick a reasonable value; if set to MAX_TABLES+2, the "
      "optimizer will switch to the original find_best (used for "
      "testing/comparison)."))
-  ("plugin-dir", po::value<string>(),
-  N_("Directory for plugins."))
-  ("plugin-add", po::value<vector<string> >()->composing()->notifier(&compose_plugin_add),
-  N_("Optional comma separated list of plugins to load at startup in addition "
-     "to the default list of plugins. "
-     "[for example: --plugin_add=crc32,logger_gearman]"))    
-  ("plugin-remove", po::value<vector<string> >()->composing()->notifier(&compose_plugin_remove),
-  N_("Optional comma separated list of plugins to not load at startup. Effectively "
-     "removes a plugin from the list of plugins to be loaded. "
-     "[for example: --plugin_remove=crc32,logger_gearman]"))
-  ("plugin-load", po::value<string>()->notifier(&notify_plugin_load)->default_value(PANDORA_PLUGIN_LIST),
-  N_("Optional comma separated list of plugins to load at starup instead of "
-     "the default plugin load list. "
-     "[for example: --plugin_load=crc32,logger_gearman]"))  
   ("preload-buffer-size", po::value<uint64_t>(&global_system_variables.preload_buff_size)->default_value(32*1024L)->notifier(&check_limits_pbs),
   N_("The size of the buffer that is allocated when preloading indexes"))
   ("query-alloc-block-size", 
@@ -1334,16 +1350,17 @@ int init_common_variables(int argc, char **argv)
   po::value<uint64_t>(&global_system_variables.tmp_table_size)->default_value(16*1024*1024L)->notifier(&check_limits_tmp_table_size),
   N_("If an internal in-memory temporary table exceeds this size, Drizzle will"
      " automatically convert it to an on-disk MyISAM table."))
-  ("no-defaults", po::value<bool>()->default_value(false)->zero_tokens(),
-  N_("Configuration file defaults are not used if no-defaults is set"))
-  ("defaults-file", po::value<vector<string> >()->composing()->notifier(&compose_defaults_file_list),
-   N_("Configuration file to use"))
-  ("config-dir", po::value<string>()->default_value(system_config_dir_drizzle),
-   N_("Base location for config files"))
   ;
 
+  full_options.add(long_options);
+  full_options.add(plugin_load_options);
+
+  initial_options.add(config_options);
+  initial_options.add(plugin_load_options);
+
+  /* Get options about where config files and the like are */
   po::parsed_options parsed= po::command_line_parser(argc, argv).
-    options(long_options).allow_unregistered().extra_parser(parse_size_arg).run();
+    options(initial_options).allow_unregistered().extra_parser(parse_size_arg).run();
   unknown_options=
     po::collect_unrecognized(parsed.options, po::include_positional);
 
@@ -1387,11 +1404,53 @@ int init_common_variables(int argc, char **argv)
     }
   }
 
-  po::notify(vm);
   process_defaults_files();
-  po::notify(vm);
+  /* TODO: here is where we should add a process_env_vars */
+
+  /* At this point, we've read all the options we need to read from files and
+     collected most of them into unknown options - now let's load everything
+  */
+
+  if (plugin_init(plugins, plugin_options))
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize plugins\n"));
+    unireg_abort(1);
+  }
+
+  full_options.add(plugin_options);
+
+  vector<string> final_unknown_options;
+  try
+  {
+    po::parsed_options final_parsed=
+      po::command_line_parser(unknown_options).
+      options(full_options).extra_parser(parse_size_arg).run();
+
+    final_unknown_options=
+      po::collect_unrecognized(final_parsed.options, po::include_positional);
+
+    po::store(final_parsed, vm);
+
+  }
+  catch (po::invalid_command_line_syntax &err)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("%s: %s.\n"
+                    "Use --help to get a list of available options\n"),
+                  internal::my_progname, err.what());
+    unireg_abort(1);
+  }
+  catch (po::unknown_option &err)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("%s\nUse --help to get a list of available options\n"),
+                  err.what());
+    unireg_abort(1);
+  }
 
   get_options();
+
+  po::notify(vm);
 
   /* Inverted Booleans */
 
@@ -1495,46 +1554,9 @@ int init_server_components(module::Registry &plugins)
   /* Allow storage engine to give real error messages */
   ha_init_errors();
 
-  if (plugin_init(plugins, plugin_options))
-  {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize plugins\n"));
-    unireg_abort(1);
-  }
-
 
   if (opt_help || opt_help_extended)
     unireg_abort(0);
-
-  vector<string> final_unknown_options;
-  try
-  {
-    po::parsed_options parsed=
-      po::command_line_parser(unknown_options).
-      options(plugin_options).extra_parser(parse_size_arg).run();
-
-    final_unknown_options=
-      po::collect_unrecognized(parsed.options, po::include_positional);
-
-    po::store(parsed, vm);
-
-  }
-  catch (po::invalid_command_line_syntax &err)
-  {
-    errmsg_printf(ERRMSG_LVL_ERROR,
-                  _("%s: %s.\n"
-                    "Use --help to get a list of available options\n"),
-                  internal::my_progname, err.what());
-    unireg_abort(1);
-  }
-  catch (po::unknown_option &err)
-  {
-    errmsg_printf(ERRMSG_LVL_ERROR,
-                  _("%s\nUse --help to get a list of available options\n"),
-                  err.what());
-    unireg_abort(1);
-  }
-
-  po::notify(vm);
 
   plugin_finalize(plugins);
 
@@ -2026,6 +2048,8 @@ static void usage(void)
   printf(_("Usage: %s [OPTIONS]\n"), internal::my_progname);
 
   po::options_description all_options("Drizzled Options");
+  all_options.add(config_options);
+  all_options.add(plugin_load_options);
   all_options.add(long_options);
   all_options.add(plugin_options);
   cout << all_options << endl;

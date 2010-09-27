@@ -238,7 +238,7 @@ int main(int argc, char **argv)
   /* Function generates error messages before abort */
   /* init_common_variables must get basic settings such as data_home_dir
      and plugin_load_list. */
-  if (init_common_variables(argc, argv))
+  if (init_common_variables(argc, argv, modules))
     unireg_abort(1);				// Will do exit
 
   init_signals();
