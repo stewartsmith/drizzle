@@ -307,7 +307,7 @@ void Session::lockOnSys()
   if (mysys_var->current_cond)
   {
     mysys_var->current_mutex->lock();
-    pthread_cond_broadcast(mysys_var->current_cond->native_handle());
+    mysys_var->current_cond->notify_all();
     mysys_var->current_mutex->unlock();
   }
 }
