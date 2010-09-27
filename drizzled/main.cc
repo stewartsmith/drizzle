@@ -236,11 +236,16 @@ int main(int argc, char **argv)
   google::protobuf::SetLogHandler(&GoogleProtoErrorThrower);
 
   /* Function generates error messages before abort */
+  error_handler_hook= my_message_sql;
   /* init_common_variables must get basic settings such as data_home_dir
      and plugin_load_list. */
-  if (init_common_variables(argc, argv))
+  if (init_common_variables(argc, argv, modules))
     unireg_abort(1);				// Will do exit
 
+  /*
+    init signals & alarm
+    After this we can't quit by a simple unireg_abort
+  */
   init_signals();
 
 
@@ -269,9 +274,9 @@ int main(int argc, char **argv)
     }
     /* TODO: This is a hack until we can properly support std::string in sys_var*/
     char **data_home_ptr= getDatadirPtr();
-    *data_home_ptr= new char[getDataHome().size()+1] ();
     fs::path full_data_home_path(fs::system_complete(fs::path(getDataHome())));
     std::string full_data_home(full_data_home_path.file_string());
+    *data_home_ptr= new char[full_data_home.size()+1] ();
     memcpy(*data_home_ptr, full_data_home.c_str(), full_data_home.size());
     getDataHomeCatalog()= "./";
     getDataHome()= "../";
@@ -304,11 +309,6 @@ int main(int argc, char **argv)
   if (plugin::Listen::setup())
     unireg_abort(1);
 
-  /*
-    init signals & alarm
-    After this we can't quit by a simple unireg_abort
-  */
-  error_handler_hook= my_message_sql;
 
   assert(plugin::num_trx_monitored_objects > 0);
   if (drizzle_rm_tmp_tables() ||

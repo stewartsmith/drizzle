@@ -34,6 +34,7 @@
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
+#include <boost/filesystem.hpp>
 
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/my_bit.h"
@@ -136,6 +137,7 @@
 
 
 using namespace std;
+namespace fs=boost::filesystem;
 namespace po=boost::program_options;
 
 
@@ -222,7 +224,7 @@ bool volatile select_thread_in_use;
 bool volatile abort_loop;
 bool volatile shutdown_in_progress;
 char *opt_scheduler_default;
-char *opt_scheduler= NULL;
+const char *opt_scheduler= NULL;
 
 size_t my_thread_stack_size= 0;
 
@@ -354,13 +356,17 @@ bool drizzle_rm_tmp_tables();
 static void drizzle_init_variables(void);
 static void get_options();
 static const char *get_relative_path(const char *path);
-static void fix_paths(string progname);
+static void fix_paths();
 
 static void usage(void);
 void close_connections(void);
 
+po::options_description config_options("Config File Options");
 po::options_description long_options("Kernel Options");
+po::options_description plugin_load_options("Plugin Loading Options");
 po::options_description plugin_options("Plugin Options");
+po::options_description initial_options("Config and Plugin Loading");
+po::options_description full_options("Kernel and Plugin Loading and Plugin");
 vector<string> unknown_options;
 vector<string> defaults_file_list;
 po::variables_map vm;
@@ -673,6 +679,60 @@ const char *load_default_groups[]=
 {
   DRIZZLE_CONFIG_NAME, "server", 0, 0
 };
+
+static void find_plugin_dir(string progname)
+{
+  if (progname[0] != FN_LIBCHAR)
+  {
+    /* We have a relative path and need to find the absolute */
+    char working_dir[FN_REFLEN];
+    char *working_dir_ptr= working_dir;
+    working_dir_ptr= getcwd(working_dir_ptr, FN_REFLEN);
+    string new_path(working_dir);
+    if (*(new_path.end()-1) != '/')
+      new_path.push_back('/');
+    if (progname[0] == '.' && progname[1] == '/')
+      new_path.append(progname.substr(2));
+    else
+      new_path.append(progname);
+    progname.swap(new_path);
+  }
+
+  /* Now, trim off the exe name */
+  string progdir(progname.substr(0, progname.rfind(FN_LIBCHAR)+1));
+  if (progdir.rfind(".libs/") != string::npos)
+  {
+    progdir.assign(progdir.substr(0, progdir.rfind(".libs/")));
+  }
+  string testlofile(progdir);
+  testlofile.append("drizzled.lo");
+  string testofile(progdir);
+  testofile.append("drizzled.o");
+  struct stat testfile_stat;
+  if (stat(testlofile.c_str(), &testfile_stat) && stat(testofile.c_str(), &testfile_stat))
+  {
+    /* neither drizzled.lo or drizzled.o exist - we are not in a source dir.
+     * Go on as usual
+     */
+    (void) internal::my_load_path(opt_plugin_dir, get_relative_path(PKGPLUGINDIR), drizzle_home);
+  }
+  else
+  {
+    /* We are in a source dir! Plugin dir is ../plugin/.libs */
+    size_t last_libchar_pos= progdir.rfind(FN_LIBCHAR,progdir.size()-2)+1;
+    string source_plugindir(progdir.substr(0,last_libchar_pos));
+    source_plugindir.append("plugin/.libs");
+    (void) internal::my_load_path(opt_plugin_dir, source_plugindir.c_str(), "");
+  }
+}
+
+static void notify_plugin_dir(string in_plugin_dir)
+{
+  if (not in_plugin_dir.empty())
+  {
+    (void) internal::my_load_path(opt_plugin_dir, in_plugin_dir.c_str(), drizzle_home);
+  }
+}
 
 static void check_limits_aii(uint64_t in_auto_increment_increment)
 {
@@ -1082,7 +1142,7 @@ static void process_defaults_files()
     ifstream input_defaults_file(file_location.c_str());
     
     po::parsed_options file_parsed=
-      po::parse_config_file(input_defaults_file, long_options, true);
+      po::parse_config_file(input_defaults_file, full_options, true);
     vector<string> file_unknown= 
       po::collect_unrecognized(file_parsed.options, po::include_positional);
 
@@ -1121,7 +1181,7 @@ static void compose_defaults_file_list(vector<string> in_options)
   }
 }
 
-int init_common_variables(int argc, char **argv)
+int init_common_variables(int argc, char **argv, module::Registry &plugins)
 {
   time_t curr_time;
   umask(((~internal::my_umask) & 0666));
@@ -1137,6 +1197,7 @@ int init_common_variables(int argc, char **argv)
 
   drizzle_init_variables();
 
+  find_plugin_dir(argv[0]);
   {
     struct tm tm_tmp;
     localtime_r(&server_start_time,&tm_tmp);
@@ -1168,11 +1229,37 @@ int init_common_variables(int argc, char **argv)
 
   std::string system_config_file_drizzle("drizzled.cnf");
 
-  long_options.add_options()
+  config_options.add_options()
   ("help-extended", po::value<bool>(&opt_help_extended)->default_value(false)->zero_tokens(),
   N_("Display this help and exit after initializing plugins."))
   ("help,?", po::value<bool>(&opt_help)->default_value(false)->zero_tokens(),
   N_("Display this help and exit."))
+  ("no-defaults", po::value<bool>()->default_value(false)->zero_tokens(),
+  N_("Configuration file defaults are not used if no-defaults is set"))
+  ("defaults-file", po::value<vector<string> >()->composing()->notifier(&compose_defaults_file_list),
+   N_("Configuration file to use"))
+  ("config-dir", po::value<string>()->default_value(system_config_dir_drizzle),
+   N_("Base location for config files"))
+  ("plugin-dir", po::value<string>()->notifier(&notify_plugin_dir),
+  N_("Directory for plugins."))
+  ;
+
+  plugin_load_options.add_options()
+  ("plugin-add", po::value<vector<string> >()->composing()->notifier(&compose_plugin_add),
+  N_("Optional comma separated list of plugins to load at startup in addition "
+     "to the default list of plugins. "
+     "[for example: --plugin_add=crc32,logger_gearman]"))    
+  ("plugin-remove", po::value<vector<string> >()->composing()->notifier(&compose_plugin_remove),
+  N_("Optional comma separated list of plugins to not load at startup. Effectively "
+     "removes a plugin from the list of plugins to be loaded. "
+     "[for example: --plugin_remove=crc32,logger_gearman]"))
+  ("plugin-load", po::value<string>()->notifier(&notify_plugin_load)->default_value(PANDORA_PLUGIN_LIST),
+  N_("Optional comma separated list of plugins to load at starup instead of "
+     "the default plugin load list. "
+     "[for example: --plugin_load=crc32,logger_gearman]"))
+  ;
+
+  long_options.add_options()
   ("auto-increment-increment", po::value<uint64_t>(&global_system_variables.auto_increment_increment)->default_value(1)->notifier(&check_limits_aii),
   N_("Auto-increment columns are incremented by this"))
   ("auto-increment-offset", po::value<uint64_t>(&global_system_variables.auto_increment_offset)->default_value(1)->notifier(&check_limits_aio),
@@ -1281,20 +1368,6 @@ int init_common_variables(int argc, char **argv)
      "automatically pick a reasonable value; if set to MAX_TABLES+2, the "
      "optimizer will switch to the original find_best (used for "
      "testing/comparison)."))
-  ("plugin-dir", po::value<string>(),
-  N_("Directory for plugins."))
-  ("plugin-add", po::value<vector<string> >()->composing()->notifier(&compose_plugin_add),
-  N_("Optional comma separated list of plugins to load at startup in addition "
-     "to the default list of plugins. "
-     "[for example: --plugin_add=crc32,logger_gearman]"))    
-  ("plugin-remove", po::value<vector<string> >()->composing()->notifier(&compose_plugin_remove),
-  N_("Optional comma separated list of plugins to not load at startup. Effectively "
-     "removes a plugin from the list of plugins to be loaded. "
-     "[for example: --plugin_remove=crc32,logger_gearman]"))
-  ("plugin-load", po::value<string>()->notifier(&notify_plugin_load)->default_value(PANDORA_PLUGIN_LIST),
-  N_("Optional comma separated list of plugins to load at starup instead of "
-     "the default plugin load list. "
-     "[for example: --plugin_load=crc32,logger_gearman]"))  
   ("preload-buffer-size", po::value<uint64_t>(&global_system_variables.preload_buff_size)->default_value(32*1024L)->notifier(&check_limits_pbs),
   N_("The size of the buffer that is allocated when preloading indexes"))
   ("query-alloc-block-size", 
@@ -1334,19 +1407,21 @@ int init_common_variables(int argc, char **argv)
   po::value<uint64_t>(&global_system_variables.tmp_table_size)->default_value(16*1024*1024L)->notifier(&check_limits_tmp_table_size),
   N_("If an internal in-memory temporary table exceeds this size, Drizzle will"
      " automatically convert it to an on-disk MyISAM table."))
-  ("no-defaults", po::value<bool>()->default_value(false)->zero_tokens(),
-  N_("Configuration file defaults are not used if no-defaults is set"))
-  ("defaults-file", po::value<vector<string> >()->composing()->notifier(&compose_defaults_file_list),
-   N_("Configuration file to use"))
-  ("config-dir", po::value<string>()->default_value(system_config_dir_drizzle),
-   N_("Base location for config files"))
   ;
 
-  // Disable allow_guessing
-  int style = po::command_line_style::default_style & ~po::command_line_style::allow_guessing;
+  full_options.add(long_options);
+  full_options.add(plugin_load_options);
 
+  initial_options.add(config_options);
+  initial_options.add(plugin_load_options);
+
+    int style = po::command_line_style::default_style & ~po::command_line_style::allow_guessing;
+    po::parsed_options parsed=
+      po::command_line_parser(unknown_options).style(style).
+      options(plugin_options).extra_parser(parse_size_arg).run();
+  /* Get options about where config files and the like are */
   po::parsed_options parsed= po::command_line_parser(argc, argv).style(style).
-    options(long_options).allow_unregistered().extra_parser(parse_size_arg).run();
+    options(initial_options).allow_unregistered().extra_parser(parse_size_arg).run();
   unknown_options=
     po::collect_unrecognized(parsed.options, po::include_positional);
 
@@ -1390,11 +1465,55 @@ int init_common_variables(int argc, char **argv)
     }
   }
 
-  po::notify(vm);
   process_defaults_files();
+  /* TODO: here is where we should add a process_env_vars */
+
+  /* We need a notify here so that plugin_init will work properly */
   po::notify(vm);
+  /* At this point, we've read all the options we need to read from files and
+     collected most of them into unknown options - now let's load everything
+  */
+
+  if (plugin_init(plugins, plugin_options))
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize plugins\n"));
+    unireg_abort(1);
+  }
+
+  full_options.add(plugin_options);
+
+  vector<string> final_unknown_options;
+  try
+  {
+    po::parsed_options final_parsed=
+      po::command_line_parser(unknown_options).style(style).
+      options(full_options).extra_parser(parse_size_arg).run();
+
+    final_unknown_options=
+      po::collect_unrecognized(final_parsed.options, po::include_positional);
+
+    po::store(final_parsed, vm);
+
+  }
+  catch (po::invalid_command_line_syntax &err)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("%s: %s.\n"
+                    "Use --help to get a list of available options\n"),
+                  internal::my_progname, err.what());
+    unireg_abort(1);
+  }
+  catch (po::unknown_option &err)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("%s\nUse --help to get a list of available options\n"),
+                  err.what());
+    unireg_abort(1);
+  }
 
   get_options();
+
+  po::notify(vm);
 
   /* Inverted Booleans */
 
@@ -1409,7 +1528,7 @@ int init_common_variables(int argc, char **argv)
     }
   }
 
-  fix_paths(argv[0]);
+  fix_paths();
 
   current_pid= getpid();		/* Save for later ref */
   init_time();				/* Init time-functions (read zone) */
@@ -1428,6 +1547,9 @@ int init_common_variables(int argc, char **argv)
     errmsg_printf(ERRMSG_LVL_ERROR, _("Error getting default charset"));
     return 1;                           // Eof of the list
   }
+
+  if (vm.count("scheduler"))
+    opt_scheduler= vm["scheduler"].as<string>().c_str();
 
   if (default_collation_name)
   {
@@ -1498,50 +1620,14 @@ int init_server_components(module::Registry &plugins)
   /* Allow storage engine to give real error messages */
   ha_init_errors();
 
-  if (plugin_init(plugins, plugin_options))
-  {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize plugins\n"));
-    unireg_abort(1);
-  }
-
 
   if (opt_help || opt_help_extended)
     unireg_abort(0);
 
-  vector<string> final_unknown_options;
-  try
+  if (plugin_finalize(plugins))
   {
-    // Disable allow_guessing
-    int style = po::command_line_style::default_style & ~po::command_line_style::allow_guessing;
-    po::parsed_options parsed=
-      po::command_line_parser(unknown_options).style(style).
-      options(plugin_options).extra_parser(parse_size_arg).run();
-
-    final_unknown_options=
-      po::collect_unrecognized(parsed.options, po::include_positional);
-
-    po::store(parsed, vm);
-
-  }
-  catch (po::invalid_command_line_syntax &err)
-  {
-    errmsg_printf(ERRMSG_LVL_ERROR,
-                  _("%s: %s.\n"
-                    "Use --help to get a list of available options\n"),
-                  internal::my_progname, err.what());
     unireg_abort(1);
   }
-  catch (po::unknown_option &err)
-  {
-    errmsg_printf(ERRMSG_LVL_ERROR,
-                  _("%s\nUse --help to get a list of available options\n"),
-                  err.what());
-    unireg_abort(1);
-  }
-
-  po::notify(vm);
-
-  plugin_finalize(plugins);
 
   string scheduler_name;
   if (opt_scheduler)
@@ -1906,7 +1992,7 @@ struct option my_long_options[] =
    0, GET_UINT, OPT_ARG, 0, 0, MAX_TABLES+2, 0, 1, 0},
   {"plugin_dir", OPT_PLUGIN_DIR,
    N_("Directory for plugins."),
-   (char**) &opt_plugin_dir_ptr, (char**) &opt_plugin_dir_ptr, 0,
+   NULL, NULL, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"plugin_add", OPT_PLUGIN_ADD,
    N_("Optional comma separated list of plugins to load at startup in addition "
@@ -2031,6 +2117,8 @@ static void usage(void)
   printf(_("Usage: %s [OPTIONS]\n"), internal::my_progname);
 
   po::options_description all_options("Drizzled Options");
+  all_options.add(config_options);
+  all_options.add(plugin_load_options);
   all_options.add(long_options);
   all_options.add(plugin_options);
   cout << all_options << endl;
@@ -2288,7 +2376,7 @@ static const char *get_relative_path(const char *path)
 }
 
 
-static void fix_paths(string progname)
+static void fix_paths()
 {
   char buff[FN_REFLEN],*pos,rp_buff[PATH_MAX];
   internal::convert_dirname(drizzle_home,drizzle_home,NULL);
@@ -2313,58 +2401,6 @@ static void fix_paths(string progname)
   (void) internal::my_load_path(pidfile_name, pidfile_name,
                                 getDataHome().c_str());
 
-  if (opt_plugin_dir_ptr == NULL)
-  {
-    /* No plugin dir has been specified. Figure out where the plugins are */
-    if (progname[0] != FN_LIBCHAR)
-    {
-      /* We have a relative path and need to find the absolute */
-      char working_dir[FN_REFLEN];
-      char *working_dir_ptr= working_dir;
-      working_dir_ptr= getcwd(working_dir_ptr, FN_REFLEN);
-      string new_path(working_dir);
-      if (*(new_path.end()-1) != '/')
-        new_path.push_back('/');
-      if (progname[0] == '.' && progname[1] == '/')
-        new_path.append(progname.substr(2));
-      else
-        new_path.append(progname);
-      progname.swap(new_path);
-    }
-
-    /* Now, trim off the exe name */
-    string progdir(progname.substr(0, progname.rfind(FN_LIBCHAR)+1));
-    if (progdir.rfind(".libs/") != string::npos)
-    {
-      progdir.assign(progdir.substr(0, progdir.rfind(".libs/")));
-    }
-    string testlofile(progdir);
-    testlofile.append("drizzled.lo");
-    string testofile(progdir);
-    testofile.append("drizzled.o");
-    struct stat testfile_stat;
-    if (stat(testlofile.c_str(), &testfile_stat) && stat(testofile.c_str(), &testfile_stat))
-    {
-      /* neither drizzled.lo or drizzled.o exist - we are not in a source dir.
-       * Go on as usual
-       */
-      (void) internal::my_load_path(opt_plugin_dir, get_relative_path(PKGPLUGINDIR),
-                                          drizzle_home);
-    }
-    else
-    {
-      /* We are in a source dir! Plugin dir is ../plugin/.libs */
-      size_t last_libchar_pos= progdir.rfind(FN_LIBCHAR,progdir.size()-2)+1;
-      string source_plugindir(progdir.substr(0,last_libchar_pos));
-      source_plugindir.append("plugin/.libs");
-      (void) internal::my_load_path(opt_plugin_dir, source_plugindir.c_str(), "");
-    }
-  }
-  else
-  {
-    (void) internal::my_load_path(opt_plugin_dir, opt_plugin_dir_ptr, drizzle_home);
-  }
-  opt_plugin_dir_ptr= opt_plugin_dir;
 
   const char *sharedir= get_relative_path(PKGDATADIR);
   if (internal::test_if_hard_path(sharedir))
@@ -2398,6 +2434,7 @@ static void fix_paths(string progname)
       drizzle_tmpdir.append(tmp_string);
     }
 
+    drizzle_tmpdir= fs::path(fs::system_complete(fs::path(drizzle_tmpdir))).file_string();
     assert(drizzle_tmpdir.size());
 
     if (mkdir(drizzle_tmpdir.c_str(), 0777) == -1)
