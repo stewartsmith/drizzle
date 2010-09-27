@@ -1075,8 +1075,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
       {
         message::Table::Field::EnumerationValues field_options= pfield.enumeration_values();
 
-        field_pack_length[fieldnr]=
-          get_enum_pack_length(field_options.field_value_size());
+        field_pack_length[fieldnr]= 4;
 
         interval_count++;
         interval_parts+= field_options.field_value_size();
@@ -2121,7 +2120,6 @@ Field *TableShare::make_field(unsigned char *ptr,
                                  null_pos,
                                  null_bit,
                                  field_name,
-                                 get_enum_pack_length(interval->count),
                                  interval,
                                  field_charset);
   case DRIZZLE_TYPE_VARCHAR:

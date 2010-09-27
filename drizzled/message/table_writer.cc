@@ -232,7 +232,10 @@ int main(int argc, char* argv[])
   po::positional_options_description p;
   p.add("table-name", 1);
 
-  po::store(po::command_line_parser(argc, argv).options(desc).
+  // Disable allow_guessing
+  int style = po::command_line_style::default_style & ~po::command_line_style::allow_guessing;
+
+  po::store(po::command_line_parser(argc, argv).options(desc).style(style).
             positional(p).run(), vm);
 
   if (not vm.count("table-name"))

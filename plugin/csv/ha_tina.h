@@ -49,7 +49,6 @@ public:
   */
   off_t saved_data_file_length;
   pthread_mutex_t mutex;
-  drizzled::THR_LOCK lock;
   bool update_file_opened;
   bool tina_write_opened;
   int meta_file;           /* Meta file we use */

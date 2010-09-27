@@ -20,6 +20,9 @@
 #include <drizzled/module/option_map.h>
 #include <drizzled/errmsg_print.h>
 
+#include <boost/thread.hpp>
+#include <boost/bind.hpp>
+
 namespace po= boost::program_options;
 using namespace std;
 using namespace drizzled;
@@ -35,31 +38,42 @@ namespace drizzled
   extern size_t my_thread_stack_size;
 }
 
-/**
- * Function to be run as a thread for each session.
- */
-namespace
+void MultiThreadScheduler::runSession(drizzled::Session *session)
 {
-  extern "C" pthread_handler_t session_thread(void *arg);
-}
-
-namespace
-{
-  extern "C" pthread_handler_t session_thread(void *arg)
+  if (drizzled::internal::my_thread_init())
   {
-    Session *session= static_cast<Session*>(arg);
-    MultiThreadScheduler *sched= static_cast<MultiThreadScheduler*>(session->scheduler);
-    sched->runSession(session);
-    return NULL;
+    session->disconnect(drizzled::ER_OUT_OF_RESOURCES, true);
+    session->status_var.aborted_connects++;
+    killSessionNow(session);
   }
+  boost::this_thread::at_thread_exit(&internal::my_thread_end);
+
+  session->thread_stack= (char*) &session;
+  session->run();
+  killSessionNow(session);
 }
 
-
-bool MultiThreadScheduler::addSession(Session *session)
+void MultiThreadScheduler::setStackSize()
 {
-  if (thread_count >= max_threads)
-    return true;
+  pthread_attr_t attr;
 
+  (void) pthread_attr_init(&attr);
+
+  /* Get the thread stack size that the OS will use and make sure
+    that we update our global variable. */
+  int err= pthread_attr_getstacksize(&attr, &my_thread_stack_size);
+  pthread_attr_destroy(&attr);
+
+  if (err != 0)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Unable to get thread stack size\n"));
+    my_thread_stack_size= 524288; // At the time of the writing of this code, this was OSX's
+  }
+
+  if (my_thread_stack_size == 0)
+  {
+    my_thread_stack_size= 524288; // At the time of the writing of this code, this was OSX's
+  }
 #ifdef __sun
   /*
    * Solaris will return zero for the stack size in a call to
@@ -71,39 +85,22 @@ bool MultiThreadScheduler::addSession(Session *session)
    * will be used.
    */
   if (my_thread_stack_size == 0)
+  {
     my_thread_stack_size= 2 * 1024 * 1024;
+  }
 #endif
+}
 
-  /* Thread stack size of zero means just use the OS default */
-  if (my_thread_stack_size != 0)
-  {
-    int err= pthread_attr_setstacksize(&attr, my_thread_stack_size);
-
-    if (err != 0)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("Unable to set thread stack size to %" PRId64 "\n"),
-                    static_cast<uint64_t>(my_thread_stack_size));
-      return true;
-    }
-  }
-  else
-  {
-    /* Get the thread stack size that the OS will use and make sure
-       that we update our global variable. */
-    int err= pthread_attr_getstacksize(&attr, &my_thread_stack_size);
-
-    if (err != 0)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Unable to get thread stack size\n"));
-      return true;
-    }
-  }
+bool MultiThreadScheduler::addSession(Session *session)
+{
+  if (thread_count >= max_threads)
+    return true;
 
   thread_count.increment();
 
-  if (pthread_create(&session->real_id, &attr, session_thread,
-                     static_cast<void*>(session)))
+  boost::thread new_thread(boost::bind(&MultiThreadScheduler::runSession, this, session));
+
+  if (not new_thread.joinable())
   {
     thread_count.decrement();
     return true;
@@ -118,9 +115,6 @@ void MultiThreadScheduler::killSessionNow(Session *session)
   /* Locks LOCK_thread_count and deletes session */
   Session::unlink(session);
   thread_count.decrement();
-  internal::my_thread_end();
-  pthread_exit(0);
-  /* We should never reach this point. */
 }
 
 MultiThreadScheduler::~MultiThreadScheduler()
@@ -130,8 +124,6 @@ MultiThreadScheduler::~MultiThreadScheduler()
   {
     COND_thread_count.wait(scopedLock);
   }
-
-  (void) pthread_attr_destroy(&attr);
 }
 
   

@@ -217,31 +217,31 @@ insert into t1 (x) values (1),(2),(3),(4),(5),(6),(7),(8),(9);
 update t1 set y=x;
 explain select * from t1, t1 t2 where t1.y = 8 and t2.x between 7 and t1.y+0;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	y	y	5	const	1	
+1	SIMPLE	t1	ref	y	y	5	const	1	Using where
 1	SIMPLE	t2	ALL	x	NULL	NULL	NULL	9	Using where; Using join buffer
 explain select * from t1, t1 t2 where t1.y = 8 and t2.x >= 7 and t2.x <= t1.y+0;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	y	y	5	const	1	
+1	SIMPLE	t1	ref	y	y	5	const	1	Using where
 1	SIMPLE	t2	ALL	x	NULL	NULL	NULL	9	Using where; Using join buffer
 explain select * from t1, t1 t2 where t1.y = 2 and t2.x between t1.y-1 and t1.y+1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	y	y	5	const	1	
+1	SIMPLE	t1	ref	y	y	5	const	1	Using where
 1	SIMPLE	t2	ALL	x	NULL	NULL	NULL	9	Using where; Using join buffer
 explain select * from t1, t1 t2 where t1.y = 2 and t2.x >= t1.y-1 and t2.x <= t1.y+1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	y	y	5	const	1	
+1	SIMPLE	t1	ref	y	y	5	const	1	Using where
 1	SIMPLE	t2	ALL	x	NULL	NULL	NULL	9	Using where; Using join buffer
 explain select * from t1, t1 t2 where t1.y = 2 and t2.x between 0 and t1.y;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	y	y	5	const	1	
+1	SIMPLE	t1	ref	y	y	5	const	1	Using where
 1	SIMPLE	t2	ALL	x	NULL	NULL	NULL	9	Using where; Using join buffer
 explain select * from t1, t1 t2 where t1.y = 2 and t2.x >= 0 and t2.x <= t1.y;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	y	y	5	const	1	
+1	SIMPLE	t1	ref	y	y	5	const	1	Using where
 1	SIMPLE	t2	ALL	x	NULL	NULL	NULL	9	Using where; Using join buffer
 explain select count(*) from t1 where x in (1);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	x	x	5	const	1	
+1	SIMPLE	t1	ref	x	x	5	const	1	Using where
 explain select count(*) from t1 where x in (1,2);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	range	x	x	5	NULL	2	Using where
@@ -414,8 +414,8 @@ count(*)
 1026
 analyze table t1,t2;
 Table	Op	Msg_type	Msg_text
-test.t1	analyze	note	The storage engine for the table doesn't support analyze
-test.t2	analyze	note	The storage engine for the table doesn't support analyze
+test.t1	analyze	status	OK
+test.t2	analyze	status	OK
 explain select * from t1, t2  where t1.uid=t2.uid AND t1.uid > 0;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	#	ALL	uid_index	NULL	NULL	#	#	Using where
@@ -974,7 +974,7 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 update t1 set a='b' where a<>'a';
 explain select * from t1 where a not between 'b' and 'b';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	#	ALL	a	NULL	NULL	#	#	Using where
+1	SIMPLE	#	#	#	#	#	#	#	Using where
 select a, hex(filler) from t1 where a not between 'b' and 'b';
 a	hex(filler)
 a	

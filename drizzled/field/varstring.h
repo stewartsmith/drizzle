@@ -41,8 +41,10 @@ public:
     length_bytes.
   */
   static const uint32_t MAX_SIZE;
+private:
   /* Store number of bytes used to store length (1 or 2) */
   uint32_t length_bytes;
+public:
   Field_varstring(unsigned char *ptr_arg,
                   uint32_t len_arg,
                   uint32_t length_bytes_arg,
@@ -62,11 +64,12 @@ public:
   bool zero_pack() const { return 0; }
   int  reset(void) { memset(ptr, 0, field_length+length_bytes); return 0; }
   uint32_t pack_length() const { return (uint32_t) field_length+length_bytes; }
+  uint32_t pack_length_no_ptr() const { return length_bytes; }
   uint32_t key_length() const { return (uint32_t) field_length; }
   uint32_t sort_length() const
   {
     return (uint32_t) field_length + (field_charset == &my_charset_bin ?
-                                    length_bytes : 0);
+                                      length_bytes : 0);
   }
   int  store(const char *to,uint32_t length, const CHARSET_INFO * const charset);
 

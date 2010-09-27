@@ -822,31 +822,28 @@ int TransactionServices::rollbackToSavepoint(Session *session, NamedSavepoint &s
   if (shouldConstructMessages())
   {
     cleanupTransactionMessage(getActiveTransactionMessage(session), session);
-    message::Transaction *savepoint_transaction= sv.getTransactionSavepoint();
-
-    google::protobuf::RepeatedPtrField< message::Statement> *statements= 
-      savepoint_transaction->mutable_statement();
-
-    /* A iterator is used here rather then the other GPB functions as there needs
-       to be a check for the case where there are no statements (a NULL value) */
-    if (statements != NULL)
+    message::Transaction *savepoint_transaction= sv.getTransactionMessage();
+    if (savepoint_transaction != NULL)
     {
-      google::protobuf::RepeatedPtrField< message::Statement>::iterator it= 
-        statements->begin();
-      google::protobuf::RepeatedPtrField< message::Statement>::iterator end_it= 
-        statements->end();
- 
-      message::Statement *new_statement= NULL;
-      
-      for (; it != end_it; ++it)
+      /* Make a copy of the savepoint transaction, this is necessary to assure proper cleanup. 
+         Upon commit the savepoint_transaction_copy will be cleaned up by a call to 
+         cleanupTransactionMessage(). The Transaction message in NamedSavepoint will be cleaned
+         up when the savepoint is cleaned up. This avoids calling delete twice on the Transaction.
+      */ 
+      message::Transaction *savepoint_transaction_copy= new message::Transaction(*sv.getTransactionMessage());
+      uint32_t num_statements = savepoint_transaction_copy->statement_size();
+      if (num_statements == 0)
+      {    
+        session->setStatementMessage(NULL);
+      }    
+      else 
       {
-        new_statement= &*it;
-      }
-
-      session->setTransactionMessage(savepoint_transaction);
-      session->setStatementMessage(new_statement);
+        session->setStatementMessage(savepoint_transaction_copy->mutable_statement(num_statements - 1));    
+      }    
+      session->setTransactionMessage(savepoint_transaction_copy);
     }
   }
+
   return error;
 }
 
@@ -900,7 +897,7 @@ int TransactionServices::setSavepoint(Session *session, NamedSavepoint &sv)
     {
       message::Transaction *transaction_savepoint= 
         new message::Transaction(*transaction);
-      sv.setTransactionSavepoint(transaction_savepoint);
+      sv.setTransactionMessage(transaction_savepoint);
     }
   } 
 
@@ -932,12 +929,6 @@ int TransactionServices::releaseSavepoint(Session *session, NamedSavepoint &sv)
     }
   }
   
-  if (shouldConstructMessages())
-  {
-    delete sv.getTransactionSavepoint();
-    sv.setTransactionSavepoint(NULL);
-  }
-
   return error;
 }
 
@@ -976,8 +967,6 @@ void TransactionServices::initTransactionMessage(message::Transaction &in_transa
 
   if (should_inc_trx_id)
     trx->set_transaction_id(getNextTransactionId());
-  else
-    trx->set_transaction_id(getCurrentTransactionId());
 
   trx->set_start_timestamp(in_session->getCurrentTimestamp());
 }
@@ -1067,12 +1056,18 @@ void TransactionServices::rollbackTransactionMessage(Session *in_session)
    */
   if (unlikely(message::transactionContainsBulkSegment(*transaction)))
   {
+    /* Remember the transaction ID so we can re-use it */
+    uint64_t trx_id= transaction->transaction_context().transaction_id();
+
     /*
      * Clear the transaction, create a Rollback statement message, 
      * attach it to the transaction, and push it to replicators.
      */
     transaction->Clear();
     initTransactionMessage(*transaction, in_session, false);
+
+    /* Set the transaction ID to match the previous messages */
+    transaction->mutable_transaction_context()->set_transaction_id(trx_id);
 
     message::Statement *statement= transaction->add_statement();
 
@@ -1116,6 +1111,9 @@ message::Statement &TransactionServices::getInsertStatement(Session *in_session,
      */
     if (static_cast<size_t>(transaction->ByteSize()) >= trx_msg_threshold)
     {
+      /* Remember the transaction ID so we can re-use it */
+      uint64_t trx_id= transaction->transaction_context().transaction_id();
+
       message::InsertData *current_data= statement->mutable_insert_data();
 
       /* Caller should use this value when adding a new record */
@@ -1137,6 +1135,10 @@ message::Statement &TransactionServices::getInsertStatement(Session *in_session,
        */
       statement= in_session->getStatementMessage();
       transaction= getActiveTransactionMessage(in_session, false);
+      assert(transaction != NULL);
+
+      /* Set the transaction ID to match the previous messages */
+      transaction->mutable_transaction_context()->set_transaction_id(trx_id);
     }
     else
     {
@@ -1306,6 +1308,9 @@ message::Statement &TransactionServices::getUpdateStatement(Session *in_session,
      */
     if (static_cast<size_t>(transaction->ByteSize()) >= trx_msg_threshold)
     {
+      /* Remember the transaction ID so we can re-use it */
+      uint64_t trx_id= transaction->transaction_context().transaction_id();
+
       message::UpdateData *current_data= statement->mutable_update_data();
 
       /* Caller should use this value when adding a new record */
@@ -1327,6 +1332,10 @@ message::Statement &TransactionServices::getUpdateStatement(Session *in_session,
        */
       statement= in_session->getStatementMessage();
       transaction= getActiveTransactionMessage(in_session, false);
+      assert(transaction != NULL);
+
+      /* Set the transaction ID to match the previous messages */
+      transaction->mutable_transaction_context()->set_transaction_id(trx_id);
     }
     else
     {
@@ -1561,6 +1570,9 @@ message::Statement &TransactionServices::getDeleteStatement(Session *in_session,
      */
     if (static_cast<size_t>(transaction->ByteSize()) >= trx_msg_threshold)
     {
+      /* Remember the transaction ID so we can re-use it */
+      uint64_t trx_id= transaction->transaction_context().transaction_id();
+
       message::DeleteData *current_data= statement->mutable_delete_data();
 
       /* Caller should use this value when adding a new record */
@@ -1582,6 +1594,10 @@ message::Statement &TransactionServices::getDeleteStatement(Session *in_session,
        */
       statement= in_session->getStatementMessage();
       transaction= getActiveTransactionMessage(in_session, false);
+      assert(transaction != NULL);
+
+      /* Set the transaction ID to match the previous messages */
+      transaction->mutable_transaction_context()->set_transaction_id(trx_id);
     }
     else
     {

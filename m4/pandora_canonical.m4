@@ -4,7 +4,7 @@ dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
 dnl Which version of the canonical setup we're using
-AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.150])
+AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.155])
 
 AC_DEFUN([PANDORA_FORCE_DEPEND_TRACKING],[
   AC_ARG_ENABLE([fat-binaries],
@@ -20,6 +20,12 @@ AC_DEFUN([PANDORA_FORCE_DEPEND_TRACKING],[
   dnl If we're building OSX Fat Binaries, we have to turn off -M options
   AS_IF([test "x${ac_enable_fat_binaries}" = "xyes"],[
     enable_dependency_tracking=no
+  ])
+])
+
+AC_DEFUN([PANDORA_BLOCK_BAD_OPTIONS],[
+  AS_IF([test "x${prefix}" = "x"],[
+    AC_MSG_ERROR([--prefix requires an argument])
   ])
 ])
 
@@ -65,6 +71,8 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   ],[
     AC_CONFIG_HEADERS([config.h])
   ])
+
+  PANDORA_BLOCK_BAD_OPTIONS
 
   # We need to prevent canonical target
   # from injecting -O2 into CFLAGS - but we won't modify anything if we have
@@ -123,8 +131,9 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
     AS_IF([test "$ac_cv_cxx_stdcxx_98" = "no"],[
       AC_MSG_ERROR([No working C++ Compiler has been found. ${PACKAGE} requires a C++ compiler that can handle C++98])
     ])
-
   ])
+  PANDORA_CXX_CSTDINT
+  PANDORA_CXX_CINTTYPES
   
   m4_if(m4_substr(m4_esyscmd(test -d gnulib && echo 0),0,1),0,[
     gl_INIT

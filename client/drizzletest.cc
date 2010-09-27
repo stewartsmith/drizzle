@@ -5479,8 +5479,12 @@ try
 
   po::variables_map vm;
 
+  // Disable allow_guessing
+  int style = po::command_line_style::default_style & ~po::command_line_style::allow_guessing;
+
   po::store(po::command_line_parser(argc, argv).options(long_options).
-            positional(p).extra_parser(parse_password_arg).run(), vm);
+            style(style).positional(p).extra_parser(parse_password_arg).run(),
+            vm);
 
   if (! vm["no-defaults"].as<bool>())
   {
@@ -6642,14 +6646,23 @@ int reg_replace(char** buf_p, int* buf_len_p, char *pattern,
     /* Repeatedly replace the string with the matched regex */
     string subject(in_string);
     size_t replace_length= strlen(replace);
+    size_t length_of_replacement= strlen(replace);
     size_t current_position= 0;
     int rc= 0;
-    while(0 >= (rc= pcre_exec(re, NULL, subject.c_str() + current_position, subject.length() - current_position,
-                      0, 0, ovector, 3)))
+
+    while (true) 
     {
+      rc= pcre_exec(re, NULL, subject.c_str(), subject.length(), 
+                    current_position, 0, ovector, 3);
+      if (rc < 0)
+      {
+        break;
+      }
+
       current_position= static_cast<size_t>(ovector[0]);
       replace_length= static_cast<size_t>(ovector[1] - ovector[0]);
-      subject.replace(current_position, replace_length, replace, replace_length);
+      subject.replace(current_position, replace_length, replace, length_of_replacement);
+      current_position= current_position + length_of_replacement;
     }
 
     char *new_buf = (char *) malloc(subject.length() + 1);

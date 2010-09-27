@@ -64,6 +64,7 @@ docs
 doxerr.log
 drizzle-2010.01.1315.tar.gz
 drizzle-2010.01.1315.tar.gz
+drizzle.pot
 drizzled.gcno
 drizzled/configmake.h
 drizzled/drizzled
@@ -86,6 +87,8 @@ drizzled/message/replication_event.pb.cc
 drizzled/message/replication_event.pb.h
 drizzled/message/replication_event_reader
 drizzled/message/replication_event_writer
+drizzled/message/resultset.pb.cc
+drizzled/message/resultset.pb.h
 drizzled/message/schema.pb.cc
 drizzled/message/schema.pb.h
 drizzled/message/schema_reader
@@ -125,8 +128,8 @@ extra/Makefile.in
 extra/comp_err
 extra/innochecksum
 extra/my_print_defaults
-extra/mysql_waitpid
 extra/mysql_password_hash
+extra/mysql_waitpid
 field.gcno
 field_conv.gcno
 field_iterator.gcno
@@ -200,6 +203,7 @@ plugin/myisam/myisamlog
 plugin/myisam/myisampack
 po/POTFILES
 po/remove-potcdate.sed
+po/stamp-it
 po/stamp-po
 protocol.gcno
 qcache.gcno
@@ -310,5 +314,3 @@ unittests/uwagi.txt
 virtual_column_info.gcno
 xid.gcno
 ylwrap
-po/stamp-it
-drizzle.pot

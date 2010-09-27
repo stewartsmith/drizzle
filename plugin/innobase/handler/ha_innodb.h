@@ -35,11 +35,18 @@ using namespace drizzled;
 typedef struct st_innobase_share {
 	THR_LOCK	lock;		/*!< MySQL lock protecting
 					this structure */
-	const char*	table_name;	/*!< InnoDB table name */
+	char	table_name[FN_REFLEN];	/*!< InnoDB table name */
 	uint		use_count;	/*!< reference count,
 					incremented in get_share()
 					and decremented in free_share() */
 	void*		table_name_hash;/*!< hash table chain node */
+
+        st_innobase_share(const char *arg) :
+          use_count(0)
+        {
+          strncpy(table_name, arg, FN_REFLEN);
+        }
+
 } INNOBASE_SHARE;
 
 

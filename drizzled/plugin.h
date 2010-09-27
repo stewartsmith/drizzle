@@ -46,9 +46,6 @@ class sys_var;
 typedef drizzle_lex_string LEX_STRING;
 struct option;
 
-extern char *opt_plugin_add;
-extern char *opt_plugin_remove;
-extern char *opt_plugin_load;
 extern char *opt_plugin_dir_ptr;
 extern char opt_plugin_dir[FN_REFLEN];
 
@@ -389,6 +386,9 @@ int64_t session_test_options(const Session *session, int64_t test_options);
 int session_sql_command(const Session *session);
 enum_tx_isolation session_tx_isolation(const Session *session);
 
+void compose_plugin_add(std::vector<std::string> options);
+void compose_plugin_remove(std::vector<std::string> options);
+void notify_plugin_load(std::string in_plugin_load);
 
 
 /**

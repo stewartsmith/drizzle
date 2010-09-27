@@ -380,7 +380,7 @@ xtPublic void xt_int8_to_byte_size(xtInt8 value, char *string)
 /* Version number must also be set in configure.in! */
 xtPublic c_char *xt_get_version(void)
 {
-	return "1.1.01 Beta";
+	return "1.1.01 RC";
 }
 
 /* Copy and URL decode! */
@@ -571,13 +571,13 @@ static XTStatMetaDataRec	pbxt_stat_meta_data[XT_STAT_MAXIMUM] = {
 		"Percentage of index cache that is dirty" },
 
 #ifdef XT_TIME_DISK_WRITES
-	{ XT_STAT_REC_WRITE_TIME,	"Data Log Write Time",	"rec", "w/ms",		XT_STAT_ACCUMULATIVE | XT_STAT_TIME_VALUE,
+	{ XT_STAT_REC_WRITE_TIME,	"Record Write Time",	"rec", "w/ms",		XT_STAT_ACCUMULATIVE | XT_STAT_TIME_VALUE,
 		"The time in %sseconds to write record/row files" },
-	{ XT_STAT_IND_WRITE_TIME,	"Data Log Write Time",	"ind", "w/ms",		XT_STAT_ACCUMULATIVE | XT_STAT_TIME_VALUE,
+	{ XT_STAT_IND_WRITE_TIME,	"Index Write Time",	"ind", "w/ms",		XT_STAT_ACCUMULATIVE | XT_STAT_TIME_VALUE,
 		"The time in %sseconds to write index files" },
-	{ XT_STAT_ILOG_WRITE_TIME,	"Data Log Write Time",	"ilog", "w/ms",		XT_STAT_ACCUMULATIVE | XT_STAT_TIME_VALUE,
+	{ XT_STAT_ILOG_WRITE_TIME,	"Index Log Write Time",	"ilog", "w/ms",		XT_STAT_ACCUMULATIVE | XT_STAT_TIME_VALUE,
 		"The time in %sseconds to index log files" },
-	{ XT_STAT_XLOG_WRITE_TIME,	"Data Log Write Time",	"*xlog", "w/ms",		XT_STAT_ACCUMULATIVE | XT_STAT_TIME_VALUE,
+	{ XT_STAT_XLOG_WRITE_TIME,	"Xact Log Write Time",	"*xlog", "w/ms",		XT_STAT_ACCUMULATIVE | XT_STAT_TIME_VALUE,
 		"The time in %sseconds to transaction log files" },
 	{ XT_STAT_DATA_WRITE_TIME,	"Data Log Write Time",	"*data", "w/ms",		XT_STAT_ACCUMULATIVE | XT_STAT_TIME_VALUE,
 		"The time in %sseconds to write data log files" }
@@ -585,9 +585,9 @@ static XTStatMetaDataRec	pbxt_stat_meta_data[XT_STAT_MAXIMUM] = {
 
 #ifdef XT_TIME_DISK_READS
     ,
-	{ XT_STAT_REC_READ_TIME,	"Data Log Read Time",	"rec", "r/ms",		XT_STAT_ACCUMULATIVE | XT_STAT_TIME_VALUE,
+	{ XT_STAT_REC_READ_TIME,	"Record Read Time",	"rec", "r/ms",		XT_STAT_ACCUMULATIVE | XT_STAT_TIME_VALUE,
 		"The time in %sseconds to read record/row files" },
-	{ XT_STAT_IND_READ_TIME,	"Data Log Read Time",	"ind", "r/ms",		XT_STAT_ACCUMULATIVE | XT_STAT_TIME_VALUE,
+	{ XT_STAT_IND_READ_TIME,	"Index Read Time",	"ind", "r/ms",		XT_STAT_ACCUMULATIVE | XT_STAT_TIME_VALUE,
 		"The time in %sseconds to read index files" },
 	{ XT_STAT_LOG_READ_TIME,	"Log Read Time",	"log", "r/ms",		XT_STAT_ACCUMULATIVE | XT_STAT_TIME_VALUE,
 		"The time in %sseconds to read index, transaction and data log files" },

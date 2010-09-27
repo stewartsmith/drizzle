@@ -47,10 +47,12 @@ public:
   NamedSavepoint(const char *in_name, size_t in_name_length) :
     name(in_name, in_name_length),
     resource_contexts(),
-    transaction_savepoint(NULL)
+    transaction_message(NULL)
   {}
-  ~NamedSavepoint()
-  {}
+
+  ~NamedSavepoint();
+
+  NamedSavepoint(const NamedSavepoint &other);
 
   void setResourceContexts(TransactionContext::ResourceContexts &new_contexts)
   {
@@ -72,21 +74,13 @@ public:
   {
     return name;
   }
-  message::Transaction *getTransactionSavepoint() const
+  message::Transaction *getTransactionMessage() const
   {
-    return transaction_savepoint;
+    return transaction_message;
   }
-  void setTransactionSavepoint(message::Transaction *in_transaction_savepoint)
+  void setTransactionMessage(message::Transaction *in_transaction_message)
   {
-    transaction_savepoint= in_transaction_savepoint;
-  }
-  NamedSavepoint(const NamedSavepoint &other)
-  {
-    name.assign(other.getName());
-    const TransactionContext::ResourceContexts &other_resource_contexts= other.getResourceContexts();
-    resource_contexts.assign(other_resource_contexts.begin(),
-                             other_resource_contexts.end());
-    transaction_savepoint= other.getTransactionSavepoint();
+    transaction_message= in_transaction_message;
   }
   NamedSavepoint &operator=(const NamedSavepoint &other)
   {
@@ -102,7 +96,7 @@ public:
 private:
   std::string name;
   TransactionContext::ResourceContexts resource_contexts;
-  message::Transaction *transaction_savepoint;
+  message::Transaction *transaction_message;
   NamedSavepoint();
 };
 

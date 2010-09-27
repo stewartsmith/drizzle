@@ -68,12 +68,15 @@ public:
 					HTON_FAST_KEY_READ | 
 					HTON_NULL_IN_KEY | 
 					HTON_CAN_INDEX_BLOBS |
-					HTON_AUTO_PART_KEY) 
+					HTON_AUTO_PART_KEY |
+					HTON_HAS_FOREIGN_KEYS |
+                    HTON_HAS_DOES_TRANSACTIONS) 
 	{}
 
 	void operator delete(void *) {}
 	void operator delete[] (void *) {}
 
+	/* override */ uint32_t index_flags(enum  ha_key_alg) const;
 	/* override */ int close_connection(Session *);
 	/* override */ int commit(Session *, bool);
 	/* override */ int rollback(Session *, bool);
@@ -104,7 +107,9 @@ public:
 
 	/* override */ bool doDoesTableExist(Session&, const TableIdentifier &identifier);
 
-        ~PBXTStorageEngine();
+	virtual void shutdownPlugin();
+
+	~PBXTStorageEngine();
 };
 
 typedef PBXTStorageEngine handlerton;
@@ -193,13 +198,6 @@ class ha_pbxt: public handler
 	MX_TABLE_TYPES_T table_flags() const;
 
 	/*
-	 * part is the key part to check. First key part is 0
-	 * If all_parts it's set, MySQL want to know the flags for the combined
-	 * index up to and including 'part'.
-	 */
-	MX_ULONG_T index_flags(uint inx, uint part, bool all_parts) const;
-
-	/*
 	 * unireg.cc will call the following to make sure that the storage engine can
 	 * handle the data it is about to send.
 	 * 
@@ -278,23 +276,10 @@ class ha_pbxt: public handler
 	void	unlock_row();
 	int		delete_all_rows(void);
 	int		repair(THD* thd, HA_CHECK_OPT* check_opt);
-#ifdef DRIZZLED
 	int		analyze(THD* thd);
 	int		optimize(THD* thd);
 	int		check(THD* thd);
-#else
-	int		analyze(THD* thd, HA_CHECK_OPT* check_opt);
-	int		optimize(THD* thd, HA_CHECK_OPT* check_opt);
-	int		check(THD* thd, HA_CHECK_OPT* check_opt);
-#endif
 	ha_rows	records_in_range(uint inx, key_range *min_key, key_range *max_key);
-#ifndef DRIZZLED
-	int		delete_system_table(const char *table_path);
-	int		delete_table(const char *from);
-	int		rename_system_table(const char * from, const char * to);
-	int		rename_table(const char * from, const char * to);
-	int		create(const char *name, TABLE *form, HA_CREATE_INFO *create_info);				//required
-#endif
 
 	THR_LOCK_DATA **store_lock(THD *thd, THR_LOCK_DATA **to, enum thr_lock_type lock_type);		 //required
 
