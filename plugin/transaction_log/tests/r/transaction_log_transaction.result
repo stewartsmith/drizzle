@@ -719,90 +719,175 @@ COMMIT;
 # check transaction_log
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
 FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
-transaction.log	276	2	2	1	2	START_TIMESTAMP	END_TIMESTAMP	INDEX_SIZE
+transaction.log	649	3	3	1	3	START_TIMESTAMP	END_TIMESTAMP	INDEX_SIZE
 
 Check transaction_log_entries
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
 0	TRANSACTION	75
 75	TRANSACTION	201
+276	TRANSACTION	373
 
 Check transaction_log_transactions
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
 0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
 75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+276	3	1	START_TIMESTAMP	END_TIMESTAMP	2	0
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
 transaction_context {
   server_id: 1
-  transaction_id: 2
+  transaction_id: 3
   START_TIMESTAMP
   END_TIMESTAMP
 }
 statement {
-  type: CREATE_TABLE
+  type: INSERT
   START_TIMESTAMP
   END_TIMESTAMP
-  create_table_statement {
-    table {
-      name: "t1"
-      engine {
-        name: "InnoDB"
-      }
-      field {
-        name: "a"
-        type: INTEGER
-        constraints {
-          is_nullable: false
-        }
-        numeric_options {
-          is_autoincrement: true
-        }
-      }
-      field {
-        name: "b"
-        type: INTEGER
-        constraints {
-          is_nullable: false
-        }
-      }
-      indexes {
-        name: "PRIMARY"
-        is_primary: true
-        is_unique: true
-        type: UNKNOWN_INDEX
-        key_length: 4
-        index_part {
-          fieldnr: 0
-          compare_length: 4
-        }
-        options {
-        }
-      }
-      indexes {
-        name: "b_key1"
-        is_primary: false
-        is_unique: false
-        type: UNKNOWN_INDEX
-        key_length: 4
-        index_part {
-          fieldnr: 1
-          compare_length: 4
-        }
-        options {
-        }
-      }
-      type: STANDARD
-      schema: "test"
-      options {
-        has_user_set_auto_increment_value: false
-        collation: "utf8_general_ci"
-        collation_id: 45
-      }
-      CREATE_TIMESTAMP
-      UPDATE_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "1"
+      insert_value: "1"
+      is_null: false
+      is_null: false
+    }
+    record {
+      insert_value: "2"
+      insert_value: "2"
+      is_null: false
+      is_null: false
+    }
+    record {
+      insert_value: "3"
+      insert_value: "3"
+      is_null: false
+      is_null: false
+    }
+    record {
+      insert_value: "4"
+      insert_value: "4"
+      is_null: false
+      is_null: false
+    }
+    record {
+      insert_value: "5"
+      insert_value: "5"
+      is_null: false
+      is_null: false
+    }
+    record {
+      insert_value: "6"
+      insert_value: "6"
+      is_null: false
+      is_null: false
+    }
+    record {
+      insert_value: "7"
+      insert_value: "7"
+      is_null: false
+      is_null: false
+    }
+    record {
+      insert_value: "8"
+      insert_value: "8"
+      is_null: false
+      is_null: false
+    }
+    record {
+      insert_value: "9"
+      insert_value: "9"
+      is_null: false
+      is_null: false
+    }
+    record {
+      insert_value: "10"
+      insert_value: "10"
+      is_null: false
+      is_null: false
+    }
+    record {
+      insert_value: "11"
+      insert_value: "100"
+      is_null: false
+      is_null: false
+    }
+    record {
+      insert_value: "12"
+      insert_value: "101"
+      is_null: false
+      is_null: false
+    }
+  }
+}
+statement {
+  type: UPDATE
+  START_TIMESTAMP
+  END_TIMESTAMP
+  update_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    key_field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    set_field_metadata {
+      type: INTEGER
+      name: "b"
+    }
+  }
+  update_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      key_value: "2"
+      after_value: "20"
+      is_null: false
+    }
+    record {
+      key_value: "4"
+      after_value: "40"
+      is_null: false
+    }
+    record {
+      key_value: "6"
+      after_value: "60"
+      is_null: false
+    }
+    record {
+      key_value: "8"
+      after_value: "80"
+      is_null: false
+    }
+    record {
+      key_value: "10"
+      after_value: "100"
+      is_null: false
+    }
+    record {
+      key_value: "11"
+      after_value: "1000"
+      is_null: false
     }
   }
 }
@@ -1296,7 +1381,7 @@ COMMIT;
 # check transaction_log
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
 FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
-transaction.log	927	5	5	1	6	START_TIMESTAMP	END_TIMESTAMP	INDEX_SIZE
+transaction.log	1074	6	6	1	5	START_TIMESTAMP	END_TIMESTAMP	INDEX_SIZE
 
 Check transaction_log_entries
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
@@ -1306,6 +1391,7 @@ ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
 150	TRANSACTION	201
 351	TRANSACTION	203
 554	TRANSACTION	373
+927	TRANSACTION	147
 
 Check transaction_log_transactions
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
@@ -1315,12 +1401,13 @@ ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMEN
 150	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
 351	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
 554	6	1	START_TIMESTAMP	END_TIMESTAMP	2	0
+927	5	1	START_TIMESTAMP	END_TIMESTAMP	1	0
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
 transaction_context {
   server_id: 1
-  transaction_id: 6
+  transaction_id: 5
   START_TIMESTAMP
   END_TIMESTAMP
 }
@@ -1331,7 +1418,7 @@ statement {
   insert_header {
     table_metadata {
       schema_name: "test"
-      table_name: "t1"
+      table_name: "t2"
     }
     field_metadata {
       type: INTEGER
@@ -1347,127 +1434,26 @@ statement {
     end_segment: true
     record {
       insert_value: "1"
-      insert_value: "1"
-      is_null: false
-      is_null: false
-    }
-    record {
-      insert_value: "2"
-      insert_value: "2"
-      is_null: false
-      is_null: false
-    }
-    record {
-      insert_value: "3"
-      insert_value: "3"
-      is_null: false
-      is_null: false
-    }
-    record {
-      insert_value: "4"
-      insert_value: "4"
-      is_null: false
-      is_null: false
-    }
-    record {
-      insert_value: "5"
-      insert_value: "5"
-      is_null: false
-      is_null: false
-    }
-    record {
-      insert_value: "6"
-      insert_value: "6"
-      is_null: false
-      is_null: false
-    }
-    record {
-      insert_value: "7"
-      insert_value: "7"
-      is_null: false
-      is_null: false
-    }
-    record {
-      insert_value: "8"
-      insert_value: "8"
-      is_null: false
-      is_null: false
-    }
-    record {
-      insert_value: "9"
-      insert_value: "9"
-      is_null: false
-      is_null: false
-    }
-    record {
-      insert_value: "10"
-      insert_value: "10"
-      is_null: false
-      is_null: false
-    }
-    record {
-      insert_value: "11"
       insert_value: "100"
       is_null: false
       is_null: false
     }
     record {
-      insert_value: "12"
-      insert_value: "101"
+      insert_value: "2"
+      insert_value: "1000"
       is_null: false
-      is_null: false
-    }
-  }
-}
-statement {
-  type: UPDATE
-  START_TIMESTAMP
-  END_TIMESTAMP
-  update_header {
-    table_metadata {
-      schema_name: "test"
-      table_name: "t1"
-    }
-    key_field_metadata {
-      type: INTEGER
-      name: "a"
-    }
-    set_field_metadata {
-      type: INTEGER
-      name: "b"
-    }
-  }
-  update_data {
-    segment_id: 1
-    end_segment: true
-    record {
-      key_value: "2"
-      after_value: "20"
       is_null: false
     }
     record {
-      key_value: "4"
-      after_value: "40"
+      insert_value: "3"
+      insert_value: "10"
+      is_null: false
       is_null: false
     }
     record {
-      key_value: "6"
-      after_value: "60"
+      insert_value: "4"
+      insert_value: "50"
       is_null: false
-    }
-    record {
-      key_value: "8"
-      after_value: "80"
-      is_null: false
-    }
-    record {
-      key_value: "10"
-      after_value: "100"
-      is_null: false
-    }
-    record {
-      key_value: "11"
-      after_value: "1000"
       is_null: false
     }
   }
