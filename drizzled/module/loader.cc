@@ -447,7 +447,7 @@ bool plugin_init(module::Registry &registry,
   return false;
 }
 
-void plugin_finalize(module::Registry &registry)
+bool plugin_finalize(module::Registry &registry)
 {
 
   /*
@@ -468,9 +468,11 @@ void plugin_finalize(module::Registry &registry)
       {
         registry.remove(module);
         delete_module(module);
+        return true;
       }
     }
   }
+  return false;
 }
 
 class PrunePlugin :

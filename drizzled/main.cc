@@ -236,11 +236,16 @@ int main(int argc, char **argv)
   google::protobuf::SetLogHandler(&GoogleProtoErrorThrower);
 
   /* Function generates error messages before abort */
+  error_handler_hook= my_message_sql;
   /* init_common_variables must get basic settings such as data_home_dir
      and plugin_load_list. */
   if (init_common_variables(argc, argv, modules))
     unireg_abort(1);				// Will do exit
 
+  /*
+    init signals & alarm
+    After this we can't quit by a simple unireg_abort
+  */
   init_signals();
 
 
@@ -304,11 +309,6 @@ int main(int argc, char **argv)
   if (plugin::Listen::setup())
     unireg_abort(1);
 
-  /*
-    init signals & alarm
-    After this we can't quit by a simple unireg_abort
-  */
-  error_handler_hook= my_message_sql;
 
   assert(plugin::num_trx_monitored_objects > 0);
   if (drizzle_rm_tmp_tables() ||

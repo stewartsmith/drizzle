@@ -34,6 +34,7 @@
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
+#include <boost/filesystem.hpp>
 
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/my_bit.h"
@@ -136,6 +137,7 @@
 
 
 using namespace std;
+namespace fs=boost::filesystem;
 namespace po=boost::program_options;
 
 
@@ -1618,7 +1620,10 @@ int init_server_components(module::Registry &plugins)
   if (opt_help || opt_help_extended)
     unireg_abort(0);
 
-  plugin_finalize(plugins);
+  if (plugin_finalize(plugins))
+  {
+    unireg_abort(1);
+  }
 
   string scheduler_name;
   if (opt_scheduler)
@@ -2425,6 +2430,7 @@ static void fix_paths()
       drizzle_tmpdir.append(tmp_string);
     }
 
+    drizzle_tmpdir= fs::path(fs::system_complete(fs::path(drizzle_tmpdir))).file_string();
     assert(drizzle_tmpdir.size());
 
     if (mkdir(drizzle_tmpdir.c_str(), 0777) == -1)
