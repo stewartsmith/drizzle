@@ -5,10 +5,17 @@
 EXTRA_DIST+= \
 	     docs/_static \
 	     docs/_templates \
+	     docs/api_header.html \
 	     docs/conf.py \
+	     docs/Doxyfile.api \
+	     docs/Doxyfile.dev \
+	     docs/Doxyfile.drizzled \
+	     docs/dev_header.html \
+	     docs/doxygen.h \
 	     docs/drizzled_header.html \
 	     ${top_srcdir}/docs/*.rst \
 	     ${top_srcdir}/docs/clients/*.rst
+
 
 # Makefile for Sphinx documentation
 #
