@@ -58,8 +58,11 @@
 #include <fcntl.h>
 #include <algorithm>
 #include <climits>
+#include "boost/filesystem.hpp" 
 
 using namespace std;
+
+namespace fs=boost::filesystem;
 namespace drizzled
 {
 
@@ -177,7 +180,8 @@ Session::Session(plugin::Client *client_arg) :
   cached_table(0),
   transaction_message(NULL),
   statement_message(NULL),
-  session_event_observers(NULL)
+  session_event_observers(NULL),
+  use_usage(false)
 {
   memset(process_list_info, 0, PROCESS_LIST_WIDTH);
   client->setSession(this);
@@ -299,14 +303,13 @@ void Session::lockOnSys()
     return;
 
   setAbort(true);
-  pthread_mutex_lock(&mysys_var->mutex);
+  boost::mutex::scoped_lock scopedLock(mysys_var->mutex);
   if (mysys_var->current_cond)
   {
-    pthread_mutex_lock(mysys_var->current_mutex);
-    pthread_cond_broadcast(mysys_var->current_cond);
-    pthread_mutex_unlock(mysys_var->current_mutex);
+    mysys_var->current_mutex->lock();
+    pthread_cond_broadcast(mysys_var->current_cond->native_handle());
+    mysys_var->current_mutex->unlock();
   }
-  pthread_mutex_unlock(&mysys_var->mutex);
 }
 
 void Session::pop_internal_handler()
@@ -392,6 +395,12 @@ Session::~Session()
   plugin::Logging::postEndDo(this);
   plugin::EventObserver::deregisterSessionEvents(*this); 
 
+  for (PropertyMap::iterator iter= life_properties.begin(); iter != life_properties.end(); iter++)
+  {
+    delete (*iter).second;
+  }
+  life_properties.clear();
+
   /* Ensure that no one is using Session */
   LOCK_delete.unlock();
 }
@@ -409,8 +418,9 @@ void Session::awake(Session::killed_state state_to_set)
   }
   if (mysys_var)
   {
-    pthread_mutex_lock(&mysys_var->mutex);
+    boost::mutex::scoped_lock scopedLock(mysys_var->mutex);
     /*
+      "
       This broadcast could be up in the air if the victim thread
       exits the cond in the time between read and broadcast, but that is
       ok since all we want to do is to make the victim thread get out
@@ -431,11 +441,10 @@ void Session::awake(Session::killed_state state_to_set)
     */
     if (mysys_var->current_cond && mysys_var->current_mutex)
     {
-      pthread_mutex_lock(mysys_var->current_mutex);
-      pthread_cond_broadcast(mysys_var->current_cond);
-      pthread_mutex_unlock(mysys_var->current_mutex);
+      mysys_var->current_mutex->lock();
+      pthread_cond_broadcast(mysys_var->current_cond->native_handle());
+      mysys_var->current_mutex->unlock();
     }
-    pthread_mutex_unlock(&mysys_var->mutex);
   }
 }
 
@@ -494,6 +503,8 @@ void Session::prepareForQueries()
                                 variables.query_prealloc_size);
   transaction.xid_state.xid.null();
   transaction.xid_state.in_session=1;
+  if (use_usage)
+    resetUsage();
 }
 
 bool Session::initGlobals()
@@ -570,8 +581,8 @@ const char* Session::enter_cond(boost::condition_variable &cond, boost::mutex &m
 {
   const char* old_msg = get_proc_info();
   safe_mutex_assert_owner(mutex);
-  mysys_var->current_mutex = mutex.native_handle();
-  mysys_var->current_cond = cond.native_handle();
+  mysys_var->current_mutex = &mutex;
+  mysys_var->current_cond = &cond;
   this->set_proc_info(msg);
   return old_msg;
 }
@@ -584,12 +595,11 @@ void Session::exit_cond(const char* old_msg)
     locked (if that would not be the case, you'll get a deadlock if someone
     does a Session::awake() on you).
   */
-  pthread_mutex_unlock(mysys_var->current_mutex);
-  pthread_mutex_lock(&mysys_var->mutex);
+  mysys_var->current_mutex->unlock();
+  boost::mutex::scoped_lock scopedLock(mysys_var->mutex);
   mysys_var->current_mutex = 0;
   mysys_var->current_cond = 0;
   this->set_proc_info(old_msg);
-  pthread_mutex_unlock(&mysys_var->mutex);
 }
 
 bool Session::authenticate()
@@ -992,20 +1002,25 @@ static int create_file(Session *session, char *path, file_exchange *exchange, in
 
   if (!internal::dirname_length(exchange->file_name))
   {
-    strcpy(path, data_home_real);
+    strcpy(path, getDataHomeCatalog().c_str());
+    strncat(path, "/", 1);
     if (! session->db.empty())
-      strncat(path, session->db.c_str(), FN_REFLEN-strlen(data_home_real)-1);
+      strncat(path, session->db.c_str(), FN_REFLEN-getDataHomeCatalog().size());
     (void) internal::fn_format(path, exchange->file_name, path, "", option);
   }
   else
-    (void) internal::fn_format(path, exchange->file_name, data_home_real, "", option);
+    (void) internal::fn_format(path, exchange->file_name, getDataHomeCatalog().c_str(), "", option);
 
-  if (opt_secure_file_priv &&
-      strncmp(opt_secure_file_priv, path, strlen(opt_secure_file_priv)))
+  if (opt_secure_file_priv)
   {
-    /* Write only allowed to dir or subdir specified by secure_file_priv */
-    my_error(ER_OPTION_PREVENTS_STATEMENT, MYF(0), "--secure-file-priv");
-    return -1;
+    fs::path secure_file_path(fs::system_complete(fs::path(opt_secure_file_priv)));
+    fs::path target_path(fs::system_complete(fs::path(path)));
+    if (target_path.file_string().substr(0, secure_file_path.file_string().size()) != secure_file_path.file_string())
+    {
+      /* Write only allowed to dir or subdir specified by secure_file_priv */
+      my_error(ER_OPTION_PREVENTS_STATEMENT, MYF(0), "--secure-file-priv");
+      return -1;
+    }
   }
 
   if (!access(path, F_OK))

@@ -18,8 +18,9 @@
  */
 
 #include "config.h"
-#include <drizzled/configmake.h>
-#include <drizzled/atomics.h>
+#include "drizzled/configmake.h"
+#include "drizzled/atomics.h"
+#include "drizzled/data_home.h"
 
 #include <netdb.h>
 #include <sys/types.h>
@@ -290,14 +291,12 @@ time_t flush_status_time;
 char drizzle_home[FN_REFLEN], pidfile_name[FN_REFLEN], system_time_zone[30];
 char *default_tz_name;
 char glob_hostname[FN_REFLEN];
-char data_home_real[FN_REFLEN],
-     language[FN_REFLEN], 
+
+char language[FN_REFLEN], 
      *opt_tc_log_file;
 const key_map key_map_empty(0);
 key_map key_map_full(0);                        // Will be initialized later
 
-uint32_t data_home_len;
-char data_home_buff[2], *data_home=data_home_real;
 std::string drizzle_tmpdir;
 char *opt_drizzle_tmpdir= NULL;
 
@@ -365,10 +364,33 @@ po::options_description plugin_options("Plugin Options");
 vector<string> unknown_options;
 vector<string> defaults_file_list;
 po::variables_map vm;
+char * data_dir_ptr;
 
 po::variables_map &getVariablesMap()
 {
   return vm;
+}
+
+std::string& getDataHome()
+{
+  static string data_home(LOCALSTATEDIR);
+  return data_home;
+}
+
+std::string& getDataHomeCatalog()
+{
+  static string data_home_catalog(getDataHome());
+  return data_home_catalog;
+}
+
+char *getDatadir()
+{
+  return data_dir_ptr;
+}
+
+char **getDatadirPtr()
+{
+  return &data_dir_ptr;
 }
  
 /****************************************************************************
@@ -508,6 +530,8 @@ void clean_up(bool print_message)
   COND_server_end.notify_all();
   LOCK_thread_count.unlock();
 
+  char **data_home_ptr= getDatadirPtr();
+  delete[](*data_home_ptr);
   /*
     The following lines may never be executed as the main thread may have
     killed us
@@ -1318,7 +1342,10 @@ int init_common_variables(int argc, char **argv)
    N_("Base location for config files"))
   ;
 
-  po::parsed_options parsed= po::command_line_parser(argc, argv).
+  // Disable allow_guessing
+  int style = po::command_line_style::default_style & ~po::command_line_style::allow_guessing;
+
+  po::parsed_options parsed= po::command_line_parser(argc, argv).style(style).
     options(long_options).allow_unregistered().extra_parser(parse_size_arg).run();
   unknown_options=
     po::collect_unrecognized(parsed.options, po::include_positional);
@@ -1484,8 +1511,10 @@ int init_server_components(module::Registry &plugins)
   vector<string> final_unknown_options;
   try
   {
+    // Disable allow_guessing
+    int style = po::command_line_style::default_style & ~po::command_line_style::allow_guessing;
     po::parsed_options parsed=
-      po::command_line_parser(unknown_options).
+      po::command_line_parser(unknown_options).style(style).
       options(plugin_options).extra_parser(parse_size_arg).run();
 
     final_unknown_options=
@@ -1686,8 +1715,7 @@ struct option my_long_options[] =
    NO_ARG, 0, 0, 0, 0, 0, 0},
   {"datadir", 'h',
    N_("Path to the database root."),
-   (char**) &data_home,
-   (char**) &data_home, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   NULL, NULL, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"default-storage-engine", OPT_STORAGE_ENGINE,
    N_("Set the default storage engine (table type) for tables."),
    (char**)&default_storage_engine_str, (char**)&default_storage_engine_str,
@@ -2051,7 +2079,6 @@ static void drizzle_init_variables(void)
   drizzle_home_ptr= drizzle_home;
   pidfile_name_ptr= pidfile_name;
   language_ptr= language;
-  data_home= data_home_real;
   session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_SQL_NOTES);
   refresh_version= 1L;	/* Increments on each reload */
   global_thread_id= 1UL;
@@ -2059,11 +2086,6 @@ static void drizzle_init_variables(void)
 
   /* Set directory paths */
   strncpy(language, LANGUAGE, sizeof(language)-1);
-  strncpy(data_home_real, get_relative_path(LOCALSTATEDIR),
-          sizeof(data_home_real)-1);
-  data_home_buff[0]=FN_CURLIB;	// all paths are relative from here
-  data_home_buff[1]=0;
-  data_home_len= 2;
 
   /* Variables in libraries */
   default_character_set_name= "utf8";
@@ -2137,11 +2159,12 @@ static void get_options()
 
   if (vm.count("datadir"))
   {
-    strncpy(data_home_real,vm["datadir"].as<string>().c_str(), sizeof(data_home_real)-1);
-    /* Correct pointer set by my_getopt (for embedded library) */
-    data_home= data_home_real;
-    data_home_len= strlen(data_home);
+    getDataHome()= vm["datadir"].as<string>();
   }
+  string &data_home_catalog= getDataHomeCatalog();
+  data_home_catalog= getDataHome();
+  data_home_catalog.push_back('/');
+  data_home_catalog.append("local");
 
   if (vm.count("user"))
   {
@@ -2285,13 +2308,10 @@ static void fix_paths(string progname)
     pos[0]= FN_LIBCHAR;
     pos[1]= 0;
   }
-  internal::convert_dirname(data_home_real,data_home_real,NULL);
-  (void) internal::fn_format(buff, data_home_real, "", "",
-                   (MY_RETURN_REAL_PATH|MY_RESOLVE_SYMLINKS));
   internal::convert_dirname(language,language,NULL);
   (void) internal::my_load_path(drizzle_home, drizzle_home,""); // Resolve current dir
-  (void) internal::my_load_path(data_home_real, data_home_real,drizzle_home);
-  (void) internal::my_load_path(pidfile_name, pidfile_name,data_home_real);
+  (void) internal::my_load_path(pidfile_name, pidfile_name,
+                                getDataHome().c_str());
 
   if (opt_plugin_dir_ptr == NULL)
   {
@@ -2369,7 +2389,7 @@ static void fix_paths(string progname)
     }
     else if (tmp_string == NULL)
     {
-      drizzle_tmpdir.append(data_home);
+      drizzle_tmpdir.append(getDataHome());
       drizzle_tmpdir.push_back(FN_LIBCHAR);
       drizzle_tmpdir.append(GLOBAL_TEMPORARY_EXT);
     }
