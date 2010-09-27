@@ -222,7 +222,7 @@ bool volatile select_thread_in_use;
 bool volatile abort_loop;
 bool volatile shutdown_in_progress;
 char *opt_scheduler_default;
-char *opt_scheduler= NULL;
+const char *opt_scheduler= NULL;
 
 size_t my_thread_stack_size= 0;
 
@@ -1484,6 +1484,9 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
     errmsg_printf(ERRMSG_LVL_ERROR, _("Error getting default charset"));
     return 1;                           // Eof of the list
   }
+
+  if (vm.count("scheduler"))
+    opt_scheduler= vm["scheduler"].as<string>().c_str();
 
   if (default_collation_name)
   {
