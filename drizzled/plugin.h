@@ -46,7 +46,6 @@ class sys_var;
 typedef drizzle_lex_string LEX_STRING;
 struct option;
 
-extern char *opt_plugin_dir_ptr;
 extern char opt_plugin_dir[FN_REFLEN];
 
 namespace plugin { class StorageEngine; }

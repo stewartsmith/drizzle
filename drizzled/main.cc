@@ -269,9 +269,9 @@ int main(int argc, char **argv)
     }
     /* TODO: This is a hack until we can properly support std::string in sys_var*/
     char **data_home_ptr= getDatadirPtr();
-    *data_home_ptr= new char[getDataHome().size()+1] ();
     fs::path full_data_home_path(fs::system_complete(fs::path(getDataHome())));
     std::string full_data_home(full_data_home_path.file_string());
+    *data_home_ptr= new char[full_data_home.size()+1] ();
     memcpy(*data_home_ptr, full_data_home.c_str(), full_data_home.size());
     getDataHomeCatalog()= "./";
     getDataHome()= "../";

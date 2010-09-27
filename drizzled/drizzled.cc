@@ -354,7 +354,7 @@ bool drizzle_rm_tmp_tables();
 static void drizzle_init_variables(void);
 static void get_options();
 static const char *get_relative_path(const char *path);
-static void fix_paths(string progname);
+static void fix_paths();
 
 static void usage(void);
 void close_connections(void);
@@ -677,6 +677,60 @@ const char *load_default_groups[]=
 {
   DRIZZLE_CONFIG_NAME, "server", 0, 0
 };
+
+static void find_plugin_dir(string progname)
+{
+  if (progname[0] != FN_LIBCHAR)
+  {
+    /* We have a relative path and need to find the absolute */
+    char working_dir[FN_REFLEN];
+    char *working_dir_ptr= working_dir;
+    working_dir_ptr= getcwd(working_dir_ptr, FN_REFLEN);
+    string new_path(working_dir);
+    if (*(new_path.end()-1) != '/')
+      new_path.push_back('/');
+    if (progname[0] == '.' && progname[1] == '/')
+      new_path.append(progname.substr(2));
+    else
+      new_path.append(progname);
+    progname.swap(new_path);
+  }
+
+  /* Now, trim off the exe name */
+  string progdir(progname.substr(0, progname.rfind(FN_LIBCHAR)+1));
+  if (progdir.rfind(".libs/") != string::npos)
+  {
+    progdir.assign(progdir.substr(0, progdir.rfind(".libs/")));
+  }
+  string testlofile(progdir);
+  testlofile.append("drizzled.lo");
+  string testofile(progdir);
+  testofile.append("drizzled.o");
+  struct stat testfile_stat;
+  if (stat(testlofile.c_str(), &testfile_stat) && stat(testofile.c_str(), &testfile_stat))
+  {
+    /* neither drizzled.lo or drizzled.o exist - we are not in a source dir.
+     * Go on as usual
+     */
+    (void) internal::my_load_path(opt_plugin_dir, get_relative_path(PKGPLUGINDIR), drizzle_home);
+  }
+  else
+  {
+    /* We are in a source dir! Plugin dir is ../plugin/.libs */
+    size_t last_libchar_pos= progdir.rfind(FN_LIBCHAR,progdir.size()-2)+1;
+    string source_plugindir(progdir.substr(0,last_libchar_pos));
+    source_plugindir.append("plugin/.libs");
+    (void) internal::my_load_path(opt_plugin_dir, source_plugindir.c_str(), "");
+  }
+}
+
+static void notify_plugin_dir(string in_plugin_dir)
+{
+  if (not in_plugin_dir.empty())
+  {
+    (void) internal::my_load_path(opt_plugin_dir, in_plugin_dir.c_str(), drizzle_home);
+  }
+}
 
 static void check_limits_aii(uint64_t in_auto_increment_increment)
 {
@@ -1141,6 +1195,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
 
   drizzle_init_variables();
 
+  find_plugin_dir(argv[0]);
   {
     struct tm tm_tmp;
     localtime_r(&server_start_time,&tm_tmp);
@@ -1183,11 +1238,11 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
    N_("Configuration file to use"))
   ("config-dir", po::value<string>()->default_value(system_config_dir_drizzle),
    N_("Base location for config files"))
+  ("plugin-dir", po::value<string>()->notifier(&notify_plugin_dir),
+  N_("Directory for plugins."))
   ;
 
   plugin_load_options.add_options()
-  ("plugin-dir", po::value<string>(),
-  N_("Directory for plugins."))
   ("plugin-add", po::value<vector<string> >()->composing()->notifier(&compose_plugin_add),
   N_("Optional comma separated list of plugins to load at startup in addition "
      "to the default list of plugins. "
@@ -1467,7 +1522,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
     }
   }
 
-  fix_paths(argv[0]);
+  fix_paths();
 
   current_pid= getpid();		/* Save for later ref */
   init_time();				/* Init time-functions (read zone) */
@@ -1928,7 +1983,7 @@ struct option my_long_options[] =
    0, GET_UINT, OPT_ARG, 0, 0, MAX_TABLES+2, 0, 1, 0},
   {"plugin_dir", OPT_PLUGIN_DIR,
    N_("Directory for plugins."),
-   (char**) &opt_plugin_dir_ptr, (char**) &opt_plugin_dir_ptr, 0,
+   NULL, NULL, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"plugin_add", OPT_PLUGIN_ADD,
    N_("Optional comma separated list of plugins to load at startup in addition "
@@ -2312,7 +2367,7 @@ static const char *get_relative_path(const char *path)
 }
 
 
-static void fix_paths(string progname)
+static void fix_paths()
 {
   char buff[FN_REFLEN],*pos,rp_buff[PATH_MAX];
   internal::convert_dirname(drizzle_home,drizzle_home,NULL);
@@ -2337,58 +2392,6 @@ static void fix_paths(string progname)
   (void) internal::my_load_path(pidfile_name, pidfile_name,
                                 getDataHome().c_str());
 
-  if (opt_plugin_dir_ptr == NULL)
-  {
-    /* No plugin dir has been specified. Figure out where the plugins are */
-    if (progname[0] != FN_LIBCHAR)
-    {
-      /* We have a relative path and need to find the absolute */
-      char working_dir[FN_REFLEN];
-      char *working_dir_ptr= working_dir;
-      working_dir_ptr= getcwd(working_dir_ptr, FN_REFLEN);
-      string new_path(working_dir);
-      if (*(new_path.end()-1) != '/')
-        new_path.push_back('/');
-      if (progname[0] == '.' && progname[1] == '/')
-        new_path.append(progname.substr(2));
-      else
-        new_path.append(progname);
-      progname.swap(new_path);
-    }
-
-    /* Now, trim off the exe name */
-    string progdir(progname.substr(0, progname.rfind(FN_LIBCHAR)+1));
-    if (progdir.rfind(".libs/") != string::npos)
-    {
-      progdir.assign(progdir.substr(0, progdir.rfind(".libs/")));
-    }
-    string testlofile(progdir);
-    testlofile.append("drizzled.lo");
-    string testofile(progdir);
-    testofile.append("drizzled.o");
-    struct stat testfile_stat;
-    if (stat(testlofile.c_str(), &testfile_stat) && stat(testofile.c_str(), &testfile_stat))
-    {
-      /* neither drizzled.lo or drizzled.o exist - we are not in a source dir.
-       * Go on as usual
-       */
-      (void) internal::my_load_path(opt_plugin_dir, get_relative_path(PKGPLUGINDIR),
-                                          drizzle_home);
-    }
-    else
-    {
-      /* We are in a source dir! Plugin dir is ../plugin/.libs */
-      size_t last_libchar_pos= progdir.rfind(FN_LIBCHAR,progdir.size()-2)+1;
-      string source_plugindir(progdir.substr(0,last_libchar_pos));
-      source_plugindir.append("plugin/.libs");
-      (void) internal::my_load_path(opt_plugin_dir, source_plugindir.c_str(), "");
-    }
-  }
-  else
-  {
-    (void) internal::my_load_path(opt_plugin_dir, opt_plugin_dir_ptr, drizzle_home);
-  }
-  opt_plugin_dir_ptr= opt_plugin_dir;
 
   const char *sharedir= get_relative_path(PKGDATADIR);
   if (internal::test_if_hard_path(sharedir))
