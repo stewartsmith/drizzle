@@ -102,7 +102,8 @@ static void create_pid_file()
     }
     (void)close(file); /* We can ignore the error, since we are going to error anyway at this point */
   }
-  snprintf(buff, 1024, "Can't start server: can't create PID file (%s)", pidfile_name);
+  memset(buff, 0, sizeof(buff));
+  snprintf(buff, sizeof(buff)-1, "Can't start server: can't create PID file (%s)", pidfile_name);
   sql_perror(buff);
   exit(1);
 }
