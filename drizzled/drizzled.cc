@@ -1507,9 +1507,9 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
     unireg_abort(1);
   }
 
-  get_options();
-
   po::notify(vm);
+
+  get_options();
 
   /* Inverted Booleans */
 
