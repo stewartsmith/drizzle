@@ -946,21 +946,23 @@ void Session::wait_for_condition(boost::mutex &mutex, boost::condition_variable 
   mysys_var->current_cond= &cond;
   saved_proc_info= get_proc_info();
   set_proc_info("Waiting for table");
-  if (!killed)
-    (void) pthread_cond_wait(cond.native_handle(), mutex.native_handle());
+  {
+    /*
+      We must unlock mutex first to avoid deadlock becasue conditions are
+      sent to this thread by doing locks in the following order:
+      lock(mysys_var->mutex)
+      lock(mysys_var->current_mutex)
 
-  /*
-    We must unlock mutex first to avoid deadlock becasue conditions are
-    sent to this thread by doing locks in the following order:
-    lock(mysys_var->mutex)
-    lock(mysys_var->current_mutex)
-
-    One by effect of this that one can only use wait_for_condition with
-    condition variables that are guranteed to not disapper (freed) even if this
-    mutex is unlocked
-  */
-
-  mutex.unlock();
+      One by effect of this that one can only use wait_for_condition with
+      condition variables that are guranteed to not disapper (freed) even if this
+      mutex is unlocked
+    */
+    boost::mutex::scoped_lock scopedLock(mutex, boost::adopt_lock_t());
+    if (not killed)
+    {
+      cond.wait(scopedLock);
+    }
+  }
   boost::mutex::scoped_lock (mysys_var->mutex);
   mysys_var->current_mutex= 0;
   mysys_var->current_cond= 0;
