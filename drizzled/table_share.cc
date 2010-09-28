@@ -785,7 +785,9 @@ TableShare::~TableShare()
     while (waiting_on_cond)
     {
       cond.notify_all();
-      pthread_cond_wait(cond.native_handle(), mutex.native_handle());
+      boost::mutex::scoped_lock scoped(mutex, boost::adopt_lock_t());
+      cond.wait(scoped);
+      scoped.release();
     }
     /* No thread refers to this anymore */
     mutex.unlock();
