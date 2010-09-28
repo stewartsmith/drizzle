@@ -211,8 +211,8 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'drizzle', u'Drizzle Documentation',
-     [u'The Drizzle Developers'], 1)
+    ('clients/drizzledump', 'drizzledump', u'a database backup program',
+     [u'Andrew Hutchings'], 1)
 ]
 
 
