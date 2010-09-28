@@ -6,7 +6,7 @@
 # All rights reserved.
 # 
 # Use and distribution licensed under the BSD license.  See
-# the COPYING file in this directory for full text.
+# the COPYING.BSD file in the root source directory for full text.
 #
 '''
 MySQL Protocol Result Objects
