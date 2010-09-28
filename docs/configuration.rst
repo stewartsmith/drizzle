@@ -28,9 +28,7 @@ Format and Rules
 
 Command line options are of the form `--option-name=value`. There are some
 boolean flags, such as `--help` which do not require (nor can accept) an
-option value.
-
-|more| See :ref:`options` for all options that :program:`drizzled`
+option value.  See :ref:`options` for all options that :program:`drizzled`
 supports.
 
 Environment variables are the same as the command line options, except that
