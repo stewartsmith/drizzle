@@ -456,7 +456,9 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
                                                      (table->open_placeholder && wait_for_placeholders)))
           {
             found= true;
-            pthread_cond_wait(COND_refresh.native_handle(),LOCK_open.native_handle());
+            boost::mutex::scoped_lock scoped(LOCK_open, boost::adopt_lock_t());
+            COND_refresh.wait(scoped);
+            scoped.release();
             break;
           }
         }
@@ -4506,10 +4508,13 @@ bool remove_table_from_cache(Session *session, TableIdentifier &identifier, uint
       {
         dropping_tables++;
         if (likely(signalled))
-          (void) pthread_cond_wait(COND_refresh.native_handle(), LOCK_open.native_handle());
+        {
+          boost::mutex::scoped_lock scoped(LOCK_open, boost::adopt_lock_t());
+          COND_refresh.wait(scoped);
+          scoped.release();
+        }
         else
         {
-          struct timespec abstime;
           /*
             It can happen that another thread has opened the
             table but has not yet locked any table at all. Since
@@ -4520,8 +4525,12 @@ bool remove_table_from_cache(Session *session, TableIdentifier &identifier, uint
             and then we retry another loop in the
             remove_table_from_cache routine.
           */
-          set_timespec(abstime, 10);
-          pthread_cond_timedwait(COND_refresh.native_handle(), LOCK_open.native_handle(), &abstime);
+          boost::xtime xt; 
+          xtime_get(&xt, boost::TIME_UTC); 
+          xt.sec += 10; 
+          boost::mutex::scoped_lock scoped(LOCK_open, boost::adopt_lock_t());
+          COND_refresh.timed_wait(scoped, xt);
+          scoped.release();
         }
         dropping_tables--;
         continue;
