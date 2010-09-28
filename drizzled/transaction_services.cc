@@ -1426,17 +1426,7 @@ void TransactionServices::setUpdateHeader(message::Statement &statement,
       field_metadata->set_type(message::internalFieldTypeToFieldProtoType(current_field->type()));
     }
 
-    /*
-     * The below really should be moved into the Field API and Record API.  But for now
-     * we do this crazy pointer fiddling to figure out if the current field
-     * has been updated in the supplied record raw byte pointers.
-     */
-    const unsigned char *old_ptr= (const unsigned char *) old_record + (ptrdiff_t) (current_field->ptr - in_table->getInsertRecord()); 
-    const unsigned char *new_ptr= (const unsigned char *) new_record + (ptrdiff_t) (current_field->ptr - in_table->getInsertRecord()); 
-
-    uint32_t field_length= current_field->pack_length(); /** @TODO This isn't always correct...check varchar diffs. */
-
-    if (memcmp(old_ptr, new_ptr, field_length) != 0)
+    if (isFieldUpdated(current_field, in_table, old_record, new_record))
     {
       /* Field is changed from old to new */
       field_metadata= header->add_set_field_metadata();
@@ -1479,17 +1469,8 @@ void TransactionServices::updateRecord(Session *in_session,
      * UPDATE t1 SET counter = counter + 1 WHERE id IN (1,2);
      *
      * We will generate two UpdateRecord messages with different set_value byte arrays.
-     *
-     * The below really should be moved into the Field API and Record API.  But for now
-     * we do this crazy pointer fiddling to figure out if the current field
-     * has been updated in the supplied record raw byte pointers.
      */
-    const unsigned char *old_ptr= (const unsigned char *) old_record + (ptrdiff_t) (current_field->ptr - in_table->getInsertRecord()); 
-    const unsigned char *new_ptr= (const unsigned char *) new_record + (ptrdiff_t) (current_field->ptr - in_table->getInsertRecord()); 
-
-    uint32_t field_length= current_field->pack_length(); /** @TODO This isn't always correct...check varchar diffs. */
-
-    if (memcmp(old_ptr, new_ptr, field_length) != 0)
+    if (isFieldUpdated(current_field, in_table, old_record, new_record))
     {
       /* Store the original "read bit" for this field */
       bool is_read_set= current_field->isReadSet();
@@ -1540,6 +1521,47 @@ void TransactionServices::updateRecord(Session *in_session,
 
   }
 }
+
+bool TransactionServices::isFieldUpdated(Field *current_field,
+                                         Table *in_table,
+                                         const unsigned char *old_record,
+                                         const unsigned char *new_record)
+{
+  /*
+   * The below really should be moved into the Field API and Record API.  But for now
+   * we do this crazy pointer fiddling to figure out if the current field
+   * has been updated in the supplied record raw byte pointers.
+   */
+  const unsigned char *old_ptr= (const unsigned char *) old_record + (ptrdiff_t) (current_field->ptr - in_table->getInsertRecord());
+  const unsigned char *new_ptr= (const unsigned char *) new_record + (ptrdiff_t) (current_field->ptr - in_table->getInsertRecord());
+
+  uint32_t field_length= current_field->pack_length(); /** @TODO This isn't always correct...check varchar diffs. */
+
+  bool old_value_is_null= current_field->is_null_in_record(old_record);
+  bool new_value_is_null= current_field->is_null_in_record(new_record);
+
+  bool isUpdated= false;
+  if (old_value_is_null != new_value_is_null)
+  {
+    if ((old_value_is_null) && (! new_value_is_null)) /* old value is NULL, new value is non NULL */
+    {
+      isUpdated= true;
+    }
+    else if ((! old_value_is_null) && (new_value_is_null)) /* old value is non NULL, new value is NULL */
+    {
+      isUpdated= true;
+    }
+  }
+
+  if (! isUpdated)
+  {
+    if (memcmp(old_ptr, new_ptr, field_length) != 0)
+    {
+      isUpdated= true;
+    }
+  }
+  return isUpdated;
+}  
 
 message::Statement &TransactionServices::getDeleteStatement(Session *in_session,
                                                             Table *in_table,

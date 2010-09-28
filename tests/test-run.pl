@@ -3490,7 +3490,6 @@ sub valgrind_arguments {
   if ( $opt_callgrind)
   {
     mtr_add_arg($args, "--tool=callgrind");
-    mtr_add_arg($args, "--base=$opt_vardir/log");
   }
   elsif ($opt_massif)
   {
