@@ -766,7 +766,9 @@ static bool wait_for_locked_table_names(Session *session, TableList *table_list)
 {
   bool result= false;
 
-  safe_mutex_assert_owner(LOCK_open.native_handle());
+#if 0
+  assert(ownership of LOCK_open);
+#endif
 
   while (locked_named_table(table_list))
   {
@@ -1012,9 +1014,11 @@ bool lock_global_read_lock(Session *session)
                                 "Waiting to get readlock");
 
     waiting_for_read_lock++;
+    boost::mutex::scoped_lock scopedLock(LOCK_global_read_lock, boost::adopt_lock_t());
     while (protect_against_global_read_lock && !session->killed)
-      pthread_cond_wait(COND_global_read_lock.native_handle(), LOCK_global_read_lock.native_handle());
+      COND_global_read_lock.wait(scopedLock);
     waiting_for_read_lock--;
+    scopedLock.release();
     if (session->killed)
     {
       session->exit_cond(old_message);
