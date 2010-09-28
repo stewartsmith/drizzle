@@ -83,7 +83,6 @@ static bool use_drizzle_protocol= false;
 static bool quick= true;
 static bool ignore_errors= false;
 static bool flush_logs= false;
-static bool opt_keywords= false;
 static bool opt_compress= false;
 static bool opt_delayed= false; 
 static bool create_options= true; 
@@ -95,13 +94,10 @@ static bool opt_set_charset= false;
 static bool opt_dump_date= true;
 static bool opt_autocommit= false; 
 static bool opt_single_transaction= false; 
-static bool opt_comments;
 static bool opt_compact;
-static bool opt_order_by_primary=false; 
 bool opt_ignore= false;
 static bool opt_complete_insert= false;
 static bool opt_drop_database;
-static bool opt_alltspcs= false;
 bool opt_no_create_info;
 bool opt_no_data= false;
 bool opt_create_db= false;
@@ -141,10 +137,7 @@ string password,
   enclosed,
   escaped,
   current_host,
-  opt_enclosed,
-  fields_terminated,
   path,
-  lines_terminated,
   current_user,
   opt_password,
   opt_protocol,
@@ -250,7 +243,7 @@ static void check_io(FILE *file)
 
 static void write_header(char *db_name)
 {
-  if ((not opt_compact) and (opt_comments))
+  if (not opt_compact)
   {
     cout << "-- drizzledump " << VERSION << " libdrizzle "
       << drizzle_version() << ", for " << HOST_VENDOR << "-" << HOST_OS
@@ -271,41 +264,25 @@ static void write_footer(FILE *sql_file)
 {
   if (! opt_compact)
   {
-    if (opt_comments)
+    if (opt_dump_date)
     {
-      if (opt_dump_date)
-      {
-        boost::posix_time::ptime time(boost::posix_time::second_clock::local_time());
-        fprintf(sql_file, "-- Dump completed on %s\n",
-          boost::posix_time::to_simple_string(time).c_str());
-      }
-      else
-        fprintf(sql_file, "-- Dump completed\n");
+      boost::posix_time::ptime time(boost::posix_time::second_clock::local_time());
+      fprintf(sql_file, "-- Dump completed on %s\n",
+        boost::posix_time::to_simple_string(time).c_str());
     }
+    else
+      fprintf(sql_file, "-- Dump completed\n");
+
     check_io(sql_file);
   }
 } /* write_footer */
 
 static int get_options(void)
 {
-
-  if (path.empty() && (! enclosed.empty() || ! opt_enclosed.empty() || ! escaped.empty() || ! lines_terminated.empty() ||
-                ! fields_terminated.empty()))
-  {
-    fprintf(stderr,
-            _("%s: You must use option --tab with --fields-...\n"), progname.c_str());
-    return(EX_USAGE);
-  }
-
   if (opt_single_transaction && opt_lock_all_tables)
   {
     fprintf(stderr, _("%s: You can't use --single-transaction and "
                       "--lock-all-tables at the same time.\n"), progname.c_str());
-    return(EX_USAGE);
-  }
-  if (! enclosed.empty() && ! opt_enclosed.empty())
-  {
-    fprintf(stderr, _("%s: You can't use ..enclosed.. and ..optionally-enclosed.. at the same time.\n"), progname.c_str());
     return(EX_USAGE);
   }
   if ((opt_databases || opt_alldbs) && ! path.empty())
@@ -484,8 +461,6 @@ try
   commandline_options.add_options()
   ("all-databases,A", po::value<bool>(&opt_alldbs)->default_value(false)->zero_tokens(),
   N_("Dump all the databases. This will be same as --databases with all databases selected."))
-  ("all-tablespaces,Y", po::value<bool>(&opt_alltspcs)->default_value(false)->zero_tokens(),
-  N_("Dump all the tablespaces."))
   ("complete-insert,c", po::value<bool>(&opt_complete_insert)->default_value(false)->zero_tokens(),
   N_("Use complete insert statements."))
   ("compress,C", po::value<bool>(&opt_compress)->default_value(false)->zero_tokens(),
@@ -497,11 +472,8 @@ try
   ("help,?", N_("Display this help message and exit."))
   ("lock-all-tables,x", po::value<bool>(&opt_lock_all_tables)->default_value(false)->zero_tokens(),
   N_("Locks all tables across all databases. This is achieved by taking a global read lock for the duration of the whole dump. Automatically turns --single-transaction and --lock-tables off."))
-  ("order-by-primary", po::value<bool>(&opt_order_by_primary)->default_value(false)->zero_tokens(),
-  N_("Sorts each table's rows by primary key, or first unique key, if such a key exists.  Useful when dumping a MyISAM table to be loaded into an InnoDB table, but will make the dump itself take considerably longer."))
   ("single-transaction", po::value<bool>(&opt_single_transaction)->default_value(false)->zero_tokens(),
   N_("Creates a consistent snapshot by dumping all tables in a single transaction. Works ONLY for tables stored in storage engines which support multiversioning (currently only InnoDB does); the dump is NOT guaranteed to be consistent for other storage engines. While a --single-transaction dump is in process, to ensure a valid dump file (correct table contents), no other connection should use the following statements: ALTER TABLE, DROP TABLE, RENAME TABLE, TRUNCATE TABLE, as consistent snapshot is not isolated from them. Option automatically turns off --lock-tables."))
-  ("opt", N_("Same as --add-drop-table, --add-locks, --create-options, --quick, --extended-insert, --lock-tables, --set-charset, and --disable-keys. Enabled by default, disable with --skip-opt.")) 
   ("skip-opt", 
   N_("Disable --opt. Disables --add-drop-table, --add-locks, --create-options, --quick, --extended-insert, --lock-tables, --set-charset, and --disable-keys."))    
   ("tables", N_("Overrides option --databases (-B)."))
@@ -522,8 +494,6 @@ try
   ("add-drop-database", po::value<bool>(&opt_drop_database)->default_value(false)->zero_tokens(),
   N_("Add a 'DROP DATABASE' before each create."))
   ("skip-drop-table", N_("Do not add a 'drop table' before each create."))
-  ("allow-keywords", po::value<bool>(&opt_keywords)->default_value(false)->zero_tokens(),
-  N_("Allow creation of column names that are keywords."))
   ("compact", po::value<bool>(&opt_compact)->default_value(false)->zero_tokens(),
   N_("Give less verbose output (useful for debugging). Disables structure comments and header/footer constructs.  Enables options --skip-add-drop-table --no-set-names --skip-disable-keys --skip-add-locks"))
   ("databases,B", po::value<bool>(&opt_databases)->default_value(false)->zero_tokens(),
@@ -536,8 +506,6 @@ try
   N_("Do not dump the specified table. To specify more than one table to ignore, use the directive multiple times, once for each table.  Each table must be specified with both database and table names, e.g. --ignore-table=database.table"))
   ("insert-ignore", po::value<bool>(&opt_ignore)->default_value(false)->zero_tokens(),
   N_("Insert rows with INSERT IGNORE."))
-  ("lines-terminated-by", po::value<string>(&lines_terminated)->default_value(""),
-  N_("Lines in the i.file are terminated by ..."))
   ("no-autocommit", po::value<bool>(&opt_autocommit)->default_value(false)->zero_tokens(),
   N_("Wrap tables with autocommit/commit statements."))
   ("no-create-db,n", po::value<bool>(&opt_create_db)->default_value(false)->zero_tokens(),
@@ -665,7 +633,6 @@ try
   /* Inverted Booleans */
 
   opt_drop= (vm.count("skip-drop-table")) ? false : true;
-  opt_comments= (vm.count("skip-comments")) ? false : true;
   extended_insert= (vm.count("skip-extended-insert")) ? false : true;
   opt_dump_date= (vm.count("skip-dump-date")) ? false : true;
   opt_disable_keys= (vm.count("skip-disable-keys")) ? false : true;
@@ -744,7 +711,7 @@ try
 
   if (opt_compact)
   { 
-    opt_comments= opt_drop= opt_disable_keys= 0;
+    opt_drop= opt_disable_keys= 0;
     opt_set_charset= 0;
   }
 
