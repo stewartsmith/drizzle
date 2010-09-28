@@ -1417,7 +1417,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
 
   /* Get options about where config files and the like are */
   po::parsed_options parsed= po::command_line_parser(argc, argv).
-    options(initial_options).allow_unregistered().extra_parser(parse_size_arg).run();
+    options(initial_options).allow_unregistered().run();
   unknown_options=
     po::collect_unrecognized(parsed.options, po::include_positional);
 
