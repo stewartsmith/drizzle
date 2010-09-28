@@ -16,9 +16,6 @@ EXTRA_DIST+= \
 	     ${top_srcdir}/docs/*.rst \
 	     ${top_srcdir}/docs/clients/*.rst
 
-man_MANS+= \
-	   docs/man/drizzledump.1
-
 # Makefile for Sphinx documentation
 #
 
@@ -34,6 +31,9 @@ ALLSPHINXOPTS   = -d $(SPHINX_BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOP
 .PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest
 
 if HAVE_SPHINX
+man_MANS+= \
+	   docs/man/drizzledump.1
+
 docs/man/drizzledump.1: man
 
 sphinx-help:
