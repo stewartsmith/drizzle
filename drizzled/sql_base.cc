@@ -962,7 +962,7 @@ void Session::wait_for_condition(boost::mutex &mutex, boost::condition_variable 
     mutex is unlocked
   */
 
-  pthread_mutex_unlock(mutex.native_handle());
+  mutex.unlock();
   boost::mutex::scoped_lock (mysys_var->mutex);
   mysys_var->current_mutex= 0;
   mysys_var->current_cond= 0;

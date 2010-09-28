@@ -762,7 +762,7 @@ static bool locked_named_table(TableList *table_list)
 }
 
 
-bool wait_for_locked_table_names(Session *session, TableList *table_list)
+static bool wait_for_locked_table_names(Session *session, TableList *table_list)
 {
   bool result= false;
 
