@@ -2568,7 +2568,7 @@ sub mysqld_arguments ($$$$) {
                 $prefix, $path_vardir_trace, $mysqld->{'type'}, $sidx);
   }
 
-  mtr_add_arg($args, "%s--sort-buffer=256K", $prefix);
+  mtr_add_arg($args, "%s--sort-buffer-size=256K", $prefix);
   mtr_add_arg($args, "%s--max-heap-table-size=1M", $prefix);
 
   if ( $opt_warnings )
