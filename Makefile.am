@@ -40,6 +40,7 @@ DIST_SUBDIRS = ${SUBDIRS} tests
 BUILT_SOURCES=
 EXTRA_DIST= \
 	    .quickly \
+	    COPYING.BSD \
 	    DRIZZLE.FAQ \
 	    EXCEPTIONS-CLIENT \
 	    config/autorun.sh \
