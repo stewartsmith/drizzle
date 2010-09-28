@@ -78,6 +78,8 @@ TL_WRITE_CONCURRENT_INSERT lock at the same time as multiple read locks.
 
 #include <drizzled/util/test.h>
 
+#include <boost/interprocess/sync/lock_options.hpp>
+
 using namespace std;
 
 namespace drizzled
@@ -152,7 +154,6 @@ static enum enum_thr_lock_result wait_for_lock(struct st_lock_list *wait, THR_LO
   internal::st_my_thread_var *thread_var= session->getThreadVar();
 
   boost::condition_variable *cond= &thread_var->suspend;
-  struct timespec wait_timeout;
   enum enum_thr_lock_result result= THR_LOCK_ABORTED;
   bool can_deadlock= test(data->owner->info->n_cursors);
 
@@ -170,13 +171,26 @@ static enum enum_thr_lock_result wait_for_lock(struct st_lock_list *wait, THR_LO
   thread_var->current_cond=  &thread_var->suspend;
   data->cond= &thread_var->suspend;;
 
-  if (can_deadlock)
-    set_timespec(wait_timeout, table_lock_wait_timeout);
   while (!thread_var->abort || in_wait_list)
   {
-    int rc= (can_deadlock ?
-             pthread_cond_timedwait(cond->native_handle(), data->lock->native_handle()->native_handle(), &wait_timeout) :
-             pthread_cond_wait(cond->native_handle(), data->lock->native_handle()->native_handle()));
+    boost::mutex::scoped_lock scoped(*data->lock->native_handle(), boost::adopt_lock_t());
+
+    if (can_deadlock)
+    {
+      boost::xtime xt; 
+      xtime_get(&xt, boost::TIME_UTC); 
+      xt.sec += table_lock_wait_timeout; 
+      if (not cond->timed_wait(scoped, xt))
+      {
+        result= THR_LOCK_WAIT_TIMEOUT;
+        scoped.release();
+        break;
+      }
+    }
+    else
+    {
+      cond->wait(scoped);
+    }
     /*
       We must break the wait if one of the following occurs:
       - the connection has been aborted (!thread_var->abort), but
@@ -192,13 +206,10 @@ static enum enum_thr_lock_result wait_for_lock(struct st_lock_list *wait, THR_LO
     */
     if (data->cond == NULL)
     {
+      scoped.release();
       break;
     }
-    if (rc == ETIMEDOUT || rc == ETIME)
-    {
-      result= THR_LOCK_WAIT_TIMEOUT;
-      break;
-    }
+    scoped.release();
   }
   if (data->cond || data->type == TL_UNLOCK)
   {

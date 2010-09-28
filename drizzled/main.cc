@@ -349,14 +349,16 @@ int main(int argc, char **argv)
   COND_thread_count.notify_all();
 
   /* Wait until cleanup is done */
-  LOCK_thread_count.lock();
-  while (!ready_to_exit)
-    pthread_cond_wait(COND_server_end.native_handle(), LOCK_thread_count.native_handle());
-  LOCK_thread_count.unlock();
+  {
+    boost::mutex::scoped_lock scopedLock(LOCK_thread_count);
+    while (!ready_to_exit)
+      COND_server_end.wait(scopedLock);
+  }
 
   clean_up(1);
   module::Registry::shutdown();
   internal::my_end();
+
   return 0;
 }
 
