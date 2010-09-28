@@ -1187,7 +1187,7 @@ int init_common_variables(int argc, char **argv)
   ("completion-type", po::value<uint32_t>(&global_system_variables.completion_type)->default_value(0)->notifier(&check_limits_completion_type),
   N_("Default completion type."))
   ("core-file",  N_("Write core on errors."))
-  ("datadir,h", po::value<string>(),
+  ("datadir", po::value<string>(),
   N_("Path to the database root."))
   ("default-storage-engine", po::value<string>(),
   N_("Set the default storage engine (table type) for tables."))
@@ -1204,7 +1204,7 @@ int init_common_variables(int argc, char **argv)
   ("log-warnings,W", po::value<string>(),
   N_("Log some not critical warnings to the log file."))  
   ("pid-file", po::value<string>(),
-  N_("Pid file used by safe_mysqld."))
+  N_("Pid file used by drizzled."))
   ("port-open-timeout", po::value<uint32_t>(&drizzled_bind_timeout)->default_value(0),
   N_("Maximum time in seconds to wait for the port to become free. "
      "(Default: no wait)"))
@@ -1342,7 +1342,10 @@ int init_common_variables(int argc, char **argv)
    N_("Base location for config files"))
   ;
 
-  po::parsed_options parsed= po::command_line_parser(argc, argv).
+  // Disable allow_guessing
+  int style = po::command_line_style::default_style & ~po::command_line_style::allow_guessing;
+
+  po::parsed_options parsed= po::command_line_parser(argc, argv).style(style).
     options(long_options).allow_unregistered().extra_parser(parse_size_arg).run();
   unknown_options=
     po::collect_unrecognized(parsed.options, po::include_positional);
@@ -1508,8 +1511,10 @@ int init_server_components(module::Registry &plugins)
   vector<string> final_unknown_options;
   try
   {
+    // Disable allow_guessing
+    int style = po::command_line_style::default_style & ~po::command_line_style::allow_guessing;
     po::parsed_options parsed=
-      po::command_line_parser(unknown_options).
+      po::command_line_parser(unknown_options).style(style).
       options(plugin_options).extra_parser(parse_size_arg).run();
 
     final_unknown_options=
@@ -1744,7 +1749,7 @@ struct option my_long_options[] =
    (char**) &max_system_variables.log_warnings, 0, GET_BOOL, OPT_ARG, 1, 0, 0,
    0, 0, 0},
   {"pid-file", OPT_PID_FILE,
-   N_("Pid file used by safe_mysqld."),
+   N_("Pid file used by drizzled."),
    (char**) &pidfile_name_ptr, (char**) &pidfile_name_ptr, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"port-open-timeout", OPT_PORT_OPEN_TIMEOUT,

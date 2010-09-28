@@ -314,3 +314,7 @@ unittests/uwagi.txt
 virtual_column_info.gcno
 xid.gcno
 ylwrap
+docs/plugins/list.rst
+docs/plugins/*
+docs/doctrees
+docs/html

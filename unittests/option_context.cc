@@ -43,7 +43,10 @@ TEST(option_context, parsing)
     "test", "--test.option=foo"
   };
 
-  po::store(po::command_line_parser(2, (char **)options).
+  // Disable allow_guessing
+  int style = po::command_line_style::default_style & ~po::command_line_style::allow_guessing;
+
+  po::store(po::command_line_parser(2, (char **)options).style(style).
             options(command_line_options).run(), vm);
   po::notify(vm);
 

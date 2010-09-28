@@ -424,8 +424,11 @@ try
 
   po::variables_map vm;
 
+  // Disable allow_guessing
+  int style = po::command_line_style::default_style & ~po::command_line_style::allow_guessing;
+
   po::store(po::command_line_parser(argc, argv).options(long_options).
-            extra_parser(parse_password_arg).run(), vm);
+            style(style).extra_parser(parse_password_arg).run(), vm);
 
   std::string user_config_dir_import(user_config_dir);
   user_config_dir_import.append("/drizzle/drizzleimport.cnf"); 
