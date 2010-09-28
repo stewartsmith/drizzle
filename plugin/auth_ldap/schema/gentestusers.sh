@@ -1,4 +1,5 @@
 #!/bin/bash
+# Copyright (c) 2010 Edward "Koko" Konetzko <konetzed@quixoticagony.com>
 
 help() {
     echo "Arguement options are:"
