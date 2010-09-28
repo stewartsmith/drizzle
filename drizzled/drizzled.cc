@@ -361,6 +361,8 @@ static void fix_paths();
 static void usage(void);
 void close_connections(void);
 
+fs::path base_plugin_dir(PKGPLUGINDIR);
+
 po::options_description config_options("Config File Options");
 po::options_description long_options("Kernel Options");
 po::options_description plugin_load_options("Plugin Loading Options");
@@ -709,21 +711,15 @@ static void find_plugin_dir(string progname)
   string testofile(progdir);
   testofile.append("drizzled.o");
   struct stat testfile_stat;
-  if (stat(testlofile.c_str(), &testfile_stat) && stat(testofile.c_str(), &testfile_stat))
-  {
-    /* neither drizzled.lo or drizzled.o exist - we are not in a source dir.
-     * Go on as usual
-     */
-    (void) internal::my_load_path(opt_plugin_dir, get_relative_path(PKGPLUGINDIR), drizzle_home);
-  }
-  else
+  if (not (stat(testlofile.c_str(), &testfile_stat) && stat(testofile.c_str(), &testfile_stat)))
   {
     /* We are in a source dir! Plugin dir is ../plugin/.libs */
     size_t last_libchar_pos= progdir.rfind(FN_LIBCHAR,progdir.size()-2)+1;
-    string source_plugindir(progdir.substr(0,last_libchar_pos));
-    source_plugindir.append("plugin/.libs");
-    (void) internal::my_load_path(opt_plugin_dir, source_plugindir.c_str(), "");
+    base_plugin_dir= progdir.substr(0,last_libchar_pos);
+    base_plugin_dir /= "plugin";
+    base_plugin_dir /= ".libs";
   }
+  (void) internal::my_load_path(opt_plugin_dir, fs::path(fs::system_complete(base_plugin_dir)).file_string().c_str(), "");
 }
 
 static void notify_plugin_dir(string in_plugin_dir)
