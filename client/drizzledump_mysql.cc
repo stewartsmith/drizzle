@@ -26,7 +26,8 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <drizzled/gettext.h>
 
-extern bool  verbose;
+extern bool verbose;
+extern bool ignore_errors;
 
 bool DrizzleDumpDatabaseMySQL::populateTables()
 {
@@ -70,7 +71,10 @@ bool DrizzleDumpDatabaseMySQL::populateTables()
     if ((not table->populateFields()) or (not table->populateIndexes()))
     {
       delete table;
-      return false;
+      if (not ignore_errors)
+        return false;
+      else
+        continue;
     }
     tables.push_back(table);
   }

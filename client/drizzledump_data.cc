@@ -42,6 +42,7 @@ extern bool opt_ignore;
 extern bool opt_compress;
 extern bool opt_drop_database;
 extern bool opt_autocommit;
+extern bool ignore_errors;
 
 extern boost::unordered_set<std::string> ignore_table;
 extern void maybe_exit(int error);
@@ -200,7 +201,10 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpDatabase &obj)
       if (data == NULL)
       {
         std::cerr << "Error: Could not get data for table " << table->displayName << std::endl;
-        maybe_exit(EX_DRIZZLEERR);
+        if (not ignore_errors)
+          maybe_exit(EX_DRIZZLEERR);
+        else
+          continue;
       }
       os << *data;
       delete data;

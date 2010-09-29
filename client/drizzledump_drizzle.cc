@@ -25,7 +25,8 @@
 #include <drizzled/gettext.h>
 #include <boost/lexical_cast.hpp>
 
-extern bool  verbose;
+extern bool verbose;
+extern bool ignore_errors;
 
 bool DrizzleDumpDatabaseDrizzle::populateTables()
 {
@@ -65,7 +66,10 @@ bool DrizzleDumpDatabaseDrizzle::populateTables()
     if ((not table->populateFields()) or (not table->populateIndexes()))
     {
       delete table;
-      return false;
+      if (not ignore_errors)
+        return false;
+      else
+        continue;
     }
     tables.push_back(table);
   }

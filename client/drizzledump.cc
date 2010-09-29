@@ -80,7 +80,7 @@ namespace po= boost::program_options;
 
 bool  verbose= false;
 static bool use_drizzle_protocol= false;
-static bool ignore_errors= false;
+bool ignore_errors= false;
 bool opt_compress= false;
 static bool create_options= true; 
 static bool opt_quoted= false;
@@ -92,7 +92,6 @@ bool opt_autocommit= false;
 static bool opt_single_transaction= false; 
 static bool opt_compact;
 bool opt_ignore= false;
-static bool opt_complete_insert= false;
 bool opt_drop_database;
 bool opt_no_create_info;
 bool opt_no_data= false;
@@ -157,7 +156,7 @@ void dump_all_tables(void)
   std::vector<DrizzleDumpDatabase*>::iterator i;
   for (i= database_store.begin(); i != database_store.end(); ++i)
   {
-    if (not (*i)->populateTables())
+    if ((not (*i)->populateTables()) && (not ignore_errors))
       maybe_exit(EX_DRIZZLEERR);
   }
 }
@@ -406,7 +405,8 @@ static int dump_selected_tables(const string &db, const vector<string> &table_na
   if (not database->populateTables(table_names))
   {
     delete database;
-    maybe_exit(EX_DRIZZLEERR);
+    if (not ignore_errors)
+      maybe_exit(EX_DRIZZLEERR);
   }
 
   database_store.push_back(database); 
@@ -454,19 +454,17 @@ try
   commandline_options.add_options()
   ("all-databases,A", po::value<bool>(&opt_alldbs)->default_value(false)->zero_tokens(),
   N_("Dump all the databases. This will be same as --databases with all databases selected."))
-  ("complete-insert,c", po::value<bool>(&opt_complete_insert)->default_value(false)->zero_tokens(),
-  N_("Use complete insert statements."))
   ("compress,C", po::value<bool>(&opt_compress)->default_value(false)->zero_tokens(),
   N_("Use compression in server/client protocol."))
   ("force,f", po::value<bool>(&ignore_errors)->default_value(false)->zero_tokens(),
   N_("Continue even if we get an sql-error."))
   ("help,?", N_("Display this help message and exit."))
   ("lock-all-tables,x", po::value<bool>(&opt_lock_all_tables)->default_value(false)->zero_tokens(),
-  N_("Locks all tables across all databases. This is achieved by taking a global read lock for the duration of the whole dump. Automatically turns --single-transaction and --lock-tables off."))
+  N_("Locks all tables across all databases. This is achieved by taking a global read lock for the duration of the whole dump. Automatically turns --single-transaction off."))
   ("single-transaction", po::value<bool>(&opt_single_transaction)->default_value(false)->zero_tokens(),
-  N_("Creates a consistent snapshot by dumping all tables in a single transaction. Works ONLY for tables stored in storage engines which support multiversioning (currently only InnoDB does); the dump is NOT guaranteed to be consistent for other storage engines. While a --single-transaction dump is in process, to ensure a valid dump file (correct table contents), no other connection should use the following statements: ALTER TABLE, DROP TABLE, RENAME TABLE, TRUNCATE TABLE, as consistent snapshot is not isolated from them. Option automatically turns off --lock-tables."))
+  N_("Creates a consistent snapshot by dumping all tables in a single transaction. Works ONLY for tables stored in storage engines which support multiversioning (currently only InnoDB does); the dump is NOT guaranteed to be consistent for other storage engines. While a --single-transaction dump is in process, to ensure a valid dump file (correct table contents), no other connection should use the following statements: ALTER TABLE, DROP TABLE, RENAME TABLE, TRUNCATE TABLE, as consistent snapshot is not isolated from them."))
   ("skip-opt", 
-  N_("Disable --opt. Disables --add-drop-table, --add-locks, --create-options, ---extended-insert, --lock-tables, and --disable-keys."))    
+  N_("Disable --opt. Disables --add-drop-table, --add-locks, --create-options, ---extended-insert and --disable-keys."))    
   ("tables", N_("Overrides option --databases (-B)."))
   ("show-progress-size", po::value<uint32_t>(&show_progress_size)->default_value(10000),
   N_("Number of rows before each output progress report (requires --verbose)."))
