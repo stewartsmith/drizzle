@@ -80,24 +80,20 @@ namespace po= boost::program_options;
 
 bool  verbose= false;
 static bool use_drizzle_protocol= false;
-static bool quick= true;
 static bool ignore_errors= false;
-static bool flush_logs= false;
-static bool opt_compress= false;
-static bool opt_delayed= false; 
+bool opt_compress= false;
 static bool create_options= true; 
 static bool opt_quoted= false;
 bool opt_databases= false; 
 bool opt_alldbs= false; 
 static bool opt_lock_all_tables= false;
-static bool opt_set_charset= false; 
 static bool opt_dump_date= true;
-static bool opt_autocommit= false; 
+bool opt_autocommit= false; 
 static bool opt_single_transaction= false; 
 static bool opt_compact;
 bool opt_ignore= false;
 static bool opt_complete_insert= false;
-static bool opt_drop_database;
+bool opt_drop_database;
 bool opt_no_create_info;
 bool opt_no_data= false;
 bool opt_create_db= false;
@@ -106,9 +102,7 @@ bool extended_insert= true;
 bool opt_replace_into= false;
 bool opt_drop= true; 
 uint32_t show_progress_size= 0;
-//static uint64_t total_rows= 0;
 static string insert_pat;
-//static char *order_by= NULL;
 static uint32_t opt_drizzle_port= 0;
 static int first_error= 0;
 static string extended_row;
@@ -171,14 +165,16 @@ void dump_all_tables(void)
 void generate_dump(void)
 {
   std::vector<DrizzleDumpDatabase*>::iterator i;
-  if (opt_set_charset)
-    cout << endl << "SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION;" << endl;
 
   if (path.empty())
   {
     cout << endl << "SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;"
       << endl << "SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;" << endl;
   }
+
+  if (opt_autocommit)
+    cout << "SET AUTOCOMMIT=0;" << endl;
+
   for (i= database_store.begin(); i != database_store.end(); ++i)
   {
     DrizzleDumpDatabase *database= *i;
@@ -190,8 +186,6 @@ void generate_dump(void)
     cout << "SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;"
       << endl << "SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;" << endl;
   }
-  if (opt_set_charset)
-    cout << "SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION;" << endl;
 }
 
 void generate_dump_db(void)
@@ -203,14 +197,15 @@ void generate_dump_db(void)
     false);
   sbuf.setConnection(destination_connection);
   std::ostream sout(&sbuf);
-  if (opt_set_charset)
-    sout << "SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION;" << endl;
 
   if (path.empty())
   {
     sout << "SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;" << endl;
     sout << "SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;" << endl;
   }
+
+  if (opt_autocommit)
+    cout << "SET AUTOCOMMIT=0;" << endl;
 
   for (i= database_store.begin(); i != database_store.end(); ++i)
   {
@@ -223,8 +218,6 @@ void generate_dump_db(void)
     sout << "SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;" << endl;
     sout << "SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;" << endl;
   }
-  if (opt_set_charset)
-    sout << "SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION;" << endl;
 }
 
 /*
@@ -465,8 +458,6 @@ try
   N_("Use complete insert statements."))
   ("compress,C", po::value<bool>(&opt_compress)->default_value(false)->zero_tokens(),
   N_("Use compression in server/client protocol."))
-  ("flush-logs,F", po::value<bool>(&flush_logs)->default_value(false)->zero_tokens(),
-  N_("Flush logs file in server before starting dump. Note that if you dump many databases at once (using the option --databases= or --all-databases), the logs will be flushed for each database dumped. The exception is when using --lock-all-tables in this case the logs will be flushed only once, corresponding to the moment all tables are locked. So if you want your dump and the log flush to happen at the same exact moment you should use --lock-all-tables or --flush-logs"))
   ("force,f", po::value<bool>(&ignore_errors)->default_value(false)->zero_tokens(),
   N_("Continue even if we get an sql-error."))
   ("help,?", N_("Display this help message and exit."))
@@ -475,7 +466,7 @@ try
   ("single-transaction", po::value<bool>(&opt_single_transaction)->default_value(false)->zero_tokens(),
   N_("Creates a consistent snapshot by dumping all tables in a single transaction. Works ONLY for tables stored in storage engines which support multiversioning (currently only InnoDB does); the dump is NOT guaranteed to be consistent for other storage engines. While a --single-transaction dump is in process, to ensure a valid dump file (correct table contents), no other connection should use the following statements: ALTER TABLE, DROP TABLE, RENAME TABLE, TRUNCATE TABLE, as consistent snapshot is not isolated from them. Option automatically turns off --lock-tables."))
   ("skip-opt", 
-  N_("Disable --opt. Disables --add-drop-table, --add-locks, --create-options, --quick, --extended-insert, --lock-tables, --set-charset, and --disable-keys."))    
+  N_("Disable --opt. Disables --add-drop-table, --add-locks, --create-options, ---extended-insert, --lock-tables, and --disable-keys."))    
   ("tables", N_("Overrides option --databases (-B)."))
   ("show-progress-size", po::value<uint32_t>(&show_progress_size)->default_value(10000),
   N_("Number of rows before each output progress report (requires --verbose)."))
@@ -495,11 +486,9 @@ try
   N_("Add a 'DROP DATABASE' before each create."))
   ("skip-drop-table", N_("Do not add a 'drop table' before each create."))
   ("compact", po::value<bool>(&opt_compact)->default_value(false)->zero_tokens(),
-  N_("Give less verbose output (useful for debugging). Disables structure comments and header/footer constructs.  Enables options --skip-add-drop-table --no-set-names --skip-disable-keys --skip-add-locks"))
+  N_("Give less verbose output (useful for debugging). Disables structure comments and header/footer constructs.  Enables options --skip-add-drop-table --no-set-names --skip-disable-keys"))
   ("databases,B", po::value<bool>(&opt_databases)->default_value(false)->zero_tokens(),
   N_("To dump several databases. Note the difference in usage; In this case no tables are given. All name arguments are regarded as databasenames. 'USE db_name;' will be included in the output."))
-  ("delayed-insert", po::value<bool>(&opt_delayed)->default_value(false)->zero_tokens(),
-  N_("Insert rows with INSERT DELAYED;"))
   ("skip-disable-keys,K",
   N_("'ALTER TABLE tb_name DISABLE KEYS; and 'ALTER TABLE tb_name ENABLE KEYS; will not be put in the output."))
   ("ignore-table", po::value<string>(),
@@ -507,21 +496,15 @@ try
   ("insert-ignore", po::value<bool>(&opt_ignore)->default_value(false)->zero_tokens(),
   N_("Insert rows with INSERT IGNORE."))
   ("no-autocommit", po::value<bool>(&opt_autocommit)->default_value(false)->zero_tokens(),
-  N_("Wrap tables with autocommit/commit statements."))
+  N_("Wrap a table's data in START TRANSACTION/COMMIT statements."))
   ("no-create-db,n", po::value<bool>(&opt_create_db)->default_value(false)->zero_tokens(),
   N_("'CREATE DATABASE IF NOT EXISTS db_name;' will not be put in the output. The above line will be added otherwise, if --databases or --all-databases option was given."))
-  ("no-create-info,t", po::value<bool>(&opt_no_create_info)->default_value(false)->zero_tokens(),
+  ("skip-create,t", po::value<bool>(&opt_no_create_info)->default_value(false)->zero_tokens(),
   N_("Don't write table creation info."))
   ("no-data,d", po::value<bool>(&opt_no_data)->default_value(false)->zero_tokens(),
   N_("No row information."))
-  ("no-set-names,N", N_("Deprecated. Use --skip-set-charset instead."))
-  ("set-charset", po::value<bool>(&opt_set_charset)->default_value(false)->zero_tokens(),
-  N_("Enable set-name"))
-  ("slow", N_("Buffer query instead of dumping directly to stdout."))
   ("replace", po::value<bool>(&opt_replace_into)->default_value(false)->zero_tokens(),
   N_("Use REPLACE INTO instead of INSERT INTO."))
-  ("result-file,r", po::value<string>(),
-  N_("Direct output to a given file. This option should be used in MSDOS, because it prevents new line '\\n' from being converted to '\\r\\n' (carriage return + line feed)."))
   ("destination-type", po::value<string>()->default_value("stdout"),
   N_("Where to send output to (stdout|database"))
   ("destination-host", po::value<string>(&opt_destination_host)->default_value("localhost"),
@@ -636,7 +619,6 @@ try
   extended_insert= (vm.count("skip-extended-insert")) ? false : true;
   opt_dump_date= (vm.count("skip-dump-date")) ? false : true;
   opt_disable_keys= (vm.count("skip-disable-keys")) ? false : true;
-  quick= (vm.count("slow")) ? false : true;
   opt_quoted= (vm.count("skip-quote-names")) ? false : true;
 
   if (vm.count("protocol"))
@@ -687,17 +669,6 @@ try
       tty_password= true;
   }
 
-  if (vm.count("result-file"))
-  {
-    if (!(md_result_file= fopen(vm["result-file"].as<string>().c_str(), "w")))
-      exit(1);
-  }
-
-  if (vm.count("no-set-names"))
-  {
-    opt_set_charset= 0;
-  }
- 
   if (! path.empty())
   { 
     opt_disable_keys= 0;
@@ -705,20 +676,19 @@ try
 
   if (vm.count("skip-opt"))
   {
-    extended_insert= opt_drop= quick= create_options= 0;
-    opt_disable_keys= opt_set_charset= 0;
+    extended_insert= opt_drop= create_options= 0;
+    opt_disable_keys= 0;
   }
 
   if (opt_compact)
   { 
     opt_drop= opt_disable_keys= 0;
-    opt_set_charset= 0;
   }
 
   if (vm.count("opt"))
   {
-    extended_insert= opt_drop= quick= create_options= 1;
-    opt_disable_keys= opt_set_charset= 1;
+    extended_insert= opt_drop= create_options= 1;
+    opt_disable_keys= 1;
   }
 
   if (vm.count("tables"))
