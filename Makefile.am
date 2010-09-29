@@ -136,7 +136,7 @@ drizzled/configmake.h: ${top_srcdir}/Makefile.in
 
 clean-local:
 	find . -name '*.gcno' | xargs rm -f 
-	-rm -rf docs/api docs/dev docs/_build
+	-rm -rf docs/api docs/dev docs/_build docs/doctrees
 
 include config/lint-source.am
 
