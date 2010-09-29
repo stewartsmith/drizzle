@@ -37,6 +37,12 @@ drop table ```a`;
 #
 # Bug #6101: create database problem
 #
+-- drizzledump 2010.09.1802 libdrizzle 7, for unknown-linux-gnu (x86_64)
+--
+-- Host: localhost    Database: test
+-- ------------------------------------------------------
+-- Server version	2010.09.1802 (Drizzle server)
+
 
 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
@@ -46,7 +52,14 @@ USE `test`;
 
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
+-- Dump completed on 2010-Sep-29 15:18:51
 create database mysqldump_test_db collate utf8_esperanto_ci;
+-- drizzledump 2010.09.1802 libdrizzle 7, for unknown-linux-gnu (x86_64)
+--
+-- Host: localhost    Database: mysqldump_test_db
+-- ------------------------------------------------------
+-- Server version	2010.09.1802 (Drizzle server)
+
 
 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
@@ -56,6 +69,7 @@ USE `mysqldump_test_db`;
 
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
+-- Dump completed on 2010-Sep-29 15:18:51
 drop database mysqldump_test_db;
 #
 # Bug #7020
@@ -70,6 +84,12 @@ CREATE TABLE t1 (a int);
 CREATE TABLE t2 (a int);
 INSERT INTO t1 VALUES (1),(2),(3);
 INSERT INTO t2 VALUES (4),(5),(6);
+-- drizzledump 2010.09.1802 libdrizzle 7, for unknown-linux-gnu (x86_64)
+--
+-- Host: localhost    Database: test
+-- ------------------------------------------------------
+-- Server version	2010.09.1802 (Drizzle server)
+
 
 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
@@ -84,6 +104,7 @@ ALTER TABLE `t2` ENABLE KEYS;
 
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
+-- Dump completed on 2010-Sep-29 15:18:51
 DROP TABLE t1;
 DROP TABLE t2;
 #
@@ -91,6 +112,12 @@ DROP TABLE t2;
 #
 CREATE TABLE t1 (`b` blob);
 INSERT INTO `t1` VALUES (0x602010000280100005E71A);
+-- drizzledump 2010.09.1802 libdrizzle 7, for unknown-linux-gnu (x86_64)
+--
+-- Host: localhost    Database: test
+-- ------------------------------------------------------
+-- Server version	2010.09.1802 (Drizzle server)
+
 
 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
@@ -105,6 +132,7 @@ ALTER TABLE `t1` ENABLE KEYS;
 
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
+-- Dump completed on 2010-Sep-29 15:18:52
 DROP TABLE t1;
 #
 # Test for --insert-ignore
@@ -112,6 +140,12 @@ DROP TABLE t1;
 CREATE TABLE t1 (a int);
 INSERT INTO t1 VALUES (1),(2),(3);
 INSERT INTO t1 VALUES (4),(5),(6);
+-- drizzledump 2010.09.1802 libdrizzle 7, for unknown-linux-gnu (x86_64)
+--
+-- Host: localhost    Database: test
+-- ------------------------------------------------------
+-- Server version	2010.09.1802 (Drizzle server)
+
 
 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
@@ -126,20 +160,7 @@ ALTER TABLE `t1` ENABLE KEYS;
 
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
-
-SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
-SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
-DROP TABLE IF EXISTS `t1`;
-CREATE TABLE `t1` (
-  `a` INT DEFAULT NULL
-) ENGINE=InnoDB COLLATE = utf8_general_ci;
-
-ALTER TABLE `t1` DISABLE KEYS;
-INSERT IGNORE INTO `t1` VALUES (1),(2),(3),(4),(5),(6);
-ALTER TABLE `t1` ENABLE KEYS;
-
-SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
-SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
+-- Dump completed on 2010-Sep-29 15:18:52
 DROP TABLE t1;
 #
 # Bug #10286: mysqldump -c crashes on table that has many fields with long
@@ -477,6 +498,12 @@ F_cd00692c3bfe59267d5ecfac5310286c int,
 F_6faa8040da20ef399b63a72d0e4ab575 int,
 F_fe73f687e5bc5280214e0486b273a5f9 int);
 insert into t1 (F_8d3bba7425e7c98c50f52ca1b52d3735) values (1);
+-- drizzledump 2010.09.1802 libdrizzle 7, for unknown-linux-gnu (x86_64)
+--
+-- Host: localhost    Database: test
+-- ------------------------------------------------------
+-- Server version	2010.09.1802 (Drizzle server)
+
 
 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
@@ -820,15 +847,23 @@ ALTER TABLE `t1` ENABLE KEYS;
 
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
+-- Dump completed on 2010-Sep-29 15:18:52
 drop table t1;
 #
 # Test for --add-drop-database
 #
 CREATE TABLE t1 (a int);
 INSERT INTO t1 VALUES (1),(2),(3);
+-- drizzledump 2010.09.1802 libdrizzle 7, for unknown-linux-gnu (x86_64)
+--
+-- Host: localhost    Database: test
+-- ------------------------------------------------------
+-- Server version	2010.09.1802 (Drizzle server)
+
 
 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
+DROP DATABASE IF EXISTS `test`
 CREATE DATABASE IF NOT EXISTS `test`;
 
 USE `test`;
@@ -844,6 +879,7 @@ ALTER TABLE `t1` ENABLE KEYS;
 
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
+-- Dump completed on 2010-Sep-29 15:18:52
 DROP TABLE t1;
 #
 # Bug #9558 mysqldump --no-data db t1 t2 format still dumps data
@@ -854,6 +890,12 @@ CREATE TABLE t1 ( a INT );
 CREATE TABLE t2 ( a INT );
 INSERT INTO t1 VALUES (1), (2);
 INSERT INTO t2 VALUES (1), (2);
+-- drizzledump 2010.09.1802 libdrizzle 7, for unknown-linux-gnu (x86_64)
+--
+-- Host: localhost    Database: mysqldump_test_db
+-- ------------------------------------------------------
+-- Server version	2010.09.1802 (Drizzle server)
+
 
 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
@@ -869,6 +911,13 @@ CREATE TABLE `t2` (
 
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
+-- Dump completed on 2010-Sep-29 15:18:53
+-- drizzledump 2010.09.1802 libdrizzle 7, for unknown-linux-gnu (x86_64)
+--
+-- Host: localhost    Database: mysqldump_test_db
+-- ------------------------------------------------------
+-- Server version	2010.09.1802 (Drizzle server)
+
 
 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
@@ -884,6 +933,7 @@ CREATE TABLE `t2` (
 
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
+-- Dump completed on 2010-Sep-29 15:18:53
 DROP TABLE t1, t2;
 DROP DATABASE mysqldump_test_db;
 #
@@ -984,11 +1034,33 @@ drop table `t1`;
 create table t1(a int);
 create table t2(a int);
 create table t3(a int);
+-- drizzledump 2010.09.1802 libdrizzle 7, for unknown-linux-gnu (x86_64)
+--
+-- Host: localhost    Database: test
+-- ------------------------------------------------------
+-- Server version	2010.09.1802 (Drizzle server)
+
 
 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
+DROP TABLE IF EXISTS `t3`;
+CREATE TABLE `t3` (
+  `a` INT DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci;
+
+DROP TABLE IF EXISTS `t1`;
+CREATE TABLE `t1` (
+  `a` INT DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci;
+
+DROP TABLE IF EXISTS `t2`;
+CREATE TABLE `t2` (
+  `a` INT DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci;
+
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
+-- Dump completed on 2010-Sep-29 15:18:54
 drop table t1, t2, t3;
 #
 # BUG#13926: --order-by-primary fails if PKEY contains quote character
@@ -1045,6 +1117,12 @@ CREATE TABLE t1(a int, b int);
 INSERT INTO t1 VALUES (1,1);
 INSERT INTO t1 VALUES (2,3);
 INSERT INTO t1 VALUES (3,4), (4,5);
+-- drizzledump 2010.09.1802 libdrizzle 7, for unknown-linux-gnu (x86_64)
+--
+-- Host: localhost    Database: test
+-- ------------------------------------------------------
+-- Server version	2010.09.1802 (Drizzle server)
+
 
 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
@@ -1060,6 +1138,7 @@ ALTER TABLE `t1` ENABLE KEYS;
 
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
+-- Dump completed on 2010-Sep-29 15:18:55
 DROP TABLE t1;
 #
 # Bug#31113 mysqldump 5.1 can't handle a dash ("-") in database names
@@ -1068,18 +1147,14 @@ create database `test-database`;
 use `test-database`;
 create table test (a int);
 
-SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION;
-
 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
-DROP TABLE IF EXISTS `test`;
 CREATE TABLE `test` (
   `a` INT DEFAULT NULL
 ) ENGINE=InnoDB COLLATE = utf8_general_ci;
 
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
-SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION;
 drop database `test-database`;
 use test;
 CREATE DATABASE mysqldump_30126;

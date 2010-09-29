@@ -129,7 +129,10 @@ bool DrizzleDumpDatabaseMySQL::populateTables(const std::vector<std::string> &ta
       if ((not table->populateFields()) or (not table->populateIndexes()))
       {
         delete table;
-        return false;
+        if (not ignore_errors)
+          return false;
+        else
+          continue;
       }
       tables.push_back(table);
       dcon->freeResult(result);
@@ -137,7 +140,10 @@ bool DrizzleDumpDatabaseMySQL::populateTables(const std::vector<std::string> &ta
     else
     {
       dcon->freeResult(result);
-      return false;
+      if (not ignore_errors)
+        return false;
+      else
+        continue;
     }
   }
 

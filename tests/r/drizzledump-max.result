@@ -64,6 +64,12 @@ id	name
 3	first value
 4	first value
 5	first value
+-- drizzledump 2010.09.1802 libdrizzle 7, for unknown-linux-gnu (x86_64)
+--
+-- Host: localhost    Database: test
+-- ------------------------------------------------------
+-- Server version	2010.09.1802 (Drizzle server)
+
 
 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
@@ -103,6 +109,13 @@ ALTER TABLE `t6` ENABLE KEYS;
 
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
+-- Dump completed on 2010-Sep-29 15:20:45
+-- drizzledump 2010.09.1802 libdrizzle 7, for unknown-linux-gnu (x86_64)
+--
+-- Host: localhost    Database: test
+-- ------------------------------------------------------
+-- Server version	2010.09.1802 (Drizzle server)
+
 
 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
@@ -142,6 +155,7 @@ ALTER TABLE `t6` ENABLE KEYS;
 
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
+-- Dump completed on 2010-Sep-29 15:20:45
 drop table t1;
 drop table t2;
 drop table t3;

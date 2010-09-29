@@ -125,7 +125,10 @@ bool DrizzleDumpDatabaseDrizzle::populateTables(const std::vector<std::string> &
         std::cerr  << "Error: Could not get fields and/ot indexes for table " << displayName << std::endl;
         delete table;
         dcon->freeResult(result);
-        return false;
+        if (not ignore_errors)
+          return false;
+        else
+          continue;
       }
       tables.push_back(table);
       dcon->freeResult(result);
@@ -134,7 +137,10 @@ bool DrizzleDumpDatabaseDrizzle::populateTables(const std::vector<std::string> &
     {
       std::cerr << "Error: Table " << displayName << " not found." << std::endl;
       dcon->freeResult(result);
-      return false;
+      if (not ignore_errors)
+        return false;
+      else
+        continue;
     }
   }
 
