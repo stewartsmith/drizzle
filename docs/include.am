@@ -30,12 +30,14 @@ ALLSPHINXOPTS   = -d $(SPHINX_BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOP
 
 .PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest
 
-if HAVE_SPHINX
+if HAVE_RECENT_SPHINX
 man_MANS+= \
 	   docs/man/drizzledump.1
 
 docs/man/drizzledump.1: man
+endif
 
+if HAVE_SPHINX
 sphinx-help:
 	@echo "Please use \`make <target>' where <target> is one of"
 	@echo "  html       to make standalone HTML files"
