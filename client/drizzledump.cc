@@ -90,6 +90,7 @@ static bool opt_lock_all_tables= false;
 static bool opt_dump_date= true;
 bool opt_autocommit= false; 
 static bool opt_single_transaction= false; 
+static bool opt_comments;
 static bool opt_compact;
 bool opt_ignore= false;
 bool opt_drop_database;
@@ -235,7 +236,7 @@ static void check_io(FILE *file)
 
 static void write_header(char *db_name)
 {
-  if (not opt_compact)
+  if ((not opt_compact) and (opt_comments))
   {
     cout << "-- drizzledump " << VERSION << " libdrizzle "
       << drizzle_version() << ", for " << HOST_VENDOR << "-" << HOST_OS
@@ -256,15 +257,17 @@ static void write_footer(FILE *sql_file)
 {
   if (! opt_compact)
   {
-    if (opt_dump_date)
+    if (opt_comments)
     {
-      boost::posix_time::ptime time(boost::posix_time::second_clock::local_time());
-      fprintf(sql_file, "-- Dump completed on %s\n",
-        boost::posix_time::to_simple_string(time).c_str());
+      if (opt_dump_date)
+      {
+        boost::posix_time::ptime time(boost::posix_time::second_clock::local_time());
+        fprintf(sql_file, "-- Dump completed on %s\n",
+          boost::posix_time::to_simple_string(time).c_str());
+      }
+      else
+        fprintf(sql_file, "-- Dump completed\n");
     }
-    else
-      fprintf(sql_file, "-- Dump completed\n");
-
     check_io(sql_file);
   }
 } /* write_footer */
@@ -614,6 +617,7 @@ try
   /* Inverted Booleans */
 
   opt_drop= (vm.count("skip-drop-table")) ? false : true;
+  opt_comments= (vm.count("skip-comments")) ? false : true;
   extended_insert= (vm.count("skip-extended-insert")) ? false : true;
   opt_dump_date= (vm.count("skip-dump-date")) ? false : true;
   opt_disable_keys= (vm.count("skip-disable-keys")) ? false : true;
@@ -680,7 +684,7 @@ try
 
   if (opt_compact)
   { 
-    opt_drop= opt_disable_keys= 0;
+    opt_comments= opt_drop= opt_disable_keys= 0;
   }
 
   if (vm.count("opt"))
