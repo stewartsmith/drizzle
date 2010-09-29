@@ -1282,8 +1282,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   ("pid-file", po::value<string>(),
   N_("Pid file used by drizzled."))
   ("port-open-timeout", po::value<uint32_t>(&drizzled_bind_timeout)->default_value(0),
-  N_("Maximum time in seconds to wait for the port to become free. "
-     "(Default: no wait)"))
+  N_("Maximum time in seconds to wait for the port to become free. "))
   ("secure-file-priv", po::value<string>(),
   N_("Limit LOAD DATA, SELECT ... OUTFILE, and LOAD_FILE() to files "
      "within specified directory"))
