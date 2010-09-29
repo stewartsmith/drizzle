@@ -762,11 +762,13 @@ static bool locked_named_table(TableList *table_list)
 }
 
 
-bool wait_for_locked_table_names(Session *session, TableList *table_list)
+static bool wait_for_locked_table_names(Session *session, TableList *table_list)
 {
   bool result= false;
 
-  safe_mutex_assert_owner(LOCK_open.native_handle());
+#if 0
+  assert(ownership of LOCK_open);
+#endif
 
   while (locked_named_table(table_list))
   {
@@ -1012,9 +1014,11 @@ bool lock_global_read_lock(Session *session)
                                 "Waiting to get readlock");
 
     waiting_for_read_lock++;
+    boost::mutex::scoped_lock scopedLock(LOCK_global_read_lock, boost::adopt_lock_t());
     while (protect_against_global_read_lock && !session->killed)
-      pthread_cond_wait(COND_global_read_lock.native_handle(), LOCK_global_read_lock.native_handle());
+      COND_global_read_lock.wait(scopedLock);
     waiting_for_read_lock--;
+    scopedLock.release();
     if (session->killed)
     {
       session->exit_cond(old_message);
@@ -1095,7 +1099,9 @@ bool wait_if_global_read_lock(Session *session, bool abort_on_refresh,
     while (must_wait(is_not_commit) && ! session->killed &&
 	   (!abort_on_refresh || session->version == refresh_version))
     {
-      (void) pthread_cond_wait(COND_global_read_lock.native_handle(), LOCK_global_read_lock.native_handle());
+      boost::mutex::scoped_lock scoped(LOCK_global_read_lock, boost::adopt_lock_t());
+      COND_global_read_lock.wait(scoped);
+      scoped.release();
     }
     if (session->killed)
       result=1;
@@ -1145,7 +1151,11 @@ bool make_global_read_lock_block_commit(Session *session)
   old_message= session->enter_cond(COND_global_read_lock, LOCK_global_read_lock,
                                    "Waiting for all running commits to finish");
   while (protect_against_global_read_lock && !session->killed)
-    pthread_cond_wait(COND_global_read_lock.native_handle(), LOCK_global_read_lock.native_handle());
+  {
+    boost::mutex::scoped_lock scopedLock(LOCK_global_read_lock, boost::adopt_lock_t());
+    COND_global_read_lock.wait(scopedLock);
+    scopedLock.release();
+  }
   if ((error= test(session->killed)))
     global_read_lock_blocks_commit--; // undo what we did
   else

@@ -1364,7 +1364,6 @@ try
   N_("Append everything into outfile. See interactive help (\\h) also. Does not work in batch mode. Disable with --disable-tee. This option is disabled by default."))
   ("disable-tee", po::value<bool>()->default_value(false)->zero_tokens(), 
   N_("Disable outfile. See interactive help (\\h) also."))
-  ("wait,w", N_("Wait and retry if connection is down."))
   ("connect_timeout", po::value<uint32_t>(&opt_connect_timeout)->default_value(0)->notifier(&check_timeout_value),
   N_("Number of seconds before connection timeout."))
   ("max_input_line", po::value<uint32_t>(&opt_max_input_line)->default_value(16*1024L*1024L)->notifier(&check_max_input_line),

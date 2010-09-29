@@ -1,13 +1,21 @@
 Drizzledump Backup Tool
 =======================
 
-The :program:`drizzledump` command line tool is used for backing up and
-restoring logical backups of a Drizzle database, as well as for migrating
-from *MySQL*.  It is called like this::
+Synopsis
+--------
 
-     $ drizzledump [OPTIONS] database [tables]
-     $ drizzledump [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]
-     $ drizzledump [OPTIONS] --all-databases [OPTIONS]
+**drizzledump** [*OPTIONS*] *database* [*tables*]
+
+**drizzledump** [*OPTIONS*] *--databases* [*OPTIONS*] *DB1* [*DB2* *DB3*...]
+
+**drizzledump** [*OPTIONS*] *--all-databases* [*OPTIONS*]
+
+Description
+-----------
+
+:program:`drizzledump` is used for backing up and
+restoring logical backups of a Drizzle database, as well as for migrating
+from *MySQL*. 
 
 When connecting to a Drizzle server it will do a plain dump of the server.  It
 will, however, automatically detect when it is connected to a *MySQL* server and

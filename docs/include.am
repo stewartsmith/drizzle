@@ -16,7 +16,6 @@ EXTRA_DIST+= \
 	     ${top_srcdir}/docs/*.rst \
 	     ${top_srcdir}/docs/clients/*.rst
 
-
 # Makefile for Sphinx documentation
 #
 
@@ -30,6 +29,14 @@ PAPEROPT_letter = -D latex_paper_size=letter
 ALLSPHINXOPTS   = -d $(SPHINX_BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) ${top_srcdir}/docs
 
 .PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest
+
+if HAVE_RECENT_SPHINX
+man_MANS+= \
+	   docs/man/drizzledump.1
+DISTCLEANFILES+= docs/man/drizzledump.1
+
+docs/man/drizzledump.1: man
+endif
 
 if HAVE_SPHINX
 sphinx-help:
