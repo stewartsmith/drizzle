@@ -3,7 +3,7 @@
 #
 
 --disable_warnings
-DROP TABLE IF EXISTS t1, t2, t3;
+DROP TABLE IF EXISTS t1, t2, t3, t4;
 --enable_warnings
 
 CREATE TABLE t1 (a INT NOT NULL, b CHAR(1000), PRIMARY KEY (a));
@@ -26,4 +26,9 @@ CREATE TABLE t3 (a INT NOT NULL, b ENUM ('1','2'), PRIMARY KEY(a));
 INSERT INTO t3 VALUES (1,'1');
 INSERT INTO t3 VALUES (2,NULL);
 
-DROP TABLE t1, t2, t3;
+CREATE TABLE t4 (id INT NOT NULL, col0_int INT DEFAULT NULL, col1_int INT DEFAULT NULL, PRIMARY KEY (id));
+INSERT INTO t4 VALUES (1, NULL, 1);
+UPDATE t4 SET col0_int= 0 WHERE col1_int != 2;
+UPDATE t4 SET col0_int= NULL WHERE col1_int != 2;
+
+DROP TABLE t1, t2, t3, t4;

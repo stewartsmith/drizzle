@@ -1295,12 +1295,9 @@ try
   N_("Continue even if we get an sql error."))
   ("named-commands,G", po::value<bool>(&named_cmds)->default_value(false)->zero_tokens(),
   N_("Enable named commands. Named commands mean this program's internal commands; see drizzle> help . When enabled, the named commands can be used from any line of the query, otherwise only from the first line, before an enter."))
-  ("ignore-spaces,i", N_("Ignore space after function names."))
   ("no-beep,b", po::value<bool>(&opt_nobeep)->default_value(false)->zero_tokens(),
   N_("Turn off beep on error."))
   ("disable-line-numbers", N_("Do not write line numbers for errors."))
-  ("skip-line-numbers,L", 
-  N_("Don't write line number for errors. WARNING: -L is deprecated, use long version of this option instead."))
   ("disable-column-names", N_("Do not write column names in results."))
   ("skip-column-names,N", 
   N_("Don't write column names in results. WARNING: -N is deprecated, use long version of this options instead."))
@@ -1367,7 +1364,6 @@ try
   N_("Append everything into outfile. See interactive help (\\h) also. Does not work in batch mode. Disable with --disable-tee. This option is disabled by default."))
   ("disable-tee", po::value<bool>()->default_value(false)->zero_tokens(), 
   N_("Disable outfile. See interactive help (\\h) also."))
-  ("wait,w", N_("Wait and retry if connection is down."))
   ("connect_timeout", po::value<uint32_t>(&opt_connect_timeout)->default_value(0)->notifier(&check_timeout_value),
   N_("Number of seconds before connection timeout."))
   ("max_input_line", po::value<uint32_t>(&opt_max_input_line)->default_value(16*1024L*1024L)->notifier(&check_max_input_line),

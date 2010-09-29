@@ -41,7 +41,8 @@ namespace plugin
 
 class Session;
 class NamedSavepoint;
-
+class Field;
+ 
 /**
  * This is a class which manages the XA transaction processing
  * in the server
@@ -428,6 +429,19 @@ public:
   }
 private:
   atomic<TransactionId> current_transaction_id;
+
+  /**
+   * Checks if a field has been updated 
+   *
+   * @param current_field Pointer to the field to check if it is updated 
+   * @in_table Pointer to the Table containing update information
+   * @param old_record Pointer to the raw bytes representing the old record/row
+   * @param new_record Pointer to the raw bytes representing the new record/row
+   */
+  bool isFieldUpdated(Field *current_field,
+                      Table *in_table,
+                      const unsigned char *old_record,
+                      const unsigned char *new_record);
 };
 
 } /* namespace drizzled */

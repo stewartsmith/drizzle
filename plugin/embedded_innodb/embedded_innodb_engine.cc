@@ -642,35 +642,102 @@ THR_LOCK_DATA **EmbeddedInnoDBCursor::store_lock(Session *session,
                       statement_savepoint_name.length());
   }
 
-  /* the below is just copied from ha_archive.cc in some dim hope it's
-     kinda right. */
+  /* the below is adapted from ha_innodb.cc */
 
-  if (lock_type != TL_IGNORE && lock.type == TL_UNLOCK)
-  {
-    /*
-      Here is where we get into the guts of a row level lock.
-      If TL_UNLOCK is set
-      If we are not doing a LOCK Table or DISCARD/IMPORT
-      TABLESPACE, then allow multiple writers
+  const uint32_t sql_command = session_sql_command(session);
+
+  if (sql_command == SQLCOM_DROP_TABLE) {
+
+    /* MySQL calls this function in DROP Table though this table
+    handle may belong to another session that is running a query.
+    Let us in that case skip any changes to the prebuilt struct. */ 
+
+  } else if (lock_type == TL_READ_WITH_SHARED_LOCKS
+       || lock_type == TL_READ_NO_INSERT
+       || (lock_type != TL_IGNORE
+           && sql_command != SQLCOM_SELECT)) {
+
+    /* The OR cases above are in this order:
+    1) MySQL is doing LOCK TABLES ... READ LOCAL, or we
+    are processing a stored procedure or function, or
+    2) (we do not know when TL_READ_HIGH_PRIORITY is used), or
+    3) this is a SELECT ... IN SHARE MODE, or
+    4) we are doing a complex SQL statement like
+    INSERT INTO ... SELECT ... and the logical logging (MySQL
+    binlog) requires the use of a locking read, or
+    MySQL is doing LOCK TABLES ... READ.
+    5) we let InnoDB do locking reads for all SQL statements that
+    are not simple SELECTs; note that select_lock_type in this
+    case may get strengthened in ::external_lock() to LOCK_X.
+    Note that we MUST use a locking read in all data modifying
+    SQL statements, because otherwise the execution would not be
+    serializable, and also the results from the update could be
+    unexpected if an obsolete consistent read view would be
+    used. */
+
+    enum_tx_isolation isolation_level= session_tx_isolation(session);
+
+    if (isolation_level != ISO_SERIALIZABLE
+        && (lock_type == TL_READ || lock_type == TL_READ_NO_INSERT)
+        && (sql_command == SQLCOM_INSERT_SELECT
+      || sql_command == SQLCOM_UPDATE
+      || sql_command == SQLCOM_CREATE_TABLE)) {
+
+      /* If we either have innobase_locks_unsafe_for_binlog
+      option set or this session is using READ COMMITTED
+      isolation level and isolation level of the transaction
+      is not set to serializable and MySQL is doing
+      INSERT INTO...SELECT or UPDATE ... = (SELECT ...) or
+      CREATE  ... SELECT... without FOR UPDATE or
+      IN SHARE MODE in select, then we use consistent
+      read for select. */
+
+      ib_lock_mode= IB_LOCK_NONE;
+    } else if (sql_command == SQLCOM_CHECKSUM) {
+      /* Use consistent read for checksum table */
+
+      ib_lock_mode= IB_LOCK_NONE;
+    } else {
+      ib_lock_mode= IB_LOCK_S;
+    }
+
+  } else if (lock_type != TL_IGNORE) {
+
+    /* We set possible LOCK_X value in external_lock, not yet
+    here even if this would be SELECT ... FOR UPDATE */
+    ib_lock_mode= IB_LOCK_NONE;
+  }
+
+  if (lock_type != TL_IGNORE && lock.type == TL_UNLOCK) {
+
+    /* If we are not doing a LOCK TABLE, DISCARD/IMPORT
+    TABLESPACE or TRUNCATE TABLE then allow multiple
+    writers. Note that ALTER TABLE uses a TL_WRITE_ALLOW_READ
+    < TL_WRITE_CONCURRENT_INSERT.
     */
 
-    if ((lock_type >= TL_WRITE_CONCURRENT_INSERT &&
-         lock_type <= TL_WRITE)
-        && !session_tablespace_op(session))
+    if ((lock_type >= TL_WRITE_CONCURRENT_INSERT
+         && lock_type <= TL_WRITE)
+        && !session_tablespace_op(session)
+        && sql_command != SQLCOM_TRUNCATE
+        && sql_command != SQLCOM_CREATE_TABLE) {
+
       lock_type = TL_WRITE_ALLOW_WRITE;
+    }
 
-    /*
-      In queries of type INSERT INTO t1 SELECT ... FROM t2 ...
-      MySQL would use the lock TL_READ_NO_INSERT on t2, and that
-      would conflict with TL_WRITE_ALLOW_WRITE, blocking all inserts
-      to t2. Convert the lock to a normal read lock to allow
-      concurrent inserts to t2.
+    /* In queries of type INSERT INTO t1 SELECT ... FROM t2 ...
+    MySQL would use the lock TL_READ_NO_INSERT on t2, and that
+    would conflict with TL_WRITE_ALLOW_WRITE, blocking all inserts
+    to t2. Convert the lock to a normal read lock to allow
+    concurrent inserts to t2.
     */
 
-    if (lock_type == TL_READ_NO_INSERT)
-      lock_type = TL_READ;
+    if (lock_type == TL_READ_NO_INSERT) {
 
-    lock.type=lock_type;
+      lock_type = TL_READ;
+    }
+
+    lock.type = lock_type;
   }
 
   *to++= &lock;
