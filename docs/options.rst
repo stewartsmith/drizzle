@@ -6,9 +6,6 @@ There are many different options one can use to configure Drizzle.
 Config File Options
 -------------------
 
-.. option:: --help-extended
-  Display this help and exit after initializing plugins.
-
 .. option:: -?,--help
   Display this help and exit.
 
@@ -23,10 +20,6 @@ Config File Options
 
 .. option:: --plugin-dir arg
   Directory for plugins
-
-.. option:: --pid-file arg
-
-  Pid file used by drizzled.
 
 Plugin Loading Options
 ----------------------
