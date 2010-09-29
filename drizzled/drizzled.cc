@@ -194,7 +194,6 @@ TYPELIB tx_isolation_typelib= {array_elements(tx_isolation_names)-1,"",
   Used with --help for detailed option
 */
 bool opt_help= false;
-bool opt_help_extended= false;
 
 arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
 {{&Arg_comparator::compare_string,     &Arg_comparator::compare_e_string},
@@ -500,7 +499,7 @@ void unireg_abort(int exit_code)
 
   if (exit_code)
     errmsg_printf(ERRMSG_LVL_ERROR, _("Aborting\n"));
-  else if (opt_help || opt_help_extended)
+  else if (opt_help)
     usage();
   clean_up(!opt_help && (exit_code));
   internal::my_end();
@@ -1226,8 +1225,6 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   std::string system_config_file_drizzle("drizzled.cnf");
 
   config_options.add_options()
-  ("help-extended", po::value<bool>(&opt_help_extended)->default_value(false)->zero_tokens(),
-  N_("Display this help and exit after initializing plugins."))
   ("help,?", po::value<bool>(&opt_help)->default_value(false)->zero_tokens(),
   N_("Display this help and exit."))
   ("no-defaults", po::value<bool>()->default_value(false)->zero_tokens(),
@@ -1273,7 +1270,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   ("datadir", po::value<string>(),
   N_("Path to the database root."))
   ("default-storage-engine", po::value<string>(),
-  N_("Set the default storage engine (table type) for tables."))
+  N_("Set the default storage engine for tables."))
   ("default-time-zone", po::value<string>(),
   N_("Set the default time zone."))
   ("exit-info,T", po::value<long>(),
@@ -1614,7 +1611,7 @@ int init_server_components(module::Registry &plugins)
   ha_init_errors();
 
 
-  if (opt_help || opt_help_extended)
+  if (opt_help)
     unireg_abort(0);
 
   if (plugin_finalize(plugins))
@@ -1755,10 +1752,6 @@ struct option my_long_options[] =
   {"help", '?', N_("Display this help and exit."),
    (char**) &opt_help, (char**) &opt_help, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
    0, 0},
-  {"help-extended", '?',
-   N_("Display this help and exit after initializing plugins."),
-   (char**) &opt_help_extended, (char**) &opt_help_extended,
-   0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"auto-increment-increment", OPT_AUTO_INCREMENT,
    N_("Auto-increment columns are incremented by this"),
    (char**) &global_system_variables.auto_increment_increment,
@@ -2412,7 +2405,7 @@ static void fix_paths()
   internal::convert_dirname(buff,buff,NULL);
   (void) internal::my_load_path(language,language,buff);
 
-  if (not opt_help and not opt_help_extended)
+  if (not opt_help)
   {
     const char *tmp_string= getenv("TMPDIR") ? getenv("TMPDIR") : NULL;
     struct stat buf;
