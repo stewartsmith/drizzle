@@ -21,6 +21,10 @@ Config File Options
 .. option:: --plugin-dir arg
   Directory for plugins
 
+.. option:: --pid-file arg
+
+  Pid file used by drizzled.
+
 Plugin Loading Options
 ----------------------
 
