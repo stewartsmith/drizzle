@@ -109,6 +109,8 @@
 #include <vector>
 #include <algorithm>
 
+#include <boost/dynamic_bitset.hpp>
+
 #include "drizzled/sql_base.h"
 #include "drizzled/sql_select.h"
 #include "drizzled/error.h"
@@ -1192,6 +1194,19 @@ skip_to_ror_scan:
 
 typedef struct st_ror_scan_info
 {
+  st_ror_scan_info()
+    :
+      idx(0),
+      keynr(0),
+      records(0), 
+      sel_arg(NULL),
+      covered_fields(NULL),
+      used_fields_covered(0),
+      key_rec_length(0),
+      index_read_cost(0.0),
+      first_uncovered_field(0),
+      key_components(0)
+  {}
   uint32_t      idx;      /* # of used key in param->keys */
   uint32_t      keynr;    /* # of used key in table */
   ha_rows   records;  /* estimate of # records this scan will return */
@@ -1200,7 +1215,7 @@ typedef struct st_ror_scan_info
   optimizer::SEL_ARG   *sel_arg;
 
   /* Fields used in the query and covered by this ROR scan. */
-  MyBitmap covered_fields;
+  boost::dynamic_bitset<> *covered_fields;
   uint32_t      used_fields_covered; /* # of set bits in covered_fields */
   int       key_rec_length; /* length of key record (including rowid) */
 
@@ -1232,8 +1247,7 @@ typedef struct st_ror_scan_info
 static
 ROR_SCAN_INFO *make_ror_scan(const optimizer::Parameter *param, int idx, optimizer::SEL_ARG *sel_arg)
 {
-  ROR_SCAN_INFO *ror_scan;
-  my_bitmap_map *bitmap_buf;
+  ROR_SCAN_INFO *ror_scan= NULL;
 
   uint32_t keynr;
 
@@ -1247,29 +1261,21 @@ ROR_SCAN_INFO *make_ror_scan(const optimizer::Parameter *param, int idx, optimiz
   ror_scan->sel_arg= sel_arg;
   ror_scan->records= param->table->quick_rows[keynr];
 
-  if (!(bitmap_buf= (my_bitmap_map*) param->mem_root->alloc_root(param->fields_bitmap_size)))
-  {
-    return NULL;
-  }
-
-  if (ror_scan->covered_fields.init(bitmap_buf, param->table->getShare()->sizeFields()))
-  {
-    return NULL;
-  }
-  ror_scan->covered_fields.clearAll();
+  ror_scan->covered_fields= new boost::dynamic_bitset<>(param->table->getShare()->sizeFields());
+  ror_scan->covered_fields->reset();
 
   KeyPartInfo *key_part= param->table->key_info[keynr].key_part;
   KeyPartInfo *key_part_end= key_part +
                                param->table->key_info[keynr].key_parts;
-  for (;key_part != key_part_end; ++key_part)
+  for (; key_part != key_part_end; ++key_part)
   {
     if (param->needed_fields.isBitSet(key_part->fieldnr-1))
-      ror_scan->covered_fields.setBit(key_part->fieldnr-1);
+      ror_scan->covered_fields->set(key_part->fieldnr-1);
   }
   double rows= rows2double(param->table->quick_rows[ror_scan->keynr]);
   ror_scan->index_read_cost=
     param->table->cursor->index_only_read_time(ror_scan->keynr, rows);
-  return(ror_scan);
+  return ror_scan;
 }
 
 
@@ -1291,6 +1297,19 @@ static int cmp_ror_scan_info(ROR_SCAN_INFO** a, ROR_SCAN_INFO** b)
   double val1= rows2double((*a)->records) * (*a)->key_rec_length;
   double val2= rows2double((*b)->records) * (*b)->key_rec_length;
   return (val1 < val2)? -1: (val1 == val2)? 0 : 1;
+}
+
+
+static uint32_t find_first_not_set(const boost::dynamic_bitset<>& map)
+{
+  for (boost::dynamic_bitset<>::size_type i= 0; i < map.size(); i++)
+  {
+    if (! map.test(i))
+    {
+      return i;
+    }
+  }
+  return map.size();
 }
 
 
@@ -1619,8 +1638,8 @@ static bool ror_intersect_add(ROR_INTERSECT_INFO *info,
   {
     info->index_records += info->param->table->quick_rows[ror_scan->keynr];
     info->index_scan_costs += ror_scan->index_read_cost;
-    bitmap_union(&info->covered_fields, &ror_scan->covered_fields);
-    if (!info->is_covering && bitmap_is_subset(&info->param->needed_fields,
+    bitmap_union(&info->covered_fields, *ror_scan->covered_fields);
+    if (! info->is_covering && bitmap_is_subset(&info->param->needed_fields,
                                                &info->covered_fields))
     {
       info->is_covering= true;
@@ -1720,11 +1739,11 @@ optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Para
     */
     for (ROR_SCAN_INFO **scan= ror_scan_mark; scan != ror_scans_end; ++scan)
     {
-      bitmap_subtract(&(*scan)->covered_fields, covered_fields);
+      bitmap_subtract(*(*scan)->covered_fields, covered_fields);
       (*scan)->used_fields_covered=
-        (*scan)->covered_fields.getBitsSet();
-      (*scan)->first_uncovered_field=
-        (*scan)->covered_fields.getFirst();
+        (*scan)->covered_fields->count();
+      (*scan)->first_uncovered_field= find_first_not_set(*(*scan)->covered_fields);
+        //(*scan)->covered_fields.find_first();
     }
 
     internal::my_qsort(ror_scan_mark, ror_scans_end-ror_scan_mark,
@@ -1737,7 +1756,7 @@ optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Para
     if (total_cost > read_time)
       return NULL;
     /* F=F-covered by first(I) */
-    bitmap_union(covered_fields, &(*ror_scan_mark)->covered_fields);
+    bitmap_union(covered_fields, *(*ror_scan_mark)->covered_fields);
     all_covered= bitmap_is_subset(&param->needed_fields, covered_fields);
   } while ((++ror_scan_mark < ror_scans_end) && !all_covered);
 
