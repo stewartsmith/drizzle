@@ -336,6 +336,8 @@ private:
 };
 
 bool bitmap_is_subset(const MyBitmap *map1, const MyBitmap *map2);
+/** temporary until MyBitmap goes away */
+bool bitmap_is_subset(const MyBitmap *map1, const boost::dynamic_bitset<>& map2);
 bool bitmap_is_overlapping(const MyBitmap *map1,
                            const MyBitmap *map2);
 

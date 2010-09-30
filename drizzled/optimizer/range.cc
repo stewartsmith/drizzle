@@ -1351,7 +1351,7 @@ static int cmp_ror_scan_info_covering(ROR_SCAN_INFO** a, ROR_SCAN_INFO** b)
 typedef struct
 {
   const optimizer::Parameter *param;
-  MyBitmap covered_fields; /* union of fields covered by all scans */
+  boost::dynamic_bitset<> *covered_fields; /* union of fields covered by all scans */
   /*
     Fraction of table records that satisfies conditions of all scans.
     This is the number of full records that will be retrieved if a
@@ -1382,20 +1382,16 @@ typedef struct
 static
 ROR_INTERSECT_INFO* ror_intersect_init(const optimizer::Parameter *param)
 {
-  ROR_INTERSECT_INFO *info;
-  my_bitmap_map* buf;
+  ROR_INTERSECT_INFO *info= NULL;
   if (!(info= (ROR_INTERSECT_INFO*)param->mem_root->alloc_root(sizeof(ROR_INTERSECT_INFO))))
     return NULL;
   info->param= param;
-  if (!(buf= (my_bitmap_map*) param->mem_root->alloc_root(param->fields_bitmap_size)))
-    return NULL;
-  if (info->covered_fields.init(buf, param->table->getShare()->sizeFields()))
-    return NULL;
+  info->covered_fields= new boost::dynamic_bitset<>(param->table->getShare()->sizeFields());
   info->is_covering= false;
   info->index_scan_costs= 0.0;
   info->index_records= 0;
   info->out_rows= (double) param->table->cursor->stats.records;
-  info->covered_fields.clearAll();
+  info->covered_fields->reset();
   return info;
 }
 
@@ -1513,7 +1509,7 @@ static double ror_scan_selectivity(const ROR_INTERSECT_INFO *info,
   optimizer::SEL_ARG *tuple_arg= NULL;
   key_part_map keypart_map= 0;
   bool cur_covered;
-  bool prev_covered= test(info->covered_fields.isBitSet(key_part->fieldnr-1));
+  bool prev_covered= test(info->covered_fields->test(key_part->fieldnr-1));
   key_range min_range;
   key_range max_range;
   min_range.key= key_val;
@@ -1526,7 +1522,7 @@ static double ror_scan_selectivity(const ROR_INTERSECT_INFO *info,
        sel_arg= sel_arg->next_key_part)
   {
     cur_covered=
-      test(info->covered_fields.isBitSet(key_part[sel_arg->part].fieldnr-1));
+      test(info->covered_fields->test(key_part[sel_arg->part].fieldnr-1));
     if (cur_covered != prev_covered)
     {
       /* create (part1val, ..., part{n-1}val) tuple. */
@@ -1638,9 +1634,9 @@ static bool ror_intersect_add(ROR_INTERSECT_INFO *info,
   {
     info->index_records += info->param->table->quick_rows[ror_scan->keynr];
     info->index_scan_costs += ror_scan->index_read_cost;
-    bitmap_union(&info->covered_fields, *ror_scan->covered_fields);
+    *info->covered_fields|= *ror_scan->covered_fields;
     if (! info->is_covering && bitmap_is_subset(&info->param->needed_fields,
-                                               &info->covered_fields))
+                                                *info->covered_fields))
     {
       info->is_covering= true;
     }

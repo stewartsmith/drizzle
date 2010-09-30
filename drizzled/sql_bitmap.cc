@@ -242,6 +242,18 @@ bool bitmap_is_subset(const MyBitmap *map1, const MyBitmap *map2)
   return 1;
 }
 
+bool bitmap_is_subset(const MyBitmap *map1, const boost::dynamic_bitset<>& map2)
+{
+  for (boost::dynamic_bitset<>::size_type i= 0; i < map2.size(); i++)
+  {
+    if (map1->isBitSet(i) && ! map2.test(i))
+    {
+        return false;
+    }
+  }
+  return true;
+}
+
 /* True if bitmaps has any common bits */
 
 bool bitmap_is_overlapping(const MyBitmap *map1, const MyBitmap *map2)
