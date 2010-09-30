@@ -28,7 +28,11 @@
 #include "xt_defs.h"
 
 #ifdef DRIZZLED
+#include <drizzled/internal/my_pthread.h>
 #include <drizzled/plugin.h>
+#include <drizzled/plugin/client.h>
+#include <drizzled/plugin/null_client.h>
+#include <drizzled/plugin/listen.h>
 #include <drizzled/show.h>
 #include <drizzled/data_home.h>
 #include <drizzled/field/blob.h>
@@ -61,6 +65,7 @@ using namespace drizzled;
 #include "database_xt.h"
 #include "cache_xt.h"
 #include "datalog_xt.h"
+#include "memory_xt.h"
 
 static void		myxt_bitmap_init(XTThreadPtr self, MX_BITMAP *map, u_int n_bits);
 static void		myxt_bitmap_free(XTThreadPtr self, MX_BITMAP *map);
@@ -607,27 +612,15 @@ xtPublic u_int myxt_create_foreign_key_from_row(XTIndexPtr ind, xtWord1 *key, xt
  */
 static void mx_set_notnull_in_record(STRUCT_TABLE *table, Field *field, char *record)
 {
-#ifdef DRIZZLED
 	if (field->null_ptr)
 		record[(uint) (field->null_ptr - (uchar *) table->getDefaultValues())] &= (uchar) ~field->null_bit;
-#else
-	ASSERT(table == field->table);
-	if (field->null_ptr)
-		record[(uint) (field->null_ptr - (uchar *) table->getInsertRecord())] &= (uchar) ~field->null_bit;
-#endif
 }
 
 static xtBool mx_is_null_in_record(STRUCT_TABLE *table, Field *field, char *record)
 {
 	if (field->null_ptr) {
-#ifdef DRIZZLED
 		if (record[(uint) (field->null_ptr - (uchar *) table->getDefaultValues())] & (uchar) field->null_bit)
 			return TRUE;
-#else
-		ASSERT(table == field->table);
-		if (record[(uint) (field->null_ptr - (uchar *) table->getInsertRecord())] & (uchar) field->null_bit)
-			return TRUE;
-#endif
 	}
 	return FALSE;
 }
@@ -641,12 +634,7 @@ static char *mx_get_length_and_data(STRUCT_TABLE *table, Field *field, char *des
 {
 	char *from;
 	
-#ifdef DRIZZLED
 	from = dest + field->offset(table->getDefaultValues());
-#else
-	ASSERT(table == field->table);
-	from = dest + field->offset(table->getInsertRecord());
-#endif
 	switch (field->real_type()) {
 #ifndef DRIZZLED
 		case MYSQL_TYPE_TINY_BLOB:
@@ -698,13 +686,13 @@ static char *mx_get_length_and_data(STRUCT_TABLE *table, Field *field, char *des
 		case MYSQL_TYPE_VARCHAR: {
 			uint length;
 
-			if (((Field_varstring *) field)->length_bytes == 1)
+			if (((Field_varstring *) field)->pack_length_no_ptr() == 1)
 				length = *((unsigned char *) from);
 			else
 				length = uint2korr(from);
 			
 			*len = length;
-			return from+((Field_varstring *) field)->length_bytes;
+			return from+((Field_varstring *) field)->pack_length_no_ptr();
 		}
 #ifndef DRIZZLED
 		case MYSQL_TYPE_DECIMAL:
@@ -764,12 +752,7 @@ static void mx_set_length_and_data(STRUCT_TABLE *table, Field *field, char *dest
 {
 	char *from;
 	
-#ifdef DRIZZLED
 	from = dest + field->offset(table->getDefaultValues());
-#else
-	ASSERT(table == field->table);
-	from = dest + field->offset(table->getInsertRecord());
-#endif
 	switch (field->real_type()) {
 #ifndef DRIZZLED
 		case MYSQL_TYPE_TINY_BLOB:
@@ -797,7 +780,7 @@ static void mx_set_length_and_data(STRUCT_TABLE *table, Field *field, char *dest
 #ifndef DRIZZLED
 		case MYSQL_TYPE_STRING:
 			if (data) {
-				mx_set_notnull_in_record(table, field, dest);
+				mx_set_notnull_in_record(field, dest);
 				memcpy(from, data, len);
 			}
 			else
@@ -809,19 +792,19 @@ static void mx_set_length_and_data(STRUCT_TABLE *table, Field *field, char *dest
 		case MYSQL_TYPE_VAR_STRING:
 			int2store(from, len);
 			if (data) {
-				mx_set_notnull_in_record(table, field, dest);
+				mx_set_notnull_in_record(field, dest);
 				memcpy(from+HA_KEY_BLOB_LENGTH, data, len);
 			}
 			return;
 #endif
 		case MYSQL_TYPE_VARCHAR:
-			if (((Field_varstring *) field)->length_bytes == 1)
+			if (((Field_varstring *) field)->pack_length_no_ptr() == 1)
 				*((unsigned char *) from) = (unsigned char) len;
 			else
 				int2store(from, len);
 			if (data) {
 				mx_set_notnull_in_record(table, field, dest);
-				memcpy(from+((Field_varstring *) field)->length_bytes, data, len);
+				memcpy(from+((Field_varstring *) field)->pack_length_no_ptr(), data, len);
 			}
 			return;
 #ifndef DRIZZLED
@@ -917,7 +900,7 @@ xtPublic xtBool myxt_create_row_from_key(XTOpenTablePtr XT_UNUSED(ot), XTIndexPt
 	 * the value of any other feilds.
 	 *
 	 * I was setting all to NULL:
-	memset(dest_buff, 0xFF, table->s->null_bytes);
+	memset(dest_buff, 0xFF, GET_TABLE_SHARE(table)->null_bytes);
 	*/
 	key = (byte *) b_value;
 	key_end = key + key_len;
@@ -1153,7 +1136,6 @@ xtPublic u_int myxt_get_key_length(XTIndexPtr ind, xtWord1 *key_buf)
 #endif
 			case HA_KEYTYPE_LONG_INT:
 			case HA_KEYTYPE_ULONG_INT:
-			case HA_KEYTYPE_UINT24:
 			case HA_KEYTYPE_DOUBLE:
 			case HA_KEYTYPE_LONGLONG:
 			case HA_KEYTYPE_ULONGLONG:
@@ -1165,7 +1147,10 @@ xtPublic u_int myxt_get_key_length(XTIndexPtr ind, xtWord1 *key_buf)
 	}
 
 	end:
-	return (xtWord1 *) key_data - key_buf;
+	u_int ilen = (xtWord1 *) key_data - key_buf;
+	if (ilen > XT_INDEX_MAX_KEY_SIZE)
+		ind->mi_key_corrupted = TRUE;
+	return ilen;
 }
 
 /* Derived from ha_key_cmp */
@@ -1361,7 +1346,6 @@ xtPublic int myxt_compare_key(XTIndexPtr ind, int search_flags, uint key_length,
 				b += keyseg->length;
 				break;
 			}
-#endif
 			case HA_KEYTYPE_UINT24: {
 				int32_t l_1 = uint3korr(a);
 				int32_t l_2 = uint3korr(b);
@@ -1371,7 +1355,6 @@ xtPublic int myxt_compare_key(XTIndexPtr ind, int search_flags, uint key_length,
 				b += keyseg->length;
 				break;
 			}
-#ifndef DRIZZLED
 			case HA_KEYTYPE_FLOAT: {
 				float f_1, f_2;
 
@@ -1539,10 +1522,10 @@ xtPublic u_int myxt_key_seg_length(XTIndexSegRec *keyseg, u_int key_offset, xtWo
 		case HA_KEYTYPE_USHORT_INT:
 		case HA_KEYTYPE_INT24:
 		case HA_KEYTYPE_FLOAT:
+		case HA_KEYTYPE_UINT24:
 #endif		
 		case HA_KEYTYPE_LONG_INT:
 		case HA_KEYTYPE_ULONG_INT:
-		case HA_KEYTYPE_UINT24:
 		case HA_KEYTYPE_DOUBLE:
 			break;
 #ifndef DRIZZLED
@@ -1855,11 +1838,7 @@ xtPublic void myxt_get_column_as_string(XTOpenTablePtr ot, char *buffer, u_int c
 		save = field->ptr;
 		xt_lock_mutex(self, &tab->tab_dic_field_lock);
 		pushr_(xt_unlock_mutex, &tab->tab_dic_field_lock);
-#ifdef DRIZZLED
 		field->ptr = (byte *) buffer + field->offset(table->getDefaultValues());
-#else
-		field->ptr = (byte *) buffer + field->offset(field->table->getInsertRecord());
-#endif
 		field->val_str(&val);
 		field->ptr = save;					// Restore org row pointer
 		freer_(); // xt_unlock_mutex(&tab->tab_dic_field_lock)
@@ -1887,11 +1866,7 @@ xtPublic xtBool myxt_set_column(XTOpenTablePtr ot, char *buffer, u_int col_idx, 
 	save = field->ptr;
 	xt_lock_mutex(self, &tab->tab_dic_field_lock);
 	pushr_(xt_unlock_mutex, &tab->tab_dic_field_lock);
-#ifdef DRIZZLED
 	field->ptr = (byte *) buffer + field->offset(table->getDefaultValues());
-#else
-	field->ptr = (byte *) buffer + field->offset(field->table->getInsertRecord());
-#endif
 	error = field->store(value, len, &my_charset_utf8_general_ci);
 	field->ptr = save;					// Restore org row pointer
 	freer_(); // xt_unlock_mutex(&tab->tab_dic_field_lock)
@@ -2008,7 +1983,6 @@ xtPublic void myxt_print_key(XTIndexPtr ind, xtWord1 *key_value)
  * MySQL Data Dictionary
  */
 
-#ifdef DRIZZLED
 static void my_close_table(STRUCT_TABLE *share)
 {
 	delete share;
@@ -2055,8 +2029,7 @@ static STRUCT_TABLE *my_open_table(XTThreadPtr self, XTDatabaseHPtr XT_UNUSED(db
 			message::Table::STANDARD);
 	}
 	else {
-		std::string n;
-		n.append(data_home);
+		std::string n(getDataHomeCatalog());
 		n.append("/");
 		n.append(database_name);
 		n.append("/");
@@ -2074,201 +2047,12 @@ static STRUCT_TABLE *my_open_table(XTThreadPtr self, XTDatabaseHPtr XT_UNUSED(db
 
 	return share;
 }
-#else // DRIZZLED
-static void my_close_table(STRUCT_TABLE *table)
-{
-#ifdef DRIZZLED
-#if 0 // Removed by Brian
-	TABLE_SHARE	*share;
-
-	share = (TABLE_SHARE *) ((char *) table + sizeof(TABLE));
-	share->free_table_share();
-#endif
-#else
-	delete_table(table, true);  // TODO: Q, why did Stewart remove this?
-#endif
-	xt_free_ns(table);
-}
-
-/*
- * This function returns NULL if the table cannot be opened 
- * because this is not a MySQL thread.
- */ 
-static STRUCT_TABLE *my_open_table(XTThreadPtr self, XTDatabaseHPtr XT_UNUSED(db), XTPathStrPtr tab_path, xtWord1 table_type)
-{
-	THD			*thd = current_thd;
-	char		path_buffer[PATH_MAX];
-	char		*table_name;
-	char		database_name[XT_IDENTIFIER_NAME_SIZE];
-	size_t		size;
-	char		*buffer, *path, *db_name, *name;
-	TABLE_SHARE	*share;
-	int			error;
-	TABLE		*table;
-
-	/* If we have no MySQL thread, then we cannot open this table!
-	 * What this means is the thread is probably the sweeper or the
-	 * compactor.
-	 */
-	if (!thd)
-		return NULL;
-
-	/* GOTCHA: Check if the table name is a partitian,
-	 * if so we need to remove the partition
-	 * extension, in order for this to work!
-	 *
-	 * Reason: the parts of a partition table do not
-	 * have .frm files!!
-	 */
-	xt_strcpy(PATH_MAX, path_buffer, tab_path->ps_path);
-	table_name = xt_last_name_of_path(path_buffer);
-#ifndef DRIZZLED
-	char *ptr;
-
-	if ((ptr = strstr(table_name, "#P#")))
-		*ptr = 0;
-#endif
-
-	xt_2nd_last_name_of_path(XT_IDENTIFIER_NAME_SIZE, database_name, path_buffer);
-
-	size = sizeof(TABLE) + sizeof(TABLE_SHARE) + 
-		strlen(path_buffer) + 1 +
-		strlen(database_name) + 1 + strlen(table_name) + 1;
-	if (!(buffer = (char *) xt_malloc(self, size)))
-		return NULL;
-	table = (TABLE *) buffer;
-	buffer += sizeof(TABLE);
-	share = (TABLE_SHARE *) buffer;
-	buffer += sizeof(TABLE_SHARE);
-
-	path = buffer;
-	strcpy(path, path_buffer);
-	buffer += strlen(path_buffer) + 1;
-	db_name = buffer;
-	strcpy(db_name, database_name);
-	buffer += strlen(database_name) + 1;
-	name = buffer;
-	strcpy(name, table_name);
-
-	/* Required to call 'open_table_from_share'! */
-	LEX *old_lex, new_lex;
-
-	old_lex = thd->lex;
-	thd->lex = &new_lex;
-	new_lex.current_select= NULL;
-	lex_start(thd);
-
-#ifdef DRIZZLED
-	char		tab_name[XT_IDENTIFIER_NAME_SIZE];
-
-	uint32_t tab_name_len = TableIdentifier::filename_to_tablename(name, tab_name, XT_IDENTIFIER_NAME_SIZE);	
-	
-	TableIdentifier *ident = NULL;
-	if (table_type == XT_TABLE_TYPE_TEMPORARY) {
-		std::string tmp_path(drizzle_tmpdir);
-		tmp_path.append("/");
-		tmp_path.append(table_name);
-		ident = new TableIdentifier(db_name, tab_name, tmp_path);
-	} else if (table_type == XT_TABLE_TYPE_STANDARD) {
-        	ident = new TableIdentifier(
-			std::string(db_name), 
-			std::string(tab_name, tab_name_len), 
-			message::Table::STANDARD);
-	} else {
-		std::string n;
-		n.append(data_home);
-		n.append("/");
-		n.append(db_name);
-		n.append("/");
-		n.append(table_name);
-		//ident = new TableIdentifier(
-		//	std::string(db_name), 
-		//	std::string(tab_name, tab_name_len), 
-		//	message::Table::INTERNAL);
-		ident = new TableIdentifier(db_name, tab_name, n);
-	}
-	share->init(db_name, 0, name, path);
-	if ((error = share->open_table_def(*thd, *ident)) ||
-		(error = share->open_table_from_share(thd, "", 0, 0, *table)))
-        {
-          xt_free(self, table);
-          lex_end(&new_lex);
-          thd->lex = old_lex;
-          xt_throw_sulxterr(XT_CONTEXT, XT_ERR_LOADING_MYSQL_DIC, tab_path->ps_path, (u_long) error);
-          delete ident;
-          return NULL;
-        }
-	delete ident;
-#else
-#if MYSQL_VERSION_ID < 60000
-#if MYSQL_VERSION_ID < 50123
-	init_tmp_table_share(share, db_name, 0, name, path);
-#else
-	init_tmp_table_share(thd, share, db_name, 0, name, path);
-#endif
-#else
-#if MYSQL_VERSION_ID < 60004
-	init_tmp_table_share(share, db_name, 0, name, path);
-#else
-	init_tmp_table_share(thd, share, db_name, 0, name, path);
-#endif
-#endif
-
-	/* If MySQL shutsdown while we are just starting up, they
-	 * they kill the plugin sub-system before calling
-	 * shutdown for the engine!
-	 */
-	if (!ha_resolve_by_legacy_type(thd, DB_TYPE_PBXT)) {
-		xt_free(self, table);
-		lex_end(&new_lex);
-		thd->lex = old_lex;
-		xt_throw_xterr(XT_CONTEXT, XT_ERR_MYSQL_SHUTDOWN);
-		return NULL;
-	}
-
-	if ((error = open_table_def(thd, share, 0))) {
-		xt_free(self, table);
-		lex_end(&new_lex);
-		thd->lex = old_lex;
-		xt_throw_sulxterr(XT_CONTEXT, XT_ERR_LOADING_MYSQL_DIC, tab_path->ps_path, (u_long) error);
-		return NULL;
-	}
-
-#if MYSQL_VERSION_ID >= 50404
-	if ((error = open_table_from_share(thd, share, "", 0, (uint) READ_ALL, 0, table, OTM_OPEN)))
-#else
-	if ((error = open_table_from_share(thd, share, "", 0, (uint) READ_ALL, 0, table, FALSE)))
-#endif
-	{
-		xt_free(self, table);
-		lex_end(&new_lex);
-		thd->lex = old_lex;
-		xt_throw_sulxterr(XT_CONTEXT, XT_ERR_LOADING_MYSQL_DIC, tab_path->ps_path, (u_long) error);
-		return NULL;
-	}
-#endif
-
-	lex_end(&new_lex);
-	thd->lex = old_lex;
-
-	/* GOTCHA: I am the plug-in!!! Therefore, I should not hold 
-	 * a reference to myself. By holding this reference I prevent
-	 * plugin_shutdown() and reap_plugins() in sql_plugin.cc
-	 * from doing their job on shutdown!
-	 */
-#ifndef DRIZZLED
-	plugin_unlock(NULL, table->s->db_plugin);
-	table->s->db_plugin = NULL;
-#endif
-	return table;
-}
-#endif // DRIZZLED
 
 /*
 static bool my_match_index(XTDDIndex *ind, KEY *index)
 {
-	KeyPartInfo	*key_part;
-	KeyPartInfo	*key_part_end;
+	KEY_PART_INFO	*key_part;
+	KEY_PART_INFO	*key_part_end;
 	u_int			j;
 	XTDDColumnRef	*cref;
 
@@ -2365,7 +2149,8 @@ static XTIndexPtr my_create_index(XTThreadPtr self, STRUCT_TABLE *table_arg, u_i
 	xt_spinlock_init_with_autoname(self, &ind->mi_dirty_lock);
 	ind->mi_index_no = idx;
 	ind->mi_flags = (index->flags & (HA_NOSAME | HA_NULL_ARE_EQUAL | HA_UNIQUE_CHECK));
-	ind->mi_low_byte_first = GET_TABLE_SHARE(table_arg)->db_low_byte_first;
+	//ind->mi_low_byte_first = TS(table_arg)->db_low_byte_first;
+	ind->mi_key_corrupted = FALSE;
 	ind->mi_fix_key = TRUE;
 	ind->mi_select_total = 0;
 	ind->mi_subset_of = 0;
@@ -2417,11 +2202,7 @@ static XTIndexPtr my_create_index(XTThreadPtr self, STRUCT_TABLE *table_arg, u_i
 			key_length++;
 			seg->flag |= HA_NULL_PART;
 			seg->null_bit = field->null_bit;
-#ifdef DRIZZLED
 			seg->null_pos = (uint) (field->null_ptr - (uchar*) table_arg->getDefaultValues());
-#else
-			seg->null_pos = (uint) (field->null_ptr - (uchar*) table_arg->getInsertRecord());
-#endif
 		}
 		else {
 			seg->null_bit = 0;
@@ -2464,10 +2245,10 @@ static XTIndexPtr my_create_index(XTThreadPtr self, STRUCT_TABLE *table_arg, u_i
 #else
 					seg->type = HA_KEYTYPE_USHORT_INT;
 					break;
-#endif
 				case 3:
 					seg->type = HA_KEYTYPE_UINT24;
 					break;
+#endif
 			}
 		}
 #endif
@@ -2867,11 +2648,7 @@ xtPublic void myxt_setup_dictionary(XTThreadPtr self, XTDictionaryPtr dic)
 			field=GET_TABLE_FIELDS(my_tab);
 			
 			curr_field = field[dic->dic_ind_cols_req];
-#ifdef DRIZZLED
 			dic->dic_ind_rec_len = curr_field->offset(my_tab->getDefaultValues());
-#else
-			dic->dic_ind_rec_len = curr_field->offset(my_tab->getInsertRecord());
-#endif
 		}
 	}
 
@@ -3157,7 +2934,7 @@ xtPublic XTDDTable *myxt_create_table_from_table(XTThreadPtr self, STRUCT_TABLE 
  * MySQL CHARACTER UTILITIES
  */
 
-xtPublic void myxt_static_convert_identifier(XTThreadPtr XT_UNUSED(self), MX_CHARSET_INFO *cs, char *from, char *to, size_t to_len)
+xtPublic void myxt_static_convert_identifier(XTThreadPtr XT_UNUSED(self), MX_CONST_CHARSET_INFO *cs, char *from, char *to, size_t to_len)
 {
 #ifdef DRIZZLED
 	((void *)cs);
@@ -3178,7 +2955,7 @@ xtPublic void myxt_static_convert_identifier(XTThreadPtr XT_UNUSED(self), MX_CHA
 }
 
 // cs == current_thd->charset()
-xtPublic char *myxt_convert_identifier(XTThreadPtr self, MX_CHARSET_INFO *cs, char *from)
+xtPublic char *myxt_convert_identifier(XTThreadPtr self, MX_CONST_CHARSET_INFO *cs, char *from)
 {
 #ifdef DRIZZLED
 	char *to = xt_dup_string(self, from);
@@ -3248,22 +3025,22 @@ xtPublic int myxt_strcasecmp(char * a, char *b)
 	return my_strcasecmp(&my_charset_utf8_general_ci, a, b);
 }
 
-xtPublic int myxt_isspace(MX_CHARSET_INFO *cs, char a)
+xtPublic int myxt_isspace(MX_CONST_CHARSET_INFO *cs, char a)
 {
 	return my_isspace(cs, a);
 }
 
-xtPublic int myxt_ispunct(MX_CHARSET_INFO *cs, char a)
+xtPublic int myxt_ispunct(MX_CONST_CHARSET_INFO *cs, char a)
 {
 	return my_ispunct(cs, a);
 }
 
-xtPublic int myxt_isdigit(MX_CHARSET_INFO *cs, char a)
+xtPublic int myxt_isdigit(MX_CONST_CHARSET_INFO *cs, char a)
 {
 	return my_isdigit(cs, a);
 }
 
-xtPublic MX_CHARSET_INFO *myxt_getcharset(bool convert)
+xtPublic MX_CONST_CHARSET_INFO *myxt_getcharset(bool convert)
 {
 	if (convert) {
 		THD *thd = current_thd;
@@ -3288,7 +3065,20 @@ xtPublic xtBool myxt_create_thread_possible()
 xtPublic void *myxt_create_thread()
 {
 #ifdef DRIZZLED
-	return (void *) 1;
+	Client		*client;
+	Session		*session;
+
+	if (drizzled::internal::my_thread_init()) {
+		xt_register_error(XT_REG_CONTEXT, XT_ERR_MYSQL_ERROR, 0, "Unable to initialize MySQL threading");
+		return NULL;
+	}
+
+	if (!(client = new NullClient()))
+		return NULL;
+	session = new Session(client);
+	session->thread_stack = (char *) &session;
+	session->storeGlobals();
+	return (void *) session;
 #else
 	THD *new_thd;
 
@@ -3366,12 +3156,15 @@ xtPublic void *myxt_create_thread()
 }
 
 #ifdef DRIZZLED
-xtPublic void myxt_destroy_thread(void *, xtBool)
+xtPublic void myxt_destroy_thread(void *s, xtBool end_threads)
 {
-}
+	Session *session = (Session *) s;
 
-xtPublic void myxt_delete_remaining_thread()
-{
+	session->lockForDelete();
+	delete session;
+
+	if (end_threads)
+		drizzled::internal::my_thread_end();
 }
 #else
 xtPublic void myxt_destroy_thread(void *thread, xtBool end_threads)
@@ -3400,6 +3193,7 @@ xtPublic void myxt_destroy_thread(void *thread, xtBool end_threads)
 	if (end_threads)
 		my_thread_end();
 }
+#endif
 
 xtPublic void myxt_delete_remaining_thread()
 {
@@ -3408,7 +3202,6 @@ xtPublic void myxt_delete_remaining_thread()
 	if ((thd = current_thd))
 		myxt_destroy_thread((void *) thd, TRUE);
 }
-#endif
 
 xtPublic XTThreadPtr myxt_get_self()
 {

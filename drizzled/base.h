@@ -192,7 +192,6 @@ enum ha_base_keytype {
   HA_KEYTYPE_ULONG_INT=9,
   HA_KEYTYPE_LONGLONG=10,
   HA_KEYTYPE_ULONGLONG=11,
-  HA_KEYTYPE_UINT24=13,
   /* Varchar (0-255 bytes) with length packed with 1 byte */
   HA_KEYTYPE_VARTEXT1=15,               /* Key is sorted as letters */
   HA_KEYTYPE_VARBINARY1=16,             /* Key is sorted as unsigned chars */

@@ -131,6 +131,7 @@ typedef struct XTDatabase : public XTHeap {
 	XTSortedListPtr			db_table_by_id;
 	XTSortedListPtr			db_table_paths;							/* A list of table paths used by this database. */
 	xtBool					db_multi_path;
+	XTSortedListPtr			db_error_list;							/* A list of errors already reported. */
 
 	/* The open table pool: */
 	XTAllTablePoolsRec		db_ot_pool;
@@ -232,7 +233,7 @@ typedef struct XTDatabase : public XTHeap {
 #define XT_FOR_POOL					5
 
 void				xt_create_database(XTThreadPtr th, char *path);
-XTDatabaseHPtr		xt_get_database(XTThreadPtr self, char *path, xtBool multi_path);
+XTDatabaseHPtr		xt_get_database(XTThreadPtr self, const char *path, xtBool multi_path);
 XTDatabaseHPtr		xt_get_database_by_id(XTThreadPtr self, xtDatabaseID db_id);
 void				xt_drop_database(XTThreadPtr self, XTDatabaseHPtr db);
 
@@ -245,10 +246,10 @@ void				xt_add_data_dir(size_t size, char *path);
 
 void				xt_use_database(XTThreadPtr self, XTDatabaseHPtr db, int what_for);
 void				xt_unuse_database(XTThreadPtr self, XTThreadPtr other_thr);
-void				xt_open_database(XTThreadPtr self, char *path, xtBool multi_path);
+void				xt_open_database(XTThreadPtr self, const char *path, xtBool multi_path);
 
-void				xt_lock_installation(XTThreadPtr self, char *installation_path);
-void				xt_unlock_installation(XTThreadPtr self, char *installation_path);
+void				xt_lock_installation(XTThreadPtr self, const char *installation_path);
+void				xt_unlock_installation(XTThreadPtr self, const char *installation_path);
 void				xt_crash_me(void);
 
 void				xt_init_databases(XTThreadPtr self);

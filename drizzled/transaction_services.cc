@@ -654,7 +654,8 @@ int TransactionServices::rollbackTransaction(Session *session, bool normal_trans
      * a rollback statement with the corresponding transaction ID
      * to rollback.
      */
-    rollbackTransactionMessage(session);
+    if (normal_transaction)
+      rollbackTransactionMessage(session);
 
     if (is_real_trans)
       session->transaction.xid_state.xid.null();
@@ -967,8 +968,6 @@ void TransactionServices::initTransactionMessage(message::Transaction &in_transa
 
   if (should_inc_trx_id)
     trx->set_transaction_id(getNextTransactionId());
-  else
-    trx->set_transaction_id(getCurrentTransactionId());
 
   trx->set_start_timestamp(in_session->getCurrentTimestamp());
 }
@@ -1058,12 +1057,18 @@ void TransactionServices::rollbackTransactionMessage(Session *in_session)
    */
   if (unlikely(message::transactionContainsBulkSegment(*transaction)))
   {
+    /* Remember the transaction ID so we can re-use it */
+    uint64_t trx_id= transaction->transaction_context().transaction_id();
+
     /*
      * Clear the transaction, create a Rollback statement message, 
      * attach it to the transaction, and push it to replicators.
      */
     transaction->Clear();
     initTransactionMessage(*transaction, in_session, false);
+
+    /* Set the transaction ID to match the previous messages */
+    transaction->mutable_transaction_context()->set_transaction_id(trx_id);
 
     message::Statement *statement= transaction->add_statement();
 
@@ -1107,6 +1112,9 @@ message::Statement &TransactionServices::getInsertStatement(Session *in_session,
      */
     if (static_cast<size_t>(transaction->ByteSize()) >= trx_msg_threshold)
     {
+      /* Remember the transaction ID so we can re-use it */
+      uint64_t trx_id= transaction->transaction_context().transaction_id();
+
       message::InsertData *current_data= statement->mutable_insert_data();
 
       /* Caller should use this value when adding a new record */
@@ -1128,6 +1136,10 @@ message::Statement &TransactionServices::getInsertStatement(Session *in_session,
        */
       statement= in_session->getStatementMessage();
       transaction= getActiveTransactionMessage(in_session, false);
+      assert(transaction != NULL);
+
+      /* Set the transaction ID to match the previous messages */
+      transaction->mutable_transaction_context()->set_transaction_id(trx_id);
     }
     else
     {
@@ -1297,6 +1309,9 @@ message::Statement &TransactionServices::getUpdateStatement(Session *in_session,
      */
     if (static_cast<size_t>(transaction->ByteSize()) >= trx_msg_threshold)
     {
+      /* Remember the transaction ID so we can re-use it */
+      uint64_t trx_id= transaction->transaction_context().transaction_id();
+
       message::UpdateData *current_data= statement->mutable_update_data();
 
       /* Caller should use this value when adding a new record */
@@ -1318,6 +1333,10 @@ message::Statement &TransactionServices::getUpdateStatement(Session *in_session,
        */
       statement= in_session->getStatementMessage();
       transaction= getActiveTransactionMessage(in_session, false);
+      assert(transaction != NULL);
+
+      /* Set the transaction ID to match the previous messages */
+      transaction->mutable_transaction_context()->set_transaction_id(trx_id);
     }
     else
     {
@@ -1407,17 +1426,7 @@ void TransactionServices::setUpdateHeader(message::Statement &statement,
       field_metadata->set_type(message::internalFieldTypeToFieldProtoType(current_field->type()));
     }
 
-    /*
-     * The below really should be moved into the Field API and Record API.  But for now
-     * we do this crazy pointer fiddling to figure out if the current field
-     * has been updated in the supplied record raw byte pointers.
-     */
-    const unsigned char *old_ptr= (const unsigned char *) old_record + (ptrdiff_t) (current_field->ptr - in_table->getInsertRecord()); 
-    const unsigned char *new_ptr= (const unsigned char *) new_record + (ptrdiff_t) (current_field->ptr - in_table->getInsertRecord()); 
-
-    uint32_t field_length= current_field->pack_length(); /** @TODO This isn't always correct...check varchar diffs. */
-
-    if (memcmp(old_ptr, new_ptr, field_length) != 0)
+    if (isFieldUpdated(current_field, in_table, old_record, new_record))
     {
       /* Field is changed from old to new */
       field_metadata= header->add_set_field_metadata();
@@ -1460,17 +1469,8 @@ void TransactionServices::updateRecord(Session *in_session,
      * UPDATE t1 SET counter = counter + 1 WHERE id IN (1,2);
      *
      * We will generate two UpdateRecord messages with different set_value byte arrays.
-     *
-     * The below really should be moved into the Field API and Record API.  But for now
-     * we do this crazy pointer fiddling to figure out if the current field
-     * has been updated in the supplied record raw byte pointers.
      */
-    const unsigned char *old_ptr= (const unsigned char *) old_record + (ptrdiff_t) (current_field->ptr - in_table->getInsertRecord()); 
-    const unsigned char *new_ptr= (const unsigned char *) new_record + (ptrdiff_t) (current_field->ptr - in_table->getInsertRecord()); 
-
-    uint32_t field_length= current_field->pack_length(); /** @TODO This isn't always correct...check varchar diffs. */
-
-    if (memcmp(old_ptr, new_ptr, field_length) != 0)
+    if (isFieldUpdated(current_field, in_table, old_record, new_record))
     {
       /* Store the original "read bit" for this field */
       bool is_read_set= current_field->isReadSet();
@@ -1522,6 +1522,47 @@ void TransactionServices::updateRecord(Session *in_session,
   }
 }
 
+bool TransactionServices::isFieldUpdated(Field *current_field,
+                                         Table *in_table,
+                                         const unsigned char *old_record,
+                                         const unsigned char *new_record)
+{
+  /*
+   * The below really should be moved into the Field API and Record API.  But for now
+   * we do this crazy pointer fiddling to figure out if the current field
+   * has been updated in the supplied record raw byte pointers.
+   */
+  const unsigned char *old_ptr= (const unsigned char *) old_record + (ptrdiff_t) (current_field->ptr - in_table->getInsertRecord());
+  const unsigned char *new_ptr= (const unsigned char *) new_record + (ptrdiff_t) (current_field->ptr - in_table->getInsertRecord());
+
+  uint32_t field_length= current_field->pack_length(); /** @TODO This isn't always correct...check varchar diffs. */
+
+  bool old_value_is_null= current_field->is_null_in_record(old_record);
+  bool new_value_is_null= current_field->is_null_in_record(new_record);
+
+  bool isUpdated= false;
+  if (old_value_is_null != new_value_is_null)
+  {
+    if ((old_value_is_null) && (! new_value_is_null)) /* old value is NULL, new value is non NULL */
+    {
+      isUpdated= true;
+    }
+    else if ((! old_value_is_null) && (new_value_is_null)) /* old value is non NULL, new value is NULL */
+    {
+      isUpdated= true;
+    }
+  }
+
+  if (! isUpdated)
+  {
+    if (memcmp(old_ptr, new_ptr, field_length) != 0)
+    {
+      isUpdated= true;
+    }
+  }
+  return isUpdated;
+}  
+
 message::Statement &TransactionServices::getDeleteStatement(Session *in_session,
                                                             Table *in_table,
                                                             uint32_t *next_segment_id)
@@ -1552,6 +1593,9 @@ message::Statement &TransactionServices::getDeleteStatement(Session *in_session,
      */
     if (static_cast<size_t>(transaction->ByteSize()) >= trx_msg_threshold)
     {
+      /* Remember the transaction ID so we can re-use it */
+      uint64_t trx_id= transaction->transaction_context().transaction_id();
+
       message::DeleteData *current_data= statement->mutable_delete_data();
 
       /* Caller should use this value when adding a new record */
@@ -1573,6 +1617,10 @@ message::Statement &TransactionServices::getDeleteStatement(Session *in_session,
        */
       statement= in_session->getStatementMessage();
       transaction= getActiveTransactionMessage(in_session, false);
+      assert(transaction != NULL);
+
+      /* Set the transaction ID to match the previous messages */
+      transaction->mutable_transaction_context()->set_transaction_id(trx_id);
     }
     else
     {

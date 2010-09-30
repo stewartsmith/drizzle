@@ -2,6 +2,7 @@
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2010 Brian Aker
+ *  Copyright (C) 2010 Stewart Smith
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,6 +32,10 @@
 #include "plugin/math_functions/pow.h"
 #include "plugin/math_functions/ln.h"
 #include "plugin/math_functions/sqrt.h"
+#include "plugin/math_functions/ceiling.h"
+#include "plugin/math_functions/exp.h"
+#include "plugin/math_functions/floor.h"
+#include "plugin/math_functions/ord.h"
 
 using namespace drizzled;
 
@@ -50,6 +55,11 @@ static int init(drizzled::module::Context &context)
   context.add(new plugin::Create_function<Item_func_pow>("power"));
   context.add(new plugin::Create_function<Item_func_ln>("ln"));
   context.add(new plugin::Create_function<Item_func_sqrt>("sqrt"));
+  context.add(new plugin::Create_function<Item_func_ceiling>("ceil"));
+  context.add(new plugin::Create_function<Item_func_ceiling>("ceiling"));
+  context.add(new plugin::Create_function<Item_func_exp>("exp"));
+  context.add(new plugin::Create_function<Item_func_floor>("floor"));
+  context.add(new plugin::Create_function<Item_func_ord>("ord"));
 
   return 0;
 }
@@ -59,7 +69,7 @@ DRIZZLE_DECLARE_PLUGIN
   DRIZZLE_VERSION_ID,
   "Math Functions",
   "1.0",
-  "Brian Aker",
+  "Brian Aker, Stewart Smith",
   "Math Functions.",
   PLUGIN_LICENSE_GPL,
   init,

@@ -29,17 +29,12 @@ class MultiThreadScheduler: public drizzled::plugin::Scheduler
 {
 private:
   drizzled::atomic<uint32_t> thread_count;
-  pthread_attr_t attr;
 
 public:
   MultiThreadScheduler(const char *name_arg): 
     Scheduler(name_arg)
   {
-    /* Setup attribute parameter for session threads. */
-    (void) pthread_attr_init(&attr);
-    (void) pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-    pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
-
+    setStackSize();
     thread_count= 0;
   }
 
@@ -47,19 +42,9 @@ public:
   bool addSession(drizzled::Session *session);
   void killSessionNow(drizzled::Session *session);
   
-  void runSession(drizzled::Session *session)
-  {
-    if (drizzled::internal::my_thread_init())
-    {
-      session->disconnect(drizzled::ER_OUT_OF_RESOURCES, true);
-      session->status_var.aborted_connects++;
-      killSessionNow(session);
-    }
-
-    session->thread_stack= (char*) &session;
-    session->run();
-    killSessionNow(session);
-  }
+  void runSession(drizzled::Session *session);
+private:
+  void setStackSize();
 };
 
 #endif /* PLUGIN_MULTI_THREAD_MULTI_THREAD_H */

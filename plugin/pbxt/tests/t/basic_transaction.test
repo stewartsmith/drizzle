@@ -1,3 +1,4 @@
+--source include/have_linux.inc
 SET SESSION storage_engine=pbxt;
 connect (con1,localhost,root,,);
 connect (con2,localhost,root,,);

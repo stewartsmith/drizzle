@@ -20,7 +20,7 @@ dnl  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 AC_PREREQ(2.59)dnl		Minimum Autoconf version required.
 dnl Version from the AC_INIT call below is overridden later
 dnl So don't update it here
-AC_INIT([drizzle],[7],[http://bugs.launchpad.net/drizzle])
+AC_INIT([drizzle7],[7],[http://bugs.launchpad.net/drizzle])
 AC_CONFIG_SRCDIR([drizzled/drizzled.cc])
 AC_CONFIG_AUX_DIR([config])
 
@@ -86,6 +86,8 @@ PANDORA_REQUIRE_LIBPCRE
 PANDORA_REQUIRE_LIBREADLINE
 PANDORA_REQUIRE_LIBDL
 AC_LANG_POP
+
+DRIZZLE_STACK_DIRECTION
 
 PANDORA_USE_BETTER_MALLOC
 

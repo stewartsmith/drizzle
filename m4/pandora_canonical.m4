@@ -4,7 +4,7 @@ dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
 dnl Which version of the canonical setup we're using
-AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.151])
+AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.155])
 
 AC_DEFUN([PANDORA_FORCE_DEPEND_TRACKING],[
   AC_ARG_ENABLE([fat-binaries],
@@ -20,6 +20,12 @@ AC_DEFUN([PANDORA_FORCE_DEPEND_TRACKING],[
   dnl If we're building OSX Fat Binaries, we have to turn off -M options
   AS_IF([test "x${ac_enable_fat_binaries}" = "xyes"],[
     enable_dependency_tracking=no
+  ])
+])
+
+AC_DEFUN([PANDORA_BLOCK_BAD_OPTIONS],[
+  AS_IF([test "x${prefix}" = "x"],[
+    AC_MSG_ERROR([--prefix requires an argument])
   ])
 ])
 
@@ -65,6 +71,8 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   ],[
     AC_CONFIG_HEADERS([config.h])
   ])
+
+  PANDORA_BLOCK_BAD_OPTIONS
 
   # We need to prevent canonical target
   # from injecting -O2 into CFLAGS - but we won't modify anything if we have
@@ -123,8 +131,9 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
     AS_IF([test "$ac_cv_cxx_stdcxx_98" = "no"],[
       AC_MSG_ERROR([No working C++ Compiler has been found. ${PACKAGE} requires a C++ compiler that can handle C++98])
     ])
-
   ])
+  PANDORA_CXX_CSTDINT
+  PANDORA_CXX_CINTTYPES
   
   m4_if(m4_substr(m4_esyscmd(test -d gnulib && echo 0),0,1),0,[
     gl_INIT
@@ -225,9 +234,19 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   AC_CHECK_PROGS([PERL], [perl])
   AC_CHECK_PROGS([DPKG_GENSYMBOLS], [dpkg-gensymbols], [:])
   AC_CHECK_PROGS([SPHINXBUILD], [sphinx-build], [:])
+  AS_IF([test "x${SPHINXBUILD}" != "x:"],[
+    AC_CACHE_CHECK([if sphinx is new enough],[ac_cv_recent_sphinx],[
+    
+    ${SPHINXBUILD} -Q -C -b man -d conftest.d . . >/dev/null 2>&1
+    AS_IF([test $? -eq 0],[ac_cv_recent_sphinx=yes],
+          [ac_cv_recent_sphinx=no])
+    rm -rf conftest.d
+    ])
+  ])
 
   AM_CONDITIONAL(HAVE_DPKG_GENSYMBOLS,[test "x${DPKG_GENSYMBOLS}" != "x:"])
   AM_CONDITIONAL(HAVE_SPHINX,[test "x${SPHINXBUILD}" != "x:"])
+  AM_CONDITIONAL(HAVE_RECENT_SPHINX,[test "x${ac_cv_recent_sphinx}" = "xyes"])
 
   m4_if(m4_substr(m4_esyscmd(test -d po && echo 0),0,1),0, [
     AM_PO_SUBDIRS

@@ -102,12 +102,9 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/function/get_user_var.h \
 			      drizzled/function/last_insert.h \
 			      drizzled/function/locate.h \
-			      drizzled/function/math/ceiling.h \
 			      drizzled/function/math/dec.h \
 			      drizzled/function/math/decimal_typecast.h \
 			      drizzled/function/math/divide.h \
-			      drizzled/function/math/exp.h \
-			      drizzled/function/math/floor.h \
 			      drizzled/function/math/int.h \
 			      drizzled/function/math/int_divide.h \
 			      drizzled/function/math/int_val.h \
@@ -116,7 +113,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/function/math/mod.h \
 			      drizzled/function/math/multiply.h \
 			      drizzled/function/math/neg.h \
-			      drizzled/function/math/ord.h \
 			      drizzled/function/math/plus.h \
 			      drizzled/function/math/real.h \
 			      drizzled/function/math/round.h \
@@ -136,15 +132,12 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/function/str/concat.h \
 			      drizzled/function/str/conv.h \
 			      drizzled/function/str/conv_charset.h \
-			      drizzled/function/str/elt.h \
 			      drizzled/function/str/export_set.h \
-			      drizzled/function/str/format.h \
 			      drizzled/function/str/insert.h \
 			      drizzled/function/str/left.h \
 			      drizzled/function/str/load_file.h \
 			      drizzled/function/str/make_set.h \
 			      drizzled/function/str/pad.h \
-			      drizzled/function/str/quote.h \
 			      drizzled/function/str/repeat.h \
 			      drizzled/function/str/replace.h \
 			      drizzled/function/str/right.h \
@@ -511,11 +504,8 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/function/get_user_var.cc \
 				 drizzled/function/last_insert.cc \
 				 drizzled/function/locate.cc \
-				 drizzled/function/math/ceiling.cc \
 				 drizzled/function/math/decimal_typecast.cc \
 				 drizzled/function/math/divide.cc \
-				 drizzled/function/math/exp.cc \
-				 drizzled/function/math/floor.cc \
 				 drizzled/function/math/int.cc \
 				 drizzled/function/math/int_divide.cc \
 				 drizzled/function/math/int_val.cc \
@@ -524,7 +514,6 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/function/math/mod.cc \
 				 drizzled/function/math/multiply.cc \
 				 drizzled/function/math/neg.cc \
-				 drizzled/function/math/ord.cc \
 				 drizzled/function/math/plus.cc \
 				 drizzled/function/math/real.cc \
 				 drizzled/function/math/round.cc \
@@ -543,15 +532,12 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/function/str/concat.cc \
 				 drizzled/function/str/conv.cc \
 				 drizzled/function/str/conv_charset.cc \
-				 drizzled/function/str/elt.cc \
 				 drizzled/function/str/export_set.cc \
-				 drizzled/function/str/format.cc \
 				 drizzled/function/str/insert.cc \
 				 drizzled/function/str/left.cc \
 				 drizzled/function/str/load_file.cc \
 				 drizzled/function/str/make_set.cc \
 				 drizzled/function/str/pad.cc \
-				 drizzled/function/str/quote.cc \
 				 drizzled/function/str/repeat.cc \
 				 drizzled/function/str/replace.cc \
 				 drizzled/function/str/right.cc \

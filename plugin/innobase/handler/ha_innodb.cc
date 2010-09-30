@@ -187,7 +187,6 @@ static plugin::TableFunction* innodb_lock_waits_tool= NULL;
 
 static long innobase_mirrored_log_groups, innobase_log_files_in_group,
   innobase_log_buffer_size,
-  innobase_file_io_threads,
   innobase_force_recovery, innobase_open_files;
 static long innobase_additional_mem_pool_size= 8*1024*1024L;
 static ulong innobase_commit_concurrency = 0;
@@ -1809,10 +1808,8 @@ innobase_init(
 /*==========*/
   module::Context &context) /*!< in: Drizzle Plugin Context */
 {
-  static char current_dir[3];   /*!< Set if using current lib */
   int   err;
   bool    ret;
-  char    *default_path;
   uint    format_id;
   InnobaseEngine *actuall_engine_ptr;
   const module::option_map &vm= context.getOptions();
@@ -1840,10 +1837,9 @@ innobase_init(
   {
     innobase_data_home_dir= strdup(vm["data-home-dir"].as<string>().c_str());
   }
-
   else
   {
-    innobase_data_home_dir= NULL;
+    innobase_data_home_dir= strdup(getDataHome().c_str());
   }
 
   if (vm.count("fast-shutdown"))
@@ -1954,15 +1950,6 @@ innobase_init(
     if (srv_n_free_tickets_to_enter < 1)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for concurrency-tickets\n"));
-      exit(-1);
-    }
-  }
-
-  if (vm.count("file-io-threads"))
-  {
-    if (innobase_file_io_threads < 4 || innobase_file_io_threads > 64)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for file-io-threads\n"));
       exit(-1);
     }
   }
@@ -2132,19 +2119,6 @@ innobase_init(
 
   os_innodb_umask = (ulint)internal::my_umask;
 
-  /* First calculate the default path for innodb_data_home_dir etc.,
-    in case the user has not given any value.
-
-    Note that when using the embedded server, the datadirectory is not
-    necessarily the current directory of this program. */
-
-  /* It's better to use current lib, to keep paths short */
-  current_dir[0] = FN_CURLIB;
-  current_dir[1] = FN_LIBCHAR;
-  current_dir[2] = 0;
-  default_path = current_dir;
-
-  ut_a(default_path);
 
   /* Set InnoDB initialization parameters according to the values
     read from MySQL .cnf file */
@@ -2153,8 +2127,7 @@ innobase_init(
 
   /* The default dir for data files is the datadir of MySQL */
 
-  srv_data_home = (innobase_data_home_dir ? innobase_data_home_dir :
-                   default_path);
+  srv_data_home = (char *)innobase_data_home_dir;
 
   /* Set default InnoDB data file size to 10 MB and let it be
     auto-extending. Thus users can use InnoDB in >= 4.0 without having
@@ -2191,7 +2164,7 @@ mem_free_and_error:
   }
   else
   {
-    innobase_log_group_home_dir = default_path;
+    innobase_log_group_home_dir = const_cast<char *>(getDataHome().c_str());
   }
 
 #ifdef UNIV_LOG_ARCHIVE
@@ -2311,7 +2284,6 @@ innobase_change_buffering_inited_ok:
 
   srv_mem_pool_size = (ulint) innobase_additional_mem_pool_size;
 
-  srv_n_file_io_threads = (ulint) innobase_file_io_threads;
   srv_n_read_io_threads = (ulint) innobase_read_io_threads;
   srv_n_write_io_threads = (ulint) innobase_write_io_threads;
 
@@ -3515,7 +3487,7 @@ ha_innobase::store_key_val_for_row(
       cs = field->charset();
 
       lenlen = (ulint)
-        (((Field_varstring*)field)->length_bytes);
+        (((Field_varstring*)field)->pack_length_no_ptr());
 
       data = row_mysql_read_true_varchar(&len,
         (byte*) (record
@@ -3855,7 +3827,7 @@ include_field:
 
     if (templ->mysql_type == DATA_MYSQL_TRUE_VARCHAR) {
       templ->mysql_length_bytes = (ulint)
-        (((Field_varstring*)field)->length_bytes);
+        (((Field_varstring*)field)->pack_length_no_ptr());
     }
 
     templ->charset = dtype_get_charset_coll(
@@ -3901,10 +3873,6 @@ ha_innobase::innobase_get_int_col_max_value(
   /* TINY */
   case HA_KEYTYPE_BINARY:
     max_value = 0xFFULL;
-    break;
-  /* MEDIUM */
-  case HA_KEYTYPE_UINT24:
-    max_value = 0xFFFFFFULL;
     break;
   /* LONG */
   case HA_KEYTYPE_ULONG_INT:
@@ -4293,12 +4261,12 @@ calc_row_difference(
         o_ptr = row_mysql_read_true_varchar(
           &o_len, o_ptr,
           (ulint)
-          (((Field_varstring*)field)->length_bytes));
+          (((Field_varstring*)field)->pack_length_no_ptr()));
 
         n_ptr = row_mysql_read_true_varchar(
           &n_len, n_ptr,
           (ulint)
-          (((Field_varstring*)field)->length_bytes));
+          (((Field_varstring*)field)->pack_length_no_ptr()));
       }
 
       break;
@@ -5397,9 +5365,9 @@ create_table_def(
     long_true_varchar = 0;
 
     if (field->type() == DRIZZLE_TYPE_VARCHAR) {
-      col_len -= ((Field_varstring*)field)->length_bytes;
+      col_len -= ((Field_varstring*)field)->pack_length_no_ptr();
 
-      if (((Field_varstring*)field)->length_bytes == 2) {
+      if (((Field_varstring*)field)->pack_length_no_ptr() == 2) {
         long_true_varchar = DATA_LONG_TRUE_VARCHAR;
       }
     }
@@ -5505,7 +5473,7 @@ create_index(
         && field->type() != DRIZZLE_TYPE_VARCHAR)
       || (field->type() == DRIZZLE_TYPE_VARCHAR
         && key_part->length < field->pack_length()
-        - ((Field_varstring*)field)->length_bytes)) {
+        - ((Field_varstring*)field)->pack_length_no_ptr())) {
 
       prefix_len = key_part->length;
 
@@ -6512,7 +6480,7 @@ ha_innobase::info(
     }
 
     snprintf(path, sizeof(path), "%s/%s%s",
-             data_home, ib_table->name, ".dfe");
+             getDataHomeCatalog().c_str(), ib_table->name, ".dfe");
 
     internal::unpack_filename(path,path);
 
@@ -7520,17 +7488,10 @@ static INNOBASE_SHARE* get_share(const char* table_name)
         !strcmp(share->table_name, table_name));
 
   if (!share) {
-
-    uint length = (uint) strlen(table_name);
-
     /* TODO: invoke HASH_MIGRATE if innobase_open_tables
     grows too big */
 
-    share = (INNOBASE_SHARE *) malloc(sizeof(*share)+length+1);
-                memset(share, 0, sizeof(*share)+length+1);
-
-    share->table_name = (char*) memcpy(share + 1,
-               table_name, length + 1);
+    share= new INNOBASE_SHARE(table_name);
 
     HASH_INSERT(INNOBASE_SHARE, table_name_hash,
           innobase_open_tables, fold, share);
@@ -7566,7 +7527,7 @@ static void free_share(INNOBASE_SHARE* share)
     HASH_DELETE(INNOBASE_SHARE, table_name_hash,
           innobase_open_tables, fold, share);
     share->lock.deinit();
-    free(share);
+    delete share;
 
     /* TODO: invoke HASH_MIGRATE if innobase_open_tables
     shrinks too much */
@@ -8760,11 +8721,6 @@ static DRIZZLE_SYSVAR_ULONG(concurrency_tickets, srv_n_free_tickets_to_enter,
   "Number of times a thread is allowed to enter InnoDB within the same SQL query after it has once got the ticket",
   NULL, NULL, 500L, 1L, ~0L, 0);
 
-static DRIZZLE_SYSVAR_LONG(file_io_threads, innobase_file_io_threads,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Number of file I/O threads in InnoDB.",
-  NULL, NULL, 4, 4, 64, 0);
-
 static DRIZZLE_SYSVAR_ULONG(read_io_threads, innobase_read_io_threads,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "Number of background read I/O threads in InnoDB.",
@@ -8929,9 +8885,6 @@ static void init_options(drizzled::module::option_context &context)
   context("concurrency-tickets",
           po::value<unsigned long>(&srv_n_free_tickets_to_enter)->default_value(500L),
           "Number of times a thread is allowed to enter InnoDB within the same SQL query after it has once got the ticket");
-  context("file-io-threads",
-          po::value<long>(&innobase_file_io_threads)->default_value(4),
-          "Number of file I/O threads in InnoDB.");
   context("read-io-threads",
           po::value<unsigned long>(&innobase_read_io_threads)->default_value(4),
           "Number of background read I/O threads in InnoDB.");
@@ -9005,7 +8958,6 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(data_home_dir),
   DRIZZLE_SYSVAR(doublewrite),
   DRIZZLE_SYSVAR(fast_shutdown),
-  DRIZZLE_SYSVAR(file_io_threads),
   DRIZZLE_SYSVAR(read_io_threads),
   DRIZZLE_SYSVAR(write_io_threads),
   DRIZZLE_SYSVAR(file_per_table),

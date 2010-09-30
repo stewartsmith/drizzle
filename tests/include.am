@@ -22,7 +22,8 @@ EXTRA_SCRIPTS = 	tests/valgrind.supp $(PRESCRIPTS)
 GENSCRIPTS =		tests/dtr tests/mtr tests/test-run
 PRESCRIPTS =		tests/test-run.pl tests/stress-test.pl
 PLUGIN_TESTS =		$(pandora_plugin_test_list)
-ALL_TESTS =		main,big,$(PLUGIN_TESTS)
+NORMAL_TESTS =		main,jp,tamil,$(PLUGIN_TESTS)
+ALL_TESTS =		main,big,jp,tamil,$(PLUGIN_TESTS)
 noinst_SCRIPTS =	$(GENSCRIPTS) $(PRESCRIPTS)
 CLEANFILES += 		$(GENSCRIPTS) tests/mtr
 
@@ -93,16 +94,16 @@ test-all:
 	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(ALL_TESTS))
 
 test-drizzle:
-	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=main,$(PLUGIN_TESTS))
+	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS))
 
 test-valgrind:
-	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --valgrind --force --suite=main,$(PLUGIN_TESTS))
+	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --valgrind --force --suite=$(NORMAL_TESTS))
 
 test-valgrind-suppressions:
-	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --valgrind --valgrind-option='--gen-suppressions=all' --valgrind-option='--show-reachable=yes' --force --suite=main,$(PLUGIN_TESTS))
+	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --valgrind --valgrind-option='--gen-suppressions=all' --valgrind-option='--show-reachable=yes' --force --suite=$(NORMAL_TESTS))
 
 test-junitxml:
-	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=main,$(PLUGIN_TESTS) --subunit | subunit2junitxml --no-passthrough > junit-format.xml )
+	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS) --subunit | subunit2junitxml --no-passthrough > junit-format.xml )
 
 test-big:
 	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=big )

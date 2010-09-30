@@ -234,7 +234,6 @@ public:
     not_flushed,
     temporary,delay_key_write,
     concurrent_insert;
-  drizzled::THR_LOCK lock;
   drizzled::internal::my_off_t mmaped_length;
   uint32_t     nonmmaped_inserts;           /* counter of writing in non-mmaped
                                            area */

@@ -16,18 +16,18 @@ CREATE TEMPORARY TABLE `Ｔ６` (`Ｃ１` char(20), INDEX(`Ｃ１`))  engine = m
 CREATE TEMPORARY TABLE `Ｔ７` (`Ｃ１` char(20), INDEX(`Ｃ１`))  engine = MEMORY;
 CREATE TEMPORARY TABLE `Ｔ８` (`Ｃ１` char(20), INDEX(`Ｃ１`))  engine = MEMORY;
 CREATE TEMPORARY TABLE `Ｔ９` (`Ｃ１` char(20), INDEX(`Ｃ１`))  engine = MEMORY;
-LOAD DATA INFILE '../std_data_ln/jisx0201_utf8.dat' INTO TABLE `Ｔ１`;
-LOAD DATA INFILE '../std_data_ln/jisx0208_utf8.dat' INTO TABLE `Ｔ２`;
+LOAD DATA INFILE '../../std_data_ln/jisx0201_utf8.dat' INTO TABLE `Ｔ１`;
+LOAD DATA INFILE '../../std_data_ln/jisx0208_utf8.dat' INTO TABLE `Ｔ２`;
 ERROR 22001: Data too long for column 'Ｃ１' at row 30
-LOAD DATA INFILE '../std_data_ln/jisx0212_utf8.dat' INTO TABLE `Ｔ３`;
-LOAD DATA INFILE '../std_data_ln/jisx0201_utf8.dat' INTO TABLE `Ｔ４`;
-LOAD DATA INFILE '../std_data_ln/jisx0208_utf8.dat' INTO TABLE `Ｔ５`;
+LOAD DATA INFILE '../../std_data_ln/jisx0212_utf8.dat' INTO TABLE `Ｔ３`;
+LOAD DATA INFILE '../../std_data_ln/jisx0201_utf8.dat' INTO TABLE `Ｔ４`;
+LOAD DATA INFILE '../../std_data_ln/jisx0208_utf8.dat' INTO TABLE `Ｔ５`;
 ERROR 22001: Data too long for column 'Ｃ１' at row 30
-LOAD DATA INFILE '../std_data_ln/jisx0212_utf8.dat' INTO TABLE `Ｔ６`;
-LOAD DATA INFILE '../std_data_ln/jisx0201_utf8.dat' INTO TABLE `Ｔ７`;
-LOAD DATA INFILE '../std_data_ln/jisx0208_utf8.dat' INTO TABLE `Ｔ８`;
+LOAD DATA INFILE '../../std_data_ln/jisx0212_utf8.dat' INTO TABLE `Ｔ６`;
+LOAD DATA INFILE '../../std_data_ln/jisx0201_utf8.dat' INTO TABLE `Ｔ７`;
+LOAD DATA INFILE '../../std_data_ln/jisx0208_utf8.dat' INTO TABLE `Ｔ８`;
 ERROR 22001: Data too long for column 'Ｃ１' at row 30
-LOAD DATA INFILE '../std_data_ln/jisx0212_utf8.dat' INTO TABLE `Ｔ９`;
+LOAD DATA INFILE '../../std_data_ln/jisx0212_utf8.dat' INTO TABLE `Ｔ９`;
 SELECT * FROM `Ｔ１` WHERE `Ｃ１` LIKE ' %';
 Ｃ１
  !"#$%&'()*+,-./

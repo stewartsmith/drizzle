@@ -688,15 +688,15 @@ CopyField::get_copy_func(Field *to,Field *from)
         return do_field_string;
       else if (to->real_type() == DRIZZLE_TYPE_VARCHAR)
       {
-        if (((Field_varstring*) to)->length_bytes !=
-            ((Field_varstring*) from)->length_bytes)
+        if (((Field_varstring*) to)->pack_length_no_ptr() !=
+            ((Field_varstring*) from)->pack_length_no_ptr())
         {
           return do_field_string;
         }
         
         if (to_length != from_length)
         {
-          return (((Field_varstring*) to)->length_bytes == 1 ?
+          return (((Field_varstring*) to)->pack_length_no_ptr() == 1 ?
                   (from->charset()->mbmaxlen == 1 ? do_varstring1 :
                                                     do_varstring1_mb) :
                   (from->charset()->mbmaxlen == 1 ? do_varstring2 :
@@ -769,7 +769,7 @@ int field_conv(Field *to,Field *from)
         from->charset() == to->charset() &&
 	to->getTable()->getShare()->db_low_byte_first == from->getTable()->getShare()->db_low_byte_first &&
         (!(to->getTable()->in_use->variables.sql_mode & (MODE_NO_ZERO_DATE | MODE_INVALID_DATES)) || (to->type() != DRIZZLE_TYPE_DATE && to->type() != DRIZZLE_TYPE_DATETIME)) &&
-        (from->real_type() != DRIZZLE_TYPE_VARCHAR || ((Field_varstring*)from)->length_bytes == ((Field_varstring*)to)->length_bytes))
+        (from->real_type() != DRIZZLE_TYPE_VARCHAR || ((Field_varstring*)from)->pack_length_no_ptr() == ((Field_varstring*)to)->pack_length_no_ptr()))
     {						// Identical fields
       /* This may happen if one does 'UPDATE ... SET x=x' */
       if (to->ptr != from->ptr)

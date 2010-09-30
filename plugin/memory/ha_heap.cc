@@ -738,7 +738,7 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
       next_field_pos= seg->start + seg->length;
       if (field->type() == DRIZZLE_TYPE_VARCHAR)
       {
-        next_field_pos+= (uint8_t)(((Field_varstring*)field)->length_bytes);
+        next_field_pos+= (uint8_t)(((Field_varstring*)field)->pack_length_no_ptr());
       }
 
       if (next_field_pos > key_part_size) {

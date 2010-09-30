@@ -28,18 +28,38 @@ namespace drizzled
 namespace internal
 {
 
+static pthread_t wrapper_pthread_self()
+{
+  return pthread_self();
+}
+
 struct st_my_thread_var
 {
-  pthread_cond_t suspend;
-  pthread_mutex_t mutex;
-  pthread_mutex_t * volatile current_mutex;
-  pthread_cond_t * volatile current_cond;
+  boost::condition_variable suspend;
+  boost::mutex mutex;
+  boost::mutex * volatile current_mutex;
+  boost::condition_variable * volatile current_cond;
   pthread_t pthread_self;
   uint64_t id;
   int volatile abort;
-  bool init;
   struct st_my_thread_var *next,**prev;
   void *opt_info;
+
+  st_my_thread_var() :
+    current_mutex(0),
+    current_cond(0),
+    id(0),
+    abort(false),
+    next(0),
+    prev(0),
+    opt_info(0)
+  { 
+    pthread_self= wrapper_pthread_self();
+  }
+
+  ~st_my_thread_var()
+  {
+  }
 };
 
 extern struct st_my_thread_var *_my_thread_var(void);

@@ -69,6 +69,7 @@ docs
 doxerr.log
 drizzle-2010.01.1315.tar.gz
 drizzle-2010.01.1315.tar.gz
+drizzle.pot
 drizzled.gcno
 drizzled/configmake.h
 drizzled/drizzled
@@ -91,6 +92,8 @@ drizzled/message/replication_event.pb.cc
 drizzled/message/replication_event.pb.h
 drizzled/message/replication_event_reader
 drizzled/message/replication_event_writer
+drizzled/message/resultset.pb.cc
+drizzled/message/resultset.pb.h
 drizzled/message/schema.pb.cc
 drizzled/message/schema.pb.h
 drizzled/message/schema_reader
@@ -130,8 +133,8 @@ extra/Makefile.in
 extra/comp_err
 extra/innochecksum
 extra/my_print_defaults
-extra/mysql_waitpid
 extra/mysql_password_hash
+extra/mysql_waitpid
 field.gcno
 field_conv.gcno
 field_iterator.gcno
@@ -197,6 +200,9 @@ plugin/blackhole/Makefile.in
 plugin/csv/Makefile.in
 plugin/heap/Makefile.in
 plugin/innobase/Makefile.in
+plugin/innobase/pars/pars0grm.c
+plugin/innobase/pars/pars0lex.c
+plugin/innobase/pars/pars0grm.h
 plugin/memcached_functions/start_mc.sh
 plugin/memcached_functions/tests/start_mc.sh
 plugin/myisam/Makefile.in
@@ -205,6 +211,7 @@ plugin/myisam/myisamlog
 plugin/myisam/myisampack
 po/POTFILES
 po/remove-potcdate.sed
+po/stamp-it
 po/stamp-po
 protocol.gcno
 qcache.gcno
@@ -315,8 +322,7 @@ unittests/uwagi.txt
 virtual_column_info.gcno
 xid.gcno
 ylwrap
-po/stamp-it
-drizzle.pot
-pars0grm.c
-pars0lex.c
-pars0grm.h
+docs/plugins/list.rst
+docs/plugins/*
+docs/doctrees
+docs/html

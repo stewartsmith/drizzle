@@ -240,21 +240,6 @@ int packed_key_cmp(BlitzTree *tree, const char *a, const char *b,
       a_next_offset = b_next_offset = curr_part->length;
       break;
     }
-    case HA_KEYTYPE_UINT24: {
-      uint32_t a_int_val = uint3korr(a_pos);
-      uint32_t b_int_val = uint3korr(b_pos);
-
-      *a_compared_len += curr_part->length;
-      *b_compared_len += curr_part->length;
-
-      if (a_int_val < b_int_val)
-        return -1;
-      else if (a_int_val > b_int_val)
-        return 1;
-
-      a_next_offset = b_next_offset = curr_part->length;
-      break;
-    }
     case HA_KEYTYPE_DOUBLE: {
       double a_double_val, b_double_val;
       float8get(a_double_val, a_pos);

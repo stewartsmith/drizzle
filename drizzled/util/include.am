@@ -17,6 +17,7 @@
 nobase_dist_include_HEADERS+= \
                               drizzled/util/convert.h \
                               drizzled/util/functors.h \
+			      drizzled/util/storable.h \
 			      drizzled/util/string.h \
                               drizzled/util/test.h \
                               drizzled/util/tokenize.h
