@@ -2335,7 +2335,6 @@ static void fix_paths()
   }
   pid_file= pid_file_path;
 
-
   if (not opt_help)
   {
     const char *tmp_string= getenv("TMPDIR") ? getenv("TMPDIR") : NULL;
