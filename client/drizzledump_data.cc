@@ -100,6 +100,8 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpIndex &obj)
       os << ",";
     std::string field= *i;
     os << "`" << field << "`";
+    if (obj.length > 0)
+      os << "(" << obj.length << ")";
   }
 
   os << ")";
