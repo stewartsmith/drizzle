@@ -135,7 +135,7 @@ static sys_var_session_uint64_t
 sys_auto_increment_offset(&vars, "auto_increment_offset",
                           &system_variables::auto_increment_offset);
 
-static sys_var_const_str       sys_basedir(&vars, "basedir", drizzle_home);
+static sys_var_fs_path sys_basedir(&vars, "basedir", basedir);
 static sys_var_session_uint64_t	sys_bulk_insert_buff_size(&vars, "bulk_insert_buffer_size",
                                                           &system_variables::bulk_insert_buff_size);
 static sys_var_session_uint32_t	sys_completion_type(&vars, "completion_type",

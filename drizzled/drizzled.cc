@@ -288,7 +288,8 @@ const double log_10[] = {
 time_t server_start_time;
 time_t flush_status_time;
 
-char drizzle_home[FN_REFLEN], pidfile_name[FN_REFLEN], system_time_zone[30];
+fs::path basedir(PREFIX);
+char pidfile_name[FN_REFLEN], system_time_zone[30];
 char *default_tz_name;
 char glob_hostname[FN_REFLEN];
 
@@ -336,7 +337,7 @@ boost::condition_variable COND_server_end;
 /* Static variables */
 
 int cleanup_done;
-static char *drizzle_home_ptr, *pidfile_name_ptr;
+static char *pidfile_name_ptr;
 
 passwd *user_info;
 
@@ -352,7 +353,6 @@ bool drizzle_rm_tmp_tables();
 
 static void drizzle_init_variables(void);
 static void get_options();
-static const char *get_relative_path(const char *path);
 static void fix_paths();
 
 static void usage(void);
@@ -723,7 +723,9 @@ static void notify_plugin_dir(string in_plugin_dir)
 {
   if (not in_plugin_dir.empty())
   {
-    (void) internal::my_load_path(opt_plugin_dir, in_plugin_dir.c_str(), drizzle_home);
+    (void) internal::my_load_path(opt_plugin_dir,
+                                  in_plugin_dir.c_str(),
+                                  basedir.file_string().c_str());
   }
 }
 
@@ -1761,7 +1763,7 @@ struct option my_long_options[] =
   {"basedir", 'b',
    N_("Path to installation directory. All paths are usually resolved "
       "relative to this."),
-   (char**) &drizzle_home_ptr, (char**) &drizzle_home_ptr, 0, GET_STR, REQUIRED_ARG,
+   NULL, NULL, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
   {"chroot", 'r',
    N_("Chroot drizzled daemon during startup."),
@@ -2121,7 +2123,7 @@ static void usage(void)
 static void drizzle_init_variables(void)
 {
   /* Things reset to zero */
-  drizzle_home[0]= pidfile_name[0]= 0;
+  pidfile_name[0]= 0;
   opt_tc_log_file= (char *)"tc.log";      // no hostname in tc_log file name !
   opt_secure_file_priv= 0;
   cleanup_done= 0;
@@ -2141,7 +2143,6 @@ static void drizzle_init_variables(void)
   character_set_filesystem= &my_charset_bin;
 
   /* Things with default values that are not zero */
-  drizzle_home_ptr= drizzle_home;
   pidfile_name_ptr= pidfile_name;
   session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_SQL_NOTES);
   refresh_version= 1L;	/* Increments on each reload */
@@ -2197,11 +2198,6 @@ static void drizzle_init_variables(void)
   have_symlink=SHOW_OPTION_YES;
 #endif
 
-  const char *tmpenv;
-  if (!(tmpenv = getenv("MY_BASEDIR_VERSION")))
-    tmpenv = PREFIX;
-  (void) strncpy(drizzle_home, tmpenv, sizeof(drizzle_home)-1);
-  
   connection_count= 0;
 }
 
@@ -2213,9 +2209,9 @@ static void drizzle_init_variables(void)
 static void get_options()
 {
 
-  if (vm.count("base-dir"))
+  if (vm.count("basedir"))
   {
-    strncpy(drizzle_home,vm["base-dir"].as<string>().c_str(),sizeof(drizzle_home)-1);
+    basedir= vm["basedir"].as<string>();
   }
 
   if (vm.count("datadir"))
@@ -2329,43 +2325,8 @@ static void get_options()
 }
 
 
-static const char *get_relative_path(const char *path)
-{
-  if (internal::test_if_hard_path(path) &&
-      (strncmp(path, PREFIX, strlen(PREFIX)) == 0) &&
-      strcmp(PREFIX,FN_ROOTDIR))
-  {
-    if (strlen(PREFIX) < strlen(path))
-      path+=(size_t) strlen(PREFIX);
-    while (*path == FN_LIBCHAR)
-      path++;
-  }
-  return path;
-}
-
-
 static void fix_paths()
 {
-  char buff[FN_REFLEN],*pos,rp_buff[PATH_MAX];
-  internal::convert_dirname(drizzle_home,drizzle_home,NULL);
-  /* Resolve symlinks to allow 'drizzle_home' to be a relative symlink */
-#if defined(HAVE_BROKEN_REALPATH)
-   internal::my_load_path(drizzle_home, drizzle_home, NULL);
-#else
-  if (!realpath(drizzle_home,rp_buff))
-    internal::my_load_path(rp_buff, drizzle_home, NULL);
-  rp_buff[FN_REFLEN-1]= '\0';
-  strcpy(drizzle_home,rp_buff);
-  /* Ensure that drizzle_home ends in FN_LIBCHAR */
-  pos= strchr(drizzle_home, '\0');
-#endif
-  if (pos[-1] != FN_LIBCHAR)
-  {
-    pos[0]= FN_LIBCHAR;
-    pos[1]= 0;
-  }
-  (void) internal::my_load_path(drizzle_home, drizzle_home,""); // Resolve current dir
-
   fs::path pid_file_path(pidfile_name);
   if (pid_file_path.root_path().string() == "")
   {
@@ -2374,16 +2335,6 @@ static void fix_paths()
   }
   strncpy(pidfile_name, pid_file_path.file_string().c_str(), sizeof(pidfile_name)-1);
 
-
-  const char *sharedir= get_relative_path(PKGDATADIR);
-  if (internal::test_if_hard_path(sharedir))
-    strncpy(buff,sharedir,sizeof(buff)-1);
-  else
-  {
-    strcpy(buff, drizzle_home);
-    strncat(buff, sharedir, sizeof(buff)-strlen(drizzle_home)-1);
-  }
-  internal::convert_dirname(buff,buff,NULL);
 
   if (not opt_help)
   {
@@ -2431,6 +2382,8 @@ static void fix_paths()
    */
   if (vm.count("secure-file-priv"))
   {
+    char buff[FN_REFLEN];
+
     internal::convert_dirname(buff, vm["secure-file-priv"].as<string>().c_str(), NULL);
     free(opt_secure_file_priv);
     opt_secure_file_priv= strdup(buff);
