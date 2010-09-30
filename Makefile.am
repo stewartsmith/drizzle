@@ -27,6 +27,8 @@ sbin_PROGRAMS =
 lib_LTLIBRARIES = 
 noinst_LTLIBRARIES =
 noinst_PROGRAMS =
+man_MANS =
+bin_PROGRAMS =
 
 VERSION=$(PANDORA_RELEASE_VERSION)
 
@@ -40,6 +42,7 @@ DIST_SUBDIRS = ${SUBDIRS} tests
 BUILT_SOURCES=
 EXTRA_DIST= \
 	    .quickly \
+	    COPYING.BSD \
 	    DRIZZLE.FAQ \
 	    EXCEPTIONS-CLIENT \
 	    config/autorun.sh \
@@ -133,7 +136,7 @@ drizzled/configmake.h: ${top_srcdir}/Makefile.in
 
 clean-local:
 	find . -name '*.gcno' | xargs rm -f 
-	-rm -rf docs/api docs/dev docs/_build
+	-rm -rf docs/api docs/dev docs/_build docs/doctrees
 
 include config/lint-source.am
 

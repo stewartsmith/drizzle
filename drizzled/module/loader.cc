@@ -75,7 +75,6 @@ typedef vector<string> PluginOptions;
 static PluginOptions opt_plugin_load;
 static PluginOptions opt_plugin_add;
 static PluginOptions opt_plugin_remove;
-char *opt_plugin_dir_ptr;
 char opt_plugin_dir[FN_REFLEN];
 const char *builtin_plugins= PANDORA_BUILTIN_LIST;
 
@@ -448,7 +447,7 @@ bool plugin_init(module::Registry &registry,
   return false;
 }
 
-void plugin_finalize(module::Registry &registry)
+bool plugin_finalize(module::Registry &registry)
 {
 
   /*
@@ -469,9 +468,11 @@ void plugin_finalize(module::Registry &registry)
       {
         registry.remove(module);
         delete_module(module);
+        return true;
       }
     }
   }
+  return false;
 }
 
 class PrunePlugin :

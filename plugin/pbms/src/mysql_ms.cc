@@ -58,7 +58,7 @@ void *ms_my_get_thread()
 #ifdef DRIZZLED
 const char *ms_my_get_mysql_home_path()
 {
-	return drizzled::data_home;
+	return drizzled::getDataHomeCatalog().c_str();
 }
 
 bool ms_is_autocommit()

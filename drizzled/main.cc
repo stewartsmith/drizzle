@@ -23,6 +23,9 @@
 #include <signal.h>
 #include <sys/resource.h>
 #include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -39,6 +42,7 @@
 # include <locale.h>
 #endif
 
+#include <boost/filesystem.hpp>
 
 #include "drizzled/plugin.h"
 #include "drizzled/gettext.h"
@@ -58,9 +62,11 @@
 
 using namespace drizzled;
 using namespace std;
+namespace fs=boost::filesystem;
 
 static pthread_t select_thread;
 static uint32_t thr_kill_signal;
+
 
 /**
   All global error messages are sent here where the first one is stored
@@ -230,26 +236,53 @@ int main(int argc, char **argv)
   google::protobuf::SetLogHandler(&GoogleProtoErrorThrower);
 
   /* Function generates error messages before abort */
+  error_handler_hook= my_message_sql;
   /* init_common_variables must get basic settings such as data_home_dir
      and plugin_load_list. */
-  if (init_common_variables(argc, argv))
+  if (init_common_variables(argc, argv, modules))
     unireg_abort(1);				// Will do exit
 
+  /*
+    init signals & alarm
+    After this we can't quit by a simple unireg_abort
+  */
   init_signals();
 
 
   select_thread=pthread_self();
   select_thread_in_use=1;
 
-  if (chdir(data_home_real) && !opt_help)
+  if (not opt_help)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Data directory %s does not exist\n"), data_home_real);
-    unireg_abort(1);
+    if (chdir(getDataHome().c_str()))
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Data directory %s does not exist\n"),
+                    getDataHome().c_str());
+      unireg_abort(1);
+    }
+    if (mkdir("local", 0700))
+    {
+      /* We don't actually care */
+    }
+    if (chdir("local"))
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Local catalog %s/local does not exist\n"),
+                    getDataHome().c_str());
+      unireg_abort(1);
+    }
+    /* TODO: This is a hack until we can properly support std::string in sys_var*/
+    char **data_home_ptr= getDatadirPtr();
+    fs::path full_data_home_path(fs::system_complete(fs::path(getDataHome())));
+    std::string full_data_home(full_data_home_path.file_string());
+    *data_home_ptr= new char[full_data_home.size()+1] ();
+    memcpy(*data_home_ptr, full_data_home.c_str(), full_data_home.size());
+    getDataHomeCatalog()= "./";
+    getDataHome()= "../";
   }
-  data_home= data_home_buff;
-  data_home[0]=FN_CURLIB;		// all paths are relative from here
-  data_home[1]=0;
-  data_home_len= 2;
+
+
 
   if (server_id == 0)
   {
@@ -276,11 +309,6 @@ int main(int argc, char **argv)
   if (plugin::Listen::setup())
     unireg_abort(1);
 
-  /*
-    init signals & alarm
-    After this we can't quit by a simple unireg_abort
-  */
-  error_handler_hook= my_message_sql;
 
   assert(plugin::num_trx_monitored_objects > 0);
   if (drizzle_rm_tmp_tables() ||
@@ -321,14 +349,16 @@ int main(int argc, char **argv)
   COND_thread_count.notify_all();
 
   /* Wait until cleanup is done */
-  LOCK_thread_count.lock();
-  while (!ready_to_exit)
-    pthread_cond_wait(COND_server_end.native_handle(), LOCK_thread_count.native_handle());
-  LOCK_thread_count.unlock();
+  {
+    boost::mutex::scoped_lock scopedLock(LOCK_thread_count);
+    while (!ready_to_exit)
+      COND_server_end.wait(scopedLock);
+  }
 
   clean_up(1);
   module::Registry::shutdown();
   internal::my_end();
+
   return 0;
 }
 

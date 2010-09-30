@@ -12,6 +12,12 @@ show tables like 'haildb%';
 Tables_in_data_dictionary (haildb%)
 HAILDB_CONFIGURATION
 HAILDB_STATUS
+HAILDB_SYS_COLUMNS
+HAILDB_SYS_FIELDS
+HAILDB_SYS_FOREIGN
+HAILDB_SYS_FOREIGN_COLS
+HAILDB_SYS_INDEXES
+HAILDB_SYS_TABLES
 haildb_table_definitions
 use test;
 create table t1 (a int primary key);

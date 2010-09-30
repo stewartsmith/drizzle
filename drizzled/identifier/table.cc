@@ -25,7 +25,6 @@
 #include "drizzled/identifier.h"
 #include "drizzled/session.h"
 #include "drizzled/internal/my_sys.h"
-#include "drizzled/data_home.h"
 
 #include "drizzled/table.h"
 
@@ -236,20 +235,6 @@ size_t TableIdentifier::build_table_filename(std::string &path, const char *db, 
     return 0;
   }
    
-
-  int rootdir_len= strlen(FN_ROOTDIR);
-  path.append(data_home);
-  ssize_t without_rootdir= path.length() - rootdir_len;
-
-  /* Don't add FN_ROOTDIR if dirzzle_data_home already includes it */
-  if (without_rootdir >= 0)
-  {
-    const char *tmp= path.c_str() + without_rootdir;
-
-    if (memcmp(tmp, FN_ROOTDIR, rootdir_len) != 0)
-      path.append(FN_ROOTDIR);
-  }
-
   path.append(dbbuff);
   path.append(FN_ROOTDIR);
   path.append(tbbuff);

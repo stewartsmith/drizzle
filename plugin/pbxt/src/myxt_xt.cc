@@ -28,7 +28,11 @@
 #include "xt_defs.h"
 
 #ifdef DRIZZLED
+#include <drizzled/internal/my_pthread.h>
 #include <drizzled/plugin.h>
+#include <drizzled/plugin/client.h>
+#include <drizzled/plugin/null_client.h>
+#include <drizzled/plugin/listen.h>
 #include <drizzled/show.h>
 #include <drizzled/data_home.h>
 #include <drizzled/field/blob.h>
@@ -682,13 +686,13 @@ static char *mx_get_length_and_data(STRUCT_TABLE *table, Field *field, char *des
 		case MYSQL_TYPE_VARCHAR: {
 			uint length;
 
-			if (((Field_varstring *) field)->length_bytes == 1)
+			if (((Field_varstring *) field)->pack_length_no_ptr() == 1)
 				length = *((unsigned char *) from);
 			else
 				length = uint2korr(from);
 			
 			*len = length;
-			return from+((Field_varstring *) field)->length_bytes;
+			return from+((Field_varstring *) field)->pack_length_no_ptr();
 		}
 #ifndef DRIZZLED
 		case MYSQL_TYPE_DECIMAL:
@@ -794,13 +798,13 @@ static void mx_set_length_and_data(STRUCT_TABLE *table, Field *field, char *dest
 			return;
 #endif
 		case MYSQL_TYPE_VARCHAR:
-			if (((Field_varstring *) field)->length_bytes == 1)
+			if (((Field_varstring *) field)->pack_length_no_ptr() == 1)
 				*((unsigned char *) from) = (unsigned char) len;
 			else
 				int2store(from, len);
 			if (data) {
 				mx_set_notnull_in_record(table, field, dest);
-				memcpy(from+((Field_varstring *) field)->length_bytes, data, len);
+				memcpy(from+((Field_varstring *) field)->pack_length_no_ptr(), data, len);
 			}
 			return;
 #ifndef DRIZZLED
@@ -2025,8 +2029,7 @@ static STRUCT_TABLE *my_open_table(XTThreadPtr self, XTDatabaseHPtr XT_UNUSED(db
 			message::Table::STANDARD);
 	}
 	else {
-		std::string n;
-		n.append(data_home);
+		std::string n(getDataHomeCatalog());
 		n.append("/");
 		n.append(database_name);
 		n.append("/");
@@ -3062,7 +3065,20 @@ xtPublic xtBool myxt_create_thread_possible()
 xtPublic void *myxt_create_thread()
 {
 #ifdef DRIZZLED
-	return (void *) 1;
+	Client		*client;
+	Session		*session;
+
+	if (drizzled::internal::my_thread_init()) {
+		xt_register_error(XT_REG_CONTEXT, XT_ERR_MYSQL_ERROR, 0, "Unable to initialize MySQL threading");
+		return NULL;
+	}
+
+	if (!(client = new NullClient()))
+		return NULL;
+	session = new Session(client);
+	session->thread_stack = (char *) &session;
+	session->storeGlobals();
+	return (void *) session;
 #else
 	THD *new_thd;
 
@@ -3140,12 +3156,15 @@ xtPublic void *myxt_create_thread()
 }
 
 #ifdef DRIZZLED
-xtPublic void myxt_destroy_thread(void *, xtBool)
+xtPublic void myxt_destroy_thread(void *s, xtBool end_threads)
 {
-}
+	Session *session = (Session *) s;
 
-xtPublic void myxt_delete_remaining_thread()
-{
+	session->lockForDelete();
+	delete session;
+
+	if (end_threads)
+		drizzled::internal::my_thread_end();
 }
 #else
 xtPublic void myxt_destroy_thread(void *thread, xtBool end_threads)
@@ -3174,6 +3193,7 @@ xtPublic void myxt_destroy_thread(void *thread, xtBool end_threads)
 	if (end_threads)
 		my_thread_end();
 }
+#endif
 
 xtPublic void myxt_delete_remaining_thread()
 {
@@ -3182,7 +3202,6 @@ xtPublic void myxt_delete_remaining_thread()
 	if ((thd = current_thd))
 		myxt_destroy_thread((void *) thd, TRUE);
 }
-#endif
 
 xtPublic XTThreadPtr myxt_get_self()
 {

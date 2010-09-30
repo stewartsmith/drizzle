@@ -913,8 +913,8 @@ int main(int argc, char **argv)
        "Delay the startup of threads by a random number of microsends (the maximum of the delay")
       ("delimiter,F",po::value<string>(&delimiter)->default_value("\n"),
        "Delimiter to use in SQL statements supplied in file or command line")
-      ("engine ,e",po::value<string>(&default_engine)->default_value(""),
-       "Storage engien to use for creating the table")
+      ("engine,e",po::value<string>(&default_engine)->default_value(""),
+       "Storage engine to use for creating the table")
       ("set-random-seed",
        po::value<uint32_t>(&opt_set_random_seed)->default_value(0), 
        "Seed for random number generator (srandom(3)) ") 
@@ -951,10 +951,12 @@ int main(int argc, char **argv)
     drizzle_con_st con;
     OptionString *eptr;
 
+    // Disable allow_guessing
+    int style = po::command_line_style::default_style & ~po::command_line_style::allow_guessing;
 
     po::variables_map vm;
     po::store(po::command_line_parser(argc, argv).options(long_options).
-            extra_parser(parse_password_arg).run(), vm);
+              style(style).extra_parser(parse_password_arg).run(), vm);
 
     std::string user_config_dir_slap(user_config_dir);
     user_config_dir_slap.append("/drizzle/drizzleslap.cnf"); 

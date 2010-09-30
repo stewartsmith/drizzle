@@ -1,4 +1,5 @@
 #!/bin/sh
+# Copyright (C) 2010 Eric Day
 
 # Kill any leftover processes from before
 pids=`ps -ef|grep drizzled|grep 12345|awk '{print $2}'`

@@ -130,4 +130,6 @@ private:
   bool in_table_scan;
 };
 
+int get_haildb_system_table_message(const char* table_name, drizzled::message::Table *table_message);
+
 #endif /* PLUGIN_HAILDB_HAILDB_ENGINE_H */

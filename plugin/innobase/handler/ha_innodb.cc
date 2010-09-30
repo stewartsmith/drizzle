@@ -1808,10 +1808,8 @@ innobase_init(
 /*==========*/
   module::Context &context) /*!< in: Drizzle Plugin Context */
 {
-  static char current_dir[3];   /*!< Set if using current lib */
   int   err;
   bool    ret;
-  char    *default_path;
   uint    format_id;
   InnobaseEngine *actuall_engine_ptr;
   const module::option_map &vm= context.getOptions();
@@ -1839,10 +1837,9 @@ innobase_init(
   {
     innobase_data_home_dir= strdup(vm["data-home-dir"].as<string>().c_str());
   }
-
   else
   {
-    innobase_data_home_dir= NULL;
+    innobase_data_home_dir= strdup(getDataHome().c_str());
   }
 
   if (vm.count("fast-shutdown"))
@@ -2122,19 +2119,6 @@ innobase_init(
 
   os_innodb_umask = (ulint)internal::my_umask;
 
-  /* First calculate the default path for innodb_data_home_dir etc.,
-    in case the user has not given any value.
-
-    Note that when using the embedded server, the datadirectory is not
-    necessarily the current directory of this program. */
-
-  /* It's better to use current lib, to keep paths short */
-  current_dir[0] = FN_CURLIB;
-  current_dir[1] = FN_LIBCHAR;
-  current_dir[2] = 0;
-  default_path = current_dir;
-
-  ut_a(default_path);
 
   /* Set InnoDB initialization parameters according to the values
     read from MySQL .cnf file */
@@ -2143,8 +2127,7 @@ innobase_init(
 
   /* The default dir for data files is the datadir of MySQL */
 
-  srv_data_home = (innobase_data_home_dir ? innobase_data_home_dir :
-                   default_path);
+  srv_data_home = (char *)innobase_data_home_dir;
 
   /* Set default InnoDB data file size to 10 MB and let it be
     auto-extending. Thus users can use InnoDB in >= 4.0 without having
@@ -2181,7 +2164,7 @@ mem_free_and_error:
   }
   else
   {
-    innobase_log_group_home_dir = default_path;
+    innobase_log_group_home_dir = const_cast<char *>(getDataHome().c_str());
   }
 
 #ifdef UNIV_LOG_ARCHIVE
@@ -3504,7 +3487,7 @@ ha_innobase::store_key_val_for_row(
       cs = field->charset();
 
       lenlen = (ulint)
-        (((Field_varstring*)field)->length_bytes);
+        (((Field_varstring*)field)->pack_length_no_ptr());
 
       data = row_mysql_read_true_varchar(&len,
         (byte*) (record
@@ -3844,7 +3827,7 @@ include_field:
 
     if (templ->mysql_type == DATA_MYSQL_TRUE_VARCHAR) {
       templ->mysql_length_bytes = (ulint)
-        (((Field_varstring*)field)->length_bytes);
+        (((Field_varstring*)field)->pack_length_no_ptr());
     }
 
     templ->charset = dtype_get_charset_coll(
@@ -4278,12 +4261,12 @@ calc_row_difference(
         o_ptr = row_mysql_read_true_varchar(
           &o_len, o_ptr,
           (ulint)
-          (((Field_varstring*)field)->length_bytes));
+          (((Field_varstring*)field)->pack_length_no_ptr()));
 
         n_ptr = row_mysql_read_true_varchar(
           &n_len, n_ptr,
           (ulint)
-          (((Field_varstring*)field)->length_bytes));
+          (((Field_varstring*)field)->pack_length_no_ptr()));
       }
 
       break;
@@ -5382,9 +5365,9 @@ create_table_def(
     long_true_varchar = 0;
 
     if (field->type() == DRIZZLE_TYPE_VARCHAR) {
-      col_len -= ((Field_varstring*)field)->length_bytes;
+      col_len -= ((Field_varstring*)field)->pack_length_no_ptr();
 
-      if (((Field_varstring*)field)->length_bytes == 2) {
+      if (((Field_varstring*)field)->pack_length_no_ptr() == 2) {
         long_true_varchar = DATA_LONG_TRUE_VARCHAR;
       }
     }
@@ -5490,7 +5473,7 @@ create_index(
         && field->type() != DRIZZLE_TYPE_VARCHAR)
       || (field->type() == DRIZZLE_TYPE_VARCHAR
         && key_part->length < field->pack_length()
-        - ((Field_varstring*)field)->length_bytes)) {
+        - ((Field_varstring*)field)->pack_length_no_ptr())) {
 
       prefix_len = key_part->length;
 
@@ -6497,7 +6480,7 @@ ha_innobase::info(
     }
 
     snprintf(path, sizeof(path), "%s/%s%s",
-             data_home, ib_table->name, ".dfe");
+             getDataHomeCatalog().c_str(), ib_table->name, ".dfe");
 
     internal::unpack_filename(path,path);
 

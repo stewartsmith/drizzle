@@ -23,7 +23,6 @@
 
 #include <assert.h>
 #include <drizzled/plugin/storage_engine.h>
-#include <drizzled/data_home.h>
 #include <boost/unordered_map.hpp>
 #include <boost/thread/shared_mutex.hpp>
 
