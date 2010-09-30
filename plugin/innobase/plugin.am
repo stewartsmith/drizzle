@@ -334,7 +334,7 @@ plugin/innobase/include/pars0grm.h: plugin/innobase/pars/pars0grm.c
 	else :; fi
 
 plugin/innobase/pars/pars0lex.c: plugin/innobase/pars/pars0lex.l
-	$(AM_V_GEN)$(LEX) -o plugin/innobase/pars/_flex_tmp.c $<
+	$(AM_V_GEN)$(LEX) -oplugin/innobase/pars/_flex_tmp.c $<
 # AIX needs its includes done in a certain order, so include "univ.i" first
 # to be sure we get it right.
 	@echo '#include "univ.i"' > $@

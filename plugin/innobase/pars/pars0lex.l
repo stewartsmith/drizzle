@@ -34,7 +34,6 @@ Created 12/14/1997 Heikki Tuuri
 %option noyy_scan_buffer
 %option noyy_scan_bytes
 %option noyy_scan_string
-%option nounistd
 
 %{
 #define YYSTYPE que_node_t*
