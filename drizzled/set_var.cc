@@ -136,6 +136,7 @@ sys_auto_increment_offset(&vars, "auto_increment_offset",
                           &system_variables::auto_increment_offset);
 
 static sys_var_fs_path sys_basedir(&vars, "basedir", basedir);
+static sys_var_fs_path sys_plugin_name(&vars, "pid_file", pid_file);
 static sys_var_session_uint64_t	sys_bulk_insert_buff_size(&vars, "bulk_insert_buffer_size",
                                                           &system_variables::bulk_insert_buff_size);
 static sys_var_session_uint32_t	sys_completion_type(&vars, "completion_type",
@@ -317,7 +318,6 @@ static sys_var_const_str        sys_hostname(&vars, "hostname", glob_hostname);
 #define FIXED_VARS_SIZE (sizeof(fixed_vars) / sizeof(drizzle_show_var))
 static drizzle_show_var fixed_vars[]= {
   {"back_log",                (char*) &back_log,                SHOW_INT},
-  {"pid_file",                (char*) pidfile_name,             SHOW_CHAR},
   {"plugin_dir",              (char*) opt_plugin_dir,           SHOW_CHAR},
   {"thread_stack",            (char*) &my_thread_stack_size,    SHOW_INT},
 };

@@ -289,7 +289,8 @@ time_t server_start_time;
 time_t flush_status_time;
 
 fs::path basedir(PREFIX);
-char pidfile_name[FN_REFLEN], system_time_zone[30];
+fs::path pid_file;
+char system_time_zone[30];
 char *default_tz_name;
 char glob_hostname[FN_REFLEN];
 
@@ -337,7 +338,6 @@ boost::condition_variable COND_server_end;
 /* Static variables */
 
 int cleanup_done;
-static char *pidfile_name_ptr;
 
 passwd *user_info;
 
@@ -525,7 +525,7 @@ void clean_up(bool print_message)
   google::protobuf::ShutdownProtobufLibrary();
 #endif
 
-  (void) unlink(pidfile_name);	// This may not always exist
+  (void) unlink(pid_file.file_string().c_str());	// This may not always exist
 
   if (print_message && server_start_time)
     errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_SHUTDOWN_COMPLETE)),internal::my_progname);
@@ -1213,11 +1213,13 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
     strncpy(glob_hostname, STRING_WITH_LEN("localhost"));
     errmsg_printf(ERRMSG_LVL_WARN, _("gethostname failed, using '%s' as hostname"),
                   glob_hostname);
-    strncpy(pidfile_name, STRING_WITH_LEN("drizzle"));
+    pid_file= "drizzle";
   }
   else
-    strncpy(pidfile_name, glob_hostname, sizeof(pidfile_name)-5);
-  strcpy(internal::fn_ext(pidfile_name),".pid");		// Add proper extension
+  {
+    pid_file= glob_hostname;
+  }
+  pid_file.replace_extension(".pid");
 
   std::string system_config_dir_drizzle(SYSCONFDIR);
   system_config_dir_drizzle.append("/drizzle");
@@ -1815,7 +1817,7 @@ struct option my_long_options[] =
    0, 0, 0},
   {"pid-file", OPT_PID_FILE,
    N_("Pid file used by drizzled."),
-   (char**) &pidfile_name_ptr, (char**) &pidfile_name_ptr, 0, GET_STR,
+   NULL, NULL, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"port-open-timeout", OPT_PORT_OPEN_TIMEOUT,
    N_("Maximum time in seconds to wait for the port to become free. "
@@ -2123,7 +2125,6 @@ static void usage(void)
 static void drizzle_init_variables(void)
 {
   /* Things reset to zero */
-  pidfile_name[0]= 0;
   opt_tc_log_file= (char *)"tc.log";      // no hostname in tc_log file name !
   opt_secure_file_priv= 0;
   cleanup_done= 0;
@@ -2143,7 +2144,6 @@ static void drizzle_init_variables(void)
   character_set_filesystem= &my_charset_bin;
 
   /* Things with default values that are not zero */
-  pidfile_name_ptr= pidfile_name;
   session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_SQL_NOTES);
   refresh_version= 1L;	/* Increments on each reload */
   global_thread_id= 1UL;
@@ -2275,7 +2275,7 @@ static void get_options()
 
   if (vm.count("pid-file"))
   {
-    strncpy(pidfile_name, vm["pid-file"].as<string>().c_str(), sizeof(pidfile_name)-1);
+    pid_file= vm["pid-file"].as<string>();
   }
 
   if (vm.count("transaction-isolation"))
@@ -2327,13 +2327,13 @@ static void get_options()
 
 static void fix_paths()
 {
-  fs::path pid_file_path(pidfile_name);
+  fs::path pid_file_path(pid_file);
   if (pid_file_path.root_path().string() == "")
   {
     pid_file_path= fs::path(getDataHome());
-    pid_file_path /= pidfile_name;
+    pid_file_path /= pid_file;
   }
-  strncpy(pidfile_name, pid_file_path.file_string().c_str(), sizeof(pidfile_name)-1);
+  pid_file= pid_file_path;
 
 
   if (not opt_help)

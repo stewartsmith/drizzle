@@ -64,7 +64,7 @@ extern const char *in_additional_cond;
 extern const char *in_having_cond;
 extern char glob_hostname[FN_REFLEN];
 extern boost::filesystem::path basedir;
-extern char pidfile_name[FN_REFLEN];
+extern boost::filesystem::path pid_file;
 extern char system_time_zone[30];
 extern char *opt_tc_log_file;
 extern uint64_t session_startup_options;

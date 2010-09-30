@@ -318,7 +318,7 @@ int main(int argc, char **argv)
     select_thread_in_use=0;
     (void) pthread_kill(signal_thread, SIGTERM);
 
-    (void) unlink(pidfile_name);	// Not needed anymore
+    (void) unlink(pid_file.file_string().c_str());	// Not needed anymore
 
     exit(1);
   }

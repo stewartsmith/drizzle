@@ -28,6 +28,7 @@
 #include "drizzled/drizzled.h"
 
 #include <boost/thread/thread.hpp>
+#include <boost/filesystem.hpp>
 
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -41,7 +42,7 @@ namespace drizzled
 extern int cleanup_done;
 extern bool volatile abort_loop;
 extern bool volatile shutdown_in_progress;
-extern char pidfile_name[FN_REFLEN];
+extern boost::filesystem::path pid_file;
 /* Prototypes -> all of these should be factored out into a propper shutdown */
 extern void close_connections(void);
 extern std::bitset<12> test_flags;
@@ -88,8 +89,7 @@ static void create_pid_file()
   int file;
   char buff[1024];
 
-  assert(pidfile_name[0]);
-  if ((file = open(pidfile_name, O_CREAT|O_WRONLY|O_TRUNC, S_IRWXU|S_IRGRP|S_IROTH)) > 0)
+  if ((file = open(pid_file.file_string().c_str(), O_CREAT|O_WRONLY|O_TRUNC, S_IRWXU|S_IRGRP|S_IROTH)) > 0)
   {
     int length;
 
@@ -103,7 +103,7 @@ static void create_pid_file()
     (void)close(file); /* We can ignore the error, since we are going to error anyway at this point */
   }
   memset(buff, 0, sizeof(buff));
-  snprintf(buff, sizeof(buff)-1, "Can't start server: can't create PID file (%s)", pidfile_name);
+  snprintf(buff, sizeof(buff)-1, "Can't start server: can't create PID file (%s)", pid_file.file_string().c_str());
   sql_perror(buff);
   exit(1);
 }
