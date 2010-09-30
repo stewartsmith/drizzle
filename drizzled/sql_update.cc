@@ -51,18 +51,16 @@ namespace drizzled
 
 static void prepare_record_for_error_message(int error, Table *table)
 {
-  Field **field_p;
-  Field *field;
-  uint32_t keynr;
-  MyBitmap unique_map; /* Fields in offended unique. */
-  my_bitmap_map unique_map_buf[bitmap_buffer_size(MAX_FIELDS)];
+  Field **field_p= NULL;
+  Field *field= NULL;
+  uint32_t keynr= 0;
 
   /*
     Only duplicate key errors print the key value.
     If storage engine does always read all columns, we have the value alraedy.
   */
   if ((error != HA_ERR_FOUND_DUPP_KEY) ||
-      !(table->cursor->getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ)))
+      ! (table->cursor->getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ)))
     return;
 
   /*
@@ -73,36 +71,35 @@ static void prepare_record_for_error_message(int error, Table *table)
     return;
 
   /* Create unique_map with all fields used by that index. */
-  unique_map.init(unique_map_buf, table->getMutableShare()->sizeFields());
-  table->mark_columns_used_by_index_no_reset(keynr, &unique_map);
+  boost::dynamic_bitset<> unique_map(table->getMutableShare()->sizeFields()); /* Fields in offended unique. */
+  table->mark_columns_used_by_index_no_reset(keynr, unique_map);
 
   /* Subtract read_set and write_set. */
-  bitmap_subtract(&unique_map, table->read_set);
-  bitmap_subtract(&unique_map, table->write_set);
+  bitmap_subtract(unique_map, table->read_set);
+  bitmap_subtract(unique_map, table->write_set);
 
   /*
     If the unique index uses columns that are neither in read_set
     nor in write_set, we must re-read the record.
     Otherwise no need to do anything.
   */
-  if (unique_map.isClearAll())
+  if (unique_map.none())
     return;
 
   /* Get identifier of last read record into table->cursor->ref. */
   table->cursor->position(table->getInsertRecord());
   /* Add all fields used by unique index to read_set. */
-  bitmap_union(table->read_set, &unique_map);
+  bitmap_union(table->read_set, unique_map);
   /* Read record that is identified by table->cursor->ref. */
   (void) table->cursor->rnd_pos(table->getUpdateRecord(), table->cursor->ref);
   /* Copy the newly read columns into the new record. */
   for (field_p= table->getFields(); (field= *field_p); field_p++)
   {
-    if (unique_map.isBitSet(field->field_index))
+    if (unique_map.test(field->field_index))
     {
       field->copy_from_tmp(table->getShare()->rec_buff_length);
     }
   }
-
 
   return;
 }

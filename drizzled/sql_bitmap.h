@@ -28,6 +28,7 @@
 #include <pthread.h>
 
 #include <cstring>
+#include <boost/dynamic_bitset.hpp>
 
 namespace drizzled
 {
@@ -340,7 +341,11 @@ bool bitmap_is_overlapping(const MyBitmap *map1,
 
 void bitmap_intersect(MyBitmap *map, const MyBitmap *map2);
 void bitmap_subtract(MyBitmap *map, const MyBitmap *map2);
+/** temporary function until MyBitmap is replaced */
+void bitmap_subtract(boost::dynamic_bitset<>& map, const MyBitmap *map2);
 void bitmap_union(MyBitmap *map, const MyBitmap *map2);
+/** temporary function until MyBitmap is replaced */
+void bitmap_union(MyBitmap *map, const boost::dynamic_bitset<>& map2);
 void bitmap_xor(MyBitmap *map, const MyBitmap *map2);
 void bitmap_invert(MyBitmap *map);
 

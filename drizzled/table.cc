@@ -542,6 +542,19 @@ void Table::mark_columns_used_by_index_no_reset(uint32_t index,
 }
 
 
+void Table::mark_columns_used_by_index_no_reset(uint32_t index,
+                                                boost::dynamic_bitset<>& bitmap)
+{
+  KeyPartInfo *key_part= key_info[index].key_part;
+  KeyPartInfo *key_part_end= (key_part + key_info[index].key_parts);
+  for (; key_part != key_part_end; key_part++)
+  {
+    if (! bitmap.empty())
+      bitmap.set(key_part->fieldnr-1);
+  }
+}
+
+
 /*
   Mark auto-increment fields as used fields in both read and write maps
 

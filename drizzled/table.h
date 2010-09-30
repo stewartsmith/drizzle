@@ -24,6 +24,7 @@
 #define DRIZZLED_TABLE_H
 
 #include <string>
+#include <boost/dynamic_bitset.hpp>
 
 #include "drizzled/order.h"
 #include "drizzled/filesort_info.h"
@@ -457,6 +458,7 @@ public:
   bool fill_item_list(List<Item> *item_list) const;
   void clear_column_bitmaps(void);
   void prepare_for_position(void);
+  void mark_columns_used_by_index_no_reset(uint32_t index, boost::dynamic_bitset<>& bitmap);
   void mark_columns_used_by_index_no_reset(uint32_t index, MyBitmap *map);
   void mark_columns_used_by_index_no_reset(uint32_t index);
   void mark_columns_used_by_index(uint32_t index);

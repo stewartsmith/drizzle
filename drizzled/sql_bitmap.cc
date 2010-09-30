@@ -316,6 +316,22 @@ void bitmap_subtract(MyBitmap *map, const MyBitmap *map2)
 }
 
 
+void bitmap_subtract(boost::dynamic_bitset<>& map, const MyBitmap *map2)
+{
+  for (boost::dynamic_bitset<>::size_type i= 0; i < map.size(); i++)
+  {
+    if (map2->isBitSet(i))
+    {
+      map.reset(i);
+    }
+    else
+    {
+      map.set(i);
+    }
+  }
+}
+
+
 void bitmap_union(MyBitmap *map, const MyBitmap *map2)
 {
   my_bitmap_map *to= map->getBitmap(), *from= map2->getBitmap(), *end;
@@ -327,6 +343,18 @@ void bitmap_union(MyBitmap *map, const MyBitmap *map2)
   while (to <= end)
   {
     *to++ |= *from++;
+  }
+}
+
+
+void bitmap_union(MyBitmap *map, const boost::dynamic_bitset<>& map2)
+{
+  for (boost::dynamic_bitset<>::size_type i= 0; i < map2.size(); i++)
+  {
+    if (map2.test(i))
+    {
+      map->setBit(i);
+    }
   }
 }
 
