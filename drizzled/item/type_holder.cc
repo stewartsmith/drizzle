@@ -243,7 +243,6 @@ Field *Item_type_holder::make_field_by_type(Table *table)
                           null_ptr,
                           0,
                           name,
-                          get_enum_pack_length(enum_set_typelib->count),
                           enum_set_typelib,
                           collation.collation);
     if (field)

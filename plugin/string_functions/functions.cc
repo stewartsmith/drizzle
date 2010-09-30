@@ -2,6 +2,7 @@
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2010 Brian Aker
+ *  Copyright (C) 2010 Stewart Smith
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,12 +22,18 @@
 #include "config.h"
 #include "plugin/string_functions/functions.h"
 
+#include "elt.h"
+#include "format.h"
+#include "quote.h"
+
 using namespace drizzled;
 
 static int init(drizzled::module::Context &context)
 {
-  (void)context;
-  
+  context.add(new plugin::Create_function<Item_func_elt>("elt"));
+  context.add(new plugin::Create_function<Item_func_format>("format"));
+  context.add(new plugin::Create_function<Item_func_quote>("quote"));
+
   return 0;
 }
 
@@ -35,7 +42,7 @@ DRIZZLE_DECLARE_PLUGIN
   DRIZZLE_VERSION_ID,
   "String Functions",
   "1.0",
-  "Brian Aker",
+  "Brian Aker, Stewart Smith",
   "String Functions.",
   PLUGIN_LICENSE_GPL,
   init,

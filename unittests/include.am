@@ -16,6 +16,11 @@ EXTRA_DIST += \
 unit: unittests/unittests
 	unittests/unittests
 
+# Removed temporal_interval_test, it is not cleaning up after itself. -Brian
+#
+#		      unittests/temporal_interval_test.cc
+#		     
+
 unittests_unittests_SOURCES = \
 			      unittests/atomics_test.cc \
 			      unittests/calendar_test.cc \
@@ -33,7 +38,6 @@ unittests_unittests_SOURCES = \
 			      unittests/table_identifier.cc \
 			      unittests/temporal_format_test.cc \
 			      unittests/temporal_generator.cc \
-			      unittests/temporal_interval_test.cc \
 			      unittests/time_test.cc \
 			      unittests/timestamp_test.cc \
 			      unittests/utf8_test.cc

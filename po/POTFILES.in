@@ -1,5 +1,8 @@
 client/drizzle.cc
 client/drizzledump.cc
+client/drizzledump_data.cc
+client/drizzledump_drizzle.cc
+client/drizzledump_mysql.cc
 client/drizzleimport.cc
 client/drizzleslap.cc
 client/drizzletest.cc

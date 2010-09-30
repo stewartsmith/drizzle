@@ -57,6 +57,9 @@ TL_WRITE_CONCURRENT_INSERT lock at the same time as multiple read locks.
 #include "drizzled/internal/thread_var.h"
 #include "drizzled/statistics_variables.h"
 
+#include "drizzled/session.h"
+#include "drizzled/current_session.h"
+
 #include "thr_lock.h"
 #include "drizzled/internal/m_string.h"
 #include <errno.h>
@@ -74,6 +77,8 @@ TL_WRITE_CONCURRENT_INSERT lock at the same time as multiple read locks.
 #endif
 
 #include <drizzled/util/test.h>
+
+#include <boost/interprocess/sync/lock_options.hpp>
 
 using namespace std;
 
@@ -145,9 +150,10 @@ static void wake_up_waiters(THR_LOCK *lock);
 
 static enum enum_thr_lock_result wait_for_lock(struct st_lock_list *wait, THR_LOCK_DATA *data, bool in_wait_list)
 {
-  internal::st_my_thread_var *thread_var= my_thread_var;
-  pthread_cond_t *cond= &thread_var->suspend;
-  struct timespec wait_timeout;
+  Session *session= current_session;
+  internal::st_my_thread_var *thread_var= session->getThreadVar();
+
+  boost::condition_variable *cond= &thread_var->suspend;
   enum enum_thr_lock_result result= THR_LOCK_ABORTED;
   bool can_deadlock= test(data->owner->info->n_cursors);
 
@@ -162,17 +168,29 @@ static enum enum_thr_lock_result wait_for_lock(struct st_lock_list *wait, THR_LO
 
   /* Set up control struct to allow others to abort locks */
   thread_var->current_mutex= data->lock->native_handle();
-  thread_var->current_cond=  cond;
-  data->cond= cond;
+  thread_var->current_cond=  &thread_var->suspend;
+  data->cond= &thread_var->suspend;;
 
-  if (can_deadlock)
-    set_timespec(wait_timeout, table_lock_wait_timeout);
   while (!thread_var->abort || in_wait_list)
   {
-    int rc= (can_deadlock ?
-             pthread_cond_timedwait(cond, data->lock->native_handle(),
-                                    &wait_timeout) :
-             pthread_cond_wait(cond, data->lock->native_handle()));
+    boost::mutex::scoped_lock scoped(*data->lock->native_handle(), boost::adopt_lock_t());
+
+    if (can_deadlock)
+    {
+      boost::xtime xt; 
+      xtime_get(&xt, boost::TIME_UTC); 
+      xt.sec += table_lock_wait_timeout; 
+      if (not cond->timed_wait(scoped, xt))
+      {
+        result= THR_LOCK_WAIT_TIMEOUT;
+        scoped.release();
+        break;
+      }
+    }
+    else
+    {
+      cond->wait(scoped);
+    }
     /*
       We must break the wait if one of the following occurs:
       - the connection has been aborted (!thread_var->abort), but
@@ -186,15 +204,12 @@ static enum enum_thr_lock_result wait_for_lock(struct st_lock_list *wait, THR_LO
       Order of checks below is important to not report about timeout
       if the predicate is true.
     */
-    if (data->cond == 0)
+    if (data->cond == NULL)
     {
+      scoped.release();
       break;
     }
-    if (rc == ETIMEDOUT || rc == ETIME)
-    {
-      result= THR_LOCK_WAIT_TIMEOUT;
-      break;
-    }
+    scoped.release();
   }
   if (data->cond || data->type == TL_UNLOCK)
   {
@@ -215,10 +230,9 @@ static enum enum_thr_lock_result wait_for_lock(struct st_lock_list *wait, THR_LO
   data->lock->unlock();
 
   /* The following must be done after unlock of lock->mutex */
-  pthread_mutex_lock(&thread_var->mutex);
+  boost::mutex::scoped_lock scopedLock(thread_var->mutex);
   thread_var->current_mutex= NULL;
   thread_var->current_cond= NULL;
-  pthread_mutex_unlock(&thread_var->mutex);
   return(result);
 }
 
@@ -393,7 +407,7 @@ static void free_all_read_locks(THR_LOCK *lock, bool using_concurrent_insert)
 
   do
   {
-    pthread_cond_t *cond=data->cond;
+    boost::condition_variable *cond= data->cond;
     if ((int) data->type == (int) TL_READ_NO_INSERT)
     {
       if (using_concurrent_insert)
@@ -413,8 +427,8 @@ static void free_all_read_locks(THR_LOCK *lock, bool using_concurrent_insert)
       }
       lock->read_no_write_count++;
     }
-    data->cond=0;				/* Mark thread free */
-    pthread_cond_signal(cond);
+    data->cond= NULL;				/* Mark thread free */
+    cond->notify_one();
   } while ((data=data->next));
   *lock->read_wait.last=0;
   if (!lock->read_wait.data)
@@ -491,9 +505,9 @@ static void wake_up_waiters(THR_LOCK *lock)
 	  lock->write.last= &data->next;
 
 	  {
-	    pthread_cond_t *cond=data->cond;
-	    data->cond=0;				/* Mark thread free */
-	    pthread_cond_signal(cond);	/* Start waiting thread */
+            boost::condition_variable *cond= data->cond;
+	    data->cond= NULL;				/* Mark thread free */
+            cond->notify_one(); /* Start waiting thred */
 	  }
 	  if (data->type != TL_WRITE_ALLOW_WRITE ||
 	      !lock->write_wait.data ||
@@ -518,7 +532,7 @@ static void wake_up_waiters(THR_LOCK *lock)
 	      !lock->read_no_write_count))
     {
       do {
-	pthread_cond_t *cond=data->cond;
+        boost::condition_variable *cond= data->cond;
 	if (((*data->prev)=data->next))		/* remove from wait-list */
 	  data->next->prev= data->prev;
 	else
@@ -527,8 +541,8 @@ static void wake_up_waiters(THR_LOCK *lock)
 	data->prev=lock->write.last;
 	lock->write.last= &data->next;
 	data->next=0;				/* Only one write lock */
-	data->cond=0;				/* Mark thread free */
-	pthread_cond_signal(cond);	/* Start waiting thread */
+	data->cond= NULL;				/* Mark thread free */
+        cond->notify_one(); /* Start waiting thread */
       } while (lock_type == TL_WRITE_ALLOW_WRITE &&
 	       (data=lock->write_wait.data) &&
 	       data->type == TL_WRITE_ALLOW_WRITE);
@@ -634,19 +648,19 @@ void thr_multi_unlock(THR_LOCK_DATA **data,uint32_t count)
 
 void THR_LOCK::abort_locks()
 {
-  pthread_mutex_lock(&mutex);
+  boost::mutex::scoped_lock scopedLock(mutex);
 
   for (THR_LOCK_DATA *local_data= read_wait.data; local_data ; local_data= local_data->next)
   {
     local_data->type= TL_UNLOCK;			/* Mark killed */
     /* It's safe to signal the cond first: we're still holding the mutex. */
-    pthread_cond_signal(local_data->cond);
+    local_data->cond->notify_one();
     local_data->cond= NULL;				/* Removed from list */
   }
   for (THR_LOCK_DATA *local_data= write_wait.data; local_data ; local_data= local_data->next)
   {
     local_data->type= TL_UNLOCK;
-    pthread_cond_signal(local_data->cond);
+    local_data->cond->notify_one();
     local_data->cond= NULL;
   }
   read_wait.last= &read_wait.data;
@@ -654,7 +668,6 @@ void THR_LOCK::abort_locks()
   read_wait.data= write_wait.data=0;
   if (write.data)
     write.data->type=TL_WRITE_ONLY;
-  pthread_mutex_unlock(&mutex);
 }
 
 
@@ -668,7 +681,7 @@ bool THR_LOCK::abort_locks_for_thread(uint64_t thread_id_arg)
 {
   bool found= false;
 
-  pthread_mutex_lock(&mutex);
+  boost::mutex::scoped_lock scopedLock(mutex);
   for (THR_LOCK_DATA *local_data= read_wait.data; local_data ; local_data= local_data->next)
   {
     if (local_data->owner->info->thread_id == thread_id_arg)
@@ -676,7 +689,7 @@ bool THR_LOCK::abort_locks_for_thread(uint64_t thread_id_arg)
       local_data->type= TL_UNLOCK;			/* Mark killed */
       /* It's safe to signal the cond first: we're still holding the mutex. */
       found= true;
-      pthread_cond_signal(local_data->cond);
+      local_data->cond->notify_one();
       local_data->cond= 0;				/* Removed from list */
 
       if (((*local_data->prev)= local_data->next))
@@ -691,7 +704,7 @@ bool THR_LOCK::abort_locks_for_thread(uint64_t thread_id_arg)
     {
       local_data->type= TL_UNLOCK;
       found= true;
-      pthread_cond_signal(local_data->cond);
+      local_data->cond->notify_one();
       local_data->cond= NULL;
 
       if (((*local_data->prev)= local_data->next))
@@ -701,7 +714,6 @@ bool THR_LOCK::abort_locks_for_thread(uint64_t thread_id_arg)
     }
   }
   wake_up_waiters(this);
-  pthread_mutex_unlock(&mutex);
 
   return found;
 }

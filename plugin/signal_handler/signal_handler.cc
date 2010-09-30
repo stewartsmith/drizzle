@@ -102,7 +102,8 @@ static void create_pid_file()
     }
     (void)close(file); /* We can ignore the error, since we are going to error anyway at this point */
   }
-  snprintf(buff, 1024, "Can't start server: can't create PID file (%s)", pidfile_name);
+  memset(buff, 0, sizeof(buff));
+  snprintf(buff, sizeof(buff)-1, "Can't start server: can't create PID file (%s)", pidfile_name);
   sql_perror(buff);
   exit(1);
 }
@@ -114,6 +115,7 @@ void signal_hand()
   sigset_t set;
   int sig;
   internal::my_thread_init();				// Init new thread
+  boost::this_thread::at_thread_exit(&internal::my_thread_end);
   signal_thread_in_use= true;
 
   if ((test_flags.test(TEST_SIGINT)))
@@ -124,11 +126,23 @@ void signal_hand()
   }
   (void) sigemptyset(&set);			// Setup up SIGINT for debug
 #ifndef IGNORE_SIGHUP_SIGQUIT
-  (void) sigaddset(&set,SIGQUIT);
-  (void) sigaddset(&set,SIGHUP);
+  if (sigaddset(&set,SIGQUIT))
+  {
+    std::cerr << "failed setting sigaddset() with SIGQUIT\n";
+  }
+  if (sigaddset(&set,SIGHUP))
+  {
+    std::cerr << "failed setting sigaddset() with SIGHUP\n";
+  }
 #endif
-  (void) sigaddset(&set,SIGTERM);
-  (void) sigaddset(&set,SIGTSTP);
+  if (sigaddset(&set,SIGTERM))
+  {
+    std::cerr << "failed setting sigaddset() with SIGTERM\n";
+  }
+  if (sigaddset(&set,SIGTSTP))
+  {
+    std::cerr << "failed setting sigaddset() with SIGTSTP\n";
+  }
 
   /* Save pid to this process (or thread on Linux) */
   create_pid_file();
@@ -149,7 +163,11 @@ void signal_hand()
   LOCK_thread_count.unlock();
   COND_thread_count.notify_all();
 
-  (void) pthread_sigmask(SIG_BLOCK,&set,NULL);
+  if (pthread_sigmask(SIG_BLOCK, &set, NULL))
+  {
+    std::cerr << "Failed to set pthread_sigmask() in signal handler\n";
+  }
+
   for (;;)
   {
     int error;					// Used when debugging
@@ -161,12 +179,11 @@ void signal_hand()
     }
     else
     {
-      while ((error= sigwait(&set,&sig)) == EINTR) ;
+      while ((error= sigwait(&set, &sig)) == EINTR) ;
     }
 
     if (cleanup_done)
     {
-      internal::my_thread_end();
       signal_thread_in_use= false;
 
       return;
@@ -175,6 +192,7 @@ void signal_hand()
     case SIGTERM:
     case SIGQUIT:
     case SIGKILL:
+    case SIGTSTP:
       /* switch to the old log message processing */
       if (!abort_loop)
       {
@@ -223,8 +241,31 @@ public:
       Wait up to 100000 micro-seconds for signal thread to die. We use this mainly to
       avoid getting warnings that internal::my_thread_end has not been called
     */
-    pthread_kill(signal_thread, SIGTERM);
-    thread.join();
+    bool completed= false;
+    /*
+     * We send SIGTERM and then do a timed join. If that fails we will on
+     * the last pthread_kill() call SIGTSTP. OSX (and FreeBSD) seem to
+     * prefer this. -Brian
+   */
+    uint32_t count= 2; // How many times to try join and see if the caller died.
+    while (not completed and count--)
+    {
+      int error;
+      int signal= count == 1 ? SIGTSTP : SIGTERM;
+      
+      if ((error= pthread_kill(thread.native_handle(), signal)))
+      {
+        char buffer[1024]; // No reason for number;
+        strerror_r(error, buffer, sizeof(buffer));
+        std::cerr << "pthread_kill() error on shutdown of signal thread (" << buffer << ")\n";
+        break;
+      }
+      else
+      {
+        boost::posix_time::milliseconds duration(100);
+        completed= thread.timed_join(duration);
+      }
+    }
   }
 };
 

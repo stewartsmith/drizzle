@@ -81,6 +81,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <string>
 #include <boost/algorithm/string.hpp>
+#include <boost/unordered_set.hpp>
+#include <boost/foreach.hpp>
 #include <map>
 #include <fstream>
 #include <drizzled/message/table.pb.h>
@@ -129,6 +131,8 @@ static void store_key_value_from_innodb(KeyInfo *key_info, unsigned char* ref, i
 
 const char INNODB_TABLE_DEFINITIONS_TABLE[]= "data_dictionary/innodb_table_definitions";
 const string statement_savepoint_name("STATEMENT");
+
+static boost::unordered_set<std::string> innodb_system_table_names;
 
 
 static const char *EmbeddedInnoDBCursor_exts[] = {
@@ -638,35 +642,102 @@ THR_LOCK_DATA **EmbeddedInnoDBCursor::store_lock(Session *session,
                       statement_savepoint_name.length());
   }
 
-  /* the below is just copied from ha_archive.cc in some dim hope it's
-     kinda right. */
+  /* the below is adapted from ha_innodb.cc */
 
-  if (lock_type != TL_IGNORE && lock.type == TL_UNLOCK)
-  {
-    /*
-      Here is where we get into the guts of a row level lock.
-      If TL_UNLOCK is set
-      If we are not doing a LOCK Table or DISCARD/IMPORT
-      TABLESPACE, then allow multiple writers
+  const uint32_t sql_command = session_sql_command(session);
+
+  if (sql_command == SQLCOM_DROP_TABLE) {
+
+    /* MySQL calls this function in DROP Table though this table
+    handle may belong to another session that is running a query.
+    Let us in that case skip any changes to the prebuilt struct. */ 
+
+  } else if (lock_type == TL_READ_WITH_SHARED_LOCKS
+       || lock_type == TL_READ_NO_INSERT
+       || (lock_type != TL_IGNORE
+           && sql_command != SQLCOM_SELECT)) {
+
+    /* The OR cases above are in this order:
+    1) MySQL is doing LOCK TABLES ... READ LOCAL, or we
+    are processing a stored procedure or function, or
+    2) (we do not know when TL_READ_HIGH_PRIORITY is used), or
+    3) this is a SELECT ... IN SHARE MODE, or
+    4) we are doing a complex SQL statement like
+    INSERT INTO ... SELECT ... and the logical logging (MySQL
+    binlog) requires the use of a locking read, or
+    MySQL is doing LOCK TABLES ... READ.
+    5) we let InnoDB do locking reads for all SQL statements that
+    are not simple SELECTs; note that select_lock_type in this
+    case may get strengthened in ::external_lock() to LOCK_X.
+    Note that we MUST use a locking read in all data modifying
+    SQL statements, because otherwise the execution would not be
+    serializable, and also the results from the update could be
+    unexpected if an obsolete consistent read view would be
+    used. */
+
+    enum_tx_isolation isolation_level= session_tx_isolation(session);
+
+    if (isolation_level != ISO_SERIALIZABLE
+        && (lock_type == TL_READ || lock_type == TL_READ_NO_INSERT)
+        && (sql_command == SQLCOM_INSERT_SELECT
+      || sql_command == SQLCOM_UPDATE
+      || sql_command == SQLCOM_CREATE_TABLE)) {
+
+      /* If we either have innobase_locks_unsafe_for_binlog
+      option set or this session is using READ COMMITTED
+      isolation level and isolation level of the transaction
+      is not set to serializable and MySQL is doing
+      INSERT INTO...SELECT or UPDATE ... = (SELECT ...) or
+      CREATE  ... SELECT... without FOR UPDATE or
+      IN SHARE MODE in select, then we use consistent
+      read for select. */
+
+      ib_lock_mode= IB_LOCK_NONE;
+    } else if (sql_command == SQLCOM_CHECKSUM) {
+      /* Use consistent read for checksum table */
+
+      ib_lock_mode= IB_LOCK_NONE;
+    } else {
+      ib_lock_mode= IB_LOCK_S;
+    }
+
+  } else if (lock_type != TL_IGNORE) {
+
+    /* We set possible LOCK_X value in external_lock, not yet
+    here even if this would be SELECT ... FOR UPDATE */
+    ib_lock_mode= IB_LOCK_NONE;
+  }
+
+  if (lock_type != TL_IGNORE && lock.type == TL_UNLOCK) {
+
+    /* If we are not doing a LOCK TABLE, DISCARD/IMPORT
+    TABLESPACE or TRUNCATE TABLE then allow multiple
+    writers. Note that ALTER TABLE uses a TL_WRITE_ALLOW_READ
+    < TL_WRITE_CONCURRENT_INSERT.
     */
 
-    if ((lock_type >= TL_WRITE_CONCURRENT_INSERT &&
-         lock_type <= TL_WRITE)
-        && !session_tablespace_op(session))
+    if ((lock_type >= TL_WRITE_CONCURRENT_INSERT
+         && lock_type <= TL_WRITE)
+        && !session_tablespace_op(session)
+        && sql_command != SQLCOM_TRUNCATE
+        && sql_command != SQLCOM_CREATE_TABLE) {
+
       lock_type = TL_WRITE_ALLOW_WRITE;
+    }
 
-    /*
-      In queries of type INSERT INTO t1 SELECT ... FROM t2 ...
-      MySQL would use the lock TL_READ_NO_INSERT on t2, and that
-      would conflict with TL_WRITE_ALLOW_WRITE, blocking all inserts
-      to t2. Convert the lock to a normal read lock to allow
-      concurrent inserts to t2.
+    /* In queries of type INSERT INTO t1 SELECT ... FROM t2 ...
+    MySQL would use the lock TL_READ_NO_INSERT on t2, and that
+    would conflict with TL_WRITE_ALLOW_WRITE, blocking all inserts
+    to t2. Convert the lock to a normal read lock to allow
+    concurrent inserts to t2.
     */
 
-    if (lock_type == TL_READ_NO_INSERT)
-      lock_type = TL_READ;
+    if (lock_type == TL_READ_NO_INSERT) {
 
-    lock.type=lock_type;
+      lock_type = TL_READ;
+    }
+
+    lock.type = lock_type;
   }
 
   *to++= &lock;
@@ -698,6 +769,18 @@ fetch:
 static const char* table_path_to_innodb_name(const char* name)
 {
   size_t l= strlen(name);
+  static string datadict_path("data_dictionary/");
+  static string sys_prefix("data_dictionary/innodb_");
+  static string sys_table_prefix("INNODB_");
+
+  if (strncmp(name, sys_prefix.c_str(), sys_prefix.length()) == 0)
+  {
+    string find_name(name+datadict_path.length());
+    std::transform(find_name.begin(), find_name.end(), find_name.begin(), ::toupper);
+    boost::unordered_set<string>::iterator iter= innodb_system_table_names.find(find_name);
+    if (iter != innodb_system_table_names.end())
+      return (*iter).c_str()+sys_table_prefix.length();
+  }
 
   int slashes= 2;
   while(slashes>0 && l > 0)
@@ -834,26 +917,16 @@ static int create_table_add_field(ib_tbl_sch_t schema,
                                   column_attr, 0, sizeof(double));
     break;
   case message::Table::Field::ENUM:
-  {
-    message::Table::Field::EnumerationValues field_options=
-      field.enumeration_values();
-
-    if (field_options.field_value_size() <= 256)
-      *err= ib_table_schema_add_col(schema, field.name().c_str(), IB_INT,
-                                    column_attr, 0, 1);
-    else if (field_options.field_value_size() > 256)
-      *err= ib_table_schema_add_col(schema, field.name().c_str(), IB_INT,
-                                    column_attr, 0, 2);
-    else
-    {
-      assert(field_options.field_value_size() <= Field_enum::max_supported_elements);
-    }
-    break;
-  }
-  case message::Table::Field::DATE:
-  case message::Table::Field::TIMESTAMP:
     *err= ib_table_schema_add_col(schema, field.name().c_str(), IB_INT,
                                   column_attr, 0, 4);
+    break;
+  case message::Table::Field::DATE:
+    *err= ib_table_schema_add_col(schema, field.name().c_str(), IB_INT,
+                                  column_attr, 0, 4);
+    break;
+  case message::Table::Field::TIMESTAMP:
+    *err= ib_table_schema_add_col(schema, field.name().c_str(), IB_INT,
+                                  column_attr, 0, 8);
     break;
   case message::Table::Field::BLOB:
     *err= ib_table_schema_add_col(schema, field.name().c_str(), IB_BLOB,
@@ -1454,6 +1527,24 @@ void EmbeddedInnoDBEngine::getTableNamesInSchemaFromInnoDB(
   ib_err_t innodb_err= ib_schema_lock_exclusive(transaction);
   assert(innodb_err == DB_SUCCESS); /* FIXME: doGetTableNames needs to be able to return error */
 
+  if (search_string.compare("data_dictionary/") == 0)
+  {
+    if (set_of_names)
+    {
+      BOOST_FOREACH(std::string table_name, innodb_system_table_names)
+      {
+        set_of_names->insert(table_name);
+      }
+    }
+    if (identifiers)
+    {
+      BOOST_FOREACH(std::string table_name, innodb_system_table_names)
+      {
+        identifiers->push_back(TableIdentifier(schema.getSchemaName(),
+                                               table_name));
+      }
+    }
+  }
 
   innodb_err= ib_cursor_open_table("SYS_TABLES", transaction, &cursor);
   assert(innodb_err == DB_SUCCESS); /* FIXME */
@@ -1656,7 +1747,11 @@ int EmbeddedInnoDBEngine::doGetTableDefinition(Session &session,
 
   assert (err == DB_SUCCESS);
 
-  read_table_message_from_innodb(innodb_table_name.c_str(), &table);
+  if (read_table_message_from_innodb(innodb_table_name.c_str(), &table) != 0)
+  {
+    if (get_innodb_system_table_message(innodb_table_name.c_str(), &table) == 0)
+      return EEXIST;
+  }
 
   return EEXIST;
 }
@@ -1668,6 +1763,10 @@ bool EmbeddedInnoDBEngine::doDoesTableExist(Session &,
   string innodb_table_name;
 
   TableIdentifier_to_innodb_name(identifier, &innodb_table_name);
+
+  boost::unordered_set<string>::iterator iter= innodb_system_table_names.find(identifier.getTableName());
+  if (iter != innodb_system_table_names.end())
+    return true;
 
   if (ib_cursor_open_table(innodb_table_name.c_str(), NULL, &innodb_cursor) != DB_SUCCESS)
     return false;
@@ -1713,14 +1812,7 @@ static ib_err_t write_row_to_innodb_tuple(Field **fields, ib_tpl_t tuple)
     }
     else if ((**field).type() == DRIZZLE_TYPE_ENUM)
     {
-      if ((*field)->data_length() == 1)
-        err= ib_tuple_write_u8(tuple, colnr, *((ib_u8_t*)(*field)->ptr));
-      else if ((*field)->data_length() == 2)
-        err= ib_tuple_write_u16(tuple, colnr, *((ib_u16_t*)(*field)->ptr));
-      else
-      {
-        assert((*field)->data_length() <= 2);
-      }
+      err= ib_tuple_write_u32(tuple, colnr, *((ib_u32_t*)(*field)->ptr));
     }
     else if ((**field).type() == DRIZZLE_TYPE_DATE)
     {
@@ -1754,10 +1846,6 @@ static uint64_t innobase_get_int_col_max_value(const Field* field)
     /* TINY */
   case HA_KEYTYPE_BINARY:
     max_value = 0xFFULL;
-    break;
-    /* MEDIUM */
-  case HA_KEYTYPE_UINT24:
-    max_value = 0xFFFFFFULL;
     break;
     /* LONG */
   case HA_KEYTYPE_ULONG_INT:
@@ -2751,6 +2839,12 @@ static int64_t innodb_log_files_in_group;
 
 static int embedded_innodb_init(drizzled::module::Context &context)
 {
+  innodb_system_table_names.insert(std::string("INNODB_SYS_TABLES"));
+  innodb_system_table_names.insert(std::string("INNODB_SYS_COLUMNS"));
+  innodb_system_table_names.insert(std::string("INNODB_SYS_INDEXES"));
+  innodb_system_table_names.insert(std::string("INNODB_SYS_FIELDS"));
+  innodb_system_table_names.insert(std::string("INNODB_SYS_FOREIGN"));
+  innodb_system_table_names.insert(std::string("INNODB_SYS_FOREIGN_COLS"));
 
   const module::option_map &vm= context.getOptions();
 

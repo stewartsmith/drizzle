@@ -27,6 +27,8 @@ sbin_PROGRAMS =
 lib_LTLIBRARIES = 
 noinst_LTLIBRARIES =
 noinst_PROGRAMS =
+man_MANS =
+bin_PROGRAMS =
 
 VERSION=$(PANDORA_RELEASE_VERSION)
 
@@ -40,6 +42,7 @@ DIST_SUBDIRS = ${SUBDIRS} tests
 BUILT_SOURCES=
 EXTRA_DIST= \
 	    .quickly \
+	    COPYING.BSD \
 	    DRIZZLE.FAQ \
 	    EXCEPTIONS-CLIENT \
 	    config/autorun.sh \
@@ -133,7 +136,7 @@ drizzled/configmake.h: ${top_srcdir}/Makefile.in
 
 clean-local:
 	find . -name '*.gcno' | xargs rm -f 
-	-rm -rf docs/api docs/dev docs/_build
+	-rm -rf docs/api docs/dev docs/_build docs/doctrees
 
 include config/lint-source.am
 
@@ -160,3 +163,16 @@ merge-clean:
 	find ./ | $(GREP) \~$$ | xargs rm -f
 	bzr unknowns
 
+install-exec-hook:
+	cd $(DESTDIR)$(sbindir) && \
+	mv -f drizzled$(EXEEXT) drizzled$(PACKAGE_VERSION)$(EXEEXT) && \
+	$(LN_S) drizzled$(PACKAGE_VERSION)$(EXEEXT) drizzled$(EXEEXT)
+
+install-data-hook:
+	cd $(DESTDIR)$(man8dir) && \
+	mv -f drizzled.8 drizzled$(PACKAGE_VERSION).8 && \
+	$(LN_S) drizzled$(PACKAGE_VERSION).8 drizzled.8
+
+uninstall-hook:
+	rm $(DESTDIR)$(man8dir)/drizzled$(PACKAGE_VERSION).8
+	rm $(DESTDIR)$(sbindir)/drizzled$(PACKAGE_VERSION)$(EXEEXT)

@@ -118,7 +118,7 @@ truncate table t1;
 # @TODO Is there really a reason for a separate error 
 # just for LOAD DATA INFILE?
 --error ER_WARN_NULL_TO_NOTNULL
-LOAD DATA INFILE '../std_data_ln/null_test.txt' INTO TABLE t1 FIELDS ENCLOSED BY '"';
+LOAD DATA INFILE '../../std_data_ln/null_test.txt' INTO TABLE t1 FIELDS ENCLOSED BY '"';
 
 drop table t1;
 

@@ -31,7 +31,9 @@
 #include <fcntl.h>
 #include <algorithm>
 #include <climits>
+#include <boost/filesystem.hpp>
 
+namespace fs=boost::filesystem;
 using namespace std;
 namespace drizzled
 {
@@ -258,22 +260,27 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
 #endif
     if (!internal::dirname_length(ex->file_name))
     {
-      strcpy(name, data_home_real);
-      strncat(name, tdb, FN_REFLEN-strlen(data_home_real)-1);
+      strcpy(name, getDataHomeCatalog().c_str());
+      strncat(name, "/", 1);
+      strncat(name, tdb, FN_REFLEN-getDataHomeCatalog().size());
       (void) internal::fn_format(name, ex->file_name, name, "",
 		       MY_RELATIVE_PATH | MY_UNPACK_FILENAME);
     }
     else
     {
-      (void) internal::fn_format(name, ex->file_name, data_home_real, "",
+      (void) internal::fn_format(name, ex->file_name, getDataHomeCatalog().c_str(), "",
 		       MY_RELATIVE_PATH | MY_UNPACK_FILENAME);
 
-      if (opt_secure_file_priv &&
-          strncmp(opt_secure_file_priv, name, strlen(opt_secure_file_priv)))
+      if (opt_secure_file_priv)
       {
-        /* Read only allowed from within dir specified by secure_file_priv */
-        my_error(ER_OPTION_PREVENTS_STATEMENT, MYF(0), "--secure-file-priv");
-        return(true);
+        fs::path secure_file_path(fs::system_complete(fs::path(opt_secure_file_priv)));
+        fs::path target_path(fs::system_complete(fs::path(name)));
+        if (target_path.file_string().substr(0, secure_file_path.file_string().size()) != secure_file_path.file_string())
+        {
+          /* Read only allowed from within dir specified by secure_file_priv */
+          my_error(ER_OPTION_PREVENTS_STATEMENT, MYF(0), "--secure-file-priv");
+          return(true);
+        }
       }
 
       struct stat stat_info;

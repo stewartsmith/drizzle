@@ -79,7 +79,7 @@ DROP TABLE t1;
 --echo #
 CREATE TABLE t1 (`b` blob);
 INSERT INTO `t1` VALUES (0x602010000280100005E71A);
---exec $DRIZZLE_DUMP --skip-extended-insert --hex-blob test --skip-comments t1 > $drizzledumpfile
+--exec $DRIZZLE_DUMP --skip-extended-insert test --skip-comments t1 > $drizzledumpfile
 let $table_name = test.t1;
 --source include/drizzledump.inc
 

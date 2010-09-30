@@ -562,9 +562,6 @@ void heap_update_auto_increment(HP_INFO *info, const unsigned char *record)
   case HA_KEYTYPE_ULONG_INT:
     value=(uint64_t) uint4korr(key);
     break;
-  case HA_KEYTYPE_UINT24:
-    value=(uint64_t) uint3korr(key);
-    break;
   case HA_KEYTYPE_DOUBLE:                       /* This shouldn't be used */
   {
     double f_1;

@@ -193,10 +193,10 @@ insert into t2 values('AAA', 10, 0.5);
 insert into t2 values('BBB', 20, 1.0);
 select t1.a1, t1.a2, t2.a1, t2.a2 from t1,t2;
 a1	a2	a1	a2
-10	aaa	AAA	10
-10	aaa	BBB	20
 10	NULL	AAA	10
 10	NULL	BBB	20
+10	aaa	AAA	10
+10	aaa	BBB	20
 10	bbb	AAA	10
 10	bbb	BBB	20
 20	zzz	AAA	10
@@ -327,7 +327,7 @@ min(a5)	max(a5)
 explain 
 select min(a3) from t1 where a2 = 2;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	k1	k1	5	const	1	
+1	SIMPLE	t1	ref	k1	k1	5	const	1	Using where
 select min(a3) from t1 where a2 = 2;
 min(a3)
 CHI
@@ -349,7 +349,7 @@ min(t1.a5)	max(t2.a3)
 explain 
 select min(t1.a3), max(t2.a2) from t1, t2 where t1.a2 = 0 and t2.a3 = 'CA';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	k1	k1	5	const	1	
+1	SIMPLE	t1	ref	k1	k1	5	const	1	Using where
 1	SIMPLE	t2	ref	k1	k1	11	const	1	Using where
 select min(t1.a3), max(t2.a2) from t1, t2 where t1.a2 = 0 and t2.a3 = 'CA';
 min(t1.a3)	max(t2.a2)
@@ -456,7 +456,7 @@ CHI
 explain
 select min(a3) from t1 where a2 = 4;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	k1	k1	5	const	1	
+1	SIMPLE	t1	ref	k1	k1	5	const	1	Using where
 select min(a3) from t1 where a2 = 4;
 min(a3)
 NULL
@@ -477,7 +477,7 @@ select (min(a4)+max(a4))/2 from t1;
 explain
 select min(a3) from t1 where 2 = a2;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	k1	k1	5	const	1	
+1	SIMPLE	t1	ref	k1	k1	5	const	1	Using where
 select min(a3) from t1 where 2 = a2;
 min(a3)
 CHI
@@ -586,33 +586,27 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t2	ALL	k2	NULL	NULL	NULL	7	Using where
 1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	15	Using join buffer
 drop table t1, t2;
-create table t1 (a char(10));
-insert into t1 values ('a'),('b'),('c');
-select coercibility(max(a)) from t1;
-coercibility(max(a))
-2
-drop table t1;
 create table t1 (a char);
 insert into t1 values ('a'),('b');
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(1) DEFAULT NULL
-) ENGINE=DEFAULT
+  `a` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 create table t2 select max(a),min(a) from t1;
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `max(a)` varchar(1) DEFAULT NULL,
-  `min(a)` varchar(1) DEFAULT NULL
-) ENGINE=DEFAULT
+  `max(a)` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL,
+  `min(a)` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t2;
 create table t2 select concat(a) from t1;
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `concat(a)` varchar(1) DEFAULT NULL
-) ENGINE=DEFAULT
+  `concat(a)` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t2,t1;
 create table t1 (a int);
 insert into t1 values (1);
@@ -683,20 +677,20 @@ create table t2 select MAX(b) from t1 group by a;
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `MAX(b)` datetime DEFAULT NULL
-) ENGINE=DEFAULT
+  `MAX(b)` DATETIME DEFAULT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1, t2;
 create table t1(f1 datetime);
 insert into t1 values (now());
 create table t2 select f2 from (select max(now()) f2 from t1) a;
 show columns from t2;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-f2	DATETIME	TRUE		TRUE	
+f2	DATETIME	YES		YES	
 drop table t2;
 create table t2 select f2 from (select now() f2 from t1) a;
 show columns from t2;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-f2	DATETIME	TRUE		TRUE	
+f2	DATETIME	YES		YES	
 drop table t2, t1;
 CREATE TABLE t1(
 id int PRIMARY KEY,
@@ -909,15 +903,15 @@ create table t1 select variance(0);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `variance(0)` double(8,4) DEFAULT NULL
-) ENGINE=DEFAULT
+  `variance(0)` DOUBLE(8,4) DEFAULT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 select stddev(0);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `stddev(0)` double(8,4) DEFAULT NULL
-) ENGINE=DEFAULT
+  `stddev(0)` DOUBLE(8,4) DEFAULT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table bug22555 (i int primary key auto_increment, s1 int, s2 int, e decimal(30,10), o double);
 insert into bug22555 (s1, s2, e, o) values (53, 78, 11.4276528, 6.828112), (17, 78, 5.916793, 1.8502951), (18, 76, 2.679231, 9.17975591), (31, 62, 6.07831, 0.1), (19, 41, 5.37463, 15.1), (83, 73, 14.567426, 7.959222), (92, 53, 6.10151, 13.1856852), (7, 12, 13.92272, 3.442007), (92, 35, 11.95358909, 6.01376678), (38, 84, 2.572, 7.904571);
@@ -1232,7 +1226,7 @@ CREATE TABLE t2( a INT, b INT, c INT, KEY(a, b) );
 INSERT INTO t2 ( a, b, c ) VALUES ( 1, NULL, 2 ), ( 1, 3, 4 ), ( 1, 4, 4 );
 EXPLAIN SELECT MIN(b), MIN(c) FROM t2 WHERE a = 1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	ref	a	a	5	const	1	
+1	SIMPLE	t2	ref	a	a	5	const	1	Using where
 SELECT MIN(b), MIN(c) FROM t2 WHERE a = 1;
 MIN(b)	MIN(c)
 3	2
@@ -1240,7 +1234,7 @@ CREATE TABLE t3 (a INT, b INT, c int, KEY(a, b));
 INSERT INTO t3 VALUES (1, NULL, 1), (2, NULL, 2),  (2, NULL, 2),  (3, NULL, 3);
 EXPLAIN SELECT MIN(a), MIN(b) FROM t3 where a = 2;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t3	ref	a	a	5	const	1	
+1	SIMPLE	t3	ref	a	a	5	const	1	Using where
 SELECT MIN(a), MIN(b) FROM t3 where a = 2;
 MIN(a)	MIN(b)
 2	NULL
@@ -1248,7 +1242,7 @@ CREATE TABLE t4 (a INT, b INT, c int, KEY(a, b));
 INSERT INTO t4 VALUES (1, 1, 1), (2, NULL, 2),  (2, NULL, 2),  (3, 1, 3);
 EXPLAIN SELECT MIN(a), MIN(b) FROM t4 where a = 2;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t4	ref	a	a	5	const	1	
+1	SIMPLE	t4	ref	a	a	5	const	1	Using where
 SELECT MIN(a), MIN(b) FROM t4 where a = 2;
 MIN(a)	MIN(b)
 2	NULL
@@ -1259,7 +1253,7 @@ CREATE TABLE t5( a INT, b INT, KEY( a, b) );
 INSERT INTO t5 VALUES( 1, 1 ), ( 1, 2 );
 EXPLAIN SELECT MIN(a), MIN(b) FROM t5 WHERE a = 1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t5	ref	a	a	5	const	1	
+1	SIMPLE	t5	ref	a	a	5	const	1	Using where
 SELECT MIN(a), MIN(b) FROM t5 WHERE a = 1;
 MIN(a)	MIN(b)
 1	1

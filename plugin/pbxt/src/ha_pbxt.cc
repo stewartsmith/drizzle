@@ -79,6 +79,7 @@ using namespace drizzled::plugin;
 #include "systab_xt.h"
 #include "xaction_xt.h"
 #include "backup_xt.h"
+#include "heap_xt.h"
 
 #ifdef DEBUG
 //#define XT_USE_SYS_PAR_DEBUG_SIZES
@@ -600,11 +601,7 @@ xtPublic XTThreadPtr xt_ha_set_current_thread(THD *thd, XTExceptionPtr e)
 	XTThreadPtr	self;
 	static int	ha_thread_count = 0, ha_id;
 
-#ifdef DRIZZLED
 	if (!(self = (XTThreadPtr) *thd->getEngineData(pbxt_hton))) {
-#else
-	if (!(self = (XTThreadPtr) *thd_ha_data(thd, pbxt_hton))) {
-#endif
 //		const			Security_context *sctx;
 		char			name[120];
 		char			ha_id_str[50];
@@ -635,11 +632,7 @@ xtPublic XTThreadPtr xt_ha_set_current_thread(THD *thd, XTExceptionPtr e)
 			return NULL;
 
 		self->st_xact_mode = XT_XACT_REPEATABLE_READ;
-#ifdef DRIZZLED
 		*thd->getEngineData(pbxt_hton) = (void *) self;
-#else
-		*thd_ha_data(thd, pbxt_hton) = (void *) self;
-#endif
 	}
 	return self;
 }
@@ -648,71 +641,16 @@ xtPublic void xt_ha_close_connection(THD* thd)
 {
 	XTThreadPtr		self;
 
-#ifdef DRIZZLED
 	if (!(self = (XTThreadPtr) *thd->getEngineData(pbxt_hton))) {
 	*thd->getEngineData(pbxt_hton) = NULL;
-#else
-	if ((self = (XTThreadPtr) *thd_ha_data(thd, pbxt_hton))) {
-		*thd_ha_data(thd, pbxt_hton) = NULL;
-#endif
 		xt_free_thread(self);
 	}
 }
 
 xtPublic XTThreadPtr xt_ha_thd_to_self(THD *thd)
 {
-#ifdef DRIZZLED
 	return (XTThreadPtr) *thd->getEngineData(pbxt_hton);
-#else
-	return (XTThreadPtr) *thd_ha_data(thd, pbxt_hton);
-#endif
 }
-
-#ifndef DRIZZLED
-/* The first bit is 1. */
-static u_int ha_get_max_bit(MX_BITMAP *map)
-{
-#ifdef DRIZZLED
-        uint32_t	cnt = map->numOfBitsInMap();
-	uint32_t 	max_bit = 0;
-
-	for (uint32_t i = 0; i < cnt; i++)
-		if (map->isBitSet(i))
-			max_bit = i+1;
-
-	return max_bit;
-#else
-	my_bitmap_map	*data_ptr = map->bitmap;
-	my_bitmap_map	*end_ptr = map->last_word_ptr;
-	u_int		cnt = map->n_bits;
-	my_bitmap_map	b;
-	
-	for (; end_ptr >= data_ptr; end_ptr--) {
-		if ((b = *end_ptr)) {
-			my_bitmap_map mask;
-			
-			if (end_ptr == map->getLastWordPtr() && map->getLastWordMask())
-				mask = map->getLastWordMask() >> 1;
-			else
-				mask = 0x80000000;
-			while (!(b & mask)) {
-				b = b << 1;
-				/* Should not happen, but if it does, we hang! */
-				if (!b)
-					return map->numOfBitsInMap();
-				cnt--;
-			}
-			return cnt;
-		}
-		if (end_ptr == map->getLastWordPtr())
-			cnt = ((cnt-1) / 32) * 32;
-		else
-			cnt -= 32;
-	}
-	return 0;
-#endif
-}
-#endif
 
 /*
  * -----------------------------------------------------------------------
@@ -1311,10 +1249,9 @@ static int pbxt_init(void *p)
 	XT_RETURN(1);
 }
 
-static int pbxt_end(void *)
+void PBXTStorageEngine::shutdownPlugin()
 {
-	XTThreadPtr		self;
-	int				err = 0;
+	XTThreadPtr self;
 
 	XT_TRACE_CALL();
 
@@ -1329,43 +1266,80 @@ static int pbxt_end(void *)
 			ha_exit(self);
 		}
 	}
-
-	XT_RETURN(err);
 }
 
 PBXTStorageEngine::~PBXTStorageEngine()
 {
-  pbxt_end(NULL);
+	/* We do nothing here, because it is now all done in shutdownPlugin(). */
 }
 
-#ifndef DRIZZLED
-static int pbxt_panic(handlerton *hton, enum ha_panic_function flag)
+/*
+ * The following query from the DBT1 test is VERY slow
+ * if we do not set HA_READ_ORDER.
+ * The reason is that it must scan all duplicates, then
+ * sort.
+ *
+ * SELECT o_id, o_carrier_id, o_entry_d, o_ol_cnt
+ * FROM orders FORCE INDEX (o_w_id)
+ * WHERE o_w_id = 2
+   * AND o_d_id = 1
+   * AND o_c_id = 500
+ * ORDER BY o_id DESC limit 1;
+ *
+ */
+//#define FLAGS_ARE_READ_DYNAMICALLY
+
+uint32_t PBXTStorageEngine::index_flags(enum  ha_key_alg) const
 {
-	return pbxt_end(hton);
-}
+	/* It would be nice if the dynamic version of this function works,
+	 * but it does not. MySQL loads this information when the table is openned,
+	 * and then it is fixed.
+	 *
+	 * The problem is, I have had to remove the HA_READ_ORDER option although
+	 * it applies to PBXT. PBXT returns entries in index order during an index
+	 * scan in _almost_ all cases.
+	 *
+	 * A number of cases are demostrated here: [(11)]
+	 *
+	 * If involves the following conditions:
+	 * - a SELECT FOR UPDATE, UPDATE or DELETE statement
+	 * - an ORDER BY, or join that requires the sort order
+	 * - another transaction which updates the index while it is being
+	 *   scanned.
+	 *
+	 * In this "obscure" case, the index scan may return index
+	 * entries in the wrong order.
+	 */
+#ifdef FLAGS_ARE_READ_DYNAMICALLY
+	/* If were are in an update (SELECT FOR UPDATE, UPDATE or DELETE), then
+	 * it may be that we return the rows from an index in the wrong
+	 * order! This is due to the fact that update reads wait for transactions
+	 * to commit and this means that index entries may change position during
+	 * the scan!
+	 */
+	if (pb_open_tab && pb_open_tab->ot_for_update)
+		return (HA_READ_NEXT | HA_READ_PREV | HA_READ_RANGE | HA_KEYREAD_ONLY);
+	/* If I understand HA_KEYREAD_ONLY then this means I do not
+	 * need to fetch the record associated with an index
+	 * key.
+	 */
+	return (HA_READ_NEXT | HA_READ_PREV | HA_READ_ORDER | HA_READ_RANGE | HA_KEYREAD_ONLY);
+#else
+	return (HA_READ_NEXT | HA_READ_PREV | HA_READ_RANGE | HA_KEYREAD_ONLY);
 #endif
+}
 
 /*
  * Kill the PBXT thread associated with the MySQL thread.
  */
-#ifdef DRIZZLED
 int PBXTStorageEngine::close_connection(Session *thd)
 {
 	PBXTStorageEngine * const hton = this;
-#else
-static int pbxt_close_connection(handlerton *hton, THD* thd)
-{
-#endif
 	XTThreadPtr		self;
 
 	XT_TRACE_CALL();
-#ifdef DRIZZLED
 	if ((self = (XTThreadPtr) *thd->getEngineData(hton))) {
 		*thd->getEngineData(pbxt_hton) = NULL;
-#else
-	if ((self = (XTThreadPtr) *thd_ha_data(thd, hton))) {
-                *thd_ha_data(thd, hton) = NULL;
-#endif
 		/* Required because freeing the thread could cause
 		 * free of database which could call xt_close_file_ns()!
 		 */
@@ -1380,11 +1354,7 @@ static int pbxt_close_connection(handlerton *hton, THD* thd)
  * when the last PBXT table was removed from the 
  * database.
  */
-#ifdef DRIZZLED
 void PBXTStorageEngine::drop_database(char *)
-#else
-static void pbxt_drop_database(handlerton *XT_UNUSED(hton), char *XT_UNUSED(path))
-#endif
 {
 	XT_TRACE_CALL();
 }
@@ -1448,22 +1418,13 @@ static int pbxt_start_consistent_snapshot(handlerton *hton, THD *thd)
  * pbxt_thr is a pointer the the PBXT thread structure.
  *
  */
-#ifdef DRIZZLED
 int PBXTStorageEngine::commit(Session *thd, bool all)
 {
 	PBXTStorageEngine * const hton = this;
-#else
-static int pbxt_commit(handlerton *hton, THD *thd, bool all)
-{
-#endif
 	int			err = 0;
 	XTThreadPtr	self;
 
-#ifdef DRIZZLED
 	if ((self = (XTThreadPtr) *thd->getEngineData(hton))) {
-#else
-	if ((self = (XTThreadPtr) *thd_ha_data(thd, hton))) {
-#endif
 		XT_PRINT2(self, "%s pbxt_commit all=%d\n", all ? "END CONN XACT" : "END STAT", all);
 
 		if (self->st_xact_data) {
@@ -1484,22 +1445,13 @@ static int pbxt_commit(handlerton *hton, THD *thd, bool all)
 	return err;
 }
 
-#ifdef DRIZZLED
 int PBXTStorageEngine::rollback(Session *thd, bool all)
 {
 	PBXTStorageEngine * const hton = this;
-#else
-static int pbxt_rollback(handlerton *hton, THD *thd, bool all)
-{
-#endif
 	int			err = 0;
 	XTThreadPtr	self;
 
-#ifdef DRIZZLED
-        if ((self = (XTThreadPtr) *thd->getEngineData(hton))) {
-#else
-	if ((self = (XTThreadPtr) *thd_ha_data(thd, hton))) {
-#endif
+	if ((self = (XTThreadPtr) *thd->getEngineData(hton))) {
 		XT_PRINT2(self, "%s pbxt_rollback all=%d\n", all ? "CONN END XACT" : "STAT END", all);
 
 		if (self->st_xact_data) {
@@ -1569,7 +1521,7 @@ static int pbxt_prepare(handlerton *hton, THD *thd, bool all)
 	return err;
 }
 
-static XTThreadPtr ha_temp_open_global_database(handlerton *hton, THD **ret_thd, int *temp_thread, char *thread_name, int *err)
+static XTThreadPtr ha_temp_open_global_database(handlerton *hton, THD **ret_thd, int *temp_thread, const char *thread_name, int *err)
 {
 	THD			*thd;
 	XTThreadPtr	self = NULL;
@@ -1911,8 +1863,13 @@ xtPublic int ha_pbxt::reopen()
 			 * selectity of the indices, as soon as the number of rows
 			 * exceeds 200 (see [**])
 			 */
+#ifdef XT_ROW_COUNT_CORRECTED
+			/* {CORRECTED-ROW-COUNT} */
+			pb_share->sh_recalc_selectivity = (pb_share->sh_table->tab_row_eof_id - 1 - pb_share->sh_table->tab_row_fnum) < 150;
+#else
 			/* {FREE-ROWS-BAD} */
 			pb_share->sh_recalc_selectivity = (pb_share->sh_table->tab_row_eof_id - 1 /* - pb_share->sh_table->tab_row_fnum */) < 150;
+#endif
 		}
 
 		/* I am not doing this anymore because it was only required
@@ -2127,13 +2084,11 @@ MX_TABLE_TYPES_T ha_pbxt::table_flags() const
 		 * purposes!
 		HA_NOT_EXACT_COUNT |
 		 */
-#ifndef DRIZZLED
 		/*
 		 * This basically means we have a file with the name of
 		 * database table (which we do).
 		 */
 		HA_FILE_BASED |
-#endif
 		/*
 		 * Not sure what this does (but MyISAM and InnoDB have it)?!
 		 * Could it mean that we support the handler functions.
@@ -2161,62 +2116,6 @@ MX_TABLE_TYPES_T ha_pbxt::table_flags() const
 		HA_AUTO_PART_KEY);
 }
 #endif
-
-/*
- * The following query from the DBT1 test is VERY slow
- * if we do not set HA_READ_ORDER.
- * The reason is that it must scan all duplicates, then
- * sort.
- *
- * SELECT o_id, o_carrier_id, o_entry_d, o_ol_cnt
- * FROM orders FORCE INDEX (o_w_id)
- * WHERE o_w_id = 2
-   * AND o_d_id = 1
-   * AND o_c_id = 500
- * ORDER BY o_id DESC limit 1;
- *
- */
-#define FLAGS_ARE_READ_DYNAMICALLY
-
-MX_ULONG_T ha_pbxt::index_flags(uint XT_UNUSED(inx), uint XT_UNUSED(part), bool XT_UNUSED(all_parts)) const
-{
-	/* It would be nice if the dynamic version of this function works,
-	 * but it does not. MySQL loads this information when the table is openned,
-	 * and then it is fixed.
-	 *
-	 * The problem is, I have had to remove the HA_READ_ORDER option although
-	 * it applies to PBXT. PBXT returns entries in index order during an index
-	 * scan in _almost_ all cases.
-	 *
-	 * A number of cases are demostrated here: [(11)]
-	 *
-	 * If involves the following conditions:
-	 * - a SELECT FOR UPDATE, UPDATE or DELETE statement
-	 * - an ORDER BY, or join that requires the sort order
-	 * - another transaction which updates the index while it is being
-	 *   scanned.
-	 *
-	 * In this "obscure" case, the index scan may return index
-	 * entries in the wrong order.
-	 */
-#ifdef FLAGS_ARE_READ_DYNAMICALLY
-	/* If were are in an update (SELECT FOR UPDATE, UPDATE or DELETE), then
-	 * it may be that we return the rows from an index in the wrong
-	 * order! This is due to the fact that update reads wait for transactions
-	 * to commit and this means that index entries may change position during
-	 * the scan!
-	 */
-	if (pb_open_tab && pb_open_tab->ot_for_update)
-		return (HA_READ_NEXT | HA_READ_PREV | HA_READ_RANGE | HA_KEYREAD_ONLY);
-	/* If I understand HA_KEYREAD_ONLY then this means I do not
-	 * need to fetch the record associated with an index
-	 * key.
-	 */
-	return (HA_READ_NEXT | HA_READ_PREV | HA_READ_ORDER | HA_READ_RANGE | HA_KEYREAD_ONLY);
-#else
-	return (HA_READ_NEXT | HA_READ_PREV | HA_READ_RANGE | HA_KEYREAD_ONLY);
-#endif
-}
 
 void ha_pbxt::internal_close(THD *thd, struct XTThread *self)
 {
@@ -2267,6 +2166,34 @@ void ha_pbxt::internal_close(THD *thd, struct XTThread *self)
 					 */
 					if (!thd || thd_sql_command(thd) == SQLCOM_FLUSH) // FLUSH TABLES
 						xt_sync_flush_table(self, ot, thd ? 0 : 4);
+					else {
+						/* This change is a result of a problem mentioned by Arjen.
+						 * REPAIR and ALTER lead to the following sequence:
+						 * 1. tab  -- copy --> tmp1
+						 * 2. tab  -- rename --> tmp2
+						 * 3. tmp1 -- rename --> tab
+						 * 4. delete tmp2
+						 *
+						 * PBXT flushes a table before rename.
+						 * In the sequence above results in a table flush in step 3 which can
+						 * take a very long time.
+						 *
+						 * The problem is, during this time frame we have only temp tables.
+						 * A crash in this state leaves the database in a bad state.
+						 *
+						 * To reduce the time in this state, the flush needs to be done
+						 * elsewhere. The code below causes the flish to occur after
+						 * step 1:
+						 */ 
+						switch (thd_sql_command(thd)) {
+							case SQLCOM_RENAME_TABLE:
+							case SQLCOM_ANALYZE:
+							case SQLCOM_ALTER_TABLE:
+							case SQLCOM_CREATE_INDEX:
+								xt_sync_flush_table(self, ot, thd ? 0 : 4);
+								break;
+						}
+					}
 				}
 				freer_(); // xt_db_return_table_to_pool(ot);
 			}
@@ -2327,9 +2254,15 @@ int ha_pbxt::open(const char *table_path, int XT_UNUSED(mode), uint XT_UNUSED(te
 #else
 			xt_tab_load_row_pointers(self, pb_open_tab);
 #endif
+
 			xt_ind_set_index_selectivity(pb_open_tab, self);
+#ifdef XT_ROW_COUNT_CORRECTED
+			/* {CORRECTED-ROW-COUNT} */
+			pb_share->sh_recalc_selectivity = (pb_share->sh_table->tab_row_eof_id - 1 - pb_share->sh_table->tab_row_fnum) < 150;
+#else
 			/* {FREE-ROWS-BAD} */
 			pb_share->sh_recalc_selectivity = (pb_share->sh_table->tab_row_eof_id - 1 /* - pb_share->sh_table->tab_row_fnum */) < 150;
+#endif
 		}
 
 		init_auto_increment(0);
@@ -2422,7 +2355,6 @@ void ha_pbxt::init_auto_increment(xtWord8 min_auto_inc)
 		xtBool		xn_started = FALSE;
 		XTThreadPtr	self = pb_open_tab->ot_thread;
 
-//#ifndef DRIZZLED
 		/*
 		 * A table may be opened by a thread with a running
 		 * transaction!
@@ -2445,7 +2377,7 @@ void ha_pbxt::init_auto_increment(xtWord8 min_auto_inc)
 			}
 			xn_started = TRUE;
 		}
-//#endif
+
 		/* Setup the conditions for the next call! */
 		table->in_use = current_thd;
 		table->next_number_field = table->found_next_number_field;
@@ -2765,7 +2697,9 @@ int ha_pbxt::doUpdateRecord(const byte * old_data, byte * new_data)
 	XT_PRINT1(self, "update_row (%s)\n", pb_share->sh_table_path->ps_path);
 	XT_DISABLED_TRACE(("UPDATE tx=%d val=%d\n", (int) self->st_xact_data->xd_start_xn_id, (int) XT_GET_DISK_4(&new_data[1])));
 	//statistic_increment(ha_update_count,&LOCK_status);
+
 	/* {START-STAT-HACK} previously position of start statement hack. */
+
 	xt_xlog_check_long_writer(self);
 
 	/* {UPDATE-STACK} */
@@ -2850,7 +2784,9 @@ int ha_pbxt::doDeleteRecord(const byte * buf)
 		return err;
 	}
 #endif
+
 	/* {START-STAT-HACK} previously position of start statement hack. */
+
 	xt_xlog_check_long_writer(pb_open_tab->ot_thread);
 
 	if (!xt_tab_delete_record(pb_open_tab, (xtWord1 *) buf))
@@ -3913,6 +3849,8 @@ int ha_pbxt::info(uint flag)
 
 	if ((ot = pb_open_tab)) {
 		if (flag & HA_STATUS_VARIABLE) {
+			register XTTableHPtr tab = ot->ot_table;
+
 			/* {FREE-ROWS-BAD}
 			 * Free row count is not reliable, so ignore it.
 			 * The problem is if tab_row_fnum > tab_row_eof_id - 1 then
@@ -3939,11 +3877,26 @@ int ha_pbxt::info(uint flag)
 			 * the actual number of vectors. But it must assume that it has at
 			 * least EXTRA_RECORDS vectors.
 			 */
-			stats.deleted = /* ot->ot_table->tab_row_fnum */ 0;
-			stats.records = (ha_rows) (ot->ot_table->tab_row_eof_id - 1 /* - stats.deleted */);
-			stats.data_file_length = xt_rec_id_to_rec_offset(ot->ot_table, ot->ot_table->tab_rec_eof_id);
-			stats.index_file_length = xt_ind_node_to_offset(ot->ot_table, ot->ot_table->tab_ind_eof);
-			stats.delete_length = ot->ot_table->tab_rec_fnum * ot->ot_rec_size;
+#ifdef XT_ROW_COUNT_CORRECTED
+			if (tab->tab_row_eof_id <= tab->tab_row_fnum ||
+				(!tab->tab_row_free_id && tab->tab_row_fnum))
+				xt_tab_check_free_lists(NULL, ot, false, true);
+			stats.records = (ha_rows) tab->tab_row_eof_id - 1;
+			if (stats.records >= tab->tab_row_fnum) {
+				stats.deleted = tab->tab_row_fnum;
+				stats.records -= stats.deleted;
+			}
+			else {
+				stats.deleted = 0;
+				stats.records = 2;
+			}
+#else
+			stats.deleted = /* tab->tab_row_fnum */ 0;
+			stats.records = (ha_rows) (tab->tab_row_eof_id - 1 /* - stats.deleted */);
+#endif
+			stats.data_file_length = xt_rec_id_to_rec_offset(tab, tab->tab_rec_eof_id);
+			stats.index_file_length = xt_ind_node_to_offset(tab, tab->tab_ind_eof);
+			stats.delete_length = tab->tab_rec_fnum * ot->ot_rec_size;
 			//check_time = info.check_time;
 			stats.mean_rec_length = (ulong) ot->ot_rec_size;
 		}
@@ -3961,11 +3914,7 @@ int ha_pbxt::info(uint flag)
 			//share->db_options_in_use = info.options;
 			stats.block_size = XT_INDEX_PAGE_SIZE;
 
-#ifdef DRIZZLED
 			if (share->getType() == message::Table::STANDARD)
-#else
-			if (share->tmp_table == NO_TMP_TABLE)
-#endif
 #ifdef DRIZZLED
 #define WHICH_MUTEX			mutex
 #elif MYSQL_VERSION_ID >= 50404
@@ -4230,11 +4179,7 @@ int ha_pbxt::delete_all_rows()
 		 * each row because it may be part of a transaction,
 		 * and there may be foreign key actions.
 		 */
-#ifdef DRIZZLED
 		XT_RETURN (errno = HA_ERR_WRONG_COMMAND);
-#else
-		XT_RETURN (my_errno = HA_ERR_WRONG_COMMAND);
-#endif
 	}
 
 	if (!(self = ha_set_current_thread(thd, &err)))
@@ -4321,11 +4266,7 @@ int ha_pbxt::delete_all_rows()
  * now agree with the MyISAM strategy.
  * 
  */
-#ifdef DRIZZLED
 int ha_pbxt::analyze(THD *thd)
-#else
-int ha_pbxt::analyze(THD *thd, HA_CHECK_OPT *XT_UNUSED(check_opt))
-#endif
 {
 	int				err = 0;
 	XTDatabaseHPtr	db;
@@ -4407,31 +4348,11 @@ int ha_pbxt::analyze(THD *thd, HA_CHECK_OPT *XT_UNUSED(check_opt))
 	XT_RETURN(err);
 }
 
-#ifndef DRIZZLED
-int ha_pbxt::repair(THD *XT_UNUSED(thd), HA_CHECK_OPT *XT_UNUSED(check_opt))
-{
-	return(HA_ADMIN_TRY_ALTER);
-}
-
-/*
- * This is mapped to "ALTER TABLE tablename TYPE=PBXT", which rebuilds
- * the table in MySQL.
- */
-int ha_pbxt::optimize(THD *XT_UNUSED(thd), HA_CHECK_OPT *XT_UNUSED(check_opt))
-{
-	return(HA_ADMIN_TRY_ALTER);
-}
-#endif
-
 #ifdef DEBUG
 extern int pbxt_mysql_trace_on;
 #endif
 
-#ifdef DRIZZLED
 int ha_pbxt::check(THD* thd)
-#else
-int ha_pbxt::check(THD* thd, HA_CHECK_OPT* XT_UNUSED(check_opt))
-#endif
 {
 	int				err = 0;
 	XTThreadPtr		self;
@@ -4594,13 +4515,24 @@ xtPublic int ha_pbxt::external_lock(THD *thd, int lock_type)
 				}
 
 				if (pb_share->sh_recalc_selectivity) {
+#ifdef XT_ROW_COUNT_CORRECTED
+					/* {CORRECTED-ROW-COUNT} */
+					if ((pb_share->sh_table->tab_row_eof_id - 1 - pb_share->sh_table->tab_row_fnum) >= 200)
+#else
 					/* {FREE-ROWS-BAD} */
-					if ((pb_share->sh_table->tab_row_eof_id - 1 /* - pb_share->sh_table->tab_row_fnum */) >= 200) {
+					if ((pb_share->sh_table->tab_row_eof_id - 1 /* - pb_share->sh_table->tab_row_fnum */) >= 200)
+#endif
+					{
 						/* [**] */
 						pb_share->sh_recalc_selectivity = FALSE;
 						xt_ind_set_index_selectivity(pb_open_tab, self);
+#ifdef XT_ROW_COUNT_CORRECTED
+						/* {CORRECTED-ROW-COUNT} */
+						pb_share->sh_recalc_selectivity = (pb_share->sh_table->tab_row_eof_id - 1 - pb_share->sh_table->tab_row_fnum) < 150;
+#else
 						/* {FREE-ROWS-BAD} */
 						pb_share->sh_recalc_selectivity = (pb_share->sh_table->tab_row_eof_id - 1 /* - pb_share->sh_table->tab_row_fnum */) < 150;
+#endif
 					}
 				}
 			}
@@ -4649,6 +4581,17 @@ xtPublic int ha_pbxt::external_lock(THD *thd, int lock_type)
 				goto complete;
 			}
 			cont_(a);
+
+			/* Occurs if you do:
+			 * truncate table t1;
+			 * truncate table t1;
+			 */
+			if (!pb_open_tab) {
+				if ((err = reopen())) {
+					pb_ex_in_use = 0;
+					goto complete;
+				}
+			}
 		}
 		else {
 			pb_ex_in_use = 1;
@@ -4979,8 +4922,8 @@ int ha_pbxt::start_stmt(THD *thd, thr_lock_type lock_type)
 #ifndef DRIZZLED
 			case SQLCOM_REPAIR:
 			case SQLCOM_OPTIMIZE:
-				self->st_stat_modify = TRUE;
 #endif
+				self->st_stat_modify = TRUE;
 				break;
 		}
 	}
@@ -5253,15 +5196,10 @@ THR_LOCK_DATA **ha_pbxt::store_lock(THD *thd, THR_LOCK_DATA **to, enum thr_lock_
  * during create if the table_flag HA_DROP_BEFORE_CREATE was specified for
  * the storage engine.
 */
-#ifdef DRIZZLED
 int PBXTStorageEngine::doDropTable(Session &, const TableIdentifier& ident)
 {
 	const std::string& path = ident.getPath();
 	const char *table_path = path.c_str();
-#else
-int ha_pbxt::delete_table(const char *table_path)
-{
-#endif
 	THD				*thd = current_thd;
 	int				err = 0;
 	XTThreadPtr		self = NULL;
@@ -5353,11 +5291,9 @@ int ha_pbxt::delete_table(const char *table_path)
 	}
 #endif
 
-#ifdef DRIZZLED
-          std::string path2(ident.getPath());
-          path2.append(DEFAULT_FILE_EXTENSION);
-          (void)internal::my_delete(path2.c_str(), MYF(0));
-#endif
+	std::string path2(ident.getPath());
+	path2.append(DEFAULT_FILE_EXTENSION);
+	(void)internal::my_delete(path2.c_str(), MYF(0));
 
 	return err;
 }
@@ -5404,7 +5340,6 @@ int ha_pbxt::delete_system_table(const char *table_path)
  * This function can be used to move a table from one database to
  * another.
  */
-#ifdef DRIZZLED
 int PBXTStorageEngine::doRenameTable(Session&,
                                      const TableIdentifier& from_ident,
                                      const TableIdentifier& to_ident)
@@ -5415,10 +5350,6 @@ int PBXTStorageEngine::doRenameTable(Session&,
         if (strcmp(from, to) == 0)
                 return 0;
 
-#else
-int ha_pbxt::rename_table(const char *from, const char *to)
-{
-#endif
 	THD				*thd = current_thd;
 	int				err = 0;
 	XTThreadPtr		self;
@@ -5495,10 +5426,8 @@ int ha_pbxt::rename_table(const char *from, const char *to)
 	pbms_completed(NULL, (err == 0));
 #endif
 
-#ifdef DRIZZLED
 	if (err == 0)
 		plugin::StorageEngine::renameDefinitionFromPath(to_ident, from_ident);
-#endif
 
 	XT_RETURN(err);
 }
@@ -5734,9 +5663,16 @@ int PBXTStorageEngine::doStartTransaction(Session *thd, start_transaction_option
 	if (!self->st_database)
 		xt_ha_open_database_of_table(self, NULL);
 
-	if (!xt_xn_begin(self)) {
+	/* startTransaction() calls registerResourceForTransaction() calls engine->startTransaction(), and then
+	 * startTransaction() calls doStartTransaction()
+	 * Which leads to this function being called twice!?
+	 * So added the self->st_xact_data test below.
+	 */
+	if (!self->st_xact_data) {
+		if (!xt_xn_begin(self)) {
 			err = xt_ha_pbxt_thread_error_for_mysql(thd, self, /*pb_ignore_dup_key*/false);
 			//pb_ex_in_use = 0;
+		}
 	}
 
 	return err;
@@ -5982,7 +5918,7 @@ int ha_pbxt::get_foreign_key_list(THD *thd, List<FOREIGN_KEY_INFO> *f_key_list)
 
 			fk_info->referenced_table = thd_make_lex_string(thd, 0,
 				ref_tbl_name, (uint) strlen(ref_tbl_name), 1);
-			
+
 			fk_info->referenced_key_name = NULL;			
 
 			XTIndex *ix = fk->getReferenceIndexPtr();

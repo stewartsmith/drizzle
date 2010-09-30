@@ -28,8 +28,6 @@ namespace drizzled
 
 class Field_enum :public Field_str
 {
-protected:
-  uint32_t packlength;
 public:
 
   using Field::store;
@@ -46,7 +44,6 @@ public:
              unsigned char *null_ptr_arg,
              unsigned char null_bit_arg,
              const char *field_name_arg,
-             uint32_t packlength_arg,
              TYPELIB *typelib_arg,
              const CHARSET_INFO * const charset_arg)
     :Field_str(ptr_arg,
@@ -55,13 +52,12 @@ public:
                null_bit_arg,
 	             field_name_arg,
                charset_arg),
-    packlength(packlength_arg),
     typelib(typelib_arg)
   {
     flags|= ENUM_FLAG;
   }
   Field *new_field(memory::Root *root, Table *new_table, bool keep_type);
-  enum ha_base_keytype key_type() const;
+  enum ha_base_keytype key_type() const { return HA_KEYTYPE_ULONG_INT; }
   int  store(const char *to, uint32_t length, const CHARSET_INFO * const);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
@@ -85,10 +81,7 @@ public:
   {
     return INT_RESULT;
   }
-  uint32_t pack_length() const
-  {
-    return (uint32_t) packlength;
-  }
+  uint32_t pack_length() const { return 4; }
   uint32_t size_of() const
   {
     return sizeof(*this);
