@@ -473,6 +473,9 @@ public:
     read_set= read_set_arg;
     write_set= write_set_arg;
   }
+  /** temporary until MyBitmap disappears */
+  void column_bitmaps_set(const boost::dynamic_bitset<>& read_set_arg,
+                          const boost::dynamic_bitset<>& write_set_arg);
 
   void restore_column_map(my_bitmap_map *old);
 

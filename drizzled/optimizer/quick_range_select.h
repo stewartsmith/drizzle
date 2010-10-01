@@ -22,6 +22,7 @@
 
 #include "drizzled/optimizer/range.h"
 
+#include <boost/dynamic_bitset.hpp>
 #include <vector>
 
 namespace drizzled
@@ -46,7 +47,7 @@ protected:
 
   /** Members to deal with case when this quick select is a ROR-merged scan */
   bool in_ror_merged_scan;
-  MyBitmap column_bitmap;
+  boost::dynamic_bitset<> *column_bitmap;
   MyBitmap *save_read_set;
   MyBitmap *save_write_set;
   bool free_file; /**< True when this->file is "owned" by this quick select */
@@ -106,8 +107,7 @@ public:
                      Table *table,
                      uint32_t index_arg,
                      bool no_alloc,
-                     memory::Root *parent_alloc,
-                     bool *create_err);
+                     memory::Root *parent_alloc);
 
   ~QuickRangeSelect();
 

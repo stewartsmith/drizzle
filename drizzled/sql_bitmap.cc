@@ -275,6 +275,19 @@ bool bitmap_is_overlapping(const MyBitmap *map1, const MyBitmap *map2)
 }
 
 
+bool bitmap_is_overlapping(const MyBitmap *map1, const boost::dynamic_bitset<>& map2)
+{
+  for (boost::dynamic_bitset<>::size_type i= 0; i < map2.size(); i++)
+  {
+    if (map1->isBitSet(i) && map2.test(i))
+    {
+        return true;
+    }
+  }
+  return false;
+}
+
+
 void bitmap_intersect(MyBitmap *map, const MyBitmap *map2)
 {
   my_bitmap_map *to= map->getBitmap(), *from= map2->getBitmap(), *end;

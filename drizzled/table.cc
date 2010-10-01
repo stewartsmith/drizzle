@@ -1758,6 +1758,27 @@ void Table::free_tmp_table(Session *session)
   session->set_proc_info(save_proc_info);
 }
 
+void Table::column_bitmaps_set(const boost::dynamic_bitset<>& read_set_arg,
+                               const boost::dynamic_bitset<>& write_set_arg)
+{
+  /* set the read set */
+  for (boost::dynamic_bitset<>::size_type i= 0; i < read_set_arg.size(); i++)
+  {
+    if (read_set_arg.test(i))
+    {
+      read_set->setBit(i);
+    }
+  }
+  /* set the write set */
+  for (boost::dynamic_bitset<>::size_type i= 0; i < write_set_arg.size(); i++)
+  {
+    if (write_set_arg.test(i))
+    {
+      write_set->setBit(i);
+    }
+  }
+}
+
 my_bitmap_map *Table::use_all_columns(MyBitmap *bitmap)
 {
   my_bitmap_map *old= bitmap->getBitmap();

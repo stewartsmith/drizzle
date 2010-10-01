@@ -21,6 +21,8 @@
 #include "drizzled/key.h"
 #include "drizzled/field/blob.h"
 
+#include <boost/dynamic_bitset.hpp>
+
 #include <string>
 
 #include <algorithm>
@@ -400,6 +402,26 @@ void key_unpack(String *to, Table *table, uint32_t idx)
 */
 
 bool is_key_used(Table *table, uint32_t idx, const MyBitmap *fields)
+{
+  table->tmp_set.clearAll();
+  table->mark_columns_used_by_index_no_reset(idx, &table->tmp_set);
+  if (bitmap_is_overlapping(&table->tmp_set, fields))
+    return 1;
+
+  /*
+    If table handler has primary key as part of the index, check that primary
+    key is not updated
+  */
+  if (idx != table->getShare()->getPrimaryKey() && table->getShare()->hasPrimaryKey() &&
+      (table->cursor->getEngine()->check_flag(HTON_BIT_PRIMARY_KEY_IN_READ_INDEX)))
+  {
+    return is_key_used(table, table->getShare()->getPrimaryKey(), fields);
+  }
+  return 0;
+}
+
+
+bool is_key_used(Table *table, uint32_t idx, const boost::dynamic_bitset<>& fields)
 {
   table->tmp_set.clearAll();
   table->mark_columns_used_by_index_no_reset(idx, &table->tmp_set);

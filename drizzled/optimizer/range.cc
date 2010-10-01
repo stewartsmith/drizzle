@@ -4033,20 +4033,15 @@ optimizer::get_quick_select(Parameter *param,
                             uint32_t mrr_buf_size,
                             memory::Root *parent_alloc)
 {
-  optimizer::QuickRangeSelect *quick= NULL;
-  bool create_err= false;
-
-  quick= new optimizer::QuickRangeSelect(param->session,
-                                         param->table,
-                                         param->real_keynr[idx],
-                                         test(parent_alloc),
-                                         NULL,
-                                         &create_err);
+  optimizer::QuickRangeSelect *quick= new optimizer::QuickRangeSelect(param->session,
+                                                                      param->table,
+                                                                      param->real_keynr[idx],
+                                                                      test(parent_alloc),
+                                                                      NULL);
 
   if (quick)
   {
-    if (create_err ||
-	      get_quick_keys(param,
+	  if (get_quick_keys(param,
                        quick,
                        param->key[idx],
                        key_tree,
@@ -4297,18 +4292,17 @@ optimizer::QuickRangeSelect *optimizer::get_quick_select_for_ref(Session *sessio
                                                                  table_reference_st *ref,
                                                                  ha_rows records)
 {
-  memory::Root *old_root, *alloc;
-  optimizer::QuickRangeSelect *quick= NULL;
+  memory::Root *old_root= NULL;
+  memory::Root *alloc= NULL;
   KeyInfo *key_info = &table->key_info[ref->key];
   KEY_PART *key_part;
   optimizer::QuickRange *range= NULL;
   uint32_t part;
-  bool create_err= false;
   optimizer::CostVector cost;
 
   old_root= session->mem_root;
   /* The following call may change session->mem_root */
-  quick= new optimizer::QuickRangeSelect(session, table, ref->key, 0, 0, &create_err);
+  optimizer::QuickRangeSelect *quick= new optimizer::QuickRangeSelect(session, table, ref->key, 0, 0);
   /* save mem_root set by QuickRangeSelect constructor */
   alloc= session->mem_root;
   /*
@@ -4317,7 +4311,7 @@ optimizer::QuickRangeSelect *optimizer::get_quick_select_for_ref(Session *sessio
   */
   session->mem_root= old_root;
 
-  if (!quick || create_err)
+  if (! quick)
     return 0;			/* no ranges found */
   if (quick->init())
     goto err;
