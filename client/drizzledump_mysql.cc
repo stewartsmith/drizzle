@@ -353,7 +353,7 @@ void DrizzleDumpFieldMySQL::setType(const char* raw_type, const char* raw_collat
     convertDateTime= true;
   }
 
-  if (old_type.compare("TIME") == 0)
+  if ((old_type.compare("TIME") == 0) or (old_type.compare("YEAR") == 0))
   {
     type= "INT";
     return;
