@@ -264,6 +264,7 @@ bool DrizzleDumpTableMySQL::populateIndexes()
       index->isPrimary= (strcmp(row[2], "PRIMARY") == 0);
       index->isUnique= (strcmp(row[1], "0") == 0);
       index->isHash= (strcmp(row[10], "HASH") == 0);
+      index->length= (row[7]) ? boost::lexical_cast<uint32_t>(row[7]) : 0;
       lastKey= row[2];
       firstIndex= false;
     }

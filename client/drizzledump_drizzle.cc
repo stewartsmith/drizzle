@@ -208,7 +208,7 @@ bool DrizzleDumpTableDrizzle::populateIndexes()
   if (verbose)
     std::cerr << _("-- Retrieving indexes for ") << tableName << "..." << std::endl;
 
-  query= "SELECT INDEX_NAME, COLUMN_NAME, IS_USED_IN_PRIMARY, IS_UNIQUE FROM DATA_DICTIONARY.INDEX_PARTS WHERE TABLE_NAME='";
+  query= "SELECT INDEX_NAME, COLUMN_NAME, IS_USED_IN_PRIMARY, IS_UNIQUE, COMPARE_LENGTH FROM DATA_DICTIONARY.INDEX_PARTS WHERE TABLE_NAME='";
   query.append(tableName);
   query.append("'");
 
@@ -228,6 +228,7 @@ bool DrizzleDumpTableDrizzle::populateIndexes()
       index->isPrimary= (strcmp(row[0], "PRIMARY") == 0);
       index->isUnique= (strcmp(row[3], "YES") == 0);
       index->isHash= 0;
+      index->length= (row[4]) ? boost::lexical_cast<uint32_t>(row[4]) : 0;
       lastKey= row[0];
       firstIndex= false;
     }
