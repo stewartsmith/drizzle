@@ -371,6 +371,18 @@ void bitmap_union(MyBitmap *map, const boost::dynamic_bitset<>& map2)
 }
 
 
+void bitmap_union(boost::dynamic_bitset<>& map, const MyBitmap *map2)
+{
+  for (boost::dynamic_bitset<>::size_type i= 0; i < map.size(); i++)
+  {
+    if (map2->isBitSet(i))
+    {
+      map.set(i);
+    }
+  }
+}
+
+
 void bitmap_xor(MyBitmap *map, const MyBitmap *map2)
 {
   my_bitmap_map *to= map->getBitmap();

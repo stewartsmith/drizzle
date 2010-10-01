@@ -545,18 +545,14 @@ uint32_t optimizer::get_index_for_order(Table *table, order_st *order, ha_rows l
 static int fill_used_fields_bitmap(optimizer::Parameter *param)
 {
   Table *table= param->table;
-  my_bitmap_map *tmp;
   uint32_t pk;
-  param->tmp_covered_fields.setBitmap(0);
+  param->tmp_covered_fields.clear();
   param->fields_bitmap_size= table->getShare()->column_bitmap_size;
-  if (!(tmp= (my_bitmap_map*) param->mem_root->alloc_root(param->fields_bitmap_size)) ||
-      param->needed_fields.init(tmp, table->getShare()->sizeFields()))
-  {
-    return 1;
-  }
+  param->needed_fields.resize(table->getShare()->sizeFields());
+  param->needed_fields.reset();
 
-  param->needed_fields= *table->read_set;
-  bitmap_union(&param->needed_fields, table->write_set);
+  bitmap_union(param->needed_fields, table->read_set);
+  bitmap_union(param->needed_fields, table->write_set);
 
   pk= param->table->getShare()->getPrimaryKey();
   if (pk != MAX_KEY && param->table->cursor->primary_key_is_clustered())
@@ -566,7 +562,7 @@ static int fill_used_fields_bitmap(optimizer::Parameter *param)
     KeyPartInfo *key_part_end= key_part +
                                  param->table->key_info[pk].key_parts;
     for (;key_part != key_part_end; ++key_part)
-      param->needed_fields.clearBit(key_part->fieldnr-1);
+      param->needed_fields.reset(key_part->fieldnr-1);
   }
   return 0;
 }
@@ -1269,7 +1265,7 @@ ROR_SCAN_INFO *make_ror_scan(const optimizer::Parameter *param, int idx, optimiz
                                param->table->key_info[keynr].key_parts;
   for (; key_part != key_part_end; ++key_part)
   {
-    if (param->needed_fields.isBitSet(key_part->fieldnr-1))
+    if (param->needed_fields.test(key_part->fieldnr-1))
       ror_scan->covered_fields->set(key_part->fieldnr-1);
   }
   double rows= rows2double(param->table->quick_rows[ror_scan->keynr]);
@@ -1635,15 +1631,14 @@ static bool ror_intersect_add(ROR_INTERSECT_INFO *info,
     info->index_records += info->param->table->quick_rows[ror_scan->keynr];
     info->index_scan_costs += ror_scan->index_read_cost;
     *info->covered_fields|= *ror_scan->covered_fields;
-    if (! info->is_covering && bitmap_is_subset(&info->param->needed_fields,
-                                                *info->covered_fields))
+    if (! info->is_covering && info->param->needed_fields.is_subset_of(*info->covered_fields))
     {
       info->is_covering= true;
     }
   }
 
   info->total_cost= info->index_scan_costs;
-  if (!info->is_covering)
+  if (! info->is_covering)
   {
     optimizer::CostVector sweep_cost;
     Join *join= info->param->session->lex->select_lex.join;
@@ -1709,17 +1704,12 @@ optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Para
   /*I=set of all covering indexes */
   ror_scan_mark= tree->ror_scans;
 
-  MyBitmap *covered_fields= &param->tmp_covered_fields;
-  if (! covered_fields->getBitmap())
+  boost::dynamic_bitset<> *covered_fields= &param->tmp_covered_fields;
+  if (covered_fields->empty())
   {
-    my_bitmap_map *tmp_bitmap= (my_bitmap_map*)param->mem_root->alloc_root(param->fields_bitmap_size);
-    covered_fields->setBitmap(tmp_bitmap);
+    covered_fields->resize(param->table->getShare()->sizeFields());
   }
-  if (! covered_fields->getBitmap() ||
-      covered_fields->init(covered_fields->getBitmap(),
-                           param->table->getShare()->sizeFields()))
-    return 0;
-  covered_fields->clearAll();
+  covered_fields->reset();
 
   double total_cost= 0.0f;
   ha_rows records=0;
@@ -1735,11 +1725,11 @@ optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Para
     */
     for (ROR_SCAN_INFO **scan= ror_scan_mark; scan != ror_scans_end; ++scan)
     {
-      bitmap_subtract(*(*scan)->covered_fields, covered_fields);
+      /* subtract one bitset from the other */
+      *(*scan)->covered_fields-= *covered_fields;
       (*scan)->used_fields_covered=
         (*scan)->covered_fields->count();
       (*scan)->first_uncovered_field= find_first_not_set(*(*scan)->covered_fields);
-        //(*scan)->covered_fields.find_first();
     }
 
     internal::my_qsort(ror_scan_mark, ror_scans_end-ror_scan_mark,
@@ -1752,9 +1742,9 @@ optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Para
     if (total_cost > read_time)
       return NULL;
     /* F=F-covered by first(I) */
-    bitmap_union(covered_fields, *(*ror_scan_mark)->covered_fields);
-    all_covered= bitmap_is_subset(&param->needed_fields, covered_fields);
-  } while ((++ror_scan_mark < ror_scans_end) && !all_covered);
+    *covered_fields|= *(*ror_scan_mark)->covered_fields;
+    all_covered= param->needed_fields.is_subset_of(*covered_fields);
+  } while ((++ror_scan_mark < ror_scans_end) && ! all_covered);
 
   if (!all_covered || (ror_scan_mark - tree->ror_scans) == 1)
     return NULL;

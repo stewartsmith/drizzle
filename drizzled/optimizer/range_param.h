@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_OPTIMIZER_RANGE_PARAM_H
 #define DRIZZLED_OPTIMIZER_RANGE_PARAM_H
 
+#include <boost/dynamic_bitset.hpp>
+
 #include "drizzled/field.h"
 
 namespace drizzled
@@ -120,8 +122,8 @@ public:
   bool quick; // Don't calulate possible keys
 
   uint32_t fields_bitmap_size;
-  MyBitmap needed_fields;    /* bitmask of fields needed by the query */
-  MyBitmap tmp_covered_fields;
+  boost::dynamic_bitset<> needed_fields;    /* bitmask of fields needed by the query */
+  boost::dynamic_bitset<> tmp_covered_fields;
 
   key_map *needed_reg;        /* ptr to SqlSelect::needed_reg */
 

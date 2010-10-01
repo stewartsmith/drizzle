@@ -346,8 +346,9 @@ void bitmap_subtract(MyBitmap *map, const MyBitmap *map2);
 /** temporary function until MyBitmap is replaced */
 void bitmap_subtract(boost::dynamic_bitset<>& map, const MyBitmap *map2);
 void bitmap_union(MyBitmap *map, const MyBitmap *map2);
-/** temporary function until MyBitmap is replaced */
+/** temporary functions until MyBitmap is replaced */
 void bitmap_union(MyBitmap *map, const boost::dynamic_bitset<>& map2);
+void bitmap_union(boost::dynamic_bitset<>& map, const MyBitmap *map2);
 void bitmap_xor(MyBitmap *map, const MyBitmap *map2);
 void bitmap_invert(MyBitmap *map);
 
