@@ -4262,7 +4262,7 @@ static bool null_part_in_key(KEY_PART *key_part, const unsigned char *key, uint3
 }
 
 
-bool optimizer::QuickSelectInterface::is_keys_used(const MyBitmap *fields)
+bool optimizer::QuickSelectInterface::is_keys_used(const boost::dynamic_bitset<>& fields)
 {
   return is_key_used(head, index, fields);
 }

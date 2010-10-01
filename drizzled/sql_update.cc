@@ -30,6 +30,7 @@
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/iocache.h"
 
+#include <boost/dynamic_bitset.hpp>
 #include <list>
 
 using namespace std;
@@ -259,8 +260,10 @@ int mysql_update(Session *session, TableList *table_list,
   if (select && select->quick)
   {
     used_index= select->quick->index;
+    /* convert write to dynamic_bitset temporarily until we get rid of MyBitmap */
+    boost::dynamic_bitset<> tmp_write_set(table->write_set->numOfBitsInMap());
     used_key_is_modified= (!select->quick->unique_key_range() &&
-                          select->quick->is_keys_used(table->write_set));
+                          select->quick->is_keys_used(tmp_write_set));
   }
   else
   {

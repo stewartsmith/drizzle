@@ -256,7 +256,7 @@ public:
    * Returns true if any index used by this quick select
    * uses field which is marked in passed bitmap.
    */
-  virtual bool is_keys_used(const MyBitmap *fields);
+  virtual bool is_keys_used(const boost::dynamic_bitset<>& fields);
 };
 
 struct st_qsel_param;
