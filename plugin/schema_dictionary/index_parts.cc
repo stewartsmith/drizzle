@@ -34,7 +34,7 @@ IndexPartsTool::IndexPartsTool() :
   add_field("COLUMN_NAME");
   add_field("COLUMN_NUMBER", plugin::TableFunction::NUMBER, 0, false);
   add_field("SEQUENCE_IN_INDEX", plugin::TableFunction::NUMBER, 0, false);
-  add_field("COMPARE_LENGTH", plugin::TableFunction::NUMBER, 0, false);
+  add_field("COMPARE_LENGTH", plugin::TableFunction::NUMBER, 0, true);
   add_field("IS_ORDER_REVERSE", plugin::TableFunction::BOOLEAN, 0, false);
   add_field("IS_USED_IN_PRIMARY", plugin::TableFunction::BOOLEAN, 0, false);
   add_field("IS_UNIQUE", plugin::TableFunction::BOOLEAN, 0, false);
@@ -96,6 +96,8 @@ bool IndexPartsTool::Generator::populate()
 
 void IndexPartsTool::Generator::fill()
 {
+  const message::Table::Field &field= getTableProto().field(index_part.fieldnr());
+
   /* TABLE_SCHEMA */
   push(getTableProto().schema());
 
@@ -106,7 +108,7 @@ void IndexPartsTool::Generator::fill()
   push(getIndex().name());
 
   /* COLUMN_NAME */
-  push(getTableProto().field(index_part.fieldnr()).name());
+  push(field.name());
 
   /* COLUMN_NUMBER */
   push(static_cast<int64_t>(index_part.fieldnr()));
@@ -115,7 +117,15 @@ void IndexPartsTool::Generator::fill()
   push(static_cast<int64_t>(index_part_iterator));
 
   /* COMPARE_LENGTH */
-  push(static_cast<int64_t>(index_part.compare_length()));
+  if ((field.type() == message::Table::Field::VARCHAR or
+    field.type() == message::Table::Field::BLOB) and
+    (index_part.has_compare_length()) and
+    (index_part.compare_length() != field.string_options().length()))
+  {
+    push(static_cast<int64_t>(index_part.compare_length()));
+  }
+  else
+    push();
 
   /* IS_ORDER_REVERSE */
   push(index_part.in_reverse_order());
