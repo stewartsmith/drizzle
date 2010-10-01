@@ -1259,7 +1259,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   N_("Auto-increment columns are incremented by this"))
   ("auto-increment-offset", po::value<uint64_t>(&global_system_variables.auto_increment_offset)->default_value(1)->notifier(&check_limits_aio),
   N_("Offset added to Auto-increment columns. Used when auto-increment-increment != 1"))
-  ("basedir,b", po::value<string>(),
+  ("basedir,b", po::value<fs::path>(&basedir),
   N_("Path to installation directory. All paths are usually resolved "
      "relative to this."))
   ("chroot,r", po::value<string>(),
@@ -2208,11 +2208,6 @@ static void drizzle_init_variables(void)
 */
 static void get_options()
 {
-
-  if (vm.count("basedir"))
-  {
-    basedir= vm["basedir"].as<string>();
-  }
 
   if (vm.count("datadir"))
   {
