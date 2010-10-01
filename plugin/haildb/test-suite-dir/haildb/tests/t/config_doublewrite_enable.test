@@ -1,0 +1,2 @@
+SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='doublewrite';
+show variables like 'innodb_doublewrite';

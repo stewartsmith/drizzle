@@ -1,2 +1,0 @@
-SHOW VARIABLES LIKE 'innodb_autoextend_increment';
-SELECT * FROM DATA_DICTIONARY.INNODB_CONFIGURATION WHERE NAME='autoextend_increment';
