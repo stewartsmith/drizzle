@@ -262,6 +262,14 @@ int mysql_update(Session *session, TableList *table_list,
     used_index= select->quick->index;
     /* convert write to dynamic_bitset temporarily until we get rid of MyBitmap */
     boost::dynamic_bitset<> tmp_write_set(table->write_set->numOfBitsInMap());
+    tmp_write_set.reset();
+    for (boost::dynamic_bitset<>::size_type i= 0; i < tmp_write_set.size(); i++)
+    {
+      if (table->write_set->isBitSet(i))
+      {
+        tmp_write_set.set(i);
+      }
+    }
     used_key_is_modified= (!select->quick->unique_key_range() &&
                           select->quick->is_keys_used(tmp_write_set));
   }
