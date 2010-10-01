@@ -169,6 +169,7 @@ bool DrizzleDumpTableMySQL::populateFields()
     field->convertDateTime= false;
     /* Also sets collation */
     field->setType(row[1], row[8]);
+    field->isNull= (strcmp(row[3], "YES") == 0) ? true : false;
     if (row[2])
     {
       if (field->convertDateTime)
@@ -181,7 +182,6 @@ bool DrizzleDumpTableMySQL::populateFields()
     else
      field->defaultValue= "";
 
-    field->isNull= (strcmp(row[3], "YES") == 0) ? true : false;
     field->isAutoIncrement= (strcmp(row[8], "auto_increment") == 0) ? true : false;
     field->defaultIsNull= field->isNull;
     field->length= (row[4]) ? boost::lexical_cast<uint32_t>(row[4]) : 0;
@@ -227,6 +227,7 @@ void DrizzleDumpFieldMySQL::dateTimeConvert(const char* oldDefault)
     defaultIsNull= true;
     defaultValue="";
   }
+  isNull= true;
 }
 
 
