@@ -205,9 +205,17 @@ void generate_dump_db(void)
 {
   std::vector<DrizzleDumpDatabase*>::iterator i;
   DrizzleStringBuf sbuf(1024);
-  destination_connection= new DrizzleDumpConnection(opt_destination_host,
-    opt_destination_port, opt_destination_user, opt_destination_password,
-    false);
+  try
+  {
+    destination_connection= new DrizzleDumpConnection(opt_destination_host,
+      opt_destination_port, opt_destination_user, opt_destination_password,
+      false);
+  }
+  catch (...)
+  {
+    cerr << "Could not connect to destination database server" << endl;
+    maybe_exit(EX_DRIZZLEERR);
+  }
   sbuf.setConnection(destination_connection);
   std::ostream sout(&sbuf);
   if (opt_set_charset)
@@ -781,9 +789,15 @@ try
     free_resources();
     exit(exit_code);
   }
-
-  db_connection = new DrizzleDumpConnection(current_host, opt_drizzle_port,
-    current_user, opt_password, use_drizzle_protocol);
+  try
+  {
+    db_connection = new DrizzleDumpConnection(current_host, opt_drizzle_port,
+      current_user, opt_password, use_drizzle_protocol);
+  }
+  catch (...)
+  {
+    maybe_exit(EX_DRIZZLEERR);
+  }
 
   if (db_connection->getServerType() == DrizzleDumpConnection::SERVER_MYSQL_FOUND)
     db_connection->queryNoResult("SET NAMES 'utf8'");
