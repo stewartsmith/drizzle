@@ -14,6 +14,7 @@
 #include <boost/static_assert.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include <boost/noncopyable.hpp>
 
@@ -113,18 +114,6 @@ invalid_syntax::invalid_syntax(const std::string& in_tokens,
 namespace detail
 {
 
-std::string trim_ws(const std::string& s)
-{
-  std::string::size_type n, n2;
-  n = s.find_first_not_of(" \t\r\n");
-  if (n == std::string::npos)
-    return std::string();
-  else {
-    n2 = s.find_last_not_of(" \t\r\n");
-    return s.substr(n, n2-n+1);
-  }
-}
-
 /** Standalone parser for config files in ini-line format.
   The parser is a model of single-pass lvalue iterator, and
   default constructor creates past-the-end-iterator. The typical usage is:
@@ -192,7 +181,7 @@ public: // Method required by eof_iterator
       // strip '#' comments and whitespace
       if ((n = s.find('#')) != std::string::npos)
         s = s.substr(0, n);
-      s = trim_ws(s);
+      boost::trim(s);
 
       if (!s.empty()) {
         // Handle section name
@@ -203,8 +192,8 @@ public: // Method required by eof_iterator
         }
         else if ((n = s.find('=')) != std::string::npos) {
 
-          std::string name = m_prefix + trim_ws(s.substr(0, n));
-          std::string option_value = trim_ws(s.substr(n+1));
+          std::string name = m_prefix + boost::trim_copy(s.substr(0, n));
+          std::string option_value = boost::trim_copy(s.substr(n+1));
 
           bool registered = allowed_option(name);
           if (!registered && !m_allow_unregistered)
