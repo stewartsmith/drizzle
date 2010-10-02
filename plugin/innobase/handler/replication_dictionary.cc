@@ -21,7 +21,6 @@
 #include "config.h"
 
 #include "replication_dictionary.h"
-
 #include "drizzled/current_session.h"
 
 extern "C" {
@@ -56,11 +55,11 @@ extern "C" {
 #include "ibuf0ibuf.h"
 #include "mysql_addons.h"
 #include "create_replication.h"
+#include "read_replication.h"
 }
 #include "handler0vars.h"
 
 #include "drizzled/replication_services.h"
-#include "drizzled/message/transaction.pb.h"
 
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
@@ -81,39 +80,29 @@ InnodbReplicationTable::InnodbReplicationTable() :
   add_field("TRANSACTION_LENGTH", plugin::TableFunction::NUMBER, 0, false);
 }
 
-extern "C" {
-  void my_replication_print_callback(void *ptr, uint64_t);
-}
-
-void my_replication_print_callback(void *ptr, uint64_t transaction_id, const char *buffer_arg, size_t buffer_length)
-{
-  StructRecorder *myrec= static_cast<StructRecorder *>(ptr);
-
-  myrec->push(transaction_id, buffer_arg, buffer_length);
-}
-
 InnodbReplicationTable::Generator::Generator(Field **arg) :
   plugin::TableFunction::Generator(arg)
 {
-  replication_print_with_callback(my_replication_print_callback, &recorder);
-  recorder.start();
+  replication_state =replication_read_init();
+}
+
+InnodbReplicationTable::Generator::~Generator()
+{
+  replication_read_deinit(replication_state);
 }
 
 bool InnodbReplicationTable::Generator::populate()
 {
-  log_record_st id;
-  bool more= recorder.next(id);
+  struct read_replication_return_st ret= replication_read_next(replication_state);
 
-  if (not more)
+  if (ret.message == NULL)
     return false;
 
   /* TABLE_NAME */
-  push(id.id);
+  push(ret.id);
 
   /* Message in viewable format */
-  std::string transaction_text;
-  message::Transaction message;
-  bool result= message.ParseFromArray(&id.buffer[0], id.buffer.size());
+  bool result= message.ParseFromArray(ret.message, ret.message_length);
   if (result == false)
   {
     fprintf(stderr, _("Unable to parse transaction. Got error: %s.\n"), message.InitializationErrorString().c_str());
@@ -124,7 +113,7 @@ bool InnodbReplicationTable::Generator::populate()
     google::protobuf::TextFormat::PrintToString(message, &transaction_text);
     push(transaction_text);
   }
-  push(static_cast<int64_t>(id.buffer.size()));
+  push(static_cast<int64_t>(ret.message_length));
 
   return true;
 }

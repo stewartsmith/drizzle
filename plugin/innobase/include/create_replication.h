@@ -22,18 +22,28 @@
 #define create_replication_h
 
 #include "univ.i"
+#include "btr0pcur.h"
 #include "dict0types.h"
 #include "dict0dict.h"
 #include "que0types.h"
 #include "row0types.h"
 #include "mtr0mtr.h"
 
+#include "read_replication.h"
+
+struct read_replication_state_st {
+  mtr_t mtr;
+  btr_pcur_t pcur;
+  dict_table_t *sys_tables;
+  dict_index_t *sys_index;
+};
+
 UNIV_INTERN ulint dict_create_sys_replication_log(void);
 
 UNIV_INTERN ulint insert_replication_message(const char *message, size_t size, trx_t *trx);
 
-typedef void (*replication_print_callback)(void *ptr, uint64_t, const char *, size_t length);
-
-UNIV_INTERN void replication_print_with_callback(replication_print_callback func, void *func_arg);
+UNIV_INTERN struct read_replication_state_st *replication_read_init(void);
+UNIV_INTERN void replication_read_deinit(struct read_replication_state_st *);
+UNIV_INTERN struct read_replication_return_st replication_read_next(struct read_replication_state_st *);
 
 #endif

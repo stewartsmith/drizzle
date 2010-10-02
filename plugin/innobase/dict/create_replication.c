@@ -18,6 +18,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include "config.h"
+
+#include "read_replication.h"
 #include "create_replication.h"
 
 #ifdef UNIV_NONINL
@@ -99,10 +102,10 @@ UNIV_INTERN ulint dict_create_sys_replication_log(void)
 
 ulint insert_replication_message(const char *message, size_t size, trx_t *trx)
 {
-	ulint error;
-	pars_info_t *info= pars_info_create();
+  ulint error;
+  pars_info_t *info= pars_info_create();
 
-	pars_info_add_dulint_literal(info, "ID", trx->id);
+  pars_info_add_dulint_literal(info, "ID", trx->id);
   pars_info_add_literal(info, "MESSAGE", message, size, DATA_FIXBINARY, DATA_ENGLISH);
 
   error= que_eval_sql(info,
@@ -115,59 +118,72 @@ ulint insert_replication_message(const char *message, size_t size, trx_t *trx)
   return error;
 }
 
-UNIV_INTERN void replication_print_with_callback(replication_print_callback func, void *func_arg)
+UNIV_INTERN struct read_replication_state_st *replication_read_init(void)
 {
-	dict_table_t*	sys_tables;
-	dict_index_t*	sys_index;
-	btr_pcur_t	pcur;
-	const rec_t*	rec;
-	const byte*	field;
-	ulint		len;
-	mtr_t		mtr;
+  struct read_replication_state_st *state= calloc(1, sizeof(struct read_replication_state_st));
 
-	mutex_enter(&(dict_sys->mutex));
+  mutex_enter(&(dict_sys->mutex));
 
-	mtr_start(&mtr);
+  mtr_start(&state->mtr);
+  state->sys_tables= dict_table_get_low("SYS_REPLICATION_LOG");
+  state->sys_index= UT_LIST_GET_FIRST(state->sys_tables->indexes);
 
-	sys_tables = dict_table_get_low("SYS_REPLICATION_LOG");
-	sys_index = UT_LIST_GET_FIRST(sys_tables->indexes);
+  mutex_exit(&(dict_sys->mutex));
 
-	btr_pcur_open_at_index_side(TRUE, sys_index, BTR_SEARCH_LEAF, &pcur, TRUE, &mtr);
-loop:
-	btr_pcur_move_to_next_user_rec(&pcur, &mtr);
+  btr_pcur_open_at_index_side(TRUE, state->sys_index, BTR_SEARCH_LEAF, &state->pcur, TRUE, &state->mtr);
 
-	rec = btr_pcur_get_rec(&pcur);
+  return state;
+}
 
-	if (!btr_pcur_is_on_user_rec(&pcur))
+UNIV_INTERN void replication_read_deinit(struct read_replication_state_st *state)
+{
+  btr_pcur_close(&state->pcur);
+  mtr_commit(&state->mtr);
+  free(state);
+}
+
+UNIV_INTERN struct read_replication_return_st replication_read_next(struct read_replication_state_st *state)
+{
+  struct read_replication_return_st ret;
+  const rec_t *rec;
+
+  btr_pcur_move_to_next_user_rec(&state->pcur, &state->mtr);
+
+  rec= btr_pcur_get_rec(&state->pcur);
+
+  while (btr_pcur_is_on_user_rec(&state->pcur))
   {
-		/* end of index */
+    const byte*	field;
+    ulint len;
 
-		btr_pcur_close(&pcur);
-		mtr_commit(&mtr);
+    // Is the row deleted? If so go fetch the next
+    if (rec_get_deleted_flag(rec, 0))
+      continue;
 
-		mutex_exit(&(dict_sys->mutex));
+    // Store transaction id
+    field = rec_get_nth_field_old(rec, 0, &len);
+    dulint du_transaction_id= mtr_read_dulint(field, &state->mtr);
+    ret.id= (ib_uint64_t) ut_conv_dulint_to_longlong(du_transaction_id);
 
-		return;
-	}
-	field = rec_get_nth_field_old(rec, 0, &len);
-
-  /* We found one */
-
-	if (!rec_get_deleted_flag(rec, 0))
-  {
-    dulint du_transaction_id= mtr_read_dulint(field, &mtr);
-    uint64_t transaction_id= (ib_uint64_t) ut_conv_dulint_to_longlong(du_transaction_id);
+    // Handler message
     field = rec_get_nth_field_old(rec, 3, &len);
+    ret.message= (char *)field;
+    ret.message_length= len;
 
-    func(func_arg, transaction_id, (char *)field, len);
+    // @todo double check that "field" will continue to be value past this
+    // point.
+    btr_pcur_store_position(&state->pcur, &state->mtr);
+    mtr_commit(&state->mtr);
 
-		btr_pcur_store_position(&pcur, &mtr);
-		mtr_commit(&mtr);
+    mtr_start(&state->mtr);
 
-		mtr_start(&mtr);
+    btr_pcur_restore_position(BTR_SEARCH_LEAF, &state->pcur, &state->mtr);
 
-		btr_pcur_restore_position(BTR_SEARCH_LEAF, &pcur, &mtr);
-	}
+    return ret;
+  }
 
-	goto loop;
+  /* end of index */
+  memset(&ret, 0, sizeof(ret));
+
+  return ret;
 }

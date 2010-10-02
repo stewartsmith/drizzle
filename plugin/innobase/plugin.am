@@ -44,6 +44,7 @@ noinst_HEADERS+= \
                  plugin/innobase/include/dict0boot.h \
                  plugin/innobase/include/dict0boot.ic \
                  plugin/innobase/include/create_replication.h \
+                 plugin/innobase/include/read_replication.h \
                  plugin/innobase/include/dict0crea.h \
                  plugin/innobase/include/dict0crea.ic \
                  plugin/innobase/include/dict0dict.h \

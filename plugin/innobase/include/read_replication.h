@@ -18,37 +18,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#ifndef read_replication_h
+#define read_replication_h
 
-#ifndef PLUGIN_INNOBASE_HANDLER_REPLICATION_DICTIONARY_H
-#define PLUGIN_INNOBASE_HANDLER_REPLICATION_DICTIONARY_H 
-
-#include "drizzled/plugin/table_function.h"
-#include "drizzled/field.h"
-#include "drizzled/message/transaction.pb.h"
-
-class InnodbReplicationTable : public drizzled::plugin::TableFunction
-{
-public:
-  InnodbReplicationTable();
-
-  class Generator : public drizzled::plugin::TableFunction::Generator
-  {
-    std::string transaction_text;
-    drizzled::message::Transaction message;
-    struct read_replication_state_st *replication_state;
-
-  public:
-    Generator(drizzled::Field **arg);
-    ~Generator();
-                        
-    bool populate();
-  private:
-  };
-
-  Generator *generator(drizzled::Field **arg)
-  {
-    return new Generator(arg);
-  }
+struct read_replication_return_st {
+  unsigned long long id;
+  unsigned long long message_length;
+  const char *message;
 };
 
-#endif /* PLUGIN_INNOBASE_HANDLER_REPLICATION_DICTIONARY_H */
+#endif
