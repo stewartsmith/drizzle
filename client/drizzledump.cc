@@ -500,8 +500,6 @@ try
   N_("Wrap a table's data in START TRANSACTION/COMMIT statements."))
   ("no-create-db,n", po::value<bool>(&opt_create_db)->default_value(false)->zero_tokens(),
   N_("'CREATE DATABASE IF NOT EXISTS db_name;' will not be put in the output. The above line will be added otherwise, if --databases or --all-databases option was given."))
-  ("skip-create,t", po::value<bool>(&opt_no_create_info)->default_value(false)->zero_tokens(),
-  N_("Don't write table creation info."))
   ("no-data,d", po::value<bool>(&opt_no_data)->default_value(false)->zero_tokens(),
   N_("No row information."))
   ("replace", po::value<bool>(&opt_replace_into)->default_value(false)->zero_tokens(),
