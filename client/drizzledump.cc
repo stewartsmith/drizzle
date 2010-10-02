@@ -192,9 +192,17 @@ void generate_dump_db(void)
 {
   std::vector<DrizzleDumpDatabase*>::iterator i;
   DrizzleStringBuf sbuf(1024);
-  destination_connection= new DrizzleDumpConnection(opt_destination_host,
-    opt_destination_port, opt_destination_user, opt_destination_password,
-    false);
+  try
+  {
+    destination_connection= new DrizzleDumpConnection(opt_destination_host,
+      opt_destination_port, opt_destination_user, opt_destination_password,
+      false);
+  }
+  catch (...)
+  {
+    cerr << "Could not connect to destination database server" << endl;
+    maybe_exit(EX_DRIZZLEERR);
+  }
   sbuf.setConnection(destination_connection);
   std::ostream sout(&sbuf);
 
@@ -507,15 +515,15 @@ try
   ("destination-type", po::value<string>()->default_value("stdout"),
   N_("Where to send output to (stdout|database"))
   ("destination-host", po::value<string>(&opt_destination_host)->default_value("localhost"),
-  N_("Hostname for destination db server (requires --destination=database)"))
+  N_("Hostname for destination db server (requires --destination-type=database)"))
   ("destination-port", po::value<uint16_t>(&opt_destination_port)->default_value(3306),
-  N_("Port number for destination db server (requires --destination=database)"))
+  N_("Port number for destination db server (requires --destination-type=database)"))
   ("destination-user", po::value<string>(&opt_destination_user),
-  N_("User name for destination db server (resquires --destination=database)"))
+  N_("User name for destination db server (resquires --destination-type=database)"))
   ("destination-password", po::value<string>(&opt_destination_password),
-  N_("Password for destination db server (requires --destination=database)"))
+  N_("Password for destination db server (requires --destination-type=database)"))
   ("destination-database", po::value<string>(&opt_destination_database),
-  N_("The database in the destination db server (requires --destination=database, not for use with --all-databases)"))
+  N_("The database in the destination db server (requires --destination-type=database, not for use with --all-databases)"))
   ;
 
   po::options_description client_options(N_("Options specific to the client"));
@@ -718,9 +726,15 @@ try
     free_resources();
     exit(exit_code);
   }
-
-  db_connection = new DrizzleDumpConnection(current_host, opt_drizzle_port,
-    current_user, opt_password, use_drizzle_protocol);
+  try
+  {
+    db_connection = new DrizzleDumpConnection(current_host, opt_drizzle_port,
+      current_user, opt_password, use_drizzle_protocol);
+  }
+  catch (...)
+  {
+    maybe_exit(EX_DRIZZLEERR);
+  }
 
   if (db_connection->getServerType() == DrizzleDumpConnection::SERVER_MYSQL_FOUND)
     db_connection->queryNoResult("SET NAMES 'utf8'");

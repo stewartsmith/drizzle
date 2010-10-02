@@ -453,7 +453,7 @@ DrizzleDumpConnection::DrizzleDumpConnection(std::string &host, uint16_t port,
   if (ret != DRIZZLE_RETURN_OK)
   {
     errorHandler(NULL, ret, "when trying to connect");
-    throw;
+    throw 1;
   }
 
   boost::match_flag_type flags = boost::match_default; 
@@ -552,7 +552,12 @@ bool DrizzleDumpConnection::setDB(std::string databaseName)
 void DrizzleDumpConnection::errorHandler(drizzle_result_st *res,
   drizzle_return_t ret, const char *when)
 {
-  if (ret == DRIZZLE_RETURN_ERROR_CODE)
+  if (res == NULL)
+  {
+    std::cerr << _("Got error: ") << drizzle_con_error(&connection) << " "
+      << when << std::endl;
+  }
+  else if (ret == DRIZZLE_RETURN_ERROR_CODE)
   {
     std::cerr << _("Got error: ") << drizzle_result_error(res)
       << " (" << drizzle_result_error_code(res) << ") " << when << std::endl;
