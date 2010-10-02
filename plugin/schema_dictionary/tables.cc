@@ -54,6 +54,7 @@ TablesTool::TablesTool() :
   add_field("TABLE_CREATION_TIME");
   add_field("TABLE_UPDATE_TIME");
   add_field("TABLE_COMMENT", plugin::TableFunction::STRING, 2048, true);
+  add_field("AUTO_INCREMENT", plugin::TableFunction::NUMBER, 0, false);
 }
 
 TablesTool::Generator::Generator(Field **arg) :
@@ -189,4 +190,7 @@ void TablesTool::Generator::fill()
   {
     push();
   }
+
+  /* AUTO_INCREMENT */
+  push(getTableMessage().options().auto_increment_value());
 }

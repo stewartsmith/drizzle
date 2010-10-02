@@ -1,0 +1,6 @@
+SHOW VARIABLES LIKE 'innodb_sync_spin_loops';
+Variable_name	Value
+innodb_sync_spin_loops	100
+SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='sync_spin_loops';
+NAME	TYPE	VALUE
+sync_spin_loops	ULONG	100

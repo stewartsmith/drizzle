@@ -1,0 +1,57 @@
+CREATE table t1 (a int primary key);
+CREATE TABLE t2 (a int primary key, b varchar(30), c bigint);
+SELECT haildb_datadict_dump();
+haildb_datadict_dump()
+HailDB Data Dictionary Contents
+-------------------------------
+SYS_FOREIGN Format: REDUNDANT Page size: 0 Columns: 7 Indexes: 3
+  COL: ID
+  COL: FOR_NAME
+  COL: REF_NAME
+  COL: N_COLS
+  COL: DB_ROW_ID
+  COL: DB_TRX_ID
+  COL: DB_ROLL_PTR
+  IDX: ID_IND
+    IDXCOL: ID
+  IDX: FOR_IND
+    IDXCOL: FOR_NAME
+  IDX: REF_IND
+    IDXCOL: REF_NAME
+SYS_FOREIGN_COLS Format: REDUNDANT Page size: 0 Columns: 7 Indexes: 1
+  COL: ID
+  COL: POS
+  COL: FOR_COL_NAME
+  COL: REF_COL_NAME
+  COL: DB_ROW_ID
+  COL: DB_TRX_ID
+  COL: DB_ROLL_PTR
+  IDX: ID_IND
+    IDXCOL: ID
+    IDXCOL: POS
+data_dictionary/haildb_table_definitions Format: COMPACT Page size: 0 Columns: 5 Indexes: 1
+  COL: table_name
+  COL: message
+  COL: DB_ROW_ID
+  COL: DB_TRX_ID
+  COL: DB_ROLL_PTR
+  IDX: PRIMARY_KEY
+    IDXCOL: table_name
+test/t1 Format: COMPACT Page size: 0 Columns: 4 Indexes: 1
+  COL: a
+  COL: DB_ROW_ID
+  COL: DB_TRX_ID
+  COL: DB_ROLL_PTR
+  IDX: PRIMARY
+    IDXCOL: a
+test/t2 Format: COMPACT Page size: 0 Columns: 6 Indexes: 1
+  COL: a
+  COL: b
+  COL: c
+  COL: DB_ROW_ID
+  COL: DB_TRX_ID
+  COL: DB_ROLL_PTR
+  IDX: PRIMARY
+    IDXCOL: a
+
+DROP TABLE t1, t2;

@@ -1,0 +1,4 @@
+CREATE table t1 (a int primary key);
+CREATE TABLE t2 (a int primary key, b varchar(30), c bigint);
+SELECT haildb_datadict_dump();
+DROP TABLE t1, t2;

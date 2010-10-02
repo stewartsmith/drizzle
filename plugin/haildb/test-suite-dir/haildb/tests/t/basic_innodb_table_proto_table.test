@@ -1,0 +1,10 @@
+show create table data_dictionary.haildb_table_definitions;
+select * from data_dictionary.haildb_table_definitions;
+use data_dictionary;
+show tables like 'haildb%';
+use test;
+create table t1 (a int primary key);
+select table_name from data_dictionary.haildb_table_definitions;
+drop table t1;
+select count(table_name) from data_dictionary.haildb_table_definitions;
+
