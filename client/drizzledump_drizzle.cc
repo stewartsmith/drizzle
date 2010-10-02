@@ -25,7 +25,8 @@
 #include <drizzled/gettext.h>
 #include <boost/lexical_cast.hpp>
 
-extern bool  verbose;
+extern bool verbose;
+extern bool ignore_errors;
 
 bool DrizzleDumpDatabaseDrizzle::populateTables()
 {
@@ -39,7 +40,7 @@ bool DrizzleDumpDatabaseDrizzle::populateTables()
   if (verbose)
     std::cerr << _("-- Retrieving table structures for ") << databaseName << "..." << std::endl;
 
-  query="SELECT TABLE_NAME, TABLE_COLLATION, ENGINE FROM DATA_DICTIONARY.TABLES WHERE TABLE_SCHEMA='";
+  query="SELECT TABLE_NAME, TABLE_COLLATION, ENGINE, AUTO_INCREMENT FROM DATA_DICTIONARY.TABLES WHERE TABLE_SCHEMA='";
   query.append(databaseName);
   query.append("' ORDER BY TABLE_NAME");
 
@@ -60,12 +61,15 @@ bool DrizzleDumpDatabaseDrizzle::populateTables()
     table->displayName= displayName;
     table->collate= row[1];
     table->engineName= row[2];
-    table->autoIncrement= 0;
+    table->autoIncrement= boost::lexical_cast<uint64_t>(row[3]);
     table->database= this;
     if ((not table->populateFields()) or (not table->populateIndexes()))
     {
       delete table;
-      return false;
+      if (not ignore_errors)
+        return false;
+      else
+        continue;
     }
     tables.push_back(table);
   }
@@ -121,7 +125,10 @@ bool DrizzleDumpDatabaseDrizzle::populateTables(const std::vector<std::string> &
         std::cerr  << "Error: Could not get fields and/ot indexes for table " << displayName << std::endl;
         delete table;
         dcon->freeResult(result);
-        return false;
+        if (not ignore_errors)
+          return false;
+        else
+          continue;
       }
       tables.push_back(table);
       dcon->freeResult(result);
@@ -130,7 +137,10 @@ bool DrizzleDumpDatabaseDrizzle::populateTables(const std::vector<std::string> &
     {
       std::cerr << "Error: Table " << displayName << " not found." << std::endl;
       dcon->freeResult(result);
-      return false;
+      if (not ignore_errors)
+        return false;
+      else
+        continue;
     }
   }
 
