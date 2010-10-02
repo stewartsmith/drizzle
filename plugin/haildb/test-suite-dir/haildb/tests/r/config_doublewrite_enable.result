@@ -1,0 +1,6 @@
+SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='doublewrite';
+NAME	TYPE	VALUE
+doublewrite	BOOL	true
+show variables like 'innodb_doublewrite';
+Variable_name	Value
+innodb_doublewrite	ON

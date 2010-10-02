@@ -1,0 +1,6 @@
+SHOW VARIABLES LIKE 'innodb_additional_mem_pool_size';
+Variable_name	Value
+innodb_additional_mem_pool_size	33554432
+SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='additional_mem_pool_size';
+NAME	TYPE	VALUE
+additional_mem_pool_size	ULINT	33554432
