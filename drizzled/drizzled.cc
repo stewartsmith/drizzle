@@ -232,8 +232,6 @@ size_t my_thread_stack_size= 0;
 plugin::StorageEngine *heap_engine;
 plugin::StorageEngine *myisam_engine;
 
-char* opt_secure_file_priv= 0;
-
 bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
 
 uint32_t drizzled_bind_timeout;
@@ -290,6 +288,8 @@ time_t flush_status_time;
 
 fs::path basedir(PREFIX);
 fs::path pid_file;
+fs::path secure_file_priv("");
+
 char system_time_zone[30];
 char *default_tz_name;
 char glob_hostname[FN_REFLEN];
@@ -516,8 +516,6 @@ void clean_up(bool print_message)
   module::Registry &modules= module::Registry::singleton();
   modules.shutdownModules();
   xid_cache_free();
-  if (opt_secure_file_priv)
-    free(opt_secure_file_priv);
 
   deinit_temporal_formats();
 
@@ -1287,7 +1285,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   N_("Pid file used by drizzled."))
   ("port-open-timeout", po::value<uint32_t>(&drizzled_bind_timeout)->default_value(0),
   N_("Maximum time in seconds to wait for the port to become free. "))
-  ("secure-file-priv", po::value<string>(),
+  ("secure-file-priv", po::value<fs::path>(&secure_file_priv),
   N_("Limit LOAD DATA, SELECT ... OUTFILE, and LOAD_FILE() to files "
      "within specified directory"))
   ("server-id", po::value<uint32_t>(&server_id)->default_value(0),
@@ -1827,7 +1825,7 @@ struct option my_long_options[] =
   {"secure-file-priv", OPT_SECURE_FILE_PRIV,
    N_("Limit LOAD DATA, SELECT ... OUTFILE, and LOAD_FILE() to files "
       "within specified directory"),
-   (char**) &opt_secure_file_priv, (char**) &opt_secure_file_priv, 0,
+   NULL, NULL, 0,
    GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"server-id",	OPT_SERVER_ID,
    N_("Uniquely identifies the server instance in the community of "
@@ -2126,7 +2124,6 @@ static void drizzle_init_variables(void)
 {
   /* Things reset to zero */
   opt_tc_log_file= (char *)"tc.log";      // no hostname in tc_log file name !
-  opt_secure_file_priv= 0;
   cleanup_done= 0;
   dropping_tables= ha_open_options=0;
   test_flags.reset();
@@ -2365,20 +2362,6 @@ static void fix_paths()
     }
   }
 
-  /*
-    Convert the secure-file-priv option to system format, allowing
-    a quick strcmp to check if read or write is in an allowed dir
-   */
-  if (vm.count("secure-file-priv"))
-  {
-    char buff[FN_REFLEN];
-
-    internal::convert_dirname(buff, vm["secure-file-priv"].as<string>().c_str(), NULL);
-    free(opt_secure_file_priv);
-    opt_secure_file_priv= strdup(buff);
-    if (opt_secure_file_priv == NULL)
-      exit(1);
-  }
 }
 
 } /* namespace drizzled */

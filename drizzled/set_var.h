@@ -65,6 +65,7 @@ extern const char *in_having_cond;
 extern char glob_hostname[FN_REFLEN];
 extern boost::filesystem::path basedir;
 extern boost::filesystem::path pid_file;
+extern boost::filesystem::path secure_file_priv;
 extern char system_time_zone[30];
 extern char *opt_tc_log_file;
 extern uint64_t session_startup_options;
@@ -81,7 +82,6 @@ extern bool opt_endinfo;
 extern uint32_t volatile thread_running;
 extern uint32_t volatile global_read_lock;
 extern bool opt_readonly;
-extern char* opt_secure_file_priv;
 extern char *default_tz_name;
 extern const char *opt_scheduler;
 

@@ -199,8 +199,8 @@ static sys_var_session_uint32_t	sys_query_prealloc_size(&vars, "query_prealloc_s
                                                         false, fix_session_mem_root);
 static sys_var_readonly sys_tmpdir(&vars, "tmpdir", OPT_GLOBAL, SHOW_CHAR, get_tmpdir);
 
-static sys_var_const_str_ptr sys_secure_file_priv(&vars, "secure_file_priv",
-                                             &opt_secure_file_priv);
+static sys_var_fs_path sys_secure_file_priv(&vars, "secure_file_priv",
+                                            secure_file_priv);
 
 static sys_var_const_str_ptr sys_scheduler(&vars, "scheduler",
                                            (char**)&opt_scheduler);

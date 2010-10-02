@@ -271,9 +271,9 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
       (void) internal::fn_format(name, ex->file_name, getDataHomeCatalog().c_str(), "",
 		       MY_RELATIVE_PATH | MY_UNPACK_FILENAME);
 
-      if (opt_secure_file_priv)
+      if (not secure_file_priv.string().empty())
       {
-        fs::path secure_file_path(fs::system_complete(fs::path(opt_secure_file_priv)));
+        fs::path secure_file_path(fs::system_complete(secure_file_priv));
         fs::path target_path(fs::system_complete(fs::path(name)));
         if (target_path.file_string().substr(0, secure_file_path.file_string().size()) != secure_file_path.file_string())
         {

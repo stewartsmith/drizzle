@@ -25,8 +25,12 @@
 #include <drizzled/session.h>
 #include "drizzled/internal/my_sys.h"
 
+#include <boost/filesystem.hpp>
+
 #include <fcntl.h>
 #include <sys/stat.h>
+
+namespace fs=boost::filesystem;
 
 namespace drizzled
 {
@@ -46,9 +50,16 @@ String *Item_load_file::val_str(String *str)
 		   MY_RELATIVE_PATH | MY_UNPACK_FILENAME);
 
   /* Read only allowed from within dir specified by secure_file_priv */
-  if (opt_secure_file_priv &&
-      strncmp(opt_secure_file_priv, path, strlen(opt_secure_file_priv)))
-    goto err;
+  if (not secure_file_priv.string().empty())
+  {
+    fs::path secure_file_path(fs::system_complete(secure_file_priv));
+    fs::path target_path(fs::system_complete(fs::path(path)));
+    if (target_path.file_string().substr(0, secure_file_path.file_string().size()) != secure_file_path.file_string())
+    {
+      null_value = 1;
+      return(0);
+    }
+  }
 
   if (stat(path, &stat_info))
     goto err;
