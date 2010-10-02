@@ -27,6 +27,88 @@ namespace drizzled
 namespace program_options
 {
 
+class invalid_syntax :
+  public boost::program_options::error
+{
+public:
+  enum kind_t {
+    long_not_allowed = 30,
+    long_adjacent_not_allowed,
+    short_adjacent_not_allowed,
+    empty_adjacent_parameter,
+    missing_parameter,
+    extra_parameter,
+    unrecognized_line
+  };
+
+  invalid_syntax(const std::string& in_tokens, kind_t in_kind);
+
+
+  // gcc says that throw specification on dtor is loosened
+  // without this line
+  ~invalid_syntax() throw() {}
+
+  kind_t kind() const
+  {
+    return m_kind;
+  }
+
+
+  const std::string& tokens() const
+  {
+    return m_tokens;
+  }
+
+
+protected:
+  /** Used to convert kind_t to a related error text */
+  static std::string error_message(kind_t kind)
+  {
+    // Initially, store the message in 'const char*' variable, to avoid
+    // conversion to string in all cases.
+    const char* msg;
+    switch(kind)
+    {
+    case long_not_allowed:
+      msg = "long options are not allowed";
+      break;
+    case long_adjacent_not_allowed:
+      msg = "parameters adjacent to long options not allowed";
+      break;
+    case short_adjacent_not_allowed:
+      msg = "parameters adjust to short options are not allowed";
+      break;
+    case empty_adjacent_parameter:
+      msg = "adjacent parameter is empty";
+      break;
+    case missing_parameter:
+      msg = "required parameter is missing";
+      break;
+    case extra_parameter:
+      msg = "extra parameter";
+      break;
+    case unrecognized_line:
+      msg = "unrecognized line";
+      break;
+    default:
+      msg = "unknown error";
+    }
+    return msg;
+  }
+
+private:
+  // TODO: copy ctor might throw
+  std::string m_tokens;
+
+  kind_t m_kind;
+};
+
+invalid_syntax::invalid_syntax(const std::string& in_tokens,
+                               invalid_syntax::kind_t in_kind) :
+ boost::program_options::error(error_message(in_kind).append(" in '").append(in_tokens).append("'"))
+, m_tokens(in_tokens)
+  , m_kind(in_kind)
+{}
 
 namespace detail
 {
@@ -141,7 +223,7 @@ public: // Method required by eof_iterator
           break;
 
         } else {
-          boost::throw_exception(boost::program_options::invalid_syntax(s, "Unrecognized line"));
+          boost::throw_exception(invalid_syntax(s, invalid_syntax::unrecognized_line));
         }
       }
     }
