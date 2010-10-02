@@ -416,8 +416,7 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpTable &obj)
   }
   os << std::endl;
   os << ") ENGINE=" << obj.engineName << " ";
-  if ((obj.dcon->getServerType() == DrizzleDumpConnection::SERVER_MYSQL_FOUND)
-    and (obj.autoIncrement > 0))
+  if (obj.autoIncrement > 0)
   {
     os << "AUTO_INCREMENT=" << obj.autoIncrement << " ";
   }
