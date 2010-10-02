@@ -2383,7 +2383,7 @@ void ha_pbxt::init_auto_increment(xtWord8 min_auto_inc)
 		table->next_number_field = table->found_next_number_field;
 
 		extra(HA_EXTRA_KEYREAD);
-		table->mark_columns_used_by_index_no_reset(TS(table)->next_number_index, table->read_set);
+		table->mark_columns_used_by_index_no_reset(TS(table)->next_number_index, *table->read_set);
 		column_bitmaps_signal();
  		doStartIndexScan(TS(table)->next_number_index, 0);
 		if (!TS(table)->next_number_key_offset) {
@@ -2735,12 +2735,10 @@ int ha_pbxt::doUpdateRecord(const byte * old_data, byte * new_data)
 	 */
 	if (table->found_next_number_field && new_data == table->getInsertRecord()) {
 		MX_LONGLONG_T	nr;
-		my_bitmap_map	*old_map;
-
-		old_map = mx_tmp_use_all_columns(table, table->read_set);
+        const boost::dynamic_bitset<>& old_bitmap= table->use_all_columns(*table->read_set);
 		nr = table->found_next_number_field->val_int();
 		ha_set_auto_increment(pb_open_tab, table->found_next_number_field);
-		mx_tmp_restore_column_map(table, old_map);
+        table->restore_column_map(old_bitmap);
 	}
 
 	if (!xt_tab_update_record(pb_open_tab, (xtWord1 *) old_data, (xtWord1 *) new_data))
@@ -3166,7 +3164,7 @@ int ha_pbxt::doStartIndexScan(uint idx, bool XT_UNUSED(sorted))
 		 * seem to have this problem!
 		 */
 		ind = (XTIndexPtr) pb_share->sh_dic_keys[idx];
-		if (MX_BIT_IS_SUBSET(table->read_set, &ind->mi_col_map))
+		if (MX_BIT_IS_SUBSET(*table->read_set, ind->mi_col_map))
 			pb_key_read = TRUE;
 #ifdef XT_PRINT_INDEX_OPT
 		printf("index_init %s index %d cols req=%d/%d read_bits=%X write_bits=%X index_bits=%X converage=%d\n", pb_open_tab->ot_table->tab_name->ps_path, (int) idx, pb_open_tab->ot_cols_req, table->read_set->MX_BIT_SIZE(), (int) *table->read_set->bitmap, (int) *table->write_set->bitmap, (int) *ind->mi_col_map.bitmap, (int) (MX_BIT_IS_SUBSET(table->read_set, &ind->mi_col_map) != 0));

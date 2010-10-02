@@ -1683,12 +1683,10 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
   if (blob_fields)
   {
-    uint32_t k, *save;
-
     /* Store offsets to blob fields to find them fast */
     blob_field.resize(blob_fields);
-    save= &blob_field[0];
-    k= 0;
+    uint32_t *save= &blob_field[0];
+    uint32_t k= 0;
     for (Fields::iterator iter= field.begin(); iter != field.end()-1; iter++, k++)
     {
       if ((*iter)->flags & BLOB_FLAG)
@@ -1698,10 +1696,9 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
   db_low_byte_first= true; // @todo Question this.
   column_bitmap_size= bitmap_buffer_size(fields);
-
-  all_bitmap.resize(column_bitmap_size);
-  all_set.init(&all_bitmap[0], fields);
-  all_set.setAll();
+  //all_set.resize(fields);
+  all_set.resize(column_bitmap_size);
+  all_set.set();
 
   return local_error;
 }
@@ -1823,7 +1820,7 @@ int TableShare::open_table_from_share(Session *session,
   int local_error;
   uint32_t records, bitmap_size;
   bool error_reported= false;
-  unsigned char *record, *bitmaps;
+  unsigned char *record= NULL;
   Field **field_ptr;
 
   /* Parsing of partitioning information from .frm needs session->lex set up. */
@@ -1955,13 +1952,9 @@ int TableShare::open_table_from_share(Session *session,
   /* Allocate bitmaps */
 
   bitmap_size= column_bitmap_size;
-  if (!(bitmaps= (unsigned char*) outparam.alloc_root(bitmap_size*3)))
-  {
-    goto err;
-  }
-  outparam.def_read_set.init((my_bitmap_map*) bitmaps, fields);
-  outparam.def_write_set.init((my_bitmap_map*) (bitmaps+bitmap_size), fields);
-  outparam.tmp_set.init((my_bitmap_map*) (bitmaps+bitmap_size*2), fields);
+  outparam.def_read_set.resize(fields);
+  outparam.def_write_set.resize(fields);
+  outparam.tmp_set.resize(fields);
   outparam.default_column_bitmaps();
 
   /* The table struct is now initialized;  Open the table */
@@ -2003,10 +1996,6 @@ int TableShare::open_table_from_share(Session *session,
       goto err;
     }
   }
-
-#if defined(HAVE_purify)
-  memset(bitmaps, 0, bitmap_size*3);
-#endif
 
   return 0;
 

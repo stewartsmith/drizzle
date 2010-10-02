@@ -3346,14 +3346,14 @@ xtPublic void myxt_get_status(XTThreadPtr self, XTStringBufferPtr strbuf)
 
 static void myxt_bitmap_init(XTThreadPtr self, MX_BITMAP *map, u_int n_bits)
 {
+#ifdef DRIZZLED
+    (void) self;
+    map->resize(n_bits);
+    map->reset();
+#else
 	my_bitmap_map	*buf;
     uint			size_in_bytes = (((n_bits) + 31) / 32) * 4;
-
 	buf = (my_bitmap_map *) xt_malloc(self, size_in_bytes);
-
-#ifdef DRIZZLED
-	map->init(buf, n_bits);
-#else
 	map->bitmap= buf;
 	map->n_bits= n_bits;
 	create_last_word_mask(map);
@@ -3364,10 +3364,9 @@ static void myxt_bitmap_init(XTThreadPtr self, MX_BITMAP *map, u_int n_bits)
 static void myxt_bitmap_free(XTThreadPtr self, MX_BITMAP *map)
 {
 #ifdef DRIZZLED
-	my_bitmap_map *buf = map->getBitmap();
-	if (buf)
-		xt_free(self, buf);
-	map->setBitmap(NULL);
+    (void) self;
+    if (map->empty())
+        map->clear();
 #else
 	if (map->bitmap) {
 		xt_free(self, map->bitmap);

@@ -131,15 +131,15 @@ public:
     prev= arg;
   }
 
-  MyBitmap *read_set; /* Active column sets */
-  MyBitmap *write_set; /* Active column sets */
+  boost::dynamic_bitset<> *read_set; /* Active column sets */
+  boost::dynamic_bitset<> *write_set; /* Active column sets */
 
   uint32_t tablenr;
   uint32_t db_stat; /**< information about the cursor as in Cursor.h */
 
-  MyBitmap def_read_set; /**< Default read set of columns */
-  MyBitmap def_write_set; /**< Default write set of columns */
-  MyBitmap tmp_set; /* Not sure about this... */
+  boost::dynamic_bitset<> def_read_set; /**< Default read set of columns */
+  boost::dynamic_bitset<> def_write_set; /**< Default write set of columns */
+  boost::dynamic_bitset<> tmp_set; /* Not sure about this... */
 
   Session *in_use; /**< Pointer to the current session using this object */
   Session *getSession()
@@ -417,7 +417,7 @@ public:
   }
 
   /* For TMP tables, should be pulled out as a class */
-  void setup_tmp_table_column_bitmaps(unsigned char *bitmaps);
+  void setup_tmp_table_column_bitmaps();
   bool create_myisam_tmp_table(KeyInfo *keyinfo,
                                MI_COLUMNDEF *start_recinfo,
                                MI_COLUMNDEF **recinfo,
@@ -459,7 +459,6 @@ public:
   void clear_column_bitmaps(void);
   void prepare_for_position(void);
   void mark_columns_used_by_index_no_reset(uint32_t index, boost::dynamic_bitset<>& bitmap);
-  void mark_columns_used_by_index_no_reset(uint32_t index, MyBitmap *map);
   void mark_columns_used_by_index_no_reset(uint32_t index);
   void mark_columns_used_by_index(uint32_t index);
   void restore_column_maps_after_mark_index();
@@ -467,22 +466,15 @@ public:
   void mark_columns_needed_for_update(void);
   void mark_columns_needed_for_delete(void);
   void mark_columns_needed_for_insert(void);
-  inline void column_bitmaps_set(MyBitmap *read_set_arg,
-                                 MyBitmap *write_set_arg)
-  {
-    read_set= read_set_arg;
-    write_set= write_set_arg;
-  }
-  /** temporary until MyBitmap disappears */
   void column_bitmaps_set(const boost::dynamic_bitset<>& read_set_arg,
                           const boost::dynamic_bitset<>& write_set_arg);
 
-  void restore_column_map(my_bitmap_map *old);
+  void restore_column_map(const boost::dynamic_bitset<>& old);
 
-  my_bitmap_map *use_all_columns(MyBitmap *bitmap);
+  const boost::dynamic_bitset<> use_all_columns(boost::dynamic_bitset<>& map);
   inline void use_all_columns()
   {
-    column_bitmaps_set(&s->all_set, &s->all_set);
+    column_bitmaps_set(s->all_set, s->all_set);
   }
 
   inline void default_column_bitmaps()
@@ -494,52 +486,52 @@ public:
   /* Both of the below should go away once we can move this bit to the field objects */
   inline bool isReadSet(uint32_t index)
   {
-    return read_set->isBitSet(index);
+    return read_set->test(index);
   }
 
   inline void setReadSet(uint32_t index)
   {
-    read_set->setBit(index);
+    read_set->set(index);
   }
 
   inline void setReadSet()
   {
-    read_set->setAll();
+    read_set->set();
   }
 
   inline void clearReadSet(uint32_t index)
   {
-    read_set->clearBit(index);
+    read_set->reset(index);
   }
 
   inline void clearReadSet()
   {
-    read_set->clearAll();
+    read_set->reset();
   }
 
   inline bool isWriteSet(uint32_t index)
   {
-    return write_set->isBitSet(index);
+    return write_set->test(index);
   }
 
   inline void setWriteSet(uint32_t index)
   {
-    write_set->setBit(index);
+    write_set->set(index);
   }
 
   inline void setWriteSet()
   {
-    write_set->setAll();
+    write_set->set();
   }
 
   inline void clearWriteSet(uint32_t index)
   {
-    write_set->clearBit(index);
+    write_set->reset(index);
   }
 
   inline void clearWriteSet()
   {
-    write_set->clearAll();
+    write_set->reset();
   }
 
   /* Is table open or should be treated as such by name-locking? */

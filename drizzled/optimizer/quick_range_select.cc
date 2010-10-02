@@ -120,7 +120,7 @@ optimizer::QuickRangeSelect::~QuickRangeSelect()
     delete column_bitmap;
     alloc.free_root(MYF(0));
   }
-  head->column_bitmaps_set(save_read_set, save_write_set);
+  head->column_bitmaps_set(*save_read_set, *save_write_set);
 }
 
 
@@ -193,13 +193,13 @@ end:
   }
   head->prepare_for_position();
   head->cursor= org_file;
-  bitmap_union(*column_bitmap, head->read_set);
+  bitmap_union(*column_bitmap, *head->read_set);
   head->column_bitmaps_set(*column_bitmap, *column_bitmap);
 
   return 0;
 
 failure:
-  head->column_bitmaps_set(save_read_set, save_write_set);
+  head->column_bitmaps_set(*save_read_set, *save_write_set);
   delete cursor;
   cursor= save_file;
   return 0;
@@ -279,7 +279,7 @@ int optimizer::QuickRangeSelect::get_next()
   if (in_ror_merged_scan)
   {
     /* Restore bitmaps set on entry */
-    head->column_bitmaps_set(save_read_set, save_write_set);
+    head->column_bitmaps_set(*save_read_set, *save_write_set);
   }
   return result;
 }

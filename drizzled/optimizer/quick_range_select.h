@@ -48,8 +48,8 @@ protected:
   /** Members to deal with case when this quick select is a ROR-merged scan */
   bool in_ror_merged_scan;
   boost::dynamic_bitset<> *column_bitmap;
-  MyBitmap *save_read_set;
-  MyBitmap *save_write_set;
+  boost::dynamic_bitset<> *save_read_set;
+  boost::dynamic_bitset<> *save_write_set;
   bool free_file; /**< True when this->file is "owned" by this quick select */
 
   /* Range pointers to be used when not using MRR interface */

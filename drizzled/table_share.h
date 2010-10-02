@@ -30,6 +30,7 @@
 
 #include <boost/unordered_map.hpp>
 #include <boost/thread/condition_variable.hpp>
+#include <boost/dynamic_bitset.hpp>
 
 #include "drizzled/typelib.h"
 #include "drizzled/memory/root.h"
@@ -258,11 +259,8 @@ public:
 
   const CHARSET_INFO *table_charset; /* Default charset of string fields */
 
-  MyBitmap all_set;
-private:
-  std::vector<my_bitmap_map> all_bitmap;
+  boost::dynamic_bitset<> all_set;
 
-public:
   /*
     Key which is used for looking-up table in table cache and in the list
     of thread's temporary tables. Has the form of:
