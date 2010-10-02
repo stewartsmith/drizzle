@@ -15,7 +15,14 @@
 #
 
 AC_DEFUN([AC_INNODB_ACTIONS],[
-  AC_REQUIRE([AC_PROG_LEX])
+  AC_CHECK_PROGS(LEX, ['flex'])
+  AS_IF([test "x$LEX" = "x" -a "$pandora_building_from_bzr" = "yes"],[
+     AC_MSG_ERROR(["flex is required for Drizzle to build from a bzr branch"])
+  ])
+  AS_IF([test "x$LEX" = "x"],[
+    LEX='if test -f "$@"; then echo "WARNING: no proper flex binary found, ignoring changes to $<"; exit 0; else echo "ERROR: no proper flex binary found"; exit 1; fi;'
+  ])
+
   AC_REQUIRE([AC_FUNC_MMAP])
 
   AC_CHECK_LIB(rt, aio_read, [innodb_system_libs="-lrt"])
