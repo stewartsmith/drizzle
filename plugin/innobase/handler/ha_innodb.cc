@@ -117,6 +117,7 @@ extern "C" {
 #include "log0log.h"
 #include "lock0lock.h"
 #include "dict0crea.h"
+#include "create_replication.h"
 #include "btr0cur.h"
 #include "btr0btr.h"
 #include "fsp0fsp.h"
@@ -134,6 +135,7 @@ extern "C" {
 
 #include "ha_innodb.h"
 #include "data_dictionary.h"
+#include "replication_dictionary.h"
 #include "internal_dictionary.h"
 #include "handler0vars.h"
 
@@ -142,6 +144,12 @@ extern "C" {
 #include <string>
 
 #include "plugin/innobase/handler/status_function.h"
+#include "plugin/innobase/handler/replication_log.h"
+
+#include <google/protobuf/io/zero_copy_stream.h>
+#include <google/protobuf/io/zero_copy_stream_impl.h>
+#include <google/protobuf/io/coded_stream.h>
+#include <google/protobuf/text_format.h>
 
 using namespace std;
 using namespace drizzled;
@@ -184,6 +192,7 @@ static plugin::TableFunction* cmp_mem_reset_tool= NULL;
 static plugin::TableFunction* innodb_trx_tool= NULL;
 static plugin::TableFunction* innodb_locks_tool= NULL;
 static plugin::TableFunction* innodb_lock_waits_tool= NULL;
+static plugin::TransactionApplier *replication_logger= NULL;
 
 static long innobase_mirrored_log_groups, innobase_log_files_in_group,
   innobase_log_buffer_size,
@@ -946,6 +955,28 @@ session_to_trx(
   Session*  session)  /*!< in: Drizzle Session */
 {
   return *(trx_t**) session->getEngineData(innodb_engine_ptr);
+}
+
+
+plugin::ReplicationReturnCode ReplicationLog::apply(Session &session,
+                                                    const message::Transaction &message)
+{
+  std::string buffer;
+
+  message.SerializeToString(&buffer);
+  trx_t *trx= session_to_trx(&session);
+
+  if (not trx)
+  {
+    std::cerr << " No trx to use \n";
+  }
+  else
+  {
+    ulint error= insert_replication_message(buffer.c_str(), buffer.size(), trx);
+    (void)error;
+  }
+
+  return plugin::SUCCESS;
 }
 
 /********************************************************************//**
@@ -2322,6 +2353,13 @@ innobase_change_buffering_inited_ok:
 
   err = innobase_start_or_create_for_mysql();
 
+  if (err != DB_SUCCESS)
+  {
+    goto mem_free_and_error;
+  }
+
+  err = dict_create_sys_replication_log();
+
   if (err != DB_SUCCESS) {
     goto mem_free_and_error;
   }
@@ -2364,6 +2402,17 @@ innobase_change_buffering_inited_ok:
   context.add(innodb_lock_waits_tool);
 
   context.add(new(std::nothrow)InnodbInternalTables());
+
+  context.add(new(std::nothrow)InnodbReplicationTable());
+
+  replication_logger= new(std::nothrow)ReplicationLog();
+  context.add(replication_logger);
+
+  if (vm.count("replication-log") and vm["replication-log"].as<bool>())
+  {
+    std::cerr << "Enable replication log\n";
+    ReplicationLog::setup(static_cast<ReplicationLog *>(replication_logger));
+  }
 
   /* Get the current high water mark format. */
   innobase_file_format_check = (char*) trx_sys_file_format_max_get();
@@ -8942,6 +8991,9 @@ static void init_options(drizzled::module::option_context &context)
   context("strict-mode",
           po::value<bool>()->default_value(false)->zero_tokens(),
           "Use strict mode when evaluating create options.");
+  context("replication-log",
+          po::value<bool>()->default_value(false),
+          "Enable internal replication log.");
   context("lock-wait-timeout",
           po::value<unsigned long>()->default_value(50),
           "Timeout in seconds an InnoDB transaction may wait for a lock before being rolled back. Values above 100000000 disable the timeout.");
