@@ -440,6 +440,7 @@ TableShare::TableShare(TableIdentifier::Type type_arg) :
   timestamp_field(NULL),
   key_info(NULL),
   mem_root(TABLE_ALLOC_BLOCK_SIZE),
+  all_set(),
   block_size(0),
   version(0),
   timestamp_offset(0),
@@ -510,6 +511,7 @@ TableShare::TableShare(TableIdentifier &identifier, const TableIdentifier::Key &
   timestamp_field(NULL),
   key_info(NULL),
   mem_root(TABLE_ALLOC_BLOCK_SIZE),
+  all_set(),
   block_size(0),
   version(0),
   timestamp_offset(0),
@@ -586,6 +588,7 @@ TableShare::TableShare(const TableIdentifier &identifier) : // Just used during 
   timestamp_field(NULL),
   key_info(NULL),
   mem_root(TABLE_ALLOC_BLOCK_SIZE),
+  all_set(),
   block_size(0),
   version(0),
   timestamp_offset(0),
@@ -669,6 +672,7 @@ TableShare::TableShare(TableIdentifier::Type type_arg,
   timestamp_field(NULL),
   key_info(NULL),
   mem_root(TABLE_ALLOC_BLOCK_SIZE),
+  all_set(),
   block_size(0),
   version(0),
   timestamp_offset(0),
@@ -855,7 +859,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
   table_charset= get_charset(table_options.collation_id());
 
-  if (!table_charset)
+  if (! table_charset)
   {
     char errmsg[100];
     snprintf(errmsg, sizeof(errmsg),
@@ -1695,9 +1699,8 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
   }
 
   db_low_byte_first= true; // @todo Question this.
-  column_bitmap_size= bitmap_buffer_size(fields);
-  //all_set.resize(fields);
-  all_set.resize(column_bitmap_size);
+  all_set.clear();
+  all_set.resize(fields);
   all_set.set();
 
   return local_error;
@@ -1818,7 +1821,7 @@ int TableShare::open_table_from_share(Session *session,
                                       Table &outparam)
 {
   int local_error;
-  uint32_t records, bitmap_size;
+  uint32_t records;
   bool error_reported= false;
   unsigned char *record= NULL;
   Field **field_ptr;
@@ -1951,7 +1954,6 @@ int TableShare::open_table_from_share(Session *session,
 
   /* Allocate bitmaps */
 
-  bitmap_size= column_bitmap_size;
   outparam.def_read_set.resize(fields);
   outparam.def_write_set.resize(fields);
   outparam.tmp_set.resize(fields);

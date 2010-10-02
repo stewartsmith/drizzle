@@ -339,12 +339,12 @@ void Table::setup_tmp_table_column_bitmaps()
   uint32_t field_count= s->sizeFields();
 
   this->def_read_set.resize(field_count);
+  this->def_write_set.resize(field_count);
   this->tmp_set.resize(field_count);
-
-  /* write_set and all_set are copies of read_set */
-  def_write_set= def_read_set;
-  s->all_set= def_read_set;
+  this->getMutableShare()->all_set.resize(field_count);
   this->getMutableShare()->all_set.set();
+  this->def_write_set.set();
+  this->def_read_set.set();
   default_column_bitmaps();
 }
 
@@ -1738,25 +1738,11 @@ void Table::free_tmp_table(Session *session)
   session->set_proc_info(save_proc_info);
 }
 
-void Table::column_bitmaps_set(const boost::dynamic_bitset<>& read_set_arg,
-                               const boost::dynamic_bitset<>& write_set_arg)
+void Table::column_bitmaps_set(boost::dynamic_bitset<>& read_set_arg,
+                               boost::dynamic_bitset<>& write_set_arg)
 {
-  /* set the read set */
-  for (boost::dynamic_bitset<>::size_type i= 0; i < read_set_arg.size(); i++)
-  {
-    if (read_set_arg.test(i))
-    {
-      read_set->set(i);
-    }
-  }
-  /* set the write set */
-  for (boost::dynamic_bitset<>::size_type i= 0; i < write_set_arg.size(); i++)
-  {
-    if (write_set_arg.test(i))
-    {
-      write_set->set(i);
-    }
-  }
+  read_set= &read_set_arg;
+  write_set= &write_set_arg;
 }
 
 

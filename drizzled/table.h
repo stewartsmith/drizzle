@@ -466,8 +466,8 @@ public:
   void mark_columns_needed_for_update(void);
   void mark_columns_needed_for_delete(void);
   void mark_columns_needed_for_insert(void);
-  void column_bitmaps_set(const boost::dynamic_bitset<>& read_set_arg,
-                          const boost::dynamic_bitset<>& write_set_arg);
+  void column_bitmaps_set(boost::dynamic_bitset<>& read_set_arg,
+                          boost::dynamic_bitset<>& write_set_arg);
 
   void restore_column_map(const boost::dynamic_bitset<>& old);
 
