@@ -552,7 +552,6 @@ public:
   uint32_t next_number_key_offset;          /* autoinc keypart offset in a key */
   uint32_t next_number_keypart;             /* autoinc keypart number in a key */
   uint32_t error, open_errno, errarg;       /* error from open_table_def() */
-  uint32_t column_bitmap_size;
 
   uint8_t blob_ptr_size;			/* 4 or 8 */
   bool db_low_byte_first;		/* Portable row format */

@@ -103,7 +103,6 @@ public:
       max_key_part(0),
       range_count(0),
       quick(false),
-      fields_bitmap_size(0),
       needed_fields(),
       tmp_covered_fields(),
       needed_reg(NULL),
@@ -121,7 +120,6 @@ public:
   unsigned char max_key[MAX_KEY_LENGTH+MAX_FIELD_WIDTH];
   bool quick; // Don't calulate possible keys
 
-  uint32_t fields_bitmap_size;
   boost::dynamic_bitset<> needed_fields;    /* bitmask of fields needed by the query */
   boost::dynamic_bitset<> tmp_covered_fields;
 

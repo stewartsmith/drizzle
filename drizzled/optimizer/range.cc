@@ -547,7 +547,6 @@ static int fill_used_fields_bitmap(optimizer::Parameter *param)
   Table *table= param->table;
   uint32_t pk;
   param->tmp_covered_fields.clear();
-  param->fields_bitmap_size= table->getShare()->column_bitmap_size;
   param->needed_fields.resize(table->getShare()->sizeFields());
   param->needed_fields.reset();
 
