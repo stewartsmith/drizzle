@@ -25,7 +25,6 @@
 
 #ifdef DRIZZLED
 #include <drizzled/definitions.h>
-#include <drizzled/sql_bitmap.h>
 #include <drizzled/field.h>
 using drizzled::Field;
 #else

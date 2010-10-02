@@ -550,8 +550,8 @@ static int fill_used_fields_bitmap(optimizer::Parameter *param)
   param->needed_fields.resize(table->getShare()->sizeFields());
   param->needed_fields.reset();
 
-  bitmap_union(param->needed_fields, *table->read_set);
-  bitmap_union(param->needed_fields, *table->write_set);
+  param->needed_fields|= *table->read_set;
+  param->needed_fields|= *table->write_set;
 
   pk= param->table->getShare()->getPrimaryKey();
   if (pk != MAX_KEY && param->table->cursor->primary_key_is_clustered())

@@ -3164,7 +3164,7 @@ int ha_pbxt::doStartIndexScan(uint idx, bool XT_UNUSED(sorted))
 		 * seem to have this problem!
 		 */
 		ind = (XTIndexPtr) pb_share->sh_dic_keys[idx];
-		if (MX_BIT_IS_SUBSET(*table->read_set, ind->mi_col_map))
+		if (MX_BIT_IS_SUBSET(table->read_set, ind->mi_col_map))
 			pb_key_read = TRUE;
 #ifdef XT_PRINT_INDEX_OPT
 		printf("index_init %s index %d cols req=%d/%d read_bits=%X write_bits=%X index_bits=%X converage=%d\n", pb_open_tab->ot_table->tab_name->ps_path, (int) idx, pb_open_tab->ot_cols_req, table->read_set->MX_BIT_SIZE(), (int) *table->read_set->bitmap, (int) *table->write_set->bitmap, (int) *ind->mi_col_map.bitmap, (int) (MX_BIT_IS_SUBSET(table->read_set, &ind->mi_col_map) != 0));

@@ -892,6 +892,7 @@ extern xtBool				pbxt_crash_debug;
 #define MX_CHARSET_INFO						struct drizzled::charset_info_st
 #define MX_CONST_CHARSET_INFO				const struct drizzled::charset_info_st			
 #define MX_CONST							const
+#include <boost/dynamic_bitset.hpp>
 #define MX_BITMAP							boost::dynamic_bitset<>
 #define MX_BIT_SIZE()						size()
 #define MX_BIT_SET(x, y)					(x)->set(y)
@@ -1013,7 +1014,7 @@ class Session;
 
 #endif // DRIZZLED
 
-#define MX_BIT_IS_SUBSET(x, y)				bitmap_is_subset(x, y)
+#define MX_BIT_IS_SUBSET(x, y)				x->is_subset_of(y)
 
 #ifndef XT_SCAN_CORE_DEFINED
 #define XT_SCAN_CORE_DEFINED

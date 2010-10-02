@@ -820,7 +820,7 @@ int write_record(Session *session, Table *table,CopyInfo *info)
             table->next_number_field->val_int());
         info->touched++;
         if ((table->cursor->getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ) &&
-             ! bitmap_is_subset(*table->write_set, *table->read_set)) ||
+            ! table->write_set->is_subset_of(*table->read_set)) ||
             table->compare_record())
         {
           if ((error=table->cursor->updateRecord(table->getUpdateRecord(),

@@ -20,6 +20,7 @@
 #include "drizzled/table.h"
 #include "drizzled/key.h"
 #include "drizzled/field/blob.h"
+#include "drizzled/util/test.h"
 
 #include <boost/dynamic_bitset.hpp>
 
@@ -405,7 +406,7 @@ bool is_key_used(Table *table, uint32_t idx, const boost::dynamic_bitset<>& fiel
 {
   table->tmp_set.reset();
   table->mark_columns_used_by_index_no_reset(idx, table->tmp_set);
-  if (bitmap_is_overlapping(table->tmp_set, fields))
+  if (table->tmp_set.is_subset_of(fields))
     return 1;
 
   /*

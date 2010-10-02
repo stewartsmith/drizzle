@@ -450,7 +450,7 @@ int mysql_update(Session *session, TableList *table_list,
     if all updated columns are read
   */
   can_compare_record= (! (table->cursor->getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ)) ||
-                       bitmap_is_subset(*table->write_set, *table->read_set));
+                       table->write_set->is_subset_of(*table->read_set));
 
   while (! (error=info.read_record(&info)) && !session->killed)
   {

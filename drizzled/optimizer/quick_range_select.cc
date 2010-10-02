@@ -21,7 +21,6 @@
 #include "drizzled/session.h"
 #include "drizzled/optimizer/quick_range.h"
 #include "drizzled/optimizer/quick_range_select.h"
-#include "drizzled/sql_bitmap.h"
 #include "drizzled/internal/m_string.h"
 #include <fcntl.h>
 
@@ -193,7 +192,7 @@ end:
   }
   head->prepare_for_position();
   head->cursor= org_file;
-  bitmap_union(*column_bitmap, *head->read_set);
+  *column_bitmap|= *head->read_set;
   head->column_bitmaps_set(*column_bitmap, *column_bitmap);
 
   return 0;
