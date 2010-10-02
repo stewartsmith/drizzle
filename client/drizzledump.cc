@@ -84,7 +84,6 @@ static bool quick= true;
 static bool ignore_errors= false;
 static bool flush_logs= false;
 static bool opt_keywords= false;
-static bool opt_compress= false;
 static bool opt_delayed= false; 
 static bool create_options= true; 
 static bool opt_quoted= false;
@@ -488,8 +487,6 @@ try
   N_("Dump all the tablespaces."))
   ("complete-insert,c", po::value<bool>(&opt_complete_insert)->default_value(false)->zero_tokens(),
   N_("Use complete insert statements."))
-  ("compress,C", po::value<bool>(&opt_compress)->default_value(false)->zero_tokens(),
-  N_("Use compression in server/client protocol."))
   ("flush-logs,F", po::value<bool>(&flush_logs)->default_value(false)->zero_tokens(),
   N_("Flush logs file in server before starting dump. Note that if you dump many databases at once (using the option --databases= or --all-databases), the logs will be flushed for each database dumped. The exception is when using --lock-all-tables in this case the logs will be flushed only once, corresponding to the moment all tables are locked. So if you want your dump and the log flush to happen at the same exact moment you should use --lock-all-tables or --flush-logs"))
   ("force,f", po::value<bool>(&ignore_errors)->default_value(false)->zero_tokens(),

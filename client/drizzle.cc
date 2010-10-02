@@ -287,7 +287,7 @@ static bool ignore_errors= false, quick= false,
   connected= false, opt_raw_data= false, unbuffered= false,
   output_tables= false, opt_rehash= true, skip_updates= false,
   safe_updates= false, one_database= false,
-  opt_compress= false, opt_shutdown= false, opt_ping= false,
+  opt_shutdown= false, opt_ping= false,
   vertical= false, line_numbers= true, column_names= true,
   opt_nopager= true, opt_outfile= false, named_cmds= false,
   opt_nobeep= false, opt_reconnect= true,
@@ -1287,8 +1287,6 @@ try
   N_("Display column type information."))
   ("comments,c", po::value<bool>(&preserve_comments)->default_value(false)->zero_tokens(),
   N_("Preserve comments. Send comments to the server. The default is --skip-comments (discard comments), enable with --comments"))
-  ("compress,C", po::value<bool>(&opt_compress)->default_value(false)->zero_tokens(),
-  N_("Use compression in server/client protocol."))  
   ("vertical,E", po::value<bool>(&vertical)->default_value(false)->zero_tokens(),
   N_("Print the output of a query (rows) vertically."))
   ("force,f", po::value<bool>(&ignore_errors)->default_value(false)->zero_tokens(),
