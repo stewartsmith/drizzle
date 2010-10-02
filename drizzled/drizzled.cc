@@ -1283,7 +1283,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   N_("Set the language used for the month names and the days of the week."))
   ("log-warnings,W", po::value<string>(),
   N_("Log some not critical warnings to the log file."))  
-  ("pid-file", po::value<string>(),
+  ("pid-file", po::value<fs::path>(&pid_file),
   N_("Pid file used by drizzled."))
   ("port-open-timeout", po::value<uint32_t>(&drizzled_bind_timeout)->default_value(0),
   N_("Maximum time in seconds to wait for the port to become free. "))
@@ -2266,11 +2266,6 @@ static void get_options()
   if (vm.count("skip-symlinks"))
   {
     internal::my_use_symdir=0;
-  }
-
-  if (vm.count("pid-file"))
-  {
-    pid_file= vm["pid-file"].as<string>();
   }
 
   if (vm.count("transaction-isolation"))
