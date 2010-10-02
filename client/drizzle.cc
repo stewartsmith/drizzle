@@ -158,9 +158,11 @@ typedef Function drizzle_compentry_func_t;
 #define vidattr(A) {}      // Can't get this to work
 #endif
 #include <boost/program_options.hpp>
+#include "drizzled/program_options/config_file.h"
 
 using namespace std;
 namespace po=boost::program_options;
+namespace dpo=drizzled::program_options;
 
 /* Don't try to make a nice table if the data is too big */
 const uint32_t MAX_COLUMN_LENGTH= 1024;
@@ -1420,16 +1422,16 @@ try
     user_config_dir_client.append("/drizzle/client.cnf");
 
     ifstream user_drizzle_ifs(user_config_dir_drizzle.c_str());
-    po::store(parse_config_file(user_drizzle_ifs, drizzle_options), vm);
+    po::store(dpo::parse_config_file(user_drizzle_ifs, drizzle_options), vm);
 
     ifstream user_client_ifs(user_config_dir_client.c_str());
-    po::store(parse_config_file(user_client_ifs, client_options), vm);
+    po::store(dpo::parse_config_file(user_client_ifs, client_options), vm);
 
     ifstream system_drizzle_ifs(system_config_dir_drizzle.c_str());
-    store(parse_config_file(system_drizzle_ifs, drizzle_options), vm);
+    store(dpo::parse_config_file(system_drizzle_ifs, drizzle_options), vm);
  
     ifstream system_client_ifs(system_config_dir_client.c_str());
-    po::store(parse_config_file(system_client_ifs, client_options), vm);
+    po::store(dpo::parse_config_file(system_client_ifs, client_options), vm);
   }
 
   po::notify(vm);

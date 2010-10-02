@@ -43,6 +43,7 @@ BUILT_SOURCES=
 BUILT_MAINT_SRC=
 EXTRA_DIST= \
 	    .quickly \
+	    COPYING.Boost \
 	    COPYING.BSD \
 	    DRIZZLE.FAQ \
 	    EXCEPTIONS-CLIENT \
