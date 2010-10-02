@@ -113,17 +113,15 @@ invalid_syntax::invalid_syntax(const std::string& in_tokens,
 namespace detail
 {
 
-namespace {
-  std::string trim_ws(const std::string& s)
-  {
-    std::string::size_type n, n2;
-    n = s.find_first_not_of(" \t\r\n");
-    if (n == std::string::npos)
-      return std::string();
-    else {
-      n2 = s.find_last_not_of(" \t\r\n");
-      return s.substr(n, n2-n+1);
-    }
+std::string trim_ws(const std::string& s)
+{
+  std::string::size_type n, n2;
+  n = s.find_first_not_of(" \t\r\n");
+  if (n == std::string::npos)
+    return std::string();
+  else {
+    n2 = s.find_last_not_of(" \t\r\n");
+    return s.substr(n, n2-n+1);
   }
 }
 
