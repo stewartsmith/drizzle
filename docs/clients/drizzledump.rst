@@ -39,10 +39,6 @@ The :program:`drizzledump` tool has several available options:
 
    Dumps using complete insert statements. *CURRENTLY BROKEN*
 
-.. option:: -C, --compress
-
-   Use client/server compression protocol.
-
 .. option:: -F, --flush-logs
 
    Flush the server logs before commencing with the dump. *CURRENTLY_BROKEN*
