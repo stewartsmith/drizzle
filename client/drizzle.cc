@@ -1326,7 +1326,7 @@ try
 
   po::options_description drizzle_options(N_("Options specific to the drizzle client"));
   drizzle_options.add_options()
-  ("disable-auto-rehash",
+  ("disable-auto-rehash,A",
   N_("Disable automatic rehashing. One doesn't need to use 'rehash' to get table and field completion, but startup and reconnecting may take a longer time."))
   ("auto-vertical-output", po::value<bool>(&auto_vertical_output)->default_value(false)->zero_tokens(),
   N_("Automatically switch to vertical output mode if the result is wider than the terminal width."))
