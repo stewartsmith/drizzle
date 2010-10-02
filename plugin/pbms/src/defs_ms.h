@@ -28,6 +28,8 @@
 #ifndef __DEFS_MS_H__
 #define __DEFS_MS_H__
 
+#include <boost/dynamic_bitset.hpp>
+
 #include "cslib/CSDefs.h"
 
 #define MS_IDENTIFIER_CHAR_COUNT	64
@@ -131,7 +133,7 @@
 #define MYSQL_THD							Session *
 #define THR_THD								THR_Session
 #define STRUCT_TABLE						class Table
-#define MY_BITMAP							MyBitmap
+#define MY_BITMAP							boost::dynamic_bitset<>
 
 #define MYSQL_TYPE_TIMESTAMP				DRIZZLE_TYPE_TIMESTAMP
 #define MYSQL_TYPE_LONG						DRIZZLE_TYPE_LONG

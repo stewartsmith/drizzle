@@ -37,11 +37,13 @@
 #ifndef __TEMPLOG_MS_H__
 #define __TEMPLOG_MS_H__
 
+#include "defs_ms.h"
+
 #include "cslib/CSDefs.h"
 #include "cslib/CSFile.h"
 #include "cslib/CSStream.h"
+#include "cslib/CSThread.h"
 
-#include "defs_ms.h"
 
 class MSOpenTable;
 class MSDatabase;

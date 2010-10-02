@@ -31,15 +31,15 @@
 
 #include <stddef.h>
 
-#include "cslib/CSGlobal.h"
-#include "cslib/CSStrUtil.h"
-#include "cslib/CSStorage.h"
-
 #include "temp_log_ms.h"
 #include "open_table_ms.h"
 #include "trans_log_ms.h"
 #include "transaction_ms.h"
 #include "parameters_ms.h"
+
+#include "cslib/CSGlobal.h"
+#include "cslib/CSStrUtil.h"
+#include "cslib/CSStorage.h"
 
 
 // Search the transaction log for a MS_ReferenceTxn record for the given BLOB.

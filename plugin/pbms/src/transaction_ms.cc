@@ -30,16 +30,17 @@
 #include "cslib/CSConfig.h"
 #include <inttypes.h>
 
-#include "cslib/CSGlobal.h"
-#include "cslib/CSStrUtil.h"
-#include "cslib/CSLog.h"
-
 #include "defs_ms.h"
 #include "mysql_ms.h"
 #include "open_table_ms.h"
 #include "trans_log_ms.h"
 #include "transaction_ms.h"
 #include "pbmsdaemon_ms.h"
+
+#include "cslib/CSGlobal.h"
+#include "cslib/CSStrUtil.h"
+#include "cslib/CSLog.h"
+
 
 /*
  * The pbms_ functions are utility functions supplied by ha_pbms.cc

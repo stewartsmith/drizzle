@@ -26,12 +26,8 @@
  * Media Stream Tables.
  *
  */
-#include "cslib/CSConfig.h"
 
-#include "cslib/CSGlobal.h"
-#include "cslib/CSLog.h"
-#include "cslib/CSStrUtil.h"
-#include "cslib/CSPath.h"
+#include "config.h"
 
 #include "open_table_ms.h"
 #include "table_ms.h"
@@ -39,6 +35,14 @@
 #include "engine_ms.h"
 #include "transaction_ms.h"
 #include "parameters_ms.h"
+
+#include "cslib/CSConfig.h"
+
+#include "cslib/CSGlobal.h"
+#include "cslib/CSLog.h"
+#include "cslib/CSStrUtil.h"
+#include "cslib/CSPath.h"
+
 
 /*
  * ---------------------------------------------------------------

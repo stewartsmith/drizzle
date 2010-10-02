@@ -27,12 +27,15 @@
  *
  */
 
+#include "config.h"
+
+#include "network_ms.h"
+#include "connection_handler_ms.h"
+
 #include "cslib/CSConfig.h"
 #include "cslib/CSGlobal.h"
 #include "cslib/CSLog.h"
 
-#include "network_ms.h"
-#include "connection_handler_ms.h"
 
 MSSystemThread		*MSNetwork::gSystemThread;
 time_t				MSNetwork::gCurrentTime;

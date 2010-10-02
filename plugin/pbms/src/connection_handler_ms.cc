@@ -27,6 +27,14 @@
  *
  */
 
+#include "config.h"
+
+#include "connection_handler_ms.h"
+#include "network_ms.h"
+#include "open_table_ms.h"
+#include "engine_ms.h"
+#include "version_ms.h"
+
 #include "cslib/CSConfig.h"
 #include <inttypes.h>
 
@@ -35,11 +43,6 @@
 #include "cslib/CSStrUtil.h"
 #include "cslib/CSHTTPStream.h"
 
-#include "connection_handler_ms.h"
-#include "network_ms.h"
-#include "open_table_ms.h"
-#include "engine_ms.h"
-#include "version_ms.h"
 
 //#include "mysql_ms.h"
 
