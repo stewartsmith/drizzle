@@ -39,6 +39,10 @@ extern bool opt_databases;
 extern bool opt_alldbs;
 extern uint32_t show_progress_size;
 extern bool opt_ignore;
+extern bool opt_compress;
+extern bool opt_drop_database;
+extern bool opt_autocommit;
+extern bool ignore_errors;
 
 extern boost::unordered_set<std::string> ignore_table;
 extern void maybe_exit(int error);
@@ -172,6 +176,9 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpDatabase &obj)
     /* Love that this variable is the opposite of its name */
     if (not opt_create_db)
     {
+      if (opt_drop_database)
+        os << "DROP DATABASE IF EXISTS `" << obj.databaseName << "`" << std::endl;
+
       os << "CREATE DATABASE IF NOT EXISTS `" << obj.databaseName << "`";
       if (not obj.collate.empty())
        os << " COLLATE = " << obj.collate;
@@ -196,7 +203,10 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpDatabase &obj)
       if (data == NULL)
       {
         std::cerr << "Error: Could not get data for table " << table->displayName << std::endl;
-        maybe_exit(EX_DRIZZLEERR);
+        if (not ignore_errors)
+          maybe_exit(EX_DRIZZLEERR);
+        else
+          continue;
       }
       os << *data;
       delete data;
@@ -236,6 +246,10 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
   }
   if (opt_disable_keys)
     os << "ALTER TABLE `" << obj.table->displayName << "` DISABLE KEYS;" << std::endl;
+
+  /* Another option that does the opposite of its name, makes me sad :( */
+  if (opt_autocommit)
+    os << "START TRANSACTION;" << std::endl;
 
   std::streampos out_position= os.tellp();
 
@@ -310,6 +324,9 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
     }
   }
   os << ");" << std::endl;
+
+  if (opt_autocommit)
+    os << "COMMIT;" << std::endl;
 
   if (opt_disable_keys)
     os << "ALTER TABLE `" << obj.table->tableName << "` ENABLE KEYS;" << std::endl;
@@ -533,8 +550,8 @@ bool DrizzleDumpConnection::setDB(std::string databaseName)
   return true;
 }
 
-void DrizzleDumpConnection::errorHandler(drizzle_result_st *res, drizzle_return_t ret,
-                     const char *when)
+void DrizzleDumpConnection::errorHandler(drizzle_result_st *res,
+  drizzle_return_t ret, const char *when)
 {
   if (ret == DRIZZLE_RETURN_ERROR_CODE)
   {

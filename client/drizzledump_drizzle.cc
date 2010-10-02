@@ -25,7 +25,8 @@
 #include <drizzled/gettext.h>
 #include <boost/lexical_cast.hpp>
 
-extern bool  verbose;
+extern bool verbose;
+extern bool ignore_errors;
 
 bool DrizzleDumpDatabaseDrizzle::populateTables()
 {
@@ -65,7 +66,10 @@ bool DrizzleDumpDatabaseDrizzle::populateTables()
     if ((not table->populateFields()) or (not table->populateIndexes()))
     {
       delete table;
-      return false;
+      if (not ignore_errors)
+        return false;
+      else
+        continue;
     }
     tables.push_back(table);
   }
@@ -121,7 +125,10 @@ bool DrizzleDumpDatabaseDrizzle::populateTables(const std::vector<std::string> &
         std::cerr  << "Error: Could not get fields and/ot indexes for table " << displayName << std::endl;
         delete table;
         dcon->freeResult(result);
-        return false;
+        if (not ignore_errors)
+          return false;
+        else
+          continue;
       }
       tables.push_back(table);
       dcon->freeResult(result);
@@ -130,7 +137,10 @@ bool DrizzleDumpDatabaseDrizzle::populateTables(const std::vector<std::string> &
     {
       std::cerr << "Error: Table " << displayName << " not found." << std::endl;
       dcon->freeResult(result);
-      return false;
+      if (not ignore_errors)
+        return false;
+      else
+        continue;
     }
   }
 

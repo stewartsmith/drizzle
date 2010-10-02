@@ -74,7 +74,6 @@ CREATE TABLE t1 (a int);
 INSERT INTO t1 VALUES (1),(2),(3);
 INSERT INTO t1 VALUES (4),(5),(6);
 --exec $DRIZZLE_DUMP --skip-comments --insert-ignore test t1
---exec $DRIZZLE_DUMP --skip-comments --insert-ignore --delayed-insert test t1
 DROP TABLE t1;
 
 --echo #
@@ -413,7 +412,7 @@ create table t1 (
  F_6faa8040da20ef399b63a72d0e4ab575 int,
  F_fe73f687e5bc5280214e0486b273a5f9 int);
 insert into t1 (F_8d3bba7425e7c98c50f52ca1b52d3735) values (1);
---exec $DRIZZLE_DUMP --skip-comments -c test
+--exec $DRIZZLE_DUMP --skip-comments test
 drop table t1;
 
 --echo #
@@ -541,7 +540,6 @@ drop table `t1`;
 create table t1(a int);
 create table t2(a int);
 create table t3(a int);
---error 2
 --exec $DRIZZLE_DUMP --skip-comments --force --no-data test t3 t1 non_existing t2
 drop table t1, t2, t3;
 
@@ -652,7 +650,7 @@ drop table words2;
 create database `test-database`;
 use `test-database`;
 create table test (a int);
---exec $DRIZZLE_DUMP --compact --opt test-database
+--exec $DRIZZLE_DUMP --compact test-database
 drop database `test-database`;
 use test;
 
