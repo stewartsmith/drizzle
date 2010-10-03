@@ -1357,7 +1357,7 @@ try
   ("raw,r", po::value<bool>(&opt_raw_data)->default_value(false)->zero_tokens(),
   N_("Write fields without conversion. Used with --batch.")) 
   ("disable-reconnect", N_("Do not reconnect if the connection is lost."))
-  ("shutdown", po::value<bool>(&opt_shutdown)->default_value(false)->zero_tokens(),
+  ("shutdown", po::value<bool>()->zero_tokens(),
   N_("Shutdown the server"))
   ("silent,s", N_("Be more silent. Print results with a tab as separator, each row on new line."))
   ("tee", po::value<string>(),
@@ -1494,6 +1494,13 @@ try
   column_names= (vm.count("disable-column-names")) ? false : true;
   opt_rehash= (vm.count("disable-auto-rehash")) ? false : true;
   opt_reconnect= (vm.count("disable-reconnect")) ? false : true;
+
+  /* Don't rehash with --shutdown */
+  if (vm.count("shutdown"))
+  {
+    opt_rehash= false;
+    opt_shutdown= true;
+  }
 
   if (vm.count("delimiter"))
   {
