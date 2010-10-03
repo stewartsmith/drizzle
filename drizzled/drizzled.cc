@@ -289,6 +289,7 @@ time_t flush_status_time;
 fs::path basedir(PREFIX);
 fs::path pid_file;
 fs::path secure_file_priv("");
+fs::path plugin_dir;
 
 char system_time_zone[30];
 char *default_tz_name;
@@ -714,18 +715,26 @@ static void find_plugin_dir(string progname)
     base_plugin_dir /= "plugin";
     base_plugin_dir /= ".libs";
   }
-  (void) internal::my_load_path(opt_plugin_dir, fs::path(fs::system_complete(base_plugin_dir)).file_string().c_str(), "");
-}
 
-static void notify_plugin_dir(string in_plugin_dir)
-{
-  if (not in_plugin_dir.empty())
+  if (plugin_dir.root_directory() == "")
   {
-    (void) internal::my_load_path(opt_plugin_dir,
-                                  in_plugin_dir.c_str(),
-                                  basedir.file_string().c_str());
+    fs::path full_plugin_dir(fs::system_complete(base_plugin_dir));
+    full_plugin_dir /= plugin_dir;
+    plugin_dir= full_plugin_dir;
   }
 }
+
+static void notify_plugin_dir(fs::path in_plugin_dir)
+{
+  plugin_dir= in_plugin_dir;
+  if (plugin_dir.root_directory() == "")
+  {
+    fs::path full_plugin_dir(fs::system_complete(basedir));
+    full_plugin_dir /= plugin_dir;
+    plugin_dir= full_plugin_dir;
+  }
+}
+
 
 static void check_limits_aii(uint64_t in_auto_increment_increment)
 {
@@ -1233,7 +1242,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
    N_("Configuration file to use"))
   ("config-dir", po::value<string>()->default_value(system_config_dir_drizzle),
    N_("Base location for config files"))
-  ("plugin-dir", po::value<string>()->notifier(&notify_plugin_dir),
+  ("plugin-dir", po::value<fs::path>(&plugin_dir)->notifier(&notify_plugin_dir),
   N_("Directory for plugins."))
   ;
 

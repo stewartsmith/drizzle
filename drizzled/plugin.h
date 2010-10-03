@@ -29,6 +29,7 @@
 #include "drizzled/lex_string.h"
 #include "drizzled/xid.h"
 #include <boost/program_options.hpp>
+#include <boost/filesystem.hpp>
 
 namespace drizzled
 {
@@ -46,7 +47,7 @@ class sys_var;
 typedef drizzle_lex_string LEX_STRING;
 struct option;
 
-extern char opt_plugin_dir[FN_REFLEN];
+extern boost::filesystem::path plugin_dir;
 
 namespace plugin { class StorageEngine; }
 
