@@ -1202,6 +1202,12 @@ typedef struct st_ror_scan_info
       first_uncovered_field(0),
       key_components(0)
   {}
+
+  ~st_ror_scan_info()
+  {
+    delete covered_fields;
+  }
+
   uint32_t      idx;      /* # of used key in param->keys */
   uint32_t      keynr;    /* # of used key in table */
   ha_rows   records;  /* estimate of # records this scan will return */
@@ -1343,8 +1349,24 @@ static int cmp_ror_scan_info_covering(ROR_SCAN_INFO** a, ROR_SCAN_INFO** b)
 }
 
 /* Auxiliary structure for incremental ROR-intersection creation */
-typedef struct
+typedef struct st_ror_intersect_info
 {
+  st_ror_intersect_info()
+    :
+      param(NULL),
+      covered_fields(NULL),
+      out_rows(0.0),
+      is_covering(false),
+      index_records(0),
+      index_scan_costs(0.0),
+      total_cost(0.0)
+  {}
+
+  ~st_ror_intersect_info()
+  {
+    delete covered_fields;
+  }
+
   const optimizer::Parameter *param;
   boost::dynamic_bitset<> *covered_fields; /* union of fields covered by all scans */
   /*
