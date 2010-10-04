@@ -55,9 +55,6 @@ bool Item_func_from_days::get_temporal(Date &to)
   if (! to.from_julian_day_number(int_value))
   {
     /* Bad input, throw an error */
-    //std::stringstream ss;
-    //std::string tmp;
-    //ss << int_value; ss >> tmp;
     std::string tmp(boost::lexical_cast<std::string>(int_value));
 
     my_error(ER_ARGUMENT_OUT_OF_RANGE, MYF(ME_FATALERROR), tmp.c_str(), func_name());

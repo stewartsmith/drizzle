@@ -131,10 +131,7 @@ int Field_enum::store(int64_t from, bool)
 
   if (from <= 0 || (uint64_t) from > typelib->count)
   {
-    /* Convert the integer to a string using stringstream */
-    //std::stringstream ss;
-    //std::string tmp;
-    //ss << from; ss >> tmp;
+    /* Convert the integer to a string using boost::lexical_cast */
     std::string tmp(boost::lexical_cast<std::string>(from));
 
     my_error(ER_INVALID_ENUM_VALUE, MYF(ME_FATALERROR), tmp.c_str());

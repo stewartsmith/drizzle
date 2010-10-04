@@ -184,11 +184,11 @@ int Field_timestamp::store(double from)
   if (from < 0 || from > 99991231235959.0)
   {
     /* Convert the double to a string using stringstream */
-    //std::stringstream ss;
-    //std::string tmp;
-    //ss.precision(18); /* 18 places should be fine for error display of double input. */
-    //ss << from; ss >> tmp;
-    std::string tmp(boost::lexical_cast<std::string>(from));
+    std::stringstream ss;
+    std::string tmp;
+    ss.precision(18); /* 18 places should be fine for error display of double input. */
+    ss << from; 
+    ss >> tmp;
 
     my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(ME_FATALERROR), tmp.c_str());
     return 2;
@@ -207,10 +207,7 @@ int Field_timestamp::store(int64_t from, bool)
   Timestamp temporal;
   if (! temporal.from_int64_t(from))
   {
-    /* Convert the integer to a string using stringstream */
-    //std::stringstream ss;
-    //std::string tmp;
-    //ss << from; ss >> tmp;
+    /* Convert the integer to a string using boost::lexical_cast */
     std::string tmp(boost::lexical_cast<std::string>(from));
 
     my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(ME_FATALERROR), tmp.c_str());
