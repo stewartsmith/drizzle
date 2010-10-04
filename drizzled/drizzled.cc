@@ -512,7 +512,6 @@ void clean_up(bool print_message)
     return;
 
   table_cache_free();
-  set_var_free();
   free_charsets();
   module::Registry &modules= module::Registry::singleton();
   modules.shutdownModules();

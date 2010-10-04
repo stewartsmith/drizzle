@@ -951,8 +951,7 @@ struct sys_var_with_base
 */
 
 int set_var_init();
-void set_var_free();
-drizzle_show_var* enumerate_sys_vars(Session *session, bool sorted);
+drizzle_show_var* enumerate_sys_vars(Session *session);
 void drizzle_add_plugin_sysvar(sys_var_pluginvar *var);
 void drizzle_del_plugin_sysvar();
 int mysql_add_sys_var_chain(sys_var *chain, struct option *long_options);
