@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2010-07-20 16:06+0000\n"
-"PO-Revision-Date: 2010-09-06 16:50+0000\n"
+"PO-Revision-Date: 2010-10-03 17:53+0000\n"
 "Last-Translator: Manuel Padilha <Unknown>\n"
 "Language-Team: Portuguese <pt@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2010-09-07 04:47+0000\n"
+"X-Launchpad-Export-Date: 2010-10-04 04:56+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 msgid "Synonym for `help'."
@@ -212,6 +212,8 @@ msgstr "Fazer ping ao servidor para verificar se está vivo."
 
 msgid "Configuration file defaults are not used if no-defaults is set"
 msgstr ""
+"Os valores pré-definidos nos ficheiros de configuração não são usados se no-"
+"defaults for especificado"
 
 msgid ""
 "Enable automatic rehashing. One doesn't need to use 'rehash' to get table "
@@ -1948,12 +1950,14 @@ msgstr "Variável de sistema desconhecida '%-.64s'"
 
 #, c-format
 msgid "Table '%-.192s' is marked as crashed and should be repaired"
-msgstr ""
+msgstr "A tabela '%-.192s' está marcada como corrompida e deve ser reparada"
 
 #, c-format
 msgid ""
 "Table '%-.192s' is marked as crashed and last (automatic?) repair failed"
 msgstr ""
+"A tabela '%-.192s' está marcada como corrompida e a última reparação "
+"(automática?) falhou"
 
 msgid "Some non-transactional changed tables couldn't be rolled back"
 msgstr ""
