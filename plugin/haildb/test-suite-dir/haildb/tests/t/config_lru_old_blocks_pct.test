@@ -1,0 +1,16 @@
+SET @my_lru = @@global.innodb_lru_old_blocks_pct;
+SHOW VARIABLES LIKE 'innodb_lru_old_blocks_pct';
+SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='lru_old_blocks_pct';
+SET GLOBAL innodb_lru_old_blocks_pct=20;
+SHOW VARIABLES LIKE 'innodb_lru_old_blocks_pct';
+SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='lru_old_blocks_pct';
+SET GLOBAL innodb_lru_old_blocks_pct=200;
+SHOW VARIABLES LIKE 'innodb_lru_old_blocks_pct';
+SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='lru_old_blocks_pct';
+SET GLOBAL innodb_lru_old_blocks_pct=95;
+SHOW VARIABLES LIKE 'innodb_lru_old_blocks_pct';
+SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='lru_old_blocks_pct';
+SET GLOBAL innodb_lru_old_blocks_pct=5;
+SHOW VARIABLES LIKE 'innodb_lru_old_blocks_pct';
+SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='lru_old_blocks_pct';
+SET GLOBAL innodb_lru_old_blocks_pct=@my_lru;

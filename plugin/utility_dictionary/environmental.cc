@@ -51,7 +51,8 @@ bool utility_dictionary::Environmental::Generator::populate()
   if (not *position)
     return false;
 
-  push(*position);
+  std::string substring(*position, 0, LARGEST_ENV_STRING);
+  push(substring);
 
   char *value= NULL;
   if ((value= strchr(*position, '=')))
@@ -61,7 +62,8 @@ bool utility_dictionary::Environmental::Generator::populate()
 
   if (value)
   {
-    push(value);
+    substring.assign(value, 0, LARGEST_ENV_STRING);
+    push(substring);
   }
   else
   {

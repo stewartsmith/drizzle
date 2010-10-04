@@ -1,0 +1,6 @@
+SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='io_capacity';
+NAME	TYPE	VALUE
+io_capacity	ULONG	500
+show variables like 'innodb_io_capacity';
+Variable_name	Value
+innodb_io_capacity	500

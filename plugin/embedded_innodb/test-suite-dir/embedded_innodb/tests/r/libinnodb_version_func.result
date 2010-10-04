@@ -1,3 +1,0 @@
-SELECT LIBINNODB_VERSION();
-LIBINNODB_VERSION()
-Release 3, Revision 0, Age 0

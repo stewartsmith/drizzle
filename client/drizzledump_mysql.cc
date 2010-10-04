@@ -26,7 +26,8 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <drizzled/gettext.h>
 
-extern bool  verbose;
+extern bool verbose;
+extern bool ignore_errors;
 
 bool DrizzleDumpDatabaseMySQL::populateTables()
 {
@@ -40,7 +41,7 @@ bool DrizzleDumpDatabaseMySQL::populateTables()
   if (verbose)
     std::cerr << _("-- Retrieving table structures for ") << databaseName << "..." << std::endl;
 
-  query="SELECT TABLE_NAME, TABLE_COLLATION, ENGINE, AUTO_INCREMENT FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='";
+  query="SELECT TABLE_NAME, TABLE_COLLATION, ENGINE, AUTO_INCREMENT FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE != 'VIEW' AND TABLE_SCHEMA='";
   query.append(databaseName);
   query.append("' ORDER BY TABLE_NAME");
 
@@ -70,7 +71,10 @@ bool DrizzleDumpDatabaseMySQL::populateTables()
     if ((not table->populateFields()) or (not table->populateIndexes()))
     {
       delete table;
-      return false;
+      if (not ignore_errors)
+        return false;
+      else
+        continue;
     }
     tables.push_back(table);
   }
@@ -125,7 +129,10 @@ bool DrizzleDumpDatabaseMySQL::populateTables(const std::vector<std::string> &ta
       if ((not table->populateFields()) or (not table->populateIndexes()))
       {
         delete table;
-        return false;
+        if (not ignore_errors)
+          return false;
+        else
+          continue;
       }
       tables.push_back(table);
       dcon->freeResult(result);
@@ -133,7 +140,10 @@ bool DrizzleDumpDatabaseMySQL::populateTables(const std::vector<std::string> &ta
     else
     {
       dcon->freeResult(result);
-      return false;
+      if (not ignore_errors)
+        return false;
+      else
+        continue;
     }
   }
 
@@ -264,6 +274,7 @@ bool DrizzleDumpTableMySQL::populateIndexes()
       index->isPrimary= (strcmp(row[2], "PRIMARY") == 0);
       index->isUnique= (strcmp(row[1], "0") == 0);
       index->isHash= (strcmp(row[10], "HASH") == 0);
+      index->length= (row[7]) ? boost::lexical_cast<uint32_t>(row[7]) : 0;
       lastKey= row[2];
       firstIndex= false;
     }
@@ -353,7 +364,7 @@ void DrizzleDumpFieldMySQL::setType(const char* raw_type, const char* raw_collat
     convertDateTime= true;
   }
 
-  if (old_type.compare("TIME") == 0)
+  if ((old_type.compare("TIME") == 0) or (old_type.compare("YEAR") == 0))
   {
     type= "INT";
     return;
