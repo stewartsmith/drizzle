@@ -41,7 +41,7 @@ bool DrizzleDumpDatabaseMySQL::populateTables()
   if (verbose)
     std::cerr << _("-- Retrieving table structures for ") << databaseName << "..." << std::endl;
 
-  query="SELECT TABLE_NAME, TABLE_COLLATION, ENGINE, AUTO_INCREMENT FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE != 'VIEW' AND TABLE_SCHEMA='";
+  query="SELECT TABLE_NAME, TABLE_COLLATION, ENGINE, AUTO_INCREMENT, TABLE_COMMENT FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE != 'VIEW' AND TABLE_SCHEMA='";
   query.append(databaseName);
   query.append("' ORDER BY TABLE_NAME");
 
@@ -52,6 +52,7 @@ bool DrizzleDumpDatabaseMySQL::populateTables()
 
   while ((row= drizzle_row_next(result)))
   {
+    size_t* row_sizes= drizzle_row_field_sizes(result);
     std::string tableName(row[0]);
     std::string displayName(tableName);
     cleanTableName(displayName);
@@ -66,6 +67,11 @@ bool DrizzleDumpDatabaseMySQL::populateTables()
       table->autoIncrement= boost::lexical_cast<uint64_t>(row[3]);
     else
       table->autoIncrement= 0;
+
+    if (row[4])
+      table->comment= DrizzleDumpData::escape(row[4], row_sizes[4]);
+    else
+      table->comment= "";
 
     table->database= this;
     if ((not table->populateFields()) or (not table->populateIndexes()))
