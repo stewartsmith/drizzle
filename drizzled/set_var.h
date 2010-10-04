@@ -61,7 +61,6 @@ extern const char *first_keyword;
 extern const char *in_left_expr_name;
 extern const char *in_additional_cond;
 extern const char *in_having_cond;
-extern char language[FN_REFLEN];
 extern char glob_hostname[FN_REFLEN];
 extern char drizzle_home[FN_REFLEN];
 extern char pidfile_name[FN_REFLEN];
