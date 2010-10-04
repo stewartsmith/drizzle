@@ -1354,7 +1354,7 @@ typedef struct st_ror_intersect_info
   st_ror_intersect_info()
     :
       param(NULL),
-      covered_fields(NULL),
+      covered_fields(),
       out_rows(0.0),
       is_covering(false),
       index_records(0),
@@ -1362,13 +1362,21 @@ typedef struct st_ror_intersect_info
       total_cost(0.0)
   {}
 
-  ~st_ror_intersect_info()
+  st_ror_intersect_info(const optimizer::Parameter *in_param)
+    :
+      param(in_param),
+      covered_fields(in_param->table->getShare()->sizeFields()),
+      out_rows(in_param->table->cursor->stats.records),
+      is_covering(false),
+      index_records(0),
+      index_scan_costs(0.0),
+      total_cost(0.0)
   {
-    delete covered_fields;
+    covered_fields.reset();
   }
 
   const optimizer::Parameter *param;
-  boost::dynamic_bitset<> *covered_fields; /* union of fields covered by all scans */
+  boost::dynamic_bitset<> covered_fields; /* union of fields covered by all scans */
   /*
     Fraction of table records that satisfies conditions of all scans.
     This is the number of full records that will be retrieved if a
@@ -1383,34 +1391,6 @@ typedef struct st_ror_intersect_info
   double total_cost;
 } ROR_INTERSECT_INFO;
 
-
-/*
-  Allocate a ROR_INTERSECT_INFO and initialize it to contain zero scans.
-
-  SYNOPSIS
-    ror_intersect_init()
-      param         Parameter from test_quick_select
-
-  RETURN
-    allocated structure
-    NULL on error
-*/
-
-static
-ROR_INTERSECT_INFO* ror_intersect_init(const optimizer::Parameter *param)
-{
-  ROR_INTERSECT_INFO *info= NULL;
-  if (!(info= (ROR_INTERSECT_INFO*)param->mem_root->alloc_root(sizeof(ROR_INTERSECT_INFO))))
-    return NULL;
-  info->param= param;
-  info->covered_fields= new boost::dynamic_bitset<>(param->table->getShare()->sizeFields());
-  info->is_covering= false;
-  info->index_scan_costs= 0.0;
-  info->index_records= 0;
-  info->out_rows= (double) param->table->cursor->stats.records;
-  info->covered_fields->reset();
-  return info;
-}
 
 static void ror_intersect_cpy(ROR_INTERSECT_INFO *dst,
                               const ROR_INTERSECT_INFO *src)
@@ -1526,7 +1506,7 @@ static double ror_scan_selectivity(const ROR_INTERSECT_INFO *info,
   optimizer::SEL_ARG *tuple_arg= NULL;
   key_part_map keypart_map= 0;
   bool cur_covered;
-  bool prev_covered= test(info->covered_fields->test(key_part->fieldnr-1));
+  bool prev_covered= test(info->covered_fields.test(key_part->fieldnr-1));
   key_range min_range;
   key_range max_range;
   min_range.key= key_val;
@@ -1539,7 +1519,7 @@ static double ror_scan_selectivity(const ROR_INTERSECT_INFO *info,
        sel_arg= sel_arg->next_key_part)
   {
     cur_covered=
-      test(info->covered_fields->test(key_part[sel_arg->part].fieldnr-1));
+      test(info->covered_fields.test(key_part[sel_arg->part].fieldnr-1));
     if (cur_covered != prev_covered)
     {
       /* create (part1val, ..., part{n-1}val) tuple. */
@@ -1651,8 +1631,8 @@ static bool ror_intersect_add(ROR_INTERSECT_INFO *info,
   {
     info->index_records += info->param->table->quick_rows[ror_scan->keynr];
     info->index_scan_costs += ror_scan->index_read_cost;
-    *info->covered_fields|= *ror_scan->covered_fields;
-    if (! info->is_covering && info->param->needed_fields.is_subset_of(*info->covered_fields))
+    info->covered_fields|= *ror_scan->covered_fields;
+    if (! info->is_covering && info->param->needed_fields.is_subset_of(info->covered_fields))
     {
       info->is_covering= true;
     }
@@ -1900,7 +1880,7 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
     ROR_SCAN_INFO *scan;
     if (! tree->ror_scans_map.test(idx))
       continue;
-    if (!(scan= make_ror_scan(param, idx, tree->keys[idx])))
+    if (! (scan= make_ror_scan(param, idx, tree->keys[idx])))
       return NULL;
     if (param->real_keynr[idx] == cpk_no)
     {
@@ -1927,20 +1907,17 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
   intersect_scans_end= intersect_scans;
 
   /* Create and incrementally update ROR intersection. */
-  ROR_INTERSECT_INFO *intersect= NULL;
-  ROR_INTERSECT_INFO *intersect_best= NULL;
-  if (! (intersect= ror_intersect_init(param)) ||
-      ! (intersect_best= ror_intersect_init(param)))
-    return NULL;
+  ROR_INTERSECT_INFO intersect(param);
+  ROR_INTERSECT_INFO intersect_best(param);
 
   /* [intersect_scans,intersect_scans_best) will hold the best intersection */
   ROR_SCAN_INFO **intersect_scans_best= NULL;
   cur_ror_scan= tree->ror_scans;
   intersect_scans_best= intersect_scans;
-  while (cur_ror_scan != tree->ror_scans_end && !intersect->is_covering)
+  while (cur_ror_scan != tree->ror_scans_end && ! intersect.is_covering)
   {
     /* S= S + first(R);  R= R - first(R); */
-    if (!ror_intersect_add(intersect, *cur_ror_scan, false))
+    if (! ror_intersect_add(&intersect, *cur_ror_scan, false))
     {
       cur_ror_scan++;
       continue;
@@ -1948,12 +1925,12 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
 
     *(intersect_scans_end++)= *(cur_ror_scan++);
 
-    if (intersect->total_cost < min_cost)
+    if (intersect.total_cost < min_cost)
     {
       /* Local minimum found, save it */
-      ror_intersect_cpy(intersect_best, intersect);
+      ror_intersect_cpy(&intersect_best, &intersect);
       intersect_scans_best= intersect_scans_end;
-      min_cost = intersect->total_cost;
+      min_cost = intersect.total_cost;
     }
   }
 
@@ -1962,19 +1939,19 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
     return NULL;
   }
 
-  *are_all_covering= intersect->is_covering;
+  *are_all_covering= intersect.is_covering;
   uint32_t best_num= intersect_scans_best - intersect_scans;
-  ror_intersect_cpy(intersect, intersect_best);
+  ror_intersect_cpy(&intersect, &intersect_best);
 
   /*
     Ok, found the best ROR-intersection of non-CPK key scans.
     Check if we should add a CPK scan. If the obtained ROR-intersection is
     covering, it doesn't make sense to add CPK scan.
   */
-  if (cpk_scan && !intersect->is_covering)
+  if (cpk_scan && ! intersect.is_covering)
   {
-    if (ror_intersect_add(intersect, cpk_scan, true) &&
-        (intersect->total_cost < min_cost))
+    if (ror_intersect_add(&intersect, cpk_scan, true) &&
+        (intersect.total_cost < min_cost))
     {
       cpk_scan_used= true;
       intersect_best= intersect; //just set pointer here
@@ -1993,15 +1970,15 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
       return NULL;
     memcpy(trp->first_scan, intersect_scans, best_num*sizeof(ROR_SCAN_INFO*));
     trp->last_scan=  trp->first_scan + best_num;
-    trp->is_covering= intersect_best->is_covering;
-    trp->read_cost= intersect_best->total_cost;
+    trp->is_covering= intersect_best.is_covering;
+    trp->read_cost= intersect_best.total_cost;
     /* Prevent divisons by zero */
-    ha_rows best_rows = double2rows(intersect_best->out_rows);
+    ha_rows best_rows = double2rows(intersect_best.out_rows);
     if (! best_rows)
       best_rows= 1;
     set_if_smaller(param->table->quick_condition_rows, best_rows);
     trp->records= best_rows;
-    trp->index_scan_costs= intersect_best->index_scan_costs;
+    trp->index_scan_costs= intersect_best.index_scan_costs;
     trp->cpk_scan= cpk_scan_used? cpk_scan: NULL;
   }
   return trp;
