@@ -317,7 +317,6 @@ static sys_var_const_str        sys_hostname(&vars, "hostname", glob_hostname);
 #define FIXED_VARS_SIZE (sizeof(fixed_vars) / sizeof(drizzle_show_var))
 static drizzle_show_var fixed_vars[]= {
   {"back_log",                (char*) &back_log,                SHOW_INT},
-  {"language",                language,                         SHOW_CHAR},
   {"pid_file",                (char*) pidfile_name,             SHOW_CHAR},
   {"plugin_dir",              (char*) opt_plugin_dir,           SHOW_CHAR},
   {"thread_stack",            (char*) &my_thread_stack_size,    SHOW_INT},
