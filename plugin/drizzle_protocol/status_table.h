@@ -18,18 +18,18 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_DRIZZLE_PROTOCOL_TABLE_FUNCTION_H
-#define PLUGIN_DRIZZLE_PROTOCOL_TABLE_FUNCTION_H
+#ifndef PLUGIN_DRIZZLE_PROTOCOL_STATUS_TABLE_H
+#define PLUGIN_DRIZZLE_PROTOCOL_STATUS_TABLE_H
 
 #include "drizzled/plugin/table_function.h"
 namespace drizzle_protocol
 {
 
 
-class DrizzleProtocolStatus : public drizzled::plugin::TableFunction
+class StatusTable : public drizzled::plugin::TableFunction
 {
 public:
-  DrizzleProtocolStatus() :
+  StatusTable() :
     drizzled::plugin::TableFunction("DATA_DICTIONARY","DRIZZLE_PROTOCOL_STATUS")
   {
     add_field("VARIABLE_NAME");
@@ -38,12 +38,17 @@ public:
 
   class Generator : public drizzled::plugin::TableFunction::Generator
   {
-    drizzled::drizzle_show_var *status_var_ptr;
 
   public:
-    Generator(drizzled::Field **fields);
+    Generator(drizzled::Field **fields) :
+      drizzled::plugin::TableFunction::Generator(fields)
+    {
+    }
 
-    bool populate();
+    bool populate()
+    {
+      return false;
+    }
   };
 
   Generator *generator(drizzled::Field **arg)
@@ -54,4 +59,4 @@ public:
 
 }
 
-#endif /* PLUGIN_DRIZZLE_PROTOCOL_TABLE_FUNCTION_H */
+#endif /* PLUGIN_DRIZZLE_PROTOCOL_STATUS_TABLE_H */
