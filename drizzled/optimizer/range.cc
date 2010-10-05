@@ -5609,7 +5609,7 @@ boost::dynamic_bitset<> optimizer::RorScanInfo::bitsToBitset() const
   {
     res= "0";
   }
-  string final("0", covered_fields_size - res.length());
+  string final(covered_fields_size - res.length(), '0');
   final.append(res);
   return (boost::dynamic_bitset<>(final));
 }
