@@ -254,11 +254,11 @@ int main(int argc, char **argv)
 
   if (not opt_help)
   {
-    if (chdir(getDataHome().c_str()))
+    if (chdir(getDataHome().file_string().c_str()))
     {
       errmsg_printf(ERRMSG_LVL_ERROR,
                     _("Data directory %s does not exist\n"),
-                    getDataHome().c_str());
+                    getDataHome().file_string().c_str());
       unireg_abort(1);
     }
     if (mkdir("local", 0700))
@@ -269,15 +269,11 @@ int main(int argc, char **argv)
     {
       errmsg_printf(ERRMSG_LVL_ERROR,
                     _("Local catalog %s/local does not exist\n"),
-                    getDataHome().c_str());
+                    getDataHome().file_string().c_str());
       unireg_abort(1);
     }
-    /* TODO: This is a hack until we can properly support std::string in sys_var*/
-    char **data_home_ptr= getDatadirPtr();
-    fs::path full_data_home_path(fs::system_complete(fs::path(getDataHome())));
-    std::string full_data_home(full_data_home_path.file_string());
-    *data_home_ptr= new char[full_data_home.size()+1] ();
-    memcpy(*data_home_ptr, full_data_home.c_str(), full_data_home.size());
+
+    full_data_home= fs::system_complete(getDataHome());
     getDataHomeCatalog()= "./";
     getDataHome()= "../";
   }

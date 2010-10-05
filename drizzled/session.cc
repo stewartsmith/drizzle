@@ -913,7 +913,7 @@ void select_to_file::send_error(uint32_t errcode,const char *err)
   {
     (void) end_io_cache(cache);
     (void) internal::my_close(file, MYF(0));
-    (void) internal::my_delete(path, MYF(0));		// Delete file on error
+    (void) internal::my_delete(path.file_string().c_str(), MYF(0));		// Delete file on error
     file= -1;
   }
 }
@@ -947,7 +947,7 @@ void select_to_file::cleanup()
     (void) internal::my_close(file, MYF(0));
     file= -1;
   }
-  path[0]= '\0';
+  path.clear();
   row_count= 0;
 }
 
@@ -957,7 +957,7 @@ select_to_file::select_to_file(file_exchange *ex)
     cache(static_cast<internal::IO_CACHE *>(memory::sql_calloc(sizeof(internal::IO_CACHE)))),
     row_count(0L)
 {
-  path[0]=0;
+  path.clear();
 }
 
 select_to_file::~select_to_file()
@@ -991,30 +991,40 @@ select_export::~select_export()
 */
 
 
-static int create_file(Session *session, char *path, file_exchange *exchange, internal::IO_CACHE *cache)
+static int create_file(Session *session,
+                       fs::path &target_path,
+                       file_exchange *exchange,
+                       internal::IO_CACHE *cache)
 {
+  fs::path to_file(exchange->file_name);
   int file;
-  uint32_t option= MY_UNPACK_FILENAME | MY_RELATIVE_PATH;
 
-#ifdef DONT_ALLOW_FULL_LOAD_DATA_PATHS
-  option|= MY_REPLACE_DIR;			// Force use of db directory
-#endif
-
-  if (!internal::dirname_length(exchange->file_name))
+  if (not to_file.has_root_directory())
   {
-    strcpy(path, getDataHomeCatalog().c_str());
-    strncat(path, "/", 1);
-    if (! session->db.empty())
-      strncat(path, session->db.c_str(), FN_REFLEN-getDataHomeCatalog().size());
-    (void) internal::fn_format(path, exchange->file_name, path, "", option);
+    target_path= fs::system_complete(getDataHomeCatalog());
+    if (not session->db.empty())
+    {
+      int count_elements= 0;
+      for (fs::path::iterator iter= to_file.begin();
+           iter != to_file.end();
+           ++iter, ++count_elements)
+      { }
+
+      if (count_elements == 1)
+      {
+        target_path /= session->db;
+      }
+    }
+    target_path /= to_file;
   }
   else
-    (void) internal::fn_format(path, exchange->file_name, getDataHomeCatalog().c_str(), "", option);
+  {
+    target_path = exchange->file_name;
+  }
 
   if (not secure_file_priv.string().empty())
   {
     fs::path secure_file_path(fs::system_complete(secure_file_priv));
-    fs::path target_path(fs::system_complete(fs::path(path)));
     if (target_path.file_string().substr(0, secure_file_path.file_string().size()) != secure_file_path.file_string())
     {
       /* Write only allowed to dir or subdir specified by secure_file_priv */
@@ -1023,19 +1033,19 @@ static int create_file(Session *session, char *path, file_exchange *exchange, in
     }
   }
 
-  if (!access(path, F_OK))
+  if (!access(target_path.file_string().c_str(), F_OK))
   {
     my_error(ER_FILE_EXISTS_ERROR, MYF(0), exchange->file_name);
     return -1;
   }
   /* Create the file world readable */
-  if ((file= internal::my_create(path, 0666, O_WRONLY|O_EXCL, MYF(MY_WME))) < 0)
+  if ((file= internal::my_create(target_path.file_string().c_str(), 0666, O_WRONLY|O_EXCL, MYF(MY_WME))) < 0)
     return file;
   (void) fchmod(file, 0666);			// Because of umask()
   if (init_io_cache(cache, file, 0L, internal::WRITE_CACHE, 0L, 1, MYF(MY_WME)))
   {
     internal::my_close(file, MYF(0));
-    internal::my_delete(path, MYF(0));  // Delete file on error, it was just created
+    internal::my_delete(target_path.file_string().c_str(), MYF(0));  // Delete file on error, it was just created
     return -1;
   }
   return file;
@@ -1049,7 +1059,9 @@ select_export::prepare(List<Item> &list, Select_Lex_Unit *u)
   bool string_results= false, non_string_results= false;
   unit= u;
   if ((uint32_t) strlen(exchange->file_name) + NAME_LEN >= FN_REFLEN)
-    strncpy(path,exchange->file_name,FN_REFLEN-1);
+  {
+    path= exchange->file_name;
+  }
 
   /* Check if there is any blobs in data */
   {
@@ -1330,7 +1342,7 @@ bool select_dump::send_data(List<Item> &items)
     }
     else if (my_b_write(cache,(unsigned char*) res->ptr(),res->length()))
     {
-      my_error(ER_ERROR_ON_WRITE, MYF(0), path, errno);
+      my_error(ER_ERROR_ON_WRITE, MYF(0), path.file_string().c_str(), errno);
       goto err;
     }
   }

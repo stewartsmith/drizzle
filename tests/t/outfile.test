@@ -39,15 +39,16 @@ eval select * into dumpfile "../../tmp/outfile-test.2" from t1;
 eval select * into dumpfile "../../tmp/outfile-test.3" from t1;
 enable_query_log;
 select load_file(concat(@tmpdir,"/outfile-test.not-exist"));
---remove_file $MYSQLTEST_VARDIR/tmp/outfile-test.1
---remove_file $MYSQLTEST_VARDIR/tmp/outfile-test.2
---remove_file $MYSQLTEST_VARDIR/tmp/outfile-test.3
+-- --remove_file $MYSQLTEST_VARDIR/tmp/outfile-test.1
+-- --remove_file $MYSQLTEST_VARDIR/tmp/outfile-test.2
+-- --remove_file $MYSQLTEST_VARDIR/tmp/outfile-test.3
 drop table t1;
 
 # Bug#8191
 disable_query_log;
 eval select 1 into outfile "../../tmp/outfile-test.4";
 enable_query_log;
+--replace_result $DRIZZLE_TEST_DIR DRIZZLE_TEST_DIR
 select load_file(concat(@tmpdir,"/outfile-test.4"));
 --remove_file $MYSQLTEST_VARDIR/tmp/outfile-test.4
 

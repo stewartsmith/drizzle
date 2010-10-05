@@ -46,7 +46,7 @@ String *Item_load_file::val_str(String *str)
   if (!(file_name= args[0]->val_str(str)))
     goto err;
 
-  (void) internal::fn_format(path, file_name->c_ptr(), getDataHome().c_str(), "",
+  (void) internal::fn_format(path, file_name->c_ptr(), getDataHome().file_string().c_str(), "",
 		   MY_RELATIVE_PATH | MY_UNPACK_FILENAME);
 
   /* Read only allowed from within dir specified by secure_file_priv */

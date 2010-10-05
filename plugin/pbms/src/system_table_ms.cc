@@ -423,7 +423,7 @@ static bool pbms_database_follder_exists( const char *db)
 	if (!db)
 		return false;
 		
-	cs_strcpy(PATH_MAX, path, ms_my_get_mysql_home_path());
+	cs_strcpy(PATH_MAX, path, ms_my_get_mysql_home_path().c_str());
 	cs_add_name_to_path(PATH_MAX, path, db);
 	
 	if (stat(path, &stat_info) == 0)

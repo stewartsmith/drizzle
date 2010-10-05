@@ -370,34 +370,26 @@ po::options_description full_options("Kernel and Plugin Loading and Plugin");
 vector<string> unknown_options;
 vector<string> defaults_file_list;
 po::variables_map vm;
-char * data_dir_ptr;
+
+fs::path data_home(LOCALSTATEDIR);
+fs::path full_data_home(LOCALSTATEDIR);
 
 po::variables_map &getVariablesMap()
 {
   return vm;
 }
 
-std::string& getDataHome()
+fs::path& getDataHome()
 {
-  static string data_home(LOCALSTATEDIR);
   return data_home;
 }
 
-std::string& getDataHomeCatalog()
+fs::path& getDataHomeCatalog()
 {
-  static string data_home_catalog(getDataHome());
+  static fs::path data_home_catalog(getDataHome());
   return data_home_catalog;
 }
 
-char *getDatadir()
-{
-  return data_dir_ptr;
-}
-
-char **getDatadirPtr()
-{
-  return &data_dir_ptr;
-}
  
 /****************************************************************************
 ** Code to end drizzled
@@ -533,8 +525,6 @@ void clean_up(bool print_message)
   COND_server_end.notify_all();
   LOCK_thread_count.unlock();
 
-  char **data_home_ptr= getDatadirPtr();
-  delete[](*data_home_ptr);
   /*
     The following lines may never be executed as the main thread may have
     killed us
@@ -914,17 +904,6 @@ static void check_limits_max_sort_length(size_t in_max_sort_length)
   global_system_variables.max_sort_length= in_max_sort_length;
 }
 
-static void check_limits_mwlc(uint64_t in_min_examined_row_limit)
-{
-  global_system_variables.min_examined_row_limit= ULONG_MAX;
-  if (in_min_examined_row_limit > ULONG_MAX)
-  {
-    cout << N_("Error: Invalid Value for min_examined_row_limit");
-    exit(-1);
-  }
-  global_system_variables.min_examined_row_limit= in_min_examined_row_limit;
-}
-
 static void check_limits_osd(uint32_t in_optimizer_search_depth)
 {
   global_system_variables.optimizer_search_depth= 0;
@@ -1275,7 +1254,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   ("completion-type", po::value<uint32_t>(&global_system_variables.completion_type)->default_value(0)->notifier(&check_limits_completion_type),
   N_("Default completion type."))
   ("core-file",  N_("Write core on errors."))
-  ("datadir", po::value<string>(),
+  ("datadir", po::value<fs::path>(&data_home),
   N_("Path to the database root."))
   ("default-storage-engine", po::value<string>(),
   N_("Set the default storage engine for tables."))
@@ -1349,7 +1328,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   N_("The number of bytes to use when sorting BLOB or TEXT values "
      "(only the first max_sort_length bytes of each value are used; the "
      "rest are ignored)."))
-  ("max-write-lock-count", po::value<uint64_t>(&max_write_lock_count)->default_value(ULONG_MAX)->notifier(&check_limits_mwlc),
+  ("max-write-lock-count", po::value<uint64_t>(&max_write_lock_count)->default_value(UINT64_MAX),
   N_("After this many write locks, allow some read locks to run in between."))
   ("min-examined-row-limit", po::value<uint64_t>(&global_system_variables.min_examined_row_limit)->default_value(0)->notifier(&check_limits_merl),
   N_("Don't log queries which examine less than min_examined_row_limit "
@@ -2214,14 +2193,9 @@ static void drizzle_init_variables(void)
 static void get_options()
 {
 
-  if (vm.count("datadir"))
-  {
-    getDataHome()= vm["datadir"].as<string>();
-  }
-  string &data_home_catalog= getDataHomeCatalog();
+  fs::path &data_home_catalog= getDataHomeCatalog();
   data_home_catalog= getDataHome();
-  data_home_catalog.push_back('/');
-  data_home_catalog.append("local");
+  data_home_catalog /= "local"; 
 
   if (vm.count("user"))
   {
@@ -2325,7 +2299,7 @@ static void fix_paths()
   fs::path pid_file_path(pid_file);
   if (pid_file_path.root_path().string() == "")
   {
-    pid_file_path= fs::path(getDataHome());
+    pid_file_path= getDataHome();
     pid_file_path /= pid_file;
   }
   pid_file= pid_file_path;
@@ -2342,7 +2316,7 @@ static void fix_paths()
     }
     else if (tmp_string == NULL)
     {
-      drizzle_tmpdir.append(getDataHome());
+      drizzle_tmpdir.append(getDataHome().file_string());
       drizzle_tmpdir.push_back(FN_LIBCHAR);
       drizzle_tmpdir.append(GLOBAL_TEMPORARY_EXT);
     }

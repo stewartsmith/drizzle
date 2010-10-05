@@ -67,7 +67,7 @@ Schema::~Schema()
 
 void Schema::prime()
 {
-  CachedDirectory directory(getDataHomeCatalog(), CachedDirectory::DIRECTORY);
+  CachedDirectory directory(getDataHomeCatalog().file_string(), CachedDirectory::DIRECTORY);
   CachedDirectory::Entries files= directory.getEntries();
 
   mutex.lock();

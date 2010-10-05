@@ -56,9 +56,9 @@ void *ms_my_get_thread()
 }
 
 #ifdef DRIZZLED
-const char *ms_my_get_mysql_home_path()
+const std::string ms_my_get_mysql_home_path()
 {
-	return drizzled::getDataHomeCatalog().c_str();
+	return drizzled::getDataHomeCatalog().file_string();
 }
 
 bool ms_is_autocommit()
@@ -67,7 +67,7 @@ bool ms_is_autocommit()
 }
 
 #else
-const char *ms_my_get_mysql_home_path()
+const std::string ms_my_get_mysql_home_path()
 {
 	return mysql_real_data_home;
 }

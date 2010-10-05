@@ -124,7 +124,6 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
                 List<Item> &set_values,
                 enum enum_duplicates handle_duplicates, bool ignore)
 {
-  char name[FN_REFLEN];
   int file;
   Table *table= NULL;
   int error;
@@ -254,61 +253,63 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
     return(true);
   }
 
+  fs::path to_file(ex->file_name);
+  fs::path target_path(fs::system_complete(getDataHomeCatalog()));
+  if (not to_file.has_root_directory())
   {
-#ifdef DONT_ALLOW_FULL_LOAD_DATA_PATHS
-    ex->file_name+=dirname_length(ex->file_name);
-#endif
-    if (!internal::dirname_length(ex->file_name))
+    int count_elements= 0;
+    for (fs::path::iterator iter= to_file.begin();
+         iter != to_file.end();
+         ++iter, ++count_elements)
+    { }
+
+    if (count_elements == 1)
     {
-      strcpy(name, getDataHomeCatalog().c_str());
-      strncat(name, "/", 1);
-      strncat(name, tdb, FN_REFLEN-getDataHomeCatalog().size());
-      (void) internal::fn_format(name, ex->file_name, name, "",
-		       MY_RELATIVE_PATH | MY_UNPACK_FILENAME);
+      target_path /= tdb;
     }
-    else
+    target_path /= to_file;
+  }
+  else
+  {
+    target_path= to_file;
+  }
+
+  if (not secure_file_priv.string().empty())
+  {
+    fs::path secure_file_path(fs::system_complete(secure_file_priv));
+    if (target_path.file_string().substr(0, secure_file_path.file_string().size()) != secure_file_path.file_string())
     {
-      (void) internal::fn_format(name, ex->file_name, getDataHomeCatalog().c_str(), "",
-		       MY_RELATIVE_PATH | MY_UNPACK_FILENAME);
-
-      if (not secure_file_priv.string().empty())
-      {
-        fs::path secure_file_path(fs::system_complete(secure_file_priv));
-        fs::path target_path(fs::system_complete(fs::path(name)));
-        if (target_path.file_string().substr(0, secure_file_path.file_string().size()) != secure_file_path.file_string())
-        {
-          /* Read only allowed from within dir specified by secure_file_priv */
-          my_error(ER_OPTION_PREVENTS_STATEMENT, MYF(0), "--secure-file-priv");
-          return(true);
-        }
-      }
-
-      struct stat stat_info;
-      if (stat(name,&stat_info))
-      {
-        my_error(ER_FILE_NOT_FOUND, MYF(0), name, errno);
-	return(true);
-      }
-
-      // if we are not in slave thread, the cursor must be:
-      if (!((stat_info.st_mode & S_IROTH) == S_IROTH &&  // readable by others
-            (stat_info.st_mode & S_IFLNK) != S_IFLNK && // and not a symlink
-            ((stat_info.st_mode & S_IFREG) == S_IFREG ||
-             (stat_info.st_mode & S_IFIFO) == S_IFIFO)))
-      {
-	my_error(ER_TEXTFILE_NOT_READABLE, MYF(0), name);
-	return(true);
-      }
-      if ((stat_info.st_mode & S_IFIFO) == S_IFIFO)
-	is_fifo = 1;
-    }
-    if ((file=internal::my_open(name,O_RDONLY,MYF(MY_WME))) < 0)
-    {
-      my_error(ER_CANT_OPEN_FILE, MYF(0), name, errno);
+      /* Read only allowed from within dir specified by secure_file_priv */
+      my_error(ER_OPTION_PREVENTS_STATEMENT, MYF(0), "--secure-file-priv");
       return(true);
     }
   }
 
+  struct stat stat_info;
+  if (stat(target_path.file_string().c_str(), &stat_info))
+  {
+    my_error(ER_FILE_NOT_FOUND, MYF(0), target_path.file_string().c_str(), errno);
+    return(true);
+  }
+
+  // if we are not in slave thread, the cursor must be:
+  if (!((stat_info.st_mode & S_IROTH) == S_IROTH &&  // readable by others
+        (stat_info.st_mode & S_IFLNK) != S_IFLNK && // and not a symlink
+        ((stat_info.st_mode & S_IFREG) == S_IFREG ||
+         (stat_info.st_mode & S_IFIFO) == S_IFIFO)))
+  {
+    my_error(ER_TEXTFILE_NOT_READABLE, MYF(0), target_path.file_string().c_str());
+    return(true);
+  }
+  if ((stat_info.st_mode & S_IFIFO) == S_IFIFO)
+    is_fifo = 1;
+
+
+  if ((file=internal::my_open(target_path.file_string().c_str(), O_RDONLY,MYF(MY_WME))) < 0)
+  {
+    my_error(ER_CANT_OPEN_FILE, MYF(0), target_path.file_string().c_str(), errno);
+    return(true);
+  }
   CopyInfo info;
   memset(&info, 0, sizeof(info));
   info.ignore= ignore;
@@ -395,14 +396,16 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
     error= -1;				// Error on read
     goto err;
   }
-  snprintf(name, sizeof(name), ER(ER_LOAD_INFO), info.records, info.deleted,
+
+  char msg[FN_REFLEN];
+  snprintf(msg, sizeof(msg), ER(ER_LOAD_INFO), info.records, info.deleted,
 	   (info.records - info.copied), session->cuted_fields);
 
   if (session->transaction.stmt.hasModifiedNonTransData())
     session->transaction.all.markModifiedNonTransData();
 
   /* ok to client sent only after binlog write and engine commit */
-  session->my_ok(info.copied + info.deleted, 0, 0L, name);
+  session->my_ok(info.copied + info.deleted, 0, 0L, msg);
 err:
   assert(transactional_table || !(info.copied || info.deleted) ||
               session->transaction.stmt.hasModifiedNonTransData());
