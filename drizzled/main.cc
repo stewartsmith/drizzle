@@ -209,6 +209,7 @@ static void GoogleProtoErrorThrower(google::protobuf::LogLevel level, const char
   case google::protobuf::LOGLEVEL_ERROR:
   case google::protobuf::LOGLEVEL_FATAL:
   default:
+    std::cerr << "GoogleProtoErrorThrower(" << filename << ", " << line << ", " << message << ")";
     throw("error in google protocol buffer parsing");
   }
 }

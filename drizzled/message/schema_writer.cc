@@ -48,6 +48,8 @@ int main(int argc, char* argv[])
   schema.set_creation_timestamp(time(NULL));
   schema.set_update_timestamp(time(NULL));
   schema.set_collation("utf8_general_ci");
+  schema.set_uuid("schema_writer");
+  schema.set_version(1);
 
   fstream output(file_name.c_str(), ios::out | ios::trunc | ios::binary);
 

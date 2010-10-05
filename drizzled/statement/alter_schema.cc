@@ -70,6 +70,9 @@ bool statement::AlterSchema::execute()
   {
     schema_message.set_collation(schema_message.collation());
   }
+  
+  // Not currently enforced in engine.
+  schema_message.set_version(schema_message.version() + 1);
 
   bool res= mysql_alter_db(session, schema_message);
 
