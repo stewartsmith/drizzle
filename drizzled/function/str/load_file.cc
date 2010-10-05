@@ -43,14 +43,8 @@ String *Item_load_file::val_str(String *str)
   String *file_name;
   int file;
   struct stat stat_info;
-  char path[FN_REFLEN];
 
   if (!(file_name= args[0]->val_str(str)))
-    goto err;
-
-  (void) internal::fn_format(path, file_name->c_ptr(), getDataHomeCatalog().file_string().c_str(), "",
-		   MY_RELATIVE_PATH | MY_UNPACK_FILENAME);
-  /*
   {
     null_value = 1;
     return(0);
@@ -66,15 +60,12 @@ String *Item_load_file::val_str(String *str)
   {
     target_path= to_file;
   }
-  */
 
   /* Read only allowed from within dir specified by secure_file_priv */
   if (not secure_file_priv.string().empty())
   {
-/*    fs::path secure_file_path(fs::system_complete(secure_file_priv));
-  if (target_path.file_string().substr(0, secure_file_path.file_string().size()) != secure_file_path.file_string()) */
-    fs::path target_path(fs::system_complete(fs::path(path)));
-    if (target_path.file_string().substr(0, secure_file_priv.file_string().size()) != secure_file_priv.file_string())
+    fs::path secure_file_path(fs::system_complete(secure_file_priv));
+    if (target_path.file_string().substr(0, secure_file_path.file_string().size()) != secure_file_path.file_string())
     {
       /* Read only allowed from within dir specified by secure_file_priv */
       my_error(ER_OPTION_PREVENTS_STATEMENT, MYF(0), "--secure-file-priv"); 
@@ -83,15 +74,15 @@ String *Item_load_file::val_str(String *str)
     }
   }
 
-  if (stat(path, &stat_info))
+  if (stat(target_path.file_string().c_str(), &stat_info))
   {
-    my_error(ER_TEXTFILE_NOT_READABLE, MYF(0), path);
+    my_error(ER_TEXTFILE_NOT_READABLE, MYF(0), file_name->c_ptr());
     goto err;
   }
 
   if (!(stat_info.st_mode & S_IROTH))
   {
-    my_error(ER_TEXTFILE_NOT_READABLE, MYF(0), path);
+    my_error(ER_TEXTFILE_NOT_READABLE, MYF(0), file_name->c_ptr());
     goto err;
   }
 
@@ -111,7 +102,7 @@ String *Item_load_file::val_str(String *str)
 
   if (tmp_value.alloc((size_t)stat_info.st_size))
     goto err;
-  if ((file = internal::my_open(file_name->c_ptr(), O_RDONLY, MYF(0))) < 0)
+  if ((file = internal::my_open(target_path.file_string().c_str(), O_RDONLY, MYF(0))) < 0)
     goto err;
   if (internal::my_read(file, (unsigned char*) tmp_value.ptr(), (size_t)stat_info.st_size, MYF(MY_NABP)))
   {
