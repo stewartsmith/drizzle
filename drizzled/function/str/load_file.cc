@@ -48,7 +48,7 @@ String *Item_load_file::val_str(String *str)
   if (!(file_name= args[0]->val_str(str)))
     goto err;
 
-  (void) internal::fn_format(path, file_name->c_ptr(), getDataHome().file_string().c_str(), "",
+  (void) internal::fn_format(path, file_name->c_ptr(), getDataHomeCatalog().file_string().c_str(), "",
 		   MY_RELATIVE_PATH | MY_UNPACK_FILENAME);
   /*
   {
@@ -84,13 +84,17 @@ String *Item_load_file::val_str(String *str)
   }
 
   if (stat(path, &stat_info))
+  {
+    my_error(ER_TEXTFILE_NOT_READABLE, MYF(0), path);
     goto err;
+  }
 
   if (!(stat_info.st_mode & S_IROTH))
   {
-    /* my_error(ER_TEXTFILE_NOT_READABLE, MYF(0), file_name->c_ptr()); */
+    my_error(ER_TEXTFILE_NOT_READABLE, MYF(0), path);
     goto err;
   }
+
   if (stat_info.st_size > (long) session.variables.max_allowed_packet)
   {
     push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
@@ -99,6 +103,12 @@ String *Item_load_file::val_str(String *str)
                         func_name(), session.variables.max_allowed_packet);
     goto err;
   }
+
+  if (stat_info.st_size == 0)
+  {
+    goto err;
+  }
+
   if (tmp_value.alloc((size_t)stat_info.st_size))
     goto err;
   if ((file = internal::my_open(file_name->c_ptr(), O_RDONLY, MYF(0))) < 0)
@@ -106,6 +116,10 @@ String *Item_load_file::val_str(String *str)
   if (internal::my_read(file, (unsigned char*) tmp_value.ptr(), (size_t)stat_info.st_size, MYF(MY_NABP)))
   {
     internal::my_close(file, MYF(0));
+    goto err;
+  }
+  if (strlen(tmp_value.ptr()) == 0)
+  {
     goto err;
   }
   tmp_value.length((size_t)stat_info.st_size);

@@ -38,10 +38,11 @@ eval select * into dumpfile "../../tmp/outfile-test.2" from t1;
 --error ER_FILE_EXISTS_ERROR
 eval select * into dumpfile "../../tmp/outfile-test.3" from t1;
 enable_query_log;
+--error ER_TEXTFILE_NOT_READABLE
 select load_file(concat(@tmpdir,"/outfile-test.not-exist"));
--- --remove_file $MYSQLTEST_VARDIR/tmp/outfile-test.1
--- --remove_file $MYSQLTEST_VARDIR/tmp/outfile-test.2
--- --remove_file $MYSQLTEST_VARDIR/tmp/outfile-test.3
+--remove_file $MYSQLTEST_VARDIR/tmp/outfile-test.1
+--remove_file $MYSQLTEST_VARDIR/tmp/outfile-test.2
+--remove_file $MYSQLTEST_VARDIR/tmp/outfile-test.3
 drop table t1;
 
 # Bug#8191

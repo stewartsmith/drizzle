@@ -1329,7 +1329,7 @@ bool select_dump::send_data(List<Item> &items)
   if (row_count++ > 1)
   {
     my_message(ER_TOO_MANY_ROWS, ER(ER_TOO_MANY_ROWS), MYF(0));
-    goto err;
+    return 1;
   }
   while ((item=li++))
   {
@@ -1337,17 +1337,15 @@ bool select_dump::send_data(List<Item> &items)
     if (!res)					// If NULL
     {
       if (my_b_write(cache,(unsigned char*) "",1))
-	goto err;
+        return 1;
     }
     else if (my_b_write(cache,(unsigned char*) res->ptr(),res->length()))
     {
       my_error(ER_ERROR_ON_WRITE, MYF(0), path.file_string().c_str(), errno);
-      goto err;
+      return 1;
     }
   }
   return(0);
-err:
-  return(1);
 }
 
 
