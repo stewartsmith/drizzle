@@ -210,6 +210,9 @@ static sys_var_uint32_t_ptr  sys_server_id(&vars, "server_id", &server_id,
 static sys_var_session_size_t	sys_sort_buffer(&vars, "sort_buffer_size",
                                                 &system_variables::sortbuff_size);
 
+static sys_var_session_size_t sys_transaction_message_threshold(&vars, "transaction_message_threshold",
+                                                                &system_variables::transaction_message_threshold);
+
 static sys_var_session_storage_engine sys_storage_engine(&vars, "storage_engine",
 				       &system_variables::storage_engine);
 static sys_var_const_str	sys_system_time_zone(&vars, "system_time_zone",

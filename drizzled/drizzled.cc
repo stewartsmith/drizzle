@@ -1062,7 +1062,7 @@ static void check_limits_tmp_table_size(uint64_t in_tmp_table_size)
 
 static void check_limits_transaction_message_threshold(size_t in_transaction_message_threshold)
 {
-  global_system_variables.transaction_message_threshold= 1024 * 1024;
+  global_system_variables.transaction_message_threshold= 1024*1024;
   if ((int64_t) in_transaction_message_threshold < 128*1024 || (int64_t)in_transaction_message_threshold > 1024*1024)
   {
     cout << N_("Error: Invalid Value for transaction_message_threshold");
