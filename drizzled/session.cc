@@ -947,7 +947,7 @@ void select_to_file::cleanup()
     (void) internal::my_close(file, MYF(0));
     file= -1;
   }
-  path.clear();
+  path= "";
   row_count= 0;
 }
 
@@ -957,7 +957,7 @@ select_to_file::select_to_file(file_exchange *ex)
     cache(static_cast<internal::IO_CACHE *>(memory::sql_calloc(sizeof(internal::IO_CACHE)))),
     row_count(0L)
 {
-  path.clear();
+  path= "";
 }
 
 select_to_file::~select_to_file()
