@@ -276,8 +276,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
 
   if (not secure_file_priv.string().empty())
   {
-    fs::path secure_file_path(fs::system_complete(secure_file_priv));
-    if (target_path.file_string().substr(0, secure_file_path.file_string().size()) != secure_file_path.file_string())
+    if (target_path.file_string().substr(0, secure_file_priv.file_string().size()) != secure_file_priv.file_string())
     {
       /* Read only allowed from within dir specified by secure_file_priv */
       my_error(ER_OPTION_PREVENTS_STATEMENT, MYF(0), "--secure-file-priv");

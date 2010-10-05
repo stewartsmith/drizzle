@@ -724,6 +724,10 @@ static void notify_plugin_dir(fs::path in_plugin_dir)
   }
 }
 
+static void expand_secure_file_priv(fs::path in_secure_file_priv)
+{
+  secure_file_priv= fs::system_complete(in_secure_file_priv);
+}
 
 static void check_limits_aii(uint64_t in_auto_increment_increment)
 {
@@ -1272,7 +1276,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   N_("Pid file used by drizzled."))
   ("port-open-timeout", po::value<uint32_t>(&drizzled_bind_timeout)->default_value(0),
   N_("Maximum time in seconds to wait for the port to become free. "))
-  ("secure-file-priv", po::value<fs::path>(&secure_file_priv),
+  ("secure-file-priv", po::value<fs::path>(&secure_file_priv)->notifier(expand_secure_file_priv),
   N_("Limit LOAD DATA, SELECT ... OUTFILE, and LOAD_FILE() to files "
      "within specified directory"))
   ("server-id", po::value<uint32_t>(&server_id)->default_value(0),

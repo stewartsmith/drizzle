@@ -52,9 +52,8 @@ String *Item_load_file::val_str(String *str)
   /* Read only allowed from within dir specified by secure_file_priv */
   if (not secure_file_priv.string().empty())
   {
-    fs::path secure_file_path(fs::system_complete(secure_file_priv));
     fs::path target_path(fs::system_complete(fs::path(path)));
-    if (target_path.file_string().substr(0, secure_file_path.file_string().size()) != secure_file_path.file_string())
+    if (target_path.file_string().substr(0, secure_file_priv.file_string().size()) != secure_file_priv.file_string())
     {
       null_value = 1;
       return(0);
