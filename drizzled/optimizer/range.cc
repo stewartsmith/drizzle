@@ -230,8 +230,6 @@ static void get_sweep_read_cost(Table *table,
   }
 }
 
-struct st_ror_scan_info;
-
 static optimizer::SEL_TREE * get_mm_parts(optimizer::RangeParameter *param,
                                COND *cond_func,
                                Field *field,
@@ -1187,51 +1185,9 @@ skip_to_ror_scan:
 }
 
 
-typedef struct st_ror_scan_info
-{
-  st_ror_scan_info()
-    :
-      idx(0),
-      keynr(0),
-      records(0), 
-      sel_arg(NULL),
-      covered_fields(NULL),
-      used_fields_covered(0),
-      key_rec_length(0),
-      index_read_cost(0.0),
-      first_uncovered_field(0),
-      key_components(0)
-  {}
-
-  ~st_ror_scan_info()
-  {
-    delete covered_fields;
-  }
-
-  uint32_t      idx;      /* # of used key in param->keys */
-  uint32_t      keynr;    /* # of used key in table */
-  ha_rows   records;  /* estimate of # records this scan will return */
-
-  /* Set of intervals over key fields that will be used for row retrieval. */
-  optimizer::SEL_ARG   *sel_arg;
-
-  /* Fields used in the query and covered by this ROR scan. */
-  boost::dynamic_bitset<> *covered_fields;
-  uint32_t      used_fields_covered; /* # of set bits in covered_fields */
-  int       key_rec_length; /* length of key record (including rowid) */
-
-  /*
-    Cost of reading all index records with values in sel_arg intervals set
-    (assuming there is no need to access full table records)
-  */
-  double    index_read_cost;
-  uint32_t      first_uncovered_field; /* first unused bit in covered_fields */
-  uint32_t      key_components; /* # of parts in the key */
-} ROR_SCAN_INFO;
-
 
 /*
-  Create ROR_SCAN_INFO* structure with a single ROR scan on index idx using
+  Create optimizer::RorScanInfo* structure with a single ROR scan on index idx using
   sel_arg set of intervals.
 
   SYNOPSIS
@@ -1246,13 +1202,13 @@ typedef struct st_ror_scan_info
 */
 
 static
-ROR_SCAN_INFO *make_ror_scan(const optimizer::Parameter *param, int idx, optimizer::SEL_ARG *sel_arg)
+optimizer::RorScanInfo *make_ror_scan(const optimizer::Parameter *param, int idx, optimizer::SEL_ARG *sel_arg)
 {
-  ROR_SCAN_INFO *ror_scan= NULL;
+  optimizer::RorScanInfo *ror_scan= NULL;
 
   uint32_t keynr;
 
-  if (!(ror_scan= (ROR_SCAN_INFO*)param->mem_root->alloc_root(sizeof(ROR_SCAN_INFO))))
+  if (!(ror_scan= (optimizer::RorScanInfo*)param->mem_root->alloc_root(sizeof(optimizer::RorScanInfo))))
     return NULL;
 
   ror_scan->idx= idx;
@@ -1281,7 +1237,7 @@ ROR_SCAN_INFO *make_ror_scan(const optimizer::Parameter *param, int idx, optimiz
 
 
 /*
-  Compare two ROR_SCAN_INFO** by  E(#records_matched) * key_record_length.
+  Compare two optimizer::RorScanInfo** by  E(#records_matched) * key_record_length.
   SYNOPSIS
     cmp_ror_scan_info()
       a ptr to first compared value
@@ -1293,7 +1249,7 @@ ROR_SCAN_INFO *make_ror_scan(const optimizer::Parameter *param, int idx, optimiz
     1 a > b
 */
 
-static int cmp_ror_scan_info(ROR_SCAN_INFO** a, ROR_SCAN_INFO** b)
+static int cmp_ror_scan_info(optimizer::RorScanInfo** a, optimizer::RorScanInfo** b)
 {
   double val1= rows2double((*a)->records) * (*a)->key_rec_length;
   double val2= rows2double((*b)->records) * (*b)->key_rec_length;
@@ -1315,7 +1271,7 @@ static uint32_t find_first_not_set(const boost::dynamic_bitset<>& map)
 
 
 /*
-  Compare two ROR_SCAN_INFO** by
+  Compare two optimizer::RorScanInfo** by
    (#covered fields in F desc,
     #components asc,
     number of first not covered component asc)
@@ -1331,7 +1287,7 @@ static uint32_t find_first_not_set(const boost::dynamic_bitset<>& map)
     1 a > b
 */
 
-static int cmp_ror_scan_info_covering(ROR_SCAN_INFO** a, ROR_SCAN_INFO** b)
+static int cmp_ror_scan_info_covering(optimizer::RorScanInfo** a, optimizer::RorScanInfo** b)
 {
   if ((*a)->used_fields_covered > (*b)->used_fields_covered)
     return -1;
@@ -1496,7 +1452,7 @@ static void ror_intersect_cpy(ROR_INTERSECT_INFO *dst,
 */
 
 static double ror_scan_selectivity(const ROR_INTERSECT_INFO *info,
-                                   const ROR_SCAN_INFO *scan)
+                                   const optimizer::RorScanInfo *scan)
 {
   double selectivity_mult= 1.0;
   KeyPartInfo *key_part= info->param->table->key_info[scan->keynr].key_part;
@@ -1604,7 +1560,7 @@ static double ror_scan_selectivity(const ROR_INTERSECT_INFO *info,
 */
 
 static bool ror_intersect_add(ROR_INTERSECT_INFO *info,
-                              ROR_SCAN_INFO* ror_scan, bool is_cpk_scan)
+                              optimizer::RorScanInfo* ror_scan, bool is_cpk_scan)
 {
   double selectivity_mult= 1.0;
 
@@ -1690,10 +1646,10 @@ optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Para
                                                             optimizer::SEL_TREE *tree,
                                                             double read_time)
 {
-  ROR_SCAN_INFO **ror_scan_mark;
-  ROR_SCAN_INFO **ror_scans_end= tree->ror_scans_end;
+  optimizer::RorScanInfo **ror_scan_mark;
+  optimizer::RorScanInfo **ror_scans_end= tree->ror_scans_end;
 
-  for (ROR_SCAN_INFO **scan= tree->ror_scans; scan != ror_scans_end; ++scan)
+  for (optimizer::RorScanInfo **scan= tree->ror_scans; scan != ror_scans_end; ++scan)
     (*scan)->key_components=
       param->table->key_info[(*scan)->keynr].key_parts;
 
@@ -1724,7 +1680,7 @@ optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Para
 	number of first not covered component
       Calculate and save these values for each of remaining scans.
     */
-    for (ROR_SCAN_INFO **scan= ror_scan_mark; scan != ror_scans_end; ++scan)
+    for (optimizer::RorScanInfo **scan= ror_scan_mark; scan != ror_scans_end; ++scan)
     {
       /* subtract one bitset from the other */
       *(*scan)->covered_fields-= *covered_fields;
@@ -1734,7 +1690,7 @@ optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Para
     }
 
     internal::my_qsort(ror_scan_mark, ror_scans_end-ror_scan_mark,
-                       sizeof(ROR_SCAN_INFO*),
+                       sizeof(optimizer::RorScanInfo*),
                        (qsort_cmp)cmp_ror_scan_info_covering);
 
     /* I=I-first(I) */
@@ -1769,9 +1725,9 @@ optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Para
   }
 
   uint32_t best_num= (ror_scan_mark - tree->ror_scans);
-  if (!(trp->first_scan= (ROR_SCAN_INFO**)param->mem_root->alloc_root(sizeof(ROR_SCAN_INFO*)* best_num)))
+  if (!(trp->first_scan= (optimizer::RorScanInfo**)param->mem_root->alloc_root(sizeof(optimizer::RorScanInfo*)* best_num)))
     return NULL;
-  memcpy(trp->first_scan, tree->ror_scans, best_num*sizeof(ROR_SCAN_INFO*));
+  memcpy(trp->first_scan, tree->ror_scans, best_num*sizeof(optimizer::RorScanInfo*));
   trp->last_scan=  trp->first_scan + best_num;
   trp->is_covering= true;
   trp->read_cost= total_cost;
@@ -1860,15 +1816,15 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
     return NULL;
 
   /*
-    Step1: Collect ROR-able SEL_ARGs and create ROR_SCAN_INFO for each of
+    Step1: Collect ROR-able SEL_ARGs and create optimizer::RorScanInfo for each of
     them. Also find and save clustered PK scan if there is one.
   */
-  ROR_SCAN_INFO **cur_ror_scan= NULL;
-  ROR_SCAN_INFO *cpk_scan= NULL;
+  optimizer::RorScanInfo **cur_ror_scan= NULL;
+  optimizer::RorScanInfo *cpk_scan= NULL;
   uint32_t cpk_no= 0;
   bool cpk_scan_used= false;
 
-  if (! (tree->ror_scans= (ROR_SCAN_INFO**)param->mem_root->alloc_root(sizeof(ROR_SCAN_INFO*)* param->keys)))
+  if (! (tree->ror_scans= (optimizer::RorScanInfo**)param->mem_root->alloc_root(sizeof(optimizer::RorScanInfo*)* param->keys)))
   {
     return NULL;
   }
@@ -1877,7 +1833,7 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
 
   for (idx= 0, cur_ror_scan= tree->ror_scans; idx < param->keys; idx++)
   {
-    ROR_SCAN_INFO *scan;
+    optimizer::RorScanInfo *scan;
     if (! tree->ror_scans_map.test(idx))
       continue;
     if (! (scan= make_ror_scan(param, idx, tree->keys[idx])))
@@ -1894,15 +1850,15 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
   tree->ror_scans_end= cur_ror_scan;
   /*
     Ok, [ror_scans, ror_scans_end) is array of ptrs to initialized
-    ROR_SCAN_INFO's.
+    optimizer::RorScanInfo's.
     Step 2: Get best ROR-intersection using an approximate algorithm.
   */
-  internal::my_qsort(tree->ror_scans, tree->n_ror_scans, sizeof(ROR_SCAN_INFO*),
+  internal::my_qsort(tree->ror_scans, tree->n_ror_scans, sizeof(optimizer::RorScanInfo*),
                      (qsort_cmp)cmp_ror_scan_info);
 
-  ROR_SCAN_INFO **intersect_scans= NULL; /* ROR scans used in index intersection */
-  ROR_SCAN_INFO **intersect_scans_end= NULL;
-  if (! (intersect_scans= (ROR_SCAN_INFO**)param->mem_root->alloc_root(sizeof(ROR_SCAN_INFO*) * tree->n_ror_scans)))
+  optimizer::RorScanInfo **intersect_scans= NULL; /* ROR scans used in index intersection */
+  optimizer::RorScanInfo **intersect_scans_end= NULL;
+  if (! (intersect_scans= (optimizer::RorScanInfo**)param->mem_root->alloc_root(sizeof(optimizer::RorScanInfo*) * tree->n_ror_scans)))
     return NULL;
   intersect_scans_end= intersect_scans;
 
@@ -1911,7 +1867,7 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
   ROR_INTERSECT_INFO intersect_best(param);
 
   /* [intersect_scans,intersect_scans_best) will hold the best intersection */
-  ROR_SCAN_INFO **intersect_scans_best= NULL;
+  optimizer::RorScanInfo **intersect_scans_best= NULL;
   cur_ror_scan= tree->ror_scans;
   intersect_scans_best= intersect_scans;
   while (cur_ror_scan != tree->ror_scans_end && ! intersect.is_covering)
@@ -1966,9 +1922,9 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
       return trp;
 
     if (! (trp->first_scan=
-           (ROR_SCAN_INFO**)param->mem_root->alloc_root(sizeof(ROR_SCAN_INFO*)*best_num)))
+           (optimizer::RorScanInfo**)param->mem_root->alloc_root(sizeof(optimizer::RorScanInfo*)*best_num)))
       return NULL;
-    memcpy(trp->first_scan, intersect_scans, best_num*sizeof(ROR_SCAN_INFO*));
+    memcpy(trp->first_scan, intersect_scans, best_num*sizeof(optimizer::RorScanInfo*));
     trp->last_scan=  trp->first_scan + best_num;
     trp->is_covering= intersect_best.is_covering;
     trp->read_cost= intersect_best.total_cost;

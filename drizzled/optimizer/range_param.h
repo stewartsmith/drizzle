@@ -33,6 +33,49 @@ typedef struct st_key_part KEY_PART;
 namespace optimizer
 {
 
+class RorScanInfo
+{
+public:
+  RorScanInfo()
+    :
+      idx(0),
+      keynr(0),
+      records(0), 
+      sel_arg(NULL),
+      covered_fields(NULL),
+      used_fields_covered(0),
+      key_rec_length(0),
+      index_read_cost(0.0),
+      first_uncovered_field(0),
+      key_components(0)
+  {}
+
+  ~RorScanInfo()
+  {
+    delete covered_fields;
+  }
+
+  uint32_t      idx;      /* # of used key in param->keys */
+  uint32_t      keynr;    /* # of used key in table */
+  ha_rows   records;  /* estimate of # records this scan will return */
+
+  /* Set of intervals over key fields that will be used for row retrieval. */
+  optimizer::SEL_ARG   *sel_arg;
+
+  /* Fields used in the query and covered by this ROR scan. */
+  boost::dynamic_bitset<> *covered_fields;
+  uint32_t      used_fields_covered; /* # of set bits in covered_fields */
+  int       key_rec_length; /* length of key record (including rowid) */
+
+  /*
+    Cost of reading all index records with values in sel_arg intervals set
+    (assuming there is no need to access full table records)
+  */
+  double    index_read_cost;
+  uint32_t      first_uncovered_field; /* first unused bit in covered_fields */
+  uint32_t      key_components; /* # of parts in the key */
+};
+
 class RangeParameter
 {
 public:
