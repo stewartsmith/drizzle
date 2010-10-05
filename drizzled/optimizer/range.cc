@@ -1576,7 +1576,7 @@ static bool ror_intersect_add(ROR_INTERSECT_INFO *info,
   {
     info->index_records += info->param->table->quick_rows[ror_scan->keynr];
     info->index_scan_costs += ror_scan->index_read_cost;
-    boost::dynamic_bitset<> tmp_bitset(ror_scan->bitsToBitset());
+    boost::dynamic_bitset<> tmp_bitset= ror_scan->bitsToBitset();
     info->covered_fields|= tmp_bitset;
     if (! info->is_covering && info->param->needed_fields.is_subset_of(info->covered_fields))
     {
@@ -5569,7 +5569,7 @@ optimizer::QuickSelectInterface *optimizer::RangeReadPlan::make_quick(optimizer:
 
 uint32_t optimizer::RorScanInfo::findFirstNotSet() const
 {
-  boost::dynamic_bitset<> map(bitsToBitset());
+  boost::dynamic_bitset<> map= bitsToBitset();
   for (boost::dynamic_bitset<>::size_type i= 0; i < map.size(); i++)
   {
     if (! map.test(i))
@@ -5583,14 +5583,14 @@ uint32_t optimizer::RorScanInfo::findFirstNotSet() const
 
 size_t optimizer::RorScanInfo::getBitCount() const
 {
-  boost::dynamic_bitset<> tmp_bitset(bitsToBitset());
+  boost::dynamic_bitset<> tmp_bitset= bitsToBitset();
   return tmp_bitset.count();
 }
 
 
 void optimizer::RorScanInfo::subtractBitset(const boost::dynamic_bitset<>& in_bitset)
 {
-  boost::dynamic_bitset<> tmp_bitset(bitsToBitset());
+  boost::dynamic_bitset<> tmp_bitset= bitsToBitset();
   tmp_bitset-= in_bitset;
   covered_fields= tmp_bitset.to_ulong();
 }
@@ -5605,9 +5605,9 @@ boost::dynamic_bitset<> optimizer::RorScanInfo::bitsToBitset() const
     res.push_back((conv & 1) + '0');
     conv>>= 1;
   }
-  if (res.empty())
+  if (! res.empty())
   {
-    res= "0";
+    std::reverse(res.begin(), res.end());
   }
   string final(covered_fields_size - res.length(), '0');
   final.append(res);
