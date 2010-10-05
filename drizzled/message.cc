@@ -71,5 +71,17 @@ void init(drizzled::message::Schema &arg, const std::string &name_arg)
   arg.set_version(1);
 }
 
+void update(drizzled::message::Schema &arg)
+{
+  arg.set_version(arg.version() + 1);
+  arg.set_update_timestamp(time(NULL));
+}
+
+void update(drizzled::message::Table &arg)
+{
+  arg.set_version(arg.version() + 1);
+  arg.set_update_timestamp(time(NULL));
+}
+
 } /* namespace message */
 } /* namespace drizzled */
