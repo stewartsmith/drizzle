@@ -29,8 +29,10 @@
 
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <iostream>
 
 namespace fs=boost::filesystem;
+using namespace std;
 
 namespace drizzled
 {
@@ -48,15 +50,36 @@ String *Item_load_file::val_str(String *str)
 
   (void) internal::fn_format(path, file_name->c_ptr(), getDataHome().file_string().c_str(), "",
 		   MY_RELATIVE_PATH | MY_UNPACK_FILENAME);
+  /*
+  {
+    null_value = 1;
+    return(0);
+  }
+
+  fs::path target_path(fs::system_complete(getDataHomeCatalog()));
+  fs::path to_file(file_name->c_ptr());
+  if (not to_file.has_root_directory())
+  {
+    target_path /= to_file;
+  }
+  else
+  {
+    target_path= to_file;
+  }
+  */
 
   /* Read only allowed from within dir specified by secure_file_priv */
   if (not secure_file_priv.string().empty())
   {
+/*    fs::path secure_file_path(fs::system_complete(secure_file_priv));
+  if (target_path.file_string().substr(0, secure_file_path.file_string().size()) != secure_file_path.file_string()) */
     fs::path target_path(fs::system_complete(fs::path(path)));
     if (target_path.file_string().substr(0, secure_file_priv.file_string().size()) != secure_file_priv.file_string())
     {
+      /* Read only allowed from within dir specified by secure_file_priv */
+      my_error(ER_OPTION_PREVENTS_STATEMENT, MYF(0), "--secure-file-priv"); 
       null_value = 1;
-      return(0);
+      return 0;
     }
   }
 
