@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-
 #include "config.h"
+#include <boost/lexical_cast.hpp>
 #include "drizzled/field/enum.h"
 #include "drizzled/error.h"
 #include "drizzled/table.h"
@@ -110,10 +110,8 @@ int Field_enum::store(int64_t from, bool)
 
   if (from <= 0 || (uint64_t) from > typelib->count)
   {
-    /* Convert the integer to a string using stringstream */
-    std::stringstream ss;
-    std::string tmp;
-    ss << from; ss >> tmp;
+    /* Convert the integer to a string using boost::lexical_cast */
+    std::string tmp(boost::lexical_cast<std::string>(from));
 
     my_error(ER_INVALID_ENUM_VALUE, MYF(ME_FATALERROR), tmp.c_str());
     return 1;
