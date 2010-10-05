@@ -1,5 +1,5 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
- *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ * vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2010 Brian Aker
  *
@@ -18,13 +18,33 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_UTILITY_DICTIONARY_DICTIONARY_H
-#define PLUGIN_UTILITY_DICTIONARY_DICTIONARY_H
+#ifndef PLUGIN_UTILITY_DICTIONARY_ENVIRONMENTAL_H
+#define PLUGIN_UTILITY_DICTIONARY_ENVIRONMENTAL_H
 
-#include "drizzled/plugin/table_function.h"
-#include "plugin/utility_dictionary/counter.h"
-#include "plugin/utility_dictionary/environmental.h"
-#include "plugin/utility_dictionary/random_number.h"
-#include "plugin/utility_dictionary/random_string.h"
+namespace utility_dictionary {
 
-#endif /* PLUGIN_UTILITY_DICTIONARY_DICTIONARY_H */
+class Environmental : public  drizzled::plugin::TableFunction
+{
+
+public:
+  Environmental();
+
+  class Generator : public drizzled::plugin::TableFunction::Generator 
+  {
+    char **position;
+
+  public:
+    Generator(drizzled::Field **arg);
+
+    bool populate();
+  };
+
+  Generator *generator(drizzled::Field **arg)
+  {
+    return new Generator(arg);
+  }
+};
+
+} /* namespace utility_dictionary */
+
+#endif /* PLUGIN_UTILITY_DICTIONARY_ENVIRONMENTAL_H */

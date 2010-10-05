@@ -222,7 +222,7 @@ drop table t1;
 #
 # Bug#15307 GROUP_CONCAT() with ORDER BY returns empty set on data_dictionary
 #
---replace_column 2 #
+--replace_column 2 # 3 #
 select DATA_TYPE, group_concat(table_schema, '.', table_name) as a, count(*) as num
 from data_dictionary.columns where
 table_schema='data_dictionary' and
