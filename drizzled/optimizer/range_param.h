@@ -42,7 +42,8 @@ public:
       keynr(0),
       records(0), 
       sel_arg(NULL),
-      covered_fields(NULL),
+      covered_fields(0),
+      covered_fields_size(0),
       used_fields_covered(0),
       key_rec_length(0),
       index_read_cost(0.0),
@@ -50,10 +51,13 @@ public:
       key_components(0)
   {}
 
-  ~RorScanInfo()
-  {
-    delete covered_fields;
-  }
+  boost::dynamic_bitset<> bitsToBitset() const;
+
+  void subtractBitset(const boost::dynamic_bitset<>& in_bitset);
+
+  uint32_t findFirstNotSet() const; 
+
+  size_t getBitCount() const;
 
   uint32_t      idx;      /* # of used key in param->keys */
   uint32_t      keynr;    /* # of used key in table */
@@ -63,7 +67,8 @@ public:
   optimizer::SEL_ARG   *sel_arg;
 
   /* Fields used in the query and covered by this ROR scan. */
-  boost::dynamic_bitset<> *covered_fields;
+  uint64_t covered_fields;
+  size_t covered_fields_size;
   uint32_t      used_fields_covered; /* # of set bits in covered_fields */
   int       key_rec_length; /* length of key record (including rowid) */
 

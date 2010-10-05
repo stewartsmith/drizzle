@@ -1218,8 +1218,9 @@ optimizer::RorScanInfo *make_ror_scan(const optimizer::Parameter *param, int idx
   ror_scan->sel_arg= sel_arg;
   ror_scan->records= param->table->quick_rows[keynr];
 
-  ror_scan->covered_fields= new boost::dynamic_bitset<>(param->table->getShare()->sizeFields());
-  ror_scan->covered_fields->reset();
+  ror_scan->covered_fields_size= param->table->getShare()->sizeFields();
+  boost::dynamic_bitset<> tmp_bitset(param->table->getShare()->sizeFields());
+  tmp_bitset.reset();
 
   KeyPartInfo *key_part= param->table->key_info[keynr].key_part;
   KeyPartInfo *key_part_end= key_part +
@@ -1227,11 +1228,12 @@ optimizer::RorScanInfo *make_ror_scan(const optimizer::Parameter *param, int idx
   for (; key_part != key_part_end; ++key_part)
   {
     if (param->needed_fields.test(key_part->fieldnr-1))
-      ror_scan->covered_fields->set(key_part->fieldnr-1);
+      tmp_bitset.set(key_part->fieldnr-1);
   }
   double rows= rows2double(param->table->quick_rows[ror_scan->keynr]);
   ror_scan->index_read_cost=
     param->table->cursor->index_only_read_time(ror_scan->keynr, rows);
+  ror_scan->covered_fields= tmp_bitset.to_ulong();
   return ror_scan;
 }
 
@@ -1254,19 +1256,6 @@ static int cmp_ror_scan_info(optimizer::RorScanInfo** a, optimizer::RorScanInfo*
   double val1= rows2double((*a)->records) * (*a)->key_rec_length;
   double val2= rows2double((*b)->records) * (*b)->key_rec_length;
   return (val1 < val2)? -1: (val1 == val2)? 0 : 1;
-}
-
-
-static uint32_t find_first_not_set(const boost::dynamic_bitset<>& map)
-{
-  for (boost::dynamic_bitset<>::size_type i= 0; i < map.size(); i++)
-  {
-    if (! map.test(i))
-    {
-      return i;
-    }
-  }
-  return map.size();
 }
 
 
@@ -1587,7 +1576,8 @@ static bool ror_intersect_add(ROR_INTERSECT_INFO *info,
   {
     info->index_records += info->param->table->quick_rows[ror_scan->keynr];
     info->index_scan_costs += ror_scan->index_read_cost;
-    info->covered_fields|= *ror_scan->covered_fields;
+    boost::dynamic_bitset<> tmp_bitset(ror_scan->bitsToBitset());
+    info->covered_fields|= tmp_bitset;
     if (! info->is_covering && info->param->needed_fields.is_subset_of(info->covered_fields))
     {
       info->is_covering= true;
@@ -1683,10 +1673,10 @@ optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Para
     for (optimizer::RorScanInfo **scan= ror_scan_mark; scan != ror_scans_end; ++scan)
     {
       /* subtract one bitset from the other */
-      *(*scan)->covered_fields-= *covered_fields;
+      (*scan)->subtractBitset(*covered_fields);
       (*scan)->used_fields_covered=
-        (*scan)->covered_fields->count();
-      (*scan)->first_uncovered_field= find_first_not_set(*(*scan)->covered_fields);
+        (*scan)->getBitCount();
+      (*scan)->first_uncovered_field= (*scan)->findFirstNotSet();
     }
 
     internal::my_qsort(ror_scan_mark, ror_scans_end-ror_scan_mark,
@@ -1699,7 +1689,8 @@ optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Para
     if (total_cost > read_time)
       return NULL;
     /* F=F-covered by first(I) */
-    *covered_fields|= *(*ror_scan_mark)->covered_fields;
+    boost::dynamic_bitset<> tmp_bitset= (*ror_scan_mark)->bitsToBitset();
+    *covered_fields|= tmp_bitset;
     all_covered= param->needed_fields.is_subset_of(*covered_fields);
   } while ((++ror_scan_mark < ror_scans_end) && ! all_covered);
 
@@ -5573,6 +5564,54 @@ optimizer::QuickSelectInterface *optimizer::RangeReadPlan::make_quick(optimizer:
     quick->read_time= read_cost;
   }
   return quick;
+}
+
+
+uint32_t optimizer::RorScanInfo::findFirstNotSet() const
+{
+  boost::dynamic_bitset<> map(bitsToBitset());
+  for (boost::dynamic_bitset<>::size_type i= 0; i < map.size(); i++)
+  {
+    if (! map.test(i))
+    {
+      return i;
+    }
+  }
+  return map.size();
+}
+
+
+size_t optimizer::RorScanInfo::getBitCount() const
+{
+  boost::dynamic_bitset<> tmp_bitset(bitsToBitset());
+  return tmp_bitset.count();
+}
+
+
+void optimizer::RorScanInfo::subtractBitset(const boost::dynamic_bitset<>& in_bitset)
+{
+  boost::dynamic_bitset<> tmp_bitset(bitsToBitset());
+  tmp_bitset-= in_bitset;
+  covered_fields= tmp_bitset.to_ulong();
+}
+
+
+boost::dynamic_bitset<> optimizer::RorScanInfo::bitsToBitset() const
+{
+  string res;
+  uint64_t conv= covered_fields;
+  while (conv)
+  {
+    res.push_back((conv & 1) + '0');
+    conv>>= 1;
+  }
+  if (res.empty())
+  {
+    res= "0";
+  }
+  string final("0", covered_fields_size - res.length());
+  final.append(res);
+  return (boost::dynamic_bitset<>(final));
 }
 
 
