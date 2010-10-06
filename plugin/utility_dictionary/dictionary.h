@@ -23,6 +23,7 @@
 
 #include "drizzled/plugin/table_function.h"
 #include "plugin/utility_dictionary/counter.h"
+#include "plugin/utility_dictionary/environmental.h"
 #include "plugin/utility_dictionary/random_number.h"
 #include "plugin/utility_dictionary/random_string.h"
 

@@ -91,8 +91,8 @@ WHERE table_name NOT LIKE 'ndb_%' AND
 table_name NOT LIKE 'falcon%'
 GROUP BY TABLE_SCHEMA ORDER BY table_schema;
 table_schema	count(*)
-DATA_DICTIONARY	45
-INFORMATION_SCHEMA	20
+DATA_DICTIONARY	#
+INFORMATION_SCHEMA	#
 create table t1(f1 LONGBLOB, f2 LONGTEXT);
 select column_name,data_type,CHARACTER_OCTET_LENGTH,
 CHARACTER_MAXIMUM_LENGTH

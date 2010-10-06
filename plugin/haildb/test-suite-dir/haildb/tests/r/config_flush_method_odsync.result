@@ -1,0 +1,6 @@
+SHOW VARIABLES LIKE 'innodb_flush_method';
+Variable_name	Value
+innodb_flush_method	O_DSYNC
+SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='flush_method';
+NAME	TYPE	VALUE
+flush_method	TEXT	O_DSYNC

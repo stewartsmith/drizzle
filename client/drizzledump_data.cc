@@ -39,6 +39,10 @@ extern bool opt_databases;
 extern bool opt_alldbs;
 extern uint32_t show_progress_size;
 extern bool opt_ignore;
+extern bool opt_compress;
+extern bool opt_drop_database;
+extern bool opt_autocommit;
+extern bool ignore_errors;
 
 extern boost::unordered_set<std::string> ignore_table;
 extern void maybe_exit(int error);
@@ -100,6 +104,8 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpIndex &obj)
       os << ",";
     std::string field= *i;
     os << "`" << field << "`";
+    if (obj.length > 0)
+      os << "(" << obj.length << ")";
   }
 
   os << ")";
@@ -170,6 +176,9 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpDatabase &obj)
     /* Love that this variable is the opposite of its name */
     if (not opt_create_db)
     {
+      if (opt_drop_database)
+        os << "DROP DATABASE IF EXISTS `" << obj.databaseName << "`" << std::endl;
+
       os << "CREATE DATABASE IF NOT EXISTS `" << obj.databaseName << "`";
       if (not obj.collate.empty())
        os << " COLLATE = " << obj.collate;
@@ -194,7 +203,10 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpDatabase &obj)
       if (data == NULL)
       {
         std::cerr << "Error: Could not get data for table " << table->displayName << std::endl;
-        maybe_exit(EX_DRIZZLEERR);
+        if (not ignore_errors)
+          maybe_exit(EX_DRIZZLEERR);
+        else
+          continue;
       }
       os << *data;
       delete data;
@@ -235,6 +247,10 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
   if (opt_disable_keys)
     os << "ALTER TABLE `" << obj.table->displayName << "` DISABLE KEYS;" << std::endl;
 
+  /* Another option that does the opposite of its name, makes me sad :( */
+  if (opt_autocommit)
+    os << "START TRANSACTION;" << std::endl;
+
   std::streampos out_position= os.tellp();
 
   while((row= drizzle_row_next(obj.result)))
@@ -242,7 +258,7 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
     rownr++;
     if ((rownr % show_progress_size) == 0)
     {
-      std::cerr << "-- %" << rownr << _(" rows dumped for table ") << obj.table->displayName << std::endl;
+      std::cerr << "-- " << rownr << _(" rows dumped for table ") << obj.table->displayName << std::endl;
     }
 
     size_t* row_sizes= drizzle_row_field_sizes(obj.result);
@@ -279,7 +295,7 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
       /* time/date conversion for MySQL connections */
       else if (obj.table->fields[i]->convertDateTime)
       {
-        os << obj.checkDateTime(os, row[i], i);
+        os << obj.checkDateTime(row[i], i);
       }
       else
       {
@@ -290,7 +306,7 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
             (obj.table->fields[i]->type.compare("VARBINARY") == 0)))
             os << obj.convertHex((unsigned char*)row[i], row_sizes[i]);
           else
-            os << "'" << obj.escape(row[i], row_sizes[i]) << "'";
+            os << "'" << DrizzleDumpData::escape(row[i], row_sizes[i]) << "'";
         }
         else
           os << row[i];
@@ -308,6 +324,9 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
     }
   }
   os << ");" << std::endl;
+
+  if (opt_autocommit)
+    os << "COMMIT;" << std::endl;
 
   if (opt_disable_keys)
     os << "ALTER TABLE `" << obj.table->tableName << "` ENABLE KEYS;" << std::endl;
@@ -334,7 +353,7 @@ std::string DrizzleDumpData::convertHex(const unsigned char* from, size_t from_s
 }
 
 /* Ripped out of libdrizzle, hopefully a little safer */
-std::string DrizzleDumpData::escape(const char* from, size_t from_size) const
+std::string DrizzleDumpData::escape(const char* from, size_t from_size)
 {
   std::string output;
 
@@ -397,13 +416,19 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpTable &obj)
   }
   os << std::endl;
   os << ") ENGINE=" << obj.engineName << " ";
-  if ((obj.dcon->getServerType() == DrizzleDumpConnection::SERVER_MYSQL_FOUND)
-    and (obj.autoIncrement > 0))
+  if (obj.autoIncrement > 0)
   {
     os << "AUTO_INCREMENT=" << obj.autoIncrement << " ";
   }
 
-  os << "COLLATE = " << obj.collate << ";" << std::endl << std::endl;
+  os << "COLLATE = " << obj.collate;
+
+  if (not obj.comment.empty())
+  {
+    os << " COMMENT = '" << obj.comment << "'";
+  }
+
+  os << ";" << std::endl << std::endl;
 
   return os;
 }
@@ -435,7 +460,7 @@ DrizzleDumpConnection::DrizzleDumpConnection(std::string &host, uint16_t port,
   if (ret != DRIZZLE_RETURN_OK)
   {
     errorHandler(NULL, ret, "when trying to connect");
-    throw;
+    throw 1;
   }
 
   boost::match_flag_type flags = boost::match_default; 
@@ -531,10 +556,15 @@ bool DrizzleDumpConnection::setDB(std::string databaseName)
   return true;
 }
 
-void DrizzleDumpConnection::errorHandler(drizzle_result_st *res, drizzle_return_t ret,
-                     const char *when)
+void DrizzleDumpConnection::errorHandler(drizzle_result_st *res,
+  drizzle_return_t ret, const char *when)
 {
-  if (ret == DRIZZLE_RETURN_ERROR_CODE)
+  if (res == NULL)
+  {
+    std::cerr << _("Got error: ") << drizzle_con_error(&connection) << " "
+      << when << std::endl;
+  }
+  else if (ret == DRIZZLE_RETURN_ERROR_CODE)
   {
     std::cerr << _("Got error: ") << drizzle_result_error(res)
       << " (" << drizzle_result_error_code(res) << ") " << when << std::endl;

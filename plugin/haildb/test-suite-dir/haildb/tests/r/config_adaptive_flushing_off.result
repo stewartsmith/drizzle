@@ -1,0 +1,6 @@
+SHOW VARIABLES LIKE 'innodb_adaptive_flushing';
+Variable_name	Value
+innodb_adaptive_flushing	OFF
+SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='adaptive_flushing';
+NAME	TYPE	VALUE
+adaptive_flushing	BOOL	false

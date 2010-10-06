@@ -1,0 +1,6 @@
+SHOW VARIABLES LIKE 'innodb_max_purge_lag';
+Variable_name	Value
+innodb_max_purge_lag	0
+SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='max_purge_lag';
+NAME	TYPE	VALUE
+max_purge_lag	ULONG	0
