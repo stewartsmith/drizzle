@@ -171,10 +171,14 @@ uint16_t x= htons(80);
       m4_if(PW_LESS_WARNINGS,[no],[
         BASE_WARNINGS="-w1 -Werror -Wcheck ${W_FORMAT} -Wp64 -Woverloaded-virtual -Wcast-qual"
       ],[
-        BASE_WARNINGS="-w1 -Wcheck ${W_FORMAT} -Wp64 -Woverloaded-virtual -Wcast-qual -diag-disable 981"
+        dnl 2203 is like old-style-cast
+        dnl 1684 is like strict-aliasing
+        BASE_WARNINGS="-w1 -Wcheck ${W_FORMAT} -Wp64 -Woverloaded-virtual -Wcast-qual -diag-disable 981,2259,2203,1684"
       ])
       CC_WARNINGS="${BASE_WARNINGS}"
       CXX_WARNINGS="${BASE_WARNINGS}"
+      PROTOSKIP_WARNINGS="-diag-disable 981,967,2259,1684,2203"
+      
     ],[
       m4_if(PW_LESS_WARNINGS,[no],[
         BASE_WARNINGS_FULL="${W_FORMAT_2} ${W_CONVERSION} -Wstrict-aliasing"
