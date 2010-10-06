@@ -2213,7 +2213,6 @@ static void drizzle_init_variables(void)
   max_system_variables.read_rnd_buff_size= UINT32_MAX;
   max_system_variables.sortbuff_size= SIZE_MAX;
   max_system_variables.tmp_table_size= MAX_MEM_TABLE_SIZE;
-  max_system_variables.transaction_message_threshold= 1024*1024;
 
   opt_scheduler_default= (char*) "multi_thread";
 
