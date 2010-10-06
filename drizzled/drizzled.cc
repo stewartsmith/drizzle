@@ -31,6 +31,7 @@
 #include <stdexcept>
 
 #include <boost/program_options.hpp>
+#include "drizzled/program_options/config_file.h"
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
@@ -139,6 +140,7 @@
 using namespace std;
 namespace fs=boost::filesystem;
 namespace po=boost::program_options;
+namespace dpo=drizzled::program_options;
 
 
 namespace drizzled
@@ -1058,6 +1060,17 @@ static void check_limits_tmp_table_size(uint64_t in_tmp_table_size)
   global_system_variables.tmp_table_size= in_tmp_table_size;
 }
 
+static void check_limits_transaction_message_threshold(size_t in_transaction_message_threshold)
+{
+  global_system_variables.transaction_message_threshold= 1024*1024;
+  if ((int64_t) in_transaction_message_threshold < 128*1024 || (int64_t)in_transaction_message_threshold > 1024*1024)
+  {
+    cout << N_("Error: Invalid Value for transaction_message_threshold valid values are between 131072 - 1048576 bytes");
+    exit(-1);
+  }
+  global_system_variables.transaction_message_threshold= in_transaction_message_threshold;
+}
+
 static pair<string, string> parse_size_suffixes(string s)
 {
   size_t equal_pos= s.find("=");
@@ -1135,7 +1148,7 @@ static void process_defaults_files()
     ifstream input_defaults_file(file_location.c_str());
     
     po::parsed_options file_parsed=
-      po::parse_config_file(input_defaults_file, full_options, true);
+      dpo::parse_config_file(input_defaults_file, full_options, true);
     vector<string> file_unknown= 
       po::collect_unrecognized(file_parsed.options, po::include_positional);
 
@@ -1300,6 +1313,8 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   N_("Path for temporary files."))
   ("transaction-isolation", po::value<string>(),
   N_("Default transaction isolation level."))
+  ("transaction-message-threshold", po::value<size_t>(&global_system_variables.transaction_message_threshold)->default_value(1024*1024)->notifier(&check_limits_transaction_message_threshold),
+  N_("Max message size written to transaction log, valid values 131072 - 1048576 bytes."))
   ("user,u", po::value<string>(),
   N_("Run drizzled daemon as user."))  
   ("version,V", 
