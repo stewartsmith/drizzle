@@ -290,6 +290,8 @@ fs::path basedir(PREFIX);
 fs::path pid_file;
 fs::path secure_file_priv("");
 fs::path plugin_dir;
+fs::path system_config_dir(SYSCONFDIR);
+
 
 char system_time_zone[30];
 char *default_tz_name;
@@ -1111,19 +1113,18 @@ static void process_defaults_files()
        iter != defaults_file_list.end();
        ++iter)
   {
-    string file_location(vm["config-dir"].as<string>());
+    fs::path file_location(system_config_dir);
     if ((*iter)[0] != '/')
     {
       /* Relative path - add config dir */
-      file_location.push_back('/');
-      file_location.append(*iter);
+      file_location /= *iter;
     }
     else
     {
       file_location= *iter;
     }
 
-    ifstream input_defaults_file(file_location.c_str());
+    ifstream input_defaults_file(file_location.file_string().c_str());
     
     po::parsed_options file_parsed=
       po::parse_config_file(input_defaults_file, full_options, true);
@@ -1210,9 +1211,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   }
   pid_file.replace_extension(".pid");
 
-  std::string system_config_dir_drizzle(SYSCONFDIR);
-  system_config_dir_drizzle.append("/drizzle");
-
+  system_config_dir /= "drizzle";
   std::string system_config_file_drizzle("drizzled.cnf");
 
   config_options.add_options()
@@ -1222,7 +1221,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   N_("Configuration file defaults are not used if no-defaults is set"))
   ("defaults-file", po::value<vector<string> >()->composing()->notifier(&compose_defaults_file_list),
    N_("Configuration file to use"))
-  ("config-dir", po::value<string>()->default_value(system_config_dir_drizzle),
+  ("config-dir", po::value<fs::path>(&system_config_dir),
    N_("Base location for config files"))
   ("plugin-dir", po::value<fs::path>(&plugin_dir)->notifier(&notify_plugin_dir),
   N_("Directory for plugins."))
@@ -1419,9 +1418,10 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
                               system_config_file_drizzle);
   }
 
-  string config_conf_d_location(vm["config-dir"].as<string>());
-  config_conf_d_location.append("/conf.d");
-  CachedDirectory config_conf_d(config_conf_d_location);
+  fs::path config_conf_d_location(system_config_dir);
+  config_conf_d_location /= "conf.d";
+
+  CachedDirectory config_conf_d(config_conf_d_location.file_string());
   if (not config_conf_d.fail())
   {
 
@@ -1435,10 +1435,9 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
           && file_entry != "."
           && file_entry != "..")
       {
-        string the_entry(config_conf_d_location);
-        the_entry.push_back('/');
-        the_entry.append(file_entry);
-        defaults_file_list.push_back(the_entry);
+        fs::path the_entry(config_conf_d_location);
+        the_entry /= file_entry;
+        defaults_file_list.push_back(the_entry.file_string());
       }
     }
   }
