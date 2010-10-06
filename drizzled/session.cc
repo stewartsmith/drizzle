@@ -1156,7 +1156,7 @@ bool select_export::send_data(List<Item> &items)
     else
     {
       if (fixed_row_size)
-        used_length= min(res->length(),item->max_length);
+        used_length= min(res->length(), static_cast<size_t>(item->max_length));
       else
         used_length= res->length();
 

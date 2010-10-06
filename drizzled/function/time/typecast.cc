@@ -98,7 +98,7 @@ String *Item_char_typecast::val_str(String *str)
   else
   {
     // Convert character set if differ
-    uint32_t dummy_errors;
+    size_t dummy_errors;
     if (!(res= args[0]->val_str(&tmp_value)) ||
         str->copy(res->ptr(), res->length(), from_cs,
         cast_cs, &dummy_errors))

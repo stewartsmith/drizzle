@@ -289,7 +289,7 @@ int str2my_decimal(uint32_t mask, const char *from, uint32_t length,
   String tmp(buff, sizeof(buff), &my_charset_bin);
   if (charset->mbminlen > 1)
   {
-    uint32_t dummy_errors;
+    size_t dummy_errors;
     tmp.copy(from, length, charset, &my_charset_utf8_general_ci, &dummy_errors);
     from= tmp.ptr();
     length=  tmp.length();
