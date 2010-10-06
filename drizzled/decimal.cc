@@ -157,8 +157,7 @@ int decimal_operation_results(int result)
 			"DECIMAL", "");
     break;
   case E_DEC_DIV_ZERO:
-    push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
-			ER_DIVISION_BY_ZERO, ER(ER_DIVISION_BY_ZERO));
+    my_error(ER_DIVISION_BY_ZERO, MYF(0));
     break;
   case E_DEC_BAD_NUM:
     push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
