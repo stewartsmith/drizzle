@@ -1,7 +1,7 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2010 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,32 +18,22 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_ALTER_SCHEMA_H
-#define DRIZZLED_STATEMENT_ALTER_SCHEMA_H
+#ifndef DRIZZLED_MESSAGE_H
+#define DRIZZLED_MESSAGE_H
 
-#include <drizzled/statement/create_schema.h>
+#include "drizzled/message/table.pb.h"
+#include "drizzled/message/schema.pb.h"
 
-namespace drizzled
-{
-class Session;
+namespace drizzled {
+namespace message {
 
-namespace statement
-{
+void init(drizzled::message::Schema &arg, const std::string &name_arg);
+void init(drizzled::message::Table &arg, const std::string &name_arg, const std::string &schema_arg, const std::string &engine_arg);
 
-class AlterSchema : public CreateSchema
-{
-public:
-  AlterSchema(Session *in_session)
-    :
-      CreateSchema(in_session)
-  { 
-  }
+void update(drizzled::message::Schema &arg);
+void update(drizzled::message::Table &arg);
 
-  bool execute();
-};
-
-} /* namespace statement */
-
+} /* namespace message */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_STATEMENT_ALTER_SCHEMA_H */
+#endif /* DRIZZLED_MESSAGE_H */

@@ -44,6 +44,8 @@
 
 #include "drizzled/transaction_services.h"
 
+#include "drizzled/message.h"
+
 using namespace std;
 
 namespace drizzled
@@ -634,8 +636,8 @@ static bool mysql_prepare_alter_table(Session *session,
   }
 
   table_message.set_creation_timestamp(table->getShare()->getTableProto()->creation_timestamp());
-
-  table_message.set_update_timestamp(time(NULL));
+  table_message.set_version(table->getShare()->getTableProto()->version());
+  table_message.set_uuid(table->getShare()->getTableProto()->uuid());
 
   rc= false;
   alter_info->create_list.swap(new_create_list);
@@ -664,6 +666,8 @@ err:
       opt->set_state(original_proto.engine().options(x).state());
     }
   }
+
+  drizzled::message::update(table_message);
 
   return rc;
 }
