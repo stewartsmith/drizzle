@@ -42,7 +42,6 @@ public:
   AlterTable(Session *in_session) :
     CreateTable(in_session)
   { 
-    create_table_message.set_update_timestamp(time(NULL));
   }
 
   bool execute();
