@@ -121,7 +121,7 @@ NULL	0	0001-01-01 00:00:00
 NULL	1212	0001-01-01 00:00:00
 EXPLAIN SELECT * FROM t1 WHERE expedition='0001-01-01 00:00:00';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	expedition	expedition	9	const	1	Using where
+1	SIMPLE	t1	ref	expedition	expedition	9	const	#	Using where
 drop table t1;
 create table t1 (a datetime not null, b datetime not null, pk int auto_increment primary key);
 insert into t1 (a,b) values (now(), now());
@@ -350,8 +350,8 @@ explain extended
 select * from t2
 where id in (select id from t2 as x1 where (t2.cur_date is null));
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
-1	PRIMARY	t2	ALL	NULL	NULL	NULL	NULL	2	100.00	Using where
-2	DEPENDENT SUBQUERY	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Impossible WHERE
+1	PRIMARY	t2	ALL	NULL	NULL	NULL	NULL	#	100.00	Using where
+2	DEPENDENT SUBQUERY	NULL	NULL	NULL	NULL	NULL	NULL	#	NULL	Impossible WHERE
 Warnings:
 Note	1276	Field or reference 'test.t2.cur_date' of SELECT #2 was resolved in SELECT #1
 Note	1003	select `test`.`t2`.`id` AS `id`,`test`.`t2`.`cur_date` AS `cur_date` from `test`.`t2` where <in_optimizer>(`test`.`t2`.`id`,<exists>(select 1 AS `Not_used` from `test`.`t2` `x1` where 0))
@@ -364,8 +364,8 @@ explain extended
 select * from t1
 where id in (select id from t1 as x1 where (t1.cur_date is null));
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
-1	PRIMARY	t1	ALL	NULL	NULL	NULL	NULL	2	100.00	Using where
-2	DEPENDENT SUBQUERY	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Impossible WHERE
+1	PRIMARY	t1	ALL	NULL	NULL	NULL	NULL	#	100.00	Using where
+2	DEPENDENT SUBQUERY	NULL	NULL	NULL	NULL	NULL	NULL	#	NULL	Impossible WHERE
 Warnings:
 Note	1276	Field or reference 'test.t1.cur_date' of SELECT #2 was resolved in SELECT #1
 Note	1003	select `test`.`t1`.`id` AS `id`,`test`.`t1`.`cur_date` AS `cur_date` from `test`.`t1` where <in_optimizer>(`test`.`t1`.`id`,<exists>(select 1 AS `Not_used` from `test`.`t1` `x1` where 0))
@@ -376,8 +376,8 @@ explain extended
 select * from t2
 where id in (select id from t2 as x1 where (t2.cur_date is null));
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
-1	PRIMARY	t2	ALL	NULL	NULL	NULL	NULL	2	100.00	Using where
-2	DEPENDENT SUBQUERY	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Impossible WHERE
+1	PRIMARY	t2	ALL	NULL	NULL	NULL	NULL	#	100.00	Using where
+2	DEPENDENT SUBQUERY	NULL	NULL	NULL	NULL	NULL	NULL	#	NULL	Impossible WHERE
 Warnings:
 Note	1276	Field or reference 'test.t2.cur_date' of SELECT #2 was resolved in SELECT #1
 Note	1003	select `test`.`t2`.`id` AS `id`,`test`.`t2`.`cur_date` AS `cur_date` from `test`.`t2` where <in_optimizer>(`test`.`t2`.`id`,<exists>(select 1 AS `Not_used` from `test`.`t2` `x1` where 0))
