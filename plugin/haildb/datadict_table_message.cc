@@ -18,11 +18,7 @@
 
 #include "config.h"
 
-#if defined(HAVE_HAILDB_H)
-# include <haildb.h>
-#else
-# include <embedded_innodb-1.0/innodb.h>
-#endif /* HAVE_HAILDB_H */
+#include <haildb.h>
 
 #include "haildb_engine.h"
 

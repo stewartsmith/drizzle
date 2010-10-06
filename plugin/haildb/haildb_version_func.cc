@@ -23,11 +23,7 @@
 #include <drizzled/function/str/strfunc.h>
 #include "haildb_version_func.h"
 
-#if defined(HAVE_HAILDB_H)
-# include <haildb.h>
-#else
-# include <embedded_innodb-1.0/innodb.h>
-#endif /* HAVE_HAILDB_H */
+#include <haildb.h>
 
 using namespace std;
 using namespace drizzled;
