@@ -1072,7 +1072,12 @@ static char pgFF[256]=
 1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 };
 
-static struct {int page; char *p;} utr11_data[256]=
+static class {
+public:
+  int page; 
+  char *p;
+} 
+  utr11_data[256]=
 {
 {0,NULL},{0,NULL},{0,NULL},{0,NULL},{0,NULL},{0,NULL},{0,NULL},{0,NULL},
 {0,NULL},{0,NULL},{0,NULL},{0,NULL},{0,NULL},{0,NULL},{0,NULL},{0,NULL},

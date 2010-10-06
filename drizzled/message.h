@@ -1,7 +1,7 @@
-/* - mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 MySQL
+ *  Copyright (C) 2010 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,37 +18,22 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_UTIL_CONVERT_H
-#define DRIZZLED_UTIL_CONVERT_H
+#ifndef DRIZZLED_MESSAGE_H
+#define DRIZZLED_MESSAGE_H
 
-#include <boost/lexical_cast.hpp>
-#include <string>
-#include <iostream>
-#include <sstream>
+#include "drizzled/message/table.pb.h"
+#include "drizzled/message/schema.pb.h"
 
-namespace drizzled
-{
+namespace drizzled {
+namespace message {
 
-template <class T>
-std::string to_string(T t)
-{
-  return boost::lexical_cast<std::string>(t);
-}
+void init(drizzled::message::Schema &arg, const std::string &name_arg);
+void init(drizzled::message::Table &arg, const std::string &name_arg, const std::string &schema_arg, const std::string &engine_arg);
 
-template <class T>
-std::string& to_string(std::string &str, T t)
-{
-  std::ostringstream o(str);
-  o << t;
-  return str;
-}
+void update(drizzled::message::Schema &arg);
+void update(drizzled::message::Table &arg);
 
-void bytesToHexdumpFormat(std::string &s, const unsigned char *from, size_t from_length);
-
-uint64_t drizzled_string_to_hex(char *to, const char *from,
-                                uint64_t from_size);
-void drizzled_hex_to_string(char *to, const char *from, uint64_t from_size);
-
+} /* namespace message */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_UTIL_CONVERT_H */
+#endif /* DRIZZLED_MESSAGE_H */

@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-
 #include "config.h"
+#include <boost/lexical_cast.hpp>
 #include <drizzled/field/timestamp.h>
 #include <drizzled/error.h>
 #include <drizzled/tztime.h>
@@ -187,7 +187,8 @@ int Field_timestamp::store(double from)
     std::stringstream ss;
     std::string tmp;
     ss.precision(18); /* 18 places should be fine for error display of double input. */
-    ss << from; ss >> tmp;
+    ss << from; 
+    ss >> tmp;
 
     my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(ME_FATALERROR), tmp.c_str());
     return 2;
@@ -206,10 +207,8 @@ int Field_timestamp::store(int64_t from, bool)
   Timestamp temporal;
   if (! temporal.from_int64_t(from))
   {
-    /* Convert the integer to a string using stringstream */
-    std::stringstream ss;
-    std::string tmp;
-    ss << from; ss >> tmp;
+    /* Convert the integer to a string using boost::lexical_cast */
+    std::string tmp(boost::lexical_cast<std::string>(from));
 
     my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(ME_FATALERROR), tmp.c_str());
     return 2;

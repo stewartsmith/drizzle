@@ -258,7 +258,7 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
     rownr++;
     if ((rownr % show_progress_size) == 0)
     {
-      std::cerr << "-- %" << rownr << _(" rows dumped for table ") << obj.table->displayName << std::endl;
+      std::cerr << "-- " << rownr << _(" rows dumped for table ") << obj.table->displayName << std::endl;
     }
 
     size_t* row_sizes= drizzle_row_field_sizes(obj.result);
@@ -295,7 +295,7 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
       /* time/date conversion for MySQL connections */
       else if (obj.table->fields[i]->convertDateTime)
       {
-        os << obj.checkDateTime(os, row[i], i);
+        os << obj.checkDateTime(row[i], i);
       }
       else
       {
