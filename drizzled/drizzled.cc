@@ -1065,10 +1065,10 @@ static void check_limits_transaction_message_threshold(size_t in_transaction_mes
   global_system_variables.transaction_message_threshold= 1024*1024;
   if ((int64_t) in_transaction_message_threshold < 128*1024 || (int64_t)in_transaction_message_threshold > 1024*1024)
   {
-    cout << N_("Error: Invalid Value for transaction_message_threshold");
+    cout << N_("Error: Invalid Value for transaction_message_threshold valid values are between 131072 - 1048576 bytes");
     exit(-1);
   }
-  global_system_variables.transaction_message_threshold= in_transaction_message_threshold; 
+  global_system_variables.transaction_message_threshold= in_transaction_message_threshold;
 }
 
 static pair<string, string> parse_size_suffixes(string s)
@@ -1317,7 +1317,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   ("transaction-isolation", po::value<string>(),
   N_("Default transaction isolation level."))
   ("transaction-message-threshold", po::value<size_t>(&global_system_variables.transaction_message_threshold)->default_value(1024*1024)->notifier(&check_limits_transaction_message_threshold),
-  N_("Max message size written to transaction log"))  
+  N_("Max message size written to transaction log, valid values 131072 - 1048576 bytes."))
   ("user,u", po::value<string>(),
   N_("Run drizzled daemon as user."))  
   ("version,V", 
@@ -1733,7 +1733,6 @@ enum options_drizzled
   OPT_RANGE_ALLOC_BLOCK_SIZE,
   OPT_QUERY_ALLOC_BLOCK_SIZE, OPT_QUERY_PREALLOC_SIZE,
   OPT_TRANS_ALLOC_BLOCK_SIZE, OPT_TRANS_PREALLOC_SIZE,
-  OPT_TRANS_MESSAGE_THRESHOLD,
   OPT_OLD_ALTER_TABLE,
   OPT_GROUP_CONCAT_MAX_LEN,
   OPT_DEFAULT_COLLATION,
@@ -2086,11 +2085,6 @@ struct option my_long_options[] =
    (char**) &global_system_variables.tmp_table_size,
    (char**) &max_system_variables.tmp_table_size, 0, GET_ULL,
    REQUIRED_ARG, 16*1024*1024L, 1024, MAX_MEM_TABLE_SIZE, 0, 1, 0},
-  {"transaction_message_threshold", OPT_TRANS_MESSAGE_THRESHOLD,
-   N_("Max message size written to transaction log."),
-   (char**) &global_system_variables.transaction_message_threshold,
-   (char**) &global_system_variables.transaction_message_threshold, 0, GET_SIZE,
-   REQUIRED_ARG, 1024*1024, 128*1024, 1024*1024, 0, 1, 0},
   {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 
