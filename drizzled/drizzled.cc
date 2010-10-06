@@ -207,7 +207,6 @@ arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
 static bool opt_debugging= 0;
 static uint32_t wake_thread;
 static char *drizzled_chroot;
-static char *language_ptr;
 static const char *default_character_set_name;
 static const char *character_set_filesystem_name;
 static char *lc_time_names_name;
@@ -293,8 +292,7 @@ char drizzle_home[FN_REFLEN], pidfile_name[FN_REFLEN], system_time_zone[30];
 char *default_tz_name;
 char glob_hostname[FN_REFLEN];
 
-char language[FN_REFLEN], 
-     *opt_tc_log_file;
+char *opt_tc_log_file;
 const key_map key_map_empty(0);
 key_map key_map_full(0);                        // Will be initialized later
 
@@ -1281,15 +1279,13 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   ("datadir", po::value<string>(),
   N_("Path to the database root."))
   ("default-storage-engine", po::value<string>(),
-  N_("Set the default storage engine (table type) for tables."))
+  N_("Set the default storage engine for tables."))
   ("default-time-zone", po::value<string>(),
   N_("Set the default time zone."))
   ("exit-info,T", po::value<long>(),
   N_("Used for debugging;  Use at your own risk!"))
   ("gdb", po::value<bool>(&opt_debugging)->default_value(false)->zero_tokens(),
   N_("Set up signals usable for debugging"))
-  ("language,L", po::value<string>(),
-  N_("(IGNORED)"))  
   ("lc-time-name", po::value<string>(),
   N_("Set the language used for the month names and the days of the week."))
   ("log-warnings,W", po::value<string>(),
@@ -1297,8 +1293,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   ("pid-file", po::value<string>(),
   N_("Pid file used by drizzled."))
   ("port-open-timeout", po::value<uint32_t>(&drizzled_bind_timeout)->default_value(0),
-  N_("Maximum time in seconds to wait for the port to become free. "
-     "(Default: no wait)"))
+  N_("Maximum time in seconds to wait for the port to become free. "))
   ("secure-file-priv", po::value<string>(),
   N_("Limit LOAD DATA, SELECT ... OUTFILE, and LOAD_FILE() to files "
      "within specified directory"))
@@ -1819,10 +1814,6 @@ struct option my_long_options[] =
    N_("Set up signals usable for debugging"),
    (char**) &opt_debugging, (char**) &opt_debugging,
    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"language", 'L',
-   N_("(IGNORED)"),
-   (char**) &language_ptr, (char**) &language_ptr, 0, GET_STR, REQUIRED_ARG,
-   0, 0, 0, 0, 0, 0},
   {"lc-time-names", OPT_LC_TIME_NAMES,
    N_("Set the language used for the month names and the days of the week."),
    (char**) &lc_time_names_name,
@@ -2165,14 +2156,10 @@ static void drizzle_init_variables(void)
   /* Things with default values that are not zero */
   drizzle_home_ptr= drizzle_home;
   pidfile_name_ptr= pidfile_name;
-  language_ptr= language;
   session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_SQL_NOTES);
   refresh_version= 1L;	/* Increments on each reload */
   global_thread_id= 1UL;
   getSessionList().clear();
-
-  /* Set directory paths */
-  strncpy(language, LANGUAGE, sizeof(language)-1);
 
   /* Variables in libraries */
   default_character_set_name= "utf8";
@@ -2262,11 +2249,6 @@ static void get_options()
       errmsg_printf(ERRMSG_LVL_WARN, _("Ignoring user change to '%s' because the user was "
                                        "set to '%s' earlier on the command line\n"),
                     vm["user"].as<string>().c_str(), drizzled_user);
-  }
-
-  if (vm.count("language"))
-  {
-    strncpy(language, vm["language"].as<string>().c_str(), sizeof(language)-1);
   }
 
   if (vm.count("version"))
@@ -2395,7 +2377,6 @@ static void fix_paths()
     pos[0]= FN_LIBCHAR;
     pos[1]= 0;
   }
-  internal::convert_dirname(language,language,NULL);
   (void) internal::my_load_path(drizzle_home, drizzle_home,""); // Resolve current dir
 
   fs::path pid_file_path(pidfile_name);
@@ -2416,7 +2397,6 @@ static void fix_paths()
     strncat(buff, sharedir, sizeof(buff)-strlen(drizzle_home)-1);
   }
   internal::convert_dirname(buff,buff,NULL);
-  (void) internal::my_load_path(language,language,buff);
 
   if (not opt_help)
   {

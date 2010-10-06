@@ -258,7 +258,7 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
     rownr++;
     if ((rownr % show_progress_size) == 0)
     {
-      std::cerr << "-- %" << rownr << _(" rows dumped for table ") << obj.table->displayName << std::endl;
+      std::cerr << "-- " << rownr << _(" rows dumped for table ") << obj.table->displayName << std::endl;
     }
 
     size_t* row_sizes= drizzle_row_field_sizes(obj.result);
@@ -295,7 +295,7 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
       /* time/date conversion for MySQL connections */
       else if (obj.table->fields[i]->convertDateTime)
       {
-        os << obj.checkDateTime(os, row[i], i);
+        os << obj.checkDateTime(row[i], i);
       }
       else
       {
@@ -306,7 +306,7 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
             (obj.table->fields[i]->type.compare("VARBINARY") == 0)))
             os << obj.convertHex((unsigned char*)row[i], row_sizes[i]);
           else
-            os << "'" << obj.escape(row[i], row_sizes[i]) << "'";
+            os << "'" << DrizzleDumpData::escape(row[i], row_sizes[i]) << "'";
         }
         else
           os << row[i];
@@ -353,7 +353,7 @@ std::string DrizzleDumpData::convertHex(const unsigned char* from, size_t from_s
 }
 
 /* Ripped out of libdrizzle, hopefully a little safer */
-std::string DrizzleDumpData::escape(const char* from, size_t from_size) const
+std::string DrizzleDumpData::escape(const char* from, size_t from_size)
 {
   std::string output;
 
@@ -421,7 +421,14 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpTable &obj)
     os << "AUTO_INCREMENT=" << obj.autoIncrement << " ";
   }
 
-  os << "COLLATE = " << obj.collate << ";" << std::endl << std::endl;
+  os << "COLLATE = " << obj.collate;
+
+  if (not obj.comment.empty())
+  {
+    os << " COMMENT = '" << obj.comment << "'";
+  }
+
+  os << ";" << std::endl << std::endl;
 
   return os;
 }
