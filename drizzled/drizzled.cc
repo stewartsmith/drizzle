@@ -204,7 +204,7 @@ arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
 
 /* static variables */
 
-static bool opt_debugging= 0;
+static bool opt_debugging= false;
 static uint32_t wake_thread;
 static char *drizzled_chroot;
 static const char *default_character_set_name;
@@ -1277,7 +1277,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   N_("Set up signals usable for debugging"))
   ("lc-time-name", po::value<string>(),
   N_("Set the language used for the month names and the days of the week."))
-  ("log-warnings,W", po::value<string>(),
+  ("log-warnings,W", po::value<bool>(&global_system_variables.log_warnings)->default_value(false)->zero_tokens(),
   N_("Log some not critical warnings to the log file."))  
   ("pid-file", po::value<string>(),
   N_("Pid file used by drizzled."))
@@ -2164,7 +2164,7 @@ static void drizzle_init_variables(void)
   max_system_variables.auto_increment_increment= UINT64_MAX;
   max_system_variables.auto_increment_offset= UINT64_MAX;
   max_system_variables.completion_type= 2;
-  max_system_variables.log_warnings= 1;
+  max_system_variables.log_warnings= true;
   max_system_variables.bulk_insert_buff_size= ULONG_MAX;
   max_system_variables.div_precincrement= DECIMAL_MAX_SCALE;
   max_system_variables.group_concat_max_len= ULONG_MAX;
@@ -2242,16 +2242,6 @@ static void get_options()
   {
     print_version();
     exit(0);
-  }
-
-  if (vm.count("log-warnings"))
-  {
-    if (vm["log-warnings"].as<string>().empty())
-      global_system_variables.log_warnings++;
-    else if (vm["log-warnings"].as<string>().compare("0"))
-      global_system_variables.log_warnings= 0L;
-    else
-      global_system_variables.log_warnings= atoi(vm["log-warnings"].as<string>().c_str());
   }
 
   if (vm.count("exit-info"))

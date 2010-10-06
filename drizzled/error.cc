@@ -39,15 +39,8 @@ namespace
 class ErrorStringNotFound: public std::exception
 {
 public:
-  ErrorStringNotFound(uint32_t code)
-    : error_num_(code)
+  ErrorStringNotFound()
   {}
-  uint32_t error_num() const
-  {
-    return error_num_;
-  }
-private:
-  uint32_t error_num_;
 };
 
 /*
@@ -202,7 +195,7 @@ const std::string &ErrorMap::find(uint32_t error_num) const
   ErrorMessageMap::const_iterator pos= mapping_.find(error_num);
   if (pos == mapping_.end())
   {
-    throw ErrorStringNotFound(error_num);
+    throw ErrorStringNotFound();
   }
   return pos->second;
 }

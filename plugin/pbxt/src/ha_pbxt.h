@@ -98,7 +98,7 @@ public:
 	/* override */ int doCommit(drizzled::Session*, bool);
 	/* override */ int doRollback(drizzled::Session*, bool);
 
-	/* override */ uint32_t max_supported_keys(void) const { return -1; }
+	/* override */ uint32_t max_supported_keys(void) const { return UINT32_MAX; }
 	/* override */ uint32_t max_supported_key_part_length(void) const { return MAX_KEY_LENGTH; }
 
 	/* override */ void doGetTableIdentifiers(drizzled::CachedDirectory&,

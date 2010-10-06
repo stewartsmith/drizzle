@@ -241,8 +241,18 @@ typedef void (*mysql_var_update_func)(Session *session,
   the following declarations are for use by plugin implementors
 */
 
+#define DECLARE_DRIZZLE_SYSVAR_BASIC(name, type) struct { \
+  DRIZZLE_PLUGIN_VAR_HEADER;      \
+  type *value;                  \
+  const type def_val;           \
+} DRIZZLE_SYSVAR_NAME(name)
+
 #define DRIZZLE_SYSVAR_BOOL(name, varname, opt, comment, check, update, def) \
-DECLARE_DRIZZLE_SYSVAR_BASIC(name, bool) = { \
+struct { \
+    DRIZZLE_PLUGIN_VAR_HEADER; \
+    bool *value; \
+    bool def_val; \
+  } DRIZZLE_SYSVAR_NAME(name) = { \
   PLUGIN_VAR_BOOL | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, &varname, def}
 

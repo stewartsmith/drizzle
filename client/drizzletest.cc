@@ -783,6 +783,7 @@ static void check_command_args(struct st_command *command,
     const struct command_arg *arg= &args[i];
     arg->ds->clear();
 
+    bool known_arg_type= true;
     switch (arg->type) {
       /* A string */
     case ARG_STRING:
@@ -817,9 +818,10 @@ static void check_command_args(struct st_command *command,
       break;
 
     default:
-      assert("Unknown argument type");
+      known_arg_type= false;
       break;
     }
+    assert(known_arg_type);
 
     /* Check required arg */
     if (arg->ds->length() == 0 && arg->required)

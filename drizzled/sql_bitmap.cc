@@ -35,7 +35,7 @@ void MyBitmap::createLastWordMask()
     Create a mask with the upper 'unused' bits set and the lower 'used'
     bits clear. The bits within each byte is stored in big-endian order.
    */
-  unsigned char const mask= static_cast<unsigned char const>((~((1 << used) - 1)) & 255); 
+  unsigned char const mask= static_cast<unsigned char>((~((1 << used) - 1)) & 255); 
 
   /*
     The first bytes are to be set to zero since they represent real  bits
