@@ -2349,7 +2349,13 @@ void HailDBCursor::position(const unsigned char *record)
 
 double HailDBCursor::scan_time()
 {
-  return 0.1;
+  ib_table_stats_t table_stats;
+  ib_err_t err;
+
+  err= ib_get_table_statistics(cursor, &table_stats, sizeof(table_stats));
+
+  /* Approximate I/O seeks for full table scan */
+  return (double) (table_stats.stat_clustered_index_size / 16384);
 }
 
 int HailDBCursor::info(uint32_t flag)
