@@ -212,7 +212,7 @@ public:
   ulong this_process;			/* processid */
   ulong last_process;			/* For table-change-check */
   ulong last_version;			/* Version on start */
-  ulong options;			/* Options used */
+  uint64_t options;			/* Options used */
   ulong min_pack_length;		/* Theese are used by packed data */
   ulong max_pack_length;
   ulong state_diff_length;

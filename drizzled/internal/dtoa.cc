@@ -1951,8 +1951,8 @@ static char *dtoa(double d, int mode, int ndigits, int *decpt, int *sign,
     *sign= 0;
 
   /* If infinity, set decpt to DTOA_OVERFLOW, if 0 set it to 1 */
-  if (((word0(d) & Exp_mask) == Exp_mask && (*decpt= DTOA_OVERFLOW)) ||
-      (!dval(d) && (*decpt= 1)))
+  if ((((word0(d) & Exp_mask) == Exp_mask) && ((*decpt= DTOA_OVERFLOW) != 0)) ||
+      (!dval(d) && ((*decpt= 1) != 0)))
   {
     /* Infinity, NaN, 0 */
     char *res= (char*) malloc(2);
