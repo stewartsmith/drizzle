@@ -22,8 +22,8 @@ EXTRA_SCRIPTS = 	tests/valgrind.supp $(PRESCRIPTS)
 GENSCRIPTS =		tests/dtr tests/mtr tests/test-run
 PRESCRIPTS =		tests/test-run.pl tests/stress-test.pl
 PLUGIN_TESTS =		$(pandora_plugin_test_list)
-NORMAL_TESTS =		main,jp,tamil,$(PLUGIN_TESTS)
-ALL_TESTS =		main,big,jp,tamil,$(PLUGIN_TESTS)
+NORMAL_TESTS =		main,jp,tamil,regression,$(PLUGIN_TESTS)
+ALL_TESTS =		main,big,jp,tamil,regression,$(PLUGIN_TESTS)
 noinst_SCRIPTS =	$(GENSCRIPTS) $(PRESCRIPTS)
 CLEANFILES += 		$(GENSCRIPTS) tests/mtr
 
