@@ -322,6 +322,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/plugin/xa_resource_manager.h \
 			      drizzled/plugin/xa_storage_engine.h \
 			      drizzled/probes.h \
+			      drizzled/program_options/config_file.h \
 			      drizzled/pthread_globals.h \
 			      drizzled/qsort_cmp.h \
 			      drizzled/query_id.h \

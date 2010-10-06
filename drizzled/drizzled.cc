@@ -31,6 +31,7 @@
 #include <stdexcept>
 
 #include <boost/program_options.hpp>
+#include "drizzled/program_options/config_file.h"
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
@@ -139,6 +140,7 @@
 using namespace std;
 namespace fs=boost::filesystem;
 namespace po=boost::program_options;
+namespace dpo=drizzled::program_options;
 
 
 namespace drizzled
@@ -1146,7 +1148,7 @@ static void process_defaults_files()
     ifstream input_defaults_file(file_location.c_str());
     
     po::parsed_options file_parsed=
-      po::parse_config_file(input_defaults_file, full_options, true);
+      dpo::parse_config_file(input_defaults_file, full_options, true);
     vector<string> file_unknown= 
       po::collect_unrecognized(file_parsed.options, po::include_positional);
 
