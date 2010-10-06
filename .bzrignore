@@ -326,3 +326,4 @@ docs/plugins/list.rst
 docs/plugins/*
 docs/doctrees
 docs/html
+plugin/innobase/include/pars0grm.h
