@@ -14,29 +14,29 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-# This is a library file used by the Perl version of mysql-test-run,
+# This is a library file used by the Perl version of drizzle-test-run,
 # and is part of the translation of the Bourne shell script with the
 # same name.
 
 use strict;
 use warnings;
 
-sub mtr_report_test_name($);
-sub mtr_report_test_passed($);
-sub mtr_report_test_failed($);
-sub mtr_report_test_skipped($);
-sub mtr_report_test_not_skipped_though_disabled($);
+sub dtr_report_test_name($);
+sub dtr_report_test_passed($);
+sub dtr_report_test_failed($);
+sub dtr_report_test_skipped($);
+sub dtr_report_test_not_skipped_though_disabled($);
 
-sub mtr_report_stats ($);
-sub mtr_print_line ();
-sub mtr_print_thick_line ();
-sub mtr_print_header ();
-sub mtr_report (@);
-sub mtr_warning (@);
-sub mtr_error (@);
-sub mtr_child_error (@);
-sub mtr_debug (@);
-sub mtr_verbose (@);
+sub dtr_report_stats ($);
+sub dtr_print_line ();
+sub dtr_print_thick_line ();
+sub dtr_print_header ();
+sub dtr_report (@);
+sub dtr_warning (@);
+sub dtr_error (@);
+sub dtr_child_error (@);
+sub dtr_debug (@);
+sub dtr_verbose (@);
 
 my $tot_real_time= 0;
 
@@ -48,14 +48,14 @@ my $tot_real_time= 0;
 #
 ##############################################################################
 
-sub mtr_report_test_name ($) {
+sub dtr_report_test_name ($) {
   my $tinfo= shift;
   my $tname= $tinfo->{name};
 
   $tname.= " '$tinfo->{combination}'"
     if defined $tinfo->{combination};
 
-  _mtr_log($tname);
+  _dtr_log($tname);
   if ($::opt_subunit) {
     printf "test: $tname\n";
   } else {
@@ -63,12 +63,12 @@ sub mtr_report_test_name ($) {
   }
 }
 
-sub mtr_report_test_skipped ($) {
+sub dtr_report_test_skipped ($) {
   my $tinfo= shift;
   my $tname= $tinfo->{name};
   my $cause= "";
 
-  $tinfo->{'result'}= 'MTR_RES_SKIPPED';
+  $tinfo->{'result'}= 'DTR_RES_SKIPPED';
   if ( $tinfo->{'disable'} )
   {
     $cause.= "disable";
@@ -80,22 +80,22 @@ sub mtr_report_test_skipped ($) {
   if ( $tinfo->{'comment'} )
   {
     if ($::opt_subunit) {
-      mtr_report("skip: $tname [\ncause: $cause\n$tinfo->{'comment'}\n]");
+      dtr_report("skip: $tname [\ncause: $cause\n$tinfo->{'comment'}\n]");
     } else { 
-      mtr_report("[ $cause ]   $tinfo->{'comment'}");
+      dtr_report("[ $cause ]   $tinfo->{'comment'}");
     }
   }
   else
   {
     if ($::opt_subunit) {
-      mtr_report("skip: $tname");
+      dtr_report("skip: $tname");
     } else {
-      mtr_report("[ $cause ]");
+      dtr_report("[ $cause ]");
     }
   }
 }
 
-sub mtr_report_tests_not_skipped_though_disabled ($) {
+sub dtr_report_tests_not_skipped_though_disabled ($) {
   my $tests= shift;
 
   if ( $::opt_enable_disabled )
@@ -112,39 +112,39 @@ sub mtr_report_tests_not_skipped_though_disabled ($) {
   }
 }
 
-sub mtr_report_test_passed ($) {
+sub dtr_report_test_passed ($) {
   my $tinfo= shift;
   my $tname= $tinfo->{name};
 
   my $timer=  "";
   if ( $::opt_timer and -f "$::opt_vardir/log/timer" )
   {
-    $timer= mtr_fromfile("$::opt_vardir/log/timer");
+    $timer= dtr_fromfile("$::opt_vardir/log/timer");
     $tot_real_time += ($timer/1000);
     $timer= sprintf "%7s", $timer;
     ### XXX: How to format this as iso6801 datetime?
   }
-  $tinfo->{'result'}= 'MTR_RES_PASSED';
+  $tinfo->{'result'}= 'dtr_RES_PASSED';
   if ($::opt_subunit) {
-    mtr_report("success: $tname");
+    dtr_report("success: $tname");
   } else {
-    mtr_report("[ pass ] $timer");
+    dtr_report("[ pass ] $timer");
   }
 }
 
-sub mtr_report_test_failed ($) {
+sub dtr_report_test_failed ($) {
   my $tinfo= shift;
   my $tname= $tinfo->{name};
   my $comment= "";
 
-  $tinfo->{'result'}= 'MTR_RES_FAILED';
+  $tinfo->{'result'}= 'dtr_RES_FAILED';
   if ( defined $tinfo->{'timeout'} )
   {
     $comment.= "timeout";
   }
   elsif ( $tinfo->{'comment'} )
   {
-    # The test failure has been detected by mysql-test-run.pl
+    # The test failure has been detected by drizzle-test-run.pl
     # when starting the servers or due to other error, the reason for
     # failing the test is saved in "comment"
     $comment.= "$tinfo->{'comment'}";
@@ -153,22 +153,22 @@ sub mtr_report_test_failed ($) {
   {
     # Test failure was detected by test tool and it's report
     # about what failed has been saved to file. Display the report.
-    $comment.= mtr_fromfile($::path_timefile);
+    $comment.= dtr_fromfile($::path_timefile);
   }
   else
   {
     # Neither this script or the test tool has recorded info
     # about why the test has failed. Should be debugged.
-    $comment.= "Unexpected termination, probably when starting mysqld";
+    $comment.= "Unexpected termination, probably when starting drizzled";
   }
   if ($::opt_subunit) {
-    mtr_report("failure: $tname [\n$comment\n]");
+    dtr_report("failure: $tname [\n$comment\n]");
   } else {
-    mtr_report("[ fail ]\n$comment");
+    dtr_report("[ fail ]\n$comment");
   }
 }
 
-sub mtr_report_stats ($) {
+sub dtr_report_stats ($) {
   my $tests= shift;
 
   # ----------------------------------------------------------------------
@@ -184,16 +184,16 @@ sub mtr_report_stats ($) {
 
   foreach my $tinfo (@$tests)
   {
-    if ( $tinfo->{'result'} eq 'MTR_RES_SKIPPED' )
+    if ( $tinfo->{'result'} eq 'DTR_RES_SKIPPED' )
     {
       $tot_skiped++;
     }
-    elsif ( $tinfo->{'result'} eq 'MTR_RES_PASSED' )
+    elsif ( $tinfo->{'result'} eq 'DTR_RES_PASSED' )
     {
       $tot_tests++;
       $tot_passed++;
     }
-    elsif ( $tinfo->{'result'} eq 'MTR_RES_FAILED' )
+    elsif ( $tinfo->{'result'} eq 'DTR_RES_FAILED' )
     {
       $tot_tests++;
       $tot_failed++;
@@ -233,7 +233,7 @@ sub mtr_report_stats ($) {
   {
     use English;
 
-    mtr_report("Spent", sprintf("%.3f", $tot_real_time),"of",
+    dtr_report("Spent", sprintf("%.3f", $tot_real_time),"of",
 	       time - $BASETIME, "seconds executing testcases");
   }
 
@@ -243,11 +243,11 @@ sub mtr_report_stats ($) {
   if ( $tot_failed != 0 )
   {
     my $test_mode= join(" ", @::glob_test_mode) || "default";
-    print "mysql-test-run in $test_mode mode: *** Failing the test(s):";
+    print "drizzle-test-run in $test_mode mode: *** Failing the test(s):";
 
     foreach my $tinfo (@$tests)
     {
-      if ( $tinfo->{'result'} eq 'MTR_RES_FAILED' )
+      if ( $tinfo->{'result'} eq 'DTR_RES_FAILED' )
       {
         print " $tinfo->{'name'}";
       }
@@ -279,7 +279,7 @@ sub mtr_report_stats ($) {
 
   if ( $tot_failed != 0 || $found_problems)
   {
-    mtr_error("there were failing test cases");
+    dtr_error("there were failing test cases");
   }
 }
 
@@ -289,15 +289,15 @@ sub mtr_report_stats ($) {
 #
 ##############################################################################
 
-sub mtr_print_line () {
+sub dtr_print_line () {
   print '-' x 80, "\n";
 }
 
-sub mtr_print_thick_line () {
+sub dtr_print_thick_line () {
   print '=' x 80, "\n";
 }
 
-sub mtr_print_header () {
+sub dtr_print_header () {
   print "DEFAULT STORAGE ENGINE: $::opt_engine\n";
   if ( $::opt_timer )
   {
@@ -307,7 +307,7 @@ sub mtr_print_header () {
   {
     print "TEST                           RESULT\n";
   }
-  mtr_print_line();
+  dtr_print_line();
   print "\n";
 }
 
@@ -322,58 +322,58 @@ use IO::File;
 
 my $log_file_ref= undef;
 
-sub mtr_log_init ($) {
+sub dtr_log_init ($) {
   my ($filename)= @_;
 
-  mtr_error("Log is already open") if defined $log_file_ref;
+  dtr_error("Log is already open") if defined $log_file_ref;
 
   $log_file_ref= IO::File->new($filename, "a") or
-    mtr_warning("Could not create logfile $filename: $!");
+    dtr_warning("Could not create logfile $filename: $!");
 }
 
-sub _mtr_log (@) {
+sub _dtr_log (@) {
   print $log_file_ref join(" ", @_),"\n"
     if defined $log_file_ref;
 }
 
-sub mtr_report (@) {
+sub dtr_report (@) {
   # Print message to screen and log
-  _mtr_log(@_);
+  _dtr_log(@_);
   print join(" ", @_),"\n";
 }
 
-sub mtr_warning (@) {
+sub dtr_warning (@) {
   # Print message to screen and log
-  _mtr_log("WARNING: ", @_);
-  print STDERR "mysql-test-run: WARNING: ",join(" ", @_),"\n";
+  _dtr_log("WARNING: ", @_);
+  print STDERR "drizzle-test-run: WARNING: ",join(" ", @_),"\n";
 }
 
-sub mtr_error (@) {
+sub dtr_error (@) {
   # Print message to screen and log
-  _mtr_log("ERROR: ", @_);
-  print STDERR "mysql-test-run: *** ERROR: ",join(" ", @_),"\n";
-  mtr_exit(1);
+  _dtr_log("ERROR: ", @_);
+  print STDERR "drizzle-test-run: *** ERROR: ",join(" ", @_),"\n";
+  dtr_exit(1);
 }
 
-sub mtr_child_error (@) {
+sub dtr_child_error (@) {
   # Print message to screen and log
-  _mtr_log("ERROR(child): ", @_);
-  print STDERR "mysql-test-run: *** ERROR(child): ",join(" ", @_),"\n";
+  _dtr_log("ERROR(child): ", @_);
+  print STDERR "drizzle-test-run: *** ERROR(child): ",join(" ", @_),"\n";
   exit(1);
 }
 
-sub mtr_debug (@) {
+sub dtr_debug (@) {
   # Only print if --script-debug is used
   if ( $::opt_script_debug )
   {
-    _mtr_log("###: ", @_);
+    _dtr_log("###: ", @_);
     print STDERR "####: ",join(" ", @_),"\n";
   }
 }
 
-sub mtr_verbose (@) {
+sub dtr_verbose (@) {
   # Always print to log, print to screen only when --verbose is used
-  _mtr_log("> ",@_);
+  _dtr_log("> ",@_);
   if ( $::opt_verbose )
   {
     print STDERR "> ",join(" ", @_),"\n";

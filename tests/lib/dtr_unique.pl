@@ -15,8 +15,8 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #
-# This file is used from mysql-test-run.pl when choosing
-# port numbers and directories to use for running mysqld.
+# This file is used from drizzle-test-run.pl when choosing
+# port numbers and directories to use for running drizzled.
 #
 
 use strict;
@@ -25,16 +25,16 @@ use Fcntl ':flock';
 #
 # Requested IDs are stored in a hash and released upon END.
 #
-my %mtr_unique_assigned_ids = ();
-my $mtr_unique_pid;
+my %dtr_unique_assigned_ids = ();
+my $dtr_unique_pid;
 BEGIN {
-	$mtr_unique_pid = $$ unless defined $mtr_unique_pid;
+	$dtr_unique_pid = $$ unless defined $dtr_unique_pid;
 }
 END { 
-	if($mtr_unique_pid == $$) {
-		while(my ($id,$file) = each(%mtr_unique_assigned_ids)) {
+	if($dtr_unique_pid == $$) {
+		while(my ($id,$file) = each(%dtr_unique_assigned_ids)) {
 			print "Autoreleasing $file:$id\n";
-			mtr_release_unique_id($file, $id);
+			dtr_release_unique_id($file, $id);
 		}
 	}
 }
@@ -52,7 +52,7 @@ END {
 # If no unique ID within the specified parameters can be 
 # obtained, return undef.
 #
-sub mtr_require_unique_id($$$) {
+sub dtr_require_unique_id($$$) {
 	my $file = shift;
 	my $min = shift;
 	my $max = shift;
@@ -113,7 +113,7 @@ sub mtr_require_unique_id($$$) {
 	close FILE;
 	flock SEM, LOCK_UN or warn "can't unlock $file.sem";
 	close SEM;
-	$mtr_unique_assigned_ids{$ret} = $file if defined $ret;
+	$dtr_unique_assigned_ids{$ret} = $file if defined $ret;
 	return $ret;
 }
 
@@ -121,11 +121,11 @@ sub mtr_require_unique_id($$$) {
 # Require a unique ID like above, but sleep if no ID can be
 # obtained immediately.
 #
-sub mtr_require_unique_id_and_wait($$$) {
-	my $ret = mtr_require_unique_id($_[0],$_[1],$_[2]);
+sub dtr_require_unique_id_and_wait($$$) {
+	my $ret = dtr_require_unique_id($_[0],$_[1],$_[2]);
 	while(! defined $ret) {
 		sleep 30;
-		$ret = mtr_require_unique_id($_[0],$_[1],$_[2]);
+		$ret = dtr_require_unique_id($_[0],$_[1],$_[2]);
 		print "Waiting for unique id to become available...\n" unless $ret;
 	}
 	return $ret;
@@ -134,7 +134,7 @@ sub mtr_require_unique_id_and_wait($$$) {
 #
 # Release a unique ID.
 #
-sub mtr_release_unique_id($$) {
+sub dtr_release_unique_id($$) {
 	my $file = shift;
 	my $myid = shift;
 
@@ -171,7 +171,7 @@ sub mtr_release_unique_id($$) {
 	close FILE;
 	flock SEM, LOCK_UN or warn "can't unlock $file.sem";
 	close SEM;
-	delete $mtr_unique_assigned_ids{$myid};
+	delete $dtr_unique_assigned_ids{$myid};
 }
 
 1;

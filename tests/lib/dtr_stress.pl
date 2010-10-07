@@ -14,14 +14,14 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-# This is a library file used by the Perl version of mysql-test-run,
+# This is a library file used by the Perl version of drizzle-test-run,
 # and is part of the translation of the Bourne shell script with the
 # same name.
 
 use strict;
 use File::Spec;
 
-# These are not to be prefixed with "mtr_"
+# These are not to be prefixed with "dtr_"
 
 sub run_stress_test ();
 
@@ -37,13 +37,13 @@ sub run_stress_test ()
   my $args;
   my $stress_suitedir;
 
-  mtr_report("Starting stress testing\n");
+  dtr_report("Starting stress testing\n");
 
   if ( ! $::glob_use_embedded_server )
   {
-    if ( ! mysqld_start($::master->[0],[],[]) )
+    if ( ! drizzled_start($::master->[0],[],[]) )
     {
-      mtr_error("Can't start the mysqld server");
+      dtr_error("Can't start the drizzled server");
     }
   }
 
@@ -52,18 +52,18 @@ sub run_stress_test ()
   #Clean up stress dir 
   if ( -d $stress_basedir )
   {
-    rmtree($stress_basedir);
+    rdtree($stress_basedir);
   }
   mkpath($stress_basedir);
  
   if ($::opt_stress_suite ne 'main' && $::opt_stress_suite ne 'default' )
   {
-    $stress_suitedir=File::Spec->catdir($::glob_mysql_test_dir, "suite", 
+    $stress_suitedir=File::Spec->catdir($::glob_drizzle_test_dir, "suite", 
                                          $::opt_stress_suite);
   }
   else
   {
-    $stress_suitedir=$::glob_mysql_test_dir;
+    $stress_suitedir=$::glob_drizzle_test_dir;
   }
 
   if ( -d $stress_suitedir )
@@ -75,7 +75,7 @@ sub run_stress_test ()
   }
   else
   {
-    mtr_error("Specified test suite $::opt_stress_suite doesn't exist");
+    dtr_error("Specified test suite $::opt_stress_suite doesn't exist");
   }
  
   if ( @::opt_cases )
@@ -91,7 +91,7 @@ sub run_stress_test ()
                                               $::opt_stress_test_file);
     if ( ! -f $::opt_stress_test_file )
     {
-      mtr_error("Specified file $::opt_stress_test_file with list of tests does not exist\n",
+      dtr_error("Specified file $::opt_stress_test_file with list of tests does not exist\n",
                 "Please ensure that file exists and has proper permissions");
     }
   }
@@ -101,7 +101,7 @@ sub run_stress_test ()
                                               "stress_tests.txt");
     if ( ! -f $::opt_stress_test_file )
     {
-      mtr_error("Default file $::opt_stress_test_file with list of tests does not exist\n",
+      dtr_error("Default file $::opt_stress_test_file with list of tests does not exist\n",
           "Please use --stress-test-file option to specify custom one or you can\n",
           "just specify name of test for testing as last argument in command line");
 
@@ -114,7 +114,7 @@ sub run_stress_test ()
                                               $::opt_stress_init_file);
     if ( ! -f $::opt_stress_init_file )
     {
-      mtr_error("Specified file $::opt_stress_init_file with list of tests does not exist\n",
+      dtr_error("Specified file $::opt_stress_init_file with list of tests does not exist\n",
                 "Please ensure that file exists and has proper permissions");
     }
   }
@@ -130,31 +130,31 @@ sub run_stress_test ()
   
   if ( $::opt_stress_mode ne 'random' && $::opt_stress_mode ne 'seq' )
   {
-    mtr_error("You specified wrong mode $::opt_stress_mode for stress test\n",
+    dtr_error("You specified wrong mode $::opt_stress_mode for stress test\n",
               "Correct values are 'random' or 'seq'");
   }
 
-  mtr_init_args(\$args);
+  dtr_init_args(\$args);
   
-  mtr_add_arg($args, "--server-socket=%s", $::master->[0]->{'path_sock'});
-  mtr_add_arg($args, "--server-user=%s", $::opt_user);
-  mtr_add_arg($args, "--server-database=%s", "test");  
-  mtr_add_arg($args, "--stress-suite-basedir=%s", $::glob_mysql_test_dir);  
-  mtr_add_arg($args, "--suite=%s", $::opt_stress_suite);
-  mtr_add_arg($args, "--stress-tests-file=%s", $::opt_stress_test_file);      
-  mtr_add_arg($args, "--stress-basedir=%s", $stress_basedir);
-  mtr_add_arg($args, "--server-logs-dir=%s", $stress_basedir);
-  mtr_add_arg($args, "--stress-mode=%s", $::opt_stress_mode);
-  mtr_add_arg($args, "--mysqltest=%s", $::exe_mysqltest);
-  mtr_add_arg($args, "--threads=%s", $::opt_stress_threads);
-  mtr_add_arg($args, "--verbose");
-  mtr_add_arg($args, "--cleanup");
-  mtr_add_arg($args, "--log-error-details");
-  mtr_add_arg($args, "--abort-on-error");
+  dtr_add_arg($args, "--server-socket=%s", $::master->[0]->{'path_sock'});
+  dtr_add_arg($args, "--server-user=%s", $::opt_user);
+  dtr_add_arg($args, "--server-database=%s", "test");  
+  dtr_add_arg($args, "--stress-suite-basedir=%s", $::glob_drizzle_test_dir);  
+  dtr_add_arg($args, "--suite=%s", $::opt_stress_suite);
+  dtr_add_arg($args, "--stress-tests-file=%s", $::opt_stress_test_file);      
+  dtr_add_arg($args, "--stress-basedir=%s", $stress_basedir);
+  dtr_add_arg($args, "--server-logs-dir=%s", $stress_basedir);
+  dtr_add_arg($args, "--stress-mode=%s", $::opt_stress_mode);
+  dtr_add_arg($args, "--drizzletest=%s", $::exe_drizzletest);
+  dtr_add_arg($args, "--threads=%s", $::opt_stress_threads);
+  dtr_add_arg($args, "--verbose");
+  dtr_add_arg($args, "--cleanup");
+  dtr_add_arg($args, "--log-error-details");
+  dtr_add_arg($args, "--abort-on-error");
 
   if ( $::opt_stress_init_file )
   {
-    mtr_add_arg($args, "--stress-init-file=%s", $::opt_stress_init_file);
+    dtr_add_arg($args, "--stress-init-file=%s", $::opt_stress_init_file);
   }
 
   if ( !$::opt_stress_loop_count && !$::opt_stress_test_count &&
@@ -167,21 +167,21 @@ sub run_stress_test ()
 
   if ( $::opt_stress_loop_count )
   {
-    mtr_add_arg($args, "--loop-count=%s", $::opt_stress_loop_count);
+    dtr_add_arg($args, "--loop-count=%s", $::opt_stress_loop_count);
   }
 
   if ( $::opt_stress_test_count )
   {
-    mtr_add_arg($args, "--test-count=%s", $::opt_stress_test_count);
+    dtr_add_arg($args, "--test-count=%s", $::opt_stress_test_count);
   }
 
   if ( $::opt_stress_test_duration )
   {
-    mtr_add_arg($args, "--test-duration=%s", $::opt_stress_test_duration);
+    dtr_add_arg($args, "--test-duration=%s", $::opt_stress_test_duration);
   }
 
   #Run stress test
-  mtr_run("$::glob_mysql_test_dir/mysql-stress-test.pl", $args, "", "", "", "");
+  dtr_run("$::glob_drizzle_test_dir/drizzle-stress-test.pl", $args, "", "", "", "");
   if ( ! $::glob_use_embedded_server )
   {
     stop_all_servers();

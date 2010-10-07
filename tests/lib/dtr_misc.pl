@@ -14,25 +14,25 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-# This is a library file used by the Perl version of mysql-test-run,
+# This is a library file used by the Perl version of drizzle-test-run,
 # and is part of the translation of the Bourne shell script with the
 # same name.
 
 use strict;
 use File::Find;
 
-sub mtr_native_path($);
-sub mtr_init_args ($);
-sub mtr_add_arg ($$@);
-sub mtr_path_exists(@);
-sub mtr_script_exists(@);
-sub mtr_file_exists(@);
-sub mtr_exe_exists(@);
-sub mtr_exe_maybe_exists(@);
-sub mtr_copy_dir($$);
-sub mtr_rmtree($);
-sub mtr_same_opts($$);
-sub mtr_cmp_opts($$);
+sub dtr_native_path($);
+sub dtr_init_args ($);
+sub dtr_add_arg ($$@);
+sub dtr_path_exists(@);
+sub dtr_script_exists(@);
+sub dtr_file_exists(@);
+sub dtr_exe_exists(@);
+sub dtr_exe_maybe_exists(@);
+sub dtr_copy_dir($$);
+sub dtr_rdtree($);
+sub dtr_same_opts($$);
+sub dtr_cmp_opts($$);
 
 ##############################################################################
 #
@@ -41,14 +41,14 @@ sub mtr_cmp_opts($$);
 ##############################################################################
 
 # Convert path to OS native format
-sub mtr_native_path($)
+sub dtr_native_path($)
 {
   my $path= shift;
 
-  # MySQL version before 5.0 still use cygwin, no need
+  # drizzle version before 5.0 still use cygwin, no need
   # to convert path
   return $path
-    if ($::mysql_version_id < 50000);
+    if ($::drizzle_version_id < 50000);
 
   $path=~ s/\//\\/g
     if ($::glob_win32);
@@ -58,12 +58,12 @@ sub mtr_native_path($)
 
 # FIXME move to own lib
 
-sub mtr_init_args ($) {
+sub dtr_init_args ($) {
   my $args = shift;
   $$args = [];                            # Empty list
 }
 
-sub mtr_add_arg ($$@) {
+sub dtr_add_arg ($$@) {
   my $args=   shift;
   my $format= shift;
   my @fargs = @_;
@@ -77,18 +77,18 @@ sub mtr_add_arg ($$@) {
 # NOTE! More specific paths should be given before less specific.
 # For example /client/debug should be listed before /client
 #
-sub mtr_path_exists (@) {
+sub dtr_path_exists (@) {
   foreach my $path ( @_ )
   {
     return $path if -e $path;
   }
   if ( @_ == 1 )
   {
-    mtr_error("Could not find $_[0]");
+    dtr_error("Could not find $_[0]");
   }
   else
   {
-    mtr_error("Could not find any of " . join(" ", @_));
+    dtr_error("Could not find any of " . join(" ", @_));
   }
 }
 
@@ -97,7 +97,7 @@ sub mtr_path_exists (@) {
 # NOTE! More specific paths should be given before less specific.
 # For example /client/debug should be listed before /client
 #
-sub mtr_script_exists (@) {
+sub dtr_script_exists (@) {
   foreach my $path ( @_ )
   {
     if($::glob_win32)
@@ -111,11 +111,11 @@ sub mtr_script_exists (@) {
   }
   if ( @_ == 1 )
   {
-    mtr_error("Could not find $_[0]");
+    dtr_error("Could not find $_[0]");
   }
   else
   {
-    mtr_error("Could not find any of " . join(" ", @_));
+    dtr_error("Could not find any of " . join(" ", @_));
   }
 }
 
@@ -124,7 +124,7 @@ sub mtr_script_exists (@) {
 # NOTE! More specific paths should be given before less specific.
 # For example /client/debug should be listed before /client
 #
-sub mtr_file_exists (@) {
+sub dtr_file_exists (@) {
   foreach my $path ( @_ )
   {
     return $path if -e $path;
@@ -137,7 +137,7 @@ sub mtr_file_exists (@) {
 # NOTE! More specific paths should be given before less specific.
 # For example /client/debug should be listed before /client
 #
-sub mtr_exe_maybe_exists (@) {
+sub dtr_exe_maybe_exists (@) {
   my @path= @_;
 
   map {$_.= ".exe"} @path if $::glob_win32;
@@ -161,38 +161,38 @@ sub mtr_exe_maybe_exists (@) {
 # NOTE! More specific paths should be given before less specific.
 # For example /client/debug should be listed before /client
 #
-sub mtr_exe_exists (@) {
+sub dtr_exe_exists (@) {
   my @path= @_;
-  if (my $path= mtr_exe_maybe_exists(@path))
+  if (my $path= dtr_exe_maybe_exists(@path))
   {
     return $path;
   }
   # Could not find exe, show error
   if ( @path == 1 )
   {
-    mtr_error("Could not find $path[0]");
+    dtr_error("Could not find $path[0]");
   }
   else
   {
-    mtr_error("Could not find any of " . join(" ", @path));
+    dtr_error("Could not find any of " . join(" ", @path));
   }
 }
 
 
-sub mtr_copy_dir($$) {
+sub dtr_copy_dir($$) {
   my $from_dir= shift;
   my $to_dir= shift;
 
-  # mtr_verbose("Copying from $from_dir to $to_dir");
+  # dtr_verbose("Copying from $from_dir to $to_dir");
 
   mkpath("$to_dir");
   opendir(DIR, "$from_dir")
-    or mtr_error("Can't find $from_dir$!");
+    or dtr_error("Can't find $from_dir$!");
   for(readdir(DIR)) {
     next if "$_" eq "." or "$_" eq "..";
     if ( -d "$from_dir/$_" )
     {
-      mtr_copy_dir("$from_dir/$_", "$to_dir/$_");
+      dtr_copy_dir("$from_dir/$_", "$to_dir/$_");
       next;
     }
     copy("$from_dir/$_", "$to_dir/$_");
@@ -202,9 +202,9 @@ sub mtr_copy_dir($$) {
 }
 
 
-sub mtr_rmtree($) {
+sub dtr_rmtree($) {
   my ($dir)= @_;
-  mtr_verbose("mtr_rmtree: $dir");
+  dtr_verbose("dtr_rdtree: $dir");
 
   # Try to use File::Path::rmtree. Recent versions
   # handles removal of directories and files that don't
@@ -213,7 +213,7 @@ sub mtr_rmtree($) {
 
   eval { rmtree($dir); };
   if ( $@ ) {
-    mtr_warning("rmtree($dir) failed, trying with File::Find...");
+    dtr_warning("rmtree($dir) failed, trying with File::Find...");
 
     my $errors= 0;
 
@@ -222,7 +222,7 @@ sub mtr_rmtree($) {
 	   no_chdir => 1,
 	   wanted => sub {
 	     chmod(0777, $_)
-	       or mtr_warning("couldn't chmod(0777, $_): $!") and $errors++;
+	       or dtr_warning("couldn't chmod(0777, $_): $!") and $errors++;
 	   }
 	  },
 	  $dir
@@ -236,30 +236,30 @@ sub mtr_rmtree($) {
 	     # Use special underscore (_) filehandle, caches stat info
 	     if (!-l $file and -d _ ) {
 	       rmdir($file) or
-		 mtr_warning("couldn't rmdir($file): $!") and $errors++;
+		 dtr_warning("couldn't rmdir($file): $!") and $errors++;
 	     } else {
 	       unlink($file)
-		 or mtr_warning("couldn't unlink($file): $!") and $errors++;
+		 or dtr_warning("couldn't unlink($file): $!") and $errors++;
 	     }
 	   }
 	  },
 	  $dir
 	);
 
-    mtr_error("Failed to remove '$dir'") if $errors;
+    dtr_error("Failed to remove '$dir'") if $errors;
 
-    mtr_report("OK, that worked!");
+    dtr_report("OK, that worked!");
   }
 }
 
 
-sub mtr_same_opts ($$) {
+sub dtr_same_opts ($$) {
   my $l1= shift;
   my $l2= shift;
-  return mtr_cmp_opts($l1,$l2) == 0;
+  return dtr_cmp_opts($l1,$l2) == 0;
 }
 
-sub mtr_cmp_opts ($$) {
+sub dtr_cmp_opts ($$) {
   my $l1= shift;
   my $l2= shift;
 
@@ -283,7 +283,7 @@ sub mtr_cmp_opts ($$) {
 #
 # Compare two arrays and put all unequal elements into a new one
 #
-sub mtr_diff_opts ($$) {
+sub dtr_diff_opts ($$) {
   my $l1= shift;
   my $l2= shift;
   my $f;
