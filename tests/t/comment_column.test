@@ -100,7 +100,6 @@ SELECT column_comment,char_length(column_comment) FROM data_dictionary.columns W
 SELECT index_comment,char_length(index_comment) FROM data_dictionary.indexes WHERE table_name='t1';
 let $ENGINE=`select variable_value from data_dictionary.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE
---error ER_NO_SUCH_TABLE
 SHOW CREATE TABLE t1;
 
 # comment overflow(error)

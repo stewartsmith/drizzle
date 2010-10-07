@@ -18,25 +18,29 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SHOW_DICTIONARY_DICTIONARY_H
-#define PLUGIN_SHOW_DICTIONARY_DICTIONARY_H
+#ifndef PLUGIN_SHOW_DICTIONARY_SHOW_CREATE_TABLE_H
+#define PLUGIN_SHOW_DICTIONARY_SHOW_CREATE_TABLE_H
 
-#include <set>
+class ShowCreateTable : public drizzled::plugin::TableFunction
+{
+public:
+  ShowCreateTable();
 
-#include "drizzled/plugin/table_function.h"
-#include "drizzled/plugin/storage_engine.h"
-#include "drizzled/statement/select.h"
+  class Generator : public drizzled::plugin::TableFunction::Generator 
+  {
+    bool is_table_primed;
+    std::string table_name;
+    drizzled::message::Table table_message;
 
-#include "drizzled/session.h"
-#include "drizzled/current_session.h"
-#include "drizzled/message/schema.pb.h"
+  public:
+    Generator(drizzled::Field **arg);
+    bool populate();
+  };
 
-#include "plugin/show_dictionary/show_columns.h"
-#include "plugin/show_dictionary/show_create_table.h"
-#include "plugin/show_dictionary/show_indexes.h"
-#include "plugin/show_dictionary/show_schemas.h"
-#include "plugin/show_dictionary/show_tables.h"
-#include "plugin/show_dictionary/show_table_status.h"
-#include "plugin/show_dictionary/show_temporary_tables.h"
+  Generator *generator(drizzled::Field **arg)
+  {
+    return new Generator(arg);
+  }
+};
 
-#endif /* PLUGIN_SHOW_DICTIONARY_DICTIONARY_H */
+#endif /* PLUGIN_SHOW_DICTIONARY_SHOW_CREATE_TABLE_H */
