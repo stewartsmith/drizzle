@@ -34,7 +34,7 @@ TEST_RUN= $(PERL) -I../$(top_srcdir)/tests/lib \
 		--vardir=../${top_builddir}/tests/var \
 		--suitepath=../${top_srcdir}/plugin \
 		--testdir=../${top_srcdir}/tests \
-		--mtr-build-thread=$$$$
+		--dtr-build-thread=$$$$
 
 EXTRA_DIST += \
 	$(EXTRA_SCRIPTS) \
