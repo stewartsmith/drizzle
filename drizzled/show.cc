@@ -118,55 +118,6 @@ int wild_case_compare(const CHARSET_INFO * const cs, const char *str, const char
   return (*str != '\0');
 }
 
-
-bool drizzled_show_create(Session *session, TableList *table_list, bool is_if_not_exists)
-{
-  char buff[2048];
-  String buffer(buff, sizeof(buff), system_charset_info);
-
-  /* Only one table for now, but VIEW can involve several tables */
-  if (session->openTables(table_list))
-  {
-    if (session->is_error())
-      return true;
-
-    /*
-      Clear all messages with 'error' level status and
-      issue a warning with 'warning' level status in
-      case of invalid view and last error is ER_VIEW_INVALID
-    */
-    drizzle_reset_errors(session, true);
-    session->clear_error();
-  }
-
-  buffer.length(0);
-
-  if (store_create_info(table_list, &buffer, is_if_not_exists))
-    return true;
-
-  List<Item> field_list;
-  {
-    field_list.push_back(new Item_empty_string("Table",NAME_CHAR_LEN));
-    // 1024 is for not to confuse old clients
-    field_list.push_back(new Item_empty_string("Create Table",
-                                               max(buffer.length(),(uint32_t)1024)));
-  }
-
-  if (session->client->sendFields(&field_list))
-    return true;
-  {
-    session->client->store(table_list->table->getAlias());
-  }
-
-  session->client->store(buffer.ptr(), buffer.length());
-
-  if (session->client->flush())
-    return true;
-
-  session->my_eof();
-  return false;
-}
-
 /**
   Get a CREATE statement for a given database.
 

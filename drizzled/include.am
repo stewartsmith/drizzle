@@ -392,7 +392,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/statement/savepoint.h \
 			      drizzled/statement/select.h \
 			      drizzled/statement/set_option.h \
-			      drizzled/statement/show_create.h \
 			      drizzled/statement/show_create_schema.h \
 			      drizzled/statement/show_errors.h \
 			      drizzled/statement/show_warnings.h \
@@ -737,7 +736,6 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/statement/savepoint.cc \
 				 drizzled/statement/select.cc \
 				 drizzled/statement/set_option.cc \
-				 drizzled/statement/show_create.cc \
 				 drizzled/statement/show_create_schema.cc \
 				 drizzled/statement/show_errors.cc \
 				 drizzled/statement/show_warnings.cc \
