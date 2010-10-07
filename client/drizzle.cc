@@ -158,9 +158,11 @@ typedef Function drizzle_compentry_func_t;
 #define vidattr(A) {}      // Can't get this to work
 #endif
 #include <boost/program_options.hpp>
+#include "drizzled/program_options/config_file.h"
 
 using namespace std;
 namespace po=boost::program_options;
+namespace dpo=drizzled::program_options;
 
 /* Don't try to make a nice table if the data is too big */
 const uint32_t MAX_COLUMN_LENGTH= 1024;
@@ -287,7 +289,7 @@ static bool ignore_errors= false, quick= false,
   connected= false, opt_raw_data= false, unbuffered= false,
   output_tables= false, opt_rehash= true, skip_updates= false,
   safe_updates= false, one_database= false,
-  opt_compress= false, opt_shutdown= false, opt_ping= false,
+  opt_shutdown= false, opt_ping= false,
   vertical= false, line_numbers= true, column_names= true,
   opt_nopager= true, opt_outfile= false, named_cmds= false,
   opt_nobeep= false, opt_reconnect= true,
@@ -1287,8 +1289,6 @@ try
   N_("Display column type information."))
   ("comments,c", po::value<bool>(&preserve_comments)->default_value(false)->zero_tokens(),
   N_("Preserve comments. Send comments to the server. The default is --skip-comments (discard comments), enable with --comments"))
-  ("compress,C", po::value<bool>(&opt_compress)->default_value(false)->zero_tokens(),
-  N_("Use compression in server/client protocol."))  
   ("vertical,E", po::value<bool>(&vertical)->default_value(false)->zero_tokens(),
   N_("Print the output of a query (rows) vertically."))
   ("force,f", po::value<bool>(&ignore_errors)->default_value(false)->zero_tokens(),
@@ -1326,7 +1326,7 @@ try
 
   po::options_description drizzle_options(N_("Options specific to the drizzle client"));
   drizzle_options.add_options()
-  ("disable-auto-rehash",
+  ("disable-auto-rehash,A",
   N_("Disable automatic rehashing. One doesn't need to use 'rehash' to get table and field completion, but startup and reconnecting may take a longer time."))
   ("auto-vertical-output", po::value<bool>(&auto_vertical_output)->default_value(false)->zero_tokens(),
   N_("Automatically switch to vertical output mode if the result is wider than the terminal width."))
@@ -1357,7 +1357,7 @@ try
   ("raw,r", po::value<bool>(&opt_raw_data)->default_value(false)->zero_tokens(),
   N_("Write fields without conversion. Used with --batch.")) 
   ("disable-reconnect", N_("Do not reconnect if the connection is lost."))
-  ("shutdown", po::value<bool>(&opt_shutdown)->default_value(false)->zero_tokens(),
+  ("shutdown", po::value<bool>()->zero_tokens(),
   N_("Shutdown the server"))
   ("silent,s", N_("Be more silent. Print results with a tab as separator, each row on new line."))
   ("tee", po::value<string>(),
@@ -1420,16 +1420,16 @@ try
     user_config_dir_client.append("/drizzle/client.cnf");
 
     ifstream user_drizzle_ifs(user_config_dir_drizzle.c_str());
-    po::store(parse_config_file(user_drizzle_ifs, drizzle_options), vm);
+    po::store(dpo::parse_config_file(user_drizzle_ifs, drizzle_options), vm);
 
     ifstream user_client_ifs(user_config_dir_client.c_str());
-    po::store(parse_config_file(user_client_ifs, client_options), vm);
+    po::store(dpo::parse_config_file(user_client_ifs, client_options), vm);
 
     ifstream system_drizzle_ifs(system_config_dir_drizzle.c_str());
-    store(parse_config_file(system_drizzle_ifs, drizzle_options), vm);
+    store(dpo::parse_config_file(system_drizzle_ifs, drizzle_options), vm);
  
     ifstream system_client_ifs(system_config_dir_client.c_str());
-    po::store(parse_config_file(system_client_ifs, client_options), vm);
+    po::store(dpo::parse_config_file(system_client_ifs, client_options), vm);
   }
 
   po::notify(vm);
@@ -1494,6 +1494,13 @@ try
   column_names= (vm.count("disable-column-names")) ? false : true;
   opt_rehash= (vm.count("disable-auto-rehash")) ? false : true;
   opt_reconnect= (vm.count("disable-reconnect")) ? false : true;
+
+  /* Don't rehash with --shutdown */
+  if (vm.count("shutdown"))
+  {
+    opt_rehash= false;
+    opt_shutdown= true;
+  }
 
   if (vm.count("delimiter"))
   {

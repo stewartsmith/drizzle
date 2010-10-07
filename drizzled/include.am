@@ -17,6 +17,11 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
+drizzled/sql_yacc.cc: drizzled/sql_yacc.yy 
+	$(AM_V_YACC)$(am__skipyacc) $(YACC) $(YLFLAGS) $(AM_YFLAGS) -o $@ $<
+	mv drizzled/sql_yacc.hh drizzled/sql_yacc.h
+
+
 
 DTRACEFILES= \
 	     drizzled/cursor.o \
@@ -245,6 +250,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/memory/multi_malloc.h \
 			      drizzled/memory/root.h \
 			      drizzled/memory/sql_alloc.h \
+			      drizzled/message.h \
 			      drizzled/module/context.h \
 			      drizzled/module/library.h \
 			      drizzled/module/manifest.h \
@@ -316,6 +322,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/plugin/xa_resource_manager.h \
 			      drizzled/plugin/xa_storage_engine.h \
 			      drizzled/probes.h \
+			      drizzled/program_options/config_file.h \
 			      drizzled/pthread_globals.h \
 			      drizzled/qsort_cmp.h \
 			      drizzled/query_id.h \
@@ -621,6 +628,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/key_map.cc \
 				 drizzled/lock.cc \
 				 drizzled/lookup_symbol.cc \
+				 drizzled/message.cc \
 				 drizzled/module/context.cc \
 				 drizzled/module/library.cc \
 				 drizzled/module/loader.cc \
@@ -806,7 +814,7 @@ else
 PCHHEADERS = 
 endif
 
-BUILT_MAINT_SRC= \
+BUILT_MAINT_SRC+= \
 		 drizzled/sql_yacc.cc \
 		 drizzled/sql_yacc.h
 

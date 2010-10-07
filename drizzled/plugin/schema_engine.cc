@@ -221,6 +221,7 @@ public:
     // @todo eomeday check that at least one engine said "true"
     bool success= engine->doAlterSchema(schema_message);
 
+
     if (success)
       success_count++;
   }

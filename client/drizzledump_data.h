@@ -116,6 +116,7 @@ class DrizzleDumpTable
     std::string displayName;
     std::string engineName;
     std::string collate;
+    std::string comment;
 
     // Currently MySQL only, hard to do in Drizzle
     uint64_t autoIncrement;
@@ -163,9 +164,9 @@ class DrizzleDumpData
     virtual ~DrizzleDumpData() { }
     friend std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj);
 
-    virtual std::ostream& checkDateTime(std::ostream &os, const char*, uint32_t) const { return os; }
+    virtual std::string checkDateTime(const char*, uint32_t) const { return std::string(""); }
     std::string convertHex(const unsigned char* from, size_t from_size) const;
-    std::string escape(const char* from, size_t from_size) const;
+    static std::string escape(const char* from, size_t from_size);
 };
 
 class DrizzleDumpConnection

@@ -26,6 +26,7 @@ using namespace drizzled;
 static int init(drizzled::module::Context &context)
 {
   context.add(new utility_dictionary::Counter);
+  context.add(new utility_dictionary::Environmental);
   context.add(new utility_dictionary::RandomNumber);
   context.add(new utility_dictionary::RandomString);
   

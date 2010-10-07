@@ -40,8 +40,10 @@ endif
 DIST_SUBDIRS = ${SUBDIRS} tests
 
 BUILT_SOURCES=
+BUILT_MAINT_SRC=
 EXTRA_DIST= \
 	    .quickly \
+	    COPYING.Boost \
 	    COPYING.BSD \
 	    DRIZZLE.FAQ \
 	    EXCEPTIONS-CLIENT \
@@ -139,6 +141,7 @@ clean-local:
 	-rm -rf docs/api docs/dev docs/_build docs/doctrees
 
 include config/lint-source.am
+include config/lcov.am
 
 include docs/include.am
 include drizzled/message/include.am

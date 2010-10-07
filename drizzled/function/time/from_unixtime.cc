@@ -18,7 +18,7 @@
  */
 
 #include "config.h"
-
+#include <boost/lexical_cast.hpp>
 #include "drizzled/function/time/from_unixtime.h"
 #include "drizzled/session.h"
 #include "drizzled/temporal.h"
@@ -85,9 +85,7 @@ bool Item_func_from_unixtime::get_date(DRIZZLE_TIME *ltime, uint32_t)
   if (! temporal.from_time_t((time_t) tmp))
   {
     null_value= true;
-    std::stringstream ss;
-    std::string tmp_string;
-    ss << tmp; ss >> tmp_string;
+    std::string tmp_string(boost::lexical_cast<std::string>(tmp));
     my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(0), tmp_string.c_str());
     return 0;
   }

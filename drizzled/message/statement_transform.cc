@@ -31,6 +31,7 @@
 
 #include "config.h"
 
+#include <boost/lexical_cast.hpp>
 #include "drizzled/message/statement_transform.h"
 #include "drizzled/message/transaction.pb.h"
 #include "drizzled/message/table.pb.h"
@@ -1036,8 +1037,6 @@ transformTableOptionsToSql(const Table::TableOptions &options,
   if (sql_variant == ANSI)
     return NONE; /* ANSI does not support table options... */
 
-  stringstream ss;
-
   if (options.has_comment())
   {
     destination.append(" COMMENT=", 9);
@@ -1066,35 +1065,27 @@ transformTableOptionsToSql(const Table::TableOptions &options,
 
   if (options.has_max_rows())
   {
-    ss << options.max_rows();
     destination.append("\nMAX_ROWS = ", 12);
-    destination.append(ss.str());
-    ss.clear();
+    destination.append(boost::lexical_cast<string>(options.max_rows()));
   }
 
   if (options.has_min_rows())
   {
-    ss << options.min_rows();
     destination.append("\nMIN_ROWS = ", 12);
-    destination.append(ss.str());
-    ss.clear();
+    destination.append(boost::lexical_cast<string>(options.min_rows()));
   }
 
   if (options.has_user_set_auto_increment_value()
       && options.has_auto_increment_value())
   {
-    ss << options.auto_increment_value();
     destination.append(" AUTO_INCREMENT=", 16);
-    destination.append(ss.str());
-    ss.clear();
+    destination.append(boost::lexical_cast<string>(options.auto_increment_value()));
   }
 
   if (options.has_avg_row_length())
   {
-    ss << options.avg_row_length();
     destination.append("\nAVG_ROW_LENGTH = ", 18);
-    destination.append(ss.str());
-    ss.clear();
+    destination.append(boost::lexical_cast<string>(options.avg_row_length()));
   }
 
   if (options.has_checksum() &&
@@ -1160,10 +1151,8 @@ transformIndexDefinitionToSql(const Table::Index &index,
       {
         if (part.compare_length() != field.string_options().length())
         {
-          stringstream ss;
           destination.push_back('(');
-          ss << part.compare_length();
-          destination.append(ss.str());
+          destination.append(boost::lexical_cast<string>(part.compare_length()));
           destination.push_back(')');
         }
       }
@@ -1325,9 +1314,8 @@ transformFieldDefinitionToSql(const Table::Field &field,
       else
         destination.append(" VARCHAR(", 9);
 
-      stringstream ss;
-      ss << field.string_options().length() << ")";
-      destination.append(ss.str());
+      destination.append(boost::lexical_cast<string>(field.string_options().length()));
+      destination.append(")");
     }
     break;
   case Table::Field::BLOB:

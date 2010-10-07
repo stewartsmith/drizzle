@@ -31,6 +31,8 @@ SchemasTool::SchemasTool() :
   add_field("DEFAULT_COLLATION_NAME");
   add_field("SCHEMA_CREATION_TIME");
   add_field("SCHEMA_UPDATE_TIME");
+  add_field("SCHEMA_UUID", plugin::TableFunction::STRING, 36, true);
+  add_field("SCHEMA_VERSION", plugin::TableFunction::NUMBER, 0, true);
 }
 
 SchemasTool::Generator::Generator(Field **arg) :
@@ -88,4 +90,10 @@ void SchemasTool::Generator::fill()
   localtime_r(&time_arg, &tm_buffer);
   strftime(buffer, sizeof(buffer), "%a %b %d %H:%M:%S %Y", &tm_buffer);
   push(buffer);
+
+  /* SCHEMA_UUID */
+  push(schema.uuid());
+
+  /* SCHEMA_VERSION */
+  push(schema.version());
 }
