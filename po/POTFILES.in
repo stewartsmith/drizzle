@@ -59,7 +59,6 @@ plugin/blitzdb/ha_blitz.h
 plugin/console/console.cc
 plugin/default_replicator/default_replicator.cc
 plugin/drizzle_protocol/drizzle_protocol.cc
-plugin/drizzle_protocol/errmsg.cc
 plugin/haildb/haildb_engine.cc
 plugin/errmsg_notify/errmsg_notify.cc
 plugin/errmsg_stderr/errmsg_stderr.cc
