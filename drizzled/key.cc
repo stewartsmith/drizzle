@@ -372,7 +372,7 @@ void key_unpack(String *to, Table *table, uint32_t idx)
       }
 
       if (key_part->length < field->pack_length())
-        tmp.length(min(tmp.length(),(uint32_t)key_part->length));
+        tmp.length(min(tmp.length(), static_cast<size_t>(key_part->length)));
       to->append(tmp);
     }
     else
