@@ -2360,7 +2360,24 @@ double HailDBCursor::scan_time()
 
 int HailDBCursor::info(uint32_t flag)
 {
-  stats.records= 2;
+  ib_table_stats_t table_stats;
+  ib_err_t err;
+
+  if (flag & HA_STATUS_VARIABLE)
+  {
+    err= ib_get_table_statistics(cursor, &table_stats, sizeof(table_stats));
+
+    stats.records= table_stats.stat_n_rows;
+
+    if (table_stats.stat_n_rows < 2)
+      stats.records= 2;
+
+    stats.deleted= 0;
+    stats.data_file_length= table_stats.stat_clustered_index_size;
+    stats.index_file_length= table_stats.stat_sum_of_other_index_sizes;
+
+    stats.mean_rec_length= stats.data_file_length / stats.records;
+  }
 
   if (flag & HA_STATUS_AUTO)
     stats.auto_increment_value= 1;
