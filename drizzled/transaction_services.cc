@@ -80,9 +80,6 @@ using namespace std;
 namespace drizzled
 {
 
-/** @TODO: Make this a system variable */
-static const size_t trx_msg_threshold= 1024 * 1024;
-
 /**
  * @defgroup Transactions
  *
@@ -1110,7 +1107,8 @@ message::Statement &TransactionServices::getInsertStatement(Session *in_session,
      * a bulk insert), we'll finalize the Statement and Transaction (doing
      * the Transaction will keep it from getting huge).
      */
-    if (static_cast<size_t>(transaction->ByteSize()) >= trx_msg_threshold)
+    if (static_cast<size_t>(transaction->ByteSize()) >= 
+      in_session->variables.transaction_message_threshold)
     {
       /* Remember the transaction ID so we can re-use it */
       uint64_t trx_id= transaction->transaction_context().transaction_id();
@@ -1307,7 +1305,8 @@ message::Statement &TransactionServices::getUpdateStatement(Session *in_session,
      * a bulk insert), we'll finalize the Statement and Transaction (doing
      * the Transaction will keep it from getting huge).
      */
-    if (static_cast<size_t>(transaction->ByteSize()) >= trx_msg_threshold)
+    if (static_cast<size_t>(transaction->ByteSize()) >= 
+      in_session->variables.transaction_message_threshold)
     {
       /* Remember the transaction ID so we can re-use it */
       uint64_t trx_id= transaction->transaction_context().transaction_id();
@@ -1591,7 +1590,8 @@ message::Statement &TransactionServices::getDeleteStatement(Session *in_session,
      * a bulk insert), we'll finalize the Statement and Transaction (doing
      * the Transaction will keep it from getting huge).
      */
-    if (static_cast<size_t>(transaction->ByteSize()) >= trx_msg_threshold)
+    if (static_cast<size_t>(transaction->ByteSize()) >= 
+      in_session->variables.transaction_message_threshold)
     {
       /* Remember the transaction ID so we can re-use it */
       uint64_t trx_id= transaction->transaction_context().transaction_id();

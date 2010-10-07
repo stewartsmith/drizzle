@@ -185,6 +185,7 @@ bool DrizzleDumpTableMySQL::populateFields()
     field->convertDateTime= false;
     /* Also sets collation */
     field->setType(row[1], row[8]);
+    field->isNull= (strcmp(row[3], "YES") == 0) ? true : false;
     if (row[2])
     {
       if (field->convertDateTime)
@@ -197,7 +198,6 @@ bool DrizzleDumpTableMySQL::populateFields()
     else
      field->defaultValue= "";
 
-    field->isNull= (strcmp(row[3], "YES") == 0) ? true : false;
     field->isAutoIncrement= (strcmp(row[8], "auto_increment") == 0) ? true : false;
     field->defaultIsNull= field->isNull;
     field->length= (row[4]) ? boost::lexical_cast<uint32_t>(row[4]) : 0;
@@ -232,9 +232,9 @@ void DrizzleDumpFieldMySQL::dateTimeConvert(const char* oldDefault)
     return;
   }
 
-  boost::regex date_regex("([0-9]{3}[1-9]-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01]))");
+  boost::regex date_regex("(0000|-00)");
 
-  if (regex_search(oldDefault, date_regex, flags))
+  if (not regex_search(oldDefault, date_regex, flags))
   {
     defaultValue= oldDefault;
   }
@@ -243,6 +243,7 @@ void DrizzleDumpFieldMySQL::dateTimeConvert(const char* oldDefault)
     defaultIsNull= true;
     defaultValue="";
   }
+  isNull= true;
 }
 
 
@@ -481,9 +482,9 @@ std::string DrizzleDumpDataMySQL::convertDate(const char* oldDate) const
 {
   boost::match_flag_type flags = boost::match_default;
   std::string output;
-  boost::regex date_regex("([0-9]{3}[1-9]-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01]))");
+  boost::regex date_regex("(0000|-00)");
 
-  if (regex_search(oldDate, date_regex, flags))
+  if (not regex_search(oldDate, date_regex, flags))
   {
     output.push_back('\'');
     output.append(oldDate);
@@ -495,15 +496,17 @@ std::string DrizzleDumpDataMySQL::convertDate(const char* oldDate) const
   return output;
 }
 
-std::ostream& DrizzleDumpDataMySQL::checkDateTime(std::ostream &os, const char* item, uint32_t field) const
+std::string DrizzleDumpDataMySQL::checkDateTime(const char* item, uint32_t field) const
 {
+  std::string ret;
+
   if (table->fields[field]->convertDateTime)
   {
     if (table->fields[field]->type.compare("INT") == 0)
-      os << convertTime(item);
+      ret= boost::lexical_cast<std::string>(convertTime(item));
     else
-      os << convertDate(item);
+      ret= convertDate(item);
   }
-  return os;
+  return ret;
 }
 

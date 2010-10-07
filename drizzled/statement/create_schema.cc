@@ -24,6 +24,7 @@
 #include <drizzled/statement/create_schema.h>
 #include <drizzled/db.h>
 #include <drizzled/plugin/event_observer.h>
+#include <drizzled/message.h>
 
 #include <string>
 
@@ -49,12 +50,7 @@ bool statement::CreateSchema::execute()
     return false;
   }
 
-  schema_message.set_name(session->lex->name.str);
-  schema_message.mutable_engine()->set_name(std::string("filesystem")); // For the moment we have only one.
-  if (not schema_message.has_collation())
-  {
-    schema_message.set_collation(default_charset_info->name);
-  }
+  drizzled::message::init(schema_message, session->lex->name.str);
 
   bool res = false;
   if (unlikely(plugin::EventObserver::beforeCreateDatabase(*session, schema_identifier.getSQLPath())))

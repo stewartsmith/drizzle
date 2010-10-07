@@ -67,6 +67,8 @@ statement {
       }
       CREATE_TIMESTAMP
       UPDATE_TIMESTAMP
+      
+      version: 1
     }
   }
 }
