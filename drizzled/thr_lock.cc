@@ -153,7 +153,7 @@ static enum enum_thr_lock_result wait_for_lock(struct st_lock_list *wait, THR_LO
   Session *session= current_session;
   internal::st_my_thread_var *thread_var= session->getThreadVar();
 
-  boost::condition_variable *cond= &thread_var->suspend;
+  boost::condition_variable_any *cond= &thread_var->suspend;
   enum enum_thr_lock_result result= THR_LOCK_ABORTED;
   bool can_deadlock= test(data->owner->info->n_cursors);
 
@@ -407,7 +407,7 @@ static void free_all_read_locks(THR_LOCK *lock, bool using_concurrent_insert)
 
   do
   {
-    boost::condition_variable *cond= data->cond;
+    boost::condition_variable_any *cond= data->cond;
     if ((int) data->type == (int) TL_READ_NO_INSERT)
     {
       if (using_concurrent_insert)
@@ -505,7 +505,7 @@ static void wake_up_waiters(THR_LOCK *lock)
 	  lock->write.last= &data->next;
 
 	  {
-            boost::condition_variable *cond= data->cond;
+            boost::condition_variable_any *cond= data->cond;
 	    data->cond= NULL;				/* Mark thread free */
             cond->notify_one(); /* Start waiting thred */
 	  }
@@ -532,7 +532,7 @@ static void wake_up_waiters(THR_LOCK *lock)
 	      !lock->read_no_write_count))
     {
       do {
-        boost::condition_variable *cond= data->cond;
+        boost::condition_variable_any *cond= data->cond;
 	if (((*data->prev)=data->next))		/* remove from wait-list */
 	  data->next->prev= data->prev;
 	else

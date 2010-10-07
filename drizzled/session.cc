@@ -577,7 +577,7 @@ bool Session::schedule()
 }
 
 
-const char* Session::enter_cond(boost::condition_variable &cond, boost::mutex &mutex, const char* msg)
+const char* Session::enter_cond(boost::condition_variable_any &cond, boost::mutex &mutex, const char* msg)
 {
   const char* old_msg = get_proc_info();
   safe_mutex_assert_owner(mutex);

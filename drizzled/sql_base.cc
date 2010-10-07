@@ -940,7 +940,7 @@ void Session::drop_open_table(Table *table, TableIdentifier &identifier)
   cond	Condition to wait for
 */
 
-void Session::wait_for_condition(boost::mutex &mutex, boost::condition_variable &cond)
+void Session::wait_for_condition(boost::mutex &mutex, boost::condition_variable_any &cond)
 {
   /* Wait until the current table is up to date */
   const char *saved_proc_info;

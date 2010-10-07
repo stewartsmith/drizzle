@@ -110,7 +110,7 @@ struct THR_LOCK_DATA {
   THR_LOCK_OWNER *owner;
   struct THR_LOCK_DATA *next,**prev;
   struct THR_LOCK *lock;
-  boost::condition_variable *cond;
+  boost::condition_variable_any *cond;
   enum thr_lock_type type;
   void *status_param;			/* Param to status functions */
 

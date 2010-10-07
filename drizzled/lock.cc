@@ -97,7 +97,7 @@ namespace drizzled
 {
 
 static boost::mutex LOCK_global_read_lock;
-static boost::condition_variable COND_global_read_lock;
+static boost::condition_variable_any COND_global_read_lock;
 
 /**
   @defgroup Locking Locking
@@ -1011,7 +1011,7 @@ bool lock_global_read_lock(Session *session)
     const char *old_message;
     LOCK_global_read_lock.lock();
     old_message=session->enter_cond(COND_global_read_lock, LOCK_global_read_lock,
-                                "Waiting to get readlock");
+                                    "Waiting to get readlock");
 
     waiting_for_read_lock++;
     boost::mutex::scoped_lock scopedLock(LOCK_global_read_lock, boost::adopt_lock_t());

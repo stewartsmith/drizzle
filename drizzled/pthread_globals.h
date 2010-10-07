@@ -32,7 +32,7 @@ extern boost::mutex LOCK_open;
 extern boost::mutex LOCK_global_system_variables;
 extern boost::mutex LOCK_thread_count;
 
-extern boost::condition_variable COND_refresh;
+extern boost::condition_variable_any COND_refresh;
 extern boost::condition_variable COND_thread_count;
 extern boost::condition_variable COND_server_end;
 extern pthread_t signal_thread;
