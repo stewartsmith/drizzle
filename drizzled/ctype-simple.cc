@@ -284,7 +284,7 @@ ulong my_strntoul_8bit(const CHARSET_INFO * const cs,
   if (overflow)
   {
     err[0]= ERANGE;
-    return (~(uint32_t) 0);
+    return UINT32_MAX;
   }
 
   return (negative ? -((long) i) : (long) i);

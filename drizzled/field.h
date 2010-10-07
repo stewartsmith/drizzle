@@ -157,6 +157,8 @@ public:
   static void *operator new(size_t size, memory::Root *mem_root);
   static void operator delete(void *, size_t)
   { }
+  static void operator delete(void *, memory::Root *)
+  { }
 
   Field(unsigned char *ptr_arg,
         uint32_t length_arg,

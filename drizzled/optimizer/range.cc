@@ -3784,7 +3784,7 @@ walk_up_n_right:
   /* Ok got a tuple */
   RANGE_SEQ_ENTRY *cur= &seq->stack[seq->i];
 
-  range->ptr= (char*)(int)(key_tree->part);
+  range->ptr= (char*)(size_t)(key_tree->part);
   {
     range->range_flag= cur->min_key_flag | cur->max_key_flag;
 

@@ -191,7 +191,7 @@ void Field_enum::sql_type(String &res) const
   uint32_t *len= typelib->type_lengths;
   for (const char **pos= typelib->type_names; *pos; pos++, len++)
   {
-    uint32_t dummy_errors;
+    size_t dummy_errors;
     if (flag)
       res.append(',');
     /* convert to res.charset() == utf8, then quote */

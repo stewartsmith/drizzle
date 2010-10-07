@@ -742,7 +742,7 @@ void MSRepoFile::setBlobMetaData(MSOpenTable *otab, uint64_t offset, const char 
 		alias_offset = 0;
 	}
 #else
-	uint32_t alias_hash = -1;
+	uint32_t alias_hash = UINT32_MAX;
 	if (alias || reset_alias) {
 		CSException::throwException(CS_CONTEXT, MS_ERR_NOT_IMPLEMENTED, "No BLOB alias support.");
 	}

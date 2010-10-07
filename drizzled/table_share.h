@@ -217,7 +217,7 @@ public:
 
     if (iter == _keynames.end())
     {
-      position= -1; //historical, required for finding primary key from unique
+      position= UINT32_MAX; //historical, required for finding primary key from unique
       return false;
     }
 
