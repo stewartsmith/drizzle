@@ -112,7 +112,7 @@ while ($_diff_i) {
 
 # ==== Compare the generated files ====
 
-diff_files $DRIZZLETEST_VARDIR/tmp/diff_table_1 $MYSQLTEST_VARDIR/tmp/diff_table_2;
+diff_files $DRIZZLETEST_VARDIR/tmp/diff_table_1 $DRIZZLETEST_VARDIR/tmp/diff_table_2;
 
 --remove_file $DRIZZLETEST_VARDIR/tmp/diff_table_1
 --remove_file $DRIZZLETEST_VARDIR/tmp/diff_table_2
