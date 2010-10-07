@@ -124,7 +124,7 @@ sub dtr_report_test_passed ($) {
     $timer= sprintf "%7s", $timer;
     ### XXX: How to format this as iso6801 datetime?
   }
-  $tinfo->{'result'}= 'dtr_RES_PASSED';
+  $tinfo->{'result'}= 'DTR_RES_PASSED';
   if ($::opt_subunit) {
     dtr_report("success: $tname");
   } else {
@@ -137,7 +137,7 @@ sub dtr_report_test_failed ($) {
   my $tname= $tinfo->{name};
   my $comment= "";
 
-  $tinfo->{'result'}= 'dtr_RES_FAILED';
+  $tinfo->{'result'}= 'DTR_RES_FAILED';
   if ( defined $tinfo->{'timeout'} )
   {
     $comment.= "timeout";

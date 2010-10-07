@@ -30,7 +30,7 @@ sub dtr_file_exists(@);
 sub dtr_exe_exists(@);
 sub dtr_exe_maybe_exists(@);
 sub dtr_copy_dir($$);
-sub dtr_rdtree($);
+sub dtr_rmtree($);
 sub dtr_same_opts($$);
 sub dtr_cmp_opts($$);
 
@@ -204,7 +204,7 @@ sub dtr_copy_dir($$) {
 
 sub dtr_rmtree($) {
   my ($dir)= @_;
-  dtr_verbose("dtr_rdtree: $dir");
+  dtr_verbose("dtr_rmtree: $dir");
 
   # Try to use File::Path::rmtree. Recent versions
   # handles removal of directories and files that don't

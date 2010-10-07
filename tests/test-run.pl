@@ -1796,7 +1796,7 @@ sub setup_vardir() {
   # Create new data dirs
   foreach my $data_dir (@data_dir_lst)
   {
-    mkpath("$data_dir/local/drizzle");
+    mkpath("$data_dir/local/mysql");
     system("$exe_schemawriter mysql $data_dir/local/mysql/db.opt");
 
     mkpath("$data_dir/local/test");
@@ -2521,7 +2521,7 @@ sub drizzled_arguments ($$$$) {
   dtr_add_arg($args, "%s--mysql-protocol.port=%d", $prefix,
               $drizzled->{'port'});
 
-  dtr_add_arg($args, "%s--mysql-protocol.port=%d", $prefix,
+  dtr_add_arg($args, "%s--drizzle-protocol.port=%d", $prefix,
               $drizzled->{'secondary_port'});
 
   dtr_add_arg($args, "%s--datadir=%s", $prefix,

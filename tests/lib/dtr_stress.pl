@@ -52,7 +52,7 @@ sub run_stress_test ()
   #Clean up stress dir 
   if ( -d $stress_basedir )
   {
-    rdtree($stress_basedir);
+    rmtree($stress_basedir);
   }
   mkpath($stress_basedir);
  

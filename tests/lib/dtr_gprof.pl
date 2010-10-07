@@ -33,7 +33,7 @@ sub gprof_collect ();
 
 sub gprof_prepare () {
 
-  rdtree($::opt_gprof_dir);
+  rmtree($::opt_gprof_dir);
   mkdir($::opt_gprof_dir);
 }
 
