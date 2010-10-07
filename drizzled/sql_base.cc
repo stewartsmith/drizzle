@@ -456,7 +456,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
                                                      (table->open_placeholder && wait_for_placeholders)))
           {
             found= true;
-            boost::mutex::scoped_lock scoped(LOCK_open, boost::adopt_lock_t());
+            boost::unique_lock<boost::mutex> scoped(LOCK_open, boost::adopt_lock_t());
             COND_refresh.wait(scoped);
             scoped.release();
             break;
@@ -487,7 +487,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
 
   if (wait_for_refresh)
   {
-    boost::mutex::scoped_lock scopedLock(session->mysys_var->mutex);
+    boost::unique_lock<boost::mutex> scopedLock(session->mysys_var->mutex);
     session->mysys_var->current_mutex= 0;
     session->mysys_var->current_cond= 0;
     session->set_proc_info(0);
@@ -551,7 +551,7 @@ void Session::close_open_tables()
 
   safe_mutex_assert_not_owner(LOCK_open.native_handle());
 
-  boost::mutex::scoped_lock scoped_lock(LOCK_open); /* Close all open tables on Session */
+  boost::unique_lock<boost::mutex> scoped_lock(LOCK_open); /* Close all open tables on Session */
 
   while (open_tables)
   {
@@ -1120,7 +1120,7 @@ bool Session::lock_table_name_if_not_cached(TableIdentifier &identifier, Table *
 {
   const TableIdentifier::Key &key(identifier.getKey());
 
-  boost::mutex::scoped_lock scope_lock(LOCK_open); /* Obtain a name lock even though table is not in cache (like for create table)  */
+  boost::unique_lock<boost::mutex> scope_lock(LOCK_open); /* Obtain a name lock even though table is not in cache (like for create table)  */
 
   TableOpenCache::iterator iter;
 
@@ -1767,7 +1767,7 @@ bool wait_for_tables(Session *session)
 
   session->set_proc_info("Waiting for tables");
   {
-    boost::mutex::scoped_lock lock(LOCK_open);
+    boost::unique_lock<boost::mutex> lock(LOCK_open);
     while (!session->killed)
     {
       session->some_tables_deleted= false;
@@ -4509,7 +4509,7 @@ bool remove_table_from_cache(Session *session, TableIdentifier &identifier, uint
         dropping_tables++;
         if (likely(signalled))
         {
-          boost::mutex::scoped_lock scoped(LOCK_open, boost::adopt_lock_t());
+          boost::unique_lock<boost::mutex> scoped(LOCK_open, boost::adopt_lock_t());
           COND_refresh.wait(scoped);
           scoped.release();
         }
@@ -4528,7 +4528,7 @@ bool remove_table_from_cache(Session *session, TableIdentifier &identifier, uint
           boost::xtime xt; 
           xtime_get(&xt, boost::TIME_UTC); 
           xt.sec += 10; 
-          boost::mutex::scoped_lock scoped(LOCK_open, boost::adopt_lock_t());
+          boost::unique_lock<boost::mutex> scoped(LOCK_open, boost::adopt_lock_t());
           COND_refresh.timed_wait(scoped, xt);
           scoped.release();
         }

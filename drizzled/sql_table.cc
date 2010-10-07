@@ -1934,7 +1934,7 @@ send_result:
         }
         else
         {
-          boost::mutex::scoped_lock lock(LOCK_open);
+          boost::unique_lock<boost::mutex> lock(LOCK_open);
 	  TableIdentifier identifier(table->table->getMutableShare()->getSchemaName(), table->table->getMutableShare()->getTableName());
           remove_table_from_cache(session, identifier, RTFC_NO_FLAG);
         }
