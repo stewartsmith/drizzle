@@ -407,8 +407,10 @@ dfield_print_also_hex(
 		case 4:
 			val = mach_read_from_4(data);
 
+                        static const ulint UNSIGNED_MASK= 0x80000000;
+
 			if (!(prtype & DATA_UNSIGNED)) {
-				val &= ~0x80000000;
+				val &= ~UNSIGNED_MASK;
 				fprintf(stderr, "%ld", (long) val);
 			} else {
 				fprintf(stderr, "%lu", (ulong) val);
