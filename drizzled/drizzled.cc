@@ -206,7 +206,7 @@ arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
 
 /* static variables */
 
-static bool opt_debugging= 0;
+static bool opt_debugging= false;
 static uint32_t wake_thread;
 static char *drizzled_chroot;
 static const char *default_character_set_name;
@@ -1290,7 +1290,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   N_("Set up signals usable for debugging"))
   ("lc-time-name", po::value<string>(),
   N_("Set the language used for the month names and the days of the week."))
-  ("log-warnings,W", po::value<string>(),
+  ("log-warnings,W", po::value<bool>(&global_system_variables.log_warnings)->default_value(false)->zero_tokens(),
   N_("Log some not critical warnings to the log file."))  
   ("pid-file", po::value<string>(),
   N_("Pid file used by drizzled."))
@@ -1766,13 +1766,13 @@ struct option my_long_options[] =
    N_("Auto-increment columns are incremented by this"),
    (char**) &global_system_variables.auto_increment_increment,
    (char**) &max_system_variables.auto_increment_increment, 0, GET_ULL,
-   OPT_ARG, 1, 1, UINT64_MAX, 0, 1, 0 },
+   OPT_ARG, 1, 1, INT64_MAX, 0, 1, 0 },
   {"auto-increment-offset", OPT_AUTO_INCREMENT_OFFSET,
    N_("Offset added to Auto-increment columns. Used when "
       "auto-increment-increment != 1"),
    (char**) &global_system_variables.auto_increment_offset,
    (char**) &max_system_variables.auto_increment_offset, 0, GET_ULL, OPT_ARG,
-   1, 1, UINT64_MAX, 0, 1, 0 },
+   1, 1, INT64_MAX, 0, 1, 0 },
   {"basedir", 'b',
    N_("Path to installation directory. All paths are usually resolved "
       "relative to this."),
@@ -1927,7 +1927,7 @@ struct option my_long_options[] =
    N_("Don't allow creation of heap tables bigger than this."),
    (char**) &global_system_variables.max_heap_table_size,
    (char**) &max_system_variables.max_heap_table_size, 0, GET_ULL,
-   REQUIRED_ARG, 16*1024*1024L, 16384, MAX_MEM_TABLE_SIZE,
+   REQUIRED_ARG, 16*1024*1024L, 16384, (int64_t)MAX_MEM_TABLE_SIZE,
    MALLOC_OVERHEAD, 1024, 0},
   {"max_join_size", OPT_MAX_JOIN_SIZE,
    N_("Joins that are probably going to read more than max_join_size records "
@@ -2024,7 +2024,7 @@ struct option my_long_options[] =
    N_("Allocation block size for storing ranges during optimization"),
    (char**) &global_system_variables.range_alloc_block_size,
    (char**) &max_system_variables.range_alloc_block_size, 0, GET_SIZE,
-   REQUIRED_ARG, RANGE_ALLOC_BLOCK_SIZE, RANGE_ALLOC_BLOCK_SIZE, SIZE_MAX,
+   REQUIRED_ARG, RANGE_ALLOC_BLOCK_SIZE, RANGE_ALLOC_BLOCK_SIZE, (int64_t)SIZE_MAX,
    0, 1024, 0},
   {"read_buffer_size", OPT_RECORD_BUFFER,
     N_("Each thread that does a sequential scan allocates a buffer of this "
@@ -2051,7 +2051,7 @@ struct option my_long_options[] =
    N_("Each thread that needs to do a sort allocates a buffer of this size."),
    (char**) &global_system_variables.sortbuff_size,
    (char**) &max_system_variables.sortbuff_size, 0, GET_SIZE, REQUIRED_ARG,
-   MAX_SORT_MEMORY, MIN_SORT_MEMORY+MALLOC_OVERHEAD*8, SIZE_MAX,
+   MAX_SORT_MEMORY, MIN_SORT_MEMORY+MALLOC_OVERHEAD*8, (int64_t)SIZE_MAX,
    MALLOC_OVERHEAD, 1, 0},
   {"table_definition_cache", OPT_TABLE_DEF_CACHE,
    N_("The number of cached table definitions."),
@@ -2071,13 +2071,13 @@ struct option my_long_options[] =
    (char**) &my_thread_stack_size,
    (char**) &my_thread_stack_size, 0, GET_SIZE,
    REQUIRED_ARG,DEFAULT_THREAD_STACK,
-   UINT32_C(1024*512), SIZE_MAX, 0, 1024, 0},
+   UINT32_C(1024*512), (int64_t)SIZE_MAX, 0, 1024, 0},
   {"tmp_table_size", OPT_TMP_TABLE_SIZE,
    N_("If an internal in-memory temporary table exceeds this size, Drizzle will"
       " automatically convert it to an on-disk MyISAM table."),
    (char**) &global_system_variables.tmp_table_size,
    (char**) &max_system_variables.tmp_table_size, 0, GET_ULL,
-   REQUIRED_ARG, 16*1024*1024L, 1024, MAX_MEM_TABLE_SIZE, 0, 1, 0},
+   REQUIRED_ARG, 16*1024*1024L, 1024, (int64_t)MAX_MEM_TABLE_SIZE, 0, 1, 0},
   {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 
@@ -2179,7 +2179,7 @@ static void drizzle_init_variables(void)
   max_system_variables.auto_increment_increment= UINT64_MAX;
   max_system_variables.auto_increment_offset= UINT64_MAX;
   max_system_variables.completion_type= 2;
-  max_system_variables.log_warnings= 1;
+  max_system_variables.log_warnings= true;
   max_system_variables.bulk_insert_buff_size= ULONG_MAX;
   max_system_variables.div_precincrement= DECIMAL_MAX_SCALE;
   max_system_variables.group_concat_max_len= ULONG_MAX;
@@ -2257,16 +2257,6 @@ static void get_options()
   {
     print_version();
     exit(0);
-  }
-
-  if (vm.count("log-warnings"))
-  {
-    if (vm["log-warnings"].as<string>().empty())
-      global_system_variables.log_warnings++;
-    else if (vm["log-warnings"].as<string>().compare("0"))
-      global_system_variables.log_warnings= 0L;
-    else
-      global_system_variables.log_warnings= atoi(vm["log-warnings"].as<string>().c_str());
   }
 
   if (vm.count("exit-info"))
