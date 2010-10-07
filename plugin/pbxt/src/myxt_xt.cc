@@ -44,9 +44,11 @@
 #include <drizzled/charset_info.h>
 #include <plugin/myisam/my_handler.h>
 #include <plugin/myisam/myisampack.h>
+#include <boost/filesystem.hpp>
 //extern "C" struct charset_info_st *session_charset(Session *session);
 extern pthread_key_t THR_Session;
 
+namespace fs=boost::filesystem;
 using namespace drizzled;
 #else
 #include "mysql_priv.h"
@@ -2029,12 +2031,10 @@ static STRUCT_TABLE *my_open_table(XTThreadPtr self, XTDatabaseHPtr XT_UNUSED(db
 			message::Table::STANDARD);
 	}
 	else {
-		std::string n(getDataHomeCatalog());
-		n.append("/");
-		n.append(database_name);
-		n.append("/");
-		n.append(tab_file_name);
-		ident = new TableIdentifier(database_name, tab_name, n);
+          fs::path n(getDataHomeCatalog());
+          n /= database_name;
+          n /= tab_file_name;
+		ident = new TableIdentifier(database_name, tab_name, n.file_string());
 	}
 	
 	share = new TableShare(message::Table::STANDARD);
