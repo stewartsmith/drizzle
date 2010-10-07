@@ -50,6 +50,8 @@
 #include <drizzled/field/timestamp.h>
 #include <drizzled/session.h>
 
+#include <string>
+
 #define my_strdup(a,b) strdup(a)
 
 using namespace drizzled;
@@ -3088,6 +3090,30 @@ int ha_pbxt::xt_index_prev_read(XTOpenTablePtr ot, XTIndexPtr ind, xtBool key_on
 	return ha_log_pbxt_thread_error_for_mysql(FALSE);
 }
 
+#ifdef DRIZZLED
+
+static std::string convert_long_to_bit_string(uint64_t bitset, uint64_t bitset_size)
+{
+  std::string res; 
+  while (bitset)
+  {
+    res.push_back((bitset & 1) + '0');
+    bitset>>= 1;
+  }
+  if (! res.empty())
+  {
+    std::reverse(res.begin(), res.end());
+  }
+  else
+  {
+    res= "0";
+  }
+  std::string final(bitset_size - res.length(), '0');
+  final.append(res);
+  return final;
+}
+#endif
+
 int ha_pbxt::doStartIndexScan(uint idx, bool XT_UNUSED(sorted))
 {
 	XTIndexPtr	ind;
@@ -3164,7 +3190,20 @@ int ha_pbxt::doStartIndexScan(uint idx, bool XT_UNUSED(sorted))
 		 * seem to have this problem!
 		 */
 		ind = (XTIndexPtr) pb_share->sh_dic_keys[idx];
+#ifdef DRIZZLED
+        /*
+         * Need to do this for drizzle because we use boost's dynamic_bitset
+         * to represent the bitsets and allocating memory for an object of that 
+         * type does not play well with the memory allocation routines in PBXT.
+         * For that reason, we just store a uint which represents the bitset
+         * in the XTIndexPtr structure for PBXT. 
+         */
+        std::string bitmap_str= convert_long_to_bit_string(ind->mi_col_map, ind->mi_col_map_size);
+        MX_BITMAP tmp(bitmap_str);
+		if (MX_BIT_IS_SUBSET(table->read_set, tmp))
+#else
 		if (MX_BIT_IS_SUBSET(table->read_set, ind->mi_col_map))
+#endif
 			pb_key_read = TRUE;
 #ifdef XT_PRINT_INDEX_OPT
 		printf("index_init %s index %d cols req=%d/%d read_bits=%X write_bits=%X index_bits=%X converage=%d\n", pb_open_tab->ot_table->tab_name->ps_path, (int) idx, pb_open_tab->ot_cols_req, table->read_set->MX_BIT_SIZE(), (int) *table->read_set->bitmap, (int) *table->write_set->bitmap, (int) *ind->mi_col_map.bitmap, (int) (MX_BIT_IS_SUBSET(table->read_set, &ind->mi_col_map) != 0));

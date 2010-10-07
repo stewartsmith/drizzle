@@ -2110,7 +2110,9 @@ static void my_deref_index_data(struct XTThread *self, XTIndexPtr mi)
 
 	xt_spinlock_free(self, &mi->mi_dirty_lock);
 	XT_INDEX_FREE_LOCK(self, mi);
+#ifndef DRIZZLED
 	myxt_bitmap_free(self, &mi->mi_col_map);
+#endif
 	if (mi->mi_free_list)
 		xt_free(self, mi->mi_free_list);
 
@@ -2140,6 +2142,7 @@ static XTIndexPtr my_create_index(XTThreadPtr self, STRUCT_TABLE *table_arg, u_i
 	uint					options = 0;
 	u_int					key_length = 0;
 	xtBool					partial_field;
+    MX_BITMAP               mi_col_map;
 
 	enter_();
 
@@ -2154,7 +2157,14 @@ static XTIndexPtr my_create_index(XTThreadPtr self, STRUCT_TABLE *table_arg, u_i
 	ind->mi_fix_key = TRUE;
 	ind->mi_select_total = 0;
 	ind->mi_subset_of = 0;
+#ifdef DRIZZLED
+    mi_col_map.resize(GET_TABLE_SHARE(table_arg)->fields);	
+    mi_col_map.reset();
+    ind->mi_col_map= mi_col_map.to_ulong();
+    ind->mi_col_map_size= GET_TABLE_SHARE(table_arg)->fields;
+#else
 	myxt_bitmap_init(self, &ind->mi_col_map, GET_TABLE_SHARE(table_arg)->fields);
+#endif
 	
 	ind->mi_seg_count = (uint) index->key_parts;
 	key_part_end = index->key_part + index->key_parts;
@@ -2301,7 +2311,11 @@ static XTIndexPtr my_create_index(XTThreadPtr self, STRUCT_TABLE *table_arg, u_i
 
 		/* NOTE: do not set if the field is only partially in the index!!! */
 		if (!partial_field)
+#ifdef DRIZZLED
+			MX_BIT_FAST_TEST_AND_SET(&mi_col_map, field->field_index);
+#else
 			MX_BIT_FAST_TEST_AND_SET(&ind->mi_col_map, field->field_index);
+#endif
 	}
 
 	if (key_length > XT_INDEX_MAX_KEY_SIZE)
@@ -3348,6 +3362,7 @@ static void myxt_bitmap_init(XTThreadPtr self, MX_BITMAP *map, u_int n_bits)
 {
 #ifdef DRIZZLED
     (void) self;
+    map= new boost::dynamic_bitset<>(n_bits);
     map->resize(n_bits);
     map->reset();
 #else
@@ -3367,6 +3382,7 @@ static void myxt_bitmap_free(XTThreadPtr self, MX_BITMAP *map)
     (void) self;
     if (map->empty())
         map->clear();
+    delete map;
 #else
 	if (map->bitmap) {
 		xt_free(self, map->bitmap);
