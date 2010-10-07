@@ -1,19 +1,8 @@
 drop table if exists t1, t2;
 select null,\N,isnull(null),isnull(1/0),isnull(1/0 = null),ifnull(null,1),ifnull(null,"TRUE"),ifnull("TRUE","ERROR"),1/0 is null,1 is not null;
-NULL	NULL	isnull(null)	isnull(1/0)	isnull(1/0 = null)	ifnull(null,1)	ifnull(null,"TRUE")	ifnull("TRUE","ERROR")	1/0 is null	1 is not null
-NULL	NULL	1	1	1	1	TRUE	TRUE	1	1
-Warnings:
-Error	1365	Division by 0
-Error	1365	Division by 0
-Error	1365	Division by 0
+ERROR 22012: Division by 0
 explain extended select null,\N,isnull(null),isnull(1/0),isnull(1/0 = null),ifnull(null,1),ifnull(null,"TRUE"),ifnull("TRUE","ERROR"),1/0 is null,1 is not null;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No tables used
-Warnings:
-Error	1365	Division by 0
-Error	1365	Division by 0
-Error	1365	Division by 0
-Note	1003	select NULL AS `NULL`,NULL AS `NULL`,isnull(NULL) AS `isnull(null)`,isnull((1 / 0)) AS `isnull(1/0)`,isnull(((1 / 0) = NULL)) AS `isnull(1/0 = null)`,ifnull(NULL,1) AS `ifnull(null,1)`,ifnull(NULL,'TRUE') AS `ifnull(null,"TRUE")`,ifnull('TRUE','ERROR') AS `ifnull("TRUE","ERROR")`,isnull((1 / 0)) AS `1/0 is null`,(1 is not null) AS `1 is not null`
+ERROR 22012: Division by 0
 select CONCAT(1, NULL),1+NULL,1-NULL;
 CONCAT(1, NULL)	1+NULL	1-NULL
 NULL	NULL	NULL

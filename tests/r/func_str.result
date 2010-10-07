@@ -249,10 +249,7 @@ select quote(concat('abc\'', '\\cba'));
 quote(concat('abc\'', '\\cba'))
 'abc\'\\cba'
 select quote(1/0), quote('\0\Z');
-quote(1/0)	quote('\0\Z')
-NULL	'\0\Z'
-Warnings:
-Error	1365	Division by 0
+ERROR 22012: Division by 0
 select length(quote(concat(char(0),"test")));
 length(quote(concat(char(0),"test")))
 8
