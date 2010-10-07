@@ -469,12 +469,9 @@ select rpad(i, 7, ' ') as t from t1;
 --disable_metadata
 drop table t1;
 
-#
-# Bug #10418: LOAD_FILE does not behave like in manual if file does not exist
-#
 
+--error ER_TEXTFILE_NOT_READABLE
 select load_file("lkjlkj");
-select ifnull(load_file("lkjlkj"),"it's null");
 
 #
 # Bug#18243: REVERSE changes its argument

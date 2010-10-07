@@ -29,6 +29,7 @@
 
 #include "cslib/CSConfig.h"
 #include <inttypes.h>
+#include <string>
 
 #include "cslib/CSGlobal.h"
 #include "cslib/CSStrUtil.h"
