@@ -105,6 +105,7 @@ drop table t1;
 #
 # Trydy's tests
 #
+--error ER_DIVISION_BY_ZERO
 select 1e10/0e0;
 #create table wl1612 (col1 int, col2 decimal(38,10), col3 numeric(38,10));
 #insert into wl1612 values(1,12345678901234567890.1234567890,12345678901234567890.1234567890);
@@ -722,10 +723,12 @@ select 0.07 * 0.07;
 select 1E-500 = 0;
 #-- should return 1 (true).
 #
+--error ER_DIVISION_BY_ZERO
 select 1 / 1E-500;
 #
 #-- should return SQLSTATE 22012 division by zero.
 #
+--error ER_DIVISION_BY_ZERO
 select 1 / 0;
 #-- should return SQLSTATE 22012 division by zero.
 #
@@ -849,6 +852,7 @@ INSERT INTO Sow6_2f VALUES (101.55);
 #-- error 1365
 #UPDATE Sow6_2f SET col1 = col1 / 0 WHERE col1 > 0;
 #-- should return SQLSTATE 22012 division by zero
+--error ER_DIVISION_BY_ZERO
 SELECT MOD(col1,0) FROM Sow6_2f;
 #-- should return SQLSTATE 22012 division by zero
 -- error 1366
@@ -865,6 +869,7 @@ select 10.3330000000000/12.34500000;
 # Bug #10404
 #
 
+--error ER_DIVISION_BY_ZERO
 select 0/0;
 
 #
@@ -901,6 +906,7 @@ DROP TABLE t1;
 # Bug #10599: problem with NULL
 #
 
+--error ER_DIVISION_BY_ZERO
 select abs(10/0);
 select abs(NULL);
 

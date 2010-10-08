@@ -63,9 +63,8 @@ using namespace drizzled;
     or stop, we just want to kill the server.
 */
 
-static void kill_server(void *sig_ptr)
+static void kill_server(int sig)
 {
-  int sig=(int) (long) sig_ptr;			// This is passed a int
   // if there is a signal during the kill in progress, ignore the other
   if (kill_in_progress)				// Safety
     return;
@@ -197,7 +196,7 @@ void signal_hand()
       if (!abort_loop)
       {
         abort_loop=1;				// mark abort for threads
-        kill_server((void*) sig);	// MIT THREAD has a alarm thread
+        kill_server(sig);		// MIT THREAD has a alarm thread
       }
       break;
     case SIGHUP:
