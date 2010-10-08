@@ -149,24 +149,6 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
 
   LOCK_open.lock(); /* Part 2 of rm a table */
 
-  /*
-    If we have the table in the definition cache, we don't have to check the
-    .frm cursor to find if the table is a normal table (not view) and what
-    engine to use.
-  */
-
-  for (table= tables; table; table= table->next_local)
-  {
-    TableIdentifier identifier(table->db, table->table_name);
-    TableShare *share;
-    table->setDbType(NULL);
-
-    if ((share= TableShare::getShare(identifier)))
-    {
-      table->setDbType(share->db_type());
-    }
-  }
-
   if (not drop_temporary && lock_table_names_exclusively(session, tables))
   {
     LOCK_open.unlock();
