@@ -22,6 +22,7 @@
 #define DRIZZLED_KEY_H
 
 #include <string>
+#include <boost/dynamic_bitset.hpp>
 
 #include "drizzled/memory/sql_alloc.h"
 #include "drizzled/key_part_spec.h"
@@ -36,7 +37,6 @@ namespace drizzled
 namespace memory { class Root; }
 
 class Item;
-class MyBitmap;
 
 class Key :public memory::SqlAlloc {
 public:
@@ -94,7 +94,7 @@ void key_restore(unsigned char *to_record, unsigned char *from_key, KeyInfo *key
 void key_zero_nulls(unsigned char *tuple, KeyInfo *key_info);
 bool key_cmp_if_same(Table *form,const unsigned char *key,uint32_t index,uint32_t key_length);
 void key_unpack(String *to,Table *form,uint32_t index);
-bool is_key_used(Table *table, uint32_t idx, const MyBitmap *fields);
+bool is_key_used(Table *table, uint32_t idx, const boost::dynamic_bitset<>& fields);
 int key_cmp(KeyPartInfo *key_part, const unsigned char *key, uint32_t key_length);
 
 } /* namespace drizzled */

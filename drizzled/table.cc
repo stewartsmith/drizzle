@@ -334,17 +334,17 @@ void append_unescaped(String *res, const char *pos, uint32_t length)
     a tmp_set bitmap to be used by things like filesort.
 */
 
-void Table::setup_tmp_table_column_bitmaps(unsigned char *bitmaps)
+void Table::setup_tmp_table_column_bitmaps()
 {
   uint32_t field_count= s->sizeFields();
 
-  this->def_read_set.init((my_bitmap_map*) bitmaps, field_count);
-  this->tmp_set.init((my_bitmap_map*) (bitmaps+ bitmap_buffer_size(field_count)), field_count);
-
-  /* write_set and all_set are copies of read_set */
-  def_write_set= def_read_set;
-  s->all_set= def_read_set;
-  this->getMutableShare()->all_set.setAll();
+  this->def_read_set.resize(field_count);
+  this->def_write_set.resize(field_count);
+  this->tmp_set.resize(field_count);
+  this->getMutableShare()->all_set.resize(field_count);
+  this->getMutableShare()->all_set.set();
+  this->def_write_set.set();
+  this->def_read_set.set();
   default_column_bitmaps();
 }
 
@@ -452,9 +452,9 @@ void Table::clear_column_bitmaps()
     bitmap_clear_all(&table->def_read_set);
     bitmap_clear_all(&table->def_write_set);
   */
-  def_read_set.clearAll();
-  def_write_set.clearAll();
-  column_bitmaps_set(&def_read_set, &def_write_set);
+  def_read_set.reset();
+  def_write_set.reset();
+  column_bitmaps_set(def_read_set, def_write_set);
 }
 
 
@@ -491,12 +491,12 @@ void Table::prepare_for_position()
 
 void Table::mark_columns_used_by_index(uint32_t index)
 {
-  MyBitmap *bitmap= &tmp_set;
+  boost::dynamic_bitset<> *bitmap= &tmp_set;
 
   (void) cursor->extra(HA_EXTRA_KEYREAD);
-  bitmap->clearAll();
-  mark_columns_used_by_index_no_reset(index, bitmap);
-  column_bitmaps_set(bitmap, bitmap);
+  bitmap->reset();
+  mark_columns_used_by_index_no_reset(index, *bitmap);
+  column_bitmaps_set(*bitmap, *bitmap);
   return;
 }
 
@@ -528,17 +528,20 @@ void Table::restore_column_maps_after_mark_index()
 
 void Table::mark_columns_used_by_index_no_reset(uint32_t index)
 {
-    mark_columns_used_by_index_no_reset(index, read_set);
+    mark_columns_used_by_index_no_reset(index, *read_set);
 }
 
+
 void Table::mark_columns_used_by_index_no_reset(uint32_t index,
-                                                MyBitmap *bitmap)
+                                                boost::dynamic_bitset<>& bitmap)
 {
   KeyPartInfo *key_part= key_info[index].key_part;
-  KeyPartInfo *key_part_end= (key_part +
-                                key_info[index].key_parts);
-  for (;key_part != key_part_end; key_part++)
-    bitmap->setBit(key_part->fieldnr-1);
+  KeyPartInfo *key_part_end= (key_part + key_info[index].key_parts);
+  for (; key_part != key_part_end; key_part++)
+  {
+    if (! bitmap.empty())
+      bitmap.set(key_part->fieldnr-1);
+  }
 }
 
 
@@ -805,7 +808,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   bool  using_unique_constraint= false;
   bool  use_packed_rows= true;
   bool  not_all_columns= !(select_options & TMP_TABLE_ALL_COLUMNS);
-  unsigned char	*pos, *group_buff, *bitmaps;
+  unsigned char	*pos, *group_buff;
   unsigned char *null_flags;
   Field **reg_field, **from_field, **default_field;
   CopyField *copy= 0;
@@ -869,7 +872,6 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
                                                 &param->start_recinfo, sizeof(*param->recinfo)*(field_count*2+4),
                                                 &group_buff, (group && ! using_unique_constraint ?
                                                               param->group_length : 0),
-                                                &bitmaps, bitmap_buffer_size(field_count)*2,
                                                 NULL))
   {
     return NULL;
@@ -1121,7 +1123,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   copy_func[0]= 0;				// End marker
   param->func_count= copy_func - param->items_to_copy;
 
-  table->setup_tmp_table_column_bitmaps(bitmaps);
+  table->setup_tmp_table_column_bitmaps();
 
   recinfo=param->start_recinfo;
   null_flags=(unsigned char*) table->getInsertRecord();
@@ -1454,18 +1456,9 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
   uint32_t record_length= 0;
   uint32_t null_count= 0;                 /* number of columns which may be null */
   uint32_t null_pack_length;              /* NULL representation array length */
-  unsigned char *bitmaps;
   Table *table;
 
   TableShareInstance *share= getTemporaryShare(message::Table::INTERNAL); // This will not go into the tableshare cache, so no key is used.
-
-  if (! share->getMemRoot()->multi_alloc_root(0,
-                                              &bitmaps, bitmap_buffer_size(field_count)*2,
-                                              NULL))
-  {
-    return NULL;
-  }
-
   table= share->getTable();
   share->setFields(field_count + 1);
   table->setFields(share->getFields(true));
@@ -1473,7 +1466,7 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
   share->blob_field.resize(field_count+1);
   share->fields= field_count;
   share->blob_ptr_size= portable_sizeof_char_ptr;
-  table->setup_tmp_table_column_bitmaps(bitmaps);
+  table->setup_tmp_table_column_bitmaps();
 
   table->in_use= this;           /* field->reset() may access table->in_use */
 
@@ -1745,16 +1738,34 @@ void Table::free_tmp_table(Session *session)
   session->set_proc_info(save_proc_info);
 }
 
-my_bitmap_map *Table::use_all_columns(MyBitmap *bitmap)
+void Table::column_bitmaps_set(boost::dynamic_bitset<>& read_set_arg,
+                               boost::dynamic_bitset<>& write_set_arg)
 {
-  my_bitmap_map *old= bitmap->getBitmap();
-  bitmap->setBitmap(s->all_set.getBitmap());
+  read_set= &read_set_arg;
+  write_set= &write_set_arg;
+}
+
+
+const boost::dynamic_bitset<> Table::use_all_columns(boost::dynamic_bitset<>& in_map)
+{
+  const boost::dynamic_bitset<> old= in_map;
+  in_map= s->all_set;
   return old;
 }
 
-void Table::restore_column_map(my_bitmap_map *old)
+void Table::restore_column_map(const boost::dynamic_bitset<>& old)
 {
-  read_set->setBitmap(old);
+  for (boost::dynamic_bitset<>::size_type i= 0; i < old.size(); i++)
+  {
+    if (old.test(i))
+    {
+      read_set->set(i);
+    }
+    else
+    {
+      read_set->reset(i);
+    }
+  }
 }
 
 uint32_t Table::find_shortest_key(const key_map *usable_keys)
@@ -1883,6 +1894,9 @@ Table::Table() :
   write_set(NULL),
   tablenr(0),
   db_stat(0),
+  def_read_set(),
+  def_write_set(),
+  tmp_set(),
   in_use(NULL),
   key_info(NULL),
   next_number_field(NULL),
@@ -1919,10 +1933,6 @@ Table::Table() :
   map(0),
   is_placeholder_created(0)
 {
-  memset(&def_read_set, 0, sizeof(MyBitmap)); /**< Default read set of columns */
-  memset(&def_write_set, 0, sizeof(MyBitmap)); /**< Default write set of columns */
-  memset(&tmp_set, 0, sizeof(MyBitmap)); /* Not sure about this... */
-
   record[0]= (unsigned char *) 0;
   record[1]= (unsigned char *) 0;
 

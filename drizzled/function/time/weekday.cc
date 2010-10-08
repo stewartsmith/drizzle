@@ -22,6 +22,7 @@
 #include "drizzled/temporal.h"
 #include "drizzled/error.h"
 #include "drizzled/function/time/weekday.h"
+#include "drizzled/util/test.h"
 
 namespace drizzled
 {
