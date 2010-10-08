@@ -58,6 +58,7 @@
 
 #include <boost/unordered_map.hpp>
 #include <boost/thread/mutex.hpp>
+#include <boost/thread/shared_mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 
 #define MIN_HANDSHAKE_SIZE      6

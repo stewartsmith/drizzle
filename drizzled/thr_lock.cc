@@ -56,6 +56,7 @@ TL_WRITE_CONCURRENT_INSERT lock at the same time as multiple read locks.
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/thread_var.h"
 #include "drizzled/statistics_variables.h"
+#include "drizzled/pthread_globals.h"
 
 #include "drizzled/session.h"
 #include "drizzled/current_session.h"
@@ -173,7 +174,7 @@ static enum enum_thr_lock_result wait_for_lock(struct st_lock_list *wait, THR_LO
 
   while (!thread_var->abort || in_wait_list)
   {
-    boost::mutex::scoped_lock scoped(*data->lock->native_handle(), boost::adopt_lock_t());
+    boost_unique_lock_t scoped(*data->lock->native_handle(), boost::adopt_lock_t());
 
     if (can_deadlock)
     {
@@ -230,7 +231,7 @@ static enum enum_thr_lock_result wait_for_lock(struct st_lock_list *wait, THR_LO
   data->lock->unlock();
 
   /* The following must be done after unlock of lock->mutex */
-  boost::mutex::scoped_lock scopedLock(thread_var->mutex);
+  boost_unique_lock_t scopedLock(thread_var->mutex);
   thread_var->current_mutex= NULL;
   thread_var->current_cond= NULL;
   return(result);
@@ -648,7 +649,7 @@ void thr_multi_unlock(THR_LOCK_DATA **data,uint32_t count)
 
 void THR_LOCK::abort_locks()
 {
-  boost::mutex::scoped_lock scopedLock(mutex);
+  boost_unique_lock_t scopedLock(mutex);
 
   for (THR_LOCK_DATA *local_data= read_wait.data; local_data ; local_data= local_data->next)
   {
@@ -681,7 +682,7 @@ bool THR_LOCK::abort_locks_for_thread(uint64_t thread_id_arg)
 {
   bool found= false;
 
-  boost::mutex::scoped_lock scopedLock(mutex);
+  boost_unique_lock_t scopedLock(mutex);
   for (THR_LOCK_DATA *local_data= read_wait.data; local_data ; local_data= local_data->next)
   {
     if (local_data->owner->info->thread_id == thread_id_arg)

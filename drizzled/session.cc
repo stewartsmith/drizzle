@@ -303,7 +303,7 @@ void Session::lockOnSys()
     return;
 
   setAbort(true);
-  boost::mutex::scoped_lock scopedLock(mysys_var->mutex);
+  boost_unique_lock_t scopedLock(mysys_var->mutex);
   if (mysys_var->current_cond)
   {
     mysys_var->current_mutex->lock();
@@ -418,7 +418,7 @@ void Session::awake(Session::killed_state state_to_set)
   }
   if (mysys_var)
   {
-    boost::mutex::scoped_lock scopedLock(mysys_var->mutex);
+    boost_unique_lock_t scopedLock(mysys_var->mutex);
     /*
       "
       This broadcast could be up in the air if the victim thread
@@ -596,7 +596,7 @@ void Session::exit_cond(const char* old_msg)
     does a Session::awake() on you).
   */
   mysys_var->current_mutex->unlock();
-  boost::mutex::scoped_lock scopedLock(mysys_var->mutex);
+  boost_unique_lock_t scopedLock(mysys_var->mutex);
   mysys_var->current_mutex = 0;
   mysys_var->current_cond = 0;
   this->set_proc_info(old_msg);

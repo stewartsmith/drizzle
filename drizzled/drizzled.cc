@@ -34,6 +34,7 @@
 #include "drizzled/program_options/config_file.h"
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/mutex.hpp>
+#include <boost/thread/shared_mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 #include <boost/filesystem.hpp>
 

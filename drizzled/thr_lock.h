@@ -19,6 +19,7 @@
 #define DRIZZLED_THR_LOCK_H
 
 #include <boost/thread/mutex.hpp>
+#include <boost/thread/shared_mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 #include <pthread.h>
 
