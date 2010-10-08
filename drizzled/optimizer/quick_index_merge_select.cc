@@ -207,7 +207,7 @@ int optimizer::QuickIndexMergeSelect::get_next()
   return result;
 }
 
-bool optimizer::QuickIndexMergeSelect::is_keys_used(const MyBitmap *fields)
+bool optimizer::QuickIndexMergeSelect::is_keys_used(const boost::dynamic_bitset<>& fields)
 {
   for (vector<optimizer::QuickRangeSelect *>::iterator it= quick_selects.begin();
        it != quick_selects.end();

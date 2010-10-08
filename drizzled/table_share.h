@@ -30,6 +30,7 @@
 
 #include <boost/unordered_map.hpp>
 #include <boost/thread/condition_variable.hpp>
+#include <boost/dynamic_bitset.hpp>
 
 #include "drizzled/typelib.h"
 #include "drizzled/memory/root.h"
@@ -217,7 +218,7 @@ public:
 
     if (iter == _keynames.end())
     {
-      position= -1; //historical, required for finding primary key from unique
+      position= UINT32_MAX; //historical, required for finding primary key from unique
       return false;
     }
 
@@ -258,11 +259,8 @@ public:
 
   const CHARSET_INFO *table_charset; /* Default charset of string fields */
 
-  MyBitmap all_set;
-private:
-  std::vector<my_bitmap_map> all_bitmap;
+  boost::dynamic_bitset<> all_set;
 
-public:
   /*
     Key which is used for looking-up table in table cache and in the list
     of thread's temporary tables. Has the form of:
@@ -554,7 +552,6 @@ public:
   uint32_t next_number_key_offset;          /* autoinc keypart offset in a key */
   uint32_t next_number_keypart;             /* autoinc keypart number in a key */
   uint32_t error, open_errno, errarg;       /* error from open_table_def() */
-  uint32_t column_bitmap_size;
 
   uint8_t blob_ptr_size;			/* 4 or 8 */
   bool db_low_byte_first;		/* Portable row format */

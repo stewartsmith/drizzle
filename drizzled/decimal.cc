@@ -157,8 +157,7 @@ int decimal_operation_results(int result)
 			"DECIMAL", "");
     break;
   case E_DEC_DIV_ZERO:
-    push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
-			ER_DIVISION_BY_ZERO, ER(ER_DIVISION_BY_ZERO));
+    my_error(ER_DIVISION_BY_ZERO, MYF(0));
     break;
   case E_DEC_BAD_NUM:
     push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
@@ -289,7 +288,7 @@ int str2my_decimal(uint32_t mask, const char *from, uint32_t length,
   String tmp(buff, sizeof(buff), &my_charset_bin);
   if (charset->mbminlen > 1)
   {
-    uint32_t dummy_errors;
+    size_t dummy_errors;
     tmp.copy(from, length, charset, &my_charset_utf8_general_ci, &dummy_errors);
     from= tmp.ptr();
     length=  tmp.length();

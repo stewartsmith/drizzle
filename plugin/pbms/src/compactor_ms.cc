@@ -29,11 +29,12 @@
 
 #include "cslib/CSConfig.h"
 
+#include "defs_ms.h"
+
 #include "cslib/CSGlobal.h"
 #include "cslib/CSStrUtil.h"
 #include "cslib/CSStorage.h"
 
-#include "defs_ms.h"
 #include "compactor_ms.h"
 #include "open_table_ms.h"
 #include "repository_ms.h"

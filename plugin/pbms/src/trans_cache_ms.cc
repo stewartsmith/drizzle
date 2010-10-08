@@ -285,7 +285,7 @@ TRef MSTransCache::tc_NewTransaction(uint32_t tid)
 		// The cache is full.
 		tc_OverFlowTID = 0;
 		tc_OverFlow->tid = tid; // save the tid of the first transaction to overflow.
-		tc_OverFlow->log_position = -1;
+		tc_OverFlow->log_position = UINT64_MAX;
 		tc_OverFlow->len = 0; 
 		tc_OverFlow->terminated = MS_Running; 
 		ref = OVERFLOW_TREF;
@@ -320,7 +320,7 @@ last_tid = tid;
 		
 	tc_List[ref].tid = tid;
 	tc_List[ref].len = 0;
-	tc_List[ref].log_position = -1;
+	tc_List[ref].log_position = UINT64_MAX;
 	tc_List[ref].terminated = MS_Running;
 
 	// Update these after initializing the structure because

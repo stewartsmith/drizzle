@@ -892,10 +892,12 @@ extern xtBool				pbxt_crash_debug;
 #define MX_CHARSET_INFO						struct drizzled::charset_info_st
 #define MX_CONST_CHARSET_INFO				const struct drizzled::charset_info_st			
 #define MX_CONST							const
-#define MX_BITMAP							drizzled::MyBitmap
-#define MX_BIT_SIZE()						numOfBitsInMap()
-#define MX_BIT_SET(x, y)					(x)->setBit(y)
-#define MX_BIT_FAST_TEST_AND_SET(x, y)				(x)->testAndSet(y)
+#include <boost/dynamic_bitset.hpp>
+#define MX_BITMAP							boost::dynamic_bitset<>
+#define MX_BIT_SIZE()						size()
+#define MX_BIT_SET(x, y)					(x)->set(y)
+//#define MX_BIT_FAST_TEST_AND_SET(x, y)		(x)->testAndSet(y)
+#define MX_BIT_FAST_TEST_AND_SET(x, y)		(x)->test(y)
 
 #define my_bool								bool
 //#define int16								int16_t
@@ -941,7 +943,8 @@ extern xtBool				pbxt_crash_debug;
 
 #define my_pthread_setspecific_ptr(T, V)	pthread_setspecific(T, (void*) (V))
 
-#define mysql_real_data_home				::drizzled::getDataHomeCatalog().c_str()
+/* TODO: This is dangerous! */
+#define mysql_real_data_home				::drizzled::getDataHomeCatalog().file_string().c_str()
 
 #define mi_int4store(T,A)   { uint32_t def_temp= (uint32_t) (A);\
                               ((unsigned char*) (T))[3]= (unsigned char) (def_temp);\
@@ -1012,7 +1015,7 @@ class Session;
 
 #endif // DRIZZLED
 
-#define MX_BIT_IS_SUBSET(x, y)				bitmap_is_subset(x, y)
+#define MX_BIT_IS_SUBSET(x, y)				x->is_subset_of(y)
 
 #ifndef XT_SCAN_CORE_DEFINED
 #define XT_SCAN_CORE_DEFINED

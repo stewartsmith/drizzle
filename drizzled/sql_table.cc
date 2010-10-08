@@ -149,24 +149,6 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
 
   LOCK_open.lock(); /* Part 2 of rm a table */
 
-  /*
-    If we have the table in the definition cache, we don't have to check the
-    .frm cursor to find if the table is a normal table (not view) and what
-    engine to use.
-  */
-
-  for (table= tables; table; table= table->next_local)
-  {
-    TableIdentifier identifier(table->db, table->table_name);
-    TableShare *share;
-    table->setDbType(NULL);
-
-    if ((share= TableShare::getShare(identifier)))
-    {
-      table->setDbType(share->db_type());
-    }
-  }
-
   if (not drop_temporary && lock_table_names_exclusively(session, tables))
   {
     LOCK_open.unlock();
@@ -643,7 +625,7 @@ static int mysql_prepare_create_table(Session *session,
 
     if (sql_field->sql_type == DRIZZLE_TYPE_ENUM)
     {
-      uint32_t dummy;
+      size_t dummy;
       const CHARSET_INFO * const cs= sql_field->charset;
       TYPELIB *interval= sql_field->interval;
 
@@ -676,7 +658,7 @@ static int mysql_prepare_create_table(Session *session,
           if (String::needs_conversion(tmp->length(), tmp->charset(),
                                        cs, &dummy))
           {
-            uint32_t cnv_errs;
+            size_t cnv_errs;
             conv.copy(tmp->ptr(), tmp->length(), tmp->charset(), cs, &cnv_errs);
             interval->type_names[i]= session->mem_root->strmake_root(conv.ptr(), conv.length());
             interval->type_lengths[i]= conv.length();
@@ -718,7 +700,8 @@ static int mysql_prepare_create_table(Session *session,
             }
           }
         }
-        calculate_interval_lengths(cs, interval, &field_length, &dummy);
+        uint32_t new_dummy;
+        calculate_interval_lengths(cs, interval, &field_length, &new_dummy);
         sql_field->length= field_length;
       }
       set_if_smaller(sql_field->length, (uint32_t)MAX_FIELD_WIDTH-1);

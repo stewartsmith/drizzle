@@ -448,10 +448,15 @@ static int fill_table_proto(message::Table &table_proto,
 
       idx->set_comment(key_info[i].comment.str);
     }
-    if (key_info[i].flags & 
-        ~(HA_NOSAME | HA_PACK_KEY | HA_USES_BLOCK_SIZE | 
-          HA_BINARY_PACK_KEY | HA_VAR_LENGTH_PART | HA_NULL_PART_KEY | 
-          HA_KEY_HAS_PART_KEY_SEG | HA_GENERATED_KEY | HA_USES_COMMENT))
+    static const uint64_t unknown_index_flag= (HA_NOSAME | HA_PACK_KEY |
+                                               HA_USES_BLOCK_SIZE | 
+                                               HA_BINARY_PACK_KEY |
+                                               HA_VAR_LENGTH_PART |
+                                               HA_NULL_PART_KEY | 
+                                               HA_KEY_HAS_PART_KEY_SEG |
+                                               HA_GENERATED_KEY |
+                                               HA_USES_COMMENT);
+    if (key_info[i].flags & ~unknown_index_flag)
       abort(); // Invalid (unknown) index flag.
 
     for(unsigned int j=0; j< key_info[i].key_parts; j++)

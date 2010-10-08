@@ -150,10 +150,10 @@ a	b	c
 15	NULL	Ten
 show variables like "secure_file_pri%";
 Variable_name	Value
-secure_file_priv	MYSQLTEST_VARDIR/
+secure_file_priv	MYSQLTEST_VARDIR
 select @@secure_file_priv;
 @@secure_file_priv
-MYSQLTEST_VARDIR/
+MYSQLTEST_VARDIR
 set @@secure_file_priv= 0;
 ERROR HY000: Variable 'secure_file_priv' is a read only variable
 truncate table t1;
@@ -162,8 +162,7 @@ ERROR HY000: The Drizzle server is running with the --secure-file-priv option so
 select * from t1;
 a	b	c
 select load_file("DRIZZLE_TEST_DIR/t/loaddata.test");
-load_file("DRIZZLE_TEST_DIR/t/loaddata.test")
-NULL
+ERROR HY000: The Drizzle server is running with the --secure-file-priv option so it cannot execute this statement
 drop table t1, t2;
 create table t1(f1 int, f2 timestamp not null default current_timestamp);
 create table t2(f1 int);
