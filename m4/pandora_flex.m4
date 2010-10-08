@@ -10,7 +10,7 @@ AC_DEFUN([_PANDORA_SEARCH_FLEX],[
   dnl  Check for flex
   dnl --------------------------------------------------------------------
 
-  AC_CHECK_PROGS(LEX, ['flex'], [:])
+  AC_CHECK_PROGS([LEX], ['flex'], [:])
   AS_IF([test "x$LEX" = "x:"],[
     pandora_have_flex=no
     LEX='if test -f "$@"; then echo "WARNING: no proper flex binary found, ignoring changes to $<"; exit 0; else echo "ERROR: no proper flex binary found"; exit 1; fi;'
@@ -29,4 +29,5 @@ AC_DEFUN([PANDORA_REQUIRE_FLEX],[
   AC_REQUIRE([PANDORA_HAVE_FLEX])
   AS_IF([test "x${pandora_have_flex}" = "xno" -a "$pandora_building_from_bzr" = "yes"],
       AC_MSG_ERROR(["flex is required for ${PACKAGE} to build from a bzr branch"])
+      )
 ])

@@ -10,7 +10,7 @@ AC_DEFUN([_PANDORA_SEARCH_BISON],[
   dnl  Check for bison
   dnl --------------------------------------------------------------------
 
-  AC_CHECK_PROGS(YACC, ['bison -y'], [:])
+  AC_CHECK_PROGS([YACC], ['bison -y'], [:])
   AS_IF([test "x$YACC" = "x:"],[
     pandora_have_bison=no
     YACC='if test -f "$@"; then echo "WARNING: no proper bison binary found, ignoring changes to $<"; exit 0; else echo "ERROR: no proper bison binary found"; exit 1; fi;'
@@ -29,4 +29,5 @@ AC_DEFUN([PANDORA_REQUIRE_BISON],[
   AC_REQUIRE([PANDORA_HAVE_BISON])
   AS_IF([test "x${pandora_have_bison}" = "xno" -a "$pandora_building_from_bzr" = "yes"],
       AC_MSG_ERROR(["bison is required for ${PACKAGE} to build from a bzr branch"])
+      )
 ])
