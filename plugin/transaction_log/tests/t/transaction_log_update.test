@@ -335,3 +335,39 @@ DROP TABLE t1;
 --source ../plugin/transaction_log/tests/t/truncate_log.inc
 --echo
 
+--echo Testing UPDATE LP Bug#655352
+--disable_warnings
+DROP TABLE IF EXISTS t1;
+--enable_warnings
+
+CREATE TABLE t1 (
+  id INT NOT NULL
+, col0_int INT DEFAULT NULL
+, col1_int INT DEFAULT NULL
+, PRIMARY KEY (id)
+);
+
+INSERT INTO t1 VALUES (1, 2, 3);
+INSERT INTO t1 VALUES (2, 4, 6);
+
+START TRANSACTION;
+UPDATE t1 SET col0_int = 3 WHERE id = 1;
+UPDATE t1 SET col1_int = 8 WHERE id = 2;
+COMMIT;
+--source ../plugin/transaction_log/tests/t/check_transaction_log.inc
+--echo
+
+START TRANSACTION;
+UPDATE t1 SET col0_int = 4 WHERE id = 1;
+UPDATE t1 SET col0_int = 6 WHERE id = 2;
+COMMIT;
+--source ../plugin/transaction_log/tests/t/check_transaction_log.inc
+--echo
+
+DROP TABLE t1;
+
+# Truncate the log file to reset for the next test
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
+--echo
+
+
