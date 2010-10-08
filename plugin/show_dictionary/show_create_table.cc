@@ -29,13 +29,11 @@
 using namespace std;
 using namespace drizzled;
 
-#define MAX_TABLE_DEFINITION_LENGTH 64000
-
 ShowCreateTable::ShowCreateTable() :
   plugin::TableFunction("DATA_DICTIONARY", "TABLE_SQL_DEFINITION")
 {
   add_field("TABLE_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
-  add_field("TABLE_SQL_DEFINITION", plugin::TableFunction::STRING, MAX_TABLE_DEFINITION_LENGTH, false);
+  add_field("TABLE_SQL_DEFINITION", plugin::TableFunction::STRING, TABLE_FUNCTION_BLOB_SIZE, false);
 }
 
 ShowCreateTable::Generator::Generator(Field **arg) :
@@ -85,7 +83,7 @@ bool ShowCreateTable::Generator::populate()
   std::cerr << "Table name " << table_name << " : " << was_true << " : " << create_sql << "\n";
 
   push(table_name);
-  push(create_sql.length() < MAX_TABLE_DEFINITION_LENGTH ? create_sql : create_sql.substr(0, MAX_TABLE_DEFINITION_LENGTH));
+  push(create_sql);
   is_table_primed= false;
 
   return true;
