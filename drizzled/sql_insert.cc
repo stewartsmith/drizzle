@@ -168,7 +168,8 @@ static int check_update_fields(Session *session, TableList *insert_table_list,
       Unmark the timestamp field so that we can check if this is modified
       by update_fields
     */
-    timestamp_mark= table->write_set->testAndClear(table->timestamp_field->field_index);
+    timestamp_mark= table->write_set->test(table->timestamp_field->field_index);
+    table->write_set->reset(table->timestamp_field->field_index);
   }
 
   /* Check the fields we are going to modify */
@@ -716,7 +717,7 @@ int write_record(Session *session, Table *table,CopyInfo *info)
 {
   int error;
   std::vector<unsigned char> key;
-  MyBitmap *save_read_set, *save_write_set;
+  boost::dynamic_bitset<> *save_read_set, *save_write_set;
   uint64_t prev_insert_id= table->cursor->next_insert_id;
   uint64_t insert_id_for_cur_row= 0;
 
@@ -819,7 +820,7 @@ int write_record(Session *session, Table *table,CopyInfo *info)
             table->next_number_field->val_int());
         info->touched++;
         if ((table->cursor->getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ) &&
-             !bitmap_is_subset(table->write_set, table->read_set)) ||
+            ! table->write_set->is_subset_of(*table->read_set)) ||
             table->compare_record())
         {
           if ((error=table->cursor->updateRecord(table->getUpdateRecord(),
@@ -910,7 +911,7 @@ int write_record(Session *session, Table *table,CopyInfo *info)
     */
     if (table->read_set != save_read_set ||
         table->write_set != save_write_set)
-      table->column_bitmaps_set(save_read_set, save_write_set);
+      table->column_bitmaps_set(*save_read_set, *save_write_set);
   }
   else if ((error=table->cursor->insertRecord(table->getInsertRecord())))
   {
@@ -939,8 +940,8 @@ err:
 
 before_err:
   table->cursor->restore_auto_increment(prev_insert_id);
-  table->column_bitmaps_set(save_read_set, save_write_set);
-  return(1);
+  table->column_bitmaps_set(*save_read_set, *save_write_set);
+  return 1;
 }
 
 

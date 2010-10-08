@@ -28,7 +28,6 @@
 #include "drizzled/sql_error.h"
 #include "drizzled/decimal.h"
 #include "drizzled/key_map.h"
-#include "drizzled/sql_bitmap.h"
 #include "drizzled/sql_list.h"
 #include "drizzled/structs.h"
 #include "drizzled/charset_info.h"

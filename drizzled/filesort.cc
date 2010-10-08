@@ -491,7 +491,8 @@ static ha_rows find_all_keys(Session *session,
   Table *sort_form;
   volatile Session::killed_state *killed= &session->killed;
   Cursor *file;
-  MyBitmap *save_read_set, *save_write_set;
+  boost::dynamic_bitset<> *save_read_set= NULL;
+  boost::dynamic_bitset<> *save_write_set= NULL;
 
   idx=indexpos=0;
   error=quick_select=0;
@@ -527,14 +528,14 @@ static ha_rows find_all_keys(Session *session,
   save_read_set=  sort_form->read_set;
   save_write_set= sort_form->write_set;
   /* Set up temporary column read map for columns used by sort */
-  sort_form->tmp_set.clearAll();
+  sort_form->tmp_set.reset();
   /* Temporary set for register_used_fields and register_field_in_read_map */
   sort_form->read_set= &sort_form->tmp_set;
   register_used_fields(param);
   if (select && select->cond)
     select->cond->walk(&Item::register_field_in_read_map, 1,
                        (unsigned char*) sort_form);
-  sort_form->column_bitmaps_set(&sort_form->tmp_set, &sort_form->tmp_set);
+  sort_form->column_bitmaps_set(sort_form->tmp_set, sort_form->tmp_set);
 
   for (;;)
   {
@@ -621,7 +622,7 @@ static ha_rows find_all_keys(Session *session,
     return(HA_POS_ERROR);
 
   /* Signal we should use orignal column read and write maps */
-  sort_form->column_bitmaps_set(save_read_set, save_write_set);
+  sort_form->column_bitmaps_set(*save_read_set, *save_write_set);
 
   if (error != HA_ERR_END_OF_FILE)
   {

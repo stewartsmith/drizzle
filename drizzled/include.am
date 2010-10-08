@@ -350,7 +350,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/show.h \
 			      drizzled/signal_handler.h \
 			      drizzled/sql_base.h \
-			      drizzled/sql_bitmap.h \
 			      drizzled/sql_error.h \
 			      drizzled/sql_lex.h \
 			      drizzled/sql_list.h \
@@ -692,7 +691,6 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/show.cc \
 				 drizzled/signal_handler.cc \
 				 drizzled/sql_base.cc \
-				 drizzled/sql_bitmap.cc \
 				 drizzled/sql_delete.cc \
 				 drizzled/sql_derived.cc \
 				 drizzled/sql_error.cc \
