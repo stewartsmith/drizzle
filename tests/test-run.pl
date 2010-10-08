@@ -870,6 +870,7 @@ sub command_line_setup () {
     $opt_valgrind= 1;
     $opt_valgrind_mysqld= 1;
     $opt_valgrind_drizzletest= 1;
+    $ENV{'VALGRIND_RUN'} = '1';
   }
   elsif ( $opt_valgrind_mysqld )
   {
