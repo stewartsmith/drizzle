@@ -1890,9 +1890,6 @@ LEX::LEX()
 */
 bool LEX::only_view_structure()
 {
-  if (sql_command == SQLCOM_SHOW_CREATE)
-    return true;
-
   return false;
 }
 
@@ -1908,9 +1905,6 @@ bool LEX::only_view_structure()
 */
 bool LEX::need_correct_ident()
 {
-  if (sql_command== SQLCOM_SHOW_CREATE)
-    return true;
-
   return false;
 }
 

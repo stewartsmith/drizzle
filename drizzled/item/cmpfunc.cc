@@ -2034,8 +2034,7 @@ void Item_func_between::fix_length_and_dec()
     ge_cmp.set_datetime_cmp_func(args, args + 1);
     le_cmp.set_datetime_cmp_func(args, args + 2);
   }
-  else if (args[0]->real_item()->type() == FIELD_ITEM &&
-           session->lex->sql_command != SQLCOM_SHOW_CREATE)
+  else if (args[0]->real_item()->type() == FIELD_ITEM)
   {
     Item_field *field_item= (Item_field*) (args[0]->real_item());
     if (field_item->field->can_be_compared_as_int64_t())
@@ -3677,7 +3676,6 @@ void Item_func_in::fix_length_and_dec()
         comparison type accordingly.
       */
       if (args[0]->real_item()->type() == FIELD_ITEM &&
-          session->lex->sql_command != SQLCOM_SHOW_CREATE &&
           cmp_type != INT_RESULT)
       {
         Item_field *field_item= (Item_field*) (args[0]->real_item());
