@@ -1878,36 +1878,6 @@ LEX::LEX()
   statement= NULL;
 }
 
-/*
-  Detect that we need only table structure of derived table/view
-
-  SYNOPSIS
-    only_view_structure()
-
-  RETURN
-    true yes, we need only structure
-    false no, we need data
-*/
-bool LEX::only_view_structure()
-{
-  return false;
-}
-
-/*
-  Should Items_ident be printed correctly
-
-  SYNOPSIS
-    need_correct_ident()
-
-  RETURN
-    true yes, we need only structure
-    false no, we need data
-*/
-bool LEX::need_correct_ident()
-{
-  return false;
-}
-
 /**
   This method should be called only during parsing.
   It is aware of compound statements (stored routine bodies)

@@ -883,9 +883,6 @@ public:
   void link_first_table_back(TableList *first, bool link_to_local);
   void first_lists_tables_same();
 
-  bool only_view_structure();
-  bool need_correct_ident();
-
   void cleanup_after_one_table_open();
 
   bool push_context(Name_resolution_context *context)

@@ -1893,23 +1893,10 @@ bool Session::openTablesLock(TableList *tables)
     close_tables_for_reopen(&tables);
   }
   if ((mysql_handle_derived(lex, &mysql_derived_prepare) ||
-       (fill_derived_tables() &&
+       (
         mysql_handle_derived(lex, &mysql_derived_filling))))
     return true;
 
-  return false;
-}
-
-bool Session::openTables(TableList *tables, uint32_t flags)
-{
-  uint32_t counter;
-  bool ret= fill_derived_tables();
-  assert(ret == false);
-  if (open_tables_from_list(&tables, &counter, flags) ||
-      mysql_handle_derived(lex, &mysql_derived_prepare))
-  {
-    return true;
-  }
   return false;
 }
 
