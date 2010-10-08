@@ -56,9 +56,6 @@ ShowCreateTable::Generator::Generator(Field **arg) :
 
     std::string foo;
     google::protobuf::TextFormat::PrintToString(table_message, &foo);
-
-    const char *was_true= is_table_primed ? "true" : "false";
-    std::cerr << identifier << "->Table MEssage (" << was_true << ") "<< foo <<  "\n";
   }
 }
 
@@ -66,7 +63,6 @@ bool ShowCreateTable::Generator::populate()
 {
   enum drizzled::message::TransformSqlError transform_err;
 
-  const char *was_true= is_table_primed ? "true" : "false";
   if (not is_table_primed)
     return false;
 
@@ -77,10 +73,8 @@ bool ShowCreateTable::Generator::populate()
                                                         false);
   if (transform_err != drizzled::message::NONE)
   {
-    std::cerr << "We got an error on transformation\n";
     return false;
   }
-  std::cerr << "Table name " << table_name << " : " << was_true << " : " << create_sql << "\n";
 
   push(table_name);
   push(create_sql);
