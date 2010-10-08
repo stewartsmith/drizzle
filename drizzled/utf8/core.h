@@ -29,8 +29,9 @@ DEALINGS IN THE SOFTWARE.
 #define DRIZZLED_UTF8_CORE_H
 
 #include <iterator>
-#include CSTDINT_H
 
+namespace drizzled
+{
 namespace utf8
 {
 
@@ -247,7 +248,8 @@ namespace internal
             (internal::mask8(*it))   == bom[2]
            );
     }
-} // namespace utf8
+} /* namespace utf8 */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_UTF8_CORE_H */
 

@@ -30,6 +30,8 @@ DEALINGS IN THE SOFTWARE.
 
 #include "drizzled/utf8/core.h"
 
+namespace drizzled
+{
 namespace utf8
 {
     namespace unchecked 
@@ -221,7 +223,8 @@ namespace utf8
           }; // class iterator
 
     } // namespace utf8::unchecked
-} // namespace utf8 
+} /* namespace utf8 */
+} /* namespace drizzled */
 
 
 #endif /* DRIZZLED_UTF8_UNCHECKED_H */

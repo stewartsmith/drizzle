@@ -31,6 +31,8 @@ DEALINGS IN THE SOFTWARE.
 #include "drizzled/utf8/core.h"
 #include <stdexcept>
 
+namespace drizzled
+{
 namespace utf8
 {
     // Exceptions that may be thrown from the library functions.
@@ -311,7 +313,8 @@ namespace utf8
       }
     }; // class iterator
 
-} // namespace utf8
+} /* namespace utf8 */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_UTF8_CHECKED_H */
 
