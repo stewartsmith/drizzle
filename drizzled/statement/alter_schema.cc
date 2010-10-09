@@ -36,7 +36,7 @@ namespace drizzled
 bool statement::AlterSchema::execute()
 {
   LEX_STRING *db= &session->lex->name;
-  message::Schema old_definition;
+  message::SchemaPtr old_definition;
 
   if (not validateSchemaOptions())
     return true;
@@ -68,16 +68,16 @@ bool statement::AlterSchema::execute()
   */
 
   // We set the name from the old version to keep case preference
-  schema_message.set_name(old_definition.name());
-  schema_message.set_version(old_definition.version());
-  schema_message.set_uuid(old_definition.uuid());
-  schema_message.mutable_engine()->set_name(old_definition.engine().name());
+  schema_message.set_name(old_definition->name());
+  schema_message.set_version(old_definition->version());
+  schema_message.set_uuid(old_definition->uuid());
+  schema_message.mutable_engine()->set_name(old_definition->engine().name());
 
   // We need to make sure we don't destroy any collation that might have
   // been changed.
   if (not schema_message.has_collation())
   {
-    schema_message.set_collation(old_definition.collation());
+    schema_message.set_collation(old_definition->collation());
   }
   
   drizzled::message::update(schema_message);

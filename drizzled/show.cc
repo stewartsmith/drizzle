@@ -191,7 +191,7 @@ bool drizzled_show_create(Session *session, TableList *table_list, bool is_if_no
 
 static bool store_db_create_info(SchemaIdentifier &schema_identifier, string &buffer, bool if_not_exists)
 {
-  message::Schema schema;
+  message::SchemaPtr schema;
 
   bool found= plugin::StorageEngine::getSchemaDefinition(schema_identifier, schema);
   if (not found)
@@ -203,13 +203,13 @@ static bool store_db_create_info(SchemaIdentifier &schema_identifier, string &bu
     buffer.append("IF NOT EXISTS ");
 
   buffer.append("`");
-  buffer.append(schema.name());
+  buffer.append(schema->name());
   buffer.append("`");
 
-  if (schema.has_collation())
+  if (schema->has_collation())
   {
     buffer.append(" COLLATE = ");
-    buffer.append(schema.collation());
+    buffer.append(schema->collation());
   }
 
   return true;
@@ -217,7 +217,7 @@ static bool store_db_create_info(SchemaIdentifier &schema_identifier, string &bu
 
 bool mysqld_show_create_db(Session &session, SchemaIdentifier &schema_identifier, bool if_not_exists)
 {
-  message::Schema schema_message;
+  message::SchemaPtr schema_message;
   string buffer;
 
   if (not plugin::StorageEngine::getSchemaDefinition(schema_identifier, schema_message))
@@ -247,7 +247,7 @@ bool mysqld_show_create_db(Session &session, SchemaIdentifier &schema_identifier
   if (session.client->sendFields(&field_list))
     return true;
 
-  session.client->store(schema_message.name());
+  session.client->store(schema_message->name());
   session.client->store(buffer);
 
   if (session.client->flush())

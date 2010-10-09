@@ -36,8 +36,21 @@ Function::Function(const std::string &name_arg) :
                                   HTON_ALTER_NOT_SUPPORTED |
                                   HTON_HAS_SCHEMA_DICTIONARY |
                                   HTON_SKIP_STORE_LOCK |
-                                  HTON_TEMPORARY_NOT_SUPPORTED)
+                                  HTON_TEMPORARY_NOT_SUPPORTED),
+  information_message(new(message::Schema)),
+  data_dictionary_message(new(message::Schema))
+
 {
+#if 0
+  information_message.reset(new(message::Schema));
+  data_dictionary_message.reset(new(message::Schema));
+#endif
+
+  information_message->set_name("information_schema");
+  data_dictionary_message->set_collation("utf8_general_ci");
+
+  data_dictionary_message->set_name("data_dictionary");
+  data_dictionary_message->set_collation("utf8_general_ci");
 }
 
 
@@ -68,17 +81,17 @@ void Function::doGetSchemaIdentifiers(SchemaIdentifiers& schemas)
   schemas.push_back(DATA_DICTIONARY_IDENTIFIER);
 }
 
-bool Function::doGetSchemaDefinition(const SchemaIdentifier &schema_identifier, message::Schema &schema_message)
+bool Function::doGetSchemaDefinition(const SchemaIdentifier &schema_identifier, message::SchemaPtr &schema_message)
 {
+  schema_message.reset(new message::Schema); // This should be fixed, we could just be using ones we built on startup.
+
   if (schema_identifier == INFORMATION_SCHEMA_IDENTIFIER)
   {
-    schema_message.set_name("information_schema");
-    schema_message.set_collation("utf8_general_ci");
+    schema_message= information_message;
   }
   else if (schema_identifier == DATA_DICTIONARY_IDENTIFIER)
   {
-    schema_message.set_name("data_dictionary");
-    schema_message.set_collation("utf8_general_ci");
+    schema_message= data_dictionary_message;
   }
   else
   {
