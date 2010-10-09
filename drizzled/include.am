@@ -427,6 +427,9 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/unique.h \
 			      drizzled/unireg.h \
 			      drizzled/user_var_entry.h \
+			      drizzled/utf8/checked.h \
+			      drizzled/utf8/core.h \
+			      drizzled/utf8/unchecked.h \
 			      drizzled/utf8/utf8.h \
 			      drizzled/var.h \
 			      drizzled/version.h \
