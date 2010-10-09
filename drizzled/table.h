@@ -61,10 +61,8 @@ typedef struct st_columndef MI_COLUMNDEF;
  */
 class Table 
 {
-public:
   TableShare *s; /**< Pointer to the shared metadata about the table */
 
-private:
   Field **field; /**< Pointer to fields collection */
 public:
 
@@ -372,9 +370,9 @@ public:
   void resetTable(Session *session, TableShare *share, uint32_t db_stat_arg);
 
   /* SHARE methods */
-  inline const TableShare *getShare() const { assert(s); return s; } /* Get rid of this long term */
+  virtual const TableShare *getShare() const { assert(s); return s; } /* Get rid of this long term */
+  virtual TableShare *getMutableShare() { assert(s); return s; } /* Get rid of this long term */
   inline bool hasShare() const { return s ? true : false ; } /* Get rid of this long term */
-  inline TableShare *getMutableShare() { assert(s); return s; } /* Get rid of this long term */
   inline void setShare(TableShare *new_share) { s= new_share; } /* Get rid of this long term */
   inline uint32_t sizeKeys() { return s->sizeKeys(); }
   inline uint32_t sizeFields() { return s->sizeFields(); }
