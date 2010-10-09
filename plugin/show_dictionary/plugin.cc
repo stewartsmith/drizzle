@@ -26,6 +26,7 @@ using namespace drizzled;
 static int init(drizzled::module::Context &context)
 {
   context.add(new ShowColumns());
+  context.add(new ShowCreateTable());
   context.add(new ShowIndexes());
   context.add(new ShowSchemas());
   context.add(new ShowTableStatus());

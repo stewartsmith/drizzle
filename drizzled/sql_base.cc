@@ -1455,9 +1455,6 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
   }
   assert(table->getShare()->getTableCount() > 0 || table->getShare()->getType() != message::Table::STANDARD);
 
-  if (lex->need_correct_ident())
-    table->alias_name_used= my_strcasecmp(table_alias_charset,
-                                          table->getMutableShare()->getTableName(), alias);
   /* Fix alias if table name changes */
   if (strcmp(table->getAlias(), alias))
   {

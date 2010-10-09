@@ -1045,11 +1045,6 @@ public:
   {
     return server_status & SERVER_STATUS_IN_TRANS;
   }
-  inline bool fill_derived_tables()
-  {
-    return !lex->only_view_structure();
-  }
-
   LEX_STRING *make_lex_string(LEX_STRING *lex_str,
                               const char* str, uint32_t length,
                               bool allocate_lex_string);
@@ -1478,26 +1473,6 @@ public:
    * The lock will automaticaly be freed by close_thread_tables()
    */
   bool openTablesLock(TableList *tables);
-
-  /**
-   * Open all tables in list and process derived tables
-   *
-   * @param Pointer to a list of tables for open
-   * @param Bitmap of flags to modify how the tables will be open:
-   *        DRIZZLE_LOCK_IGNORE_FLUSH - open table even if someone has
-   *        done a flush or namelock on it.
-   *
-   * @retval
-   *  false - ok
-   * @retval
-   *  true  - error
-   *
-   * @note
-   *
-   * This is to be used on prepare stage when you don't read any
-   * data from the tables.
-   */
-  bool openTables(TableList *tables, uint32_t flags= 0);
 
   int open_tables_from_list(TableList **start, uint32_t *counter, uint32_t flags= 0);
 

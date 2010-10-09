@@ -1,2 +1,5 @@
 SHOW CREATE TABLE test.invalid_table_collation;
-ERROR HY000: Corrupt or invalid table definition: Table test/invalid_table_collation has invalid/unknown collation: 123456,pi_pi_pi
+Table	Create Table
+invalid_table_collation	CREATE TABLE `invalid_table_collation` (
+  `number` INT
+) ENGINE=tableprototester COMMENT='Invalid table collation ' COLLATE = pi_pi_pi
