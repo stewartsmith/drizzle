@@ -72,12 +72,12 @@ StatusVars* ScoreboardSlot::getStatusVars()
   return status_vars;
 }
 
-void ScoreboardSlot::setSessionId(uint64_t in_session_id)
+void ScoreboardSlot::setSessionId(drizzled::session_id_t in_session_id)
 {
   session_id= in_session_id;
 }
 
-uint64_t ScoreboardSlot::getSessionId()
+drizzled::session_id_t ScoreboardSlot::getSessionId()
 {
   return session_id;
 }

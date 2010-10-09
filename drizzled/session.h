@@ -315,6 +315,8 @@ struct Ha_data
  * all member variables that are not critical to non-internal operations of the
  * session object.
  */
+typedef int64_t session_id_t;
+
 class Session : public Open_tables_state
 {
 public:
@@ -685,7 +687,7 @@ public:
     create_sort_index(); may differ from examined_row_count.
   */
   uint32_t row_count;
-  uint64_t thread_id;
+  session_id_t thread_id;
   uint32_t tmp_table;
   uint32_t global_read_lock;
   uint32_t server_status;
@@ -827,7 +829,7 @@ public:
   }
 
   /** Accessor method returning the session's ID. */
-  inline uint64_t getSessionId()  const
+  inline session_id_t getSessionId()  const
   {
     return thread_id;
   }
