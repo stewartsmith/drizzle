@@ -28,8 +28,7 @@ public:
 
   class Generator : public drizzled::plugin::TableFunction::Generator 
   {
-    bool is_table_primed;
-    std::string table_name;
+    bool is_primed;
     drizzled::message::Table table_message;
 
   public:
