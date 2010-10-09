@@ -23,57 +23,64 @@
 #include "drizzled/identifier.h"
 #include "drizzled/message.h"
 #include "drizzled/message/statement_transform.h"
-#include <google/protobuf/text_format.h>
 #include <string>
 
 using namespace std;
 using namespace drizzled;
 
-ShowCreateTable::ShowCreateTable() :
-  plugin::TableFunction("DATA_DICTIONARY", "TABLE_SQL_DEFINITION")
+ShowCreateSchema::ShowCreateSchema() :
+  plugin::TableFunction("DATA_DICTIONARY", "SCHEMA_SQL_DEFINITION")
 {
-  add_field("TABLE_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
-  add_field("TABLE_SQL_DEFINITION", plugin::TableFunction::STRING, TABLE_FUNCTION_BLOB_SIZE, false);
+  add_field("SCHEMA_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("SCHEMA_SQL_DEFINITION", plugin::TableFunction::STRING, TABLE_FUNCTION_BLOB_SIZE, false);
 }
 
-ShowCreateTable::Generator::Generator(Field **arg) :
+ShowCreateSchema::Generator::Generator(Field **arg) :
   plugin::TableFunction::Generator(arg),
-  is_primed(false)
+  is_primed(false),
+  if_not_exists(false)
 {
   statement::Select *select= static_cast<statement::Select *>(getSession().lex->statement);
 
-  if (not select->getShowTable().empty() && not select->getShowSchema().empty())
+  if (not select->getShowSchema().empty())
   {
-    TableIdentifier identifier(select->getShowSchema(), select->getShowTable());
+    schema_name.append(select->getShowTable());
+    SchemaIdentifier identifier(select->getShowSchema());
 
-    int error= plugin::StorageEngine::getTableDefinition(getSession(),
-                                                         identifier,
-                                                         table_message);
+    is_primed= plugin::StorageEngine::getSchemaDefinition(identifier,
+                                                          schema_message);
 
-    if (error == EEXIST)
-      is_primed= true;
+    if_not_exists= select->getShowExists();
   }
 }
 
-bool ShowCreateTable::Generator::populate()
+bool ShowCreateSchema::Generator::populate()
 {
-  enum drizzled::message::TransformSqlError transform_err;
-
   if (not is_primed)
     return false;
 
-  std::string create_sql;
-  transform_err= message::transformTableDefinitionToSql(table_message,
-                                                        create_sql,
-                                                        message::DRIZZLE,
-                                                        false);
-  if (transform_err != drizzled::message::NONE)
+  std::string buffer;
+
+  /* This needs to be moved out to its own function */
   {
-    return false;
+    buffer.append("CREATE DATABASE ");
+
+    if (if_not_exists)
+      buffer.append("IF NOT EXISTS ");
+
+    buffer.append("`");
+    buffer.append(schema_message.name());
+    buffer.append("`");
+
+    if (schema_message.has_collation())
+    {
+      buffer.append(" COLLATE = ");
+      buffer.append(schema_message.collation());
+    }
   }
 
-  push(table_message.name());
-  push(create_sql);
+  push(schema_message.name());
+  push(buffer);
   is_primed= false;
 
   return true;
