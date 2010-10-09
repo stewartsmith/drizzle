@@ -355,7 +355,7 @@ public:
     return mem_root.strmake_root(str_arg, len_arg);
   }
 
-  filesort_info_st sort;
+  filesort_info sort;
 
   Table();
   virtual ~Table() { };
@@ -822,20 +822,6 @@ class TableList;
 struct st_lex;
 class select_union;
 class Tmp_Table_Param;
-
-struct open_table_list_st
-{
-  std::string   db;
-  std::string   table;
-  uint32_t in_use;
-  uint32_t locked;
-
-  open_table_list_st() :
-    in_use(0),
-    locked(0)
-  { }
-
-};
 
 void free_blobs(Table *table);
 int set_zone(int nr,int min_zone,int max_zone);
