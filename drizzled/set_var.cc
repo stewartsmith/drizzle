@@ -198,10 +198,10 @@ static sys_var_session_size_t	sys_range_alloc_block_size(&vars, "range_alloc_blo
                                                            &system_variables::range_alloc_block_size);
 static sys_var_session_uint32_t	sys_query_alloc_block_size(&vars, "query_alloc_block_size",
                                                            &system_variables::query_alloc_block_size,
-                                                           false, fix_session_mem_root);
+                                                           NULL, fix_session_mem_root);
 static sys_var_session_uint32_t	sys_query_prealloc_size(&vars, "query_prealloc_size",
                                                         &system_variables::query_prealloc_size,
-                                                        false, fix_session_mem_root);
+                                                        NULL, fix_session_mem_root);
 static sys_var_readonly sys_tmpdir(&vars, "tmpdir", OPT_GLOBAL, SHOW_CHAR, get_tmpdir);
 
 static sys_var_fs_path sys_secure_file_priv(&vars, "secure_file_priv",

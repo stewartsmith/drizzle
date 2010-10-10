@@ -597,25 +597,25 @@ int ha_tina::encode_quote(unsigned char *)
         {
           buffer.append('\\');
           buffer.append('"');
-          *ptr++;
+          (void) *ptr++;
         }
         else if (*ptr == '\r')
         {
           buffer.append('\\');
           buffer.append('r');
-          *ptr++;
+          (void) *ptr++;
         }
         else if (*ptr == '\\')
         {
           buffer.append('\\');
           buffer.append('\\');
-          *ptr++;
+          (void) *ptr++;
         }
         else if (*ptr == '\n')
         {
           buffer.append('\\');
           buffer.append('n');
-          *ptr++;
+          (void) *ptr++;
         }
         else
           buffer.append(*ptr++);
