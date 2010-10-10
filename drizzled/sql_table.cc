@@ -1445,7 +1445,7 @@ bool mysql_create_table_no_lock(Session *session,
                                  &key_info_buffer, &key_count,
                                  select_field_count))
   {
-    boost::mutex::scoped_lock lock(LOCK_open); /* CREATE TABLE (some confussion on naming, double check) */
+    boost_unique_lock_t lock(LOCK_open); /* CREATE TABLE (some confussion on naming, double check) */
     error= locked_create_event(session,
                                identifier,
                                create_info,
@@ -1511,7 +1511,7 @@ static bool drizzle_create_table(Session *session,
 
   if (name_lock)
   {
-    boost::mutex::scoped_lock lock(LOCK_open); /* Lock for removing name_lock during table create */
+    boost_unique_lock_t lock(LOCK_open); /* Lock for removing name_lock during table create */
     session->unlink_open_table(name_lock);
   }
 
@@ -1935,7 +1935,7 @@ send_result:
         }
         else
         {
-          boost::mutex::scoped_lock lock(LOCK_open);
+          boost::unique_lock<boost::mutex> lock(LOCK_open);
 	  TableIdentifier identifier(table->table->getMutableShare()->getSchemaName(), table->table->getMutableShare()->getTableName());
           remove_table_from_cache(session, identifier, RTFC_NO_FLAG);
         }
@@ -2122,7 +2122,7 @@ bool mysql_create_like_table(Session* session,
     {
       if (name_lock)
       {
-        boost::mutex::scoped_lock lock(LOCK_open); /* unlink open tables for create table like*/
+        boost_unique_lock_t lock(LOCK_open); /* unlink open tables for create table like*/
         session->unlink_open_table(name_lock);
       }
 
@@ -2141,7 +2141,7 @@ bool mysql_create_like_table(Session* session,
     {
       bool was_created;
       {
-        boost::mutex::scoped_lock lock(LOCK_open); /* We lock for CREATE TABLE LIKE to copy table definition */
+        boost_unique_lock_t lock(LOCK_open); /* We lock for CREATE TABLE LIKE to copy table definition */
         was_created= create_table_wrapper(*session, create_table_proto, destination_identifier,
                                                src_identifier, is_engine_set);
       }
@@ -2160,7 +2160,7 @@ bool mysql_create_like_table(Session* session,
 
     if (name_lock)
     {
-      boost::mutex::scoped_lock lock(LOCK_open); /* unlink open tables for create table like*/
+      boost_unique_lock_t lock(LOCK_open); /* unlink open tables for create table like*/
       session->unlink_open_table(name_lock);
     }
   }

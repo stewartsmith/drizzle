@@ -58,6 +58,7 @@
 
 #include <boost/unordered_map.hpp>
 #include <boost/thread/mutex.hpp>
+#include <boost/thread/shared_mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 
 #define MIN_HANDSHAKE_SIZE      6
@@ -1008,7 +1009,7 @@ public:
     enter_cond(); this mutex is then released by exit_cond().
     Usage must be: lock mutex; enter_cond(); your code; exit_cond().
   */
-  const char* enter_cond(boost::condition_variable &cond, boost::mutex &mutex, const char* msg);
+  const char* enter_cond(boost::condition_variable_any &cond, boost::mutex &mutex, const char* msg);
   void exit_cond(const char* old_msg);
 
   inline time_t query_start() { return start_time; }
@@ -1537,7 +1538,7 @@ public:
   bool reopen_name_locked_table(TableList* table_list, bool link_in);
   bool close_cached_tables(TableList *tables, bool wait_for_refresh, bool wait_for_placeholders);
 
-  void wait_for_condition(boost::mutex &mutex, boost::condition_variable &cond);
+  void wait_for_condition(boost::mutex &mutex, boost::condition_variable_any &cond);
   int setup_conds(TableList *leaves, COND **conds);
   int lock_tables(TableList *tables, uint32_t count, bool *need_reopen);
 

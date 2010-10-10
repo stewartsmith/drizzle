@@ -24,6 +24,8 @@
 #include "drizzled/message/table.pb.h"
 #include "drizzled/message/schema.pb.h"
 
+#include <boost/shared_ptr.hpp>
+
 namespace drizzled {
 namespace message {
 
@@ -32,6 +34,8 @@ void init(drizzled::message::Table &arg, const std::string &name_arg, const std:
 
 void update(drizzled::message::Schema &arg);
 void update(drizzled::message::Table &arg);
+
+typedef boost::shared_ptr<drizzled::message::Schema> SchemaPtr;
 
 } /* namespace message */
 } /* namespace drizzled */

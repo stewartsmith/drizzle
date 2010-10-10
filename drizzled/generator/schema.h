@@ -30,7 +30,7 @@ namespace generator {
 class Schema
 {
   Session &session;
-  message::Schema schema;
+  message::SchemaPtr schema;
 
   SchemaIdentifiers schema_names;
   SchemaIdentifiers::const_iterator schema_iterator;
@@ -39,20 +39,19 @@ public:
 
   Schema(Session &arg);
 
-  operator const drizzled::message::Schema*()
+  operator const drizzled::message::SchemaPtr()
   {
     while (schema_iterator != schema_names.end())
     {
-      schema.Clear();
       SchemaIdentifier schema_identifier(*schema_iterator);
       bool is_schema_parsed= plugin::StorageEngine::getSchemaDefinition(schema_identifier, schema);
       schema_iterator++;
 
       if (is_schema_parsed)
-        return &schema;
+        return schema;
     }
 
-    return NULL;
+    return message::SchemaPtr();
   }
 
   operator const drizzled::SchemaIdentifier*()

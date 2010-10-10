@@ -21,6 +21,8 @@
 #ifndef PLUGIN_SHOW_DICTIONARY_SHOW_CREATE_SCHEMA_H
 #define PLUGIN_SHOW_DICTIONARY_SHOW_CREATE_SCHEMA_H
 
+#include "drizzled/message.h"
+
 class ShowCreateSchema : public drizzled::plugin::TableFunction
 {
 public:
@@ -31,7 +33,7 @@ public:
     bool is_primed;
     bool if_not_exists;
     std::string schema_name;
-    drizzled::message::Schema schema_message;
+    drizzled::message::SchemaPtr schema_message;
 
   public:
     Generator(drizzled::Field **arg);

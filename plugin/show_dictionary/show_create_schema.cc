@@ -69,17 +69,17 @@ bool ShowCreateSchema::Generator::populate()
       buffer.append("IF NOT EXISTS ");
 
     buffer.append("`");
-    buffer.append(schema_message.name());
+    buffer.append(schema_message->name());
     buffer.append("`");
 
-    if (schema_message.has_collation())
+    if (schema_message->has_collation())
     {
       buffer.append(" COLLATE = ");
-      buffer.append(schema_message.collation());
+      buffer.append(schema_message->collation());
     }
   }
 
-  push(schema_message.name());
+  push(schema_message->name());
   push(buffer);
   is_primed= false;
 

@@ -34,6 +34,7 @@
 #include "drizzled/program_options/config_file.h"
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/mutex.hpp>
+#include <boost/thread/shared_mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 #include <boost/filesystem.hpp>
 
@@ -335,7 +336,7 @@ boost::mutex LOCK_open;
 boost::mutex LOCK_global_system_variables;
 boost::mutex LOCK_thread_count;
 
-boost::condition_variable COND_refresh;
+boost::condition_variable_any COND_refresh;
 boost::condition_variable COND_thread_count;
 pthread_t signal_thread;
 boost::condition_variable COND_server_end;
