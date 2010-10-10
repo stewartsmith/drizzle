@@ -152,7 +152,7 @@ optimizer::QuickRorIntersectSelect::push_quick_back(optimizer::QuickRangeSelect 
 }
 
 
-bool optimizer::QuickRorIntersectSelect::is_keys_used(const MyBitmap *fields)
+bool optimizer::QuickRorIntersectSelect::is_keys_used(const boost::dynamic_bitset<>& fields)
 {
   for (vector<optimizer::QuickRangeSelect *>::iterator it= quick_selects.begin();
        it != quick_selects.end();

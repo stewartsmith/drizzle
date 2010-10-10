@@ -26,25 +26,34 @@
 namespace drizzled
 {
 
-class TableShareInstance : public TableShare 
+class TableShareInstance : public Table
 {
-  Table private_table;
+  TableShare _share;
 
 public:
   TableShareInstance(TableIdentifier::Type type_arg) :
-    TableShare(type_arg)
+    _share(type_arg)
   {
-    private_table.setShare(this);
   }
 
   Table *getTable()
   {
-    return &private_table;
+    return this;
+  }
+
+  TableShare *getMutableShare(void)
+  {
+    return &_share;
+  }
+
+  const TableShare *getShare(void) const
+  {
+    return &_share;
   }
 
   ~TableShareInstance()
   {
-    private_table.free_tmp_table(private_table.in_use);
+    this->free_tmp_table(this->in_use);
   }
 };
 

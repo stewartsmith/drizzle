@@ -61,16 +61,16 @@ INSERT INTO t1 (c1) VALUES
   ('.r.'), ('.rr.'), ('.rrr.'), ('.rrrr.');
 SELECT * FROM t1;
 
---replace_result $MYSQLTEST_VARDIR MYSQLTEST_VARDIR
-eval SELECT * INTO OUTFILE '$MYSQLTEST_VARDIR/tmp/t1' FIELDS ENCLOSED BY 'r' FROM t1;
-cat_file $MYSQLTEST_VARDIR/tmp/t1;
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+eval SELECT * INTO OUTFILE '$DRIZZLETEST_VARDIR/tmp/t1' FIELDS ENCLOSED BY 'r' FROM t1;
+cat_file $DRIZZLETEST_VARDIR/tmp/t1;
 
---replace_result $MYSQLTEST_VARDIR MYSQLTEST_VARDIR
-eval LOAD DATA INFILE '$MYSQLTEST_VARDIR/tmp/t1' INTO TABLE t2 FIELDS ENCLOSED BY 'r';
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+eval LOAD DATA INFILE '$DRIZZLETEST_VARDIR/tmp/t1' INTO TABLE t2 FIELDS ENCLOSED BY 'r';
 SELECT t1.id, c1, c2 FROM t1 LEFT  JOIN t2 ON t1.id=t2.id WHERE c1 != c2;
 SELECT t1.id, c1, c2 FROM t1 RIGHT JOIN t2 ON t1.id=t2.id WHERE c1 != c2;
 
-remove_file $MYSQLTEST_VARDIR/tmp/t1;
+remove_file $DRIZZLETEST_VARDIR/tmp/t1;
 DROP TABLE t1,t2;
 
 # End of 4.1 tests
@@ -121,9 +121,9 @@ select * from t1;
 #
 # It should not be possible to load from a file outside of vardir
 
---replace_result $MYSQLTEST_VARDIR MYSQLTEST_VARDIR
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
 show variables like "secure_file_pri%";
---replace_result $MYSQLTEST_VARDIR MYSQLTEST_VARDIR
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
 select @@secure_file_priv;
 --error ER_INCORRECT_GLOBAL_LOCAL_VAR
 set @@secure_file_priv= 0;
@@ -135,8 +135,8 @@ truncate table t1;
 eval load data infile '$DRIZZLE_TEST_DIR/t/loaddata.test' into table t1;
 select * from t1;
 
-# Test "load_file" returns NULL
 --replace_result $DRIZZLE_TEST_DIR DRIZZLE_TEST_DIR
+--error ER_OPTION_PREVENTS_STATEMENT
 eval select load_file("$DRIZZLE_TEST_DIR/t/loaddata.test");
 
 # cleanup
@@ -150,23 +150,23 @@ create table t1(f1 int, f2 timestamp not null default current_timestamp);
 create table t2(f1 int);
 insert into t2 values(1),(2);
 disable_query_log;
-eval select * into outfile '$MYSQLTEST_VARDIR/tmp/t2' from t2;
+eval select * into outfile '$DRIZZLETEST_VARDIR/tmp/t2' from t2;
 --error ER_WARN_TOO_FEW_RECORDS
-eval load data infile '$MYSQLTEST_VARDIR/tmp/t2' into table t1;
+eval load data infile '$DRIZZLETEST_VARDIR/tmp/t2' into table t1;
 enable_query_log;
 select f1 from t1 where f2 IS NOT NULL order by f1;
-remove_file $MYSQLTEST_VARDIR/tmp/t2;
+remove_file $DRIZZLETEST_VARDIR/tmp/t2;
 delete from t1;
 disable_query_log;
-eval SELECT * INTO OUTFILE '$MYSQLTEST_VARDIR/tmp/t2'
+eval SELECT * INTO OUTFILE '$DRIZZLETEST_VARDIR/tmp/t2'
 FIELDS TERMINATED BY '' OPTIONALLY ENCLOSED BY '' LINES TERMINATED BY '\r\n'
 FROM t2;
 --error ER_WARN_TOO_FEW_RECORDS
-eval load data infile '$MYSQLTEST_VARDIR/tmp/t2' into table t1
+eval load data infile '$DRIZZLETEST_VARDIR/tmp/t2' into table t1
 FIELDS TERMINATED BY '' OPTIONALLY ENCLOSED BY '' LINES TERMINATED BY '\r\n';
 enable_query_log;
 select f1 from t1 where f2 IS NOT NULL order by f1;
-remove_file $MYSQLTEST_VARDIR/tmp/t2;
+remove_file $DRIZZLETEST_VARDIR/tmp/t2;
 drop table t1,t2;
 
 #
@@ -179,16 +179,16 @@ CREATE TABLE t1 (c1 INT, c2 TIMESTAMP, c3 REAL, c4 DOUBLE);
 INSERT INTO t1 (c1, c2, c3, c4) VALUES (10, '1970-02-01 01:02:03', 1.1E-100, 1.1E+100);
 SELECT * FROM t1;
 
---replace_result $MYSQLTEST_VARDIR MYSQLTEST_VARDIR
-eval SELECT * INTO OUTFILE '$MYSQLTEST_VARDIR/tmp/t1' FIELDS ENCLOSED BY '-' FROM t1;
-#cat_file $MYSQLTEST_VARDIR/tmp/t1;
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+eval SELECT * INTO OUTFILE '$DRIZZLETEST_VARDIR/tmp/t1' FIELDS ENCLOSED BY '-' FROM t1;
+#cat_file $DRIZZLETEST_VARDIR/tmp/t1;
 echo EOF;
 
 TRUNCATE t1;
 
---replace_result $MYSQLTEST_VARDIR MYSQLTEST_VARDIR
-eval LOAD DATA INFILE '$MYSQLTEST_VARDIR/tmp/t1' INTO TABLE t1 FIELDS ENCLOSED BY '-';
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+eval LOAD DATA INFILE '$DRIZZLETEST_VARDIR/tmp/t1' INTO TABLE t1 FIELDS ENCLOSED BY '-';
 SELECT * FROM t1;
 
-remove_file $MYSQLTEST_VARDIR/tmp/t1;
+remove_file $DRIZZLETEST_VARDIR/tmp/t1;
 DROP TABLE t1;

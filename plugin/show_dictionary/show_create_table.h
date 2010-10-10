@@ -1,7 +1,7 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2010 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,33 +18,28 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_SHOW_CREATE_H
-#define DRIZZLED_STATEMENT_SHOW_CREATE_H
+#ifndef PLUGIN_SHOW_DICTIONARY_SHOW_CREATE_TABLE_H
+#define PLUGIN_SHOW_DICTIONARY_SHOW_CREATE_TABLE_H
 
-#include <drizzled/statement.h>
-
-namespace drizzled
-{
-class Session;
-
-namespace statement
-{
-
-class ShowCreate : public Statement
+class ShowCreateTable : public drizzled::plugin::TableFunction
 {
 public:
-  ShowCreate(Session *in_session)
-    :
-      Statement(in_session),
-      is_if_not_exists(false)
-  {}
+  ShowCreateTable();
 
-  bool execute();
-  bool is_if_not_exists;
+  class Generator : public drizzled::plugin::TableFunction::Generator 
+  {
+    bool is_primed;
+    drizzled::message::Table table_message;
+
+  public:
+    Generator(drizzled::Field **arg);
+    bool populate();
+  };
+
+  Generator *generator(drizzled::Field **arg)
+  {
+    return new Generator(arg);
+  }
 };
 
-} /* end namespace statement */
-
-} /* end namespace drizzled */
-
-#endif /* DRIZZLED_STATEMENT_SHOW_CREATE_H */
+#endif /* PLUGIN_SHOW_DICTIONARY_SHOW_CREATE_TABLE_H */

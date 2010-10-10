@@ -32,6 +32,14 @@
 
 #include "defs_ms.h"
 
+#include "cslib/CSConfig.h"
+#include <inttypes.h>
+
+#include "cslib/CSGlobal.h"
+#include "cslib/CSSocket.h"
+#include "cslib/CSStrUtil.h"
+#include "cslib/CSHTTPStream.h"
+
 #include "pbms.h"
 class MSOpenTable;
 

@@ -14,7 +14,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-# This is a library file used by the Perl version of mysql-test-run,
+# This is a library file used by the Perl version of drizzle-test-run,
 # and is part of the translation of the Bourne shell script with the
 # same name.
 
@@ -28,7 +28,7 @@ sub collect_test_cases ($);
 sub collect_one_suite ($);
 sub collect_one_test_case ($$$$$$$$$);
 
-sub mtr_options_from_test_file($$);
+sub dtr_options_from_test_file($$);
 
 my $do_test;
 my $skip_test;
@@ -42,7 +42,7 @@ sub init_pattern {
   }
   # Check that pattern is a valid regex
   eval { "" =~/$from/; 1 } or
-    mtr_error("Invalid regex '$from' passed to $what\nPerl says: $@");
+    dtr_error("Invalid regex '$from' passed to $what\nPerl says: $@");
   return $from;
 }
 
@@ -85,7 +85,7 @@ sub collect_test_cases ($) {
       }
       if ( not $found )
       {
-	mtr_error("Could not find $tname in any suite");
+	dtr_error("Could not find $tname in any suite");
       }
     }
   }
@@ -113,19 +113,19 @@ sub collect_test_cases ($) {
       {
 	my $base_name= $1;
 	my $idx= $2;
-	mtr_verbose("$test_name =>  $base_name idx=$idx");
+	dtr_verbose("$test_name =>  $base_name idx=$idx");
 	if ( $idx > 1 )
 	{
 	  $idx-= 1;
 	  $base_name= "$base_name$idx";
-	  mtr_verbose("New basename $base_name");
+	  dtr_verbose("New basename $base_name");
 	}
 
 	foreach my $tinfo2 (@$cases)
 	{
 	  if ( $tinfo2->{'name'} eq $base_name )
 	  {
-	    mtr_verbose("found dependent test $tinfo2->{'name'}");
+	    dtr_verbose("found dependent test $tinfo2->{'name'}");
 	    $depend_on_test_name=$base_name;
 	  }
 	}
@@ -133,7 +133,7 @@ sub collect_test_cases ($) {
 
       if ( defined $depend_on_test_name )
       {
-	mtr_verbose("Giving $test_name same critera as $depend_on_test_name");
+	dtr_verbose("Giving $test_name same critera as $depend_on_test_name");
 	$sort_criteria{$test_name} = $sort_criteria{$depend_on_test_name};
       }
       else
@@ -168,7 +168,7 @@ sub collect_test_cases ($) {
 }
 
 # Valid extensions and their corresonding component id
-my %exts = ( 'test' => 'mysqld',
+my %exts = ( 'test' => 'drizzled',
 	     'imtest' => 'im'
 	   );
 
@@ -202,7 +202,7 @@ sub split_testname {
     return ( $parts[0], $parts[1], $parts[2]);
   }
 
-  mtr_error("Illegal format of test name: $test_name");
+  dtr_error("Illegal format of test name: $test_name");
 }
 
 
@@ -211,18 +211,18 @@ sub collect_one_suite($)
   my $suite= shift;  # Test suite name
   my @cases;  # Array of hash
 
-  mtr_verbose("Collecting: $suite");
+  dtr_verbose("Collecting: $suite");
 
   my $suitepath= "$::glob_suite_path";
-  my $suitedir= "$::glob_mysql_test_dir"; # Default
+  my $suitedir= "$::glob_drizzle_test_dir"; # Default
   if ( $suite ne "main" )
   {
-    $suitedir= mtr_path_exists(
+    $suitedir= dtr_path_exists(
              "$suitepath/$suite/drizzle-tests",
              "$suitepath/$suite/tests",
              "$suitedir/suite/$suite",
 			       "$suitedir/$suite");
-    mtr_verbose("suitedir: $suitedir");
+    dtr_verbose("suitedir: $suitedir");
   }
 
   my $testdir= "$suitedir/t";
@@ -250,7 +250,7 @@ sub collect_one_suite($)
   my $suite_opts= [];
   if ( -f $suite_opt_file )
   {
-    $suite_opts= mtr_get_opts_from_file($suite_opt_file);
+    $suite_opts= dtr_get_opts_from_file($suite_opt_file);
   }
 
   if ( @::opt_cases )
@@ -277,7 +277,7 @@ sub collect_one_suite($)
         {
 	  # This is only an error if suite was specified, otherwise it
 	  # could exist in another suite
-          mtr_error("Test '$full_name' was not found in suite '$sname'")
+          dtr_error("Test '$full_name' was not found in suite '$sname'")
 	    if $sname;
 
 	  next;
@@ -308,18 +308,18 @@ sub collect_one_suite($)
   }
   else
   {
-    opendir(TESTDIR, $testdir) or mtr_error("Can't open dir \"$testdir\": $!");
+    opendir(TESTDIR, $testdir) or dtr_error("Can't open dir \"$testdir\": $!");
 
     foreach my $elem ( sort readdir(TESTDIR) )
     {
       my $component_id= undef;
       my $tname= undef;
 
-      if ($tname= mtr_match_extension($elem, 'test'))
+      if ($tname= dtr_match_extension($elem, 'test'))
       {
-        $component_id = 'mysqld';
+        $component_id = 'drizzled';
       }
-      elsif ($tname= mtr_match_extension($elem, 'imtest'))
+      elsif ($tname= dtr_match_extension($elem, 'imtest'))
       {
         $component_id = 'im';
       }
@@ -354,7 +354,7 @@ sub collect_one_suite($)
     if (@::opt_combinations)
     {
       # take the combination from command-line
-      mtr_verbose("Take the combination from command line");
+      dtr_verbose("Take the combination from command line");
       foreach my $combination (@::opt_combinations) {
 	my $comb= {};
 	$comb->{name}= $combination;
@@ -365,7 +365,7 @@ sub collect_one_suite($)
     elsif (-f $combination_file )
     {
       # Read combinations file in my.cnf format
-      mtr_verbose("Read combinations file");
+      dtr_verbose("Read combinations file");
       my $config= My::Config->new($combination_file);
 
       foreach my $group ($config->groups()) {
@@ -437,7 +437,7 @@ sub optimize_cases {
     next if $tinfo->{skip};
 
     # Replication test needs an adjustment of binlog format
-    if (mtr_match_prefix($tinfo->{'name'}, "rpl"))
+    if (dtr_match_prefix($tinfo->{'name'}, "rpl"))
     {
 
       # =======================================================
@@ -446,13 +446,13 @@ sub optimize_cases {
       my $test_binlog_format;
       foreach my $opt ( @{$tinfo->{master_opt}} ) {
 	$test_binlog_format= $test_binlog_format ||
-	  mtr_match_prefix($opt, "--binlog-format=");
+	  dtr_match_prefix($opt, "--binlog-format=");
       }
       # print $tinfo->{name}." uses ".$test_binlog_format."\n";
 
       # =======================================================
       # If a special binlog format was selected with
-      # --mysqld=--binlog-format=x, skip all test with different
+      # --drizzled=--binlog-format=x, skip all test with different
       # binlog-format
       # =======================================================
       if (defined $::used_binlog_format and
@@ -481,8 +481,8 @@ sub optimize_cases {
       }
 
       # =======================================================
-      # Use dynamic switching of binlog-format if mtr started
-      # w/o --mysqld=--binlog-format=xxx and combinations.
+      # Use dynamic switching of binlog-format if dtr started
+      # w/o --drizzled=--binlog-format=xxx and combinations.
       # =======================================================
       if (!defined $tinfo->{'combination'} and
           !defined $::used_binlog_format)
@@ -559,7 +559,7 @@ sub collect_one_test_case($$$$$$$$$) {
 
   $tinfo->{'slave_num'}= 0; # Default, no slave
   $tinfo->{'master_num'}= 1; # Default, 1 master
-  if ( defined mtr_match_prefix($tname,"rpl") )
+  if ( defined dtr_match_prefix($tname,"rpl") )
   {
     if ( $::opt_skip_rpl )
     {
@@ -572,7 +572,7 @@ sub collect_one_test_case($$$$$$$$$) {
 
   }
 
-  if ( defined mtr_match_prefix($tname,"federated") )
+  if ( defined dtr_match_prefix($tname,"federated") )
   {
     # Default, federated uses the first slave as it's federated database
     $tinfo->{'slave_num'}= 1;
@@ -595,7 +595,7 @@ sub collect_one_test_case($$$$$$$$$) {
   # Add suite opts
   foreach my $opt ( @$suite_opts )
   {
-    mtr_verbose($opt);
+    dtr_verbose($opt);
     push(@{$tinfo->{'master_opt'}}, $opt);
     push(@{$tinfo->{'slave_opt'}}, $opt);
   }
@@ -606,34 +606,34 @@ sub collect_one_test_case($$$$$$$$$) {
     if ( -f $master_opt_file )
     {
 
-      my $master_opt= mtr_get_opts_from_file($master_opt_file);
+      my $master_opt= dtr_get_opts_from_file($master_opt_file);
 
       foreach my $opt ( @$master_opt )
       {
         my $value;
 
-        # The opt file is used both to send special options to the mysqld
+        # The opt file is used both to send special options to the drizzled
         # as well as pass special test case specific options to this
         # script
 
-        $value= mtr_match_prefix($opt, "--timezone=");
+        $value= dtr_match_prefix($opt, "--timezone=");
         if ( defined $value )
         {
           $tinfo->{'timezone'}= $value;
           next;
         }
 
-        $value= mtr_match_prefix($opt, "--slave-num=");
+        $value= dtr_match_prefix($opt, "--slave-num=");
         if ( defined $value )
         {
           $tinfo->{'slave_num'}= $value;
           next;
         }
 
-        $value= mtr_match_prefix($opt, "--result-file=");
+        $value= dtr_match_prefix($opt, "--result-file=");
         if ( defined $value )
         {
-          # Specifies the file mysqltest should compare
+          # Specifies the file drizzletest should compare
           # output against
           if ( -f "r/$::opt_engine/$value.result")
           {
@@ -648,7 +648,7 @@ sub collect_one_test_case($$$$$$$$$) {
         }
 
         # If we set default time zone, remove the one we have
-        $value= mtr_match_prefix($opt, "--default-time-zone=");
+        $value= dtr_match_prefix($opt, "--default-time-zone=");
         if ( defined $value )
         {
           # Set timezone for this test case to something different
@@ -675,12 +675,12 @@ sub collect_one_test_case($$$$$$$$$) {
   # Add slave opts
   if ( -f $slave_opt_file )
   {
-    my $slave_opt= mtr_get_opts_from_file($slave_opt_file);
+    my $slave_opt= dtr_get_opts_from_file($slave_opt_file);
 
     foreach my $opt ( @$slave_opt )
     {
       # If we set default time zone, remove the one we have
-      my $value= mtr_match_prefix($opt, "--default-time-zone=");
+      my $value= dtr_match_prefix($opt, "--default-time-zone=");
       $tinfo->{'slave_opt'}= [] if defined $value;
     }
     push(@{$tinfo->{'slave_opt'}}, @$slave_opt);
@@ -688,7 +688,7 @@ sub collect_one_test_case($$$$$$$$$) {
 
   if ( -f $slave_mi_file )
   {
-    $tinfo->{'slave_mi'}= mtr_get_opts_from_file($slave_mi_file);
+    $tinfo->{'slave_mi'}= dtr_get_opts_from_file($slave_mi_file);
   }
 
   if ( -f $master_sh )
@@ -721,7 +721,7 @@ sub collect_one_test_case($$$$$$$$$) {
 
   if ( -f $im_opt_file )
   {
-    $tinfo->{'im_opts'} = mtr_get_opts_from_file($im_opt_file);
+    $tinfo->{'im_opts'} = dtr_get_opts_from_file($im_opt_file);
   }
   else
   {
@@ -739,7 +739,7 @@ sub collect_one_test_case($$$$$$$$$) {
   if ( -f $disabled_file )
   {
     $marked_as_disabled= 1;
-    $tinfo->{'comment'}= mtr_fromfile($disabled_file);
+    $tinfo->{'comment'}= dtr_fromfile($disabled_file);
   }
 
   # If test was marked as disabled, either opt_enable_disabled is off and then
@@ -782,7 +782,7 @@ sub collect_one_test_case($$$$$$$$$) {
   }
   else
   {
-    mtr_options_from_test_file($tinfo,"$testdir/${tname}.test");
+    dtr_options_from_test_file($tinfo,"$testdir/${tname}.test");
 
     if ( defined $::used_default_engine )
     {
@@ -839,11 +839,11 @@ our @tags=
  ["require_manager", "require_manager", 1],
 );
 
-sub mtr_options_from_test_file($$) {
+sub dtr_options_from_test_file($$) {
   my $tinfo= shift;
   my $file= shift;
-  #mtr_verbose("$file");
-  my $F= IO::File->new($file) or mtr_error("can't open file \"$file\": $!");
+  #dtr_verbose("$file");
+  my $F= IO::File->new($file) or dtr_error("can't open file \"$file\": $!");
 
   while ( my $line= <$F> )
   {
@@ -869,13 +869,13 @@ sub mtr_options_from_test_file($$) {
       $value =~ s/^\s+//;  # Remove leading space
       $value =~ s/[[:space:]]+$//;  # Remove ending space
 
-      my $sourced_file= "$::glob_mysql_test_dir/$value";
+      my $sourced_file= "$::glob_drizzle_test_dir/$value";
       if ( -f $sourced_file )
       {
 	# Only source the file if it exists, we may get
 	# false positives in the regexes above if someone
-	# writes "source nnnn;" in a test case(such as mysqltest.test)
-	mtr_options_from_test_file($tinfo, $sourced_file);
+	# writes "source nnnn;" in a test case(such as drizzletest.test)
+	dtr_options_from_test_file($tinfo, $sourced_file);
       }
     }
   }

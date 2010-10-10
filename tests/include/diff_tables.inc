@@ -56,9 +56,9 @@
 disable_query_log;
 
 --error 0,1
---remove_file $MYSQLTEST_VARDIR/tmp/diff_table_1
+--remove_file $DRIZZLETEST_VARDIR/tmp/diff_table_1
 --error 0,1
---remove_file $MYSQLTEST_VARDIR/tmp/diff_table_2
+--remove_file $DRIZZLETEST_VARDIR/tmp/diff_table_2
 
 let $_diff_table=$diff_table_2;
 let $_diff_i=2;
@@ -102,7 +102,7 @@ while ($_diff_i) {
   # Now that we have the comma-separated list of columns, we can write
   # the table to a file.
   eval SELECT * FROM $_diff_table ORDER BY 1 
-              INTO OUTFILE '$MYSQLTEST_VARDIR/tmp/diff_table_$_diff_i';
+              INTO OUTFILE '$DRIZZLETEST_VARDIR/tmp/diff_table_$_diff_i';
 
   # Do the same for $diff_table_1.
   dec $_diff_i;
@@ -112,9 +112,9 @@ while ($_diff_i) {
 
 # ==== Compare the generated files ====
 
-diff_files $MYSQLTEST_VARDIR/tmp/diff_table_1 $MYSQLTEST_VARDIR/tmp/diff_table_2;
+diff_files $DRIZZLETEST_VARDIR/tmp/diff_table_1 $DRIZZLETEST_VARDIR/tmp/diff_table_2;
 
---remove_file $MYSQLTEST_VARDIR/tmp/diff_table_1
---remove_file $MYSQLTEST_VARDIR/tmp/diff_table_2
+--remove_file $DRIZZLETEST_VARDIR/tmp/diff_table_1
+--remove_file $DRIZZLETEST_VARDIR/tmp/diff_table_2
 
 enable_query_log;

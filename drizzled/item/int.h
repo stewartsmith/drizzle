@@ -21,6 +21,7 @@
 #define DRIZZLED_ITEM_INT_H
 
 #include <drizzled/item/num.h>
+#include <drizzled/util/test.h>
 
 namespace drizzled
 {

@@ -619,6 +619,9 @@ static const uint32_t RECORD_CACHE_SIZE= 64*1024;
 # define _DTRACE_VERSION 0
 #endif
 
+typedef uint64_t table_map;   /* Used for table bits in join */
+typedef uint32_t nesting_map; /* Used for flags of nesting constructs */
+
 } /* namespace drizzled */
 
 #endif /* DRIZZLED_DEFINITIONS_H */

@@ -14,7 +14,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-# This is a library file used by the Perl version of mysql-test-run,
+# This is a library file used by the Perl version of drizzle-test-run,
 # and is part of the translation of the Bourne shell script with the
 # same name.
 
@@ -23,7 +23,7 @@ use strict;
 
 # $Data::Dumper::Indent= 1;
 
-sub mtr_diff($$);
+sub dtr_diff($$);
 
 ##############################################################################
 #
@@ -32,12 +32,12 @@ sub mtr_diff($$);
 #
 ##############################################################################
 
-# FIXME replace die with mtr_error
+# FIXME replace die with dtr_error
 
-#require "mtr_report.pl";
-#mtr_diff("a.txt","b.txt");
+#require "dtr_report.pl";
+#dtr_diff("a.txt","b.txt");
 
-sub mtr_diff ($$) {
+sub dtr_diff ($$) {
   my $file1 = shift;
   my $file2 = shift;
 
@@ -47,13 +47,13 @@ sub mtr_diff ($$) {
 
   unless ( open(FILE1, $file1) )
   {
-    mtr_warning("can't open \"$file1\": $!");
+    dtr_warning("can't open \"$file1\": $!");
     return;
   }
 
   unless ( open(FILE2, $file2) )
   {
-    mtr_warning("can't open \"$file2\": $!");
+    dtr_warning("can't open \"$file2\": $!");
     return;
   }
 

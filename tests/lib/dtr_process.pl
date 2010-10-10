@@ -14,7 +14,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-# This is a library file used by the Perl version of mysql-test-run,
+# This is a library file used by the Perl version of drizzle-test-run,
 # and is part of the translation of the Bourne shell script with the
 # same name.
 
@@ -24,18 +24,18 @@ use strict;
 
 use POSIX qw(WNOHANG SIGHUP);
 
-sub mtr_run ($$$$$$;$);
-sub mtr_spawn ($$$$$$;$);
-sub mtr_check_stop_servers ($);
-sub mtr_kill_leftovers ();
-sub mtr_wait_blocking ($);
-sub mtr_record_dead_children ();
-sub mtr_ndbmgm_start($$);
-sub mtr_exit ($);
+sub dtr_run ($$$$$$;$);
+sub dtr_spawn ($$$$$$;$);
+sub dtr_check_stop_servers ($);
+sub dtr_kill_leftovers ();
+sub dtr_wait_blocking ($);
+sub dtr_record_dead_children ();
+sub dtr_ndbmgm_start($$);
+sub dtr_exit ($);
 sub sleep_until_file_created ($$$);
-sub mtr_kill_processes ($);
-sub mtr_ping_with_timeout($);
-sub mtr_ping_port ($);
+sub dtr_kill_processes ($);
+sub dtr_ping_with_timeout($);
+sub dtr_ping_port ($);
 
 # Local function
 sub spawn_impl ($$$$$$$);
@@ -46,7 +46,7 @@ sub spawn_impl ($$$$$$$);
 #
 ##############################################################################
 
-sub mtr_run ($$$$$$;$) {
+sub dtr_run ($$$$$$;$) {
   my $path=       shift;
   my $arg_list_t= shift;
   my $input=      shift;
@@ -59,7 +59,7 @@ sub mtr_run ($$$$$$;$) {
     $spawn_opts);
 }
 
-sub mtr_run_test ($$$$$$;$) {
+sub dtr_run_test ($$$$$$;$) {
   my $path=       shift;
   my $arg_list_t= shift;
   my $input=      shift;
@@ -72,7 +72,7 @@ sub mtr_run_test ($$$$$$;$) {
     $spawn_opts);
 }
 
-sub mtr_spawn ($$$$$$;$) {
+sub dtr_spawn ($$$$$$;$) {
   my $path=       shift;
   my $arg_list_t= shift;
   my $input=      shift;
@@ -98,29 +98,29 @@ sub spawn_impl ($$$$$$$) {
 
   if ( $::opt_script_debug )
   {
-    mtr_report("");
-    mtr_debug("-" x 73);
-    mtr_debug("STDIN  $input") if $input;
-    mtr_debug("STDOUT $output") if $output;
-    mtr_debug("STDERR $error") if $error;
-    mtr_debug("$mode: $path ", join(" ",@$arg_list_t));
-    mtr_debug("spawn options:");
+    dtr_report("");
+    dtr_debug("-" x 73);
+    dtr_debug("STDIN  $input") if $input;
+    dtr_debug("STDOUT $output") if $output;
+    dtr_debug("STDERR $error") if $error;
+    dtr_debug("$mode: $path ", join(" ",@$arg_list_t));
+    dtr_debug("spawn options:");
     if ($spawn_opts)
     {
       foreach my $key (sort keys %{$spawn_opts})
       {
-        mtr_debug("  - $key: $spawn_opts->{$key}");
+        dtr_debug("  - $key: $spawn_opts->{$key}");
       }
     }
     else
     {
-      mtr_debug("  none");
+      dtr_debug("  none");
     }
-    mtr_debug("-" x 73);
-    mtr_report("");
+    dtr_debug("-" x 73);
+    dtr_report("");
   }
 
-  mtr_error("Can't spawn with empty \"path\"") unless defined $path;
+  dtr_error("Can't spawn with empty \"path\"") unless defined $path;
 
 
  FORK:
@@ -131,12 +131,12 @@ sub spawn_impl ($$$$$$$) {
     {
       if ( $! == $!{EAGAIN} )           # See "perldoc Errno"
       {
-        mtr_warning("Got EAGAIN from fork(), sleep 1 second and redo");
+        dtr_warning("Got EAGAIN from fork(), sleep 1 second and redo");
         sleep(1);
         redo FORK;
       }
 
-      mtr_error("$path ($pid) can't be forked, error: $!");
+      dtr_error("$path ($pid) can't be forked, error: $!");
 
     }
 
@@ -167,7 +167,7 @@ sub spawn_impl ($$$$$$$) {
 	}
         elsif ( ! open(STDOUT,$log_file_open_mode,$output) )
         {
-          mtr_child_error("can't redirect STDOUT to \"$output\": $!");
+          dtr_child_error("can't redirect STDOUT to \"$output\": $!");
         }
       }
 
@@ -177,14 +177,14 @@ sub spawn_impl ($$$$$$$) {
         {
           if ( ! open(STDERR,">&STDOUT") )
           {
-            mtr_child_error("can't dup STDOUT: $!");
+            dtr_child_error("can't dup STDOUT: $!");
           }
         }
         else
         {
           if ( ! open(STDERR,$log_file_open_mode,$error) )
           {
-            mtr_child_error("can't redirect STDERR to \"$error\": $!");
+            dtr_child_error("can't redirect STDERR to \"$error\": $!");
           }
         }
       }
@@ -193,19 +193,19 @@ sub spawn_impl ($$$$$$$) {
       {
         if ( ! open(STDIN,"<",$input) )
         {
-          mtr_child_error("can't redirect STDIN to \"$input\": $!");
+          dtr_child_error("can't redirect STDIN to \"$input\": $!");
         }
       }
 
       if ( ! exec($path,@$arg_list_t) )
       {
-        mtr_child_error("failed to execute \"$path\": $!");
+        dtr_child_error("failed to execute \"$path\": $!");
       }
-      mtr_error("Should never come here 1!");
+      dtr_error("Should never come here 1!");
     }
-    mtr_error("Should never come here 2!");
+    dtr_error("Should never come here 2!");
   }
-  mtr_error("Should never come here 3!");
+  dtr_error("Should never come here 3!");
 }
 
 
@@ -224,7 +224,7 @@ sub spawn_parent_impl {
       {
 	# The "simple" waitpid has failed, print debug info
 	# and try to handle the error
-        mtr_warning("waitpid($pid, 0) returned $ret_pid " .
+        dtr_warning("waitpid($pid, 0) returned $ret_pid " .
 		    "when waiting for '$path', error: '$!'");
 	if ( $ret_pid == -1 )
 	{
@@ -232,19 +232,19 @@ sub spawn_parent_impl {
 	  # no longer exist and waitpid couldn't wait for it.
 	  return 1;
 	}
-	mtr_error("Error handling failed");
+	dtr_error("Error handling failed");
       }
 
-      return mtr_process_exit_status($?);
+      return dtr_process_exit_status($?);
     }
     else
     {
-      # We run mysqltest and wait for it to return. But we try to
-      # catch dying mysqld processes as well.
+      # We run drizzletest and wait for it to return. But we try to
+      # catch dying drizzled processes as well.
       #
       # We do blocking waitpid() until we get the return from the
-      # "mysqltest" call. But if a mysqld process dies that we
-      # started, we take this as an error, and kill mysqltest.
+      # "drizzletest" call. But if a drizzled process dies that we
+      # started, we take this as an error, and kill drizzletest.
 
 
       my $exit_value= -1;
@@ -257,7 +257,7 @@ sub spawn_parent_impl {
         # status info first before $? is lost,
         # but not $exit_value, this is flagged from
 
-        my $timer_name= mtr_timer_timeout($::glob_timers, $ret_pid);
+        my $timer_name= dtr_timer_timeout($::glob_timers, $ret_pid);
         if ( $timer_name )
         {
           if ( $timer_name eq "suite" )
@@ -265,41 +265,41 @@ sub spawn_parent_impl {
             # We give up here
             # FIXME we should only give up the suite, not all of the run?
             print STDERR "\n";
-            mtr_error("Test suite timeout");
+            dtr_error("Test suite timeout");
           }
           elsif ( $timer_name eq "testcase" )
           {
             $saved_exit_value=  63;       # Mark as timeout
-            kill(9, $pid);                # Kill mysqltest
+            kill(9, $pid);                # Kill drizzletest
             next;                         # Go on and catch the termination
           }
         }
 
         if ( $ret_pid == $pid )
         {
-          # We got termination of mysqltest, we are done
-          $exit_value= mtr_process_exit_status($?);
+          # We got termination of drizzletest, we are done
+          $exit_value= dtr_process_exit_status($?);
           last;
         }
 
         # One of the child processes died, unless this was expected
-	# mysqltest should be killed and test aborted
+	# drizzletest should be killed and test aborted
 
 	check_expected_crash_and_restart($ret_pid);
       }
 
       if ( $ret_pid != $pid )
       {
-        # We terminated the waiting because a "mysqld" process died.
-        # Kill the mysqltest process.
-	mtr_verbose("Kill mysqltest because another process died");
+        # We terminated the waiting because a "drizzled" process died.
+        # Kill the drizzletest process.
+	dtr_verbose("Kill drizzletest because another process died");
         kill(9,$pid);
 
         $ret_pid= waitpid($pid,0);
 
         if ( $ret_pid != $pid )
         {
-          mtr_error("$path ($pid) got lost somehow");
+          dtr_error("$path ($pid) got lost somehow");
         }
       }
 
@@ -318,7 +318,7 @@ sub spawn_parent_impl {
 # We try to emulate how an Unix shell calculates the exit code
 # ----------------------------------------------------------------------
 
-sub mtr_process_exit_status {
+sub dtr_process_exit_status {
   my $raw_status= shift;
 
   if ( $raw_status & 127 )
@@ -339,27 +339,27 @@ sub mtr_process_exit_status {
 ##############################################################################
 
 
-# Kill all processes(mysqld, ndbd, ndb_mgmd and im) that would conflict with
+# Kill all processes(drizzled, ndbd, ndb_mgmd and im) that would conflict with
 # this run
 # Make sure to remove the PID file, if any.
 # kill IM manager first, else it will restart the servers
-sub mtr_kill_leftovers () {
+sub dtr_kill_leftovers () {
 
-  mtr_report("Killing Possible Leftover Processes");
-  mtr_debug("mtr_kill_leftovers(): started.");
+  dtr_report("Killing Possible Leftover Processes");
+  dtr_debug("dtr_kill_leftovers(): started.");
 
   my @kill_pids;
   my %admin_pids;
 
   foreach my $srv (@{$::master}, @{$::slave})
   {
-    mtr_debug("  - mysqld " .
+    dtr_debug("  - drizzled " .
               "(pid: $srv->{pid}; " .
               "pid file: '$srv->{path_pid}'; " .
               "socket: '$srv->{path_sock}'; ".
               "port: $srv->{port})");
 
-    my $pid= mtr_server_shutdown($srv);
+    my $pid= dtr_server_shutdown($srv);
 
     # Save the pid of the drizzle client process
     $admin_pids{$pid}= 1;
@@ -374,17 +374,17 @@ sub mtr_kill_leftovers () {
   }
 
   # Wait for all the admin processes to complete
-  mtr_wait_blocking(\%admin_pids);
+  dtr_wait_blocking(\%admin_pids);
 
-  # If we trusted "mysqladmin --shutdown_timeout= ..." we could just
+  # If we trusted "drizzleadmin --shutdown_timeout= ..." we could just
   # terminate now, but we don't (FIXME should be debugged).
   # So we try again to ping and at least wait the same amount of time
-  # mysqladmin would for all to die.
+  # drizzleadmin would for all to die.
 
-  mtr_ping_with_timeout(\@kill_pids);
+  dtr_ping_with_timeout(\@kill_pids);
 
   # We now have tried to terminate nice. We have waited for the listen
-  # port to be free, but can't really tell if the mysqld process died
+  # port to be free, but can't really tell if the drizzled process died
   # or not. We now try to find the process PID from the PID file, and
   # send a kill to that process. Note that Perl let kill(0,@pids) be
   # a way to just return the numer of processes the kernel can send
@@ -398,12 +398,12 @@ sub mtr_kill_leftovers () {
 
   my $rundir= "$::opt_vardir/run";
 
-  mtr_debug("Processing PID files in directory '$rundir'...");
+  dtr_debug("Processing PID files in directory '$rundir'...");
 
   if ( -d $rundir )
   {
     opendir(RUNDIR, $rundir)
-      or mtr_error("can't open directory \"$rundir\": $!");
+      or dtr_error("can't open directory \"$rundir\": $!");
 
     my @pids;
 
@@ -416,26 +416,26 @@ sub mtr_kill_leftovers () {
 
 	if ( -f $pidfile )
 	{
-	  mtr_debug("Processing PID file: '$pidfile'...");
+	  dtr_debug("Processing PID file: '$pidfile'...");
 
-	  my $pid= mtr_get_pid_from_file($pidfile);
+	  my $pid= dtr_get_pid_from_file($pidfile);
 
-	  mtr_debug("Got pid: $pid from file '$pidfile'");
+	  dtr_debug("Got pid: $pid from file '$pidfile'");
 
 	  if ( $::glob_cygwin_perl or kill(0, $pid) )
 	  {
-	    mtr_debug("There is process with pid $pid -- scheduling for kill.");
+	    dtr_debug("There is process with pid $pid -- scheduling for kill.");
 	    push(@pids, $pid);            # We know (cygwin guess) it exists
 	  }
 	  else
 	  {
-	    mtr_debug("There is no process with pid $pid -- skipping.");
+	    dtr_debug("There is no process with pid $pid -- skipping.");
 	  }
 	}
       }
       else
       {
-	mtr_warning("Found non pid file $elem in $rundir")
+	dtr_warning("Found non pid file $elem in $rundir")
 	  if -f "$rundir/$elem";
 	next;
       }
@@ -444,7 +444,7 @@ sub mtr_kill_leftovers () {
 
     if ( @pids )
     {
-      mtr_debug("Killing the following processes with PID files: " .
+      dtr_debug("Killing the following processes with PID files: " .
                 join(' ', @pids) . "...");
 
       start_reap_all();
@@ -454,7 +454,7 @@ sub mtr_kill_leftovers () {
         # We have no (easy) way of knowing the Cygwin controlling
         # process, in the PID file we only have the Windows process id.
         system("kill -f " . join(" ",@pids)); # Hope for the best....
-        mtr_debug("Sleep 5 seconds waiting for processes to die");
+        dtr_debug("Sleep 5 seconds waiting for processes to die");
         sleep(5);
       }
       else
@@ -462,15 +462,15 @@ sub mtr_kill_leftovers () {
         my $retries= 10;                    # 10 seconds
         do
         {
-          mtr_debug("Sending SIGKILL to pids: " . join(' ', @pids));
+          dtr_debug("Sending SIGKILL to pids: " . join(' ', @pids));
           kill(9, @pids);
-          mtr_report("Sleep 1 second waiting for processes to die");
+          dtr_report("Sleep 1 second waiting for processes to die");
           sleep(1)                      # Wait one second
         } while ( $retries-- and  kill(0, @pids) );
 
         if ( kill(0, @pids) )           # Check if some left
         {
-          mtr_warning("can't kill process(es) " . join(" ", @pids));
+          dtr_warning("can't kill process(es) " . join(" ", @pids));
         }
       }
 
@@ -479,23 +479,23 @@ sub mtr_kill_leftovers () {
   }
   else
   {
-    mtr_debug("Directory for PID files ($rundir) does not exist.");
+    dtr_debug("Directory for PID files ($rundir) does not exist.");
   }
 
   # We may have failed everything, but we now check again if we have
   # the listen ports free to use, and if they are free, just go for it.
 
-  mtr_debug("Checking known mysqld servers...");
+  dtr_debug("Checking known drizzled servers...");
 
   foreach my $srv ( @kill_pids )
   {
-    if ( defined $srv->{'port'} and mtr_ping_port($srv->{'port'}) )
+    if ( defined $srv->{'port'} and dtr_ping_port($srv->{'port'}) )
     {
-      mtr_warning("can't kill old process holding port $srv->{'port'}");
+      dtr_warning("can't kill old process holding port $srv->{'port'}");
     }
   }
 
-  mtr_debug("mtr_kill_leftovers(): finished.");
+  dtr_debug("dtr_kill_leftovers(): finished.");
 }
 
 
@@ -503,19 +503,19 @@ sub mtr_kill_leftovers () {
 # Check that all processes in "spec" are shutdown gracefully
 # else kill them off hard
 #
-sub mtr_check_stop_servers ($) {
+sub dtr_check_stop_servers ($) {
   my $spec=  shift;
 
   # Return if no processes are defined
   return if ! @$spec;
 
-  mtr_verbose("mtr_check_stop_servers");
+  dtr_verbose("dtr_check_stop_servers");
 
   # ----------------------------------------------------------------------
   # Wait until servers in "spec" has stopped listening
   # to their ports or timeout occurs
   # ----------------------------------------------------------------------
-  mtr_ping_with_timeout(\@$spec);
+  dtr_ping_with_timeout(\@$spec);
 
   # ----------------------------------------------------------------------
   # Use waitpid() nonblocking for a little while, to see how
@@ -532,12 +532,12 @@ sub mtr_check_stop_servers ($) {
       $ret_pid= waitpid($pid,&WNOHANG);
       if ($ret_pid == $pid)
       {
-	mtr_verbose("Caught exit of process $ret_pid");
+	dtr_verbose("Caught exit of process $ret_pid");
 	$srv->{'pid'}= 0;
       }
       elsif ($ret_pid == 0)
       {
-	mtr_verbose("Process $pid is still alive");
+	dtr_verbose("Process $pid is still alive");
 	if ($wait_counter-- > 0)
 	{
 	  # Give the processes more time to exit
@@ -547,7 +547,7 @@ sub mtr_check_stop_servers ($) {
       }
       else
       {
-	mtr_warning("caught exit of unknown child $ret_pid");
+	dtr_warning("caught exit of unknown child $ret_pid");
       }
     }
   }
@@ -574,9 +574,9 @@ sub mtr_check_stop_servers ($) {
       # that it's being killed hard.
       if ( defined $srv->{'errfile'} )
       {
-	mtr_tofile($srv->{'errfile'}, "Note: Forcing kill of process $pid\n");
+	dtr_tofile($srv->{'errfile'}, "Note: Forcing kill of process $pid\n");
       }
-      mtr_warning("Forcing kill of process $pid");
+      dtr_warning("Forcing kill of process $pid");
 
     }
     else
@@ -588,7 +588,7 @@ sub mtr_check_stop_servers ($) {
       if ( -f $srv->{'pidfile'} and ! unlink($srv->{'pidfile'}) and
            -f $srv->{'pidfile'} )
       {
-        mtr_error("can't remove $srv->{'pidfile'}");
+        dtr_error("can't remove $srv->{'pidfile'}");
       }
     }
   }
@@ -599,7 +599,7 @@ sub mtr_check_stop_servers ($) {
     return;
   }
 
-  mtr_kill_processes(\%kill_pids);
+  dtr_kill_processes(\%kill_pids);
 
   # ----------------------------------------------------------------------
   # All processes are killed, cleanup leftover files
@@ -617,7 +617,7 @@ sub mtr_check_stop_servers ($) {
 	  if ( defined $file and -f $file and ! unlink($file) and -f $file )
           {
 	    $errors++;
-	    mtr_warning("couldn't delete $file");
+	    dtr_warning("couldn't delete $file");
 	  }
 	}
 
@@ -626,9 +626,9 @@ sub mtr_check_stop_servers ($) {
 	  # Wait for the pseudo pid - if the real_pid was known
 	  # the pseudo pid has not been waited for yet, wai blocking
 	  # since it's "such a simple program"
-	  mtr_verbose("Wait for pseudo process $srv->{'pid'}");
+	  dtr_verbose("Wait for pseudo process $srv->{'pid'}");
 	  my $ret_pid= waitpid($srv->{'pid'}, 0);
-	  mtr_verbose("Pseudo process $ret_pid died");
+	  dtr_verbose("Pseudo process $ret_pid died");
 	}
 
 	$srv->{'pid'}= 0;
@@ -639,13 +639,13 @@ sub mtr_check_stop_servers ($) {
       # There where errors killing processes
       # do one last attempt to ping the servers
       # and if they can't be pinged, assume they are dead
-      if ( ! mtr_ping_with_timeout( \@$spec ) )
+      if ( ! dtr_ping_with_timeout( \@$spec ) )
       {
-	mtr_error("we could not kill or clean up all processes");
+	dtr_error("we could not kill or clean up all processes");
       }
       else
       {
-	mtr_verbose("All ports were free, continuing");
+	dtr_verbose("All ports were free, continuing");
       }
     }
   }
@@ -653,17 +653,17 @@ sub mtr_check_stop_servers ($) {
 
 
 # Wait for all the process in the list to terminate
-sub mtr_wait_blocking($) {
+sub dtr_wait_blocking($) {
   my $admin_pids= shift;
 
 
   # Return if no processes defined
   return if ! %$admin_pids;
 
-  mtr_verbose("mtr_wait_blocking");
+  dtr_verbose("dtr_wait_blocking");
 
   # Wait for all the started processes to exit
-  # As mysqladmin is such a simple program, we trust it to terminate itself.
+  # As drizzleadmin is such a simple program, we trust it to terminate itself.
   # I.e. we wait blocking, and wait for them all before we go on.
   foreach my $pid (keys %{$admin_pids})
   {
@@ -672,55 +672,55 @@ sub mtr_wait_blocking($) {
   }
 }
 
-sub mtr_server_shutdown($) {
+sub dtr_server_shutdown($) {
   my $srv= shift;
   my $args;
 
-  mtr_init_args(\$args);
-  mtr_add_arg($args, "--shutdown");
-  mtr_add_arg($args, "--user=%s", $::opt_user);
-  mtr_add_arg($args, "--password=");
-  mtr_add_arg($args, "--silent");
+  dtr_init_args(\$args);
+  dtr_add_arg($args, "--shutdown");
+  dtr_add_arg($args, "--user=%s", $::opt_user);
+  dtr_add_arg($args, "--password=");
+  dtr_add_arg($args, "--silent");
 
   if ( -e $srv->{'path_sock'} )
   {
-    mtr_add_arg($args, "--socket=%s", $srv->{'path_sock'});
+    dtr_add_arg($args, "--socket=%s", $srv->{'path_sock'});
   }
 
   if ( $srv->{'port'} )
   {
-    mtr_add_arg($args, "--port=%s", $srv->{'port'});
+    dtr_add_arg($args, "--port=%s", $srv->{'port'});
   }
 
-  mtr_add_arg($args, "--connect_timeout=5");
+  dtr_add_arg($args, "--connect_timeout=5");
 
-  my $pid= mtr_spawn($::exe_drizzle, $args,
+  my $pid= dtr_spawn($::exe_drizzle, $args,
                      "", "", "", "", { append_log_file => 1 });
-  mtr_verbose("mtr_server_shutdown, pid: $pid");
+  dtr_verbose("dtr_server_shutdown, pid: $pid");
   return $pid;
 }
 
 # Start "ndb_mgm shutdown" for a specific cluster, it will
 # shutdown all data nodes and leave the ndb_mgmd running
-sub mtr_ndbmgm_start($$) {
+sub dtr_ndbmgm_start($$) {
   my $cluster= shift;
   my $command= shift;
 
   my $args;
 
-  mtr_init_args(\$args);
+  dtr_init_args(\$args);
 
-  mtr_add_arg($args, "--no-defaults");
-  mtr_add_arg($args, "--core");
-  mtr_add_arg($args, "--try-reconnect=1");
-  mtr_add_arg($args, "--ndb_connectstring=%s", $cluster->{'connect_string'});
-  mtr_add_arg($args, "-e");
-  mtr_add_arg($args, "$command");
+  dtr_add_arg($args, "--no-defaults");
+  dtr_add_arg($args, "--core");
+  dtr_add_arg($args, "--try-reconnect=1");
+  dtr_add_arg($args, "--ndb_connectstring=%s", $cluster->{'connect_string'});
+  dtr_add_arg($args, "-e");
+  dtr_add_arg($args, "$command");
 
-  my $pid= mtr_spawn($::exe_ndb_mgm, $args,
+  my $pid= dtr_spawn($::exe_ndb_mgm, $args,
 		     "", "/dev/null", "/dev/null", "",
 		     {});
-  mtr_verbose("mtr_ndbmgm_start, pid: $pid");
+  dtr_verbose("dtr_ndbmgm_start, pid: $pid");
   return $pid;
 
 }
@@ -728,14 +728,14 @@ sub mtr_ndbmgm_start($$) {
 
 # Ping all servers in list, exit when none of them answers
 # or when timeout has passed
-sub mtr_ping_with_timeout($) {
+sub dtr_ping_with_timeout($) {
   my $spec= shift;
   my $timeout= 200;                     # 20 seconds max
   my $res= 1;                           # If we just fall through, we are done
                                         # in the sense that the servers don't
                                         # listen to their ports any longer
 
-  mtr_debug("Waiting for mysqld servers to stop...");
+  dtr_debug("Waiting for drizzled servers to stop...");
 
  TIME:
   while ( $timeout-- )
@@ -745,9 +745,9 @@ sub mtr_ping_with_timeout($) {
       $res= 1;                          # We are optimistic
       if ( $srv->{'pid'} and defined $srv->{'port'} )
       {
-	if ( mtr_ping_port($srv->{'port'}) )
+	if ( dtr_ping_port($srv->{'port'}) )
 	{
-	  mtr_verbose("waiting for process $srv->{'pid'} to stop ".
+	  dtr_verbose("waiting for process $srv->{'pid'} to stop ".
 		      "using port $srv->{'port'}");
 
 	  # Millisceond sleep emulated with select
@@ -766,11 +766,11 @@ sub mtr_ping_with_timeout($) {
 
   if ($res)
   {
-    mtr_debug("mtr_ping_with_timeout(): All mysqld instances are down.");
+    dtr_debug("dtr_ping_with_timeout(): All drizzled instances are down.");
   }
   else
   {
-    mtr_report("mtr_ping_with_timeout(): At least one server is alive.");
+    dtr_report("dtr_ping_with_timeout(): At least one server is alive.");
   }
 
   return $res;
@@ -786,12 +786,12 @@ sub mark_process_dead($)
 {
   my $ret_pid= shift;
 
-  foreach my $mysqld (@{$::master}, @{$::slave})
+  foreach my $drizzled (@{$::master}, @{$::slave})
   {
-    if ( $mysqld->{'pid'} eq $ret_pid )
+    if ( $drizzled->{'pid'} eq $ret_pid )
     {
-      mtr_verbose("$mysqld->{'type'} $mysqld->{'idx'} exited, pid: $ret_pid");
-      $mysqld->{'pid'}= 0;
+      dtr_verbose("$drizzled->{'type'} $drizzled->{'idx'} exited, pid: $ret_pid");
+      $drizzled->{'pid'}= 0;
       return;
     }
   }
@@ -800,7 +800,7 @@ sub mark_process_dead($)
   {
     if ( $cluster->{'pid'} eq $ret_pid )
     {
-      mtr_verbose("$cluster->{'name'} cluster ndb_mgmd exited, pid: $ret_pid");
+      dtr_verbose("$cluster->{'name'} cluster ndb_mgmd exited, pid: $ret_pid");
       $cluster->{'pid'}= 0;
       return;
     }
@@ -809,13 +809,13 @@ sub mark_process_dead($)
     {
       if ( $ndbd->{'pid'} eq $ret_pid )
       {
-	mtr_verbose("$cluster->{'name'} cluster ndbd exited, pid: $ret_pid");
+	dtr_verbose("$cluster->{'name'} cluster ndbd exited, pid: $ret_pid");
 	$ndbd->{'pid'}= 0;
 	return;
       }
     }
   }
-  mtr_warning("mark_process_dead couldn't find an entry for pid: $ret_pid");
+  dtr_warning("mark_process_dead couldn't find an entry for pid: $ret_pid");
 
 }
 
@@ -828,21 +828,21 @@ sub check_expected_crash_and_restart($)
 {
   my $ret_pid= shift;
 
-  foreach my $mysqld (@{$::master}, @{$::slave})
+  foreach my $drizzled (@{$::master}, @{$::slave})
   {
-    if ( $mysqld->{'pid'} eq $ret_pid )
+    if ( $drizzled->{'pid'} eq $ret_pid )
     {
-      mtr_verbose("$mysqld->{'type'} $mysqld->{'idx'} exited, pid: $ret_pid");
-      $mysqld->{'pid'}= 0;
+      dtr_verbose("$drizzled->{'type'} $drizzled->{'idx'} exited, pid: $ret_pid");
+      $drizzled->{'pid'}= 0;
 
       # Check if crash expected and restart if it was
-      my $expect_file= "$::opt_vardir/tmp/" . "$mysqld->{'type'}" .
-	"$mysqld->{'idx'}" . ".expect";
+      my $expect_file= "$::opt_vardir/tmp/" . "$drizzled->{'type'}" .
+	"$drizzled->{'idx'}" . ".expect";
       if ( -f $expect_file )
       {
-	mtr_verbose("Crash was expected, file $expect_file exists");
-	mysqld_start($mysqld, $mysqld->{'start_opts'},
-		     $mysqld->{'start_slave_master_info'});
+	dtr_verbose("Crash was expected, file $expect_file exists");
+	drizzled_start($drizzled, $drizzled->{'start_opts'},
+		     $drizzled->{'start_slave_master_info'});
 	unlink($expect_file);
       }
 
@@ -854,7 +854,7 @@ sub check_expected_crash_and_restart($)
   {
     if ( $cluster->{'pid'} eq $ret_pid )
     {
-      mtr_verbose("$cluster->{'name'} cluster ndb_mgmd exited, pid: $ret_pid");
+      dtr_verbose("$cluster->{'name'} cluster ndb_mgmd exited, pid: $ret_pid");
       $cluster->{'pid'}= 0;
 
       # Check if crash expected and restart if it was
@@ -862,7 +862,7 @@ sub check_expected_crash_and_restart($)
 	".expect";
       if ( -f $expect_file )
       {
-	mtr_verbose("Crash was expected, file $expect_file exists");
+	dtr_verbose("Crash was expected, file $expect_file exists");
 	ndbmgmd_start($cluster);
 	unlink($expect_file);
       }
@@ -873,7 +873,7 @@ sub check_expected_crash_and_restart($)
     {
       if ( $ndbd->{'pid'} eq $ret_pid )
       {
-	mtr_verbose("$cluster->{'name'} cluster ndbd exited, pid: $ret_pid");
+	dtr_verbose("$cluster->{'name'} cluster ndbd exited, pid: $ret_pid");
 	$ndbd->{'pid'}= 0;
 
 	# Check if crash expected and restart if it was
@@ -881,7 +881,7 @@ sub check_expected_crash_and_restart($)
 	  "$ndbd->{'idx'}" . ".expect";
 	if ( -f $expect_file )
 	{
-	  mtr_verbose("Crash was expected, file $expect_file exists");
+	  dtr_verbose("Crash was expected, file $expect_file exists");
 	  ndbd_start($cluster, $ndbd->{'idx'},
 		     $ndbd->{'start_extra_args'});
 	  unlink($expect_file);
@@ -896,7 +896,7 @@ sub check_expected_crash_and_restart($)
     return;
   }
 
-  mtr_warning("check_expected_crash_and_restart couldn't find an entry for pid: $ret_pid");
+  dtr_warning("check_expected_crash_and_restart couldn't find an entry for pid: $ret_pid");
 
 }
 
@@ -908,7 +908,7 @@ sub check_expected_crash_and_restart($)
 #
 ##############################################################################
 
-sub mtr_record_dead_children () {
+sub dtr_record_dead_children () {
 
   my $process_died= 0;
   my $ret_pid;
@@ -917,7 +917,7 @@ sub mtr_record_dead_children () {
   # -1 or 0 means there are no more procesess to wait for
   while ( ($ret_pid= waitpid(-1,&WNOHANG)) != 0 and $ret_pid != -1)
   {
-    mtr_warning("mtr_record_dead_children: $ret_pid");
+    dtr_warning("dtr_record_dead_children: $ret_pid");
     mark_process_dead($ret_pid);
     $process_died= 1;
   }
@@ -936,7 +936,7 @@ sub start_reap_all {
   my $pid;
   while(($pid= waitpid(-1, &WNOHANG)) != 0 and $pid != -1)
   {
-    mtr_warning("start_reap_all pid: $pid");
+    dtr_warning("start_reap_all pid: $pid");
     mark_process_dead($pid);
   };
 }
@@ -946,35 +946,35 @@ sub stop_reap_all {
 }
 
 
-sub mtr_ping_port ($) {
+sub dtr_ping_port ($) {
   my $port= shift;
 
-  mtr_verbose("mtr_ping_port: $port");
+  dtr_verbose("dtr_ping_port: $port");
 
   my $remote= "localhost";
   my $iaddr=  inet_aton($remote);
   if ( ! $iaddr )
   {
-    mtr_error("can't find IP number for $remote");
+    dtr_error("can't find IP number for $remote");
   }
   my $paddr=  sockaddr_in($port, $iaddr);
   my $proto=  getprotobyname('tcp');
   if ( ! socket(SOCK, PF_INET, SOCK_STREAM, $proto) )
   {
-    mtr_error("can't create socket: $!");
+    dtr_error("can't create socket: $!");
   }
 
-  mtr_debug("Pinging server (port: $port)...");
+  dtr_debug("Pinging server (port: $port)...");
 
   if ( connect(SOCK, $paddr) )
   {
     close(SOCK);                        # FIXME check error?
-    mtr_verbose("USED");
+    dtr_verbose("USED");
     return 1;
   }
   else
   {
-    mtr_verbose("FREE");
+    dtr_verbose("FREE");
     return 0;
   }
 }
@@ -1004,18 +1004,18 @@ sub sleep_until_file_created ($$$) {
     # Check if it died after the fork() was successful
     if ( $pid != 0 && waitpid($pid,&WNOHANG) == $pid )
     {
-      mtr_warning("Process $pid died");
+      dtr_warning("Process $pid died");
       return 0;
     }
 
-    mtr_debug("Sleep $sleeptime milliseconds waiting for $pidfile");
+    dtr_debug("Sleep $sleeptime milliseconds waiting for $pidfile");
 
     # Print extra message every 60 seconds
     my $seconds= ($loop * $sleeptime) / 1000;
     if ( $seconds > 1 and int($seconds * 10) % 600 == 0 )
     {
       my $left= $timeout - $seconds;
-      mtr_warning("Waited $seconds seconds for $pidfile to be created, " .
+      dtr_warning("Waited $seconds seconds for $pidfile to be created, " .
                   "still waiting for $left seconds...");
     }
 
@@ -1027,17 +1027,17 @@ sub sleep_until_file_created ($$$) {
 }
 
 
-sub mtr_kill_processes ($) {
+sub dtr_kill_processes ($) {
   my $pids = shift;
 
-  mtr_verbose("mtr_kill_processes (" . join(" ", keys %{$pids}) . ")");
+  dtr_verbose("dtr_kill_processes (" . join(" ", keys %{$pids}) . ")");
 
   foreach my $pid (keys %{$pids})
   {
 
     if ($pid <= 0)
     {
-      mtr_warning("Trying to kill illegal pid: $pid");
+      dtr_warning("Trying to kill illegal pid: $pid");
       next;
     }
 
@@ -1045,22 +1045,22 @@ sub mtr_kill_processes ($) {
     if ($signaled_procs == 0)
     {
       # No such process existed, assume it's killed
-      mtr_verbose("killed $pid(no such process)");
+      dtr_verbose("killed $pid(no such process)");
     }
     else
     {
       my $ret_pid= waitpid($pid,0);
       if ($ret_pid == $pid)
       {
-	mtr_verbose("killed $pid(got the pid)");
+	dtr_verbose("killed $pid(got the pid)");
       }
       elsif ($ret_pid == -1)
       {
-	mtr_verbose("killed $pid(got -1)");
+	dtr_verbose("killed $pid(got -1)");
       }
     }
   }
-  mtr_verbose("done killing processes");
+  dtr_verbose("done killing processes");
 }
 
 
@@ -1070,9 +1070,9 @@ sub mtr_kill_processes ($) {
 #
 ##############################################################################
 
-sub mtr_exit ($) {
+sub dtr_exit ($) {
   my $code= shift;
-  mtr_timer_stop_all($::glob_timers);
+  dtr_timer_stop_all($::glob_timers);
   local $SIG{HUP} = 'IGNORE';
   # ToDo: Signalling -$$ will only work if we are the process group
   # leader (in fact on QNX it will signal our session group leader,

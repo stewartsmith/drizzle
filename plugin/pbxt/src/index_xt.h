@@ -25,7 +25,6 @@
 
 #ifdef DRIZZLED
 #include <drizzled/definitions.h>
-#include <drizzled/sql_bitmap.h>
 #include <drizzled/field.h>
 using drizzled::Field;
 #else
@@ -434,7 +433,12 @@ typedef struct XTIndex {
 	XTPrevItemFunc		mi_prev_item;
 	XTLastItemFunc		mi_last_item;
 	XTSimpleCompFunc	mi_simple_comp_key;
+#ifdef DRIZZLED
+	uint64_t            mi_col_map;					/* Bit-map of columns in the index. */
+    uint64_t            mi_col_map_size;            /* size of this bitmap. */
+#else
 	MX_BITMAP			mi_col_map;					/* Bit-map of columns in the index. */
+#endif
 	u_int				mi_subset_of;				/* Indicates if this index is a complete subset of someother index. */
 	u_int				mi_seg_count;
 	XTIndexSegRec		mi_seg[200];

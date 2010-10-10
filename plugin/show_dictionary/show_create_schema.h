@@ -1,7 +1,7 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2010 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,31 +18,32 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include <drizzled/show.h>
-#include <drizzled/session.h>
-#include <drizzled/statement/show_create_schema.h>
-#include <drizzled/db.h>
+#ifndef PLUGIN_SHOW_DICTIONARY_SHOW_CREATE_SCHEMA_H
+#define PLUGIN_SHOW_DICTIONARY_SHOW_CREATE_SCHEMA_H
 
-#include <string>
+#include "drizzled/message.h"
 
-using namespace std;
-
-namespace drizzled
+class ShowCreateSchema : public drizzled::plugin::TableFunction
 {
+public:
+  ShowCreateSchema();
 
-bool statement::ShowCreateSchema::execute()
-{
-  SchemaIdentifier schema_identifier(string(session->lex->name.str, session->lex->name.length));
-
-  if (not check_db_name(session, schema_identifier))
+  class Generator : public drizzled::plugin::TableFunction::Generator 
   {
-    my_error(ER_WRONG_DB_NAME, MYF(0), schema_identifier.getSQLPath().c_str());
-    return false;
-  }
-  bool res= mysqld_show_create_db(*session, schema_identifier,
-                                  is_if_not_exists);
-  return res;
-}
+    bool is_primed;
+    bool if_not_exists;
+    std::string schema_name;
+    drizzled::message::SchemaPtr schema_message;
 
-} /* namespace drizzled */
+  public:
+    Generator(drizzled::Field **arg);
+    bool populate();
+  };
+
+  Generator *generator(drizzled::Field **arg)
+  {
+    return new Generator(arg);
+  }
+};
+
+#endif /* PLUGIN_SHOW_DICTIONARY_SHOW_CREATE_SCHEMA_H */

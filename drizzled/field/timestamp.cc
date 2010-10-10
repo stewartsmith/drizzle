@@ -233,7 +233,7 @@ int64_t Field_timestamp::val_int(void)
   ASSERT_COLUMN_MARKED_FOR_READ;
 
 #ifdef WORDS_BIGENDIAN
-  if (getTable() && getTable()->s->db_low_byte_first)
+  if (getTable() && getTable()->getShare()->db_low_byte_first)
     temp= uint8korr(ptr);
   else
 #endif
@@ -258,7 +258,7 @@ String *Field_timestamp::val_str(String *val_buffer, String *)
   to= (char *) val_buffer->ptr();
 
 #ifdef WORDS_BIGENDIAN
-  if (getTable() && getTable()->s->db_low_byte_first)
+  if (getTable() && getTable()->getShare()->db_low_byte_first)
     temp= uint8korr(ptr);
   else
 #endif
@@ -282,7 +282,7 @@ bool Field_timestamp::get_date(DRIZZLE_TIME *ltime, uint32_t)
   uint64_t temp;
 
 #ifdef WORDS_BIGENDIAN
-  if (getTable() && getTable()->s->db_low_byte_first)
+  if (getTable() && getTable()->getShare()->db_low_byte_first)
     temp= uint8korr(ptr);
   else
 #endif
@@ -315,7 +315,7 @@ int Field_timestamp::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   int64_t a,b;
 #ifdef WORDS_BIGENDIAN
-  if (getTable() && getTable()->s->db_low_byte_first)
+  if (getTable() && getTable()->getShare()->db_low_byte_first)
   {
     a=sint8korr(a_ptr);
     b=sint8korr(b_ptr);
@@ -333,7 +333,7 @@ int Field_timestamp::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 void Field_timestamp::sort_string(unsigned char *to,uint32_t )
 {
 #ifdef WORDS_BIGENDIAN
-  if (!getTable() || !getTable()->s->db_low_byte_first)
+  if (!getTable() || !getTable()->getShare()->db_low_byte_first)
   {
     to[0] = ptr[0];
     to[1] = ptr[1];
@@ -385,7 +385,7 @@ long Field_timestamp::get_timestamp(bool *null_value)
   if ((*null_value= is_null()))
     return 0;
 #ifdef WORDS_BIGENDIAN
-  if (getTable() && getTable()->s->db_low_byte_first)
+  if (getTable() && getTable()->getShare()->db_low_byte_first)
     return sint8korr(ptr);
 #endif
   int64_t tmp;
@@ -396,7 +396,7 @@ long Field_timestamp::get_timestamp(bool *null_value)
 void Field_timestamp::store_timestamp(int64_t timestamp)
 {
 #ifdef WORDS_BIGENDIAN
-  if (getTable() && getTable()->s->db_low_byte_first)
+  if (getTable() && getTable()->getShare()->db_low_byte_first)
   {
     int8store(ptr, timestamp);
   }

@@ -350,7 +350,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/show.h \
 			      drizzled/signal_handler.h \
 			      drizzled/sql_base.h \
-			      drizzled/sql_bitmap.h \
 			      drizzled/sql_error.h \
 			      drizzled/sql_lex.h \
 			      drizzled/sql_list.h \
@@ -392,8 +391,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/statement/savepoint.h \
 			      drizzled/statement/select.h \
 			      drizzled/statement/set_option.h \
-			      drizzled/statement/show_create.h \
-			      drizzled/statement/show_create_schema.h \
 			      drizzled/statement/show_errors.h \
 			      drizzled/statement/show_warnings.h \
 			      drizzled/statement/start_transaction.h \
@@ -430,6 +427,9 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/unique.h \
 			      drizzled/unireg.h \
 			      drizzled/user_var_entry.h \
+			      drizzled/utf8/checked.h \
+			      drizzled/utf8/core.h \
+			      drizzled/utf8/unchecked.h \
 			      drizzled/utf8/utf8.h \
 			      drizzled/var.h \
 			      drizzled/version.h \
@@ -692,7 +692,6 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/show.cc \
 				 drizzled/signal_handler.cc \
 				 drizzled/sql_base.cc \
-				 drizzled/sql_bitmap.cc \
 				 drizzled/sql_delete.cc \
 				 drizzled/sql_derived.cc \
 				 drizzled/sql_error.cc \
@@ -737,8 +736,6 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/statement/savepoint.cc \
 				 drizzled/statement/select.cc \
 				 drizzled/statement/set_option.cc \
-				 drizzled/statement/show_create.cc \
-				 drizzled/statement/show_create_schema.cc \
 				 drizzled/statement/show_errors.cc \
 				 drizzled/statement/show_warnings.cc \
 				 drizzled/statement/start_transaction.cc \

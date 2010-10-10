@@ -37,7 +37,7 @@ public:
 
   class Generator : public drizzled::plugin::TableFunction::Generator 
   {
-    drizzled::message::Schema schema;
+    drizzled::message::SchemaPtr schema;
 
     drizzled::generator::Schema schema_generator;
 
@@ -48,7 +48,7 @@ public:
 
     const std::string &schema_name()
     {
-      return schema.name();
+      return schema->name();
     }
 
     bool populate();
