@@ -9,6 +9,11 @@
 #
 #
 
+# Ignore startup/shutdown events
+--disable_query_log
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
+--enable_query_log
+
 # Filter all statements involving tables called "t2"
 set global filtered_replicator_filteredtables=t2;
 
