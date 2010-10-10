@@ -861,9 +861,9 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     copy_func_count+= param->sum_func_count;
   }
 
-  TableShareInstance *share= session->getTemporaryShare(message::Table::INTERNAL); // This will not go into the tableshare cache, so no key is used.
+  table= session->getTemporaryShare(message::Table::INTERNAL); // This will not go into the tableshare cache, so no key is used.
 
-  if (not share->getMemRoot()->multi_alloc_root(0,
+  if (not table->getMemRoot()->multi_alloc_root(0,
                                                 &default_field, sizeof(Field*) * (field_count),
                                                 &from_field, sizeof(Field*)*field_count,
                                                 &copy_func, sizeof(*copy_func)*(copy_func_count+1),
@@ -884,17 +884,15 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   param->items_to_copy= copy_func;
   /* make table according to fields */
 
-  table= share->getTable();
-
   memset(default_field, 0, sizeof(Field*) * (field_count));
   memset(from_field, 0, sizeof(Field*)*field_count);
 
   mem_root_save= session->mem_root;
   session->mem_root= table->getMemRoot();
 
-  share->setFields(field_count+1);
-  table->setFields(share->getFields(true));
-  reg_field= share->getFields(true);
+  table->getMutableShare()->setFields(field_count+1);
+  table->setFields(table->getMutableShare()->getFields(true));
+  reg_field= table->getMutableShare()->getFields(true);
   table->alias= table_alias;
   table->reginfo.lock_type=TL_WRITE;	/* Will be updated */
   table->db_stat=HA_OPEN_KEYFILE+HA_OPEN_RNDFILE;
@@ -906,14 +904,13 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   table->covering_keys.reset();
   table->keys_in_use_for_query.reset();
 
-  table->setShare(share);
-  share->blob_field.resize(field_count+1);
-  uint32_t *blob_field= &share->blob_field[0];
-  share->blob_ptr_size= portable_sizeof_char_ptr;
-  share->db_low_byte_first=1;                // True for HEAP and MyISAM
-  share->table_charset= param->table_charset;
-  share->keys_for_keyread.reset();
-  share->keys_in_use.reset();
+  table->getMutableShare()->blob_field.resize(field_count+1);
+  uint32_t *blob_field= &table->getMutableShare()->blob_field[0];
+  table->getMutableShare()->blob_ptr_size= portable_sizeof_char_ptr;
+  table->getMutableShare()->db_low_byte_first=1;                // True for HEAP and MyISAM
+  table->getMutableShare()->table_charset= param->table_charset;
+  table->getMutableShare()->keys_for_keyread.reset();
+  table->getMutableShare()->keys_in_use.reset();
 
   /* Calculate which type of fields we will store in the temporary table */
 
@@ -1060,7 +1057,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   field_count= fieldnr;
   *reg_field= 0;
   *blob_field= 0;				// End marker
-  share->fields= field_count;
+  table->getMutableShare()->fields= field_count;
 
   /* If result table is small; use a heap */
   /* future: storage engine selection can be made dynamic? */
@@ -1069,8 +1066,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
       (session->lex->current_select->olap == ROLLUP_TYPE) ||
       (select_options & (OPTION_BIG_TABLES | SELECT_SMALL_RESULT)) == OPTION_BIG_TABLES)
   {
-    share->storage_engine= myisam_engine;
-    table->cursor= share->db_type()->getCursor(*share);
+    table->getMutableShare()->storage_engine= myisam_engine;
+    table->cursor= table->getMutableShare()->db_type()->getCursor(*table->getMutableShare());
     if (group &&
 	(param->group_parts > table->cursor->getEngine()->max_key_parts() ||
 	 param->group_length > table->cursor->getEngine()->max_key_length()))
@@ -1080,8 +1077,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   }
   else
   {
-    share->storage_engine= heap_engine;
-    table->cursor= share->db_type()->getCursor(*share);
+    table->getMutableShare()->storage_engine= heap_engine;
+    table->cursor= table->getMutableShare()->db_type()->getCursor(*table->getMutableShare());
   }
   if (! table->cursor)
     goto err;
@@ -1090,7 +1087,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   if (! using_unique_constraint)
     reclength+= group_null_items;	// null flag is stored separately
 
-  share->blob_fields= blob_count;
+  table->getMutableShare()->blob_fields= blob_count;
   if (blob_count == 0)
   {
     /* We need to ensure that first byte is not 0 for the delete link */
@@ -1109,16 +1106,16 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   if (blob_count || ((string_total_length >= STRING_TOTAL_LENGTH_TO_PACK_ROWS) && (reclength / string_total_length <= RATIO_TO_PACK_ROWS || (string_total_length / string_count) >= AVG_STRING_LENGTH_TO_PACK_ROWS)))
     use_packed_rows= 1;
 
-  share->setRecordLength(reclength);
+  table->getMutableShare()->setRecordLength(reclength);
   {
     uint32_t alloc_length=ALIGN_SIZE(reclength+MI_UNIQUE_HASH_LENGTH+1);
-    share->rec_buff_length= alloc_length;
+    table->getMutableShare()->rec_buff_length= alloc_length;
     if (!(table->record[0]= (unsigned char*) table->alloc_root(alloc_length*2)))
     {
       goto err;
     }
     table->record[1]= table->getInsertRecord()+alloc_length;
-    share->resizeDefaultValues(alloc_length);
+    table->getMutableShare()->resizeDefaultValues(alloc_length);
   }
   copy_func[0]= 0;				// End marker
   param->func_count= copy_func - param->items_to_copy;
@@ -1137,8 +1134,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     memset(null_flags, 255, null_pack_length);	// Set null fields
 
     table->null_flags= (unsigned char*) table->getInsertRecord();
-    share->null_fields= null_count+ hidden_null_count;
-    share->null_bytes= null_pack_length;
+    table->getMutableShare()->null_fields= null_count+ hidden_null_count;
+    table->getMutableShare()->null_bytes= null_pack_length;
   }
   null_count= (blob_count == 0) ? 1 : 0;
   hidden_field_count=param->hidden_field_count;
@@ -1229,11 +1226,11 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   }
   else
   {
-    max_rows= (uint64_t) (((share->db_type() == heap_engine) ?
+    max_rows= (uint64_t) (((table->getMutableShare()->db_type() == heap_engine) ?
                            min(session->variables.tmp_table_size,
                                session->variables.max_heap_table_size) :
                            session->variables.tmp_table_size) /
-                          share->getRecordLength());
+                          table->getMutableShare()->getRecordLength());
   }
 
   set_if_bigger(max_rows, (uint64_t)1);	// For dummy start options
@@ -1243,7 +1240,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   */
   set_if_smaller(max_rows, rows_limit);
 
-  share->setMaxRows(max_rows);
+  table->getMutableShare()->setMaxRows(max_rows);
 
   param->end_write_records= rows_limit;
 
@@ -1253,8 +1250,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   {
     table->group=group;				/* Table is grouped by key */
     param->group_buff=group_buff;
-    share->keys=1;
-    share->uniques= test(using_unique_constraint);
+    table->getMutableShare()->keys=1;
+    table->getMutableShare()->uniques= test(using_unique_constraint);
     table->key_info=keyinfo;
     keyinfo->key_part=key_part_info;
     keyinfo->flags=HA_NOSAME;
@@ -1325,13 +1322,13 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
         indexes on blobs with arbitrary length. Such indexes cannot be
         used for lookups.
       */
-      share->uniques= 1;
+      table->getMutableShare()->uniques= 1;
     }
     null_pack_length-=hidden_null_pack_length;
     keyinfo->key_parts= ((field_count-param->hidden_field_count)+
-			 (share->uniques ? test(null_pack_length) : 0));
+			 (table->getMutableShare()->uniques ? test(null_pack_length) : 0));
     table->distinct= 1;
-    share->keys= 1;
+    table->getMutableShare()->keys= 1;
     if (!(key_part_info= (KeyPartInfo*)
          table->alloc_root(keyinfo->key_parts * sizeof(KeyPartInfo))))
       goto err;
@@ -1349,7 +1346,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
       blobs can distinguish NULL from 0. This extra field is not needed
       when we do not use UNIQUE indexes for blobs.
     */
-    if (null_pack_length && share->uniques)
+    if (null_pack_length && table->getMutableShare()->uniques)
     {
       key_part_info->null_bit= 0;
       key_part_info->offset=hidden_null_pack_length;
@@ -1404,8 +1401,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 
   if (session->is_fatal_error)				// If end of memory
     goto err;
-  share->db_record_offset= 1;
-  if (share->db_type() == myisam_engine)
+  table->getMutableShare()->db_record_offset= 1;
+  if (table->getMutableShare()->db_type() == myisam_engine)
   {
     if (table->create_myisam_tmp_table(param->keyinfo, param->start_recinfo,
 				       &param->recinfo, select_options))
@@ -1456,16 +1453,14 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
   uint32_t record_length= 0;
   uint32_t null_count= 0;                 /* number of columns which may be null */
   uint32_t null_pack_length;              /* NULL representation array length */
-  Table *table;
 
-  TableShareInstance *share= getTemporaryShare(message::Table::INTERNAL); // This will not go into the tableshare cache, so no key is used.
-  table= share->getTable();
-  share->setFields(field_count + 1);
-  table->setFields(share->getFields(true));
-  field= share->getFields(true);
-  share->blob_field.resize(field_count+1);
-  share->fields= field_count;
-  share->blob_ptr_size= portable_sizeof_char_ptr;
+  Table *table= getTemporaryShare(message::Table::INTERNAL); // This will not go into the tableshare cache, so no key is used.
+  table->getMutableShare()->setFields(field_count + 1);
+  table->setFields(table->getMutableShare()->getFields(true));
+  field= table->getMutableShare()->getFields(true);
+  table->getMutableShare()->blob_field.resize(field_count+1);
+  table->getMutableShare()->fields= field_count;
+  table->getMutableShare()->blob_ptr_size= portable_sizeof_char_ptr;
   table->setup_tmp_table_column_bitmaps();
 
   table->in_use= this;           /* field->reset() may access table->in_use */
@@ -1474,17 +1469,17 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
   List_iterator_fast<CreateField> it(field_list);
   while ((cdef= it++))
   {
-    *field= share->make_field(NULL,
-                              cdef->length,
-                              (cdef->flags & NOT_NULL_FLAG) ? false : true,
-                              (unsigned char *) ((cdef->flags & NOT_NULL_FLAG) ? 0 : ""),
-                              (cdef->flags & NOT_NULL_FLAG) ? 0 : 1,
-                              cdef->decimals,
-                              cdef->sql_type,
-                              cdef->charset,
-                              cdef->unireg_check,
-                              cdef->interval,
-                              cdef->field_name);
+    *field= table->getMutableShare()->make_field(NULL,
+                                                 cdef->length,
+                                                 (cdef->flags & NOT_NULL_FLAG) ? false : true,
+                                                 (unsigned char *) ((cdef->flags & NOT_NULL_FLAG) ? 0 : ""),
+                                                 (cdef->flags & NOT_NULL_FLAG) ? 0 : 1,
+                                                 cdef->decimals,
+                                                 cdef->sql_type,
+                                                 cdef->charset,
+                                                 cdef->unireg_check,
+                                                 cdef->interval,
+                                                 cdef->field_name);
     if (!*field)
       goto error;
     (*field)->init(table);
@@ -1493,31 +1488,31 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
       null_count++;
 
     if ((*field)->flags & BLOB_FLAG)
-      share->blob_field[blob_count++]= (uint32_t) (field - table->getFields());
+      table->getMutableShare()->blob_field[blob_count++]= (uint32_t) (field - table->getFields());
 
     field++;
   }
   *field= NULL;                             /* mark the end of the list */
-  share->blob_field[blob_count]= 0;            /* mark the end of the list */
-  share->blob_fields= blob_count;
+  table->getMutableShare()->blob_field[blob_count]= 0;            /* mark the end of the list */
+  table->getMutableShare()->blob_fields= blob_count;
 
   null_pack_length= (null_count + 7)/8;
-  share->setRecordLength(record_length + null_pack_length);
-  share->rec_buff_length= ALIGN_SIZE(share->getRecordLength() + 1);
-  table->record[0]= (unsigned char*)alloc(share->rec_buff_length);
+  table->getMutableShare()->setRecordLength(record_length + null_pack_length);
+  table->getMutableShare()->rec_buff_length= ALIGN_SIZE(table->getMutableShare()->getRecordLength() + 1);
+  table->record[0]= (unsigned char*)alloc(table->getMutableShare()->rec_buff_length);
   if (not table->getInsertRecord())
     goto error;
 
   if (null_pack_length)
   {
     table->null_flags= (unsigned char*) table->getInsertRecord();
-    share->null_fields= null_count;
-    share->null_bytes= null_pack_length;
+    table->getMutableShare()->null_fields= null_count;
+    table->getMutableShare()->null_bytes= null_pack_length;
   }
   {
     /* Set up field pointers */
     unsigned char *null_pos= table->getInsertRecord();
-    unsigned char *field_pos= null_pos + share->null_bytes;
+    unsigned char *field_pos= null_pos + table->getMutableShare()->null_bytes;
     uint32_t null_bit= 1;
 
     for (field= table->getFields(); *field; ++field)
