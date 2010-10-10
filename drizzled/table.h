@@ -61,10 +61,8 @@ typedef struct st_columndef MI_COLUMNDEF;
  */
 class Table 
 {
-public:
-  TableShare *s; /**< Pointer to the shared metadata about the table */
+  TableShare *_share; /**< Pointer to the shared metadata about the table */
 
-private:
   Field **field; /**< Pointer to fields collection */
 public:
 
@@ -372,42 +370,42 @@ public:
   void resetTable(Session *session, TableShare *share, uint32_t db_stat_arg);
 
   /* SHARE methods */
-  inline const TableShare *getShare() const { assert(s); return s; } /* Get rid of this long term */
-  inline bool hasShare() const { return s ? true : false ; } /* Get rid of this long term */
-  inline TableShare *getMutableShare() { assert(s); return s; } /* Get rid of this long term */
-  inline void setShare(TableShare *new_share) { s= new_share; } /* Get rid of this long term */
-  inline uint32_t sizeKeys() { return s->sizeKeys(); }
-  inline uint32_t sizeFields() { return s->sizeFields(); }
-  inline uint32_t getRecordLength() const { return s->getRecordLength(); }
-  inline uint32_t sizeBlobFields() { return s->blob_fields; }
-  inline uint32_t *getBlobField() { return &s->blob_field[0]; }
+  virtual const TableShare *getShare() const { assert(_share); return _share; } /* Get rid of this long term */
+  virtual TableShare *getMutableShare() { assert(_share); return _share; } /* Get rid of this long term */
+  inline bool hasShare() const { return _share ? true : false ; } /* Get rid of this long term */
+  inline void setShare(TableShare *new_share) { _share= new_share; } /* Get rid of this long term */
+  inline uint32_t sizeKeys() { return _share->sizeKeys(); }
+  inline uint32_t sizeFields() { return _share->sizeFields(); }
+  inline uint32_t getRecordLength() const { return _share->getRecordLength(); }
+  inline uint32_t sizeBlobFields() { return _share->blob_fields; }
+  inline uint32_t *getBlobField() { return &_share->blob_field[0]; }
 
   Field_blob *getBlobFieldAt(uint32_t arg) const
   {
-    if (arg < s->blob_fields)
-      return (Field_blob*) field[s->blob_field[arg]]; /*NOTE: Using 'Table.field' NOT SharedTable.field. */
+    if (arg < getShare()->blob_fields)
+      return (Field_blob*) field[getShare()->blob_field[arg]]; /*NOTE: Using 'Table.field' NOT SharedTable.field. */
 
     return NULL;
   }
-  inline uint8_t getBlobPtrSize() { return s->blob_ptr_size; }
-  inline uint32_t getNullBytes() { return s->null_bytes; }
-  inline uint32_t getNullFields() { return s->null_fields; }
-  inline unsigned char *getDefaultValues() { return  s->getDefaultValues(); }
-  inline const char *getSchemaName()  const { return s->getSchemaName(); }
-  inline const char *getTableName()  const { return s->getTableName(); }
+  inline uint8_t getBlobPtrSize() { return getShare()->blob_ptr_size; }
+  inline uint32_t getNullBytes() { return getShare()->null_bytes; }
+  inline uint32_t getNullFields() { return getShare()->null_fields; }
+  inline unsigned char *getDefaultValues() { return  getMutableShare()->getDefaultValues(); }
+  inline const char *getSchemaName()  const { return getShare()->getSchemaName(); }
+  inline const char *getTableName()  const { return getShare()->getTableName(); }
 
-  inline bool isDatabaseLowByteFirst() { return s->db_low_byte_first; } /* Portable row format */
-  inline bool isNameLock() const { return s->isNameLock(); }
-  inline bool isReplaceWithNameLock() { return s->replace_with_name_lock; }
+  inline bool isDatabaseLowByteFirst() { return getShare()->db_low_byte_first; } /* Portable row format */
+  inline bool isNameLock() const { return getShare()->isNameLock(); }
+  inline bool isReplaceWithNameLock() { return getShare()->replace_with_name_lock; }
 
   uint32_t index_flags(uint32_t idx) const
   {
-    return s->storage_engine->index_flags(s->getKeyInfo(idx).algorithm);
+    return getShare()->storage_engine->index_flags(getShare()->getKeyInfo(idx).algorithm);
   }
 
   inline plugin::StorageEngine *getEngine() const   /* table_type for handler */
   {
-    return s->storage_engine;
+    return getShare()->storage_engine;
   }
 
   Cursor &getCursor() const /* table_type for handler */
@@ -474,7 +472,7 @@ public:
   const boost::dynamic_bitset<> use_all_columns(boost::dynamic_bitset<>& map);
   inline void use_all_columns()
   {
-    column_bitmaps_set(s->all_set, s->all_set);
+    column_bitmaps_set(getMutableShare()->all_set, getMutableShare()->all_set);
   }
 
   inline void default_column_bitmaps()
@@ -544,7 +542,7 @@ public:
   */
   inline bool needs_reopen_or_name_lock()
   { 
-    return s->getVersion() != refresh_version;
+    return getShare()->getVersion() != refresh_version;
   }
 
   /**
@@ -559,7 +557,7 @@ public:
   {
     null_row= 1;
     status|= STATUS_NULL_ROW;
-    memset(null_flags, 255, s->null_bytes);
+    memset(null_flags, 255, getShare()->null_bytes);
   }
 
   void free_io_cache();
@@ -568,7 +566,7 @@ public:
 
   void print_error(int error, myf errflag)
   {
-    s->storage_engine->print_error(error, errflag, *this);
+    getShare()->storage_engine->print_error(error, errflag, *this);
   }
 
   /**

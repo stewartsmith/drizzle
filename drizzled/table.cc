@@ -96,16 +96,16 @@ int Table::delete_table(bool free_share)
 
   if (free_share)
   {
-    if (s->getType() == message::Table::STANDARD)
+    if (getShare()->getType() == message::Table::STANDARD)
     {
-      TableShare::release(s);
+      TableShare::release(getMutableShare());
     }
     else
     {
-      delete s;
+      delete getShare();
     }
 
-    s= NULL;
+    setShare(NULL);
   }
   mem_root.free_root(MYF(0));
 
@@ -117,7 +117,7 @@ void Table::resetTable(Session *session,
                        TableShare *share,
                        uint32_t db_stat_arg)
 {
-  s= share;
+  setShare(share);
   field= NULL;
 
   cursor= NULL;
@@ -336,7 +336,7 @@ void append_unescaped(String *res, const char *pos, uint32_t length)
 
 void Table::setup_tmp_table_column_bitmaps()
 {
-  uint32_t field_count= s->sizeFields();
+  uint32_t field_count= getShare()->sizeFields();
 
   this->def_read_set.resize(field_count);
   this->def_write_set.resize(field_count);
@@ -471,9 +471,9 @@ void Table::prepare_for_position()
 {
 
   if ((cursor->getEngine()->check_flag(HTON_BIT_PRIMARY_KEY_IN_READ_INDEX)) &&
-      s->hasPrimaryKey())
+      getShare()->hasPrimaryKey())
   {
-    mark_columns_used_by_index_no_reset(s->getPrimaryKey());
+    mark_columns_used_by_index_no_reset(getShare()->getPrimaryKey());
   }
   return;
 }
@@ -562,8 +562,8 @@ void Table::mark_auto_increment_column()
   */
   setReadSet(found_next_number_field->field_index);
   setWriteSet(found_next_number_field->field_index);
-  if (s->next_number_keypart)
-    mark_columns_used_by_index_no_reset(s->next_number_index);
+  if (getShare()->next_number_keypart)
+    mark_columns_used_by_index_no_reset(getShare()->next_number_index);
 }
 
 
@@ -594,14 +594,14 @@ void Table::mark_columns_needed_for_delete()
     be able to do an delete
 
   */
-  if (not s->hasPrimaryKey())
+  if (not getShare()->hasPrimaryKey())
   {
     /* fallback to use all columns in the table to identify row */
     use_all_columns();
     return;
   }
   else
-    mark_columns_used_by_index_no_reset(s->getPrimaryKey());
+    mark_columns_used_by_index_no_reset(getShare()->getPrimaryKey());
 
   /* If we the engine wants all predicates we mark all keys */
   if (cursor->getEngine()->check_flag(HTON_BIT_REQUIRES_KEY_COLUMNS_FOR_DELETE))
@@ -642,14 +642,14 @@ void Table::mark_columns_needed_for_update()
     the primary key, the hidden primary key or all columns to be
     able to do an update
   */
-  if (not s->hasPrimaryKey())
+  if (not getShare()->hasPrimaryKey())
   {
     /* fallback to use all columns in the table to identify row */
     use_all_columns();
     return;
   }
   else
-    mark_columns_used_by_index_no_reset(s->getPrimaryKey());
+    mark_columns_used_by_index_no_reset(getShare()->getPrimaryKey());
 
   if (cursor->getEngine()->check_flag(HTON_BIT_REQUIRES_KEY_COLUMNS_FOR_DELETE))
   {
@@ -1555,7 +1555,7 @@ bool Table::open_tmp_table()
 {
   int error;
   
-  TableIdentifier identifier(s->getSchemaName(), s->getTableName(), s->getPath());
+  TableIdentifier identifier(getShare()->getSchemaName(), getShare()->getTableName(), getShare()->getPath());
   if ((error=cursor->ha_open(identifier,
                              this,
                              O_RDWR,
@@ -1607,9 +1607,8 @@ bool Table::create_myisam_tmp_table(KeyInfo *keyinfo,
   int error;
   MI_KEYDEF keydef;
   MI_UNIQUEDEF uniquedef;
-  TableShare *share= s;
 
-  if (share->sizeKeys())
+  if (getShare()->sizeKeys())
   {						// Get keys for ni_create
     bool using_unique_constraint= false;
     HA_KEYSEG *seg= (HA_KEYSEG*) this->mem_root.alloc_root(sizeof(*seg) * keyinfo->key_parts);
@@ -1619,11 +1618,11 @@ bool Table::create_myisam_tmp_table(KeyInfo *keyinfo,
     memset(seg, 0, sizeof(*seg) * keyinfo->key_parts);
     if (keyinfo->key_length >= cursor->getEngine()->max_key_length() ||
 	keyinfo->key_parts > cursor->getEngine()->max_key_parts() ||
-	share->uniques)
+	getShare()->uniques)
     {
       /* Can't create a key; Make a unique constraint instead of a key */
-      share->keys=    0;
-      share->uniques= 1;
+      getMutableShare()->keys=    0;
+      getMutableShare()->uniques= 1;
       using_unique_constraint= true;
       memset(&uniquedef, 0, sizeof(uniquedef));
       uniquedef.keysegs=keyinfo->key_parts;
@@ -1635,7 +1634,7 @@ bool Table::create_myisam_tmp_table(KeyInfo *keyinfo,
       (*recinfo)->type= FIELD_CHECK;
       (*recinfo)->length=MI_UNIQUE_HASH_LENGTH;
       (*recinfo)++;
-      share->setRecordLength(share->getRecordLength() + MI_UNIQUE_HASH_LENGTH);
+      getMutableShare()->setRecordLength(getShare()->getRecordLength() + MI_UNIQUE_HASH_LENGTH);
     }
     else
     {
@@ -1656,8 +1655,7 @@ bool Table::create_myisam_tmp_table(KeyInfo *keyinfo,
       {
 	seg->type= ((keyinfo->key_part[i].key_type & 1 /* binary */) ?
 	 HA_KEYTYPE_VARBINARY2 : HA_KEYTYPE_VARTEXT2);
-	seg->bit_start= (uint8_t)(key_field->pack_length()
-                                  - share->blob_ptr_size);
+	seg->bit_start= (uint8_t)(key_field->pack_length() - getShare()->blob_ptr_size);
 	seg->flag= HA_BLOB_PART;
 	seg->length= 0;			// Whole blob in unique constraint
       }
@@ -1685,10 +1683,10 @@ bool Table::create_myisam_tmp_table(KeyInfo *keyinfo,
       OPTION_BIG_TABLES)
     create_info.data_file_length= ~(uint64_t) 0;
 
-  if ((error= mi_create(share->getTableName(), share->sizeKeys(), &keydef,
+  if ((error= mi_create(getShare()->getTableName(), getShare()->sizeKeys(), &keydef,
                         (uint32_t) (*recinfo-start_recinfo),
                         start_recinfo,
-                        share->uniques, &uniquedef,
+                        getShare()->uniques, &uniquedef,
                         &create_info,
                         HA_CREATE_TMP_TABLE)))
   {
@@ -1698,7 +1696,7 @@ bool Table::create_myisam_tmp_table(KeyInfo *keyinfo,
     return true;
   }
   in_use->status_var.created_tmp_disk_tables++;
-  share->db_record_offset= 1;
+  getMutableShare()->db_record_offset= 1;
   return false;
 }
 
@@ -1718,11 +1716,11 @@ void Table::free_tmp_table(Session *session)
   {
     if (db_stat)
     {
-      cursor->closeMarkForDelete(s->getTableName());
+      cursor->closeMarkForDelete(getShare()->getTableName());
     }
 
-    TableIdentifier identifier(s->getSchemaName(), s->getTableName(), s->getTableName());
-    s->db_type()->doDropTable(*session, identifier);
+    TableIdentifier identifier(getShare()->getSchemaName(), getShare()->getTableName(), getShare()->getTableName());
+    getMutableShare()->db_type()->doDropTable(*session, identifier);
 
     delete cursor;
   }
@@ -1749,7 +1747,7 @@ void Table::column_bitmaps_set(boost::dynamic_bitset<>& read_set_arg,
 const boost::dynamic_bitset<> Table::use_all_columns(boost::dynamic_bitset<>& in_map)
 {
   const boost::dynamic_bitset<> old= in_map;
-  in_map= s->all_set;
+  in_map= getShare()->all_set;
   return old;
 }
 
@@ -1774,7 +1772,7 @@ uint32_t Table::find_shortest_key(const key_map *usable_keys)
   uint32_t best= MAX_KEY;
   if (usable_keys->any())
   {
-    for (uint32_t nr= 0; nr < s->sizeKeys() ; nr++)
+    for (uint32_t nr= 0; nr < getShare()->sizeKeys() ; nr++)
     {
       if (usable_keys->test(nr))
       {
@@ -1801,7 +1799,7 @@ bool Table::compare_record(Field **ptr)
 {
   for (; *ptr ; ptr++)
   {
-    if ((*ptr)->cmp_offset(s->rec_buff_length))
+    if ((*ptr)->cmp_offset(getShare()->rec_buff_length))
       return true;
   }
   return false;
@@ -1811,18 +1809,18 @@ bool Table::compare_record(Field **ptr)
 
 bool Table::compare_record()
 {
-  if (s->blob_fields + s->varchar_fields == 0)
-    return memcmp(this->getInsertRecord(), this->getUpdateRecord(), (size_t) s->getRecordLength());
+  if (getShare()->blob_fields + getShare()->varchar_fields == 0)
+    return memcmp(this->getInsertRecord(), this->getUpdateRecord(), (size_t) getShare()->getRecordLength());
   
   /* Compare null bits */
-  if (memcmp(null_flags, null_flags + s->rec_buff_length, s->null_bytes))
+  if (memcmp(null_flags, null_flags + getShare()->rec_buff_length, getShare()->null_bytes))
     return true; /* Diff in NULL value */
 
   /* Compare updated fields */
   for (Field **ptr= field ; *ptr ; ptr++)
   {
     if (isWriteSet((*ptr)->field_index) &&
-	(*ptr)->cmp_binary_offset(s->rec_buff_length))
+	(*ptr)->cmp_binary_offset(getShare()->rec_buff_length))
       return true;
   }
   return false;
@@ -1834,7 +1832,7 @@ bool Table::compare_record()
  */
 void Table::storeRecord()
 {
-  memcpy(getUpdateRecord(), getInsertRecord(), (size_t) s->getRecordLength());
+  memcpy(getUpdateRecord(), getInsertRecord(), (size_t) getShare()->getRecordLength());
 }
 
 /*
@@ -1843,8 +1841,8 @@ void Table::storeRecord()
  */
 void Table::storeRecordAsInsert()
 {
-  assert(insert_values.size() >= s->getRecordLength());
-  memcpy(&insert_values[0], getInsertRecord(), (size_t) s->getRecordLength());
+  assert(insert_values.size() >= getShare()->getRecordLength());
+  memcpy(&insert_values[0], getInsertRecord(), (size_t) getShare()->getRecordLength());
 }
 
 /*
@@ -1853,7 +1851,7 @@ void Table::storeRecordAsInsert()
  */
 void Table::storeRecordAsDefault()
 {
-  memcpy(s->getDefaultValues(), getInsertRecord(), (size_t) s->getRecordLength());
+  memcpy(getMutableShare()->getDefaultValues(), getInsertRecord(), (size_t) getShare()->getRecordLength());
 }
 
 /*
@@ -1862,7 +1860,7 @@ void Table::storeRecordAsDefault()
  */
 void Table::restoreRecord()
 {
-  memcpy(getInsertRecord(), getUpdateRecord(), (size_t) s->getRecordLength());
+  memcpy(getInsertRecord(), getUpdateRecord(), (size_t) getShare()->getRecordLength());
 }
 
 /*
@@ -1871,7 +1869,7 @@ void Table::restoreRecord()
  */
 void Table::restoreRecordAsDefault()
 {
-  memcpy(getInsertRecord(), s->getDefaultValues(), (size_t) s->getRecordLength());
+  memcpy(getInsertRecord(), getMutableShare()->getDefaultValues(), (size_t) getShare()->getRecordLength());
 }
 
 /*
@@ -1881,11 +1879,11 @@ void Table::restoreRecordAsDefault()
 void Table::emptyRecord()
 {
   restoreRecordAsDefault();
-  memset(null_flags, 255, s->null_bytes);
+  memset(null_flags, 255, getShare()->null_bytes);
 }
 
 Table::Table() : 
-  s(NULL),
+  _share(NULL),
   field(NULL),
   cursor(NULL),
   next(NULL),
@@ -1972,7 +1970,7 @@ int Table::report_error(int error)
   */
   if (error != HA_ERR_LOCK_DEADLOCK && error != HA_ERR_LOCK_WAIT_TIMEOUT)
     errmsg_printf(ERRMSG_LVL_ERROR, _("Got error %d when reading table '%s'"),
-                  error, s->getPath());
+                  error, getShare()->getPath());
   print_error(error, MYF(0));
 
   return 1;
@@ -1995,7 +1993,7 @@ void Table::setup_table_map(TableList *table_list, uint32_t table_number)
   tablenr= table_number;
   map= (table_map) 1 << table_number;
   force_index= table_list->force_index;
-  covering_keys= s->keys_for_keyread;
+  covering_keys= getShare()->keys_for_keyread;
   merge_keys.reset();
 }
 

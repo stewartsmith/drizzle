@@ -455,7 +455,7 @@ namespace plugin
   //--------
   bool TableEventData::callEventObservers()
   {
-    observerList= table.s->getTableObservers();
+    observerList= table.getMutableShare()->getTableObservers();
 
     return EventData::callEventObservers();
   }

@@ -2385,15 +2385,15 @@ void ha_pbxt::init_auto_increment(xtWord8 min_auto_inc)
 		table->next_number_field = table->found_next_number_field;
 
 		extra(HA_EXTRA_KEYREAD);
-		table->mark_columns_used_by_index_no_reset(TS(table)->next_number_index, *table->read_set);
+		table->mark_columns_used_by_index_no_reset(table->getShare()->next_number_index, *table->read_set);
 		column_bitmaps_signal();
- 		doStartIndexScan(TS(table)->next_number_index, 0);
-		if (!TS(table)->next_number_key_offset) {
+ 		doStartIndexScan(table->getShare()->next_number_index, 0);
+		if (!table->getShare()->next_number_key_offset) {
 			// Autoincrement at key-start
 			err = index_last(table->getUpdateRecord());
-			if (!err && !table->next_number_field->is_null(TS(table)->rec_buff_length)) {
+			if (!err && !table->next_number_field->is_null(table->getShare()->rec_buff_length)) {
 				/* {PRE-INC} */
-				nr = (xtWord8) table->next_number_field->val_int_offset(TS(table)->rec_buff_length);
+				nr = (xtWord8) table->next_number_field->val_int_offset(table->getShare()->rec_buff_length);
 			}
 		}
 		else {
@@ -2406,7 +2406,7 @@ void ha_pbxt::init_auto_increment(xtWord8 min_auto_inc)
 			err = index_first(table->getUpdateRecord());
 			while (!err) {
 				/* {PRE-INC} */
-				val = (xtWord8) table->next_number_field->val_int_offset(TS(table)->rec_buff_length);
+				val = (xtWord8) table->next_number_field->val_int_offset(table->getShare()->rec_buff_length);
 				if (val > nr)
 					nr = val;
 				err = index_next(table->getUpdateRecord());
@@ -5612,7 +5612,7 @@ int PBXTStorageEngine::doCreateTable(Session&,
 	try_(a) {
 		xt_ha_open_database_of_table(self, (XTPathStrPtr) table_path);
 
-		for (uint i=0; i<table_arg.s->keys; i++) {
+		for (uint i=0; i<table_arg.getShare()->keys; i++) {
 			if (table_arg.key_info[i].key_length > XT_INDEX_MAX_KEY_SIZE)
 				xt_throw_sulxterr(XT_CONTEXT, XT_ERR_KEY_TOO_LARGE, table_arg.key_info[i].name, (u_long) XT_INDEX_MAX_KEY_SIZE);
 		}
@@ -5629,11 +5629,11 @@ int PBXTStorageEngine::doCreateTable(Session&,
 
 		StorageEngine::writeDefinitionFromPath(ident, proto);
 
-		tab_def = xt_ri_create_table(self, true, (XTPathStrPtr) table_path, const_cast<char *>(thd->getQueryString().c_str()), myxt_create_table_from_table(self, table_arg.s), &source_dic);
+		tab_def = xt_ri_create_table(self, true, (XTPathStrPtr) table_path, const_cast<char *>(thd->getQueryString().c_str()), myxt_create_table_from_table(self, table_arg.getMutableShare()), &source_dic);
 		tab_def->checkForeignKeys(self, proto.type() == message::Table::TEMPORARY);
 
 		dic.dic_table = tab_def;
-		dic.dic_my_table = table_arg.s;
+		dic.dic_my_table = table_arg.getMutableShare();
 		dic.dic_tab_flags = source_dic.dic_tab_flags;
 		//if (create_info.storage_media == HA_SM_MEMORY)
 		//	dic.dic_tab_flags |= XT_TF_MEMORY_TABLE;
