@@ -14,17 +14,17 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-# This is a library file used by the Perl version of mysql-test-run,
+# This is a library file used by the Perl version of drizzle-test-run,
 # and is part of the translation of the Bourne shell script with the
 # same name.
 
 use Errno;
 use strict;
 
-sub mtr_init_timers ();
-sub mtr_timer_start($$$);
-sub mtr_timer_stop($$);
-sub mtr_timer_stop_all($);
+sub dtr_init_timers ();
+sub dtr_timer_start($$$);
+sub dtr_timer_stop($$);
+sub dtr_timer_stop_all($);
 
 
 ##############################################################################
@@ -33,7 +33,7 @@ sub mtr_timer_stop_all($);
 #
 ##############################################################################
 
-sub mtr_init_timers () {
+sub dtr_init_timers () {
   my $timers = { timers => {}, pids => {}};
   return $timers;
 }
@@ -48,14 +48,14 @@ sub mtr_init_timers () {
 #
 ##############################################################################
 
-sub mtr_timer_start($$$) {
+sub dtr_timer_start($$$) {
   my ($timers,$name,$duration)= @_;
 
   if ( exists $timers->{'timers'}->{$name} )
   {
     # We have an old running timer, kill it
-    mtr_warning("There is an old timer running");
-    mtr_timer_stop($timers,$name);
+    dtr_warning("There is an old timer running");
+    dtr_timer_stop($timers,$name);
   }
 
  FORK:
@@ -66,20 +66,20 @@ sub mtr_timer_start($$$) {
     {
       if ( $! == $!{EAGAIN} )           # See "perldoc Errno"
       {
-        mtr_warning("Got EAGAIN from fork(), sleep 1 second and redo");
+        dtr_warning("Got EAGAIN from fork(), sleep 1 second and redo");
         sleep(1);
         redo FORK;
       }
       else
       {
-        mtr_error("can't fork timer, error: $!");
+        dtr_error("can't fork timer, error: $!");
       }
     }
 
     if ( $tpid )
     {
       # Parent, record the information
-      mtr_verbose("Starting timer for '$name',",
+      dtr_verbose("Starting timer for '$name',",
 		  "duration: $duration, pid: $tpid");
       $timers->{'timers'}->{$name}->{'pid'}= $tpid;
       $timers->{'timers'}->{$name}->{'duration'}= $duration;
@@ -95,26 +95,26 @@ sub mtr_timer_start($$$) {
       $SIG{INT}= 'DEFAULT';
 
       $SIG{TERM}= sub {
-	mtr_verbose("timer $$ woke up, exiting!");
+	dtr_verbose("timer $$ woke up, exiting!");
 	exit(0);
       };
 
-      $0= "mtr_timer(timers,$name,$duration)";
+      $0= "dtr_timer(timers,$name,$duration)";
       sleep($duration);
-      mtr_verbose("timer $$ expired after $duration seconds");
+      dtr_verbose("timer $$ expired after $duration seconds");
       exit(0);
     }
   }
 }
 
 
-sub mtr_timer_stop ($$) {
+sub dtr_timer_stop ($$) {
   my ($timers,$name)= @_;
 
   if ( exists $timers->{'timers'}->{$name} )
   {
     my $tpid= $timers->{'timers'}->{$name}->{'pid'};
-    mtr_verbose("Stopping timer for '$name' with pid $tpid");
+    dtr_verbose("Stopping timer for '$name' with pid $tpid");
 
     # FIXME as Cygwin reuses pids fast, maybe check that is
     # the expected process somehow?!
@@ -130,22 +130,22 @@ sub mtr_timer_stop ($$) {
     return 1;
   }
 
-  mtr_error("Asked to stop timer '$name' not started");
+  dtr_error("Asked to stop timer '$name' not started");
 }
 
 
-sub mtr_timer_stop_all ($) {
+sub dtr_timer_stop_all ($) {
   my $timers= shift;
 
   foreach my $name ( keys %{$timers->{'timers'}} )
   {
-    mtr_timer_stop($timers, $name);
+    dtr_timer_stop($timers, $name);
   }
   return 1;
 }
 
 
-sub mtr_timer_timeout ($$) {
+sub dtr_timer_timeout ($$) {
   my ($timers,$pid)= @_;
 
   return "" unless exists $timers->{'pids'}->{$pid};

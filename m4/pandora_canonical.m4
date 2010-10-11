@@ -4,7 +4,7 @@ dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
 dnl Which version of the canonical setup we're using
-AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.155])
+AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.159])
 
 AC_DEFUN([PANDORA_FORCE_DEPEND_TRACKING],[
   AC_ARG_ENABLE([fat-binaries],
@@ -233,6 +233,9 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   AC_CHECK_PROGS([DOXYGEN], [doxygen])
   AC_CHECK_PROGS([PERL], [perl])
   AC_CHECK_PROGS([DPKG_GENSYMBOLS], [dpkg-gensymbols], [:])
+  AC_CHECK_PROGS([LCOV], [lcov], [echo lcov not found])
+  AC_CHECK_PROGS([LCOV_GENHTML], [genhtml], [echo genhtml not found])
+
   AC_CHECK_PROGS([SPHINXBUILD], [sphinx-build], [:])
   AS_IF([test "x${SPHINXBUILD}" != "x:"],[
     AC_CACHE_CHECK([if sphinx is new enough],[ac_cv_recent_sphinx],[

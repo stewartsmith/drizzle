@@ -174,6 +174,15 @@ static void printTransaction(const message::Transaction &transaction)
     if (should_commit)
       should_commit= isEndStatement(statement);
 
+    /* A ROLLBACK would be the only Statement within the Transaction
+     * since all other Statements will have been deleted from the
+     * Transaction message, so we should fall out of this loop immediately.
+     * We don't want to issue an unnecessary COMMIT, so we change
+     * should_commit to false here.
+     */
+    if (statement.type() == message::Statement::ROLLBACK)
+      should_commit= false;
+
     printStatement(statement);
   }
 

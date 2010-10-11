@@ -14,15 +14,15 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-# This is a library file used by the Perl version of mysql-test-run,
+# This is a library file used by the Perl version of drizzle-test-run,
 # and is part of the translation of the Bourne shell script with the
 # same name.
 
 use strict;
 
-sub mtr_match_prefix ($$);
-sub mtr_match_extension ($$);
-sub mtr_match_any_exact ($$);
+sub dtr_match_prefix ($$);
+sub dtr_match_extension ($$);
+sub dtr_match_any_exact ($$);
 
 ##############################################################################
 #
@@ -32,7 +32,7 @@ sub mtr_match_any_exact ($$);
 
 # Match a prefix and return what is after the prefix
 
-sub mtr_match_prefix ($$) {
+sub dtr_match_prefix ($$) {
   my $string= shift;
   my $prefix= shift;
 
@@ -49,7 +49,7 @@ sub mtr_match_prefix ($$) {
 
 # Match extension and return the name without extension
 
-sub mtr_match_extension ($$) {
+sub dtr_match_extension ($$) {
   my $file= shift;
   my $ext=  shift;
 
@@ -66,7 +66,7 @@ sub mtr_match_extension ($$) {
 
 # Match a substring anywere in a string
 
-sub mtr_match_substring ($$) {
+sub dtr_match_substring ($$) {
   my $string= shift;
   my $substring= shift;
 
@@ -81,7 +81,7 @@ sub mtr_match_substring ($$) {
 }
 
 
-sub mtr_match_any_exact ($$) {
+sub dtr_match_any_exact ($$) {
   my $string= shift;
   my $mlist=  shift;
 

@@ -16,64 +16,64 @@ insert into t1 values(1);
 # Test delimiters
 # This breaks vpath builds - and I don't care enough about it to fix
 # drizzletest. We can re-enable this in the new test system
-#--exec $MYSQL test 2>&1 < "$DRIZZLE_TEST_DIR/t/mysql_delimiter.sql"
+#--exec $DRIZZLE test 2>&1 < "$DRIZZLE_TEST_DIR/t/mysql_delimiter.sql"
 
 --disable_query_log
 # Test delimiter : supplied on the command line
 select "Test delimiter : from command line" as "_";
---exec $MYSQL test --delimiter=":" -e "select * from t1:"
+--exec $DRIZZLE test --delimiter=":" -e "select * from t1:"
 # Test delimiter :; supplied on the command line
 select "Test delimiter :; from command line" as "_";
---exec $MYSQL test --delimiter=":;" -e "select * from t1:;"
+--exec $DRIZZLE test --delimiter=":;" -e "select * from t1:;"
 # Test 'go' command (vertical output) \G
 select "Test 'go' command(vertical output) \G" as "_";
---exec $MYSQL test -e "select * from t1\G"
+--exec $DRIZZLE test -e "select * from t1\G"
 # Test 'go' command \g
 select "Test  'go' command \g" as "_";
---exec $MYSQL test -e "select * from t1\g"
+--exec $DRIZZLE test -e "select * from t1\g"
 --enable_query_log
 drop table t1;
 
 #
 # Bug#16859 -- NULLs in columns must not truncate data as if a C-language "string".
 #
-#--exec $MYSQL -t test -e "create table t1 (col1 binary(4), col2 varchar(10), col3 int); insert into t1 values ('a', 'b', 123421),('a ', '0123456789', 4), ('abcd', '', 4); select concat('>',col1,'<'), col2, col3 from t1; drop table t1;" 2>&1
+#--exec $DRIZZLE -t test -e "create table t1 (col1 binary(4), col2 varchar(10), col3 int); insert into t1 values ('a', 'b', 123421),('a ', '0123456789', 4), ('abcd', '', 4); select concat('>',col1,'<'), col2, col3 from t1; drop table t1;" 2>&1
 
 #
 # Bug#17939 Wrong table format when using UTF8 strings
 #
---exec $MYSQL --table -e "SELECT 'John Doe' as '__tañgè Ñãmé'" 2>&1
---exec $MYSQL --table -e "SELECT '__tañgè Ñãmé' as 'John Doe'" 2>&1
+--exec $DRIZZLE --table -e "SELECT 'John Doe' as '__tañgè Ñãmé'" 2>&1
+--exec $DRIZZLE --table -e "SELECT '__tañgè Ñãmé' as 'John Doe'" 2>&1
 
 #
 # Bug#18265 -- mysql client: No longer right-justifies numeric columns
 #
---exec $MYSQL -t test -e "create table t1 (i int, j int, k char(25)); insert into t1 (i) values (1); insert into t1 (k) values ('<----------------------->'); insert into t1 (k) values ('<-----'); insert into t1 (k) values ('Τη γλώσσα'); insert into t1 (k) values ('ᛖᚴ ᚷᛖᛏ'); select * from t1; DROP TABLE t1;"
+--exec $DRIZZLE -t test -e "create table t1 (i int, j int, k char(25)); insert into t1 (i) values (1); insert into t1 (k) values ('<----------------------->'); insert into t1 (k) values ('<-----'); insert into t1 (k) values ('Τη γλώσσα'); insert into t1 (k) values ('ᛖᚴ ᚷᛖᛏ'); select * from t1; DROP TABLE t1;"
 
 #
 # "DESCRIBE" commands may return strange NULLness flags.
 #
---exec $MYSQL test -e "create table t1 (i int, j int not null, k int); insert into t1 values (null, 1, null); select * from t1; describe t1; drop table t1;"
---exec $MYSQL -t test -e "create table t1 (i int, j int not null, k int); insert into t1 values (null, 1, null); select * from t1; describe t1; drop table t1;"
+--exec $DRIZZLE test -e "create table t1 (i int, j int not null, k int); insert into t1 values (null, 1, null); select * from t1; describe t1; drop table t1;"
+--exec $DRIZZLE -t test -e "create table t1 (i int, j int not null, k int); insert into t1 values (null, 1, null); select * from t1; describe t1; drop table t1;"
 
 #
 # Bug#19564: mysql displays NULL instead of space
 #
---exec $MYSQL test -e "create table b19564 (i int, s1 char(1)); insert into b19564 values (1, 'x'); insert into b19564 values (2, NULL); insert into b19564 values (3, ' '); select * from b19564 order by i; drop table b19564;" 
---exec $MYSQL -t test -e "create table b19564 (i int, s1 char(1)); insert into b19564 values (1, 'x'); insert into b19564 values (2, NULL); insert into b19564 values (3, ' '); select * from b19564 order by i; drop table b19564;" 
+--exec $DRIZZLE test -e "create table b19564 (i int, s1 char(1)); insert into b19564 values (1, 'x'); insert into b19564 values (2, NULL); insert into b19564 values (3, ' '); select * from b19564 order by i; drop table b19564;" 
+--exec $DRIZZLE -t test -e "create table b19564 (i int, s1 char(1)); insert into b19564 values (1, 'x'); insert into b19564 values (2, NULL); insert into b19564 values (3, ' '); select * from b19564 order by i; drop table b19564;" 
 
 #
 # Bug#21618: NULL shown as empty string in client
 #
---exec $MYSQL test -e "select unhex('zz');" 
---exec $MYSQL -t test -e "select unhex('zz');" 
+--exec $DRIZZLE test -e "select unhex('zz');" 
+--exec $DRIZZLE -t test -e "select unhex('zz');" 
 
 # Bug#19265 describe command does not work from mysql prompt
 #
 
 create table t1(a int, b varchar(255), c int);
---exec $MYSQL test -e "desc t1"
---exec $MYSQL test -e "desc t1\g"
+--exec $DRIZZLE test -e "desc t1"
+--exec $DRIZZLE test -e "desc t1\g"
 drop table t1;
 
 #--disable_parsing
@@ -81,7 +81,7 @@ drop table t1;
 # Bug#21042  	mysql client segfaults on importing a mysqldump export
 #
 #--error 1
-#--exec $MYSQL test -e "connect verylongdatabasenamethatshouldblowthe256byteslongbufferincom_connectfunctionxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxendcccccccdxxxxxxxxxxxxxxxxxkskskskskkskskskskskskskskskskkskskskskkskskskskskskskskskend" 2>&1
+#--exec $DRIZZLE test -e "connect verylongdatabasenamethatshouldblowthe256byteslongbufferincom_connectfunctionxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxendcccccccdxxxxxxxxxxxxxxxxxkskskskskkskskskskskskskskskskkskskskskkskskskskskskskskskend" 2>&1
 #--enable_parsing
 
 
@@ -90,34 +90,34 @@ drop table t1;
 #
 
 # if the client sees the 'use' within the comment, we haven't fixed
---exec echo "/*"          >  $MYSQLTEST_VARDIR/tmp/bug20432.sql
---exec echo "use"         >> $MYSQLTEST_VARDIR/tmp/bug20432.sql
---exec echo "*/"          >> $MYSQLTEST_VARDIR/tmp/bug20432.sql
---exec $MYSQL              < $MYSQLTEST_VARDIR/tmp/bug20432.sql 2>&1
+--exec echo "/*"          >  $DRIZZLETEST_VARDIR/tmp/bug20432.sql
+--exec echo "use"         >> $DRIZZLETEST_VARDIR/tmp/bug20432.sql
+--exec echo "*/"          >> $DRIZZLETEST_VARDIR/tmp/bug20432.sql
+--exec $DRIZZLE              < $DRIZZLETEST_VARDIR/tmp/bug20432.sql 2>&1
 
 # SQL can have embedded comments => workie
---exec echo "select /*"   >  $MYSQLTEST_VARDIR/tmp/bug20432.sql
---exec echo "use"         >> $MYSQLTEST_VARDIR/tmp/bug20432.sql
---exec echo "*/ 1"        >> $MYSQLTEST_VARDIR/tmp/bug20432.sql
---exec $MYSQL              < $MYSQLTEST_VARDIR/tmp/bug20432.sql 2>&1
+--exec echo "select /*"   >  $DRIZZLETEST_VARDIR/tmp/bug20432.sql
+--exec echo "use"         >> $DRIZZLETEST_VARDIR/tmp/bug20432.sql
+--exec echo "*/ 1"        >> $DRIZZLETEST_VARDIR/tmp/bug20432.sql
+--exec $DRIZZLE              < $DRIZZLETEST_VARDIR/tmp/bug20432.sql 2>&1
 
 # client commands on the other hand must be at BOL => error
---exec echo "/*"          >  $MYSQLTEST_VARDIR/tmp/bug20432.sql
---exec echo "xxx"         >> $MYSQLTEST_VARDIR/tmp/bug20432.sql
---exec echo "*/ use"      >> $MYSQLTEST_VARDIR/tmp/bug20432.sql
+--exec echo "/*"          >  $DRIZZLETEST_VARDIR/tmp/bug20432.sql
+--exec echo "xxx"         >> $DRIZZLETEST_VARDIR/tmp/bug20432.sql
+--exec echo "*/ use"      >> $DRIZZLETEST_VARDIR/tmp/bug20432.sql
 --error 1
---exec $MYSQL              < $MYSQLTEST_VARDIR/tmp/bug20432.sql 2>&1
+--exec $DRIZZLE              < $DRIZZLETEST_VARDIR/tmp/bug20432.sql 2>&1
 
 # client comment recognized, but parameter missing => error
---exec echo "use"         >  $MYSQLTEST_VARDIR/tmp/bug20432.sql
---exec $MYSQL              < $MYSQLTEST_VARDIR/tmp/bug20432.sql 2>&1
+--exec echo "use"         >  $DRIZZLETEST_VARDIR/tmp/bug20432.sql
+--exec $DRIZZLE              < $DRIZZLETEST_VARDIR/tmp/bug20432.sql 2>&1
 
 #
 # Bug #20328: mysql client interprets commands in comments
 #
-#--exec $MYSQL -e "help" > $MYSQLTEST_VARDIR/tmp/bug20328_1.result
-#--exec $MYSQL -e "help " > $MYSQLTEST_VARDIR/tmp/bug20328_2.result
-#--diff_files $MYSQLTEST_VARDIR/tmp/bug20328_1.result $MYSQLTEST_VARDIR/tmp/bug20328_2.result
+#--exec $DRIZZLE -e "help" > $DRIZZLETEST_VARDIR/tmp/bug20328_1.result
+#--exec $DRIZZLE -e "help " > $DRIZZLETEST_VARDIR/tmp/bug20328_2.result
+#--diff_files $DRIZZLETEST_VARDIR/tmp/bug20328_1.result $DRIZZLETEST_VARDIR/tmp/bug20328_2.result
 
 #
 # Bug #19216: Client crashes on long SELECT
@@ -127,7 +127,7 @@ drop table t1;
 #   max number that can fit in a 16 bit number.
 
 #--perl
-#open(FILE,">","$ENV{'MYSQLTEST_VARDIR'}/tmp/b19216.tmp") or die;
+#open(FILE,">","$ENV{'DRIZZLETEST_VARDIR'}/tmp/b19216.tmp") or die;
 #print FILE "select\n";
 #print FILE "'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',\n" x 3400;
 #print FILE "'b';\n";
@@ -135,10 +135,10 @@ drop table t1;
 #EOF
 
 #--disable_query_log
-#--exec $MYSQL < $MYSQLTEST_VARDIR/tmp/b19216.tmp >/dev/null
+#--exec $DRIZZLE < $DRIZZLETEST_VARDIR/tmp/b19216.tmp >/dev/null
 #--enable_query_log
 #
-#--remove_file $MYSQLTEST_VARDIR/tmp/b19216.tmp
+#--remove_file $DRIZZLETEST_VARDIR/tmp/b19216.tmp
 
 #
 # Bug#17583: mysql drops connection when stdout is not writable
@@ -154,7 +154,7 @@ insert into t17583 select a from t17583;
 insert into t17583 select a from t17583;
 # Close to the minimal data needed to exercise bug.
 select count(*) from t17583;
---exec echo "select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; " |$MYSQL test >&-
+--exec echo "select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; select count(*) from t17583; " |$DRIZZLE test >&-
 drop table t17583;
 
 #
@@ -163,52 +163,52 @@ drop table t17583;
 #
 #
 --echo Test connect without db- or host-name => reconnect
---exec $MYSQL test -e "\r" 2>&1
---exec $MYSQL test -e "connect" 2>&1
+--exec $DRIZZLE test -e "\r" 2>&1
+--exec $DRIZZLE test -e "connect" 2>&1
 
 --echo Test connect with dbname only => new dbname, old hostname
---exec $MYSQL test -e "\r test" 2>&1
---exec $MYSQL test -e "connect test" 2>&1
---exec $MYSQL test -e "\rtest" 2>&1
+--exec $DRIZZLE test -e "\r test" 2>&1
+--exec $DRIZZLE test -e "connect test" 2>&1
+--exec $DRIZZLE test -e "\rtest" 2>&1
 --error 1
---exec $MYSQL test -e "connecttest" 2>&1
+--exec $DRIZZLE test -e "connecttest" 2>&1
 
 --echo Test connect with _invalid_ dbname only => new invalid dbname, old hostname
 --error 1
---exec $MYSQL test -e "\r invalid" 2>&1
+--exec $DRIZZLE test -e "\r invalid" 2>&1
 --error 1
---exec $MYSQL test -e "connect invalid" 2>&1
+--exec $DRIZZLE test -e "connect invalid" 2>&1
 
 --echo Test connect with dbname + hostname
-#--exec $MYSQL test -e "\r test localhost" 2>&1
-#--exec $MYSQL test -e "connect test localhost" 2>&1
+#--exec $DRIZZLE test -e "\r test localhost" 2>&1
+#--exec $DRIZZLE test -e "connect test localhost" 2>&1
 
 --echo Test connect with dbname + _invalid_ hostname
 # Mask the errno of the error message
 #--replace_regex /\([0-9]*\)/(errno)/
 #--error 1
-#--exec $MYSQL test -e "\r test invalid_hostname" 2>&1
+#--exec $DRIZZLE test -e "\r test invalid_hostname" 2>&1
 #--replace_regex /\([0-9]*\)/(errno)/
 #--error 1
-#--exec $MYSQL test -e "connect test invalid_hostname" 2>&1
+#--exec $DRIZZLE test -e "connect test invalid_hostname" 2>&1
 
 #--echo The commands reported in the bug report
 #--replace_regex /\([0-9]*\)/(errno)/
 #--error 1
-#--exec $MYSQL test -e "\r\r\n\r\n cyril\ has\ found\ a\ bug\ :)XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" 2>&1
+#--exec $DRIZZLE test -e "\r\r\n\r\n cyril\ has\ found\ a\ bug\ :)XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" 2>&1
 #
 ##--replace_regex /\([0-9]*\)/(errno)/
 ##--error 1
-##--exec echo '\r\r\n\r\n cyril\ has\ found\ a\ bug\ :)XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX' | $MYSQL 2>&1
+##--exec echo '\r\r\n\r\n cyril\ has\ found\ a\ bug\ :)XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX' | $DRIZZLE 2>&1
 #
 #--echo Too long dbname
 #--error 1
-#--exec $MYSQL test -e "\r test_really_long_dbnamexxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx localhost" 2>&1
+#--exec $DRIZZLE test -e "\r test_really_long_dbnamexxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx localhost" 2>&1
 #
 #--echo Too long hostname
 #--replace_regex /\([0-9]*\)/(errno)/
 #--error 1
-#--exec $MYSQL test -e "\r  test cyrils_superlonghostnameXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" 2>&1
+#--exec $DRIZZLE test -e "\r  test cyrils_superlonghostnameXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" 2>&1
 
 
 #
@@ -217,35 +217,35 @@ drop table t17583;
 #
 
 # This should work just fine...
-#--write_file $MYSQLTEST_VARDIR/tmp/bug21412.sql
+#--write_file $DRIZZLETEST_VARDIR/tmp/bug21412.sql
 #DELIMITER /
 #SELECT 1/
 #EOF
-#--exec $MYSQL             < $MYSQLTEST_VARDIR/tmp/bug21412.sql 2>&1
-#remove_file $MYSQLTEST_VARDIR/tmp/bug21412.sql;
+#--exec $DRIZZLE             < $DRIZZLETEST_VARDIR/tmp/bug21412.sql 2>&1
+#remove_file $DRIZZLETEST_VARDIR/tmp/bug21412.sql;
 #
 ## This should give an error...
-#--write_file $MYSQLTEST_VARDIR/tmp/bug21412.sql
+#--write_file $DRIZZLETEST_VARDIR/tmp/bug21412.sql
 #DELIMITER \
 #EOF
-#--exec $MYSQL             < $MYSQLTEST_VARDIR/tmp/bug21412.sql 2>&1
-#remove_file $MYSQLTEST_VARDIR/tmp/bug21412.sql;
+#--exec $DRIZZLE             < $DRIZZLETEST_VARDIR/tmp/bug21412.sql 2>&1
+#remove_file $DRIZZLETEST_VARDIR/tmp/bug21412.sql;
 #
 ## As should this...
-#--write_file $MYSQLTEST_VARDIR/tmp/bug21412.sql
+#--write_file $DRIZZLETEST_VARDIR/tmp/bug21412.sql
 #DELIMITER \\
 #EOF
-#--exec $MYSQL             < $MYSQLTEST_VARDIR/tmp/bug21412.sql 2>&1
-#remove_file $MYSQLTEST_VARDIR/tmp/bug21412.sql;
+#--exec $DRIZZLE             < $DRIZZLETEST_VARDIR/tmp/bug21412.sql 2>&1
+#remove_file $DRIZZLETEST_VARDIR/tmp/bug21412.sql;
 #
 #
 # Some coverage of not normally used parts
 #
 
 --disable_query_log
-#--exec $MYSQL test -e "show status" 2>&1 > /dev/null
---exec $MYSQL --help 2>&1 > /dev/null
---exec $MYSQL --version 2>&1 > /dev/null
+#--exec $DRIZZLE test -e "show status" 2>&1 > /dev/null
+--exec $DRIZZLE --help 2>&1 > /dev/null
+--exec $DRIZZLE --version 2>&1 > /dev/null
 --enable_query_log
 
 #
@@ -254,16 +254,16 @@ drop table t17583;
 
 # allow error 7(invalid argument) since --pager does not always exist in mysql
 --error 0,1,7
---exec $MYSQL --pager="540bytelengthstringxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" -e "select 1" > /dev/null 2>&1
+--exec $DRIZZLE --pager="540bytelengthstringxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" -e "select 1" > /dev/null 2>&1
 
 #
 # Bug#29323 mysql client only accetps ANSI encoded files
 #
-#--write_file $MYSQLTEST_VARDIR/tmp/bug29323.sql
+#--write_file $DRIZZLETEST_VARDIR/tmp/bug29323.sql
 #﻿select "This is a file starting with UTF8 BOM 0xEFBBBF";
 #EOF
-#--exec $MYSQL < $MYSQLTEST_VARDIR/tmp/bug29323.sql 2>&1
-#remove_file $MYSQLTEST_VARDIR/tmp/bug29323.sql;
+#--exec $DRIZZLE < $DRIZZLETEST_VARDIR/tmp/bug29323.sql 2>&1
+#remove_file $DRIZZLETEST_VARDIR/tmp/bug29323.sql;
 
 --echo End of 5.0 tests
 
@@ -271,8 +271,8 @@ drop table t17583;
 # Bug#26780: patch to add auto vertical output option to the cli.
 #
 # Make this wide enough that it will wrap almost everywhere.
-#--exec $MYSQL test --auto-vertical-output --table -e "SELECT 1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0;"
+#--exec $DRIZZLE test --auto-vertical-output --table -e "SELECT 1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0;"
 # Too short to wrap.
-#--exec $MYSQL test --auto-vertical-output --table -e "SELECT 1;"
+#--exec $DRIZZLE test --auto-vertical-output --table -e "SELECT 1;"
 
 --echo End of tests

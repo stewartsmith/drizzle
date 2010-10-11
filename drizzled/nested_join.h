@@ -21,7 +21,6 @@
 #define DRIZZLED_NESTED_JOIN_H
 
 #include <drizzled/sql_list.h>
-#include <drizzled/sql_bitmap.h>
 #include <drizzled/item.h>
 #include <drizzled/table_list.h>
 

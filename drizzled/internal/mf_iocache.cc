@@ -738,7 +738,7 @@ int _my_b_write(register IO_CACHE *info, const unsigned char *Buffer, size_t Cou
 
   if (info->pos_in_file+info->buffer_length > info->end_of_file)
   {
-    errno=errno=EFBIG;
+    errno=EFBIG;
     return info->error = -1;
   }
 

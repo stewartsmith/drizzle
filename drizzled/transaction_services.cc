@@ -1402,6 +1402,7 @@ bool TransactionServices::useExistingUpdateHeader(message::Statement &statement,
     in_table->setReadSet();
 
     size_t num_calculated_updated_fields= 0;
+    bool found= false;
     while ((current_field= *table_fields++) != NULL)
     {
       if (num_calculated_updated_fields > num_set_fields)
@@ -1412,7 +1413,7 @@ bool TransactionServices::useExistingUpdateHeader(message::Statement &statement,
       if (isFieldUpdated(current_field, in_table, old_record, new_record))
       {
         /* check that this field exists in the UpdateHeader record */
-        bool found= false;
+        found= false;
 
         for (size_t x= 0; x < num_set_fields; ++x)
         {
@@ -1432,7 +1433,7 @@ bool TransactionServices::useExistingUpdateHeader(message::Statement &statement,
       }
     }
 
-    if (num_calculated_updated_fields == num_set_fields)
+    if ((num_calculated_updated_fields == num_set_fields) && found)
     {
       return true;
     } 

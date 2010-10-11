@@ -49,6 +49,9 @@
 
 #include <string>
 
+#include "drizzled/utf8/checked.h"
+#include "drizzled/utf8/unchecked.h"
+
 namespace drizzled
 {
 namespace utf8
