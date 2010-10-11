@@ -1435,6 +1435,8 @@ public:
   }
   void refresh_status();
   user_var_entry *getVariable(LEX_STRING &name, bool create_if_not_exists);
+  user_var_entry *getVariable(const std::string  &name, bool create_if_not_exists);
+  void setVariable(const std::string &name, const std::string &value);
   
   /**
    * Closes all tables used by the current substatement, or all tables
