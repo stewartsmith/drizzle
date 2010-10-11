@@ -31,6 +31,7 @@
 #include <boost/unordered_map.hpp>
 #include <boost/thread/condition_variable.hpp>
 #include <boost/dynamic_bitset.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include "drizzled/typelib.h"
 #include "drizzled/memory/root.h"
@@ -40,7 +41,9 @@
 namespace drizzled
 {
 
-typedef boost::unordered_map< TableIdentifier::Key, TableShare *> TableDefinitionCache;
+typedef boost::shared_ptr<TableShare> TableSharePtr;
+
+typedef boost::unordered_map< TableIdentifier::Key, TableSharePtr> TableDefinitionCache;
 
 const static std::string STANDARD_STRING("STANDARD");
 const static std::string TEMPORARY_STRING("TEMPORARY");

@@ -32,7 +32,7 @@ public:
   class Generator : public drizzled::plugin::TableFunction::Generator 
   {
     bool is_primed;
-    drizzled::TableShare *share;
+    drizzled::TableSharePtr share;
     drizzled::TableDefinitionCache::const_iterator table_share_iterator;
 
     void fill();

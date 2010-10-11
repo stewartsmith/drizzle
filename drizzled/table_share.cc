@@ -140,7 +140,6 @@ void TableShare::release(TableShare *share)
     if (iter != table_def_cache.end())
     {
       table_def_cache.erase(iter);
-      delete share;
     }
     return;
   }
@@ -152,20 +151,19 @@ void TableShare::release(TableIdentifier &identifier)
   TableDefinitionCache::iterator iter= table_def_cache.find(identifier.getKey());
   if (iter != table_def_cache.end())
   {
-    TableShare *share= (*iter).second;
+    TableSharePtr share= (*iter).second;
     share->version= 0;                          // Mark for delete
     if (share->ref_count == 0)
     {
       share->lock();
       plugin::EventObserver::deregisterTableEvents(*share);
       table_def_cache.erase(identifier.getKey());
-      delete share;
     }
   }
 }
 
 
-static TableShare *foundTableShare(TableShare *share)
+static TableShare *foundTableShare(TableSharePtr share)
 {
   /*
     We found an existing table definition. Return it if we didn't get
@@ -183,7 +181,7 @@ static TableShare *foundTableShare(TableShare *share)
 
   share->incrementTableCount();
 
-  return share;
+  return share.get();
 }
 
 /*
@@ -213,7 +211,7 @@ TableShare *TableShare::getShareCreate(Session *session,
                                        TableIdentifier &identifier,
                                        int *error)
 {
-  TableShare *share= NULL;
+  TableSharePtr share;
 
   *error= 0;
 
@@ -225,26 +223,18 @@ TableShare *TableShare::getShareCreate(Session *session,
     return foundTableShare(share);
   }
 
-  if (not (share= new TableShare(message::Table::STANDARD, identifier)))
-  {
-    return NULL;
-  }
-
+  share.reset(new TableShare(message::Table::STANDARD, identifier));
+  
   /*
     Lock mutex to be able to read table definition from file without
     conflicts
   */
   share->lock();
 
-  /**
-   * @TODO: we need to eject something if we exceed table_def_size
- */
   pair<TableDefinitionCache::iterator, bool> ret=
     table_def_cache.insert(make_pair(identifier.getKey(), share));
   if (ret.second == false)
   {
-    delete share;
-
     return NULL;
   }
 
@@ -252,7 +242,6 @@ TableShare *TableShare::getShareCreate(Session *session,
   {
     *error= share->error;
     table_def_cache.erase(identifier.getKey());
-    delete share;
 
     return NULL;
   }
@@ -262,7 +251,7 @@ TableShare *TableShare::getShareCreate(Session *session,
   
   share->unlock();
 
-  return share;
+  return share.get();
 }
 
 
@@ -285,7 +274,7 @@ TableShare *TableShare::getShare(TableIdentifier &identifier)
   TableDefinitionCache::iterator iter= table_def_cache.find(identifier.getKey());
   if (iter != table_def_cache.end())
   {
-    return (*iter).second;
+    return (*iter).second.get();
   }
   else
   {
