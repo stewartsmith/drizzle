@@ -598,6 +598,42 @@ namespace plugin
     return eventData.callEventObservers();
   }
 
+  bool EventObserver::connectSession(Session &session)
+  {
+    if (all_event_plugins.empty())
+      return false;
+
+    ConnectSessionEventData eventData(session);
+    return eventData.callEventObservers();
+  }
+
+  bool EventObserver::disconnectSession(Session &session)
+  {
+    if (all_event_plugins.empty())
+      return false;
+
+    DisconnectSessionEventData eventData(session);
+    return eventData.callEventObservers();
+  }
+
+  bool EventObserver::beforeStatement(Session &session)
+  {
+    if (all_event_plugins.empty())
+      return false;
+
+    BeforeStatementEventData eventData(session);
+    return eventData.callEventObservers();
+  }
+
+  bool EventObserver::afterStatement(Session &session)
+  {
+    if (all_event_plugins.empty())
+      return false;
+
+    AfterStatementEventData eventData(session);
+    return eventData.callEventObservers();
+  }
+
 
 } /* namespace plugin */
 } /* namespace drizzled */

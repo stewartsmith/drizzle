@@ -67,6 +67,8 @@
 #include "drizzled/module/registry.h"
 #include "drizzled/module/load_list.h"
 
+#include "drizzled/plugin/event_observer.h"
+
 #include <google/protobuf/stubs/common.h>
 
 #if TIME_WITH_SYS_TIME
@@ -651,6 +653,10 @@ void Session::unlink(Session *session)
   getSessionList().erase(remove(getSessionList().begin(),
                          getSessionList().end(),
                          session));
+  if (unlikely(plugin::EventObserver::disconnectSession(*session)))
+  {
+    // We should do something about an error...
+  }
 
   delete session;
   LOCK_thread_count.unlock();

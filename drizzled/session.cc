@@ -556,6 +556,11 @@ bool Session::schedule()
   getSessionList().push_back(this);
   LOCK_thread_count.unlock();
 
+  if (unlikely(plugin::EventObserver::connectSession(*this)))
+  {
+    // We should do something about an error...
+  }
+
   if (scheduler->addSession(this))
   {
     DRIZZLE_CONNECTION_START(thread_id);

@@ -135,6 +135,30 @@ static void observeAfterDropDatabase(AfterDropDatabaseEventData &data)
   fprintf(stderr, PLUGIN_NAME" EVENT observeAfterDropDatabase(%s) err = %d\n", data.db.c_str(), data.err);
 }
 
+//---
+static void observeConnectSession(ConnectSessionEventData &data)
+{
+  fprintf(stderr, PLUGIN_NAME" EVENT observeConnectSession %d\n", static_cast<int>(data.session.getSessionId()));
+}
+
+//---
+static void observeDisconnectSession(DisconnectSessionEventData &data)
+{
+  fprintf(stderr, PLUGIN_NAME" EVENT observeDisconnectSession %d\n", static_cast<int>(data.session.getSessionId()));
+}
+
+//---
+static void observeBeforeStatement(BeforeStatementEventData &data)
+{
+  fprintf(stderr, PLUGIN_NAME" EVENT observeBeforeStatement %d\n", static_cast<int>(data.session.getSessionId()));
+}
+
+//---
+static void observeAfterStatement(AfterStatementEventData &data)
+{
+  fprintf(stderr, PLUGIN_NAME" EVENT observeAfterStatement %d\n", static_cast<int>(data.session.getSessionId()));
+}
+
 HelloEvents::~HelloEvents()
 {
   /* These are strdup'd in option processing */
@@ -181,6 +205,10 @@ void HelloEvents::registerSessionEventsDo(Session &session, EventObserverList &o
     
   registerEvent(observers, AFTER_CREATE_DATABASE);
   registerEvent(observers, AFTER_DROP_DATABASE, sysvar_post_drop_db_position);
+  registerEvent(observers, DISCONNECT_SESSION);
+  registerEvent(observers, CONNECT_SESSION);
+  registerEvent(observers, BEFORE_STATEMENT);
+  registerEvent(observers, AFTER_STATEMENT);
 }
 
 
@@ -229,6 +257,22 @@ bool HelloEvents::observeEventDo(EventData &data)
 
   case AFTER_DROP_DATABASE:
     observeAfterDropDatabase((AfterDropDatabaseEventData &)data);
+    break;
+
+  case CONNECT_SESSION:
+    observeConnectSession((ConnectSessionEventData &)data);
+    break;
+
+  case DISCONNECT_SESSION:
+    observeDisconnectSession((DisconnectSessionEventData &)data);
+    break;
+
+  case BEFORE_STATEMENT:
+    observeBeforeStatement((BeforeStatementEventData &)data);
+    break;
+
+  case AFTER_STATEMENT:
+    observeAfterStatement((AfterStatementEventData &)data);
     break;
 
   default:
@@ -328,7 +372,7 @@ static int init(module::Context &context)
 
   else
   {
-    sysvar_db_list= (char *)"";
+    sysvar_db_list= strdup("");
   }
 
   if (vm.count("watch-tables"))
@@ -338,7 +382,7 @@ static int init(module::Context &context)
 
   else
   {
-    sysvar_table_list= (char *)"";
+    sysvar_table_list= strdup("");
   }
   hello_events= new HelloEvents(PLUGIN_NAME);
 

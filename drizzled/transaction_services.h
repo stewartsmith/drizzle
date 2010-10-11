@@ -485,6 +485,19 @@ private:
    */
   int sendEvent(Session *session, const message::Event &event);
 
+  /**
+   * Helper method which checks the UpdateHeader to determine 
+   * if it needs to be finalized.  
+   *
+   * @param[in] statement Statement message container to check 
+   * @param[in] in_table Pointer to the Table being updated
+   * @param[in] old_record Pointer to the old data in the record
+   * @param[in] new_record Pointer to the new data in the record
+   */
+  bool useExistingUpdateHeader(message::Statement &statement,
+                               Table *in_table,
+                               const unsigned char *old_record,
+                               const unsigned char *new_record);
 };
 
 } /* namespace drizzled */
