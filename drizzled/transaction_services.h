@@ -118,6 +118,7 @@ public:
    */
   void cleanupTransactionMessage(message::Transaction *in_transaction,
                                  Session *in_session);
+
   /**
    * Helper method which initializes a Statement message
    *
@@ -427,6 +428,31 @@ public:
   {
     current_transaction_id= 0;
   }
+
+  /**************
+   * Events API
+   **************/
+
+  /**
+   * Send server startup event.
+   *
+   * @param session Session pointer
+   *
+   * @retval true Success
+   * @retval false Failure
+   */
+  bool sendStartupEvent(Session *session);
+
+  /**
+   * Send server shutdown event.
+   *
+   * @param session Session pointer
+   *
+   * @retval true Success
+   * @retval false Failure
+   */
+  bool sendShutdownEvent(Session *session);
+
 private:
   atomic<TransactionId> current_transaction_id;
 
@@ -444,6 +470,22 @@ private:
                       const unsigned char *new_record);
 
   /**
+   * Create a Transaction that contains event information and send it off.
+   *
+   * This differs from other uses of Transaction in that we don't use the
+   * message associated with Session. We create a totally new message and
+   * use it.
+   *
+   * @param session Session pointer
+   * @param event Event message to send
+   *
+   * @note Used by the public Events API.
+   *
+   * @returns Non-zero on error
+   */
+  int sendEvent(Session *session, const message::Event &event);
+
+  /**
    * Helper method which checks the UpdateHeader to determine 
    * if it needs to be finalized.  
    *
@@ -456,7 +498,6 @@ private:
                                Table *in_table,
                                const unsigned char *old_record,
                                const unsigned char *new_record);
-
 };
 
 } /* namespace drizzled */
