@@ -522,7 +522,17 @@ public:
   uint32_t null_fields;			/* number of null fields */
   uint32_t blob_fields;			/* number of blob fields */
   uint32_t timestamp_field_offset;		/* Field number for timestamp field */
-  uint32_t varchar_fields;                  /* number of varchar fields */
+private:
+  bool has_variable_width;                  /* number of varchar fields */
+public:
+  bool hasVariableWidth() const
+  {
+    return has_variable_width; // We should calculate this.
+  }
+  void setVariableWidth()
+  {
+    has_variable_width= true;
+  }
   uint32_t db_create_options;		/* Create options from database */
   uint32_t db_options_in_use;		/* Options in use */
   uint32_t db_record_offset;		/* if HA_REC_IN_SEQ */

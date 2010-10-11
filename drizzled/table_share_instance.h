@@ -29,10 +29,12 @@ namespace drizzled
 class TableShareInstance : public Table
 {
   TableShare _share;
+  bool _has_variable_width;
 
 public:
   TableShareInstance(TableIdentifier::Type type_arg) :
-    _share(type_arg)
+    _share(type_arg),
+    _has_variable_width(false)
   {
   }
 
@@ -49,6 +51,16 @@ public:
   const TableShare *getShare(void) const
   {
     return &_share;
+  }
+
+  bool hasVariableWidth() const
+  {
+    return _has_variable_width;
+  }
+
+  void setVariableWidth()
+  {
+    _has_variable_width= true;
   }
 
   ~TableShareInstance()

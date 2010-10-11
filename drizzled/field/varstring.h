@@ -51,12 +51,10 @@ public:
                   unsigned char *null_ptr_arg,
                   unsigned char null_bit_arg,
                   const char *field_name_arg,
-                  TableShare *share,
                   const CHARSET_INFO * const cs);
   Field_varstring(uint32_t len_arg,
                   bool maybe_null_arg,
                   const char *field_name_arg,
-                  TableShare *share,
                   const CHARSET_INFO * const cs);
 
   enum_field_types type() const { return DRIZZLE_TYPE_VARCHAR; }
