@@ -1339,21 +1339,16 @@ message::Statement &TransactionServices::getUpdateStatement(Session *in_session,
     }
     else
     {
-      const message::UpdateHeader &update_header= statement->update_header();
-      string old_table_name= update_header.table_metadata().table_name();
-
-      string current_table_name;
-      (void) in_table->getShare()->getTableName(current_table_name);
-      if (current_table_name.compare(old_table_name))
-      {
-        finalizeStatementMessage(*statement, in_session);
-        statement= in_session->getStatementMessage();
-      }
-      else
+      if (useExistingUpdateHeader(*statement, in_table, old_record, new_record))
       {
         /* carry forward the existing segment id */
         const message::UpdateData &current_data= statement->update_data();
         *next_segment_id= current_data.segment_id();
+      } 
+      else 
+      {
+        finalizeStatementMessage(*statement, in_session);
+        statement= in_session->getStatementMessage();
       }
     }
   }
@@ -1379,6 +1374,75 @@ message::Statement &TransactionServices::getUpdateStatement(Session *in_session,
   }
   return *statement;
 }
+
+bool TransactionServices::useExistingUpdateHeader(message::Statement &statement,
+                                                  Table *in_table,
+                                                  const unsigned char *old_record,
+                                                  const unsigned char *new_record)
+{
+  const message::UpdateHeader &update_header= statement.update_header();
+  string old_table_name= update_header.table_metadata().table_name();
+
+  string current_table_name;
+  (void) in_table->getShare()->getTableName(current_table_name);
+  if (current_table_name.compare(old_table_name))
+  {
+    return false;
+  }
+  else
+  {
+    /* Compare the set fields in the existing UpdateHeader and see if they
+     * match the updated fields in the new record, if they do not we must
+     * create a new UpdateHeader 
+     */
+    size_t num_set_fields= update_header.set_field_metadata_size();
+
+    Field *current_field;
+    Field **table_fields= in_table->getFields();
+    in_table->setReadSet();
+
+    size_t num_calculated_updated_fields= 0;
+    bool found= false;
+    while ((current_field= *table_fields++) != NULL)
+    {
+      if (num_calculated_updated_fields > num_set_fields)
+      {
+        break;
+      }
+
+      if (isFieldUpdated(current_field, in_table, old_record, new_record))
+      {
+        /* check that this field exists in the UpdateHeader record */
+        found= false;
+
+        for (size_t x= 0; x < num_set_fields; ++x)
+        {
+          const message::FieldMetadata &field_metadata= update_header.set_field_metadata(x);
+          string name= field_metadata.name();
+          if (name.compare(current_field->field_name) == 0)
+          {
+            found= true;
+            ++num_calculated_updated_fields;
+            break;
+          } 
+        }
+        if (! found)
+        {
+          break;
+        } 
+      }
+    }
+
+    if ((num_calculated_updated_fields == num_set_fields) && found)
+    {
+      return true;
+    } 
+    else 
+    {
+      return false;
+    }
+  }
+}  
 
 void TransactionServices::setUpdateHeader(message::Statement &statement,
                                           Session *in_session,
