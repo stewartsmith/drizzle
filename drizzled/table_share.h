@@ -612,12 +612,6 @@ public:
 
   void setIdentifier(TableIdentifier &identifier_arg);
 
-  inline bool honor_global_locks()
-  {
-    return (table_category == TABLE_CATEGORY_USER);
-  }
-
-
   /*
     Initialize share for temporary tables
 
@@ -643,12 +637,13 @@ public:
 
   static void cacheStart(void);
   static void release(TableShare *share);
+  static void release(TableSharePtr &share);
   static void release(TableIdentifier &identifier);
   static const TableDefinitionCache &getCache();
-  static TableShare *getShare(TableIdentifier &identifier);
-  static TableShare *getShareCreate(Session *session, 
-                                    TableIdentifier &identifier,
-                                    int *error);
+  static TableSharePtr getShare(TableIdentifier &identifier);
+  static TableSharePtr getShareCreate(Session *session, 
+                                      TableIdentifier &identifier,
+                                      int *error);
 
   friend std::ostream& operator<<(std::ostream& output, const TableShare &share)
   {

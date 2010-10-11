@@ -146,6 +146,32 @@ void TableShare::release(TableShare *share)
   share->unlock();
 }
 
+void TableShare::release(TableSharePtr &share)
+{
+  bool to_be_deleted= false;
+  safe_mutex_assert_owner(LOCK_open.native_handle);
+
+  share->lock();
+  if (!--share->ref_count)
+  {
+    to_be_deleted= true;
+  }
+
+  if (to_be_deleted)
+  {
+    TableIdentifier identifier(share->getSchemaName(), share->getTableName());
+    plugin::EventObserver::deregisterTableEvents(*share);
+   
+    TableDefinitionCache::iterator iter= table_def_cache.find(identifier.getKey());
+    if (iter != table_def_cache.end())
+    {
+      table_def_cache.erase(iter);
+    }
+    return;
+  }
+  share->unlock();
+}
+
 void TableShare::release(TableIdentifier &identifier)
 {
   TableDefinitionCache::iterator iter= table_def_cache.find(identifier.getKey());
@@ -163,7 +189,7 @@ void TableShare::release(TableIdentifier &identifier)
 }
 
 
-static TableShare *foundTableShare(TableSharePtr share)
+static TableSharePtr foundTableShare(TableSharePtr share)
 {
   /*
     We found an existing table definition. Return it if we didn't get
@@ -176,12 +202,12 @@ static TableShare *foundTableShare(TableSharePtr share)
     /* Table definition contained an error */
     share->open_table_error(share->error, share->open_errno, share->errarg);
 
-    return NULL;
+    return TableSharePtr();
   }
 
   share->incrementTableCount();
 
-  return share.get();
+  return share;
 }
 
 /*
@@ -207,9 +233,9 @@ static TableShare *foundTableShare(TableSharePtr share)
 #  Share for table
 */
 
-TableShare *TableShare::getShareCreate(Session *session, 
-                                       TableIdentifier &identifier,
-                                       int *error)
+TableSharePtr TableShare::getShareCreate(Session *session, 
+                                         TableIdentifier &identifier,
+                                         int *error)
 {
   TableSharePtr share;
 
@@ -235,7 +261,7 @@ TableShare *TableShare::getShareCreate(Session *session,
     table_def_cache.insert(make_pair(identifier.getKey(), share));
   if (ret.second == false)
   {
-    return NULL;
+    return TableSharePtr();
   }
 
   if (share->open_table_def(*session, identifier))
@@ -243,7 +269,7 @@ TableShare *TableShare::getShareCreate(Session *session,
     *error= share->error;
     table_def_cache.erase(identifier.getKey());
 
-    return NULL;
+    return TableSharePtr();
   }
   share->ref_count++;				// Mark in use
   
@@ -251,7 +277,7 @@ TableShare *TableShare::getShareCreate(Session *session,
   
   share->unlock();
 
-  return share.get();
+  return share;
 }
 
 
@@ -267,19 +293,17 @@ TableShare *TableShare::getShareCreate(Session *session,
   0  Not cached
 #  TableShare for table
 */
-TableShare *TableShare::getShare(TableIdentifier &identifier)
+TableSharePtr TableShare::getShare(TableIdentifier &identifier)
 {
   safe_mutex_assert_owner(LOCK_open.native_handle);
 
   TableDefinitionCache::iterator iter= table_def_cache.find(identifier.getKey());
   if (iter != table_def_cache.end())
   {
-    return (*iter).second.get();
+    return (*iter).second;
   }
-  else
-  {
-    return NULL;
-  }
+
+  return TableSharePtr();
 }
 
 static enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_type)
