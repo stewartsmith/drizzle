@@ -2005,4 +2005,47 @@ void TransactionServices::rawStatement(Session *in_session, const string &query)
   cleanupTransactionMessage(transaction, in_session);
 }
 
+int TransactionServices::sendEvent(Session *session, const message::Event &event)
+{
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  if (! replication_services.isActive())
+    return 0;
+
+  message::Transaction *transaction= new (nothrow) message::Transaction();
+
+  // set server id, start timestamp
+  initTransactionMessage(*transaction, session, true);
+
+  // set end timestamp
+  finalizeTransactionMessage(*transaction, session);
+
+  message::Event *trx_event= transaction->mutable_event();
+
+  trx_event->CopyFrom(event);
+
+  plugin::ReplicationReturnCode result= replication_services.pushTransactionMessage(*session, *transaction);
+
+  delete transaction;
+
+  return static_cast<int>(result);
+}
+
+bool TransactionServices::sendStartupEvent(Session *session)
+{
+  message::Event event;
+  event.set_type(message::Event::STARTUP);
+  if (sendEvent(session, event) != 0)
+    return false;
+  return true;
+}
+
+bool TransactionServices::sendShutdownEvent(Session *session)
+{
+  message::Event event;
+  event.set_type(message::Event::SHUTDOWN);
+  if (sendEvent(session, event) != 0)
+    return false;
+  return true;
+}
+
 } /* namespace drizzled */
