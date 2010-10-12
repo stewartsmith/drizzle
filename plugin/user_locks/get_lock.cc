@@ -20,6 +20,7 @@
 
 #include "config.h"
 #include "plugin/user_locks/module.h"
+#include "plugin/user_locks/lock_storage.h"
 
 #include <string>
 
@@ -40,9 +41,26 @@ int64_t GetLock::val_int()
   if (not res->length())
     return 0;
 
-  bool result= user_locks::Locks::getInstance().lock(getSession().getSessionId(), res->c_str(), wait_time);
+  boost::tribool result= user_locks::Locks::getInstance().lock(getSession().getSessionId(), res->c_str(), wait_time);
 
-  return result ? 1 : 0;
+  if (boost::indeterminate(result))
+    null_value= true;
+
+  if (result)
+  {
+    user_locks::Storable *list= dynamic_cast<user_locks::Storable *>(getSession().getProperty("user_locks"));
+    if (not list) // Just in case we ever blow the assert
+    {
+      list= new user_locks::Storable(getSession().getSessionId());
+      getSession().setProperty("user_locks", list);
+    }
+
+    list->insert(res->c_str());
+
+    return 1;
+  }
+
+  return 0;
 }
 
 } /* namespace user_locks */

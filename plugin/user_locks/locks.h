@@ -20,6 +20,7 @@
 
 #include <boost/thread/mutex.hpp>
 #include <boost/unordered_map.hpp>
+#include <boost/logic/tribool.hpp>
 
 #include <string>
 
@@ -42,8 +43,9 @@ class Locks
     }
   };
 
+  typedef boost::shared_ptr<lock_st> lock_st_ptr;
 
-  typedef boost::unordered_map<std::string, lock_st *, drizzled::util::insensitive_hash, drizzled::util::insensitive_equal_to> LockMap;
+  typedef boost::unordered_map<std::string, lock_st_ptr, drizzled::util::insensitive_hash, drizzled::util::insensitive_equal_to> LockMap;
 
 public:
   static Locks &getInstance(void)
@@ -57,7 +59,7 @@ public:
     return lock(id_arg, arg, 0);
   }
   bool lock(drizzled::session_id_t id_arg, const std::string &arg, int64_t wait_for);
-  bool release(const std::string &arg);
+  boost::tribool release(const std::string &arg, drizzled::session_id_t &id_arg);
   bool isFree(const std::string &arg);
   bool isUsed(const std::string &arg, drizzled::session_id_t &id_arg);
 

@@ -18,48 +18,52 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "plugin/user_locks/module.h"
-#include "plugin/user_locks/lock_storage.h"
+#ifndef PLUGIN_USER_LOCKS_STORABLE_H_H
+#define PLUGIN_USER_LOCKS_STORABLE_H_H
 
-#include <string>
+#include "drizzled/session.h"
+
+#include <boost/unordered_set.hpp>
 
 namespace user_locks {
 
-int64_t ReleaseLock::val_int()
-{
-  drizzled::String *res= args[0]->val_str(&value);
+/*
+  We a storable to track any locks we might have open so that if we are disconnected before we release the locks, we release the locks during the deconstruction of Session.
+*/
 
-  if (not res)
+class Storable : public drizzled::util::Storable {
+  typedef boost::unordered_set<std::string> LockList;
+  LockList list_of_locks;
+  drizzled::session_id_t id;
+
+public:
+
+  Storable(drizzled::session_id_t id_arg) :
+    id(id_arg)
   {
-    null_value= true;
-    return 0;
-  }
-  null_value= false;
-
-  if (not res->length())
-    return 0;
-
-  drizzled::session_id_t id= getSession().getSessionId();
-  boost::tribool result= user_locks::Locks::getInstance().release(res->c_str(), id);
-
-  if (result)
-  {
-    user_locks::Storable *list= dynamic_cast<user_locks::Storable *>(getSession().getProperty("user_locks"));
-    assert(list);
-    if (list) // Just in case we ever blow the assert
-      list->erase(res->c_str());
-
-    return 1;
-  }
-  else if (not result)
-  {
-    return 0;
   }
 
-  null_value= true;
+  ~Storable()
+  {
+    for (LockList::iterator iter= list_of_locks.begin();
+         iter != list_of_locks.end(); iter++)
+    {
+      (void)user_locks::Locks::getInstance().release(*iter, id);
+    }
+  }
 
-  return 0;
-}
+  void insert(const std::string &arg)
+  {
+    list_of_locks.insert(arg);
+  }
+
+  void erase(const std::string &arg)
+  {
+    list_of_locks.erase(arg);
+  }
+};
+
 
 } /* namespace user_locks */
+
+#endif /* PLUGIN_USER_LOCKS_STORABLE_H_H */

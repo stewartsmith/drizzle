@@ -39,7 +39,8 @@ int64_t IsFreeLock::val_int()
   if (not res->length())
     return 0;
 
-  bool result= user_locks::Locks::getInstance().release(res->c_str());
+  drizzled::session_id_t id= getSession().getSessionId();
+  bool result= user_locks::Locks::getInstance().release(std::string(res->c_str()), id);
 
   return result ? 1 : 0;
 }

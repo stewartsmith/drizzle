@@ -59,10 +59,17 @@ bool Locks::isFree(const std::string &arg)
   return iter != lock_map.end();
 }
 
-bool Locks::release(const std::string &arg)
+boost::tribool Locks::release(const std::string &arg, drizzled::session_id_t &id_arg)
 {
+  size_t elements= 0;
   boost::unique_lock<boost::mutex> scope(mutex);
-  size_t elements= lock_map.erase(arg);
+  LockMap::iterator iter= lock_map.find(arg);
+
+  if ( iter == lock_map.end())
+    return boost::indeterminate;
+
+  if ((*iter).second->id == id_arg)
+    elements= lock_map.erase(arg);
 
   return elements ? true : false;
 }
