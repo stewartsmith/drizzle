@@ -4777,6 +4777,12 @@ ha_innobase::index_read(
 
   index = prebuilt->index;
 
+  if (UNIV_UNLIKELY(index == NULL)) {
+    prebuilt->index_usable = FALSE;
+    return(HA_ERR_CRASHED);
+  }
+
+
   /* Note that if the index for which the search template is built is not
   necessarily prebuilt->index, but can also be the clustered index */
 
@@ -4932,6 +4938,7 @@ ha_innobase::change_active_index(
   if (UNIV_UNLIKELY(!prebuilt->index)) {
     errmsg_printf(ERRMSG_LVL_WARN, "InnoDB: change_active_index(%u) failed",
           keynr);
+    prebuilt->index_usable = FALSE;
     return(1);
   }
 
