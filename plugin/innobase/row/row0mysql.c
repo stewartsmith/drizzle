@@ -1754,7 +1754,6 @@ row_create_table_for_mysql(
 	const char*	table_name;
 	ulint		table_name_len;
 	ulint		err;
-	ulint		i;
 
 	ut_ad(trx->mysql_thread_id == os_thread_get_curr_id());
 #ifdef UNIV_SYNC_DEBUG
@@ -1769,7 +1768,6 @@ row_create_table_for_mysql(
 		      " by the user.\n"
 		      "InnoDB: Shut down mysqld and edit my.cnf so that newraw"
 		      " is replaced with raw.\n", stderr);
-err_exit:
 		dict_mem_table_free(table);
 		trx_commit_for_mysql(trx);
 
@@ -1777,15 +1775,6 @@ err_exit:
 	}
 
 	trx->op_info = "creating table";
-
-	/* Check that no reserved column names are used. */
-	for (i = 0; i < dict_table_get_n_user_cols(table); i++) {
-		if (dict_col_name_is_reserved(
-			    dict_table_get_col_name(table, i))) {
-
-			goto err_exit;
-		}
-	}
 
 	trx_start_if_not_started(trx);
 
