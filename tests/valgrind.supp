@@ -324,6 +324,14 @@
    fun:_Z15key_cache_writePN8drizzled12st_key_cacheEiyiPhjji
    ...
 }
+{
+   MyISAM pwrite issue. Teh Suck.
+   Memcheck:Param
+   pwrite64(buf)
+   fun:pwrite64
+   fun:_Z15key_cache_writePN8drizzled12st_key_cacheEimiPhjji
+   ...
+}
 
 # Things we don't like in Drizzle
 
