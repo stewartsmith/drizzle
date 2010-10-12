@@ -5787,7 +5787,8 @@ InnobaseEngine::doCreateTable(
 
   /* Check for name conflicts (with reserved name) for
      any user indices to be created. */
-  if (innobase_index_name_is_reserved(trx, form.key_info, form.s->keys)) {
+  if (innobase_index_name_is_reserved(trx, form.key_info,
+                                      form.getShare()->keys)) {
     error = -1;
     goto cleanup;
   }
