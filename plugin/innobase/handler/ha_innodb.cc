@@ -258,21 +258,6 @@ static const char* innobase_change_buffering_values[IBUF_USE_COUNT] = {
   "inserts" /* IBUF_USE_INSERT */
 };
 
-/***********************************************************************
-This function checks each index name for a table against reserved
-system default primary index name 'GEN_CLUST_INDEX'. If a name matches,
-this function pushes an error message to the client, and returns true. */
-static
-bool
-innobase_index_name_is_reserved(
-/*============================*/
-					/* out: true if index name matches a
-					reserved name */
-	const trx_t*	trx,		/* in: InnoDB transaction handle */
-	const Table&	form,		/* in: information on table
-					columns and indexes */
-	const char*	norm_name);	/* in: table name */
-
 /* "GEN_CLUST_INDEX" is the name reserved for Innodb default
 system primary index. */
 static const char innobase_index_reserve_name[]= "GEN_CLUST_INDEX";
@@ -5787,7 +5772,7 @@ InnobaseEngine::doCreateTable(
 
   /* Check for name conflicts (with reserved name) for
      any user indices to be created. */
-  if (innobase_index_name_is_reserved(trx, form, norm_name)) {
+  if (innobase_index_name_is_reserved(trx, form.key_info, form.s->keys)) {
     error = -1;
     goto cleanup;
   }
@@ -9165,35 +9150,38 @@ innobase_commit_concurrency_init_default(void)
 /***********************************************************************
 This function checks each index name for a table against reserved
 system default primary index name 'GEN_CLUST_INDEX'. If a name matches,
-this function pushes an error message to the client, and returns true. */
-static
+this function pushes an warning message to the client, and returns true. */
+extern "C" UNIV_INTERN
 bool
 innobase_index_name_is_reserved(
 /*============================*/
 					/* out: true if an index name
 					matches the reserved name */
 	const trx_t*	trx,		/* in: InnoDB transaction handle */
-	const Table&	form,		/* in: information on table
-					columns and indexes */
-	const char*	)	/* in: table name */
+	const KeyInfo*	key_info,	/* in: Indexes to be created */
+	ulint		num_of_keys)	/* in: Number of indexes to
+					be created. */
 {
-  KeyInfo*	key;
+  const KeyInfo*	key;
   uint		key_num;	/* index number */
 
-  for (key_num = 0; key_num < form.s->keys; key_num++) {
-    key = form.key_info + key_num;
+  for (key_num = 0; key_num < num_of_keys; key_num++) {
+    key = &key_info[key_num];
 
     if (innobase_strcasecmp(key->name,
                             innobase_index_reserve_name) == 0) {
       /* Push warning to drizzle */
       push_warning_printf((Session*)trx->mysql_thd,
-                          DRIZZLE_ERROR::WARN_LEVEL_ERROR,
-                          ER_CANT_CREATE_TABLE,
+                          DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                          ER_WRONG_NAME_FOR_INDEX,
                           "Cannot Create Index with name "
                           "'%s'. The name is reserved "
                           "for the system default primary "
                           "index.",
                           innobase_index_reserve_name);
+
+      my_error(ER_WRONG_NAME_FOR_INDEX, MYF(0),
+               innobase_index_reserve_name);
 
       return(true);
     }
