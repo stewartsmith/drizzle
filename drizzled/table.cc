@@ -1419,7 +1419,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   if (session->is_fatal_error)				// If end of memory
     goto err;
   table->getMutableShare()->db_record_offset= 1;
-  if (table->getMutableShare()->db_type() == myisam_engine)
+  if (table->getShare()->db_type() == myisam_engine)
   {
     if (table->create_myisam_tmp_table(param->keyinfo, param->start_recinfo,
 				       &param->recinfo, select_options))
@@ -1732,7 +1732,7 @@ void Table::free_tmp_table(Session *session)
     }
 
     TableIdentifier identifier(getShare()->getSchemaName(), getShare()->getTableName(), getShare()->getTableName());
-    getMutableShare()->db_type()->doDropTable(*session, identifier);
+    getShare()->getEngine()->doDropTable(*session, identifier);
 
     delete cursor;
   }

@@ -247,7 +247,6 @@ void table_cache_free(void)
 
 void close_handle_and_leave_table_as_lock(Table *table)
 {
-  TableShare *share, *old_share= table->getMutableShare();
   assert(table->db_stat);
   assert(table->getShare()->getType() == message::Table::STANDARD);
 
@@ -258,9 +257,9 @@ void close_handle_and_leave_table_as_lock(Table *table)
   */
   TableIdentifier identifier(table->getShare()->getSchemaName(), table->getShare()->getTableName(), message::Table::INTERNAL);
   const TableIdentifier::Key &key(identifier.getKey());
-  share= new TableShare(identifier.getType(),
-                        identifier,
-                        const_cast<char *>(&key[0]),  static_cast<uint32_t>(old_share->getCacheKeySize()));
+  TableShare *share= new TableShare(identifier.getType(),
+                                    identifier,
+                                    const_cast<char *>(&key[0]),  static_cast<uint32_t>(table->getShare()->getCacheKeySize()));
 
   table->cursor->close();
   table->db_stat= 0;                            // Mark cursor closed
