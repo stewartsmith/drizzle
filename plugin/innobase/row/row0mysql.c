@@ -1851,6 +1851,8 @@ row_create_table_for_mysql(
 	if (UNIV_UNLIKELY(err != DB_SUCCESS)) {
 		trx->error_state = DB_SUCCESS;
 		trx_general_rollback_for_mysql(trx, NULL);
+		/* TO DO: free table?  The code below will dereference
+		table->name, though. */
 	}
 
 	switch (err) {
@@ -1869,31 +1871,6 @@ row_create_table_for_mysql(
 		break;
 
 	case DB_DUPLICATE_KEY:
-		ut_print_timestamp(stderr);
-		fputs("  InnoDB: Error: table ", stderr);
-		ut_print_name(stderr, trx, TRUE, table->name);
-		fputs(" already exists in InnoDB internal\n"
-		      "InnoDB: data dictionary. Have you deleted"
-		      " the .frm file\n"
-		      "InnoDB: and not used DROP TABLE?"
-		      " Have you used DROP DATABASE\n"
-		      "InnoDB: for InnoDB tables in"
-		      " MySQL version <= 3.23.43?\n"
-		      "InnoDB: See the Restrictions section"
-		      " of the InnoDB manual.\n"
-		      "InnoDB: You can drop the orphaned table"
-		      " inside InnoDB by\n"
-		      "InnoDB: creating an InnoDB table with"
-		      " the same name in another\n"
-		      "InnoDB: database and copying the .frm file"
-		      " to the current database.\n"
-		      "InnoDB: Then MySQL thinks the table exists,"
-		      " and DROP TABLE will\n"
-		      "InnoDB: succeed.\n"
-		      "InnoDB: You can look for further help from\n"
-		      "InnoDB: " REFMAN "innodb-troubleshooting.html\n",
-		      stderr);
-
 		/* We may also get err == DB_ERROR if the .ibd file for the
 		table already exists */
 
