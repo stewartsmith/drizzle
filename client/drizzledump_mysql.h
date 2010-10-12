@@ -68,6 +68,7 @@ class DrizzleDumpTableMySQL : public DrizzleDumpTable
 
     bool populateFields();
     bool populateIndexes();
+    bool populateFkeys();
     void setEngine(const char* newEngine);
     void setCollate(const char* newCollate);
     DrizzleDumpData* getData(void);

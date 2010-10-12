@@ -286,20 +286,9 @@ bool DrizzleDumpTableDrizzle::populateFkeys()
     fkey->parentColumns= row[1];
     fkey->childTable= row[2];
     fkey->childColumns= row[3];
-    if (strcmp(row[4], "NONE") != 0)
-      fkey->matchOption= row[4];
-    else
-      fkey->matchOption= "";
-
-    if (strcmp(row[5], "UNDEFINED") != 0)
-      fkey->deleteRule= row[5];
-    else
-      fkey->deleteRule= "";
-
-    if (strcmp(row[6], "UNDEFINED") != 0)
-      fkey->updateRule= row[6];
-    else
-      fkey->updateRule= "";
+    fkey->matchOption= (strcmp(row[4], "NONE") != 0) ? row[4] : "";
+    fkey->deleteRule= (strcmp(row[5], "UNDEFINED") != 0) ? row[5] : "";
+    fkey->updateRule= (strcmp(row[6], "UNDEFINED") != 0) ? row[6] : "";
 
     fkeys.push_back(fkey);
   }
