@@ -21,23 +21,62 @@
 #ifndef PLUGIN_SCHEMA_DICTIONARY_REFERENTIAL_CONSTRAINTS_H
 #define PLUGIN_SCHEMA_DICTIONARY_REFERENTIAL_CONSTRAINTS_H
 
-class ReferentialConstraintsTool : public TablesTool
+class ReferentialConstraintsTool : public drizzled::plugin::TableFunction
 {
 public:
 
   ReferentialConstraintsTool();
 
-  class Generator : public TablesTool::Generator 
+  ReferentialConstraintsTool(const char *schema_arg, const char *table_arg) :
+    drizzled::plugin::TableFunction(schema_arg, table_arg)
+  { }
+
+  ReferentialConstraintsTool(const char *table_arg) :
+    drizzled::plugin::TableFunction("DATA_DICTIONARY", table_arg)
+  { }
+
+  class Generator : public drizzled::plugin::TableFunction::Generator 
   {
-    bool populate()
-    {
-      return false;
-    }
+    drizzled::generator::AllTables all_tables_generator;
+    drizzled::message::Table table_message;
+    drizzled::message::Table::ForeignKeyConstraint fkey;
+    int keyPos;
+    bool firstFill;
+
+    virtual void fill();
 
   public:
-    Generator(drizzled::Field **arg) :
-      TablesTool::Generator(arg)
-    { }
+    Generator(drizzled::Field **arg);
+    
+    bool nextTable();
+    bool fillFkey();
+
+    void pushType(drizzled::message::Table::Field::FieldType type);
+
+    const std::string &table_name()
+    {
+      return table_message.name();
+    }
+
+    const drizzled::message::Table& getTableProto()
+    {
+      return table_message;
+    }
+
+    const drizzled::message::Table& getTableMessage()
+    {
+      return table_message;
+    }
+
+    bool isTablesPrimed()
+    {
+      return true;
+    }
+
+    bool populate();
+
+    std::string fkeyOption(drizzled::message::Table::ForeignKeyConstraint::ForeignKeyOption option);
+
   };
 
   Generator *generator(drizzled::Field **arg)

@@ -2,6 +2,7 @@
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2010 Sun Microsystems
+ *  Copyright (C) 2010 Andrew Hutchings
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,7 +26,7 @@ using namespace std;
 using namespace drizzled;
 
 ReferentialConstraintsTool::ReferentialConstraintsTool() :
-  TablesTool("REFERENTIAL_CONSTRAINTS")
+  plugin::TableFunction("DATA_DICTIONARY", "REFERENTIAL_CONSTRAINTS")
 {
   add_field("CONSTRAINT_SCHEMA");
   add_field("CONSTRAINT_NAME");
@@ -40,4 +41,152 @@ ReferentialConstraintsTool::ReferentialConstraintsTool() :
   add_field("TABLE_NAME");
 
   add_field("REFERENCED_TABLE_NAME");
+}
+
+ReferentialConstraintsTool::Generator::Generator(Field **arg) :
+  plugin::TableFunction::Generator(arg),
+  all_tables_generator(getSession()),
+  keyPos(0),
+  firstFill(true)
+{
+}
+
+bool ReferentialConstraintsTool::Generator::nextTable()
+{
+  const drizzled::message::Table *table_ptr;
+  while ((table_ptr= all_tables_generator))
+  {
+    table_message.CopyFrom(*table_ptr);
+    return true;
+  }
+
+  return false;
+}
+
+bool ReferentialConstraintsTool::Generator::fillFkey()
+{
+  if (firstFill)
+  {
+    firstFill= false;
+    nextTable();
+  }
+
+  while(true)
+  {
+    if (keyPos < getTableMessage().fk_constraint_size())
+    { 
+      fkey= getTableMessage().fk_constraint(keyPos);
+      keyPos++;
+      fill();
+      return true;
+    }
+    else if (nextTable())
+    {
+      keyPos= 0;
+    }
+    else
+      return false;
+  }
+}
+
+bool ReferentialConstraintsTool::Generator::populate()
+{
+  if (fillFkey())
+    return true;
+
+  return false;
+}
+
+void ReferentialConstraintsTool::Generator::pushType(message::Table::Field::FieldType type)
+{
+  switch (type)
+  {
+    default:
+      push("VARCHAR");
+      break;
+  }
+}
+
+std::string ReferentialConstraintsTool::Generator::fkeyOption(message::Table::ForeignKeyConstraint::ForeignKeyOption option)
+{
+  std::string ret;
+  switch (option)
+  {
+    case message::Table::ForeignKeyConstraint::OPTION_UNDEF:
+      ret= "UNDEFINED";
+      break;
+    case message::Table::ForeignKeyConstraint::OPTION_RESTRICT:
+      ret= "RESTRICT";
+      break;
+    case message::Table::ForeignKeyConstraint::OPTION_CASCADE:
+      ret= "CASCADE";
+      break;
+    case message::Table::ForeignKeyConstraint::OPTION_SET_NULL:
+      ret= "SET NULL";
+      break;
+    case message::Table::ForeignKeyConstraint::OPTION_NO_ACTION:
+      ret= "NO ACTION";
+      break;
+    case message::Table::ForeignKeyConstraint::OPTION_DEFAULT:
+    default:
+      ret= "DEFAULT";
+      break;
+  }
+  return ret;
+}
+
+void ReferentialConstraintsTool::Generator::fill()
+{
+  /* CONSTRAINT_SCHEMA */
+  push(getTableMessage().schema());
+
+  /* CONSTRAINT_NAME */
+  push(fkey.name());
+
+  /* UNIQUE_CONSTRAINT_SCHEMA */
+  push();
+
+  /* UNIQUE_CONSTRAINT_NAME */
+  std::string destination;
+
+  for (ssize_t x= 0; x < fkey.references_columns_size(); ++x)
+  {
+    if (x != 0)
+      destination.append(", ");
+    
+    destination.append("`");
+    destination.append(fkey.references_columns(x));
+    destination.append("`");
+  }
+
+  push(destination);
+
+  /* MATCH_OPTION */
+  switch (fkey.match())
+  {
+    case message::Table::ForeignKeyConstraint::MATCH_FULL:
+      push("FULL");
+      break;
+    case message::Table::ForeignKeyConstraint::MATCH_PARTIAL:
+      push("PARTIAL");
+      break;
+    case message::Table::ForeignKeyConstraint::MATCH_SIMPLE:
+      push("SIMPLE");
+      break;
+    default:
+      push("NONE");
+      break;
+  }
+  /* UPDATE_RULE */
+  push(fkeyOption(fkey.update_option()));
+
+  /* DELETE_RULE */
+  push(fkeyOption(fkey.delete_option()));
+
+  /* TABLE_NAME */
+  push(getTableMessage().name());
+
+  /* REFERENCED_TABLE_NAME */
+  push(fkey.references_table_name());
+
 }
