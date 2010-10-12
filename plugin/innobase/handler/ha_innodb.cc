@@ -101,6 +101,7 @@ using namespace std;
 /* Include necessary InnoDB headers */
 extern "C" {
 #include "univ.i"
+#include "buf0lru.h"
 #include "btr0sea.h"
 #include "os0file.h"
 #include "os0thread.h"
@@ -198,6 +199,10 @@ static ulong innobase_write_io_threads;
  */
 static int64_t innobase_buffer_pool_size= 128*1024*1024;
 static int64_t innobase_log_file_size;
+
+/** Percentage of the buffer pool to reserve for 'old' blocks.
+Connected to buf_LRU_old_ratio. */
+static uint innobase_old_blocks_pct;
 
 /* The default values for the following char* start-up parameters
 are determined in innobase_init below: */
@@ -2309,6 +2314,8 @@ innobase_change_buffering_inited_ok:
 
   data_mysql_default_charset_coll = (ulint)default_charset_info->number;
 
+  innobase_old_blocks_pct = buf_LRU_old_ratio_update(innobase_old_blocks_pct,
+                                                     FALSE);
 
   innobase_commit_concurrency_init_default();
 
@@ -8516,6 +8523,25 @@ innodb_adaptive_hash_index_update(
   }
 }
 
+/****************************************************************//**
+Update the system variable innodb_old_blocks_pct using the "saved"
+value. This function is registered as a callback with MySQL. */
+static
+void
+innodb_old_blocks_pct_update(
+/*=========================*/
+	Session*			,	/*!< in: thread handle */
+	drizzle_sys_var*	,	/*!< in: pointer to
+						system variable */
+	void*				,/*!< out: where the
+						formal string goes */
+	const void*			save)	/*!< in: immediate result
+						from check function */
+{
+	innobase_old_blocks_pct = buf_LRU_old_ratio_update(
+		*static_cast<const uint*>(save), TRUE);
+}
+
 /*************************************************************//**
 Check if it is a valid value of innodb_change_buffering.  This function is
 registered as a callback with MySQL.
@@ -8754,6 +8780,18 @@ static DRIZZLE_SYSVAR_LONG(mirrored_log_groups, innobase_mirrored_log_groups,
   "Number of identical copies of log groups we keep for the database. Currently this should be set to 1.",
   NULL, NULL, 1, 1, 10, 0);
 
+static DRIZZLE_SYSVAR_UINT(old_blocks_pct, innobase_old_blocks_pct,
+  PLUGIN_VAR_RQCMDARG,
+  "Percentage of the buffer pool to reserve for 'old' blocks.",
+  NULL, innodb_old_blocks_pct_update, 100 * 3 / 8, 5, 95, 0);
+
+static DRIZZLE_SYSVAR_UINT(old_blocks_time, buf_LRU_old_threshold_ms,
+  PLUGIN_VAR_RQCMDARG,
+  "Move blocks to the 'new' end of the buffer pool if the first access"
+  " was at least this many milliseconds ago."
+  " The timeout is disabled if 0 (the default).",
+  NULL, NULL, 0, 0, UINT32_MAX, 0);
+
 static DRIZZLE_SYSVAR_LONG(open_files, innobase_open_files,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "How many files at the maximum InnoDB keeps open at the same time.",
@@ -8977,6 +9015,8 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(max_purge_lag),
   DRIZZLE_SYSVAR(adaptive_flushing),
   DRIZZLE_SYSVAR(mirrored_log_groups),
+  DRIZZLE_SYSVAR(old_blocks_pct),
+  DRIZZLE_SYSVAR(old_blocks_time),
   DRIZZLE_SYSVAR(open_files),
   DRIZZLE_SYSVAR(stats_on_metadata),
   DRIZZLE_SYSVAR(stats_sample_pages),
