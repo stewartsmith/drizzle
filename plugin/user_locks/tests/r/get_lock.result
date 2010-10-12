@@ -10,8 +10,8 @@ get_lock("foo", 1)
 SELECT release_lock("foo");
 release_lock("foo")
 1
-SELECT get_lock("foo", 1, 100);
-get_lock("foo", 1, 100)
+SELECT get_lock("foo", 10);
+get_lock("foo", 10)
 1
 SELECT release_lock("foo");
 release_lock("foo")

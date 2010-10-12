@@ -45,11 +45,7 @@ public:
 
   ~Storable()
   {
-    for (LockList::iterator iter= list_of_locks.begin();
-         iter != list_of_locks.end(); iter++)
-    {
-      (void)user_locks::Locks::getInstance().release(*iter, id);
-    }
+    erase_all();
   }
 
   void insert(const std::string &arg)
@@ -60,6 +56,16 @@ public:
   void erase(const std::string &arg)
   {
     list_of_locks.erase(arg);
+  }
+
+  void erase_all()
+  {
+    for (LockList::iterator iter= list_of_locks.begin();
+         iter != list_of_locks.end(); iter++)
+    {
+      (void)user_locks::Locks::getInstance().release(*iter, id);
+    }
+    list_of_locks.clear();
   }
 };
 

@@ -46,6 +46,10 @@ int64_t GetLock::val_int()
   if (not res->length())
     return 0;
 
+  user_locks::Storable *list= dynamic_cast<user_locks::Storable *>(getSession().getProperty("user_locks"));
+  if (list) // To be compatible with MySQL, we will now release all other locks we might have.
+    list->erase_all();
+
   boost::tribool result= user_locks::Locks::getInstance().lock(getSession().getSessionId(), res->c_str(), wait_time);
 
   if (boost::indeterminate(result))
@@ -53,8 +57,7 @@ int64_t GetLock::val_int()
 
   if (result)
   {
-    user_locks::Storable *list= dynamic_cast<user_locks::Storable *>(getSession().getProperty("user_locks"));
-    if (not list) // Just in case we ever blow the assert
+    if (not list)
     {
       list= new user_locks::Storable(getSession().getSessionId());
       getSession().setProperty("user_locks", list);
