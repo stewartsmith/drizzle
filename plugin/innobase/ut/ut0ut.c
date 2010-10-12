@@ -222,7 +222,7 @@ value may wrap around.  It should only be used for heuristic
 purposes.
 @return	ms since epoch */
 UNIV_INTERN
-uint
+ulint
 ut_time_ms(void)
 /*============*/
 {
@@ -230,7 +230,7 @@ ut_time_ms(void)
 
 	ut_gettimeofday(&tv, NULL);
 
-	return((uint) tv.tv_sec * 1000 + tv.tv_usec / 1000);
+	return((ulint) tv.tv_sec * 1000 + tv.tv_usec / 1000);
 }
 #endif /* !UNIV_HOTBACKUP */
 
