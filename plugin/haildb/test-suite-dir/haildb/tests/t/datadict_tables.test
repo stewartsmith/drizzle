@@ -11,8 +11,6 @@ select name from data_dictionary.haildb_sys_tables;
 --replace_column 9 #
 explain select name from data_dictionary.haildb_sys_tables where name="SYS_FOREIGN";
 select name from data_dictionary.haildb_sys_tables where name="SYS_FOREIGN";
---replace_column 9 #
-explain select t.name t,c.name c from data_dictionary.haildb_sys_tables as t, data_dictionary.haildb_sys_columns as c where t.id=c.table_id;
 select t.name t,c.name c from data_dictionary.haildb_sys_tables as t, data_dictionary.haildb_sys_columns as c where t.id=c.table_id;
 
 select t.name as table_name,c.name as column_name from data_dictionary.haildb_sys_tables t,data_dictionary.haildb_sys_columns c where t.id=c.table_id order by table_name,column_name;
