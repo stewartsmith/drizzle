@@ -103,6 +103,7 @@ Created 2/16/1996 Heikki Tuuri
 # include "row0row.h"
 # include "row0mysql.h"
 # include "btr0pcur.h"
+# include "os0sync.h" /* for INNODB_RW_LOCKS_USE_ATOMICS */
 
 #include <errno.h>
 #include <unistd.h>
