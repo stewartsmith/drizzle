@@ -5789,6 +5789,8 @@ InnobaseEngine::doCreateTable(
     goto cleanup;
   }
 
+  if (lex_identified_temp_table)
+    iflags |= DICT_TF2_TEMPORARY << DICT_TF2_SHIFT;
 
   error= create_table_def(trx, &form, norm_name,
                           lex_identified_temp_table ? name2 : NULL,
