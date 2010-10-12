@@ -29,18 +29,16 @@ ReferentialConstraintsTool::ReferentialConstraintsTool() :
   plugin::TableFunction("DATA_DICTIONARY", "REFERENTIAL_CONSTRAINTS")
 {
   add_field("CONSTRAINT_SCHEMA");
+  add_field("CONSTRAINT_TABLE");
   add_field("CONSTRAINT_NAME");
+  add_field("CONSTRAINT_COLUMNS");
 
-  add_field("UNIQUE_CONSTRAINT_SCHEMA");
-  add_field("UNIQUE_CONSTRAINT_NAME");
-
+  add_field("REFERENCED_TABLE_NAME");
+  add_field("REFERENCED_TABLE_COLUMNS");
 
   add_field("MATCH_OPTION");
   add_field("UPDATE_RULE");
   add_field("DELETE_RULE");
-  add_field("TABLE_NAME");
-
-  add_field("REFERENCED_TABLE_NAME");
 }
 
 ReferentialConstraintsTool::Generator::Generator(Field **arg) :
@@ -140,13 +138,31 @@ void ReferentialConstraintsTool::Generator::fill()
   /* CONSTRAINT_SCHEMA */
   push(getTableMessage().schema());
 
+  /* CONSTRAINT_TABLE */
+  push(getTableMessage().name());
+
   /* CONSTRAINT_NAME */
   push(fkey.name());
 
-  /* UNIQUE_CONSTRAINT_SCHEMA */
-  push();
+  /* CONSTRAINT_COLUMNS */
+  std::string source;
 
-  /* UNIQUE_CONSTRAINT_NAME */
+  for (ssize_t x= 0; x < fkey.column_names_size(); ++x)
+  {
+    if (x != 0)
+      source.append(", ");
+
+    source.append("`");
+    source.append(fkey.column_names(x));
+    source.append("`");
+  }
+
+  push(source);
+
+  /* REFERENCED_TABLE_NAME */
+  push(fkey.references_table_name());
+
+  /* REFERENCED_TABLE_COLUMNS */
   std::string destination;
 
   for (ssize_t x= 0; x < fkey.references_columns_size(); ++x)
@@ -182,11 +198,5 @@ void ReferentialConstraintsTool::Generator::fill()
 
   /* DELETE_RULE */
   push(fkeyOption(fkey.delete_option()));
-
-  /* TABLE_NAME */
-  push(getTableMessage().name());
-
-  /* REFERENCED_TABLE_NAME */
-  push(fkey.references_table_name());
 
 }
