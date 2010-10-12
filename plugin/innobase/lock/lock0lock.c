@@ -361,9 +361,6 @@ lock_rec_validate_page(
 /*===================*/
 	ulint	space,	/*!< in: space id */
 	ulint	page_no);/*!< in: page number */
-
-/* Define the following in order to enable lock_rec_validate_page() checks. */
-# undef UNIV_DEBUG_LOCK_VALIDATE
 #endif /* UNIV_DEBUG */
 
 /* The lock system */
