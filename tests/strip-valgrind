@@ -16,8 +16,9 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 current_test= None
-in_leak_summar= False
-new_current_test=True
+in_leak_summary= False
+in_suppression= False
+new_current_test= True
 results=[]
 summary={}
 total_warning_count=0
@@ -28,6 +29,19 @@ for line in open('var/log/master.err','r').readlines():
     in_leak_summary=False
     new_current_test=True
     continue
+  if line.strip() == "{":
+    in_suppression= True
+    results.append("Suppression:\n{\n")
+    continue
+  if line.strip() == "}":
+    in_suppression= False
+    results.append("}\n")
+    continue
+  if in_suppression:
+    results.append(line)
+    continue
+
+
   if line[:2] != "==":
     continue
   valgrind_command= line.split("==")[2]
