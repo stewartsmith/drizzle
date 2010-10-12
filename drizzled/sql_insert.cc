@@ -1501,26 +1501,43 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
   tmp_table.null_row= false;
   tmp_table.maybe_null= false;
 
+  tmp_table.in_use= session;
+
   while ((item=it++))
   {
     CreateField *cr_field;
     Field *field, *def_field;
     if (item->type() == Item::FUNC_ITEM)
+    {
       if (item->result_type() != STRING_RESULT)
+      {
         field= item->tmp_table_field(&tmp_table);
+      }
       else
+      {
         field= item->tmp_table_field_from_field_type(&tmp_table, 0);
+      }
+    }
     else
+    {
       field= create_tmp_field(session, &tmp_table, item, item->type(),
                               (Item ***) 0, &tmp_field, &def_field, false,
                               false, false, 0);
+    }
+
     if (!field ||
 	!(cr_field=new CreateField(field,(item->type() == Item::FIELD_ITEM ?
 					   ((Item_field *)item)->field :
 					   (Field*) 0))))
+    {
       return NULL;
+    }
+
     if (item->maybe_null)
+    {
       cr_field->flags &= ~NOT_NULL_FLAG;
+    }
+
     alter_info->create_list.push_back(cr_field);
   }
 

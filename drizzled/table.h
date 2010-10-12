@@ -380,6 +380,14 @@ public:
   inline uint32_t sizeBlobFields() { return _share->blob_fields; }
   inline uint32_t *getBlobField() { return &_share->blob_field[0]; }
 
+public:
+  virtual bool hasVariableWidth() const
+  {
+    return getShare()->hasVariableWidth(); // We should calculate this.
+  }
+
+  virtual void setVariableWidth(void);
+
   Field_blob *getBlobFieldAt(uint32_t arg) const
   {
     if (arg < getShare()->blob_fields)

@@ -56,7 +56,6 @@ Field_varstring::Field_varstring(unsigned char *ptr_arg,
                                  unsigned char *null_ptr_arg,
                                  unsigned char null_bit_arg,
                                  const char *field_name_arg,
-                                 TableShare *share,
                                  const CHARSET_INFO * const cs) :
   Field_str(ptr_arg,
             len_arg,
@@ -65,13 +64,11 @@ Field_varstring::Field_varstring(unsigned char *ptr_arg,
             field_name_arg, cs),
 length_bytes(length_bytes_arg)
 {
-  share->varchar_fields++;
 }
 
 Field_varstring::Field_varstring(uint32_t len_arg,
                                  bool maybe_null_arg,
                                  const char *field_name_arg,
-                                 TableShare *share,
                                  const CHARSET_INFO * const cs) :
   Field_str((unsigned char*) 0,
             len_arg,
@@ -81,7 +78,6 @@ Field_varstring::Field_varstring(uint32_t len_arg,
             cs),
   length_bytes(len_arg < 256 ? 1 :2)
 {
-  share->varchar_fields++;
 }
 
 int Field_varstring::store(const char *from,uint32_t length, const CHARSET_INFO * const cs)

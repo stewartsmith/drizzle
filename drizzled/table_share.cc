@@ -140,7 +140,32 @@ void TableShare::release(TableShare *share)
     if (iter != table_def_cache.end())
     {
       table_def_cache.erase(iter);
-      delete share;
+    }
+    return;
+  }
+  share->unlock();
+}
+
+void TableShare::release(TableSharePtr &share)
+{
+  bool to_be_deleted= false;
+  safe_mutex_assert_owner(LOCK_open.native_handle);
+
+  share->lock();
+  if (!--share->ref_count)
+  {
+    to_be_deleted= true;
+  }
+
+  if (to_be_deleted)
+  {
+    TableIdentifier identifier(share->getSchemaName(), share->getTableName());
+    plugin::EventObserver::deregisterTableEvents(*share);
+   
+    TableDefinitionCache::iterator iter= table_def_cache.find(identifier.getKey());
+    if (iter != table_def_cache.end())
+    {
+      table_def_cache.erase(iter);
     }
     return;
   }
@@ -152,20 +177,19 @@ void TableShare::release(TableIdentifier &identifier)
   TableDefinitionCache::iterator iter= table_def_cache.find(identifier.getKey());
   if (iter != table_def_cache.end())
   {
-    TableShare *share= (*iter).second;
+    TableSharePtr share= (*iter).second;
     share->version= 0;                          // Mark for delete
     if (share->ref_count == 0)
     {
       share->lock();
       plugin::EventObserver::deregisterTableEvents(*share);
       table_def_cache.erase(identifier.getKey());
-      delete share;
     }
   }
 }
 
 
-static TableShare *foundTableShare(TableShare *share)
+static TableSharePtr foundTableShare(TableSharePtr share)
 {
   /*
     We found an existing table definition. Return it if we didn't get
@@ -178,7 +202,7 @@ static TableShare *foundTableShare(TableShare *share)
     /* Table definition contained an error */
     share->open_table_error(share->error, share->open_errno, share->errarg);
 
-    return NULL;
+    return TableSharePtr();
   }
 
   share->incrementTableCount();
@@ -209,11 +233,11 @@ static TableShare *foundTableShare(TableShare *share)
 #  Share for table
 */
 
-TableShare *TableShare::getShareCreate(Session *session, 
-                                       TableIdentifier &identifier,
-                                       int *error)
+TableSharePtr TableShare::getShareCreate(Session *session, 
+                                         TableIdentifier &identifier,
+                                         int *error)
 {
-  TableShare *share= NULL;
+  TableSharePtr share;
 
   *error= 0;
 
@@ -225,36 +249,27 @@ TableShare *TableShare::getShareCreate(Session *session,
     return foundTableShare(share);
   }
 
-  if (not (share= new TableShare(message::Table::STANDARD, identifier)))
-  {
-    return NULL;
-  }
-
+  share.reset(new TableShare(message::Table::STANDARD, identifier));
+  
   /*
     Lock mutex to be able to read table definition from file without
     conflicts
   */
   share->lock();
 
-  /**
-   * @TODO: we need to eject something if we exceed table_def_size
- */
   pair<TableDefinitionCache::iterator, bool> ret=
     table_def_cache.insert(make_pair(identifier.getKey(), share));
   if (ret.second == false)
   {
-    delete share;
-
-    return NULL;
+    return TableSharePtr();
   }
 
   if (share->open_table_def(*session, identifier))
   {
     *error= share->error;
     table_def_cache.erase(identifier.getKey());
-    delete share;
 
-    return NULL;
+    return TableSharePtr();
   }
   share->ref_count++;				// Mark in use
   
@@ -278,7 +293,7 @@ TableShare *TableShare::getShareCreate(Session *session,
   0  Not cached
 #  TableShare for table
 */
-TableShare *TableShare::getShare(TableIdentifier &identifier)
+TableSharePtr TableShare::getShare(TableIdentifier &identifier)
 {
   safe_mutex_assert_owner(LOCK_open.native_handle);
 
@@ -287,10 +302,8 @@ TableShare *TableShare::getShare(TableIdentifier &identifier)
   {
     return (*iter).second;
   }
-  else
-  {
-    return NULL;
-  }
+
+  return TableSharePtr();
 }
 
 static enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_type)
@@ -464,7 +477,7 @@ TableShare::TableShare(TableIdentifier::Type type_arg) :
   null_fields(0),
   blob_fields(0),
   timestamp_field_offset(0),
-  varchar_fields(0),
+  has_variable_width(false),
   db_create_options(0),
   db_options_in_use(0),
   db_record_offset(0),
@@ -534,7 +547,7 @@ TableShare::TableShare(TableIdentifier &identifier, const TableIdentifier::Key &
   null_fields(0),
   blob_fields(0),
   timestamp_field_offset(0),
-  varchar_fields(0),
+  has_variable_width(false),
   db_create_options(0),
   db_options_in_use(0),
   db_record_offset(0),
@@ -610,7 +623,7 @@ TableShare::TableShare(const TableIdentifier &identifier) : // Just used during 
   null_fields(0),
   blob_fields(0),
   timestamp_field_offset(0),
-  varchar_fields(0),
+  has_variable_width(false),
   db_create_options(0),
   db_options_in_use(0),
   db_record_offset(0),
@@ -693,7 +706,7 @@ TableShare::TableShare(TableIdentifier::Type type_arg,
   null_fields(0),
   blob_fields(0),
   timestamp_field_offset(0),
-  varchar_fields(0),
+  has_variable_width(false),
   db_create_options(0),
   db_options_in_use(0),
   db_record_offset(0),
@@ -2112,11 +2125,11 @@ Field *TableShare::make_field(unsigned char *ptr,
                                  interval,
                                  field_charset);
   case DRIZZLE_TYPE_VARCHAR:
+    setVariableWidth();
     return new (&mem_root) Field_varstring(ptr,field_length,
                                       HA_VARCHAR_PACKLENGTH(field_length),
                                       null_pos,null_bit,
                                       field_name,
-                                      this,
                                       field_charset);
   case DRIZZLE_TYPE_BLOB:
     return new (&mem_root) Field_blob(ptr,
