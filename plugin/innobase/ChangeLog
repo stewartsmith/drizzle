@@ -1,3 +1,9 @@
+2009-11-11	The InnoDB Team
+
+	* include/os0file.h, os/os0file.c:
+	Fix Bug#3139 Mysql crashes: 'windows error 995' after several selects
+	on a large DB
+
 2009-01-01	The InnoDB Team
 
 	* btr/btr0sea.c, buf/buf0buf.c, dict/dict0dict.c, fil/fil0fil.c,
