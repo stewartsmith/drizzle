@@ -33,6 +33,29 @@ class DrizzleDumpConnection;
 class DrizzleDumpDatabase;
 class DrizzleDumpData;
 
+class DrizzleDumpForeignKey
+{
+  public:
+    DrizzleDumpConnection *dcon;
+    std::string constraintName;
+
+    DrizzleDumpForeignKey(std::string name, DrizzleDumpConnection* connection) :
+      dcon(connection),
+      constraintName(name)
+    { }
+
+    virtual ~DrizzleDumpForeignKey() { }
+
+    std::string parentColumns;
+    std::string childColumns;
+    std::string childTable;
+    std::string matchOption;
+    std::string deleteRule;
+    std::string updateRule;
+
+    friend std::ostream& operator <<(std::ostream &os, const DrizzleDumpForeignKey &obj);
+};
+
 class DrizzleDumpIndex
 {
   public:
@@ -107,9 +130,11 @@ class DrizzleDumpTable
 
     virtual bool populateFields() { return false; }
     virtual bool populateIndexes() { return false; }
+    virtual bool populateFkeys() { return false; }
     virtual DrizzleDumpData* getData() { return NULL; }
     std::vector<DrizzleDumpField*> fields;
     std::vector<DrizzleDumpIndex*> indexes;
+    std::vector<DrizzleDumpForeignKey*> fkeys;
 
     friend std::ostream& operator <<(std::ostream &os, const DrizzleDumpTable &obj);
     std::string tableName;

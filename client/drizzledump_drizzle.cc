@@ -68,7 +68,8 @@ bool DrizzleDumpDatabaseDrizzle::populateTables()
     else
       table->comment= "";
     table->database= this;
-    if ((not table->populateFields()) or (not table->populateIndexes()))
+    if ((not table->populateFields()) or (not table->populateIndexes()) or
+      (not table->populateFkeys()))
     {
       delete table;
       if (not ignore_errors)
@@ -252,6 +253,54 @@ bool DrizzleDumpTableDrizzle::populateIndexes()
   if (!firstIndex)
     indexes.push_back(index);
 
+  dcon->freeResult(result);
+  return true;
+}
+
+bool DrizzleDumpTableDrizzle::populateFkeys()
+{
+  drizzle_result_st *result;
+  drizzle_row_t row;
+  std::string query;
+  DrizzleDumpForeignKey *fkey;
+
+  if (verbose)
+    std::cerr << _("-- Retrieving foreign keys for ") << tableName << "..." << std::endl;
+
+  query= "SELECT CONSTRAINT_NAME, CONSTRAINT_COLUMNS, REFERENCED_TABLE_NAME, REFERENCED_TABLE_COLUMNS, MATCH_OPTION, DELETE_RULE, UPDATE_RULE FROM DATA_DICTIONARY.REFERENTIAL_CONSTRAINTS WHERE CONSTRAINT_SCHEMA='";
+  query.append(database->databaseName);
+  query.append("' AND CONSTRAINT_TABLE='");
+  query.append(tableName);
+  query.append("'");
+
+  result= dcon->query(query);
+
+  if (result == NULL)
+    return false;
+
+  while ((row= drizzle_row_next(result)))
+  {
+    fkey= new DrizzleDumpForeignKey(row[0], dcon);
+    fkey->parentColumns= row[1];
+    fkey->childTable= row[2];
+    fkey->childColumns= row[3];
+    if (strcmp(row[4], "NONE") != 0)
+      fkey->matchOption= row[4];
+    else
+      fkey->matchOption= "";
+
+    if (strcmp(row[5], "UNDEFINED") != 0)
+      fkey->deleteRule= row[5];
+    else
+      fkey->deleteRule= "";
+
+    if (strcmp(row[6], "UNDEFINED") != 0)
+      fkey->updateRule= row[6];
+    else
+      fkey->updateRule= "";
+
+    fkeys.push_back(fkey);
+  }
   dcon->freeResult(result);
   return true;
 }
