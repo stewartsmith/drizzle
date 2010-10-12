@@ -4938,9 +4938,10 @@ ha_innobase::change_active_index(
                  prebuilt->index);
 
   if (UNIV_UNLIKELY(!prebuilt->index_usable)) {
-    errmsg_printf(ERRMSG_LVL_WARN,
-         "InnoDB: insufficient history for index %u",
-          keynr);
+    push_warning_printf(user_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                        HA_ERR_TABLE_DEF_CHANGED,
+                        "InnoDB: insufficient history for index %u",
+                        keynr);
     /* The caller seems to ignore this.  Thus, we must check
     this again in row_search_for_mysql(). */
     return(2);
