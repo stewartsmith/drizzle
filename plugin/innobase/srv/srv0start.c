@@ -498,14 +498,16 @@ io_handler_thread(
 		ios++;
 		mutex_exit(&ios_mutex);
 	}
-
-	thr_local_free(os_thread_get_curr_id());
-
 	/* We count the number of threads in os_thread_exit(). A created
 	thread should always use that to exit and not use return() to exit.
 	The thread actually never comes here because it is exited in an
 	os_event_wait(). */
 #if (!defined(__SUNPRO_C) && !defined(__SUNPRO_CC))
+        /* This is disabled on SunStudio as it (rightly) gives a warning
+           about this code never being reached. See the loop above? No exit
+           condition. */
+	thr_local_free(os_thread_get_curr_id());
+
 	return 0;
 #endif
 }
