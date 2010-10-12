@@ -162,6 +162,7 @@ static ulong commit_threads = 0;
 static pthread_mutex_t commit_threads_m;
 static pthread_cond_t commit_cond;
 static pthread_mutex_t commit_cond_m;
+static pthread_mutex_t analyze_mutex;
 static bool innodb_inited = 0;
 
 #define INSIDE_HA_INNOBASE_CC
@@ -309,6 +310,7 @@ public:
       pthread_mutex_destroy(&prepare_commit_mutex);
       pthread_mutex_destroy(&commit_threads_m);
       pthread_mutex_destroy(&commit_cond_m);
+      pthread_mutex_destroy(&analyze_mutex);
       pthread_cond_destroy(&commit_cond);
     }
     
@@ -2346,6 +2348,7 @@ innobase_change_buffering_inited_ok:
   pthread_mutex_init(&prepare_commit_mutex, MY_MUTEX_INIT_FAST);
   pthread_mutex_init(&commit_threads_m, MY_MUTEX_INIT_FAST);
   pthread_mutex_init(&commit_cond_m, MY_MUTEX_INIT_FAST);
+  pthread_mutex_init(&analyze_mutex, MY_MUTEX_INIT_FAST);
   pthread_cond_init(&commit_cond, NULL);
   innodb_inited= 1;
 
@@ -2583,6 +2586,8 @@ InnobaseEngine::doRollback(
   first to obey the latching order. */
 
   innobase_release_stat_resources(trx);
+
+  trx->n_autoinc_rows = 0;
 
   /* If we had reserved the auto-inc lock for some table (if
   we come here to roll back the latest SQL statement) we
@@ -5867,18 +5872,22 @@ InnobaseEngine::doCreateTable(
     setup at this stage and so we use session. */
 
   /* We need to copy the AUTOINC value from the old table if
-    this is an ALTER TABLE. */
+    this is an ALTER TABLE or CREATE INDEX because CREATE INDEX
+    does a table copy too. */
 
   if ((create_proto.options().has_auto_increment_value()
-       || session_sql_command(&session) == SQLCOM_ALTER_TABLE)
+       || session_sql_command(&session) == SQLCOM_ALTER_TABLE
+       || session_sql_command(&session) == SQLCOM_CREATE_INDEX)
       && create_proto.options().auto_increment_value() != 0) {
 
-    /* Query was ALTER TABLE...AUTO_INCREMENT = x; or
-      CREATE TABLE ...AUTO_INCREMENT = x; Find out a table
-      definition from the dictionary and get the current value
-      of the auto increment field. Set a new value to the
-      auto increment field if the value is greater than the
-      maximum value in the column. */
+    /* Query was one of :
+       CREATE TABLE ...AUTO_INCREMENT = x; or
+       ALTER TABLE...AUTO_INCREMENT = x;   or
+       CREATE INDEX x on t(...);
+       Find out a table definition from the dictionary and get
+       the current value of the auto increment field. Set a new
+       value to the auto increment field if the value is greater
+       than the maximum value in the column. */
 
     auto_inc_value = create_proto.options().auto_increment_value();
 
@@ -6752,8 +6761,14 @@ ha_innobase::analyze(
 /*=================*/
   Session*)   /*!< in: connection thread handle */
 {
+  /* Serialize ANALYZE TABLE inside InnoDB, see
+     Bug#38996 Race condition in ANALYZE TABLE */
+  pthread_mutex_lock(&analyze_mutex);
+
   /* Simply call ::info() with all the flags */
   info(HA_STATUS_TIME | HA_STATUS_CONST | HA_STATUS_VARIABLE);
+
+  pthread_mutex_unlock(&analyze_mutex);
 
   return(0);
 }
@@ -7858,6 +7873,7 @@ ha_innobase::get_auto_increment(
   /* This all current style autoinc. */
   {
     uint64_t  need;
+    uint64_t  current;
     uint64_t  next_value;
     uint64_t  col_max_value;
 
@@ -7866,11 +7882,11 @@ ha_innobase::get_auto_increment(
     col_max_value = innobase_get_int_col_max_value(
       table->next_number_field);
 
+    current = *first_value > col_max_value ? autoinc : *first_value;
     need = *nb_reserved_values * increment;
 
     /* Compute the last value in the interval */
-    next_value = innobase_next_autoinc(
-      *first_value, need, offset, col_max_value);
+    next_value = innobase_next_autoinc(current, need, offset, col_max_value);
 
     prebuilt->autoinc_last_value = next_value;
 
