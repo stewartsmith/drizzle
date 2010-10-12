@@ -2039,7 +2039,9 @@ os_file_pread(
 				offset */
 {
 	off_t	offs;
+#if defined(HAVE_PREAD) && !defined(HAVE_BROKEN_PREAD)
 	ssize_t	n_bytes;
+#endif /* HAVE_PREAD && !HAVE_BROKEN_PREAD */
 
 	ut_a((offset & 0xFFFFFFFFUL) == offset);
 
@@ -2078,16 +2080,20 @@ os_file_pread(
 	{
 		off_t	ret_offset;
 		ssize_t	ret;
+#ifndef UNIV_HOTBACKUP
 		ulint	i;
+#endif /* !UNIV_HOTBACKUP */
 
 		os_mutex_enter(os_file_count_mutex);
 		os_n_pending_reads++;
 		os_mutex_exit(os_file_count_mutex);
 
+#ifndef UNIV_HOTBACKUP
 		/* Protect the seek / read operation with a mutex */
 		i = ((ulint) file) % OS_FILE_N_SEEK_MUTEXES;
 
 		os_mutex_enter(os_file_seek_mutexes[i]);
+#endif /* !UNIV_HOTBACKUP */
 
 		ret_offset = lseek(file, offs, SEEK_SET);
 
@@ -2097,7 +2103,9 @@ os_file_pread(
 			ret = read(file, buf, (ssize_t)n);
 		}
 
+#ifndef UNIV_HOTBACKUP
 		os_mutex_exit(os_file_seek_mutexes[i]);
+#endif /* !UNIV_HOTBACKUP */
 
 		os_mutex_enter(os_file_count_mutex);
 		os_n_pending_reads--;
