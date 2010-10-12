@@ -29,7 +29,12 @@ namespace user_locks {
 int64_t GetLock::val_int()
 {
   drizzled::String *res= args[0]->val_str(&value);
-  int64_t wait_time= 0;//= args[1]->val_int();
+  int64_t wait_time= 0;
+
+  if (arg_count == 2)
+  {
+    wait_time= args[1]->val_int();
+  }
 
   if (not res)
   {

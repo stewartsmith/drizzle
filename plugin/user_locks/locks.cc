@@ -21,15 +21,45 @@
 #include "config.h"
 #include "plugin/user_locks/module.h"
 
+#include <boost/thread/locks.hpp>
+
 #include <string>
 
 namespace user_locks {
 
 bool Locks::lock(drizzled::session_id_t id_arg, const std::string &arg, int64_t wait_for)
 {
-  (void)wait_for;
-  std::pair<LockMap::iterator, bool> is_locked;
+  boost::system_time timeout= boost::get_system_time() + boost::posix_time::seconds(wait_for);
+  boost::unique_lock<boost::mutex> scope(mutex);
+  
+  LockMap::iterator iter;
+  while ((iter= lock_map.find(arg)) != lock_map.end())
+  {
+    if (id_arg == (*iter).second->id)
+    {
+      // We own the lock, so we just exit.
+      return true;
+    }
+    bool success= cond.timed_wait(scope, timeout);
 
+    if (not success)
+      return false;
+  }
+
+  if (iter == lock_map.end())
+  {
+    std::pair<LockMap::iterator, bool> is_locked;
+
+    is_locked= lock_map.insert(std::make_pair(arg, new lock_st(id_arg)));
+    return is_locked.second;
+  }
+
+  return false;
+}
+
+bool Locks::lock(drizzled::session_id_t id_arg, const std::string &arg)
+{
+  std::pair<LockMap::iterator, bool> is_locked;
   boost::unique_lock<boost::mutex> scope(mutex);
   is_locked= lock_map.insert(std::make_pair(arg, new lock_st(id_arg)));
 
@@ -65,13 +95,20 @@ boost::tribool Locks::release(const std::string &arg, drizzled::session_id_t &id
   boost::unique_lock<boost::mutex> scope(mutex);
   LockMap::iterator iter= lock_map.find(arg);
 
+  // Nothing is found
   if ( iter == lock_map.end())
     return boost::indeterminate;
 
   if ((*iter).second->id == id_arg)
     elements= lock_map.erase(arg);
 
-  return elements ? true : false;
+  if (elements)
+  {
+    cond.notify_one();
+    return true;
+  }
+
+  return false;
 }
 
 } /* namespace user_locks */

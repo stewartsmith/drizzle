@@ -19,6 +19,7 @@
  */
 
 #include <boost/thread/mutex.hpp>
+#include <boost/thread/condition_variable.hpp>
 #include <boost/unordered_map.hpp>
 #include <boost/logic/tribool.hpp>
 
@@ -54,17 +55,15 @@ public:
     return instance;
   }
 
-  bool lock(drizzled::session_id_t id_arg, const std::string &arg)
-  {
-    return lock(id_arg, arg, 0);
-  }
-  bool lock(drizzled::session_id_t id_arg, const std::string &arg, int64_t wait_for);
+  bool lock(drizzled::session_id_t id_arg, const std::string &arg);
+  bool lock(drizzled::session_id_t id_arg, const std::string &arg, int64_t wait_for= 0);
   boost::tribool release(const std::string &arg, drizzled::session_id_t &id_arg);
   bool isFree(const std::string &arg);
   bool isUsed(const std::string &arg, drizzled::session_id_t &id_arg);
 
 private:
   boost::mutex mutex;
+  boost::condition_variable cond;
   LockMap lock_map; 
 };
 

@@ -34,7 +34,7 @@ public:
 
   int64_t val_int();
   const char *func_name() const { return "get_lock"; }
-  bool check_argument_count(int n) { return n < 4; }
+  bool check_argument_count(int n) { return n < 3; }
 };
 
 } /* namespace user_locks */
