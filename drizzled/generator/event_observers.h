@@ -18,16 +18,36 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_GENERATOR_H
-#define DRIZZLED_GENERATOR_H
+#ifndef DRIZZLED_GENERATOR_EVENT_OBSERVER_H
+#define DRIZZLED_GENERATOR_EVENT_OBSERVER_H
 
-#include "drizzled/session.h"
+#include "drizzled/plugin/event_observer.h"
 
-#include "drizzled/generator/event_observers.h"
-#include "drizzled/generator/functions.h"
-#include "drizzled/generator/schema.h"
-#include "drizzled/generator/table.h"
-#include "drizzled/generator/all_tables.h"
-#include "drizzled/generator/all_fields.h"
+namespace drizzled {
+namespace generator {
 
-#endif /* DRIZZLED_GENERATOR_H */
+class EventObserver
+{
+  plugin::EventObserverVector::const_iterator iter;
+
+public:
+
+  EventObserver();
+
+  operator drizzled::plugin::EventObserverPtr()
+  {
+    while (iter != plugin::EventObserver::getEventObservers().end())
+    {
+      drizzled::plugin::EventObserverPtr ret= *iter;
+      iter++;
+      return ret;
+    }
+
+    return NULL;
+  }
+};
+
+} /* namespace generator */
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_GENERATOR_EVENT_OBSERVER_H */
