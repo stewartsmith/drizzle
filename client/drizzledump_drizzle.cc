@@ -224,7 +224,9 @@ bool DrizzleDumpTableDrizzle::populateIndexes()
   if (verbose)
     std::cerr << _("-- Retrieving indexes for ") << tableName << "..." << std::endl;
 
-  query= "SELECT INDEX_NAME, COLUMN_NAME, IS_USED_IN_PRIMARY, IS_UNIQUE, COMPARE_LENGTH FROM DATA_DICTIONARY.INDEX_PARTS WHERE TABLE_NAME='";
+  query= "SELECT INDEX_NAME, COLUMN_NAME, IS_USED_IN_PRIMARY, IS_UNIQUE, COMPARE_LENGTH FROM DATA_DICTIONARY.INDEX_PARTS WHERE TABLE_SCHEMA='";
+  query.append(database->databaseName);
+  query.append("' AND TABLE_NAME='");
   query.append(tableName);
   query.append("'");
 
