@@ -207,6 +207,7 @@ SELECT a FROM t1;
 #
 # This should go away entirely when we get rid of the Field::store()
 # mess in the optimizer with value objects.
+--replace_column 9 #
 EXPLAIN SELECT a FROM t1 WHERE a=0;
 SELECT a FROM t1 WHERE a=0;
 
