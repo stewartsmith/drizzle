@@ -1201,6 +1201,12 @@ row_merge_read_clustered_index(
 		in order to release the latch on the old page. */
 
 		if (btr_pcur_is_after_last_on_page(&pcur)) {
+			if (UNIV_UNLIKELY(trx_is_interrupted(trx))) {
+				i = 0;
+				err = DB_INTERRUPTED;
+				goto err_exit;
+			}
+
 			btr_pcur_store_position(&pcur, &mtr);
 			mtr_commit(&mtr);
 			mtr_start(&mtr);
@@ -1558,6 +1564,7 @@ static __attribute__((nonnull))
 ulint
 row_merge(
 /*======*/
+	trx_t*			trx,	/*!< in: transaction */
 	const dict_index_t*	index,	/*!< in: index being created */
 	merge_file_t*		file,	/*!< in/out: file containing
 					index entries */
@@ -1591,6 +1598,10 @@ row_merge(
 	for (; foffs0 < ihalf && foffs1 < file->offset; foffs0++, foffs1++) {
 		ulint	ahalf;	/*!< arithmetic half the input file */
 
+		if (UNIV_UNLIKELY(trx_is_interrupted(trx))) {
+			return(DB_INTERRUPTED);
+		}
+
 		error = row_merge_blocks(index, file, block,
 					 &foffs0, &foffs1, &of, table);
 
@@ -1618,6 +1629,10 @@ row_merge(
 	/* Copy the last blocks, if there are any. */
 
 	while (foffs0 < ihalf) {
+		if (UNIV_UNLIKELY(trx_is_interrupted(trx))) {
+			return(DB_INTERRUPTED);
+		}
+
 		if (!row_merge_blocks_copy(index, file, block, &foffs0, &of)) {
 			return(DB_CORRUPTION);
 		}
@@ -1626,6 +1641,10 @@ row_merge(
 	ut_ad(foffs0 == ihalf);
 
 	while (foffs1 < file->offset) {
+		if (UNIV_UNLIKELY(trx_is_interrupted(trx))) {
+			return(DB_INTERRUPTED);
+		}
+
 		if (!row_merge_blocks_copy(index, file, block, &foffs1, &of)) {
 			return(DB_CORRUPTION);
 		}
@@ -1654,6 +1673,7 @@ static
 ulint
 row_merge_sort(
 /*===========*/
+	trx_t*			trx,	/*!< in: transaction */
 	const dict_index_t*	index,	/*!< in: index being created */
 	merge_file_t*		file,	/*!< in/out: file containing
 					index entries */
@@ -1672,7 +1692,8 @@ row_merge_sort(
 	do {
 		ulint	error;
 
-		error = row_merge(index, file, &half, block, tmpfd, table);
+		error = row_merge(trx, index, file, &half,
+				  block, tmpfd, table);
 
 		if (error != DB_SUCCESS) {
 			return(error);
@@ -2492,7 +2513,7 @@ row_merge_build_indexes(
 	sorting and inserting. */
 
 	for (i = 0; i < n_indexes; i++) {
-		error = row_merge_sort(indexes[i], &merge_files[i],
+		error = row_merge_sort(trx, indexes[i], &merge_files[i],
 				       block, &tmpfd, table);
 
 		if (error == DB_SUCCESS) {
