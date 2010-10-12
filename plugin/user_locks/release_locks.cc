@@ -20,32 +20,21 @@
 
 #include "config.h"
 #include "plugin/user_locks/module.h"
+#include "plugin/user_locks/lock_storage.h"
 
-using namespace drizzled;
+#include <string>
 
-static int init(drizzled::module::Context &context)
+namespace user_locks {
+
+int64_t ReleaseLocks::val_int()
 {
-  user_locks::Locks::getInstance(); // We are single threaded at this point, so we can use this to initialize.
-  context.add(new plugin::Create_function<user_locks::GetLock>("get_lock"));
-  context.add(new plugin::Create_function<user_locks::GetLocks>("get_locks"));
-  context.add(new plugin::Create_function<user_locks::ReleaseLock>("release_lock"));
-  context.add(new plugin::Create_function<user_locks::ReleaseLocks>("release_locks"));
-  context.add(new plugin::Create_function<user_locks::IsFreeLock>("is_free_lock"));
-  context.add(new plugin::Create_function<user_locks::IsUsedLock>("is_used_lock"));
+  int64_t count= 0;
 
-  return 0;
+  user_locks::Storable *list= dynamic_cast<user_locks::Storable *>(getSession().getProperty("user_locks"));
+  if (list) // To be compatible with MySQL, we will now release all other locks we might have.
+    count= list->erase_all();
+
+  return count;
 }
 
-DRIZZLE_DECLARE_PLUGIN
-{
-  DRIZZLE_VERSION_ID,
-  "User Level Locking Functions",
-  "1.0",
-  "Brian Aker",
-  "User level locking functions",
-  PLUGIN_LICENSE_GPL,
-  init,
-  NULL,
-  NULL
-}
-DRIZZLE_DECLARE_PLUGIN_END;
+} /* namespace user_locks */

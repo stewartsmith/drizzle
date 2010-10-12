@@ -66,6 +66,31 @@ bool Locks::lock(drizzled::session_id_t id_arg, const std::string &arg)
   return is_locked.second;
 }
 
+bool Locks::lock(drizzled::session_id_t id_arg, const std::set< std::string > &arg)
+{
+  boost::unique_lock<boost::mutex> scope(mutex);
+
+  for (std::set< std::string >::const_iterator iter= arg.begin(); iter != arg.end(); iter++)
+  {
+    LockMap::iterator record= lock_map.find(*iter);
+
+    if (record != lock_map.end())
+    {
+      if (id_arg != (*record).second->id)
+        return false;
+    }
+  }
+
+  for (std::set< std::string >::iterator iter= arg.begin(); iter != arg.end(); iter++)
+  {
+    std::pair<LockMap::iterator, bool> is_locked;
+    //is_locked can fail in cases where we already own the lock.
+    is_locked= lock_map.insert(std::make_pair(*iter, new lock_st(id_arg)));
+  }
+
+  return true;
+}
+
 bool Locks::isUsed(const std::string &arg, drizzled::session_id_t &id_arg)
 {
   boost::unique_lock<boost::mutex> scope(mutex);

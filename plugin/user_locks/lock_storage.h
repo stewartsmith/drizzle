@@ -53,20 +53,27 @@ public:
     list_of_locks.insert(arg);
   }
 
-  void erase(const std::string &arg)
+  bool erase(const std::string &arg)
   {
-    list_of_locks.erase(arg);
+    return boost::lexical_cast<bool>(list_of_locks.erase(arg));
   }
 
-  void erase_all()
+  // An assert() should be added so that we can test to make sure the locks
+  // are what we think they are (i.e. test the result of release())
+  int64_t erase_all()
   {
+    int64_t count= list_of_locks.size();
+
     for (LockList::iterator iter= list_of_locks.begin();
          iter != list_of_locks.end(); iter++)
     {
       (void)user_locks::Locks::getInstance().release(*iter, id);
     }
     list_of_locks.clear();
+
+    return count;
   }
+
 };
 
 

@@ -18,20 +18,24 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_USER_LOCKS_MODULE_H
-#define PLUGIN_USER_LOCKS_MODULE_H
+#ifndef PLUGIN_USER_LOCKS_GET_LOCKS_H
+#define PLUGIN_USER_LOCKS_GET_LOCKS_H
 
-#include <drizzled/item/func.h>
-#include <drizzled/function/str/strfunc.h>
+namespace user_locks {
 
-#include <drizzled/plugin/function.h>
+class GetLocks : public drizzled::Item_int_func
+{
+  drizzled::String value;
 
-#include "plugin/user_locks/get_lock.h"
-#include "plugin/user_locks/get_locks.h"
-#include "plugin/user_locks/is_free_lock.h"
-#include "plugin/user_locks/is_used_lock.h"
-#include "plugin/user_locks/locks.h"
-#include "plugin/user_locks/release_lock.h"
-#include "plugin/user_locks/release_locks.h"
+public:
+  GetLocks() :
+    drizzled::Item_int_func()
+  {}
 
-#endif /* PLUGIN_USER_LOCKS_MODULE_H */
+  int64_t val_int();
+  const char *func_name() const { return "get_locks"; }
+};
+
+} /* namespace user_locks */
+
+#endif /* PLUGIN_USER_LOCKS_GET_LOCKS_H */

@@ -57,6 +57,7 @@ public:
 
   bool lock(drizzled::session_id_t id_arg, const std::string &arg);
   bool lock(drizzled::session_id_t id_arg, const std::string &arg, int64_t wait_for= 0);
+  bool lock(drizzled::session_id_t id_arg, const std::set< std::string > &arg);
   boost::tribool release(const std::string &arg, drizzled::session_id_t &id_arg);
   bool isFree(const std::string &arg);
   bool isUsed(const std::string &arg, drizzled::session_id_t &id_arg);
