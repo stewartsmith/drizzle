@@ -81,13 +81,23 @@ public:
   http://www.opengroup.org/bookstore/catalog/c193.htm
 
 */
-struct st_drizzle_xid {
+
+class drizzle_xid {
+public:
   long formatID;
   long gtrid_length;
   long bqual_length;
   char data[DRIZZLE_XIDDATASIZE];  /* Not \0-terminated */
+
+  drizzle_xid() :
+    formatID(0),
+    gtrid_length(0),
+    bqual_length(0)
+  {
+    memset(data, 0, DRIZZLE_XIDDATASIZE);
+  }
 };
-typedef struct st_drizzle_xid DRIZZLE_XID;
+typedef class drizzle_xid DRIZZLE_XID;
 
 enum xa_states {XA_NOTR=0, XA_ACTIVE, XA_IDLE, XA_PREPARED};
 extern const char *xa_state_names[];
