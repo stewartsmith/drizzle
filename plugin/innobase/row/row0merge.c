@@ -2131,7 +2131,7 @@ row_merge_rename_tables(
 	if (err != DB_SUCCESS) {
 err_exit:
 		trx->error_state = DB_SUCCESS;
-		trx_general_rollback_for_mysql(trx, FALSE, NULL);
+		trx_general_rollback_for_mysql(trx, NULL);
 		trx->error_state = DB_SUCCESS;
 	}
 
