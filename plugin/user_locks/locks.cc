@@ -114,6 +114,11 @@ bool Locks::isFree(const std::string &arg)
   return iter != lock_map.end();
 }
 
+void Locks::Copy(LockMap &lock_map_arg)
+{
+  lock_map_arg= lock_map;
+}
+
 boost::tribool Locks::release(const std::string &arg, drizzled::session_id_t &id_arg)
 {
   size_t elements= 0;

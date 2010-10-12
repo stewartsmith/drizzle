@@ -18,22 +18,44 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_USER_LOCKS_MODULE_H
-#define PLUGIN_USER_LOCKS_MODULE_H
+#include "config.h"
 
-#include <drizzled/item/func.h>
-#include <drizzled/function/str/strfunc.h>
+#include "plugin/user_locks/module.h"
 
-#include <drizzled/plugin/function.h>
-#include "drizzled/plugin/table_function.h"
+#include <drizzled/atomics.h>
+#include <drizzled/session.h>
 
-#include "plugin/user_locks/get_lock.h"
-#include "plugin/user_locks/get_locks.h"
-#include "plugin/user_locks/is_free_lock.h"
-#include "plugin/user_locks/is_used_lock.h"
-#include "plugin/user_locks/locks.h"
-#include "plugin/user_locks/release_lock.h"
-#include "plugin/user_locks/release_locks.h"
-#include "plugin/user_locks/user_locks_dictionary.h"
+using namespace drizzled;
+using namespace std;
 
-#endif /* PLUGIN_USER_LOCKS_MODULE_H */
+user_locks::UserLocks::UserLocks() :
+  plugin::TableFunction("DATA_DICTIONARY", "USER_LOCKS")
+{
+  add_field("USER_LOCK_NAME", plugin::TableFunction::STRING, user_locks::LARGEST_LOCK_NAME, false);
+  add_field("SESSION_ID", plugin::TableFunction::NUMBER, 0, false);
+}
+
+user_locks::UserLocks::Generator::Generator(drizzled::Field **arg) :
+  drizzled::plugin::TableFunction::Generator(arg)
+{
+  user_locks::Locks::getInstance().Copy(lock_map);
+  iter= lock_map.begin();
+}
+
+bool user_locks::UserLocks::Generator::populate()
+{
+
+  while (iter != lock_map.end())
+  {
+    // USER_LOCK_NAME
+    push((*iter).first);
+
+    // SESSION_ID
+    push((*iter).second->id);
+
+    iter++;
+    return true;
+  }
+
+  return false;
+}

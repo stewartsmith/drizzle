@@ -33,8 +33,11 @@
 
 namespace user_locks {
 
+const size_t LARGEST_LOCK_NAME= 64;
+
 class Locks
 {
+public:
   struct lock_st {
     drizzled::session_id_t id;
 
@@ -48,7 +51,6 @@ class Locks
 
   typedef boost::unordered_map<std::string, lock_st_ptr, drizzled::util::insensitive_hash, drizzled::util::insensitive_equal_to> LockMap;
 
-public:
   static Locks &getInstance(void)
   {
     static Locks instance;
@@ -61,6 +63,7 @@ public:
   boost::tribool release(const std::string &arg, drizzled::session_id_t &id_arg);
   bool isFree(const std::string &arg);
   bool isUsed(const std::string &arg, drizzled::session_id_t &id_arg);
+  void Copy(LockMap &lock_map);
 
 private:
   boost::mutex mutex;

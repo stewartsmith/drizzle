@@ -32,6 +32,7 @@ static int init(drizzled::module::Context &context)
   context.add(new plugin::Create_function<user_locks::ReleaseLocks>("release_locks"));
   context.add(new plugin::Create_function<user_locks::IsFreeLock>("is_free_lock"));
   context.add(new plugin::Create_function<user_locks::IsUsedLock>("is_used_lock"));
+  context.add(new user_locks::UserLocks);
 
   return 0;
 }

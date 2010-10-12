@@ -18,22 +18,34 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_USER_LOCKS_MODULE_H
-#define PLUGIN_USER_LOCKS_MODULE_H
+#ifndef PLUGIN_USER_LOCKS_USER_LOCKS_DICTIONARY_H
+#define PLUGIN_USER_LOCKS_USER_LOCKS_DICTIONARY_H
 
-#include <drizzled/item/func.h>
-#include <drizzled/function/str/strfunc.h>
+namespace user_locks {
 
-#include <drizzled/plugin/function.h>
-#include "drizzled/plugin/table_function.h"
+class UserLocks : public  drizzled::plugin::TableFunction
+{
 
-#include "plugin/user_locks/get_lock.h"
-#include "plugin/user_locks/get_locks.h"
-#include "plugin/user_locks/is_free_lock.h"
-#include "plugin/user_locks/is_used_lock.h"
-#include "plugin/user_locks/locks.h"
-#include "plugin/user_locks/release_lock.h"
-#include "plugin/user_locks/release_locks.h"
-#include "plugin/user_locks/user_locks_dictionary.h"
+public:
+  UserLocks();
 
-#endif /* PLUGIN_USER_LOCKS_MODULE_H */
+  class Generator : public drizzled::plugin::TableFunction::Generator 
+  {
+    Locks::LockMap lock_map;
+    Locks::LockMap::iterator iter;
+
+  public:
+    Generator(drizzled::Field **arg);
+
+    bool populate();
+  };
+
+  Generator *generator(drizzled::Field **arg)
+  {
+    return new Generator(arg);
+  }
+};
+
+} /* namespace user_locks */
+
+#endif /* PLUGIN_USER_LOCKS_USER_LOCKS_DICTIONARY_H */
