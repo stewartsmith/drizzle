@@ -27,6 +27,7 @@
 #include "drizzled/item/ref.h"
 #include "drizzled/item/field.h"
 #include "drizzled/item/bin_string.h"
+#include "drizzled/util/test.h"
 
 namespace drizzled
 {

@@ -175,7 +175,7 @@ uint16_t x= htons(80);
         dnl 1684 is like strict-aliasing
         dnl 188 is about using enums as bitfields
         dnl 1683 is a warning about _EXPLICIT_ casting, which we want
-        BASE_WARNINGS="-w1 -Wcheck ${W_FORMAT} -Wp64 -Woverloaded-virtual -Wcast-qual -diag-disable 188,981,2259,2203,1683,1684"
+        BASE_WARNINGS="-w1 -Werror -Wcheck ${W_FORMAT} -Wp64 -Woverloaded-virtual -Wcast-qual -diag-disable 188,981,2259,2203,1683,1684"
       ])
       CC_WARNINGS="${BASE_WARNINGS}"
       CXX_WARNINGS="${BASE_WARNINGS}"

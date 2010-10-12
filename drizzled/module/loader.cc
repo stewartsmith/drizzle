@@ -75,7 +75,6 @@ typedef vector<string> PluginOptions;
 static PluginOptions opt_plugin_load;
 static PluginOptions opt_plugin_add;
 static PluginOptions opt_plugin_remove;
-char opt_plugin_dir[FN_REFLEN];
 const char *builtin_plugins= PANDORA_BUILTIN_LIST;
 
 /* Note that 'int version' must be the first field of every plugin

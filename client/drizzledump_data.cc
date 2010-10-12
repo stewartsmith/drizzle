@@ -345,7 +345,7 @@ std::string DrizzleDumpData::convertHex(const unsigned char* from, size_t from_s
   {
     /* Would be nice if std::hex liked uint8_t, ah well */
     output << std::uppercase << std::hex << std::setw(2) << std::setfill('0') << (unsigned short)(*from);
-    *from++;
+    (void) *from++;
     from_size--;
   }
 
@@ -376,7 +376,7 @@ std::string DrizzleDumpData::escape(const char* from, size_t from_size)
        }
     }
     output.push_back(*from);
-    *from++;
+    (void) *from++;
     from_size--;
   }
 

@@ -90,7 +90,7 @@ double Field_double::val_real(void)
   ASSERT_COLUMN_MARKED_FOR_READ;
 
 #ifdef WORDS_BIGENDIAN
-  if (getTable()->s->db_low_byte_first)
+  if (getTable()->getShare()->db_low_byte_first)
   {
     float8get(j,ptr);
   }
@@ -108,7 +108,7 @@ int64_t Field_double::val_int(void)
   ASSERT_COLUMN_MARKED_FOR_READ;
 
 #ifdef WORDS_BIGENDIAN
-  if (getTable()->s->db_low_byte_first)
+  if (getTable()->getShare()->db_low_byte_first)
   {
     float8get(j,ptr);
   }
@@ -150,7 +150,7 @@ String *Field_double::val_str(String *val_buffer,
   ASSERT_COLUMN_MARKED_FOR_READ;
 
 #ifdef WORDS_BIGENDIAN
-  if (getTable()->s->db_low_byte_first)
+  if (getTable()->getShare()->db_low_byte_first)
   {
     float8get(nr,ptr);
   }
@@ -177,7 +177,7 @@ int Field_double::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   double a,b;
 #ifdef WORDS_BIGENDIAN
-  if (getTable()->s->db_low_byte_first)
+  if (getTable()->getShare()->db_low_byte_first)
   {
     float8get(a,a_ptr);
     float8get(b,b_ptr);
@@ -198,7 +198,7 @@ void Field_double::sort_string(unsigned char *to,uint32_t )
 {
   double nr;
 #ifdef WORDS_BIGENDIAN
-  if (getTable()->s->db_low_byte_first)
+  if (getTable()->getShare()->db_low_byte_first)
   {
     float8get(nr,ptr);
   }

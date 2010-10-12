@@ -127,6 +127,11 @@ transformStatementToSql(const Statement &source,
 
   switch (source.type())
   {
+  case Statement::ROLLBACK:
+    {
+      sql_strings.push_back("ROLLBACK");
+      break;
+    }
   case Statement::INSERT:
     {
       if (! source.has_insert_header())

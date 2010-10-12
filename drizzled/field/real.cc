@@ -44,7 +44,7 @@ Field_real::pack(unsigned char *to, const unsigned char *from,
 {
   assert(max_length >= pack_length());
 #ifdef WORDS_BIGENDIAN
-  if (low_byte_first != getTable()->s->db_low_byte_first)
+  if (low_byte_first != getTable()->getShare()->db_low_byte_first)
   {
     const unsigned char *dptr= from + pack_length();
     while (dptr-- > from)
@@ -61,7 +61,7 @@ Field_real::unpack(unsigned char *to, const unsigned char *from,
                    uint32_t param_data, bool low_byte_first)
 {
 #ifdef WORDS_BIGENDIAN
-  if (low_byte_first != getTable()->s->db_low_byte_first)
+  if (low_byte_first != getTable()->getShare()->db_low_byte_first)
   {
     const unsigned char *dptr= from + pack_length();
     while (dptr-- > from)

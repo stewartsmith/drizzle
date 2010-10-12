@@ -90,10 +90,12 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>
+#include <boost/filesystem.hpp>
 #include <drizzled/module/option_map.h>
 #include <iostream>
 
 namespace po= boost::program_options;
+namespace fs=boost::filesystem;
 using namespace std;
 
 /** @file ha_innodb.cc */
@@ -316,6 +318,7 @@ public:
     
     /* These get strdup'd from vm variables */
     free(innobase_data_home_dir);
+    free(innobase_log_group_home_dir);
 
   }
 
@@ -1863,7 +1866,7 @@ innobase_init(
   }
   else
   {
-    innobase_data_home_dir= strdup(getDataHome().c_str());
+    innobase_data_home_dir= strdup(getDataHome().file_string().c_str());
   }
 
   if (vm.count("fast-shutdown"))
@@ -2184,11 +2187,11 @@ mem_free_and_error:
 
   if (vm.count("log-group-home-dir"))
   {
-    innobase_log_group_home_dir= const_cast<char *>(vm["log-group-home-dir"].as<string>().c_str());
+    innobase_log_group_home_dir= strdup(vm["log-group-home-dir"].as<string>().c_str());
   }
   else
   {
-    innobase_log_group_home_dir = const_cast<char *>(getDataHome().c_str());
+    innobase_log_group_home_dir = strdup(getDataHome().file_string().c_str());
   }
 
 #ifdef UNIV_LOG_ARCHIVE
@@ -6527,7 +6530,6 @@ ha_innobase::info(
   ib_int64_t  n_rows;
   ulong   j;
   ulong   i;
-  char    path[FN_REFLEN];
   os_file_stat_t  stat_info;
 
   /* If we are forcing recovery at a high level, we will suppress
@@ -6571,15 +6573,14 @@ ha_innobase::info(
       prebuilt->trx->op_info = "returning various info to MySQL";
     }
 
-    snprintf(path, sizeof(path), "%s/%s%s",
-             getDataHomeCatalog().c_str(), ib_table->name, ".dfe");
-
-    internal::unpack_filename(path,path);
+    fs::path get_status_path(getDataHomeCatalog());
+    get_status_path /= ib_table->name;
+    fs::change_extension(get_status_path, "dfe");
 
     /* Note that we do not know the access time of the table,
     nor the CHECK TABLE time, nor the UPDATE or INSERT time. */
 
-    if (os_file_get_status(path,&stat_info)) {
+    if (os_file_get_status(get_status_path.file_string().c_str(), &stat_info)) {
       stats.create_time = (ulong) stat_info.ctime;
     }
   }

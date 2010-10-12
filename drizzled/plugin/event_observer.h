@@ -74,6 +74,10 @@ class EventObserver : public Plugin
       /* Session events: */
       BEFORE_CREATE_DATABASE, AFTER_CREATE_DATABASE, 
       BEFORE_DROP_DATABASE,   AFTER_DROP_DATABASE,
+      CONNECT_SESSION,
+      DISCONNECT_SESSION,
+      AFTER_STATEMENT,
+      BEFORE_STATEMENT,
 
       /* Schema events: */
       BEFORE_DROP_TABLE,   AFTER_DROP_TABLE, 
@@ -133,6 +137,18 @@ class EventObserver : public Plugin
 
       case AFTER_DROP_DATABASE:
         return "AFTER_DROP_DATABASE";
+
+      case CONNECT_SESSION:
+        return "CONNECT_SESSION";
+
+      case DISCONNECT_SESSION:
+        return "DISCONNECT_SESSION";
+
+      case AFTER_STATEMENT:
+        return "AFTER_STATEMENT";
+
+      case BEFORE_STATEMENT:
+        return "BEFORE_STATEMENT";
 
       case MAX_EVENT_COUNT:
         break;
@@ -204,6 +220,10 @@ class EventObserver : public Plugin
     static bool afterDropTable(Session &session, const drizzled::TableIdentifier &table, int err);
     static bool beforeRenameTable(Session &session, const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to);
     static bool afterRenameTable(Session &session, const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to, int err);
+    static bool connectSession(Session &session);
+    static bool disconnectSession(Session &session);
+    static bool beforeStatement(Session &session);
+    static bool afterStatement(Session &session);
 
     /*==========================================================*/
     /* Static meathods called by drizzle to notify interested plugins 
@@ -353,6 +373,46 @@ public:
     SessionEventData(EventObserver::AFTER_DROP_DATABASE, session_arg), 
     db(db_arg), 
     err(err_arg) 
+  {}  
+};
+
+//-----
+class ConnectSessionEventData: public SessionEventData
+{
+public:
+
+  ConnectSessionEventData(Session &session_arg):
+    SessionEventData(EventObserver::CONNECT_SESSION, session_arg)
+  {}  
+};
+
+//-----
+class DisconnectSessionEventData: public SessionEventData
+{
+public:
+
+  DisconnectSessionEventData(Session &session_arg):
+    SessionEventData(EventObserver::DISCONNECT_SESSION, session_arg)
+  {}  
+};
+
+//-----
+class BeforeStatementEventData: public SessionEventData
+{
+public:
+
+  BeforeStatementEventData(Session &session_arg):
+    SessionEventData(EventObserver::BEFORE_STATEMENT, session_arg)
+  {}  
+};
+
+//-----
+class AfterStatementEventData: public SessionEventData
+{
+public:
+
+  AfterStatementEventData(Session &session_arg):
+    SessionEventData(EventObserver::AFTER_STATEMENT, session_arg)
   {}  
 };
 
