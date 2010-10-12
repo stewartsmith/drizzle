@@ -20,15 +20,15 @@
 #ifndef DRIZZLED_DATA_HOME_H
 #define DRIZZLED_DATA_HOME_H
 
-#include <string>
+#include <boost/filesystem.hpp>
 
 namespace drizzled
 {
 
-std::string& getDataHome();
-std::string& getDataHomeCatalog();
-char *getDatadir();
-char **getDatadirPtr();
+extern boost::filesystem::path full_data_home;
+
+boost::filesystem::path& getDataHome();
+boost::filesystem::path& getDataHomeCatalog();
 
 } /* namespace drizzled */
 

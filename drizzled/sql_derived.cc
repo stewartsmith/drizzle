@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /*
   Derived tables
@@ -144,11 +144,6 @@ exit:
     }
     else
     {
-      if (! session->fill_derived_tables())
-      {
-        delete derived_result;
-        derived_result= NULL;
-      }
       orig_table_list->derived_result= derived_result;
       orig_table_list->table= table;
       orig_table_list->table_name=        const_cast<char *>(table->getShare()->getTableName());

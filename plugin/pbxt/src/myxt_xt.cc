@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * 2006-05-16	Paul McCullagh
  *
@@ -44,9 +44,11 @@
 #include <drizzled/charset_info.h>
 #include <plugin/myisam/my_handler.h>
 #include <plugin/myisam/myisampack.h>
+#include <boost/filesystem.hpp>
 //extern "C" struct charset_info_st *session_charset(Session *session);
 extern pthread_key_t THR_Session;
 
+namespace fs=boost::filesystem;
 using namespace drizzled;
 #else
 #include "mysql_priv.h"
@@ -2029,12 +2031,10 @@ static STRUCT_TABLE *my_open_table(XTThreadPtr self, XTDatabaseHPtr XT_UNUSED(db
 			message::Table::STANDARD);
 	}
 	else {
-		std::string n(getDataHomeCatalog());
-		n.append("/");
-		n.append(database_name);
-		n.append("/");
-		n.append(tab_file_name);
-		ident = new TableIdentifier(database_name, tab_name, n);
+          fs::path n(getDataHomeCatalog());
+          n /= database_name;
+          n /= tab_file_name;
+		ident = new TableIdentifier(database_name, tab_name, n.file_string());
 	}
 	
 	share = new TableShare(message::Table::STANDARD);
@@ -2110,7 +2110,9 @@ static void my_deref_index_data(struct XTThread *self, XTIndexPtr mi)
 
 	xt_spinlock_free(self, &mi->mi_dirty_lock);
 	XT_INDEX_FREE_LOCK(self, mi);
+#ifndef DRIZZLED
 	myxt_bitmap_free(self, &mi->mi_col_map);
+#endif
 	if (mi->mi_free_list)
 		xt_free(self, mi->mi_free_list);
 
@@ -2140,6 +2142,7 @@ static XTIndexPtr my_create_index(XTThreadPtr self, STRUCT_TABLE *table_arg, u_i
 	uint					options = 0;
 	u_int					key_length = 0;
 	xtBool					partial_field;
+    MX_BITMAP               mi_col_map;
 
 	enter_();
 
@@ -2154,7 +2157,14 @@ static XTIndexPtr my_create_index(XTThreadPtr self, STRUCT_TABLE *table_arg, u_i
 	ind->mi_fix_key = TRUE;
 	ind->mi_select_total = 0;
 	ind->mi_subset_of = 0;
+#ifdef DRIZZLED
+    mi_col_map.resize(GET_TABLE_SHARE(table_arg)->fields);	
+    mi_col_map.reset();
+    ind->mi_col_map= mi_col_map.to_ulong();
+    ind->mi_col_map_size= GET_TABLE_SHARE(table_arg)->fields;
+#else
 	myxt_bitmap_init(self, &ind->mi_col_map, GET_TABLE_SHARE(table_arg)->fields);
+#endif
 	
 	ind->mi_seg_count = (uint) index->key_parts;
 	key_part_end = index->key_part + index->key_parts;
@@ -2301,7 +2311,11 @@ static XTIndexPtr my_create_index(XTThreadPtr self, STRUCT_TABLE *table_arg, u_i
 
 		/* NOTE: do not set if the field is only partially in the index!!! */
 		if (!partial_field)
+#ifdef DRIZZLED
+			MX_BIT_FAST_TEST_AND_SET(&mi_col_map, field->field_index);
+#else
 			MX_BIT_FAST_TEST_AND_SET(&ind->mi_col_map, field->field_index);
+#endif
 	}
 
 	if (key_length > XT_INDEX_MAX_KEY_SIZE)
@@ -3346,14 +3360,15 @@ xtPublic void myxt_get_status(XTThreadPtr self, XTStringBufferPtr strbuf)
 
 static void myxt_bitmap_init(XTThreadPtr self, MX_BITMAP *map, u_int n_bits)
 {
+#ifdef DRIZZLED
+    (void) self;
+    map= new boost::dynamic_bitset<>(n_bits);
+    map->resize(n_bits);
+    map->reset();
+#else
 	my_bitmap_map	*buf;
     uint			size_in_bytes = (((n_bits) + 31) / 32) * 4;
-
 	buf = (my_bitmap_map *) xt_malloc(self, size_in_bytes);
-
-#ifdef DRIZZLED
-	map->init(buf, n_bits);
-#else
 	map->bitmap= buf;
 	map->n_bits= n_bits;
 	create_last_word_mask(map);
@@ -3364,10 +3379,10 @@ static void myxt_bitmap_init(XTThreadPtr self, MX_BITMAP *map, u_int n_bits)
 static void myxt_bitmap_free(XTThreadPtr self, MX_BITMAP *map)
 {
 #ifdef DRIZZLED
-	my_bitmap_map *buf = map->getBitmap();
-	if (buf)
-		xt_free(self, buf);
-	map->setBitmap(NULL);
+    (void) self;
+    if (map->empty())
+        map->clear();
+    delete map;
 #else
 	if (map->bitmap) {
 		xt_free(self, map->bitmap);

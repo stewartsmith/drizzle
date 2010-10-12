@@ -219,7 +219,7 @@ int Field_blob::store(const char *from,uint32_t length, const CHARSET_INFO * con
 
   if (from == value.ptr())
   {
-    uint32_t dummy_offset;
+    size_t dummy_offset;
     if (!String::needs_conversion(length, cs, field_charset, &dummy_offset))
     {
       Field_blob::store_length(length);

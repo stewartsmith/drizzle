@@ -622,8 +622,8 @@ void Item_func::count_real_length()
 
 void Item_func::signal_divide_by_null()
 {
-  push_warning(getSessionPtr(), DRIZZLE_ERROR::WARN_LEVEL_ERROR, ER_DIVISION_BY_ZERO, ER(ER_DIVISION_BY_ZERO));
-  null_value= 1;
+  my_error(ER_DIVISION_BY_ZERO, MYF(0));
+  null_value= 0;
 }
 
 

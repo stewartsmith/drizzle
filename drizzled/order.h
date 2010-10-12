@@ -20,7 +20,6 @@
 #ifndef DRIZZLED_ORDER_H
 #define DRIZZLED_ORDER_H
 
-#include <drizzled/sql_bitmap.h>
 #include <drizzled/field.h>
 
 namespace drizzled

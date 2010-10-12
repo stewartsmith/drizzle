@@ -31,6 +31,9 @@ SchemasTool::SchemasTool() :
   add_field("DEFAULT_COLLATION_NAME");
   add_field("SCHEMA_CREATION_TIME");
   add_field("SCHEMA_UPDATE_TIME");
+  add_field("SCHEMA_UUID", plugin::TableFunction::STRING, 36, true);
+  add_field("SCHEMA_VERSION", plugin::TableFunction::NUMBER, 0, true);
+  add_field("SCHEMA_USE_COUNT", plugin::TableFunction::NUMBER, 0, true);
 }
 
 SchemasTool::Generator::Generator(Field **arg) :
@@ -41,10 +44,10 @@ SchemasTool::Generator::Generator(Field **arg) :
   
 bool SchemasTool::Generator::nextSchema()
 {
-  const drizzled::message::Schema *schema_ptr;
+  drizzled::message::SchemaPtr schema_ptr;
   while ((schema_ptr= schema_generator))
   {
-    schema.CopyFrom(*schema_ptr);
+    schema= schema_ptr;
     return true;
   }
 
@@ -69,13 +72,13 @@ bool SchemasTool::Generator::populate()
 void SchemasTool::Generator::fill()
 {
   /* SCHEMA_NAME */
-  push(schema.name());
+  push(schema->name());
 
   /* DEFAULT_COLLATION_NAME */
-  push(schema.collation());
+  push(schema->collation());
 
   /* SCHEMA_CREATION_TIME */
-  time_t time_arg= schema.creation_timestamp();
+  time_t time_arg= schema->creation_timestamp();
   char buffer[40];
   struct tm tm_buffer;
 
@@ -84,8 +87,17 @@ void SchemasTool::Generator::fill()
   push(buffer);
 
   /* SCHEMA_UPDATE_TIME */
-  time_arg= schema.update_timestamp();
+  time_arg= schema->update_timestamp();
   localtime_r(&time_arg, &tm_buffer);
   strftime(buffer, sizeof(buffer), "%a %b %d %H:%M:%S %Y", &tm_buffer);
   push(buffer);
+
+  /* SCHEMA_UUID */
+  push(schema->uuid());
+
+  /* SCHEMA_VERSION */
+  push(schema->version());
+
+  /* SCHEMA_USE_COUNT */
+  push(schema->version());
 }

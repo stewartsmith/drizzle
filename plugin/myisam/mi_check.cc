@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /* Describe, check and repair of MyISAM tables */
 
@@ -459,7 +459,7 @@ int chk_key(MI_CHECK *param, register MI_INFO *info)
 		  llstr(share->state.key_root[key],buff));
       if (!(param->testflag & T_INFO))
 	return(-1);
-      result= -1;
+      result= UINT32_MAX;
       continue;
     }
     param->key_file_blocks+=keyinfo->block_length;
@@ -478,7 +478,7 @@ int chk_key(MI_CHECK *param, register MI_INFO *info)
 		    llstr(info->state->records,buff2));
 	if (!(param->testflag & T_INFO))
 	return(-1);
-	result= -1;
+	result= UINT32_MAX;
 	continue;
       }
       if (found_keys - full_text_keys == 1 &&
@@ -495,7 +495,7 @@ int chk_key(MI_CHECK *param, register MI_INFO *info)
 	  mi_check_print_error(param,"Key 1 doesn't point at all records");
 	if (!(param->testflag & T_INFO))
 	  return(-1);
-	result= -1;
+	result= UINT32_MAX;
 	continue;
       }
     }
@@ -894,7 +894,7 @@ int chk_data_link(MI_CHECK *param, MI_INFO *info,int extend)
       puts("- check record links");
   }
 
-  if (!mi_alloc_rec_buff(info, -1, &record))
+  if (!mi_alloc_rec_buff(info, SIZE_MAX, &record))
   {
     mi_check_print_error(param,"Not enough memory for record");
     return(-1);
@@ -1447,8 +1447,8 @@ int mi_repair(MI_CHECK *param, register MI_INFO *info,
 		      MYF(MY_WME | MY_WAIT_IF_FULL)))
       goto err;
   info->opt_flag|=WRITE_CACHE_USED;
-  if (!mi_alloc_rec_buff(info, -1, &sort_param.record) ||
-      !mi_alloc_rec_buff(info, -1, &sort_param.rec_buff))
+  if (!mi_alloc_rec_buff(info, SIZE_MAX, &sort_param.record) ||
+      !mi_alloc_rec_buff(info, SIZE_MAX, &sort_param.rec_buff))
   {
     mi_check_print_error(param, "Not enough memory for extra record");
     goto err;
@@ -2061,8 +2061,8 @@ int mi_repair_by_sort(MI_CHECK *param, register MI_INFO *info,
   info->opt_flag|=WRITE_CACHE_USED;
   info->rec_cache.file=info->dfile;		/* for sort_delete_record */
 
-  if (!mi_alloc_rec_buff(info, -1, &sort_param.record) ||
-      !mi_alloc_rec_buff(info, -1, &sort_param.rec_buff))
+  if (!mi_alloc_rec_buff(info, SIZE_MAX, &sort_param.record) ||
+      !mi_alloc_rec_buff(info, SIZE_MAX, &sort_param.rec_buff))
   {
     mi_check_print_error(param, "Not enough memory for extra record");
     goto err;
@@ -3276,7 +3276,7 @@ void update_auto_increment_key(MI_CHECK *param, MI_INFO *info,
     We have to use an allocated buffer instead of info->rec_buff as
     _mi_put_key_in_record() may use info->rec_buff
   */
-  if (!mi_alloc_rec_buff(info, -1, &record))
+  if (!mi_alloc_rec_buff(info, SIZE_MAX, &record))
   {
     mi_check_print_error(param,"Not enough memory for extra record");
     return;

@@ -31,8 +31,10 @@
 #include <stdexcept>
 
 #include <boost/program_options.hpp>
+#include "drizzled/program_options/config_file.h"
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/mutex.hpp>
+#include <boost/thread/shared_mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 #include <boost/filesystem.hpp>
 
@@ -64,6 +66,8 @@
 #include "drizzled/drizzled.h"
 #include "drizzled/module/registry.h"
 #include "drizzled/module/load_list.h"
+
+#include "drizzled/plugin/event_observer.h"
 
 #include <google/protobuf/stubs/common.h>
 
@@ -139,6 +143,7 @@
 using namespace std;
 namespace fs=boost::filesystem;
 namespace po=boost::program_options;
+namespace dpo=drizzled::program_options;
 
 
 namespace drizzled
@@ -204,10 +209,9 @@ arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
 
 /* static variables */
 
-static bool opt_debugging= 0;
+static bool opt_debugging= false;
 static uint32_t wake_thread;
 static char *drizzled_chroot;
-static char *language_ptr;
 static const char *default_character_set_name;
 static const char *character_set_filesystem_name;
 static char *lc_time_names_name;
@@ -232,8 +236,6 @@ size_t my_thread_stack_size= 0;
 */
 plugin::StorageEngine *heap_engine;
 plugin::StorageEngine *myisam_engine;
-
-char* opt_secure_file_priv= 0;
 
 bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
 
@@ -289,12 +291,18 @@ const double log_10[] = {
 time_t server_start_time;
 time_t flush_status_time;
 
-char drizzle_home[FN_REFLEN], pidfile_name[FN_REFLEN], system_time_zone[30];
+fs::path basedir(PREFIX);
+fs::path pid_file;
+fs::path secure_file_priv("");
+fs::path plugin_dir;
+fs::path system_config_dir(SYSCONFDIR);
+
+
+char system_time_zone[30];
 char *default_tz_name;
 char glob_hostname[FN_REFLEN];
 
-char language[FN_REFLEN], 
-     *opt_tc_log_file;
+char *opt_tc_log_file;
 const key_map key_map_empty(0);
 key_map key_map_full(0);                        // Will be initialized later
 
@@ -330,7 +338,7 @@ boost::mutex LOCK_open;
 boost::mutex LOCK_global_system_variables;
 boost::mutex LOCK_thread_count;
 
-boost::condition_variable COND_refresh;
+boost::condition_variable_any COND_refresh;
 boost::condition_variable COND_thread_count;
 pthread_t signal_thread;
 boost::condition_variable COND_server_end;
@@ -338,7 +346,6 @@ boost::condition_variable COND_server_end;
 /* Static variables */
 
 int cleanup_done;
-static char *drizzle_home_ptr, *pidfile_name_ptr;
 
 passwd *user_info;
 
@@ -354,7 +361,6 @@ bool drizzle_rm_tmp_tables();
 
 static void drizzle_init_variables(void);
 static void get_options();
-static const char *get_relative_path(const char *path);
 static void fix_paths();
 
 static void usage(void);
@@ -371,34 +377,26 @@ po::options_description full_options("Kernel and Plugin Loading and Plugin");
 vector<string> unknown_options;
 vector<string> defaults_file_list;
 po::variables_map vm;
-char * data_dir_ptr;
+
+fs::path data_home(LOCALSTATEDIR);
+fs::path full_data_home(LOCALSTATEDIR);
 
 po::variables_map &getVariablesMap()
 {
   return vm;
 }
 
-std::string& getDataHome()
+fs::path& getDataHome()
 {
-  static string data_home(LOCALSTATEDIR);
   return data_home;
 }
 
-std::string& getDataHomeCatalog()
+fs::path& getDataHomeCatalog()
 {
-  static string data_home_catalog(getDataHome());
+  static fs::path data_home_catalog(getDataHome());
   return data_home_catalog;
 }
 
-char *getDatadir()
-{
-  return data_dir_ptr;
-}
-
-char **getDatadirPtr()
-{
-  return &data_dir_ptr;
-}
  
 /****************************************************************************
 ** Code to end drizzled
@@ -513,13 +511,10 @@ void clean_up(bool print_message)
     return;
 
   table_cache_free();
-  set_var_free();
   free_charsets();
   module::Registry &modules= module::Registry::singleton();
   modules.shutdownModules();
   xid_cache_free();
-  if (opt_secure_file_priv)
-    free(opt_secure_file_priv);
 
   deinit_temporal_formats();
 
@@ -527,7 +522,7 @@ void clean_up(bool print_message)
   google::protobuf::ShutdownProtobufLibrary();
 #endif
 
-  (void) unlink(pidfile_name);	// This may not always exist
+  (void) unlink(pid_file.file_string().c_str());	// This may not always exist
 
   if (print_message && server_start_time)
     errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_SHUTDOWN_COMPLETE)),internal::my_progname);
@@ -537,8 +532,6 @@ void clean_up(bool print_message)
   COND_server_end.notify_all();
   LOCK_thread_count.unlock();
 
-  char **data_home_ptr= getDatadirPtr();
-  delete[](*data_home_ptr);
   /*
     The following lines may never be executed as the main thread may have
     killed us
@@ -660,6 +653,10 @@ void Session::unlink(Session *session)
   getSessionList().erase(remove(getSessionList().begin(),
                          getSessionList().end(),
                          session));
+  if (unlikely(plugin::EventObserver::disconnectSession(*session)))
+  {
+    // We should do something about an error...
+  }
 
   delete session;
   LOCK_thread_count.unlock();
@@ -718,15 +715,29 @@ static void find_plugin_dir(string progname)
     base_plugin_dir /= "plugin";
     base_plugin_dir /= ".libs";
   }
-  (void) internal::my_load_path(opt_plugin_dir, fs::path(fs::system_complete(base_plugin_dir)).file_string().c_str(), "");
+
+  if (plugin_dir.root_directory() == "")
+  {
+    fs::path full_plugin_dir(fs::system_complete(base_plugin_dir));
+    full_plugin_dir /= plugin_dir;
+    plugin_dir= full_plugin_dir;
+  }
 }
 
-static void notify_plugin_dir(string in_plugin_dir)
+static void notify_plugin_dir(fs::path in_plugin_dir)
 {
-  if (not in_plugin_dir.empty())
+  plugin_dir= in_plugin_dir;
+  if (plugin_dir.root_directory() == "")
   {
-    (void) internal::my_load_path(opt_plugin_dir, in_plugin_dir.c_str(), drizzle_home);
+    fs::path full_plugin_dir(fs::system_complete(basedir));
+    full_plugin_dir /= plugin_dir;
+    plugin_dir= full_plugin_dir;
   }
+}
+
+static void expand_secure_file_priv(fs::path in_secure_file_priv)
+{
+  secure_file_priv= fs::system_complete(in_secure_file_priv);
 }
 
 static void check_limits_aii(uint64_t in_auto_increment_increment)
@@ -908,17 +919,6 @@ static void check_limits_max_sort_length(size_t in_max_sort_length)
   global_system_variables.max_sort_length= in_max_sort_length;
 }
 
-static void check_limits_mwlc(uint64_t in_min_examined_row_limit)
-{
-  global_system_variables.min_examined_row_limit= ULONG_MAX;
-  if (in_min_examined_row_limit > ULONG_MAX)
-  {
-    cout << N_("Error: Invalid Value for min_examined_row_limit");
-    exit(-1);
-  }
-  global_system_variables.min_examined_row_limit= in_min_examined_row_limit;
-}
-
 static void check_limits_osd(uint32_t in_optimizer_search_depth)
 {
   global_system_variables.optimizer_search_depth= 0;
@@ -1060,6 +1060,17 @@ static void check_limits_tmp_table_size(uint64_t in_tmp_table_size)
   global_system_variables.tmp_table_size= in_tmp_table_size;
 }
 
+static void check_limits_transaction_message_threshold(size_t in_transaction_message_threshold)
+{
+  global_system_variables.transaction_message_threshold= 1024*1024;
+  if ((int64_t) in_transaction_message_threshold < 128*1024 || (int64_t)in_transaction_message_threshold > 1024*1024)
+  {
+    cout << N_("Error: Invalid Value for transaction_message_threshold valid values are between 131072 - 1048576 bytes");
+    exit(-1);
+  }
+  global_system_variables.transaction_message_threshold= in_transaction_message_threshold;
+}
+
 static pair<string, string> parse_size_suffixes(string s)
 {
   size_t equal_pos= s.find("=");
@@ -1122,22 +1133,21 @@ static void process_defaults_files()
        iter != defaults_file_list.end();
        ++iter)
   {
-    string file_location(vm["config-dir"].as<string>());
+    fs::path file_location(system_config_dir);
     if ((*iter)[0] != '/')
     {
       /* Relative path - add config dir */
-      file_location.push_back('/');
-      file_location.append(*iter);
+      file_location /= *iter;
     }
     else
     {
       file_location= *iter;
     }
 
-    ifstream input_defaults_file(file_location.c_str());
+    ifstream input_defaults_file(file_location.file_string().c_str());
     
     po::parsed_options file_parsed=
-      po::parse_config_file(input_defaults_file, full_options, true);
+      dpo::parse_config_file(input_defaults_file, full_options, true);
     vector<string> file_unknown= 
       po::collect_unrecognized(file_parsed.options, po::include_positional);
 
@@ -1213,15 +1223,15 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
     strncpy(glob_hostname, STRING_WITH_LEN("localhost"));
     errmsg_printf(ERRMSG_LVL_WARN, _("gethostname failed, using '%s' as hostname"),
                   glob_hostname);
-    strncpy(pidfile_name, STRING_WITH_LEN("drizzle"));
+    pid_file= "drizzle";
   }
   else
-    strncpy(pidfile_name, glob_hostname, sizeof(pidfile_name)-5);
-  strcpy(internal::fn_ext(pidfile_name),".pid");		// Add proper extension
+  {
+    pid_file= glob_hostname;
+  }
+  pid_file.replace_extension(".pid");
 
-  std::string system_config_dir_drizzle(SYSCONFDIR);
-  system_config_dir_drizzle.append("/drizzle");
-
+  system_config_dir /= "drizzle";
   std::string system_config_file_drizzle("drizzled.cnf");
 
   config_options.add_options()
@@ -1231,9 +1241,9 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   N_("Configuration file defaults are not used if no-defaults is set"))
   ("defaults-file", po::value<vector<string> >()->composing()->notifier(&compose_defaults_file_list),
    N_("Configuration file to use"))
-  ("config-dir", po::value<string>()->default_value(system_config_dir_drizzle),
+  ("config-dir", po::value<fs::path>(&system_config_dir),
    N_("Base location for config files"))
-  ("plugin-dir", po::value<string>()->notifier(&notify_plugin_dir),
+  ("plugin-dir", po::value<fs::path>(&plugin_dir)->notifier(&notify_plugin_dir),
   N_("Directory for plugins."))
   ;
 
@@ -1257,7 +1267,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   N_("Auto-increment columns are incremented by this"))
   ("auto-increment-offset", po::value<uint64_t>(&global_system_variables.auto_increment_offset)->default_value(1)->notifier(&check_limits_aio),
   N_("Offset added to Auto-increment columns. Used when auto-increment-increment != 1"))
-  ("basedir,b", po::value<string>(),
+  ("basedir,b", po::value<fs::path>(&basedir),
   N_("Path to installation directory. All paths are usually resolved "
      "relative to this."))
   ("chroot,r", po::value<string>(),
@@ -1267,28 +1277,25 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   ("completion-type", po::value<uint32_t>(&global_system_variables.completion_type)->default_value(0)->notifier(&check_limits_completion_type),
   N_("Default completion type."))
   ("core-file",  N_("Write core on errors."))
-  ("datadir", po::value<string>(),
+  ("datadir", po::value<fs::path>(&data_home),
   N_("Path to the database root."))
   ("default-storage-engine", po::value<string>(),
-  N_("Set the default storage engine (table type) for tables."))
+  N_("Set the default storage engine for tables."))
   ("default-time-zone", po::value<string>(),
   N_("Set the default time zone."))
   ("exit-info,T", po::value<long>(),
   N_("Used for debugging;  Use at your own risk!"))
   ("gdb", po::value<bool>(&opt_debugging)->default_value(false)->zero_tokens(),
   N_("Set up signals usable for debugging"))
-  ("language,L", po::value<string>(),
-  N_("(IGNORED)"))  
   ("lc-time-name", po::value<string>(),
   N_("Set the language used for the month names and the days of the week."))
-  ("log-warnings,W", po::value<string>(),
+  ("log-warnings,W", po::value<bool>(&global_system_variables.log_warnings)->default_value(false)->zero_tokens(),
   N_("Log some not critical warnings to the log file."))  
-  ("pid-file", po::value<string>(),
+  ("pid-file", po::value<fs::path>(&pid_file),
   N_("Pid file used by drizzled."))
   ("port-open-timeout", po::value<uint32_t>(&drizzled_bind_timeout)->default_value(0),
-  N_("Maximum time in seconds to wait for the port to become free. "
-     "(Default: no wait)"))
-  ("secure-file-priv", po::value<string>(),
+  N_("Maximum time in seconds to wait for the port to become free. "))
+  ("secure-file-priv", po::value<fs::path>(&secure_file_priv)->notifier(expand_secure_file_priv),
   N_("Limit LOAD DATA, SELECT ... OUTFILE, and LOAD_FILE() to files "
      "within specified directory"))
   ("server-id", po::value<uint32_t>(&server_id)->default_value(0),
@@ -1305,6 +1312,8 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   N_("Path for temporary files."))
   ("transaction-isolation", po::value<string>(),
   N_("Default transaction isolation level."))
+  ("transaction-message-threshold", po::value<size_t>(&global_system_variables.transaction_message_threshold)->default_value(1024*1024)->notifier(&check_limits_transaction_message_threshold),
+  N_("Max message size written to transaction log, valid values 131072 - 1048576 bytes."))
   ("user,u", po::value<string>(),
   N_("Run drizzled daemon as user."))  
   ("version,V", 
@@ -1344,7 +1353,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   N_("The number of bytes to use when sorting BLOB or TEXT values "
      "(only the first max_sort_length bytes of each value are used; the "
      "rest are ignored)."))
-  ("max-write-lock-count", po::value<uint64_t>(&max_write_lock_count)->default_value(ULONG_MAX)->notifier(&check_limits_mwlc),
+  ("max-write-lock-count", po::value<uint64_t>(&max_write_lock_count)->default_value(UINT64_MAX),
   N_("After this many write locks, allow some read locks to run in between."))
   ("min-examined-row-limit", po::value<uint64_t>(&global_system_variables.min_examined_row_limit)->default_value(0)->notifier(&check_limits_merl),
   N_("Don't log queries which examine less than min_examined_row_limit "
@@ -1431,9 +1440,10 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
                               system_config_file_drizzle);
   }
 
-  string config_conf_d_location(vm["config-dir"].as<string>());
-  config_conf_d_location.append("/conf.d");
-  CachedDirectory config_conf_d(config_conf_d_location);
+  fs::path config_conf_d_location(system_config_dir);
+  config_conf_d_location /= "conf.d";
+
+  CachedDirectory config_conf_d(config_conf_d_location.file_string());
   if (not config_conf_d.fail())
   {
 
@@ -1447,10 +1457,9 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
           && file_entry != "."
           && file_entry != "..")
       {
-        string the_entry(config_conf_d_location);
-        the_entry.push_back('/');
-        the_entry.append(file_entry);
-        defaults_file_list.push_back(the_entry);
+        fs::path the_entry(config_conf_d_location);
+        the_entry /= file_entry;
+        defaults_file_list.push_back(the_entry.file_string());
       }
     }
   }
@@ -1756,17 +1765,17 @@ struct option my_long_options[] =
    N_("Auto-increment columns are incremented by this"),
    (char**) &global_system_variables.auto_increment_increment,
    (char**) &max_system_variables.auto_increment_increment, 0, GET_ULL,
-   OPT_ARG, 1, 1, UINT64_MAX, 0, 1, 0 },
+   OPT_ARG, 1, 1, INT64_MAX, 0, 1, 0 },
   {"auto-increment-offset", OPT_AUTO_INCREMENT_OFFSET,
    N_("Offset added to Auto-increment columns. Used when "
       "auto-increment-increment != 1"),
    (char**) &global_system_variables.auto_increment_offset,
    (char**) &max_system_variables.auto_increment_offset, 0, GET_ULL, OPT_ARG,
-   1, 1, UINT64_MAX, 0, 1, 0 },
+   1, 1, INT64_MAX, 0, 1, 0 },
   {"basedir", 'b',
    N_("Path to installation directory. All paths are usually resolved "
       "relative to this."),
-   (char**) &drizzle_home_ptr, (char**) &drizzle_home_ptr, 0, GET_STR, REQUIRED_ARG,
+   NULL, NULL, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
   {"chroot", 'r',
    N_("Chroot drizzled daemon during startup."),
@@ -1806,10 +1815,6 @@ struct option my_long_options[] =
    N_("Set up signals usable for debugging"),
    (char**) &opt_debugging, (char**) &opt_debugging,
    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"language", 'L',
-   N_("(IGNORED)"),
-   (char**) &language_ptr, (char**) &language_ptr, 0, GET_STR, REQUIRED_ARG,
-   0, 0, 0, 0, 0, 0},
   {"lc-time-names", OPT_LC_TIME_NAMES,
    N_("Set the language used for the month names and the days of the week."),
    (char**) &lc_time_names_name,
@@ -1822,7 +1827,7 @@ struct option my_long_options[] =
    0, 0, 0},
   {"pid-file", OPT_PID_FILE,
    N_("Pid file used by drizzled."),
-   (char**) &pidfile_name_ptr, (char**) &pidfile_name_ptr, 0, GET_STR,
+   NULL, NULL, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"port-open-timeout", OPT_PORT_OPEN_TIMEOUT,
    N_("Maximum time in seconds to wait for the port to become free. "
@@ -1832,7 +1837,7 @@ struct option my_long_options[] =
   {"secure-file-priv", OPT_SECURE_FILE_PRIV,
    N_("Limit LOAD DATA, SELECT ... OUTFILE, and LOAD_FILE() to files "
       "within specified directory"),
-   (char**) &opt_secure_file_priv, (char**) &opt_secure_file_priv, 0,
+   NULL, NULL, 0,
    GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"server-id",	OPT_SERVER_ID,
    N_("Uniquely identifies the server instance in the community of "
@@ -1921,7 +1926,7 @@ struct option my_long_options[] =
    N_("Don't allow creation of heap tables bigger than this."),
    (char**) &global_system_variables.max_heap_table_size,
    (char**) &max_system_variables.max_heap_table_size, 0, GET_ULL,
-   REQUIRED_ARG, 16*1024*1024L, 16384, MAX_MEM_TABLE_SIZE,
+   REQUIRED_ARG, 16*1024*1024L, 16384, (int64_t)MAX_MEM_TABLE_SIZE,
    MALLOC_OVERHEAD, 1024, 0},
   {"max_join_size", OPT_MAX_JOIN_SIZE,
    N_("Joins that are probably going to read more than max_join_size records "
@@ -2018,7 +2023,7 @@ struct option my_long_options[] =
    N_("Allocation block size for storing ranges during optimization"),
    (char**) &global_system_variables.range_alloc_block_size,
    (char**) &max_system_variables.range_alloc_block_size, 0, GET_SIZE,
-   REQUIRED_ARG, RANGE_ALLOC_BLOCK_SIZE, RANGE_ALLOC_BLOCK_SIZE, SIZE_MAX,
+   REQUIRED_ARG, RANGE_ALLOC_BLOCK_SIZE, RANGE_ALLOC_BLOCK_SIZE, (int64_t)SIZE_MAX,
    0, 1024, 0},
   {"read_buffer_size", OPT_RECORD_BUFFER,
     N_("Each thread that does a sequential scan allocates a buffer of this "
@@ -2045,7 +2050,7 @@ struct option my_long_options[] =
    N_("Each thread that needs to do a sort allocates a buffer of this size."),
    (char**) &global_system_variables.sortbuff_size,
    (char**) &max_system_variables.sortbuff_size, 0, GET_SIZE, REQUIRED_ARG,
-   MAX_SORT_MEMORY, MIN_SORT_MEMORY+MALLOC_OVERHEAD*8, SIZE_MAX,
+   MAX_SORT_MEMORY, MIN_SORT_MEMORY+MALLOC_OVERHEAD*8, (int64_t)SIZE_MAX,
    MALLOC_OVERHEAD, 1, 0},
   {"table_definition_cache", OPT_TABLE_DEF_CACHE,
    N_("The number of cached table definitions."),
@@ -2065,13 +2070,13 @@ struct option my_long_options[] =
    (char**) &my_thread_stack_size,
    (char**) &my_thread_stack_size, 0, GET_SIZE,
    REQUIRED_ARG,DEFAULT_THREAD_STACK,
-   UINT32_C(1024*512), SIZE_MAX, 0, 1024, 0},
+   UINT32_C(1024*512), (int64_t)SIZE_MAX, 0, 1024, 0},
   {"tmp_table_size", OPT_TMP_TABLE_SIZE,
    N_("If an internal in-memory temporary table exceeds this size, Drizzle will"
       " automatically convert it to an on-disk MyISAM table."),
    (char**) &global_system_variables.tmp_table_size,
    (char**) &max_system_variables.tmp_table_size, 0, GET_ULL,
-   REQUIRED_ARG, 16*1024*1024L, 1024, MAX_MEM_TABLE_SIZE, 0, 1, 0},
+   REQUIRED_ARG, 16*1024*1024L, 1024, (int64_t)MAX_MEM_TABLE_SIZE, 0, 1, 0},
   {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 
@@ -2130,9 +2135,7 @@ static void usage(void)
 static void drizzle_init_variables(void)
 {
   /* Things reset to zero */
-  drizzle_home[0]= pidfile_name[0]= 0;
   opt_tc_log_file= (char *)"tc.log";      // no hostname in tc_log file name !
-  opt_secure_file_priv= 0;
   cleanup_done= 0;
   dropping_tables= ha_open_options=0;
   test_flags.reset();
@@ -2150,16 +2153,10 @@ static void drizzle_init_variables(void)
   character_set_filesystem= &my_charset_bin;
 
   /* Things with default values that are not zero */
-  drizzle_home_ptr= drizzle_home;
-  pidfile_name_ptr= pidfile_name;
-  language_ptr= language;
   session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_SQL_NOTES);
   refresh_version= 1L;	/* Increments on each reload */
   global_thread_id= 1UL;
   getSessionList().clear();
-
-  /* Set directory paths */
-  strncpy(language, LANGUAGE, sizeof(language)-1);
 
   /* Variables in libraries */
   default_character_set_name= "utf8";
@@ -2177,7 +2174,7 @@ static void drizzle_init_variables(void)
   max_system_variables.auto_increment_increment= UINT64_MAX;
   max_system_variables.auto_increment_offset= UINT64_MAX;
   max_system_variables.completion_type= 2;
-  max_system_variables.log_warnings= 1;
+  max_system_variables.log_warnings= true;
   max_system_variables.bulk_insert_buff_size= ULONG_MAX;
   max_system_variables.div_precincrement= DECIMAL_MAX_SCALE;
   max_system_variables.group_concat_max_len= ULONG_MAX;
@@ -2210,11 +2207,6 @@ static void drizzle_init_variables(void)
   have_symlink=SHOW_OPTION_YES;
 #endif
 
-  const char *tmpenv;
-  if (!(tmpenv = getenv("MY_BASEDIR_VERSION")))
-    tmpenv = PREFIX;
-  (void) strncpy(drizzle_home, tmpenv, sizeof(drizzle_home)-1);
-  
   connection_count= 0;
 }
 
@@ -2226,19 +2218,9 @@ static void drizzle_init_variables(void)
 static void get_options()
 {
 
-  if (vm.count("base-dir"))
-  {
-    strncpy(drizzle_home,vm["base-dir"].as<string>().c_str(),sizeof(drizzle_home)-1);
-  }
-
-  if (vm.count("datadir"))
-  {
-    getDataHome()= vm["datadir"].as<string>();
-  }
-  string &data_home_catalog= getDataHomeCatalog();
+  fs::path &data_home_catalog= getDataHomeCatalog();
   data_home_catalog= getDataHome();
-  data_home_catalog.push_back('/');
-  data_home_catalog.append("local");
+  data_home_catalog /= "local"; 
 
   if (vm.count("user"))
   {
@@ -2251,25 +2233,10 @@ static void get_options()
                     vm["user"].as<string>().c_str(), drizzled_user);
   }
 
-  if (vm.count("language"))
-  {
-    strncpy(language, vm["language"].as<string>().c_str(), sizeof(language)-1);
-  }
-
   if (vm.count("version"))
   {
     print_version();
     exit(0);
-  }
-
-  if (vm.count("log-warnings"))
-  {
-    if (vm["log-warnings"].as<string>().empty())
-      global_system_variables.log_warnings++;
-    else if (vm["log-warnings"].as<string>().compare("0"))
-      global_system_variables.log_warnings= 0L;
-    else
-      global_system_variables.log_warnings= atoi(vm["log-warnings"].as<string>().c_str());
   }
 
   if (vm.count("exit-info"))
@@ -2293,11 +2260,6 @@ static void get_options()
   if (vm.count("skip-symlinks"))
   {
     internal::my_use_symdir=0;
-  }
-
-  if (vm.count("pid-file"))
-  {
-    strncpy(pidfile_name, vm["pid-file"].as<string>().c_str(), sizeof(pidfile_name)-1);
   }
 
   if (vm.count("transaction-isolation"))
@@ -2347,63 +2309,15 @@ static void get_options()
 }
 
 
-static const char *get_relative_path(const char *path)
-{
-  if (internal::test_if_hard_path(path) &&
-      (strncmp(path, PREFIX, strlen(PREFIX)) == 0) &&
-      strcmp(PREFIX,FN_ROOTDIR))
-  {
-    if (strlen(PREFIX) < strlen(path))
-      path+=(size_t) strlen(PREFIX);
-    while (*path == FN_LIBCHAR)
-      path++;
-  }
-  return path;
-}
-
-
 static void fix_paths()
 {
-  char buff[FN_REFLEN],*pos,rp_buff[PATH_MAX];
-  internal::convert_dirname(drizzle_home,drizzle_home,NULL);
-  /* Resolve symlinks to allow 'drizzle_home' to be a relative symlink */
-#if defined(HAVE_BROKEN_REALPATH)
-   internal::my_load_path(drizzle_home, drizzle_home, NULL);
-#else
-  if (!realpath(drizzle_home,rp_buff))
-    internal::my_load_path(rp_buff, drizzle_home, NULL);
-  rp_buff[FN_REFLEN-1]= '\0';
-  strcpy(drizzle_home,rp_buff);
-  /* Ensure that drizzle_home ends in FN_LIBCHAR */
-  pos= strchr(drizzle_home, '\0');
-#endif
-  if (pos[-1] != FN_LIBCHAR)
-  {
-    pos[0]= FN_LIBCHAR;
-    pos[1]= 0;
-  }
-  internal::convert_dirname(language,language,NULL);
-  (void) internal::my_load_path(drizzle_home, drizzle_home,""); // Resolve current dir
-
-  fs::path pid_file_path(pidfile_name);
+  fs::path pid_file_path(pid_file);
   if (pid_file_path.root_path().string() == "")
   {
-    pid_file_path= fs::path(getDataHome());
-    pid_file_path /= pidfile_name;
+    pid_file_path= getDataHome();
+    pid_file_path /= pid_file;
   }
-  strncpy(pidfile_name, pid_file_path.file_string().c_str(), sizeof(pidfile_name)-1);
-
-
-  const char *sharedir= get_relative_path(PKGDATADIR);
-  if (internal::test_if_hard_path(sharedir))
-    strncpy(buff,sharedir,sizeof(buff)-1);
-  else
-  {
-    strcpy(buff, drizzle_home);
-    strncat(buff, sharedir, sizeof(buff)-strlen(drizzle_home)-1);
-  }
-  internal::convert_dirname(buff,buff,NULL);
-  (void) internal::my_load_path(language,language,buff);
+  pid_file= pid_file_path;
 
   if (not opt_help)
   {
@@ -2417,7 +2331,7 @@ static void fix_paths()
     }
     else if (tmp_string == NULL)
     {
-      drizzle_tmpdir.append(getDataHome());
+      drizzle_tmpdir.append(getDataHome().file_string());
       drizzle_tmpdir.push_back(FN_LIBCHAR);
       drizzle_tmpdir.append(GLOBAL_TEMPORARY_EXT);
     }
@@ -2445,18 +2359,6 @@ static void fix_paths()
     }
   }
 
-  /*
-    Convert the secure-file-priv option to system format, allowing
-    a quick strcmp to check if read or write is in an allowed dir
-   */
-  if (vm.count("secure-file-priv"))
-  {
-    internal::convert_dirname(buff, vm["secure-file-priv"].as<string>().c_str(), NULL);
-    free(opt_secure_file_priv);
-    opt_secure_file_priv= strdup(buff);
-    if (opt_secure_file_priv == NULL)
-      exit(1);
-  }
 }
 
 } /* namespace drizzled */

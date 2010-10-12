@@ -39,8 +39,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 /***********************************************************************
@@ -66,7 +66,7 @@ Public License for more details.
 
 You should have received a copy of the GNU General Public License along
 with this program; if not, write to the Free Software Foundation, Inc.,
-59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 ***********************************************************************/
 
@@ -2130,8 +2130,8 @@ int read_row_from_haildb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, T
   int colnr= 0;
 
   /* We need the primary key for ::position() to work */
-  if (table->s->getPrimaryKey() != MAX_KEY)
-    table->mark_columns_used_by_index_no_reset(table->s->getPrimaryKey());
+  if (table->getShare()->getPrimaryKey() != MAX_KEY)
+    table->mark_columns_used_by_index_no_reset(table->getShare()->getPrimaryKey());
 
   for (Field **field= table->getFields() ; *field ; field++, colnr++)
   {
@@ -2576,8 +2576,8 @@ uint32_t HailDBCursor::calculate_key_len(uint32_t key_position,
   /* works only with key prefixes */
   assert(((keypart_map_arg + 1) & keypart_map_arg) == 0);
 
-  KeyPartInfo *key_part_found= table->s->getKeyInfo(key_position).key_part;
-  KeyPartInfo *end_key_part_found= key_part_found + table->s->getKeyInfo(key_position).key_parts;
+  KeyPartInfo *key_part_found= table->getShare()->getKeyInfo(key_position).key_part;
+  KeyPartInfo *end_key_part_found= key_part_found + table->getShare()->getKeyInfo(key_position).key_parts;
   uint32_t length= 0;
 
   while (key_part_found < end_key_part_found && keypart_map_arg)

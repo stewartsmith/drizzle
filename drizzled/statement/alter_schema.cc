@@ -24,6 +24,7 @@
 #include <drizzled/statement/alter_schema.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/db.h>
+#include <drizzled/message.h>
 
 #include <string>
 
@@ -35,7 +36,7 @@ namespace drizzled
 bool statement::AlterSchema::execute()
 {
   LEX_STRING *db= &session->lex->name;
-  message::Schema old_definition;
+  message::SchemaPtr old_definition;
 
   if (not validateSchemaOptions())
     return true;
@@ -48,10 +49,7 @@ bool statement::AlterSchema::execute()
     return false;
   }
 
-  schema_message.set_name(db->str);
-  schema_message.mutable_engine()->set_name("filesystem"); // For the moment we have only one.
-  SchemaIdentifier identifier(schema_message.name());
-
+  SchemaIdentifier identifier(db->str);
   if (not plugin::StorageEngine::getSchemaDefinition(identifier, old_definition))
   {
     my_error(ER_SCHEMA_DOES_NOT_EXIST, MYF(0), db->str);
@@ -65,11 +63,24 @@ bool statement::AlterSchema::execute()
                MYF(0));
     return true;
   }
+  /*
+    @todo right now the logic for alter schema is just sitting here, at some point this should be packaged up in a class/etc.
+  */
 
+  // We set the name from the old version to keep case preference
+  schema_message.set_name(old_definition->name());
+  schema_message.set_version(old_definition->version());
+  schema_message.set_uuid(old_definition->uuid());
+  schema_message.mutable_engine()->set_name(old_definition->engine().name());
+
+  // We need to make sure we don't destroy any collation that might have
+  // been changed.
   if (not schema_message.has_collation())
   {
-    schema_message.set_collation(schema_message.collation());
+    schema_message.set_collation(old_definition->collation());
   }
+  
+  drizzled::message::update(schema_message);
 
   bool res= mysql_alter_db(session, schema_message);
 

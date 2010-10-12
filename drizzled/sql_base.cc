@@ -11,7 +11,7 @@
 
   You should have received a copy of the GNU General Public License
   along with this program; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 
 /* Basic functions needed by many modules */
@@ -456,7 +456,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
                                                      (table->open_placeholder && wait_for_placeholders)))
           {
             found= true;
-            boost::mutex::scoped_lock scoped(LOCK_open, boost::adopt_lock_t());
+            boost_unique_lock_t scoped(LOCK_open, boost::adopt_lock_t());
             COND_refresh.wait(scoped);
             scoped.release();
             break;
@@ -487,7 +487,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
 
   if (wait_for_refresh)
   {
-    boost::mutex::scoped_lock scopedLock(session->mysys_var->mutex);
+    boost_unique_lock_t scopedLock(session->mysys_var->mutex);
     session->mysys_var->current_mutex= 0;
     session->mysys_var->current_cond= 0;
     session->set_proc_info(0);
@@ -551,7 +551,7 @@ void Session::close_open_tables()
 
   safe_mutex_assert_not_owner(LOCK_open.native_handle());
 
-  boost::mutex::scoped_lock scoped_lock(LOCK_open); /* Close all open tables on Session */
+  boost_unique_lock_t scoped_lock(LOCK_open); /* Close all open tables on Session */
 
   while (open_tables)
   {
@@ -918,7 +918,7 @@ void Session::drop_open_table(Table *table, TableIdentifier &identifier)
   }
   else
   {
-    boost::mutex::scoped_lock scoped_lock(LOCK_open); /* Close and drop a table (AUX routine) */
+    boost_unique_lock_t scoped_lock(LOCK_open); /* Close and drop a table (AUX routine) */
     /*
       unlink_open_table() also tells threads waiting for refresh or close
       that something has happened.
@@ -940,7 +940,7 @@ void Session::drop_open_table(Table *table, TableIdentifier &identifier)
   cond	Condition to wait for
 */
 
-void Session::wait_for_condition(boost::mutex &mutex, boost::condition_variable &cond)
+void Session::wait_for_condition(boost::mutex &mutex, boost::condition_variable_any &cond)
 {
   /* Wait until the current table is up to date */
   const char *saved_proc_info;
@@ -959,13 +959,13 @@ void Session::wait_for_condition(boost::mutex &mutex, boost::condition_variable 
       condition variables that are guranteed to not disapper (freed) even if this
       mutex is unlocked
     */
-    boost::mutex::scoped_lock scopedLock(mutex, boost::adopt_lock_t());
+    boost_unique_lock_t scopedLock(mutex, boost::adopt_lock_t());
     if (not killed)
     {
       cond.wait(scopedLock);
     }
   }
-  boost::mutex::scoped_lock (mysys_var->mutex);
+  boost_unique_lock_t mysys_scopedLock(mysys_var->mutex);
   mysys_var->current_mutex= 0;
   mysys_var->current_cond= 0;
   set_proc_info(saved_proc_info);
@@ -1120,7 +1120,7 @@ bool Session::lock_table_name_if_not_cached(TableIdentifier &identifier, Table *
 {
   const TableIdentifier::Key &key(identifier.getKey());
 
-  boost::mutex::scoped_lock scope_lock(LOCK_open); /* Obtain a name lock even though table is not in cache (like for create table)  */
+  boost_unique_lock_t scope_lock(LOCK_open); /* Obtain a name lock even though table is not in cache (like for create table)  */
 
   TableOpenCache::iterator iter;
 
@@ -1455,9 +1455,6 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
   }
   assert(table->getShare()->getTableCount() > 0 || table->getShare()->getType() != message::Table::STANDARD);
 
-  if (lex->need_correct_ident())
-    table->alias_name_used= my_strcasecmp(table_alias_charset,
-                                          table->getMutableShare()->getTableName(), alias);
   /* Fix alias if table name changes */
   if (strcmp(table->getAlias(), alias))
   {
@@ -1767,7 +1764,7 @@ bool wait_for_tables(Session *session)
 
   session->set_proc_info("Waiting for tables");
   {
-    boost::mutex::scoped_lock lock(LOCK_open);
+    boost_unique_lock_t lock(LOCK_open);
     while (!session->killed)
     {
       session->some_tables_deleted= false;
@@ -1912,7 +1909,7 @@ static int open_unireg_entry(Session *session,
                              TableIdentifier &identifier)
 {
   int error;
-  TableShare *share;
+  TableSharePtr share;
   uint32_t discover_retry_count= 0;
 
   safe_mutex_assert_owner(LOCK_open.native_handle());
@@ -2319,7 +2316,7 @@ static void update_field_dependencies(Session *session, Field *field, Table *tab
 {
   if (session->mark_used_columns != MARK_COLUMNS_NONE)
   {
-    MyBitmap *current_bitmap, *other_bitmap;
+    boost::dynamic_bitset<> *current_bitmap= NULL;
 
     /*
       We always want to register the used keys, as the column bitmap may have
@@ -2332,15 +2329,14 @@ static void update_field_dependencies(Session *session, Field *field, Table *tab
     if (session->mark_used_columns == MARK_COLUMNS_READ)
     {
       current_bitmap= table->read_set;
-      other_bitmap=   table->write_set;
     }
     else
     {
       current_bitmap= table->write_set;
-      other_bitmap=   table->read_set;
     }
 
-    if (current_bitmap->testAndSet(field->field_index))
+    //if (current_bitmap->testAndSet(field->field_index))
+    if (current_bitmap->test(field->field_index))
     {
       if (session->mark_used_columns == MARK_COLUMNS_WRITE)
         session->dup_field= field;
@@ -4509,7 +4505,7 @@ bool remove_table_from_cache(Session *session, TableIdentifier &identifier, uint
         dropping_tables++;
         if (likely(signalled))
         {
-          boost::mutex::scoped_lock scoped(LOCK_open, boost::adopt_lock_t());
+          boost_unique_lock_t scoped(LOCK_open, boost::adopt_lock_t());
           COND_refresh.wait(scoped);
           scoped.release();
         }
@@ -4528,7 +4524,7 @@ bool remove_table_from_cache(Session *session, TableIdentifier &identifier, uint
           boost::xtime xt; 
           xtime_get(&xt, boost::TIME_UTC); 
           xt.sec += 10; 
-          boost::mutex::scoped_lock scoped(LOCK_open, boost::adopt_lock_t());
+          boost_unique_lock_t scoped(LOCK_open, boost::adopt_lock_t());
           COND_refresh.timed_wait(scoped, xt);
           scoped.release();
         }

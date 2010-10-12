@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include "config.h"
 
@@ -284,7 +284,7 @@ ulong my_strntoul_8bit(const CHARSET_INFO * const cs,
   if (overflow)
   {
     err[0]= ERANGE;
-    return (~(uint32_t) 0);
+    return UINT32_MAX;
   }
 
   return (negative ? -((long) i) : (long) i);

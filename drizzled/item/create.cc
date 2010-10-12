@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /**
   @file
@@ -1854,7 +1854,7 @@ Create_func_space::create(Session *session, Item *arg1)
 
   if (cs->mbminlen > 1)
   {
-    uint32_t dummy_errors;
+    size_t dummy_errors;
     sp= new (session->mem_root) Item_string("", 0, cs, DERIVATION_COERCIBLE);
     sp->str_value.copy(" ", 1, &my_charset_utf8_general_ci, cs, &dummy_errors);
   }

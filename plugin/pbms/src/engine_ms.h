@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Original author: Paul McCullagh
  * Continued development: Barry Leslie
@@ -31,6 +31,14 @@
 #define __ENGINE_MS_H__
 
 #include "defs_ms.h"
+
+#include "cslib/CSConfig.h"
+#include <inttypes.h>
+
+#include "cslib/CSGlobal.h"
+#include "cslib/CSSocket.h"
+#include "cslib/CSStrUtil.h"
+#include "cslib/CSHTTPStream.h"
 
 #include "pbms.h"
 class MSOpenTable;

@@ -10,18 +10,12 @@
 # FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # 
 # You should have received a copy of the GNU General Public License along with
-# this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-# Place, Suite 330, Boston, MA 02111-1307 USA
+# this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+# St, Fifth Floor, Boston, MA 02110-1301 USA
 #
 
 AC_DEFUN([AC_INNODB_ACTIONS],[
-  AC_CHECK_PROGS(LEX, ['flex'])
-  AS_IF([test "x$LEX" = "x" -a "$pandora_building_from_bzr" = "yes"],[
-     AC_MSG_ERROR(["flex is required for Drizzle to build from a bzr branch"])
-  ])
-  AS_IF([test "x$LEX" = "x"],[
-    LEX='if test -f "$@"; then echo "WARNING: no proper flex binary found, ignoring changes to $<"; exit 0; else echo "ERROR: no proper flex binary found"; exit 1; fi;'
-  ])
+  PANDORA_REQUIRE_FLEX
 
   AC_REQUIRE([AC_FUNC_MMAP])
 

@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /* open a isam-database */
 
@@ -137,12 +137,12 @@ MI_INFO *mi_open(const drizzled::TableIdentifier &identifier, int mode, uint32_t
       goto err;
     }
     share->options= mi_uint2korr(share->state.header.options);
-    if (share->options &
-	~(HA_OPTION_PACK_RECORD | HA_OPTION_PACK_KEYS |
-	  HA_OPTION_COMPRESS_RECORD | HA_OPTION_READ_ONLY_DATA |
-	  HA_OPTION_TEMP_COMPRESS_RECORD |
-          HA_OPTION_TMP_TABLE
-          ))
+    static const uint64_t OLD_FILE_OPTIONS= HA_OPTION_PACK_RECORD |
+	    HA_OPTION_PACK_KEYS |
+	    HA_OPTION_COMPRESS_RECORD | HA_OPTION_READ_ONLY_DATA |
+	    HA_OPTION_TEMP_COMPRESS_RECORD |
+	    HA_OPTION_TMP_TABLE;
+    if (share->options & ~OLD_FILE_OPTIONS)
     {
       errno=HA_ERR_OLD_FILE;
       goto err;
@@ -489,7 +489,7 @@ MI_INFO *mi_open(const drizzled::TableIdentifier &identifier, int mode, uint32_t
   /* Allocate buffer for one record */
 
   /* prerequisites: memset(info, 0) && info->s=share; are met. */
-  if (!mi_alloc_rec_buff(&info, -1, &info.rec_buff))
+  if (!mi_alloc_rec_buff(&info, SIZE_MAX, &info.rec_buff))
     goto err;
   memset(info.rec_buff, 0, mi_get_rec_buff_len(&info, info.rec_buff));
 
@@ -544,7 +544,7 @@ unsigned char *mi_alloc_rec_buff(MI_INFO *info, size_t length, unsigned char **b
     unsigned char *newptr = *buf;
 
     /* to simplify initial init of info->rec_buf in mi_open and mi_extra */
-    if (length == (ulong) -1)
+    if (length == SIZE_MAX)
     {
       if (info->s->options & HA_OPTION_COMPRESS_RECORD)
         length= max(info->s->base.pack_reclength, info->s->max_pack_length);

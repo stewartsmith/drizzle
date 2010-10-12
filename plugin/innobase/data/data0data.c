@@ -11,8 +11,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -407,8 +407,10 @@ dfield_print_also_hex(
 		case 4:
 			val = mach_read_from_4(data);
 
+                        static const ulint UNSIGNED_MASK= 0x80000000;
+
 			if (!(prtype & DATA_UNSIGNED)) {
-				val &= ~0x80000000;
+				val &= ~UNSIGNED_MASK;
 				fprintf(stderr, "%ld", (long) val);
 			} else {
 				fprintf(stderr, "%lu", (ulong) val);

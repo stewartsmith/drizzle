@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /*
   A better inplementation of the UNIX ctype(3) library.
@@ -238,7 +238,11 @@ typedef struct my_charset_handler_st
   /* Charset dependant snprintf() */
   size_t (*snprintf)(const struct charset_info_st * const, char *to, size_t n,
                      const char *fmt,
-                     ...) __attribute__((format(printf, 4, 5)));
+                     ...)
+#if defined(__GNUC__) && !defined(__INTEL_COMPILER)
+                         __attribute__((format(printf, 4, 5)))
+#endif
+                         ;
   size_t (*long10_to_str)(const struct charset_info_st * const, char *to, size_t n,
                           int radix, long int val);
   size_t (*int64_t10_to_str)(const struct charset_info_st * const, char *to, size_t n,

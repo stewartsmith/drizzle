@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  *  Created by Barry Leslie on 10/02/09.
  *
@@ -546,7 +546,7 @@ static size_t send_callback(void *ptr, size_t objs, size_t obj_size, void *v_con
 	}
 	catch_(a);
 	con->ms_throw_error = true;
-	data_sent = -1;
+	data_sent = SIZE_MAX;
 	
 	cont_(a);
 	
@@ -569,7 +569,7 @@ static size_t receive_data(void *vptr, size_t objs, size_t obj_size, void *v_con
 	}
 	catch_(a);
 	con->ms_throw_error = true;
-	data_len = -1;
+	data_len = SIZE_MAX; 
 	
 	cont_(a);
 	return_(data_len);	

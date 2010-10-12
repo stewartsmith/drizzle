@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /* This file is originally from the mysql distribution. Coded by monty */
 
@@ -58,7 +58,7 @@ String::String()
 { }
 
 
-String::String(uint32_t length_arg)
+String::String(size_t length_arg)
   : Ptr(NULL),
     str_length(0),
     Alloced_length(0),
@@ -70,14 +70,14 @@ String::String(uint32_t length_arg)
 
 String::String(const char *str, const CHARSET_INFO * const cs)
   : Ptr(const_cast<char *>(str)),
-    str_length(static_cast<uint32_t>(strlen(str))),
+    str_length(static_cast<size_t>(strlen(str))),
     Alloced_length(0),
     alloced(false),
     str_charset(cs)
 { }
 
 
-String::String(const char *str, uint32_t len, const CHARSET_INFO * const cs)
+String::String(const char *str, size_t len, const CHARSET_INFO * const cs)
   : Ptr(const_cast<char *>(str)),
     str_length(len),
     Alloced_length(0),
@@ -86,7 +86,7 @@ String::String(const char *str, uint32_t len, const CHARSET_INFO * const cs)
 { }
 
 
-String::String(char *str, uint32_t len, const CHARSET_INFO * const cs)
+String::String(char *str, size_t len, const CHARSET_INFO * const cs)
   : Ptr(str),
     str_length(len),
     Alloced_length(len),
@@ -106,12 +106,12 @@ String::String(const String &str)
 
 void *String::operator new(size_t size, memory::Root *mem_root)
 {
-  return mem_root->alloc_root(static_cast<uint32_t>(size));
+  return mem_root->alloc_root(static_cast<size_t>(size));
 }
 
 String::~String() { free(); }
 
-bool String::real_alloc(uint32_t arg_length)
+bool String::real_alloc(size_t arg_length)
 {
   arg_length=ALIGN_SIZE(arg_length+1);
   str_length=0;
@@ -133,9 +133,9 @@ bool String::real_alloc(uint32_t arg_length)
 ** (for C functions)
 */
 
-bool String::realloc(uint32_t alloc_length)
+bool String::realloc(size_t alloc_length)
 {
-  uint32_t len=ALIGN_SIZE(alloc_length+1);
+  size_t len=ALIGN_SIZE(alloc_length+1);
   if (Alloced_length < len)
   {
     char *new_ptr;
@@ -167,20 +167,20 @@ bool String::realloc(uint32_t alloc_length)
 
 bool String::set_int(int64_t num, bool unsigned_flag, const CHARSET_INFO * const cs)
 {
-  uint32_t l=20*cs->mbmaxlen+1;
+  size_t l=20*cs->mbmaxlen+1;
   int base= unsigned_flag ? 10 : -10;
 
   if (alloc(l))
     return true;
-  str_length=(uint32_t) (cs->cset->int64_t10_to_str)(cs,Ptr,l,base,num);
+  str_length=(size_t) (cs->cset->int64_t10_to_str)(cs,Ptr,l,base,num);
   str_charset=cs;
   return false;
 }
 
-bool String::set_real(double num,uint32_t decimals, const CHARSET_INFO * const cs)
+bool String::set_real(double num,size_t decimals, const CHARSET_INFO * const cs)
 {
   char buff[FLOATING_POINT_BUFFER];
-  uint32_t dummy_errors;
+  size_t dummy_errors;
   size_t len;
 
   str_charset=cs;
@@ -192,7 +192,7 @@ bool String::set_real(double num,uint32_t decimals, const CHARSET_INFO * const c
     return copy(buff, len, &my_charset_utf8_general_ci, cs, &dummy_errors);
   }
   len= internal::my_fcvt(num, decimals, buff, NULL);
-  return copy(buff, (uint32_t) len, &my_charset_utf8_general_ci, cs,
+  return copy(buff, (size_t) len, &my_charset_utf8_general_ci, cs,
               &dummy_errors);
 }
 
@@ -218,7 +218,7 @@ bool String::copy(const String &str)
   return false;
 }
 
-bool String::copy(const char *str,uint32_t arg_length, const CHARSET_INFO * const cs)
+bool String::copy(const char *str,size_t arg_length, const CHARSET_INFO * const cs)
 {
   if (alloc(arg_length))
     return true;
@@ -240,7 +240,7 @@ bool String::copy(const char *str,uint32_t arg_length, const CHARSET_INFO * cons
   arg_length		Length of string to copy.
   from_cs		Character set to copy from
   to_cs			Character set to copy to
-  uint32_t *offset	Returns number of unaligned characters.
+  size_t *offset	Returns number of unaligned characters.
 
   RETURN
    0  No conversion needed
@@ -252,10 +252,10 @@ bool String::copy(const char *str,uint32_t arg_length, const CHARSET_INFO * cons
   character_set_results is NULL.
 */
 
-bool String::needs_conversion(uint32_t arg_length,
+bool String::needs_conversion(size_t arg_length,
 			      const CHARSET_INFO * const from_cs,
 			      const CHARSET_INFO * const to_cs,
-			      uint32_t *offset)
+			      size_t *offset)
 {
   *offset= 0;
   if (!to_cs ||
@@ -271,11 +271,11 @@ bool String::needs_conversion(uint32_t arg_length,
 
 
 
-bool String::set_or_copy_aligned(const char *str,uint32_t arg_length,
+bool String::set_or_copy_aligned(const char *str,size_t arg_length,
                                  const CHARSET_INFO * const cs)
 {
   /* How many bytes are in incomplete character */
-  uint32_t offset= (arg_length % cs->mbminlen);
+  size_t offset= (arg_length % cs->mbminlen);
 
   assert(!offset); /* All characters are complete, just copy */
 
@@ -285,9 +285,9 @@ bool String::set_or_copy_aligned(const char *str,uint32_t arg_length,
 
 	/* Copy with charset conversion */
 
-bool String::copy(const char *str, uint32_t arg_length,
+bool String::copy(const char *str, size_t arg_length,
 		          const CHARSET_INFO * const,
-				  const CHARSET_INFO * const to_cs, uint32_t *errors)
+				  const CHARSET_INFO * const to_cs, size_t *errors)
 {
   *errors= 0;
   return copy(str, arg_length, to_cs);
@@ -313,14 +313,14 @@ bool String::copy(const char *str, uint32_t arg_length,
 
 */
 
-bool String::set_ascii(const char *str, uint32_t arg_length)
+bool String::set_ascii(const char *str, size_t arg_length)
 {
   if (str_charset->mbminlen == 1)
   {
     set(str, arg_length, str_charset);
     return 0;
   }
-  uint32_t dummy_errors;
+  size_t dummy_errors;
   return copy(str, arg_length, &my_charset_utf8_general_ci, str_charset, &dummy_errors);
 }
 
@@ -341,7 +341,7 @@ bool String::append(const String &s)
   Append an ASCII string to the a string of the current character set
 */
 
-bool String::append(const char *s,uint32_t arg_length)
+bool String::append(const char *s,size_t arg_length)
 {
   if (!arg_length)
     return false;
@@ -372,7 +372,7 @@ bool String::append(const char *s)
   with character set recoding
 */
 
-bool String::append(const char *s,uint32_t arg_length, const CHARSET_INFO * const)
+bool String::append(const char *s,size_t arg_length, const CHARSET_INFO * const)
 {
   if (realloc(str_length + arg_length))
     return true;
@@ -383,8 +383,8 @@ bool String::append(const char *s,uint32_t arg_length, const CHARSET_INFO * cons
 }
 
 
-bool String::append_with_prefill(const char *s,uint32_t arg_length,
-		 uint32_t full_length, char fill_char)
+bool String::append_with_prefill(const char *s,size_t arg_length,
+		 size_t full_length, char fill_char)
 {
   int t_length= arg_length > full_length ? arg_length : full_length;
 
@@ -400,19 +400,19 @@ bool String::append_with_prefill(const char *s,uint32_t arg_length,
   return false;
 }
 
-uint32_t String::numchars()
+size_t String::numchars()
 {
   return str_charset->cset->numchars(str_charset, Ptr, Ptr+str_length);
 }
 
-int String::charpos(int i,uint32_t offset)
+int String::charpos(int i,size_t offset)
 {
   if (i <= 0)
     return i;
   return str_charset->cset->charpos(str_charset,Ptr+offset,Ptr+str_length,i);
 }
 
-int String::strstr(const String &s,uint32_t offset)
+int String::strstr(const String &s,size_t offset)
 {
   if (s.length()+offset <= str_length)
   {
@@ -443,7 +443,7 @@ skip:
 ** Search string from end. Offset is offset to the end of string
 */
 
-int String::strrstr(const String &s,uint32_t offset)
+int String::strrstr(const String &s,size_t offset)
 {
   if (s.length() <= offset && offset <= str_length)
   {
@@ -475,13 +475,13 @@ skip:
   If wrong parameter or not enough memory, do nothing
 */
 
-bool String::replace(uint32_t offset,uint32_t arg_length,const String &to)
+bool String::replace(size_t offset,size_t arg_length,const String &to)
 {
   return replace(offset,arg_length,to.ptr(),to.length());
 }
 
-bool String::replace(uint32_t offset,uint32_t arg_length,
-                     const char *to, uint32_t to_length)
+bool String::replace(size_t offset,size_t arg_length,
+                     const char *to, size_t to_length)
 {
   long diff = (long) to_length-(long) arg_length;
   if (offset+arg_length <= str_length)
@@ -497,7 +497,7 @@ bool String::replace(uint32_t offset,uint32_t arg_length,
     {
       if (diff)
       {
-	if (realloc(str_length+(uint32_t) diff))
+	if (realloc(str_length+(size_t) diff))
 	  return true;
 	internal::bmove_upp((unsigned char*) Ptr+str_length+diff,
                             (unsigned char*) Ptr+str_length,
@@ -506,7 +506,7 @@ bool String::replace(uint32_t offset,uint32_t arg_length,
       if (to_length)
 	memcpy(Ptr+offset,to,to_length);
     }
-    str_length+=(uint32_t) diff;
+    str_length+=(size_t) diff;
   }
   return false;
 }
@@ -560,13 +560,13 @@ int sortcmp(const String *s,const String *t, const CHARSET_INFO * const cs)
 
 int stringcmp(const String *s,const String *t)
 {
-  uint32_t s_len= s->length(), t_len= t->length(), len= min(s_len,t_len);
+  size_t s_len= s->length(), t_len= t->length(), len= min(s_len,t_len);
   int cmp= memcmp(s->ptr(), t->ptr(), len);
   return (cmp) ? cmp : (int) (s_len - t_len);
 }
 
 
-String *copy_if_not_alloced(String *to,String *from,uint32_t from_length)
+String *copy_if_not_alloced(String *to,String *from,size_t from_length)
 {
   if (from->Alloced_length >= from_length)
     return from;
@@ -615,17 +615,17 @@ String *copy_if_not_alloced(String *to,String *from,uint32_t from_length)
 */
 
 
-uint32_t
+size_t
 well_formed_copy_nchars(const CHARSET_INFO * const to_cs,
-                        char *to, uint32_t to_length,
+                        char *to, size_t to_length,
                         const CHARSET_INFO * const from_cs,
-                        const char *from, uint32_t from_length,
-                        uint32_t nchars,
+                        const char *from, size_t from_length,
+                        size_t nchars,
                         const char **well_formed_error_pos,
                         const char **cannot_convert_error_pos,
                         const char **from_end_pos)
 {
-  uint32_t res;
+  size_t res;
 
   assert((to_cs == &my_charset_bin) ||
          (from_cs == &my_charset_bin) ||
@@ -651,7 +651,7 @@ well_formed_copy_nchars(const CHARSET_INFO * const to_cs,
   else
   {
     int well_formed_error;
-    uint32_t from_offset;
+    size_t from_offset;
 
     if ((from_offset= (from_length % to_cs->mbminlen)) &&
         (from_cs == &my_charset_bin))
@@ -661,7 +661,7 @@ well_formed_copy_nchars(const CHARSET_INFO * const to_cs,
         INSERT INTO t1 (ucs2_column) VALUES (0x01);
         0x01 -> 0x0001
       */
-      uint32_t pad_length= to_cs->mbminlen - from_offset;
+      size_t pad_length= to_cs->mbminlen - from_offset;
       memset(to, 0, pad_length);
       memmove(to + pad_length, from, from_offset);
       nchars--;
@@ -733,7 +733,7 @@ void String::print(String *str)
 /* Factor the extern out */
 extern const CHARSET_INFO *system_charset_info, *files_charset_info;
 
-void String::append_identifier(const char *name, uint32_t in_length)
+void String::append_identifier(const char *name, size_t in_length)
 {
   const char *name_end;
   char quote_char;
@@ -788,9 +788,9 @@ void String::swap(String &s)
   std::swap(str_charset, s.str_charset);
 }
 
-void String::q_append(const uint32_t n)
+void String::q_append(const size_t n)
 {
-  int4store(Ptr + str_length, n);
+  int8store(Ptr + str_length, n);
   str_length += 4;
 }
 void String::q_append(double d)
@@ -803,15 +803,15 @@ void String::q_append(double *d)
   float8store(Ptr + str_length, *d);
   str_length += 8;
 }
-void String::q_append(const char *data, uint32_t data_len)
+void String::q_append(const char *data, size_t data_len)
 {
   memcpy(Ptr + str_length, data, data_len);
   str_length += data_len;
 }
 
-void String::write_at_position(int position, uint32_t value)
+void String::write_at_position(int position, size_t value)
 {
-  int4store(Ptr + position,value);
+  int8store(Ptr + position,value);
 }
 bool check_if_only_end_space(const CHARSET_INFO * const cs, char *str,
                              char *end)

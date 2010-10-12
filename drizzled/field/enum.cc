@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-
 #include "config.h"
+#include <boost/lexical_cast.hpp>
 #include "drizzled/field/enum.h"
 #include "drizzled/error.h"
 #include "drizzled/table.h"
@@ -43,7 +43,7 @@ void Field_enum::store_type(uint64_t value)
   value--; /* we store as starting from 0, although SQL starts from 1 */
 
 #ifdef WORDS_BIGENDIAN
-  if (getTable()->s->db_low_byte_first)
+  if (getTable()->getShare()->db_low_byte_first)
   {
     int4store(ptr, (unsigned short) value);
   }
@@ -110,10 +110,8 @@ int Field_enum::store(int64_t from, bool)
 
   if (from <= 0 || (uint64_t) from > typelib->count)
   {
-    /* Convert the integer to a string using stringstream */
-    std::stringstream ss;
-    std::string tmp;
-    ss << from; ss >> tmp;
+    /* Convert the integer to a string using boost::lexical_cast */
+    std::string tmp(boost::lexical_cast<std::string>(from));
 
     my_error(ER_INVALID_ENUM_VALUE, MYF(ME_FATALERROR), tmp.c_str());
     return 1;
@@ -133,7 +131,7 @@ int64_t Field_enum::val_int(void)
 
   uint16_t tmp;
 #ifdef WORDS_BIGENDIAN
-  if (getTable()->s->db_low_byte_first)
+  if (getTable()->getShare()->db_low_byte_first)
     tmp= sint4korr(ptr);
   else
 #endif
@@ -193,7 +191,7 @@ void Field_enum::sql_type(String &res) const
   uint32_t *len= typelib->type_lengths;
   for (const char **pos= typelib->type_names; *pos; pos++, len++)
   {
-    uint32_t dummy_errors;
+    size_t dummy_errors;
     if (flag)
       res.append(',');
     /* convert to res.charset() == utf8, then quote */

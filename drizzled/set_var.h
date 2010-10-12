@@ -21,6 +21,7 @@
 #define DRIZZLED_SET_VAR_H
 
 #include <string>
+#include <boost/filesystem.hpp>
 
 #include "drizzled/function/func.h"
 #include "drizzled/function/set_user_var.h"
@@ -61,10 +62,10 @@ extern const char *first_keyword;
 extern const char *in_left_expr_name;
 extern const char *in_additional_cond;
 extern const char *in_having_cond;
-extern char language[FN_REFLEN];
 extern char glob_hostname[FN_REFLEN];
-extern char drizzle_home[FN_REFLEN];
-extern char pidfile_name[FN_REFLEN];
+extern boost::filesystem::path basedir;
+extern boost::filesystem::path pid_file;
+extern boost::filesystem::path secure_file_priv;
 extern char system_time_zone[30];
 extern char *opt_tc_log_file;
 extern uint64_t session_startup_options;
@@ -81,7 +82,6 @@ extern bool opt_endinfo;
 extern uint32_t volatile thread_running;
 extern uint32_t volatile global_read_lock;
 extern bool opt_readonly;
-extern char* opt_secure_file_priv;
 extern char *default_tz_name;
 extern const char *opt_scheduler;
 
@@ -360,6 +360,44 @@ public:
   { return 0; }
 };
 
+
+class sys_var_fs_path :
+  public sys_var
+{
+  const boost::filesystem::path &value;
+public:
+  sys_var_fs_path(sys_var_chain *chain,
+                  const char *name_arg,
+                  const boost::filesystem::path& value_arg) :
+    sys_var(name_arg),
+    value(value_arg)
+  {
+    chain_sys_var(chain);
+  }
+
+  inline void set(char *)
+  { }
+
+  bool check(Session *, set_var *)
+  {
+    return true;
+  }
+  bool update(Session *, set_var *)
+  {
+    return true;
+  }
+  SHOW_TYPE show_type() { return SHOW_CHAR; }
+  unsigned char *value_ptr(Session *, sql_var_t, const LEX_STRING *)
+  {
+    return (unsigned char*)(value.file_string().c_str());
+  }
+  bool check_update_type(Item_result)
+  {
+    return true;
+  }
+  bool check_default(sql_var_t) { return true; }
+  bool is_readonly() const { return true; }
+};
 
 class sys_var_const_str :public sys_var
 {
@@ -913,8 +951,7 @@ struct sys_var_with_base
 */
 
 int set_var_init();
-void set_var_free();
-drizzle_show_var* enumerate_sys_vars(Session *session, bool sorted);
+drizzle_show_var* enumerate_sys_vars(Session *session);
 void drizzle_add_plugin_sysvar(sys_var_pluginvar *var);
 void drizzle_del_plugin_sysvar();
 int mysql_add_sys_var_chain(sys_var *chain, struct option *long_options);

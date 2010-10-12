@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Original author: Paul McCullagh
  * Continued development: Barry Leslie
@@ -30,9 +30,11 @@
 #ifndef __MS_MYSQL_H__
 #define __MS_MYSQL_H__
 
+#include <string>
+
 void		*ms_my_get_thread();
 uint64_t	ms_my_1970_to_mysql_time(time_t t);
-const char	*ms_my_get_mysql_home_path();
+const std::string ms_my_get_mysql_home_path();
 void		ms_my_set_column_name(const char *table, uint16_t col_index, char *col_name);
 bool		ms_is_autocommit();
 

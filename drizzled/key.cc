@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 
 /* Functions to handle keys and fields in forms */
@@ -20,6 +20,9 @@
 #include "drizzled/table.h"
 #include "drizzled/key.h"
 #include "drizzled/field/blob.h"
+#include "drizzled/util/test.h"
+
+#include <boost/dynamic_bitset.hpp>
 
 #include <string>
 
@@ -372,7 +375,7 @@ void key_unpack(String *to, Table *table, uint32_t idx)
       }
 
       if (key_part->length < field->pack_length())
-        tmp.length(min(tmp.length(),(uint32_t)key_part->length));
+        tmp.length(min(tmp.length(), static_cast<size_t>(key_part->length)));
       to->append(tmp);
     }
     else
@@ -399,11 +402,11 @@ void key_unpack(String *to, Table *table, uint32_t idx)
     FALSE  Otherwise
 */
 
-bool is_key_used(Table *table, uint32_t idx, const MyBitmap *fields)
+bool is_key_used(Table *table, uint32_t idx, const boost::dynamic_bitset<>& fields)
 {
-  table->tmp_set.clearAll();
-  table->mark_columns_used_by_index_no_reset(idx, &table->tmp_set);
-  if (bitmap_is_overlapping(&table->tmp_set, fields))
+  table->tmp_set.reset();
+  table->mark_columns_used_by_index_no_reset(idx, table->tmp_set);
+  if (table->tmp_set.is_subset_of(fields))
     return 1;
 
   /*

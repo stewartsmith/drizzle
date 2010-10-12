@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Original author: Paul McCullagh
  * Continued development: Barry Leslie
@@ -1259,7 +1259,7 @@ MSDatabase *MSDatabase::newDatabase(const char *db_location, CSString *db_name, 
 	 * The database name is case sensitive here if the file system names are
 	 * case sensitive. This is desirable.
 	 */
-	path = CSPath::newPath(ms_my_get_mysql_home_path(), RETAIN(db_name));
+	path = CSPath::newPath(ms_my_get_mysql_home_path().c_str(), RETAIN(db_name));
 	push_(path);
 	if (create && !path->exists()) {
 		CSException::throwException(CS_CONTEXT, MS_ERR_UNKNOWN_DB, db_name->getCString());
@@ -1605,7 +1605,7 @@ void MSDatabase::dropDatabase(MSDatabase *doomedDatabase, const char *db_name )
 		bool create = false;
 		uint32_t db_id;
 		
-		path = createDatabasePath(ms_my_get_mysql_home_path(), CSString::newString(db_name), &db_id, &create);
+		path = createDatabasePath(ms_my_get_mysql_home_path().c_str(), CSString::newString(db_name), &db_id, &create);
 		
 		if (path) {
 			MSTransactionManager::dropDatabase(db_id);
@@ -1636,7 +1636,7 @@ void MSDatabase::dropDatabase(const char *db_name )
 // 3: <database>/<table>
 bool MSDatabase::convertTablePathToIDs(const char *table_path, uint32_t *db_id, uint32_t *tab_id, bool create) 
 {
-	const char	*base = ms_my_get_mysql_home_path();
+	const char	*base = ms_my_get_mysql_home_path().c_str();
 	CSString	*table_url;
 	CSString	*db_path = NULL;
 	CSString	*db_name = NULL;
@@ -1736,7 +1736,7 @@ MSDatabase *MSDatabase::loadDatabase(CSString *db_name, bool create)
 	MSDatabase *db;
 	enter_();
 	
-	db = newDatabase(ms_my_get_mysql_home_path(), db_name, 0, create);
+	db = newDatabase(ms_my_get_mysql_home_path().c_str(), db_name, 0, create);
 	
 	if (db) {
 		push_(db);

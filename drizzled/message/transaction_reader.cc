@@ -45,9 +45,13 @@
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 
+#include <boost/program_options.hpp>
+
 using namespace std;
 using namespace google;
 using namespace drizzled;
+
+namespace po= boost::program_options;
 
 static const char *replace_with_spaces= "\n\r";
 
@@ -148,11 +152,45 @@ static bool isEndTransaction(const message::Transaction &transaction)
   return true;
 }
 
-static void printTransaction(const message::Transaction &transaction)
+static void printEvent(const message::Event &event)
+{
+  switch (event.type())
+  {
+    case message::Event::STARTUP:
+    {
+      cout << "-- EVENT: Server startup\n";
+      break;
+    }
+    case message::Event::SHUTDOWN:
+    {
+      cout << "-- EVENT: Server shutdown\n";
+      break;
+    }
+    default:
+    {
+      cout << "-- EVENT: Unknown event\n";
+      break;
+    }
+  }
+}
+
+static void printTransaction(const message::Transaction &transaction,
+                             bool ignore_events)
 {
   static uint64_t last_trx_id= 0;
   bool should_commit= true;
   const message::TransactionContext trx= transaction.transaction_context();
+
+  /*
+   * First check to see if this is an event message.
+   */
+  if (transaction.has_event())
+  {
+    last_trx_id= trx.transaction_id();
+    if (not ignore_events)
+      printEvent(transaction.event());
+    return;
+  }
 
   size_t num_statements= transaction.statement_size();
   size_t x;
@@ -174,6 +212,15 @@ static void printTransaction(const message::Transaction &transaction)
     if (should_commit)
       should_commit= isEndStatement(statement);
 
+    /* A ROLLBACK would be the only Statement within the Transaction
+     * since all other Statements will have been deleted from the
+     * Transaction message, so we should fall out of this loop immediately.
+     * We don't want to issue an unnecessary COMMIT, so we change
+     * should_commit to false here.
+     */
+    if (statement.type() == message::Statement::ROLLBACK)
+      should_commit= false;
+
     printStatement(statement);
   }
 
@@ -193,32 +240,57 @@ int main(int argc, char* argv[])
   GOOGLE_PROTOBUF_VERIFY_VERSION;
   int file;
 
-  if (argc < 2 || argc > 3)
+  /*
+   * Setup program options
+   */
+  po::options_description desc("Program options");
+  desc.add_options()
+    ("help", N_("Display help and exit"))
+    ("checksum", N_("Perform checksum"))
+    ("ignore-events", N_("Ignore event messages"))
+    ("input-file", po::value< vector<string> >(), N_("Transaction log file"));
+
+  /*
+   * We allow one positional argument that will be transaction file name
+   */
+  po::positional_options_description pos;
+  pos.add("input-file", 1);
+
+  /*
+   * Parse the program options
+   */
+  po::variables_map vm;
+  po::store(po::command_line_parser(argc, argv).
+            options(desc).positional(pos).run(), vm);
+  po::notify(vm);
+
+  /*
+   * If the help option was given, or not input file was supplied,
+   * print out usage information.
+   */
+  if (vm.count("help") || not vm.count("input-file"))
   {
-    fprintf(stderr, _("Usage: %s TRANSACTION_LOG [--checksum] \n"), argv[0]);
+    fprintf(stderr, _("Usage: %s [options] TRANSACTION_LOG \n"),
+            argv[0]);
+    fprintf(stderr, _("OPTIONS:\n"));
+    fprintf(stderr, _("--help           :  Display help and exit\n"));
+    fprintf(stderr, _("--checksum       :  Perform checksum\n"));
+    fprintf(stderr, _("--ignore-events  :  Ignore event messages\n"));
+    return -1;
+  }
+
+  bool do_checksum= vm.count("checksum") ? true : false;
+  bool ignore_events= vm.count("ignore-events") ? true : false;
+
+  string filename= vm["input-file"].as< vector<string> >()[0];
+  file= open(filename.c_str(), O_RDONLY);
+  if (file == -1)
+  {
+    fprintf(stderr, _("Cannot open file: %s\n"), filename.c_str());
     return -1;
   }
 
   message::Transaction transaction;
-
-  file= open(argv[1], O_RDONLY);
-  if (file == -1)
-  {
-    fprintf(stderr, _("Cannot open file: %s\n"), argv[1]);
-    return -1;
-  }
-
-  bool do_checksum= false;
-
-  if (argc == 3)
-  {
-    string checksum_arg(argv[2]);
-    transform(checksum_arg.begin(), checksum_arg.end(), checksum_arg.begin(), ::tolower);
-
-    if ("--checksum" == checksum_arg)
-      do_checksum= true;
-  }
-
   message::TransactionManager trx_mgr;
 
   protobuf::io::ZeroCopyInputStream *raw_input= new protobuf::io::FileInputStream(file);
@@ -325,7 +397,7 @@ int main(int argc, char* argv[])
         {
           message::Transaction new_trx;
           trx_mgr.getTransactionMessage(new_trx, transaction_id, idx);
-          printTransaction(new_trx);
+          printTransaction(new_trx, ignore_events);
           idx++;
         }
 
@@ -334,7 +406,7 @@ int main(int argc, char* argv[])
       }
       else
       {
-        printTransaction(transaction);
+        printTransaction(transaction, ignore_events);
       }
     }
 

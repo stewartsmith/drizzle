@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Original author: Paul McCullagh
  * Continued development: Barry Leslie
@@ -423,7 +423,7 @@ static bool pbms_database_follder_exists( const char *db)
 	if (!db)
 		return false;
 		
-	cs_strcpy(PATH_MAX, path, ms_my_get_mysql_home_path());
+	cs_strcpy(PATH_MAX, path, ms_my_get_mysql_home_path().c_str());
 	cs_add_name_to_path(PATH_MAX, path, db);
 	
 	if (stat(path, &stat_info) == 0)
@@ -959,7 +959,7 @@ bool MSRepositoryTable::returnRow(MSBlobHeadPtr	blob, char *buf)
 	save_write_set = table->write_set;
 	table->write_set = NULL;
 
-	memset(buf, 0xFF, table->s->null_bytes);
+	memset(buf, 0xFF, table->getNullBytes());
  	for (Field **field=GET_TABLE_FIELDS(table) ; *field ; field++) {
  		curr_field = *field;
 
@@ -1121,7 +1121,7 @@ bool MSBlobDataTable::returnRow(MSBlobHeadPtr blob, char *buf)
 	save_write_set = table->write_set;
 	table->write_set = NULL;
 
-	memset(buf, 0xFF, table->s->null_bytes);
+	memset(buf, 0xFF, table->getNullBytes());
  	for (Field **field=GET_TABLE_FIELDS(table) ; *field ; field++) {
  		curr_field = *field;
 
@@ -1564,7 +1564,7 @@ void MSReferenceTable::returnRow(MSRefDataPtr ref_data, char *buf)
 	table->write_set = NULL;
 	table->read_set = NULL;
 
-	memset(buf, 0xFF, table->s->null_bytes);
+	memset(buf, 0xFF, table->getNullBytes());
  	for (Field **field=GET_TABLE_FIELDS(table) ; *field ; field++) {
  		curr_field = *field;
 
@@ -1921,7 +1921,7 @@ void MSMetaDataTable::returnRow(char *name, char *value, char *buf)
 	save_write_set = table->write_set;
 	table->write_set = NULL;
 
-	memset(buf, 0xFF, table->s->null_bytes);
+	memset(buf, 0xFF, table->getNullBytes());
  	for (Field **field=GET_TABLE_FIELDS(table) ; *field ; field++) {
  		curr_field = *field;
 

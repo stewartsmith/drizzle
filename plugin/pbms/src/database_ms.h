@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Original author: Paul McCullagh
  * Continued development: Barry Leslie
@@ -30,10 +30,6 @@
 #ifndef __DATABASE_MS_H__
 #define __DATABASE_MS_H__
 
-#include "cslib/CSDefs.h"
-#include "cslib/CSStorage.h"
-#include "cslib/CSStrUtil.h"
-
 #include "table_ms.h"
 #include "repository_ms.h"
 #ifdef HAVE_ALIAS_SUPPORT
@@ -42,6 +38,10 @@
 #include "temp_log_ms.h"
 #include "compactor_ms.h"
 #include "cloud_ms.h"
+
+#include "cslib/CSDefs.h"
+#include "cslib/CSStorage.h"
+#include "cslib/CSStrUtil.h"
 
 class MSOpenTable;
 class MSBackup;
