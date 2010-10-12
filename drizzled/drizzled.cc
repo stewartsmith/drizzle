@@ -470,27 +470,6 @@ void close_connections(void)
   }
 }
 
-/**
-  cleanup all memory and end program nicely.
-
-    If SIGNALS_DONT_BREAK_READ is defined, this function is called
-    by the main thread. To get Drizzle to shut down nicely in this case
-    (Mac OS X) we have to call exit() instead if pthread_exit().
-
-  @note
-    This function never returns.
-*/
-void unireg_end(void)
-{
-  clean_up(1);
-  internal::my_thread_end();
-#if defined(SIGNALS_DONT_BREAK_READ)
-  exit(0);
-#else
-  pthread_exit(0);				// Exit is in main thread
-#endif
-}
-
 
 void unireg_abort(int exit_code)
 {
