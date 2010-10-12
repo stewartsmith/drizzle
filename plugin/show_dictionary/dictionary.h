@@ -32,6 +32,8 @@
 #include "drizzled/message/schema.pb.h"
 
 #include "plugin/show_dictionary/show_columns.h"
+#include "plugin/show_dictionary/show_create_schema.h"
+#include "plugin/show_dictionary/show_create_table.h"
 #include "plugin/show_dictionary/show_indexes.h"
 #include "plugin/show_dictionary/show_schemas.h"
 #include "plugin/show_dictionary/show_tables.h"

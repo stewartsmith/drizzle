@@ -75,7 +75,6 @@ typedef vector<string> PluginOptions;
 static PluginOptions opt_plugin_load;
 static PluginOptions opt_plugin_add;
 static PluginOptions opt_plugin_remove;
-char opt_plugin_dir[FN_REFLEN];
 const char *builtin_plugins= PANDORA_BUILTIN_LIST;
 
 /* Note that 'int version' must be the first field of every plugin
@@ -580,8 +579,8 @@ void module_shutdown(module::Registry &registry)
 
 static const uint32_t EXTRA_OPTIONS= 1; /* handle the NULL option */
 
-typedef DECLARE_DRIZZLE_SYSVAR_BASIC(sysvar_bool_t, bool);
-typedef DECLARE_DRIZZLE_SessionVAR_BASIC(sessionvar_bool_t, bool);
+typedef DECLARE_DRIZZLE_SYSVAR_BOOL(sysvar_bool_t);
+typedef DECLARE_DRIZZLE_SessionVAR_BOOL(sessionvar_bool_t);
 typedef DECLARE_DRIZZLE_SYSVAR_BASIC(sysvar_str_t, char *);
 typedef DECLARE_DRIZZLE_SessionVAR_BASIC(sessionvar_str_t, char *);
 

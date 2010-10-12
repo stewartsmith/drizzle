@@ -82,13 +82,14 @@
 #include <drizzled/lock.h>
 #include "drizzled/pthread_globals.h"
 #include "drizzled/internal/my_sys.h"
+#include "drizzled/pthread_globals.h"
 
 #include <set>
 #include <vector>
 #include <algorithm>
 #include <functional>
 
-#include <boost/thread/mutex.hpp>
+#include <boost/thread/shared_mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 
 using namespace std;
@@ -97,7 +98,7 @@ namespace drizzled
 {
 
 static boost::mutex LOCK_global_read_lock;
-static boost::condition_variable COND_global_read_lock;
+static boost::condition_variable_any COND_global_read_lock;
 
 /**
   @defgroup Locking Locking
@@ -1011,10 +1012,10 @@ bool lock_global_read_lock(Session *session)
     const char *old_message;
     LOCK_global_read_lock.lock();
     old_message=session->enter_cond(COND_global_read_lock, LOCK_global_read_lock,
-                                "Waiting to get readlock");
+                                    "Waiting to get readlock");
 
     waiting_for_read_lock++;
-    boost::mutex::scoped_lock scopedLock(LOCK_global_read_lock, boost::adopt_lock_t());
+    boost_unique_lock_t scopedLock(LOCK_global_read_lock, boost::adopt_lock_t());
     while (protect_against_global_read_lock && !session->killed)
       COND_global_read_lock.wait(scopedLock);
     waiting_for_read_lock--;
@@ -1045,7 +1046,7 @@ void unlock_global_read_lock(Session *session)
   uint32_t tmp;
 
   {
-    boost::mutex::scoped_lock scopedLock(LOCK_global_read_lock);
+    boost_unique_lock_t scopedLock(LOCK_global_read_lock);
     tmp= --global_read_lock;
     if (session->global_read_lock == MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT)
       --global_read_lock_blocks_commit;
@@ -1099,7 +1100,7 @@ bool wait_if_global_read_lock(Session *session, bool abort_on_refresh,
     while (must_wait(is_not_commit) && ! session->killed &&
 	   (!abort_on_refresh || session->version == refresh_version))
     {
-      boost::mutex::scoped_lock scoped(LOCK_global_read_lock, boost::adopt_lock_t());
+      boost_unique_lock_t scoped(LOCK_global_read_lock, boost::adopt_lock_t());
       COND_global_read_lock.wait(scoped);
       scoped.release();
     }
@@ -1152,7 +1153,7 @@ bool make_global_read_lock_block_commit(Session *session)
                                    "Waiting for all running commits to finish");
   while (protect_against_global_read_lock && !session->killed)
   {
-    boost::mutex::scoped_lock scopedLock(LOCK_global_read_lock, boost::adopt_lock_t());
+    boost_unique_lock_t scopedLock(LOCK_global_read_lock, boost::adopt_lock_t());
     COND_global_read_lock.wait(scopedLock);
     scopedLock.release();
   }

@@ -35,12 +35,6 @@ The :program:`drizzledump` tool has several available options:
    *data_dictionary* in Drizzle and *information_schema*, *performance_schema*
    and *mysql* in MySQL.
 
-.. option:: -C, --compress
-
-   Use client/server compression protocol.
-
-   **NOTE:** this option is not currently implemented.
-
 .. option:: -f, --force
 
    Continue even if we get an sql-error.

@@ -188,15 +188,16 @@ bool DrizzleDumpTableMySQL::populateFields()
     field->isNull= (strcmp(row[3], "YES") == 0) ? true : false;
     if (row[2])
     {
-      if (field->convertDateTime)
-      {
-        field->dateTimeConvert(row[2]);
-      }
-      else
-        field->defaultValue= row[2];
+      field->defaultValue= row[2];
     }
     else
      field->defaultValue= "";
+
+    if (field->convertDateTime)
+    {
+      field->dateTimeConvert();
+    }
+
 
     field->isAutoIncrement= (strcmp(row[8], "auto_increment") == 0) ? true : false;
     field->defaultIsNull= field->isNull;
@@ -213,20 +214,17 @@ bool DrizzleDumpTableMySQL::populateFields()
 }
 
 
-void DrizzleDumpFieldMySQL::dateTimeConvert(const char* oldDefault)
+void DrizzleDumpFieldMySQL::dateTimeConvert(void)
 {
   boost::match_flag_type flags = boost::match_default;
 
-  if (strcmp(oldDefault, "CURRENT_TIMESTAMP") == 0)
-  {
-    defaultValue= oldDefault;
+  if (strcmp(defaultValue.c_str(), "CURRENT_TIMESTAMP") == 0)
     return;
-  }
 
   if (type.compare("INT") == 0)
   {
     /* We were a TIME, now we are an INT */
-    std::string ts(oldDefault);
+    std::string ts(defaultValue);
     boost::posix_time::time_duration td(boost::posix_time::duration_from_string(ts));
     defaultValue= boost::lexical_cast<std::string>(td.total_seconds());
     return;
@@ -234,11 +232,7 @@ void DrizzleDumpFieldMySQL::dateTimeConvert(const char* oldDefault)
 
   boost::regex date_regex("(0000|-00)");
 
-  if (not regex_search(oldDefault, date_regex, flags))
-  {
-    defaultValue= oldDefault;
-  }
-  else
+  if (regex_search(defaultValue, date_regex, flags))
   {
     defaultIsNull= true;
     defaultValue="";

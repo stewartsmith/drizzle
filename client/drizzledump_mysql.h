@@ -48,7 +48,7 @@ class DrizzleDumpFieldMySQL : public DrizzleDumpField
 
     ~DrizzleDumpFieldMySQL() { }
 
-    void dateTimeConvert(const char* oldDefault);
+    void dateTimeConvert(void);
     void setCollate(const char* newCollate);
     void setType(const char* raw_type, const char* collation);
 };

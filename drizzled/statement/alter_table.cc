@@ -1177,8 +1177,7 @@ static bool internal_alter_table(Session *session,
         new_table->intern_close_table();
         if (new_table->hasShare())
         {
-          delete new_table->s;
-          new_table->s= NULL;
+          delete new_table->getMutableShare();
         }
 
         delete new_table;
@@ -1228,8 +1227,7 @@ static bool internal_alter_table(Session *session,
 
       if (new_table->hasShare())
       {
-        delete new_table->s;
-        new_table->s= NULL;
+        delete new_table->getMutableShare();
       }
 
       delete new_table;
@@ -1446,7 +1444,7 @@ copy_data_between_tables(Session *session,
    * don't get the usual automatic call to StorageEngine::startStatement(), so
    * we manually call it here...
    */
-  to->s->getEngine()->startStatement(session);
+  to->getMutableShare()->getEngine()->startStatement(session);
 
   if (!(copy= new CopyField[to->getShare()->sizeFields()]))
     return -1;

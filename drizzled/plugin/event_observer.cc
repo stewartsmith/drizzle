@@ -455,7 +455,7 @@ namespace plugin
   //--------
   bool TableEventData::callEventObservers()
   {
-    observerList= table.s->getTableObservers();
+    observerList= table.getMutableShare()->getTableObservers();
 
     return EventData::callEventObservers();
   }
@@ -595,6 +595,42 @@ namespace plugin
       return false;
 
     AfterDropDatabaseEventData eventData(session, db, err);
+    return eventData.callEventObservers();
+  }
+
+  bool EventObserver::connectSession(Session &session)
+  {
+    if (all_event_plugins.empty())
+      return false;
+
+    ConnectSessionEventData eventData(session);
+    return eventData.callEventObservers();
+  }
+
+  bool EventObserver::disconnectSession(Session &session)
+  {
+    if (all_event_plugins.empty())
+      return false;
+
+    DisconnectSessionEventData eventData(session);
+    return eventData.callEventObservers();
+  }
+
+  bool EventObserver::beforeStatement(Session &session)
+  {
+    if (all_event_plugins.empty())
+      return false;
+
+    BeforeStatementEventData eventData(session);
+    return eventData.callEventObservers();
+  }
+
+  bool EventObserver::afterStatement(Session &session)
+  {
+    if (all_event_plugins.empty())
+      return false;
+
+    AfterStatementEventData eventData(session);
     return eventData.callEventObservers();
   }
 

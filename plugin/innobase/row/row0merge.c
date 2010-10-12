@@ -1216,7 +1216,8 @@ row_merge_read_clustered_index(
 					if (dfield_is_null(field)) {
 						err = DB_PRIMARY_KEY_IS_NULL;
 						i = 0;
-						goto err_exit;
+						trx->error_key_num = i;
+						goto func_exit;
 					}
 
 					field_type->prtype |= DATA_NOT_NULL;

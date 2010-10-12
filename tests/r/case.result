@@ -38,25 +38,13 @@ select (CASE "two" when "one" then 1.00 WHEN "two" then 2.00 END) +0.0;
 (CASE "two" when "one" then 1.00 WHEN "two" then 2.00 END) +0.0
 2.00
 select case 1/0 when "a" then "true" else "false" END;
-case 1/0 when "a" then "true" else "false" END
-false
-Warnings:
-Error	1365	Division by 0
+ERROR 22012: Division by 0
 select case 1/0 when "a" then "true" END;
-case 1/0 when "a" then "true" END
-NULL
-Warnings:
-Error	1365	Division by 0
+ERROR 22012: Division by 0
 select (case 1/0 when "a" then "true" END);
-(case 1/0 when "a" then "true" END)
-NULL
-Warnings:
-Error	1365	Division by 0
+ERROR 22012: Division by 0
 select (case 1/0 when "a" then "true" END) + 0.0;
-(case 1/0 when "a" then "true" END) + 0.0
-NULL
-Warnings:
-Error	1365	Division by 0
+ERROR 22012: Division by 0
 select case when 1>0 then "TRUE" else "FALSE" END;
 case when 1>0 then "TRUE" else "FALSE" END
 TRUE

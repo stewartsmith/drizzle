@@ -26,14 +26,13 @@
 namespace drizzled
 {
 
-struct st_ror_scan_info;
-
 namespace optimizer
 {
 
 class Parameter;
 class SEL_ARG;
 class SEL_TREE;
+class RorScanInfo;
 
 /*
   Table rows retrieval plan. Range optimizer creates QuickSelectInterface-derived
@@ -134,9 +133,9 @@ public:
                                    memory::Root *parent_alloc);
 
   /* Array of pointers to ROR range scans used in this intersection */
-  struct st_ror_scan_info **first_scan;
-  struct st_ror_scan_info **last_scan; /* End of the above array */
-  struct st_ror_scan_info *cpk_scan;  /* Clustered PK scan, if there is one */
+  RorScanInfo **first_scan;
+  RorScanInfo **last_scan; /* End of the above array */
+  RorScanInfo *cpk_scan;  /* Clustered PK scan, if there is one */
 
   bool is_covering; /* true if no row retrieval phase is necessary */
   double index_scan_costs; /* SUM(cost(index_scan)) */

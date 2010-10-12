@@ -308,13 +308,10 @@ uint32_t week_number_from_gregorian_date(uint32_t year
  * @param Subject year
  * @param Subject month
  * @param Subject day
- * @param Pointer to a uint32_t to hold the resulting year, which 
- *        may be incremented or decremented depending on flags
  */
 uint32_t iso_week_number_from_gregorian_date(uint32_t year
                                            , uint32_t month
-                                           , uint32_t day
-                                           , uint32_t *year_out);
+                                           , uint32_t day);
 /**
  * Takes a number in the form [YY]YYMM and converts it into
  * a number of months.

@@ -86,7 +86,6 @@ extern const CHARSET_INFO *character_set_filesystem;
 extern size_t my_thread_stack_size;
 
 class sys_var_pluginvar;
-static DYNAMIC_ARRAY fixed_show_vars;
 typedef map<string, sys_var *> SystemVariableMap;
 static SystemVariableMap system_variable_map;
 extern char *opt_drizzle_tmpdir;
@@ -135,7 +134,14 @@ static sys_var_session_uint64_t
 sys_auto_increment_offset(&vars, "auto_increment_offset",
                           &system_variables::auto_increment_offset);
 
-static sys_var_const_str       sys_basedir(&vars, "basedir", drizzle_home);
+static sys_var_fs_path sys_basedir(&vars, "basedir", basedir);
+static sys_var_fs_path sys_pid_file(&vars, "pid_file", pid_file);
+static sys_var_fs_path sys_plugin_dir(&vars, "plugin_dir", plugin_dir);
+
+static sys_var_size_t_ptr sys_thread_stack_size(&vars, "thread_stack",
+                                                      &my_thread_stack_size);
+static sys_var_uint32_t_ptr sys_back_log(&vars, "back_log", &back_log);
+
 static sys_var_session_uint64_t	sys_bulk_insert_buff_size(&vars, "bulk_insert_buffer_size",
                                                           &system_variables::bulk_insert_buff_size);
 static sys_var_session_uint32_t	sys_completion_type(&vars, "completion_type",
@@ -144,7 +150,7 @@ static sys_var_session_uint32_t	sys_completion_type(&vars, "completion_type",
                                                     fix_completion_type);
 static sys_var_collation_sv
 sys_collation_server(&vars, "collation_server", &system_variables::collation_server, &default_charset_info);
-static sys_var_const_str_ptr       sys_datadir(&vars, "datadir", getDatadirPtr());
+static sys_var_fs_path       sys_datadir(&vars, "datadir", getDataHome());
 
 static sys_var_session_uint64_t	sys_join_buffer_size(&vars, "join_buffer_size",
                                                      &system_variables::join_buff_size);
@@ -192,14 +198,14 @@ static sys_var_session_size_t	sys_range_alloc_block_size(&vars, "range_alloc_blo
                                                            &system_variables::range_alloc_block_size);
 static sys_var_session_uint32_t	sys_query_alloc_block_size(&vars, "query_alloc_block_size",
                                                            &system_variables::query_alloc_block_size,
-                                                           false, fix_session_mem_root);
+                                                           NULL, fix_session_mem_root);
 static sys_var_session_uint32_t	sys_query_prealloc_size(&vars, "query_prealloc_size",
                                                         &system_variables::query_prealloc_size,
-                                                        false, fix_session_mem_root);
+                                                        NULL, fix_session_mem_root);
 static sys_var_readonly sys_tmpdir(&vars, "tmpdir", OPT_GLOBAL, SHOW_CHAR, get_tmpdir);
 
-static sys_var_const_str_ptr sys_secure_file_priv(&vars, "secure_file_priv",
-                                             &opt_secure_file_priv);
+static sys_var_fs_path sys_secure_file_priv(&vars, "secure_file_priv",
+                                            secure_file_priv);
 
 static sys_var_const_str_ptr sys_scheduler(&vars, "scheduler",
                                            (char**)&opt_scheduler);
@@ -209,6 +215,9 @@ static sys_var_uint32_t_ptr  sys_server_id(&vars, "server_id", &server_id,
 
 static sys_var_session_size_t	sys_sort_buffer(&vars, "sort_buffer_size",
                                                 &system_variables::sortbuff_size);
+
+static sys_var_session_size_t sys_transaction_message_threshold(&vars, "transaction_message_threshold",
+                                                                &system_variables::transaction_message_threshold);
 
 static sys_var_session_storage_engine sys_storage_engine(&vars, "storage_engine",
 				       &system_variables::storage_engine);
@@ -306,21 +315,6 @@ sys_var_session_time_zone sys_time_zone(&vars, "time_zone");
 
 /* Global read-only variable containing hostname */
 static sys_var_const_str        sys_hostname(&vars, "hostname", glob_hostname);
-
-/*
-  Additional variables (not derived from sys_var class, not accessible as
-  @@varname in SELECT or SET). Sorted in alphabetical order to facilitate
-  maintenance - SHOW VARIABLES will sort its output.
-  TODO: remove this list completely
-*/
-
-#define FIXED_VARS_SIZE (sizeof(fixed_vars) / sizeof(drizzle_show_var))
-static drizzle_show_var fixed_vars[]= {
-  {"back_log",                (char*) &back_log,                SHOW_INT},
-  {"pid_file",                (char*) pidfile_name,             SHOW_CHAR},
-  {"plugin_dir",              (char*) opt_plugin_dir,           SHOW_CHAR},
-  {"thread_stack",            (char*) &my_thread_stack_size,    SHOW_INT},
-};
 
 bool sys_var::check(Session *, set_var *var)
 {
@@ -1562,23 +1556,20 @@ int mysql_del_sys_var_chain(sys_var *first)
   SYNOPSIS
     enumerate_sys_vars()
     session         current thread
-    sorted      If TRUE, the system variables should be sorted
 
   RETURN VALUES
     pointer     Array of drizzle_show_var elements for display
     NULL        FAILURE
 */
 
-drizzle_show_var* enumerate_sys_vars(Session *session, bool)
+drizzle_show_var* enumerate_sys_vars(Session *session)
 {
-  int fixed_count= fixed_show_vars.elements;
-  int size= sizeof(drizzle_show_var) * (system_variable_map.size() + fixed_count + 1);
+  int size= sizeof(drizzle_show_var) * (system_variable_map.size() + 1);
   drizzle_show_var *result= (drizzle_show_var*) session->alloc(size);
 
   if (result)
   {
-    drizzle_show_var *show= result + fixed_count;
-    memcpy(result, fixed_show_vars.buffer, fixed_count * sizeof(drizzle_show_var));
+    drizzle_show_var *show= result;
 
     SystemVariableMap::const_iterator iter= system_variable_map.begin();
     while (iter != system_variable_map.end())
@@ -1587,7 +1578,7 @@ drizzle_show_var* enumerate_sys_vars(Session *session, bool)
       show->name= var->getName().c_str();
       show->value= (char*) var;
       show->type= SHOW_SYS;
-      show++;
+      ++show;
       ++iter;
     }
 
@@ -1615,13 +1606,6 @@ int set_var_init()
 
   for (sys_var *var= vars.first; var; var= var->getNext(), count++) {};
 
-  if (my_init_dynamic_array(&fixed_show_vars, sizeof(drizzle_show_var),
-                            FIXED_VARS_SIZE + 64, 64))
-    goto error;
-
-  fixed_show_vars.elements= FIXED_VARS_SIZE;
-  memcpy(fixed_show_vars.buffer, fixed_vars, sizeof(fixed_vars));
-
   vars.last->setNext(NULL);
   if (mysql_add_sys_var_chain(vars.first, my_long_options))
     goto error;
@@ -1631,12 +1615,6 @@ int set_var_init()
 error:
    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize system variables"));
   return(1);
-}
-
-
-void set_var_free()
-{
-  delete_dynamic(&fixed_show_vars);
 }
 
 

@@ -21,6 +21,7 @@
 #include "drizzled/optimizer/range.h"
 #include "drizzled/optimizer/range_param.h"
 #include "drizzled/optimizer/sel_arg.h"
+#include "drizzled/util/test.h"
 
 namespace drizzled
 {

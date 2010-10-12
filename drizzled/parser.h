@@ -91,8 +91,6 @@
 #include <drizzled/statement/savepoint.h>
 #include <drizzled/statement/select.h>
 #include <drizzled/statement/set_option.h>
-#include <drizzled/statement/show_create.h>
-#include <drizzled/statement/show_create_schema.h>
 #include <drizzled/statement/show_errors.h>
 #include <drizzled/statement/show_warnings.h>
 #include <drizzled/statement/start_transaction.h>

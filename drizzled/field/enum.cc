@@ -43,7 +43,7 @@ void Field_enum::store_type(uint64_t value)
   value--; /* we store as starting from 0, although SQL starts from 1 */
 
 #ifdef WORDS_BIGENDIAN
-  if (getTable()->s->db_low_byte_first)
+  if (getTable()->getShare()->db_low_byte_first)
   {
     int4store(ptr, (unsigned short) value);
   }
@@ -131,7 +131,7 @@ int64_t Field_enum::val_int(void)
 
   uint16_t tmp;
 #ifdef WORDS_BIGENDIAN
-  if (getTable()->s->db_low_byte_first)
+  if (getTable()->getShare()->db_low_byte_first)
     tmp= sint4korr(ptr);
   else
 #endif
@@ -191,7 +191,7 @@ void Field_enum::sql_type(String &res) const
   uint32_t *len= typelib->type_lengths;
   for (const char **pos= typelib->type_names; *pos; pos++, len++)
   {
-    uint32_t dummy_errors;
+    size_t dummy_errors;
     if (flag)
       res.append(',');
     /* convert to res.charset() == utf8, then quote */

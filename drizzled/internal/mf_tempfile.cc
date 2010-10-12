@@ -73,7 +73,7 @@ int create_temp_file(char *to, const char *dir, const char *prefix,
     dir= P_tmpdir;
   if (strlen(dir)+prefix_str.length() > FN_REFLEN-2)
   {
-    errno=errno= ENAMETOOLONG;
+    errno= ENAMETOOLONG;
     return(file);
   }
   strcpy(convert_dirname(to,dir,NULL),prefix_str.c_str());

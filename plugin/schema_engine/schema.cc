@@ -67,7 +67,7 @@ Schema::~Schema()
 
 void Schema::prime()
 {
-  CachedDirectory directory(getDataHomeCatalog(), CachedDirectory::DIRECTORY);
+  CachedDirectory directory(getDataHomeCatalog().file_string(), CachedDirectory::DIRECTORY);
   CachedDirectory::Entries files= directory.getEntries();
 
   mutex.lock();
@@ -87,7 +87,7 @@ void Schema::prime()
       SchemaIdentifier schema_identifier(schema_message.name());
 
       pair<SchemaCache::iterator, bool> ret=
-        schema_cache.insert(make_pair(schema_identifier.getPath(), schema_message));
+        schema_cache.insert(make_pair(schema_identifier.getPath(), new message::Schema(schema_message)));
 
       if (ret.second == false)
      {
@@ -106,20 +106,20 @@ void Schema::doGetSchemaIdentifiers(SchemaIdentifiers &set_of_names)
          iter != schema_cache.end();
          iter++)
     {
-      set_of_names.push_back(SchemaIdentifier((*iter).second.name()));
+      set_of_names.push_back(SchemaIdentifier((*iter).second->name()));
     }
   }
   mutex.unlock_shared();
 }
 
-bool Schema::doGetSchemaDefinition(const SchemaIdentifier &schema_identifier, message::Schema &schema_message)
+bool Schema::doGetSchemaDefinition(const SchemaIdentifier &schema_identifier, message::SchemaPtr &schema_message)
 {
   mutex.lock_shared();
   SchemaCache::iterator iter= schema_cache.find(schema_identifier.getPath());
 
   if (iter != schema_cache.end())
   {
-    schema_message.CopyFrom(((*iter).second));
+    schema_message= (*iter).second;
     mutex.unlock_shared();
     return true;
   }
@@ -146,7 +146,7 @@ bool Schema::doCreateSchema(const drizzled::message::Schema &schema_message)
   mutex.lock();
   {
     pair<SchemaCache::iterator, bool> ret=
-      schema_cache.insert(make_pair(schema_identifier.getPath(), schema_message));
+      schema_cache.insert(make_pair(schema_identifier.getPath(), new message::Schema(schema_message)));
 
 
     if (ret.second == false)
@@ -161,7 +161,7 @@ bool Schema::doCreateSchema(const drizzled::message::Schema &schema_message)
 
 bool Schema::doDropSchema(const SchemaIdentifier &schema_identifier)
 {
-  message::Schema schema_message;
+  message::SchemaPtr schema_message;
 
   string schema_file(schema_identifier.getPath());
   schema_file.append(1, FN_LIBCHAR);
@@ -213,7 +213,7 @@ bool Schema::doAlterSchema(const drizzled::message::Schema &schema_message)
       schema_cache.erase(schema_identifier.getPath());
 
       pair<SchemaCache::iterator, bool> ret=
-        schema_cache.insert(make_pair(schema_identifier.getPath(), schema_message));
+        schema_cache.insert(make_pair(schema_identifier.getPath(), new message::Schema(schema_message)));
 
       if (ret.second == false)
       {

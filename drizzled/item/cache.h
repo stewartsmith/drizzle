@@ -23,6 +23,7 @@
 #include "drizzled/item/ident.h"
 #include "drizzled/item/field.h"
 #include "drizzled/item/basic_constant.h"
+#include "drizzled/util/test.h"
 
 namespace drizzled
 {

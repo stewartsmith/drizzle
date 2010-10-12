@@ -64,13 +64,13 @@ int my_create_with_symlink(const char *linkname, const char *filename,
   {
     if (!access(filename,F_OK))
     {
-      errno= errno= EEXIST;
+      errno= EEXIST;
       my_error(EE_CANTCREATEFILE, MYF(0), filename, EEXIST);
       return(-1);
     }
     if (create_link && !access(linkname,F_OK))
     {
-      errno= errno= EEXIST;
+      errno= EEXIST;
       my_error(EE_CANTCREATEFILE, MYF(0), linkname, EEXIST);
       return(-1);
     }
