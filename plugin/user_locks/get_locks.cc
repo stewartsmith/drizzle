@@ -28,7 +28,7 @@ namespace user_locks {
 
 int64_t GetLocks::val_int()
 {
-  std::set< std::string > list_of_locks;
+  Keys list_of_locks;
 
   for (int64_t x= 0; x < arg_count; x++)
   {
@@ -36,7 +36,7 @@ int64_t GetLocks::val_int()
 
     if (res && res->length())
     {
-      list_of_locks.insert(res->c_str());
+      list_of_locks.insert(Key(getSession().getSecurityContext(), res->c_str()));
     }
     else
     {
@@ -62,7 +62,7 @@ int64_t GetLocks::val_int()
       getSession().setProperty("user_locks", list);
     }
 
-    for (std::set< std::string >::iterator iter= list_of_locks.begin();
+    for (Keys::iterator iter= list_of_locks.begin();
          iter != list_of_locks.end(); iter++)
     {
       list->insert(*iter);

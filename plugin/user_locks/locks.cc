@@ -27,7 +27,7 @@
 
 namespace user_locks {
 
-bool Locks::lock(drizzled::session_id_t id_arg, const std::string &arg, int64_t wait_for)
+bool Locks::lock(drizzled::session_id_t id_arg, const user_locks::Key &arg, int64_t wait_for)
 {
   boost::system_time timeout= boost::get_system_time() + boost::posix_time::seconds(wait_for);
   boost::unique_lock<boost::mutex> scope(mutex);
@@ -57,7 +57,7 @@ bool Locks::lock(drizzled::session_id_t id_arg, const std::string &arg, int64_t 
   return false;
 }
 
-bool Locks::lock(drizzled::session_id_t id_arg, const std::string &arg)
+bool Locks::lock(drizzled::session_id_t id_arg, const user_locks::Key &arg)
 {
   std::pair<LockMap::iterator, bool> is_locked;
   boost::unique_lock<boost::mutex> scope(mutex);
@@ -66,11 +66,11 @@ bool Locks::lock(drizzled::session_id_t id_arg, const std::string &arg)
   return is_locked.second;
 }
 
-bool Locks::lock(drizzled::session_id_t id_arg, const std::set< std::string > &arg)
+bool Locks::lock(drizzled::session_id_t id_arg, const user_locks::Keys &arg)
 {
   boost::unique_lock<boost::mutex> scope(mutex);
 
-  for (std::set< std::string >::const_iterator iter= arg.begin(); iter != arg.end(); iter++)
+  for (user_locks::Keys::const_iterator iter= arg.begin(); iter != arg.end(); iter++)
   {
     LockMap::iterator record= lock_map.find(*iter);
 
@@ -81,7 +81,7 @@ bool Locks::lock(drizzled::session_id_t id_arg, const std::set< std::string > &a
     }
   }
 
-  for (std::set< std::string >::iterator iter= arg.begin(); iter != arg.end(); iter++)
+  for (Keys::iterator iter= arg.begin(); iter != arg.end(); iter++)
   {
     std::pair<LockMap::iterator, bool> is_locked;
     //is_locked can fail in cases where we already own the lock.
@@ -91,7 +91,7 @@ bool Locks::lock(drizzled::session_id_t id_arg, const std::set< std::string > &a
   return true;
 }
 
-bool Locks::isUsed(const std::string &arg, drizzled::session_id_t &id_arg)
+bool Locks::isUsed(const user_locks::Key &arg, drizzled::session_id_t &id_arg)
 {
   boost::unique_lock<boost::mutex> scope(mutex);
   
@@ -105,7 +105,7 @@ bool Locks::isUsed(const std::string &arg, drizzled::session_id_t &id_arg)
   return true;
 }
 
-bool Locks::isFree(const std::string &arg)
+bool Locks::isFree(const user_locks::Key &arg)
 {
   boost::unique_lock<boost::mutex> scope(mutex);
 
@@ -119,7 +119,7 @@ void Locks::Copy(LockMap &lock_map_arg)
   lock_map_arg= lock_map;
 }
 
-boost::tribool Locks::release(const std::string &arg, drizzled::session_id_t &id_arg)
+boost::tribool Locks::release(const user_locks::Key &arg, drizzled::session_id_t &id_arg)
 {
   size_t elements= 0;
   boost::unique_lock<boost::mutex> scope(mutex);

@@ -50,7 +50,7 @@ int64_t GetLock::val_int()
   if (list) // To be compatible with MySQL, we will now release all other locks we might have.
     list->erase_all();
 
-  boost::tribool result= user_locks::Locks::getInstance().lock(getSession().getSessionId(), res->c_str(), wait_time);
+  boost::tribool result= user_locks::Locks::getInstance().lock(getSession().getSessionId(), Key(getSession().getSecurityContext(), res->c_str()), wait_time);
 
   if (boost::indeterminate(result))
     null_value= true;
@@ -63,7 +63,7 @@ int64_t GetLock::val_int()
       getSession().setProperty("user_locks", list);
     }
 
-    list->insert(res->c_str());
+    list->insert(Key(getSession().getSecurityContext(), res->c_str()));
 
     return 1;
   }

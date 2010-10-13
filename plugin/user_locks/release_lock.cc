@@ -41,14 +41,14 @@ int64_t ReleaseLock::val_int()
     return 0;
 
   drizzled::session_id_t id= getSession().getSessionId();
-  boost::tribool result= user_locks::Locks::getInstance().release(res->c_str(), id);
+  boost::tribool result= user_locks::Locks::getInstance().release(Key(getSession().getSecurityContext(), res->c_str()), id);
 
   if (result)
   {
     user_locks::Storable *list= dynamic_cast<user_locks::Storable *>(getSession().getProperty("user_locks"));
     assert(list);
     if (list) // Just in case we ever blow the assert
-      list->erase(res->c_str());
+      list->erase(Key(getSession().getSecurityContext(), res->c_str()));
 
     return 1;
   }

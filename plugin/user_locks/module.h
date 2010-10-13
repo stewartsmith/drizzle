@@ -27,6 +27,9 @@
 #include <drizzled/plugin/function.h>
 #include "drizzled/plugin/table_function.h"
 
+// We use this key for all of the locks we create.
+#include "plugin/user_locks/key.h"
+
 #include "plugin/user_locks/get_lock.h"
 #include "plugin/user_locks/get_locks.h"
 #include "plugin/user_locks/is_free_lock.h"

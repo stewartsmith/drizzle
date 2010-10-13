@@ -32,8 +32,7 @@ namespace user_locks {
 */
 
 class Storable : public drizzled::util::Storable {
-  typedef boost::unordered_set<std::string> LockList;
-  LockList list_of_locks;
+  Keys list_of_locks;
   drizzled::session_id_t id;
 
 public:
@@ -48,12 +47,12 @@ public:
     erase_all();
   }
 
-  void insert(const std::string &arg)
+  void insert(const Key &arg)
   {
     list_of_locks.insert(arg);
   }
 
-  bool erase(const std::string &arg)
+  bool erase(const Key &arg)
   {
     return boost::lexical_cast<bool>(list_of_locks.erase(arg));
   }
@@ -64,7 +63,7 @@ public:
   {
     int64_t count= list_of_locks.size();
 
-    for (LockList::iterator iter= list_of_locks.begin();
+    for (Keys::iterator iter= list_of_locks.begin();
          iter != list_of_locks.end(); iter++)
     {
       (void)user_locks::Locks::getInstance().release(*iter, id);

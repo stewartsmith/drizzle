@@ -12,9 +12,9 @@ if ((is_used_lock("foo3") = CONNECTION_ID()), "YES", "NO")
 YES
 SELECT USER_LOCK_NAME FROM DATA_DICTIONARY.USER_LOCKS;
 USER_LOCK_NAME
+foo
 foo2
 foo3
-foo
 SELECT release_lock("foo2");
 release_lock("foo2")
 1
@@ -29,8 +29,8 @@ if ((is_used_lock("foo3") = CONNECTION_ID()), "YES", "NO")
 YES
 SELECT USER_LOCK_NAME FROM DATA_DICTIONARY.USER_LOCKS;
 USER_LOCK_NAME
-foo3
 foo
+foo3
 SELECT release_locks();
 release_locks()
 2

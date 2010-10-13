@@ -30,50 +30,48 @@
 #include "drizzled/util/string.h"
 
 
-#ifndef PLUGIN_USER_LOCKS_LOCKS_H
-#define PLUGIN_USER_LOCKS_LOCKS_H
+#ifndef PLUGIN_USER_LOCKS_KEY_H
+#define PLUGIN_USER_LOCKS_KEY_H
 
 namespace user_locks {
 
-const size_t LARGEST_LOCK_NAME= 64;
+class Key {
+  drizzled::SecurityContext context;
+  std::string lock_name;
+  size_t hash_value;
 
-class Locks
-{
 public:
-  struct lock_st {
-    drizzled::session_id_t id;
-
-    lock_st(drizzled::session_id_t id_arg) :
-      id(id_arg)
-    {
-    }
-  };
-
-  typedef boost::shared_ptr<lock_st> lock_st_ptr;
-
-  typedef boost::unordered_map<user_locks::Key, lock_st_ptr> LockMap;
-
-  static Locks &getInstance(void)
+  Key(const drizzled::SecurityContext &context_arg, const std::string &lock_name_arg) :
+    context(context_arg),
+    lock_name(lock_name_arg)
   {
-    static Locks instance;
-    return instance;
+    drizzled::util::insensitive_hash hasher;
+    hash_value= hasher(context.getUser() + lock_name_arg);
   }
 
-  bool lock(drizzled::session_id_t id_arg, const user_locks::Key &arg);
-  bool lock(drizzled::session_id_t id_arg, const user_locks::Key &arg, int64_t wait_for= 0);
-  bool lock(drizzled::session_id_t id_arg, const user_locks::Keys &arg);
-  boost::tribool release(const user_locks::Key &arg, drizzled::session_id_t &id_arg);
-  bool isFree(const user_locks::Key &arg);
-  bool isUsed(const user_locks::Key &arg, drizzled::session_id_t &id_arg);
-  void Copy(LockMap &lock_map);
+  size_t getHashValue() const
+  {
+    return hash_value;
+  }
 
-private:
-  boost::mutex mutex;
-  boost::condition_variable cond;
-  LockMap lock_map; 
+  const std::string &getLockName() const
+  {
+    return lock_name;
+  }
+
+  const std::string &getUser() const
+  {
+    return context.getUser();
+  }
+
 };
 
+bool operator==(Key const& left, Key const& right);
+
+std::size_t hash_value(Key const& b);
+
+typedef boost::unordered_set<Key> Keys;
 
 } /* namespace user_locks */
 
-#endif /* PLUGIN_USER_LOCKS_LOCKS_H */
+#endif /* PLUGIN_USER_LOCKS_KEY_H */

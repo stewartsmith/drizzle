@@ -19,47 +19,22 @@
  */
 
 #include "config.h"
-
 #include "plugin/user_locks/module.h"
 
-#include <drizzled/atomics.h>
-#include <drizzled/session.h>
+namespace user_locks {
 
-using namespace drizzled;
-using namespace std;
-
-user_locks::UserLocks::UserLocks() :
-  plugin::TableFunction("DATA_DICTIONARY", "USER_LOCKS")
+bool operator==(Key const& left, Key const& right)
 {
-  add_field("USER_LOCK_NAME", plugin::TableFunction::STRING, user_locks::LARGEST_LOCK_NAME, false);
-  add_field("SESSION_ID", plugin::TableFunction::NUMBER, 0, false);
-  add_field("USER_NAME", plugin::TableFunction::STRING);
-}
-
-user_locks::UserLocks::Generator::Generator(drizzled::Field **arg) :
-  drizzled::plugin::TableFunction::Generator(arg)
-{
-  user_locks::Locks::getInstance().Copy(lock_map);
-  iter= lock_map.begin();
-}
-
-bool user_locks::UserLocks::Generator::populate()
-{
-
-  while (iter != lock_map.end())
-  {
-    // USER_LOCK_NAME
-    push((*iter).first.getLockName());
-
-    // SESSION_ID
-    push((*iter).second->id);
-    //
-    // USER_NAME
-    push((*iter).first.getUser());
-
-    iter++;
+  if (left.getLockName() == right.getLockName())
     return true;
-  }
 
   return false;
 }
+
+
+std::size_t hash_value(Key const& b)
+{
+  return b.getHashValue();
+}
+
+} /* namespace user_locks */
