@@ -1337,11 +1337,8 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     }
 
 
-    Table temp_table; /* Use this so that BLOB DEFAULT '' works */
-    temp_table.setShare(this);
-    temp_table.in_use= &session;
-    temp_table.getMutableShare()->db_low_byte_first= true; //Cursor->low_byte_first();
-    temp_table.getMutableShare()->blob_ptr_size= portable_sizeof_char_ptr;
+    db_low_byte_first= true; //Cursor->low_byte_first();
+    blob_ptr_size= portable_sizeof_char_ptr;
 
     uint32_t field_length= 0; //Assignment is for compiler complaint.
 
@@ -1444,8 +1441,6 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
                                 getTableProto()->field(fieldnr).name().c_str());
 
     field[fieldnr]= f;
-
-    f->init(&temp_table); /* blob default values need table obj */
 
     if (! (f->flags & NOT_NULL_FLAG))
     {
