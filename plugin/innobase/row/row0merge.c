@@ -1202,9 +1202,9 @@ row_merge_read_clustered_index(
 
 		if (btr_pcur_is_after_last_on_page(&pcur)) {
 			if (UNIV_UNLIKELY(trx_is_interrupted(trx))) {
-				i = 0;
 				err = DB_INTERRUPTED;
-				goto err_exit;
+				trx->error_key_num = 0;
+				goto func_exit;
 			}
 
 			btr_pcur_store_position(&pcur, &mtr);
@@ -1246,8 +1246,7 @@ row_merge_read_clustered_index(
 
 					if (dfield_is_null(field)) {
 						err = DB_PRIMARY_KEY_IS_NULL;
-						i = 0;
-						trx->error_key_num = i;
+						trx->error_key_num = 0;
 						goto func_exit;
 					}
 
@@ -1288,7 +1287,6 @@ row_merge_read_clustered_index(
 
 					if (dup.n_dup) {
 						err = DB_DUPLICATE_KEY;
-err_exit:
 						trx->error_key_num = i;
 						goto func_exit;
 					}
@@ -1302,7 +1300,8 @@ err_exit:
 			if (!row_merge_write(file->fd, file->offset++,
 					     block)) {
 				err = DB_OUT_OF_FILE_SPACE;
-				goto err_exit;
+				trx->error_key_num = i;
+				goto func_exit;
 			}
 
 			UNIV_MEM_INVALID(block[0], sizeof block[0]);
