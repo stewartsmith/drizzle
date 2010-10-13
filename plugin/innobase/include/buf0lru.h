@@ -26,6 +26,7 @@ Created 11/5/1995 Heikki Tuuri
 #ifndef buf0lru_h
 #define buf0lru_h
 
+#include <sys/types.h>
 #include "univ.i"
 #include "ut0byte.h"
 #include "buf0types.h"
