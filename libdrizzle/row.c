@@ -158,7 +158,8 @@ drizzle_return_t drizzle_state_row_read(drizzle_con_st *con)
 {
   drizzle_log_debug(con->drizzle, "drizzle_state_row_read");
 
-  if (con->packet_size != 0 && con->buffer_size < con->packet_size)
+  if (con->packet_size != 0 && con->buffer_size < con->packet_size && 
+    con->buffer_size < 5)
   {
     drizzle_state_push(con, drizzle_state_read);
     return DRIZZLE_RETURN_OK;
