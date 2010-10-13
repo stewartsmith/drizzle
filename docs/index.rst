@@ -61,6 +61,14 @@ Clients:
    clients/drizzle.rst
    clients/drizzledump.rst
 
+libdrizzle:
+
+.. toctree::
+   :maxdepth: 2
+
+   libdrizzle/api.rst
+   libdrizzle/developer.rst
+
 Indices and tables
 ==================
 
