@@ -81,11 +81,6 @@ EXTRA_DIST+=	${man_MANS}
 	indent
 
 
-doxygen:
-	${DOXYGEN} docs/Doxyfile.api
-	${DOXYGEN} docs/Doxyfile.dev
-	${DOXYGEN} docs/Doxyfile.drizzled
-
 indent:
 	for f in `find ${top_srcdir} -type f | grep -v innobase |\
                   ${EGREP} '\.(cc|c|h)$$' ` ; do \

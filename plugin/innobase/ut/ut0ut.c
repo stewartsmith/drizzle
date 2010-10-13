@@ -148,6 +148,7 @@ ut_time(void)
 	return(time(NULL));
 }
 
+#ifndef UNIV_HOTBACKUP
 /**********************************************************//**
 Returns system time.
 Upon successful completion, the value 0 is returned; otherwise the
@@ -214,6 +215,24 @@ ut_time_us(
 
 	return(us);
 }
+
+/**********************************************************//**
+Returns the number of milliseconds since some epoch.  The
+value may wrap around.  It should only be used for heuristic
+purposes.
+@return	ms since epoch */
+UNIV_INTERN
+ulint
+ut_time_ms(void)
+/*============*/
+{
+	struct timeval	tv;
+
+	ut_gettimeofday(&tv, NULL);
+
+	return((ulint) tv.tv_sec * 1000 + tv.tv_usec / 1000);
+}
+#endif /* !UNIV_HOTBACKUP */
 
 /**********************************************************//**
 Returns the difference of two times in seconds.
