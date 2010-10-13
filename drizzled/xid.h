@@ -94,7 +94,7 @@ public:
     gtrid_length(0),
     bqual_length(0)
   {
-	  memset(data, 0, DRIZZLE_XIDDATASIZE);
+    memset(data, 0, DRIZZLE_XIDDATASIZE);
   }
 };
 typedef class drizzle_xid DRIZZLE_XID;
