@@ -121,6 +121,10 @@ if we are compiling on Windows. */
 #  endif /* UNIV_HOTBACKUP */
 # endif
 
+#ifdef HAVE_PTHREAD
+#include <pthread.h>
+#endif
+
 /* Include <sys/stat.h> to get S_I... macros defined for os0file.c */
 # include <sys/stat.h>
 # if !defined(__NETWARE__) && !defined(__WIN__) 
