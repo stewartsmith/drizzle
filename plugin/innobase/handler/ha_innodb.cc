@@ -149,13 +149,6 @@ extern "C" {
 using namespace std;
 using namespace drizzled;
 
-#ifndef DRIZZLE_SERVER
-/* This is needed because of Bug #3596.  Let us hope that pthread_mutex_t
-is defined the same in both builds: the MySQL server and the InnoDB plugin. */
-extern pthread_mutex_t LOCK_thread_count;
-
-#endif /* DRIZZLE_SERVER */
-
 /** to protect innobase_open_files */
 static pthread_mutex_t innobase_share_mutex;
 /** to force correct commit order in binlog */
