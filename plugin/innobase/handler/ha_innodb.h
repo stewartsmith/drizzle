@@ -31,6 +31,18 @@ St, Fifth Floor, Boston, MA 02110-1301 USA
 #include <drizzled/plugin/transactional_storage_engine.h>
 
 using namespace drizzled;
+
+/* Structure defines translation table between mysql index and innodb
+index structures */
+typedef struct innodb_idx_translate_struct {
+	ulint		index_count;	/*!< number of valid index entries
+					in the index_mapping array */
+	ulint		array_size;	/*!< array size of index_mapping */
+	dict_index_t**	index_mapping;	/*!< index pointer array directly
+					maps to index in Innodb from MySQL
+					array index */
+} innodb_idx_translate_t;
+
 /** InnoDB table share */
 typedef struct st_innobase_share {
 	THR_LOCK	lock;		/*!< MySQL lock protecting
@@ -40,6 +52,9 @@ typedef struct st_innobase_share {
 					incremented in get_share()
 					and decremented in free_share() */
 	void*		table_name_hash;/*!< hash table chain node */
+	innodb_idx_translate_t	idx_trans_tbl;	/*!< index translation
+						table between MySQL and
+						Innodb */
 
         st_innobase_share(const char *arg) :
           use_count(0)

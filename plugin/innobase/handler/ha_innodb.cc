@@ -2880,6 +2880,203 @@ innobase_get_int_col_max_value(
 	return(max_value);
 }
 
+/*******************************************************************//**
+This function checks whether the index column information
+is consistent between KEY info from mysql and that from innodb index.
+@return TRUE if all column types match. */
+static
+ibool
+innobase_match_index_columns(
+/*=========================*/
+	const KeyInfo*		key_info,	/*!< in: Index info
+						from mysql */
+	const dict_index_t*	index_info)	/*!< in: Index info
+						from Innodb */
+{
+	const KeyPartInfo*	key_part;
+	const KeyPartInfo*	key_end;
+	const dict_field_t*	innodb_idx_fld;
+	const dict_field_t*	innodb_idx_fld_end;
+
+	/* Check whether user defined index column count matches */
+	if (key_info->key_parts != index_info->n_user_defined_cols) {
+		return(FALSE);
+	}
+
+	key_part = key_info->key_part;
+	key_end = key_part + key_info->key_parts;
+	innodb_idx_fld = index_info->fields;
+	innodb_idx_fld_end = index_info->fields + index_info->n_fields;
+
+	/* Check each index column's datatype. We do not check
+	column name because there exists case that index
+	column name got modified in mysql but such change does not
+	propagate to InnoDB.
+	One hidden assumption here is that the index column sequences
+	are matched up between those in mysql and Innodb. */
+	for (; key_part != key_end; ++key_part) {
+		ulint	col_type;
+		ibool	is_unsigned;
+		ulint	mtype = innodb_idx_fld->col->mtype;
+
+		/* Need to translate to InnoDB column type before
+		comparison. */
+		col_type = get_innobase_type_from_mysql_type(&is_unsigned,
+							     key_part->field);
+
+		/* Ignore Innodb specific system columns. */
+		while (mtype == DATA_SYS) {
+			innodb_idx_fld++;
+
+			if (innodb_idx_fld >= innodb_idx_fld_end) {
+				return(FALSE);
+			}
+		}
+
+		if (col_type != mtype) {
+			/* Column Type mismatches */
+			return(FALSE);
+		}
+
+		innodb_idx_fld++;
+	}
+
+	return(TRUE);
+}
+
+/*******************************************************************//**
+This function builds a translation table in INNOBASE_SHARE
+structure for fast index location with mysql array number from its
+table->key_info structure. This also provides the necessary translation
+between the key order in mysql key_info and Innodb ib_table->indexes if
+they are not fully matched with each other.
+Note we do not have any mutex protecting the translation table
+building based on the assumption that there is no concurrent
+index creation/drop and DMLs that requires index lookup. All table
+handle will be closed before the index creation/drop.
+@return TRUE if index translation table built successfully */
+static
+ibool
+innobase_build_index_translation(
+/*=============================*/
+	const Table*		table,	  /*!< in: table in MySQL data
+					  dictionary */
+	dict_table_t*		ib_table, /*!< in: table in Innodb data
+					  dictionary */
+	INNOBASE_SHARE*		share)	  /*!< in/out: share structure
+					  where index translation table
+					  will be constructed in. */
+{
+	ulint		mysql_num_index;
+	ulint		ib_num_index;
+	dict_index_t**	index_mapping;
+	ibool		ret = TRUE;
+
+	mysql_num_index = table->getShare()->keys;
+	ib_num_index = UT_LIST_GET_LEN(ib_table->indexes);
+
+	/* Innodb could have own system indexes. */
+	ut_a(ib_num_index >= mysql_num_index);
+
+	index_mapping = share->idx_trans_tbl.index_mapping;
+
+	/* If index entry count is non-zero, nothing has
+	changed since last update, directly return TRUE */
+	if (share->idx_trans_tbl.index_count) {
+		/* Index entry count should still match mysql_num_index */
+		ut_a(share->idx_trans_tbl.index_count == mysql_num_index);
+		goto func_exit;
+	}
+
+	/* The number of index increased, rebuild the mapping table */
+	if (mysql_num_index > share->idx_trans_tbl.array_size) {
+		index_mapping = (dict_index_t**) realloc(index_mapping,
+							mysql_num_index *
+                                                         sizeof(*index_mapping));
+
+		if (!index_mapping) {
+			ret = FALSE;
+			goto func_exit;
+		}
+
+		share->idx_trans_tbl.array_size = mysql_num_index;
+	}
+
+
+	/* For each index in the mysql key_info array, fetch its
+	corresponding InnoDB index pointer into index_mapping
+	array. */
+	for (ulint count = 0; count < mysql_num_index; count++) {
+
+		/* Fetch index pointers into index_mapping according to mysql
+		index sequence */
+		index_mapping[count] = dict_table_get_index_on_name(
+			ib_table, table->key_info[count].name);
+
+		if (!index_mapping[count]) {
+			errmsg_printf(ERRMSG_LVL_ERROR, "Cannot find index %s in InnoDB "
+					"index dictionary.",
+					table->key_info[count].name);
+			ret = FALSE;
+			goto func_exit;
+		}
+
+		/* Double check fetched index has the same
+		column info as those in mysql key_info. */
+		if (!innobase_match_index_columns(&table->key_info[count],
+					          index_mapping[count])) {
+			errmsg_printf(ERRMSG_LVL_ERROR, "Found index %s whose column info "
+					"does not match that of MySQL.",
+					table->key_info[count].name);
+			ret = FALSE;
+			goto func_exit;
+		}
+	}
+
+	/* Successfully built the translation table */
+	share->idx_trans_tbl.index_count = mysql_num_index;
+
+func_exit:
+	if (!ret) {
+		/* Build translation table failed. */
+		free(index_mapping);
+
+		share->idx_trans_tbl.array_size = 0;
+		share->idx_trans_tbl.index_count = 0;
+		index_mapping = NULL;
+	}
+
+	share->idx_trans_tbl.index_mapping = index_mapping;
+
+	return(ret);
+}
+
+/*******************************************************************//**
+This function uses index translation table to quickly locate the
+requested index structure.
+Note we do not have mutex protection for the index translatoin table
+access, it is based on the assumption that there is no concurrent
+translation table rebuild (fter create/drop index) and DMLs that
+require index lookup.
+@return dict_index_t structure for requested index. NULL if
+fail to locate the index structure. */
+static
+dict_index_t*
+innobase_index_lookup(
+/*==================*/
+	INNOBASE_SHARE*	share,	/*!< in: share structure for index
+				translation table. */
+	uint		keynr)	/*!< in: index number for the requested
+				index */
+{
+	if (!share->idx_trans_tbl.index_mapping
+	    || keynr >= share->idx_trans_tbl.index_count) {
+		return(NULL);
+	}
+
+	return(share->idx_trans_tbl.index_mapping[keynr]);
+}
+
 /********************************************************************//**
 Set the autoinc column max value. This should only be called once from
 ha_innobase::open(). Therefore there's no need for a covering lock. */
@@ -3078,6 +3275,11 @@ ha_innobase::doOpen(const TableIdentifier &identifier,
 
   primary_key = table->getShare()->getPrimaryKey();
   key_used_on_scan = primary_key;
+
+  if (!innobase_build_index_translation(table, ib_table, share)) {
+    errmsg_printf(ERRMSG_LVL_ERROR, "Build InnoDB index translation table for"
+                    " Table %s failed", identifier.getPath().c_str());
+  }
 
   /* Allocate a buffer for a 'row reference'. A row reference is
   a string of bytes of length ref_length which uniquely specifies
@@ -4888,8 +5090,21 @@ ha_innobase::innobase_get_index(
 
   if (keynr != MAX_KEY && table->getShare()->sizeKeys() > 0) 
   {
-    index = dict_table_get_index_on_name(prebuilt->table,
-                                         table->getShare()->getTableProto()->indexes(keynr).name().c_str());
+    KeyInfo *key = table->key_info + keynr;
+    index = innobase_index_lookup(share, keynr);
+
+    if (index) {
+      ut_a(ut_strcmp(index->name, key->name) == 0);
+    } else {
+      errmsg_printf(ERRMSG_LVL_ERROR, "InnoDB could not find index %s "
+                      "key no %u for table %s through "
+                      " its index translation table",
+                      key ? key->name : "NULL", keynr,
+                      prebuilt->table->name);
+
+      index = dict_table_get_index_on_name(prebuilt->table,
+                                           key->name);
+    }
   } else {
     index = dict_table_get_first_index(prebuilt->table);
   }
@@ -6334,7 +6549,9 @@ ha_innobase::records_in_range(
 
   key = &table->key_info[active_index];
 
-  index = dict_table_get_index_on_name(prebuilt->table, table->getShare()->getTableProto()->indexes(active_index).name().c_str());
+  index = innobase_get_index(keynr);
+
+  ut_a(ut_strcmp(index->name, key->name) == 0);
 
   /* MySQL knows about this index and so we must be able to find it.*/
   ut_a(index);
@@ -6678,13 +6895,28 @@ ha_innobase::info(
   }
 
   if (flag & HA_STATUS_CONST) {
-    index = dict_table_get_first_index(ib_table);
+    /* Verify the number of index in InnoDB and MySQL
+       matches up. If prebuilt->clust_index_was_generated
+       holds, InnoDB defines GEN_CLUST_INDEX internally */
+    ulint	num_innodb_index = UT_LIST_GET_LEN(ib_table->indexes) - prebuilt->clust_index_was_generated;
 
-    if (prebuilt->clust_index_was_generated) {
-      index = dict_table_get_next_index(index);
+    if (table->getShare()->keys != num_innodb_index) {
+      errmsg_printf(ERRMSG_LVL_ERROR, "Table %s contains %lu "
+                      "indexes inside InnoDB, which "
+                      "is different from the number of "
+                      "indexes %u defined in the MySQL ",
+                      ib_table->name, num_innodb_index,
+                      table->getShare()->keys);
     }
 
     for (i = 0; i < table->getShare()->sizeKeys(); i++) {
+      /* We could get index quickly through internal
+         index mapping with the index translation table.
+         The identity of index (match up index name with
+         that of table->key_info[i]) is already verified in
+         innobase_get_index().  */
+      index = innobase_get_index(i);
+
       if (index == NULL) {
         errmsg_printf(ERRMSG_LVL_ERROR, "Table %s contains fewer "
             "indexes inside InnoDB than "
@@ -6736,8 +6968,6 @@ ha_innobase::info(
           rec_per_key >= ~(ulong) 0 ? ~(ulong) 0 :
           (ulong) rec_per_key;
       }
-
-      index = dict_table_get_next_index(index);
     }
   }
 
@@ -7588,6 +7818,11 @@ static INNOBASE_SHARE* get_share(const char* table_name)
           innobase_open_tables, fold, share);
 
     thr_lock_init(&share->lock);
+
+    /* Index translation table initialization */
+    share->idx_trans_tbl.index_mapping = NULL;
+    share->idx_trans_tbl.index_count = 0;
+    share->idx_trans_tbl.array_size = 0;
   }
 
   share->use_count++;
@@ -7618,6 +7853,10 @@ static void free_share(INNOBASE_SHARE* share)
     HASH_DELETE(INNOBASE_SHARE, table_name_hash,
           innobase_open_tables, fold, share);
     share->lock.deinit();
+
+    /* Free any memory from index translation table */
+    free(share->idx_trans_tbl.index_mapping);
+
     delete share;
 
     /* TODO: invoke HASH_MIGRATE if innobase_open_tables
