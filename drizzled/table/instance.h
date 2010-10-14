@@ -51,6 +51,11 @@ public:
     return &_share;
   }
 
+  void setShare(TableShare *)
+  {
+    assert(0);
+  }
+
   const TableShare *getShare(void) const
   {
     return &_share;

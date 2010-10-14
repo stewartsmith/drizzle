@@ -372,13 +372,13 @@ public:
   /* SHARE methods */
   virtual const TableShare *getShare() const { assert(_share); return _share; } /* Get rid of this long term */
   virtual TableShare *getMutableShare() { assert(_share); return _share; } /* Get rid of this long term */
-  inline bool hasShare() const { return _share ? true : false ; } /* Get rid of this long term */
-  inline void setShare(TableShare *new_share) { _share= new_share; } /* Get rid of this long term */
-  inline uint32_t sizeKeys() { return _share->sizeKeys(); }
-  inline uint32_t sizeFields() { return _share->sizeFields(); }
-  inline uint32_t getRecordLength() const { return _share->getRecordLength(); }
-  inline uint32_t sizeBlobFields() { return _share->blob_fields; }
-  inline uint32_t *getBlobField() { return &_share->blob_field[0]; }
+  bool hasShare() const { return _share ? true : false ; } /* Get rid of this long term */
+  virtual void setShare(TableShare *new_share) { _share= new_share; } /* Get rid of this long term */
+  uint32_t sizeKeys() { return _share->sizeKeys(); }
+  uint32_t sizeFields() { return _share->sizeFields(); }
+  uint32_t getRecordLength() const { return _share->getRecordLength(); }
+  uint32_t sizeBlobFields() { return _share->blob_fields; }
+  uint32_t *getBlobField() { return &_share->blob_field[0]; }
 
 public:
   virtual bool hasVariableWidth() const
