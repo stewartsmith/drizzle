@@ -1,3 +1,0 @@
-SELECT HAILDB_VERSION();
-HAILDB_VERSION()
-Release 3, Revision 1, Age 2

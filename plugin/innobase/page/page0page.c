@@ -677,7 +677,7 @@ page_copy_rec_list_end(
 
 				if (UNIV_UNLIKELY
 				    (!page_zip_decompress(new_page_zip,
-							  new_page))) {
+							  new_page, FALSE))) {
 					ut_error;
 				}
 				ut_ad(page_validate(new_page, index));
@@ -790,7 +790,7 @@ page_copy_rec_list_start(
 
 				if (UNIV_UNLIKELY
 				    (!page_zip_decompress(new_page_zip,
-							  new_page))) {
+							  new_page, FALSE))) {
 					ut_error;
 				}
 				ut_ad(page_validate(new_page, index));

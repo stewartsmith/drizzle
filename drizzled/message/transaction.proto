@@ -6,6 +6,7 @@ option java_outer_classname = "TransactionMessage";
 
 import "table.proto";
 import "schema.proto";
+import "event.proto";
 
 /*
  * @file
@@ -589,4 +590,5 @@ message Transaction
 {
   required TransactionContext transaction_context = 1;
   repeated Statement statement = 2;
+  optional Event event = 3;
 }

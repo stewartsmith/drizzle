@@ -697,6 +697,18 @@ size_t Table::max_row_length(const unsigned char *data)
   return length;
 }
 
+void Table::setVariableWidth(void)
+{
+  assert(in_use);
+  if (in_use && in_use->lex->sql_command == SQLCOM_CREATE_TABLE)
+  {
+    getMutableShare()->setVariableWidth();
+    return;
+  }
+
+  assert(0); // Programming error, you can't set this on a plain old Table.
+}
+
 /****************************************************************************
  Functions for creating temporary tables.
 ****************************************************************************/
@@ -734,13 +746,18 @@ Field *create_tmp_field_from_field(Session *session, Field *org_field,
   */
   if (convert_blob_length && convert_blob_length <= Field_varstring::MAX_SIZE &&
       (org_field->flags & BLOB_FLAG))
+  {
+    table->setVariableWidth();
     new_field= new Field_varstring(convert_blob_length,
                                    org_field->maybe_null(),
-                                   org_field->field_name, table->getMutableShare(),
+                                   org_field->field_name,
                                    org_field->charset());
+  }
   else
+  {
     new_field= org_field->new_field(session->mem_root, table,
                                     table == org_field->getTable());
+  }
   if (new_field)
   {
     new_field->init(table);
@@ -1351,13 +1368,13 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
       key_part_info->null_bit= 0;
       key_part_info->offset=hidden_null_pack_length;
       key_part_info->length=null_pack_length;
+      table->setVariableWidth();
       key_part_info->field= new Field_varstring(table->getInsertRecord(),
                                                 (uint32_t) key_part_info->length,
                                                 0,
                                                 (unsigned char*) 0,
                                                 (uint32_t) 0,
                                                 NULL,
-                                                table->getMutableShare(),
                                                 &my_charset_bin);
       if (!key_part_info->field)
         goto err;
@@ -1804,7 +1821,7 @@ bool Table::compare_record(Field **ptr)
 
 bool Table::compare_record()
 {
-  if (getShare()->blob_fields + getShare()->varchar_fields == 0)
+  if (not getShare()->blob_fields + getShare()->hasVariableWidth())
     return memcmp(this->getInsertRecord(), this->getUpdateRecord(), (size_t) getShare()->getRecordLength());
   
   /* Compare null bits */

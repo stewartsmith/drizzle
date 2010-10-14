@@ -18,6 +18,7 @@ while ($1)
 commit;
 enable_query_log;
 select count(distinct n) from t1;
+--replace_column 9 #
 explain extended select count(distinct n) from t1;
 drop table t1;
 
