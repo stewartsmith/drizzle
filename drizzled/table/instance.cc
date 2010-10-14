@@ -33,8 +33,10 @@
 namespace drizzled
 {
 
+namespace table
+{
 
-bool TableShareInstance::open_tmp_table()
+bool Instance::open_tmp_table()
 {
   int error;
   
@@ -82,7 +84,7 @@ bool TableShareInstance::open_tmp_table()
      true  - Error
 */
 
-bool TableShareInstance::create_myisam_tmp_table(KeyInfo *keyinfo,
+bool Instance::create_myisam_tmp_table(KeyInfo *keyinfo,
                                                  MI_COLUMNDEF *start_recinfo,
                                                  MI_COLUMNDEF **recinfo,
                                                  uint64_t options)
@@ -184,7 +186,7 @@ bool TableShareInstance::create_myisam_tmp_table(KeyInfo *keyinfo,
 }
 
 
-void TableShareInstance::free_tmp_table(Session *session)
+void Instance::free_tmp_table(Session *session)
 {
   const char *save_proc_info;
 
@@ -218,5 +220,28 @@ void TableShareInstance::free_tmp_table(Session *session)
   session->set_proc_info(save_proc_info);
 }
 
+/*
+  Set up column usage bitmaps for a temporary table
 
+  IMPLEMENTATION
+    For temporary tables, we need one bitmap with all columns set and
+    a tmp_set bitmap to be used by things like filesort.
+*/
+
+void Instance::setup_tmp_table_column_bitmaps()
+{
+  uint32_t field_count= getShare()->sizeFields();
+
+  this->def_read_set.resize(field_count);
+  this->def_write_set.resize(field_count);
+  this->tmp_set.resize(field_count);
+  this->getMutableShare()->all_set.resize(field_count);
+  this->getMutableShare()->all_set.set();
+  this->def_write_set.set();
+  this->def_read_set.set();
+  default_column_bitmaps();
+}
+
+
+} /* namespace table */
 } /* namespace drizzled */

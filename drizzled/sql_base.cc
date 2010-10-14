@@ -53,6 +53,7 @@
 #include "drizzled/internal/iocache.h"
 #include "drizzled/drizzled.h"
 #include "drizzled/plugin/authorization.h"
+#include "drizzled/table/temporary.h"
 #include "drizzled/table_placeholder.h"
 
 using namespace std;
@@ -2256,7 +2257,7 @@ Table *Session::open_temporary_table(TableIdentifier &identifier,
                         const_cast<char *>(identifier.getPath().c_str()), static_cast<uint32_t>(identifier.getPath().length()));
 
 
-  Table *new_tmp_table= new TemporaryTable;
+  table::Temporary *new_tmp_table= new table::Temporary;
   if (not new_tmp_table)
     return NULL;
 

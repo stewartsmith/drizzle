@@ -20,19 +20,22 @@
 
 /* Structs that defines the Table */
 
-#ifndef DRIZZLED_TABLE_SHARE_INSTANCE_H
-#define DRIZZLED_TABLE_SHARE_INSTANCE_H
+#ifndef DRIZZLED_TABLE_INSTANCE_H
+#define DRIZZLED_TABLE_INSTANCE_H
 
 namespace drizzled
 {
 
-class TableShareInstance : public Table
+namespace table
+{
+
+class Instance : public Table
 {
   TableShare _share;
   bool _has_variable_width;
 
 public:
-  TableShareInstance(TableIdentifier::Type type_arg) :
+  Instance(TableIdentifier::Type type_arg) :
     _share(type_arg),
     _has_variable_width(false)
   {
@@ -71,12 +74,13 @@ public:
     _has_variable_width= true;
   }
 
-  ~TableShareInstance()
+  ~Instance()
   {
-    this->free_tmp_table(this->in_use);
+    free_tmp_table(in_use);
   }
 };
 
+} /* namespace table */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TABLE_SHARE_INSTANCE_H */
+#endif /* DRIZZLED_TABLE_INSTANCE_H */

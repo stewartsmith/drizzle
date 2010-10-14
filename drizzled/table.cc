@@ -54,7 +54,7 @@
 #include <drizzled/item/null.h>
 #include <drizzled/temporal.h>
 
-#include "drizzled/table_share_instance.h"
+#include "drizzled/table/instance.h"
 
 #include "drizzled/table_proto.h"
 
@@ -323,29 +323,6 @@ void append_unescaped(String *res, const char *pos, uint32_t length)
     }
   }
   res->append('\'');
-}
-
-
-/*
-  Set up column usage bitmaps for a temporary table
-
-  IMPLEMENTATION
-    For temporary tables, we need one bitmap with all columns set and
-    a tmp_set bitmap to be used by things like filesort.
-*/
-
-void TableShareInstance::setup_tmp_table_column_bitmaps()
-{
-  uint32_t field_count= getShare()->sizeFields();
-
-  this->def_read_set.resize(field_count);
-  this->def_write_set.resize(field_count);
-  this->tmp_set.resize(field_count);
-  this->getMutableShare()->all_set.resize(field_count);
-  this->getMutableShare()->all_set.set();
-  this->def_write_set.set();
-  this->def_read_set.set();
-  default_column_bitmaps();
 }
 
 
@@ -877,7 +854,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     copy_func_count+= param->sum_func_count;
   }
 
-  TableShareInstance *table;
+  table::Instance *table;
   table= session->getTemporaryShare(message::Table::INTERNAL); // This will not go into the tableshare cache, so no key is used.
 
   if (not table->getMemRoot()->multi_alloc_root(0,
@@ -1471,7 +1448,7 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
   uint32_t null_count= 0;                 /* number of columns which may be null */
   uint32_t null_pack_length;              /* NULL representation array length */
 
-  TableShareInstance *table= getTemporaryShare(message::Table::INTERNAL); // This will not go into the tableshare cache, so no key is used.
+  table::Instance *table= getTemporaryShare(message::Table::INTERNAL); // This will not go into the tableshare cache, so no key is used.
   table->getMutableShare()->setFields(field_count + 1);
   table->setFields(table->getMutableShare()->getFields(true));
   field= table->getMutableShare()->getFields(true);

@@ -639,19 +639,6 @@ public:
   }
 };
 
-class TemporaryTable : public Table
-{
-public:
-  TemporaryTable() :
-    Table()
-  {
-  }
-
-  ~TemporaryTable()
-  {
-  }
-};
-
 /**
  * @class
  *  ForeignKeyInfo
@@ -873,6 +860,6 @@ bool check_table_name(const char *name, uint32_t length);
 
 } /* namespace drizzled */
 
-#include "drizzled/table_share_instance.h"
+#include "drizzled/table/instance.h"
 
 #endif /* DRIZZLED_TABLE_H */
