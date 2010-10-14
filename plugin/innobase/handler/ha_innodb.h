@@ -100,9 +100,8 @@ class ha_innobase: public Cursor
 	UNIV_INTERN ulint innobase_reset_autoinc(uint64_t auto_inc);
 	UNIV_INTERN ulint innobase_get_autoinc(uint64_t* value);
 	ulint innobase_update_autoinc(uint64_t	auto_inc);
-	UNIV_INTERN ulint innobase_initialize_autoinc();
+	UNIV_INTERN void innobase_initialize_autoinc();
 	UNIV_INTERN dict_index_t* innobase_get_index(uint keynr);
- 	UNIV_INTERN uint64_t innobase_get_int_col_max_value(const Field* field);
 
 	/* Init values for the class: */
  public:
