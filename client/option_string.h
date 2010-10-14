@@ -23,8 +23,7 @@
 #include <iostream>
 #include <string>
 #include <cstdlib>
-
-using namespace std;
+#include <drizzled/gettext.h>
 
 class OptionString 
 {
