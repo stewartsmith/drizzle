@@ -54,7 +54,7 @@
 #include "drizzled/drizzled.h"
 #include "drizzled/plugin/authorization.h"
 #include "drizzled/table/temporary.h"
-#include "drizzled/table_placeholder.h"
+#include "drizzled/table/placeholder.h"
 
 using namespace std;
 
@@ -1080,7 +1080,7 @@ Table *Session::table_cache_insert_placeholder(const char *db_name, const char *
     Create a table entry with the right key and with an old refresh version
   */
   TableIdentifier identifier(db_name, table_name, message::Table::INTERNAL);
-  TablePlaceholder *table= new TablePlaceholder(this, identifier);
+  table::Placeholder *table= new table::Placeholder(this, identifier);
 
   if (not add_table(table))
   {

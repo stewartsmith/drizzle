@@ -26,12 +26,15 @@
 namespace drizzled
 {
 
-class TablePlaceholder : public Table
+namespace table
+{
+
+class Placeholder : public Table
 {
   TableShare private_share;
 
 public:
-  TablePlaceholder(Session *session, TableIdentifier &identifier) :
+  Placeholder(Session *session, TableIdentifier &identifier) :
     Table(),
     private_share(identifier, identifier.getKey())
   {
@@ -43,6 +46,7 @@ public:
   }
 };
 
+} /* namespace table */
 } /* namespace drizzled */
 
 #endif /* DRIZZLED_TABLE_PLACEHOLDER_H */
