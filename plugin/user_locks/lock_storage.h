@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_USER_LOCKS_STORABLE_H_H
-#define PLUGIN_USER_LOCKS_STORABLE_H_H
+#ifndef PLUGIN_USER_LOCKS_LOCK_STORAGE_H
+#define PLUGIN_USER_LOCKS_LOCK_STORAGE_H
 
 #include "drizzled/session.h"
 
@@ -78,4 +78,4 @@ public:
 
 } /* namespace user_locks */
 
-#endif /* PLUGIN_USER_LOCKS_STORABLE_H_H */
+#endif /* PLUGIN_USER_LOCKS_LOCK_STORAGE_H */
