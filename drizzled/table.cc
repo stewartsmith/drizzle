@@ -1940,8 +1940,7 @@ Table::Table() :
   query_id(0),
   quick_condition_rows(0),
   timestamp_field_type(TIMESTAMP_NO_AUTO_SET),
-  map(0),
-  is_placeholder_created(0)
+  map(0)
 {
   record[0]= (unsigned char *) 0;
   record[1]= (unsigned char *) 0;
