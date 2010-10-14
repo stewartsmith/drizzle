@@ -7045,7 +7045,11 @@ ha_innobase::check(
 /*===============*/
   Session*  session)  /*!< in: user thread handle */
 {
-  ulint   ret;
+  dict_index_t*	index;
+  ulint		n_rows;
+  ulint		n_rows_in_table	= ULINT_UNDEFINED;
+  ibool		is_ok		= TRUE;
+  ulint		old_isolation_level;
 
   assert(session == table->in_use);
   ut_a(prebuilt->trx);
@@ -7059,17 +7063,140 @@ ha_innobase::check(
     build_template(prebuilt, NULL, table, ROW_MYSQL_WHOLE_ROW);
   }
 
-  ret = row_check_table_for_mysql(prebuilt);
-
-  switch (ret) {
-  case DB_SUCCESS:
-    return(HA_ADMIN_OK);
-  case DB_INTERRUPTED:
-    my_error(ER_QUERY_INTERRUPTED, MYF(0));
-    return(-1);
-  default:
+  if (prebuilt->table->ibd_file_missing) {
+        errmsg_printf(ERRMSG_LVL_ERROR, "InnoDB: Error:\n"
+                    "InnoDB: MySQL is trying to use a table handle"
+                    " but the .ibd file for\n"
+                    "InnoDB: table %s does not exist.\n"
+                    "InnoDB: Have you deleted the .ibd file"
+                    " from the database directory under\n"
+                    "InnoDB: the MySQL datadir, or have you"
+                    " used DISCARD TABLESPACE?\n"
+                    "InnoDB: Please refer to\n"
+                    "InnoDB: " REFMAN "innodb-troubleshooting.html\n"
+                    "InnoDB: how you can resolve the problem.\n",
+                    prebuilt->table->name);
     return(HA_ADMIN_CORRUPT);
   }
+
+  prebuilt->trx->op_info = "checking table";
+
+  old_isolation_level = prebuilt->trx->isolation_level;
+
+  /* We must run the index record counts at an isolation level
+     >= READ COMMITTED, because a dirty read can see a wrong number
+     of records in some index; to play safe, we use always
+     REPEATABLE READ here */
+
+  prebuilt->trx->isolation_level = TRX_ISO_REPEATABLE_READ;
+
+  /* Enlarge the fatal lock wait timeout during CHECK TABLE. */
+  mutex_enter(&kernel_mutex);
+  srv_fatal_semaphore_wait_threshold += 7200; /* 2 hours */
+  mutex_exit(&kernel_mutex);
+
+  for (index = dict_table_get_first_index(prebuilt->table);
+       index != NULL;
+       index = dict_table_get_next_index(index)) {
+#if 0
+    fputs("Validating index ", stderr);
+    ut_print_name(stderr, trx, FALSE, index->name);
+    putc('\n', stderr);
+#endif
+
+    if (!btr_validate_index(index, prebuilt->trx)) {
+      is_ok = FALSE;
+      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                          ER_NOT_KEYFILE,
+                          "InnoDB: The B-tree of"
+                          " index '%-.200s' is corrupted.",
+                          index->name);
+      continue;
+    }
+
+    /* Instead of invoking change_active_index(), set up
+       a dummy template for non-locking reads, disabling
+       access to the clustered index. */
+    prebuilt->index = index;
+
+    prebuilt->index_usable = row_merge_is_index_usable(
+			prebuilt->trx, prebuilt->index);
+
+    if (UNIV_UNLIKELY(!prebuilt->index_usable)) {
+      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                          HA_ERR_TABLE_DEF_CHANGED,
+                          "InnoDB: Insufficient history for"
+                          " index '%-.200s'",
+                          index->name);
+      continue;
+    }
+
+    prebuilt->sql_stat_start = TRUE;
+    prebuilt->template_type = ROW_MYSQL_DUMMY_TEMPLATE;
+    prebuilt->n_template = 0;
+    prebuilt->need_to_access_clustered = FALSE;
+
+    dtuple_set_n_fields(prebuilt->search_tuple, 0);
+
+    prebuilt->select_lock_type = LOCK_NONE;
+
+    if (!row_check_index_for_mysql(prebuilt, index, &n_rows)) {
+      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                          ER_NOT_KEYFILE,
+                          "InnoDB: The B-tree of"
+                          " index '%-.200s' is corrupted.",
+                          index->name);
+      is_ok = FALSE;
+    }
+
+    if (session_killed(user_session)) {
+      break;
+    }
+
+#if 0
+    fprintf(stderr, "%lu entries in index %s\n", n_rows,
+            index->name);
+#endif
+
+    if (index == dict_table_get_first_index(prebuilt->table)) {
+      n_rows_in_table = n_rows;
+    } else if (n_rows != n_rows_in_table) {
+      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                          ER_NOT_KEYFILE,
+                          "InnoDB: Index '%-.200s'"
+                          " contains %lu entries,"
+                          " should be %lu.",
+                          index->name,
+                          (ulong) n_rows,
+                          (ulong) n_rows_in_table);
+      is_ok = FALSE;
+    }
+  }
+
+  /* Restore the original isolation level */
+  prebuilt->trx->isolation_level = old_isolation_level;
+
+  /* We validate also the whole adaptive hash index for all tables
+     at every CHECK TABLE */
+
+  if (!btr_search_validate()) {
+    push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                 ER_NOT_KEYFILE,
+                 "InnoDB: The adaptive hash index is corrupted.");
+    is_ok = FALSE;
+  }
+
+  /* Restore the fatal lock wait timeout after CHECK TABLE. */
+  mutex_enter(&kernel_mutex);
+  srv_fatal_semaphore_wait_threshold -= 7200; /* 2 hours */
+  mutex_exit(&kernel_mutex);
+
+  prebuilt->trx->op_info = "";
+  if (session_killed(user_session)) {
+    my_error(ER_QUERY_INTERRUPTED, MYF(0));
+  }
+
+  return(is_ok ? HA_ADMIN_OK : HA_ADMIN_CORRUPT);
 }
 
 /*************************************************************//**
