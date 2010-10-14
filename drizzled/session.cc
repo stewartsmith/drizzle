@@ -552,9 +552,10 @@ bool Session::schedule()
   current_global_counters.connections++;
   thread_id= variables.pseudo_thread_id= global_thread_id++;
 
-  LOCK_thread_count.lock();
-  getSessionList().push_back(this);
-  LOCK_thread_count.unlock();
+  {
+    boost::mutex::scoped_lock scoped(LOCK_thread_count);
+    getSessionList().push_back(this);
+  }
 
   if (unlikely(plugin::EventObserver::connectSession(*this)))
   {

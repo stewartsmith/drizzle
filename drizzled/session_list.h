@@ -26,7 +26,8 @@ namespace drizzled
 {
 
 class Session;
-typedef std::list<Session *> SessionList;
+typedef Session* SessionPtr;
+typedef std::list<SessionPtr> SessionList;
 SessionList &getSessionList();
 
 }
