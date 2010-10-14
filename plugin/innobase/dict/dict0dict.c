@@ -1459,6 +1459,7 @@ dict_index_add_to_cache(
 
 	if (!dict_index_find_cols(table, index)) {
 
+		dict_mem_index_free(index);
 		return(DB_CORRUPTION);
 	}
 
