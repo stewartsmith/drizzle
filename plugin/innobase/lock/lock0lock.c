@@ -4318,11 +4318,6 @@ lock_print_info_summary(
 /*====================*/
 	FILE*	file)	/*!< in: file where to print */
 {
-	/* We must protect the MySQL thd->query field with a MySQL mutex, and
-	because the MySQL mutex must be reserved before the kernel_mutex of
-	InnoDB, we call innobase_mysql_prepare_print_arbitrary_thd() here. */
-
-	innobase_mysql_prepare_print_arbitrary_thd();
 	lock_mutex_enter_kernel();
 
 	if (lock_deadlock_found) {
@@ -4405,7 +4400,6 @@ loop:
 
 	if (trx == NULL) {
 		lock_mutex_exit_kernel();
-		innobase_mysql_end_print_arbitrary_thd();
 
 		ut_ad(lock_validate());
 
@@ -4489,7 +4483,6 @@ loop:
 			}
 
 			lock_mutex_exit_kernel();
-			innobase_mysql_end_print_arbitrary_thd();
 
 			mtr_start(&mtr);
 
@@ -4500,7 +4493,6 @@ loop:
 
 			load_page_first = FALSE;
 
-			innobase_mysql_prepare_print_arbitrary_thd();
 			lock_mutex_enter_kernel();
 
 			goto loop;
