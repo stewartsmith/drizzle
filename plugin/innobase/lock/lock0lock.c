@@ -3747,9 +3747,10 @@ lock_table_enqueue_waiting(
 
 /*********************************************************************//**
 Checks if other transactions have an incompatible mode lock request in
-the lock queue. */
+the lock queue.
+@return	lock or NULL */
 UNIV_INLINE
-ibool
+lock_t*
 lock_table_other_has_incompatible(
 /*==============================*/
 	trx_t*		trx,	/*!< in: transaction, or NULL if all
@@ -3771,13 +3772,13 @@ lock_table_other_has_incompatible(
 		    && (!lock_mode_compatible(lock_get_mode(lock), mode))
 		    && (wait || !(lock_get_wait(lock)))) {
 
-			return(TRUE);
+			return(lock);
 		}
 
 		lock = UT_LIST_GET_PREV(un_member.tab_lock.locks, lock);
 	}
 
-	return(FALSE);
+	return(NULL);
 }
 
 /*********************************************************************//**
