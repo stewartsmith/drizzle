@@ -18,10 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* Structs that defines the Table */
-
-#ifndef DRIZZLED_TABLE_INSTANCE_H
-#define DRIZZLED_TABLE_INSTANCE_H
+#ifndef DRIZZLED_TABLE_CONCURRENT_H
+#define DRIZZLED_TABLE_CONCURRENT_H
 
 namespace drizzled
 {
@@ -29,58 +27,20 @@ namespace drizzled
 namespace table
 {
 
-class Instance : public Table
+class Concurrent : public Table
 {
-  TableShare _share;
-  bool _has_variable_width;
-
 public:
-  Instance() :
-    _share(message::Table::INTERNAL),
-    _has_variable_width(false)
+  Concurrent() :
+    Table()
   {
   }
 
-  Table *getTable()
+  ~Concurrent()
   {
-    return this;
-  }
-
-  TableShare *getMutableShare(void)
-  {
-    return &_share;
-  }
-
-  const TableShare *getShare(void) const
-  {
-    return &_share;
-  }
-
-  bool hasVariableWidth() const
-  {
-    return _has_variable_width;
-  }
-
-  bool create_myisam_tmp_table(KeyInfo *keyinfo,
-                               MI_COLUMNDEF *start_recinfo,
-                               MI_COLUMNDEF **recinfo,
-                               uint64_t options);
-  void setup_tmp_table_column_bitmaps();
-  void free_tmp_table(Session *session);
-  bool open_tmp_table();
-
-  void setVariableWidth()
-  {
-    _has_variable_width= true;
-  }
-
-  ~Instance()
-  {
-    free_tmp_table(in_use);
   }
 };
 
 } /* namespace table */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TABLE_INSTANCE_H */
+#endif /* DRIZZLED_TABLE_CONCURRENT_H */

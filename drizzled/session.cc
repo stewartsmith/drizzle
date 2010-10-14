@@ -2051,9 +2051,9 @@ bool Session::renameTableMessage(const TableIdentifier &from, const TableIdentif
   return true;
 }
 
-table::Instance *Session::getTemporaryShare(TableIdentifier::Type type_arg)
+table::Instance *Session::getInstanceTable()
 {
-  temporary_shares.push_back(new table::Instance(type_arg)); // This will not go into the tableshare cache, so no key is used.
+  temporary_shares.push_back(new table::Instance()); // This will not go into the tableshare cache, so no key is used.
 
   table::Instance *tmp_share= temporary_shares.back();
 

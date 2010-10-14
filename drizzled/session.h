@@ -1576,7 +1576,7 @@ public:
 
   void get_xid(DRIZZLE_XID *xid); // Innodb only
 
-  table::Instance *getTemporaryShare(TableIdentifier::Type type_arg);
+  table::Instance *getInstanceTable();
 
 private:
   bool resetUsage()

@@ -855,7 +855,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   }
 
   table::Instance *table;
-  table= session->getTemporaryShare(message::Table::INTERNAL); // This will not go into the tableshare cache, so no key is used.
+  table= session->getInstanceTable(); // This will not go into the tableshare cache, so no key is used.
 
   if (not table->getMemRoot()->multi_alloc_root(0,
                                                 &default_field, sizeof(Field*) * (field_count),
@@ -1448,7 +1448,7 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
   uint32_t null_count= 0;                 /* number of columns which may be null */
   uint32_t null_pack_length;              /* NULL representation array length */
 
-  table::Instance *table= getTemporaryShare(message::Table::INTERNAL); // This will not go into the tableshare cache, so no key is used.
+  table::Instance *table= getInstanceTable(); // This will not go into the tableshare cache, so no key is used.
   table->getMutableShare()->setFields(field_count + 1);
   table->setFields(table->getMutableShare()->getFields(true));
   field= table->getMutableShare()->getFields(true);
