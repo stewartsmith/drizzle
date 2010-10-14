@@ -82,13 +82,9 @@ plugin/myisam/ha_myisam.cc
 plugin/myisam/my_handler_errors.cc
 plugin/mysql_protocol/mysql_protocol.cc
 plugin/pbms/src/parameters_ms.cc
-plugin/pool_of_threads/pool_of_threads.cc
-plugin/pool_of_threads/pool_of_threads.h
-plugin/pool_of_threads/session_scheduler.cc
 plugin/rabbitmq/rabbitmq_log.cc
 plugin/session_dictionary/processlist.cc
 plugin/signal_handler/signal_handler.cc
-plugin/single_thread/single_thread.h
 plugin/syslog/errmsg.cc
 plugin/syslog/function.cc
 plugin/syslog/logging.cc
