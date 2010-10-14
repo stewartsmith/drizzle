@@ -422,14 +422,6 @@ public:
     return *cursor;
   }
 
-  /* For TMP tables, should be pulled out as a class */
-  void setup_tmp_table_column_bitmaps();
-  bool create_myisam_tmp_table(KeyInfo *keyinfo,
-                               MI_COLUMNDEF *start_recinfo,
-                               MI_COLUMNDEF **recinfo,
-                               uint64_t options);
-  void free_tmp_table(Session *session);
-  bool open_tmp_table();
   size_t max_row_length(const unsigned char *data);
   uint32_t find_shortest_key(const key_map *usable_keys);
   bool compare_record(Field **ptr);
@@ -644,6 +636,19 @@ public:
   bool isPlaceHolder()
   {
     return is_placeholder_created;
+  }
+};
+
+class TemporaryTable : public Table
+{
+public:
+  TemporaryTable() :
+    Table()
+  {
+  }
+
+  ~TemporaryTable()
+  {
   }
 };
 
@@ -867,5 +872,7 @@ bool check_db_name(Session *session, SchemaIdentifier &schema);
 bool check_table_name(const char *name, uint32_t length);
 
 } /* namespace drizzled */
+
+#include "drizzled/table_share_instance.h"
 
 #endif /* DRIZZLED_TABLE_H */

@@ -2256,7 +2256,7 @@ Table *Session::open_temporary_table(TableIdentifier &identifier,
                         const_cast<char *>(identifier.getPath().c_str()), static_cast<uint32_t>(identifier.getPath().length()));
 
 
-  Table *new_tmp_table= new Table;
+  Table *new_tmp_table= new TemporaryTable;
   if (not new_tmp_table)
     return NULL;
 

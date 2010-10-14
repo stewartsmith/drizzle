@@ -58,6 +58,14 @@ public:
     return _has_variable_width;
   }
 
+  bool create_myisam_tmp_table(KeyInfo *keyinfo,
+                               MI_COLUMNDEF *start_recinfo,
+                               MI_COLUMNDEF **recinfo,
+                               uint64_t options);
+  void setup_tmp_table_column_bitmaps();
+  void free_tmp_table(Session *session);
+  bool open_tmp_table();
+
   void setVariableWidth()
   {
     _has_variable_width= true;
