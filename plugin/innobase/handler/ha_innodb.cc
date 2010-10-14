@@ -4128,24 +4128,29 @@ no_commit:
       update the table upper limit. Note: last_value
       will be 0 if get_auto_increment() was not called.*/
 
-      if (auto_inc <= col_max_value
-          && auto_inc >= prebuilt->autoinc_last_value) {
+      if (auto_inc >= prebuilt->autoinc_last_value) {
 set_max_autoinc:
-        ut_a(prebuilt->autoinc_increment > 0);
+        /* This should filter out the negative
+           values set explicitly by the user. */
+        if (auto_inc <= col_max_value) {
+          ut_a(prebuilt->autoinc_increment > 0);
 
-        uint64_t  need;
-        uint64_t  offset;
+          uint64_t	need;
+          uint64_t	offset;
 
-        offset = prebuilt->autoinc_offset;
-        need = prebuilt->autoinc_increment;
+          offset = prebuilt->autoinc_offset;
+          need = prebuilt->autoinc_increment;
 
-        auto_inc = innobase_next_autoinc(
-          auto_inc, need, offset, col_max_value);
+          auto_inc = innobase_next_autoinc(
+                                           auto_inc,
+                                           need, offset, col_max_value);
 
-        err = innobase_set_max_autoinc(auto_inc);
+          err = innobase_set_max_autoinc(
+                                         auto_inc);
 
-        if (err != DB_SUCCESS) {
-          error = err;
+          if (err != DB_SUCCESS) {
+            error = err;
+          }
         }
       }
       break;
@@ -7325,7 +7330,7 @@ innodb_show_status(
 
   mutex_enter(&srv_monitor_file_mutex);
   rewind(srv_monitor_file);
-  srv_printf_innodb_monitor(srv_monitor_file,
+  srv_printf_innodb_monitor(srv_monitor_file, FALSE,
         &trx_list_start, &trx_list_end);
   flen = ftell(srv_monitor_file);
   os_file_set_eof(srv_monitor_file);
