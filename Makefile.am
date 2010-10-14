@@ -30,6 +30,8 @@ noinst_PROGRAMS =
 man_MANS =
 bin_PROGRAMS =
 
+VERSION=$(PANDORA_RELEASE_VERSION)
+
 SUBDIRS = .
 if BUILD_PO
 SUBDIRS += po
@@ -120,6 +122,8 @@ drizzled/configmake.h: ${top_srcdir}/Makefile.in
 	  echo '#define PKGLIBDIR "$(pkglibdir)"'; \
 	  echo '#define PKGLIBEXECDIR "$(pkglibexecdir)"'; \
 	  echo '#define PKGPLUGINDIR "$(pkgplugindir)"'; \
+          echo '#undef VERSION'; \
+          echo '#define VERSION "${PANDORA_RELEASE_VERSION}"'; \
 	} | sed '/""/d' > $@-t
 	@if diff $@-t $@ >/dev/null 2>&1 ; then \
 	  rm @-t ; \
