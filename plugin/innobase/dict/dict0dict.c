@@ -139,7 +139,7 @@ static
 void
 dict_field_print_low(
 /*=================*/
-	dict_field_t*	field);	/*!< in: field */
+	const dict_field_t*	field);	/*!< in: field */
 /*********************************************************************//**
 Frees a foreign key struct. */
 static
@@ -4402,7 +4402,7 @@ static
 void
 dict_field_print_low(
 /*=================*/
-	dict_field_t*	field)	/*!< in: field */
+	const dict_field_t*	field)	/*!< in: field */
 {
 	ut_ad(mutex_own(&(dict_sys->mutex)));
 
