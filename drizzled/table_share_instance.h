@@ -38,11 +38,6 @@ public:
   {
   }
 
-  Table *getTable()
-  {
-    return this;
-  }
-
   TableShare *getMutableShare(void)
   {
     return &_share;
@@ -65,7 +60,7 @@ public:
 
   ~TableShareInstance()
   {
-    this->free_tmp_table(this->in_use);
+    free_tmp_table(this->in_use);
   }
 };
 
