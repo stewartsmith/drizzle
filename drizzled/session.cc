@@ -1408,21 +1408,21 @@ bool select_max_min_finder_subselect::send_data(List<Item> &items)
       switch (val_item->result_type())
       {
       case REAL_RESULT:
-	op= &select_max_min_finder_subselect::cmp_real;
-	break;
+        op= &select_max_min_finder_subselect::cmp_real;
+        break;
       case INT_RESULT:
-	op= &select_max_min_finder_subselect::cmp_int;
-	break;
+        op= &select_max_min_finder_subselect::cmp_int;
+        break;
       case STRING_RESULT:
-	op= &select_max_min_finder_subselect::cmp_str;
-	break;
+        op= &select_max_min_finder_subselect::cmp_str;
+        break;
       case DECIMAL_RESULT:
         op= &select_max_min_finder_subselect::cmp_decimal;
         break;
       case ROW_RESULT:
         // This case should never be choosen
-	assert(0);
-	op= 0;
+        assert(0);
+        op= 0;
       }
     }
     cache->store(val_item);
