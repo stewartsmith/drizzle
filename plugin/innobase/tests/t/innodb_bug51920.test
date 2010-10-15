@@ -35,7 +35,7 @@ let $wait_condition =
 -- source include/wait_condition.inc
 
 connection con1;
--- error ER_QUERY_INTERRUPTED,20
+-- error ER_QUERY_INTERRUPTED,20,2
 reap;
 connection default;
 DROP TABLE bug51920;
