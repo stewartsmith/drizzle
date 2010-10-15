@@ -18,35 +18,29 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* Structs that defines the Table */
-
-#ifndef DRIZZLED_TABLE_PLACEHOLDER_H
-#define DRIZZLED_TABLE_PLACEHOLDER_H
+#ifndef DRIZZLED_TABLE_TEMPORARY_H
+#define DRIZZLED_TABLE_TEMPORARY_H
 
 namespace drizzled
 {
 
-class TablePlaceholder : public Table
+namespace table
 {
-  TableShare private_share;
 
+class Temporary : public Table
+{
 public:
-  TablePlaceholder(Session *session, TableIdentifier &identifier) :
-    Table(),
-    private_share(identifier, identifier.getKey())
+  Temporary() :
+    Table()
   {
-    setShare(&private_share);
-    in_use= session;
-
-    locked_by_name= true;
   }
 
-  bool isPlaceHolder(void) const
+  ~Temporary()
   {
-    return true;
   }
 };
 
+} /* namespace table */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TABLE_PLACEHOLDER_H */
+#endif /* DRIZZLED_TABLE_TEMPORARY_H */

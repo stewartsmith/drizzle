@@ -1578,7 +1578,7 @@ public:
 
   void get_xid(DRIZZLE_XID *xid); // Innodb only
 
-  TableShareInstance *getTemporaryShare(TableIdentifier::Type type_arg);
+  table::Instance *getInstanceTable();
 
 private:
   bool resetUsage()
@@ -1606,7 +1606,7 @@ private:
   // This lives throughout the life of Session
   bool use_usage;
   PropertyMap life_properties;
-  std::vector<TableShareInstance *> temporary_shares;
+  std::vector<table::Instance *> temporary_shares;
   struct rusage usage;
 };
 

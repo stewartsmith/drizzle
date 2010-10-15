@@ -20,20 +20,23 @@
 
 /* Structs that defines the Table */
 
-#ifndef DRIZZLED_TABLE_SHARE_INSTANCE_H
-#define DRIZZLED_TABLE_SHARE_INSTANCE_H
+#ifndef DRIZZLED_TABLE_INSTANCE_H
+#define DRIZZLED_TABLE_INSTANCE_H
 
 namespace drizzled
 {
 
-class TableShareInstance : public Table
+namespace table
+{
+
+class Instance : public Table
 {
   TableShare _share;
   bool _has_variable_width;
 
 public:
-  TableShareInstance(TableIdentifier::Type type_arg) :
-    _share(type_arg),
+  Instance() :
+    _share(message::Table::INTERNAL),
     _has_variable_width(false)
   {
   }
@@ -41,6 +44,11 @@ public:
   TableShare *getMutableShare(void)
   {
     return &_share;
+  }
+
+  void setShare(TableShare *)
+  {
+    assert(0);
   }
 
   const TableShare *getShare(void) const
@@ -53,17 +61,26 @@ public:
     return _has_variable_width;
   }
 
+  bool create_myisam_tmp_table(KeyInfo *keyinfo,
+                               MI_COLUMNDEF *start_recinfo,
+                               MI_COLUMNDEF **recinfo,
+                               uint64_t options);
+  void setup_tmp_table_column_bitmaps();
+  void free_tmp_table(Session *session);
+  bool open_tmp_table();
+
   void setVariableWidth()
   {
     _has_variable_width= true;
   }
 
-  ~TableShareInstance()
+  ~Instance()
   {
-    free_tmp_table(this->in_use);
+    free_tmp_table(in_use);
   }
 };
 
+} /* namespace table */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TABLE_SHARE_INSTANCE_H */
+#endif /* DRIZZLED_TABLE_INSTANCE_H */

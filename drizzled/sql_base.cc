@@ -53,7 +53,8 @@
 #include "drizzled/internal/iocache.h"
 #include "drizzled/drizzled.h"
 #include "drizzled/plugin/authorization.h"
-#include "drizzled/table_placeholder.h"
+#include "drizzled/table/temporary.h"
+#include "drizzled/table/placeholder.h"
 
 using namespace std;
 
@@ -1079,7 +1080,7 @@ Table *Session::table_cache_insert_placeholder(const char *db_name, const char *
     Create a table entry with the right key and with an old refresh version
   */
   TableIdentifier identifier(db_name, table_name, message::Table::INTERNAL);
-  TablePlaceholder *table= new TablePlaceholder(this, identifier);
+  table::Placeholder *table= new table::Placeholder(this, identifier);
 
   if (not add_table(table))
   {
@@ -2256,7 +2257,7 @@ Table *Session::open_temporary_table(TableIdentifier &identifier,
                         const_cast<char *>(identifier.getPath().c_str()), static_cast<uint32_t>(identifier.getPath().length()));
 
 
-  Table *new_tmp_table= new Table;
+  table::Temporary *new_tmp_table= new table::Temporary;
   if (not new_tmp_table)
     return NULL;
 

@@ -48,12 +48,14 @@
 #include "drizzled/transaction_services.h"
 #include "drizzled/drizzled.h"
 
-#include "drizzled/table_share_instance.h"
+#include "drizzled/table/instance.h"
 
 #include "plugin/myisam/myisam.h"
 #include "drizzled/internal/iocache.h"
 #include "drizzled/internal/thread_var.h"
 #include "drizzled/plugin/event_observer.h"
+
+#include "drizzled/util/functors.h"
 
 #include <fcntl.h>
 #include <algorithm>
@@ -562,6 +564,11 @@ bool Session::schedule()
     // We should do something about an error...
   }
 
+  if (unlikely(plugin::EventObserver::connectSession(*this)))
+  {
+    // We should do something about an error...
+  }
+
   if (scheduler->addSession(this))
   {
     DRIZZLE_CONNECTION_START(thread_id);
@@ -827,11 +834,9 @@ void Session::cleanup_after_query()
   where= Session::DEFAULT_WHERE;
 
   /* Reset the temporary shares we built */
-  for (std::vector<TableShareInstance *>::iterator iter= temporary_shares.begin();
-       iter != temporary_shares.end(); iter++)
-  {
-    delete *iter;
-  }
+  for_each(temporary_shares.begin(),
+           temporary_shares.end(),
+           DeletePtr());
   temporary_shares.clear();
 }
 
@@ -2052,11 +2057,11 @@ bool Session::renameTableMessage(const TableIdentifier &from, const TableIdentif
   return true;
 }
 
-TableShareInstance *Session::getTemporaryShare(TableIdentifier::Type type_arg)
+table::Instance *Session::getInstanceTable()
 {
-  temporary_shares.push_back(new TableShareInstance(type_arg)); // This will not go into the tableshare cache, so no key is used.
+  temporary_shares.push_back(new table::Instance()); // This will not go into the tableshare cache, so no key is used.
 
-  TableShareInstance *tmp_share= temporary_shares.back();
+  table::Instance *tmp_share= temporary_shares.back();
 
   assert(tmp_share);
 
