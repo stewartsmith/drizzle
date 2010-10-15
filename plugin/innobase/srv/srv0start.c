@@ -487,9 +487,7 @@ io_handler_thread(
 	thread should always use that to exit and not use return() to exit.
 	The thread actually never comes here because it is exited in an
 	os_event_wait(). */
-#if (!defined(__SUNPRO_C) && !defined(__SUNPRO_CC))
 	return 0;
-#endif
 }
 #endif /* !UNIV_HOTBACKUP */
 
