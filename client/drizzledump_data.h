@@ -251,7 +251,8 @@ class DrizzleStringBuf : public std::streambuf
 
     void writeString(std::string &str)
     {
-      connection->queryNoResult(str);
+      if (not connection->queryNoResult(str))
+        throw 1;
     }
 
     void setConnection(DrizzleDumpConnection *conn) { connection= conn; }
@@ -280,23 +281,23 @@ class DrizzleStringBuf : public std::streambuf
 
     int	sync()
     {
-        size_t len = size_t(pptr() - pbase());
-        std::string temp(pbase(), len);
+      size_t len = size_t(pptr() - pbase());
+      std::string temp(pbase(), len);
 
-        /* Drop newlines */
-        temp.erase(std::remove(temp.begin(), temp.end(), '\n'), temp.end());
+      /* Drop newlines */
+      temp.erase(std::remove(temp.begin(), temp.end(), '\n'), temp.end());
 
-        if (temp.compare(0, 2, "--") == 0)
-        {
-          /* Drop comments */
-          setp(pbase(), epptr());
-        }
-        if (temp.find(";") != std::string::npos)
-        {
-            writeString(temp);
-            setp(pbase(), epptr());
-        }
-        return 0;
+      if (temp.compare(0, 2, "--") == 0)
+      {
+        /* Drop comments */
+        setp(pbase(), epptr());
+      }
+      if (temp.find(";") != std::string::npos)
+      {
+        writeString(temp);
+        setp(pbase(), epptr());
+      }
+      return 0;
     }
 };
 
