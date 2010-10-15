@@ -492,24 +492,12 @@ static DRIZZLE_SYSVAR_INT(before_update_position,
                            INT32_MAX -1, /* max */
                            0 /* blk */);
 
-static DRIZZLE_SYSVAR_INT(post_drop_db_position,
-                           sysvar_post_drop_db_position,
-                           PLUGIN_VAR_NOCMDARG,
-                           N_("After drop database event observer call position"),
-                           NULL, /* check func */
-                           NULL, /* update func */
-                           -1, /* default */
-                           INT32_MIN +1, /* min */
-                           -1, /* max */
-                           0 /* blk */);
-
 static drizzle_sys_var* system_var[]= {
   DRIZZLE_SYSVAR(watch_databases),
   DRIZZLE_SYSVAR(watch_tables),
   DRIZZLE_SYSVAR(enable),
   DRIZZLE_SYSVAR(before_write_position),
   DRIZZLE_SYSVAR(before_update_position),
-  DRIZZLE_SYSVAR(post_drop_db_position),
   NULL
 };
 
