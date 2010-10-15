@@ -238,11 +238,11 @@ public:
   pthread_t mainthread;            /* Thread descriptor */
 
   azio_container():
-	  fd(0),
-	  offset(0),
-	  read_size(0),
-	  buffer(NULL),
-	  mainthread(0)
+    fd(0),
+    offset(0),
+    read_size(0),
+    buffer(NULL),
+    mainthread(0)
   {}
 
 };
@@ -251,23 +251,23 @@ public:
 typedef class azio_stream {
 public:
   z_stream stream;
-  int      z_err;   /* error code for last stream operation */
-  int      z_eof;   /* set if end of input file */
-  int      file;   /* .gz file */
-  Byte     *inbuf;  /* input buffer */
-  Byte     buffer1[AZ_BUFSIZE_READ];  /* input buffer */
-  Byte     buffer2[AZ_BUFSIZE_READ];  /* input buffer */
-  Byte     outbuf[AZ_BUFSIZE_WRITE]; /* output buffer */
-  int      aio_inited; /* Are we good to go */
-  uLong    crc;     /* crc32 of uncompressed data */
-  char     *msg;    /* error message */
-  char     mode;    /* 'w' or 'r' */
-  size_t   start;   /* start of compressed data in file (header skipped) */
-  size_t   in;      /* bytes into deflate or inflate */
-  size_t   out;     /* bytes out of deflate or inflate */
-  size_t   pos;     /* bytes out of deflate or inflate */
-  int      back;    /* one character push-back */
-  int      last;    /* true if push-back is last character */
+  int z_err;    /* error code for last stream operation */
+  int z_eof;    /* set if end of input file */
+  int file;     /* .gz file */
+  Byte *inbuf;  /* input buffer */
+  Byte buffer1[AZ_BUFSIZE_READ];  /* input buffer */
+  Byte buffer2[AZ_BUFSIZE_READ];  /* input buffer */
+  Byte outbuf[AZ_BUFSIZE_WRITE]; /* output buffer */
+  int aio_inited; /* Are we good to go */
+  uLong crc;      /* crc32 of uncompressed data */
+  char *msg;      /* error message */
+  char mode;      /* 'w' or 'r' */
+  size_t start;   /* start of compressed data in file (header skipped) */
+  size_t in;      /* bytes into deflate or inflate */
+  size_t out;     /* bytes out of deflate or inflate */
+  size_t pos;     /* bytes out of deflate or inflate */
+  int back;    /* one character push-back */
+  int last;    /* true if push-back is last character */
   unsigned char version;   /* Version */
   unsigned char minor_version;   /* Version */
   unsigned int block_size;   /* Block Size */
