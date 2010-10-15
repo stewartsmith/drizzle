@@ -31,7 +31,7 @@ KILL @thread_id;
 
 let $wait_timeout= 30;
 let $wait_condition =
- SELECT COUNT(*)=0 FROM data_dictionary.processlist WHERE ID=@thread_id; 
+ SELECT COUNT(*)=0 FROM data_dictionary.processlist WHERE INFO LIKE "UPDATE bug51920 SET i=2%";
 -- source include/wait_condition.inc
 
 connection con1;
