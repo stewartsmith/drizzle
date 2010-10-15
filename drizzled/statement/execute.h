@@ -1,7 +1,7 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2010 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,61 +18,43 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_H
-#define DRIZZLED_STATEMENT_H
+#ifndef DRIZZLED_STATEMENT_EXECUTE_H
+#define DRIZZLED_STATEMENT_EXECUTE_H
 
-#include <drizzled/definitions.h>
-#include <drizzled/error.h>
-#include <drizzled/sql_parse.h>
-#include <drizzled/sql_base.h>
-#include <drizzled/show.h>
+#include <drizzled/statement.h>
 
 namespace drizzled
 {
-
 class Session;
-class TableList;
-class Item;
 
 namespace statement
 {
 
-/**
- * @class Statement
- * @brief Represents a statement to be executed
- */
-class Statement
+class Execute : public Statement
 {
+  bool is_var;
+  LEX_STRING to_execute;
+
+  bool parseVariable(void);
+
 public:
-  Statement(Session *in_session)
-    : 
-      session(in_session)
-  {}
+  Execute(Session *in_session);
 
-  virtual ~Statement() {}
-
-  /**
-   * Execute the statement.
-   *
-   * @return true on failure; false on success
-   */
-  virtual bool execute()= 0;
-
-  Session *getSession()
+  void setQuery(LEX_STRING &arg)
   {
-    return session;
+    to_execute= arg;
   }
 
-protected:
+  void setVar()
+  {
+    is_var= true;
+  }
 
-  /**
-   * A session handler.
-   */
-  Session *session;
+  bool execute();
 };
 
 } /* namespace statement */
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_STATEMENT_H */
+#endif /* DRIZZLED_STATEMENT_EXECUTE_H */

@@ -128,7 +128,7 @@ int BlitzEngine::doCreateTable(drizzled::Session &,
 
   /* Temporary fix for blocking composite keys. We need to add this
      check because version 1 doesn't handle composite indexes. */
-  for (uint32_t i = 0; i < table.getMutableShare()->keys; i++) {
+  for (uint32_t i = 0; i < table.getShare()->keys; i++) {
     if (table.key_info[i].key_parts > 1)
       return HA_ERR_UNSUPPORTED;
   }
@@ -142,7 +142,7 @@ int BlitzEngine::doCreateTable(drizzled::Session &,
     return ecode;
 
   /* Create b+tree index(es) for this table. */
-  for (uint32_t i = 0; i < table.getMutableShare()->keys; i++) {
+  for (uint32_t i = 0; i < table.getShare()->keys; i++) {
     if ((ecode = btree.create(identifier.getPath().c_str(), i)) != 0)
       return ecode;
   }
@@ -421,7 +421,7 @@ int ha_blitz::open(const char *table_name, int, uint32_t) {
      will use to uniquely identify a row. The actual allocation is
      done by the kernel so all we do here is specify the size of it.*/
   if (share->primary_key_exists) {
-    ref_length = table->key_info[table->getMutableShare()->getPrimaryKey()].key_length;
+    ref_length = table->key_info[table->getShare()->getPrimaryKey()].key_length;
   } else {
     ref_length = sizeof(held_key_len) + sizeof(uint64_t);
   }
@@ -932,7 +932,7 @@ int ha_blitz::doUpdateRecord(const unsigned char *old_row,
       /* Now write the new key. */
       prefix_len = make_index_key(key_buffer, i, new_row);
 
-      if (i == table->getMutableShare()->getPrimaryKey()) {
+      if (i == table->getShare()->getPrimaryKey()) {
         key = merge_key(key_buffer, prefix_len, key_buffer, prefix_len, &klen);
         rv = share->btrees[i].write(key, klen);
       } else {
@@ -959,13 +959,13 @@ int ha_blitz::doUpdateRecord(const unsigned char *old_row,
   if (table_based) {
     rv = share->dict.write_row(held_key, held_key_len, row_buf, row_len);
   } else {
-    int klen = make_index_key(key_buffer, table->getMutableShare()->getPrimaryKey(), old_row);
+    int klen = make_index_key(key_buffer, table->getShare()->getPrimaryKey(), old_row);
 
     /* Delete with the old key. */
     share->dict.delete_row(key_buffer, klen);
 
     /* Write with the new key. */
-    klen = make_index_key(key_buffer, table->getMutableShare()->getPrimaryKey(), new_row);
+    klen = make_index_key(key_buffer, table->getShare()->getPrimaryKey(), new_row);
     rv = share->dict.write_row(key_buffer, klen, row_buf, row_len);
   }
 
@@ -1079,7 +1079,7 @@ size_t ha_blitz::make_primary_key(char *pack_to, const unsigned char *row) {
   /* Getting here means that there is a PK in this table. Get the
      binary representation of the PK, pack it to BlitzDB's key buffer
      and return the size of it. */
-  return make_index_key(pack_to, table->getMutableShare()->getPrimaryKey(), row);
+  return make_index_key(pack_to, table->getShare()->getPrimaryKey(), row);
 }
 
 size_t ha_blitz::make_index_key(char *pack_to, int key_num,
@@ -1240,13 +1240,13 @@ size_t ha_blitz::pack_row(unsigned char *row_buffer,
 
   /* Nothing special to do if the table is fixed length */
   if (share->fixed_length_table) {
-    memcpy(row_buffer, row_to_pack, table->getMutableShare()->getRecordLength());
-    return (size_t)table->getMutableShare()->getRecordLength();
+    memcpy(row_buffer, row_to_pack, table->getShare()->getRecordLength());
+    return (size_t)table->getShare()->getRecordLength();
   }
 
   /* Copy NULL bits */
-  memcpy(row_buffer, row_to_pack, table->getMutableShare()->null_bytes);
-  pos = row_buffer + table->getMutableShare()->null_bytes;
+  memcpy(row_buffer, row_to_pack, table->getShare()->null_bytes);
+  pos = row_buffer + table->getShare()->null_bytes;
 
   /* Pack each field into the buffer */
   for (Field **field = table->getFields(); *field; field++) {
@@ -1270,8 +1270,8 @@ bool ha_blitz::unpack_row(unsigned char *to, const char *from,
   /* Start by copying NULL bits which is the beginning block
      of a Drizzle row. */
   pos = (const unsigned char *)from;
-  memcpy(to, pos, table->getMutableShare()->null_bytes);
-  pos += table->getMutableShare()->null_bytes;
+  memcpy(to, pos, table->getShare()->null_bytes);
+  pos += table->getShare()->null_bytes;
 
   /* Unpack all fields in the provided row. */
   for (Field **field = table->getFields(); *field; field++) {
@@ -1334,9 +1334,9 @@ BlitzShare *ha_blitz::get_share(const char *name) {
 
   /* Prepare Index Structure(s) */
   KeyInfo *curr = &table->getMutableShare()->getKeyInfo(0);
-  share_ptr->btrees = new BlitzTree[table->getMutableShare()->keys];
+  share_ptr->btrees = new BlitzTree[table->getShare()->keys];
 
-  for (uint32_t i = 0; i < table->getMutableShare()->keys; i++, curr++) {
+  for (uint32_t i = 0; i < table->getShare()->keys; i++, curr++) {
     share_ptr->btrees[i].open(table_path.c_str(), i, BDBOWRITER);
     share_ptr->btrees[i].parts = new BlitzKeyPart[curr->key_parts];
 
@@ -1371,13 +1371,13 @@ BlitzShare *ha_blitz::get_share(const char *name) {
   /* Set Meta Data */
   share_ptr->auto_increment_value = share_ptr->dict.read_meta_autoinc();
   share_ptr->table_name = table_path;
-  share_ptr->nkeys = table->getMutableShare()->keys;
+  share_ptr->nkeys = table->getShare()->keys;
   share_ptr->use_count = 1;
 
-  share_ptr->fixed_length_table = !(table->getMutableShare()->db_create_options
+  share_ptr->fixed_length_table = !(table->getShare()->db_create_options
                                     & HA_OPTION_PACK_RECORD);
 
-  if (table->getMutableShare()->getPrimaryKey() >= MAX_KEY)
+  if (table->getShare()->getPrimaryKey() >= MAX_KEY)
     share_ptr->primary_key_exists = false;
   else
     share_ptr->primary_key_exists = true;

@@ -377,6 +377,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/statement/drop_schema.h \
 			      drizzled/statement/drop_table.h \
 			      drizzled/statement/empty_query.h \
+			      drizzled/statement/execute.h \
 			      drizzled/statement/flush.h \
 			      drizzled/statement/insert.h \
 			      drizzled/statement/insert_select.h \
@@ -722,6 +723,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/statement/drop_schema.cc \
 				 drizzled/statement/drop_table.cc \
 				 drizzled/statement/empty_query.cc \
+				 drizzled/statement/execute.cc \
 				 drizzled/statement/flush.cc \
 				 drizzled/statement/insert.cc \
 				 drizzled/statement/insert_select.cc \

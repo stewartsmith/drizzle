@@ -35,7 +35,7 @@ int ha_blitz::compare_rows_for_unique_violation(const unsigned char *old_row,
   /* For now, we are only interested in supporting a PRIMARY KEY. In the
      next phase of BlitzDB, this should loop through the key array. */
   if (share->primary_key_exists) {
-    KeyInfo *pk = &table->key_info[table->getMutableShare()->getPrimaryKey()];
+    KeyInfo *pk = &table->key_info[table->getShare()->getPrimaryKey()];
     KeyPartInfo *key_part = pk->key_part;
     KeyPartInfo *key_part_end = key_part + pk->key_parts;
     int key_changed = 0;
@@ -73,7 +73,7 @@ int ha_blitz::compare_rows_for_unique_violation(const unsigned char *old_row,
       /* Key Exists. It's a violation. */
       if (fetched != NULL) {
         free(fetched);
-        this->errkey_id = table->getMutableShare()->getPrimaryKey();
+        this->errkey_id = table->getShare()->getPrimaryKey();
         return HA_ERR_FOUND_DUPP_KEY;
       }
     }

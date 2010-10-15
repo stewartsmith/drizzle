@@ -281,7 +281,10 @@ void lex_end(LEX *lex)
   lex->setCacheable(true);
 
   if (lex->statement) 
+  {
     delete lex->statement;
+    lex->statement= NULL;
+  }
 }
 
 static int find_keyword(Lex_input_stream *lip, uint32_t len, bool function)
