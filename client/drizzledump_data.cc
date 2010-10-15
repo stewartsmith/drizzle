@@ -222,6 +222,7 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
   bool new_insert= true;
   bool first= true;
   uint64_t rownr= 0;
+  size_t byte_counter= 0;
 
   drizzle_row_t row;
 
@@ -256,18 +257,22 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
   while((row= drizzle_row_next(obj.result)))
   {
     rownr++;
-    if ((rownr % show_progress_size) == 0)
+    if (verbose and (rownr % show_progress_size) == 0)
     {
       std::cerr << "-- " << rownr << _(" rows dumped for table ") << obj.table->displayName << std::endl;
     }
 
     size_t* row_sizes= drizzle_row_field_sizes(obj.result);
-    if (not first)
+    for (uint32_t i= 0; i < drizzle_result_column_count(obj.result); i++)
+      byte_counter+= row_sizes[i];
+
+    if (not first and not new_insert)
     {
       if (extended_insert)
         os << "),(";
       else
         os << ");" << std::endl;
+      byte_counter+= 3;
     }
     else
       first= false;
@@ -283,6 +288,7 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
           os << "IGNORE ";
       }
       os << "INTO `" << obj.table->displayName << "` VALUES (";
+      byte_counter+= 28 + obj.table->displayName.length();
       if (extended_insert)
         new_insert= false;
     }
@@ -304,9 +310,13 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
           /* Hex blob processing or escape text */
           if (((obj.table->fields[i]->type.compare("BLOB") == 0) or
             (obj.table->fields[i]->type.compare("VARBINARY") == 0)))
+          {
             os << obj.convertHex((unsigned char*)row[i], row_sizes[i]);
+            byte_counter+= row_sizes[i];
+          }
           else
             os << "'" << DrizzleDumpData::escape(row[i], row_sizes[i]) << "'";
+          byte_counter+= 3;
         }
         else
           os << row[i];
@@ -316,11 +326,11 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
     }
     /* Break insert up if it is too long */
     if (extended_insert and
-      ((os.tellp() - out_position) >= DRIZZLE_MAX_LINE_LENGTH))
+      (byte_counter >= DRIZZLE_MAX_LINE_LENGTH))
     {
       os << ");" << std::endl;
       new_insert= true;
-      out_position= os.tellp();
+      byte_counter= 0;
     }
   }
   os << ");" << std::endl;
