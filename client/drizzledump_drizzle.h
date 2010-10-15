@@ -25,6 +25,17 @@
 class DrizzleDumpDatabaseDrizzle;
 class DrizzleDumpDataDrizzle;
 
+class DrizzleDumpForeignKeyDrizzle : public DrizzleDumpForeignKey
+{
+  public:
+    DrizzleDumpForeignKeyDrizzle(std::string name, DrizzleDumpConnection* connection) : DrizzleDumpForeignKey(name, connection)
+    { }
+
+    ~DrizzleDumpForeignKeyDrizzle()
+    {
+    }
+};
+
 class DrizzleDumpIndexDrizzle : public DrizzleDumpIndex
 {
   public:
@@ -61,9 +72,11 @@ class DrizzleDumpTableDrizzle : public DrizzleDumpTable
     {
       fields.clear();
       indexes.clear();
+      fkeys.clear();
     }
     bool populateFields();
     bool populateIndexes();
+    bool populateFkeys();
     DrizzleDumpData* getData(void);
 };
 

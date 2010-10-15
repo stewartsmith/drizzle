@@ -79,6 +79,21 @@ void DrizzleDumpDatabase::cleanTableName(std::string &tableName)
 
 }
 
+std::ostream& operator <<(std::ostream &os, const DrizzleDumpForeignKey &obj)
+{
+  os << "  CONSTRAINT `" << obj.constraintName << "` FOREIGN KEY ("
+    << obj.parentColumns << ") REFERENCES `" << obj.childTable << "` ("
+    << obj.childColumns << ")";
+
+  if (not obj.deleteRule.empty())
+    os << " ON DELETE " << obj.deleteRule;
+
+  if (not obj.updateRule.empty())
+    os << " ON UPDATE " << obj.updateRule;
+
+  return os;
+}
+
 std::ostream& operator <<(std::ostream &os, const DrizzleDumpIndex &obj)
 {
   if (obj.isPrimary)
@@ -410,10 +425,20 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpTable &obj)
   std::vector<DrizzleDumpIndex*> output_indexes = obj.indexes;
   for (j= output_indexes.begin(); j != output_indexes.end(); ++j)
   {
-    os << "," << std::endl;;
+    os << "," << std::endl;
     DrizzleDumpIndex *index= *j;
     os << *index;
   }
+
+  std::vector<DrizzleDumpForeignKey*>::iterator k;
+  std::vector<DrizzleDumpForeignKey*> output_fkeys = obj.fkeys;
+  for (k= output_fkeys.begin(); k != output_fkeys.end(); ++k)
+  {
+    os << "," << std::endl;
+    DrizzleDumpForeignKey *fkey= *k;
+    os << *fkey;
+  }
+
   os << std::endl;
   os << ") ENGINE=" << obj.engineName << " ";
   if (obj.autoIncrement > 0)
