@@ -1,0 +1,31 @@
+#
+# Bug #51920: InnoDB connections in lock wait ignore KILL until timeout
+#
+-- source include/have_innodb.inc
+
+CREATE TABLE bug51920 (i INT) ENGINE=InnoDB;
+INSERT INTO bug51920 VALUES (1);
+
+BEGIN;
+SELECT * FROM bug51920 FOR UPDATE;
+
+connect (con1,localhost,root,,);
+
+connection con1;
+let $ID = `select connection_id()`;
+--send
+UPDATE bug51920 SET i=2;
+
+connection default;
+--replace_result $ID ID
+eval SET @thread_id= $ID;
+KILL @thread_id;
+SELECT sleep(2);
+SELECT * FROM DATA_DICTIONARY.PROCESSLIST WHERE ID=@thread_id;
+
+connection con1;
+-- error ER_QUERY_INTERRUPTED,20
+reap;
+connection default;
+DROP TABLE bug51920;
+-- disconnect con1
