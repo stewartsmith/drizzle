@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_GENERATOR_EVENT_OBSERVER_H
-#define DRIZZLED_GENERATOR_EVENT_OBSERVER_H
+#ifndef DRIZZLED_GENERATOR_EVENT_OBSERVERS_H
+#define DRIZZLED_GENERATOR_EVENT_OBSERVERS_H
 
 #include "drizzled/plugin/event_observer.h"
 
@@ -50,4 +50,4 @@ public:
 } /* namespace generator */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_GENERATOR_EVENT_OBSERVER_H */
+#endif /* DRIZZLED_GENERATOR_EVENT_OBSERVERS_H */
