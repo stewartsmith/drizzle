@@ -1752,21 +1752,7 @@ trx_is_strict(
 /*==========*/
 	trx_t*	trx)	/*!< in: transaction */
 {
-	return(trx && trx->mysql_thd
-	       && THDVAR((THD*) trx->mysql_thd, strict_mode));
-}
-
-/**********************************************************************//**
-Determines if the currently running transaction is in strict mode.
-@return	TRUE if strict */
-extern "C" UNIV_INTERN
-ibool
-trx_is_strict(
-/*==========*/
-	trx_t*	trx)	/*!< in: transaction */
-{
-	return(trx && trx->mysql_thd
-	       && THDVAR((THD*) trx->mysql_thd, strict_mode));
+  return(trx && trx->mysql_thd && true);
 }
 
 /**************************************************************//**
