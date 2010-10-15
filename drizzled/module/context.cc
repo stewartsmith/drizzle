@@ -38,7 +38,7 @@ module::option_map Context::getOptions()
 void Context::registerVariable(sys_var *var)
 {
   var->setName(prepend_name(module->getName(), var->getName()));
-  module->addSysVar(var);
+  module->addMySysVar(var);
   add_sys_var_to_list(var);
 }
 

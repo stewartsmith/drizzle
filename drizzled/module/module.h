@@ -58,7 +58,7 @@ public:
   Library *plugin_dl;
   bool isInited;
   Variables system_vars;         /* server variables for this plugin */
-  Variables sys_vars; /* vars registered through a context - need to free */
+  Variables sys_vars;
   Module(const Manifest *manifest_arg,
          Library *library_arg) :
     name(manifest_arg->name),
@@ -81,6 +81,12 @@ public:
   const Manifest& getManifest() const
   {
     return *manifest;
+  }
+
+  void addMySysVar(sys_var *var)
+  {
+    sys_vars.push_back(var);
+    addSysVar(var);
   }
 
   void addSysVar(sys_var *var)

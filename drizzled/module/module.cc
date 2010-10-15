@@ -20,6 +20,7 @@
 #include "config.h"
 #include "drizzled/module/module.h"
 #include "drizzled/set_var.h"
+#include "drizzled/util/functors.h"
 
 namespace drizzled
 {
@@ -29,12 +30,7 @@ namespace module
 
 Module::~Module()
 {
-  for (Variables::iterator iter= sys_vars.begin();
-       iter != sys_vars.end();
-       ++iter)
-  {
-    delete *iter;
-  }
+  for_each(sys_vars.begin(), sys_vars.end(), DeletePtr());
 }
 
 } /* namespace module */
