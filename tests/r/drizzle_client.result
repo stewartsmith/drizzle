@@ -104,8 +104,8 @@ Test connect without db- or host-name => reconnect
 Test connect with dbname only => new dbname, old hostname
 ERROR 1064 (42000) at line 2: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'connecttest' at line 1
 Test connect with _invalid_ dbname only => new invalid dbname, old hostname
-ERROR 1049 (42000): Unknown database 'invalid'
-ERROR 1049 (42000): Unknown database 'invalid'
+ERROR 1049 (42000): Unknown schema 'invalid'
+ERROR 1049 (42000): Unknown schema 'invalid'
 Test connect with dbname + hostname
 Test connect with dbname + _invalid_ hostname
 End of 5.0 tests

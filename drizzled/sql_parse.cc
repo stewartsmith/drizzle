@@ -1438,18 +1438,20 @@ kill_one_thread(Session *, session_id_t id, bool only_kill_query)
 {
   Session *tmp= NULL;
   uint32_t error= ER_NO_SUCH_THREAD;
-  LOCK_thread_count.lock(); // For unlink from list
   
-  for (SessionList::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
   {
-    if ((*it)->thread_id == id)
+    boost::mutex::scoped_lock scoped(LOCK_thread_count);
+    for (SessionList::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
     {
-      tmp= *it;
-      tmp->lockForDelete();
-      break;
+      if ((*it)->thread_id == id)
+      {
+        tmp= *it;
+        tmp->lockForDelete();
+        break;
+      }
     }
   }
-  LOCK_thread_count.unlock();
+
   if (tmp)
   {
 

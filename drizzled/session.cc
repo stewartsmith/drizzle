@@ -552,9 +552,10 @@ bool Session::schedule()
   current_global_counters.connections++;
   thread_id= variables.pseudo_thread_id= global_thread_id++;
 
-  LOCK_thread_count.lock();
-  getSessionList().push_back(this);
-  LOCK_thread_count.unlock();
+  {
+    boost::mutex::scoped_lock scoped(LOCK_thread_count);
+    getSessionList().push_back(this);
+  }
 
   if (unlikely(plugin::EventObserver::connectSession(*this)))
   {
@@ -1408,21 +1409,21 @@ bool select_max_min_finder_subselect::send_data(List<Item> &items)
       switch (val_item->result_type())
       {
       case REAL_RESULT:
-	op= &select_max_min_finder_subselect::cmp_real;
-	break;
+        op= &select_max_min_finder_subselect::cmp_real;
+        break;
       case INT_RESULT:
-	op= &select_max_min_finder_subselect::cmp_int;
-	break;
+        op= &select_max_min_finder_subselect::cmp_int;
+        break;
       case STRING_RESULT:
-	op= &select_max_min_finder_subselect::cmp_str;
-	break;
+        op= &select_max_min_finder_subselect::cmp_str;
+        break;
       case DECIMAL_RESULT:
         op= &select_max_min_finder_subselect::cmp_decimal;
         break;
       case ROW_RESULT:
         // This case should never be choosen
-	assert(0);
-	op= 0;
+        assert(0);
+        op= 0;
       }
     }
     cache->store(val_item);

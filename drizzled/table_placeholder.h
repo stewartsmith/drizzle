@@ -35,11 +35,15 @@ public:
     Table(),
     private_share(identifier, identifier.getKey())
   {
-    is_placeholder_created= true;
     setShare(&private_share);
     in_use= session;
 
     locked_by_name= true;
+  }
+
+  bool isPlaceHolder(void) const
+  {
+    return true;
   }
 };
 

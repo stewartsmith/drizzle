@@ -637,13 +637,10 @@ public:
     return output;  // for multiple << operators.
   }
 
-protected:
-  bool is_placeholder_created;
-
 public:
-  bool isPlaceHolder()
+  virtual bool isPlaceHolder(void) const
   {
-    return is_placeholder_created;
+    return false;
   }
 };
 
