@@ -151,8 +151,9 @@ void ForeignKeysTool::Generator::fill()
   {
     if (x != 0)
       source.append(", ");
-
+    source.push_back('`');
     source.append(fkey.column_names(x));
+    source.push_back('`');
   }
 
   push(source);
@@ -167,8 +168,9 @@ void ForeignKeysTool::Generator::fill()
   {
     if (x != 0)
       destination.append(", ");
-    
+    destination.push_back('`'); 
     destination.append(fkey.references_columns(x));
+    destination.push_back('`');
   }
 
   push(destination);
