@@ -3459,9 +3459,6 @@ os_aio_simulated_wake_handler_thread(
 
 	ut_ad(!os_aio_use_native_aio);
 
-	/* Fix compiler warning */
-	*consecutive_ios = NULL;
-
 	segment = os_aio_get_array_and_local_segment(&array, global_segment);
 
 	n = array->n_slots / array->n_segments;
@@ -3922,6 +3919,9 @@ os_aio_simulated_handle(
 	ibool		ret;
 	ulint		n;
 	ulint		i;
+
+	/* Fix compiler warning */
+	*consecutive_ios = NULL;
 
 	memset(consecutive_ios, 0, sizeof(os_aio_slot_t*) * OS_AIO_MERGE_N_CONSECUTIVE);
 	segment = os_aio_get_array_and_local_segment(&array, global_segment);
