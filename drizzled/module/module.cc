@@ -18,10 +18,7 @@
  */
 
 #include "config.h"
-#include "drizzled/module/context.h"
-#include "drizzled/module/option_map.h"
 #include "drizzled/module/module.h"
-#include "drizzled/drizzled.h"
 #include "drizzled/set_var.h"
 
 namespace drizzled
@@ -30,46 +27,15 @@ namespace drizzled
 namespace module
 {
 
-module::option_map Context::getOptions()
+Module::~Module()
 {
-  return module::option_map(module->getName(), getVariablesMap());
-}
-
-void Context::registerVariable(sys_var *var)
-{
-  var->setName(prepend_name(module->getName(), var->getName()));
-  module->addSysVar(var);
-  add_sys_var_to_list(var);
-}
-
-namespace
-{
-
-class SwapDashes
-{
-public:
-  char operator()(char a) const
+  for (Variables::iterator iter= sys_vars.begin();
+       iter != sys_vars.end();
+       ++iter)
   {
-    if (a == '-')
-      return '_';
-    return a;
+    delete *iter;
   }
-};
-
-} /* namespace */
-
-std::string Context::prepend_name(std::string module_name,
-                                  const std::string &var_name)
-{
-  module_name.push_back('_');
-  module_name.append(var_name);
-  std::transform(module_name.begin(), module_name.end(),
-                 module_name.begin(), SwapDashes());
-  std::transform(module_name.begin(), module_name.end(),
-                 module_name.begin(), ::tolower);
-  return module_name;
 }
-
 
 } /* namespace module */
 } /* namespace drizzled */

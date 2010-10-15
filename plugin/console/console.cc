@@ -29,6 +29,7 @@ using namespace drizzled;
 
 namespace po= boost::program_options;
 
+static bool enabled= false;
 static bool debug_enabled= false;
 static char* username= NULL;
 static char* password= NULL;
@@ -294,6 +295,9 @@ public:
   {
     if (debug_enabled)
       enabled= true;
+
+    if (not enabled)
+      return false;
 
     if (pipe(pipe_fds) == -1)
     {

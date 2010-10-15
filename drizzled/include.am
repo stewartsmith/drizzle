@@ -470,7 +470,6 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/cached_item.cc \
 				 drizzled/check_stack_overrun.cc \
 				 drizzled/comp_creator.cc \
-				 drizzled/context.cc \
 				 drizzled/create_field.cc \
 				 drizzled/current_session.cc \
 				 drizzled/cursor.cc \
@@ -637,6 +636,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/module/context.cc \
 				 drizzled/module/library.cc \
 				 drizzled/module/loader.cc \
+				 drizzled/module/module.cc \
 				 drizzled/module/option_context.cc \
 				 drizzled/module/option_map.cc \
 				 drizzled/module/registry.cc \
