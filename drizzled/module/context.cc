@@ -34,5 +34,40 @@ module::option_map Context::getOptions()
   return module::option_map(module->getName(), getVariablesMap());
 }
 
+void Context::registerVariable(sys_var *var)
+{
+  var->setName(prepend_name(module->getName(), var->getName()));
+  add_sys_var_to_list(var);
+}
+
+namespace
+{
+
+class SwapDashes
+{
+public:
+  char operator()(char a) const
+  {
+    if (a == '-')
+      return '_';
+    return a;
+  }
+};
+
+} /* namespace */
+
+std::string Context::prepend_name(std::string module_name,
+                                  const std::string &var_name)
+{
+  module_name.push_back('_');
+  module_name.append(var_name);
+  std::transform(module_name.begin(), module_name.end(),
+                 module_name.begin(), SwapDashes());
+  std::transform(module_name.begin(), module_name.end(),
+                 module_name.begin(), ::tolower);
+  return module_name;
+}
+
+
 } /* namespace module */
 } /* namespace drizzled */
