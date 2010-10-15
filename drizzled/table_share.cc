@@ -1442,6 +1442,14 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
     field[fieldnr]= f;
 
+    // This needs to go, we should be setting the "use" on the field so that
+    // it does not reference the share/table.
+    Table temp_table; /* Use this so that BLOB DEFAULT '' works */
+    temp_table.setShare(this);
+    temp_table.in_use= &session;
+
+    f->init(&temp_table); /* blob default values need table obj */
+
     if (! (f->flags & NOT_NULL_FLAG))
     {
       *f->null_ptr|= f->null_bit;
