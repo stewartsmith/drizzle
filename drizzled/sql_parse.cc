@@ -1434,7 +1434,7 @@ void add_join_natural(TableList *a, TableList *b, List<String> *using_fields,
 */
 
 static unsigned int
-kill_one_thread(Session *, ulong id, bool only_kill_query)
+kill_one_thread(Session *, session_id_t id, bool only_kill_query)
 {
   Session *tmp= NULL;
   uint32_t error= ER_NO_SUCH_THREAD;
@@ -1475,7 +1475,7 @@ kill_one_thread(Session *, ulong id, bool only_kill_query)
     only_kill_query     Should it kill the query or the connection
 */
 
-void sql_kill(Session *session, ulong id, bool only_kill_query)
+void sql_kill(Session *session, int64_t id, bool only_kill_query)
 {
   uint32_t error;
   if (!(error= kill_one_thread(session, id, only_kill_query)))

@@ -49,9 +49,9 @@ public:
 
   StatusVars* getStatusVars();
 
-  void setSessionId(uint64_t in_session_id);
+  void setSessionId(drizzled::session_id_t in_session_id);
 
-  uint64_t getSessionId();
+  drizzled::session_id_t getSessionId();
 
   void setInUse(bool in_in_use);
 
@@ -75,7 +75,7 @@ private:
   std::string user;
   std::string ip;
   bool in_use;
-  uint64_t session_id;
+  drizzled::session_id_t session_id;
 };
  
 #endif /* PLUGIN_LOGGING_STATS_SCOREBOARD_SLOT_H */
