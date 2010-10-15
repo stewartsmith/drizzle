@@ -714,6 +714,8 @@ err_exit:
 	row_mysql_lock_data_dictionary(trx);
 	dict_locked = TRUE;
 
+	ut_d(dict_table_check_for_dup_indexes(innodb_table, FALSE));
+
 	/* If a new primary key is defined for the table we need
 	to drop the original table and rebuild all indexes. */
 
@@ -746,6 +748,8 @@ err_exit:
 					user_session);
 			}
 
+			ut_d(dict_table_check_for_dup_indexes(innodb_table,
+							      FALSE));
 			row_mysql_unlock_data_dictionary(trx);
 			goto err_exit;
 		}
@@ -821,7 +825,7 @@ error_handling:
 		row_mysql_lock_data_dictionary(trx);
 		dict_locked = TRUE;
 
-		ut_d(dict_table_check_for_dup_indexes(prebuilt->table));
+		ut_d(dict_table_check_for_dup_indexes(prebuilt->table, TRUE));
 
 		if (!new_primary) {
 			error = row_merge_rename_indexes(trx, indexed_table);
@@ -909,6 +913,8 @@ convert_error:
 		trx_commit_for_mysql(prebuilt->trx);
 	}
 
+	ut_d(dict_table_check_for_dup_indexes(innodb_table, FALSE));
+
 	if (dict_locked) {
 		row_mysql_unlock_data_dictionary(trx);
 	}
@@ -952,6 +958,7 @@ ha_innobase::prepare_drop_index(
 	/* Test and mark all the indexes to be dropped */
 
 	row_mysql_lock_data_dictionary(trx);
+	ut_d(dict_table_check_for_dup_indexes(prebuilt->table, FALSE));
 
 	/* Check that none of the indexes have previously been flagged
 	for deletion. */
@@ -1117,6 +1124,7 @@ func_exit:
 		} while (index);
 	}
 
+	ut_d(dict_table_check_for_dup_indexes(prebuilt->table, FALSE));
 	row_mysql_unlock_data_dictionary(trx);
 
 	return(err);
@@ -1161,6 +1169,7 @@ ha_innobase::final_drop_index(
 		prebuilt->table->flags, user_session);
 
 	row_mysql_lock_data_dictionary(trx);
+	ut_d(dict_table_check_for_dup_indexes(prebuilt->table, FALSE));
 
 	if (UNIV_UNLIKELY(err)) {
 
@@ -1201,9 +1210,8 @@ ha_innobase::final_drop_index(
 	valid index entry count in the translation table to zero */
 	share->idx_trans_tbl.index_count = 0;
 
-	ut_d(dict_table_check_for_dup_indexes(prebuilt->table));
-
 func_exit:
+	ut_d(dict_table_check_for_dup_indexes(prebuilt->table, FALSE));
 	trx_commit_for_mysql(trx);
 	trx_commit_for_mysql(prebuilt->trx);
 	row_mysql_unlock_data_dictionary(trx);
