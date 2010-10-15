@@ -19,6 +19,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#ifndef CLIENT_STATS_H
+#define CLIENT_STATS_H
+
 #include "client_priv.h"
 #include <string>
 #include <iostream>
@@ -117,3 +120,5 @@ private:
   long int create_timing;
   uint64_t create_count;
 };
+
+#endif /* CLIENT_STATS_H */

@@ -19,6 +19,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#ifndef CLIENT_STATEMENT_H
+#define CLIENT_STATEMENT_H
+
 #include "client_priv.h"
 #include <string>
 #include <iostream>
@@ -120,3 +123,5 @@ private:
   slap_query_t type;
   Statement *next;
 };
+
+#endif /* CLIENT_STATEMENT_H */
