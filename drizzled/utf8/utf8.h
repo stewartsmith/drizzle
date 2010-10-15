@@ -49,6 +49,9 @@
 
 #include <string>
 
+#include "drizzled/utf8/checked.h"
+#include "drizzled/utf8/unchecked.h"
+
 namespace drizzled
 {
 namespace utf8
@@ -110,11 +113,13 @@ int sequence_length(T c)
 static inline uint32_t char_length(const std::string &in_string)
 {
   uint32_t length= 0;
+  int seq_length= 0;
   std::string::const_iterator iter= in_string.begin();
   while (iter < in_string.end())
   {
     length++;
-    iter += sequence_length(*iter);
+    seq_length= sequence_length(*iter);
+    iter += (seq_length > 0) ? seq_length : 1;
   }
   return length;
 }

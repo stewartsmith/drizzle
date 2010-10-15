@@ -59,6 +59,7 @@
 #include "drizzled/tztime.h"
 #include "drizzled/signal_handler.h"
 #include "drizzled/replication_services.h"
+#include "drizzled/transaction_services.h"
 
 using namespace drizzled;
 using namespace std;
@@ -324,6 +325,17 @@ int main(int argc, char **argv)
                 PANDORA_RELEASE_VERSION, COMPILATION_COMMENT);
 
 
+  TransactionServices &transaction_services= TransactionServices::singleton();
+
+  /* Send server startup event */
+  if ((session= new Session(plugin::Listen::getNullClient())))
+  {
+    transaction_services.sendStartupEvent(session);
+    session->lockForDelete();
+    delete session;
+  }
+
+
   /* Listen for new connections and start new session for each connection
      accepted. The listen.getClient() method will return NULL when the server
      should be shutdown. */
@@ -338,6 +350,14 @@ int main(int argc, char **argv)
     /* If we error on creation we drop the connection and delete the session. */
     if (session->schedule())
       Session::unlink(session);
+  }
+
+  /* Send server shutdown event */
+  if ((session= new Session(plugin::Listen::getNullClient())))
+  {
+    transaction_services.sendShutdownEvent(session);
+    session->lockForDelete();
+    delete session;
   }
 
   LOCK_thread_count.lock();

@@ -48,6 +48,7 @@
 #include "drizzled/plugin/authorization.h"
 #include "drizzled/optimizer/explain_plan.h"
 #include "drizzled/pthread_globals.h"
+#include "drizzled/plugin/event_observer.h"
 
 #include <limits.h>
 
@@ -190,6 +191,10 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   /* TODO: set session->lex->sql_command to SQLCOM_END here */
 
   plugin::Logging::preDo(session);
+  if (unlikely(plugin::EventObserver::beforeStatement(*session)))
+  {
+    // We should do something about an error...
+  }
 
   session->server_status&=
            ~(SERVER_QUERY_NO_INDEX_USED | SERVER_QUERY_NO_GOOD_INDEX_USED);
@@ -307,6 +312,10 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   session->close_thread_tables();
 
   plugin::Logging::postDo(session);
+  if (unlikely(plugin::EventObserver::afterStatement(*session)))
+  {
+    // We should do something about an error...
+  }
 
   /* Store temp state for processlist */
   session->set_proc_info("cleaning up");

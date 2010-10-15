@@ -58,6 +58,7 @@
 
 #include <boost/unordered_map.hpp>
 #include <boost/thread/mutex.hpp>
+#include <boost/thread/shared_mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 
 #define MIN_HANDSHAKE_SIZE      6
@@ -1010,7 +1011,7 @@ public:
     enter_cond(); this mutex is then released by exit_cond().
     Usage must be: lock mutex; enter_cond(); your code; exit_cond().
   */
-  const char* enter_cond(boost::condition_variable &cond, boost::mutex &mutex, const char* msg);
+  const char* enter_cond(boost::condition_variable_any &cond, boost::mutex &mutex, const char* msg);
   void exit_cond(const char* old_msg);
 
   inline time_t query_start() { return start_time; }
@@ -1047,11 +1048,6 @@ public:
   {
     return server_status & SERVER_STATUS_IN_TRANS;
   }
-  inline bool fill_derived_tables()
-  {
-    return !lex->only_view_structure();
-  }
-
   LEX_STRING *make_lex_string(LEX_STRING *lex_str,
                               const char* str, uint32_t length,
                               bool allocate_lex_string);
@@ -1481,26 +1477,6 @@ public:
    */
   bool openTablesLock(TableList *tables);
 
-  /**
-   * Open all tables in list and process derived tables
-   *
-   * @param Pointer to a list of tables for open
-   * @param Bitmap of flags to modify how the tables will be open:
-   *        DRIZZLE_LOCK_IGNORE_FLUSH - open table even if someone has
-   *        done a flush or namelock on it.
-   *
-   * @retval
-   *  false - ok
-   * @retval
-   *  true  - error
-   *
-   * @note
-   *
-   * This is to be used on prepare stage when you don't read any
-   * data from the tables.
-   */
-  bool openTables(TableList *tables, uint32_t flags= 0);
-
   int open_tables_from_list(TableList **start, uint32_t *counter, uint32_t flags= 0);
 
   Table *openTableLock(TableList *table_list, thr_lock_type lock_type);
@@ -1564,7 +1540,7 @@ public:
   bool reopen_name_locked_table(TableList* table_list, bool link_in);
   bool close_cached_tables(TableList *tables, bool wait_for_refresh, bool wait_for_placeholders);
 
-  void wait_for_condition(boost::mutex &mutex, boost::condition_variable &cond);
+  void wait_for_condition(boost::mutex &mutex, boost::condition_variable_any &cond);
   int setup_conds(TableList *leaves, COND **conds);
   int lock_tables(TableList *tables, uint32_t count, bool *need_reopen);
 

@@ -73,8 +73,8 @@ static void get_password(char *to, uint32_t length,int fd, bool echo)
       {
 	if (echo)
 	{
-	  fputs("\b \b",stdout);
-	  fflush(stdout);
+	  fputs("\b \b",stderr);
+	  fflush(stderr);
 	}
 	pos--;
 	continue;
@@ -84,11 +84,6 @@ static void get_password(char *to, uint32_t length,int fd, bool echo)
       break;
     if (iscntrl(tmp) || pos == end)
       continue;
-    if (echo)
-    {
-      fputc('*',stdout);
-      fflush(stdout);
-    }
     *(pos++) = tmp;
   }
   while (pos != to && isspace(pos[-1]) == ' ')
@@ -103,10 +98,10 @@ char *client_get_tty_password(const char *opt_message)
   TERMIO org,tmp;
   char buff[80];
 
-  if (isatty(fileno(stdout)))
+  if (isatty(fileno(stderr)))
   {
-    fputs(opt_message ? opt_message : "Enter password: ",stdout);
-    fflush(stdout);
+    fputs(opt_message ? opt_message : "Enter password: ",stderr);
+    fflush(stderr);
   }
 #  if defined(HAVE_TERMIOS_H)
   tcgetattr(fileno(stdin), &org);
@@ -115,7 +110,7 @@ char *client_get_tty_password(const char *opt_message)
   tmp.c_cc[VMIN] = 1;
   tmp.c_cc[VTIME] = 0;
   tcsetattr(fileno(stdin), TCSADRAIN, &tmp);
-  get_password(buff, sizeof(buff)-1, fileno(stdin), isatty(fileno(stdout)));
+  get_password(buff, sizeof(buff)-1, fileno(stdin), isatty(fileno(stderr)));
   tcsetattr(fileno(stdin), TCSADRAIN, &org);
 #  elif defined(HAVE_TERMIO_H)
   ioctl(fileno(stdin), (int) TCGETA, &org);
@@ -124,7 +119,7 @@ char *client_get_tty_password(const char *opt_message)
   tmp.c_cc[VMIN] = 1;
   tmp.c_cc[VTIME]= 0;
   ioctl(fileno(stdin),(int) TCSETA, &tmp);
-  get_password(buff,sizeof(buff)-1,fileno(stdin),isatty(fileno(stdout)));
+  get_password(buff,sizeof(buff)-1,fileno(stdin),isatty(fileno(stderr)));
   ioctl(fileno(stdin),(int) TCSETA, &org);
 #  else
   gtty(fileno(stdin), &org);
@@ -132,11 +127,11 @@ char *client_get_tty_password(const char *opt_message)
   tmp.sg_flags &= ~ECHO;
   tmp.sg_flags |= RAW;
   stty(fileno(stdin), &tmp);
-  get_password(buff,sizeof(buff)-1,fileno(stdin),isatty(fileno(stdout)));
+  get_password(buff,sizeof(buff)-1,fileno(stdin),isatty(fileno(stderr)));
   stty(fileno(stdin), &org);
 #  endif
-  if (isatty(fileno(stdout)))
-    fputc('\n',stdout);
+  if (isatty(fileno(stderr)))
+    fputc('\n',stderr);
 
   return strdup(buff);
 }

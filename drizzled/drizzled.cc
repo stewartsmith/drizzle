@@ -34,6 +34,7 @@
 #include "drizzled/program_options/config_file.h"
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/mutex.hpp>
+#include <boost/thread/shared_mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 #include <boost/filesystem.hpp>
 
@@ -65,6 +66,8 @@
 #include "drizzled/drizzled.h"
 #include "drizzled/module/registry.h"
 #include "drizzled/module/load_list.h"
+
+#include "drizzled/plugin/event_observer.h"
 
 #include <google/protobuf/stubs/common.h>
 
@@ -335,7 +338,7 @@ boost::mutex LOCK_open;
 boost::mutex LOCK_global_system_variables;
 boost::mutex LOCK_thread_count;
 
-boost::condition_variable COND_refresh;
+boost::condition_variable_any COND_refresh;
 boost::condition_variable COND_thread_count;
 pthread_t signal_thread;
 boost::condition_variable COND_server_end;
@@ -465,27 +468,6 @@ void close_connections(void)
     tmp->client->close();
     LOCK_thread_count.unlock();
   }
-}
-
-/**
-  cleanup all memory and end program nicely.
-
-    If SIGNALS_DONT_BREAK_READ is defined, this function is called
-    by the main thread. To get Drizzle to shut down nicely in this case
-    (Mac OS X) we have to call exit() instead if pthread_exit().
-
-  @note
-    This function never returns.
-*/
-void unireg_end(void)
-{
-  clean_up(1);
-  internal::my_thread_end();
-#if defined(SIGNALS_DONT_BREAK_READ)
-  exit(0);
-#else
-  pthread_exit(0);				// Exit is in main thread
-#endif
 }
 
 
@@ -650,6 +632,10 @@ void Session::unlink(Session *session)
   getSessionList().erase(remove(getSessionList().begin(),
                          getSessionList().end(),
                          session));
+  if (unlikely(plugin::EventObserver::disconnectSession(*session)))
+  {
+    // We should do something about an error...
+  }
 
   delete session;
   LOCK_thread_count.unlock();

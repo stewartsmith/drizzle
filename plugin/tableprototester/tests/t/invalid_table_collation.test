@@ -1,3 +1,2 @@
---error ER_CORRUPT_TABLE_DEFINITION
 SHOW CREATE TABLE test.invalid_table_collation;
 

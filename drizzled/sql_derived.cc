@@ -144,11 +144,6 @@ exit:
     }
     else
     {
-      if (! session->fill_derived_tables())
-      {
-        delete derived_result;
-        derived_result= NULL;
-      }
       orig_table_list->derived_result= derived_result;
       orig_table_list->table= table;
       orig_table_list->table_name=        const_cast<char *>(table->getShare()->getTableName());

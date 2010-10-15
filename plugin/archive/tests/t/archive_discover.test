@@ -1,7 +1,7 @@
 CREATE TABLE t1 (a int) ENGINE=ARCHIVE;
 INSERT into t1 (a) values (42);
 SELECT * from t1;
---remove_file $MYSQLTEST_VARDIR/master-data/local/test/t1.arz
+--remove_file $DRIZZLETEST_VARDIR/master-data/local/test/t1.arz
 FLUSH TABLES;
 --error ER_NO_SUCH_TABLE
 SELECT * FROM t1;
