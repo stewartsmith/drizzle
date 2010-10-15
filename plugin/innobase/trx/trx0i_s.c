@@ -29,6 +29,13 @@ Created July 17, 2007 Vasil Dimov
 *******************************************************/
 
 #include "config.h"
+/* Found during the build of 5.5.3 on Linux 2.4 and early 2.6 kernels:
+   The includes "univ.i" -> "my_global.h" cause a different path
+   to be taken further down with pthread functions and types,
+   so they must come first.
+   From the symptoms, this is related to bug#46587 in the MySQL bug DB.
+*/
+#include "univ.i"
 
 #if !defined(BUILD_DRIZZLE)
 # include <mysql/plugin.h>
@@ -36,7 +43,6 @@ Created July 17, 2007 Vasil Dimov
 
 #include "mysql_addons.h"
 
-#include "univ.i"
 #include "buf0buf.h"
 #include "dict0dict.h"
 #include "ha0storage.h"
