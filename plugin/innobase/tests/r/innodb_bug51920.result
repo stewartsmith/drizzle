@@ -7,9 +7,5 @@ i
 UPDATE bug51920 SET i=2;
 SET @thread_id= ID;
 KILL @thread_id;
-SELECT COUNT(*)=0 FROM data_dictionary.processlist WHERE ID=@thread_id;
-COUNT(*)=0
-0
-Executed the test condition 2 times
 Got one of the listed errors
 DROP TABLE bug51920;

@@ -17,10 +17,18 @@ let $ID = `select connection_id()`;
 UPDATE bug51920 SET i=2;
 
 connection default;
+
 --replace_result $ID ID
 eval SET @thread_id= $ID;
+
+let $wait_timeout= 30;
+let $wait_condition =
+  SELECT COUNT(*)=1 FROM data_dictionary.processlist
+  WHERE ID=@thread_id;
+-- source include/wait_condition.inc
+
 KILL @thread_id;
-SELECT COUNT(*)=0 FROM data_dictionary.processlist WHERE ID=@thread_id;
+
 let $wait_timeout= 30;
 let $wait_condition =
  SELECT COUNT(*)=0 FROM data_dictionary.processlist WHERE ID=@thread_id; 
