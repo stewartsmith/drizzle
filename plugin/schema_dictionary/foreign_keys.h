@@ -18,20 +18,20 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SCHEMA_DICTIONARY_REFERENTIAL_CONSTRAINTS_H
-#define PLUGIN_SCHEMA_DICTIONARY_REFERENTIAL_CONSTRAINTS_H
+#ifndef PLUGIN_SCHEMA_DICTIONARY_FOREIGN_KEYS_H
+#define PLUGIN_SCHEMA_DICTIONARY_FOREIGN_KEYS_H
 
-class ReferentialConstraintsTool : public drizzled::plugin::TableFunction
+class ForeignKeysTool : public drizzled::plugin::TableFunction
 {
 public:
 
-  ReferentialConstraintsTool();
+  ForeignKeysTool();
 
-  ReferentialConstraintsTool(const char *schema_arg, const char *table_arg) :
+  ForeignKeysTool(const char *schema_arg, const char *table_arg) :
     drizzled::plugin::TableFunction(schema_arg, table_arg)
   { }
 
-  ReferentialConstraintsTool(const char *table_arg) :
+  ForeignKeysTool(const char *table_arg) :
     drizzled::plugin::TableFunction("DATA_DICTIONARY", table_arg)
   { }
 
@@ -85,4 +85,4 @@ public:
   }
 };
 
-#endif /* PLUGIN_SCHEMA_DICTIONARY_REFERENTIAL_CONSTRAINTS_H */
+#endif /* PLUGIN_SCHEMA_DICTIONARY_FOREIGN_KEYS_H */

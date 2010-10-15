@@ -25,8 +25,8 @@
 using namespace std;
 using namespace drizzled;
 
-ReferentialConstraintsTool::ReferentialConstraintsTool() :
-  plugin::TableFunction("DATA_DICTIONARY", "REFERENTIAL_CONSTRAINTS")
+ForeignKeysTool::ForeignKeysTool() :
+  plugin::TableFunction("DATA_DICTIONARY", "FOREIGN_KEYS")
 {
   add_field("CONSTRAINT_SCHEMA");
   add_field("CONSTRAINT_TABLE");
@@ -41,7 +41,7 @@ ReferentialConstraintsTool::ReferentialConstraintsTool() :
   add_field("DELETE_RULE");
 }
 
-ReferentialConstraintsTool::Generator::Generator(Field **arg) :
+ForeignKeysTool::Generator::Generator(Field **arg) :
   plugin::TableFunction::Generator(arg),
   all_tables_generator(getSession()),
   keyPos(0),
@@ -49,7 +49,7 @@ ReferentialConstraintsTool::Generator::Generator(Field **arg) :
 {
 }
 
-bool ReferentialConstraintsTool::Generator::nextTable()
+bool ForeignKeysTool::Generator::nextTable()
 {
   const drizzled::message::Table *table_ptr;
   while ((table_ptr= all_tables_generator))
@@ -61,7 +61,7 @@ bool ReferentialConstraintsTool::Generator::nextTable()
   return false;
 }
 
-bool ReferentialConstraintsTool::Generator::fillFkey()
+bool ForeignKeysTool::Generator::fillFkey()
 {
   if (firstFill)
   {
@@ -87,7 +87,7 @@ bool ReferentialConstraintsTool::Generator::fillFkey()
   }
 }
 
-bool ReferentialConstraintsTool::Generator::populate()
+bool ForeignKeysTool::Generator::populate()
 {
   if (fillFkey())
     return true;
@@ -95,7 +95,7 @@ bool ReferentialConstraintsTool::Generator::populate()
   return false;
 }
 
-void ReferentialConstraintsTool::Generator::pushType(message::Table::Field::FieldType type)
+void ForeignKeysTool::Generator::pushType(message::Table::Field::FieldType type)
 {
   switch (type)
   {
@@ -105,7 +105,7 @@ void ReferentialConstraintsTool::Generator::pushType(message::Table::Field::Fiel
   }
 }
 
-std::string ReferentialConstraintsTool::Generator::fkeyOption(message::Table::ForeignKeyConstraint::ForeignKeyOption option)
+std::string ForeignKeysTool::Generator::fkeyOption(message::Table::ForeignKeyConstraint::ForeignKeyOption option)
 {
   std::string ret;
   switch (option)
@@ -133,7 +133,7 @@ std::string ReferentialConstraintsTool::Generator::fkeyOption(message::Table::Fo
   return ret;
 }
 
-void ReferentialConstraintsTool::Generator::fill()
+void ForeignKeysTool::Generator::fill()
 {
   /* CONSTRAINT_SCHEMA */
   push(getTableMessage().schema());
@@ -152,9 +152,7 @@ void ReferentialConstraintsTool::Generator::fill()
     if (x != 0)
       source.append(", ");
 
-    source.append("`");
     source.append(fkey.column_names(x));
-    source.append("`");
   }
 
   push(source);
@@ -170,9 +168,7 @@ void ReferentialConstraintsTool::Generator::fill()
     if (x != 0)
       destination.append(", ");
     
-    destination.append("`");
     destination.append(fkey.references_columns(x));
-    destination.append("`");
   }
 
   push(destination);
