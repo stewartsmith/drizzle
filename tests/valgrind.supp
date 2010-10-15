@@ -419,3 +419,57 @@
    ...
 }
 
+# Issues with boost::thread
+{
+  Boost::thread issues. Not a problem - static init issues.
+  Memcheck:Leak
+  ...
+  fun:_ZN5boost6detail16add_new_tss_nodeEPKvNS_10shared_ptrINS0_20tss_cleanup_functionEEEPv
+  fun:_ZN5boost6detail12set_tss_dataEPKvNS_10shared_ptrINS0_20tss_cleanup_functionEEEPvb
+  fun:_ZN8drizzled8internal14my_thread_initEv
+  fun:_ZN8drizzled8internal21my_thread_global_initEv
+  fun:_ZN8drizzled8internal7my_initEv
+  fun:main
+}
+
+{
+  Boost::thread issues. Not a problem - static init issues.
+  Memcheck:Leak
+  fun:_Znwm
+  fun:_ZNSt8_Rb_treeIPKvSt4pairIKS1_N5boost6detail13tss_data_nodeEESt10_Select1stIS7_ESt4lessIS1_ESaIS7_EE10_M_insert_EPKSt18_Rb_tree_node_baseSG_RKS7_
+  fun:_ZN5boost6detail16add_new_tss_nodeEPKvNS_10shared_ptrINS0_20tss_cleanup_functionEEEPv
+  fun:_ZN5boost6detail12set_tss_dataEPKvNS_10shared_ptrINS0_20tss_cleanup_functionEEEPvb
+  fun:_ZN5boost19thread_specific_ptrIN8drizzled8internal16st_my_thread_varEED1Ev
+  ...
+}
+{
+  Boost::thread issues. Not a problem - static init issues.
+  Memcheck:Leak
+  ...
+  fun:_ZN5boost6detail23get_current_thread_dataEv
+  fun:_ZN5boost6detail13find_tss_dataEPKv
+  fun:_ZN5boost6detail12get_tss_dataEPKv
+  fun:_ZN8drizzled8internal14my_thread_initEv
+  fun:_ZN8drizzled8internal21my_thread_global_initEv
+  fun:_ZN8drizzled8internal7my_initEv
+  ...
+}
+{
+  Boost::thread issues. Not a problem - static init issues.
+  Memcheck:Leak
+  ...
+  fun:_ZN5boost19thread_specific_ptrIPN8drizzled6memory4RootEED1Ev
+  fun:__run_exit_handlers
+  fun:exit
+  ...
+}
+{
+  Boost::thread issues. Not a problem - static init issues.
+  Memcheck:Leak
+  ...
+  fun:_ZN5boost19thread_specific_ptr*
+  fun:__run_exit_handlers
+  fun:exit
+  ...
+}
+
