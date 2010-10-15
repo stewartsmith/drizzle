@@ -29,7 +29,6 @@ using namespace drizzled;
 
 namespace po= boost::program_options;
 
-static bool enabled= false;
 static bool debug_enabled= false;
 static char* username= NULL;
 static char* password= NULL;
@@ -296,9 +295,6 @@ public:
     if (debug_enabled)
       enabled= true;
 
-    if (enabled == false)
-      return false;
-
     if (pipe(pipe_fds) == -1)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("pipe() failed with errno %d"), errno);
@@ -339,20 +335,13 @@ static int init(drizzled::module::Context &context)
     db= strdup("");
 
   context.add(new ListenConsole("console"));
+  context.registerVariable(new sys_var_bool_ptr("enable", &enabled));
+  context.registerVariable(new sys_var_bool_ptr("debug_enable", &debug_enabled));
+  context.registerVariable(new sys_var_const_str("username", username));
+  context.registerVariable(new sys_var_const_str("password", password));
+  context.registerVariable(new sys_var_const_str("db", db));
   return 0;
 }
-
-static DRIZZLE_SYSVAR_BOOL(enable, enabled, PLUGIN_VAR_NOCMDARG,
-                           N_("Enable the console."), NULL, NULL, false);
-static DRIZZLE_SYSVAR_BOOL(debug, debug_enabled, PLUGIN_VAR_NOCMDARG,
-                           N_("Turn on extra debugging."), NULL, NULL, false);
-
-static DRIZZLE_SYSVAR_STR(username, username, PLUGIN_VAR_READONLY,
-                          N_("User to use for auth."), NULL, NULL, NULL);
-static DRIZZLE_SYSVAR_STR(password, password, PLUGIN_VAR_READONLY,
-                          N_("Password to use for auth."), NULL, NULL, NULL);
-static DRIZZLE_SYSVAR_STR(db, db, PLUGIN_VAR_READONLY,
-                          N_("Default database to use."), NULL, NULL, NULL);
 
 static void init_options(drizzled::module::option_context &context)
 {
@@ -373,15 +362,6 @@ static void init_options(drizzled::module::option_context &context)
           N_("Default database to use."));
 }
 
-static drizzle_sys_var* vars[]= {
-  DRIZZLE_SYSVAR(enable),
-  DRIZZLE_SYSVAR(debug),
-  DRIZZLE_SYSVAR(username),
-  DRIZZLE_SYSVAR(password),
-  DRIZZLE_SYSVAR(db),
-  NULL
-};
-
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
@@ -391,7 +371,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Console Client",
   PLUGIN_LICENSE_BSD,
   init,   /* Plugin Init */
-  vars,   /* system variables */
+  NULL,   /* system variables */
   init_options    /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;
