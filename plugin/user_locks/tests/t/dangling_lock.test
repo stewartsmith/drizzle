@@ -1,0 +1,5 @@
+# The goal is to create a "dangling lock". We should be cleaning up locks on
+# exit, and this will tell us (via valgrind) if that is happending.
+set @lock_name= "dangling_lock";
+SELECT get_lock(@lock_name);
+SELECT if ((is_used_lock(@lock_name) = CONNECTION_ID()), "YES", "NO");

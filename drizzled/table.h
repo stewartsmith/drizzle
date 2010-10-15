@@ -372,13 +372,13 @@ public:
   /* SHARE methods */
   virtual const TableShare *getShare() const { assert(_share); return _share; } /* Get rid of this long term */
   virtual TableShare *getMutableShare() { assert(_share); return _share; } /* Get rid of this long term */
-  inline bool hasShare() const { return _share ? true : false ; } /* Get rid of this long term */
-  inline void setShare(TableShare *new_share) { _share= new_share; } /* Get rid of this long term */
-  inline uint32_t sizeKeys() { return _share->sizeKeys(); }
-  inline uint32_t sizeFields() { return _share->sizeFields(); }
-  inline uint32_t getRecordLength() const { return _share->getRecordLength(); }
-  inline uint32_t sizeBlobFields() { return _share->blob_fields; }
-  inline uint32_t *getBlobField() { return &_share->blob_field[0]; }
+  bool hasShare() const { return _share ? true : false ; } /* Get rid of this long term */
+  virtual void setShare(TableShare *new_share) { _share= new_share; } /* Get rid of this long term */
+  uint32_t sizeKeys() { return _share->sizeKeys(); }
+  uint32_t sizeFields() { return _share->sizeFields(); }
+  uint32_t getRecordLength() const { return _share->getRecordLength(); }
+  uint32_t sizeBlobFields() { return _share->blob_fields; }
+  uint32_t *getBlobField() { return &_share->blob_field[0]; }
 
 public:
   virtual bool hasVariableWidth() const
@@ -422,14 +422,6 @@ public:
     return *cursor;
   }
 
-  /* For TMP tables, should be pulled out as a class */
-  void setup_tmp_table_column_bitmaps();
-  bool create_myisam_tmp_table(KeyInfo *keyinfo,
-                               MI_COLUMNDEF *start_recinfo,
-                               MI_COLUMNDEF **recinfo,
-                               uint64_t options);
-  void free_tmp_table(Session *session);
-  bool open_tmp_table();
   size_t max_row_length(const unsigned char *data);
   uint32_t find_shortest_key(const key_map *usable_keys);
   bool compare_record(Field **ptr);
@@ -637,13 +629,10 @@ public:
     return output;  // for multiple << operators.
   }
 
-protected:
-  bool is_placeholder_created;
-
 public:
-  bool isPlaceHolder()
+  virtual bool isPlaceHolder(void) const
   {
-    return is_placeholder_created;
+    return false;
   }
 };
 
@@ -867,5 +856,8 @@ bool check_db_name(Session *session, SchemaIdentifier &schema);
 bool check_table_name(const char *name, uint32_t length);
 
 } /* namespace drizzled */
+
+#include "drizzled/table/instance.h"
+#include "drizzled/table/concurrent.h"
 
 #endif /* DRIZZLED_TABLE_H */

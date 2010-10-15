@@ -58,6 +58,7 @@ Select_full_range_join	#
 Select_range	#
 Select_range_check	#
 Select_scan	#
+Sessions_connected	#
 Slow_queries	#
 Sort_merge_passes	#
 Sort_range	#
@@ -65,6 +66,5 @@ Sort_rows	#
 Sort_scan	#
 Table_locks_immediate	#
 Table_locks_waited	#
-Threads_connected	#
 Uptime	#
 Uptime_since_flush_status	#

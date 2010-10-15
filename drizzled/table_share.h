@@ -251,7 +251,8 @@ public:
 private:
   std::vector<unsigned char> default_values;		/* row with default values */
 public:
-  unsigned char * getDefaultValues()
+  // @note This needs to be made to be const in the future
+  unsigned char *getDefaultValues()
   {
     return &default_values[0];
   }

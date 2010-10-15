@@ -1,0 +1,16 @@
+SET @lock_name="release_lock_test";
+SELECT get_lock(@lock_name);
+get_lock(@lock_name)
+1
+SELECT if ((is_used_lock(@lock_name) = CONNECTION_ID()), "YES", "NO");
+if ((is_used_lock(@lock_name) = CONNECTION_ID()), "YES", "NO")
+YES
+SELECT release_lock(@lock_name);
+release_lock(@lock_name)
+1
+SELECT is_used_lock(@lock_name);
+is_used_lock(@lock_name)
+NULL
+SELECT release_lock(@lock_name);
+release_lock(@lock_name)
+NULL

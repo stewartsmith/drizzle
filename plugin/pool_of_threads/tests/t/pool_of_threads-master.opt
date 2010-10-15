@@ -1,1 +1,0 @@
---plugin-add=pool_of_threads --scheduler=pool_of_threads

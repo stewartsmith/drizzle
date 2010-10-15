@@ -1,5 +1,0 @@
-PANDORA_HAVE_LIBEVENT
-AS_IF([test x$ac_cv_libevent = xno],
-  AC_MSG_WARN([Couldnt find a recent libevent pool-of-threads scheduler will not be built. On Debian this can be found in libevent-dev. On RedHat its in libevent-devel.]))
-
-

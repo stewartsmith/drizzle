@@ -1680,7 +1680,7 @@ void wait_while_table_is_used(Session *session, Table *table,
   mysql_lock_abort(session, table);	/* end threads waiting on lock */
 
   /* Wait until all there are no other threads that has this table open */
-  TableIdentifier identifier(table->getMutableShare()->getSchemaName(), table->getMutableShare()->getTableName());
+  TableIdentifier identifier(table->getShare()->getSchemaName(), table->getShare()->getTableName());
   remove_table_from_cache(session, identifier, RTFC_WAIT_OTHER_THREAD_FLAG);
 }
 
@@ -1832,7 +1832,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       const char *old_message=session->enter_cond(COND_refresh, LOCK_open,
                                                   "Waiting to get writelock");
       mysql_lock_abort(session,table->table);
-      TableIdentifier identifier(table->table->getMutableShare()->getSchemaName(), table->table->getMutableShare()->getTableName());
+      TableIdentifier identifier(table->table->getShare()->getSchemaName(), table->table->getShare()->getTableName());
       remove_table_from_cache(session, identifier,
                               RTFC_WAIT_OTHER_THREAD_FLAG |
                               RTFC_CHECK_KILLED_FLAG);
@@ -1936,7 +1936,7 @@ send_result:
         else
         {
           boost::unique_lock<boost::mutex> lock(LOCK_open);
-	  TableIdentifier identifier(table->table->getMutableShare()->getSchemaName(), table->table->getMutableShare()->getTableName());
+	  TableIdentifier identifier(table->table->getShare()->getSchemaName(), table->table->getShare()->getTableName());
           remove_table_from_cache(session, identifier, RTFC_NO_FLAG);
         }
       }
@@ -2077,8 +2077,8 @@ bool mysql_create_like_table(Session* session,
   if (session->open_tables_from_list(&src_table, &not_used))
     return true;
 
-  TableIdentifier src_identifier(src_table->table->getMutableShare()->getSchemaName(),
-                                 src_table->table->getMutableShare()->getTableName(), src_table->table->getMutableShare()->getType());
+  TableIdentifier src_identifier(src_table->table->getShare()->getSchemaName(),
+                                 src_table->table->getShare()->getTableName(), src_table->table->getShare()->getType());
 
 
 
