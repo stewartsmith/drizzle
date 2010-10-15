@@ -20,8 +20,11 @@ connection default;
 --replace_result $ID ID
 eval SET @thread_id= $ID;
 KILL @thread_id;
-SELECT sleep(2);
-SELECT * FROM DATA_DICTIONARY.PROCESSLIST WHERE ID=@thread_id;
+SELECT COUNT(*)=0 FROM data_dictionary.processlist WHERE ID=@thread_id;
+let $wait_timeout= 30;
+let $wait_condition =
+ SELECT COUNT(*)=0 FROM data_dictionary.processlist WHERE ID=@thread_id; 
+-- source include/wait_condition.inc
 
 connection con1;
 -- error ER_QUERY_INTERRUPTED,20

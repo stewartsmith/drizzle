@@ -7,10 +7,9 @@ i
 UPDATE bug51920 SET i=2;
 SET @thread_id= ID;
 KILL @thread_id;
-SELECT sleep(2);
-sleep(2)
+SELECT COUNT(*)=0 FROM data_dictionary.processlist WHERE ID=@thread_id;
+COUNT(*)=0
 0
-SELECT * FROM DATA_DICTIONARY.PROCESSLIST WHERE ID=@thread_id;
-ID	USER	HOST	DB	COMMAND	TIME	STATE	INFO
+Executed the test condition 2 times
 Got one of the listed errors
 DROP TABLE bug51920;
