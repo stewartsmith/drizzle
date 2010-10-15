@@ -516,7 +516,7 @@ create table t1 (c1 int);
 use mysqltest;
 drop database mysqltest;
 alter table test.t1 rename t1;
-ERROR 3D000: No database selected
+ERROR 3D000: No schema selected
 alter table test.t1 rename test.t1;
 use test;
 drop table t1;

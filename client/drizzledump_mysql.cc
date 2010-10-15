@@ -74,7 +74,8 @@ bool DrizzleDumpDatabaseMySQL::populateTables()
       table->comment= "";
 
     table->database= this;
-    if ((not table->populateFields()) or (not table->populateIndexes()))
+    if ((not table->populateFields()) or (not table->populateIndexes()) or
+     (not table->populateFkeys()))
     {
       delete table;
       if (not ignore_errors)
@@ -284,6 +285,43 @@ bool DrizzleDumpTableMySQL::populateIndexes()
   if (!firstIndex)
     indexes.push_back(index);
 
+  dcon->freeResult(result);
+  return true;
+}
+
+bool DrizzleDumpTableMySQL::populateFkeys()
+{
+  drizzle_result_st *result;
+  drizzle_row_t row;
+  std::string query;
+  DrizzleDumpForeignKey *fkey;
+
+  if (verbose)
+    std::cerr << _("-- Retrieving foreign keys for ") << tableName << "..." << std::endl;
+
+  query= "select rc.constraint_name, rc.referenced_table_name, group_concat(distinct concat('`',kc.column_name,'`')), rc.update_rule, rc.delete_rule, rc.match_option, group_concat(distinct concat('`',kt.column_name,'`')) from information_schema.referential_constraints rc join information_schema.key_column_usage kt on (rc.constraint_schema = kt.constraint_schema and rc.constraint_name = kt.constraint_name) join information_schema.key_column_usage kc on (rc.constraint_schema = kc.constraint_schema and rc.referenced_table_name = kc.table_name and rc.unique_constraint_name = kc.constraint_name) where rc.constraint_schema='";
+  query.append(database->databaseName);
+  query.append("' and rc.table_name='");
+  query.append(tableName);
+  query.append("' group by rc.constraint_name");
+
+  result= dcon->query(query);
+
+  if (result == NULL)
+    return false;
+
+  while ((row= drizzle_row_next(result)))
+  {
+    fkey= new DrizzleDumpForeignKey(row[0], dcon);
+    fkey->parentColumns= row[6];
+    fkey->childTable= row[1];
+    fkey->childColumns= row[2];
+    fkey->updateRule= (strcmp(row[3], "RESTRICT") != 0) ? row[3] : "";
+    fkey->deleteRule= (strcmp(row[4], "RESTRICT") != 0) ? row[4] : "";
+    fkey->matchOption= (strcmp(row[5], "NONE") != 0) ? row[5] : "";
+
+    fkeys.push_back(fkey);
+  }
   dcon->freeResult(result);
   return true;
 }

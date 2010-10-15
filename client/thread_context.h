@@ -1,7 +1,8 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Sun Microsystems
+ *  Copyright (C) 2010 Vijay Samuel
+ *  Copyright (C) 2008 MySQL
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,26 +19,51 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "plugin/schema_dictionary/dictionary.h"
+#ifndef CLIENT_THREAD_CONTEXT_H
+#define CLIENT_THREAD_CONTEXT_H
 
-using namespace std;
-using namespace drizzled;
+#include "client_priv.h"
+#include "statement.h"
+#include <string>
+#include <iostream>
 
-ReferentialConstraintsTool::ReferentialConstraintsTool() :
-  TablesTool("REFERENTIAL_CONSTRAINTS")
+class ThreadContext 
 {
-  add_field("CONSTRAINT_SCHEMA");
-  add_field("CONSTRAINT_NAME");
+public:
+  ThreadContext(Statement *in_stmt,
+                uint64_t in_limit) :
+    stmt(in_stmt),
+    limit(in_limit)
+  { }
 
-  add_field("UNIQUE_CONSTRAINT_SCHEMA");
-  add_field("UNIQUE_CONSTRAINT_NAME");
+  ThreadContext() :
+    stmt(),
+    limit(0)
+  { }
 
+  Statement *getStmt() const
+  {
+    return stmt;
+  }
 
-  add_field("MATCH_OPTION");
-  add_field("UPDATE_RULE");
-  add_field("DELETE_RULE");
-  add_field("TABLE_NAME");
+  uint64_t getLimit() const
+  {
+    return limit;
+  }
 
-  add_field("REFERENCED_TABLE_NAME");
-}
+  void setStmt(Statement *in_stmt)
+  {
+    stmt= in_stmt;
+  }
+
+  void setLimit(uint64_t in_limit)
+  {
+    limit= in_limit;
+  }  
+
+private:
+  Statement *stmt;
+  uint64_t limit;
+};
+
+#endif /* CLIENT_THREAD_CONTEXT_H */
