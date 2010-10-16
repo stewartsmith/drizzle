@@ -221,13 +221,13 @@ enum test_flag_bit
 // uncachable cause
 #define UNCACHEABLE_DEPENDENT   1
 #define UNCACHEABLE_RAND        2
-#define UNCACHEABLE_SIDEEFFECT	4
+#define UNCACHEABLE_SIDEEFFECT	3
 /// forcing to save JOIN for explain
-#define UNCACHEABLE_EXPLAIN     8
+#define UNCACHEABLE_EXPLAIN     4
 /** Don't evaluate subqueries in prepare even if they're not correlated */
-#define UNCACHEABLE_PREPARE    16
+#define UNCACHEABLE_PREPARE     5
 /* For uncorrelated SELECT in an UNION with some correlated SELECTs */
-#define UNCACHEABLE_UNITED     32
+#define UNCACHEABLE_UNITED      6
 
 /* Used to check GROUP BY list in the MODE_ONLY_FULL_GROUP_BY mode */
 #define UNDEF_POS (-1)

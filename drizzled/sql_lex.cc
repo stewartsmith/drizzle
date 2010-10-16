@@ -1302,7 +1302,7 @@ void Select_Lex_Node::init_query()
   options= 0;
   linkage= UNSPECIFIED_TYPE;
   no_error= no_table_names_allowed= 0;
-  uncacheable= 0;
+  uncacheable.reset();
 }
 
 void Select_Lex_Node::init_select()
@@ -1568,19 +1568,19 @@ void Select_Lex::mark_as_dependent(Select_Lex *last)
        s && s != last;
        s= s->outer_select())
   {
-    if (!(s->uncacheable & UNCACHEABLE_DEPENDENT))
+    if (! (s->uncacheable.test(UNCACHEABLE_DEPENDENT)))
     {
       // Select is dependent of outer select
-      s->uncacheable= (s->uncacheable & ~UNCACHEABLE_UNITED) |
-                       UNCACHEABLE_DEPENDENT;
+      s->uncacheable.set(UNCACHEABLE_DEPENDENT);
+      s->uncacheable.set(UNCACHEABLE_UNITED);
       Select_Lex_Unit *munit= s->master_unit();
-      munit->uncacheable= (munit->uncacheable & ~UNCACHEABLE_UNITED) |
-                       UNCACHEABLE_DEPENDENT;
+      munit->uncacheable.set(UNCACHEABLE_UNITED);
+      munit->uncacheable.set(UNCACHEABLE_DEPENDENT);
       for (Select_Lex *sl= munit->first_select(); sl ; sl= sl->next_select())
       {
         if (sl != s &&
-            !(sl->uncacheable & (UNCACHEABLE_DEPENDENT | UNCACHEABLE_UNITED)))
-          sl->uncacheable|= UNCACHEABLE_UNITED;
+            ! (sl->uncacheable.test(UNCACHEABLE_DEPENDENT) && sl->uncacheable.test(UNCACHEABLE_UNITED)))
+          sl->uncacheable.set(UNCACHEABLE_UNITED);
       }
     }
     s->is_correlated= true;
