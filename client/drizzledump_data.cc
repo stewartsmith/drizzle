@@ -389,18 +389,33 @@ std::string DrizzleDumpData::escape(const char* from, size_t from_size)
       switch (*from)
       {
          case 0:
+           output.append("\\0");
+           break;
          case '\n':
+           output.append("\\n");
+           break;
          case '\r':
+           output.append("\\r");
+           break;
          case '\\':
+           output.append("\\\\");
+           break;
          case '\'':
+           output.append("\\'");
+           break;
          case '"':
+           output.append("\\\"");
+           break;
          case '\032':
-           output.push_back('\\');
+           output.append("\\Z");
+           break;
          default:
+           output.push_back(*from);
            break;
        }
     }
-    output.push_back(*from);
+    else
+      output.push_back(*from);
     (void) *from++;
     from_size--;
   }
