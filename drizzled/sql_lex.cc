@@ -1371,7 +1371,6 @@ void Select_Lex::init_select()
   group_list.empty();
   db= 0;
   having= 0;
-  table_join_options= 0;
   in_sum_expr= with_wild= 0;
   options= 0;
   braces= 0;
@@ -1605,16 +1604,17 @@ TableList* Select_Lex_Node::get_table_list()
 List<Item>* Select_Lex_Node::get_item_list()
 { return NULL; }
 
-TableList *Select_Lex_Node::add_table_to_list (Session *, Table_ident *, LEX_STRING *, uint32_t,
-                                                  thr_lock_type, List<Index_hint> *, LEX_STRING *)
+TableList *Select_Lex_Node::add_table_to_list(Session *, 
+                                              Table_ident *, 
+                                              LEX_STRING *, 
+                                              const bitset<NUM_OF_TABLE_OPTIONS>&,
+                                              thr_lock_type, 
+                                              List<Index_hint> *, 
+                                              LEX_STRING *)
 {
   return 0;
 }
 
-uint32_t Select_Lex_Node::get_table_join_options()
-{
-  return 0;
-}
 
 /*
   prohibit using LIMIT clause
@@ -1692,10 +1692,6 @@ List<Item>* Select_Lex::get_item_list()
   return &item_list;
 }
 
-uint32_t Select_Lex::get_table_join_options()
-{
-  return table_join_options;
-}
 
 bool Select_Lex::setup_ref_array(Session *session, uint32_t order_group_num)
 {
