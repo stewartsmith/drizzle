@@ -1,0 +1,3 @@
+SELECT MODULE_NAME from DATA_DICTIONARY.modules WHERE MODULE_NAME="trigger_dictionary";
+MODULE_NAME
+trigger_dictionary
