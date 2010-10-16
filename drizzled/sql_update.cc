@@ -72,7 +72,7 @@ static void prepare_record_for_error_message(int error, Table *table)
     return;
 
   /* Create unique_map with all fields used by that index. */
-  boost::dynamic_bitset<> unique_map(table->getMutableShare()->sizeFields()); /* Fields in offended unique. */
+  boost::dynamic_bitset<> unique_map(table->getShare()->sizeFields()); /* Fields in offended unique. */
   table->mark_columns_used_by_index_no_reset(keynr, unique_map);
 
   /* Subtract read_set and write_set. */

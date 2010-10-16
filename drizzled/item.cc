@@ -1124,11 +1124,16 @@ Field *Item::make_string_field(Table *table)
   Field *field;
   assert(collation.collation);
   if (max_length/collation.collation->mbmaxlen > CONVERT_IF_BIGGER_TO_BLOB)
+  {
     field= new Field_blob(max_length, maybe_null, name,
                           collation.collation);
+  }
   else
-    field= new Field_varstring(max_length, maybe_null, name, table->getMutableShare(),
+  {
+    table->setVariableWidth();
+    field= new Field_varstring(max_length, maybe_null, name,
                                collation.collation);
+  }
 
   if (field)
     field->init(table);
@@ -1588,19 +1593,25 @@ static Field *create_tmp_field_from_item(Session *,
     if ((type= item->field_type()) == DRIZZLE_TYPE_DATETIME ||
         type == DRIZZLE_TYPE_DATE ||
         type == DRIZZLE_TYPE_TIMESTAMP)
+    {
       new_field= item->tmp_table_field_from_field_type(table, 1);
-    /*
-      Make sure that the blob fits into a Field_varstring which has
-      2-byte lenght.
-    */
+      /*
+        Make sure that the blob fits into a Field_varstring which has
+        2-byte lenght.
+      */
+    }
     else if (item->max_length/item->collation.collation->mbmaxlen > 255 &&
              convert_blob_length <= Field_varstring::MAX_SIZE &&
              convert_blob_length)
+    {
+      table->setVariableWidth();
       new_field= new Field_varstring(convert_blob_length, maybe_null,
-                                     item->name, table->getMutableShare(),
-                                     item->collation.collation);
+                                     item->name, item->collation.collation);
+    }
     else
+    {
       new_field= item->make_string_field(table);
+    }
     new_field->set_derivation(item->collation.derivation);
     break;
   case DECIMAL_RESULT:

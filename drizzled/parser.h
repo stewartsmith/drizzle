@@ -77,6 +77,7 @@
 #include <drizzled/statement/drop_schema.h>
 #include <drizzled/statement/drop_table.h>
 #include <drizzled/statement/empty_query.h>
+#include <drizzled/statement/execute.h>
 #include <drizzled/statement/flush.h>
 #include <drizzled/statement/insert.h>
 #include <drizzled/statement/insert_select.h>

@@ -31,6 +31,7 @@
 #include <boost/unordered_map.hpp>
 #include <boost/thread/condition_variable.hpp>
 #include <boost/dynamic_bitset.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include "drizzled/typelib.h"
 #include "drizzled/memory/root.h"
@@ -40,7 +41,9 @@
 namespace drizzled
 {
 
-typedef boost::unordered_map< TableIdentifier::Key, TableShare *> TableDefinitionCache;
+typedef boost::shared_ptr<TableShare> TableSharePtr;
+
+typedef boost::unordered_map< TableIdentifier::Key, TableSharePtr> TableDefinitionCache;
 
 const static std::string STANDARD_STRING("STANDARD");
 const static std::string TEMPORARY_STRING("TEMPORARY");
@@ -248,7 +251,8 @@ public:
 private:
   std::vector<unsigned char> default_values;		/* row with default values */
 public:
-  unsigned char * getDefaultValues()
+  // @note This needs to be made to be const in the future
+  unsigned char *getDefaultValues()
   {
     return &default_values[0];
   }
@@ -519,7 +523,17 @@ public:
   uint32_t null_fields;			/* number of null fields */
   uint32_t blob_fields;			/* number of blob fields */
   uint32_t timestamp_field_offset;		/* Field number for timestamp field */
-  uint32_t varchar_fields;                  /* number of varchar fields */
+private:
+  bool has_variable_width;                  /* number of varchar fields */
+public:
+  bool hasVariableWidth() const
+  {
+    return has_variable_width; // We should calculate this.
+  }
+  void setVariableWidth()
+  {
+    has_variable_width= true;
+  }
   uint32_t db_create_options;		/* Create options from database */
   uint32_t db_options_in_use;		/* Options in use */
   uint32_t db_record_offset;		/* if HA_REC_IN_SEQ */
@@ -609,12 +623,6 @@ public:
 
   void setIdentifier(TableIdentifier &identifier_arg);
 
-  inline bool honor_global_locks()
-  {
-    return (table_category == TABLE_CATEGORY_USER);
-  }
-
-
   /*
     Initialize share for temporary tables
 
@@ -640,12 +648,13 @@ public:
 
   static void cacheStart(void);
   static void release(TableShare *share);
+  static void release(TableSharePtr &share);
   static void release(TableIdentifier &identifier);
   static const TableDefinitionCache &getCache();
-  static TableShare *getShare(TableIdentifier &identifier);
-  static TableShare *getShareCreate(Session *session, 
-                                    TableIdentifier &identifier,
-                                    int *error);
+  static TableSharePtr getShare(TableIdentifier &identifier);
+  static TableSharePtr getShareCreate(Session *session, 
+                                      TableIdentifier &identifier,
+                                      int *error);
 
   friend std::ostream& operator<<(std::ostream& output, const TableShare &share)
   {

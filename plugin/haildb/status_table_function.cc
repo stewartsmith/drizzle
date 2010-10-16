@@ -19,11 +19,7 @@
 #include "config.h"
 #include "drizzled/plugin/table_function.h"
 
-#if defined(HAVE_HAILDB_H)
-# include <haildb.h>
-#else
-# include <embedded_innodb-1.0/innodb.h>
-#endif /* HAVE_HAILDB_H */
+#include <haildb.h>
 
 #include "status_table_function.h"
 
@@ -45,6 +41,8 @@ public:
   class Generator : public drizzled::plugin::TableFunction::Generator
   {
   private:
+    const char **names;
+    uint32_t names_count;
     uint32_t names_next;
   public:
     Generator(drizzled::Field **arg);
@@ -59,57 +57,6 @@ public:
   }
 };
 
-static const char*      libinnodb_status_var_names[] = {
-  "read_req_pending",
-  "write_req_pending",
-  "fsync_req_pending",
-  "write_req_done",
-  "read_req_done",
-  "fsync_req_done",
-  "bytes_total_written",
-  "bytes_total_read",
-
-  "buffer_pool_current_size",
-  "buffer_pool_data_pages",
-  "buffer_pool_dirty_pages",
-  "buffer_pool_misc_pages",
-  "buffer_pool_free_pages",
-  "buffer_pool_read_reqs",
-  "buffer_pool_reads",
-  "buffer_pool_waited_for_free",
-  "buffer_pool_pages_flushed",
-  "buffer_pool_write_reqs",
-  "buffer_pool_total_pages",
-  "buffer_pool_pages_read",
-  "buffer_pool_pages_written",
-
-  "double_write_pages_written",
-  "double_write_invoked",
-
-  "log_buffer_slot_waits",
-  "log_write_reqs",
-  "log_write_flush_count",
-  "log_bytes_written",
-  "log_fsync_req_done",
-  "log_write_req_pending",
-  "log_fsync_req_pending",
-
-  "lock_row_waits",
-  "lock_row_waiting",
-  "lock_total_wait_time_in_secs",
-  "lock_wait_time_avg_in_secs",
-  "lock_max_wait_time_in_secs",
-
-  "row_total_read",
-  "row_total_inserted",
-  "row_total_updated",
-  "row_total_deleted",
-
-  "page_size",
-  "have_atomic_builtins",
-  NULL
-};
-
 LibInnoDBStatusTool::LibInnoDBStatusTool() :
   plugin::TableFunction("DATA_DICTIONARY", "HAILDB_STATUS")
 {
@@ -121,17 +68,20 @@ LibInnoDBStatusTool::Generator::Generator(Field **arg) :
   plugin::TableFunction::Generator(arg),
   names_next(0)
 {
+  ib_err_t err= ib_status_get_all(&names, &names_count);
+  assert(err == DB_SUCCESS);
 }
 
 LibInnoDBStatusTool::Generator::~Generator()
 {
+  free(names);
 }
 
 bool LibInnoDBStatusTool::Generator::populate()
 {
-  if (libinnodb_status_var_names[names_next] != NULL)
+  if (names[names_next] != NULL)
   {
-    const char* config_name= libinnodb_status_var_names[names_next];
+    const char* config_name= names[names_next];
 
     push(config_name);
 

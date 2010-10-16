@@ -134,11 +134,14 @@ drop table t1;
 CREATE TABLE t1 (a DATE, b int, PRIMARY KEY (a,b));
 INSERT INTO t1 VALUES (DATE(NOW()), 1);
 SELECT COUNT(*) FROM t1 WHERE a = NOW();
+--replace_column 9 #
 EXPLAIN SELECT COUNT(*) FROM t1 WHERE a = NOW();
 INSERT INTO t1 VALUES (DATE(NOW()), 2);
 SELECT COUNT(*) FROM t1 WHERE a = NOW();
+--replace_column 9 #
 EXPLAIN SELECT COUNT(*) FROM t1 WHERE a = NOW();
 SELECT COUNT(*) FROM t1 WHERE a = NOW() AND b = 1;
+--replace_column 9 #
 EXPLAIN SELECT COUNT(*) FROM t1 WHERE a = NOW() AND b = 1;
 # This bombs for some reason...commenting out for now.
 # JRP - 2009-02-10

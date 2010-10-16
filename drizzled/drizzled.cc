@@ -435,17 +435,17 @@ void close_connections(void)
 
   Session *tmp;
 
-  LOCK_thread_count.lock(); // For unlink from list
-
-  for( SessionList::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
   {
-    tmp= *it;
-    tmp->killed= Session::KILL_CONNECTION;
-    tmp->scheduler->killSession(tmp);
-    DRIZZLE_CONNECTION_DONE(tmp->thread_id);
-    tmp->lockOnSys();
+    boost::mutex::scoped_lock scoped(LOCK_thread_count);
+    for( SessionList::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
+    {
+      tmp= *it;
+      tmp->killed= Session::KILL_CONNECTION;
+      tmp->scheduler->killSession(tmp);
+      DRIZZLE_CONNECTION_DONE(tmp->thread_id);
+      tmp->lockOnSys();
+    }
   }
-  LOCK_thread_count.unlock(); // For unlink from list
 
   if (connection_count)
     sleep(2);                                   // Give threads time to die
@@ -457,38 +457,15 @@ void close_connections(void)
   */
   for (;;)
   {
-    LOCK_thread_count.lock(); // For unlink from list
+    boost::mutex::scoped_lock scoped(LOCK_thread_count);
     if (getSessionList().empty())
     {
-      LOCK_thread_count.unlock();
       break;
     }
     tmp= getSessionList().front();
     /* Close before unlock, avoiding crash. See LP bug#436685 */
     tmp->client->close();
-    LOCK_thread_count.unlock();
   }
-}
-
-/**
-  cleanup all memory and end program nicely.
-
-    If SIGNALS_DONT_BREAK_READ is defined, this function is called
-    by the main thread. To get Drizzle to shut down nicely in this case
-    (Mac OS X) we have to call exit() instead if pthread_exit().
-
-  @note
-    This function never returns.
-*/
-void unireg_end(void)
-{
-  clean_up(1);
-  internal::my_thread_end();
-#if defined(SIGNALS_DONT_BREAK_READ)
-  exit(0);
-#else
-  pthread_exit(0);				// Exit is in main thread
-#endif
 }
 
 
@@ -647,7 +624,7 @@ void Session::unlink(Session *session)
 
   session->cleanup();
 
-  LOCK_thread_count.lock();
+  boost::mutex::scoped_lock scoped(LOCK_thread_count);
   session->lockForDelete();
 
   getSessionList().erase(remove(getSessionList().begin(),
@@ -659,7 +636,6 @@ void Session::unlink(Session *session)
   }
 
   delete session;
-  LOCK_thread_count.unlock();
 }
 
 

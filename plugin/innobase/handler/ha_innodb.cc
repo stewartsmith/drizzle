@@ -210,7 +210,6 @@ static my_bool  innobase_use_doublewrite    = TRUE;
 static my_bool  innobase_use_checksums      = TRUE;
 static my_bool  innobase_rollback_on_timeout    = FALSE;
 static my_bool  innobase_create_status_file   = FALSE;
-static my_bool  innobase_stats_on_metadata    = TRUE;
 
 static char*  internal_innobase_data_file_path  = NULL;
 
@@ -1794,7 +1793,6 @@ innobase_init(
   innobase_use_checksums= (vm.count("disable-checksums")) ? false : true;
   innobase_use_doublewrite= (vm.count("disable-doublewrite")) ? false : true;
   srv_adaptive_flushing= (vm.count("disable-adaptive-flushing")) ? false : true;
-  innobase_stats_on_metadata= (vm.count("disable-stats-on-metadata")) ? false : true;
   srv_use_sys_malloc= (vm.count("use-internal-malloc")) ? false : true;
   (SessionVAR(NULL,support_xa))= (vm.count("disable-xa")) ? false : true;
   (SessionVAR(NULL,table_locks))= (vm.count("disable-table-locks")) ? false : true;
@@ -6852,16 +6850,14 @@ ha_innobase::info(
   ib_table = prebuilt->table;
 
   if (flag & HA_STATUS_TIME) {
-    if (innobase_stats_on_metadata) {
-      /* In sql_show we call with this flag: update
-      then statistics so that they are up-to-date */
+    /* In Analyze we call with this flag: update
+       then statistics so that they are up-to-date */
 
-      prebuilt->trx->op_info = "updating table statistics";
+    prebuilt->trx->op_info = "updating table statistics";
 
-      dict_update_statistics(ib_table);
+    dict_update_statistics(ib_table);
 
-      prebuilt->trx->op_info = "returning various info to MySQL";
-    }
+    prebuilt->trx->op_info = "returning various info to MySQL";
 
     fs::path get_status_path(getDataHomeCatalog());
     get_status_path /= ib_table->name;
@@ -9307,11 +9303,6 @@ static DRIZZLE_SYSVAR_BOOL(status_file, innobase_create_status_file,
   "Enable SHOW INNODB STATUS output in the innodb_status.<pid> file",
   NULL, NULL, FALSE);
 
-static DRIZZLE_SYSVAR_BOOL(stats_on_metadata, innobase_stats_on_metadata,
-  PLUGIN_VAR_OPCMDARG,
-  "Enable statistics gathering for metadata commands such as SHOW TABLE STATUS (on by default)",
-  NULL, NULL, TRUE);
-
 static DRIZZLE_SYSVAR_ULONGLONG(stats_sample_pages, srv_stats_sample_pages,
   PLUGIN_VAR_RQCMDARG,
   "The number of index pages to sample when calculating statistics (default 8)",
@@ -9626,7 +9617,6 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(old_blocks_pct),
   DRIZZLE_SYSVAR(old_blocks_time),
   DRIZZLE_SYSVAR(open_files),
-  DRIZZLE_SYSVAR(stats_on_metadata),
   DRIZZLE_SYSVAR(stats_sample_pages),
   DRIZZLE_SYSVAR(adaptive_hash_index),
   DRIZZLE_SYSVAR(replication_delay),

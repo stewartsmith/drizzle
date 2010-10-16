@@ -12,8 +12,24 @@ is forked from the popular MySQL database.
 The Drizzle team has removed non-essential code, re-factored the remaining
 code and modernized the code base moving to C++.
 
+Introduction:
+
 .. toctree::
    :maxdepth: 2
+
+   preface
+   what_is_drizzle
+   brief_history_of_drizzle
+   how_to_report_a_bug
+
+SQL Language:
+
+.. toctree::
+   :maxdepth: 2
+
+   ddl
+   dml
+   columntypes
 
 Configuration:
 
@@ -44,6 +60,14 @@ Clients:
 
    clients/drizzle.rst
    clients/drizzledump.rst
+
+libdrizzle:
+
+.. toctree::
+   :maxdepth: 2
+
+   libdrizzle/api.rst
+   libdrizzle/developer.rst
 
 Indices and tables
 ==================

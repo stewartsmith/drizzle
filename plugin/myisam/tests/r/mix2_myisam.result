@@ -681,7 +681,7 @@ insert into mysqltest.t3 values(1);
 commit;
 drop database mysqltest;
 show tables from mysqltest;
-ERROR 42000: Unknown database 'mysqltest'
+ERROR 42000: Unknown schema 'mysqltest'
 set autocommit=0;
 create TEMPORARY table t1 (a int not null) engine= MyISAM;
 insert into t1 values(1),(2);

@@ -1434,22 +1434,24 @@ void add_join_natural(TableList *a, TableList *b, List<String> *using_fields,
 */
 
 static unsigned int
-kill_one_thread(Session *, ulong id, bool only_kill_query)
+kill_one_thread(Session *, session_id_t id, bool only_kill_query)
 {
   Session *tmp= NULL;
   uint32_t error= ER_NO_SUCH_THREAD;
-  LOCK_thread_count.lock(); // For unlink from list
   
-  for (SessionList::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
   {
-    if ((*it)->thread_id == id)
+    boost::mutex::scoped_lock scoped(LOCK_thread_count);
+    for (SessionList::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
     {
-      tmp= *it;
-      tmp->lockForDelete();
-      break;
+      if ((*it)->thread_id == id)
+      {
+        tmp= *it;
+        tmp->lockForDelete();
+        break;
+      }
     }
   }
-  LOCK_thread_count.unlock();
+
   if (tmp)
   {
 
@@ -1475,7 +1477,7 @@ kill_one_thread(Session *, ulong id, bool only_kill_query)
     only_kill_query     Should it kill the query or the connection
 */
 
-void sql_kill(Session *session, ulong id, bool only_kill_query)
+void sql_kill(Session *session, int64_t id, bool only_kill_query)
 {
   uint32_t error;
   if (!(error= kill_one_thread(session, id, only_kill_query)))
