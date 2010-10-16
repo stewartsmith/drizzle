@@ -31,9 +31,6 @@ namespace po= boost::program_options;
 
 static bool enabled= false;
 static bool debug_enabled= false;
-static char* username= NULL;
-static char* password= NULL;
-static char* db= NULL;
 
 
 class ClientConsole: public plugin::Client
@@ -41,12 +38,20 @@ class ClientConsole: public plugin::Client
   bool is_dead;
   uint32_t column;
   uint32_t max_column;
+  const std::string &username;
+  const std::string &password;
+  const std::string &db;
 
 public:
-  ClientConsole():
+  ClientConsole(const std::string &username_arg,
+                const std::string &password_arg,
+                const std::string &db_arg) :
     is_dead(false),
     column(0),
-    max_column(0)
+    max_column(0),
+    username(username_arg),
+    password(password_arg),
+    db(db_arg)
   {}
 
   virtual void printDebug(const char *message)
@@ -95,7 +100,7 @@ public:
   {
     printDebug("authenticate");
     session->getSecurityContext().setUser(username);
-    return session->checkUser(password, strlen(password), db);
+    return session->checkUser(password, db);
   }
 
   virtual bool readCommand(char **packet, uint32_t *packet_length)
@@ -269,10 +274,19 @@ public:
 class ListenConsole: public plugin::Listen
 {
   int pipe_fds[2];
+  const std::string username;
+  const std::string password;
+  const std::string db;
 
 public:
-  ListenConsole(const std::string &name_arg) :
-    plugin::Listen(name_arg)
+  ListenConsole(const std::string &name_arg,
+                const std::string &username_arg,
+                const std::string &password_arg,
+                const std::string &db_arg) :
+    plugin::Listen(name_arg),
+    username(username_arg),
+    password(password_arg),
+    db(db_arg)
   {
     pipe_fds[0]= -1;
   }
@@ -284,11 +298,6 @@ public:
       close(pipe_fds[0]);
       close(pipe_fds[1]);
     }
-
-    /* Cleanup from the module strdup'ing these below */
-    free(username);
-    free(password);
-    free(db);
   }
 
   virtual bool getFileDescriptors(std::vector<int> &fds)
@@ -314,36 +323,22 @@ public:
   {
     char buffer[1];
     assert(read(fd, buffer, 1) == 1);
-    return new ClientConsole;
+    return new ClientConsole(username, password, db);
   }
 };
 
 static int init(drizzled::module::Context &context)
 {
   const module::option_map &vm= context.getOptions();
-  /* duplicating these here means they need to be freed. They're global, so
-     we'll just have the ListenConsole object do it in its destructor */
-  if (vm.count("username"))
-    username= strdup(vm["username"].as<string>().c_str());
-  else
-    username= strdup("");
-
-  if (vm.count("password"))
-    password= strdup(vm["password"].as<string>().c_str());
-  else
-    password= strdup("");
-
-  if (vm.count("db"))
-    db= strdup(vm["db"].as<string>().c_str());
-  else
-    db= strdup("");
-
-  context.add(new ListenConsole("console"));
+  const string username(vm.count("username") ? vm["username"].as<string>() : "");
+  const string password(vm.count("password") ? vm["password"].as<string>() : "");
+  const string db(vm.count("db") ? vm["db"].as<string>() : "");
   context.registerVariable(new sys_var_bool_ptr("enable", &enabled));
   context.registerVariable(new sys_var_bool_ptr("debug_enable", &debug_enabled));
-  context.registerVariable(new sys_var_const_str("username", username));
-  context.registerVariable(new sys_var_const_str("password", password));
-  context.registerVariable(new sys_var_const_str("db", db));
+  context.registerVariable(new sys_var_const_string_val("username", username));
+  context.registerVariable(new sys_var_const_string_val("password", password));
+  context.registerVariable(new sys_var_const_string_val("db", db));
+  context.add(new ListenConsole("console", username, password, db));
   return 0;
 }
 

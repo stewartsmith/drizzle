@@ -787,7 +787,7 @@ bool ClientMySQLProtocol::checkConnection(void)
 
   session->getSecurityContext().setUser(user);
 
-  return session->checkUser(passwd, passwd_len, l_db);
+  return session->checkUser(string(passwd, passwd_len), l_db);
 }
 
 bool ClientMySQLProtocol::netStoreData(const unsigned char *from, size_t length)
