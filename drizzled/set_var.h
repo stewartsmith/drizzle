@@ -488,50 +488,50 @@ public:
 };
 
 template<>
-bool sys_var_constrained_value<const uint64_t>::is_readonly() const
+inline bool sys_var_constrained_value<const uint64_t>::is_readonly() const
 {
   return true;
 }
 
 template<>
-bool sys_var_constrained_value<const uint32_t>::is_readonly() const
+inline bool sys_var_constrained_value<const uint32_t>::is_readonly() const
 {
   return true;
 }
 
 template<>
-SHOW_TYPE sys_var_constrained_value<uint64_t>::show_type()
+inline SHOW_TYPE sys_var_constrained_value<uint64_t>::show_type()
 {
   return SHOW_LONGLONG;
 }
 
 template<>
-SHOW_TYPE sys_var_constrained_value<int64_t>::show_type()
+inline SHOW_TYPE sys_var_constrained_value<int64_t>::show_type()
 {
   return SHOW_LONGLONG;
 }
 
 template<>
-SHOW_TYPE sys_var_constrained_value<uint32_t>::show_type()
+inline SHOW_TYPE sys_var_constrained_value<uint32_t>::show_type()
 {
   return SHOW_LONG;
 }
 
 template<>
-SHOW_TYPE sys_var_constrained_value<int32_t>::show_type()
+inline SHOW_TYPE sys_var_constrained_value<int32_t>::show_type()
 {
   return SHOW_LONG;
 }
 
 template<>
-bool sys_var_constrained_value<uint64_t>::update(Session *, set_var *var)
+inline bool sys_var_constrained_value<uint64_t>::update(Session *, set_var *var)
 {
   value= var->save_result.uint64_t_value;
   return false;
 }
 
 template<>
-bool sys_var_constrained_value<uint32_t>::update(Session *, set_var *var)
+inline bool sys_var_constrained_value<uint32_t>::update(Session *, set_var *var)
 {
   value= var->save_result.uint32_t_value;
   return false;
