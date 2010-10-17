@@ -30,7 +30,7 @@
 #include "drizzled/algorithm/sha1.h"
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
-#include <drizzled/sys_var.h>
+#include <drizzled/set_var.h>
 #include <iostream>
 
 namespace po= boost::program_options;
@@ -227,7 +227,7 @@ static int init(module::Context &context)
   }
 
   context.add(auth_file);
-  context.registerVariable(new sys_var_const_string_val("users", vm["users"]));
+  context.registerVariable(new sys_var_const_string_val("users", vm["users"].as<string>()));
   return 0;
 }
 
