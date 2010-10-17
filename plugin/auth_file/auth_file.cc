@@ -214,12 +214,7 @@ static int init(module::Context &context)
 {
   const module::option_map &vm= context.getOptions();
 
-  if (vm.count("users"))
-  {
-    users_file= const_cast<char *>(vm["users"].as<string>().c_str());
-  }
-
-  AuthFile *auth_file = new AuthFile("auth_file");
+  AuthFile *auth_file = new AuthFile("auth_file", vm["users"].as<string>());
   if (!auth_file->loadFile())
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Could not load auth file: %s\n"),
@@ -229,22 +224,10 @@ static int init(module::Context &context)
   }
 
   context.add(auth_file);
+  context.registerVariable(new sys_var_const_string_val("users", vm["users"]));
   return 0;
 }
 
-static DRIZZLE_SYSVAR_STR(users,
-                          users_file,
-                          PLUGIN_VAR_READONLY,
-                          N_("File to load for usernames and passwords"),
-                          NULL, /* check func */
-                          NULL, /* update func*/
-                          DEFAULT_USERS_FILE /* default */);
-
-static drizzle_sys_var* sys_variables[]=
-{
-  DRIZZLE_SYSVAR(users),
-  NULL
-};
 
 static void init_options(drizzled::module::option_context &context)
 {
@@ -255,4 +238,4 @@ static void init_options(drizzled::module::option_context &context)
 
 } /* namespace auth_file */
 
-DRIZZLE_PLUGIN(auth_file::init, auth_file::sys_variables, auth_file::init_options);
+DRIZZLE_PLUGIN(auth_file::init, NULL, auth_file::init_options);

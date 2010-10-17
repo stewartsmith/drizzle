@@ -37,7 +37,7 @@ static int init(drizzled::module::Context &context)
 {
 
   archive_engine= new ArchiveEngine();
-  context.add(new sys_var_bool_ptr("aio", &archive_use_aio));
+  context.registerVariable(new sys_var_bool_ptr("aio", &archive_use_aio));
   context.add(archive_engine);
 
   return false;
