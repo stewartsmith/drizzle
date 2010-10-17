@@ -30,6 +30,7 @@
 #include "drizzled/algorithm/sha1.h"
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
+#include <drizzled/sys_var.h>
 #include <iostream>
 
 namespace po= boost::program_options;
@@ -39,14 +40,15 @@ using namespace drizzled;
 namespace auth_file
 {
 
-static char* users_file= NULL;
 static const char DEFAULT_USERS_FILE[]= SYSCONFDIR "/drizzle.users";
 
 class AuthFile: public plugin::Authentication
 {
+  const std::string users_file;
+
 public:
 
-  AuthFile(string name_arg);
+  AuthFile(string name_arg, string users_file_arg);
 
   /**
    * Retrieve the last error encountered in the class.
@@ -91,8 +93,9 @@ private:
   map<string, string> users;
 };
 
-AuthFile::AuthFile(string name_arg):
+AuthFile::AuthFile(string name_arg, string users_file_arg):
   plugin::Authentication(name_arg),
+  users_file(users_file_arg),
   error(),
   users()
 {
@@ -105,7 +108,7 @@ string& AuthFile::getError(void)
 
 bool AuthFile::loadFile(void)
 {
-  ifstream file(users_file);
+  ifstream file(users_file.c_str());
 
   if (!file.is_open())
   {
