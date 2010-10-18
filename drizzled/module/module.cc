@@ -33,7 +33,7 @@ namespace module
 
 Module::~Module()
 {
-  for_each(sys_vars.begin(), sys_vars.end(), DeletePtr());
+  std::for_each(sys_vars.begin(), sys_vars.end(), DeletePtr());
 }
 
 } /* namespace module */
