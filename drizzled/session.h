@@ -151,19 +151,31 @@ struct CopyInfo
 
 };
 
-struct DrizzleLock
+class DrizzleLock
 {
-  Table **table;
+private:
+  std::vector<Table *> table;
+  std::vector<THR_LOCK_DATA *> locks;
+public:
+
+  Table **getTable()
+  {
+    return &table[0];
+  }
   uint32_t table_count;
   uint32_t lock_count;
-  THR_LOCK_DATA **locks;
+  THR_LOCK_DATA **getLocks()
+  {
+    return &locks[0];
+  }
 
-  DrizzleLock() :
-    table(0),
-    table_count(0),
-    lock_count(0),
-    locks(0)
-  { }
+  DrizzleLock(size_t table_count_arg, size_t lock_count_arg) :
+    table_count(table_count_arg),
+    lock_count(lock_count_arg)
+  {
+    table.resize(table_count);
+    locks.resize(lock_count);
+  }
 
 };
 
