@@ -38,7 +38,7 @@
 
 namespace drizzled
 {
-class sys_var;
+class set_var;
 
 void module_shutdown(module::Registry &registry);
 
@@ -58,29 +58,20 @@ public:
   Library *plugin_dl;
   bool isInited;
   Variables system_vars;         /* server variables for this plugin */
+  Variables sys_vars;
   Module(const Manifest *manifest_arg,
          Library *library_arg) :
     name(manifest_arg->name),
     manifest(manifest_arg),
     plugin_dl(library_arg),
     isInited(false),
-    system_vars()
+    system_vars(),
+    sys_vars()
   {
     assert(manifest != NULL);
   }
 
-  // @todo why is this here? -B
-#if 0 
-  ~Module()
-  {
-    for (Variables::iterator iter= system_vars.begin();
-         iter != system_vars.end();
-         ++iter)
-    {
-      delete *iter;
-    }
-  }
-#endif
+  ~Module();
 
   const std::string& getName() const
   {
@@ -90,6 +81,12 @@ public:
   const Manifest& getManifest() const
   {
     return *manifest;
+  }
+
+  void addMySysVar(sys_var *var)
+  {
+    sys_vars.push_back(var);
+    addSysVar(var);
   }
 
   void addSysVar(sys_var *var)

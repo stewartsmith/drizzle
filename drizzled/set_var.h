@@ -96,7 +96,7 @@ void init_sys_var();
 class sys_var
 {
 protected:
-  const std::string name; /**< The name of the variable */
+  std::string name; /**< The name of the variable */
   sys_after_update_func after_update; /**< Function pointer triggered after the variable's value is updated */
   struct option *option_limits; /**< Updated by by set_var_init() */
   bool m_allow_empty_value; /**< Does variable allow an empty value? */
@@ -108,6 +108,11 @@ public:
     m_allow_empty_value(true)
   {}
   virtual ~sys_var() {}
+
+  void setName(const std::string &name_in)
+  {
+    name= name_in;
+  }
 
   /** 
    * Returns the name of the variable.
