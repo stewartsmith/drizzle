@@ -70,48 +70,70 @@
  *
  */
 #ifndef md5_INCLUDED
-#  define md5_INCLUDED
+#define md5_INCLUDED
+
 #include <string.h>
 
+#include "CSDefs.h"
+
 /* Define the state of the MD5 Algorithm. */
-
-
 typedef unsigned int md5_word_t;
-#define CHECKSUM_VALUE_SIZE	16
 
-typedef struct {
-	u_char val[CHECKSUM_VALUE_SIZE];
-} Md5Digest;
+#define MD5_CHECKSUM_SIZE			CHECKSUM_VALUE_SIZE
+#define MD5_CHECKSUM_STRING_SIZE	(CHECKSUM_VALUE_SIZE * 2 + 1)
 
 class CSMd5 {
 	private:
 	struct md5_state_s {
-		md5_word_t count[2];		/* message length in bits, lsw first */
-		md5_word_t abcd[4];		/* digest buffer */
-		u_char buf[64];		/* accumulate block */
+		md5_word_t	count[2];		/* message length in bits, lsw first */
+		md5_word_t	abcd[4];		/* digest buffer */
+		u_char		buf[64];		/* accumulate block */
 	} md5_state;
 
+	u_char			digest[MD5_CHECKSUM_SIZE];
+	char			digest_cstr[MD5_CHECKSUM_STRING_SIZE];
+
 	void md5_process(const u_char *data /*[64]*/);
+	void md5_digest();
 
 	public:
-	CSMd5()
-	{
+	CSMd5() {
 		md5_init();
 	}
-	
+
 	void md5_init();
 
 	/* Append a string to the message. */
 	void md5_append(const u_char  *data, int nbytes);
-	void md5_append(const char  *data)
-	{
+
+	void md5_append(const char  *data) {
 		md5_append((const u_char  *) data, strlen(data));
 	}
-	
 
 	/* Finish the message and return the digest. */
-	void md5_digest(Md5Digest *digest);
+	
+	// Returns the raw bin digest.
+	const u_char *md5_get_digest() {
+		if (!digest_cstr[0])
+			md5_digest();
+		return digest;
+	}
 
+	// Returns the bin/hex digest.
+	void md5_get_digest(Md5Digest *d) {
+		if (!digest_cstr[0])
+			md5_digest();
+			
+		memcpy(d->val, digest, CHECKSUM_VALUE_SIZE);
+	}
+	
+	// Returns the bin/hex digest.
+	const char *md5_get_digest_cstr() {
+		if (!digest_cstr[0])
+			md5_digest();
+		return digest_cstr;
+	}
+	
 };
 
 #endif /* md5_INCLUDED */

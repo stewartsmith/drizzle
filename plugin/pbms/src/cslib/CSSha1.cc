@@ -58,6 +58,7 @@
 
 #include "CSConfig.h"
 #include <string.h>
+#include <stdint.h>
 
 #include "CSDefs.h"
 #include "CSObject.h"

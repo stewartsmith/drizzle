@@ -545,11 +545,11 @@ void MSDatabase::returnRepoFileToPool(MSRepoFile *file)
 	push_(file);
 	if ((repo = file->myRepo)) {
 		if (repo->isRemovingFP) {
-			repo->removeRepoFile(file);
+			repo->removeRepoFile(RETAIN(file));
 			myRepostoryList->wakeup();
 		}
 		else
-			repo->returnRepoFile(file);
+			repo->returnRepoFile(RETAIN(file));
 		repo->release(); /* [++] here is the release.  */
 	}
 	release_(file);
@@ -1076,7 +1076,7 @@ MSDatabase *MSDatabase::getDatabase(uint32_t db_id)
 						int len = ptr - dir_name;
 						ptr++;
 						if ((strtoul(ptr, NULL, 10) == db_id) && len) {
-							db = getDatabase(CSCString::newString(dir_name, len), true);
+							db = getDatabase(CSString::newString(dir_name, len), true);
 							ASSERT(db->myDatabaseID == db_id);
 						}
 					}
@@ -1259,7 +1259,7 @@ MSDatabase *MSDatabase::newDatabase(const char *db_location, CSString *db_name, 
 	 * The database name is case sensitive here if the file system names are
 	 * case sensitive. This is desirable.
 	 */
-	path = CSPath::newPath(ms_my_get_mysql_home_path().c_str(), RETAIN(db_name));
+	path = CSPath::newPath(ms_my_get_mysql_home_path(), RETAIN(db_name));
 	push_(path);
 	if (create && !path->exists()) {
 		CSException::throwException(CS_CONTEXT, MS_ERR_UNKNOWN_DB, db_name->getCString());
@@ -1597,7 +1597,7 @@ void MSDatabase::dropDatabase(MSDatabase *doomedDatabase, const char *db_name )
 			gDatabaseList->remove(doomedDatabase->getKey());
 		if (!self->myMustQuit) 
 			unlock_(gDatabaseList); 
-		ASSERT(doomedDatabase->iRefCount == 1);
+		ASSERT(doomedDatabase->getRefCount() == 1);
 		release_(doomedDatabase);
 		
 	} else {
@@ -1605,7 +1605,7 @@ void MSDatabase::dropDatabase(MSDatabase *doomedDatabase, const char *db_name )
 		bool create = false;
 		uint32_t db_id;
 		
-		path = createDatabasePath(ms_my_get_mysql_home_path().c_str(), CSString::newString(db_name), &db_id, &create);
+		path = createDatabasePath(ms_my_get_mysql_home_path(), CSString::newString(db_name), &db_id, &create);
 		
 		if (path) {
 			MSTransactionManager::dropDatabase(db_id);
@@ -1636,7 +1636,7 @@ void MSDatabase::dropDatabase(const char *db_name )
 // 3: <database>/<table>
 bool MSDatabase::convertTablePathToIDs(const char *table_path, uint32_t *db_id, uint32_t *tab_id, bool create) 
 {
-	const char	*base = ms_my_get_mysql_home_path().c_str();
+	const char	*base = ms_my_get_mysql_home_path();
 	CSString	*table_url;
 	CSString	*db_path = NULL;
 	CSString	*db_name = NULL;
@@ -1736,7 +1736,7 @@ MSDatabase *MSDatabase::loadDatabase(CSString *db_name, bool create)
 	MSDatabase *db;
 	enter_();
 	
-	db = newDatabase(ms_my_get_mysql_home_path().c_str(), db_name, 0, create);
+	db = newDatabase(ms_my_get_mysql_home_path(), db_name, 0, create);
 	
 	if (db) {
 		push_(db);

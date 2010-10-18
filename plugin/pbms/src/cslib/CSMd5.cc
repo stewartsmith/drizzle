@@ -55,8 +55,8 @@
 #include <string.h>
 
 #include "CSDefs.h"
-
 #include "CSMd5.h"
+#include "CSStrUtil.h"
 
 #undef BYTE_ORDER	/* 1 = big-endian, -1 = little-endian, 0 = unknown */
 #ifdef ARCH_IS_BIG_ENDIAN
@@ -321,6 +321,9 @@ void CSMd5::md5_process(const u_char *data /*[64]*/)
 void
 CSMd5::md5_init()
 {
+	/* Indicates that there is no digest: */
+	digest_cstr[0] = 0;
+
     md5_state.count[0] = md5_state.count[1] = 0;
     md5_state.abcd[0] = 0x67452301;
     md5_state.abcd[1] = /*0xefcdab89*/ T_MASK ^ 0x10325476;
@@ -338,7 +341,6 @@ void CSMd5::md5_append(const u_char *data, int nbytes)
    if (nbytes <= 0) {
 		return;
 	}
-	
 	
    /* Update the message length. */
     md5_state.count[1] += nbytes >> 29;
@@ -368,8 +370,7 @@ void CSMd5::md5_append(const u_char *data, int nbytes)
 }
 
 
-void
-CSMd5::md5_digest(Md5Digest *digest)
+void CSMd5::md5_digest()
 {
     static const u_char pad[64] = {
 	0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -388,5 +389,8 @@ CSMd5::md5_digest(Md5Digest *digest)
     /* Append the length. */
     md5_append(data, 8);
     for (i = 0; i < 16; ++i)
-		digest->val[i] = (u_char)(md5_state.abcd[i >> 2] >> ((i & 3) << 3));
+		digest[i] = (u_char)(md5_state.abcd[i >> 2] >> ((i & 3) << 3));
+
+	/* Generate the text version: */
+	cs_bin_to_hex(MD5_CHECKSUM_STRING_SIZE, digest_cstr, MD5_CHECKSUM_SIZE, digest);
 }

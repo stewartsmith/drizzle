@@ -44,29 +44,26 @@
  * BASIC OBJECTS
  */
 
+#ifdef DEBUG
+void CSObject::retain(const char *func, const char *file, uint32_t line)
+{
+	CSException::throwAssertion(func, file, line, "Non-referenced object cannot be referenced");
+}
+#else
 void CSObject::retain()
 {
 	CSException::throwAssertion(CS_CONTEXT, "Non-referenced object cannot be referenced");
 }
-
-void CSObject::release()
-{
-	delete this;
-}
+#endif
 
 #ifdef DEBUG
-/*
-void CSObject::retain(const char *func, const char *file, uint32_t line)
-{
-	CSException::throwAssertion(CS_CONTEXT, "Non-referenced object cannot be referenced");
-}
-
-void CSObject::release(const char *func, const char *file, uint32_t line)
+void CSObject::release(const char *, const char *, uint32_t )
+#else
+void CSObject::release()
+#endif
 {
 	delete this;
 }
-*/
-#endif
 
 CSObject *CSObject::getKey() { CSException::throwCoreError(CS_CONTEXT, CS_ERR_IMPL_MISSING, __FUNC__); return NULL; }
 
@@ -85,10 +82,34 @@ CSObject *CSObject::getPrevLink() { CSException::throwCoreError(CS_CONTEXT, CS_E
 void CSObject::setNextLink(CSObject *) { CSException::throwCoreError(CS_CONTEXT, CS_ERR_IMPL_MISSING, __FUNC__); }
 
 void CSObject::setPrevLink(CSObject *) { CSException::throwCoreError(CS_CONTEXT, CS_ERR_IMPL_MISSING, __FUNC__); }
+
+/*
+ * ---------------------------------------------------------------
+ * STATIC OBJECTS
+ */
+
+#ifdef DEBUG
+void CSStaticObject::retain(const char *, const char *, uint32_t )
+#else
+void CSStaticObject::retain()
+#endif
+{
+}
+
+#ifdef DEBUG
+void CSStaticObject::release(const char *, const char *, uint32_t )
+#else
+void CSStaticObject::release()
+#endif
+{
+	finalize();
+}
+
 /*
  * ---------------------------------------------------------------
  * REFERENCE OBJECTS
  */
+
 CSRefObject::CSRefObject():
 CSObject(),
 iRefCount(1)
@@ -104,47 +125,32 @@ CSRefObject::~CSRefObject()
 	ASSERT(iRefCount == 0);
 }
 
+#ifdef DEBUG
+void CSRefObject::retain(const char *func, const char *file, uint32_t line)
+#else
 void CSRefObject::retain()
+#endif
 {
 	if (!iRefCount)
 		CSException::throwAssertion(CS_CONTEXT, "Freed object being retained.");
 		
 	iRefCount++;
 #ifdef DEBUG
-	cs_mm_track_memory(NULL, NULL, 0, this, true, iRefCount, iTrackMe);
+	cs_mm_track_memory(func, file, line, this, true, iRefCount, iTrackMe);
 #endif
 }
 
-void CSRefObject::release()
-{
-	bool terminate;
-
 #ifdef DEBUG
-	cs_mm_track_memory(NULL, NULL, 0, this, false, iRefCount, iTrackMe);
-#endif
-	iRefCount--;
-	if (!iRefCount)
-		terminate = true;
-	else
-		terminate = false;
-
-	if (terminate)
-		delete this;
-}
-
-#ifdef DEBUG
-/*
-void CSRefObject::retain(const char *func, const char *file, uint32_t line)
-{
-	iRefCount++;
-	cs_mm_print_track(func, file, line, this, true, iRefCount);
-}
-
 void CSRefObject::release(const char *func, const char *file, uint32_t line)
+#else
+void CSRefObject::release()
+#endif
 {
 	bool terminate;
 
+#ifdef DEBUG
 	cs_mm_track_memory(func, file, line, this, false, iRefCount, iTrackMe);
+#endif
 	iRefCount--;
 	if (!iRefCount)
 		terminate = true;
@@ -154,7 +160,13 @@ void CSRefObject::release(const char *func, const char *file, uint32_t line)
 	if (terminate)
 		delete this;
 }
-*/
+
+#ifdef DEBUG
+void CSRefObject::startTracking()
+{
+	iTrackMe = 1;
+	cs_mm_track_memory(NULL, NULL, 0, this, true, iRefCount, iTrackMe);
+}
 #endif
 
 /*
@@ -178,23 +190,31 @@ CSSharedRefObject::~CSSharedRefObject()
 	ASSERT(iRefCount == 0);
 }
 
+#ifdef DEBUG
+void CSSharedRefObject::retain(const char *func, const char *file, uint32_t line)
+#else
 void CSSharedRefObject::retain()
+#endif
 {
 	lock();
 	iRefCount++;
 #ifdef DEBUG
-	cs_mm_track_memory(NULL, NULL, 0, this, true, iRefCount, iTrackMe);
+	cs_mm_track_memory(func, file, line, this, true, iRefCount, iTrackMe);
 #endif
 	unlock();
 }
 
+#ifdef DEBUG
+void CSSharedRefObject::release(const char *func, const char *file, uint32_t line)
+#else
 void CSSharedRefObject::release()
+#endif
 {
 	bool terminate;
 
 	lock();
 #ifdef DEBUG
-	cs_mm_track_memory(NULL, NULL, 0, this, false, iRefCount, iTrackMe);
+	cs_mm_track_memory(func, file, line, this, false, iRefCount, iTrackMe);
 #endif
 	iRefCount--;
 	if (!iRefCount)

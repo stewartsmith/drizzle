@@ -27,12 +27,12 @@
 #include "CSConfig.h"
 
 #include <stdlib.h>
+#include <string.h>
 #include <inttypes.h>
 
-#include "string.h"
-
-#include "CSHTTPStream.h"
 #include "CSGlobal.h"
+#include "CSHTTPStream.h"
+#include "CSLog.h"
 
 #ifdef DEBUG
 //#define PRINT_HEADER
@@ -85,11 +85,15 @@ void CSHeader::setValue(CSString *value)
 	iValue = value;
 }
 
-void CSHeader::write(CSOutputStream *out)
+void CSHeader::write(CSOutputStream *out, bool trace)
 {
+	if (trace)
+		printf("%s: %s\n", iName->getCString(), iValue->getCString());
+
 	out->print(iName);
 	out->print(": ");
-	out->print(iValue);
+	if (iValue)
+		out->print(iValue);
 	out->print("\r\n");
 }
 
@@ -218,6 +222,14 @@ void CSHTTPHeaders::addHeader(const char *name, CSString *value)
 	exit_();
 }
 
+void CSHTTPHeaders::addHeader(const char *name, uint64_t value)
+{
+	char buffer[30];
+
+	snprintf(buffer, 30, "%"PRIu64, value);
+	addHeader(name, buffer);
+}
+
 void CSHTTPHeaders::removeHeader(CSString *name)
 {
 	enter_();
@@ -245,37 +257,47 @@ void CSHTTPHeaders::removeHeader(const char *name)
 
 CSString *CSHTTPHeaders::getHeaderValue(const char *name)
 {
-	CSString *n;
 	CSString *v;
 
-	enter_();
-	n = CSString::newString(name);
-	push_(n);
 	v = NULL;
 	if (iHeaders) {
 		CSHeader *h;
 
 		for (uint32_t i=0; i<iHeaders->size(); i++) {
 			h = (CSHeader *) iHeaders->get(i);
-			if (h->getName()->compare(n) == 0) {
+			if (h->getName()->compare(name) == 0) {
 				v = h->getValue();
 				v->retain();
 				break;
 			}
 		}
 	}
-	release_(n);
-	return_(v);
+	return v;
 }
 
-void CSHTTPHeaders::writeHeader(CSOutputStream *out)
+const char *CSHTTPHeaders::getHeaderCStringValue(const char *name)
 {
 	if (iHeaders) {
 		CSHeader *h;
 
 		for (uint32_t i=0; i<iHeaders->size(); i++) {
 			h = (CSHeader *) iHeaders->get(i);
-			h->write(out);
+			if (h->getName()->compare(name) == 0) {
+				return h->getValue()->getCString();
+			}
+		}
+	}
+	return NULL;
+}
+
+void CSHTTPHeaders::writeHeader(CSOutputStream *out, bool trace)
+{
+	if (iHeaders) {
+		CSHeader *h;
+
+		for (uint32_t i=0; i<iHeaders->size(); i++) {
+			h = (CSHeader *) iHeaders->get(i);
+			h->write(out, trace);
 		}
 	}
 }
@@ -318,7 +340,7 @@ CSHTTPInputStream::~CSHTTPInputStream()
 		iInput->release();
 }
 
-void CSHTTPInputStream::readHead()
+void CSHTTPInputStream::readHead(bool trace)
 {
 	CSStringBuffer	*sb = NULL;
 	bool			first_line = true;
@@ -330,9 +352,11 @@ void CSHTTPInputStream::readHead()
 		sb = iInput->readLine();
 		if (!sb)
 			break;
-#ifdef PRINT_HEADER
-		printf("HTTP: %s\n", sb->getCString());
-#endif
+		if (trace) {
+			if (first_line)
+				CSL.log(self, CSLog::Protocol, "HTTP Request - Header:\n");
+			printf("%s\n", sb->getCString());
+		}
 		if (sb->length() == 0) {
 			sb->release();
 			break;
@@ -401,6 +425,40 @@ void CSHTTPInputStream::readHead()
 	exit_();
 }
 
+void CSHTTPInputStream::readBody()
+{
+	uint64_t	body_size;
+	size_t	tfer, len;
+
+	if (getContentLength(&body_size)) {
+		iBody.setLength((size_t) body_size);
+		len = 0;
+		while (len < body_size) {
+			tfer =  read(iBody.getBuffer(len), (size_t)(body_size - len));
+			if (!tfer)
+				CSException::throwException(CS_CONTEXT, CS_ERR_BODY_INCOMPLETE, "POST data incomplete");
+			len += tfer;
+		}
+	}
+	else {
+		CSStringBuffer *sb = NULL;
+
+		/* Read until we have an empty line. */
+		for (;;) {
+			sb = readLine();
+			if (!sb)
+				break;
+			if (sb->length() == 0) {
+				sb->release();
+				break;
+			}
+			iBody.append(sb->getBuffer(0), sb->length());
+			iBody.append((char) '\n');
+			sb->release();
+		}
+	}
+}
+
 bool CSHTTPInputStream::getRange(uint64_t *size, uint64_t *offset)
 {
 	CSString	*val;
@@ -423,7 +481,7 @@ bool CSHTTPInputStream::getRange(uint64_t *size, uint64_t *offset)
 	return haveRange;
 }
 
-uint64_t CSHTTPInputStream::getContentLength()
+bool CSHTTPInputStream::getContentLength(uint64_t *length)
 {
 	CSString	*val;
 	uint64_t		size = 0;
@@ -434,8 +492,10 @@ uint64_t CSHTTPInputStream::getContentLength()
 		if (len)  
 			sscanf(len, "%"PRIu64"", &size);		
 		val->release();
+		*length = size;
+		return true;
 	}
-	return size;
+	return false;
 }
 
 const char *CSHTTPInputStream::getMethod()
@@ -531,33 +591,60 @@ CSHTTPOutputStream::~CSHTTPOutputStream()
 		iOutput->release();
 }
 
-void CSHTTPOutputStream::writeHeaders()
+void CSHTTPOutputStream::print(const char *str, bool trace)
 {
-	writeHeader(this);
+	if (trace)
+		printf("%s", str);
+	iOutput->print(str);
+}
+
+
+void CSHTTPOutputStream::print(int32_t value, bool trace)
+{
+	if (trace)
+		printf("%d", value);
+	iOutput->print(value);
+}
+
+void CSHTTPOutputStream::print(uint64_t value, bool trace)
+{
+	if (trace)
+		printf("%"PRIu64, value);
+	iOutput->print(value);
+}
+
+void CSHTTPOutputStream::writeHeaders(bool trace)
+{
+	writeHeader(this, trace);
 	clearHeaders();
 }
 
-void CSHTTPOutputStream::writeHead()
+void CSHTTPOutputStream::writeHead(bool trace)
 {
-	iOutput->print("HTTP/1.1 ");
-	iOutput->print(iStatus);
-	iOutput->print(" ");
-	iOutput->print(getReasonPhrase(iStatus));
-	iOutput->print("\r\n");
-	writeHeader(iOutput);
-	iOutput->print("Content-Length: ");
-	iOutput->print(iContentLength);
-	iOutput->print("\r\n");
+	enter_();
+	if (trace)
+		CSL.log(self, CSLog::Protocol, "HTTP Reply - Header:\n");
+	print("HTTP/1.1 ", trace);
+	print(iStatus, trace);
+	print(" ", trace);
+	print(getReasonPhrase(iStatus), trace);
+	print("\r\n", trace);
+	writeHeader(iOutput, trace);
+	print("Content-Length: ", trace);
+	print(iContentLength, trace);
+	print("\r\n", trace);
 	if (iRangeSize && (iStatus == 200)) {
-		iOutput->print("Content-Range: bytes ");
-		iOutput->print(iRangeOffset);
-		iOutput->print("-");
-		iOutput->print(iRangeOffset + iRangeSize -1);
-		iOutput->print("/");
-		iOutput->print(iTotalLength);
-		iOutput->print("\r\n");
+		print("Content-Range: bytes ", trace);
+		print(iRangeOffset, trace);
+		print("-", trace);
+		print(iRangeOffset + iRangeSize -1, trace);
+		print("/", trace);
+		print(iTotalLength, trace);
+		print("\r\n", trace);
 	}
-	iOutput->print("\r\n");
+	print("\r\n", trace);
+	exit_();
+
 }
 
 void CSHTTPOutputStream::clearBody()
@@ -580,10 +667,38 @@ void CSHTTPOutputStream::appendBody(const char *str)
 	iContentLength = iBody.length();
 }
 
-void CSHTTPOutputStream::appendBody(int value)
+void CSHTTPOutputStream::appendBody(int32_t value)
 {
 	iBody.append(value);
 	iContentLength = iBody.length();
+}
+
+void CSHTTPOutputStream::appendBody(uint32_t value)
+{
+	iBody.append(value);
+	iContentLength = iBody.length();
+}
+
+void CSHTTPOutputStream::appendBody(uint64_t value)
+{
+	iBody.append(value);
+	iContentLength = iBody.length();
+}
+
+const char *CSHTTPOutputStream::getBodyData()
+{
+	return iBody.getCString(); 
+}
+
+size_t CSHTTPOutputStream::getBodyLength()
+{
+	return iBody.length();
+}
+
+void CSHTTPOutputStream::setBody(CSStringBufferImpl *buf)
+{
+	iBody.take(buf);
+	iContentLength = iBody.length(); 
 }
 
 void CSHTTPOutputStream::close()

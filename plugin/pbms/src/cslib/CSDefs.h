@@ -35,6 +35,18 @@
 // Use standard portable data types
 #include <stdint.h>
 
+/* Those compilers that support the function
+ * macro (in particular the "pretty" function
+ * macro must be defined here.
+ */
+#ifdef OS_WINDOWS
+#define __FUNC__				__FUNCTION__
+#elif defined(OS_SOLARIS)
+#define __FUNC__				"__func__"
+#else
+#define __FUNC__				__PRETTY_FUNCTION__
+#endif
+
 /*
  * An unsigned integer, 1 byte long:
  */
@@ -47,7 +59,7 @@
  */
 #define s_char			unsigned char
 
-/* PBMS assumes that off_t is 8 bytes so to ensure this always use  off64_t*/
+/* We assumes that off_t is 8 bytes so to ensure this always use  off64_t*/
 #define off64_t			uint64_t
 
 
@@ -299,5 +311,11 @@ typedef union {
 		char *rec_chars;
 		CSIntPtr int_val;
 } CSDiskData;
+
+#define CHECKSUM_VALUE_SIZE			16
+typedef struct {
+	u_char val[CHECKSUM_VALUE_SIZE];
+} Md5Digest;
+
 	
 #endif

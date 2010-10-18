@@ -28,7 +28,17 @@
 
 #include "CSEncode.h"
 
-static const u_char base64Map[64] = {
+static const u_char base64URLMap[64] = {
+	'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 
+	'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 
+	'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 
+	'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 
+	'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 
+	'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 
+	'w', 'x', 'y', 'z', '0', '1', '2', '3', 
+	'4', '5', '6', '7', '8', '9', '-', '_'
+};
+static const u_char base64STDMap[64] = {
 	'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 
 	'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 
 	'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 
@@ -40,26 +50,26 @@ static const u_char base64Map[64] = {
 };
  
 static const u_char decodeBase64Map[128] = {
-	0XBF, 0XFF, 0XF2, 0X2C, 0XBF, 0XFF, 0XF2, 0X24, 
-	0X0, 0X0, 0X2E, 0X4C, 0X0, 0X0, 0X0, 0X3, 
-	0X0, 0X0, 0X0, 0X3, 0XBF, 0XFF, 0XF1, 0X40, 
-	0X0, 0X0, 0X0, 0X50, 0X8F, 0XE1, 0X56, 0XD8, 
-	0X0, 0X30, 0X6, 0XEC, 0X0, 0X30, 0X6, 0XF0, 
-	0X0, 0X0, 0X2E, 0X3E, 0X0, 0X0, 0X0, 0X3F, 
+	0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 
+	0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 
+	0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 
+	0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 
+	0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 
+	0XFF, 0XFF, 0XFF, 0X3E, 0XFF, 0X3E, 0XFF, 0X3F, 
 	0X34, 0X35, 0X36, 0X37, 0X38, 0X39, 0X3A, 0X3B, 
-	0X3C, 0X3D, 0X2C, 0X68, 0X90, 0X0, 0X17, 0XD8, 
-	0XBF, 0X0, 0X1, 0X2, 0X3, 0X4, 0X5, 0X6, 
-	0X7, 0X8, 0X9, 0XA, 0XB, 0XC, 0XD, 0XE, 
-	0XF, 0X10, 0X11, 0X12, 0X13, 0X14, 0X15, 0X16, 
-	0X17, 0X18, 0X19, 0X80, 0X0, 0X0, 0X0, 0X0, 
-	0X0, 0X1A, 0X1B, 0X1C, 0X1D, 0X1E, 0X1F, 0X20, 
+	0X3C, 0X3D, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 
+	0XFF, 0X00, 0X01, 0X02, 0X03, 0X04, 0X05, 0X06, 
+	0X07, 0X08, 0X09, 0X0A, 0X0B, 0X0C, 0X0D, 0X0E, 
+	0X0F, 0X10, 0X11, 0X12, 0X13, 0X14, 0X15, 0X16, 
+	0X17, 0X18, 0X19, 0XFF, 0XFF, 0XFF, 0XFF, 0X3F, 
+	0XFF, 0X1A, 0X1B, 0X1C, 0X1D, 0X1E, 0X1F, 0X20, 
 	0X21, 0X22, 0X23, 0X24, 0X25, 0X26, 0X27, 0X28, 
 	0X29, 0X2A, 0X2B, 0X2C, 0X2D, 0X2E, 0X2F, 0X30, 
-	0X31, 0X32, 0X33, 0X0, 0X90, 0X1B, 0XBA, 0X48, 
+	0X31, 0X32, 0X33, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 
 };
 
-
-static bool base64Encoded(const u_char *data, size_t len)
+//------------------
+static bool base64Encoded(const u_char *data, size_t len, const u_char *vc)
 {
 	if (len % 4)
 		return false;
@@ -72,21 +82,33 @@ static bool base64Encoded(const u_char *data, size_t len)
 		return false;
 		
 	for (; i ; i--, data++) {
-		if (*data > 63)
+		if (((*data < 'A') || (*data > 'Z')) &&
+			((*data < 'a') || (*data > 'z')) &&
+			((*data < '0') || (*data > '9')) &&
+			((*data != vc[0]) && (*data != vc[1])))
 			return false;
 	}
 	
 	return true; // Actually this isn't so much 'true' as 'maybe'
 }
 
-char *base64Encode(const void *data, size_t len)
+//------------------
+static char *genericBase64Encode(const void *data, size_t len, char *encode_buffer, size_t encode_buffer_len, const u_char base64Map[])
 {
 	u_char *wptr, *rptr, *encoding;
 	size_t size;
 	enter_();
 
-	size = ((len + 2) / 3) * 4;
-	encoding = (u_char *) cs_malloc(size +1);
+	size = ((len + 2) / 3) * 4 +1;
+	if ((encode_buffer != NULL) && (encode_buffer_len < size)) 
+		CSException::throwException(CS_CONTEXT, CS_ERR_GENERIC_ERROR, "Base64 encode buffer is too small.");
+	
+	if (encode_buffer)
+		encoding = (u_char *) encode_buffer;
+	else
+		encoding = (u_char *) cs_malloc(size);
+		
+	size--;
 	encoding[size] = 0;
 	
 	wptr= encoding;
@@ -119,26 +141,30 @@ char *base64Encode(const void *data, size_t len)
 	return_((char*)encoding);
 }
 
-void *base64Decode(const char *data, size_t len)
+//------------------
+static void *genericBase64Decode(const char *data, size_t len, void *decode_buffer, size_t decode_buffer_len, const u_char base64Map[])
 {
-	uint32_t tail;
 	u_char *wptr, *rptr, *decoding;
 	enter_();
 
 	rptr = (u_char *) data;
 
-	if (!base64Encoded(rptr, len)) 
+	if (!base64Encoded(rptr, len, base64Map +62)) 
 		CSException::throwException(CS_CONTEXT, CS_ERR_GENERIC_ERROR, "String was not Base64 encoded.");
 	
+	if ((decode_buffer != NULL) && (decode_buffer_len < ((len/ 4) * 3))) 
+		CSException::throwException(CS_CONTEXT, CS_ERR_GENERIC_ERROR, "Base64 decoded buffer is too small.");
+	
+	if (decode_buffer)
+		decoding = (u_char *) decode_buffer;
+	else
 	decoding = (u_char *) cs_malloc((len/ 4) * 3);
 	
 	wptr= decoding;
 	
-	tail = len; 
-	while (rptr[tail-1] == '=') 
-		tail--; 
+	while (rptr[len-1] == '=') 
+		len--; 
 
-	len -= tail;
 	while (len/4) {		
 		wptr[0] = ( ((decodeBase64Map[rptr[0]] << 2) & 0xFF) | ((decodeBase64Map[rptr[1]] >> 4) & 0x03) ); 
 		wptr[1] = ( ((decodeBase64Map[rptr[1]] << 4) & 0xFF) | ((decodeBase64Map[rptr[2]] >> 2) & 0x0F) ); 
@@ -156,6 +182,30 @@ void *base64Decode(const char *data, size_t len)
 	}
 	
 	return_(decoding);
+}
+
+//------------------
+char *base64Encode(const void *data, size_t len, char *encode_buffer, size_t encode_buffer_len)
+{
+	return genericBase64Encode(data, len, encode_buffer, encode_buffer_len, base64STDMap);
+}
+
+//------------------
+void *base64Decode(const char *data, size_t len, void *decode_buffer, size_t decode_buffer_len)
+{
+	return genericBase64Decode(data, len, decode_buffer, decode_buffer_len, base64STDMap);
+}
+
+//------------------
+char *base64UrlEncode(const void *data, size_t len, char *encode_buffer, size_t encode_buffer_len)
+{
+	return genericBase64Encode(data, len, encode_buffer, encode_buffer_len, base64URLMap);
+}
+
+//------------------
+void *base64UrlDecode(const char *data, size_t len, void *decode_buffer, size_t decode_buffer_len)
+{
+	return genericBase64Decode(data, len, decode_buffer, decode_buffer_len, base64URLMap);
 }
 
 #ifdef NOT_USED

@@ -36,8 +36,6 @@
 #include "CSDefs.h"
 #include "CSObject.h"
 
-using namespace std;
-
 class CSTime : public CSObject  {
 public:
 	CSTime(): iIsNull(true) { }
@@ -91,6 +89,12 @@ public:
 	void setUTC1601(uint64_t nsec100);
 	uint64_t getUTC1601();
 
+	/* 
+	 * Tests if the time is more than 'max_age' seconds in the past.
+	 */
+	bool olderThen(time_t max_age);
+
+	static	uint64_t getTimeCurrentTicks();
 private:
 	bool	iIsNull;
 	char	iCString[100];

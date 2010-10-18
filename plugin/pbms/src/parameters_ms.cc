@@ -30,6 +30,7 @@
 #include <drizzled/common.h>
 #include <drizzled/plugin.h>
 #include <drizzled/session.h>
+using namespace std;
 using namespace drizzled;
 using namespace drizzled::plugin;
 
@@ -44,6 +45,7 @@ using namespace drizzled::plugin;
 #endif 
 
 #include <inttypes.h>
+#include <string.h>
 
 #include "cslib/CSDefs.h"
 #include "cslib/CSObject.h"
@@ -316,6 +318,25 @@ void PBMSParameters::blackListedDB(const char *db)
 }		
 
 //-----------------
+bool PBMSParameters::try_LocateDB(CSThread *self, const char *db, bool *found)
+{
+	volatile bool rtc = true;
+	try_(a) {
+		lock_(&my_table_list_lock);	
+		
+			
+		*found = (locate_db(my_table_list, db, strlen(db)) != NULL);
+			
+		unlock_(&my_table_list_lock);
+		rtc = false;
+	}
+	
+	catch_(a)
+	cont_(a);
+	return rtc;
+}
+
+//-----------------
 bool PBMSParameters::isBLOBDatabase(const char *db)
 {
 	CSThread *self;
@@ -338,19 +359,9 @@ bool PBMSParameters::isBLOBDatabase(const char *db)
 	if ((err = MSEngine::enterConnectionNoThd(&self, &result)) == 0) {
 
 		inner_();
-		try_(a) {
-			lock_(&my_table_list_lock);	
-			
-				
-			found = (locate_db(my_table_list, db, strlen(db)) != NULL);
-				
-			unlock_(&my_table_list_lock);
-		}
-		
-		catch_(a) {
+		if (try_LocateDB(self, db, &found)) {
 			err = MSEngine::exceptionToResult(&self->myException, &result);
-		}
-		cont_(a);
+		}		
 		outer_();
 	
 	}
@@ -364,14 +375,56 @@ bool PBMSParameters::isBLOBDatabase(const char *db)
 }
 	
 //-----------------
+bool PBMSParameters::try_LocateTable(CSThread *self, const char *db, const char *table, bool *found)
+{
+	volatile bool rtc = true;
+	try_(a) {
+		const char *ptr;
+		int db_len, table_len, match_len;
+		
+		lock_(&my_table_list_lock);	
+				
+		db_len = strlen(db);
+		table_len = strlen(table);
+		
+		ptr = my_table_list;
+		while (ptr) {
+			ptr = locate_db(ptr, db, db_len);
+			if (ptr) {
+				match_len = 0;
+				if (*ptr == '*')
+					match_len = 1;
+				else if (strncmp(ptr, table, table_len) == 0)
+					match_len = table_len;
+					
+				if (match_len) {
+					ptr += match_len;
+					if ((!*ptr) || (*ptr == ',') || isspace(*ptr)) {
+						*found = true;
+						break;
+					}
+				}
+				
+				NEXT_IN_TABLE_LIST(ptr);
+			}
+		}
+			
+		unlock_(&my_table_list_lock);
+		rtc = false;
+	}
+	
+	catch_(a)
+	cont_(a);
+	return rtc;
+}
+
+//-----------------
 bool PBMSParameters::isBLOBTable(const char *db, const char *table)
 {
 	CSThread *self;
 	int		err;
 	PBMSResultRec result;
 	bool found = false;
-	const char *ptr;
-	int db_len, table_len, match_len;
 	
 	if (isBlackListedDB(db))
 		return false;
@@ -388,40 +441,9 @@ bool PBMSParameters::isBLOBTable(const char *db, const char *table)
 	if ((err = MSEngine::enterConnectionNoThd(&self, &result)) == 0) {
 
 		inner_();
-		try_(a) {
-			lock_(&my_table_list_lock);	
-					
-			db_len = strlen(db);
-			table_len = strlen(table);
-			
-			ptr = my_table_list;
-			while (ptr) {
-				ptr = locate_db(ptr, db, db_len);
-				if (ptr) {
-					match_len = 0;
-					if (*ptr == '*')
-						match_len = 1;
-					else if (strncmp(ptr, table, table_len) == 0)
-						match_len = table_len;
-						
-					if (match_len) {
-						ptr += match_len;
-						if ((!*ptr) || (*ptr == ',') || isspace(*ptr)) {
-							found = true;
-							break;
-						}
-					}
-					
-					NEXT_IN_TABLE_LIST(ptr);
-				}
-			}
-				
-			unlock_(&my_table_list_lock);
-		}
-		catch_(a) {
+		if (try_LocateTable(self, db, table, &found)) {
 			err = MSEngine::exceptionToResult(&self->myException, &result);
-		}
-		cont_(a);
+		}		
 		outer_();
 	
 	}

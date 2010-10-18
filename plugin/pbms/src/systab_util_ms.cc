@@ -124,6 +124,12 @@ bool SysTabRec::nextRecord()
 }
 	
 //---------------------
+void SysTabRec::resetRecord()
+{
+	ptr= 0;
+}
+
+//---------------------
 uint8_t SysTabRec::getInt1Field()
 {
 	uint8_t val = 0;

@@ -30,6 +30,10 @@
 #ifndef __DATABASE_MS_H__
 #define __DATABASE_MS_H__
 
+#include "cslib/CSDefs.h"
+#include "cslib/CSStorage.h"
+#include "cslib/CSStrUtil.h"
+
 #include "table_ms.h"
 #include "repository_ms.h"
 #ifdef HAVE_ALIAS_SUPPORT
@@ -38,10 +42,6 @@
 #include "temp_log_ms.h"
 #include "compactor_ms.h"
 #include "cloud_ms.h"
-
-#include "cslib/CSDefs.h"
-#include "cslib/CSStorage.h"
-#include "cslib/CSStrUtil.h"
 
 class MSOpenTable;
 class MSBackup;

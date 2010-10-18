@@ -35,12 +35,11 @@
 #ifdef S3_UNIT_TEST
 //#define SHOW_SIGNING
 // Uncomment this line to trace network action during request. Very Usefull!!
-//#define DEBUG_CURL
+#define DEBUG_CURL
 #define DUMP_ERRORS
 #endif
 
-//#define DEBUG_CURL
-#define DUMP_ERRORS
+//#define DUMP_ERRORS
 //#define SHOW_SIGNING
 
 #define HEX_CHECKSUM_VALUE_SIZE (2 *CHECKSUM_VALUE_SIZE)
@@ -128,6 +127,7 @@ class S3ProtocolCon : CSXMLBuffer, public CSObject {
 	
 	CSMd5			ms_md5;
 	char			ms_s3Checksum[HEX_CHECKSUM_VALUE_SIZE +1];
+	bool			ms_calculate_md5;
 	
 	bool			ms_notFound; // True if the object could not be found
 	bool			ms_retry; // True if the request failed with a retry error.
@@ -142,12 +142,14 @@ class S3ProtocolCon : CSXMLBuffer, public CSObject {
 	bool			ms_throw_error;	// Gets set if an exception occurs in a callback.
 	bool			ms_old_libcurl;
 	char			*ms_safe_url;
+	time_t			ms_last_modified;
 	
 	S3ProtocolCon():
 		ms_curl(NULL),
 		ms_header_list(NULL),
 		ms_inputStream(NULL),
 		ms_outputStream(NULL),
+		ms_calculate_md5(false),
 		ms_notFound(false),
 		ms_retry(false),
 		ms_slowDown(false),
@@ -156,7 +158,8 @@ class S3ProtocolCon : CSXMLBuffer, public CSObject {
 		ms_replyStatus(0),
 		ms_throw_error(false),
 		ms_old_libcurl(false),
-		ms_safe_url(NULL)
+		ms_safe_url(NULL),
+		ms_last_modified(0)
 	{
 	
 		ms_curl = curl_easy_init();
@@ -230,6 +233,7 @@ class S3ProtocolCon : CSXMLBuffer, public CSObject {
 			//case 307: // Temporary Redirect
 				break;
 			case 404:	// Not Found
+			case 403:	// Forbidden (S3 object not found)
 				ms_notFound = true;
 				break;
 			case 500:	
@@ -367,9 +371,18 @@ public:
 	{
 		enter_();
 		
-		push_(output);	
+		if (output) {
+			push_(output);
+			THROW_CURL_IF(curl_easy_setopt(ms_curl, CURLOPT_HTTPGET, 1L));
+		} else {
+			THROW_CURL_IF(curl_easy_setopt(ms_curl, CURLOPT_NOBODY, 1L));
+		}
+		
+		// 
+		THROW_CURL_IF(curl_easy_setopt(ms_curl, CURLOPT_FILETIME, 1L));
 		THROW_CURL_IF(curl_easy_setopt(ms_curl, CURLOPT_HTTPHEADER, ms_header_list));
-		THROW_CURL_IF(curl_easy_setopt(ms_curl, CURLOPT_HTTPGET, 1L));
+    // Ask curl to parse the Last-Modified header.  This is easier than
+    // parsing it ourselves.
 
 		ms_outputStream = output;	
 		if (curl_easy_perform(ms_curl) && !ms_throw_error) {
@@ -377,16 +390,19 @@ public:
 			CSException::throwException(CS_CONTEXT, CS_ERR_GENERIC_ERROR, ms_curl_error);
 		}
 		ms_outputStream = NULL;	
-		release_(output);	
+		if (output){
+			release_(output);
+		}
 		
 		if (ms_throw_error) 
 			throw_();
 		
 		check_reply_status();
+		curl_easy_getinfo(ms_curl, CURLINFO_FILETIME, &ms_last_modified);
 		exit_();		
 	}
 	
-	inline void ms_execute_put_request(CSInputStream *input, off64_t size, Md5Digest *digest)
+	inline void ms_execute_put_request(CSInputStream *input, off64_t size)
 	{
 		enter_();
 		
@@ -414,20 +430,24 @@ public:
 		
 		check_reply_status();
 		
-		// Check that the checksums agree
-		char checksum[HEX_CHECKSUM_VALUE_SIZE +1];
-		
-		ms_md5.md5_digest(digest);
-		cs_bin_to_hex(HEX_CHECKSUM_VALUE_SIZE, checksum, CHECKSUM_VALUE_SIZE, digest->val);
-		checksum[HEX_CHECKSUM_VALUE_SIZE] = 0;
-		
-		cs_strToUpper(ms_s3Checksum);
-		if (strcmp(checksum, ms_s3Checksum)) {
-			// The request should be restarted in this case.
-			ms_retry = true;
-			CSException::logException(CS_CONTEXT, CS_ERR_CHECKSUM_ERROR, "Calculated checksum did not match S3 checksum");
+		if (ms_calculate_md5) {
+			// If the data was not sent with an md5 checksum then verify
+			// the server's md5 value with the one calculated during the send.
+			char checksum[HEX_CHECKSUM_VALUE_SIZE +1];
+			Md5Digest digest;
+			
+			ms_md5.md5_get_digest(&digest);
+			cs_bin_to_hex(HEX_CHECKSUM_VALUE_SIZE, checksum, CHECKSUM_VALUE_SIZE, digest.val);
+			checksum[HEX_CHECKSUM_VALUE_SIZE] = 0;
+			
+			cs_strToUpper(ms_s3Checksum);
+			if (strcmp(checksum, ms_s3Checksum)) {
+				// The request should be restarted in this case.
+				ms_retry = true;
+				CSException::logException(CS_CONTEXT, CS_ERR_CHECKSUM_ERROR, "Calculated checksum did not match S3 checksum");
+			}
 		}
-		
+
 		exit_();		
 	}
 	
@@ -443,7 +463,8 @@ CSS3Protocol::CSS3Protocol():
 	s3_server(NULL),
 	s3_public_key(NULL),
 	s3_private_key(NULL),
-	s3_maxRetrys(5)
+	s3_maxRetries(5),
+	s3_sleepTime(0)
 {
 	new_(s3_server, CSStringBuffer());
 	s3_server->append("s3.amazonaws.com/");
@@ -524,6 +545,29 @@ if(0){
 // CURL callback functions:
 ////////////////////////////
 //----------------------
+//-----------------
+static bool try_ReadStream(CSThread *self, S3ProtocolCon *con, unsigned char *ptr, size_t buffer_size, size_t *data_sent)
+{
+	volatile bool rtc = true;
+	try_(a) {
+		*data_sent = con->ms_inputStream->read((char*)ptr, buffer_size);
+		if (*data_sent <= con->ms_data_size) {
+			con->ms_data_size -= *data_sent;
+			if (*data_sent)
+				con->ms_md5.md5_append(ptr, *data_sent); // Calculating the checksum for the data sent.
+		} else if (*data_sent > con->ms_data_size) 
+			CSException::RecordException(CS_CONTEXT, CS_ERR_GENERIC_ERROR, "Blob larger than expected.");
+		else if (con->ms_data_size && !*data_sent)
+			CSException::RecordException(CS_CONTEXT, CS_ERR_GENERIC_ERROR, "Blob smaller than expected.");
+		rtc = false;
+	}
+	
+	catch_(a)
+	cont_(a);
+	return rtc;
+}
+
+//----------------------
 static size_t send_callback(void *ptr, size_t objs, size_t obj_size, void *v_con)
 {
 	S3ProtocolCon *con = (S3ProtocolCon*) v_con;
@@ -533,25 +577,33 @@ static size_t send_callback(void *ptr, size_t objs, size_t obj_size, void *v_con
 		return 0;
 		
 	enter_();
-	try_(a) {
-		data_sent = con->ms_inputStream->read((char*)ptr, buffer_size);
-		if (data_sent <= con->ms_data_size) {
-			con->ms_data_size -= data_sent;
-			if (data_sent)
-				con->ms_md5.md5_append((u_char*)ptr, data_sent); // Calculating the checksum for the data sent.
-		} else if (data_sent > con->ms_data_size) 
-			CSException::RecordException(CS_CONTEXT, CS_ERR_GENERIC_ERROR, "Blob larger than expected.");
-		else if (con->ms_data_size && !data_sent)
-			CSException::RecordException(CS_CONTEXT, CS_ERR_GENERIC_ERROR, "Blob smaller than expected.");
+	if (try_ReadStream(self, con, (unsigned char*)ptr, buffer_size, &data_sent)) {
+		con->ms_throw_error = true;
+		data_sent = (size_t)-1;
 	}
-	catch_(a);
-	con->ms_throw_error = true;
-	data_sent = SIZE_MAX;
 	
-	cont_(a);
-	
-	return data_sent;
+	return_(data_sent);
 }
+
+//-----------------
+static bool try_WriteStream(CSThread *self, S3ProtocolCon *con, char *ptr, size_t data_len)
+{
+	volatile bool rtc = true;
+	try_(a) {
+		if (con->ms_replyStatus >= 400) { // Collect the error reply.
+			if (!con->ms_errorReply)
+				con->ms_errorReply = new CSStringBuffer(50);		
+			con->ms_errorReply->append(ptr, data_len);
+		} else if (	con->ms_outputStream)
+			con->ms_outputStream->write(ptr, data_len);
+		rtc = false;
+	}
+	
+	catch_(a)
+	cont_(a);
+	return rtc;
+}
+
 //----------------------
 static size_t receive_data(void *vptr, size_t objs, size_t obj_size, void *v_con)
 {
@@ -559,23 +611,28 @@ static size_t receive_data(void *vptr, size_t objs, size_t obj_size, void *v_con
 	size_t data_len = objs * obj_size;
 
 	enter_();
-	try_(a) {
-		if (con->ms_replyStatus >= 400) { // Collect the error reply.
-			if (!con->ms_errorReply)
-				con->ms_errorReply = new CSStringBuffer(50);		
-			con->ms_errorReply->append((char*)vptr, data_len);
-		} else if (	con->ms_outputStream)
-			con->ms_outputStream->write((char*)vptr, data_len);
+	if (try_WriteStream(self, con, (char*)vptr, data_len)) {
+		con->ms_throw_error = true;
+		data_len = (size_t)-1;
 	}
-	catch_(a);
-	con->ms_throw_error = true;
-	data_len = SIZE_MAX; 
-	
-	cont_(a);
+
 	return_(data_len);	
 }
 
 #define IS_REDIRECT(s) ((s >= 300) && (s < 400))
+//----------------------
+static bool try_addHeader(CSThread *self, S3ProtocolCon *con, char *name, uint32_t name_len, char *value, uint32_t value_len)
+{
+	try_(a) {
+		con->ms_reply_headers.addHeader(name, name_len, value, value_len);
+		return false;
+	}
+	
+	catch_(a);
+	cont_(a);
+	return true;
+}
+
 //----------------------
 static size_t receive_header(void *header, size_t objs, size_t obj_size, void *v_con)
 {
@@ -584,13 +641,6 @@ static size_t receive_header(void *header, size_t objs, size_t obj_size, void *v
 	char *end, *ptr = (char*) header, *name, *value = NULL;
 	uint32_t name_len =0, value_len = 0;
 	
-	CLOBBER_PROTECT(con);
-	CLOBBER_PROTECT(size);
-	CLOBBER_PROTECT(ptr);
-	CLOBBER_PROTECT(value);
-	CLOBBER_PROTECT(value_len);
-	CLOBBER_PROTECT(name_len);
-
 //printf(	"receive_header: %s\n", ptr);
 	end = ptr + size;
 	if (*(end -2) == '\r' && *(end -1) == '\n')
@@ -638,7 +688,9 @@ static size_t receive_header(void *header, size_t objs, size_t obj_size, void *v
 	while (value[value_len-1] == ' ') value_len--;
 	
 	if (!strncasecmp(name, "ETag", 4)) {
-		value++; value_len -=2; // Strip quotation marks from checksum string.
+		if (*value == '"') {
+			value++; value_len -=2; // Strip quotation marks from checksum string.
+		}
 		if (value_len == HEX_CHECKSUM_VALUE_SIZE) {
 			memcpy(con->ms_s3Checksum, value, value_len);
 			con->ms_s3Checksum[value_len] = 0;
@@ -646,15 +698,10 @@ static size_t receive_header(void *header, size_t objs, size_t obj_size, void *v
 	}
 	
 	enter_();
-	try_(a) {
-		con->ms_reply_headers.addHeader(name, name_len, value, value_len);
+	if (try_addHeader(self, con, name, name_len, value, value_len)) {
+		con->ms_throw_error = true;
+		size = (size_t)-1;
 	}
-	
-	catch_(a);
-	con->ms_throw_error = true;
-	size = (size_t)-1;
-		
-	cont_(a);
 	return_(size);
 }
 
@@ -716,11 +763,12 @@ retry:
 	con_data->ms_execute_delete_request();
 	
 	if (con_data->ms_retry) {
-		if (retry_count == s3_maxRetrys) {
+		if (retry_count == s3_maxRetries) {
 			CSException::throwException(CS_CONTEXT, CS_ERR_GENERIC_ERROR, "S3 operation aborted after max retries.");
 		}
-	printf("RETRY: s3_delete()\n");
+	//printf("RETRY: s3_delete()\n");
 		retry_count++;
+		self->sleep(s3_sleepTime);
 		goto retry;
 	}
 	
@@ -815,11 +863,12 @@ retry:
 	}
 	
 	if (con_data->ms_retry) {
-		if (retry_count == s3_maxRetrys) {
+		if (retry_count == s3_maxRetries) {
 			CSException::throwException(CS_CONTEXT, CS_ERR_GENERIC_ERROR, "S3 operation aborted after max retries.");
 		}
-	printf("RETRY: s3_copy()\n");
+	//printf("RETRY: s3_copy()\n");
 		retry_count++;
+		self->sleep(s3_sleepTime);
 		goto retry;
 	}
 	
@@ -831,7 +880,7 @@ retry:
 
 
 //-------------------------------
-CSVector *CSS3Protocol::s3_receive(CSOutputStream *output, const char *bucket, const char *key, bool *found)
+CSVector *CSS3Protocol::s3_receive(CSOutputStream *output, const char *bucket, const char *key, bool *found, S3RangePtr range, time_t *last_modified)
 {
  	CSStringBuffer *s3_buffer;
     char date[64];
@@ -839,10 +888,16 @@ CSVector *CSS3Protocol::s3_receive(CSOutputStream *output, const char *bucket, c
 	uint32_t retry_count = 0;
 	S3ProtocolCon *con_data;
 	CSVector *replyHeaders;
+	CSString *range_header = NULL;
+	const char *http_op;
 
 	enter_();
 
-	push_(output);
+	if (output) {
+		push_(output);
+		http_op = "GET";
+	} else
+		http_op = "HEAD";
 
 	new_(s3_buffer, CSStringBuffer());
 	push_(s3_buffer);
@@ -872,8 +927,16 @@ retry:
 	s3_buffer->append(date);
 	con_data->ms_setHeader(s3_buffer->getCString());
 
+	if (range) {
+		char buffer[80];
+		snprintf(buffer, 80,"Range: bytes=%"PRIu64"-%"PRIu64, range->startByte, range->endByte);
+
+		range_header = CSString::newString(buffer);
+	}
 	// Create the authentication signature and add the 'Authorization' header
-	signed_str = s3_getSignature("GET", NULL, NULL, date, bucket, key);
+	if (range_header)
+		con_data->ms_setHeader(range_header->getCString());
+	signed_str = s3_getSignature(http_op, NULL, NULL, date, bucket, key, NULL);
 	push_(signed_str);
 	s3_buffer->setLength(0);
 	s3_buffer->append("Authorization: AWS ");	
@@ -883,23 +946,28 @@ retry:
 	release_(signed_str); signed_str = NULL;
 	con_data->ms_setHeader(s3_buffer->getCString());
 	
-	con_data->ms_execute_get_request(RETAIN(output));
+	if (output) output->retain();
+	con_data->ms_execute_get_request(output);
 	
 	if (con_data->ms_retry) {
-		if (retry_count == s3_maxRetrys) {
+		if (retry_count == s3_maxRetries) {
 			CSException::throwException(CS_CONTEXT, CS_ERR_GENERIC_ERROR, "S3 operation aborted after max retries.");
 		}
-	printf("RETRY: s3_receive()\n");
+	//printf("RETRY: s3_receive()\n");
 		retry_count++;
 		output->reset();
+		self->sleep(s3_sleepTime);
 		goto retry;
 	}
 	
+	if (last_modified)
+		*last_modified = con_data->ms_last_modified;
 	*found = !con_data->ms_notFound;
 	replyHeaders = con_data->ms_reply_headers.takeHeaders();
 	release_(con_data);
 	release_(s3_buffer);
-	release_(output);
+	if (output)
+		release_(output);
 	
 	return_(replyHeaders);
 }
@@ -1000,6 +1068,8 @@ retry:
 	s3_buffer->append(bucket);
 	s3_buffer->append(".");	
 	s3_buffer->append(s3_server->getCString());
+//s3_buffer->append("/");	
+//s3_buffer->append(bucket);
 	if (key_prefix) {
 		s3_buffer->append("?prefix=");
 		s3_buffer->append(key_prefix);
@@ -1035,12 +1105,13 @@ retry:
 	con_data->ms_execute_get_request(RETAIN(output));
 	
 	if (con_data->ms_retry) {
-		if (retry_count == s3_maxRetrys) {
+		if (retry_count == s3_maxRetries) {
 			CSException::throwException(CS_CONTEXT, CS_ERR_GENERIC_ERROR, "S3 operation aborted after max retries.");
 		}
-	printf("RETRY: s3_list()\n");
+	//printf("RETRY: s3_list()\n");
 		retry_count++;
 		output->reset();
+		self->sleep(s3_sleepTime);
 		goto retry;
 	}
 	
@@ -1077,10 +1148,10 @@ CSVector *CSS3Protocol::s3_send(CSInputStream *input, const char *bucket, const 
  	CSStringBuffer *s3_buffer;
     char date[64];
 	CSString *signed_str;
-	Md5Digest dummy_digest;
 	uint32_t retry_count = 0;
 	S3ProtocolCon *con_data;
 	CSVector *replyHeaders;
+	char checksum[32], *md5 = NULL;
 
 	enter_();
 	push_(input);
@@ -1090,9 +1161,6 @@ CSVector *CSS3Protocol::s3_send(CSInputStream *input, const char *bucket, const 
 
 	new_(con_data, S3ProtocolCon());
 	push_(con_data);
-
-	if (!digest)
-		digest = &dummy_digest;
 		
 	if (!content_type)
 		content_type = "binary/octet-stream";
@@ -1130,9 +1198,24 @@ retry:
 	s3_buffer->append(content_type);
 	con_data->ms_setHeader(s3_buffer->getCString());
 		
+	if (digest) {
+		// Add the Md5 checksum header
+		md5 = checksum;
+		memset(checksum, 0, 32);
+		base64Encode(digest->val, 16, checksum, 32);
+		
+		s3_buffer->setLength(0);
+		s3_buffer->append("Content-MD5: ");	
+		s3_buffer->append(checksum);
+		con_data->ms_setHeader(s3_buffer->getCString());		
+		con_data->ms_calculate_md5 = false;
+	} else 
+		con_data->ms_calculate_md5 = true;
+	
+
 	// Create the authentication signature and add the 'Authorization' header
 	if (!s3Authorization)
-		signed_str = s3_getSignature("PUT", NULL, content_type, date, bucket, key);
+		signed_str = s3_getSignature("PUT", md5, content_type, date, bucket, key);
 	else
 		signed_str = CSString::newString(s3Authorization);
 	push_(signed_str);
@@ -1144,19 +1227,21 @@ retry:
 	release_(signed_str); signed_str = NULL;
 	con_data->ms_setHeader(s3_buffer->getCString());
 	
-	con_data->ms_execute_put_request(RETAIN(input), size, digest);
+	con_data->ms_execute_put_request(RETAIN(input), size);
 	
 	if (con_data->ms_retry) {
-		if (retry_count == s3_maxRetrys) {
+		if (retry_count == s3_maxRetries) {
 			CSException::throwException(CS_CONTEXT, CS_ERR_GENERIC_ERROR, "S3 operation aborted after max retries.");
 		}
-	printf("RETRY: s3_send()\n");
+	//printf("RETRY: s3_send()\n");
 		retry_count++;
 		input->reset();
+		self->sleep(s3_sleepTime);
 		goto retry;
 	}
 	
 	replyHeaders = con_data->ms_reply_headers.takeHeaders();
+
 	release_(con_data);
 	release_(s3_buffer);
 	release_(input);
@@ -1211,6 +1296,7 @@ static void show_help_info(const char *cmd)
 	printf("Delete object:\n\t%s d <bucket> <object_key>\n", cmd);
 	printf("Delete all object with a given prefix:\n\t%s D <bucket> <object_prefix>\n", cmd);
 	printf("Get object, data will be written to 'prottest.out':\n\t%s g <bucket> <object_key> <timeout>\n", cmd);
+	printf("Get object header only:\n\t%s h <bucket> <object_key> <timeout>\n", cmd);
 	printf("Put (Upload) an object:\n\t%s p <bucket> <object_key> <file>\n", cmd);
 	printf("List objects in the bucket:\n\t%s l <bucket> [<object_prefix> [max_list_size]]\n", cmd);
 	printf("Copy object:\n\t%s c <src_bucket> <src_object_key> <dst_bucket> <dst_object_key> \n", cmd);
@@ -1240,6 +1326,7 @@ int main(int argc, char **argv)
 	CSThread *main_thread;
 	const char *pub_key;
 	const char *priv_key;
+	const char *server;
 	CSS3Protocol *prot = NULL;
 	
 	if (argc < 3) {
@@ -1265,7 +1352,10 @@ int main(int argc, char **argv)
 		new_(prot, CSS3Protocol());
 		push_(prot);
 		
-		prot->s3_setServer("s3.amazonaws.com/");
+		server = getenv("S3_SERVER");
+		if ((server == NULL) || (*server == 0))
+			server = "s3.amazonaws.com/";
+		prot->s3_setServer(server);
 		prot->s3_setPublicKey(pub_key);
 		prot->s3_setPrivateKey(priv_key);
 		
@@ -1308,15 +1398,22 @@ int main(int argc, char **argv)
 				
 				break;
 			case 'g':  // Get the object
-				if (argc == 4) {
+				if ((argc == 4) || (argc == 6)) {
 					CSFile *output;	
 					CSVector *headers;
 					bool found;				
+					S3RangeRec *range_ptr = NULL, range = 	{0,0};		
+					
+					if (argc == 6) {
+						range.startByte = atoi(argv[4]);
+						range.endByte = atoi(argv[5]);
+						range_ptr = &range;
+					}
 					
 					output = CSFile::newFile("prottest.out");
 					push_(output);
 					output->open(CSFile::CREATE | CSFile::TRUNCATE);
-					headers = prot->s3_receive(output->getOutputStream(), argv[2], argv[3], &found);
+					headers = prot->s3_receive(output->getOutputStream(), argv[2], argv[3], &found, range_ptr);
 					if (!found)
 						printf("%s/%s could not be found.\n", argv[2], argv[3]);
 						
@@ -1328,15 +1425,34 @@ int main(int argc, char **argv)
 				
 				break;
 				
+			case 'h':  // Get the object header
+				if (argc == 4) {
+					CSVector *headers;
+					bool found;	
+					S3RangeRec range = 	{0,0};		
+					
+					headers = prot->s3_receive(NULL, argv[2], argv[3], &found);
+					if (!found)
+						printf("%s/%s could not be found.\n", argv[2], argv[3]);
+						
+					dump_headers(headers);
+						
+				} else
+					printf("Bad command: h <bucket> <object_key>\n");
+				
+				break;
+				
 			case 'p':  // Put (Upload) the object
 				if (argc == 5) {
 					CSFile *input;
+					Md5Digest digest;
 					CSVector *headers;
 					
 					input = CSFile::newFile(argv[4]);
 					push_(input);
 					input->open(CSFile::READONLY);
-					headers = prot->s3_send(input->getInputStream(), argv[2], argv[3], input->myFilePath->getSize());
+					input->md5Digest(&digest);
+					headers = prot->s3_send(input->getInputStream(), argv[2], argv[3], input->myFilePath->getSize(), NULL, &digest);
 					dump_headers(headers);
 					release_(input);
 				} else

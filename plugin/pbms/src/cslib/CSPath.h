@@ -37,13 +37,12 @@
 #include "CSTime.h"
 #include "CSDefs.h"
 #include "CSString.h"
-
-using namespace std;
+#include "CSSys.h"
 
 class CSFile;
 class CSDirectory;
 
-class CSPath : public CSRefObject {
+class CSPath : public CSRefObject, public CSSys {
 public:
 	virtual CSFile *createFile(int mode);
 
@@ -65,6 +64,9 @@ public:
 	/* Delete the contents of a directory */
 	virtual void emptyDir();
 	
+	/* Recursively delete the contents of a directory */
+	virtual void emptyPath();
+	
 	/* Copy a file or directory to the specified location. */
 	virtual void copyTo(CSPath *to_path, bool overwrite);
 
@@ -76,7 +78,7 @@ public:
 	virtual void remove();
 
 	/* Create an empty file. */
-	virtual void touch(bool create_path);
+	virtual void touch(bool create_path = false);
 
 	virtual CSString *getString();
 
@@ -92,9 +94,13 @@ public:
 
 	virtual bool exists() { return exists(NULL); }
 
+	static void info(const char *path, bool *is_dir, off64_t *size, CSTime *mod_time);
+
 	virtual void info(bool *is_dir, off64_t *size, CSTime *mod_time);
 
-	virtual off64_t getSize();
+	static off64_t getSize(const char *path);
+	
+ 	virtual off64_t getSize();
 
 	virtual bool isDir();
 
@@ -137,6 +143,8 @@ public:
 	static CSPath *newPath(const char *cwd, const char *path);
 
 private:
+	CSFile *try_CreateAndOpen(CSThread *self, int mode, bool retry);
+	static CSLock iRename_lock;
 	CSPath():iPath(NULL) { }
 
 	virtual ~CSPath();

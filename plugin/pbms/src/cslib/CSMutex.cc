@@ -28,11 +28,17 @@
 #include "CSConfig.h"
 
 #include <assert.h>
+#ifdef OS_WINDOWS
+extern int gettimeofday(struct timeval *tv, struct timezone *tz);
+#else
 #include <sys/time.h>
+#endif
+
 
 #include "CSException.h"
 #include "CSMutex.h"
 #include "CSGlobal.h"
+#include "CSLog.h"
 
 /*
  * ---------------------------------------------------------------
@@ -40,6 +46,11 @@
  */
 
 CSMutex::CSMutex()
+#ifdef DEBUG
+:
+iLocker(NULL),
+trace(false)
+#endif
 {
 	int err;
 
@@ -58,10 +69,20 @@ void CSMutex::lock()
 
 	if ((err = pthread_mutex_lock(&iMutex)))
 		CSException::throwOSError(CS_CONTEXT, err);
+#ifdef DEBUG
+	iLocker = CSThread::getSelf();
+	if (trace)
+		CSL.logf(iLocker, CSLog::Protocol, "Mutex locked\n");
+#endif
 }
 
 void CSMutex::unlock()
 {
+#ifdef DEBUG
+	if (trace)
+		CSL.logf(iLocker, CSLog::Protocol, "Mutex unlocked\n");
+	iLocker = NULL;
+#endif
 	pthread_mutex_unlock(&iMutex);
 }
 
@@ -154,24 +175,10 @@ void CSSync::wait(time_t milli_sec)
 	struct timespec	abstime;
 	int				lock_count;
 	int				err;
+	uint64_t		micro_sec;
 
 	enter_();
-#ifdef XT_WIN
-	union ft64		now;
-  
-	GetSystemTimeAsFileTime(&now.ft);
-
-	/* System time is measured in 100ns units.
-	 * This calculation will be reversed by the Windows implementation
-	 * of pthread_cond_timedwait(), in order to extract the
-	 * milli-second timeout!
-	 */
-	abstime.tv.i64 = now.i64 + (milli_sec * 10000);
-  
-	abstime.max_timeout_msec = milli_sec;
-#else
 	struct timeval	now;
-	uint64_t			micro_sec;
 
 	/* Get the current time in microseconds: */
 	gettimeofday(&now, NULL);
@@ -183,7 +190,7 @@ void CSSync::wait(time_t milli_sec)
 	/* Setup the end time, which is in nano-seconds. */
 	abstime.tv_sec = (long) (micro_sec / 1000000);				/* seconds */
 	abstime.tv_nsec = (long) ((micro_sec % 1000000) * 1000);	/* and nanoseconds */
-#endif
+
 	ASSERT(iLockingThread == self);
 	lock_count = iLockCount;
 	iLockCount = 0;

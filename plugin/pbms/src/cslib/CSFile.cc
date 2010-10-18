@@ -33,25 +33,17 @@
 #include <dirent.h>
 #endif
 #include <stdio.h>
-#include <sys/stat.h>
-#include <fcntl.h>
+#include <sys/time.h>
+
 #include <errno.h>
 #include <string.h>
 
+#include "CSGlobal.h"
 #include "CSFile.h"
 #include "CSStream.h"
-#include "CSGlobal.h"
+#include "CSMd5.h"
 
-
-static int unix_file_open(const char *path, int flags, mode_t mode)
-{
-	return open(path, flags, mode);
-}
-
-int unix_file_close(int fh)
-{
-	return close(fh);
-}
+#define IS_MODE(m, s) ((m & s) == s)
 
 /*
  * ---------------------------------------------------------------
@@ -85,52 +77,70 @@ CSInputStream *CSFile::getInputStream(off64_t offset)
 	return CSFileInputStream::newStream(RETAIN(this), offset);
 }
 
+bool CSFile::try_CreateAndOpen(CSThread *self, int mode, bool retry)
+{
+	volatile bool rtc = true;
+	
+	try_(a) {
+		openFile(mode);
+		rtc = false; // success, do not try again.
+	}
+	catch_(a) {
+		if (retry || !isDirNotFound(&self->myException))
+			throw_();
+
+		/* Make sure the parent directory exists: */
+		CSPath	*dir = CSPath::newPath(RETAIN(myFilePath), "..");
+		push_(dir);
+		try_(b) {
+			dir->makePath();
+		}
+		catch_(b) { /* Two threads may try to create the directory at the same time. */
+			if (!isDirExists(&self->myException))
+				throw_();
+		}
+		cont_(b);
+
+		release_(dir);
+	}
+	cont_(a);
+	return rtc; // try again.
+}
+
 void CSFile::open(int mode)
 {
-	CSPath	*dir;
-	bool	retry = false;
-
-	CLOBBER_PROTECT(retry);
-
 	enter_();
 	if (mode & CREATE) {
-		/* Create and open the file: */
-		do {
-			try_(a) {
-				openFile(mode);
-				retry = false;
-			}
-			catch_(a) {
-				if (retry || !isDirNotFound(&self->myException))
-					throw_();
-
-				/* Make sure the parent directory exists: */
-				dir = CSPath::newPath(RETAIN(myFilePath), "..");
-				push_(dir);
-				try_(b) {
-					dir->makePath();
-				}
-				catch_(b) { /* Two threads may try to create the directory at the same time. */
-					if (!isDirExists(&self->myException))
-						throw_();
-				}
-				cont_(b);
-
-				release_(dir);
-				retry = true;
-			}
-			cont_(a);
-		}
-		while (retry);
+		bool retry = false;
+		while ((retry = try_CreateAndOpen(self, mode, retry)) == true){}		
 	}
 	else
 		openFile(mode);
 	exit_();
 }
 
+void CSFile::lock()
+{
+	if (!iLocked) {
+		sf_lock(IS_MODE(iMode, READONLY));
+	}
+	iLocked++;
+}
+
+void CSFile::unlock()
+{
+	iLocked--;
+	if (!iLocked) 
+		sf_unlock();
+}
+
 bool CSFile::transfer(CSFile *dst_file, off64_t dst_offset, CSFile *src_file, off64_t src_offset, off64_t size, char *buffer, size_t buffer_size)
 {
 	size_t tfer;
+	enter_();
+	
+	push_(dst_file);
+	push_(src_file);
 
 	while (size > 0) {
 		if (size > (off64_t) buffer_size)
@@ -138,18 +148,24 @@ bool CSFile::transfer(CSFile *dst_file, off64_t dst_offset, CSFile *src_file, of
 		else
 			tfer = (size_t) size;
 		if (!(tfer = src_file->read(buffer, src_offset, tfer, 0)))
-			return false;
+			break;
 		dst_file->write(buffer, dst_offset, tfer);
 		dst_offset += tfer;
 		src_offset += tfer;
 		size -= tfer;
 	}
-	return true;
+	
+	release_(src_file);
+	release_(dst_file);
+	return_(size == 0);
 }
 
 void CSFile::streamOut(CSOutputStream *dst_stream, off64_t src_offset, off64_t size, char *buffer, size_t buffer_size)
 {
 	size_t tfer;
+	enter_();
+	
+	push_(dst_stream);
 
 	while (size > 0) {
 		if (size > (off64_t) buffer_size)
@@ -163,57 +179,55 @@ void CSFile::streamOut(CSOutputStream *dst_stream, off64_t src_offset, off64_t s
 		src_offset += tfer;
 		size -= tfer;
 	}
+	
+	release_(dst_stream);
+	exit_();
 }
 
 #define CS_MASK				((S_IRUSR | S_IWUSR) | (S_IRGRP | S_IWGRP) | (S_IROTH))
 
+void CSFile::touch()
+{
+	// don't use futimes() here. On some platforms it will fail if the 
+	// file was opened readonly.
+	if (utimes(myFilePath->getCString(), NULL) == -1)
+		CSException::throwFileError(CS_CONTEXT, myFilePath->getCString(), errno);
+}
+
 void CSFile::close()
 {
-	if (iFH != -1) {
-		unix_file_close(iFH);
-		iFH = -1;
-	}
+	while (iLocked)
+		unlock();
+	sf_close();
 }
 
 off64_t CSFile::getEOF()
 {
-	off64_t eof;
-
-	if ((eof = lseek(iFH, 0, SEEK_END)) == (off64_t) -1)
-		CSException::throwFileError(CS_CONTEXT, myFilePath->getCString(), errno);
-
-     return eof;
+     return sf_getEOF();
 }
 
 void CSFile::setEOF(off64_t offset)
 {
-	if (ftruncate(iFH, offset) == -1)
-		CSException::throwFileError(CS_CONTEXT, myFilePath->getCString(), errno);
+	sf_setEOF(offset);
 }
 
 size_t CSFile::read(void *data, off64_t offset, size_t size, size_t min_size)
 {
-	ssize_t read_size;
+	size_t read_size;
 	
 	enter_();
-	read_size = pread(iFH, data, size, offset);
+	read_size = sf_pread(data, size, offset);
 	self->interrupted();
-	if (read_size ==  -1)
-		CSException::throwFileError(CS_CONTEXT, myFilePath->getCString(), errno);
-	if ((size_t) read_size < min_size)
+	if (read_size < min_size)
 		CSException::throwEOFError(CS_CONTEXT, myFilePath->getCString());
 	return_(read_size);
 }
 
 void CSFile::write(const void *data, off64_t offset, size_t size)
 {
-	size_t write_size;
-
 	enter_();
-    write_size = pwrite(iFH, (void *) data, size, offset);
+    sf_pwrite(data, size, offset);
 	self->interrupted();
-	if (write_size != size)
-		CSException::throwFileError(CS_CONTEXT, myFilePath->getCString(), errno);
 	exit_();
 }
 
@@ -223,7 +237,7 @@ void CSFile::flush()
 
 void CSFile::sync()
 {
-	fsync(iFH);
+	sf_sync();
 }
 
 CSFile *CSFile::newFile(CSPath *path)
@@ -246,24 +260,46 @@ CSFile *CSFile::newFile(const char *path_str)
 	return newFile(path);
 }
 
+CSFile *CSFile::newFile(const char *dir_str, const char *path_str)
+{
+	CSPath *path;
+
+	path = CSPath::newPath(dir_str, path_str);
+	return newFile(path);
+}
+
 void CSFile::openFile(int mode)
 {
-	int flags = 0;
-
-	if (mode & READONLY)
-		flags = O_RDONLY;
-	else
-		flags = O_RDWR;
-
-	if (mode & CREATE)
-		flags |= O_CREAT;
+	if (fs_isOpen() && (iMode != mode))
+		close();
+		
+	if (!fs_isOpen())
+		sf_open(myFilePath->getCString(), IS_MODE(mode, READONLY), IS_MODE(mode, CREATE));
 	
-	if ((iFH = unix_file_open(myFilePath->getCString(), flags, CS_MASK)) ==  -1)
-		CSException::throwFileError(CS_CONTEXT, myFilePath->getCString(), errno);
-
+	iMode = mode;
 	/* Does not make sense to truncate, and have READONLY! */
-	if ((mode & TRUNCATE) && !(mode & READONLY))
+	if (IS_MODE(mode, TRUNCATE) && !IS_MODE(mode, READONLY))
 		setEOF((off64_t) 0);
+}
+
+void CSFile::md5Digest(Md5Digest *digest)
+{
+	u_char buffer[1024];
+	off64_t offset = 0, size, len;
+	CSMd5 md5;
+	enter_();
+	
+	size = getEOF();
+	while (size) {
+		len = (size < 1024)? size:1024;
+		len = read(buffer, offset, len, len);
+		offset +=len;
+		size -= len;
+		md5.md5_append(buffer, len);
+	}
+	md5.md5_get_digest(digest);
+	exit_();
+	
 }
 
 /*
@@ -441,60 +477,6 @@ void CSReadBufferedFile::openFile(int mode)
 	myFile->openFile(mode);
 }
 
-CSFile *CSReadBufferedFile::newFile(CSFile *file)
-{
-	CSReadBufferedFile *f;
-
-	if (!(f = new CSReadBufferedFile())) {
-		file->release();
-		CSException::throwOSError(CS_CONTEXT, ENOMEM);
-	}
-	f->myFile = file;
-	f->myFilePath = file->myFilePath;
-	f->myFilePath->retain();
-	return (CSFile *) f;
-}
-
-/*
- * ---------------------------------------------------------------
- * A BUFFERED FILE
- */
-
-void CSBufferedFile::write(const void *data, off64_t offset, size_t size)
-{
-	if (iBufferDataLen > 0) {
-		if (offset < iFileBufferOffset && offset <= iFileBufferOffset + iBufferDataLen) {
-			size_t tfer;
-
-			tfer = iFileBufferOffset + SC_DEFAULT_FILE_BUFFER_SIZE - offset;
-			if (tfer >= size) {
-				memcpy(iFileBuffer + (offset - iFileBufferOffset), data, size);
-			}
-			size -= tfer;
-			data = (char *) data + tfer;
-		}
-		flush();
-	}
-
-	if (size < SC_DEFAULT_FILE_BUFFER_SIZE) {
-		iFileBufferOffset = offset;
-		iBufferDataLen = size;
-		memcpy(iFileBuffer, data, size);
-		iBufferDirty = true;
-	}
-	else
-		myFile->write(data, offset, size);
-}
-
-void CSBufferedFile::flush()
-{
-	if (iBufferDirty && iBufferDataLen) {
-		myFile->write(iFileBuffer, iFileBufferOffset, iBufferDataLen);
-		iBufferDirty = false;
-		
-	}
-	myFile->flush();
-}
 
 /*
  * ---------------------------------------------------------------

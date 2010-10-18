@@ -182,8 +182,8 @@ CSObject *CSSortedList::takeItemAt(uint32_t idx)
 		
 	item = 	iList[idx];
 	
-	memmove(&iList[idx], &iList[idx+1], (iInUse - idx) * sizeof(CSObject *));
 	iInUse--;
+	memmove(&iList[idx], &iList[idx+1], (iInUse - idx) * sizeof(CSObject *));
 	return item;
 }
 
@@ -193,8 +193,8 @@ void CSSortedList::remove(CSObject *key)
 	uint32_t		idx;
 
 	if ((item = search(key, idx))) {
-		memmove(&iList[idx], &iList[idx+1], (iInUse - idx) * sizeof(CSObject *));
 		iInUse--;
+		memmove(&iList[idx], &iList[idx+1], (iInUse - idx) * sizeof(CSObject *));
 		item->release();
 	}
 }
@@ -251,6 +251,30 @@ void CSLinkedList::addFront(CSObject *item)
 		else
 			iListBack = item;
 		iListFront = item;
+		iSize++;
+	}
+	else
+		/* Must do this or I will have one reference too
+		 * many!
+		 * The input object was given to me referenced,
+		 * but I already have the object on my list, and
+		 * referenced!
+		 */
+		item->release();
+}
+
+void CSLinkedList::addBack(CSObject *item)
+{
+	if (iListBack != item) {
+		remove(item);
+		item->setNextLink(iListBack);
+		item->setPrevLink(NULL);
+		
+		if (iListBack)
+			iListBack->setPrevLink(item);
+		else
+			iListFront = item;
+		iListBack = item;
 		iSize++;
 	}
 	else
@@ -505,6 +529,7 @@ uint32_t CSSparseArray::getIndex(uint32_t idx)
 {
 	uint32_t pos;
 
+	// If search fails then pos will be > iUsage
 	search(idx, pos);
 	return pos;
 }
@@ -655,8 +680,8 @@ void CSOrderedList::remove(CSOrderKey *key)
 		CSOrderedListItemRec ir;
 
 		memcpy(&ir, item, sizeof(CSOrderedListItemRec));
-		memmove(&iList[idx], &iList[idx+1], (iInUse - idx) * sizeof(CSOrderedListItemRec));
 		iInUse--;
+		memmove(&iList[idx], &iList[idx+1], (iInUse - idx) * sizeof(CSOrderedListItemRec));
 		if (ir.li_key)
 			ir.li_key->release();
 		if (ir.li_item)

@@ -60,11 +60,11 @@
 
 DT_FIELD_INFO pbms_variable_info[]=
 {
-	{"Id",			NULL,	NULL, MYSQL_TYPE_LONG,		NULL,							NOT_NULL_FLAG,	"The variable ID"},
+	{"Id",			NOVAL,	NULL, MYSQL_TYPE_LONG,		NULL,							NOT_NULL_FLAG,	"The variable ID"},
 	{"Name",		32,		NULL, MYSQL_TYPE_VARCHAR,	&UTF8_CHARSET,	NOT_NULL_FLAG,	"PBMS variable name"},
 	{"Value",	1024,	NULL, MYSQL_TYPE_VARCHAR,	&UTF8_CHARSET,	0,	"PBMS variable value."},
 	{"Description",	124,	NULL, MYSQL_TYPE_VARCHAR,	&UTF8_CHARSET,	NOT_NULL_FLAG,	"PBMS variable description."},
-	{NULL,NULL, NULL, MYSQL_TYPE_STRING,NULL, 0, NULL}
+	{NULL,NOVAL, NULL, MYSQL_TYPE_STRING,NULL, 0, NULL}
 };
 
 DT_KEY_INFO pbms_variable_keys[]=
@@ -327,6 +327,39 @@ static  CSPath *getSysVarFile(CSString *db_path)
 	return_(path);
 }
 
+class LoadTableCleanUp : public CSRefObject {
+	bool do_cleanup;
+	CSThread *myself;
+	
+	uint32_t ref_id;
+
+	public:
+	
+	LoadTableCleanUp(): CSRefObject(),
+		do_cleanup(false), myself(NULL){}
+		
+	~LoadTableCleanUp() 
+	{
+		if (do_cleanup) {
+			CSL.log(myself, CSLog::Protocol, "\nRestore failed!\n");
+			CSL.flush();
+			myself->logException();
+		}
+	}
+	
+	void setCleanUp(CSThread *self)
+	{
+		myself = self;
+		do_cleanup = true;
+	}
+	
+	void cancelCleanUp()
+	{
+		do_cleanup = false;
+	}
+	
+};
+
 void MSVariableTable::loadTable(MSDatabase *db)
 {
 	CSPath	*path;
@@ -392,16 +425,17 @@ void MSVariableTable::loadTable(MSDatabase *db)
 		CSL.log(self, CSLog::Protocol, db->myDatabaseName->getCString());
 		CSL.log(self, CSLog::Protocol, " ...");
 		CSL.flush();
-		try_(a) {
-			db->myBlobCloud->cl_restoreDB();
-		}
-		catch_(a) {
-			CSL.log(self, CSLog::Protocol, "\nRestore failed!\n");
-			CSL.flush();
-			self->logException();
-			throw_();
-		}
-		cont_(a);
+		LoadTableCleanUp *cleanup;
+		
+		new_(cleanup, LoadTableCleanUp());
+		push_(cleanup);
+		cleanup->setCleanUp(self);
+		
+		db->myBlobCloud->cl_restoreDB();
+		
+		cleanup->cancelCleanUp();
+		release_(cleanup);
+
 		CSL.log(self, CSLog::Protocol, "\nRestore done.\n");
 		CSL.flush();
 		set_BackupNo(RETAIN(db), "0");
@@ -509,14 +543,22 @@ bool MSVariableTable::seqScanNext(char *buf)
 	save_write_set = table->write_set;
 	table->write_set = NULL;
 
+#ifdef DRIZZLED
 	memset(buf, 0xFF, table->getNullBytes());
+#else
+	memset(buf, 0xFF, table->s->null_bytes);
+#endif
  	for (Field **field=GET_TABLE_FIELDS(table) ; *field ; field++) {
  		curr_field = *field;
 		save = curr_field->ptr;
 #if MYSQL_VERSION_ID < 50114
 		curr_field->ptr = (byte *) buf + curr_field->offset();
 #else
+#ifdef DRIZZLED
 		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->getTable()->getInsertRecord());
+#else
+		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->table->record[0]);
+#endif
 #endif
 		switch (curr_field->field_name[0]) {
 			case 'I':

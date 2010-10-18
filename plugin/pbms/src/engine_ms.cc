@@ -202,26 +202,19 @@ const PBMSEnginePtr MSEngine::getEngineInfoAt(int indx)
 		}
 	}
 	
-	return NULL;
+	return (const PBMSEnginePtr)NULL;
 }
 #endif	
 
 //---------------
-int32_t	MSEngine::createBlob(const char *db_name, const char *tab_name, char *blob, size_t blob_len, PBMSBlobURLPtr blob_url, PBMSResultPtr result)
+bool MSEngine::try_createBlob(CSThread *self, const char *db_name, const char *tab_name, char *blob, size_t blob_len, PBMSBlobURLPtr blob_url)
 {
-
-	CSThread		*self;
-	int32_t			err = MS_OK;
-	MSOpenTable		*otab;
-	CSInputStream	*i_stream = NULL;
+	volatile bool rtc = true;
 	
-	CLOBBER_PROTECT(err);
-
-	if ((err = enterConnectionNoThd(&self, result)))
-		return err;
-
-	inner_();
 	try_(a) {
+		MSOpenTable		*otab;
+		CSInputStream	*i_stream = NULL;
+		
 		otab = openTable(db_name, tab_name, true);
 		frompool_(otab);
 		
@@ -232,30 +225,37 @@ int32_t	MSEngine::createBlob(const char *db_name, const char *tab_name, char *bl
 			CSException::throwException(CS_CONTEXT, MS_ERR_RECOVERY_IN_PROGRESS, "Cannot create BLOBs during repository recovery.");
 
 		backtopool_(otab);
+		rtc = false;			
 	}
-	catch_(a) {
-		err = exceptionToResult(&self->myException, result);
-	}
+	catch_(a);
 	cont_(a);
-	return_(err);
+	return rtc;
 }
 
 //---------------
-int32_t	MSEngine::referenceBlob(const char *db_name, const char *tab_name, PBMSBlobURLPtr ret_blob_url, char *blob_url, uint16_t col_index, PBMSResultPtr result)
+int32_t	MSEngine::createBlob(const char *db_name, const char *tab_name, char *blob, size_t blob_len, PBMSBlobURLPtr blob_url, PBMSResultPtr result)
 {
 
 	CSThread		*self;
 	int32_t			err = MS_OK;
-	MSBlobURLRec	blob;
-	MSOpenTable		*otab;
 	
-	CLOBBER_PROTECT(err);
-
 	if ((err = enterConnectionNoThd(&self, result)))
 		return err;
 
 	inner_();
+	if (try_createBlob(self, db_name, tab_name, blob, blob_len, blob_url))
+		err = exceptionToResult(&self->myException, result);
+
+	return_(err);
+}
+
+//---------------
+bool MSEngine::try_referenceBlob(CSThread *self, const char *db_name, const char *tab_name, PBMSBlobURLPtr ret_blob_url, char *blob_url, uint16_t col_index)
+{
+	volatile bool rtc = true;
 	try_(a) {
+		MSBlobURLRec	blob;
+		MSOpenTable		*otab;
 		
 		if (! PBMSBlobURLTools::couldBeURL(blob_url, &blob)){
 			char buffer[CS_EXC_MESSAGE_SIZE];
@@ -271,29 +271,39 @@ int32_t	MSEngine::referenceBlob(const char *db_name, const char *tab_name, PBMSB
 		otab->useBlob(blob.bu_type, blob.bu_db_id, blob.bu_tab_id, blob.bu_blob_id, blob.bu_auth_code, col_index, blob.bu_blob_size, blob.bu_blob_ref_id, ret_blob_url);
 
 		backtopool_(otab);
+		rtc = false;			
 	}
-	catch_(a) {
-		err = exceptionToResult(&self->myException, result);
-	}
+	catch_(a);
 	cont_(a);
-	return_(err);
+	return rtc;
 }
 
 //---------------
-int32_t	MSEngine::dereferenceBlob(const char *db_name, const char *tab_name, char *blob_url, PBMSResultPtr result)
+int32_t	MSEngine::referenceBlob(const char *db_name, const char *tab_name, PBMSBlobURLPtr ret_blob_url, char *blob_url, uint16_t col_index, PBMSResultPtr result)
 {
+
 	CSThread		*self;
 	int32_t			err = MS_OK;
-	MSBlobURLRec	blob;
-	MSOpenTable		*otab;
-
-	CLOBBER_PROTECT(err);
-
+	
 	if ((err = enterConnectionNoThd(&self, result)))
 		return err;
 
 	inner_();
+	if (try_referenceBlob(self, db_name, tab_name, ret_blob_url, blob_url, col_index))
+		err = exceptionToResult(&self->myException, result);
+
+	return_(err);
+
+}
+
+//---------------
+bool MSEngine::try_dereferenceBlob(CSThread *self, const char *db_name, const char *tab_name, char *blob_url)
+{
+	volatile bool rtc = true;
 	try_(a) {
+		MSBlobURLRec	blob;
+		MSOpenTable		*otab;
+
 		if (! PBMSBlobURLTools::couldBeURL(blob_url, &blob)){
 			char buffer[CS_EXC_MESSAGE_SIZE];
 
@@ -323,35 +333,58 @@ int32_t	MSEngine::dereferenceBlob(const char *db_name, const char *tab_name, cha
 			CSException::throwException(CS_CONTEXT, MS_ERR_INCORRECT_URL, buffer);
 		}
 		
-		backtopool_(otab);				
+		backtopool_(otab);	
+		rtc = false;			
 	}
-	catch_(a) {
-		err = exceptionToResult(&self->myException, result);
-	}
+	catch_(a);
 	cont_(a);
+	return rtc;
+}
+
+int32_t	MSEngine::dereferenceBlob(const char *db_name, const char *tab_name, char *blob_url, PBMSResultPtr result)
+{
+	CSThread		*self;
+	int32_t			err = MS_OK;
+
+	if ((err = enterConnectionNoThd(&self, result)))
+		return err;
+
+	inner_();
+	if (try_dereferenceBlob(self, db_name, tab_name, blob_url))
+		err = exceptionToResult(&self->myException, result);
+
 	return_(err);
+}
+
+bool MSEngine::try_dropDatabase(CSThread *self, const char *db_name)
+{
+	volatile bool rtc = true;
+	try_(a) {
+		MSDatabase::dropDatabase(db_name);
+		rtc = false;
+	}
+	catch_(a);
+	cont_(a);
+	
+	return rtc;
 }
 
 int32_t MSEngine::dropDatabase(const char *db_name, PBMSResultPtr result)
 {
 	CSThread *self;
-	int		err = MS_OK;;
+	int		err = MS_OK;
 	
-	CLOBBER_PROTECT(err);
-
 	if ((err = enterConnectionNoThd(&self, result)))
 		return err;
+
 	inner_();
 	
-	try_(a) {
-		MSDatabase::dropDatabase(db_name);
-	}
-	catch_(a) {
+	if (try_dropDatabase(self, db_name))
 		err = exceptionToResult(&self->myException, result);
-	}
-	cont_(a);
+
 	return_(err);
 }
+
 //---------------
 typedef struct UnDoInfo {
 	bool udo_WasRename;
@@ -361,17 +394,10 @@ typedef struct UnDoInfo {
 	CSString *udo_NewName;
 } UnDoInfoRec, *UnDoInfoPtr;
 
-int32_t	MSEngine::dropTable(const char *db_name, const char *tab_name, PBMSResultPtr result)
+//---------------
+bool MSEngine::try_dropTable(CSThread *self, const char *db_name, const char *tab_name)
 {
-	CSThread	*self;
-	int			err = MS_OK;
-
-	CLOBBER_PROTECT(err);
-
-	if ((err = enterConnectionNoThd(&self, result)))
-		return err;
-
-	inner_();
+	volatile bool rtc = true;
 	try_(a) {
 
 		CSPath			*new_path;
@@ -382,8 +408,9 @@ int32_t	MSEngine::dropTable(const char *db_name, const char *tab_name, PBMSResul
 		UnDoInfoPtr		undo_info = NULL;
 
 		otab = openTable(db_name, tab_name, false);
-		if (!otab)
-			goto exit;
+		if (!otab) {
+			goto end_try;
+		}
 		
 		// If we are recovering do not delete the table.
 		// It is normal for MySQL recovery scripts to delete any table they aare about to
@@ -391,7 +418,7 @@ int32_t	MSEngine::dropTable(const char *db_name, const char *tab_name, PBMSResul
 		// then this would delete all the recovered BLOBs in the table.
 		if (otab->getDB()->isRecovering()) {
 			otab->returnToPool();
-			goto exit;
+			goto end_try;
 		}
 
 		frompool_(otab);
@@ -421,7 +448,7 @@ int32_t	MSEngine::dropTable(const char *db_name, const char *tab_name, PBMSResul
 		frompool_(tab_pool);
 
 		if (old_path->exists())
-			old_path->move(new_path);
+			old_path->move(RETAIN(new_path));
 		tab->myDatabase->dropTable(RETAIN(tab));
 		
 		/* Add the table to the temp delete list if we are not recovering... */
@@ -437,15 +464,28 @@ int32_t	MSEngine::dropTable(const char *db_name, const char *tab_name, PBMSResul
 		
 		undo_info->udo_WasRename = false;
 		self->myInfo = undo_info;
-		
-		
-exit: ;
+				
+end_try:
+		rtc = false;	
 	}
-	
-	catch_(a) {
-		err = exceptionToResult(&self->myException, result);
-	}
+	catch_(a);
 	cont_(a);
+	return rtc;
+}
+
+//---------------
+int32_t	MSEngine::dropTable(const char *db_name, const char *tab_name, PBMSResultPtr result)
+{
+	CSThread	*self;
+	int			err = MS_OK;
+
+	if ((err = enterConnectionNoThd(&self, result)))
+		return err;
+
+	inner_();
+	if (try_dropTable(self, db_name, tab_name))
+		err = exceptionToResult(&self->myException, result);
+
 	outer_();
 	exitConnection();
 	return err;
@@ -506,7 +546,7 @@ bool MSEngine::renameTable(const char *from_db_name, const char *from_table, con
 	tab_pool = MSTableList::lockTablePoolForDeletion(otab);
 	frompool_(tab_pool);
 
-	from_path->move(to_path);
+	from_path->move(RETAIN(to_path));
 	tab->myDatabase->renameTable(tab, to_table);
 
 	backtopool_(tab_pool);	// The will unlock and close the table pool freeing all tables in it.
@@ -518,17 +558,9 @@ bool MSEngine::renameTable(const char *from_db_name, const char *from_table, con
 }
 
 //---------------
-int32_t	MSEngine::renameTable(const char *from_db_name, const char *from_table, const char *to_db_name, const char *to_table, PBMSResultPtr result)
+bool MSEngine::try_renameTable(CSThread *self, const char *from_db_name, const char *from_table, const char *to_db_name, const char *to_table)
 {
-	CSThread	*self;
-	int err = MS_OK;
-
-	CLOBBER_PROTECT(err);
-
-	if ((err = enterConnectionNoThd(&self, result)))
-		return err;
-
-	inner_();
+	volatile bool rtc = true;
 	try_(a) {
 		UnDoInfoPtr undo_info = (UnDoInfoPtr) cs_malloc(sizeof(UnDoInfoRec));
 		push_ptr_(undo_info);
@@ -554,11 +586,26 @@ int32_t	MSEngine::renameTable(const char *from_db_name, const char *from_table, 
 		}
 		self->myInfo = undo_info;
 		pop_(undo_info);
+		rtc = false;			
 	}
-	catch_(a) {
-		err = exceptionToResult(&self->myException, result);
-	}
+	catch_(a);
 	cont_(a);
+	return rtc;
+}
+
+//---------------
+int32_t	MSEngine::renameTable(const char *from_db_name, const char *from_table, const char *to_db_name, const char *to_table, PBMSResultPtr result)
+{
+	CSThread	*self;
+	int err = MS_OK;
+
+	if ((err = enterConnectionNoThd(&self, result)))
+		return err;
+
+	inner_();
+	if (try_renameTable(self, from_db_name, from_table, to_db_name, to_table))
+		err = exceptionToResult(&self->myException, result);
+
 	outer_();
 	exitConnection();
 	return err;
@@ -591,6 +638,26 @@ void MSEngine::completeRenameTable(UnDoInfoPtr info, bool ok)
 	}
 	exit_();
 }
+
+//---------------
+static bool try_CompleteTransaction(CSThread *self, bool ok)
+{
+	volatile bool rtc = true;
+	try_(a) {
+		if (ok)
+			MSTransactionManager::commit();
+		else if (self->myIsAutoCommit)
+			MSTransactionManager::rollback();
+		else
+			MSTransactionManager::rollbackToPosition(self->myStartStmt); // Rollback the last logical statement.
+		rtc = false;
+	}
+	catch_(a)
+	cont_(a);
+	
+	return rtc;
+}
+
 //---------------
 void MSEngine::callCompleted(bool ok)
 {
@@ -611,18 +678,9 @@ void MSEngine::callCompleted(bool ok)
 		self->myInfo = NULL;
 	} else if (self->myTID && (self->myIsAutoCommit || !ok)) {
 		inner_();
-		try_(a) {
-			if (ok)
-				MSTransactionManager::commit();
-			else if (self->myIsAutoCommit)
-				MSTransactionManager::rollback();
-			else
-				MSTransactionManager::rollbackToPosition(self->myStartStmt); // Rollback the last logical statement.
-		}
-		catch_(a) {
+		if (try_CompleteTransaction(self, ok)) {
 			self->logException();
 		}
-		cont_(a);
 		outer_();
 	}
 	

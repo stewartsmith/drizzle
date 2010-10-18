@@ -33,6 +33,8 @@
 
 #include "CSDefs.h"
 
+class CSThread;
+
 class CSMutex {
 public:
 	CSMutex();
@@ -46,6 +48,11 @@ public:
 
 private:
 	pthread_mutex_t	iMutex;
+#ifdef DEBUG
+	CSThread		*iLocker;
+public:
+	bool			trace;
+#endif
 };
 
 class CSLock : public CSMutex {

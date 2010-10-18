@@ -599,7 +599,6 @@ void cs_mm_print_track(const char *func, const char *file, uint32_t line, void *
 	if (!track_me && !mm_tracking_id)
 		return;
 
-
 	if (func) {
 		cs_format_context(300, buffer, func, file, line);
 		fprintf(stderr, "TRACKING (%"PRIu32"): %s %2"PRIu32" %s", debug_ptr->md_id, inc ? "INC" : "DEC", ref_cnt, buffer);
@@ -672,3 +671,28 @@ void cs_exit_memory(void)
 #endif
 }
 
+#ifdef DEBUG
+uint32_t cs_mm_get_check_point()
+{
+	return mm_alloc_count;
+}
+
+// Reports any memory allocated after the check_point
+// but has not been freed.
+void cs_mm_assert_check_point(uint32_t check_point)
+{
+	uint32_t mm;
+
+	if (!mm_addresses)
+		return;
+
+	pthread_mutex_lock(&mm_mutex);
+	for (mm=0; mm<mm_nr_in_use; mm++) {
+		if (mm_addresses[mm].id >= check_point)
+			mm_throw_assertion(&mm_addresses[mm], mm_addresses[mm].ptr, "Not freed");
+	}
+
+	pthread_mutex_unlock(&mm_mutex);
+
+}
+#endif

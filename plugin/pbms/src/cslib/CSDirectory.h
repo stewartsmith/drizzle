@@ -29,56 +29,35 @@
 #ifndef __CSDIRECTORY_H__
 #define __CSDIRECTORY_H__
 
-#include <dirent.h>
-
 #include "CSDefs.h"
+#include "CSSys.h"
 #include "CSPath.h"
 #include "CSTime.h"
 #include "CSObject.h"
 #include "CSStream.h"
 
-using namespace std;
-
-class CSDirectory : public CSObject {
+class CSDirectory : public CSSysDir, public CSObject  {
 public:
-	CSDirectory(): iEntry(NULL), iDir(NULL), iPath(NULL) { }
+	const char *name();
 
-	virtual ~CSDirectory();
-
-	virtual void open();
-
-	virtual void close();
-
-	virtual bool next();
-
-	virtual const char *name();
-
-	virtual bool isFile() ;
+	bool isFile();
 	
-	virtual void deleteEntry() ;
+	off64_t getSize();
+	
+	void deleteEntry();
 
-	virtual void info(bool *is_dir, off64_t *size, CSTime *mod_time);
+	void info(bool *is_dir, off64_t *size, CSTime *mod_time);
 
-	virtual void print(CSOutputStream *out);
+	bool exists();
+
+	void print(CSOutputStream *out);
 
 	friend class TDDirectory;
 
-	static CSDirectory *newDirectory(CSPath *);
-	static CSDirectory *newDirectory(CSString *);
+	static CSDirectory *newDirectory(CSPath *path);
+	static CSDirectory *newDirectory(CSString *path);
+	static CSDirectory *newDirectory(const char *path);
 
-private:
-	/* Solaris requires od_entry.d_name member to have size at least as returned
-	 * by pathconf() function on per-directory basis. As a result 'struct dirent'
-	 * cannot be staticly alloacted. 
-	 */
-	union var_dirent {
-		struct dirent entry;
-		char space[1];
-	} *iEntry;
-	
-	DIR *iDir;
-	CSString *iPath;
-	void getFilePath(char *path, size_t size);
 };
 
 

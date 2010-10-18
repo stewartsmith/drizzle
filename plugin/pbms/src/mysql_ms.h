@@ -30,11 +30,9 @@
 #ifndef __MS_MYSQL_H__
 #define __MS_MYSQL_H__
 
-#include <string>
-
 void		*ms_my_get_thread();
 uint64_t	ms_my_1970_to_mysql_time(time_t t);
-const std::string ms_my_get_mysql_home_path();
+const char	*ms_my_get_mysql_home_path();
 void		ms_my_set_column_name(const char *table, uint16_t col_index, char *col_name);
 bool		ms_is_autocommit();
 

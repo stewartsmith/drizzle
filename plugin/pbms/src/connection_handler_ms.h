@@ -30,12 +30,11 @@
 #ifndef __CONNECTIONHANDLER_MS_H__
 #define __CONNECTIONHANDLER_MS_H__
 
-#include "engine_ms.h"
-
 #include "cslib/CSDefs.h"
 #include "cslib/CSThread.h"
 #include "cslib/CSHTTPStream.h"
 
+#include "engine_ms.h"
 
 class MSConnectionHandler : public CSDaemon {
 public:
