@@ -1106,13 +1106,16 @@ int Join::optimize()
       If this join belongs to an uncacheable subquery save
       the original join
     */
-    if (select_lex->uncacheable && !is_top_level_join() &&
+    if (select_lex->uncacheable.any() && 
+        ! is_top_level_join() &&
         init_save_join_tab())
-      return(-1);
+    {
+      return -1;
+    }
   }
 
   error= 0;
-  return(0);
+  return 0;
 
 setup_subq_exit:
   /* Even with zero matching rows, subqueries in the HAVING clause
@@ -1195,7 +1198,7 @@ bool Join::init_save_join_tab()
 
 bool Join::save_join_tab()
 {
-  if (!join_tab_save && select_lex->master_unit()->uncacheable)
+  if (! join_tab_save && select_lex->master_unit()->uncacheable.any())
   {
     if (!(join_tab_save= (JoinTable*)session->memdup((unsigned char*) join_tab,
             sizeof(JoinTable) * tables)))
@@ -1835,7 +1838,7 @@ void Join::join_free()
     Optimization: if not EXPLAIN and we are done with the Join,
     free all tables.
   */
-  bool full= (!select_lex->uncacheable && !session->lex->describe);
+  bool full= (select_lex->uncacheable.none() && ! session->lex->describe);
   bool can_unlock= full;
 
   cleanup(full);
