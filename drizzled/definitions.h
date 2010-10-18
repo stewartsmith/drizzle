@@ -219,24 +219,25 @@ enum test_flag_bit
 #define MY_CHARSET_BIN_MB_MAXLEN 1
 
 // uncachable cause
-#define UNCACHEABLE_DEPENDENT   1
-#define UNCACHEABLE_RAND        2
-#define UNCACHEABLE_SIDEEFFECT	4
+static const uint32_t UNCACHEABLE_DEPENDENT= 1;
+static const uint32_t UNCACHEABLE_RAND= 2;
+static const uint32_t UNCACHEABLE_SIDEEFFECT= 3;
 /// forcing to save JOIN for explain
-#define UNCACHEABLE_EXPLAIN     8
+static const uint32_t UNCACHEABLE_EXPLAIN= 4;
 /** Don't evaluate subqueries in prepare even if they're not correlated */
-#define UNCACHEABLE_PREPARE    16
+static const uint32_t UNCACHEABLE_PREPARE= 5;
 /* For uncorrelated SELECT in an UNION with some correlated SELECTs */
-#define UNCACHEABLE_UNITED     32
+static const uint32_t UNCACHEABLE_UNITED= 6;
 
 /* Used to check GROUP BY list in the MODE_ONLY_FULL_GROUP_BY mode */
 #define UNDEF_POS (-1)
 
 /* Options to add_table_to_list() */
-#define TL_OPTION_UPDATING	1
-#define TL_OPTION_FORCE_INDEX	2
-#define TL_OPTION_IGNORE_LEAVES 4
-#define TL_OPTION_ALIAS         8
+static const uint32_t TL_OPTION_UPDATING= 0;
+static const uint32_t TL_OPTION_FORCE_INDEX= 1;
+static const uint32_t TL_OPTION_IGNORE_LEAVES= 2;
+static const uint32_t TL_OPTION_ALIAS= 3;
+static const uint32_t NUM_OF_TABLE_OPTIONS= 4;
 
 /* Some portable defines */
 

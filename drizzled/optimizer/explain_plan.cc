@@ -32,6 +32,7 @@
 #include <cstdio>
 #include <string>
 #include <sstream>
+#include <bitset>
 
 using namespace std;
 
@@ -485,7 +486,7 @@ bool optimizer::ExplainPlan::explainUnion(Session *session,
        sl= sl->next_select())
   {
     // drop UNCACHEABLE_EXPLAIN, because it is for internal usage only
-    uint8_t uncacheable= (sl->uncacheable & ~UNCACHEABLE_EXPLAIN);
+    sl->uncacheable.reset(UNCACHEABLE_EXPLAIN);
     if (&session->lex->select_lex == sl)
     {
       if (sl->first_inner_unit() || sl->next_select())
@@ -507,13 +508,13 @@ bool optimizer::ExplainPlan::explainUnion(Session *session,
         }
         else
         {
-          if (uncacheable & UNCACHEABLE_DEPENDENT)
+          if (sl->uncacheable.test(UNCACHEABLE_DEPENDENT))
           {
             sl->type= optimizer::ST_DEPENDENT_SUBQUERY;
           }
           else
           {
-            if (uncacheable)
+            if (sl->uncacheable.any())
             {
               sl->type= optimizer::ST_UNCACHEABLE_SUBQUERY;
             }
@@ -526,13 +527,13 @@ bool optimizer::ExplainPlan::explainUnion(Session *session,
       }
       else
       {
-        if (uncacheable & UNCACHEABLE_DEPENDENT)
+        if (sl->uncacheable.test(UNCACHEABLE_DEPENDENT))
         {
           sl->type= optimizer::ST_DEPENDENT_UNION;
         }
         else
         {
-          if (uncacheable)
+          if (sl->uncacheable.any())
           {
             sl->type= optimizer::ST_UNCACHEABLE_UNION;
           }
