@@ -325,29 +325,45 @@ drizzle_return_t drizzle_query_run_all(drizzle_st *drizzle)
 size_t drizzle_escape_string(char *to, const char *from, size_t from_size)
 {
   size_t to_size= 0;
+  char newchar;
 
   while (from_size > 0)
   {
+    newchar= 0;
     /* All multi-byte UTF8 characters have the high bit set for all bytes. */
     if (!(*from & 0x80))
     {
       switch (*from)
       {
       case 0:
+        newchar= '0';
+        break;
       case '\n':
+        newchar= 'n';
+        break;
       case '\r':
+        newchar= 'r';
+        break;
+      case '\032':
+        newchar= 'Z';
+        break;
       case '\\':
       case '\'':
       case '"':
-      case '\032':
         *to++= '\\';
         to_size++;
       default:
         break;
       }
     }
-
-    *to++= *from++;
+    if (newchar != 0)
+    {
+      *to++= '\\';
+      *to++= newchar;
+      to_size++;
+    }
+    else 
+      *to++= *from++;
     from_size--;
     to_size++;
   }
