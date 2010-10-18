@@ -18,6 +18,9 @@
  */
 
 #include "config.h"
+
+#include <algorithm>
+
 #include "drizzled/module/module.h"
 #include "drizzled/set_var.h"
 #include "drizzled/util/functors.h"
