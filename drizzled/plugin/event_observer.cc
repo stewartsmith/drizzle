@@ -400,6 +400,9 @@ namespace plugin
   {
     EventObserverList::ObserverMap *eventObservers;
 
+    if (observerList == NULL)
+      return false; // Nobody was interested in the event. :(
+
     eventObservers = observerList->getObservers(event);
 
     if (eventObservers == NULL)
@@ -447,7 +450,7 @@ namespace plugin
 
   /*==========================================================*/
   /* Static meathods called by drizzle to notify interested plugins 
-   * of a schema event,
+   * of a schema event.
  */
   bool EventObserver::beforeDropTable(Session &session, const drizzled::TableIdentifier &table)
   {
@@ -487,11 +490,13 @@ namespace plugin
 
   /*==========================================================*/
   /* Static meathods called by drizzle to notify interested plugins 
-   * of a table event,
+   * of a table event.
+   *
+   * A quick test is done first to see if there are any interested observers.
  */
   bool EventObserver::beforeInsertRecord(Table &table, unsigned char *buf)
   {
-    if (all_event_plugins.empty())
+    if (all_event_plugins.empty() || !TableEventData::hasEvents(table))
       return false;
 
     BeforeInsertRecordEventData eventData(*(table.in_use), table, buf);
@@ -500,7 +505,7 @@ namespace plugin
 
   bool EventObserver::afterInsertRecord(Table &table, const unsigned char *buf, int err)
   {
-    if (all_event_plugins.empty())
+    if (all_event_plugins.empty() || !TableEventData::hasEvents(table))
       return false;
 
     AfterInsertRecordEventData eventData(*(table.in_use), table, buf, err);
@@ -509,7 +514,7 @@ namespace plugin
 
   bool EventObserver::beforeDeleteRecord(Table &table, const unsigned char *buf)
   {
-    if (all_event_plugins.empty())
+    if (all_event_plugins.empty() || !TableEventData::hasEvents(table))
       return false;
 
     BeforeDeleteRecordEventData eventData(*(table.in_use), table, buf);
@@ -518,7 +523,7 @@ namespace plugin
 
   bool EventObserver::afterDeleteRecord(Table &table, const unsigned char *buf, int err)
   {
-    if (all_event_plugins.empty())
+    if (all_event_plugins.empty() || !TableEventData::hasEvents(table))
       return false;
 
     AfterDeleteRecordEventData eventData(*(table.in_use), table, buf, err);
@@ -527,7 +532,7 @@ namespace plugin
 
   bool EventObserver::beforeUpdateRecord(Table &table, const unsigned char *old_data, unsigned char *new_data)
   {
-    if (all_event_plugins.empty())
+    if (all_event_plugins.empty() || !TableEventData::hasEvents(table))
       return false;
 
     BeforeUpdateRecordEventData eventData(*(table.in_use), table, old_data, new_data);
@@ -536,7 +541,7 @@ namespace plugin
 
   bool EventObserver::afterUpdateRecord(Table &table, const unsigned char *old_data, unsigned char *new_data, int err)
   {
-    if (all_event_plugins.empty())
+    if (all_event_plugins.empty() || !TableEventData::hasEvents(table))
       return false;
 
     AfterUpdateRecordEventData eventData(*(table.in_use), table, old_data, new_data, err);
@@ -545,11 +550,13 @@ namespace plugin
 
   /*==========================================================*/
   /* Static meathods called by drizzle to notify interested plugins 
-   * of a session event,
- */
+   * of a session event.
+   *
+   * A quick test is done first to see if there are any interested observers.
+*/
   bool EventObserver::beforeCreateDatabase(Session &session, const std::string &db)
   {
-    if (all_event_plugins.empty())
+    if (all_event_plugins.empty() || !SessionEventData::hasEvents(session))
       return false;
 
     BeforeCreateDatabaseEventData eventData(session, db);
@@ -558,7 +565,7 @@ namespace plugin
 
   bool EventObserver::afterCreateDatabase(Session &session, const std::string &db, int err)
   {
-    if (all_event_plugins.empty())
+    if (all_event_plugins.empty() || !SessionEventData::hasEvents(session))
       return false;
 
     AfterCreateDatabaseEventData eventData(session, db, err);
@@ -567,7 +574,7 @@ namespace plugin
 
   bool EventObserver::beforeDropDatabase(Session &session, const std::string &db)
   {
-    if (all_event_plugins.empty())
+    if (all_event_plugins.empty() || !SessionEventData::hasEvents(session))
       return false;
 
     BeforeDropDatabaseEventData eventData(session, db);
@@ -576,7 +583,7 @@ namespace plugin
 
   bool EventObserver::afterDropDatabase(Session &session, const std::string &db, int err)
   {
-    if (all_event_plugins.empty())
+    if (all_event_plugins.empty() || !SessionEventData::hasEvents(session))
       return false;
 
     AfterDropDatabaseEventData eventData(session, db, err);
@@ -585,7 +592,7 @@ namespace plugin
 
   bool EventObserver::connectSession(Session &session)
   {
-    if (all_event_plugins.empty())
+    if (all_event_plugins.empty() || !SessionEventData::hasEvents(session))
       return false;
 
     ConnectSessionEventData eventData(session);
@@ -594,7 +601,7 @@ namespace plugin
 
   bool EventObserver::disconnectSession(Session &session)
   {
-    if (all_event_plugins.empty())
+    if (all_event_plugins.empty() || !SessionEventData::hasEvents(session))
       return false;
 
     DisconnectSessionEventData eventData(session);
@@ -603,7 +610,7 @@ namespace plugin
 
   bool EventObserver::beforeStatement(Session &session)
   {
-    if (all_event_plugins.empty())
+    if (all_event_plugins.empty() || !SessionEventData::hasEvents(session))
       return false;
 
     BeforeStatementEventData eventData(session);
@@ -612,7 +619,7 @@ namespace plugin
 
   bool EventObserver::afterStatement(Session &session)
   {
-    if (all_event_plugins.empty())
+    if (all_event_plugins.empty() || !SessionEventData::hasEvents(session))
       return false;
 
     AfterStatementEventData eventData(session);
