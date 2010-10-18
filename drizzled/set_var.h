@@ -372,6 +372,76 @@ public:
   bool is_readonly() const { return true; }
 };
 
+class sys_var_const_string :
+  public sys_var
+{
+  const std::string &value;
+public:
+  sys_var_const_string(const char *name_arg,
+                       const std::string& value_arg) :
+    sys_var(name_arg),
+    value(value_arg)
+  { }
+
+  inline void set(char *)
+  { }
+
+  bool check(Session *, set_var *)
+  {
+    return true;
+  }
+  bool update(Session *, set_var *)
+  {
+    return true;
+  }
+  SHOW_TYPE show_type() { return SHOW_CHAR; }
+  unsigned char *value_ptr(Session *, sql_var_t, const LEX_STRING *)
+  {
+    return (unsigned char*)(value.c_str());
+  }
+  bool check_update_type(Item_result)
+  {
+    return true;
+  }
+  bool check_default(sql_var_t) { return true; }
+  bool is_readonly() const { return true; }
+};
+
+class sys_var_const_string_val :
+  public sys_var
+{
+  const std::string value;
+public:
+  sys_var_const_string_val(const char *name_arg,
+                           const std::string& value_arg) :
+    sys_var(name_arg),
+    value(value_arg)
+  { }
+
+  inline void set(char *)
+  { }
+
+  bool check(Session *, set_var *)
+  {
+    return true;
+  }
+  bool update(Session *, set_var *)
+  {
+    return true;
+  }
+  SHOW_TYPE show_type() { return SHOW_CHAR; }
+  unsigned char *value_ptr(Session *, sql_var_t, const LEX_STRING *)
+  {
+    return (unsigned char*)(value.c_str());
+  }
+  bool check_update_type(Item_result)
+  {
+    return true;
+  }
+  bool check_default(sql_var_t) { return true; }
+  bool is_readonly() const { return true; }
+};
+
 class sys_var_const_str :public sys_var
 {
   char *value;					// Pointer to const value
