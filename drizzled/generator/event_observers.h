@@ -1,7 +1,7 @@
-/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Sun Microsystems
+ *  Copyright (C) 2010 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,32 +18,36 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SCHEMA_DICTIONARY_REFERENTIAL_CONSTRAINTS_H
-#define PLUGIN_SCHEMA_DICTIONARY_REFERENTIAL_CONSTRAINTS_H
+#ifndef DRIZZLED_GENERATOR_EVENT_OBSERVERS_H
+#define DRIZZLED_GENERATOR_EVENT_OBSERVERS_H
 
-class ReferentialConstraintsTool : public TablesTool
+#include "drizzled/plugin/event_observer.h"
+
+namespace drizzled {
+namespace generator {
+
+class EventObserver
 {
+  plugin::EventObserverVector::const_iterator iter;
+
 public:
 
-  ReferentialConstraintsTool();
+  EventObserver();
 
-  class Generator : public TablesTool::Generator 
+  operator drizzled::plugin::EventObserverPtr()
   {
-    bool populate()
+    while (iter != plugin::EventObserver::getEventObservers().end())
     {
-      return false;
+      drizzled::plugin::EventObserverPtr ret= *iter;
+      iter++;
+      return ret;
     }
 
-  public:
-    Generator(drizzled::Field **arg) :
-      TablesTool::Generator(arg)
-    { }
-  };
-
-  Generator *generator(drizzled::Field **arg)
-  {
-    return new Generator(arg);
+    return NULL;
   }
 };
 
-#endif /* PLUGIN_SCHEMA_DICTIONARY_REFERENTIAL_CONSTRAINTS_H */
+} /* namespace generator */
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_GENERATOR_EVENT_OBSERVERS_H */

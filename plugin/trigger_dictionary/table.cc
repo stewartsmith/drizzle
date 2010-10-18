@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Sun Microsystems
+ *  Copyright (C) 2010 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,25 +19,38 @@
  */
 
 #include "config.h"
-#include "plugin/schema_dictionary/dictionary.h"
 
-using namespace std;
+#include "plugin/trigger_dictionary/table.h"
+
+#include <drizzled/atomics.h>
+#include <drizzled/session.h>
+
+
 using namespace drizzled;
+using namespace std;
 
-ReferentialConstraintsTool::ReferentialConstraintsTool() :
-  TablesTool("REFERENTIAL_CONSTRAINTS")
+trigger_dictionary::Table::Table() :
+  plugin::TableFunction("DATA_DICTIONARY", "EVENT_OBSERVERS")
 {
-  add_field("CONSTRAINT_SCHEMA");
-  add_field("CONSTRAINT_NAME");
+  add_field("EVENT_OBSERVER_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+}
 
-  add_field("UNIQUE_CONSTRAINT_SCHEMA");
-  add_field("UNIQUE_CONSTRAINT_NAME");
+trigger_dictionary::Table::Generator::Generator(drizzled::Field **arg) :
+  drizzled::plugin::TableFunction::Generator(arg),
+  event_observer_generator()
+{ }
 
+bool trigger_dictionary::Table::Generator::populate()
+{
+  drizzled::plugin::EventObserverPtr event;
 
-  add_field("MATCH_OPTION");
-  add_field("UPDATE_RULE");
-  add_field("DELETE_RULE");
-  add_field("TABLE_NAME");
+  while ((event= event_observer_generator))
+  {
+    /* TRIGGER_NAME */
+    push(event->getName());
 
-  add_field("REFERENCED_TABLE_NAME");
+    return true;
+  }
+
+  return false;
 }

@@ -1,0 +1,55 @@
+# Lets Make sure everything is turned on for us.
+SELECT VARIABLE_NAME,VARIABLE_VALUE FROM DATA_DICTIONARY.GLOBAL_VARIABLES WHERE VARIABLE_NAME LIKE "hello%";
+
+# Test the DDL triggers on tables, on t2 should be observed.
+CREATE TABLE t1 (a int);
+select IF(@BEFORE_DROP_TABLE, "YES", "NO");
+select IF(@AFTER_DROP_TABLE, "YES", "NO");
+select IF(@BEFORE_RENAME_TABLE, "YES", "NO");
+select IF(@AFTER_RENAME_TABLE, "YES", "NO");
+
+CREATE TABLE t2 (a int);
+select IF(@BEFORE_DROP_TABLE, "YES", "NO");
+select IF(@AFTER_DROP_TABLE, "YES", "NO");
+select IF(@BEFORE_RENAME_TABLE, "YES", "NO");
+select IF(@AFTER_RENAME_TABLE, "YES", "NO");
+
+DROP TABLE t1;
+select IF(@BEFORE_DROP_TABLE, "YES", "NO");
+select IF(@AFTER_DROP_TABLE, "YES", "NO");
+select IF(@BEFORE_RENAME_TABLE, "YES", "NO");
+select IF(@AFTER_RENAME_TABLE, "YES", "NO");
+
+DROP TABLE t2;
+select IF(@BEFORE_DROP_TABLE, "YES", "NO");
+select IF(@AFTER_DROP_TABLE, "YES", "NO");
+select IF(@BEFORE_RENAME_TABLE, "YES", "NO");
+select IF(@AFTER_RENAME_TABLE, "YES", "NO");
+
+# Test the DDL triggers on tables, on t2 should be observed.
+CREATE SCHEMA events;
+use events;
+CREATE TABLE t1 (a int);
+select IF(@BEFORE_DROP_TABLE, "YES", "NO");
+select IF(@AFTER_DROP_TABLE, "YES", "NO");
+select IF(@BEFORE_RENAME_TABLE, "YES", "NO");
+select IF(@AFTER_RENAME_TABLE, "YES", "NO");
+
+CREATE TABLE t2 (a int);
+select IF(@BEFORE_DROP_TABLE, "YES", "NO");
+select IF(@AFTER_DROP_TABLE, "YES", "NO");
+select IF(@BEFORE_RENAME_TABLE, "YES", "NO");
+select IF(@AFTER_RENAME_TABLE, "YES", "NO");
+
+DROP TABLE t1;
+select IF(@BEFORE_DROP_TABLE, "YES", "NO");
+select IF(@AFTER_DROP_TABLE, "YES", "NO");
+select IF(@BEFORE_RENAME_TABLE, "YES", "NO");
+select IF(@AFTER_RENAME_TABLE, "YES", "NO");
+
+DROP TABLE t2;
+select IF(@BEFORE_DROP_TABLE, "YES", "NO");
+select IF(@AFTER_DROP_TABLE, "YES", "NO");
+select IF(@BEFORE_RENAME_TABLE, "YES", "NO");
+select IF(@AFTER_RENAME_TABLE, "YES", "NO");
+DROP SCHEMA events;

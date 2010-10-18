@@ -6,7 +6,7 @@ CREATE SCHEMA drizzleslap;
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.columns" --delimiter=";"
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.index_parts" --delimiter=";"
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.indexes" --delimiter=";"
---exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.referential_constraints" --delimiter=";"
+--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.foreign_keys" --delimiter=";"
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.schemas" --delimiter=";"
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.table_constraints" --delimiter=";"
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.tables" --delimiter=";"

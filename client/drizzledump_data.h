@@ -33,6 +33,29 @@ class DrizzleDumpConnection;
 class DrizzleDumpDatabase;
 class DrizzleDumpData;
 
+class DrizzleDumpForeignKey
+{
+  public:
+    DrizzleDumpConnection *dcon;
+    std::string constraintName;
+
+    DrizzleDumpForeignKey(std::string name, DrizzleDumpConnection* connection) :
+      dcon(connection),
+      constraintName(name)
+    { }
+
+    virtual ~DrizzleDumpForeignKey() { }
+
+    std::string parentColumns;
+    std::string childColumns;
+    std::string childTable;
+    std::string matchOption;
+    std::string deleteRule;
+    std::string updateRule;
+
+    friend std::ostream& operator <<(std::ostream &os, const DrizzleDumpForeignKey &obj);
+};
+
 class DrizzleDumpIndex
 {
   public:
@@ -107,9 +130,11 @@ class DrizzleDumpTable
 
     virtual bool populateFields() { return false; }
     virtual bool populateIndexes() { return false; }
+    virtual bool populateFkeys() { return false; }
     virtual DrizzleDumpData* getData() { return NULL; }
     std::vector<DrizzleDumpField*> fields;
     std::vector<DrizzleDumpIndex*> indexes;
+    std::vector<DrizzleDumpForeignKey*> fkeys;
 
     friend std::ostream& operator <<(std::ostream &os, const DrizzleDumpTable &obj);
     std::string tableName;
@@ -226,7 +251,8 @@ class DrizzleStringBuf : public std::streambuf
 
     void writeString(std::string &str)
     {
-      connection->queryNoResult(str);
+      if (not connection->queryNoResult(str))
+        throw 1;
     }
 
     void setConnection(DrizzleDumpConnection *conn) { connection= conn; }
@@ -255,23 +281,23 @@ class DrizzleStringBuf : public std::streambuf
 
     int	sync()
     {
-        size_t len = size_t(pptr() - pbase());
-        std::string temp(pbase(), len);
+      size_t len = size_t(pptr() - pbase());
+      std::string temp(pbase(), len);
 
-        /* Drop newlines */
-        temp.erase(std::remove(temp.begin(), temp.end(), '\n'), temp.end());
+      /* Drop newlines */
+      temp.erase(std::remove(temp.begin(), temp.end(), '\n'), temp.end());
 
-        if (temp.compare(0, 2, "--") == 0)
-        {
-          /* Drop comments */
-          setp(pbase(), epptr());
-        }
-        if (temp.find(";") != std::string::npos)
-        {
-            writeString(temp);
-            setp(pbase(), epptr());
-        }
-        return 0;
+      if (temp.compare(0, 2, "--") == 0)
+      {
+        /* Drop comments */
+        setp(pbase(), epptr());
+      }
+      if (temp.find(";") != std::string::npos)
+      {
+        writeString(temp);
+        setp(pbase(), epptr());
+      }
+      return 0;
     }
 };
 

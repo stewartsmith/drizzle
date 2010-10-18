@@ -23,6 +23,7 @@
 
 #include "drizzled/session.h"
 
+#include "drizzled/generator/event_observers.h"
 #include "drizzled/generator/functions.h"
 #include "drizzled/generator/schema.h"
 #include "drizzled/generator/table.h"

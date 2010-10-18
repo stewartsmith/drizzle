@@ -28,7 +28,7 @@ static int init(drizzled::module::Context &context)
   context.add(new ColumnsTool());
   context.add(new IndexPartsTool());
   context.add(new IndexesTool());
-  context.add(new ReferentialConstraintsTool());
+  context.add(new ForeignKeysTool());
   context.add(new SchemasTool());
   context.add(new TableConstraintsTool());
   context.add(new TablesTool());
