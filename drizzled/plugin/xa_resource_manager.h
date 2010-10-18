@@ -71,6 +71,11 @@ public:
     return doXaRecover(append_to, len);
   }
 
+  uint64_t getTransactionId(Session *session)
+  {
+    return doGetTransactionId(session);
+  }
+
   typedef ::boost::unordered_set<my_xid> commit_list_set;
   /** 
    * The below static class methods wrap the interaction
@@ -117,6 +122,8 @@ private:
    *  for this engine.
    */
   virtual int doXaRecover(XID * append_to, size_t len)= 0;
+
+  virtual uint64_t doGetTransactionId(Session *session)= 0;
 };
 
 } /* namespace plugin */

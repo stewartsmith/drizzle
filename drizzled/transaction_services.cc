@@ -426,6 +426,29 @@ void TransactionServices::registerResourceForTransaction(Session *session,
     registerResourceForStatement(session, monitored, engine, resource_manager);
 }
 
+uint64_t TransactionServices::getCurrentTransactionId(Session *session)
+{
+  TransactionContext *trans= &session->transaction.stmt;
+  TransactionContext::ResourceContexts &resource_contexts= trans->getResourceContexts();
+
+  if (resource_contexts.empty() == false)
+  {
+    for (TransactionContext::ResourceContexts::iterator it= resource_contexts.begin();
+         it != resource_contexts.end();
+         ++it)
+    {
+      ResourceContext *resource_context= *it;
+
+      plugin::MonitoredInTransaction *resource= resource_context->getMonitored();
+      if (resource->participatesInXaTransaction())
+      {
+        return resource_context->getXaResourceManager()->getTransactionId(session);
+      }
+    }
+  }
+  return 0;
+}
+
 /**
   @retval
     0   ok
@@ -964,7 +987,7 @@ void TransactionServices::initTransactionMessage(message::Transaction &in_transa
   trx->set_server_id(in_session->getServerId());
 
   if (should_inc_trx_id)
-    trx->set_transaction_id(getNextTransactionId());
+    trx->set_transaction_id(getCurrentTransactionId(in_session));
 
   trx->set_start_timestamp(in_session->getCurrentTimestamp());
 }

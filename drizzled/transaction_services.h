@@ -42,7 +42,7 @@ namespace plugin
 class Session;
 class NamedSavepoint;
 class Field;
- 
+
 /**
  * This is a class which manages the XA transaction processing
  * in the server
@@ -51,16 +51,11 @@ class TransactionServices
 {
 public:
   static const size_t DEFAULT_RECORD_SIZE= 100;
-  typedef uint64_t TransactionId;
   /**
    * Constructor
    */
   TransactionServices()
   {
-    /**
-     * @todo set transaction ID to the last one from an applier...
-     */
-    current_transaction_id= 0;
   }
 
   /**
@@ -413,20 +408,14 @@ public:
                                       plugin::MonitoredInTransaction *monitored,
                                       plugin::TransactionalStorageEngine *engine,
                                       plugin::XaResourceManager *resource_manager);
-  TransactionId getNextTransactionId()
-  {
-    return current_transaction_id.increment();
-  }
-  TransactionId getCurrentTransactionId()
-  {
-    return current_transaction_id;
-  }
+
+  uint64_t getCurrentTransactionId(Session *session);
+ 
   /**
    * DEBUG ONLY.  See plugin::TransactionLog::truncate()
    */
   void resetTransactionId()
   {
-    current_transaction_id= 0;
   }
 
   /**************
@@ -454,7 +443,6 @@ public:
   bool sendShutdownEvent(Session *session);
 
 private:
-  atomic<TransactionId> current_transaction_id;
 
   /**
    * Checks if a field has been updated 
