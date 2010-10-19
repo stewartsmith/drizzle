@@ -356,5 +356,6 @@ bool CSSysDir::entryIsFile()
 }
 
 //--------------
+extern void unix_close(int h);
 void unix_close(int h) {close(h);}
 

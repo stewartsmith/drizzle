@@ -636,9 +636,10 @@ iSuspendCount(0)
 {
 }
 
-void CSDaemon::try_Run(CSThread *self, bool must_sleep)
+void CSDaemon::try_Run(CSThread *self, const bool c_must_sleep)
 {
 	try_(a) {
+		 bool must_sleep = c_must_sleep; // This done to avoid longjmp() clobber.
 		while (!myMustQuit) {
 			if (must_sleep) {
 				lock_(this);

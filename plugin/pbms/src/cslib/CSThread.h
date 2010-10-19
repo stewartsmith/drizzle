@@ -361,7 +361,7 @@ public:
 	void suspendedWait(time_t milli_sec);
 
 private:
-	void		try_Run(CSThread *self, bool must_sleep);
+	void		try_Run(CSThread *self, const bool must_sleep);
 	bool		iSuspended;
 	uint32_t	iSuspendCount;
 };
