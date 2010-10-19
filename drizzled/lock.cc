@@ -34,7 +34,7 @@
       This is followed by a call to thr_multi_lock() for all tables.
 
   - When statement is done, we call mysql_unlock_tables().
-    This will call thr_multi_unlock() followed by
+    This will call DrizzleLock::unlock() followed by
     table_handler->external_lock(session, F_UNLCK) for each table.
 
   - Note that mysql_unlock_tables() may be called several times as
@@ -164,18 +164,17 @@ static int thr_lock_errno_to_mysql[]=
 static void reset_lock_data_and_free(DrizzleLock **mysql_lock)
 {
   DrizzleLock *sql_lock= *mysql_lock;
-  THR_LOCK_DATA **ldata, **ldata_end;
-
-  /* Clear the lock type of all lock data to avoid reusage. */
-  for (ldata= sql_lock->getLocks(), ldata_end= ldata + sql_lock->lock_count;
-       ldata < ldata_end;
-       ldata++)
-  {
-    /* Reset lock type. */
-    (*ldata)->type= TL_UNLOCK;
-  }
+  sql_lock->reset();
   delete sql_lock;
   *mysql_lock= 0;
+}
+
+void DrizzleLock::reset(void)
+{
+  for (std::vector<THR_LOCK_DATA *>::iterator iter= locks.begin(); iter != locks.end(); iter++)
+  {
+    (*iter)->type= TL_UNLOCK;
+  }
 }
 
 
@@ -296,7 +295,7 @@ DrizzleLock *mysql_lock_tables(Session *session, Table **tables, uint32_t count,
 
     /* going to retry, unlock all tables */
     if (sql_lock->lock_count)
-        thr_multi_unlock(sql_lock->getLocks(), sql_lock->lock_count);
+        sql_lock->unlock(sql_lock->lock_count);
 
     if (sql_lock->table_count)
       unlock_external(session, sql_lock->getTable(), sql_lock->table_count);
@@ -375,7 +374,7 @@ static int lock_external(Session *session, Table **tables, uint32_t count)
 void mysql_unlock_tables(Session *session, DrizzleLock *sql_lock)
 {
   if (sql_lock->lock_count)
-    thr_multi_unlock(sql_lock->getLocks(), sql_lock->lock_count);
+    sql_lock->unlock(sql_lock->lock_count);
   if (sql_lock->table_count)
     unlock_external(session, sql_lock->getTable(), sql_lock->table_count);
   delete sql_lock;
@@ -419,7 +418,7 @@ void mysql_unlock_read_tables(Session *session, DrizzleLock *sql_lock)
   /* unlock the read locked tables */
   if (i != found)
   {
-    thr_multi_unlock(lock,i-found);
+    sql_lock->unlock(i - found);
     sql_lock->lock_count= found;
   }
 

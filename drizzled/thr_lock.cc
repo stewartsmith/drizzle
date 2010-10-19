@@ -92,6 +92,8 @@ static enum thr_lock_type thr_upgraded_concurrent_insert_lock = TL_WRITE;
 
 uint64_t max_write_lock_count= UINT64_MAX;
 
+static void thr_multi_unlock(THR_LOCK_DATA **data,uint32_t count);
+
 /*
 ** For the future (now the thread specific cond is alloced by my_pthread.c)
 */
@@ -630,7 +632,7 @@ thr_multi_lock(THR_LOCK_DATA **data, uint32_t count, THR_LOCK_OWNER *owner)
 
   /* free all locks */
 
-void thr_multi_unlock(THR_LOCK_DATA **data,uint32_t count)
+static void thr_multi_unlock(THR_LOCK_DATA **data,uint32_t count)
 {
   THR_LOCK_DATA **pos,**end;
 
@@ -640,6 +642,17 @@ void thr_multi_unlock(THR_LOCK_DATA **data,uint32_t count)
       thr_unlock(*pos);
   }
   return;
+}
+
+void DrizzleLock::unlock(uint32_t count)
+{
+  THR_LOCK_DATA **pos,**end;
+
+  for (pos= getLocks(),end= getLocks()+count; pos < end ; pos++)
+  {
+    if ((*pos)->type != TL_UNLOCK)
+      thr_unlock(*pos);
+  }
 }
 
 /*

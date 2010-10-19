@@ -73,6 +73,9 @@ public:
     table_count= arg;
   }
 
+  void reset(void);
+  void unlock(uint32_t count);
+
   DrizzleLock(size_t table_count_arg, size_t lock_count_arg) :
     table_count(table_count_arg),
     lock_count(lock_count_arg)
