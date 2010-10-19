@@ -198,18 +198,7 @@ private:
 public:
   bool doesKeyNameExist(const char *name_arg, uint32_t name_length, uint32_t &position) const
   {
-    std::string arg(name_arg, name_length);
-    std::transform(arg.begin(), arg.end(),
-                   arg.begin(), ::toupper);
-
-    std::vector<std::string>::const_iterator iter= std::find(_keynames.begin(), _keynames.end(), arg);
-
-    if (iter == _keynames.end())
-      return false;
-
-    position= iter -  _keynames.begin();
-
-    return true;
+    return doesKeyNameExist(std::string(name_arg, name_length), position);
   }
 
   bool doesKeyNameExist(std::string arg, uint32_t &position) const
