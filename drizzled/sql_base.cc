@@ -70,9 +70,9 @@ TableOpenCache &get_open_cache()
   return open_cache;
 }
 
-static void free_cache_entry(Table *entry);
+static void free_cache_entry(table::Concurrent *entry);
 
-void remove_table(Table *arg)
+void remove_table(table::Concurrent *arg)
 {
   TableOpenCacheRange ppp;
   ppp= get_open_cache().equal_range(arg->getShare()->getCacheKey());
@@ -80,7 +80,7 @@ void remove_table(Table *arg)
   for (TableOpenCache::const_iterator iter= ppp.first;
          iter != ppp.second; ++iter)
   {
-    Table *found_table= (*iter).second;
+    table::Concurrent *found_table= (*iter).second;
 
     if (found_table == arg)
     {
@@ -91,7 +91,7 @@ void remove_table(Table *arg)
   }
 }
 
-static bool add_table(Table *arg)
+static bool add_table(table::Concurrent *arg)
 {
   TableOpenCache &open_cache(get_open_cache());
 
@@ -101,16 +101,16 @@ static bool add_table(Table *arg)
 }
 
 class UnusedTables {
-  Table *tables;				/* Used by mysql_test */
+  table::Concurrent *tables;				/* Used by mysql_test */
 
-  Table *getTable() const
+  table::Concurrent *getTable() const
   {
     return tables;
   }
 
-  Table *setTable(Table *arg)
+  table::Concurrent *setTable(Table *arg)
   {
-    return tables= arg;
+    return tables= dynamic_cast<table::Concurrent *>(arg);
   }
 
 public:
@@ -128,7 +128,7 @@ public:
       remove_table(getTable());
   }
   
-  void link(Table *table)
+  void link(table::Concurrent *table)
   {
     if (getTable())
     {
@@ -146,7 +146,7 @@ public:
   }
 
 
-  void unlink(Table *table)
+  void unlink(table::Concurrent *table)
   {
     table->unlink();
 
@@ -161,7 +161,7 @@ public:
 
 /* move table first in unused links */
 
-  void relink(Table *table)
+  void relink(table::Concurrent *table)
   {
     if (table != getTable())
     {
@@ -295,7 +295,7 @@ void Table::intern_close_table()
   We need to have a lock on LOCK_open when calling this
 */
 
-void free_cache_entry(Table *table)
+void free_cache_entry(table::Concurrent *table)
 {
   table->intern_close_table();
   if (not table->in_use)
@@ -504,7 +504,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
 bool Session::free_cached_table()
 {
   bool found_old_table= false;
-  Table *table= open_tables;
+  table::Concurrent *table= dynamic_cast<table::Concurrent *>(open_tables);
 
   safe_mutex_assert_owner(LOCK_open.native_handle());
   assert(table->key_read == 0);
@@ -877,7 +877,7 @@ void Session::unlink_open_table(Table *find)
       *prev= list->getNext();
 
       /* Close table. */
-      remove_table(list);
+      remove_table(dynamic_cast<table::Concurrent *>(list));
     }
     else
     {
@@ -1384,7 +1384,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
       }
       if (table)
       {
-        unused_tables.unlink(table);
+        unused_tables.unlink(dynamic_cast<table::Concurrent *>(table));
         table->in_use= this;
       }
       else
@@ -1424,21 +1424,24 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
         }
 
         /* make a new table */
-        table= new Table;
-        if (table == NULL)
         {
-          LOCK_open.unlock();
-          return NULL;
-        }
+          table::Concurrent *new_table= new table::Concurrent;
+          table= new_table;
+          if (new_table == NULL)
+          {
+            LOCK_open.unlock();
+            return NULL;
+          }
 
-        error= open_unireg_entry(this, table, alias, identifier);
-        if (error != 0)
-        {
-          delete table;
-          LOCK_open.unlock();
-          return NULL;
+          error= open_unireg_entry(this, new_table, alias, identifier);
+          if (error != 0)
+          {
+            delete new_table;
+            LOCK_open.unlock();
+            return NULL;
+          }
+          (void)add_table(new_table);
         }
-        (void)add_table(table);
       }
 
       LOCK_open.unlock();
@@ -1591,7 +1594,7 @@ bool Session::reopen_tables(bool get_locks, bool)
     next= table->getNext();
 
     my_error(ER_CANT_REOPEN_TABLE, MYF(0), table->getAlias());
-    remove_table(table);
+    remove_table(dynamic_cast<table::Concurrent *>(table));
     error= 1;
   }
   *prev=0;
@@ -1843,7 +1846,7 @@ Table *drop_locked_tables(Session *session, const drizzled::TableIdentifier &ide
       else
       {
         /* We already have a name lock, remove copy */
-        remove_table(table);
+        remove_table(dynamic_cast<table::Concurrent *>(table));
       }
     }
     else
@@ -4399,7 +4402,7 @@ void remove_db_from_cache(const SchemaIdentifier &schema_identifier)
        iter != get_open_cache().end();
        iter++)
   {
-    Table *table= (*iter).second;
+    table::Concurrent *table= (*iter).second;
 
     if (not schema_identifier.getPath().compare(table->getShare()->getSchemaName()))
     {
@@ -4444,11 +4447,11 @@ bool remove_table_from_cache(Session *session, TableIdentifier &identifier, uint
     for (TableOpenCache::const_iterator iter= ppp.first;
          iter != ppp.second; ++iter)
     {
-      Table *table= (*iter).second;
+      table::Concurrent *table= (*iter).second;
       Session *in_use;
 
       table->getMutableShare()->resetVersion();		/* Free when thread is ready */
-      if (!(in_use=table->in_use))
+      if (not (in_use= table->in_use))
       {
         unused_tables.relink(table);
       }
@@ -4483,7 +4486,9 @@ bool remove_table_from_cache(Session *session, TableIdentifier &identifier, uint
         }
       }
       else
+      {
         result= result || (flags & RTFC_OWNED_BY_Session_FLAG);
+      }
     }
 
     unused_tables.cullByVersion();
