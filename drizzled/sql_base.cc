@@ -995,30 +995,20 @@ void Session::wait_for_condition(boost::mutex &mutex, boost::condition_variable_
   true  - Error
 */
 
-bool Session::reopen_name_locked_table(TableList* table_list, bool link_in)
+bool Session::reopen_name_locked_table(TableList* table_list)
 {
   Table *table= table_list->table;
   char *table_name= table_list->table_name;
-  Table orig_table;
 
   safe_mutex_assert_owner(LOCK_open.native_handle());
 
-  if (killed || !table)
+  if (killed || not table)
     return true;
-
-  orig_table= *table;
 
   TableIdentifier identifier(table_list->db, table_list->table_name);
   if (open_unireg_entry(this, table, table_name, identifier))
   {
     table->intern_close_table();
-    /*
-      If there was an error during opening of table (for example if it
-      does not exist) '*table' object can be wiped out. To be able
-      properly release name-lock in this case we should restore this
-      object to its original state.
-    */
-    *table= orig_table;
     return true;
   }
 
@@ -1032,20 +1022,6 @@ bool Session::reopen_name_locked_table(TableList* table_list, bool link_in)
   */
   table->getMutableShare()->resetVersion();
   table->in_use = this;
-
-  if (link_in)
-  {
-    table->setNext(open_tables);
-    open_tables= table;
-  }
-  else
-  {
-    /*
-      Table object should be already in Session::open_tables list so we just
-      need to set Table::next correctly.
-    */
-    table->setNext(orig_table.getNext());
-  }
 
   table->tablenr= current_tablenr++;
   table->used_fields= 0;

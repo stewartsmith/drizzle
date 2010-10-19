@@ -1572,12 +1572,14 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
       if (not identifier.isTmp())
       {
         LOCK_open.lock(); /* CREATE TABLE... has found that the table already exists for insert and is adapting to use it */
-        if (session->reopen_name_locked_table(create_table, false))
+        if (session->reopen_name_locked_table(create_table))
         {
           quick_rm_table(*session, identifier);
         }
         else
+        {
           table= create_table->table;
+        }
         LOCK_open.unlock();
       }
       else
