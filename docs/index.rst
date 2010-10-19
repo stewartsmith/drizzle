@@ -52,6 +52,7 @@ Architecture:
    :maxdepth: 2
 
    protocol
+   replication
 
 Clients:
 
