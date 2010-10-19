@@ -9,7 +9,8 @@ EXTRA_DIST+= \
 	     docs/Doxyfile \
 	     docs/drizzled_header.html \
 	     ${top_srcdir}/docs/*.rst \
-	     ${top_srcdir}/docs/clients/*.rst
+	     ${top_srcdir}/docs/clients/*.rst \
+	     ${top_srcdir}/docs/libdrizzle/*.rst
 
 # Makefile for Sphinx documentation
 #
