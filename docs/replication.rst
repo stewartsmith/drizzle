@@ -189,12 +189,15 @@ will do the following:
 Handling ROLLBACKs
 ------------------
 
-Any time a transaction is rolled back, a single Transaction message is
-containing a Statement with type = ROLLBACK is sent to replicators.
+When a transaction is rolled back, one of two things happen depending
+on whether the transaction is made up of either a single Transaction
+message, or if it is made up of multiple Transaction messages (e.g, bulk
+load).
 
-What the replicator does with this information depends on the
-replicator.  For most, only rollbacks of bulk operations will actually
-trigger any real action on a replica, since non-bulk operations won't
-have changed any data on a replica and the ROLLBACK is only sent to a
-replica to notify it of a transaction being rolled back (so that the
-replica can understand transaction ID sequence gaps...)
+* For a transaction encapsulated entirely within a single Transaction
+  message, the entire message is simply discarded and not sent through
+  the replication stream.
+* For a transaction which is made up of multiple messages, and at least
+  one message has already been sent through the replication stream, then
+  the Transaction message will contain a Statement message with type =
+  ROLLBACK.
