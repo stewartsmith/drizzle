@@ -232,14 +232,19 @@ void Instance::setup_tmp_table_column_bitmaps()
 {
   uint32_t field_count= getShare()->sizeFields();
 
-  this->def_read_set.resize(field_count);
-  this->def_write_set.resize(field_count);
-  this->tmp_set.resize(field_count);
-  this->getMutableShare()->all_set.resize(field_count);
-  this->getMutableShare()->all_set.set();
-  this->def_write_set.set();
-  this->def_read_set.set();
+  def_read_set.resize(field_count);
+  def_write_set.resize(field_count);
+  tmp_set.resize(field_count);
+  getMutableShare()->all_set.resize(field_count);
+  getMutableShare()->all_set.set();
+  def_write_set.set();
+  def_read_set.set();
   default_column_bitmaps();
+}
+
+Instance::~Instance()
+{
+  free_tmp_table(in_use);
 }
 
 
