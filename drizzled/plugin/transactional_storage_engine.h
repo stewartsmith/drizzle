@@ -224,6 +224,12 @@ private:
     (void) session;
     return 0;
   }
+
+  virtual uint64_t doGetTransactionId(Session *session)
+  {
+    (void) session;
+    return 0;
+  }
 };
 
 } /* namespace plugin */
