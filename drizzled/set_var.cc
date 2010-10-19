@@ -63,6 +63,7 @@
 #include "drizzled/pthread_globals.h"
 #include "drizzled/charset.h"
 #include "drizzled/transaction_services.h"
+#include "drizzled/constrained_value.h"
 
 #include <cstdio>
 #include <map>
@@ -139,7 +140,7 @@ static sys_var_fs_path sys_plugin_dir("plugin_dir", plugin_dir);
 
 static sys_var_size_t_ptr sys_thread_stack_size("thread_stack",
                                                       &my_thread_stack_size);
-static sys_var_uint32_t_ptr sys_back_log("back_log", &back_log);
+static sys_var_constrained_value<uint32_t> sys_back_log("back_log", back_log);
 
 static sys_var_session_uint64_t	sys_bulk_insert_buff_size("bulk_insert_buffer_size",
                                                           &system_variables::bulk_insert_buff_size);

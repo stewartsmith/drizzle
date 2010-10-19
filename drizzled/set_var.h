@@ -75,7 +75,7 @@ extern time_t flush_status_time;
 extern uint32_t global_thread_id;
 extern uint64_t table_cache_size;
 extern uint64_t max_connect_errors;
-extern uint32_t back_log;
+extern back_log_constraints back_log;
 extern uint32_t ha_open_options;
 extern char *drizzled_bind_host;
 extern uint32_t dropping_tables;

@@ -30,44 +30,43 @@ namespace drizzled
 template<class T>
 class constrained_value
 {
+  T m_val;
+protected:
+
+  virtual constrained_value<T>& set_value(const constrained_value<T>& rhs)= 0;
+  virtual constrained_value<T>& set_value(T rhs)= 0;
+
 public:
-  constrained_value<T>(T in_value= 0,
-                       T in_max_val= std::numeric_limits<T>::max(),
-                       T in_min_val= std::numeric_limits<T>::min(),
-                       int in_align_to= 1) :
-    m_val(in_value),
-    m_max_val(in_max_val),
-    m_min_val(in_min_val),
-    m_align_to(in_align_to)
+  explicit constrained_value<T>(T in_value= 0) :
+    m_val(in_value)
   { }
 
-  constrained_value<T>(const constrained_value<T>& old) :
-    m_val(old.m_val),
-    m_max_val(old.m_max_val),
-    m_min_val(old.m_min_val),
-    m_align_to(old.m_align_to)
-  { }
+  virtual ~constrained_value<T>()
+  {}
+
+  operator T() const
+  {
+    return m_val;
+  }
 
   constrained_value<T>& operator=(const constrained_value<T>& rhs)
   {
-    (*this)= rhs.m_val;
-    return *this;
+    return set_value(rhs);
   }
 
   constrained_value<T>& operator=(T rhs)
   {
-    if ((rhs > m_max_val) || (rhs < m_min_val))
-    {
-      boost::throw_exception(boost::program_options::validation_error(boost::program_options::validation_error::invalid_option_value));
-    }
-    rhs-= rhs % m_align_to;
-    m_val= rhs;
-    return *this;
+    return set_value(rhs);
   }
 
-  operator T()
+  T getVal() const
   {
     return m_val;
+  }
+
+  void setVal(T in_val)
+  {
+    m_val= in_val;
   }
 
   template<class CharT, class Traits>
@@ -84,37 +83,55 @@ public:
   friend
   std::ostream& operator<<(std::ostream& os, const constrained_value<T>& v)
   {
-    os << v.m_val;
+    os << v.getVal();
     return os;
   }
-
-private:
-  T m_val;
-  T m_max_val;
-  T m_min_val;
-  int m_align_to;
 };
+
+template<class T, uint64_t MAXVAL=UINT64_MAX, int64_t MINVAL=INT64_MIN, int ALIGN=1>
+class constrained_check :
+  public constrained_value<T>
+{
+public:
+  constrained_check<T,MAXVAL,MINVAL,ALIGN>(T in_value= 0) :
+    constrained_value<T>(in_value)
+  { }
+
+protected:
+  constrained_value<T>& set_value(const constrained_value<T>& rhs)
+  {
+    return set_value(rhs.getVal());
+  }
+
+  constrained_value<T>& set_value(T rhs)
+  {
+    if ((rhs > MAXVAL) || (rhs < MINVAL))
+    {
+      boost::throw_exception(boost::program_options::validation_error(boost::program_options::validation_error::invalid_option_value));
+    }
+    rhs-= rhs % ALIGN;
+    setVal(rhs);
+    return *this;
+  }
+
+
+};
+
+typedef constrained_check<uint32_t,65535,1> back_log_constraints;
 
 } /* namespace drizzled */
 
 template<class T>
 void validate(boost::any& v,
               const std::vector<std::string>& values,
-              drizzled::constrained_value<T>, int)
+              drizzled::constrained_value<T> val, int)
 {
   boost::program_options::validators::check_first_occurrence(v);
   const std::string& s= boost::program_options::validators::get_single_string(values);
 
-  drizzled::constrained_value<T> &val= boost::any_cast<T>(v);
-  try
-  {
-    val= boost::lexical_cast<T>(s);
-  }
-  catch (...)
-  {
-    boost::throw_exception(boost::program_options::validation_error(boost::program_options::validation_error::invalid_option_value));
-  }
+  val= boost::lexical_cast<T>(s);
   v= boost::any(val);
 }
+
 
 #endif /* DRIZZLED_CONSTRAINED_VALUE_H */

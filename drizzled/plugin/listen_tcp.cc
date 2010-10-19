@@ -22,6 +22,7 @@
 #include <drizzled/error.h>
 #include <drizzled/plugin/listen_tcp.h>
 #include <drizzled/errmsg_print.h>
+#include <drizzled/constrained_value.h>
 
 #include <cstdio>
 #include <unistd.h>
@@ -37,7 +38,7 @@ using namespace std;
 
 namespace drizzled
 {
-extern uint32_t back_log;
+extern back_log_constraints back_log;
 extern uint32_t drizzled_bind_timeout;
 
 

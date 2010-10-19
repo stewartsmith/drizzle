@@ -20,9 +20,12 @@
 
 #include "config.h"
 
+#include <string>
+
 #include <gtest/gtest.h>
 
 #include <drizzled/constrained_value.h>
+#include <boost/lexical_cast.hpp>
 
 using namespace drizzled;
 
@@ -30,7 +33,7 @@ namespace po= boost::program_options;
 
 TEST(constrained_value, raw_usage)
 {
-  constrained_value<uint64_t> val(1, 1024, 1, 10);
+  constrained_check<uint64_t,1024,1,10> val(1);
 
   EXPECT_EQ(UINT64_C(1), (uint64_t)val);
 
@@ -41,4 +44,14 @@ TEST(constrained_value, raw_usage)
 
   EXPECT_EQ(20, (uint64_t)val);
 }
+
+TEST(constrained_value, lexical_cast_usage)
+{
+  constrained_check<uint64_t,1024,1,10> val(1);
+
+  std::string string_val= boost::lexical_cast<std::string>(val);
+
+  EXPECT_EQ(std::string("1"), string_val);
+}
+
 
