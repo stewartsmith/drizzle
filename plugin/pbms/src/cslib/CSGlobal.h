@@ -68,8 +68,14 @@ int cs_hope(const char *func, const char *file, int line, const char *message);
  *
  * It also sets up the current thread pointer 'self'.
  */
+#ifdef DEBUG
+#define STACK_CHECK    CSReleasePtr self_reltop = self->relTop
+#else
+#define STACK_CHECK   
+#endif
+
 #define inner_()			int			cs_frame = self->callTop++; \
-							CSReleasePtr self_reltop = self->relTop; \
+							STACK_CHECK ; \
 							do { \
 								if (cs_frame< CS_CALL_STACK_SIZE) { \
 									self->callStack[cs_frame].cs_func = __FUNC__; \
