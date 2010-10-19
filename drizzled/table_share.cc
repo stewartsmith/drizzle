@@ -44,6 +44,9 @@
 #include "drizzled/internal/my_pthread.h"
 #include "drizzled/plugin/event_observer.h"
 
+#include "drizzled/table.h"
+#include "drizzled/table/shell.h"
+
 #include "drizzled/session.h"
 
 #include "drizzled/charset.h"
@@ -1444,7 +1447,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
     // This needs to go, we should be setting the "use" on the field so that
     // it does not reference the share/table.
-    Table temp_table; /* Use this so that BLOB DEFAULT '' works */
+    table::Shell temp_table; /* Use this so that BLOB DEFAULT '' works */
     temp_table.setShare(this);
     temp_table.in_use= &session;
 

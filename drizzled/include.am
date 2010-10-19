@@ -415,6 +415,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/table/concurrent.h \
 			      drizzled/table/instance.h \
 			      drizzled/table/placeholder.h \
+			      drizzled/table/shell.h \
 			      drizzled/table/temporary.h \
 			      drizzled/temporal.h \
 			      drizzled/temporal_format.h \
