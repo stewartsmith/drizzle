@@ -849,16 +849,16 @@ int Session::drop_temporary_table(TableList *table_list)
 
   @param  session     Thread context
   @param  find    Table to remove
+
+  @note because we risk the chance of deleting the share, we can't assume that it will exist past, this should be modified once we can use a TableSharePtr here.
 */
 
 void Session::unlink_open_table(Table *find)
 {
-  char key[MAX_DBKEY_LENGTH];
-  uint32_t key_length= find->getShare()->getCacheKeySize();
-  Table *list, **prev;
+  const TableIdentifier::Key find_key(find->getShare()->getCacheKey());
+  Table **prev;
   safe_mutex_assert_owner(LOCK_open.native_handle());
 
-  memcpy(key, &find->getShare()->getCacheKey()[0], key_length);
   /*
     Note that we need to hold LOCK_open while changing the
     open_tables list. Another thread may work on it.
@@ -868,10 +868,9 @@ void Session::unlink_open_table(Table *find)
   */
   for (prev= &open_tables; *prev; )
   {
-    list= *prev;
+    Table *list= *prev;
 
-    if (list->getShare()->getCacheKeySize() == key_length &&
-        not memcmp(&list->getShare()->getCacheKey()[0], key, key_length))
+    if (list->getShare()->getCacheKey() == find_key)
     {
       /* Remove table from open_tables list. */
       *prev= list->getNext();
