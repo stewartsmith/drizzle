@@ -138,6 +138,7 @@ AS_IF([test "$lt_cv_prog_gnu_ld" = "yes"],[
   LDFLAGS="${LDFLAGS} ${LD_VERSION_SCRIPT}"
   ])
 
+WITH_VALGRIND
 
 AC_CONFIG_FILES(Makefile dnl
  tests/Makefile dnl

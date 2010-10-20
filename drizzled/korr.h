@@ -42,7 +42,7 @@
                                     ((uint32_t) (unsigned char) (A)[0])))
 #define sint4korr(A)	(*((long *) (A)))
 #define uint2korr(A)	(*((uint16_t *) (A)))
-#if defined(HAVE_purify)
+#if defined(HAVE_VALGRIND)
 #define uint3korr(A)	(uint32_t) (((uint32_t) ((unsigned char) (A)[0])) +\
 				  (((uint32_t) ((unsigned char) (A)[1])) << 8) +\
 				  (((uint32_t) ((unsigned char) (A)[2])) << 16))
@@ -54,7 +54,7 @@
     It means, that you have to provide enough allocated space !
 */
 #define uint3korr(A)	(long) (*((unsigned int *) (A)) & 0xFFFFFF)
-#endif /* HAVE_purify */
+#endif /* HAVE_VALGRIND */
 #define uint4korr(A)	(*((uint32_t *) (A)))
 #define uint8korr(A)	(*((uint64_t *) (A)))
 #define sint8korr(A)	(*((int64_t *) (A)))
