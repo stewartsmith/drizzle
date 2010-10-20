@@ -74,10 +74,7 @@ public:
     _has_variable_width= true;
   }
 
-  ~Instance()
-  {
-    free_tmp_table(in_use);
-  }
+  ~Instance();
 };
 
 } /* namespace table */

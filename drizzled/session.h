@@ -145,22 +145,6 @@ struct CopyInfo
 
 };
 
-struct DrizzleLock
-{
-  Table **table;
-  uint32_t table_count;
-  uint32_t lock_count;
-  THR_LOCK_DATA **locks;
-
-  DrizzleLock() :
-    table(0),
-    table_count(0),
-    lock_count(0),
-    locks(0)
-  { }
-
-};
-
 } /* namespace drizzled */
 
 /** @TODO why is this in the middle of the file */

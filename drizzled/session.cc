@@ -1870,29 +1870,28 @@ user_var_entry *Session::getVariable(LEX_STRING &name, bool create_if_not_exists
 
 user_var_entry *Session::getVariable(const std::string  &name, bool create_if_not_exists)
 {
-  user_var_entry *entry= NULL;
   UserVarsRange ppp= user_vars.equal_range(name);
 
   for (UserVars::iterator iter= ppp.first;
-         iter != ppp.second; ++iter)
+       iter != ppp.second; ++iter)
   {
-    entry= (*iter).second;
+    return (*iter).second;
   }
 
-  if ((entry == NULL) && create_if_not_exists)
+  if (not create_if_not_exists)
+    return NULL;
+
+  user_var_entry *entry= NULL;
+  entry= new (nothrow) user_var_entry(name.c_str(), query_id);
+
+  if (entry == NULL)
+    return NULL;
+
+  std::pair<UserVars::iterator, bool> returnable= user_vars.insert(make_pair(name, entry));
+
+  if (not returnable.second)
   {
-    entry= new (nothrow) user_var_entry(name.c_str(), query_id);
-
-    if (entry == NULL)
-      return NULL;
-
-    std::pair<UserVars::iterator, bool> returnable= user_vars.insert(make_pair(name, entry));
-
-    if (not returnable.second)
-    {
-      delete entry;
-      return NULL;
-    }
+    delete entry;
   }
 
   return entry;
