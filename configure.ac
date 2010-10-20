@@ -135,6 +135,8 @@ dnl re-enable later
 dnl AM_CONDITIONAL([BUILD_GCC_PCH],[test "$GCC" = "yes"])
 AM_CONDITIONAL([BUILD_GCC_PCH],[test "no" = "yes"])
 
+WITH_VALGRIND
+
 AC_CONFIG_FILES(Makefile dnl
  tests/Makefile dnl
  drizzled/plugin/version.h dnl
