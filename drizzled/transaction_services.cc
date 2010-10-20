@@ -387,8 +387,6 @@ void TransactionServices::registerResourceForTransaction(Session *session,
   if (session->transaction.xid_state.xid.is_null())
     session->transaction.xid_state.xid.set(session->getQueryId());
 
-  engine->startTransaction(session, START_TRANS_NO_OPTIONS);
-
   /* Only true if user is executing a BEGIN WORK/START TRANSACTION */
   if (! session->getResourceContext(monitored, 0)->isStarted())
     registerResourceForStatement(session, monitored, engine);
