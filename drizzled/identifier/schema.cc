@@ -27,6 +27,8 @@
 #include "drizzled/current_session.h"
 #include "drizzled/internal/my_sys.h"
 
+#include "drizzled/util/backtrace.h"
+
 #include <algorithm>
 #include <sstream>
 #include <cstdio>
@@ -121,8 +123,19 @@ static bool tablename_to_filename(const string &from, string &to)
 
 SchemaIdentifier::SchemaIdentifier(const std::string &db_arg) :
   db(db_arg),
-  db_path("")
+  db_path(""),
+  catalog("LOCAL")
 { 
+#if 0
+  string::size_type lastPos= db.find_first_of('/', 0);
+
+  if (lastPos != std::string::npos) 
+  {
+    catalog= db.substr(0, lastPos);
+    db.erase(0, lastPos + 1);
+  }
+#endif
+
   if (not db_arg.empty())
   {
     drizzled::build_schema_filename(db_path, db);

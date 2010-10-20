@@ -29,12 +29,7 @@
 #include "drizzled/plugin.h"
 #include "drizzled/plugin/scheduler.h"
 
-#ifdef __GNUC__
-#ifdef HAVE_BACKTRACE
-#include <execinfo.h>
-#include <cxxabi.h>
-#endif // HAVE_BACKTRACE
-#endif // __GNUC__
+#include "drizzled/util/backtrace.h"
 
 using namespace drizzled;
 
@@ -101,7 +96,6 @@ static void write_core(int sig)
 #endif
 }
 
-#define BACKTRACE_STACK_SIZE 50
 void drizzled_handle_segfault(int sig)
 {
   time_t curr_time;
@@ -151,65 +145,7 @@ void drizzled_handle_segfault(int sig)
                     "Hope that's ok; if not, decrease some variables in the "
                     "equation.\n\n"));
 
-#ifdef __GNUC__
-#ifdef HAVE_BACKTRACE
-  {
-    void *array[BACKTRACE_STACK_SIZE];
-    size_t size;
-    char **strings;
-
-    size= backtrace(array, BACKTRACE_STACK_SIZE);
-    strings= backtrace_symbols(array, size);
-
-    std::cerr << "Number of stack frames obtained: " << size <<  std::endl;
-
-    for (size_t x= 1; x < size; x++) 
-    {
-      size_t sz= 200;
-      char *function= (char *)malloc(sz);
-      char *begin= 0;
-      char *end= 0;
-
-      for (char *j = strings[x]; *j; ++j)
-      {
-        if (*j == '(') {
-          begin = j;
-        }
-        else if (*j == '+') {
-          end = j;
-        }
-      }
-      if (begin && end)
-      {
-        begin++;
-        *end= '\0';
-
-        int status;
-        char *ret = abi::__cxa_demangle(begin, function, &sz, &status);
-        if (ret) 
-        {
-          function= ret;
-        }
-        else
-        {
-          std::strncpy(function, begin, sz);
-          std::strncat(function, "()", sz);
-          function[sz-1] = '\0';
-        }
-        std::cerr << function << std::endl;
-      }
-      else
-      {
-        std::cerr << strings[x] << std::endl;
-      }
-      free(function);
-    }
-
-
-    free (strings);
-  }
-#endif // HAVE_BACKTRACE
-#endif // __GNUC__
+  drizzled::util::custom_backtrace();
 
   write_core(sig);
 
