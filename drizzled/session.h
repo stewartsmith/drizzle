@@ -1199,7 +1199,7 @@ public:
    * @param  Length of scrambled password
    * @param  Database name to connect to, may be NULL
    */
-  bool checkUser(const char *passwd, uint32_t passwd_len, const char *db);
+  bool checkUser(const std::string &passwd, const std::string &db);
   
   /**
    * Returns the timestamp (in microseconds) of when the Session 

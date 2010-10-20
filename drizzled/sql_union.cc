@@ -400,11 +400,11 @@ bool Select_Lex_Unit::exec()
   uint64_t add_rows=0;
   ha_rows examined_rows= 0;
 
-  if (executed && !uncacheable && !describe)
-    return(false);
+  if (executed && uncacheable.none() && ! describe)
+    return false;
   executed= 1;
 
-  if (uncacheable || !item || !item->assigned() || describe)
+  if (uncacheable.any() || ! item || ! item->assigned() || describe)
   {
     if (item)
       item->reset_value_registration();

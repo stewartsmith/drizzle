@@ -626,9 +626,9 @@ bool Session::authenticate()
   return true;
 }
 
-bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_db)
+bool Session::checkUser(const std::string &passwd_str,
+                        const std::string &in_db)
 {
-  const string passwd_str(passwd, passwd_len);
   bool is_authenticated=
     plugin::Authentication::isAuthenticated(getSecurityContext(),
                                             passwd_str);
@@ -641,7 +641,7 @@ bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_
   }
 
   /* Change database if necessary */
-  if (in_db && in_db[0])
+  if (not in_db.empty())
   {
     SchemaIdentifier identifier(in_db);
     if (mysql_change_db(this, identifier))
@@ -651,7 +651,7 @@ bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_
     }
   }
   my_ok();
-  password= test(passwd_len);          // remember for error messages
+  password= not passwd_str.empty();
 
   /* Ready to handle queries */
   return true;

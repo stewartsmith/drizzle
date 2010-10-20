@@ -27,6 +27,7 @@ unittests_unittests_SOURCES = \
 			      unittests/date_test.cc \
 			      unittests/date_time_test.cc \
 			      unittests/generators.cc \
+                              unittests/libdrizzle_test.cc \
 			      unittests/main.cc \
 			      unittests/micro_timestamp_test.cc \
 			      unittests/nano_timestamp_test.cc \
@@ -44,4 +45,5 @@ unittests_unittests_SOURCES = \
 
 unittests_unittests_LDADD= \
   $(filter-out drizzled/main.$(OBJEXT), ${am_drizzled_drizzled_OBJECTS}) \
-  ${drizzled_drizzled_LDADD} ${LTLIBGTEST} ${BOOST_LIBS}
+  ${drizzled_drizzled_LDADD} ${LTLIBGTEST} ${BOOST_LIBS} \
+  libdrizzle/libdrizzle.la
