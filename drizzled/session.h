@@ -569,7 +569,7 @@ public:
      *
      * Contains a list of all engines participating in the given statement.
      *
-     * In autocommit mode, this will be used to commit/rollback the
+     * @note In autocommit mode, this will be used to commit/rollback the
      * normal transaction.
      */
     TransactionContext stmt;
@@ -1250,26 +1250,6 @@ public:
     return statement_message;
   }
   
-  /**
-   * Used to undo effects of a failed statement.
-   *
-   * An SQL statement, like an UPDATE, that affects multiple rows could
-   * potentially fail mid-way through processing the rows. In such a case,
-   * the successfully modified rows that preceeded the failing row would
-   * have been added to the Statement message. This method is used for
-   * rolling back that change.
-   *
-   * @note
-   * This particular failure is seen on column constraint violations
-   * during a multi-row UPDATE and a multi-row INSERT..SELECT.
-   *
-   * @param count The number of records to remove from Statement.
-   *
-   * @retval true Successfully removed 'count' records
-   * @retval false Failure
-   */
-  bool removeStatementRecords(uint32_t count);
-
   /**
    * Returns a pointer to the current Resulset message for this
    * Session, or NULL if no active message.

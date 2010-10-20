@@ -1255,7 +1255,8 @@ bool select_insert::send_data(List<Item> &values)
      * records that we added to the current Statement message. We can
      * use session->row_count to know how many records we have already added.
      */
-    session->removeStatementRecords(session->row_count - 1);
+    TransactionServices &ts= TransactionServices::singleton();
+    ts.removeStatementRecords(session, (session->row_count - 1));
     return(1);
   }
 

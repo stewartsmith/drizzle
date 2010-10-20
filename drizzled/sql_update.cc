@@ -29,6 +29,7 @@
 #include "drizzled/records.h"
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/iocache.h"
+#include "drizzled/transaction_services.h"
 
 #include <boost/dynamic_bitset.hpp>
 #include <list>
@@ -468,7 +469,10 @@ int mysql_update(Session *session, TableList *table_list,
          * replication Statement message.
          */
         if (found > 0)
-          session->removeStatementRecords(found);
+        {
+          TransactionServices &ts= TransactionServices::singleton();
+          ts.removeStatementRecords(session, found);
+        }
 
         break;
       }

@@ -61,10 +61,8 @@
 #include <algorithm>
 #include <climits>
 #include <boost/filesystem.hpp>
-#include <google/protobuf/repeated_field.h>
 
 using namespace std;
-using namespace google;
 
 namespace fs=boost::filesystem;
 namespace drizzled
@@ -913,98 +911,6 @@ int Session::send_explain_fields(select_result *result)
 void select_result::send_error(uint32_t errcode, const char *err)
 {
   my_message(errcode, err, MYF(0));
-}
-
-/**
- * Template for removing Statement records of different types.
- *
- * The code for removing records from different Statement message types
- * is identical except for the class types that are embedded within the
- * Statement.
- */
-template <class DataType, class RecordType>
-static bool removeStatementRecordsWithType(Session *session,
-                                           DataType *data,
-                                           uint32_t count)
-{
-  uint32_t num_avail_recs= static_cast<uint32_t>(data->record_size());
-
-  /* If there aren't enough records to remove 'count' of them, error. */
-  if (num_avail_recs < count)
-    return false;
-
-  /*
-   * If we are removing all of the data records, we'll just remove this
-   * entire Statement message.
-   */
-  if (num_avail_recs == count)
-  {
-    message::Transaction *transaction= session->getTransactionMessage();
-    protobuf::RepeatedPtrField<message::Statement> *statements= transaction->mutable_statement();
-    statements->RemoveLast();
-
-    /*
-     * Now need to set the Session Statement pointer to either the previous
-     * Statement, or NULL if there isn't one.
-     */
-    if (statements->size() == 0)
-    {
-      session->setStatementMessage(NULL);
-    }
-    else
-    {
-      /*
-       * There isn't a great way to get a pointer to the previous Statement
-       * message using the RepeatedPtrField object, so we'll just get to it
-       * using the Transaction message.
-       */
-      int last_stmt_idx= transaction->statement_size() - 1;
-      session->setStatementMessage(transaction->mutable_statement(last_stmt_idx));
-    }
-  }
-  /* We only need to remove 'count' records */
-  else if (num_avail_recs > count)
-  {
-    protobuf::RepeatedPtrField<RecordType> *records= data->mutable_record();
-    while (count--)
-      records->RemoveLast();
-  }
-
-  return true;
-}
-
-bool Session::removeStatementRecords(uint32_t count)
-{
-  if (statement_message == NULL)    return false;
-
-  switch (statement_message->type())
-  {
-    case message::Statement::INSERT:
-    {
-      message::InsertData *data= statement_message->mutable_insert_data();
-      return removeStatementRecordsWithType<message::InsertData, message::InsertRecord>(this, data, count);
-      break;
-    }
-
-    case message::Statement::UPDATE:
-    {
-      message::UpdateData *data= statement_message->mutable_update_data();
-      return removeStatementRecordsWithType<message::UpdateData, message::UpdateRecord>(this, data, count);
-      break;
-    }
-
-    case message::Statement::DELETE:  /* not sure if this one is possible... */
-    {
-      message::DeleteData *data= statement_message->mutable_delete_data();
-      return removeStatementRecordsWithType<message::DeleteData, message::DeleteRecord>(this, data, count);
-      break;
-    }
-
-    default:
-      return false;
-  }
-
-  return true;
 }
 
 /************************************************************************
