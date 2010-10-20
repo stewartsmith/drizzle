@@ -1680,7 +1680,7 @@ _mi_calc_bin_pack_key_length(MI_KEYDEF *keyinfo,uint32_t nod_flag,unsigned char 
   uint32_t length,key_length,ref_length;
 
   s_temp->totlength=key_length=_mi_keylength(keyinfo,key)+nod_flag;
-#ifdef HAVE_purify
+#ifdef HAVE_VALGRIND
   s_temp->n_length= s_temp->n_ref_length=0;	/* For valgrind */
 #endif
   s_temp->key=key;

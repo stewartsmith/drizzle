@@ -453,7 +453,7 @@ read_fixed_length(Session *session, CopyInfo &info, TableList *table_list,
     }
     it.rewind();
     unsigned char *pos=read_info.row_start;
-#ifdef HAVE_purify
+#ifdef HAVE_VALGRIND
     read_info.row_end[0]=0;
 #endif
 
