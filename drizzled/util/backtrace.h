@@ -1,7 +1,7 @@
-/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Sun Microsystems
+ *  Copyright (C) 2010 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,34 +18,19 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/session.h"
-#include "drizzled/generator/session.h"
+#ifndef DRIZZLED_UTIL_BACKTRACE_H
+#define DRIZZLED_UTIL_BACKTRACE_H
 
-#ifndef PLUGIN_SESSION_DICTIONARY_PROCESSLIST_H
-#define PLUGIN_SESSION_DICTIONARY_PROCESSLIST_H
-
-class ProcesslistTool : public drizzled::plugin::TableFunction
+namespace drizzled
 {
-public:
 
-  ProcesslistTool();
+namespace util
+{
 
-  class Generator : public drizzled::plugin::TableFunction::Generator 
-  {
-    time_t now;
-    drizzled::generator::Session session_generator;
+void custom_backtrace(void);
 
-  public:
-    Generator(drizzled::Field **arg);
-    ~Generator();
+} /* namespace util */
+} /* namespace drizzled */
 
-    bool populate();
-  };
+#endif /* DRIZZLED_UTIL_BACKTRACE_H */
 
-  Generator *generator(drizzled::Field **arg)
-  {
-    return new Generator(arg);
-  }
-};
-
-#endif /* PLUGIN_SESSION_DICTIONARY_PROCESSLIST_H */
