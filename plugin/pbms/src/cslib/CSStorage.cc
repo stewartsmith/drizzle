@@ -55,7 +55,16 @@ CSHashTable::~CSHashTable()
 void CSHashTable::setSize(uint32_t size)
 {
 	enter_();
-	cs_realloc((void **) &iTable, sizeof(CSObject *) * size);
+	if (size == 0) {
+		if (iTable) {
+			cs_free(iTable);
+			iTable = NULL;
+		}
+	}
+	else {
+		cs_realloc((void **) &iTable, sizeof(CSObject *) * size);
+		memset(iTable, 0, sizeof(CSObject *) * size);
+	}
 	iSize = size;
 	exit_();
 }
@@ -83,7 +92,7 @@ CSObject *CSHashTable::find(CSObject *key)
 	return NULL;
 }
 
-void CSHashTable::remove(CSObject *key)
+bool CSHashTable::remove(CSObject *key)
 {
 	uint32_t h = key->hashKey();
 	CSObject *item, *prev_item;
@@ -98,11 +107,12 @@ void CSHashTable::remove(CSObject *key)
 			else
 				iTable[h % iSize] = item->getHashLink();
 			item->release();
-			break;
+			return true;
 		}
 		prev_item = item;
 		item = item->getHashLink();
 	}
+	return false;
 }
 
 void CSHashTable::clear()

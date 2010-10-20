@@ -51,7 +51,7 @@ public:
 	/* Value is returned NOT referenced. */
 	CSObject *find(CSObject *key);
 	
-	void remove(CSObject *key);
+	bool remove(CSObject *key);
 
 private:
 	uint32_t iSize;

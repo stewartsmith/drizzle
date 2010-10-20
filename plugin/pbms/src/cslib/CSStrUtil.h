@@ -70,6 +70,7 @@ char		*cs_strdup(const char *in_str, size_t len);
 bool		cs_starts_with(const char *cstr, const char *w_cstr);
 bool		cs_ends_with(const char *cstr, const char *w_cstr);
 void		cs_make_absolute_path(size_t max, char *path, const char *rel_path, const char *cwd);
+void		cs_replace_string(size_t size, char *into, const char *find_str, const char *str);
 void		cs_replace_string(size_t size, char *into, const char ch, const char *str);
 int64_t		cs_str_to_int8(const char *ptr, bool *overflow);
 int64_t		cs_byte_size_to_int8(const char *ptr, bool *invalid = NULL);

@@ -28,12 +28,15 @@
 
 #include "CSConfig.h"
 
-#ifndef XT_WIN
+#ifdef OS_WINDOWS
+#include <sys/utime.h>
+#define utimes(f, s) _utime(f, s)
+#else
 #include <unistd.h>
 #include <dirent.h>
+#include <sys/time.h>
 #endif
 #include <stdio.h>
-#include <sys/time.h>
 
 #include <errno.h>
 #include <string.h>
@@ -285,13 +288,14 @@ void CSFile::openFile(int mode)
 void CSFile::md5Digest(Md5Digest *digest)
 {
 	u_char buffer[1024];
-	off64_t offset = 0, size, len;
+	off64_t offset = 0, size;
+	size_t len;
 	CSMd5 md5;
 	enter_();
 	
 	size = getEOF();
 	while (size) {
-		len = (size < 1024)? size:1024;
+		len = (size_t)((size < 1024)? size:1024);
 		len = read(buffer, offset, len, len);
 		offset +=len;
 		size -= len;
@@ -348,7 +352,7 @@ void CSReadBufferedFile::setEOF(off64_t offset)
 		iBufferDataLen = 0;
 	}
 	else if (offset < iFileBufferOffset + iBufferDataLen)
-		iBufferDataLen = offset - iFileBufferOffset;
+		iBufferDataLen = (size_t)(offset - iFileBufferOffset);
 }
 
 size_t CSReadBufferedFile::read(void *data, off64_t offset, size_t size, size_t min_size)
@@ -366,7 +370,7 @@ size_t CSReadBufferedFile::read(void *data, off64_t offset, size_t size, size_t 
 			}
 			if (offset + size > iFileBufferOffset) {
 				// 2
-				tfer = offset + size - iFileBufferOffset;
+				tfer = (size_t)(offset + size - iFileBufferOffset);
 				memcpy((char *) data + (iFileBufferOffset - offset), iFileBuffer, tfer);
 				size -= tfer;
 			}
@@ -397,7 +401,7 @@ size_t CSReadBufferedFile::read(void *data, off64_t offset, size_t size, size_t 
 		}
 		if (offset < iFileBufferOffset + iBufferDataLen) {
 			// 4 We assume we are reading front to back
-			tfer = iFileBufferOffset + iBufferDataLen - offset;
+			tfer = (size_t)(iFileBufferOffset + iBufferDataLen - offset);
 			memcpy(data, iFileBuffer + (offset - iFileBufferOffset), tfer);
 			data = (char *) data + tfer;
 			size -= tfer;
@@ -437,7 +441,7 @@ void CSReadBufferedFile::write(const void *data, off64_t offset, size_t size)
 			}
 			else if (offset + size > iFileBufferOffset) {
 				// 2
-				tfer = offset + size - iFileBufferOffset;
+				tfer = (size_t)(offset + size - iFileBufferOffset);
 				memcpy(iFileBuffer, (char *) data + (iFileBufferOffset - offset), tfer);
 			}
 		}
@@ -447,7 +451,7 @@ void CSReadBufferedFile::write(const void *data, off64_t offset, size_t size)
 		}
 		else if (offset < iFileBufferOffset + iBufferDataLen) {
 			// 4 We assume we are reading front to back
-			tfer = iFileBufferOffset + iBufferDataLen - offset;
+			tfer = (size_t)(iFileBufferOffset + iBufferDataLen - offset);
 			memcpy(iFileBuffer + (offset - iFileBufferOffset), data, tfer);
 		}
 		// else 5

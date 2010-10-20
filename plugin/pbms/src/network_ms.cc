@@ -198,14 +198,14 @@ class OpenConnectioCleanUp : public CSRefObject {
 };
 
 /*
- * Return NULL of a connection cannot be openned, and the
+ * Return NULL if a connection cannot be openned, and the
  * thread must quit.
  */
 CSSocket *MSNetwork::openConnection(MSConnectionHandler *handler)
 {
 	CSSocket *sock = NULL;
 	OpenConnectioCleanUp *cleanup;
-	
+
 	enter_();
 	
 	if(!MSNetwork::gListenerSocket) {

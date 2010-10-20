@@ -222,6 +222,14 @@ int prof_setjmp(void);
 								(self)->relTop++; \
 							} while (0)
 
+#define locked_(r)			do { \
+								if ((self)->relTop >= (self)->relStack + CS_RELEASE_STACK_SIZE) \
+									CSException::throwCoreError(CS_CONTEXT, CS_ERR_RELEASE_OVERFLOW); \
+								(self)->relTop->r_type = CS_RELEASE_MUTEX; \
+								(self)->relTop->x.r_mutex = (r); \
+								(self)->relTop++; \
+							} while (0)
+
 #define unlock_(r)			do {  \
 								register CSMutex *rp; \
 								ASSERT((self)->relTop > (self)->relStack); \

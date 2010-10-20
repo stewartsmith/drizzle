@@ -83,6 +83,14 @@ class CSThread;
 #define CS_DIR_DELIM		"\\"
 #define IS_DIR_CHAR(ch)		((ch) == CS_DIR_CHAR || (ch) == '/')
 
+#ifndef PATH_MAX
+#define PATH_MAX		MAX_PATH
+#endif
+
+#ifndef NAME_MAX
+#define NAME_MAX		MAX_PATH
+#endif
+
 #else
 
 #define CS_DEFAULT_EOL		"\n"
@@ -95,20 +103,6 @@ class CSThread;
 #define CS_CALL_STACK_SIZE		100
 #define CS_RELEASE_STACK_SIZE	200
 #define CS_JUMP_STACK_SIZE		20
-
-/* Fixed length types */
-
-#ifdef CS_WIN
-
-#ifndef PATH_MAX
-#define PATH_MAX		MAX_PATH
-#endif
-
-#ifndef NAME_MAX
-#define NAME_MAX		MAX_PATH
-#endif
-
-#endif // CS_WIN
 
 /* C string display width sizes including space for a null terminator and possible sign. */
 #define CS_WIDTH_INT_8	5

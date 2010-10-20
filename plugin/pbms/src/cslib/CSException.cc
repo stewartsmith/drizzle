@@ -181,7 +181,7 @@ void CSException::initCoreError(const char *func, const char *file, int line, in
 	cs_format_context(CS_EXC_CONTEXT_SIZE, iContext, func, file, line);
 	iErrorCode = err;
 	getCoreError(CS_EXC_MESSAGE_SIZE, iMessage, err);
-	cs_replace_string(CS_EXC_MESSAGE_SIZE, iMessage, '%', item);
+	cs_replace_string(CS_EXC_MESSAGE_SIZE, iMessage, "%s", item);
 }
 
 void CSException::initOSError(const char *func, const char *file, int line, int err)

@@ -37,8 +37,8 @@
 #else
 #include <signal.h>
 #include <sys/signal.h>
-#endif
 #include <unistd.h>
+#endif
 #include <errno.h>
 
 #include "CSGlobal.h"
@@ -534,10 +534,14 @@ CSThread* CSThread::getSelf()
 		return (CSThread*) NULL;
 		
 #ifdef DEBUG
-	if (self->getRefCount() == 0) {
+	/* PMC - Problem is, if this is called when releasing a
+	 * thread, then we have the reference count equal to
+	 * zero.
+	if (self && !self->iRefCount) {
 		pthread_setspecific(sThreadKey, NULL);
 		CSException::throwAssertion(CS_CONTEXT, "Freed self pointer referenced.");
-	}	
+	}
+	*/
 #endif
 
 	return self;

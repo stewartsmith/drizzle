@@ -246,6 +246,7 @@ bool cs_fixed_pattern(const char *str)
 }
 
 #ifdef OS_WINDOWS
+/* 
 bool cs_match_patern(const char *pattern, const char *str, bool ignore_case)
 {
 	bool escaped = false;
@@ -290,6 +291,7 @@ bool cs_match_patern(const char *pattern, const char *str, bool ignore_case)
 	
 	return ((!*pattern) && (!*str));
 }
+*/
 #else
 bool cs_match_patern(const char *pattern, const char *str, bool ignore_case)
 {
@@ -568,6 +570,24 @@ bool cs_ends_with(const char *cstr, const char *w_cstr)
 	}
 
 	return true;
+}
+
+void cs_replace_string(size_t size, char *into, const char *find_str, const char *str)
+{
+	char *ptr;
+
+	if ((ptr = strstr(into, find_str))) {
+		size_t len = strlen(into);
+		size_t len2 = strlen(str);
+		size_t len3 = strlen(find_str);
+		
+		if (len + len2 + len3 >= size)
+			len2 = size - len;
+		
+		memmove(ptr+len2, ptr+len3, len - (ptr + len3 - into));
+		memcpy(ptr, str, len2);
+		into[len + len2 - len3] = 0;
+	}
 }
 
 void cs_replace_string(size_t size, char *into, const char ch, const char *str)
