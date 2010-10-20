@@ -259,11 +259,15 @@ static int seapi_tester_init(drizzled::module::Context &context)
   engine_state_transitions.insert(state_pair("::doCreateTable()", "::SEAPITester()"));
   engine_state_transitions.insert(state_pair("::SEAPITester()", "BEGIN"));
   engine_state_transitions.insert(state_pair("BEGIN", "START STATEMENT"));
+  engine_state_transitions.insert(state_pair("BEGIN", "COMMIT"));
+  engine_state_transitions.insert(state_pair("BEGIN", "ROLLBACK"));
   engine_state_transitions.insert(state_pair("START STATEMENT", "END STATEMENT"));
   engine_state_transitions.insert(state_pair("END STATEMENT", "START STATEMENT"));
   engine_state_transitions.insert(state_pair("END STATEMENT", "COMMIT"));
   engine_state_transitions.insert(state_pair("END STATEMENT", "ROLLBACK"));
 
+  engine_state_transitions.insert(state_pair("COMMIT", "::SEAPITester()"));
+  engine_state_transitions.insert(state_pair("ROLLBACK", "::SEAPITester()"));
   engine_state= "INIT";
 
   context.add(new SEAPITester(engine_name));
