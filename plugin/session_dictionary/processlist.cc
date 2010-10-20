@@ -52,90 +52,75 @@ ProcesslistTool::Generator::Generator(Field **arg) :
   plugin::TableFunction::Generator(arg)
 {
   now= time(NULL);
-
-  LOCK_thread_count.lock();
-  it= getSessionList().begin();
 }
 
 ProcesslistTool::Generator::~Generator()
 {
-  LOCK_thread_count.unlock();
 }
 
 bool ProcesslistTool::Generator::populate()
 {
-  const char *val;
+  drizzled::SessionPtr tmp;
 
-
-  while (it != getSessionList().end())
+  while ((tmp= session_generator))
   {
-    if ((*it)->isViewable())
+    const SecurityContext *tmp_sctx= &tmp->getSecurityContext();
+    const char *val;
+
+    /* ID */
+    push((int64_t) tmp->thread_id);
+
+
+    /* USER */
+    if (not tmp_sctx->getUser().empty())
+      push(tmp_sctx->getUser());
+    else 
+      push(_("no user"));
+
+    /* HOST */
+    push(tmp_sctx->getIp());
+
+    /* DB */
+    if (! tmp->db.empty())
     {
-      break;
+      push(tmp->db);
     }
-    ++it;
+    else
+    {
+      push();
+    }
+
+    /* COMMAND */
+    if ((val= const_cast<char *>(tmp->killed == Session::KILL_CONNECTION ? "Killed" : 0)))
+    {
+      push(val);
+    }
+    else
+    {
+      push(command_name[tmp->command].str, command_name[tmp->command].length);
+    }
+
+    /* DRIZZLE_TIME */
+    push(static_cast<uint64_t>(tmp->start_time ?  now - tmp->start_time : 0));
+
+    /* STATE */
+    val= (char*) (tmp->client->isWriting() ?
+                  "Writing to net" :
+                  tmp->client->isReading() ?
+                  (tmp->command == COM_SLEEP ?
+                   NULL : "Reading from net") :
+                  tmp->get_proc_info() ? tmp->get_proc_info() :
+                  tmp->getThreadVar() &&
+                  tmp->getThreadVar()->current_cond ?
+                  "Waiting on cond" : NULL);
+    val ? push(val) : push();
+
+    /* INFO */
+    size_t length= strlen(tmp->process_list_info);
+    length ?  push(tmp->process_list_info, length) : push();
+
+    return true;
   }
 
-  if (it == getSessionList().end())
-    return false;
-
-  Session *tmp= *it;
-  const SecurityContext *tmp_sctx= &tmp->getSecurityContext();
-
-
-  /* ID */
-  push((int64_t) tmp->thread_id);
-
-
-  /* USER */
-  if (not tmp_sctx->getUser().empty())
-    push(tmp_sctx->getUser());
-  else 
-    push(_("no user"));
-
-  /* HOST */
-  push(tmp_sctx->getIp());
-
-  /* DB */
-  if (! tmp->db.empty())
-  {
-    push(tmp->db);
-  }
-  else
-  {
-    push();
-  }
-
-  /* COMMAND */
-  if ((val= const_cast<char *>(tmp->killed == Session::KILL_CONNECTION ? "Killed" : 0)))
-  {
-    push(val);
-  }
-  else
-  {
-    push(command_name[tmp->command].str, command_name[tmp->command].length);
-  }
-
-  /* DRIZZLE_TIME */
-  push(static_cast<uint64_t>(tmp->start_time ?  now - tmp->start_time : 0));
-
-  /* STATE */
-  val= (char*) (tmp->client->isWriting() ?
-                "Writing to net" :
-                tmp->client->isReading() ?
-                (tmp->command == COM_SLEEP ?
-                 NULL : "Reading from net") :
-                tmp->get_proc_info() ? tmp->get_proc_info() :
-                tmp->getThreadVar() &&
-                tmp->getThreadVar()->current_cond ?
-                "Waiting on cond" : NULL);
-  val ? push(val) : push();
-
-  /* INFO */
-  size_t length= strlen(tmp->process_list_info);
-  length ?  push(tmp->process_list_info, length) : push();
-
-  it++;
-
-  return true;
+  return false;
 }
