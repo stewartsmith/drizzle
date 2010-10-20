@@ -52,6 +52,7 @@ namespace drizzled
 
 class Table;
 class TableShare;
+class Session;
 
 namespace plugin
 {
