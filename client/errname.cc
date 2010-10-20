@@ -735,7 +735,7 @@ ErrorCodes::ErrorCodes()
     { "ER_UNKNOWN_SCHEMA_OPTION", 1699},
     { "ER_EVENT_OBSERVER_PLUGIN", 1700},
     { "ER_CORRUPT_SCHEMA_DEFINITION", 1701},
-    { "ER_UNUSED1702", 1702},
+    { "ER_OUT_OF_GLOBAL_SORTMEMORY", 1702},
     { 0, 0 }
   };
 

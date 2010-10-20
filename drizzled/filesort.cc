@@ -268,8 +268,7 @@ ha_rows filesort(Session *session, Table *table, SortField *sortorder, uint32_t 
   allocated_sort_memory= param.keys * param.rec_length;
   if (not global_sort_buffer.add(allocated_sort_memory))
   {
-    std::cerr << "Global buffer hit!" << std::endl;
-    my_error(ER_OUT_OF_SORTMEMORY, MYF(ME_ERROR+ME_WAITTANG));
+    my_error(ER_OUT_OF_GLOBAL_SORTMEMORY, MYF(ME_ERROR+ME_WAITTANG));
     goto err;
   }
 

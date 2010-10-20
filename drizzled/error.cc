@@ -235,6 +235,7 @@ ErrorMap::ErrorMap()
   add(ER_OPEN_AS_READONLY, N_("Table '%-.192s' is read only"));
   add(ER_OUTOFMEMORY, N_("Out of memory; restart server and try again (needed %lu bytes)"));
   add(ER_OUT_OF_SORTMEMORY, N_("Out of sort memory; increase server sort buffer size"));
+  add(ER_OUT_OF_GLOBAL_SORTMEMORY, N_("Global sort memory constraint hit; increase sort-heap-threshold"));
   add(ER_UNEXPECTED_EOF, N_("Unexpected EOF found when reading file '%-.192s' (errno: %d)"));
   add(ER_CON_COUNT_ERROR, N_("Too many connections"));
   add(ER_OUT_OF_RESOURCES, N_("Out of memory; check if drizzled or some other process uses all available memory; if not, you may have to use 'ulimit' to allow drizzled to use more memory or you can add more swap space"));
