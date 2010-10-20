@@ -1447,8 +1447,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
     // This needs to go, we should be setting the "use" on the field so that
     // it does not reference the share/table.
-    table::Shell temp_table; /* Use this so that BLOB DEFAULT '' works */
-    temp_table.setShare(this);
+    table::Shell temp_table(*this); /* Use this so that BLOB DEFAULT '' works */
     temp_table.in_use= &session;
 
     f->init(&temp_table); /* blob default values need table obj */

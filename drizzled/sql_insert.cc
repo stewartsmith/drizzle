@@ -1488,9 +1488,8 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
   }
 
   {
-    table::Shell tmp_table;		// Used during 'CreateField()'
+    table::Shell tmp_table(share);		// Used during 'CreateField()'
     tmp_table.timestamp_field= 0;
-    tmp_table.setShare(&share);
 
     tmp_table.getMutableShare()->db_create_options= 0;
     tmp_table.getMutableShare()->blob_ptr_size= portable_sizeof_char_ptr;

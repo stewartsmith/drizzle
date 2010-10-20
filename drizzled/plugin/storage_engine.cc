@@ -503,8 +503,8 @@ int StorageEngine::createTable(Session &session,
                                message::Table& table_message)
 {
   int error= 1;
-  table::Shell table;
   TableShare share(identifier);
+  table::Shell table(share);
   message::Table tmp_proto;
 
   if (share.parse_table_proto(session, table_message) || share.open_table_from_share(&session, identifier, "", 0, 0, table))
