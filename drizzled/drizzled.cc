@@ -63,6 +63,7 @@
 #include "drizzled/drizzled.h"
 #include "drizzled/module/registry.h"
 #include "drizzled/module/load_list.h"
+#include "drizzled/global_buffer.h"
 
 #include <google/protobuf/stubs/common.h>
 
@@ -342,6 +343,8 @@ static char *drizzle_home_ptr, *pidfile_name_ptr;
 passwd *user_info;
 
 atomic<uint32_t> connection_count;
+
+global_buffer_constraint<uint64_t> global_sort_buffer(MAX_SORT_MEMORY * 10);
 
 /** 
   Refresh value. We use to test this to find out if a refresh even has happened recently.
@@ -1321,6 +1324,9 @@ int init_common_variables(int argc, char **argv)
   ("sort-buffer-size",
   po::value<size_t>(&global_system_variables.sortbuff_size)->default_value(MAX_SORT_MEMORY)->notifier(&check_limits_sort_buffer_size),
   N_("Each thread that needs to do a sort allocates a buffer of this size."))
+  ("sort-heap-threshold",
+  po::value<uint64_t>()->default_value(MAX_SORT_MEMORY*10),
+  N_("A global cap on the amount of memory that can be allocated by session sort buffers"))
   ("table-definition-cache", po::value<size_t>(&table_def_size)->default_value(128)->notifier(&check_limits_tdc),
   N_("The number of cached table definitions."))
   ("table-open-cache", po::value<uint64_t>(&table_cache_size)->default_value(TABLE_OPEN_CACHE_DEFAULT)->notifier(&check_limits_toc),
@@ -2196,6 +2202,11 @@ static void get_options()
       global_system_variables.log_warnings= 0L;
     else
       global_system_variables.log_warnings= atoi(vm["log-warnings"].as<string>().c_str());
+  }
+
+  if (vm.count("sort-heap-threshold"))
+  {
+    global_sort_buffer.setMaxSize(vm["sort-heap-threshold"].as<uint64_t>());
   }
 
   if (vm.count("exit-info"))

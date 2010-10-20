@@ -29,6 +29,7 @@
 #include <queue>
 #include <algorithm>
 
+#include "drizzled/drizzled.h"
 #include "drizzled/sql_sort.h"
 #include "drizzled/error.h"
 #include "drizzled/probes.h"
@@ -41,6 +42,8 @@
 #include "drizzled/internal/my_sys.h"
 #include "plugin/myisam/myisam.h"
 #include "drizzled/plugin/transactional_storage_engine.h"
+#include "drizzled/atomics.h"
+#include "drizzled/global_buffer.h"
 
 using namespace std;
 
@@ -136,7 +139,7 @@ ha_rows filesort(Session *session, Table *table, SortField *sortorder, uint32_t 
                  bool sort_positions, ha_rows *examined_rows)
 {
   int error;
-  uint32_t memavl, min_sort_memory;
+  uint32_t memavl= 0, min_sort_memory;
   uint32_t maxbuffer;
   buffpek_st *buffpek;
   ha_rows records= HA_POS_ERROR;
@@ -261,6 +264,14 @@ ha_rows filesort(Session *session, Table *table, SortField *sortorder, uint32_t 
     my_error(ER_OUT_OF_SORTMEMORY,MYF(ME_ERROR+ME_WAITTANG));
     goto err;
   }
+
+  if (not global_sort_buffer.add(session->variables.sortbuff_size - memavl))
+  {
+    std::cerr << "Global buffer hit!" << std::endl;
+    my_error(ER_OUT_OF_SORTMEMORY, MYF(ME_ERROR+ME_WAITTANG));
+    goto err;
+  }
+
   if (open_cached_file(&buffpek_pointers,drizzle_tmpdir.c_str(),TEMP_PREFIX,
 		       DISK_BUFFER_SIZE, MYF(MY_WME)))
     goto err;
@@ -360,6 +371,7 @@ ha_rows filesort(Session *session, Table *table, SortField *sortorder, uint32_t 
   }
   *examined_rows= param.examined_rows;
   memcpy(&table->sort, &table_sort, sizeof(filesort_info_st));
+  global_sort_buffer.sub(session->variables.sortbuff_size - memavl);
   DRIZZLE_FILESORT_DONE(error, records);
   return (error ? HA_POS_ERROR : records);
 } /* filesort */

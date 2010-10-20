@@ -25,7 +25,8 @@
 #include <boost/program_options.hpp>
 
 #include "drizzled/atomics.h"
-
+#include "drizzled/global_buffer.h"
+#include "drizzled/definitions.h"
 struct passwd;
 
 namespace drizzled
@@ -46,6 +47,8 @@ extern bool opt_help;
 extern bool opt_help_extended;
 extern passwd *user_info;
 extern char *drizzled_user;
+
+extern global_buffer_constraint<uint64_t> global_sort_buffer;
 
 extern const char * const DRIZZLE_CONFIG_NAME;
 
