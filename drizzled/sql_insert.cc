@@ -1249,7 +1249,15 @@ bool select_insert::send_data(List<Item> &values)
   store_values(values);
   session->count_cuted_fields= CHECK_FIELD_IGNORE;
   if (session->is_error())
+  {
+    /*
+     * If we fail mid-way through INSERT..SELECT, we need to remove any
+     * records that we added to the current Statement message. We can
+     * use session->row_count to know how many records we have already added.
+     */
+    session->removeStatementRecords(session->row_count - 1);
     return(1);
+  }
 
   // Release latches in case bulk insert takes a long time
   plugin::TransactionalStorageEngine::releaseTemporaryLatches(session);

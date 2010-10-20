@@ -21,23 +21,20 @@
 #ifndef DRIZZLED_SESSION_H
 #define DRIZZLED_SESSION_H
 
-/* Classes in mysql */
-
 #include "drizzled/plugin.h"
-#include <drizzled/sql_locale.h>
+#include "drizzled/sql_locale.h"
 #include "drizzled/resource_context.h"
-#include <drizzled/cursor.h>
-#include <drizzled/current_session.h>
-#include <drizzled/sql_error.h>
-#include <drizzled/file_exchange.h>
-#include <drizzled/select_result_interceptor.h>
-#include <drizzled/statistics_variables.h>
-#include <drizzled/xid.h>
+#include "drizzled/cursor.h"
+#include "drizzled/current_session.h"
+#include "drizzled/sql_error.h"
+#include "drizzled/file_exchange.h"
+#include "drizzled/select_result_interceptor.h"
+#include "drizzled/statistics_variables.h"
+#include "drizzled/xid.h"
 #include "drizzled/query_id.h"
 #include "drizzled/named_savepoint.h"
 #include "drizzled/transaction_context.h"
 #include "drizzled/util/storable.h"
-
 #include "drizzled/my_hash.h"
 
 #include <netdb.h>
@@ -47,14 +44,11 @@
 #include <deque>
 
 #include "drizzled/internal/getrusage.h"
-
-#include <drizzled/security_context.h>
-#include <drizzled/open_tables_state.h>
-
-#include <drizzled/internal_error_handler.h>
-#include <drizzled/diagnostics_area.h>
-
-#include <drizzled/plugin/authorization.h>
+#include "drizzled/security_context.h"
+#include "drizzled/open_tables_state.h"
+#include "drizzled/internal_error_handler.h"
+#include "drizzled/diagnostics_area.h"
+#include "drizzled/plugin/authorization.h"
 
 #include <boost/unordered_map.hpp>
 #include <boost/thread/mutex.hpp>
@@ -564,10 +558,38 @@ public:
   ResourceContext *getResourceContext(const plugin::MonitoredInTransaction *monitored,
                                       size_t index= 0);
 
+  /**
+   * Structure used to manage "statement transactions" and
+   * "normal transactions". In autocommit mode, the normal transaction is
+   * equivalent to the statement transaction.
+   *
+   * Storage engines will be registered here when they participate in
+   * a transaction. No engine is registered more than once.
+   */
   struct st_transactions {
     std::deque<NamedSavepoint> savepoints;
-    TransactionContext all; ///< Trans since BEGIN WORK
-    TransactionContext stmt; ///< Trans for current statement
+
+    /**
+     * The normal transaction (since BEGIN WORK).
+     *
+     * Contains a list of all engines that have participated in any of the
+     * statement transactions started within the context of the normal
+     * transaction.
+     *
+     * @note In autocommit mode, this is empty.
+     */
+    TransactionContext all;
+
+    /**
+     * The statment transaction.
+     *
+     * Contains a list of all engines participating in the given statement.
+     *
+     * In autocommit mode, this will be used to commit/rollback the
+     * normal transaction.
+     */
+    TransactionContext stmt;
+
     XID_STATE xid_state;
 
     void cleanup()
@@ -1211,9 +1233,8 @@ public:
    * Current implementation does not depend on that, but future changes
    * should be done with this in mind; 
    *
-   * @param  Scrambled password received from client
-   * @param  Length of scrambled password
-   * @param  Database name to connect to, may be NULL
+   * @param passwd Scrambled password received from client
+   * @param db Database name to connect to, may be NULL
    */
   bool checkUser(const std::string &passwd, const std::string &db);
   
@@ -1245,6 +1266,26 @@ public:
     return statement_message;
   }
   
+  /**
+   * Used to undo effects of a failed statement.
+   *
+   * An SQL statement, like an UPDATE, that affects multiple rows could
+   * potentially fail mid-way through processing the rows. In such a case,
+   * the successfully modified rows that preceeded the failing row would
+   * have been added to the Statement message. This method is used for
+   * rolling back that change.
+   *
+   * @note
+   * This particular failure is seen on column constraint violations
+   * during a multi-row UPDATE and a multi-row INSERT..SELECT.
+   *
+   * @param count The number of records to remove from Statement.
+   *
+   * @retval true Successfully removed 'count' records
+   * @retval false Failure
+   */
+  bool removeStatementRecords(uint32_t count);
+
   /**
    * Returns a pointer to the current Resulset message for this
    * Session, or NULL if no active message.
