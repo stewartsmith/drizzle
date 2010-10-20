@@ -18,39 +18,54 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* Structs that defines the Table */
+#ifndef DRIZZLED_GENERATOR_SESSION_H
+#define DRIZZLED_GENERATOR_SESSION_H
 
-#ifndef DRIZZLED_TABLE_PLACEHOLDER_H
-#define DRIZZLED_TABLE_PLACEHOLDER_H
+#include "drizzled/pthread_globals.h"
+#include "drizzled/session_list.h"
 
-namespace drizzled
+namespace drizzled {
+namespace generator {
+
+class Session
 {
-
-namespace table
-{
-
-class Placeholder : public table::Concurrent
-{
-  TableShare private_share;
+  SessionList local_list;
+  SessionList::const_iterator iter;
 
 public:
-  Placeholder(Session *session, TableIdentifier &identifier) :
-    table::Concurrent(),
-    private_share(identifier, identifier.getKey())
-  {
-    setShare(&private_share);
-    in_use= session;
 
-    locked_by_name= true;
+  Session()
+  {
+    LOCK_thread_count.lock();
+    local_list= getSessionList();
+    iter= local_list.begin();
   }
 
-  bool isPlaceHolder(void) const
+  ~Session()
   {
-    return true;
+    LOCK_thread_count.unlock();
+  }
+
+  operator drizzled::SessionPtr()
+  {
+    while (iter != local_list.end())
+    {
+      if (not (*iter)->isViewable())
+      {
+        iter++;
+        continue;
+      }
+
+      drizzled::SessionPtr ret= *iter;
+      iter++;
+      return ret;
+    }
+
+    return NULL;
   }
 };
 
-} /* namespace table */
+} /* namespace generator */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TABLE_PLACEHOLDER_H */
+#endif /* DRIZZLED_GENERATOR_SESSION_H */

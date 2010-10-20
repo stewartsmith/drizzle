@@ -198,18 +198,7 @@ private:
 public:
   bool doesKeyNameExist(const char *name_arg, uint32_t name_length, uint32_t &position) const
   {
-    std::string arg(name_arg, name_length);
-    std::transform(arg.begin(), arg.end(),
-                   arg.begin(), ::toupper);
-
-    std::vector<std::string>::const_iterator iter= std::find(_keynames.begin(), _keynames.end(), arg);
-
-    if (iter == _keynames.end())
-      return false;
-
-    position= iter -  _keynames.begin();
-
-    return true;
+    return doesKeyNameExist(std::string(name_arg, name_length), position);
   }
 
   bool doesKeyNameExist(std::string arg, uint32_t &position) const
@@ -690,6 +679,19 @@ public:
                             const char *alias,
                             uint32_t db_stat, uint32_t ha_open_flags,
                             Table &outparam);
+private:
+  int open_table_from_share_inner(Session *session,
+                                  const char *alias,
+                                  uint32_t db_stat, uint32_t ha_open_flags,
+                                  Table &outparam,
+                                  bool &error_reported);
+  int open_table_cursor_inner(Session *session,
+                              const TableIdentifier &identifier,
+                              const char *alias,
+                              uint32_t db_stat, uint32_t ha_open_flags,
+                              Table &outparam,
+                              bool &error_reported);
+public:
   int parse_table_proto(Session& session, message::Table &table);
 private:
   int inner_parse_table_proto(Session& session, message::Table &table);

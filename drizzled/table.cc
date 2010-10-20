@@ -1687,7 +1687,6 @@ void Table::emptyRecord()
 }
 
 Table::Table() : 
-  _share(NULL),
   field(NULL),
   cursor(NULL),
   next(NULL),
