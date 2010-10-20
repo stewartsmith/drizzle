@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Original author: Paul McCullagh (H&G2JCtL)
  * Continued development: Barry Leslie
@@ -27,6 +27,8 @@
 
 #ifndef __DEFS_MS_H__
 #define __DEFS_MS_H__
+
+#include <boost/dynamic_bitset.hpp>
 
 #include "cslib/CSDefs.h"
 
@@ -131,7 +133,7 @@
 #define MYSQL_THD							Session *
 #define THR_THD								THR_Session
 #define STRUCT_TABLE						class Table
-#define MY_BITMAP							MyBitmap
+#define MY_BITMAP							boost::dynamic_bitset<>
 
 #define MYSQL_TYPE_TIMESTAMP				DRIZZLE_TYPE_TIMESTAMP
 #define MYSQL_TYPE_LONG						DRIZZLE_TYPE_LONG

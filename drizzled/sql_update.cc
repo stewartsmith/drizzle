@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 
 /*
@@ -30,6 +30,7 @@
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/iocache.h"
 
+#include <boost/dynamic_bitset.hpp>
 #include <list>
 
 using namespace std;
@@ -51,18 +52,16 @@ namespace drizzled
 
 static void prepare_record_for_error_message(int error, Table *table)
 {
-  Field **field_p;
-  Field *field;
-  uint32_t keynr;
-  MyBitmap unique_map; /* Fields in offended unique. */
-  my_bitmap_map unique_map_buf[bitmap_buffer_size(MAX_FIELDS)];
+  Field **field_p= NULL;
+  Field *field= NULL;
+  uint32_t keynr= 0;
 
   /*
     Only duplicate key errors print the key value.
     If storage engine does always read all columns, we have the value alraedy.
   */
   if ((error != HA_ERR_FOUND_DUPP_KEY) ||
-      !(table->cursor->getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ)))
+      ! (table->cursor->getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ)))
     return;
 
   /*
@@ -73,36 +72,35 @@ static void prepare_record_for_error_message(int error, Table *table)
     return;
 
   /* Create unique_map with all fields used by that index. */
-  unique_map.init(unique_map_buf, table->getMutableShare()->sizeFields());
-  table->mark_columns_used_by_index_no_reset(keynr, &unique_map);
+  boost::dynamic_bitset<> unique_map(table->getShare()->sizeFields()); /* Fields in offended unique. */
+  table->mark_columns_used_by_index_no_reset(keynr, unique_map);
 
   /* Subtract read_set and write_set. */
-  bitmap_subtract(&unique_map, table->read_set);
-  bitmap_subtract(&unique_map, table->write_set);
+  unique_map-= *table->read_set;
+  unique_map-= *table->write_set;
 
   /*
     If the unique index uses columns that are neither in read_set
     nor in write_set, we must re-read the record.
     Otherwise no need to do anything.
   */
-  if (unique_map.isClearAll())
+  if (unique_map.none())
     return;
 
   /* Get identifier of last read record into table->cursor->ref. */
   table->cursor->position(table->getInsertRecord());
   /* Add all fields used by unique index to read_set. */
-  bitmap_union(table->read_set, &unique_map);
+  *table->read_set|= unique_map;
   /* Read record that is identified by table->cursor->ref. */
   (void) table->cursor->rnd_pos(table->getUpdateRecord(), table->cursor->ref);
   /* Copy the newly read columns into the new record. */
   for (field_p= table->getFields(); (field= *field_p); field_p++)
   {
-    if (unique_map.isBitSet(field->field_index))
+    if (unique_map.test(field->field_index))
     {
       field->copy_from_tmp(table->getShare()->rec_buff_length);
     }
   }
-
 
   return;
 }
@@ -219,7 +217,7 @@ int mysql_update(Session *session, TableList *table_list,
       (table->timestamp_field_type == TIMESTAMP_AUTO_SET_ON_UPDATE ||
        table->timestamp_field_type == TIMESTAMP_AUTO_SET_ON_BOTH))
   {
-    bitmap_union(table->read_set, table->write_set);
+    *table->read_set|= *table->write_set;
   }
   // Don't count on usage of 'only index' when calculating which key to use
   table->covering_keys.reset();
@@ -263,7 +261,7 @@ int mysql_update(Session *session, TableList *table_list,
   {
     used_index= select->quick->index;
     used_key_is_modified= (!select->quick->unique_key_range() &&
-                          select->quick->is_keys_used(table->write_set));
+                          select->quick->is_keys_used(*table->write_set));
   }
   else
   {
@@ -271,7 +269,7 @@ int mysql_update(Session *session, TableList *table_list,
     if (used_index == MAX_KEY)                  // no index for sort order
       used_index= table->cursor->key_used_on_scan;
     if (used_index != MAX_KEY)
-      used_key_is_modified= is_key_used(table, used_index, table->write_set);
+      used_key_is_modified= is_key_used(table, used_index, *table->write_set);
   }
 
 
@@ -451,12 +449,12 @@ int mysql_update(Session *session, TableList *table_list,
     the table handler is returning all columns OR if
     if all updated columns are read
   */
-  can_compare_record= (!(table->cursor->getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ)) ||
-                       bitmap_is_subset(table->write_set, table->read_set));
+  can_compare_record= (! (table->cursor->getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ)) ||
+                       table->write_set->is_subset_of(*table->read_set));
 
-  while (!(error=info.read_record(&info)) && !session->killed)
+  while (! (error=info.read_record(&info)) && !session->killed)
   {
-    if (!(select && select->skip_record()))
+    if (! (select && select->skip_record()))
     {
       if (table->cursor->was_semi_consistent_read())
         continue;  /* repeat the read of the same row if it still exists */

@@ -11,8 +11,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -82,6 +82,13 @@ void
 mem_init(
 /*=====*/
 	ulint	size);	/*!< in: common pool size in bytes */
+/******************************************************************//**
+Closes the memory system. */
+UNIV_INTERN
+void
+mem_close(void);
+/*===========*/
+
 /**************************************************************//**
 Use this macro instead of the corresponding function! Macro for memory
 heap creation. */

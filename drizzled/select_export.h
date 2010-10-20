@@ -29,7 +29,9 @@
 namespace drizzled
 {
 
-class select_export :public select_to_file {
+class select_export :
+  public select_to_file
+{
   uint32_t field_term_length;
   int field_sep_char,escape_char,line_sep_char;
   int field_term_char; // first char of FIELDS TERMINATED BY or MAX_INT

@@ -15,18 +15,17 @@ noinst_LTLIBRARIES+= \
 noinst_PROGRAMS+= \
 		  client/drizzletest
 
-bin_PROGRAMS= \
-	      client/drizzle \
-	      client/drizzledump \
-	      client/drizzleimport \
-	      client/drizzleslap
+bin_PROGRAMS+= \
+	       client/drizzle \
+	       client/drizzledump \
+	       client/drizzleimport \
+	       client/drizzleslap
 
-man_MANS= \
-	  client/drizzle.1 \
-	  client/drizzled.8 \
-	  client/drizzledump.1 \
-	  client/drizzleimport.1 \
-	  client/drizzleslap.1
+man_MANS+= \
+	   client/drizzle.1 \
+	   client/drizzled.8 \
+	   client/drizzleimport.1 \
+	   client/drizzleslap.1
 
 client_libgetpassword_la_SOURCES= client/get_password.cc
 
@@ -37,8 +36,12 @@ noinst_HEADERS+= \
 		 client/linebuffer.h \
                  client/drizzledump_data.h \
                  client/drizzledump_mysql.h \
-                 client/drizzledump_drizzle.h
-
+                 client/drizzledump_drizzle.h \
+                 client/statement.h \
+                 client/option_string.h \
+                 client/stats.h \
+                 client/thread_context.h \
+                 client/conclusions.h
 
 client_drizzle_SOURCES=		client/drizzle.cc client/linebuffer.cc
 client_drizzle_LDADD=		${READLINE_LIBS} ${BOOST_LIBS} \

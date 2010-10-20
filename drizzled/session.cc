@@ -48,12 +48,14 @@
 #include "drizzled/transaction_services.h"
 #include "drizzled/drizzled.h"
 
-#include "drizzled/table_share_instance.h"
+#include "drizzled/table/instance.h"
 
 #include "plugin/myisam/myisam.h"
 #include "drizzled/internal/iocache.h"
 #include "drizzled/internal/thread_var.h"
 #include "drizzled/plugin/event_observer.h"
+
+#include "drizzled/util/functors.h"
 
 #include <fcntl.h>
 #include <algorithm>
@@ -303,11 +305,11 @@ void Session::lockOnSys()
     return;
 
   setAbort(true);
-  boost::mutex::scoped_lock scopedLock(mysys_var->mutex);
+  boost_unique_lock_t scopedLock(mysys_var->mutex);
   if (mysys_var->current_cond)
   {
     mysys_var->current_mutex->lock();
-    pthread_cond_broadcast(mysys_var->current_cond->native_handle());
+    mysys_var->current_cond->notify_all();
     mysys_var->current_mutex->unlock();
   }
 }
@@ -418,7 +420,7 @@ void Session::awake(Session::killed_state state_to_set)
   }
   if (mysys_var)
   {
-    boost::mutex::scoped_lock scopedLock(mysys_var->mutex);
+    boost_unique_lock_t scopedLock(mysys_var->mutex);
     /*
       "
       This broadcast could be up in the air if the victim thread
@@ -442,7 +444,7 @@ void Session::awake(Session::killed_state state_to_set)
     if (mysys_var->current_cond && mysys_var->current_mutex)
     {
       mysys_var->current_mutex->lock();
-      pthread_cond_broadcast(mysys_var->current_cond->native_handle());
+      mysys_var->current_cond->notify_all();
       mysys_var->current_mutex->unlock();
     }
   }
@@ -552,9 +554,20 @@ bool Session::schedule()
   current_global_counters.connections++;
   thread_id= variables.pseudo_thread_id= global_thread_id++;
 
-  LOCK_thread_count.lock();
-  getSessionList().push_back(this);
-  LOCK_thread_count.unlock();
+  {
+    boost::mutex::scoped_lock scoped(LOCK_thread_count);
+    getSessionList().push_back(this);
+  }
+
+  if (unlikely(plugin::EventObserver::connectSession(*this)))
+  {
+    // We should do something about an error...
+  }
+
+  if (unlikely(plugin::EventObserver::connectSession(*this)))
+  {
+    // We should do something about an error...
+  }
 
   if (scheduler->addSession(this))
   {
@@ -577,7 +590,7 @@ bool Session::schedule()
 }
 
 
-const char* Session::enter_cond(boost::condition_variable &cond, boost::mutex &mutex, const char* msg)
+const char* Session::enter_cond(boost::condition_variable_any &cond, boost::mutex &mutex, const char* msg)
 {
   const char* old_msg = get_proc_info();
   safe_mutex_assert_owner(mutex);
@@ -596,7 +609,7 @@ void Session::exit_cond(const char* old_msg)
     does a Session::awake() on you).
   */
   mysys_var->current_mutex->unlock();
-  boost::mutex::scoped_lock scopedLock(mysys_var->mutex);
+  boost_unique_lock_t scopedLock(mysys_var->mutex);
   mysys_var->current_mutex = 0;
   mysys_var->current_cond = 0;
   this->set_proc_info(old_msg);
@@ -613,9 +626,9 @@ bool Session::authenticate()
   return true;
 }
 
-bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_db)
+bool Session::checkUser(const std::string &passwd_str,
+                        const std::string &in_db)
 {
-  const string passwd_str(passwd, passwd_len);
   bool is_authenticated=
     plugin::Authentication::isAuthenticated(getSecurityContext(),
                                             passwd_str);
@@ -628,7 +641,7 @@ bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_
   }
 
   /* Change database if necessary */
-  if (in_db && in_db[0])
+  if (not in_db.empty())
   {
     SchemaIdentifier identifier(in_db);
     if (mysql_change_db(this, identifier))
@@ -638,7 +651,7 @@ bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_
     }
   }
   my_ok();
-  password= test(passwd_len);          // remember for error messages
+  password= not passwd_str.empty();
 
   /* Ready to handle queries */
   return true;
@@ -821,11 +834,9 @@ void Session::cleanup_after_query()
   where= Session::DEFAULT_WHERE;
 
   /* Reset the temporary shares we built */
-  for (std::vector<TableShareInstance *>::iterator iter= temporary_shares.begin();
-       iter != temporary_shares.end(); iter++)
-  {
-    delete *iter;
-  }
+  for_each(temporary_shares.begin(),
+           temporary_shares.end(),
+           DeletePtr());
   temporary_shares.clear();
 }
 
@@ -913,7 +924,7 @@ void select_to_file::send_error(uint32_t errcode,const char *err)
   {
     (void) end_io_cache(cache);
     (void) internal::my_close(file, MYF(0));
-    (void) internal::my_delete(path, MYF(0));		// Delete file on error
+    (void) internal::my_delete(path.file_string().c_str(), MYF(0));		// Delete file on error
     file= -1;
   }
 }
@@ -947,7 +958,7 @@ void select_to_file::cleanup()
     (void) internal::my_close(file, MYF(0));
     file= -1;
   }
-  path[0]= '\0';
+  path= "";
   row_count= 0;
 }
 
@@ -957,7 +968,7 @@ select_to_file::select_to_file(file_exchange *ex)
     cache(static_cast<internal::IO_CACHE *>(memory::sql_calloc(sizeof(internal::IO_CACHE)))),
     row_count(0L)
 {
-  path[0]=0;
+  path= "";
 }
 
 select_to_file::~select_to_file()
@@ -991,31 +1002,40 @@ select_export::~select_export()
 */
 
 
-static int create_file(Session *session, char *path, file_exchange *exchange, internal::IO_CACHE *cache)
+static int create_file(Session *session,
+                       fs::path &target_path,
+                       file_exchange *exchange,
+                       internal::IO_CACHE *cache)
 {
+  fs::path to_file(exchange->file_name);
   int file;
-  uint32_t option= MY_UNPACK_FILENAME | MY_RELATIVE_PATH;
 
-#ifdef DONT_ALLOW_FULL_LOAD_DATA_PATHS
-  option|= MY_REPLACE_DIR;			// Force use of db directory
-#endif
-
-  if (!internal::dirname_length(exchange->file_name))
+  if (not to_file.has_root_directory())
   {
-    strcpy(path, getDataHomeCatalog().c_str());
-    strncat(path, "/", 1);
-    if (! session->db.empty())
-      strncat(path, session->db.c_str(), FN_REFLEN-getDataHomeCatalog().size());
-    (void) internal::fn_format(path, exchange->file_name, path, "", option);
+    target_path= fs::system_complete(getDataHomeCatalog());
+    if (not session->db.empty())
+    {
+      int count_elements= 0;
+      for (fs::path::iterator iter= to_file.begin();
+           iter != to_file.end();
+           ++iter, ++count_elements)
+      { }
+
+      if (count_elements == 1)
+      {
+        target_path /= session->db;
+      }
+    }
+    target_path /= to_file;
   }
   else
-    (void) internal::fn_format(path, exchange->file_name, getDataHomeCatalog().c_str(), "", option);
-
-  if (opt_secure_file_priv)
   {
-    fs::path secure_file_path(fs::system_complete(fs::path(opt_secure_file_priv)));
-    fs::path target_path(fs::system_complete(fs::path(path)));
-    if (target_path.file_string().substr(0, secure_file_path.file_string().size()) != secure_file_path.file_string())
+    target_path = exchange->file_name;
+  }
+
+  if (not secure_file_priv.string().empty())
+  {
+    if (target_path.file_string().substr(0, secure_file_priv.file_string().size()) != secure_file_priv.file_string())
     {
       /* Write only allowed to dir or subdir specified by secure_file_priv */
       my_error(ER_OPTION_PREVENTS_STATEMENT, MYF(0), "--secure-file-priv");
@@ -1023,19 +1043,19 @@ static int create_file(Session *session, char *path, file_exchange *exchange, in
     }
   }
 
-  if (!access(path, F_OK))
+  if (!access(target_path.file_string().c_str(), F_OK))
   {
     my_error(ER_FILE_EXISTS_ERROR, MYF(0), exchange->file_name);
     return -1;
   }
   /* Create the file world readable */
-  if ((file= internal::my_create(path, 0666, O_WRONLY|O_EXCL, MYF(MY_WME))) < 0)
+  if ((file= internal::my_create(target_path.file_string().c_str(), 0666, O_WRONLY|O_EXCL, MYF(MY_WME))) < 0)
     return file;
   (void) fchmod(file, 0666);			// Because of umask()
   if (init_io_cache(cache, file, 0L, internal::WRITE_CACHE, 0L, 1, MYF(MY_WME)))
   {
     internal::my_close(file, MYF(0));
-    internal::my_delete(path, MYF(0));  // Delete file on error, it was just created
+    internal::my_delete(target_path.file_string().c_str(), MYF(0));  // Delete file on error, it was just created
     return -1;
   }
   return file;
@@ -1049,7 +1069,9 @@ select_export::prepare(List<Item> &list, Select_Lex_Unit *u)
   bool string_results= false, non_string_results= false;
   unit= u;
   if ((uint32_t) strlen(exchange->file_name) + NAME_LEN >= FN_REFLEN)
-    strncpy(path,exchange->file_name,FN_REFLEN-1);
+  {
+    path= exchange->file_name;
+  }
 
   /* Check if there is any blobs in data */
   {
@@ -1156,7 +1178,7 @@ bool select_export::send_data(List<Item> &items)
     else
     {
       if (fixed_row_size)
-        used_length= min(res->length(),item->max_length);
+        used_length= min(res->length(), static_cast<size_t>(item->max_length));
       else
         used_length= res->length();
 
@@ -1318,7 +1340,7 @@ bool select_dump::send_data(List<Item> &items)
   if (row_count++ > 1)
   {
     my_message(ER_TOO_MANY_ROWS, ER(ER_TOO_MANY_ROWS), MYF(0));
-    goto err;
+    return 1;
   }
   while ((item=li++))
   {
@@ -1326,17 +1348,15 @@ bool select_dump::send_data(List<Item> &items)
     if (!res)					// If NULL
     {
       if (my_b_write(cache,(unsigned char*) "",1))
-	goto err;
+        return 1;
     }
     else if (my_b_write(cache,(unsigned char*) res->ptr(),res->length()))
     {
-      my_error(ER_ERROR_ON_WRITE, MYF(0), path, errno);
-      goto err;
+      my_error(ER_ERROR_ON_WRITE, MYF(0), path.file_string().c_str(), errno);
+      return 1;
     }
   }
   return(0);
-err:
-  return(1);
 }
 
 
@@ -1394,21 +1414,21 @@ bool select_max_min_finder_subselect::send_data(List<Item> &items)
       switch (val_item->result_type())
       {
       case REAL_RESULT:
-	op= &select_max_min_finder_subselect::cmp_real;
-	break;
+        op= &select_max_min_finder_subselect::cmp_real;
+        break;
       case INT_RESULT:
-	op= &select_max_min_finder_subselect::cmp_int;
-	break;
+        op= &select_max_min_finder_subselect::cmp_int;
+        break;
       case STRING_RESULT:
-	op= &select_max_min_finder_subselect::cmp_str;
-	break;
+        op= &select_max_min_finder_subselect::cmp_str;
+        break;
       case DECIMAL_RESULT:
         op= &select_max_min_finder_subselect::cmp_decimal;
         break;
       case ROW_RESULT:
         // This case should never be choosen
-	assert(0);
-	op= 0;
+        assert(0);
+        op= 0;
       }
     }
     cache->store(val_item);
@@ -1751,32 +1771,47 @@ void Session::refresh_status()
 
 user_var_entry *Session::getVariable(LEX_STRING &name, bool create_if_not_exists)
 {
-  user_var_entry *entry= NULL;
-  UserVarsRange ppp= user_vars.equal_range(std::string(name.str, name.length));
+  return getVariable(std::string(name.str, name.length), create_if_not_exists);
+}
+
+user_var_entry *Session::getVariable(const std::string  &name, bool create_if_not_exists)
+{
+  UserVarsRange ppp= user_vars.equal_range(name);
 
   for (UserVars::iterator iter= ppp.first;
-         iter != ppp.second; ++iter)
+       iter != ppp.second; ++iter)
   {
-    entry= (*iter).second;
+    return (*iter).second;
   }
 
-  if ((entry == NULL) && create_if_not_exists)
+  if (not create_if_not_exists)
+    return NULL;
+
+  user_var_entry *entry= NULL;
+  entry= new (nothrow) user_var_entry(name.c_str(), query_id);
+
+  if (entry == NULL)
+    return NULL;
+
+  std::pair<UserVars::iterator, bool> returnable= user_vars.insert(make_pair(name, entry));
+
+  if (not returnable.second)
   {
-    entry= new (nothrow) user_var_entry(name.str, query_id);
-
-    if (entry == NULL)
-      return NULL;
-
-    std::pair<UserVars::iterator, bool> returnable= user_vars.insert(make_pair(std::string(name.str, name.length), entry));
-
-    if (not returnable.second)
-    {
-      delete entry;
-      return NULL;
-    }
+    delete entry;
   }
 
   return entry;
+}
+
+void Session::setVariable(const std::string &name, const std::string &value)
+{
+  user_var_entry *updateable_var= getVariable(name.c_str(), true);
+
+  updateable_var->update_hash(false,
+                              (void*)value.c_str(),
+                              static_cast<uint32_t>(value.length()), STRING_RESULT,
+                              &my_charset_bin,
+                              DERIVATION_IMPLICIT, false);
 }
 
 void Session::mark_temp_tables_as_free_for_reuse()
@@ -1893,23 +1928,10 @@ bool Session::openTablesLock(TableList *tables)
     close_tables_for_reopen(&tables);
   }
   if ((mysql_handle_derived(lex, &mysql_derived_prepare) ||
-       (fill_derived_tables() &&
+       (
         mysql_handle_derived(lex, &mysql_derived_filling))))
     return true;
 
-  return false;
-}
-
-bool Session::openTables(TableList *tables, uint32_t flags)
-{
-  uint32_t counter;
-  bool ret= fill_derived_tables();
-  assert(ret == false);
-  if (open_tables_from_list(&tables, &counter, flags) ||
-      mysql_handle_derived(lex, &mysql_derived_prepare))
-  {
-    return true;
-  }
   return false;
 }
 
@@ -2050,11 +2072,11 @@ bool Session::renameTableMessage(const TableIdentifier &from, const TableIdentif
   return true;
 }
 
-TableShareInstance *Session::getTemporaryShare(TableIdentifier::Type type_arg)
+table::Instance *Session::getInstanceTable()
 {
-  temporary_shares.push_back(new TableShareInstance(type_arg)); // This will not go into the tableshare cache, so no key is used.
+  temporary_shares.push_back(new table::Instance()); // This will not go into the tableshare cache, so no key is used.
 
-  TableShareInstance *tmp_share= temporary_shares.back();
+  table::Instance *tmp_share= temporary_shares.back();
 
   assert(tmp_share);
 

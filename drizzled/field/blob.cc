@@ -219,7 +219,7 @@ int Field_blob::store(const char *from,uint32_t length, const CHARSET_INFO * con
 
   if (from == value.ptr())
   {
-    uint32_t dummy_offset;
+    size_t dummy_offset;
     if (!String::needs_conversion(length, cs, field_charset, &dummy_offset))
     {
       Field_blob::store_length(length);
@@ -531,7 +531,7 @@ void Field_blob::sort_string(unsigned char *to,uint32_t length)
 
 uint32_t Field_blob::pack_length() const
 {
-  return (uint32_t) (packlength + getTable()->getShare()->blob_ptr_size);
+  return (uint32_t) (packlength + portable_sizeof_char_ptr);
 }
 
 void Field_blob::sql_type(String &res) const

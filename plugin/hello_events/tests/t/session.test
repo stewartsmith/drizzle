@@ -1,0 +1,15 @@
+# Lets Make sure everything is turned on for us.
+SELECT VARIABLE_NAME,VARIABLE_VALUE FROM DATA_DICTIONARY.GLOBAL_VARIABLES WHERE VARIABLE_NAME LIKE "hello%";
+
+select IF(@CONNECT_SESSION, "YES", "NO");
+--replace_column 1 #
+select IF(@DISCONNECT_SESSION, "YES", "NO");
+select IF(@BEFORE_STATEMENT, "YES", "NO");
+select IF(@AFTER_STATEMENT, "YES", "NO");
+
+select IF(@BEFORE_INSERT_RECORD, "YES", "NO");
+select IF(@AFTER_INSERT_RECORD, "YES", "NO");
+select IF(@BEFORE_UPDATE_RECORD, "YES", "NO");
+select IF(@AFTER_UPDATE_RECORD, "YES", "NO");
+select IF(@BEFORE_DELETE_RECORD, "YES", "NO");
+select IF(@AFTER_DELETE_RECORD, "YES", "NO");

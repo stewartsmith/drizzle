@@ -1,4 +1,9 @@
+*.bb
+*.bbg
+*.da
 *.dirstamp
+*.gcda
+*.gcno
 *.gmo
 *.gz
 *.la
@@ -195,6 +200,9 @@ plugin/blackhole/Makefile.in
 plugin/csv/Makefile.in
 plugin/heap/Makefile.in
 plugin/innobase/Makefile.in
+plugin/innobase/pars/pars0grm.c
+plugin/innobase/pars/pars0lex.c
+plugin/innobase/pars/pars0grm.h
 plugin/memcached_functions/start_mc.sh
 plugin/memcached_functions/tests/start_mc.sh
 plugin/myisam/Makefile.in
@@ -314,3 +322,10 @@ unittests/uwagi.txt
 virtual_column_info.gcno
 xid.gcno
 ylwrap
+docs/plugins/list.rst
+docs/plugins/*
+docs/doctrees
+docs/html
+plugin/innobase/include/pars0grm.h
+tests/total_warning_count
+tests/stripped_log

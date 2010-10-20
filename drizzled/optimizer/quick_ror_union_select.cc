@@ -163,7 +163,7 @@ optimizer::QuickRorUnionSelect::~QuickRorUnionSelect()
 }
 
 
-bool optimizer::QuickRorUnionSelect::is_keys_used(const MyBitmap *fields)
+bool optimizer::QuickRorUnionSelect::is_keys_used(const boost::dynamic_bitset<>& fields)
 {
   for (vector<optimizer::QuickSelectInterface *>::iterator it= quick_selects.begin();
        it != quick_selects.end();

@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA	02111-1307	USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA	02110-1301	USA
  *
  * 2005-11-10	Paul McCullagh
  *
@@ -98,7 +98,7 @@ public:
 	/* override */ int doCommit(drizzled::Session*, bool);
 	/* override */ int doRollback(drizzled::Session*, bool);
 
-	/* override */ uint32_t max_supported_keys(void) const { return -1; }
+	/* override */ uint32_t max_supported_keys(void) const { return UINT32_MAX; }
 	/* override */ uint32_t max_supported_key_part_length(void) const { return MAX_KEY_LENGTH; }
 
 	/* override */ void doGetTableIdentifiers(drizzled::CachedDirectory&,

@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <config.h>
+#include "config.h"
 #include "ha_blitz.h"
 
 using namespace drizzled;
@@ -35,7 +35,7 @@ int ha_blitz::compare_rows_for_unique_violation(const unsigned char *old_row,
   /* For now, we are only interested in supporting a PRIMARY KEY. In the
      next phase of BlitzDB, this should loop through the key array. */
   if (share->primary_key_exists) {
-    KeyInfo *pk = &table->key_info[table->s->getPrimaryKey()];
+    KeyInfo *pk = &table->key_info[table->getShare()->getPrimaryKey()];
     KeyPartInfo *key_part = pk->key_part;
     KeyPartInfo *key_part_end = key_part + pk->key_parts;
     int key_changed = 0;
@@ -67,13 +67,13 @@ int ha_blitz::compare_rows_for_unique_violation(const unsigned char *old_row,
        would violate the unique contraint. */
     if (key_changed) {
       key = key_buffer;
-      key_len = make_index_key(key, table->s->getPrimaryKey(), new_row);
+      key_len = make_index_key(key, table->getMutableShare()->getPrimaryKey(), new_row);
       fetched = share->dict.get_row(key, key_len, &fetched_len);
 
       /* Key Exists. It's a violation. */
       if (fetched != NULL) {
         free(fetched);
-        this->errkey_id = table->s->getPrimaryKey();
+        this->errkey_id = table->getShare()->getPrimaryKey();
         return HA_ERR_FOUND_DUPP_KEY;
       }
     }

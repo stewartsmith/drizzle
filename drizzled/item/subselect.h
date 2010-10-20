@@ -27,6 +27,7 @@
 #include "drizzled/item/ref.h"
 #include "drizzled/item/field.h"
 #include "drizzled/item/bin_string.h"
+#include "drizzled/util/test.h"
 
 namespace drizzled
 {
@@ -462,7 +463,8 @@ public:
   */
   virtual int exec()= 0;
   virtual uint32_t cols()= 0; /* return number of columns in select */
-  virtual uint8_t uncacheable()= 0; /* query is uncacheable */
+  virtual bool uncacheable()= 0; /* query is uncacheable */
+  virtual bool uncacheable(uint32_t bit_pos)= 0; /* query is uncacheable */
   enum Item_result type() { return res_type; }
   enum_field_types field_type() { return res_field_type; }
   virtual void exclude()= 0;
@@ -499,7 +501,8 @@ public:
   void fix_length_and_dec(Item_cache** row);
   int exec();
   uint32_t cols();
-  uint8_t uncacheable();
+  bool uncacheable();
+  bool uncacheable(uint32_t bit_pos);
   void exclude();
   table_map upper_select_const_tables();
   virtual void print (String *str, enum_query_type query_type);
@@ -527,7 +530,8 @@ public:
   void fix_length_and_dec(Item_cache** row);
   int exec();
   uint32_t cols();
-  uint8_t uncacheable();
+  bool uncacheable();
+  bool uncacheable(uint32_t bit_pos);
   void exclude();
   table_map upper_select_const_tables();
   virtual void print (String *str, enum_query_type query_type);
@@ -584,7 +588,8 @@ public:
   void fix_length_and_dec(Item_cache** row);
   int exec();
   uint32_t cols() { return 1; }
-  uint8_t uncacheable() { return UNCACHEABLE_DEPENDENT; }
+  bool uncacheable() { return true; }
+  bool uncacheable(uint32_t) { return true; }
   void exclude();
   table_map upper_select_const_tables() { return 0; }
   virtual void print (String *str, enum_query_type query_type);

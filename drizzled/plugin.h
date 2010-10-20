@@ -29,6 +29,7 @@
 #include "drizzled/lex_string.h"
 #include "drizzled/xid.h"
 #include <boost/program_options.hpp>
+#include <boost/filesystem.hpp>
 
 namespace drizzled
 {
@@ -46,8 +47,7 @@ class sys_var;
 typedef drizzle_lex_string LEX_STRING;
 struct option;
 
-extern char *opt_plugin_dir_ptr;
-extern char opt_plugin_dir[FN_REFLEN];
+extern boost::filesystem::path plugin_dir;
 
 namespace plugin { class StorageEngine; }
 
@@ -198,6 +198,12 @@ typedef void (*mysql_var_update_func)(Session *session,
 */
 
 
+#define DECLARE_DRIZZLE_SYSVAR_BOOL(name) struct { \
+  DRIZZLE_PLUGIN_VAR_HEADER;      \
+  bool *value;                  \
+  bool def_val;           \
+} DRIZZLE_SYSVAR_NAME(name)
+
 #define DECLARE_DRIZZLE_SYSVAR_BASIC(name, type) struct { \
   DRIZZLE_PLUGIN_VAR_HEADER;      \
   type *value;                  \
@@ -221,6 +227,13 @@ typedef void (*mysql_var_update_func)(Session *session,
   DECLARE_SessionVAR_FUNC(type);    \
 } DRIZZLE_SYSVAR_NAME(name)
 
+#define DECLARE_DRIZZLE_SessionVAR_BOOL(name) struct { \
+  DRIZZLE_PLUGIN_VAR_HEADER;      \
+  int offset;                   \
+  bool def_val;           \
+  DECLARE_SessionVAR_FUNC(bool);    \
+} DRIZZLE_SYSVAR_NAME(name)
+
 #define DECLARE_DRIZZLE_SessionVAR_SIMPLE(name, type) struct { \
   DRIZZLE_PLUGIN_VAR_HEADER;      \
   int offset;                   \
@@ -242,10 +255,23 @@ typedef void (*mysql_var_update_func)(Session *session,
   the following declarations are for use by plugin implementors
 */
 
+#define DECLARE_DRIZZLE_SYSVAR_BOOL(name) struct { \
+  DRIZZLE_PLUGIN_VAR_HEADER;      \
+  bool *value;                  \
+  bool def_val;           \
+} DRIZZLE_SYSVAR_NAME(name)
+
+
 #define DRIZZLE_SYSVAR_BOOL(name, varname, opt, comment, check, update, def) \
-DECLARE_DRIZZLE_SYSVAR_BASIC(name, bool) = { \
+  DECLARE_DRIZZLE_SYSVAR_BOOL(name) = { \
   PLUGIN_VAR_BOOL | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, &varname, def}
+
+#define DECLARE_DRIZZLE_SYSVAR_BASIC(name, type) struct { \
+  DRIZZLE_PLUGIN_VAR_HEADER;      \
+  type *value;                  \
+  const type def_val;           \
+} DRIZZLE_SYSVAR_NAME(name)
 
 #define DRIZZLE_SYSVAR_STR(name, varname, opt, comment, check, update, def) \
 DECLARE_DRIZZLE_SYSVAR_BASIC(name, char *) = { \
@@ -283,7 +309,7 @@ DECLARE_DRIZZLE_SYSVAR_SIMPLE(name, uint64_t) = { \
   #name, comment, check, update, &varname, def, min, max, blk }
 
 #define DRIZZLE_SessionVAR_BOOL(name, opt, comment, check, update, def) \
-DECLARE_DRIZZLE_SessionVAR_BASIC(name, char) = { \
+DECLARE_DRIZZLE_SessionVAR_BOOL(name) = { \
   PLUGIN_VAR_BOOL | PLUGIN_VAR_SessionLOCAL | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, -1, def, NULL}
 
@@ -371,7 +397,7 @@ struct drizzle_value
 
 extern bool plugin_init(module::Registry &registry,
                         boost::program_options::options_description &long_options);
-extern void plugin_finalize(module::Registry &registry);
+extern bool plugin_finalize(module::Registry &registry);
 extern void my_print_help_inc_plugins(option *options);
 extern bool plugin_is_ready(const LEX_STRING *name, int type);
 extern void plugin_sessionvar_init(Session *session);

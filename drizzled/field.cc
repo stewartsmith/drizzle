@@ -717,8 +717,8 @@ void Field::make_field(SendField *field)
 {
   if (orig_table && orig_table->getShare()->getSchemaName() && *orig_table->getShare()->getSchemaName())
   {
-    field->db_name= orig_table->getMutableShare()->getSchemaName();
-    field->org_table_name= orig_table->getMutableShare()->getTableName();
+    field->db_name= orig_table->getShare()->getSchemaName();
+    field->org_table_name= orig_table->getShare()->getTableName();
   }
   else
     field->org_table_name= field->db_name= "";

@@ -11,8 +11,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -790,8 +790,15 @@ btr_create(
 	} else {
 		/* It is a non-ibuf tree: create a file segment for leaf
 		pages */
-		fseg_create(space, page_no,
-			    PAGE_HEADER + PAGE_BTR_SEG_LEAF, mtr);
+		if (!fseg_create(space, page_no,
+				 PAGE_HEADER + PAGE_BTR_SEG_LEAF, mtr)) {
+			/* Not enough space for new segment, free root
+			segment before return. */
+			btr_free_root(space, zip_size, page_no, mtr);
+
+			return(FIL_NULL);
+		}
+
 		/* The fseg create acquires a second latch on the page,
 		therefore we must declare it: */
 		buf_block_dbg_add_level(block, SYNC_TREE_NODE_NEW);
@@ -1011,7 +1018,26 @@ btr_page_reorganize_low(
 	    (!page_zip_compress(page_zip, page, index, NULL))) {
 
 		/* Restore the old page and exit. */
-		buf_frame_copy(page, temp_page);
+
+#if defined UNIV_DEBUG || defined UNIV_ZIP_DEBUG
+		/* Check that the bytes that we skip are identical. */
+		ut_a(!memcmp(page, temp_page, PAGE_HEADER));
+		ut_a(!memcmp(PAGE_HEADER + PAGE_N_RECS + page,
+			     PAGE_HEADER + PAGE_N_RECS + temp_page,
+			     PAGE_DATA - (PAGE_HEADER + PAGE_N_RECS)));
+		ut_a(!memcmp(UNIV_PAGE_SIZE - FIL_PAGE_DATA_END + page,
+			     UNIV_PAGE_SIZE - FIL_PAGE_DATA_END + temp_page,
+			     FIL_PAGE_DATA_END));
+#endif /* UNIV_DEBUG || UNIV_ZIP_DEBUG */
+
+		memcpy(PAGE_HEADER + page, PAGE_HEADER + temp_page,
+		       PAGE_N_RECS - PAGE_N_DIR_SLOTS);
+		memcpy(PAGE_DATA + page, PAGE_DATA + temp_page,
+		       UNIV_PAGE_SIZE - PAGE_DATA - FIL_PAGE_DATA_END);
+
+#if defined UNIV_DEBUG || defined UNIV_ZIP_DEBUG
+		ut_a(!memcmp(page, temp_page, UNIV_PAGE_SIZE));
+#endif /* UNIV_DEBUG || UNIV_ZIP_DEBUG */
 
 		goto func_exit;
 	}

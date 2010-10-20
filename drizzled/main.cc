@@ -59,6 +59,7 @@
 #include "drizzled/tztime.h"
 #include "drizzled/signal_handler.h"
 #include "drizzled/replication_services.h"
+#include "drizzled/transaction_services.h"
 
 using namespace drizzled;
 using namespace std;
@@ -209,6 +210,7 @@ static void GoogleProtoErrorThrower(google::protobuf::LogLevel level, const char
   case google::protobuf::LOGLEVEL_ERROR:
   case google::protobuf::LOGLEVEL_FATAL:
   default:
+    std::cerr << "GoogleProtoErrorThrower(" << filename << ", " << line << ", " << message << ")";
     throw("error in google protocol buffer parsing");
   }
 }
@@ -236,11 +238,16 @@ int main(int argc, char **argv)
   google::protobuf::SetLogHandler(&GoogleProtoErrorThrower);
 
   /* Function generates error messages before abort */
+  error_handler_hook= my_message_sql;
   /* init_common_variables must get basic settings such as data_home_dir
      and plugin_load_list. */
-  if (init_common_variables(argc, argv))
+  if (init_common_variables(argc, argv, modules))
     unireg_abort(1);				// Will do exit
 
+  /*
+    init signals & alarm
+    After this we can't quit by a simple unireg_abort
+  */
   init_signals();
 
 
@@ -249,11 +256,11 @@ int main(int argc, char **argv)
 
   if (not opt_help)
   {
-    if (chdir(getDataHome().c_str()))
+    if (chdir(getDataHome().file_string().c_str()))
     {
       errmsg_printf(ERRMSG_LVL_ERROR,
                     _("Data directory %s does not exist\n"),
-                    getDataHome().c_str());
+                    getDataHome().file_string().c_str());
       unireg_abort(1);
     }
     if (mkdir("local", 0700))
@@ -264,15 +271,11 @@ int main(int argc, char **argv)
     {
       errmsg_printf(ERRMSG_LVL_ERROR,
                     _("Local catalog %s/local does not exist\n"),
-                    getDataHome().c_str());
+                    getDataHome().file_string().c_str());
       unireg_abort(1);
     }
-    /* TODO: This is a hack until we can properly support std::string in sys_var*/
-    char **data_home_ptr= getDatadirPtr();
-    *data_home_ptr= new char[getDataHome().size()+1] ();
-    fs::path full_data_home_path(fs::system_complete(fs::path(getDataHome())));
-    std::string full_data_home(full_data_home_path.file_string());
-    memcpy(*data_home_ptr, full_data_home.c_str(), full_data_home.size());
+
+    full_data_home= fs::system_complete(getDataHome());
     getDataHomeCatalog()= "./";
     getDataHome()= "../";
   }
@@ -304,11 +307,6 @@ int main(int argc, char **argv)
   if (plugin::Listen::setup())
     unireg_abort(1);
 
-  /*
-    init signals & alarm
-    After this we can't quit by a simple unireg_abort
-  */
-  error_handler_hook= my_message_sql;
 
   assert(plugin::num_trx_monitored_objects > 0);
   if (drizzle_rm_tmp_tables() ||
@@ -318,13 +316,24 @@ int main(int argc, char **argv)
     select_thread_in_use=0;
     (void) pthread_kill(signal_thread, SIGTERM);
 
-    (void) unlink(pidfile_name);	// Not needed anymore
+    (void) unlink(pid_file.file_string().c_str());	// Not needed anymore
 
     exit(1);
   }
 
   errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_STARTUP)), internal::my_progname,
                 PANDORA_RELEASE_VERSION, COMPILATION_COMMENT);
+
+
+  TransactionServices &transaction_services= TransactionServices::singleton();
+
+  /* Send server startup event */
+  if ((session= new Session(plugin::Listen::getNullClient())))
+  {
+    transaction_services.sendStartupEvent(session);
+    session->lockForDelete();
+    delete session;
+  }
 
 
   /* Listen for new connections and start new session for each connection
@@ -343,20 +352,30 @@ int main(int argc, char **argv)
       Session::unlink(session);
   }
 
+  /* Send server shutdown event */
+  if ((session= new Session(plugin::Listen::getNullClient())))
+  {
+    transaction_services.sendShutdownEvent(session);
+    session->lockForDelete();
+    delete session;
+  }
+
   LOCK_thread_count.lock();
   select_thread_in_use=0;			// For close_connections
   LOCK_thread_count.unlock();
   COND_thread_count.notify_all();
 
   /* Wait until cleanup is done */
-  LOCK_thread_count.lock();
-  while (!ready_to_exit)
-    pthread_cond_wait(COND_server_end.native_handle(), LOCK_thread_count.native_handle());
-  LOCK_thread_count.unlock();
+  {
+    boost::mutex::scoped_lock scopedLock(LOCK_thread_count);
+    while (!ready_to_exit)
+      COND_server_end.wait(scopedLock);
+  }
 
   clean_up(1);
   module::Registry::shutdown();
   internal::my_end();
+
   return 0;
 }
 

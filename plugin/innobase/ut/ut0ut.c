@@ -18,8 +18,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -148,6 +148,7 @@ ut_time(void)
 	return(time(NULL));
 }
 
+#ifndef UNIV_HOTBACKUP
 /**********************************************************//**
 Returns system time.
 Upon successful completion, the value 0 is returned; otherwise the
@@ -214,6 +215,24 @@ ut_time_us(
 
 	return(us);
 }
+
+/**********************************************************//**
+Returns the number of milliseconds since some epoch.  The
+value may wrap around.  It should only be used for heuristic
+purposes.
+@return	ms since epoch */
+UNIV_INTERN
+ulint
+ut_time_ms(void)
+/*============*/
+{
+	struct timeval	tv;
+
+	ut_gettimeofday(&tv, NULL);
+
+	return((ulint) tv.tv_sec * 1000 + tv.tv_usec / 1000);
+}
+#endif /* !UNIV_HOTBACKUP */
 
 /**********************************************************//**
 Returns the difference of two times in seconds.

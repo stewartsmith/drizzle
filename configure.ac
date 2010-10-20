@@ -58,11 +58,6 @@ AC_PATH_PROG(GPERF, gperf)
 AS_IF([test "x$GPERF" = "x"],
       AC_MSG_ERROR("Drizzle requires gperf to build."))
 
-AC_CHECK_PROGS(YACC, ['bison -y'])
-AS_IF([test "x$YACC" = "x" -a "$pandora_building_from_bzr" = "yes"],[
-  AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
-])
-
 # libexecinfo provides backtrace_symbols on FreeBSD
 AC_SEARCH_LIBS(backtrace_symbols, [execinfo])
 

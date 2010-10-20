@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA	02111-1307	USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA	02110-1301	USA
  *
  * 2005-11-10	Paul McCullagh
  *
@@ -49,6 +49,8 @@
 #include <drizzled/table.h>
 #include <drizzled/field/timestamp.h>
 #include <drizzled/session.h>
+
+#include <string>
 
 #define my_strdup(a,b) strdup(a)
 
@@ -2383,15 +2385,15 @@ void ha_pbxt::init_auto_increment(xtWord8 min_auto_inc)
 		table->next_number_field = table->found_next_number_field;
 
 		extra(HA_EXTRA_KEYREAD);
-		table->mark_columns_used_by_index_no_reset(TS(table)->next_number_index, table->read_set);
+		table->mark_columns_used_by_index_no_reset(table->getShare()->next_number_index, *table->read_set);
 		column_bitmaps_signal();
- 		doStartIndexScan(TS(table)->next_number_index, 0);
-		if (!TS(table)->next_number_key_offset) {
+ 		doStartIndexScan(table->getShare()->next_number_index, 0);
+		if (!table->getShare()->next_number_key_offset) {
 			// Autoincrement at key-start
 			err = index_last(table->getUpdateRecord());
-			if (!err && !table->next_number_field->is_null(TS(table)->rec_buff_length)) {
+			if (!err && !table->next_number_field->is_null(table->getShare()->rec_buff_length)) {
 				/* {PRE-INC} */
-				nr = (xtWord8) table->next_number_field->val_int_offset(TS(table)->rec_buff_length);
+				nr = (xtWord8) table->next_number_field->val_int_offset(table->getShare()->rec_buff_length);
 			}
 		}
 		else {
@@ -2404,7 +2406,7 @@ void ha_pbxt::init_auto_increment(xtWord8 min_auto_inc)
 			err = index_first(table->getUpdateRecord());
 			while (!err) {
 				/* {PRE-INC} */
-				val = (xtWord8) table->next_number_field->val_int_offset(TS(table)->rec_buff_length);
+				val = (xtWord8) table->next_number_field->val_int_offset(table->getShare()->rec_buff_length);
 				if (val > nr)
 					nr = val;
 				err = index_next(table->getUpdateRecord());
@@ -2735,12 +2737,10 @@ int ha_pbxt::doUpdateRecord(const byte * old_data, byte * new_data)
 	 */
 	if (table->found_next_number_field && new_data == table->getInsertRecord()) {
 		MX_LONGLONG_T	nr;
-		my_bitmap_map	*old_map;
-
-		old_map = mx_tmp_use_all_columns(table, table->read_set);
+        const boost::dynamic_bitset<>& old_bitmap= table->use_all_columns(*table->read_set);
 		nr = table->found_next_number_field->val_int();
 		ha_set_auto_increment(pb_open_tab, table->found_next_number_field);
-		mx_tmp_restore_column_map(table, old_map);
+        table->restore_column_map(old_bitmap);
 	}
 
 	if (!xt_tab_update_record(pb_open_tab, (xtWord1 *) old_data, (xtWord1 *) new_data))
@@ -3090,6 +3090,30 @@ int ha_pbxt::xt_index_prev_read(XTOpenTablePtr ot, XTIndexPtr ind, xtBool key_on
 	return ha_log_pbxt_thread_error_for_mysql(FALSE);
 }
 
+#ifdef DRIZZLED
+
+static std::string convert_long_to_bit_string(uint64_t bitset, uint64_t bitset_size)
+{
+  std::string res; 
+  while (bitset)
+  {
+    res.push_back((bitset & 1) + '0');
+    bitset>>= 1;
+  }
+  if (! res.empty())
+  {
+    std::reverse(res.begin(), res.end());
+  }
+  else
+  {
+    res= "0";
+  }
+  std::string final(bitset_size - res.length(), '0');
+  final.append(res);
+  return final;
+}
+#endif
+
 int ha_pbxt::doStartIndexScan(uint idx, bool XT_UNUSED(sorted))
 {
 	XTIndexPtr	ind;
@@ -3166,7 +3190,20 @@ int ha_pbxt::doStartIndexScan(uint idx, bool XT_UNUSED(sorted))
 		 * seem to have this problem!
 		 */
 		ind = (XTIndexPtr) pb_share->sh_dic_keys[idx];
-		if (MX_BIT_IS_SUBSET(table->read_set, &ind->mi_col_map))
+#ifdef DRIZZLED
+        /*
+         * Need to do this for drizzle because we use boost's dynamic_bitset
+         * to represent the bitsets and allocating memory for an object of that 
+         * type does not play well with the memory allocation routines in PBXT.
+         * For that reason, we just store a uint which represents the bitset
+         * in the XTIndexPtr structure for PBXT. 
+         */
+        std::string bitmap_str= convert_long_to_bit_string(ind->mi_col_map, ind->mi_col_map_size);
+        MX_BITMAP tmp(bitmap_str);
+		if (MX_BIT_IS_SUBSET(table->read_set, tmp))
+#else
+		if (MX_BIT_IS_SUBSET(table->read_set, ind->mi_col_map))
+#endif
 			pb_key_read = TRUE;
 #ifdef XT_PRINT_INDEX_OPT
 		printf("index_init %s index %d cols req=%d/%d read_bits=%X write_bits=%X index_bits=%X converage=%d\n", pb_open_tab->ot_table->tab_name->ps_path, (int) idx, pb_open_tab->ot_cols_req, table->read_set->MX_BIT_SIZE(), (int) *table->read_set->bitmap, (int) *table->write_set->bitmap, (int) *ind->mi_col_map.bitmap, (int) (MX_BIT_IS_SUBSET(table->read_set, &ind->mi_col_map) != 0));
@@ -5575,7 +5612,7 @@ int PBXTStorageEngine::doCreateTable(Session&,
 	try_(a) {
 		xt_ha_open_database_of_table(self, (XTPathStrPtr) table_path);
 
-		for (uint i=0; i<table_arg.s->keys; i++) {
+		for (uint i=0; i<table_arg.getShare()->keys; i++) {
 			if (table_arg.key_info[i].key_length > XT_INDEX_MAX_KEY_SIZE)
 				xt_throw_sulxterr(XT_CONTEXT, XT_ERR_KEY_TOO_LARGE, table_arg.key_info[i].name, (u_long) XT_INDEX_MAX_KEY_SIZE);
 		}
@@ -5592,11 +5629,11 @@ int PBXTStorageEngine::doCreateTable(Session&,
 
 		StorageEngine::writeDefinitionFromPath(ident, proto);
 
-		tab_def = xt_ri_create_table(self, true, (XTPathStrPtr) table_path, const_cast<char *>(thd->getQueryString().c_str()), myxt_create_table_from_table(self, table_arg.s), &source_dic);
+		tab_def = xt_ri_create_table(self, true, (XTPathStrPtr) table_path, const_cast<char *>(thd->getQueryString().c_str()), myxt_create_table_from_table(self, table_arg.getMutableShare()), &source_dic);
 		tab_def->checkForeignKeys(self, proto.type() == message::Table::TEMPORARY);
 
 		dic.dic_table = tab_def;
-		dic.dic_my_table = table_arg.s;
+		dic.dic_my_table = table_arg.getMutableShare();
 		dic.dic_tab_flags = source_dic.dic_tab_flags;
 		//if (create_info.storage_media == HA_SM_MEMORY)
 		//	dic.dic_tab_flags |= XT_TF_MEMORY_TABLE;

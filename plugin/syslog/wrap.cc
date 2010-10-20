@@ -38,13 +38,12 @@ WrapSyslog::WrapSyslog () :
 WrapSyslog::~WrapSyslog ()
 {
   ::closelog();
-  delete &(WrapSyslog::singleton());
 }
 
 WrapSyslog& WrapSyslog::singleton()
 {
-  static WrapSyslog *handle = new WrapSyslog();
-  return *handle;
+  static WrapSyslog handle;
+  return handle;
 }
 
 /* TODO, for the sake of performance, scan through all the priority

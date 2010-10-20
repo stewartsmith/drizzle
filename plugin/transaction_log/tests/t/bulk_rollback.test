@@ -1,6 +1,11 @@
 # This test validates message format for a rollback of a large transactions
 # that is broken up into multiple Transaction messages.
 
+# Ignore startup/shutdown events
+--disable_query_log
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
+--enable_query_log
+
 CREATE TABLE t (a INT NOT NULL PRIMARY KEY, b VARCHAR(100));
 
 START TRANSACTION;

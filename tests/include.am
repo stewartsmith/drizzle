@@ -1,5 +1,6 @@
 # vim:ft=automake
 # Copyright (C) 2000-2006 MySQL AB
+# Copyright (c) 2010 Monty Taylor
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
@@ -13,8 +14,8 @@
 #
 # You should have received a copy of the GNU Library General Public
 # License along with this library; if not, write to the Free
-# Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
-# MA 02111-1307, USA
+# Software Foundation, Inc., 51 Franklin Place - Suite 330, Boston,
+# MA 02110-1301, USA
 
 benchdir_root=		$(prefix)
 testdir =	        $(benchdir_root)/mysql-test
@@ -22,7 +23,8 @@ EXTRA_SCRIPTS = 	tests/valgrind.supp $(PRESCRIPTS)
 GENSCRIPTS =		tests/dtr tests/mtr tests/test-run
 PRESCRIPTS =		tests/test-run.pl tests/stress-test.pl
 PLUGIN_TESTS =		$(pandora_plugin_test_list)
-ALL_TESTS =		main,big,$(PLUGIN_TESTS)
+NORMAL_TESTS =		main,jp,tamil,regression,$(PLUGIN_TESTS)
+ALL_TESTS =		main,big,jp,tamil,regression,$(PLUGIN_TESTS)
 noinst_SCRIPTS =	$(GENSCRIPTS) $(PRESCRIPTS)
 CLEANFILES += 		$(GENSCRIPTS) tests/mtr
 
@@ -33,7 +35,7 @@ TEST_RUN= $(PERL) -I../$(top_srcdir)/tests/lib \
 		--vardir=../${top_builddir}/tests/var \
 		--suitepath=../${top_srcdir}/plugin \
 		--testdir=../${top_srcdir}/tests \
-		--mtr-build-thread=$$$$
+		--dtr-build-thread=$$$$
 
 EXTRA_DIST += \
 	$(EXTRA_SCRIPTS) \
@@ -48,7 +50,8 @@ EXTRA_DIST += \
 	${srcdir}/tests/r/pbxt/*result \
 	${srcdir}/tests/std_data \
 	${srcdir}/tests/lib/*.pl \
-	${srcdir}/tests/lib/My/*.pm
+	${srcdir}/tests/lib/My/*.pm \
+	tests/strip-valgrind
 
 check-local: test-drizzle
 
@@ -93,16 +96,16 @@ test-all:
 	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(ALL_TESTS))
 
 test-drizzle:
-	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=main,$(PLUGIN_TESTS))
+	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS))
 
 test-valgrind:
-	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --valgrind --force --suite=main,$(PLUGIN_TESTS))
+	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --valgrind --force --suite=$(NORMAL_TESTS) && python strip-valgrind)
 
 test-valgrind-suppressions:
-	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --valgrind --valgrind-option='--gen-suppressions=all' --valgrind-option='--show-reachable=yes' --force --suite=main,$(PLUGIN_TESTS))
+	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --valgrind --valgrind-option='--gen-suppressions=all' --valgrind-option='--show-reachable=yes' --force --suite=$(NORMAL_TESTS) && python strip-valgrind)
 
 test-junitxml:
-	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=main,$(PLUGIN_TESTS) --subunit | subunit2junitxml --no-passthrough > junit-format.xml )
+	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS) --subunit | subunit2junitxml --no-passthrough > junit-format.xml )
 
 test-big:
 	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=big )

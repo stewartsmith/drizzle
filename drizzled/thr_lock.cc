@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /*
 Read and write locks for Posix threads. All tread must acquire
@@ -56,6 +56,7 @@ TL_WRITE_CONCURRENT_INSERT lock at the same time as multiple read locks.
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/thread_var.h"
 #include "drizzled/statistics_variables.h"
+#include "drizzled/pthread_globals.h"
 
 #include "drizzled/session.h"
 #include "drizzled/current_session.h"
@@ -78,6 +79,8 @@ TL_WRITE_CONCURRENT_INSERT lock at the same time as multiple read locks.
 
 #include <drizzled/util/test.h>
 
+#include <boost/interprocess/sync/lock_options.hpp>
+
 using namespace std;
 
 namespace drizzled
@@ -87,7 +90,9 @@ uint64_t table_lock_wait_timeout;
 static enum thr_lock_type thr_upgraded_concurrent_insert_lock = TL_WRITE;
 
 
-uint64_t max_write_lock_count= ~(uint64_t) 0L;
+uint64_t max_write_lock_count= UINT64_MAX;
+
+static void thr_multi_unlock(THR_LOCK_DATA **data,uint32_t count);
 
 /*
 ** For the future (now the thread specific cond is alloced by my_pthread.c)
@@ -151,8 +156,7 @@ static enum enum_thr_lock_result wait_for_lock(struct st_lock_list *wait, THR_LO
   Session *session= current_session;
   internal::st_my_thread_var *thread_var= session->getThreadVar();
 
-  boost::condition_variable *cond= &thread_var->suspend;
-  struct timespec wait_timeout;
+  boost::condition_variable_any *cond= &thread_var->suspend;
   enum enum_thr_lock_result result= THR_LOCK_ABORTED;
   bool can_deadlock= test(data->owner->info->n_cursors);
 
@@ -170,13 +174,26 @@ static enum enum_thr_lock_result wait_for_lock(struct st_lock_list *wait, THR_LO
   thread_var->current_cond=  &thread_var->suspend;
   data->cond= &thread_var->suspend;;
 
-  if (can_deadlock)
-    set_timespec(wait_timeout, table_lock_wait_timeout);
   while (!thread_var->abort || in_wait_list)
   {
-    int rc= (can_deadlock ?
-             pthread_cond_timedwait(cond->native_handle(), data->lock->native_handle()->native_handle(), &wait_timeout) :
-             pthread_cond_wait(cond->native_handle(), data->lock->native_handle()->native_handle()));
+    boost_unique_lock_t scoped(*data->lock->native_handle(), boost::adopt_lock_t());
+
+    if (can_deadlock)
+    {
+      boost::xtime xt; 
+      xtime_get(&xt, boost::TIME_UTC); 
+      xt.sec += table_lock_wait_timeout; 
+      if (not cond->timed_wait(scoped, xt))
+      {
+        result= THR_LOCK_WAIT_TIMEOUT;
+        scoped.release();
+        break;
+      }
+    }
+    else
+    {
+      cond->wait(scoped);
+    }
     /*
       We must break the wait if one of the following occurs:
       - the connection has been aborted (!thread_var->abort), but
@@ -192,13 +209,10 @@ static enum enum_thr_lock_result wait_for_lock(struct st_lock_list *wait, THR_LO
     */
     if (data->cond == NULL)
     {
+      scoped.release();
       break;
     }
-    if (rc == ETIMEDOUT || rc == ETIME)
-    {
-      result= THR_LOCK_WAIT_TIMEOUT;
-      break;
-    }
+    scoped.release();
   }
   if (data->cond || data->type == TL_UNLOCK)
   {
@@ -219,7 +233,7 @@ static enum enum_thr_lock_result wait_for_lock(struct st_lock_list *wait, THR_LO
   data->lock->unlock();
 
   /* The following must be done after unlock of lock->mutex */
-  boost::mutex::scoped_lock scopedLock(thread_var->mutex);
+  boost_unique_lock_t scopedLock(thread_var->mutex);
   thread_var->current_mutex= NULL;
   thread_var->current_cond= NULL;
   return(result);
@@ -396,7 +410,7 @@ static void free_all_read_locks(THR_LOCK *lock, bool using_concurrent_insert)
 
   do
   {
-    boost::condition_variable *cond= data->cond;
+    boost::condition_variable_any *cond= data->cond;
     if ((int) data->type == (int) TL_READ_NO_INSERT)
     {
       if (using_concurrent_insert)
@@ -494,7 +508,7 @@ static void wake_up_waiters(THR_LOCK *lock)
 	  lock->write.last= &data->next;
 
 	  {
-            boost::condition_variable *cond= data->cond;
+            boost::condition_variable_any *cond= data->cond;
 	    data->cond= NULL;				/* Mark thread free */
             cond->notify_one(); /* Start waiting thred */
 	  }
@@ -521,7 +535,7 @@ static void wake_up_waiters(THR_LOCK *lock)
 	      !lock->read_no_write_count))
     {
       do {
-        boost::condition_variable *cond= data->cond;
+        boost::condition_variable_any *cond= data->cond;
 	if (((*data->prev)=data->next))		/* remove from wait-list */
 	  data->next->prev= data->prev;
 	else
@@ -618,7 +632,7 @@ thr_multi_lock(THR_LOCK_DATA **data, uint32_t count, THR_LOCK_OWNER *owner)
 
   /* free all locks */
 
-void thr_multi_unlock(THR_LOCK_DATA **data,uint32_t count)
+static void thr_multi_unlock(THR_LOCK_DATA **data,uint32_t count)
 {
   THR_LOCK_DATA **pos,**end;
 
@@ -630,6 +644,17 @@ void thr_multi_unlock(THR_LOCK_DATA **data,uint32_t count)
   return;
 }
 
+void DrizzleLock::unlock(uint32_t count)
+{
+  THR_LOCK_DATA **pos,**end;
+
+  for (pos= getLocks(),end= getLocks()+count; pos < end ; pos++)
+  {
+    if ((*pos)->type != TL_UNLOCK)
+      thr_unlock(*pos);
+  }
+}
+
 /*
   Abort all threads waiting for a lock. The lock will be upgraded to
   TL_WRITE_ONLY to abort any new accesses to the lock
@@ -637,7 +662,7 @@ void thr_multi_unlock(THR_LOCK_DATA **data,uint32_t count)
 
 void THR_LOCK::abort_locks()
 {
-  boost::mutex::scoped_lock scopedLock(mutex);
+  boost_unique_lock_t scopedLock(mutex);
 
   for (THR_LOCK_DATA *local_data= read_wait.data; local_data ; local_data= local_data->next)
   {
@@ -670,7 +695,7 @@ bool THR_LOCK::abort_locks_for_thread(uint64_t thread_id_arg)
 {
   bool found= false;
 
-  boost::mutex::scoped_lock scopedLock(mutex);
+  boost_unique_lock_t scopedLock(mutex);
   for (THR_LOCK_DATA *local_data= read_wait.data; local_data ; local_data= local_data->next)
   {
     if (local_data->owner->info->thread_id == thread_id_arg)

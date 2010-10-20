@@ -414,13 +414,9 @@ uint32_t week_number_from_gregorian_date(uint32_t year
  */
 uint32_t iso_week_number_from_gregorian_date(uint32_t year
                                            , uint32_t month
-                                           , uint32_t day
-                                           , uint32_t *year_out)
+                                           , uint32_t day)
 {
   struct tm broken_time;
-
-  if (year_out != NULL)
-    *year_out= year;
 
   broken_time.tm_year= year;
   broken_time.tm_mon= month - 1; /* struct tm has non-ordinal months */
@@ -440,18 +436,6 @@ uint32_t iso_week_number_from_gregorian_date(uint32_t year
     return 0; /* Not valid for ISO8601:1988 */
 
   uint32_t week_number= (uint32_t) atoi(result);
-
-  /* 
-   * ISO8601:1988 states that if the first week in January
-   * does not contain 4 days, then the resulting week number
-   * shall be 52 or 53, depending on the number of days in the
-   * previous year.  In this case, we adjust the outbound
-   * year parameter down a year.
-   */
-  if (year_out != NULL)
-    if (week_number == 53 || week_number == 52)
-      if (month == 1)
-        *year_out--;
 
   return week_number;
 }

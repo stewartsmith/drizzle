@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 
 /* Insert of records */
@@ -168,7 +168,8 @@ static int check_update_fields(Session *session, TableList *insert_table_list,
       Unmark the timestamp field so that we can check if this is modified
       by update_fields
     */
-    timestamp_mark= table->write_set->testAndClear(table->timestamp_field->field_index);
+    timestamp_mark= table->write_set->test(table->timestamp_field->field_index);
+    table->write_set->reset(table->timestamp_field->field_index);
   }
 
   /* Check the fields we are going to modify */
@@ -716,7 +717,7 @@ int write_record(Session *session, Table *table,CopyInfo *info)
 {
   int error;
   std::vector<unsigned char> key;
-  MyBitmap *save_read_set, *save_write_set;
+  boost::dynamic_bitset<> *save_read_set, *save_write_set;
   uint64_t prev_insert_id= table->cursor->next_insert_id;
   uint64_t insert_id_for_cur_row= 0;
 
@@ -819,7 +820,7 @@ int write_record(Session *session, Table *table,CopyInfo *info)
             table->next_number_field->val_int());
         info->touched++;
         if ((table->cursor->getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ) &&
-             !bitmap_is_subset(table->write_set, table->read_set)) ||
+            ! table->write_set->is_subset_of(*table->read_set)) ||
             table->compare_record())
         {
           if ((error=table->cursor->updateRecord(table->getUpdateRecord(),
@@ -910,7 +911,7 @@ int write_record(Session *session, Table *table,CopyInfo *info)
     */
     if (table->read_set != save_read_set ||
         table->write_set != save_write_set)
-      table->column_bitmaps_set(save_read_set, save_write_set);
+      table->column_bitmaps_set(*save_read_set, *save_write_set);
   }
   else if ((error=table->cursor->insertRecord(table->getInsertRecord())))
   {
@@ -939,8 +940,8 @@ err:
 
 before_err:
   table->cursor->restore_auto_increment(prev_insert_id);
-  table->column_bitmaps_set(save_read_set, save_write_set);
-  return(1);
+  table->column_bitmaps_set(*save_read_set, *save_write_set);
+  return 1;
 }
 
 
@@ -1500,26 +1501,43 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
   tmp_table.null_row= false;
   tmp_table.maybe_null= false;
 
+  tmp_table.in_use= session;
+
   while ((item=it++))
   {
     CreateField *cr_field;
     Field *field, *def_field;
     if (item->type() == Item::FUNC_ITEM)
+    {
       if (item->result_type() != STRING_RESULT)
+      {
         field= item->tmp_table_field(&tmp_table);
+      }
       else
+      {
         field= item->tmp_table_field_from_field_type(&tmp_table, 0);
+      }
+    }
     else
+    {
       field= create_tmp_field(session, &tmp_table, item, item->type(),
                               (Item ***) 0, &tmp_field, &def_field, false,
                               false, false, 0);
+    }
+
     if (!field ||
 	!(cr_field=new CreateField(field,(item->type() == Item::FIELD_ITEM ?
 					   ((Item_field *)item)->field :
 					   (Field*) 0))))
+    {
       return NULL;
+    }
+
     if (item->maybe_null)
+    {
       cr_field->flags &= ~NOT_NULL_FLAG;
+    }
+
     alter_info->create_list.push_back(cr_field);
   }
 

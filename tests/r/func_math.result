@@ -43,45 +43,28 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 Warnings:
 Note	1003	select abs(-(10)) AS `abs(-10)`,sign(-(5)) AS `sign(-5)`,sign(5) AS `sign(5)`,sign(0) AS `sign(0)`
 select log(exp(10)),exp(log(sqrt(10))*2),log(-1),log(NULL),log(1,1),log(3,9),log(-1,2),log(NULL,2);
-log(exp(10))	exp(log(sqrt(10))*2)	log(-1)	log(NULL)	log(1,1)	log(3,9)	log(-1,2)	log(NULL,2)
-10	10	NULL	NULL	NULL	2	NULL	NULL
-Warnings:
-Error	1365	Division by 0
-Error	1365	Division by 0
-Error	1365	Division by 0
+ERROR 22012: Division by 0
 explain extended select log(exp(10)),exp(log(sqrt(10))*2),log(-1),log(NULL),log(1,1),log(3,9),log(-1,2),log(NULL,2);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No tables used
 Warnings:
 Note	1003	select log(exp(10)) AS `log(exp(10))`,exp((log(sqrt(10)) * 2)) AS `exp(log(sqrt(10))*2)`,log(-(1)) AS `log(-1)`,log(NULL) AS `log(NULL)`,log(1,1) AS `log(1,1)`,log(3,9) AS `log(3,9)`,log(-(1),2) AS `log(-1,2)`,log(NULL,2) AS `log(NULL,2)`
 select ln(exp(10)),exp(ln(sqrt(10))*2),ln(-1),ln(0),ln(NULL);
-ln(exp(10))	exp(ln(sqrt(10))*2)	ln(-1)	ln(0)	ln(NULL)
-10	10	NULL	NULL	NULL
-Warnings:
-Error	1365	Division by 0
-Error	1365	Division by 0
+ERROR 22012: Division by 0
 explain extended select ln(exp(10)),exp(ln(sqrt(10))*2),ln(-1),ln(0),ln(NULL);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No tables used
 Warnings:
 Note	1003	select ln(exp(10)) AS `ln(exp(10))`,exp((ln(sqrt(10)) * 2)) AS `exp(ln(sqrt(10))*2)`,ln(-(1)) AS `ln(-1)`,ln(0) AS `ln(0)`,ln(NULL) AS `ln(NULL)`
 select log2(8),log2(15),log2(-2),log2(0),log2(NULL);
-log2(8)	log2(15)	log2(-2)	log2(0)	log2(NULL)
-3	3.90689059560852	NULL	NULL	NULL
-Warnings:
-Error	1365	Division by 0
-Error	1365	Division by 0
+ERROR 22012: Division by 0
 explain extended select log2(8),log2(15),log2(-2),log2(0),log2(NULL);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No tables used
 Warnings:
 Note	1003	select log2(8) AS `log2(8)`,log2(15) AS `log2(15)`,log2(-(2)) AS `log2(-2)`,log2(0) AS `log2(0)`,log2(NULL) AS `log2(NULL)`
 select log10(100),log10(18),log10(-4),log10(0),log10(NULL);
-log10(100)	log10(18)	log10(-4)	log10(0)	log10(NULL)
-2	1.25527250510331	NULL	NULL	NULL
-Warnings:
-Error	1365	Division by 0
-Error	1365	Division by 0
+ERROR 22012: Division by 0
 explain extended select log10(100),log10(18),log10(-4),log10(0),log10(NULL);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No tables used

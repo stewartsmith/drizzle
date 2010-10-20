@@ -11,7 +11,7 @@
 
   You should have received a copy of the GNU General Public License
   along with this program; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 
 /* Basic functions needed by many modules */
@@ -53,7 +53,8 @@
 #include "drizzled/internal/iocache.h"
 #include "drizzled/drizzled.h"
 #include "drizzled/plugin/authorization.h"
-#include "drizzled/table_placeholder.h"
+#include "drizzled/table/temporary.h"
+#include "drizzled/table/placeholder.h"
 
 using namespace std;
 
@@ -200,10 +201,6 @@ unsigned char *table_cache_key(const unsigned char *record,
                                size_t *length,
                                bool );
 
-#if 0
-static bool reopen_table(Table *table);
-#endif
-
 unsigned char *table_cache_key(const unsigned char *record,
                                size_t *length,
                                bool )
@@ -251,7 +248,6 @@ void table_cache_free(void)
 
 void close_handle_and_leave_table_as_lock(Table *table)
 {
-  TableShare *share, *old_share= table->getMutableShare();
   assert(table->db_stat);
   assert(table->getShare()->getType() == message::Table::STANDARD);
 
@@ -262,9 +258,9 @@ void close_handle_and_leave_table_as_lock(Table *table)
   */
   TableIdentifier identifier(table->getShare()->getSchemaName(), table->getShare()->getTableName(), message::Table::INTERNAL);
   const TableIdentifier::Key &key(identifier.getKey());
-  share= new TableShare(identifier.getType(),
-                        identifier,
-                        const_cast<char *>(&key[0]),  static_cast<uint32_t>(old_share->getCacheKeySize()));
+  TableShare *share= new TableShare(identifier.getType(),
+                                    identifier,
+                                    const_cast<char *>(&key[0]),  static_cast<uint32_t>(table->getShare()->getCacheKeySize()));
 
   table->cursor->close();
   table->db_stat= 0;                            // Mark cursor closed
@@ -343,151 +339,155 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
   bool result= false;
   Session *session= this;
 
-  LOCK_open.lock(); /* Optionally lock for remove tables from open_cahe if not in use */
-
-  if (tables == NULL)
   {
-    refresh_version++;				// Force close of open tables
+    LOCK_open.lock(); /* Optionally lock for remove tables from open_cahe if not in use */
 
-    unused_tables.clear();
+    if (tables == NULL)
+    {
+      refresh_version++;				// Force close of open tables
+
+      unused_tables.clear();
+
+      if (wait_for_refresh)
+      {
+        /*
+          Other threads could wait in a loop in open_and_lock_tables(),
+          trying to lock one or more of our tables.
+
+          If they wait for the locks in thr_multi_lock(), their lock
+          request is aborted. They loop in open_and_lock_tables() and
+          enter open_table(). Here they notice the table is refreshed and
+          wait for COND_refresh. Then they loop again in
+          openTablesLock() and this time open_table() succeeds. At
+          this moment, if we (the FLUSH TABLES thread) are scheduled and
+          on another FLUSH TABLES enter close_cached_tables(), they could
+          awake while we sleep below, waiting for others threads (us) to
+          close their open tables. If this happens, the other threads
+          would find the tables unlocked. They would get the locks, one
+          after the other, and could do their destructive work. This is an
+          issue if we have LOCK TABLES in effect.
+
+          The problem is that the other threads passed all checks in
+          open_table() before we refresh the table.
+
+          The fix for this problem is to set some_tables_deleted for all
+          threads with open tables. These threads can still get their
+          locks, but will immediately release them again after checking
+          this variable. They will then loop in openTablesLock()
+          again. There they will wait until we update all tables version
+          below.
+
+          Setting some_tables_deleted is done by remove_table_from_cache()
+          in the other branch.
+
+          In other words (reviewer suggestion): You need this setting of
+          some_tables_deleted for the case when table was opened and all
+          related checks were passed before incrementing refresh_version
+          (which you already have) but attempt to lock the table happened
+          after the call to Session::close_old_data_files() i.e. after removal of
+          current thread locks.
+        */
+        for (TableOpenCache::const_iterator iter= get_open_cache().begin();
+             iter != get_open_cache().end();
+             iter++)
+        {
+          Table *table= (*iter).second;
+          if (table->in_use)
+            table->in_use->some_tables_deleted= false;
+        }
+      }
+    }
+    else
+    {
+      bool found= false;
+      for (TableList *table= tables; table; table= table->next_local)
+      {
+        TableIdentifier identifier(table->db, table->table_name);
+        if (remove_table_from_cache(session, identifier,
+                                    RTFC_OWNED_BY_Session_FLAG))
+        {
+          found= true;
+        }
+      }
+      if (!found)
+        wait_for_refresh= false;			// Nothing to wait for
+    }
 
     if (wait_for_refresh)
     {
       /*
-        Other threads could wait in a loop in open_and_lock_tables(),
-        trying to lock one or more of our tables.
-
-        If they wait for the locks in thr_multi_lock(), their lock
-        request is aborted. They loop in open_and_lock_tables() and
-        enter open_table(). Here they notice the table is refreshed and
-        wait for COND_refresh. Then they loop again in
-        openTablesLock() and this time open_table() succeeds. At
-        this moment, if we (the FLUSH TABLES thread) are scheduled and
-        on another FLUSH TABLES enter close_cached_tables(), they could
-        awake while we sleep below, waiting for others threads (us) to
-        close their open tables. If this happens, the other threads
-        would find the tables unlocked. They would get the locks, one
-        after the other, and could do their destructive work. This is an
-        issue if we have LOCK TABLES in effect.
-
-        The problem is that the other threads passed all checks in
-        open_table() before we refresh the table.
-
-        The fix for this problem is to set some_tables_deleted for all
-        threads with open tables. These threads can still get their
-        locks, but will immediately release them again after checking
-        this variable. They will then loop in openTablesLock()
-        again. There they will wait until we update all tables version
-        below.
-
-        Setting some_tables_deleted is done by remove_table_from_cache()
-        in the other branch.
-
-        In other words (reviewer suggestion): You need this setting of
-        some_tables_deleted for the case when table was opened and all
-        related checks were passed before incrementing refresh_version
-        (which you already have) but attempt to lock the table happened
-        after the call to Session::close_old_data_files() i.e. after removal of
-        current thread locks.
+        If there is any table that has a lower refresh_version, wait until
+        this is closed (or this thread is killed) before returning
       */
-      for (TableOpenCache::const_iterator iter= get_open_cache().begin();
-           iter != get_open_cache().end();
-           iter++)
+      session->mysys_var->current_mutex= &LOCK_open;
+      session->mysys_var->current_cond= &COND_refresh;
+      session->set_proc_info("Flushing tables");
+
+      session->close_old_data_files();
+
+      bool found= true;
+      /* Wait until all threads has closed all the tables we had locked */
+      while (found && ! session->killed)
       {
-        Table *table= (*iter).second;
-        if (table->in_use)
-          table->in_use->some_tables_deleted= false;
-      }
-    }
-  }
-  else
-  {
-    bool found= false;
-    for (TableList *table= tables; table; table= table->next_local)
-    {
-      TableIdentifier identifier(table->db, table->table_name);
-      if (remove_table_from_cache(session, identifier,
-                                  RTFC_OWNED_BY_Session_FLAG))
-      {
-        found= true;
-      }
-    }
-    if (!found)
-      wait_for_refresh= false;			// Nothing to wait for
-  }
-
-  if (wait_for_refresh)
-  {
-    /*
-      If there is any table that has a lower refresh_version, wait until
-      this is closed (or this thread is killed) before returning
-    */
-    session->mysys_var->current_mutex= &LOCK_open;
-    session->mysys_var->current_cond= &COND_refresh;
-    session->set_proc_info("Flushing tables");
-
-    session->close_old_data_files();
-
-    bool found= true;
-    /* Wait until all threads has closed all the tables we had locked */
-    while (found && ! session->killed)
-    {
-      found= false;
-      for (TableOpenCache::const_iterator iter= get_open_cache().begin();
-           iter != get_open_cache().end();
-           iter++)
-      {
-        Table *table= (*iter).second;
-        /* Avoid a self-deadlock. */
-        if (table->in_use == session)
-          continue;
-        /*
-          Note that we wait here only for tables which are actually open, and
-          not for placeholders with Table::open_placeholder set. Waiting for
-          latter will cause deadlock in the following scenario, for example:
-
-          conn1-> lock table t1 write;
-          conn2-> lock table t2 write;
-          conn1-> flush tables;
-          conn2-> flush tables;
-
-          It also does not make sense to wait for those of placeholders that
-          are employed by CREATE TABLE as in this case table simply does not
-          exist yet.
-        */
-        if (table->needs_reopen_or_name_lock() && (table->db_stat ||
-                                                   (table->open_placeholder && wait_for_placeholders)))
+        found= false;
+        for (TableOpenCache::const_iterator iter= get_open_cache().begin();
+             iter != get_open_cache().end();
+             iter++)
         {
-          found= true;
-          pthread_cond_wait(COND_refresh.native_handle(),LOCK_open.native_handle());
-          break;
+          Table *table= (*iter).second;
+          /* Avoid a self-deadlock. */
+          if (table->in_use == session)
+            continue;
+          /*
+            Note that we wait here only for tables which are actually open, and
+            not for placeholders with Table::open_placeholder set. Waiting for
+            latter will cause deadlock in the following scenario, for example:
+
+            conn1-> lock table t1 write;
+            conn2-> lock table t2 write;
+            conn1-> flush tables;
+            conn2-> flush tables;
+
+            It also does not make sense to wait for those of placeholders that
+            are employed by CREATE TABLE as in this case table simply does not
+            exist yet.
+          */
+          if (table->needs_reopen_or_name_lock() && (table->db_stat ||
+                                                     (table->open_placeholder && wait_for_placeholders)))
+          {
+            found= true;
+            boost_unique_lock_t scoped(LOCK_open, boost::adopt_lock_t());
+            COND_refresh.wait(scoped);
+            scoped.release();
+            break;
+          }
         }
       }
-    }
-    /*
-      No other thread has the locked tables open; reopen them and get the
-      old locks. This should always succeed (unless some external process
-      has removed the tables)
-    */
-    result= session->reopen_tables(true, true);
-
-    /* Set version for table */
-    for (Table *table= session->open_tables; table ; table= table->getNext())
-    {
       /*
-        Preserve the version (0) of write locked tables so that a impending
-        global read lock won't sneak in.
+        No other thread has the locked tables open; reopen them and get the
+        old locks. This should always succeed (unless some external process
+        has removed the tables)
       */
-      if (table->reginfo.lock_type < TL_WRITE_ALLOW_WRITE)
-        table->getMutableShare()->refreshVersion();
-    }
-  }
+      result= session->reopen_tables(true, true);
 
-  LOCK_open.unlock();
+      /* Set version for table */
+      for (Table *table= session->open_tables; table ; table= table->getNext())
+      {
+        /*
+          Preserve the version (0) of write locked tables so that a impending
+          global read lock won't sneak in.
+        */
+        if (table->reginfo.lock_type < TL_WRITE_ALLOW_WRITE)
+          table->getMutableShare()->refreshVersion();
+      }
+    }
+
+    LOCK_open.unlock();
+  }
 
   if (wait_for_refresh)
   {
-    boost::mutex::scoped_lock scopedLock(session->mysys_var->mutex);
+    boost_unique_lock_t scopedLock(session->mysys_var->mutex);
     session->mysys_var->current_mutex= 0;
     session->mysys_var->current_cond= 0;
     session->set_proc_info(0);
@@ -551,7 +551,7 @@ void Session::close_open_tables()
 
   safe_mutex_assert_not_owner(LOCK_open.native_handle());
 
-  boost::mutex::scoped_lock scoped_lock(LOCK_open); /* Close all open tables on Session */
+  boost_unique_lock_t scoped_lock(LOCK_open); /* Close all open tables on Session */
 
   while (open_tables)
   {
@@ -858,7 +858,7 @@ void Session::unlink_open_table(Table *find)
   Table *list, **prev;
   safe_mutex_assert_owner(LOCK_open.native_handle());
 
-  memcpy(key, &find->getMutableShare()->getCacheKey()[0], key_length);
+  memcpy(key, &find->getShare()->getCacheKey()[0], key_length);
   /*
     Note that we need to hold LOCK_open while changing the
     open_tables list. Another thread may work on it.
@@ -918,7 +918,7 @@ void Session::drop_open_table(Table *table, TableIdentifier &identifier)
   }
   else
   {
-    boost::mutex::scoped_lock scoped_lock(LOCK_open); /* Close and drop a table (AUX routine) */
+    boost_unique_lock_t scoped_lock(LOCK_open); /* Close and drop a table (AUX routine) */
     /*
       unlink_open_table() also tells threads waiting for refresh or close
       that something has happened.
@@ -940,7 +940,7 @@ void Session::drop_open_table(Table *table, TableIdentifier &identifier)
   cond	Condition to wait for
 */
 
-void Session::wait_for_condition(boost::mutex &mutex, boost::condition_variable &cond)
+void Session::wait_for_condition(boost::mutex &mutex, boost::condition_variable_any &cond)
 {
   /* Wait until the current table is up to date */
   const char *saved_proc_info;
@@ -948,22 +948,24 @@ void Session::wait_for_condition(boost::mutex &mutex, boost::condition_variable 
   mysys_var->current_cond= &cond;
   saved_proc_info= get_proc_info();
   set_proc_info("Waiting for table");
-  if (!killed)
-    (void) pthread_cond_wait(cond.native_handle(), mutex.native_handle());
+  {
+    /*
+      We must unlock mutex first to avoid deadlock becasue conditions are
+      sent to this thread by doing locks in the following order:
+      lock(mysys_var->mutex)
+      lock(mysys_var->current_mutex)
 
-  /*
-    We must unlock mutex first to avoid deadlock becasue conditions are
-    sent to this thread by doing locks in the following order:
-    lock(mysys_var->mutex)
-    lock(mysys_var->current_mutex)
-
-    One by effect of this that one can only use wait_for_condition with
-    condition variables that are guranteed to not disapper (freed) even if this
-    mutex is unlocked
-  */
-
-  pthread_mutex_unlock(mutex.native_handle());
-  boost::mutex::scoped_lock (mysys_var->mutex);
+      One by effect of this that one can only use wait_for_condition with
+      condition variables that are guranteed to not disapper (freed) even if this
+      mutex is unlocked
+    */
+    boost_unique_lock_t scopedLock(mutex, boost::adopt_lock_t());
+    if (not killed)
+    {
+      cond.wait(scopedLock);
+    }
+  }
+  boost_unique_lock_t mysys_scopedLock(mysys_var->mutex);
   mysys_var->current_mutex= 0;
   mysys_var->current_cond= 0;
   set_proc_info(saved_proc_info);
@@ -996,7 +998,6 @@ void Session::wait_for_condition(boost::mutex &mutex, boost::condition_variable 
 bool Session::reopen_name_locked_table(TableList* table_list, bool link_in)
 {
   Table *table= table_list->table;
-  TableShare *share;
   char *table_name= table_list->table_name;
   Table orig_table;
 
@@ -1021,7 +1022,6 @@ bool Session::reopen_name_locked_table(TableList* table_list, bool link_in)
     return true;
   }
 
-  share= table->getMutableShare();
   /*
     We want to prevent other connections from opening this table until end
     of statement as it is likely that modifications of table's metadata are
@@ -1030,7 +1030,7 @@ bool Session::reopen_name_locked_table(TableList* table_list, bool link_in)
     This also allows us to assume that no other connection will sneak in
     before we will get table-level lock on this table.
   */
-  share->resetVersion();
+  table->getMutableShare()->resetVersion();
   table->in_use = this;
 
   if (link_in)
@@ -1080,7 +1080,7 @@ Table *Session::table_cache_insert_placeholder(const char *db_name, const char *
     Create a table entry with the right key and with an old refresh version
   */
   TableIdentifier identifier(db_name, table_name, message::Table::INTERNAL);
-  TablePlaceholder *table= new TablePlaceholder(this, identifier);
+  table::Placeholder *table= new table::Placeholder(this, identifier);
 
   if (not add_table(table))
   {
@@ -1118,7 +1118,7 @@ bool Session::lock_table_name_if_not_cached(TableIdentifier &identifier, Table *
 {
   const TableIdentifier::Key &key(identifier.getKey());
 
-  boost::mutex::scoped_lock scope_lock(LOCK_open); /* Obtain a name lock even though table is not in cache (like for create table)  */
+  boost_unique_lock_t scope_lock(LOCK_open); /* Obtain a name lock even though table is not in cache (like for create table)  */
 
   TableOpenCache::iterator iter;
 
@@ -1204,6 +1204,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
     same name. This block implements the behaviour.
     TODO -> move this block into a separate function.
   */
+  bool reset= false;
   for (table= temporary_tables; table ; table=table->getNext())
   {
     if (table->getShare()->getCacheKey() == key)
@@ -1220,236 +1221,238 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
         return NULL;
       }
       table->query_id= getQueryId();
-      goto reset;
+      reset= true;
+      break;
     }
   }
 
-  if (flags & DRIZZLE_OPEN_TEMPORARY_ONLY)
+  if (not reset)
   {
-    my_error(ER_NO_SUCH_TABLE, MYF(0), table_list->db, table_list->table_name);
-    return NULL;
-  }
-
-  /*
-    If it's the first table from a list of tables used in a query,
-    remember refresh_version (the version of open_cache state).
-    If the version changes while we're opening the remaining tables,
-    we will have to back off, close all the tables opened-so-far,
-    and try to reopen them.
-
-    Note-> refresh_version is currently changed only during FLUSH TABLES.
-  */
-  if (!open_tables)
-  {
-    version= refresh_version;
-  }
-  else if ((version != refresh_version) &&
-           ! (flags & DRIZZLE_LOCK_IGNORE_FLUSH))
-  {
-    /* Someone did a refresh while thread was opening tables */
-    if (refresh)
-      *refresh= true;
-
-    return NULL;
-  }
-
-  /*
-    Before we test the global cache, we test our local session cache.
-  */
-  if (cached_table)
-  {
-    assert(false); /* Not implemented yet */
-  }
-
-  /*
-    Non pre-locked/LOCK TABLES mode, and the table is not temporary:
-    this is the normal use case.
-    Now we should:
-    - try to find the table in the table cache.
-    - if one of the discovered Table instances is name-locked
-    (table->getShare()->version == 0) back off -- we have to wait
-    until no one holds a name lock on the table.
-    - if there is no such Table in the name cache, read the table definition
-    and insert it into the cache.
-    We perform all of the above under LOCK_open which currently protects
-    the open cache (also known as table cache) and table definitions stored
-    on disk.
-  */
-
-  LOCK_open.lock(); /* Lock for FLUSH TABLES for open table */
-
-  /*
-    Actually try to find the table in the open_cache.
-    The cache may contain several "Table" instances for the same
-    physical table. The instances that are currently "in use" by
-    some thread have their "in_use" member != NULL.
-    There is no good reason for having more than one entry in the
-    hash for the same physical table, except that we use this as
-    an implicit "pending locks queue" - see
-    wait_for_locked_table_names for details.
-  */
-  ppp= get_open_cache().equal_range(key);
-
-  table= NULL;
-  for (TableOpenCache::const_iterator iter= ppp.first;
-       iter != ppp.second; ++iter, table= NULL)
-  {
-    table= (*iter).second;
-
-    if (not table->in_use)
-      break;
-    /*
-      Here we flush tables marked for flush.
-      Normally, table->getShare()->version contains the value of
-      refresh_version from the moment when this table was
-      (re-)opened and added to the cache.
-      If since then we did (or just started) FLUSH TABLES
-      statement, refresh_version has been increased.
-      For "name-locked" Table instances, table->getShare()->version is set
-      to 0 (see lock_table_name for details).
-      In case there is a pending FLUSH TABLES or a name lock, we
-      need to back off and re-start opening tables.
-      If we do not back off now, we may dead lock in case of lock
-      order mismatch with some other thread:
-      c1-> name lock t1; -- sort of exclusive lock
-      c2-> open t2;      -- sort of shared lock
-      c1-> name lock t2; -- blocks
-      c2-> open t1; -- blocks
-    */
-    if (table->needs_reopen_or_name_lock())
+    if (flags & DRIZZLE_OPEN_TEMPORARY_ONLY)
     {
-      if (flags & DRIZZLE_LOCK_IGNORE_FLUSH)
-      {
-        /* Force close at once after usage */
-        version= table->getShare()->getVersion();
-        continue;
-      }
+      my_error(ER_NO_SUCH_TABLE, MYF(0), table_list->db, table_list->table_name);
+      return NULL;
+    }
 
-      /* Avoid self-deadlocks by detecting self-dependencies. */
-      if (table->open_placeholder && table->in_use == this)
-      {
-        LOCK_open.unlock();
-        my_error(ER_UPDATE_TABLE_USED, MYF(0), table->getMutableShare()->getTableName());
-        return NULL;
-      }
+    /*
+      If it's the first table from a list of tables used in a query,
+      remember refresh_version (the version of open_cache state).
+      If the version changes while we're opening the remaining tables,
+      we will have to back off, close all the tables opened-so-far,
+      and try to reopen them.
+
+      Note-> refresh_version is currently changed only during FLUSH TABLES.
+    */
+    if (!open_tables)
+    {
+      version= refresh_version;
+    }
+    else if ((version != refresh_version) &&
+             ! (flags & DRIZZLE_LOCK_IGNORE_FLUSH))
+    {
+      /* Someone did a refresh while thread was opening tables */
+      if (refresh)
+        *refresh= true;
+
+      return NULL;
+    }
+
+    /*
+      Before we test the global cache, we test our local session cache.
+    */
+    if (cached_table)
+    {
+      assert(false); /* Not implemented yet */
+    }
+
+    /*
+      Non pre-locked/LOCK TABLES mode, and the table is not temporary:
+      this is the normal use case.
+      Now we should:
+      - try to find the table in the table cache.
+      - if one of the discovered Table instances is name-locked
+      (table->getShare()->version == 0) back off -- we have to wait
+      until no one holds a name lock on the table.
+      - if there is no such Table in the name cache, read the table definition
+      and insert it into the cache.
+      We perform all of the above under LOCK_open which currently protects
+      the open cache (also known as table cache) and table definitions stored
+      on disk.
+    */
+
+    {
+      LOCK_open.lock(); /* Lock for FLUSH TABLES for open table */
 
       /*
-        Back off, part 1: mark the table as "unused" for the
-        purpose of name-locking by setting table->db_stat to 0. Do
-        that only for the tables in this thread that have an old
-        table->getShare()->version (this is an optimization (?)).
-        table->db_stat == 0 signals wait_for_locked_table_names
-        that the tables in question are not used any more. See
-        table_is_used call for details.
+        Actually try to find the table in the open_cache.
+        The cache may contain several "Table" instances for the same
+        physical table. The instances that are currently "in use" by
+        some thread have their "in_use" member != NULL.
+        There is no good reason for having more than one entry in the
+        hash for the same physical table, except that we use this as
+        an implicit "pending locks queue" - see
+        wait_for_locked_table_names for details.
       */
-      close_old_data_files(false, false);
+      ppp= get_open_cache().equal_range(key);
 
-      /*
-        Back-off part 2: try to avoid "busy waiting" on the table:
-        if the table is in use by some other thread, we suspend
-        and wait till the operation is complete: when any
-        operation that juggles with table->getShare()->version completes,
-        it broadcasts COND_refresh condition variable.
-        If 'old' table we met is in use by current thread we return
-        without waiting since in this situation it's this thread
-        which is responsible for broadcasting on COND_refresh
-        (and this was done already in Session::close_old_data_files()).
-        Good example of such situation is when we have statement
-        that needs two instances of table and FLUSH TABLES comes
-        after we open first instance but before we open second
-        instance.
-      */
-      if (table->in_use != this)
+      table= NULL;
+      for (TableOpenCache::const_iterator iter= ppp.first;
+           iter != ppp.second; ++iter, table= NULL)
       {
-        /* wait_for_conditionwill unlock LOCK_open for us */
-        wait_for_condition(LOCK_open, COND_refresh);
+        table= (*iter).second;
+
+        if (not table->in_use)
+          break;
+        /*
+          Here we flush tables marked for flush.
+          Normally, table->getShare()->version contains the value of
+          refresh_version from the moment when this table was
+          (re-)opened and added to the cache.
+          If since then we did (or just started) FLUSH TABLES
+          statement, refresh_version has been increased.
+          For "name-locked" Table instances, table->getShare()->version is set
+          to 0 (see lock_table_name for details).
+          In case there is a pending FLUSH TABLES or a name lock, we
+          need to back off and re-start opening tables.
+          If we do not back off now, we may dead lock in case of lock
+          order mismatch with some other thread:
+          c1-> name lock t1; -- sort of exclusive lock
+          c2-> open t2;      -- sort of shared lock
+          c1-> name lock t2; -- blocks
+          c2-> open t1; -- blocks
+        */
+        if (table->needs_reopen_or_name_lock())
+        {
+          if (flags & DRIZZLE_LOCK_IGNORE_FLUSH)
+          {
+            /* Force close at once after usage */
+            version= table->getShare()->getVersion();
+            continue;
+          }
+
+          /* Avoid self-deadlocks by detecting self-dependencies. */
+          if (table->open_placeholder && table->in_use == this)
+          {
+            LOCK_open.unlock();
+            my_error(ER_UPDATE_TABLE_USED, MYF(0), table->getShare()->getTableName());
+            return NULL;
+          }
+
+          /*
+            Back off, part 1: mark the table as "unused" for the
+            purpose of name-locking by setting table->db_stat to 0. Do
+            that only for the tables in this thread that have an old
+            table->getShare()->version (this is an optimization (?)).
+            table->db_stat == 0 signals wait_for_locked_table_names
+            that the tables in question are not used any more. See
+            table_is_used call for details.
+          */
+          close_old_data_files(false, false);
+
+          /*
+            Back-off part 2: try to avoid "busy waiting" on the table:
+            if the table is in use by some other thread, we suspend
+            and wait till the operation is complete: when any
+            operation that juggles with table->getShare()->version completes,
+            it broadcasts COND_refresh condition variable.
+            If 'old' table we met is in use by current thread we return
+            without waiting since in this situation it's this thread
+            which is responsible for broadcasting on COND_refresh
+            (and this was done already in Session::close_old_data_files()).
+            Good example of such situation is when we have statement
+            that needs two instances of table and FLUSH TABLES comes
+            after we open first instance but before we open second
+            instance.
+          */
+          if (table->in_use != this)
+          {
+            /* wait_for_conditionwill unlock LOCK_open for us */
+            wait_for_condition(LOCK_open, COND_refresh);
+          }
+          else
+          {
+            LOCK_open.unlock();
+          }
+          /*
+            There is a refresh in progress for this table.
+            Signal the caller that it has to try again.
+          */
+          if (refresh)
+            *refresh= true;
+          return NULL;
+        }
+      }
+      if (table)
+      {
+        unused_tables.unlink(table);
+        table->in_use= this;
       }
       else
       {
-        LOCK_open.unlock();
-      }
-      /*
-        There is a refresh in progress for this table.
-        Signal the caller that it has to try again.
-      */
-      if (refresh)
-        *refresh= true;
-      return NULL;
-    }
-  }
-  if (table)
-  {
-    unused_tables.unlink(table);
-    table->in_use= this;
-  }
-  else
-  {
-    /* Insert a new Table instance into the open cache */
-    int error;
-    /* Free cache if too big */
-    unused_tables.cull();
+        /* Insert a new Table instance into the open cache */
+        int error;
+        /* Free cache if too big */
+        unused_tables.cull();
 
-    if (table_list->isCreate())
-    {
-      TableIdentifier  lock_table_identifier(table_list->db, table_list->table_name, message::Table::STANDARD);
+        if (table_list->isCreate())
+        {
+          TableIdentifier  lock_table_identifier(table_list->db, table_list->table_name, message::Table::STANDARD);
 
-      if (not plugin::StorageEngine::doesTableExist(*this, lock_table_identifier))
-      {
-        /*
-          Table to be created, so we need to create placeholder in table-cache.
-        */
-        if (!(table= table_cache_insert_placeholder(table_list->db, table_list->table_name)))
+          if (not plugin::StorageEngine::doesTableExist(*this, lock_table_identifier))
+          {
+            /*
+              Table to be created, so we need to create placeholder in table-cache.
+            */
+            if (!(table= table_cache_insert_placeholder(table_list->db, table_list->table_name)))
+            {
+              LOCK_open.unlock();
+              return NULL;
+            }
+            /*
+              Link placeholder to the open tables list so it will be automatically
+              removed once tables are closed. Also mark it so it won't be ignored
+              by other trying to take name-lock.
+            */
+            table->open_placeholder= true;
+            table->setNext(open_tables);
+            open_tables= table;
+            LOCK_open.unlock();
+
+            return table ;
+          }
+          /* Table exists. Let us try to open it. */
+        }
+
+        /* make a new table */
+        table= new Table;
+        if (table == NULL)
         {
           LOCK_open.unlock();
           return NULL;
         }
-        /*
-          Link placeholder to the open tables list so it will be automatically
-          removed once tables are closed. Also mark it so it won't be ignored
-          by other trying to take name-lock.
-        */
-        table->open_placeholder= true;
-        table->setNext(open_tables);
-        open_tables= table;
-        LOCK_open.unlock();
 
-        return table ;
+        error= open_unireg_entry(this, table, alias, identifier);
+        if (error != 0)
+        {
+          delete table;
+          LOCK_open.unlock();
+          return NULL;
+        }
+        (void)add_table(table);
       }
-      /* Table exists. Let us try to open it. */
-    }
 
-    /* make a new table */
-    table= new Table;
-    if (table == NULL)
-    {
       LOCK_open.unlock();
-      return NULL;
     }
-
-    error= open_unireg_entry(this, table, alias, identifier);
-    if (error != 0)
+    if (refresh)
     {
-      delete table;
-      LOCK_open.unlock();
-      return NULL;
+      table->setNext(open_tables); /* Link into simple list */
+      open_tables= table;
     }
-    (void)add_table(table);
-  }
+    table->reginfo.lock_type= TL_READ; /* Assume read */
 
-  LOCK_open.unlock();
-  if (refresh)
-  {
-    table->setNext(open_tables); /* Link into simple list */
-    open_tables= table;
   }
-  table->reginfo.lock_type= TL_READ; /* Assume read */
-
-reset:
   assert(table->getShare()->getTableCount() > 0 || table->getShare()->getType() != message::Table::STANDARD);
 
-  if (lex->need_correct_ident())
-    table->alias_name_used= my_strcasecmp(table_alias_charset,
-                                          table->getMutableShare()->getTableName(), alias);
   /* Fix alias if table name changes */
   if (strcmp(table->getAlias(), alias))
   {
@@ -1480,97 +1483,6 @@ reset:
 
   return table;
 }
-
-
-#if 0
-/*
-  Reopen an table because the definition has changed.
-
-  SYNOPSIS
-  reopen_table()
-  table	Table object
-
-  NOTES
-  The data cursor for the table is already closed and the share is released
-  The table has a 'dummy' share that mainly contains database and table name.
-
-  RETURN
-  0  ok
-  1  error. The old table object is not changed.
-*/
-
-bool reopen_table(Table *table)
-{
-  Table tmp;
-  bool error= 1;
-  Field **field;
-  uint32_t key,part;
-  TableList table_list;
-  Session *session= table->in_use;
-
-  assert(table->getShare()->ref_count == 0);
-  assert(!table->sort.io_cache);
-
-#ifdef EXTRA_DEBUG
-  if (table->db_stat)
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Table %s had a open data Cursor in reopen_table"),
-                  table->alias);
-#endif
-  table_list.db=         const_cast<char *>(table->getShare()->getSchemaName());
-  table_list.table_name= table->getShare()->getTableName();
-  table_list.table=      table;
-
-  if (wait_for_locked_table_names(session, &table_list))
-    return true;                             // Thread was killed
-
-  if (open_unireg_entry(session, &tmp, &table_list,
-                        table->alias,
-                        table->getShare()->getCacheKey(),
-                        table->getShare()->getCacheKeySize()))
-    goto end;
-
-  /* This list copies variables set by open_table */
-  tmp.tablenr=		table->tablenr;
-  tmp.used_fields=	table->used_fields;
-  tmp.const_table=	table->const_table;
-  tmp.null_row=		table->null_row;
-  tmp.maybe_null=	table->maybe_null;
-  tmp.status=		table->status;
-
-  /* Get state */
-  tmp.in_use=    	session;
-  tmp.reginfo.lock_type=table->reginfo.lock_type;
-
-  /* Replace table in open list */
-  tmp.next=		table->next;
-  tmp.prev=		table->prev;
-
-  if (table->cursor)
-    table->delete_table(true);		// close cursor, free everything
-
-  *table= tmp;
-  table->default_column_bitmaps();
-  table->cursor->change_table_ptr(table, table->s);
-
-  assert(table->alias != 0);
-  for (field=table->field ; *field ; field++)
-  {
-    (*field)->table= (*field)->orig_table= table;
-    (*field)->table_name= &table->alias;
-  }
-  for (key=0 ; key < table->getShare()->keys ; key++)
-  {
-    for (part=0 ; part < table->key_info[key].usable_key_parts ; part++)
-      table->key_info[key].key_part[part].field->table= table;
-  }
-
-  broadcast_refresh();
-  error= false;
-
-end:
-  return(error);
-}
-#endif
 
 
 /**
@@ -1850,7 +1762,7 @@ bool wait_for_tables(Session *session)
 
   session->set_proc_info("Waiting for tables");
   {
-    boost::mutex::scoped_lock lock(LOCK_open);
+    boost_unique_lock_t lock(LOCK_open);
     while (!session->killed)
     {
       session->some_tables_deleted= false;
@@ -1995,7 +1907,7 @@ static int open_unireg_entry(Session *session,
                              TableIdentifier &identifier)
 {
   int error;
-  TableShare *share;
+  TableSharePtr share;
   uint32_t discover_retry_count= 0;
 
   safe_mutex_assert_owner(LOCK_open.native_handle());
@@ -2345,7 +2257,7 @@ Table *Session::open_temporary_table(TableIdentifier &identifier,
                         const_cast<char *>(identifier.getPath().c_str()), static_cast<uint32_t>(identifier.getPath().length()));
 
 
-  Table *new_tmp_table= new Table;
+  table::Temporary *new_tmp_table= new table::Temporary;
   if (not new_tmp_table)
     return NULL;
 
@@ -2402,7 +2314,7 @@ static void update_field_dependencies(Session *session, Field *field, Table *tab
 {
   if (session->mark_used_columns != MARK_COLUMNS_NONE)
   {
-    MyBitmap *current_bitmap, *other_bitmap;
+    boost::dynamic_bitset<> *current_bitmap= NULL;
 
     /*
       We always want to register the used keys, as the column bitmap may have
@@ -2415,15 +2327,14 @@ static void update_field_dependencies(Session *session, Field *field, Table *tab
     if (session->mark_used_columns == MARK_COLUMNS_READ)
     {
       current_bitmap= table->read_set;
-      other_bitmap=   table->write_set;
     }
     else
     {
       current_bitmap= table->write_set;
-      other_bitmap=   table->read_set;
     }
 
-    if (current_bitmap->testAndSet(field->field_index))
+    //if (current_bitmap->testAndSet(field->field_index))
+    if (current_bitmap->test(field->field_index))
     {
       if (session->mark_used_columns == MARK_COLUMNS_WRITE)
         session->dup_field= field;
@@ -4490,7 +4401,7 @@ void remove_db_from_cache(const SchemaIdentifier &schema_identifier)
   {
     Table *table= (*iter).second;
 
-    if (not schema_identifier.getPath().compare(table->getMutableShare()->getSchemaName()))
+    if (not schema_identifier.getPath().compare(table->getShare()->getSchemaName()))
     {
       table->getMutableShare()->resetVersion();			/* Free when thread is ready */
       if (not table->in_use)
@@ -4591,10 +4502,13 @@ bool remove_table_from_cache(Session *session, TableIdentifier &identifier, uint
       {
         dropping_tables++;
         if (likely(signalled))
-          (void) pthread_cond_wait(COND_refresh.native_handle(), LOCK_open.native_handle());
+        {
+          boost_unique_lock_t scoped(LOCK_open, boost::adopt_lock_t());
+          COND_refresh.wait(scoped);
+          scoped.release();
+        }
         else
         {
-          struct timespec abstime;
           /*
             It can happen that another thread has opened the
             table but has not yet locked any table at all. Since
@@ -4605,8 +4519,12 @@ bool remove_table_from_cache(Session *session, TableIdentifier &identifier, uint
             and then we retry another loop in the
             remove_table_from_cache routine.
           */
-          set_timespec(abstime, 10);
-          pthread_cond_timedwait(COND_refresh.native_handle(), LOCK_open.native_handle(), &abstime);
+          boost::xtime xt; 
+          xtime_get(&xt, boost::TIME_UTC); 
+          xt.sec += 10; 
+          boost_unique_lock_t scoped(LOCK_open, boost::adopt_lock_t());
+          COND_refresh.timed_wait(scoped, xt);
+          scoped.release();
         }
         dropping_tables--;
         continue;

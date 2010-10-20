@@ -18,8 +18,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -173,6 +173,22 @@ btr_search_sys_create(
 	btr_search_sys = mem_alloc(sizeof(btr_search_sys_t));
 
 	btr_search_sys->hash_index = ha_create(hash_size, 0, 0);
+}
+
+/*****************************************************************//**
+Frees the adaptive search system at a database shutdown. */
+UNIV_INTERN
+void
+btr_search_sys_free(void)
+/*=====================*/
+{
+	rw_lock_free(&btr_search_latch);
+	mem_free(btr_search_latch_temp);
+	btr_search_latch_temp = NULL;
+	mem_heap_free(btr_search_sys->hash_index->heap);
+	hash_table_free(btr_search_sys->hash_index);
+	mem_free(btr_search_sys);
+	btr_search_sys = NULL;
 }
 
 /********************************************************************//**
@@ -957,7 +973,7 @@ btr_search_guess_on_hash(
 	/* Increment the page get statistics though we did not really
 	fix the page: for user info only */
 
-	buf_pool->n_page_gets++;
+	buf_pool->stat.n_page_gets++;
 
 	return(TRUE);
 

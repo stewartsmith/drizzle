@@ -26,7 +26,8 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <drizzled/gettext.h>
 
-extern bool  verbose;
+extern bool verbose;
+extern bool ignore_errors;
 
 bool DrizzleDumpDatabaseMySQL::populateTables()
 {
@@ -40,7 +41,7 @@ bool DrizzleDumpDatabaseMySQL::populateTables()
   if (verbose)
     std::cerr << _("-- Retrieving table structures for ") << databaseName << "..." << std::endl;
 
-  query="SELECT TABLE_NAME, TABLE_COLLATION, ENGINE, AUTO_INCREMENT FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='";
+  query="SELECT TABLE_NAME, TABLE_COLLATION, ENGINE, AUTO_INCREMENT, TABLE_COMMENT FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE != 'VIEW' AND TABLE_SCHEMA='";
   query.append(databaseName);
   query.append("' ORDER BY TABLE_NAME");
 
@@ -51,6 +52,7 @@ bool DrizzleDumpDatabaseMySQL::populateTables()
 
   while ((row= drizzle_row_next(result)))
   {
+    size_t* row_sizes= drizzle_row_field_sizes(result);
     std::string tableName(row[0]);
     std::string displayName(tableName);
     cleanTableName(displayName);
@@ -66,11 +68,20 @@ bool DrizzleDumpDatabaseMySQL::populateTables()
     else
       table->autoIncrement= 0;
 
+    if (row[4])
+      table->comment= DrizzleDumpData::escape(row[4], row_sizes[4]);
+    else
+      table->comment= "";
+
     table->database= this;
-    if ((not table->populateFields()) or (not table->populateIndexes()))
+    if ((not table->populateFields()) or (not table->populateIndexes()) or
+     (not table->populateFkeys()))
     {
       delete table;
-      return false;
+      if (not ignore_errors)
+        return false;
+      else
+        continue;
     }
     tables.push_back(table);
   }
@@ -125,7 +136,10 @@ bool DrizzleDumpDatabaseMySQL::populateTables(const std::vector<std::string> &ta
       if ((not table->populateFields()) or (not table->populateIndexes()))
       {
         delete table;
-        return false;
+        if (not ignore_errors)
+          return false;
+        else
+          continue;
       }
       tables.push_back(table);
       dcon->freeResult(result);
@@ -133,7 +147,10 @@ bool DrizzleDumpDatabaseMySQL::populateTables(const std::vector<std::string> &ta
     else
     {
       dcon->freeResult(result);
-      return false;
+      if (not ignore_errors)
+        return false;
+      else
+        continue;
     }
   }
 
@@ -169,19 +186,20 @@ bool DrizzleDumpTableMySQL::populateFields()
     field->convertDateTime= false;
     /* Also sets collation */
     field->setType(row[1], row[8]);
+    field->isNull= (strcmp(row[3], "YES") == 0) ? true : false;
     if (row[2])
     {
-      if (field->convertDateTime)
-      {
-        field->dateTimeConvert(row[2]);
-      }
-      else
-        field->defaultValue= row[2];
+      field->defaultValue= row[2];
     }
     else
      field->defaultValue= "";
 
-    field->isNull= (strcmp(row[3], "YES") == 0) ? true : false;
+    if (field->convertDateTime)
+    {
+      field->dateTimeConvert();
+    }
+
+
     field->isAutoIncrement= (strcmp(row[8], "auto_increment") == 0) ? true : false;
     field->defaultIsNull= field->isNull;
     field->length= (row[4]) ? boost::lexical_cast<uint32_t>(row[4]) : 0;
@@ -197,36 +215,30 @@ bool DrizzleDumpTableMySQL::populateFields()
 }
 
 
-void DrizzleDumpFieldMySQL::dateTimeConvert(const char* oldDefault)
+void DrizzleDumpFieldMySQL::dateTimeConvert(void)
 {
   boost::match_flag_type flags = boost::match_default;
 
-  if (strcmp(oldDefault, "CURRENT_TIMESTAMP") == 0)
-  {
-    defaultValue= oldDefault;
+  if (strcmp(defaultValue.c_str(), "CURRENT_TIMESTAMP") == 0)
     return;
-  }
 
   if (type.compare("INT") == 0)
   {
     /* We were a TIME, now we are an INT */
-    std::string ts(oldDefault);
+    std::string ts(defaultValue);
     boost::posix_time::time_duration td(boost::posix_time::duration_from_string(ts));
     defaultValue= boost::lexical_cast<std::string>(td.total_seconds());
     return;
   }
 
-  boost::regex date_regex("([0-9]{3}[1-9]-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01]))");
+  boost::regex date_regex("(0000|-00)");
 
-  if (regex_search(oldDefault, date_regex, flags))
-  {
-    defaultValue= oldDefault;
-  }
-  else
+  if (regex_search(defaultValue, date_regex, flags))
   {
     defaultIsNull= true;
     defaultValue="";
   }
+  isNull= true;
 }
 
 
@@ -264,6 +276,7 @@ bool DrizzleDumpTableMySQL::populateIndexes()
       index->isPrimary= (strcmp(row[2], "PRIMARY") == 0);
       index->isUnique= (strcmp(row[1], "0") == 0);
       index->isHash= (strcmp(row[10], "HASH") == 0);
+      index->length= (row[7]) ? boost::lexical_cast<uint32_t>(row[7]) : 0;
       lastKey= row[2];
       firstIndex= false;
     }
@@ -272,6 +285,43 @@ bool DrizzleDumpTableMySQL::populateIndexes()
   if (!firstIndex)
     indexes.push_back(index);
 
+  dcon->freeResult(result);
+  return true;
+}
+
+bool DrizzleDumpTableMySQL::populateFkeys()
+{
+  drizzle_result_st *result;
+  drizzle_row_t row;
+  std::string query;
+  DrizzleDumpForeignKey *fkey;
+
+  if (verbose)
+    std::cerr << _("-- Retrieving foreign keys for ") << tableName << "..." << std::endl;
+
+  query= "select rc.constraint_name, rc.referenced_table_name, group_concat(distinct concat('`',kc.column_name,'`')), rc.update_rule, rc.delete_rule, rc.match_option, group_concat(distinct concat('`',kt.column_name,'`')) from information_schema.referential_constraints rc join information_schema.key_column_usage kt on (rc.constraint_schema = kt.constraint_schema and rc.constraint_name = kt.constraint_name) join information_schema.key_column_usage kc on (rc.constraint_schema = kc.constraint_schema and rc.referenced_table_name = kc.table_name and rc.unique_constraint_name = kc.constraint_name) where rc.constraint_schema='";
+  query.append(database->databaseName);
+  query.append("' and rc.table_name='");
+  query.append(tableName);
+  query.append("' group by rc.constraint_name");
+
+  result= dcon->query(query);
+
+  if (result == NULL)
+    return false;
+
+  while ((row= drizzle_row_next(result)))
+  {
+    fkey= new DrizzleDumpForeignKey(row[0], dcon);
+    fkey->parentColumns= row[6];
+    fkey->childTable= row[1];
+    fkey->childColumns= row[2];
+    fkey->updateRule= (strcmp(row[3], "RESTRICT") != 0) ? row[3] : "";
+    fkey->deleteRule= (strcmp(row[4], "RESTRICT") != 0) ? row[4] : "";
+    fkey->matchOption= (strcmp(row[5], "NONE") != 0) ? row[5] : "";
+
+    fkeys.push_back(fkey);
+  }
   dcon->freeResult(result);
   return true;
 }
@@ -353,7 +403,7 @@ void DrizzleDumpFieldMySQL::setType(const char* raw_type, const char* raw_collat
     convertDateTime= true;
   }
 
-  if (old_type.compare("TIME") == 0)
+  if ((old_type.compare("TIME") == 0) or (old_type.compare("YEAR") == 0))
   {
     type= "INT";
     return;
@@ -464,9 +514,9 @@ std::string DrizzleDumpDataMySQL::convertDate(const char* oldDate) const
 {
   boost::match_flag_type flags = boost::match_default;
   std::string output;
-  boost::regex date_regex("([0-9]{3}[1-9]-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01]))");
+  boost::regex date_regex("(0000|-00)");
 
-  if (regex_search(oldDate, date_regex, flags))
+  if (not regex_search(oldDate, date_regex, flags))
   {
     output.push_back('\'');
     output.append(oldDate);
@@ -478,15 +528,17 @@ std::string DrizzleDumpDataMySQL::convertDate(const char* oldDate) const
   return output;
 }
 
-std::ostream& DrizzleDumpDataMySQL::checkDateTime(std::ostream &os, const char* item, uint32_t field) const
+std::string DrizzleDumpDataMySQL::checkDateTime(const char* item, uint32_t field) const
 {
+  std::string ret;
+
   if (table->fields[field]->convertDateTime)
   {
     if (table->fields[field]->type.compare("INT") == 0)
-      os << convertTime(item);
+      ret= boost::lexical_cast<std::string>(convertTime(item));
     else
-      os << convertDate(item);
+      ret= convertDate(item);
   }
-  return os;
+  return ret;
 }
 

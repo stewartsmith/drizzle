@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /* drop and alter of tables */
 
@@ -148,24 +148,6 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
   bool foreign_key_error= false;
 
   LOCK_open.lock(); /* Part 2 of rm a table */
-
-  /*
-    If we have the table in the definition cache, we don't have to check the
-    .frm cursor to find if the table is a normal table (not view) and what
-    engine to use.
-  */
-
-  for (table= tables; table; table= table->next_local)
-  {
-    TableIdentifier identifier(table->db, table->table_name);
-    TableShare *share;
-    table->setDbType(NULL);
-
-    if ((share= TableShare::getShare(identifier)))
-    {
-      table->setDbType(share->db_type());
-    }
-  }
 
   if (not drop_temporary && lock_table_names_exclusively(session, tables))
   {
@@ -643,7 +625,7 @@ static int mysql_prepare_create_table(Session *session,
 
     if (sql_field->sql_type == DRIZZLE_TYPE_ENUM)
     {
-      uint32_t dummy;
+      size_t dummy;
       const CHARSET_INFO * const cs= sql_field->charset;
       TYPELIB *interval= sql_field->interval;
 
@@ -676,7 +658,7 @@ static int mysql_prepare_create_table(Session *session,
           if (String::needs_conversion(tmp->length(), tmp->charset(),
                                        cs, &dummy))
           {
-            uint32_t cnv_errs;
+            size_t cnv_errs;
             conv.copy(tmp->ptr(), tmp->length(), tmp->charset(), cs, &cnv_errs);
             interval->type_names[i]= session->mem_root->strmake_root(conv.ptr(), conv.length());
             interval->type_lengths[i]= conv.length();
@@ -718,7 +700,8 @@ static int mysql_prepare_create_table(Session *session,
             }
           }
         }
-        calculate_interval_lengths(cs, interval, &field_length, &dummy);
+        uint32_t new_dummy;
+        calculate_interval_lengths(cs, interval, &field_length, &new_dummy);
         sql_field->length= field_length;
       }
       set_if_smaller(sql_field->length, (uint32_t)MAX_FIELD_WIDTH-1);
@@ -1462,7 +1445,7 @@ bool mysql_create_table_no_lock(Session *session,
                                  &key_info_buffer, &key_count,
                                  select_field_count))
   {
-    boost::mutex::scoped_lock lock(LOCK_open); /* CREATE TABLE (some confussion on naming, double check) */
+    boost_unique_lock_t lock(LOCK_open); /* CREATE TABLE (some confussion on naming, double check) */
     error= locked_create_event(session,
                                identifier,
                                create_info,
@@ -1528,7 +1511,7 @@ static bool drizzle_create_table(Session *session,
 
   if (name_lock)
   {
-    boost::mutex::scoped_lock lock(LOCK_open); /* Lock for removing name_lock during table create */
+    boost_unique_lock_t lock(LOCK_open); /* Lock for removing name_lock during table create */
     session->unlink_open_table(name_lock);
   }
 
@@ -1697,7 +1680,7 @@ void wait_while_table_is_used(Session *session, Table *table,
   mysql_lock_abort(session, table);	/* end threads waiting on lock */
 
   /* Wait until all there are no other threads that has this table open */
-  TableIdentifier identifier(table->getMutableShare()->getSchemaName(), table->getMutableShare()->getTableName());
+  TableIdentifier identifier(table->getShare()->getSchemaName(), table->getShare()->getTableName());
   remove_table_from_cache(session, identifier, RTFC_WAIT_OTHER_THREAD_FLAG);
 }
 
@@ -1849,7 +1832,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       const char *old_message=session->enter_cond(COND_refresh, LOCK_open,
                                                   "Waiting to get writelock");
       mysql_lock_abort(session,table->table);
-      TableIdentifier identifier(table->table->getMutableShare()->getSchemaName(), table->table->getMutableShare()->getTableName());
+      TableIdentifier identifier(table->table->getShare()->getSchemaName(), table->table->getShare()->getTableName());
       remove_table_from_cache(session, identifier,
                               RTFC_WAIT_OTHER_THREAD_FLAG |
                               RTFC_CHECK_KILLED_FLAG);
@@ -1952,8 +1935,8 @@ send_result:
         }
         else
         {
-          boost::mutex::scoped_lock lock(LOCK_open);
-	  TableIdentifier identifier(table->table->getMutableShare()->getSchemaName(), table->table->getMutableShare()->getTableName());
+          boost::unique_lock<boost::mutex> lock(LOCK_open);
+	  TableIdentifier identifier(table->table->getShare()->getSchemaName(), table->table->getShare()->getTableName());
           remove_table_from_cache(session, identifier, RTFC_NO_FLAG);
         }
       }
@@ -2094,8 +2077,8 @@ bool mysql_create_like_table(Session* session,
   if (session->open_tables_from_list(&src_table, &not_used))
     return true;
 
-  TableIdentifier src_identifier(src_table->table->getMutableShare()->getSchemaName(),
-                                 src_table->table->getMutableShare()->getTableName(), src_table->table->getMutableShare()->getType());
+  TableIdentifier src_identifier(src_table->table->getShare()->getSchemaName(),
+                                 src_table->table->getShare()->getTableName(), src_table->table->getShare()->getType());
 
 
 
@@ -2139,7 +2122,7 @@ bool mysql_create_like_table(Session* session,
     {
       if (name_lock)
       {
-        boost::mutex::scoped_lock lock(LOCK_open); /* unlink open tables for create table like*/
+        boost_unique_lock_t lock(LOCK_open); /* unlink open tables for create table like*/
         session->unlink_open_table(name_lock);
       }
 
@@ -2158,7 +2141,7 @@ bool mysql_create_like_table(Session* session,
     {
       bool was_created;
       {
-        boost::mutex::scoped_lock lock(LOCK_open); /* We lock for CREATE TABLE LIKE to copy table definition */
+        boost_unique_lock_t lock(LOCK_open); /* We lock for CREATE TABLE LIKE to copy table definition */
         was_created= create_table_wrapper(*session, create_table_proto, destination_identifier,
                                                src_identifier, is_engine_set);
       }
@@ -2177,7 +2160,7 @@ bool mysql_create_like_table(Session* session,
 
     if (name_lock)
     {
-      boost::mutex::scoped_lock lock(LOCK_open); /* unlink open tables for create table like*/
+      boost_unique_lock_t lock(LOCK_open); /* unlink open tables for create table like*/
       session->unlink_open_table(name_lock);
     }
   }

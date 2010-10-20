@@ -21,6 +21,7 @@
 #ifndef DRIZZLED_UTIL_CONVERT_H
 #define DRIZZLED_UTIL_CONVERT_H
 
+#include <boost/lexical_cast.hpp>
 #include <string>
 #include <iostream>
 #include <sstream>
@@ -31,9 +32,7 @@ namespace drizzled
 template <class T>
 std::string to_string(T t)
 {
-  std::ostringstream o;
-  o << t;
-  return o.str();
+  return boost::lexical_cast<std::string>(t);
 }
 
 template <class T>

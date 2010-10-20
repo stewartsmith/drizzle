@@ -1,0 +1,9 @@
+create table t1 (a int primary key, b varchar(100) unique);
+insert into t1 values (2,"Beaker"),(3,"Cricket"), (1,"Shirty");
+--replace_column 9 #
+EXPLAIN SELECT * FROM t1;
+SELECT * FROM t1;
+--replace_column 9 #
+EXPLAIN SELECT a FROM t1 FORCE INDEX (PRIMARY) WHERE b="Beaker";
+SELECT a FROM t1 FORCE INDEX (PRIMARY) WHERE b="Beaker";
+drop table t1;

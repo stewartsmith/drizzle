@@ -21,7 +21,6 @@
 #define DRIZZLED_SQL_SORT_H
 
 #include <unistd.h>
-
 #include "drizzled/base.h"
 #include "drizzled/qsort_cmp.h"
 
@@ -44,7 +43,7 @@ class SortField;
 #define MERGEBUFF2		15
 
 /*
-   The structure sort_addon_field_st describes a fixed layout
+   The structure sort_addon_field describes a fixed layout
    for field values appended to sorted values in records to be sorted
    in the sort buffer.
    Only fixed layout is supported now.
@@ -59,14 +58,15 @@ class SortField;
    the callback function 'unpack_addon_fields'.
 */
 
-struct sort_addon_field_st {  /* Sort addon packed field */
+class sort_addon_field {  /* Sort addon packed field */
+public:
   Field *field;          /* Original field */
   uint32_t   offset;         /* Offset from the last sorted field */
   uint32_t   null_offset;    /* Offset to to null bit from the last sorted field */
   uint32_t   length;         /* Length in the sort buffer */
   uint8_t  null_bit;       /* Null bit mask for the field */
 
-  sort_addon_field_st() :
+  sort_addon_field() :
     field(NULL),
     offset(0),
     null_offset(0),
@@ -76,7 +76,8 @@ struct sort_addon_field_st {  /* Sort addon packed field */
 
 };
 
-struct buffpek_st {		/* Struktur om sorteringsbuffrarna */
+class buffpek {		/* Struktur om sorteringsbuffrarna */
+public:
   off_t file_pos;			/* Where we are in the sort file */
   unsigned char *base;			/* key pointers */
   unsigned char *key;			/* key pointers */
@@ -84,7 +85,7 @@ struct buffpek_st {		/* Struktur om sorteringsbuffrarna */
   size_t mem_count;			/* numbers of keys in memory */
   size_t max_keys;			/* Max keys in buffert */
 
-  buffpek_st() :
+  buffpek() :
     file_pos(0),
     base(0),
     key(0),
@@ -95,13 +96,15 @@ struct buffpek_st {		/* Struktur om sorteringsbuffrarna */
 
 };
 
-struct BUFFPEK_COMPARE_CONTEXT
+class BUFFPEK_COMPARE_CONTEXT
 {
+public:
   qsort_cmp2 key_compare;
   void *key_compare_arg;
 };
 
-struct st_sort_param {
+class sort_param {
+public:
   uint32_t rec_length;          /* Length of sorted records */
   uint32_t sort_length;			/* Length of sorted columns */
   uint32_t ref_length;			/* Length of record ref. */
@@ -112,7 +115,7 @@ struct st_sort_param {
   Table *sort_form;			/* For quicker make_sortkey */
   SortField *local_sortorder;
   SortField *end;
-  sort_addon_field_st *addon_field; /* Descriptors for companion fields */
+  sort_addon_field *addon_field; /* Descriptors for companion fields */
   unsigned char *unique_buff;
   bool not_killable;
   char* tmp_buffer;
@@ -121,21 +124,21 @@ struct st_sort_param {
   BUFFPEK_COMPARE_CONTEXT cmp_context;
 };
 
-typedef struct st_sort_param SORTPARAM;
+typedef class sort_param SORTPARAM;
 
 
 int merge_many_buff(SORTPARAM *param, unsigned char *sort_buffer,
-                    buffpek_st *buffpek,
+                    buffpek *buffpek,
                     uint32_t *maxbuffer, internal::IO_CACHE *t_file);
 
-uint32_t read_to_buffer(internal::IO_CACHE *fromfile, buffpek_st *buffpek,
+uint32_t read_to_buffer(internal::IO_CACHE *fromfile, buffpek *buffpek,
                         uint32_t sort_length);
 
 int merge_buffers(SORTPARAM *param,internal::IO_CACHE *from_file,
                   internal::IO_CACHE *to_file, unsigned char *sort_buffer,
-                  buffpek_st *lastbuff,
-                  buffpek_st *Fb,
-                  buffpek_st *Tb,int flag);
+                  buffpek *lastbuff,
+                  buffpek *Fb,
+                  buffpek *Tb,int flag);
 
 } /* namespace drizzled */
 

@@ -18,9 +18,13 @@ explain extended select CASE 1 when 1 then "one" WHEN 2 then "two" ELSE "more" E
 select CASE 2.0 when 1 then "one" WHEN 2.0 then "two" ELSE "more" END;
 select (CASE "two" when "one" then "1" WHEN "two" then "2" END);
 select (CASE "two" when "one" then 1.00 WHEN "two" then 2.00 END) +0.0;
+--error ER_DIVISION_BY_ZERO
 select case 1/0 when "a" then "true" else "false" END;
+--error ER_DIVISION_BY_ZERO
 select case 1/0 when "a" then "true" END;
+--error ER_DIVISION_BY_ZERO
 select (case 1/0 when "a" then "true" END);
+--error ER_DIVISION_BY_ZERO
 select (case 1/0 when "a" then "true" END) + 0.0;
 select case when 1>0 then "TRUE" else "FALSE" END;
 select case when 1<0 then "TRUE" else "FALSE" END;

@@ -5,7 +5,7 @@
 # All rights reserved.
 #
 # Use and distribution licensed under the BSD license.  See
-# the COPYING file in this directory for full text.
+# the COPYING.BSD file in the root source directory for full text.
 #
 #
 
@@ -108,14 +108,4 @@ CLEANFILES+= \
 	libdrizzle/drizzle_client.h.gch \
 	libdrizzle/drizzle_server.h.gch \
 	libdrizzle/common.h.gch
-
-EXTRA_DIST+= \
-	PROTOCOL \
-	config/config.rpath \
-	docs/Doxyfile.api \
-	docs/Doxyfile.dev \
-        docs/Doxyfile.drizzled \
-	docs/dev_header.html \
-	docs/api_header.html \
-	docs/doxygen.h
 

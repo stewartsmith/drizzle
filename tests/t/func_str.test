@@ -98,6 +98,7 @@ select LEAST(NULL,'HARRY','HARRIOT',NULL,'HAROLD'),GREATEST(NULL,'HARRY','HARRIO
 
 select quote('\'\"\\test');
 select quote(concat('abc\'', '\\cba'));
+--error ER_DIVISION_BY_ZERO
 select quote(1/0), quote('\0\Z');
 select length(quote(concat(char(0),"test")));
 select hex(quote(concat(char(224),char(227),char(230),char(231),char(232),char(234),char(235))));
@@ -469,12 +470,9 @@ select rpad(i, 7, ' ') as t from t1;
 --disable_metadata
 drop table t1;
 
-#
-# Bug #10418: LOAD_FILE does not behave like in manual if file does not exist
-#
 
+--error ER_TEXTFILE_NOT_READABLE
 select load_file("lkjlkj");
-select ifnull(load_file("lkjlkj"),"it's null");
 
 #
 # Bug#18243: REVERSE changes its argument

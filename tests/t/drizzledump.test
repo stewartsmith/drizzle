@@ -74,7 +74,6 @@ CREATE TABLE t1 (a int);
 INSERT INTO t1 VALUES (1),(2),(3);
 INSERT INTO t1 VALUES (4),(5),(6);
 --exec $DRIZZLE_DUMP --skip-comments --insert-ignore test t1
---exec $DRIZZLE_DUMP --skip-comments --insert-ignore --delayed-insert test t1
 DROP TABLE t1;
 
 --echo #
@@ -413,7 +412,7 @@ create table t1 (
  F_6faa8040da20ef399b63a72d0e4ab575 int,
  F_fe73f687e5bc5280214e0486b273a5f9 int);
 insert into t1 (F_8d3bba7425e7c98c50f52ca1b52d3735) values (1);
---exec $DRIZZLE_DUMP --skip-comments -c test
+--exec $DRIZZLE_DUMP --skip-comments test
 drop table t1;
 
 --echo #
@@ -523,10 +522,10 @@ select * from t1;
 
 show create table `t1`;
 
---exec $DRIZZLE_DUMP --skip-comments test t1 > $MYSQLTEST_VARDIR/tmp/bug19025.sql
+--exec $DRIZZLE_DUMP --skip-comments test t1 > $DRIZZLETEST_VARDIR/tmp/bug19025.sql
 DROP TABLE `t1`;
 
---exec $MYSQL test < $MYSQLTEST_VARDIR/tmp/bug19025.sql
+--exec $DRIZZLE test < $DRIZZLETEST_VARDIR/tmp/bug19025.sql
 
 select * from t1;
 
@@ -541,7 +540,6 @@ drop table `t1`;
 create table t1(a int);
 create table t2(a int);
 create table t3(a int);
---error 2
 --exec $DRIZZLE_DUMP --skip-comments --force --no-data test t3 t1 non_existing t2
 drop table t1, t2, t3;
 
@@ -615,19 +613,19 @@ insert t2 values ("We the people", "in order to perform");
 insert t2 values ("a more perfect", "union");
 select * from t1;
 select * from t2;
---exec $DRIZZLE_DUMP --tab=$MYSQLTEST_VARDIR/tmp/ test
---exec $MYSQL test < $MYSQLTEST_VARDIR/tmp/t1.sql
---exec $MYSQL test < $MYSQLTEST_VARDIR/tmp/t2.sql
+--exec $DRIZZLE_DUMP --tab=$DRIZZLETEST_VARDIR/tmp/ test
+--exec $DRIZZLE test < $DRIZZLETEST_VARDIR/tmp/t1.sql
+--exec $DRIZZLE test < $DRIZZLETEST_VARDIR/tmp/t2.sql
 # The first load tests the pausing code
---exec $DRIZZLE_IMPORT --use-threads=1 test $MYSQLTEST_VARDIR/tmp/t1.txt $MYSQLTEST_VARDIR/tmp/t2.txt
+--exec $DRIZZLE_IMPORT --use-threads=1 test $DRIZZLETEST_VARDIR/tmp/t1.txt $DRIZZLETEST_VARDIR/tmp/t2.txt
 # Now we test with multiple threads!
---exec $DRIZZLE_IMPORT --silent --use-threads=5 test $MYSQLTEST_VARDIR/tmp/t1.txt $MYSQLTEST_VARDIR/tmp/t2.txt
+--exec $DRIZZLE_IMPORT --silent --use-threads=5 test $DRIZZLETEST_VARDIR/tmp/t1.txt $DRIZZLETEST_VARDIR/tmp/t2.txt
 select * from t1;
 select * from t2;
 # Now we test with multiple threads, but less threads than files.
 create table words(a varchar(255));
 create table words2(b varchar(255));
---exec $DRIZZLE_IMPORT --silent --use-threads=2 test $MYSQLTEST_VARDIR/tmp/t1.txt $MYSQLTEST_VARDIR/tmp/t2.txt $MYSQLTEST_VARDIR/std_data_ln/words.dat $MYSQLTEST_VARDIR/std_data_ln/words2.dat
+--exec $DRIZZLE_IMPORT --silent --use-threads=2 test $DRIZZLETEST_VARDIR/tmp/t1.txt $DRIZZLETEST_VARDIR/tmp/t2.txt $DRIZZLETEST_VARDIR/std_data_ln/words.dat $DRIZZLETEST_VARDIR/std_data_ln/words2.dat
 select * from t1;
 select * from t2;
 select * from words;
@@ -637,7 +635,7 @@ select * from words2;
 drop table words;
 --replace_regex /.*mysqlimport(\.exe)*/mysql-import/
 --error 1
---exec $DRIZZLE_IMPORT --silent --use-threads=2 test $MYSQLTEST_VARDIR/tmp/t1.txt $MYSQLTEST_VARDIR/tmp/t2.txt $MYSQLTEST_VARDIR/std_data_ln/words.dat $MYSQLTEST_VARDIR/std_data_ln/words2.dat 2>&1
+--exec $DRIZZLE_IMPORT --silent --use-threads=2 test $DRIZZLETEST_VARDIR/tmp/t1.txt $DRIZZLETEST_VARDIR/tmp/t2.txt $DRIZZLETEST_VARDIR/std_data_ln/words.dat $DRIZZLETEST_VARDIR/std_data_ln/words2.dat 2>&1
 
 drop table t1;
 drop table t2;
@@ -652,7 +650,7 @@ drop table words2;
 create database `test-database`;
 use `test-database`;
 create table test (a int);
---exec $DRIZZLE_DUMP --compact --opt test-database
+--exec $DRIZZLE_DUMP --compact test-database
 drop database `test-database`;
 use test;
 
@@ -663,8 +661,8 @@ use test;
 CREATE DATABASE mysqldump_30126;
 USE mysqldump_30126;
 CREATE TABLE t1 (c1 int);
---exec $DRIZZLE_DUMP --add-drop-database mysqldump_30126 > $MYSQLTEST_VARDIR/tmp/bug30126.sql
---exec $DRIZZLE mysqldump_30126 < $MYSQLTEST_VARDIR/tmp/bug30126.sql
+--exec $DRIZZLE_DUMP --add-drop-database mysqldump_30126 > $DRIZZLETEST_VARDIR/tmp/bug30126.sql
+--exec $DRIZZLE mysqldump_30126 < $DRIZZLETEST_VARDIR/tmp/bug30126.sql
 DROP DATABASE mysqldump_30126;
 
 

@@ -140,7 +140,32 @@ void TableShare::release(TableShare *share)
     if (iter != table_def_cache.end())
     {
       table_def_cache.erase(iter);
-      delete share;
+    }
+    return;
+  }
+  share->unlock();
+}
+
+void TableShare::release(TableSharePtr &share)
+{
+  bool to_be_deleted= false;
+  safe_mutex_assert_owner(LOCK_open.native_handle);
+
+  share->lock();
+  if (!--share->ref_count)
+  {
+    to_be_deleted= true;
+  }
+
+  if (to_be_deleted)
+  {
+    TableIdentifier identifier(share->getSchemaName(), share->getTableName());
+    plugin::EventObserver::deregisterTableEvents(*share);
+   
+    TableDefinitionCache::iterator iter= table_def_cache.find(identifier.getKey());
+    if (iter != table_def_cache.end())
+    {
+      table_def_cache.erase(iter);
     }
     return;
   }
@@ -152,20 +177,19 @@ void TableShare::release(TableIdentifier &identifier)
   TableDefinitionCache::iterator iter= table_def_cache.find(identifier.getKey());
   if (iter != table_def_cache.end())
   {
-    TableShare *share= (*iter).second;
+    TableSharePtr share= (*iter).second;
     share->version= 0;                          // Mark for delete
     if (share->ref_count == 0)
     {
       share->lock();
       plugin::EventObserver::deregisterTableEvents(*share);
       table_def_cache.erase(identifier.getKey());
-      delete share;
     }
   }
 }
 
 
-static TableShare *foundTableShare(TableShare *share)
+static TableSharePtr foundTableShare(TableSharePtr share)
 {
   /*
     We found an existing table definition. Return it if we didn't get
@@ -178,7 +202,7 @@ static TableShare *foundTableShare(TableShare *share)
     /* Table definition contained an error */
     share->open_table_error(share->error, share->open_errno, share->errarg);
 
-    return NULL;
+    return TableSharePtr();
   }
 
   share->incrementTableCount();
@@ -209,11 +233,11 @@ static TableShare *foundTableShare(TableShare *share)
 #  Share for table
 */
 
-TableShare *TableShare::getShareCreate(Session *session, 
-                                       TableIdentifier &identifier,
-                                       int *error)
+TableSharePtr TableShare::getShareCreate(Session *session, 
+                                         TableIdentifier &identifier,
+                                         int *error)
 {
-  TableShare *share= NULL;
+  TableSharePtr share;
 
   *error= 0;
 
@@ -225,36 +249,27 @@ TableShare *TableShare::getShareCreate(Session *session,
     return foundTableShare(share);
   }
 
-  if (not (share= new TableShare(message::Table::STANDARD, identifier)))
-  {
-    return NULL;
-  }
-
+  share.reset(new TableShare(message::Table::STANDARD, identifier));
+  
   /*
     Lock mutex to be able to read table definition from file without
     conflicts
   */
   share->lock();
 
-  /**
-   * @TODO: we need to eject something if we exceed table_def_size
- */
   pair<TableDefinitionCache::iterator, bool> ret=
     table_def_cache.insert(make_pair(identifier.getKey(), share));
   if (ret.second == false)
   {
-    delete share;
-
-    return NULL;
+    return TableSharePtr();
   }
 
   if (share->open_table_def(*session, identifier))
   {
     *error= share->error;
     table_def_cache.erase(identifier.getKey());
-    delete share;
 
-    return NULL;
+    return TableSharePtr();
   }
   share->ref_count++;				// Mark in use
   
@@ -278,7 +293,7 @@ TableShare *TableShare::getShareCreate(Session *session,
   0  Not cached
 #  TableShare for table
 */
-TableShare *TableShare::getShare(TableIdentifier &identifier)
+TableSharePtr TableShare::getShare(TableIdentifier &identifier)
 {
   safe_mutex_assert_owner(LOCK_open.native_handle);
 
@@ -287,10 +302,8 @@ TableShare *TableShare::getShare(TableIdentifier &identifier)
   {
     return (*iter).second;
   }
-  else
-  {
-    return NULL;
-  }
+
+  return TableSharePtr();
 }
 
 static enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_type)
@@ -440,6 +453,7 @@ TableShare::TableShare(TableIdentifier::Type type_arg) :
   timestamp_field(NULL),
   key_info(NULL),
   mem_root(TABLE_ALLOC_BLOCK_SIZE),
+  all_set(),
   block_size(0),
   version(0),
   timestamp_offset(0),
@@ -463,7 +477,7 @@ TableShare::TableShare(TableIdentifier::Type type_arg) :
   null_fields(0),
   blob_fields(0),
   timestamp_field_offset(0),
-  varchar_fields(0),
+  has_variable_width(false),
   db_create_options(0),
   db_options_in_use(0),
   db_record_offset(0),
@@ -475,7 +489,6 @@ TableShare::TableShare(TableIdentifier::Type type_arg) :
   error(0),
   open_errno(0),
   errarg(0),
-  column_bitmap_size(0),
   blob_ptr_size(0),
   db_low_byte_first(false),
   name_lock(false),
@@ -510,6 +523,7 @@ TableShare::TableShare(TableIdentifier &identifier, const TableIdentifier::Key &
   timestamp_field(NULL),
   key_info(NULL),
   mem_root(TABLE_ALLOC_BLOCK_SIZE),
+  all_set(),
   block_size(0),
   version(0),
   timestamp_offset(0),
@@ -533,7 +547,7 @@ TableShare::TableShare(TableIdentifier &identifier, const TableIdentifier::Key &
   null_fields(0),
   blob_fields(0),
   timestamp_field_offset(0),
-  varchar_fields(0),
+  has_variable_width(false),
   db_create_options(0),
   db_options_in_use(0),
   db_record_offset(0),
@@ -545,7 +559,6 @@ TableShare::TableShare(TableIdentifier &identifier, const TableIdentifier::Key &
   error(0),
   open_errno(0),
   errarg(0),
-  column_bitmap_size(0),
   blob_ptr_size(0),
   db_low_byte_first(false),
   name_lock(false),
@@ -586,6 +599,7 @@ TableShare::TableShare(const TableIdentifier &identifier) : // Just used during 
   timestamp_field(NULL),
   key_info(NULL),
   mem_root(TABLE_ALLOC_BLOCK_SIZE),
+  all_set(),
   block_size(0),
   version(0),
   timestamp_offset(0),
@@ -609,7 +623,7 @@ TableShare::TableShare(const TableIdentifier &identifier) : // Just used during 
   null_fields(0),
   blob_fields(0),
   timestamp_field_offset(0),
-  varchar_fields(0),
+  has_variable_width(false),
   db_create_options(0),
   db_options_in_use(0),
   db_record_offset(0),
@@ -621,7 +635,6 @@ TableShare::TableShare(const TableIdentifier &identifier) : // Just used during 
   error(0),
   open_errno(0),
   errarg(0),
-  column_bitmap_size(0),
   blob_ptr_size(0),
   db_low_byte_first(false),
   name_lock(false),
@@ -669,6 +682,7 @@ TableShare::TableShare(TableIdentifier::Type type_arg,
   timestamp_field(NULL),
   key_info(NULL),
   mem_root(TABLE_ALLOC_BLOCK_SIZE),
+  all_set(),
   block_size(0),
   version(0),
   timestamp_offset(0),
@@ -692,7 +706,7 @@ TableShare::TableShare(TableIdentifier::Type type_arg,
   null_fields(0),
   blob_fields(0),
   timestamp_field_offset(0),
-  varchar_fields(0),
+  has_variable_width(false),
   db_create_options(0),
   db_options_in_use(0),
   db_record_offset(0),
@@ -704,7 +718,6 @@ TableShare::TableShare(TableIdentifier::Type type_arg,
   error(0),
   open_errno(0),
   errarg(0),
-  column_bitmap_size(0),
   blob_ptr_size(0),
   db_low_byte_first(false),
   name_lock(false),
@@ -785,7 +798,9 @@ TableShare::~TableShare()
     while (waiting_on_cond)
     {
       cond.notify_all();
-      pthread_cond_wait(cond.native_handle(), mutex.native_handle());
+      boost::mutex::scoped_lock scoped(mutex, boost::adopt_lock_t());
+      cond.wait(scoped);
+      scoped.release();
     }
     /* No thread refers to this anymore */
     mutex.unlock();
@@ -853,7 +868,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
   table_charset= get_charset(table_options.collation_id());
 
-  if (!table_charset)
+  if (! table_charset)
   {
     char errmsg[100];
     snprintf(errmsg, sizeof(errmsg),
@@ -1322,11 +1337,8 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     }
 
 
-    Table temp_table; /* Use this so that BLOB DEFAULT '' works */
-    temp_table.setShare(this);
-    temp_table.in_use= &session;
-    temp_table.getMutableShare()->db_low_byte_first= true; //Cursor->low_byte_first();
-    temp_table.getMutableShare()->blob_ptr_size= portable_sizeof_char_ptr;
+    db_low_byte_first= true; //Cursor->low_byte_first();
+    blob_ptr_size= portable_sizeof_char_ptr;
 
     uint32_t field_length= 0; //Assignment is for compiler complaint.
 
@@ -1429,6 +1441,12 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
                                 getTableProto()->field(fieldnr).name().c_str());
 
     field[fieldnr]= f;
+
+    // This needs to go, we should be setting the "use" on the field so that
+    // it does not reference the share/table.
+    Table temp_table; /* Use this so that BLOB DEFAULT '' works */
+    temp_table.setShare(this);
+    temp_table.in_use= &session;
 
     f->init(&temp_table); /* blob default values need table obj */
 
@@ -1681,12 +1699,10 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
   if (blob_fields)
   {
-    uint32_t k, *save;
-
     /* Store offsets to blob fields to find them fast */
     blob_field.resize(blob_fields);
-    save= &blob_field[0];
-    k= 0;
+    uint32_t *save= &blob_field[0];
+    uint32_t k= 0;
     for (Fields::iterator iter= field.begin(); iter != field.end()-1; iter++, k++)
     {
       if ((*iter)->flags & BLOB_FLAG)
@@ -1695,11 +1711,9 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
   }
 
   db_low_byte_first= true; // @todo Question this.
-  column_bitmap_size= bitmap_buffer_size(fields);
-
-  all_bitmap.resize(column_bitmap_size);
-  all_set.init(&all_bitmap[0], fields);
-  all_set.setAll();
+  all_set.clear();
+  all_set.resize(fields);
+  all_set.set();
 
   return local_error;
 }
@@ -1819,9 +1833,9 @@ int TableShare::open_table_from_share(Session *session,
                                       Table &outparam)
 {
   int local_error;
-  uint32_t records, bitmap_size;
+  uint32_t records;
   bool error_reported= false;
-  unsigned char *record, *bitmaps;
+  unsigned char *record= NULL;
   Field **field_ptr;
 
   /* Parsing of partitioning information from .frm needs session->lex set up. */
@@ -1952,14 +1966,9 @@ int TableShare::open_table_from_share(Session *session,
 
   /* Allocate bitmaps */
 
-  bitmap_size= column_bitmap_size;
-  if (!(bitmaps= (unsigned char*) outparam.alloc_root(bitmap_size*3)))
-  {
-    goto err;
-  }
-  outparam.def_read_set.init((my_bitmap_map*) bitmaps, fields);
-  outparam.def_write_set.init((my_bitmap_map*) (bitmaps+bitmap_size), fields);
-  outparam.tmp_set.init((my_bitmap_map*) (bitmaps+bitmap_size*2), fields);
+  outparam.def_read_set.resize(fields);
+  outparam.def_write_set.resize(fields);
+  outparam.tmp_set.resize(fields);
   outparam.default_column_bitmaps();
 
   /* The table struct is now initialized;  Open the table */
@@ -2001,10 +2010,6 @@ int TableShare::open_table_from_share(Session *session,
       goto err;
     }
   }
-
-#if defined(HAVE_purify)
-  memset(bitmaps, 0, bitmap_size*3);
-#endif
 
   return 0;
 
@@ -2123,11 +2128,11 @@ Field *TableShare::make_field(unsigned char *ptr,
                                  interval,
                                  field_charset);
   case DRIZZLE_TYPE_VARCHAR:
+    setVariableWidth();
     return new (&mem_root) Field_varstring(ptr,field_length,
                                       HA_VARCHAR_PACKLENGTH(field_length),
                                       null_pos,null_bit,
                                       field_name,
-                                      this,
                                       field_charset);
   case DRIZZLE_TYPE_BLOB:
     return new (&mem_root) Field_blob(ptr,

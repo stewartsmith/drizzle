@@ -48,12 +48,16 @@ TablesTool::TablesTool() :
   add_field("TABLE_SCHEMA");
   add_field("TABLE_NAME");
   add_field("TABLE_TYPE");
+  add_field("TABLE_ARCHETYPE");
   add_field("ENGINE");
   add_field("ROW_FORMAT", 10);
   add_field("TABLE_COLLATION");
   add_field("TABLE_CREATION_TIME");
   add_field("TABLE_UPDATE_TIME");
   add_field("TABLE_COMMENT", plugin::TableFunction::STRING, 2048, true);
+  add_field("AUTO_INCREMENT", plugin::TableFunction::NUMBER, 0, false);
+  add_field("TABLE_UUID", plugin::TableFunction::STRING, 36, true);
+  add_field("TABLE_VERSION", plugin::TableFunction::NUMBER, 0, true);
 }
 
 TablesTool::Generator::Generator(Field **arg) :
@@ -137,6 +141,16 @@ void TablesTool::Generator::fill()
   push(getTableMessage().name());
 
   /* TABLE_TYPE */
+  if (drizzled::TableIdentifier::isView(getTableMessage().type()))
+  {
+    push("VIEW");
+  }
+  else
+  {
+    push("BASE");
+  }
+
+  /* TABLE_ARCHETYPE */
   {
     switch (getTableMessage().type())
     {
@@ -189,4 +203,13 @@ void TablesTool::Generator::fill()
   {
     push();
   }
+
+  /* AUTO_INCREMENT */
+  push(getTableMessage().options().auto_increment_value());
+
+  /* TABLE_UUID */
+  push(getTableMessage().uuid());
+
+  /* TABLE_VERSION */
+  push(getTableMessage().version());
 }

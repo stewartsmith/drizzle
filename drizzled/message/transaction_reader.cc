@@ -39,14 +39,19 @@
 #include <unistd.h>
 #include <drizzled/message/transaction.pb.h>
 #include <drizzled/message/statement_transform.h>
+#include <drizzled/message/transaction_manager.h>
 #include <drizzled/util/convert.h>
 
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 
+#include <boost/program_options.hpp>
+
 using namespace std;
 using namespace google;
 using namespace drizzled;
+
+namespace po= boost::program_options;
 
 static const char *replace_with_spaces= "\n\r";
 
@@ -126,18 +131,74 @@ static bool isEndStatement(const message::Statement &statement)
   return true;
 }
 
-static void printTransaction(const message::Transaction &transaction)
+static bool isEndTransaction(const message::Transaction &transaction)
+{
+  const message::TransactionContext trx= transaction.transaction_context();
+
+  size_t num_statements= transaction.statement_size();
+
+  /*
+   * If any Statement is partial, then we can expect another Transaction
+   * message.
+   */
+  for (size_t x= 0; x < num_statements; ++x)
+  {
+    const message::Statement &statement= transaction.statement(x);
+
+    if (not isEndStatement(statement))
+      return false;
+  }
+
+  return true;
+}
+
+static void printEvent(const message::Event &event)
+{
+  switch (event.type())
+  {
+    case message::Event::STARTUP:
+    {
+      cout << "-- EVENT: Server startup\n";
+      break;
+    }
+    case message::Event::SHUTDOWN:
+    {
+      cout << "-- EVENT: Server shutdown\n";
+      break;
+    }
+    default:
+    {
+      cout << "-- EVENT: Unknown event\n";
+      break;
+    }
+  }
+}
+
+static void printTransaction(const message::Transaction &transaction,
+                             bool ignore_events)
 {
   static uint64_t last_trx_id= 0;
   bool should_commit= true;
   const message::TransactionContext trx= transaction.transaction_context();
+
+  /*
+   * First check to see if this is an event message.
+   */
+  if (transaction.has_event())
+  {
+    last_trx_id= trx.transaction_id();
+    if (not ignore_events)
+      printEvent(transaction.event());
+    return;
+  }
 
   size_t num_statements= transaction.statement_size();
   size_t x;
 
   /*
    * One way to determine when a new transaction begins is when the
-   * transaction id changes. We check that here.
+   * transaction id changes (if all transactions have their GPB messages
+   * grouped together, which this program will). We check that here.
    */
   if (trx.transaction_id() != last_trx_id)
     cout << "START TRANSACTION;" << endl;
@@ -150,6 +211,15 @@ static void printTransaction(const message::Transaction &transaction)
 
     if (should_commit)
       should_commit= isEndStatement(statement);
+
+    /* A ROLLBACK would be the only Statement within the Transaction
+     * since all other Statements will have been deleted from the
+     * Transaction message, so we should fall out of this loop immediately.
+     * We don't want to issue an unnecessary COMMIT, so we change
+     * should_commit to false here.
+     */
+    if (statement.type() == message::Statement::ROLLBACK)
+      should_commit= false;
 
     printStatement(statement);
   }
@@ -170,31 +240,58 @@ int main(int argc, char* argv[])
   GOOGLE_PROTOBUF_VERIFY_VERSION;
   int file;
 
-  if (argc < 2 || argc > 3)
+  /*
+   * Setup program options
+   */
+  po::options_description desc("Program options");
+  desc.add_options()
+    ("help", N_("Display help and exit"))
+    ("checksum", N_("Perform checksum"))
+    ("ignore-events", N_("Ignore event messages"))
+    ("input-file", po::value< vector<string> >(), N_("Transaction log file"));
+
+  /*
+   * We allow one positional argument that will be transaction file name
+   */
+  po::positional_options_description pos;
+  pos.add("input-file", 1);
+
+  /*
+   * Parse the program options
+   */
+  po::variables_map vm;
+  po::store(po::command_line_parser(argc, argv).
+            options(desc).positional(pos).run(), vm);
+  po::notify(vm);
+
+  /*
+   * If the help option was given, or not input file was supplied,
+   * print out usage information.
+   */
+  if (vm.count("help") || not vm.count("input-file"))
   {
-    fprintf(stderr, _("Usage: %s TRANSACTION_LOG [--checksum] \n"), argv[0]);
+    fprintf(stderr, _("Usage: %s [options] TRANSACTION_LOG \n"),
+            argv[0]);
+    fprintf(stderr, _("OPTIONS:\n"));
+    fprintf(stderr, _("--help           :  Display help and exit\n"));
+    fprintf(stderr, _("--checksum       :  Perform checksum\n"));
+    fprintf(stderr, _("--ignore-events  :  Ignore event messages\n"));
+    return -1;
+  }
+
+  bool do_checksum= vm.count("checksum") ? true : false;
+  bool ignore_events= vm.count("ignore-events") ? true : false;
+
+  string filename= vm["input-file"].as< vector<string> >()[0];
+  file= open(filename.c_str(), O_RDONLY);
+  if (file == -1)
+  {
+    fprintf(stderr, _("Cannot open file: %s\n"), filename.c_str());
     return -1;
   }
 
   message::Transaction transaction;
-
-  file= open(argv[1], O_RDONLY);
-  if (file == -1)
-  {
-    fprintf(stderr, _("Cannot open file: %s\n"), argv[1]);
-    return -1;
-  }
-
-  bool do_checksum= false;
-
-  if (argc == 3)
-  {
-    string checksum_arg(argv[2]);
-    transform(checksum_arg.begin(), checksum_arg.end(), checksum_arg.begin(), ::tolower);
-
-    if ("--checksum" == checksum_arg)
-      do_checksum= true;
-  }
+  message::TransactionManager trx_mgr;
 
   protobuf::io::ZeroCopyInputStream *raw_input= new protobuf::io::FileInputStream(file);
   protobuf::io::CodedInputStream *coded_input= new protobuf::io::CodedInputStream(raw_input);
@@ -276,8 +373,42 @@ int main(int argc, char* argv[])
       break;
     }
 
-    /* Print the transaction */
-    printTransaction(transaction);
+    if (not isEndTransaction(transaction))
+    {
+      trx_mgr.store(transaction);
+    }
+    else
+    {
+      const message::TransactionContext trx= transaction.transaction_context();
+      uint64_t transaction_id= trx.transaction_id();
+
+      /*
+       * If there are any previous Transaction messages for this transaction,
+       * store this one, then output all of them together.
+       */
+      if (trx_mgr.contains(transaction_id))
+      {
+        trx_mgr.store(transaction);
+
+        uint32_t size= trx_mgr.getTransactionBufferSize(transaction_id);
+        uint32_t idx= 0;
+
+        while (idx != size)
+        {
+          message::Transaction new_trx;
+          trx_mgr.getTransactionMessage(new_trx, transaction_id, idx);
+          printTransaction(new_trx, ignore_events);
+          idx++;
+        }
+
+        /* No longer need this transaction */
+        trx_mgr.remove(transaction_id);
+      }
+      else
+      {
+        printTransaction(transaction, ignore_events);
+      }
+    }
 
     /* Skip 4 byte checksum */
     coded_input->ReadLittleEndian32(&checksum);
@@ -291,10 +422,11 @@ int main(int argc, char* argv[])
     }
 
     previous_length= length;
-  }
+  } /* end while */
+
   if (buffer)
     free(buffer);
-  
+
   delete coded_input;
   delete raw_input;
 

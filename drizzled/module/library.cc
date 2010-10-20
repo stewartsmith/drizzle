@@ -24,6 +24,8 @@
 #include <cerrno>
 #include <string>
 
+#include <boost/filesystem.hpp>
+
 #include "drizzled/plugin.h"
 #include "drizzled/definitions.h"
 #include "drizzled/error.h"
@@ -31,6 +33,7 @@
 #include "drizzled/module/library.h"
 
 using namespace std;
+namespace fs=boost::filesystem;
 
 namespace drizzled
 {
@@ -50,22 +53,19 @@ module::Library::~Library()
   */
 }
 
-const string module::Library::getLibraryPath(const string &plugin_name)
+const fs::path module::Library::getLibraryPath(const string &plugin_name)
 {
-  /* Compile dll path */
-  string dlpath;
-  dlpath.reserve(FN_REFLEN);
-  dlpath.append(opt_plugin_dir);
-  dlpath.append("/");
-  dlpath.append("lib");
-  dlpath.append(plugin_name);
-  dlpath.append("_plugin");
+  string plugin_lib_name("lib");
+  plugin_lib_name.append(plugin_name);
+  plugin_lib_name.append("_plugin");
 #if defined(TARGET_OS_OSX)
-  dlpath.append(".dylib");
+  plugin_lib_name.append(".dylib");
 #else
-  dlpath.append(".so");
+  plugin_lib_name.append(".so");
 #endif
-  return dlpath;
+
+  /* Compile dll path */
+  return plugin_dir / plugin_lib_name;
 }
 
 module::Library *module::Library::loadLibrary(const string &plugin_name, bool builtin)
@@ -102,7 +102,7 @@ module::Library *module::Library::loadLibrary(const string &plugin_name, bool bu
   else
   {
   /* Open new dll handle */
-    dlpath.assign(Library::getLibraryPath(plugin_name));
+    dlpath.assign(Library::getLibraryPath(plugin_name).file_string());
     handle= dlopen(dlpath.c_str(), RTLD_NOW|RTLD_GLOBAL);
     if (handle == NULL)
     {

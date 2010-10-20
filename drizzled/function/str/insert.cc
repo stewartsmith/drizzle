@@ -42,9 +42,9 @@ String *Item_func_insert::val_str(String *str)
       args[3]->null_value)
     goto null;
 
-  if ((start < 0) || (start > res->length()))
+  if ((start < 0) || (start > static_cast<int64_t>(res->length())))
     return res;                                 // Wrong param; skip insert
-  if ((length < 0) || (length > res->length()))
+  if ((length < 0) || (length > static_cast<int64_t>(res->length())))
     length= res->length();
 
   /* start and length are now sufficiently valid to pass to charpos function */
@@ -52,9 +52,9 @@ String *Item_func_insert::val_str(String *str)
    length= res->charpos((int) length, (uint32_t) start);
 
   /* Re-testing with corrected params */
-  if (start > res->length())
+  if (start > static_cast<int64_t>(res->length()))
     return res;
-  if (length > res->length() - start)
+  if (length > static_cast<int64_t>(res->length()) - start)
     length= res->length() - start;
 
   if ((uint64_t) (res->length() - length + res2->length()) >

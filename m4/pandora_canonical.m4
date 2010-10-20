@@ -4,7 +4,7 @@ dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
 dnl Which version of the canonical setup we're using
-AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.155])
+AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.161])
 
 AC_DEFUN([PANDORA_FORCE_DEPEND_TRACKING],[
   AC_ARG_ENABLE([fat-binaries],
@@ -108,6 +108,18 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
     PANDORA_VC_VERSION
   ],[
     PANDORA_TEST_VC_DIR
+
+    changequote(<<, >>)dnl
+    PANDORA_RELEASE_ID=`echo $VERSION | sed 's/[^0-9]//g'`
+    changequote([, ])dnl
+
+    PANDORA_RELEASE_COMMENT=""
+    AC_DEFINE_UNQUOTED([PANDORA_RELEASE_VERSION],["$VERSION"],
+                       [Version of the software])
+
+    AC_SUBST(PANDORA_RELEASE_COMMENT)
+    AC_SUBST(PANDORA_RELEASE_VERSION)
+    AC_SUBST(PANDORA_RELEASE_ID)
   ])
   PANDORA_VERSION
 
@@ -233,10 +245,23 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   AC_CHECK_PROGS([DOXYGEN], [doxygen])
   AC_CHECK_PROGS([PERL], [perl])
   AC_CHECK_PROGS([DPKG_GENSYMBOLS], [dpkg-gensymbols], [:])
+  AC_CHECK_PROGS([LCOV], [lcov], [echo lcov not found])
+  AC_CHECK_PROGS([LCOV_GENHTML], [genhtml], [echo genhtml not found])
+
   AC_CHECK_PROGS([SPHINXBUILD], [sphinx-build], [:])
+  AS_IF([test "x${SPHINXBUILD}" != "x:"],[
+    AC_CACHE_CHECK([if sphinx is new enough],[ac_cv_recent_sphinx],[
+    
+    ${SPHINXBUILD} -Q -C -b man -d conftest.d . . >/dev/null 2>&1
+    AS_IF([test $? -eq 0],[ac_cv_recent_sphinx=yes],
+          [ac_cv_recent_sphinx=no])
+    rm -rf conftest.d
+    ])
+  ])
 
   AM_CONDITIONAL(HAVE_DPKG_GENSYMBOLS,[test "x${DPKG_GENSYMBOLS}" != "x:"])
   AM_CONDITIONAL(HAVE_SPHINX,[test "x${SPHINXBUILD}" != "x:"])
+  AM_CONDITIONAL(HAVE_RECENT_SPHINX,[test "x${ac_cv_recent_sphinx}" = "xyes"])
 
   m4_if(m4_substr(m4_esyscmd(test -d po && echo 0),0,1),0, [
     AM_PO_SUBDIRS

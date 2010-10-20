@@ -26,6 +26,7 @@
 #include <algorithm>
 
 #include "drizzled/function/math/round.h"
+#include "drizzled/util/test.h"
 
 namespace drizzled
 {

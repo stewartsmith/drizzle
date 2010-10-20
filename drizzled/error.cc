@@ -39,15 +39,8 @@ namespace
 class ErrorStringNotFound: public std::exception
 {
 public:
-  ErrorStringNotFound(uint32_t code)
-    : error_num_(code)
+  ErrorStringNotFound()
   {}
-  uint32_t error_num() const
-  {
-    return error_num_;
-  }
-private:
-  uint32_t error_num_;
 };
 
 /*
@@ -202,7 +195,7 @@ const std::string &ErrorMap::find(uint32_t error_num) const
   ErrorMessageMap::const_iterator pos= mapping_.find(error_num);
   if (pos == mapping_.end())
   {
-    throw ErrorStringNotFound(error_num);
+    throw ErrorStringNotFound();
   }
   return pos->second;
 }
@@ -215,9 +208,9 @@ ErrorMap::ErrorMap()
   add(ER_YES, N_("YES"));
   add(ER_CANT_CREATE_FILE, N_("Can't create file '%-.200s' (errno: %d)"));
   add(ER_CANT_CREATE_TABLE, N_("Can't create table '%-.200s' (errno: %d)"));
-  add(ER_CANT_CREATE_DB, N_("Can't create database '%-.192s' (errno: %d)"));
-  add(ER_DB_CREATE_EXISTS, N_("Can't create database '%-.192s'; database exists"));
-  add(ER_DB_DROP_EXISTS, N_("Can't drop database '%-.192s'; database doesn't exist"));
+  add(ER_CANT_CREATE_DB, N_("Can't create schema '%-.192s' (errno: %d)"));
+  add(ER_DB_CREATE_EXISTS, N_("Can't create schema '%-.192s'; schema exists"));
+  add(ER_DB_DROP_EXISTS, N_("Can't drop schema '%-.192s'; schema doesn't exist"));
   add(ER_CANT_DELETE_FILE, N_("Error on delete of '%-.192s' (errno: %d)"));
   add(ER_CANT_GET_STAT, N_("Can't get status of '%-.200s' (errno: %d)"));
   add(ER_CANT_LOCK, N_("Can't lock file (errno: %d)"));
@@ -247,12 +240,12 @@ ErrorMap::ErrorMap()
   add(ER_OUT_OF_RESOURCES, N_("Out of memory; check if drizzled or some other process uses all available memory; if not, you may have to use 'ulimit' to allow drizzled to use more memory or you can add more swap space"));
   add(ER_BAD_HOST_ERROR, N_("Can't get hostname for your address"));
   add(ER_HANDSHAKE_ERROR, N_("Bad handshake"));
-  add(ER_DBACCESS_DENIED_ERROR, N_("Access denied for user '%-.48s'@'%-.64s' to database '%-.192s'"));
+  add(ER_DBACCESS_DENIED_ERROR, N_("Access denied for user '%-.48s'@'%-.64s' to schema '%-.192s'"));
   add(ER_ACCESS_DENIED_ERROR, N_("Access denied for user '%-.48s'@'%-.64s' (using password: %s)"));
-  add(ER_NO_DB_ERROR, N_("No database selected"));
+  add(ER_NO_DB_ERROR, N_("No schema selected"));
   add(ER_UNKNOWN_COM_ERROR, N_("Unknown command"));
   add(ER_BAD_NULL_ERROR, N_("Column '%-.192s' cannot be null"));
-  add(ER_BAD_DB_ERROR, N_("Unknown database '%-.192s'"));
+  add(ER_BAD_DB_ERROR, N_("Unknown schema '%-.192s'"));
   add(ER_TABLE_EXISTS_ERROR, N_("Table '%-.192s' already exists"));
   add(ER_BAD_TABLE_ERROR, N_("Unknown table '%-.100s'"));
   add(ER_NON_UNIQ_ERROR, N_("Column '%-.192s' in %-.192s is ambiguous"));
@@ -287,7 +280,7 @@ ErrorMap::ErrorMap()
   add(ER_NO_SUCH_INDEX, N_("Table '%-.192s' has no index like the one used in CREATE INDEX; recreate the table"));
   add(ER_WRONG_FIELD_TERMINATORS, N_("Field separator argument '%-.32s' with length '%d' is not what is expected; check the manual"));
   add(ER_BLOBS_AND_NO_TERMINATED, N_("You can't use fixed rowlength with BLOBs; please use 'fields terminated by'"));
-  add(ER_TEXTFILE_NOT_READABLE, N_("The file '%-.128s' must be in the database directory or be readable by all"));
+  add(ER_TEXTFILE_NOT_READABLE, N_("The file '%-.128s' must be in the schema directory or be readable by all"));
   add(ER_FILE_EXISTS_ERROR, N_("File '%-.200s' already exists"));
   add(ER_LOAD_INFO, N_("Records: %ld  Deleted: %ld  Skipped: %ld  Warnings: %ld"));
   add(ER_WRONG_SUB_KEY, N_("Incorrect prefix key; the used key part isn't a string, the used length is longer than the key part, or the storage engine doesn't support unique prefix keys"));
@@ -299,7 +292,7 @@ ErrorMap::ErrorMap()
   add(ER_KILL_DENIED_ERROR, N_("You are not owner of thread %lu"));
   add(ER_NO_TABLES_USED, N_("No tables used"));
   add(ER_BLOB_CANT_HAVE_DEFAULT, N_("BLOB/TEXT column '%-.192s' can't have a default value"));
-  add(ER_WRONG_DB_NAME, N_("Incorrect database name '%-.100s'"));
+  add(ER_WRONG_DB_NAME, N_("Incorrect schema name '%-.100s'"));
   add(ER_WRONG_TABLE_NAME, N_("Incorrect table name '%-.100s'"));
   add(ER_TOO_BIG_SELECT, N_("The SELECT would examine more than MAX_JOIN_SIZE rows; check your WHERE and use SET SQL_BIG_SELECTS=1 or SET MAX_JOIN_SIZE=# if the SELECT is okay"));
   add(ER_UNKNOWN_ERROR, N_("Unknown error"));

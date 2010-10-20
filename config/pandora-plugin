@@ -25,6 +25,7 @@ import subprocess
 
 plugin_am_file=None
 plugin_ac_file=None
+plugin_doc_index=None
 
 class ChangeProtectedFile(object):
 
@@ -191,7 +192,15 @@ def write_plugin(plugin, plugin_ini_list):
 
   write_plugin_ac(plugin, plugin_ac_file)
   write_plugin_am(plugin, plugin_am_file)
+  write_plugin_docs(plugin, plugin_doc_index)
   plugin['writing_status'] = 'done'
+
+def write_plugin_docs(plugin, doc_index):
+  if plugin['docs'] is not None and os.path.isdir("docs/plugins"):
+    if not os.path.exists(os.path.join("docs/plugins",plugin["name"])):
+      os.symlink(os.path.abspath(plugin["docs"]), os.path.join("docs/plugins",plugin["name"]))
+    doc_index.write("""
+   %(name)s/index""" % plugin)
 
 def write_plugin_ac(plugin, plugin_ac):
   #
@@ -229,8 +238,8 @@ AS_HELP_STRING([--without-%(name_with_dashes)s-plugin],[Disable building %(title
   ])
 AC_ARG_ENABLE([%(name_with_dashes)s-plugin],[
 dnl indented wierd to make the help output correct
-AS_HELP_STRING([--enable-%(name_with_dashes)s-plugin],[Build %(title)s. @<:@default=%(default_yesno)s@:>@])
-AS_HELP_STRING([--disable-%(name_with_dashes)s-plugin],[Disable building %(title)s])
+AS_HELP_STRING([--enable-%(name_with_dashes)s-plugin],[Enable loading %(title)s by default. @<:@default=%(default_yesno)s@:>@])
+AS_HELP_STRING([--disable-%(name_with_dashes)s-plugin],[Disable loading %(title)s by default.])
   ],
   [enable_%(name)s_plugin="$enableval"],
   [enable_%(name)s_plugin=%(default_yesno)s])
@@ -351,6 +360,10 @@ def find_testsuite(plugin_dir):
     return ""
   return None
 
+def find_docs(plugin_dir):
+  if os.path.isfile(os.path.join(plugin_dir, "docs", "index.rst")):
+    return os.path.join(plugin_dir, "docs")
+
 def read_plugin_ini(plugin_dir):
     if plugin_dir == ".":
       plugin_name="**OUT-OF-TREE**"
@@ -420,6 +433,7 @@ def read_plugin_ini(plugin_dir):
         plugin['testsuite']=True
       else:
         plugin['testsuite']=False
+    plugin['docs']= find_docs(plugin_dir)
 
     plugin['cflags']+= ' ' + config['extra_cflags']
     plugin['cppflags']+= ' ' + config['extra_cppflags']
@@ -485,6 +499,8 @@ EXTRA_DIST += %(rel_path)s/plugin.ini
       plugin_am.write("EXTRA_DIST += %(rel_path)s/%(testsuitedir)s\n" % plugin)
   if plugin.has_key('dist_testsuite') and plugin['dist_testsuite'] != "":
     plugin_am.write("EXTRA_DIST += %(rel_path)s/%(dist_testsuite)s\n" % plugin)
+  if plugin['docs'] is not None:
+    plugin_am.write("EXTRA_DIST += ${top_srcdir}/%(rel_path)s/docs/*.rst\n" % plugin)
   if plugin['static']:
     plugin_am.write("""
 %(root_plugin_dir)s_%(plugin_prefix)s%(name)s_dir=${top_srcdir}/%(rel_path)s
@@ -600,7 +616,6 @@ os.path.walk(os.path.join(config['top_srcdir'],
              accumulate_plugins,
              plugin_list)
 
-
 if not os.path.exists("config/pandora-plugin.am") or "write" in actions:
   plugin_am_file = ChangeProtectedFile(os.path.join('config', 'pandora-plugin.am'))
   plugin_am_file.write("""
@@ -630,6 +645,17 @@ PANDORA_DYNAMIC_LDADDS=
 if not os.path.exists("config/pandora-plugin.ac") or "write" in actions:
   plugin_ac_file = ChangeProtectedFile(os.path.join('config', 'pandora-plugin.ac'))
   plugin_ac_file.write("dnl Generated file, run make to rebuild\n")
+
+if os.path.exists("docs/plugins"):
+  if not os.path.exists("docs/plugins/list.rst") or "write" in actions:
+    plugin_doc_index = ChangeProtectedFile("docs/plugins/list.rst")
+    plugin_doc_index.write("""
+Plugin Documentation
+====================
+
+.. toctree::
+   :maxdepth: 2
+""")
 
 
 if os.path.exists('plugin.ini'):
@@ -672,3 +698,5 @@ if plugin_am_file is not None:
   plugin_am_file.close()
 if plugin_ac_file is not None:
   plugin_ac_file.close()
+if plugin_doc_index is not None:
+  plugin_doc_index.close()

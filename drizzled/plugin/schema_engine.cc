@@ -65,11 +65,11 @@ void StorageEngine::getIdentifiers(Session &session, SchemaIdentifiers &schemas)
 class StorageEngineGetSchemaDefinition: public unary_function<StorageEngine *, bool>
 {
   const SchemaIdentifier &identifier;
-  message::Schema &schema_proto;
+  message::SchemaPtr &schema_proto;
 
 public:
   StorageEngineGetSchemaDefinition(const SchemaIdentifier &identifier_arg,
-                                   message::Schema &schema_proto_arg) :
+                                   message::SchemaPtr &schema_proto_arg) :
     identifier(identifier_arg),
     schema_proto(schema_proto_arg) 
   {
@@ -84,15 +84,13 @@ public:
 /*
   Return value is "if parsed"
 */
-bool StorageEngine::getSchemaDefinition(const drizzled::TableIdentifier &identifier, message::Schema &proto)
+bool StorageEngine::getSchemaDefinition(const drizzled::TableIdentifier &identifier, message::SchemaPtr &proto)
 {
   return StorageEngine::getSchemaDefinition(identifier, proto);
 }
 
-bool StorageEngine::getSchemaDefinition(const SchemaIdentifier &identifier, message::Schema &proto)
+bool StorageEngine::getSchemaDefinition(const SchemaIdentifier &identifier, message::SchemaPtr &proto)
 {
-  proto.Clear();
-
   EngineVector::iterator iter=
     find_if(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
             StorageEngineGetSchemaDefinition(identifier, proto));
@@ -107,7 +105,7 @@ bool StorageEngine::getSchemaDefinition(const SchemaIdentifier &identifier, mess
 
 bool StorageEngine::doesSchemaExist(const SchemaIdentifier &identifier)
 {
-  message::Schema proto;
+  message::SchemaPtr proto;
 
   return StorageEngine::getSchemaDefinition(identifier, proto);
 }
@@ -115,14 +113,14 @@ bool StorageEngine::doesSchemaExist(const SchemaIdentifier &identifier)
 
 const CHARSET_INFO *StorageEngine::getSchemaCollation(const SchemaIdentifier &identifier)
 {
-  message::Schema schmema_proto;
+  message::SchemaPtr schmema_proto;
   bool found;
 
   found= StorageEngine::getSchemaDefinition(identifier, schmema_proto);
 
-  if (found && schmema_proto.has_collation())
+  if (found && schmema_proto->has_collation())
   {
-    const string buffer= schmema_proto.collation();
+    const string buffer= schmema_proto->collation();
     const CHARSET_INFO* cs= get_charset_by_name(buffer.c_str());
 
     if (not cs)
@@ -220,6 +218,7 @@ public:
   {
     // @todo eomeday check that at least one engine said "true"
     bool success= engine->doAlterSchema(schema_message);
+
 
     if (success)
       success_count++;

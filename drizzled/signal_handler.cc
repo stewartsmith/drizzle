@@ -182,7 +182,7 @@ void drizzled_handle_segfault(int sig)
       if (begin && end)
       {
         begin++;
-        *end= NULL;
+        *end= '\0';
 
         int status;
         char *ret = abi::__cxa_demangle(begin, function, &sz, &status);
@@ -194,7 +194,7 @@ void drizzled_handle_segfault(int sig)
         {
           std::strncpy(function, begin, sz);
           std::strncat(function, "()", sz);
-          function[sz-1] = NULL;
+          function[sz-1] = '\0';
         }
         std::cerr << function << std::endl;
       }

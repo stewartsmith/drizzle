@@ -27,6 +27,8 @@ sbin_PROGRAMS =
 lib_LTLIBRARIES = 
 noinst_LTLIBRARIES =
 noinst_PROGRAMS =
+man_MANS =
+bin_PROGRAMS =
 
 VERSION=$(PANDORA_RELEASE_VERSION)
 
@@ -38,8 +40,11 @@ endif
 DIST_SUBDIRS = ${SUBDIRS} tests
 
 BUILT_SOURCES=
+BUILT_MAINT_SRC=
 EXTRA_DIST= \
 	    .quickly \
+	    COPYING.Boost \
+	    COPYING.BSD \
 	    DRIZZLE.FAQ \
 	    EXCEPTIONS-CLIENT \
 	    config/autorun.sh \
@@ -75,11 +80,6 @@ EXTRA_DIST+=	${man_MANS}
 .PHONY: \
 	indent
 
-
-doxygen:
-	${DOXYGEN} docs/Doxyfile.api
-	${DOXYGEN} docs/Doxyfile.dev
-	${DOXYGEN} docs/Doxyfile.drizzled
 
 indent:
 	for f in `find ${top_srcdir} -type f | grep -v innobase |\
@@ -133,9 +133,10 @@ drizzled/configmake.h: ${top_srcdir}/Makefile.in
 
 clean-local:
 	find . -name '*.gcno' | xargs rm -f 
-	-rm -rf docs/api docs/dev docs/_build
+	-rm -rf docs/api docs/dev docs/_build docs/doctrees
 
 include config/lint-source.am
+include config/lcov.am
 
 include docs/include.am
 include drizzled/message/include.am
@@ -162,14 +163,14 @@ merge-clean:
 
 install-exec-hook:
 	cd $(DESTDIR)$(sbindir) && \
-	mv -f drizzled$(EXEEXT) drizzled$(PACKAGE_VERSION)$(EXEEXT) && \
-	$(LN_S) drizzled$(PACKAGE_VERSION)$(EXEEXT) drizzled$(EXEEXT)
+	mv -f drizzled$(EXEEXT) drizzled7$(EXEEXT) && \
+	$(LN_S) drizzled7$(EXEEXT) drizzled$(EXEEXT)
 
 install-data-hook:
 	cd $(DESTDIR)$(man8dir) && \
-	mv -f drizzled.8 drizzled$(PACKAGE_VERSION).8 && \
-	$(LN_S) drizzled$(PACKAGE_VERSION).8 drizzled.8
+	mv -f drizzled.8 drizzled7.8 && \
+	$(LN_S) drizzled7.8 drizzled.8
 
 uninstall-hook:
-	rm $(DESTDIR)$(man8dir)/drizzled$(PACKAGE_VERSION).8
-	rm $(DESTDIR)$(sbindir)/drizzled$(PACKAGE_VERSION)$(EXEEXT)
+	rm $(DESTDIR)$(man8dir)/drizzled7.8
+	rm $(DESTDIR)$(sbindir)/drizzled7$(EXEEXT)

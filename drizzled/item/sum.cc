@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 
 /**
@@ -521,8 +521,10 @@ Field *Item_sum::create_tmp_field(bool ,
         convert_blob_length > Field_varstring::MAX_SIZE ||
         !convert_blob_length)
       return make_string_field(table);
+
+    table->setVariableWidth();
     field= new Field_varstring(convert_blob_length, maybe_null,
-                               name, table->getMutableShare(), collation.collation);
+                               name, collation.collation);
     break;
   case DECIMAL_RESULT:
     field= new Field_decimal(max_length, maybe_null, name,
@@ -1255,9 +1257,10 @@ Field *Item_sum_avg::create_tmp_field(bool group, Table *table,
       The easiest way is to do this is to store both value in a string
       and unpack on access.
     */
+    table->setVariableWidth();
     field= new Field_varstring(((hybrid_type == DECIMAL_RESULT) ?
                                 dec_bin_size : sizeof(double)) + sizeof(int64_t),
-                               0, name, table->getMutableShare(), &my_charset_bin);
+                               0, name, &my_charset_bin);
   }
   else if (hybrid_type == DECIMAL_RESULT)
     field= new Field_decimal(max_length, maybe_null, name,
@@ -1471,7 +1474,8 @@ Field *Item_sum_variance::create_tmp_field(bool group, Table *table,
       The easiest way is to do this is to store both value in a string
       and unpack on access.
     */
-    field= new Field_varstring(sizeof(double)*2 + sizeof(int64_t), 0, name, table->getMutableShare(), &my_charset_bin);
+    table->setVariableWidth();
+    field= new Field_varstring(sizeof(double)*2 + sizeof(int64_t), 0, name, &my_charset_bin);
   }
   else
     field= new Field_double(max_length, maybe_null, name, decimals, true);

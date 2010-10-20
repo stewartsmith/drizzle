@@ -3,10 +3,13 @@ create table t1 (`a` blob);
 insert into t1 values("hello world"),("Hello mars"),(NULL);
 select load_file(concat(@tmpdir,"/outfile-test.1"));
 load_file(concat(@tmpdir,"/outfile-test.1"))
-NULL
+hello world
+Hello mars
+\N
+
 select load_file(concat(@tmpdir,"/outfile-test.2"));
 load_file(concat(@tmpdir,"/outfile-test.2"))
-NULL
+hello world
 select load_file(concat(@tmpdir,"/outfile-test.3"));
 load_file(concat(@tmpdir,"/outfile-test.3"))
 NULL
@@ -14,12 +17,12 @@ ERROR HY000: File '../../tmp/outfile-test.1' already exists
 ERROR HY000: File '../../tmp/outfile-test.2' already exists
 ERROR HY000: File '../../tmp/outfile-test.3' already exists
 select load_file(concat(@tmpdir,"/outfile-test.not-exist"));
-load_file(concat(@tmpdir,"/outfile-test.not-exist"))
-NULL
+ERROR HY000: The file '../../tmp/outfile-test.not-exist' must be in the schema directory or be readable by all
 drop table t1;
 select load_file(concat(@tmpdir,"/outfile-test.4"));
 load_file(concat(@tmpdir,"/outfile-test.4"))
-NULL
+1
+
 CREATE TABLE t1 (a INT);
 EXPLAIN 
 SELECT *

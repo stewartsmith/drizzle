@@ -1,0 +1,10 @@
+Data Description Language
+========
+
+CREATE SCHEMA <>
+ALTER SCHEMA <>
+DROP SCHEMA <>
+
+CREATE TABLE <>
+ALTER TABLE <>
+DROP TABLE <>

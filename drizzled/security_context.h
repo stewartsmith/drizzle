@@ -58,7 +58,7 @@ public:
     return user;
   }
 
-  void setUser(const char *newuser)
+  void setUser(const std::string &newuser)
   {
     user.assign(newuser);
   }

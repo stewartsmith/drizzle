@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Original author: Paul McCullagh
  * Continued development: Barry Leslie
@@ -56,9 +56,9 @@ void *ms_my_get_thread()
 }
 
 #ifdef DRIZZLED
-const char *ms_my_get_mysql_home_path()
+const std::string ms_my_get_mysql_home_path()
 {
-	return drizzled::getDataHomeCatalog().c_str();
+	return drizzled::getDataHomeCatalog().file_string();
 }
 
 bool ms_is_autocommit()
@@ -67,7 +67,7 @@ bool ms_is_autocommit()
 }
 
 #else
-const char *ms_my_get_mysql_home_path()
+const std::string ms_my_get_mysql_home_path()
 {
 	return mysql_real_data_home;
 }

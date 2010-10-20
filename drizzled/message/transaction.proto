@@ -1,8 +1,12 @@
 package drizzled.message;
 option optimize_for = SPEED;
 
+option java_package = "org.drizzle.messages";
+option java_outer_classname = "TransactionMessage";
+
 import "table.proto";
 import "schema.proto";
+import "event.proto";
 
 /*
  * @file
@@ -296,6 +300,7 @@ message TableMetadata
 {
   required string schema_name = 1; /* Name of the containing schema */
   required string table_name = 2; /* Name of the table */
+  optional string catalog_name = 3;  /* Name of the catalog */
 }
 
 /*
@@ -476,6 +481,7 @@ message AlterSchemaStatement
 message DropSchemaStatement
 {
   required string schema_name = 1; /* Name of the schema to drop */
+  optional string catalog_name = 2; /* Name of the catalog containing the schema */
 }
 
 /*
@@ -584,4 +590,5 @@ message Transaction
 {
   required TransactionContext transaction_context = 1;
   repeated Statement statement = 2;
+  optional Event event = 3;
 }

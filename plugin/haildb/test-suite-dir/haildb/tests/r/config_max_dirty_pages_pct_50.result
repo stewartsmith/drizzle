@@ -1,0 +1,6 @@
+SHOW VARIABLES LIKE 'innodb_max_dirty_pages_pct';
+Variable_name	Value
+innodb_max_dirty_pages_pct	50
+SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='max_dirty_pages_pct';
+NAME	TYPE	VALUE
+max_dirty_pages_pct	ULONG	50

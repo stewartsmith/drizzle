@@ -11,7 +11,7 @@
 
   You should have received a copy of the GNU General Public License
   along with this program; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /*
   Make sure to look at ha_tina.h for more details.
@@ -597,25 +597,25 @@ int ha_tina::encode_quote(unsigned char *)
         {
           buffer.append('\\');
           buffer.append('"');
-          *ptr++;
+          (void) *ptr++;
         }
         else if (*ptr == '\r')
         {
           buffer.append('\\');
           buffer.append('r');
-          *ptr++;
+          (void) *ptr++;
         }
         else if (*ptr == '\\')
         {
           buffer.append('\\');
           buffer.append('\\');
-          *ptr++;
+          (void) *ptr++;
         }
         else if (*ptr == '\n')
         {
           buffer.append('\\');
           buffer.append('n');
-          *ptr++;
+          (void) *ptr++;
         }
         else
           buffer.append(*ptr++);

@@ -1,0 +1,24 @@
+SHOW CREATE TABLE DATA_DICTIONARY.haildb_STATUS;
+SELECT COUNT(NAME) FROM DATA_DICTIONARY.haildb_STATUS;
+SELECT NAME FROM DATA_DICTIONARY.haildb_STATUS;
+SELECT * FROM DATA_DICTIONARY.haildb_STATUS WHERE NAME="page_size";
+--replace_column 1 #
+SELECT (@fsync_count:= VALUE) AS fsyncs FROM DATA_DICTIONARY.haildb_STATUS WHERE NAME="fsync_req_done";
+create table t1 (a int primary key);
+SELECT (@fsync_count < @fsync_count:= VALUE) AS fsyncs FROM DATA_DICTIONARY.haildb_STATUS WHERE NAME="fsync_req_done";
+insert into t1 values (1);
+SELECT (@fsync_count < @fsync_count:= VALUE) AS fsyncs FROM DATA_DICTIONARY.haildb_STATUS WHERE NAME="fsync_req_done";
+insert into t1 values (5),(2),(3),(4);
+SELECT (@fsync_count < @fsync_count:= VALUE) AS fsyncs FROM DATA_DICTIONARY.haildb_STATUS WHERE NAME="fsync_req_done";
+delete from t1;
+SELECT (@fsync_count < @fsync_count:= VALUE) AS fsyncs FROM DATA_DICTIONARY.haildb_STATUS WHERE NAME="fsync_req_done";
+begin;
+insert into t1 values (1);
+insert into t1 values (2);
+insert into t1 values (3);
+insert into t1 values (4);
+commit;
+SELECT (@fsync_count < @fsync_count:= VALUE) AS fsyncs FROM DATA_DICTIONARY.haildb_STATUS WHERE NAME="fsync_req_done";
+DROP TABLE t1;
+SELECT (@fsync_count < (@fsync_count:= VALUE)) AS fsyncs FROM DATA_DICTIONARY.haildb_STATUS WHERE NAME="fsync_req_done";
+

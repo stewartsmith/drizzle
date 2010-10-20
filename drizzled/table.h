@@ -24,6 +24,7 @@
 #define DRIZZLED_TABLE_H
 
 #include <string>
+#include <boost/dynamic_bitset.hpp>
 
 #include "drizzled/order.h"
 #include "drizzled/filesort_info.h"
@@ -60,10 +61,8 @@ typedef struct st_columndef MI_COLUMNDEF;
  */
 class Table 
 {
-public:
-  TableShare *s; /**< Pointer to the shared metadata about the table */
+  TableShare *_share; /**< Pointer to the shared metadata about the table */
 
-private:
   Field **field; /**< Pointer to fields collection */
 public:
 
@@ -130,15 +129,15 @@ public:
     prev= arg;
   }
 
-  MyBitmap *read_set; /* Active column sets */
-  MyBitmap *write_set; /* Active column sets */
+  boost::dynamic_bitset<> *read_set; /* Active column sets */
+  boost::dynamic_bitset<> *write_set; /* Active column sets */
 
   uint32_t tablenr;
   uint32_t db_stat; /**< information about the cursor as in Cursor.h */
 
-  MyBitmap def_read_set; /**< Default read set of columns */
-  MyBitmap def_write_set; /**< Default write set of columns */
-  MyBitmap tmp_set; /* Not sure about this... */
+  boost::dynamic_bitset<> def_read_set; /**< Default read set of columns */
+  boost::dynamic_bitset<> def_write_set; /**< Default write set of columns */
+  boost::dynamic_bitset<> tmp_set; /* Not sure about this... */
 
   Session *in_use; /**< Pointer to the current session using this object */
   Session *getSession()
@@ -354,7 +353,7 @@ public:
     return mem_root.strmake_root(str_arg, len_arg);
   }
 
-  filesort_info_st sort;
+  filesort_info sort;
 
   Table();
   virtual ~Table() { };
@@ -371,42 +370,50 @@ public:
   void resetTable(Session *session, TableShare *share, uint32_t db_stat_arg);
 
   /* SHARE methods */
-  inline const TableShare *getShare() const { assert(s); return s; } /* Get rid of this long term */
-  inline bool hasShare() const { return s ? true : false ; } /* Get rid of this long term */
-  inline TableShare *getMutableShare() { assert(s); return s; } /* Get rid of this long term */
-  inline void setShare(TableShare *new_share) { s= new_share; } /* Get rid of this long term */
-  inline uint32_t sizeKeys() { return s->sizeKeys(); }
-  inline uint32_t sizeFields() { return s->sizeFields(); }
-  inline uint32_t getRecordLength() const { return s->getRecordLength(); }
-  inline uint32_t sizeBlobFields() { return s->blob_fields; }
-  inline uint32_t *getBlobField() { return &s->blob_field[0]; }
+  virtual const TableShare *getShare() const { assert(_share); return _share; } /* Get rid of this long term */
+  virtual TableShare *getMutableShare() { assert(_share); return _share; } /* Get rid of this long term */
+  bool hasShare() const { return _share ? true : false ; } /* Get rid of this long term */
+  virtual void setShare(TableShare *new_share) { _share= new_share; } /* Get rid of this long term */
+  uint32_t sizeKeys() { return _share->sizeKeys(); }
+  uint32_t sizeFields() { return _share->sizeFields(); }
+  uint32_t getRecordLength() const { return _share->getRecordLength(); }
+  uint32_t sizeBlobFields() { return _share->blob_fields; }
+  uint32_t *getBlobField() { return &_share->blob_field[0]; }
+
+public:
+  virtual bool hasVariableWidth() const
+  {
+    return getShare()->hasVariableWidth(); // We should calculate this.
+  }
+
+  virtual void setVariableWidth(void);
 
   Field_blob *getBlobFieldAt(uint32_t arg) const
   {
-    if (arg < s->blob_fields)
-      return (Field_blob*) field[s->blob_field[arg]]; /*NOTE: Using 'Table.field' NOT SharedTable.field. */
+    if (arg < getShare()->blob_fields)
+      return (Field_blob*) field[getShare()->blob_field[arg]]; /*NOTE: Using 'Table.field' NOT SharedTable.field. */
 
     return NULL;
   }
-  inline uint8_t getBlobPtrSize() { return s->blob_ptr_size; }
-  inline uint32_t getNullBytes() { return s->null_bytes; }
-  inline uint32_t getNullFields() { return s->null_fields; }
-  inline unsigned char *getDefaultValues() { return  s->getDefaultValues(); }
-  inline const char *getSchemaName()  const { return s->getSchemaName(); }
-  inline const char *getTableName()  const { return s->getTableName(); }
+  inline uint8_t getBlobPtrSize() { return getShare()->blob_ptr_size; }
+  inline uint32_t getNullBytes() { return getShare()->null_bytes; }
+  inline uint32_t getNullFields() { return getShare()->null_fields; }
+  inline unsigned char *getDefaultValues() { return  getMutableShare()->getDefaultValues(); }
+  inline const char *getSchemaName()  const { return getShare()->getSchemaName(); }
+  inline const char *getTableName()  const { return getShare()->getTableName(); }
 
-  inline bool isDatabaseLowByteFirst() { return s->db_low_byte_first; } /* Portable row format */
-  inline bool isNameLock() const { return s->isNameLock(); }
-  inline bool isReplaceWithNameLock() { return s->replace_with_name_lock; }
+  inline bool isDatabaseLowByteFirst() { return getShare()->db_low_byte_first; } /* Portable row format */
+  inline bool isNameLock() const { return getShare()->isNameLock(); }
+  inline bool isReplaceWithNameLock() { return getShare()->replace_with_name_lock; }
 
   uint32_t index_flags(uint32_t idx) const
   {
-    return s->storage_engine->index_flags(s->getKeyInfo(idx).algorithm);
+    return getShare()->storage_engine->index_flags(getShare()->getKeyInfo(idx).algorithm);
   }
 
   inline plugin::StorageEngine *getEngine() const   /* table_type for handler */
   {
-    return s->storage_engine;
+    return getShare()->storage_engine;
   }
 
   Cursor &getCursor() const /* table_type for handler */
@@ -415,14 +422,6 @@ public:
     return *cursor;
   }
 
-  /* For TMP tables, should be pulled out as a class */
-  void setup_tmp_table_column_bitmaps(unsigned char *bitmaps);
-  bool create_myisam_tmp_table(KeyInfo *keyinfo,
-                               MI_COLUMNDEF *start_recinfo,
-                               MI_COLUMNDEF **recinfo,
-                               uint64_t options);
-  void free_tmp_table(Session *session);
-  bool open_tmp_table();
   size_t max_row_length(const unsigned char *data);
   uint32_t find_shortest_key(const key_map *usable_keys);
   bool compare_record(Field **ptr);
@@ -457,7 +456,7 @@ public:
   bool fill_item_list(List<Item> *item_list) const;
   void clear_column_bitmaps(void);
   void prepare_for_position(void);
-  void mark_columns_used_by_index_no_reset(uint32_t index, MyBitmap *map);
+  void mark_columns_used_by_index_no_reset(uint32_t index, boost::dynamic_bitset<>& bitmap);
   void mark_columns_used_by_index_no_reset(uint32_t index);
   void mark_columns_used_by_index(uint32_t index);
   void restore_column_maps_after_mark_index();
@@ -465,19 +464,15 @@ public:
   void mark_columns_needed_for_update(void);
   void mark_columns_needed_for_delete(void);
   void mark_columns_needed_for_insert(void);
-  inline void column_bitmaps_set(MyBitmap *read_set_arg,
-                                 MyBitmap *write_set_arg)
-  {
-    read_set= read_set_arg;
-    write_set= write_set_arg;
-  }
+  void column_bitmaps_set(boost::dynamic_bitset<>& read_set_arg,
+                          boost::dynamic_bitset<>& write_set_arg);
 
-  void restore_column_map(my_bitmap_map *old);
+  void restore_column_map(const boost::dynamic_bitset<>& old);
 
-  my_bitmap_map *use_all_columns(MyBitmap *bitmap);
+  const boost::dynamic_bitset<> use_all_columns(boost::dynamic_bitset<>& map);
   inline void use_all_columns()
   {
-    column_bitmaps_set(&s->all_set, &s->all_set);
+    column_bitmaps_set(getMutableShare()->all_set, getMutableShare()->all_set);
   }
 
   inline void default_column_bitmaps()
@@ -489,52 +484,52 @@ public:
   /* Both of the below should go away once we can move this bit to the field objects */
   inline bool isReadSet(uint32_t index)
   {
-    return read_set->isBitSet(index);
+    return read_set->test(index);
   }
 
   inline void setReadSet(uint32_t index)
   {
-    read_set->setBit(index);
+    read_set->set(index);
   }
 
   inline void setReadSet()
   {
-    read_set->setAll();
+    read_set->set();
   }
 
   inline void clearReadSet(uint32_t index)
   {
-    read_set->clearBit(index);
+    read_set->reset(index);
   }
 
   inline void clearReadSet()
   {
-    read_set->clearAll();
+    read_set->reset();
   }
 
   inline bool isWriteSet(uint32_t index)
   {
-    return write_set->isBitSet(index);
+    return write_set->test(index);
   }
 
   inline void setWriteSet(uint32_t index)
   {
-    write_set->setBit(index);
+    write_set->set(index);
   }
 
   inline void setWriteSet()
   {
-    write_set->setAll();
+    write_set->set();
   }
 
   inline void clearWriteSet(uint32_t index)
   {
-    write_set->clearBit(index);
+    write_set->reset(index);
   }
 
   inline void clearWriteSet()
   {
-    write_set->clearAll();
+    write_set->reset();
   }
 
   /* Is table open or should be treated as such by name-locking? */
@@ -547,7 +542,7 @@ public:
   */
   inline bool needs_reopen_or_name_lock()
   { 
-    return s->getVersion() != refresh_version;
+    return getShare()->getVersion() != refresh_version;
   }
 
   /**
@@ -562,7 +557,7 @@ public:
   {
     null_row= 1;
     status|= STATUS_NULL_ROW;
-    memset(null_flags, 255, s->null_bytes);
+    memset(null_flags, 255, getShare()->null_bytes);
   }
 
   void free_io_cache();
@@ -571,7 +566,7 @@ public:
 
   void print_error(int error, myf errflag)
   {
-    s->storage_engine->print_error(error, errflag, *this);
+    getShare()->storage_engine->print_error(error, errflag, *this);
   }
 
   /**
@@ -634,13 +629,10 @@ public:
     return output;  // for multiple << operators.
   }
 
-protected:
-  bool is_placeholder_created;
-
 public:
-  bool isPlaceHolder()
+  virtual bool isPlaceHolder(void) const
   {
-    return is_placeholder_created;
+    return false;
   }
 };
 
@@ -826,20 +818,6 @@ struct st_lex;
 class select_union;
 class Tmp_Table_Param;
 
-struct open_table_list_st
-{
-  std::string   db;
-  std::string   table;
-  uint32_t in_use;
-  uint32_t locked;
-
-  open_table_list_st() :
-    in_use(0),
-    locked(0)
-  { }
-
-};
-
 void free_blobs(Table *table);
 int set_zone(int nr,int min_zone,int max_zone);
 uint32_t convert_period_to_month(uint32_t period);
@@ -878,5 +856,8 @@ bool check_db_name(Session *session, SchemaIdentifier &schema);
 bool check_table_name(const char *name, uint32_t length);
 
 } /* namespace drizzled */
+
+#include "drizzled/table/instance.h"
+#include "drizzled/table/concurrent.h"
 
 #endif /* DRIZZLED_TABLE_H */

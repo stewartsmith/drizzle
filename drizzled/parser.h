@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #ifndef DRIZZLED_PARSER_H
 #define DRIZZLED_PARSER_H
@@ -77,6 +77,7 @@
 #include <drizzled/statement/drop_schema.h>
 #include <drizzled/statement/drop_table.h>
 #include <drizzled/statement/empty_query.h>
+#include <drizzled/statement/execute.h>
 #include <drizzled/statement/flush.h>
 #include <drizzled/statement/insert.h>
 #include <drizzled/statement/insert_select.h>
@@ -91,8 +92,6 @@
 #include <drizzled/statement/savepoint.h>
 #include <drizzled/statement/select.h>
 #include <drizzled/statement/set_option.h>
-#include <drizzled/statement/show_create.h>
-#include <drizzled/statement/show_create_schema.h>
 #include <drizzled/statement/show_errors.h>
 #include <drizzled/statement/show_warnings.h>
 #include <drizzled/statement/start_transaction.h>

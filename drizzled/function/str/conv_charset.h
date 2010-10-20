@@ -40,7 +40,7 @@ public:
     conv_charset= cs;
     if (cache_if_const && args[0]->const_item())
     {
-      uint32_t errors= 0;
+      size_t errors= 0;
       String tmp, *str= args[0]->val_str(&tmp);
       if (!str || str_value.copy(str->ptr(), str->length(),
                                  str->charset(), conv_charset, &errors))

@@ -248,7 +248,7 @@ public:
       UNCACHEABLE_EXPLAIN
       UNCACHEABLE_PREPARE
   */
-  uint8_t uncacheable;
+  std::bitset<8> uncacheable;
   enum sub_select_type linkage;
   bool no_table_names_allowed; /* used for global order by */
   bool no_error; /* suppress error message (convert it to warnings) */
@@ -283,13 +283,12 @@ public:
   virtual uint32_t get_in_sum_expr();
   virtual TableList* get_table_list();
   virtual List<Item>* get_item_list();
-  virtual uint32_t get_table_join_options();
   virtual TableList *add_table_to_list(Session *session, Table_ident *table,
-                                        LEX_STRING *alias,
-                                        uint32_t table_options,
-                                        thr_lock_type flags= TL_UNLOCK,
-                                        List<Index_hint> *hints= 0,
-                                        LEX_STRING *option= 0);
+                                       LEX_STRING *alias,
+                                       const std::bitset<NUM_OF_TABLE_OPTIONS>& table_options,
+                                       thr_lock_type flags= TL_UNLOCK,
+                                       List<Index_hint> *hints= 0,
+                                       LEX_STRING *option= 0);
   virtual void set_lock_for_tables(thr_lock_type)
   {}
 
@@ -458,7 +457,6 @@ public:
   enum_parsing_place parsing_place; /* where we are parsing expression */
   bool with_sum_func;   /* sum function indicator */
 
-  uint32_t table_join_options;
   uint32_t in_sum_expr;
   uint32_t select_number; /* number of select (used for EXPLAIN) */
   int8_t nest_level;     /* nesting level of select */
@@ -552,7 +550,7 @@ public:
   TableList* add_table_to_list(Session *session,
                                Table_ident *table,
                                LEX_STRING *alias,
-                               uint32_t table_options,
+                               const std::bitset<NUM_OF_TABLE_OPTIONS>& table_options,
                                thr_lock_type flags= TL_UNLOCK,
                                List<Index_hint> *hints= 0,
                                LEX_STRING *option= 0);
@@ -563,7 +561,6 @@ public:
   void add_joined_table(TableList *table);
   TableList *convert_right_join();
   List<Item>* get_item_list();
-  uint32_t get_table_join_options();
   void set_lock_for_tables(thr_lock_type lock_type);
   inline void init_order()
   {
@@ -882,9 +879,6 @@ public:
   TableList *unlink_first_table(bool *link_to_local);
   void link_first_table_back(TableList *first, bool link_to_local);
   void first_lists_tables_same();
-
-  bool only_view_structure();
-  bool need_correct_ident();
 
   void cleanup_after_one_table_open();
 

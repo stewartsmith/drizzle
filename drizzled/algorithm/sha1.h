@@ -12,6 +12,7 @@
 
 #include <stdint.h>
 #include <sys/types.h>
+#include <string.h>
 
 namespace drizzled
 {
@@ -27,10 +28,18 @@ namespace drizzled
 #define	SHA1_DIGEST_LENGTH		20
 #define	SHA1_DIGEST_STRING_LENGTH	(SHA1_DIGEST_LENGTH * 2 + 1)
 
-typedef struct {
+typedef class sha1_ctx{
+public:
     uint32_t state[5];
     uint64_t count;
     uint8_t buffer[SHA1_BLOCK_LENGTH];
+
+    sha1_ctx():
+    	count(0)
+    {
+      memset(state, 0, 5);
+      memset(buffer, 0, SHA1_BLOCK_LENGTH);
+    }
 } SHA1_CTX;
 
 void SHA1Init(SHA1_CTX *);

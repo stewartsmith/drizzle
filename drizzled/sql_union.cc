@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /*
   UNION  of select's
@@ -400,11 +400,11 @@ bool Select_Lex_Unit::exec()
   uint64_t add_rows=0;
   ha_rows examined_rows= 0;
 
-  if (executed && !uncacheable && !describe)
-    return(false);
+  if (executed && uncacheable.none() && ! describe)
+    return false;
   executed= 1;
 
-  if (uncacheable || !item || !item->assigned() || describe)
+  if (uncacheable.any() || ! item || ! item->assigned() || describe)
   {
     if (item)
       item->reset_value_registration();

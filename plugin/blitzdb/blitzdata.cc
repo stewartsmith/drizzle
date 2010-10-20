@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <config.h>
+#include "config.h"
 #include "ha_blitz.h"
 
 using namespace std;
@@ -90,7 +90,7 @@ int BlitzData::create_data_table(drizzled::message::Table &proto,
   /* Write the Meta Data for this Table. */
   tc_meta_buffer = tchdbopaque(data_table);
   write_meta_autoinc(autoinc);
-  write_meta_keycount(table_info.s->keys);
+  write_meta_keycount(table_info.getShare()->keys);
 
   /* We're Done. */
   if (close_data_table() != 0)

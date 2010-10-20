@@ -60,26 +60,26 @@ ELSE 'misc' END	column_name	CASE WHEN IS_USED_IN_PRIMARY = 'YES' THEN 'primary'
 WHEN IS_INDEXED = 'YES' THEN 'indexed' 
 ELSE 'indexed' END 
 
-DATA_DICTIONARY	CHARACTER_SETS	function	CHARACTER_SET_NAME	indexed
-DATA_DICTIONARY	CHARACTER_SETS	function	DEFAULT_COLLATE_NAME	indexed
-DATA_DICTIONARY	CHARACTER_SETS	function	DESCRIPTION	indexed
-DATA_DICTIONARY	CHARACTER_SETS	function	MAXLEN	indexed
-DATA_DICTIONARY	COLLATIONS	function	CHARACTER_SET_NAME	indexed
-DATA_DICTIONARY	COLLATIONS	function	COLLATION_NAME	indexed
-DATA_DICTIONARY	COLLATIONS	function	DESCRIPTION	indexed
-DATA_DICTIONARY	COLLATIONS	function	ID	indexed
-DATA_DICTIONARY	COLLATIONS	function	IS_DEFAULT	indexed
-DATA_DICTIONARY	COLLATIONS	function	IS_COMPILED	indexed
-DATA_DICTIONARY	COLLATIONS	function	SORTLEN	indexed
-DATA_DICTIONARY	COLUMNS	function	TABLE_SCHEMA	indexed
-DATA_DICTIONARY	COLUMNS	function	TABLE_NAME	indexed
-DATA_DICTIONARY	COLUMNS	function	COLUMN_NAME	indexed
-DATA_DICTIONARY	COLUMNS	function	COLUMN_TYPE	indexed
-DATA_DICTIONARY	COLUMNS	function	ORDINAL_POSITION	indexed
-DATA_DICTIONARY	COLUMNS	function	COLUMN_DEFAULT	indexed
-DATA_DICTIONARY	COLUMNS	function	COLUMN_DEFAULT_IS_NULL	indexed
-DATA_DICTIONARY	COLUMNS	function	COLUMN_DEFAULT_UPDATE	indexed
-DATA_DICTIONARY	COLUMNS	function	IS_AUTO_INCREMENT	indexed
+DATA_DICTIONARY	CHARACTER_SETS	misc	CHARACTER_SET_NAME	indexed
+DATA_DICTIONARY	CHARACTER_SETS	misc	DEFAULT_COLLATE_NAME	indexed
+DATA_DICTIONARY	CHARACTER_SETS	misc	DESCRIPTION	indexed
+DATA_DICTIONARY	CHARACTER_SETS	misc	MAXLEN	indexed
+DATA_DICTIONARY	COLLATIONS	misc	CHARACTER_SET_NAME	indexed
+DATA_DICTIONARY	COLLATIONS	misc	COLLATION_NAME	indexed
+DATA_DICTIONARY	COLLATIONS	misc	DESCRIPTION	indexed
+DATA_DICTIONARY	COLLATIONS	misc	ID	indexed
+DATA_DICTIONARY	COLLATIONS	misc	IS_DEFAULT	indexed
+DATA_DICTIONARY	COLLATIONS	misc	IS_COMPILED	indexed
+DATA_DICTIONARY	COLLATIONS	misc	SORTLEN	indexed
+DATA_DICTIONARY	COLUMNS	misc	TABLE_SCHEMA	indexed
+DATA_DICTIONARY	COLUMNS	misc	TABLE_NAME	indexed
+DATA_DICTIONARY	COLUMNS	misc	COLUMN_NAME	indexed
+DATA_DICTIONARY	COLUMNS	misc	COLUMN_TYPE	indexed
+DATA_DICTIONARY	COLUMNS	misc	ORDINAL_POSITION	indexed
+DATA_DICTIONARY	COLUMNS	misc	COLUMN_DEFAULT	indexed
+DATA_DICTIONARY	COLUMNS	misc	COLUMN_DEFAULT_IS_NULL	indexed
+DATA_DICTIONARY	COLUMNS	misc	COLUMN_DEFAULT_UPDATE	indexed
+DATA_DICTIONARY	COLUMNS	misc	IS_AUTO_INCREMENT	indexed
 CREATE SCHEMA randgen_query_test;
 USE randgen_query_test;
 CREATE TABLE t1 (a INT);
@@ -105,26 +105,26 @@ table_schema	table_name	CASE WHEN table_type = 'STANDARD' THEN 'table'
              WHEN IS_INDEXED = 'YES' THEN 'indexed'
        ELSE 'indexed' END
 
-randgen_query_test	t1	table	a	indexed
-randgen_query_test	t2	table	a	indexed
-randgen_query_test	t3	table	a	indexed
-randgen_query_test	t4	table	b	indexed
-randgen_query_test	t5	table	b	indexed
-test	t1	table	col_bigint	indexed
-test	t1	table	col_text	indexed
-test	t1	table	col_char	indexed
-test	t1	table	col_enum	indexed
-test	t1	table	col_int	indexed
-test	t1	table	col_char_not_null	indexed
-test	t1	table	col_int_not_null_key	indexed
-test	t1	table	col_text_not_null	indexed
-test	t1	table	col_enum_not_null_key	indexed
-test	t1	table	col_int_key	indexed
-test	t1	table	col_char_key	indexed
-test	t1	table	col_enum_not_null	indexed
-test	t1	table	col_text_not_null_key	indexed
-test	t1	table	pk	primary
-test	t1	table	col_bigint_key	indexed
+randgen_query_test	t1	misc	a	indexed
+randgen_query_test	t2	misc	a	indexed
+randgen_query_test	t3	misc	a	indexed
+randgen_query_test	t4	misc	b	indexed
+randgen_query_test	t5	misc	b	indexed
+test	t1	misc	col_bigint	indexed
+test	t1	misc	col_text	indexed
+test	t1	misc	col_char	indexed
+test	t1	misc	col_enum	indexed
+test	t1	misc	col_int	indexed
+test	t1	misc	col_char_not_null	indexed
+test	t1	misc	col_int_not_null_key	indexed
+test	t1	misc	col_text_not_null	indexed
+test	t1	misc	col_enum_not_null_key	indexed
+test	t1	misc	col_int_key	indexed
+test	t1	misc	col_char_key	indexed
+test	t1	misc	col_enum_not_null	indexed
+test	t1	misc	col_text_not_null_key	indexed
+test	t1	misc	pk	primary
+test	t1	misc	col_bigint_key	indexed
 DROP SCHEMA randgen_query_test;
 USE test;
 select AVG(`col_int_key`) + AVG(`col_int`) AS average1,

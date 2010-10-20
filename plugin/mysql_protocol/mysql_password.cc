@@ -19,7 +19,9 @@
 #include "drizzled/util/convert.h"
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 const char* MySQLPasswordName = "mysql_password";
 
@@ -65,4 +67,6 @@ String *MySQLPassword::val_str(String *str)
   str->length(SHA1_DIGEST_LENGTH * 2);
 
   return str;
+}
+
 }

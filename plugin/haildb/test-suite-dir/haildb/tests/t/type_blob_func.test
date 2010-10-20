@@ -1,0 +1,15 @@
+create table t1 (a blob);
+insert into t1 values ('a'),('aa'),('aaa');
+select length(a) from t1;
+drop table t1;
+
+create table t1 (pk int auto_increment primary key, a blob);
+insert into t1 (a) values ('ccc'),('bb'),('a');
+select pk,length(a) from t1 order by length(a);
+SELECT haildb_datadict_dump();
+drop table t1;
+
+create table t1 (a blob);
+insert into t1 values ('aaa'),('aa'),('a');
+select length(a) from t1 order by length(a);
+drop table t1;

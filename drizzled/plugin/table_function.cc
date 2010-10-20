@@ -115,24 +115,33 @@ void plugin::TableFunction::add_field(const char *label,
     field_options->set_default_null(false);
     field_constraints->set_is_nullable(false);
   case TableFunction::STRING:
-  {
-    drizzled::message::Table::Field::StringFieldOptions *string_field_options;
-    field->set_type(drizzled::message::Table::Field::VARCHAR);
-
-    string_field_options= field->mutable_string_options();
-    string_field_options->set_length(field_length);
-  }
+    {
+      drizzled::message::Table::Field::StringFieldOptions *string_field_options;
+      if (field_length >= TABLE_FUNCTION_BLOB_SIZE)
+      {
+        field->set_type(drizzled::message::Table::Field::BLOB);
+        string_field_options= field->mutable_string_options();
+        string_field_options->set_collation_id(default_charset_info->number);
+        string_field_options->set_collation(default_charset_info->name);
+      }
+      else
+      {
+        field->set_type(drizzled::message::Table::Field::VARCHAR);
+        string_field_options= field->mutable_string_options();
+        string_field_options->set_length(field_length);
+      }
+    }
     break;
   case TableFunction::VARBINARY:
-  {
-    drizzled::message::Table::Field::StringFieldOptions *string_field_options;
-    field->set_type(drizzled::message::Table::Field::VARCHAR);
+    {
+      drizzled::message::Table::Field::StringFieldOptions *string_field_options;
+      field->set_type(drizzled::message::Table::Field::VARCHAR);
 
-    string_field_options= field->mutable_string_options();
-    string_field_options->set_length(field_length);
-    string_field_options->set_collation(my_charset_bin.csname);
-    string_field_options->set_collation_id(my_charset_bin.number);
-  }
+      string_field_options= field->mutable_string_options();
+      string_field_options->set_length(field_length);
+      string_field_options->set_collation(my_charset_bin.csname);
+      string_field_options->set_collation_id(my_charset_bin.number);
+    }
     break;
   case TableFunction::NUMBER: // Currently NUMBER always has a value
     field->set_type(drizzled::message::Table::Field::BIGINT);

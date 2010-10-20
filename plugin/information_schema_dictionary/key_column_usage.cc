@@ -41,7 +41,9 @@ KeyColumnUsage::Generator::Generator(drizzled::Field **arg) :
   InformationSchema::Generator(arg),
   generator(getSession()),
   index_iterator(0),
-  index_part_iterator(0)
+  index_part_iterator(0),
+  fk_constraint_iterator(0),
+  fk_constraint_column_name_iterator(0)
 {
   while (not (table_message= generator))
   { };
@@ -84,7 +86,7 @@ bool KeyColumnUsage::Generator::populate()
         push(table_message->field(fieldnr).name());
 
         /* ORDINAL_POSITION */
-        push(static_cast<int64_t>(index_part_iterator));
+        push(static_cast<int64_t>((index_part_iterator +1)));
 
         if (index_part_iterator == index.index_part_size() -1)
         {
@@ -100,8 +102,55 @@ bool KeyColumnUsage::Generator::populate()
       }
     }
 
+    if (fk_constraint_iterator != table_message->fk_constraint_size())
+    {
+      drizzled::message::Table::ForeignKeyConstraint foreign_key= table_message->fk_constraint(fk_constraint_iterator);
+
+      {
+        /* Constraints live in the same catalog.schema as the table they refer too. */
+        /* CONSTRAINT_CATALOG */
+        push(table_message->catalog());
+
+        /* CONSTRAINT_SCHEMA */
+        push(table_message->schema());
+
+        /* CONSTRAINT_NAME */
+        push(foreign_key.name());
+
+        /* TABLE_CATALOG */
+        push(table_message->catalog());
+
+        /* TABLE_SCHEMA */
+        push(table_message->schema());
+
+        /* TABLE_NAME */
+        push(table_message->name());
+
+        /* COLUMN_NAME */
+        push(foreign_key.column_names(fk_constraint_column_name_iterator));
+
+        /* ORDINAL_POSITION */
+        push(static_cast<int64_t>((fk_constraint_column_name_iterator + 1)));
+
+        if (fk_constraint_column_name_iterator == foreign_key.column_names_size() -1)
+        {
+          fk_constraint_iterator++;
+          fk_constraint_column_name_iterator= 0;
+        }
+        else
+        {
+          fk_constraint_column_name_iterator++;
+        }
+
+        return true;
+      }
+    }
+
     index_iterator= 0;
     index_part_iterator= 0;
+
+    fk_constraint_iterator= 0;
+    fk_constraint_column_name_iterator= 0;
 
   } while ((table_message= generator));
 

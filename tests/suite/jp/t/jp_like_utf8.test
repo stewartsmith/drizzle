@@ -29,18 +29,18 @@ CREATE TEMPORARY TABLE `Ｔ９` (`Ｃ１` char(20), INDEX(`Ｃ１`))  engine = M
 # jisx0208 data
 # jisx0212 supplemental character data
 
-LOAD DATA INFILE '../std_data_ln/jisx0201_utf8.dat' INTO TABLE `Ｔ１`;
+LOAD DATA INFILE '../../std_data_ln/jisx0201_utf8.dat' INTO TABLE `Ｔ１`;
 --error ER_DATA_TOO_LONG
-LOAD DATA INFILE '../std_data_ln/jisx0208_utf8.dat' INTO TABLE `Ｔ２`;
-LOAD DATA INFILE '../std_data_ln/jisx0212_utf8.dat' INTO TABLE `Ｔ３`;
-LOAD DATA INFILE '../std_data_ln/jisx0201_utf8.dat' INTO TABLE `Ｔ４`;
+LOAD DATA INFILE '../../std_data_ln/jisx0208_utf8.dat' INTO TABLE `Ｔ２`;
+LOAD DATA INFILE '../../std_data_ln/jisx0212_utf8.dat' INTO TABLE `Ｔ３`;
+LOAD DATA INFILE '../../std_data_ln/jisx0201_utf8.dat' INTO TABLE `Ｔ４`;
 --error ER_DATA_TOO_LONG
-LOAD DATA INFILE '../std_data_ln/jisx0208_utf8.dat' INTO TABLE `Ｔ５`;
-LOAD DATA INFILE '../std_data_ln/jisx0212_utf8.dat' INTO TABLE `Ｔ６`;
-LOAD DATA INFILE '../std_data_ln/jisx0201_utf8.dat' INTO TABLE `Ｔ７`;
+LOAD DATA INFILE '../../std_data_ln/jisx0208_utf8.dat' INTO TABLE `Ｔ５`;
+LOAD DATA INFILE '../../std_data_ln/jisx0212_utf8.dat' INTO TABLE `Ｔ６`;
+LOAD DATA INFILE '../../std_data_ln/jisx0201_utf8.dat' INTO TABLE `Ｔ７`;
 --error ER_DATA_TOO_LONG
-LOAD DATA INFILE '../std_data_ln/jisx0208_utf8.dat' INTO TABLE `Ｔ８`;
-LOAD DATA INFILE '../std_data_ln/jisx0212_utf8.dat' INTO TABLE `Ｔ９`;
+LOAD DATA INFILE '../../std_data_ln/jisx0208_utf8.dat' INTO TABLE `Ｔ８`;
+LOAD DATA INFILE '../../std_data_ln/jisx0212_utf8.dat' INTO TABLE `Ｔ９`;
 
 #InnoDB
 SELECT * FROM `Ｔ１` WHERE `Ｃ１` LIKE ' %';

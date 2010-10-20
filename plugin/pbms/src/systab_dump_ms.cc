@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Barry Leslie
  *
@@ -157,7 +157,7 @@ bool MSDumpTable::returnDumpRow(char *record, uint64_t record_size, char *buf)
 	 */
 	save_write_set = table->write_set;
 	table->write_set = NULL;
-	memset(buf, 0xFF, table->s->null_bytes);
+	memset(buf, 0xFF, table->getNullBytes());
 	
  	for (Field **field=GET_TABLE_FIELDS(table) ; *field ; field++) {
  		curr_field = *field;
@@ -427,7 +427,7 @@ void MSDumpTable::insertRow(char *buf)
 	
     /* Get the blob record: */
     blob_rec= buf + field->offset(table->getInsertRecord());
-    packlength= field->pack_length() - table->s->blob_ptr_size;
+    packlength= field->pack_length() - table->getShare()->blob_ptr_size;
 
     memcpy(&blob_ptr, blob_rec +packlength, sizeof(char*));
     length= field->get_length();

@@ -7,7 +7,9 @@ drop table if exists t1, t2;
 # Testing of NULL in a lot of different places
 #
 
+--error ER_DIVISION_BY_ZERO
 select null,\N,isnull(null),isnull(1/0),isnull(1/0 = null),ifnull(null,1),ifnull(null,"TRUE"),ifnull("TRUE","ERROR"),1/0 is null,1 is not null;
+--error ER_DIVISION_BY_ZERO
 explain extended select null,\N,isnull(null),isnull(1/0),isnull(1/0 = null),ifnull(null,1),ifnull(null,"TRUE"),ifnull("TRUE","ERROR"),1/0 is null,1 is not null;
 select CONCAT(1, NULL),1+NULL,1-NULL;
 select NULL=NULL,NULL<>NULL,IFNULL(NULL,1.1)+0,CONCAT(IFNULL(NULL,1), 0);

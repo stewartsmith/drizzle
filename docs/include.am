@@ -6,13 +6,16 @@ EXTRA_DIST+= \
 	     docs/_static \
 	     docs/_templates \
 	     docs/conf.py \
+	     docs/Doxyfile \
 	     docs/drizzled_header.html \
-	     docs/index.rst
+	     ${top_srcdir}/docs/*.rst \
+	     ${top_srcdir}/docs/clients/*.rst \
+	     ${top_srcdir}/docs/libdrizzle/*.rst
 
 # Makefile for Sphinx documentation
 #
 
-SPHINXOPTS    =
+SPHINXOPTS    = -D release=${PANDORA_RELEASE_VERSION}
 PAPER         =
 SPHINX_BUILDDIR      = ${top_builddir}/docs
 
@@ -21,7 +24,19 @@ PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
 ALLSPHINXOPTS   = -d $(SPHINX_BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) ${top_srcdir}/docs
 
-.PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest
+.PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest doxygen
+
+doxygen:
+	${DOXYGEN} docs/Doxyfile
+
+
+if HAVE_RECENT_SPHINX
+man_MANS+= \
+	   docs/man/drizzledump.1
+DISTCLEANFILES+= docs/man/drizzledump.1
+
+docs/man/drizzledump.1: man
+endif
 
 if HAVE_SPHINX
 sphinx-help:

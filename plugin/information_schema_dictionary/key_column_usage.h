@@ -34,6 +34,9 @@ public:
     int32_t index_iterator;
     int32_t index_part_iterator;
 
+    int32_t fk_constraint_iterator;
+    int32_t fk_constraint_column_name_iterator;
+
   public:
     Generator(drizzled::Field **arg);
 

@@ -41,7 +41,8 @@ namespace plugin
 
 class Session;
 class NamedSavepoint;
-
+class Field;
+ 
 /**
  * This is a class which manages the XA transaction processing
  * in the server
@@ -117,6 +118,7 @@ public:
    */
   void cleanupTransactionMessage(message::Transaction *in_transaction,
                                  Session *in_session);
+
   /**
    * Helper method which initializes a Statement message
    *
@@ -426,8 +428,76 @@ public:
   {
     current_transaction_id= 0;
   }
+
+  /**************
+   * Events API
+   **************/
+
+  /**
+   * Send server startup event.
+   *
+   * @param session Session pointer
+   *
+   * @retval true Success
+   * @retval false Failure
+   */
+  bool sendStartupEvent(Session *session);
+
+  /**
+   * Send server shutdown event.
+   *
+   * @param session Session pointer
+   *
+   * @retval true Success
+   * @retval false Failure
+   */
+  bool sendShutdownEvent(Session *session);
+
 private:
   atomic<TransactionId> current_transaction_id;
+
+  /**
+   * Checks if a field has been updated 
+   *
+   * @param current_field Pointer to the field to check if it is updated 
+   * @in_table Pointer to the Table containing update information
+   * @param old_record Pointer to the raw bytes representing the old record/row
+   * @param new_record Pointer to the raw bytes representing the new record/row
+   */
+  bool isFieldUpdated(Field *current_field,
+                      Table *in_table,
+                      const unsigned char *old_record,
+                      const unsigned char *new_record);
+
+  /**
+   * Create a Transaction that contains event information and send it off.
+   *
+   * This differs from other uses of Transaction in that we don't use the
+   * message associated with Session. We create a totally new message and
+   * use it.
+   *
+   * @param session Session pointer
+   * @param event Event message to send
+   *
+   * @note Used by the public Events API.
+   *
+   * @returns Non-zero on error
+   */
+  int sendEvent(Session *session, const message::Event &event);
+
+  /**
+   * Helper method which checks the UpdateHeader to determine 
+   * if it needs to be finalized.  
+   *
+   * @param[in] statement Statement message container to check 
+   * @param[in] in_table Pointer to the Table being updated
+   * @param[in] old_record Pointer to the old data in the record
+   * @param[in] new_record Pointer to the new data in the record
+   */
+  bool useExistingUpdateHeader(message::Statement &statement,
+                               Table *in_table,
+                               const unsigned char *old_record,
+                               const unsigned char *new_record);
 };
 
 } /* namespace drizzled */

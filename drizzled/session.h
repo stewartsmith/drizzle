@@ -58,6 +58,7 @@
 
 #include <boost/unordered_map.hpp>
 #include <boost/thread/mutex.hpp>
+#include <boost/thread/shared_mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 
 #define MIN_HANDSHAKE_SIZE      6
@@ -150,22 +151,6 @@ struct CopyInfo
 
 };
 
-struct DrizzleLock
-{
-  Table **table;
-  uint32_t table_count;
-  uint32_t lock_count;
-  THR_LOCK_DATA **locks;
-
-  DrizzleLock() :
-    table(0),
-    table_count(0),
-    lock_count(0),
-    locks(0)
-  { }
-
-};
-
 } /* namespace drizzled */
 
 /** @TODO why is this in the middle of the file */
@@ -222,6 +207,7 @@ struct system_variables
   size_t sortbuff_size;
   uint32_t thread_handling;
   uint32_t tx_isolation;
+  size_t transaction_message_threshold;
   uint32_t completion_type;
   /* Determines which non-standard SQL behaviour should be enabled */
   uint32_t sql_mode;
@@ -314,6 +300,8 @@ struct Ha_data
  * all member variables that are not critical to non-internal operations of the
  * session object.
  */
+typedef int64_t session_id_t;
+
 class Session : public Open_tables_state
 {
 public:
@@ -684,7 +672,7 @@ public:
     create_sort_index(); may differ from examined_row_count.
   */
   uint32_t row_count;
-  uint64_t thread_id;
+  session_id_t thread_id;
   uint32_t tmp_table;
   uint32_t global_read_lock;
   uint32_t server_status;
@@ -826,7 +814,7 @@ public:
   }
 
   /** Accessor method returning the session's ID. */
-  inline uint64_t getSessionId()  const
+  inline session_id_t getSessionId()  const
   {
     return thread_id;
   }
@@ -1007,7 +995,7 @@ public:
     enter_cond(); this mutex is then released by exit_cond().
     Usage must be: lock mutex; enter_cond(); your code; exit_cond().
   */
-  const char* enter_cond(boost::condition_variable &cond, boost::mutex &mutex, const char* msg);
+  const char* enter_cond(boost::condition_variable_any &cond, boost::mutex &mutex, const char* msg);
   void exit_cond(const char* old_msg);
 
   inline time_t query_start() { return start_time; }
@@ -1044,11 +1032,6 @@ public:
   {
     return server_status & SERVER_STATUS_IN_TRANS;
   }
-  inline bool fill_derived_tables()
-  {
-    return !lex->only_view_structure();
-  }
-
   LEX_STRING *make_lex_string(LEX_STRING *lex_str,
                               const char* str, uint32_t length,
                               bool allocate_lex_string);
@@ -1216,7 +1199,7 @@ public:
    * @param  Length of scrambled password
    * @param  Database name to connect to, may be NULL
    */
-  bool checkUser(const char *passwd, uint32_t passwd_len, const char *db);
+  bool checkUser(const std::string &passwd, const std::string &db);
   
   /**
    * Returns the timestamp (in microseconds) of when the Session 
@@ -1438,6 +1421,8 @@ public:
   }
   void refresh_status();
   user_var_entry *getVariable(LEX_STRING &name, bool create_if_not_exists);
+  user_var_entry *getVariable(const std::string  &name, bool create_if_not_exists);
+  void setVariable(const std::string &name, const std::string &value);
   
   /**
    * Closes all tables used by the current substatement, or all tables
@@ -1477,26 +1462,6 @@ public:
    * The lock will automaticaly be freed by close_thread_tables()
    */
   bool openTablesLock(TableList *tables);
-
-  /**
-   * Open all tables in list and process derived tables
-   *
-   * @param Pointer to a list of tables for open
-   * @param Bitmap of flags to modify how the tables will be open:
-   *        DRIZZLE_LOCK_IGNORE_FLUSH - open table even if someone has
-   *        done a flush or namelock on it.
-   *
-   * @retval
-   *  false - ok
-   * @retval
-   *  true  - error
-   *
-   * @note
-   *
-   * This is to be used on prepare stage when you don't read any
-   * data from the tables.
-   */
-  bool openTables(TableList *tables, uint32_t flags= 0);
 
   int open_tables_from_list(TableList **start, uint32_t *counter, uint32_t flags= 0);
 
@@ -1561,7 +1526,7 @@ public:
   bool reopen_name_locked_table(TableList* table_list, bool link_in);
   bool close_cached_tables(TableList *tables, bool wait_for_refresh, bool wait_for_placeholders);
 
-  void wait_for_condition(boost::mutex &mutex, boost::condition_variable &cond);
+  void wait_for_condition(boost::mutex &mutex, boost::condition_variable_any &cond);
   int setup_conds(TableList *leaves, COND **conds);
   int lock_tables(TableList *tables, uint32_t count, bool *need_reopen);
 
@@ -1599,7 +1564,7 @@ public:
 
   void get_xid(DRIZZLE_XID *xid); // Innodb only
 
-  TableShareInstance *getTemporaryShare(TableIdentifier::Type type_arg);
+  table::Instance *getInstanceTable();
 
 private:
   bool resetUsage()
@@ -1627,7 +1592,7 @@ private:
   // This lives throughout the life of Session
   bool use_usage;
   PropertyMap life_properties;
-  std::vector<TableShareInstance *> temporary_shares;
+  std::vector<table::Instance *> temporary_shares;
   struct rusage usage;
 };
 

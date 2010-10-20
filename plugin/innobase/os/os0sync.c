@@ -11,8 +11,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -86,6 +86,9 @@ os_sync_init(void)
 {
 	UT_LIST_INIT(os_event_list);
 	UT_LIST_INIT(os_mutex_list);
+
+	os_sync_mutex = NULL;
+	os_sync_mutex_inited = FALSE;
 
 	os_sync_mutex = os_mutex_create(NULL);
 
@@ -714,6 +717,7 @@ os_fast_mutex_free(
 		os_mutex_enter(os_sync_mutex);
 	}
 
+	ut_ad(os_fast_mutex_count > 0);
 	os_fast_mutex_count--;
 
 	if (UNIV_LIKELY(os_sync_mutex_inited)) {

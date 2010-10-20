@@ -4,21 +4,21 @@ Tables_in_mysql
 show tables;
 Tables_in_test
 connect(localhost,root,z,test2,MASTER_PORT,);
-ERROR 42000: Unknown database 'test2'
+ERROR 42000: Unknown schema 'test2'
 show tables;
 Tables_in_mysql
 show tables;
 Tables_in_test
 connect(localhost,test,,test2,MASTER_PORT,);
-ERROR 42000: Unknown database 'test2'
+ERROR 42000: Unknown schema 'test2'
 connect(localhost,test,,"",MASTER_PORT,);
-ERROR 42000: Unknown database '""'
+ERROR 42000: Unknown schema '""'
 connect(localhost,test,zorro,test2,MASTER_PORT,);
-ERROR 42000: Unknown database 'test2'
+ERROR 42000: Unknown schema 'test2'
 connect(localhost,test,,test2,MASTER_PORT,);
-ERROR 42000: Unknown database 'test2'
+ERROR 42000: Unknown schema 'test2'
 connect(localhost,test,zorro,test2,MASTER_PORT,);
-ERROR 42000: Unknown database 'test2'
+ERROR 42000: Unknown schema 'test2'
 create table t1 (id integer not null auto_increment primary key);
 create temporary table t2(id integer not null auto_increment primary key);
 set @id := 1;

@@ -80,9 +80,6 @@ using namespace std;
 namespace drizzled
 {
 
-/** @TODO: Make this a system variable */
-static const size_t trx_msg_threshold= 1024 * 1024;
-
 /**
  * @defgroup Transactions
  *
@@ -654,7 +651,8 @@ int TransactionServices::rollbackTransaction(Session *session, bool normal_trans
      * a rollback statement with the corresponding transaction ID
      * to rollback.
      */
-    rollbackTransactionMessage(session);
+    if (normal_transaction)
+      rollbackTransactionMessage(session);
 
     if (is_real_trans)
       session->transaction.xid_state.xid.null();
@@ -1109,7 +1107,8 @@ message::Statement &TransactionServices::getInsertStatement(Session *in_session,
      * a bulk insert), we'll finalize the Statement and Transaction (doing
      * the Transaction will keep it from getting huge).
      */
-    if (static_cast<size_t>(transaction->ByteSize()) >= trx_msg_threshold)
+    if (static_cast<size_t>(transaction->ByteSize()) >= 
+      in_session->variables.transaction_message_threshold)
     {
       /* Remember the transaction ID so we can re-use it */
       uint64_t trx_id= transaction->transaction_context().transaction_id();
@@ -1306,7 +1305,8 @@ message::Statement &TransactionServices::getUpdateStatement(Session *in_session,
      * a bulk insert), we'll finalize the Statement and Transaction (doing
      * the Transaction will keep it from getting huge).
      */
-    if (static_cast<size_t>(transaction->ByteSize()) >= trx_msg_threshold)
+    if (static_cast<size_t>(transaction->ByteSize()) >= 
+      in_session->variables.transaction_message_threshold)
     {
       /* Remember the transaction ID so we can re-use it */
       uint64_t trx_id= transaction->transaction_context().transaction_id();
@@ -1339,21 +1339,16 @@ message::Statement &TransactionServices::getUpdateStatement(Session *in_session,
     }
     else
     {
-      const message::UpdateHeader &update_header= statement->update_header();
-      string old_table_name= update_header.table_metadata().table_name();
-
-      string current_table_name;
-      (void) in_table->getShare()->getTableName(current_table_name);
-      if (current_table_name.compare(old_table_name))
-      {
-        finalizeStatementMessage(*statement, in_session);
-        statement= in_session->getStatementMessage();
-      }
-      else
+      if (useExistingUpdateHeader(*statement, in_table, old_record, new_record))
       {
         /* carry forward the existing segment id */
         const message::UpdateData &current_data= statement->update_data();
         *next_segment_id= current_data.segment_id();
+      } 
+      else 
+      {
+        finalizeStatementMessage(*statement, in_session);
+        statement= in_session->getStatementMessage();
       }
     }
   }
@@ -1379,6 +1374,75 @@ message::Statement &TransactionServices::getUpdateStatement(Session *in_session,
   }
   return *statement;
 }
+
+bool TransactionServices::useExistingUpdateHeader(message::Statement &statement,
+                                                  Table *in_table,
+                                                  const unsigned char *old_record,
+                                                  const unsigned char *new_record)
+{
+  const message::UpdateHeader &update_header= statement.update_header();
+  string old_table_name= update_header.table_metadata().table_name();
+
+  string current_table_name;
+  (void) in_table->getShare()->getTableName(current_table_name);
+  if (current_table_name.compare(old_table_name))
+  {
+    return false;
+  }
+  else
+  {
+    /* Compare the set fields in the existing UpdateHeader and see if they
+     * match the updated fields in the new record, if they do not we must
+     * create a new UpdateHeader 
+     */
+    size_t num_set_fields= update_header.set_field_metadata_size();
+
+    Field *current_field;
+    Field **table_fields= in_table->getFields();
+    in_table->setReadSet();
+
+    size_t num_calculated_updated_fields= 0;
+    bool found= false;
+    while ((current_field= *table_fields++) != NULL)
+    {
+      if (num_calculated_updated_fields > num_set_fields)
+      {
+        break;
+      }
+
+      if (isFieldUpdated(current_field, in_table, old_record, new_record))
+      {
+        /* check that this field exists in the UpdateHeader record */
+        found= false;
+
+        for (size_t x= 0; x < num_set_fields; ++x)
+        {
+          const message::FieldMetadata &field_metadata= update_header.set_field_metadata(x);
+          string name= field_metadata.name();
+          if (name.compare(current_field->field_name) == 0)
+          {
+            found= true;
+            ++num_calculated_updated_fields;
+            break;
+          } 
+        }
+        if (! found)
+        {
+          break;
+        } 
+      }
+    }
+
+    if ((num_calculated_updated_fields == num_set_fields) && found)
+    {
+      return true;
+    } 
+    else 
+    {
+      return false;
+    }
+  }
+}  
 
 void TransactionServices::setUpdateHeader(message::Statement &statement,
                                           Session *in_session,
@@ -1425,17 +1489,7 @@ void TransactionServices::setUpdateHeader(message::Statement &statement,
       field_metadata->set_type(message::internalFieldTypeToFieldProtoType(current_field->type()));
     }
 
-    /*
-     * The below really should be moved into the Field API and Record API.  But for now
-     * we do this crazy pointer fiddling to figure out if the current field
-     * has been updated in the supplied record raw byte pointers.
-     */
-    const unsigned char *old_ptr= (const unsigned char *) old_record + (ptrdiff_t) (current_field->ptr - in_table->getInsertRecord()); 
-    const unsigned char *new_ptr= (const unsigned char *) new_record + (ptrdiff_t) (current_field->ptr - in_table->getInsertRecord()); 
-
-    uint32_t field_length= current_field->pack_length(); /** @TODO This isn't always correct...check varchar diffs. */
-
-    if (memcmp(old_ptr, new_ptr, field_length) != 0)
+    if (isFieldUpdated(current_field, in_table, old_record, new_record))
     {
       /* Field is changed from old to new */
       field_metadata= header->add_set_field_metadata();
@@ -1478,17 +1532,8 @@ void TransactionServices::updateRecord(Session *in_session,
      * UPDATE t1 SET counter = counter + 1 WHERE id IN (1,2);
      *
      * We will generate two UpdateRecord messages with different set_value byte arrays.
-     *
-     * The below really should be moved into the Field API and Record API.  But for now
-     * we do this crazy pointer fiddling to figure out if the current field
-     * has been updated in the supplied record raw byte pointers.
      */
-    const unsigned char *old_ptr= (const unsigned char *) old_record + (ptrdiff_t) (current_field->ptr - in_table->getInsertRecord()); 
-    const unsigned char *new_ptr= (const unsigned char *) new_record + (ptrdiff_t) (current_field->ptr - in_table->getInsertRecord()); 
-
-    uint32_t field_length= current_field->pack_length(); /** @TODO This isn't always correct...check varchar diffs. */
-
-    if (memcmp(old_ptr, new_ptr, field_length) != 0)
+    if (isFieldUpdated(current_field, in_table, old_record, new_record))
     {
       /* Store the original "read bit" for this field */
       bool is_read_set= current_field->isReadSet();
@@ -1540,6 +1585,47 @@ void TransactionServices::updateRecord(Session *in_session,
   }
 }
 
+bool TransactionServices::isFieldUpdated(Field *current_field,
+                                         Table *in_table,
+                                         const unsigned char *old_record,
+                                         const unsigned char *new_record)
+{
+  /*
+   * The below really should be moved into the Field API and Record API.  But for now
+   * we do this crazy pointer fiddling to figure out if the current field
+   * has been updated in the supplied record raw byte pointers.
+   */
+  const unsigned char *old_ptr= (const unsigned char *) old_record + (ptrdiff_t) (current_field->ptr - in_table->getInsertRecord());
+  const unsigned char *new_ptr= (const unsigned char *) new_record + (ptrdiff_t) (current_field->ptr - in_table->getInsertRecord());
+
+  uint32_t field_length= current_field->pack_length(); /** @TODO This isn't always correct...check varchar diffs. */
+
+  bool old_value_is_null= current_field->is_null_in_record(old_record);
+  bool new_value_is_null= current_field->is_null_in_record(new_record);
+
+  bool isUpdated= false;
+  if (old_value_is_null != new_value_is_null)
+  {
+    if ((old_value_is_null) && (! new_value_is_null)) /* old value is NULL, new value is non NULL */
+    {
+      isUpdated= true;
+    }
+    else if ((! old_value_is_null) && (new_value_is_null)) /* old value is non NULL, new value is NULL */
+    {
+      isUpdated= true;
+    }
+  }
+
+  if (! isUpdated)
+  {
+    if (memcmp(old_ptr, new_ptr, field_length) != 0)
+    {
+      isUpdated= true;
+    }
+  }
+  return isUpdated;
+}  
+
 message::Statement &TransactionServices::getDeleteStatement(Session *in_session,
                                                             Table *in_table,
                                                             uint32_t *next_segment_id)
@@ -1568,7 +1654,8 @@ message::Statement &TransactionServices::getDeleteStatement(Session *in_session,
      * a bulk insert), we'll finalize the Statement and Transaction (doing
      * the Transaction will keep it from getting huge).
      */
-    if (static_cast<size_t>(transaction->ByteSize()) >= trx_msg_threshold)
+    if (static_cast<size_t>(transaction->ByteSize()) >= 
+      in_session->variables.transaction_message_threshold)
     {
       /* Remember the transaction ID so we can re-use it */
       uint64_t trx_id= transaction->transaction_context().transaction_id();
@@ -1916,6 +2003,49 @@ void TransactionServices::rawStatement(Session *in_session, const string &query)
   (void) replication_services.pushTransactionMessage(*in_session, *transaction);
 
   cleanupTransactionMessage(transaction, in_session);
+}
+
+int TransactionServices::sendEvent(Session *session, const message::Event &event)
+{
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  if (! replication_services.isActive())
+    return 0;
+
+  message::Transaction *transaction= new (nothrow) message::Transaction();
+
+  // set server id, start timestamp
+  initTransactionMessage(*transaction, session, true);
+
+  // set end timestamp
+  finalizeTransactionMessage(*transaction, session);
+
+  message::Event *trx_event= transaction->mutable_event();
+
+  trx_event->CopyFrom(event);
+
+  plugin::ReplicationReturnCode result= replication_services.pushTransactionMessage(*session, *transaction);
+
+  delete transaction;
+
+  return static_cast<int>(result);
+}
+
+bool TransactionServices::sendStartupEvent(Session *session)
+{
+  message::Event event;
+  event.set_type(message::Event::STARTUP);
+  if (sendEvent(session, event) != 0)
+    return false;
+  return true;
+}
+
+bool TransactionServices::sendShutdownEvent(Session *session)
+{
+  message::Event event;
+  event.set_type(message::Event::SHUTDOWN);
+  if (sendEvent(session, event) != 0)
+    return false;
+  return true;
 }
 
 } /* namespace drizzled */

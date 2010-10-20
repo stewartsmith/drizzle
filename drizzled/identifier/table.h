@@ -118,11 +118,25 @@ public:
     return false;
   }
 
+  static bool isView(message::Table::TableType arg) // Not a SQL view, but a view for I_S
+  {
+    switch (arg)
+    {
+    default:
+    case message::Table::STANDARD:
+    case message::Table::TEMPORARY:
+    case message::Table::INTERNAL:
+      break;
+    case message::Table::FUNCTION:
+      return true;
+    }
+
+    return false;
+  }
+
   bool isView() const // Not a SQL view, but a view for I_S
   {
-    if (type == message::Table::FUNCTION)
-      return true;
-    return false;
+    return isView(type);
   }
 
   Type getType() const
@@ -193,8 +207,11 @@ public:
 
   friend bool operator==(TableIdentifier &left, TableIdentifier &right)
   {
-    if (left.getKey() == right.getKey())
-      return true;
+    if (left.getHashValue() == right.getHashValue())
+    {
+      if (left.getKey() == right.getKey())
+        return true;
+    }
 
     return false;
   }

@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Paul McCullagh
  *
@@ -354,7 +354,7 @@ void XTLocationTable::loadRow(char *buf, xtWord4 row_id)
 	save_write_set = table->write_set;
 	table->write_set = NULL;
 
-	memset(buf, 0xFF, table->s->null_bytes);
+	memset(buf, 0xFF, table->getNullBytes());
 
 	tp_ptr = *((XTTablePathPtr *) xt_sl_item_at(ost_db->db_table_paths, row_id));
 
@@ -464,7 +464,7 @@ void XTStatisticsTable::loadRow(char *buf, xtWord4 rec_id)
 	save_write_set = table->write_set;
 	table->write_set = NULL;
 
-	memset(buf, 0xFF, table->s->null_bytes);
+	memset(buf, 0xFF, table->getNullBytes());
 
 	stat_name = xt_get_stat_meta_data(rec_id)->sm_name;
 	stat_value = xt_get_statistic(&tt_statistics, ost_db, rec_id);

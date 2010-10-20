@@ -6,5 +6,5 @@ DROP DATABASE mysqltest_1;
 ERROR HY000: Can't execute the query because you have a conflicting read lock
 UNLOCK TABLES;
 DROP DATABASE mysqltest_1;
-ERROR HY000: Can't drop database 'mysqltest_1'; database doesn't exist
+ERROR HY000: Can't drop schema 'mysqltest_1'; schema doesn't exist
 End of 5.1 tests

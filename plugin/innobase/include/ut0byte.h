@@ -11,8 +11,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -219,8 +219,8 @@ UNIV_INLINE
 void*
 ut_align(
 /*=====*/
-	void*	ptr,		/*!< in: pointer */
-	ulint	align_no);	/*!< in: align by this number */
+	const void*	ptr,		/*!< in: pointer */
+	ulint		align_no);	/*!< in: align by this number */
 /*********************************************************//**
 The following function rounds down a pointer to the nearest
 aligned address.

@@ -46,7 +46,12 @@ namespace plugin
 
 /*============================*/
   // Basic plugin registration stuff.
-  static vector<EventObserver *> all_event_plugins;
+  EventObserverVector all_event_plugins;
+
+  const EventObserverVector &EventObserver::getEventObservers(void)
+  {
+    return all_event_plugins;
+  }
 
   //---------
   bool EventObserver::addPlugin(EventObserver *handler)
@@ -86,18 +91,16 @@ namespace plugin
 
     EventObserverList()
     {
-      uint32_t i;
-
-      event_observer_lists.reserve(EventObserver::MAX_EVENT_COUNT);
-      for (i=0; i < EventObserver::MAX_EVENT_COUNT; i++)
-      {
-        event_observer_lists[i]= NULL;
-      }
+			// Initialize the list with NULL pointers.
+			event_observer_lists.assign(EventObserver::MAX_EVENT_COUNT, NULL);
     }
 
     ~EventObserverList()
     {
-      clearAllObservers();
+      for_each(event_observer_lists.begin(),
+               event_observer_lists.end(),
+               DeletePtr());
+			event_observer_lists.clear();
     }
 
     /* Add the observer to the observer list for the even, positioning it if required.
@@ -137,15 +140,6 @@ namespace plugin
       }
 
       observers->insert(pair<uint32_t, EventObserver *>(event_pos, eventObserver) );
-    }
-
-    /* Remove all observer from all lists. */
-    void clearAllObservers()
-    {
-      for_each(event_observer_lists.begin(),
-               event_observer_lists.end(),
-               DeletePtr());
-      event_observer_lists.clear();
     }
 
 
@@ -202,19 +196,17 @@ namespace plugin
 
     observers= table_share.getTableObservers();
 
-    if (observers == NULL) 
-    {
-      observers= new EventObserverList();
-      table_share.setTableObservers(observers);
-    } 
-    else 
-    {
-      /* Calling registerTableEvents() for a table that already has
-       * events registered on it is probably a programming error.
-     */
-      observers->clearAllObservers();
+    if (observers != NULL) 
+		{
+			errmsg_printf(ERRMSG_LVL_WARN,
+									_("EventObserver::registerTableEvents(): Table already has events registered on it: probable programming error."));
+			table_share.setTableObservers(NULL);
+      delete observers;
     }
 
+		observers= new EventObserverList();
+		table_share.setTableObservers(observers);
+ 
 
     for_each(all_event_plugins.begin(), all_event_plugins.end(),
              RegisterTableEventsIterate(table_share, *observers));
@@ -225,7 +217,7 @@ namespace plugin
   /* Cleanup before freeing the TableShare object. */
   void EventObserver::deregisterTableEvents(TableShare &table_share)
   {
-    if (all_event_plugins.empty())
+   if (all_event_plugins.empty())
       return;
 
     EventObserverList *observers;
@@ -235,7 +227,6 @@ namespace plugin
     if (observers) 
     {
       table_share.setTableObservers(NULL);
-      observers->clearAllObservers();
       delete observers;
     }
   }
@@ -282,7 +273,7 @@ namespace plugin
     {
       observers= new EventObserverList();
       session.setSchemaObservers(db, observers);
-    }
+   }
 
     for_each(all_event_plugins.begin(), all_event_plugins.end(),
              RegisterSchemaEventsIterate(db, *observers));
@@ -303,7 +294,6 @@ namespace plugin
     if (observers) 
     {
       session.setSchemaObservers(db, NULL);
-      observers->clearAllObservers();
       delete observers;
     }
   }
@@ -342,14 +332,15 @@ namespace plugin
     EventObserverList *observers;
 
     observers= session.getSessionObservers();
+		if (observers) { // This should not happed
+			errmsg_printf(ERRMSG_LVL_WARN,
+									_("EventObserver::registerSessionEvents(): Session already has events registered on it: probable programming error."));
+			session.setSessionObservers(NULL);
+			delete observers;
+		}
 
-    if (observers == NULL) 
-    {
-      observers= new EventObserverList();
-      session.setSessionObservers(observers);
-    }
-
-    observers->clearAllObservers();
+	observers= new EventObserverList();
+	session.setSessionObservers(observers);
 
     for_each(all_event_plugins.begin(), all_event_plugins.end(),
              RegisterSessionEventsIterate(session, *observers));
@@ -370,7 +361,6 @@ namespace plugin
     if (observers) 
     {
       session.setSessionObservers(NULL);
-      observers->clearAllObservers();
       delete observers;
     }
   }
@@ -455,7 +445,7 @@ namespace plugin
   //--------
   bool TableEventData::callEventObservers()
   {
-    observerList= table.s->getTableObservers();
+    observerList= table.getMutableShare()->getTableObservers();
 
     return EventData::callEventObservers();
   }
@@ -595,6 +585,42 @@ namespace plugin
       return false;
 
     AfterDropDatabaseEventData eventData(session, db, err);
+    return eventData.callEventObservers();
+  }
+
+  bool EventObserver::connectSession(Session &session)
+  {
+    if (all_event_plugins.empty())
+      return false;
+
+    ConnectSessionEventData eventData(session);
+    return eventData.callEventObservers();
+  }
+
+  bool EventObserver::disconnectSession(Session &session)
+  {
+    if (all_event_plugins.empty())
+      return false;
+
+    DisconnectSessionEventData eventData(session);
+    return eventData.callEventObservers();
+  }
+
+  bool EventObserver::beforeStatement(Session &session)
+  {
+    if (all_event_plugins.empty())
+      return false;
+
+    BeforeStatementEventData eventData(session);
+    return eventData.callEventObservers();
+  }
+
+  bool EventObserver::afterStatement(Session &session)
+  {
+    if (all_event_plugins.empty())
+      return false;
+
+    AfterStatementEventData eventData(session);
     return eventData.callEventObservers();
   }
 

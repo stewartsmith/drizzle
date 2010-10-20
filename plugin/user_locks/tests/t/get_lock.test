@@ -1,0 +1,11 @@
+SELECT get_lock("foo");
+SELECT release_lock("foo");
+SELECT get_lock("foo", 1);
+SELECT release_lock("foo");
+SELECT get_lock("foo", 10);
+SELECT release_lock("foo");
+
+set @lock_name= "new_name";
+SELECT get_lock(@lock_name);
+SELECT if ((is_used_lock(@lock_name) = CONNECTION_ID()), "YES", "NO");
+SELECT release_lock(@lock_name);

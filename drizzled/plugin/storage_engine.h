@@ -24,8 +24,7 @@
 #include <drizzled/definitions.h>
 #include <drizzled/plugin.h>
 #include <drizzled/handler_structs.h>
-#include <drizzled/message/schema.pb.h>
-#include <drizzled/message/table.pb.h>
+#include <drizzled/message.h>
 #include "drizzled/plugin/plugin.h"
 #include "drizzled/sql_string.h"
 #include "drizzled/identifier.h"
@@ -329,8 +328,8 @@ public:
 
   // @note All schema methods defined here
   static void getIdentifiers(Session &session, SchemaIdentifiers &schemas);
-  static bool getSchemaDefinition(const drizzled::TableIdentifier &identifier, message::Schema &proto);
-  static bool getSchemaDefinition(const drizzled::SchemaIdentifier &identifier, message::Schema &proto);
+  static bool getSchemaDefinition(const drizzled::TableIdentifier &identifier, message::SchemaPtr &proto);
+  static bool getSchemaDefinition(const drizzled::SchemaIdentifier &identifier, message::SchemaPtr &proto);
   static bool doesSchemaExist(const drizzled::SchemaIdentifier &identifier);
   static const CHARSET_INFO *getSchemaCollation(const drizzled::SchemaIdentifier &identifier);
   static bool createSchema(const drizzled::message::Schema &schema_message);
@@ -341,7 +340,7 @@ public:
   virtual void doGetSchemaIdentifiers(SchemaIdentifiers&)
   { }
 
-  virtual bool doGetSchemaDefinition(const drizzled::SchemaIdentifier&, drizzled::message::Schema&)
+  virtual bool doGetSchemaDefinition(const drizzled::SchemaIdentifier&, drizzled::message::SchemaPtr&)
   { 
     return false; 
   }

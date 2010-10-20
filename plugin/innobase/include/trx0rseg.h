@@ -11,8 +11,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -125,6 +125,13 @@ trx_rseg_create(
 	ulint	max_size,	/*!< in: max size in pages */
 	ulint*	id,		/*!< out: rseg id */
 	mtr_t*	mtr);		/*!< in: mtr */
+/***************************************************************************
+Free's an instance of the rollback segment in memory. */
+UNIV_INTERN
+void
+trx_rseg_mem_free(
+/*==============*/
+	trx_rseg_t*	rseg);		/* in, own: instance to free */
 
 
 /* Number of undo log slots in a rollback segment file copy */

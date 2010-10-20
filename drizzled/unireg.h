@@ -26,7 +26,6 @@
 namespace drizzled
 {
 
-void unireg_end(void) __attribute__((noreturn));
 void unireg_abort(int exit_code) __attribute__((noreturn));
 
 } /* namespace drizzled */

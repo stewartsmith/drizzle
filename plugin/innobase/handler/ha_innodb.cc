@@ -18,8 +18,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 /***********************************************************************
@@ -45,7 +45,7 @@ Public License for more details.
 
 You should have received a copy of the GNU General Public License along
 with this program; if not, write to the Free Software Foundation, Inc.,
-59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 ***********************************************************************/
 
@@ -90,10 +90,12 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>
+#include <boost/filesystem.hpp>
 #include <drizzled/module/option_map.h>
 #include <iostream>
 
 namespace po= boost::program_options;
+namespace fs=boost::filesystem;
 using namespace std;
 
 /** @file ha_innodb.cc */
@@ -101,6 +103,7 @@ using namespace std;
 /* Include necessary InnoDB headers */
 extern "C" {
 #include "univ.i"
+#include "buf0lru.h"
 #include "btr0sea.h"
 #include "os0file.h"
 #include "os0thread.h"
@@ -161,6 +164,7 @@ static ulong commit_threads = 0;
 static pthread_mutex_t commit_threads_m;
 static pthread_cond_t commit_cond;
 static pthread_mutex_t commit_cond_m;
+static pthread_mutex_t analyze_mutex;
 static bool innodb_inited = 0;
 
 #define INSIDE_HA_INNOBASE_CC
@@ -199,6 +203,10 @@ static ulong innobase_write_io_threads;
 static int64_t innobase_buffer_pool_size= 128*1024*1024;
 static int64_t innobase_log_file_size;
 
+/** Percentage of the buffer pool to reserve for 'old' blocks.
+Connected to buf_LRU_old_ratio. */
+static uint innobase_old_blocks_pct;
+
 /* The default values for the following char* start-up parameters
 are determined in innobase_init below: */
 
@@ -213,9 +221,7 @@ file formats in the configuration file, but can only be set to any
 of the supported file formats during runtime. */
 static char*  innobase_file_format_check    = NULL;
 
-/* The following has a misleading name: starting from 4.0.5, this also
-affects Windows: */
-static char*  innobase_unix_file_flush_method   = NULL;
+static char*  innobase_file_flush_method   = NULL;
 
 /* Below we have boolean-valued start-up parameters, and their default
 values */
@@ -229,7 +235,6 @@ static my_bool  innobase_use_doublewrite    = TRUE;
 static my_bool  innobase_use_checksums      = TRUE;
 static my_bool  innobase_rollback_on_timeout    = FALSE;
 static my_bool  innobase_create_status_file   = FALSE;
-static my_bool  innobase_stats_on_metadata    = TRUE;
 
 static char*  internal_innobase_data_file_path  = NULL;
 
@@ -254,6 +259,10 @@ static const char* innobase_change_buffering_values[IBUF_USE_COUNT] = {
   "none",   /* IBUF_USE_NONE */
   "inserts" /* IBUF_USE_INSERT */
 };
+
+/* "GEN_CLUST_INDEX" is the name reserved for Innodb default
+system primary index. */
+static const char innobase_index_reserve_name[]= "GEN_CLUST_INDEX";
 
 /********************************************************************
 Gives the file extension of an InnoDB single-table tablespace. */
@@ -302,11 +311,13 @@ public:
       pthread_mutex_destroy(&prepare_commit_mutex);
       pthread_mutex_destroy(&commit_threads_m);
       pthread_mutex_destroy(&commit_cond_m);
+      pthread_mutex_destroy(&analyze_mutex);
       pthread_cond_destroy(&commit_cond);
     }
     
     /* These get strdup'd from vm variables */
     free(innobase_data_home_dir);
+    free(innobase_log_group_home_dir);
 
   }
 
@@ -592,10 +603,10 @@ innobase_file_format_check_on_off(
 /************************************************************//**
 Validate the file format check config parameters, as a side effect it
 sets the srv_check_file_format_at_startup variable.
-@return true if valid config value */
+@return	the format_id if valid config value, otherwise, return -1 */
 static
-bool
-innobase_file_format_check_validate(
+int
+innobase_file_format_validate_and_set(
 /*================================*/
   const char* format_check);    /*!< in: parameter value */
 
@@ -675,10 +686,10 @@ static drizzle_show_var innodb_status_variables[]= {
   (char*) &export_vars.innodb_buffer_pool_pages_misc,   SHOW_LONG},
   {"buffer_pool_pages_total",
   (char*) &export_vars.innodb_buffer_pool_pages_total,    SHOW_LONG},
-  {"buffer_pool_read_ahead_rnd",
-  (char*) &export_vars.innodb_buffer_pool_read_ahead_rnd, SHOW_LONG},
-  {"buffer_pool_read_ahead_seq",
-  (char*) &export_vars.innodb_buffer_pool_read_ahead_seq, SHOW_LONG},
+  {"buffer_pool_read_ahead",
+  (char*) &export_vars.innodb_buffer_pool_read_ahead, SHOW_LONG},
+  {"buffer_pool_read_ahead_evicted",
+  (char*) &export_vars.innodb_buffer_pool_read_ahead_evicted, SHOW_LONG},
   {"buffer_pool_read_requests",
   (char*) &export_vars.innodb_buffer_pool_read_requests,  SHOW_LONG},
   {"buffer_pool_reads",
@@ -1009,11 +1020,20 @@ convert_error_code_to_mysql(
   case DB_SUCCESS:
     return(0);
 
+  case DB_INTERRUPTED:
+    my_error(ER_QUERY_INTERRUPTED, MYF(0));
+    /* fall through */
   case DB_ERROR:
   default:
     return(-1); /* unspecified error */
 
   case DB_DUPLICATE_KEY:
+    /* Be cautious with returning this error, since
+       mysql could re-enter the storage layer to get
+       duplicated key info, the operation requires a
+       valid table handle and/or transaction information,
+       which might not always be available in the error
+       handling stage. */
     return(HA_ERR_FOUND_DUPP_KEY);
 
   case DB_FOREIGN_DUPLICATE_KEY:
@@ -1100,11 +1120,17 @@ convert_error_code_to_mysql(
     and the actual error code name could very well be different.
     This will require some monitoring, ie. the status
     of this request on our part.*/
-#ifdef ER_TOO_MANY_CONCURRENT_TRXS
-    return(ER_TOO_MANY_CONCURRENT_TRXS);
-#else
+
+    /* New error code HA_ERR_TOO_MANY_CONCURRENT_TRXS is only
+       available in 5.1.38 and later, but the plugin should still
+       work with previous versions of MySQL.
+       In Drizzle we seem to not have this yet.
+    */
+#ifdef HA_ERR_TOO_MANY_CONCURRENT_TRXS
+    return(HA_ERR_TOO_MANY_CONCURRENT_TRXS);
+#else /* HA_ERR_TOO_MANY_CONCURRENT_TRXS */
     return(HA_ERR_RECORD_FILE_FULL);
-#endif
+#endif /* HA_ERR_TOO_MANY_CONCURRENT_TRXS */
   case DB_UNSUPPORTED:
     return(HA_ERR_UNSUPPORTED);
   }
@@ -1819,7 +1845,6 @@ innobase_init(
   innobase_use_checksums= (vm.count("disable-checksums")) ? false : true;
   innobase_use_doublewrite= (vm.count("disable-doublewrite")) ? false : true;
   srv_adaptive_flushing= (vm.count("disable-adaptive-flushing")) ? false : true;
-  innobase_stats_on_metadata= (vm.count("disable-stats-on-metadata")) ? false : true;
   srv_use_sys_malloc= (vm.count("use-internal-malloc")) ? false : true;
   (SessionVAR(NULL,support_xa))= (vm.count("disable-xa")) ? false : true;
   (SessionVAR(NULL,table_locks))= (vm.count("disable-table-locks")) ? false : true;
@@ -1839,7 +1864,7 @@ innobase_init(
   }
   else
   {
-    innobase_data_home_dir= strdup(getDataHome().c_str());
+    innobase_data_home_dir= strdup(getDataHome().file_string().c_str());
   }
 
   if (vm.count("fast-shutdown"))
@@ -1867,11 +1892,11 @@ innobase_init(
 
   if (vm.count("flush-method"))
   {
-    innobase_unix_file_flush_method= const_cast<char *>(vm["flush-method"].as<string>().c_str());
+    innobase_file_flush_method= const_cast<char *>(vm["flush-method"].as<string>().c_str());
   }
   else
   {
-    innobase_unix_file_flush_method= NULL;
+    innobase_file_flush_method= NULL;
   }
 
 #ifdef UNIV_LOG_ARCHIVE
@@ -2160,11 +2185,11 @@ mem_free_and_error:
 
   if (vm.count("log-group-home-dir"))
   {
-    innobase_log_group_home_dir= const_cast<char *>(vm["log-group-home-dir"].as<string>().c_str());
+    innobase_log_group_home_dir= strdup(vm["log-group-home-dir"].as<string>().c_str());
   }
   else
   {
-    innobase_log_group_home_dir = const_cast<char *>(getDataHome().c_str());
+    innobase_log_group_home_dir = strdup(getDataHome().file_string().c_str());
   }
 
 #ifdef UNIV_LOG_ARCHIVE
@@ -2225,9 +2250,8 @@ innodb_log_group_home_dir: */
     /* Did the user specify a format name that we support ?
       As a side effect it will update the variable
       srv_check_file_format_at_startup */
-    if (!innobase_file_format_check_validate(
-                                             innobase_file_format_check)) {
-
+    if (innobase_file_format_validate_and_set(
+				innobase_file_format_check) < 0) {
       errmsg_printf(ERRMSG_LVL_ERROR, "InnoDB: invalid "
                     "innodb_file_format_check value: "
                     "should be either 'on' or 'off' or "
@@ -2269,7 +2293,7 @@ innobase_change_buffering_inited_ok:
 
   /* --------------------------------------------------*/
 
-  srv_file_flush_method_str = innobase_unix_file_flush_method;
+  srv_file_flush_method_str = innobase_file_flush_method;
 
   srv_n_log_groups = (ulint) innobase_mirrored_log_groups;
   srv_n_log_files = (ulint) innobase_log_files_in_group;
@@ -2311,6 +2335,8 @@ innobase_change_buffering_inited_ok:
 
   data_mysql_default_charset_coll = (ulint)default_charset_info->number;
 
+  innobase_old_blocks_pct = buf_LRU_old_ratio_update(innobase_old_blocks_pct,
+                                                     FALSE);
 
   innobase_commit_concurrency_init_default();
 
@@ -2331,6 +2357,7 @@ innobase_change_buffering_inited_ok:
   pthread_mutex_init(&prepare_commit_mutex, MY_MUTEX_INIT_FAST);
   pthread_mutex_init(&commit_threads_m, MY_MUTEX_INIT_FAST);
   pthread_mutex_init(&commit_cond_m, MY_MUTEX_INIT_FAST);
+  pthread_mutex_init(&analyze_mutex, MY_MUTEX_INIT_FAST);
   pthread_cond_init(&commit_cond, NULL);
   innodb_inited= 1;
 
@@ -2568,6 +2595,8 @@ InnobaseEngine::doRollback(
   first to obey the latching order. */
 
   innobase_release_stat_resources(trx);
+
+  trx->n_autoinc_rows = 0;
 
   /* If we had reserved the auto-inc lock for some table (if
   we come here to roll back the latest SQL statement) we
@@ -4747,6 +4776,12 @@ ha_innobase::index_read(
 
   index = prebuilt->index;
 
+  if (UNIV_UNLIKELY(index == NULL)) {
+    prebuilt->index_usable = FALSE;
+    return(HA_ERR_CRASHED);
+  }
+
+
   /* Note that if the index for which the search template is built is not
   necessarily prebuilt->index, but can also be the clustered index */
 
@@ -4902,6 +4937,7 @@ ha_innobase::change_active_index(
   if (UNIV_UNLIKELY(!prebuilt->index)) {
     errmsg_printf(ERRMSG_LVL_WARN, "InnoDB: change_active_index(%u) failed",
           keynr);
+    prebuilt->index_usable = FALSE;
     return(1);
   }
 
@@ -4909,9 +4945,10 @@ ha_innobase::change_active_index(
                  prebuilt->index);
 
   if (UNIV_UNLIKELY(!prebuilt->index_usable)) {
-    errmsg_printf(ERRMSG_LVL_WARN,
-         "InnoDB: insufficient history for index %u",
-          keynr);
+    push_warning_printf(user_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                        HA_ERR_TABLE_DEF_CHANGED,
+                        "InnoDB: insufficient history for index %u",
+                        keynr);
     /* The caller seems to ignore this.  Thus, we must check
     this again in row_search_for_mysql(). */
     return(2);
@@ -5372,6 +5409,18 @@ create_table_def(
       }
     }
 
+    /* First check whether the column to be added has a
+       system reserved name. */
+    if (dict_col_name_is_reserved(field->field_name)){
+      my_error(ER_WRONG_COLUMN_NAME, MYF(0), field->field_name);
+
+      dict_mem_table_free(table);
+      trx_commit_for_mysql(trx);
+
+      error = DB_ERROR;
+      goto error_ret;
+    }
+
     dict_mem_table_add_col(table, table->heap,
       (char*) field->field_name,
       col_type,
@@ -5385,6 +5434,15 @@ create_table_def(
 
   error = row_create_table_for_mysql(table, trx);
 
+	if (error == DB_DUPLICATE_KEY) {
+		char buf[100];
+		innobase_convert_identifier(buf, sizeof buf,
+					    table_name, strlen(table_name),
+					    trx->mysql_thd, TRUE);
+		my_error(ER_TABLE_EXISTS_ERROR, MYF(0), buf);
+	}
+
+error_ret:
   error = convert_error_code_to_mysql(error, flags, NULL);
 
   return(error);
@@ -5420,6 +5478,9 @@ create_index(
   key = &form->key_info[key_num];
 
   n_fields = key->key_parts;
+
+  /* Assert that "GEN_CLUST_INDEX" cannot be used as non-primary index */
+  ut_a(innobase_strcasecmp(key->name, innobase_index_reserve_name) != 0);
 
   ind_type = 0;
 
@@ -5530,8 +5591,9 @@ create_clustered_index_when_no_primary(
   /* We pass 0 as the space id, and determine at a lower level the space
   id where to store the table */
 
-  index = dict_mem_index_create(table_name, "GEN_CLUST_INDEX",
-              0, DICT_CLUSTERED, 0);
+  index = dict_mem_index_create(table_name,
+                                innobase_index_reserve_name,
+                                0, DICT_CLUSTERED, 0);
 
   error = row_create_index_for_mysql(index, trx, NULL);
 
@@ -5708,14 +5770,6 @@ InnobaseEngine::doCreateTable(
                             "InnoDB: ROW_FORMAT=compressed requires innodb_file_format > Antelope.");
       }
     }
-
-    error= create_table_def(trx, &form, norm_name,
-                            lex_identified_temp_table ? name2 : NULL,
-                            iflags);
-  }
-
-  if (error) {
-    goto cleanup;
   }
 
   /* Look for a primary key */
@@ -5728,6 +5782,25 @@ InnobaseEngine::doCreateTable(
     the primary key is always number 0, if it exists */
 
   assert(primary_key_no == -1 || primary_key_no == 0);
+
+  /* Check for name conflicts (with reserved name) for
+     any user indices to be created. */
+  if (innobase_index_name_is_reserved(trx, form.key_info,
+                                      form.getShare()->keys)) {
+    error = -1;
+    goto cleanup;
+  }
+
+  if (lex_identified_temp_table)
+    iflags |= DICT_TF2_TEMPORARY << DICT_TF2_SHIFT;
+
+  error= create_table_def(trx, &form, norm_name,
+                          lex_identified_temp_table ? name2 : NULL,
+                          iflags);
+
+  if (error) {
+    goto cleanup;
+  }
 
   /* Create the keys */
 
@@ -5810,18 +5883,22 @@ InnobaseEngine::doCreateTable(
     setup at this stage and so we use session. */
 
   /* We need to copy the AUTOINC value from the old table if
-    this is an ALTER TABLE. */
+    this is an ALTER TABLE or CREATE INDEX because CREATE INDEX
+    does a table copy too. */
 
   if ((create_proto.options().has_auto_increment_value()
-       || session_sql_command(&session) == SQLCOM_ALTER_TABLE)
+       || session_sql_command(&session) == SQLCOM_ALTER_TABLE
+       || session_sql_command(&session) == SQLCOM_CREATE_INDEX)
       && create_proto.options().auto_increment_value() != 0) {
 
-    /* Query was ALTER TABLE...AUTO_INCREMENT = x; or
-      CREATE TABLE ...AUTO_INCREMENT = x; Find out a table
-      definition from the dictionary and get the current value
-      of the auto increment field. Set a new value to the
-      auto increment field if the value is greater than the
-      maximum value in the column. */
+    /* Query was one of :
+       CREATE TABLE ...AUTO_INCREMENT = x; or
+       ALTER TABLE...AUTO_INCREMENT = x;   or
+       CREATE INDEX x on t(...);
+       Find out a table definition from the dictionary and get
+       the current value of the auto increment field. Set a new
+       value to the auto increment field if the value is greater
+       than the maximum value in the column. */
 
     auto_inc_value = create_proto.options().auto_increment_value();
 
@@ -6200,6 +6277,23 @@ UNIV_INTERN int InnobaseEngine::doRenameTable(Session &session, const TableIdent
   innobase_commit_low(trx);
   trx_free_for_mysql(trx);
 
+  /* Add a special case to handle the Duplicated Key error
+     and return DB_ERROR instead.
+     This is to avoid a possible SIGSEGV error from mysql error
+     handling code. Currently, mysql handles the Duplicated Key
+     error by re-entering the storage layer and getting dup key
+     info by calling get_dup_key(). This operation requires a valid
+     table handle ('row_prebuilt_t' structure) which could no
+     longer be available in the error handling stage. The suggested
+     solution is to report a 'table exists' error message (since
+     the dup key error here is due to an existing table whose name
+     is the one we are trying to rename to) and return the generic
+     error code. */
+  if (error == (int) DB_DUPLICATE_KEY) {
+    my_error(ER_TABLE_EXISTS_ERROR, MYF(0), to.getPath().c_str());
+    error = DB_ERROR;
+  }
+
   error = convert_error_code_to_mysql(error, 0, NULL);
 
   if (not error)
@@ -6435,7 +6529,6 @@ ha_innobase::info(
   ib_int64_t  n_rows;
   ulong   j;
   ulong   i;
-  char    path[FN_REFLEN];
   os_file_stat_t  stat_info;
 
   /* If we are forcing recovery at a high level, we will suppress
@@ -6468,26 +6561,23 @@ ha_innobase::info(
   ib_table = prebuilt->table;
 
   if (flag & HA_STATUS_TIME) {
-    if (innobase_stats_on_metadata) {
-      /* In sql_show we call with this flag: update
-      then statistics so that they are up-to-date */
+    /* In Analyze we call with this flag: update
+       then statistics so that they are up-to-date */
 
-      prebuilt->trx->op_info = "updating table statistics";
+    prebuilt->trx->op_info = "updating table statistics";
 
-      dict_update_statistics(ib_table);
+    dict_update_statistics(ib_table);
 
-      prebuilt->trx->op_info = "returning various info to MySQL";
-    }
+    prebuilt->trx->op_info = "returning various info to MySQL";
 
-    snprintf(path, sizeof(path), "%s/%s%s",
-             getDataHomeCatalog().c_str(), ib_table->name, ".dfe");
-
-    internal::unpack_filename(path,path);
+    fs::path get_status_path(getDataHomeCatalog());
+    get_status_path /= ib_table->name;
+    fs::change_extension(get_status_path, "dfe");
 
     /* Note that we do not know the access time of the table,
     nor the CHECK TABLE time, nor the UPDATE or INSERT time. */
 
-    if (os_file_get_status(path,&stat_info)) {
+    if (os_file_get_status(get_status_path.file_string().c_str(), &stat_info)) {
       stats.create_time = (ulong) stat_info.ctime;
     }
   }
@@ -6695,8 +6785,14 @@ ha_innobase::analyze(
 /*=================*/
   Session*)   /*!< in: connection thread handle */
 {
+  /* Serialize ANALYZE TABLE inside InnoDB, see
+     Bug#38996 Race condition in ANALYZE TABLE */
+  pthread_mutex_lock(&analyze_mutex);
+
   /* Simply call ::info() with all the flags */
   info(HA_STATUS_TIME | HA_STATUS_CONST | HA_STATUS_VARIABLE);
+
+  pthread_mutex_unlock(&analyze_mutex);
 
   return(0);
 }
@@ -6728,11 +6824,15 @@ ha_innobase::check(
 
   ret = row_check_table_for_mysql(prebuilt);
 
-  if (ret == DB_SUCCESS) {
+  switch (ret) {
+  case DB_SUCCESS:
     return(HA_ADMIN_OK);
+  case DB_INTERRUPTED:
+    my_error(ER_QUERY_INTERRUPTED, MYF(0));
+    return(-1);
+  default:
+    return(HA_ADMIN_CORRUPT);
   }
-
-  return(HA_ADMIN_CORRUPT);
 }
 
 /*************************************************************//**
@@ -7608,17 +7708,19 @@ ha_innobase::store_lock(
         && isolation_level != TRX_ISO_SERIALIZABLE
         && (lock_type == TL_READ || lock_type == TL_READ_NO_INSERT)
         && (sql_command == SQLCOM_INSERT_SELECT
-      || sql_command == SQLCOM_UPDATE
-      || sql_command == SQLCOM_CREATE_TABLE)) {
+            || sql_command == SQLCOM_REPLACE_SELECT
+            || sql_command == SQLCOM_UPDATE
+            || sql_command == SQLCOM_CREATE_TABLE)) {
 
       /* If we either have innobase_locks_unsafe_for_binlog
       option set or this session is using READ COMMITTED
       isolation level and isolation level of the transaction
       is not set to serializable and MySQL is doing
-      INSERT INTO...SELECT or UPDATE ... = (SELECT ...) or
-      CREATE  ... SELECT... without FOR UPDATE or
-      IN SHARE MODE in select, then we use consistent
-      read for select. */
+      INSERT INTO...SELECT or REPLACE INTO...SELECT
+      or UPDATE ... = (SELECT ...) or CREATE  ...
+      SELECT... without FOR UPDATE or IN SHARE
+      MODE in select, then we use consistent read
+      for select. */
 
       prebuilt->select_lock_type = LOCK_NONE;
       prebuilt->stored_select_lock_type = LOCK_NONE;
@@ -7799,6 +7901,7 @@ ha_innobase::get_auto_increment(
   /* This all current style autoinc. */
   {
     uint64_t  need;
+    uint64_t  current;
     uint64_t  next_value;
     uint64_t  col_max_value;
 
@@ -7807,11 +7910,11 @@ ha_innobase::get_auto_increment(
     col_max_value = innobase_get_int_col_max_value(
       table->next_number_field);
 
+    current = *first_value > col_max_value ? autoinc : *first_value;
     need = *nb_reserved_values * increment;
 
     /* Compute the last value in the interval */
-    next_value = innobase_next_autoinc(
-      *first_value, need, offset, col_max_value);
+    next_value = innobase_next_autoinc(current, need, offset, col_max_value);
 
     prebuilt->autoinc_last_value = next_value;
 
@@ -8292,25 +8395,23 @@ innobase_file_format_check_on_off(
 /************************************************************//**
 Validate the file format check config parameters, as a side effect it
 sets the srv_check_file_format_at_startup variable.
-@return true if valid config value */
+@return the format_id if valid config value, otherwise, return -1 */
 static
-bool
-innobase_file_format_check_validate(
+int
+innobase_file_format_validate_and_set(
 /*================================*/
   const char* format_check) /*!< in: parameter value */
 {
   uint    format_id;
-  bool    ret = true;
 
   format_id = innobase_file_format_name_lookup(format_check);
 
   if (format_id < DICT_TF_FORMAT_MAX + 1) {
     srv_check_file_format_at_startup = format_id;
+    return((int) format_id);
   } else {
-    ret = false;
+    return(-1);
   }
-
-  return(ret);
 }
 
 /*************************************************************//**
@@ -8344,8 +8445,11 @@ innodb_file_format_name_validate(
       file_format_input);
 
     if (format_id <= DICT_TF_FORMAT_MAX) {
+      /* Save a pointer to the name in the
+         'file_format_name_map' constant array. */
+      *static_cast<const char**>(save) =
+        trx_sys_file_format_id_to_name(format_id);
 
-      *static_cast<const char**>(save) = file_format_input;
       return(0);
     }
   }
@@ -8398,7 +8502,7 @@ static
 int
 innodb_file_format_check_validate(
 /*==============================*/
-  Session*      , /*!< in: thread handle */
+  Session*      session, /*!< in: thread handle */
   drizzle_sys_var*  , /*!< in: pointer to system
             variable */
   void*       save, /*!< out: immediate result
@@ -8408,6 +8512,7 @@ innodb_file_format_check_validate(
   const char* file_format_input;
   char    buff[STRING_BUFFER_USUAL_SIZE];
   int   len = sizeof(buff);
+  int   format_id;
 
   ut_a(save != NULL);
   ut_a(value != NULL);
@@ -8420,24 +8525,32 @@ innodb_file_format_check_validate(
     message if they did so. */
 
     if (innobase_file_format_check_on_off(file_format_input)) {
-      errmsg_printf(ERRMSG_LVL_WARN, 
+      push_warning_printf(session,
+                          DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                          ER_WRONG_ARGUMENTS,
         "InnoDB: invalid innodb_file_format_check "
         "value; on/off can only be set at startup or "
         "in the configuration file");
-    } else if (innobase_file_format_check_validate(
-        file_format_input)) {
-
-      *static_cast<const char**>(save) = file_format_input;
-
-      return(0);
-
     } else {
-      errmsg_printf(ERRMSG_LVL_WARN, 
-        "InnoDB: invalid innodb_file_format_check "
-        "value; can be any format up to %s "
-        "or its equivalent numeric id",
-        trx_sys_file_format_id_to_name(
-          DICT_TF_FORMAT_MAX));
+      format_id = innobase_file_format_validate_and_set(file_format_input);
+      if (format_id >= 0) {
+        /* Save a pointer to the name in the
+           'file_format_name_map' constant array. */
+        *static_cast<const char**>(save) =
+          trx_sys_file_format_id_to_name(
+                                         (uint)format_id);
+
+        return(0);
+
+      } else {
+        push_warning_printf(session,
+                            DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                            ER_WRONG_ARGUMENTS,
+                            "InnoDB: invalid innodb_file_format_check "
+                            "value; can be any format up to %s "
+                            "or its equivalent numeric id",
+                            trx_sys_file_format_id_to_name(DICT_TF_FORMAT_MAX));
+      }
     }
   }
 
@@ -8516,6 +8629,25 @@ innodb_adaptive_hash_index_update(
   } else {
     btr_search_disable();
   }
+}
+
+/****************************************************************//**
+Update the system variable innodb_old_blocks_pct using the "saved"
+value. This function is registered as a callback with MySQL. */
+static
+void
+innodb_old_blocks_pct_update(
+/*=========================*/
+	Session*			,	/*!< in: thread handle */
+	drizzle_sys_var*	,	/*!< in: pointer to
+						system variable */
+	void*				,/*!< out: where the
+						formal string goes */
+	const void*			save)	/*!< in: immediate result
+						from check function */
+{
+	innobase_old_blocks_pct = buf_LRU_old_ratio_update(
+		*static_cast<const uint*>(save), TRUE);
 }
 
 /*************************************************************//**
@@ -8623,12 +8755,16 @@ static DRIZZLE_SYSVAR_STR(file_format, innobase_file_format_name,
   innodb_file_format_name_validate,
   innodb_file_format_name_update, "Antelope");
 
+/* If a new file format is introduced, the file format
+name needs to be updated accordingly. Please refer to
+file_format_name_map[] defined in trx0sys.c for the next
+file format name. */
 static DRIZZLE_SYSVAR_STR(file_format_check, innobase_file_format_check,
   PLUGIN_VAR_OPCMDARG,
   "The highest file format in the tablespace.",
   innodb_file_format_check_validate,
   innodb_file_format_check_update,
-  "on");
+  "Barracuda");
 
 static DRIZZLE_SYSVAR_ULONG(flush_log_at_trx_commit, srv_flush_log_at_trx_commit,
   PLUGIN_VAR_OPCMDARG,
@@ -8637,7 +8773,7 @@ static DRIZZLE_SYSVAR_ULONG(flush_log_at_trx_commit, srv_flush_log_at_trx_commit
   " or 2 (write at commit, flush once per second).",
   NULL, NULL, 1, 0, 2, 0);
 
-static DRIZZLE_SYSVAR_STR(flush_method, innobase_unix_file_flush_method,
+static DRIZZLE_SYSVAR_STR(flush_method, innobase_file_flush_method,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "With which method to flush data.", NULL, NULL, NULL);
 
@@ -8674,11 +8810,6 @@ static DRIZZLE_SYSVAR_BOOL(status_file, innobase_create_status_file,
   PLUGIN_VAR_OPCMDARG | PLUGIN_VAR_NOSYSVAR,
   "Enable SHOW INNODB STATUS output in the innodb_status.<pid> file",
   NULL, NULL, FALSE);
-
-static DRIZZLE_SYSVAR_BOOL(stats_on_metadata, innobase_stats_on_metadata,
-  PLUGIN_VAR_OPCMDARG,
-  "Enable statistics gathering for metadata commands such as SHOW TABLE STATUS (on by default)",
-  NULL, NULL, TRUE);
 
 static DRIZZLE_SYSVAR_ULONGLONG(stats_sample_pages, srv_stats_sample_pages,
   PLUGIN_VAR_RQCMDARG,
@@ -8755,6 +8886,18 @@ static DRIZZLE_SYSVAR_LONG(mirrored_log_groups, innobase_mirrored_log_groups,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "Number of identical copies of log groups we keep for the database. Currently this should be set to 1.",
   NULL, NULL, 1, 1, 10, 0);
+
+static DRIZZLE_SYSVAR_UINT(old_blocks_pct, innobase_old_blocks_pct,
+  PLUGIN_VAR_RQCMDARG,
+  "Percentage of the buffer pool to reserve for 'old' blocks.",
+  NULL, innodb_old_blocks_pct_update, 100 * 3 / 8, 5, 95, 0);
+
+static DRIZZLE_SYSVAR_UINT(old_blocks_time, buf_LRU_old_threshold_ms,
+  PLUGIN_VAR_RQCMDARG,
+  "Move blocks to the 'new' end of the buffer pool if the first access"
+  " was at least this many milliseconds ago."
+  " The timeout is disabled if 0 (the default).",
+  NULL, NULL, 0, 0, UINT32_MAX, 0);
 
 static DRIZZLE_SYSVAR_LONG(open_files, innobase_open_files,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
@@ -8979,8 +9122,9 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(max_purge_lag),
   DRIZZLE_SYSVAR(adaptive_flushing),
   DRIZZLE_SYSVAR(mirrored_log_groups),
+  DRIZZLE_SYSVAR(old_blocks_pct),
+  DRIZZLE_SYSVAR(old_blocks_time),
   DRIZZLE_SYSVAR(open_files),
-  DRIZZLE_SYSVAR(stats_on_metadata),
   DRIZZLE_SYSVAR(stats_sample_pages),
   DRIZZLE_SYSVAR(adaptive_hash_index),
   DRIZZLE_SYSVAR(replication_delay),
@@ -9053,6 +9197,49 @@ innobase_commit_concurrency_init_default(void)
 {
   DRIZZLE_SYSVAR_NAME(commit_concurrency).def_val
     = innobase_commit_concurrency;
+}
+
+/***********************************************************************
+This function checks each index name for a table against reserved
+system default primary index name 'GEN_CLUST_INDEX'. If a name matches,
+this function pushes an warning message to the client, and returns true. */
+extern "C" UNIV_INTERN
+bool
+innobase_index_name_is_reserved(
+/*============================*/
+					/* out: true if an index name
+					matches the reserved name */
+	const trx_t*	trx,		/* in: InnoDB transaction handle */
+	const KeyInfo*	key_info,	/* in: Indexes to be created */
+	ulint		num_of_keys)	/* in: Number of indexes to
+					be created. */
+{
+  const KeyInfo*	key;
+  uint		key_num;	/* index number */
+
+  for (key_num = 0; key_num < num_of_keys; key_num++) {
+    key = &key_info[key_num];
+
+    if (innobase_strcasecmp(key->name,
+                            innobase_index_reserve_name) == 0) {
+      /* Push warning to drizzle */
+      push_warning_printf((Session*)trx->mysql_thd,
+                          DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                          ER_WRONG_NAME_FOR_INDEX,
+                          "Cannot Create Index with name "
+                          "'%s'. The name is reserved "
+                          "for the system default primary "
+                          "index.",
+                          innobase_index_reserve_name);
+
+      my_error(ER_WRONG_NAME_FOR_INDEX, MYF(0),
+               innobase_index_reserve_name);
+
+      return(true);
+    }
+  }
+
+  return(false);
 }
 
 #ifdef UNIV_COMPILE_TEST_FUNCS

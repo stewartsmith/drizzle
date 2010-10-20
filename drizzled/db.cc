@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 
 /* create and drop of databases */
@@ -359,23 +359,6 @@ static int rm_table_part2(Session *session, TableList *tables)
   bool foreign_key_error= false;
 
   LOCK_open.lock(); /* Part 2 of rm a table */
-
-  /*
-    If we have the table in the definition cache, we don't have to check the
-    .frm cursor to find if the table is a normal table (not view) and what
-    engine to use.
-  */
-
-  for (table= tables; table; table= table->next_local)
-  {
-    TableIdentifier identifier(table->db, table->table_name);
-    TableShare *share;
-    table->setDbType(NULL);
-    if ((share= TableShare::getShare(identifier)))
-    {
-      table->setDbType(share->db_type());
-    }
-  }
 
   if (lock_table_names_exclusively(session, tables))
   {

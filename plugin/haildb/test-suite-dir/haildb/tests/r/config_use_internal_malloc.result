@@ -1,0 +1,6 @@
+SHOW VARIABLES LIKE 'innodb_use_sys_malloc';
+Variable_name	Value
+innodb_use_sys_malloc	OFF
+SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='use_sys_malloc';
+NAME	TYPE	VALUE
+use_sys_malloc	BOOL	false

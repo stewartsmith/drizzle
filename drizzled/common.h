@@ -156,7 +156,7 @@
 
 
 
-#define packet_error (~(uint32_t) 0)
+#define packet_error UINT32_MAX
 
 #if defined(__cplusplus)
 

@@ -5,7 +5,7 @@
  * All rights reserved.
  *
  * Use and distribution licensed under the BSD license.  See
- * the COPYING file in this directory for full text.
+ * the COPYING.BSD file in the root source directory for full text.
  */
 
 /**
@@ -158,14 +158,15 @@ drizzle_return_t drizzle_state_row_read(drizzle_con_st *con)
 {
   drizzle_log_debug(con->drizzle, "drizzle_state_row_read");
 
+  if (con->packet_size != 0 && con->buffer_size < con->packet_size && 
+    con->buffer_size < 5)
+  {
+    drizzle_state_push(con, drizzle_state_read);
+    return DRIZZLE_RETURN_OK;
+  }
+
   if (con->packet_size == 5 && con->buffer_ptr[0] == 254)
   {
-    if (con->buffer_size < 5)
-    {
-      drizzle_state_push(con, drizzle_state_read);
-      return DRIZZLE_RETURN_OK;
-    }
-
     /* Got EOF packet, no more rows. */
     con->result->row_current= 0;
     con->result->warning_count= drizzle_get_byte2(con->buffer_ptr + 1);

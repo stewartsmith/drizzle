@@ -519,7 +519,7 @@ count(*)
 #
 SELECT * FROM data_dictionary.GLOBAL_STATEMENTS;
 VARIABLE_NAME	VARIABLE_VALUE
-select	2
+select	3
 create_table	1
 create_index	0
 alter_table	0
@@ -530,7 +530,7 @@ delete	0
 truncate	0
 drop_table	1
 drop_index	0
-show_create	1
+show_create	0
 show_create_db	0
 load	0
 set_option	0

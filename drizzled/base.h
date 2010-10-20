@@ -473,21 +473,23 @@ enum data_file_type {
 */
 #define NULL_RANGE	64
 
-typedef struct st_key_range
+class key_range
 {
+public:
   const unsigned char *key;
   uint32_t length;
   enum ha_rkey_function flag;
   key_part_map keypart_map;
-} key_range;
+};
 
-typedef struct st_key_multi_range
+class KEY_MULTI_RANGE
 {
+public:
   key_range start_key;
   key_range end_key;
   char  *ptr;                 /* Free to use by caller (ptr to row etc) */
   uint32_t  range_flag;           /* key range flags see above */
-} KEY_MULTI_RANGE;
+};
 
 
 /* For number of records */

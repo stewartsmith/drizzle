@@ -106,6 +106,7 @@ drop table t1;
 # Bug #9404  information_schema: Weird error messages
 # with SELECT SUM() ... GROUP BY queries
 #
+--replace_column 2 #
 SELECT table_schema, count(*) FROM data_dictionary.tables
 WHERE table_name NOT LIKE 'ndb_%' AND 
 table_name NOT LIKE 'falcon%'

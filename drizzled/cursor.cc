@@ -1454,10 +1454,7 @@ int Cursor::ha_external_lock(Session *session, int lock_type)
 int Cursor::ha_reset()
 {
   /* Check that we have called all proper deallocation functions */
-  assert((unsigned char*) table->def_read_set.getBitmap() +
-              table->getShare()->column_bitmap_size ==
-              (unsigned char*) table->def_write_set.getBitmap());
-  assert(table->getShare()->all_set.isSetAll());
+  assert(! table->getShare()->all_set.none());
   assert(table->key_read == 0);
   /* ensure that ha_index_end / endTableScan has been called */
   assert(inited == NONE);

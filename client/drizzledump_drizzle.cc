@@ -25,7 +25,8 @@
 #include <drizzled/gettext.h>
 #include <boost/lexical_cast.hpp>
 
-extern bool  verbose;
+extern bool verbose;
+extern bool ignore_errors;
 
 bool DrizzleDumpDatabaseDrizzle::populateTables()
 {
@@ -39,7 +40,7 @@ bool DrizzleDumpDatabaseDrizzle::populateTables()
   if (verbose)
     std::cerr << _("-- Retrieving table structures for ") << databaseName << "..." << std::endl;
 
-  query="SELECT TABLE_NAME, TABLE_COLLATION, ENGINE FROM DATA_DICTIONARY.TABLES WHERE TABLE_SCHEMA='";
+  query="SELECT TABLE_NAME, TABLE_COLLATION, ENGINE, AUTO_INCREMENT, TABLE_COMMENT FROM DATA_DICTIONARY.TABLES WHERE TABLE_SCHEMA='";
   query.append(databaseName);
   query.append("' ORDER BY TABLE_NAME");
 
@@ -50,6 +51,7 @@ bool DrizzleDumpDatabaseDrizzle::populateTables()
 
   while ((row= drizzle_row_next(result)))
   {
+    size_t* row_sizes= drizzle_row_field_sizes(result);
     std::string tableName(row[0]);
     std::string displayName(tableName);
     cleanTableName(displayName);
@@ -60,12 +62,20 @@ bool DrizzleDumpDatabaseDrizzle::populateTables()
     table->displayName= displayName;
     table->collate= row[1];
     table->engineName= row[2];
-    table->autoIncrement= 0;
+    table->autoIncrement= boost::lexical_cast<uint64_t>(row[3]);
+    if (row[4])
+      table->comment= DrizzleDumpData::escape(row[4], row_sizes[4]);
+    else
+      table->comment= "";
     table->database= this;
-    if ((not table->populateFields()) or (not table->populateIndexes()))
+    if ((not table->populateFields()) or (not table->populateIndexes()) or
+      (not table->populateFkeys()))
     {
       delete table;
-      return false;
+      if (not ignore_errors)
+        return false;
+      else
+        continue;
     }
     tables.push_back(table);
   }
@@ -121,7 +131,10 @@ bool DrizzleDumpDatabaseDrizzle::populateTables(const std::vector<std::string> &
         std::cerr  << "Error: Could not get fields and/ot indexes for table " << displayName << std::endl;
         delete table;
         dcon->freeResult(result);
-        return false;
+        if (not ignore_errors)
+          return false;
+        else
+          continue;
       }
       tables.push_back(table);
       dcon->freeResult(result);
@@ -130,7 +143,10 @@ bool DrizzleDumpDatabaseDrizzle::populateTables(const std::vector<std::string> &
     {
       std::cerr << "Error: Table " << displayName << " not found." << std::endl;
       dcon->freeResult(result);
-      return false;
+      if (not ignore_errors)
+        return false;
+      else
+        continue;
     }
   }
 
@@ -208,7 +224,9 @@ bool DrizzleDumpTableDrizzle::populateIndexes()
   if (verbose)
     std::cerr << _("-- Retrieving indexes for ") << tableName << "..." << std::endl;
 
-  query= "SELECT INDEX_NAME, COLUMN_NAME, IS_USED_IN_PRIMARY, IS_UNIQUE FROM DATA_DICTIONARY.INDEX_PARTS WHERE TABLE_NAME='";
+  query= "SELECT INDEX_NAME, COLUMN_NAME, IS_USED_IN_PRIMARY, IS_UNIQUE, COMPARE_LENGTH FROM DATA_DICTIONARY.INDEX_PARTS WHERE TABLE_SCHEMA='";
+  query.append(database->databaseName);
+  query.append("' AND TABLE_NAME='");
   query.append(tableName);
   query.append("'");
 
@@ -228,6 +246,7 @@ bool DrizzleDumpTableDrizzle::populateIndexes()
       index->isPrimary= (strcmp(row[0], "PRIMARY") == 0);
       index->isUnique= (strcmp(row[3], "YES") == 0);
       index->isHash= 0;
+      index->length= (row[4]) ? boost::lexical_cast<uint32_t>(row[4]) : 0;
       lastKey= row[0];
       firstIndex= false;
     }
@@ -236,6 +255,43 @@ bool DrizzleDumpTableDrizzle::populateIndexes()
   if (!firstIndex)
     indexes.push_back(index);
 
+  dcon->freeResult(result);
+  return true;
+}
+
+bool DrizzleDumpTableDrizzle::populateFkeys()
+{
+  drizzle_result_st *result;
+  drizzle_row_t row;
+  std::string query;
+  DrizzleDumpForeignKey *fkey;
+
+  if (verbose)
+    std::cerr << _("-- Retrieving foreign keys for ") << tableName << "..." << std::endl;
+
+  query= "SELECT CONSTRAINT_NAME, CONSTRAINT_COLUMNS, REFERENCED_TABLE_NAME, REFERENCED_TABLE_COLUMNS, MATCH_OPTION, DELETE_RULE, UPDATE_RULE FROM DATA_DICTIONARY.FOREIGN_KEYS WHERE CONSTRAINT_SCHEMA='";
+  query.append(database->databaseName);
+  query.append("' AND CONSTRAINT_TABLE='");
+  query.append(tableName);
+  query.append("'");
+
+  result= dcon->query(query);
+
+  if (result == NULL)
+    return false;
+
+  while ((row= drizzle_row_next(result)))
+  {
+    fkey= new DrizzleDumpForeignKey(row[0], dcon);
+    fkey->parentColumns= row[1];
+    fkey->childTable= row[2];
+    fkey->childColumns= row[3];
+    fkey->matchOption= (strcmp(row[4], "NONE") != 0) ? row[4] : "";
+    fkey->deleteRule= (strcmp(row[5], "UNDEFINED") != 0) ? row[5] : "";
+    fkey->updateRule= (strcmp(row[6], "UNDEFINED") != 0) ? row[6] : "";
+
+    fkeys.push_back(fkey);
+  }
   dcon->freeResult(result);
   return true;
 }

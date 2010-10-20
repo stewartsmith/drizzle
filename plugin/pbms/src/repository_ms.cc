@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Original author: Paul McCullagh
  * Continued development: Barry Leslie
@@ -742,7 +742,7 @@ void MSRepoFile::setBlobMetaData(MSOpenTable *otab, uint64_t offset, const char 
 		alias_offset = 0;
 	}
 #else
-	uint32_t alias_hash = -1;
+	uint32_t alias_hash = UINT32_MAX;
 	if (alias || reset_alias) {
 		CSException::throwException(CS_CONTEXT, MS_ERR_NOT_IMPLEMENTED, "No BLOB alias support.");
 	}

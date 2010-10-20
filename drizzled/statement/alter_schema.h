@@ -37,7 +37,6 @@ public:
     :
       CreateSchema(in_session)
   { 
-    schema_message.set_update_timestamp(time(NULL));
   }
 
   bool execute();

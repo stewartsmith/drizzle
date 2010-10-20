@@ -11,8 +11,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -58,6 +58,12 @@ void
 lock_sys_create(
 /*============*/
 	ulint	n_cells);	/*!< in: number of slots in lock hash table */
+/*********************************************************************//**
+Closes the lock system at database shutdown. */
+UNIV_INTERN
+void
+lock_sys_close(void);
+/*================*/
 /*********************************************************************//**
 Checks if some transaction has an implicit x-lock on a record in a clustered
 index.
@@ -629,6 +635,14 @@ ulint
 lock_number_of_rows_locked(
 /*=======================*/
 	trx_t*	trx);	/*!< in: transaction */
+/*******************************************************************//**
+Check if a transaction holds any autoinc locks.
+@return TRUE if the transaction holds any AUTOINC locks. */
+UNIV_INTERN
+ibool
+lock_trx_holds_autoinc_locks(
+/*=========================*/
+	const trx_t*	trx);		/*!< in: transaction */
 /*******************************************************************//**
 Release all the transaction's autoinc locks. */
 UNIV_INTERN

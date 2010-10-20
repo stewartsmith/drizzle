@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #include "config.h"
@@ -787,7 +787,9 @@ bool ClientMySQLProtocol::checkConnection(void)
 
   session->getSecurityContext().setUser(user);
 
-  return session->checkUser(passwd, passwd_len, l_db);
+  return session->checkUser(string(passwd, passwd_len),
+                            string(l_db ? l_db : ""));
+
 }
 
 bool ClientMySQLProtocol::netStoreData(const unsigned char *from, size_t length)

@@ -23,6 +23,8 @@
 #include <drizzled/xid.h>
 #include <drizzled/discrete_interval.h>
 #include <drizzled/identifier.h>
+#include <drizzled/definitions.h>
+#include <drizzled/key_map.h>
 
 /* Definitions for parameters to do with Cursor-routines */
 
@@ -35,9 +37,6 @@
 #include <drizzled/atomics.h>
 
 #include <drizzled/message/table.pb.h>
-
-/* Bits to show what an alter table will do */
-#include <drizzled/sql_bitmap.h>
 
 #include <bitset>
 #include <algorithm>

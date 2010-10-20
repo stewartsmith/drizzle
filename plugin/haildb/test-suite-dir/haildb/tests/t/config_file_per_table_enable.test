@@ -1,0 +1,5 @@
+SHOW VARIABLES LIKE 'innodb_file_per_table';
+SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='file_per_table';
+CREATE TABLE t1 (a int primary key);
+--file_exists $DRIZZLETEST_VARDIR/master-data/local/test/t1.ibd
+DROP TABLE t1; 

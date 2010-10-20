@@ -35,17 +35,34 @@ class Select : public Statement
   /* These will move out once we have args for table functions */
   std::string show_schema;
   std::string show_table;
+  bool if_exists;
 
 public:
   Select(Session *in_session)
     :
-      Statement(in_session)
+      Statement(in_session),
+      if_exists(false)
   {}
 
   void setShowPredicate(const std::string &schema_arg, const std::string &table_arg)
   {
     show_schema= schema_arg;
     show_table= table_arg;
+  }
+
+  void setShowPredicate(const std::string &schema_arg)
+  {
+    show_schema= schema_arg;
+  }
+
+  void setShowExists(bool arg)
+  {
+    if_exists= arg;
+  }
+
+  bool getShowExists()
+  {
+    return if_exists;
   }
 
   const std::string getShowSchema()

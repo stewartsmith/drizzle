@@ -21,6 +21,8 @@
 #ifndef DRIZZLED_SELECT_TO_FILE_H
 #define DRIZZLED_SELECT_TO_FILE_H
 
+#include <boost/filesystem.hpp>
+
 namespace drizzled
 {
 
@@ -29,14 +31,15 @@ namespace internal
 typedef struct st_io_cache IO_CACHE;
 }
 
-class select_to_file : public select_result_interceptor
+class select_to_file :
+  public select_result_interceptor
 {
 protected:
   file_exchange *exchange;
   int file;
   internal::IO_CACHE *cache;
   ha_rows row_count;
-  char path[FN_REFLEN];
+  boost::filesystem::path path;
 
 public:
   select_to_file(file_exchange *ex);

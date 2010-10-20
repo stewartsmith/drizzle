@@ -86,7 +86,7 @@ bool statement::DropIndex::execute()
     Table *table= session->find_temporary_table(first_table);
     assert(table);
     {
-      TableIdentifier identifier(first_table->db, first_table->table_name, table->s->getPath());
+      TableIdentifier identifier(first_table->db, first_table->table_name, table->getShare()->getPath());
       create_info.default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier);
 
       res= alter_table(session, 

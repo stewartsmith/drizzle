@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include "myisam_priv.h"
 #include <drizzled/util/test.h>
@@ -303,7 +303,7 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
       share->not_flushed= false;
     }
     if (share->base.blobs)
-      mi_alloc_rec_buff(info, -1, &info->rec_buff);
+      mi_alloc_rec_buff(info, SIZE_MAX, &info->rec_buff);
     break;
   case HA_EXTRA_NORMAL:				/* Theese isn't in use */
     info->quick_mode=0;
@@ -372,7 +372,7 @@ int mi_reset(MI_INFO *info)
     error= end_io_cache(&info->rec_cache);
   }
   if (share->base.blobs)
-    mi_alloc_rec_buff(info, -1, &info->rec_buff);
+    mi_alloc_rec_buff(info, SIZE_MAX, &info->rec_buff);
 #if !defined(TARGET_OS_SOLARIS)
   if (info->opt_flag & MEMMAP_USED)
     madvise((char*) share->file_map, share->state.state.data_file_length,
