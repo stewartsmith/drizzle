@@ -56,6 +56,8 @@ public:
     return &_share;
   }
 
+  bool hasShare() const { return true; }
+
   bool hasVariableWidth() const
   {
     return _has_variable_width;

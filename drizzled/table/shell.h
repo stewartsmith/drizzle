@@ -29,6 +29,8 @@ namespace table
 
 class Shell : public drizzled::Table
 {
+  TableShare *_share; /**< Pointer to the shared metadata about the table */
+
 public:
   Shell() :
     Table()
@@ -38,6 +40,11 @@ public:
   ~Shell()
   {
   }
+
+  const TableShare *getShare() const { assert(_share); return _share; } /* Get rid of this long term */
+  TableShare *getMutableShare() { assert(_share); return _share; } /* Get rid of this long term */
+  bool hasShare() const { return _share ? true : false ; } /* Get rid of this long term */
+  void setShare(TableShare *new_share) { _share= new_share; } /* Get rid of this long term */
 };
 
 } /* namespace table */
