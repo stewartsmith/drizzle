@@ -8,7 +8,7 @@ Variable_name	Value
 Handler_commit	0
 DROP SCHEMA IF EXISTS boundaries;
 Warnings:
-Note	1008	Can't drop database 'boundaries'; database doesn't exist
+Note	1008	Can't drop schema 'boundaries'; schema doesn't exist
 SHOW STATUS LIKE 'Handler_commit%';
 Variable_name	Value
 Handler_commit	1
@@ -23,7 +23,7 @@ Handler_commit	1
 BEGIN;
 DROP SCHEMA IF EXISTS boundaries;
 Warnings:
-Note	1008	Can't drop database 'boundaries'; database doesn't exist
+Note	1008	Can't drop schema 'boundaries'; schema doesn't exist
 COMMIT;
 SHOW STATUS LIKE 'Handler_commit%';
 Variable_name	Value

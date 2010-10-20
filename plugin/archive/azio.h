@@ -41,7 +41,7 @@
 
 #include <drizzled/common.h>
 #include "drizzled/internal/my_sys.h"
-
+#include <string.h>
 #include <zlib.h>
 
 #ifdef  __cplusplus
@@ -224,9 +224,10 @@ typedef enum {
   AZ_METHOD_MAX
 } az_method;
 
-typedef struct azio_container_st azio_container_st;
+typedef class azio_container azio_container;
 
-struct azio_container_st {
+class azio_container {
+public:
   int fd;
   az_thread_type ready;
   size_t offset;
@@ -235,28 +236,38 @@ struct azio_container_st {
   pthread_mutex_t thresh_mutex;
   pthread_cond_t threshhold;
   pthread_t mainthread;            /* Thread descriptor */
+
+  azio_container():
+    fd(0),
+    offset(0),
+    read_size(0),
+    buffer(NULL),
+    mainthread(0)
+  {}
+
 };
 
 
-typedef struct azio_stream {
+typedef class azio_stream {
+public:
   z_stream stream;
-  int      z_err;   /* error code for last stream operation */
-  int      z_eof;   /* set if end of input file */
-  int     file;   /* .gz file */
-  Byte     *inbuf;  /* input buffer */
-  Byte     buffer1[AZ_BUFSIZE_READ];  /* input buffer */
-  Byte     buffer2[AZ_BUFSIZE_READ];  /* input buffer */
-  Byte     outbuf[AZ_BUFSIZE_WRITE]; /* output buffer */
-  int      aio_inited; /* Are we good to go */
-  uLong    crc;     /* crc32 of uncompressed data */
-  char     *msg;    /* error message */
-  char     mode;    /* 'w' or 'r' */
-  size_t  start;   /* start of compressed data in file (header skipped) */
-  size_t  in;      /* bytes into deflate or inflate */
-  size_t  out;     /* bytes out of deflate or inflate */
-  size_t  pos;     /* bytes out of deflate or inflate */
-  int      back;    /* one character push-back */
-  int      last;    /* true if push-back is last character */
+  int z_err;    /* error code for last stream operation */
+  int z_eof;    /* set if end of input file */
+  int file;     /* .gz file */
+  Byte *inbuf;  /* input buffer */
+  Byte buffer1[AZ_BUFSIZE_READ];  /* input buffer */
+  Byte buffer2[AZ_BUFSIZE_READ];  /* input buffer */
+  Byte outbuf[AZ_BUFSIZE_WRITE]; /* output buffer */
+  int aio_inited; /* Are we good to go */
+  uLong crc;      /* crc32 of uncompressed data */
+  char *msg;      /* error message */
+  char mode;      /* 'w' or 'r' */
+  size_t start;   /* start of compressed data in file (header skipped) */
+  size_t in;      /* bytes into deflate or inflate */
+  size_t out;     /* bytes out of deflate or inflate */
+  size_t pos;     /* bytes out of deflate or inflate */
+  int back;    /* one character push-back */
+  int last;    /* true if push-back is last character */
   unsigned char version;   /* Version */
   unsigned char minor_version;   /* Version */
   unsigned int block_size;   /* Block Size */
@@ -271,11 +282,49 @@ typedef struct azio_stream {
   unsigned int frm_length;   /* Position for start of FRM */
   unsigned int comment_start_pos;   /* Position for start of comment */
   unsigned int comment_length;   /* Position for start of comment */
+
 #ifdef AZIO_AIO
-  azio_container_st container;
+  azio_container container;
 #endif
   az_method method;
   char *row_ptr;
+
+  azio_stream():
+    z_err(0),
+    z_eof(0),
+    file(0),
+    inbuf(NULL),
+    aio_inited(0),
+    crc(0),
+    msg(NULL),
+    mode(0),
+    start(0),
+    in(0),
+    out(0),
+    pos(0),
+    back(0),
+    last(0),
+    version(0),
+    minor_version(0),
+    block_size(0),
+    check_point(0),
+    forced_flushes(0),
+    rows(0),
+    auto_increment(0),
+    longest_row(0),
+    shortest_row(0),
+    dirty(0),
+    frm_start_pos(0),
+    frm_length(0),
+    comment_start_pos(0),
+    comment_length(0),
+    row_ptr(NULL)
+ {
+    memset(buffer1, 0, AZ_BUFSIZE_READ);
+    memset(buffer2, 0, AZ_BUFSIZE_READ);
+    memset(outbuf, 0, AZ_BUFSIZE_WRITE);
+ }
+
 } azio_stream;
 
                         /* basic functions */

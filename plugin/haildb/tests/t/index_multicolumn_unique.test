@@ -1,0 +1,9 @@
+create table t1 (a int primary key, b int, c int, unique abcindex(a,b,c), unique bcindex(b,c));
+insert into t1 values (1,1,1),(2,2,2),(3,3,3),(4,4,4),(5,5,5),(6,2,3),(7,2,4),(8,2,1);
+--replace_column 9 #
+explain select * from t1 force index (abcindex) where a=2 and b=2;
+select * from t1 force index (abcindex) where a=2 and b=2;
+--replace_column 9 #
+explain select a from t1 force index (bcindex) where b=2 and c>2;
+select a from t1 force index (bcindex) where b=2 and c>2;
+DROP TABLE t1;

@@ -58,195 +58,202 @@ namespace plugin
 {
 class EventObserverList;
 class EventData;
+class EventObserver;
 
+typedef std::vector<EventObserver *> EventObserverVector;
+typedef EventObserver* EventObserverPtr;
 
 class EventObserver : public Plugin
+{
+  EventObserver();
+  EventObserver(const EventObserver &);
+  EventObserver& operator=(const EventObserver &);
+public:
+  explicit EventObserver(std::string name_arg)
+    : Plugin(name_arg, "EventObserver")
+  {}
+  virtual ~EventObserver() {}
+
+  enum EventType{
+    /* Session events: */
+    BEFORE_CREATE_DATABASE, AFTER_CREATE_DATABASE, 
+    BEFORE_DROP_DATABASE,   AFTER_DROP_DATABASE,
+    CONNECT_SESSION,
+    DISCONNECT_SESSION,
+    AFTER_STATEMENT,
+    BEFORE_STATEMENT,
+
+    /* Schema events: */
+    BEFORE_DROP_TABLE,   AFTER_DROP_TABLE, 
+    BEFORE_RENAME_TABLE, AFTER_RENAME_TABLE, 
+
+    /* Table events: */
+    BEFORE_INSERT_RECORD,   AFTER_INSERT_RECORD, 
+    BEFORE_UPDATE_RECORD,   AFTER_UPDATE_RECORD, 
+    BEFORE_DELETE_RECORD,   AFTER_DELETE_RECORD,
+
+    /* The max event ID marker. */
+    MAX_EVENT_COUNT
+  };
+
+  static const char *eventName(EventType event) 
   {
-    EventObserver();
-    EventObserver(const EventObserver &);
-    EventObserver& operator=(const EventObserver &);
-  public:
-    explicit EventObserver(std::string name_arg)
-      : Plugin(name_arg, "EventObserver")
-    {}
-    virtual ~EventObserver() {}
-
-    enum EventType{
-      /* Session events: */
-      BEFORE_CREATE_DATABASE, AFTER_CREATE_DATABASE, 
-      BEFORE_DROP_DATABASE,   AFTER_DROP_DATABASE,
-      CONNECT_SESSION,
-      DISCONNECT_SESSION,
-      AFTER_STATEMENT,
-      BEFORE_STATEMENT,
-
-      /* Schema events: */
-      BEFORE_DROP_TABLE,   AFTER_DROP_TABLE, 
-      BEFORE_RENAME_TABLE, AFTER_RENAME_TABLE, 
-
-      /* Table events: */
-      BEFORE_INSERT_RECORD,   AFTER_INSERT_RECORD, 
-      BEFORE_UPDATE_RECORD,   AFTER_UPDATE_RECORD, 
-      BEFORE_DELETE_RECORD,   AFTER_DELETE_RECORD,
-
-      /* The max event ID marker. */
-      MAX_EVENT_COUNT
-    };
-
-    static const char *eventName(EventType event) 
+    switch(event) 
     {
-      switch(event) 
-      {
-      case BEFORE_DROP_TABLE:
-        return "BEFORE_DROP_TABLE";
+    case BEFORE_DROP_TABLE:
+      return "BEFORE_DROP_TABLE";
 
-      case AFTER_DROP_TABLE:
-        return "AFTER_DROP_TABLE";
+    case AFTER_DROP_TABLE:
+      return "AFTER_DROP_TABLE";
 
-      case BEFORE_RENAME_TABLE:
-        return "BEFORE_RENAME_TABLE";
+    case BEFORE_RENAME_TABLE:
+      return "BEFORE_RENAME_TABLE";
 
-      case AFTER_RENAME_TABLE:
-        return "AFTER_RENAME_TABLE";
+    case AFTER_RENAME_TABLE:
+      return "AFTER_RENAME_TABLE";
 
-      case BEFORE_INSERT_RECORD:
-        return "BEFORE_INSERT_RECORD";
+    case BEFORE_INSERT_RECORD:
+      return "BEFORE_INSERT_RECORD";
 
-      case AFTER_INSERT_RECORD:
-        return "AFTER_INSERT_RECORD";
+    case AFTER_INSERT_RECORD:
+      return "AFTER_INSERT_RECORD";
 
-      case BEFORE_UPDATE_RECORD:
-        return "BEFORE_UPDATE_RECORD";
+    case BEFORE_UPDATE_RECORD:
+      return "BEFORE_UPDATE_RECORD";
 
-      case AFTER_UPDATE_RECORD:
-        return "AFTER_UPDATE_RECORD";
+    case AFTER_UPDATE_RECORD:
+      return "AFTER_UPDATE_RECORD";
 
-      case BEFORE_DELETE_RECORD:
-        return "BEFORE_DELETE_RECORD";
+    case BEFORE_DELETE_RECORD:
+      return "BEFORE_DELETE_RECORD";
 
-      case AFTER_DELETE_RECORD:
-        return "AFTER_DELETE_RECORD";
+    case AFTER_DELETE_RECORD:
+      return "AFTER_DELETE_RECORD";
 
-      case BEFORE_CREATE_DATABASE:
-        return "BEFORE_CREATE_DATABASE";
+    case BEFORE_CREATE_DATABASE:
+      return "BEFORE_CREATE_DATABASE";
 
-      case AFTER_CREATE_DATABASE:
-        return "AFTER_CREATE_DATABASE";
+    case AFTER_CREATE_DATABASE:
+      return "AFTER_CREATE_DATABASE";
 
-      case BEFORE_DROP_DATABASE:
-        return "BEFORE_DROP_DATABASE";
+    case BEFORE_DROP_DATABASE:
+      return "BEFORE_DROP_DATABASE";
 
-      case AFTER_DROP_DATABASE:
-        return "AFTER_DROP_DATABASE";
+    case AFTER_DROP_DATABASE:
+      return "AFTER_DROP_DATABASE";
 
-      case CONNECT_SESSION:
-        return "CONNECT_SESSION";
+    case CONNECT_SESSION:
+      return "CONNECT_SESSION";
 
-      case DISCONNECT_SESSION:
-        return "DISCONNECT_SESSION";
+    case DISCONNECT_SESSION:
+      return "DISCONNECT_SESSION";
 
-      case AFTER_STATEMENT:
-        return "AFTER_STATEMENT";
+    case AFTER_STATEMENT:
+      return "AFTER_STATEMENT";
 
-      case BEFORE_STATEMENT:
-        return "BEFORE_STATEMENT";
+    case BEFORE_STATEMENT:
+      return "BEFORE_STATEMENT";
 
-      case MAX_EVENT_COUNT:
-        break;
-      }
-
-      return "Unknown";
+    case MAX_EVENT_COUNT:
+      break;
     }
 
-    /*==========================================================*/
-    /* registerEvents() must be implemented to allow the plugin to
-     * register which events it is interested in.
-   */
-    virtual void registerTableEventsDo(TableShare &, EventObserverList &){}
-    virtual void registerSchemaEventsDo(const std::string &/*db*/, EventObserverList &) {}
-    virtual void registerSessionEventsDo(Session &, EventObserverList &) {}
+    return "Unknown";
+  }
 
-    virtual bool observeEventDo(EventData &)= 0;
+  /*==========================================================*/
+  /* registerEvents() must be implemented to allow the plugin to
+   * register which events it is interested in.
+ */
+  virtual void registerTableEventsDo(TableShare &, EventObserverList &){}
+  virtual void registerSchemaEventsDo(const std::string &/*db*/, EventObserverList &) {}
+  virtual void registerSessionEventsDo(Session &, EventObserverList &) {}
 
-    /*==========================================================*/
-    /* Static access methods called by drizzle: */
-    static bool addPlugin(EventObserver *handler);
-    static void removePlugin(EventObserver *handler);
+  virtual bool observeEventDo(EventData &)= 0;
 
-    /*==========================================================*/
-    /* Register an event of interest for this plugin. 
-     * This is called from with in the plugin when registering itself.
-     *
-     * The position field is used to indicate the order the event observer is to be 
-     * called. If the event observer must be called before any other observer then 
-     * the position must be set to 1. If it must be called last then the position must be 
-     * set to -1. A position of 0 indicated the position doesn't matter.
-     *
-     * If 2 plugins require the same position then which is called first in not guarenteed.
-     * In this case a warrning will be logged but execution will continue.
-     * 
-     * It is good practice that if the event position matters not to hard code the position
-     * but supply a systen variable so that it can be set at runtime so that the user can
-     * decide which event should be called first.
-   */
-    void registerEvent(EventObserverList &observers, EventType event, int32_t position= 0); 
+  /*==========================================================*/
+  /* Static access methods called by drizzle: */
+  static bool addPlugin(EventObserver *handler);
+  static void removePlugin(EventObserver *handler);
 
-    /*==========================================================*/
-    /* Called from drizzle to register all events for all event plugins 
-     * interested in this table. 
-   */
-    static void registerTableEvents(TableShare &table_share); 
-    static void deregisterTableEvents(TableShare &table_share); 
+  /*==========================================================*/
+  /* Register an event of interest for this plugin. 
+   * This is called from with in the plugin when registering itself.
+   *
+   * The position field is used to indicate the order the event observer is to be 
+   * called. If the event observer must be called before any other observer then 
+   * the position must be set to 1. If it must be called last then the position must be 
+   * set to -1. A position of 0 indicated the position doesn't matter.
+   *
+   * If 2 plugins require the same position then which is called first in not guarenteed.
+   * In this case a warrning will be logged but execution will continue.
+   * 
+   * It is good practice that if the event position matters not to hard code the position
+   * but supply a systen variable so that it can be set at runtime so that the user can
+   * decide which event should be called first.
+ */
+  void registerEvent(EventObserverList &observers, EventType event, int32_t position= 0); 
 
-    /*==========================================================*/
-    /* Called from drizzle to register all events for all event plugins 
-     * interested in this database. 
-   */
-    static void registerSchemaEvents(Session &session, const std::string &db); 
-    static void deregisterSchemaEvents(Session &session, const std::string &db); 
+  /*==========================================================*/
+  /* Called from drizzle to register all events for all event plugins 
+   * interested in this table. 
+ */
+  static void registerTableEvents(TableShare &table_share); 
+  static void deregisterTableEvents(TableShare &table_share); 
 
-    /*==========================================================*/
-    /* Called from drizzle to register all events for all event plugins 
-     * interested in this session. 
-   */
-    static void registerSessionEvents(Session &session); 
-    static void deregisterSessionEvents(Session &session); 
+  /*==========================================================*/
+  /* Called from drizzle to register all events for all event plugins 
+   * interested in this database. 
+ */
+  static void registerSchemaEvents(Session &session, const std::string &db); 
+  static void deregisterSchemaEvents(Session &session, const std::string &db); 
+
+  /*==========================================================*/
+  /* Called from drizzle to register all events for all event plugins 
+   * interested in this session. 
+ */
+  static void registerSessionEvents(Session &session); 
+  static void deregisterSessionEvents(Session &session); 
 
 
-    /*==========================================================*/
-    /* Static meathods called by drizzle to notify interested plugins 
-     * of a schema an event,
-   */
-    static bool beforeDropTable(Session &session, const drizzled::TableIdentifier &table);
-    static bool afterDropTable(Session &session, const drizzled::TableIdentifier &table, int err);
-    static bool beforeRenameTable(Session &session, const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to);
-    static bool afterRenameTable(Session &session, const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to, int err);
-    static bool connectSession(Session &session);
-    static bool disconnectSession(Session &session);
-    static bool beforeStatement(Session &session);
-    static bool afterStatement(Session &session);
+  /*==========================================================*/
+  /* Static meathods called by drizzle to notify interested plugins 
+   * of a schema an event,
+ */
+  static bool beforeDropTable(Session &session, const drizzled::TableIdentifier &table);
+  static bool afterDropTable(Session &session, const drizzled::TableIdentifier &table, int err);
+  static bool beforeRenameTable(Session &session, const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to);
+  static bool afterRenameTable(Session &session, const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to, int err);
+  static bool connectSession(Session &session);
+  static bool disconnectSession(Session &session);
+  static bool beforeStatement(Session &session);
+  static bool afterStatement(Session &session);
 
-    /*==========================================================*/
-    /* Static meathods called by drizzle to notify interested plugins 
-     * of a table an event,
-   */
-    static bool beforeInsertRecord(Table &table, unsigned char *buf);
-    static bool afterInsertRecord(Table &table, const unsigned char *buf, int err);
-    static bool beforeDeleteRecord(Table &table, const unsigned char *buf);
-    static bool afterDeleteRecord(Table &table, const unsigned char *buf, int err);
-    static bool beforeUpdateRecord(Table &table, const unsigned char *old_data, unsigned char *new_data);
-    static bool afterUpdateRecord(Table &table, const unsigned char *old_data, unsigned char *new_data, int err);
+  /*==========================================================*/
+  /* Static meathods called by drizzle to notify interested plugins 
+   * of a table an event,
+ */
+  static bool beforeInsertRecord(Table &table, unsigned char *buf);
+  static bool afterInsertRecord(Table &table, const unsigned char *buf, int err);
+  static bool beforeDeleteRecord(Table &table, const unsigned char *buf);
+  static bool afterDeleteRecord(Table &table, const unsigned char *buf, int err);
+  static bool beforeUpdateRecord(Table &table, const unsigned char *old_data, unsigned char *new_data);
+  static bool afterUpdateRecord(Table &table, const unsigned char *old_data, unsigned char *new_data, int err);
 
-    /*==========================================================*/
-    /* Static meathods called by drizzle to notify interested plugins 
-     * of a table an event,
-   */
-    static bool beforeCreateDatabase(Session &session, const std::string &db);
-    static bool afterCreateDatabase(Session &session, const std::string &db, int err);
-    static bool beforeDropDatabase(Session &session, const std::string &db);
-    static bool afterDropDatabase(Session &session, const std::string &db, int err);
+  /*==========================================================*/
+  /* Static meathods called by drizzle to notify interested plugins 
+   * of a table an event,
+ */
+  static bool beforeCreateDatabase(Session &session, const std::string &db);
+  static bool afterCreateDatabase(Session &session, const std::string &db, int err);
+  static bool beforeDropDatabase(Session &session, const std::string &db);
+  static bool afterDropDatabase(Session &session, const std::string &db, int err);
 
-  };
+  static const EventObserverVector &getEventObservers(void);
+
+};
+
+
 
 
 /* EventObserver data classes: */

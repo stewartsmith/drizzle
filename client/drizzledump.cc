@@ -207,6 +207,7 @@ void generate_dump_db(void)
   }
   sbuf.setConnection(destination_connection);
   std::ostream sout(&sbuf);
+  sout.exceptions(ios_base::badbit);
 
   if (path.empty())
   {
@@ -219,8 +220,17 @@ void generate_dump_db(void)
 
   for (i= database_store.begin(); i != database_store.end(); ++i)
   {
-    DrizzleDumpDatabase *database= *i;
-    sout << *database;
+    try
+    {
+      DrizzleDumpDatabase *database= *i;
+      sout << *database;
+    }
+    catch (...)
+    {
+      std::cout << _("Error inserting into destnation database") << std::endl;
+      if (not ignore_errors)
+        maybe_exit(EX_DRIZZLEERR);
+    }
   }
 
   if (path.empty())

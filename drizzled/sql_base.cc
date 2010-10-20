@@ -53,7 +53,8 @@
 #include "drizzled/internal/iocache.h"
 #include "drizzled/drizzled.h"
 #include "drizzled/plugin/authorization.h"
-#include "drizzled/table_placeholder.h"
+#include "drizzled/table/temporary.h"
+#include "drizzled/table/placeholder.h"
 
 using namespace std;
 
@@ -247,7 +248,6 @@ void table_cache_free(void)
 
 void close_handle_and_leave_table_as_lock(Table *table)
 {
-  TableShare *share, *old_share= table->getMutableShare();
   assert(table->db_stat);
   assert(table->getShare()->getType() == message::Table::STANDARD);
 
@@ -258,9 +258,9 @@ void close_handle_and_leave_table_as_lock(Table *table)
   */
   TableIdentifier identifier(table->getShare()->getSchemaName(), table->getShare()->getTableName(), message::Table::INTERNAL);
   const TableIdentifier::Key &key(identifier.getKey());
-  share= new TableShare(identifier.getType(),
-                        identifier,
-                        const_cast<char *>(&key[0]),  static_cast<uint32_t>(old_share->getCacheKeySize()));
+  TableShare *share= new TableShare(identifier.getType(),
+                                    identifier,
+                                    const_cast<char *>(&key[0]),  static_cast<uint32_t>(table->getShare()->getCacheKeySize()));
 
   table->cursor->close();
   table->db_stat= 0;                            // Mark cursor closed
@@ -858,7 +858,7 @@ void Session::unlink_open_table(Table *find)
   Table *list, **prev;
   safe_mutex_assert_owner(LOCK_open.native_handle());
 
-  memcpy(key, &find->getMutableShare()->getCacheKey()[0], key_length);
+  memcpy(key, &find->getShare()->getCacheKey()[0], key_length);
   /*
     Note that we need to hold LOCK_open while changing the
     open_tables list. Another thread may work on it.
@@ -998,7 +998,6 @@ void Session::wait_for_condition(boost::mutex &mutex, boost::condition_variable_
 bool Session::reopen_name_locked_table(TableList* table_list, bool link_in)
 {
   Table *table= table_list->table;
-  TableShare *share;
   char *table_name= table_list->table_name;
   Table orig_table;
 
@@ -1023,7 +1022,6 @@ bool Session::reopen_name_locked_table(TableList* table_list, bool link_in)
     return true;
   }
 
-  share= table->getMutableShare();
   /*
     We want to prevent other connections from opening this table until end
     of statement as it is likely that modifications of table's metadata are
@@ -1032,7 +1030,7 @@ bool Session::reopen_name_locked_table(TableList* table_list, bool link_in)
     This also allows us to assume that no other connection will sneak in
     before we will get table-level lock on this table.
   */
-  share->resetVersion();
+  table->getMutableShare()->resetVersion();
   table->in_use = this;
 
   if (link_in)
@@ -1082,7 +1080,7 @@ Table *Session::table_cache_insert_placeholder(const char *db_name, const char *
     Create a table entry with the right key and with an old refresh version
   */
   TableIdentifier identifier(db_name, table_name, message::Table::INTERNAL);
-  TablePlaceholder *table= new TablePlaceholder(this, identifier);
+  table::Placeholder *table= new table::Placeholder(this, identifier);
 
   if (not add_table(table))
   {
@@ -1336,7 +1334,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
           if (table->open_placeholder && table->in_use == this)
           {
             LOCK_open.unlock();
-            my_error(ER_UPDATE_TABLE_USED, MYF(0), table->getMutableShare()->getTableName());
+            my_error(ER_UPDATE_TABLE_USED, MYF(0), table->getShare()->getTableName());
             return NULL;
           }
 
@@ -2259,7 +2257,7 @@ Table *Session::open_temporary_table(TableIdentifier &identifier,
                         const_cast<char *>(identifier.getPath().c_str()), static_cast<uint32_t>(identifier.getPath().length()));
 
 
-  Table *new_tmp_table= new Table;
+  table::Temporary *new_tmp_table= new table::Temporary;
   if (not new_tmp_table)
     return NULL;
 
@@ -4403,7 +4401,7 @@ void remove_db_from_cache(const SchemaIdentifier &schema_identifier)
   {
     Table *table= (*iter).second;
 
-    if (not schema_identifier.getPath().compare(table->getMutableShare()->getSchemaName()))
+    if (not schema_identifier.getPath().compare(table->getShare()->getSchemaName()))
     {
       table->getMutableShare()->resetVersion();			/* Free when thread is ready */
       if (not table->in_use)

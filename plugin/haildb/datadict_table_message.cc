@@ -18,11 +18,7 @@
 
 #include "config.h"
 
-#if defined(HAVE_HAILDB_H)
-# include <haildb.h>
-#else
-# include <embedded_innodb-1.0/innodb.h>
-#endif /* HAVE_HAILDB_H */
+#include <haildb.h>
 
 #include "haildb_engine.h"
 
@@ -91,7 +87,6 @@ int get_haildb_system_table_message(const char* table_name, drizzled::message::T
     field->set_name("SPACE");
     field->set_type(message::Table::Field::INTEGER);
 
-
     message::Table::Index *index= table_message->add_indexes();
     index->set_name("PRIMARY");
     index->set_is_primary(true);
@@ -156,11 +151,13 @@ int get_haildb_system_table_message(const char* table_name, drizzled::message::T
     index->set_is_primary(true);
     index->set_is_unique(true);
     index->set_type(message::Table::Index::BTREE);
-    index->set_key_length(IB_MAX_TABLE_NAME_LEN);
+    index->set_key_length(sizeof(uint64_t) + sizeof(uint32_t));
     message::Table::Index::IndexPart *part= index->add_index_part();
     part->set_fieldnr(0);
+    part->set_compare_length(sizeof(uint64_t));
     part= index->add_index_part();
     part->set_fieldnr(1);
+    part->set_compare_length(sizeof(uint32_t));
 
     return 0;
   }
@@ -216,11 +213,13 @@ int get_haildb_system_table_message(const char* table_name, drizzled::message::T
     index->set_is_primary(true);
     index->set_is_unique(true);
     index->set_type(message::Table::Index::BTREE);
-    index->set_key_length(IB_MAX_TABLE_NAME_LEN);
+    index->set_key_length(sizeof(uint64_t) + sizeof(uint32_t));
     message::Table::Index::IndexPart *part= index->add_index_part();
     part->set_fieldnr(0);
+    part->set_compare_length(sizeof(uint64_t));
     part= index->add_index_part();
     part->set_fieldnr(1);
+    part->set_compare_length(sizeof(uint32_t));
 
     return 0;
   }
@@ -260,11 +259,13 @@ int get_haildb_system_table_message(const char* table_name, drizzled::message::T
     index->set_is_primary(true);
     index->set_is_unique(true);
     index->set_type(message::Table::Index::BTREE);
-    index->set_key_length(IB_MAX_TABLE_NAME_LEN);
+    index->set_key_length(sizeof(uint64_t) + sizeof(uint32_t));
     message::Table::Index::IndexPart *part= index->add_index_part();
     part->set_fieldnr(0);
+    part->set_compare_length(sizeof(uint64_t));
     part= index->add_index_part();
     part->set_fieldnr(1);
+    part->set_compare_length(sizeof(uint32_t));
 
     return 0;
   }
@@ -312,9 +313,10 @@ int get_haildb_system_table_message(const char* table_name, drizzled::message::T
     index->set_is_primary(true);
     index->set_is_unique(true);
     index->set_type(message::Table::Index::BTREE);
-    index->set_key_length(IB_MAX_TABLE_NAME_LEN);
+    index->set_key_length(sizeof(uint64_t));
     message::Table::Index::IndexPart *part= index->add_index_part();
     part->set_fieldnr(0);
+    part->set_compare_length(sizeof(uint64_t));
 
     index= table_message->add_indexes();
     index->set_name("FOR_IND");
@@ -324,6 +326,7 @@ int get_haildb_system_table_message(const char* table_name, drizzled::message::T
     index->set_key_length(IB_MAX_TABLE_NAME_LEN);
     part= index->add_index_part();
     part->set_fieldnr(1);
+    part->set_compare_length(IB_MAX_TABLE_NAME_LEN);
 
     index= table_message->add_indexes();
     index->set_name("REF_IND");
@@ -333,7 +336,7 @@ int get_haildb_system_table_message(const char* table_name, drizzled::message::T
     index->set_key_length(IB_MAX_TABLE_NAME_LEN);
     part= index->add_index_part();
     part->set_fieldnr(2);
-
+    part->set_compare_length(IB_MAX_TABLE_NAME_LEN);
     return 0;
   }
   else if (strcmp(table_name, "SYS_FOREIGN_COLS") == 0)
@@ -380,11 +383,13 @@ int get_haildb_system_table_message(const char* table_name, drizzled::message::T
     index->set_is_primary(true);
     index->set_is_unique(true);
     index->set_type(message::Table::Index::BTREE);
-    index->set_key_length(IB_MAX_TABLE_NAME_LEN);
+    index->set_key_length(sizeof(uint64_t) + sizeof(uint32_t));
     message::Table::Index::IndexPart *part= index->add_index_part();
     part->set_fieldnr(0);
+    part->set_compare_length(sizeof(uint64_t));
     part= index->add_index_part();
     part->set_fieldnr(1);
+    part->set_compare_length(sizeof(uint32_t));
 
     return 0;
   }

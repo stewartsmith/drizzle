@@ -46,8 +46,8 @@ namespace drizzled
 #define ASSERT_COLUMN_MARKED_FOR_READ assert(!getTable() || (getTable()->read_set == NULL || isReadSet()))
 #define ASSERT_COLUMN_MARKED_FOR_WRITE assert(!getTable() || (getTable()->write_set == NULL || isWriteSet()))
 #else
-#define ASSERT_COLUMN_MARKED_FOR_READ
-#define ASSERT_COLUMN_MARKED_FOR_WRITE
+#define ASSERT_COLUMN_MARKED_FOR_READ assert(getTable())
+#define ASSERT_COLUMN_MARKED_FOR_WRITE assert(getTable())
 #endif
 
 typedef struct st_typelib TYPELIB;

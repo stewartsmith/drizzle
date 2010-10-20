@@ -361,9 +361,6 @@ lock_rec_validate_page(
 /*===================*/
 	ulint	space,	/*!< in: space id */
 	ulint	page_no);/*!< in: page number */
-
-/* Define the following in order to enable lock_rec_validate_page() checks. */
-# undef UNIV_DEBUG_LOCK_VALIDATE
 #endif /* UNIV_DEBUG */
 
 /* The lock system */
@@ -576,6 +573,23 @@ lock_sys_create(
 
 	lock_latest_err_file = os_file_create_tmpfile();
 	ut_a(lock_latest_err_file);
+}
+
+/*********************************************************************//**
+Closes the lock system at database shutdown. */
+UNIV_INTERN
+void
+lock_sys_close(void)
+/*================*/
+{
+	if (lock_latest_err_file != NULL) {
+		fclose(lock_latest_err_file);
+		lock_latest_err_file = NULL;
+	}
+
+	hash_table_free(lock_sys->rec_hash);
+	mem_free(lock_sys);
+	lock_sys = NULL;
 }
 
 /*********************************************************************//**
@@ -3574,7 +3588,8 @@ lock_table_remove_low(
 		and lock_grant()). Therefore it can be empty and we
 		need to check for that. */
 
-		if (!ib_vector_is_empty(trx->autoinc_locks)) {
+		if (!lock_get_wait(lock)
+		    && !ib_vector_is_empty(trx->autoinc_locks)) {
 			lock_t*	autoinc_lock;
 
 			autoinc_lock = ib_vector_pop(trx->autoinc_locks);
@@ -3647,8 +3662,10 @@ lock_table_enqueue_waiting(
 
 	if (lock_deadlock_occurs(lock, trx)) {
 
-		lock_reset_lock_and_trx_wait(lock);
+		/* The order here is important, we don't want to
+		lose the state of the lock before calling remove. */
 		lock_table_remove_low(lock);
+		lock_reset_lock_and_trx_wait(lock);
 
 		return(DB_DEADLOCK);
 	}
@@ -4627,6 +4644,10 @@ lock_rec_queue_validate(
 		next function call: we have to release lock table mutex
 		to obey the latching order */
 
+		/* If this thread is holding the file space latch
+		(fil_space_t::latch), the following check WILL break
+		latching order and may cause a deadlock of threads. */
+
 		impl_trx = lock_sec_rec_some_has_impl_off_kernel(
 			rec, index, offsets);
 
@@ -4749,6 +4770,11 @@ loop:
 				(ulong) space, (ulong) page_no);
 
 			lock_mutex_exit_kernel();
+
+			/* If this thread is holding the file space
+			latch (fil_space_t::latch), the following
+			check WILL break the latching order and may
+			cause a deadlock of threads. */
 
 			lock_rec_queue_validate(block, rec, index, offsets);
 
@@ -5361,6 +5387,20 @@ lock_release_autoinc_last_lock(
 
 	/* This will remove the lock from the trx autoinc_locks too. */
 	lock_table_dequeue(lock);
+}
+
+/*******************************************************************//**
+Check if a transaction holds any autoinc locks. 
+@return TRUE if the transaction holds any AUTOINC locks. */
+UNIV_INTERN
+ibool
+lock_trx_holds_autoinc_locks(
+/*=========================*/
+	const trx_t*	trx)		/*!< in: transaction */
+{
+	ut_a(trx->autoinc_locks != NULL);
+
+	return(!ib_vector_is_empty(trx->autoinc_locks));
 }
 
 /*******************************************************************//**

@@ -48,12 +48,14 @@
 #include "drizzled/transaction_services.h"
 #include "drizzled/drizzled.h"
 
-#include "drizzled/table_share_instance.h"
+#include "drizzled/table/instance.h"
 
 #include "plugin/myisam/myisam.h"
 #include "drizzled/internal/iocache.h"
 #include "drizzled/internal/thread_var.h"
 #include "drizzled/plugin/event_observer.h"
+
+#include "drizzled/util/functors.h"
 
 #include <fcntl.h>
 #include <algorithm>
@@ -552,9 +554,15 @@ bool Session::schedule()
   current_global_counters.connections++;
   thread_id= variables.pseudo_thread_id= global_thread_id++;
 
-  LOCK_thread_count.lock();
-  getSessionList().push_back(this);
-  LOCK_thread_count.unlock();
+  {
+    boost::mutex::scoped_lock scoped(LOCK_thread_count);
+    getSessionList().push_back(this);
+  }
+
+  if (unlikely(plugin::EventObserver::connectSession(*this)))
+  {
+    // We should do something about an error...
+  }
 
   if (unlikely(plugin::EventObserver::connectSession(*this)))
   {
@@ -618,9 +626,9 @@ bool Session::authenticate()
   return true;
 }
 
-bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_db)
+bool Session::checkUser(const std::string &passwd_str,
+                        const std::string &in_db)
 {
-  const string passwd_str(passwd, passwd_len);
   bool is_authenticated=
     plugin::Authentication::isAuthenticated(getSecurityContext(),
                                             passwd_str);
@@ -633,7 +641,7 @@ bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_
   }
 
   /* Change database if necessary */
-  if (in_db && in_db[0])
+  if (not in_db.empty())
   {
     SchemaIdentifier identifier(in_db);
     if (mysql_change_db(this, identifier))
@@ -643,7 +651,7 @@ bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_
     }
   }
   my_ok();
-  password= test(passwd_len);          // remember for error messages
+  password= not passwd_str.empty();
 
   /* Ready to handle queries */
   return true;
@@ -826,11 +834,9 @@ void Session::cleanup_after_query()
   where= Session::DEFAULT_WHERE;
 
   /* Reset the temporary shares we built */
-  for (std::vector<TableShareInstance *>::iterator iter= temporary_shares.begin();
-       iter != temporary_shares.end(); iter++)
-  {
-    delete *iter;
-  }
+  for_each(temporary_shares.begin(),
+           temporary_shares.end(),
+           DeletePtr());
   temporary_shares.clear();
 }
 
@@ -1408,21 +1414,21 @@ bool select_max_min_finder_subselect::send_data(List<Item> &items)
       switch (val_item->result_type())
       {
       case REAL_RESULT:
-	op= &select_max_min_finder_subselect::cmp_real;
-	break;
+        op= &select_max_min_finder_subselect::cmp_real;
+        break;
       case INT_RESULT:
-	op= &select_max_min_finder_subselect::cmp_int;
-	break;
+        op= &select_max_min_finder_subselect::cmp_int;
+        break;
       case STRING_RESULT:
-	op= &select_max_min_finder_subselect::cmp_str;
-	break;
+        op= &select_max_min_finder_subselect::cmp_str;
+        break;
       case DECIMAL_RESULT:
         op= &select_max_min_finder_subselect::cmp_decimal;
         break;
       case ROW_RESULT:
         // This case should never be choosen
-	assert(0);
-	op= 0;
+        assert(0);
+        op= 0;
       }
     }
     cache->store(val_item);
@@ -1765,32 +1771,47 @@ void Session::refresh_status()
 
 user_var_entry *Session::getVariable(LEX_STRING &name, bool create_if_not_exists)
 {
-  user_var_entry *entry= NULL;
-  UserVarsRange ppp= user_vars.equal_range(std::string(name.str, name.length));
+  return getVariable(std::string(name.str, name.length), create_if_not_exists);
+}
+
+user_var_entry *Session::getVariable(const std::string  &name, bool create_if_not_exists)
+{
+  UserVarsRange ppp= user_vars.equal_range(name);
 
   for (UserVars::iterator iter= ppp.first;
-         iter != ppp.second; ++iter)
+       iter != ppp.second; ++iter)
   {
-    entry= (*iter).second;
+    return (*iter).second;
   }
 
-  if ((entry == NULL) && create_if_not_exists)
+  if (not create_if_not_exists)
+    return NULL;
+
+  user_var_entry *entry= NULL;
+  entry= new (nothrow) user_var_entry(name.c_str(), query_id);
+
+  if (entry == NULL)
+    return NULL;
+
+  std::pair<UserVars::iterator, bool> returnable= user_vars.insert(make_pair(name, entry));
+
+  if (not returnable.second)
   {
-    entry= new (nothrow) user_var_entry(name.str, query_id);
-
-    if (entry == NULL)
-      return NULL;
-
-    std::pair<UserVars::iterator, bool> returnable= user_vars.insert(make_pair(std::string(name.str, name.length), entry));
-
-    if (not returnable.second)
-    {
-      delete entry;
-      return NULL;
-    }
+    delete entry;
   }
 
   return entry;
+}
+
+void Session::setVariable(const std::string &name, const std::string &value)
+{
+  user_var_entry *updateable_var= getVariable(name.c_str(), true);
+
+  updateable_var->update_hash(false,
+                              (void*)value.c_str(),
+                              static_cast<uint32_t>(value.length()), STRING_RESULT,
+                              &my_charset_bin,
+                              DERIVATION_IMPLICIT, false);
 }
 
 void Session::mark_temp_tables_as_free_for_reuse()
@@ -2051,11 +2072,11 @@ bool Session::renameTableMessage(const TableIdentifier &from, const TableIdentif
   return true;
 }
 
-TableShareInstance *Session::getTemporaryShare(TableIdentifier::Type type_arg)
+table::Instance *Session::getInstanceTable()
 {
-  temporary_shares.push_back(new TableShareInstance(type_arg)); // This will not go into the tableshare cache, so no key is used.
+  temporary_shares.push_back(new table::Instance()); // This will not go into the tableshare cache, so no key is used.
 
-  TableShareInstance *tmp_share= temporary_shares.back();
+  table::Instance *tmp_share= temporary_shares.back();
 
   assert(tmp_share);
 

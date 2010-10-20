@@ -1,0 +1,85 @@
+EXECUTE "SELECT TABLE_NAME FROM DATA_DICTIONARY.tables LIMIT 2";
+TABLE_NAME
+#
+#
+SET @t1=1, @t2=2, @t3:=4;
+SELECT @t1, @t2, @t3, @t4 := @t1+@t2+@t3;
+@t1	@t2	@t3	@t4 := @t1+@t2+@t3
+1	2	4	7
+EXECUTE "SELECT @t1, @t2, @t3, @t4 := @t1+@t2+@t3";
+@t1	@t2	@t3	@t4 := @t1+@t2+@t3
+1	2	4	7
+SET @bugus_syntax= "3";
+EXECUTE "SELECT * FROM DATA_DICTIONARY.tables LIMIT @bugus_syntax";
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '@bugus_syntax' at line 1
+EXECUTE "SELECT TABLE_NAME FROM DATA_DICTIONARY.tables LIMIT 2";
+TABLE_NAME
+#
+#
+EXECUTE "EXECUTE SELECT * FROM DATA_DICTIONARY.tables LIMIT 2";
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'SELECT * FROM DATA_DICTIONARY.tables LIMIT 2' at line 1
+EXECUTE "SELECT @t1, @t2, @t3, @t4 := @t1+@t2+@t3";
+@t1	@t2	@t3	@t4 := @t1+@t2+@t3
+1	2	4	7
+set @sub_var="SELECT @t1, @t2, @t3, @t4 := @t1+@t2+@t3";
+EXECUTE @sub_var;
+@t1	@t2	@t3	@t4 := @t1+@t2+@t3
+1	2	4	7
+EXECUTE "CREATE TABLE t1 (a SERIAL)";
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` BIGINT NOT NULL AUTO_INCREMENT,
+  UNIQUE KEY `a` (`a`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+EXECUTE "INSERT INTO t1 VALUES ()";
+EXECUTE "DROP TABLE t1";
+EXECUTE "SELECT @t1, @t2, @t3, @t4 := @t1+@t2+@t3; SELECT @t1, @t2, @t3, @t4 := @t1+@t2+@t3";
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '; SELECT @t1, @t2, @t3, @t4 := @t1+@t2+@t3' at line 1
+set @foo="SELECT 1+2+3";
+execute @foo;
+1+2+3
+6
+set @create="CREATE TABLE t1 (a SERIAL)";
+set @insert="INSERT INTO t1 VALUES ()";
+set @select="SELECT a FROM t1";
+set @drop="DROP TABLE t1";
+execute @create;
+execute @insert;
+execute @insert;
+execute @insert;
+execute @select;
+a
+1
+2
+3
+execute @drop;
+EXECUTE @does_not_exist;
+ERROR HY000: Incorrect arguments to Invalid Variable
+EXECUTE "";
+ERROR HY000: Incorrect arguments to Invalid Variable
+EXECUTE "SELECT (SELECT 1) UNION SELECT (SELECT 2)";
+(SELECT 1)
+1
+2
+EXECUTE "explain extended SELECT (SELECT 1) UNION SELECT (SELECT 2)";
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	PRIMARY	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No tables used
+3	UNION	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No tables used
+NULL	UNION RESULT	<union1,3>	ALL	NULL	NULL	NULL	NULL	NULL	NULL	
+Warnings:
+Note	1249	Select 2 was reduced during optimization
+Note	1249	Select 4 was reduced during optimization
+Note	1003	select 1 AS `(SELECT 1)` union select 2 AS `(SELECT 2)`
+EXECUTE "SELECT (SELECT (SELECT 0 UNION SELECT 0))";
+(SELECT (SELECT 0 UNION SELECT 0))
+0
+EXECUTE "explain extended SELECT (SELECT (SELECT 0 UNION SELECT 0))";
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	PRIMARY	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No tables used
+3	SUBQUERY	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No tables used
+4	UNION	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No tables used
+NULL	UNION RESULT	<union3,4>	ALL	NULL	NULL	NULL	NULL	NULL	NULL	
+Warnings:
+Note	1249	Select 2 was reduced during optimization
+Note	1003	select (select 0 AS `0` union select 0 AS `0`) AS `(SELECT (SELECT 0 UNION SELECT 0))`

@@ -38,7 +38,7 @@
 #include "plugin/schema_dictionary/columns.h"
 #include "plugin/schema_dictionary/indexes.h"
 #include "plugin/schema_dictionary/index_parts.h"
-#include "plugin/schema_dictionary/referential_constraints.h"
+#include "plugin/schema_dictionary/foreign_keys.h"
 #include "plugin/schema_dictionary/table_constraints.h"
 
 #endif /* PLUGIN_SCHEMA_DICTIONARY_DICTIONARY_H */

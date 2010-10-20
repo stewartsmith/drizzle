@@ -58,6 +58,11 @@ public:
    */
   virtual bool execute()= 0;
 
+  Session *getSession()
+  {
+    return session;
+  }
+
 protected:
 
   /**

@@ -1,0 +1,15 @@
+# Test for simple lock issues
+SELECT get_locks("foo", "foo2", "foo3");
+SELECT if ((is_used_lock("foo") = CONNECTION_ID()), "YES", "NO");
+SELECT if ((is_used_lock("foo2") = CONNECTION_ID()), "YES", "NO");
+SELECT if ((is_used_lock("foo3") = CONNECTION_ID()), "YES", "NO");
+
+SELECT release_lock("foo2");
+SELECT if ((is_used_lock("foo") = CONNECTION_ID()), "YES", "NO");
+SELECT if ((is_used_lock("foo2") = CONNECTION_ID()), "YES", "NO");
+SELECT if ((is_used_lock("foo3") = CONNECTION_ID()), "YES", "NO");
+
+SELECT release_locks();
+SELECT if ((is_used_lock("foo") = CONNECTION_ID()), "YES", "NO");
+SELECT if ((is_used_lock("foo2") = CONNECTION_ID()), "YES", "NO");
+SELECT if ((is_used_lock("foo3") = CONNECTION_ID()), "YES", "NO");

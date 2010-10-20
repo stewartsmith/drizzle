@@ -90,16 +90,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include "drizzled/global_charset_info.h"
 
-#include "haildb_version_func.h"
 #include "haildb_datadict_dump_func.h"
 #include "config_table_function.h"
 #include "status_table_function.h"
 
-#if defined(HAVE_HAILDB_H)
-# include <haildb.h>
-#else
-# include <embedded_innodb-1.0/innodb.h>
-#endif /* HAVE_HAILDB_H */
+#include <haildb.h>
 
 #include "haildb_engine.h"
 
@@ -2353,12 +2348,35 @@ void HailDBCursor::position(const unsigned char *record)
 
 double HailDBCursor::scan_time()
 {
-  return 0.1;
+  ib_table_stats_t table_stats;
+  ib_err_t err;
+
+  err= ib_get_table_statistics(cursor, &table_stats, sizeof(table_stats));
+
+  /* Approximate I/O seeks for full table scan */
+  return (double) (table_stats.stat_clustered_index_size / 16384);
 }
 
 int HailDBCursor::info(uint32_t flag)
 {
-  stats.records= 2;
+  ib_table_stats_t table_stats;
+  ib_err_t err;
+
+  if (flag & HA_STATUS_VARIABLE)
+  {
+    err= ib_get_table_statistics(cursor, &table_stats, sizeof(table_stats));
+
+    stats.records= table_stats.stat_n_rows;
+
+    if (table_stats.stat_n_rows < 2)
+      stats.records= 2;
+
+    stats.deleted= 0;
+    stats.data_file_length= table_stats.stat_clustered_index_size;
+    stats.index_file_length= table_stats.stat_sum_of_other_index_sizes;
+
+    stats.mean_rec_length= stats.data_file_length / stats.records;
+  }
 
   if (flag & HA_STATUS_AUTO)
     stats.auto_increment_value= 1;
@@ -3219,7 +3237,6 @@ static int haildb_init(drizzled::module::Context &context)
   haildb_engine= new HailDBEngine("InnoDB");
   context.add(haildb_engine);
 
-  haildb_version_func_initialize(context);
   haildb_datadict_dump_func_initialize(context);
   config_table_function_initialize(context);
   status_table_function_initialize(context);

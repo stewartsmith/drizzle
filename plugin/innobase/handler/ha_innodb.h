@@ -250,4 +250,20 @@ trx_t*
 innobase_trx_allocate(
 /*==================*/
 	Session		*session);	/*!< in: user thread handle */
+
+/***********************************************************************
+This function checks each index name for a table against reserved
+system default primary index name 'GEN_CLUST_INDEX'. If a name matches,
+this function pushes an error message to the client, and returns true. */
+extern "C"
+bool
+innobase_index_name_is_reserved(
+/*============================*/
+					/* out: true if index name matches a
+					reserved name */
+	const trx_t*	trx,		/* in: InnoDB transaction handle */
+	const drizzled::KeyInfo*	key_info,/* in: Indexes to be created */
+	ulint		num_of_keys);	/* in: Number of indexes to
+					be created. */
+
 #endif /* INNODB_HANDLER_HA_INNODB_H */

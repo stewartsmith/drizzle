@@ -180,6 +180,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/generator/all_fields.h \
 			      drizzled/generator/all_tables.h \
 			      drizzled/generator/functions.h \
+			      drizzled/generator/event_observers.h \
 			      drizzled/generator/schema.h \
 			      drizzled/generator/table.h \
 			      drizzled/gettext.h \
@@ -377,6 +378,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/statement/drop_schema.h \
 			      drizzled/statement/drop_table.h \
 			      drizzled/statement/empty_query.h \
+			      drizzled/statement/execute.h \
 			      drizzled/statement/flush.h \
 			      drizzled/statement/insert.h \
 			      drizzled/statement/insert_select.h \
@@ -409,9 +411,11 @@ nobase_dist_include_HEADERS+= \
  			      drizzled/statistics_variables.h \
 			      drizzled/table_proto.h \
 			      drizzled/table_reference.h \
-			      drizzled/table_placeholder.h \
 			      drizzled/table_share.h \
-			      drizzled/table_share_instance.h \
+			      drizzled/table/concurrent.h \
+			      drizzled/table/instance.h \
+			      drizzled/table/placeholder.h \
+			      drizzled/table/temporary.h \
 			      drizzled/temporal.h \
 			      drizzled/temporal_format.h \
 			      drizzled/temporal_interval.h \
@@ -579,6 +583,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/function/user_var_as_out_param.cc \
 				 drizzled/generator/all_fields.cc \
 				 drizzled/generator/all_tables.cc \
+				 drizzled/generator/event_observers.cc \
 				 drizzled/generator/functions.cc \
 				 drizzled/generator/schema.cc \
 				 drizzled/generator/table.cc \
@@ -633,6 +638,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/module/context.cc \
 				 drizzled/module/library.cc \
 				 drizzled/module/loader.cc \
+				 drizzled/module/module.cc \
 				 drizzled/module/option_context.cc \
 				 drizzled/module/option_map.cc \
 				 drizzled/module/registry.cc \
@@ -722,6 +728,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/statement/drop_schema.cc \
 				 drizzled/statement/drop_table.cc \
 				 drizzled/statement/empty_query.cc \
+				 drizzled/statement/execute.cc \
 				 drizzled/statement/flush.cc \
 				 drizzled/statement/insert.cc \
 				 drizzled/statement/insert_select.cc \
@@ -748,6 +755,9 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/table_function_container.cc \
 				 drizzled/table_list.cc \
 				 drizzled/table_share.cc \
+				 drizzled/table/concurrent.cc \
+				 drizzled/table/instance.cc \
+				 drizzled/table/temporary.cc \
 				 drizzled/thr_lock.cc \
 				 drizzled/time_functions.cc \
 				 drizzled/transaction_services.cc \

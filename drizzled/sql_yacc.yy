@@ -521,6 +521,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  ESCAPED
 %token  ESCAPE_SYM                    /* SQL-2003-R */
 %token  EXCLUSIVE_SYM
+%token  EXECUTE_SYM
 %token  EXISTS                        /* SQL-2003-R */
 %token  EXTENDED_SYM
 %token  EXTRACT_SYM                   /* SQL-2003-N */
@@ -802,6 +803,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         IDENT_sys TEXT_STRING_sys TEXT_STRING_literal
         opt_component
         BIN_NUM TEXT_STRING_filesystem ident_or_empty
+        execute_var_or_string
         opt_constraint constraint opt_ident
 
 %type <lex_str_ptr>
@@ -935,6 +937,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         statement
         opt_field_or_var_spec fields_or_vars opt_load_data_set_spec
         init_key_options key_options key_opts key_opt key_using_alg
+        execute
 END_OF_INPUT
 
 %type <index_hint> index_hint_type
@@ -1004,6 +1007,7 @@ statement:
         | delete
         | describe
         | drop
+        | execute
         | flush
         | insert
         | kill
@@ -3719,13 +3723,11 @@ normal_join:
 /* Warning - may return NULL in case of incomplete SELECT */
 table_factor:
           {
-            Select_Lex *sel= Lex->current_select;
-            sel->table_join_options= 0;
           }
           table_ident opt_table_alias opt_key_definition
           {
             if (!($$= Lex->current_select->add_table_to_list(YYSession, $2, $3,
-                             Lex->current_select->get_table_join_options(),
+                             0,
                              Lex->lock_option,
                              Lex->current_select->pop_index_hints())))
               DRIZZLE_YYABORT;
@@ -4462,6 +4464,36 @@ opt_temporary:
           /* empty */ { $$= 0; }
         | TEMPORARY_SYM { $$= 1; }
         ;
+
+/*
+  Execute a string as dynamic SQL.
+  */
+
+execute:
+       EXECUTE_SYM
+       {
+          LEX *lex= Lex;
+          statement::Execute *statement= new(std::nothrow) statement::Execute(YYSession);
+          lex->statement= statement;
+          if (lex->statement == NULL)
+            DRIZZLE_YYABORT;
+       }
+       execute_var_or_string
+
+
+execute_var_or_string:
+         ident_or_text
+         {
+          statement::Execute *statement= (statement::Execute *)Lex->statement;
+          statement->setQuery($1);
+         }
+        | '@' ident_or_text
+        {
+          statement::Execute *statement= (statement::Execute *)Lex->statement;
+          statement->setVar();
+          statement->setQuery($2);
+        }
+
 /*
 ** Insert : add new data to table
 */

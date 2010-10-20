@@ -87,11 +87,7 @@ extern const char *opt_scheduler;
 
 uint64_t fix_unsigned(Session *, uint64_t, const struct option *);
 
-struct sys_var_chain
-{
-  sys_var *first;
-  sys_var *last;
-};
+void init_sys_var();
 
 /**
  * A class which represents a variable, either global or 
@@ -100,11 +96,10 @@ struct sys_var_chain
 class sys_var
 {
 protected:
-  const std::string name; /**< The name of the variable */
+  std::string name; /**< The name of the variable */
   sys_after_update_func after_update; /**< Function pointer triggered after the variable's value is updated */
   struct option *option_limits; /**< Updated by by set_var_init() */
   bool m_allow_empty_value; /**< Does variable allow an empty value? */
-  sys_var *next;
 public:
   sys_var(const std::string name_arg, sys_after_update_func func= NULL)
     :
@@ -113,13 +108,10 @@ public:
     m_allow_empty_value(true)
   {}
   virtual ~sys_var() {}
-  void chain_sys_var(sys_var_chain *chain_arg)
+
+  void setName(const std::string &name_in)
   {
-    if (chain_arg->last)
-      chain_arg->last->next= this;
-    else
-      chain_arg->first= this;
-    chain_arg->last= this;
+    name= name_in;
   }
 
   /** 
@@ -140,22 +132,6 @@ public:
   const std::vector<std::string>& getAliases() const
   {
     return empty_aliases;
-  }
-  /**
-   * Returns a pointer to the next sys_var, or NULL if none.
-   */
-  inline sys_var *getNext() const
-  {
-    return next;
-  }
-  /**
-   * Sets the pointer to the next sys_var.
-   *
-   * @param Pointer to the next sys_var, or NULL if you set the tail...
-   */
-  inline void setNext(sys_var *in_next)
-  {
-    next= in_next;
   }
   /**
    * Returns a pointer to the variable's option limits
@@ -238,15 +214,15 @@ class sys_var_uint32_t_ptr :public sys_var
 {
   uint32_t *value;
 public:
-  sys_var_uint32_t_ptr(sys_var_chain *chain, const char *name_arg,
+  sys_var_uint32_t_ptr(const char *name_arg,
                        uint32_t *value_ptr_arg)
     :sys_var(name_arg),value(value_ptr_arg)
-  { chain_sys_var(chain); }
-  sys_var_uint32_t_ptr(sys_var_chain *chain, const char *name_arg,
+  {  }
+  sys_var_uint32_t_ptr(const char *name_arg,
                        uint32_t *value_ptr_arg,
                        sys_after_update_func func)
     :sys_var(name_arg,func), value(value_ptr_arg)
-  { chain_sys_var(chain); }
+  {  }
   bool check(Session *session, set_var *var);
   bool update(Session *session, set_var *var);
   void set_default(Session *session, sql_var_t type);
@@ -260,13 +236,13 @@ class sys_var_uint64_t_ptr :public sys_var
 {
   uint64_t *value;
 public:
-  sys_var_uint64_t_ptr(sys_var_chain *chain, const char *name_arg, uint64_t *value_ptr_arg)
+  sys_var_uint64_t_ptr(const char *name_arg, uint64_t *value_ptr_arg)
     :sys_var(name_arg),value(value_ptr_arg)
-  { chain_sys_var(chain); }
-  sys_var_uint64_t_ptr(sys_var_chain *chain, const char *name_arg, uint64_t *value_ptr_arg,
+  {  }
+  sys_var_uint64_t_ptr(const char *name_arg, uint64_t *value_ptr_arg,
 		       sys_after_update_func func)
     :sys_var(name_arg,func), value(value_ptr_arg)
-  { chain_sys_var(chain); }
+  {  }
   bool update(Session *session, set_var *var);
   void set_default(Session *session, sql_var_t type);
   SHOW_TYPE show_type() { return SHOW_LONGLONG; }
@@ -279,13 +255,13 @@ class sys_var_size_t_ptr :public sys_var
 {
   size_t *value;
 public:
-  sys_var_size_t_ptr(sys_var_chain *chain, const char *name_arg, size_t *value_ptr_arg)
+  sys_var_size_t_ptr(const char *name_arg, size_t *value_ptr_arg)
     :sys_var(name_arg),value(value_ptr_arg)
-  { chain_sys_var(chain); }
-  sys_var_size_t_ptr(sys_var_chain *chain, const char *name_arg, size_t *value_ptr_arg,
+  {  }
+  sys_var_size_t_ptr(const char *name_arg, size_t *value_ptr_arg,
                      sys_after_update_func func)
     :sys_var(name_arg,func), value(value_ptr_arg)
-  { chain_sys_var(chain); }
+  {  }
   bool update(Session *session, set_var *var);
   void set_default(Session *session, sql_var_t type);
   SHOW_TYPE show_type() { return SHOW_SIZE; }
@@ -297,9 +273,9 @@ class sys_var_bool_ptr :public sys_var
 {
 public:
   bool *value;
-  sys_var_bool_ptr(sys_var_chain *chain, const char *name_arg, bool *value_arg)
+  sys_var_bool_ptr(const char *name_arg, bool *value_arg)
     :sys_var(name_arg),value(value_arg)
-  { chain_sys_var(chain); }
+  {  }
   bool check(Session *session, set_var *var)
   {
     return check_enum(session, var, &bool_typelib);
@@ -316,9 +292,9 @@ public:
 class sys_var_bool_ptr_readonly :public sys_var_bool_ptr
 {
 public:
-  sys_var_bool_ptr_readonly(sys_var_chain *chain, const char *name_arg,
+  sys_var_bool_ptr_readonly(const char *name_arg,
                             bool *value_arg)
-    :sys_var_bool_ptr(chain, name_arg, value_arg)
+    :sys_var_bool_ptr(name_arg, value_arg)
   {}
   bool is_readonly() const { return 1; }
 };
@@ -332,14 +308,14 @@ public:
   sys_check_func check_func;
   sys_update_func update_func;
   sys_set_default_func set_default_func;
-  sys_var_str(sys_var_chain *chain, const char *name_arg,
+  sys_var_str(const char *name_arg,
 	      sys_check_func check_func_arg,
 	      sys_update_func update_func_arg,
 	      sys_set_default_func set_default_func_arg,
               char *value_arg)
     :sys_var(name_arg), value(value_arg), check_func(check_func_arg),
     update_func(update_func_arg),set_default_func(set_default_func_arg)
-  { chain_sys_var(chain); }
+  {  }
   bool check(Session *session, set_var *var);
   bool update(Session *session, set_var *var)
   {
@@ -366,14 +342,11 @@ class sys_var_fs_path :
 {
   const boost::filesystem::path &value;
 public:
-  sys_var_fs_path(sys_var_chain *chain,
-                  const char *name_arg,
+  sys_var_fs_path(const char *name_arg,
                   const boost::filesystem::path& value_arg) :
     sys_var(name_arg),
     value(value_arg)
-  {
-    chain_sys_var(chain);
-  }
+  { }
 
   inline void set(char *)
   { }
@@ -399,14 +372,84 @@ public:
   bool is_readonly() const { return true; }
 };
 
+class sys_var_const_string :
+  public sys_var
+{
+  const std::string &value;
+public:
+  sys_var_const_string(const char *name_arg,
+                       const std::string& value_arg) :
+    sys_var(name_arg),
+    value(value_arg)
+  { }
+
+  inline void set(char *)
+  { }
+
+  bool check(Session *, set_var *)
+  {
+    return true;
+  }
+  bool update(Session *, set_var *)
+  {
+    return true;
+  }
+  SHOW_TYPE show_type() { return SHOW_CHAR; }
+  unsigned char *value_ptr(Session *, sql_var_t, const LEX_STRING *)
+  {
+    return (unsigned char*)(value.c_str());
+  }
+  bool check_update_type(Item_result)
+  {
+    return true;
+  }
+  bool check_default(sql_var_t) { return true; }
+  bool is_readonly() const { return true; }
+};
+
+class sys_var_const_string_val :
+  public sys_var
+{
+  const std::string value;
+public:
+  sys_var_const_string_val(const char *name_arg,
+                           const std::string& value_arg) :
+    sys_var(name_arg),
+    value(value_arg)
+  { }
+
+  inline void set(char *)
+  { }
+
+  bool check(Session *, set_var *)
+  {
+    return true;
+  }
+  bool update(Session *, set_var *)
+  {
+    return true;
+  }
+  SHOW_TYPE show_type() { return SHOW_CHAR; }
+  unsigned char *value_ptr(Session *, sql_var_t, const LEX_STRING *)
+  {
+    return (unsigned char*)(value.c_str());
+  }
+  bool check_update_type(Item_result)
+  {
+    return true;
+  }
+  bool check_default(sql_var_t) { return true; }
+  bool is_readonly() const { return true; }
+};
+
 class sys_var_const_str :public sys_var
 {
   char *value;					// Pointer to const value
 public:
-  sys_var_const_str(sys_var_chain *chain, const char *name_arg,
+  sys_var_const_str(const char *name_arg,
                     const char *value_arg)
     :sys_var(name_arg), value((char*) value_arg)
-  { chain_sys_var(chain); }
+  {  }
   inline void set (char *new_value)
   {
     value= new_value;
@@ -438,9 +481,9 @@ class sys_var_const_str_ptr :public sys_var
 {
   char **value;					// Pointer to const value
 public:
-  sys_var_const_str_ptr(sys_var_chain *chain, const char *name_arg, char **value_arg)
+  sys_var_const_str_ptr(const char *name_arg, char **value_arg)
     :sys_var(name_arg),value(value_arg)
-  { chain_sys_var(chain); }
+  {  }
   bool check(Session *, set_var *)
   {
     return 1;
@@ -484,13 +527,13 @@ class sys_var_session_uint32_t :public sys_var_session
   sys_check_func check_func;
 public:
   uint32_t system_variables::*offset;
-  sys_var_session_uint32_t(sys_var_chain *chain, const char *name_arg,
+  sys_var_session_uint32_t(const char *name_arg,
                            uint32_t system_variables::*offset_arg,
                            sys_check_func c_func= NULL,
                            sys_after_update_func au_func= NULL)
     :sys_var_session(name_arg, au_func), check_func(c_func),
     offset(offset_arg)
-  { chain_sys_var(chain); }
+  {  }
   bool check(Session *session, set_var *var);
   bool update(Session *session, set_var *var);
   void set_default(Session *session, sql_var_t type);
@@ -504,15 +547,15 @@ class sys_var_session_ha_rows :public sys_var_session
 {
 public:
   ha_rows system_variables::*offset;
-  sys_var_session_ha_rows(sys_var_chain *chain, const char *name_arg,
+  sys_var_session_ha_rows(const char *name_arg,
                       ha_rows system_variables::*offset_arg)
     :sys_var_session(name_arg), offset(offset_arg)
-  { chain_sys_var(chain); }
-  sys_var_session_ha_rows(sys_var_chain *chain, const char *name_arg,
+  {  }
+  sys_var_session_ha_rows(const char *name_arg,
                       ha_rows system_variables::*offset_arg,
 		      sys_after_update_func func)
     :sys_var_session(name_arg,func), offset(offset_arg)
-  { chain_sys_var(chain); }
+  {  }
   bool update(Session *session, set_var *var);
   void set_default(Session *session, sql_var_t type);
   SHOW_TYPE show_type() { return SHOW_HA_ROWS; }
@@ -527,7 +570,7 @@ class sys_var_session_uint64_t :public sys_var_session
 public:
   uint64_t system_variables::*offset;
   bool only_global;
-  sys_var_session_uint64_t(sys_var_chain *chain, 
+  sys_var_session_uint64_t(
                            const char *name_arg,
                            uint64_t system_variables::*offset_arg,
                            sys_after_update_func au_func= NULL,
@@ -535,9 +578,8 @@ public:
     :sys_var_session(name_arg, au_func),
     check_func(c_func),
     offset(offset_arg)
-  { chain_sys_var(chain); }
-  sys_var_session_uint64_t(sys_var_chain *chain,
-                           const char *name_arg,
+  {  }
+  sys_var_session_uint64_t(const char *name_arg,
                            uint64_t system_variables::*offset_arg,
                            sys_after_update_func func,
                            bool only_global_arg,
@@ -546,7 +588,7 @@ public:
     check_func(cfunc),
     offset(offset_arg),
     only_global(only_global_arg)
-  { chain_sys_var(chain); }
+  {  }
   bool update(Session *session, set_var *var);
   void set_default(Session *session, sql_var_t type);
   SHOW_TYPE show_type() { return SHOW_LONGLONG; }
@@ -569,16 +611,15 @@ class sys_var_session_size_t :public sys_var_session
 public:
   size_t system_variables::*offset;
   bool only_global;
-  sys_var_session_size_t(sys_var_chain *chain, const char *name_arg,
+  sys_var_session_size_t(const char *name_arg,
                          size_t system_variables::*offset_arg,
                          sys_after_update_func au_func= NULL,
                          sys_check_func c_func= NULL)
     :sys_var_session(name_arg, au_func),
      check_func(c_func),
      offset(offset_arg)
-  { chain_sys_var(chain); }
-  sys_var_session_size_t(sys_var_chain *chain,
-                         const char *name_arg,
+  {  }
+  sys_var_session_size_t(const char *name_arg,
                          size_t system_variables::*offset_arg,
                          sys_after_update_func func,
                          bool only_global_arg,
@@ -587,7 +628,7 @@ public:
      check_func(cfunc),
      offset(offset_arg),
      only_global(only_global_arg)
-  { chain_sys_var(chain); }
+  {  }
   bool update(Session *session, set_var *var);
   void set_default(Session *session, sql_var_t type);
   SHOW_TYPE show_type() { return SHOW_SIZE; }
@@ -609,13 +650,13 @@ class sys_var_session_bool :public sys_var_session
 {
 public:
   bool system_variables::*offset;
-  sys_var_session_bool(sys_var_chain *chain, const char *name_arg, bool system_variables::*offset_arg)
+  sys_var_session_bool(const char *name_arg, bool system_variables::*offset_arg)
     :sys_var_session(name_arg), offset(offset_arg)
-  { chain_sys_var(chain); }
-  sys_var_session_bool(sys_var_chain *chain, const char *name_arg, bool system_variables::*offset_arg,
+  {  }
+  sys_var_session_bool(const char *name_arg, bool system_variables::*offset_arg,
 		   sys_after_update_func func)
     :sys_var_session(name_arg,func), offset(offset_arg)
-  { chain_sys_var(chain); }
+  {  }
   bool update(Session *session, set_var *var);
   void set_default(Session *session, sql_var_t type);
   SHOW_TYPE show_type() { return SHOW_MY_BOOL; }
@@ -637,13 +678,13 @@ protected:
   TYPELIB *enum_names;
   sys_check_func check_func;
 public:
-  sys_var_session_enum(sys_var_chain *chain, const char *name_arg,
+  sys_var_session_enum(const char *name_arg,
                    uint32_t system_variables::*offset_arg, TYPELIB *typelib,
                    sys_after_update_func func= NULL,
                    sys_check_func check_f= NULL)
     :sys_var_session(name_arg, func), offset(offset_arg),
     enum_names(typelib), check_func(check_f)
-  { chain_sys_var(chain); }
+  {  }
   bool check(Session *session, set_var *var)
   {
     int ret= 0;
@@ -666,10 +707,10 @@ class sys_var_session_storage_engine :public sys_var_session
 protected:
   plugin::StorageEngine *system_variables::*offset;
 public:
-  sys_var_session_storage_engine(sys_var_chain *chain, const char *name_arg,
+  sys_var_session_storage_engine(const char *name_arg,
                                  plugin::StorageEngine *system_variables::*offset_arg)
     :sys_var_session(name_arg), offset(offset_arg)
-  { chain_sys_var(chain); }
+  {  }
   bool check(Session *session, set_var *var);
   SHOW_TYPE show_type() { return SHOW_CHAR; }
   bool check_update_type(Item_result type)
@@ -689,12 +730,12 @@ class sys_var_session_bit :public sys_var_session
 public:
   uint64_t bit_flag;
   bool reverse;
-  sys_var_session_bit(sys_var_chain *chain, const char *name_arg,
+  sys_var_session_bit(const char *name_arg,
                   sys_check_func c_func, sys_update_func u_func,
                   uint64_t bit, bool reverse_arg=0)
     :sys_var_session(name_arg, NULL), check_func(c_func),
     update_func(u_func), bit_flag(bit), reverse(reverse_arg)
-  { chain_sys_var(chain); }
+  {  }
   bool check(Session *session, set_var *var);
   bool update(Session *session, set_var *var);
   bool check_update_type(Item_result)
@@ -710,9 +751,9 @@ public:
 class sys_var_timestamp :public sys_var
 {
 public:
-  sys_var_timestamp(sys_var_chain *chain, const char *name_arg)
+  sys_var_timestamp(const char *name_arg)
     :sys_var(name_arg, NULL)
-  { chain_sys_var(chain); }
+  {  }
   bool update(Session *session, set_var *var);
   void set_default(Session *session, sql_var_t type);
   bool check_type(sql_var_t type)    { return type == OPT_GLOBAL; }
@@ -727,9 +768,9 @@ public:
 class sys_var_last_insert_id :public sys_var
 {
 public:
-  sys_var_last_insert_id(sys_var_chain *chain, const char *name_arg)
+  sys_var_last_insert_id(const char *name_arg)
     :sys_var(name_arg, NULL)
-  { chain_sys_var(chain); }
+  {  }
   bool update(Session *session, set_var *var);
   bool check_type(sql_var_t type) { return type == OPT_GLOBAL; }
   SHOW_TYPE show_type() { return SHOW_LONGLONG; }
@@ -759,13 +800,13 @@ class sys_var_collation_sv :public sys_var_collation
   const CHARSET_INFO *system_variables::*offset;
   const CHARSET_INFO **global_default;
 public:
-  sys_var_collation_sv(sys_var_chain *chain, const char *name_arg,
+  sys_var_collation_sv(const char *name_arg,
                        const CHARSET_INFO *system_variables::*offset_arg,
                        const CHARSET_INFO **global_default_arg)
     :sys_var_collation(name_arg),
     offset(offset_arg), global_default(global_default_arg)
   {
-    chain_sys_var(chain);
+    
   }
   bool update(Session *session, set_var *var);
   void set_default(Session *session, sql_var_t type);
@@ -781,12 +822,12 @@ public:
   sql_var_t var_type;
   SHOW_TYPE show_type_value;
   sys_value_ptr_func value_ptr_func;
-  sys_var_readonly(sys_var_chain *chain, const char *name_arg, sql_var_t type,
+  sys_var_readonly(const char *name_arg, sql_var_t type,
 		   SHOW_TYPE show_type_arg,
 		   sys_value_ptr_func value_ptr_func_arg)
     :sys_var(name_arg), var_type(type),
        show_type_value(show_type_arg), value_ptr_func(value_ptr_func_arg)
-  { chain_sys_var(chain); }
+  {  }
   bool update(Session *, set_var *)
   { return 1; }
   bool check_default(sql_var_t)
@@ -807,10 +848,10 @@ public:
 class sys_var_session_time_zone :public sys_var_session
 {
 public:
-  sys_var_session_time_zone(sys_var_chain *chain, const char *name_arg)
+  sys_var_session_time_zone(const char *name_arg)
     :sys_var_session(name_arg, NULL)
   {
-    chain_sys_var(chain);
+    
   }
   bool check(Session *session, set_var *var);
   SHOW_TYPE show_type() { return SHOW_CHAR; }
@@ -831,10 +872,10 @@ class sys_var_microseconds :public sys_var_session
 {
   uint64_t system_variables::*offset;
 public:
-  sys_var_microseconds(sys_var_chain *chain, const char *name_arg,
+  sys_var_microseconds(const char *name_arg,
                        uint64_t system_variables::*offset_arg):
     sys_var_session(name_arg), offset(offset_arg)
-  { chain_sys_var(chain); }
+  {  }
   bool check(Session *, set_var *) {return 0;}
   bool update(Session *session, set_var *var);
   void set_default(Session *session, sql_var_t type);
@@ -848,10 +889,10 @@ public:
 class sys_var_session_lc_time_names :public sys_var_session
 {
 public:
-  sys_var_session_lc_time_names(sys_var_chain *chain, const char *name_arg)
+  sys_var_session_lc_time_names(const char *name_arg)
     : sys_var_session(name_arg, NULL)
   {
-    chain_sys_var(chain);
+    
   }
   bool check(Session *session, set_var *var);
   SHOW_TYPE show_type() { return SHOW_CHAR; }
@@ -954,8 +995,8 @@ int set_var_init();
 drizzle_show_var* enumerate_sys_vars(Session *session);
 void drizzle_add_plugin_sysvar(sys_var_pluginvar *var);
 void drizzle_del_plugin_sysvar();
-int mysql_add_sys_var_chain(sys_var *chain, struct option *long_options);
-int mysql_del_sys_var_chain(sys_var *chain);
+void add_sys_var_to_list(sys_var *var, struct option *long_options);
+void add_sys_var_to_list(sys_var *var);
 sys_var *find_sys_var(Session *session, const char *str, uint32_t length=0);
 int sql_set_variables(Session *session, List<set_var_base> *var_list);
 bool not_all_support_one_shot(List<set_var_base> *var_list);

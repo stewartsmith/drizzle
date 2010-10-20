@@ -419,7 +419,13 @@ def read_plugin_ini(plugin_dir):
     else:
       plugin['enabled']="yes"
     if plugin.has_key('static'):
-      plugin['static']= parser.getboolean('plugin','static')
+      try:
+        plugin['static']= parser.getboolean('plugin','static')
+      except:
+        if plugin['static'][:5] == os.sys.platform[:5]:
+          plugin['static']= True
+        else:
+          plugin['static']= False
     if plugin.has_key('install'):
       plugin['install']= parser.getboolean('plugin','install')
     if plugin.has_key('testsuite'):

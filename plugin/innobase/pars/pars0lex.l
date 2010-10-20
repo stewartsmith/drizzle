@@ -647,3 +647,29 @@ In the state 'id', only two actions are possible (defined below). */
 }
 
 %%
+
+/* yylex_destroy() is not defined before Flex 2.5.9
+   so we attempt to define something that should be good enough
+   for old Flex - such as that found on CentOS 5
+*/
+#if !defined(YY_FLEX_MAJOR_VERSION) || YY_FLEX_MAJOR_VERSION < 2 \
+  || (YY_FLEX_MAJOR_VERSION == 2                                        \
+      && (!defined(YY_FLEX_MINOR_VERSION) || YY_FLEX_MINOR_VERSION < 5  \
+          || (YY_FLEX_MINOR_VERSION == 5                                \
+              && (!defined(YY_FLEX_SUBMINOR_VERSION)                    \
+                  || YY_FLEX_SUBMINOR_VERSION < 9))))
+# define yylex_destroy() yy_delete_buffer(YY_CURRENT_BUFFER)
+#endif
+
+/**********************************************************************
+Release any resources used by the lexer. */
+UNIV_INTERN
+void
+pars_lexer_close(void)
+/*==================*/
+{
+	yylex_destroy();
+	free(stringbuf);
+	stringbuf = NULL;
+	stringbuf_len_alloc = stringbuf_len = 0;
+}

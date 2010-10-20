@@ -156,6 +156,7 @@ drizzle_show_var StatusHelper::status_vars_defs[]=
   {"Select_range",              (char*) offsetof(system_status_var, select_range_count), SHOW_LONGLONG_STATUS},
   {"Select_range_check",        (char*) offsetof(system_status_var, select_range_check_count), SHOW_LONGLONG_STATUS},
   {"Select_scan",               (char*) offsetof(system_status_var, select_scan_count), SHOW_LONGLONG_STATUS},
+  {"Sessions_connected",         (char*) &show_connection_count_cont_new,  SHOW_FUNC},
   {"Slow_queries",              (char*) offsetof(system_status_var, long_query_count), SHOW_LONGLONG_STATUS},
   {"Sort_merge_passes",         (char*) offsetof(system_status_var, filesort_merge_passes), SHOW_LONGLONG_STATUS},
   {"Sort_range",                (char*) offsetof(system_status_var, filesort_range_count), SHOW_LONGLONG_STATUS},
@@ -163,7 +164,6 @@ drizzle_show_var StatusHelper::status_vars_defs[]=
   {"Sort_scan",                 (char*) offsetof(system_status_var, filesort_scan_count), SHOW_LONGLONG_STATUS},
   {"Table_locks_immediate",     (char*) &current_global_counters.locks_immediate,        SHOW_LONGLONG},
   {"Table_locks_waited",        (char*) &current_global_counters.locks_waited,           SHOW_LONGLONG},
-  {"Threads_connected",         (char*) &show_connection_count_cont_new,  SHOW_FUNC},
   {"Uptime",                    (char*) &show_starttime_cont_new,         SHOW_FUNC},
   {"Uptime_since_flush_status", (char*) &show_flushstatustime_cont_new,   SHOW_FUNC},
   {NULL, NULL, SHOW_LONGLONG}

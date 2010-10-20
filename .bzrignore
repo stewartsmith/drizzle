@@ -327,3 +327,5 @@ docs/plugins/*
 docs/doctrees
 docs/html
 plugin/innobase/include/pars0grm.h
+tests/total_warning_count
+tests/stripped_log

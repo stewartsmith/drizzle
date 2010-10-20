@@ -80,15 +80,11 @@ public:
   void registerVariable(sys_var *var);
 
   option_map getOptions();
+
+  static std::string prepend_name(std::string module_name,
+                                  const std::string &var_name);
 };
 
-inline void Context::registerVariable(sys_var *)
-{
-/* In here, you can do:
-  sys_var->append_name_prefix(module->getName());
-  register_variable_whatever();
-*/
-}
 
 } /* namespace module */
 } /* namespace drizzled */

@@ -66,6 +66,7 @@
 
 #include <cstdio>
 #include <map>
+#include <vector>
 #include <algorithm>
 
 using namespace std;
@@ -125,167 +126,165 @@ static unsigned char *get_tmpdir(Session *session);
   The variables are linked into the list. A variable is added to
   it in the constructor (see sys_var class for details).
 */
-static sys_var_chain vars = { NULL, NULL };
-
 static sys_var_session_uint64_t
-sys_auto_increment_increment(&vars, "auto_increment_increment",
+sys_auto_increment_increment("auto_increment_increment",
                              &system_variables::auto_increment_increment);
 static sys_var_session_uint64_t
-sys_auto_increment_offset(&vars, "auto_increment_offset",
+sys_auto_increment_offset("auto_increment_offset",
                           &system_variables::auto_increment_offset);
 
-static sys_var_fs_path sys_basedir(&vars, "basedir", basedir);
-static sys_var_fs_path sys_pid_file(&vars, "pid_file", pid_file);
-static sys_var_fs_path sys_plugin_dir(&vars, "plugin_dir", plugin_dir);
+static sys_var_fs_path sys_basedir("basedir", basedir);
+static sys_var_fs_path sys_pid_file("pid_file", pid_file);
+static sys_var_fs_path sys_plugin_dir("plugin_dir", plugin_dir);
 
-static sys_var_size_t_ptr sys_thread_stack_size(&vars, "thread_stack",
+static sys_var_size_t_ptr sys_thread_stack_size("thread_stack",
                                                       &my_thread_stack_size);
-static sys_var_uint32_t_ptr sys_back_log(&vars, "back_log", &back_log);
+static sys_var_uint32_t_ptr sys_back_log("back_log", &back_log);
 
-static sys_var_session_uint64_t	sys_bulk_insert_buff_size(&vars, "bulk_insert_buffer_size",
+static sys_var_session_uint64_t	sys_bulk_insert_buff_size("bulk_insert_buffer_size",
                                                           &system_variables::bulk_insert_buff_size);
-static sys_var_session_uint32_t	sys_completion_type(&vars, "completion_type",
+static sys_var_session_uint32_t	sys_completion_type("completion_type",
                                                     &system_variables::completion_type,
                                                     check_completion_type,
                                                     fix_completion_type);
 static sys_var_collation_sv
-sys_collation_server(&vars, "collation_server", &system_variables::collation_server, &default_charset_info);
-static sys_var_fs_path       sys_datadir(&vars, "datadir", getDataHome());
+sys_collation_server("collation_server", &system_variables::collation_server, &default_charset_info);
+static sys_var_fs_path       sys_datadir("datadir", getDataHome());
 
-static sys_var_session_uint64_t	sys_join_buffer_size(&vars, "join_buffer_size",
+static sys_var_session_uint64_t	sys_join_buffer_size("join_buffer_size",
                                                      &system_variables::join_buff_size);
-static sys_var_session_uint32_t	sys_max_allowed_packet(&vars, "max_allowed_packet",
+static sys_var_session_uint32_t	sys_max_allowed_packet("max_allowed_packet",
                                                        &system_variables::max_allowed_packet);
-static sys_var_uint64_t_ptr	sys_max_connect_errors(&vars, "max_connect_errors",
+static sys_var_uint64_t_ptr	sys_max_connect_errors("max_connect_errors",
                                                &max_connect_errors);
-static sys_var_session_uint64_t	sys_max_error_count(&vars, "max_error_count",
+static sys_var_session_uint64_t	sys_max_error_count("max_error_count",
                                                   &system_variables::max_error_count);
-static sys_var_session_uint64_t	sys_max_heap_table_size(&vars, "max_heap_table_size",
+static sys_var_session_uint64_t	sys_max_heap_table_size("max_heap_table_size",
                                                         &system_variables::max_heap_table_size);
-static sys_var_session_uint64_t sys_pseudo_thread_id(&vars, "pseudo_thread_id",
+static sys_var_session_uint64_t sys_pseudo_thread_id("pseudo_thread_id",
                                               &system_variables::pseudo_thread_id,
                                               0, check_pseudo_thread_id);
-static sys_var_session_ha_rows	sys_max_join_size(&vars, "max_join_size",
+static sys_var_session_ha_rows	sys_max_join_size("max_join_size",
                                                   &system_variables::max_join_size,
                                                   fix_max_join_size);
-static sys_var_session_uint64_t	sys_max_seeks_for_key(&vars, "max_seeks_for_key",
+static sys_var_session_uint64_t	sys_max_seeks_for_key("max_seeks_for_key",
                                                       &system_variables::max_seeks_for_key);
-static sys_var_session_uint64_t   sys_max_length_for_sort_data(&vars, "max_length_for_sort_data",
+static sys_var_session_uint64_t   sys_max_length_for_sort_data("max_length_for_sort_data",
                                                                &system_variables::max_length_for_sort_data);
-static sys_var_session_size_t	sys_max_sort_length(&vars, "max_sort_length",
+static sys_var_session_size_t	sys_max_sort_length("max_sort_length",
                                                     &system_variables::max_sort_length);
-static sys_var_uint64_t_ptr	sys_max_write_lock_count(&vars, "max_write_lock_count",
+static sys_var_uint64_t_ptr	sys_max_write_lock_count("max_write_lock_count",
                                                  &max_write_lock_count);
-static sys_var_session_uint64_t sys_min_examined_row_limit(&vars, "min_examined_row_limit",
+static sys_var_session_uint64_t sys_min_examined_row_limit("min_examined_row_limit",
                                                            &system_variables::min_examined_row_limit);
 
 /* these two cannot be static */
-static sys_var_session_bool sys_optimizer_prune_level(&vars, "optimizer_prune_level",
+static sys_var_session_bool sys_optimizer_prune_level("optimizer_prune_level",
                                                       &system_variables::optimizer_prune_level);
-static sys_var_session_uint32_t sys_optimizer_search_depth(&vars, "optimizer_search_depth",
+static sys_var_session_uint32_t sys_optimizer_search_depth("optimizer_search_depth",
                                                            &system_variables::optimizer_search_depth);
 
-static sys_var_session_uint64_t sys_preload_buff_size(&vars, "preload_buffer_size",
+static sys_var_session_uint64_t sys_preload_buff_size("preload_buffer_size",
                                                       &system_variables::preload_buff_size);
-static sys_var_session_uint32_t sys_read_buff_size(&vars, "read_buffer_size",
+static sys_var_session_uint32_t sys_read_buff_size("read_buffer_size",
                                                    &system_variables::read_buff_size);
-static sys_var_session_uint32_t	sys_read_rnd_buff_size(&vars, "read_rnd_buffer_size",
+static sys_var_session_uint32_t	sys_read_rnd_buff_size("read_rnd_buffer_size",
                                                        &system_variables::read_rnd_buff_size);
-static sys_var_session_uint32_t	sys_div_precincrement(&vars, "div_precision_increment",
+static sys_var_session_uint32_t	sys_div_precincrement("div_precision_increment",
                                                       &system_variables::div_precincrement);
 
-static sys_var_session_size_t	sys_range_alloc_block_size(&vars, "range_alloc_block_size",
+static sys_var_session_size_t	sys_range_alloc_block_size("range_alloc_block_size",
                                                            &system_variables::range_alloc_block_size);
-static sys_var_session_uint32_t	sys_query_alloc_block_size(&vars, "query_alloc_block_size",
+static sys_var_session_uint32_t	sys_query_alloc_block_size("query_alloc_block_size",
                                                            &system_variables::query_alloc_block_size,
                                                            NULL, fix_session_mem_root);
-static sys_var_session_uint32_t	sys_query_prealloc_size(&vars, "query_prealloc_size",
+static sys_var_session_uint32_t	sys_query_prealloc_size("query_prealloc_size",
                                                         &system_variables::query_prealloc_size,
                                                         NULL, fix_session_mem_root);
-static sys_var_readonly sys_tmpdir(&vars, "tmpdir", OPT_GLOBAL, SHOW_CHAR, get_tmpdir);
+static sys_var_readonly sys_tmpdir("tmpdir", OPT_GLOBAL, SHOW_CHAR, get_tmpdir);
 
-static sys_var_fs_path sys_secure_file_priv(&vars, "secure_file_priv",
+static sys_var_fs_path sys_secure_file_priv("secure_file_priv",
                                             secure_file_priv);
 
-static sys_var_const_str_ptr sys_scheduler(&vars, "scheduler",
+static sys_var_const_str_ptr sys_scheduler("scheduler",
                                            (char**)&opt_scheduler);
 
-static sys_var_uint32_t_ptr  sys_server_id(&vars, "server_id", &server_id,
+static sys_var_uint32_t_ptr  sys_server_id("server_id", &server_id,
                                            fix_server_id);
 
-static sys_var_session_size_t	sys_sort_buffer(&vars, "sort_buffer_size",
+static sys_var_session_size_t	sys_sort_buffer("sort_buffer_size",
                                                 &system_variables::sortbuff_size);
 
-static sys_var_session_size_t sys_transaction_message_threshold(&vars, "transaction_message_threshold",
+static sys_var_session_size_t sys_transaction_message_threshold("transaction_message_threshold",
                                                                 &system_variables::transaction_message_threshold);
 
-static sys_var_session_storage_engine sys_storage_engine(&vars, "storage_engine",
+static sys_var_session_storage_engine sys_storage_engine("storage_engine",
 				       &system_variables::storage_engine);
-static sys_var_const_str	sys_system_time_zone(&vars, "system_time_zone",
+static sys_var_const_str	sys_system_time_zone("system_time_zone",
                                              system_time_zone);
-static sys_var_size_t_ptr	sys_table_def_size(&vars, "table_definition_cache",
+static sys_var_size_t_ptr	sys_table_def_size("table_definition_cache",
                                              &table_def_size);
-static sys_var_uint64_t_ptr	sys_table_cache_size(&vars, "table_open_cache",
+static sys_var_uint64_t_ptr	sys_table_cache_size("table_open_cache",
 					     &table_cache_size);
-static sys_var_uint64_t_ptr	sys_table_lock_wait_timeout(&vars, "table_lock_wait_timeout",
+static sys_var_uint64_t_ptr	sys_table_lock_wait_timeout("table_lock_wait_timeout",
                                                     &table_lock_wait_timeout);
-static sys_var_session_enum	sys_tx_isolation(&vars, "tx_isolation",
+static sys_var_session_enum	sys_tx_isolation("tx_isolation",
                                              &system_variables::tx_isolation,
                                              &tx_isolation_typelib,
                                              fix_tx_isolation,
                                              check_tx_isolation);
-static sys_var_session_uint64_t	sys_tmp_table_size(&vars, "tmp_table_size",
+static sys_var_session_uint64_t	sys_tmp_table_size("tmp_table_size",
 					   &system_variables::tmp_table_size);
-static sys_var_bool_ptr  sys_timed_mutexes(&vars, "timed_mutexes", &internal::timed_mutexes);
-static sys_var_const_str  sys_version(&vars, "version", version().c_str());
+static sys_var_bool_ptr  sys_timed_mutexes("timed_mutexes", &internal::timed_mutexes);
+static sys_var_const_str  sys_version("version", version().c_str());
 
-static sys_var_const_str	sys_version_comment(&vars, "version_comment",
+static sys_var_const_str	sys_version_comment("version_comment",
                                             COMPILATION_COMMENT);
-static sys_var_const_str	sys_version_compile_machine(&vars, "version_compile_machine",
+static sys_var_const_str	sys_version_compile_machine("version_compile_machine",
                                                       HOST_CPU);
-static sys_var_const_str	sys_version_compile_os(&vars, "version_compile_os",
+static sys_var_const_str	sys_version_compile_os("version_compile_os",
                                                  HOST_OS);
-static sys_var_const_str	sys_version_compile_vendor(&vars, "version_compile_vendor",
+static sys_var_const_str	sys_version_compile_vendor("version_compile_vendor",
                                                  HOST_VENDOR);
 
 /* Variables that are bits in Session */
 
-sys_var_session_bit sys_autocommit(&vars, "autocommit", 0,
+sys_var_session_bit sys_autocommit("autocommit", 0,
                                set_option_autocommit,
                                OPTION_NOT_AUTOCOMMIT,
                                1);
-static sys_var_session_bit	sys_big_selects(&vars, "sql_big_selects", 0,
+static sys_var_session_bit	sys_big_selects("sql_big_selects", 0,
 					set_option_bit,
 					OPTION_BIG_SELECTS);
-static sys_var_session_bit	sys_sql_warnings(&vars, "sql_warnings", 0,
+static sys_var_session_bit	sys_sql_warnings("sql_warnings", 0,
 					 set_option_bit,
 					 OPTION_WARNINGS);
-static sys_var_session_bit	sys_sql_notes(&vars, "sql_notes", 0,
+static sys_var_session_bit	sys_sql_notes("sql_notes", 0,
 					 set_option_bit,
 					 OPTION_SQL_NOTES);
-static sys_var_session_bit	sys_buffer_results(&vars, "sql_buffer_result", 0,
+static sys_var_session_bit	sys_buffer_results("sql_buffer_result", 0,
 					   set_option_bit,
 					   OPTION_BUFFER_RESULT);
-static sys_var_session_bit	sys_foreign_key_checks(&vars, "foreign_key_checks", 0,
+static sys_var_session_bit	sys_foreign_key_checks("foreign_key_checks", 0,
 					       set_option_bit,
 					       OPTION_NO_FOREIGN_KEY_CHECKS, 1);
-static sys_var_session_bit	sys_unique_checks(&vars, "unique_checks", 0,
+static sys_var_session_bit	sys_unique_checks("unique_checks", 0,
 					  set_option_bit,
 					  OPTION_RELAXED_UNIQUE_CHECKS, 1);
 /* Local state variables */
 
-static sys_var_session_ha_rows	sys_select_limit(&vars, "sql_select_limit",
+static sys_var_session_ha_rows	sys_select_limit("sql_select_limit",
 						 &system_variables::select_limit);
-static sys_var_timestamp sys_timestamp(&vars, "timestamp");
+static sys_var_timestamp sys_timestamp("timestamp");
 static sys_var_last_insert_id
-sys_last_insert_id(&vars, "last_insert_id");
+sys_last_insert_id("last_insert_id");
 /*
   identity is an alias for last_insert_id(), so that we are compatible
   with Sybase
 */
-static sys_var_last_insert_id sys_identity(&vars, "identity");
+static sys_var_last_insert_id sys_identity("identity");
 
-static sys_var_session_lc_time_names sys_lc_time_names(&vars, "lc_time_names");
+static sys_var_session_lc_time_names sys_lc_time_names("lc_time_names");
 
 /*
   We want statements referring explicitly to @@session.insert_id to be
@@ -299,22 +298,22 @@ static sys_var_session_lc_time_names sys_lc_time_names(&vars, "lc_time_names");
   statement-based logging mode: t will be different on master and
   slave).
 */
-static sys_var_readonly sys_error_count(&vars, "error_count",
+static sys_var_readonly sys_error_count("error_count",
                                         OPT_SESSION,
                                         SHOW_INT,
                                         get_error_count);
-static sys_var_readonly sys_warning_count(&vars, "warning_count",
+static sys_var_readonly sys_warning_count("warning_count",
                                           OPT_SESSION,
                                           SHOW_INT,
                                           get_warning_count);
 
-sys_var_session_uint64_t sys_group_concat_max_len(&vars, "group_concat_max_len",
+sys_var_session_uint64_t sys_group_concat_max_len("group_concat_max_len",
                                                   &system_variables::group_concat_max_len);
 
-sys_var_session_time_zone sys_time_zone(&vars, "time_zone");
+sys_var_session_time_zone sys_time_zone("time_zone");
 
 /* Global read-only variable containing hostname */
-static sys_var_const_str        sys_hostname(&vars, "hostname", glob_hostname);
+static sys_var_const_str        sys_hostname("hostname", glob_hostname);
 
 bool sys_var::check(Session *, set_var *var)
 {
@@ -1471,82 +1470,6 @@ static struct option *find_option(struct option *opt, const char *name)
 }
 
 
-/*
-  Add variables to the dynamic hash of system variables
-
-  SYNOPSIS
-    mysql_add_sys_var_chain()
-    first       Pointer to first system variable to add
-    long_opt    (optional)command line arguments may be tied for limit checks.
-
-  RETURN VALUES
-    0           SUCCESS
-    otherwise   FAILURE
-*/
-
-
-int mysql_add_sys_var_chain(sys_var *first, struct option *long_options)
-{
-  sys_var *var;
-  /* @todo for future A write lock should be held on LOCK_system_variables_hash */
-
-  for (var= first; var; var= var->getNext())
-  {
-
-    string lower_name(var->getName());
-    transform(lower_name.begin(), lower_name.end(),
-              lower_name.begin(), ::tolower);
-
-    /* this fails if there is a conflicting variable name. */
-    if (system_variable_map.find(lower_name) != system_variable_map.end())
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Variable named %s already exists!\n"),
-                    var->getName().c_str());
-      return 1;
-    } 
-
-    pair<SystemVariableMap::iterator, bool> ret= 
-      system_variable_map.insert(make_pair(lower_name, var));
-    if (ret.second == false)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Could not add Variable: %s\n"),
-                    var->getName().c_str());
-      return 1;
-    }
-
-    if (long_options)
-      var->setOptionLimits(find_option(long_options, var->getName().c_str()));
-  }
-  return 0;
-
-}
-
-
-/*
-  Remove variables to the dynamic hash of system variables
-
-  SYNOPSIS
-    mysql_del_sys_var_chain()
-    first       Pointer to first system variable to remove
-
-  RETURN VALUES
-    0           SUCCESS
-    otherwise   FAILURE
-*/
-
-int mysql_del_sys_var_chain(sys_var *first)
-{
-
-  /* A write lock should be held on LOCK_system_variables_hash */
-  for (sys_var *var= first; var; var= var->getNext())
-  {
-    string lower_name(var->getName());
-    transform(lower_name.begin(), lower_name.end(),
-              lower_name.begin(), ::tolower);
-    system_variable_map.erase(lower_name);
-  }
-  return 0;
-}
 
 
 
@@ -1589,6 +1512,37 @@ drizzle_show_var* enumerate_sys_vars(Session *session)
 }
 
 
+
+void add_sys_var_to_list(sys_var *var)
+{
+  string lower_name(var->getName());
+  transform(lower_name.begin(), lower_name.end(),
+            lower_name.begin(), ::tolower);
+
+  /* this fails if there is a conflicting variable name. */
+  if (system_variable_map.find(lower_name) != system_variable_map.end())
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Variable named %s already exists!\n"),
+                  var->getName().c_str());
+    throw exception();
+  } 
+
+  pair<SystemVariableMap::iterator, bool> ret= 
+    system_variable_map.insert(make_pair(lower_name, var));
+  if (ret.second == false)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Could not add Variable: %s\n"),
+                  var->getName().c_str());
+    throw exception();
+  }
+}
+
+void add_sys_var_to_list(sys_var *var, struct option *long_options)
+{
+  add_sys_var_to_list(var);
+  var->setOptionLimits(find_option(long_options, var->getName().c_str()));
+}
+
 /*
   Initialize the system variables
 
@@ -1602,19 +1556,83 @@ drizzle_show_var* enumerate_sys_vars(Session *session)
 
 int set_var_init()
 {
-  uint32_t count= 0;
-
-  for (sys_var *var= vars.first; var; var= var->getNext(), count++) {};
-
-  vars.last->setNext(NULL);
-  if (mysql_add_sys_var_chain(vars.first, my_long_options))
-    goto error;
-
+  try
+  {
+    add_sys_var_to_list(&sys_auto_increment_increment, my_long_options);
+    add_sys_var_to_list(&sys_auto_increment_offset, my_long_options);
+    add_sys_var_to_list(&sys_autocommit, my_long_options);
+    add_sys_var_to_list(&sys_back_log, my_long_options);
+    add_sys_var_to_list(&sys_basedir, my_long_options);
+    add_sys_var_to_list(&sys_big_selects, my_long_options);
+    add_sys_var_to_list(&sys_buffer_results, my_long_options);
+    add_sys_var_to_list(&sys_bulk_insert_buff_size, my_long_options);
+    add_sys_var_to_list(&sys_collation_server, my_long_options);
+    add_sys_var_to_list(&sys_completion_type, my_long_options);
+    add_sys_var_to_list(&sys_datadir, my_long_options);
+    add_sys_var_to_list(&sys_div_precincrement, my_long_options);
+    add_sys_var_to_list(&sys_error_count, my_long_options);
+    add_sys_var_to_list(&sys_foreign_key_checks, my_long_options);
+    add_sys_var_to_list(&sys_group_concat_max_len, my_long_options);
+    add_sys_var_to_list(&sys_hostname, my_long_options);
+    add_sys_var_to_list(&sys_identity, my_long_options);
+    add_sys_var_to_list(&sys_join_buffer_size, my_long_options);
+    add_sys_var_to_list(&sys_last_insert_id, my_long_options);
+    add_sys_var_to_list(&sys_lc_time_names, my_long_options);
+    add_sys_var_to_list(&sys_max_allowed_packet, my_long_options);
+    add_sys_var_to_list(&sys_max_connect_errors, my_long_options);
+    add_sys_var_to_list(&sys_max_error_count, my_long_options);
+    add_sys_var_to_list(&sys_max_heap_table_size, my_long_options);
+    add_sys_var_to_list(&sys_max_join_size, my_long_options);
+    add_sys_var_to_list(&sys_max_length_for_sort_data, my_long_options);
+    add_sys_var_to_list(&sys_max_seeks_for_key, my_long_options);
+    add_sys_var_to_list(&sys_max_sort_length, my_long_options);
+    add_sys_var_to_list(&sys_max_write_lock_count, my_long_options);
+    add_sys_var_to_list(&sys_min_examined_row_limit, my_long_options);
+    add_sys_var_to_list(&sys_optimizer_prune_level, my_long_options);
+    add_sys_var_to_list(&sys_optimizer_search_depth, my_long_options);
+    add_sys_var_to_list(&sys_pid_file, my_long_options);
+    add_sys_var_to_list(&sys_plugin_dir, my_long_options);
+    add_sys_var_to_list(&sys_preload_buff_size, my_long_options);
+    add_sys_var_to_list(&sys_pseudo_thread_id, my_long_options);
+    add_sys_var_to_list(&sys_query_alloc_block_size, my_long_options);
+    add_sys_var_to_list(&sys_query_prealloc_size, my_long_options);
+    add_sys_var_to_list(&sys_range_alloc_block_size, my_long_options);
+    add_sys_var_to_list(&sys_read_buff_size, my_long_options);
+    add_sys_var_to_list(&sys_read_rnd_buff_size, my_long_options);
+    add_sys_var_to_list(&sys_scheduler, my_long_options);
+    add_sys_var_to_list(&sys_secure_file_priv, my_long_options);
+    add_sys_var_to_list(&sys_select_limit, my_long_options);
+    add_sys_var_to_list(&sys_server_id, my_long_options);
+    add_sys_var_to_list(&sys_sort_buffer, my_long_options);
+    add_sys_var_to_list(&sys_sql_notes, my_long_options);
+    add_sys_var_to_list(&sys_sql_warnings, my_long_options);
+    add_sys_var_to_list(&sys_storage_engine, my_long_options);
+    add_sys_var_to_list(&sys_system_time_zone, my_long_options);
+    add_sys_var_to_list(&sys_table_cache_size, my_long_options);
+    add_sys_var_to_list(&sys_table_def_size, my_long_options);
+    add_sys_var_to_list(&sys_table_lock_wait_timeout, my_long_options);
+    add_sys_var_to_list(&sys_thread_stack_size, my_long_options);
+    add_sys_var_to_list(&sys_time_zone, my_long_options);
+    add_sys_var_to_list(&sys_timed_mutexes, my_long_options);
+    add_sys_var_to_list(&sys_timestamp, my_long_options);
+    add_sys_var_to_list(&sys_tmp_table_size, my_long_options);
+    add_sys_var_to_list(&sys_tmpdir, my_long_options);
+    add_sys_var_to_list(&sys_transaction_message_threshold, my_long_options);
+    add_sys_var_to_list(&sys_tx_isolation, my_long_options);
+    add_sys_var_to_list(&sys_unique_checks, my_long_options);
+    add_sys_var_to_list(&sys_version, my_long_options);
+    add_sys_var_to_list(&sys_version_comment, my_long_options);
+    add_sys_var_to_list(&sys_version_compile_machine, my_long_options);
+    add_sys_var_to_list(&sys_version_compile_os, my_long_options);
+    add_sys_var_to_list(&sys_version_compile_vendor, my_long_options);
+    add_sys_var_to_list(&sys_warning_count, my_long_options);
+  }
+  catch (...)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize system variables"));
+    return(1);
+  }
   return(0);
-
-error:
-   errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize system variables"));
-  return(1);
 }
 
 

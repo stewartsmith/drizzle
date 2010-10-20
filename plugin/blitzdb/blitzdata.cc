@@ -90,7 +90,7 @@ int BlitzData::create_data_table(drizzled::message::Table &proto,
   /* Write the Meta Data for this Table. */
   tc_meta_buffer = tchdbopaque(data_table);
   write_meta_autoinc(autoinc);
-  write_meta_keycount(table_info.getMutableShare()->keys);
+  write_meta_keycount(table_info.getShare()->keys);
 
   /* We're Done. */
   if (close_data_table() != 0)

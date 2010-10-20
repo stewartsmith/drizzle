@@ -151,22 +151,6 @@ struct CopyInfo
 
 };
 
-struct DrizzleLock
-{
-  Table **table;
-  uint32_t table_count;
-  uint32_t lock_count;
-  THR_LOCK_DATA **locks;
-
-  DrizzleLock() :
-    table(0),
-    table_count(0),
-    lock_count(0),
-    locks(0)
-  { }
-
-};
-
 } /* namespace drizzled */
 
 /** @TODO why is this in the middle of the file */
@@ -316,6 +300,8 @@ struct Ha_data
  * all member variables that are not critical to non-internal operations of the
  * session object.
  */
+typedef int64_t session_id_t;
+
 class Session : public Open_tables_state
 {
 public:
@@ -686,7 +672,7 @@ public:
     create_sort_index(); may differ from examined_row_count.
   */
   uint32_t row_count;
-  uint64_t thread_id;
+  session_id_t thread_id;
   uint32_t tmp_table;
   uint32_t global_read_lock;
   uint32_t server_status;
@@ -828,7 +814,7 @@ public:
   }
 
   /** Accessor method returning the session's ID. */
-  inline uint64_t getSessionId()  const
+  inline session_id_t getSessionId()  const
   {
     return thread_id;
   }
@@ -1213,7 +1199,7 @@ public:
    * @param  Length of scrambled password
    * @param  Database name to connect to, may be NULL
    */
-  bool checkUser(const char *passwd, uint32_t passwd_len, const char *db);
+  bool checkUser(const std::string &passwd, const std::string &db);
   
   /**
    * Returns the timestamp (in microseconds) of when the Session 
@@ -1435,6 +1421,8 @@ public:
   }
   void refresh_status();
   user_var_entry *getVariable(LEX_STRING &name, bool create_if_not_exists);
+  user_var_entry *getVariable(const std::string  &name, bool create_if_not_exists);
+  void setVariable(const std::string &name, const std::string &value);
   
   /**
    * Closes all tables used by the current substatement, or all tables
@@ -1576,7 +1564,7 @@ public:
 
   void get_xid(DRIZZLE_XID *xid); // Innodb only
 
-  TableShareInstance *getTemporaryShare(TableIdentifier::Type type_arg);
+  table::Instance *getInstanceTable();
 
 private:
   bool resetUsage()
@@ -1604,7 +1592,7 @@ private:
   // This lives throughout the life of Session
   bool use_usage;
   PropertyMap life_properties;
-  std::vector<TableShareInstance *> temporary_shares;
+  std::vector<table::Instance *> temporary_shares;
   struct rusage usage;
 };
 

@@ -207,8 +207,11 @@ public:
 
   friend bool operator==(TableIdentifier &left, TableIdentifier &right)
   {
-    if (left.getKey() == right.getKey())
-      return true;
+    if (left.getHashValue() == right.getHashValue())
+    {
+      if (left.getKey() == right.getKey())
+        return true;
+    }
 
     return false;
   }

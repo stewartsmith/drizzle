@@ -1,0 +1,90 @@
+#!/usr/bin/env python
+#
+# Copyright (C) 2010 Monty Taylor
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; version 2 of the License.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
+current_test= None
+in_leak_summary= False
+in_suppression= False
+new_current_test= True
+results=[]
+summary={}
+total_warning_count=0
+
+for line in open('var/log/master.err','r').readlines():
+  if line[:12] == "CURRENT_TEST":
+    current_test= line.split()[1]
+    in_leak_summary=False
+    new_current_test=True
+    continue
+  if line.strip() == "{":
+    in_suppression= True
+    results.append("Suppression:\n{\n")
+    continue
+  if line.strip() == "}":
+    in_suppression= False
+    results.append("}\n")
+    continue
+  if in_suppression:
+    results.append(line)
+    continue
+
+
+  if line[:2] != "==":
+    continue
+  valgrind_command= line.split("==")[2]
+  if valgrind_command[1:5] == "LEAK":
+    in_leak_summary=True
+    continue
+  if in_leak_summary:
+    continue
+  if valgrind_command[1:6] in ("Copyr","Using","Comma","Memch","For c","ERROR","HEAP ","    i","  tot", "Threa","Warni"):
+    continue
+  if len(valgrind_command.strip()) > 0:
+    if new_current_test:
+      summary[current_test]=1
+      total_warning_count += 1
+      new_current_test = False
+      results.append("\n\n************")
+      results.append(current_test)
+      results.append("************\n\n")
+      new_current_test = False
+    elif valgrind_command[1] != " ":
+      summary[current_test] += 1
+      total_warning_count += 1
+      results.append("\n")
+    results.append(valgrind_command)
+
+warning_count=open("total_warning_count","w")
+warning_count.write(str(total_warning_count))
+warning_count.write("\n")
+warning_count.close()
+
+outfile=open('stripped_log','w')
+outfile.write("Total warnings:")
+outfile.write(str(total_warning_count))
+outfile.write("\n\n")
+
+for k,v in summary.items():
+  outfile.write(str(v))
+  outfile.write(" warnings in ")
+  outfile.write(k)
+  outfile.write("\n")
+
+outfile.write("\n\n")
+
+for line in results:
+  outfile.write(line)
+outfile.close()
