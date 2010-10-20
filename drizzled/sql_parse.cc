@@ -211,8 +211,6 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
     SchemaIdentifier identifier(tmp);
 
-    std::cerr << identifier << "\n";
-
     if (not mysql_change_db(session, identifier))
     {
       session->my_ok();

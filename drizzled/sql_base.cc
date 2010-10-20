@@ -1908,7 +1908,10 @@ retry:
     {
       share->resetVersion();                        // Mark share as old
       if (discover_retry_count++)               // Retry once
-        goto err;
+      {
+        TableShare::release(share);
+        return 1;
+      }
 
       /*
         TODO->
@@ -1930,7 +1933,10 @@ retry:
         using the share.
       */
       if (share->getTableCount() != 1)
-        goto err;
+      {
+        TableShare::release(share);
+        return 1;
+      }
       /* Free share and wait until it's released by all threads */
       TableShare::release(share);
 
@@ -1943,15 +1949,12 @@ retry:
       return 1;
     }
 
-    goto err;
+    TableShare::release(share);
+
+    return 1;
   }
 
   return 0;
-
-err:
-  TableShare::release(share);
-
-  return 1;
 }
 
 
@@ -3180,7 +3183,7 @@ mark_common_columns(Session *session, TableList *table_ref_1, TableList *table_r
     /* true if field_name_1 is a member of using_fields */
     bool is_using_column_1;
     if (!(nj_col_1= it_1.get_or_create_column_ref(leaf_1)))
-      goto err;
+      return(result);
     field_name_1= nj_col_1->name();
     is_using_column_1= using_fields &&
       test_if_string_in_list(field_name_1, using_fields);
@@ -3198,7 +3201,7 @@ mark_common_columns(Session *session, TableList *table_ref_1, TableList *table_r
       Natural_join_column *cur_nj_col_2;
       const char *cur_field_name_2;
       if (!(cur_nj_col_2= it_2.get_or_create_column_ref(leaf_2)))
-        goto err;
+        return(result);
       cur_field_name_2= cur_nj_col_2->name();
 
       /*
@@ -3218,7 +3221,7 @@ mark_common_columns(Session *session, TableList *table_ref_1, TableList *table_r
             (found && (!using_fields || is_using_column_1)))
         {
           my_error(ER_NON_UNIQ_ERROR, MYF(0), field_name_1, session->where);
-          goto err;
+          return(result);
         }
         nj_col_2= cur_nj_col_2;
         found= true;
@@ -3251,7 +3254,7 @@ mark_common_columns(Session *session, TableList *table_ref_1, TableList *table_r
       Item_func_eq *eq_cond;
 
       if (!item_1 || !item_2)
-        goto err;                               // out of memory
+        return(result); // out of memory
 
       /*
         In the case of no_wrap_view_item == 0, the created items must be
@@ -3276,10 +3279,10 @@ mark_common_columns(Session *session, TableList *table_ref_1, TableList *table_r
       */
       if (set_new_item_local_context(session, item_ident_1, nj_col_1->table_ref) ||
           set_new_item_local_context(session, item_ident_2, nj_col_2->table_ref))
-        goto err;
+        return(result);
 
       if (!(eq_cond= new Item_func_eq(item_ident_1, item_ident_2)))
-        goto err;                               /* Out of memory. */
+        return(result);                               /* Out of memory. */
 
       /*
         Add the new equi-join condition to the ON clause. Notice that
@@ -3325,7 +3328,6 @@ mark_common_columns(Session *session, TableList *table_ref_1, TableList *table_r
   */
   result= false;
 
-err:
   return(result);
 }
 
@@ -3383,7 +3385,9 @@ store_natural_using_join_columns(Session *session,
 
   if (!(non_join_columns= new List<Natural_join_column>) ||
       !(natural_using_join->join_columns= new List<Natural_join_column>))
-    goto err;
+  {
+    return(result);
+  }
 
   /* Append the columns of the first join operand. */
   for (it_1.set(table_ref_1); !it_1.end_of_fields(); it_1.next())
@@ -3422,7 +3426,7 @@ store_natural_using_join_columns(Session *session,
         {
           my_error(ER_BAD_FIELD_ERROR, MYF(0), using_field_name_ptr,
                    session->where);
-          goto err;
+          return(result);
         }
         if (!my_strcasecmp(system_charset_info,
                            common_field->name(), using_field_name_ptr))
@@ -3450,7 +3454,6 @@ store_natural_using_join_columns(Session *session,
 
   result= false;
 
-err:
   return(result);
 }
 
@@ -3536,7 +3539,7 @@ store_top_level_join_columns(Session *session, TableList *table_ref,
       if (cur_table_ref->getNestedJoin() &&
           store_top_level_join_columns(session, cur_table_ref,
                                        real_left_neighbor, real_right_neighbor))
-        goto err;
+        return(result);
       same_level_right_neighbor= cur_table_ref;
     }
   }
@@ -3568,7 +3571,7 @@ store_top_level_join_columns(Session *session, TableList *table_ref,
       std::swap(table_ref_1, table_ref_2);
     if (mark_common_columns(session, table_ref_1, table_ref_2,
                             using_fields, &found_using_fields))
-      goto err;
+      return(result);
 
     /*
       Swap the join operands back, so that we pick the columns of the second
@@ -3580,7 +3583,7 @@ store_top_level_join_columns(Session *session, TableList *table_ref,
     if (store_natural_using_join_columns(session, table_ref, table_ref_1,
                                          table_ref_2, using_fields,
                                          found_using_fields))
-      goto err;
+      return(result);
 
     /*
       Change NATURAL JOIN to JOIN ... ON. We do this for both operands
@@ -3613,7 +3616,6 @@ store_top_level_join_columns(Session *session, TableList *table_ref,
   }
   result= false; /* All is OK. */
 
-err:
   return(result);
 }
 
@@ -4258,17 +4260,14 @@ fill_record(Session *session, List<Item> &fields, List<Item> &values, bool ignor
     if ((value->save_in_field(rfield, 0) < 0) && !ignore_errors)
     {
       my_message(ER_UNKNOWN_ERROR, ER(ER_UNKNOWN_ERROR), MYF(0));
-      goto err;
+      if (table)
+        table->auto_increment_field_not_null= false;
+
+      return true;
     }
   }
 
   return session->is_error();
-
-err:
-  if (table)
-    table->auto_increment_field_not_null= false;
-
-  return true;
 }
 
 
@@ -4318,16 +4317,15 @@ bool fill_record(Session *session, Field **ptr, List<Item> &values, bool)
     if (field == table->next_number_field)
       table->auto_increment_field_not_null= true;
     if (value->save_in_field(field, 0) < 0)
-      goto err;
+    {
+      if (table)
+        table->auto_increment_field_not_null= false;
+
+      return true;
+    }
   }
 
   return(session->is_error());
-
-err:
-  if (table)
-    table->auto_increment_field_not_null= false;
-
-  return true;
 }
 
 
