@@ -25,7 +25,7 @@
 
 TEST(global_buffer, overflow)
 {
-  global_buffer_constraint<uint64_t> test_buffer(1024);
+  drizzled::global_buffer_constraint<uint64_t> test_buffer(1024);
 
   ASSERT_TRUE(test_buffer.add(512));
   ASSERT_TRUE(test_buffer.add(512));
@@ -34,7 +34,7 @@ TEST(global_buffer, overflow)
 
 TEST(global_buffer, subtract)
 {
-  global_buffer_constraint<uint64_t> test_buffer(1024);
+  drizzled::global_buffer_constraint<uint64_t> test_buffer(1024);
 
   ASSERT_TRUE(test_buffer.add(1024));
   ASSERT_TRUE(test_buffer.sub(512));
@@ -44,7 +44,7 @@ TEST(global_buffer, subtract)
 
 TEST(global_buffer, underflow)
 {
-  global_buffer_constraint<uint64_t> test_buffer(1024);
+  drizzled::global_buffer_constraint<uint64_t> test_buffer(1024);
 
   ASSERT_TRUE(test_buffer.add(10));
   ASSERT_FALSE(test_buffer.sub(11));
@@ -52,7 +52,7 @@ TEST(global_buffer, underflow)
 
 TEST(global_buffer, change_max)
 {
-  global_buffer_constraint<uint64_t> test_buffer(1024);
+  drizzled::global_buffer_constraint<uint64_t> test_buffer(1024);
 
   test_buffer.setMaxSize(512);
 
