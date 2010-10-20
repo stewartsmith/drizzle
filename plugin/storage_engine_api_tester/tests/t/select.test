@@ -1,0 +1,3 @@
+CREATE TABLE t2 (a int) ENGINE=STORAGE_ENGINE_API_TESTER;
+start transaction with consistent snapshot;
+select * from t2;
