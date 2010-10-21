@@ -49,10 +49,10 @@ static bool tablename_to_filename(const string &from, string &to);
 
 static size_t build_schema_filename(string &path, const string &db)
 {
-  string dbbuff("");
+  path.append("");
   bool conversion_error= false;
 
-  conversion_error= tablename_to_filename(db, dbbuff);
+  conversion_error= tablename_to_filename(db, path);
   if (conversion_error)
   {
     errmsg_printf(ERRMSG_LVL_ERROR,
@@ -60,9 +60,6 @@ static size_t build_schema_filename(string &path, const string &db)
                     "name length restrictions."));
     return 0;
   }
-   
-
-  path.append(dbbuff);
 
   return path.length();
 }
