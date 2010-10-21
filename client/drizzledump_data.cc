@@ -355,7 +355,8 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
       byte_counter= 0;
     }
   }
-  os << ");" << std::endl;
+  if (not new_insert)
+    os << ");" << std::endl;
 
   if (opt_autocommit)
     os << "COMMIT;" << std::endl;
