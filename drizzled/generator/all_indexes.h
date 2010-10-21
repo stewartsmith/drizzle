@@ -18,20 +18,18 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_GENERATOR_ALL_FIELDS_H
-#define DRIZZLED_GENERATOR_ALL_FIELDS_H
+#ifndef DRIZZLED_GENERATOR_ALL_INDEXES_H
+#define DRIZZLED_GENERATOR_ALL_INDEXES_H
 
 namespace drizzled {
 namespace generator {
 
-typedef std::pair<const drizzled::message::Table *, const drizzled::message::Table::Field*> FieldPair;
-
-class AllFields
+class AllIndexes
 {
   Session &session;
   message::Table table_message;
   const drizzled::message::Table *table_ptr;
-  int32_t field_iterator;
+  int32_t index_iterator;
 
   drizzled::generator::AllTables all_tables_generator;
 
@@ -39,19 +37,19 @@ class AllFields
 
 public:
 
-  AllFields(Session &arg);
+  AllIndexes(Session &arg);
 
   void reset();
 
-  operator const drizzled::message::Table::Field*()
+  operator const drizzled::message::Table::Index*()
   {
     if (table_ptr)
     {
       do {
-        if (field_iterator != table_message.field_size())
+        if (index_iterator != table_message.indexes_size())
         {
-          const message::Table::Field &field(table_message.field(field_iterator++));
-          return &field;
+          const message::Table::Index &index(table_message.indexes(index_iterator++));
+          return &index;
         }
 
       } while ((table_ptr= all_tables_generator) && table_setup());
@@ -59,35 +57,9 @@ public:
 
     return NULL;
   }
-
-  operator const FieldPair()
-  {
-    if (table_ptr)
-    {
-      do {
-        if (field_iterator != table_message.field_size())
-        {
-          const message::Table::Field &field(table_message.field(field_iterator++));
-          return std::make_pair(table_ptr, &field);
-        }
-
-      } while ((table_ptr= all_tables_generator) && table_setup());
-    }
-
-    return end();
-  }
-
-  static FieldPair end(void)
-  {
-    FieldPair pair;
-    pair.first= NULL;
-    pair.second= NULL;
-
-    return pair;
-  }
 };
 
 } /* namespace generator */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_GENERATOR_ALL_FIELDS_H */
+#endif /* DRIZZLED_GENERATOR_ALL_INDEXES_H */

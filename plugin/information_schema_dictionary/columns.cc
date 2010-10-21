@@ -101,7 +101,7 @@ bool Columns::Generator::populate()
       push(field.constraints().is_nullable());
 
       /* DATA_TYPE */
-      pushType(field.type());
+      push(drizzled::message::type(field.type()));
 
       /* "CHARACTER_MAXIMUM_LENGTH" */
       if (field.string_options().has_length())

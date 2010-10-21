@@ -1,4 +1,4 @@
-/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2010 Brian Aker
@@ -20,4 +20,31 @@
 
 #include "config.h"
 
-#include "plugin/information_schema_dictionary/dictionary.h"
+#include "drizzled/generator.h"
+
+using namespace std;
+
+namespace drizzled
+{
+namespace generator
+{
+
+AllIndexes::AllIndexes(Session &arg) :
+  session(arg),
+  index_iterator(0),
+  all_tables_generator(arg)
+{
+  ((table_ptr= all_tables_generator));
+}
+
+bool AllIndexes::table_setup()
+{
+  table_message.Clear();
+  table_message.CopyFrom(*table_ptr);
+  index_iterator= 0;
+
+  return true;
+}
+
+} /* namespace generator */
+} /* namespace drizzled */

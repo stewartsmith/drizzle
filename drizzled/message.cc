@@ -28,10 +28,40 @@
 
 #include "drizzled/message/table.pb.h"
 #include "drizzled/message/schema.pb.h"
+
+#include <string>
 #include <uuid/uuid.h>
 
 namespace drizzled {
 namespace message {
+
+// These are used to generate strings for types
+static const std::string VARCHAR("VARCHAR");
+static const std::string DOUBLE("DOUBLE");
+static const std::string BLOB("BLOB");
+static const std::string ENUM("ENUM");
+static const std::string INTEGER("INTEGER");
+static const std::string BIGINT("BIGINT");
+static const std::string DECIMAL("DECIMAL");
+static const std::string DATE("DATE");
+static const std::string TIMESTAMP("TIMESTAMP");
+static const std::string DATETIME("DATETIME");
+
+static const std::string UNDEFINED("UNDEFINED");
+static const std::string RESTRICT("RESTRICT");
+static const std::string CASCADE("CASCADE");
+static const std::string SET_NULL("SET NULL");
+static const std::string NO_ACTION("NO ACTION");
+static const std::string DEFAULT("DEFAULT");
+
+static const std::string YES("YES");
+static const std::string NO("NO");
+
+static const std::string UNKNOWN_INDEX("UNKNOWN_INDEX");
+static const std::string BTREE("BTREE");
+static const std::string RTREE("RTREE");
+static const std::string HASH("HASH");
+static const std::string FULLTEXT("FULLTEXT");
 
 void init(drizzled::message::Table &arg, const std::string &name_arg, const std::string &schema_arg, const std::string &engine_arg)
 {
@@ -80,6 +110,78 @@ void update(drizzled::message::Table &arg)
 {
   arg.set_version(arg.version() + 1);
   arg.set_update_timestamp(time(NULL));
+}
+
+const std::string &type(drizzled::message::Table::Field::FieldType type)
+{
+  switch (type)
+  {
+  default:
+  case message::Table::Field::VARCHAR:
+    return VARCHAR;
+  case message::Table::Field::DOUBLE:
+    return DOUBLE;
+  case message::Table::Field::BLOB:
+    return BLOB;
+  case message::Table::Field::ENUM:
+    return ENUM;
+  case message::Table::Field::INTEGER:
+    return INTEGER;
+  case message::Table::Field::BIGINT:
+    return BIGINT;
+  case message::Table::Field::DECIMAL:
+    return DECIMAL;
+  case message::Table::Field::DATE:
+    return DATE;
+  case message::Table::Field::TIMESTAMP:
+    return TIMESTAMP;
+  case message::Table::Field::DATETIME:
+    return DATETIME;
+  }
+}
+
+const std::string &type(drizzled::message::Table::ForeignKeyConstraint::ForeignKeyOption type)
+{
+  switch (type)
+  {
+  default:
+  case message::Table::ForeignKeyConstraint::OPTION_UNDEF:
+    return UNDEFINED;
+  case message::Table::ForeignKeyConstraint::OPTION_RESTRICT:
+    return RESTRICT;
+  case message::Table::ForeignKeyConstraint::OPTION_CASCADE:
+    return CASCADE;
+  case message::Table::ForeignKeyConstraint::OPTION_SET_NULL:
+    return SET_NULL;
+  case message::Table::ForeignKeyConstraint::OPTION_NO_ACTION:
+    return NO_ACTION;
+  case message::Table::ForeignKeyConstraint::OPTION_DEFAULT:
+    return DEFAULT;
+  }
+}
+
+// This matches SQL standard of using YES/NO not the normal TRUE/FALSE
+const std::string &type(bool type)
+{
+  return type ? YES : NO;
+}
+
+const std::string &type(drizzled::message::Table::Index::IndexType type)
+{
+  switch (type)
+  {
+  default:
+  case message::Table::Index::UNKNOWN_INDEX:
+    return UNKNOWN_INDEX;
+  case message::Table::Index::BTREE:
+    return BTREE;
+  case message::Table::Index::RTREE:
+    return RTREE;
+  case message::Table::Index::HASH:
+    return HASH;
+  case message::Table::Index::FULLTEXT:
+    return FULLTEXT;
+  }
 }
 
 } /* namespace message */

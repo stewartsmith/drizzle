@@ -129,7 +129,7 @@ void ColumnsTool::Generator::fill()
   push(column.name());
 
   /* COLUMN_TYPE */
-  pushType(column.type());
+  push(drizzled::message::type(column.type()));
 
   /* ORDINAL_POSITION */
   push(static_cast<int64_t>(column_iterator));
@@ -211,7 +211,7 @@ void ColumnsTool::Generator::fill()
   push(indexes_found_in);
 
   /* DATATYPE */
-  pushType(column.type());
+  push(drizzled::message::type(column.type()));
 
  /* "CHARACTER_MAXIMUM_LENGTH" */
   push(static_cast<int64_t>(column.string_options().length()));

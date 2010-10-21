@@ -95,16 +95,6 @@ bool ForeignKeysTool::Generator::populate()
   return false;
 }
 
-void ForeignKeysTool::Generator::pushType(message::Table::Field::FieldType type)
-{
-  switch (type)
-  {
-    default:
-      push("VARCHAR");
-      break;
-  }
-}
-
 std::string ForeignKeysTool::Generator::fkeyOption(message::Table::ForeignKeyConstraint::ForeignKeyOption option)
 {
   std::string ret;

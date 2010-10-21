@@ -66,6 +66,10 @@ current_session.gcno
 dbug/Makefile.in
 depcomp
 docs
+docs/doctrees
+docs/html
+docs/plugins/*
+docs/plugins/list.rst
 doxerr.log
 drizzle-2010.01.1315.tar.gz
 drizzle-2010.01.1315.tar.gz
@@ -85,6 +89,8 @@ drizzled/message/binlog_writer
 drizzled/message/command_reader
 drizzled/message/engine.pb.cc
 drizzled/message/engine.pb.h
+drizzled/message/event.pb.cc
+drizzled/message/event.pb.h
 drizzled/message/length
 drizzled/message/replication.pb.cc
 drizzled/message/replication.pb.h
@@ -200,9 +206,10 @@ plugin/blackhole/Makefile.in
 plugin/csv/Makefile.in
 plugin/heap/Makefile.in
 plugin/innobase/Makefile.in
+plugin/innobase/include/pars0grm.h
 plugin/innobase/pars/pars0grm.c
-plugin/innobase/pars/pars0lex.c
 plugin/innobase/pars/pars0grm.h
+plugin/innobase/pars/pars0lex.c
 plugin/memcached_functions/start_mc.sh
 plugin/memcached_functions/tests/start_mc.sh
 plugin/myisam/Makefile.in
@@ -307,8 +314,10 @@ tests/install_test_db
 tests/mtr
 tests/mtr@
 tests/resolve_stack_dump
+tests/stripped_log
 tests/test-run
 tests/test-run@
+tests/total_warning_count
 tests/var
 thr_malloc.gcno
 time.gcno
@@ -322,10 +331,3 @@ unittests/uwagi.txt
 virtual_column_info.gcno
 xid.gcno
 ylwrap
-docs/plugins/list.rst
-docs/plugins/*
-docs/doctrees
-docs/html
-plugin/innobase/include/pars0grm.h
-tests/total_warning_count
-tests/stripped_log

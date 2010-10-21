@@ -29,5 +29,6 @@
 #include "drizzled/generator/table.h"
 #include "drizzled/generator/all_tables.h"
 #include "drizzled/generator/all_fields.h"
+#include "drizzled/generator/all_indexes.h"
 
 #endif /* DRIZZLED_GENERATOR_H */
