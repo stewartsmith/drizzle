@@ -22,12 +22,12 @@
 
 #include <drizzled/session.h>
 #include <drizzled/function/str/strfunc.h>
-#include "plugin/util_function/functions.h"
+#include "plugin/utility_functions/functions.h"
 
 namespace drizzled
 {
 
-namespace util_function
+namespace utility_functions
 {
 
 String *Catalog::val_str(String *str)
@@ -47,5 +47,5 @@ String *Catalog::val_str(String *str)
   return str;
 }
 
-} /* namespace util_function */
+} /* namespace utility_functions */
 } /* namespace drizzled */

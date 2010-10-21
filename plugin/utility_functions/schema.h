@@ -18,15 +18,15 @@
  */
 
 
-#ifndef PLUGIN_UTIL_FUNCTIONS_SCHEMA_H
-#define PLUGIN_UTIL_FUNCTIONS_SCHEMA_H
+#ifndef PLUGIN_UTILITY_FUNCTIONS_SCHEMA_H
+#define PLUGIN_UTILITY_FUNCTIONS_SCHEMA_H
 
 #include <drizzled/function/str/strfunc.h>
 
 namespace drizzled
 {
 
-namespace util_function
+namespace utility_functions
 {
 
 class Schema :public Item_str_func
@@ -44,7 +44,7 @@ public:
 };
 
 
-} /* namespace util_function */
+} /* namespace utility_functions */
 } /* namespace drizzled */
 
-#endif /* PLUGIN_UTIL_FUNCTIONS_SCHEMA_H */
+#endif /* PLUGIN_UTILITY_FUNCTIONS_SCHEMA_H */

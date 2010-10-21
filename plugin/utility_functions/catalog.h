@@ -18,48 +18,32 @@
  */
 
 
-#ifndef PLUGIN_UTIL_FUNCTIONS_USER_H
-#define PLUGIN_UTIL_FUNCTIONS_USER_H
+#ifndef PLUGIN_UTILITY_FUNCTIONS_CATALOG_H
+#define PLUGIN_UTILITY_FUNCTIONS_CATALOG_H
 
 #include <drizzled/function/str/strfunc.h>
 
 namespace drizzled
 {
 
-namespace util_function
+namespace utility_functions
 {
 
-class User :public Item_str_func
+class Catalog :public Item_str_func
 {
-protected:
-  bool init (const char *user, const char *host);
-
 public:
-  User()
-  {
-    str_value.set("", 0, system_charset_info);
-  }
-  String *val_str(String *)
-  {
-    assert(fixed == 1);
-    return (null_value ? 0 : &str_value);
-  }
-  bool fix_fields(Session *session, Item **ref);
+  Catalog() :Item_str_func() {}
+  String *val_str(String *);
   void fix_length_and_dec()
   {
-    max_length= (USERNAME_CHAR_LENGTH + HOSTNAME_LENGTH + 1) *
-                system_charset_info->mbmaxlen;
+    max_length= MAX_FIELD_NAME * system_charset_info->mbmaxlen;
+    maybe_null=1;
   }
-  const char *func_name() const { return "user"; }
-  const char *fully_qualified_func_name() const { return "user()"; }
-  int save_in_field(Field *field,
-                    bool )
-  {
-    return save_str_value_in_field(field, &str_value);
-  }
+  const char *func_name() const { return "catalog"; }
+  const char *fully_qualified_func_name() const { return "catalog()"; }
 };
 
-} /* namespace util_function */
+} /* namespace utility_functions */
 } /* namespace drizzled */
 
-#endif /* PLUGIN_UTIL_FUNCTIONS_USER_H */
+#endif /* PLUGIN_UTILITY_FUNCTIONS_CATALOG_H */
