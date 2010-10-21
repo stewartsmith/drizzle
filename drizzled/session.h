@@ -393,6 +393,7 @@ public:
     only responsible for freeing this member.
   */
   std::string db;
+  std::string catalog;
   /* current cache key */
   std::string query_cache_key;
   /**
