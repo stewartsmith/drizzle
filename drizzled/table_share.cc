@@ -1902,7 +1902,7 @@ int TableShare::open_table_from_share_inner(Session *session,
       outparam.record[1]= outparam.getInsertRecord();   // Safety
   }
 
-#ifdef HAVE_purify
+#ifdef HAVE_VALGRIND
   /*
     We need this because when we read var-length rows, we are not updating
     bytes after end of varchar

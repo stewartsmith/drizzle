@@ -673,7 +673,7 @@ bool update_ref_and_keys(Session *session,
         else if (use->getKeypart() != 0)		// First found must be 0
           continue;
 
-#ifdef HAVE_purify
+#ifdef HAVE_VALGRIND
         /* Valgrind complains about overlapped memcpy when save_pos==use. */
         if (save_pos != use)
 #endif
@@ -6158,7 +6158,7 @@ bool setup_copy_fields(Session *session,
         {
           copy->set(tmp, item->result_field);
           item->result_field->move_field(copy->to_ptr,copy->to_null_ptr,1);
-#ifdef HAVE_purify
+#ifdef HAVE_VALGRIND
           copy->to_ptr[copy->from_length]= 0;
 #endif
           copy++;
