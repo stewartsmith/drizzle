@@ -49,7 +49,7 @@ static bool tablename_to_filename(const string &from, string &to);
 
 static size_t build_schema_filename(string &path, const string &db)
 {
-  path.append("");
+  path.append("../local/");
   bool conversion_error= false;
 
   conversion_error= tablename_to_filename(db, path);
