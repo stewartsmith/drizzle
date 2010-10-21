@@ -261,27 +261,23 @@ static bool tablename_to_filename(const char *from, char *to, size_t to_length)
   size_t length= 0;
   for (; *from  && length < to_length; length++, from++)
   {
-    if ((*from >= '0' && *from <= '9') ||
-        (*from >= 'a' && *from <= 'z') ||
-/* OSX defines an extra set of high-bit and multi-byte characters
-   that cannot be used on the filesystem. Instead of trying to sort
-   those out, we'll just escape encode all high-bit-set chars on OSX.
-   It won't really hurt anything - it'll just make some filenames ugly. */
-#if !defined(TARGET_OS_OSX)
-        ((unsigned char)*from >= 128) ||
-#endif
-        (*from == '_') ||
-        (*from == ' ') ||
-        (*from == '-'))
+    if (isascii(*from))
     {
-      to[length]= tolower(*from);
-      continue;
-    }
+      if ((isdigit(*from)) ||
+          (islower(*from)) ||
+          (*from == '_') ||
+          (*from == ' ') ||
+          (*from == '-'))
+      {
+        to[length]= tolower(*from);
+        continue;
+      }
 
-    if ((*from >= 'A' && *from <= 'Z'))
-    {
-      to[length]= tolower(*from);
-      continue;
+      if (isupper(*from))
+      {
+        to[length]= tolower(*from);
+        continue;
+      }
     }
    
     if (length + 3 >= to_length)
