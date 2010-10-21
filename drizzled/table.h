@@ -354,7 +354,7 @@ public:
   filesort_info sort;
 
   Table();
-  virtual ~Table() { };
+  virtual ~Table();
 
   int report_error(int error);
   /**

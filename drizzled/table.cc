@@ -107,9 +107,13 @@ int Table::delete_table(bool free_share)
 
     setShare(NULL);
   }
-  mem_root.free_root(MYF(0));
 
   return error;
+}
+
+Table::~Table()
+{
+  mem_root.free_root(MYF(0));
 }
 
 
