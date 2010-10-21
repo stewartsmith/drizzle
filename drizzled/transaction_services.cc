@@ -346,6 +346,11 @@ void TransactionServices::registerResourceForStatement(Session *session,
     registerResourceForTransaction(session, monitored, engine, resource_manager);
   }
 
+  if (global_resource_manager == NULL)
+  {
+    global_resource_manager= resource_manager;
+  }
+
   TransactionContext *trans= &session->transaction.stmt;
   ResourceContext *resource_context= session->getResourceContext(monitored, 0);
 
@@ -411,6 +416,11 @@ void TransactionServices::registerResourceForTransaction(Session *session,
 
   assert(monitored->participatesInSqlTransaction());
 
+  if (global_resource_manager == NULL)
+  {
+    global_resource_manager= resource_manager;
+  }
+
   resource_context->setMonitored(monitored);
   resource_context->setXaResourceManager(resource_manager);
   resource_context->setTransactionalStorageEngine(engine);
@@ -428,9 +438,18 @@ void TransactionServices::registerResourceForTransaction(Session *session,
 
 uint64_t TransactionServices::getCurrentTransactionId(Session *session)
 {
+/*
   TransactionContext *trans= &session->transaction.stmt;
   TransactionContext::ResourceContexts &resource_contexts= trans->getResourceContexts();
+*/
 
+  if (global_resource_manager)
+  {
+    return global_resource_manager->getTransactionId(session);
+  }
+  return 0;
+
+/* 
   if (resource_contexts.empty() == false)
   {
     for (TransactionContext::ResourceContexts::iterator it= resource_contexts.begin();
@@ -447,6 +466,7 @@ uint64_t TransactionServices::getCurrentTransactionId(Session *session)
     }
   }
   return 0;
+*/
 }
 
 /**

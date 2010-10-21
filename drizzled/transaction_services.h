@@ -56,6 +56,7 @@ public:
    */
   TransactionServices()
   {
+    global_resource_manager= NULL;
   }
 
   /**
@@ -486,6 +487,8 @@ private:
                                Table *in_table,
                                const unsigned char *old_record,
                                const unsigned char *new_record);
+
+  plugin::XaResourceManager *global_resource_manager;
 };
 
 } /* namespace drizzled */
