@@ -348,7 +348,8 @@ public:
   {
     return doRollback(session, all); /* XA rollback just does a SQL ROLLBACK */
   }
-  virtual uint64_t doGetTransactionId(Session *session);
+  virtual uint64_t doGetCurrentTransactionId(Session *session);
+  virtual uint64_t doGetNewTransactionId(Session *session);
   virtual int doCommit(Session* session, bool all);
   virtual int doRollback(Session* session, bool all);
 
@@ -8255,7 +8256,13 @@ InnobaseEngine::doXaPrepare(
   return(error);
 }
 
-uint64_t InnobaseEngine::doGetTransactionId(Session *session)
+uint64_t InnobaseEngine::doGetCurrentTransactionId(Session *session)
+{
+  trx_t *trx = session_to_trx(session);
+  return (ib_uint64_t) ut_conv_dulint_to_longlong(trx->id);
+}
+
+uint64_t InnobaseEngine::doGetNewTransactionId(Session *session)
 {
   trx_t *trx= innobase_trx_allocate(session);
 

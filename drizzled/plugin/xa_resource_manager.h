@@ -71,9 +71,14 @@ public:
     return doXaRecover(append_to, len);
   }
 
-  uint64_t getTransactionId(Session *session)
+  uint64_t getCurrentTransactionId(Session *session)
   {
-    return doGetTransactionId(session);
+    return doGetCurrentTransactionId(session);
+  }
+
+  uint64_t getNewTransactionId(Session *session)
+  {
+    return doGetNewTransactionId(session);
   }
 
   typedef ::boost::unordered_set<my_xid> commit_list_set;
@@ -123,7 +128,9 @@ private:
    */
   virtual int doXaRecover(XID * append_to, size_t len)= 0;
 
-  virtual uint64_t doGetTransactionId(Session *session)= 0;
+  virtual uint64_t doGetCurrentTransactionId(Session *session)= 0;
+
+  virtual uint64_t doGetNewTransactionId(Session *session)= 0;
 };
 
 } /* namespace plugin */

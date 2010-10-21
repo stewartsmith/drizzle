@@ -438,35 +438,32 @@ void TransactionServices::registerResourceForTransaction(Session *session,
 
 uint64_t TransactionServices::getCurrentTransactionId(Session *session)
 {
-/*
   TransactionContext *trans= &session->transaction.stmt;
   TransactionContext::ResourceContexts &resource_contexts= trans->getResourceContexts();
-*/
 
-  if (global_resource_manager)
-  {
-    return global_resource_manager->getTransactionId(session);
-  }
-  return 0;
-
-/* 
   if (resource_contexts.empty() == false)
   {
-    for (TransactionContext::ResourceContexts::iterator it= resource_contexts.begin();
-         it != resource_contexts.end();
-         ++it)
-    {
-      ResourceContext *resource_context= *it;
-
-      plugin::MonitoredInTransaction *resource= resource_context->getMonitored();
-      if (resource->participatesInXaTransaction())
+      for (TransactionContext::ResourceContexts::iterator it= resource_contexts.begin();
+           it != resource_contexts.end();
+           ++it)
       {
-        return resource_context->getXaResourceManager()->getTransactionId(session);
+        ResourceContext *resource_context= *it;
+
+        plugin::MonitoredInTransaction *resource= resource_context->getMonitored();
+        if (resource->participatesInXaTransaction())
+        {
+          return resource_context->getXaResourceManager()->getCurrentTransactionId(session);
+        } 
+        else 
+        {
+          if (global_resource_manager)
+          {
+            return global_resource_manager->getNewTransactionId(session);
+          }
+        }
       }
-    }
   }
   return 0;
-*/
 }
 
 /**
