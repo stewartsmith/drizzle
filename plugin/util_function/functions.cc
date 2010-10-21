@@ -28,6 +28,7 @@ static int init(drizzled::module::Context &context)
 {
   context.add(new plugin::Create_function<util_function::Catalog>("catalog"));
   context.add(new plugin::Create_function<util_function::Schema>("database"));
+  context.add(new plugin::Create_function<util_function::User>("user"));
 
   return 0;
 }

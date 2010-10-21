@@ -1,8 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
- *  Copyright (C) 2010 Stewart Smith
+ *  Copyright (C) 2010 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,10 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
 
-#include <drizzled/session.h>
-#include "plugin/util_function/functions.h"
+#ifndef PLUGIN_UTIL_FUNCTIONS_USER_H
+#define PLUGIN_UTIL_FUNCTIONS_USER_H
+
+#include <drizzled/function/str/strfunc.h>
 
 namespace drizzled
 {
@@ -29,21 +29,37 @@ namespace drizzled
 namespace util_function
 {
 
-String *Schema::val_str(String *str)
+class User :public Item_str_func
 {
-  assert(fixed == 1);
-  Session *session= current_session;
-  if (session->db.empty())
+protected:
+  bool init (const char *user, const char *host);
+
+public:
+  User()
   {
-    null_value= 1;
-    return 0;
+    str_value.set("", 0, system_charset_info);
   }
-  else
+  String *val_str(String *)
   {
-    str->copy(session->db.c_str(), session->db.length(), system_charset_info);
+    assert(fixed == 1);
+    return (null_value ? 0 : &str_value);
   }
-  return str;
-}
+  bool fix_fields(Session *session, Item **ref);
+  void fix_length_and_dec()
+  {
+    max_length= (USERNAME_CHAR_LENGTH + HOSTNAME_LENGTH + 1) *
+                system_charset_info->mbmaxlen;
+  }
+  const char *func_name() const { return "user"; }
+  const char *fully_qualified_func_name() const { return "user()"; }
+  int save_in_field(Field *field,
+                    bool )
+  {
+    return save_str_value_in_field(field, &str_value);
+  }
+};
 
 } /* namespace util_function */
 } /* namespace drizzled */
+
+#endif /* PLUGIN_UTIL_FUNCTIONS_USER_H */
