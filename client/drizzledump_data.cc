@@ -347,8 +347,8 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
         os << ",";
     }
     /* Break insert up if it is too long */
-    if (extended_insert and
-      (byte_counter >= DRIZZLE_MAX_LINE_LENGTH))
+    if ((extended_insert and
+      (byte_counter >= DRIZZLE_MAX_LINE_LENGTH)) or (not extended_insert))
     {
       os << ");" << std::endl;
       new_insert= true;
