@@ -1434,9 +1434,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
   /* Fix alias if table name changes */
   if (strcmp(table->getAlias(), alias))
   {
-    uint32_t length=(uint32_t) strlen(alias)+1;
-    table->alias= (char*) realloc((char*) table->alias, length);
-    memcpy((void*) table->alias, alias, length);
+    table->setAlias(alias);
   }
 
   /* These variables are also set in reopen_table() */

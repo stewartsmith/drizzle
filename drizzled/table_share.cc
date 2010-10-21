@@ -1849,7 +1849,7 @@ int TableShare::open_table_from_share(Session *session,
   outparam.cursor= 0;				// For easier error checking
   outparam.db_stat= 0;
   outparam.getMemRoot()->free_root(MYF(0));       // Safe to call on zeroed root
-  free((char*) outparam.alias);
+  outparam.clearAlias();
 
   return ret;
 }
@@ -1870,8 +1870,7 @@ int TableShare::open_table_from_share_inner(Session *session,
   local_error= 1;
   outparam.resetTable(session, this, db_stat);
 
-  if (not (outparam.alias= strdup(alias)))
-    return local_error;
+  outparam.setAlias(alias);
 
   /* Allocate Cursor */
   if (not (outparam.cursor= db_type()->getCursor(*this)))
