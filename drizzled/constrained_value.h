@@ -21,6 +21,7 @@
 #define DRIZZLED_CONSTRAINED_VALUE_H
 
 #include <boost/program_options.hpp>
+#include <boost/program_options/errors.hpp>
 #include <boost/exception/all.hpp>
 #include <iostream>
 
@@ -107,7 +108,7 @@ protected:
   {
     if ((rhs > MAXVAL) || (rhs < MINVAL))
     {
-      boost::throw_exception(boost::program_options::validation_error(boost::program_options::validation_error::invalid_option_value));
+      boost::throw_exception(boost::program_options::invalid_option_value(boost::lexical_cast<std::string>(rhs)));
     }
     rhs-= rhs % ALIGN;
     setVal(rhs);
