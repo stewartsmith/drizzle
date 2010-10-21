@@ -22,7 +22,6 @@
 
 #include <boost/program_options.hpp>
 #include <boost/program_options/errors.hpp>
-#include <boost/exception/all.hpp>
 #include <iostream>
 
 namespace drizzled
