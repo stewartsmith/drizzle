@@ -25,5 +25,6 @@
 #include <drizzled/plugin/function.h>
 
 #include "plugin/util_function/catalog.h"
+#include "plugin/util_function/schema.h"
 
 #endif /* PLUGIN_UTIL_FUNCTIONS_FUNCTIONS_H */
