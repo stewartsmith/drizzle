@@ -26,7 +26,7 @@ using namespace drizzled;
 
 
 ColumnsTool::ColumnsTool() :
-  TablesTool("COLUMNS")
+  DataDictionary("COLUMNS")
 {
   add_field("TABLE_SCHEMA");
   add_field("TABLE_NAME");
@@ -61,201 +61,163 @@ ColumnsTool::ColumnsTool() :
 
 
 ColumnsTool::Generator::Generator(Field **arg) :
-  TablesTool::Generator(arg),
-  column_iterator(0),
-  is_columns_primed(false)
+  DataDictionary::Generator(arg),
+  field_generator(getSession())
 {
-}
-
-
-bool ColumnsTool::Generator::nextColumnCore()
-{
-  if (is_columns_primed)
-  {
-    column_iterator++;
-  }
-  else
-  {
-    if (not isTablesPrimed())
-      return false;
-
-    column_iterator= 0;
-    is_columns_primed= true;
-  }
-
-  if (column_iterator >= getTableProto().field_size())
-    return false;
-
-  column= getTableProto().field(column_iterator);
-
-  return true;
-}
-
-
-bool ColumnsTool::Generator::nextColumn()
-{
-  while (not nextColumnCore())
-  {
-    if (not nextTable())
-      return false;
-    is_columns_primed= false;
-  }
-
-  return true;
 }
 
 bool ColumnsTool::Generator::populate()
 {
+  drizzled::generator::FieldPair field_pair;
 
-  if (not nextColumn())
-    return false;
-
-  fill();
-
-  return true;
-}
-
-void ColumnsTool::Generator::fill()
-{
-  /* TABLE_SCHEMA */
-  assert(getTableProto().schema().length());
-  assert(getTableProto().schema().c_str());
-  push(getTableProto().schema());
-
-  /* TABLE_NAME */
-  push(getTableProto().name());
-
-  /* COLUMN_NAME */
-  push(column.name());
-
-  /* COLUMN_TYPE */
-  push(drizzled::message::type(column.type()));
-
-  /* ORDINAL_POSITION */
-  push(static_cast<int64_t>(column_iterator));
-
-  /* COLUMN_DEFAULT */
-  if (column.options().has_default_value())
+  while (!!(field_pair= field_generator))
   {
-    push(column.options().default_value());
-  }
-  else if (column.options().has_default_bin_value())
-  {
-    push(column.options().default_bin_value().c_str(), column.options().default_bin_value().length());
-  }
-  else if (column.options().has_default_expression())
-  {
-    push(column.options().default_expression());
-  }
-  else
-  {
-    push();
-  }
+    const drizzled::message::Table *table_message= field_pair.first;
+    int32_t field_iterator= field_pair.second;
+    const message::Table::Field &column(table_message->field(field_pair.second));
 
-  /* COLUMN_DEFAULT_IS_NULL */
-  push(column.options().default_null());
+    /* TABLE_SCHEMA */
+    push(table_message->schema());
 
-  /* COLUMN_DEFAULT_UPDATE */
-  push(column.options().update_expression());
+    /* TABLE_NAME */
+    push(table_message->name());
 
-  /* IS_AUTO_INCREMENT */
-  push(column.numeric_options().is_autoincrement());
+    /* COLUMN_NAME */
+    push(column.name());
 
-  /* IS_NULLABLE */
-  push(column.constraints().is_nullable());
+    /* COLUMN_TYPE */
+    push(drizzled::message::type(column.type()));
 
-  /* IS_INDEXED, IS_USED_IN_PRIMARY, IS_UNIQUE, IS_MULTI, IS_FIRST_IN_MULTI, INDEXES_FOUND_IN */
-  bool is_indexed= false;
-  bool is_primary= false;
-  bool is_unique= false;
-  bool is_multi= false;
-  bool is_multi_first= false;
-  int64_t indexes_found_in= 0;
-  for (int32_t x= 0; x < getTableProto().indexes_size() ; x++)
-  {
-    drizzled::message::Table::Index index=
-      getTableProto().indexes(x);
+    /* ORDINAL_POSITION */
+    push(static_cast<int64_t>(field_iterator));
 
-    for (int32_t y= 0; y < index.index_part_size() ; y++)
+    /* COLUMN_DEFAULT */
+    if (column.options().has_default_value())
     {
-      drizzled::message::Table::Index::IndexPart index_part=
-        index.index_part(y);
+      push(column.options().default_value());
+    }
+    else if (column.options().has_default_bin_value())
+    {
+      push(column.options().default_bin_value().c_str(), column.options().default_bin_value().length());
+    }
+    else if (column.options().has_default_expression())
+    {
+      push(column.options().default_expression());
+    }
+    else
+    {
+      push();
+    }
 
-      if (static_cast<int32_t>(index_part.fieldnr()) == column_iterator)
+    /* COLUMN_DEFAULT_IS_NULL */
+    push(column.options().default_null());
+
+    /* COLUMN_DEFAULT_UPDATE */
+    push(column.options().update_expression());
+
+    /* IS_AUTO_INCREMENT */
+    push(column.numeric_options().is_autoincrement());
+
+    /* IS_NULLABLE */
+    push(column.constraints().is_nullable());
+
+    /* IS_INDEXED, IS_USED_IN_PRIMARY, IS_UNIQUE, IS_MULTI, IS_FIRST_IN_MULTI, INDEXES_FOUND_IN */
+    bool is_indexed= false;
+    bool is_primary= false;
+    bool is_unique= false;
+    bool is_multi= false;
+    bool is_multi_first= false;
+    int64_t indexes_found_in= 0;
+    for (int32_t x= 0; x < table_message->indexes_size() ; x++)
+    {
+      const drizzled::message::Table::Index &index(table_message->indexes(x));
+
+      for (int32_t y= 0; y < index.index_part_size() ; y++)
       {
-        indexes_found_in++;
-        is_indexed= true;
+        const drizzled::message::Table::Index::IndexPart &index_part(index.index_part(y));
 
-        if (index.is_primary())
-          is_primary= true;
-
-        if (index.is_unique())
-          is_unique= true;
-
-        if (index.index_part_size() > 1)
+        if (static_cast<int32_t>(index_part.fieldnr()) == field_iterator)
         {
-          is_multi= true;
+          indexes_found_in++;
+          is_indexed= true;
 
-          if (y == 0)
-            is_multi_first= true;
+          if (index.is_primary())
+            is_primary= true;
+
+          if (index.is_unique())
+            is_unique= true;
+
+          if (index.index_part_size() > 1)
+          {
+            is_multi= true;
+
+            if (y == 0)
+              is_multi_first= true;
+          }
         }
       }
     }
-  }
-  /* ...IS_INDEXED, IS_USED_IN_PRIMARY, IS_UNIQUE, IS_MULTI, IS_FIRST_IN_MULTI, INDEXES_FOUND_IN */
-  push(is_indexed);
-  push(is_primary);
-  push(is_unique);
-  push(is_multi);
-  push(is_multi_first);
-  push(indexes_found_in);
+    /* ...IS_INDEXED, IS_USED_IN_PRIMARY, IS_UNIQUE, IS_MULTI, IS_FIRST_IN_MULTI, INDEXES_FOUND_IN */
+    push(is_indexed);
+    push(is_primary);
+    push(is_unique);
+    push(is_multi);
+    push(is_multi_first);
+    push(indexes_found_in);
 
-  /* DATATYPE */
-  push(drizzled::message::type(column.type()));
+    /* DATATYPE */
+    push(drizzled::message::type(column.type()));
 
- /* "CHARACTER_MAXIMUM_LENGTH" */
-  push(static_cast<int64_t>(column.string_options().length()));
+    /* "CHARACTER_MAXIMUM_LENGTH" */
+    push(static_cast<int64_t>(column.string_options().length()));
 
- /* "CHARACTER_OCTET_LENGTH" */
-  push(static_cast<int64_t>(column.string_options().length()) * 4);
+    /* "CHARACTER_OCTET_LENGTH" */
+    push(static_cast<int64_t>(column.string_options().length()) * 4);
 
- /* "NUMERIC_PRECISION" */
-  push(static_cast<int64_t>(column.numeric_options().precision()));
+    /* "NUMERIC_PRECISION" */
+    push(static_cast<int64_t>(column.numeric_options().precision()));
 
- /* "NUMERIC_SCALE" */
-  push(static_cast<int64_t>(column.numeric_options().scale()));
+    /* "NUMERIC_SCALE" */
+    push(static_cast<int64_t>(column.numeric_options().scale()));
 
- /* "ENUM_VALUES" */
-  if (column.type() == drizzled::message::Table::Field::ENUM)
-  {
-    string destination;
-    size_t num_field_values= column.enumeration_values().field_value_size();
-    for (size_t x= 0; x < num_field_values; ++x)
+    /* "ENUM_VALUES" */
+    if (column.type() == drizzled::message::Table::Field::ENUM)
     {
-      const string &type= column.enumeration_values().field_value(x);
+      string destination;
+      size_t num_field_values= column.enumeration_values().field_value_size();
+      for (size_t x= 0; x < num_field_values; ++x)
+      {
+        const string &type= column.enumeration_values().field_value(x);
 
-      if (x != 0)
-        destination.push_back(',');
+        if (x != 0)
+          destination.push_back(',');
 
-      destination.push_back('\'');
-      destination.append(type);
-      destination.push_back('\'');
+        destination.push_back('\'');
+        destination.append(type);
+        destination.push_back('\'');
+      }
+      push(destination);
     }
-    push(destination);
-  }
-  else
-    push();
+    else
+    {
+      push();
+    }
 
- /* "COLLATION_NAME" */
-  push(column.string_options().collation());
+    /* "COLLATION_NAME" */
+    push(column.string_options().collation());
 
- /* "COLUMN_COMMENT" */
-  if (column.has_comment())
-  {
-    push(column.comment());
+    /* "COLUMN_COMMENT" */
+    if (column.has_comment())
+    {
+      push(column.comment());
+    }
+    else
+    {
+      push();
+    }
+
+    return true;
   }
-  else
-  {
-    push();
-  }
+
+  return false;
 }

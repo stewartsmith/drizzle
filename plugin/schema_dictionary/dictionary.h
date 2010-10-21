@@ -33,6 +33,8 @@
 
 #include "drizzled/generator.h"
 
+#include "plugin/schema_dictionary/data_dictionary.h"
+
 #include "plugin/schema_dictionary/schemas.h"
 #include "plugin/schema_dictionary/tables.h"
 #include "plugin/schema_dictionary/columns.h"

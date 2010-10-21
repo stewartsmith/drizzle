@@ -67,7 +67,7 @@ public:
       do {
         if (field_iterator != table_message.field_size())
         {
-          return std::make_pair(table_ptr, field_iterator++);
+          return std::make_pair(&table_message, field_iterator++);
         }
       } while ((table_ptr= all_tables_generator) && table_setup());
     }
