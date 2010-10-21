@@ -27,6 +27,12 @@
 namespace drizzled
 {
 
+template<class T> class constrained_value;
+template<class T>
+std::istream& operator>>(std::istream& is, constrained_value<T>& bound_val);
+template<class T>
+std::ostream& operator<<(std::ostream& os, const constrained_value<T>& v);
+
 template<class T>
 class constrained_value
 {
@@ -69,9 +75,8 @@ public:
     m_val= in_val;
   }
 
-  template<class CharT, class Traits>
-  friend std::basic_istream<CharT,Traits>&
-  operator>>(std::basic_istream<CharT,Traits>& is,
+  friend std::istream&
+  operator>>(std::istream& is,
              constrained_value<T>& bound_val)
   {
     T inner_val;
