@@ -48,3 +48,11 @@ bool AllFields::table_setup()
 
 } /* namespace generator */
 } /* namespace drizzled */
+
+bool operator!(const drizzled::generator::FieldPair &arg)
+{
+  if (arg.first == 0 and arg.second == 0)
+    return true;
+
+  return false;
+}
