@@ -347,15 +347,16 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
         os << ",";
     }
     /* Break insert up if it is too long */
-    if (extended_insert and
-      (byte_counter >= DRIZZLE_MAX_LINE_LENGTH))
+    if ((extended_insert and
+      (byte_counter >= DRIZZLE_MAX_LINE_LENGTH)) or (not extended_insert))
     {
       os << ");" << std::endl;
       new_insert= true;
       byte_counter= 0;
     }
   }
-  os << ");" << std::endl;
+  if (not new_insert)
+    os << ");" << std::endl;
 
   if (opt_autocommit)
     os << "COMMIT;" << std::endl;
