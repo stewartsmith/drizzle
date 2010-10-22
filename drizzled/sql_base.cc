@@ -1023,14 +1023,14 @@ bool Session::reopen_name_locked_table(TableList* table_list)
   case of failure.
 */
 
-Table *Session::table_cache_insert_placeholder(const char *db_name, const char *table_name)
+Table *Session::table_cache_insert_placeholder(const drizzled::TableIdentifier &arg)
 {
   safe_mutex_assert_owner(LOCK_open.native_handle());
 
   /*
     Create a table entry with the right key and with an old refresh version
   */
-  TableIdentifier identifier(db_name, table_name, message::Table::INTERNAL);
+  TableIdentifier identifier(arg.getSchemaName(), arg.getTableName(), message::Table::INTERNAL);
   table::Placeholder *table= new table::Placeholder(this, identifier);
 
   if (not add_table(table))
@@ -1081,7 +1081,7 @@ bool Session::lock_table_name_if_not_cached(TableIdentifier &identifier, Table *
     return false;
   }
 
-  if (not (*table= table_cache_insert_placeholder(identifier.getSchemaName().c_str(), identifier.getTableName().c_str())))
+  if (not (*table= table_cache_insert_placeholder(identifier)))
   {
     return true;
   }
@@ -1354,7 +1354,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
             /*
               Table to be created, so we need to create placeholder in table-cache.
             */
-            if (!(table= table_cache_insert_placeholder(table_list->db, table_list->table_name)))
+            if (!(table= table_cache_insert_placeholder(lock_table_identifier)))
             {
               LOCK_open.unlock();
               return NULL;

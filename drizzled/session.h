@@ -1474,7 +1474,7 @@ public:
   void close_cached_table(Table *table);
 
   /* Create a lock in the cache */
-  Table *table_cache_insert_placeholder(const char *db_name, const char *table_name);
+  Table *table_cache_insert_placeholder(const TableIdentifier &identifier);
   bool lock_table_name_if_not_cached(TableIdentifier &identifier, Table **table);
 
   typedef boost::unordered_map<std::string, message::Table, util::insensitive_hash, util::insensitive_equal_to> TableMessageCache;

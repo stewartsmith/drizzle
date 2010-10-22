@@ -714,7 +714,7 @@ static int lock_table_name(Session *session, TableList *table_list, bool check_i
   }
 
   Table *table;
-  if (!(table= session->table_cache_insert_placeholder(table_list->db, table_list->table_name)))
+  if (!(table= session->table_cache_insert_placeholder(identifier)))
   {
     return -1;
   }
