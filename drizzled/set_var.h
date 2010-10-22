@@ -537,6 +537,18 @@ inline bool sys_var_constrained_value<uint32_t>::update(Session *, set_var *var)
   return false;
 }
 
+template<>
+inline unsigned char *sys_var_constrained_value<const uint64_t>::value_ptr(Session *, sql_var_t, const LEX_STRING *)
+{
+  return (unsigned char*)&basic_value;
+}
+
+template<>
+inline unsigned char *sys_var_constrained_value<const uint32_t>::value_ptr(Session *, sql_var_t, const LEX_STRING *)
+{
+  return (unsigned char*)&basic_value;
+}
+
 class sys_var_const_string :
   public sys_var
 {
