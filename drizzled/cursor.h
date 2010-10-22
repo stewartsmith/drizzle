@@ -145,8 +145,8 @@ inline key_part_map make_prev_keypart_map(T a)
 */
 class Cursor
 {
+  TableShare &table_share;   /* The table definition */
 protected:
-  TableShare *table_share;   /* The table definition */
   Table *table;               /* The current open table */
 
   ha_rows estimation_rows_to_insert;
@@ -161,7 +161,7 @@ public:
 
   TableShare *getShare() const
   {
-    return table_share;
+    return &table_share;
   }
 
   ha_statistics stats;

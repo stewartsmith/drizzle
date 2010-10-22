@@ -2399,8 +2399,8 @@ int HailDBCursor::doStartIndexScan(uint32_t keynr, bool)
   {
     ib_err_t err;
     ib_id_t index_id;
-    err= ib_index_get_id(table_path_to_haildb_name(table_share->getPath()),
-                         table_share->getKeyInfo(keynr).name,
+    err= ib_index_get_id(table_path_to_haildb_name(getShare()->getPath()),
+                         getShare()->getKeyInfo(keynr).name,
                          &index_id);
     if (err != DB_SUCCESS)
       return -1;
