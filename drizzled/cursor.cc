@@ -56,7 +56,8 @@ namespace drizzled
 Cursor::Cursor(plugin::StorageEngine &engine_arg,
                Table &arg)
   : table(arg),
-    estimation_rows_to_insert(0), engine(engine_arg),
+    engine(engine_arg),
+    estimation_rows_to_insert(0),
     ref(0),
     key_used_on_scan(MAX_KEY), active_index(MAX_KEY),
     ref_length(sizeof(internal::my_off_t)),
@@ -94,7 +95,6 @@ Cursor *Cursor::clone(memory::Root *mem_root)
                              getTable()->getShare()->getType());
 
   if (new_handler && !new_handler->ha_open(identifier,
-                                           getTable(),
                                            getTable()->getDBStat(),
                                            HA_OPEN_IGNORE_IF_LOCKED))
     return new_handler;
@@ -222,7 +222,6 @@ int Cursor::doOpen(const TableIdentifier &identifier, int mode, uint32_t test_if
   Don't wait for locks if not HA_OPEN_WAIT_IF_LOCKED is set
 */
 int Cursor::ha_open(const TableIdentifier &identifier,
-                    Table *,
                     int mode,
                     int test_if_locked)
 {

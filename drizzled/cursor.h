@@ -145,11 +145,12 @@ inline key_part_map make_prev_keypart_map(T a)
 */
 class Cursor
 {
-protected:
   Table &table;               /* The current open table */
-
-  ha_rows estimation_rows_to_insert;
   plugin::StorageEngine &engine;      /* storage engine of this Cursor */
+
+protected:
+  ha_rows estimation_rows_to_insert;
+
 public:
   inline plugin::StorageEngine *getEngine() const	/* table_type for handler */
   {
@@ -229,7 +230,7 @@ public:
 
   /* ha_ methods: pubilc wrappers for private virtual API */
 
-  int ha_open(const TableIdentifier &identifier, Table *table, int mode, int test_if_locked);
+  int ha_open(const TableIdentifier &identifier, int mode, int test_if_locked);
   int startIndexScan(uint32_t idx, bool sorted);
   int endIndexScan();
   int startTableScan(bool scan);

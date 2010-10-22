@@ -245,7 +245,7 @@ Cursor *ha_heap::clone(memory::Root *)
                              getTable()->getShare()->getTableName(),
                              getTable()->getShare()->getPath());
 
-  if (new_handler && !new_handler->ha_open(identifier, getTable(), getTable()->db_stat,
+  if (new_handler && !new_handler->ha_open(identifier, getTable()->db_stat,
                                            HA_OPEN_IGNORE_IF_LOCKED))
     return new_handler;
   return NULL;
