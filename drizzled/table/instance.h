@@ -56,6 +56,8 @@ public:
     return &_share;
   }
 
+  bool hasShare() const { return true; }
+
   bool hasVariableWidth() const
   {
     return _has_variable_width;
@@ -74,10 +76,7 @@ public:
     _has_variable_width= true;
   }
 
-  ~Instance()
-  {
-    free_tmp_table(in_use);
-  }
+  ~Instance();
 };
 
 } /* namespace table */

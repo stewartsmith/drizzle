@@ -18,10 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* Structs that defines the Table */
-
-#ifndef DRIZZLED_TABLE_PLACEHOLDER_H
-#define DRIZZLED_TABLE_PLACEHOLDER_H
+#ifndef DRIZZLED_TABLE_SHELL_H
+#define DRIZZLED_TABLE_SHELL_H
 
 namespace drizzled
 {
@@ -29,28 +27,28 @@ namespace drizzled
 namespace table
 {
 
-class Placeholder : public table::Concurrent
+class Shell : public drizzled::Table
 {
-  TableShare private_share;
+  TableShare &_share; /**< Pointer to the shared metadata about the table */
 
 public:
-  Placeholder(Session *session, TableIdentifier &identifier) :
-    table::Concurrent(),
-    private_share(identifier, identifier.getKey())
+  Shell(TableShare &arg) :
+    Table(),
+    _share(arg)
   {
-    setShare(&private_share);
-    in_use= session;
-
-    locked_by_name= true;
   }
 
-  bool isPlaceHolder(void) const
+  ~Shell()
   {
-    return true;
   }
+
+  const TableShare *getShare() const { return &_share; } /* Get rid of this long term */
+  TableShare *getMutableShare() { return &_share; } /* Get rid of this long term */
+  bool hasShare() const { return true; } /* Get rid of this long term */
+  void setShare(TableShare *) { ; } /* Get rid of this long term */
 };
 
 } /* namespace table */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TABLE_PLACEHOLDER_H */
+#endif /* DRIZZLED_TABLE_SHELL_H */

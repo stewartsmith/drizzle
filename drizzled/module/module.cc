@@ -1,12 +1,11 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Brian Aker
+ *  Copyright (C) 2010 Monty Taylor
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ *  the Free Software Foundation; version 2 of the License.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -18,39 +17,24 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* Structs that defines the Table */
+#include "config.h"
 
-#ifndef DRIZZLED_TABLE_PLACEHOLDER_H
-#define DRIZZLED_TABLE_PLACEHOLDER_H
+#include <algorithm>
+
+#include "drizzled/module/module.h"
+#include "drizzled/set_var.h"
+#include "drizzled/util/functors.h"
 
 namespace drizzled
 {
 
-namespace table
+namespace module
 {
 
-class Placeholder : public table::Concurrent
+Module::~Module()
 {
-  TableShare private_share;
+  std::for_each(sys_vars.begin(), sys_vars.end(), DeletePtr());
+}
 
-public:
-  Placeholder(Session *session, TableIdentifier &identifier) :
-    table::Concurrent(),
-    private_share(identifier, identifier.getKey())
-  {
-    setShare(&private_share);
-    in_use= session;
-
-    locked_by_name= true;
-  }
-
-  bool isPlaceHolder(void) const
-  {
-    return true;
-  }
-};
-
-} /* namespace table */
+} /* namespace module */
 } /* namespace drizzled */
-
-#endif /* DRIZZLED_TABLE_PLACEHOLDER_H */

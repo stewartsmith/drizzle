@@ -151,22 +151,6 @@ struct CopyInfo
 
 };
 
-struct DrizzleLock
-{
-  Table **table;
-  uint32_t table_count;
-  uint32_t lock_count;
-  THR_LOCK_DATA **locks;
-
-  DrizzleLock() :
-    table(0),
-    table_count(0),
-    lock_count(0),
-    locks(0)
-  { }
-
-};
-
 } /* namespace drizzled */
 
 /** @TODO why is this in the middle of the file */
@@ -1215,7 +1199,7 @@ public:
    * @param  Length of scrambled password
    * @param  Database name to connect to, may be NULL
    */
-  bool checkUser(const char *passwd, uint32_t passwd_len, const char *db);
+  bool checkUser(const std::string &passwd, const std::string &db);
   
   /**
    * Returns the timestamp (in microseconds) of when the Session 
@@ -1539,7 +1523,7 @@ public:
 
   /* Reopen operations */
   bool reopen_tables(bool get_locks, bool mark_share_as_old);
-  bool reopen_name_locked_table(TableList* table_list, bool link_in);
+  bool reopen_name_locked_table(TableList* table_list);
   bool close_cached_tables(TableList *tables, bool wait_for_refresh, bool wait_for_placeholders);
 
   void wait_for_condition(boost::mutex &mutex, boost::condition_variable_any &cond);

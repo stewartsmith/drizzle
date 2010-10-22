@@ -626,9 +626,9 @@ bool Session::authenticate()
   return true;
 }
 
-bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_db)
+bool Session::checkUser(const std::string &passwd_str,
+                        const std::string &in_db)
 {
-  const string passwd_str(passwd, passwd_len);
   bool is_authenticated=
     plugin::Authentication::isAuthenticated(getSecurityContext(),
                                             passwd_str);
@@ -641,7 +641,7 @@ bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_
   }
 
   /* Change database if necessary */
-  if (in_db && in_db[0])
+  if (not in_db.empty())
   {
     SchemaIdentifier identifier(in_db);
     if (mysql_change_db(this, identifier))
@@ -651,7 +651,7 @@ bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_
     }
   }
   my_ok();
-  password= test(passwd_len);          // remember for error messages
+  password= not passwd_str.empty();
 
   /* Ready to handle queries */
   return true;
@@ -1776,29 +1776,28 @@ user_var_entry *Session::getVariable(LEX_STRING &name, bool create_if_not_exists
 
 user_var_entry *Session::getVariable(const std::string  &name, bool create_if_not_exists)
 {
-  user_var_entry *entry= NULL;
   UserVarsRange ppp= user_vars.equal_range(name);
 
   for (UserVars::iterator iter= ppp.first;
-         iter != ppp.second; ++iter)
+       iter != ppp.second; ++iter)
   {
-    entry= (*iter).second;
+    return (*iter).second;
   }
 
-  if ((entry == NULL) && create_if_not_exists)
+  if (not create_if_not_exists)
+    return NULL;
+
+  user_var_entry *entry= NULL;
+  entry= new (nothrow) user_var_entry(name.c_str(), query_id);
+
+  if (entry == NULL)
+    return NULL;
+
+  std::pair<UserVars::iterator, bool> returnable= user_vars.insert(make_pair(name, entry));
+
+  if (not returnable.second)
   {
-    entry= new (nothrow) user_var_entry(name.c_str(), query_id);
-
-    if (entry == NULL)
-      return NULL;
-
-    std::pair<UserVars::iterator, bool> returnable= user_vars.insert(make_pair(name, entry));
-
-    if (not returnable.second)
-    {
-      delete entry;
-      return NULL;
-    }
+    delete entry;
   }
 
   return entry;

@@ -1,4 +1,4 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2010 Brian Aker
@@ -18,39 +18,19 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* Structs that defines the Table */
-
-#ifndef DRIZZLED_TABLE_PLACEHOLDER_H
-#define DRIZZLED_TABLE_PLACEHOLDER_H
+#ifndef DRIZZLED_UTIL_BACKTRACE_H
+#define DRIZZLED_UTIL_BACKTRACE_H
 
 namespace drizzled
 {
 
-namespace table
+namespace util
 {
 
-class Placeholder : public table::Concurrent
-{
-  TableShare private_share;
+void custom_backtrace(void);
 
-public:
-  Placeholder(Session *session, TableIdentifier &identifier) :
-    table::Concurrent(),
-    private_share(identifier, identifier.getKey())
-  {
-    setShare(&private_share);
-    in_use= session;
-
-    locked_by_name= true;
-  }
-
-  bool isPlaceHolder(void) const
-  {
-    return true;
-  }
-};
-
-} /* namespace table */
+} /* namespace util */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TABLE_PLACEHOLDER_H */
+#endif /* DRIZZLED_UTIL_BACKTRACE_H */
+

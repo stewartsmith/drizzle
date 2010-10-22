@@ -3723,13 +3723,11 @@ normal_join:
 /* Warning - may return NULL in case of incomplete SELECT */
 table_factor:
           {
-            Select_Lex *sel= Lex->current_select;
-            sel->table_join_options= 0;
           }
           table_ident opt_table_alias opt_key_definition
           {
             if (!($$= Lex->current_select->add_table_to_list(YYSession, $2, $3,
-                             Lex->current_select->get_table_join_options(),
+                             0,
                              Lex->lock_option,
                              Lex->current_select->pop_index_hints())))
               DRIZZLE_YYABORT;

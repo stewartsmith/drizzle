@@ -182,6 +182,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/generator/functions.h \
 			      drizzled/generator/event_observers.h \
 			      drizzled/generator/schema.h \
+			      drizzled/generator/session.h \
 			      drizzled/generator/table.h \
 			      drizzled/gettext.h \
 			      drizzled/global_charset_info.h \
@@ -415,6 +416,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/table/concurrent.h \
 			      drizzled/table/instance.h \
 			      drizzled/table/placeholder.h \
+			      drizzled/table/shell.h \
 			      drizzled/table/temporary.h \
 			      drizzled/temporal.h \
 			      drizzled/temporal_format.h \
@@ -638,6 +640,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/module/context.cc \
 				 drizzled/module/library.cc \
 				 drizzled/module/loader.cc \
+				 drizzled/module/module.cc \
 				 drizzled/module/option_context.cc \
 				 drizzled/module/option_map.cc \
 				 drizzled/module/registry.cc \

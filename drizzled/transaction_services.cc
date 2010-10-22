@@ -69,6 +69,7 @@
 #include "drizzled/plugin/monitored_in_transaction.h"
 #include "drizzled/plugin/transactional_storage_engine.h"
 #include "drizzled/plugin/xa_resource_manager.h"
+#include "drizzled/plugin/xa_storage_engine.h"
 #include "drizzled/internal/my_sys.h"
 
 using namespace std;
@@ -297,6 +298,19 @@ namespace drizzled
  * transaction after all DDLs, just like the statement transaction
  * is always committed at the end of all statements.
  */
+TransactionServices::TransactionServices()
+{
+  plugin::StorageEngine *engine= plugin::StorageEngine::findByName("InnoDB");
+  if (engine)
+  {
+    xa_storage_engine= (plugin::XaStorageEngine*)engine; 
+  }
+  else 
+  {
+    xa_storage_engine= NULL;
+  }
+}
+
 void TransactionServices::registerResourceForStatement(Session *session,
                                                        plugin::MonitoredInTransaction *monitored,
                                                        plugin::TransactionalStorageEngine *engine)
@@ -344,11 +358,6 @@ void TransactionServices::registerResourceForStatement(Session *session,
      * transaction.
      */
     registerResourceForTransaction(session, monitored, engine, resource_manager);
-  }
-
-  if (global_resource_manager == NULL)
-  {
-    global_resource_manager= resource_manager;
   }
 
   TransactionContext *trans= &session->transaction.stmt;
@@ -416,11 +425,6 @@ void TransactionServices::registerResourceForTransaction(Session *session,
 
   assert(monitored->participatesInSqlTransaction());
 
-  if (global_resource_manager == NULL)
-  {
-    global_resource_manager= resource_manager;
-  }
-
   resource_context->setMonitored(monitored);
   resource_context->setXaResourceManager(resource_manager);
   resource_context->setTransactionalStorageEngine(engine);
@@ -456,9 +460,9 @@ uint64_t TransactionServices::getCurrentTransactionId(Session *session)
         } 
         else 
         {
-          if (global_resource_manager)
+          if (xa_storage_engine)
           {
-            return global_resource_manager->getNewTransactionId(session);
+            return xa_storage_engine->getNewTransactionId(session);
           }
         }
       }
@@ -1057,7 +1061,6 @@ void TransactionServices::initStatementMessage(message::Statement &statement,
 {
   statement.set_type(in_type);
   statement.set_start_timestamp(in_session->getCurrentTimestamp());
-  /** @TODO Set sql string optionally */
 }
 
 void TransactionServices::finalizeStatementMessage(message::Statement &statement,

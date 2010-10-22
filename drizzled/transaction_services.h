@@ -36,6 +36,7 @@ namespace plugin
 {
   class MonitoredInTransaction;
   class XaResourceManager;
+  class XaStorageEngine;
   class TransactionalStorageEngine;
 }
 
@@ -51,13 +52,8 @@ class TransactionServices
 {
 public:
   static const size_t DEFAULT_RECORD_SIZE= 100;
-  /**
-   * Constructor
-   */
-  TransactionServices()
-  {
-    global_resource_manager= NULL;
-  }
+  
+  TransactionServices();
 
   /**
    * Singleton method
@@ -488,7 +484,7 @@ private:
                                const unsigned char *old_record,
                                const unsigned char *new_record);
 
-  plugin::XaResourceManager *global_resource_manager;
+  plugin::XaStorageEngine *xa_storage_engine;
 };
 
 } /* namespace drizzled */

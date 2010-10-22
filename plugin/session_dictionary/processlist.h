@@ -19,7 +19,7 @@
  */
 
 #include "drizzled/session.h"
-#include "drizzled/session_list.h"
+#include "drizzled/generator/session.h"
 
 #ifndef PLUGIN_SESSION_DICTIONARY_PROCESSLIST_H
 #define PLUGIN_SESSION_DICTIONARY_PROCESSLIST_H
@@ -33,7 +33,7 @@ public:
   class Generator : public drizzled::plugin::TableFunction::Generator 
   {
     time_t now;
-    drizzled::SessionList::iterator it;
+    drizzled::generator::Session session_generator;
 
   public:
     Generator(drizzled::Field **arg);
