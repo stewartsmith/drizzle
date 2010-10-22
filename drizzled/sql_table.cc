@@ -160,9 +160,10 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
 
   for (table= tables; table; table= table->next_local)
   {
-    char *db=table->db;
+    char *db= table->db;
+    TableIdentifier tmp_identifier(table->db, table->table_name);
 
-    error= session->drop_temporary_table(table);
+    error= session->drop_temporary_table(tmp_identifier);
 
     switch (error) {
     case  0:
@@ -179,16 +180,15 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
     if (drop_temporary == false)
     {
       Table *locked_table;
-      TableIdentifier identifier(db, table->table_name);
-      abort_locked_tables(session, identifier);
-      remove_table_from_cache(session, identifier,
+      abort_locked_tables(session, tmp_identifier);
+      remove_table_from_cache(session, tmp_identifier,
                               RTFC_WAIT_OTHER_THREAD_FLAG |
                               RTFC_CHECK_KILLED_FLAG);
       /*
         If the table was used in lock tables, remember it so that
         unlock_table_names can free it
       */
-      if ((locked_table= drop_locked_tables(session, identifier)))
+      if ((locked_table= drop_locked_tables(session, tmp_identifier)))
         table->table= locked_table;
 
       if (session->killed)
@@ -2060,7 +2060,6 @@ bool mysql_create_like_table(Session* session,
                              bool is_if_not_exists,
                              bool is_engine_set)
 {
-  char *db= table->db;
   char *table_name= table->table_name;
   bool res= true;
   uint32_t not_used;
@@ -2091,7 +2090,7 @@ bool mysql_create_like_table(Session* session,
   bool table_exists= false;
   if (destination_identifier.isTmp())
   {
-    if (session->find_temporary_table(db, table_name))
+    if (session->find_temporary_table(destination_identifier))
     {
       table_exists= true;
     }

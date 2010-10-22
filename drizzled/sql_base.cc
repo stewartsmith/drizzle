@@ -760,31 +760,7 @@ int Session::doGetTableDefinition(const TableIdentifier &identifier,
   return ENOENT;
 }
 
-Table *Session::find_temporary_table(const char *new_db, const char *table_name)
-{
-  char	key[MAX_DBKEY_LENGTH];
-  uint	key_length;
-
-  key_length= TableIdentifier::createKey(key, new_db, table_name);
-
-  for (Table *table= temporary_tables ; table ; table= table->getNext())
-  {
-    const TableIdentifier::Key &share_key(table->getShare()->getCacheKey());
-    if (share_key.size() == key_length &&
-        not memcmp(&share_key[0], key, key_length))
-    {
-      return table;
-    }
-  }
-  return NULL;                               // Not a temporary table
-}
-
-Table *Session::find_temporary_table(TableList *table_list)
-{
-  return find_temporary_table(table_list->db, table_list->table_name);
-}
-
-Table *Session::find_temporary_table(TableIdentifier &identifier)
+Table *Session::find_temporary_table(const TableIdentifier &identifier)
 {
   for (Table *table= temporary_tables ; table ; table= table->getNext())
   {
@@ -822,11 +798,11 @@ Table *Session::find_temporary_table(TableIdentifier &identifier)
   @retval -1  the table is in use by a outer query
 */
 
-int Session::drop_temporary_table(TableList *table_list)
+int Session::drop_temporary_table(const drizzled::TableIdentifier &identifier)
 {
   Table *table;
 
-  if (not (table= find_temporary_table(table_list)))
+  if (not (table= find_temporary_table(identifier)))
     return 1;
 
   /* Table might be in use by some outer statement. */
@@ -1046,14 +1022,14 @@ bool Session::reopen_name_locked_table(TableList* table_list)
   case of failure.
 */
 
-Table *Session::table_cache_insert_placeholder(const char *db_name, const char *table_name)
+Table *Session::table_cache_insert_placeholder(const drizzled::TableIdentifier &arg)
 {
   safe_mutex_assert_owner(LOCK_open.native_handle());
 
   /*
     Create a table entry with the right key and with an old refresh version
   */
-  TableIdentifier identifier(db_name, table_name, message::Table::INTERNAL);
+  TableIdentifier identifier(arg.getSchemaName(), arg.getTableName(), message::Table::INTERNAL);
   table::Placeholder *table= new table::Placeholder(this, identifier);
 
   if (not add_table(table))
@@ -1104,7 +1080,7 @@ bool Session::lock_table_name_if_not_cached(TableIdentifier &identifier, Table *
     return false;
   }
 
-  if (not (*table= table_cache_insert_placeholder(identifier.getSchemaName().c_str(), identifier.getTableName().c_str())))
+  if (not (*table= table_cache_insert_placeholder(identifier)))
   {
     return true;
   }
@@ -1377,7 +1353,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
             /*
               Table to be created, so we need to create placeholder in table-cache.
             */
-            if (!(table= table_cache_insert_placeholder(table_list->db, table_list->table_name)))
+            if (!(table= table_cache_insert_placeholder(lock_table_identifier)))
             {
               LOCK_open.unlock();
               return NULL;

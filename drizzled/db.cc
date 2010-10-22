@@ -372,9 +372,11 @@ static int rm_table_part2(Session *session, TableList *tables)
   for (table= tables; table; table= table->next_local)
   {
     char *db=table->db;
+    TableIdentifier identifier(table->db, table->table_name);
+
     plugin::StorageEngine *table_type;
 
-    error= session->drop_temporary_table(table);
+    error= session->drop_temporary_table(identifier);
 
     switch (error) {
     case  0:
@@ -393,8 +395,6 @@ static int rm_table_part2(Session *session, TableList *tables)
     }
 
     table_type= table->getDbType();
-
-    TableIdentifier identifier(db, table->table_name);
 
     {
       Table *locked_table;

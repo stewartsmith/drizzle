@@ -83,7 +83,8 @@ bool statement::DropIndex::execute()
   }
   else
   {
-    Table *table= session->find_temporary_table(first_table);
+    TableIdentifier catch22(first_table->db, first_table->table_name);
+    Table *table= session->find_temporary_table(catch22);
     assert(table);
     {
       TableIdentifier identifier(first_table->db, first_table->table_name, table->getShare()->getPath());
