@@ -73,8 +73,6 @@ public:
 
     bool populate();
 
-    std::string fkeyOption(drizzled::message::Table::ForeignKeyConstraint::ForeignKeyOption option);
-
   };
 
   Generator *generator(drizzled::Field **arg)

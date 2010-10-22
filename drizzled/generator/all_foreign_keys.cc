@@ -18,18 +18,34 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_GENERATOR_H
-#define DRIZZLED_GENERATOR_H
+#include "config.h"
 
-#include "drizzled/session.h"
+#include "drizzled/generator.h"
 
-#include "drizzled/generator/event_observers.h"
-#include "drizzled/generator/functions.h"
-#include "drizzled/generator/schema.h"
-#include "drizzled/generator/table.h"
-#include "drizzled/generator/all_tables.h"
-#include "drizzled/generator/all_fields.h"
-#include "drizzled/generator/all_indexes.h"
-#include "drizzled/generator/all_foreign_keys.h"
+using namespace std;
 
-#endif /* DRIZZLED_GENERATOR_H */
+namespace drizzled
+{
+namespace generator
+{
+
+AllForeignKeys::AllForeignKeys(Session &arg) :
+  session(arg),
+  foreign_keys_iterator(0),
+  all_tables_generator(arg)
+{
+  ((table_ptr= all_tables_generator));
+  table_setup();
+}
+
+bool AllForeignKeys::table_setup()
+{
+  table_message.Clear();
+  table_message.CopyFrom(*table_ptr);
+  foreign_keys_iterator= 0;
+
+  return true;
+}
+
+} /* namespace generator */
+} /* namespace drizzled */

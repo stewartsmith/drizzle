@@ -38,37 +38,49 @@ ReferentialConstraints::ReferentialConstraints() :
   add_field("DELETE_RULE");
 }
 
-void ReferentialConstraints::Generator::fill()
-{
-}
-
-bool ReferentialConstraints::Generator::nextCore()
-{
-  return false;
-}
-
-bool ReferentialConstraints::Generator::next()
-{
-  while (not nextCore())
-  {
-    return false;
-  }
-
-  return true;
-}
-
 ReferentialConstraints::Generator::Generator(drizzled::Field **arg) :
   InformationSchema::Generator(arg),
-  is_primed(false)
+  foreign_key_generator(getSession())
 {
 }
 
 bool ReferentialConstraints::Generator::populate()
 {
-  if (not next())
-    return false;
+  drizzled::generator::FieldPair field_pair;
+  while (!!(field_pair= foreign_key_generator))
+  {
+    const drizzled::message::Table *table_message= field_pair.first;
+    const message::Table::ForeignKeyConstraint &foreign_key(table_message->fk_constraint(field_pair.second));
 
-  fill();
+    // CONSTRAINT_CATALOG
+    push(table_message->catalog());
 
-  return true;
+    // CONSTRAINT_SCHEMA
+    push(table_message->schema());
+
+    // CONSTRAINT_NAME
+    push(foreign_key.name());
+
+    // UNIQUE_CONSTRAINT_CATALOG
+    push(table_message->catalog());
+    
+    // UNIQUE_CONSTRAINT_SCHEMA
+    push(table_message->schema());
+
+    // UNIQUE_CONSTRAINT_NAME
+    push(" ");
+    
+    // MATCH_OPTION 
+    push(drizzled::message::type(foreign_key.match()));
+    
+    //UPDATE_RULE
+    push(drizzled::message::type(foreign_key.update_option()));
+
+    //DELETE_RULE
+    push(drizzled::message::type(foreign_key.delete_option()));
+
+    return true;
+  }
+
+  return false;
 }

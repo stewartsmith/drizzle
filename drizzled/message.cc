@@ -35,6 +35,8 @@
 namespace drizzled {
 namespace message {
 
+static const std::string PROGRAM_ERROR("PROGRAM_ERROR");
+
 // These are used to generate strings for types
 static const std::string VARCHAR("VARCHAR");
 static const std::string DOUBLE("DOUBLE");
@@ -52,7 +54,7 @@ static const std::string RESTRICT("RESTRICT");
 static const std::string CASCADE("CASCADE");
 static const std::string SET_NULL("SET NULL");
 static const std::string NO_ACTION("NO ACTION");
-static const std::string DEFAULT("DEFAULT");
+static const std::string SET_DEFAULT("SET DEFAULT");
 
 static const std::string YES("YES");
 static const std::string NO("NO");
@@ -62,6 +64,10 @@ static const std::string BTREE("BTREE");
 static const std::string RTREE("RTREE");
 static const std::string HASH("HASH");
 static const std::string FULLTEXT("FULLTEXT");
+
+static const std::string MATCH_FULL("FULL");
+static const std::string MATCH_PARTIAL("PARTIAL");
+static const std::string MATCH_SIMPLE("SIMPLE");
 
 void init(drizzled::message::Table &arg, const std::string &name_arg, const std::string &schema_arg, const std::string &engine_arg)
 {
@@ -116,7 +122,6 @@ const std::string &type(drizzled::message::Table::Field::FieldType type)
 {
   switch (type)
   {
-  default:
   case message::Table::Field::VARCHAR:
     return VARCHAR;
   case message::Table::Field::DOUBLE:
@@ -138,26 +143,29 @@ const std::string &type(drizzled::message::Table::Field::FieldType type)
   case message::Table::Field::DATETIME:
     return DATETIME;
   }
+
+  assert(0);
+  return PROGRAM_ERROR;
 }
 
 const std::string &type(drizzled::message::Table::ForeignKeyConstraint::ForeignKeyOption type)
 {
   switch (type)
   {
-  default:
-  case message::Table::ForeignKeyConstraint::OPTION_UNDEF:
-    return UNDEFINED;
   case message::Table::ForeignKeyConstraint::OPTION_RESTRICT:
     return RESTRICT;
   case message::Table::ForeignKeyConstraint::OPTION_CASCADE:
     return CASCADE;
   case message::Table::ForeignKeyConstraint::OPTION_SET_NULL:
     return SET_NULL;
+  case message::Table::ForeignKeyConstraint::OPTION_UNDEF:
   case message::Table::ForeignKeyConstraint::OPTION_NO_ACTION:
     return NO_ACTION;
-  case message::Table::ForeignKeyConstraint::OPTION_DEFAULT:
-    return DEFAULT;
+  case message::Table::ForeignKeyConstraint::OPTION_SET_DEFAULT:
+    return SET_DEFAULT;
   }
+
+  return NO_ACTION;
 }
 
 // This matches SQL standard of using YES/NO not the normal TRUE/FALSE
@@ -170,7 +178,6 @@ const std::string &type(drizzled::message::Table::Index::IndexType type)
 {
   switch (type)
   {
-  default:
   case message::Table::Index::UNKNOWN_INDEX:
     return UNKNOWN_INDEX;
   case message::Table::Index::BTREE:
@@ -182,6 +189,25 @@ const std::string &type(drizzled::message::Table::Index::IndexType type)
   case message::Table::Index::FULLTEXT:
     return FULLTEXT;
   }
+
+  assert(0);
+  return PROGRAM_ERROR;
+}
+
+const std::string &type(drizzled::message::Table::ForeignKeyConstraint::ForeignKeyMatchOption type)
+{
+  switch (type)
+  {
+  case message::Table::ForeignKeyConstraint::MATCH_FULL:
+    return MATCH_FULL;
+  case message::Table::ForeignKeyConstraint::MATCH_PARTIAL:
+    return MATCH_PARTIAL;
+  case message::Table::ForeignKeyConstraint::MATCH_UNDEFINED:
+  case message::Table::ForeignKeyConstraint::MATCH_SIMPLE:
+    return MATCH_SIMPLE;
+  }
+
+  return MATCH_SIMPLE;
 }
 
 } /* namespace message */

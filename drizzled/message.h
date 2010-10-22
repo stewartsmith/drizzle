@@ -39,6 +39,7 @@ const std::string &type(drizzled::message::Table::Field::FieldType type);
 const std::string &type(drizzled::message::Table::ForeignKeyConstraint::ForeignKeyOption type);
 const std::string &type(bool type);
 const std::string &type(drizzled::message::Table::Index::IndexType type);
+const std::string &type(drizzled::message::Table::ForeignKeyConstraint::ForeignKeyMatchOption type);
 
 typedef boost::shared_ptr<drizzled::message::Schema> SchemaPtr;
 

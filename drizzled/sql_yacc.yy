@@ -1993,7 +1993,7 @@ delete_option:
         | CASCADE       { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_CASCADE; }
         | SET NULL_SYM  { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_SET_NULL; }
         | NO_SYM ACTION { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_NO_ACTION; }
-        | SET DEFAULT   { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_DEFAULT;  }
+        | SET DEFAULT   { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_SET_DEFAULT;  }
         ;
 
 key_type:
