@@ -1487,8 +1487,6 @@ public:
   bool renameTableMessage(const TableIdentifier &from, const TableIdentifier &to);
 
   /* Work with temporary tables */
-  Table *find_temporary_table(TableList *table_list);
-  Table *find_temporary_table(const char *db, const char *table_name);
   Table *find_temporary_table(const TableIdentifier &identifier);
 
   void doGetTableNames(CachedDirectory &directory,
@@ -1516,7 +1514,6 @@ private:
 public:
 
   void dumpTemporaryTableNames(const char *id);
-  int drop_temporary_table(TableList *table_list);
   int drop_temporary_table(const drizzled::TableIdentifier &identifier);
   bool rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &identifier);
   bool rm_temporary_table(TableIdentifier &identifier, bool best_effort= false);

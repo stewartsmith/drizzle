@@ -761,30 +761,6 @@ int Session::doGetTableDefinition(const TableIdentifier &identifier,
   return ENOENT;
 }
 
-Table *Session::find_temporary_table(const char *new_db, const char *table_name)
-{
-  char	key[MAX_DBKEY_LENGTH];
-  uint	key_length;
-
-  key_length= TableIdentifier::createKey(key, new_db, table_name);
-
-  for (Table *table= temporary_tables ; table ; table= table->getNext())
-  {
-    const TableIdentifier::Key &share_key(table->getShare()->getCacheKey());
-    if (share_key.size() == key_length &&
-        not memcmp(&share_key[0], key, key_length))
-    {
-      return table;
-    }
-  }
-  return NULL;                               // Not a temporary table
-}
-
-Table *Session::find_temporary_table(TableList *table_list)
-{
-  return find_temporary_table(table_list->db, table_list->table_name);
-}
-
 Table *Session::find_temporary_table(const TableIdentifier &identifier)
 {
   for (Table *table= temporary_tables ; table ; table= table->getNext())
@@ -822,25 +798,6 @@ Table *Session::find_temporary_table(const TableIdentifier &identifier)
   of this thread
   @retval -1  the table is in use by a outer query
 */
-
-int Session::drop_temporary_table(TableList *table_list)
-{
-  Table *table;
-
-  if (not (table= find_temporary_table(table_list)))
-    return 1;
-
-  /* Table might be in use by some outer statement. */
-  if (table->query_id && table->query_id != query_id)
-  {
-    my_error(ER_CANT_REOPEN_TABLE, MYF(0), table->getAlias());
-    return -1;
-  }
-
-  close_temporary_table(table);
-
-  return 0;
-}
 
 int Session::drop_temporary_table(const drizzled::TableIdentifier &identifier)
 {
