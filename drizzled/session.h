@@ -1489,7 +1489,7 @@ public:
   /* Work with temporary tables */
   Table *find_temporary_table(TableList *table_list);
   Table *find_temporary_table(const char *db, const char *table_name);
-  Table *find_temporary_table(TableIdentifier &identifier);
+  Table *find_temporary_table(const TableIdentifier &identifier);
 
   void doGetTableNames(CachedDirectory &directory,
                        const SchemaIdentifier &schema_identifier,
@@ -1517,6 +1517,7 @@ public:
 
   void dumpTemporaryTableNames(const char *id);
   int drop_temporary_table(TableList *table_list);
+  int drop_temporary_table(const drizzled::TableIdentifier &identifier);
   bool rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &identifier);
   bool rm_temporary_table(TableIdentifier &identifier, bool best_effort= false);
   Table *open_temporary_table(TableIdentifier &identifier,
