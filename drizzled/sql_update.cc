@@ -471,7 +471,7 @@ int mysql_update(Session *session, TableList *table_list,
         if (found > 0)
         {
           TransactionServices &ts= TransactionServices::singleton();
-          ts.removeStatementRecords(session, found);
+          ts.removeStatementRecords(session, updated);
         }
 
         break;
