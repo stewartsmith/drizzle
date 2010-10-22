@@ -359,27 +359,6 @@ public:
    *   true found and reported an error.
    */
   bool process_index_hints(Table *table);
-  /**
-   * Creates a table definition cache key for this table entry.
-   *
-   * @param[out] Create key here (must be of size MAX_DBKEY_LENGTH)
-   *
-   * @note
-   *
-   * The table cache_key is created from:
-   *   db_name + \0
-   *   table_name + \0
-   *
-   * if the table is a tmp table, we add the following to make each tmp table
-   * unique on the slave:
-   *
-   * 4 bytes for master thread id
-   * 4 bytes pseudo thread id
-   *
-   * @retval
-   *  Length of key
-   */
-  uint32_t create_table_def_key(char *key);
 
   friend std::ostream& operator<<(std::ostream& output, const TableList &list)
   {
