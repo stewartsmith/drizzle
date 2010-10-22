@@ -175,12 +175,6 @@ int Cursor::ha_end_bulk_insert()
   return end_bulk_insert();
 }
 
-void Cursor::change_table_ptr(Table *table_arg, TableShare *share)
-{
-  table= table_arg;
-  table_share= share;
-}
-
 const key_map *Cursor::keys_to_use_for_scanning()
 {
   return &key_map_empty;

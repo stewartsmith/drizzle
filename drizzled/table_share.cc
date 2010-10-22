@@ -1834,10 +1834,10 @@ int TableShare::open_table_from_share(Session *session,
                                       Table &outparam)
 {
   bool error_reported= false;
-  int ret= open_table_from_share_inner(session, alias, db_stat, ha_open_flags, outparam, error_reported);
+  int ret= open_table_from_share_inner(session, alias, db_stat, outparam);
 
   if (not ret)
-    ret= open_table_cursor_inner(session, identifier, alias, db_stat, ha_open_flags, outparam, error_reported);
+    ret= open_table_cursor_inner(identifier, db_stat, ha_open_flags, outparam, error_reported);
 
   if (not ret)
     return ret;
@@ -1849,16 +1849,15 @@ int TableShare::open_table_from_share(Session *session,
   outparam.cursor= 0;				// For easier error checking
   outparam.db_stat= 0;
   outparam.getMemRoot()->free_root(MYF(0));       // Safe to call on zeroed root
-  free((char*) outparam.alias);
+  outparam.clearAlias();
 
   return ret;
 }
 
 int TableShare::open_table_from_share_inner(Session *session,
                                             const char *alias,
-                                            uint32_t db_stat, uint32_t ,
-                                            Table &outparam,
-                                            bool &)
+                                            uint32_t db_stat,
+                                            Table &outparam)
 {
   int local_error;
   uint32_t records;
@@ -1871,8 +1870,7 @@ int TableShare::open_table_from_share_inner(Session *session,
   local_error= 1;
   outparam.resetTable(session, this, db_stat);
 
-  if (not (outparam.alias= strdup(alias)))
-    return local_error;
+  outparam.setAlias(alias);
 
   /* Allocate Cursor */
   if (not (outparam.cursor= db_type()->getCursor(*this)))
@@ -2001,9 +1999,7 @@ int TableShare::open_table_from_share_inner(Session *session,
   return 0;
 }
 
-int TableShare::open_table_cursor_inner(Session *,
-                                        const TableIdentifier &identifier,
-                                        const char *,
+int TableShare::open_table_cursor_inner(const TableIdentifier &identifier,
                                         uint32_t db_stat, uint32_t ha_open_flags,
                                         Table &outparam,
                                         bool &error_reported)
