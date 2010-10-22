@@ -279,7 +279,7 @@ TinaShare *ha_tina::get_share(const std::string &table_name)
 {
   pthread_mutex_lock(&tina_mutex);
 
-  Tina *a_tina= static_cast<Tina *>(engine);
+  Tina *a_tina= static_cast<Tina *>(getEngine());
   share= a_tina->findOpenTable(table_name);
 
   std::string meta_file_name;
@@ -481,7 +481,7 @@ int ha_tina::free_share()
       share->tina_write_opened= false;
     }
 
-    Tina *a_tina= static_cast<Tina *>(engine);
+    Tina *a_tina= static_cast<Tina *>(getEngine());
     a_tina->deleteOpenTable(share->table_name);
     delete share;
   }

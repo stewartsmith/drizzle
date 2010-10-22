@@ -149,11 +149,11 @@ protected:
   Table *table;               /* The current open table */
 
   ha_rows estimation_rows_to_insert;
-  plugin::StorageEngine *engine;      /* storage engine of this Cursor */
+  plugin::StorageEngine &engine;      /* storage engine of this Cursor */
 public:
   inline plugin::StorageEngine *getEngine() const	/* table_type for handler */
   {
-    return engine;
+    return &engine;
   }
   unsigned char *ref;				/* Pointer to current row */
   unsigned char *dup_ref;			/* Pointer to duplicate row */

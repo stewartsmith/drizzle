@@ -559,7 +559,7 @@ HailDBTableShare *HailDBCursor::get_share(const char *table_name, bool has_hidde
 {
   pthread_mutex_lock(&haildb_mutex);
 
-  HailDBEngine *a_engine= static_cast<HailDBEngine *>(engine);
+  HailDBEngine *a_engine= static_cast<HailDBEngine *>(getEngine());
   share= a_engine->findOpenTable(table_name);
 
   if (!share)
@@ -602,7 +602,7 @@ int HailDBCursor::free_share()
   pthread_mutex_lock(&haildb_mutex);
   if (!--share->use_count)
   {
-    HailDBEngine *a_engine= static_cast<HailDBEngine *>(engine);
+    HailDBEngine *a_engine= static_cast<HailDBEngine *>(getEngine());
     a_engine->deleteOpenTable(share->table_name);
     delete share;
   }
@@ -1894,7 +1894,7 @@ int HailDBCursor::doInsertRecord(unsigned char *record)
      * yuck.
      */
 
-    HailDBEngine *storage_engine= static_cast<HailDBEngine*>(engine);
+    HailDBEngine *storage_engine= static_cast<HailDBEngine*>(getEngine());
     err= ib_cursor_reset(cursor);
     storage_engine->doCommit(current_session, true);
     storage_engine->doStartTransaction(current_session, START_TRANS_NO_OPTIONS);

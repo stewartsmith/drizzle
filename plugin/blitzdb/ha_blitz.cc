@@ -1308,7 +1308,7 @@ static BlitzEngine *blitz_engine = NULL;
 
 BlitzShare *ha_blitz::get_share(const char *name) {
   BlitzShare *share_ptr;
-  BlitzEngine *bz_engine = (BlitzEngine *)engine;
+  BlitzEngine *bz_engine = (BlitzEngine *)getEngine();
   std::string table_path(name);
 
   pthread_mutex_lock(&blitz_utility_mutex);
@@ -1408,7 +1408,7 @@ int ha_blitz::free_share(void) {
       share->btrees[i].close();
     }
 
-    BlitzEngine *bz_engine = (BlitzEngine *)engine;
+    BlitzEngine *bz_engine = (BlitzEngine *)getEngine();
     bz_engine->deleteTableShare(share->table_name);
 
     delete[] share->btrees;

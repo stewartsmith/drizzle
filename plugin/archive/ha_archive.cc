@@ -294,7 +294,7 @@ bool ArchiveShare::prime(uint64_t *auto_increment)
 */
 ArchiveShare *ha_archive::get_share(const char *table_name, int *rc)
 {
-  ArchiveEngine *a_engine= static_cast<ArchiveEngine *>(engine);
+  ArchiveEngine *a_engine= static_cast<ArchiveEngine *>(getEngine());
 
   pthread_mutex_lock(&a_engine->mutex());
 
@@ -339,7 +339,7 @@ ArchiveShare *ha_archive::get_share(const char *table_name, int *rc)
 */
 int ha_archive::free_share()
 {
-  ArchiveEngine *a_engine= static_cast<ArchiveEngine *>(engine);
+  ArchiveEngine *a_engine= static_cast<ArchiveEngine *>(getEngine());
 
   pthread_mutex_lock(&a_engine->mutex());
   if (!--share->use_count)

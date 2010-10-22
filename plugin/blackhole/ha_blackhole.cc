@@ -404,7 +404,7 @@ BlackholeShare *ha_blackhole::get_share(const char *table_name)
 {
   pthread_mutex_lock(&blackhole_mutex);
 
-  BlackholeEngine *a_engine= static_cast<BlackholeEngine *>(engine);
+  BlackholeEngine *a_engine= static_cast<BlackholeEngine *>(getEngine());
   share= a_engine->findOpenTable(table_name);
 
   if (share == NULL)
@@ -429,7 +429,7 @@ void ha_blackhole::free_share()
   pthread_mutex_lock(&blackhole_mutex);
   if (!--share->use_count)
   {
-    BlackholeEngine *a_engine= static_cast<BlackholeEngine *>(engine);
+    BlackholeEngine *a_engine= static_cast<BlackholeEngine *>(getEngine());
     a_engine->deleteOpenTable(share->table_name);
     delete share;
   }

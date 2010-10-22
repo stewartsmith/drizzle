@@ -369,7 +369,7 @@ FilesystemTableShare *FilesystemCursor::get_share(const char *table_name)
 {
   Guard g(filesystem_mutex);
 
-  FilesystemEngine *a_engine= static_cast<FilesystemEngine *>(engine);
+  FilesystemEngine *a_engine= static_cast<FilesystemEngine *>(getEngine());
   share= a_engine->findOpenTable(table_name);
 
   /*
@@ -414,7 +414,7 @@ void FilesystemCursor::free_share()
   Guard g(filesystem_mutex);
 
   if (!--share->use_count){
-    FilesystemEngine *a_engine= static_cast<FilesystemEngine *>(engine);
+    FilesystemEngine *a_engine= static_cast<FilesystemEngine *>(getEngine());
     a_engine->deleteOpenTable(share->table_name);
     pthread_mutex_destroy(&share->mutex);
     delete share;

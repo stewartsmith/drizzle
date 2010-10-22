@@ -56,7 +56,7 @@ namespace drizzled
 Cursor::Cursor(plugin::StorageEngine &engine_arg,
                TableShare&)
   : table(0),
-    estimation_rows_to_insert(0), engine(&engine_arg),
+    estimation_rows_to_insert(0), engine(engine_arg),
     ref(0),
     key_used_on_scan(MAX_KEY), active_index(MAX_KEY),
     ref_length(sizeof(internal::my_off_t)),
@@ -192,7 +192,7 @@ void Cursor::ha_statistic_increment(uint64_t system_status_var::*offset) const
 
 void **Cursor::ha_data(Session *session) const
 {
-  return session->getEngineData(engine);
+  return session->getEngineData(getEngine());
 }
 
 bool Cursor::is_fatal_error(int error, uint32_t flags)
@@ -664,7 +664,7 @@ Cursor::setTransactionReadWrite()
   if (not table || not table->in_use)
     return;
 
-  resource_context= table->in_use->getResourceContext(engine);
+  resource_context= table->in_use->getResourceContext(getEngine());
   /*
     When a storage engine method is called, the transaction must
     have been started, unless it's a DDL call, for which the

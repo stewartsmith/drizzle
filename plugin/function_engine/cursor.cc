@@ -45,7 +45,7 @@ FunctionCursor::FunctionCursor(plugin::StorageEngine &engine_arg,
 
 int FunctionCursor::open(const char *name, int, uint32_t)
 {
-  tool= static_cast<Function *>(engine)->getFunction(name); 
+  tool= static_cast<Function *>(getEngine())->getFunction(name); 
 //  assert(tool);
 
   record_id= 0;
