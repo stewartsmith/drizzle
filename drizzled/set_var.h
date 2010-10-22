@@ -27,6 +27,7 @@
 #include "drizzled/function/set_user_var.h"
 #include "drizzled/item/string.h"
 #include "drizzled/item/field.h"
+#include "drizzled/constrained_value.h"
 
 namespace drizzled
 {
@@ -74,7 +75,7 @@ extern time_t flush_status_time;
 extern uint32_t global_thread_id;
 extern uint64_t table_cache_size;
 extern uint64_t max_connect_errors;
-extern uint32_t back_log;
+extern back_log_constraints back_log;
 extern uint32_t ha_open_options;
 extern char *drizzled_bind_host;
 extern uint32_t dropping_tables;
@@ -88,6 +89,63 @@ extern const char *opt_scheduler;
 uint64_t fix_unsigned(Session *, uint64_t, const struct option *);
 
 void init_sys_var();
+
+/****************************************************************************
+  Classes for parsing of the SET command
+****************************************************************************/
+
+class set_var_base :public memory::SqlAlloc
+{
+public:
+  set_var_base() {}
+  virtual ~set_var_base() {}
+  virtual int check(Session *session)=0;	/* To check privileges etc. */
+  virtual int update(Session *session)=0;	/* To set the value */
+  /* light check for PS */
+};
+
+/* MySQL internal variables */
+class set_var :public set_var_base
+{
+public:
+  sys_var *var;
+  Item *value;
+  sql_var_t type;
+  union
+  {
+    const CHARSET_INFO *charset;
+    uint32_t uint32_t_value;
+    uint64_t uint64_t_value;
+    size_t size_t_value;
+    plugin::StorageEngine *storage_engine;
+    Time_zone *time_zone;
+    MY_LOCALE *locale_value;
+  } save_result;
+  LEX_STRING base;			/* for structs */
+
+  set_var(sql_var_t type_arg, sys_var *var_arg,
+          const LEX_STRING *base_name_arg, Item *value_arg)
+    :var(var_arg), type(type_arg), base(*base_name_arg)
+  {
+    /*
+      If the set value is a field, change it to a string to allow things like
+      SET table_type=MYISAM;
+    */
+    if (value_arg && value_arg->type() == Item::FIELD_ITEM)
+    {
+      Item_field *item= (Item_field*) value_arg;
+      if (!(value=new Item_string(item->field_name,
+                  (uint32_t) strlen(item->field_name),
+				  item->collation.collation)))
+	value=value_arg;			/* Give error message later */
+    }
+    else
+      value=value_arg;
+  }
+  int check(Session *session);
+  int update(Session *session);
+};
+
 
 /**
  * A class which represents a variable, either global or 
@@ -371,6 +429,125 @@ public:
   bool check_default(sql_var_t) { return true; }
   bool is_readonly() const { return true; }
 };
+
+template<class T>
+class sys_var_constrained_value :
+  public sys_var
+{
+  constrained_value<T> &value;
+  T basic_value;
+  T default_value;
+  bool have_default_value;
+public:
+  sys_var_constrained_value(const char *name_arg,
+                            constrained_value<T> &value_arg) :
+    sys_var(name_arg),
+    value(value_arg),
+    default_value(0),
+    have_default_value(false)
+  { }
+
+  sys_var_constrained_value(const char *name_arg,
+                            constrained_value<T> &value_arg,
+                            T default_value_arg) :
+    sys_var(name_arg),
+    value(value_arg),
+    default_value(default_value_arg),
+    have_default_value(true)
+  { }
+
+public:
+  bool is_readonly() const
+  {
+    return false;
+  }
+
+  SHOW_TYPE show_type() { return SHOW_INT; }
+
+  bool update(Session *, set_var *var)
+  {
+    value= var->save_result.uint32_t_value;
+    return false;
+  }
+
+  bool check_default(sql_var_t)
+  {
+    return not have_default_value;
+  }
+
+  void set_default(Session *, sql_var_t)
+  {
+    value= default_value;
+  }
+
+  unsigned char *value_ptr(Session *, sql_var_t, const LEX_STRING *)
+  {
+    basic_value= T(value);
+    return (unsigned char*)&basic_value;
+  }
+};
+
+template<>
+inline bool sys_var_constrained_value<const uint64_t>::is_readonly() const
+{
+  return true;
+}
+
+template<>
+inline bool sys_var_constrained_value<const uint32_t>::is_readonly() const
+{
+  return true;
+}
+
+template<>
+inline SHOW_TYPE sys_var_constrained_value<uint64_t>::show_type()
+{
+  return SHOW_LONGLONG;
+}
+
+template<>
+inline SHOW_TYPE sys_var_constrained_value<int64_t>::show_type()
+{
+  return SHOW_LONGLONG;
+}
+
+template<>
+inline SHOW_TYPE sys_var_constrained_value<uint32_t>::show_type()
+{
+  return SHOW_LONG;
+}
+
+template<>
+inline SHOW_TYPE sys_var_constrained_value<int32_t>::show_type()
+{
+  return SHOW_LONG;
+}
+
+template<>
+inline bool sys_var_constrained_value<uint64_t>::update(Session *, set_var *var)
+{
+  value= var->save_result.uint64_t_value;
+  return false;
+}
+
+template<>
+inline bool sys_var_constrained_value<uint32_t>::update(Session *, set_var *var)
+{
+  value= var->save_result.uint32_t_value;
+  return false;
+}
+
+template<>
+inline unsigned char *sys_var_constrained_value<const uint64_t>::value_ptr(Session *, sql_var_t, const LEX_STRING *)
+{
+  return (unsigned char*)&basic_value;
+}
+
+template<>
+inline unsigned char *sys_var_constrained_value<const uint32_t>::value_ptr(Session *, sql_var_t, const LEX_STRING *)
+{
+  return (unsigned char*)&basic_value;
+}
 
 class sys_var_const_string :
   public sys_var
@@ -906,63 +1083,6 @@ public:
   unsigned char *value_ptr(Session *session, sql_var_t type,
                            const LEX_STRING *base);
   virtual void set_default(Session *session, sql_var_t type);
-};
-
-
-/****************************************************************************
-  Classes for parsing of the SET command
-****************************************************************************/
-
-class set_var_base :public memory::SqlAlloc
-{
-public:
-  set_var_base() {}
-  virtual ~set_var_base() {}
-  virtual int check(Session *session)=0;	/* To check privileges etc. */
-  virtual int update(Session *session)=0;	/* To set the value */
-  /* light check for PS */
-};
-
-/* MySQL internal variables */
-class set_var :public set_var_base
-{
-public:
-  sys_var *var;
-  Item *value;
-  sql_var_t type;
-  union
-  {
-    const CHARSET_INFO *charset;
-    uint32_t uint32_t_value;
-    uint64_t uint64_t_value;
-    size_t size_t_value;
-    plugin::StorageEngine *storage_engine;
-    Time_zone *time_zone;
-    MY_LOCALE *locale_value;
-  } save_result;
-  LEX_STRING base;			/* for structs */
-
-  set_var(sql_var_t type_arg, sys_var *var_arg,
-          const LEX_STRING *base_name_arg, Item *value_arg)
-    :var(var_arg), type(type_arg), base(*base_name_arg)
-  {
-    /*
-      If the set value is a field, change it to a string to allow things like
-      SET table_type=MYISAM;
-    */
-    if (value_arg && value_arg->type() == Item::FIELD_ITEM)
-    {
-      Item_field *item= (Item_field*) value_arg;
-      if (!(value=new Item_string(item->field_name,
-                  (uint32_t) strlen(item->field_name),
-				  item->collation.collation)))
-	value=value_arg;			/* Give error message later */
-    }
-    else
-      value=value_arg;
-  }
-  int check(Session *session);
-  int update(Session *session);
 };
 
 
