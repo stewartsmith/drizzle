@@ -243,19 +243,6 @@ public:
     RETURN
     Length of key
   */
-  static uint32_t createKey(char *key, const char *db_arg, const char *table_name_arg)
-  {
-    uint32_t key_length;
-    char *key_pos= key;
-
-    key_pos= strcpy(key_pos, db_arg) + strlen(db_arg);
-    key_pos= strcpy(key_pos+1, table_name_arg) +
-      strlen(table_name_arg);
-    key_length= (uint32_t)(key_pos-key)+1;
-
-    return key_length;
-  }
-
   static uint32_t createKey(char *key, const TableIdentifier &identifier)
   {
     uint32_t key_length;
