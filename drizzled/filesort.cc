@@ -672,23 +672,33 @@ write_keys(SORTPARAM *param, register unsigned char **sort_keys, uint32_t count,
   if (!my_b_inited(tempfile) &&
       open_cached_file(tempfile, drizzle_tmpdir.c_str(), TEMP_PREFIX, DISK_BUFFER_SIZE,
                        MYF(MY_WME)))
-    goto err;
+  {
+    return 1;
+  }
   /* check we won't have more buffpeks than we can possibly keep in memory */
   if (my_b_tell(buffpek_pointers) + sizeof(buffpek) > (uint64_t)UINT_MAX)
-    goto err;
+  {
+    return 1;
+  }
+
   buffpek.file_pos= my_b_tell(tempfile);
   if ((ha_rows) count > param->max_rows)
     count=(uint32_t) param->max_rows;
   buffpek.count=(ha_rows) count;
   for (end=sort_keys+count ; sort_keys != end ; sort_keys++)
+  {
     if (my_b_write(tempfile, (unsigned char*) *sort_keys, (uint32_t) rec_length))
-      goto err;
-  if (my_b_write(buffpek_pointers, (unsigned char*) &buffpek, sizeof(buffpek)))
-    goto err;
-  return(0);
+    {
+      return 1;
+    }
+  }
 
-err:
-  return(1);
+  if (my_b_write(buffpek_pointers, (unsigned char*) &buffpek, sizeof(buffpek)))
+  {
+    return 1;
+  }
+
+  return 0;
 } /* write_keys */
 
 
