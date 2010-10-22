@@ -21,25 +21,15 @@
 #include "config.h"
 
 #include <drizzled/session.h>
-#include <drizzled/function/str/strfunc.h>
+#include "plugin/utility_functions/functions.h"
 
-using namespace drizzled;
-
-class DatabaseFunction :public Item_str_func
+namespace drizzled
 {
-public:
-  DatabaseFunction() :Item_str_func() {}
-  String *val_str(String *);
-  void fix_length_and_dec()
-  {
-    max_length= MAX_FIELD_NAME * system_charset_info->mbmaxlen;
-    maybe_null=1;
-  }
-  const char *func_name() const { return "database"; }
-  const char *fully_qualified_func_name() const { return "database()"; }
-};
 
-String *DatabaseFunction::val_str(String *str)
+namespace utility_functions
+{
+
+String *Schema::val_str(String *str)
 {
   assert(fixed == 1);
   Session *session= current_session;
@@ -49,29 +39,11 @@ String *DatabaseFunction::val_str(String *str)
     return 0;
   }
   else
+  {
     str->copy(session->db.c_str(), session->db.length(), system_charset_info);
+  }
   return str;
 }
 
-plugin::Create_function<DatabaseFunction> *database_function= NULL;
-
-static int initialize(drizzled::module::Context &context)
-{
-  database_function= new plugin::Create_function<DatabaseFunction>("database");
-  context.add(database_function);
-  return 0;
-}
-
-DRIZZLE_DECLARE_PLUGIN
-{
-  DRIZZLE_VERSION_ID,
-  "database_function",
-  "1.0",
-  "Stewart Smith",
-  "returns the current database",
-  PLUGIN_LICENSE_GPL,
-  initialize, /* Plugin Init */
-  NULL,   /* system variables */
-  NULL    /* config options */
-}
-DRIZZLE_DECLARE_PLUGIN_END;
+} /* namespace utility_functions */
+} /* namespace drizzled */

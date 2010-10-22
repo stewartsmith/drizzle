@@ -44,6 +44,9 @@
 #include "drizzled/internal/my_pthread.h"
 #include "drizzled/plugin/event_observer.h"
 
+#include "drizzled/table.h"
+#include "drizzled/table/shell.h"
+
 #include "drizzled/session.h"
 
 #include "drizzled/charset.h"
@@ -1444,8 +1447,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
     // This needs to go, we should be setting the "use" on the field so that
     // it does not reference the share/table.
-    Table temp_table; /* Use this so that BLOB DEFAULT '' works */
-    temp_table.setShare(this);
+    table::Shell temp_table(*this); /* Use this so that BLOB DEFAULT '' works */
     temp_table.in_use= &session;
 
     f->init(&temp_table); /* blob default values need table obj */
@@ -1825,16 +1827,40 @@ err_not_open:
   5    Error (see open_table_error: charset unavailable)
   7    Table definition has changed in engine
 */
-
 int TableShare::open_table_from_share(Session *session,
                                       const TableIdentifier &identifier,
                                       const char *alias,
                                       uint32_t db_stat, uint32_t ha_open_flags,
                                       Table &outparam)
 {
+  bool error_reported= false;
+  int ret= open_table_from_share_inner(session, alias, db_stat, outparam);
+
+  if (not ret)
+    ret= open_table_cursor_inner(identifier, db_stat, ha_open_flags, outparam, error_reported);
+
+  if (not ret)
+    return ret;
+
+  if (not error_reported)
+    open_table_error(ret, errno, 0);
+
+  delete outparam.cursor;
+  outparam.cursor= 0;				// For easier error checking
+  outparam.db_stat= 0;
+  outparam.getMemRoot()->free_root(MYF(0));       // Safe to call on zeroed root
+  outparam.clearAlias();
+
+  return ret;
+}
+
+int TableShare::open_table_from_share_inner(Session *session,
+                                            const char *alias,
+                                            uint32_t db_stat,
+                                            Table &outparam)
+{
   int local_error;
   uint32_t records;
-  bool error_reported= false;
   unsigned char *record= NULL;
   Field **field_ptr;
 
@@ -1844,12 +1870,11 @@ int TableShare::open_table_from_share(Session *session,
   local_error= 1;
   outparam.resetTable(session, this, db_stat);
 
-  if (not (outparam.alias= strdup(alias)))
-    goto err;
+  outparam.setAlias(alias);
 
   /* Allocate Cursor */
   if (not (outparam.cursor= db_type()->getCursor(*this)))
-    goto err;
+    return local_error;
 
   local_error= 4;
   records= 0;
@@ -1859,7 +1884,7 @@ int TableShare::open_table_from_share(Session *session,
   records++;
 
   if (!(record= (unsigned char*) outparam.alloc_root(rec_buff_length * records)))
-    goto err;
+    return local_error;
 
   if (records == 0)
   {
@@ -1875,7 +1900,7 @@ int TableShare::open_table_from_share(Session *session,
       outparam.record[1]= outparam.getInsertRecord();   // Safety
   }
 
-#ifdef HAVE_purify
+#ifdef HAVE_VALGRIND
   /*
     We need this because when we read var-length rows, we are not updating
     bytes after end of varchar
@@ -1895,7 +1920,7 @@ int TableShare::open_table_from_share(Session *session,
 
   if (!(field_ptr = (Field **) outparam.alloc_root( (uint32_t) ((fields+1)* sizeof(Field*)))))
   {
-    goto err;
+    return local_error;
   }
 
   outparam.setFields(field_ptr);
@@ -1908,7 +1933,7 @@ int TableShare::open_table_from_share(Session *session,
   for (uint32_t i= 0 ; i < fields; i++, field_ptr++)
   {
     if (!((*field_ptr)= field[i]->clone(outparam.getMemRoot(), &outparam)))
-      goto err;
+      return local_error;
   }
   (*field_ptr)= 0;                              // End marker
 
@@ -1927,7 +1952,7 @@ int TableShare::open_table_from_share(Session *session,
     uint32_t n_length;
     n_length= keys*sizeof(KeyInfo) + key_parts*sizeof(KeyPartInfo);
     if (!(local_key_info= (KeyInfo*) outparam.alloc_root(n_length)))
-      goto err;
+      return local_error;
     outparam.key_info= local_key_info;
     key_part= (reinterpret_cast<KeyPartInfo*> (local_key_info+keys));
 
@@ -1971,8 +1996,16 @@ int TableShare::open_table_from_share(Session *session,
   outparam.tmp_set.resize(fields);
   outparam.default_column_bitmaps();
 
+  return 0;
+}
+
+int TableShare::open_table_cursor_inner(const TableIdentifier &identifier,
+                                        uint32_t db_stat, uint32_t ha_open_flags,
+                                        Table &outparam,
+                                        bool &error_reported)
+{
   /* The table struct is now initialized;  Open the table */
-  local_error= 2;
+  int local_error= 2;
   if (db_stat)
   {
     assert(!(db_stat & HA_WAIT_IF_LOCKED));
@@ -2007,23 +2040,11 @@ int TableShare::open_table_from_share(Session *session,
           local_error= 7;
         break;
       }
-      goto err;
+      return local_error;
     }
   }
 
   return 0;
-
-err:
-  if (!error_reported)
-    open_table_error(local_error, errno, 0);
-
-  delete outparam.cursor;
-  outparam.cursor= 0;				// For easier error checking
-  outparam.db_stat= 0;
-  outparam.getMemRoot()->free_root(MYF(0));       // Safe to call on zeroed root
-  free((char*) outparam.alias);
-
-  return (local_error);
 }
 
 /* error message when opening a form cursor */

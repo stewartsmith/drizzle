@@ -129,7 +129,7 @@
 #include <drizzled/gettext.h>
 
 
-#ifdef HAVE_purify
+#ifdef HAVE_VALGRIND
 #define IF_PURIFY(A,B) (A)
 #else
 #define IF_PURIFY(A,B) (B)

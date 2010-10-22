@@ -61,10 +61,15 @@ void* multi_malloc(bool zerofill, ...)
   }
   va_end(args);
 
+#ifdef HAVE_VALGRIND
+  if (!(start= calloc(0, tot_length)))
+    return(0);
+#else
   if (!(start= malloc(tot_length)))
     return(0);
   if (zerofill)
     memset(start, 0, tot_length);
+#endif
 
   va_start(args, zerofill);
   res= static_cast<char *>(start);

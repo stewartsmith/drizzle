@@ -49,6 +49,7 @@ EXTRA_DIST= \
 	    EXCEPTIONS-CLIENT \
 	    config/autorun.sh \
 	    config/config.rpath \
+	    config/drizzle.ver \
 	    config/make-lint.py \
 	    config/pandora_vc_revinfo \
 	    config/pre_hook.sh \

@@ -32,6 +32,8 @@
 #include "drizzled/transaction_services.h"
 #include "drizzled/plugin/transactional_storage_engine.h"
 
+#include "drizzled/table/shell.h"
+
 namespace drizzled
 {
 
@@ -1470,9 +1472,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
                                       DrizzleLock **lock,
 				      TableIdentifier &identifier)
 {
-  Table tmp_table;		// Used during 'CreateField()'
   TableShare share(message::Table::INTERNAL);
-  Table *table= 0;
   uint32_t select_field_count= items->elements;
   /* Add selected items to field list */
   List_iterator_fast<Item> it(*items);
@@ -1496,58 +1496,60 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
     return NULL;
   }
 
-  tmp_table.timestamp_field= 0;
-  tmp_table.setShare(&share);
-
-  tmp_table.getMutableShare()->db_create_options= 0;
-  tmp_table.getMutableShare()->blob_ptr_size= portable_sizeof_char_ptr;
-
-  if (not table_proto.engine().name().compare("MyISAM"))
-    tmp_table.getMutableShare()->db_low_byte_first= true;
-  else if (not table_proto.engine().name().compare("MEMORY"))
-    tmp_table.getMutableShare()->db_low_byte_first= true;
-
-  tmp_table.null_row= false;
-  tmp_table.maybe_null= false;
-
-  tmp_table.in_use= session;
-
-  while ((item=it++))
   {
-    CreateField *cr_field;
-    Field *field, *def_field;
-    if (item->type() == Item::FUNC_ITEM)
+    table::Shell tmp_table(share);		// Used during 'CreateField()'
+    tmp_table.timestamp_field= 0;
+
+    tmp_table.getMutableShare()->db_create_options= 0;
+    tmp_table.getMutableShare()->blob_ptr_size= portable_sizeof_char_ptr;
+
+    if (not table_proto.engine().name().compare("MyISAM"))
+      tmp_table.getMutableShare()->db_low_byte_first= true;
+    else if (not table_proto.engine().name().compare("MEMORY"))
+      tmp_table.getMutableShare()->db_low_byte_first= true;
+
+    tmp_table.null_row= false;
+    tmp_table.maybe_null= false;
+
+    tmp_table.in_use= session;
+
+    while ((item=it++))
     {
-      if (item->result_type() != STRING_RESULT)
+      CreateField *cr_field;
+      Field *field, *def_field;
+      if (item->type() == Item::FUNC_ITEM)
       {
-        field= item->tmp_table_field(&tmp_table);
+        if (item->result_type() != STRING_RESULT)
+        {
+          field= item->tmp_table_field(&tmp_table);
+        }
+        else
+        {
+          field= item->tmp_table_field_from_field_type(&tmp_table, 0);
+        }
       }
       else
       {
-        field= item->tmp_table_field_from_field_type(&tmp_table, 0);
+        field= create_tmp_field(session, &tmp_table, item, item->type(),
+                                (Item ***) 0, &tmp_field, &def_field, false,
+                                false, false, 0);
       }
-    }
-    else
-    {
-      field= create_tmp_field(session, &tmp_table, item, item->type(),
-                              (Item ***) 0, &tmp_field, &def_field, false,
-                              false, false, 0);
-    }
 
-    if (!field ||
-	!(cr_field=new CreateField(field,(item->type() == Item::FIELD_ITEM ?
-					   ((Item_field *)item)->field :
-					   (Field*) 0))))
-    {
-      return NULL;
-    }
+      if (!field ||
+          !(cr_field=new CreateField(field,(item->type() == Item::FIELD_ITEM ?
+                                            ((Item_field *)item)->field :
+                                            (Field*) 0))))
+      {
+        return NULL;
+      }
 
-    if (item->maybe_null)
-    {
-      cr_field->flags &= ~NOT_NULL_FLAG;
-    }
+      if (item->maybe_null)
+      {
+        cr_field->flags &= ~NOT_NULL_FLAG;
+      }
 
-    alter_info->create_list.push_back(cr_field);
+      alter_info->create_list.push_back(cr_field);
+    }
   }
 
   /*
@@ -1557,6 +1559,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
     creating base table on which name we have exclusive lock. So code below
     should not cause deadlocks or races.
   */
+  Table *table= 0;
   {
     if (not mysql_create_table_no_lock(session,
 				       identifier,
@@ -1581,12 +1584,14 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
       if (not identifier.isTmp())
       {
         LOCK_open.lock(); /* CREATE TABLE... has found that the table already exists for insert and is adapting to use it */
-        if (session->reopen_name_locked_table(create_table, false))
+        if (session->reopen_name_locked_table(create_table))
         {
           quick_rm_table(*session, identifier);
         }
         else
+        {
           table= create_table->table;
+        }
         LOCK_open.unlock();
       }
       else
@@ -1604,7 +1609,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
         }
       }
     }
-    if (!table)                                   // open failed
+    if (not table)                                   // open failed
       return NULL;
   }
 

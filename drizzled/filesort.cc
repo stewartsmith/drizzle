@@ -919,18 +919,18 @@ static void make_sortkey(register SORTPARAM *param,
       if (addonf->null_bit && field->is_null())
       {
         nulls[addonf->null_offset]|= addonf->null_bit;
-#ifdef HAVE_purify
+#ifdef HAVE_VALGRIND
 	memset(to, 0, addonf->length);
 #endif
       }
       else
       {
-#ifdef HAVE_purify
+#ifdef HAVE_VALGRIND
         unsigned char *end= field->pack(to, field->ptr);
-	uint32_t length= (uint32_t) ((to + addonf->length) - end);
-	assert((int) length >= 0);
-	if (length)
-	  memset(end, 0, length);
+	uint32_t local_length= (uint32_t) ((to + addonf->length) - end);
+	assert((int) local_length >= 0);
+	if (local_length)
+	  memset(end, 0, local_length);
 #else
         (void) field->pack(to, field->ptr);
 #endif

@@ -29,15 +29,25 @@ namespace table
 
 class Temporary : public Table
 {
+  TableShare *_share; /**< Pointer to the shared metadata about the table */
+
 public:
-  Temporary() :
+  Temporary(TableIdentifier::Type type_arg,
+             TableIdentifier &identifier,
+             char *path_arg, uint32_t path_length_arg) :
     Table()
   {
+    _share= new TableShare(type_arg, identifier, path_arg, path_length_arg);
   }
 
   ~Temporary()
   {
   }
+
+  virtual const TableShare *getShare() const { assert(_share); return _share; } /* Get rid of this long term */
+  virtual TableShare *getMutableShare() { assert(_share); return _share; } /* Get rid of this long term */
+  virtual bool hasShare() const { return _share ? true : false ; } /* Get rid of this long term */
+  virtual void setShare(TableShare *new_share) { _share= new_share; } /* Get rid of this long term */
 };
 
 } /* namespace table */

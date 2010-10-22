@@ -54,6 +54,8 @@
 #include <drizzled/table_proto.h>
 #include <drizzled/plugin/event_observer.h>
 
+#include <drizzled/table/shell.h>
+
 #include <boost/algorithm/string/compare.hpp>
 
 static bool shutdown_has_begun= false; // Once we put in the container for the vector/etc for engines this will go away.
@@ -501,8 +503,8 @@ int StorageEngine::createTable(Session &session,
                                message::Table& table_message)
 {
   int error= 1;
-  Table table;
   TableShare share(identifier);
+  table::Shell table(share);
   message::Table tmp_proto;
 
   if (share.parse_table_proto(session, table_message) || share.open_table_from_share(&session, identifier, "", 0, 0, table))

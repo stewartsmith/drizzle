@@ -158,7 +158,7 @@ Session::Session(plugin::Client *client_arg) :
   Open_tables_state(refresh_version),
   mem_root(&main_mem_root),
   lex(&main_lex),
-  query(),
+  catalog("LOCAL"),
   client(client_arg),
   scheduler(NULL),
   scheduler_arg(NULL),

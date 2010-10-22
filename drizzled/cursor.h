@@ -266,7 +266,6 @@ public:
 
   void adjust_next_insert_id_after_explicit_value(uint64_t nr);
   int update_auto_increment();
-  virtual void change_table_ptr(Table *table_arg, TableShare *share);
 
   /* Estimates calculation */
   virtual double scan_time(void)
