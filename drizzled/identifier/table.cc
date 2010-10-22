@@ -323,9 +323,9 @@ void TableIdentifier::init()
   hash_value= hasher(path);
 
   key.resize(getKeySize());
-  size_t key_length= TableIdentifier::createKey(&key[0], *this);
 
-  assert(key_length == getKeySize()); // If this is off, then we have a memory issue.
+  std::copy(getSchemaName().begin(), getSchemaName().end(), key.begin());
+  std::copy(getTableName().begin(), getTableName().end(), key.begin() + getSchemaName().length() + 1);
 }
 
 

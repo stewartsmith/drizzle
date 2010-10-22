@@ -221,39 +221,7 @@ public:
   static size_t build_tmptable_filename(std::string &buffer);
   static size_t build_tmptable_filename(std::vector<char> &buffer);
 
-  /*
-    Create a table cache key
-
-    SYNOPSIS
-    createKey()
-    key			Create key here (must be of size MAX_DBKEY_LENGTH)
-    table_list		Table definition
-
-    IMPLEMENTATION
-    The table cache_key is created from:
-    db_name + \0
-    table_name + \0
-
-    if the table is a tmp table, we add the following to make each tmp table
-    unique on the slave:
-
-    4 bytes for master thread id
-    4 bytes pseudo thread id
-
-    RETURN
-    Length of key
-  */
-  static uint32_t createKey(char *key, const TableIdentifier &identifier)
-  {
-    uint32_t key_length;
-    char *key_pos= key;
-
-    key_pos= strcpy(key_pos, identifier.getSchemaName().c_str()) + identifier.getSchemaName().length();
-    key_pos= strcpy(key_pos + 1, identifier.getTableName().c_str()) + identifier.getTableName().length();
-    key_length= (uint32_t)(key_pos-key)+1;
-
-    return key_length;
-  }
+public:
 
   size_t getHashValue() const
   {
