@@ -74,7 +74,7 @@ public:
     pthread_mutex_destroy(&filesystem_mutex);
   }
 
-  virtual Cursor *create(TableShare &table)
+  virtual Cursor *create(Table &table)
   {
     return new FilesystemCursor(*this, table);
   }
@@ -453,7 +453,7 @@ void FilesystemCursor::critical_section_exit()
   thread_locked = false;
 }
 
-FilesystemCursor::FilesystemCursor(drizzled::plugin::StorageEngine &engine_arg, TableShare &table_arg)
+FilesystemCursor::FilesystemCursor(drizzled::plugin::StorageEngine &engine_arg, Table &table_arg)
   : Cursor(engine_arg, table_arg),
     file_buff(new TransparentFile),
     thread_locked(false)

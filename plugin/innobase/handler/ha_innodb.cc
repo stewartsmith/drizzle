@@ -391,7 +391,7 @@ public:
         /* out: 0 or error number */
     ::drizzled::XID *xid);  /* in: X/Open XA transaction identification */
 
-  virtual Cursor *create(TableShare &table)
+  virtual Cursor *create(Table &table)
   {
     return new ha_innobase(*this, table);
   }
@@ -1612,7 +1612,7 @@ check_trx_exists(
 Construct ha_innobase Cursor. */
 UNIV_INTERN
 ha_innobase::ha_innobase(plugin::StorageEngine &engine_arg,
-                         TableShare &table_arg)
+                         Table &table_arg)
   :Cursor(engine_arg, table_arg),
   primary_key(0), /* needs initialization because index_flags() may be called 
                      before this is set to the real value. It's ok to have any 

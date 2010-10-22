@@ -57,7 +57,7 @@ public:
     table_definition_ext= TABLEPROTOTESTER_EXT;
   }
 
-  virtual Cursor *create(TableShare &table)
+  virtual Cursor *create(Table &table)
   {
     return new TableProtoTesterCursor(*this, table);
   }
@@ -128,7 +128,7 @@ bool TableProtoTesterEngine::doDoesTableExist(Session&, const drizzled::TableIde
 }
 
 TableProtoTesterCursor::TableProtoTesterCursor(drizzled::plugin::StorageEngine &engine_arg,
-                           TableShare &table_arg) :
+                                               Table &table_arg) :
   Cursor(engine_arg, table_arg)
 { }
 

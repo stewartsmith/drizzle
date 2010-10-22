@@ -1482,7 +1482,7 @@ int PBXTStorageEngine::rollback(Session *thd, bool all)
 	return 0;
 }
 
-Cursor *PBXTStorageEngine::create(TableShare& table)
+Cursor *PBXTStorageEngine::create(Table& table)
 {
 	return new ha_pbxt(*this, table);
 }
@@ -2020,7 +2020,7 @@ static int pbxt_exit_statistics(void *XT_UNUSED(p))
  *
  */
 
-ha_pbxt::ha_pbxt(plugin::StorageEngine &engine_arg, TableShare &table_arg) : Cursor(engine_arg, table_arg)
+ha_pbxt::ha_pbxt(plugin::StorageEngine &engine_arg, Table &table_arg) : Cursor(engine_arg, table_arg)
 {
 	pb_share = NULL;
 	pb_open_tab = NULL;

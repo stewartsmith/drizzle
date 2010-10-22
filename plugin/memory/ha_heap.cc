@@ -60,7 +60,7 @@ public:
     hp_panic(HA_PANIC_CLOSE);
   }
 
-  virtual Cursor *create(TableShare &table)
+  virtual Cursor *create(Table &table)
   {
     return new ha_heap(*this, table);
   }
@@ -158,7 +158,7 @@ static int heap_init(module::Context &context)
 *****************************************************************************/
 
 ha_heap::ha_heap(plugin::StorageEngine &engine_arg,
-                 TableShare &table_arg)
+                 Table &table_arg)
   :Cursor(engine_arg, table_arg), file(0), records_changed(0), key_stat_version(0),
   internal_table(0)
 {}
@@ -240,7 +240,7 @@ int ha_heap::close(void)
 
 Cursor *ha_heap::clone(memory::Root *)
 {
-  Cursor *new_handler= table->getMutableShare()->db_type()->getCursor(*(table->getMutableShare()));
+  Cursor *new_handler= table->getMutableShare()->db_type()->getCursor(*table);
   TableIdentifier identifier(table->getShare()->getSchemaName(),
                              table->getShare()->getTableName(),
                              table->getShare()->getPath());

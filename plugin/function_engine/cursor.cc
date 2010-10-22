@@ -37,7 +37,7 @@ using namespace drizzled;
 *****************************************************************************/
 
 FunctionCursor::FunctionCursor(plugin::StorageEngine &engine_arg,
-                               TableShare &table_arg) :
+                               Table &table_arg) :
   Cursor(engine_arg, table_arg),
   estimate_of_rows(100), // Completely fabricated, I used to use the value 2.
   rows_returned(0)

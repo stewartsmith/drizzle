@@ -59,7 +59,7 @@
  */
 
 #ifdef DRIZZLED
-ha_xtsys::ha_xtsys(handlerton *hton, TableShare& table_arg):
+ha_xtsys::ha_xtsys(handlerton *hton, Table& table_arg):
 handler(*hton, table_arg),
 ha_open_tab(NULL)
 {

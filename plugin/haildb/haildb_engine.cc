@@ -150,7 +150,7 @@ public:
 
   ~HailDBEngine();
 
-  virtual Cursor *create(TableShare &table)
+  virtual Cursor *create(Table &table)
   {
     return new HailDBCursor(*this, table);
   }
@@ -796,7 +796,7 @@ static void TableIdentifier_to_haildb_name(const TableIdentifier &identifier, st
 }
 
 HailDBCursor::HailDBCursor(drizzled::plugin::StorageEngine &engine_arg,
-                           TableShare &table_arg)
+                           Table &table_arg)
   :Cursor(engine_arg, table_arg),
    ib_lock_mode(IB_LOCK_NONE),
    write_can_replace(false),

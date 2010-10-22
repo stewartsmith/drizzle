@@ -196,7 +196,7 @@ int ArchiveEngine::doGetTableDefinition(Session&,
 
 
 ha_archive::ha_archive(drizzled::plugin::StorageEngine &engine_arg,
-                       TableShare &table_arg)
+                       Table &table_arg)
   :Cursor(engine_arg, table_arg), delayed_insert(0), bulk_insert(0)
 {
   /* Set our original buffer from pre-allocated memory */

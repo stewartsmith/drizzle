@@ -104,7 +104,7 @@ public:
     mi_panic(HA_PANIC_CLOSE);
   }
 
-  virtual Cursor *create(TableShare &table)
+  virtual Cursor *create(Table &table)
   {
     return new ha_myisam(*this, table);
   }
@@ -544,7 +544,7 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
 }
 
 ha_myisam::ha_myisam(plugin::StorageEngine &engine_arg,
-                     TableShare &table_arg)
+                     Table &table_arg)
   : Cursor(engine_arg, table_arg),
   file(0),
   can_enable_indexes(true),

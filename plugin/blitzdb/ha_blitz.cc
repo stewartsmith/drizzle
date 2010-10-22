@@ -54,7 +54,7 @@ public:
     tcmapdel(blitz_table_cache);
   }
 
-  virtual drizzled::Cursor *create(drizzled::TableShare &table) {
+  virtual drizzled::Cursor *create(drizzled::Table &table) {
     return new ha_blitz(*this, table);
   }
 
@@ -365,7 +365,7 @@ void BlitzEngine::deleteTableShare(const std::string &table_name) {
 }
 
 ha_blitz::ha_blitz(drizzled::plugin::StorageEngine &engine_arg,
-                   TableShare &table_arg) : Cursor(engine_arg, table_arg),
+                   Table &table_arg) : Cursor(engine_arg, table_arg),
                                             btree_cursor(NULL),
                                             table_scan(false),
                                             table_based(false),

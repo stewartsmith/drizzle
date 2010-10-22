@@ -112,7 +112,7 @@ public:
     pthread_mutex_destroy(&tina_mutex);
   }
 
-  virtual Cursor *create(TableShare &table)
+  virtual Cursor *create(Table &table)
   {
     return new ha_tina(*this, table);
   }
@@ -530,7 +530,7 @@ static off_t find_eoln_buff(Transparent_file *data_buff, off_t begin,
 
 
 
-ha_tina::ha_tina(drizzled::plugin::StorageEngine &engine_arg, TableShare &table_arg)
+ha_tina::ha_tina(drizzled::plugin::StorageEngine &engine_arg, Table &table_arg)
   :Cursor(engine_arg, table_arg),
   /*
     These definitions are found in Cursor.h

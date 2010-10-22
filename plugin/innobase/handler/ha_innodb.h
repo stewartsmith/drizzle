@@ -107,7 +107,7 @@ class ha_innobase: public Cursor
 	/* Init values for the class: */
  public:
 	UNIV_INTERN ha_innobase(plugin::StorageEngine &engine,
-                                TableShare &table_arg);
+                                Table &table_arg);
 	UNIV_INTERN ~ha_innobase();
   /**
    * Returns the plugin::TransactionStorageEngine pointer

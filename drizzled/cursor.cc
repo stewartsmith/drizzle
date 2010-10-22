@@ -54,8 +54,8 @@ namespace drizzled
 ** General Cursor functions
 ****************************************************************************/
 Cursor::Cursor(plugin::StorageEngine &engine_arg,
-               TableShare&)
-  : table(0),
+               Table &arg)
+  : table(&arg),
     estimation_rows_to_insert(0), engine(engine_arg),
     ref(0),
     key_used_on_scan(MAX_KEY), active_index(MAX_KEY),
@@ -79,7 +79,7 @@ Cursor::~Cursor(void)
  */
 Cursor *Cursor::clone(memory::Root *mem_root)
 {
-  Cursor *new_handler= table->getMutableShare()->db_type()->getCursor(*table->getMutableShare());
+  Cursor *new_handler= table->getMutableShare()->db_type()->getCursor(*table);
 
   /*
     Allocate Cursor->ref here because otherwise ha_open will allocate it

@@ -68,7 +68,7 @@ public:
     pthread_mutex_destroy(&blackhole_mutex);
   }
 
-  virtual Cursor *create(TableShare &table)
+  virtual Cursor *create(Table &table)
   {
     return new ha_blackhole(*this, table);
   }
@@ -191,7 +191,7 @@ void BlackholeEngine::deleteOpenTable(const string &table_name)
 *****************************************************************************/
 
 ha_blackhole::ha_blackhole(drizzled::plugin::StorageEngine &engine_arg,
-                           TableShare &table_arg)
+                           Table &table_arg)
   :Cursor(engine_arg, table_arg), share(NULL)
 { }
 

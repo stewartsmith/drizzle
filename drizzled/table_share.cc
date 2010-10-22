@@ -1873,7 +1873,7 @@ int TableShare::open_table_from_share_inner(Session *session,
   outparam.setAlias(alias);
 
   /* Allocate Cursor */
-  if (not (outparam.cursor= db_type()->getCursor(*this)))
+  if (not (outparam.cursor= db_type()->getCursor(outparam)))
     return local_error;
 
   local_error= 4;

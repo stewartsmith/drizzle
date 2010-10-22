@@ -224,7 +224,7 @@ public:
   */
   Discrete_interval auto_inc_interval_for_cur_row;
 
-  Cursor(plugin::StorageEngine &engine_arg, TableShare &share_arg);
+  Cursor(plugin::StorageEngine &engine_arg, Table &share_arg);
   virtual ~Cursor(void);
   virtual Cursor *clone(memory::Root *mem_root);
 
