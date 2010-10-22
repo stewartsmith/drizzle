@@ -217,7 +217,7 @@ public:
   }
 
   static uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length);
-  static size_t build_table_filename(std::string &buff, const char *db, const char *table_name, bool is_tmp);
+  static size_t build_table_filename(std::string &path, const std::string &db, const std::string &table_name, bool is_tmp);
   static size_t build_tmptable_filename(std::string &buffer);
   static size_t build_tmptable_filename(std::vector<char> &buffer);
 
