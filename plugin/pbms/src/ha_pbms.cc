@@ -697,7 +697,11 @@ int ha_pbms::open(const char *table_path, int , uint )
 	inner_();
 	try_(a) {
 		ha_open_tab = MSSystemTableShare::openSystemTable(table_path, table);
+#ifdef DRIZZLED
 		ha_lock.init(&ha_open_tab->myShare->myThrLock);
+#else
+		thr_lock_data_init(&ha_open_tab->myShare->myThrLock, &ha_lock, NULL);
+#endif
 		ref_length = ha_open_tab->getRefLen();
 	}
 	catch_(a) {

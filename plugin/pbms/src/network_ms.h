@@ -30,10 +30,10 @@
 #ifndef __NETWORK_MS_H__
 #define __NETWORK_MS_H__
 
-#include "connection_handler_ms.h"
 #include "cslib/CSDefs.h"
 #include "cslib/CSSocket.h"
 #include "cslib/CSThread.h"
+#include "connection_handler_ms.h"
 
 class MSSystemThread : public CSDaemon {
 public:

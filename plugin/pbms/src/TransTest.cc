@@ -523,15 +523,15 @@ static bool verify_database(MYSQL *mysql)
 	if (log_row_cnt == ref_row_cnt) {
 		for ( i = 0; i < log_row_cnt; i++) {
 			l_record = mysql_fetch_row(l_results);
-			tab_id = atol(l_getUpdateRecord());
+			tab_id = atol(l_record[1]);
 			r_record = mysql_fetch_row(r_results[tab_id-1]);		
-			if ((atol(l_getInsertRecord()) != atol(r_getInsertRecord())) ||
-				(atol(l_getUpdateRecord()) != atol(r_getUpdateRecord())) ||
+			if ((atol(l_record[0]) != atol(r_record[0])) ||
+				(atol(l_record[1]) != atol(r_record[1])) ||
 				(atol(l_record[2]) != atol(r_record[2]))) {
 				
 				printf("verify_database() Failed: in row %d, tab_id %d\n", i+1, tab_id);
-				printf("field 1:  %d =? %d\n", atol(l_getInsertRecord()), atol(r_getInsertRecord()));
-				printf("field 2:  %d =? %d\n", atol(l_getUpdateRecord()), atol(r_getUpdateRecord()));
+				printf("field 1:  %d =? %d\n", atol(l_record[0]), atol(r_record[0]));
+				printf("field 2:  %d =? %d\n", atol(l_record[1]), atol(r_record[1]));
 				printf("field 3:  %d =? %d\n", atol(l_record[2]), atol(r_record[2]));
 				goto done;
 			}
@@ -716,7 +716,7 @@ void TransTestWriterThread::generate_records()
 						mysql_data_seek(results, rand()%cnt);
 						record = mysql_fetch_row(results);
 							
-						blob_ref_id = atol(getInsertRecord());
+						blob_ref_id = atol(record[0]);
 						blob_id = atol(record[2]);
 						
 						sprintf(stmt, "DELETE FROM "REF_TABLE" WHERE blob_ref = %"PRIu64" AND blob_id = %"PRIu64"", tab_id, blob_ref_id, blob_id); 

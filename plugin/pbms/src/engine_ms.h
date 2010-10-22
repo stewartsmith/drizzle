@@ -32,14 +32,6 @@
 
 #include "defs_ms.h"
 
-#include "cslib/CSConfig.h"
-#include <inttypes.h>
-
-#include "cslib/CSGlobal.h"
-#include "cslib/CSSocket.h"
-#include "cslib/CSStrUtil.h"
-#include "cslib/CSHTTPStream.h"
-
 #include "pbms.h"
 class MSOpenTable;
 
@@ -85,6 +77,13 @@ public:
 	static bool couldBeURL(const char *url, size_t length);
 	
 	private:
+	static bool try_createBlob(CSThread *self, const char *db_name, const char *tab_name, char *blob, size_t blob_len, PBMSBlobURLPtr blob_url);
+	static bool try_referenceBlob(CSThread *self, const char *db_name, const char *tab_name, PBMSBlobURLPtr ret_blob_url, char *blob_url, uint16_t col_index);
+	static bool try_dereferenceBlob(CSThread *self, const char *db_name, const char *tab_name, char *blob_url);
+	static bool try_dropDatabase(CSThread *self, const char *db_name);
+	static bool try_dropTable(CSThread *self, const char *db_name, const char *tab_name);
+	static bool try_renameTable(CSThread *self, const char *from_db_name, const char *from_table, const char *to_db_name, const char *to_table);
+	
 	static MSOpenTable *openTable(const char *db_name, const char *tab_name, bool create);
 	static bool renameTable(const char *db_name, const char *from_table, const char *to_db_name, const char *to_table);
 	static void completeRenameTable(struct UnDoInfo *info, bool ok);

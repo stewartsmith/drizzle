@@ -27,22 +27,21 @@
  *
  */
 
-#include "config.h"
-
-#include "connection_handler_ms.h"
-#include "network_ms.h"
-#include "open_table_ms.h"
-#include "engine_ms.h"
-#include "version_ms.h"
-
 #include "cslib/CSConfig.h"
 #include <inttypes.h>
+
+#include "defs_ms.h"
 
 #include "cslib/CSGlobal.h"
 #include "cslib/CSSocket.h"
 #include "cslib/CSStrUtil.h"
 #include "cslib/CSHTTPStream.h"
 
+#include "connection_handler_ms.h"
+#include "network_ms.h"
+#include "open_table_ms.h"
+#include "engine_ms.h"
+#include "version_ms.h"
 
 //#include "mysql_ms.h"
 
@@ -451,7 +450,10 @@ void MSConnectionHandler::handlePut()
 	new_(metadata, CSStringBuffer(80));
 	push_(metadata);
 	
-	blob_len = iInputStream->getContentLength();
+	 if (! iInputStream->getContentLength(&blob_len)) {
+		CSException::throwException(CS_CONTEXT, CS_ERR_MISSING_HTTP_HEADER, "Missing content lenght header");
+	 }
+	 
 	
 	// Collect the meta data.
 	for (uint32_t i = 0; i < iInputStream->numHeaders(); i++) {

@@ -55,6 +55,7 @@ class SysTabRec: public CSRefStringBuffer {
 	// Methods used to read records
 	bool firstRecord();
 	bool nextRecord();
+	void resetRecord();
 		
 	uint8_t getInt1Field();	
 	uint32_t getInt4Field();	

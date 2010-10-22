@@ -37,13 +37,11 @@
 #ifndef __TEMPLOG_MS_H__
 #define __TEMPLOG_MS_H__
 
-#include "defs_ms.h"
-
 #include "cslib/CSDefs.h"
 #include "cslib/CSFile.h"
 #include "cslib/CSStream.h"
-#include "cslib/CSThread.h"
 
+#include "defs_ms.h"
 
 class MSOpenTable;
 class MSDatabase;
@@ -142,6 +140,8 @@ public:
 	virtual void *completeWork();
 
 private:
+	bool try_ReleaseBLOBReference(CSThread *self, CSStringBuffer *buffer, uint32_t tab_id, int type, uint64_t blob_id, uint32_t auth_code);
+
 	MSDatabase			*iTempLogDatabase;
 	MSTempLogFile		*iTempLogFile;
 	size_t				iLogRecSize;
