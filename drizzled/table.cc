@@ -1063,7 +1063,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
       (select_options & (OPTION_BIG_TABLES | SELECT_SMALL_RESULT)) == OPTION_BIG_TABLES)
   {
     table->getMutableShare()->storage_engine= myisam_engine;
-    table->cursor= table->getMutableShare()->db_type()->getCursor(*table->getMutableShare());
+    table->cursor= table->getMutableShare()->db_type()->getCursor(*table);
     if (group &&
 	(param->group_parts > table->cursor->getEngine()->max_key_parts() ||
 	 param->group_length > table->cursor->getEngine()->max_key_length()))
@@ -1074,7 +1074,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   else
   {
     table->getMutableShare()->storage_engine= heap_engine;
-    table->cursor= table->getMutableShare()->db_type()->getCursor(*table->getMutableShare());
+    table->cursor= table->getMutableShare()->db_type()->getCursor(*table);
   }
   if (! table->cursor)
     goto err;

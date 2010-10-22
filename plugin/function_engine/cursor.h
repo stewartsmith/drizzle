@@ -39,7 +39,7 @@ class FunctionCursor: public drizzled::Cursor
 
 public:
   FunctionCursor(drizzled::plugin::StorageEngine &engine,
-                 drizzled::TableShare &table_arg);
+                 drizzled::Table &table_arg);
   ~FunctionCursor() {}
 
   int open(const char *name, int mode, uint32_t test_if_locked);

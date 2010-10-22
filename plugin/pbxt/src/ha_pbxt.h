@@ -80,7 +80,7 @@ public:
 	/* override */ int close_connection(Session *);
 	/* override */ int commit(Session *, bool);
 	/* override */ int rollback(Session *, bool);
-	/* override */ Cursor *create(TableShare&);
+	/* override */ Cursor *create(Table&);
 	/* override */ void drop_database(char *);
 	/* override */ bool show_status(Session *, stat_print_fn *, enum ha_stat_type);
         /* override */ const char **bas_ext() const;
@@ -174,7 +174,7 @@ class ha_pbxt: public handler
 	THD					*pb_mysql_thd;			/* A pointer to the MySQL thread. */
 	xtBool				pb_in_stat;				/* TRUE of start_stmt() was issued */
 
-	ha_pbxt(plugin::StorageEngine &engine_arg, TableShare &table_arg);
+	ha_pbxt(plugin::StorageEngine &engine_arg, Table &table_arg);
 	virtual ~ha_pbxt() { }
 
 	/* The name that will be used for display purposes */

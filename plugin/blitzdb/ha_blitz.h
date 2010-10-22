@@ -301,7 +301,7 @@ private:
 
 public:
   ha_blitz(drizzled::plugin::StorageEngine &engine_arg,
-           drizzled::TableShare &table_arg);
+           drizzled::Table &table_arg);
   ~ha_blitz() {}
 
   /* TABLE CONTROL RELATED FUNCTIONS */

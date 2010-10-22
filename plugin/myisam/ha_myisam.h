@@ -34,7 +34,7 @@ class ha_myisam: public drizzled::Cursor
 
  public:
   ha_myisam(drizzled::plugin::StorageEngine &engine,
-            drizzled::TableShare &table_arg);
+            drizzled::Table &table_arg);
   ~ha_myisam() {}
   Cursor *clone(drizzled::memory::Root *mem_root);
   const char *index_type(uint32_t key_number);
