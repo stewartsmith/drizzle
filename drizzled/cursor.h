@@ -145,7 +145,6 @@ inline key_part_map make_prev_keypart_map(T a)
 */
 class Cursor
 {
-  TableShare &table_share;   /* The table definition */
 protected:
   Table *table;               /* The current open table */
 
@@ -159,9 +158,12 @@ public:
   unsigned char *ref;				/* Pointer to current row */
   unsigned char *dup_ref;			/* Pointer to duplicate row */
 
-  TableShare *getShare() const
+  TableShare *getShare();
+
+  Table *getTable() const
   {
-    return &table_share;
+    assert(table);
+    return table;
   }
 
   ha_statistics stats;

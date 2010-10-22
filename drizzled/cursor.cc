@@ -54,8 +54,8 @@ namespace drizzled
 ** General Cursor functions
 ****************************************************************************/
 Cursor::Cursor(plugin::StorageEngine &engine_arg,
-               TableShare &share_arg)
-  : table_share(share_arg), table(0),
+               TableShare&)
+  : table(0),
     estimation_rows_to_insert(0), engine(&engine_arg),
     ref(0),
     key_used_on_scan(MAX_KEY), active_index(MAX_KEY),
@@ -229,7 +229,6 @@ int Cursor::ha_open(const TableIdentifier &identifier,
   int error;
 
   table= table_arg;
-  assert(table->getShare() == &table_share);
 
   if ((error= doOpen(identifier, mode, test_if_locked)))
   {
@@ -1398,18 +1397,18 @@ int Cursor::ha_external_lock(Session *session, int lock_type)
   {
     if (lock_type == F_RDLCK)
     {
-      DRIZZLE_CURSOR_RDLOCK_START(table_share.getSchemaName(),
-                                  table_share.getTableName());
+      DRIZZLE_CURSOR_RDLOCK_START(getTable()->getShare()->getSchemaName(),
+                                  getTable()->getShare()->getTableName());
     }
     else if (lock_type == F_WRLCK)
     {
-      DRIZZLE_CURSOR_WRLOCK_START(table_share.getSchemaName(),
-                                  table_share.getTableName());
+      DRIZZLE_CURSOR_WRLOCK_START(getTable()->getShare()->getSchemaName(),
+                                  getTable()->getShare()->getTableName());
     }
     else if (lock_type == F_UNLCK)
     {
-      DRIZZLE_CURSOR_UNLOCK_START(table_share.getSchemaName(),
-                                  table_share.getTableName());
+      DRIZZLE_CURSOR_UNLOCK_START(getTable()->getShare()->getSchemaName(),
+                                  getTable()->getShare()->getTableName());
     }
   }
 
@@ -1475,7 +1474,7 @@ int Cursor::insertRecord(unsigned char *buf)
     table->timestamp_field->set_time();
   }
 
-  DRIZZLE_INSERT_ROW_START(table_share.getSchemaName(), table_share.getTableName());
+  DRIZZLE_INSERT_ROW_START(getTable()->getShare()->getSchemaName(), getTable()->getShare()->getTableName());
   setTransactionReadWrite();
   
   if (unlikely(plugin::EventObserver::beforeInsertRecord(*table, buf)))
@@ -1517,7 +1516,7 @@ int Cursor::updateRecord(const unsigned char *old_data, unsigned char *new_data)
    */
   assert(new_data == table->getInsertRecord());
 
-  DRIZZLE_UPDATE_ROW_START(table_share.getSchemaName(), table_share.getTableName());
+  DRIZZLE_UPDATE_ROW_START(getTable()->getShare()->getSchemaName(), getTable()->getShare()->getTableName());
   setTransactionReadWrite();
   if (unlikely(plugin::EventObserver::beforeUpdateRecord(*table, old_data, new_data)))
   {
@@ -1551,12 +1550,16 @@ int Cursor::updateRecord(const unsigned char *old_data, unsigned char *new_data)
 
   return 0;
 }
+TableShare *Cursor::getShare()
+{
+  return getTable()->getMutableShare();
+}
 
 int Cursor::deleteRecord(const unsigned char *buf)
 {
   int error;
 
-  DRIZZLE_DELETE_ROW_START(table_share.getSchemaName(), table_share.getTableName());
+  DRIZZLE_DELETE_ROW_START(getTable()->getShare()->getSchemaName(), getTable()->getShare()->getTableName());
   setTransactionReadWrite();
   if (unlikely(plugin::EventObserver::beforeDeleteRecord(*table, buf)))
   {
