@@ -474,7 +474,7 @@ uint64_t HailDBCursor::getHiddenPrimaryKeyInitialAutoIncrementValue()
 {
   uint64_t nr;
   ib_err_t err;
-  ib_trx_t transaction= *get_trx(table->in_use);
+  ib_trx_t transaction= *get_trx(getTable()->in_use);
   ib_cursor_attach_trx(cursor, transaction);
   tuple= ib_clust_read_tuple_create(cursor);
   err= ib_cursor_last(cursor);
@@ -485,7 +485,7 @@ uint64_t HailDBCursor::getHiddenPrimaryKeyInitialAutoIncrementValue()
   else
   {
     assert (err == DB_SUCCESS);
-    err= ib_tuple_read_u64(tuple, table->getShare()->fields, &nr);
+    err= ib_tuple_read_u64(tuple, getTable()->getShare()->fields, &nr);
     nr++;
   }
   ib_tuple_delete(tuple);
@@ -500,33 +500,33 @@ uint64_t HailDBCursor::getInitialAutoIncrementValue()
   int error;
 
   (void) extra(HA_EXTRA_KEYREAD);
-  table->mark_columns_used_by_index_no_reset(table->getShare()->next_number_index);
-  doStartIndexScan(table->getShare()->next_number_index, 1);
-  if (table->getShare()->next_number_keypart == 0)
+  getTable()->mark_columns_used_by_index_no_reset(getTable()->getShare()->next_number_index);
+  doStartIndexScan(getTable()->getShare()->next_number_index, 1);
+  if (getTable()->getShare()->next_number_keypart == 0)
   {						// Autoincrement at key-start
-    error=index_last(table->getUpdateRecord());
+    error=index_last(getTable()->getUpdateRecord());
   }
   else
   {
     unsigned char key[MAX_KEY_LENGTH];
-    key_copy(key, table->getInsertRecord(),
-             table->key_info + table->getShare()->next_number_index,
-             table->getShare()->next_number_key_offset);
-    error= index_read_map(table->getUpdateRecord(), key,
-                          make_prev_keypart_map(table->getShare()->next_number_keypart),
+    key_copy(key, getTable()->getInsertRecord(),
+             getTable()->key_info + getTable()->getShare()->next_number_index,
+             getTable()->getShare()->next_number_key_offset);
+    error= index_read_map(getTable()->getUpdateRecord(), key,
+                          make_prev_keypart_map(getTable()->getShare()->next_number_keypart),
                           HA_READ_PREFIX_LAST);
   }
 
   if (error)
     nr=1;
   else
-    nr= ((uint64_t) table->found_next_number_field->
-         val_int_offset(table->getShare()->rec_buff_length)+1);
+    nr= ((uint64_t) getTable()->found_next_number_field->
+         val_int_offset(getTable()->getShare()->rec_buff_length)+1);
   doEndIndexScan();
   (void) extra(HA_EXTRA_NO_KEYREAD);
 
-  if (table->getShare()->getTableProto()->options().auto_increment_value() > nr)
-    nr= table->getShare()->getTableProto()->options().auto_increment_value();
+  if (getTable()->getShare()->getTableProto()->options().auto_increment_value() > nr)
+    nr= getTable()->getShare()->getTableProto()->options().auto_increment_value();
 
   return nr;
 }
@@ -573,7 +573,7 @@ HailDBTableShare *HailDBCursor::get_share(const char *table_name, bool has_hidde
       return(NULL);
     }
 
-    if (table->found_next_number_field)
+    if (getTable()->found_next_number_field)
     {
       share->auto_increment_value.fetch_and_store(
                                   a_engine->getInitialAutoIncrementValue(this));
@@ -836,14 +836,14 @@ int HailDBCursor::open(const char *name, int, uint32_t)
   lock.init(&share->lock);
 
 
-  if (table->getShare()->getPrimaryKey() != MAX_KEY)
-    ref_length= table->key_info[table->getShare()->getPrimaryKey()].key_length;
+  if (getTable()->getShare()->getPrimaryKey() != MAX_KEY)
+    ref_length= getTable()->key_info[getTable()->getShare()->getPrimaryKey()].key_length;
   else if (share->has_hidden_primary_key)
     ref_length= sizeof(uint64_t);
   else
   {
-    unsigned int keynr= get_first_unique_index(*table);
-    ref_length= table->key_info[keynr].key_length;
+    unsigned int keynr= get_first_unique_index(*getTable());
+    ref_length= getTable()->key_info[keynr].key_length;
   }
 
   in_table_scan= false;
@@ -1872,7 +1872,7 @@ int HailDBCursor::doInsertRecord(unsigned char *record)
   ib_err_t err;
   int ret= 0;
 
-  ib_trx_t transaction= *get_trx(table->in_use);
+  ib_trx_t transaction= *get_trx(getTable()->in_use);
 
   tuple= ib_clust_read_tuple_create(cursor);
 
@@ -1898,7 +1898,7 @@ int HailDBCursor::doInsertRecord(unsigned char *record)
     err= ib_cursor_reset(cursor);
     storage_engine->doCommit(current_session, true);
     storage_engine->doStartTransaction(current_session, START_TRANS_NO_OPTIONS);
-    transaction= *get_trx(table->in_use);
+    transaction= *get_trx(getTable()->in_use);
     assert(err == DB_SUCCESS);
     ib_cursor_attach_trx(cursor, transaction);
     err= ib_cursor_first(cursor);
@@ -1907,13 +1907,13 @@ int HailDBCursor::doInsertRecord(unsigned char *record)
   assert(err == DB_SUCCESS || err == DB_END_OF_INDEX);
 
 
-  if (table->next_number_field)
+  if (getTable()->next_number_field)
   {
     update_auto_increment();
 
-    uint64_t temp_auto= table->next_number_field->val_int();
+    uint64_t temp_auto= getTable()->next_number_field->val_int();
 
-    if (temp_auto <= innobase_get_int_col_max_value(table->next_number_field))
+    if (temp_auto <= innobase_get_int_col_max_value(getTable()->next_number_field))
     {
       while (true)
       {
@@ -1935,11 +1935,11 @@ int HailDBCursor::doInsertRecord(unsigned char *record)
 
   }
 
-  write_row_to_haildb_tuple(table->getFields(), tuple);
+  write_row_to_haildb_tuple(getTable()->getFields(), tuple);
 
   if (share->has_hidden_primary_key)
   {
-    err= ib_tuple_write_u64(tuple, table->getShare()->fields, share->hidden_pkey_auto_increment_value.fetch_and_increment());
+    err= ib_tuple_write_u64(tuple, getTable()->getShare()->fields, share->hidden_pkey_auto_increment_value.fetch_and_increment());
   }
 
   err= ib_cursor_insert_row(cursor, tuple);
@@ -1948,13 +1948,13 @@ int HailDBCursor::doInsertRecord(unsigned char *record)
   {
     if (write_can_replace)
     {
-      store_key_value_from_haildb(table->key_info + table->getShare()->getPrimaryKey(),
+      store_key_value_from_haildb(getTable()->key_info + getTable()->getShare()->getPrimaryKey(),
                                   ref, ref_length, record);
 
       ib_tpl_t search_tuple= ib_clust_search_tuple_create(cursor);
 
       fill_ib_search_tpl_from_drizzle_key(search_tuple,
-                                          table->key_info + 0,
+                                          getTable()->key_info + 0,
                                           ref, ref_length);
 
       int res;
@@ -1968,7 +1968,7 @@ int HailDBCursor::doInsertRecord(unsigned char *record)
       err= ib_cursor_first(cursor);
       assert(err == DB_SUCCESS || err == DB_END_OF_INDEX);
 
-      write_row_to_haildb_tuple(table->getFields(), tuple);
+      write_row_to_haildb_tuple(getTable()->getFields(), tuple);
 
       err= ib_cursor_insert_row(cursor, tuple);
       assert(err==DB_SUCCESS); // probably be nice and process errors
@@ -1997,7 +1997,7 @@ int HailDBCursor::doUpdateRecord(const unsigned char *,
   err= ib_tuple_copy(update_tuple, tuple);
   assert(err == DB_SUCCESS);
 
-  write_row_to_haildb_tuple(table->getFields(), update_tuple);
+  write_row_to_haildb_tuple(getTable()->getFields(), update_tuple);
 
   err= ib_cursor_update_row(cursor, tuple, update_tuple);
 
@@ -2031,7 +2031,7 @@ int HailDBCursor::delete_all_rows(void)
      so only support TRUNCATE and not DELETE FROM t;
      (this is what ha_haildb does)
   */
-  if (session_sql_command(table->in_use) != SQLCOM_TRUNCATE)
+  if (session_sql_command(getTable()->in_use) != SQLCOM_TRUNCATE)
     return HA_ERR_WRONG_COMMAND;
 
   ib_id_t id;
@@ -2046,7 +2046,7 @@ int HailDBCursor::delete_all_rows(void)
   {
     ib_err_t rollback_err= ib_trx_rollback(transaction);
 
-    push_warning_printf(table->in_use, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+    push_warning_printf(getTable()->in_use, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                         ER_CANT_DELETE_FILE,
                         _("Cannot Lock HailDB Data Dictionary. HailDB Error %d (%s)\n"),
                         err, ib_strerror(err));
@@ -2087,7 +2087,7 @@ int HailDBCursor::doStartTableScan(bool)
     doEndTableScan();
   in_table_scan= true;
 
-  transaction= *get_trx(table->in_use);
+  transaction= *get_trx(getTable()->in_use);
 
   assert(transaction != NULL);
 
@@ -2206,7 +2206,7 @@ int HailDBCursor::rnd_next(unsigned char *buf)
     err= ib_cursor_next(cursor);
 
   tuple= ib_tuple_clear(tuple);
-  ret= read_row_from_haildb(buf, cursor, tuple, table,
+  ret= read_row_from_haildb(buf, cursor, tuple, getTable(),
                             share->has_hidden_primary_key,
                             &hidden_autoinc_pkey_position);
 
@@ -2241,13 +2241,13 @@ int HailDBCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
   else
   {
     unsigned int keynr;
-    if (table->getShare()->getPrimaryKey() != MAX_KEY)
-      keynr= table->getShare()->getPrimaryKey();
+    if (getTable()->getShare()->getPrimaryKey() != MAX_KEY)
+      keynr= getTable()->getShare()->getPrimaryKey();
     else
-      keynr= get_first_unique_index(*table);
+      keynr= get_first_unique_index(*getTable());
 
     fill_ib_search_tpl_from_drizzle_key(search_tuple,
-                                        table->key_info + keynr,
+                                        getTable()->key_info + keynr,
                                         pos, ref_length);
   }
 
@@ -2263,7 +2263,7 @@ int HailDBCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
   tuple= ib_tuple_clear(tuple);
 
   if (ret == 0)
-    ret= read_row_from_haildb(buf, cursor, tuple, table,
+    ret= read_row_from_haildb(buf, cursor, tuple, getTable(),
                               share->has_hidden_primary_key,
                               &hidden_autoinc_pkey_position);
 
@@ -2334,12 +2334,12 @@ void HailDBCursor::position(const unsigned char *record)
   else
   {
     unsigned int keynr;
-    if (table->getShare()->getPrimaryKey() != MAX_KEY)
-      keynr= table->getShare()->getPrimaryKey();
+    if (getTable()->getShare()->getPrimaryKey() != MAX_KEY)
+      keynr= getTable()->getShare()->getPrimaryKey();
     else
-      keynr= get_first_unique_index(*table);
+      keynr= get_first_unique_index(*getTable());
 
-    store_key_value_from_haildb(table->key_info + keynr,
+    store_key_value_from_haildb(getTable()->key_info + keynr,
                                 ref, ref_length, record);
   }
 
@@ -2385,7 +2385,7 @@ int HailDBCursor::info(uint32_t flag)
 
 int HailDBCursor::doStartIndexScan(uint32_t keynr, bool)
 {
-  ib_trx_t transaction= *get_trx(table->in_use);
+  ib_trx_t transaction= *get_trx(getTable()->in_use);
 
   active_index= keynr;
 
@@ -2547,7 +2547,7 @@ int HailDBCursor::haildb_index_read(unsigned char *buf,
     search_tuple= ib_sec_search_tuple_create(cursor);
 
   fill_ib_search_tpl_from_drizzle_key(search_tuple,
-                                      table->key_info + active_index,
+                                      getTable()->key_info + active_index,
                                       key_ptr, key_len);
 
   err= ib_cursor_moveto(cursor, search_tuple, search_mode, &res);
@@ -2555,7 +2555,7 @@ int HailDBCursor::haildb_index_read(unsigned char *buf,
 
   if ((err == DB_RECORD_NOT_FOUND || err == DB_END_OF_INDEX))
   {
-    table->status= STATUS_NOT_FOUND;
+    getTable()->status= STATUS_NOT_FOUND;
     return HA_ERR_KEY_NOT_FOUND;
   }
 
@@ -2565,14 +2565,14 @@ int HailDBCursor::haildb_index_read(unsigned char *buf,
   }
 
   tuple= ib_tuple_clear(tuple);
-  ret= read_row_from_haildb(buf, cursor, tuple, table,
+  ret= read_row_from_haildb(buf, cursor, tuple, getTable(),
                             share->has_hidden_primary_key,
                             &hidden_autoinc_pkey_position,
                             (allocate_blobs)? &blobroot : NULL);
   if (ret == 0)
-    table->status= 0;
+    getTable()->status= 0;
   else
-    table->status= STATUS_NOT_FOUND;
+    getTable()->status= STATUS_NOT_FOUND;
 
   advance_cursor= true;
 
@@ -2594,8 +2594,8 @@ uint32_t HailDBCursor::calculate_key_len(uint32_t key_position,
   /* works only with key prefixes */
   assert(((keypart_map_arg + 1) & keypart_map_arg) == 0);
 
-  KeyPartInfo *key_part_found= table->getShare()->getKeyInfo(key_position).key_part;
-  KeyPartInfo *end_key_part_found= key_part_found + table->getShare()->getKeyInfo(key_position).key_parts;
+  KeyPartInfo *key_part_found= getTable()->getShare()->getKeyInfo(key_position).key_part;
+  KeyPartInfo *end_key_part_found= key_part_found + getTable()->getShare()->getKeyInfo(key_position).key_parts;
   uint32_t length= 0;
 
   while (key_part_found < end_key_part_found && keypart_map_arg)
@@ -2654,7 +2654,7 @@ int HailDBCursor::index_next(unsigned char *buf)
   }
 
   tuple= ib_tuple_clear(tuple);
-  ret= read_row_from_haildb(buf, cursor, tuple, table,
+  ret= read_row_from_haildb(buf, cursor, tuple, getTable(),
                             share->has_hidden_primary_key,
                             &hidden_autoinc_pkey_position);
 
@@ -2687,7 +2687,7 @@ int HailDBCursor::index_prev(unsigned char *buf)
   }
 
   tuple= ib_tuple_clear(tuple);
-  ret= read_row_from_haildb(buf, cursor, tuple, table,
+  ret= read_row_from_haildb(buf, cursor, tuple, getTable(),
                             share->has_hidden_primary_key,
                             &hidden_autoinc_pkey_position);
 
@@ -2707,7 +2707,7 @@ int HailDBCursor::index_first(unsigned char *buf)
     return ib_err_t_to_drizzle_error(err);
 
   tuple= ib_tuple_clear(tuple);
-  ret= read_row_from_haildb(buf, cursor, tuple, table,
+  ret= read_row_from_haildb(buf, cursor, tuple, getTable(),
                             share->has_hidden_primary_key,
                             &hidden_autoinc_pkey_position);
 
@@ -2727,7 +2727,7 @@ int HailDBCursor::index_last(unsigned char *buf)
     return ib_err_t_to_drizzle_error(err);
 
   tuple= ib_tuple_clear(tuple);
-  ret= read_row_from_haildb(buf, cursor, tuple, table,
+  ret= read_row_from_haildb(buf, cursor, tuple, getTable(),
                             share->has_hidden_primary_key,
                             &hidden_autoinc_pkey_position);
   advance_cursor= true;

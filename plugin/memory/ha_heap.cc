@@ -185,9 +185,9 @@ int ha_heap::doOpen(const drizzled::TableIdentifier &identifier, int mode, uint3
     HP_SHARE *internal_share= NULL;
     message::Table create_proto;
 
-    if (not heap_storage_engine->heap_create_table(table->in_use,
+    if (not heap_storage_engine->heap_create_table(getTable()->in_use,
                                                    identifier.getPath().c_str(),
-                                                   table,
+                                                   getTable(),
                                                    internal_table,
                                                    create_proto,
                                                    &internal_share))
@@ -240,12 +240,12 @@ int ha_heap::close(void)
 
 Cursor *ha_heap::clone(memory::Root *)
 {
-  Cursor *new_handler= table->getMutableShare()->db_type()->getCursor(*table);
-  TableIdentifier identifier(table->getShare()->getSchemaName(),
-                             table->getShare()->getTableName(),
-                             table->getShare()->getPath());
+  Cursor *new_handler= getTable()->getMutableShare()->db_type()->getCursor(*getTable());
+  TableIdentifier identifier(getTable()->getShare()->getSchemaName(),
+                             getTable()->getShare()->getTableName(),
+                             getTable()->getShare()->getPath());
 
-  if (new_handler && !new_handler->ha_open(identifier, table, table->db_stat,
+  if (new_handler && !new_handler->ha_open(identifier, getTable(), getTable()->db_stat,
                                            HA_OPEN_IGNORE_IF_LOCKED))
     return new_handler;
   return NULL;
@@ -281,9 +281,9 @@ void ha_heap::set_keys_for_scanning(void)
 
 void ha_heap::update_key_stats()
 {
-  for (uint32_t i= 0; i < table->getShare()->sizeKeys(); i++)
+  for (uint32_t i= 0; i < getTable()->getShare()->sizeKeys(); i++)
   {
-    KeyInfo *key= &table->key_info[i];
+    KeyInfo *key= &getTable()->key_info[i];
 
     if (!key->rec_per_key)
       continue;
@@ -310,7 +310,7 @@ void ha_heap::update_key_stats()
 int ha_heap::doInsertRecord(unsigned char * buf)
 {
   int res;
-  if (table->next_number_field && buf == table->getInsertRecord())
+  if (getTable()->next_number_field && buf == getTable()->getInsertRecord())
   {
     if ((res= update_auto_increment()))
       return res;
@@ -350,7 +350,7 @@ int ha_heap::doDeleteRecord(const unsigned char * buf)
   int res;
 
   res= heap_delete(file,buf);
-  if (!res && table->getShare()->getType() == message::Table::STANDARD &&
+  if (!res && getTable()->getShare()->getType() == message::Table::STANDARD &&
       ++records_changed*MEMORY_STATS_UPDATE_THRESHOLD > file->getShare()->records)
   {
     /*
@@ -369,7 +369,7 @@ int ha_heap::index_read_map(unsigned char *buf, const unsigned char *key,
   assert(inited==INDEX);
   ha_statistic_increment(&system_status_var::ha_read_key_count);
   int error = heap_rkey(file,buf,active_index, key, keypart_map, find_flag);
-  table->status = error ? STATUS_NOT_FOUND : 0;
+  getTable()->status = error ? STATUS_NOT_FOUND : 0;
   return error;
 }
 
@@ -380,7 +380,7 @@ int ha_heap::index_read_last_map(unsigned char *buf, const unsigned char *key,
   ha_statistic_increment(&system_status_var::ha_read_key_count);
   int error= heap_rkey(file, buf, active_index, key, keypart_map,
 		       HA_READ_PREFIX_LAST);
-  table->status= error ? STATUS_NOT_FOUND : 0;
+  getTable()->status= error ? STATUS_NOT_FOUND : 0;
   return error;
 }
 
@@ -390,7 +390,7 @@ int ha_heap::index_read_idx_map(unsigned char *buf, uint32_t index, const unsign
 {
   ha_statistic_increment(&system_status_var::ha_read_key_count);
   int error = heap_rkey(file, buf, index, key, keypart_map, find_flag);
-  table->status = error ? STATUS_NOT_FOUND : 0;
+  getTable()->status = error ? STATUS_NOT_FOUND : 0;
   return error;
 }
 
@@ -399,7 +399,7 @@ int ha_heap::index_next(unsigned char * buf)
   assert(inited==INDEX);
   ha_statistic_increment(&system_status_var::ha_read_next_count);
   int error=heap_rnext(file,buf);
-  table->status=error ? STATUS_NOT_FOUND: 0;
+  getTable()->status=error ? STATUS_NOT_FOUND: 0;
   return error;
 }
 
@@ -408,7 +408,7 @@ int ha_heap::index_prev(unsigned char * buf)
   assert(inited==INDEX);
   ha_statistic_increment(&system_status_var::ha_read_prev_count);
   int error=heap_rprev(file,buf);
-  table->status=error ? STATUS_NOT_FOUND: 0;
+  getTable()->status=error ? STATUS_NOT_FOUND: 0;
   return error;
 }
 
@@ -417,7 +417,7 @@ int ha_heap::index_first(unsigned char * buf)
   assert(inited==INDEX);
   ha_statistic_increment(&system_status_var::ha_read_first_count);
   int error=heap_rfirst(file, buf, active_index);
-  table->status=error ? STATUS_NOT_FOUND: 0;
+  getTable()->status=error ? STATUS_NOT_FOUND: 0;
   return error;
 }
 
@@ -426,7 +426,7 @@ int ha_heap::index_last(unsigned char * buf)
   assert(inited==INDEX);
   ha_statistic_increment(&system_status_var::ha_read_last_count);
   int error=heap_rlast(file, buf, active_index);
-  table->status=error ? STATUS_NOT_FOUND: 0;
+  getTable()->status=error ? STATUS_NOT_FOUND: 0;
   return error;
 }
 
@@ -439,7 +439,7 @@ int ha_heap::rnd_next(unsigned char *buf)
 {
   ha_statistic_increment(&system_status_var::ha_read_rnd_next_count);
   int error=heap_scan(file, buf);
-  table->status=error ? STATUS_NOT_FOUND: 0;
+  getTable()->status=error ? STATUS_NOT_FOUND: 0;
   return error;
 }
 
@@ -450,7 +450,7 @@ int ha_heap::rnd_pos(unsigned char * buf, unsigned char *pos)
   ha_statistic_increment(&system_status_var::ha_read_rnd_count);
   memcpy(&heap_position, pos, sizeof(HEAP_PTR));
   error=heap_rrnd(file, buf, heap_position);
-  table->status=error ? STATUS_NOT_FOUND: 0;
+  getTable()->status=error ? STATUS_NOT_FOUND: 0;
   return error;
 }
 
@@ -499,7 +499,7 @@ int ha_heap::reset()
 int ha_heap::delete_all_rows()
 {
   heap_clear(file);
-  if (table->getShare()->getType() == message::Table::STANDARD)
+  if (getTable()->getShare()->getType() == message::Table::STANDARD)
   {
     /*
        We can perform this safely since only one writer at the time is
@@ -634,7 +634,7 @@ int HeapEngine::doRenameTable(Session &session, const TableIdentifier &from, con
 ha_rows ha_heap::records_in_range(uint32_t inx, key_range *min_key,
                                   key_range *max_key)
 {
-  KeyInfo *key= &table->key_info[inx];
+  KeyInfo *key= &getTable()->key_info[inx];
 
   if (!min_key || !max_key ||
       min_key->length != max_key->length ||

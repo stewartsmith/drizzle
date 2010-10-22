@@ -384,7 +384,7 @@ FilesystemTableShare *FilesystemCursor::get_share(const char *table_name)
       return NULL;
     }
 
-    share->format.parseFromTable(table->getShare()->getTableProto());
+    share->format.parseFromTable(getTable()->getShare()->getTableProto());
     if (!share->format.isFileGiven())
     {
       return NULL;
@@ -487,7 +487,7 @@ int FilesystemCursor::close(void)
 
 int FilesystemCursor::doStartTableScan(bool)
 {
-  sql_command_type = session_sql_command(table->getSession());
+  sql_command_type = session_sql_command(getTable()->getSession());
 
   if (thread_locked)
     critical_section_exit();
@@ -515,14 +515,14 @@ int FilesystemCursor::doStartTableScan(bool)
 
 int FilesystemCursor::find_current_row(unsigned char *buf)
 {
-  ptrdiff_t row_offset= buf - table->record[0];
+  ptrdiff_t row_offset= buf - getTable()->record[0];
 
   next_position= current_position;
 
   string content;
   bool line_done= false;
   bool line_blank= true;
-  Field **field= table->getFields();
+  Field **field= getTable()->getFields();
   for (; !line_done && *field; ++next_position)
   {
     char ch= file_buff->get_value(next_position);
@@ -616,8 +616,8 @@ int FilesystemCursor::rnd_next(unsigned char *buf)
     if (tag_depth >= share->vm.size())
       return HA_ERR_END_OF_FILE;
 
-    ptrdiff_t row_offset= buf - table->record[0];
-    for (Field **field= table->getFields(); *field; field++)
+    ptrdiff_t row_offset= buf - getTable()->record[0];
+    for (Field **field= getTable()->getFields(); *field; field++)
     {
       string key((*field)->field_name);
       string content= share->vm[tag_depth][key];
@@ -696,7 +696,7 @@ int FilesystemCursor::openUpdateFile()
 
 int FilesystemCursor::doEndTableScan()
 {
-  sql_command_type = session_sql_command(table->getSession());
+  sql_command_type = session_sql_command(getTable()->getSession());
 
   if (share->format.isTagFormat())
   {
@@ -784,7 +784,7 @@ void FilesystemCursor::recordToString(string& output)
 {
   bool first= true;
   drizzled::String attribute;
-  for (Field **field= table->getFields(); *field; ++field)
+  for (Field **field= getTable()->getFields(); *field; ++field)
   {
     if (first == true)
     {
@@ -817,7 +817,7 @@ int FilesystemCursor::doInsertRecord(unsigned char * buf)
   if (share->format.isTagFormat())
     return 0;
 
-  sql_command_type = session_sql_command(table->getSession());
+  sql_command_type = session_sql_command(getTable()->getSession());
 
   critical_section_enter();
 

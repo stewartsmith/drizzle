@@ -318,7 +318,7 @@ const char *ha_blackhole::index_type(uint32_t)
 
 int ha_blackhole::doInsertRecord(unsigned char *)
 {
-  return(table->next_number_field ? update_auto_increment() : 0);
+  return(getTable()->next_number_field ? update_auto_increment() : 0);
 }
 
 int ha_blackhole::doStartTableScan(bool)

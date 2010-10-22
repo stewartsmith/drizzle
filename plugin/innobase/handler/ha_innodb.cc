@@ -2897,8 +2897,8 @@ ha_innobase::innobase_initialize_autoinc()
   const char* col_name;
   ulint   error;
 
-  col_name = table->found_next_number_field->field_name;
-  index = innobase_get_index(table->getShare()->next_number_index);
+  col_name = getTable()->found_next_number_field->field_name;
+  index = innobase_get_index(getTable()->getShare()->next_number_index);
 
   /* Execute SELECT MAX(col_name) FROM TABLE; */
   error = row_search_max_autoinc(index, col_name, &auto_inc);
@@ -2956,7 +2956,7 @@ ha_innobase::doOpen(const TableIdentifier &identifier,
   UT_NOT_USED(mode);
   UT_NOT_USED(test_if_locked);
 
-  session= table->in_use;
+  session= getTable()->in_use;
 
   /* Under some cases Drizzle seems to call this function while
   holding btr_search_latch. This breaks the latching order as
@@ -2980,8 +2980,8 @@ ha_innobase::doOpen(const TableIdentifier &identifier,
   stored the string length as the first byte. */
 
   upd_and_key_val_buff_len =
-        table->getShare()->stored_rec_length
-        + table->getShare()->max_key_length
+        getTable()->getShare()->stored_rec_length
+        + getTable()->getShare()->max_key_length
         + MAX_REF_PARTS * 3;
 
   upd_buff.resize(upd_and_key_val_buff_len);
@@ -3044,13 +3044,13 @@ ha_innobase::doOpen(const TableIdentifier &identifier,
 
   prebuilt = row_create_prebuilt(ib_table);
 
-  prebuilt->mysql_row_len = table->getShare()->stored_rec_length;
-  prebuilt->default_rec = table->getDefaultValues();
+  prebuilt->mysql_row_len = getTable()->getShare()->stored_rec_length;
+  prebuilt->default_rec = getTable()->getDefaultValues();
   ut_ad(prebuilt->default_rec);
 
   /* Looks like MySQL-3.23 sometimes has primary key number != 0 */
 
-  primary_key = table->getShare()->getPrimaryKey();
+  primary_key = getTable()->getShare()->getPrimaryKey();
   key_used_on_scan = primary_key;
 
   /* Allocate a buffer for a 'row reference'. A row reference is
@@ -3073,7 +3073,7 @@ ha_innobase::doOpen(const TableIdentifier &identifier,
     save space, because all row reference buffers are allocated
     based on ref_length. */
 
-    ref_length = table->key_info[primary_key].key_length;
+    ref_length = getTable()->key_info[primary_key].key_length;
   } else {
     if (primary_key != MAX_KEY) {
       errmsg_printf(ERRMSG_LVL_ERROR, "Table %s has no primary key in InnoDB data "
@@ -3125,7 +3125,7 @@ ha_innobase::doOpen(const TableIdentifier &identifier,
   info(HA_STATUS_NO_LOCK | HA_STATUS_VARIABLE | HA_STATUS_CONST);
 
   /* Only if the table has an AUTOINC column. */
-  if (prebuilt->table != NULL && table->found_next_number_field != NULL) {
+  if (prebuilt->table != NULL && getTable()->found_next_number_field != NULL) {
     ulint error;
 
     dict_table_autoinc_lock(prebuilt->table);
@@ -3163,7 +3163,7 @@ ha_innobase::close(void)
 {
   Session*  session;
 
-  session= table->in_use;
+  session= getTable()->in_use;
   if (session != NULL) {
     getTransactionalEngine()->releaseTemporaryLatches(session);
   }
@@ -3444,7 +3444,7 @@ ha_innobase::store_key_val_for_row(
   uint    buff_len,/*!< in: buffer length */
   const unsigned char*  record)/*!< in: row in MySQL format */
 {
-  KeyInfo*    key_info  = &table->key_info[keynr];
+  KeyInfo*    key_info  = &getTable()->key_info[keynr];
   KeyPartInfo*  key_part  = key_info->key_part;
   KeyPartInfo*  end   = key_part + key_info->key_parts;
   char*   buff_start  = buff;
@@ -3520,7 +3520,7 @@ ha_innobase::store_key_val_for_row(
 
       data = row_mysql_read_true_varchar(&len,
         (byte*) (record
-        + (ulint)get_field_offset(table, field)),
+        + (ulint)get_field_offset(getTable(), field)),
         lenlen);
 
       true_len = len;
@@ -3583,12 +3583,12 @@ ha_innobase::store_key_val_for_row(
 
       blob_data = row_mysql_read_blob_ref(&blob_len,
         (byte*) (record
-        + (ulint)get_field_offset(table, field)),
+        + (ulint)get_field_offset(getTable(), field)),
           (ulint) field->pack_length());
 
       true_len = blob_len;
 
-      ut_a(get_field_offset(table, field)
+      ut_a(get_field_offset(getTable(), field)
         == key_part->offset);
 
       /* For multi byte character sets we need to calculate
@@ -4079,7 +4079,7 @@ no_commit:
   num_write_row++;
 
   /* This is the case where the table has an auto-increment column */
-  if (table->next_number_field && record == table->getInsertRecord()) {
+  if (getTable()->next_number_field && record == getTable()->getInsertRecord()) {
 
     /* Reset the error code before calling
     innobase_get_auto_increment(). */
@@ -4108,8 +4108,7 @@ no_commit:
     /* Build the template used in converting quickly between
     the two database formats */
 
-    build_template(prebuilt, NULL, table,
-             ROW_MYSQL_WHOLE_ROW);
+    build_template(prebuilt, NULL, getTable(), ROW_MYSQL_WHOLE_ROW);
   }
 
   innodb_srv_conc_enter_innodb(prebuilt->trx);
@@ -4133,10 +4132,9 @@ no_commit:
     /* We need the upper limit of the col type to check for
     whether we update the table autoinc counter or not. */
     col_max_value = innobase_get_int_col_max_value(
-      table->next_number_field);
-
+      getTable()->next_number_field); 
     /* Get the value that MySQL attempted to store in the table.*/
-    auto_inc = table->next_number_field->val_int();
+    auto_inc = getTable()->next_number_field->val_int();
 
     switch (error) {
     case DB_DUPLICATE_KEY:
@@ -4386,7 +4384,7 @@ ha_innobase::doUpdateRecord(
   /* Build an update vector from the modified fields in the rows
   (uses upd_buff of the handle) */
 
-  calc_row_difference(uvect, (unsigned char*) old_row, new_row, table,
+  calc_row_difference(uvect, (unsigned char*) old_row, new_row, getTable(),
       &upd_buff[0], (ulint)upd_and_key_val_buff_len,
       prebuilt, user_session);
 
@@ -4395,17 +4393,17 @@ ha_innobase::doUpdateRecord(
 
   ut_a(prebuilt->template_type == ROW_MYSQL_WHOLE_ROW);
 
-  if (table->found_next_number_field)
+  if (getTable()->found_next_number_field)
   {
     uint64_t  auto_inc;
     uint64_t  col_max_value;
 
-    auto_inc = table->found_next_number_field->val_int();
+    auto_inc = getTable()->found_next_number_field->val_int();
 
     /* We need the upper limit of the col type to check for
     whether we update the table autoinc counter or not. */
     col_max_value = innobase_get_int_col_max_value(
-      table->found_next_number_field);
+      getTable()->found_next_number_field);
 
     uint64_t current_autoinc;
     ulint autoinc_error= innobase_get_autoinc(&current_autoinc);
@@ -4442,8 +4440,8 @@ ha_innobase::doUpdateRecord(
   value used in the INSERT statement.*/
 
   if (error == DB_SUCCESS
-      && table->next_number_field
-      && new_row == table->getInsertRecord()
+      && getTable()->next_number_field
+      && new_row == getTable()->getInsertRecord()
       && session_sql_command(user_session) == SQLCOM_INSERT
       && (trx->duplicates & (TRX_DUP_IGNORE | TRX_DUP_REPLACE))
     == TRX_DUP_IGNORE)  {
@@ -4451,12 +4449,12 @@ ha_innobase::doUpdateRecord(
     uint64_t  auto_inc;
     uint64_t  col_max_value;
 
-    auto_inc = table->next_number_field->val_int();
+    auto_inc = getTable()->next_number_field->val_int();
 
     /* We need the upper limit of the col type to check for
     whether we update the table autoinc counter or not. */
     col_max_value = innobase_get_int_col_max_value(
-      table->next_number_field);
+      getTable()->next_number_field);
 
     if (auto_inc <= col_max_value && auto_inc != 0) {
 
@@ -4586,7 +4584,7 @@ void
 ha_innobase::try_semi_consistent_read(bool yes)
 /*===========================================*/
 {
-  ut_a(prebuilt->trx == session_to_trx(table->in_use));
+  ut_a(prebuilt->trx == session_to_trx(getTable()->in_use));
 
   /* Row read type is set to semi consistent read if this was
   requested by the MySQL and either innodb_locks_unsafe_for_binlog
@@ -4786,7 +4784,7 @@ ha_innobase::index_read(
   necessarily prebuilt->index, but can also be the clustered index */
 
   if (prebuilt->sql_stat_start) {
-    build_template(prebuilt, user_session, table,
+    build_template(prebuilt, user_session, getTable(),
              ROW_MYSQL_REC_FIELDS);
   }
 
@@ -4841,21 +4839,21 @@ ha_innobase::index_read(
   switch (ret) {
   case DB_SUCCESS:
     error = 0;
-    table->status = 0;
+    getTable()->status = 0;
     break;
   case DB_RECORD_NOT_FOUND:
     error = HA_ERR_KEY_NOT_FOUND;
-    table->status = STATUS_NOT_FOUND;
+    getTable()->status = STATUS_NOT_FOUND;
     break;
   case DB_END_OF_INDEX:
     error = HA_ERR_KEY_NOT_FOUND;
-    table->status = STATUS_NOT_FOUND;
+    getTable()->status = STATUS_NOT_FOUND;
     break;
   default:
     error = convert_error_code_to_mysql((int) ret,
                 prebuilt->table->flags,
                 user_session);
-    table->status = STATUS_NOT_FOUND;
+    getTable()->status = STATUS_NOT_FOUND;
     break;
   }
 
@@ -4897,10 +4895,10 @@ ha_innobase::innobase_get_index(
   ut_ad(user_session == table->in_use);
   ut_a(prebuilt->trx == session_to_trx(user_session));
 
-  if (keynr != MAX_KEY && table->getShare()->sizeKeys() > 0) 
+  if (keynr != MAX_KEY && getTable()->getShare()->sizeKeys() > 0) 
   {
     index = dict_table_get_index_on_name(prebuilt->table,
-                                         table->getShare()->getTableProto()->indexes(keynr).name().c_str());
+                                         getTable()->getShare()->getTableProto()->indexes(keynr).name().c_str());
   } else {
     index = dict_table_get_first_index(prebuilt->table);
   }
@@ -4909,7 +4907,7 @@ ha_innobase::innobase_get_index(
     errmsg_printf(ERRMSG_LVL_ERROR, 
       "Innodb could not find key n:o %u with name %s "
       "from dict cache for table %s",
-      keynr, table->getShare()->getTableProto()->indexes(keynr).name().c_str(),
+      keynr, getTable()->getShare()->getTableProto()->indexes(keynr).name().c_str(),
       prebuilt->table->name);
   }
 
@@ -4967,7 +4965,7 @@ ha_innobase::change_active_index(
   the flag ROW_MYSQL_WHOLE_ROW below, but that caused unnecessary
   copying. Starting from MySQL-4.1 we use a more efficient flag here. */
 
-  build_template(prebuilt, user_session, table, ROW_MYSQL_REC_FIELDS);
+  build_template(prebuilt, user_session, getTable(), ROW_MYSQL_REC_FIELDS);
 
   return(0);
 }
@@ -5027,20 +5025,20 @@ ha_innobase::general_fetch(
   switch (ret) {
   case DB_SUCCESS:
     error = 0;
-    table->status = 0;
+    getTable()->status = 0;
     break;
   case DB_RECORD_NOT_FOUND:
     error = HA_ERR_END_OF_FILE;
-    table->status = STATUS_NOT_FOUND;
+    getTable()->status = STATUS_NOT_FOUND;
     break;
   case DB_END_OF_INDEX:
     error = HA_ERR_END_OF_FILE;
-    table->status = STATUS_NOT_FOUND;
+    getTable()->status = STATUS_NOT_FOUND;
     break;
   default:
     error = convert_error_code_to_mysql(
       (int) ret, prebuilt->table->flags, user_session);
-    table->status = STATUS_NOT_FOUND;
+    getTable()->status = STATUS_NOT_FOUND;
     break;
   }
 
@@ -5235,7 +5233,7 @@ ha_innobase::rnd_pos(
 
   ha_statistic_increment(&system_status_var::ha_read_rnd_count);
 
-  ut_a(prebuilt->trx == session_to_trx(table->in_use));
+  ut_a(prebuilt->trx == session_to_trx(getTable()->in_use));
 
   if (prebuilt->clust_index_was_generated) {
     /* No primary key was defined for the table and we
@@ -5281,7 +5279,7 @@ ha_innobase::position(
 {
   uint    len;
 
-  ut_a(prebuilt->trx == session_to_trx(table->in_use));
+  ut_a(prebuilt->trx == session_to_trx(getTable()->in_use));
 
   if (prebuilt->clust_index_was_generated) {
     /* No primary key was defined for the table and we
@@ -5950,7 +5948,7 @@ ha_innobase::discard_or_import_tablespace(
 
   ut_a(prebuilt->trx);
   ut_a(prebuilt->trx->magic_n == TRX_MAGIC_N);
-  ut_a(prebuilt->trx == session_to_trx(table->in_use));
+  ut_a(prebuilt->trx == session_to_trx(getTable()->in_use));
 
   dict_table = prebuilt->table;
   trx = prebuilt->trx;
@@ -5979,7 +5977,7 @@ ha_innobase::delete_all_rows(void)
   /* Get the transaction associated with the current session, or create one
   if not yet created, and update prebuilt->trx */
 
-  update_session(table->in_use);
+  update_session(getTable()->in_use);
 
   if (session_sql_command(user_session) != SQLCOM_TRUNCATE) {
   fallback:
@@ -6321,10 +6319,10 @@ ha_innobase::records_in_range(
   KeyInfo*    key;
   dict_index_t* index;
   unsigned char*    key_val_buff2 = (unsigned char*) malloc(
-              table->getShare()->stored_rec_length
-          + table->getShare()->max_key_length + 100);
-  ulint   buff2_len = table->getShare()->stored_rec_length
-          + table->getShare()->max_key_length + 100;
+              getTable()->getShare()->stored_rec_length
+          + getTable()->getShare()->max_key_length + 100);
+  ulint   buff2_len = getTable()->getShare()->stored_rec_length
+          + getTable()->getShare()->max_key_length + 100;
   dtuple_t* range_start;
   dtuple_t* range_end;
   ib_int64_t  n_rows;
@@ -6332,7 +6330,7 @@ ha_innobase::records_in_range(
   ulint   mode2;
   mem_heap_t* heap;
 
-  ut_a(prebuilt->trx == session_to_trx(table->in_use));
+  ut_a(prebuilt->trx == session_to_trx(getTable()->in_use));
 
   prebuilt->trx->op_info = (char*)"estimating records in index range";
 
@@ -6343,9 +6341,9 @@ ha_innobase::records_in_range(
 
   active_index = keynr;
 
-  key = &table->key_info[active_index];
+  key = &getTable()->key_info[active_index];
 
-  index = dict_table_get_index_on_name(prebuilt->table, table->getShare()->getTableProto()->indexes(active_index).name().c_str());
+  index = dict_table_get_index_on_name(prebuilt->table, getTable()->getShare()->getTableProto()->indexes(active_index).name().c_str());
 
   /* MySQL knows about this index and so we must be able to find it.*/
   ut_a(index);
@@ -6427,7 +6425,7 @@ ha_innobase::estimate_rows_upper_bound(void)
   external_lock(). To be safe, update the session of the current table
   handle. */
 
-  update_session(table->in_use);
+  update_session(getTable()->in_use);
 
   prebuilt->trx->op_info = (char*)
          "calculating upper bound for table rows";
@@ -6491,7 +6489,7 @@ ha_innobase::read_time(
   ha_rows total_rows;
   double  time_for_scan;
 
-  if (index != table->getShare()->getPrimaryKey()) {
+  if (index != getTable()->getShare()->getPrimaryKey()) {
     /* Not clustered */
     return(Cursor::read_time(index, ranges, rows));
   }
@@ -6549,7 +6547,7 @@ ha_innobase::info(
   external_lock(). To be safe, update the session of the current table
   handle. */
 
-  update_session(table->in_use);
+  update_session(getTable()->in_use);
 
   /* In case MySQL calls this in the middle of a SELECT query, release
   possible adaptive hash latch to avoid deadlocks of threads */
@@ -6657,7 +6655,7 @@ ha_innobase::info(
 
         Session*  session;
 
-        session= table->in_use;
+        session= getTable()->in_use;
         assert(session);
 
         push_warning_printf(
@@ -6693,7 +6691,7 @@ ha_innobase::info(
       index = dict_table_get_next_index(index);
     }
 
-    for (i = 0; i < table->getShare()->sizeKeys(); i++) {
+    for (i = 0; i < getTable()->getShare()->sizeKeys(); i++) {
       if (index == NULL) {
         errmsg_printf(ERRMSG_LVL_ERROR, "Table %s contains fewer "
             "indexes inside InnoDB than "
@@ -6707,7 +6705,7 @@ ha_innobase::info(
         break;
       }
 
-      for (j = 0; j < table->key_info[i].key_parts; j++) {
+      for (j = 0; j < getTable()->key_info[i].key_parts; j++) {
 
         if (j + 1 > index->n_uniq) {
           errmsg_printf(ERRMSG_LVL_ERROR, 
@@ -6741,7 +6739,7 @@ ha_innobase::info(
           rec_per_key = 1;
         }
 
-        table->key_info[i].rec_per_key[j]=
+        getTable()->key_info[i].rec_per_key[j]=
           rec_per_key >= ~(ulong) 0 ? ~(ulong) 0 :
           (ulong) rec_per_key;
       }
@@ -6766,7 +6764,7 @@ ha_innobase::info(
     }
   }
 
-  if ((flag & HA_STATUS_AUTO) && table->found_next_number_field) {
+  if ((flag & HA_STATUS_AUTO) && getTable()->found_next_number_field) {
     stats.auto_increment_value = innobase_peek_autoinc();
   }
 
@@ -6810,7 +6808,7 @@ ha_innobase::check(
 {
   ulint   ret;
 
-  assert(session == table->in_use);
+  assert(session == getTable()->in_use);
   ut_a(prebuilt->trx);
   ut_a(prebuilt->trx->magic_n == TRX_MAGIC_N);
   ut_a(prebuilt->trx == session_to_trx(session));
@@ -6819,7 +6817,7 @@ ha_innobase::check(
     /* Build the template; we will use a dummy template
     in index scans done in checking */
 
-    build_template(prebuilt, NULL, table, ROW_MYSQL_WHOLE_ROW);
+    build_template(prebuilt, NULL, getTable(), ROW_MYSQL_WHOLE_ROW);
   }
 
   ret = row_check_table_for_mysql(prebuilt);
@@ -6858,7 +6856,7 @@ ha_innobase::update_table_comment(
     return((char*)comment); /* string too long */
   }
 
-  update_session(table->in_use);
+  update_session(getTable()->in_use);
 
   prebuilt->trx->op_info = (char*)"returning table comment";
 
@@ -6929,7 +6927,7 @@ ha_innobase::get_foreign_key_create_info(void)
   external_lock(). To be safe, update the session of the current table
   handle. */
 
-  update_session(table->in_use);
+  update_session(getTable()->in_use);
 
   prebuilt->trx->op_info = (char*)"getting info on foreign keys";
 
@@ -6978,7 +6976,7 @@ ha_innobase::get_foreign_key_list(Session *session, List<ForeignKeyInfo> *f_key_
   dict_foreign_t* foreign;
 
   ut_a(prebuilt != NULL);
-  update_session(table->in_use);
+  update_session(getTable()->in_use);
   prebuilt->trx->op_info = (char*)"getting list of foreign keys";
   trx_search_latch_release_if_reserved(prebuilt->trx);
   mutex_enter(&(dict_sys->mutex));
@@ -7116,7 +7114,7 @@ ha_innobase::can_switch_engines(void)
 {
   bool  can_switch;
 
-  ut_a(prebuilt->trx == session_to_trx(table->in_use));
+  ut_a(prebuilt->trx == session_to_trx(getTable()->in_use));
 
   prebuilt->trx->op_info =
       "determining if there are foreign key constraints";
@@ -7204,16 +7202,16 @@ ha_innobase::extra(
       either, because the calling threads may change.
       CAREFUL HERE, OR MEMORY CORRUPTION MAY OCCUR! */
     case HA_EXTRA_IGNORE_DUP_KEY:
-      session_to_trx(table->in_use)->duplicates |= TRX_DUP_IGNORE;
+      session_to_trx(getTable()->in_use)->duplicates |= TRX_DUP_IGNORE;
       break;
     case HA_EXTRA_WRITE_CAN_REPLACE:
-      session_to_trx(table->in_use)->duplicates |= TRX_DUP_REPLACE;
+      session_to_trx(getTable()->in_use)->duplicates |= TRX_DUP_REPLACE;
       break;
     case HA_EXTRA_WRITE_CANNOT_REPLACE:
-      session_to_trx(table->in_use)->duplicates &= ~TRX_DUP_REPLACE;
+      session_to_trx(getTable()->in_use)->duplicates &= ~TRX_DUP_REPLACE;
       break;
     case HA_EXTRA_NO_IGNORE_DUP_KEY:
-      session_to_trx(table->in_use)->duplicates &=
+      session_to_trx(getTable()->in_use)->duplicates &=
         ~(TRX_DUP_IGNORE | TRX_DUP_REPLACE);
       break;
     default:/* Do nothing */
@@ -7854,7 +7852,7 @@ ha_innobase::get_auto_increment(
   uint64_t  autoinc = 0;
 
   /* Prepare prebuilt->trx in the table handle */
-  update_session(table->in_use);
+  update_session(getTable()->in_use);
 
   error = innobase_get_autoinc(&autoinc);
 
@@ -7908,7 +7906,7 @@ ha_innobase::get_auto_increment(
     /* We need the upper limit of the col type to check for
     whether we update the table autoinc counter or not. */
     col_max_value = innobase_get_int_col_max_value(
-      table->next_number_field);
+      getTable()->next_number_field);
 
     current = *first_value > col_max_value ? autoinc : *first_value;
     need = *nb_reserved_values * increment;
@@ -7951,7 +7949,7 @@ ha_innobase::reset_auto_increment(
 {
   int error;
 
-  update_session(table->in_use);
+  update_session(getTable()->in_use);
 
   error = row_lock_table_autoinc_for_mysql(prebuilt);
 
@@ -8017,10 +8015,10 @@ ha_innobase::cmp_ref(
   /* Do a type-aware comparison of primary key fields. PK fields
   are always NOT NULL, so no checks for NULL are performed. */
 
-  key_part = table->key_info[table->getShare()->getPrimaryKey()].key_part;
+  key_part = getTable()->key_info[getTable()->getShare()->getPrimaryKey()].key_part;
 
   key_part_end = key_part
-      + table->key_info[table->getShare()->getPrimaryKey()].key_parts;
+      + getTable()->key_info[getTable()->getShare()->getPrimaryKey()].key_parts;
 
   for (; key_part != key_part_end; ++key_part) {
     field = key_part->field;

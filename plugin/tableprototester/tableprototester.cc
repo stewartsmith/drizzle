@@ -263,7 +263,7 @@ const char *TableProtoTesterCursor::index_type(uint32_t)
 
 int TableProtoTesterCursor::doInsertRecord(unsigned char *)
 {
-  return(table->next_number_field ? update_auto_increment() : 0);
+  return(getTable()->next_number_field ? update_auto_increment() : 0);
 }
 
 int TableProtoTesterCursor::doStartTableScan(bool)

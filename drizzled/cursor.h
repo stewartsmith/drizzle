@@ -146,7 +146,7 @@ inline key_part_map make_prev_keypart_map(T a)
 class Cursor
 {
 protected:
-  Table *table;               /* The current open table */
+  Table &table;               /* The current open table */
 
   ha_rows estimation_rows_to_insert;
   plugin::StorageEngine &engine;      /* storage engine of this Cursor */
@@ -162,8 +162,7 @@ public:
 
   Table *getTable() const
   {
-    assert(table);
-    return table;
+    return &table;
   }
 
   ha_statistics stats;

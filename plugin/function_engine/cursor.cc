@@ -67,7 +67,7 @@ int FunctionCursor::close(void)
 int FunctionCursor::doStartTableScan(bool)
 {
   rows_returned= 0;
-  generator= tool->generator(table->getFields());
+  generator= tool->generator(getTable()->getFields());
 
   return 0;
 }
@@ -79,12 +79,12 @@ int FunctionCursor::rnd_next(unsigned char *)
   ha_statistic_increment(&system_status_var::ha_read_rnd_next_count);
 
   /* Fix bug in the debug logic for field */
-  for (Field **field= table->getFields() ; *field ; field++)
+  for (Field **field= getTable()->getFields() ; *field ; field++)
   {
     (*field)->setWriteSet();
   }
 
-  more_rows= generator->sub_populate(table->getShare()->sizeFields());
+  more_rows= generator->sub_populate(getTable()->getShare()->sizeFields());
 
   if (more_rows)
   {
@@ -102,11 +102,11 @@ int FunctionCursor::rnd_next(unsigned char *)
 
 void FunctionCursor::position(const unsigned char *record)
 {
-  if (row_cache.size() <= record_id * table->getShare()->getRecordLength())
+  if (row_cache.size() <= record_id * getTable()->getShare()->getRecordLength())
   {
-    row_cache.resize(row_cache.size() + table->getShare()->getRecordLength() * 100); // Hardwired at adding an additional 100 rows of storage
+    row_cache.resize(row_cache.size() + getTable()->getShare()->getRecordLength() * 100); // Hardwired at adding an additional 100 rows of storage
   }
-  memcpy(&row_cache[record_id * table->getShare()->getRecordLength()], record, table->getShare()->getRecordLength());
+  memcpy(&row_cache[record_id * getTable()->getShare()->getRecordLength()], record, getTable()->getShare()->getRecordLength());
   internal::my_store_ptr(ref, ref_length, record_id);
   record_id++;
 }
@@ -151,8 +151,8 @@ int FunctionCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
   ha_statistic_increment(&system_status_var::ha_read_rnd_count);
   size_t position_id= (size_t)internal::my_get_ptr(pos, ref_length);
 
-  assert(position_id * table->getShare()->getRecordLength() < row_cache.size());
-  memcpy(buf, &row_cache[position_id * table->getShare()->getRecordLength()], table->getShare()->getRecordLength());
+  assert(position_id * getTable()->getShare()->getRecordLength() < row_cache.size());
+  memcpy(buf, &row_cache[position_id * getTable()->getShare()->getRecordLength()], getTable()->getShare()->getRecordLength());
 
   return 0;
 }
