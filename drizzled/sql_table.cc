@@ -2060,7 +2060,6 @@ bool mysql_create_like_table(Session* session,
                              bool is_if_not_exists,
                              bool is_engine_set)
 {
-  char *db= table->db;
   char *table_name= table->table_name;
   bool res= true;
   uint32_t not_used;
@@ -2091,7 +2090,7 @@ bool mysql_create_like_table(Session* session,
   bool table_exists= false;
   if (destination_identifier.isTmp())
   {
-    if (session->find_temporary_table(db, table_name))
+    if (session->find_temporary_table(destination_identifier))
     {
       table_exists= true;
     }
