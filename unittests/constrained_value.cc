@@ -1,7 +1,7 @@
-/* - mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2010 Monty Taylor
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,33 +18,40 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_UTIL_FUNCTORS_H
-#define DRIZZLED_UTIL_FUNCTORS_H
+#include "config.h"
 
-namespace drizzled
+#include <string>
+
+#include <gtest/gtest.h>
+
+#include <drizzled/constrained_value.h>
+#include <boost/lexical_cast.hpp>
+
+using namespace drizzled;
+
+namespace po= boost::program_options;
+
+TEST(constrained_value, raw_usage)
 {
+  constrained_check<uint64_t,1024,1,10> val(1);
 
-class DeletePtr
+  EXPECT_EQ(UINT64_C(1), (uint64_t)val);
+
+  ASSERT_THROW(val= 1025 , po::validation_error);
+  ASSERT_THROW(val= 0 , po::validation_error);
+
+  val= 25;
+
+  EXPECT_EQ(20, (uint64_t)val);
+}
+
+TEST(constrained_value, lexical_cast_usage)
 {
-public:
-  template<typename T>
-  inline void operator()(const T *ptr) const
-  {
-    delete ptr;
-  }
-};
+  constrained_check<uint64_t,1024,1,10> val(1);
 
-class SafeDeletePtr
-{
-public:
-  template<typename T>
-  inline void operator()(const T *ptr) const
-  {
-    if (ptr)
-			delete ptr;
-  }
-};
+  std::string string_val= boost::lexical_cast<std::string>(val);
 
-} /* namespace drizzled */
+  EXPECT_EQ(std::string("1"), string_val);
+}
 
-#endif /* DRIZZLED_UTIL_FUNCTORS_H */
+

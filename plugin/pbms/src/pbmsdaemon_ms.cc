@@ -59,6 +59,6 @@ void PBMSDaemon::setDaemonState(DaemonState state)
 	pbd_state = state;
 	
 	if (pbd_state == DaemonStartUp) { // In theory we could allow this to be set with a commandline option.
-		cs_make_absolute_path(PATH_MAX, pbd_home_dir, "pbms", ms_my_get_mysql_home_path().c_str()); 
+		cs_make_absolute_path(PATH_MAX, pbd_home_dir, "pbms", ms_my_get_mysql_home_path()); 
 	}
 }
