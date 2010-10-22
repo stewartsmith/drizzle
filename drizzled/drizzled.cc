@@ -1376,8 +1376,8 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   po::value<size_t>(&global_system_variables.sortbuff_size)->default_value(MAX_SORT_MEMORY)->notifier(&check_limits_sort_buffer_size),
   N_("Each thread that needs to do a sort allocates a buffer of this size."))
   ("sort-heap-threshold",
-  po::value<uint64_t>()->default_value(MAX_SORT_MEMORY*10),
-  N_("A global cap on the amount of memory that can be allocated by session sort buffers"))
+  po::value<uint64_t>()->default_value(0),
+  N_("A global cap on the amount of memory that can be allocated by session sort buffers (0 means unlimited)"))
   ("table-definition-cache", po::value<size_t>(&table_def_size)->default_value(128)->notifier(&check_limits_tdc),
   N_("The number of cached table definitions."))
   ("table-open-cache", po::value<uint64_t>(&table_cache_size)->default_value(TABLE_OPEN_CACHE_DEFAULT)->notifier(&check_limits_toc),
@@ -2223,6 +2223,14 @@ static void get_options()
 
   if (vm.count("sort-heap-threshold"))
   {
+    if ((vm["sort-heap-threshold"].as<size_t>() > 0) and
+      (vm["sort-heap-threshold"].as<size_t>() < 
+      global_system_variables.sortbuff_size))
+    {
+      cout << N_("Error: sort-heap-threshold cannot be less than sort-buffer-size") << endl;
+      exit(-1);
+    }
+
     global_sort_buffer.setMaxSize(vm["sort-heap-threshold"].as<uint64_t>());
   }
 

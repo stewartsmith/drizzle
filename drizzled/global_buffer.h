@@ -28,12 +28,17 @@ template <class T>
 class global_buffer_constraint
 {
 public:
-  global_buffer_constraint(T max) :
-    max_size(max)
-  {  }
+  global_buffer_constraint(T max)
+  {
+    setMaxSize(max); 
+  }
 
   T getMaxSize() const { return max_size; }
-  void setMaxSize(T new_size) { max_size= new_size; }
+  void setMaxSize(T new_size) 
+  {
+    if (new_size == 0) new_size = std::numeric_limits<T>::max(); 
+    max_size= new_size;
+  }
 
   bool add(T addition)
   {
