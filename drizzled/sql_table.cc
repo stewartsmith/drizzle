@@ -160,8 +160,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
 
   for (table= tables; table; table= table->next_local)
   {
-    char *db= table->db;
-    TableIdentifier tmp_identifier(table->db, table->table_name);
+    TableIdentifier tmp_identifier(table->getSchemaName(), table->table_name);
 
     error= session->drop_temporary_table(tmp_identifier);
 
@@ -197,7 +196,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
         goto err_with_placeholders;
       }
     }
-    TableIdentifier identifier(db, table->table_name, table->getInternalTmpTable() ? message::Table::INTERNAL : message::Table::STANDARD);
+    TableIdentifier identifier(table->getSchemaName(), table->table_name, table->getInternalTmpTable() ? message::Table::INTERNAL : message::Table::STANDARD);
 
     if (drop_temporary || not plugin::StorageEngine::doesTableExist(*session, identifier))
     {
@@ -229,7 +228,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
     if (error == 0 || (if_exists && foreign_key_error == false))
     {
       TransactionServices &transaction_services= TransactionServices::singleton();
-      transaction_services.dropTable(session, string(db), string(table->table_name), if_exists);
+      transaction_services.dropTable(session, string(table->getSchemaName()), string(table->table_name), if_exists);
     }
 
     if (error)
@@ -1759,10 +1758,9 @@ static bool mysql_admin_table(Session* session, TableList* tables,
   for (table= tables; table; table= table->next_local)
   {
     char table_name[NAME_LEN*2+2];
-    char* db = table->db;
     bool fatal_error=0;
 
-    snprintf(table_name, sizeof(table_name), "%s.%s",db,table->table_name);
+    snprintf(table_name, sizeof(table_name), "%s.%s", table->getSchemaName(),table->table_name);
     table->lock_type= lock_type;
     /* open only one table from local list of command */
     {

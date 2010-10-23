@@ -371,8 +371,8 @@ static int rm_table_part2(Session *session, TableList *tables)
 
   for (table= tables; table; table= table->next_local)
   {
-    char *db=table->db;
-    TableIdentifier identifier(table->db, table->table_name);
+    const char *db=table->getSchemaName();
+    TableIdentifier identifier(table->getSchemaName(), table->table_name);
 
     plugin::StorageEngine *table_type;
 
@@ -514,8 +514,8 @@ static long drop_tables_via_filenames(Session *session,
     if (not table_list)
       return -1;
 
-    table_list->db= (char*) (table_list+1);
-    table_list->table_name= strcpy(table_list->db, schema_identifier.getSchemaName().c_str()) + db_len + 1;
+    table_list->setSchemaName((char*) (table_list+1));
+    table_list->table_name= strcpy((char*) (table_list+1), schema_identifier.getSchemaName().c_str()) + db_len + 1;
     TableIdentifier::filename_to_tablename((*it).getTableName().c_str(), table_list->table_name, (*it).getTableName().size() + 1);
     table_list->alias= table_list->table_name;  // If lower_case_table_names=2
     table_list->setInternalTmpTable((strncmp((*it).getTableName().c_str(),

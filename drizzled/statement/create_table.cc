@@ -80,9 +80,9 @@ bool statement::CreateTable::execute()
   TableList *create_table= session->lex->unlink_first_table(&link_to_local);
   TableList *select_tables= session->lex->query_tables;
 
-  drizzled::message::init(create_table_message, create_table_message.name(), create_table->db, create_info.db_type->getName());
+  drizzled::message::init(create_table_message, create_table_message.name(), create_table->getSchemaName(), create_info.db_type->getName());
 
-  TableIdentifier new_table_identifier(create_table->db,
+  TableIdentifier new_table_identifier(create_table->getSchemaName(),
                                        create_table->table_name,
                                        create_table_message.type());
 

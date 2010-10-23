@@ -128,7 +128,26 @@ public:
   /** link in a global list of all queries tables */
   TableList *next_global; 
   TableList **prev_global;
+
+private:
   char *db;
+
+public:
+  const char *getSchemaName()
+  {
+    return db;
+  }
+
+  char **getSchemaNamePtr()
+  {
+    return &db;
+  }
+
+  void setSchemaName(char *arg)
+  {
+    db= arg;
+  }
+
   const char *alias;
   char *table_name;
   char *option; ///< Used by cache index

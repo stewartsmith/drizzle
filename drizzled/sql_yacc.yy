@@ -2125,8 +2125,7 @@ alter:
               DRIZZLE_YYABORT;
             lex->col_list.empty();
             lex->select_lex.init_order();
-            lex->select_lex.db=
-              ((TableList*) lex->select_lex.table_list.first)->db;
+            lex->select_lex.db= const_cast<char *>(((TableList*) lex->select_lex.table_list.first)->getSchemaName());
             statement->alter_info.build_method= $2;
           }
           alter_commands
@@ -5821,7 +5820,7 @@ field_ident:
           {
             TableList *table=
               reinterpret_cast<TableList*>(Lex->current_select->table_list.first);
-            if (my_strcasecmp(table_alias_charset, $1.str, table->db))
+            if (my_strcasecmp(table_alias_charset, $1.str, table->getSchemaName()))
             {
               my_error(ER_WRONG_DB_NAME, MYF(0), $1.str);
               DRIZZLE_YYABORT;

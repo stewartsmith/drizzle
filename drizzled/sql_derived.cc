@@ -149,7 +149,7 @@ exit:
       orig_table_list->table_name=        const_cast<char *>(table->getShare()->getTableName());
       orig_table_list->table_name_length= table->getShare()->getTableNameSize();
       table->derived_select_number= first_select->select_number;
-      orig_table_list->db= (char *)"";
+      orig_table_list->setSchemaName((char *)"");
       orig_table_list->db_length= 0;
       /* Force read of table stats in the optimizer */
       table->cursor->info(HA_STATUS_VARIABLE);

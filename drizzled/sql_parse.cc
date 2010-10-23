@@ -911,7 +911,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
 					                     List<Index_hint> *index_hints_arg,
                                          LEX_STRING *option)
 {
-  register TableList *ptr;
+  TableList *ptr;
   TableList *previous_table_ref; /* The table preceding the current one. */
   char *alias_str;
   LEX *lex= session->lex;
@@ -956,10 +956,10 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   if (table->db.str)
   {
     ptr->setIsFqtn(true);
-    ptr->db= table->db.str;
+    ptr->setSchemaName(table->db.str);
     ptr->db_length= table->db.length;
   }
-  else if (lex->copy_db_to(&ptr->db, &ptr->db_length))
+  else if (lex->copy_db_to(ptr->getSchemaNamePtr(), &ptr->db_length))
     return NULL;
   else
     ptr->setIsFqtn(false);
@@ -986,7 +986,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
 	 tables=tables->next_local)
     {
       if (!my_strcasecmp(table_alias_charset, alias_str, tables->alias) &&
-	  !strcasecmp(ptr->db, tables->db))
+	  !strcasecmp(ptr->getSchemaName(), tables->getSchemaName()))
       {
 	my_error(ER_NONUNIQ_TABLE, MYF(0), alias_str);
 	return NULL;

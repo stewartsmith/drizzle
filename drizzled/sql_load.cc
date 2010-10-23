@@ -130,14 +130,15 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
   String *field_term=ex->field_term,*escaped=ex->escaped;
   String *enclosed=ex->enclosed;
   bool is_fifo=0;
-  char *db= table_list->db;			// This is never null
-  assert(db);
+
+  assert(table_list->getSchemaName()); // This should never be null
+
   /*
     If path for cursor is not defined, we will use the current database.
     If this is not set, we will use the directory where the table to be
     loaded is located
   */
-  const char *tdb= session->db.empty() ? db  : session->db.c_str();		// Result is never null
+  const char *tdb= session->db.empty() ? table_list->getSchemaName()  : session->db.c_str();		// Result is never null
   assert(tdb);
   uint32_t skip_lines= ex->skip_lines;
   bool transactional_table;
