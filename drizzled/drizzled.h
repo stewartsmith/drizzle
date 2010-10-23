@@ -49,6 +49,7 @@ extern passwd *user_info;
 extern char *drizzled_user;
 
 extern global_buffer_constraint<uint64_t> global_sort_buffer;
+extern global_buffer_constraint<uint64_t> global_join_buffer;
 
 extern const char * const DRIZZLE_CONFIG_NAME;
 

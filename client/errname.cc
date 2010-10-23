@@ -736,6 +736,7 @@ ErrorCodes::ErrorCodes()
     { "ER_EVENT_OBSERVER_PLUGIN", 1700},
     { "ER_CORRUPT_SCHEMA_DEFINITION", 1701},
     { "ER_OUT_OF_GLOBAL_SORTMEMORY", 1702},
+    { "ER_OUT_OF_GLOBAL_JOINMEMORY", 1703},
     { 0, 0 }
   };
 

@@ -352,7 +352,8 @@ passwd *user_info;
 
 atomic<uint32_t> connection_count;
 
-global_buffer_constraint<uint64_t> global_sort_buffer(MAX_SORT_MEMORY * 10);
+global_buffer_constraint<uint64_t> global_sort_buffer(0);
+global_buffer_constraint<uint64_t> global_join_buffer(0);
 
 /** 
   Refresh value. We use to test this to find out if a refresh even has happened recently.
@@ -1312,6 +1313,9 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   N_("The maximum length of the result of function  group_concat."))
   ("join-buffer-size", po::value<uint64_t>(&global_system_variables.join_buff_size)->default_value(128*1024L)->notifier(&check_limits_join_buffer_size),
   N_("The size of the buffer that is used for full joins."))
+  ("join-heap-threshold",
+  po::value<uint64_t>()->default_value(0),
+  N_("A global cap on the amount of memory that can be allocated by session join buffers (0 means unlimited)"))
   ("max-allowed-packet", po::value<uint32_t>(&global_system_variables.max_allowed_packet)->default_value(1024*1024L)->notifier(&check_limits_map),
   N_("Max packetlength to send/receive from to server."))
   ("max-connect-errors", po::value<uint64_t>(&max_connect_errors)->default_value(MAX_CONNECT_ERRORS)->notifier(&check_limits_mce),
@@ -2232,6 +2236,19 @@ static void get_options()
     }
 
     global_sort_buffer.setMaxSize(vm["sort-heap-threshold"].as<uint64_t>());
+  }
+
+  if (vm.count("join-heap-threshold"))
+  {
+    if ((vm["join-heap-threshold"].as<size_t>() > 0) and
+      (vm["join-heap-threshold"].as<size_t>() <
+      global_system_variables.join_buff_size))
+    {
+      cout << N_("Error: join-heap-threshold cannot be less than join-buffer-size") << endl;
+      exit(-1);
+    }
+
+    global_join_buffer.setMaxSize(vm["join-heap-threshold"].as<uint64_t>());
   }
 
   if (vm.count("exit-info"))
