@@ -935,9 +935,9 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         subselect_end select_var_list select_var_list_init opt_len
         opt_extended_describe
         statement
+        execute
         opt_field_or_var_spec fields_or_vars opt_load_data_set_spec
         init_key_options key_options key_opts key_opt key_using_alg
-        execute
 END_OF_INPUT
 
 %type <index_hint> index_hint_type
@@ -4470,26 +4470,30 @@ opt_temporary:
   */
 
 execute:
-       EXECUTE_SYM
+       EXECUTE_SYM execute_var_or_string
        {
-          LEX *lex= Lex;
-          statement::Execute *statement= new(std::nothrow) statement::Execute(YYSession);
-          lex->statement= statement;
-          if (lex->statement == NULL)
-            DRIZZLE_YYABORT;
        }
-       execute_var_or_string
 
 
 execute_var_or_string:
          ident_or_text
          {
-          statement::Execute *statement= (statement::Execute *)Lex->statement;
-          statement->setQuery($1);
+            LEX *lex= Lex;
+            statement::Execute *statement= new(std::nothrow) statement::Execute(YYSession);
+            lex->statement= statement;
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
+
+            statement->setQuery($1);
          }
         | '@' ident_or_text
         {
-          statement::Execute *statement= (statement::Execute *)Lex->statement;
+          LEX *lex= Lex;
+          statement::Execute *statement= new(std::nothrow) statement::Execute(YYSession);
+          lex->statement= statement;
+          if (lex->statement == NULL)
+            DRIZZLE_YYABORT;
+
           statement->setVar();
           statement->setQuery($2);
         }
