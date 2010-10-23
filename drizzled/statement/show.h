@@ -18,10 +18,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_SELECT_H
-#define DRIZZLED_STATEMENT_SELECT_H
+#ifndef DRIZZLED_STATEMENT_SHOW_H
+#define DRIZZLED_STATEMENT_SHOW_H
 
-#include <drizzled/statement.h>
+#include <drizzled/statement/select.h>
 
 namespace drizzled
 {
@@ -30,12 +30,50 @@ class Session;
 namespace statement
 {
 
-class Select : public Statement
+class Show : public Select
 {
+  /* These will move out once we have args for table functions */
+  std::string show_schema;
+  std::string show_table;
+  bool if_exists;
+
 public:
-  Select(Session *in_session) :
-    Statement(in_session)
+  Show(Session *in_session)
+    :
+      Select(in_session),
+      if_exists(false)
   {}
+
+  void setShowPredicate(const std::string &schema_arg, const std::string &table_arg)
+  {
+    show_schema= schema_arg;
+    show_table= table_arg;
+  }
+
+  void setShowPredicate(const std::string &schema_arg)
+  {
+    show_schema= schema_arg;
+  }
+
+  void setShowExists(bool arg)
+  {
+    if_exists= arg;
+  }
+
+  bool getShowExists()
+  {
+    return if_exists;
+  }
+
+  const std::string getShowSchema()
+  {
+    return show_schema;
+  }
+
+  const std::string getShowTable()
+  {
+    return show_table;
+  }
 
   bool execute();
 };
@@ -43,4 +81,4 @@ public:
 } /* namespace statement */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_STATEMENT_SELECT_H */
+#endif /* DRIZZLED_STATEMENT_SHOW_H */

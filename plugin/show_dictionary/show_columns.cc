@@ -57,7 +57,7 @@ ShowColumns::Generator::Generator(Field **arg) :
   is_columns_primed(false),
   column_iterator(0)
 {
-  statement::Select *select= static_cast<statement::Select *>(getSession().lex->statement);
+  statement::Show *select= static_cast<statement::Show *>(getSession().lex->statement);
 
   if (not select->getShowTable().empty() && not select->getShowSchema().empty())
   {

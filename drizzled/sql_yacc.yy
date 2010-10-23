@@ -4800,7 +4800,7 @@ show_param:
 
              lex->sql_command= SQLCOM_SELECT;
              lex->statement=
-               new(std::nothrow) statement::Select(session);
+               new(std::nothrow) statement::Show(session);
              if (lex->statement == NULL)
                DRIZZLE_YYABORT;
 
@@ -4840,8 +4840,8 @@ show_param:
 
              lex->sql_command= SQLCOM_SELECT;
 
-             statement::Select *select=
-               new(std::nothrow) statement::Select(YYSession);
+             statement::Show *select=
+               new(std::nothrow) statement::Show(YYSession);
 
              lex->statement= select;
 
@@ -4900,8 +4900,8 @@ show_param:
 
              lex->sql_command= SQLCOM_SELECT;
 
-             statement::Select *select=
-               new(std::nothrow) statement::Select(YYSession);
+             statement::Show *select=
+               new(std::nothrow) statement::Show(YYSession);
 
              lex->statement= select;
 
@@ -4923,8 +4923,8 @@ show_param:
            {
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SELECT;
-             statement::Select *select=
-               new(std::nothrow) statement::Select(YYSession);
+             statement::Show *select=
+               new(std::nothrow) statement::Show(YYSession);
 
              lex->statement= select;
 
@@ -4965,11 +4965,11 @@ show_param:
           {
              LEX *lex= Lex;
              Session *session= YYSession;
-             statement::Select *select;
+             statement::Show *select;
 
              lex->sql_command= SQLCOM_SELECT;
 
-             select= new(std::nothrow) statement::Select(session);
+             select= new(std::nothrow) statement::Show(session);
 
              lex->statement= select;
 
@@ -5007,11 +5007,11 @@ show_param:
           {
              LEX *lex= Lex;
              Session *session= YYSession;
-             statement::Select *select;
+             statement::Show *select;
 
              lex->sql_command= SQLCOM_SELECT;
 
-             select= new(std::nothrow) statement::Select(session);
+             select= new(std::nothrow) statement::Show(session);
 
              lex->statement= select;
 
@@ -5048,7 +5048,7 @@ show_param:
           {
             (void) create_select_for_variable("warning_count");
             LEX *lex= Lex;
-            lex->statement= new(std::nothrow) statement::Select(YYSession);
+            lex->statement= new(std::nothrow) statement::Show(YYSession);
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
           }
@@ -5056,7 +5056,7 @@ show_param:
           {
             (void) create_select_for_variable("error_count");
             LEX *lex= Lex;
-            lex->statement= new(std::nothrow) statement::Select(YYSession);
+            lex->statement= new(std::nothrow) statement::Show(YYSession);
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
           }
@@ -5079,7 +5079,7 @@ show_param:
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SELECT;
              lex->statement=
-               new(std::nothrow) statement::Select(YYSession);
+               new(std::nothrow) statement::Show(YYSession);
              if (lex->statement == NULL)
                DRIZZLE_YYABORT;
 
@@ -5117,8 +5117,8 @@ show_param:
            {
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SELECT;
-             statement::Select *select=
-               new(std::nothrow) statement::Select(YYSession);
+             statement::Show *select=
+               new(std::nothrow) statement::Show(YYSession);
 
              lex->statement= select;
 
@@ -5158,7 +5158,7 @@ show_param:
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SELECT;
              lex->statement=
-               new(std::nothrow) statement::Select(YYSession);
+               new(std::nothrow) statement::Show(YYSession);
              if (lex->statement == NULL)
                DRIZZLE_YYABORT;
 
@@ -5179,7 +5179,7 @@ show_param:
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SELECT;
              lex->statement=
-               new(std::nothrow) statement::Select(YYSession);
+               new(std::nothrow) statement::Show(YYSession);
              if (lex->statement == NULL)
                DRIZZLE_YYABORT;
 
@@ -5217,8 +5217,8 @@ show_param:
            {
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SELECT;
-             statement::Select *select=
-               new(std::nothrow) statement::Select(YYSession);
+             statement::Show *select=
+               new(std::nothrow) statement::Show(YYSession);
 
              lex->statement= select;
 
@@ -5285,13 +5285,13 @@ describe:
           describe_command table_ident
           {
             Session *session= YYSession;
-            statement::Select *select;
+            statement::Show *select;
             LEX *lex= Lex;
             lex->lock_option= TL_READ;
             mysql_init_select(lex);
             lex->current_select->parsing_place= SELECT_LIST;
             lex->sql_command= SQLCOM_SELECT;
-            select= new(std::nothrow) statement::Select(session);
+            select= new(std::nothrow) statement::Show(session);
             lex->statement= select;
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;

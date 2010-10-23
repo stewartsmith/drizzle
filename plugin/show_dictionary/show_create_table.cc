@@ -40,7 +40,7 @@ ShowCreateTable::Generator::Generator(Field **arg) :
   plugin::TableFunction::Generator(arg),
   is_primed(false)
 {
-  statement::Select *select= static_cast<statement::Select *>(getSession().lex->statement);
+  statement::Show *select= static_cast<statement::Show *>(getSession().lex->statement);
 
   if (not select->getShowTable().empty() && not select->getShowSchema().empty())
   {
