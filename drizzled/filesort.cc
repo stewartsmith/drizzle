@@ -1026,41 +1026,59 @@ static bool save_index(SORTPARAM *param, unsigned char **sort_keys, uint32_t cou
 int merge_many_buff(SORTPARAM *param, unsigned char *sort_buffer,
 		    buffpek *buffpek_inst, uint32_t *maxbuffer, internal::IO_CACHE *t_file)
 {
-  register uint32_t i;
   internal::IO_CACHE t_file2,*from_file,*to_file,*temp;
   buffpek *lastbuff;
 
   if (*maxbuffer < MERGEBUFF2)
-    return(0);
+    return 0;
   if (flush_io_cache(t_file) ||
-      open_cached_file(&t_file2,drizzle_tmpdir.c_str(),TEMP_PREFIX,DISK_BUFFER_SIZE,
-			MYF(MY_WME)))
-    return(1);
+      open_cached_file(&t_file2,drizzle_tmpdir.c_str(),TEMP_PREFIX,DISK_BUFFER_SIZE, MYF(MY_WME)))
+  {
+    return 1;
+  }
 
   from_file= t_file ; to_file= &t_file2;
   while (*maxbuffer >= MERGEBUFF2)
   {
+    register uint32_t i;
+
     if (reinit_io_cache(from_file,internal::READ_CACHE,0L,0,0))
-      goto cleanup;
+    {
+      break;
+    }
+
     if (reinit_io_cache(to_file,internal::WRITE_CACHE,0L,0,0))
-      goto cleanup;
+    {
+      break;
+    }
+
     lastbuff=buffpek_inst;
     for (i=0 ; i <= *maxbuffer-MERGEBUFF*3/2 ; i+=MERGEBUFF)
     {
       if (merge_buffers(param,from_file,to_file,sort_buffer,lastbuff++,
 			buffpek_inst+i,buffpek_inst+i+MERGEBUFF-1,0))
-      goto cleanup;
+      {
+        goto cleanup;
+      }
     }
+
     if (merge_buffers(param,from_file,to_file,sort_buffer,lastbuff++,
 		      buffpek_inst+i,buffpek_inst+ *maxbuffer,0))
+    {
       break;
+    }
+
     if (flush_io_cache(to_file))
+    {
       break;
+    }
+
     temp=from_file; from_file=to_file; to_file=temp;
     setup_io_cache(from_file);
     setup_io_cache(to_file);
     *maxbuffer= (uint32_t) (lastbuff-buffpek_inst)-1;
   }
+
 cleanup:
   close_cached_file(to_file);			// This holds old result
   if (to_file == t_file)
@@ -1191,7 +1209,8 @@ int merge_buffers(SORTPARAM *param, internal::IO_CACHE *from_file,
     strpos+= (uint32_t) (error= (int) read_to_buffer(from_file, buffpek_inst,
                                                                          rec_length));
     if (error == -1)
-      goto err;
+      return -1;
+
     buffpek_inst->max_keys= buffpek_inst->mem_count;	// If less data in buffers than expected
     queue.push(buffpek_inst);
   }
@@ -1210,7 +1229,7 @@ int merge_buffers(SORTPARAM *param, internal::IO_CACHE *from_file,
     memcpy(param->unique_buff, buffpek_inst->key, rec_length);
     if (my_b_write(to_file, (unsigned char*) buffpek_inst->key, rec_length))
     {
-      error=1; goto err;
+      return 1;
     }
     buffpek_inst->key+= rec_length;
     buffpek_inst->mem_count--;
@@ -1224,13 +1243,15 @@ int merge_buffers(SORTPARAM *param, internal::IO_CACHE *from_file,
     queue.push(buffpek_inst);
   }
   else
+  {
     cmp= 0;                                        // Not unique
+  }
 
   while (queue.size() > 1)
   {
     if (*killed)
     {
-      error= 1; goto err;
+      return 1;
     }
     for (;;)
     {
@@ -1246,14 +1267,14 @@ int merge_buffers(SORTPARAM *param, internal::IO_CACHE *from_file,
       {
         if (my_b_write(to_file,(unsigned char*) buffpek_inst->key, rec_length))
         {
-          error=1; goto err;
+          return 1;
         }
       }
       else
       {
         if (my_b_write(to_file, (unsigned char*) buffpek_inst->key+offset, res_length))
         {
-          error=1; goto err;
+          return 1;
         }
       }
       if (!--max_rows)
@@ -1273,7 +1294,9 @@ int merge_buffers(SORTPARAM *param, internal::IO_CACHE *from_file,
           break;                        /* One buffer have been removed */
         }
         else if (error == -1)
-          goto err;
+        {
+          return -1;
+        }
       }
       /* Top element has been replaced */
       queue.pop();
@@ -1310,7 +1333,7 @@ int merge_buffers(SORTPARAM *param, internal::IO_CACHE *from_file,
       if (my_b_write(to_file,(unsigned char*) buffpek_inst->key,
                      (rec_length*buffpek_inst->mem_count)))
       {
-        error= 1; goto err;
+        return 1;
       }
     }
     else
@@ -1323,19 +1346,20 @@ int merge_buffers(SORTPARAM *param, internal::IO_CACHE *from_file,
       {
         if (my_b_write(to_file, (unsigned char *) strpos, res_length))
         {
-          error=1; goto err;
+          return 1;
         }
       }
     }
   }
+
   while ((error=(int) read_to_buffer(from_file,buffpek_inst, rec_length))
          != -1 && error != 0);
 
 end:
   lastbuff->count= min(org_max_rows-max_rows, param->max_rows);
   lastbuff->file_pos= to_start_filepos;
-err:
-  return(error);
+
+  return error;
 } /* merge_buffers */
 
 
