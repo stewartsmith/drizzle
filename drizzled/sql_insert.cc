@@ -276,7 +276,15 @@ bool mysql_insert(Session *session,TableList *table_list,
                            false,
                            (fields.elements || !value_count ||
                             (0) != 0), !ignore))
-    goto abort;
+  {
+    if (table != NULL)
+      table->cursor->ha_release_auto_increment();
+    if (!joins_freed)
+      free_underlaid_joins(session, &session->lex->select_lex);
+    session->abort_on_warning= 0;
+    DRIZZLE_INSERT_DONE(1, 0);
+    return true;
+  }
 
   /* mysql_prepare_insert set table_list->table if it was not set */
   table= table_list->table;
@@ -307,10 +315,26 @@ bool mysql_insert(Session *session,TableList *table_list,
     if (values->elements != value_count)
     {
       my_error(ER_WRONG_VALUE_COUNT_ON_ROW, MYF(0), counter);
-      goto abort;
+
+      if (table != NULL)
+        table->cursor->ha_release_auto_increment();
+      if (!joins_freed)
+        free_underlaid_joins(session, &session->lex->select_lex);
+      session->abort_on_warning= 0;
+      DRIZZLE_INSERT_DONE(1, 0);
+
+      return true;
     }
     if (setup_fields(session, 0, *values, MARK_COLUMNS_READ, 0, 0))
-      goto abort;
+    {
+      if (table != NULL)
+        table->cursor->ha_release_auto_increment();
+      if (!joins_freed)
+        free_underlaid_joins(session, &session->lex->select_lex);
+      session->abort_on_warning= 0;
+      DRIZZLE_INSERT_DONE(1, 0);
+      return true;
+    }
   }
   its.rewind ();
 
@@ -454,7 +478,16 @@ bool mysql_insert(Session *session,TableList *table_list,
     table->cursor->extra(HA_EXTRA_WRITE_CANNOT_REPLACE);
 
   if (error)
-    goto abort;
+  {
+    if (table != NULL)
+      table->cursor->ha_release_auto_increment();
+    if (!joins_freed)
+      free_underlaid_joins(session, &session->lex->select_lex);
+    session->abort_on_warning= 0;
+    DRIZZLE_INSERT_DONE(1, 0);
+    return true;
+  }
+
   if (values_list.elements == 1 && (!(session->options & OPTION_WARNINGS) ||
 				    !session->cuted_fields))
   {
@@ -478,16 +511,8 @@ bool mysql_insert(Session *session,TableList *table_list,
   session->status_var.inserted_row_count+= session->row_count_func;
   session->abort_on_warning= 0;
   DRIZZLE_INSERT_DONE(0, session->row_count_func);
-  return false;
 
-abort:
-  if (table != NULL)
-    table->cursor->ha_release_auto_increment();
-  if (!joins_freed)
-    free_underlaid_joins(session, &session->lex->select_lex);
-  session->abort_on_warning= 0;
-  DRIZZLE_INSERT_DONE(1, 0);
-  return true;
+  return false;
 }
 
 
