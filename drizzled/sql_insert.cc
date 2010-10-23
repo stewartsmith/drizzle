@@ -1600,14 +1600,25 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
       if (not identifier.isTmp())
       {
         LOCK_open.lock(); /* CREATE TABLE... has found that the table already exists for insert and is adapting to use it */
-        if (session->reopen_name_locked_table(create_table))
+
+        if (create_table->table)
         {
-          quick_rm_table(*session, identifier);
+          table::Concurrent *concurrent_table= dynamic_cast<table::Concurrent *>(create_table->table);
+
+          if (concurrent_table->reopen_name_locked_table(create_table, session))
+          {
+            quick_rm_table(*session, identifier);
+          }
+          else
+          {
+            table= create_table->table;
+          }
         }
         else
         {
-          table= create_table->table;
+          quick_rm_table(*session, identifier);
         }
+
         LOCK_open.unlock();
       }
       else

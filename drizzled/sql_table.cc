@@ -1440,10 +1440,10 @@ bool mysql_create_table_no_lock(Session *session,
 
   /* Build a Table object to pass down to the engine, and the do the actual create. */
   if (not mysql_prepare_create_table(session, create_info, table_proto, alter_info,
-                                 internal_tmp_table,
-                                 &db_options,
-                                 &key_info_buffer, &key_count,
-                                 select_field_count))
+                                     internal_tmp_table,
+                                     &db_options,
+                                     &key_info_buffer, &key_count,
+                                     select_field_count))
   {
     boost_unique_lock_t lock(LOCK_open); /* CREATE TABLE (some confussion on naming, double check) */
     error= locked_create_event(session,

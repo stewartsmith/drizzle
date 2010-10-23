@@ -192,10 +192,6 @@ public:
 };
 
 static UnusedTables unused_tables;
-static int open_unireg_entry(Session *session,
-                             Table *entry,
-                             const char *alias,
-                             TableIdentifier &identifier);
 
 unsigned char *table_cache_key(const unsigned char *record,
                                size_t *length,
@@ -969,18 +965,18 @@ void Session::wait_for_condition(boost::mutex &mutex, boost::condition_variable_
   true  - Error
 */
 
-bool Session::reopen_name_locked_table(TableList* table_list)
+bool table::Concurrent::reopen_name_locked_table(TableList* table_list, Session *session)
 {
-  Table *table= table_list->table;
+  table::Concurrent *table= this;
   char *table_name= table_list->table_name;
 
   safe_mutex_assert_owner(LOCK_open.native_handle());
 
-  if (killed || not table)
+  if (session->killed)
     return true;
 
   TableIdentifier identifier(table_list->db, table_list->table_name);
-  if (open_unireg_entry(this, table, table_name, identifier))
+  if (table->open_unireg_entry(session, table_name, identifier))
   {
     table->intern_close_table();
     return true;
@@ -995,9 +991,9 @@ bool Session::reopen_name_locked_table(TableList* table_list)
     before we will get table-level lock on this table.
   */
   table->getMutableShare()->resetVersion();
-  table->in_use = this;
+  table->in_use = session;
 
-  table->tablenr= current_tablenr++;
+  table->tablenr= session->current_tablenr++;
   table->used_fields= 0;
   table->const_table= 0;
   table->null_row= false;
@@ -1383,7 +1379,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
             return NULL;
           }
 
-          error= open_unireg_entry(this, new_table, alias, identifier);
+          error= new_table->open_unireg_entry(this, alias, identifier);
           if (error != 0)
           {
             delete new_table;
@@ -1852,10 +1848,9 @@ void abort_locked_tables(Session *session, const drizzled::TableIdentifier &iden
 #	Error
 */
 
-static int open_unireg_entry(Session *session,
-                             Table *entry,
-                             const char *alias,
-                             TableIdentifier &identifier)
+int table::Concurrent::open_unireg_entry(Session *session,
+                                         const char *alias,
+                                         TableIdentifier &identifier)
 {
   int error;
   TableSharePtr share;
@@ -1875,7 +1870,7 @@ retry:
                                                           HA_OPEN_RNDFILE |
                                                           HA_GET_INDEX |
                                                           HA_TRY_READ_ONLY),
-                                              session->open_options, *entry)))
+                                              session->open_options, *this)))
   {
     if (error == 7)                             // Table def changed
     {
