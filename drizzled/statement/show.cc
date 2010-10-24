@@ -1,7 +1,7 @@
-/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Brian Aker
+ *  Copyright (C) 2009 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,34 +18,21 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SHOW_DICTIONARY_SHOW_TEMPORARY_TABLES_H
-#define PLUGIN_SHOW_DICTIONARY_SHOW_TEMPORARY_TABLES_H
+#include "config.h"
+#include <drizzled/session.h>
+#include <drizzled/statement/show.h>
 
-class ShowTemporaryTables : public show_dictionary::Show
+namespace drizzled
 {
-public:
-  ShowTemporaryTables();
 
-  class Generator : public show_dictionary::Show::Generator
-  {
-    drizzled::Session &session;
-    drizzled::Table *table;
+bool statement::Show::execute()
+{
+  TableList *all_tables= session->lex->query_tables;
+  session->status_var.last_query_cost= 0.0;
+  bool res= execute_sqlcom_select(session, all_tables);
 
-    void fill();
+  return res;
+}
 
-    bool checkSchema();
+} /* namespace drizzled */
 
-  public:
-    Generator(drizzled::Field **arg);
-
-    bool populate();
-
-  };
-
-  Generator *generator(drizzled::Field **arg)
-  {
-    return new Generator(arg);
-  }
-};
-
-#endif /* PLUGIN_SHOW_DICTIONARY_SHOW_TEMPORARY_TABLES_H */
