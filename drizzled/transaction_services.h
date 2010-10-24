@@ -407,6 +407,8 @@ public:
                                       plugin::XaResourceManager *resource_manager);
 
   uint64_t getCurrentTransactionId(Session *session);
+
+  void allocateNewTransactionId(Session *session);
  
   /**
    * DEBUG ONLY.  See plugin::TransactionLog::truncate()

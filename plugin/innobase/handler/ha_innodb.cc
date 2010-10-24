@@ -5800,6 +5800,8 @@ InnobaseEngine::doCreateTable(
                           lex_identified_temp_table ? name2 : NULL,
                           iflags);
 
+  session.setXaId((ib_uint64_t) ut_conv_dulint_to_longlong(trx->id));
+
   if (error) {
     goto cleanup;
   }

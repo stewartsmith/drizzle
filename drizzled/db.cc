@@ -130,7 +130,7 @@ bool mysql_create_db(Session *session, const message::Schema &schema_message, co
         session->my_ok();
       }
     }
-    else if (not plugin::StorageEngine::createSchema(schema_message)) // Try to create it 
+    else if (not plugin::StorageEngine::createSchema(schema_message, *session)) // Try to create it 
     {
       my_error(ER_CANT_CREATE_DB, MYF(0), schema_message.name().c_str(), errno);
       error= true;

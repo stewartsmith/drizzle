@@ -440,6 +440,12 @@ void TransactionServices::registerResourceForTransaction(Session *session,
     registerResourceForStatement(session, monitored, engine, resource_manager);
 }
 
+void TransactionServices::allocateNewTransactionId(Session *session)
+{
+  uint64_t xa_id= xa_storage_engine->getNewTransactionId(session);
+  session->setXaId(xa_id);
+}
+
 uint64_t TransactionServices::getCurrentTransactionId(Session *session)
 {
   TransactionContext *trans= &session->transaction.stmt;
@@ -467,7 +473,7 @@ uint64_t TransactionServices::getCurrentTransactionId(Session *session)
         }
       }
   }
-  return 0;
+  return session->getXaId();
 }
 
 /**
@@ -1009,6 +1015,8 @@ void TransactionServices::initTransactionMessage(message::Transaction &in_transa
 
   if (should_inc_trx_id)
     trx->set_transaction_id(getCurrentTransactionId(in_session));
+  else 
+    trx->set_transaction_id(0);
 
   trx->set_start_timestamp(in_session->getCurrentTimestamp());
 }
