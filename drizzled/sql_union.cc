@@ -361,9 +361,9 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
                                           create_options, ""))
       goto err;
     memset(&result_table_list, 0, sizeof(result_table_list));
-    result_table_list.db= (char*) "";
+    result_table_list.setSchemaName((char*) "");
     result_table_list.alias= "union";
-    result_table_list.table_name= (char *) "union";
+    result_table_list.setTableName((char *) "union");
     result_table_list.table= table= union_result->table;
 
     session_arg->lex->current_select= lex_select_save;

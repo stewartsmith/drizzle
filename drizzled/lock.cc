@@ -682,7 +682,7 @@ static DrizzleLock *get_lock_data(Session *session, Table **table_ptr, uint32_t 
 
 static int lock_table_name(Session *session, TableList *table_list)
 {
-  TableIdentifier identifier(table_list->db, table_list->table_name);
+  TableIdentifier identifier(table_list->getSchemaName(), table_list->getTableName());
   const TableIdentifier::Key &key(identifier.getKey());
 
   {

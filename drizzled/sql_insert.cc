@@ -1504,11 +1504,11 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
       create_info->table_existed= 1;		// Mark that table existed
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                           ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
-                          create_table->table_name);
+                          create_table->getTableName());
       return create_table->table;
     }
 
-    my_error(ER_TABLE_EXISTS_ERROR, MYF(0), create_table->table_name);
+    my_error(ER_TABLE_EXISTS_ERROR, MYF(0), create_table->getTableName());
     return NULL;
   }
 
@@ -1593,7 +1593,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
           or it was created via different mysqld front-end to the
           cluster. We don't have much options but throw an error.
         */
-        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), create_table->table_name);
+        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), create_table->getTableName());
         return NULL;
       }
 

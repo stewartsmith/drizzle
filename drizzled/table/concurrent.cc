@@ -61,15 +61,13 @@ namespace table
 
 bool Concurrent::reopen_name_locked_table(TableList* table_list, Session *session)
 {
-  char *table_name= table_list->table_name;
-
   safe_mutex_assert_owner(LOCK_open.native_handle());
 
   if (session->killed)
     return true;
 
-  TableIdentifier identifier(table_list->db, table_list->table_name);
-  if (open_unireg_entry(session, table_name, identifier))
+  TableIdentifier identifier(table_list->getSchemaName(), table_list->getTableName());
+  if (open_unireg_entry(session, table_list->getTableName(), identifier))
   {
     intern_close_table();
     return true;

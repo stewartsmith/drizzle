@@ -128,9 +128,47 @@ public:
   /** link in a global list of all queries tables */
   TableList *next_global; 
   TableList **prev_global;
+
+private:
   char *db;
+
+public:
+  const char *getSchemaName()
+  {
+    return db;
+  }
+
+  char **getSchemaNamePtr()
+  {
+    return &db;
+  }
+
+  void setSchemaName(char *arg)
+  {
+    db= arg;
+  }
+
   const char *alias;
+
+private:
   char *table_name;
+
+public:
+  const char *getTableName()
+  {
+    return table_name;
+  }
+
+  char **getTableNamePtr()
+  {
+    return &table_name;
+  }
+
+  void setTableName(char *arg)
+  {
+    table_name= arg;
+  }
+
   char *option; ///< Used by cache index
   Item *on_expr; ///< Used with outer join
   Table *table; ///< opened table

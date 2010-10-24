@@ -371,8 +371,8 @@ static int rm_table_part2(Session *session, TableList *tables)
 
   for (table= tables; table; table= table->next_local)
   {
-    char *db=table->db;
-    TableIdentifier identifier(table->db, table->table_name);
+    const char *db=table->getSchemaName();
+    TableIdentifier identifier(table->getSchemaName(), table->getTableName());
 
     plugin::StorageEngine *table_type;
 
@@ -426,7 +426,7 @@ static int rm_table_part2(Session *session, TableList *tables)
       // Table was not found on disk and table can't be created from engine
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                           ER_BAD_TABLE_ERROR, ER(ER_BAD_TABLE_ERROR),
-                          table->table_name);
+                          table->getTableName());
     }
     else
     {
@@ -447,14 +447,14 @@ static int rm_table_part2(Session *session, TableList *tables)
 
     if (error == 0 || (foreign_key_error == false))
     {
-      transaction_services.dropTable(session, string(db), string(table->table_name), true);
+      transaction_services.dropTable(session, string(db), string(table->getTableName()), true);
     }
 
     if (error)
     {
       if (wrong_tables.length())
         wrong_tables.append(',');
-      wrong_tables.append(String(table->table_name,system_charset_info));
+      wrong_tables.append(String(table->getTableName(),system_charset_info));
     }
   }
   /*
@@ -514,10 +514,10 @@ static long drop_tables_via_filenames(Session *session,
     if (not table_list)
       return -1;
 
-    table_list->db= (char*) (table_list+1);
-    table_list->table_name= strcpy(table_list->db, schema_identifier.getSchemaName().c_str()) + db_len + 1;
-    TableIdentifier::filename_to_tablename((*it).getTableName().c_str(), table_list->table_name, (*it).getTableName().size() + 1);
-    table_list->alias= table_list->table_name;  // If lower_case_table_names=2
+    table_list->setSchemaName((char*) (table_list+1));
+    table_list->setTableName(strcpy((char*) (table_list+1), schema_identifier.getSchemaName().c_str()) + db_len + 1);
+    TableIdentifier::filename_to_tablename((*it).getTableName().c_str(), const_cast<char *>(table_list->getTableName()), (*it).getTableName().size() + 1);
+    table_list->alias= table_list->getTableName();  // If lower_case_table_names=2
     table_list->setInternalTmpTable((strncmp((*it).getTableName().c_str(),
                                              TMP_FILE_PREFIX,
                                              strlen(TMP_FILE_PREFIX)) == 0));

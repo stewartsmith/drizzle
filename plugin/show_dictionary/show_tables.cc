@@ -27,16 +27,16 @@ using namespace std;
 using namespace drizzled;
 
 ShowTables::ShowTables() :
-  plugin::TableFunction("DATA_DICTIONARY", "SHOW_TABLES")
+  show_dictionary::Show("SHOW_TABLES")
 {
   add_field("TABLE_NAME");
 }
 
 ShowTables::Generator::Generator(drizzled::Field **arg) :
-  drizzled::plugin::TableFunction::Generator(arg),
+  show_dictionary::Show::Generator(arg),
   is_primed(false)
 {
-  statement::Select *select= static_cast<statement::Select *>(getSession().lex->statement);
+  statement::Show *select= static_cast<statement::Show *>(getSession().lex->statement);
 
   if (not select->getShowSchema().empty())
   {
