@@ -160,8 +160,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
 
   for (table= tables; table; table= table->next_local)
   {
-    char *db= table->db;
-    TableIdentifier tmp_identifier(table->db, table->table_name);
+    TableIdentifier tmp_identifier(table->getSchemaName(), table->getTableName());
 
     error= session->drop_temporary_table(tmp_identifier);
 
@@ -197,7 +196,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
         goto err_with_placeholders;
       }
     }
-    TableIdentifier identifier(db, table->table_name, table->getInternalTmpTable() ? message::Table::INTERNAL : message::Table::STANDARD);
+    TableIdentifier identifier(table->getSchemaName(), table->getTableName(), table->getInternalTmpTable() ? message::Table::INTERNAL : message::Table::STANDARD);
 
     if (drop_temporary || not plugin::StorageEngine::doesTableExist(*session, identifier))
     {
@@ -205,7 +204,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
       if (if_exists)
         push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                             ER_BAD_TABLE_ERROR, ER(ER_BAD_TABLE_ERROR),
-                            table->table_name);
+                            table->getTableName());
       else
         error= 1;
     }
@@ -229,14 +228,14 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
     if (error == 0 || (if_exists && foreign_key_error == false))
     {
       TransactionServices &transaction_services= TransactionServices::singleton();
-      transaction_services.dropTable(session, string(db), string(table->table_name), if_exists);
+      transaction_services.dropTable(session, string(table->getSchemaName()), string(table->getTableName()), if_exists);
     }
 
     if (error)
     {
       if (wrong_tables.length())
         wrong_tables.append(',');
-      wrong_tables.append(String(table->table_name,system_charset_info));
+      wrong_tables.append(String(table->getTableName(), system_charset_info));
     }
   }
   /*
@@ -1759,10 +1758,9 @@ static bool mysql_admin_table(Session* session, TableList* tables,
   for (table= tables; table; table= table->next_local)
   {
     char table_name[NAME_LEN*2+2];
-    char* db = table->db;
     bool fatal_error=0;
 
-    snprintf(table_name, sizeof(table_name), "%s.%s",db,table->table_name);
+    snprintf(table_name, sizeof(table_name), "%s.%s", table->getSchemaName(), table->getTableName());
     table->lock_type= lock_type;
     /* open only one table from local list of command */
     {
@@ -2060,7 +2058,6 @@ bool mysql_create_like_table(Session* session,
                              bool is_if_not_exists,
                              bool is_engine_set)
 {
-  char *table_name= table->table_name;
   bool res= true;
   uint32_t not_used;
 
@@ -2170,14 +2167,14 @@ bool mysql_create_like_table(Session* session,
     {
       char warn_buff[DRIZZLE_ERRMSG_SIZE];
       snprintf(warn_buff, sizeof(warn_buff),
-               ER(ER_TABLE_EXISTS_ERROR), table_name);
+               ER(ER_TABLE_EXISTS_ERROR), table->getTableName());
       push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                    ER_TABLE_EXISTS_ERROR,warn_buff);
       res= false;
     }
     else
     {
-      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), table_name);
+      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), table->getTableName());
     }
   }
 

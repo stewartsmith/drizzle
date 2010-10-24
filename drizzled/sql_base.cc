@@ -401,7 +401,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
       bool found= false;
       for (TableList *table= tables; table; table= table->next_local)
       {
-        TableIdentifier identifier(table->db, table->table_name);
+        TableIdentifier identifier(table->getSchemaName(), table->getTableName());
         if (remove_table_from_cache(session, identifier,
                                     RTFC_OWNED_BY_Session_FLAG))
         {
@@ -591,8 +591,8 @@ TableList *find_table_in_list(TableList *table,
   for (; table; table= table->*link )
   {
     if ((table->table == 0 || table->table->getShare()->getType() == message::Table::STANDARD) &&
-        strcasecmp(table->db, db_name) == 0 &&
-        strcasecmp(table->table_name, table_name) == 0)
+        strcasecmp(table->getSchemaName(), db_name) == 0 &&
+        strcasecmp(table->getTableName(), table_name) == 0)
       break;
   }
   return table;
@@ -663,8 +663,8 @@ TableList* unique_table(TableList *table, TableList *table_list,
     */
     assert(table);
   }
-  d_name= table->db;
-  t_name= table->table_name;
+  d_name= table->getSchemaName();
+  t_name= table->getTableName();
   t_alias= table->alias;
 
   for (;;)
@@ -972,15 +972,14 @@ void Session::wait_for_condition(boost::mutex &mutex, boost::condition_variable_
 bool Session::reopen_name_locked_table(TableList* table_list)
 {
   Table *table= table_list->table;
-  char *table_name= table_list->table_name;
 
   safe_mutex_assert_owner(LOCK_open.native_handle());
 
   if (killed || not table)
     return true;
 
-  TableIdentifier identifier(table_list->db, table_list->table_name);
-  if (open_unireg_entry(this, table, table_name, identifier))
+  TableIdentifier identifier(table_list->getSchemaName(), table_list->getTableName());
+  if (open_unireg_entry(this, table, table_list->getTableName(), identifier))
   {
     table->intern_close_table();
     return true;
@@ -1143,7 +1142,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
   if (killed)
     return NULL;
 
-  TableIdentifier identifier(table_list->db, table_list->table_name);
+  TableIdentifier identifier(table_list->getSchemaName(), table_list->getTableName());
   const TableIdentifier::Key &key(identifier.getKey());
   TableOpenCacheRange ppp;
 
@@ -1180,7 +1179,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
   {
     if (flags & DRIZZLE_OPEN_TEMPORARY_ONLY)
     {
-      my_error(ER_NO_SUCH_TABLE, MYF(0), table_list->db, table_list->table_name);
+      my_error(ER_NO_SUCH_TABLE, MYF(0), table_list->getSchemaName(), table_list->getTableName());
       return NULL;
     }
 
@@ -1346,7 +1345,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
 
         if (table_list->isCreate())
         {
-          TableIdentifier  lock_table_identifier(table_list->db, table_list->table_name, message::Table::STANDARD);
+          TableIdentifier  lock_table_identifier(table_list->getSchemaName(), table_list->getTableName(), message::Table::STANDARD);
 
           if (not plugin::StorageEngine::doesTableExist(*this, lock_table_identifier))
           {
@@ -1997,7 +1996,7 @@ restart:
      * to see if it exists so that an unauthorized user cannot phish for
      * table/schema information via error messages
      */
-    TableIdentifier the_table(tables->db, tables->table_name);
+    TableIdentifier the_table(tables->getSchemaName(), tables->getTableName());
     if (not plugin::Authorization::isAuthorized(getSecurityContext(),
                                                 the_table))
     {
@@ -2520,8 +2519,8 @@ find_field_in_table_ref(Session *session, TableList *table_list,
       */
       table_name && table_name[0] &&
       (my_strcasecmp(table_alias_charset, table_list->alias, table_name) ||
-       (db_name && db_name[0] && table_list->db && table_list->db[0] &&
-        strcmp(db_name, table_list->db))))
+       (db_name && db_name[0] && table_list->getSchemaName() && table_list->getSchemaName()[0] &&
+        strcmp(db_name, table_list->getSchemaName()))))
     return 0;
 
   *actual_table= NULL;
@@ -3988,7 +3987,7 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
     assert(tables->is_leaf_for_name_resolution());
 
     if ((table_name && my_strcasecmp(table_alias_charset, table_name, tables->alias)) ||
-        (db_name && strcasecmp(tables->db,db_name)))
+        (db_name && strcasecmp(tables->getSchemaName(),db_name)))
       continue;
 
     /*

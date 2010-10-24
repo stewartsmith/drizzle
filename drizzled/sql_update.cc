@@ -638,7 +638,7 @@ bool mysql_prepare_update(Session *session, TableList *table_list,
     TableList *duplicate;
     if ((duplicate= unique_table(table_list, table_list->next_global)))
     {
-      my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->table_name);
+      my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->getTableName());
       return true;
     }
   }
