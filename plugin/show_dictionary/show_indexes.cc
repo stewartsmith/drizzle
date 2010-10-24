@@ -27,7 +27,7 @@ using namespace std;
 using namespace drizzled;
 
 ShowIndexes::ShowIndexes() :
-  plugin::TableFunction("DATA_DICTIONARY", "SHOW_INDEXES")
+  show_dictionary::Show("SHOW_INDEXES")
 {
   add_field("Table");
   add_field("Unique", plugin::TableFunction::BOOLEAN, 0, false);
@@ -37,7 +37,7 @@ ShowIndexes::ShowIndexes() :
 }
 
 ShowIndexes::Generator::Generator(Field **arg) :
-  plugin::TableFunction::Generator(arg),
+  show_dictionary::Show::Generator(arg),
   is_tables_primed(false),
   is_index_primed(false),
   is_index_part_primed(false),

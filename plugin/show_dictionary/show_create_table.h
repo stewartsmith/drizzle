@@ -21,12 +21,12 @@
 #ifndef PLUGIN_SHOW_DICTIONARY_SHOW_CREATE_TABLE_H
 #define PLUGIN_SHOW_DICTIONARY_SHOW_CREATE_TABLE_H
 
-class ShowCreateTable : public drizzled::plugin::TableFunction
+class ShowCreateTable : public show_dictionary::Show
 {
 public:
   ShowCreateTable();
 
-  class Generator : public drizzled::plugin::TableFunction::Generator 
+  class Generator : public show_dictionary::Show::Generator 
   {
     bool is_primed;
     drizzled::message::Table table_message;

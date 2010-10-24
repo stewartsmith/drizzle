@@ -21,12 +21,12 @@
 #ifndef PLUGIN_SHOW_DICTIONARY_SHOW_TABLES_H
 #define PLUGIN_SHOW_DICTIONARY_SHOW_TABLES_H
 
-class ShowTables : public drizzled::plugin::TableFunction
+class ShowTables : public show_dictionary::Show
 {
 public:
   ShowTables();
 
-  class Generator : public drizzled::plugin::TableFunction::Generator
+  class Generator : public show_dictionary::Show::Generator
   {
     bool is_primed;
     drizzled::TableIdentifiers set_of_identifiers;

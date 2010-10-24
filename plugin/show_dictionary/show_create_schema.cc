@@ -29,14 +29,14 @@ using namespace std;
 using namespace drizzled;
 
 ShowCreateSchema::ShowCreateSchema() :
-  plugin::TableFunction("DATA_DICTIONARY", "SCHEMA_SQL_DEFINITION")
+  show_dictionary::Show("SCHEMA_SQL_DEFINITION")
 {
   add_field("SCHEMA_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
   add_field("SCHEMA_SQL_DEFINITION", plugin::TableFunction::STRING, TABLE_FUNCTION_BLOB_SIZE, false);
 }
 
 ShowCreateSchema::Generator::Generator(Field **arg) :
-  plugin::TableFunction::Generator(arg),
+  show_dictionary::Show::Generator(arg),
   is_primed(false),
   if_not_exists(false)
 {

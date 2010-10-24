@@ -30,14 +30,14 @@ using namespace std;
 using namespace drizzled;
 
 ShowCreateTable::ShowCreateTable() :
-  plugin::TableFunction("DATA_DICTIONARY", "TABLE_SQL_DEFINITION")
+  show_dictionary::Show("TABLE_SQL_DEFINITION")
 {
   add_field("TABLE_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
   add_field("TABLE_SQL_DEFINITION", plugin::TableFunction::STRING, TABLE_FUNCTION_BLOB_SIZE, false);
 }
 
 ShowCreateTable::Generator::Generator(Field **arg) :
-  plugin::TableFunction::Generator(arg),
+  show_dictionary::Show::Generator(arg),
   is_primed(false)
 {
   statement::Show *select= static_cast<statement::Show *>(getSession().lex->statement);

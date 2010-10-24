@@ -18,28 +18,27 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SHOW_DICTIONARY_SHOW_TEMPORARY_TABLES_H
-#define PLUGIN_SHOW_DICTIONARY_SHOW_TEMPORARY_TABLES_H
+#ifndef PLUGIN_SHOW_DICTIONARY_SHOW_H
+#define PLUGIN_SHOW_DICTIONARY_SHOW_H
 
-class ShowTemporaryTables : public show_dictionary::Show
+namespace show_dictionary {
+
+class Show : public drizzled::plugin::TableFunction
 {
 public:
-  ShowTemporaryTables();
-
-  class Generator : public show_dictionary::Show::Generator
+  Show(const char *arg) :
+    drizzled::plugin::TableFunction("DATA_DICTIONARY", arg)
   {
-    drizzled::Session &session;
-    drizzled::Table *table;
+  }
 
-    void fill();
+  bool visable() { return false; }
 
-    bool checkSchema();
-
+  class Generator : public drizzled::plugin::TableFunction::Generator 
+  {
   public:
-    Generator(drizzled::Field **arg);
-
-    bool populate();
-
+    Generator(drizzled::Field **arg):
+      drizzled::plugin::TableFunction::Generator(arg)
+    { }
   };
 
   Generator *generator(drizzled::Field **arg)
@@ -48,4 +47,6 @@ public:
   }
 };
 
-#endif /* PLUGIN_SHOW_DICTIONARY_SHOW_TEMPORARY_TABLES_H */
+} /* namespace show_dictionary */
+
+#endif /* PLUGIN_SHOW_DICTIONARY_SHOW_H */

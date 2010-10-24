@@ -41,7 +41,7 @@ static const string TIMESTAMP("TIMESTAMP");
 static const string DATETIME("DATETIME");
 
 ShowColumns::ShowColumns() :
-  plugin::TableFunction("DATA_DICTIONARY", "SHOW_COLUMNS")
+  show_dictionary::Show("SHOW_COLUMNS")
 {
   add_field("Field");
   add_field("Type");
@@ -52,7 +52,7 @@ ShowColumns::ShowColumns() :
 }
 
 ShowColumns::Generator::Generator(Field **arg) :
-  plugin::TableFunction::Generator(arg),
+  show_dictionary::Show::Generator(arg),
   is_tables_primed(false),
   is_columns_primed(false),
   column_iterator(0)
