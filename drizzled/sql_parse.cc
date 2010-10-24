@@ -968,7 +968,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   ptr->setIsAlias(alias ? true : false);
   if (table->table.length)
     table->table.length= my_casedn_str(files_charset_info, table->table.str);
-  ptr->table_name=table->table.str;
+  ptr->setTableName(table->table.str);
   ptr->table_name_length=table->table.length;
   ptr->lock_type=   lock_type;
   ptr->force_index= table_options.test(TL_OPTION_FORCE_INDEX);

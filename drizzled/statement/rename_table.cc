@@ -147,7 +147,7 @@ bool statement::RenameTable::rename(TableList *ren_table,
   const char *new_alias, *old_alias;
 
   {
-    old_alias= ren_table->table_name;
+    old_alias= ren_table->getTableName();
     new_alias= new_table_name;
   }
 
@@ -186,7 +186,7 @@ TableList *statement::RenameTable::renameTablesInList(TableList *table_list,
   for (ren_table= table_list; ren_table; ren_table= new_table->next_local)
   {
     new_table= ren_table->next_local;
-    if (rename(ren_table, new_table->getSchemaName(), new_table->table_name, skip_error))
+    if (rename(ren_table, new_table->getSchemaName(), new_table->getTableName(), skip_error))
       return ren_table;
   }
   return 0;

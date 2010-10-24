@@ -107,7 +107,7 @@ bool statement::AlterTable::execute()
   /* Chicken/Egg... we need to search for the table, to know if the table exists, so we can build a full identifier from it */
   message::Table original_table_message;
   {
-    TableIdentifier identifier(first_table->getSchemaName(), first_table->table_name);
+    TableIdentifier identifier(first_table->getSchemaName(), first_table->getTableName());
     if (plugin::StorageEngine::getTableDefinition(*session, identifier, original_table_message) != EEXIST)
     {
       my_error(ER_BAD_TABLE_ERROR, MYF(0), identifier.getSQLPath().c_str());
@@ -146,9 +146,9 @@ bool statement::AlterTable::execute()
   bool res;
   if (original_table_message.type() == message::Table::STANDARD )
   {
-    TableIdentifier identifier(first_table->getSchemaName(), first_table->table_name);
+    TableIdentifier identifier(first_table->getSchemaName(), first_table->getTableName());
     TableIdentifier new_identifier(select_lex->db ? select_lex->db : first_table->getSchemaName(),
-                                   session->lex->name.str ? session->lex->name.str : first_table->table_name);
+                                   session->lex->name.str ? session->lex->name.str : first_table->getTableName());
 
     res= alter_table(session, 
                      identifier,
@@ -164,13 +164,13 @@ bool statement::AlterTable::execute()
   }
   else
   {
-    TableIdentifier catch22(first_table->getSchemaName(), first_table->table_name);
+    TableIdentifier catch22(first_table->getSchemaName(), first_table->getTableName());
     Table *table= session->find_temporary_table(catch22);
     assert(table);
     {
-      TableIdentifier identifier(first_table->getSchemaName(), first_table->table_name, table->getMutableShare()->getPath());
+      TableIdentifier identifier(first_table->getSchemaName(), first_table->getTableName(), table->getMutableShare()->getPath());
       TableIdentifier new_identifier(select_lex->db ? select_lex->db : first_table->getSchemaName(),
-                                     session->lex->name.str ? session->lex->name.str : first_table->table_name,
+                                     session->lex->name.str ? session->lex->name.str : first_table->getTableName(),
                                      table->getMutableShare()->getPath());
 
       res= alter_table(session, 
@@ -1498,7 +1498,8 @@ copy_data_between_tables(Session *session,
 
       memset(&tables, 0, sizeof(tables));
       tables.table= from;
-      tables.alias= tables.table_name= const_cast<char *>(from->getMutableShare()->getTableName());
+      tables.setTableName(const_cast<char *>(from->getMutableShare()->getTableName()));
+      tables.alias= const_cast<char *>(tables.getTableName());
       tables.setSchemaName(const_cast<char *>(from->getMutableShare()->getSchemaName()));
       error= 1;
 
@@ -1637,7 +1638,7 @@ static Table *open_alter_table(Session *session, Table *table, TableIdentifier &
     TableList tbl;
     tbl.setSchemaName(const_cast<char *>(identifier.getSchemaName().c_str()));
     tbl.alias= const_cast<char *>(identifier.getTableName().c_str());
-    tbl.table_name= const_cast<char *>(identifier.getTableName().c_str());
+    tbl.setTableName(const_cast<char *>(identifier.getTableName().c_str()));
 
     /* Table is in session->temporary_tables */
     new_table= session->openTable(&tbl, (bool*) 0, DRIZZLE_LOCK_IGNORE_FLUSH);

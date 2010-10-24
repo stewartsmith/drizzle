@@ -128,9 +128,9 @@ const char *Field_iterator_table_ref::table_name()
   if (table_ref->is_natural_join)
     return natural_join_it.column_ref()->table_name();
 
-  assert(!strcmp(table_ref->table_name,
-                      table_ref->table->getShare()->getTableName()));
-  return table_ref->table_name;
+  assert(!strcmp(table_ref->getTableName(),
+                 table_ref->table->getShare()->getTableName()));
+  return table_ref->getTableName();
 }
 
 

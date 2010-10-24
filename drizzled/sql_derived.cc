@@ -146,7 +146,7 @@ exit:
     {
       orig_table_list->derived_result= derived_result;
       orig_table_list->table= table;
-      orig_table_list->table_name=        const_cast<char *>(table->getShare()->getTableName());
+      orig_table_list->setTableName(const_cast<char *>(table->getShare()->getTableName()));
       orig_table_list->table_name_length= table->getShare()->getTableNameSize();
       table->derived_select_number= first_select->select_number;
       orig_table_list->setSchemaName((char *)"");

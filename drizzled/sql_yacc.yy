@@ -5826,7 +5826,7 @@ field_ident:
               DRIZZLE_YYABORT;
             }
             if (my_strcasecmp(table_alias_charset, $3.str,
-                              table->table_name))
+                              table->getTableName()))
             {
               my_error(ER_WRONG_TABLE_NAME, MYF(0), $3.str);
               DRIZZLE_YYABORT;

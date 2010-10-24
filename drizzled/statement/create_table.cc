@@ -83,7 +83,7 @@ bool statement::CreateTable::execute()
   drizzled::message::init(create_table_message, create_table_message.name(), create_table->getSchemaName(), create_info.db_type->getName());
 
   TableIdentifier new_table_identifier(create_table->getSchemaName(),
-                                       create_table->table_name,
+                                       create_table->getTableName(),
                                        create_table_message.type());
 
   if (create_table_precheck(new_table_identifier))

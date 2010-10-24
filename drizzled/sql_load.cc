@@ -170,7 +170,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
   */
   if (unique_table(table_list, table_list->next_global))
   {
-    my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->table_name);
+    my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->getTableName());
     return(true);
   }
 
