@@ -847,7 +847,7 @@ void Session::unlink_open_table(Table *find)
       *prev= list->getNext();
 
       /* Close table. */
-      remove_table(dynamic_cast<table::Concurrent *>(list));
+      remove_table(static_cast<table::Concurrent *>(list));
     }
     else
     {
@@ -1475,7 +1475,7 @@ bool Session::reopen_tables(bool get_locks, bool)
     next= table->getNext();
 
     my_error(ER_CANT_REOPEN_TABLE, MYF(0), table->getAlias());
-    remove_table(dynamic_cast<table::Concurrent *>(table));
+    remove_table(static_cast<table::Concurrent *>(table));
     error= 1;
   }
   *prev=0;
