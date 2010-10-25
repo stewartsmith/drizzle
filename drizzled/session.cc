@@ -2085,4 +2085,34 @@ table::Instance *Session::getInstanceTable()
   return tmp_share;
 }
 
+
+/**
+  Create a reduced Table object with properly set up Field list from a
+  list of field definitions.
+
+    The created table doesn't have a table Cursor associated with
+    it, has no keys, no group/distinct, no copy_funcs array.
+    The sole purpose of this Table object is to use the power of Field
+    class to read/write data to/from table->getInsertRecord(). Then one can store
+    the record in any container (RB tree, hash, etc).
+    The table is created in Session mem_root, so are the table's fields.
+    Consequently, if you don't BLOB fields, you don't need to free it.
+
+  @param session         connection handle
+  @param field_list  list of column definitions
+
+  @return
+    0 if out of memory, Table object in case of success
+*/
+table::Instance *Session::getInstanceTable(List<CreateField> &field_list)
+{
+  temporary_shares.push_back(new table::Instance(this, field_list)); // This will not go into the tableshare cache, so no key is used.
+
+  table::Instance *tmp_share= temporary_shares.back();
+
+  assert(tmp_share);
+
+  return tmp_share;
+}
+
 } /* namespace drizzled */
