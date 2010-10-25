@@ -680,13 +680,11 @@ static DrizzleLock *get_lock_data(Session *session, Table **table_ptr, uint32_t 
     > 0  table locked, but someone is using it
 */
 
-static int lock_table_name(Session *session, TableList *table_list, bool check_in_use)
+static int lock_table_name(Session *session, TableList *table_list)
 {
-  bool  found_locked_table= false;
-  TableIdentifier identifier(table_list->db, table_list->table_name);
+  TableIdentifier identifier(table_list->getSchemaName(), table_list->getTableName());
   const TableIdentifier::Key &key(identifier.getKey());
 
-  if (check_in_use)
   {
     /* Only insert the table if we haven't insert it already */
     TableOpenCacheRange ppp;
@@ -699,8 +697,6 @@ static int lock_table_name(Session *session, TableList *table_list, bool check_i
       Table *table= (*iter).second;
       if (table->reginfo.lock_type < TL_WRITE)
       {
-        if (table->in_use == session)
-          found_locked_table= true;
         continue;
       }
 
@@ -714,7 +710,7 @@ static int lock_table_name(Session *session, TableList *table_list, bool check_i
   }
 
   Table *table;
-  if (!(table= session->table_cache_insert_placeholder(table_list->db, table_list->table_name)))
+  if (!(table= session->table_cache_insert_placeholder(identifier)))
   {
     return -1;
   }
@@ -722,8 +718,7 @@ static int lock_table_name(Session *session, TableList *table_list, bool check_i
   table_list->table= table;
 
   /* Return 1 if table is in use */
-  return(test(remove_table_from_cache(session, identifier,
-				      check_in_use ? RTFC_NO_FLAG : RTFC_WAIT_OTHER_THREAD_FLAG)));
+  return(test(remove_table_from_cache(session, identifier, RTFC_NO_FLAG)));
 }
 
 
@@ -801,7 +796,7 @@ static bool lock_table_names(Session *session, TableList *table_list)
   for (lock_table= table_list; lock_table; lock_table= lock_table->next_local)
   {
     int got_lock;
-    if ((got_lock= lock_table_name(session, lock_table, true)) < 0)
+    if ((got_lock= lock_table_name(session, lock_table)) < 0)
       goto end;					// Fatal error
     if (got_lock)
       got_all_locks=0;				// Someone is using table

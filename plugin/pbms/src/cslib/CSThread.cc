@@ -30,12 +30,15 @@
 
 #ifdef OS_WINDOWS
 #include <signal.h>
-#include "uniwin.h"
+//#include "uniwin.h"
+#define SIGUSR1 30
+#define SIGUSR2 31
+
 #else
 #include <signal.h>
 #include <sys/signal.h>
-#endif
 #include <unistd.h>
+#endif
 #include <errno.h>
 
 #include "CSGlobal.h"
@@ -208,6 +211,7 @@ void CSThread::addToList()
 void CSThread::removeFromList()
 {
 	if (myThreadList && isRunning) {
+		CSThread *myself = this; // pop_() wants to take a reference to its parameter.
 		enter_();
 		/* Retain the thread in order to ensure
 		 * that after it is removed from the list,
@@ -215,11 +219,11 @@ void CSThread::removeFromList()
 		 * unlock_() call invalid, because it requires
 		 * on the thread.
 		 */
-		push_(this);
+		push_(myself);
 		lock_(myThreadList);
-		myThreadList->remove(RETAIN(this));
+		myThreadList->remove(RETAIN(myself));
 		unlock_(myThreadList);
-		pop_(this);
+		pop_(myself);
 		outer_();
 	}
 	this->release();
@@ -288,7 +292,7 @@ void *CSThread::run()
 	return NULL;
 }
 
-void CSThread::start()
+void CSThread::start(bool detached)
 {
 	int err;
 
@@ -303,6 +307,10 @@ void CSThread::start()
 			break;
 		usleep(10);
 	}
+	
+	isDetached = detached;
+	if (detached)
+		pthread_detach(iThread);
 }
 
 void CSThread::stop()
@@ -313,12 +321,17 @@ void CSThread::stop()
 
 void *CSThread::join()
 {
-	void	*return_data;
+	void	*return_data = NULL;
 	int		err;
 
 	enter_();
-	if ((err = pthread_join(iThread, &return_data)))
+	if (isDetached) {
+		while (isRunning && !pthread_kill(iThread, 0)) 
+			usleep(100);
+	} else if ((err = pthread_join(iThread, &return_data))) {
 		CSException::throwOSError(CS_CONTEXT, err);
+	}
+
 	return_(return_data);
 }
 
@@ -334,6 +347,7 @@ void CSThread::setSignalPending(unsigned int sig)
 
 void CSThread::signal(unsigned int sig)
 {
+#ifndef OS_WINDOWS // Currently you cannot signal threads on windows.
 	int err;
 
 	setSignalPending(sig);
@@ -343,6 +357,7 @@ void CSThread::signal(unsigned int sig)
 		if (err != ESRCH) /* No such process */
 			CSException::throwOSError(CS_CONTEXT, err);
 	}
+#endif
 }
 
 void CSThread::throwSignal()
@@ -388,6 +403,14 @@ void CSThread::releaseObjects(CSReleasePtr top)
 			case CS_RELEASE_POOLED:
 				if (relTop->x.r_pooled)
 					relTop->x.r_pooled->returnToPool();
+				break;
+			case CS_RELEASE_MEM:
+				if (relTop->x.r_mem)
+					cs_free(relTop->x.r_mem);
+				break;
+			case CS_RELEASE_OBJECT_PTR:
+				if ((relTop->x.r_objectPtr) && (obj = *(relTop->x.r_objectPtr)))
+					obj->release();
 				break;
 		}
 	}
@@ -463,7 +486,6 @@ bool CSThread::startUp()
 	isUp = false;
 	if ((err = pthread_key_create(&sThreadKey, NULL))) {
 		CSException::logOSError(CS_CONTEXT, errno);
-		return false;
 	} else
 		isUp = true;
 		
@@ -512,10 +534,14 @@ CSThread* CSThread::getSelf()
 		return (CSThread*) NULL;
 		
 #ifdef DEBUG
-	if (self->iRefCount == 0) {
+	/* PMC - Problem is, if this is called when releasing a
+	 * thread, then we have the reference count equal to
+	 * zero.
+	if (self && !self->iRefCount) {
 		pthread_setspecific(sThreadKey, NULL);
-		CSException::throwAssertion(CS_CONTEXT, "Bad self pointer.");
-	}	
+		CSException::throwAssertion(CS_CONTEXT, "Freed self pointer referenced.");
+	}
+	*/
 #endif
 
 	return self;
@@ -614,19 +640,10 @@ iSuspendCount(0)
 {
 }
 
-void *CSDaemon::run()
+void CSDaemon::try_Run(CSThread *self, const bool c_must_sleep)
 {
-	bool must_sleep = false;
-
-	CLOBBER_PROTECT(must_sleep);
-
-	enter_();
-	CLOBBER_PROTECT(self);
-
-	myMustQuit = !initializeWork();
-
-	restart:
 	try_(a) {
+		 bool must_sleep = c_must_sleep; // This done to avoid longjmp() clobber.
 		while (!myMustQuit) {
 			if (must_sleep) {
 				lock_(this);
@@ -646,9 +663,19 @@ void *CSDaemon::run()
 			myMustQuit = true;
 	}
 	cont_(a);
-	if (!myMustQuit) {
+}
+
+void *CSDaemon::run()
+{
+	bool must_sleep = false;
+
+	enter_();
+
+	myMustQuit = !initializeWork();
+
+	while  (!myMustQuit) {
+		try_Run(self, must_sleep);
 		must_sleep = true;
-		goto restart;
 	}
 
 	/* Prevent signals from going off in completeWork! */

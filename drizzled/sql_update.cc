@@ -164,12 +164,19 @@ int mysql_update(Session *session, TableList *table_list,
   table->quick_keys.reset();
 
   if (mysql_prepare_update(session, table_list, &conds, order_num, order))
-    goto abort;
+  {
+    DRIZZLE_UPDATE_DONE(1, 0, 0);
+    return 1;
+  }
 
   old_covering_keys= table->covering_keys;		// Keys used in WHERE
   /* Check the fields we are going to modify */
   if (setup_fields_with_no_wrap(session, 0, fields, MARK_COLUMNS_WRITE, 0, 0))
-    goto abort;
+  {
+    DRIZZLE_UPDATE_DONE(1, 0, 0);
+    return 1;
+  }
+
   if (table->timestamp_field)
   {
     // Don't set timestamp column if this is modified
@@ -190,7 +197,9 @@ int mysql_update(Session *session, TableList *table_list,
   if (setup_fields(session, 0, values, MARK_COLUMNS_READ, 0, 0))
   {
     free_underlaid_joins(session, select_lex);
-    goto abort;
+    DRIZZLE_UPDATE_DONE(1, 0, 0);
+
+    return 1;
   }
 
   if (select_lex->inner_refs_list.elements &&
@@ -238,7 +247,10 @@ int mysql_update(Session *session, TableList *table_list,
     session->main_da.reset_diagnostics_area();
     free_underlaid_joins(session, select_lex);
     if (error)
-      goto abort;				// Error in where
+    {
+      DRIZZLE_UPDATE_DONE(1, 0, 0);
+      return 1;
+    }
     DRIZZLE_UPDATE_DONE(0, 0, 0);
     session->my_ok();				// No matching records
     return 0;
@@ -597,7 +609,6 @@ err:
   }
   session->abort_on_warning= 0;
 
-abort:
   DRIZZLE_UPDATE_DONE(1, 0, 0);
   return 1;
 }
@@ -641,7 +652,7 @@ bool mysql_prepare_update(Session *session, TableList *table_list,
     TableList *duplicate;
     if ((duplicate= unique_table(table_list, table_list->next_global)))
     {
-      my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->table_name);
+      my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->getTableName());
       return true;
     }
   }

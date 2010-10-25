@@ -76,6 +76,7 @@ class TableFunction : public Plugin
 
   void init();
 
+
 public:
   TableFunction(const char *schema_arg, const char *table_arg) :
     Plugin(local_string_append(schema_arg, table_arg) , "TableFunction"),
@@ -183,6 +184,8 @@ public:
                  TableFunction::ColumnType type,
                  uint32_t field_length,
                  bool is_default_null= false);
+
+  virtual bool visable() { return true; }
 };
 
 } /* namespace plugin */

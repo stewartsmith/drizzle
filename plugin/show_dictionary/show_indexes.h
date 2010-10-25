@@ -21,12 +21,12 @@
 #ifndef PLUGIN_SHOW_DICTIONARY_SHOW_INDEXES_H
 #define PLUGIN_SHOW_DICTIONARY_SHOW_INDEXES_H
 
-class ShowIndexes : public drizzled::plugin::TableFunction
+class ShowIndexes : public show_dictionary::Show
 {
 public:
   ShowIndexes();
 
-  class Generator : public drizzled::plugin::TableFunction::Generator 
+  class Generator : public show_dictionary::Show::Generator 
   {
     bool is_tables_primed;
     bool is_index_primed;

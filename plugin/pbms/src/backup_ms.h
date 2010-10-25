@@ -34,6 +34,9 @@
 class MSDatabase;
 
 class MSBackupInfo : public CSRefObject {
+	friend class StartDumpCleanUp;
+	friend class InsertRowCleanUp;
+	
 	private:
 	static uint32_t	gMaxInfoRef;
 	static CSSyncSparseArray *gBackupInfo;
@@ -155,6 +158,7 @@ public:
 	
 	static MSBackup* newMSBackup(MSBackupInfo *backup_info);
 
+	friend class StartBackupCleanUp;
 private:
 	void completeBackup();
 	

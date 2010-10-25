@@ -67,7 +67,7 @@ class FilesystemCursor : public drizzled::Cursor
   std::vector< std::pair<off_t, off_t> > slots;
 
 public:
-  FilesystemCursor(drizzled::plugin::StorageEngine &engine, drizzled::TableShare &table_arg);
+  FilesystemCursor(drizzled::plugin::StorageEngine &engine, drizzled::Table &table_arg);
   ~FilesystemCursor()
   {
   }

@@ -26,7 +26,7 @@ using namespace std;
 using namespace drizzled;
 
 ShowTemporaryTables::ShowTemporaryTables() :
-  drizzled::plugin::TableFunction("DATA_DICTIONARY", "SHOW_TEMPORARY_TABLES")
+  show_dictionary::Show("SHOW_TEMPORARY_TABLES")
 {
   add_field("TABLE_SCHEMA");
   add_field("TABLE_NAME");
@@ -36,7 +36,7 @@ ShowTemporaryTables::ShowTemporaryTables() :
 }
 
 ShowTemporaryTables::Generator::Generator(Field **arg) :
-  plugin::TableFunction::Generator(arg),
+  show_dictionary::Show::Generator(arg),
   session(getSession())
 {
   table= session.temporary_tables;

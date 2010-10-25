@@ -1873,7 +1873,7 @@ int TableShare::open_table_from_share_inner(Session *session,
   outparam.setAlias(alias);
 
   /* Allocate Cursor */
-  if (not (outparam.cursor= db_type()->getCursor(*this)))
+  if (not (outparam.cursor= db_type()->getCursor(outparam)))
     return local_error;
 
   local_error= 4;
@@ -2011,9 +2011,9 @@ int TableShare::open_table_cursor_inner(const TableIdentifier &identifier,
     assert(!(db_stat & HA_WAIT_IF_LOCKED));
     int ha_err;
 
-    if ((ha_err= (outparam.cursor->ha_open(identifier, &outparam,
-                          (db_stat & HA_READ_ONLY ? O_RDONLY : O_RDWR),
-                          (db_stat & HA_OPEN_TEMPORARY ? HA_OPEN_TMP_TABLE : HA_OPEN_IGNORE_IF_LOCKED) | ha_open_flags))))
+    if ((ha_err= (outparam.cursor->ha_open(identifier,
+                                           (db_stat & HA_READ_ONLY ? O_RDONLY : O_RDWR),
+                                           (db_stat & HA_OPEN_TEMPORARY ? HA_OPEN_TMP_TABLE : HA_OPEN_IGNORE_IF_LOCKED) | ha_open_flags))))
     {
       switch (ha_err)
       {

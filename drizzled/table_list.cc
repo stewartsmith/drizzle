@@ -34,11 +34,6 @@ namespace drizzled
 class Item;
 class Item_field;
 
-uint32_t TableList::create_table_def_key(char *key)
-{
-  return TableIdentifier::createKey(key, db, table_name);
-}
-
 bool TableList::set_insert_values(memory::Root *)
 {
   if (table)

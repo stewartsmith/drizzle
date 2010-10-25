@@ -29,6 +29,9 @@
 
 #include <string.h>
 #include <time.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "CSLog.h"
 #include "CSMemory.h"
@@ -36,6 +39,14 @@
 #include "CSStrUtil.h"
 #include "CSThread.h"
 #include "CSGlobal.h"
+
+
+//#ifdef DEBUG
+//#define DEFAULT_LOG_BUFFER_SIZE			10
+//#else
+#define DEFAULT_LOG_BUFFER_SIZE			2000
+//#endif
+
 /*
  * The global logging object.
  */
@@ -160,5 +171,59 @@ void CSLog::logLine(CSThread *self, int level, const char *buffer)
 	unlock();
 }
 
+void CSLog::log_va(CSThread *self, int level, const char *func, const char *file, int line, const char *fmt, va_list ap)
+{
+	char buffer[DEFAULT_LOG_BUFFER_SIZE];
+	char *log_string = NULL;
 
+	lock();
+
+#if !defined(va_copy) || defined(OS_SOLARIS)
+	int len;
+
+	len = vsnprintf(buffer, DEFAULT_LOG_BUFFER_SIZE-1, fmt, ap);
+	if (len > DEFAULT_LOG_BUFFER_SIZE-1)
+		len = DEFAULT_LOG_BUFFER_SIZE-1;
+	buffer[len] = 0;
+	log_string = buffer;
+#else
+	/* Use the buffer, unless it is too small */
+	va_list ap2;
+
+	va_copy(ap2, ap);
+	if (vsnprintf(buffer, DEFAULT_LOG_BUFFER_SIZE, fmt, ap) >= DEFAULT_LOG_BUFFER_SIZE) {
+		if (vasprintf(&log_string, fmt, ap2) == -1)
+			log_string = NULL;
+	}
+	else
+		log_string = buffer;
+#endif
+
+	if (log_string) {
+		log(self, func, file, line, level, log_string);
+
+		if (log_string != buffer)
+			free(log_string);
+	}
+
+	unlock();
+}
+
+void CSLog::logf(CSThread *self, int level, const char *fmt, ...)
+{
+	va_list	ap;
+
+	va_start(ap, fmt);
+	log_va(self, level, NULL, NULL, 0, fmt, ap);
+	va_end(ap);
+}
+
+void CSLog::logf(CSThread *self, int level, const char *func, const char *file, int line, const char *fmt, ...)
+{
+	va_list	ap;
+
+	va_start(ap, fmt);
+	log_va(self, level, func, file, line, fmt, ap);
+	va_end(ap);
+}
 

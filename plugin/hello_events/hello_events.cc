@@ -25,9 +25,9 @@
  * This plugin is an example events plugin that just prints some info for
  * the events that it is tracking. 
  *  
-set global hello_events_enable = ON;
-set global hello_events_watch_databases = "x";   
-set global hello_events_watch_tables = "x,y";
+set global hello_events1_enable = ON;
+set global hello_events1_watch_databases = "x";   
+set global hello_events1_watch_tables = "x,y";
 
  */
 
@@ -190,8 +190,16 @@ static void observeAfterStatement(AfterStatementEventData &data)
 HelloEvents::~HelloEvents()
 {
   /* These are strdup'd in option processing */
-  free(sysvar_table_list);
-  free(sysvar_db_list);
+  if (sysvar_table_list) {
+	free(sysvar_table_list);
+	sysvar_table_list = NULL;
+  }
+  
+  if (sysvar_db_list) {
+	free(sysvar_db_list);
+	sysvar_db_list = NULL;
+  }
+  
 }
 
 //==================================
