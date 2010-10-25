@@ -46,16 +46,6 @@ state_multimap cursor_state_transitions;
 /* This is a hack to make store_lock kinda work */
 drizzled::THR_LOCK share_lock;
 
-static inline void ENGINE_STATE(const string &state)
-{
-  if (engine_state.compare(state) != 0)
-  {
-    cerr << "Expected Engine state " << state
-         << "but engine in " << engine_state << " instead." << endl;
-    assert((engine_state.compare(state) != 0));
-  }
-}
-
 static inline void ENGINE_NEW_STATE(const string &new_state)
 {
   state_multimap_iter cur= engine_state_transitions.find(engine_state);
@@ -276,7 +266,6 @@ private:
 
 bool SEAPITester::doDoesTableExist(Session&, const TableIdentifier &identifier)
 {
-  ENGINE_STATE("::SEAPITester()");
   return table_messages.find(identifier.getPath()) != table_messages.end();
 }
 
@@ -291,7 +280,6 @@ int SEAPITester::doCreateTable(Session&,
                                const drizzled::TableIdentifier &identifier,
                                drizzled::message::Table& create_proto)
 {
-  ENGINE_STATE("::SEAPITester()");
   ENGINE_NEW_STATE("::doCreateTable()");
 
   if (table_messages.find(identifier.getPath()) != table_messages.end())
@@ -307,7 +295,6 @@ int SEAPITester::doCreateTable(Session&,
 
 int SEAPITester::doDropTable(Session&, const TableIdentifier &identifier)
 {
-  ENGINE_STATE("::SEAPITester()");
   if (table_messages.find(identifier.getPath()) == table_messages.end())
     return ENOENT;
 
@@ -320,17 +307,14 @@ int SEAPITester::doGetTableDefinition(Session& ,
                                       const TableIdentifier &identifier,
                                       drizzled::message::Table &table)
 {
-  ENGINE_STATE("::doGetTableDefinition()");
   TableMessageMapIterator iter= table_messages.find(identifier.getPath());
   if (iter == table_messages.end())
   {
-    ENGINE_STATE("::SEAPITester()");
     return ENOENT;
   }
 
   table= (*iter).second;
 
-  ENGINE_STATE("::SEAPITester()");
   return EEXIST;
 }
 
