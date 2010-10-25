@@ -476,11 +476,11 @@ int mysql_update(Session *session, TableList *table_list,
       if (fill_record(session, fields, values))
       {
         /*
-         * If we updated some rows before this one failed (found > 0),
+         * If we updated some rows before this one failed (updated > 0),
          * then we will need to undo adding those records to the
          * replication Statement message.
          */
-        if (found > 0)
+        if (updated > 0)
         {
           TransactionServices &ts= TransactionServices::singleton();
           ts.removeStatementRecords(session, updated);
