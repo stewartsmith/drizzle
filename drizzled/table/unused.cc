@@ -29,15 +29,13 @@
 #include "drizzled/sql_base.h"
 #include "drizzled/set_var.h"
 
-#include "drizzled/unused_tables.h"
+#include "drizzled/table/unused.h"
 
 namespace drizzled
 {
 
 namespace table
 {
-class Concurrent;
-}
 
 UnusedTables &getUnused(void)
 {
@@ -59,7 +57,7 @@ void UnusedTables::cullByVersion()
     remove_table(getTable());
 }
 
-void UnusedTables::link(table::Concurrent *table)
+void UnusedTables::link(Concurrent *table)
 {
   if (getTable())
   {
@@ -77,7 +75,7 @@ void UnusedTables::link(table::Concurrent *table)
 }
 
 
-void UnusedTables::unlink(table::Concurrent *table)
+void UnusedTables::unlink(Concurrent *table)
 {
   table->unlink();
 
@@ -92,7 +90,7 @@ void UnusedTables::unlink(table::Concurrent *table)
 
 /* move table first in unused links */
 
-void UnusedTables::relink(table::Concurrent *table)
+void UnusedTables::relink(Concurrent *table)
 {
   if (table != getTable())
   {
@@ -111,4 +109,6 @@ void UnusedTables::clear()
   while (getTable())
     remove_table(getTable());
 }
+
+} /* namespace table */
 } /* namespace drizzled */

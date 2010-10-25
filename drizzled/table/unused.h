@@ -22,18 +22,19 @@
 #define DRIZZLED_UNUSED_TABLES_H
 
 namespace drizzled {
+namespace table {
 
 class UnusedTables {
-  table::Concurrent *tables;				/* Used by mysql_test */
+  Concurrent *tables;				/* Used by mysql_test */
 
-  table::Concurrent *getTable() const
+  Concurrent *getTable() const
   {
     return tables;
   }
 
-  table::Concurrent *setTable(Table *arg)
+  Concurrent *setTable(Table *arg)
   {
-    return tables= dynamic_cast<table::Concurrent *>(arg);
+    return tables= dynamic_cast<Concurrent *>(arg);
   }
 
 public:
@@ -42,13 +43,13 @@ public:
 
   void cullByVersion();
   
-  void link(table::Concurrent *table);
+  void link(Concurrent *table);
 
-  void unlink(table::Concurrent *table);
+  void unlink(Concurrent *table);
 
 /* move table first in unused links */
 
-  void relink(table::Concurrent *table);
+  void relink(Concurrent *table);
 
   void clear();
 
@@ -64,6 +65,7 @@ public:
 UnusedTables &getUnused(void);
 
 
+} /* namepsace table */
 } /* namepsace drizzled */
 
 #endif /* DRIZZLED_UNUSED_TABLES_H */

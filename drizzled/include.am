@@ -408,18 +408,18 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/structs.h \
 			      drizzled/symbol_hash.h \
 			      drizzled/table.h \
-			      drizzled/table_function_container.h \
-			      drizzled/table_ident.h \
-			      drizzled/table_list.h \
- 			      drizzled/statistics_variables.h \
-			      drizzled/table_proto.h \
-			      drizzled/table_reference.h \
-			      drizzled/table_share.h \
 			      drizzled/table/concurrent.h \
 			      drizzled/table/instance.h \
 			      drizzled/table/placeholder.h \
 			      drizzled/table/shell.h \
 			      drizzled/table/temporary.h \
+			      drizzled/table/unused.h \
+			      drizzled/table_function_container.h \
+			      drizzled/table_ident.h \
+			      drizzled/table_list.h \
+			      drizzled/table_proto.h \
+			      drizzled/table_reference.h \
+			      drizzled/table_share.h \
 			      drizzled/temporal.h \
 			      drizzled/temporal_format.h \
 			      drizzled/temporal_interval.h \
@@ -434,7 +434,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/tztime.h \
 			      drizzled/unique.h \
 			      drizzled/unireg.h \
-			      drizzled/unused_tables.h \
+ 			      drizzled/statistics_variables.h \
 			      drizzled/user_var_entry.h \
 			      drizzled/utf8/checked.h \
 			      drizzled/utf8/core.h \
@@ -758,19 +758,19 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/status_helper.cc \
 				 drizzled/strfunc.cc \
 				 drizzled/table.cc \
-				 drizzled/table_function_container.cc \
-				 drizzled/table_list.cc \
-				 drizzled/table_share.cc \
 				 drizzled/table/concurrent.cc \
 				 drizzled/table/instance.cc \
 				 drizzled/table/temporary.cc \
+				 drizzled/table/unused.cc \
+				 drizzled/table_function_container.cc \
+				 drizzled/table_list.cc \
+				 drizzled/table_share.cc \
 				 drizzled/thr_lock.cc \
 				 drizzled/time_functions.cc \
 				 drizzled/transaction_services.cc \
 				 drizzled/tree.cc \
 				 drizzled/tztime.cc \
 				 drizzled/unique.cc \
-				 drizzled/unused_tables.cc \
 				 drizzled/user_var_entry.cc \
 				 drizzled/version.cc \
 				 drizzled/xid.cc

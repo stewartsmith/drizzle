@@ -55,7 +55,7 @@
 #include "drizzled/plugin/authorization.h"
 #include "drizzled/table/temporary.h"
 #include "drizzled/table/placeholder.h"
-#include "drizzled/unused_tables.h"
+#include "drizzled/table/unused.h"
 
 using namespace std;
 
@@ -128,7 +128,7 @@ void table_cache_free(void)
 {
   refresh_version++;				// Force close of open tables
 
-  getUnused().clear();
+  table::getUnused().clear();
   get_open_cache().clear();
 }
 
@@ -203,7 +203,7 @@ void free_cache_entry(table::Concurrent *table)
   table->intern_close_table();
   if (not table->in_use)
   {
-    getUnused().unlink(table);
+    table::getUnused().unlink(table);
   }
 
   delete table;
@@ -249,7 +249,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
     {
       refresh_version++;				// Force close of open tables
 
-      getUnused().clear();
+      table::getUnused().clear();
 
       if (wait_for_refresh)
       {
@@ -433,7 +433,7 @@ bool Session::free_cached_table()
     table->cursor->ha_reset();
     table->in_use= false;
 
-    getUnused().link(table);
+    table::getUnused().link(table);
   }
 
   return found_old_table;
@@ -1175,7 +1175,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
       }
       if (table)
       {
-        getUnused().unlink(dynamic_cast<table::Concurrent *>(table));
+        table::getUnused().unlink(dynamic_cast<table::Concurrent *>(table));
         table->in_use= this;
       }
       else
@@ -1183,7 +1183,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
         /* Insert a new Table instance into the open cache */
         int error;
         /* Free cache if too big */
-        getUnused().cull();
+        table::getUnused().cull();
 
         if (table_list->isCreate())
         {
@@ -4094,11 +4094,11 @@ void remove_db_from_cache(const SchemaIdentifier &schema_identifier)
     {
       table->getMutableShare()->resetVersion();			/* Free when thread is ready */
       if (not table->in_use)
-        getUnused().relink(table);
+        table::getUnused().relink(table);
     }
   }
 
-  getUnused().cullByVersion();
+  table::getUnused().cullByVersion();
 }
 
 
@@ -4139,7 +4139,7 @@ bool remove_table_from_cache(Session *session, TableIdentifier &identifier, uint
       table->getMutableShare()->resetVersion();		/* Free when thread is ready */
       if (not (in_use= table->in_use))
       {
-        getUnused().relink(table);
+        table::getUnused().relink(table);
       }
       else if (in_use != session)
       {
@@ -4177,7 +4177,7 @@ bool remove_table_from_cache(Session *session, TableIdentifier &identifier, uint
       }
     }
 
-    getUnused().cullByVersion();
+    table::getUnused().cullByVersion();
 
     /* Remove table from table definition cache if it's not in use */
     TableShare::release(identifier);
