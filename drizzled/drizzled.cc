@@ -321,8 +321,8 @@ my_decimal decimal_zero;
 
 FILE *stderror_file=0;
 
-struct system_variables global_system_variables;
-struct system_variables max_system_variables;
+struct drizzle_system_variables global_system_variables;
+struct drizzle_system_variables max_system_variables;
 struct global_counters current_global_counters;
 
 const CHARSET_INFO *system_charset_info, *files_charset_info ;

@@ -351,6 +351,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/session_list.h \
 			      drizzled/set_var.h \
 			      drizzled/show.h \
+			      drizzled/show_type.h \
 			      drizzled/signal_handler.h \
 			      drizzled/sql_base.h \
 			      drizzled/sql_error.h \

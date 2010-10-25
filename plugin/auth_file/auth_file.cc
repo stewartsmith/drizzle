@@ -32,7 +32,6 @@
 #include "drizzled/util/convert.h"
 #include "drizzled/algorithm/sha1.h"
 #include "drizzled/module/option_map.h"
-#include "drizzled/sys_var.h"
 
 namespace po= boost::program_options;
 using namespace std;

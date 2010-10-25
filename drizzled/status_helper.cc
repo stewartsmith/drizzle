@@ -32,6 +32,7 @@ using namespace std;
 namespace drizzled
 {
 
+extern uint64_t refresh_version;
 extern time_t server_start_time;
 extern time_t flush_status_time;
 

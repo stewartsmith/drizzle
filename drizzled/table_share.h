@@ -41,6 +41,8 @@
 namespace drizzled
 {
 
+extern uint64_t refresh_version;
+
 typedef boost::shared_ptr<TableShare> TableSharePtr;
 
 typedef boost::unordered_map< TableIdentifier::Key, TableSharePtr> TableDefinitionCache;

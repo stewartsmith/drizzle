@@ -45,18 +45,19 @@
 
 #include "config.h"
 #include "drizzled/option.h"
-#include <drizzled/error.h>
-#include <drizzled/gettext.h>
-#include <drizzled/tztime.h>
-#include <drizzled/data_home.h>
-#include <drizzled/set_var.h>
-#include <drizzled/session.h>
-#include <drizzled/sql_base.h>
-#include <drizzled/lock.h>
-#include <drizzled/item/uint.h>
-#include <drizzled/item/null.h>
-#include <drizzled/item/float.h>
-#include <drizzled/plugin.h>
+#include "drizzled/error.h"
+#include "drizzled/gettext.h"
+#include "drizzled/tztime.h"
+#include "drizzled/data_home.h"
+#include "drizzled/set_var.h"
+#include "drizzled/session.h"
+#include "drizzled/sql_base.h"
+#include "drizzled/lock.h"
+#include "drizzled/item/uint.h"
+#include "drizzled/item/null.h"
+#include "drizzled/item/float.h"
+#include "drizzled/item/string.h"
+#include "drizzled/plugin.h"
 #include "drizzled/version.h"
 #include "drizzled/strfunc.h"
 #include "drizzled/internal/m_string.h"
@@ -129,10 +130,10 @@ static unsigned char *get_tmpdir(Session *session);
 */
 static sys_var_session_uint64_t
 sys_auto_increment_increment("auto_increment_increment",
-                             &system_variables::auto_increment_increment);
+                             &drizzle_system_variables::auto_increment_increment);
 static sys_var_session_uint64_t
 sys_auto_increment_offset("auto_increment_offset",
-                          &system_variables::auto_increment_offset);
+                          &drizzle_system_variables::auto_increment_offset);
 
 static sys_var_fs_path sys_basedir("basedir", basedir);
 static sys_var_fs_path sys_pid_file("pid_file", pid_file);
@@ -143,64 +144,64 @@ static sys_var_size_t_ptr sys_thread_stack_size("thread_stack",
 static sys_var_constrained_value<uint32_t> sys_back_log("back_log", back_log);
 
 static sys_var_session_uint64_t	sys_bulk_insert_buff_size("bulk_insert_buffer_size",
-                                                          &system_variables::bulk_insert_buff_size);
+                                                          &drizzle_system_variables::bulk_insert_buff_size);
 static sys_var_session_uint32_t	sys_completion_type("completion_type",
-                                                    &system_variables::completion_type,
+                                                    &drizzle_system_variables::completion_type,
                                                     check_completion_type,
                                                     fix_completion_type);
 static sys_var_collation_sv
-sys_collation_server("collation_server", &system_variables::collation_server, &default_charset_info);
+sys_collation_server("collation_server", &drizzle_system_variables::collation_server, &default_charset_info);
 static sys_var_fs_path       sys_datadir("datadir", getDataHome());
 
 static sys_var_session_uint64_t	sys_join_buffer_size("join_buffer_size",
-                                                     &system_variables::join_buff_size);
+                                                     &drizzle_system_variables::join_buff_size);
 static sys_var_session_uint32_t	sys_max_allowed_packet("max_allowed_packet",
-                                                       &system_variables::max_allowed_packet);
+                                                       &drizzle_system_variables::max_allowed_packet);
 static sys_var_uint64_t_ptr	sys_max_connect_errors("max_connect_errors",
                                                &max_connect_errors);
 static sys_var_session_uint64_t	sys_max_error_count("max_error_count",
-                                                  &system_variables::max_error_count);
+                                                  &drizzle_system_variables::max_error_count);
 static sys_var_session_uint64_t	sys_max_heap_table_size("max_heap_table_size",
-                                                        &system_variables::max_heap_table_size);
+                                                        &drizzle_system_variables::max_heap_table_size);
 static sys_var_session_uint64_t sys_pseudo_thread_id("pseudo_thread_id",
-                                              &system_variables::pseudo_thread_id,
+                                              &drizzle_system_variables::pseudo_thread_id,
                                               0, check_pseudo_thread_id);
 static sys_var_session_ha_rows	sys_max_join_size("max_join_size",
-                                                  &system_variables::max_join_size,
+                                                  &drizzle_system_variables::max_join_size,
                                                   fix_max_join_size);
 static sys_var_session_uint64_t	sys_max_seeks_for_key("max_seeks_for_key",
-                                                      &system_variables::max_seeks_for_key);
+                                                      &drizzle_system_variables::max_seeks_for_key);
 static sys_var_session_uint64_t   sys_max_length_for_sort_data("max_length_for_sort_data",
-                                                               &system_variables::max_length_for_sort_data);
+                                                               &drizzle_system_variables::max_length_for_sort_data);
 static sys_var_session_size_t	sys_max_sort_length("max_sort_length",
-                                                    &system_variables::max_sort_length);
+                                                    &drizzle_system_variables::max_sort_length);
 static sys_var_uint64_t_ptr	sys_max_write_lock_count("max_write_lock_count",
                                                  &max_write_lock_count);
 static sys_var_session_uint64_t sys_min_examined_row_limit("min_examined_row_limit",
-                                                           &system_variables::min_examined_row_limit);
+                                                           &drizzle_system_variables::min_examined_row_limit);
 
 /* these two cannot be static */
 static sys_var_session_bool sys_optimizer_prune_level("optimizer_prune_level",
-                                                      &system_variables::optimizer_prune_level);
+                                                      &drizzle_system_variables::optimizer_prune_level);
 static sys_var_session_uint32_t sys_optimizer_search_depth("optimizer_search_depth",
-                                                           &system_variables::optimizer_search_depth);
+                                                           &drizzle_system_variables::optimizer_search_depth);
 
 static sys_var_session_uint64_t sys_preload_buff_size("preload_buffer_size",
-                                                      &system_variables::preload_buff_size);
+                                                      &drizzle_system_variables::preload_buff_size);
 static sys_var_session_uint32_t sys_read_buff_size("read_buffer_size",
-                                                   &system_variables::read_buff_size);
+                                                   &drizzle_system_variables::read_buff_size);
 static sys_var_session_uint32_t	sys_read_rnd_buff_size("read_rnd_buffer_size",
-                                                       &system_variables::read_rnd_buff_size);
+                                                       &drizzle_system_variables::read_rnd_buff_size);
 static sys_var_session_uint32_t	sys_div_precincrement("div_precision_increment",
-                                                      &system_variables::div_precincrement);
+                                                      &drizzle_system_variables::div_precincrement);
 
 static sys_var_session_size_t	sys_range_alloc_block_size("range_alloc_block_size",
-                                                           &system_variables::range_alloc_block_size);
+                                                           &drizzle_system_variables::range_alloc_block_size);
 static sys_var_session_uint32_t	sys_query_alloc_block_size("query_alloc_block_size",
-                                                           &system_variables::query_alloc_block_size,
+                                                           &drizzle_system_variables::query_alloc_block_size,
                                                            NULL, fix_session_mem_root);
 static sys_var_session_uint32_t	sys_query_prealloc_size("query_prealloc_size",
-                                                        &system_variables::query_prealloc_size,
+                                                        &drizzle_system_variables::query_prealloc_size,
                                                         NULL, fix_session_mem_root);
 static sys_var_readonly sys_tmpdir("tmpdir", OPT_GLOBAL, SHOW_CHAR, get_tmpdir);
 
@@ -214,13 +215,13 @@ static sys_var_uint32_t_ptr  sys_server_id("server_id", &server_id,
                                            fix_server_id);
 
 static sys_var_session_size_t	sys_sort_buffer("sort_buffer_size",
-                                                &system_variables::sortbuff_size);
+                                                &drizzle_system_variables::sortbuff_size);
 
 static sys_var_session_size_t sys_transaction_message_threshold("transaction_message_threshold",
-                                                                &system_variables::transaction_message_threshold);
+                                                                &drizzle_system_variables::transaction_message_threshold);
 
 static sys_var_session_storage_engine sys_storage_engine("storage_engine",
-				       &system_variables::storage_engine);
+				       &drizzle_system_variables::storage_engine);
 static sys_var_const_str	sys_system_time_zone("system_time_zone",
                                              system_time_zone);
 static sys_var_size_t_ptr	sys_table_def_size("table_definition_cache",
@@ -230,12 +231,12 @@ static sys_var_uint64_t_ptr	sys_table_cache_size("table_open_cache",
 static sys_var_uint64_t_ptr	sys_table_lock_wait_timeout("table_lock_wait_timeout",
                                                     &table_lock_wait_timeout);
 static sys_var_session_enum	sys_tx_isolation("tx_isolation",
-                                             &system_variables::tx_isolation,
+                                             &drizzle_system_variables::tx_isolation,
                                              &tx_isolation_typelib,
                                              fix_tx_isolation,
                                              check_tx_isolation);
 static sys_var_session_uint64_t	sys_tmp_table_size("tmp_table_size",
-					   &system_variables::tmp_table_size);
+					   &drizzle_system_variables::tmp_table_size);
 static sys_var_bool_ptr  sys_timed_mutexes("timed_mutexes", &internal::timed_mutexes);
 static sys_var_const_str  sys_version("version", version().c_str());
 
@@ -275,7 +276,7 @@ static sys_var_session_bit	sys_unique_checks("unique_checks", 0,
 /* Local state variables */
 
 static sys_var_session_ha_rows	sys_select_limit("sql_select_limit",
-						 &system_variables::select_limit);
+						 &drizzle_system_variables::select_limit);
 static sys_var_timestamp sys_timestamp("timestamp");
 static sys_var_last_insert_id
 sys_last_insert_id("last_insert_id");
@@ -309,7 +310,7 @@ static sys_var_readonly sys_warning_count("warning_count",
                                           get_warning_count);
 
 sys_var_session_uint64_t sys_group_concat_max_len("group_concat_max_len",
-                                                  &system_variables::group_concat_max_len);
+                                                  &drizzle_system_variables::group_concat_max_len);
 
 sys_var_session_time_zone sys_time_zone("time_zone");
 

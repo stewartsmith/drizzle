@@ -23,12 +23,20 @@
 #include <string>
 #include <boost/filesystem.hpp>
 
+/*
 #include "drizzled/function/func.h"
 #include "drizzled/function/set_user_var.h"
 #include "drizzled/item/string.h"
 #include "drizzled/item/field.h"
+*/
 #include "drizzled/constrained_value.h"
 #include "drizzled/set_var.h"
+#include "drizzled/show_type.h"
+#include "drizzled/typelib.h"
+#include "drizzled/item_result.h"
+#include "drizzled/base.h"
+#include "drizzled/global_charset_info.h"
+#include "drizzled/lex_string.h"
 
 namespace drizzled
 {
@@ -47,7 +55,7 @@ typedef void (*sys_set_default_func)(Session *, sql_var_t);
 typedef unsigned char *(*sys_value_ptr_func)(Session *session);
 
 static const std::vector<std::string> empty_aliases;
-extern struct system_variables max_system_variables;
+extern struct drizzle_system_variables max_system_variables;
 extern size_t table_def_size;
 
 extern std::string drizzle_tmpdir;
@@ -636,9 +644,9 @@ class sys_var_session_uint32_t :public sys_var_session
 {
   sys_check_func check_func;
 public:
-  uint32_t system_variables::*offset;
+  uint32_t drizzle_system_variables::*offset;
   sys_var_session_uint32_t(const char *name_arg,
-                           uint32_t system_variables::*offset_arg,
+                           uint32_t drizzle_system_variables::*offset_arg,
                            sys_check_func c_func= NULL,
                            sys_after_update_func au_func= NULL)
     :sys_var_session(name_arg, au_func), check_func(c_func),
@@ -656,13 +664,13 @@ public:
 class sys_var_session_ha_rows :public sys_var_session
 {
 public:
-  ha_rows system_variables::*offset;
+  ha_rows drizzle_system_variables::*offset;
   sys_var_session_ha_rows(const char *name_arg,
-                      ha_rows system_variables::*offset_arg)
+                      ha_rows drizzle_system_variables::*offset_arg)
     :sys_var_session(name_arg), offset(offset_arg)
   {  }
   sys_var_session_ha_rows(const char *name_arg,
-                      ha_rows system_variables::*offset_arg,
+                      ha_rows drizzle_system_variables::*offset_arg,
 		      sys_after_update_func func)
     :sys_var_session(name_arg,func), offset(offset_arg)
   {  }
@@ -678,11 +686,11 @@ class sys_var_session_uint64_t :public sys_var_session
 {
   sys_check_func check_func;
 public:
-  uint64_t system_variables::*offset;
+  uint64_t drizzle_system_variables::*offset;
   bool only_global;
   sys_var_session_uint64_t(
                            const char *name_arg,
-                           uint64_t system_variables::*offset_arg,
+                           uint64_t drizzle_system_variables::*offset_arg,
                            sys_after_update_func au_func= NULL,
                            sys_check_func c_func= NULL)
     :sys_var_session(name_arg, au_func),
@@ -690,7 +698,7 @@ public:
     offset(offset_arg)
   {  }
   sys_var_session_uint64_t(const char *name_arg,
-                           uint64_t system_variables::*offset_arg,
+                           uint64_t drizzle_system_variables::*offset_arg,
                            sys_after_update_func func,
                            bool only_global_arg,
                            sys_check_func cfunc= NULL)
@@ -719,10 +727,10 @@ class sys_var_session_size_t :public sys_var_session
 {
   sys_check_func check_func;
 public:
-  size_t system_variables::*offset;
+  size_t drizzle_system_variables::*offset;
   bool only_global;
   sys_var_session_size_t(const char *name_arg,
-                         size_t system_variables::*offset_arg,
+                         size_t drizzle_system_variables::*offset_arg,
                          sys_after_update_func au_func= NULL,
                          sys_check_func c_func= NULL)
     :sys_var_session(name_arg, au_func),
@@ -730,7 +738,7 @@ public:
      offset(offset_arg)
   {  }
   sys_var_session_size_t(const char *name_arg,
-                         size_t system_variables::*offset_arg,
+                         size_t drizzle_system_variables::*offset_arg,
                          sys_after_update_func func,
                          bool only_global_arg,
                          sys_check_func cfunc= NULL)
@@ -759,11 +767,11 @@ public:
 class sys_var_session_bool :public sys_var_session
 {
 public:
-  bool system_variables::*offset;
-  sys_var_session_bool(const char *name_arg, bool system_variables::*offset_arg)
+  bool drizzle_system_variables::*offset;
+  sys_var_session_bool(const char *name_arg, bool drizzle_system_variables::*offset_arg)
     :sys_var_session(name_arg), offset(offset_arg)
   {  }
-  sys_var_session_bool(const char *name_arg, bool system_variables::*offset_arg,
+  sys_var_session_bool(const char *name_arg, bool drizzle_system_variables::*offset_arg,
 		   sys_after_update_func func)
     :sys_var_session(name_arg,func), offset(offset_arg)
   {  }
@@ -784,12 +792,12 @@ public:
 class sys_var_session_enum :public sys_var_session
 {
 protected:
-  uint32_t system_variables::*offset;
+  uint32_t drizzle_system_variables::*offset;
   TYPELIB *enum_names;
   sys_check_func check_func;
 public:
   sys_var_session_enum(const char *name_arg,
-                   uint32_t system_variables::*offset_arg, TYPELIB *typelib,
+                   uint32_t drizzle_system_variables::*offset_arg, TYPELIB *typelib,
                    sys_after_update_func func= NULL,
                    sys_check_func check_f= NULL)
     :sys_var_session(name_arg, func), offset(offset_arg),
@@ -815,10 +823,10 @@ public:
 class sys_var_session_storage_engine :public sys_var_session
 {
 protected:
-  plugin::StorageEngine *system_variables::*offset;
+  plugin::StorageEngine *drizzle_system_variables::*offset;
 public:
   sys_var_session_storage_engine(const char *name_arg,
-                                 plugin::StorageEngine *system_variables::*offset_arg)
+                                 plugin::StorageEngine *drizzle_system_variables::*offset_arg)
     :sys_var_session(name_arg), offset(offset_arg)
   {  }
   bool check(Session *session, set_var *var);
@@ -907,11 +915,11 @@ public:
 
 class sys_var_collation_sv :public sys_var_collation
 {
-  const CHARSET_INFO *system_variables::*offset;
+  const CHARSET_INFO *drizzle_system_variables::*offset;
   const CHARSET_INFO **global_default;
 public:
   sys_var_collation_sv(const char *name_arg,
-                       const CHARSET_INFO *system_variables::*offset_arg,
+                       const CHARSET_INFO *drizzle_system_variables::*offset_arg,
                        const CHARSET_INFO **global_default_arg)
     :sys_var_collation(name_arg),
     offset(offset_arg), global_default(global_default_arg)
@@ -980,10 +988,10 @@ public:
 
 class sys_var_microseconds :public sys_var_session
 {
-  uint64_t system_variables::*offset;
+  uint64_t drizzle_system_variables::*offset;
 public:
   sys_var_microseconds(const char *name_arg,
-                       uint64_t system_variables::*offset_arg):
+                       uint64_t drizzle_system_variables::*offset_arg):
     sys_var_session(name_arg), offset(offset_arg)
   {  }
   bool check(Session *, set_var *) {return 0;}

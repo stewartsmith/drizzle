@@ -19,6 +19,7 @@
 
 #include "config.h"
 #include "drizzled/session.h"
+#include "drizzled/item/string.h"
 #include "drizzled/sql_list.h"
 
 using namespace std;
@@ -73,6 +74,25 @@ err:
 /*****************************************************************************
   Functions to handle SET mysql_internal_variable=const_expr
 *****************************************************************************/
+set_var::set_var(sql_var_t type_arg, sys_var *var_arg,
+                 const LEX_STRING *base_name_arg, Item *value_arg) :
+  var(var_arg), type(type_arg), base(*base_name_arg)
+{
+  /*
+    If the set value is a field, change it to a string to allow things like
+    SET table_type=MYISAM;
+  */
+  if (value_arg && value_arg->type() == Item::FIELD_ITEM)
+  {
+    Item_field *item= (Item_field*) value_arg;
+    if (!(value=new Item_string(item->field_name,
+                                (uint32_t) strlen(item->field_name),
+                                item->collation.collation)))
+      value=value_arg;			/* Give error message later */
+  }
+  else
+    value=value_arg;
+}
 
 int set_var::check(Session *session)
 {

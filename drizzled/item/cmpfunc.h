@@ -27,6 +27,7 @@
 #include "drizzled/item/sum.h"
 #include "drizzled/item/int.h"
 #include "drizzled/item/float.h"
+#include "drizzled/item/string.h"
 #include "drizzled/item/decimal.h"
 #include "drizzled/function/math/int.h"
 #include "drizzled/function/numhybrid.h"

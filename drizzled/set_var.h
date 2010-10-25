@@ -20,16 +20,29 @@
 #ifndef DRIZZLED_SET_VAR_H
 #define DRIZZLED_SET_VAR_H
 
-#include "drizzled/function/func.h"
+/*#include "drizzled/function/func.h"
 #include "drizzled/function/set_user_var.h"
 #include "drizzled/item/string.h"
 #include "drizzled/item/field.h"
+*/
+#include "drizzled/memory/sql_alloc.h"
+#include "drizzled/sql_list.h"
+#include "drizzled/lex_string.h"
 
 namespace drizzled
 {
 
+namespace plugin
+{
+class StorageEngine;
+}
+
+class sys_var;
+class Item;
+class Item_func_set_user_var;
 class Time_zone;
 typedef struct my_locale_st MY_LOCALE;
+typedef struct charset_info_st CHARSET_INFO;
 
 /* Classes to support the SET command */
 
@@ -43,7 +56,8 @@ typedef struct my_locale_st MY_LOCALE;
   Classes for parsing of the SET command
 ****************************************************************************/
 
-class set_var_base :public memory::SqlAlloc
+class set_var_base :
+  public memory::SqlAlloc
 {
 public:
   set_var_base() {}
@@ -54,7 +68,8 @@ public:
 };
 
 /* MySQL internal variables */
-class set_var :public set_var_base
+class set_var :
+  public set_var_base
 {
 public:
   sys_var *var;
@@ -73,24 +88,7 @@ public:
   LEX_STRING base;			/* for structs */
 
   set_var(sql_var_t type_arg, sys_var *var_arg,
-          const LEX_STRING *base_name_arg, Item *value_arg)
-    :var(var_arg), type(type_arg), base(*base_name_arg)
-  {
-    /*
-      If the set value is a field, change it to a string to allow things like
-      SET table_type=MYISAM;
-    */
-    if (value_arg && value_arg->type() == Item::FIELD_ITEM)
-    {
-      Item_field *item= (Item_field*) value_arg;
-      if (!(value=new Item_string(item->field_name,
-                  (uint32_t) strlen(item->field_name),
-				  item->collation.collation)))
-	value=value_arg;			/* Give error message later */
-    }
-    else
-      value=value_arg;
-  }
+          const LEX_STRING *base_name_arg, Item *value_arg);
   int check(Session *session);
   int update(Session *session);
 };
@@ -101,8 +99,8 @@ class set_var_user: public set_var_base
 {
   Item_func_set_user_var *user_var_item;
 public:
-  set_var_user(Item_func_set_user_var *item)
-    :user_var_item(item)
+  set_var_user(Item_func_set_user_var *item) :
+    user_var_item(item)
   {}
   int check(Session *session);
   int update(Session *session);
