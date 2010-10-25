@@ -111,6 +111,12 @@ public:
                                      THR_LOCK_DATA **to,
                              enum thr_lock_type);
 
+  int doInsertRecord(unsigned char *)
+  {
+    CURSOR_NEW_STATE("::doInsertRecord()");
+    CURSOR_NEW_STATE("::store_lock()");
+    return 0;
+  }
 
 private:
   string cursor_state;
@@ -363,6 +369,8 @@ static int seapi_tester_init(drizzled::module::Context &context)
   cursor_state_transitions.insert(state_pair("::store_lock()", "::doStartTableScan()"));
   cursor_state_transitions.insert(state_pair("::open()", "::doStartTableScan()"));
   cursor_state_transitions.insert(state_pair("::doStartTableScan()", "::rnd_next()"));
+  cursor_state_transitions.insert(state_pair("::store_lock()", "::doInsertRecord()"));
+  cursor_state_transitions.insert(state_pair("::doInsertRecord()", "::store_lock()"));
 
 
   /* below just for autocommit statement. doesn't seem right to me */
