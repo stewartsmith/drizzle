@@ -43,7 +43,8 @@ typedef multimap<string, string>::iterator state_multimap_iter;
 state_multimap engine_state_transitions;
 state_multimap cursor_state_transitions;
 
-void load_engine_state_transitions(state_multimap &engine_state_transitions);
+void load_engine_state_transitions(state_multimap &states);
+void load_cursor_state_transitions(state_multimap &states);
 
 /* This is a hack to make store_lock kinda work */
 drizzled::THR_LOCK share_lock;
@@ -361,20 +362,8 @@ int SEAPITester::doRollback(Session*, bool)
 static int seapi_tester_init(drizzled::module::Context &context)
 {
   load_engine_state_transitions(engine_state_transitions);
+  load_cursor_state_transitions(cursor_state_transitions);
   engine_state= "INIT";
-
-
-  cursor_state_transitions.insert(state_pair("Cursor()", "::open()"));
-  cursor_state_transitions.insert(state_pair("::open()", "::store_lock()"));
-  cursor_state_transitions.insert(state_pair("::store_lock()", "::doStartTableScan()"));
-  cursor_state_transitions.insert(state_pair("::open()", "::doStartTableScan()"));
-  cursor_state_transitions.insert(state_pair("::doStartTableScan()", "::rnd_next()"));
-  cursor_state_transitions.insert(state_pair("::store_lock()", "::doInsertRecord()"));
-  cursor_state_transitions.insert(state_pair("::doInsertRecord()", "::store_lock()"));
-
-
-  /* below just for autocommit statement. doesn't seem right to me */
-  engine_state_transitions.insert(state_pair("::SEAPITester()", "START STATEMENT"));
 
   thr_lock_init(&share_lock); /* HACK for store_lock */
 
