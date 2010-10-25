@@ -434,6 +434,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/tztime.h \
 			      drizzled/unique.h \
 			      drizzled/unireg.h \
+			      drizzled/unused_tables.h \
 			      drizzled/user_var_entry.h \
 			      drizzled/utf8/checked.h \
 			      drizzled/utf8/core.h \
@@ -769,6 +770,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/tree.cc \
 				 drizzled/tztime.cc \
 				 drizzled/unique.cc \
+				 drizzled/unused_tables.cc \
 				 drizzled/user_var_entry.cc \
 				 drizzled/version.cc \
 				 drizzled/xid.cc

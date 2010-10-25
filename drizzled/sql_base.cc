@@ -55,6 +55,7 @@
 #include "drizzled/plugin/authorization.h"
 #include "drizzled/table/temporary.h"
 #include "drizzled/table/placeholder.h"
+#include "drizzled/unused_tables.h"
 
 using namespace std;
 
@@ -100,99 +101,6 @@ static bool add_table(table::Concurrent *arg)
   return not (returnable == open_cache.end());
 }
 
-class UnusedTables {
-  table::Concurrent *tables;				/* Used by mysql_test */
-
-  table::Concurrent *getTable() const
-  {
-    return tables;
-  }
-
-  table::Concurrent *setTable(Table *arg)
-  {
-    return tables= dynamic_cast<table::Concurrent *>(arg);
-  }
-
-public:
-
-  void cull()
-  {
-    /* Free cache if too big */
-    while (cached_open_tables() > table_cache_size && getTable())
-      remove_table(getTable());
-  }
-
-  void cullByVersion()
-  {
-    while (getTable() && not getTable()->getShare()->getVersion())
-      remove_table(getTable());
-  }
-  
-  void link(table::Concurrent *table)
-  {
-    if (getTable())
-    {
-      table->setNext(getTable());		/* Link in last */
-      table->setPrev(getTable()->getPrev());
-      getTable()->setPrev(table);
-      table->getPrev()->setNext(table);
-    }
-    else
-    {
-      table->setPrev(setTable(table));
-      table->setNext(table->getPrev());
-      assert(table->getNext() == table && table->getPrev() == table);
-    }
-  }
-
-
-  void unlink(table::Concurrent *table)
-  {
-    table->unlink();
-
-    /* Unlink the table from "unused_tables" list. */
-    if (table == getTable())
-    {  // First unused
-      setTable(getTable()->getNext()); // Remove from link
-      if (table == getTable())
-        setTable(NULL);
-    }
-  }
-
-/* move table first in unused links */
-
-  void relink(table::Concurrent *table)
-  {
-    if (table != getTable())
-    {
-      table->unlink();
-
-      table->setNext(getTable());			/* Link in unused tables */
-      table->setPrev(getTable()->getPrev());
-      getTable()->getPrev()->setNext(table);
-      getTable()->setPrev(table);
-      setTable(table);
-    }
-  }
-
-
-  void clear()
-  {
-    while (getTable())
-      remove_table(getTable());
-  }
-
-  UnusedTables():
-    tables(NULL)
-  { }
-
-  ~UnusedTables()
-  { 
-  }
-};
-
-static UnusedTables unused_tables;
-
 unsigned char *table_cache_key(const unsigned char *record,
                                size_t *length,
                                bool );
@@ -220,7 +128,7 @@ void table_cache_free(void)
 {
   refresh_version++;				// Force close of open tables
 
-  unused_tables.clear();
+  getUnused().clear();
   get_open_cache().clear();
 }
 
@@ -295,7 +203,7 @@ void free_cache_entry(table::Concurrent *table)
   table->intern_close_table();
   if (not table->in_use)
   {
-    unused_tables.unlink(table);
+    getUnused().unlink(table);
   }
 
   delete table;
@@ -341,7 +249,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
     {
       refresh_version++;				// Force close of open tables
 
-      unused_tables.clear();
+      getUnused().clear();
 
       if (wait_for_refresh)
       {
@@ -525,7 +433,7 @@ bool Session::free_cached_table()
     table->cursor->ha_reset();
     table->in_use= false;
 
-    unused_tables.link(table);
+    getUnused().link(table);
   }
 
   return found_old_table;
@@ -1267,7 +1175,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
       }
       if (table)
       {
-        unused_tables.unlink(dynamic_cast<table::Concurrent *>(table));
+        getUnused().unlink(dynamic_cast<table::Concurrent *>(table));
         table->in_use= this;
       }
       else
@@ -1275,7 +1183,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
         /* Insert a new Table instance into the open cache */
         int error;
         /* Free cache if too big */
-        unused_tables.cull();
+        getUnused().cull();
 
         if (table_list->isCreate())
         {
@@ -4186,11 +4094,11 @@ void remove_db_from_cache(const SchemaIdentifier &schema_identifier)
     {
       table->getMutableShare()->resetVersion();			/* Free when thread is ready */
       if (not table->in_use)
-        unused_tables.relink(table);
+        getUnused().relink(table);
     }
   }
 
-  unused_tables.cullByVersion();
+  getUnused().cullByVersion();
 }
 
 
@@ -4231,7 +4139,7 @@ bool remove_table_from_cache(Session *session, TableIdentifier &identifier, uint
       table->getMutableShare()->resetVersion();		/* Free when thread is ready */
       if (not (in_use= table->in_use))
       {
-        unused_tables.relink(table);
+        getUnused().relink(table);
       }
       else if (in_use != session)
       {
@@ -4269,7 +4177,7 @@ bool remove_table_from_cache(Session *session, TableIdentifier &identifier, uint
       }
     }
 
-    unused_tables.cullByVersion();
+    getUnused().cullByVersion();
 
     /* Remove table from table definition cache if it's not in use */
     TableShare::release(identifier);
