@@ -691,8 +691,20 @@ int TransactionServices::rollbackTransaction(Session *session, bool normal_trans
 */
 int TransactionServices::autocommitOrRollback(Session *session, int error)
 {
+
   if (session->transaction.stmt.getResourceContexts().empty() == false)
   {
+    TransactionContext *trans = &session->transaction.stmt;
+    TransactionContext::ResourceContexts &resource_contexts= trans->getResourceContexts();
+    for (TransactionContext::ResourceContexts::iterator it= resource_contexts.begin();
+         it != resource_contexts.end();
+         ++it)
+    {
+      ResourceContext *resource_context= *it;
+
+      resource_context->getTransactionalStorageEngine()->endStatement(session);
+    }
+
     if (! error)
     {
       if (commitTransaction(session, false))
