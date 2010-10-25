@@ -2,29 +2,35 @@ connect (a,localhost,root,,);
 connect (b,localhost,root,,);
 
 connection a;
+--echo A
 CREATE TABLE t1 (a int);
 SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;
 BEGIN;
 INSERT INTO t1 values (1);
 
 connection b;
+--echo B
 SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;
 BEGIN;
 SELECT * from t1;
 
 connection a;
+--echo A
 INSERT INTO t1 values (2);
 
 connection b;
+--echo B
 SELECT * from t1;
 COMMIT;
 BEGIN;
 SELECT * FROM t1;
 
 connection a;
+--echo A
 COMMIT;
 
 connection b;
+--echo B
 SELECT * from t1 order by a;
 COMMIT;
 BEGIN;
