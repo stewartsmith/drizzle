@@ -38,6 +38,8 @@
 #include "drizzled/message/table.pb.h"
 #include "drizzled/util/string.h"
 
+#include "drizzled/table/cache.h"
+
 namespace drizzled
 {
 

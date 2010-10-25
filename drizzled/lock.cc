@@ -687,11 +687,11 @@ static int lock_table_name(Session *session, TableList *table_list)
 
   {
     /* Only insert the table if we haven't insert it already */
-    TableOpenCacheRange ppp;
+    table::CacheRange ppp;
 
     ppp= get_open_cache().equal_range(key);
 
-    for (TableOpenCache::const_iterator iter= ppp.first;
+    for (table::Cache::const_iterator iter= ppp.first;
          iter != ppp.second; ++iter)
     {
       Table *table= (*iter).second;
