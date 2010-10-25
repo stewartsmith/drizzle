@@ -48,6 +48,7 @@ drizzled/sql_select.cc
 drizzled/sql_table.cc
 drizzled/sql_yacc.cc
 drizzled/statement/alter_table.cc
+drizzled/sys_var.cc
 drizzled/table.cc
 drizzled/table_share.cc
 drizzled/transaction_services.cc

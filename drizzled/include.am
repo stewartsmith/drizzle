@@ -407,6 +407,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/strfunc.h \
 			      drizzled/structs.h \
 			      drizzled/symbol_hash.h \
+			      drizzled/sys_var.h \
 			      drizzled/table.h \
 			      drizzled/table_function_container.h \
 			      drizzled/table_ident.h \
@@ -756,6 +757,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/statement/update.cc \
 				 drizzled/status_helper.cc \
 				 drizzled/strfunc.cc \
+				 drizzled/sys_var.cc \
 				 drizzled/table.cc \
 				 drizzled/table_function_container.cc \
 				 drizzled/table_list.cc \

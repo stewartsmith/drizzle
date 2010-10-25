@@ -20,6 +20,9 @@
 #ifndef DRIZZLED_PLUGIN_H
 #define DRIZZLED_PLUGIN_H
 
+#include <boost/program_options.hpp>
+#include <boost/filesystem.hpp>
+
 #include "drizzled/module/manifest.h"
 #include "drizzled/module/module.h"
 #include "drizzled/plugin/version.h"
@@ -28,8 +31,6 @@
 
 #include "drizzled/lex_string.h"
 #include "drizzled/xid.h"
-#include <boost/program_options.hpp>
-#include <boost/filesystem.hpp>
 
 namespace drizzled
 {
@@ -106,6 +107,7 @@ typedef int (*mysql_show_var_func)(drizzle_show_var *, char *);
 struct st_show_var_func_container {
   mysql_show_var_func func;
 };
+
 /*
   declarations for server variables and command line options
 */

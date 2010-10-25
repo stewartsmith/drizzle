@@ -1531,7 +1531,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
 
   if (item_create_init())
     return 1;
-  if (set_var_init())
+  if (sys_var_init())
     return 1;
   /* Creates static regex matching for temporal values */
   if (! init_temporal_formats())
