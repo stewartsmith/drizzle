@@ -408,7 +408,7 @@ public:
 
   uint64_t getCurrentTransactionId(Session *session);
 
-  void allocateNewTransactionId(Session *session);
+  void allocateNewTransactionId();
  
   /**
    * DEBUG ONLY.  See plugin::TransactionLog::truncate()

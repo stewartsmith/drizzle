@@ -131,7 +131,7 @@ bool Schema::doGetSchemaDefinition(const SchemaIdentifier &schema_identifier, me
 }
 
 
-bool Schema::doCreateSchema(const drizzled::message::Schema &schema_message, drizzled::Session &session)
+bool Schema::doCreateSchema(const drizzled::message::Schema &schema_message)
 {
   SchemaIdentifier schema_identifier(schema_message.name());
 
@@ -159,7 +159,7 @@ bool Schema::doCreateSchema(const drizzled::message::Schema &schema_message, dri
   mutex.unlock();
 
   TransactionServices &transaction_services= TransactionServices::singleton();
-  transaction_services.allocateNewTransactionId(&session);
+  transaction_services.allocateNewTransactionId();
 
   return true;
 }
@@ -201,6 +201,9 @@ bool Schema::doDropSchema(const SchemaIdentifier &schema_identifier)
   schema_cache.erase(schema_identifier.getPath());
   mutex.unlock();
 
+  TransactionServices &transaction_services= TransactionServices::singleton();
+  transaction_services.allocateNewTransactionId();
+
   return true;
 }
 
@@ -226,6 +229,9 @@ bool Schema::doAlterSchema(const drizzled::message::Schema &schema_message)
       }
     }
     mutex.unlock();
+
+    TransactionServices &transaction_services= TransactionServices::singleton();
+    transaction_services.allocateNewTransactionId();
   }
 
   return true;

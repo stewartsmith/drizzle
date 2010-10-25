@@ -142,28 +142,26 @@ class CreateSchema :
   public unary_function<StorageEngine *, void>
 {
   const drizzled::message::Schema &schema_message;
-  drizzled::Session &session;
 
 public:
 
-  CreateSchema(const drizzled::message::Schema &arg, drizzled::Session &in_session) :
-    schema_message(arg),
-    session(in_session)
+  CreateSchema(const drizzled::message::Schema &arg) :
+    schema_message(arg)
   {
   }
 
   result_type operator() (argument_type engine)
   {
     // @todo eomeday check that at least one engine said "true"
-    (void)engine->doCreateSchema(schema_message, session);
+    (void)engine->doCreateSchema(schema_message);
   }
 };
 
-bool StorageEngine::createSchema(const drizzled::message::Schema &schema_message, Session &session)
+bool StorageEngine::createSchema(const drizzled::message::Schema &schema_message)
 {
   // Add hook here for engines to register schema.
   for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
-           CreateSchema(schema_message, session));
+           CreateSchema(schema_message));
 
   return true;
 }

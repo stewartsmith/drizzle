@@ -332,7 +332,7 @@ public:
   static bool getSchemaDefinition(const drizzled::SchemaIdentifier &identifier, message::SchemaPtr &proto);
   static bool doesSchemaExist(const drizzled::SchemaIdentifier &identifier);
   static const CHARSET_INFO *getSchemaCollation(const drizzled::SchemaIdentifier &identifier);
-  static bool createSchema(const drizzled::message::Schema &schema_message, drizzled::Session &session);
+  static bool createSchema(const drizzled::message::Schema &schema_message);
   static bool dropSchema(const drizzled::SchemaIdentifier &identifier);
   static bool alterSchema(const drizzled::message::Schema &schema_message);
 
@@ -345,17 +345,20 @@ public:
     return false; 
   }
 
-  virtual bool doCreateSchema(const drizzled::message::Schema&, Session &session)
+  virtual bool doCreateSchema(const drizzled::message::Schema&)
   {
-    (void)session;
     return false;
   }
 
   virtual bool doAlterSchema(const drizzled::message::Schema&)
-  { return false; }
+  {
+    return false;
+  }
 
   virtual bool doDropSchema(const drizzled::SchemaIdentifier&)
-  { return false; }
+  {
+    return false; 
+  }
 
   static inline const std::string &resolveName(const StorageEngine *engine)
   {

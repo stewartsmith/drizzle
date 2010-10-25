@@ -440,10 +440,17 @@ void TransactionServices::registerResourceForTransaction(Session *session,
     registerResourceForStatement(session, monitored, engine, resource_manager);
 }
 
-void TransactionServices::allocateNewTransactionId(Session *session)
+void TransactionServices::allocateNewTransactionId()
 {
-  uint64_t xa_id= xa_storage_engine->getNewTransactionId(session);
-  session->setXaId(xa_id);
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  if (! replication_services.isActive())
+  {
+    return;
+  }
+
+  Session *my_session= current_session;
+  uint64_t xa_id= xa_storage_engine->getNewTransactionId(my_session);
+  my_session->setXaId(xa_id);
 }
 
 uint64_t TransactionServices::getCurrentTransactionId(Session *session)

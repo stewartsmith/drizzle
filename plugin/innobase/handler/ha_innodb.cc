@@ -4118,6 +4118,8 @@ no_commit:
 
   error = row_insert_for_mysql((byte*) record, prebuilt);
 
+  user_session->setXaId((ib_uint64_t) ut_conv_dulint_to_longlong(trx->id));
+
   /* Handle duplicate key errors */
   if (auto_inc_used) {
     ulint   err;
@@ -4435,6 +4437,8 @@ ha_innobase::doUpdateRecord(
 
   error = row_update_for_mysql((byte*) old_row, prebuilt);
 
+  user_session->setXaId((ib_uint64_t) ut_conv_dulint_to_longlong(trx->id));
+
   /* We need to do some special AUTOINC handling for the following case:
 
   INSERT INTO t (c1,c2) VALUES(x,y) ON DUPLICATE KEY UPDATE ...
@@ -4524,6 +4528,8 @@ ha_innobase::doDeleteRecord(
   innodb_srv_conc_enter_innodb(trx);
 
   error = row_update_for_mysql((byte*) record, prebuilt);
+
+  user_session->setXaId((ib_uint64_t) ut_conv_dulint_to_longlong(trx->id));
 
   innodb_srv_conc_exit_innodb(trx);
 
@@ -6052,6 +6058,8 @@ InnobaseEngine::doDropTable(
                                    session_sql_command(&session)
                                    == SQLCOM_DROP_DB);
 
+  session.setXaId((ib_uint64_t) ut_conv_dulint_to_longlong(trx->id));
+
   /* Flush the log to reduce probability that the .frm files and
     the InnoDB data dictionary get out-of-sync if the user runs
     with innodb_flush_log_at_trx_commit = 0 */
@@ -6272,6 +6280,8 @@ UNIV_INTERN int InnobaseEngine::doRenameTable(Session &session, const TableIdent
   trx = innobase_trx_allocate(&session);
 
   error = innobase_rename_table(trx, from.getPath().c_str(), to.getPath().c_str(), TRUE);
+
+  session.setXaId((ib_uint64_t) ut_conv_dulint_to_longlong(trx->id));
 
   /* Tell the InnoDB server that there might be work for
     utility threads: */
