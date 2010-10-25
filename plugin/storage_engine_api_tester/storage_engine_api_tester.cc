@@ -43,6 +43,8 @@ typedef multimap<string, string>::iterator state_multimap_iter;
 state_multimap engine_state_transitions;
 state_multimap cursor_state_transitions;
 
+void load_engine_state_transitions(state_multimap &engine_state_transitions);
+
 /* This is a hack to make store_lock kinda work */
 drizzled::THR_LOCK share_lock;
 
@@ -352,31 +354,7 @@ int SEAPITester::doRollback(Session*, bool)
 
 static int seapi_tester_init(drizzled::module::Context &context)
 {
-  engine_state_transitions.insert(state_pair("INIT", "::SEAPITester()"));
-  engine_state_transitions.insert(state_pair("::SEAPITester()", "::~SEAPITester()"));
-  engine_state_transitions.insert(state_pair("::SEAPITester()", "::doCreateTable()"));
-  engine_state_transitions.insert(state_pair("::doCreateTable()", "::SEAPITester()"));
-/*  engine_state_transitions.insert(state_pair("::SEAPITester()", "::create()"));
-    engine_state_transitions.insert(state_pair("::create()", "::SEAPITester()"));*/
-  engine_state_transitions.insert(state_pair("::SEAPITester()", "BEGIN"));
-  engine_state_transitions.insert(state_pair("BEGIN", "START STATEMENT"));
-
-  /* really a bug */
-  engine_state_transitions.insert(state_pair("BEGIN", "END STATEMENT"));
-  /* also a bug */
-  engine_state_transitions.insert(state_pair("::SEAPITester()", "COMMIT"));
-
-  engine_state_transitions.insert(state_pair("BEGIN", "COMMIT"));
-  engine_state_transitions.insert(state_pair("BEGIN", "ROLLBACK"));
-  engine_state_transitions.insert(state_pair("START STATEMENT", "END STATEMENT"));
-  engine_state_transitions.insert(state_pair("END STATEMENT", "START STATEMENT"));
-  engine_state_transitions.insert(state_pair("END STATEMENT", "COMMIT"));
-  engine_state_transitions.insert(state_pair("END STATEMENT", "ROLLBACK"));
-
-  engine_state_transitions.insert(state_pair("COMMIT", "::SEAPITester()"));
-  engine_state_transitions.insert(state_pair("ROLLBACK", "::SEAPITester()"));
-  engine_state_transitions.insert(state_pair("::SEAPITester()", "::doGetTableDefinition()"));
-  engine_state_transitions.insert(state_pair("::doGetTableDefinition()", "::SEAPITester()"));
+  load_engine_state_transitions(engine_state_transitions);
   engine_state= "INIT";
 
 
