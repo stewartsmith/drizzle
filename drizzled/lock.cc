@@ -689,7 +689,7 @@ static int lock_table_name(Session *session, TableList *table_list)
     /* Only insert the table if we haven't insert it already */
     table::CacheRange ppp;
 
-    ppp= get_open_cache().equal_range(key);
+    ppp= table::getCache().equal_range(key);
 
     for (table::Cache::const_iterator iter= ppp.first;
          iter != ppp.second; ++iter)
@@ -726,7 +726,7 @@ void unlock_table_name(TableList *table_list)
 {
   if (table_list->table)
   {
-    remove_table(dynamic_cast<table::Concurrent *>(table_list->table));
+    table::remove_table(static_cast<table::Concurrent *>(table_list->table));
     broadcast_refresh();
   }
 }

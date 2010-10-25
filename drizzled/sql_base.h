@@ -34,7 +34,6 @@ uint32_t cached_open_tables(void);
 uint32_t cached_table_definitions(void);
 
 table::Cache &get_open_cache();
-void remove_table(table::Concurrent *arg);
 
 void kill_drizzle(void);
 

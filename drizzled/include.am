@@ -408,6 +408,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/structs.h \
 			      drizzled/symbol_hash.h \
 			      drizzled/table.h \
+			      drizzled/table/cache.h \
 			      drizzled/table/concurrent.h \
 			      drizzled/table/instance.h \
 			      drizzled/table/placeholder.h \
@@ -758,6 +759,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/status_helper.cc \
 				 drizzled/strfunc.cc \
 				 drizzled/table.cc \
+				 drizzled/table/cache.cc \
 				 drizzled/table/concurrent.cc \
 				 drizzled/table/instance.cc \
 				 drizzled/table/temporary.cc \

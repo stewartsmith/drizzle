@@ -59,7 +59,7 @@ ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
   {
     LOCK_open.lock(); /* Optionally lock for remove tables from open_cahe if not in use */
 
-    table::Cache &open_cache(get_open_cache());
+    table::Cache &open_cache(table::getCache());
 
     for (table::Cache::const_iterator iter= open_cache.begin();
          iter != open_cache.end();

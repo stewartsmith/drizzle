@@ -64,37 +64,9 @@ namespace drizzled
 
 extern bool volatile shutdown_in_progress;
 
-table::Cache &get_open_cache()
-{
-  static table::Cache open_cache;				/* Used by mysql_test */
-
-  return open_cache;
-}
-
-static void free_cache_entry(table::Concurrent *entry);
-
-void remove_table(table::Concurrent *arg)
-{
-  table::CacheRange ppp;
-  ppp= get_open_cache().equal_range(arg->getShare()->getCacheKey());
-
-  for (table::Cache::const_iterator iter= ppp.first;
-         iter != ppp.second; ++iter)
-  {
-    table::Concurrent *found_table= (*iter).second;
-
-    if (found_table == arg)
-    {
-      free_cache_entry(arg);
-      get_open_cache().erase(iter);
-      return;
-    }
-  }
-}
-
 static bool add_table(table::Concurrent *arg)
 {
-  table::Cache &open_cache(get_open_cache());
+  table::Cache &open_cache(table::getCache());
 
   table::Cache::iterator returnable= open_cache.insert(make_pair(arg->getShare()->getCacheKey(), arg));
 
@@ -121,7 +93,7 @@ bool table_cache_init(void)
 
 uint32_t cached_open_tables(void)
 {
-  return get_open_cache().size();
+  return table::getCache().size();
 }
 
 void table_cache_free(void)
@@ -129,7 +101,7 @@ void table_cache_free(void)
   refresh_version++;				// Force close of open tables
 
   table::getUnused().clear();
-  get_open_cache().clear();
+  table::getCache().clear();
 }
 
 /*
@@ -185,28 +157,6 @@ void Table::intern_close_table()
   {
     delete_table(true);			// close cursor
   }
-}
-
-/*
-  Remove table from the open table cache
-
-  SYNOPSIS
-  free_cache_entry()
-  entry		Table to remove
-
-  NOTE
-  We need to have a lock on LOCK_open when calling this
-*/
-
-void free_cache_entry(table::Concurrent *table)
-{
-  table->intern_close_table();
-  if (not table->in_use)
-  {
-    table::getUnused().unlink(table);
-  }
-
-  delete table;
 }
 
 /* Free resources allocated by filesort() and read_record() */
@@ -290,8 +240,8 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
           after the call to Session::close_old_data_files() i.e. after removal of
           current thread locks.
         */
-        for (table::Cache::const_iterator iter= get_open_cache().begin();
-             iter != get_open_cache().end();
+        for (table::Cache::const_iterator iter= table::getCache().begin();
+             iter != table::getCache().end();
              iter++)
         {
           Table *table= (*iter).second;
@@ -333,8 +283,8 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
       while (found && ! session->killed)
       {
         found= false;
-        for (table::Cache::const_iterator iter= get_open_cache().begin();
-             iter != get_open_cache().end();
+        for (table::Cache::const_iterator iter= table::getCache().begin();
+             iter != table::getCache().end();
              iter++)
         {
           Table *table= (*iter).second;
@@ -418,7 +368,7 @@ bool Session::free_cached_table()
   if (table->needs_reopen_or_name_lock() ||
       version != refresh_version || !table->db_stat)
   {
-    remove_table(table);
+    table::remove_table(table);
     found_old_table= true;
   }
   else
@@ -755,7 +705,7 @@ void Session::unlink_open_table(Table *find)
       *prev= list->getNext();
 
       /* Close table. */
-      remove_table(dynamic_cast<table::Concurrent *>(list));
+      table::remove_table(dynamic_cast<table::Concurrent *>(list));
     }
     else
     {
@@ -913,9 +863,9 @@ bool Session::lock_table_name_if_not_cached(TableIdentifier &identifier, Table *
 
   table::Cache::iterator iter;
 
-  iter= get_open_cache().find(key);
+  iter= table::getCache().find(key);
 
-  if (iter != get_open_cache().end())
+  if (iter != table::getCache().end())
   {
     *table= 0;
     return false;
@@ -1084,7 +1034,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
         an implicit "pending locks queue" - see
         wait_for_locked_table_names for details.
       */
-      ppp= get_open_cache().equal_range(key);
+      ppp= table::getCache().equal_range(key);
 
       table= NULL;
       for (table::Cache::const_iterator iter= ppp.first;
@@ -1383,7 +1333,7 @@ bool Session::reopen_tables(bool get_locks, bool)
     next= table->getNext();
 
     my_error(ER_CANT_REOPEN_TABLE, MYF(0), table->getAlias());
-    remove_table(dynamic_cast<table::Concurrent *>(table));
+    table::remove_table(dynamic_cast<table::Concurrent *>(table));
     error= 1;
   }
   *prev=0;
@@ -1522,7 +1472,7 @@ bool table_is_used(Table *table, bool wait_for_name_lock)
     const TableIdentifier::Key &key(table->getShare()->getCacheKey());
 
     table::CacheRange ppp;
-    ppp= get_open_cache().equal_range(key);
+    ppp= table::getCache().equal_range(key);
 
     for (table::Cache::const_iterator iter= ppp.first;
          iter != ppp.second; ++iter)
@@ -1635,7 +1585,7 @@ Table *drop_locked_tables(Session *session, const drizzled::TableIdentifier &ide
       else
       {
         /* We already have a name lock, remove copy */
-        remove_table(dynamic_cast<table::Concurrent *>(table));
+        table::remove_table(dynamic_cast<table::Concurrent *>(table));
       }
     }
     else
@@ -4084,8 +4034,8 @@ void remove_db_from_cache(const SchemaIdentifier &schema_identifier)
 {
   safe_mutex_assert_owner(LOCK_open.native_handle());
 
-  for (table::Cache::const_iterator iter= get_open_cache().begin();
-       iter != get_open_cache().end();
+  for (table::Cache::const_iterator iter= table::getCache().begin();
+       iter != table::getCache().end();
        iter++)
   {
     table::Concurrent *table= (*iter).second;
@@ -4128,7 +4078,7 @@ bool remove_table_from_cache(Session *session, TableIdentifier &identifier, uint
     result= signalled= false;
 
     table::CacheRange ppp;
-    ppp= get_open_cache().equal_range(key);
+    ppp= table::getCache().equal_range(key);
 
     for (table::Cache::const_iterator iter= ppp.first;
          iter != ppp.second; ++iter)

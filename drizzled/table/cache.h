@@ -32,10 +32,8 @@ class Concurrent;
 typedef boost::unordered_multimap< TableIdentifier::Key, Concurrent *> Cache;
 typedef std::pair< Cache::const_iterator, Cache::const_iterator > CacheRange;
 
-#if 0
 Cache &getCache(void);
 void remove_table(table::Concurrent *arg);
-#endif
 
 } /* namepsace table */
 } /* namepsace drizzled */
