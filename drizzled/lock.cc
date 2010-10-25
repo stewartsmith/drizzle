@@ -709,13 +709,13 @@ static int lock_table_name(Session *session, TableList *table_list)
     }
   }
 
-  Table *table;
+  table::Placeholder *table= NULL;
   if (!(table= session->table_cache_insert_placeholder(identifier)))
   {
     return -1;
   }
 
-  table_list->table= table;
+  table_list->table= reinterpret_cast<Table *>(table);
 
   /* Return 1 if table is in use */
   return(test(remove_table_from_cache(session, identifier, RTFC_NO_FLAG)));

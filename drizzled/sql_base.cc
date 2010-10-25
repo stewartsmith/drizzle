@@ -955,7 +955,7 @@ void Session::wait_for_condition(boost::mutex &mutex, boost::condition_variable_
   case of failure.
 */
 
-Table *Session::table_cache_insert_placeholder(const drizzled::TableIdentifier &arg)
+table::Placeholder *Session::table_cache_insert_placeholder(const drizzled::TableIdentifier &arg)
 {
   safe_mutex_assert_owner(LOCK_open.native_handle());
 
