@@ -50,8 +50,9 @@ drop table t1;
 #
 
 create table t1(a int, b int not null, c date, d char(5));
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
 --error ER_WARN_NULL_TO_NOTNULL
-load data infile '../../std_data_ln/warnings_loaddata.dat' into table t1 fields terminated by ',';
+eval load data infile '$DRIZZLETEST_VARDIR/std_data_ln/warnings_loaddata.dat' into table t1 fields terminated by ',';
 # PS doesn't work good with @@warning_count
 --disable_ps_protocol
 select @@warning_count;

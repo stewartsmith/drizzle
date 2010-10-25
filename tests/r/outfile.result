@@ -13,21 +13,19 @@ hello world
 select load_file(concat(@tmpdir,"/outfile-test.3"));
 load_file(concat(@tmpdir,"/outfile-test.3"))
 NULL
-ERROR HY000: File '../../tmp/outfile-test.1' already exists
-ERROR HY000: File '../../tmp/outfile-test.2' already exists
-ERROR HY000: File '../../tmp/outfile-test.3' already exists
+ERROR HY000: File 'DRIZZLETEST_VARDIR/tmp/outfile-test.1' already exists
+ERROR HY000: File 'DRIZZLETEST_VARDIR/tmp/outfile-test.2' already exists
+ERROR HY000: File 'DRIZZLETEST_VARDIR/tmp/outfile-test.3' already exists
 select load_file(concat(@tmpdir,"/outfile-test.not-exist"));
-ERROR HY000: The file '../../tmp/outfile-test.not-exist' must be in the schema directory or be readable by all
+ERROR HY000: The file '/home/pcrews/bzr/work/memtest/drizzle/tests/var/tmp/outfile-test.not-exist' must be in the schema directory or be readable by all
 drop table t1;
 select load_file(concat(@tmpdir,"/outfile-test.4"));
 load_file(concat(@tmpdir,"/outfile-test.4"))
 1
 
 CREATE TABLE t1 (a INT);
-EXPLAIN 
-SELECT *
-INTO OUTFILE '../../tmp/t1.txt'
-  FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"' LINES TERMINATED BY '\r\n'
+EXPLAIN SELECT * INTO OUTFILE 'DRIZZLETEST_VARDIR/tmp/t1.txt' 
+FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"' LINES TERMINATED BY '\r\n'
   FROM t1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	1	
