@@ -180,9 +180,9 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
     {
       Table *locked_table;
       abort_locked_tables(session, tmp_identifier);
-      remove_table_from_cache(session, tmp_identifier,
-                              RTFC_WAIT_OTHER_THREAD_FLAG |
-                              RTFC_CHECK_KILLED_FLAG);
+      table::Cache::singleton().removeTable(session, tmp_identifier,
+                                            RTFC_WAIT_OTHER_THREAD_FLAG |
+                                            RTFC_CHECK_KILLED_FLAG);
       /*
         If the table was used in lock tables, remember it so that
         unlock_table_names can free it
@@ -1680,7 +1680,7 @@ void wait_while_table_is_used(Session *session, Table *table,
 
   /* Wait until all there are no other threads that has this table open */
   TableIdentifier identifier(table->getShare()->getSchemaName(), table->getShare()->getTableName());
-  remove_table_from_cache(session, identifier, RTFC_WAIT_OTHER_THREAD_FLAG);
+  table::Cache::singleton().removeTable(session, identifier, RTFC_WAIT_OTHER_THREAD_FLAG);
 }
 
 /*
@@ -1935,7 +1935,7 @@ send_result:
         {
           boost::unique_lock<boost::mutex> lock(LOCK_open);
 	  TableIdentifier identifier(table->table->getShare()->getSchemaName(), table->table->getShare()->getTableName());
-          remove_table_from_cache(session, identifier, RTFC_NO_FLAG);
+          table::Cache::singleton().removeTable(session, identifier, RTFC_NO_FLAG);
         }
       }
     }
