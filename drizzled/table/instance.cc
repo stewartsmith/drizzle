@@ -48,22 +48,21 @@ Instance::Instance(Session *session, List<CreateField> &field_list) :
   uint32_t null_count= 0;                 /* number of columns which may be null */
   uint32_t null_pack_length;              /* NULL representation array length */
 
-  Instance *table= this;
-  table->getMutableShare()->setFields(field_count + 1);
-  table->setFields(table->getMutableShare()->getFields(true));
-  field_arg= table->getMutableShare()->getFields(true);
-  table->getMutableShare()->blob_field.resize(field_count+1);
-  table->getMutableShare()->fields= field_count;
-  table->getMutableShare()->blob_ptr_size= portable_sizeof_char_ptr;
-  table->setup_tmp_table_column_bitmaps();
+  getMutableShare()->setFields(field_count + 1);
+  setFields(getMutableShare()->getFields(true));
+  field_arg= getMutableShare()->getFields(true);
+  getMutableShare()->blob_field.resize(field_count+1);
+  getMutableShare()->fields= field_count;
+  getMutableShare()->blob_ptr_size= portable_sizeof_char_ptr;
+  setup_tmp_table_column_bitmaps();
 
-  table->in_use= session;           /* field_arg->reset() may access table->in_use */
+  in_use= session;           /* field_arg->reset() may access in_use */
 
   /* Create all fields and calculate the total length of record */
   List_iterator_fast<CreateField> it(field_list);
   while ((cdef= it++))
   {
-    *field_arg= table->getMutableShare()->make_field(NULL,
+    *field_arg= getMutableShare()->make_field(NULL,
                                                  cdef->length,
                                                  (cdef->flags & NOT_NULL_FLAG) ? false : true,
                                                  (unsigned char *) ((cdef->flags & NOT_NULL_FLAG) ? 0 : ""),
@@ -79,42 +78,42 @@ Instance::Instance(Session *session, List<CreateField> &field_list) :
       throw "Memory allocation failure";
     }
 
-    (*field_arg)->init(table);
+    (*field_arg)->init(this);
     record_length+= (*field_arg)->pack_length();
     if (! ((*field_arg)->flags & NOT_NULL_FLAG))
       null_count++;
 
     if ((*field_arg)->flags & BLOB_FLAG)
-      table->getMutableShare()->blob_field[blob_count++]= (uint32_t) (field_arg - table->getFields());
+      getMutableShare()->blob_field[blob_count++]= (uint32_t) (field_arg - getFields());
 
     field_arg++;
   }
   *field_arg= NULL;                             /* mark the end of the list */
-  table->getMutableShare()->blob_field[blob_count]= 0;            /* mark the end of the list */
-  table->getMutableShare()->blob_fields= blob_count;
+  getMutableShare()->blob_field[blob_count]= 0;            /* mark the end of the list */
+  getMutableShare()->blob_fields= blob_count;
 
   null_pack_length= (null_count + 7)/8;
-  table->getMutableShare()->setRecordLength(record_length + null_pack_length);
-  table->getMutableShare()->rec_buff_length= ALIGN_SIZE(table->getMutableShare()->getRecordLength() + 1);
-  table->record[0]= (unsigned char*)session->alloc(table->getMutableShare()->rec_buff_length);
-  if (not table->getInsertRecord())
+  getMutableShare()->setRecordLength(record_length + null_pack_length);
+  getMutableShare()->rec_buff_length= ALIGN_SIZE(getMutableShare()->getRecordLength() + 1);
+  record[0]= (unsigned char*)session->alloc(getMutableShare()->rec_buff_length);
+  if (not getInsertRecord())
   {
     throw "Memory allocation failure";
   }
 
   if (null_pack_length)
   {
-    table->null_flags= (unsigned char*) table->getInsertRecord();
-    table->getMutableShare()->null_fields= null_count;
-    table->getMutableShare()->null_bytes= null_pack_length;
+    null_flags= (unsigned char*) getInsertRecord();
+    getMutableShare()->null_fields= null_count;
+    getMutableShare()->null_bytes= null_pack_length;
   }
   {
     /* Set up field pointers */
-    unsigned char *null_pos= table->getInsertRecord();
-    unsigned char *field_pos= null_pos + table->getMutableShare()->null_bytes;
+    unsigned char *null_pos= getInsertRecord();
+    unsigned char *field_pos= null_pos + getMutableShare()->null_bytes;
     uint32_t null_bit= 1;
 
-    for (field_arg= table->getFields(); *field_arg; ++field_arg)
+    for (field_arg= getFields(); *field_arg; ++field_arg)
     {
       Field *cur_field= *field_arg;
       if ((cur_field->flags & NOT_NULL_FLAG))
