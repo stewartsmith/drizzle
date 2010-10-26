@@ -455,31 +455,11 @@ void TransactionServices::allocateNewTransactionId()
 
 uint64_t TransactionServices::getCurrentTransactionId(Session *session)
 {
-  TransactionContext *trans= &session->transaction.stmt;
-  TransactionContext::ResourceContexts &resource_contexts= trans->getResourceContexts();
-
-  if (resource_contexts.empty() == false)
+  if (session->getXaId() == 0)
   {
-      for (TransactionContext::ResourceContexts::iterator it= resource_contexts.begin();
-           it != resource_contexts.end();
-           ++it)
-      {
-        ResourceContext *resource_context= *it;
-
-        plugin::MonitoredInTransaction *resource= resource_context->getMonitored();
-        if (resource->participatesInXaTransaction())
-        {
-          return resource_context->getXaResourceManager()->getCurrentTransactionId(session);
-        } 
-        else 
-        {
-          if (xa_storage_engine)
-          {
-            return xa_storage_engine->getNewTransactionId(session);
-          }
-        }
-      }
+    session->setXaId(xa_storage_engine->getNewTransactionId(session)); 
   }
+
   return session->getXaId();
 }
 
@@ -1021,9 +1001,14 @@ void TransactionServices::initTransactionMessage(message::Transaction &in_transa
   trx->set_server_id(in_session->getServerId());
 
   if (should_inc_trx_id)
+  {
     trx->set_transaction_id(getCurrentTransactionId(in_session));
-  else 
+    in_session->setXaId(0);
+  }  
+  else
+  { 
     trx->set_transaction_id(0);
+  }
 
   trx->set_start_timestamp(in_session->getCurrentTimestamp());
 }
@@ -2072,7 +2057,7 @@ int TransactionServices::sendEvent(Session *session, const message::Event &event
   message::Transaction *transaction= new (nothrow) message::Transaction();
 
   // set server id, start timestamp
-  initTransactionMessage(*transaction, session, true);
+  initTransactionMessage(*transaction, session, false);
 
   // set end timestamp
   finalizeTransactionMessage(*transaction, session);
