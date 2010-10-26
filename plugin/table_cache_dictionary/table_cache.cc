@@ -47,7 +47,7 @@ table_cache_dictionary::TableCache::Generator::Generator(drizzled::Field **arg) 
 {
   LOCK_open.lock(); /* Optionally lock for remove tables from open_cahe if not in use */
 
-  for (table::Cache::const_iterator iter= table::getCache().begin();
+  for (table::CacheMap::const_iterator iter= table::getCache().begin();
        iter != table::getCache().end();
        iter++)
    {

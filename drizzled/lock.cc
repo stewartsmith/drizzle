@@ -691,7 +691,7 @@ static int lock_table_name(Session *session, TableList *table_list)
 
     ppp= table::getCache().equal_range(key);
 
-    for (table::Cache::const_iterator iter= ppp.first;
+    for (table::CacheMap::const_iterator iter= ppp.first;
          iter != ppp.second; ++iter)
     {
       Table *table= (*iter).second;

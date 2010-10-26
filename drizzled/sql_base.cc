@@ -66,9 +66,9 @@ extern bool volatile shutdown_in_progress;
 
 static bool add_table(table::Concurrent *arg)
 {
-  table::Cache &open_cache(table::getCache());
+  table::CacheMap &open_cache(table::getCache());
 
-  table::Cache::iterator returnable= open_cache.insert(make_pair(arg->getShare()->getCacheKey(), arg));
+  table::CacheMap::iterator returnable= open_cache.insert(make_pair(arg->getShare()->getCacheKey(), arg));
 
   return not (returnable == open_cache.end());
 }
@@ -240,7 +240,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
           after the call to Session::close_old_data_files() i.e. after removal of
           current thread locks.
         */
-        for (table::Cache::const_iterator iter= table::getCache().begin();
+        for (table::CacheMap::const_iterator iter= table::getCache().begin();
              iter != table::getCache().end();
              iter++)
         {
@@ -283,7 +283,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
       while (found && ! session->killed)
       {
         found= false;
-        for (table::Cache::const_iterator iter= table::getCache().begin();
+        for (table::CacheMap::const_iterator iter= table::getCache().begin();
              iter != table::getCache().end();
              iter++)
         {
@@ -861,7 +861,7 @@ bool Session::lock_table_name_if_not_cached(TableIdentifier &identifier, Table *
 
   boost_unique_lock_t scope_lock(LOCK_open); /* Obtain a name lock even though table is not in cache (like for create table)  */
 
-  table::Cache::iterator iter;
+  table::CacheMap::iterator iter;
 
   iter= table::getCache().find(key);
 
@@ -1037,7 +1037,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
       ppp= table::getCache().equal_range(key);
 
       table= NULL;
-      for (table::Cache::const_iterator iter= ppp.first;
+      for (table::CacheMap::const_iterator iter= ppp.first;
            iter != ppp.second; ++iter, table= NULL)
       {
         table= (*iter).second;
@@ -1474,7 +1474,7 @@ bool table_is_used(Table *table, bool wait_for_name_lock)
     table::CacheRange ppp;
     ppp= table::getCache().equal_range(key);
 
-    for (table::Cache::const_iterator iter= ppp.first;
+    for (table::CacheMap::const_iterator iter= ppp.first;
          iter != ppp.second; ++iter)
     {
       Table *search= (*iter).second;
@@ -4034,7 +4034,7 @@ void remove_db_from_cache(const SchemaIdentifier &schema_identifier)
 {
   safe_mutex_assert_owner(LOCK_open.native_handle());
 
-  for (table::Cache::const_iterator iter= table::getCache().begin();
+  for (table::CacheMap::const_iterator iter= table::getCache().begin();
        iter != table::getCache().end();
        iter++)
   {
@@ -4080,7 +4080,7 @@ bool remove_table_from_cache(Session *session, TableIdentifier &identifier, uint
     table::CacheRange ppp;
     ppp= table::getCache().equal_range(key);
 
-    for (table::Cache::const_iterator iter= ppp.first;
+    for (table::CacheMap::const_iterator iter= ppp.first;
          iter != ppp.second; ++iter)
     {
       table::Concurrent *table= (*iter).second;

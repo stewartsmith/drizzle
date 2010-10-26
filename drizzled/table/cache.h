@@ -29,10 +29,28 @@ namespace table {
 
 class Concurrent;
 
-typedef boost::unordered_multimap< TableIdentifier::Key, Concurrent *> Cache;
-typedef std::pair< Cache::const_iterator, Cache::const_iterator > CacheRange;
+typedef boost::unordered_multimap< TableIdentifier::Key, Concurrent *> CacheMap;
+typedef std::pair< CacheMap::const_iterator, CacheMap::const_iterator > CacheRange;
 
-Cache &getCache(void);
+class Cache 
+{
+  CacheMap cache;
+
+public:
+  static inline Cache &singleton()
+  {
+    static Cache open_cache;
+
+    return open_cache;
+  }
+
+  CacheMap &getCache()
+  {
+    return cache;
+  }
+};
+
+CacheMap &getCache(void);
 void remove_table(table::Concurrent *arg);
 
 } /* namepsace table */
