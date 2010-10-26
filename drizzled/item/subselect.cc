@@ -181,7 +181,6 @@ Item_subselect::select_transformer(Join *)
 bool Item_subselect::fix_fields(Session *session_param, Item **ref)
 {
   char const *save_where= session_param->where;
-  uint8_t uncacheable;
   bool res;
 
   assert(fixed == 0);
@@ -209,18 +208,26 @@ bool Item_subselect::fix_fields(Session *session_param, Item **ref)
 
       // did we changed top item of WHERE condition
       if (unit->outer_select()->where == (*ref))
-	unit->outer_select()->where= substitution; // correct WHERE for PS
+      {
+        unit->outer_select()->where= substitution; // correct WHERE for PS
+      }
       else if (unit->outer_select()->having == (*ref))
-	unit->outer_select()->having= substitution; // correct HAVING for PS
+      {
+        unit->outer_select()->having= substitution; // correct HAVING for PS
+      }
 
       (*ref)= substitution;
       substitution->name= name;
       if (have_to_be_excluded)
-	engine->exclude();
+      {
+        engine->exclude();
+      }
       substitution= 0;
       session->where= "checking transformed subquery";
-      if (!(*ref)->fixed)
-	ret= (*ref)->fix_fields(session, ref);
+      if (! (*ref)->fixed)
+      {
+        ret= (*ref)->fix_fields(session, ref);
+      }
       session->where= save_where;
       return ret;
     }
@@ -235,11 +242,13 @@ bool Item_subselect::fix_fields(Session *session_param, Item **ref)
   else
     goto err;
 
-  if ((uncacheable= engine->uncacheable()))
+  if (engine->uncacheable())
   {
     const_item_cache= 0;
-    if (uncacheable & UNCACHEABLE_RAND)
+    if (engine->uncacheable(UNCACHEABLE_RAND))
+    {
       used_tables_cache|= RAND_TABLE_BIT;
+    }
   }
   fixed= 1;
 
@@ -381,7 +390,7 @@ Item *Item_subselect::get_tmp_table_item(Session *session_arg)
 
 void Item_subselect::update_used_tables()
 {
-  if (!engine->uncacheable())
+  if (! engine->uncacheable())
   {
     // did all used tables become static?
     if (!(used_tables_cache & ~engine->upper_select_const_tables()))
@@ -1004,7 +1013,7 @@ Item_in_subselect::single_value_transformer(Join *join,
     later in this method.
   */
   if ((abort_on_null || (upper_item && upper_item->top_level())) &&
-      !select_lex->master_unit()->uncacheable && !func->eqne_op())
+      select_lex->master_unit()->uncacheable.none() && !func->eqne_op())
   {
     if (substitution)
     {
@@ -1100,7 +1109,7 @@ Item_in_subselect::single_value_transformer(Join *join,
 			      (char *)"<no matter>",
 			      (char *)in_left_expr_name);
 
-    master_unit->uncacheable|= UNCACHEABLE_DEPENDENT;
+    master_unit->uncacheable.set(UNCACHEABLE_DEPENDENT);
   }
 
   if (!abort_on_null && left_expr->maybe_null && !pushed_cond_guards)
@@ -1163,7 +1172,7 @@ Item_in_subselect::single_value_in_to_exists_transformer(Join * join, const Comp
 {
   Select_Lex *select_lex= join->select_lex;
 
-  select_lex->uncacheable|= UNCACHEABLE_DEPENDENT;
+  select_lex->uncacheable.set(UNCACHEABLE_DEPENDENT);
   if (join->having || select_lex->with_sum_func ||
       select_lex->group_list.elements)
   {
@@ -1369,7 +1378,7 @@ Item_in_subselect::row_value_transformer(Join *join)
     optimizer->keep_top_level_cache();
 
     session->lex->current_select= current;
-    master_unit->uncacheable|= UNCACHEABLE_DEPENDENT;
+    master_unit->uncacheable.set(UNCACHEABLE_DEPENDENT);
 
     if (!abort_on_null && left_expr->maybe_null && !pushed_cond_guards)
     {
@@ -1421,7 +1430,7 @@ Item_in_subselect::row_value_in_to_exists_transformer(Join * join)
                         select_lex->group_list.first ||
                         !select_lex->table_list.elements);
 
-  select_lex->uncacheable|= UNCACHEABLE_DEPENDENT;
+  select_lex->uncacheable.set(UNCACHEABLE_DEPENDENT);
   if (is_having_used)
   {
     /*
@@ -2152,7 +2161,7 @@ int subselect_single_select_engine::exec()
       session->lex->current_select= save_select;
       return(join->error ? join->error : 1);
     }
-    if (!select_lex->uncacheable && session->lex->describe &&
+    if (select_lex->uncacheable.none() && session->lex->describe &&
         !(join->select_options & SELECT_DESCRIBE) &&
         join->need_tmp && item->const_item())
     {
@@ -2162,8 +2171,8 @@ int subselect_single_select_engine::exec()
         called by EXPLAIN and we need to preserve the initial query structure
         so we can display it.
        */
-      select_lex->uncacheable|= UNCACHEABLE_EXPLAIN;
-      select_lex->master_unit()->uncacheable|= UNCACHEABLE_EXPLAIN;
+      select_lex->uncacheable.set(UNCACHEABLE_EXPLAIN);
+      select_lex->master_unit()->uncacheable.set(UNCACHEABLE_EXPLAIN);
       if (join->init_save_join_tab())
         return(1);
     }
@@ -2172,15 +2181,15 @@ int subselect_single_select_engine::exec()
       return(1);
     }
   }
-  if (select_lex->uncacheable &&
-      select_lex->uncacheable != UNCACHEABLE_EXPLAIN
-      && executed)
+  if (select_lex->uncacheable.any() &&
+      ! select_lex->uncacheable.test(UNCACHEABLE_EXPLAIN) &&
+      executed)
   {
     if (join->reinit())
     {
       session->where= save_where;
       session->lex->current_select= save_select;
-      return(1);
+      return 1;
     }
     item->reset();
     item->assigned((executed= 0));
@@ -2633,15 +2642,27 @@ uint32_t subselect_union_engine::cols()
 }
 
 
-uint8_t subselect_single_select_engine::uncacheable()
+bool subselect_single_select_engine::uncacheable()
 {
-  return select_lex->uncacheable;
+  return select_lex->uncacheable.any();
 }
 
 
-uint8_t subselect_union_engine::uncacheable()
+bool subselect_single_select_engine::uncacheable(uint32_t bit_pos)
 {
-  return unit->uncacheable;
+  return select_lex->uncacheable.test(bit_pos);
+}
+
+
+bool subselect_union_engine::uncacheable()
+{
+  return unit->uncacheable.any();
+}
+
+
+bool subselect_union_engine::uncacheable(uint32_t bit_pos)
+{
+  return unit->uncacheable.test(bit_pos);
 }
 
 

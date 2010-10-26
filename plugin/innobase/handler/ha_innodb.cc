@@ -2503,6 +2503,14 @@ retry:
     SQL statement */
 
     trx_mark_sql_stat_end(trx);
+
+    if (! session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
+    {
+      if (trx->conc_state != TRX_NOT_STARTED)
+      {
+        commit(session, TRUE);
+      }
+    }
   }
 
   trx->n_autoinc_rows = 0; /* Reset the number AUTO-INC rows required */
@@ -2516,6 +2524,14 @@ retry:
   /* Tell the InnoDB server that there might be work for utility
   threads: */
   srv_active_wake_master_thread();
+
+  if (trx->isolation_level <= TRX_ISO_READ_COMMITTED &&
+      trx->global_read_view)
+  {
+    /* At low transaction isolation levels we let
+       each consistent read set its own snapshot */
+    read_view_close_for_mysql(trx);
+  }
 
   return(0);
 }
@@ -2558,6 +2574,14 @@ InnobaseEngine::doRollback(
     error = trx_rollback_for_mysql(trx);
   } else {
     error = trx_rollback_last_sql_stat_for_mysql(trx);
+  }
+
+  if (trx->isolation_level <= TRX_ISO_READ_COMMITTED &&
+      trx->global_read_view)
+  {
+    /* At low transaction isolation levels we let
+       each consistent read set its own snapshot */
+    read_view_close_for_mysql(trx);
   }
 
   return(convert_error_code_to_mysql(error, 0, NULL));
@@ -8660,23 +8684,6 @@ InnobaseEngine::doEndStatement(
 
   innobase_release_stat_resources(trx);
 
-  if (! session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
-  {
-    if (trx->conc_state != TRX_NOT_STARTED)
-    {
-      commit(session, TRUE);
-    }
-  }
-  else
-  {
-    if (trx->isolation_level <= TRX_ISO_READ_COMMITTED &&
-        trx->global_read_view)
-    {
-      /* At low transaction isolation levels we let
-      each consistent read set its own snapshot */
-      read_view_close_for_mysql(trx);
-    }
-  }
 }
 
 /*******************************************************************//**

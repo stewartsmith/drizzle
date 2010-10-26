@@ -1,0 +1,2 @@
+CREATE TABLE t1 (a int) ENGINE=STORAGE_ENGINE_API_TESTER;
+drop table t1;

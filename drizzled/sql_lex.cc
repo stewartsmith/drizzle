@@ -1302,7 +1302,7 @@ void Select_Lex_Node::init_query()
   options= 0;
   linkage= UNSPECIFIED_TYPE;
   no_error= no_table_names_allowed= 0;
-  uncacheable= 0;
+  uncacheable.reset();
 }
 
 void Select_Lex_Node::init_select()
@@ -1371,7 +1371,6 @@ void Select_Lex::init_select()
   group_list.empty();
   db= 0;
   having= 0;
-  table_join_options= 0;
   in_sum_expr= with_wild= 0;
   options= 0;
   braces= 0;
@@ -1568,19 +1567,19 @@ void Select_Lex::mark_as_dependent(Select_Lex *last)
        s && s != last;
        s= s->outer_select())
   {
-    if (!(s->uncacheable & UNCACHEABLE_DEPENDENT))
+    if (! (s->uncacheable.test(UNCACHEABLE_DEPENDENT)))
     {
       // Select is dependent of outer select
-      s->uncacheable= (s->uncacheable & ~UNCACHEABLE_UNITED) |
-                       UNCACHEABLE_DEPENDENT;
+      s->uncacheable.set(UNCACHEABLE_DEPENDENT);
+      s->uncacheable.set(UNCACHEABLE_UNITED);
       Select_Lex_Unit *munit= s->master_unit();
-      munit->uncacheable= (munit->uncacheable & ~UNCACHEABLE_UNITED) |
-                       UNCACHEABLE_DEPENDENT;
+      munit->uncacheable.set(UNCACHEABLE_UNITED);
+      munit->uncacheable.set(UNCACHEABLE_DEPENDENT);
       for (Select_Lex *sl= munit->first_select(); sl ; sl= sl->next_select())
       {
         if (sl != s &&
-            !(sl->uncacheable & (UNCACHEABLE_DEPENDENT | UNCACHEABLE_UNITED)))
-          sl->uncacheable|= UNCACHEABLE_UNITED;
+            ! (sl->uncacheable.test(UNCACHEABLE_DEPENDENT) && sl->uncacheable.test(UNCACHEABLE_UNITED)))
+          sl->uncacheable.set(UNCACHEABLE_UNITED);
       }
     }
     s->is_correlated= true;
@@ -1605,16 +1604,17 @@ TableList* Select_Lex_Node::get_table_list()
 List<Item>* Select_Lex_Node::get_item_list()
 { return NULL; }
 
-TableList *Select_Lex_Node::add_table_to_list (Session *, Table_ident *, LEX_STRING *, uint32_t,
-                                                  thr_lock_type, List<Index_hint> *, LEX_STRING *)
+TableList *Select_Lex_Node::add_table_to_list(Session *, 
+                                              Table_ident *, 
+                                              LEX_STRING *, 
+                                              const bitset<NUM_OF_TABLE_OPTIONS>&,
+                                              thr_lock_type, 
+                                              List<Index_hint> *, 
+                                              LEX_STRING *)
 {
   return 0;
 }
 
-uint32_t Select_Lex_Node::get_table_join_options()
-{
-  return 0;
-}
 
 /*
   prohibit using LIMIT clause
@@ -1692,10 +1692,6 @@ List<Item>* Select_Lex::get_item_list()
   return &item_list;
 }
 
-uint32_t Select_Lex::get_table_join_options()
-{
-  return table_join_options;
-}
 
 bool Select_Lex::setup_ref_array(Session *session, uint32_t order_group_num)
 {

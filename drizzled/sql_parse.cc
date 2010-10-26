@@ -368,6 +368,7 @@ static bool _schema_select(Session *session, Select_Lex *sel,
                            const string& schema_table_name)
 {
   LEX_STRING db, table;
+  bitset<NUM_OF_TABLE_OPTIONS> table_options;
   /*
      We have to make non const db_name & table_name
      because of lower_case_table_names
@@ -376,7 +377,7 @@ static bool _schema_select(Session *session, Select_Lex *sel,
   session->make_lex_string(&table, schema_table_name, false);
 
   if (! sel->add_table_to_list(session, new Table_ident(db, table),
-                               NULL, 0, TL_READ))
+                               NULL, table_options, TL_READ))
   {
     return true;
   }
@@ -903,12 +904,12 @@ void store_position_for_column(const char *name)
 */
 
 TableList *Select_Lex::add_table_to_list(Session *session,
-					     Table_ident *table,
-					     LEX_STRING *alias,
-					     uint32_t table_options,
-					     thr_lock_type lock_type,
-					     List<Index_hint> *index_hints_arg,
-                                             LEX_STRING *option)
+					                     Table_ident *table,
+					                     LEX_STRING *alias,
+					                     const bitset<NUM_OF_TABLE_OPTIONS>& table_options,
+					                     thr_lock_type lock_type,
+					                     List<Index_hint> *index_hints_arg,
+                                         LEX_STRING *option)
 {
   register TableList *ptr;
   TableList *previous_table_ref; /* The table preceding the current one. */
@@ -918,7 +919,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   if (!table)
     return NULL;				// End of memory
   alias_str= alias ? alias->str : table->table.str;
-  if (!test(table_options & TL_OPTION_ALIAS) &&
+  if (! table_options.test(TL_OPTION_ALIAS) &&
       check_table_name(table->table.str, table->table.length))
   {
     my_error(ER_WRONG_TABLE_NAME, MYF(0), table->table.str);
@@ -970,8 +971,8 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   ptr->table_name=table->table.str;
   ptr->table_name_length=table->table.length;
   ptr->lock_type=   lock_type;
-  ptr->force_index= test(table_options & TL_OPTION_FORCE_INDEX);
-  ptr->ignore_leaves= test(table_options & TL_OPTION_IGNORE_LEAVES);
+  ptr->force_index= table_options.test(TL_OPTION_FORCE_INDEX);
+  ptr->ignore_leaves= table_options.test(TL_OPTION_IGNORE_LEAVES);
   ptr->derived=	    table->sel;
   ptr->select_lex=  lex->current_select;
   ptr->index_hints= index_hints_arg;

@@ -249,4 +249,4 @@ private:
   uint64_t min_rows;
 };
 
-#endif
+#endif /* CLIENT_CONCLUSIONS_H */

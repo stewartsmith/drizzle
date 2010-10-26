@@ -180,6 +180,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/generator/all_fields.h \
 			      drizzled/generator/all_tables.h \
 			      drizzled/generator/functions.h \
+			      drizzled/generator/event_observers.h \
 			      drizzled/generator/schema.h \
 			      drizzled/generator/table.h \
 			      drizzled/gettext.h \
@@ -582,6 +583,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/function/user_var_as_out_param.cc \
 				 drizzled/generator/all_fields.cc \
 				 drizzled/generator/all_tables.cc \
+				 drizzled/generator/event_observers.cc \
 				 drizzled/generator/functions.cc \
 				 drizzled/generator/schema.cc \
 				 drizzled/generator/table.cc \
@@ -636,6 +638,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/module/context.cc \
 				 drizzled/module/library.cc \
 				 drizzled/module/loader.cc \
+				 drizzled/module/module.cc \
 				 drizzled/module/option_context.cc \
 				 drizzled/module/option_map.cc \
 				 drizzled/module/registry.cc \

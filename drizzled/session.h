@@ -1215,7 +1215,7 @@ public:
    * @param  Length of scrambled password
    * @param  Database name to connect to, may be NULL
    */
-  bool checkUser(const char *passwd, uint32_t passwd_len, const char *db);
+  bool checkUser(const std::string &passwd, const std::string &db);
   
   /**
    * Returns the timestamp (in microseconds) of when the Session 
@@ -1437,6 +1437,8 @@ public:
   }
   void refresh_status();
   user_var_entry *getVariable(LEX_STRING &name, bool create_if_not_exists);
+  user_var_entry *getVariable(const std::string  &name, bool create_if_not_exists);
+  void setVariable(const std::string &name, const std::string &value);
   
   /**
    * Closes all tables used by the current substatement, or all tables

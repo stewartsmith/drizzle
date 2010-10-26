@@ -46,7 +46,12 @@ namespace plugin
 
 /*============================*/
   // Basic plugin registration stuff.
-  static vector<EventObserver *> all_event_plugins;
+  EventObserverVector all_event_plugins;
+
+  const EventObserverVector &EventObserver::getEventObservers(void)
+  {
+    return all_event_plugins;
+  }
 
   //---------
   bool EventObserver::addPlugin(EventObserver *handler)
