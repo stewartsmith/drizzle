@@ -1603,7 +1603,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 
         if (create_table->table)
         {
-          table::Concurrent *concurrent_table= dynamic_cast<table::Concurrent *>(create_table->table);
+          table::Concurrent *concurrent_table= static_cast<table::Concurrent *>(create_table->table);
 
           if (concurrent_table->reopen_name_locked_table(create_table, session))
           {

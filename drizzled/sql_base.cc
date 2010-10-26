@@ -110,7 +110,7 @@ class UnusedTables {
 
   table::Concurrent *setTable(Table *arg)
   {
-    return tables= dynamic_cast<table::Concurrent *>(arg);
+    return tables= static_cast<table::Concurrent *>(arg);
   }
 
 public:
@@ -499,7 +499,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
 bool Session::free_cached_table()
 {
   bool found_old_table= false;
-  table::Concurrent *table= dynamic_cast<table::Concurrent *>(open_tables);
+  table::Concurrent *table= static_cast<table::Concurrent *>(open_tables);
 
   safe_mutex_assert_owner(LOCK_open.native_handle());
   assert(table->key_read == 0);
@@ -847,7 +847,7 @@ void Session::unlink_open_table(Table *find)
       *prev= list->getNext();
 
       /* Close table. */
-      remove_table(dynamic_cast<table::Concurrent *>(list));
+      remove_table(static_cast<table::Concurrent *>(list));
     }
     else
     {
@@ -1267,7 +1267,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
       }
       if (table)
       {
-        unused_tables.unlink(dynamic_cast<table::Concurrent *>(table));
+        unused_tables.unlink(static_cast<table::Concurrent *>(table));
         table->in_use= this;
       }
       else
@@ -1475,7 +1475,7 @@ bool Session::reopen_tables(bool get_locks, bool)
     next= table->getNext();
 
     my_error(ER_CANT_REOPEN_TABLE, MYF(0), table->getAlias());
-    remove_table(dynamic_cast<table::Concurrent *>(table));
+    remove_table(static_cast<table::Concurrent *>(table));
     error= 1;
   }
   *prev=0;
@@ -1727,7 +1727,7 @@ Table *drop_locked_tables(Session *session, const drizzled::TableIdentifier &ide
       else
       {
         /* We already have a name lock, remove copy */
-        remove_table(dynamic_cast<table::Concurrent *>(table));
+        remove_table(static_cast<table::Concurrent *>(table));
       }
     }
     else
