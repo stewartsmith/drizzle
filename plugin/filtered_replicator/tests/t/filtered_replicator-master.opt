@@ -1,1 +1,1 @@
---transaction-log.enable --transaction-log.use-replicator=filtered --scheduler=multi_thread --filtered-replicator.filteredschemas=notest
+--plugin-add=filtered-replicator --transaction-log.enable --transaction-log.use-replicator=filtered --scheduler=multi_thread --filtered-replicator.filteredschemas=notest
