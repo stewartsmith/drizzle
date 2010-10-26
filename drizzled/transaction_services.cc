@@ -1911,34 +1911,37 @@ bool TransactionServices::removeStatementRecords(Session *session,
   if (statement == NULL)
     return false;
 
+  bool retval= false;
+
   switch (statement->type())
   {
     case message::Statement::INSERT:
     {
       message::InsertData *data= statement->mutable_insert_data();
-      return removeStatementRecordsWithType<message::InsertData, message::InsertRecord>(session, data, count);
+      retval= removeStatementRecordsWithType<message::InsertData, message::InsertRecord>(session, data, count);
       break;
     }
 
     case message::Statement::UPDATE:
     {
       message::UpdateData *data= statement->mutable_update_data();
-      return removeStatementRecordsWithType<message::UpdateData, message::UpdateRecord>(session, data, count);
+      retval= removeStatementRecordsWithType<message::UpdateData, message::UpdateRecord>(session, data, count);
       break;
     }
 
     case message::Statement::DELETE:  /* not sure if this one is possible... */
     {
       message::DeleteData *data= statement->mutable_delete_data();
-      return removeStatementRecordsWithType<message::DeleteData, message::DeleteRecord>(session, data, count);
+      retval= removeStatementRecordsWithType<message::DeleteData, message::DeleteRecord>(session, data, count);
       break;
     }
 
     default:
-      return false;
+      retval= false;
+      break;
   }
 
-  return true;
+  return retval;
 }
 
 
