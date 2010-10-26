@@ -119,8 +119,9 @@ truncate table t1;
 # as 1048, only gives a "row" number.
 # @TODO Is there really a reason for a separate error 
 # just for LOAD DATA INFILE?
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
 --error ER_WARN_NULL_TO_NOTNULL
-LOAD DATA INFILE '../../std_data_ln/null_test.txt' INTO TABLE t1 FIELDS ENCLOSED BY '"';
+eval LOAD DATA INFILE '$DRIZZLETEST_VARDIR/std_data_ln/null_test.txt' INTO TABLE t1 FIELDS ENCLOSED BY '"';
 
 drop table t1;
 

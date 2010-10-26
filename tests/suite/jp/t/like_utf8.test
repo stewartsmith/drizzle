@@ -29,18 +29,27 @@ CREATE TEMPORARY TABLE `Ｔ９` (`Ｃ１` char(20), INDEX(`Ｃ１`))  engine = M
 # jisx0208 data
 # jisx0212 supplemental character data
 
-LOAD DATA INFILE '../../std_data_ln/jisx0201_utf8.dat' INTO TABLE `Ｔ１`;
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+eval LOAD DATA INFILE '$DRIZZLETEST_VARDIR/std_data_ln/jisx0201_utf8.dat' INTO TABLE `Ｔ１`;
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
 --error ER_DATA_TOO_LONG
-LOAD DATA INFILE '../../std_data_ln/jisx0208_utf8.dat' INTO TABLE `Ｔ２`;
-LOAD DATA INFILE '../../std_data_ln/jisx0212_utf8.dat' INTO TABLE `Ｔ３`;
-LOAD DATA INFILE '../../std_data_ln/jisx0201_utf8.dat' INTO TABLE `Ｔ４`;
+eval LOAD DATA INFILE '$DRIZZLETEST_VARDIR/std_data_ln/jisx0208_utf8.dat' INTO TABLE `Ｔ２`;
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+eval LOAD DATA INFILE '$DRIZZLETEST_VARDIR/std_data_ln/jisx0212_utf8.dat' INTO TABLE `Ｔ３`;
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+eval LOAD DATA INFILE '$DRIZZLETEST_VARDIR/std_data_ln/jisx0201_utf8.dat' INTO TABLE `Ｔ４`;
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
 --error ER_DATA_TOO_LONG
-LOAD DATA INFILE '../../std_data_ln/jisx0208_utf8.dat' INTO TABLE `Ｔ５`;
-LOAD DATA INFILE '../../std_data_ln/jisx0212_utf8.dat' INTO TABLE `Ｔ６`;
-LOAD DATA INFILE '../../std_data_ln/jisx0201_utf8.dat' INTO TABLE `Ｔ７`;
+eval LOAD DATA INFILE '$DRIZZLETEST_VARDIR/std_data_ln/jisx0208_utf8.dat' INTO TABLE `Ｔ５`;
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+eval LOAD DATA INFILE '$DRIZZLETEST_VARDIR/std_data_ln/jisx0212_utf8.dat' INTO TABLE `Ｔ６`;
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+eval LOAD DATA INFILE '$DRIZZLETEST_VARDIR/std_data_ln/jisx0201_utf8.dat' INTO TABLE `Ｔ７`;
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
 --error ER_DATA_TOO_LONG
-LOAD DATA INFILE '../../std_data_ln/jisx0208_utf8.dat' INTO TABLE `Ｔ８`;
-LOAD DATA INFILE '../../std_data_ln/jisx0212_utf8.dat' INTO TABLE `Ｔ９`;
+eval LOAD DATA INFILE '$DRIZZLETEST_VARDIR/std_data_ln/jisx0208_utf8.dat' INTO TABLE `Ｔ８`;
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+eval LOAD DATA INFILE '$DRIZZLETEST_VARDIR/std_data_ln/jisx0212_utf8.dat' INTO TABLE `Ｔ９`;
 
 #InnoDB
 SELECT * FROM `Ｔ１` WHERE `Ｃ１` LIKE ' %';
