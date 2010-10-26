@@ -22,16 +22,16 @@
 #include <fstream>
 #include <map>
 #include <string>
+#include <iostream>
+
+#include <boost/program_options.hpp>
 
 #include "drizzled/configmake.h"
 #include "drizzled/plugin/authentication.h"
 #include "drizzled/security_context.h"
 #include "drizzled/util/convert.h"
 #include "drizzled/algorithm/sha1.h"
-#include <boost/program_options.hpp>
-#include <drizzled/module/option_map.h>
-#include <drizzled/set_var.h>
-#include <iostream>
+#include "drizzled/module/option_map.h"
 
 namespace po= boost::program_options;
 using namespace std;

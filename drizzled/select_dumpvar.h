@@ -21,7 +21,7 @@
 #define DRIZZLED_SELECT_DUMPVAR_H
 
 #include "drizzled/error.h"
-#include "drizzled/error.h"
+#include "drizzled/function/set_user_var.h"
 
 #include <vector>
 

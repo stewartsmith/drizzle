@@ -321,8 +321,8 @@ my_decimal decimal_zero;
 
 FILE *stderror_file=0;
 
-struct system_variables global_system_variables;
-struct system_variables max_system_variables;
+struct drizzle_system_variables global_system_variables;
+struct drizzle_system_variables max_system_variables;
 struct global_counters current_global_counters;
 
 const CHARSET_INFO *system_charset_info, *files_charset_info ;
@@ -1531,7 +1531,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
 
   if (item_create_init())
     return 1;
-  if (set_var_init())
+  if (sys_var_init())
     return 1;
   /* Creates static regex matching for temporal values */
   if (! init_temporal_formats())

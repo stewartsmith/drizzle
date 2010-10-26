@@ -165,9 +165,9 @@ class Time_zone;
 #define Session_SENTRY_MAGIC 0xfeedd1ff
 #define Session_SENTRY_GONE  0xdeadbeef
 
-struct system_variables
+struct drizzle_system_variables
 {
-  system_variables()
+  drizzle_system_variables()
   {};
   /*
     How dynamically allocated system variables are handled:
@@ -238,7 +238,7 @@ struct system_variables
   Time_zone *time_zone;
 };
 
-extern struct system_variables global_system_variables;
+extern struct drizzle_system_variables global_system_variables;
 
 } /* namespace drizzled */
 
@@ -415,7 +415,7 @@ private:
   UserVars user_vars; /**< Hash of user variables defined during the session's lifetime */
 
 public:
-  struct system_variables variables; /**< Mutable local variables local to the session */
+  drizzle_system_variables variables; /**< Mutable local variables local to the session */
   struct system_status_var status_var; /**< Session-local status counters */
   THR_LOCK_INFO lock_info; /**< Locking information for this session */
   THR_LOCK_OWNER main_lock_id; /**< To use for conventional queries */

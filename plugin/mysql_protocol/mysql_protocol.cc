@@ -1103,7 +1103,7 @@ bool MysqlProtocolStatus::Generator::populate()
 
     if (status_var_ptr->type == SHOW_FUNC)
     {
-      ((mysql_show_var_func)((st_show_var_func_container *)status_var_ptr->value)->func)(&tmp, buff);
+      ((drizzle_show_var_func)((st_show_var_func_container *)status_var_ptr->value)->func)(&tmp, buff);
       value= buff;
       type= tmp.type;
     }
