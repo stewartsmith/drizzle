@@ -83,5 +83,39 @@ void remove_table(table::Concurrent *arg)
   }
 }
 
+/*
+  Wait until all threads has closed the tables in the list
+  We have also to wait if there is thread that has a lock on this table even
+  if the table is closed
+*/
+
+bool Cache::areTablesUsed(Table *table, bool wait_for_name_lock)
+{
+  do
+  {
+    const TableIdentifier::Key &key(table->getShare()->getCacheKey());
+
+    table::CacheRange ppp= table::getCache().equal_range(key);
+
+    for (table::CacheMap::const_iterator iter= ppp.first; iter != ppp.second; ++iter)
+    {
+      Table *search= (*iter).second;
+      if (search->in_use == table->in_use)
+        continue;                               // Name locked by this thread
+      /*
+        We can't use the table under any of the following conditions:
+        - There is an name lock on it (Table is to be deleted or altered)
+        - If we are in flush table and we didn't execute the flush
+        - If the table engine is open and it's an old version
+        (We must wait until all engines are shut down to use the table)
+      */
+      if ( (search->locked_by_name && wait_for_name_lock) ||
+           (search->is_name_opened() && search->needs_reopen_or_name_lock()))
+        return 1;
+    }
+  } while ((table=table->getNext()));
+  return 0;
+}
+
 } /* namespace table */
 } /* namespace drizzled */

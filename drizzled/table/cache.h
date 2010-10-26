@@ -48,6 +48,8 @@ public:
   {
     return cache;
   }
+
+  bool areTablesUsed(Table *table, bool wait_for_name_lock);
 };
 
 CacheMap &getCache(void);

@@ -742,7 +742,7 @@ static bool locked_named_table(TableList *table_list)
       Table *save_next= table->getNext();
       bool result;
       table->setNext(NULL);
-      result= table_is_used(table_list->table, 0);
+      result= table::Cache::singleton().areTablesUsed(table_list->table, 0);
       table->setNext(save_next);
       if (result)
         return 1;
