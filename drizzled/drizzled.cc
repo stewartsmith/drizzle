@@ -787,7 +787,7 @@ static void check_limits_join_buffer_size(uint64_t in_join_buffer_size)
 
 static void check_limits_map(uint32_t in_max_allowed_packet)
 {
-  global_system_variables.max_allowed_packet= (1024*1024L);
+  global_system_variables.max_allowed_packet= (64*1024*1024L);
   if (in_max_allowed_packet < 1024 || in_max_allowed_packet > 1024*1024L*1024L)
   {
     cout << N_("Error: Invalid Value for max_allowed_packet");
@@ -1300,7 +1300,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   N_("The maximum length of the result of function  group_concat."))
   ("join-buffer-size", po::value<uint64_t>(&global_system_variables.join_buff_size)->default_value(128*1024L)->notifier(&check_limits_join_buffer_size),
   N_("The size of the buffer that is used for full joins."))
-  ("max-allowed-packet", po::value<uint32_t>(&global_system_variables.max_allowed_packet)->default_value(1024*1024L)->notifier(&check_limits_map),
+  ("max-allowed-packet", po::value<uint32_t>(&global_system_variables.max_allowed_packet)->default_value(64*1024*1024L)->notifier(&check_limits_map),
   N_("Max packetlength to send/receive from to server."))
   ("max-connect-errors", po::value<uint64_t>(&max_connect_errors)->default_value(MAX_CONNECT_ERRORS)->notifier(&check_limits_mce),
   N_("If there is more than this number of interrupted connections from a "
@@ -1908,7 +1908,7 @@ struct option my_long_options[] =
    N_("Max packetlength to send/receive from to server."),
    (char**) &global_system_variables.max_allowed_packet,
    (char**) &max_system_variables.max_allowed_packet, 0, GET_UINT32,
-   REQUIRED_ARG, 1024*1024L, 1024, 1024L*1024L*1024L, MALLOC_OVERHEAD, 1024, 0},
+   REQUIRED_ARG, 64*1024*1024L, 1024, 1024L*1024L*1024L, MALLOC_OVERHEAD, 1024, 0},
   {"max_connect_errors", OPT_MAX_CONNECT_ERRORS,
    N_("If there is more than this number of interrupted connections from a "
       "host this host will be blocked from further connections."),
