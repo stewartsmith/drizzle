@@ -322,10 +322,7 @@ void TableIdentifier::init()
   util::insensitive_hash hasher;
   hash_value= hasher(path);
 
-  key.resize(getKeySize());
-
-  std::copy(getSchemaName().begin(), getSchemaName().end(), key.begin());
-  std::copy(getTableName().begin(), getTableName().end(), key.begin() + getSchemaName().length() + 1);
+  key.set(getKeySize(), getSchemaName(), getTableName());
 }
 
 
@@ -367,7 +364,23 @@ void TableIdentifier::copyToTableMessage(message::Table &message) const
   message.set_schema(getSchemaName());
 }
 
+void TableIdentifier::Key::set(size_t resize_arg, const std::string &a, const std::string &b)
+{
+  key_buffer.resize(resize_arg);
+
+  std::copy(a.begin(), a.end(), key_buffer.begin());
+  std::copy(b.begin(), b.end(), key_buffer.begin() + a.length() + 1);
+
+  util::sensitive_hash hasher;
+  hash_value= hasher(key_buffer);
+}
+
 std::size_t hash_value(TableIdentifier const& b)
+{
+  return b.getHashValue();
+}
+
+std::size_t hash_value(TableIdentifier::Key const& b)
 {
   return b.getHashValue();
 }

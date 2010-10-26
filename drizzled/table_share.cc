@@ -510,8 +510,8 @@ TableShare::TableShare(TableIdentifier::Type type_arg) :
 
   if (type_arg == message::Table::INTERNAL)
   {
-    TableIdentifier::build_tmptable_filename(private_key_for_cache);
-    init(&private_key_for_cache[0], &private_key_for_cache[0]);
+    TableIdentifier::build_tmptable_filename(private_key_for_cache.vectorPtr());
+    init(private_key_for_cache.vector(), private_key_for_cache.vector());
   }
   else
   {
@@ -582,10 +582,10 @@ TableShare::TableShare(TableIdentifier &identifier, const TableIdentifier::Key &
   table_category=         TABLE_CATEGORY_TEMPORARY;
   tmp_table=              message::Table::INTERNAL;
 
-  db.str= &private_key_for_cache[0];
-  db.length= strlen(&private_key_for_cache[0]);
+  db.str= const_cast<char *>(private_key_for_cache.vector());
+  db.length= strlen(private_key_for_cache.vector());
 
-  table_name.str= &private_key_for_cache[0] + strlen(&private_key_for_cache[0]) + 1;
+  table_name.str= const_cast<char *>(private_key_for_cache.vector()) + strlen(private_key_for_cache.vector()) + 1;
   table_name.length= strlen(table_name.str);
   path.str= (char *)"";
   normalized_path.str= path.str;
@@ -661,8 +661,8 @@ TableShare::TableShare(const TableIdentifier &identifier) : // Just used during 
   {
     table_category=         TABLE_CATEGORY_TEMPORARY;
     tmp_table=              message::Table::INTERNAL;
-    db.str= &private_key_for_cache[0];
-    db.length= strlen(&private_key_for_cache[0]);
+    db.str= const_cast<char *>(private_key_for_cache.vector());
+    db.length= strlen(private_key_for_cache.vector());
     table_name.str= db.str + 1;
     table_name.length= strlen(table_name.str);
     path.str= &private_normalized_path[0];
@@ -744,7 +744,7 @@ TableShare::TableShare(TableIdentifier::Type type_arg,
     Let us use the fact that the key is "db/0/table_name/0" + optional
     part for temporary tables.
   */
-  db.str= &private_key_for_cache[0];
+  db.str= const_cast<char *>(private_key_for_cache.vector());
   db.length=         strlen(db.str);
   table_name.str=    db.str + db.length + 1;
   table_name.length= strlen(table_name.str);
@@ -819,14 +819,13 @@ TableShare::~TableShare()
 
 void TableShare::setIdentifier(TableIdentifier &identifier_arg)
 {
-  private_key_for_cache.clear();
   private_key_for_cache= identifier_arg.getKey();
 
   /*
     Let us use the fact that the key is "db/0/table_name/0" + optional
     part for temporary tables.
   */
-  db.str= &private_key_for_cache[0];
+  db.str= const_cast<char *>(private_key_for_cache.vector());
   db.length=         strlen(db.str);
   table_name.str=    db.str + db.length + 1;
   table_name.length= strlen(table_name.str);
