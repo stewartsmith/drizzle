@@ -346,19 +346,13 @@ public:
   }
 
   virtual bool doCreateSchema(const drizzled::message::Schema&)
-  {
-    return false;
-  }
+  { return false; }
 
   virtual bool doAlterSchema(const drizzled::message::Schema&)
-  {
-    return false;
-  }
+  { return false; }
 
   virtual bool doDropSchema(const drizzled::SchemaIdentifier&)
-  {
-    return false; 
-  }
+  { return false; }
 
   static inline const std::string &resolveName(const StorageEngine *engine)
   {
