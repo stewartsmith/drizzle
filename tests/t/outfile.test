@@ -46,7 +46,7 @@ eval select * into dumpfile "$DRIZZLETEST_VARDIR/tmp/outfile-test.3" from t1;
 enable_query_log;
 --replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
 --error ER_TEXTFILE_NOT_READABLE
-select load_file(concat(@tmpdir,"/outfile-test.not-exist"));
+select load_file(concat(@tmpdir,"/outfile.not-exist"));
 --remove_file $DRIZZLETEST_VARDIR/tmp/outfile-test.1
 --remove_file $DRIZZLETEST_VARDIR/tmp/outfile-test.2
 --remove_file $DRIZZLETEST_VARDIR/tmp/outfile-test.3
