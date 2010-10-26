@@ -32,13 +32,15 @@
 #include <stdlib.h>
 #include <stddef.h>
 
-#include "open_table_ms.h"
-#include "database_ms.h"
+#include "defs_ms.h"
 
 #include "cslib/CSGlobal.h"
 #include "cslib/CSLog.h"
 #include "cslib/CSPath.h"
 #include "cslib/CSStrUtil.h"
+
+#include "database_ms.h"
+#include "open_table_ms.h"
 
 MSTable::MSTable():
 CSSharedRefObject(),

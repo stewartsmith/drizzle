@@ -682,12 +682,9 @@ public:
 private:
   int open_table_from_share_inner(Session *session,
                                   const char *alias,
-                                  uint32_t db_stat, uint32_t ha_open_flags,
-                                  Table &outparam,
-                                  bool &error_reported);
-  int open_table_cursor_inner(Session *session,
-                              const TableIdentifier &identifier,
-                              const char *alias,
+                                  uint32_t db_stat,
+                                  Table &outparam);
+  int open_table_cursor_inner(const TableIdentifier &identifier,
                               uint32_t db_stat, uint32_t ha_open_flags,
                               Table &outparam,
                               bool &error_reported);

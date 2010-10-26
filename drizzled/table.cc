@@ -81,8 +81,7 @@ int Table::delete_table(bool free_share)
 
   if (db_stat)
     error= cursor->close();
-  free((char*) alias);
-  alias= NULL;
+  _alias.clear();
   if (field)
   {
     for (Field **ptr=field ; *ptr ; ptr++)
@@ -104,12 +103,15 @@ int Table::delete_table(bool free_share)
     {
       delete getShare();
     }
-
     setShare(NULL);
   }
-  mem_root.free_root(MYF(0));
 
   return error;
+}
+
+Table::~Table()
+{
+  mem_root.free_root(MYF(0));
 }
 
 
@@ -142,7 +144,7 @@ void Table::resetTable(Session *session,
 
   pos_in_table_list= NULL;
   group= NULL;
-  alias= NULL;
+  _alias.clear();
   null_flags= NULL;
 
   lock_position= 0;
@@ -887,7 +889,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   table->getMutableShare()->setFields(field_count+1);
   table->setFields(table->getMutableShare()->getFields(true));
   reg_field= table->getMutableShare()->getFields(true);
-  table->alias= table_alias;
+  table->setAlias(table_alias);
   table->reginfo.lock_type=TL_WRITE;	/* Will be updated */
   table->db_stat=HA_OPEN_KEYFILE+HA_OPEN_RNDFILE;
   table->map=1;
@@ -1061,7 +1063,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
       (select_options & (OPTION_BIG_TABLES | SELECT_SMALL_RESULT)) == OPTION_BIG_TABLES)
   {
     table->getMutableShare()->storage_engine= myisam_engine;
-    table->cursor= table->getMutableShare()->db_type()->getCursor(*table->getMutableShare());
+    table->cursor= table->getMutableShare()->db_type()->getCursor(*table);
     if (group &&
 	(param->group_parts > table->cursor->getEngine()->max_key_parts() ||
 	 param->group_length > table->cursor->getEngine()->max_key_length()))
@@ -1072,7 +1074,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   else
   {
     table->getMutableShare()->storage_engine= heap_engine;
-    table->cursor= table->getMutableShare()->db_type()->getCursor(*table->getMutableShare());
+    table->cursor= table->getMutableShare()->db_type()->getCursor(*table);
   }
   if (! table->cursor)
     goto err;
@@ -1705,7 +1707,6 @@ Table::Table() :
   timestamp_field(NULL),
   pos_in_table_list(NULL),
   group(NULL),
-  alias(NULL),
   null_flags(NULL),
   lock_position(0),
   lock_data_start(0),

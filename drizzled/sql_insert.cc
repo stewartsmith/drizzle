@@ -276,7 +276,15 @@ bool mysql_insert(Session *session,TableList *table_list,
                            false,
                            (fields.elements || !value_count ||
                             (0) != 0), !ignore))
-    goto abort;
+  {
+    if (table != NULL)
+      table->cursor->ha_release_auto_increment();
+    if (!joins_freed)
+      free_underlaid_joins(session, &session->lex->select_lex);
+    session->abort_on_warning= 0;
+    DRIZZLE_INSERT_DONE(1, 0);
+    return true;
+  }
 
   /* mysql_prepare_insert set table_list->table if it was not set */
   table= table_list->table;
@@ -307,10 +315,26 @@ bool mysql_insert(Session *session,TableList *table_list,
     if (values->elements != value_count)
     {
       my_error(ER_WRONG_VALUE_COUNT_ON_ROW, MYF(0), counter);
-      goto abort;
+
+      if (table != NULL)
+        table->cursor->ha_release_auto_increment();
+      if (!joins_freed)
+        free_underlaid_joins(session, &session->lex->select_lex);
+      session->abort_on_warning= 0;
+      DRIZZLE_INSERT_DONE(1, 0);
+
+      return true;
     }
     if (setup_fields(session, 0, *values, MARK_COLUMNS_READ, 0, 0))
-      goto abort;
+    {
+      if (table != NULL)
+        table->cursor->ha_release_auto_increment();
+      if (!joins_freed)
+        free_underlaid_joins(session, &session->lex->select_lex);
+      session->abort_on_warning= 0;
+      DRIZZLE_INSERT_DONE(1, 0);
+      return true;
+    }
   }
   its.rewind ();
 
@@ -454,7 +478,16 @@ bool mysql_insert(Session *session,TableList *table_list,
     table->cursor->extra(HA_EXTRA_WRITE_CANNOT_REPLACE);
 
   if (error)
-    goto abort;
+  {
+    if (table != NULL)
+      table->cursor->ha_release_auto_increment();
+    if (!joins_freed)
+      free_underlaid_joins(session, &session->lex->select_lex);
+    session->abort_on_warning= 0;
+    DRIZZLE_INSERT_DONE(1, 0);
+    return true;
+  }
+
   if (values_list.elements == 1 && (!(session->options & OPTION_WARNINGS) ||
 				    !session->cuted_fields))
   {
@@ -478,16 +511,8 @@ bool mysql_insert(Session *session,TableList *table_list,
   session->status_var.inserted_row_count+= session->row_count_func;
   session->abort_on_warning= 0;
   DRIZZLE_INSERT_DONE(0, session->row_count_func);
-  return false;
 
-abort:
-  if (table != NULL)
-    table->cursor->ha_release_auto_increment();
-  if (!joins_freed)
-    free_underlaid_joins(session, &session->lex->select_lex);
-  session->abort_on_warning= 0;
-  DRIZZLE_INSERT_DONE(1, 0);
-  return true;
+  return false;
 }
 
 
@@ -1479,11 +1504,11 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
       create_info->table_existed= 1;		// Mark that table existed
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                           ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
-                          create_table->table_name);
+                          create_table->getTableName());
       return create_table->table;
     }
 
-    my_error(ER_TABLE_EXISTS_ERROR, MYF(0), create_table->table_name);
+    my_error(ER_TABLE_EXISTS_ERROR, MYF(0), create_table->getTableName());
     return NULL;
   }
 
@@ -1568,21 +1593,32 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
           or it was created via different mysqld front-end to the
           cluster. We don't have much options but throw an error.
         */
-        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), create_table->table_name);
+        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), create_table->getTableName());
         return NULL;
       }
 
       if (not identifier.isTmp())
       {
         LOCK_open.lock(); /* CREATE TABLE... has found that the table already exists for insert and is adapting to use it */
-        if (session->reopen_name_locked_table(create_table))
+
+        if (create_table->table)
         {
-          quick_rm_table(*session, identifier);
+          table::Concurrent *concurrent_table= dynamic_cast<table::Concurrent *>(create_table->table);
+
+          if (concurrent_table->reopen_name_locked_table(create_table, session))
+          {
+            quick_rm_table(*session, identifier);
+          }
+          else
+          {
+            table= create_table->table;
+          }
         }
         else
         {
-          table= create_table->table;
+          quick_rm_table(*session, identifier);
         }
+
         LOCK_open.unlock();
       }
       else
@@ -1596,7 +1632,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
             it preparable for open. But let us do close_temporary_table() here
             just in case.
           */
-          session->drop_temporary_table(create_table);
+          session->drop_temporary_table(identifier);
         }
       }
     }

@@ -22,7 +22,7 @@ AC_DEFUN([PANDORA_OPTIMIZE],[
     dnl with using AC_CC_STD_C99 above
     CC="${CC} -std=gnu99"
 
-    AM_CPPFLAGS="-ggdb3 ${AM_CPPFLAGS}"
+    AM_CPPFLAGS="-g ${AM_CPPFLAGS}"
 
     DEBUG_CFLAGS="-O0"
     DEBUG_CXXFLAGS="-O0"

@@ -34,6 +34,17 @@ public:
   }
 };
 
+class SafeDeletePtr
+{
+public:
+  template<typename T>
+  inline void operator()(const T *ptr) const
+  {
+    if (ptr)
+			delete ptr;
+  }
+};
+
 } /* namespace drizzled */
 
 #endif /* DRIZZLED_UTIL_FUNCTORS_H */

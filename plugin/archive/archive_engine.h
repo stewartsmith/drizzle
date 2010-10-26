@@ -87,7 +87,7 @@ public:
     return _mutex;
   }
 
-  virtual drizzled::Cursor *create(drizzled::TableShare &table)
+  virtual drizzled::Cursor *create(drizzled::Table &table)
   {
     return new ha_archive(*this, table);
   }

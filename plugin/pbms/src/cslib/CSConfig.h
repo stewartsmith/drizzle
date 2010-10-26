@@ -43,18 +43,16 @@
 #include "mysql_priv.h"
 #endif
 
-/* Note: mysql_priv.h messes with new, which caused a crash. */
-#ifdef new
-#undef new
-#endif
+#else  // defined(MYSQL_SERVER) ||  defined(DRIZZLED)
 
+#if defined(WIN32) ||  defined(WIN64) 
+#include "win_config.h"
 #else
 #include "config.h"
-#endif	//defined(MYSQL_SERVER) ||  defined(DRIZZLED)
+#endif
 
-#include <sys/types.h>
-#include <inttypes.h>
-#include <unistd.h>
+#endif // defined(MYSQL_SERVER) ||  defined(DRIZZLED)
+
 
 /*
  * This enables everything that GNU can do. The macro is actually
@@ -64,41 +62,47 @@
 #define _GNU_SOURCE
 #endif
 
-#ifndef NODEBUG
-#ifdef DEBUG
-#ifndef DBUG_OFF
-#ifndef DEBUG
-#define DEBUG
+/*
+ * Make sure we use the thread safe version of the library.
+ */
+#ifndef _THREAD_SAFE // Seems to be defined by some Drizzle header
+#define _THREAD_SAFE
 #endif
-#endif
-#endif
+
+/*
+ * This causes things to be defined like stuff in inttypes.h
+ * which is used in printf()
+ */
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS
 #endif
 
 /*
  * What operating system are we on?
  */
-#ifdef __darwin__
+#ifdef __APPLE__
 #define OS_MACINTOSH
 #endif
 
-#if defined(MSDOS) || defined(__WIN__) || defined(_WIN64)
+#if defined(MSDOS) || defined(__WIN__) || defined(_WIN64) || defined(WIN32)
 #define OS_WINDOWS
+#endif
+
+#ifdef __FreeBSD__
+#define OS_FREEBSD
+#endif
+
+#ifdef __NetBSD__
+#define OS_NETBSD
 #endif
 
 #ifdef __sun
 #define OS_SOLARIS
 #endif
 
-
-#ifdef OS_WINDOWS
-#ifdef _DEBUG
-#ifndef NODEBUG
-#ifndef DBUG_OFF
-#ifndef DEBUG
+#if defined(_DEBUG) || defined(DBUG_ON)
+#if !defined(NODEBUG) && !defined(DBUG_OFF) && !defined(DEBUG)
 #define DEBUG
-#endif
-#endif
-#endif
 #endif
 #endif
 

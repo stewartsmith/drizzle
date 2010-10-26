@@ -42,7 +42,6 @@ bool Instance::open_tmp_table()
   
   TableIdentifier identifier(getShare()->getSchemaName(), getShare()->getTableName(), getShare()->getPath());
   if ((error=cursor->ha_open(identifier,
-                             this,
                              O_RDWR,
                              HA_OPEN_TMP_TABLE | HA_OPEN_INTERNAL_TABLE)))
   {
@@ -185,41 +184,6 @@ bool Instance::create_myisam_tmp_table(KeyInfo *keyinfo,
   return false;
 }
 
-
-void Instance::free_tmp_table(Session *session)
-{
-  const char *save_proc_info;
-
-  save_proc_info= session->get_proc_info();
-  session->set_proc_info("removing tmp table");
-
-  // Release latches since this can take a long time
-  plugin::TransactionalStorageEngine::releaseTemporaryLatches(session);
-
-  if (cursor)
-  {
-    if (db_stat)
-    {
-      cursor->closeMarkForDelete(getShare()->getTableName());
-    }
-
-    TableIdentifier identifier(getShare()->getSchemaName(), getShare()->getTableName(), getShare()->getTableName());
-    getShare()->getEngine()->doDropTable(*session, identifier);
-
-    delete cursor;
-  }
-
-  /* free blobs */
-  for (Field **ptr= getFields() ; *ptr ; ptr++)
-  {
-    (*ptr)->free();
-  }
-  free_io_cache();
-
-  getMemRoot()->free_root(MYF(0));
-  session->set_proc_info(save_proc_info);
-}
-
 /*
   Set up column usage bitmaps for a temporary table
 
@@ -244,7 +208,36 @@ void Instance::setup_tmp_table_column_bitmaps()
 
 Instance::~Instance()
 {
-  free_tmp_table(in_use);
+  const char *save_proc_info;
+
+  save_proc_info= in_use->get_proc_info();
+  in_use->set_proc_info("removing tmp table");
+
+  // Release latches since this can take a long time
+  plugin::TransactionalStorageEngine::releaseTemporaryLatches(in_use);
+
+  if (cursor)
+  {
+    if (db_stat)
+    {
+      cursor->closeMarkForDelete(getShare()->getTableName());
+    }
+
+    TableIdentifier identifier(getShare()->getSchemaName(), getShare()->getTableName(), getShare()->getTableName());
+    getShare()->getEngine()->doDropTable(*in_use, identifier);
+
+    delete cursor;
+  }
+
+  /* free blobs */
+  for (Field **ptr= getFields() ; *ptr ; ptr++)
+  {
+    (*ptr)->free();
+  }
+  free_io_cache();
+
+  getMemRoot()->free_root(MYF(0));
+  in_use->set_proc_info(save_proc_info);
 }
 
 

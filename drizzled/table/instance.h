@@ -68,7 +68,6 @@ public:
                                MI_COLUMNDEF **recinfo,
                                uint64_t options);
   void setup_tmp_table_column_bitmaps();
-  void free_tmp_table(Session *session);
   bool open_tmp_table();
 
   void setVariableWidth()

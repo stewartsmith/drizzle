@@ -30,12 +30,12 @@
 #ifndef __OPENTABLE_MS_H__
 #define __OPENTABLE_MS_H__
 
-
-#include "engine_ms.h"
-#include "database_ms.h"
-
 #include "cslib/CSDefs.h"
 #include "cslib/CSFile.h"
+
+#include "engine_ms.h"
+
+#include "database_ms.h"
 
 class MSOpenTablePool;
 

@@ -37,21 +37,12 @@ static int init(drizzled::module::Context &context)
 {
 
   archive_engine= new ArchiveEngine();
+  context.registerVariable(new sys_var_bool_ptr("aio", &archive_use_aio));
   context.add(archive_engine);
 
   return false;
 }
 
-
-static DRIZZLE_SYSVAR_BOOL(aio, archive_use_aio,
-  PLUGIN_VAR_NOCMDOPT,
-  "Whether or not to use asynchronous IO.",
-  NULL, NULL, true);
-
-static drizzle_sys_var* archive_system_variables[]= {
-  DRIZZLE_SYSVAR(aio),
-  NULL
-};
 
 DRIZZLE_DECLARE_PLUGIN
 {
@@ -62,7 +53,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Archive storage engine",
   PLUGIN_LICENSE_GPL,
   init, /* Plugin Init */
-  archive_system_variables,   /* system variables                */
+  NULL,   /* system variables                */
   NULL                        /* config options                  */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

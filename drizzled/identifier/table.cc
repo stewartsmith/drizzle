@@ -46,7 +46,7 @@ extern pid_t current_pid;
 
 static const char hexchars[]= "0123456789abcdef";
 
-static bool tablename_to_filename(const char *from, char *to, size_t to_length);
+static bool tablename_to_filename(const string &from, string &to);
 
 /*
   Translate a cursor name to a table name (WL #1324).
@@ -203,20 +203,28 @@ size_t TableIdentifier::build_tmptable_filename(std::vector<char> &buffer)
     path length on success, 0 on failure
 */
 
-size_t TableIdentifier::build_table_filename(std::string &path, const char *db, const char *table_name, bool is_tmp)
+size_t TableIdentifier::build_table_filename(std::string &path, const std::string &db, const std::string &table_name, bool is_tmp)
 {
-  char dbbuff[FN_REFLEN];
-  char tbbuff[FN_REFLEN];
   bool conversion_error= false;
 
-  memset(tbbuff, 0, sizeof(tbbuff));
+  conversion_error= tablename_to_filename(db, path);
+  if (conversion_error)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("Schema name cannot be encoded and fit within filesystem "
+                    "name length restrictions."));
+    return 0;
+  }
+
+  path.append(FN_ROOTDIR);
+
   if (is_tmp) // It a conversion tmp
   {
-    strncpy(tbbuff, table_name, sizeof(tbbuff));
+    path.append(table_name);
   }
   else
   {
-    conversion_error= tablename_to_filename(table_name, tbbuff, sizeof(tbbuff));
+    conversion_error= tablename_to_filename(table_name, path);
     if (conversion_error)
     {
       errmsg_printf(ERRMSG_LVL_ERROR,
@@ -225,20 +233,7 @@ size_t TableIdentifier::build_table_filename(std::string &path, const char *db, 
       return 0;
     }
   }
-  memset(dbbuff, 0, sizeof(dbbuff));
-  conversion_error= tablename_to_filename(db, dbbuff, sizeof(dbbuff));
-  if (conversion_error)
-  {
-    errmsg_printf(ERRMSG_LVL_ERROR,
-                  _("Schema name cannot be encoded and fit within filesystem "
-                    "name length restrictions."));
-    return 0;
-  }
    
-  path.append(dbbuff);
-  path.append(FN_ROOTDIR);
-  path.append(tbbuff);
-
   return path.length();
 }
 
@@ -255,49 +250,40 @@ size_t TableIdentifier::build_table_filename(std::string &path, const char *db, 
   RETURN
     true if errors happen. false on success.
 */
-static bool tablename_to_filename(const char *from, char *to, size_t to_length)
+static bool tablename_to_filename(const string &from, string &to)
 {
   
-  size_t length= 0;
-  for (; *from  && length < to_length; length++, from++)
+  string::const_iterator iter= from.begin();
+  for (; iter != from.end(); ++iter)
   {
-    if ((*from >= '0' && *from <= '9') ||
-        (*from >= 'a' && *from <= 'z') ||
-/* OSX defines an extra set of high-bit and multi-byte characters
-   that cannot be used on the filesystem. Instead of trying to sort
-   those out, we'll just escape encode all high-bit-set chars on OSX.
-   It won't really hurt anything - it'll just make some filenames ugly. */
-#if !defined(TARGET_OS_OSX)
-        ((unsigned char)*from >= 128) ||
-#endif
-        (*from == '_') ||
-        (*from == ' ') ||
-        (*from == '-'))
+    if (isascii(*iter))
     {
-      to[length]= tolower(*from);
-      continue;
-    }
+      if ((isdigit(*iter)) ||
+          (islower(*iter)) ||
+          (*iter == '_') ||
+          (*iter == ' ') ||
+          (*iter == '-'))
+      {
+        to.push_back(*iter);
+        continue;
+      }
 
-    if ((*from >= 'A' && *from <= 'Z'))
-    {
-      to[length]= tolower(*from);
-      continue;
+      if (isupper(*iter))
+      {
+        to.push_back(tolower(*iter));
+        continue;
+      }
     }
    
-    if (length + 3 >= to_length)
-      return true;
-
     /* We need to escape this char in a way that can be reversed */
-    to[length++]= '@';
-    to[length++]= hexchars[(*from >> 4) & 15];
-    to[length]= hexchars[(*from) & 15];
+    to.push_back('@');
+    to.push_back(hexchars[(*iter >> 4) & 15]);
+    to.push_back(hexchars[(*iter) & 15]);
   }
 
-  if (internal::check_if_legal_tablename(to) &&
-      length + 4 < to_length)
+  if (internal::check_if_legal_tablename(to.c_str()))
   {
-    memcpy(to + length, "@@@", 4);
-    length+= 3;
+    to.append("@@@");
   }
   return false;
 }
@@ -319,11 +305,11 @@ void TableIdentifier::init()
   case message::Table::FUNCTION:
   case message::Table::STANDARD:
     assert(path.size() == 0);
-    build_table_filename(path, getSchemaName().c_str(), table_name.c_str(), false);
+    build_table_filename(path, getSchemaName(), table_name, false);
     break;
   case message::Table::INTERNAL:
     assert(path.size() == 0);
-    build_table_filename(path, getSchemaName().c_str(), table_name.c_str(), true);
+    build_table_filename(path, getSchemaName(), table_name, true);
     break;
   case message::Table::TEMPORARY:
     if (path.empty())
@@ -337,9 +323,9 @@ void TableIdentifier::init()
   hash_value= hasher(path);
 
   key.resize(getKeySize());
-  size_t key_length= TableIdentifier::createKey(&key[0], *this);
 
-  assert(key_length == getKeySize()); // If this is off, then we have a memory issue.
+  std::copy(getSchemaName().begin(), getSchemaName().end(), key.begin());
+  std::copy(getTableName().begin(), getTableName().end(), key.begin() + getSchemaName().length() + 1);
 }
 
 

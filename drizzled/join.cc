@@ -338,7 +338,7 @@ int Join::prepare(Item ***rref_pointer_array,
   }
 
   if (error)
-    goto err;
+    return(-1);
 
   /* 
    * The below will create the new table for
@@ -347,7 +347,7 @@ int Join::prepare(Item ***rref_pointer_array,
    * @see create_table_from_items() in drizzled/sql_insert.cc
    */
   if (result && result->prepare(fields_list, unit_arg))
-    goto err;
+    return(-1);
 
   /* Init join struct */
   count_field_types(select_lex, &tmp_table_param, all_fields, 0);
@@ -359,18 +359,16 @@ int Join::prepare(Item ***rref_pointer_array,
   if (sum_func_count && !group_list && (func_count || field_count))
   {
     my_message(ER_WRONG_SUM_SELECT,ER(ER_WRONG_SUM_SELECT),MYF(0));
-    goto err;
+    return(-1);
   }
 #endif
   if (select_lex->olap == ROLLUP_TYPE && rollup_init())
-    goto err;
+    return(-1);
+
   if (alloc_func_list())
-    goto err;
+    return(-1);
 
-  return(0); // All OK
-
-err:
-  return(-1);
+  return 0; // All OK
 }
 
 /*
@@ -867,12 +865,7 @@ int Join::optimize()
         save_index_subquery_explain_info(join_tab, where);
         join_tab[0].type= AM_UNIQUE_SUBQUERY;
         error= 0;
-        return(unit->item->
-                    change_engine(new
-                                  subselect_uniquesubquery_engine(session,
-                                                                  join_tab,
-                                                                  unit->item,
-                                                                  where)));
+        return(unit->item->change_engine(new subselect_uniquesubquery_engine(session, join_tab, unit->item, where)));
       }
       else if (join_tab[0].type == AM_REF &&
          join_tab[0].ref.items[0]->name == in_left_expr_name)
@@ -881,14 +874,7 @@ int Join::optimize()
         save_index_subquery_explain_info(join_tab, where);
         join_tab[0].type= AM_INDEX_SUBQUERY;
         error= 0;
-        return(unit->item->
-                    change_engine(new
-                                  subselect_indexsubquery_engine(session,
-                                                                 join_tab,
-                                                                 unit->item,
-                                                                 where,
-                                                                 NULL,
-                                                                 0)));
+        return(unit->item->change_engine(new subselect_indexsubquery_engine(session, join_tab, unit->item, where, NULL, 0)));
       }
     } 
     else if (join_tab[0].type == AM_REF_OR_NULL &&
@@ -899,13 +885,7 @@ int Join::optimize()
       error= 0;
       conds= remove_additional_cond(conds);
       save_index_subquery_explain_info(join_tab, conds);
-      return(unit->item->
-      change_engine(new subselect_indexsubquery_engine(session,
-                   join_tab,
-                   unit->item,
-                   conds,
-                                                                   having,
-                   1)));
+      return(unit->item->change_engine(new subselect_indexsubquery_engine(session, join_tab, unit->item, conds, having, 1)));
     }
 
   }
@@ -1191,8 +1171,10 @@ bool Join::init_save_join_tab()
 {
   if (!(tmp_join= (Join*)session->alloc(sizeof(Join))))
     return 1;
+
   error= 0;              // Ensure that tmp_join.error= 0
   restore_tmp();
+
   return 0;
 }
 
@@ -2840,7 +2822,9 @@ enum_nested_loop_state end_write(Join *join, JoinTable *, bool end_of_records)
       if ((error=table->cursor->insertRecord(table->getInsertRecord())))
       {
         if (!table->cursor->is_fatal_error(error, HA_CHECK_DUP))
-          goto end;
+        {
+          return NESTED_LOOP_OK;
+        }
 
         my_error(ER_USE_SQL_BIG_RESULT, MYF(0));
         return NESTED_LOOP_ERROR;        // Table is_full error
@@ -2855,7 +2839,7 @@ enum_nested_loop_state end_write(Join *join, JoinTable *, bool end_of_records)
       }
     }
   }
-end:
+
   return NESTED_LOOP_OK;
 }
 

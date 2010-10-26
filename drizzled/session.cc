@@ -158,7 +158,7 @@ Session::Session(plugin::Client *client_arg) :
   Open_tables_state(refresh_version),
   mem_root(&main_mem_root),
   lex(&main_lex),
-  query(),
+  catalog("LOCAL"),
   client(client_arg),
   scheduler(NULL),
   scheduler_arg(NULL),
@@ -1134,7 +1134,7 @@ bool select_export::send_data(List<Item> &items)
   if (unit->offset_limit_cnt)
   {						// using limit offset,count
     unit->offset_limit_cnt--;
-    return(0);
+    return false;
   }
   row_count++;
   Item *item;
@@ -1143,7 +1143,8 @@ bool select_export::send_data(List<Item> &items)
 
   if (my_b_write(cache,(unsigned char*) exchange->line_start->ptr(),
                  exchange->line_start->length()))
-    goto err;
+    return true;
+
   while ((item=li++))
   {
     Item_result result_type=item->result_type();
@@ -1154,7 +1155,7 @@ bool select_export::send_data(List<Item> &items)
     {
       if (my_b_write(cache,(unsigned char*) exchange->enclosed->ptr(),
                      exchange->enclosed->length()))
-        goto err;
+        return true;
     }
     if (!res)
     {						// NULL
@@ -1165,10 +1166,10 @@ bool select_export::send_data(List<Item> &items)
           null_buff[0]=escape_char;
           null_buff[1]='N';
           if (my_b_write(cache,(unsigned char*) null_buff,2))
-            goto err;
+            return true;
         }
         else if (my_b_write(cache,(unsigned char*) "NULL",4))
-          goto err;
+          return true;
       }
       else
       {
@@ -1259,15 +1260,15 @@ bool select_export::send_data(List<Item> &items)
             tmp_buff[1]= *pos ? *pos : '0';
             if (my_b_write(cache,(unsigned char*) start,(uint32_t) (pos-start)) ||
                 my_b_write(cache,(unsigned char*) tmp_buff,2))
-              goto err;
+              return true;
             start=pos+1;
           }
         }
         if (my_b_write(cache,(unsigned char*) start,(uint32_t) (pos-start)))
-          goto err;
+          return true;
       }
       else if (my_b_write(cache,(unsigned char*) res->ptr(),used_length))
-        goto err;
+        return true;
     }
     if (fixed_row_size)
     {						// Fill with space
@@ -1283,31 +1284,32 @@ bool select_export::send_data(List<Item> &items)
         for (; length > sizeof(space) ; length-=sizeof(space))
         {
           if (my_b_write(cache,(unsigned char*) space,sizeof(space)))
-            goto err;
+            return true;
         }
         if (my_b_write(cache,(unsigned char*) space,length))
-          goto err;
+          return true;
       }
     }
     if (res && enclosed)
     {
       if (my_b_write(cache, (unsigned char*) exchange->enclosed->ptr(),
                      exchange->enclosed->length()))
-        goto err;
+        return true;
     }
     if (--items_left)
     {
       if (my_b_write(cache, (unsigned char*) exchange->field_term->ptr(),
                      field_term_length))
-        goto err;
+        return true;
     }
   }
   if (my_b_write(cache,(unsigned char*) exchange->line_term->ptr(),
                  exchange->line_term->length()))
-    goto err;
-  return(0);
-err:
-  return(1);
+  {
+    return true;
+  }
+
+  return false;
 }
 
 

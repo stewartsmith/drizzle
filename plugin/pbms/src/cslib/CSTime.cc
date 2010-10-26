@@ -27,10 +27,12 @@
 #include "CSConfig.h"
 
 #include <string.h>
-#include <time.h>
 
 #ifdef OS_WINDOWS
 #include <Windows.h>
+extern int gettimeofday(struct timeval *tv, struct timezone *tz);
+#else
+#include <sys/time.h>
 #endif
 
 #include "CSTime.h"
@@ -186,6 +188,18 @@ void CSTime::setUTC1970(time_t sec, s_int nsec)
 	setUTC(ltime.tm_year + 1900, ltime.tm_mon + 1, ltime.tm_mday, ltime.tm_hour, ltime.tm_min, ltime.tm_sec, nsec);
 }
 
+bool CSTime::olderThen(time_t max_age)
+{
+	time_t secs, now;
+	s_int nsec;
+	
+	getUTC1970(secs, nsec);
+	
+	now = time(NULL);
+	
+	return ((now - secs) > max_age);
+}
+
 void CSTime::getUTC1970(time_t& sec, s_int& nsec)
 {
 #ifdef OS_WINDOWS
@@ -266,5 +280,15 @@ uint64_t CSTime::get1970as1601()
 }
 
 #endif
+
+uint64_t CSTime::getTimeCurrentTicks()
+{
+	struct timeval	now;
+
+	/* Get the current time in microseconds: */
+	gettimeofday(&now, NULL);
+	return (uint64_t) now.tv_sec * (uint64_t) 1000000 + (uint64_t) now.tv_usec;
+}
+
 
 

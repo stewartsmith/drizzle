@@ -24,7 +24,7 @@
 class TableProtoTesterCursor: public drizzled::Cursor
 {
 public:
-  TableProtoTesterCursor(drizzled::plugin::StorageEngine &engine, drizzled::TableShare &table_arg);
+  TableProtoTesterCursor(drizzled::plugin::StorageEngine &engine, drizzled::Table &table_arg);
   ~TableProtoTesterCursor()
   {}
 

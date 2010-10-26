@@ -165,10 +165,22 @@ public:
   
   const char *getAlias() const
   {
-    return alias;
+    return _alias.c_str();
   }
 
-  const char *alias; /**< alias or table name if no alias */
+  void clearAlias()
+  {
+    _alias.clear();
+  }
+
+  void setAlias(const char *arg)
+  {
+    _alias= arg;
+  }
+
+private:
+  std::string _alias; /**< alias or table name if no alias */
+public:
 
   unsigned char *null_flags;
 
@@ -354,7 +366,7 @@ public:
   filesort_info sort;
 
   Table();
-  virtual ~Table() { };
+  virtual ~Table();
 
   int report_error(int error);
   /**

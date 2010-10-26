@@ -21,12 +21,12 @@
 #ifndef PLUGIN_SHOW_DICTIONARY_SHOW_TABLE_STATUS_H
 #define PLUGIN_SHOW_DICTIONARY_SHOW_TABLE_STATUS_H
 
-class ShowTableStatus : public  drizzled::plugin::TableFunction
+class ShowTableStatus : public  show_dictionary::Show
 {
 public:
   ShowTableStatus();
 
-  class Generator : public drizzled::plugin::TableFunction::Generator 
+  class Generator : public show_dictionary::Show::Generator 
   {
     bool is_primed;
     drizzled::Table *table;
