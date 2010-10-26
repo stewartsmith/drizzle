@@ -27,8 +27,14 @@
 
 #include <sstream>
 
-using namespace drizzled;
 using namespace std;
+
+namespace drizzled
+{
+
+extern uint64_t refresh_version;
+extern time_t server_start_time;
+extern time_t flush_status_time;
 
 static int show_starttime_new(drizzle_show_var *var, char *buff)
 {
@@ -168,3 +174,5 @@ drizzle_show_var StatusHelper::status_vars_defs[]=
   {"Uptime_since_flush_status", (char*) &show_flushstatustime_cont_new,   SHOW_FUNC},
   {NULL, NULL, SHOW_LONGLONG}
 };
+
+} /* namespace drizzled */

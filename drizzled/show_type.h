@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Monty Taylor
+ *  Copyright (C) 2008 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,24 +17,40 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-
-#include <algorithm>
-
-#include "drizzled/module/module.h"
-#include "drizzled/sys_var.h"
-#include "drizzled/util/functors.h"
+#ifndef DRIZZLED_SHOW_TYPE_H
+#define DRIZZLED_SHOW_TYPE_H
 
 namespace drizzled
 {
 
-namespace module
+/*
+  declarations for SHOW STATUS support in plugins
+*/
+typedef enum enum_drizzle_show_type
 {
+  SHOW_UNDEF, SHOW_BOOL, SHOW_INT, SHOW_LONG,
+  SHOW_LONGLONG, SHOW_CHAR, SHOW_CHAR_PTR,
+  SHOW_FUNC,
+  SHOW_LONG_STATUS, SHOW_DOUBLE_STATUS,
+  SHOW_MY_BOOL, SHOW_HA_ROWS, SHOW_SYS, SHOW_INT_NOFLUSH,
+  SHOW_LONGLONG_STATUS, SHOW_DOUBLE, SHOW_SIZE
+} SHOW_TYPE;
 
-Module::~Module()
+struct drizzle_show_var {
+  const char *name;
+  char *value;
+  SHOW_TYPE type;
+};
+
+
+static const int SHOW_VAR_FUNC_BUFF_SIZE= 1024;
+typedef int (*drizzle_show_var_func)(drizzle_show_var *, char *);
+
+struct st_show_var_func_container
 {
-  std::for_each(sys_vars.begin(), sys_vars.end(), DeletePtr());
+  drizzle_show_var_func func;
+};
+
 }
 
-} /* namespace module */
-} /* namespace drizzled */
+#endif /* DRIZZLED_SHOW_TYPE_H */

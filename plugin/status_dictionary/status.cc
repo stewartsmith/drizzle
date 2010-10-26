@@ -71,7 +71,7 @@ bool StateTool::Generator::populate()
       drizzle_show_var tmp;
 
       for (var= variables; var->type == SHOW_FUNC; var= &tmp)
-        ((mysql_show_var_func)((st_show_var_func_container *)var->value)->func)(&tmp, buff);
+        ((drizzle_show_var_func)((st_show_var_func_container *)var->value)->func)(&tmp, buff);
     }
 
     if (isWild(variables->name))
