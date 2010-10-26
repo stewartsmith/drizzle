@@ -39,13 +39,12 @@
 #include "drizzled/util/string.h"
 
 #include "drizzled/table/cache.h"
+#include "drizzled/definition/cache.h"
 
 namespace drizzled
 {
 
 typedef boost::shared_ptr<TableShare> TableSharePtr;
-
-typedef boost::unordered_map< TableIdentifier::Key, TableSharePtr> TableDefinitionCache;
 
 const static std::string STANDARD_STRING("STANDARD");
 const static std::string TEMPORARY_STRING("TEMPORARY");
@@ -237,9 +236,7 @@ private:
   {
     mutex.unlock();
   }
-public:
 
-private:
   std::vector<unsigned char> default_values;		/* row with default values */
 public:
   // @note This needs to be made to be const in the future
@@ -479,6 +476,7 @@ public:
 
 private:
   uint32_t ref_count;       /* How many Table objects uses this */
+
 public:
   uint32_t getTableCount() const
   {
@@ -490,6 +488,11 @@ public:
     lock();
     ref_count++;
     unlock();
+  }
+
+  uint32_t decrementTableCount()
+  {
+    return --ref_count;
   }
 
   uint32_t null_bytes;
@@ -637,7 +640,6 @@ public:
 
   void open_table_error(int pass_error, int db_errno, int pass_errarg);
 
-  static void cacheStart(void);
   static void release(TableShare *share);
   static void release(TableSharePtr &share);
   static void release(TableIdentifier &identifier);

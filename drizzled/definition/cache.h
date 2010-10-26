@@ -2,7 +2,6 @@
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2010 Brian Aker
- *  Copyright (C) 2010 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,22 +18,19 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_TABLE_CACHE_H
-#define DRIZZLED_TABLE_CACHE_H
-
-#include <boost/unordered_map.hpp>
+#ifndef DRIZZLED_DEFINITION_CACHE_H
+#define DRIZZLED_DEFINITION_CACHE_H
 
 namespace drizzled {
-namespace table {
 
-class Concurrent;
+typedef boost::shared_ptr<TableShare> TableSharePtr;
+typedef boost::unordered_map< TableIdentifier::Key, TableSharePtr> TableDefinitionCache;
 
-typedef boost::unordered_multimap< TableIdentifier::Key, Concurrent *> CacheMap;
-typedef std::pair< CacheMap::const_iterator, CacheMap::const_iterator > CacheRange;
+namespace definition {
 
-class Cache 
+class Cache
 {
-  CacheMap cache;
+  TableDefinitionCache cache;
 
 public:
   static inline Cache &singleton()
@@ -44,21 +40,23 @@ public:
     return open_cache;
   }
 
-  CacheMap &getCache()
+  TableDefinitionCache &getCache()
   {
     return cache;
   }
 
-  bool areTablesUsed(Table *table, bool wait_for_name_lock);
-  void removeSchema(const SchemaIdentifier &schema_identifier);
-  bool removeTable(Session *session, TableIdentifier &identifier, uint32_t flags);
-  void release(TableShare *share);
+  size_t size() const
+  {
+    return cache.size();
+  }
+
+  void rehash(size_t arg)
+  {
+    cache.rehash(arg);
+  }
 };
 
-CacheMap &getCache(void);
-void remove_table(table::Concurrent *arg);
+} /* namespace definition */
+} /* namespace drizzled */
 
-} /* namepsace table */
-} /* namepsace drizzled */
-
-#endif /* DRIZZLED_TABLE_CACHE_H */
+#endif /* DRIZZLED_DEFINITION_CACHE_H */

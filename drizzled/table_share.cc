@@ -83,33 +83,10 @@ namespace drizzled
 {
 
 extern size_t table_def_size;
-static TableDefinitionCache table_def_cache;
 
 /*****************************************************************************
   Functions to handle table definition cach (TableShare)
  *****************************************************************************/
-
-
-// @todo switch this a boost::thread one only call.
-void TableShare::cacheStart(void)
-{
-  /* 
-   * This is going to overalloc a bit - as rehash sets the number of
-   * buckets, not the number of elements. BUT, it'll allow us to not need
-   * to rehash later on as the unordered_map grows.
- */
-  table_def_cache.rehash(table_def_size);
-}
-
-
-/**
- * @TODO This should return size_t
- */
-uint32_t cached_table_definitions(void)
-{
-  return static_cast<uint32_t>(table_def_cache.size());
-}
-
 
 /*
   Mark that we are not using table share anymore.
@@ -139,10 +116,10 @@ void TableShare::release(TableShare *share)
     TableIdentifier identifier(share->getSchemaName(), share->getTableName());
     plugin::EventObserver::deregisterTableEvents(*share);
    
-    TableDefinitionCache::iterator iter= table_def_cache.find(identifier.getKey());
-    if (iter != table_def_cache.end())
+    TableDefinitionCache::iterator iter= definition::Cache::singleton().getCache().find(identifier.getKey());
+    if (iter != definition::Cache::singleton().getCache().end())
     {
-      table_def_cache.erase(iter);
+      definition::Cache::singleton().getCache().erase(iter);
     }
     return;
   }
@@ -165,10 +142,10 @@ void TableShare::release(TableSharePtr &share)
     TableIdentifier identifier(share->getSchemaName(), share->getTableName());
     plugin::EventObserver::deregisterTableEvents(*share);
    
-    TableDefinitionCache::iterator iter= table_def_cache.find(identifier.getKey());
-    if (iter != table_def_cache.end())
+    TableDefinitionCache::iterator iter= definition::Cache::singleton().getCache().find(identifier.getKey());
+    if (iter != definition::Cache::singleton().getCache().end())
     {
-      table_def_cache.erase(iter);
+      definition::Cache::singleton().getCache().erase(iter);
     }
     return;
   }
@@ -177,8 +154,8 @@ void TableShare::release(TableSharePtr &share)
 
 void TableShare::release(TableIdentifier &identifier)
 {
-  TableDefinitionCache::iterator iter= table_def_cache.find(identifier.getKey());
-  if (iter != table_def_cache.end())
+  TableDefinitionCache::iterator iter= definition::Cache::singleton().getCache().find(identifier.getKey());
+  if (iter != definition::Cache::singleton().getCache().end())
   {
     TableSharePtr share= (*iter).second;
     share->version= 0;                          // Mark for delete
@@ -186,7 +163,7 @@ void TableShare::release(TableIdentifier &identifier)
     {
       share->lock();
       plugin::EventObserver::deregisterTableEvents(*share);
-      table_def_cache.erase(identifier.getKey());
+      definition::Cache::singleton().getCache().erase(identifier.getKey());
     }
   }
 }
@@ -245,8 +222,8 @@ TableSharePtr TableShare::getShareCreate(Session *session,
   *error= 0;
 
   /* Read table definition from cache */
-  TableDefinitionCache::iterator iter= table_def_cache.find(identifier.getKey());
-  if (iter != table_def_cache.end())
+  TableDefinitionCache::iterator iter= definition::Cache::singleton().getCache().find(identifier.getKey());
+  if (iter != definition::Cache::singleton().getCache().end())
   {
     share= (*iter).second;
     return foundTableShare(share);
@@ -261,7 +238,7 @@ TableSharePtr TableShare::getShareCreate(Session *session,
   share->lock();
 
   pair<TableDefinitionCache::iterator, bool> ret=
-    table_def_cache.insert(make_pair(identifier.getKey(), share));
+    definition::Cache::singleton().getCache().insert(make_pair(identifier.getKey(), share));
   if (ret.second == false)
   {
     return TableSharePtr();
@@ -270,7 +247,7 @@ TableSharePtr TableShare::getShareCreate(Session *session,
   if (share->open_table_def(*session, identifier))
   {
     *error= share->error;
-    table_def_cache.erase(identifier.getKey());
+    definition::Cache::singleton().getCache().erase(identifier.getKey());
 
     return TableSharePtr();
   }
@@ -300,8 +277,8 @@ TableSharePtr TableShare::getShare(TableIdentifier &identifier)
 {
   safe_mutex_assert_owner(LOCK_open.native_handle);
 
-  TableDefinitionCache::iterator iter= table_def_cache.find(identifier.getKey());
-  if (iter != table_def_cache.end())
+  TableDefinitionCache::iterator iter= definition::Cache::singleton().getCache().find(identifier.getKey());
+  if (iter != definition::Cache::singleton().getCache().end())
   {
     return (*iter).second;
   }
@@ -446,7 +423,7 @@ bool TableShare::fieldInPrimaryKey(Field *in_field) const
 
 const TableDefinitionCache &TableShare::getCache()
 {
-  return table_def_cache;
+  return definition::Cache::singleton().getCache();
 }
 
 TableShare::TableShare(TableIdentifier::Type type_arg) :
@@ -1746,7 +1723,7 @@ int TableShare::parse_table_proto(Session& session, message::Table &table)
 
   NOTES
   This function is called when the table definition is not cached in
-  table_def_cache
+  definition::Cache::singleton().getCache()
   The data is returned in 'share', which is alloced by
   alloc_table_share().. The code assumes that share is initialized.
 
