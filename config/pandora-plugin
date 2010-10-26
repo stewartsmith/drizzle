@@ -329,7 +329,7 @@ def expand_plugin_ini(plugin):
     plugin['tests']= fix_file_paths(plugin, plugin['tests'])
 
     # Make a yes/no version for autoconf help messages
-    if plugin['load_by_default'] or plugin['static']:
+    if plugin['load_by_default']:
       plugin['default_yesno']="yes"
     else:
       plugin['default_yesno']="no"
