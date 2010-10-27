@@ -37,6 +37,15 @@ SQL Language:
    transactional 
    administrative 
 
+Advanced Topics:
+  
+.. toctree::
+   :maxdepth: 2
+
+   storage_engines
+   logging
+
+
 Configuration:
 
 .. toctree::
