@@ -18,20 +18,20 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_GENERATOR_ALL_FIELDS_H
-#define DRIZZLED_GENERATOR_ALL_FIELDS_H
+#ifndef DRIZZLED_GENERATOR_ALL_FOREIGN_KEYS_H
+#define DRIZZLED_GENERATOR_ALL_FOREIGN_KEYS_H
 
 namespace drizzled {
 namespace generator {
 
-typedef std::pair<const drizzled::message::Table *, int32_t> FieldPair;
+typedef std::pair<const drizzled::message::Table *, int32_t> ForeignKeyConstraintPair;
 
-class AllFields
+class AllForeignKeys
 {
   Session &session;
   message::Table table_message;
   const drizzled::message::Table *table_ptr;
-  int32_t field_iterator;
+  int32_t foreign_keys_iterator;
 
   drizzled::generator::AllTables all_tables_generator;
 
@@ -39,19 +39,19 @@ class AllFields
 
 public:
 
-  AllFields(Session &arg);
+  AllForeignKeys(Session &arg);
 
   void reset();
 
-  operator const drizzled::message::Table::Field*()
+  operator const drizzled::message::Table::ForeignKeyConstraint*()
   {
     if (table_ptr)
     {
       do {
-        if (field_iterator != table_message.field_size())
+        if (foreign_keys_iterator != table_message.fk_constraint_size())
         {
-          const message::Table::Field &field(table_message.field(field_iterator++));
-          return &field;
+          const message::Table::ForeignKeyConstraint &fk_constraint(table_message.fk_constraint(foreign_keys_iterator++));
+          return &fk_constraint;
         }
 
       } while ((table_ptr= all_tables_generator) && table_setup());
@@ -60,19 +60,19 @@ public:
     return NULL;
   }
 
-  operator const FieldPair()
+  operator const ForeignKeyConstraintPair()
   {
     if (table_ptr)
     {
       do {
-        if (field_iterator != table_message.field_size())
+        if (foreign_keys_iterator != table_message.fk_constraint_size())
         {
-          return std::make_pair(&table_message, field_iterator++);
+          return std::make_pair(&table_message, foreign_keys_iterator++);
         }
       } while ((table_ptr= all_tables_generator) && table_setup());
     }
 
-    FieldPair null_pair;
+    ForeignKeyConstraintPair null_pair;
     return null_pair;
   }
 };
@@ -80,6 +80,4 @@ public:
 } /* namespace generator */
 } /* namespace drizzled */
 
-bool operator!(const drizzled::generator::FieldPair &arg);
-
-#endif /* DRIZZLED_GENERATOR_ALL_FIELDS_H */
+#endif /* DRIZZLED_GENERATOR_ALL_FOREIGN_KEYS_H */

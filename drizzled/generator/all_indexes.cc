@@ -29,31 +29,22 @@ namespace drizzled
 namespace generator
 {
 
-AllFields::AllFields(Session &arg) :
+AllIndexes::AllIndexes(Session &arg) :
   session(arg),
-  field_iterator(0),
+  index_iterator(0),
   all_tables_generator(arg)
 {
   ((table_ptr= all_tables_generator));
-  table_setup();
 }
 
-bool AllFields::table_setup()
+bool AllIndexes::table_setup()
 {
   table_message.Clear();
   table_message.CopyFrom(*table_ptr);
-  field_iterator= 0;
+  index_iterator= 0;
 
   return true;
 }
 
 } /* namespace generator */
 } /* namespace drizzled */
-
-bool operator!(const drizzled::generator::FieldPair &arg)
-{
-  if (arg.first == 0 and arg.second == 0)
-    return true;
-
-  return false;
-}

@@ -18,42 +18,48 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#ifndef DRIZZLED_GENERATOR_ALL_INDEXES_H
+#define DRIZZLED_GENERATOR_ALL_INDEXES_H
 
-#include "drizzled/generator.h"
+namespace drizzled {
+namespace generator {
 
-using namespace std;
-
-namespace drizzled
+class AllIndexes
 {
-namespace generator
-{
+  Session &session;
+  message::Table table_message;
+  const drizzled::message::Table *table_ptr;
+  int32_t index_iterator;
 
-AllFields::AllFields(Session &arg) :
-  session(arg),
-  field_iterator(0),
-  all_tables_generator(arg)
-{
-  ((table_ptr= all_tables_generator));
-  table_setup();
-}
+  drizzled::generator::AllTables all_tables_generator;
 
-bool AllFields::table_setup()
-{
-  table_message.Clear();
-  table_message.CopyFrom(*table_ptr);
-  field_iterator= 0;
+  bool table_setup();
 
-  return true;
-}
+public:
+
+  AllIndexes(Session &arg);
+
+  void reset();
+
+  operator const drizzled::message::Table::Index*()
+  {
+    if (table_ptr)
+    {
+      do {
+        if (index_iterator != table_message.indexes_size())
+        {
+          const message::Table::Index &index(table_message.indexes(index_iterator++));
+          return &index;
+        }
+
+      } while ((table_ptr= all_tables_generator) && table_setup());
+    }
+
+    return NULL;
+  }
+};
 
 } /* namespace generator */
 } /* namespace drizzled */
 
-bool operator!(const drizzled::generator::FieldPair &arg)
-{
-  if (arg.first == 0 and arg.second == 0)
-    return true;
-
-  return false;
-}
+#endif /* DRIZZLED_GENERATOR_ALL_INDEXES_H */

@@ -21,42 +21,20 @@
 #ifndef PLUGIN_SCHEMA_DICTIONARY_SCHEMAS_H
 #define PLUGIN_SCHEMA_DICTIONARY_SCHEMAS_H
 
-class SchemasTool : public drizzled::plugin::TableFunction
+class SchemasTool : public DataDictionary
 {
 public:
 
   SchemasTool();
 
-  SchemasTool(const char *schema_arg, const char *table_arg) :
-    drizzled::plugin::TableFunction(schema_arg, table_arg)
-  { }
-
-  SchemasTool(const char *table_arg) :
-    drizzled::plugin::TableFunction("DATA_DICTIONARY", table_arg)
-  { }
-
-  class Generator : public drizzled::plugin::TableFunction::Generator 
+  class Generator : public DataDictionary::Generator 
   {
-    drizzled::message::SchemaPtr schema;
-
     drizzled::generator::Schema schema_generator;
-
-    virtual void fill();
 
   public:
     Generator(drizzled::Field **arg);
 
-    const std::string &schema_name()
-    {
-      return schema->name();
-    }
-
     bool populate();
-    bool nextSchema();
-    bool isSchemaPrimed()
-    {
-      return true;
-    }
   };
 
   Generator *generator(drizzled::Field **arg)

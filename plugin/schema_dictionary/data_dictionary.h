@@ -1,4 +1,4 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2010 Brian Aker
@@ -18,42 +18,30 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#ifndef PLUGIN_SCHEMA_DICTIONARY_DATA_DICTIONARY_H
+#define PLUGIN_SCHEMA_DICTIONARY_DATA_DICTIONARY_H
 
-#include "drizzled/generator.h"
-
-using namespace std;
-
-namespace drizzled
+class DataDictionary : public drizzled::plugin::TableFunction
 {
-namespace generator
-{
+public:
 
-AllFields::AllFields(Session &arg) :
-  session(arg),
-  field_iterator(0),
-  all_tables_generator(arg)
-{
-  ((table_ptr= all_tables_generator));
-  table_setup();
-}
+  DataDictionary(const char *table_arg) :
+    drizzled::plugin::TableFunction("DATA_DICTIONARY", table_arg)
+  { }
 
-bool AllFields::table_setup()
-{
-  table_message.Clear();
-  table_message.CopyFrom(*table_ptr);
-  field_iterator= 0;
+  class Generator : public drizzled::plugin::TableFunction::Generator 
+  {
+  public:
+    Generator(drizzled::Field **arg):
+      drizzled::plugin::TableFunction::Generator(arg)
+    { }
+  };
 
-  return true;
-}
+  Generator *generator(drizzled::Field **arg)
+  {
+    return new Generator(arg);
+  }
 
-} /* namespace generator */
-} /* namespace drizzled */
+};
 
-bool operator!(const drizzled::generator::FieldPair &arg)
-{
-  if (arg.first == 0 and arg.second == 0)
-    return true;
-
-  return false;
-}
+#endif /* PLUGIN_SCHEMA_DICTIONARY_DATA_DICTIONARY_H */
