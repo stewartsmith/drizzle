@@ -22,21 +22,21 @@
  */
 
 #include "config.h"
-#include <drizzled/session.h>
+#include "drizzled/session.h"
 #include "drizzled/session_list.h"
 #include <sys/stat.h>
-#include <drizzled/error.h>
-#include <drizzled/gettext.h>
-#include <drizzled/query_id.h>
-#include <drizzled/data_home.h>
-#include <drizzled/sql_base.h>
-#include <drizzled/lock.h>
-#include <drizzled/item/cache.h>
-#include <drizzled/item/float.h>
-#include <drizzled/item/return_int.h>
-#include <drizzled/item/empty_string.h>
-#include <drizzled/show.h>
-#include <drizzled/plugin/client.h>
+#include "drizzled/error.h"
+#include "drizzled/gettext.h"
+#include "drizzled/query_id.h"
+#include "drizzled/data_home.h"
+#include "drizzled/sql_base.h"
+#include "drizzled/lock.h"
+#include "drizzled/item/cache.h"
+#include "drizzled/item/float.h"
+#include "drizzled/item/return_int.h"
+#include "drizzled/item/empty_string.h"
+#include "drizzled/show.h"
+#include "drizzled/plugin/client.h"
 #include "drizzled/plugin/scheduler.h"
 #include "drizzled/plugin/authentication.h"
 #include "drizzled/plugin/logging.h"
@@ -60,7 +60,7 @@
 #include <fcntl.h>
 #include <algorithm>
 #include <climits>
-#include "boost/filesystem.hpp" 
+#include <boost/filesystem.hpp>
 
 using namespace std;
 
