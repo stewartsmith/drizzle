@@ -30,7 +30,6 @@
 #include "drizzled/data_home.h"
 
 #include "drizzled/internal/my_sys.h"
-#include "drizzled/session.h"
 #include "drizzled/transaction_services.h"
 
 #include <fcntl.h>

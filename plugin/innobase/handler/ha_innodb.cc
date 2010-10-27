@@ -8268,7 +8268,7 @@ InnobaseEngine::doXaPrepare(
 
 uint64_t InnobaseEngine::doGetCurrentTransactionId(Session *session)
 {
-  trx_t *trx = session_to_trx(session);
+  trx_t *trx= session_to_trx(session);
   return (ib_uint64_t) ut_conv_dulint_to_longlong(trx->id);
 }
 
@@ -8277,7 +8277,7 @@ uint64_t InnobaseEngine::doGetNewTransactionId(Session *session)
   trx_t *trx= innobase_trx_allocate(session);
 
   mutex_enter(&kernel_mutex);
-  trx->id = trx_sys_get_new_trx_id();
+  trx->id= trx_sys_get_new_trx_id();
   mutex_exit(&kernel_mutex);
 
   return (ib_uint64_t) ut_conv_dulint_to_longlong(trx->id);
