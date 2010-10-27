@@ -30,9 +30,12 @@ SQL Language:
    queries
    ddl
    dml
-   columntypes
-   dynamic
-   getting_information
+   columntypes 
+   variables 
+   dynamic 
+   getting_information 
+   transactional 
+   administrative 
 
 Configuration:
 

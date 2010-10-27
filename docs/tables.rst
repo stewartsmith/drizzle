@@ -11,4 +11,5 @@ table can have an infinite set of rows.
    alter_table
    create_table
    drop_table
-   truncate
+   truncate 
+   rename

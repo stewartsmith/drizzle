@@ -1,0 +1,10 @@
+ADMINISTRATIVE 
+==============
+
+KILL
+
+FLUSH 
+
+ANALYZE
+
+UNLOCK
