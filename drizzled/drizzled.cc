@@ -1140,7 +1140,16 @@ static void compose_defaults_file_list(vector<string> in_options)
        it != in_options.end();
        ++it)
   {
-    defaults_file_list.push_back(*it);
+    fs::path p(*it);
+    if (fs::is_regular_file(p))
+      defaults_file_list.push_back(*it);
+    else
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("Defaults file '%s' not found\n"), (*it).c_str());
+      unireg_abort(1);
+    }
+
   }
 }
 
