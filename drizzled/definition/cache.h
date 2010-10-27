@@ -24,13 +24,14 @@
 namespace drizzled {
 
 typedef boost::shared_ptr<TableShare> TableSharePtr;
-typedef boost::unordered_map< TableIdentifier::Key, TableSharePtr> TableDefinitionCache;
 
 namespace definition {
 
+typedef boost::unordered_map< TableIdentifier::Key, TableSharePtr> CacheMap;
+
 class Cache
 {
-  TableDefinitionCache cache;
+  CacheMap cache;
 
 public:
   static inline Cache &singleton()
@@ -40,7 +41,7 @@ public:
     return open_cache;
   }
 
-  TableDefinitionCache &getCache()
+  CacheMap &getCache()
   {
     return cache;
   }

@@ -33,7 +33,7 @@ TableSharePtr Cache::find(const TableIdentifier &identifier)
 {
   //safe_mutex_assert_owner(LOCK_open.native_handle);
 
-  TableDefinitionCache::iterator iter= cache.find(identifier.getKey());
+  CacheMap::iterator iter= cache.find(identifier.getKey());
   if (iter != cache.end())
   {
     return (*iter).second;
@@ -51,7 +51,7 @@ void Cache::erase(const TableIdentifier &identifier)
 
 bool Cache::insert(const TableIdentifier &identifier, TableSharePtr share)
 {
-  std::pair<TableDefinitionCache::iterator, bool> ret=
+  std::pair<CacheMap::iterator, bool> ret=
     cache.insert(std::make_pair(identifier.getKey(), share));
 
   return ret.second;
