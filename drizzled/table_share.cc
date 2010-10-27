@@ -222,12 +222,8 @@ TableSharePtr TableShare::getShareCreate(Session *session,
   *error= 0;
 
   /* Read table definition from cache */
-  TableDefinitionCache::iterator iter= definition::Cache::singleton().getCache().find(identifier.getKey());
-  if (iter != definition::Cache::singleton().getCache().end())
-  {
-    share= (*iter).second;
+  if ((share= definition::Cache::singleton().getShare(identifier)))
     return foundTableShare(share);
-  }
 
   share.reset(new TableShare(message::Table::STANDARD, identifier));
   
@@ -237,17 +233,15 @@ TableSharePtr TableShare::getShareCreate(Session *session,
   */
   share->lock();
 
-  pair<TableDefinitionCache::iterator, bool> ret=
-    definition::Cache::singleton().getCache().insert(make_pair(identifier.getKey(), share));
-  if (ret.second == false)
-  {
+  bool ret= definition::Cache::singleton().insert(identifier, share);
+
+  if (not ret)
     return TableSharePtr();
-  }
 
   if (share->open_table_def(*session, identifier))
   {
     *error= share->error;
-    definition::Cache::singleton().getCache().erase(identifier.getKey());
+    definition::Cache::singleton().erase(identifier);
 
     return TableSharePtr();
   }

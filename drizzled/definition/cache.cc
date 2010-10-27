@@ -42,5 +42,20 @@ TableSharePtr Cache::getShare(const TableIdentifier &identifier)
   return TableSharePtr();
 }
 
+void Cache::erase(const TableIdentifier &identifier)
+{
+  //safe_mutex_assert_owner(LOCK_open.native_handle);
+  
+  cache.erase(identifier.getKey());
+}
+
+bool Cache::insert(const TableIdentifier &identifier, TableSharePtr share)
+{
+  std::pair<TableDefinitionCache::iterator, bool> ret=
+    cache.insert(std::make_pair(identifier.getKey(), share));
+
+  return ret.second;
+}
+
 } /* namespace definition */
 } /* namespace drizzled */
