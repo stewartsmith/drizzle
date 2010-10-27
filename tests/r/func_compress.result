@@ -66,7 +66,7 @@ NULL
 NULL
 Warnings:
 Error	1259	ZLIB: Input data corrupted
-Error	1256	Uncompressed data size too large; the maximum size is 1048576 (based on max_allowed_packet). The length of uncompressed data may also be corrupted.
+Error	1256	Uncompressed data size too large; the maximum size is 67108864 (based on max_allowed_packet). The length of uncompressed data may also be corrupted.
 drop table t1;
 set @@max_allowed_packet=1048576*100;
 select compress(repeat('aaaaaaaaaa', IF(XXX, 10, 10000000))) is null;
