@@ -400,11 +400,6 @@ bool TableShare::fieldInPrimaryKey(Field *in_field) const
   return false;
 }
 
-const TableDefinitionCache &TableShare::getCache()
-{
-  return definition::Cache::singleton().getCache();
-}
-
 TableShare::TableShare(TableIdentifier::Type type_arg) :
   table_category(TABLE_UNKNOWN_CATEGORY),
   open_count(0),

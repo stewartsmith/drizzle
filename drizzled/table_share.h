@@ -643,7 +643,6 @@ public:
   static void release(TableShare *share);
   static void release(TableSharePtr &share);
   static void release(TableIdentifier &identifier);
-  static const TableDefinitionCache &getCache();
   static TableSharePtr getShare(TableIdentifier &identifier);
   static TableSharePtr getShareCreate(Session *session, 
                                       TableIdentifier &identifier,
