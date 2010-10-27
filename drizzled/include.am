@@ -63,6 +63,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/data_home.h \
 			      drizzled/db.h \
 			      drizzled/decimal.h \
+			      drizzled/definition/cache.h \
 			      drizzled/definitions.h \
 			      drizzled/diagnostics_area.h \
 			      drizzled/discrete_interval.h \
@@ -481,6 +482,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/current_session.cc \
 				 drizzled/cursor.cc \
 				 drizzled/decimal.cc \
+				 drizzled/definition/cache.cc \
 				 drizzled/diagnostics_area.cc \
 				 drizzled/drizzle_time.cc \
 				 drizzled/drizzled.cc \

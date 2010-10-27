@@ -277,13 +277,7 @@ TableSharePtr TableShare::getShare(TableIdentifier &identifier)
 {
   safe_mutex_assert_owner(LOCK_open.native_handle);
 
-  TableDefinitionCache::iterator iter= definition::Cache::singleton().getCache().find(identifier.getKey());
-  if (iter != definition::Cache::singleton().getCache().end())
-  {
-    return (*iter).second;
-  }
-
-  return TableSharePtr();
+  return definition::Cache::singleton().getShare(identifier);
 }
 
 static enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_type)

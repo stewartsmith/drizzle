@@ -18,47 +18,29 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_DEFINITION_CACHE_H
-#define DRIZZLED_DEFINITION_CACHE_H
+#include "config.h"
+
+#include "drizzled/pthread_globals.h"
+#include "drizzled/session.h"
+#include "drizzled/identifier/table.h"
+#include "drizzled/table_share.h"
 
 namespace drizzled {
 
-typedef boost::shared_ptr<TableShare> TableSharePtr;
-typedef boost::unordered_map< TableIdentifier::Key, TableSharePtr> TableDefinitionCache;
-
 namespace definition {
 
-class Cache
+TableSharePtr Cache::getShare(const TableIdentifier &identifier)
 {
-  TableDefinitionCache cache;
+  //safe_mutex_assert_owner(LOCK_open.native_handle);
 
-public:
-  static inline Cache &singleton()
+  TableDefinitionCache::iterator iter= cache.find(identifier.getKey());
+  if (iter != cache.end())
   {
-    static Cache open_cache;
-
-    return open_cache;
+    return (*iter).second;
   }
 
-  TableDefinitionCache &getCache()
-  {
-    return cache;
-  }
-
-  size_t size() const
-  {
-    return cache.size();
-  }
-
-  void rehash(size_t arg)
-  {
-    cache.rehash(arg);
-  }
-
-  TableSharePtr getShare(const TableIdentifier &identifier);
-};
+  return TableSharePtr();
+}
 
 } /* namespace definition */
 } /* namespace drizzled */
-
-#endif /* DRIZZLED_DEFINITION_CACHE_H */
