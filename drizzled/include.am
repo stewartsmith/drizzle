@@ -64,6 +64,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/db.h \
 			      drizzled/decimal.h \
 			      drizzled/definition/cache.h \
+			      drizzled/definition/table.h \
 			      drizzled/definitions.h \
 			      drizzled/diagnostics_area.h \
 			      drizzled/discrete_interval.h \
@@ -421,7 +422,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/table_list.h \
 			      drizzled/table_proto.h \
 			      drizzled/table_reference.h \
-			      drizzled/table_share.h \
 			      drizzled/temporal.h \
 			      drizzled/temporal_format.h \
 			      drizzled/temporal_interval.h \
@@ -483,6 +483,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/cursor.cc \
 				 drizzled/decimal.cc \
 				 drizzled/definition/cache.cc \
+				 drizzled/definition/table.cc \
 				 drizzled/diagnostics_area.cc \
 				 drizzled/drizzle_time.cc \
 				 drizzled/drizzled.cc \
@@ -768,7 +769,6 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/table/unused.cc \
 				 drizzled/table_function_container.cc \
 				 drizzled/table_list.cc \
-				 drizzled/table_share.cc \
 				 drizzled/thr_lock.cc \
 				 drizzled/time_functions.cc \
 				 drizzled/transaction_services.cc \
