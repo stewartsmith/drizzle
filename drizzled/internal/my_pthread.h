@@ -20,6 +20,8 @@
 
 #include <unistd.h>
 
+#include <boost/date_time.hpp>
+
 #ifndef ETIME
 #define ETIME ETIMEDOUT				/* For FreeBSD */
 #endif
@@ -70,7 +72,10 @@ typedef void *(* pthread_handler)(void *);
 #ifndef set_timespec_nsec
 #define set_timespec_nsec(ABSTIME,NSEC) \
 {\
-  uint64_t now= my_getsystime() + (NSEC/100); \
+  boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::local_time());\
+  boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));\
+  uint64_t t_mark= (mytime-epoch).total_microseconds();\
+  uint64_t now= t_mark + (NSEC/100); \
   (ABSTIME).tv_sec=  (time_t) (now / 10000000UL);                  \
   (ABSTIME).tv_nsec= (long) (now % 10000000UL * 100 + ((NSEC) % 100)); \
 }
