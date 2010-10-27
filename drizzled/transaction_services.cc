@@ -2057,7 +2057,7 @@ int TransactionServices::sendEvent(Session *session, const message::Event &event
   message::Transaction *transaction= new (nothrow) message::Transaction();
 
   // set server id, start timestamp
-  initTransactionMessage(*transaction, session, false);
+  initTransactionMessage(*transaction, session, true);
 
   // set end timestamp
   finalizeTransactionMessage(*transaction, session);
