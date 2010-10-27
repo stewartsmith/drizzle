@@ -49,7 +49,7 @@ Function::Function(const std::string &name_arg) :
 }
 
 
-Cursor *Function::create(TableShare &table)
+Cursor *Function::create(Table &table)
 {
   return new FunctionCursor(*this, table);
 }

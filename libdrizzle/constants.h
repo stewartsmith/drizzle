@@ -37,7 +37,7 @@ extern "C" {
 /* Defines. */
 #define DRIZZLE_DEFAULT_TCP_HOST         "127.0.0.1"
 #define DRIZZLE_DEFAULT_TCP_PORT         4427
-#define DRIZZLE_DEFAULT_TCP_PORT_MYSQL   3306
+#define DRIZZLE_DEFAULT_TCP_PORT_MYSQL   4427
 #define DRIZZLE_DEFAULT_UDS              "/tmp/drizzle.sock"
 #define DRIZZLE_DEFAULT_UDS_MYSQL        "/tmp/mysql.sock"
 #define DRIZZLE_DEFAULT_BACKLOG          64

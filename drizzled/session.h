@@ -21,23 +21,20 @@
 #ifndef DRIZZLED_SESSION_H
 #define DRIZZLED_SESSION_H
 
-/* Classes in mysql */
-
 #include "drizzled/plugin.h"
-#include <drizzled/sql_locale.h>
+#include "drizzled/sql_locale.h"
 #include "drizzled/resource_context.h"
-#include <drizzled/cursor.h>
-#include <drizzled/current_session.h>
-#include <drizzled/sql_error.h>
-#include <drizzled/file_exchange.h>
-#include <drizzled/select_result_interceptor.h>
-#include <drizzled/statistics_variables.h>
-#include <drizzled/xid.h>
+#include "drizzled/cursor.h"
+#include "drizzled/current_session.h"
+#include "drizzled/sql_error.h"
+#include "drizzled/file_exchange.h"
+#include "drizzled/select_result_interceptor.h"
+#include "drizzled/statistics_variables.h"
+#include "drizzled/xid.h"
 #include "drizzled/query_id.h"
 #include "drizzled/named_savepoint.h"
 #include "drizzled/transaction_context.h"
 #include "drizzled/util/storable.h"
-
 #include "drizzled/my_hash.h"
 
 #include <netdb.h>
@@ -47,14 +44,11 @@
 #include <deque>
 
 #include "drizzled/internal/getrusage.h"
-
-#include <drizzled/security_context.h>
-#include <drizzled/open_tables_state.h>
-
-#include <drizzled/internal_error_handler.h>
-#include <drizzled/diagnostics_area.h>
-
-#include <drizzled/plugin/authorization.h>
+#include "drizzled/security_context.h"
+#include "drizzled/open_tables_state.h"
+#include "drizzled/internal_error_handler.h"
+#include "drizzled/diagnostics_area.h"
+#include "drizzled/plugin/authorization.h"
 
 #include <boost/unordered_map.hpp>
 #include <boost/thread/mutex.hpp>
@@ -151,22 +145,6 @@ struct CopyInfo
 
 };
 
-struct DrizzleLock
-{
-  Table **table;
-  uint32_t table_count;
-  uint32_t lock_count;
-  THR_LOCK_DATA **locks;
-
-  DrizzleLock() :
-    table(0),
-    table_count(0),
-    lock_count(0),
-    locks(0)
-  { }
-
-};
-
 } /* namespace drizzled */
 
 /** @TODO why is this in the middle of the file */
@@ -181,9 +159,10 @@ class Time_zone;
 #define Session_SENTRY_MAGIC 0xfeedd1ff
 #define Session_SENTRY_GONE  0xdeadbeef
 
-struct system_variables
+struct drizzle_system_variables
 {
-  system_variables() {};
+  drizzle_system_variables()
+  {};
   /*
     How dynamically allocated system variables are handled:
 
@@ -253,7 +232,7 @@ struct system_variables
   Time_zone *time_zone;
 };
 
-extern struct system_variables global_system_variables;
+extern struct drizzle_system_variables global_system_variables;
 
 } /* namespace drizzled */
 
@@ -409,6 +388,7 @@ public:
     only responsible for freeing this member.
   */
   std::string db;
+  std::string catalog;
   /* current cache key */
   std::string query_cache_key;
   /**
@@ -429,7 +409,7 @@ private:
   UserVars user_vars; /**< Hash of user variables defined during the session's lifetime */
 
 public:
-  struct system_variables variables; /**< Mutable local variables local to the session */
+  drizzle_system_variables variables; /**< Mutable local variables local to the session */
   struct system_status_var status_var; /**< Session-local status counters */
   THR_LOCK_INFO lock_info; /**< Locking information for this session */
   THR_LOCK_OWNER main_lock_id; /**< To use for conventional queries */
@@ -564,10 +544,38 @@ public:
   ResourceContext *getResourceContext(const plugin::MonitoredInTransaction *monitored,
                                       size_t index= 0);
 
+  /**
+   * Structure used to manage "statement transactions" and
+   * "normal transactions". In autocommit mode, the normal transaction is
+   * equivalent to the statement transaction.
+   *
+   * Storage engines will be registered here when they participate in
+   * a transaction. No engine is registered more than once.
+   */
   struct st_transactions {
     std::deque<NamedSavepoint> savepoints;
-    TransactionContext all; ///< Trans since BEGIN WORK
-    TransactionContext stmt; ///< Trans for current statement
+
+    /**
+     * The normal transaction (since BEGIN WORK).
+     *
+     * Contains a list of all engines that have participated in any of the
+     * statement transactions started within the context of the normal
+     * transaction.
+     *
+     * @note In autocommit mode, this is empty.
+     */
+    TransactionContext all;
+
+    /**
+     * The statment transaction.
+     *
+     * Contains a list of all engines participating in the given statement.
+     *
+     * @note In autocommit mode, this will be used to commit/rollback the
+     * normal transaction.
+     */
+    TransactionContext stmt;
+
     XID_STATE xid_state;
 
     void cleanup()
@@ -1211,9 +1219,8 @@ public:
    * Current implementation does not depend on that, but future changes
    * should be done with this in mind; 
    *
-   * @param  Scrambled password received from client
-   * @param  Length of scrambled password
-   * @param  Database name to connect to, may be NULL
+   * @param passwd Scrambled password received from client
+   * @param db Database name to connect to, may be NULL
    */
   bool checkUser(const std::string &passwd, const std::string &db);
   
@@ -1489,7 +1496,7 @@ public:
   void close_cached_table(Table *table);
 
   /* Create a lock in the cache */
-  Table *table_cache_insert_placeholder(const char *db_name, const char *table_name);
+  Table *table_cache_insert_placeholder(const TableIdentifier &identifier);
   bool lock_table_name_if_not_cached(TableIdentifier &identifier, Table **table);
 
   typedef boost::unordered_map<std::string, message::Table, util::insensitive_hash, util::insensitive_equal_to> TableMessageCache;
@@ -1502,9 +1509,7 @@ public:
   bool renameTableMessage(const TableIdentifier &from, const TableIdentifier &to);
 
   /* Work with temporary tables */
-  Table *find_temporary_table(TableList *table_list);
-  Table *find_temporary_table(const char *db, const char *table_name);
-  Table *find_temporary_table(TableIdentifier &identifier);
+  Table *find_temporary_table(const TableIdentifier &identifier);
 
   void doGetTableNames(CachedDirectory &directory,
                        const SchemaIdentifier &schema_identifier,
@@ -1531,7 +1536,7 @@ private:
 public:
 
   void dumpTemporaryTableNames(const char *id);
-  int drop_temporary_table(TableList *table_list);
+  int drop_temporary_table(const drizzled::TableIdentifier &identifier);
   bool rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &identifier);
   bool rm_temporary_table(TableIdentifier &identifier, bool best_effort= false);
   Table *open_temporary_table(TableIdentifier &identifier,
@@ -1539,7 +1544,6 @@ public:
 
   /* Reopen operations */
   bool reopen_tables(bool get_locks, bool mark_share_as_old);
-  bool reopen_name_locked_table(TableList* table_list, bool link_in);
   bool close_cached_tables(TableList *tables, bool wait_for_refresh, bool wait_for_placeholders);
 
   void wait_for_condition(boost::mutex &mutex, boost::condition_variable_any &cond);

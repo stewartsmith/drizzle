@@ -49,16 +49,19 @@ void TableFunctionContainer::getNames(const string &predicate,
   {
     plugin::TableFunction *tool= (*it).second;
 
-    if (predicate.length())
+    if (tool->visable())
     {
-      if (boost::iequals(predicate, tool->getSchemaHome()))
+      if (predicate.length())
+      {
+        if (boost::iequals(predicate, tool->getSchemaHome()))
+        {
+          set_of_names.insert(tool->getTableLabel());
+        }
+      }
+      else
       {
         set_of_names.insert(tool->getTableLabel());
       }
-    }
-    else
-    {
-      set_of_names.insert(tool->getTableLabel());
     }
   }
 }

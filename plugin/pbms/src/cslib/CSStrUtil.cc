@@ -29,14 +29,30 @@
 #include "CSConfig.h"
 #include <inttypes.h>
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+
+#ifndef OS_WINDOWS
+#include <fnmatch.h>
+#endif
 
 #include "CSDefs.h"
 #include "CSStrUtil.h"
 #include "CSMemory.h"
 #include "CSGlobal.h"
+
+const char *cs_version()
+{
+	static char version[124];
+	
+	if (!version[0]) {
+		snprintf(version, 124, "%s(Built %s %s)", VERSION, __DATE__, __TIME__);
+	}
+	
+	return version;
+}
 
 void cs_strcpy(size_t size, char *to, const char *from, size_t len)
 {
@@ -57,6 +73,25 @@ void cs_strcpy(size_t size, char *to, const char *from)
 			*to++ = *from++;
 		*to = 0;
 	}
+}
+
+/* This function adds '...' to the end of the string.
+ * if it does not fit!
+ */
+void cs_strcpy_dottt(size_t size, char *d, const char *s, size_t len)
+{
+	if (len+1 <= size) {
+		cs_strcpy(size, d, s, len);
+		return;
+	}
+	if (size < 5) {
+		/* Silly, but anyway... */
+		cs_strcpy(size, d, "...");
+		return;
+	}
+	memcpy(d, s, size-4);
+	memcpy(d+size-4, "...", 3);
+	d[size-1] = 0;
 }
 
 void cs_strcpy_left(size_t size, char *to, const char *from, char ch)
@@ -174,6 +209,96 @@ void cs_format_context(size_t size, char *buffer, const char *func, const char *
 		cs_strcat(size, buffer, ")");
 }
 
+int cs_path_depth(const char *path)
+{
+	int count = 0;
+	while (*path) {
+		if (IS_DIR_CHAR(*path))
+			count++;
+
+		path++;
+	}
+	return count;
+}
+
+static const char *find_wildcard(const char *pattern)
+{
+	bool escaped = false;
+	while (*pattern) {
+		if ((*pattern == '*' || *pattern == '?' ) && !escaped)
+			return pattern;
+			
+		if (*pattern == '\\')
+			escaped = !escaped;
+		else
+			escaped = false;
+			
+		pattern++;
+	}
+	
+	return NULL;
+}
+
+// Check if the path contains any variable components.
+bool cs_fixed_pattern(const char *str)
+{
+	return (find_wildcard(str) == NULL);
+}
+
+#ifdef OS_WINDOWS
+/* 
+bool cs_match_patern(const char *pattern, const char *str, bool ignore_case)
+{
+	bool escaped = false;
+	
+	while (*pattern && *str) {
+		if ((*pattern == '*' || *pattern == '?' ) && !escaped) {
+			if (*pattern == '?') {
+				pattern++;
+				str++;	
+				continue;			
+			}
+			
+			while (*pattern == '*' || *pattern == '?' ) pattern++; // eat the pattern matching characters.
+			
+			if (!*pattern) // A * at the end of the pattern matches everything.
+				return true;
+				
+			// This is where it gets complicted.
+			
+			coming soon!
+			
+		}
+					
+		if (*pattern == '\\')
+			escaped = !escaped;
+		else
+			escaped = false;
+			
+		if (escaped)
+			pattern++;
+		else {
+			if (ignore_case) {
+				if (toupper(*pattern) != toupper(*str))
+					return false;
+			} else if (*pattern != *str)
+				return false;
+			pattern++;
+			str++;				
+		}
+		
+	}
+	
+	return ((!*pattern) && (!*str));
+}
+*/
+#else
+bool cs_match_patern(const char *pattern, const char *str, bool ignore_case)
+{
+	return (fnmatch(pattern, str, (ignore_case)?FNM_CASEFOLD:0) == 0);
+}
+#endif
+
 /* This function returns "" if the path ends with a dir char */
 char *cs_last_name_of_path(const char *path, int count)
 {
@@ -202,20 +327,20 @@ char *cs_last_name_of_path(const char *path)
 }
 
 /* This function returns the last name component, even if the path ends with a dir char */
-char *cs_last_directory_of_path(char *path)
+char *cs_last_directory_of_path(const char *path)
 {
 	size_t	length;
-	char	*ptr;
+	const char	*ptr;
 
 	length = strlen(path);
 	if (!length)
-		return(path);
+		return((char *)path);
 	ptr = path + length - 1;
 	if (IS_DIR_CHAR(*ptr))
 		ptr--;
 	while (ptr != path && !IS_DIR_CHAR(*ptr)) ptr--;
 	if (IS_DIR_CHAR(*ptr)) ptr++;
-	return(ptr);
+	return((char *)ptr);
 }
 
 const char *cs_find_extension(const char *file_name)
@@ -402,6 +527,12 @@ char *cs_strdup(const char *in_str, size_t len)
 		return NULL;
 
 	str = (char *) cs_malloc(len + 1);
+
+	// Allow for allocation of an oversized buffer.
+	size_t str_len = strlen(in_str);
+	if (len > str_len)
+		len = str_len;
+		
 	memcpy(str, in_str, len);
 	str[len] = 0;
 	return str;
@@ -416,6 +547,47 @@ bool cs_starts_with(const char *cstr, const char *w_cstr)
 		w_cstr++;
 	}
 	return *cstr || !*w_cstr;
+}
+
+bool cs_ends_with(const char *cstr, const char *w_cstr)
+{
+	size_t		len = strlen(cstr);
+	size_t		w_len = strlen(w_cstr);
+	const char	*ptr = cstr + len - 1;
+	const char	*w_ptr = w_cstr + w_len - 1;
+	
+	if (w_len > len)
+		return false;
+
+	if (w_len == 0)
+		return false;
+
+	while (w_ptr >= w_cstr) {
+		if (*w_ptr != *ptr)
+			return false;
+		w_ptr--;
+		ptr--;
+	}
+
+	return true;
+}
+
+void cs_replace_string(size_t size, char *into, const char *find_str, const char *str)
+{
+	char *ptr;
+
+	if ((ptr = strstr(into, find_str))) {
+		size_t len = strlen(into);
+		size_t len2 = strlen(str);
+		size_t len3 = strlen(find_str);
+		
+		if (len + len2 + len3 >= size)
+			len2 = size - len;
+		
+		memmove(ptr+len2, ptr+len3, len - (ptr + len3 - into));
+		memcpy(ptr, str, len2);
+		into[len + len2 - len3] = 0;
+	}
 }
 
 void cs_replace_string(size_t size, char *into, const char ch, const char *str)
@@ -469,126 +641,124 @@ int64_t cs_str_to_int8(const char *ptr, bool *overflow)
 	return value;
 }
 
-int64_t cs_byte_size_to_int8(const char *ptr)
+int64_t cs_byte_size_to_int8(const char *ptr, bool *invalid)
 {
-	char	number[101], *num_ptr;
+	char	*end_ptr;
 	int64_t	size;
+
+	if (invalid)
+		*invalid = false;
 
 	while (*ptr && isspace(*ptr))
 		ptr++;
 
-	num_ptr = number;
-	while (*ptr && isdigit(*ptr)) {
-		if (num_ptr < number+100) {
-			*num_ptr = *ptr;
-			num_ptr++;
-		}
-		ptr++;
-	}
-	*num_ptr = 0;
-	size = cs_str_to_int8(number, NULL);
+	if (!isdigit(*ptr) && *ptr != '.')
+		goto failed;
 
+	size = (int64_t) strtod(ptr, &end_ptr);
+
+	ptr = end_ptr;
 	while (*ptr && isspace(*ptr))
 		ptr++;
 	
 	switch (toupper(*ptr)) {
+		case 'P':
+			size *= (int64_t) 1024;
+		case 'T':
+			size *= (int64_t) 1024;
 		case 'G':
-			size *= 1024LL * 1024LL * 1024LL;
-			break;
+			size *= (int64_t) 1024;
 		case 'M':
-			size *= 1024LL * 1024LL;
-			break;
+			size *= (int64_t) 1024;
 		case 'K':
-			size *= 1024LL;
+			size *= (int64_t) 1024;
+			ptr++;
 			break;
+		case '\0':
+			break;
+		default:
+			goto failed;
 	}
 	
-	return size;
+	if (toupper(*ptr) == 'B')
+		ptr++;
+
+	while (*ptr && isspace(*ptr))
+		ptr++;
+
+	if (*ptr)
+		goto failed;
+
+	return (int64_t) size;
+
+	failed:
+	if (invalid)
+		*invalid = true;
+	return 0;
 }
 
 
-/*--------------------------------------------------------------------------------------------------*/
-size_t cs_hex_to_bin(size_t size, void *bin, size_t len, const char *hex)
-{	
-	unsigned char *bin_ptr, *hex_ptr, c, val;
-	size_t result = 0;
-
-	if (len %2)  /* The hex string must be an even number of bytes. */
-		len--;
-		
-	if (len > (2 *size)) {
-		len = 2 * size;
-	} 
-			
-	bin_ptr = (unsigned char *) bin;	
-	hex_ptr = (unsigned char *) hex;	
-
-	
-	for (; len > 0; len--, hex_ptr++) {
-		c = *hex_ptr;
-		if ((c >= '0') && (c <= '9')) {
-			val = c - '0';
-		}
-		else {
-			c = toupper(c);
-			if ((c >= 'A') && (c <= 'F')) {
-				val = c - 'A' + 10;
-			}
-			else
-				return(result);
-		}
-		
-		if ( len & 0X01) {
-			*bin_ptr += val;
-			bin_ptr++;
-			result++;
-		}
-		else {
-			*bin_ptr = val << 4;
-		}
-	}
-	
-	return(result);
-}
-	
-/*--------------------------------------------------------------------------------------------------*/
-size_t cs_bin_to_hex(size_t size, char *hex, size_t len, const void *bin)
+static uint32_t cs_hex_value(char ch)
 {
-	static uint16_t hex_table[256], initialized = 0;
-	uint16_t *hex_ptr = (uint16_t *)hex;
-	unsigned char *bin_ptr = (unsigned char *)bin;
-	size_t	result = 0;
+	u_char uch = (u_char) ch;
 
-	/* init the hex table if required */
-	if (!initialized) {
-		char buf[20];
-		int i;
-		for ( i=0; i < 256; i++) {
-			snprintf(buf, 20,"%X", i + 256);
-			memcpy(&(hex_table[i]), buf +1, 2);
+	if (uch >= '0' && uch <= '9')
+		return uch - '0';
+	if (uch >= 'A' && uch <= 'F')
+		return uch - 'A' + 10; 
+	if (uch >= 'a' && uch <= 'f')
+		return uch - 'a' + 10;
+	return 0;
+}
+
+size_t cs_hex_to_bin(size_t size, void *v_bin, size_t len, const char *hex)
+{
+	size_t	tot_size = size;
+	uint32_t	val = 0;
+	size_t	shift = 0;
+	u_char *bin = (u_char *) v_bin;
+
+	if (len & 1)
+		shift = 1;
+	for (size_t i=shift; i<len+shift && size > 0; i++) {
+		if (i & 1) {
+			val = val | cs_hex_value(*hex);
+			*bin = val;
+			bin++;
+			size--;
 		}
-		
-		initialized = 1;
+		else
+			val = cs_hex_value(*hex) << 4;
+		hex++;
 	}
-	/*----------------------------------*/	
+	return tot_size - size;
+}
 
-	if (size < len *2) {
-		len = size/2;
+size_t cs_hex_to_bin(size_t size, void *bin, const char *hex)
+{
+	return cs_hex_to_bin(size, bin, strlen(hex), hex);
+}
+
+#define HEX_DIGIT(x)	((x) <= 9 ? '0' + (x) : 'A' + ((x) - 10))
+
+void cs_bin_to_hex(size_t size, char *hex, size_t len, const void *v_bin)
+{
+	const u_char *bin = (u_char *) v_bin;
+	if (size == 0)
+		return;
+	size--;
+	for (size_t i=0; i<len && size > 0; i++) {
+		*hex = HEX_DIGIT(*bin >> 4);
+		hex++;
+		size--;
+		if (size == 0)
+			break;
+		*hex = HEX_DIGIT(*bin & 0x0F);
+		hex++;
+		size--;
+		bin++;
 	}
-		
-	result = len *2;
-		
-	hex_ptr += len -1;
-	bin_ptr += len -1;
-	for (; len != 0; len--, hex_ptr--, bin_ptr--) {
-		memcpy(hex_ptr, hex_table + *bin_ptr, 2);
-	}
-	
-	// If there is room null terminate the hex string.
-	if (size > result)
-		hex[result] = 0;
-		
-	return(result);
+	*hex = 0;
 }	
 
 void cs_strToUpper(char *ptr)
@@ -606,4 +776,16 @@ void cs_strToLower(char *ptr)
 		ptr++;
 	}
 }
+
+/*
+ * Return failed if this is not a valid number.
+ */
+bool cs_str_to_value(const char *ptr, uint32_t *value, uint8_t base)
+{
+	char *endptr;
+
+	*value = strtoul(ptr, &endptr, base);
+	return *endptr ? false : true;
+}
+
 

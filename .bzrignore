@@ -21,6 +21,7 @@
 .libs
 .plugin.ini.stamp
 .plugin.scan
+ChangeLog
 DEPENDENCIES
 INSTALL
 Makefile
@@ -72,7 +73,6 @@ docs/plugins/*
 docs/plugins/list.rst
 doxerr.log
 drizzle-2010.01.1315.tar.gz
-drizzle-2010.01.1315.tar.gz
 drizzle.pot
 drizzled.gcno
 drizzled/configmake.h
@@ -105,7 +105,6 @@ drizzled/message/schema.pb.h
 drizzled/message/schema_reader
 drizzled/message/schema_writer
 drizzled/message/table.pb.cc
-drizzled/message/table.pb.h
 drizzled/message/table.pb.h
 drizzled/message/table_raw_reader
 drizzled/message/table_reader
@@ -195,7 +194,6 @@ pandora-plugin.ac
 pandora-plugin.am
 parser.gcno
 patch
-plugin/Makefile.in
 plugin/Makefile.in
 plugin/archive/Makefile.in
 plugin/archive/archive_performance

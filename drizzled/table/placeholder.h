@@ -29,13 +29,13 @@ namespace drizzled
 namespace table
 {
 
-class Placeholder : public Table
+class Placeholder : public table::Concurrent
 {
   TableShare private_share;
 
 public:
   Placeholder(Session *session, TableIdentifier &identifier) :
-    Table(),
+    table::Concurrent(),
     private_share(identifier, identifier.getKey())
   {
     setShare(&private_share);

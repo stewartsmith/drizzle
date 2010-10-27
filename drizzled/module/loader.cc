@@ -162,8 +162,8 @@ static bool plugin_load_list(module::Registry &registry,
                              bool builtin= false);
 static int test_plugin_options(memory::Root *, module::Module *,
                                po::options_description &long_options);
-static void unlock_variables(Session *session, struct system_variables *vars);
-static void cleanup_variables(system_variables *vars);
+static void unlock_variables(Session *session, drizzle_system_variables *vars);
+static void cleanup_variables(drizzle_system_variables *vars);
 static void plugin_vars_free_values(module::Module::Variables &vars);
 
 /* declared in set_var.cc */
@@ -1063,7 +1063,7 @@ void plugin_sessionvar_init(Session *session)
 /*
   Unlocks all system variables which hold a reference
 */
-static void unlock_variables(Session *, struct system_variables *vars)
+static void unlock_variables(Session *, struct drizzle_system_variables *vars)
 {
   vars->storage_engine= NULL;
 }
@@ -1075,7 +1075,7 @@ static void unlock_variables(Session *, struct system_variables *vars)
   Unlike plugin_vars_free_values() it frees all variables of all plugins,
   it's used on shutdown.
 */
-static void cleanup_variables(system_variables *vars)
+static void cleanup_variables(drizzle_system_variables *vars)
 {
   assert(vars->storage_engine == NULL);
 

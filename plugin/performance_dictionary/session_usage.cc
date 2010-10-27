@@ -61,7 +61,7 @@ performance_dictionary::SessionUsage::Generator::Generator(drizzled::Field **arg
   drizzled::plugin::TableFunction::Generator(arg),
   usage_cache(0)
 { 
-  usage_cache= dynamic_cast<QueryUsage *>(getSession().getProperty("query_usage"));
+  usage_cache= static_cast<QueryUsage *>(getSession().getProperty("query_usage"));
   if (usage_cache)
     query_iter= usage_cache->list().rbegin();
 }

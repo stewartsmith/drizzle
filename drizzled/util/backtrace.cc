@@ -41,6 +41,8 @@ namespace util
 
 void custom_backtrace(void)
 {
+#ifdef __GNUC__
+#ifdef HAVE_BACKTRACE
   void *array[50];
   size_t size;
   char **strings;
@@ -94,6 +96,8 @@ void custom_backtrace(void)
 
 
   free (strings);
+#endif // HAVE_BACKTRACE
+#endif // __GNUC__
 }
 
 } /* namespace util */

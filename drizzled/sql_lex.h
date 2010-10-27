@@ -62,7 +62,8 @@ class Item_outer_ref;
 */
 
 #ifdef DRIZZLE_SERVER
-# include <drizzled/set_var.h>
+/* set_var should change to set_var here ... */
+# include <drizzled/sys_var.h>
 # include <drizzled/item/func.h>
 # ifdef DRIZZLE_YACC
 #  define LEX_YYSTYPE void *

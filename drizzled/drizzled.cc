@@ -125,11 +125,12 @@
 #endif
 
 #include "drizzled/internal/my_pthread.h"			// For thr_setconcurency()
+#include "drizzled/constrained_value.h"
 
 #include <drizzled/gettext.h>
 
 
-#ifdef HAVE_purify
+#ifdef HAVE_VALGRIND
 #define IF_PURIFY(A,B) (A)
 #else
 #define IF_PURIFY(A,B) (B)
@@ -244,7 +245,7 @@ std::bitset<12> test_flags;
 uint32_t dropping_tables, ha_open_options;
 uint32_t tc_heuristic_recover= 0;
 uint64_t session_startup_options;
-uint32_t back_log;
+back_log_constraints back_log(50);
 uint32_t server_id;
 uint64_t table_cache_size;
 size_t table_def_size;
@@ -320,8 +321,8 @@ my_decimal decimal_zero;
 
 FILE *stderror_file=0;
 
-struct system_variables global_system_variables;
-struct system_variables max_system_variables;
+struct drizzle_system_variables global_system_variables;
+struct drizzle_system_variables max_system_variables;
 struct global_counters current_global_counters;
 
 const CHARSET_INFO *system_charset_info, *files_charset_info ;
@@ -749,16 +750,6 @@ static void check_limits_completion_type(uint32_t in_completion_type)
   global_system_variables.completion_type= in_completion_type;
 }
 
-static void check_limits_back_log(uint32_t in_back_log)
-{
-  back_log= 50;
-  if (in_back_log < 1 || in_back_log > 65535)
-  {
-    cout << N_("Error: Invalid Value for back_log");
-    exit(-1);
-  }
-  back_log= in_back_log;
-}
 
 static void check_limits_dpi(uint32_t in_div_precincrement)
 {
@@ -1109,16 +1100,7 @@ static void process_defaults_files()
        iter != defaults_file_list.end();
        ++iter)
   {
-    fs::path file_location(system_config_dir);
-    if ((*iter)[0] != '/')
-    {
-      /* Relative path - add config dir */
-      file_location /= *iter;
-    }
-    else
-    {
-      file_location= *iter;
-    }
+    fs::path file_location= *iter;
 
     ifstream input_defaults_file(file_location.file_string().c_str());
     
@@ -1294,7 +1276,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   N_("Run drizzled daemon as user."))  
   ("version,V", 
   N_("Output version information and exit."))
-  ("back-log", po::value<uint32_t>(&back_log)->default_value(50)->notifier(&check_limits_back_log),
+  ("back-log", po::value<back_log_constraints>(&back_log),
   N_("The number of outstanding connection requests Drizzle can have. This "
      "comes into play when the main Drizzle thread gets very many connection "
      "requests in a very short time."))
@@ -1414,28 +1396,28 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   {
     defaults_file_list.insert(defaults_file_list.begin(),
                               system_config_file_drizzle);
-  }
 
-  fs::path config_conf_d_location(system_config_dir);
-  config_conf_d_location /= "conf.d";
+    fs::path config_conf_d_location(system_config_dir);
+    config_conf_d_location /= "conf.d";
 
-  CachedDirectory config_conf_d(config_conf_d_location.file_string());
-  if (not config_conf_d.fail())
-  {
-
-    for (CachedDirectory::Entries::const_iterator iter= config_conf_d.getEntries().begin();
-         iter != config_conf_d.getEntries().end();
-         ++iter)
+    CachedDirectory config_conf_d(config_conf_d_location.file_string());
+    if (not config_conf_d.fail())
     {
-      string file_entry((*iter)->filename);
-          
-      if (not file_entry.empty()
-          && file_entry != "."
-          && file_entry != "..")
+
+      for (CachedDirectory::Entries::const_iterator iter= config_conf_d.getEntries().begin();
+           iter != config_conf_d.getEntries().end();
+           ++iter)
       {
-        fs::path the_entry(config_conf_d_location);
-        the_entry /= file_entry;
-        defaults_file_list.push_back(the_entry.file_string());
+        string file_entry((*iter)->filename);
+
+        if (not file_entry.empty()
+            && file_entry != "."
+            && file_entry != "..")
+        {
+          fs::path the_entry(config_conf_d_location);
+          the_entry /= file_entry;
+          defaults_file_list.push_back(the_entry.file_string());
+        }
       }
     }
   }
@@ -1444,7 +1426,18 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   /* TODO: here is where we should add a process_env_vars */
 
   /* We need a notify here so that plugin_init will work properly */
-  po::notify(vm);
+  try
+  {
+    po::notify(vm);
+  }
+  catch (po::validation_error &err)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR,  
+                  _("%s: %s.\n"
+                    "Use --help to get a list of available options\n"),
+                  internal::my_progname, err.what());
+    unireg_abort(1);
+  }
   /* At this point, we've read all the options we need to read from files and
      collected most of them into unknown options - now let's load everything
   */
@@ -1470,6 +1463,14 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
     po::store(final_parsed, vm);
 
   }
+  catch (po::validation_error &err)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("%s: %s.\n"
+                    "Use --help to get a list of available options\n"),
+                  internal::my_progname, err.what());
+    unireg_abort(1);
+  }
   catch (po::invalid_command_line_syntax &err)
   {
     errmsg_printf(ERRMSG_LVL_ERROR,
@@ -1486,7 +1487,18 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
     unireg_abort(1);
   }
 
-  po::notify(vm);
+  try
+  {
+    po::notify(vm);
+  }
+  catch (po::validation_error &err)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR,  
+                  _("%s: %s.\n"
+                    "Use --help to get a list of available options\n"),
+                  internal::my_progname, err.what());
+    unireg_abort(1);
+  }
 
   get_options();
 
@@ -1510,7 +1522,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
 
   if (item_create_init())
     return 1;
-  if (set_var_init())
+  if (sys_var_init())
     return 1;
   /* Creates static regex matching for temporal values */
   if (! init_temporal_formats())

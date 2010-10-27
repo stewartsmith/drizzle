@@ -21,12 +21,12 @@
 #ifndef PLUGIN_SHOW_DICTIONARY_SHOW_TEMPORARY_TABLES_H
 #define PLUGIN_SHOW_DICTIONARY_SHOW_TEMPORARY_TABLES_H
 
-class ShowTemporaryTables : public drizzled::plugin::TableFunction
+class ShowTemporaryTables : public show_dictionary::Show
 {
 public:
   ShowTemporaryTables();
 
-  class Generator : public drizzled::plugin::TableFunction::Generator
+  class Generator : public show_dictionary::Show::Generator
   {
     drizzled::Session &session;
     drizzled::Table *table;

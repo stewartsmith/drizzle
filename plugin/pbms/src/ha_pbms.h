@@ -66,7 +66,7 @@ class ha_pbms: public handler
 
 public:
 #ifdef DRIZZLED
-	ha_pbms(handlerton *hton, TableShare& table_arg);
+	ha_pbms(handlerton *hton, Table& table_arg);
 #else
 	ha_pbms(handlerton *hton, TABLE_SHARE *table_arg);
 #endif

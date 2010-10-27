@@ -935,9 +935,9 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         subselect_end select_var_list select_var_list_init opt_len
         opt_extended_describe
         statement
+        execute
         opt_field_or_var_spec fields_or_vars opt_load_data_set_spec
         init_key_options key_options key_opts key_opt key_using_alg
-        execute
 END_OF_INPUT
 
 %type <index_hint> index_hint_type
@@ -2125,8 +2125,7 @@ alter:
               DRIZZLE_YYABORT;
             lex->col_list.empty();
             lex->select_lex.init_order();
-            lex->select_lex.db=
-              ((TableList*) lex->select_lex.table_list.first)->db;
+            lex->select_lex.db= const_cast<char *>(((TableList*) lex->select_lex.table_list.first)->getSchemaName());
             statement->alter_info.build_method= $2;
           }
           alter_commands
@@ -4470,26 +4469,30 @@ opt_temporary:
   */
 
 execute:
-       EXECUTE_SYM
+       EXECUTE_SYM execute_var_or_string
        {
-          LEX *lex= Lex;
-          statement::Execute *statement= new(std::nothrow) statement::Execute(YYSession);
-          lex->statement= statement;
-          if (lex->statement == NULL)
-            DRIZZLE_YYABORT;
        }
-       execute_var_or_string
 
 
 execute_var_or_string:
          ident_or_text
          {
-          statement::Execute *statement= (statement::Execute *)Lex->statement;
-          statement->setQuery($1);
+            LEX *lex= Lex;
+            statement::Execute *statement= new(std::nothrow) statement::Execute(YYSession);
+            lex->statement= statement;
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
+
+            statement->setQuery($1);
          }
         | '@' ident_or_text
         {
-          statement::Execute *statement= (statement::Execute *)Lex->statement;
+          LEX *lex= Lex;
+          statement::Execute *statement= new(std::nothrow) statement::Execute(YYSession);
+          lex->statement= statement;
+          if (lex->statement == NULL)
+            DRIZZLE_YYABORT;
+
           statement->setVar();
           statement->setQuery($2);
         }
@@ -4800,7 +4803,7 @@ show_param:
 
              lex->sql_command= SQLCOM_SELECT;
              lex->statement=
-               new(std::nothrow) statement::Select(session);
+               new(std::nothrow) statement::Show(session);
              if (lex->statement == NULL)
                DRIZZLE_YYABORT;
 
@@ -4840,8 +4843,8 @@ show_param:
 
              lex->sql_command= SQLCOM_SELECT;
 
-             statement::Select *select=
-               new(std::nothrow) statement::Select(YYSession);
+             statement::Show *select=
+               new(std::nothrow) statement::Show(YYSession);
 
              lex->statement= select;
 
@@ -4900,8 +4903,8 @@ show_param:
 
              lex->sql_command= SQLCOM_SELECT;
 
-             statement::Select *select=
-               new(std::nothrow) statement::Select(YYSession);
+             statement::Show *select=
+               new(std::nothrow) statement::Show(YYSession);
 
              lex->statement= select;
 
@@ -4923,8 +4926,8 @@ show_param:
            {
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SELECT;
-             statement::Select *select=
-               new(std::nothrow) statement::Select(YYSession);
+             statement::Show *select=
+               new(std::nothrow) statement::Show(YYSession);
 
              lex->statement= select;
 
@@ -4965,11 +4968,11 @@ show_param:
           {
              LEX *lex= Lex;
              Session *session= YYSession;
-             statement::Select *select;
+             statement::Show *select;
 
              lex->sql_command= SQLCOM_SELECT;
 
-             select= new(std::nothrow) statement::Select(session);
+             select= new(std::nothrow) statement::Show(session);
 
              lex->statement= select;
 
@@ -5007,11 +5010,11 @@ show_param:
           {
              LEX *lex= Lex;
              Session *session= YYSession;
-             statement::Select *select;
+             statement::Show *select;
 
              lex->sql_command= SQLCOM_SELECT;
 
-             select= new(std::nothrow) statement::Select(session);
+             select= new(std::nothrow) statement::Show(session);
 
              lex->statement= select;
 
@@ -5048,7 +5051,7 @@ show_param:
           {
             (void) create_select_for_variable("warning_count");
             LEX *lex= Lex;
-            lex->statement= new(std::nothrow) statement::Select(YYSession);
+            lex->statement= new(std::nothrow) statement::Show(YYSession);
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
           }
@@ -5056,7 +5059,7 @@ show_param:
           {
             (void) create_select_for_variable("error_count");
             LEX *lex= Lex;
-            lex->statement= new(std::nothrow) statement::Select(YYSession);
+            lex->statement= new(std::nothrow) statement::Show(YYSession);
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
           }
@@ -5079,7 +5082,7 @@ show_param:
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SELECT;
              lex->statement=
-               new(std::nothrow) statement::Select(YYSession);
+               new(std::nothrow) statement::Show(YYSession);
              if (lex->statement == NULL)
                DRIZZLE_YYABORT;
 
@@ -5117,8 +5120,8 @@ show_param:
            {
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SELECT;
-             statement::Select *select=
-               new(std::nothrow) statement::Select(YYSession);
+             statement::Show *select=
+               new(std::nothrow) statement::Show(YYSession);
 
              lex->statement= select;
 
@@ -5158,7 +5161,7 @@ show_param:
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SELECT;
              lex->statement=
-               new(std::nothrow) statement::Select(YYSession);
+               new(std::nothrow) statement::Show(YYSession);
              if (lex->statement == NULL)
                DRIZZLE_YYABORT;
 
@@ -5179,7 +5182,7 @@ show_param:
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SELECT;
              lex->statement=
-               new(std::nothrow) statement::Select(YYSession);
+               new(std::nothrow) statement::Show(YYSession);
              if (lex->statement == NULL)
                DRIZZLE_YYABORT;
 
@@ -5217,8 +5220,8 @@ show_param:
            {
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SELECT;
-             statement::Select *select=
-               new(std::nothrow) statement::Select(YYSession);
+             statement::Show *select=
+               new(std::nothrow) statement::Show(YYSession);
 
              lex->statement= select;
 
@@ -5285,13 +5288,13 @@ describe:
           describe_command table_ident
           {
             Session *session= YYSession;
-            statement::Select *select;
+            statement::Show *select;
             LEX *lex= Lex;
             lex->lock_option= TL_READ;
             mysql_init_select(lex);
             lex->current_select->parsing_place= SELECT_LIST;
             lex->sql_command= SQLCOM_SELECT;
-            select= new(std::nothrow) statement::Select(session);
+            select= new(std::nothrow) statement::Show(session);
             lex->statement= select;
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
@@ -5821,13 +5824,13 @@ field_ident:
           {
             TableList *table=
               reinterpret_cast<TableList*>(Lex->current_select->table_list.first);
-            if (my_strcasecmp(table_alias_charset, $1.str, table->db))
+            if (my_strcasecmp(table_alias_charset, $1.str, table->getSchemaName()))
             {
               my_error(ER_WRONG_DB_NAME, MYF(0), $1.str);
               DRIZZLE_YYABORT;
             }
             if (my_strcasecmp(table_alias_charset, $3.str,
-                              table->table_name))
+                              table->getTableName()))
             {
               my_error(ER_WRONG_TABLE_NAME, MYF(0), $3.str);
               DRIZZLE_YYABORT;

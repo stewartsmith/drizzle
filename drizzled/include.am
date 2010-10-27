@@ -56,6 +56,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/check_stack_overrun.h \
 			      drizzled/common.h \
 			      drizzled/comp_creator.h \
+			      drizzled/constrained_value.h \
 			      drizzled/create_field.h \
 			      drizzled/current_session.h \
 			      drizzled/cursor.h \
@@ -352,6 +353,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/session_list.h \
 			      drizzled/set_var.h \
 			      drizzled/show.h \
+			      drizzled/show_type.h \
 			      drizzled/signal_handler.h \
 			      drizzled/sql_base.h \
 			      drizzled/sql_error.h \
@@ -396,6 +398,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/statement/savepoint.h \
 			      drizzled/statement/select.h \
 			      drizzled/statement/set_option.h \
+			      drizzled/statement/show.h \
 			      drizzled/statement/show_errors.h \
 			      drizzled/statement/show_warnings.h \
 			      drizzled/statement/start_transaction.h \
@@ -407,6 +410,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/strfunc.h \
 			      drizzled/structs.h \
 			      drizzled/symbol_hash.h \
+			      drizzled/sys_var.h \
 			      drizzled/table.h \
 			      drizzled/table_function_container.h \
 			      drizzled/table_ident.h \
@@ -418,6 +422,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/table/concurrent.h \
 			      drizzled/table/instance.h \
 			      drizzled/table/placeholder.h \
+			      drizzled/table/shell.h \
 			      drizzled/table/temporary.h \
 			      drizzled/temporal.h \
 			      drizzled/temporal_format.h \
@@ -748,6 +753,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/statement/savepoint.cc \
 				 drizzled/statement/select.cc \
 				 drizzled/statement/set_option.cc \
+				 drizzled/statement/show.cc \
 				 drizzled/statement/show_errors.cc \
 				 drizzled/statement/show_warnings.cc \
 				 drizzled/statement/start_transaction.cc \
@@ -756,6 +762,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/statement/update.cc \
 				 drizzled/status_helper.cc \
 				 drizzled/strfunc.cc \
+				 drizzled/sys_var.cc \
 				 drizzled/table.cc \
 				 drizzled/table_function_container.cc \
 				 drizzled/table_list.cc \

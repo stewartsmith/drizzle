@@ -55,7 +55,7 @@ int64_t GetLocks::val_int()
 
   if (result)
   {
-    user_locks::Storable *list= dynamic_cast<user_locks::Storable *>(getSession().getProperty("user_locks"));
+    user_locks::Storable *list= static_cast<user_locks::Storable *>(getSession().getProperty("user_locks"));
     if (not list)
     {
       list= new user_locks::Storable(getSession().getSessionId());

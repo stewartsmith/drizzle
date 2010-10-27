@@ -2368,7 +2368,7 @@ int sort_key_read(MI_SORT_PARAM *sort_param, void *key)
     (info->s->rec_reflength+
      _mi_make_key(info, sort_param->key, (unsigned char*) key,
 		  sort_param->record, sort_param->filepos));
-#ifdef HAVE_purify
+#ifdef HAVE_VALGRIND
   memset((unsigned char *)key+sort_param->real_key_length, 0,
          (sort_param->key_length-sort_param->real_key_length));
 #endif

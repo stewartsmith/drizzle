@@ -21,12 +21,14 @@
 #ifndef PLUGIN_SHOW_DICTIONARY_SHOW_COLUMNS_H
 #define PLUGIN_SHOW_DICTIONARY_SHOW_COLUMNS_H
 
-class ShowColumns : public drizzled::plugin::TableFunction
+class ShowColumns : public show_dictionary::Show
 {
 public:
   ShowColumns();
 
-  class Generator : public drizzled::plugin::TableFunction::Generator 
+  bool visable() { return false; }
+
+  class Generator : public show_dictionary::Show::Generator 
   {
     bool is_tables_primed;
     bool is_columns_primed;

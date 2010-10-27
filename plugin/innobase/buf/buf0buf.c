@@ -749,7 +749,7 @@ buf_chunk_init(
 
 		buf_block_init(block, frame);
 
-#ifdef HAVE_purify
+#ifdef HAVE_VALGRIND
 		/* Wipe contents of frame to eliminate a Purify warning */
 		memset(block->frame, '\0', UNIV_PAGE_SIZE);
 #endif

@@ -34,7 +34,7 @@
       This is followed by a call to thr_multi_lock() for all tables.
 
   - When statement is done, we call mysql_unlock_tables().
-    This will call thr_multi_unlock() followed by
+    This will call DrizzleLock::unlock() followed by
     table_handler->external_lock(session, F_UNLCK) for each table.
 
   - Note that mysql_unlock_tables() may be called several times as
@@ -164,18 +164,17 @@ static int thr_lock_errno_to_mysql[]=
 static void reset_lock_data_and_free(DrizzleLock **mysql_lock)
 {
   DrizzleLock *sql_lock= *mysql_lock;
-  THR_LOCK_DATA **ldata, **ldata_end;
-
-  /* Clear the lock type of all lock data to avoid reusage. */
-  for (ldata= sql_lock->locks, ldata_end= ldata + sql_lock->lock_count;
-       ldata < ldata_end;
-       ldata++)
-  {
-    /* Reset lock type. */
-    (*ldata)->type= TL_UNLOCK;
-  }
-  free((unsigned char*) sql_lock);
+  sql_lock->reset();
+  delete sql_lock;
   *mysql_lock= 0;
+}
+
+void DrizzleLock::reset(void)
+{
+  for (std::vector<THR_LOCK_DATA *>::iterator iter= locks.begin(); iter != locks.end(); iter++)
+  {
+    (*iter)->type= TL_UNLOCK;
+  }
 }
 
 
@@ -247,7 +246,7 @@ DrizzleLock *mysql_lock_tables(Session *session, Table **tables, uint32_t count,
      * of the type of lock that Drizzle intends to take on a 
      * specific table.
      */
-    if (sql_lock->table_count && lock_external(session, sql_lock->table,
+    if (sql_lock->table_count && lock_external(session, sql_lock->getTable(),
                                                sql_lock->table_count))
     {
       /* Clear the lock type of all lock data to avoid reusage. */
@@ -256,17 +255,18 @@ DrizzleLock *mysql_lock_tables(Session *session, Table **tables, uint32_t count,
     }
     session->set_proc_info("Table lock");
     /* Copy the lock data array. thr_multi_lock() reorders its contens. */
-    memcpy(sql_lock->locks + sql_lock->lock_count, sql_lock->locks,
-           sql_lock->lock_count * sizeof(*sql_lock->locks));
+    memcpy(sql_lock->getLocks() + sql_lock->lock_count,
+           sql_lock->getLocks(),
+           sql_lock->lock_count * sizeof(*sql_lock->getLocks()));
     /* Lock on the copied half of the lock data array. */
-    rc= thr_lock_errno_to_mysql[(int) thr_multi_lock(sql_lock->locks +
+    rc= thr_lock_errno_to_mysql[(int) thr_multi_lock(sql_lock->getLocks() +
                                                      sql_lock->lock_count,
                                                      sql_lock->lock_count,
                                                      session->lock_id)];
     if (rc > 1)                                 /* a timeout or a deadlock */
     {
       if (sql_lock->table_count)
-        unlock_external(session, sql_lock->table, sql_lock->table_count);
+        unlock_external(session, sql_lock->getTable(), sql_lock->table_count);
       reset_lock_data_and_free(&sql_lock);
       my_error(rc, MYF(0));
       break;
@@ -295,10 +295,10 @@ DrizzleLock *mysql_lock_tables(Session *session, Table **tables, uint32_t count,
 
     /* going to retry, unlock all tables */
     if (sql_lock->lock_count)
-        thr_multi_unlock(sql_lock->locks, sql_lock->lock_count);
+        sql_lock->unlock(sql_lock->lock_count);
 
     if (sql_lock->table_count)
-      unlock_external(session, sql_lock->table, sql_lock->table_count);
+      unlock_external(session, sql_lock->getTable(), sql_lock->table_count);
 
     /*
       If thr_multi_lock fails it resets lock type for tables, which
@@ -340,9 +340,8 @@ retry:
 
 static int lock_external(Session *session, Table **tables, uint32_t count)
 {
-  register uint32_t i;
   int lock_type,error;
-  for (i=1 ; i <= count ; i++, tables++)
+  for (uint32_t i= 1 ; i <= count ; i++, tables++)
   {
     assert((*tables)->reginfo.lock_type >= TL_READ);
     lock_type=F_WRLCK;				/* Lock exclusive */
@@ -375,11 +374,10 @@ static int lock_external(Session *session, Table **tables, uint32_t count)
 void mysql_unlock_tables(Session *session, DrizzleLock *sql_lock)
 {
   if (sql_lock->lock_count)
-    thr_multi_unlock(sql_lock->locks,sql_lock->lock_count);
+    sql_lock->unlock(sql_lock->lock_count);
   if (sql_lock->table_count)
-    unlock_external(session, sql_lock->table, sql_lock->table_count);
-  free((unsigned char*) sql_lock);
-  return;
+    unlock_external(session, sql_lock->getTable(), sql_lock->table_count);
+  delete sql_lock;
 }
 
 /**
@@ -407,12 +405,12 @@ void mysql_unlock_read_tables(Session *session, DrizzleLock *sql_lock)
   uint32_t i,found;
 
   /* Move all write locks first */
-  THR_LOCK_DATA **lock=sql_lock->locks;
+  THR_LOCK_DATA **lock=sql_lock->getLocks();
   for (i=found=0 ; i < sql_lock->lock_count ; i++)
   {
-    if (sql_lock->locks[i]->type >= TL_WRITE_ALLOW_READ)
+    if (sql_lock->getLocks()[i]->type >= TL_WRITE_ALLOW_READ)
     {
-      std::swap(*lock, sql_lock->locks[i]);
+      std::swap(*lock, sql_lock->getLocks()[i]);
       lock++;
       found++;
     }
@@ -420,19 +418,19 @@ void mysql_unlock_read_tables(Session *session, DrizzleLock *sql_lock)
   /* unlock the read locked tables */
   if (i != found)
   {
-    thr_multi_unlock(lock,i-found);
+    sql_lock->unlock(i - found);
     sql_lock->lock_count= found;
   }
 
   /* Then do the same for the external locks */
   /* Move all write locked tables first */
-  Table **table=sql_lock->table;
+  Table **table= sql_lock->getTable();
   for (i=found=0 ; i < sql_lock->table_count ; i++)
   {
-    assert(sql_lock->table[i]->lock_position == i);
-    if ((uint32_t) sql_lock->table[i]->reginfo.lock_type >= TL_WRITE_ALLOW_READ)
+    assert(sql_lock->getTable()[i]->lock_position == i);
+    if ((uint32_t) sql_lock->getTable()[i]->reginfo.lock_type >= TL_WRITE_ALLOW_READ)
     {
-      std::swap(*table, sql_lock->table[i]);
+      std::swap(*table, sql_lock->getTable()[i]);
       table++;
       found++;
     }
@@ -444,12 +442,12 @@ void mysql_unlock_read_tables(Session *session, DrizzleLock *sql_lock)
     sql_lock->table_count=found;
   }
   /* Fix the lock positions in Table */
-  table= sql_lock->table;
+  table= sql_lock->getTable();
   found= 0;
   for (i= 0; i < sql_lock->table_count; i++)
   {
     Table *tbl= *table;
-    tbl->lock_position= table - sql_lock->table;
+    tbl->lock_position= table - sql_lock->getTable();
     tbl->lock_data_start= found;
     found+= tbl->lock_count;
     table++;
@@ -495,8 +493,8 @@ void mysql_lock_abort(Session *session, Table *table)
                              &write_lock_used)))
   {
     for (uint32_t x= 0; x < locked->lock_count; x++)
-      locked->locks[x]->lock->abort_locks();
-    free((unsigned char*) locked);
+      locked->getLocks()[x]->lock->abort_locks();
+    delete locked;
   }
 }
 
@@ -524,17 +522,17 @@ bool mysql_lock_abort_for_thread(Session *session, Table *table)
   {
     for (uint32_t i= 0; i < locked->lock_count; i++)
     {
-      if (locked->locks[i]->lock->abort_locks_for_thread(table->in_use->thread_id))
+      if (locked->getLocks()[i]->lock->abort_locks_for_thread(table->in_use->thread_id))
         result= true;
     }
-    free((unsigned char*) locked);
+    delete locked;
   }
   return result;
 }
 
 /** Unlock a set of external. */
 
-static int unlock_external(Session *session, Table **table,uint32_t count)
+static int unlock_external(Session *session, Table **table, uint32_t count)
 {
   int error,error_code;
 
@@ -570,19 +568,18 @@ static int unlock_external(Session *session, Table **table,uint32_t count)
 static DrizzleLock *get_lock_data(Session *session, Table **table_ptr, uint32_t count,
 				 bool should_lock, Table **write_lock_used)
 {
-  uint32_t tables,lock_count;
+  uint32_t lock_count;
   DrizzleLock *sql_lock;
   THR_LOCK_DATA **locks, **locks_buf, **locks_start;
   Table **to, **table_buf;
 
   *write_lock_used=0;
-  for (uint32_t i= tables= lock_count= 0 ; i < count ; i++)
+  for (uint32_t i= lock_count= 0 ; i < count ; i++)
   {
     Table *t= table_ptr[i];
 
     if (! (t->getEngine()->check_flag(HTON_BIT_SKIP_STORE_LOCK)))
     {
-      tables++;
       lock_count++;
     }
   }
@@ -593,16 +590,13 @@ static DrizzleLock *get_lock_data(Session *session, Table **table_ptr, uint32_t 
     update the table values. So the second part of the array is copied
     from the first part immediately before calling thr_multi_lock().
   */
-  if (!(sql_lock= (DrizzleLock*)
-	malloc(sizeof(*sql_lock) +
-               sizeof(THR_LOCK_DATA*) * tables * 2 +
-               sizeof(table_ptr) * lock_count)))
-  {
+  sql_lock= new DrizzleLock(lock_count, lock_count*2);
+
+  if (not sql_lock)
     return NULL;
-  }
-  locks= locks_buf= sql_lock->locks= (THR_LOCK_DATA**) (sql_lock + 1);
-  to= table_buf= sql_lock->table= (Table**) (locks + tables * 2);
-  sql_lock->table_count= lock_count;
+
+  locks= locks_buf= sql_lock->getLocks();
+  to= table_buf= sql_lock->getTable();
 
   for (uint32_t i= 0; i < count ; i++)
   {
@@ -622,7 +616,7 @@ static DrizzleLock *get_lock_data(Session *session, Table **table_ptr, uint32_t 
       {
 	my_error(ER_OPEN_AS_READONLY, MYF(0), table->getAlias());
         /* Clear the lock type of the lock data that are stored already. */
-        sql_lock->lock_count= locks - sql_lock->locks;
+        sql_lock->lock_count= locks - sql_lock->getLocks();
         reset_lock_data_and_free(&sql_lock);
 	return NULL;
       }
@@ -686,13 +680,11 @@ static DrizzleLock *get_lock_data(Session *session, Table **table_ptr, uint32_t 
     > 0  table locked, but someone is using it
 */
 
-static int lock_table_name(Session *session, TableList *table_list, bool check_in_use)
+static int lock_table_name(Session *session, TableList *table_list)
 {
-  bool  found_locked_table= false;
-  TableIdentifier identifier(table_list->db, table_list->table_name);
+  TableIdentifier identifier(table_list->getSchemaName(), table_list->getTableName());
   const TableIdentifier::Key &key(identifier.getKey());
 
-  if (check_in_use)
   {
     /* Only insert the table if we haven't insert it already */
     TableOpenCacheRange ppp;
@@ -705,8 +697,6 @@ static int lock_table_name(Session *session, TableList *table_list, bool check_i
       Table *table= (*iter).second;
       if (table->reginfo.lock_type < TL_WRITE)
       {
-        if (table->in_use == session)
-          found_locked_table= true;
         continue;
       }
 
@@ -720,7 +710,7 @@ static int lock_table_name(Session *session, TableList *table_list, bool check_i
   }
 
   Table *table;
-  if (!(table= session->table_cache_insert_placeholder(table_list->db, table_list->table_name)))
+  if (!(table= session->table_cache_insert_placeholder(identifier)))
   {
     return -1;
   }
@@ -728,8 +718,7 @@ static int lock_table_name(Session *session, TableList *table_list, bool check_i
   table_list->table= table;
 
   /* Return 1 if table is in use */
-  return(test(remove_table_from_cache(session, identifier,
-				      check_in_use ? RTFC_NO_FLAG : RTFC_WAIT_OTHER_THREAD_FLAG)));
+  return(test(remove_table_from_cache(session, identifier, RTFC_NO_FLAG)));
 }
 
 
@@ -737,7 +726,7 @@ void unlock_table_name(TableList *table_list)
 {
   if (table_list->table)
   {
-    remove_table(table_list->table);
+    remove_table(static_cast<table::Concurrent *>(table_list->table));
     broadcast_refresh();
   }
 }
@@ -807,7 +796,7 @@ static bool lock_table_names(Session *session, TableList *table_list)
   for (lock_table= table_list; lock_table; lock_table= lock_table->next_local)
   {
     int got_lock;
-    if ((got_lock= lock_table_name(session, lock_table, true)) < 0)
+    if ((got_lock= lock_table_name(session, lock_table)) < 0)
       goto end;					// Fatal error
     if (got_lock)
       got_all_locks=0;				// Someone is using table
