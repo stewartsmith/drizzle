@@ -1422,7 +1422,6 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
     }
   }
 
-  process_defaults_files();
   /* TODO: here is where we should add a process_env_vars */
 
   /* We need a notify here so that plugin_init will work properly */
@@ -1438,6 +1437,25 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
                   internal::my_progname, err.what());
     unireg_abort(1);
   }
+
+  process_defaults_files();
+
+  /* Process with notify a second time because a config file may contain
+     plugin loader options */
+
+  try
+  {
+    po::notify(vm);
+  }
+  catch (po::validation_error &err)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("%s: %s.\n"
+                    "Use --help to get a list of available options\n"),
+                  internal::my_progname, err.what());
+    unireg_abort(1);
+  }
+
   /* At this point, we've read all the options we need to read from files and
      collected most of them into unknown options - now let's load everything
   */
