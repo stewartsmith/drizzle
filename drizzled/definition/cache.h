@@ -55,7 +55,7 @@ public:
     cache.rehash(arg);
   }
 
-  TableSharePtr getShare(const TableIdentifier &identifier);
+  TableSharePtr find(const TableIdentifier &identifier);
   void erase(const TableIdentifier &identifier);
   bool insert(const TableIdentifier &identifier, TableSharePtr share);
 };

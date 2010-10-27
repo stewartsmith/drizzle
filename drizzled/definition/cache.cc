@@ -29,7 +29,7 @@ namespace drizzled {
 
 namespace definition {
 
-TableSharePtr Cache::getShare(const TableIdentifier &identifier)
+TableSharePtr Cache::find(const TableIdentifier &identifier)
 {
   //safe_mutex_assert_owner(LOCK_open.native_handle);
 

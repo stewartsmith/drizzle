@@ -116,11 +116,7 @@ void TableShare::release(TableShare *share)
     TableIdentifier identifier(share->getSchemaName(), share->getTableName());
     plugin::EventObserver::deregisterTableEvents(*share);
    
-    TableDefinitionCache::iterator iter= definition::Cache::singleton().getCache().find(identifier.getKey());
-    if (iter != definition::Cache::singleton().getCache().end())
-    {
-      definition::Cache::singleton().getCache().erase(iter);
-    }
+    definition::Cache::singleton().erase(identifier);
     return;
   }
   share->unlock();
@@ -142,11 +138,7 @@ void TableShare::release(TableSharePtr &share)
     TableIdentifier identifier(share->getSchemaName(), share->getTableName());
     plugin::EventObserver::deregisterTableEvents(*share);
    
-    TableDefinitionCache::iterator iter= definition::Cache::singleton().getCache().find(identifier.getKey());
-    if (iter != definition::Cache::singleton().getCache().end())
-    {
-      definition::Cache::singleton().getCache().erase(iter);
-    }
+    definition::Cache::singleton().erase(identifier);
     return;
   }
   share->unlock();
@@ -154,16 +146,15 @@ void TableShare::release(TableSharePtr &share)
 
 void TableShare::release(TableIdentifier &identifier)
 {
-  TableDefinitionCache::iterator iter= definition::Cache::singleton().getCache().find(identifier.getKey());
-  if (iter != definition::Cache::singleton().getCache().end())
+  TableSharePtr share= definition::Cache::singleton().find(identifier);
+  if (share)
   {
-    TableSharePtr share= (*iter).second;
     share->version= 0;                          // Mark for delete
     if (share->ref_count == 0)
     {
       share->lock();
       plugin::EventObserver::deregisterTableEvents(*share);
-      definition::Cache::singleton().getCache().erase(identifier.getKey());
+      definition::Cache::singleton().erase(identifier);
     }
   }
 }
@@ -222,7 +213,7 @@ TableSharePtr TableShare::getShareCreate(Session *session,
   *error= 0;
 
   /* Read table definition from cache */
-  if ((share= definition::Cache::singleton().getShare(identifier)))
+  if ((share= definition::Cache::singleton().find(identifier)))
     return foundTableShare(share);
 
   share.reset(new TableShare(message::Table::STANDARD, identifier));
@@ -271,7 +262,7 @@ TableSharePtr TableShare::getShare(TableIdentifier &identifier)
 {
   safe_mutex_assert_owner(LOCK_open.native_handle);
 
-  return definition::Cache::singleton().getShare(identifier);
+  return definition::Cache::singleton().find(identifier);
 }
 
 static enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_type)
