@@ -14,30 +14,30 @@ Configuration
 
 Several server variables control the transaction log.
 
-**enable**
+**transaction-log.enable**
 
    Enable transaction log.
 
-**enable-checksum**
+**transaction-log.enable-checksum**
 
    Enable CRC32 Checksumming of each written transaction log entry
 
-**file**
+**transaction-log.file**
 
   Path to the file to use for transaction log. The default will be
   :file:`transaction.log`.
 
-**use-replicator**
+**transaction-log.use-replicator**
 
    Name of the replicator plugin to use (default='default_replicator')
 
-**flush-frequency**
+**transaction-log.flush-frequency**
 
    * 0 : rely on operating system to sync log file (default)
    * 1 : sync file at each transaction write
    * 2 : sync log file once per second
 
-**num-write-buffers**
+**transaction-log.num-write-buffers**
 
    Number of slots for in-memory write buffers (default=8).
 

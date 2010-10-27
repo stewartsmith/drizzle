@@ -29,6 +29,7 @@
 #include "drizzled/records.h"
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/iocache.h"
+#include "drizzled/transaction_services.h"
 
 #include <boost/dynamic_bitset.hpp>
 #include <list>
@@ -473,7 +474,20 @@ int mysql_update(Session *session, TableList *table_list,
 
       table->storeRecord();
       if (fill_record(session, fields, values))
+      {
+        /*
+         * If we updated some rows before this one failed (updated > 0),
+         * then we will need to undo adding those records to the
+         * replication Statement message.
+         */
+        if (updated > 0)
+        {
+          TransactionServices &ts= TransactionServices::singleton();
+          ts.removeStatementRecords(session, updated);
+        }
+
         break;
+      }
 
       found++;
 
@@ -486,15 +500,15 @@ int mysql_update(Session *session, TableList *table_list,
         table->auto_increment_field_not_null= false;
 
         if (!error || error == HA_ERR_RECORD_IS_THE_SAME)
-	{
+        {
           if (error != HA_ERR_RECORD_IS_THE_SAME)
             updated++;
           else
             error= 0;
-	}
-	else if (! ignore ||
+        }
+        else if (! ignore ||
                  table->cursor->is_fatal_error(error, HA_CHECK_DUP_KEY))
-	{
+        {
           /*
             If (ignore && error is ignorable) we don't have to
             do anything; otherwise...
@@ -505,10 +519,10 @@ int mysql_update(Session *session, TableList *table_list,
             flags|= ME_FATALERROR; /* Other handler errors are fatal */
 
           prepare_record_for_error_message(error, table);
-	  table->print_error(error,MYF(flags));
-	  error= 1;
-	  break;
-	}
+          table->print_error(error,MYF(flags));
+          error= 1;
+          break;
+        }
       }
 
       if (!--limit && using_limit)

@@ -28,8 +28,7 @@
 #include "drizzled/errmsg_print.h"
 #include "drizzled/gettext.h"
 #include "drizzled/session.h"
-#include "drizzled/set_var.h"
-#include <drizzled/plugin.h>
+#include "drizzled/plugin.h"
 #include "drizzled/plugin/client.h"
 #include "drizzled/table.h"
 #include "drizzled/field/timestamp.h"

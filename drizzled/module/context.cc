@@ -22,7 +22,7 @@
 #include "drizzled/module/option_map.h"
 #include "drizzled/module/module.h"
 #include "drizzled/drizzled.h"
-#include "drizzled/set_var.h"
+#include "drizzled/sys_var.h"
 
 namespace drizzled
 {

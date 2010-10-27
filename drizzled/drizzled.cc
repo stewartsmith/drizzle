@@ -321,8 +321,8 @@ my_decimal decimal_zero;
 
 FILE *stderror_file=0;
 
-struct system_variables global_system_variables;
-struct system_variables max_system_variables;
+struct drizzle_system_variables global_system_variables;
+struct drizzle_system_variables max_system_variables;
 struct global_counters current_global_counters;
 
 const CHARSET_INFO *system_charset_info, *files_charset_info ;
@@ -1100,16 +1100,7 @@ static void process_defaults_files()
        iter != defaults_file_list.end();
        ++iter)
   {
-    fs::path file_location(system_config_dir);
-    if ((*iter)[0] != '/')
-    {
-      /* Relative path - add config dir */
-      file_location /= *iter;
-    }
-    else
-    {
-      file_location= *iter;
-    }
+    fs::path file_location= *iter;
 
     ifstream input_defaults_file(file_location.file_string().c_str());
     
@@ -1405,28 +1396,28 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   {
     defaults_file_list.insert(defaults_file_list.begin(),
                               system_config_file_drizzle);
-  }
 
-  fs::path config_conf_d_location(system_config_dir);
-  config_conf_d_location /= "conf.d";
+    fs::path config_conf_d_location(system_config_dir);
+    config_conf_d_location /= "conf.d";
 
-  CachedDirectory config_conf_d(config_conf_d_location.file_string());
-  if (not config_conf_d.fail())
-  {
-
-    for (CachedDirectory::Entries::const_iterator iter= config_conf_d.getEntries().begin();
-         iter != config_conf_d.getEntries().end();
-         ++iter)
+    CachedDirectory config_conf_d(config_conf_d_location.file_string());
+    if (not config_conf_d.fail())
     {
-      string file_entry((*iter)->filename);
-          
-      if (not file_entry.empty()
-          && file_entry != "."
-          && file_entry != "..")
+
+      for (CachedDirectory::Entries::const_iterator iter= config_conf_d.getEntries().begin();
+           iter != config_conf_d.getEntries().end();
+           ++iter)
       {
-        fs::path the_entry(config_conf_d_location);
-        the_entry /= file_entry;
-        defaults_file_list.push_back(the_entry.file_string());
+        string file_entry((*iter)->filename);
+
+        if (not file_entry.empty()
+            && file_entry != "."
+            && file_entry != "..")
+        {
+          fs::path the_entry(config_conf_d_location);
+          the_entry /= file_entry;
+          defaults_file_list.push_back(the_entry.file_string());
+        }
       }
     }
   }
@@ -1531,7 +1522,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
 
   if (item_create_init())
     return 1;
-  if (set_var_init())
+  if (sys_var_init())
     return 1;
   /* Creates static regex matching for temporal values */
   if (! init_temporal_formats())

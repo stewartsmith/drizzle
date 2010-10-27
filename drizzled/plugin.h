@@ -20,6 +20,9 @@
 #ifndef DRIZZLED_PLUGIN_H
 #define DRIZZLED_PLUGIN_H
 
+#include <boost/program_options.hpp>
+#include <boost/filesystem.hpp>
+
 #include "drizzled/module/manifest.h"
 #include "drizzled/module/module.h"
 #include "drizzled/plugin/version.h"
@@ -27,9 +30,8 @@
 #include "drizzled/definitions.h"
 
 #include "drizzled/lex_string.h"
+#include "drizzled/sys_var.h"
 #include "drizzled/xid.h"
-#include <boost/program_options.hpp>
-#include <boost/filesystem.hpp>
 
 namespace drizzled
 {
@@ -78,34 +80,6 @@ namespace plugin { class StorageEngine; }
   } 
 
 
-/*
-  declarations for SHOW STATUS support in plugins
-*/
-enum enum_mysql_show_type
-{
-  SHOW_UNDEF, SHOW_BOOL, SHOW_INT, SHOW_LONG,
-  SHOW_LONGLONG, SHOW_CHAR, SHOW_CHAR_PTR,
-  SHOW_FUNC,
-  SHOW_LONG_STATUS, SHOW_DOUBLE_STATUS,
-  SHOW_MY_BOOL, SHOW_HA_ROWS, SHOW_SYS, SHOW_INT_NOFLUSH,
-  SHOW_LONGLONG_STATUS, SHOW_DOUBLE, SHOW_SIZE
-};
-
-struct drizzle_show_var {
-  const char *name;
-  char *value;
-  enum enum_mysql_show_type type;
-};
-
-typedef enum enum_mysql_show_type SHOW_TYPE;
-
-
-#define SHOW_VAR_FUNC_BUFF_SIZE 1024
-typedef int (*mysql_show_var_func)(drizzle_show_var *, char *);
-
-struct st_show_var_func_container {
-  mysql_show_var_func func;
-};
 /*
   declarations for server variables and command line options
 */

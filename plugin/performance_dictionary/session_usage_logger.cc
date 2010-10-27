@@ -40,7 +40,7 @@ bool SessionUsageLogger::pre(Session *session)
 
 bool SessionUsageLogger::post(Session *session)
 {
-  QueryUsage *usage_cache= dynamic_cast<QueryUsage *>(session->getProperty("query_usage"));
+  QueryUsage *usage_cache= static_cast<QueryUsage *>(session->getProperty("query_usage"));
 
   if (not usage_cache)
   {

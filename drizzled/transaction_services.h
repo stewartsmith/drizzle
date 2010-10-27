@@ -260,6 +260,28 @@ public:
    * @param use_update_record If true, uses the values from the update row instead
    */
   void deleteRecord(Session *in_session, Table *in_table, bool use_update_record= false);
+
+  /**
+   * Used to undo effects of a failed statement.
+   *
+   * An SQL statement, like an UPDATE, that affects multiple rows could
+   * potentially fail mid-way through processing the rows. In such a case,
+   * the successfully modified rows that preceeded the failing row would
+   * have been added to the Statement message. This method is used for
+   * rolling back that change.
+   *
+   * @note
+   * This particular failure is seen on column constraint violations
+   * during a multi-row UPDATE and a multi-row INSERT..SELECT.
+   *
+   * @param in_session Pointer to the Session containing the Statement
+   * @param count The number of records to remove from Statement.
+   *
+   * @retval true Successfully removed 'count' records
+   * @retval false Failure
+   */
+  bool removeStatementRecords(Session *in_session, uint32_t count);
+
   /**
    * Creates a CreateSchema Statement GPB message and adds it
    * to the Session's active Transaction GPB message for pushing

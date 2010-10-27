@@ -22,7 +22,7 @@
 #include <algorithm>
 
 #include "drizzled/module/module.h"
-#include "drizzled/set_var.h"
+#include "drizzled/sys_var.h"
 #include "drizzled/util/functors.h"
 
 namespace drizzled
