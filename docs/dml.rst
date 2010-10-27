@@ -1,7 +1,10 @@
 Data Manipulation Language
 ========
 
-INSERT
-UPDATE
-DELETE
-REPLACE
+.. toctree::
+   :maxdepth: 2
+
+   delete
+   insert
+   replace
+   update

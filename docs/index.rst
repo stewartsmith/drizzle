@@ -27,9 +27,12 @@ SQL Language:
 .. toctree::
    :maxdepth: 2
 
+   queries
    ddl
    dml
    columntypes
+   dynamic
+   getting_information
 
 Configuration:
 
