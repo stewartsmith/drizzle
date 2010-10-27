@@ -26,16 +26,15 @@
  * Network interface.
  *
  */
-
-#include "config.h"
-
-#include "network_ms.h"
-#include "connection_handler_ms.h"
-
 #include "cslib/CSConfig.h"
+
+#include "defs_ms.h"
+
 #include "cslib/CSGlobal.h"
 #include "cslib/CSLog.h"
 
+#include "network_ms.h"
+#include "connection_handler_ms.h"
 
 MSSystemThread		*MSNetwork::gSystemThread;
 time_t				MSNetwork::gCurrentTime;
@@ -171,16 +170,46 @@ void MSNetwork::startConnectionHandler()
  * Return NULL of a connection cannot be openned, and the
  * thread must quit.
  */
+class OpenConnectioCleanUp : public CSRefObject {
+	bool do_cleanup;
+
+	public:
+	
+	OpenConnectioCleanUp(): CSRefObject(),
+		do_cleanup(false){}
+		
+	~OpenConnectioCleanUp() 
+	{
+		if (do_cleanup) {
+			MSNetwork::unlockListenerSocket();
+		}
+	}
+	
+	void setCleanUp()
+	{
+		do_cleanup = true;
+	}
+	
+	void cancelCleanUp()
+	{
+		do_cleanup = false;
+	}
+	
+};
+
+/*
+ * Return NULL if a connection cannot be openned, and the
+ * thread must quit.
+ */
 CSSocket *MSNetwork::openConnection(MSConnectionHandler *handler)
 {
 	CSSocket *sock = NULL;
-
-	CLOBBER_PROTECT(sock);
+	OpenConnectioCleanUp *cleanup;
 
 	enter_();
 	
 	if(!MSNetwork::gListenerSocket) {
-		return NULL;
+		return_(NULL);
 	}
 	
 	sock = CSSocket::newSocket();
@@ -192,19 +221,18 @@ CSSocket *MSNetwork::openConnection(MSConnectionHandler *handler)
 		return_(NULL);
 	}
 
-	try_(a) {
-		sock->open(MSNetwork::gListenerSocket);
-	}
-	catch_(a) {
-		unlockListenerSocket();
-		throw_();
-	}
-	cont_(a);
+	new_(cleanup, OpenConnectioCleanUp());
+	push_(cleanup);
+	
+	cleanup->setCleanUp();
+	sock->open(MSNetwork::gListenerSocket);
+	cleanup->cancelCleanUp();
 
 	handler->lastUse = gCurrentTime;
 
 	unlockListenerSocket();
 
+	release_(cleanup);
 	pop_(sock);
 	return_(sock);
 }

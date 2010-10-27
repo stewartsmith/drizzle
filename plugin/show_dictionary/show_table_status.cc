@@ -28,7 +28,7 @@ using namespace drizzled;
 using namespace std;
 
 ShowTableStatus::ShowTableStatus() :
-  plugin::TableFunction("DATA_DICTIONARY", "SHOW_TABLE_STATUS")
+  show_dictionary::Show("SHOW_TABLE_STATUS")
 {
   add_field("Session", plugin::TableFunction::NUMBER, 0, false);
   add_field("Schema");
@@ -43,10 +43,10 @@ ShowTableStatus::ShowTableStatus() :
 }
 
 ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
-  drizzled::plugin::TableFunction::Generator(arg),
+  show_dictionary::Show::Generator(arg),
   is_primed(false)
 {
-  statement::Select *select= static_cast<statement::Select *>(getSession().lex->statement);
+  statement::Show *select= static_cast<statement::Show *>(getSession().lex->statement);
 
   schema_predicate.append(select->getShowSchema());
 

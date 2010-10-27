@@ -28,20 +28,20 @@
  */
 
 #include "cslib/CSConfig.h"
+
 #include <inttypes.h>
-#include <string>
 
 #include "defs_ms.h"
-#include "mysql_ms.h"
-#include "open_table_ms.h"
-#include "trans_log_ms.h"
-#include "transaction_ms.h"
-#include "pbmsdaemon_ms.h"
 
 #include "cslib/CSGlobal.h"
 #include "cslib/CSStrUtil.h"
 #include "cslib/CSLog.h"
 
+#include "mysql_ms.h"
+#include "open_table_ms.h"
+#include "trans_log_ms.h"
+#include "transaction_ms.h"
+#include "pbmsdaemon_ms.h"
 
 /*
  * The pbms_ functions are utility functions supplied by ha_pbms.cc
@@ -179,10 +179,10 @@ void MSTransactionThread::reportLostReference(MSTransPtr rec, MS_TxnState state)
 
 void MSTransactionThread::dereference(MSTransPtr rec, MS_TxnState state)
 {
-	MSOpenTable		*otab;
 	enter_();
 	
 	try_(a) {
+		MSOpenTable		*otab;
 		otab = MSTableList::getOpenTableByID(rec->tr_db_id, rec->tr_tab_id);
 		frompool_(otab);
 		otab->freeReference(rec->tr_blob_id, rec->tr_blob_ref_id);
@@ -199,10 +199,10 @@ void MSTransactionThread::dereference(MSTransPtr rec, MS_TxnState state)
 
 void MSTransactionThread::commitReference(MSTransPtr rec, MS_TxnState state)
 {
-	MSOpenTable		*otab;
 	enter_();
 	
 	try_(a) {
+		MSOpenTable		*otab;
 		otab = MSTableList::getOpenTableByID(rec->tr_db_id, rec->tr_tab_id);
 		frompool_(otab);
 		otab->commitReference(rec->tr_blob_id, rec->tr_blob_ref_id);
@@ -237,11 +237,11 @@ void MSTransactionThread::flush()
 
 bool MSTransactionThread::doWork()
 {
-	MSTransRec rec = {0,0,0,0,0,0,0};
-	MS_TxnState state;
 	enter_();
 	
 	try_(a) {
+		MSTransRec rec = {0,0,0,0,0,0,0};
+		MS_TxnState state;
 		while (!myMustQuit) {
 			// This will sleep while waiting for the next 
 			// completed transaction.
@@ -412,14 +412,11 @@ void MSTransactionManager::rollback()
 	exit_();
 }
 
-class MSTransactionCheckPoint: public CSCString
+class MSTransactionCheckPoint: public CSString
 {
 	public:
-	MSTransactionCheckPoint(const char *name, uint32_t stmtCount ):CSCString()
+	MSTransactionCheckPoint(const char *name, uint32_t stmtCount ):CSString(name)
 	{
-		myCString = cs_strdup(name);
-		myStrLen = strlen(name);
-
 		position = stmtCount;
 	}
 	
@@ -444,10 +441,10 @@ void MSTransactionManager::setSavepoint(const char *savePoint)
 void MSTransactionManager::releaseSavepoint(const char *savePoint)
 {
 	MSTransactionCheckPoint *checkPoint;
-	CSCString *name;
+	CSString *name;
 	enter_();
 	
-	name = CSCString::newString(savePoint);
+	name = CSString::newString(savePoint);
 	push_(name);
 
 	checkPoint = (MSTransactionCheckPoint*) self->mySavePoints.find(name);
@@ -462,10 +459,10 @@ void MSTransactionManager::releaseSavepoint(const char *savePoint)
 void MSTransactionManager::rollbackTo(const char *savePoint)
 {
 	MSTransactionCheckPoint *checkPoint;
-	CSCString *name;
+	CSString *name;
 	enter_();
 	
-	name = CSCString::newString(savePoint);
+	name = CSString::newString(savePoint);
 	push_(name);
 
 	checkPoint = (MSTransactionCheckPoint*) self->mySavePoints.find(name);

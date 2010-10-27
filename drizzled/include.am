@@ -56,6 +56,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/check_stack_overrun.h \
 			      drizzled/common.h \
 			      drizzled/comp_creator.h \
+			      drizzled/constrained_value.h \
 			      drizzled/create_field.h \
 			      drizzled/current_session.h \
 			      drizzled/cursor.h \
@@ -182,6 +183,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/generator/functions.h \
 			      drizzled/generator/event_observers.h \
 			      drizzled/generator/schema.h \
+			      drizzled/generator/session.h \
 			      drizzled/generator/table.h \
 			      drizzled/gettext.h \
 			      drizzled/global_charset_info.h \
@@ -393,6 +395,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/statement/savepoint.h \
 			      drizzled/statement/select.h \
 			      drizzled/statement/set_option.h \
+			      drizzled/statement/show.h \
 			      drizzled/statement/show_errors.h \
 			      drizzled/statement/show_warnings.h \
 			      drizzled/statement/start_transaction.h \
@@ -415,6 +418,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/table/concurrent.h \
 			      drizzled/table/instance.h \
 			      drizzled/table/placeholder.h \
+			      drizzled/table/shell.h \
 			      drizzled/table/temporary.h \
 			      drizzled/temporal.h \
 			      drizzled/temporal_format.h \
@@ -743,6 +747,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/statement/savepoint.cc \
 				 drizzled/statement/select.cc \
 				 drizzled/statement/set_option.cc \
+				 drizzled/statement/show.cc \
 				 drizzled/statement/show_errors.cc \
 				 drizzled/statement/show_warnings.cc \
 				 drizzled/statement/start_transaction.cc \

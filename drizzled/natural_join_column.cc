@@ -66,9 +66,9 @@ const char *Natural_join_column::db_name()
     Test that TableList::db is the same as TableShare::db to
     ensure consistency. 
   */
-  assert(!strcmp(table_ref->db,
-                 table_ref->table->getShare()->getSchemaName()));
-  return table_ref->db;
+  assert(!strcmp(table_ref->getSchemaName(), table_ref->table->getShare()->getSchemaName()));
+
+  return table_ref->getSchemaName();
 }
 
 } /* namespace drizzled */

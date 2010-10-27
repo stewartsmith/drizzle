@@ -532,7 +532,7 @@ try
   N_("Where to send output to (stdout|database"))
   ("destination-host", po::value<string>(&opt_destination_host)->default_value("localhost"),
   N_("Hostname for destination db server (requires --destination-type=database)"))
-  ("destination-port", po::value<uint16_t>(&opt_destination_port)->default_value(3306),
+  ("destination-port", po::value<uint16_t>(&opt_destination_port)->default_value(4427),
   N_("Port number for destination db server (requires --destination-type=database)"))
   ("destination-user", po::value<string>(&opt_destination_user),
   N_("User name for destination db server (resquires --destination-type=database)"))

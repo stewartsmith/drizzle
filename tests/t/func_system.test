@@ -5,6 +5,7 @@
 select database();
 select database() = "test";
 
+--replace_column 1 #
 select user() like "%@%";
 
 select version() > "2009.01.756";

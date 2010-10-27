@@ -151,22 +151,6 @@ struct CopyInfo
 
 };
 
-struct DrizzleLock
-{
-  Table **table;
-  uint32_t table_count;
-  uint32_t lock_count;
-  THR_LOCK_DATA **locks;
-
-  DrizzleLock() :
-    table(0),
-    table_count(0),
-    lock_count(0),
-    locks(0)
-  { }
-
-};
-
 } /* namespace drizzled */
 
 /** @TODO why is this in the middle of the file */
@@ -183,7 +167,8 @@ class Time_zone;
 
 struct system_variables
 {
-  system_variables() {};
+  system_variables()
+  {};
   /*
     How dynamically allocated system variables are handled:
 
@@ -409,6 +394,7 @@ public:
     only responsible for freeing this member.
   */
   std::string db;
+  std::string catalog;
   /* current cache key */
   std::string query_cache_key;
   /**
@@ -1489,7 +1475,7 @@ public:
   void close_cached_table(Table *table);
 
   /* Create a lock in the cache */
-  Table *table_cache_insert_placeholder(const char *db_name, const char *table_name);
+  Table *table_cache_insert_placeholder(const TableIdentifier &identifier);
   bool lock_table_name_if_not_cached(TableIdentifier &identifier, Table **table);
 
   typedef boost::unordered_map<std::string, message::Table, util::insensitive_hash, util::insensitive_equal_to> TableMessageCache;
@@ -1502,9 +1488,7 @@ public:
   bool renameTableMessage(const TableIdentifier &from, const TableIdentifier &to);
 
   /* Work with temporary tables */
-  Table *find_temporary_table(TableList *table_list);
-  Table *find_temporary_table(const char *db, const char *table_name);
-  Table *find_temporary_table(TableIdentifier &identifier);
+  Table *find_temporary_table(const TableIdentifier &identifier);
 
   void doGetTableNames(CachedDirectory &directory,
                        const SchemaIdentifier &schema_identifier,
@@ -1531,7 +1515,7 @@ private:
 public:
 
   void dumpTemporaryTableNames(const char *id);
-  int drop_temporary_table(TableList *table_list);
+  int drop_temporary_table(const drizzled::TableIdentifier &identifier);
   bool rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &identifier);
   bool rm_temporary_table(TableIdentifier &identifier, bool best_effort= false);
   Table *open_temporary_table(TableIdentifier &identifier,
@@ -1539,7 +1523,6 @@ public:
 
   /* Reopen operations */
   bool reopen_tables(bool get_locks, bool mark_share_as_old);
-  bool reopen_name_locked_table(TableList* table_list, bool link_in);
   bool close_cached_tables(TableList *tables, bool wait_for_refresh, bool wait_for_placeholders);
 
   void wait_for_condition(boost::mutex &mutex, boost::condition_variable_any &cond);

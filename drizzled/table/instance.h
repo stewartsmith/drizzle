@@ -56,6 +56,8 @@ public:
     return &_share;
   }
 
+  bool hasShare() const { return true; }
+
   bool hasVariableWidth() const
   {
     return _has_variable_width;
@@ -66,7 +68,6 @@ public:
                                MI_COLUMNDEF **recinfo,
                                uint64_t options);
   void setup_tmp_table_column_bitmaps();
-  void free_tmp_table(Session *session);
   bool open_tmp_table();
 
   void setVariableWidth()
@@ -74,10 +75,7 @@ public:
     _has_variable_width= true;
   }
 
-  ~Instance()
-  {
-    free_tmp_table(in_use);
-  }
+  ~Instance();
 };
 
 } /* namespace table */

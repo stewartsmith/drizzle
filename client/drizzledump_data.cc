@@ -43,6 +43,7 @@ extern bool opt_compress;
 extern bool opt_drop_database;
 extern bool opt_autocommit;
 extern bool ignore_errors;
+extern std::string opt_destination_database;
 
 extern boost::unordered_set<std::string> ignore_table;
 extern void maybe_exit(int error);
@@ -192,16 +193,22 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpDatabase &obj)
     if (not opt_create_db)
     {
       if (opt_drop_database)
-        os << "DROP DATABASE IF EXISTS `" << obj.databaseName << "`" << std::endl;
+      {
+        os << "DROP DATABASE IF EXISTS `"
+          << ((opt_destination_database.empty()) ? obj.databaseName
+          : opt_destination_database) << "`" << std::endl;
+      }
 
-      os << "CREATE DATABASE IF NOT EXISTS `" << obj.databaseName << "`";
+      os << "CREATE DATABASE IF NOT EXISTS `"
+        << ((opt_destination_database.empty()) ? obj.databaseName
+        : opt_destination_database) << "`";
       if (not obj.collate.empty())
        os << " COLLATE = " << obj.collate;
 
       os << ";" << std::endl << std::endl;
     }
-
-    os << "USE `" << obj.databaseName << "`;" << std::endl << std::endl;
+    os << "USE `" << ((opt_destination_database.empty()) ? obj.databaseName
+      : opt_destination_database) << "`;" << std::endl << std::endl;
   }
 
   std::vector<DrizzleDumpTable*>::iterator i;
@@ -340,15 +347,16 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
         os << ",";
     }
     /* Break insert up if it is too long */
-    if (extended_insert and
-      (byte_counter >= DRIZZLE_MAX_LINE_LENGTH))
+    if ((extended_insert and
+      (byte_counter >= DRIZZLE_MAX_LINE_LENGTH)) or (not extended_insert))
     {
       os << ");" << std::endl;
       new_insert= true;
       byte_counter= 0;
     }
   }
-  os << ");" << std::endl;
+  if (not new_insert)
+    os << ");" << std::endl;
 
   if (opt_autocommit)
     os << "COMMIT;" << std::endl;

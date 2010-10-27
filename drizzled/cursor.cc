@@ -54,9 +54,10 @@ namespace drizzled
 ** General Cursor functions
 ****************************************************************************/
 Cursor::Cursor(plugin::StorageEngine &engine_arg,
-               TableShare &share_arg)
-  : table_share(&share_arg), table(0),
-    estimation_rows_to_insert(0), engine(&engine_arg),
+               Table &arg)
+  : table(arg),
+    engine(engine_arg),
+    estimation_rows_to_insert(0),
     ref(0),
     key_used_on_scan(MAX_KEY), active_index(MAX_KEY),
     ref_length(sizeof(internal::my_off_t)),
@@ -79,7 +80,7 @@ Cursor::~Cursor(void)
  */
 Cursor *Cursor::clone(memory::Root *mem_root)
 {
-  Cursor *new_handler= table->getMutableShare()->db_type()->getCursor(*table->getMutableShare());
+  Cursor *new_handler= getTable()->getMutableShare()->db_type()->getCursor(*getTable());
 
   /*
     Allocate Cursor->ref here because otherwise ha_open will allocate it
@@ -89,13 +90,12 @@ Cursor *Cursor::clone(memory::Root *mem_root)
   if (!(new_handler->ref= (unsigned char*) mem_root->alloc_root(ALIGN_SIZE(ref_length)*2)))
     return NULL;
 
-  TableIdentifier identifier(table->getShare()->getSchemaName(),
-                             table->getShare()->getTableName(),
-                             table->getShare()->getType());
+  TableIdentifier identifier(getTable()->getShare()->getSchemaName(),
+                             getTable()->getShare()->getTableName(),
+                             getTable()->getShare()->getType());
 
   if (new_handler && !new_handler->ha_open(identifier,
-                                           table,
-                                           table->getDBStat(),
+                                           getTable()->getDBStat(),
                                            HA_OPEN_IGNORE_IF_LOCKED))
     return new_handler;
   return NULL;
@@ -111,8 +111,8 @@ uint32_t Cursor::calculate_key_len(uint32_t key_position, key_part_map keypart_m
   /* works only with key prefixes */
   assert(((keypart_map_arg + 1) & keypart_map_arg) == 0);
 
-  const KeyPartInfo *key_part_found= table->getShare()->getKeyInfo(key_position).key_part;
-  const KeyPartInfo *end_key_part_found= key_part_found + table->getShare()->getKeyInfo(key_position).key_parts;
+  const KeyPartInfo *key_part_found= getTable()->getShare()->getKeyInfo(key_position).key_part;
+  const KeyPartInfo *end_key_part_found= key_part_found + getTable()->getShare()->getKeyInfo(key_position).key_parts;
   uint32_t length= 0;
 
   while (key_part_found < end_key_part_found && keypart_map_arg)
@@ -175,12 +175,6 @@ int Cursor::ha_end_bulk_insert()
   return end_bulk_insert();
 }
 
-void Cursor::change_table_ptr(Table *table_arg, TableShare *share)
-{
-  table= table_arg;
-  table_share= share;
-}
-
 const key_map *Cursor::keys_to_use_for_scanning()
 {
   return &key_map_empty;
@@ -188,17 +182,17 @@ const key_map *Cursor::keys_to_use_for_scanning()
 
 bool Cursor::has_transactions()
 {
-  return (table->getShare()->db_type()->check_flag(HTON_BIT_DOES_TRANSACTIONS));
+  return (getTable()->getShare()->db_type()->check_flag(HTON_BIT_DOES_TRANSACTIONS));
 }
 
 void Cursor::ha_statistic_increment(uint64_t system_status_var::*offset) const
 {
-  (table->in_use->status_var.*offset)++;
+  (getTable()->in_use->status_var.*offset)++;
 }
 
 void **Cursor::ha_data(Session *session) const
 {
-  return session->getEngineData(engine);
+  return session->getEngineData(getEngine());
 }
 
 bool Cursor::is_fatal_error(int error, uint32_t flags)
@@ -214,7 +208,7 @@ bool Cursor::is_fatal_error(int error, uint32_t flags)
 
 ha_rows Cursor::records() { return stats.records; }
 uint64_t Cursor::tableSize() { return stats.index_file_length + stats.data_file_length; }
-uint64_t Cursor::rowSize() { return table->getRecordLength() + table->sizeFields(); }
+uint64_t Cursor::rowSize() { return getTable()->getRecordLength() + getTable()->sizeFields(); }
 
 int Cursor::doOpen(const TableIdentifier &identifier, int mode, uint32_t test_if_locked)
 {
@@ -228,21 +222,17 @@ int Cursor::doOpen(const TableIdentifier &identifier, int mode, uint32_t test_if
   Don't wait for locks if not HA_OPEN_WAIT_IF_LOCKED is set
 */
 int Cursor::ha_open(const TableIdentifier &identifier,
-                    Table *table_arg,
                     int mode,
                     int test_if_locked)
 {
   int error;
 
-  table= table_arg;
-  assert(table->getShare() == table_share);
-
   if ((error= doOpen(identifier, mode, test_if_locked)))
   {
     if ((error == EACCES || error == EROFS) && mode == O_RDWR &&
-        (table->db_stat & HA_TRY_READ_ONLY))
+        (getTable()->db_stat & HA_TRY_READ_ONLY))
     {
-      table->db_stat|=HA_READ_ONLY;
+      getTable()->db_stat|=HA_READ_ONLY;
       error= doOpen(identifier, O_RDONLY,test_if_locked);
     }
   }
@@ -252,12 +242,12 @@ int Cursor::ha_open(const TableIdentifier &identifier,
   }
   else
   {
-    if (table->getShare()->db_options_in_use & HA_OPTION_READ_ONLY_DATA)
-      table->db_stat|=HA_READ_ONLY;
+    if (getTable()->getShare()->db_options_in_use & HA_OPTION_READ_ONLY_DATA)
+      getTable()->db_stat|=HA_READ_ONLY;
     (void) extra(HA_EXTRA_NO_READCHECK);	// Not needed in SQL
 
     /* ref is already allocated for us if we're called from Cursor::clone() */
-    if (!ref && !(ref= (unsigned char*) table->alloc_root(ALIGN_SIZE(ref_length)*2)))
+    if (!ref && !(ref= (unsigned char*) getTable()->alloc_root(ALIGN_SIZE(ref_length)*2)))
     {
       close();
       error=HA_ERR_OUT_OF_MEM;
@@ -286,7 +276,7 @@ int Cursor::read_first_row(unsigned char * buf, uint32_t primary_key)
     TODO remove the test for HA_READ_ORDER
   */
   if (stats.deleted < 10 || primary_key >= MAX_KEY ||
-      !(table->index_flags(primary_key) & HA_READ_ORDER))
+      !(getTable()->index_flags(primary_key) & HA_READ_ORDER))
   {
     (void) startTableScan(1);
     while ((error= rnd_next(buf)) == HA_ERR_RECORD_DELETED) ;
@@ -334,7 +324,7 @@ void Cursor::adjust_next_insert_id_after_explicit_value(uint64_t nr)
     Session::next_insert_id to be greater than the explicit value.
   */
   if ((next_insert_id > 0) && (nr >= next_insert_id))
-    set_next_insert_id(compute_next_insert_id(nr, &table->in_use->variables));
+    set_next_insert_id(compute_next_insert_id(nr, &getTable()->in_use->variables));
 }
 
 
@@ -451,7 +441,7 @@ int Cursor::update_auto_increment()
 {
   uint64_t nr, nb_reserved_values;
   bool append= false;
-  Session *session= table->in_use;
+  Session *session= getTable()->in_use;
   struct system_variables *variables= &session->variables;
 
   /*
@@ -464,8 +454,8 @@ int Cursor::update_auto_increment()
      for an auto increment column, not a magic value like NULL is.
      same as sql_mode=NO_AUTO_VALUE_ON_ZERO */
 
-  if ((nr= table->next_number_field->val_int()) != 0
-      || table->auto_increment_field_not_null)
+  if ((nr= getTable()->next_number_field->val_int()) != 0
+      || getTable()->auto_increment_field_not_null)
   {
     /*
       Update next_insert_id if we had already generated a value in this
@@ -543,14 +533,14 @@ int Cursor::update_auto_increment()
       nr= compute_next_insert_id(nr-1, variables);
     }
 
-    if (table->getShare()->next_number_keypart == 0)
+    if (getTable()->getShare()->next_number_keypart == 0)
     {
       /* We must defer the appending until "nr" has been possibly truncated */
       append= true;
     }
   }
 
-  if (unlikely(table->next_number_field->store((int64_t) nr, true)))
+  if (unlikely(getTable()->next_number_field->store((int64_t) nr, true)))
   {
     /*
       first test if the query was aborted due to strict mode constraints
@@ -566,9 +556,9 @@ int Cursor::update_auto_increment()
       bother shifting the right bound (anyway any other value from this
       interval will cause a duplicate key).
     */
-    nr= prev_insert_id(table->next_number_field->val_int(), variables);
-    if (unlikely(table->next_number_field->store((int64_t) nr, true)))
-      nr= table->next_number_field->val_int();
+    nr= prev_insert_id(getTable()->next_number_field->val_int(), variables);
+    if (unlikely(getTable()->next_number_field->store((int64_t) nr, true)))
+      nr= getTable()->next_number_field->val_int();
   }
   if (append)
   {
@@ -622,7 +612,7 @@ void Cursor::ha_release_auto_increment()
       this statement used forced auto_increment values if there were some,
       wipe them away for other statements.
     */
-    table->in_use->auto_inc_intervals_forced.empty();
+    getTable()->in_use->auto_inc_intervals_forced.empty();
   }
 }
 
@@ -668,10 +658,10 @@ Cursor::setTransactionReadWrite()
    * possible resource to gain (and if there is... then there is a bug such
    * that in_use should have been set.
  */
-  if (not table || not table->in_use)
+  if (not getTable()->in_use)
     return;
 
-  resource_context= table->in_use->getResourceContext(engine);
+  resource_context= getTable()->in_use->getResourceContext(getEngine());
   /*
     When a storage engine method is called, the transaction must
     have been started, unless it's a DDL call, for which the
@@ -712,9 +702,9 @@ Cursor::ha_delete_all_rows()
      * @todo Make TransactionServices generic to AfterTriggerServices
      * or similar...
      */
-    Session *const session= table->in_use;
+    Session *const session= getTable()->in_use;
     TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.truncateTable(session, table);
+    transaction_services.truncateTable(session, getTable());
   }
 
   return result;
@@ -813,7 +803,7 @@ int Cursor::index_next_same(unsigned char *buf, const unsigned char *key, uint32
   int error;
   if (!(error=index_next(buf)))
   {
-    ptrdiff_t ptrdiff= buf - table->getInsertRecord();
+    ptrdiff_t ptrdiff= buf - getTable()->getInsertRecord();
     unsigned char *save_record_0= NULL;
     KeyInfo *key_info= NULL;
     KeyPartInfo *key_part;
@@ -829,9 +819,9 @@ int Cursor::index_next_same(unsigned char *buf, const unsigned char *key, uint32
     */
     if (ptrdiff)
     {
-      save_record_0= table->getInsertRecord();
-      table->record[0]= buf;
-      key_info= table->key_info + active_index;
+      save_record_0= getTable()->getInsertRecord();
+      getTable()->record[0]= buf;
+      key_info= getTable()->key_info + active_index;
       key_part= key_info->key_part;
       key_part_end= key_part + key_info->key_parts;
       for (; key_part < key_part_end; key_part++)
@@ -841,16 +831,16 @@ int Cursor::index_next_same(unsigned char *buf, const unsigned char *key, uint32
       }
     }
 
-    if (key_cmp_if_same(table, key, active_index, keylen))
+    if (key_cmp_if_same(getTable(), key, active_index, keylen))
     {
-      table->status=STATUS_NOT_FOUND;
+      getTable()->status=STATUS_NOT_FOUND;
       error=HA_ERR_END_OF_FILE;
     }
 
     /* Move back if necessary. */
     if (ptrdiff)
     {
-      table->record[0]= save_record_0;
+      getTable()->record[0]= save_record_0;
       for (key_part= key_info->key_part; key_part < key_part_end; key_part++)
         key_part->field->move_field_offset(-ptrdiff);
     }
@@ -887,7 +877,7 @@ int Cursor::index_next_same(unsigned char *buf, const unsigned char *key, uint32
 double Cursor::index_only_read_time(uint32_t keynr, double key_records)
 {
   uint32_t keys_per_block= (stats.block_size/2/
-			(table->key_info[keynr].key_length + ref_length) + 1);
+			(getTable()->key_info[keynr].key_length + ref_length) + 1);
   return ((double) (key_records + keys_per_block-1) /
           (double) keys_per_block);
 }
@@ -1194,12 +1184,12 @@ int Cursor::read_range_first(const key_range *start_key,
     key_compare_result_on_equal= ((end_key->flag == HA_READ_BEFORE_KEY) ? 1 :
 				  (end_key->flag == HA_READ_AFTER_KEY) ? -1 : 0);
   }
-  range_key_part= table->key_info[active_index].key_part;
+  range_key_part= getTable()->key_info[active_index].key_part;
 
   if (!start_key)			// Read first record
-    result= index_first(table->getInsertRecord());
+    result= index_first(getTable()->getInsertRecord());
   else
-    result= index_read_map(table->getInsertRecord(),
+    result= index_read_map(getTable()->getInsertRecord(),
                            start_key->key,
                            start_key->keypart_map,
                            start_key->flag);
@@ -1232,11 +1222,11 @@ int Cursor::read_range_next()
   if (eq_range)
   {
     /* We trust that index_next_same always gives a row in range */
-    return(index_next_same(table->getInsertRecord(),
+    return(index_next_same(getTable()->getInsertRecord(),
                                 end_range->key,
                                 end_range->length));
   }
-  result= index_next(table->getInsertRecord());
+  result= index_next(getTable()->getInsertRecord());
   if (result)
     return result;
   return(compare_key(end_range) <= 0 ? 0 : HA_ERR_END_OF_FILE);
@@ -1404,18 +1394,18 @@ int Cursor::ha_external_lock(Session *session, int lock_type)
   {
     if (lock_type == F_RDLCK)
     {
-      DRIZZLE_CURSOR_RDLOCK_START(table_share->getSchemaName(),
-                                  table_share->getTableName());
+      DRIZZLE_CURSOR_RDLOCK_START(getTable()->getShare()->getSchemaName(),
+                                  getTable()->getShare()->getTableName());
     }
     else if (lock_type == F_WRLCK)
     {
-      DRIZZLE_CURSOR_WRLOCK_START(table_share->getSchemaName(),
-                                  table_share->getTableName());
+      DRIZZLE_CURSOR_WRLOCK_START(getTable()->getShare()->getSchemaName(),
+                                  getTable()->getShare()->getTableName());
     }
     else if (lock_type == F_UNLCK)
     {
-      DRIZZLE_CURSOR_UNLOCK_START(table_share->getSchemaName(),
-                                  table_share->getTableName());
+      DRIZZLE_CURSOR_UNLOCK_START(getTable()->getShare()->getSchemaName(),
+                                  getTable()->getShare()->getTableName());
     }
   }
 
@@ -1454,14 +1444,14 @@ int Cursor::ha_external_lock(Session *session, int lock_type)
 int Cursor::ha_reset()
 {
   /* Check that we have called all proper deallocation functions */
-  assert(! table->getShare()->all_set.none());
-  assert(table->key_read == 0);
+  assert(! getTable()->getShare()->all_set.none());
+  assert(getTable()->key_read == 0);
   /* ensure that ha_index_end / endTableScan has been called */
   assert(inited == NONE);
   /* Free cache used by filesort */
-  table->free_io_cache();
+  getTable()->free_io_cache();
   /* reset the bitmaps to point to defaults */
-  table->default_column_bitmaps();
+  getTable()->default_column_bitmaps();
   return(reset());
 }
 
@@ -1476,22 +1466,22 @@ int Cursor::insertRecord(unsigned char *buf)
    * @TODO Technically, the below two lines can be take even further out of the
    * Cursor interface and into the fill_record() method.
    */
-  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
+  if (getTable()->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
   {
-    table->timestamp_field->set_time();
+    getTable()->timestamp_field->set_time();
   }
 
-  DRIZZLE_INSERT_ROW_START(table_share->getSchemaName(), table_share->getTableName());
+  DRIZZLE_INSERT_ROW_START(getTable()->getShare()->getSchemaName(), getTable()->getShare()->getTableName());
   setTransactionReadWrite();
   
-  if (unlikely(plugin::EventObserver::beforeInsertRecord(*table, buf)))
+  if (unlikely(plugin::EventObserver::beforeInsertRecord(*getTable(), buf)))
   {
     error= ER_EVENT_OBSERVER_PLUGIN;
   }
   else
   {
     error= doInsertRecord(buf);
-    if (unlikely(plugin::EventObserver::afterInsertRecord(*table, buf, error))) 
+    if (unlikely(plugin::EventObserver::afterInsertRecord(*getTable(), buf, error))) 
     {
       error= ER_EVENT_OBSERVER_PLUGIN;
     }
@@ -1506,7 +1496,7 @@ int Cursor::insertRecord(unsigned char *buf)
     return error;
   }
 
-  if (unlikely(log_row_for_replication(table, NULL, buf)))
+  if (unlikely(log_row_for_replication(getTable(), NULL, buf)))
     return HA_ERR_RBR_LOGGING_FAILED;
 
   return 0;
@@ -1521,23 +1511,23 @@ int Cursor::updateRecord(const unsigned char *old_data, unsigned char *new_data)
     Some storage engines require that the new record is in getInsertRecord()
     (and the old record is in getUpdateRecord()).
    */
-  assert(new_data == table->getInsertRecord());
+  assert(new_data == getTable()->getInsertRecord());
 
-  DRIZZLE_UPDATE_ROW_START(table_share->getSchemaName(), table_share->getTableName());
+  DRIZZLE_UPDATE_ROW_START(getTable()->getShare()->getSchemaName(), getTable()->getShare()->getTableName());
   setTransactionReadWrite();
-  if (unlikely(plugin::EventObserver::beforeUpdateRecord(*table, old_data, new_data)))
+  if (unlikely(plugin::EventObserver::beforeUpdateRecord(*getTable(), old_data, new_data)))
   {
     error= ER_EVENT_OBSERVER_PLUGIN;
   }
   else
   {
-    if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
+    if (getTable()->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
     {
-      table->timestamp_field->set_time();
+      getTable()->timestamp_field->set_time();
     }
 
     error= doUpdateRecord(old_data, new_data);
-    if (unlikely(plugin::EventObserver::afterUpdateRecord(*table, old_data, new_data, error)))
+    if (unlikely(plugin::EventObserver::afterUpdateRecord(*getTable(), old_data, new_data, error)))
     {
       error= ER_EVENT_OBSERVER_PLUGIN;
     }
@@ -1552,26 +1542,30 @@ int Cursor::updateRecord(const unsigned char *old_data, unsigned char *new_data)
     return error;
   }
 
-  if (unlikely(log_row_for_replication(table, old_data, new_data)))
+  if (unlikely(log_row_for_replication(getTable(), old_data, new_data)))
     return HA_ERR_RBR_LOGGING_FAILED;
 
   return 0;
+}
+TableShare *Cursor::getShare()
+{
+  return getTable()->getMutableShare();
 }
 
 int Cursor::deleteRecord(const unsigned char *buf)
 {
   int error;
 
-  DRIZZLE_DELETE_ROW_START(table_share->getSchemaName(), table_share->getTableName());
+  DRIZZLE_DELETE_ROW_START(getTable()->getShare()->getSchemaName(), getTable()->getShare()->getTableName());
   setTransactionReadWrite();
-  if (unlikely(plugin::EventObserver::beforeDeleteRecord(*table, buf)))
+  if (unlikely(plugin::EventObserver::beforeDeleteRecord(*getTable(), buf)))
   {
     error= ER_EVENT_OBSERVER_PLUGIN;
   }
   else
   {
     error= doDeleteRecord(buf);
-    if (unlikely(plugin::EventObserver::afterDeleteRecord(*table, buf, error)))
+    if (unlikely(plugin::EventObserver::afterDeleteRecord(*getTable(), buf, error)))
     {
       error= ER_EVENT_OBSERVER_PLUGIN;
     }
@@ -1584,7 +1578,7 @@ int Cursor::deleteRecord(const unsigned char *buf)
   if (unlikely(error))
     return error;
 
-  if (unlikely(log_row_for_replication(table, buf, NULL)))
+  if (unlikely(log_row_for_replication(getTable(), buf, NULL)))
     return HA_ERR_RBR_LOGGING_FAILED;
 
   return 0;

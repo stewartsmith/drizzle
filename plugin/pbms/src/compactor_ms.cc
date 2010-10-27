@@ -277,7 +277,7 @@ bool MSCompactorThread::doWork()
 				dst_file->write(head->getBuffer(0), dst_offset, head_size);
 
 				/* We have an engine reference, copy the BLOB over: */
-				CSFile::transfer(dst_file, dst_offset + head_size, src_file, src_offset + head_size, blob_size, iCompactBuffer, MS_COMPACTOR_BUFFER_SIZE);
+				CSFile::transfer(RETAIN(dst_file), dst_offset + head_size, RETAIN(src_file), src_offset + head_size, blob_size, iCompactBuffer, MS_COMPACTOR_BUFFER_SIZE);
 
 #ifdef HAVE_ALIAS_SUPPORT
 				/* If the BLOB has an alias update the alias index. */

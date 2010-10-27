@@ -332,6 +332,14 @@
    fun:_Z15key_cache_writePN8drizzled12st_key_cacheEimiPhjji
    ...
 }
+{
+   MyISAM pwrite issue. Teh Suck.
+   Memcheck:Param
+   pwrite64(buf)
+   ...
+   fun:_Z15key_cache_writePN8drizzled12st_key_cacheEimiPhjji
+  ...
+}
 
 # Things we don't like in Drizzle
 
@@ -471,5 +479,45 @@
   fun:__run_exit_handlers
   fun:exit
   ...
+}
+{
+  Boost::thread issues. Not a problem - static init issues.
+  Memcheck:Leak
+  fun:_Znwm
+  ...
+  fun:_ZN5boost6detail12set_tss_dataEPKvNS_10shared_ptrINS0_20tss_cleanup_functionEEEPvb
+   fun:_ZN8drizzled8internal14my_thread_initEv
+   fun:_ZN8drizzled8internal21my_thread_global_initEv
+   fun:_ZN8drizzled8internal7my_initEv
+   fun:main
+}
+{
+  Boost::thread issues. Not a problem - static init issues.
+   Memcheck:Leak
+   fun:_Znwj
+   ...
+   fun:_ZN5boost6detail12set_tss_dataEPKvNS_10shared_ptrINS0_20tss_cleanup_functionEEEPvb
+   fun:_ZN8drizzled8internal14my_thread_initEv
+   fun:_ZN8drizzled8internal21my_thread_global_initEv
+   fun:_ZN8drizzled8internal7my_initEv
+   fun:main
+}
+{
+  Boost::thread issues. Not a problem - static init issues.
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZN5boost6detail12set_tss_dataEPKvNS_10shared_ptrINS0_20tss_cleanup_functionEEEPvb
+   fun:_ZN8drizzled7Session12storeGlobalsEv
+   fun:_ZN8drizzled21drizzle_rm_tmp_tablesEv
+   fun:main
+}
+{
+  Boost::thread issues. Not a problem - static init issues.
+   Memcheck:Leak
+   fun:_Znwj
+   fun:_ZN5boost6detail12set_tss_dataEPKvNS_10shared_ptrINS0_20tss_cleanup_functionEEEPvb
+   fun:_ZN8drizzled7Session12storeGlobalsEv
+   fun:_ZN8drizzled21drizzle_rm_tmp_tablesEv
+   fun:main
 }
 

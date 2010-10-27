@@ -61,6 +61,10 @@ void memory::Root::init_alloc_root(size_t block_size_arg)
   first_block_usage= 0;
 }
 
+memory::Root::~Root()
+{
+}
+
 
 /**
  * @details
