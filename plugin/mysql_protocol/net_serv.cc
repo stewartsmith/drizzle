@@ -677,7 +677,7 @@ my_real_read(NET *net, size_t *complen)
           /* Clear the buffer so libdrizzle doesn't keep retrying */
           while (len > 0)
           {
-            length= read(net->vio->sd, net->buff, min(net->max_packet, len));
+            length= read(net->vio->sd, net->buff, min((size_t)net->max_packet, len));
             assert((long)length > 0L);
             len-= length;
           }
