@@ -227,7 +227,7 @@ void generate_dump_db(void)
     }
     catch (...)
     {
-      std::cout << _("Error inserting into destnation database") << std::endl;
+      std::cout << _("Error inserting into destination database") << std::endl;
       if (not ignore_errors)
         maybe_exit(EX_DRIZZLEERR);
     }
