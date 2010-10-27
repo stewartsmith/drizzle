@@ -67,6 +67,11 @@ drizzle_st *drizzle_create(drizzle_st *drizzle)
   if ( WSAStartup( MAKEWORD(2,2), &wsaData ) != 0 )
     printf("Error at WSAStartup()\n");
 #endif
+  struct sigaction act;
+
+  act.sa_handler = SIG_IGN;
+  sigaction(SIGPIPE, &act, NULL);
+
   if (drizzle == NULL)
   {
     drizzle= malloc(sizeof(drizzle_st));

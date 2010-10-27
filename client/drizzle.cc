@@ -340,7 +340,7 @@ static char *delimiter= NULL;
 static uint32_t delimiter_length= 1;
 unsigned short terminal_width= 80;
 
-int drizzleclient_real_query_for_lazy(const char *buf, int length,
+int drizzleclient_real_query_for_lazy(const char *buf, size_t length,
                                       drizzle_result_st *result,
                                       uint32_t *error_code);
 int drizzleclient_store_result_for_lazy(drizzle_result_st *result);
@@ -2669,7 +2669,7 @@ static void get_current_db(void)
  The different commands
 ***************************************************************************/
 
-int drizzleclient_real_query_for_lazy(const char *buf, int length,
+int drizzleclient_real_query_for_lazy(const char *buf, size_t length,
                                       drizzle_result_st *result,
                                       uint32_t *error_code)
 {
