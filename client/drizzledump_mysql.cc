@@ -578,7 +578,7 @@ DrizzleDumpDataMySQL::DrizzleDumpDataMySQL(DrizzleDumpTable *dataTable,
 DrizzleDumpDataMySQL::~DrizzleDumpDataMySQL()
 {
   drizzle_result_free(result);
-  if (result) delete result;
+  delete result;
 }
 
 long DrizzleDumpDataMySQL::convertTime(const char* oldTime) const
