@@ -1,10 +1,11 @@
-ADMINISTRATIVE 
+Administrative Commands
 ==============
 
-KILL
+.. toctree::
+   :maxdepth: 2
 
-FLUSH 
-
-ANALYZE
-
-UNLOCK
+   kill
+   flush
+   unlock
+   analyze 
+   check
