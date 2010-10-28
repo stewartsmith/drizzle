@@ -217,7 +217,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
           again. There they will wait until we update all tables version
           below.
 
-          Setting some_tables_deleted is done by remove_table_from_cache()
+          Setting some_tables_deleted is done by table::Cache::singleton().removeTable()
           in the other branch.
 
           In other words (reviewer suggestion): You need this setting of
@@ -678,7 +678,7 @@ void Session::unlink_open_table(Table *find)
   /*
     Note that we need to hold LOCK_open while changing the
     open_tables list. Another thread may work on it.
-    (See: remove_table_from_cache(), mysql_wait_completed_table())
+    (See: table::Cache::singleton().removeTable(), mysql_wait_completed_table())
     Closing a MERGE child before the parent would be fatal if the
     other thread tries to abort the MERGE lock in between.
   */
@@ -1513,7 +1513,7 @@ Table *drop_locked_tables(Session *session, const drizzled::TableIdentifier &ide
   /*
     Note that we need to hold LOCK_open while changing the
     open_tables list. Another thread may work on it.
-    (See: remove_table_from_cache(), mysql_wait_completed_table())
+    (See: table::Cache::singleton().removeTable(), mysql_wait_completed_table())
     Closing a MERGE child before the parent would be fatal if the
     other thread tries to abort the MERGE lock in between.
   */

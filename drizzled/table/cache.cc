@@ -127,7 +127,7 @@ bool Cache::areTablesUsed(Table *table, bool wait_for_name_lock)
   Invalidate any cache entries that are for some DB
 
   SYNOPSIS
-  remove_db_from_cache()
+  removeSchema()
   db		Database name. This will be in lower case if
   lower_case_table_name is set
 
@@ -263,7 +263,7 @@ bool Cache::removeTable(Session *session, TableIdentifier &identifier, uint32_t 
             ensure that the thread actually hears our signal
             before we go to sleep. Thus we wait for a short time
             and then we retry another loop in the
-            remove_table_from_cache routine.
+            table::Cache::singleton().removeTable routine.
           */
           boost::xtime xt; 
           xtime_get(&xt, boost::TIME_UTC); 

@@ -1831,9 +1831,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
                                                   "Waiting to get writelock");
       mysql_lock_abort(session,table->table);
       TableIdentifier identifier(table->table->getShare()->getSchemaName(), table->table->getShare()->getTableName());
-      remove_table_from_cache(session, identifier,
-                              RTFC_WAIT_OTHER_THREAD_FLAG |
-                              RTFC_CHECK_KILLED_FLAG);
+      table::Cache::singleton().removeTable(session, identifier, RTFC_WAIT_OTHER_THREAD_FLAG | RTFC_CHECK_KILLED_FLAG);
       session->exit_cond(old_message);
       if (session->killed)
 	goto err;
