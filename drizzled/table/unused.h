@@ -35,7 +35,7 @@ class UnusedTables {
 
   Concurrent *setTable(Table *arg)
   {
-    return tables= dynamic_cast<Concurrent *>(arg);
+    return tables= static_cast<Concurrent *>(arg);
   }
 
 public:
