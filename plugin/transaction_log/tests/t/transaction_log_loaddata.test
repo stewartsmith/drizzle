@@ -2,6 +2,12 @@
 # test of how the transaction log treats
 # LOAD DATA INFILE
 
+# Ignore startup/shutdown events
+--disable_query_log
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
+--enable_query_log
+
+
 --echo Testing basic LOAD DATA 
 --disable_warnings
 DROP TABLE IF EXISTS t1;

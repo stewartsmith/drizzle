@@ -2,6 +2,12 @@
 # Test of commit statements and how the transaction log handles them
 # captures / represents them
 
+# Ignore startup/shutdown events
+--disable_query_log
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
+--enable_query_log
+
+
 SET @OLD_AUTO_COMMIT = @@AUTOCOMMIT;
 SET AUTOCOMMIT = 0;
 
