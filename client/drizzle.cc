@@ -1801,10 +1801,8 @@ void drizzle_end(int sig)
 
   if (sig >= 0)
     put_info(sig ? _("Aborted") : _("Bye"), INFO_RESULT,0,0);
-  if (glob_buffer)
-    delete glob_buffer;
-  if (processed_prompt)
-    delete processed_prompt;
+  delete glob_buffer;
+  delete processed_prompt;
   opt_password.erase();
   free(histfile);
   free(histfile_tmp);
@@ -3586,7 +3584,7 @@ com_pager(string *, const char *line)
   /* Skip the spaces between the command and the argument */
   while (param && isspace(*param))
     param++;
-  if (!param || !strlen(param)) // if pager was not given, use the default
+  if (!param || (*param == '\0')) // if pager was not given, use the default
   {
     if (!default_pager_set)
     {

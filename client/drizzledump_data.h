@@ -64,7 +64,10 @@ class DrizzleDumpIndex
 
     DrizzleDumpIndex(std::string &index, DrizzleDumpConnection* connection) :
       dcon(connection),
-      indexName(index)
+      indexName(index),
+      isPrimary(false),
+      isUnique(false),
+      isHash(false)
     { }
 
     virtual ~DrizzleDumpIndex() { }
@@ -83,7 +86,12 @@ class DrizzleDumpField
   public:
     DrizzleDumpField(std::string &field, DrizzleDumpConnection* connection) :
       dcon(connection),
-      fieldName(field)
+      fieldName(field),
+      isNull(false),
+      isUnsigned(false),
+      isAutoIncrement(false),
+      defaultIsNull(false),
+      convertDateTime(false)
     { }
 
     virtual ~DrizzleDumpField() { }
@@ -120,7 +128,8 @@ class DrizzleDumpTable
   public:
     DrizzleDumpTable(std::string &table, DrizzleDumpConnection* connection) :
       dcon(connection),
-      tableName(table)
+      tableName(table),
+      database(NULL)
     { }
 
     virtual ~DrizzleDumpTable() { }
@@ -183,7 +192,8 @@ class DrizzleDumpData
     drizzle_result_st *result;
     DrizzleDumpData(DrizzleDumpTable *dataTable, DrizzleDumpConnection *connection) :
       dcon(connection),
-      table(dataTable)
+      table(dataTable),
+      result(NULL)
     { }
 
     virtual ~DrizzleDumpData() { }
@@ -229,8 +239,8 @@ class DrizzleDumpConnection
 
     void freeResult(drizzle_result_st* result);
     bool setDB(std::string databaseName);
-    bool usingDrizzleProtocol(void) { return drizzleProtocol; }
-    bool getServerType(void) { return serverType; }
+    bool usingDrizzleProtocol(void) const { return drizzleProtocol; }
+    bool getServerType(void) const { return serverType; }
     const char* getServerVersion(void) { return drizzle_con_server_version(&connection); }
 };
 
