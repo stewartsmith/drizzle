@@ -648,7 +648,6 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/module/option_context.cc \
 				 drizzled/module/option_map.cc \
 				 drizzled/module/registry.cc \
-				 drizzled/my_getsystime.cc \
 				 drizzled/my_hash.cc \
 				 drizzled/name_resolution_context_state.cc \
 				 drizzled/named_savepoint.cc \
