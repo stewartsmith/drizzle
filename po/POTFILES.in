@@ -8,6 +8,7 @@ client/drizzleslap.cc
 client/drizzletest.cc
 drizzled/cursor.cc
 drizzled/db.cc
+drizzled/definition/table.cc
 drizzled/drizzled.cc
 drizzled/error.cc
 drizzled/gettext.h
@@ -59,15 +60,15 @@ plugin/blitzdb/ha_blitz.h
 plugin/console/console.cc
 plugin/default_replicator/default_replicator.cc
 plugin/drizzle_protocol/drizzle_protocol.cc
-plugin/haildb/haildb_engine.cc
 plugin/errmsg_notify/errmsg_notify.cc
 plugin/errmsg_stderr/errmsg_stderr.cc
 plugin/filtered_replicator/filtered_replicator.cc
+plugin/haildb/haildb_engine.cc
 plugin/hello_events/hello_events.cc
 plugin/innobase/handler/data_dictionary.cc
 plugin/innobase/handler/ha_innodb.cc
-plugin/innobase/ut/ut0auxconf_pause.c
 plugin/innobase/pars/pars0grm.c
+plugin/innobase/ut/ut0auxconf_pause.c
 plugin/logging_gearman/logging_gearman.cc
 plugin/logging_query/logging_query.cc
 plugin/logging_stats/logging_stats.cc
