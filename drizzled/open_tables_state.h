@@ -40,6 +40,7 @@ public:
     base tables that were opened with @see open_tables().
   */
   Table *open_tables;
+
   /**
     List of temporary tables used by this thread. Contains user-level
     temporary tables, created with CREATE TEMPORARY TABLE, and

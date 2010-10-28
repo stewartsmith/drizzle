@@ -272,7 +272,7 @@ bool mysql_rm_db(Session *session, SchemaIdentifier &schema_identifier, const bo
     else
     {
       LOCK_open.lock(); /* After deleting database, remove all cache entries related to schema */
-      remove_db_from_cache(schema_identifier);
+      table::Cache::singleton().removeSchema(schema_identifier);
       LOCK_open.unlock();
 
 
@@ -399,9 +399,9 @@ static int rm_table_part2(Session *session, TableList *tables)
     {
       Table *locked_table;
       abort_locked_tables(session, identifier);
-      remove_table_from_cache(session, identifier,
-                              RTFC_WAIT_OTHER_THREAD_FLAG |
-                              RTFC_CHECK_KILLED_FLAG);
+      table::Cache::singleton().removeTable(session, identifier,
+                                            RTFC_WAIT_OTHER_THREAD_FLAG |
+                                            RTFC_CHECK_KILLED_FLAG);
       /*
         If the table was used in lock tables, remember it so that
         unlock_table_names can free it
