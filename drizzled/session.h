@@ -1585,6 +1585,7 @@ public:
   void get_xid(DRIZZLE_XID *xid); // Innodb only
 
   table::Instance *getInstanceTable();
+  table::Instance *getInstanceTable(List<CreateField> &field_list);
 
 private:
   bool resetUsage()

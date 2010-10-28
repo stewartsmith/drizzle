@@ -193,19 +193,6 @@ public:
 
 static UnusedTables unused_tables;
 
-unsigned char *table_cache_key(const unsigned char *record,
-                               size_t *length,
-                               bool );
-
-unsigned char *table_cache_key(const unsigned char *record,
-                               size_t *length,
-                               bool )
-{
-  Table *entry=(Table*) record;
-  *length= entry->getShare()->getCacheKey().size();
-  return (unsigned char*) &entry->getShare()->getCacheKey()[0];
-}
-
 bool table_cache_init(void)
 {
   return false;
@@ -256,7 +243,7 @@ void close_handle_and_leave_table_as_lock(Table *table)
   const TableIdentifier::Key &key(identifier.getKey());
   TableShare *share= new TableShare(identifier.getType(),
                                     identifier,
-                                    const_cast<char *>(&key[0]),  static_cast<uint32_t>(table->getShare()->getCacheKeySize()));
+                                    const_cast<char *>(key.vector()),  static_cast<uint32_t>(table->getShare()->getCacheKeySize()));
 
   table->cursor->close();
   table->db_stat= 0;                            // Mark cursor closed

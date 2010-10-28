@@ -27,9 +27,24 @@ SQL Language:
 .. toctree::
    :maxdepth: 2
 
+   queries
    ddl
    dml
-   columntypes
+   columntypes 
+   variables 
+   dynamic 
+   getting_information 
+   transactional 
+   administrative 
+
+Advanced Topics:
+  
+.. toctree::
+   :maxdepth: 2
+
+   storage_engines
+   logging
+
 
 Configuration:
 
