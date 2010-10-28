@@ -82,6 +82,7 @@ plugin/multi_thread/multi_thread.h
 plugin/myisam/ha_myisam.cc
 plugin/myisam/my_handler_errors.cc
 plugin/mysql_protocol/mysql_protocol.cc
+plugin/mysql_unix_socket_protocol/protocol.cc
 plugin/pbms/src/parameters_ms.cc
 plugin/rabbitmq/rabbitmq_log.cc
 plugin/session_dictionary/processlist.cc
