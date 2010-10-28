@@ -78,7 +78,6 @@ private:
   /** Category of this table. */
   enum_table_category table_category;
 
-  uint32_t open_count;			/* Number of tables in open list */
 public:
 
   bool isTemporaryCategory() const

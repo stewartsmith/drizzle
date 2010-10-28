@@ -23,7 +23,7 @@
 #include "drizzled/pthread_globals.h"
 #include "drizzled/session.h"
 #include "drizzled/identifier/table.h"
-#include "drizzled/table_share.h"
+#include "drizzled/definition/table.h"
 
 namespace drizzled {
 

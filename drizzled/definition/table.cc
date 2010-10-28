@@ -402,7 +402,6 @@ bool TableShare::fieldInPrimaryKey(Field *in_field) const
 
 TableShare::TableShare(TableIdentifier::Type type_arg) :
   table_category(TABLE_UNKNOWN_CATEGORY),
-  open_count(0),
   found_next_number_field(NULL),
   timestamp_field(NULL),
   key_info(NULL),
@@ -472,7 +471,6 @@ TableShare::TableShare(TableIdentifier::Type type_arg) :
 
 TableShare::TableShare(TableIdentifier &identifier, const TableIdentifier::Key &key) :// Used by placeholder
   table_category(TABLE_UNKNOWN_CATEGORY),
-  open_count(0),
   found_next_number_field(NULL),
   timestamp_field(NULL),
   key_info(NULL),
@@ -548,7 +546,6 @@ TableShare::TableShare(TableIdentifier &identifier, const TableIdentifier::Key &
 
 TableShare::TableShare(const TableIdentifier &identifier) : // Just used during createTable()
   table_category(TABLE_UNKNOWN_CATEGORY),
-  open_count(0),
   found_next_number_field(NULL),
   timestamp_field(NULL),
   key_info(NULL),
@@ -631,7 +628,6 @@ TableShare::TableShare(TableIdentifier::Type type_arg,
                        char *path_arg,
                        uint32_t path_length_arg) :
   table_category(TABLE_UNKNOWN_CATEGORY),
-  open_count(0),
   found_next_number_field(NULL),
   timestamp_field(NULL),
   key_info(NULL),
