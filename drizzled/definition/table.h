@@ -23,8 +23,8 @@
   instance of table share per one table in the database.
 */
 
-#ifndef DRIZZLED_TABLE_SHARE_H
-#define DRIZZLED_TABLE_SHARE_H
+#ifndef DRIZZLED_DEFINITION_TABLE_H
+#define DRIZZLED_DEFINITION_TABLE_H
 
 #include <string>
 
@@ -38,14 +38,15 @@
 #include "drizzled/message/table.pb.h"
 #include "drizzled/util/string.h"
 
+#include "drizzled/table/cache.h"
+#include "drizzled/definition/cache.h"
+
 namespace drizzled
 {
 
 extern uint64_t refresh_version;
 
 typedef boost::shared_ptr<TableShare> TableSharePtr;
-
-typedef boost::unordered_map< TableIdentifier::Key, TableSharePtr> TableDefinitionCache;
 
 const static std::string STANDARD_STRING("STANDARD");
 const static std::string TEMPORARY_STRING("TEMPORARY");
@@ -79,7 +80,6 @@ private:
   /** Category of this table. */
   enum_table_category table_category;
 
-  uint32_t open_count;			/* Number of tables in open list */
 public:
 
   bool isTemporaryCategory() const
@@ -237,9 +237,7 @@ private:
   {
     mutex.unlock();
   }
-public:
 
-private:
   std::vector<unsigned char> default_values;		/* row with default values */
 public:
   // @note This needs to be made to be const in the future
@@ -479,6 +477,7 @@ public:
 
 private:
   uint32_t ref_count;       /* How many Table objects uses this */
+
 public:
   uint32_t getTableCount() const
   {
@@ -490,6 +489,11 @@ public:
     lock();
     ref_count++;
     unlock();
+  }
+
+  uint32_t decrementTableCount()
+  {
+    return --ref_count;
   }
 
   uint32_t null_bytes;
@@ -637,11 +641,9 @@ public:
 
   void open_table_error(int pass_error, int db_errno, int pass_errarg);
 
-  static void cacheStart(void);
   static void release(TableShare *share);
   static void release(TableSharePtr &share);
   static void release(TableIdentifier &identifier);
-  static const TableDefinitionCache &getCache();
   static TableSharePtr getShare(TableIdentifier &identifier);
   static TableSharePtr getShareCreate(Session *session, 
                                       TableIdentifier &identifier,
@@ -698,4 +700,4 @@ private:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TABLE_SHARE_H */
+#endif /* DRIZZLED_DEFINITION_TABLE_H */

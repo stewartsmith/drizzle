@@ -1619,7 +1619,9 @@ int init_server_components(module::Registry &plugins)
     errmsg_printf(ERRMSG_LVL_ERROR, _("Could not initialize table cache\n"));
     unireg_abort(1);
   }
-  TableShare::cacheStart();
+
+  // Resize the definition Cache at startup
+  definition::Cache::singleton().rehash(table_def_size);
 
   setup_fpu();
 
