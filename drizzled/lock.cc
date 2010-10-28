@@ -726,7 +726,7 @@ void unlock_table_name(TableList *table_list)
 {
   if (table_list->table)
   {
-    remove_table(dynamic_cast<table::Concurrent *>(table_list->table));
+    remove_table(static_cast<table::Concurrent *>(table_list->table));
     broadcast_refresh();
   }
 }

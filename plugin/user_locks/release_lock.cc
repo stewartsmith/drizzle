@@ -45,7 +45,7 @@ int64_t ReleaseLock::val_int()
 
   if (result)
   {
-    user_locks::Storable *list= dynamic_cast<user_locks::Storable *>(getSession().getProperty("user_locks"));
+    user_locks::Storable *list= static_cast<user_locks::Storable *>(getSession().getProperty("user_locks"));
     assert(list);
     if (list) // Just in case we ever blow the assert
       list->erase(Key(getSession().getSecurityContext(), res->c_str()));

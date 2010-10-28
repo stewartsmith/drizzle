@@ -473,17 +473,17 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpTable &obj)
   }
 
   os << std::endl;
-  os << ") ENGINE=" << obj.engineName << " ";
+  os << ") ENGINE='" << obj.engineName << "' ";
   if (obj.autoIncrement > 0)
   {
     os << "AUTO_INCREMENT=" << obj.autoIncrement << " ";
   }
 
-  os << "COLLATE = " << obj.collate;
+  os << "COLLATE='" << obj.collate << "'";
 
   if (not obj.comment.empty())
   {
-    os << " COMMENT = '" << obj.comment << "'";
+    os << " COMMENT='" << obj.comment << "'";
   }
 
   os << ";" << std::endl << std::endl;

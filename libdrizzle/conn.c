@@ -1007,7 +1007,7 @@ drizzle_return_t drizzle_state_write(drizzle_con_st *con)
   while (con->buffer_size != 0)
   {
   
-    write_size = send(con->fd,(char *) con->buffer_ptr, con->buffer_size,0);
+    write_size = send(con->fd,(char *) con->buffer_ptr, con->buffer_size, 0);
 
     drizzle_log_crazy(con->drizzle, "write fd=%d return=%zd errno=%d", con->fd,
                       write_size, errno);
