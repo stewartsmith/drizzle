@@ -69,9 +69,9 @@ static void printStatement(const message::Statement &statement)
   {
     string &sql= *sql_string_iter;
 
-    /* 
-     * Replace \n and \r with spaces so that SQL statements 
-     * are always on a single line 
+    /*
+     * Replace \n and \r with spaces so that SQL statements
+     * are always on a single line
      */
     {
       string::size_type found= sql.find_first_of(replace_with_spaces);
@@ -319,12 +319,11 @@ int main(int argc, char* argv[])
   message::TransactionManager trx_mgr;
 
   protobuf::io::ZeroCopyInputStream *raw_input= new protobuf::io::FileInputStream(file);
-  protobuf::io::CodedInputStream *coded_input= new protobuf::io::CodedInputStream(raw_input);
 
   /* Skip ahead to user supplied position */
   if (opt_start_pos)
   {
-    if (not coded_input->Skip(opt_start_pos))
+    if (not raw_input->Skip(opt_start_pos))
     {
       cerr << _("Could not skip to position ") << opt_start_pos
            << _(" in file ") << filename << endl;
@@ -340,11 +339,26 @@ int main(int argc, char* argv[])
   bool result= true;
   uint32_t message_type= 0;
 
-  /* Read in the length of the command */
-  while (result == true && 
-         coded_input->ReadLittleEndian32(&message_type) == true &&
-         coded_input->ReadLittleEndian32(&length) == true)
+  while (result == true)
   {
+   /*
+     * Odd thing to note about using CodedInputStream: This class wasn't
+     * intended to read large amounts of GPB messages. It has an upper
+     * limit on the number of bytes it will read (see Protobuf docs for
+     * this class for more info). A warning will be produced as you
+     * get close to this limit. Since this is a pretty lightweight class,
+     * we should be able to simply create a new one for each message we
+     * want to read.
+     */
+    protobuf::io::CodedInputStream coded_input(raw_input);
+
+    /* Read in the type and length of the command */
+    if (not coded_input.ReadLittleEndian32(&message_type) ||
+        not coded_input.ReadLittleEndian32(&length))
+    {
+      break;  /* EOF */
+    }
+
     if (message_type != ReplicationServices::TRANSACTION)
     {
       cerr << _("Found a non-transaction message in log.  Currently, not supported.\n");
@@ -359,7 +373,7 @@ int main(int argc, char* argv[])
 
     if (buffer == NULL)
     {
-      /* 
+      /*
        * First time around...just malloc the length.  This block gets rid
        * of a GCC warning about uninitialized temp_buffer.
        */
@@ -380,7 +394,7 @@ int main(int argc, char* argv[])
       buffer= temp_buffer;
 
     /* Read the Command */
-    result= coded_input->ReadRaw(buffer, (int) length);
+    result= coded_input.ReadRaw(buffer, (int) length);
     if (result == false)
     {
       char errmsg[STRERROR_MAX];
@@ -425,7 +439,7 @@ int main(int argc, char* argv[])
       else
       {
         /* Need to get the checksum bytes out of stream */
-        coded_input->ReadLittleEndian32(&checksum);
+        coded_input.ReadLittleEndian32(&checksum);
         previous_length = length;
         continue;
       }
@@ -472,7 +486,7 @@ int main(int argc, char* argv[])
     } /* end ! vm.count("transaction-id") */
 
     /* Skip 4 byte checksum */
-    coded_input->ReadLittleEndian32(&checksum);
+    coded_input.ReadLittleEndian32(&checksum);
 
     if (do_checksum)
     {
@@ -492,7 +506,6 @@ int main(int argc, char* argv[])
   if (buffer)
     free(buffer);
 
-  delete coded_input;
   delete raw_input;
 
   return (result == true ? 0 : 1);

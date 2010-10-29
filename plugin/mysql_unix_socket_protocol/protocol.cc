@@ -79,6 +79,7 @@ static int init(drizzled::module::Context &context)
 bool Protocol::getFileDescriptors(std::vector<int> &fds)
 {
   struct sockaddr_un servAddr;
+  socklen_t addrlen;
   int unix_sock;
 
   if ((unix_sock= socket(AF_UNIX, SOCK_STREAM, 0)) < 0)
@@ -97,7 +98,8 @@ bool Protocol::getFileDescriptors(std::vector<int> &fds)
 
   (void) setsockopt(unix_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&arg, sizeof(arg));
 
-  if (bind(unix_sock, reinterpret_cast<struct sockaddr *>(&servAddr), sizeof(servAddr)) < 0)
+  addrlen= sizeof(servAddr);
+  if (bind(unix_sock, reinterpret_cast<struct sockaddr *>(&servAddr), addrlen) < 0)
   { 
     std::cerr << "Can't start server : Bind on unix socket\n";
     std::cerr << "Do you already have another of drizzled or mysqld running on socket: " << "/tmp/mysql.socket" << "?\n";
