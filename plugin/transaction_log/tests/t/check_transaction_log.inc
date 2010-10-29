@@ -8,18 +8,18 @@
 # We will also check the transaction log contents via the 
 # udf - PRINT_TRANSACTION_MESSAGE(transaction_log, <offset>)
 
---echo # check transaction_log
---replace_column 7 START_TIMESTAMP 8 END_TIMESTAMP 9 INDEX_SIZE
-SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
---echo
+#--echo # check transaction_log
+#--replace_column 7 START_TIMESTAMP 8 END_TIMESTAMP 9 INDEX_SIZE
+#SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG;
+#--echo
 
 --echo Check transaction_log_entries
-SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 --echo
 
 --echo Check transaction_log_transactions
 --replace_column 4 START_TIMESTAMP 5 END_TIMESTAMP
-SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 
 --echo Check transaction log contents
 --replace_regex /start_timestamp: [0-9]+/START_TIMESTAMP/g /end_timestamp: [0-9]+/END_TIMESTAMP/g /creation_timestamp: [0-9]+/CREATE_TIMESTAMP/ /update_timestamp: [0-9]+/UPDATE_TIMESTAMP/ /transaction_id: [0-9]+/TRANSACTION_ID/
