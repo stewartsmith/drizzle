@@ -342,6 +342,7 @@ int main(int argc, char **argv)
     delete session;
   }
 
+
   /* Listen for new connections and start new session for each connection
      accepted. The listen.getClient() method will return NULL when the server
      should be shutdown. */

@@ -34,9 +34,6 @@ CREATE TABLE t2 LIKE t1;
 
 CREATE TABLE t3 LIKE t2;
 
-# check our list of transactions prior to the DROP
-SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES ;
-
 DROP TABLE t1, t2, t3;
 # The transaction log treats the above DROP as 3 
 # separate transactions.  We check the last three 

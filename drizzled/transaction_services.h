@@ -432,13 +432,6 @@ public:
 
   void allocateNewTransactionId();
  
-  /**
-   * DEBUG ONLY.  See plugin::TransactionLog::truncate()
-   */
-  void resetTransactionId()
-  {
-  }
-
   /**************
    * Events API
    **************/
