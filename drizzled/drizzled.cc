@@ -354,6 +354,7 @@ atomic<uint32_t> connection_count;
 
 global_buffer_constraint<uint64_t> global_sort_buffer(0);
 global_buffer_constraint<uint64_t> global_join_buffer(0);
+global_buffer_constraint<uint64_t> global_read_rnd_buffer(0);
 
 /** 
   Refresh value. We use to test this to find out if a refresh even has happened recently.
@@ -1374,6 +1375,9 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   N_("When reading rows in sorted order after a sort, the rows are read "
      "through this buffer to avoid a disk seeks. If not set, then it's set "
      "to the value of record_buffer."))
+  ("read-rnd-threshold",
+  po::value<uint64_t>()->default_value(0),
+  N_("A global cap on the size of read-rnd-buffer-size (0 means unlimited)"))
   ("scheduler", po::value<string>(),
   N_("Select scheduler to be used (by default multi-thread)."))
   ("sort-buffer-size",
@@ -2249,6 +2253,19 @@ static void get_options()
     }
 
     global_join_buffer.setMaxSize(vm["join-heap-threshold"].as<uint64_t>());
+  }
+
+  if (vm.count("read-rnd-threshold"))
+  {
+    if ((vm["read-rnd-threshold"].as<size_t>() > 0) and
+      (vm["read-rnd-threshold"].as<size_t>() <
+      global_system_variables.read_rnd_buff_size))
+    {
+      cout << N_("Error: read-rnd-threshold cannot be less than read-rnd-buffer-size") << endl;
+      exit(-1);
+    }
+
+    global_read_rnd_buffer.setMaxSize(vm["read-rnd-threshold"].as<uint64_t>());
   }
 
   if (vm.count("exit-info"))
