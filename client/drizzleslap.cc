@@ -653,9 +653,6 @@ void concurrency_loop(drizzle_con_st *con, uint32_t current, OptionString *eptr)
     if (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary)
       generate_primary_key_list(con, eptr);
 
-    if (commit_rate)
-      run_query(con, NULL, "SET AUTOCOMMIT=0", strlen("SET AUTOCOMMIT=0"));
-
     if (!pre_system.empty())
     {
       int ret= system(pre_system.c_str());
