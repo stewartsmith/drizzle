@@ -99,10 +99,10 @@ bool Protocol::getFileDescriptors(std::vector<int> &fds)
   (void) setsockopt(unix_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&arg, sizeof(arg));
 
   addrlen= sizeof(servAddr);
-  if (bind(unix_sock, reinterpret_cast<struct sockaddr *>(&servAddr), addrlen) < 0)
+  if (::bind(unix_sock, reinterpret_cast<sockaddr *>(&servAddr), addrlen) < 0)
   { 
     std::cerr << "Can't start server : Bind on unix socket\n";
-    std::cerr << "Do you already have another of drizzled or mysqld running on socket: " << "/tmp/mysql.socket" << "?\n";
+    std::cerr << "Do you already have another of drizzled or mysqld running on socket: " << unix_socket_path << "?\n";
     std::cerr << "Can't start server : UNIX Socket";
 
     return false;
