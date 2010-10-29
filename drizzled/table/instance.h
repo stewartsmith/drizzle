@@ -41,6 +41,8 @@ public:
   {
   }
 
+  Instance(Session *session, List<CreateField> &field_list);
+
   TableShare *getMutableShare(void)
   {
     return &_share;

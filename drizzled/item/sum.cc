@@ -1027,7 +1027,7 @@ bool Item_sum_distinct::setup(Session *session)
   field_def.init_for_tmp_table(table_field_type, args[0]->max_length,
                                args[0]->decimals, args[0]->maybe_null);
 
-  if (! (table= session->create_virtual_tmp_table(field_list)))
+  if (! (table= session->getInstanceTable(field_list)))
     return(true);
 
   /* XXX: check that the case of CHAR(0) works OK */

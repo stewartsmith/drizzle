@@ -158,7 +158,7 @@ static bool drizzleclient_net_realloc(NET *net, size_t length)
   if (length >= net->max_packet_size)
   {
     /* @todo: 1 and 2 codes are identical. */
-    net->error= 1;
+    net->error= 3;
     net->last_errno= ER_NET_PACKET_TOO_LARGE;
     my_error(ER_NET_PACKET_TOO_LARGE, MYF(0));
     return(1);
@@ -599,7 +599,7 @@ static uint32_t
 my_real_read(NET *net, size_t *complen)
 {
   unsigned char *pos;
-  size_t length;
+  size_t length= 0;
   uint32_t i,retry_count=0;
   size_t len=packet_error;
   uint32_t remain= (net->compress ? NET_HEADER_SIZE+COMP_HEADER_SIZE :
@@ -674,6 +674,14 @@ my_real_read(NET *net, size_t *complen)
       {
         if (drizzleclient_net_realloc(net,helping))
         {
+          /* Clear the buffer so libdrizzle doesn't keep retrying */
+          while (len > 0)
+          {
+            length= read(net->vio->sd, net->buff, min((size_t)net->max_packet, len));
+            assert((long)length > 0L);
+            len-= length;
+          }
+            
           len= packet_error;          /* Return error and close connection */
           goto end;
         }

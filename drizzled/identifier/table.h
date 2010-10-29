@@ -58,7 +58,58 @@ class TableIdentifier : public SchemaIdentifier
 {
 public:
   typedef message::Table::TableType Type;
-  typedef std::vector<char> Key;
+
+  class Key
+  {
+    std::vector<char> key_buffer;
+    size_t hash_value;
+
+  public:
+
+    Key() :
+      hash_value(0)
+    {
+    }
+
+    const char *vector() const
+    {
+      return &key_buffer[0];
+    }
+
+    std::vector<char> &vectorPtr()
+    {
+      return key_buffer;
+    }
+
+    void set(size_t resize_arg, const std::string &a, const std::string &b);
+
+    friend bool operator==(const Key &left, const Key &right)
+    {
+      if (left.hash_value == right.hash_value and left.key_buffer.size() == right.key_buffer.size())
+      {
+        if (memcmp(&left.key_buffer[0], &right.key_buffer[0], left.key_buffer.size()) == 0)
+          return true;
+      }
+
+      return false;
+    }
+
+    friend bool operator<(const Key &left, const Key &right)
+    {
+      return left.key_buffer < right.key_buffer;
+    }
+
+    size_t size() const
+    {
+      return key_buffer.size();
+    }
+
+    size_t getHashValue() const
+    {
+      return hash_value;
+    }
+  };
+
 private:
 
   Type type;
@@ -235,6 +286,7 @@ public:
 };
 
 std::size_t hash_value(TableIdentifier const& b);
+std::size_t hash_value(TableIdentifier::Key const& b);
 
 typedef std::vector <TableIdentifier> TableIdentifiers;
 

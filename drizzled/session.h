@@ -21,23 +21,20 @@
 #ifndef DRIZZLED_SESSION_H
 #define DRIZZLED_SESSION_H
 
-/* Classes in mysql */
-
 #include "drizzled/plugin.h"
-#include <drizzled/sql_locale.h>
+#include "drizzled/sql_locale.h"
 #include "drizzled/resource_context.h"
-#include <drizzled/cursor.h>
-#include <drizzled/current_session.h>
-#include <drizzled/sql_error.h>
-#include <drizzled/file_exchange.h>
-#include <drizzled/select_result_interceptor.h>
-#include <drizzled/statistics_variables.h>
-#include <drizzled/xid.h>
+#include "drizzled/cursor.h"
+#include "drizzled/current_session.h"
+#include "drizzled/sql_error.h"
+#include "drizzled/file_exchange.h"
+#include "drizzled/select_result_interceptor.h"
+#include "drizzled/statistics_variables.h"
+#include "drizzled/xid.h"
 #include "drizzled/query_id.h"
 #include "drizzled/named_savepoint.h"
 #include "drizzled/transaction_context.h"
 #include "drizzled/util/storable.h"
-
 #include "drizzled/my_hash.h"
 
 #include <netdb.h>
@@ -47,14 +44,11 @@
 #include <deque>
 
 #include "drizzled/internal/getrusage.h"
-
-#include <drizzled/security_context.h>
-#include <drizzled/open_tables_state.h>
-
-#include <drizzled/internal_error_handler.h>
-#include <drizzled/diagnostics_area.h>
-
-#include <drizzled/plugin/authorization.h>
+#include "drizzled/security_context.h"
+#include "drizzled/open_tables_state.h"
+#include "drizzled/internal_error_handler.h"
+#include "drizzled/diagnostics_area.h"
+#include "drizzled/plugin/authorization.h"
 
 #include <boost/unordered_map.hpp>
 #include <boost/thread/mutex.hpp>
@@ -79,9 +73,15 @@ class Transaction;
 class Statement;
 class Resultset;
 }
+
 namespace internal
 {
 struct st_my_thread_var;
+}
+
+namespace table
+{
+class Placeholder;
 }
 
 class Lex_input_stream;
@@ -165,9 +165,9 @@ class Time_zone;
 #define Session_SENTRY_MAGIC 0xfeedd1ff
 #define Session_SENTRY_GONE  0xdeadbeef
 
-struct system_variables
+struct drizzle_system_variables
 {
-  system_variables()
+  drizzle_system_variables()
   {};
   /*
     How dynamically allocated system variables are handled:
@@ -238,7 +238,7 @@ struct system_variables
   Time_zone *time_zone;
 };
 
-extern struct system_variables global_system_variables;
+extern struct drizzle_system_variables global_system_variables;
 
 } /* namespace drizzled */
 
@@ -427,7 +427,7 @@ private:
   UserVars user_vars; /**< Hash of user variables defined during the session's lifetime */
 
 public:
-  struct system_variables variables; /**< Mutable local variables local to the session */
+  drizzle_system_variables variables; /**< Mutable local variables local to the session */
   struct system_status_var status_var; /**< Session-local status counters */
   THR_LOCK_INFO lock_info; /**< Locking information for this session */
   THR_LOCK_OWNER main_lock_id; /**< To use for conventional queries */
@@ -562,10 +562,38 @@ public:
   ResourceContext *getResourceContext(const plugin::MonitoredInTransaction *monitored,
                                       size_t index= 0);
 
+  /**
+   * Structure used to manage "statement transactions" and
+   * "normal transactions". In autocommit mode, the normal transaction is
+   * equivalent to the statement transaction.
+   *
+   * Storage engines will be registered here when they participate in
+   * a transaction. No engine is registered more than once.
+   */
   struct st_transactions {
     std::deque<NamedSavepoint> savepoints;
-    TransactionContext all; ///< Trans since BEGIN WORK
-    TransactionContext stmt; ///< Trans for current statement
+
+    /**
+     * The normal transaction (since BEGIN WORK).
+     *
+     * Contains a list of all engines that have participated in any of the
+     * statement transactions started within the context of the normal
+     * transaction.
+     *
+     * @note In autocommit mode, this is empty.
+     */
+    TransactionContext all;
+
+    /**
+     * The statment transaction.
+     *
+     * Contains a list of all engines participating in the given statement.
+     *
+     * @note In autocommit mode, this will be used to commit/rollback the
+     * normal transaction.
+     */
+    TransactionContext stmt;
+
     XID_STATE xid_state;
 
     void cleanup()
@@ -1209,9 +1237,8 @@ public:
    * Current implementation does not depend on that, but future changes
    * should be done with this in mind; 
    *
-   * @param  Scrambled password received from client
-   * @param  Length of scrambled password
-   * @param  Database name to connect to, may be NULL
+   * @param passwd Scrambled password received from client
+   * @param db Database name to connect to, may be NULL
    */
   bool checkUser(const std::string &passwd, const std::string &db);
   
@@ -1487,7 +1514,7 @@ public:
   void close_cached_table(Table *table);
 
   /* Create a lock in the cache */
-  Table *table_cache_insert_placeholder(const TableIdentifier &identifier);
+  table::Placeholder *table_cache_insert_placeholder(const TableIdentifier &identifier);
   bool lock_table_name_if_not_cached(TableIdentifier &identifier, Table **table);
 
   typedef boost::unordered_map<std::string, message::Table, util::insensitive_hash, util::insensitive_equal_to> TableMessageCache;
@@ -1576,6 +1603,7 @@ public:
   void get_xid(DRIZZLE_XID *xid); // Innodb only
 
   table::Instance *getInstanceTable();
+  table::Instance *getInstanceTable(List<CreateField> &field_list);
 
 private:
   bool resetUsage()

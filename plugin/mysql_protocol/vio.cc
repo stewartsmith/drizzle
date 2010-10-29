@@ -114,7 +114,6 @@ static int _vio_fastsend(Vio * vio)
   if (error != 0)
   {
     perror("setsockopt");
-    assert(error == 0);
   }
 
   return error;

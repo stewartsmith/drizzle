@@ -70,6 +70,21 @@ struct insensitive_hash : std::unary_function<std::string, std::size_t>
   }
 };
 
+struct sensitive_hash : std::unary_function< std::vector<char>, std::size_t>
+{
+  std::size_t operator()(std::vector<char> const& x) const
+  {
+    std::size_t seed = 0;
+
+    for(std::vector<char>::const_iterator it = x.begin(); it != x.end(); ++it)
+    {
+      boost::hash_combine(seed, *it);
+    }
+
+    return seed;
+  }
+};
+
 } /* namespace util */
 } /* namespace drizzled */
 

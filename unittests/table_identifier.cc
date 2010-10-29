@@ -64,13 +64,13 @@ TEST(table_identifier_test_key, Key)
   const TableIdentifier::Key key= identifier.getKey();
 
   EXPECT_EQ(key.size(), 7);
-  EXPECT_EQ(key[0], 't');
-  EXPECT_EQ(key[1], 'e');
-  EXPECT_EQ(key[2], 's');
-  EXPECT_EQ(key[3], 't');
-  EXPECT_EQ(key[4], 0);
-  EXPECT_EQ(key[5], 'a');
-  EXPECT_EQ(key[6], 0);
+  EXPECT_EQ(key.vector()[0], 't');
+  EXPECT_EQ(key.vector()[1], 'e');
+  EXPECT_EQ(key.vector()[2], 's');
+  EXPECT_EQ(key.vector()[3], 't');
+  EXPECT_EQ(key.vector()[4], 0);
+  EXPECT_EQ(key.vector()[5], 'a');
+  EXPECT_EQ(key.vector()[6], 0);
 }
 
 TEST(table_identifier_test_key, KeyCompare)

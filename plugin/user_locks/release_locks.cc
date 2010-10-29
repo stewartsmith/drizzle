@@ -30,7 +30,7 @@ int64_t ReleaseLocks::val_int()
 {
   int64_t count= 0;
 
-  user_locks::Storable *list= dynamic_cast<user_locks::Storable *>(getSession().getProperty("user_locks"));
+  user_locks::Storable *list= static_cast<user_locks::Storable *>(getSession().getProperty("user_locks"));
   if (list) // To be compatible with MySQL, we will now release all other locks we might have.
     count= list->erase_all();
 

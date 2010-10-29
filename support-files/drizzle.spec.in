@@ -451,7 +451,6 @@ you will need to install %{name}-devel.
 %{_includedir}/drizzled/table_list.h
 %{_includedir}/drizzled/table_proto.h
 %{_includedir}/drizzled/table_reference.h
-%{_includedir}/drizzled/table_share.h
 %{_includedir}/drizzled/temporal.h
 %{_includedir}/drizzled/temporal_format.h
 %{_includedir}/drizzled/temporal_interval.h
