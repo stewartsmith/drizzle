@@ -209,9 +209,9 @@ int my_decimal2string(uint32_t mask, const my_decimal *d,
     fixed_prec will be 0, and my_decimal_string_length() will be called
     instead to calculate the required size of the buffer.
   */
-  int length= (fixed_prec
-               ? (fixed_prec + ((fixed_prec == fixed_dec) ? 1 : 0) + 1)
-               : my_decimal_string_length(d));
+  int length= (int)(fixed_prec
+                    ? (uint32_t)(fixed_prec + ((fixed_prec == fixed_dec) ? 1 : 0) + 1)
+                    : (uint32_t)my_decimal_string_length(d));
   int result;
   if (str->alloc(length))
     return check_result(mask, E_DEC_OOM);
@@ -905,7 +905,7 @@ static int decimal_shift(decimal_t *dec, int shift)
     if (do_left)
     {
       do_mini_left_shift(dec, l_mini_shift, beg, end);
-      mini_shift=- l_mini_shift;
+      mini_shift= (-l_mini_shift);
     }
     else
     {

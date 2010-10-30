@@ -37,7 +37,7 @@ namespace drizzled
 namespace module
 {
 
-class Manifest;
+struct Manifest;
 
 /* A handle for the dynamic library containing a plugin or plugins. */
 class Library

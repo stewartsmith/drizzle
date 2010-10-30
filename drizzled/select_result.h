@@ -35,7 +35,7 @@ public:
   {
     session= current_session;
   }
-  virtual ~select_result() {};
+  virtual ~select_result() {}
   virtual int prepare(List<Item> &,
                       Select_Lex_Unit *u)
   {

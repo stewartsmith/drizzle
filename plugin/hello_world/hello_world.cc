@@ -35,7 +35,7 @@ public:
   String *val_str(String* s) {
     s->set(STRING_WITH_LEN("Hello World!"),system_charset_info);
     return s;
-  };
+  }
   void fix_length_and_dec() {
     max_length=strlen("Hello World!");
   }

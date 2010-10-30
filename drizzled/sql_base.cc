@@ -368,7 +368,7 @@ bool Session::free_cached_table()
 
     /* Free memory and reset for next loop */
     table->cursor->ha_reset();
-    table->in_use= false;
+    table->in_use= NULL;
 
     table::getUnused().link(table);
   }

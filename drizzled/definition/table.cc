@@ -206,11 +206,11 @@ static TableSharePtr foundTableShare(TableSharePtr share)
 
 TableSharePtr TableShare::getShareCreate(Session *session, 
                                          TableIdentifier &identifier,
-                                         int *error)
+                                         int *in_error)
 {
   TableSharePtr share;
 
-  *error= 0;
+  *in_error= 0;
 
   /* Read table definition from cache */
   if ((share= definition::Cache::singleton().find(identifier)))
@@ -231,7 +231,7 @@ TableSharePtr TableShare::getShareCreate(Session *session,
 
   if (share->open_table_def(*session, identifier))
   {
-    *error= share->error;
+    *in_error= share->error;
     definition::Cache::singleton().erase(identifier);
 
     return TableSharePtr();

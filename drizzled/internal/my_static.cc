@@ -64,7 +64,7 @@ uint32_t  sf_malloc_count= 0;		/* Number of times NEW() was called */
 unsigned char *sf_min_adress= (unsigned char*) ~(unsigned long) 0L,
      *sf_max_adress= (unsigned char*) 0L;
 /* Root of the linked list of struct st_irem */
-struct irem *sf_malloc_root = NULL;
+irem *sf_malloc_root = NULL;
 
 	/* from my_alarm */
 int volatile my_have_got_alarm=0;	/* declare variable to reset */

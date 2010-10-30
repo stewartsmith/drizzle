@@ -178,10 +178,10 @@ public:
 
   Status(int in_exit_status, 
          uint32_t in_query_start_line,
-  	 char *in_file_name,
+         char *in_file_name,
          LineBuffer *in_line_buff,
-	 bool in_batch,
-	 bool in_add_to_history)
+         bool in_batch,
+         bool in_add_to_history)
     :
     exit_status(in_exit_status),
     query_start_line(in_query_start_line),
@@ -191,15 +191,14 @@ public:
     add_to_history(in_add_to_history)
     {}
 
-  Status()
-    :
-    exit_status(),
-    query_start_line(),
-    file_name(),
-    line_buff(),
-    batch(),        
-    add_to_history()
-    {}
+  Status() :
+    exit_status(0),
+    query_start_line(0),
+    file_name(NULL),
+    line_buff(NULL),
+    batch(false),        
+    add_to_history(false)
+  {}
   
   int getExitStatus() const
   {

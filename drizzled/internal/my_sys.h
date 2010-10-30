@@ -329,8 +329,8 @@ extern char * my_load_path(char * to, const char *path,
 extern int wild_compare(const char *str,const char *wildstr,
                         bool str_is_pattern);
 extern WF_PACK *wf_comp(char * str);
-extern int wf_test(struct wild_file_pack *wf_pack,const char *name);
-extern void wf_end(struct wild_file_pack *buffer);
+extern int wf_test(wild_file_pack *wf_pack,const char *name);
+extern void wf_end(wild_file_pack *buffer);
 extern bool array_append_string_unique(const char *str,
                                           const char **array, size_t size);
 extern void get_date(char * to,int timeflag,time_t use_time);

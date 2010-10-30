@@ -137,8 +137,8 @@ bool AuthFile::loadFile(void)
       password = string(line, password_offset + 1);
     }
 
-    pair<map<string, string>::iterator, bool> result;
-    result = users.insert(pair<string, string>(username, password));
+    pair<map<string, string>::iterator, bool> result=
+      users.insert(pair<string, string>(username, password));
     if (result.second == false)
     {
       error = "Duplicate entry found in users file: ";

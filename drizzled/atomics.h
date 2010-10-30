@@ -24,7 +24,7 @@
 # if defined(__SUNPRO_CC)
 #  include <drizzled/atomic/sun_studio.h>
 # endif
-# if !defined(__ICC) && (defined(HAVE_GCC_ATOMIC_BUILTINS) || defined(__SUNPRO_CC))
+# if !defined(__ICC) && !defined(__clang__) && (defined(HAVE_GCC_ATOMIC_BUILTINS) || defined(__SUNPRO_CC))
 #  include <drizzled/atomic/gcc_traits.h>
 #  define ATOMIC_TRAITS internal::gcc_traits
 # else  /* use pthread impl */

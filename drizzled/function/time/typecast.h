@@ -76,7 +76,7 @@ public:
   enum Functype functype() const { return CHAR_TYPECAST_FUNC; }
   bool eq(const Item *item, bool binary_cmp) const;
   const char *func_name() const { return "cast_as_char"; }
-  const char* cast_type() const { return "char"; };
+  const char* cast_type() const { return "char"; }
   String *val_str(String *a);
   void fix_length_and_dec();
   virtual void print(String *str, enum_query_type query_type);
