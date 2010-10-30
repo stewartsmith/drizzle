@@ -396,7 +396,7 @@ int Field_blob::cmp_binary(const unsigned char *a_ptr, const unsigned char *b_pt
 
   diff= memcmp(a,b,min(a_length,b_length));
 
-  return diff ? diff : (int) (a_length - b_length);
+  return diff ? diff : (unsigned int) (a_length - b_length);
 }
 
 /* The following is used only when comparing a key */

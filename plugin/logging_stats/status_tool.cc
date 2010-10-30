@@ -100,14 +100,14 @@ StatusTool::StatusTool(LoggingStats *in_logging_stats, bool inIsLocal) :
 }
 
 StatusTool::Generator::Generator(Field **arg, LoggingStats *in_logging_stats,
-                                 vector<drizzle_show_var *> *all_status_vars, 
+                                 vector<drizzle_show_var *> *in_all_status_vars, 
                                  bool inIsLocal) :
   TableFunction::Generator(arg),
   logging_stats(in_logging_stats),
   isLocal(inIsLocal)   
 {
-  all_status_vars_it= all_status_vars->begin();
-  all_status_vars_end= all_status_vars->end();
+  all_status_vars_it= in_all_status_vars->begin();
+  all_status_vars_end= in_all_status_vars->end();
 
   status_var_to_display= NULL;
   if (isLocal)

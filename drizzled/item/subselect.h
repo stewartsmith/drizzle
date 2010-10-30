@@ -430,7 +430,7 @@ public:
     res_field_type= DRIZZLE_TYPE_VARCHAR;
     maybe_null= 0;
   }
-  virtual ~subselect_engine() {}; // to satisfy compiler
+  virtual ~subselect_engine() {} // to satisfy compiler
   virtual void cleanup()= 0;
 
   /*
@@ -468,7 +468,7 @@ public:
   enum Item_result type() { return res_type; }
   enum_field_types field_type() { return res_field_type; }
   virtual void exclude()= 0;
-  virtual bool may_be_null() { return maybe_null; };
+  virtual bool may_be_null() { return maybe_null; }
   virtual table_map upper_select_const_tables()= 0;
   static table_map calc_const_tables(TableList *);
   virtual void print(String *str, enum_query_type query_type)= 0;
