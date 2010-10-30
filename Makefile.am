@@ -43,6 +43,7 @@ BUILT_SOURCES=
 BUILT_MAINT_SRC=
 EXTRA_DIST= \
 	    .quickly \
+	    ChangeLog \
 	    COPYING.Boost \
 	    COPYING.BSD \
 	    DRIZZLE.FAQ \
@@ -70,7 +71,9 @@ DISTCLEANFILES=		ac_available_languages_fragment \
 			intltool-merge \
 			intltool-update
 
-MAINTAINERCLEANFILES=	autom4te.cache
+MAINTAINERCLEANFILES= \
+		      autom4te.cache \
+		      ChangeLog
 
 EXTRA_LTLIBRARIES=
 pkgplugin_LTLIBRARIES=
@@ -136,6 +139,8 @@ clean-local:
 	find . -name '*.gcno' | xargs rm -f 
 	-rm -rf docs/api docs/dev docs/_build docs/doctrees
 
+ChangeLog:
+	bzr log --gnu > ChangeLog
 include config/lint-source.am
 include config/lcov.am
 

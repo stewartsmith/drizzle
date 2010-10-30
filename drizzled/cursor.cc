@@ -304,7 +304,7 @@ int Cursor::read_first_row(unsigned char * buf, uint32_t primary_key)
   @verbatim 1,5,15,25,35,... @endverbatim
 */
 inline uint64_t
-compute_next_insert_id(uint64_t nr,struct system_variables *variables)
+compute_next_insert_id(uint64_t nr, drizzle_system_variables *variables)
 {
   if (variables->auto_increment_increment == 1)
     return (nr+1); // optimization of the formula below
@@ -344,7 +344,7 @@ void Cursor::adjust_next_insert_id_after_explicit_value(uint64_t nr)
     The number X if it exists, "nr" otherwise.
 */
 inline uint64_t
-prev_insert_id(uint64_t nr, struct system_variables *variables)
+prev_insert_id(uint64_t nr, drizzle_system_variables *variables)
 {
   if (unlikely(nr < variables->auto_increment_offset))
   {
@@ -442,7 +442,7 @@ int Cursor::update_auto_increment()
   uint64_t nr, nb_reserved_values;
   bool append= false;
   Session *session= getTable()->in_use;
-  struct system_variables *variables= &session->variables;
+  drizzle_system_variables *variables= &session->variables;
 
   /*
     next_insert_id is a "cursor" into the reserved interval, it may go greater

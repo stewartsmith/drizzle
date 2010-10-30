@@ -148,7 +148,6 @@ int Vio::fastsend()
   if (error != 0)
   {
     perror("setsockopt");
-    assert(error == 0);
   }
 
   return error;

@@ -206,8 +206,6 @@ bool ClientMySQLProtocol::readCommand(char **l_packet, uint32_t *packet_length)
       return false;                       // We have to close it.
 
     net.error= 0;
-    *packet_length= 0;
-    return true;
   }
 
   *l_packet= (char*) net.read_pos;
@@ -419,6 +417,8 @@ void ClientMySQLProtocol::sendError(uint32_t sql_errno, const char *err)
   err= (char*) buff;
 
   drizzleclient_net_write_command(&net,(unsigned char) 255, (unsigned char*) "", 0, (unsigned char*) err, length);
+
+  drizzleclient_net_flush(&net);
 
   session->main_da.can_overwrite_status= false;
 }
@@ -1103,7 +1103,7 @@ bool MysqlProtocolStatus::Generator::populate()
 
     if (status_var_ptr->type == SHOW_FUNC)
     {
-      ((mysql_show_var_func)((st_show_var_func_container *)status_var_ptr->value)->func)(&tmp, buff);
+      ((drizzle_show_var_func)((st_show_var_func_container *)status_var_ptr->value)->func)(&tmp, buff);
       value= buff;
       type= tmp.type;
     }

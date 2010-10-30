@@ -364,9 +364,8 @@ void HailDBEngine::doStartStatement(Session *session)
                     statement_savepoint_name.length());
 }
 
-void HailDBEngine::doEndStatement(Session *session)
+void HailDBEngine::doEndStatement(Session *)
 {
-  doCommit(session, false);
 }
 
 int HailDBEngine::doSetSavepoint(Session* session,

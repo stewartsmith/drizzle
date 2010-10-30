@@ -227,7 +227,7 @@ void generate_dump_db(void)
     }
     catch (...)
     {
-      std::cout << _("Error inserting into destnation database") << std::endl;
+      std::cout << _("Error inserting into destination database") << std::endl;
       if (not ignore_errors)
         maybe_exit(EX_DRIZZLEERR);
     }
@@ -357,8 +357,7 @@ void maybe_exit(int error)
   if (ignore_errors)
     return;
   delete db_connection;
-  if (destination_connection)
-    delete destination_connection;
+  delete destination_connection;
   free_resources();
   exit(error);
 }
@@ -838,8 +837,7 @@ try
   */
 err:
   delete db_connection;
-  if (destination_connection)
-    delete destination_connection;
+  delete destination_connection;
   if (path.empty())
     write_footer(md_result_file);
   free_resources();
