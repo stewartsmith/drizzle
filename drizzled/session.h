@@ -119,8 +119,9 @@ typedef std::map <std::string, message::Table> ProtoCache;
       of the INSERT ... ON DUPLICATE KEY UPDATE no matter whether the row
       was actually changed or not.
 */
-struct CopyInfo 
+class CopyInfo 
 {
+public:
   ha_rows records; /**< Number of processed records */
   ha_rows deleted; /**< Number of deleted records */
   ha_rows updated; /**< Number of updated records */
@@ -168,7 +169,7 @@ class Time_zone;
 struct drizzle_system_variables
 {
   drizzle_system_variables()
-  {};
+  {}
   /*
     How dynamically allocated system variables are handled:
 
@@ -1584,7 +1585,7 @@ public:
     if (variables.storage_engine)
       return variables.storage_engine;
     return global_system_variables.storage_engine;
-  };
+  }
 
   static void unlink(Session *session);
 
@@ -1649,8 +1650,9 @@ namespace drizzled
  * A structure used to describe sort information
  * for a field or item used in ORDER BY.
  */
-struct SortField 
+class SortField 
 {
+public:
   Field *field;	/**< Field to sort */
   Item	*item; /**< Item if not sorting fields */
   size_t length; /**< Length of sort field */

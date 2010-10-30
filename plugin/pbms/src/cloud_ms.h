@@ -67,17 +67,17 @@ public:
 	}
 
 
-	static MSCloudInfo *getCloudInfo(uint32_t cloudRefId)
+	static MSCloudInfo *getCloudInfo(uint32_t in_cloudRefId)
 	{
 		MSCloudInfo *info;
 		enter_();
 		
 		lock_(gCloudInfo);
 		
-		info = (MSCloudInfo *) gCloudInfo->get(cloudRefId);
+		info = (MSCloudInfo *) gCloudInfo->get(in_cloudRefId);
 		if (!info) {
 			char msg[80];
-			snprintf(msg, 80, "Cloud info with reference ID %"PRIu32" not found", cloudRefId);
+			snprintf(msg, 80, "Cloud info with reference ID %"PRIu32" not found", in_cloudRefId);
 			CSException::throwException(CS_CONTEXT, CS_ERR_GENERIC_ERROR, msg);
 		}
 		info->retain();

@@ -115,7 +115,7 @@ protected:
       boost::throw_exception(boost::program_options::invalid_option_value(boost::lexical_cast<std::string>(rhs)));
     }
     rhs-= rhs % ALIGN;
-    setVal(rhs);
+    this->setVal(rhs);
     return *this;
   }
 

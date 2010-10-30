@@ -82,14 +82,14 @@ module::Library *module::Library::loadLibrary(const string &plugin_name, bool bu
     return NULL;
   }
 
-  void *handle= NULL;
+  void *dl_handle= NULL;
   string dlpath("");
 
   if (builtin)
   {
     dlpath.assign("<builtin>");
-    handle= dlopen(NULL, RTLD_NOW|RTLD_LOCAL);
-    if (handle == NULL)
+    dl_handle= dlopen(NULL, RTLD_NOW|RTLD_LOCAL);
+    if (dl_handle == NULL)
     {
       const char *errmsg= dlerror();
       errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_CANT_OPEN_LIBRARY),
@@ -103,8 +103,8 @@ module::Library *module::Library::loadLibrary(const string &plugin_name, bool bu
   {
   /* Open new dll handle */
     dlpath.assign(Library::getLibraryPath(plugin_name).file_string());
-    handle= dlopen(dlpath.c_str(), RTLD_NOW|RTLD_GLOBAL);
-    if (handle == NULL)
+    dl_handle= dlopen(dlpath.c_str(), RTLD_NOW|RTLD_GLOBAL);
+    if (dl_handle == NULL)
     {
       const char *errmsg= dlerror();
       uint32_t dlpathlen= dlpath.length();
@@ -130,7 +130,7 @@ module::Library *module::Library::loadLibrary(const string &plugin_name, bool bu
   plugin_decl_sym.append("_plugin_");
 
   /* Find plugin declarations */
-  void *sym= dlsym(handle, plugin_decl_sym.c_str());
+  void *sym= dlsym(dl_handle, plugin_decl_sym.c_str());
   if (sym == NULL)
   {
     const char* errmsg= dlerror();
@@ -138,23 +138,23 @@ module::Library *module::Library::loadLibrary(const string &plugin_name, bool bu
     errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_CANT_FIND_DL_ENTRY),
                   plugin_decl_sym.c_str(), dlpath.c_str());
     (void)dlerror();
-    dlclose(handle);
+    dlclose(dl_handle);
     return NULL;
   }
 
-  const Manifest *manifest= static_cast<module::Manifest *>(sym); 
-  if (manifest->drizzle_version != DRIZZLE_VERSION_ID)
+  const Manifest *module_manifest= static_cast<module::Manifest *>(sym); 
+  if (module_manifest->drizzle_version != DRIZZLE_VERSION_ID)
   {
     errmsg_printf(ERRMSG_LVL_ERROR,
                   _("Plugin module %s was compiled for version %" PRIu64 ", "
                     "which does not match the current running version of "
                     "Drizzle: %" PRIu64"."),
-                 dlpath.c_str(), manifest->drizzle_version,
+                 dlpath.c_str(), module_manifest->drizzle_version,
                  DRIZZLE_VERSION_ID);
     return NULL;
   }
 
-  return new (nothrow) module::Library(plugin_name, handle, manifest);
+  return new (nothrow) module::Library(plugin_name, dl_handle, module_manifest);
 }
 
 } /* namespace drizzled */

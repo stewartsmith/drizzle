@@ -1601,7 +1601,7 @@ get_addon_fields(Session *session, Field **ptabfield, uint32_t sortlength, uint3
 */
 
 static void
-unpack_addon_fields(struct sort_addon_field *addon_field, unsigned char *buff)
+unpack_addon_fields(sort_addon_field *addon_field, unsigned char *buff)
 {
   Field *field;
   sort_addon_field *addonf= addon_field;
