@@ -336,6 +336,11 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
             os << obj.convertHex((unsigned char*)row[i], row_sizes[i]);
             byte_counter+= row_sizes[i];
           }
+          else if ((obj.table->fields[i]->type.compare("ENUM") == 0) and
+            (strcmp(row[i], "") == 0))
+          {
+            os << "NULL";
+          }
           else
             os << "'" << DrizzleDumpData::escape(row[i], row_sizes[i]) << "'";
           byte_counter+= 3;

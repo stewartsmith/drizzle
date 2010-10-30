@@ -5700,16 +5700,9 @@ int PBXTStorageEngine::doStartTransaction(Session *thd, start_transaction_option
 	if (!self->st_database)
 		xt_ha_open_database_of_table(self, NULL);
 
-	/* startTransaction() calls registerResourceForTransaction() calls engine->startTransaction(), and then
-	 * startTransaction() calls doStartTransaction()
-	 * Which leads to this function being called twice!?
-	 * So added the self->st_xact_data test below.
-	 */
-	if (!self->st_xact_data) {
-		if (!xt_xn_begin(self)) {
-			err = xt_ha_pbxt_thread_error_for_mysql(thd, self, /*pb_ignore_dup_key*/false);
-			//pb_ex_in_use = 0;
-		}
+	assert(!self->st_xact_data); // Check we're not called twice
+        if (!xt_xn_begin(self)) {
+          err = xt_ha_pbxt_thread_error_for_mysql(thd, self, /*pb_ignore_dup_key*/false);
 	}
 
 	return err;
