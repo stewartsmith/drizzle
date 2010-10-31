@@ -30,9 +30,9 @@ class Item;
 /* Order clause list element */
 
 /* Order clause list element */
-class order_st{
+class Order{
 public:
-  struct order_st *next;
+  struct Order *next;
   Item   **item;          /* Point at item in select fields */
   Item   *item_ptr;       /* Storage for initial item */
   Item   **item_copy;     /* For SPs; the original item ptr */
@@ -46,7 +46,7 @@ public:
   char   *buff;           /* If tmp-table group */
   table_map used, depend_map;
 
-  order_st():
+  Order():
           next(NULL),
           item(NULL),
           item_ptr(NULL),
