@@ -125,7 +125,7 @@ select_union::create_result_table(Session *session_arg, List<Item> *column_types
   tmp_table_param.field_count= column_types->elements;
 
   if (! (table= create_tmp_table(session_arg, &tmp_table_param, *column_types,
-                                 (order_st*) NULL, is_union_distinct, 1,
+                                 (Order*) NULL, is_union_distinct, 1,
                                  options, HA_POS_ERROR, (char*) table_alias)))
   {
     return true;
@@ -176,12 +176,12 @@ Select_Lex_Unit::init_prepare_fake_select_lex(Session *session_arg)
     fake_select_lex->context.first_name_resolution_table=
     fake_select_lex->get_table_list();
 
-  for (order_st *order= (order_st *) global_parameters->order_list.first;
+  for (Order *order= (Order *) global_parameters->order_list.first;
        order;
        order= order->next)
     order->item= &order->item_ptr;
 
-  for (order_st *order= (order_st *)global_parameters->order_list.first;
+  for (Order *order= (Order *)global_parameters->order_list.first;
        order;
        order=order->next)
   {
@@ -278,8 +278,8 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
                                 sl->order_list.elements) +
                                sl->group_list.elements,
                                can_skip_order_by ?
-                               (order_st*) NULL : (order_st *)sl->order_list.first,
-                               (order_st*) sl->group_list.first,
+                               (Order*) NULL : (Order *)sl->order_list.first,
+                               (Order*) sl->group_list.first,
                                sl->having,
                                sl, this);
     /* There are no * in the statement anymore (for PS) */
@@ -541,8 +541,8 @@ bool Select_Lex_Unit::exec()
                               &result_table_list,
                               0, item_list, NULL,
                               global_parameters->order_list.elements,
-                              (order_st*)global_parameters->order_list.first,
-                              (order_st*) NULL, NULL,
+                              (Order*)global_parameters->order_list.first,
+                              (Order*) NULL, NULL,
                               fake_select_lex->options | SELECT_NO_UNLOCK,
                               result, this, fake_select_lex);
       }
@@ -564,8 +564,8 @@ bool Select_Lex_Unit::exec()
                                 &result_table_list,
                                 0, item_list, NULL,
                                 global_parameters->order_list.elements,
-                                (order_st*)global_parameters->order_list.first,
-                                (order_st*) NULL, NULL,
+                                (Order*)global_parameters->order_list.first,
+                                (Order*) NULL, NULL,
                                 fake_select_lex->options | SELECT_NO_UNLOCK,
                                 result, this, fake_select_lex);
         }
@@ -625,8 +625,8 @@ bool Select_Lex_Unit::cleanup()
     error|= fake_select_lex->cleanup();
     if (fake_select_lex->order_list.elements)
     {
-      order_st *ord;
-      for (ord= (order_st*)fake_select_lex->order_list.first; ord; ord= ord->next)
+      Order *ord;
+      for (ord= (Order*)fake_select_lex->order_list.first; ord; ord= ord->next)
         (*ord->item)->cleanup();
     }
   }
