@@ -522,7 +522,7 @@ private:
     the corresponding 'ha_*' method above.
   */
 
-  virtual int open(const char *, int , uint32_t ) { assert(0); return -1; };
+  virtual int open(const char *, int , uint32_t ) { assert(0); return -1; }
   virtual int doOpen(const TableIdentifier &identifier, int mode, uint32_t test_if_locked);
   virtual int doStartIndexScan(uint32_t idx, bool)
   { active_index= idx; return 0; }
@@ -583,7 +583,7 @@ private:
   {
     return 0;
   }
-  virtual void release_auto_increment(void) { return; };
+  virtual void release_auto_increment(void) { return; }
   /** admin commands - called from mysql_admin_table */
   virtual int check(Session *)
   { return HA_ADMIN_NOT_IMPLEMENTED; }

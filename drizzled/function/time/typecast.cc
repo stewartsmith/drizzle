@@ -187,8 +187,8 @@ void Item_char_typecast::fix_length_and_dec()
   charset_conversion= (cast_cs->mbmaxlen > 1) ||
                       (!my_charset_same(from_cs, cast_cs) && from_cs != &my_charset_bin && cast_cs != &my_charset_bin);
   collation.set(cast_cs, DERIVATION_IMPLICIT);
-  char_length= (cast_length >= 0) ? cast_length :
-	       args[0]->max_length/from_cs->mbmaxlen;
+  char_length= (cast_length >= 0) ? (uint32_t)cast_length :
+	       (uint32_t)args[0]->max_length/from_cs->mbmaxlen;
   max_length= char_length * cast_cs->mbmaxlen;
 }
 

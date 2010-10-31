@@ -103,7 +103,7 @@ ClientMySQLProtocol::ClientMySQLProtocol(int fd, bool using_mysql41_protocol_arg
 ClientMySQLProtocol::~ClientMySQLProtocol()
 {
   if (net.vio)
-    vio_close(net.vio);
+    net.vio->close();
 }
 
 int ClientMySQLProtocol::getFileDescriptor(void)
@@ -884,7 +884,7 @@ void ClientMySQLProtocol::makeScramble(char *scramble)
   uint32_t pointer_seed;
   memcpy(&pointer_seed, &pointer, 4);
   uint32_t random1= (seed + pointer_seed) % random_max;
-  uint32_t random2= (seed + session->variables.pseudo_thread_id + net.vio->sd) % random_max;
+  uint32_t random2= (seed + session->variables.pseudo_thread_id + net.vio->get_fd()) % random_max;
 
   for (char *end= scramble + SCRAMBLE_LENGTH; scramble != end; scramble++)
   {
