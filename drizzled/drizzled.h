@@ -51,6 +51,7 @@ extern char *drizzled_user;
 extern global_buffer_constraint<uint64_t> global_sort_buffer;
 extern global_buffer_constraint<uint64_t> global_join_buffer;
 extern global_buffer_constraint<uint64_t> global_read_rnd_buffer;
+extern global_buffer_constraint<uint64_t> global_read_buffer;
 
 extern const char * const DRIZZLE_CONFIG_NAME;
 

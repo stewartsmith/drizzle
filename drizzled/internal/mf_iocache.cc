@@ -51,6 +51,7 @@ TODO:
 
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/m_string.h"
+#include "drizzled/drizzled.h"
 #ifdef HAVE_AIOWAIT
 #include "drizzled/error.h"
 #include "drizzled/internal/aio_result.h"
@@ -247,6 +248,12 @@ int init_io_cache(IO_CACHE *info, int file, size_t cachesize,
       if (cachesize < min_cache)
 	cachesize = min_cache;
       buffer_block= cachesize;
+      if ((type == READ_CACHE) and (not global_read_buffer.add(buffer_block)))
+      {
+        my_error(ER_OUT_OF_GLOBAL_READMEMORY, MYF(ME_ERROR+ME_WAITTANG));
+        return 2;
+      }
+
       if ((info->buffer=
 	   (unsigned char*) malloc(buffer_block)) != 0)
       {
@@ -255,8 +262,14 @@ int init_io_cache(IO_CACHE *info, int file, size_t cachesize,
 	break;					/* Enough memory found */
       }
       if (cachesize == min_cache)
+      {
+        if (type == READ_CACHE)
+          global_read_buffer.sub(buffer_block);
 	return(2);				/* Can't alloc cache */
+      }
       /* Try with less memory */
+      if (type == READ_CACHE)
+        global_read_buffer.sub(buffer_block);
       cachesize= (cachesize*3/4 & ~(min_cache-1));
     }
   }
@@ -928,6 +941,8 @@ int end_io_cache(IO_CACHE *info)
   }
   if (info->alloced_buffer)
   {
+    if (info->type == READ_CACHE)
+      global_read_buffer.sub(info->buffer_length);
     info->alloced_buffer=0;
     if (info->file != -1)			/* File doesn't exist */
       error= my_b_flush_io_cache(info,1);

@@ -238,6 +238,7 @@ ErrorMap::ErrorMap()
   add(ER_OUT_OF_GLOBAL_SORTMEMORY, N_("Global sort memory constraint hit; increase sort-heap-threshold"));
   add(ER_OUT_OF_GLOBAL_JOINMEMORY, N_("Global join memory constraint hit; increase join-heap-threshold"));
   add(ER_OUT_OF_GLOBAL_READRNDMEMORY, N_("Global read_rnd memory constraint hit; increase read-rnd-heap-threshold"));
+  add(ER_OUT_OF_GLOBAL_READMEMORY, N_("Global read memory constraint hit; increase read-buffer-threshold"));
   add(ER_UNEXPECTED_EOF, N_("Unexpected EOF found when reading file '%-.192s' (errno: %d)"));
   add(ER_CON_COUNT_ERROR, N_("Too many connections"));
   add(ER_OUT_OF_RESOURCES, N_("Out of memory; check if drizzled or some other process uses all available memory; if not, you may have to use 'ulimit' to allow drizzled to use more memory or you can add more swap space"));

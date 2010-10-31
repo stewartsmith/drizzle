@@ -738,6 +738,7 @@ ErrorCodes::ErrorCodes()
     { "ER_OUT_OF_GLOBAL_SORTMEMORY", 1702},
     { "ER_OUT_OF_GLOBAL_JOINMEMORY", 1703},
     { "ER_OUT_OF_GLOBAL_READRNDMEMORY", 1704},
+    { "ER_OUT_OF_GLOBAL_READMEMORY", 1705},
     { 0, 0 }
   };
 

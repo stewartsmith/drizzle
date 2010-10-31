@@ -355,6 +355,7 @@ atomic<uint32_t> connection_count;
 global_buffer_constraint<uint64_t> global_sort_buffer(0);
 global_buffer_constraint<uint64_t> global_join_buffer(0);
 global_buffer_constraint<uint64_t> global_read_rnd_buffer(0);
+global_buffer_constraint<uint64_t> global_read_buffer(0);
 
 /** 
   Refresh value. We use to test this to find out if a refresh even has happened recently.
@@ -1370,6 +1371,9 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   N_("Each thread that does a sequential scan allocates a buffer of this "
       "size for each table it scans. If you do many sequential scans, you may "
       "want to increase this value."))
+  ("read-buffer-threshold",
+  po::value<uint64_t>()->default_value(0),
+  N_("A global cap on the size of read-buffer-size (0 means unlimited)"))
   ("read-rnd-buffer-size",
   po::value<uint32_t>(&global_system_variables.read_rnd_buff_size)->default_value(256*1024L)->notifier(&check_limits_read_rnd_buffer_size),
   N_("When reading rows in sorted order after a sort, the rows are read "
@@ -2266,6 +2270,19 @@ static void get_options()
     }
 
     global_read_rnd_buffer.setMaxSize(vm["read-rnd-threshold"].as<uint64_t>());
+  }
+
+  if (vm.count("read-buffer-threshold"))
+  {
+    if ((vm["read-buffer-threshold"].as<size_t>() > 0) and
+      (vm["read-buffer-threshold"].as<size_t>() <
+      global_system_variables.read_buff_size))
+    {
+      cout << N_("Error: read-buffer-threshold cannot be less than read-buffer-size") << endl;
+      exit(-1);
+    }
+
+    global_read_buffer.setMaxSize(vm["read-buffer-threshold"].as<uint64_t>());
   }
 
   if (vm.count("exit-info"))
