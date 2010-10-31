@@ -451,7 +451,7 @@ void MSConnectionHandler::handlePut()
 	push_(metadata);
 	
 	 if (! iInputStream->getContentLength(&blob_len)) {
-		CSException::throwException(CS_CONTEXT, CS_ERR_MISSING_HTTP_HEADER, "Missing content lenght header");
+		CSException::throwException(CS_CONTEXT, CS_ERR_MISSING_HTTP_HEADER, "Missing content length header");
 	 }
 	 
 	

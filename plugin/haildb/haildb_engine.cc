@@ -2879,7 +2879,7 @@ static int haildb_init(drizzled::module::Context &context)
     if (innobase_additional_mem_pool_size > LONG_MAX || innobase_additional_mem_pool_size < 512*1024L)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of additional-mem-pool-size"));
-      exit(-1);
+      return 1;
     }
     innobase_additional_mem_pool_size/= 1024;
     innobase_additional_mem_pool_size*= 1024;
@@ -2890,7 +2890,7 @@ static int haildb_init(drizzled::module::Context &context)
     if (srv_auto_extend_increment > 1000L || srv_auto_extend_increment < 1L)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of autoextend-increment"));
-      exit(-1);
+      return 1;
     }
   }
 
@@ -2899,7 +2899,7 @@ static int haildb_init(drizzled::module::Context &context)
     if (innobase_buffer_pool_size > INT64_MAX || innobase_buffer_pool_size < 5*1024*1024L)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of buffer-pool-size"));
-      exit(-1);
+      return 1;
     }
     innobase_buffer_pool_size/= 1024*1024L;
     innobase_buffer_pool_size*= 1024*1024L;
@@ -2910,7 +2910,7 @@ static int haildb_init(drizzled::module::Context &context)
     if (srv_io_capacity > (unsigned long)~0L || srv_io_capacity < 100)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of io-capacity"));
-      exit(-1);
+      return 1;
     }
   }
 
@@ -2919,7 +2919,7 @@ static int haildb_init(drizzled::module::Context &context)
     if (innobase_fast_shutdown > 2)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of fast-shutdown"));
-      exit(-1);
+      return 1;
     }
   }
 
@@ -2928,7 +2928,7 @@ static int haildb_init(drizzled::module::Context &context)
     if (srv_flush_log_at_trx_commit > 2)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of flush-log-at-trx-commit"));
-      exit(-1);
+      return 1;
     }
   }
 
@@ -2937,7 +2937,7 @@ static int haildb_init(drizzled::module::Context &context)
     if (innobase_force_recovery > 6)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of force-recovery"));
-      exit(-1);
+      return 1;
     }
   }
 
@@ -2946,7 +2946,7 @@ static int haildb_init(drizzled::module::Context &context)
     if (haildb_log_file_size > INT64_MAX || haildb_log_file_size < 1*1024*1024L)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of log-file-size"));
-      exit(-1);
+      return 1;
     }
     haildb_log_file_size/= 1024*1024L;
     haildb_log_file_size*= 1024*1024L;
@@ -2957,7 +2957,7 @@ static int haildb_init(drizzled::module::Context &context)
     if (haildb_log_files_in_group > 100 || haildb_log_files_in_group < 2)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of log-files-in-group"));
-      exit(-1);
+      return 1;
     }
   }
 
@@ -2966,7 +2966,7 @@ static int haildb_init(drizzled::module::Context &context)
     if (innobase_lock_wait_timeout > 1024*1024*1024 || innobase_lock_wait_timeout < 1)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of lock-wait-timeout"));
-      exit(-1);
+      return 1;
     }
   }
 
@@ -2975,7 +2975,7 @@ static int haildb_init(drizzled::module::Context &context)
     if (innobase_log_buffer_size > LONG_MAX || innobase_log_buffer_size < 256*1024L)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of log-buffer-size"));
-      exit(-1);
+      return 1;
     }
     innobase_log_buffer_size/= 1024;
     innobase_log_buffer_size*= 1024;
@@ -2986,7 +2986,7 @@ static int haildb_init(drizzled::module::Context &context)
     if (innobase_lru_old_blocks_pct > 95 || innobase_lru_old_blocks_pct < 5)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of lru-old-blocks-pct"));
-      exit(-1);
+      return 1;
     }
   }
 
@@ -2995,7 +2995,7 @@ static int haildb_init(drizzled::module::Context &context)
     if (innobase_lru_block_access_recency > ULONG_MAX)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of lru-block-access-recency"));
-      exit(-1);
+      return 1;
     }
   }
 
@@ -3004,7 +3004,7 @@ static int haildb_init(drizzled::module::Context &context)
     if (srv_max_buf_pool_modified_pct > 99)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of max-dirty-pages-pct"));
-      exit(-1);
+      return 1;
     }
   }
 
@@ -3013,7 +3013,7 @@ static int haildb_init(drizzled::module::Context &context)
     if (srv_max_purge_lag > (unsigned long)~0L)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of max-purge-lag"));
-      exit(-1);
+      return 1;
     }
   }
 
@@ -3022,7 +3022,7 @@ static int haildb_init(drizzled::module::Context &context)
     if (innobase_open_files > LONG_MAX || innobase_open_files < 10L)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of open-files"));
-      exit(-1);
+      return 1;
     }
   }
 
@@ -3031,7 +3031,7 @@ static int haildb_init(drizzled::module::Context &context)
     if (innobase_read_io_threads > 64 || innobase_read_io_threads < 1)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of read-io-threads"));
-      exit(-1);
+      return 1;
     }
   }
 
@@ -3040,7 +3040,7 @@ static int haildb_init(drizzled::module::Context &context)
     if (srv_n_spin_wait_rounds > (unsigned long)~0L)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of sync_spin_loops"));
-      exit(-1);
+      return 1;
     }
   }
 
