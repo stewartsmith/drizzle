@@ -184,7 +184,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/generator/schema.h \
 			      drizzled/generator/table.h \
 			      drizzled/gettext.h \
-			      global_buffer.h \
+			      drizzled/global_buffer.h \
 			      drizzled/global_charset_info.h \
 			      drizzled/ha_statistics.h \
 			      drizzled/handler_structs.h \
