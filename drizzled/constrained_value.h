@@ -93,7 +93,9 @@ public:
   }
 };
 
-template<class T, uint64_t MAXVAL=UINT64_MAX, int64_t MINVAL=INT64_MIN, int ALIGN=1>
+template<class T,
+  T MAXVAL= std::numeric_limits<T>::max(),
+  T MINVAL= std::numeric_limits<T>::min(), unsigned int ALIGN= 1>
 class constrained_check :
   public constrained_value<T>
 {
