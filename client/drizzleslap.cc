@@ -78,6 +78,7 @@
 #include "stats.h"
 #include "thread_context.h"
 #include "conclusions.h"
+#include "wakeup.h"
 
 #include <signal.h>
 #include <stdarg.h>
@@ -94,6 +95,7 @@
 #include <iostream>
 #include <fstream>
 #include <drizzled/configmake.h>
+
 /* Added this for string translation. */
 #include <drizzled/gettext.h>
 
@@ -120,9 +122,8 @@ static char *shared_memory_base_name=0;
 uint32_t thread_counter;
 boost::mutex counter_mutex;
 boost::condition_variable_any count_threshhold;
-bool master_wakeup;
-boost::mutex sleeper_mutex;
-boost::condition_variable_any sleep_threshhold;
+
+client::Wakeup master_wakeup;
 
 /* Global Thread timer */
 static bool timer_alarm= false;
@@ -275,12 +276,7 @@ static void run_task(ThreadContext *ctx)
   drizzle_row_t row;
   Statement *ptr;
 
-  sleeper_mutex.lock();
-  while (master_wakeup)
-  {
-    sleep_threshhold.wait(sleeper_mutex);
-  }
-  sleeper_mutex.unlock();
+  master_wakeup.wait();
 
   slap_connect(con, true);
 
@@ -1905,12 +1901,7 @@ static void timer_thread()
     We lock around the initial call in case were we in a loop. This
     also keeps the value properly syncronized across call threads.
   */
-  sleeper_mutex.lock();
-  while (master_wakeup)
-  {
-    sleep_threshhold.wait(sleeper_mutex);
-  }
-  sleeper_mutex.unlock();
+  master_wakeup.wait();
 
   {
     boost::mutex::scoped_lock scopedLock(timer_alarm_mutex);
@@ -1939,10 +1930,7 @@ static void run_scheduler(Stats *sptr, Statement **stmts, uint32_t concur, uint6
     OptionString *sql_type;
     thread_counter= 0;
 
-    {
-      boost::mutex::scoped_lock scopedWakeup(sleeper_mutex);
-      master_wakeup= true;
-    }
+    master_wakeup.reset();
 
     real_concurrency= 0;
 
@@ -1998,11 +1986,7 @@ static void run_scheduler(Stats *sptr, Statement **stmts, uint32_t concur, uint6
     }
   }
 
-  {
-    boost::mutex::scoped_lock scopedSleeper(sleeper_mutex);
-    master_wakeup= false;
-  }
-  sleep_threshhold.notify_all();
+  master_wakeup.start();
 
   gettimeofday(&start_time, NULL);
 
