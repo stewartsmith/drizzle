@@ -194,7 +194,6 @@ string concurrency_str;
 string create_string;
 std::vector <uint32_t> concurrency;
 
-const char *default_dbug_option= "d:t:o,/tmp/drizzleslap.trace";
 std::string opt_csv_str;
 int csv_file;
 
