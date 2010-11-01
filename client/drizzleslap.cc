@@ -93,10 +93,13 @@
 #include <string>
 #include <iostream>
 #include <fstream>
-#include <pthread.h>
 #include <drizzled/configmake.h>
 /* Added this for string translation. */
 #include <drizzled/gettext.h>
+
+#include <boost/thread.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/condition_variable.hpp>
 #include <boost/program_options.hpp>
 
 #define SLAP_VERSION "1.5"
@@ -115,16 +118,16 @@ static char *shared_memory_base_name=0;
 
 /* Global Thread counter */
 uint32_t thread_counter;
-pthread_mutex_t counter_mutex;
-pthread_cond_t count_threshhold;
-uint32_t master_wakeup;
-pthread_mutex_t sleeper_mutex;
-pthread_cond_t sleep_threshhold;
+boost::mutex counter_mutex;
+boost::condition_variable_any count_threshhold;
+bool master_wakeup;
+boost::mutex sleeper_mutex;
+boost::condition_variable_any sleep_threshhold;
 
 /* Global Thread timer */
 static bool timer_alarm= false;
-pthread_mutex_t timer_alarm_mutex;
-pthread_cond_t timer_alarm_threshold;
+boost::mutex timer_alarm_mutex;
+boost::condition_variable_any timer_alarm_threshold;
 
 std::vector < std::string > primary_keys;
 
@@ -225,8 +228,6 @@ static int create_schema(drizzle_con_st *con, const char *db, Statement *stmt,
                          OptionString *engine_stmt, Stats *sptr);
 static int run_scheduler(Stats *sptr, Statement **stmts, uint32_t concur,
                          uint64_t limit);
-extern "C" pthread_handler_t run_task(void *p);
-extern "C" pthread_handler_t timer_thread(void *p);
 void statement_cleanup(Statement *stmt);
 void option_cleanup(OptionString *stmt);
 void concurrency_loop(drizzle_con_st *con, uint32_t current, OptionString *eptr);
@@ -264,6 +265,138 @@ static void combine_queries(vector<string> queries)
     user_supplied_query.append(delimiter);
   }
 }
+
+
+static void run_task(ThreadContext *ctx)
+{
+  uint64_t counter= 0, queries;
+  uint64_t detach_counter;
+  unsigned int commit_counter;
+  drizzle_con_st con;
+  drizzle_result_st result;
+  drizzle_row_t row;
+  Statement *ptr;
+
+  sleeper_mutex.lock();
+  while (master_wakeup)
+  {
+    sleep_threshhold.wait(sleeper_mutex);
+  }
+  sleeper_mutex.unlock();
+
+  slap_connect(&con, true);
+
+  if (verbose >= 3)
+    printf("connected!\n");
+  queries= 0;
+
+  commit_counter= 0;
+  if (commit_rate)
+    run_query(&con, NULL, "SET AUTOCOMMIT=0", strlen("SET AUTOCOMMIT=0"));
+
+limit_not_met:
+  for (ptr= ctx->getStmt(), detach_counter= 0;
+       ptr && ptr->getLength();
+       ptr= ptr->getNext(), detach_counter++)
+  {
+    if (!opt_only_print && detach_rate && !(detach_counter % detach_rate))
+    {
+      slap_close(&con);
+      slap_connect(&con, true);
+    }
+
+    /*
+      We have to execute differently based on query type. This should become a function.
+    */
+    if ((ptr->getType() == UPDATE_TYPE_REQUIRES_PREFIX) ||
+        (ptr->getType() == SELECT_TYPE_REQUIRES_PREFIX))
+    {
+      int length;
+      unsigned int key_val;
+      char buffer[HUGE_STRING_LENGTH];
+
+      /*
+        This should only happen if some sort of new engine was
+        implemented that didn't properly handle UPDATEs.
+
+        Just in case someone runs this under an experimental engine we don't
+        want a crash so the if() is placed here.
+      */
+      assert(primary_keys.size());
+      if (primary_keys.size())
+      {
+        key_val= (unsigned int)(random() % primary_keys.size());
+        const char *key;
+        key= primary_keys[key_val].c_str();
+
+        assert(key);
+
+        length= snprintf(buffer, HUGE_STRING_LENGTH, "%.*s '%s'",
+                         (int)ptr->getLength(), ptr->getString(), key);
+
+        if (run_query(&con, &result, buffer, length))
+        {
+          fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
+                  internal::my_progname, (uint32_t)length, buffer, drizzle_con_error(&con));
+          exit(1);
+        }
+      }
+    }
+    else
+    {
+      if (run_query(&con, &result, ptr->getString(), ptr->getLength()))
+      {
+        fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
+                internal::my_progname, (uint32_t)ptr->getLength(), ptr->getString(), drizzle_con_error(&con));
+        exit(1);
+      }
+    }
+
+    if (!opt_only_print)
+    {
+      while ((row = drizzle_row_next(&result)))
+        counter++;
+      drizzle_result_free(&result);
+    }
+    queries++;
+
+    if (commit_rate && (++commit_counter == commit_rate))
+    {
+      commit_counter= 0;
+      run_query(&con, NULL, "COMMIT", strlen("COMMIT"));
+    }
+
+    /* If the timer is set, and the alarm is not active then end */
+    if (opt_timer_length && timer_alarm == false)
+      goto end;
+
+    /* If limit has been reached, and we are not in a timer_alarm just end */
+    if (ctx->getLimit() && queries == ctx->getLimit() && timer_alarm == false)
+      goto end;
+  }
+
+  if (opt_timer_length && timer_alarm == true)
+    goto limit_not_met;
+
+  if (ctx->getLimit() && queries < ctx->getLimit())
+    goto limit_not_met;
+
+
+end:
+  if (commit_rate)
+    run_query(&con, NULL, "COMMIT", strlen("COMMIT"));
+
+  slap_close(&con);
+
+  {
+    boost::mutex::scoped_lock scopedLock(counter_mutex);
+    thread_counter--;
+    count_threshhold.notify_one();
+  }
+
+  delete ctx;
+}
+
 /**
  * commandline_options is the set of all options that can only be called via the command line.
 
@@ -525,14 +658,6 @@ int main(int argc, char **argv)
 
     slap_connect(&con, false);
 
-    pthread_mutex_init(&counter_mutex, NULL);
-    pthread_cond_init(&count_threshhold, NULL);
-    pthread_mutex_init(&sleeper_mutex, NULL);
-    pthread_cond_init(&sleep_threshhold, NULL);
-    pthread_mutex_init(&timer_alarm_mutex, NULL);
-    pthread_cond_init(&timer_alarm_threshold, NULL);
-
-
     /* Main iterations loop */
 burnin:
     eptr= engine_options;
@@ -565,13 +690,6 @@ burnin:
 
     if (opt_burnin)
       goto burnin;
-
-    pthread_mutex_destroy(&counter_mutex);
-    pthread_cond_destroy(&count_threshhold);
-    pthread_mutex_destroy(&sleeper_mutex);
-    pthread_cond_destroy(&sleep_threshhold);
-    pthread_mutex_destroy(&timer_alarm_mutex);
-    pthread_cond_destroy(&timer_alarm_threshold);
 
     slap_close(&con);
 
@@ -1799,281 +1917,136 @@ run_statements(drizzle_con_st *con, Statement *stmt)
   return(0);
 }
 
+
+static void timer_thread()
+{
+  /*
+    We lock around the initial call in case were we in a loop. This
+    also keeps the value properly syncronized across call threads.
+  */
+  sleeper_mutex.lock();
+  while (master_wakeup)
+  {
+    sleep_threshhold.wait(sleeper_mutex);
+  }
+  sleeper_mutex.unlock();
+
+  {
+    boost::mutex::scoped_lock scopedLock(timer_alarm_mutex);
+
+    boost::xtime xt; 
+    xtime_get(&xt, boost::TIME_UTC); 
+    xt.sec += opt_timer_length; 
+
+    (void)timer_alarm_threshold.timed_wait(scopedLock, xt);
+  }
+
+  {
+    boost::mutex::scoped_lock scopedLock(timer_alarm_mutex);
+    timer_alarm= false;
+  }
+}
+
 static int
 run_scheduler(Stats *sptr, Statement **stmts, uint32_t concur, uint64_t limit)
 {
-  uint32_t y;
   unsigned int real_concurrency;
   struct timeval start_time, end_time;
-  OptionString *sql_type;
-  pthread_t mainthread;            /* Thread descriptor */
-  pthread_attr_t attr;          /* Thread attributes */
 
-
-  pthread_attr_init(&attr);
-  pthread_attr_setdetachstate(&attr,
-                              PTHREAD_CREATE_DETACHED);
-
-  pthread_mutex_lock(&counter_mutex);
-  thread_counter= 0;
-
-  pthread_mutex_lock(&sleeper_mutex);
-  master_wakeup= 1;
-  pthread_mutex_unlock(&sleeper_mutex);
-
-  real_concurrency= 0;
-
-  for (y= 0, sql_type= query_options;
-       y < query_statements_count;
-       y++, sql_type= sql_type->getNext())
   {
-    unsigned int options_loop= 1;
+    boost::mutex::scoped_lock lock(counter_mutex);
 
-    if (sql_type->getOption())
+    OptionString *sql_type;
+    thread_counter= 0;
+
     {
-      options_loop= strtol(sql_type->getOption(),
-                           (char **)NULL, 10);
-      options_loop= options_loop ? options_loop : 1;
+      boost::mutex::scoped_lock scopedWakeup(sleeper_mutex);
+      master_wakeup= true;
     }
 
-    while (options_loop--)
-    {
-      for (uint32_t x= 0; x < concur; x++)
-      {
-        ThreadContext *con;
-        con= new ThreadContext;
-        if (con == NULL)
-        {
-          fprintf(stderr, "Memory Allocation error in scheduler\n");
-          exit(1);
-        }
-        con->setStmt(stmts[y]);
-        con->setLimit(limit);
+    real_concurrency= 0;
 
-        real_concurrency++;
-        /* now you create the thread */
-        if (pthread_create(&mainthread, &attr, run_task,
-                           (void *)con) != 0)
+    uint32_t y;
+    for (y= 0, sql_type= query_options;
+         y < query_statements_count;
+         y++, sql_type= sql_type->getNext())
+    {
+      unsigned int options_loop= 1;
+
+      if (sql_type->getOption())
+      {
+        options_loop= strtol(sql_type->getOption(),
+                             (char **)NULL, 10);
+        options_loop= options_loop ? options_loop : 1;
+      }
+
+      while (options_loop--)
+      {
+        for (uint32_t x= 0; x < concur; x++)
         {
-          fprintf(stderr,"%s: Could not create thread\n", internal::my_progname);
-          exit(1);
+          ThreadContext *con;
+          con= new ThreadContext;
+          if (con == NULL)
+          {
+            fprintf(stderr, "Memory Allocation error in scheduler\n");
+            exit(1);
+          }
+          con->setStmt(stmts[y]);
+          con->setLimit(limit);
+
+          real_concurrency++;
+
+          /* now you create the thread */
+          boost::thread new_thread(boost::bind(&run_task, con));
+          thread_counter++;
         }
-        thread_counter++;
       }
     }
-  }
 
-  /*
-    The timer_thread belongs to all threads so it too obeys the wakeup
-    call that run tasks obey.
-  */
-  if (opt_timer_length)
-  {
-    pthread_mutex_lock(&timer_alarm_mutex);
-    timer_alarm= true;
-    pthread_mutex_unlock(&timer_alarm_mutex);
-
-    if (pthread_create(&mainthread, &attr, timer_thread,
-                       (void *)&opt_timer_length) != 0)
+    /*
+      The timer_thread belongs to all threads so it too obeys the wakeup
+      call that run tasks obey.
+    */
+    if (opt_timer_length)
     {
-      fprintf(stderr,"%s: Could not create timer thread\n", internal::my_progname);
-      exit(1);
+      {
+        boost::mutex::scoped_lock alarmLock(timer_alarm_mutex);
+        timer_alarm= true;
+      }
+
+      boost::thread new_thread(&timer_thread);
     }
   }
 
-  pthread_mutex_unlock(&counter_mutex);
-  pthread_attr_destroy(&attr);
-
-  pthread_mutex_lock(&sleeper_mutex);
-  master_wakeup= 0;
-  pthread_mutex_unlock(&sleeper_mutex);
-  pthread_cond_broadcast(&sleep_threshhold);
+  {
+    boost::mutex::scoped_lock scopedSleeper(sleeper_mutex);
+    master_wakeup= false;
+  }
+  sleep_threshhold.notify_all();
 
   gettimeofday(&start_time, NULL);
 
   /*
     We loop until we know that all children have cleaned up.
   */
-  pthread_mutex_lock(&counter_mutex);
-  while (thread_counter)
   {
-    struct timespec abstime;
+    boost::mutex::scoped_lock scopedLock(counter_mutex);
+    while (thread_counter)
+    {
+      boost::xtime xt; 
+      xtime_get(&xt, boost::TIME_UTC); 
+      xt.sec += 3;
 
-    set_timespec(abstime, 3);
-    pthread_cond_timedwait(&count_threshhold, &counter_mutex, &abstime);
+      count_threshhold.timed_wait(scopedLock, xt);
+    }
   }
-  pthread_mutex_unlock(&counter_mutex);
 
   gettimeofday(&end_time, NULL);
-
 
   sptr->setTiming(timedif(end_time, start_time));
   sptr->setUsers(concur);
   sptr->setRealUsers(real_concurrency);
   sptr->setRows(limit);
-
-  return(0);
-}
-
-
-pthread_handler_t timer_thread(void *p)
-{
-  uint32_t *timer_length= (uint32_t *)p;
-  struct timespec abstime;
-
-
-  /*
-    We lock around the initial call in case were we in a loop. This
-    also keeps the value properly syncronized across call threads.
-  */
-  pthread_mutex_lock(&sleeper_mutex);
-  while (master_wakeup)
-  {
-    pthread_cond_wait(&sleep_threshhold, &sleeper_mutex);
-  }
-  pthread_mutex_unlock(&sleeper_mutex);
-
-  set_timespec(abstime, *timer_length);
-
-  pthread_mutex_lock(&timer_alarm_mutex);
-  pthread_cond_timedwait(&timer_alarm_threshold, &timer_alarm_mutex, &abstime);
-  pthread_mutex_unlock(&timer_alarm_mutex);
-
-  pthread_mutex_lock(&timer_alarm_mutex);
-  timer_alarm= false;
-  pthread_mutex_unlock(&timer_alarm_mutex);
-
-  return(0);
-}
-
-pthread_handler_t run_task(void *p)
-{
-  uint64_t counter= 0, queries;
-  uint64_t detach_counter;
-  unsigned int commit_counter;
-  drizzle_con_st con;
-  drizzle_result_st result;
-  drizzle_row_t row;
-  Statement *ptr;
-  ThreadContext *ctx= (ThreadContext *)p;
-
-  pthread_mutex_lock(&sleeper_mutex);
-  while (master_wakeup)
-  {
-    pthread_cond_wait(&sleep_threshhold, &sleeper_mutex);
-  }
-  pthread_mutex_unlock(&sleeper_mutex);
-
-  slap_connect(&con, true);
-
-  if (verbose >= 3)
-    printf("connected!\n");
-  queries= 0;
-
-  commit_counter= 0;
-  if (commit_rate)
-    run_query(&con, NULL, "SET AUTOCOMMIT=0", strlen("SET AUTOCOMMIT=0"));
-
-limit_not_met:
-  for (ptr= ctx->getStmt(), detach_counter= 0;
-       ptr && ptr->getLength();
-       ptr= ptr->getNext(), detach_counter++)
-  {
-    if (!opt_only_print && detach_rate && !(detach_counter % detach_rate))
-    {
-      slap_close(&con);
-      slap_connect(&con, true);
-    }
-
-    /*
-      We have to execute differently based on query type. This should become a function.
-    */
-    if ((ptr->getType() == UPDATE_TYPE_REQUIRES_PREFIX) ||
-        (ptr->getType() == SELECT_TYPE_REQUIRES_PREFIX))
-    {
-      int length;
-      unsigned int key_val;
-      char buffer[HUGE_STRING_LENGTH];
-
-      /*
-        This should only happen if some sort of new engine was
-        implemented that didn't properly handle UPDATEs.
-
-        Just in case someone runs this under an experimental engine we don't
-        want a crash so the if() is placed here.
-      */
-      assert(primary_keys.size());
-      if (primary_keys.size())
-      {
-        key_val= (unsigned int)(random() % primary_keys.size());
-        const char *key;
-        key= primary_keys[key_val].c_str();
-
-        assert(key);
-
-        length= snprintf(buffer, HUGE_STRING_LENGTH, "%.*s '%s'",
-                         (int)ptr->getLength(), ptr->getString(), key);
-
-        if (run_query(&con, &result, buffer, length))
-        {
-          fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-                  internal::my_progname, (uint32_t)length, buffer, drizzle_con_error(&con));
-          exit(1);
-        }
-      }
-    }
-    else
-    {
-      if (run_query(&con, &result, ptr->getString(), ptr->getLength()))
-      {
-        fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-                internal::my_progname, (uint32_t)ptr->getLength(), ptr->getString(), drizzle_con_error(&con));
-        exit(1);
-      }
-    }
-
-    if (!opt_only_print)
-    {
-      while ((row = drizzle_row_next(&result)))
-        counter++;
-      drizzle_result_free(&result);
-    }
-    queries++;
-
-    if (commit_rate && (++commit_counter == commit_rate))
-    {
-      commit_counter= 0;
-      run_query(&con, NULL, "COMMIT", strlen("COMMIT"));
-    }
-
-    /* If the timer is set, and the alarm is not active then end */
-    if (opt_timer_length && timer_alarm == false)
-      goto end;
-
-    /* If limit has been reached, and we are not in a timer_alarm just end */
-    if (ctx->getLimit() && queries == ctx->getLimit() && timer_alarm == false)
-      goto end;
-  }
-
-  if (opt_timer_length && timer_alarm == true)
-    goto limit_not_met;
-
-  if (ctx->getLimit() && queries < ctx->getLimit())
-    goto limit_not_met;
-
-
-end:
-  if (commit_rate)
-    run_query(&con, NULL, "COMMIT", strlen("COMMIT"));
-
-  slap_close(&con);
-
-  pthread_mutex_lock(&counter_mutex);
-  thread_counter--;
-  pthread_cond_signal(&count_threshhold);
-  pthread_mutex_unlock(&counter_mutex);
-
-  delete ctx;
 
   return(0);
 }
@@ -2420,8 +2393,7 @@ statement_cleanup(Statement *stmt)
   }
 }
 
-void
-slap_close(drizzle_con_st *con)
+void slap_close(drizzle_con_st *con)
 {
   if (opt_only_print)
     return;
@@ -2429,8 +2401,7 @@ slap_close(drizzle_con_st *con)
   drizzle_free(drizzle_con_drizzle(con));
 }
 
-void
-slap_connect(drizzle_con_st *con, bool connect_to_schema)
+void slap_connect(drizzle_con_st *con, bool connect_to_schema)
 {
   /* Connect to server */
   static uint32_t connection_retry_sleep= 100000; /* Microseconds */
@@ -2471,8 +2442,6 @@ slap_connect(drizzle_con_st *con, bool connect_to_schema)
             ret, drizzle_con_error(con));
     exit(1);
   }
-
-  return;
 }
 
 void
