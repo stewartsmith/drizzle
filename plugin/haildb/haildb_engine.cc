@@ -2844,8 +2844,9 @@ static unsigned int srv_auto_extend_increment;
 static unsigned long innobase_lock_wait_timeout;
 static unsigned long srv_n_spin_wait_rounds;
 static int64_t innobase_buffer_pool_size;
+typedef constrained_check<size_t, SIZE_MAX, 512, 1024> additional_mem_pool_constraint;
+static additional_mem_pool_constraint innobase_additional_mem_pool_size;
 static long innobase_open_files;
-static long innobase_additional_mem_pool_size;
 static long innobase_force_recovery;
 static long innobase_log_buffer_size;
 static char  default_haildb_data_file_path[]= "ibdata1:10M:autoextend";
@@ -2873,17 +2874,6 @@ static int haildb_init(drizzled::module::Context &context)
   innobase_use_doublewrite= (vm.count("disable-doublewrite")) ? false : true;
   innobase_print_verbose_log= (vm.count("disable-print-verbose-log")) ? false : true;
   srv_use_sys_malloc= (vm.count("use-internal-malloc")) ? false : true;
-
-  if (vm.count("additional-mem-pool-size"))
-  {
-    if (innobase_additional_mem_pool_size > LONG_MAX || innobase_additional_mem_pool_size < 512*1024L)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of additional-mem-pool-size"));
-      return 1;
-    }
-    innobase_additional_mem_pool_size/= 1024;
-    innobase_additional_mem_pool_size*= 1024;
-  }
 
   if (vm.count("autoextend-increment"))
   {
@@ -3132,7 +3122,7 @@ static int haildb_init(drizzled::module::Context &context)
   if (err != DB_SUCCESS)
     goto haildb_error;
 
-  err= ib_cfg_set_int("additional_mem_pool_size", innobase_additional_mem_pool_size);
+  err= ib_cfg_set_int("additional_mem_pool_size", static_cast<size_t>(innobase_additional_mem_pool_size));
   if (err != DB_SUCCESS)
     goto haildb_error;
 
@@ -3235,6 +3225,11 @@ static int haildb_init(drizzled::module::Context &context)
 
   haildb_engine= new HailDBEngine("InnoDB");
   context.add(haildb_engine);
+  context.registerVariable(new sys_var_bool_ptr_readonly("adaptive_hash_index",
+                                                         &innobase_adaptive_hash_index));
+  context.registerVariable(new sys_var_bool_ptr_readonly("adaptive_flushing",
+                                                         &srv_adaptive_flushing));
+  context.registerVariable(new sys_var_constrained_value_readonly<size_t>("additional_mem_pool_size",innobase_additional_mem_pool_size));
 
   haildb_datadict_dump_func_initialize(context);
   config_table_function_initialize(context);
@@ -3364,21 +3359,6 @@ static void haildb_status_file_update(Session*, drizzle_sys_var*,
   if (err == DB_SUCCESS)
     innobase_create_status_file= status_file_enabled;
 }
-
-static DRIZZLE_SYSVAR_BOOL(adaptive_hash_index, innobase_adaptive_hash_index,
-  PLUGIN_VAR_NOCMDARG,
-  "Enable HailDB adaptive hash index (enabled by default).  ",
-  NULL, NULL, true);
-
-static DRIZZLE_SYSVAR_BOOL(adaptive_flushing, srv_adaptive_flushing,
-  PLUGIN_VAR_NOCMDARG,
-  "Attempt flushing dirty pages to avoid IO bursts at checkpoints.",
-  NULL, NULL, true);
-
-static DRIZZLE_SYSVAR_LONG(additional_mem_pool_size, innobase_additional_mem_pool_size,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Size of a memory pool HailDB uses to store data dictionary information and other internal data structures.",
-  NULL, NULL, 8*1024*1024L, 512*1024L, LONG_MAX, 1024);
 
 static DRIZZLE_SYSVAR_UINT(autoextend_increment, srv_auto_extend_increment,
   PLUGIN_VAR_RQCMDARG,
@@ -3548,7 +3528,7 @@ static void init_options(drizzled::module::option_context &context)
   context("disable-adaptive-flushing",
           N_("Do not attempt to flush dirty pages to avoid IO bursts at checkpoints."));
   context("additional-mem-pool-size",
-          po::value<long>(&innobase_additional_mem_pool_size)->default_value(8*1024*1024L),
+          po::value<additional_mem_pool_constraint>(&innobase_additional_mem_pool_size)->default_value(8*1024*1024L),
           N_("Size of a memory pool HailDB uses to store data dictionary information and other internal data structures."));
   context("autoextend-increment",
           po::value<unsigned int>(&srv_auto_extend_increment)->default_value(8L),
@@ -3642,9 +3622,6 @@ static void init_options(drizzled::module::option_context &context)
 }
 
 static drizzle_sys_var* innobase_system_variables[]= {
-  DRIZZLE_SYSVAR(adaptive_hash_index),
-  DRIZZLE_SYSVAR(adaptive_flushing),
-  DRIZZLE_SYSVAR(additional_mem_pool_size),
   DRIZZLE_SYSVAR(autoextend_increment),
   DRIZZLE_SYSVAR(buffer_pool_size),
   DRIZZLE_SYSVAR(checksums),
