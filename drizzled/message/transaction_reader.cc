@@ -22,25 +22,24 @@
  */
 
 #include "config.h"
-#include <drizzled/definitions.h>
-#include <drizzled/gettext.h>
-#include <drizzled/replication_services.h>
-#include <drizzled/algorithm/crc32.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <cstdio>
 #include <cerrno>
 #include <iostream>
 #include <string>
 #include <algorithm>
 #include <vector>
 #include <unistd.h>
-#include <drizzled/message/transaction.pb.h>
-#include <drizzled/message/statement_transform.h>
-#include <drizzled/message/transaction_manager.h>
-#include <drizzled/util/convert.h>
+#include "drizzled/definitions.h"
+#include "drizzled/gettext.h"
+#include "drizzled/replication_services.h"
+#include "drizzled/algorithm/crc32.h"
+#include "drizzled/message/transaction.pb.h"
+#include "drizzled/message/statement_transform.h"
+#include "drizzled/message/transaction_manager.h"
+#include "drizzled/util/convert.h"
 
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
@@ -70,9 +69,9 @@ static void printStatement(const message::Statement &statement)
   {
     string &sql= *sql_string_iter;
 
-    /* 
-     * Replace \n and \r with spaces so that SQL statements 
-     * are always on a single line 
+    /*
+     * Replace \n and \r with spaces so that SQL statements
+     * are always on a single line
      */
     {
       string::size_type found= sql.find_first_of(replace_with_spaces);
@@ -175,7 +174,8 @@ static void printEvent(const message::Event &event)
 }
 
 static void printTransaction(const message::Transaction &transaction,
-                             bool ignore_events)
+                             bool ignore_events,
+                             bool print_as_raw)
 {
   static uint64_t last_trx_id= 0;
   bool should_commit= true;
@@ -188,7 +188,18 @@ static void printTransaction(const message::Transaction &transaction,
   {
     last_trx_id= trx.transaction_id();
     if (not ignore_events)
-      printEvent(transaction.event());
+    {
+      if (print_as_raw)
+        transaction.PrintDebugString();
+      else
+        printEvent(transaction.event());
+    }
+    return;
+  }
+
+  if (print_as_raw)
+  {
+    transaction.PrintDebugString();
     return;
   }
 
@@ -238,7 +249,8 @@ static void printTransaction(const message::Transaction &transaction,
 int main(int argc, char* argv[])
 {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
-  int file;
+  int opt_start_pos= 0;
+  uint64_t opt_transaction_id= 0;
 
   /*
    * Setup program options
@@ -248,7 +260,14 @@ int main(int argc, char* argv[])
     ("help", N_("Display help and exit"))
     ("checksum", N_("Perform checksum"))
     ("ignore-events", N_("Ignore event messages"))
-    ("input-file", po::value< vector<string> >(), N_("Transaction log file"));
+    ("input-file", po::value< vector<string> >(), N_("Transaction log file"))
+    ("raw", N_("Print raw Protobuf messages instead of SQL"))
+    ("start-pos",
+      po::value<int>(&opt_start_pos),
+      N_("Start reading from the given file position"))
+    ("transaction-id",
+      po::value<uint64_t>(&opt_transaction_id),
+      N_("Only output for the given transaction ID"));
 
   /*
    * We allow one positional argument that will be transaction file name
@@ -270,23 +289,29 @@ int main(int argc, char* argv[])
    */
   if (vm.count("help") || not vm.count("input-file"))
   {
-    fprintf(stderr, _("Usage: %s [options] TRANSACTION_LOG \n"),
-            argv[0]);
-    fprintf(stderr, _("OPTIONS:\n"));
-    fprintf(stderr, _("--help           :  Display help and exit\n"));
-    fprintf(stderr, _("--checksum       :  Perform checksum\n"));
-    fprintf(stderr, _("--ignore-events  :  Ignore event messages\n"));
+    cerr << desc << endl;
+    return -1;
+  }
+
+  /*
+   * Specifying both a transaction ID and a start position
+   * is not logical.
+   */
+  if (vm.count("start-pos") && vm.count("transaction-id"))
+  {
+    cerr << _("Cannot use --start-pos and --transaction-id together\n");
     return -1;
   }
 
   bool do_checksum= vm.count("checksum") ? true : false;
   bool ignore_events= vm.count("ignore-events") ? true : false;
+  bool print_as_raw= vm.count("raw") ? true : false;
 
   string filename= vm["input-file"].as< vector<string> >()[0];
-  file= open(filename.c_str(), O_RDONLY);
+  int file= open(filename.c_str(), O_RDONLY);
   if (file == -1)
   {
-    fprintf(stderr, _("Cannot open file: %s\n"), filename.c_str());
+    cerr << _("Cannot open file: ") << filename << endl;
     return -1;
   }
 
@@ -294,7 +319,17 @@ int main(int argc, char* argv[])
   message::TransactionManager trx_mgr;
 
   protobuf::io::ZeroCopyInputStream *raw_input= new protobuf::io::FileInputStream(file);
-  protobuf::io::CodedInputStream *coded_input= new protobuf::io::CodedInputStream(raw_input);
+
+  /* Skip ahead to user supplied position */
+  if (opt_start_pos)
+  {
+    if (not raw_input->Skip(opt_start_pos))
+    {
+      cerr << _("Could not skip to position ") << opt_start_pos
+           << _(" in file ") << filename << endl;
+      exit(-1);
+    }
+  }
 
   char *buffer= NULL;
   char *temp_buffer= NULL;
@@ -304,26 +339,41 @@ int main(int argc, char* argv[])
   bool result= true;
   uint32_t message_type= 0;
 
-  /* Read in the length of the command */
-  while (result == true && 
-         coded_input->ReadLittleEndian32(&message_type) == true &&
-         coded_input->ReadLittleEndian32(&length) == true)
+  while (result == true)
   {
+   /*
+     * Odd thing to note about using CodedInputStream: This class wasn't
+     * intended to read large amounts of GPB messages. It has an upper
+     * limit on the number of bytes it will read (see Protobuf docs for
+     * this class for more info). A warning will be produced as you
+     * get close to this limit. Since this is a pretty lightweight class,
+     * we should be able to simply create a new one for each message we
+     * want to read.
+     */
+    protobuf::io::CodedInputStream coded_input(raw_input);
+
+    /* Read in the type and length of the command */
+    if (not coded_input.ReadLittleEndian32(&message_type) ||
+        not coded_input.ReadLittleEndian32(&length))
+    {
+      break;  /* EOF */
+    }
+
     if (message_type != ReplicationServices::TRANSACTION)
     {
-      fprintf(stderr, _("Found a non-transaction message in log.  Currently, not supported.\n"));
-      exit(1);
+      cerr << _("Found a non-transaction message in log.  Currently, not supported.\n");
+      exit(-1);
     }
 
     if (length > INT_MAX)
     {
-      fprintf(stderr, _("Attempted to read record bigger than INT_MAX\n"));
-      exit(1);
+      cerr << _("Attempted to read record bigger than INT_MAX\n");
+      exit(-1);
     }
 
     if (buffer == NULL)
     {
-      /* 
+      /*
        * First time around...just malloc the length.  This block gets rid
        * of a GCC warning about uninitialized temp_buffer.
        */
@@ -337,87 +387,116 @@ int main(int argc, char* argv[])
 
     if (temp_buffer == NULL)
     {
-      fprintf(stderr, _("Memory allocation failure trying to allocate %" PRIu64 " bytes.\n"),
-              static_cast<uint64_t>(length));
+      cerr << _("Memory allocation failure trying to allocate ") << length << _(" bytes\n");
       break;
     }
     else
       buffer= temp_buffer;
 
     /* Read the Command */
-    result= coded_input->ReadRaw(buffer, (int) length);
+    result= coded_input.ReadRaw(buffer, (int) length);
     if (result == false)
     {
       char errmsg[STRERROR_MAX];
       strerror_r(errno, errmsg, sizeof(errmsg));
-      fprintf(stderr, _("Could not read transaction message.\n"));
-      fprintf(stderr, _("GPB ERROR: %s.\n"), errmsg);
+      cerr << _("Could not read transaction message.\n");
+      cerr << _("GPB ERROR: ") << errmsg << endl;;
       string hexdump;
       hexdump.reserve(length * 4);
       bytesToHexdumpFormat(hexdump, reinterpret_cast<const unsigned char *>(buffer), length);
-      fprintf(stderr, _("HEXDUMP:\n\n%s\n"), hexdump.c_str());
+      cerr << _("HEXDUMP:\n\n") << hexdump << endl;
       break;
     }
 
     result= transaction.ParseFromArray(buffer, static_cast<int32_t>(length));
     if (result == false)
     {
-      fprintf(stderr, _("Unable to parse command. Got error: %s.\n"), transaction.InitializationErrorString().c_str());
+      cerr << _("Unable to parse command. Got error: ")
+           << transaction.InitializationErrorString() << endl;
       if (buffer != NULL)
       {
         string hexdump;
         hexdump.reserve(length * 4);
         bytesToHexdumpFormat(hexdump, reinterpret_cast<const unsigned char *>(buffer), length);
-        fprintf(stderr, _("HEXDUMP:\n\n%s\n"), hexdump.c_str());
+        cerr <<  _("HEXDUMP:\n\n") << hexdump << endl;
       }
       break;
     }
 
-    if (not isEndTransaction(transaction))
-    {
-      trx_mgr.store(transaction);
-    }
-    else
-    {
-      const message::TransactionContext trx= transaction.transaction_context();
-      uint64_t transaction_id= trx.transaction_id();
+    const message::TransactionContext trx= transaction.transaction_context();
+    uint64_t transaction_id= trx.transaction_id();
 
-      /*
-       * If there are any previous Transaction messages for this transaction,
-       * store this one, then output all of them together.
-       */
-      if (trx_mgr.contains(transaction_id))
+    /*
+     * If we are given a transaction ID, we only look for that one and
+     * print it out.
+     */
+    if (vm.count("transaction-id"))
+    {
+      if (opt_transaction_id == transaction_id)
       {
-        trx_mgr.store(transaction);
-
-        uint32_t size= trx_mgr.getTransactionBufferSize(transaction_id);
-        uint32_t idx= 0;
-
-        while (idx != size)
-        {
-          message::Transaction new_trx;
-          trx_mgr.getTransactionMessage(new_trx, transaction_id, idx);
-          printTransaction(new_trx, ignore_events);
-          idx++;
-        }
-
-        /* No longer need this transaction */
-        trx_mgr.remove(transaction_id);
+        printTransaction(transaction, ignore_events, print_as_raw);
       }
       else
       {
-        printTransaction(transaction, ignore_events);
+        /* Need to get the checksum bytes out of stream */
+        coded_input.ReadLittleEndian32(&checksum);
+        previous_length = length;
+        continue;
       }
     }
 
+    /*
+     * No transaction ID given, so process all messages.
+     */
+    else
+    {
+      if (not isEndTransaction(transaction))
+      {
+        trx_mgr.store(transaction);
+      }
+      else
+      {
+        /*
+         * If there are any previous Transaction messages for this transaction,
+         * store this one, then output all of them together.
+         */
+        if (trx_mgr.contains(transaction_id))
+        {
+          trx_mgr.store(transaction);
+
+          uint32_t size= trx_mgr.getTransactionBufferSize(transaction_id);
+          uint32_t idx= 0;
+
+          while (idx != size)
+          {
+            message::Transaction new_trx;
+            trx_mgr.getTransactionMessage(new_trx, transaction_id, idx);
+            printTransaction(new_trx, ignore_events, print_as_raw);
+            idx++;
+          }
+
+          /* No longer need this transaction */
+          trx_mgr.remove(transaction_id);
+        }
+        else
+        {
+          printTransaction(transaction, ignore_events, print_as_raw);
+        }
+      }
+    } /* end ! vm.count("transaction-id") */
+
     /* Skip 4 byte checksum */
-    coded_input->ReadLittleEndian32(&checksum);
+    coded_input.ReadLittleEndian32(&checksum);
 
     if (do_checksum)
     {
       if (checksum != drizzled::algorithm::crc32(buffer, static_cast<size_t>(length)))
       {
-        fprintf(stderr, _("Checksum failed. Wanted %" PRIu32 " got %" PRIu32 "\n"), checksum, drizzled::algorithm::crc32(buffer, static_cast<size_t>(length)));
+        cerr << _("Checksum failed. Wanted ")
+             << checksum
+             << _(" got ")
+             << drizzled::algorithm::crc32(buffer, static_cast<size_t>(length))
+             << endl;
       }
     }
 
@@ -427,7 +506,6 @@ int main(int argc, char* argv[])
   if (buffer)
     free(buffer);
 
-  delete coded_input;
   delete raw_input;
 
   return (result == true ? 0 : 1);

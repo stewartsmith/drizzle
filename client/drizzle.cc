@@ -178,10 +178,10 @@ public:
 
   Status(int in_exit_status, 
          uint32_t in_query_start_line,
-  	 char *in_file_name,
+         char *in_file_name,
          LineBuffer *in_line_buff,
-	 bool in_batch,
-	 bool in_add_to_history)
+         bool in_batch,
+         bool in_add_to_history)
     :
     exit_status(in_exit_status),
     query_start_line(in_query_start_line),
@@ -191,15 +191,14 @@ public:
     add_to_history(in_add_to_history)
     {}
 
-  Status()
-    :
-    exit_status(),
-    query_start_line(),
-    file_name(),
-    line_buff(),
-    batch(),        
-    add_to_history()
-    {}
+  Status() :
+    exit_status(0),
+    query_start_line(0),
+    file_name(NULL),
+    line_buff(NULL),
+    batch(false),        
+    add_to_history(false)
+  {}
   
   int getExitStatus() const
   {
@@ -340,7 +339,7 @@ static char *delimiter= NULL;
 static uint32_t delimiter_length= 1;
 unsigned short terminal_width= 80;
 
-int drizzleclient_real_query_for_lazy(const char *buf, int length,
+int drizzleclient_real_query_for_lazy(const char *buf, size_t length,
                                       drizzle_result_st *result,
                                       uint32_t *error_code);
 int drizzleclient_store_result_for_lazy(drizzle_result_st *result);
@@ -1801,10 +1800,8 @@ void drizzle_end(int sig)
 
   if (sig >= 0)
     put_info(sig ? _("Aborted") : _("Bye"), INFO_RESULT,0,0);
-  if (glob_buffer)
-    delete glob_buffer;
-  if (processed_prompt)
-    delete processed_prompt;
+  delete glob_buffer;
+  delete processed_prompt;
   opt_password.erase();
   free(histfile);
   free(histfile_tmp);
@@ -2669,7 +2666,7 @@ static void get_current_db(void)
  The different commands
 ***************************************************************************/
 
-int drizzleclient_real_query_for_lazy(const char *buf, int length,
+int drizzleclient_real_query_for_lazy(const char *buf, size_t length,
                                       drizzle_result_st *result,
                                       uint32_t *error_code)
 {
@@ -3586,7 +3583,7 @@ com_pager(string *, const char *line)
   /* Skip the spaces between the command and the argument */
   while (param && isspace(*param))
     param++;
-  if (!param || !strlen(param)) // if pager was not given, use the default
+  if (!param || (*param == '\0')) // if pager was not given, use the default
   {
     if (!default_pager_set)
     {

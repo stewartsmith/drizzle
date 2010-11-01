@@ -79,16 +79,16 @@ public:
 /*
  * Private methods.
  */
-std::string option_context::prepend_name(std::string module_name,
+std::string option_context::prepend_name(std::string in_module_name,
                                          const char *name_in)
 {
-  module_name.push_back('.');
-  std::transform(module_name.begin(), module_name.end(),
-                 module_name.begin(), SwapUnderscores());
-  std::transform(module_name.begin(), module_name.end(),
-                 module_name.begin(), ::tolower);
-  module_name.append(name_in);
-  return module_name;
+  in_module_name.push_back('.');
+  std::transform(in_module_name.begin(), in_module_name.end(),
+                 in_module_name.begin(), SwapUnderscores());
+  std::transform(in_module_name.begin(), in_module_name.end(),
+                 in_module_name.begin(), ::tolower);
+  in_module_name.append(name_in);
+  return in_module_name;
 }
 
 

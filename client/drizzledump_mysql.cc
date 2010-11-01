@@ -186,7 +186,10 @@ bool DrizzleDumpTableMySQL::populateFields()
     field->convertDateTime= false;
     /* Also sets collation */
     field->setType(row[1], row[8]);
-    field->isNull= (strcmp(row[3], "YES") == 0) ? true : false;
+    if (field->type.compare("ENUM") == 0)
+      field->isNull= true;
+    else
+      field->isNull= (strcmp(row[3], "YES") == 0) ? true : false;
     if (row[2])
     {
       field->defaultValue= row[2];
@@ -575,7 +578,7 @@ DrizzleDumpDataMySQL::DrizzleDumpDataMySQL(DrizzleDumpTable *dataTable,
 DrizzleDumpDataMySQL::~DrizzleDumpDataMySQL()
 {
   drizzle_result_free(result);
-  if (result) delete result;
+  delete result;
 }
 
 long DrizzleDumpDataMySQL::convertTime(const char* oldTime) const

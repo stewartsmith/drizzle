@@ -68,9 +68,8 @@ void TableFunctionContainer::getNames(const string &predicate,
 
 void TableFunctionContainer::addFunction(plugin::TableFunction *tool)
 {
-  std::pair<ToolMap::iterator, bool> ret;
-
-  ret= table_map.insert(std::make_pair(tool->getPath(), tool));
+  std::pair<ToolMap::iterator, bool> ret=
+    table_map.insert(std::make_pair(tool->getPath(), tool));
   assert(ret.second == true);
 }
 

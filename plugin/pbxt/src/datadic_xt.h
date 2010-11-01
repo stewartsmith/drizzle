@@ -201,7 +201,7 @@ class XTDDIndex : public XTDDConstraint {
 		return new_obj;
 	}
 
-        virtual void init(XTThreadPtr self) { XTDDConstraint::init(self); };
+        virtual void init(XTThreadPtr self) { XTDDConstraint::init(self); }
 	virtual void init(XTThreadPtr self, XTObject *obj);
 	struct XTIndex *getIndexPtr();
 };

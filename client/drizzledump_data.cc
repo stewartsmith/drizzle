@@ -336,6 +336,11 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
             os << obj.convertHex((unsigned char*)row[i], row_sizes[i]);
             byte_counter+= row_sizes[i];
           }
+          else if ((obj.table->fields[i]->type.compare("ENUM") == 0) and
+            (strcmp(row[i], "") == 0))
+          {
+            os << "NULL";
+          }
           else
             os << "'" << DrizzleDumpData::escape(row[i], row_sizes[i]) << "'";
           byte_counter+= 3;
@@ -473,17 +478,17 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpTable &obj)
   }
 
   os << std::endl;
-  os << ") ENGINE=" << obj.engineName << " ";
+  os << ") ENGINE='" << obj.engineName << "' ";
   if (obj.autoIncrement > 0)
   {
     os << "AUTO_INCREMENT=" << obj.autoIncrement << " ";
   }
 
-  os << "COLLATE = " << obj.collate;
+  os << "COLLATE='" << obj.collate << "'";
 
   if (not obj.comment.empty())
   {
-    os << " COMMENT = '" << obj.comment << "'";
+    os << " COMMENT='" << obj.comment << "'";
   }
 
   os << ";" << std::endl << std::endl;

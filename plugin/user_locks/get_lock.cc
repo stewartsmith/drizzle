@@ -46,7 +46,7 @@ int64_t GetLock::val_int()
   if (not res->length())
     return 0;
 
-  user_locks::Storable *list= dynamic_cast<user_locks::Storable *>(getSession().getProperty("user_locks"));
+  user_locks::Storable *list= static_cast<user_locks::Storable *>(getSession().getProperty("user_locks"));
   if (list) // To be compatible with MySQL, we will now release all other locks we might have.
     list->erase_all();
 

@@ -241,8 +241,8 @@ struct XTThread;
 class XTTask;
 
 /* Run a task. The thread input is the thread that is running the task. */
-typedef xtBool (*XTDoTaskFunc)(struct XTTask *task_data, struct XTThread *thread);
-typedef void (*XTFreeTaskFunc)(struct XTTask *task_data);
+typedef xtBool (*XTDoTaskFunc)(XTTask *task_data, XTThread *thread);
+typedef void (*XTFreeTaskFunc)(XTTask *task_data);
 
 class XTTask {
 	public:

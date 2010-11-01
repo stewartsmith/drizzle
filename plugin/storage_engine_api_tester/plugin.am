@@ -1,0 +1,9 @@
+if BUILD_STORAGE_ENGINE_API_TESTER_PLUGIN
+noinst_PROGRAMS+= \
+                  plugin/storage_engine_api_tester/engine_states_to_dot \
+                  plugin/storage_engine_api_tester/cursor_states_to_dot
+endif
+
+plugin_storage_engine_api_tester_engine_states_to_dot_SOURCES= plugin/storage_engine_api_tester/engine_states.cc plugin/storage_engine_api_tester/engine_states_to_dot.cc
+
+plugin_storage_engine_api_tester_cursor_states_to_dot_SOURCES= plugin/storage_engine_api_tester/cursor_states.cc plugin/storage_engine_api_tester/cursor_states_to_dot.cc

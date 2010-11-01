@@ -42,7 +42,7 @@ class user_var_entry
   { 
     name.str= strdup(arg);
     name.length= strlen(arg);
-  };
+  }
 
   ~user_var_entry()
   {

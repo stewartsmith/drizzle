@@ -1276,7 +1276,16 @@ bool select_insert::send_data(List<Item> &values)
   store_values(values);
   session->count_cuted_fields= CHECK_FIELD_IGNORE;
   if (session->is_error())
+  {
+    /*
+     * If we fail mid-way through INSERT..SELECT, we need to remove any
+     * records that we added to the current Statement message. We can
+     * use session->row_count to know how many records we have already added.
+     */
+    TransactionServices &ts= TransactionServices::singleton();
+    ts.removeStatementRecords(session, (session->row_count - 1));
     return(1);
+  }
 
   // Release latches in case bulk insert takes a long time
   plugin::TransactionalStorageEngine::releaseTemporaryLatches(session);
@@ -1603,7 +1612,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 
         if (create_table->table)
         {
-          table::Concurrent *concurrent_table= dynamic_cast<table::Concurrent *>(create_table->table);
+          table::Concurrent *concurrent_table= static_cast<table::Concurrent *>(create_table->table);
 
           if (concurrent_table->reopen_name_locked_table(create_table, session))
           {
