@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_BUFFER_H
-#define DRIZZLED_BUFFER_H
+#ifndef DRIZZLED_GLOBAL_BUFFER_H
+#define DRIZZLED_GLOBAL_BUFFER_H
 
 #include <drizzled/atomics.h>
 
@@ -66,4 +66,4 @@ private:
 };
 
 }
-#endif /* DRIZZLED_BUFFER_H */
+#endif /* DRIZZLED_GLOBAL_BUFFER_H */
