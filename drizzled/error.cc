@@ -474,6 +474,7 @@ ErrorMap::ErrorMap()
   add(ER_USE_SQL_BIG_RESULT, N_("Temporary table too large, rerun with SQL_BIG_RESULT."));
   add(ER_UNKNOWN_ENGINE_OPTION, N_("Unknown table engine option key/pair %s = %s."));
   add(ER_UNKNOWN_SCHEMA_OPTION, N_("Unknown schema engine option key/pair %s = %s."));
+  add(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, N_("Transactional DDL not supported"));
 
   add(EE_CANTUNLOCK, N_("Can't unlock file (Errcode: %d)"));
   add(EE_CANT_CHSIZE, N_("Can't change size of file (Errcode: %d)"));

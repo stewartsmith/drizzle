@@ -67,12 +67,11 @@ bool statement::CreateTable::execute()
     return true;
   }
 
-
-  /* If CREATE TABLE of non-temporary table, do implicit commit */
   if (not lex_identified_temp_table)
   {
-    if (not session->endActiveTransaction())
+    if (session->inTransaction())
     {
+      my_error(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, MYF(0));
       return true;
     }
   }
