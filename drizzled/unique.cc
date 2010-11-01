@@ -138,13 +138,13 @@ inline double log2_n_fact(double x)
 */
 
 double Unique::get_use_cost(uint32_t *, uint32_t nkeys, uint32_t key_size,
-                            size_t max_in_memory_size)
+                            size_t max_in_memory_size_arg)
 {
   ulong max_elements_in_tree;
   ulong last_tree_elems;
   double result;
 
-  max_elements_in_tree= ((ulong) max_in_memory_size /
+  max_elements_in_tree= ((ulong) max_in_memory_size_arg /
                          ALIGN_SIZE(sizeof(TREE_ELEMENT)+key_size));
 
   last_tree_elems= nkeys % max_elements_in_tree;

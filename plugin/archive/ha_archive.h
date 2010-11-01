@@ -79,7 +79,7 @@ class ha_archive: public drizzled::Cursor
 
 public:
   ha_archive(drizzled::plugin::StorageEngine &engine_arg,
-             drizzled::TableShare &table_arg);
+             drizzled::Table &table_arg);
   ~ha_archive()
   { }
 

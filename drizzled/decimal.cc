@@ -209,9 +209,9 @@ int my_decimal2string(uint32_t mask, const my_decimal *d,
     fixed_prec will be 0, and my_decimal_string_length() will be called
     instead to calculate the required size of the buffer.
   */
-  int length= (fixed_prec
-               ? (fixed_prec + ((fixed_prec == fixed_dec) ? 1 : 0) + 1)
-               : my_decimal_string_length(d));
+  int length= (int)(fixed_prec
+                    ? (uint32_t)(fixed_prec + ((fixed_prec == fixed_dec) ? 1 : 0) + 1)
+                    : (uint32_t)my_decimal_string_length(d));
   int result;
   if (str->alloc(length))
     return check_result(mask, E_DEC_OOM);
@@ -363,7 +363,13 @@ typedef int64_t      dec2;
 #define DIG_MASK     100000000
 #define DIG_BASE     1000000000
 #define DIG_MAX      (DIG_BASE-1)
-#define ROUND_UP(X)  (((X)+DIG_PER_DEC1-1)/DIG_PER_DEC1)
+
+template<typename T> 
+inline static T round_up(const T &x)
+{
+  return (x+DIG_PER_DEC1-1)/DIG_PER_DEC1;
+}
+
 static const dec1 powers10[DIG_PER_DEC1+1]={
   1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000};
 static const int dig2bytes[DIG_PER_DEC1+1]={0, 1, 1, 2, 2, 3, 3, 4, 4, 4};
@@ -372,93 +378,78 @@ static const dec1 frac_max[DIG_PER_DEC1-1]={
   999900000, 999990000, 999999000,
   999999900, 999999990 };
 
-#ifdef HAVE_purify
+#ifdef HAVE_VALGRIND
 #define sanity(d) assert((d)->len > 0)
 #else
 #define sanity(d) assert((d)->len >0 && ((d)->buf[0] | \
                               (d)->buf[(d)->len-1] | 1))
 #endif
 
-#define FIX_INTG_FRAC_ERROR(len, intg1, frac1, error)                   \
-        do                                                              \
-        {                                                               \
-          if (unlikely(intg1+frac1 > (len)))                            \
-          {                                                             \
-            if (unlikely(intg1 > (len)))                                \
-            {                                                           \
-              intg1=(len);                                              \
-              frac1=0;                                                  \
-              error=E_DEC_OVERFLOW;                                     \
-            }                                                           \
-            else                                                        \
-            {                                                           \
-              frac1=(len)-intg1;                                        \
-              error=E_DEC_TRUNCATED;                                    \
-            }                                                           \
-          }                                                             \
-          else                                                          \
-            error=E_DEC_OK;                                             \
-        } while(0)
+inline static void fix_intg_frac_error(const int len, int &intg1, int &frac1, int &error)
+{
+  if (unlikely(intg1+frac1 > len))
+  {
+    if (unlikely(intg1 > len))
+    {
+      intg1=(len);
+      frac1=0;
+      error=E_DEC_OVERFLOW;
+    }
+    else
+    {
+      frac1=(len)-intg1;
+      error=E_DEC_TRUNCATED;
+    }
+  }
+  else
+    error=E_DEC_OK;
+}
 
-#define ADD(to, from1, from2, carry)  /* assume carry <= 1 */           \
-        do                                                              \
-        {                                                               \
-          dec1 a=(from1)+(from2)+(carry);                               \
-          assert((carry) <= 1);                                    \
-          if (((carry)= a >= DIG_BASE)) /* no division here! */         \
-            a-=DIG_BASE;                                                \
-          (to)=a;                                                       \
-        } while(0)
+/* assume carry <= 1 */
+inline static void add(dec1 &to, const dec1 &from1, const dec1& from2, dec1 &carry)
+{
+  dec1 a=from1+from2+carry;
+  assert(carry <= 1);
+  if ((carry= (a >= DIG_BASE))) /* no division here! */
+    a-=DIG_BASE;
+  to=a;
+}
 
-#define ADD2(to, from1, from2, carry)                                   \
-        do                                                              \
-        {                                                               \
-          dec2 a=((dec2)(from1))+(from2)+(carry);                       \
-          if (((carry)= a >= DIG_BASE))                                 \
-            a-=DIG_BASE;                                                \
-          if (unlikely(a >= DIG_BASE))                                  \
-          {                                                             \
-            a-=DIG_BASE;                                                \
-            carry++;                                                    \
-          }                                                             \
-          (to)=(dec1) a;                                                \
-        } while(0)
+inline static void add2(dec1 &to, const dec1 &from1, const dec1 &from2, dec1 &carry)
+{
+  dec2 a=dec2(from1)+from2+carry;
+  if ((carry= (a >= DIG_BASE)))
+    a-=DIG_BASE;
+  if (unlikely(a >= DIG_BASE))
+  {
+    a-=DIG_BASE;
+    carry++;
+  }
+  to=dec1(a);
+}
 
-#define SUB(to, from1, from2, carry) /* to=from1-from2 */               \
-        do                                                              \
-        {                                                               \
-          dec1 a=(from1)-(from2)-(carry);                               \
-          if (((carry)= a < 0))                                         \
-            a+=DIG_BASE;                                                \
-          (to)=a;                                                       \
-        } while(0)
+/* to=from1-from2 */
+inline static void sub(dec1 &to, const dec1 &from1, const dec1 &from2, dec1 &carry)
+{
+  dec1 a=from1-from2-carry;
+  if ((carry= (a < 0)))
+    a+=DIG_BASE;
+  to=a;
+}
 
-#define SUB2(to, from1, from2, carry) /* to=from1-from2 */              \
-        do                                                              \
-        {                                                               \
-          dec1 a=(from1)-(from2)-(carry);                               \
-          if (((carry)= a < 0))                                         \
-            a+=DIG_BASE;                                                \
-          if (unlikely(a < 0))                                          \
-          {                                                             \
-            a+=DIG_BASE;                                                \
-            carry++;                                                    \
-          }                                                             \
-          (to)=a;                                                       \
-        } while(0)
-
-/**
-  Swap the contents of two variables.
- */
-#define swap_variables(TYPE, a, b) \
-  do {                             \
-    TYPE dummy;                    \
-    dummy= a;                      \
-    a= b;                          \
-    b= dummy;                      \
-  } while (0)
-
-
+/* to=from1-from2 */
+inline static void sub2(dec1 &to, const dec1 &from1, const dec1 &from2, dec1 &carry)
+{
+  dec1 a=from1-from2-carry;
+  if ((carry= (a < 0)))
+    a+=DIG_BASE;
+  if (unlikely(a < 0))
+  {
+    a+=DIG_BASE;
+    carry++;
+  }
+  to=a;
+}
 
 /**
   @brief  Get maximum value for given precision and scale
@@ -527,7 +518,7 @@ static dec1 *remove_leading_zeroes(const decimal_t *from, int *intg_result)
 int decimal_actual_fraction(decimal_t *from)
 {
   int frac= from->frac, i;
-  dec1 *buf0= from->buf + ROUND_UP(from->intg) + ROUND_UP(frac) - 1;
+  dec1 *buf0= from->buf + round_up(from->intg) + round_up(frac) - 1;
 
   if (frac == 0)
     return 0;
@@ -632,7 +623,7 @@ int decimal2string(const decimal_t *from, char *to, int *to_len,
   {
     char *s1= s + intg_len;
     fill= frac_len - frac;
-    buf=buf0+ROUND_UP(intg);
+    buf=buf0+round_up(intg);
     *s1++='.';
     for (; frac>0; frac-=DIG_PER_DEC1)
     {
@@ -657,7 +648,7 @@ int decimal2string(const decimal_t *from, char *to, int *to_len,
   if (intg)
   {
     s+=intg;
-    for (buf=buf0+ROUND_UP(intg); intg>0; intg-=DIG_PER_DEC1)
+    for (buf=buf0+round_up(intg); intg>0; intg-=DIG_PER_DEC1)
     {
       dec1 x=*--buf;
       for (i=min(intg, DIG_PER_DEC1); i; i--)
@@ -687,7 +678,7 @@ static void digits_bounds(decimal_t *from, int *start_result, int *end_result)
 {
   int start, stop, i;
   dec1 *buf_beg= from->buf;
-  dec1 *end= from->buf + ROUND_UP(from->intg) + ROUND_UP(from->frac);
+  dec1 *end= from->buf + round_up(from->intg) + round_up(from->frac);
   dec1 *buf_end= end - 1;
 
   /* find non-zero digit from number begining */
@@ -753,8 +744,8 @@ static void digits_bounds(decimal_t *from, int *start_result, int *end_result)
 */
 static void do_mini_left_shift(decimal_t *dec, int shift, int beg, int last)
 {
-  dec1 *from= dec->buf + ROUND_UP(beg + 1) - 1;
-  dec1 *end= dec->buf + ROUND_UP(last) - 1;
+  dec1 *from= dec->buf + round_up(beg + 1) - 1;
+  dec1 *end= dec->buf + round_up(last) - 1;
   int c_shift= DIG_PER_DEC1 - shift;
   assert(from >= dec->buf);
   assert(end < dec->buf + dec->len);
@@ -781,8 +772,8 @@ static void do_mini_left_shift(decimal_t *dec, int shift, int beg, int last)
 */
 static void do_mini_right_shift(decimal_t *dec, int shift, int beg, int last)
 {
-  dec1 *from= dec->buf + ROUND_UP(last) - 1;
-  dec1 *end= dec->buf + ROUND_UP(beg + 1) - 1;
+  dec1 *from= dec->buf + round_up(last) - 1;
+  dec1 *end= dec->buf + round_up(beg + 1) - 1;
   int c_shift= DIG_PER_DEC1 - shift;
   assert(from < dec->buf + dec->len);
   assert(end >= dec->buf);
@@ -818,7 +809,7 @@ static int decimal_shift(decimal_t *dec, int shift)
   /* index of position after last decimal digit */
   int end;
   /* index of digit position just after point */
-  int point= ROUND_UP(dec->intg) * DIG_PER_DEC1;
+  int point= round_up(dec->intg) * DIG_PER_DEC1;
   /* new point position */
   int new_point= point + shift;
   /* number of digits in result */
@@ -845,7 +836,7 @@ static int decimal_shift(decimal_t *dec, int shift)
   digits_frac= end - new_point;
   set_if_bigger(digits_frac, 0);
 
-  if ((new_len= ROUND_UP(digits_int) + (new_frac_len= ROUND_UP(digits_frac))) >
+  if ((new_len= round_up(digits_int) + (new_frac_len= round_up(digits_frac))) >
       dec->len)
   {
     int lack= new_len - dec->len;
@@ -905,7 +896,7 @@ static int decimal_shift(decimal_t *dec, int shift)
     if (do_left)
     {
       do_mini_left_shift(dec, l_mini_shift, beg, end);
-      mini_shift=- l_mini_shift;
+      mini_shift= (-l_mini_shift);
     }
     else
     {
@@ -938,8 +929,8 @@ static int decimal_shift(decimal_t *dec, int shift)
     {
       /* move left */
       d_shift= new_front / DIG_PER_DEC1;
-      to= dec->buf + (ROUND_UP(beg + 1) - 1 - d_shift);
-      barier= dec->buf + (ROUND_UP(end) - 1 - d_shift);
+      to= dec->buf + (round_up(beg + 1) - 1 - d_shift);
+      barier= dec->buf + (round_up(end) - 1 - d_shift);
       assert(to >= dec->buf);
       assert(barier + d_shift < dec->buf + dec->len);
       for(; to <= barier; to++)
@@ -952,8 +943,8 @@ static int decimal_shift(decimal_t *dec, int shift)
     {
       /* move right */
       d_shift= (1 - new_front) / DIG_PER_DEC1;
-      to= dec->buf + ROUND_UP(end) - 1 + d_shift;
-      barier= dec->buf + ROUND_UP(beg + 1) - 1 + d_shift;
+      to= dec->buf + round_up(end) - 1 + d_shift;
+      barier= dec->buf + round_up(beg + 1) - 1 + d_shift;
       assert(to < dec->buf + dec->len);
       assert(barier - d_shift >= dec->buf);
       for(; to >= barier; to--)
@@ -972,13 +963,13 @@ static int decimal_shift(decimal_t *dec, int shift)
 
     Only one of following 'for' loops will work becouse beg <= end
   */
-  beg= ROUND_UP(beg + 1) - 1;
-  end= ROUND_UP(end) - 1;
+  beg= round_up(beg + 1) - 1;
+  end= round_up(end) - 1;
   assert(new_point >= 0);
 
   /* We don't want negative new_point below */
   if (new_point != 0)
-    new_point= ROUND_UP(new_point) - 1;
+    new_point= round_up(new_point) - 1;
 
   if (new_point > end)
   {
@@ -1073,8 +1064,8 @@ internal_str2dec(char *from, decimal_t *to, char **end, bool fixed)
       error=E_DEC_OVERFLOW;
       intg=to->intg;
     }
-    intg1=ROUND_UP(intg);
-    frac1=ROUND_UP(frac);
+    intg1=round_up(intg);
+    frac1=round_up(frac);
     if (intg1+frac1 > to->len)
     {
       error= E_DEC_OOM;
@@ -1083,9 +1074,9 @@ internal_str2dec(char *from, decimal_t *to, char **end, bool fixed)
   }
   else
   {
-    intg1=ROUND_UP(intg);
-    frac1=ROUND_UP(frac);
-    FIX_INTG_FRAC_ERROR(to->len, intg1, frac1, error);
+    intg1=round_up(intg);
+    frac1=round_up(frac);
+    fix_intg_frac_error(to->len, intg1, frac1, error);
     if (unlikely(error))
     {
       frac=frac1*DIG_PER_DEC1;
@@ -1549,7 +1540,7 @@ int bin2decimal(const unsigned char *from, decimal_t *to, int precision, int sca
   d_copy[0]^= 0x80;
   from= d_copy;
 
-  FIX_INTG_FRAC_ERROR(to->len, intg1, frac1, error);
+  fix_intg_frac_error(to->len, intg1, frac1, error);
   if (unlikely(error))
   {
     if (intg1 < intg0+(intg0x>0))
@@ -1669,10 +1660,10 @@ int
 decimal_round(const decimal_t *from, decimal_t *to, int scale,
               decimal_round_mode mode)
 {
-  int frac0=scale>0 ? ROUND_UP(scale) : scale/DIG_PER_DEC1,
-      frac1=ROUND_UP(from->frac), round_digit= 0,
-      intg0=ROUND_UP(from->intg), error=E_DEC_OK, len=to->len,
-      intg1=ROUND_UP(from->intg +
+  int frac0=scale>0 ? round_up(scale) : scale/DIG_PER_DEC1,
+      frac1=round_up(from->frac), round_digit= 0,
+      intg0=round_up(from->intg), error=E_DEC_OK, len=to->len,
+      intg1=round_up(from->intg +
                      (((intg0 + frac0)>0) && (from->buf[0] == DIG_MAX)));
   dec1 *buf0=from->buf, *buf1=to->buf, x, y, carry=0;
   int first_dig;
@@ -1807,7 +1798,7 @@ decimal_round(const decimal_t *from, decimal_t *to, int scale,
     carry=1;
     *buf1-=DIG_BASE;
     while (carry && --buf1 >= to->buf)
-      ADD(*buf1, *buf1, 0, carry);
+      add(*buf1, *buf1, 0, carry);
     if (unlikely(carry))
     {
       /* shifting the number to create space for new digit */
@@ -1860,8 +1851,8 @@ done:
 
 static int do_add(const decimal_t *from1, const decimal_t *from2, decimal_t *to)
 {
-  int intg1=ROUND_UP(from1->intg), intg2=ROUND_UP(from2->intg),
-      frac1=ROUND_UP(from1->frac), frac2=ROUND_UP(from2->frac),
+  int intg1=round_up(from1->intg), intg2=round_up(from2->intg),
+      frac1=round_up(from1->frac), frac2=round_up(from2->frac),
       frac0=max(frac1, frac2), intg0=max(intg1, intg2), error;
   dec1 *buf1, *buf2, *buf0, *stop, *stop2, x, carry;
 
@@ -1877,7 +1868,7 @@ static int do_add(const decimal_t *from1, const decimal_t *from2, decimal_t *to)
     to->buf[0]=0; /* safety */
   }
 
-  FIX_INTG_FRAC_ERROR(to->len, intg0, frac0, error);
+  fix_intg_frac_error(to->len, intg0, frac0, error);
   if (unlikely(error == E_DEC_OVERFLOW))
   {
     max_decimal(to->len * DIG_PER_DEC1, 0, to);
@@ -1920,7 +1911,7 @@ static int do_add(const decimal_t *from1, const decimal_t *from2, decimal_t *to)
   carry=0;
   while (buf1 > stop2)
   {
-    ADD(*--buf0, *--buf1, *--buf2, carry);
+    add(*--buf0, *--buf1, *--buf2, carry);
   }
 
   /* part 3 - cmin(intg) ... cmax(intg) */
@@ -1928,7 +1919,7 @@ static int do_add(const decimal_t *from1, const decimal_t *from2, decimal_t *to)
                         ((stop=from2->buf)+intg2-intg1) ;
   while (buf1 > stop)
   {
-    ADD(*--buf0, *--buf1, 0, carry);
+    add(*--buf0, *--buf1, 0, carry);
   }
 
   if (unlikely(carry))
@@ -1942,8 +1933,8 @@ static int do_add(const decimal_t *from1, const decimal_t *from2, decimal_t *to)
    if to==0, return -1/0/+1 - the result of the comparison */
 static int do_sub(const decimal_t *from1, const decimal_t *from2, decimal_t *to)
 {
-  int intg1=ROUND_UP(from1->intg), intg2=ROUND_UP(from2->intg),
-      frac1=ROUND_UP(from1->frac), frac2=ROUND_UP(from2->frac);
+  int intg1=round_up(from1->intg), intg2=round_up(from2->intg),
+      frac1=round_up(from1->frac), frac2=round_up(from2->frac);
   int frac0=max(frac1, frac2), error;
   dec1 *buf1, *buf2, *buf0, *stop1, *stop2, *start1, *start2, carry=0;
 
@@ -2009,14 +2000,14 @@ static int do_sub(const decimal_t *from1, const decimal_t *from2, decimal_t *to)
   /* ensure that always from1 > from2 (and intg1 >= intg2) */
   if (carry)
   {
-    swap_variables(const decimal_t *,from1, from2);
-    swap_variables(dec1 *,start1, start2);
-    swap_variables(int,intg1,intg2);
-    swap_variables(int,frac1,frac2);
+    swap(from1, from2);
+    swap(start1, start2);
+    swap(intg1, intg2);
+    swap(frac1, frac2);
     to->sign= 1 - to->sign;
   }
 
-  FIX_INTG_FRAC_ERROR(to->len, intg1, frac0, error);
+  fix_intg_frac_error(to->len, intg1, frac0, error);
   buf0=to->buf+intg1+frac0;
 
   to->frac=max(from1->frac, from2->frac);
@@ -2050,20 +2041,20 @@ static int do_sub(const decimal_t *from1, const decimal_t *from2, decimal_t *to)
       *--buf0=0;
     while (buf2 > stop2)
     {
-      SUB(*--buf0, 0, *--buf2, carry);
+      sub(*--buf0, 0, *--buf2, carry);
     }
   }
 
   /* part 2 - cmin(frac) ... intg2 */
   while (buf2 > start2)
   {
-    SUB(*--buf0, *--buf1, *--buf2, carry);
+    sub(*--buf0, *--buf1, *--buf2, carry);
   }
 
   /* part 3 - intg2 ... intg1 */
   while (carry && buf1 > start1)
   {
-    SUB(*--buf0, *--buf1, 0, carry);
+    sub(*--buf0, *--buf1, 0, carry);
   }
 
   while (buf1 > start1)
@@ -2107,7 +2098,7 @@ int decimal_cmp(const decimal_t *from1, const decimal_t *from2)
 int decimal_is_zero(const decimal_t *from)
 {
   dec1 *buf1=from->buf,
-       *end=buf1+ROUND_UP(from->intg)+ROUND_UP(from->frac);
+       *end=buf1+round_up(from->intg)+round_up(from->frac);
   while (buf1 < end)
     if (*buf1++)
       return 0;
@@ -2136,9 +2127,9 @@ int decimal_is_zero(const decimal_t *from)
 */
 int decimal_mul(const decimal_t *from1, const decimal_t *from2, decimal_t *to)
 {
-  int intg1=ROUND_UP(from1->intg), intg2=ROUND_UP(from2->intg),
-      frac1=ROUND_UP(from1->frac), frac2=ROUND_UP(from2->frac),
-      intg0=ROUND_UP(from1->intg+from2->intg),
+  int intg1=round_up(from1->intg), intg2=round_up(from2->intg),
+      frac1=round_up(from1->frac), frac2=round_up(from2->frac),
+      intg0=round_up(from1->intg+from2->intg),
       frac0=frac1+frac2, error, i, j, d_to_move;
   dec1 *buf1=from1->buf+intg1, *buf2=from2->buf+intg2, *buf0,
        *start2, *stop2, *stop1, *start0, carry;
@@ -2147,7 +2138,7 @@ int decimal_mul(const decimal_t *from1, const decimal_t *from2, decimal_t *to)
 
   i=intg0;
   j=frac0;
-  FIX_INTG_FRAC_ERROR(to->len, intg0, frac0, error);
+  fix_intg_frac_error(to->len, intg0, frac0, error);
   to->sign=from1->sign != from2->sign;
   to->frac=from1->frac+from2->frac;
   to->intg=intg0*DIG_PER_DEC1;
@@ -2188,20 +2179,20 @@ int decimal_mul(const decimal_t *from1, const decimal_t *from2, decimal_t *to)
       dec2 p= ((dec2)*buf1) * ((dec2)*buf2);
       hi=(dec1)(p/DIG_BASE);
       lo=(dec1)(p-((dec2)hi)*DIG_BASE);
-      ADD2(*buf0, *buf0, lo, carry);
+      add2(*buf0, *buf0, lo, carry);
       carry+=hi;
     }
     if (carry)
     {
       if (buf0 < to->buf)
         return E_DEC_OVERFLOW;
-      ADD2(*buf0, *buf0, 0, carry);
+      add2(*buf0, *buf0, 0, carry);
     }
     for (buf0--; carry; buf0--)
     {
       if (buf0 < to->buf)
         return E_DEC_OVERFLOW;
-      ADD(*buf0, *buf0, 0, carry);
+      add(*buf0, *buf0, 0, carry);
     }
   }
 
@@ -2224,7 +2215,7 @@ int decimal_mul(const decimal_t *from1, const decimal_t *from2, decimal_t *to)
     }
   }
   buf1= to->buf;
-  d_to_move= intg0 + ROUND_UP(to->frac);
+  d_to_move= intg0 + round_up(to->frac);
   while (!*buf1 && (to->intg > DIG_PER_DEC1))
   {
     buf1++;
@@ -2254,8 +2245,8 @@ int decimal_mul(const decimal_t *from1, const decimal_t *from2, decimal_t *to)
 static int do_div_mod(const decimal_t *from1, const decimal_t *from2,
                        decimal_t *to, decimal_t *mod, int scale_incr)
 {
-  int frac1=ROUND_UP(from1->frac)*DIG_PER_DEC1, prec1=from1->intg+frac1,
-      frac2=ROUND_UP(from2->frac)*DIG_PER_DEC1, prec2=from2->intg+frac2,
+  int frac1=round_up(from1->frac)*DIG_PER_DEC1, prec1=from1->intg+frac1,
+      frac2=round_up(from2->frac)*DIG_PER_DEC1, prec2=from2->intg+frac2,
       error= 0, i, intg0, frac0, len1, len2, dintg, div_mod=(!mod);
   dec1 *buf0, *buf1=from1->buf, *buf2=from2->buf, *tmp1,
        *start2, *stop2, *stop1, *stop0, norm2, carry, *start1, dcarry;
@@ -2305,7 +2296,7 @@ static int do_div_mod(const decimal_t *from1, const decimal_t *from2,
     intg0=0;
   }
   else
-    intg0=ROUND_UP(dintg);
+    intg0=round_up(dintg);
   if (mod)
   {
     /* we're calculating N1 % N2.
@@ -2324,13 +2315,13 @@ static int do_div_mod(const decimal_t *from1, const decimal_t *from2,
       N2 is in the buf2, has prec2 digits. Scales are frac1 and
       frac2 accordingly.
       Thus, the result will have
-         frac = ROUND_UP(frac1+frac2+scale_incr)
+         frac = round_up(frac1+frac2+scale_incr)
       and
          intg = (prec1-frac1) - (prec2-frac2) + 1
          prec = intg+frac
     */
-    frac0=ROUND_UP(frac1+frac2+scale_incr);
-    FIX_INTG_FRAC_ERROR(to->len, intg0, frac0, error);
+    frac0=round_up(frac1+frac2+scale_incr);
+    fix_intg_frac_error(to->len, intg0, frac0, error);
     to->sign=from1->sign != from2->sign;
     to->intg=intg0*DIG_PER_DEC1;
     to->frac=frac0*DIG_PER_DEC1;
@@ -2341,7 +2332,7 @@ static int do_div_mod(const decimal_t *from1, const decimal_t *from2,
     while (dintg++ < 0)
       *buf0++=0;
 
-  len1=(i=ROUND_UP(prec1))+ROUND_UP(2*frac2+scale_incr+1) + 1;
+  len1=(i=round_up(prec1))+round_up(2*frac2+scale_incr+1) + 1;
   set_if_bigger(len1, 3);
   if (!(tmp1=(dec1 *)alloca(len1*sizeof(dec1))))
     return E_DEC_OOM;
@@ -2351,7 +2342,7 @@ static int do_div_mod(const decimal_t *from1, const decimal_t *from2,
   start1=tmp1;
   stop1=start1+len1;
   start2=buf2;
-  stop2=buf2+ROUND_UP(prec2)-1;
+  stop2=buf2+round_up(prec2)-1;
 
   /* removing end zeroes */
   while (*stop2 == 0 && stop2 >= start2)
@@ -2410,7 +2401,7 @@ static int do_div_mod(const decimal_t *from1, const decimal_t *from2,
         x=guess * (*--buf2);
         hi=(dec1)(x/DIG_BASE);
         lo=(dec1)(x-((dec2)hi)*DIG_BASE);
-        SUB2(*buf1, *buf1, lo, carry);
+        sub2(*buf1, *buf1, lo, carry);
         carry+=hi;
       }
       carry= dcarry < carry;
@@ -2424,7 +2415,7 @@ static int do_div_mod(const decimal_t *from1, const decimal_t *from2,
         buf1=start1+len2;
         for (carry=0; buf2 > start2; buf1--)
         {
-          ADD(*buf1, *buf1, *--buf2, carry);
+          add(*buf1, *buf1, *--buf2, carry);
         }
       }
     }
@@ -2443,8 +2434,8 @@ static int do_div_mod(const decimal_t *from1, const decimal_t *from2,
     if (dcarry)
       *--start1=dcarry;
     buf0=to->buf;
-    intg0=(int) (ROUND_UP(prec1-frac1)-(start1-tmp1));
-    frac0=ROUND_UP(to->frac);
+    intg0=(int) (round_up(prec1-frac1)-(start1-tmp1));
+    frac0=round_up(to->frac);
     error=E_DEC_OK;
     if (unlikely(frac0==0 && intg0==0))
     {
@@ -2474,7 +2465,7 @@ static int do_div_mod(const decimal_t *from1, const decimal_t *from2,
         error=E_DEC_OVERFLOW;
         goto done;
       }
-      assert(intg0 <= ROUND_UP(from2->intg));
+      assert(intg0 <= round_up(from2->intg));
       stop1=start1+frac0+intg0;
       to->intg=min(intg0*DIG_PER_DEC1, from2->intg);
     }
@@ -2554,7 +2545,7 @@ void dump_decimal(decimal_t *d)
 {
   int i;
   printf("/* intg=%d, frac=%d, sign=%d, buf[]={", d->intg, d->frac, d->sign);
-  for (i=0; i < ROUND_UP(d->frac)+ROUND_UP(d->intg)-1; i++)
+  for (i=0; i < round_up(d->frac)+round_up(d->intg)-1; i++)
     printf("%09d, ", d->buf[i]);
   printf("%09d} */ ", d->buf[i]);
 }

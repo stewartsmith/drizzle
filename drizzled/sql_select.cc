@@ -447,19 +447,6 @@ inline Item *and_items(Item* cond, Item *item)
   return (cond? (new Item_cond_and(cond, item)) : item);
 }
 
-static void fix_list_after_tbl_changes(Select_Lex *new_parent, List<TableList> *tlist)
-{
-  List_iterator<TableList> it(*tlist);
-  TableList *table;
-  while ((table= it++))
-  {
-    if (table->on_expr)
-      table->on_expr->fix_after_pullout(new_parent, &table->on_expr);
-    if (table->getNestedJoin())
-      fix_list_after_tbl_changes(new_parent, &table->getNestedJoin()->join_list);
-  }
-}
-
 /*****************************************************************************
   Create JoinTableS, make a guess about the table types,
   Approximate how many records will be used in each table
@@ -673,7 +660,7 @@ bool update_ref_and_keys(Session *session,
         else if (use->getKeypart() != 0)		// First found must be 0
           continue;
 
-#ifdef HAVE_purify
+#ifdef HAVE_VALGRIND
         /* Valgrind complains about overlapped memcpy when save_pos==use. */
         if (save_pos != use)
 #endif
@@ -1216,241 +1203,8 @@ COND *add_found_match_trig_cond(JoinTable *tab, COND *cond, JoinTable *root_tab)
   return tmp;
 }
 
-/*
-  Check if given expression uses only table fields covered by the given index
-
-  SYNOPSIS
-    uses_index_fields_only()
-      item           Expression to check
-      tbl            The table having the index
-      keyno          The index number
-      other_tbls_ok  true <=> Fields of other non-const tables are allowed
-
-  DESCRIPTION
-    Check if given expression only uses fields covered by index #keyno in the
-    table tbl. The expression can use any fields in any other tables.
-
-    The expression is guaranteed not to be AND or OR - those constructs are
-    handled outside of this function.
-
-  RETURN
-    true   Yes
-    false  No
-*/
-static bool uses_index_fields_only(Item *item, Table *tbl, uint32_t keyno, bool other_tbls_ok)
-{
-  if (item->const_item())
-    return true;
-
-  /*
-    Don't push down the triggered conditions. Nested outer joins execution
-    code may need to evaluate a condition several times (both triggered and
-    untriggered), and there is no way to put thi
-    TODO: Consider cloning the triggered condition and using the copies for:
-      1. push the first copy down, to have most restrictive index condition
-         possible
-      2. Put the second copy into tab->select_cond.
-  */
-  if (item->type() == Item::FUNC_ITEM &&
-      ((Item_func*)item)->functype() == Item_func::TRIG_COND_FUNC)
-    return false;
-
-  if (!(item->used_tables() & tbl->map))
-    return other_tbls_ok;
-
-  Item::Type item_type= item->type();
-  switch (item_type) {
-  case Item::FUNC_ITEM:
-    {
-      /* This is a function, apply condition recursively to arguments */
-      Item_func *item_func= (Item_func*)item;
-      Item **child;
-      Item **item_end= (item_func->arguments()) + item_func->argument_count();
-      for (child= item_func->arguments(); child != item_end; child++)
-      {
-        if (!uses_index_fields_only(*child, tbl, keyno, other_tbls_ok))
-          return false;
-      }
-      return true;
-    }
-  case Item::COND_ITEM:
-    {
-      /* This is a function, apply condition recursively to arguments */
-      List_iterator<Item> li(*((Item_cond*)item)->argument_list());
-      Item *list_item;
-      while ((list_item=li++))
-      {
-        if (!uses_index_fields_only(item, tbl, keyno, other_tbls_ok))
-          return false;
-      }
-      return true;
-    }
-  case Item::FIELD_ITEM:
-    {
-      Item_field *item_field= (Item_field*)item;
-      if (item_field->field->getTable() != tbl)
-        return true;
-      return item_field->field->part_of_key.test(keyno);
-    }
-  case Item::REF_ITEM:
-    return uses_index_fields_only(item->real_item(), tbl, keyno,
-                                  other_tbls_ok);
-  default:
-    return false; /* Play it safe, don't push unknown non-const items */
-  }
-}
-
 #define ICP_COND_USES_INDEX_ONLY 10
 
-/*
-  Get a part of the condition that can be checked using only index fields
-
-  SYNOPSIS
-    make_cond_for_index()
-      cond           The source condition
-      table          The table that is partially available
-      keyno          The index in the above table. Only fields covered by the index
-                     are available
-      other_tbls_ok  true <=> Fields of other non-const tables are allowed
-
-  DESCRIPTION
-    Get a part of the condition that can be checked when for the given table
-    we have values only of fields covered by some index. The condition may
-    refer to other tables, it is assumed that we have values of all of their
-    fields.
-
-    Example:
-      make_cond_for_index(
-         "cond(t1.field) AND cond(t2.key1) AND cond(t2.non_key) AND cond(t2.key2)",
-          t2, keyno(t2.key1))
-      will return
-        "cond(t1.field) AND cond(t2.key2)"
-
-  RETURN
-    Index condition, or NULL if no condition could be inferred.
-*/
-static Item *make_cond_for_index(Item *cond, Table *table, uint32_t keyno, bool other_tbls_ok)
-{
-  if (!cond)
-    return NULL;
-  if (cond->type() == Item::COND_ITEM)
-  {
-    uint32_t n_marked= 0;
-    if (((Item_cond*) cond)->functype() == Item_func::COND_AND_FUNC)
-    {
-      Item_cond_and *new_cond=new Item_cond_and;
-      if (!new_cond)
-        return (COND*) 0;
-      List_iterator<Item> li(*((Item_cond*) cond)->argument_list());
-      Item *item;
-      while ((item=li++))
-      {
-        Item *fix= make_cond_for_index(item, table, keyno, other_tbls_ok);
-        if (fix)
-          new_cond->argument_list()->push_back(fix);
-        n_marked += test(item->marker == ICP_COND_USES_INDEX_ONLY);
-      }
-      if (n_marked ==((Item_cond*)cond)->argument_list()->elements)
-        cond->marker= ICP_COND_USES_INDEX_ONLY;
-      switch (new_cond->argument_list()->elements) {
-      case 0:
-        return (COND*) 0;
-      case 1:
-        return new_cond->argument_list()->head();
-      default:
-        new_cond->quick_fix_field();
-        return new_cond;
-      }
-    }
-    else /* It's OR */
-    {
-      Item_cond_or *new_cond=new Item_cond_or;
-      if (!new_cond)
-        return (COND*) 0;
-      List_iterator<Item> li(*((Item_cond*) cond)->argument_list());
-      Item *item;
-      while ((item=li++))
-      {
-        Item *fix= make_cond_for_index(item, table, keyno, other_tbls_ok);
-        if (!fix)
-          return (COND*) 0;
-        new_cond->argument_list()->push_back(fix);
-        n_marked += test(item->marker == ICP_COND_USES_INDEX_ONLY);
-      }
-      if (n_marked ==((Item_cond*)cond)->argument_list()->elements)
-        cond->marker= ICP_COND_USES_INDEX_ONLY;
-      new_cond->quick_fix_field();
-      new_cond->top_level_item();
-      return new_cond;
-    }
-  }
-
-  if (!uses_index_fields_only(cond, table, keyno, other_tbls_ok))
-    return (COND*) 0;
-  cond->marker= ICP_COND_USES_INDEX_ONLY;
-  return cond;
-}
-
-
-static Item *make_cond_remainder(Item *cond, bool exclude_index)
-{
-  if (exclude_index && cond->marker == ICP_COND_USES_INDEX_ONLY)
-    return 0; /* Already checked */
-
-  if (cond->type() == Item::COND_ITEM)
-  {
-    table_map tbl_map= 0;
-    if (((Item_cond*) cond)->functype() == Item_func::COND_AND_FUNC)
-    {
-      /* Create new top level AND item */
-      Item_cond_and *new_cond=new Item_cond_and;
-      if (!new_cond)
-        return (COND*) 0;
-      List_iterator<Item> li(*((Item_cond*) cond)->argument_list());
-      Item *item;
-      while ((item=li++))
-      {
-        Item *fix= make_cond_remainder(item, exclude_index);
-        if (fix)
-        {
-          new_cond->argument_list()->push_back(fix);
-          tbl_map |= fix->used_tables();
-        }
-      }
-      switch (new_cond->argument_list()->elements) {
-      case 0:
-        return (COND*) 0;
-      case 1:
-        return new_cond->argument_list()->head();
-      default:
-        new_cond->quick_fix_field();
-        ((Item_cond*)new_cond)->used_tables_cache= tbl_map;
-        return new_cond;
-      }
-    }
-    else /* It's OR */
-    {
-      Item_cond_or *new_cond=new Item_cond_or;
-      if (!new_cond)
-        return (COND*) 0;
-      List_iterator<Item> li(*((Item_cond*) cond)->argument_list());
-      Item *item;
-      while ((item=li++))
-      {
-        Item *fix= make_cond_remainder(item, false);
-        if (!fix)
-          return (COND*) 0;
-        new_cond->argument_list()->push_back(fix);
-        tbl_map |= fix->used_tables();
-      }
-      new_cond->quick_fix_field();
-      ((Item_cond*)new_cond)->used_tables_cache= tbl_map;
-      new_cond->top_level_item();
-      return new_cond;
-    }
-  }
-  return cond;
-}
 
 /**
   cleanup JoinTable.
@@ -6158,7 +5912,7 @@ bool setup_copy_fields(Session *session,
         {
           copy->set(tmp, item->result_field);
           item->result_field->move_field(copy->to_ptr,copy->to_null_ptr,1);
-#ifdef HAVE_purify
+#ifdef HAVE_VALGRIND
           copy->to_ptr[copy->from_length]= 0;
 #endif
           copy++;

@@ -28,8 +28,7 @@
 #include "drizzled/errmsg_print.h"
 #include "drizzled/gettext.h"
 #include "drizzled/session.h"
-#include "drizzled/set_var.h"
-#include <drizzled/plugin.h>
+#include "drizzled/plugin.h"
 #include "drizzled/plugin/client.h"
 #include "drizzled/table.h"
 #include "drizzled/field/timestamp.h"
@@ -104,7 +103,7 @@ public:
     mi_panic(HA_PANIC_CLOSE);
   }
 
-  virtual Cursor *create(TableShare &table)
+  virtual Cursor *create(Table &table)
   {
     return new ha_myisam(*this, table);
   }
@@ -544,7 +543,7 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
 }
 
 ha_myisam::ha_myisam(plugin::StorageEngine &engine_arg,
-                     TableShare &table_arg)
+                     Table &table_arg)
   : Cursor(engine_arg, table_arg),
   file(0),
   can_enable_indexes(true),
@@ -590,13 +589,13 @@ int ha_myisam::doOpen(const drizzled::TableIdentifier &identifier, int mode, uin
   if (!(file= mi_open(identifier, mode, test_if_locked)))
     return (errno ? errno : -1);
 
-  if (!table->getShare()->getType()) /* No need to perform a check for tmp table */
+  if (!getTable()->getShare()->getType()) /* No need to perform a check for tmp table */
   {
-    if ((errno= table2myisam(table, &keyinfo, &recinfo, &recs)))
+    if ((errno= table2myisam(getTable(), &keyinfo, &recinfo, &recs)))
     {
       goto err;
     }
-    if (check_definition(keyinfo, recinfo, table->getShare()->sizeKeys(), recs,
+    if (check_definition(keyinfo, recinfo, getTable()->getShare()->sizeKeys(), recs,
                          file->s->keyinfo, file->s->rec,
                          file->s->base.keys, file->s->base.fields, true))
     {
@@ -612,17 +611,17 @@ int ha_myisam::doOpen(const drizzled::TableIdentifier &identifier, int mode, uin
   info(HA_STATUS_NO_LOCK | HA_STATUS_VARIABLE | HA_STATUS_CONST);
   if (!(test_if_locked & HA_OPEN_WAIT_IF_LOCKED))
     mi_extra(file, HA_EXTRA_WAIT_LOCK, 0);
-  if (!table->getShare()->db_record_offset)
+  if (!getTable()->getShare()->db_record_offset)
     is_ordered= false;
 
 
   keys_with_parts.reset();
-  for (i= 0; i < table->getShare()->sizeKeys(); i++)
+  for (i= 0; i < getTable()->getShare()->sizeKeys(); i++)
   {
-    table->key_info[i].block_size= file->s->keyinfo[i].block_length;
+    getTable()->key_info[i].block_size= file->s->keyinfo[i].block_length;
 
-    KeyPartInfo *kp= table->key_info[i].key_part;
-    KeyPartInfo *kp_end= kp + table->key_info[i].key_parts;
+    KeyPartInfo *kp= getTable()->key_info[i].key_part;
+    KeyPartInfo *kp_end= kp + getTable()->key_info[i].key_parts;
     for (; kp != kp_end; kp++)
     {
       if (!kp->field->part_of_key.test(i))
@@ -659,7 +658,7 @@ int ha_myisam::doInsertRecord(unsigned char *buf)
     If we have an auto_increment column and we are writing a changed row
     or a new row, then update the auto_increment value in the record.
   */
-  if (table->next_number_field && buf == table->getInsertRecord())
+  if (getTable()->next_number_field && buf == getTable()->getInsertRecord())
   {
     int error;
     if ((error= update_auto_increment()))
@@ -691,12 +690,12 @@ int ha_myisam::repair(Session *session, MI_CHECK &param, bool do_optimize)
   {
     errmsg_printf(ERRMSG_LVL_INFO, "Retrying repair of: '%s' failed. "
                           "Please try REPAIR EXTENDED or myisamchk",
-                          table->getShare()->getPath());
+                          getTable()->getShare()->getPath());
     return(HA_ADMIN_FAILED);
   }
 
-  param.db_name=    table->getShare()->getSchemaName();
-  param.table_name= table->getAlias();
+  param.db_name=    getTable()->getShare()->getSchemaName();
+  param.table_name= getTable()->getAlias();
   param.tmpfile_createflag = O_RDWR | O_TRUNC;
   param.using_global_keycache = 1;
   param.session= session;
@@ -705,7 +704,7 @@ int ha_myisam::repair(Session *session, MI_CHECK &param, bool do_optimize)
   strcpy(fixed_name,file->filename);
 
   // Don't lock tables if we have used LOCK Table
-  if (mi_lock_database(file, table->getShare()->getType() ? F_EXTRA_LCK : F_WRLCK))
+  if (mi_lock_database(file, getTable()->getShare()->getType() ? F_EXTRA_LCK : F_WRLCK))
   {
     mi_check_print_error(&param,ER(ER_CANT_LOCK),errno);
     return(HA_ADMIN_FAILED);
@@ -902,7 +901,7 @@ int ha_myisam::enable_indexes(uint32_t mode)
   }
   else if (mode == HA_KEY_SWITCH_NONUNIQ_SAVE)
   {
-    Session *session= table->in_use;
+    Session *session= getTable()->in_use;
     MI_CHECK param;
     const char *save_proc_info= session->get_proc_info();
     session->set_proc_info("Creating index");
@@ -978,7 +977,7 @@ int ha_myisam::indexes_are_disabled(void)
 
 void ha_myisam::start_bulk_insert(ha_rows rows)
 {
-  Session *session= table->in_use;
+  Session *session= getTable()->in_use;
   ulong size= session->variables.read_buff_size;
 
   /* don't enable row cache if too few rows */
@@ -1063,7 +1062,7 @@ int ha_myisam::index_read_map(unsigned char *buf, const unsigned char *key,
   assert(inited==INDEX);
   ha_statistic_increment(&system_status_var::ha_read_key_count);
   int error=mi_rkey(file, buf, active_index, key, keypart_map, find_flag);
-  table->status=error ? STATUS_NOT_FOUND: 0;
+  getTable()->status=error ? STATUS_NOT_FOUND: 0;
   return error;
 }
 
@@ -1073,7 +1072,7 @@ int ha_myisam::index_read_idx_map(unsigned char *buf, uint32_t index, const unsi
 {
   ha_statistic_increment(&system_status_var::ha_read_key_count);
   int error=mi_rkey(file, buf, index, key, keypart_map, find_flag);
-  table->status=error ? STATUS_NOT_FOUND: 0;
+  getTable()->status=error ? STATUS_NOT_FOUND: 0;
   return error;
 }
 
@@ -1084,7 +1083,7 @@ int ha_myisam::index_read_last_map(unsigned char *buf, const unsigned char *key,
   ha_statistic_increment(&system_status_var::ha_read_key_count);
   int error=mi_rkey(file, buf, active_index, key, keypart_map,
                     HA_READ_PREFIX_LAST);
-  table->status=error ? STATUS_NOT_FOUND: 0;
+  getTable()->status=error ? STATUS_NOT_FOUND: 0;
   return(error);
 }
 
@@ -1093,7 +1092,7 @@ int ha_myisam::index_next(unsigned char *buf)
   assert(inited==INDEX);
   ha_statistic_increment(&system_status_var::ha_read_next_count);
   int error=mi_rnext(file,buf,active_index);
-  table->status=error ? STATUS_NOT_FOUND: 0;
+  getTable()->status=error ? STATUS_NOT_FOUND: 0;
   return error;
 }
 
@@ -1102,7 +1101,7 @@ int ha_myisam::index_prev(unsigned char *buf)
   assert(inited==INDEX);
   ha_statistic_increment(&system_status_var::ha_read_prev_count);
   int error=mi_rprev(file,buf, active_index);
-  table->status=error ? STATUS_NOT_FOUND: 0;
+  getTable()->status=error ? STATUS_NOT_FOUND: 0;
   return error;
 }
 
@@ -1111,7 +1110,7 @@ int ha_myisam::index_first(unsigned char *buf)
   assert(inited==INDEX);
   ha_statistic_increment(&system_status_var::ha_read_first_count);
   int error=mi_rfirst(file, buf, active_index);
-  table->status=error ? STATUS_NOT_FOUND: 0;
+  getTable()->status=error ? STATUS_NOT_FOUND: 0;
   return error;
 }
 
@@ -1120,7 +1119,7 @@ int ha_myisam::index_last(unsigned char *buf)
   assert(inited==INDEX);
   ha_statistic_increment(&system_status_var::ha_read_last_count);
   int error=mi_rlast(file, buf, active_index);
-  table->status=error ? STATUS_NOT_FOUND: 0;
+  getTable()->status=error ? STATUS_NOT_FOUND: 0;
   return error;
 }
 
@@ -1135,7 +1134,7 @@ int ha_myisam::index_next_same(unsigned char *buf,
   {
     error= mi_rnext_same(file,buf);
   } while (error == HA_ERR_RECORD_DELETED);
-  table->status=error ? STATUS_NOT_FOUND: 0;
+  getTable()->status=error ? STATUS_NOT_FOUND: 0;
   return error;
 }
 
@@ -1176,7 +1175,7 @@ int ha_myisam::rnd_next(unsigned char *buf)
 {
   ha_statistic_increment(&system_status_var::ha_read_rnd_next_count);
   int error=mi_scan(file, buf);
-  table->status=error ? STATUS_NOT_FOUND: 0;
+  getTable()->status=error ? STATUS_NOT_FOUND: 0;
   return error;
 }
 
@@ -1184,7 +1183,7 @@ int ha_myisam::rnd_pos(unsigned char *buf, unsigned char *pos)
 {
   ha_statistic_increment(&system_status_var::ha_read_rnd_count);
   int error=mi_rrnd(file, buf, internal::my_get_ptr(pos,ref_length));
-  table->status=error ? STATUS_NOT_FOUND: 0;
+  getTable()->status=error ? STATUS_NOT_FOUND: 0;
   return error;
 }
 
@@ -1213,7 +1212,7 @@ int ha_myisam::info(uint32_t flag)
   }
   if (flag & HA_STATUS_CONST)
   {
-    TableShare *share= table->getMutableShare();
+    TableShare *share= getTable()->getMutableShare();
     stats.max_data_file_length=  misam_info.max_data_file_length;
     stats.max_index_file_length= misam_info.max_index_file_length;
     stats.create_time= misam_info.create_time;
@@ -1270,9 +1269,9 @@ int ha_myisam::info(uint32_t flag)
     share->keys_for_keyread&= share->keys_in_use;
     share->db_record_offset= misam_info.record_offset;
     if (share->key_parts)
-      memcpy(table->key_info[0].rec_per_key,
+      memcpy(getTable()->key_info[0].rec_per_key,
 	     misam_info.rec_per_key,
-	     sizeof(table->key_info[0].rec_per_key)*share->key_parts);
+	     sizeof(getTable()->key_info[0].rec_per_key)*share->key_parts);
     assert(share->getType() != message::Table::STANDARD);
 
    /*
@@ -1337,7 +1336,7 @@ int MyisamEngine::doDropTable(Session &session,
 int ha_myisam::external_lock(Session *session, int lock_type)
 {
   file->in_use= session;
-  return mi_lock_database(file, !table->getShare()->getType() ?
+  return mi_lock_database(file, !getTable()->getShare()->getType() ?
 			  lock_type : ((lock_type == F_UNLCK) ?
 				       F_UNLCK : F_EXTRA_LCK));
 }
@@ -1408,7 +1407,7 @@ void ha_myisam::get_auto_increment(uint64_t ,
   int error;
   unsigned char key[MI_MAX_KEY_LENGTH];
 
-  if (!table->getShare()->next_number_key_offset)
+  if (!getTable()->getShare()->next_number_key_offset)
   {						// Autoincrement at key-start
     ha_myisam::info(HA_STATUS_AUTO);
     *first_value= stats.auto_increment_value;
@@ -1418,22 +1417,22 @@ void ha_myisam::get_auto_increment(uint64_t ,
   }
 
   /* it's safe to call the following if bulk_insert isn't on */
-  mi_flush_bulk_insert(file, table->getShare()->next_number_index);
+  mi_flush_bulk_insert(file, getTable()->getShare()->next_number_index);
 
   (void) extra(HA_EXTRA_KEYREAD);
-  key_copy(key, table->getInsertRecord(),
-           &table->key_info[table->getShare()->next_number_index],
-           table->getShare()->next_number_key_offset);
-  error= mi_rkey(file, table->getUpdateRecord(), (int) table->getShare()->next_number_index,
-                 key, make_prev_keypart_map(table->getShare()->next_number_keypart),
+  key_copy(key, getTable()->getInsertRecord(),
+           &getTable()->key_info[getTable()->getShare()->next_number_index],
+           getTable()->getShare()->next_number_key_offset);
+  error= mi_rkey(file, getTable()->getUpdateRecord(), (int) getTable()->getShare()->next_number_index,
+                 key, make_prev_keypart_map(getTable()->getShare()->next_number_keypart),
                  HA_READ_PREFIX_LAST);
   if (error)
     nr= 1;
   else
   {
     /* Get data from getUpdateRecord() */
-    nr= ((uint64_t) table->next_number_field->
-         val_int_offset(table->getShare()->rec_buff_length)+1);
+    nr= ((uint64_t) getTable()->next_number_field->
+         val_int_offset(getTable()->getShare()->rec_buff_length)+1);
   }
   extra(HA_EXTRA_NO_KEYREAD);
   *first_value= nr;

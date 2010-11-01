@@ -39,7 +39,7 @@ public:
 class HailDBCursor: public drizzled::Cursor
 {
 public:
-  HailDBCursor(drizzled::plugin::StorageEngine &engine, drizzled::TableShare &table_arg);
+  HailDBCursor(drizzled::plugin::StorageEngine &engine, drizzled::Table &table_arg);
   ~HailDBCursor()
   {}
 

@@ -680,27 +680,23 @@ static DrizzleLock *get_lock_data(Session *session, Table **table_ptr, uint32_t 
     > 0  table locked, but someone is using it
 */
 
-static int lock_table_name(Session *session, TableList *table_list, bool check_in_use)
+static int lock_table_name(Session *session, TableList *table_list)
 {
-  bool  found_locked_table= false;
-  TableIdentifier identifier(table_list->db, table_list->table_name);
+  TableIdentifier identifier(table_list->getSchemaName(), table_list->getTableName());
   const TableIdentifier::Key &key(identifier.getKey());
 
-  if (check_in_use)
   {
     /* Only insert the table if we haven't insert it already */
-    TableOpenCacheRange ppp;
+    table::CacheRange ppp;
 
-    ppp= get_open_cache().equal_range(key);
+    ppp= table::getCache().equal_range(key);
 
-    for (TableOpenCache::const_iterator iter= ppp.first;
+    for (table::CacheMap::const_iterator iter= ppp.first;
          iter != ppp.second; ++iter)
     {
       Table *table= (*iter).second;
       if (table->reginfo.lock_type < TL_WRITE)
       {
-        if (table->in_use == session)
-          found_locked_table= true;
         continue;
       }
 
@@ -713,17 +709,16 @@ static int lock_table_name(Session *session, TableList *table_list, bool check_i
     }
   }
 
-  Table *table;
-  if (!(table= session->table_cache_insert_placeholder(table_list->db, table_list->table_name)))
+  table::Placeholder *table= NULL;
+  if (!(table= session->table_cache_insert_placeholder(identifier)))
   {
     return -1;
   }
 
-  table_list->table= table;
+  table_list->table= reinterpret_cast<Table *>(table);
 
   /* Return 1 if table is in use */
-  return(test(remove_table_from_cache(session, identifier,
-				      check_in_use ? RTFC_NO_FLAG : RTFC_WAIT_OTHER_THREAD_FLAG)));
+  return(test(table::Cache::singleton().removeTable(session, identifier, RTFC_NO_FLAG)));
 }
 
 
@@ -731,7 +726,7 @@ void unlock_table_name(TableList *table_list)
 {
   if (table_list->table)
   {
-    remove_table(table_list->table);
+    table::remove_table(static_cast<table::Concurrent *>(table_list->table));
     broadcast_refresh();
   }
 }
@@ -747,7 +742,7 @@ static bool locked_named_table(TableList *table_list)
       Table *save_next= table->getNext();
       bool result;
       table->setNext(NULL);
-      result= table_is_used(table_list->table, 0);
+      result= table::Cache::singleton().areTablesUsed(table_list->table, 0);
       table->setNext(save_next);
       if (result)
         return 1;
@@ -801,7 +796,7 @@ static bool lock_table_names(Session *session, TableList *table_list)
   for (lock_table= table_list; lock_table; lock_table= lock_table->next_local)
   {
     int got_lock;
-    if ((got_lock= lock_table_name(session, lock_table, true)) < 0)
+    if ((got_lock= lock_table_name(session, lock_table)) < 0)
       goto end;					// Fatal error
     if (got_lock)
       got_all_locks=0;				// Someone is using table

@@ -91,6 +91,7 @@
 #include <drizzled/statement/rollback_to_savepoint.h>
 #include <drizzled/statement/savepoint.h>
 #include <drizzled/statement/select.h>
+#include <drizzled/statement/show.h>
 #include <drizzled/statement/set_option.h>
 #include <drizzled/statement/show_errors.h>
 #include <drizzled/statement/show_warnings.h>

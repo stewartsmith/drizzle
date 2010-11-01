@@ -227,7 +227,7 @@ void generate_dump_db(void)
     }
     catch (...)
     {
-      std::cout << _("Error inserting into destnation database") << std::endl;
+      std::cout << _("Error inserting into destination database") << std::endl;
       if (not ignore_errors)
         maybe_exit(EX_DRIZZLEERR);
     }
@@ -357,8 +357,7 @@ void maybe_exit(int error)
   if (ignore_errors)
     return;
   delete db_connection;
-  if (destination_connection)
-    delete destination_connection;
+  delete destination_connection;
   free_resources();
   exit(error);
 }
@@ -532,7 +531,7 @@ try
   N_("Where to send output to (stdout|database"))
   ("destination-host", po::value<string>(&opt_destination_host)->default_value("localhost"),
   N_("Hostname for destination db server (requires --destination-type=database)"))
-  ("destination-port", po::value<uint16_t>(&opt_destination_port)->default_value(3306),
+  ("destination-port", po::value<uint16_t>(&opt_destination_port)->default_value(4427),
   N_("Port number for destination db server (requires --destination-type=database)"))
   ("destination-user", po::value<string>(&opt_destination_user),
   N_("User name for destination db server (resquires --destination-type=database)"))
@@ -838,8 +837,7 @@ try
   */
 err:
   delete db_connection;
-  if (destination_connection)
-    delete destination_connection;
+  delete destination_connection;
   if (path.empty())
     write_footer(md_result_file);
   free_resources();

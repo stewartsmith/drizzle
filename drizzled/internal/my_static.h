@@ -44,8 +44,8 @@ namespace internal
 class irem
 {
 public:
-  struct irem *next;		/* Linked list of structures	   */
-  struct irem *prev;		/* Other link			   */
+  irem *next;		/* Linked list of structures	   */
+  irem *prev;		/* Other link			   */
   char *filename;		/* File in which memory was new'ed */
   uint32_t linenum;		/* Line number in above file	   */
   uint32_t datasize;		/* Size requested		   */

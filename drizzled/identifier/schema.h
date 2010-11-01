@@ -49,12 +49,13 @@
 
 namespace drizzled {
 
-static std::string catalog("");
+static std::string catalog("local");
 
 class SchemaIdentifier
 {
   std::string db;
   std::string db_path;
+  std::string catalog;
 
 
   // @note this should be changed to protected once Session contains an
@@ -92,6 +93,8 @@ public:
                                   SchemaIdentifier &identifier)
   {
     output << "SchemaIdentifier:(";
+    output <<  identifier.catalog;
+    output << ", ";
     output <<  identifier.db;
     output << ", ";
     output << identifier.getPath();

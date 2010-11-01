@@ -30,22 +30,33 @@ typedef JoinTable JoinTable;
   CacheField and JoinCache is used on full join to cache records in outer
   table
 */
-struct CacheField {
+class CacheField {
   /*
     Where source data is located (i.e. this points to somewhere in
     tableX->getInsertRecord())
   */
+public:
   unsigned char *str;
   uint32_t length; /* Length of data at *str, in bytes */
   uint32_t blob_length; /* Valid IFF blob_field != 0 */
   Field_blob *blob_field;
   bool strip; /* true <=> Strip endspaces ?? */
-
   Table *get_rowid; /* _ != NULL <=> */
+
+  CacheField():
+    str(NULL),
+    length(0),
+    blob_length(0),
+    blob_field(NULL),
+    strip(false),
+    get_rowid(NULL)
+  {}
+
 };
 
-struct JoinCache
+class JoinCache
 {
+public:
   unsigned char *buff;
   unsigned char *pos;    /* Start of free space in the buffer */
   unsigned char *end;
@@ -65,6 +76,21 @@ struct JoinCache
   CacheField *field;
   CacheField **blob_ptr;
   optimizer::SqlSelect *select;
+
+  JoinCache():
+    buff(NULL),
+    pos(NULL),
+    end(NULL),
+    records(0),
+    record_nr(0),
+    ptr_record(0),
+    fields(0),
+    length(0),
+    blobs(0),
+    field(NULL),
+    blob_ptr(NULL),
+    select(NULL)
+  {}
 
   void reset_cache_read();
   void reset_cache_write();

@@ -59,7 +59,7 @@ public:
     return EPERM; 
   }
 
-  virtual drizzled::Cursor *create(drizzled::TableShare &table);
+  virtual drizzled::Cursor *create(drizzled::Table &table);
 
   const char **bas_ext() const 
   {

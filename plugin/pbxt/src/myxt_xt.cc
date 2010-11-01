@@ -2951,7 +2951,7 @@ xtPublic XTDDTable *myxt_create_table_from_table(XTThreadPtr self, STRUCT_TABLE 
 xtPublic void myxt_static_convert_identifier(XTThreadPtr XT_UNUSED(self), MX_CONST_CHARSET_INFO *cs, char *from, char *to, size_t to_len)
 {
 #ifdef DRIZZLED
-	((void *)cs);
+	((void)cs);
 	 xt_strcpy(to_len, to, from);
 #else
 	uint errors;
@@ -2973,7 +2973,7 @@ xtPublic char *myxt_convert_identifier(XTThreadPtr self, MX_CONST_CHARSET_INFO *
 {
 #ifdef DRIZZLED
 	char *to = xt_dup_string(self, from);
-	((void *)cs);
+	((void)cs);
 #else
 	uint	errors;
 	u_int	len;

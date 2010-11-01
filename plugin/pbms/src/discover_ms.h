@@ -30,6 +30,7 @@
  * ---------------------------------------------------------------
  * TABLE DISCOVERY HANDLER
  */
+#define NOVAL 0
 
 typedef struct dt_field_info
 	{

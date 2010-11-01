@@ -416,7 +416,7 @@ bool ReadRecord::init_rr_cache()
   {
     return false;
   }
-#ifdef HAVE_purify
+#ifdef HAVE_VALGRIND
   // Avoid warnings in qsort
   memset(cache, 0, local_rec_cache_size + cache_records * struct_length + 1);
 #endif

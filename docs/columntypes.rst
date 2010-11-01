@@ -47,3 +47,11 @@ ENUM
 Enum (enumerated) types are static lists of strings that are defineed on
 table creation. They can be used to represent a collection of string types
 that are sorted based on the order that they are created.
+
+------
+SERIAL
+------
+
+A SERIAL is a meta type that creates a column where a number is inserted in
+increasing order as rows are inserted into the table. The actual type is a
+BIGINT.

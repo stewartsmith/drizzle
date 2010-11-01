@@ -1196,8 +1196,6 @@ static void transformForeignKeyOptionToSql(Table::ForeignKeyConstraint::ForeignK
 {
   switch (opt)
   {
-  case Table::ForeignKeyConstraint::OPTION_UNDEF:
-    break;
   case Table::ForeignKeyConstraint::OPTION_RESTRICT:
     destination.append("RESTRICT");
     break;
@@ -1207,10 +1205,11 @@ static void transformForeignKeyOptionToSql(Table::ForeignKeyConstraint::ForeignK
   case Table::ForeignKeyConstraint::OPTION_SET_NULL:
     destination.append("SET NULL");
     break;
+  case Table::ForeignKeyConstraint::OPTION_UNDEF:
   case Table::ForeignKeyConstraint::OPTION_NO_ACTION:
     destination.append("NO ACTION");
     break;
-  case Table::ForeignKeyConstraint::OPTION_DEFAULT:
+  case Table::ForeignKeyConstraint::OPTION_SET_DEFAULT:
     destination.append("SET DEFAULT");
     break;
   }
@@ -1263,13 +1262,13 @@ transformForeignKeyConstraintDefinitionToSql(const Table::ForeignKeyConstraint &
 
   destination.push_back(')');
 
-  if (fkey.update_option() != Table::ForeignKeyConstraint::OPTION_UNDEF)
+  if (fkey.has_update_option() and fkey.update_option() != Table::ForeignKeyConstraint::OPTION_UNDEF)
   {
     destination.append(" ON UPDATE ", 11);
     transformForeignKeyOptionToSql(fkey.update_option(), destination);
   }
 
-  if (fkey.delete_option() != Table::ForeignKeyConstraint::OPTION_UNDEF)
+  if (fkey.has_delete_option() and fkey.delete_option() != Table::ForeignKeyConstraint::OPTION_UNDEF)
   {
     destination.append(" ON DELETE ", 11);
     transformForeignKeyOptionToSql(fkey.delete_option(), destination);

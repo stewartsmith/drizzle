@@ -27,7 +27,12 @@
 
 #include "CSConfig.h"
 
+#ifdef OS_WINDOWS
+#define strsignal(s) NULL
+#else
 #include <sys/signal.h>
+#endif
+
 #include <limits.h>
 #include <string.h>
 
@@ -68,7 +73,9 @@ void CSException::log(CSThread *self)
 	CSL.log(self, CSLog::Error, " ");
 	CSL.log(self, CSLog::Error, getMessage());
 	CSL.eol(self, CSLog::Error);
+#ifdef DUMP_STACK_TRACE
 	CSL.log(self, CSLog::Error, getStackTrace());
+#endif
 	CSL.unlock();
 }
 
@@ -81,8 +88,35 @@ void CSException::log(CSThread *self, const char *message)
 	CSL.log(self, CSLog::Error, " ");
 	CSL.log(self, CSLog::Error, getMessage());
 	CSL.eol(self, CSLog::Error);
+#ifdef DUMP_STACK_TRACE
 	CSL.log(self, CSLog::Error, getStackTrace());
+#endif
 	CSL.unlock();
+}
+
+void CSException::initException_va(const char *func, const char *file, int line, int err, const char *fmt, va_list ap)
+{
+
+	cs_format_context(CS_EXC_CONTEXT_SIZE, iContext, func, file, line);
+	iErrorCode = err;
+#ifdef OS_WINDOWS
+	vsprintf(iMessage, fmt, ap);
+#else
+	size_t len;
+	len = vsnprintf(iMessage, CS_EXC_MESSAGE_SIZE-1, fmt, ap);
+	if (len > CS_EXC_MESSAGE_SIZE-1)
+		len = CS_EXC_MESSAGE_SIZE-1;
+	iMessage[len] = 0;
+#endif
+}
+
+void CSException::initExceptionf(const char *func, const char *file, int line, int err, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	initException_va(func, file, line, err, fmt, ap);
+	va_end(ap);
 }
 
 void CSException::initException(const char *func, const char *file, int line, int err, const char *message)
@@ -107,7 +141,8 @@ void CSException::initAssertion(const char *func, const char *file, int line, co
 {
 	cs_format_context(CS_EXC_CONTEXT_SIZE, iContext, func, file, line);
 	iErrorCode = CS_ERR_ASSERTION;
-	cs_strcpy(CS_EXC_MESSAGE_SIZE, iMessage, message);
+	cs_strcpy(CS_EXC_MESSAGE_SIZE, iMessage, "Assertion failed: ");
+	cs_strcat(CS_EXC_MESSAGE_SIZE, iMessage, message);
 }
 
 void CSException::getCoreError(uint32_t size, char *buffer, int err)
@@ -146,7 +181,7 @@ void CSException::initCoreError(const char *func, const char *file, int line, in
 	cs_format_context(CS_EXC_CONTEXT_SIZE, iContext, func, file, line);
 	iErrorCode = err;
 	getCoreError(CS_EXC_MESSAGE_SIZE, iMessage, err);
-	cs_replace_string(CS_EXC_MESSAGE_SIZE, iMessage, '%', item);
+	cs_replace_string(CS_EXC_MESSAGE_SIZE, iMessage, "%s", item);
 }
 
 void CSException::initOSError(const char *func, const char *file, int line, int err)
@@ -254,7 +289,7 @@ void CSException::throwException(const char *func, const char *file, int line, i
 	else {
 		CSException e;
 		
-		e.initException(func, file, line, err,message);
+		e.initException(func, file, line, err, message);
 		e.log(NULL, "*** Uncaught error");
 	}
 }
@@ -264,6 +299,27 @@ void CSException::throwException(const char *func, const char *file, int line, i
 	throwException(func, file, line, err, message, NULL);
 }
 
+void CSException::throwExceptionf(const char *func, const char *file, int line, int err, const char *fmt, ...)
+{
+	CSThread	*self;
+	va_list		ap;
+
+	va_start(ap, fmt);
+	if ((self = CSThread::getSelf())) {
+		self->myException.initException_va(func, file, line, err, fmt, ap);
+		va_end(ap);
+		self->myException.setStackTrace(self, NULL);
+		self->throwException();
+	}
+	else {
+		CSException e;
+		
+		e.initException_va(func, file, line, err, fmt, ap);
+		va_end(ap);
+		e.log(NULL, "*** Uncaught error");
+	}
+}
+
 void CSException::throwAssertion(const char *func, const char *file, int line, const char *message)
 {
 	CSThread *self;
@@ -271,7 +327,9 @@ void CSException::throwAssertion(const char *func, const char *file, int line, c
 	if ((self = CSThread::getSelf())) {
 		self->myException.initAssertion(func, file, line, message);
 		self->myException.setStackTrace(self);
+		/* Not sure why we log the excpetion down here?!
 		self->logException();
+		*/
 		self->throwException();
 	}
 	else {
@@ -412,7 +470,7 @@ void CSException::throwEOFError(const char *func, const char *file, int line, co
 void CSException::throwLastError(const char *func, const char *file, int line)
 {
 #ifdef OS_WINDOWS
-	throwOSError(func, file, line, (int) getLastError());
+	throwOSError(func, file, line, (int) GetLastError());
 #else
 	throwOSError(func, file, line, (int) errno);
 #endif

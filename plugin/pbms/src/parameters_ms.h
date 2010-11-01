@@ -66,6 +66,11 @@ class PBMSParameters {
 	static int32_t getBeforeUptateEventPosition();
 	
 	static int32_t getBeforeInsertEventPosition();	
+	
+	private:
+	static bool try_LocateDB(CSThread *self, const char *db, bool *found);
+	static bool try_LocateTable(CSThread *self, const char *db, const char *table, bool *found);
+
 #endif
 };
 

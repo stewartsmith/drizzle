@@ -59,7 +59,7 @@ class ha_xtsys: public handler
 
 public:
 #ifdef DRIZZLED
-	ha_xtsys(handlerton *hton, TableShare& table_arg);
+	ha_xtsys(handlerton *hton, Table& table_arg);
 #else
 	ha_xtsys(handlerton *hton, TABLE_SHARE *table_arg);
 #endif

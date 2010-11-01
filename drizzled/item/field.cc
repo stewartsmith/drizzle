@@ -699,7 +699,7 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
     {
       Item_ref *rf;
       rf= new Item_ref(context,
-                       (cached_table->db[0] ? cached_table->db : 0),
+                       (cached_table->getSchemaName()[0] ? cached_table->getSchemaName() : 0),
                        (char*) cached_table->alias, (char*) field_name);
       if (!rf)
         return -1;

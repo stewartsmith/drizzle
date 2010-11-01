@@ -43,7 +43,7 @@ class Join;
 class Session;
 struct st_ha_create_information;
 typedef st_ha_create_information HA_CREATE_INFO;
-struct TableList;
+class TableList;
 
 class Table;
 typedef class Item COND;

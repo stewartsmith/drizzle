@@ -56,7 +56,7 @@ message Table {
       OPTION_CASCADE = 2;
       OPTION_SET_NULL = 3;
       OPTION_NO_ACTION = 4;
-      OPTION_DEFAULT = 5;
+      OPTION_SET_DEFAULT = 5;
     }
 
     required ForeignKeyOption update_option = 6 [ default = OPTION_UNDEF ];

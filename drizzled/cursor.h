@@ -145,23 +145,25 @@ inline key_part_map make_prev_keypart_map(T a)
 */
 class Cursor
 {
-protected:
-  TableShare *table_share;   /* The table definition */
-  Table *table;               /* The current open table */
+  Table &table;               /* The current open table */
+  plugin::StorageEngine &engine;      /* storage engine of this Cursor */
 
+protected:
   ha_rows estimation_rows_to_insert;
-  plugin::StorageEngine *engine;      /* storage engine of this Cursor */
+
 public:
   inline plugin::StorageEngine *getEngine() const	/* table_type for handler */
   {
-    return engine;
+    return &engine;
   }
   unsigned char *ref;				/* Pointer to current row */
   unsigned char *dup_ref;			/* Pointer to duplicate row */
 
-  TableShare *getShare() const
+  TableShare *getShare();
+
+  Table *getTable() const
   {
-    return table_share;
+    return &table;
   }
 
   ha_statistics stats;
@@ -222,13 +224,13 @@ public:
   */
   Discrete_interval auto_inc_interval_for_cur_row;
 
-  Cursor(plugin::StorageEngine &engine_arg, TableShare &share_arg);
+  Cursor(plugin::StorageEngine &engine_arg, Table &share_arg);
   virtual ~Cursor(void);
   virtual Cursor *clone(memory::Root *mem_root);
 
   /* ha_ methods: pubilc wrappers for private virtual API */
 
-  int ha_open(const TableIdentifier &identifier, Table *table, int mode, int test_if_locked);
+  int ha_open(const TableIdentifier &identifier, int mode, int test_if_locked);
   int startIndexScan(uint32_t idx, bool sorted);
   int endIndexScan();
   int startTableScan(bool scan);
@@ -266,7 +268,6 @@ public:
 
   void adjust_next_insert_id_after_explicit_value(uint64_t nr);
   int update_auto_increment();
-  virtual void change_table_ptr(Table *table_arg, TableShare *share);
 
   /* Estimates calculation */
   virtual double scan_time(void)
@@ -521,7 +522,7 @@ private:
     the corresponding 'ha_*' method above.
   */
 
-  virtual int open(const char *, int , uint32_t ) { assert(0); return -1; };
+  virtual int open(const char *, int , uint32_t ) { assert(0); return -1; }
   virtual int doOpen(const TableIdentifier &identifier, int mode, uint32_t test_if_locked);
   virtual int doStartIndexScan(uint32_t idx, bool)
   { active_index= idx; return 0; }
@@ -582,7 +583,7 @@ private:
   {
     return 0;
   }
-  virtual void release_auto_increment(void) { return; };
+  virtual void release_auto_increment(void) { return; }
   /** admin commands - called from mysql_admin_table */
   virtual int check(Session *)
   { return HA_ADMIN_NOT_IMPLEMENTED; }

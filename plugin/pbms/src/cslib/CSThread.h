@@ -35,9 +35,8 @@
 #include "CSDefs.h"
 #include "CSMutex.h"
 #include "CSException.h"
+#include "CSObject.h"
 #include "CSStorage.h"
-
-using namespace std;
 
 #define CS_THREAD_TYPE				int
 
@@ -59,6 +58,7 @@ typedef struct CSCallStack {
 #define CS_RELEASE_MUTEX		2
 #define CS_RELEASE_POOLED		3
 #define CS_RELEASE_MEM			4
+#define CS_RELEASE_OBJECT_PTR	5
 
 typedef struct CSRelease {
 	int						r_type;
@@ -67,6 +67,7 @@ typedef struct CSRelease {
 		CSMutex				*r_mutex;					/* The mutex to be unlocked! */
 		CSPooled			*r_pooled;
 		void				*r_mem;
+		CSObject			**r_objectPtr;
 	} x;
 } CSReleaseRec, *CSReleasePtr;
 
@@ -124,24 +125,26 @@ public:
 	/* Set to true when the thread must quit (never reset!): */
 	bool			myMustQuit;	
 	
+	CSException		myException;
+#if defined(MYSQL_SERVER) ||  defined(DRIZZLED)
+
 	/* Set to true when this tread was initialized through the internal PBMS api. */
 	/* When this is the case than it must only be freed via the API as well. */
 	bool			pbms_api_owner;
-
-	CSException		myException;
 
 	/* Transaction references. */
 #ifdef DRIZZLED
 	CSSortedList	mySavePoints;
 #endif
-	uint32_t			myTID;			// Current transaction ID
-	uint32_t			myTransRef;		// Reference to the current transaction cache index
+	uint32_t		myTID;			// Current transaction ID
+	uint32_t		myTransRef;		// Reference to the current transaction cache index
 	bool			myIsAutoCommit;	// Is the current transaction in auto commit mode.
-	uint32_t			myCacheVersion;	// The last transaction cache version checked. Used during overflow.
+	uint32_t		myCacheVersion;	// The last transaction cache version checked. Used during overflow.
 	bool			myStartTxn;		// A flag to indicate the start of a new transaction.
-	uint32_t			myStmtCount;	// Counts the number of statements in the current transaction.
-	uint32_t			myStartStmt;	// The myStmtCount at the start of the last logical statement. (An update is 2 statements but only 1 logical statement.)
-	void			*myInfo;		// A place to hang some info. (Be carefull with this!)
+	uint32_t		myStmtCount;	// Counts the number of statements in the current transaction.
+	uint32_t		myStartStmt;	// The myStmtCount at the start of the last logical statement. (An update is 2 statements but only 1 logical statement.)
+	void			*myInfo;
+#endif
 	
 	/* The call stack */
 	int				callTop;
@@ -163,6 +166,7 @@ public:
 		ignoreSignals(false),
 		isRunning(false),
 		myMustQuit(false),
+#if defined(MYSQL_SERVER) ||  defined(DRIZZLED)
 		pbms_api_owner(false),
 		myTID(0),
 		myTransRef(0),
@@ -172,10 +176,12 @@ public:
 		myStmtCount(0),
 		myStartStmt(0),
 		myInfo(NULL),
+#endif
 		callTop(0),
 		jumpDepth(0),
 		relTop(relStack),
 		iIsMain(false),
+		isDetached(false),
 		iRunFunc(NULL),
 		iNextLink(NULL),
 		iPrevLink(NULL)
@@ -199,7 +205,7 @@ public:
 	 *
      * @exception CSSystemException thrown if thread is invalid.
 	 */
-	void start();
+	void start(bool detached = false);
 
 	/*
 	 * Stop execution of the thread.
@@ -250,7 +256,7 @@ public:
 	void releaseObjects(CSReleasePtr top);
 	void throwException();
 	void caught();
-	bool isMe(CSThread *me) { return (me->iThread == iThread);}
+	bool isMe(CSThread *me) { return (pthread_equal(me->iThread,iThread) != 0);}
 	/* Make this object linkable: */
 	virtual CSObject *getNextLink() { return iNextLink; }
 	virtual CSObject *getPrevLink() { return iPrevLink; }
@@ -262,6 +268,7 @@ public:
 private:
 	pthread_t		iThread;
 	bool			iIsMain;
+	bool			isDetached;
 	ThreadRunFunc	iRunFunc;
 	CSObject		*iNextLink;
 	CSObject		*iPrevLink;
@@ -318,12 +325,18 @@ public:
 
 	virtual void *run();
 
+	/* Return false if startup failed, and the thread must quit. */
 	virtual bool initializeWork() { return true; };
 
+	/* Return true of the thread should sleep before doing more work. */
 	virtual bool doWork();
 
 	virtual void *completeWork() { return NULL; };
 
+	/* Return false if the excpetion is not handled and the thread must quit.
+	 * Set must_sleep to true of the thread should pause before doing work
+	 * again.
+	 */
 	virtual bool handleException();
 
 	virtual void stop();
@@ -348,8 +361,9 @@ public:
 	void suspendedWait(time_t milli_sec);
 
 private:
-	bool			iSuspended;
-	uint32_t			iSuspendCount;
+	void		try_Run(CSThread *self, const bool must_sleep);
+	bool		iSuspended;
+	uint32_t	iSuspendCount;
 };
 
 #endif

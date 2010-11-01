@@ -40,6 +40,7 @@ public:
     base tables that were opened with @see open_tables().
   */
   Table *open_tables;
+
   /**
     List of temporary tables used by this thread. Contains user-level
     temporary tables, created with CREATE TEMPORARY TABLE, and
@@ -79,7 +80,15 @@ public:
     This constructor serves for creation of Open_tables_state instances
     which are used as backup storage.
   */
-  Open_tables_state() { }
+  Open_tables_state() :
+    open_tables(0),
+    temporary_tables(0),
+    derived_tables(0),
+    lock(0),
+    extra_lock(0),
+    version(0),
+    current_tablenr(0)
+  { }
   virtual ~Open_tables_state() {}
 
   Open_tables_state(uint64_t version_arg);

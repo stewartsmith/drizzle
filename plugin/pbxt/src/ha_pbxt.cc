@@ -1482,7 +1482,7 @@ int PBXTStorageEngine::rollback(Session *thd, bool all)
 	return 0;
 }
 
-Cursor *PBXTStorageEngine::create(TableShare& table)
+Cursor *PBXTStorageEngine::create(Table& table)
 {
 	return new ha_pbxt(*this, table);
 }
@@ -2020,7 +2020,7 @@ static int pbxt_exit_statistics(void *XT_UNUSED(p))
  *
  */
 
-ha_pbxt::ha_pbxt(plugin::StorageEngine &engine_arg, TableShare &table_arg) : Cursor(engine_arg, table_arg)
+ha_pbxt::ha_pbxt(plugin::StorageEngine &engine_arg, Table &table_arg) : Cursor(engine_arg, table_arg)
 {
 	pb_share = NULL;
 	pb_open_tab = NULL;
@@ -2351,9 +2351,9 @@ void ha_pbxt::init_auto_increment(xtWord8 min_auto_inc)
 		return;
 
 	xt_spinlock_lock(&tab->tab_ainc_lock);
-	if (table->found_next_number_field && !tab->tab_auto_inc) {
-		Field		*tmp_fie = table->next_number_field;
-		THD			*tmp_thd = table->in_use;
+	if (getTable()->found_next_number_field && !tab->tab_auto_inc) {
+		Field		*tmp_fie = getTable()->next_number_field;
+		THD			*tmp_thd = getTable()->in_use;
 		xtBool		xn_started = FALSE;
 		XTThreadPtr	self = pb_open_tab->ot_thread;
 
@@ -2381,19 +2381,19 @@ void ha_pbxt::init_auto_increment(xtWord8 min_auto_inc)
 		}
 
 		/* Setup the conditions for the next call! */
-		table->in_use = current_thd;
-		table->next_number_field = table->found_next_number_field;
+		getTable()->in_use = current_thd;
+		getTable()->next_number_field = getTable()->found_next_number_field;
 
 		extra(HA_EXTRA_KEYREAD);
-		table->mark_columns_used_by_index_no_reset(table->getShare()->next_number_index, *table->read_set);
+		getTable()->mark_columns_used_by_index_no_reset(getTable()->getShare()->next_number_index, *getTable()->read_set);
 		column_bitmaps_signal();
- 		doStartIndexScan(table->getShare()->next_number_index, 0);
-		if (!table->getShare()->next_number_key_offset) {
+ 		doStartIndexScan(getTable()->getShare()->next_number_index, 0);
+		if (!getTable()->getShare()->next_number_key_offset) {
 			// Autoincrement at key-start
-			err = index_last(table->getUpdateRecord());
-			if (!err && !table->next_number_field->is_null(table->getShare()->rec_buff_length)) {
+			err = index_last(getTable()->getUpdateRecord());
+			if (!err && !getTable()->next_number_field->is_null(getTable()->getShare()->rec_buff_length)) {
 				/* {PRE-INC} */
-				nr = (xtWord8) table->next_number_field->val_int_offset(table->getShare()->rec_buff_length);
+				nr = (xtWord8) getTable()->next_number_field->val_int_offset(getTable()->getShare()->rec_buff_length);
 			}
 		}
 		else {
@@ -2403,13 +2403,13 @@ void ha_pbxt::init_auto_increment(xtWord8 min_auto_inc)
 			 */
 			xtWord8 val;
 
-			err = index_first(table->getUpdateRecord());
+			err = index_first(getTable()->getUpdateRecord());
 			while (!err) {
 				/* {PRE-INC} */
-				val = (xtWord8) table->next_number_field->val_int_offset(table->getShare()->rec_buff_length);
+				val = (xtWord8) getTable()->next_number_field->val_int_offset(getTable()->getShare()->rec_buff_length);
 				if (val > nr)
 					nr = val;
-				err = index_next(table->getUpdateRecord());
+				err = index_next(getTable()->getUpdateRecord());
 			}
 		}
 
@@ -2444,8 +2444,8 @@ void ha_pbxt::init_auto_increment(xtWord8 min_auto_inc)
 			tab->tab_auto_inc = min_auto_inc-1;
 
 		/* Restore the changed values: */
-		table->next_number_field = tmp_fie;
-		table->in_use = tmp_thd;
+		getTable()->next_number_field = tmp_fie;
+		getTable()->in_use = tmp_thd;
 
 		if (xn_started) {
 			XT_PRINT0(self, "xt_xn_commit in init_auto_increment\n");
@@ -2480,7 +2480,7 @@ void ha_pbxt::get_auto_increment(MX_ULONGLONG_T offset, MX_ULONGLONG_T increment
 		nr += increment - ((nr - offset) % increment);
 	else
 		nr += increment;
-	if (table->next_number_field->cmp((const unsigned char *)&nr_less_inc, (const unsigned char *)&nr) < 0)
+	if (getTable()->next_number_field->cmp((const unsigned char *)&nr_less_inc, (const unsigned char *)&nr) < 0)
 		tab->tab_auto_inc = (xtWord8) (nr);
 	else
 		nr = ~0;	/* indicate error to the caller */
@@ -2610,14 +2610,14 @@ int ha_pbxt::doInsertRecord(byte *buf)
 			pb_import_row_count++;
 	}
 
-	if (table->next_number_field && buf == table->getInsertRecord()) {
+	if (getTable()->next_number_field && buf == getTable()->getInsertRecord()) {
 		int update_err = update_auto_increment();
 		if (update_err) {
 			ha_log_pbxt_thread_error_for_mysql(pb_ignore_dup_key);
 			err = update_err;
 			goto done;
 		}
-		ha_set_auto_increment(pb_open_tab, table->next_number_field);
+		ha_set_auto_increment(pb_open_tab, getTable()->next_number_field);
 	}
 
 	if (!xt_tab_new_record(pb_open_tab, (xtWord1 *) buf)) {
@@ -2735,12 +2735,12 @@ int ha_pbxt::doUpdateRecord(const byte * old_data, byte * new_data)
 	 * update t1 set a=2 where a=1;
 	 * insert into t1 (val) values (1);
 	 */
-	if (table->found_next_number_field && new_data == table->getInsertRecord()) {
+	if (getTable()->found_next_number_field && new_data == getTable()->getInsertRecord()) {
 		MX_LONGLONG_T	nr;
-        const boost::dynamic_bitset<>& old_bitmap= table->use_all_columns(*table->read_set);
-		nr = table->found_next_number_field->val_int();
-		ha_set_auto_increment(pb_open_tab, table->found_next_number_field);
-        table->restore_column_map(old_bitmap);
+        const boost::dynamic_bitset<>& old_bitmap= getTable()->use_all_columns(*getTable()->read_set);
+		nr = getTable()->found_next_number_field->val_int();
+		ha_set_auto_increment(pb_open_tab, getTable()->found_next_number_field);
+        getTable()->restore_column_map(old_bitmap);
 	}
 
 	if (!xt_tab_update_record(pb_open_tab, (xtWord1 *) old_data, (xtWord1 *) new_data))
@@ -3134,7 +3134,7 @@ int ha_pbxt::doStartIndexScan(uint idx, bool XT_UNUSED(sorted))
 	/* The number of columns required: */
 	if (pb_open_tab->ot_is_modify) {
 
-		pb_open_tab->ot_cols_req = table->read_set->MX_BIT_SIZE();
+		pb_open_tab->ot_cols_req = getTable()->read_set->MX_BIT_SIZE();
 #ifdef XT_PRINT_INDEX_OPT
 		ind = (XTIndexPtr) pb_share->sh_dic_keys[idx];
 
@@ -3149,7 +3149,7 @@ int ha_pbxt::doStartIndexScan(uint idx, bool XT_UNUSED(sorted))
 	}
 	else {
 		//pb_open_tab->ot_cols_req = ha_get_max_bit(table->read_set);
-		pb_open_tab->ot_cols_req = table->read_set->MX_BIT_SIZE();
+		pb_open_tab->ot_cols_req = getTable()->read_set->MX_BIT_SIZE();
 
 		/* Check for index coverage!
 		 *
@@ -3200,9 +3200,9 @@ int ha_pbxt::doStartIndexScan(uint idx, bool XT_UNUSED(sorted))
          */
         std::string bitmap_str= convert_long_to_bit_string(ind->mi_col_map, ind->mi_col_map_size);
         MX_BITMAP tmp(bitmap_str);
-		if (MX_BIT_IS_SUBSET(table->read_set, tmp))
+		if (MX_BIT_IS_SUBSET(getTable()->read_set, tmp))
 #else
-		if (MX_BIT_IS_SUBSET(table->read_set, ind->mi_col_map))
+		if (MX_BIT_IS_SUBSET(getTable()->read_set, ind->mi_col_map))
 #endif
 			pb_key_read = TRUE;
 #ifdef XT_PRINT_INDEX_OPT
@@ -3347,10 +3347,10 @@ int ha_pbxt::index_read_xt(byte * buf, uint idx, const byte *key, uint key_len, 
 	XT_DISABLED_TRACE(("search tx=%d val=%d err=%d\n", (int) pb_open_tab->ot_thread->st_xact_data->xd_start_xn_id, (int) XT_GET_DISK_4(key), err));
 	done:
 	if (err)
-		table->status = STATUS_NOT_FOUND;
+		getTable()->status = STATUS_NOT_FOUND;
 	else {
 		pb_open_tab->ot_thread->st_statistics.st_row_select++;
-		table->status = 0;
+		getTable()->status = 0;
 	}
 	return err;
 }
@@ -3408,10 +3408,10 @@ int ha_pbxt::index_next(byte * buf)
 #endif
 	done:
 	if (err)
-		table->status = STATUS_NOT_FOUND;
+		getTable()->status = STATUS_NOT_FOUND;
 	else {
 		pb_open_tab->ot_thread->st_statistics.st_row_select++;
-		table->status = 0;
+		getTable()->status = 0;
 	}
 	XT_RETURN(err);
 }
@@ -3462,10 +3462,10 @@ int ha_pbxt::index_next_same(byte * buf, const byte *key, uint length)
 #endif
 	done:
 	if (err)
-		table->status = STATUS_NOT_FOUND;
+		getTable()->status = STATUS_NOT_FOUND;
 	else {
 		pb_open_tab->ot_thread->st_statistics.st_row_select++;
-		table->status = 0;
+		getTable()->status = 0;
 	}
 	XT_RETURN(err);
 }
@@ -3500,10 +3500,10 @@ int ha_pbxt::index_prev(byte * buf)
 #endif
 	done:
 	if (err)
-		table->status = STATUS_NOT_FOUND;
+		getTable()->status = STATUS_NOT_FOUND;
 	else {
 		pb_open_tab->ot_thread->st_statistics.st_row_select++;
-		table->status = 0;
+		getTable()->status = 0;
 	}
 	XT_RETURN(err);
 }
@@ -3553,10 +3553,10 @@ int ha_pbxt::index_first(byte * buf)
 #endif
 	done:
 	if (err)
-		table->status = STATUS_NOT_FOUND;
+		getTable()->status = STATUS_NOT_FOUND;
 	else {
 		pb_open_tab->ot_thread->st_statistics.st_row_select++;
-		table->status = 0;
+		getTable()->status = 0;
 	}
 	XT_RETURN(err);
 }
@@ -3599,10 +3599,10 @@ int ha_pbxt::index_last(byte * buf)
 #endif
 	done:
 	if (err)
-		table->status = STATUS_NOT_FOUND;
+		getTable()->status = STATUS_NOT_FOUND;
 	else {
 		pb_open_tab->ot_thread->st_statistics.st_row_select++;
-		table->status = 0;
+		getTable()->status = 0;
 	}
 	XT_RETURN(err);
 }
@@ -3646,7 +3646,7 @@ int ha_pbxt::doStartTableScan(bool scan)
 
 	/* The number of columns required: */
 	if (pb_open_tab->ot_is_modify) {
-		pb_open_tab->ot_cols_req = table->read_set->MX_BIT_SIZE();
+		pb_open_tab->ot_cols_req = getTable()->read_set->MX_BIT_SIZE();
 		/* {START-STAT-HACK} previously position of start statement hack,
 		 * previous comment to code below: */
 		/* Start a statement based transaction as soon
@@ -3656,7 +3656,7 @@ int ha_pbxt::doStartTableScan(bool scan)
 	}
 	else {
 		//pb_open_tab->ot_cols_req = ha_get_max_bit(table->read_set);
-		pb_open_tab->ot_cols_req = table->read_set->MX_BIT_SIZE();
+		pb_open_tab->ot_cols_req = getTable()->read_set->MX_BIT_SIZE();
 
 		/*
 		 * in case of queries like SELECT COUNT(*) FROM t
@@ -3726,10 +3726,10 @@ int ha_pbxt::rnd_next(byte *buf)
 		err = HA_ERR_END_OF_FILE;
 
 	if (err)
-		table->status = STATUS_NOT_FOUND;
+		getTable()->status = STATUS_NOT_FOUND;
 	else {
 		pb_open_tab->ot_thread->st_statistics.st_row_select++;
-		table->status = 0;
+		getTable()->status = 0;
 	}
 	XT_RETURN(err);
 }
@@ -3801,10 +3801,10 @@ int ha_pbxt::rnd_pos(byte * buf, byte *pos)
 	}		
 
 	if (err)
-		table->status = STATUS_NOT_FOUND;
+		getTable()->status = STATUS_NOT_FOUND;
 	else {
 		pb_open_tab->ot_thread->st_statistics.st_row_select++;
-		table->status = 0;
+		getTable()->status = 0;
 	}
 	XT_RETURN(err);
 }
@@ -5700,16 +5700,9 @@ int PBXTStorageEngine::doStartTransaction(Session *thd, start_transaction_option
 	if (!self->st_database)
 		xt_ha_open_database_of_table(self, NULL);
 
-	/* startTransaction() calls registerResourceForTransaction() calls engine->startTransaction(), and then
-	 * startTransaction() calls doStartTransaction()
-	 * Which leads to this function being called twice!?
-	 * So added the self->st_xact_data test below.
-	 */
-	if (!self->st_xact_data) {
-		if (!xt_xn_begin(self)) {
-			err = xt_ha_pbxt_thread_error_for_mysql(thd, self, /*pb_ignore_dup_key*/false);
-			//pb_ex_in_use = 0;
-		}
+	assert(!self->st_xact_data); // Check we're not called twice
+        if (!xt_xn_begin(self)) {
+          err = xt_ha_pbxt_thread_error_for_mysql(thd, self, /*pb_ignore_dup_key*/false);
 	}
 
 	return err;

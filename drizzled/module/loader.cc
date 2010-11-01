@@ -59,9 +59,14 @@ using namespace std;
 /** These exist just to prevent symbols from being optimized out */
 typedef drizzled::module::Manifest drizzled_builtin_list[];
 extern drizzled_builtin_list PANDORA_BUILTIN_SYMBOLS_LIST;
+extern drizzled_builtin_list PANDORA_BUILTIN_LOAD_SYMBOLS_LIST;
 drizzled::module::Manifest *drizzled_builtins[]=
 {
   PANDORA_BUILTIN_SYMBOLS_LIST, NULL
+};
+drizzled::module::Manifest *drizzled_load_builtins[]=
+{
+  PANDORA_BUILTIN_LOAD_SYMBOLS_LIST, NULL
 };
 
 namespace drizzled
@@ -76,6 +81,7 @@ static PluginOptions opt_plugin_load;
 static PluginOptions opt_plugin_add;
 static PluginOptions opt_plugin_remove;
 const char *builtin_plugins= PANDORA_BUILTIN_LIST;
+const char *builtin_load_plugins= PANDORA_BUILTIN_LOAD_LIST;
 
 /* Note that 'int version' must be the first field of every plugin
    sub-structure (plugin->info).
@@ -162,8 +168,8 @@ static bool plugin_load_list(module::Registry &registry,
                              bool builtin= false);
 static int test_plugin_options(memory::Root *, module::Module *,
                                po::options_description &long_options);
-static void unlock_variables(Session *session, struct system_variables *vars);
-static void cleanup_variables(system_variables *vars);
+static void unlock_variables(Session *session, drizzle_system_variables *vars);
+static void cleanup_variables(drizzle_system_variables *vars);
 static void plugin_vars_free_values(module::Module::Variables &vars);
 
 /* declared in set_var.cc */
@@ -392,6 +398,9 @@ bool plugin_init(module::Registry &registry,
 
   initialized= 1;
 
+  PluginOptions builtin_load_list;
+  tokenize(builtin_load_plugins, builtin_load_list, ",", true);
+
   PluginOptions builtin_list;
   tokenize(builtin_plugins, builtin_list, ",", true);
 
@@ -399,22 +408,34 @@ bool plugin_init(module::Registry &registry,
 
   if (opt_plugin_add.size() > 0)
   {
-    opt_plugin_load.insert(opt_plugin_load.end(),
-                           opt_plugin_add.begin(),
-                           opt_plugin_add.end());
+    for (PluginOptions::iterator iter= opt_plugin_add.begin();
+         iter != opt_plugin_add.end();
+         ++iter)
+    {
+      if (find(builtin_list.begin(),
+               builtin_list.end(), *iter) != builtin_list.end())
+      {
+        builtin_load_list.push_back(*iter);
+      }
+      else
+      {
+        opt_plugin_load.push_back(*iter);
+      }
+    }
   }
 
   if (opt_plugin_remove.size() > 0)
   {
     plugin_prune_list(opt_plugin_load, opt_plugin_remove);
-    plugin_prune_list(builtin_list, opt_plugin_remove);
+    plugin_prune_list(builtin_load_list, opt_plugin_remove);
   }
 
 
   /*
     First we register builtin plugins
   */
-  const set<string> builtin_list_set(builtin_list.begin(), builtin_list.end());
+  const set<string> builtin_list_set(builtin_load_list.begin(),
+                                     builtin_load_list.end());
   load_failed= plugin_load_list(registry, &tmp_root,
                                 builtin_list_set, long_options, true);
   if (load_failed)
@@ -1063,7 +1084,7 @@ void plugin_sessionvar_init(Session *session)
 /*
   Unlocks all system variables which hold a reference
 */
-static void unlock_variables(Session *, struct system_variables *vars)
+static void unlock_variables(Session *, struct drizzle_system_variables *vars)
 {
   vars->storage_engine= NULL;
 }
@@ -1075,7 +1096,7 @@ static void unlock_variables(Session *, struct system_variables *vars)
   Unlike plugin_vars_free_values() it frees all variables of all plugins,
   it's used on shutdown.
 */
-static void cleanup_variables(system_variables *vars)
+static void cleanup_variables(drizzle_system_variables *vars)
 {
   assert(vars->storage_engine == NULL);
 

@@ -21,17 +21,13 @@
 #ifndef PLUGIN_SHOW_DICTIONARY_SHOW_SCHEMAS_H
 #define PLUGIN_SHOW_DICTIONARY_SHOW_SCHEMAS_H
 
-class ShowSchemas : public drizzled::plugin::TableFunction
+class ShowSchemas : public show_dictionary::Show
 {
 public:
 
   ShowSchemas();
 
-  ShowSchemas(const char *schema_arg, const char *table_arg) :
-    drizzled::plugin::TableFunction(schema_arg, table_arg)
-  { }
-
-  class Generator : public drizzled::plugin::TableFunction::Generator 
+  class Generator : public show_dictionary::Show::Generator 
   {
     drizzled::SchemaIdentifiers schema_names;
     drizzled::SchemaIdentifiers::const_iterator schema_iterator;

@@ -29,10 +29,7 @@ public:
 
   class Generator : public InformationSchema::Generator 
   {
-    bool is_primed;
-    void fill();
-    bool nextCore();
-    bool next();
+    drizzled::generator::AllForeignKeys foreign_key_generator;
 
   public:
     Generator(drizzled::Field **arg);

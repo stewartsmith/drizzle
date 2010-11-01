@@ -21,6 +21,7 @@
 #include "drizzled/session.h"
 #include "drizzled/item/uint.h"
 #include "drizzled/item/float.h"
+#include "drizzled/item/string.h"
 #include "drizzled/optimizer/explain_plan.h"
 #include "drizzled/optimizer/position.h"
 #include "drizzled/optimizer/quick_ror_intersect_select.h"
