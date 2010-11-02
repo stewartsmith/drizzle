@@ -69,6 +69,7 @@
 #include "drizzled/plugin/monitored_in_transaction.h"
 #include "drizzled/plugin/transactional_storage_engine.h"
 #include "drizzled/plugin/xa_resource_manager.h"
+#include "drizzled/plugin/xa_storage_engine.h"
 #include "drizzled/internal/my_sys.h"
 
 #include <vector>
@@ -299,6 +300,19 @@ namespace drizzled
  * transaction after all DDLs, just like the statement transaction
  * is always committed at the end of all statements.
  */
+TransactionServices::TransactionServices()
+{
+  plugin::StorageEngine *engine= plugin::StorageEngine::findByName("InnoDB");
+  if (engine)
+  {
+    xa_storage_engine= (plugin::XaStorageEngine*)engine; 
+  }
+  else 
+  {
+    xa_storage_engine= NULL;
+  }
+}
+
 void TransactionServices::registerResourceForStatement(Session *session,
                                                        plugin::MonitoredInTransaction *monitored,
                                                        plugin::TransactionalStorageEngine *engine)
@@ -424,6 +438,29 @@ void TransactionServices::registerResourceForTransaction(Session *session,
   /* Only true if user is executing a BEGIN WORK/START TRANSACTION */
   if (! session->getResourceContext(monitored, 0)->isStarted())
     registerResourceForStatement(session, monitored, engine, resource_manager);
+}
+
+void TransactionServices::allocateNewTransactionId()
+{
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  if (! replication_services.isActive())
+  {
+    return;
+  }
+
+  Session *my_session= current_session;
+  uint64_t xa_id= xa_storage_engine->getNewTransactionId(my_session);
+  my_session->setXaId(xa_id);
+}
+
+uint64_t TransactionServices::getCurrentTransactionId(Session *session)
+{
+  if (session->getXaId() == 0)
+  {
+    session->setXaId(xa_storage_engine->getNewTransactionId(session)); 
+  }
+
+  return session->getXaId();
 }
 
 /**
@@ -976,7 +1013,14 @@ void TransactionServices::initTransactionMessage(message::Transaction &in_transa
   trx->set_server_id(in_session->getServerId());
 
   if (should_inc_trx_id)
-    trx->set_transaction_id(getNextTransactionId());
+  {
+    trx->set_transaction_id(getCurrentTransactionId(in_session));
+    in_session->setXaId(0);
+  }  
+  else
+  { 
+    trx->set_transaction_id(0);
+  }
 
   trx->set_start_timestamp(in_session->getCurrentTimestamp());
 }
@@ -1029,7 +1073,6 @@ void TransactionServices::initStatementMessage(message::Statement &statement,
 {
   statement.set_type(in_type);
   statement.set_start_timestamp(in_session->getCurrentTimestamp());
-  /** @TODO Set sql string optionally */
 }
 
 void TransactionServices::finalizeStatementMessage(message::Statement &statement,

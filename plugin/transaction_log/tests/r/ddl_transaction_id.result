@@ -14,23 +14,224 @@ ALTER TABLE t1 CHANGE COLUMN padding less_padding VARCHAR(180) NOT NULL;
 SELECT * FROM t1 WHERE id = 3;
 id	less_padding
 DROP TABLE t1;
-SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
-FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
-transaction.log	X	6	6	1	6	X	X	X
-SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
-ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
-X	TRANSACTION	X
-X	TRANSACTION	X
-X	TRANSACTION	X
-X	TRANSACTION	X
-X	TRANSACTION	X
-X	TRANSACTION	X
-SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
-ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
-X	1	1	X	X	1	0
-X	2	1	X	X	1	0
-X	3	1	X	X	1	0
-X	4	1	X	X	1	0
-X	5	1	X	X	1	0
-X	6	1	X	X	1	0
+Check transaction_log_entries
+SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+COUNT(*)
+6
+
+Check transaction_log_transactions
+SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+COUNT(*)
+6
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  TRANSACTION_ID
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: DROP_TABLE
+  START_TIMESTAMP
+  END_TIMESTAMP
+  drop_table_statement {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    if_exists_clause: false
+  }
+}
+
+
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+PRINT_TRANSACTION_MESSAGE('transaction.log',entry_offset)
+transaction_context {
+  server_id: 1
+  TRANSACTION_ID
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: DROP_TABLE
+  START_TIMESTAMP
+  END_TIMESTAMP
+  drop_table_statement {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    if_exists_clause: true
+  }
+}
+
+transaction_context {
+  server_id: 1
+  TRANSACTION_ID
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: CREATE_TABLE
+  START_TIMESTAMP
+  END_TIMESTAMP
+  create_table_statement {
+    table {
+      name: "t1"
+      engine {
+        name: "InnoDB"
+      }
+      field {
+        name: "id"
+        type: INTEGER
+        constraints {
+          is_nullable: false
+        }
+      }
+      field {
+        name: "padding"
+        type: VARCHAR
+        constraints {
+          is_nullable: false
+        }
+        string_options {
+          length: 200
+          collation_id: 45
+          collation: "utf8_general_ci"
+        }
+      }
+      indexes {
+        name: "PRIMARY"
+        is_primary: true
+        is_unique: true
+        type: UNKNOWN_INDEX
+        key_length: 4
+        index_part {
+          fieldnr: 0
+          compare_length: 4
+        }
+        options {
+        }
+      }
+      type: STANDARD
+      schema: "test"
+      options {
+        has_user_set_auto_increment_value: false
+        collation: "utf8_general_ci"
+        collation_id: 45
+      }
+      CREATE_TIMESTAMP
+      UPDATE_TIMESTAMP
+      
+      version: 1
+    }
+  }
+}
+
+transaction_context {
+  server_id: 1
+  TRANSACTION_ID
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "id"
+    }
+    field_metadata {
+      type: VARCHAR
+      name: "padding"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "1"
+      insert_value: "I love testing."
+      is_null: false
+      is_null: false
+    }
+  }
+}
+
+transaction_context {
+  server_id: 1
+  TRANSACTION_ID
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "id"
+    }
+    field_metadata {
+      type: VARCHAR
+      name: "padding"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "2"
+      insert_value: "I hate testing."
+      is_null: false
+      is_null: false
+    }
+  }
+}
+
+transaction_context {
+  server_id: 1
+  TRANSACTION_ID
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: RAW_SQL
+  START_TIMESTAMP
+  END_TIMESTAMP
+  sql: "ALTER TABLE t1 CHANGE COLUMN padding less_padding VARCHAR(180) NOT NULL"
+}
+
+transaction_context {
+  server_id: 1
+  TRANSACTION_ID
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: DROP_TABLE
+  START_TIMESTAMP
+  END_TIMESTAMP
+  drop_table_statement {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    if_exists_clause: false
+  }
+}
+
 SET GLOBAL transaction_log_truncate_debug= true;

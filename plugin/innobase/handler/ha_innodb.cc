@@ -348,6 +348,8 @@ public:
   {
     return doRollback(session, all); /* XA rollback just does a SQL ROLLBACK */
   }
+  virtual uint64_t doGetCurrentTransactionId(Session *session);
+  virtual uint64_t doGetNewTransactionId(Session *session);
   virtual int doCommit(Session* session, bool all);
   virtual int doRollback(Session* session, bool all);
 
@@ -4139,6 +4141,8 @@ no_commit:
 
   error = row_insert_for_mysql((byte*) record, prebuilt);
 
+  user_session->setXaId((ib_uint64_t) ut_conv_dulint_to_longlong(trx->id));
+
   /* Handle duplicate key errors */
   if (auto_inc_used) {
     ulint   err;
@@ -4455,6 +4459,8 @@ ha_innobase::doUpdateRecord(
 
   error = row_update_for_mysql((byte*) old_row, prebuilt);
 
+  user_session->setXaId((ib_uint64_t) ut_conv_dulint_to_longlong(trx->id));
+
   /* We need to do some special AUTOINC handling for the following case:
 
   INSERT INTO t (c1,c2) VALUES(x,y) ON DUPLICATE KEY UPDATE ...
@@ -4544,6 +4550,8 @@ ha_innobase::doDeleteRecord(
   innodb_srv_conc_enter_innodb(trx);
 
   error = row_update_for_mysql((byte*) record, prebuilt);
+
+  user_session->setXaId((ib_uint64_t) ut_conv_dulint_to_longlong(trx->id));
 
   innodb_srv_conc_exit_innodb(trx);
 
@@ -5820,6 +5828,8 @@ InnobaseEngine::doCreateTable(
                           lex_identified_temp_table ? name2 : NULL,
                           iflags);
 
+  session.setXaId((ib_uint64_t) ut_conv_dulint_to_longlong(trx->id));
+
   if (error) {
     goto cleanup;
   }
@@ -6070,6 +6080,8 @@ InnobaseEngine::doDropTable(
                                    session_sql_command(&session)
                                    == SQLCOM_DROP_DB);
 
+  session.setXaId((ib_uint64_t) ut_conv_dulint_to_longlong(trx->id));
+
   /* Flush the log to reduce probability that the .frm files and
     the InnoDB data dictionary get out-of-sync if the user runs
     with innodb_flush_log_at_trx_commit = 0 */
@@ -6290,6 +6302,8 @@ UNIV_INTERN int InnobaseEngine::doRenameTable(Session &session, const TableIdent
   trx = innobase_trx_allocate(&session);
 
   error = innobase_rename_table(trx, from.getPath().c_str(), to.getPath().c_str(), TRUE);
+
+  session.setXaId((ib_uint64_t) ut_conv_dulint_to_longlong(trx->id));
 
   /* Tell the InnoDB server that there might be work for
     utility threads: */
@@ -8257,6 +8271,23 @@ InnobaseEngine::doXaPrepare(
   srv_active_wake_master_thread();
 
   return(error);
+}
+
+uint64_t InnobaseEngine::doGetCurrentTransactionId(Session *session)
+{
+  trx_t *trx= session_to_trx(session);
+  return (ib_uint64_t) ut_conv_dulint_to_longlong(trx->id);
+}
+
+uint64_t InnobaseEngine::doGetNewTransactionId(Session *session)
+{
+  trx_t *trx= innobase_trx_allocate(session);
+
+  mutex_enter(&kernel_mutex);
+  trx->id= trx_sys_get_new_trx_id();
+  mutex_exit(&kernel_mutex);
+
+  return (ib_uint64_t) ut_conv_dulint_to_longlong(trx->id);
 }
 
 /*******************************************************************//**
