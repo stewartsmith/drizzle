@@ -54,6 +54,16 @@ To run the tests in a specific suite::
 
     ./test-run [OPTIONS] --suite=SUITENAME
 
+Running specific tests within a suite
+--------------------------------------
+To run a specific set of tests within a suite::
+
+    ./test-run [OPTIONS] --suite=SUITENAME TEST1 [TEST2..TESTN]
+
+Calling tests using <suitename>.<testname> currently does not work.
+One must specify the test suite via the :option:`--suite` option.
+
+
 Running all available tests
 ---------------------------
 Currently, the quickest way to execute all tests in all suites is
