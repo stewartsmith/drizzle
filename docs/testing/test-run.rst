@@ -46,7 +46,7 @@ Running all tests within a suite
 Many of the tests supplied with Drizzle are organized into suites.  
 
 The tests within drizzle/tests/t are considered the 'main' suite.  
-Other suitesare located in either drizzle/tests/suite or within the various
+Other suites are located in either drizzle/tests/suite or within the various
 directories in drizzle/plugin.  Tests for a specific plugin should live in 
 the plugin's directory - drizzle/plugin/example_plugin/tests
 
@@ -68,15 +68,30 @@ Interpreting test results
 The output of the test runner is quite simple.  Every test should pass.
 In the event of a test failure, please take the time to file a bug.
 
-At the end of a run, the program will provide the user with a listing
-of:
-  * how many tests passed
+During a run, the program will provide the user with:
+  * test name (suite + name)
+  * test status (pass/fail/skipped)
+  * time spent executing each test
+
+At the end of a run, the program will provide the user with a listing of:
+  * how many tests were run
   * how many tests failed
+  * percentage of passing tests
   * a listing of failing tests
   * total time spent executing the tests
 
 Example output::
 
+    <snip>
+    main.snowman                                                 [ pass ]       9
+    main.statement_boundaries                                    [ pass ]      17
+    main.status                                                  [ pass ]      12
+    main.strict                                                  [ pass ]      50
+    main.subselect                                               [ pass ]    6778
+    main.subselect2                                              [ pass ]      51
+    main.subselect3                                              [ fail ]
+    drizzletest: At line 621: query 'select a, (select max(b) from t1) into outfile
+    <snip>
     --------------------------------------------------------------------------------
     Stopping All Servers
     Failed 10/231 tests, 95.67% were successful.
@@ -119,7 +134,7 @@ Program architecture
 :program:`test-run.pl` uses a simple diff-based mechanism for testing.  
 It will execute the statements contained in a test and compare the results 
 to pre-recorded expected results.  In the event of a test failure, you
-will be presented with a sample diff::
+will be presented with a diff::
 
     main.exp1                                                    [ fail ]
     --- drizzle/tests/r/exp1.result	2010-11-02 02:10:25.107013998 +0300
