@@ -820,7 +820,7 @@ inline static size_t my_charpos(const charset_info_st *cs,
                                 const CHAR_T *b, const CHAR_T* e, size_t num)
 {
   return (cs->cset->charpos(cs, (const char*) b, (const char *)e, num));
-} // fixme!!!
+}
 
 inline static bool use_mb(const charset_info_st *cs)
 {
