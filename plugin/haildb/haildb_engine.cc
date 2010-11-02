@@ -2844,7 +2844,8 @@ typedef constrained_check<unsigned int, 1000, 1> autoextend_constraint;
 static autoextend_constraint srv_auto_extend_increment;
 static unsigned long innobase_lock_wait_timeout;
 static unsigned long srv_n_spin_wait_rounds;
-static int64_t innobase_buffer_pool_size;
+typedef constrained_check<size_t, SIZE_MAX, 5242880, 1048576> buffer_pool_constraint;
+static buffer_pool_constraint innobase_buffer_pool_size;
 typedef constrained_check<size_t, SIZE_MAX, 512, 1024> additional_mem_pool_constraint;
 static additional_mem_pool_constraint innobase_additional_mem_pool_size;
 static long innobase_open_files;
@@ -2875,17 +2876,6 @@ static int haildb_init(drizzled::module::Context &context)
   innobase_use_doublewrite= (vm.count("disable-doublewrite")) ? false : true;
   innobase_print_verbose_log= (vm.count("disable-print-verbose-log")) ? false : true;
   srv_use_sys_malloc= (vm.count("use-internal-malloc")) ? false : true;
-
-  if (vm.count("buffer-pool-size"))
-  {
-    if (innobase_buffer_pool_size > INT64_MAX || innobase_buffer_pool_size < 5*1024*1024L)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of buffer-pool-size"));
-      return 1;
-    }
-    innobase_buffer_pool_size/= 1024*1024L;
-    innobase_buffer_pool_size*= 1024*1024L;
-  }
 
   if (vm.count("io-capacity"))
   {
@@ -3122,7 +3112,7 @@ static int haildb_init(drizzled::module::Context &context)
   if (err != DB_SUCCESS)
     goto haildb_error;
 
-  err= ib_cfg_set_int("buffer_pool_size", innobase_buffer_pool_size);
+  err= ib_cfg_set_int("buffer_pool_size", static_cast<size_t>(innobase_buffer_pool_size));
   if (err != DB_SUCCESS)
     goto haildb_error;
 
@@ -3223,6 +3213,7 @@ static int haildb_init(drizzled::module::Context &context)
                                                          &srv_adaptive_flushing));
   context.registerVariable(new sys_var_constrained_value_readonly<size_t>("additional_mem_pool_size",innobase_additional_mem_pool_size));
   context.registerVariable(new sys_var_constrained_value_readonly<unsigned int>("autoextend_increment", srv_auto_extend_increment));
+  context.registerVariable(new sys_var_constrained_value_readonly<size_t>("buffer_pool_size", innobase_buffer_pool_size));
 
   haildb_datadict_dump_func_initialize(context);
   config_table_function_initialize(context);
@@ -3352,11 +3343,6 @@ static void haildb_status_file_update(Session*, drizzle_sys_var*,
   if (err == DB_SUCCESS)
     innobase_create_status_file= status_file_enabled;
 }
-
-static DRIZZLE_SYSVAR_LONGLONG(buffer_pool_size, innobase_buffer_pool_size,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "The size of the memory buffer HailDB uses to cache data and indexes of its tables.",
-  NULL, NULL, 128*1024*1024L, 5*1024*1024L, INT64_MAX, 1024*1024L);
 
 static DRIZZLE_SYSVAR_BOOL(checksums, innobase_use_checksums,
   PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
@@ -3522,7 +3508,7 @@ static void init_options(drizzled::module::option_context &context)
           po::value<autoextend_constraint>(&srv_auto_extend_increment)->default_value(8),
           N_("Data file autoextend increment in megabytes"));
   context("buffer-pool-size",
-          po::value<int64_t>(&innobase_buffer_pool_size)->default_value(128*1024*1024L),
+          po::value<buffer_pool_constraint>(&innobase_buffer_pool_size)->default_value(128*1024*1024L),
           N_("The size of the memory buffer HailDB uses to cache data and indexes of its tables."));
   context("data-home-dir",
           po::value<string>(),
@@ -3610,7 +3596,6 @@ static void init_options(drizzled::module::option_context &context)
 }
 
 static drizzle_sys_var* innobase_system_variables[]= {
-  DRIZZLE_SYSVAR(buffer_pool_size),
   DRIZZLE_SYSVAR(checksums),
   DRIZZLE_SYSVAR(data_home_dir),
   DRIZZLE_SYSVAR(doublewrite),
