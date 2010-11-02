@@ -2840,7 +2840,8 @@ static unsigned long innobase_lru_old_blocks_pct;
 static unsigned long innobase_lru_block_access_recency;
 static unsigned long innobase_read_io_threads;
 static unsigned long innobase_write_io_threads;
-static unsigned int srv_auto_extend_increment;
+typedef constrained_check<unsigned int, 1000, 1> autoextend_constraint;
+static autoextend_constraint srv_auto_extend_increment;
 static unsigned long innobase_lock_wait_timeout;
 static unsigned long srv_n_spin_wait_rounds;
 static int64_t innobase_buffer_pool_size;
@@ -2874,15 +2875,6 @@ static int haildb_init(drizzled::module::Context &context)
   innobase_use_doublewrite= (vm.count("disable-doublewrite")) ? false : true;
   innobase_print_verbose_log= (vm.count("disable-print-verbose-log")) ? false : true;
   srv_use_sys_malloc= (vm.count("use-internal-malloc")) ? false : true;
-
-  if (vm.count("autoextend-increment"))
-  {
-    if (srv_auto_extend_increment > 1000L || srv_auto_extend_increment < 1L)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of autoextend-increment"));
-      return 1;
-    }
-  }
 
   if (vm.count("buffer-pool-size"))
   {
@@ -3126,7 +3118,7 @@ static int haildb_init(drizzled::module::Context &context)
   if (err != DB_SUCCESS)
     goto haildb_error;
 
-  err= ib_cfg_set_int("autoextend_increment", srv_auto_extend_increment);
+  err= ib_cfg_set_int("autoextend_increment", static_cast<unsigned int>(srv_auto_extend_increment));
   if (err != DB_SUCCESS)
     goto haildb_error;
 
@@ -3230,6 +3222,7 @@ static int haildb_init(drizzled::module::Context &context)
   context.registerVariable(new sys_var_bool_ptr_readonly("adaptive_flushing",
                                                          &srv_adaptive_flushing));
   context.registerVariable(new sys_var_constrained_value_readonly<size_t>("additional_mem_pool_size",innobase_additional_mem_pool_size));
+  context.registerVariable(new sys_var_constrained_value_readonly<unsigned int>("autoextend_increment", srv_auto_extend_increment));
 
   haildb_datadict_dump_func_initialize(context);
   config_table_function_initialize(context);
@@ -3359,11 +3352,6 @@ static void haildb_status_file_update(Session*, drizzle_sys_var*,
   if (err == DB_SUCCESS)
     innobase_create_status_file= status_file_enabled;
 }
-
-static DRIZZLE_SYSVAR_UINT(autoextend_increment, srv_auto_extend_increment,
-  PLUGIN_VAR_RQCMDARG,
-  "Data file autoextend increment in megabytes",
-  NULL, NULL, 8L, 1L, 1000L, 0);
 
 static DRIZZLE_SYSVAR_LONGLONG(buffer_pool_size, innobase_buffer_pool_size,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
@@ -3531,7 +3519,7 @@ static void init_options(drizzled::module::option_context &context)
           po::value<additional_mem_pool_constraint>(&innobase_additional_mem_pool_size)->default_value(8*1024*1024L),
           N_("Size of a memory pool HailDB uses to store data dictionary information and other internal data structures."));
   context("autoextend-increment",
-          po::value<unsigned int>(&srv_auto_extend_increment)->default_value(8L),
+          po::value<autoextend_constraint>(&srv_auto_extend_increment)->default_value(8),
           N_("Data file autoextend increment in megabytes"));
   context("buffer-pool-size",
           po::value<int64_t>(&innobase_buffer_pool_size)->default_value(128*1024*1024L),
@@ -3622,7 +3610,6 @@ static void init_options(drizzled::module::option_context &context)
 }
 
 static drizzle_sys_var* innobase_system_variables[]= {
-  DRIZZLE_SYSVAR(autoextend_increment),
   DRIZZLE_SYSVAR(buffer_pool_size),
   DRIZZLE_SYSVAR(checksums),
   DRIZZLE_SYSVAR(data_home_dir),
