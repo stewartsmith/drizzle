@@ -119,7 +119,7 @@ To do so call::
 
     ./test-run --start-and-exit [*OPTIONS*]
 
-..This will start a Drizzle server that you can connect to and query
+This will start a Drizzle server that you can connect to and query
 
 Starting a server against a pre-populated DATADIR
 --------------------------------------------------
@@ -165,7 +165,7 @@ Options to control what engine/variation to run
    
    Use the compressed protocol between client and server
 
-.. option:: ----bench
+.. option:: --bench
    
    Run the benchmark suite
 
