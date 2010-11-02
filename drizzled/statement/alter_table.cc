@@ -58,7 +58,7 @@ static int copy_data_between_tables(Session *session,
                                     List<CreateField> &create,
                                     bool ignore,
                                     uint32_t order_num,
-                                    order_st *order,
+                                    Order *order,
                                     ha_rows *copied,
                                     ha_rows *deleted,
                                     enum enum_enable_or_disable keys_onoff,
@@ -159,7 +159,7 @@ bool statement::AlterTable::execute()
                      first_table,
                      &alter_info,
                      select_lex->order_list.elements,
-                     (order_st *) select_lex->order_list.first,
+                     (Order *) select_lex->order_list.first,
                      session->lex->ignore);
   }
   else
@@ -182,7 +182,7 @@ bool statement::AlterTable::execute()
                        first_table,
                        &alter_info,
                        select_lex->order_list.elements,
-                       (order_st *) select_lex->order_list.first,
+                       (Order *) select_lex->order_list.first,
                        session->lex->ignore);
     }
   }
@@ -875,7 +875,7 @@ static bool internal_alter_table(Session *session,
                                  TableList *table_list,
                                  AlterInfo *alter_info,
                                  uint32_t order_num,
-                                 order_st *order,
+                                 Order *order,
                                  bool ignore)
 {
   int error= 0;
@@ -1350,7 +1350,7 @@ bool alter_table(Session *session,
                  TableList *table_list,
                  AlterInfo *alter_info,
                  uint32_t order_num,
-                 order_st *order,
+                 Order *order,
                  bool ignore)
 {
   bool error;
@@ -1411,7 +1411,7 @@ copy_data_between_tables(Session *session,
                          Table *from, Table *to,
                          List<CreateField> &create,
                          bool ignore,
-                         uint32_t order_num, order_st *order,
+                         uint32_t order_num, Order *order,
                          ha_rows *copied,
                          ha_rows *deleted,
                          enum enum_enable_or_disable keys_onoff,

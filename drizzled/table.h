@@ -161,7 +161,7 @@ public:
   Field_timestamp *timestamp_field; /**< Points to the auto-setting timestamp field, if any */
 
   TableList *pos_in_table_list; /* Element referring to this table */
-  order_st *group;
+  Order *group;
   
   const char *getAlias() const
   {
