@@ -265,25 +265,25 @@ void lex_start(Session *session)
   lex->reset();
 }
 
-void lex_end(LEX *lex)
+void LEX::end()
 {
-  if (lex->yacc_yyss)
+  if (yacc_yyss)
   {
-    free(lex->yacc_yyss);
-    free(lex->yacc_yyvs);
-    lex->yacc_yyss= 0;
-    lex->yacc_yyvs= 0;
+    free(yacc_yyss);
+    free(yacc_yyvs);
+    yacc_yyss= 0;
+    yacc_yyvs= 0;
   }
 
-  delete lex->result;
+  delete result;
 
-  lex->result= 0;
-  lex->setCacheable(true);
+  result= 0;
+  setCacheable(true);
 
-  if (lex->statement) 
+  if (statement) 
   {
-    delete lex->statement;
-    lex->statement= NULL;
+    delete statement;
+    statement= NULL;
   }
 }
 

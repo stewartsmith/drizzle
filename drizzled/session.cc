@@ -1519,7 +1519,7 @@ bool select_exists_subselect::send_data(List<Item> &)
 void Session::end_statement()
 {
   /* Cleanup SQL processing state to reuse this statement in next query. */
-  lex_end(lex);
+  lex->end();
   query_cache_key= ""; // reset the cache key
   resetResultsetMessage();
 }
