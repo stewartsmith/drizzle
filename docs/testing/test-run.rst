@@ -76,7 +76,8 @@ Otherwise, one should simply name all suites::
 Interpreting test results
 =========================
 The output of the test runner is quite simple.  Every test should pass.
-In the event of a test failure, please take the time to file a bug.
+In the event of a test failure, please take the time to file a bug here:
+*https://bugs.launchpad.net/drizzle*
 
 During a run, the program will provide the user with:
   * test name (suite + name)
