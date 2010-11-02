@@ -67,27 +67,6 @@
 #define GREGORIAN_DAYS_IN_100_YEARS UINT32_C(36524)
 #define GREGORIAN_DAYS_IN_4_YEARS   UINT32_C(1461)
 
-/**
- * Simple macro returning whether the supplied year
- * is a leap year in the supplied calendar.
- *
- * @param Year to evaluate
- * @param Calendar to use
- */
-#define IS_LEAP_YEAR(y, c) (days_in_year((y),(c)) == 366)
-
-/**
- * Simple macro returning whether the supplied year
- * is a leap year in the Gregorian proleptic calendar.
- */
-#define IS_GREGORIAN_LEAP_YEAR(y) (days_in_year_gregorian((y)) == 366)
-
-/**
- * Simple macro returning whether the supplied year
- * is a leap year in the Julian proleptic calendar.
- */
-#define IS_JULIAN_LEAP_YEAR(y) (days_in_year_julian((y)) == 366)
-
 namespace drizzled
 {
 
@@ -96,11 +75,12 @@ namespace drizzled
  */
 enum calendar
 {
-  GREGORIAN= 1
-, JULIAN= 2
-, HEBREW= 3
-, ISLAM= 4
+  GREGORIAN= 1, 
+  JULIAN= 2, 
+  HEBREW= 3, 
+  ISLAM= 4
 };
+
 
 /**
  * Calculates the Julian Day Number from the year, month 
@@ -185,10 +165,6 @@ uint32_t days_in_year_gregorian(uint32_t year);
  */
 uint32_t days_in_year_julian(uint32_t year);
 
-#define NUM_LEAP_YEARS(y, c) ((c) == GREGORIAN \
-    ? number_of_leap_years_gregorian((y)) \
-    : number_of_leap_years_julian((y)))
-
 /**
  * Returns the number of leap years that have
  * occurred in the Julian Proleptic calendar
@@ -215,6 +191,13 @@ int32_t number_of_leap_years_gregorian(uint32_t year);
  * @param Month in date
  */
 uint32_t days_in_gregorian_year_month(uint32_t year, uint32_t month);
+
+inline static bool num_leap_years(uint32_t y, enum calendar c) 
+{
+  return (c == GREGORIAN                
+          ? number_of_leap_years_gregorian(y) 
+          : number_of_leap_years_julian(y));
+}
 
 /**
  * Returns the number of the day in a week.
@@ -327,6 +310,36 @@ uint32_t year_month_to_months(uint32_t year_month);
  * @param Number of months
  */
 uint32_t months_to_year_month(uint32_t months);
+
+/**
+ * Simple function returning whether the supplied year
+ * is a leap year in the supplied calendar.
+ *
+ * @param Year to evaluate
+ * @param Calendar to use
+ */
+inline static bool is_leap_year(uint32_t y, enum calendar c)
+{
+  return (days_in_year(y, c) == 366);
+}
+
+/**
+ * Simple function returning whether the supplied year
+ * is a leap year in the Gregorian proleptic calendar.
+ */
+inline static bool is_gregorian_leap_year(uint32_t y)
+{
+  return (days_in_year_gregorian(y) == 366);
+}
+
+/**
+ * Simple function returning whether the supplied year
+ * is a leap year in the Julian proleptic calendar.
+ */
+inline static bool is_julian_leap_year(uint32_t y) 
+{
+  return (days_in_year_julian(y) == 366);
+}
 
 } /* namespace drizzled */
 
