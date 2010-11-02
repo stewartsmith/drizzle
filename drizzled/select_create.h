@@ -24,7 +24,7 @@ namespace drizzled
 {
 
 class select_create: public select_insert {
-  order_st *group;
+  Order *group;
   TableList *create_table;
   bool is_if_not_exists;
   HA_CREATE_INFO *create_info;

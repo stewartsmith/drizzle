@@ -195,8 +195,8 @@ public:
   List<Item> tmp_fields_list3;
   int error;
 
-  order_st *order;
-  order_st *group_list; /**< hold parameters of mysql_select */
+  Order *order;
+  Order *group_list; /**< hold parameters of mysql_select */
   COND *conds;                            // ---"---
   Item *conds_history; /**< store WHERE for explain */
   TableList *tables_list; /**< hold 'tables' parameter of mysql_select */
@@ -403,8 +403,8 @@ public:
               uint32_t wind_num,
               COND *conds,
               uint32_t og_num,
-              order_st *order,
-              order_st *group,
+              Order *order,
+              Order *group,
               Item *having,
               Select_Lex *select,
               Select_Lex_Unit *unit);
