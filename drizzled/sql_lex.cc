@@ -280,11 +280,8 @@ void LEX::end()
   result= 0;
   setCacheable(true);
 
-  if (statement) 
-  {
-    delete statement;
-    statement= NULL;
-  }
+  delete statement;
+  statement= NULL;
 }
 
 static int find_keyword(Lex_input_stream *lip, uint32_t len, bool function)
