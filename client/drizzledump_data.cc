@@ -379,6 +379,9 @@ std::string DrizzleDumpData::convertHex(const unsigned char* from, size_t from_s
   std::ostringstream output;
   if (from_size > 0)
     output << "0x";
+  else
+    output << "''";
+
   while (from_size > 0)
   {
     /* Would be nice if std::hex liked uint8_t, ah well */
