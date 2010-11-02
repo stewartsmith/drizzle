@@ -44,9 +44,17 @@ eval select * into dumpfile "$DRIZZLETEST_VARDIR/tmp/outfile-test.2" from t1;
 --error ER_FILE_EXISTS_ERROR
 eval select * into dumpfile "$DRIZZLETEST_VARDIR/tmp/outfile-test.3" from t1;
 enable_query_log;
---replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+
+# The test below drastically shortens $DRIZZLETEST_VARDIR
+# to just VAR and uses a less informative file name
+# This is done to accomodate longer file paths
+# We were seeing error message truncation when
+# the path to the server under test was long (110+ chars)
+
+eval SET @tmpdir1="$DRIZZLETEST_VARDIR";
+--replace_result $DRIZZLETEST_VARDIR VAR
 --error ER_TEXTFILE_NOT_READABLE
-select load_file(concat(@tmpdir,"/outfile.not-exist"));
+eval select load_file(concat(@tmpdir1,"/bad"));
 --remove_file $DRIZZLETEST_VARDIR/tmp/outfile-test.1
 --remove_file $DRIZZLETEST_VARDIR/tmp/outfile-test.2
 --remove_file $DRIZZLETEST_VARDIR/tmp/outfile-test.3

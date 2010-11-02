@@ -470,7 +470,7 @@ select rpad(i, 7, ' ') as t from t1;
 --disable_metadata
 drop table t1;
 
---replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+--replace_result $DRIZZLETEST_VARDIR VARDIR
 --error ER_TEXTFILE_NOT_READABLE
 eval select load_file("$DRIZZLETEST_VARDIR/lkjlkj");
 
