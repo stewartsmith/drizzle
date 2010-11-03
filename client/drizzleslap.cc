@@ -195,7 +195,7 @@ static uint64_t num_of_query;
 static uint64_t auto_generate_sql_number;
 string concurrency_str;
 string create_string;
-std::vector <uint32_t> concurrency;
+std::vector <size_t> concurrency;
 
 std::string opt_csv_str;
 int csv_file;
@@ -2380,7 +2380,7 @@ void slap_connect(drizzle_con_st &con, bool connect_to_schema)
     abort();
   }
 
-  drizzle_set_context(drizzle, (void*)connection_count.fetch_and_increment());
+  drizzle_set_context(drizzle, (void*)(connection_count.fetch_and_increment()));
 
   if (opt_only_print)
     return;
