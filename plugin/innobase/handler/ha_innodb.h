@@ -121,7 +121,7 @@ class ha_innobase: public Cursor
 	/* Init values for the class: */
  public:
 	UNIV_INTERN ha_innobase(plugin::StorageEngine &engine,
-                                TableShare &table_arg);
+                                Table &table_arg);
 	UNIV_INTERN ~ha_innobase();
   /**
    * Returns the plugin::TransactionStorageEngine pointer
@@ -133,7 +133,7 @@ class ha_innobase: public Cursor
    */
   UNIV_INTERN plugin::TransactionalStorageEngine *getTransactionalEngine()
   {
-    return static_cast<plugin::TransactionalStorageEngine *>(engine);
+    return static_cast<plugin::TransactionalStorageEngine *>(getEngine());
   }
 
 	UNIV_INTERN const char* index_type(uint key_number);

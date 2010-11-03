@@ -36,13 +36,14 @@ namespace plugin
 {
   class MonitoredInTransaction;
   class XaResourceManager;
+  class XaStorageEngine;
   class TransactionalStorageEngine;
 }
 
 class Session;
 class NamedSavepoint;
 class Field;
- 
+
 /**
  * This is a class which manages the XA transaction processing
  * in the server
@@ -51,17 +52,8 @@ class TransactionServices
 {
 public:
   static const size_t DEFAULT_RECORD_SIZE= 100;
-  typedef uint64_t TransactionId;
-  /**
-   * Constructor
-   */
-  TransactionServices()
-  {
-    /**
-     * @todo set transaction ID to the last one from an applier...
-     */
-    current_transaction_id= 0;
-  }
+  
+  TransactionServices();
 
   /**
    * Singleton method
@@ -260,6 +252,28 @@ public:
    * @param use_update_record If true, uses the values from the update row instead
    */
   void deleteRecord(Session *in_session, Table *in_table, bool use_update_record= false);
+
+  /**
+   * Used to undo effects of a failed statement.
+   *
+   * An SQL statement, like an UPDATE, that affects multiple rows could
+   * potentially fail mid-way through processing the rows. In such a case,
+   * the successfully modified rows that preceeded the failing row would
+   * have been added to the Statement message. This method is used for
+   * rolling back that change.
+   *
+   * @note
+   * This particular failure is seen on column constraint violations
+   * during a multi-row UPDATE and a multi-row INSERT..SELECT.
+   *
+   * @param in_session Pointer to the Session containing the Statement
+   * @param count The number of records to remove from Statement.
+   *
+   * @retval true Successfully removed 'count' records
+   * @retval false Failure
+   */
+  bool removeStatementRecords(Session *in_session, uint32_t count);
+
   /**
    * Creates a CreateSchema Statement GPB message and adds it
    * to the Session's active Transaction GPB message for pushing
@@ -413,22 +427,11 @@ public:
                                       plugin::MonitoredInTransaction *monitored,
                                       plugin::TransactionalStorageEngine *engine,
                                       plugin::XaResourceManager *resource_manager);
-  TransactionId getNextTransactionId()
-  {
-    return current_transaction_id.increment();
-  }
-  TransactionId getCurrentTransactionId()
-  {
-    return current_transaction_id;
-  }
-  /**
-   * DEBUG ONLY.  See plugin::TransactionLog::truncate()
-   */
-  void resetTransactionId()
-  {
-    current_transaction_id= 0;
-  }
 
+  uint64_t getCurrentTransactionId(Session *session);
+
+  void allocateNewTransactionId();
+ 
   /**************
    * Events API
    **************/
@@ -454,7 +457,6 @@ public:
   bool sendShutdownEvent(Session *session);
 
 private:
-  atomic<TransactionId> current_transaction_id;
 
   /**
    * Checks if a field has been updated 
@@ -498,6 +500,8 @@ private:
                                Table *in_table,
                                const unsigned char *old_record,
                                const unsigned char *new_record);
+
+  plugin::XaStorageEngine *xa_storage_engine;
 };
 
 } /* namespace drizzled */

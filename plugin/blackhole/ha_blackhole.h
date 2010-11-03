@@ -51,7 +51,7 @@ class ha_blackhole: public drizzled::Cursor
 
 public:
   ha_blackhole(drizzled::plugin::StorageEngine &engine,
-               drizzled::TableShare &table_arg);
+               drizzled::Table &table_arg);
   ~ha_blackhole()
   {}
 

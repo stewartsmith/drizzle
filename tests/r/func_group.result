@@ -867,20 +867,22 @@ v	a
 3.00000	3
 SELECT b/c as v, SUM(a) FROM t1 GROUP BY v;
 v	SUM(a)
+0.33333	6
 0.50000	6
+0.66667	6
 1.00000	18
 1.50000	6
 2.00000	6
 3.00000	6
-9999999999.99999	12
 SELECT SUM(a) FROM t1 GROUP BY b/c;
 SUM(a)
+6
+6
 6
 18
 6
 6
 6
-12
 DROP TABLE t1;
 set div_precision_increment= @sav_dpi;
 CREATE TABLE t1 (a INT PRIMARY KEY, b INT);

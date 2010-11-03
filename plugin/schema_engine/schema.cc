@@ -30,6 +30,7 @@
 #include "drizzled/data_home.h"
 
 #include "drizzled/internal/my_sys.h"
+#include "drizzled/transaction_services.h"
 
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -156,6 +157,9 @@ bool Schema::doCreateSchema(const drizzled::message::Schema &schema_message)
   }
   mutex.unlock();
 
+  TransactionServices &transaction_services= TransactionServices::singleton();
+  transaction_services.allocateNewTransactionId();
+
   return true;
 }
 
@@ -196,6 +200,9 @@ bool Schema::doDropSchema(const SchemaIdentifier &schema_identifier)
   schema_cache.erase(schema_identifier.getPath());
   mutex.unlock();
 
+  TransactionServices &transaction_services= TransactionServices::singleton();
+  transaction_services.allocateNewTransactionId();
+
   return true;
 }
 
@@ -221,6 +228,9 @@ bool Schema::doAlterSchema(const drizzled::message::Schema &schema_message)
       }
     }
     mutex.unlock();
+
+    TransactionServices &transaction_services= TransactionServices::singleton();
+    transaction_services.allocateNewTransactionId();
   }
 
   return true;

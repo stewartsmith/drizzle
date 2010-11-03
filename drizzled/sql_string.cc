@@ -117,7 +117,8 @@ bool String::real_alloc(size_t arg_length)
   str_length=0;
   if (Alloced_length < arg_length)
   {
-    free();
+    if (Alloced_length > 0)
+      free();
     if (!(Ptr=(char*) malloc(arg_length)))
       return true;
     Alloced_length=arg_length;

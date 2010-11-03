@@ -43,6 +43,7 @@ extern bool opt_compress;
 extern bool opt_drop_database;
 extern bool opt_autocommit;
 extern bool ignore_errors;
+extern std::string opt_destination_database;
 
 extern boost::unordered_set<std::string> ignore_table;
 extern void maybe_exit(int error);
@@ -192,16 +193,22 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpDatabase &obj)
     if (not opt_create_db)
     {
       if (opt_drop_database)
-        os << "DROP DATABASE IF EXISTS `" << obj.databaseName << "`" << std::endl;
+      {
+        os << "DROP DATABASE IF EXISTS `"
+          << ((opt_destination_database.empty()) ? obj.databaseName
+          : opt_destination_database) << "`" << std::endl;
+      }
 
-      os << "CREATE DATABASE IF NOT EXISTS `" << obj.databaseName << "`";
+      os << "CREATE DATABASE IF NOT EXISTS `"
+        << ((opt_destination_database.empty()) ? obj.databaseName
+        : opt_destination_database) << "`";
       if (not obj.collate.empty())
        os << " COLLATE = " << obj.collate;
 
       os << ";" << std::endl << std::endl;
     }
-
-    os << "USE `" << obj.databaseName << "`;" << std::endl << std::endl;
+    os << "USE `" << ((opt_destination_database.empty()) ? obj.databaseName
+      : opt_destination_database) << "`;" << std::endl << std::endl;
   }
 
   std::vector<DrizzleDumpTable*>::iterator i;
@@ -329,6 +336,11 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
             os << obj.convertHex((unsigned char*)row[i], row_sizes[i]);
             byte_counter+= row_sizes[i];
           }
+          else if ((obj.table->fields[i]->type.compare("ENUM") == 0) and
+            (strcmp(row[i], "") == 0))
+          {
+            os << "NULL";
+          }
           else
             os << "'" << DrizzleDumpData::escape(row[i], row_sizes[i]) << "'";
           byte_counter+= 3;
@@ -340,15 +352,16 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
         os << ",";
     }
     /* Break insert up if it is too long */
-    if (extended_insert and
-      (byte_counter >= DRIZZLE_MAX_LINE_LENGTH))
+    if ((extended_insert and
+      (byte_counter >= DRIZZLE_MAX_LINE_LENGTH)) or (not extended_insert))
     {
       os << ");" << std::endl;
       new_insert= true;
       byte_counter= 0;
     }
   }
-  os << ");" << std::endl;
+  if (not new_insert)
+    os << ");" << std::endl;
 
   if (opt_autocommit)
     os << "COMMIT;" << std::endl;
@@ -366,6 +379,9 @@ std::string DrizzleDumpData::convertHex(const unsigned char* from, size_t from_s
   std::ostringstream output;
   if (from_size > 0)
     output << "0x";
+  else
+    output << "''";
+
   while (from_size > 0)
   {
     /* Would be nice if std::hex liked uint8_t, ah well */
@@ -465,17 +481,17 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpTable &obj)
   }
 
   os << std::endl;
-  os << ") ENGINE=" << obj.engineName << " ";
+  os << ") ENGINE='" << obj.engineName << "' ";
   if (obj.autoIncrement > 0)
   {
     os << "AUTO_INCREMENT=" << obj.autoIncrement << " ";
   }
 
-  os << "COLLATE = " << obj.collate;
+  os << "COLLATE='" << obj.collate << "'";
 
   if (not obj.comment.empty())
   {
-    os << " COMMENT = '" << obj.comment << "'";
+    os << " COMMENT='" << obj.comment << "'";
   }
 
   os << ";" << std::endl << std::endl;

@@ -28,8 +28,6 @@
 #ifndef __DEFS_MS_H__
 #define __DEFS_MS_H__
 
-#include <boost/dynamic_bitset.hpp>
-
 #include "cslib/CSDefs.h"
 
 #define MS_IDENTIFIER_CHAR_COUNT	64
@@ -117,6 +115,7 @@
 #define MS_DEFAULT_KEEP_ALIVE		(10) 
 
 #ifdef DRIZZLED
+#include <boost/dynamic_bitset.hpp>
 /* Drizzle is stuck at this level: */
 #define MYSQL_VERSION_ID					60005
 

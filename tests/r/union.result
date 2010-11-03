@@ -1236,7 +1236,7 @@ t3	CREATE TABLE `t3` (
 drop tables t1,t2,t3;
 SELECT @tmp_max:= @@max_allowed_packet;
 @tmp_max:= @@max_allowed_packet
-1048576
+67108864
 SET max_allowed_packet=25000000;
 CREATE TABLE t1 (a mediumtext);
 CREATE TABLE t2 (b varchar(20));

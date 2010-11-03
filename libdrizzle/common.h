@@ -33,6 +33,7 @@
 #include <string.h>
 #include <sys/uio.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include "drizzle_local.h"
 #include "conn_local.h"

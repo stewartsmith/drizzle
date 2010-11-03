@@ -93,17 +93,17 @@ static DT_FIELD_INFO pbms_repository_info[]=
 #ifdef HAVE_ALIAS_SUPPORT
 	{"Blob_alias",			BLOB_ALIAS_LENGTH, NULL, MYSQL_TYPE_VARCHAR,		&my_charset_utf8_bin,	0,								"The BLOB alias"},
 #endif
-	{"Repository_id",		NULL, NULL, MYSQL_TYPE_LONG,		NULL,					NOT_NULL_FLAG,					"The repository file number"},
-	{"Repo_blob_offset",	NULL, NULL, MYSQL_TYPE_LONGLONG,	NULL,					NOT_NULL_FLAG,					"The offset of the BLOB in the repository file"},
-	{"Blob_size",			NULL, NULL, MYSQL_TYPE_LONGLONG,	NULL,					NOT_NULL_FLAG,					"The size of the BLOB in bytes"},
+	{"Repository_id",		NOVAL, NULL, MYSQL_TYPE_LONG,		NULL,					NOT_NULL_FLAG,					"The repository file number"},
+	{"Repo_blob_offset",	NOVAL, NULL, MYSQL_TYPE_LONGLONG,	NULL,					NOT_NULL_FLAG,					"The offset of the BLOB in the repository file"},
+	{"Blob_size",			NOVAL, NULL, MYSQL_TYPE_LONGLONG,	NULL,					NOT_NULL_FLAG,					"The size of the BLOB in bytes"},
 	{"MD5_Checksum",		32,   NULL,	MYSQL_TYPE_VARCHAR,		system_charset_info,	0,								"The MD5 Digest of the BLOB data."},
-	{"Head_size",			NULL, NULL, MYSQL_TYPE_SHORT,		NULL,					NOT_NULL_FLAG | UNSIGNED_FLAG,	"The size of the BLOB header - proceeds the BLOB data"},
-	{"Access_code",			NULL, NULL, MYSQL_TYPE_LONG,		NULL,					NOT_NULL_FLAG,					"The 4-byte authorisation code required to access the BLOB - part of the BLOB URL"},
-	{"Creation_time",		NULL, NULL, MYSQL_TYPE_TIMESTAMP,	NULL,					NOT_NULL_FLAG,					"The time the BLOB was created"},
-	{"Last_ref_time",		NULL, NULL, MYSQL_TYPE_TIMESTAMP,	NULL,					0,								"The last time the BLOB was referenced"},
-	{"Last_access_time",	NULL, NULL, MYSQL_TYPE_TIMESTAMP,	NULL,					0,								"The last time the BLOB was accessed (read)"},
-	{"Access_count",		NULL, NULL, MYSQL_TYPE_LONG,		NULL,					NOT_NULL_FLAG,					"The count of the number of times the BLOB has been read"},
-	{NULL,NULL, NULL, MYSQL_TYPE_STRING,NULL, 0, NULL}
+	{"Head_size",			NOVAL, NULL, MYSQL_TYPE_SHORT,		NULL,					NOT_NULL_FLAG | UNSIGNED_FLAG,	"The size of the BLOB header - proceeds the BLOB data"},
+	{"Access_code",			NOVAL, NULL, MYSQL_TYPE_LONG,		NULL,					NOT_NULL_FLAG,					"The 4-byte authorisation code required to access the BLOB - part of the BLOB URL"},
+	{"Creation_time",		NOVAL, NULL, MYSQL_TYPE_TIMESTAMP,	NULL,					NOT_NULL_FLAG,					"The time the BLOB was created"},
+	{"Last_ref_time",		NOVAL, NULL, MYSQL_TYPE_TIMESTAMP,	NULL,					0,								"The last time the BLOB was referenced"},
+	{"Last_access_time",	NOVAL, NULL, MYSQL_TYPE_TIMESTAMP,	NULL,					0,								"The last time the BLOB was accessed (read)"},
+	{"Access_count",		NOVAL, NULL, MYSQL_TYPE_LONG,		NULL,					NOT_NULL_FLAG,					"The count of the number of times the BLOB has been read"},
+	{NULL,NOVAL, NULL, MYSQL_TYPE_STRING,NULL, 0, NULL}
 };
 
 #ifdef PBMS_HAS_KEYS
@@ -116,11 +116,11 @@ static DT_KEY_INFO pbms_repository_keys[]=
 
 static DT_FIELD_INFO pbms_metadata_info[]=
 {
-	{"Repository_id",		NULL,					NULL, MYSQL_TYPE_LONG,		NULL,							NOT_NULL_FLAG,	"The repository file number"},
-	{"Repo_blob_offset",	NULL,					NULL, MYSQL_TYPE_LONGLONG,	NULL,							NOT_NULL_FLAG,	"The offset of the BLOB in the repository file"},
+	{"Repository_id",		NOVAL,					NULL, MYSQL_TYPE_LONG,		NULL,							NOT_NULL_FLAG,	"The repository file number"},
+	{"Repo_blob_offset",	NOVAL,					NULL, MYSQL_TYPE_LONGLONG,	NULL,							NOT_NULL_FLAG,	"The offset of the BLOB in the repository file"},
 	{"Name",				MS_META_NAME_SIZE,	NULL, MYSQL_TYPE_VARCHAR,	&UTF8_CHARSET,	NOT_NULL_FLAG,	"Metadata name"},
 	{"Value",				MS_META_VALUE_SIZE,	NULL, MYSQL_TYPE_VARCHAR,	&UTF8_CHARSET,			NOT_NULL_FLAG,	"Metadata value"},
-	{NULL,					NULL,					NULL, MYSQL_TYPE_STRING,	NULL, 0, NULL}
+	{NULL,					NOVAL,					NULL, MYSQL_TYPE_STRING,	NULL, 0, NULL}
 };
 
 #ifdef PBMS_HAS_KEYS
@@ -135,10 +135,10 @@ static DT_KEY_INFO pbms_metadata_keys[]=
 #ifdef HAVE_ALIAS_SUPPORT
 static DT_FIELD_INFO pbms_alias_info[]=
 {
-	{"Repository_id",		NULL, NULL, MYSQL_TYPE_LONG,		NULL,				NOT_NULL_FLAG,	"The repository file number"},
-	{"Repo_blob_offset",	NULL, NULL, MYSQL_TYPE_LONGLONG,	NULL,				NOT_NULL_FLAG,	"The offset of the BLOB in the repository file"},
+	{"Repository_id",		NOVAL, NULL, MYSQL_TYPE_LONG,		NULL,				NOT_NULL_FLAG,	"The repository file number"},
+	{"Repo_blob_offset",	NOVAL, NULL, MYSQL_TYPE_LONGLONG,	NULL,				NOT_NULL_FLAG,	"The offset of the BLOB in the repository file"},
 	{"Blob_alias",			BLOB_ALIAS_LENGTH, NULL, MYSQL_TYPE_VARCHAR,		&my_charset_utf8_bin,	NOT_NULL_FLAG,			"The BLOB alias"},
-	{NULL,NULL, NULL, MYSQL_TYPE_STRING,NULL, 0, NULL}
+	{NULL,NOVAL, NULL, MYSQL_TYPE_STRING,NULL, 0, NULL}
 };
 
 static DT_KEY_INFO pbms_alias_keys[]=
@@ -150,10 +150,10 @@ static DT_KEY_INFO pbms_alias_keys[]=
 
 static DT_FIELD_INFO pbms_blobs_info[]=
 {
-	{"Repository_id",		NULL, NULL, MYSQL_TYPE_LONG,		NULL,				NOT_NULL_FLAG,	"The repository file number"},
-	{"Repo_blob_offset",	NULL, NULL, MYSQL_TYPE_LONGLONG,	NULL,				NOT_NULL_FLAG,	"The offset of the BLOB in the repository file"},
-	{"Blob_data",			NULL, NULL, MYSQL_TYPE_LONG_BLOB,	&my_charset_bin,	NOT_NULL_FLAG,	"The data of this BLOB"},
-	{NULL,NULL, NULL, MYSQL_TYPE_STRING,NULL, 0, NULL}
+	{"Repository_id",		NOVAL, NULL, MYSQL_TYPE_LONG,		NULL,				NOT_NULL_FLAG,	"The repository file number"},
+	{"Repo_blob_offset",	NOVAL, NULL, MYSQL_TYPE_LONGLONG,	NULL,				NOT_NULL_FLAG,	"The offset of the BLOB in the repository file"},
+	{"Blob_data",			NOVAL, NULL, MYSQL_TYPE_LONG_BLOB,	&my_charset_bin,	NOT_NULL_FLAG,	"The data of this BLOB"},
+	{NULL,NOVAL, NULL, MYSQL_TYPE_STRING,NULL, 0, NULL}
 };
 
 #ifdef PBMS_HAS_KEYS
@@ -167,17 +167,17 @@ static DT_KEY_INFO pbms_blobs_keys[]=
 static DT_FIELD_INFO pbms_reference_info[]=
 {
 	{"Table_name",		MS_TABLE_NAME_SIZE,		NULL, MYSQL_TYPE_STRING,	system_charset_info,	0,	"The name of the referencing table"},
-	{"Column_ordinal",	NULL,					NULL, MYSQL_TYPE_LONG,		NULL,					0,	"The column ordinal of the referencing field"},
-	{"Blob_id",			NULL,					NULL, MYSQL_TYPE_LONGLONG,	NULL,					NOT_NULL_FLAG,	"The BLOB reference number - part of the BLOB URL"},
+	{"Column_ordinal",	NOVAL,					NULL, MYSQL_TYPE_LONG,		NULL,					0,	"The column ordinal of the referencing field"},
+	{"Blob_id",			NOVAL,					NULL, MYSQL_TYPE_LONGLONG,	NULL,					NOT_NULL_FLAG,	"The BLOB reference number - part of the BLOB URL"},
 	{"Blob_url",		PBMS_BLOB_URL_SIZE,		NULL, MYSQL_TYPE_VARCHAR,	system_charset_info,	0,	"The BLOB URL for HTTP GET access"},
-	{"Repository_id",	NULL,					NULL, MYSQL_TYPE_LONG,		NULL,					NOT_NULL_FLAG,	"The repository file number of the BLOB"},
-	{"Repo_blob_offset",NULL,					NULL, MYSQL_TYPE_LONGLONG,	NULL,					NOT_NULL_FLAG,	"The offset in the repository file"},
-	{"Blob_size",		NULL,					NULL, MYSQL_TYPE_LONGLONG,	NULL,					NOT_NULL_FLAG,	"The size of the BLOB in bytes"},
-	{"Deletion_time",	NULL,					NULL, MYSQL_TYPE_TIMESTAMP,	NULL,					0,				"The time the BLOB was deleted"},
-	{"Remove_in",		NULL,					NULL, MYSQL_TYPE_LONG,		NULL,					0,				"The number of seconds before the reference/BLOB is removed perminently"},
-	{"Temp_log_id",		NULL,					NULL, MYSQL_TYPE_LONG,		NULL,					0,				"Temporary log number of the referencing deletion entry"},
-	{"Temp_log_offset",	NULL,					NULL, MYSQL_TYPE_LONGLONG,	NULL,					0,				"Temporary log offset of the referencing deletion entry"},
-	{NULL,NULL, NULL, MYSQL_TYPE_STRING,NULL, 0, NULL}
+	{"Repository_id",	NOVAL,					NULL, MYSQL_TYPE_LONG,		NULL,					NOT_NULL_FLAG,	"The repository file number of the BLOB"},
+	{"Repo_blob_offset",NOVAL,					NULL, MYSQL_TYPE_LONGLONG,	NULL,					NOT_NULL_FLAG,	"The offset in the repository file"},
+	{"Blob_size",		NOVAL,					NULL, MYSQL_TYPE_LONGLONG,	NULL,					NOT_NULL_FLAG,	"The size of the BLOB in bytes"},
+	{"Deletion_time",	NOVAL,					NULL, MYSQL_TYPE_TIMESTAMP,	NULL,					0,				"The time the BLOB was deleted"},
+	{"Remove_in",		NOVAL,					NULL, MYSQL_TYPE_LONG,		NULL,					0,				"The number of seconds before the reference/BLOB is removed perminently"},
+	{"Temp_log_id",		NOVAL,					NULL, MYSQL_TYPE_LONG,		NULL,					0,				"Temporary log number of the referencing deletion entry"},
+	{"Temp_log_offset",	NOVAL,					NULL, MYSQL_TYPE_LONGLONG,	NULL,					0,				"Temporary log offset of the referencing deletion entry"},
+	{NULL,NOVAL, NULL, MYSQL_TYPE_STRING,NULL, 0, NULL}
 };
 
 #ifdef PBMS_HAS_KEYS
@@ -423,7 +423,7 @@ static bool pbms_database_follder_exists( const char *db)
 	if (!db)
 		return false;
 		
-	cs_strcpy(PATH_MAX, path, ms_my_get_mysql_home_path().c_str());
+	cs_strcpy(PATH_MAX, path, ms_my_get_mysql_home_path());
 	cs_add_name_to_path(PATH_MAX, path, db);
 	
 	if (stat(path, &stat_info) == 0)
@@ -489,40 +489,44 @@ void PBMSSystemTables::removeSystemTables(CSString *db_path)
 }
 
 //----------------
+bool PBMSSystemTables::try_loadSystemTables(CSThread *self, int i, MSDatabase *db)
+{
+	volatile bool rtc = true;
+	try_(a) {
+		switch (i) {
+			case 0:
+				MSHTTPHeaderTable::loadTable(RETAIN(db));
+				break;
+			case 1:
+				MSCloudTable::loadTable(RETAIN(db));
+				break;
+			case 2:
+				MSBackupTable::loadTable(RETAIN(db));
+				break;
+			case 3:
+				// Variable must be loaded after cloud and backup info
+				// incase BLOB recovery is required.
+				MSVariableTable::loadTable(RETAIN(db)); 
+				break;
+				
+			default:
+				ASSERT(false);
+		}
+		rtc = false;
+	}
+	catch_(a);
+	cont_(a);
+	return rtc;
+}
+//----------------
 void PBMSSystemTables::loadSystemTables(MSDatabase *db)
 {
-	int i = 0;
-	
-	CLOBBER_PROTECT(i);
 	enter_();
 	push_(db);
 	
-	for ( i = 0; i < 4; i++) {
-		try_(a) {
-			switch (i) {
-				case 0:
-					MSHTTPHeaderTable::loadTable(RETAIN(db));
-					break;
-				case 1:
-					MSCloudTable::loadTable(RETAIN(db));
-					break;
-				case 2:
-					MSBackupTable::loadTable(RETAIN(db));
-					break;
-				case 3:
-					// Variable must be loaded after cloud and backup info
-					// incase BLOB recovery is required.
-					MSVariableTable::loadTable(RETAIN(db)); 
-					break;
-					
-				default:
-					ASSERT(false);
-			}
-		}
-		catch_(a) {
-			self->logException();
-		}
-		cont_(a);
+	for ( int i = 0; i < 4; i++) {
+		if (try_loadSystemTables(self, i, db))
+			self->logException();			
 	}
 	
 	release_(db);
@@ -633,25 +637,25 @@ void PBMSSystemTables::restoreSystemTables(MSDatabase *db, const char *data, siz
 				if (MSHTTPHeaderTable::tableVersion == tab_version)
 					MSHTTPHeaderTable::restoreTable(RETAIN(db), data, tab_size);
 				else
-					CSException::logException(CS_CONTEXT, MS_ERR_SYSTAB_VERSION, "Restore "METADATA_HEADER_NAME" failed, incompatable table version" );
+					CSException::logException(CS_CONTEXT, MS_ERR_SYSTAB_VERSION, "Restore "METADATA_HEADER_NAME" failed, incompatible table version" );
 				break;
 			case MSCloudTable::tableID:
 				if (MSCloudTable::tableVersion == tab_version)
 					MSCloudTable::restoreTable(RETAIN(db), data, tab_size);
 				else
-					CSException::logException(CS_CONTEXT, MS_ERR_SYSTAB_VERSION, "Restore "CLOUD_TABLE_NAME" failed, incompatable table version" );
+					CSException::logException(CS_CONTEXT, MS_ERR_SYSTAB_VERSION, "Restore "CLOUD_TABLE_NAME" failed, incompatible table version" );
 				break;
 			case MSBackupTable::tableID:
 				if (MSBackupTable::tableVersion == tab_version)
 					MSBackupTable::restoreTable(RETAIN(db), data, tab_size);
 				else
-					CSException::logException(CS_CONTEXT, MS_ERR_SYSTAB_VERSION, "Restore "BACKUP_TABLE_NAME" failed, incompatable table version" );
+					CSException::logException(CS_CONTEXT, MS_ERR_SYSTAB_VERSION, "Restore "BACKUP_TABLE_NAME" failed, incompatible table version" );
 				break;				
 			case MSVariableTable::tableID:
 				if (MSVariableTable::tableVersion == tab_version)
 					MSVariableTable::restoreTable(RETAIN(db), data, tab_size);
 				else
-					CSException::logException(CS_CONTEXT, MS_ERR_SYSTAB_VERSION, "Restore "VARIABLES_TABLE_NAME" failed, incompatable table version" );
+					CSException::logException(CS_CONTEXT, MS_ERR_SYSTAB_VERSION, "Restore "VARIABLES_TABLE_NAME" failed, incompatible table version" );
 				break;
 			default:
 				ASSERT(false);
@@ -675,8 +679,13 @@ void PBMSSystemTables::restoreSystemTables(MSDatabase *db, const char *data, siz
 
 void MSOpenSystemTable::setNotNullInRecord(Field *field, char *record)
 {
+#ifdef DRIZZLED
 	if (field->null_ptr)
 		record[(uint) (field->null_ptr - (uchar *) field->getTable()->getInsertRecord())] &= (uchar) ~field->null_bit;
+#else
+	if (field->null_ptr)
+		record[(uint) (field->null_ptr - (uchar *) field->table->record[0])] &= (uchar) ~field->null_bit;
+#endif
 }
 
 /*
@@ -722,6 +731,22 @@ MSRepositoryTable::~MSRepositoryTable()
 //-----------------------
 void MSRepositoryTable::use()
 {
+	MSDatabase *db;
+	enter_();
+
+	if (!iBlobBuffer)
+		new_(iBlobBuffer, CSStringBuffer(20));
+		
+	db = myShare->mySysDatabase;
+	if ((iCompactor = db->getCompactorThread())) {
+		if (iCompactor->isMe(self))
+			iCompactor = NULL;
+		else {
+			iCompactor->retain();
+			iCompactor->suspend();
+		}
+	}
+	exit_();
 }
 
 //-----------------------
@@ -744,8 +769,6 @@ void MSRepositoryTable::unuse()
 //-----------------------
 void MSRepositoryTable::seqScanInit()
 {
-	MSDatabase *db;
-
 	enter_();
 	
 	// Flush all committed transactions to the repository file.
@@ -753,17 +776,6 @@ void MSRepositoryTable::seqScanInit()
 
 	iRepoIndex = 0;
 	iRepoOffset = 0;
-	if (!iBlobBuffer)
-		new_(iBlobBuffer, CSStringBuffer(20));
-	db = myShare->mySysDatabase;
-	if ((iCompactor = db->getCompactorThread())) {
-		if (iCompactor->isMe(self))
-			iCompactor = NULL;
-		else {
-			iCompactor->retain();
-			iCompactor->suspend();
-		}
-	}
 		
 	exit_();
 }
@@ -959,15 +971,22 @@ bool MSRepositoryTable::returnRow(MSBlobHeadPtr	blob, char *buf)
 	save_write_set = table->write_set;
 	table->write_set = NULL;
 
+#ifdef DRIZZLED
 	memset(buf, 0xFF, table->getNullBytes());
+#else
+	memset(buf, 0xFF, table->s->null_bytes);
+#endif
  	for (Field **field=GET_TABLE_FIELDS(table) ; *field ; field++) {
  		curr_field = *field;
-
 		save = curr_field->ptr;
 #if MYSQL_VERSION_ID < 50114
 		curr_field->ptr = (byte *) buf + curr_field->offset();
 #else
+#ifdef DRIZZLED
 		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->getTable()->getInsertRecord());
+#else
+		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->table->record[0]);
+#endif
 #endif
 		switch (curr_field->field_name[0]) {
 			case 'A':
@@ -1121,15 +1140,22 @@ bool MSBlobDataTable::returnRow(MSBlobHeadPtr blob, char *buf)
 	save_write_set = table->write_set;
 	table->write_set = NULL;
 
+#ifdef DRIZZLED
 	memset(buf, 0xFF, table->getNullBytes());
+#else
+	memset(buf, 0xFF, table->s->null_bytes);
+#endif
  	for (Field **field=GET_TABLE_FIELDS(table) ; *field ; field++) {
  		curr_field = *field;
-
 		save = curr_field->ptr;
 #if MYSQL_VERSION_ID < 50114
 		curr_field->ptr = (byte *) buf + curr_field->offset();
 #else
+#ifdef DRIZZLED
 		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->getTable()->getInsertRecord());
+#else
+		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->table->record[0]);
+#endif
 #endif
 		switch (curr_field->field_name[0]) {
 			case 'R':
@@ -1211,15 +1237,22 @@ bool MSBlobAliasTable::returnRow(MSBlobHeadPtr blob, char *buf)
 	save_write_set = table->write_set;
 	table->write_set = NULL;
 
+#ifdef DRIZZLED
+	memset(buf, 0xFF, table->getNullBytes());
+#else
 	memset(buf, 0xFF, table->s->null_bytes);
+#endif
  	for (Field **field=GET_TABLE_FIELDS(table) ; *field ; field++) {
  		curr_field = *field;
-
 		save = curr_field->ptr;
 #if MYSQL_VERSION_ID < 50114
 		curr_field->ptr = (byte *) buf + curr_field->offset();
 #else
-		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->table->getInsertRecord());
+#ifdef DRIZZLED
+		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->getTable()->getInsertRecord());
+#else
+		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->table->record[0]);
+#endif
 #endif
 		switch (curr_field->field_name[0]) {
 			case 'R':
@@ -1564,15 +1597,22 @@ void MSReferenceTable::returnRow(MSRefDataPtr ref_data, char *buf)
 	table->write_set = NULL;
 	table->read_set = NULL;
 
+#ifdef DRIZZLED
 	memset(buf, 0xFF, table->getNullBytes());
+#else
+	memset(buf, 0xFF, table->s->null_bytes);
+#endif
  	for (Field **field=GET_TABLE_FIELDS(table) ; *field ; field++) {
  		curr_field = *field;
-
 		save = curr_field->ptr;
 #if MYSQL_VERSION_ID < 50114
 		curr_field->ptr = (byte *) buf + curr_field->offset();
 #else
+#ifdef DRIZZLED
 		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->getTable()->getInsertRecord());
+#else
+		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->table->record[0]);
+#endif
 #endif
 		switch (curr_field->field_name[0]) {
 			case 'B':
@@ -1730,6 +1770,13 @@ MSMetaDataTable *MSMetaDataTable::newMSMetaDataTable(MSDatabase *db)
 	return  (MSMetaDataTable*) MSSystemTableShare::openSystemTable(path, NULL);
 }
 
+void MSMetaDataTable::use()
+{
+	MSRepositoryTable::use();
+	new_(iMetData, CSStringBuffer(80));
+	iMetDataSize = 0;
+}
+
 void MSMetaDataTable::unuse()
 {
 	MSRepositoryTable::unuse();
@@ -1748,7 +1795,6 @@ void MSMetaDataTable::seqScanInit()
 	iMetDataPos = 0;
 	iMetBlobRepo = 0;
 	iMetBlobOffset = 0;
-	new_(iMetData, CSStringBuffer(80));
 	iMetStateSaved = false;
 }
 
@@ -1921,15 +1967,22 @@ void MSMetaDataTable::returnRow(char *name, char *value, char *buf)
 	save_write_set = table->write_set;
 	table->write_set = NULL;
 
+#ifdef DRIZZLED
 	memset(buf, 0xFF, table->getNullBytes());
+#else
+	memset(buf, 0xFF, table->s->null_bytes);
+#endif
  	for (Field **field=GET_TABLE_FIELDS(table) ; *field ; field++) {
  		curr_field = *field;
-
 		save = curr_field->ptr;
 #if MYSQL_VERSION_ID < 50114
 		curr_field->ptr = (byte *) buf + curr_field->offset();
 #else
+#ifdef DRIZZLED
 		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->getTable()->getInsertRecord());
+#else
+		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->table->record[0]);
+#endif
 #endif
 		switch (curr_field->field_name[0]) {
 			case 'R':
@@ -2162,6 +2215,39 @@ void MSMetaDataTable::deleteRow(char *buf)
 	exit_();
 }
 
+class UpdateRowCleanUp : public CSRefObject {
+	bool do_cleanup;
+	MSMetaDataTable *tab;
+	char *row_data;
+	
+	uint32_t ref_id;
+
+	public:
+	
+	UpdateRowCleanUp(): CSRefObject(),
+		do_cleanup(false), tab(NULL), row_data(NULL){}
+		
+	~UpdateRowCleanUp() 
+	{
+		if (do_cleanup) {
+			tab->deleteRow(row_data);
+		}
+	}
+	
+	void setCleanUp(MSMetaDataTable *table, char *data)
+	{
+		row_data = data;
+		tab = table;
+		do_cleanup = true;
+	}
+	
+	void cancelCleanUp()
+	{
+		do_cleanup = false;
+	}
+	
+};
+
 void MSMetaDataTable::updateRow(char *old_data, char *new_data)
 {
 	uint32_t o_repo_index, n_repo_index;
@@ -2191,15 +2277,19 @@ void MSMetaDataTable::updateRow(char *old_data, char *new_data)
 	
 	// If the meta data is not for the same BLOB then we do an insert and delete.
 	if ((n_repo_index != o_repo_index) || (n_repo_offset != o_repo_offset)) {
+		UpdateRowCleanUp *cleanup;
+		new_(cleanup, UpdateRowCleanUp());
+		push_(cleanup);
+
 		insertRow(new_data);
-		try_(a) {
-			deleteRow(old_data);
-		}
-		catch_(a) {
-			deleteRow(new_data);
-			throw_();
-		}
-		cont_(a);
+		
+		cleanup->setCleanUp(this, new_data);
+		
+		deleteRow(old_data);
+		
+		cleanup->cancelCleanUp();
+		release_(cleanup);
+		
 		exit_();
 	}
 	
@@ -2300,7 +2390,11 @@ iOpenCount(0)
 
 MSSystemTableShare::~MSSystemTableShare()
 {
+#ifdef DRIZZLED
 	myThrLock.unlock();
+#else
+	thr_lock_delete(&myThrLock);
+#endif
 	if (myTablePath) {
 		myTablePath->release();
 		myTablePath = NULL;

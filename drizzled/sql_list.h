@@ -431,7 +431,7 @@ protected:
   inline T *replace(T *)   { return (T*) 0; }
   inline T *replace(List<T> &) { return (T*) 0; }
   inline void remove(void)  { }
-  inline void after(T *a)   { }
+  inline void after(T *)   { }
   inline T** ref(void)	    { return (T**) 0; }
 
 public:

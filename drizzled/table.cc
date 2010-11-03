@@ -81,8 +81,7 @@ int Table::delete_table(bool free_share)
 
   if (db_stat)
     error= cursor->close();
-  free((char*) alias);
-  alias= NULL;
+  _alias.clear();
   if (field)
   {
     for (Field **ptr=field ; *ptr ; ptr++)
@@ -104,12 +103,15 @@ int Table::delete_table(bool free_share)
     {
       delete getShare();
     }
-
     setShare(NULL);
   }
-  mem_root.free_root(MYF(0));
 
   return error;
+}
+
+Table::~Table()
+{
+  mem_root.free_root(MYF(0));
 }
 
 
@@ -142,7 +144,7 @@ void Table::resetTable(Session *session,
 
   pos_in_table_list= NULL;
   group= NULL;
-  alias= NULL;
+  _alias.clear();
   null_flags= NULL;
 
   lock_position= 0;
@@ -787,7 +789,7 @@ Field *create_tmp_field_from_field(Session *session, Field *org_field,
 
 Table *
 create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
-		 order_st *group, bool distinct, bool save_sum_fields,
+		 Order *group, bool distinct, bool save_sum_fields,
 		 uint64_t select_options, ha_rows rows_limit,
 		 const char *table_alias)
 {
@@ -821,7 +823,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     {
       group= 0;					// Can't use group key
     }
-    else for (order_st *tmp=group ; tmp ; tmp=tmp->next)
+    else for (Order *tmp=group ; tmp ; tmp=tmp->next)
     {
       /*
         marker == 4 means two things:
@@ -887,7 +889,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   table->getMutableShare()->setFields(field_count+1);
   table->setFields(table->getMutableShare()->getFields(true));
   reg_field= table->getMutableShare()->getFields(true);
-  table->alias= table_alias;
+  table->setAlias(table_alias);
   table->reginfo.lock_type=TL_WRITE;	/* Will be updated */
   table->db_stat=HA_OPEN_KEYFILE+HA_OPEN_RNDFILE;
   table->map=1;
@@ -1061,7 +1063,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
       (select_options & (OPTION_BIG_TABLES | SELECT_SMALL_RESULT)) == OPTION_BIG_TABLES)
   {
     table->getMutableShare()->storage_engine= myisam_engine;
-    table->cursor= table->getMutableShare()->db_type()->getCursor(*table->getMutableShare());
+    table->cursor= table->getMutableShare()->db_type()->getCursor(*table);
     if (group &&
 	(param->group_parts > table->cursor->getEngine()->max_key_parts() ||
 	 param->group_length > table->cursor->getEngine()->max_key_length()))
@@ -1072,7 +1074,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   else
   {
     table->getMutableShare()->storage_engine= heap_engine;
-    table->cursor= table->getMutableShare()->db_type()->getCursor(*table->getMutableShare());
+    table->cursor= table->getMutableShare()->db_type()->getCursor(*table);
   }
   if (! table->cursor)
     goto err;
@@ -1254,7 +1256,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     keyinfo->rec_per_key= 0;
     keyinfo->algorithm= HA_KEY_ALG_UNDEF;
     keyinfo->name= (char*) "group_key";
-    order_st *cur_group= group;
+    Order *cur_group= group;
     for (; cur_group ; cur_group= cur_group->next, key_part_info++)
     {
       Field *field=(*cur_group->item)->get_tmp_table_field();
@@ -1419,127 +1421,6 @@ err:
 
 /****************************************************************************/
 
-/**
-  Create a reduced Table object with properly set up Field list from a
-  list of field definitions.
-
-    The created table doesn't have a table Cursor associated with
-    it, has no keys, no group/distinct, no copy_funcs array.
-    The sole purpose of this Table object is to use the power of Field
-    class to read/write data to/from table->getInsertRecord(). Then one can store
-    the record in any container (RB tree, hash, etc).
-    The table is created in Session mem_root, so are the table's fields.
-    Consequently, if you don't BLOB fields, you don't need to free it.
-
-  @param session         connection handle
-  @param field_list  list of column definitions
-
-  @return
-    0 if out of memory, Table object in case of success
-*/
-
-Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
-{
-  uint32_t field_count= field_list.elements;
-  uint32_t blob_count= 0;
-  Field **field;
-  CreateField *cdef;                           /* column definition */
-  uint32_t record_length= 0;
-  uint32_t null_count= 0;                 /* number of columns which may be null */
-  uint32_t null_pack_length;              /* NULL representation array length */
-
-  table::Instance *table= getInstanceTable(); // This will not go into the tableshare cache, so no key is used.
-  table->getMutableShare()->setFields(field_count + 1);
-  table->setFields(table->getMutableShare()->getFields(true));
-  field= table->getMutableShare()->getFields(true);
-  table->getMutableShare()->blob_field.resize(field_count+1);
-  table->getMutableShare()->fields= field_count;
-  table->getMutableShare()->blob_ptr_size= portable_sizeof_char_ptr;
-  table->setup_tmp_table_column_bitmaps();
-
-  table->in_use= this;           /* field->reset() may access table->in_use */
-
-  /* Create all fields and calculate the total length of record */
-  List_iterator_fast<CreateField> it(field_list);
-  while ((cdef= it++))
-  {
-    *field= table->getMutableShare()->make_field(NULL,
-                                                 cdef->length,
-                                                 (cdef->flags & NOT_NULL_FLAG) ? false : true,
-                                                 (unsigned char *) ((cdef->flags & NOT_NULL_FLAG) ? 0 : ""),
-                                                 (cdef->flags & NOT_NULL_FLAG) ? 0 : 1,
-                                                 cdef->decimals,
-                                                 cdef->sql_type,
-                                                 cdef->charset,
-                                                 cdef->unireg_check,
-                                                 cdef->interval,
-                                                 cdef->field_name);
-    if (!*field)
-      goto error;
-    (*field)->init(table);
-    record_length+= (*field)->pack_length();
-    if (! ((*field)->flags & NOT_NULL_FLAG))
-      null_count++;
-
-    if ((*field)->flags & BLOB_FLAG)
-      table->getMutableShare()->blob_field[blob_count++]= (uint32_t) (field - table->getFields());
-
-    field++;
-  }
-  *field= NULL;                             /* mark the end of the list */
-  table->getMutableShare()->blob_field[blob_count]= 0;            /* mark the end of the list */
-  table->getMutableShare()->blob_fields= blob_count;
-
-  null_pack_length= (null_count + 7)/8;
-  table->getMutableShare()->setRecordLength(record_length + null_pack_length);
-  table->getMutableShare()->rec_buff_length= ALIGN_SIZE(table->getMutableShare()->getRecordLength() + 1);
-  table->record[0]= (unsigned char*)alloc(table->getMutableShare()->rec_buff_length);
-  if (not table->getInsertRecord())
-    goto error;
-
-  if (null_pack_length)
-  {
-    table->null_flags= (unsigned char*) table->getInsertRecord();
-    table->getMutableShare()->null_fields= null_count;
-    table->getMutableShare()->null_bytes= null_pack_length;
-  }
-  {
-    /* Set up field pointers */
-    unsigned char *null_pos= table->getInsertRecord();
-    unsigned char *field_pos= null_pos + table->getMutableShare()->null_bytes;
-    uint32_t null_bit= 1;
-
-    for (field= table->getFields(); *field; ++field)
-    {
-      Field *cur_field= *field;
-      if ((cur_field->flags & NOT_NULL_FLAG))
-        cur_field->move_field(field_pos);
-      else
-      {
-        cur_field->move_field(field_pos, (unsigned char*) null_pos, null_bit);
-        null_bit<<= 1;
-        if (null_bit == (1 << 8))
-        {
-          ++null_pos;
-          null_bit= 1;
-        }
-      }
-      cur_field->reset();
-
-      field_pos+= cur_field->pack_length();
-    }
-  }
-
-  return table;
-
-error:
-  for (field= table->getFields(); *field; ++field)
-  {
-    delete *field;                         /* just invokes field destructor */
-  }
-  return 0;
-}
-
 void Table::column_bitmaps_set(boost::dynamic_bitset<>& read_set_arg,
                                boost::dynamic_bitset<>& write_set_arg)
 {
@@ -1687,7 +1568,6 @@ void Table::emptyRecord()
 }
 
 Table::Table() : 
-  _share(NULL),
   field(NULL),
   cursor(NULL),
   next(NULL),
@@ -1706,7 +1586,6 @@ Table::Table() :
   timestamp_field(NULL),
   pos_in_table_list(NULL),
   group(NULL),
-  alias(NULL),
   null_flags(NULL),
   lock_position(0),
   lock_data_start(0),

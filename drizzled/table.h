@@ -33,7 +33,7 @@
 #include "drizzled/cursor.h"
 #include "drizzled/lex_string.h"
 #include "drizzled/table_list.h"
-#include "drizzled/table_share.h"
+#include "drizzled/definition/table.h"
 #include "drizzled/atomics.h"
 #include "drizzled/query_id.h"
 
@@ -61,8 +61,6 @@ typedef struct st_columndef MI_COLUMNDEF;
  */
 class Table 
 {
-  TableShare *_share; /**< Pointer to the shared metadata about the table */
-
   Field **field; /**< Pointer to fields collection */
 public:
 
@@ -163,14 +161,26 @@ public:
   Field_timestamp *timestamp_field; /**< Points to the auto-setting timestamp field, if any */
 
   TableList *pos_in_table_list; /* Element referring to this table */
-  order_st *group;
+  Order *group;
   
   const char *getAlias() const
   {
-    return alias;
+    return _alias.c_str();
   }
 
-  const char *alias; /**< alias or table name if no alias */
+  void clearAlias()
+  {
+    _alias.clear();
+  }
+
+  void setAlias(const char *arg)
+  {
+    _alias= arg;
+  }
+
+private:
+  std::string _alias; /**< alias or table name if no alias */
+public:
 
   unsigned char *null_flags;
 
@@ -356,7 +366,7 @@ public:
   filesort_info sort;
 
   Table();
-  virtual ~Table() { };
+  virtual ~Table();
 
   int report_error(int error);
   /**
@@ -370,15 +380,16 @@ public:
   void resetTable(Session *session, TableShare *share, uint32_t db_stat_arg);
 
   /* SHARE methods */
-  virtual const TableShare *getShare() const { assert(_share); return _share; } /* Get rid of this long term */
-  virtual TableShare *getMutableShare() { assert(_share); return _share; } /* Get rid of this long term */
-  bool hasShare() const { return _share ? true : false ; } /* Get rid of this long term */
-  virtual void setShare(TableShare *new_share) { _share= new_share; } /* Get rid of this long term */
-  uint32_t sizeKeys() { return _share->sizeKeys(); }
-  uint32_t sizeFields() { return _share->sizeFields(); }
-  uint32_t getRecordLength() const { return _share->getRecordLength(); }
-  uint32_t sizeBlobFields() { return _share->blob_fields; }
-  uint32_t *getBlobField() { return &_share->blob_field[0]; }
+  virtual const TableShare *getShare() const= 0; /* Get rid of this long term */
+  virtual TableShare *getMutableShare()= 0; /* Get rid of this long term */
+  virtual bool hasShare() const= 0; /* Get rid of this long term */
+  virtual void setShare(TableShare *new_share)= 0; /* Get rid of this long term */
+
+  uint32_t sizeKeys() { return getMutableShare()->sizeKeys(); }
+  uint32_t sizeFields() { return getMutableShare()->sizeFields(); }
+  uint32_t getRecordLength() const { return getShare()->getRecordLength(); }
+  uint32_t sizeBlobFields() { return getMutableShare()->blob_fields; }
+  uint32_t *getBlobField() { return &getMutableShare()->blob_field[0]; }
 
 public:
   virtual bool hasVariableWidth() const

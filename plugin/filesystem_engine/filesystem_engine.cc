@@ -74,7 +74,7 @@ public:
     pthread_mutex_destroy(&filesystem_mutex);
   }
 
-  virtual Cursor *create(TableShare &table)
+  virtual Cursor *create(Table &table)
   {
     return new FilesystemCursor(*this, table);
   }
@@ -369,7 +369,7 @@ FilesystemTableShare *FilesystemCursor::get_share(const char *table_name)
 {
   Guard g(filesystem_mutex);
 
-  FilesystemEngine *a_engine= static_cast<FilesystemEngine *>(engine);
+  FilesystemEngine *a_engine= static_cast<FilesystemEngine *>(getEngine());
   share= a_engine->findOpenTable(table_name);
 
   /*
@@ -384,7 +384,7 @@ FilesystemTableShare *FilesystemCursor::get_share(const char *table_name)
       return NULL;
     }
 
-    share->format.parseFromTable(table->getShare()->getTableProto());
+    share->format.parseFromTable(getTable()->getShare()->getTableProto());
     if (!share->format.isFileGiven())
     {
       return NULL;
@@ -414,7 +414,7 @@ void FilesystemCursor::free_share()
   Guard g(filesystem_mutex);
 
   if (!--share->use_count){
-    FilesystemEngine *a_engine= static_cast<FilesystemEngine *>(engine);
+    FilesystemEngine *a_engine= static_cast<FilesystemEngine *>(getEngine());
     a_engine->deleteOpenTable(share->table_name);
     pthread_mutex_destroy(&share->mutex);
     delete share;
@@ -453,7 +453,7 @@ void FilesystemCursor::critical_section_exit()
   thread_locked = false;
 }
 
-FilesystemCursor::FilesystemCursor(drizzled::plugin::StorageEngine &engine_arg, TableShare &table_arg)
+FilesystemCursor::FilesystemCursor(drizzled::plugin::StorageEngine &engine_arg, Table &table_arg)
   : Cursor(engine_arg, table_arg),
     file_buff(new TransparentFile),
     thread_locked(false)
@@ -487,7 +487,7 @@ int FilesystemCursor::close(void)
 
 int FilesystemCursor::doStartTableScan(bool)
 {
-  sql_command_type = session_sql_command(table->getSession());
+  sql_command_type = session_sql_command(getTable()->getSession());
 
   if (thread_locked)
     critical_section_exit();
@@ -515,14 +515,14 @@ int FilesystemCursor::doStartTableScan(bool)
 
 int FilesystemCursor::find_current_row(unsigned char *buf)
 {
-  ptrdiff_t row_offset= buf - table->record[0];
+  ptrdiff_t row_offset= buf - getTable()->record[0];
 
   next_position= current_position;
 
   string content;
   bool line_done= false;
   bool line_blank= true;
-  Field **field= table->getFields();
+  Field **field= getTable()->getFields();
   for (; !line_done && *field; ++next_position)
   {
     char ch= file_buff->get_value(next_position);
@@ -616,8 +616,8 @@ int FilesystemCursor::rnd_next(unsigned char *buf)
     if (tag_depth >= share->vm.size())
       return HA_ERR_END_OF_FILE;
 
-    ptrdiff_t row_offset= buf - table->record[0];
-    for (Field **field= table->getFields(); *field; field++)
+    ptrdiff_t row_offset= buf - getTable()->record[0];
+    for (Field **field= getTable()->getFields(); *field; field++)
     {
       string key((*field)->field_name);
       string content= share->vm[tag_depth][key];
@@ -696,7 +696,7 @@ int FilesystemCursor::openUpdateFile()
 
 int FilesystemCursor::doEndTableScan()
 {
-  sql_command_type = session_sql_command(table->getSession());
+  sql_command_type = session_sql_command(getTable()->getSession());
 
   if (share->format.isTagFormat())
   {
@@ -784,7 +784,7 @@ void FilesystemCursor::recordToString(string& output)
 {
   bool first= true;
   drizzled::String attribute;
-  for (Field **field= table->getFields(); *field; ++field)
+  for (Field **field= getTable()->getFields(); *field; ++field)
   {
     if (first == true)
     {
@@ -817,7 +817,7 @@ int FilesystemCursor::doInsertRecord(unsigned char * buf)
   if (share->format.isTagFormat())
     return 0;
 
-  sql_command_type = session_sql_command(table->getSession());
+  sql_command_type = session_sql_command(getTable()->getSession());
 
   critical_section_enter();
 

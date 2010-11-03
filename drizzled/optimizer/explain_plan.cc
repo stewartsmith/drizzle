@@ -21,6 +21,7 @@
 #include "drizzled/session.h"
 #include "drizzled/item/uint.h"
 #include "drizzled/item/float.h"
+#include "drizzled/item/string.h"
 #include "drizzled/optimizer/explain_plan.h"
 #include "drizzled/optimizer/position.h"
 #include "drizzled/optimizer/quick_ror_intersect_select.h"
@@ -569,8 +570,8 @@ bool optimizer::ExplainPlan::explainUnion(Session *session,
                       first->item_list,
                       first->where,
                       first->order_list.elements + first->group_list.elements,
-                      (order_st*) first->order_list.first,
-                      (order_st*) first->group_list.first,
+                      (Order*) first->order_list.first,
+                      (Order*) first->group_list.first,
                       first->having,
                       first->options | session->options | SELECT_DESCRIBE,
                       result, 

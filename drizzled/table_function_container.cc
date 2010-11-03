@@ -49,25 +49,27 @@ void TableFunctionContainer::getNames(const string &predicate,
   {
     plugin::TableFunction *tool= (*it).second;
 
-    if (predicate.length())
+    if (tool->visable())
     {
-      if (boost::iequals(predicate, tool->getSchemaHome()))
+      if (predicate.length())
+      {
+        if (boost::iequals(predicate, tool->getSchemaHome()))
+        {
+          set_of_names.insert(tool->getTableLabel());
+        }
+      }
+      else
       {
         set_of_names.insert(tool->getTableLabel());
       }
-    }
-    else
-    {
-      set_of_names.insert(tool->getTableLabel());
     }
   }
 }
 
 void TableFunctionContainer::addFunction(plugin::TableFunction *tool)
 {
-  std::pair<ToolMap::iterator, bool> ret;
-
-  ret= table_map.insert(std::make_pair(tool->getPath(), tool));
+  std::pair<ToolMap::iterator, bool> ret=
+    table_map.insert(std::make_pair(tool->getPath(), tool));
   assert(ret.second == true);
 }
 

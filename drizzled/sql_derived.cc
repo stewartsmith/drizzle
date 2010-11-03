@@ -146,10 +146,10 @@ exit:
     {
       orig_table_list->derived_result= derived_result;
       orig_table_list->table= table;
-      orig_table_list->table_name=        const_cast<char *>(table->getShare()->getTableName());
+      orig_table_list->setTableName(const_cast<char *>(table->getShare()->getTableName()));
       orig_table_list->table_name_length= table->getShare()->getTableNameSize();
       table->derived_select_number= first_select->select_number;
-      orig_table_list->db= (char *)"";
+      orig_table_list->setSchemaName((char *)"");
       orig_table_list->db_length= 0;
       /* Force read of table stats in the optimizer */
       table->cursor->info(HA_STATUS_VARIABLE);
@@ -214,8 +214,8 @@ bool mysql_derived_filling(Session *session, LEX *lex, TableList *orig_table_lis
                         first_select->item_list, first_select->where,
                         (first_select->order_list.elements+
                         first_select->group_list.elements),
-                        (order_st *) first_select->order_list.first,
-                        (order_st *) first_select->group_list.first,
+                        (Order *) first_select->order_list.first,
+                        (Order *) first_select->group_list.first,
                         first_select->having,
                         (first_select->options | session->options | SELECT_NO_UNLOCK),
                         derived_result, unit, first_select);

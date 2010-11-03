@@ -88,7 +88,7 @@ class ha_tina: public drizzled::Cursor
   int init_data_file();
 
 public:
-  ha_tina(drizzled::plugin::StorageEngine &engine, drizzled::TableShare &table_arg);
+  ha_tina(drizzled::plugin::StorageEngine &engine, drizzled::Table &table_arg);
   ~ha_tina()
   {
     if (file_buff)

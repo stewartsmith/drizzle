@@ -62,7 +62,8 @@ class Item_outer_ref;
 */
 
 #ifdef DRIZZLE_SERVER
-# include <drizzled/set_var.h>
+/* set_var should change to set_var here ... */
+# include <drizzled/sys_var.h>
 # include <drizzled/item/func.h>
 # ifdef DRIZZLE_YACC
 #  define LEX_YYSTYPE void *
@@ -403,6 +404,64 @@ public:
 class Select_Lex: public Select_Lex_Node
 {
 public:
+
+  Select_Lex() :
+    context(),
+    db(0),
+    where(0),
+    having(0),
+    cond_value(),
+    having_value(),
+    parent_lex(0),
+    olap(UNSPECIFIED_OLAP_TYPE),
+    table_list(),
+    group_list(),
+    item_list(),
+    interval_list(),
+    is_item_list_lookup(false),
+    join(0),
+    top_join_list(),
+    join_list(0),
+    embedding(0),
+    sj_nests(),
+    leaf_tables(0),
+    type(optimizer::ST_PRIMARY),
+    order_list(),
+    gorder_list(0),
+    select_limit(0),
+    offset_limit(0),
+    ref_pointer_array(0),
+    select_n_having_items(0),
+    cond_count(0),
+    between_count(0),
+    max_equal_elems(0),
+    select_n_where_fields(0),
+    parsing_place(NO_MATTER),
+    with_sum_func(0),
+    in_sum_expr(0),
+    select_number(0),
+    nest_level(0),
+    inner_sum_func_list(0),
+    with_wild(0),
+    braces(0),
+    having_fix_field(0),
+    inner_refs_list(),
+    n_sum_items(0),
+    n_child_sum_items(0),
+    explicit_limit(0),
+    subquery_in_having(0),
+    is_correlated(0),
+    exclude_from_table_unique_test(0),
+    non_agg_fields(),
+    cur_pos_in_select_list(0),
+    prev_join_using(0),
+    full_group_by_flag(),
+    current_index_hint_type(INDEX_HINT_IGNORE),
+    current_index_hint_clause(),
+    index_hints(0)
+  {
+  }
+
   Name_resolution_context context;
   char *db;
   /* An Item representing the WHERE clause */
@@ -581,7 +640,6 @@ public:
   bool test_limit();
 
   friend void lex_start(Session *session);
-  Select_Lex() : n_sum_items(0), n_child_sum_items(0) {}
   void make_empty_select()
   {
     init_query();
@@ -590,7 +648,7 @@ public:
   bool setup_ref_array(Session *session, uint32_t order_group_num);
   void print(Session *session, String *str, enum_query_type query_type);
   static void print_order(String *str,
-                          order_st *order,
+                          Order *order,
                           enum_query_type query_type);
   void print_limit(Session *session, String *str, enum_query_type query_type);
   void fix_prepare_information(Session *session, Item **conds, Item **having_conds);

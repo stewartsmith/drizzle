@@ -3318,7 +3318,7 @@ static int do_sleep(struct st_command *command, bool real_sleep)
   bool error= false;
   char *p= command->first_argument;
   char *sleep_start, *sleep_end= command->end;
-  double sleep_val;
+  double sleep_val= 0;
 
   while (my_isspace(charset_info, *p))
     p++;

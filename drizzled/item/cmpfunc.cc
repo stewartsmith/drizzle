@@ -764,30 +764,31 @@ get_date_from_str(Session *session, String *str, enum enum_drizzle_timestamp_typ
 */
 
 enum Arg_comparator::enum_date_cmp_type
-Arg_comparator::can_compare_as_dates(Item *a, Item *b, uint64_t *const_value)
+Arg_comparator::can_compare_as_dates(Item *in_a, Item *in_b,
+                                     uint64_t *const_value)
 {
   enum enum_date_cmp_type cmp_type= CMP_DATE_DFLT;
   Item *str_arg= 0, *date_arg= 0;
 
-  if (a->type() == Item::ROW_ITEM || b->type() == Item::ROW_ITEM)
+  if (in_a->type() == Item::ROW_ITEM || in_b->type() == Item::ROW_ITEM)
     return CMP_DATE_DFLT;
 
-  if (a->is_datetime())
+  if (in_a->is_datetime())
   {
-    if (b->is_datetime())
+    if (in_b->is_datetime())
       cmp_type= CMP_DATE_WITH_DATE;
-    else if (b->result_type() == STRING_RESULT)
+    else if (in_b->result_type() == STRING_RESULT)
     {
       cmp_type= CMP_DATE_WITH_STR;
-      date_arg= a;
-      str_arg= b;
+      date_arg= in_a;
+      str_arg= in_b;
     }
   }
-  else if (b->is_datetime() && a->result_type() == STRING_RESULT)
+  else if (in_b->is_datetime() && in_a->result_type() == STRING_RESULT)
   {
     cmp_type= CMP_STR_WITH_DATE;
-    date_arg= b;
-    str_arg= a;
+    date_arg= in_b;
+    str_arg= in_a;
   }
 
   if (cmp_type != CMP_DATE_DFLT)

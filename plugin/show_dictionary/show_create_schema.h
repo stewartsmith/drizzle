@@ -23,12 +23,12 @@
 
 #include "drizzled/message.h"
 
-class ShowCreateSchema : public drizzled::plugin::TableFunction
+class ShowCreateSchema : public show_dictionary::Show
 {
 public:
   ShowCreateSchema();
 
-  class Generator : public drizzled::plugin::TableFunction::Generator 
+  class Generator : public show_dictionary::Show::Generator 
   {
     bool is_primed;
     bool if_not_exists;

@@ -89,7 +89,7 @@ class SEAPITesterCursor : public drizzled::Cursor
 {
 public:
   SEAPITesterCursor(drizzled::plugin::StorageEngine &engine_arg,
-                    drizzled::TableShare &table_arg)
+                    drizzled::Table &table_arg)
     : Cursor(engine_arg, table_arg)
     { cursor_state= "Cursor()"; }
   ~SEAPITesterCursor()
@@ -223,7 +223,7 @@ public:
     return api_tester_exts;
   }
 
-  virtual Cursor *create(TableShare &table)
+  virtual Cursor *create(Table &table)
   {
     return new SEAPITesterCursor(*this, table);
   }

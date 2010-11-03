@@ -25,8 +25,14 @@
 #include "CSSha1.h"
 #include "CSMd5.h"
 
-char *base64Encode(const void *data, size_t len);
-void *base64Decode(const char *data, size_t len);
+// If the base64 buffer passed in is NULL then the function will allocate one the correct size for the data.
+// In this caser the caller must free the buffer using cs_free().
+// If a buffer is suppled but is too small en exception will be thrown.
+char *base64Encode(const void *data, size_t len, char *encode_buffer = NULL, size_t encode_buffer_len = 0);
+void *base64Decode(const char *data, size_t len, void *decode_buffer = NULL, size_t decode_buffer_len = 0);
+
+char *base64UrlEncode(const void *data, size_t len, char *encode_buffer = NULL, size_t encode_buffer_len = 0);
+void *base64UrlDecode(const char *data, size_t len, void *decode_buffer = NULL, size_t decode_buffer_len = 0);
 
 CSString *signature(const char *text, const char *key);
 CSString *urlEncode(CSString *src);

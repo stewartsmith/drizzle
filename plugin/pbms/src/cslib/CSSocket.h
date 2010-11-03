@@ -37,42 +37,65 @@
 #include "CSMemory.h"
 #include "CSMutex.h"
 
-using namespace std;
-
 class CSOutputStream;
 class CSInputStream;
 
+#define CS_SOCKET_ADDRESS_SIZE		300
+
+/* This is only required if you do
+ * not use an output buffer stream!
+ */
+//#define CS_USE_OUTPUT_BUFFER
+
+#ifdef CS_USE_OUTPUT_BUFFER
+#ifdef DEBUG
+#define CS_OUTPUT_BUFFER_SIZE		80
+#define CS_MIN_WRITE_SIZE			40
+#else
+#define CS_OUTPUT_BUFFER_SIZE		(4*1024)
+#define CS_MIN_WRITE_SIZE			(1500)
+#endif
+#endif
+
 class CSSocket : public CSRefObject {
 public:
-	CSSocket() { }
+	CSSocket(): iHandle(-1), iHost(NULL), iService(NULL), iIdentity(NULL), iPort(0), iTimeout(0) {
+#ifdef CS_USE_OUTPUT_BUFFER
+	iDataLen = 0;
+#endif
+	}
 
-	virtual ~CSSocket() { }
+	virtual ~CSSocket() {
+		close();
+	}
+
+	void setTimeout(uint32_t milli_sec);
 
 	CSOutputStream *getOutputStream();
 
 	CSInputStream *getInputStream();
 
-	virtual void formatAddress(size_t size, char *address) = 0;
+	virtual void formatAddress(size_t size, char *address);
 
 	/*
 	 * Publish a listener:
 	 */
-	virtual void publish(char *service, int default_port) = 0;
+	virtual void publish(char *service, int default_port);
 
 	/*
 	 * Accept a connection from a listening socket:
 	 */
-	virtual void open(CSSocket *listener) = 0;
+	virtual void open(CSSocket *listener);
 
 	/*
 	 * Connect to a listening socket.
 	 */
-	virtual void open(char *address, int default_port) = 0;
+	virtual void open(char *address, int default_port);
 
 	/*
 	 * Close the socket.
 	 */
-	virtual void close() { }
+	virtual void close();
 
 	/*
 	 * Read at least one byte from the socket.
@@ -84,7 +107,7 @@ public:
 	 * Note: Errors on the socket do not cause
 	 * an exception!
 	 */
-	virtual size_t read(void *data, size_t size) = 0;
+	virtual size_t read(void *data, size_t size);
 
 	/*
 	 * Returns -1 on EOF!
@@ -92,79 +115,58 @@ public:
 	 * Just like read, error on the socket do
 	 * not throw an exception.
 	 */
-	virtual int read() = 0;
+	virtual int read();
 
 	/*
 	 * Look at the next character in the file without
 	 * taking from the input.
 	 */
-	virtual int peek() = 0;
+	virtual int peek();
 
 	/*
 	 * Write the given number of bytes.
 	 * Throws IOException if an error occurs.
 	 */
-	virtual void write(const  void *data, size_t size) = 0;
+	virtual void write(const  void *data, size_t size);
 
 	/*
 	 * Write a character to the file.
 	 */
-	virtual void write(char ch) = 0;
+	virtual void write(char ch);
 
 	/*
 	 * Flush the data written.
 	 */
-	virtual void flush() = 0;
+	virtual void flush();
+
+	virtual const char *identify();
+
+	static void initSockets();
 
 	static CSSocket	*newSocket();
-
-	friend class SCSocket;
-
-private:
-};
-
-#define CS_SOCKET_ADDRESS_SIZE		300
-
-class SCSocket : public CSSocket {
-public:
-	SCSocket(): CSSocket(), iHandle(-1), iHost(NULL), iService(NULL), iPort(0) { }
-
-	virtual ~SCSocket() {
-		close();
-	}
-
-	virtual void formatAddress(size_t size, char *address);
-
-	virtual void publish(char *service, int default_port);
-
-	virtual void open(CSSocket *listener);
-
-	virtual void open(char *address, int default_port);
-
-	virtual void close();
-
-	virtual size_t read(void *data, size_t size);
-
-	virtual int read();
-
-	virtual int peek();
-
-	virtual void write(const void *data, size_t size);
-
-	virtual void write(char ch);
-
-	virtual void flush();
 
 private:
 	void throwError(const char *func, const char *file, int line, char *address, int err);
 	void throwError(const char *func, const char *file, int line, int err);
-	void setInternalOptions();
+	void setNoDelay();
+	void setNonBlocking();
+	void setBlocking();
 	void openInternal();
+	void writeBlock(const void *data, size_t len);
+	int timeoutRead(CSThread *self, void *buffer, size_t length);
 
-	int iHandle;
-	char *iHost;
-	char *iService;
-	int iPort;
+	int			iHandle;
+	char		*iHost;
+	char		*iService;
+	char		*iIdentity;
+	int			iPort;
+	uint32_t	iTimeout;
+
+#ifdef CS_USE_OUTPUT_BUFFER
+	char	iOutputBuffer[CS_OUTPUT_BUFFER_SIZE];
+	size_t	iDataLen;
+#endif
+
 };
 
 #endif

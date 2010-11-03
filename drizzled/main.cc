@@ -61,6 +61,8 @@
 #include "drizzled/replication_services.h"
 #include "drizzled/transaction_services.h"
 
+#include "drizzled/util/backtrace.h"
+
 using namespace drizzled;
 using namespace std;
 namespace fs=boost::filesystem;
@@ -202,6 +204,9 @@ static void GoogleProtoErrorThrower(google::protobuf::LogLevel level, const char
   (void)filename;
   (void)line;
   (void)message;
+  std::cerr << "\n";
+  drizzled::util::custom_backtrace();
+  std::cerr << "\n";
   switch(level)
   {
   case google::protobuf::LOGLEVEL_INFO:
@@ -330,6 +335,8 @@ int main(int argc, char **argv)
   /* Send server startup event */
   if ((session= new Session(plugin::Listen::getNullClient())))
   {
+    currentSession().release();
+    currentSession().reset(session);
     transaction_services.sendStartupEvent(session);
     session->lockForDelete();
     delete session;
@@ -355,6 +362,8 @@ int main(int argc, char **argv)
   /* Send server shutdown event */
   if ((session= new Session(plugin::Listen::getNullClient())))
   {
+    currentSession().release();
+    currentSession().reset(session);
     transaction_services.sendShutdownEvent(session);
     session->lockForDelete();
     delete session;

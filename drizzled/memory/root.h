@@ -85,6 +85,8 @@ public:
     error_handler= 0;
   }
 
+  ~Root();
+
   /**
    * blocks with free memory in it 
    */

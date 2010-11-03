@@ -63,27 +63,36 @@ int decimal_round(const decimal_t *from, decimal_t *to, int new_scale,
 int decimal_is_zero(const decimal_t *from);
 void max_decimal(int precision, int frac, decimal_t *to);
 
-#define string2decimal(A,B,C) internal_str2dec((A), (B), (C), 0)
+inline int string2decimal(char *from, decimal_t *to, char **end)
+{
+  return internal_str2dec(from, to, end, false);
+}
 
 /* set a decimal_t to zero */
 
-#define decimal_make_zero(dec)        do {                \
-                                        (dec)->buf[0]=0;    \
-                                        (dec)->intg=1;      \
-                                        (dec)->frac=0;      \
-                                        (dec)->sign=0;      \
-                                      } while(0)
+inline void decimal_make_zero(decimal_t *dec)
+{							    
+  dec->buf[0]=0;
+  dec->intg=1;
+  dec->frac=0;
+  dec->sign=0; 
+}
 
 /*
   returns the length of the buffer to hold string representation
   of the decimal (including decimal dot, possible sign and \0)
 */
 
-#define decimal_string_size(dec) (((dec)->intg ? (dec)->intg : 1) + \
-				  (dec)->frac + ((dec)->frac > 0) + 2)
+inline int decimal_string_size(const decimal_t *dec)
+{
+  return (dec->intg ? dec->intg : 1) + dec->frac + (dec->frac > 0) + 2;
+}
 
 /* negate a decimal */
-#define decimal_neg(dec) do { (dec)->sign^=1; } while(0)
+inline void decimal_neg(decimal_t *dec)
+{
+  dec->sign^=1;
+}
 
 /*
   conventions:
@@ -160,7 +169,7 @@ public:
   {
     len= DECIMAL_BUFF_LENGTH;
     buf= buffer;
-	#if !defined (HAVE_purify)
+	#if !defined (HAVE_VALGRIND)
 		/* Set buffer to 'random' value to find wrong buffer usage */
 		for (uint32_t i= 0; i < DECIMAL_BUFF_LENGTH; i++)
 		  buffer[i]= i;

@@ -34,15 +34,12 @@
 #include "CSDefs.h"
 #include "CSPath.h"
 #include "CSException.h"
-
-using namespace std;
-
-extern int unix_file_close(int fh);
+#include "CSSys.h"
 
 class CSOutputStream;
 class CSInputStream;
 
-class CSFile : public CSRefObject {
+class CSFile : public CSSysFile, public CSRefObject {
 public:
 	CSPath *myFilePath;
 
@@ -51,7 +48,7 @@ public:
 	static const int CREATE = 2;	// Create if it does not exist
 	static const int TRUNCATE = 4;	// After open, set EOF to zero	
 
-	CSFile(): myFilePath(NULL), iFH(-1) { }
+	CSFile(): myFilePath(NULL), iMode(-1), iLocked(0) { }
 
 	virtual ~CSFile(); 
 
@@ -67,10 +64,22 @@ public:
 	 */
 	virtual void open(int mode);
 
+	/* Lock the file. The file will be unlocked
+	 * when closed.
+	 */
+	virtual void lock();
+
+	virtual void unlock();
+
 	/*
 	 * Close the file.
 	 */
 	virtual void close();
+
+	/*
+	 * Calculate the Md5 digest for the file.
+	 */
+	void md5Digest(Md5Digest *digest);
 
 	/*
 	 * Move the current position to
@@ -101,6 +110,9 @@ public:
 	/* Flush the OS buffers: */
 	virtual void sync() ;
 
+	/* Resets access and modification times of the file: */
+	virtual void touch();
+
 	/*
 	 * Return a platform specific prefered 
 	 * line ending for text files.
@@ -109,16 +121,20 @@ public:
 
 	virtual const char *getPathString() { return myFilePath->getCString(); }
 
+	bool exists() { return myFilePath->exists(); }
+
 	friend class CSReadBufferedFile;
-	friend class CSBufferedFile;
 
 private:
-	int		iFH;
+	int		iMode;
+	int		iLocked;
 
 	virtual void openFile(int mode);
+	bool try_CreateAndOpen(CSThread *self, int mode, bool retry);
 
 public:
 	void streamOut(CSOutputStream *dst_stream, off64_t src_offset, off64_t size, char *buffer, size_t buffer_size);
+	void streamIn(CSInputStream *src_stream, off64_t dst_offset, off64_t size, char *buffer, size_t buffer_size);
 
 	static bool isDirNotFound(CSException *e) { return e->getErrorCode() == ENOENT; }
 	static bool isDirExists(CSException *e) { return e->getErrorCode() == EEXIST; }
@@ -128,7 +144,12 @@ public:
 	static CSFile *newFile(CSPath *path);
 
 	static CSFile *newFile(const char *path);
+
+	static CSFile *newFile(const char *dir_str, const char *path_str);
 };
+
+
+// This stuff needs to be retought.
 
 #ifdef DEBUG
 #define SC_DEFAULT_FILE_BUFFER_SIZE			127
@@ -136,54 +157,43 @@ public:
 #define SC_DEFAULT_FILE_BUFFER_SIZE			(64 * 1024)
 #endif
 
-class CSReadBufferedFile : public CSFile {
+class CSReadBufferedFile : public CSRefObject {
 public:
-	CSFile	*myFile;
 
 	CSReadBufferedFile();
 
-	virtual ~CSReadBufferedFile();
+	~CSReadBufferedFile();
+	
+	void setFile(CSFile	*file) {myFile = file;}
 
-	virtual void close();
+	const char *getPathString() { return myFile->getPathString(); }
+	void open(int mode) {myFile->open(mode); }
 
-	virtual off64_t getEOF();
+	void close();
 
-	virtual void setEOF(off64_t offset);
+	off64_t getEOF();
 
-	virtual size_t read(void *data, off64_t offset, size_t size, size_t min_size);
+	void setEOF(off64_t offset);
 
-	virtual void write(const void *data, off64_t offset, size_t size);
+	size_t read(void *data, off64_t offset, size_t size, size_t min_size);
 
-	virtual void flush();
+	void write(const void *data, off64_t offset, size_t size);
 
-	virtual void sync();
+	void flush();
 
-	virtual const char *getEOL();
+	void sync();
 
-	friend class CSBufferedFile;
+	const char *getEOL();
 
 private:
+	CSFile	*myFile;
+
 	char	iFileBuffer[SC_DEFAULT_FILE_BUFFER_SIZE];
 	off64_t	iFileBufferOffset;
 	size_t	iBufferDataLen;
 
 	virtual void openFile(int mode);
-public:
-	static CSFile *newFile(CSFile *file);
 };
 
-class CSBufferedFile : public CSReadBufferedFile {
-public:
-	CSBufferedFile(): CSReadBufferedFile(), iBufferDirty(false) { }
-
-	virtual ~CSBufferedFile() { };
-
-	virtual void write(const void *data, off64_t offset, size_t size);
-
-	virtual void flush();
-
-private:
-	bool	iBufferDirty;
-};
 
 #endif
