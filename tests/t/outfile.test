@@ -51,7 +51,9 @@ enable_query_log;
 # We were seeing error message truncation when
 # the path to the server under test was long (110+ chars)
 
+--disable_query_log
 eval SET @tmpdir1="$DRIZZLETEST_VARDIR";
+--enable_query_log
 --replace_result $DRIZZLETEST_VARDIR VAR
 --error ER_TEXTFILE_NOT_READABLE
 eval select load_file(concat(@tmpdir1,"/bad"));
