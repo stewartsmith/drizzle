@@ -177,9 +177,15 @@ command. Not tested on Windows. */
 #define UNIV_COMPILE_TEST_FUNCS
 */
 
+#if 0
+/* Please enable this when
+Bug#53202 valgrind: uninitialized bytes in dtuple_print()
+if fixed */
 #ifdef HAVE_purify
 # define UNIV_DEBUG_VALGRIND
 #endif /* HAVE_purify */
+#endif
+
 #if 0
 #define UNIV_DEBUG_VALGRIND			/* Enable extra
 						Valgrind instrumentation */
