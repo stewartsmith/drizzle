@@ -93,7 +93,7 @@ void TEST_join(Join *join);
 /* Extern functions in sql_select.cc */
 bool store_val_in_field(Field *field, Item *val, enum_check_fields check_flag);
 Table *create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
-			order_st *group, bool distinct, bool save_sum_fields,
+			Order *group, bool distinct, bool save_sum_fields,
 			uint64_t select_options, ha_rows rows_limit,
 			const char* alias);
 void count_field_types(Select_Lex *select_lex, Tmp_Table_Param *param,
@@ -114,10 +114,10 @@ COND* substitute_for_best_equal_field(COND *cond, COND_EQUAL *cond_equal, void *
 bool list_contains_unique_index(Table *table, bool (*find_func) (Field *, void *), void *data);
 bool find_field_in_order_list (Field *field, void *data);
 bool find_field_in_item_list (Field *field, void *data);
-bool test_if_skip_sort_order(JoinTable *tab,order_st *order,ha_rows select_limit, bool no_changes, const key_map *map);
-order_st *create_distinct_group(Session *session,
+bool test_if_skip_sort_order(JoinTable *tab,Order *order,ha_rows select_limit, bool no_changes, const key_map *map);
+Order *create_distinct_group(Session *session,
                                 Item **ref_pointer_array,
-                                order_st *order_list,
+                                Order *order_list,
                                 List<Item> &fields,
                                 List<Item> &,
                                 bool *all_order_by_fields_used);
@@ -130,7 +130,7 @@ bool change_to_use_tmp_fields(Session *session,
                               List<Item> &all_fields);
 int do_select(Join *join, List<Item> *fields, Table *tmp_table);
 bool const_expression_in_where(COND *conds,Item *item, Item **comp_item);
-int create_sort_index(Session *session, Join *join, order_st *order, ha_rows filesort_limit, ha_rows select_limit, bool is_order_by);
+int create_sort_index(Session *session, Join *join, Order *order, ha_rows filesort_limit, ha_rows select_limit, bool is_order_by);
 void save_index_subquery_explain_info(JoinTable *join_tab, Item* where);
 Item *remove_additional_cond(Item* conds);
 bool setup_sum_funcs(Session *session, Item_sum **func_ptr);
@@ -143,7 +143,7 @@ bool change_refs_to_tmp_fields(Session *session,
                                List<Item> &res_all_fields,
                                uint32_t elements,
 			                         List<Item> &all_fields);
-bool change_group_ref(Session *session, Item_func *expr, order_st *group_list, bool *changed);
+bool change_group_ref(Session *session, Item_func *expr, Order *group_list, bool *changed);
 bool check_interleaving_with_nj(JoinTable *next);
 
 int join_read_const_table(JoinTable *tab, optimizer::Position *pos);
@@ -181,13 +181,13 @@ void push_index_cond(JoinTable *tab, uint32_t keyno, bool other_tbls_ok);
 void add_not_null_conds(Join *join);
 uint32_t max_part_bit(key_part_map bits);
 COND *add_found_match_trig_cond(JoinTable *tab, COND *cond, JoinTable *root_tab);
-order_st *create_distinct_group(Session *session,
+Order *create_distinct_group(Session *session,
                                 Item **ref_pointer_array,
-                                order_st *order,
+                                Order *order,
                                 List<Item> &fields,
                                 List<Item> &all_fields,
                                 bool *all_order_by_fields_used);
-bool eq_ref_table(Join *join, order_st *start_order, JoinTable *tab);
+bool eq_ref_table(Join *join, Order *start_order, JoinTable *tab);
 int remove_dup_with_compare(Session *session, Table *table, Field **first_field, uint32_t offset, Item *having);
 int remove_dup_with_hash_index(Session *session, 
                                Table *table,
@@ -210,14 +210,14 @@ void add_group_and_distinct_keys(Join *join, JoinTable *join_tab);
 void read_cached_record(JoinTable *tab);
 bool mysql_select(Session *session, Item ***rref_pointer_array,
                   TableList *tables, uint32_t wild_num,  List<Item> &list,
-                  COND *conds, uint32_t og_num, order_st *order, order_st *group,
+                  COND *conds, uint32_t og_num, Order *order, Order *group,
                   Item *having, uint64_t select_type,
                   select_result *result, Select_Lex_Unit *unit,
                   Select_Lex *select_lex);
 // Create list for using with tempory table
 void init_tmptable_sum_functions(Item_sum **func);
 void update_tmptable_sum_func(Item_sum **func,Table *tmp_table);
-bool only_eq_ref_tables(Join *join, order_st *order, table_map tables);
+bool only_eq_ref_tables(Join *join, Order *order, table_map tables);
 bool create_ref_for_key(Join *join, JoinTable *j, 
                         optimizer::KeyUse *org_keyuse, 
                         table_map used_tables);

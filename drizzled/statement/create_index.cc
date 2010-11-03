@@ -73,7 +73,7 @@ bool statement::CreateIndex::execute()
                      create_table_message, 
                      first_table,
                      &alter_info,
-                     0, (order_st*) 0, 0);
+                     0, (Order*) 0, 0);
   }
   else
   {
@@ -92,7 +92,7 @@ bool statement::CreateIndex::execute()
                        create_table_message, 
                        first_table,
                        &alter_info,
-                       0, (order_st*) 0, 0);
+                       0, (Order*) 0, 0);
     }
   }
 

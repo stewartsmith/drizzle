@@ -3,12 +3,11 @@
 
 --source ../plugin/transaction_log/tests/t/ddl_transaction_id.inc
 
---replace_column 2 X 7 X 8 X 9 X
-SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
---replace_column 1 X 3 X
-SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
---replace_column 1 X 4 X 5 X
-SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+--source ../plugin/transaction_log/tests/t/check_transaction_log.inc
+
+--replace_regex /start_timestamp: [0-9]+/START_TIMESTAMP/g /end_timestamp: [0-9]+/END_TIMESTAMP/g /creation_timestamp: [0-9]+/CREATE_TIMESTAMP/ /update_timestamp: [0-9]+/UPDATE_TIMESTAMP/ /transaction_id: [0-9]+/TRANSACTION_ID/
+
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 
 # Truncate the log file to reset for the next test
 --source ../plugin/transaction_log/tests/t/truncate_log.inc

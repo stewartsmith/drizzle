@@ -214,8 +214,8 @@ bool mysql_derived_filling(Session *session, LEX *lex, TableList *orig_table_lis
                         first_select->item_list, first_select->where,
                         (first_select->order_list.elements+
                         first_select->group_list.elements),
-                        (order_st *) first_select->order_list.first,
-                        (order_st *) first_select->group_list.first,
+                        (Order *) first_select->order_list.first,
+                        (Order *) first_select->group_list.first,
                         first_select->having,
                         (first_select->options | session->options | SELECT_NO_UNLOCK),
                         derived_result, unit, first_select);

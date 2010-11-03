@@ -366,6 +366,19 @@ public:
   {
     return mem_root;
   }
+
+  uint64_t xa_id;
+
+  uint64_t getXaId()
+  {
+    return xa_id;
+  }
+
+  void setXaId(uint64_t in_xa_id)
+  {
+    xa_id= in_xa_id; 
+  }
+
   /**
    * Uniquely identifies each statement object in thread scope; change during
    * statement lifetime.
