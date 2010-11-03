@@ -4,10 +4,10 @@ USE test;
 --source include/setup-global-constraints.inc
 
 # Test for sort buffer constraint
---error 1
+--error 134
 --exec $DRIZZLE_SLAP -q "SELECT * FROM t1 ORDER BY 1" -c100 --iterations=1 --number-of-queries=1000 --create-schema=test
 
 # Test for join buffer constraint
---error 1
+--error 134
 --exec $DRIZZLE_SLAP -q "select * from t1 join t2 on (t1.charcol1 = t2.charcol1);" -c10 --iterations=1 --number-of-queries=100 --create-schema=test
 

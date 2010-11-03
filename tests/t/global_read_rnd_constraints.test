@@ -13,5 +13,5 @@ insert into t1 select SQL_BIG_RESULT * from t1;
 insert into t1 select SQL_BIG_RESULT * from t1;
 
 # Test for read_rnd buffer constraint
---error 1
+--error 134
 --exec $DRIZZLE_SLAP -q "SELECT SQL_BIG_RESULT * FROM t1 ORDER BY 1" -c100 --iterations=1 --number-of-queries=1000 --create-schema=test
