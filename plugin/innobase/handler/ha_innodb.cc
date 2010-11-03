@@ -139,7 +139,6 @@ static ulong commit_threads = 0;
 static pthread_mutex_t commit_threads_m;
 static pthread_cond_t commit_cond;
 static pthread_mutex_t commit_cond_m;
-static pthread_mutex_t analyze_mutex;
 static bool innodb_inited = 0;
 
 #define INSIDE_HA_INNOBASE_CC
@@ -286,7 +285,6 @@ public:
       pthread_mutex_destroy(&prepare_commit_mutex);
       pthread_mutex_destroy(&commit_threads_m);
       pthread_mutex_destroy(&commit_cond_m);
-      pthread_mutex_destroy(&analyze_mutex);
       pthread_cond_destroy(&commit_cond);
     }
     
@@ -2307,7 +2305,6 @@ innobase_change_buffering_inited_ok:
   pthread_mutex_init(&prepare_commit_mutex, MY_MUTEX_INIT_FAST);
   pthread_mutex_init(&commit_threads_m, MY_MUTEX_INIT_FAST);
   pthread_mutex_init(&commit_cond_m, MY_MUTEX_INIT_FAST);
-  pthread_mutex_init(&analyze_mutex, MY_MUTEX_INIT_FAST);
   pthread_cond_init(&commit_cond, NULL);
   innodb_inited= 1;
 
@@ -4849,7 +4846,7 @@ ha_innobase::unlock_row(void)
   case ROW_READ_WITH_LOCKS:
     if (!srv_locks_unsafe_for_binlog
         && prebuilt->trx->isolation_level
-        != TRX_ISO_READ_COMMITTED) {
+        > TRX_ISO_READ_COMMITTED) {
       break;
     }
     /* fall through */
@@ -4888,7 +4885,7 @@ ha_innobase::try_semi_consistent_read(bool yes)
 
   if (yes
       && (srv_locks_unsafe_for_binlog
-    || prebuilt->trx->isolation_level == TRX_ISO_READ_COMMITTED)) {
+    || prebuilt->trx->isolation_level <= TRX_ISO_READ_COMMITTED)) {
     prebuilt->row_read_type = ROW_READ_TRY_SEMI_CONSISTENT;
   } else {
     prebuilt->row_read_type = ROW_READ_WITH_LOCKS;
@@ -7127,14 +7124,8 @@ ha_innobase::analyze(
 /*=================*/
   Session*)   /*!< in: connection thread handle */
 {
-  /* Serialize ANALYZE TABLE inside InnoDB, see
-     Bug#38996 Race condition in ANALYZE TABLE */
-  pthread_mutex_lock(&analyze_mutex);
-
   /* Simply call ::info() with all the flags */
   info(HA_STATUS_TIME | HA_STATUS_CONST | HA_STATUS_VARIABLE);
-
-  pthread_mutex_unlock(&analyze_mutex);
 
   return(0);
 }
@@ -8230,7 +8221,7 @@ ha_innobase::store_lock(
     isolation_level = trx->isolation_level;
 
     if ((srv_locks_unsafe_for_binlog
-         || isolation_level == TRX_ISO_READ_COMMITTED)
+         || isolation_level <= TRX_ISO_READ_COMMITTED)
         && isolation_level != TRX_ISO_SERIALIZABLE
         && (lock_type == TL_READ || lock_type == TL_READ_NO_INSERT)
         && (sql_command == SQLCOM_INSERT_SELECT
