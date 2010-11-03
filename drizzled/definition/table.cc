@@ -83,33 +83,10 @@ namespace drizzled
 {
 
 extern size_t table_def_size;
-static TableDefinitionCache table_def_cache;
 
 /*****************************************************************************
   Functions to handle table definition cach (TableShare)
  *****************************************************************************/
-
-
-// @todo switch this a boost::thread one only call.
-void TableShare::cacheStart(void)
-{
-  /* 
-   * This is going to overalloc a bit - as rehash sets the number of
-   * buckets, not the number of elements. BUT, it'll allow us to not need
-   * to rehash later on as the unordered_map grows.
- */
-  table_def_cache.rehash(table_def_size);
-}
-
-
-/**
- * @TODO This should return size_t
- */
-uint32_t cached_table_definitions(void)
-{
-  return static_cast<uint32_t>(table_def_cache.size());
-}
-
 
 /*
   Mark that we are not using table share anymore.
@@ -139,11 +116,7 @@ void TableShare::release(TableShare *share)
     TableIdentifier identifier(share->getSchemaName(), share->getTableName());
     plugin::EventObserver::deregisterTableEvents(*share);
    
-    TableDefinitionCache::iterator iter= table_def_cache.find(identifier.getKey());
-    if (iter != table_def_cache.end())
-    {
-      table_def_cache.erase(iter);
-    }
+    definition::Cache::singleton().erase(identifier);
     return;
   }
   share->unlock();
@@ -165,11 +138,7 @@ void TableShare::release(TableSharePtr &share)
     TableIdentifier identifier(share->getSchemaName(), share->getTableName());
     plugin::EventObserver::deregisterTableEvents(*share);
    
-    TableDefinitionCache::iterator iter= table_def_cache.find(identifier.getKey());
-    if (iter != table_def_cache.end())
-    {
-      table_def_cache.erase(iter);
-    }
+    definition::Cache::singleton().erase(identifier);
     return;
   }
   share->unlock();
@@ -177,16 +146,15 @@ void TableShare::release(TableSharePtr &share)
 
 void TableShare::release(TableIdentifier &identifier)
 {
-  TableDefinitionCache::iterator iter= table_def_cache.find(identifier.getKey());
-  if (iter != table_def_cache.end())
+  TableSharePtr share= definition::Cache::singleton().find(identifier);
+  if (share)
   {
-    TableSharePtr share= (*iter).second;
     share->version= 0;                          // Mark for delete
     if (share->ref_count == 0)
     {
       share->lock();
       plugin::EventObserver::deregisterTableEvents(*share);
-      table_def_cache.erase(identifier.getKey());
+      definition::Cache::singleton().erase(identifier);
     }
   }
 }
@@ -238,19 +206,15 @@ static TableSharePtr foundTableShare(TableSharePtr share)
 
 TableSharePtr TableShare::getShareCreate(Session *session, 
                                          TableIdentifier &identifier,
-                                         int *error)
+                                         int *in_error)
 {
   TableSharePtr share;
 
-  *error= 0;
+  *in_error= 0;
 
   /* Read table definition from cache */
-  TableDefinitionCache::iterator iter= table_def_cache.find(identifier.getKey());
-  if (iter != table_def_cache.end())
-  {
-    share= (*iter).second;
+  if ((share= definition::Cache::singleton().find(identifier)))
     return foundTableShare(share);
-  }
 
   share.reset(new TableShare(message::Table::STANDARD, identifier));
   
@@ -260,17 +224,15 @@ TableSharePtr TableShare::getShareCreate(Session *session,
   */
   share->lock();
 
-  pair<TableDefinitionCache::iterator, bool> ret=
-    table_def_cache.insert(make_pair(identifier.getKey(), share));
-  if (ret.second == false)
-  {
+  bool ret= definition::Cache::singleton().insert(identifier, share);
+
+  if (not ret)
     return TableSharePtr();
-  }
 
   if (share->open_table_def(*session, identifier))
   {
-    *error= share->error;
-    table_def_cache.erase(identifier.getKey());
+    *in_error= share->error;
+    definition::Cache::singleton().erase(identifier);
 
     return TableSharePtr();
   }
@@ -300,13 +262,7 @@ TableSharePtr TableShare::getShare(TableIdentifier &identifier)
 {
   safe_mutex_assert_owner(LOCK_open.native_handle);
 
-  TableDefinitionCache::iterator iter= table_def_cache.find(identifier.getKey());
-  if (iter != table_def_cache.end())
-  {
-    return (*iter).second;
-  }
-
-  return TableSharePtr();
+  return definition::Cache::singleton().find(identifier);
 }
 
 static enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_type)
@@ -444,14 +400,8 @@ bool TableShare::fieldInPrimaryKey(Field *in_field) const
   return false;
 }
 
-const TableDefinitionCache &TableShare::getCache()
-{
-  return table_def_cache;
-}
-
 TableShare::TableShare(TableIdentifier::Type type_arg) :
   table_category(TABLE_UNKNOWN_CATEGORY),
-  open_count(0),
   found_next_number_field(NULL),
   timestamp_field(NULL),
   key_info(NULL),
@@ -510,8 +460,8 @@ TableShare::TableShare(TableIdentifier::Type type_arg) :
 
   if (type_arg == message::Table::INTERNAL)
   {
-    TableIdentifier::build_tmptable_filename(private_key_for_cache);
-    init(&private_key_for_cache[0], &private_key_for_cache[0]);
+    TableIdentifier::build_tmptable_filename(private_key_for_cache.vectorPtr());
+    init(private_key_for_cache.vector(), private_key_for_cache.vector());
   }
   else
   {
@@ -521,7 +471,6 @@ TableShare::TableShare(TableIdentifier::Type type_arg) :
 
 TableShare::TableShare(TableIdentifier &identifier, const TableIdentifier::Key &key) :// Used by placeholder
   table_category(TABLE_UNKNOWN_CATEGORY),
-  open_count(0),
   found_next_number_field(NULL),
   timestamp_field(NULL),
   key_info(NULL),
@@ -582,10 +531,10 @@ TableShare::TableShare(TableIdentifier &identifier, const TableIdentifier::Key &
   table_category=         TABLE_CATEGORY_TEMPORARY;
   tmp_table=              message::Table::INTERNAL;
 
-  db.str= &private_key_for_cache[0];
-  db.length= strlen(&private_key_for_cache[0]);
+  db.str= const_cast<char *>(private_key_for_cache.vector());
+  db.length= strlen(private_key_for_cache.vector());
 
-  table_name.str= &private_key_for_cache[0] + strlen(&private_key_for_cache[0]) + 1;
+  table_name.str= const_cast<char *>(private_key_for_cache.vector()) + strlen(private_key_for_cache.vector()) + 1;
   table_name.length= strlen(table_name.str);
   path.str= (char *)"";
   normalized_path.str= path.str;
@@ -597,7 +546,6 @@ TableShare::TableShare(TableIdentifier &identifier, const TableIdentifier::Key &
 
 TableShare::TableShare(const TableIdentifier &identifier) : // Just used during createTable()
   table_category(TABLE_UNKNOWN_CATEGORY),
-  open_count(0),
   found_next_number_field(NULL),
   timestamp_field(NULL),
   key_info(NULL),
@@ -661,8 +609,8 @@ TableShare::TableShare(const TableIdentifier &identifier) : // Just used during 
   {
     table_category=         TABLE_CATEGORY_TEMPORARY;
     tmp_table=              message::Table::INTERNAL;
-    db.str= &private_key_for_cache[0];
-    db.length= strlen(&private_key_for_cache[0]);
+    db.str= const_cast<char *>(private_key_for_cache.vector());
+    db.length= strlen(private_key_for_cache.vector());
     table_name.str= db.str + 1;
     table_name.length= strlen(table_name.str);
     path.str= &private_normalized_path[0];
@@ -680,7 +628,6 @@ TableShare::TableShare(TableIdentifier::Type type_arg,
                        char *path_arg,
                        uint32_t path_length_arg) :
   table_category(TABLE_UNKNOWN_CATEGORY),
-  open_count(0),
   found_next_number_field(NULL),
   timestamp_field(NULL),
   key_info(NULL),
@@ -744,7 +691,7 @@ TableShare::TableShare(TableIdentifier::Type type_arg,
     Let us use the fact that the key is "db/0/table_name/0" + optional
     part for temporary tables.
   */
-  db.str= &private_key_for_cache[0];
+  db.str= const_cast<char *>(private_key_for_cache.vector());
   db.length=         strlen(db.str);
   table_name.str=    db.str + db.length + 1;
   table_name.length= strlen(table_name.str);
@@ -819,14 +766,13 @@ TableShare::~TableShare()
 
 void TableShare::setIdentifier(TableIdentifier &identifier_arg)
 {
-  private_key_for_cache.clear();
   private_key_for_cache= identifier_arg.getKey();
 
   /*
     Let us use the fact that the key is "db/0/table_name/0" + optional
     part for temporary tables.
   */
-  db.str= &private_key_for_cache[0];
+  db.str= const_cast<char *>(private_key_for_cache.vector());
   db.length=         strlen(db.str);
   table_name.str=    db.str + db.length + 1;
   table_name.length= strlen(table_name.str);
@@ -1746,7 +1692,7 @@ int TableShare::parse_table_proto(Session& session, message::Table &table)
 
   NOTES
   This function is called when the table definition is not cached in
-  table_def_cache
+  definition::Cache::singleton().getCache()
   The data is returned in 'share', which is alloced by
   alloc_table_share().. The code assumes that share is initialized.
 

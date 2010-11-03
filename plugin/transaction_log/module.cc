@@ -44,7 +44,6 @@
 
 #include <drizzled/plugin/plugin.h>
 #include <drizzled/session.h>
-#include <drizzled/set_var.h>
 #include <drizzled/gettext.h>
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>

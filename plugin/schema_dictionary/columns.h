@@ -21,31 +21,20 @@
 #ifndef PLUGIN_SCHEMA_DICTIONARY_COLUMNS_H
 #define PLUGIN_SCHEMA_DICTIONARY_COLUMNS_H
 
-class ColumnsTool : public TablesTool
+class ColumnsTool : public DataDictionary
 {
 public:
 
   ColumnsTool();
 
-  class Generator : public TablesTool::Generator 
+  class Generator : public DataDictionary::Generator
   {
-    int32_t column_iterator;
-    bool is_columns_primed;
-    drizzled::message::Table::Field column;
-
-    bool nextColumnCore();
-    bool nextColumn();
+    drizzled::generator::AllFields field_generator;
 
   public:
     Generator(drizzled::Field **arg);
 
     bool populate();
-    void fill();
-
-    const drizzled::message::Table::Field& getColumn()
-    {
-      return column;
-    }
   };
 
   Generator *generator(drizzled::Field **arg)

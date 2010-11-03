@@ -1993,7 +1993,7 @@ delete_option:
         | CASCADE       { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_CASCADE; }
         | SET NULL_SYM  { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_SET_NULL; }
         | NO_SYM ACTION { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_NO_ACTION; }
-        | SET DEFAULT   { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_DEFAULT;  }
+        | SET DEFAULT   { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_SET_DEFAULT;  }
         ;
 
 key_type:
@@ -4795,6 +4795,7 @@ show:
           {}
         ;
 
+/* SHOW SCHEMAS */
 show_param:
            DATABASES show_wild
            {
@@ -4836,6 +4837,7 @@ show_param:
               if (session->add_order_to_list(my_field, true))
                 DRIZZLE_YYABORT;
            }
+           /* SHOW TABLES */
          | TABLES opt_db show_wild
            {
              LEX *lex= Lex;
@@ -4896,6 +4898,7 @@ show_param:
               if (session->add_order_to_list(my_field, true))
                 DRIZZLE_YYABORT;
            }
+           /* SHOW TEMPORARY TABLES */
          | TEMPORARY_SYM TABLES show_wild
            {
              LEX *lex= Lex;
@@ -4922,6 +4925,7 @@ show_param:
              (session->lex->current_select->with_wild)++;
 
            }
+           /* SHOW TABLE STATUS */
          | TABLE_SYM STATUS_SYM opt_db show_wild
            {
              LEX *lex= Lex;
@@ -4964,6 +4968,7 @@ show_param:
                DRIZZLE_YYABORT;
              (session->lex->current_select->with_wild)++;
            }
+           /* SHOW COLUMNS FROM table_name */
         | COLUMNS from_or_in table_ident opt_db show_wild
           {
              LEX *lex= Lex;
@@ -5006,6 +5011,7 @@ show_param:
              (session->lex->current_select->with_wild)++;
 
           }
+          /* SHOW INDEXES from table */
         | keys_or_index from_or_in table_ident opt_db where_clause
           {
              LEX *lex= Lex;

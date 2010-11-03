@@ -59,7 +59,7 @@ static int init(drizzled::module::Context &context)
     if (sysvar_logging_threshold_slow > ULONG_MAX)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for logging-threshold-slow\n"));
-      exit(-1);
+      return 1;
     }
   }
 
@@ -68,7 +68,7 @@ static int init(drizzled::module::Context &context)
     if (sysvar_logging_threshold_big_resultset > 2)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for logging-threshold-big-resultset\n"));
-      exit(-1);
+      return 1;
     }
   }
 
@@ -77,7 +77,7 @@ static int init(drizzled::module::Context &context)
     if (sysvar_logging_threshold_big_examined > 2)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for logging-threshold-big-examined\n"));
-      exit(-1);
+      return 1;
     }
   }
 

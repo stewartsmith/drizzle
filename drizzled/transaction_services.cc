@@ -69,13 +69,16 @@
 #include "drizzled/plugin/monitored_in_transaction.h"
 #include "drizzled/plugin/transactional_storage_engine.h"
 #include "drizzled/plugin/xa_resource_manager.h"
+#include "drizzled/plugin/xa_storage_engine.h"
 #include "drizzled/internal/my_sys.h"
-
-using namespace std;
 
 #include <vector>
 #include <algorithm>
 #include <functional>
+#include <google/protobuf/repeated_field.h>
+
+using namespace std;
+using namespace google;
 
 namespace drizzled
 {
@@ -297,6 +300,19 @@ namespace drizzled
  * transaction after all DDLs, just like the statement transaction
  * is always committed at the end of all statements.
  */
+TransactionServices::TransactionServices()
+{
+  plugin::StorageEngine *engine= plugin::StorageEngine::findByName("InnoDB");
+  if (engine)
+  {
+    xa_storage_engine= (plugin::XaStorageEngine*)engine; 
+  }
+  else 
+  {
+    xa_storage_engine= NULL;
+  }
+}
+
 void TransactionServices::registerResourceForStatement(Session *session,
                                                        plugin::MonitoredInTransaction *monitored,
                                                        plugin::TransactionalStorageEngine *engine)
@@ -387,8 +403,6 @@ void TransactionServices::registerResourceForTransaction(Session *session,
   if (session->transaction.xid_state.xid.is_null())
     session->transaction.xid_state.xid.set(session->getQueryId());
 
-  engine->startTransaction(session, START_TRANS_NO_OPTIONS);
-
   /* Only true if user is executing a BEGIN WORK/START TRANSACTION */
   if (! session->getResourceContext(monitored, 0)->isStarted())
     registerResourceForStatement(session, monitored, engine);
@@ -424,6 +438,29 @@ void TransactionServices::registerResourceForTransaction(Session *session,
   /* Only true if user is executing a BEGIN WORK/START TRANSACTION */
   if (! session->getResourceContext(monitored, 0)->isStarted())
     registerResourceForStatement(session, monitored, engine, resource_manager);
+}
+
+void TransactionServices::allocateNewTransactionId()
+{
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  if (! replication_services.isActive())
+  {
+    return;
+  }
+
+  Session *my_session= current_session;
+  uint64_t xa_id= xa_storage_engine->getNewTransactionId(my_session);
+  my_session->setXaId(xa_id);
+}
+
+uint64_t TransactionServices::getCurrentTransactionId(Session *session)
+{
+  if (session->getXaId() == 0)
+  {
+    session->setXaId(xa_storage_engine->getNewTransactionId(session)); 
+  }
+
+  return session->getXaId();
 }
 
 /**
@@ -693,8 +730,20 @@ int TransactionServices::rollbackTransaction(Session *session, bool normal_trans
 */
 int TransactionServices::autocommitOrRollback(Session *session, int error)
 {
+
   if (session->transaction.stmt.getResourceContexts().empty() == false)
   {
+    TransactionContext *trans = &session->transaction.stmt;
+    TransactionContext::ResourceContexts &resource_contexts= trans->getResourceContexts();
+    for (TransactionContext::ResourceContexts::iterator it= resource_contexts.begin();
+         it != resource_contexts.end();
+         ++it)
+    {
+      ResourceContext *resource_context= *it;
+
+      resource_context->getTransactionalStorageEngine()->endStatement(session);
+    }
+
     if (! error)
     {
       if (commitTransaction(session, false))
@@ -964,7 +1013,14 @@ void TransactionServices::initTransactionMessage(message::Transaction &in_transa
   trx->set_server_id(in_session->getServerId());
 
   if (should_inc_trx_id)
-    trx->set_transaction_id(getNextTransactionId());
+  {
+    trx->set_transaction_id(getCurrentTransactionId(in_session));
+    in_session->setXaId(0);
+  }  
+  else
+  { 
+    trx->set_transaction_id(0);
+  }
 
   trx->set_start_timestamp(in_session->getCurrentTimestamp());
 }
@@ -1017,7 +1073,6 @@ void TransactionServices::initStatementMessage(message::Statement &statement,
 {
   statement.set_type(in_type);
   statement.set_start_timestamp(in_session->getCurrentTimestamp());
-  /** @TODO Set sql string optionally */
 }
 
 void TransactionServices::finalizeStatementMessage(message::Statement &statement,
@@ -1825,6 +1880,123 @@ void TransactionServices::deleteRecord(Session *in_session, Table *in_table, boo
     }
   }
 }
+
+
+/**
+ * Template for removing Statement records of different types.
+ *
+ * The code for removing records from different Statement message types
+ * is identical except for the class types that are embedded within the
+ * Statement.
+ *
+ * There are 3 scenarios we need to look for:
+ *   - We've been asked to remove more records than exist in the Statement
+ *   - We've been asked to remove less records than exist in the Statement
+ *   - We've been asked to remove ALL records that exist in the Statement
+ *
+ * If we are removing ALL records, then effectively we would be left with
+ * an empty Statement message, so we should just remove it and clean up
+ * message pointers in the Session object.
+ */
+template <class DataType, class RecordType>
+static bool removeStatementRecordsWithType(Session *session,
+                                           DataType *data,
+                                           uint32_t count)
+{
+  uint32_t num_avail_recs= static_cast<uint32_t>(data->record_size());
+
+  /* If there aren't enough records to remove 'count' of them, error. */
+  if (num_avail_recs < count)
+    return false;
+
+  /*
+   * If we are removing all of the data records, we'll just remove this
+   * entire Statement message.
+   */
+  if (num_avail_recs == count)
+  {
+    message::Transaction *transaction= session->getTransactionMessage();
+    protobuf::RepeatedPtrField<message::Statement> *statements= transaction->mutable_statement();
+    statements->RemoveLast();
+
+    /*
+     * Now need to set the Session Statement pointer to either the previous
+     * Statement, or NULL if there isn't one.
+     */
+    if (statements->size() == 0)
+    {
+      session->setStatementMessage(NULL);
+    }
+    else
+    {
+      /*
+       * There isn't a great way to get a pointer to the previous Statement
+       * message using the RepeatedPtrField object, so we'll just get to it
+       * using the Transaction message.
+       */
+      int last_stmt_idx= transaction->statement_size() - 1;
+      session->setStatementMessage(transaction->mutable_statement(last_stmt_idx));
+    }
+  }
+  /* We only need to remove 'count' records */
+  else if (num_avail_recs > count)
+  {
+    protobuf::RepeatedPtrField<RecordType> *records= data->mutable_record();
+    while (count--)
+      records->RemoveLast();
+  }
+
+  return true;
+}
+
+
+bool TransactionServices::removeStatementRecords(Session *session,
+                                                 uint32_t count)
+{
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  if (! replication_services.isActive())
+    return false;
+
+  /* Get the most current Statement */
+  message::Statement *statement= session->getStatementMessage();
+
+  /* Make sure we have work to do */
+  if (statement == NULL)
+    return false;
+
+  bool retval= false;
+
+  switch (statement->type())
+  {
+    case message::Statement::INSERT:
+    {
+      message::InsertData *data= statement->mutable_insert_data();
+      retval= removeStatementRecordsWithType<message::InsertData, message::InsertRecord>(session, data, count);
+      break;
+    }
+
+    case message::Statement::UPDATE:
+    {
+      message::UpdateData *data= statement->mutable_update_data();
+      retval= removeStatementRecordsWithType<message::UpdateData, message::UpdateRecord>(session, data, count);
+      break;
+    }
+
+    case message::Statement::DELETE:  /* not sure if this one is possible... */
+    {
+      message::DeleteData *data= statement->mutable_delete_data();
+      retval= removeStatementRecordsWithType<message::DeleteData, message::DeleteRecord>(session, data, count);
+      break;
+    }
+
+    default:
+      retval= false;
+      break;
+  }
+
+  return retval;
+}
+
 
 void TransactionServices::createTable(Session *in_session,
                                       const message::Table &table)

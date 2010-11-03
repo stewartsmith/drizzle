@@ -45,7 +45,7 @@ bool statement::Update::execute()
                          session->lex->value_list,
                          select_lex->where,
                          select_lex->order_list.elements,
-                         (order_st *) select_lex->order_list.first,
+                         (Order *) select_lex->order_list.first,
                          unit->select_limit_cnt,
                          session->lex->duplicates, 
                          session->lex->ignore);

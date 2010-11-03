@@ -29,6 +29,7 @@
 #include "drizzled/records.h"
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/iocache.h"
+#include "drizzled/transaction_services.h"
 
 #include <boost/dynamic_bitset.hpp>
 #include <list>
@@ -127,7 +128,7 @@ static void prepare_record_for_error_message(int error, Table *table)
 
 int mysql_update(Session *session, TableList *table_list,
                  List<Item> &fields, List<Item> &values, COND *conds,
-                 uint32_t order_num, order_st *order,
+                 uint32_t order_num, Order *order,
                  ha_rows limit, enum enum_duplicates,
                  bool ignore)
 {
@@ -473,7 +474,20 @@ int mysql_update(Session *session, TableList *table_list,
 
       table->storeRecord();
       if (fill_record(session, fields, values))
+      {
+        /*
+         * If we updated some rows before this one failed (updated > 0),
+         * then we will need to undo adding those records to the
+         * replication Statement message.
+         */
+        if (updated > 0)
+        {
+          TransactionServices &ts= TransactionServices::singleton();
+          ts.removeStatementRecords(session, updated);
+        }
+
         break;
+      }
 
       found++;
 
@@ -486,15 +500,15 @@ int mysql_update(Session *session, TableList *table_list,
         table->auto_increment_field_not_null= false;
 
         if (!error || error == HA_ERR_RECORD_IS_THE_SAME)
-	{
+        {
           if (error != HA_ERR_RECORD_IS_THE_SAME)
             updated++;
           else
             error= 0;
-	}
-	else if (! ignore ||
+        }
+        else if (! ignore ||
                  table->cursor->is_fatal_error(error, HA_CHECK_DUP_KEY))
-	{
+        {
           /*
             If (ignore && error is ignorable) we don't have to
             do anything; otherwise...
@@ -505,10 +519,10 @@ int mysql_update(Session *session, TableList *table_list,
             flags|= ME_FATALERROR; /* Other handler errors are fatal */
 
           prepare_record_for_error_message(error, table);
-	  table->print_error(error,MYF(flags));
-	  error= 1;
-	  break;
-	}
+          table->print_error(error,MYF(flags));
+          error= 1;
+          break;
+        }
       }
 
       if (!--limit && using_limit)
@@ -615,7 +629,7 @@ err:
     true  error
 */
 bool mysql_prepare_update(Session *session, TableList *table_list,
-			 Item **conds, uint32_t order_num, order_st *order)
+			 Item **conds, uint32_t order_num, Order *order)
 {
   List<Item> all_fields;
   Select_Lex *select_lex= &session->lex->select_lex;

@@ -1027,7 +1027,7 @@ bool Item_sum_distinct::setup(Session *session)
   field_def.init_for_tmp_table(table_field_type, args[0]->max_length,
                                args[0]->decimals, args[0]->maybe_null);
 
-  if (! (table= session->create_virtual_tmp_table(field_list)))
+  if (! (table= session->getInstanceTable(field_list)))
     return(true);
 
   /* XXX: check that the case of CHAR(0) works OK */
@@ -2603,7 +2603,7 @@ bool Item_sum_count_distinct::setup(Session *session)
   tmp_table_param->force_copy_fields= force_copy_fields;
   assert(table == 0);
 
-  if (!(table= create_tmp_table(session, tmp_table_param, list, (order_st*) 0, 1,
+  if (!(table= create_tmp_table(session, tmp_table_param, list, (Order*) 0, 1,
 				0,
 				(select_lex->options | session->options),
 				HA_POS_ERROR, (char*)"")))
@@ -2838,7 +2838,7 @@ int group_concat_key_cmp_with_order(void* arg, const void* key1,
                                     const void* key2)
 {
   Item_func_group_concat* grp_item= (Item_func_group_concat*) arg;
-  order_st **order_item, **end;
+  Order **order_item, **end;
   Table *table= grp_item->table;
 
   for (order_item= grp_item->order, end=order_item+ grp_item->arg_count_order;
@@ -2982,10 +2982,10 @@ Item_func_group_concat(Name_resolution_context *context_arg,
     order - arg_count_order
   */
   if (!(args= (Item**) memory::sql_alloc(sizeof(Item*) * arg_count +
-                                 sizeof(order_st*)*arg_count_order)))
+                                 sizeof(Order*)*arg_count_order)))
     return;
 
-  order= (order_st**)(args + arg_count);
+  order= (Order**)(args + arg_count);
 
   /* fill args items of show and sort */
   List_iterator_fast<Item> li(*select_list);
@@ -2995,8 +2995,8 @@ Item_func_group_concat(Name_resolution_context *context_arg,
 
   if (arg_count_order)
   {
-    order_st **order_ptr= order;
-    for (order_st *order_item= (order_st*) order_list->first;
+    Order **order_ptr= order;
+    for (Order *order_item= (Order*) order_list->first;
          order_item != NULL;
          order_item= order_item->next)
     {
@@ -3263,7 +3263,7 @@ bool Item_func_group_concat::setup(Session *session)
     field list.
   */
   if (!(table= create_tmp_table(session, tmp_table_param, all_fields,
-                                (order_st*) 0, 0, true,
+                                (Order*) 0, 0, true,
                                 (select_lex->options | session->options),
                                 HA_POS_ERROR, (char*) "")))
   {

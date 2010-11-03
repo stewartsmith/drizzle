@@ -184,21 +184,22 @@ bool DrizzleDumpTableMySQL::populateFields()
     DrizzleDumpFieldMySQL *field = new DrizzleDumpFieldMySQL(fieldName, dcon);
     /* Stop valgrind warning */
     field->convertDateTime= false;
+    field->isNull= (strcmp(row[3], "YES") == 0) ? true : false;
     /* Also sets collation */
     field->setType(row[1], row[8]);
-    field->isNull= (strcmp(row[3], "YES") == 0) ? true : false;
+    if (field->type.compare("ENUM") == 0)
+      field->isNull= true;
+
     if (row[2])
     {
       field->defaultValue= row[2];
+      if (field->convertDateTime)
+      {
+        field->dateTimeConvert();
+      }
     }
     else
      field->defaultValue= "";
-
-    if (field->convertDateTime)
-    {
-      field->dateTimeConvert();
-    }
-
 
     field->isAutoIncrement= (strcmp(row[8], "auto_increment") == 0) ? true : false;
     field->defaultIsNull= field->isNull;
@@ -245,7 +246,6 @@ void DrizzleDumpFieldMySQL::dateTimeConvert(void)
     defaultIsNull= true;
     defaultValue="";
   }
-  isNull= true;
 }
 
 
@@ -477,6 +477,7 @@ void DrizzleDumpFieldMySQL::setType(const char* raw_type, const char* raw_collat
     /* Intended to catch TIME/DATE/TIMESTAMP/DATETIME 
        We may have a default TIME/DATE which needs converting */
     convertDateTime= true;
+    isNull= true;
   }
 
   if ((old_type.compare("TIME") == 0) or (old_type.compare("YEAR") == 0))
@@ -575,7 +576,7 @@ DrizzleDumpDataMySQL::DrizzleDumpDataMySQL(DrizzleDumpTable *dataTable,
 DrizzleDumpDataMySQL::~DrizzleDumpDataMySQL()
 {
   drizzle_result_free(result);
-  if (result) delete result;
+  delete result;
 }
 
 long DrizzleDumpDataMySQL::convertTime(const char* oldTime) const

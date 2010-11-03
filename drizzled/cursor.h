@@ -55,7 +55,7 @@ class TableList;
 class TableShare;
 class Select_Lex_Unit;
 class ForeignKeyInfo;
-struct order_st;
+struct Order;
 
 class Item;
 
@@ -522,7 +522,7 @@ private:
     the corresponding 'ha_*' method above.
   */
 
-  virtual int open(const char *, int , uint32_t ) { assert(0); return -1; };
+  virtual int open(const char *, int , uint32_t ) { assert(0); return -1; }
   virtual int doOpen(const TableIdentifier &identifier, int mode, uint32_t test_if_locked);
   virtual int doStartIndexScan(uint32_t idx, bool)
   { active_index= idx; return 0; }
@@ -583,7 +583,7 @@ private:
   {
     return 0;
   }
-  virtual void release_auto_increment(void) { return; };
+  virtual void release_auto_increment(void) { return; }
   /** admin commands - called from mysql_admin_table */
   virtual int check(Session *)
   { return HA_ADMIN_NOT_IMPLEMENTED; }
@@ -640,12 +640,12 @@ extern const char *ha_row_type[];
 void ha_init_errors(void);
 
 class SortField;
-SortField *make_unireg_sortorder(order_st *order, uint32_t *length,
+SortField *make_unireg_sortorder(Order *order, uint32_t *length,
                                  SortField *sortorder);
 int setup_order(Session *session, Item **ref_pointer_array, TableList *tables,
-                List<Item> &fields, List <Item> &all_fields, order_st *order);
+                List<Item> &fields, List <Item> &all_fields, Order *order);
 int setup_group(Session *session, Item **ref_pointer_array, TableList *tables,
-                List<Item> &fields, List<Item> &all_fields, order_st *order,
+                List<Item> &fields, List<Item> &all_fields, Order *order,
                 bool *hidden_group_fields);
 bool fix_inner_refs(Session *session, List<Item> &all_fields, Select_Lex *select,
                     Item **ref_pointer_array);
@@ -692,10 +692,10 @@ bool mysql_rename_table(Session &session,
                         TableIdentifier &new_identifier);
 
 bool mysql_prepare_update(Session *session, TableList *table_list,
-                          Item **conds, uint32_t order_num, order_st *order);
+                          Item **conds, uint32_t order_num, Order *order);
 int mysql_update(Session *session,TableList *tables,List<Item> &fields,
                  List<Item> &values,COND *conds,
-                 uint32_t order_num, order_st *order, ha_rows limit,
+                 uint32_t order_num, Order *order, ha_rows limit,
                  enum enum_duplicates handle_duplicates, bool ignore);
 bool mysql_prepare_insert(Session *session, TableList *table_list, Table *table,
                           List<Item> &fields, List_item *values,

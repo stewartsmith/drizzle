@@ -6,11 +6,8 @@
 Welcome to Drizzle's documentation!
 ===================================
 
-Drizzle is a community-driven open source project that
-is forked from the popular MySQL database.  
+Drizzle is a transactional, relational, community-driven open source database that is forked from the popular MySQL database.  
 
-The Drizzle team has removed non-essential code, re-factored the remaining
-code and modernized the code base moving to C++.
 
 Introduction:
 
@@ -27,9 +24,24 @@ SQL Language:
 .. toctree::
    :maxdepth: 2
 
+   queries
    ddl
    dml
-   columntypes
+   columntypes 
+   variables 
+   dynamic 
+   getting_information 
+   transactional 
+   administrative 
+
+Advanced Topics:
+  
+.. toctree::
+   :maxdepth: 2
+
+   storage_engines
+   logging
+
 
 Configuration:
 

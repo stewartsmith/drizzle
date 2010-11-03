@@ -22,16 +22,16 @@
 #include <fstream>
 #include <map>
 #include <string>
+#include <iostream>
+
+#include <boost/program_options.hpp>
 
 #include "drizzled/configmake.h"
 #include "drizzled/plugin/authentication.h"
 #include "drizzled/security_context.h"
 #include "drizzled/util/convert.h"
 #include "drizzled/algorithm/sha1.h"
-#include <boost/program_options.hpp>
-#include <drizzled/module/option_map.h>
-#include <drizzled/set_var.h>
-#include <iostream>
+#include "drizzled/module/option_map.h"
 
 namespace po= boost::program_options;
 using namespace std;
@@ -137,8 +137,8 @@ bool AuthFile::loadFile(void)
       password = string(line, password_offset + 1);
     }
 
-    pair<map<string, string>::iterator, bool> result;
-    result = users.insert(pair<string, string>(username, password));
+    pair<map<string, string>::iterator, bool> result=
+      users.insert(pair<string, string>(username, password));
     if (result.second == false)
     {
       error = "Duplicate entry found in users file: ";

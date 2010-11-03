@@ -2,9 +2,11 @@
 # test of how the transaction log treats
 # LOAD DATA INFILE
 
-# Truncate the log file to reset for the next test
+# Ignore startup/shutdown events
+--disable_query_log
 --source ../plugin/transaction_log/tests/t/truncate_log.inc
---echo
+--enable_query_log
+
 
 --echo Testing basic LOAD DATA 
 --disable_warnings

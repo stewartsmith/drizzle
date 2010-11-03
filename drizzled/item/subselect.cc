@@ -268,7 +268,7 @@ bool Item_subselect::walk(Item_processor processor, bool walk_subquery,
     {
       List_iterator<Item> li(lex->item_list);
       Item *item;
-      order_st *order;
+      Order *order;
 
       if (lex->where && (lex->where)->walk(processor, walk_subquery, argument))
         return 1;
@@ -281,12 +281,12 @@ bool Item_subselect::walk(Item_processor processor, bool walk_subquery,
         if (item->walk(processor, walk_subquery, argument))
           return 1;
       }
-      for (order= (order_st*) lex->order_list.first ; order; order= order->next)
+      for (order= (Order*) lex->order_list.first ; order; order= order->next)
       {
         if ((*order->item)->walk(processor, walk_subquery, argument))
           return 1;
       }
-      for (order= (order_st*) lex->group_list.first ; order; order= order->next)
+      for (order= (Order*) lex->group_list.first ; order; order= order->next)
       {
         if ((*order->item)->walk(processor, walk_subquery, argument))
           return 1;
@@ -2039,8 +2039,8 @@ int subselect_single_select_engine::prepare()
 		    select_lex->where,
 		    select_lex->order_list.elements +
 		    select_lex->group_list.elements,
-		    (order_st*) select_lex->order_list.first,
-		    (order_st*) select_lex->group_list.first,
+		    (Order*) select_lex->order_list.first,
+		    (Order*) select_lex->group_list.first,
 		    select_lex->having,
 		    select_lex, select_lex->master_unit()))
     return 1;
