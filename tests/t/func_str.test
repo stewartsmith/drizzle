@@ -470,9 +470,13 @@ select rpad(i, 7, ' ') as t from t1;
 --disable_metadata
 drop table t1;
 
---replace_result $DRIZZLETEST_VARDIR VARDIR
+--disable_query_log
+let $bad_test_file = "$DRIZZLETEST_VARDIR/lkjlkj" ;
+--enable_query_log
+let $replace_substring = `SELECT SUBSTRING($bad_test_file,1,128)`;
+--replace_result $replace_substring DRIZZLETEST_BAD_FILE 
 --error ER_TEXTFILE_NOT_READABLE
-eval select load_file("$DRIZZLETEST_VARDIR/lkjlkj");
+eval select load_file($bad_test_file);
 
 #
 # Bug#18243: REVERSE changes its argument

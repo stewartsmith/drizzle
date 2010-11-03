@@ -52,11 +52,12 @@ enable_query_log;
 # the path to the server under test was long (110+ chars)
 
 --disable_query_log
-eval SET @tmpdir1="$DRIZZLETEST_VARDIR";
+let $bad_test_file ="$DRIZZLETEST_VARDIR/tmp/bad";
 --enable_query_log
---replace_result $DRIZZLETEST_VARDIR VAR
+let $replace_substring = `SELECT SUBSTRING($bad_test_file,1,128)`;
+--replace_result $replace_substring DRIZZLETEST_BAD_FILE $bad_test_file DRIZZLETEST_BAD_FILE
 --error ER_TEXTFILE_NOT_READABLE
-eval select load_file(concat(@tmpdir1,"/bad"));
+eval select load_file($bad_test_file);
 --remove_file $DRIZZLETEST_VARDIR/tmp/outfile-test.1
 --remove_file $DRIZZLETEST_VARDIR/tmp/outfile-test.2
 --remove_file $DRIZZLETEST_VARDIR/tmp/outfile-test.3

@@ -16,8 +16,8 @@ NULL
 ERROR HY000: File 'DRIZZLETEST_VARDIR/tmp/outfile-test.1' already exists
 ERROR HY000: File 'DRIZZLETEST_VARDIR/tmp/outfile-test.2' already exists
 ERROR HY000: File 'DRIZZLETEST_VARDIR/tmp/outfile-test.3' already exists
-select load_file(concat(@tmpdir1,"/bad"));
-ERROR HY000: The file 'VAR/bad' must be in the schema directory or be readable by all
+select load_file(DRIZZLETEST_BAD_FILE);
+ERROR HY000: The file 'DRIZZLETEST_BAD_FILE' must be in the schema directory or be readable by all
 drop table t1;
 select load_file(concat(@tmpdir,"/outfile-test.4"));
 load_file(concat(@tmpdir,"/outfile-test.4"))
