@@ -717,7 +717,7 @@ t
 1000000
 1      
 drop table t1;
-select load_file("DRIZZLETEST_BAD_FILE" );
+select load_file(DRIZZLETEST_BAD_FILE);
 ERROR HY000: The file 'DRIZZLETEST_BAD_FILE' must be in the schema directory or be readable by all
 CREATE TABLE t1 (a varchar(10));
 INSERT INTO t1 VALUES ('abc'), ('xyz');
