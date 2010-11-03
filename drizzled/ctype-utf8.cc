@@ -2111,7 +2111,7 @@ my_wc_mb_utf8mb4(const CHARSET_INFO * const,
   else return MY_CS_ILUNI;
 
   if (r + count > e)
-    return MY_CS_TOOSMALLN(count);
+    return my_cs_toosmalln(count);
 
   switch (count) {
     /* Fall through all cases!!! */
