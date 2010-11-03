@@ -256,30 +256,7 @@ int packed_key_cmp(BlitzTree *tree, const char *a, const char *b,
       a_next_offset = b_next_offset = curr_part->length;
       break;
     }
-    case HA_KEYTYPE_VARTEXT1: {
-      uint8_t a_varchar_len = *(uint8_t *)a_pos;
-      uint8_t b_varchar_len = *(uint8_t *)b_pos;
-      int key_changed;
-
-      a_pos++;
-      b_pos++;
-
-      *a_compared_len += a_varchar_len + sizeof(a_varchar_len);
-      *b_compared_len += b_varchar_len + sizeof(b_varchar_len);
-
-      /* Compare the texts by respecting collation. */
-      key_changed = my_strnncoll(&my_charset_utf8_general_ci,
-                                 (unsigned char *)a_pos, a_varchar_len,
-                                 (unsigned char *)b_pos, b_varchar_len);
-      if (key_changed < 0)
-        return -1;
-      else if (key_changed > 0)
-        return 1;
-
-      a_next_offset = a_varchar_len;
-      b_next_offset = b_varchar_len;
-      break;
-    }
+    case HA_KEYTYPE_VARTEXT1:
     case HA_KEYTYPE_VARTEXT2: {
       uint16_t a_varchar_len = uint2korr(a_pos);
       uint16_t b_varchar_len = uint2korr(b_pos);
