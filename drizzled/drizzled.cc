@@ -2276,8 +2276,8 @@ static void get_options()
 
   if (vm.count("sort-heap-threshold"))
   {
-    if ((vm["sort-heap-threshold"].as<size_t>() > 0) and
-      (vm["sort-heap-threshold"].as<size_t>() < 
+    if ((vm["sort-heap-threshold"].as<uint64_t>() > 0) and
+      (vm["sort-heap-threshold"].as<uint64_t>() < 
       global_system_variables.sortbuff_size))
     {
       cout << N_("Error: sort-heap-threshold cannot be less than sort-buffer-size") << endl;
@@ -2289,8 +2289,8 @@ static void get_options()
 
   if (vm.count("join-heap-threshold"))
   {
-    if ((vm["join-heap-threshold"].as<size_t>() > 0) and
-      (vm["join-heap-threshold"].as<size_t>() <
+    if ((vm["join-heap-threshold"].as<uint64_t>() > 0) and
+      (vm["join-heap-threshold"].as<uint64_t>() <
       global_system_variables.join_buff_size))
     {
       cout << N_("Error: join-heap-threshold cannot be less than join-buffer-size") << endl;
@@ -2302,8 +2302,8 @@ static void get_options()
 
   if (vm.count("read-rnd-threshold"))
   {
-    if ((vm["read-rnd-threshold"].as<size_t>() > 0) and
-      (vm["read-rnd-threshold"].as<size_t>() <
+    if ((vm["read-rnd-threshold"].as<uint64_t>() > 0) and
+      (vm["read-rnd-threshold"].as<uint64_t>() <
       global_system_variables.read_rnd_buff_size))
     {
       cout << N_("Error: read-rnd-threshold cannot be less than read-rnd-buffer-size") << endl;
@@ -2315,8 +2315,8 @@ static void get_options()
 
   if (vm.count("read-buffer-threshold"))
   {
-    if ((vm["read-buffer-threshold"].as<size_t>() > 0) and
-      (vm["read-buffer-threshold"].as<size_t>() <
+    if ((vm["read-buffer-threshold"].as<uint64_t>() > 0) and
+      (vm["read-buffer-threshold"].as<uint64_t>() <
       global_system_variables.read_buff_size))
     {
       cout << N_("Error: read-buffer-threshold cannot be less than read-buffer-size") << endl;
