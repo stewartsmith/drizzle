@@ -1557,8 +1557,6 @@ public:
   int setup_conds(TableList *leaves, COND **conds);
   int lock_tables(TableList *tables, uint32_t count, bool *need_reopen);
 
-  Table *create_virtual_tmp_table(List<CreateField> &field_list);
-  
   drizzled::util::Storable *getProperty(const std::string &arg)
   {
     return life_properties[arg];
