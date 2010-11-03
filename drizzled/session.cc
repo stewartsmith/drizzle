@@ -618,7 +618,7 @@ void Session::exit_cond(const char* old_msg)
 
 bool Session::authenticate()
 {
-  lex_start(this);
+  lex->start(this);
   if (client->authenticate())
     return false;
 
@@ -1520,7 +1520,7 @@ bool select_exists_subselect::send_data(List<Item> &)
 void Session::end_statement()
 {
   /* Cleanup SQL processing state to reuse this statement in next query. */
-  lex_end(lex);
+  lex->end();
   query_cache_key= ""; // reset the cache key
   resetResultsetMessage();
 }

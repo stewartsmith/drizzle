@@ -255,16 +255,6 @@ int set_zone(register int nr, int min_zone, int max_zone)
   return (nr);
 } /* set_zone */
 
-	/* Adjust number to next larger disk buffer */
-
-ulong next_io_size(register ulong pos)
-{
-  register ulong offset;
-  if ((offset= pos & (IO_SIZE-1)))
-    return pos-offset+IO_SIZE;
-  return pos;
-} /* next_io_size */
-
 
 /*
   Store an SQL quoted string.

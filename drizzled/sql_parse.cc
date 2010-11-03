@@ -727,7 +727,7 @@ void create_select_for_variable(const char *var_name)
 void mysql_parse(Session *session, const char *inBuf, uint32_t length)
 {
   uint64_t start_time= my_getsystime();
-  lex_start(session);
+  session->lex->start(session);
   session->reset_for_next_command();
   /* Check if the Query is Cached if and return true if yes
    * TODO the plugin has to make sure that the query is cacheble
