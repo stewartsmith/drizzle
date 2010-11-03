@@ -88,7 +88,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
 
       if (select_lex->setup_ref_array(session, order->elements) ||
 	  setup_order(session, select_lex->ref_pointer_array, &tables,
-                    fields, all_fields, (order_st*) order->first))
+                    fields, all_fields, (Order*) order->first))
       {
         delete select;
         free_underlaid_joins(session, &session->lex->select_lex);
@@ -200,14 +200,14 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
     ha_rows examined_rows;
 
     if ((!select || table->quick_keys.none()) && limit != HA_POS_ERROR)
-      usable_index= optimizer::get_index_for_order(table, (order_st*)(order->first), limit);
+      usable_index= optimizer::get_index_for_order(table, (Order*)(order->first), limit);
 
     if (usable_index == MAX_KEY)
     {
       table->sort.io_cache= new internal::IO_CACHE;
 
 
-      if (!(sortorder= make_unireg_sortorder((order_st*) order->first,
+      if (!(sortorder= make_unireg_sortorder((Order*) order->first,
                                              &length, NULL)) ||
 	  (table->sort.found_records = filesort(session, table, sortorder, length,
                                                 select, HA_POS_ERROR, 1,

@@ -157,6 +157,7 @@ enum_tx_isolation session_tx_isolation(const Session *session)
 Session::Session(plugin::Client *client_arg) :
   Open_tables_state(refresh_version),
   mem_root(&main_mem_root),
+  xa_id(0),
   lex(&main_lex),
   catalog("LOCAL"),
   client(client_arg),

@@ -2,6 +2,12 @@
 # test of various REPLACE statements and
 # how the transaction_log captures the relevant data
 
+# Ignore startup/shutdown events
+--disable_query_log
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
+--enable_query_log
+
+
 
 --echo Testing REPLACE basic 
 --disable_warnings
