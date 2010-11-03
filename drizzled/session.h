@@ -1534,7 +1534,9 @@ public:
                            message::Table &table_proto);
   bool doDoesTableExist(const drizzled::TableIdentifier &identifier);
 
+private:
   void close_temporary_tables();
+public:
   void close_temporary_table(Table *table);
   // The method below just handles the de-allocation of the table. In
   // a better memory type world, this would not be needed.
