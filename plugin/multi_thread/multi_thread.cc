@@ -136,7 +136,7 @@ static int init(drizzled::module::Context &context)
     if (max_threads > 4096 || max_threads < 1)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for max-threads\n"));
-      exit(-1);
+      return 1;
     }
   }
 

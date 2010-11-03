@@ -285,7 +285,6 @@ void TransactionLog::truncate()
     result= ftruncate(log_file, log_offset);
   }
   while (result == -1 && errno == EINTR);
-  drizzled::TransactionServices::singleton().resetTransactionId();
 }
 
 bool TransactionLog::findLogFilenameContainingTransactionId(const ReplicationServices::GlobalTransactionId&,

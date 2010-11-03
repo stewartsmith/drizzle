@@ -5,5 +5,5 @@
 --exec $DRIZZLE test < $DRIZZLETEST_VARDIR/tmp/slap.out
 
 --echo remove tmp file
-#--remove_file  $DRIZZLETEST_VARDIR/tmp/slap.out
+--remove_file  $DRIZZLETEST_VARDIR/tmp/slap.out
 
