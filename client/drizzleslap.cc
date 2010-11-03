@@ -952,7 +952,6 @@ build_table_string(void)
   {
     fprintf(stderr, "Memory Allocation error in creating table\n");
     abort();
-    abort();
   }
   ptr->setType(CREATE_TABLE_TYPE);
   strcpy(ptr->getString(), table_string.c_str());

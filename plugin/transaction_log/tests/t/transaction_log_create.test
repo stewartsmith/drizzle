@@ -2,6 +2,11 @@
 # Test of CREATE TABLE statements and how the transaction log
 # captures / represents them
 
+# Ignore startup/shutdown events
+--disable_query_log
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
+--enable_query_log
+
 --echo Testing simple CREATE
 --disable_warnings
 DROP TABLE IF EXISTS t1;

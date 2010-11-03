@@ -19,7 +19,7 @@ SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) fro
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
 transaction_context {
   server_id: 1
-  transaction_id: 1
+  TRANSACTION_ID
   START_TIMESTAMP
   END_TIMESTAMP
 }
@@ -77,7 +77,7 @@ SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) fro
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
 transaction_context {
   server_id: 1
-  transaction_id: 2
+  TRANSACTION_ID
   START_TIMESTAMP
   END_TIMESTAMP
 }
@@ -169,7 +169,7 @@ SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) fro
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
 transaction_context {
   server_id: 1
-  transaction_id: 5
+  TRANSACTION_ID
   START_TIMESTAMP
   END_TIMESTAMP
 }

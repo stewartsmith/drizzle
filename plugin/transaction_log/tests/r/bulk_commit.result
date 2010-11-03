@@ -2,17 +2,11 @@ CREATE TABLE t (a INT NOT NULL PRIMARY KEY, b VARCHAR(100));
 START TRANSACTION;
 COMMIT;
 
-SELECT server_id, transaction_id, num_statements FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
-server_id	transaction_id	num_statements
-1	1	1
-1	2	1
-1	2	1
-
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log', ENTRY_OFFSET) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 PRINT_TRANSACTION_MESSAGE('transaction.log', ENTRY_OFFSET)
 transaction_context {
   server_id: 1
-  transaction_id: 1
+  TRANSACTION_ID
   START_TIMESTAMP
   END_TIMESTAMP
 }
@@ -75,7 +69,7 @@ statement {
 
 transaction_context {
   server_id: 1
-  transaction_id: 2
+  TRANSACTION_ID
   START_TIMESTAMP
   END_TIMESTAMP
 }
@@ -55353,7 +55347,7 @@ statement {
 
 transaction_context {
   server_id: 1
-  transaction_id: 2
+  TRANSACTION_ID
   START_TIMESTAMP
   END_TIMESTAMP
 }

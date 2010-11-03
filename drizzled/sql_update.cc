@@ -128,7 +128,7 @@ static void prepare_record_for_error_message(int error, Table *table)
 
 int mysql_update(Session *session, TableList *table_list,
                  List<Item> &fields, List<Item> &values, COND *conds,
-                 uint32_t order_num, order_st *order,
+                 uint32_t order_num, Order *order,
                  ha_rows limit, enum enum_duplicates,
                  bool ignore)
 {
@@ -629,7 +629,7 @@ err:
     true  error
 */
 bool mysql_prepare_update(Session *session, TableList *table_list,
-			 Item **conds, uint32_t order_num, order_st *order)
+			 Item **conds, uint32_t order_num, Order *order)
 {
   List<Item> all_fields;
   Select_Lex *select_lex= &session->lex->select_lex;

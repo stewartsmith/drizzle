@@ -648,7 +648,7 @@ public:
   bool setup_ref_array(Session *session, uint32_t order_group_num);
   void print(Session *session, String *str, enum_query_type query_type);
   static void print_order(String *str,
-                          order_st *order,
+                          Order *order,
                           enum_query_type query_type);
   void print_limit(Session *session, String *str, enum_query_type query_type);
   void fix_prepare_information(Session *session, Item **conds, Item **having_conds);
