@@ -206,6 +206,11 @@ void Lex_input_stream::body_utf8_append_literal(const LEX_STRING *txt,
   Because of this, it's critical to not do too much things here.
   (We already do too much here)
 */
+void LEX::start(Session *arg)
+{
+  lex_start(arg);
+}
+
 void lex_start(Session *session)
 {
   LEX *lex= session->lex;

@@ -1007,6 +1007,7 @@ public:
     return sum_expr_used;
   }
 
+  void start(Session *session);
   void end();
 
 private: 
