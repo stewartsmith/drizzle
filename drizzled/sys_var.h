@@ -23,12 +23,6 @@
 #include <string>
 #include <boost/filesystem.hpp>
 
-/*
-#include "drizzled/function/func.h"
-#include "drizzled/function/set_user_var.h"
-#include "drizzled/item/string.h"
-#include "drizzled/item/field.h"
-*/
 #include "drizzled/constrained_value.h"
 #include "drizzled/set_var.h"
 #include "drizzled/show_type.h"
@@ -429,18 +423,6 @@ public:
 };
 
 template<>
-inline bool sys_var_constrained_value<const uint64_t>::is_readonly() const
-{
-  return true;
-}
-
-template<>
-inline bool sys_var_constrained_value<const uint32_t>::is_readonly() const
-{
-  return true;
-}
-
-template<>
 inline SHOW_TYPE sys_var_constrained_value<uint64_t>::show_type()
 {
   return SHOW_LONGLONG;
@@ -478,17 +460,28 @@ inline bool sys_var_constrained_value<uint32_t>::update(Session *, set_var *var)
   return false;
 }
 
-template<>
-inline unsigned char *sys_var_constrained_value<const uint64_t>::value_ptr(Session *, sql_var_t, const LEX_STRING *)
+template<class T>
+class sys_var_constrained_value_readonly :
+  public sys_var_constrained_value<T>
 {
-  return (unsigned char*)&basic_value;
-}
+public:
+  sys_var_constrained_value_readonly(const char *name_arg,
+                                     constrained_value<T> &value_arg) :
+    sys_var_constrained_value<T>(name_arg, value_arg)
+  { }
 
-template<>
-inline unsigned char *sys_var_constrained_value<const uint32_t>::value_ptr(Session *, sql_var_t, const LEX_STRING *)
-{
-  return (unsigned char*)&basic_value;
-}
+  sys_var_constrained_value_readonly(const char *name_arg,
+                                     constrained_value<T> &value_arg,
+                                     T default_value_arg) :
+    sys_var_constrained_value<T>(name_arg, value_arg, default_value_arg)
+  { }
+
+public:
+  bool is_readonly() const
+  {
+    return true;
+  }
+};
 
 class sys_var_const_string :
   public sys_var
