@@ -103,6 +103,7 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 #include <boost/program_options.hpp>
+#include <drizzled/atomics.h>
 
 #define SLAP_VERSION "1.5"
 
@@ -131,6 +132,8 @@ boost::mutex timer_alarm_mutex;
 boost::condition_variable_any timer_alarm_threshold;
 
 std::vector < std::string > primary_keys;
+
+drizzled::atomic<size_t> connection_count;
 
 static string host, 
   opt_password, 
@@ -1673,7 +1676,9 @@ static int run_query(drizzle_con_st &con, drizzle_result_st *result,
 
   if (opt_only_print)
   {
-    printf("%.*s;\n", len, query);
+    printf("/* CON: %lu */ %.*s;\n",
+           (size_t)drizzle_context(drizzle_con_drizzle(&con)),
+           len, query);
     return 0;
   }
 
@@ -1780,7 +1785,9 @@ static void create_schema(drizzle_con_st &con, const char *db, Statement *stmt, 
 
   if (opt_only_print)
   {
-    printf("use %s;\n", db);
+    printf("/* CON: %lu */ use %s;\n",
+           (size_t)drizzle_context(drizzle_con_drizzle(&con)),
+           db);
   }
   else
   {
@@ -2348,9 +2355,6 @@ void statement_cleanup(Statement *stmt)
 
 void slap_close(drizzle_con_st &con)
 {
-  if (opt_only_print)
-    return;
-
   drizzle_free(drizzle_con_drizzle(&con));
 }
 
@@ -2361,9 +2365,6 @@ void slap_connect(drizzle_con_st &con, bool connect_to_schema)
   int connect_error= 1;
   drizzle_return_t ret;
   drizzle_st *drizzle;
-
-  if (opt_only_print)
-    return;
 
   if (opt_delayed_start)
     usleep(random()%opt_delayed_start);
@@ -2378,6 +2379,11 @@ void slap_connect(drizzle_con_st &con, bool connect_to_schema)
     fprintf(stderr,"%s: Error creating drizzle object\n", internal::my_progname);
     abort();
   }
+
+  drizzle_set_context(drizzle, (void*)(connection_count.fetch_and_increment()));
+
+  if (opt_only_print)
+    return;
 
   for (uint32_t x= 0; x < 10; x++)
   {
