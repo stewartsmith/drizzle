@@ -3212,6 +3212,8 @@ static int haildb_init(drizzled::module::Context &context)
   context.registerVariable(new sys_var_constrained_value_readonly<size_t>("buffer_pool_size", innobase_buffer_pool_size));
   context.registerVariable(new sys_var_bool_ptr_readonly("checksums",
                                                          &innobase_use_checksums));
+  context.registerVariable(new sys_var_bool_ptr_readonly("doublewrite",
+                                                         &innobase_use_doublewrite));
   context.registerVariable(new sys_var_const_string_val("data_home_dir",
                                                 vm.count("data-home-dir") ?  vm["data-home-dir"].as<string>() : ""));
 
@@ -3343,12 +3345,6 @@ static void haildb_status_file_update(Session*, drizzle_sys_var*,
   if (err == DB_SUCCESS)
     innobase_create_status_file= status_file_enabled;
 }
-
-static DRIZZLE_SYSVAR_BOOL(doublewrite, innobase_use_doublewrite,
-  PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
-  "Enable HailDB doublewrite buffer (enabled by default). "
-  "Disable with --skip-haildb-doublewrite.",
-  NULL, NULL, true);
 
 static DRIZZLE_SYSVAR_ULONG(io_capacity, srv_io_capacity,
   PLUGIN_VAR_RQCMDARG,
@@ -3585,7 +3581,6 @@ static void init_options(drizzled::module::option_context &context)
 }
 
 static drizzle_sys_var* innobase_system_variables[]= {
-  DRIZZLE_SYSVAR(doublewrite),
   DRIZZLE_SYSVAR(io_capacity),
   DRIZZLE_SYSVAR(fast_shutdown),
   DRIZZLE_SYSVAR(file_per_table),
