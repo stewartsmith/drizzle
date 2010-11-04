@@ -2818,8 +2818,6 @@ free_err:
   return err;
 }
 
-static bool  innobase_use_checksums= true;
-static char*  innobase_data_home_dir      = NULL;
 static char*  innobase_log_group_home_dir   = NULL;
 static bool innobase_use_doublewrite= true;
 static unsigned long srv_io_capacity= 200;
@@ -2848,6 +2846,8 @@ typedef constrained_check<size_t, SIZE_MAX, 5242880, 1048576> buffer_pool_constr
 static buffer_pool_constraint innobase_buffer_pool_size;
 typedef constrained_check<size_t, SIZE_MAX, 512, 1024> additional_mem_pool_constraint;
 static additional_mem_pool_constraint innobase_additional_mem_pool_size;
+static bool  innobase_use_checksums= true;
+
 static long innobase_open_files;
 static long innobase_force_recovery;
 static long innobase_log_buffer_size;
@@ -3016,11 +3016,6 @@ static int haildb_init(drizzled::module::Context &context)
     }
   }
 
-  if (vm.count("data-home-dir"))
-  {
-    innobase_data_home_dir= const_cast<char *>(vm["data-home-dir"].as<string>().c_str());
-  }
-
   if (vm.count("file-format"))
   {
     innobase_file_format_name= const_cast<char *>(vm["file-format"].as<string>().c_str());
@@ -3047,9 +3042,10 @@ static int haildb_init(drizzled::module::Context &context)
   if (err != DB_SUCCESS)
     goto haildb_error;
 
-  if (innobase_data_home_dir)
+
+  if (vm.count("data-home-dir"))
   {
-    err= ib_cfg_set_text("data_home_dir", innobase_data_home_dir);
+    err= ib_cfg_set_text("data_home_dir", vm["data-home-dir"].as<string>().c_str());
     if (err != DB_SUCCESS)
       goto haildb_error;
   }
@@ -3214,6 +3210,10 @@ static int haildb_init(drizzled::module::Context &context)
   context.registerVariable(new sys_var_constrained_value_readonly<size_t>("additional_mem_pool_size",innobase_additional_mem_pool_size));
   context.registerVariable(new sys_var_constrained_value_readonly<unsigned int>("autoextend_increment", srv_auto_extend_increment));
   context.registerVariable(new sys_var_constrained_value_readonly<size_t>("buffer_pool_size", innobase_buffer_pool_size));
+  context.registerVariable(new sys_var_bool_ptr_readonly("checksums",
+                                                         &innobase_use_checksums));
+  context.registerVariable(new sys_var_const_string_val("data_home_dir",
+                                                vm.count("data-home-dir") ?  vm["data-home-dir"].as<string>() : ""));
 
   haildb_datadict_dump_func_initialize(context);
   config_table_function_initialize(context);
@@ -3343,17 +3343,6 @@ static void haildb_status_file_update(Session*, drizzle_sys_var*,
   if (err == DB_SUCCESS)
     innobase_create_status_file= status_file_enabled;
 }
-
-static DRIZZLE_SYSVAR_BOOL(checksums, innobase_use_checksums,
-  PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
-  "Enable HailDB checksums validation (enabled by default). "
-  "Disable with --skip-haildb-checksums.",
-  NULL, NULL, true);
-
-static DRIZZLE_SYSVAR_STR(data_home_dir, innobase_data_home_dir,
-  PLUGIN_VAR_READONLY,
-  "The common part for HailDB table spaces.",
-  NULL, NULL, NULL);
 
 static DRIZZLE_SYSVAR_BOOL(doublewrite, innobase_use_doublewrite,
   PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
@@ -3596,8 +3585,6 @@ static void init_options(drizzled::module::option_context &context)
 }
 
 static drizzle_sys_var* innobase_system_variables[]= {
-  DRIZZLE_SYSVAR(checksums),
-  DRIZZLE_SYSVAR(data_home_dir),
   DRIZZLE_SYSVAR(doublewrite),
   DRIZZLE_SYSVAR(io_capacity),
   DRIZZLE_SYSVAR(fast_shutdown),
