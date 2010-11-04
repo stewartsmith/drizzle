@@ -1,6 +1,6 @@
-=============
+==========================
 A Brief History Of Drizzle
-=============
+==========================
 
 Drizzle was forked by Brian Aker in 2008 after the Sun Acqusition of MySQL
 by Sun Microsystems. It was announced in 2008 at the O'Reilly Open Source

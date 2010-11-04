@@ -1,6 +1,6 @@
-=============
+================
 What is Drizzle?
-=============
+================
 
 Drizzle is a micro-kernel designed database system with relational and
 durability goals built into the kernel as a default design. It supports a
