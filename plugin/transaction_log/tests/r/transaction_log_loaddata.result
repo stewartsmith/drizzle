@@ -1,7 +1,7 @@
 Testing basic LOAD DATA 
 DROP TABLE IF EXISTS t1;
 CREATE TABLE t1 (a INT NOT NULL AUTO_INCREMENT, b CHAR(50), PRIMARY KEY(a) );
-LOAD DATA INFILE '../../std_data_ln/translogloaddata.dat' into table t1 ;
+LOAD DATA INFILE 'DRIZZLETEST_VARDIR/std_data_ln/translogloaddata.dat' into table t1 ;
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
