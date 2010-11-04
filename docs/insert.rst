@@ -1,5 +1,5 @@
 Inserting Data
-========
+==============
 
 In Dizzle you can make use of INSERT in order to insert data into a table.
 

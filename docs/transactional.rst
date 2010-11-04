@@ -1,5 +1,5 @@
 Using transactions
-=================
+==================
 
 .. toctree::
    :maxdepth: 2
