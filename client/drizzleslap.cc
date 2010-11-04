@@ -133,7 +133,7 @@ boost::condition_variable_any timer_alarm_threshold;
 
 std::vector < std::string > primary_keys;
 
-drizzled::atomic<uint32_t> connection_count;
+drizzled::atomic<size_t> connection_count;
 
 static string host, 
   opt_password, 
@@ -195,7 +195,7 @@ static uint64_t num_of_query;
 static uint64_t auto_generate_sql_number;
 string concurrency_str;
 string create_string;
-std::vector <size_t> concurrency;
+std::vector <uint32_t> concurrency;
 
 std::string opt_csv_str;
 int csv_file;
@@ -1672,8 +1672,8 @@ static int run_query(drizzle_con_st &con, drizzle_result_st *result,
 
   if (opt_only_print)
   {
-    printf("/* CON: %d */ %.*s;\n",
-           drizzle_context(drizzle_con_drizzle(&con)),
+    printf("/* CON: %lu */ %.*s;\n",
+           (size_t)drizzle_context(drizzle_con_drizzle(&con)),
            len, query);
     return 0;
   }
@@ -1781,8 +1781,8 @@ static void create_schema(drizzle_con_st &con, const char *db, Statement *stmt, 
 
   if (opt_only_print)
   {
-    printf("/* CON: %u */ use %s;\n",
-           drizzle_context(drizzle_con_drizzle(&con)),
+    printf("/* CON: %lu */ use %s;\n",
+           (size_t)drizzle_context(drizzle_con_drizzle(&con)),
            db);
   }
   else
