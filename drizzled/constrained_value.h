@@ -94,8 +94,8 @@ public:
 };
 
 template<class T,
-  T MAXVAL= std::numeric_limits<T>::max(),
-  T MINVAL= std::numeric_limits<T>::min(), unsigned int ALIGN= 1>
+  T MAXVAL,
+  T MINVAL, unsigned int ALIGN= 1>
 class constrained_check :
   public constrained_value<T>
 {
