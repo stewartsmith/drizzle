@@ -95,15 +95,7 @@ int Table::delete_table(bool free_share)
 
   if (free_share)
   {
-    if (getShare()->getType() == message::Table::STANDARD)
-    {
-      TableShare::release(getMutableShare());
-    }
-    else
-    {
-      delete getShare();
-    }
-    setShare(NULL);
+    release();
   }
 
   return error;

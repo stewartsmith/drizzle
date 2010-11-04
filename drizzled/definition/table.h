@@ -52,6 +52,7 @@ const static std::string STANDARD_STRING("STANDARD");
 const static std::string TEMPORARY_STRING("TEMPORARY");
 const static std::string INTERNAL_STRING("INTERNAL");
 const static std::string FUNCTION_STRING("FUNCTION");
+const static std::string NO_PROTOBUFFER_AVAILABLE("NO PROTOBUFFER AVAILABLE");
 
 namespace plugin
 {
@@ -399,17 +400,24 @@ public:
 
   const std::string &getTableTypeAsString() const
   {
-    switch (table_proto->type())
+    if (table_proto)
     {
-    default:
-    case message::Table::STANDARD:
-      return STANDARD_STRING;
-    case message::Table::TEMPORARY:
-      return TEMPORARY_STRING;
-    case message::Table::INTERNAL:
-      return INTERNAL_STRING;
-    case message::Table::FUNCTION:
-      return FUNCTION_STRING;
+      switch (table_proto->type())
+      {
+      default:
+      case message::Table::STANDARD:
+        return STANDARD_STRING;
+      case message::Table::TEMPORARY:
+        return TEMPORARY_STRING;
+      case message::Table::INTERNAL:
+        return INTERNAL_STRING;
+      case message::Table::FUNCTION:
+        return FUNCTION_STRING;
+      }
+    }
+    else
+    {
+      return NO_PROTOBUFFER_AVAILABLE;
     }
   }
 
