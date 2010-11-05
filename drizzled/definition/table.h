@@ -172,7 +172,7 @@ public:
 
 private:
   memory::Root mem_root;
-public:
+
   void *alloc_root(size_t arg)
   {
     return mem_root.alloc_root(arg);
@@ -188,7 +188,6 @@ public:
     return &mem_root;
   }
 
-private:
   std::vector<std::string> _keynames;
 
   void addKeyName(std::string arg)
