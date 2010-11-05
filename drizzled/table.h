@@ -385,6 +385,8 @@ public:
   virtual bool hasShare() const= 0; /* Get rid of this long term */
   virtual void setShare(TableShare *new_share)= 0; /* Get rid of this long term */
 
+  virtual void release(void)= 0;
+
   uint32_t sizeKeys() { return getMutableShare()->sizeKeys(); }
   uint32_t sizeFields() { return getMutableShare()->sizeFields(); }
   uint32_t getRecordLength() const { return getShare()->getRecordLength(); }
@@ -629,13 +631,20 @@ public:
 
   friend std::ostream& operator<<(std::ostream& output, const Table &table)
   {
-    output << "Table:(";
-    output << table.getShare()->getSchemaName();
-    output << ", ";
-    output <<  table.getShare()->getTableName();
-    output << ", ";
-    output <<  table.getShare()->getTableTypeAsString();
-    output << ")";
+    if (table.getShare())
+    {
+      output << "Table:(";
+      output << table.getShare()->getSchemaName();
+      output << ", ";
+      output <<  table.getShare()->getTableName();
+      output << ", ";
+      output <<  table.getShare()->getTableTypeAsString();
+      output << ")";
+    }
+    else
+    {
+      output << "Table:(has no share)";
+    }
 
     return output;  // for multiple << operators.
   }

@@ -48,6 +48,11 @@ public:
   {
     return true;
   }
+
+  void release(void)
+  {
+    TableShare::release(getMutableShare());
+  }
 };
 
 } /* namespace table */

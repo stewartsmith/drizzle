@@ -194,5 +194,22 @@ retry:
   return 0;
 }
 
+void table::Concurrent::release(void)
+{
+  // During an ALTER TABLE we could see the proto go away when the
+  // definition is pushed out of this table object. In this case we would
+  // not release from the cache because we were not in the cache. We just
+  // delete if this happens.
+  if (getShare()->getType() == message::Table::STANDARD)
+  {
+    TableShare::release(getMutableShare());
+  }
+  else
+  {
+    delete _share;
+  }
+  _share= NULL;
+}
+
 } /* namespace table */
 } /* namespace drizzled */
