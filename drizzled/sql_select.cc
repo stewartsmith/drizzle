@@ -61,6 +61,8 @@
 #include "drizzled/optimizer/quick_range_select.h"
 #include "drizzled/optimizer/quick_ror_intersect_select.h"
 
+#include "drizzled/filesort.h"
+
 using namespace std;
 
 namespace drizzled
@@ -5006,9 +5008,10 @@ int create_sort_index(Session *session, Join *join, Order *order, ha_rows fileso
     return(0);
   for (Order *ord= join->order; ord; ord= ord->next)
     length++;
-  if (!(join->sortorder=
-        make_unireg_sortorder(order, &length, join->sortorder)))
-    goto err;
+  if (!(join->sortorder= make_unireg_sortorder(order, &length, join->sortorder)))
+  {
+    return(-1);
+  }
 
   table->sort.io_cache= new internal::IO_CACHE;
   table->status=0;				// May be wrong if quick_select
@@ -5043,16 +5046,18 @@ int create_sort_index(Session *session, Join *join, Order *order, ha_rows fileso
                                                                  &tab->ref,
                                                                  tab->found_records))))
       {
-        goto err;
+	return(-1);
       }
     }
   }
 
   if (table->getShare()->getType())
     table->cursor->info(HA_STATUS_VARIABLE);	// Get record count
-  table->sort.found_records=filesort(session, table,join->sortorder, length,
-                                     select, filesort_limit, 0,
-                                     &examined_rows);
+
+  FileSort filesort(*session);
+  table->sort.found_records=filesort.run(table,join->sortorder, length,
+					 select, filesort_limit, 0,
+					 &examined_rows);
   tab->records= table->sort.found_records;	// For SQL_CALC_ROWS
   if (select)
   {
@@ -5070,9 +5075,8 @@ int create_sort_index(Session *session, Join *join, Order *order, ha_rows fileso
     table->key_read=0;
     table->cursor->extra(HA_EXTRA_NO_KEYREAD);
   }
+
   return(table->sort.found_records == HA_POS_ERROR);
-err:
-  return(-1);
 }
 
 int remove_dup_with_compare(Session *session, Table *table, Field **first_field, uint32_t offset, Item *having)

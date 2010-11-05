@@ -30,6 +30,7 @@
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/iocache.h"
 #include "drizzled/transaction_services.h"
+#include "drizzled/filesort.h"
 
 #include <boost/dynamic_bitset.hpp>
 #include <list>
@@ -313,13 +314,14 @@ int mysql_update(Session *session, TableList *table_list,
       uint32_t         length= 0;
       SortField  *sortorder;
       ha_rows examined_rows;
+      FileSort filesort(*session);
 
-      table->sort.io_cache = new internal::IO_CACHE;
+      table->sort.io_cache= new internal::IO_CACHE;
 
       if (!(sortorder=make_unireg_sortorder(order, &length, NULL)) ||
-          (table->sort.found_records= filesort(session, table, sortorder, length,
-                                               select, limit, 1,
-                                               &examined_rows))
+	  (table->sort.found_records= filesort.run(table, sortorder, length,
+						   select, limit, 1,
+						   &examined_rows))
           == HA_POS_ERROR)
       {
 	goto err;

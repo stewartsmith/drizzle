@@ -93,6 +93,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/field/varstring.h \
 			      drizzled/field_iterator.h \
 			      drizzled/file_exchange.h \
+			      drizzled/filesort.h \
 			      drizzled/filesort_info.h \
 			      drizzled/foreign_key.h \
 			      drizzled/function_container.h \
