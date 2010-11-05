@@ -10,6 +10,4 @@ USE test;
 
 # Test for join buffer constraint
 --error 1703
-select SQL_BIG_RESULT * from t1 join t2 on (t1.charcol1 = t2.charcol2), (select SQL_BIG_RESULT * from t1 join t2 on (t1.charcol1 = t2.charcol2)) as t3;
-
-~                                                           
+select SQL_BIG_RESULT * from t1 join t2 on (t1.charcol1 = t2.charcol2) join t2 as t3 on (t1.charcol1 = t3.charcol2);

@@ -89,7 +89,7 @@ int join_init_cache(Session *session, JoinTable *tables, uint32_t table_count)
   if (!(cache->field=(CacheField*)
         memory::sql_alloc(sizeof(CacheField)*(cache->fields+table_count*2)+(blobs+1)* sizeof(CacheField*))))
   {
-    size= max((size_t) session->variables.join_buff_size, (size_t)cache->length);
+    size= cache->end - cache->buff;
     global_join_buffer.sub(size);
     free((unsigned char*) cache->buff);
     cache->buff=0;

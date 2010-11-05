@@ -51,6 +51,7 @@
 #include "drizzled/index_hint.h"
 #include "drizzled/records.h"
 #include "drizzled/internal/iocache.h"
+#include "drizzled/drizzled.h"
 
 #include "drizzled/sql_union.h"
 #include "drizzled/optimizer/key_field.h"
@@ -1216,7 +1217,11 @@ void JoinTable::cleanup()
   delete quick;
   quick= 0;
   if (cache.buff)
+  {
+    size_t size= cache.end - cache.buff;
+    global_join_buffer.sub(size);
     free(cache.buff);
+  }
   cache.buff= 0;
   limit= 0;
   if (table)
