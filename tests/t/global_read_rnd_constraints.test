@@ -1,7 +1,7 @@
 # Test is disabled because drizzleslap error code is now different on different platforms
 
 # Setup table for tests
-#USE test;
+USE test;
 
 #--source include/setup-global-constraints.inc
 
