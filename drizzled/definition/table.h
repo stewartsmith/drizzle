@@ -172,7 +172,7 @@ public:
 
 private:
   memory::Root mem_root;
-public:
+
   void *alloc_root(size_t arg)
   {
     return mem_root.alloc_root(arg);
@@ -188,7 +188,6 @@ public:
     return &mem_root;
   }
 
-private:
   std::vector<std::string> _keynames;
 
   void addKeyName(std::string arg)
@@ -294,6 +293,7 @@ public:
     return private_key_for_cache.size();
   }
 
+private:
   void setPath(char *str_arg, uint32_t size_arg)
   {
     path.str= str_arg;
@@ -305,6 +305,7 @@ public:
     normalized_path.str= str_arg;
     normalized_path.length= size_arg;
   }
+public:
 
   const char *getTableName() const
   {
