@@ -98,6 +98,13 @@ libdrizzle:
    libdrizzle/api.rst
    libdrizzle/developer.rst
 
+Testing:
+
+.. toctree::
+   :maxdepth: 2
+ 
+   testing/test-run.rst
+
 Indices and tables
 ==================
 

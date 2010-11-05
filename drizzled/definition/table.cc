@@ -2097,7 +2097,7 @@ Field *TableShare::make_field(unsigned char *ptr,
   case DRIZZLE_TYPE_VARCHAR:
     setVariableWidth();
     return new (&mem_root) Field_varstring(ptr,field_length,
-                                      HA_VARCHAR_PACKLENGTH(field_length),
+                                      ha_varchar_packlength(field_length),
                                       null_pos,null_bit,
                                       field_name,
                                       field_charset);

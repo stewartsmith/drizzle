@@ -31,10 +31,19 @@ namespace drizzled
 	Check stack size; Send error if there isn't enough stack to continue
 ****************************************************************************/
 #if defined(STACK_DIRECTION) && (STACK_DIRECTION < 0)
-#define used_stack(A,B) (long) (A - B)
+static const bool stack_direction_negative = true;
 #else
-#define used_stack(A,B) (long) (B - A)
+static const bool stack_direction_negative = false;
 #endif
+
+template <typename A_T, typename B_T>
+inline static long used_stack(A_T A, B_T B)
+{
+  if (stack_direction_negative)
+    return (long) (A - B);
+  else
+    return (long) (B - A);
+}
 
 extern size_t my_thread_stack_size;
 
