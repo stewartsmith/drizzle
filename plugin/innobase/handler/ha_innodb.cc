@@ -8287,7 +8287,11 @@ uint64_t InnobaseEngine::doGetNewTransactionId(Session *session)
   trx->id= trx_sys_get_new_trx_id();
   mutex_exit(&kernel_mutex);
 
-  return (ib_uint64_t) ut_conv_dulint_to_longlong(trx->id);
+  uint64_t transaction_id= (ib_uint64_t) ut_conv_dulint_to_longlong(trx->id);
+
+  trx_free_for_mysql(trx);
+
+  return transaction_id;
 }
 
 /*******************************************************************//**
