@@ -190,6 +190,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/generator/session.h \
 			      drizzled/generator/table.h \
 			      drizzled/gettext.h \
+			      drizzled/global_buffer.h \
 			      drizzled/global_charset_info.h \
 			      drizzled/ha_statistics.h \
 			      drizzled/handler_structs.h \

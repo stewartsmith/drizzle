@@ -29,6 +29,7 @@
 #include <queue>
 #include <algorithm>
 
+#include "drizzled/drizzled.h"
 #include "drizzled/sql_sort.h"
 #include "drizzled/error.h"
 #include "drizzled/probes.h"
@@ -41,6 +42,8 @@
 #include "drizzled/internal/my_sys.h"
 #include "plugin/myisam/myisam.h"
 #include "drizzled/plugin/transactional_storage_engine.h"
+#include "drizzled/atomics.h"
+#include "drizzled/global_buffer.h"
 
 using namespace std;
 
@@ -136,8 +139,9 @@ ha_rows filesort(Session *session, Table *table, SortField *sortorder, uint32_t 
                  bool sort_positions, ha_rows *examined_rows)
 {
   int error;
-  uint32_t memavl, min_sort_memory;
+  uint32_t memavl= 0, min_sort_memory;
   uint32_t maxbuffer;
+  size_t allocated_sort_memory= 0;
   buffpek *buffpek_inst;
   ha_rows records= HA_POS_ERROR;
   unsigned char **sort_keys= 0;
@@ -247,10 +251,20 @@ ha_rows filesort(Session *session, Table *table, SortField *sortorder, uint32_t 
     uint32_t old_memavl;
     uint32_t keys= memavl/(param.rec_length+sizeof(char*));
     param.keys= (uint32_t) min(records+1, (ha_rows)keys);
+
+    allocated_sort_memory= param.keys * param.rec_length;
+    if (not global_sort_buffer.add(allocated_sort_memory))
+    {
+      my_error(ER_OUT_OF_GLOBAL_SORTMEMORY, MYF(ME_ERROR+ME_WAITTANG));
+      goto err;
+    }
+
     if ((table_sort.sort_keys=
 	 (unsigned char **) make_char_array((char **) table_sort.sort_keys,
                                             param.keys, param.rec_length)))
       break;
+
+    global_sort_buffer.sub(allocated_sort_memory);
     old_memavl= memavl;
     if ((memavl= memavl/4*3) < min_sort_memory && old_memavl > min_sort_memory)
       memavl= min_sort_memory;
@@ -261,6 +275,7 @@ ha_rows filesort(Session *session, Table *table, SortField *sortorder, uint32_t 
     my_error(ER_OUT_OF_SORTMEMORY,MYF(ME_ERROR+ME_WAITTANG));
     goto err;
   }
+
   if (open_cached_file(&buffpek_pointers,drizzle_tmpdir.c_str(),TEMP_PREFIX,
 		       DISK_BUFFER_SIZE, MYF(MY_WME)))
     goto err;
@@ -357,6 +372,7 @@ ha_rows filesort(Session *session, Table *table, SortField *sortorder, uint32_t 
     session->status_var.filesort_rows+= (uint32_t) records;
   }
   *examined_rows= param.examined_rows;
+  global_sort_buffer.sub(allocated_sort_memory);
   memcpy(&table->sort, &table_sort, sizeof(filesort_info));
   DRIZZLE_FILESORT_DONE(error, records);
   return (error ? HA_POS_ERROR : records);

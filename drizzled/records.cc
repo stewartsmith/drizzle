@@ -27,6 +27,7 @@
 #include "drizzled/optimizer/range.h"
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/iocache.h"
+#include "drizzled/drizzled.h"
 
 namespace drizzled
 {
@@ -172,6 +173,7 @@ void ReadRecord::end_read_record()
 {                   /* free cache if used */
   if (cache)
   {
+    global_read_rnd_buffer.sub(session->variables.read_rnd_buff_size);
     free((char*) cache);
     cache= NULL;
   }
@@ -401,6 +403,12 @@ bool ReadRecord::init_rr_cache()
                         (reclength + struct_length));
   local_rec_cache_size= cache_records * reclength;
   rec_cache_size= cache_records * ref_length;
+
+  if (not global_read_rnd_buffer.add(session->variables.read_rnd_buff_size))
+  {
+    my_error(ER_OUT_OF_GLOBAL_READRNDMEMORY, MYF(ME_ERROR+ME_WAITTANG));
+    return false;
+  }
 
   // We have to allocate one more byte to use uint3korr (see comments for it)
   if (cache_records <= 2 ||
