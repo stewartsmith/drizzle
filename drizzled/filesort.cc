@@ -68,12 +68,6 @@ static void make_sortkey(SORTPARAM *param,
                          unsigned char *to,
                          unsigned char *ref_pos);
 static void register_used_fields(SORTPARAM *param);
-static int merge_index(SORTPARAM *param,
-                       unsigned char *sort_buffer,
-		       buffpek *buffpek,
-		       uint32_t maxbuffer,
-                       internal::IO_CACHE *tempfile,
-		       internal::IO_CACHE *outfile);
 static bool save_index(SORTPARAM *param,
                        unsigned char **sort_keys,
                        uint32_t count,
@@ -1013,8 +1007,8 @@ static bool save_index(SORTPARAM *param, unsigned char **sort_keys, uint32_t cou
 
 /** Merge buffers to make < MERGEBUFF2 buffers. */
 
-int merge_many_buff(SORTPARAM *param, unsigned char *sort_buffer,
-		    buffpek *buffpek_inst, uint32_t *maxbuffer, internal::IO_CACHE *t_file)
+int FileSort::merge_many_buff(SORTPARAM *param, unsigned char *sort_buffer,
+                              buffpek *buffpek_inst, uint32_t *maxbuffer, internal::IO_CACHE *t_file)
 {
   internal::IO_CACHE t_file2,*from_file,*to_file,*temp;
   buffpek *lastbuff;
@@ -1088,8 +1082,7 @@ cleanup:
     (uint32_t)-1 if something goes wrong
 */
 
-uint32_t read_to_buffer(internal::IO_CACHE *fromfile, buffpek *buffpek_inst,
-                        uint32_t rec_length)
+uint32_t FileSort::read_to_buffer(internal::IO_CACHE *fromfile, buffpek *buffpek_inst, uint32_t rec_length)
 {
   register uint32_t count;
   uint32_t length;
@@ -1142,10 +1135,10 @@ class compare_functor
     other  error
 */
 
-int merge_buffers(SORTPARAM *param, internal::IO_CACHE *from_file,
-                  internal::IO_CACHE *to_file, unsigned char *sort_buffer,
-                  buffpek *lastbuff, buffpek *Fb, buffpek *Tb,
-                  int flag)
+int FileSort::merge_buffers(SORTPARAM *param, internal::IO_CACHE *from_file,
+                            internal::IO_CACHE *to_file, unsigned char *sort_buffer,
+                            buffpek *lastbuff, buffpek *Fb, buffpek *Tb,
+                            int flag)
 {
   int error;
   uint32_t rec_length,res_length,offset;
@@ -1157,10 +1150,10 @@ int merge_buffers(SORTPARAM *param, internal::IO_CACHE *from_file,
   buffpek *buffpek_inst;
   qsort2_cmp cmp;
   void *first_cmp_arg;
-  volatile Session::killed_state *killed= &current_session->killed;
+  volatile Session::killed_state *killed= &getSession().killed;
   Session::killed_state not_killable;
 
-  current_session->status_var.filesort_merge_passes++;
+  getSession().status_var.filesort_merge_passes++;
   if (param->not_killable)
   {
     killed= &not_killable;
@@ -1355,14 +1348,15 @@ end:
 
 	/* Do a merge to output-file (save only positions) */
 
-static int merge_index(SORTPARAM *param, unsigned char *sort_buffer,
-		       buffpek *buffpek_inst, uint32_t maxbuffer,
-		       internal::IO_CACHE *tempfile, internal::IO_CACHE *outfile)
+int FileSort::merge_index(SORTPARAM *param, unsigned char *sort_buffer,
+                          buffpek *buffpek_inst, uint32_t maxbuffer,
+                          internal::IO_CACHE *tempfile, internal::IO_CACHE *outfile)
 {
   if (merge_buffers(param,tempfile,outfile,sort_buffer,buffpek_inst,buffpek_inst,
 		    buffpek_inst+maxbuffer,1))
-    return(1);
-  return(0);
+    return 1;
+
+  return 0;
 } /* merge_index */
 
 

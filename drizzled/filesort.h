@@ -53,6 +53,28 @@ class FileSort {
                         internal::IO_CACHE *buffpek_pointers,
                         internal::IO_CACHE *tempfile, internal::IO_CACHE *indexfile);
 
+  int merge_buffers(SORTPARAM *param,internal::IO_CACHE *from_file,
+                    internal::IO_CACHE *to_file, unsigned char *sort_buffer,
+                    buffpek *lastbuff,
+                    buffpek *Fb,
+                    buffpek *Tb,int flag);
+
+  int merge_index(SORTPARAM *param,
+                  unsigned char *sort_buffer,
+                  buffpek *buffpek,
+                  uint32_t maxbuffer,
+                  internal::IO_CACHE *tempfile,
+                  internal::IO_CACHE *outfile);
+
+  int merge_many_buff(SORTPARAM *param, unsigned char *sort_buffer,
+                      buffpek *buffpek,
+                      uint32_t *maxbuffer, internal::IO_CACHE *t_file);
+
+  uint32_t read_to_buffer(internal::IO_CACHE *fromfile, buffpek *buffpek,
+                          uint32_t sort_length);
+
+
+
 public:
 
   FileSort(Session &arg);
