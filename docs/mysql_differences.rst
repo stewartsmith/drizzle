@@ -5,7 +5,10 @@ Notable MySQL Differences
 Drizzle was forked from the (now defunct) MySQL 6.0 tree. Since then there
 have been a lot of changes. Some areas are similar, others unrecognisable.
 
-This section aims to explore some of the notable differences between
+This section aims to explore some of the notable differences between MySQL
+and Drizzle.
+
+This section was originally adapted from the Drizzle Wiki.
 
 Usage
 -----
