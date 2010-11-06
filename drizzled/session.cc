@@ -923,7 +923,7 @@ void select_to_file::send_error(uint32_t errcode,const char *err)
   my_message(errcode, err, MYF(0));
   if (file > 0)
   {
-    (void) end_io_cache(cache);
+    (void) cache->end_io_cache();
     (void) internal::my_close(file, MYF(0));
     (void) internal::my_delete(path.file_string().c_str(), MYF(0));		// Delete file on error
     file= -1;
@@ -933,7 +933,7 @@ void select_to_file::send_error(uint32_t errcode,const char *err)
 
 bool select_to_file::send_eof()
 {
-  int error= test(end_io_cache(cache));
+  int error= test(cache->end_io_cache());
   if (internal::my_close(file, MYF(MY_WME)))
     error= 1;
   if (!error)
@@ -955,7 +955,7 @@ void select_to_file::cleanup()
   /* In case of error send_eof() may be not called: close the file here. */
   if (file >= 0)
   {
-    (void) end_io_cache(cache);
+    (void) cache->end_io_cache();
     (void) internal::my_close(file, MYF(0));
     file= -1;
   }
@@ -1053,7 +1053,7 @@ static int create_file(Session *session,
   if ((file= internal::my_create(target_path.file_string().c_str(), 0666, O_WRONLY|O_EXCL, MYF(MY_WME))) < 0)
     return file;
   (void) fchmod(file, 0666);			// Because of umask()
-  if (init_io_cache(cache, file, 0L, internal::WRITE_CACHE, 0L, 1, MYF(MY_WME)))
+  if (cache->init_io_cache(file, 0L, internal::WRITE_CACHE, 0L, 1, MYF(MY_WME)))
   {
     internal::my_close(file, MYF(0));
     internal::my_delete(target_path.file_string().c_str(), MYF(0));  // Delete file on error, it was just created
@@ -1584,25 +1584,6 @@ bool Session::set_db(const std::string &new_db)
   return false;
 }
 
-
-
-
-/**
-  Check the killed state of a user thread
-  @param session  user thread
-  @retval 0 the user thread is active
-  @retval 1 the user thread has been killed
-*/
-int session_killed(const Session *session)
-{
-  return(session->killed);
-}
-
-
-const struct charset_info_st *session_charset(Session *session)
-{
-  return(session->charset());
-}
 
 /**
   Mark transaction to rollback and mark error as fatal to a sub-statement.

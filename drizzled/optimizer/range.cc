@@ -397,7 +397,7 @@ void optimizer::SqlSelect::cleanup()
     delete cond;
     cond= 0;
   }
-  close_cached_file(file);
+  file->close_cached_file();
 }
 
 

@@ -204,7 +204,7 @@ int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages,
 	goto err;
     }
     if (internal::flush_io_cache(&tempfile) ||
-	internal::reinit_io_cache(&tempfile,internal::READ_CACHE,0L,0,0))
+	tempfile.reinit_io_cache(internal::READ_CACHE,0L,0,0))
       goto err;
     if (!no_messages)
       printf("  - Last merge and dumping keys\n");
@@ -222,11 +222,13 @@ int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages,
     uint32_t     keyno=info->key;
     uint32_t     key_length, ref_length=idx->s->rec_reflength;
 
-    if (!no_messages)
+    if (not no_messages)
       printf("  - Adding exceptions\n");
-    if (flush_io_cache(&tempfile_for_exceptions) ||
-	reinit_io_cache(&tempfile_for_exceptions,internal::READ_CACHE,0L,0,0))
+
+    if (flush_io_cache(&tempfile_for_exceptions) || tempfile_for_exceptions.reinit_io_cache(internal::READ_CACHE,0L,0,0))
+    {
       goto err;
+    }
 
     while (!my_b_read(&tempfile_for_exceptions,(unsigned char*)&key_length,
 		      sizeof(key_length))
@@ -244,8 +246,8 @@ err:
   if (sort_keys)
     free((unsigned char*) sort_keys);
   delete_dynamic(&buffpek);
-  close_cached_file(&tempfile);
-  close_cached_file(&tempfile_for_exceptions);
+  tempfile.close_cached_file();
+  tempfile_for_exceptions.close_cached_file();
 
   return(error ? -1 : 0);
 } /* _create_index_by_sort */
@@ -357,8 +359,8 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
        i < sort_info->total_keys ;
        i++,
 	 delete_dynamic(&sinfo->buffpek),
-	 close_cached_file(&sinfo->tempfile),
-	 close_cached_file(&sinfo->tempfile_for_exceptions),
+	 sinfo->tempfile.close_cached_file(),
+	 sinfo->tempfile_for_exceptions.close_cached_file(),
 	 sinfo++)
   {
     if (got_error)
@@ -406,8 +408,7 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
           continue;
         }
       }
-      if (flush_io_cache(&sinfo->tempfile) ||
-          reinit_io_cache(&sinfo->tempfile,internal::READ_CACHE,0L,0,0))
+      if (flush_io_cache(&sinfo->tempfile) || sinfo->tempfile.reinit_io_cache(internal::READ_CACHE,0L,0,0))
       {
         got_error=1;
         continue;
@@ -430,8 +431,7 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
       if (param->testflag & T_VERBOSE)
         printf("Key %d  - Dumping 'long' keys\n", sinfo->key+1);
 
-      if (flush_io_cache(&sinfo->tempfile_for_exceptions) ||
-          reinit_io_cache(&sinfo->tempfile_for_exceptions,internal::READ_CACHE,0L,0,0))
+      if (flush_io_cache(&sinfo->tempfile_for_exceptions) || sinfo->tempfile_for_exceptions.reinit_io_cache(internal::READ_CACHE,0L,0,0))
       {
         got_error=1;
         continue;
@@ -576,8 +576,8 @@ static int  merge_many_buff(MI_SORT_PARAM *info, uint32_t keys,
   from_file= t_file ; to_file= &t_file2;
   while (*maxbuffer >= MERGEBUFF2)
   {
-    reinit_io_cache(from_file,internal::READ_CACHE,0L,0,0);
-    reinit_io_cache(to_file,internal::WRITE_CACHE,0L,0,0);
+    from_file->reinit_io_cache(internal::READ_CACHE,0L,0,0);
+    to_file->reinit_io_cache(internal::WRITE_CACHE,0L,0,0);
     lastbuff=buffpek;
     for (i=0 ; i <= *maxbuffer-MERGEBUFF*3/2 ; i+=MERGEBUFF)
     {
@@ -594,7 +594,7 @@ static int  merge_many_buff(MI_SORT_PARAM *info, uint32_t keys,
     *maxbuffer= (int) (lastbuff-buffpek)-1;
   }
 cleanup:
-  close_cached_file(to_file);                   /* This holds old result */
+  to_file->close_cached_file();                   /* This holds old result */
   if (to_file == t_file)
     *t_file=t_file2;                            /* Copy result file */
 

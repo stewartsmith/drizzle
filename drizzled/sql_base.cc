@@ -143,7 +143,7 @@ void Table::free_io_cache()
 {
   if (sort.io_cache)
   {
-    close_cached_file(sort.io_cache);
+    sort.io_cache->close_cached_file();
     delete sort.io_cache;
     sort.io_cache= 0;
   }

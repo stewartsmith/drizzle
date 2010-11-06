@@ -1290,7 +1290,7 @@ innobase_get_charset(
 /*=================*/
   void* mysql_session)  /*!< in: MySQL thread handle */
 {
-  return session_charset(static_cast<Session*>(mysql_session));
+  return static_cast<Session*>(mysql_session)->charset();
 }
 
 extern "C" UNIV_INTERN
@@ -1805,7 +1805,7 @@ trx_is_interrupted(
 /*===============*/
   trx_t*  trx)  /*!< in: transaction */
 {
-  return(trx && trx->mysql_thd && session_killed((Session*) trx->mysql_thd));
+  return(trx && trx->mysql_thd && static_cast<Session*>(trx->mysql_thd)->killed);
 }
 
 /**************************************************************//**

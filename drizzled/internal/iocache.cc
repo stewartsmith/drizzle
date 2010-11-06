@@ -28,71 +28,72 @@ namespace drizzled
 namespace internal
 {
 
-	/*
-	** Open tempfile cached by IO_CACHE
-	** Should be used when no seeks are done (only reinit_io_buff)
-	** Return false if cache is inited ok
-	** The actual file is created when the IO_CACHE buffer gets filled
-	** If dir is not given, use TMPDIR.
-	*/
+/*
+** Open tempfile cached by st_io_cache
+** Should be used when no seeks are done (only reinit_io_buff)
+** Return false if cache is inited ok
+** The actual file is created when the st_io_cache buffer gets filled
+** If dir is not given, use TMPDIR.
+*/
 
-bool open_cached_file(IO_CACHE *cache, const char* dir, const char *prefix,
-                         size_t cache_size, myf cache_myflags)
+bool open_cached_file(st_io_cache *cache, const char *dir_arg, const char *prefix_arg,
+		      size_t cache_size_arg, myf cache_myflags)
 {
-  cache->dir=	 dir ? strdup(dir) : (char*) 0;
-  cache->prefix= (prefix ? strdup(prefix) :
-		 (char*) 0);
+  cache->dir=	 dir_arg ? strdup(dir_arg) : (char*) 0;
+  cache->prefix= (prefix_arg ? strdup(prefix_arg) : (char*) 0);
+
   if ((cache->dir == NULL) || (cache->prefix == NULL))
     return true;
-  cache->file_name=0;
-  cache->buffer=0;				/* Mark that not open */
-  if (!init_io_cache(cache,-1,cache_size,WRITE_CACHE,0L,0,
-		     MYF(cache_myflags | MY_NABP)))
+
+  cache->file_name= 0;
+  cache->buffer= 0;				/* Mark that not open */
+  if (not cache->init_io_cache(-1, cache_size_arg,WRITE_CACHE,0L,0, MYF(cache_myflags | MY_NABP)))
   {
     return false;
   }
   free(cache->dir);
   free(cache->prefix);
+
   return true;
 }
 
-	/* Create the temporary file */
+/* Create the temporary file */
 
-bool real_open_cached_file(IO_CACHE *cache)
+bool st_io_cache::real_open_cached_file()
 {
   char name_buff[FN_REFLEN];
-  int error=1;
-  if ((cache->file=create_temp_file(name_buff, cache->dir, cache->prefix, MYF(MY_WME))) >= 0)
+
+  if ((file= create_temp_file(name_buff, dir, prefix, MYF(MY_WME))) >= 0)
   {
-    error=0;
     my_delete(name_buff,MYF(MY_WME | ME_NOINPUT));
+    return false;
   }
-  return(error);
+
+  return true;
 }
 
 
-void close_cached_file(IO_CACHE *cache)
+void st_io_cache::close_cached_file()
 {
-  if (my_b_inited(cache))
+  if (my_b_inited(this))
   {
-    int file=cache->file;
-    cache->file= -1;				/* Don't flush data */
-    (void) end_io_cache(cache);
-    if (file >= 0)
+    int _file= file;
+    file= -1;				/* Don't flush data */
+    (void) end_io_cache();
+    if (_file >= 0)
     {
-      (void) my_close(file,MYF(0));
+      (void) my_close(_file, MYF(0));
 #ifdef CANT_DELETE_OPEN_FILES
-      if (cache->file_name)
+      if (file_name)
       {
-	(void) my_delete(cache->file_name,MYF(MY_WME | ME_NOINPUT));
-	free(cache->file_name);
+	(void) my_delete(file_name, MYF(MY_WME | ME_NOINPUT));
+	free(file_name);
       }
 #endif
     }
-    free(cache->dir);
-    free(cache->prefix);
+    free(dir);
+    free(prefix);
   }
-  return;
 }
 
 } /* namespace internal */

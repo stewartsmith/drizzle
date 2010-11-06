@@ -46,10 +46,10 @@ drizzled_internal_libinternal_la_SOURCES= \
 					  drizzled/internal/default.cc \
 					  drizzled/internal/dtoa.cc \
 					  drizzled/internal/int2str.cc \
+					  drizzled/internal/iocache.cc \
 					  drizzled/internal/llstr.cc \
 					  drizzled/internal/longlong2str.cc \
 					  drizzled/internal/mf_arr_appstr.cc \
-					  drizzled/internal/mf_cache.cc \
 					  drizzled/internal/mf_dirname.cc \
 					  drizzled/internal/mf_fn_ext.cc \
 					  drizzled/internal/mf_format.cc \
