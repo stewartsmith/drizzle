@@ -1512,7 +1512,7 @@ copy_data_between_tables(Session *session,
           !(sortorder= make_unireg_sortorder(order, &length, NULL)) ||
           (from->sort.found_records= filesort.run(from, sortorder, length,
                                                   (optimizer::SqlSelect *) 0, HA_POS_ERROR,
-                                                  1, &examined_rows)) == HA_POS_ERROR)
+                                                  1, examined_rows)) == HA_POS_ERROR)
       {
         goto err;
       }

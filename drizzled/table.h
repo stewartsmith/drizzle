@@ -447,6 +447,7 @@ public:
   void restoreRecordAsDefault();
   void emptyRecord();
 
+
   /* See if this can be blown away */
   inline uint32_t getDBStat () { return db_stat; }
   inline uint32_t setDBStat () { return db_stat; }
@@ -848,16 +849,6 @@ void change_byte(unsigned char *,uint,char,char);
 
 namespace optimizer { class SqlSelect; }
 
-ha_rows filesort(Session *session,
-                 Table *form,
-                 SortField *sortorder,
-                 uint32_t s_length,
-                 optimizer::SqlSelect *select,
-                 ha_rows max_rows,
-                 bool sort_positions,
-                 ha_rows *examined_rows);
-
-void filesort_free_buffers(Table *table, bool full);
 void change_double_for_sort(double nr,unsigned char *to);
 double my_double_round(double value, int64_t dec, bool dec_unsigned,
                        bool truncate);

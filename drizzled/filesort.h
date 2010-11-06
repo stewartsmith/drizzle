@@ -42,31 +42,33 @@ namespace optimizer {
 class SqlSelect;
 }
 
+class SortParam;
+
 class FileSort {
   Session &_session;
 
   uint32_t sortlength(SortField *sortorder, uint32_t s_length, bool *multi_byte_charset);
   sort_addon_field *get_addon_fields(Field **ptabfield, uint32_t sortlength, uint32_t *plength);
-  ha_rows find_all_keys(SORTPARAM *param, 
+  ha_rows find_all_keys(SortParam *param, 
                         optimizer::SqlSelect *select,
                         unsigned char **sort_keys,
                         internal::IO_CACHE *buffpek_pointers,
                         internal::IO_CACHE *tempfile, internal::IO_CACHE *indexfile);
 
-  int merge_buffers(SORTPARAM *param,internal::IO_CACHE *from_file,
+  int merge_buffers(SortParam *param,internal::IO_CACHE *from_file,
                     internal::IO_CACHE *to_file, unsigned char *sort_buffer,
                     buffpek *lastbuff,
                     buffpek *Fb,
                     buffpek *Tb,int flag);
 
-  int merge_index(SORTPARAM *param,
+  int merge_index(SortParam *param,
                   unsigned char *sort_buffer,
                   buffpek *buffpek,
                   uint32_t maxbuffer,
                   internal::IO_CACHE *tempfile,
                   internal::IO_CACHE *outfile);
 
-  int merge_many_buff(SORTPARAM *param, unsigned char *sort_buffer,
+  int merge_many_buff(SortParam *param, unsigned char *sort_buffer,
                       buffpek *buffpek,
                       uint32_t *maxbuffer, internal::IO_CACHE *t_file);
 
@@ -86,7 +88,7 @@ public:
 
   ha_rows run(Table *table, SortField *sortorder, uint32_t s_length,
               optimizer::SqlSelect *select, ha_rows max_rows,
-              bool sort_positions, ha_rows *examined_rows);
+              bool sort_positions, ha_rows &examined_rows);
 
 };
 

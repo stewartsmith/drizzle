@@ -52,6 +52,24 @@ public:
     record_pointers(0),
     found_records()
   { }
+
+  filesort_info(const filesort_info& arg) {
+    io_cache= arg.io_cache;
+    sort_keys= arg.sort_keys;
+    buffpek= arg.buffpek;
+    buffpek_len= arg.buffpek_len;
+    addon_buf= arg.addon_buf;
+    addon_length= arg.addon_length;
+    addon_field= arg.addon_field;
+    unpack= arg.unpack;
+    record_pointers= arg.record_pointers;
+    found_records= arg.found_records;
+  }
+
+  ~filesort_info()
+  {
+  }
+
 };
 
 } /* namespace drizzled */

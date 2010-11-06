@@ -5062,7 +5062,7 @@ int create_sort_index(Session *session, Join *join, Order *order, ha_rows fileso
   FileSort filesort(*session);
   table->sort.found_records=filesort.run(table,join->sortorder, length,
 					 select, filesort_limit, 0,
-					 &examined_rows);
+					 examined_rows);
   tab->records= table->sort.found_records;	// For SQL_CALC_ROWS
   if (select)
   {

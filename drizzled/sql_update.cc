@@ -321,8 +321,7 @@ int mysql_update(Session *session, TableList *table_list,
       if (!(sortorder=make_unireg_sortorder(order, &length, NULL)) ||
 	  (table->sort.found_records= filesort.run(table, sortorder, length,
 						   select, limit, 1,
-						   &examined_rows))
-          == HA_POS_ERROR)
+						   examined_rows)) == HA_POS_ERROR)
       {
 	goto err;
       }

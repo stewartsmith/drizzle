@@ -1677,4 +1677,38 @@ bool Table::fill_item_list(List<Item> *item_list) const
   return false;
 }
 
+
+void Table::filesort_free_buffers(bool full)
+{
+  if (sort.record_pointers)
+  {
+    free((unsigned char*) sort.record_pointers);
+    sort.record_pointers=0;
+  }
+  if (full)
+  {
+    if (sort.sort_keys )
+    {
+      if ((unsigned char*) sort.sort_keys)
+        free((unsigned char*) sort.sort_keys);
+      sort.sort_keys= 0;
+    }
+    if (sort.buffpek)
+    {
+      if ((unsigned char*) sort.buffpek)
+        free((unsigned char*) sort.buffpek);
+      sort.buffpek= 0;
+      sort.buffpek_len= 0;
+    }
+  }
+
+  if (sort.addon_buf)
+  {
+    free((char *) sort.addon_buf);
+    free((char *) sort.addon_field);
+    sort.addon_buf=0;
+    sort.addon_field=0;
+  }
+}
+
 } /* namespace drizzled */
