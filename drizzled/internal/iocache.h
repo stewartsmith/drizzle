@@ -189,6 +189,10 @@ struct st_io_cache    /* Used when cacheing files */
                        bool use_async_io,
                        bool clear_cache);
   void setup_io_cache();
+  bool open_cached_file(const char *dir,
+                        const char *prefix, size_t cache_size,
+                        myf cache_myflags);
+
 };
 
 typedef struct st_io_cache IO_CACHE;    /* Used when cacheing files */
@@ -201,10 +205,6 @@ extern int my_block_write(st_io_cache *info, const unsigned char *Buffer,
 extern int my_b_flush_io_cache(st_io_cache *info, int need_append_buffer_lock);
 
 #define flush_io_cache(info) my_b_flush_io_cache((info),1)
-
-extern bool open_cached_file(st_io_cache *cache,const char *dir,
-                             const char *prefix, size_t cache_size,
-                             myf cache_myflags);
 
 } /* namespace internal */
 } /* namespace drizzled */

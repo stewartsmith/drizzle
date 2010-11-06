@@ -36,23 +36,23 @@ namespace internal
 ** If dir is not given, use TMPDIR.
 */
 
-bool open_cached_file(st_io_cache *cache, const char *dir_arg, const char *prefix_arg,
+bool st_io_cache::open_cached_file(const char *dir_arg, const char *prefix_arg,
 		      size_t cache_size_arg, myf cache_myflags)
 {
-  cache->dir=	 dir_arg ? strdup(dir_arg) : (char*) 0;
-  cache->prefix= (prefix_arg ? strdup(prefix_arg) : (char*) 0);
+  dir=	 dir_arg ? strdup(dir_arg) : (char*) 0;
+  prefix= (prefix_arg ? strdup(prefix_arg) : (char*) 0);
 
-  if ((cache->dir == NULL) || (cache->prefix == NULL))
+  if ((dir == NULL) || (prefix == NULL))
     return true;
 
-  cache->file_name= 0;
-  cache->buffer= 0;				/* Mark that not open */
-  if (not cache->init_io_cache(-1, cache_size_arg,WRITE_CACHE,0L,0, MYF(cache_myflags | MY_NABP)))
+  file_name= 0;
+  buffer= 0;				/* Mark that not open */
+  if (not init_io_cache(-1, cache_size_arg,WRITE_CACHE,0L,0, MYF(cache_myflags | MY_NABP)))
   {
     return false;
   }
-  free(cache->dir);
-  free(cache->prefix);
+  free(dir);
+  free(prefix);
 
   return true;
 }

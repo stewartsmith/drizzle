@@ -443,8 +443,8 @@ bool st_io_cache::reinit_io_cache(enum cache_type type_arg,
  */
 static int _my_b_read(register st_io_cache *info, unsigned char *Buffer, size_t Count)
 {
-  size_t length,diff_length,left_length, max_length;
-  my_off_t pos_in_file;
+  size_t length_local,diff_length,left_length, max_length;
+  my_off_t pos_in_file_local;
 
   if ((left_length= (size_t) (info->read_end-info->read_pos)))
   {
@@ -455,7 +455,7 @@ static int _my_b_read(register st_io_cache *info, unsigned char *Buffer, size_t 
   }
 
   /* pos_in_file always point on where info->buffer was read */
-  pos_in_file=info->pos_in_file+ (size_t) (info->read_end - info->buffer);
+  pos_in_file_local=info->pos_in_file+ (size_t) (info->read_end - info->buffer);
 
   /*
     Whenever a function which operates on st_io_cache flushes/writes
@@ -465,7 +465,7 @@ static int _my_b_read(register st_io_cache *info, unsigned char *Buffer, size_t 
   */
   if (info->seek_not_done)
   {
-    if ((lseek(info->file,pos_in_file,SEEK_SET) != MY_FILEPOS_ERROR))
+    if ((lseek(info->file,pos_in_file_local,SEEK_SET) != MY_FILEPOS_ERROR))
     {
       /* No error, reset seek_not_done flag. */
       info->seek_not_done= 0;
@@ -483,34 +483,33 @@ static int _my_b_read(register st_io_cache *info, unsigned char *Buffer, size_t 
     }
   }
 
-  diff_length= (size_t) (pos_in_file & (IO_SIZE-1));
+  diff_length= (size_t) (pos_in_file_local & (IO_SIZE-1));
   if (Count >= (size_t) (IO_SIZE+(IO_SIZE-diff_length)))
   {					/* Fill first intern buffer */
     size_t read_length;
-    if (info->end_of_file <= pos_in_file)
+    if (info->end_of_file <= pos_in_file_local)
     {					/* End of file */
       info->error= (int) left_length;
       return(1);
     }
-    length=(Count & (size_t) ~(IO_SIZE-1))-diff_length;
-    if ((read_length= my_read(info->file,Buffer, length, info->myflags))
-	!= length)
+    length_local=(Count & (size_t) ~(IO_SIZE-1))-diff_length;
+    if ((read_length= my_read(info->file,Buffer, length_local, info->myflags)) != length_local)
     {
       info->error= (read_length == (size_t) -1 ? -1 :
 		    (int) (read_length+left_length));
       return(1);
     }
-    Count-=length;
-    Buffer+=length;
-    pos_in_file+=length;
-    left_length+=length;
+    Count-= length_local;
+    Buffer+= length_local;
+    pos_in_file_local+= length_local;
+    left_length+= length_local;
     diff_length=0;
   }
 
   max_length= info->read_length-diff_length;
   if (info->type != READ_FIFO &&
-      max_length > (info->end_of_file - pos_in_file))
-    max_length= (size_t) (info->end_of_file - pos_in_file);
+      max_length > (info->end_of_file - pos_in_file_local))
+    max_length= (size_t) (info->end_of_file - pos_in_file_local);
   if (!max_length)
   {
     if (Count)
@@ -518,22 +517,22 @@ static int _my_b_read(register st_io_cache *info, unsigned char *Buffer, size_t 
       info->error= static_cast<int>(left_length);	/* We only got this many char */
       return(1);
     }
-    length=0;				/* Didn't read any chars */
+     length_local=0;				/* Didn't read any chars */
   }
-  else if ((length= my_read(info->file,info->buffer, max_length,
+  else if (( length_local= my_read(info->file,info->buffer, max_length,
                             info->myflags)) < Count ||
-	   length == (size_t) -1)
+	    length_local == (size_t) -1)
   {
-    if (length != (size_t) -1)
-      memcpy(Buffer, info->buffer, length);
-    info->pos_in_file= pos_in_file;
-    info->error= length == (size_t) -1 ? -1 : (int) (length+left_length);
+    if ( length_local != (size_t) -1)
+      memcpy(Buffer, info->buffer,  length_local);
+    info->pos_in_file= pos_in_file_local;
+    info->error=  length_local == (size_t) -1 ? -1 : (int) ( length_local+left_length);
     info->read_pos=info->read_end=info->buffer;
     return(1);
   }
   info->read_pos=info->buffer+Count;
-  info->read_end=info->buffer+length;
-  info->pos_in_file=pos_in_file;
+  info->read_end=info->buffer+ length_local;
+  info->pos_in_file=pos_in_file_local;
   memcpy(Buffer, info->buffer, Count);
   return(0);
 }
@@ -555,7 +554,7 @@ static int _my_b_read(register st_io_cache *info, unsigned char *Buffer, size_t 
  */
 int _my_b_async_read(register st_io_cache *info, unsigned char *Buffer, size_t Count)
 {
-  size_t length,read_length,diff_length,left_length,use_length,org_Count;
+  size_t length_local,read_length,diff_length,left_length,use_length,org_Count;
   size_t max_length;
   my_off_t next_pos_in_file;
   unsigned char *read_buffer;
@@ -616,13 +615,13 @@ int _my_b_async_read(register st_io_cache *info, unsigned char *Buffer, size_t C
       }
     }
 	/* Copy found bytes to buffer */
-    length=min(Count,read_length);
-    memcpy(Buffer,info->read_pos,(size_t) length);
-    Buffer+=length;
-    Count-=length;
-    left_length+=length;
+    length_local=min(Count,read_length);
+    memcpy(Buffer,info->read_pos,(size_t) length_local);
+    Buffer+=length_local;
+    Count-=length_local;
+    left_length+=length_local;
     info->read_end=info->rc_pos+read_length;
-    info->read_pos+=length;
+    info->read_pos+=length_local;
   }
   else
     next_pos_in_file=(info->pos_in_file+ (size_t)
@@ -743,7 +742,7 @@ int _my_b_get(st_io_cache *info)
  */
 int _my_b_write(register st_io_cache *info, const unsigned char *Buffer, size_t Count)
 {
-  size_t rest_length,length;
+  size_t rest_length,length_local;
 
   if (info->pos_in_file+info->buffer_length > info->end_of_file)
   {
@@ -761,7 +760,7 @@ int _my_b_write(register st_io_cache *info, const unsigned char *Buffer, size_t 
     return 1;
   if (Count >= IO_SIZE)
   {					/* Fill first intern buffer */
-    length=Count & (size_t) ~(IO_SIZE-1);
+    length_local=Count & (size_t) ~(IO_SIZE-1);
     if (info->seek_not_done)
     {
       /*
@@ -777,12 +776,12 @@ int _my_b_write(register st_io_cache *info, const unsigned char *Buffer, size_t 
       }
       info->seek_not_done=0;
     }
-    if (my_write(info->file, Buffer, length, info->myflags | MY_NABP))
+    if (my_write(info->file, Buffer, length_local, info->myflags | MY_NABP))
       return info->error= -1;
 
-    Count-=length;
-    Buffer+=length;
-    info->pos_in_file+=length;
+    Count-=length_local;
+    Buffer+=length_local;
+    info->pos_in_file+=length_local;
   }
   memcpy(info->write_pos,Buffer,(size_t) Count);
   info->write_pos+=Count;
@@ -798,7 +797,7 @@ int _my_b_write(register st_io_cache *info, const unsigned char *Buffer, size_t 
 int my_block_write(register st_io_cache *info, const unsigned char *Buffer, size_t Count,
 		   my_off_t pos)
 {
-  size_t length;
+  size_t length_local;
   int error=0;
 
   if (pos < info->pos_in_file)
@@ -807,28 +806,28 @@ int my_block_write(register st_io_cache *info, const unsigned char *Buffer, size
     if (pos + Count <= info->pos_in_file)
       return (pwrite(info->file, Buffer, Count, pos) == 0);
     /* Write the part of the block that is before buffer */
-    length= (uint32_t) (info->pos_in_file - pos);
-    if (pwrite(info->file, Buffer, length, pos) == 0)
+    length_local= (uint32_t) (info->pos_in_file - pos);
+    if (pwrite(info->file, Buffer, length_local, pos) == 0)
       info->error= error= -1;
-    Buffer+=length;
-    pos+=  length;
-    Count-= length;
+    Buffer+=length_local;
+    pos+=  length_local;
+    Count-= length_local;
   }
 
   /* Check if we want to write inside the used part of the buffer.*/
-  length= (size_t) (info->write_end - info->buffer);
-  if (pos < info->pos_in_file + length)
+  length_local= (size_t) (info->write_end - info->buffer);
+  if (pos < info->pos_in_file + length_local)
   {
     size_t offset= (size_t) (pos - info->pos_in_file);
-    length-=offset;
-    if (length > Count)
-      length=Count;
-    memcpy(info->buffer+offset, Buffer, length);
-    Buffer+=length;
-    Count-= length;
-    /* Fix length of buffer if the new data was larger */
-    if (info->buffer+length > info->write_pos)
-      info->write_pos=info->buffer+length;
+    length_local-=offset;
+    if (length_local > Count)
+      length_local=Count;
+    memcpy(info->buffer+offset, Buffer, length_local);
+    Buffer+=length_local;
+    Count-= length_local;
+    /* Fix length_local of buffer if the new data was larger */
+    if (info->buffer+length_local > info->write_pos)
+      info->write_pos=info->buffer+length_local;
     if (!Count)
       return (error);
   }
@@ -844,9 +843,9 @@ int my_block_write(register st_io_cache *info, const unsigned char *Buffer, size
  */
 int my_b_flush_io_cache(st_io_cache *info, int need_append_buffer_lock)
 {
-  size_t length;
+  size_t length_local;
   bool append_cache= false;
-  my_off_t pos_in_file;
+  my_off_t pos_in_file_local;
 
   if (info->type == WRITE_CACHE || append_cache)
   {
@@ -857,16 +856,16 @@ int my_b_flush_io_cache(st_io_cache *info, int need_append_buffer_lock)
     }
     lock_append_buffer(info, need_append_buffer_lock);
 
-    if ((length=(size_t) (info->write_pos - info->write_buffer)))
+    if ((length_local=(size_t) (info->write_pos - info->write_buffer)))
     {
-      pos_in_file=info->pos_in_file;
+      pos_in_file_local=info->pos_in_file;
       /*
 	If we have append cache, we always open the file with
 	O_APPEND which moves the pos to EOF automatically on every write
       */
       if (!append_cache && info->seek_not_done)
       {					/* File touched, do seek */
-	if (lseek(info->file,pos_in_file,SEEK_SET) == MY_FILEPOS_ERROR)
+	if (lseek(info->file,pos_in_file_local,SEEK_SET) == MY_FILEPOS_ERROR)
 	{
 	  unlock_append_buffer(info, need_append_buffer_lock);
 	  return((info->error= -1));
@@ -875,18 +874,18 @@ int my_b_flush_io_cache(st_io_cache *info, int need_append_buffer_lock)
 	  info->seek_not_done=0;
       }
       if (!append_cache)
-	info->pos_in_file+=length;
+	info->pos_in_file+=length_local;
       info->write_end= (info->write_buffer+info->buffer_length-
-			((pos_in_file+length) & (IO_SIZE-1)));
+			((pos_in_file_local+length_local) & (IO_SIZE-1)));
 
-      if (my_write(info->file,info->write_buffer,length,
+      if (my_write(info->file,info->write_buffer,length_local,
 		   info->myflags | MY_NABP))
 	info->error= -1;
       else
 	info->error= 0;
       if (!append_cache)
       {
-        set_if_bigger(info->end_of_file,(pos_in_file+length));
+        set_if_bigger(info->end_of_file,(pos_in_file_local+length_local));
       }
       else
       {

@@ -328,7 +328,7 @@ ha_rows FileSort::run(Table *table, SortField *sortorder, uint32_t s_length,
     goto err;
   }
 
-  if (open_cached_file(&buffpek_pointers,drizzle_tmpdir.c_str(),TEMP_PREFIX, DISK_BUFFER_SIZE, MYF(MY_WME)))
+  if (buffpek_pointers.open_cached_file(drizzle_tmpdir.c_str(),TEMP_PREFIX, DISK_BUFFER_SIZE, MYF(MY_WME)))
   {
     goto err;
   }
@@ -367,7 +367,7 @@ ha_rows FileSort::run(Table *table, SortField *sortorder, uint32_t s_length,
     table_sort.buffpek_len= maxbuffer;
     buffpek_pointers.close_cached_file();
 	/* Open cached file if it isn't open */
-    if (! my_b_inited(outfile) && open_cached_file(outfile,drizzle_tmpdir.c_str(),TEMP_PREFIX,READ_RECORD_BUFFER, MYF(MY_WME)))
+    if (! my_b_inited(outfile) && outfile->open_cached_file(drizzle_tmpdir.c_str(),TEMP_PREFIX,READ_RECORD_BUFFER, MYF(MY_WME)))
     {
       goto err;
     }
@@ -721,7 +721,7 @@ int SortParam::write_keys(register unsigned char **sort_keys, uint32_t count,
 
   internal::my_string_ptr_sort((unsigned char*) sort_keys, (uint32_t) count, sort_length);
   if (!my_b_inited(tempfile) &&
-      open_cached_file(tempfile, drizzle_tmpdir.c_str(), TEMP_PREFIX, DISK_BUFFER_SIZE, MYF(MY_WME)))
+      tempfile->open_cached_file(drizzle_tmpdir.c_str(), TEMP_PREFIX, DISK_BUFFER_SIZE, MYF(MY_WME)))
   {
     return 1;
   }
@@ -1082,7 +1082,7 @@ int FileSort::merge_many_buff(SortParam *param, unsigned char *sort_buffer,
   if (*maxbuffer < MERGEBUFF2)
     return 0;
   if (flush_io_cache(t_file) ||
-      open_cached_file(&t_file2,drizzle_tmpdir.c_str(),TEMP_PREFIX,DISK_BUFFER_SIZE, MYF(MY_WME)))
+      t_file2.open_cached_file(drizzle_tmpdir.c_str(),TEMP_PREFIX,DISK_BUFFER_SIZE, MYF(MY_WME)))
   {
     return 1;
   }
