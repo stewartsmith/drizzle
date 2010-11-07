@@ -32,6 +32,7 @@ Introduction:
    what_is_drizzle
    brief_history_of_drizzle
    how_to_report_a_bug
+   mysql_differences
 
 SQL Language:
 -------------
