@@ -64,7 +64,7 @@ using namespace drizzled::plugin;
 #endif
 
 
-static int my_port_number = PBMS_PORT;
+uint32_t pbms_port_number = PBMS_PORT;
 
 static char		*my_repository_threshold = NULL;
 static char		*my_temp_log_threshold = NULL;
@@ -123,7 +123,7 @@ struct st_mysql_sys_var
 #endif
 
 //--------------
-uint32_t PBMSParameters::getPortNumber(){ return my_port_number;}
+uint32_t PBMSParameters::getPortNumber(){ return pbms_port_number;}
 
 //--------------
 uint32_t PBMSParameters::getServerID(){ return my_server_id;}
@@ -487,8 +487,8 @@ static void pbms_temp_blob_timeout_func(THD *thd, struct st_mysql_sys_var *var, 
 
 //-----------------
 //-----------------
-static MYSQL_SYSVAR_INT(port, my_port_number,
-	PLUGIN_VAR_OPCMDARG | PLUGIN_VAR_READONLY,
+static MYSQL_SYSVAR_UINT(port, pbms_port_number,
+	PLUGIN_VAR_READONLY,
 	"The port for the server stream-based communications.",
 	NULL, NULL, PBMS_PORT, 0, 64*1024, 1);
 
