@@ -688,8 +688,8 @@ CopyField::get_copy_func(Field *to,Field *from)
         return do_field_string;
       else if (to->real_type() == DRIZZLE_TYPE_VARCHAR)
       {
-        if (((Field_varstring*) to)->pack_length_no_ptr() !=
-            ((Field_varstring*) from)->pack_length_no_ptr())
+        if ((dynamic_cast<Field_varstring*>(to))->pack_length_no_ptr() !=
+            (dynamic_cast<Field_varstring*>(from))->pack_length_no_ptr())
         {
           return do_field_string;
         }
