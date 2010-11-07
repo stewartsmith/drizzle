@@ -30,15 +30,19 @@
 #include "config.h"
 #include "drizzled/sql_select.h" /* include join.h */
 #include "drizzled/field/blob.h"
+#include "drizzled/drizzled.h"
+#include "drizzled/internal/my_sys.h"
 
 #include <algorithm>
 
-using namespace drizzled;
 using namespace std;
 
-static uint32_t used_blob_length(CACHE_FIELD **ptr);
+namespace drizzled
+{
 
-static uint32_t used_blob_length(CACHE_FIELD **ptr)
+static uint32_t used_blob_length(CacheField **ptr);
+
+static uint32_t used_blob_length(CacheField **ptr)
 {
   uint32_t length,blob_length;
   for (length=0 ; *ptr ; ptr++)
@@ -58,18 +62,17 @@ static uint32_t used_blob_length(CACHE_FIELD **ptr)
 ******************************************************************************/
 int join_init_cache(Session *session, JoinTable *tables, uint32_t table_count)
 {
-  register unsigned int i;
   unsigned int length, blobs;
   size_t size;
-  CACHE_FIELD *copy,**blob_ptr;
-  JOIN_CACHE  *cache;
+  CacheField *copy,**blob_ptr;
+  JoinCache  *cache;
   JoinTable *join_tab;
 
   cache= &tables[table_count].cache;
   cache->fields=blobs=0;
 
   join_tab= tables;
-  for (i=0 ; i < table_count ; i++,join_tab++)
+  for (unsigned int i= 0; i < table_count ; i++, join_tab++)
   {
     if (!join_tab->used_fieldlength)		/* Not calced yet */
       calc_used_field_length(session, join_tab);
@@ -83,25 +86,25 @@ int join_init_cache(Session *session, JoinTable *tables, uint32_t table_count)
       join_tab->used_fieldlength += join_tab->table->cursor->ref_length;
     }
   }
-  if (!(cache->field=(CACHE_FIELD*)
-	memory::sql_alloc(sizeof(CACHE_FIELD)*(cache->fields+table_count*2)+(blobs+1)*
-
-		  sizeof(CACHE_FIELD*))))
+  if (!(cache->field=(CacheField*)
+        memory::sql_alloc(sizeof(CacheField)*(cache->fields+table_count*2)+(blobs+1)* sizeof(CacheField*))))
   {
+    size= cache->end - cache->buff;
+    global_join_buffer.sub(size);
     free((unsigned char*) cache->buff);
     cache->buff=0;
     return(1);
   }
   copy=cache->field;
-  blob_ptr=cache->blob_ptr=(CACHE_FIELD**)
+  blob_ptr=cache->blob_ptr=(CacheField**)
     (cache->field+cache->fields+table_count*2);
 
   length=0;
-  for (i=0 ; i < table_count ; i++)
+  for (unsigned int i= 0 ; i < table_count ; i++)
   {
     uint32_t null_fields=0, used_fields;
     Field **f_ptr,*field;
-    for (f_ptr= tables[i].table->field,used_fields= tables[i].used_fields; used_fields; f_ptr++)
+    for (f_ptr= tables[i].table->getFields(), used_fields= tables[i].used_fields; used_fields; f_ptr++)
     {
       field= *f_ptr;
       if (field->isReadSet())
@@ -120,7 +123,7 @@ int join_init_cache(Session *session, JoinTable *tables, uint32_t table_count)
     if (null_fields && tables[i].table->getNullFields())
     {						/* must copy null bits */
       copy->str= tables[i].table->null_flags;
-      copy->length= tables[i].table->s->null_bytes;
+      copy->length= tables[i].table->getShare()->null_bytes;
       copy->strip=0;
       copy->blob_field=0;
       copy->get_rowid= NULL;
@@ -163,28 +166,44 @@ int join_init_cache(Session *session, JoinTable *tables, uint32_t table_count)
   cache->blobs= blobs;
   *blob_ptr= NULL;					/* End sequentel */
   size= max((size_t) session->variables.join_buff_size, (size_t)cache->length);
+  if (not global_join_buffer.add(size))
+  {
+    my_error(ER_OUT_OF_GLOBAL_JOINMEMORY, MYF(ME_ERROR+ME_WAITTANG));
+    return 1;
+  }
   if (!(cache->buff= (unsigned char*) malloc(size)))
     return 1;
   cache->end= cache->buff+size;
-  reset_cache_write(cache);
+  cache->reset_cache_write();
+
   return 0;
 }
 
-bool store_record_in_cache(JOIN_CACHE *cache)
+bool JoinCache::store_record_in_cache()
 {
-  uint32_t length;
-  unsigned char *pos;
-  CACHE_FIELD *copy,*end_field;
+  JoinCache *cache= this;
+  unsigned char *local_pos;
+  CacheField *copy,*end_field;
   bool last_record;
 
-  pos= cache->pos;
+  local_pos= cache->pos;
   end_field= cache->field+cache->fields;
 
-  length= cache->length;
-  if (cache->blobs)
-    length+= used_blob_length(cache->blob_ptr);
-  if ((last_record= (length + cache->length > (size_t) (cache->end - pos))))
-    cache->ptr_record= cache->records;
+  {
+    uint32_t local_length;
+
+    local_length= cache->length;
+    if (cache->blobs)
+    {
+      local_length+= used_blob_length(cache->blob_ptr);
+    }
+
+    if ((last_record= (local_length + cache->length > (size_t) (cache->end - local_pos))))
+    {
+      cache->ptr_record= cache->records;
+    }
+  }
+
   /*
     There is room in cache. Put record there
   */
@@ -195,57 +214,59 @@ bool store_record_in_cache(JOIN_CACHE *cache)
     {
       if (last_record)
       {
-        copy->blob_field->get_image(pos, copy->length+sizeof(char*), copy->blob_field->charset());
-        pos+= copy->length+sizeof(char*);
+        copy->blob_field->get_image(local_pos, copy->length+sizeof(char*), copy->blob_field->charset());
+        local_pos+= copy->length+sizeof(char*);
       }
       else
       {
-        copy->blob_field->get_image(pos, copy->length, // blob length
+        copy->blob_field->get_image(local_pos, copy->length, // blob length
 				    copy->blob_field->charset());
-        memcpy(pos+copy->length,copy->str,copy->blob_length);  // Blob data
-        pos+= copy->length+copy->blob_length;
+        memcpy(local_pos + copy->length,copy->str,copy->blob_length);  // Blob data
+        local_pos+= copy->length+copy->blob_length;
       }
     }
     else
     {
       // SemiJoinDuplicateElimination: Get the rowid into table->ref:
       if (copy->get_rowid)
-        copy->get_rowid->cursor->position(copy->get_rowid->record[0]);
+        copy->get_rowid->cursor->position(copy->get_rowid->getInsertRecord());
 
       if (copy->strip)
       {
-        unsigned char *str,*end;
-        for (str= copy->str,end= str+copy->length; end > str && end[-1] == ' '; end--)
-        {}
-        length= (uint32_t) (end-str);
-        memcpy(pos+2, str, length);
-        int2store(pos, length);
-        pos+= length+2;
+        unsigned char *str, *local_end;
+        for (str= copy->str,local_end= str+copy->length; local_end > str && local_end[-1] == ' '; local_end--) {}
+
+        uint32_t local_length= (uint32_t) (local_end - str);
+        memcpy(local_pos+2, str, local_length);
+        int2store(local_pos, local_length);
+        local_pos+= local_length+2;
       }
       else
       {
-        memcpy(pos,copy->str,copy->length);
-        pos+= copy->length;
+        memcpy(local_pos, copy->str, copy->length);
+        local_pos+= copy->length;
       }
     }
   }
-  cache->pos= pos;
-  return last_record || (size_t) (cache->end - pos) < cache->length;
+  cache->pos= local_pos;
+  return last_record || (size_t) (cache->end - local_pos) < cache->length;
 }
 
-void reset_cache_read(JOIN_CACHE *cache)
+void JoinCache::reset_cache_read()
 {
-  cache->record_nr= 0;
-  cache->pos= cache->buff;
+  record_nr= 0;
+  pos= buff;
 }
 
-void reset_cache_write(JOIN_CACHE *cache)
+void JoinCache::reset_cache_write()
 {
-  reset_cache_read(cache);
-  cache->records= 0;
-  cache->ptr_record= UINT32_MAX;
+  reset_cache_read();
+  records= 0;
+  ptr_record= UINT32_MAX;
 }
 
 /**
   @} (end of group Query_Optimizer)
 */
+
+} /* namespace drizzled */

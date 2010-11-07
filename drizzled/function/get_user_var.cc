@@ -26,8 +26,10 @@
 #include <drizzled/sql_parse.h>
 #include <drizzled/session.h>
 
-String *
-Item_func_get_user_var::val_str(String *str)
+namespace drizzled
+{
+
+String *Item_func_get_user_var::val_str(String *str)
 {
   assert(fixed == 1);
   if (!var_entry)
@@ -63,12 +65,11 @@ int64_t Item_func_get_user_var::val_int()
 
 void Item_func_get_user_var::fix_length_and_dec()
 {
-  Session *session=current_session;
   maybe_null=1;
   decimals=NOT_FIXED_DEC;
   max_length=MAX_BLOB_WIDTH;
 
-  var_entry= session->getVariable(name, false);
+  var_entry= session.getVariable(name, false);
 
   /*
     If the variable didn't exist it has been created as a STRING-type.
@@ -116,7 +117,7 @@ void Item_func_get_user_var::fix_length_and_dec()
 
 bool Item_func_get_user_var::const_item() const
 {
-  return (!var_entry || current_session->query_id != var_entry->update_query_id);
+  return (!var_entry || session.getQueryId() != var_entry->update_query_id);
 }
 
 
@@ -149,3 +150,5 @@ bool Item_func_get_user_var::eq(const Item *item,
   return (name.length == other->name.length &&
 	  !memcmp(name.str, other->name.str, name.length));
 }
+
+} /* namespace drizzled */

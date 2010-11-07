@@ -22,7 +22,9 @@
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/alter_schema.h>
+#include <drizzled/plugin/storage_engine.h>
 #include <drizzled/db.h>
+#include <drizzled/message.h>
 
 #include <string>
 
@@ -33,15 +35,27 @@ namespace drizzled
 
 bool statement::AlterSchema::execute()
 {
-  string database_name(session->lex->name.str);
-  NonNormalisedDatabaseName non_normalised_database_name(database_name);
-  NormalisedDatabaseName normalised_database_name(non_normalised_database_name);
+  LEX_STRING *db= &session->lex->name;
+  message::SchemaPtr old_definition;
 
-  if (! normalised_database_name.isValid())
+  if (not validateSchemaOptions())
+    return true;
+
+  SchemaIdentifier schema_identifier(string(db->str, db->length));
+
+  if (not check_db_name(session, schema_identifier))
   {
-    my_error(ER_WRONG_DB_NAME, MYF(0), normalised_database_name.to_string().c_str());
+    my_error(ER_WRONG_DB_NAME, MYF(0), schema_identifier.getSQLPath().c_str());
     return false;
   }
+
+  SchemaIdentifier identifier(db->str);
+  if (not plugin::StorageEngine::getSchemaDefinition(identifier, old_definition))
+  {
+    my_error(ER_SCHEMA_DOES_NOT_EXIST, MYF(0), db->str);
+    return true;
+  }
+
   if (session->inTransaction())
   {
     my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, 
@@ -49,8 +63,28 @@ bool statement::AlterSchema::execute()
                MYF(0));
     return true;
   }
-  bool res= mysql_alter_db(session, normalised_database_name, &schema_message);
-  return res;
+  /*
+    @todo right now the logic for alter schema is just sitting here, at some point this should be packaged up in a class/etc.
+  */
+
+  // We set the name from the old version to keep case preference
+  schema_message.set_name(old_definition->name());
+  schema_message.set_version(old_definition->version());
+  schema_message.set_uuid(old_definition->uuid());
+  schema_message.mutable_engine()->set_name(old_definition->engine().name());
+
+  // We need to make sure we don't destroy any collation that might have
+  // been changed.
+  if (not schema_message.has_collation())
+  {
+    schema_message.set_collation(old_definition->collation());
+  }
+  
+  drizzled::message::update(schema_message);
+
+  bool res= mysql_alter_db(session, schema_message);
+
+  return not res;
 }
 
 } /* namespace drizzled */

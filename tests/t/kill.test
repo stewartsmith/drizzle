@@ -106,7 +106,7 @@ drop table t1, t2, t3;
 #kill query $ID;
 #enable_query_log;
 #connection con2;
-#--error 1317
+#--error ER_QUERY_INTERRUPTED
 #reap;
 #select @a;
 #connection con1;
@@ -122,7 +122,7 @@ drop table t1, t2, t3;
 #eval kill query $ID;
 #enable_query_log;
 #connection con2;
-#--error 1317
+#--error ER_QUERY_INTERRUPTED
 #reap;
 #select @a;
 #connection con1;
@@ -137,7 +137,7 @@ drop table t1, t2, t3;
 #eval kill query $ID;
 #enable_query_log;
 #connection con2;
-#--error 1317
+#--error ER_QUERY_INTERRUPTED
 #reap;
 #select @a;
 #

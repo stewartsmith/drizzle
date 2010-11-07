@@ -5,14 +5,17 @@
 # that the size of the log file is 0 after truncation
 #
 
+# Truncate the log file to reset for the next test
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
+
 # Populate log with some records...
 --source ../plugin/transaction_log/tests/t/insert.inc
 
 # Trim result since Solaris/BSD wc program apparently adds whitespace before output
---exec wc -l var/master-data/transaction.log | tr -d ' ' 
+--exec wc -l var/master-data/local/transaction.log | tr -d ' ' 
 
 # Truncate the log file
 --source ../plugin/transaction_log/tests/t/truncate_log.inc
 
 # Trim result since Solaris/BSD wc program apparently adds whitespace before output
---exec wc -l var/master-data/transaction.log | tr -d ' ' 
+--exec wc -l var/master-data/local/transaction.log | tr -d ' ' 

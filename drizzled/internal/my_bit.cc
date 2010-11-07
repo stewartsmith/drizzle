@@ -11,11 +11,17 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "drizzled/internal/mysys_priv.h"
+#include "config.h"
+#include "drizzled/internal/my_sys.h"
 
 #include "drizzled/internal/my_bit.h"
+
+namespace drizzled
+{
+namespace internal
+{
 
 const char _my_bits_nbits[256] = {
   0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4,
@@ -61,3 +67,6 @@ const unsigned char _my_bits_reverse_table[256]={
 0x57, 0xD7, 0x37, 0xB7, 0x77, 0xF7, 0x0F, 0x8F, 0x4F, 0xCF, 0x2F, 0xAF, 0x6F,
 0xEF, 0x1F, 0x9F, 0x5F, 0xDF, 0x3F, 0xBF, 0x7F, 0xFF
 };
+
+} /* namespace internal */
+} /* namespace drizzled */

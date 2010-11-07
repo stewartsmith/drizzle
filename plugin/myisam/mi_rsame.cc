@@ -11,11 +11,12 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include "myisam_priv.h"
 #include <drizzled/util/test.h>
 
+using namespace drizzled;
 
 	/*
 	** Find current row with read on position or read on key
@@ -48,13 +49,9 @@ int mi_rsame(MI_INFO *info, unsigned char *record, int inx)
     info->lastinx=inx;
     info->lastkey_length=_mi_make_key(info,(uint) inx,info->lastkey,record,
 				      info->lastpos);
-    if (info->s->concurrent_insert)
-      pthread_rwlock_rdlock(&info->s->key_root_lock[inx]);
     _mi_search(info,info->s->keyinfo+inx,info->lastkey, USE_WHOLE_KEY,
                SEARCH_SAME,
                info->s->state.key_root[inx]);
-    if (info->s->concurrent_insert)
-      pthread_rwlock_unlock(&info->s->key_root_lock[inx]);
   }
 
   if (!(*info->read_record)(info,info->lastpos,record))

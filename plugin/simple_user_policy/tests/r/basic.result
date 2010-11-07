@@ -1,0 +1,72 @@
+create database user1;
+create database user2;
+show databases;
+Database
+DATA_DICTIONARY
+INFORMATION_SCHEMA
+mysql
+test
+user1
+user2
+use user2;
+create table t1 (kill_id int);
+insert into t1 values(connection_id());
+SELECT * from user1.dont_exist;
+ERROR 42S02: Table 'user1.dont_exist' doesn't exist
+show databases;
+Database
+DATA_DICTIONARY
+INFORMATION_SCHEMA
+user1
+SELECT * from user2.dont_exist;
+ERROR 42000: Access denied for user 'user1'@'LOCALHOST' to schema 'user2'
+create database authorize_fail;
+ERROR 42000: Access denied for user 'user1'@'LOCALHOST' to schema 'authorize_fail'
+drop database user2;
+ERROR 42000: Access denied for user 'user1'@'LOCALHOST' to schema 'user2'
+create table t1 (kill_id int);
+insert into t1 values(connection_id());
+show processlist;
+ID	USER	HOST	DB	COMMAND	TIME	STATE	INFO
+2	user1	#	user1	#	#	#	#
+3	user1	#	user1	#	#	#	#
+select ((@id := kill_id) - kill_id) from t1;
+((@id := kill_id) - kill_id)
+0
+kill @id;
+select ((@id := kill_id) - kill_id) from t1;
+((@id := kill_id) - kill_id)
+0
+select @id != connection_id();
+@id != connection_id()
+1
+update t1 set kill_id = connection_id();
+show processlist;
+ID	USER	HOST	DB	COMMAND	TIME	STATE	INFO
+4	user2	#	user2	#	#	#	#
+select ((@id := kill_id) - kill_id) from t1;
+((@id := kill_id) - kill_id)
+0
+kill @id;
+ERROR HY000: Unknown thread id: 1
+show processlist;
+ID	USER	HOST	DB	COMMAND	TIME	STATE	INFO
+1	root	#	user2	#	#	#	#
+3	user1	#	user1	#	#	#	#
+4	user2	#	user2	#	#	#	#
+5	user1	#	user1	#	#	#	#
+use user1;
+select ((@id := kill_id) - kill_id) from t1;
+((@id := kill_id) - kill_id)
+0
+kill @id;
+select ((@id := kill_id) - kill_id) from t1;
+((@id := kill_id) - kill_id)
+0
+select @id != connection_id();
+@id != connection_id()
+1
+connect(localhost,authz,,authz_no,MASTER_PORT,);
+ERROR 42000: Access denied for user 'authz'@'LOCALHOST' to schema 'authz_no'
+drop schema user1;
+drop schema user2;

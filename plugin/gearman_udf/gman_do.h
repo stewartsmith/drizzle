@@ -21,7 +21,7 @@
 
 #include <libgearman/gearman.h>
 
-class Item_func_gman_do :public Item_str_func
+class Item_func_gman_do :public drizzled::Item_str_func
 {
 protected:
   typedef enum
@@ -36,7 +36,7 @@ protected:
 private:
   gman_do_options_t options;
   gearman_client_st client;
-  String buffer;
+  drizzled::String buffer;
 
 public:
   Item_func_gman_do():
@@ -48,7 +48,7 @@ public:
   ~Item_func_gman_do();
   void fix_length_and_dec() { max_length=10; }
   virtual const char *func_name() const{ return "gman_do"; }
-  String *val_str(String *);
+  drizzled::String *val_str(drizzled::String *);
   void *realloc(size_t size);
 };
 

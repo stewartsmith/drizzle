@@ -1,0 +1,5 @@
+create table t1 (a int not null auto_increment primary key, val int);
+insert into t1 (val) values (1);
+update t1 set a=2 where a=1;
+insert into t1 (val) values (1);
+drop table t1;

@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /*  File   : bmove.c
     Author : Michael widenius
@@ -23,10 +23,19 @@
 */
 
 #include "config.h"
-#include "m_string.h"
+
+#include "drizzled/internal/m_string.h"
+
+namespace drizzled
+{
+namespace internal
+{
 
 void bmove_upp(register unsigned char *dst, register const unsigned char *src,
                register size_t len)
 {
   while (len-- != 0) *--dst = *--src;
 }
+
+} /* namespace internal */
+} /* namespace drizzled */

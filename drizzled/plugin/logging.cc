@@ -18,11 +18,12 @@
  */
 
 #include "config.h"
-#include <drizzled/plugin/logging.h>
-#include <drizzled/gettext.h>
-#include "drizzled/plugin/registry.h"
+#include "drizzled/plugin/logging.h"
+#include "drizzled/gettext.h"
+#include "drizzled/errmsg_print.h"
 
 #include <vector>
+#include <algorithm>
 
 class Session;
 
@@ -96,6 +97,29 @@ public:
   }
 };
 
+class PostEndIterate : public unary_function<plugin::Logging *, bool>
+{
+  Session *session;
+public:
+  PostEndIterate(Session *session_arg) :
+    unary_function<plugin::Logging *, bool>(),
+    session(session_arg) {}
+
+  /* This gets called once for each loaded logging plugin */
+  inline result_type operator()(argument_type handler)
+  {
+    if (handler->postEnd(session))
+    {
+      /* TRANSLATORS: The leading word "logging" is the name
+         of the plugin api, and so should not be translated. */
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("logging '%s' postEnd() failed"),
+                    handler->getName().c_str());
+      return true;
+    }
+    return false;
+  }
+};
 
 /* This is the Logging::preDo entry point.
    This gets called by the rest of the Drizzle server code */
@@ -123,6 +147,20 @@ bool plugin::Logging::postDo(Session *session)
   /* If iter is == end() here, that means that all of the plugins returned
    * false, which in this case means they all succeeded. Since we want to 
    * return false on success, we return the value of the two being != 
+   */
+  return iter != all_loggers.end();
+}
+
+/* This gets called in the session destructor */
+bool plugin::Logging::postEndDo(Session *session)
+{
+  /* Use find_if instead of foreach so that we can collect return codes */
+  vector<plugin::Logging *>::iterator iter=
+    find_if(all_loggers.begin(), all_loggers.end(),
+            PostEndIterate(session));
+  /* If iter is == end() here, that means that all of the plugins returned
+   * false, which in this case means they all succeeded. Since we want to
+   * return false on success, we return the value of the two being !=
    */
   return iter != all_loggers.end();
 }

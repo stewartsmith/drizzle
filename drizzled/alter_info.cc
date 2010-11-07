@@ -29,6 +29,9 @@
 #include "drizzled/key.h"
 #include "drizzled/create_field.h"
 
+namespace drizzled
+{
+
 AlterInfo::AlterInfo() :
   flags(),
   keys_onoff(LEAVE_AS_IS),
@@ -38,3 +41,5 @@ AlterInfo::AlterInfo() :
   datetime_field(NULL),
   error_if_not_empty(false)
 {}
+
+} /* namespace drizzled */

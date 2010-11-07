@@ -56,6 +56,7 @@ create table t3 (a int);
 insert into t3 values (NULL), (NULL);
 flush status;
 select a in (select max(ie) from t1 where oref=4 group by grp) from t3;
+--replace_column 2 #
 show status like 'Handler_read_rnd_next';
 select ' ^ This must show 11' Z;
 
@@ -88,6 +89,7 @@ select oref, a, a in (select a from t1 where oref=t2.oref) Z from t2;
 flush status;
 select oref, a from t2 where a in (select a from t1 where oref=t2.oref);
 # This will only show access to t2:
+--replace_column 2 #
 show status like '%Handler_read_rnd_next';
 
 # Check that repeated NULL-scans are not cached (subq. is not correlated):
@@ -96,6 +98,7 @@ insert into t2 values (NULL, 0),(NULL, 0), (NULL, 0), (NULL, 0);
 
 flush status;
 select oref, a, a in (select a from t1 where oref=t2.oref) Z from t2;
+--replace_column 2 #
 show status like '%Handler_read%';
 select 'No key lookups, seq reads: 29= 5 reads from t2 + 4 * 6 reads from t1.' Z;
 
@@ -615,9 +618,11 @@ DROP TABLE t1, t2;
 
 create table t1 (a int, b decimal(13, 3)); 
 insert into t1 values (1, 0.123);
-select a, (select max(b) from t1) into outfile "subselect.out.file.1" from t1;
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+eval select a, (select max(b) from t1) into outfile "$DRIZZLETEST_VARDIR/subselect.out.file.1" from t1;
 delete from t1;
-load data infile "subselect.out.file.1" into table t1;
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+eval load data infile "$DRIZZLETEST_VARDIR/subselect.out.file.1" into table t1;
 select * from t1;
 drop table t1;
 

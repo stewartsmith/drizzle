@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /*
   Defines: llstr();
@@ -23,8 +23,13 @@
   variables with printf() as there is no usable printf() standard one can use.
 */
 
+#include "config.h"
+#include "drizzled/internal/m_string.h"
 
-#include "m_string.h"
+namespace drizzled
+{
+namespace internal
+{
 
 char *llstr(int64_t value,char *buff)
 {
@@ -37,3 +42,6 @@ char *ullstr(int64_t value,char *buff)
   int64_t10_to_str(value,buff,10);
   return buff;
 }
+
+} /* namespace internal */
+} /* namespace drizzled */

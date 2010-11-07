@@ -21,7 +21,8 @@
 #ifndef DRIZZLED_INTERNAL_ERROR_HANDLER_H
 #define DRIZZLED_INTERNAL_ERROR_HANDLER_H
 
-
+namespace drizzled
+{
 
 /**
   This class represents the interface for internal error handlers.
@@ -65,4 +66,7 @@ public:
                             DRIZZLE_ERROR::enum_warning_level level,
                             Session *session) = 0;
 };
+
+} /* namespace drizzled */
+
 #endif /* DRIZZLED_INTERNAL_ERROR_HANDLER_H */

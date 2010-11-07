@@ -65,7 +65,10 @@ bool plugin::Listen::setup(void)
     vector<int>::iterator fd;
 
     if ((*it)->getFileDescriptors(fds))
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Error getting file descriptors"));
       return true;
+    }
 
     fd_list.resize(fd_count + fds.size() + 1);
 

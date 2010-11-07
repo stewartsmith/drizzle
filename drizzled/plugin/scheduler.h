@@ -27,10 +27,10 @@
 #include <string>
 #include <vector>
 
-class Session;
-
 namespace drizzled
 {
+class Session;
+
 namespace plugin
 {
 
@@ -70,10 +70,9 @@ public:
   static void removePlugin(plugin::Scheduler *sced);
   static bool setPlugin(const std::string& name);
   static Scheduler *getScheduler();
-
 };
 
-} /* end namespace drizzled::plugin */
-} /* end namespace drizzled */
+} /* namespace plugin */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_PLUGIN_SCHEDULER_H */

@@ -1,0 +1,11 @@
+# Drizzle's plugin/modules dictionary.
+
+use data_dictionary;
+
+# 
+# do a query on the PLUGINS table in I_S to ensure it works correctly
+# how do we test for this if the contents of this table can change
+# depend on what plugins are configured for use?
+#
+--replace_column 1 #
+SELECT count(*) FROM data_dictionary.plugins;

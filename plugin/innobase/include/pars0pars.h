@@ -11,8 +11,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -583,6 +583,12 @@ pars_info_get_bound_id(
 	pars_info_t*		info,	/*!< in: info struct */
 	const char*		name);	/*!< in: bound id name to find */
 
+/******************************************************************//**
+Release any resources used by the lexer. */
+UNIV_INTERN
+void
+pars_lexer_close(void);
+/*==================*/
 
 /** Extra information supplied for pars_sql(). */
 struct pars_info_struct {

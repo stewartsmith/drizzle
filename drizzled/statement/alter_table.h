@@ -23,11 +23,10 @@
 
 #include <drizzled/statement/create_table.h>
 
-class Session;
-class TableList;
-
 namespace drizzled
 {
+class Session;
+class TableList;
 
 namespace message
 {
@@ -40,10 +39,10 @@ namespace statement
 class AlterTable : public CreateTable
 {
 public:
-  AlterTable(Session *in_session)
-    :
-      CreateTable(in_session)
-  { }
+  AlterTable(Session *in_session) :
+    CreateTable(in_session)
+  { 
+  }
 
   bool execute();
 };
@@ -51,12 +50,15 @@ public:
 } /* namespace statement */
 
 
-bool alter_table(Session *session, char *new_db, char *new_name,
+bool alter_table(Session *session,
+                 drizzled::TableIdentifier &original_table_identifier,
+                 drizzled::TableIdentifier &new_table_identifier,
                  HA_CREATE_INFO *create_info,
-                 message::Table *create_proto,
+                 const message::Table &original_proto,
+                 message::Table &create_proto,
                  TableList *table_list,
                  AlterInfo *alter_info,
-                 uint32_t order_num, order_st *order, bool ignore);
+                 uint32_t order_num, Order *order, bool ignore);
 
 } /* namespace drizzled */
 #endif /* DRIZZLED_STATEMENT_ALTER_TABLE_H */

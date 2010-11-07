@@ -34,6 +34,8 @@
 
 using namespace std;
 
+namespace drizzled
+{
 
 /****************************************************************************
   double precision floating point numbers
@@ -46,7 +48,7 @@ int Field_double::store(const char *from,uint32_t len, const CHARSET_INFO * cons
   double nr= my_strntod(cs,(char*) from, len, &end, &error);
 
   ASSERT_COLUMN_MARKED_FOR_WRITE;
-  if (error || (!len || (((uint32_t) (end-from) != len) && table->in_use->count_cuted_fields)))
+  if (error || (!len || (((uint32_t) (end-from) != len) && getTable()->in_use->count_cuted_fields)))
   {
     set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                 (error ? ER_WARN_DATA_OUT_OF_RANGE : ER_WARN_DATA_TRUNCATED), 1);
@@ -64,7 +66,7 @@ int Field_double::store(double nr)
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
 #ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
+  if (getTable()->getShare()->db_low_byte_first)
   {
     float8store(ptr,nr);
   }
@@ -88,7 +90,7 @@ double Field_double::val_real(void)
   ASSERT_COLUMN_MARKED_FOR_READ;
 
 #ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
+  if (getTable()->getShare()->db_low_byte_first)
   {
     float8get(j,ptr);
   }
@@ -106,7 +108,7 @@ int64_t Field_double::val_int(void)
   ASSERT_COLUMN_MARKED_FOR_READ;
 
 #ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
+  if (getTable()->getShare()->db_low_byte_first)
   {
     float8get(j,ptr);
   }
@@ -148,7 +150,7 @@ String *Field_double::val_str(String *val_buffer,
   ASSERT_COLUMN_MARKED_FOR_READ;
 
 #ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
+  if (getTable()->getShare()->db_low_byte_first)
   {
     float8get(nr,ptr);
   }
@@ -162,9 +164,9 @@ String *Field_double::val_str(String *val_buffer,
   size_t len;
 
   if (dec >= NOT_FIXED_DEC)
-    len= my_gcvt(nr, MY_GCVT_ARG_DOUBLE, to_length - 1, to, NULL);
+    len= internal::my_gcvt(nr, internal::MY_GCVT_ARG_DOUBLE, to_length - 1, to, NULL);
   else
-    len= my_fcvt(nr, dec, to, NULL);
+    len= internal::my_fcvt(nr, dec, to, NULL);
 
   val_buffer->length((uint32_t) len);
 
@@ -175,7 +177,7 @@ int Field_double::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   double a,b;
 #ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
+  if (getTable()->getShare()->db_low_byte_first)
   {
     float8get(a,a_ptr);
     float8get(b,b_ptr);
@@ -196,7 +198,7 @@ void Field_double::sort_string(unsigned char *to,uint32_t )
 {
   double nr;
 #ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
+  if (getTable()->getShare()->db_low_byte_first)
   {
     float8get(nr,ptr);
   }
@@ -221,3 +223,4 @@ void Field_double::sql_type(String &res) const
   }
 }
 
+} /* namespace drizzled */

@@ -111,8 +111,8 @@ create table t1 select date_format("2004-01-19 10:10:10", "%Y-%m-%d");
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `date_format("2004-01-19 10:10:10", "%Y-%m-%d")` varchar(10) DEFAULT NULL
-) ENGINE=InnoDB
+  `date_format("2004-01-19 10:10:10", "%Y-%m-%d")` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 select * from t1;
 date_format("2004-01-19 10:10:10", "%Y-%m-%d")
 2004-01-19
@@ -135,8 +135,8 @@ ERROR HY000: Incorrect string value: '\xFF' for column 's1' at row 1
 select hex(s1) from t1;
 hex(s1)
 drop table t1;
-create table t1 (a text, primary key(a(360)));
-ERROR 42000: Specified key was too long; max key length is 767 bytes
+create table t1 (a text, primary key(a(360))) engine=innodb;
+ERROR 42000: Specified key was too long; max key length is 1023 bytes
 CREATE TABLE t1 ( a varchar(10) );
 INSERT INTO t1 VALUES ( 'test' );
 SELECT a.a, b.a FROM t1 a, t1 b WHERE a.a = b.a;
@@ -307,9 +307,9 @@ unique key a using btree (c(2))
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `c` varchar(10) DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
   UNIQUE KEY `a` (`c`(2)) USING BTREE
-) ENGINE=MEMORY
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 insert into t1 values ('1'),('2'),('3'),('4'),('x'),('y'),('z');
 insert into t1 values ('a');
 insert into t1 values ('aa');
@@ -486,8 +486,8 @@ create table t2 select concat(a,'') as a from t1;
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `a` varchar(1) DEFAULT NULL
-) ENGINE=InnoDB
+  `a` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table t2;
 drop table t1;
 select 'c' like '\_' as want0;
@@ -724,7 +724,7 @@ drop table t1;
 CREATE TEMPORARY TABLE t1 (
 a varchar(255) NOT NULL default '',
 KEY a (a)
-) ENGINE=MyISAM COLLATE utf8_general_ci;
+) ENGINE=MyISAM COLLATE=utf8_general_ci;
 insert into t1 values (0xe880bd);
 insert into t1 values (0x5b);
 select hex(a) from t1;
@@ -1234,96 +1234,6 @@ predicted_order	hex(utf8_encoding)
 101	E0B78AE2808DE0B6BB
 DROP TABLE t1;
 End of 5.1 tests
-select hex(weight_string('a'));
-hex(weight_string('a'))
-0041
-select hex(weight_string('A'));
-hex(weight_string('A'))
-0041
-select hex(weight_string('abc'));
-hex(weight_string('abc'))
-004100420043
-select hex(weight_string('abc' as char(2)));
-hex(weight_string('abc' as char(2)))
-00410042
-select hex(weight_string('abc' as char(3)));
-hex(weight_string('abc' as char(3)))
-004100420043
-select hex(weight_string('abc' as char(5)));
-hex(weight_string('abc' as char(5)))
-00410042004300200020
-select hex(weight_string('a' LEVEL 1));
-hex(weight_string('a' LEVEL 1))
-0041
-select hex(weight_string('A' LEVEL 1));
-hex(weight_string('A' LEVEL 1))
-0041
-select hex(weight_string('abc' LEVEL 1));
-hex(weight_string('abc' LEVEL 1))
-004100420043
-select hex(weight_string('abc' as char(2) LEVEL 1));
-hex(weight_string('abc' as char(2) LEVEL 1))
-00410042
-select hex(weight_string('abc' as char(3) LEVEL 1));
-hex(weight_string('abc' as char(3) LEVEL 1))
-004100420043
-select hex(weight_string('abc' as char(5) LEVEL 1));
-hex(weight_string('abc' as char(5) LEVEL 1))
-00410042004300200020
-select hex(weight_string('abc' as char(5) LEVEL 1 REVERSE));
-hex(weight_string('abc' as char(5) LEVEL 1 REVERSE))
-20002000430042004100
-select hex(weight_string('abc' as char(5) LEVEL 1 DESC));
-hex(weight_string('abc' as char(5) LEVEL 1 DESC))
-FFBEFFBDFFBCFFDFFFDF
-select hex(weight_string('abc' as char(5) LEVEL 1 DESC REVERSE));
-hex(weight_string('abc' as char(5) LEVEL 1 DESC REVERSE))
-DFFFDFFFBCFFBDFFBEFF
-select hex(weight_string('a'));
-hex(weight_string('a'))
-0041
-select hex(weight_string('A'));
-hex(weight_string('A'))
-0041
-select hex(weight_string('abc'));
-hex(weight_string('abc'))
-004100420043
-select hex(weight_string('abc' as char(2)));
-hex(weight_string('abc' as char(2)))
-00410042
-select hex(weight_string('abc' as char(3)));
-hex(weight_string('abc' as char(3)))
-004100420043
-select hex(weight_string('abc' as char(5)));
-hex(weight_string('abc' as char(5)))
-00410042004300200020
-select hex(weight_string('a' LEVEL 1));
-hex(weight_string('a' LEVEL 1))
-0041
-select hex(weight_string('A' LEVEL 1));
-hex(weight_string('A' LEVEL 1))
-0041
-select hex(weight_string('abc' LEVEL 1));
-hex(weight_string('abc' LEVEL 1))
-004100420043
-select hex(weight_string('abc' as char(2) LEVEL 1));
-hex(weight_string('abc' as char(2) LEVEL 1))
-00410042
-select hex(weight_string('abc' as char(3) LEVEL 1));
-hex(weight_string('abc' as char(3) LEVEL 1))
-004100420043
-select hex(weight_string('abc' as char(5) LEVEL 1));
-hex(weight_string('abc' as char(5) LEVEL 1))
-00410042004300200020
-select hex(weight_string('abc' as char(5) LEVEL 1 REVERSE));
-hex(weight_string('abc' as char(5) LEVEL 1 REVERSE))
-20002000430042004100
-select hex(weight_string('abc' as char(5) LEVEL 1 DESC));
-hex(weight_string('abc' as char(5) LEVEL 1 DESC))
-FFBEFFBDFFBCFFDFFFDF
-select hex(weight_string('abc' as char(5) LEVEL 1 DESC REVERSE));
-hex(weight_string('abc' as char(5) LEVEL 1 DESC REVERSE))
-DFFFDFFFBCFFBDFFBEFF
 set max_sort_length=5;
 select @@max_sort_length;
 @@max_sort_length

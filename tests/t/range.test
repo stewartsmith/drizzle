@@ -556,6 +556,7 @@ INSERT INTO t1 VALUES
  'd8c4177d09f8b11f5.52725521');
 
 --replace_column 3 # 8 # 9 #
+--sorted_result
 EXPLAIN
 SELECT s.oxid FROM t1 v, t1 s 
   WHERE s.oxrootid = 'd8c4177d09f8b11f5.52725521' AND
@@ -803,7 +804,7 @@ explain select * from t2 where a between 'a' and 'a ';
 explain select * from t2 where a = 'a' or a='a ';
 
 update t1 set a='b' where a<>'a';
---replace_column 3 # 8 # 9 #
+--replace_column 3 # 4 # 5 # 6 # 7 # 8 # 9 #
 explain select * from t1 where a not between 'b' and 'b'; 
 select a, hex(filler) from t1 where a not between 'b' and 'b'; 
 

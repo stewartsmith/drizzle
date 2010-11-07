@@ -18,8 +18,11 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/sign.h>
+
+namespace drizzled
+{
 
 int64_t Item_func_sign::val_int()
 {
@@ -30,3 +33,4 @@ int64_t Item_func_sign::val_int()
 }
 
 
+} /* namespace drizzled */

@@ -19,6 +19,7 @@
  */
 
 #include "config.h"
+#include <boost/lexical_cast.hpp>
 #include "drizzled/field/datetime.h"
 #include "drizzled/error.h"
 #include "drizzled/table.h"
@@ -31,11 +32,13 @@
 #include <string>
 
 
+namespace drizzled
+{
+
 /****************************************************************************
 ** datetime type
 ** In string context: YYYY-MM-DD HH:MM:DD
 ** In number context: YYYYMMDDHHMMDD
-** Stored as a 8 byte unsigned int. Should sometimes be change to a 6 byte int.
 ****************************************************************************/
 
 int Field_datetime::store(const char *from,
@@ -47,7 +50,7 @@ int Field_datetime::store(const char *from,
    * Try to create a DateTime from the supplied string.  Throw an error
    * if unable to create a valid DateTime.  
    */
-  drizzled::DateTime temporal;
+  DateTime temporal;
   if (! temporal.from_string(from, (size_t) len))
   {
     my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR), from);
@@ -58,7 +61,7 @@ int Field_datetime::store(const char *from,
   temporal.to_int64_t(&int_value);
 
 #ifdef WORDS_BIGENDIAN
-  if (table && table->s->db_low_byte_first)
+  if (getTable() && getTable()->getShare()->db_low_byte_first)
   {
     int8store(ptr, int_value);
   }
@@ -73,11 +76,8 @@ int Field_datetime::store(double from)
   ASSERT_COLUMN_MARKED_FOR_WRITE;
   if (from < 0.0 || from > 99991231235959.0)
   {
-    /* Convert the double to a string using stringstream */
-    std::stringstream ss;
-    std::string tmp;
-    ss.precision(18); /* 18 places should be fine for error display of double input. */
-    ss << from; ss >> tmp;
+    /* Convert the double to a string using boost::lexical_cast */
+    std::string tmp(boost::lexical_cast<std::string>(from));
 
     my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR), tmp.c_str());
     return 2;
@@ -92,13 +92,11 @@ int Field_datetime::store(int64_t from, bool)
    * Try to create a DateTime from the supplied integer.  Throw an error
    * if unable to create a valid DateTime.  
    */
-  drizzled::DateTime temporal;
+  DateTime temporal;
   if (! temporal.from_int64_t(from))
   {
-    /* Convert the integer to a string using stringstream */
-    std::stringstream ss;
-    std::string tmp;
-    ss << from; ss >> tmp;
+    /* Convert the integer to a string using boost::lexical_cast */
+    std::string tmp(boost::lexical_cast<std::string>(from));
 
     my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR), tmp.c_str());
     return 2;
@@ -113,7 +111,7 @@ int Field_datetime::store(int64_t from, bool)
   temporal.to_int64_t(&int_value);
 
 #ifdef WORDS_BIGENDIAN
-  if (table && table->s->db_low_byte_first)
+  if (getTable() && getTable()->getShare()->db_low_byte_first)
   {
     int8store(ptr, int_value);
   }
@@ -125,7 +123,7 @@ int Field_datetime::store(int64_t from, bool)
 
 int Field_datetime::store_time(DRIZZLE_TIME *ltime, enum enum_drizzle_timestamp_type)
 {
-  drizzled::DateTime temporal;
+  DateTime temporal;
 
   temporal.set_years(ltime->year);
   temporal.set_months(ltime->month);
@@ -149,7 +147,7 @@ int Field_datetime::store_time(DRIZZLE_TIME *ltime, enum enum_drizzle_timestamp_
   temporal.to_int64_t(&int_value);
 
 #ifdef WORDS_BIGENDIAN
-  if (table && table->s->db_low_byte_first)
+  if (getTable() && getTable()->getShare()->db_low_byte_first)
   {
     int8store(ptr, int_value);
   }
@@ -171,7 +169,7 @@ int64_t Field_datetime::val_int(void)
   ASSERT_COLUMN_MARKED_FOR_READ;
 
 #ifdef WORDS_BIGENDIAN
-  if (table && table->s->db_low_byte_first)
+  if (getTable() && getTable()->getShare()->db_low_byte_first)
     j=sint8korr(ptr);
   else
 #endif
@@ -183,20 +181,20 @@ int64_t Field_datetime::val_int(void)
 String *Field_datetime::val_str(String *val_buffer,
 				String *)
 {
-  val_buffer->alloc(drizzled::DateTime::MAX_STRING_LENGTH);
-  val_buffer->length(drizzled::DateTime::MAX_STRING_LENGTH);
+  val_buffer->alloc(DateTime::MAX_STRING_LENGTH);
+  val_buffer->length(DateTime::MAX_STRING_LENGTH);
   int64_t tmp;
 
   ASSERT_COLUMN_MARKED_FOR_READ;
 
 #ifdef WORDS_BIGENDIAN
-  if (table && table->s->db_low_byte_first)
+  if (getTable() && getTable()->getShare()->db_low_byte_first)
     tmp=sint8korr(ptr);
   else
 #endif
     int64_tget(tmp,ptr);
 
-  drizzled::DateTime dt;
+  DateTime dt;
 
   /* TODO: add an assert that this succeeds
    * currently fails due to bug in allowing
@@ -204,14 +202,14 @@ String *Field_datetime::val_str(String *val_buffer,
    * not null without a default value.
    */
   dt.from_int64_t(tmp, false); /* NOTE: this does *NOT* attempt convertion
-				        from formats such as 20090101 as
-					the stored value has already been
-					converted.
-			       */
+                                 from formats such as 20090101 as
+                                 the stored value has already been
+                                 converted.
+                               */
 
   int rlen;
-  rlen= dt.to_string((char*)val_buffer->ptr(), drizzled::DateTime::MAX_STRING_LENGTH);
-  assert((rlen+1) <  drizzled::DateTime::MAX_STRING_LENGTH);
+  rlen= dt.to_string((char*)val_buffer->ptr(), DateTime::MAX_STRING_LENGTH);
+  assert((rlen+1) <  DateTime::MAX_STRING_LENGTH);
 
   val_buffer->length(rlen);
 
@@ -246,7 +244,7 @@ int Field_datetime::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   int64_t a,b;
 #ifdef WORDS_BIGENDIAN
-  if (table && table->s->db_low_byte_first)
+  if (getTable() && getTable()->getShare()->db_low_byte_first)
   {
     a=sint8korr(a_ptr);
     b=sint8korr(b_ptr);
@@ -264,7 +262,7 @@ int Field_datetime::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 void Field_datetime::sort_string(unsigned char *to,uint32_t )
 {
 #ifdef WORDS_BIGENDIAN
-  if (!table || !table->s->db_low_byte_first)
+  if (!getTable() || !getTable()->getShare()->db_low_byte_first)
   {
     to[0] = ptr[0];
     to[1] = ptr[1];
@@ -295,3 +293,4 @@ void Field_datetime::sql_type(String &res) const
   res.set_ascii(STRING_WITH_LEN("datetime"));
 }
 
+} /* namespace drizzled */

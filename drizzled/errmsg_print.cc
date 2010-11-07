@@ -23,20 +23,22 @@
 */
 
 #include "config.h"
-#include <drizzled/plugin/registry.h>
+
+#include <drizzled/definitions.h>
 #include <drizzled/errmsg_print.h>
-#include <drizzled/current_session.h>
 #include <drizzled/plugin/error_message.h>
 
 #include <cerrno>
 #include <cstring>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 void sql_perror(const char *message)
 {
-  // is stderr threadsafe?
-  errmsg_printf(ERRMSG_LVL_ERROR, "%s: %s", message, strerror(errno));
+  char errmsg[STRERROR_MAX];
+  strerror_r(errno, errmsg, sizeof(errmsg));
+  errmsg_printf(ERRMSG_LVL_ERROR, "%s: %s\n", message, errmsg);
 }
 
 bool errmsg_printf (int priority, char const *format, ...)
@@ -44,7 +46,9 @@ bool errmsg_printf (int priority, char const *format, ...)
   bool rv;
   va_list args;
   va_start(args, format);
-  rv= plugin::ErrorMessage::vprintf(current_session, priority, format, args);
+  rv= plugin::ErrorMessage::vprintf(NULL, priority, format, args);
   va_end(args);
   return rv;
 }
+
+} /* namespace drizzled */

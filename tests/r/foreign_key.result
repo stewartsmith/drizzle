@@ -18,16 +18,16 @@ REFERENCES customer(id)) ENGINE=INNODB;
 show create table product_order;
 Table	Create Table
 product_order	CREATE TABLE `product_order` (
-  `no` int NOT NULL AUTO_INCREMENT,
-  `product_category` int NOT NULL,
-  `product_id` int NOT NULL,
-  `customer_id` int NOT NULL,
+  `no` INT NOT NULL AUTO_INCREMENT,
+  `product_category` INT NOT NULL,
+  `product_id` INT NOT NULL,
+  `customer_id` INT NOT NULL,
   PRIMARY KEY (`no`),
   KEY `product_category` (`product_category`,`product_id`),
   KEY `customer_id` (`customer_id`),
-  CONSTRAINT `product_order_ibfk_1` FOREIGN KEY (`product_category`, `product_id`) REFERENCES `product` (`category`, `id`) ON UPDATE CASCADE,
+  CONSTRAINT `product_order_ibfk_1` FOREIGN KEY (`product_category`, `product_id`) REFERENCES `product` (`category`, `id`) ON UPDATE CASCADE ON DELETE RESTRICT,
   CONSTRAINT `product_order_ibfk_2` FOREIGN KEY (`customer_id`) REFERENCES `customer` (`id`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table product_order, customer, product;
 drop table if exists t_34455;
 create table t_34455 (

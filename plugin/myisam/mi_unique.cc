@@ -11,17 +11,22 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /* Functions to check if a row is unique */
 
 #include "myisam_priv.h"
 #include "drizzled/charset_info.h"
 
-bool mi_check_unique(MI_INFO *info, MI_UNIQUEDEF *def, unsigned char *record,
-			ha_checksum unique_hash, my_off_t disk_pos)
+using namespace drizzled;
+
+bool mi_check_unique(MI_INFO *info,
+                     MI_UNIQUEDEF *def,
+                     unsigned char *record,
+                     internal::ha_checksum unique_hash,
+                     internal::my_off_t disk_pos)
 {
-  my_off_t lastpos=info->lastpos;
+  internal::my_off_t lastpos=info->lastpos;
   MI_KEYDEF *key= &info->s->keyinfo[def->key];
   unsigned char *key_buff=info->lastkey2;
 
@@ -71,10 +76,10 @@ bool mi_check_unique(MI_INFO *info, MI_UNIQUEDEF *def, unsigned char *record,
     Add support for bit fields
 */
 
-ha_checksum mi_unique_hash(MI_UNIQUEDEF *def, const unsigned char *record)
+internal::ha_checksum mi_unique_hash(MI_UNIQUEDEF *def, const unsigned char *record)
 {
   const unsigned char *pos, *end;
-  ha_checksum crc= 0;
+  internal::ha_checksum crc= 0;
   uint32_t seed1=0, seed2= 4;
   HA_KEYSEG *keyseg;
 
@@ -93,7 +98,7 @@ ha_checksum mi_unique_hash(MI_UNIQUEDEF *def, const unsigned char *record)
 	  done)
 	*/
 	crc=((crc << 8) + 511+
-	     (crc >> (8*sizeof(ha_checksum)-8)));
+	     (crc >> (8*sizeof(internal::ha_checksum)-8)));
 	continue;
       }
     }
@@ -126,7 +131,7 @@ ha_checksum mi_unique_hash(MI_UNIQUEDEF *def, const unsigned char *record)
       while (pos != end)
 	crc=((crc << 8) +
 	     (((unsigned char)  *(unsigned char*) pos++))) +
-	  (crc >> (8*sizeof(ha_checksum)-8));
+	  (crc >> (8*sizeof(internal::ha_checksum)-8));
   }
   return crc;
 }

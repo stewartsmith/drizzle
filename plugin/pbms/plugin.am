@@ -1,0 +1,12 @@
+
+EXTRA_DIST+= \
+             plugin/pbms/src/TransTest.cc \
+             plugin/pbms/src/alias_ms.cc \
+             plugin/pbms/src/alias_ms.h \
+             plugin/pbms/src/discover_ms.cc \
+             plugin/pbms/src/pbms_enabled.cc \
+             plugin/pbms/src/pbms_enabled.h \
+             plugin/pbms/src/systab_enabled_ms.cc \
+             plugin/pbms/src/systab_enabled_ms.h \
+             plugin/pbms/src/udf_ms.cc
+

@@ -68,7 +68,7 @@ int64_t BenchmarkFunction::val_int()
   {
     if (args[0]->null_value == false)
     {
-      int64_t10_to_str((int64_t)loop_count, buff, -10);
+      internal::int64_t10_to_str((int64_t)loop_count, buff, -10);
       push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                           ER_WRONG_VALUE_FOR_TYPE, ER(ER_WRONG_VALUE_FOR_TYPE),
                           "count", buff, "benchmark");
@@ -118,18 +118,11 @@ void BenchmarkFunction::print(String *str, enum_query_type query_type)
 
 plugin::Create_function<BenchmarkFunction> *benchmarkudf= NULL;
 
-static int initialize(plugin::Registry &registry)
+static int initialize(module::Context &context)
 {
   benchmarkudf= new plugin::Create_function<BenchmarkFunction>("benchmark");
-  registry.add(benchmarkudf);
+  context.add(benchmarkudf);
   return 0;
-}
-
-static int finalize(plugin::Registry &registry)
-{
-   registry.remove(benchmarkudf);
-   delete benchmarkudf;
-   return 0;
 }
 
 DRIZZLE_DECLARE_PLUGIN
@@ -141,8 +134,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Measure time for repeated calls to a function.",
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
-  finalize,   /* Plugin Deinit */
-  NULL,   /* status variables */
   NULL,   /* system variables */
   NULL    /* config options */
 }

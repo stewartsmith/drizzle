@@ -11,7 +11,7 @@
 
   You should have received a copy of the GNU General Public License
   along with this program; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /*
   Make sure to look at ha_tina.h for more details.
@@ -53,10 +53,13 @@ TODO:
 
 #include <fcntl.h>
 
+#include <algorithm>
+#include <vector>
 #include <string>
 #include <map>
 
 using namespace std;
+using namespace drizzled;
 
 /*
   unsigned char + unsigned char + uint64_t + uint64_t + uint64_t + uint64_t + unsigned char
@@ -75,29 +78,12 @@ using namespace std;
 static int read_meta_file(int meta_file, ha_rows *rows);
 static int write_meta_file(int meta_file, ha_rows rows, bool dirty);
 
-extern "C" void tina_get_status(void* param, int concurrent_insert);
-extern "C" void tina_update_status(void* param);
-extern "C" bool tina_check_status(void* param);
-
 /* Stuff for shares */
 pthread_mutex_t tina_mutex;
 
 /*****************************************************************************
  ** TINA tables
  *****************************************************************************/
-
-/*
-  Used for sorting chains with qsort().
-*/
-static int sort_set (tina_set *a, tina_set *b)
-{
-  /*
-    We assume that intervals do not intersect. So, it is enought to compare
-    any two points. Here we take start of intervals for comparison.
-  */
-  return ( a->begin > b->begin ? 1 : ( a->begin < b->begin ? -1 : 0 ) );
-}
-
 
 /*
   If frm_error() is called in table.cc this is called to find out what file
@@ -118,37 +104,33 @@ public:
    : drizzled::plugin::StorageEngine(name_arg,
                                      HTON_TEMPORARY_ONLY |
                                      HTON_NO_AUTO_INCREMENT |
-                                     HTON_HAS_DATA_DICTIONARY |
-                                     HTON_SKIP_STORE_LOCK |
-                                     HTON_FILE_BASED),
+                                     HTON_SKIP_STORE_LOCK),
     tina_open_tables()
   {}
-  virtual Cursor *create(TableShare &table,
-                         drizzled::memory::Root *mem_root)
+  virtual ~Tina()
   {
-    return new (mem_root) ha_tina(*this, table);
+    pthread_mutex_destroy(&tina_mutex);
+  }
+
+  virtual Cursor *create(Table &table)
+  {
+    return new ha_tina(*this, table);
   }
 
   const char **bas_ext() const {
     return ha_tina_exts;
   }
 
-  int doCreateTable(Session *,
-                    const char *table_name,
-                    Table& table_arg,
+  int doCreateTable(Session &,
+                    Table &table_arg,
+                    const drizzled::TableIdentifier &identifier,
                     drizzled::message::Table&);
 
   int doGetTableDefinition(Session& session,
-                           const char* path,
-                           const char *db,
-                           const char *table_name,
-                           const bool is_tmp,
-                           drizzled::message::Table *table_proto);
+                           const drizzled::TableIdentifier &identifier,
+                           drizzled::message::Table &table_message);
 
-  /* Temp only engine, so do not return values. */
-  void doGetTableNames(drizzled::CachedDirectory &, string& , set<string>&) { };
-
-  int doDropTable(Session&, const string table_path);
+  int doDropTable(Session&, const drizzled::TableIdentifier &identifier);
   TinaShare *findOpenTable(const string table_name);
   void addOpenTable(const string &table_name, TinaShare *);
   void deleteOpenTable(const string &table_name);
@@ -157,36 +139,69 @@ public:
   uint32_t max_keys()          const { return 0; }
   uint32_t max_key_parts()     const { return 0; }
   uint32_t max_key_length()    const { return 0; }
+  bool doDoesTableExist(Session& session, const drizzled::TableIdentifier &identifier);
+  int doRenameTable(Session&, const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to);
+
+  void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
+                             const drizzled::SchemaIdentifier &schema_identifier,
+                             drizzled::TableIdentifiers &set_of_identifiers);
 };
 
-int Tina::doDropTable(Session&,
-                        const string table_path)
+void Tina::doGetTableIdentifiers(drizzled::CachedDirectory&,
+                                 const drizzled::SchemaIdentifier&,
+                                 drizzled::TableIdentifiers&)
+{
+}
+
+int Tina::doRenameTable(Session &session,
+                        const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to)
+{
+  int error= 0;
+  for (const char **ext= bas_ext(); *ext ; ext++)
+  {
+    if (rename_file_ext(from.getPath().c_str(), to.getPath().c_str(), *ext))
+    {
+      if ((error=errno) != ENOENT)
+        break;
+      error= 0;
+    }
+  }
+
+  session.renameTableMessage(from, to);
+
+  return error;
+}
+
+bool Tina::doDoesTableExist(Session &session, const drizzled::TableIdentifier &identifier)
+{
+  return session.doesTableMessageExist(identifier);
+}
+
+
+int Tina::doDropTable(Session &session,
+                      const drizzled::TableIdentifier &identifier)
 {
   int error= 0;
   int enoent_or_zero= ENOENT;                   // Error if no file was deleted
-  char buff[FN_REFLEN];
-  ProtoCache::iterator iter;
 
   for (const char **ext= bas_ext(); *ext ; ext++)
   {
-    fn_format(buff, table_path.c_str(), "", *ext,
-              MY_UNPACK_FILENAME|MY_APPEND_EXT);
-    if (my_delete_with_symlink(buff, MYF(0)))
+    std::string full_name= identifier.getPath();
+    full_name.append(*ext);
+
+    if (internal::my_delete_with_symlink(full_name.c_str(), MYF(0)))
     {
       if ((error= errno) != ENOENT)
 	break;
     }
     else
+    {
       enoent_or_zero= 0;                        // No error for ENOENT
+    }
     error= enoent_or_zero;
   }
 
-  pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(table_path.c_str());
-
-  if (iter!= proto_cache.end())
-    proto_cache.erase(iter);
-  pthread_mutex_unlock(&proto_cache_mutex);
+  session.removeTableMessage(identifier);
 
   return error;
 }
@@ -213,81 +228,61 @@ void Tina::deleteOpenTable(const string &table_name)
 }
 
 
-int Tina::doGetTableDefinition(Session&,
-                               const char* path,
-                               const char *,
-                               const char *,
-                               const bool,
-                               drizzled::message::Table *table_proto)
+int Tina::doGetTableDefinition(Session &session,
+                               const drizzled::TableIdentifier &identifier,
+                               drizzled::message::Table &table_message)
 {
-  int error= ENOENT;
-  ProtoCache::iterator iter;
+  if (session.getTableMessage(identifier, table_message))
+    return EEXIST;
 
-  pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(path);
-
-  if (iter!= proto_cache.end())
-  {
-    if (table_proto)
-      table_proto->CopyFrom(((*iter).second));
-    error= EEXIST;
-  }
-  pthread_mutex_unlock(&proto_cache_mutex);
-
-  return error;
+  return ENOENT;
 }
 
 
 static Tina *tina_engine= NULL;
 
-static int tina_init_func(drizzled::plugin::Registry &registry)
+static int tina_init_func(drizzled::module::Context &context)
 {
 
   tina_engine= new Tina("CSV");
-  registry.add(tina_engine);
+  context.add(tina_engine);
 
   pthread_mutex_init(&tina_mutex,MY_MUTEX_INIT_FAST);
   return 0;
 }
 
-static int tina_done_func(drizzled::plugin::Registry &registry)
+
+
+TinaShare::TinaShare(const std::string &table_name_arg) : 
+  table_name(table_name_arg),
+  data_file_name(table_name_arg),
+  use_count(0),
+  saved_data_file_length(0),
+  update_file_opened(false),
+  tina_write_opened(false),
+  crashed(false),
+  rows_recorded(0),
+  data_file_version(0)
 {
-  registry.remove(tina_engine);
-  delete tina_engine;
-
-  pthread_mutex_destroy(&tina_mutex);
-
-  return 0;
-}
-
-
-TinaShare::TinaShare(const char *table_name_arg)
-  : table_name(table_name_arg), use_count(0), saved_data_file_length(0),
-    update_file_opened(false), tina_write_opened(false),
-    crashed(false), rows_recorded(0), data_file_version(0)
-{
-  thr_lock_init(&lock);
-  fn_format(data_file_name, table_name_arg, "", CSV_EXT,
-            MY_REPLACE_EXT|MY_UNPACK_FILENAME);
+  data_file_name.append(CSV_EXT);
 }
 
 TinaShare::~TinaShare()
 {
-  thr_lock_delete(&lock);
   pthread_mutex_destroy(&mutex);
 }
 
 /*
   Simple lock controls.
 */
-TinaShare *ha_tina::get_share(const char *table_name)
+TinaShare *ha_tina::get_share(const std::string &table_name)
 {
   pthread_mutex_lock(&tina_mutex);
 
-  Tina *a_tina= static_cast<Tina *>(engine);
+  Tina *a_tina= static_cast<Tina *>(getEngine());
   share= a_tina->findOpenTable(table_name);
 
-  char meta_file_name[FN_REFLEN];
+  std::string meta_file_name;
   struct stat file_stat;
 
   /*
@@ -304,10 +299,10 @@ TinaShare *ha_tina::get_share(const char *table_name)
       return NULL;
     }
 
-    fn_format(meta_file_name, table_name, "", CSM_EXT,
-              MY_REPLACE_EXT|MY_UNPACK_FILENAME);
+    meta_file_name.assign(table_name);
+    meta_file_name.append(CSM_EXT);
 
-    if (stat(share->data_file_name, &file_stat))
+    if (stat(share->data_file_name.c_str(), &file_stat))
     {
       pthread_mutex_unlock(&tina_mutex);
       delete share;
@@ -326,8 +321,8 @@ TinaShare *ha_tina::get_share(const char *table_name)
       Usually this will result in auto-repair, and we will get a good
       meta-file in the end.
     */
-    if ((share->meta_file= my_open(meta_file_name,
-                                   O_RDWR|O_CREAT, MYF(0))) == -1)
+    if ((share->meta_file= internal::my_open(meta_file_name.c_str(),
+                                             O_RDWR|O_CREAT, MYF(0))) == -1)
       share->crashed= true;
 
     /*
@@ -369,7 +364,7 @@ static int read_meta_file(int meta_file, ha_rows *rows)
   unsigned char *ptr= meta_buffer;
 
   lseek(meta_file, 0, SEEK_SET);
-  if (my_read(meta_file, (unsigned char*)meta_buffer, META_BUFFER_SIZE, 0)
+  if (internal::my_read(meta_file, (unsigned char*)meta_buffer, META_BUFFER_SIZE, 0)
       != META_BUFFER_SIZE)
     return(HA_ERR_CRASHED_ON_USAGE);
 
@@ -391,7 +386,7 @@ static int read_meta_file(int meta_file, ha_rows *rows)
       ((bool)(*ptr)== true))
     return(HA_ERR_CRASHED_ON_USAGE);
 
-  my_sync(meta_file, MYF(MY_WME));
+  internal::my_sync(meta_file, MYF(MY_WME));
 
   return(0);
 }
@@ -436,11 +431,11 @@ static int write_meta_file(int meta_file, ha_rows rows, bool dirty)
   *ptr= (unsigned char)dirty;
 
   lseek(meta_file, 0, SEEK_SET);
-  if (my_write(meta_file, (unsigned char *)meta_buffer, META_BUFFER_SIZE, 0)
+  if (internal::my_write(meta_file, (unsigned char *)meta_buffer, META_BUFFER_SIZE, 0)
       != META_BUFFER_SIZE)
     return(-1);
 
-  my_sync(meta_file, MYF(MY_WME));
+  internal::my_sync(meta_file, MYF(MY_WME));
 
   return(0);
 }
@@ -455,7 +450,7 @@ int ha_tina::init_tina_writer()
   (void)write_meta_file(share->meta_file, share->rows_recorded, true);
 
   if ((share->tina_write_filedes=
-        my_open(share->data_file_name, O_RDWR|O_APPEND, MYF(0))) == -1)
+        internal::my_open(share->data_file_name.c_str(), O_RDWR|O_APPEND, MYF(0))) == -1)
   {
     share->crashed= true;
     return(1);
@@ -477,16 +472,16 @@ int ha_tina::free_share()
     /* Write the meta file. Mark it as crashed if needed. */
     (void)write_meta_file(share->meta_file, share->rows_recorded,
                           share->crashed ? true :false);
-    if (my_close(share->meta_file, MYF(0)))
+    if (internal::my_close(share->meta_file, MYF(0)))
       result_code= 1;
     if (share->tina_write_opened)
     {
-      if (my_close(share->tina_write_filedes, MYF(0)))
+      if (internal::my_close(share->tina_write_filedes, MYF(0)))
         result_code= 1;
       share->tina_write_opened= false;
     }
 
-    Tina *a_tina= static_cast<Tina *>(engine);
+    Tina *a_tina= static_cast<Tina *>(getEngine());
     a_tina->deleteOpenTable(share->table_name);
     delete share;
   }
@@ -535,19 +530,17 @@ static off_t find_eoln_buff(Transparent_file *data_buff, off_t begin,
 
 
 
-ha_tina::ha_tina(drizzled::plugin::StorageEngine &engine_arg, TableShare &table_arg)
+ha_tina::ha_tina(drizzled::plugin::StorageEngine &engine_arg, Table &table_arg)
   :Cursor(engine_arg, table_arg),
   /*
     These definitions are found in Cursor.h
     They are not probably completely right.
   */
   current_position(0), next_position(0), local_saved_data_file_length(0),
-  file_buff(0), chain_alloced(0), chain_size(DEFAULT_CHAIN_LENGTH),
-  local_data_file_version(0), records_is_known(0)
+  file_buff(0), local_data_file_version(0), records_is_known(0)
 {
   /* Set our original buffers from pre-allocated memory */
   buffer.set((char*)byte_buffer, IO_SIZE, &my_charset_bin);
-  chain= chain_buffer;
   file_buff= new Transparent_file();
 }
 
@@ -564,7 +557,7 @@ int ha_tina::encode_quote(unsigned char *)
 
   buffer.length(0);
 
-  for (Field **field=table->field ; *field ; field++)
+  for (Field **field= getTable()->getFields() ; *field ; field++)
   {
     const char *ptr;
     const char *end_ptr;
@@ -604,25 +597,25 @@ int ha_tina::encode_quote(unsigned char *)
         {
           buffer.append('\\');
           buffer.append('"');
-          *ptr++;
+          (void) *ptr++;
         }
         else if (*ptr == '\r')
         {
           buffer.append('\\');
           buffer.append('r');
-          *ptr++;
+          (void) *ptr++;
         }
         else if (*ptr == '\\')
         {
           buffer.append('\\');
           buffer.append('\\');
-          *ptr++;
+          (void) *ptr++;
         }
         else if (*ptr == '\n')
         {
           buffer.append('\\');
           buffer.append('n');
-          *ptr++;
+          (void) *ptr++;
         }
         else
           buffer.append(*ptr++);
@@ -652,36 +645,10 @@ int ha_tina::encode_quote(unsigned char *)
 */
 int ha_tina::chain_append()
 {
-  if ( chain_ptr != chain && (chain_ptr -1)->end == current_position)
-    (chain_ptr -1)->end= next_position;
+  if (chain.size() > 0 && chain.back().second == current_position)
+    chain.back().second= next_position;
   else
-  {
-    /* We set up for the next position */
-    if ((off_t)(chain_ptr - chain) == (chain_size -1))
-    {
-      off_t location= chain_ptr - chain;
-      chain_size += DEFAULT_CHAIN_LENGTH;
-      if (chain_alloced)
-      {
-        if ((chain= (tina_set *) realloc(chain, chain_size)) == NULL)
-          return -1;
-      }
-      else
-      {
-        tina_set *ptr= (tina_set *) malloc(chain_size * sizeof(tina_set));
-        if (ptr == NULL)
-          return -1;
-        memcpy(ptr, chain, DEFAULT_CHAIN_LENGTH * sizeof(tina_set));
-        chain= ptr;
-        chain_alloced++;
-      }
-      chain_ptr= chain + location;
-    }
-    chain_ptr->begin= current_position;
-    chain_ptr->end= next_position;
-    chain_ptr++;
-  }
-
+    chain.push_back(make_pair(current_position, next_position));
   return 0;
 }
 
@@ -695,7 +662,7 @@ int ha_tina::find_current_row(unsigned char *buf)
   int eoln_len;
   int error;
 
-  free_root(&blobroot, MYF(drizzled::memory::MARK_BLOCKS_FREE));
+  blobroot.free_root(MYF(drizzled::memory::MARK_BLOCKS_FREE));
 
   /*
     We do not read further then local_saved_data_file_length in order
@@ -708,9 +675,9 @@ int ha_tina::find_current_row(unsigned char *buf)
 
   error= HA_ERR_CRASHED_ON_USAGE;
 
-  memset(buf, 0, table->s->null_bytes);
+  memset(buf, 0, getTable()->getShare()->null_bytes);
 
-  for (Field **field=table->field ; *field ; field++)
+  for (Field **field= getTable()->getFields() ; *field ; field++)
   {
     char curr_char;
 
@@ -794,7 +761,7 @@ int ha_tina::find_current_row(unsigned char *buf)
         memcpy(&src, blob->ptr + packlength, sizeof(char*));
         if (src)
         {
-          tgt= (unsigned char*) alloc_root(&blobroot, length);
+          tgt= (unsigned char*) blobroot.alloc_root(length);
           memmove(tgt, src, length);
           memcpy(blob->ptr + packlength, &tgt, sizeof(char*));
         }
@@ -810,81 +777,13 @@ err:
 }
 
 /*
-  Three functions below are needed to enable concurrent insert functionality
-  for CSV engine. For more details see mysys/thr_lock.c
-*/
-
-void tina_get_status(void* param, int)
-{
-  ha_tina *tina= (ha_tina*) param;
-  tina->get_status();
-}
-
-void tina_update_status(void* param)
-{
-  ha_tina *tina= (ha_tina*) param;
-  tina->update_status();
-}
-
-/* this should exist and return 0 for concurrent insert to work */
-bool tina_check_status(void *)
-{
-  return 0;
-}
-
-/*
-  Save the state of the table
-
-  SYNOPSIS
-    get_status()
-
-  DESCRIPTION
-    This function is used to retrieve the file length. During the lock
-    phase of concurrent insert. For more details see comment to
-    ha_tina::update_status below.
-*/
-
-void ha_tina::get_status()
-{
-  local_saved_data_file_length= share->saved_data_file_length;
-}
-
-
-/*
-  Correct the state of the table. Called by unlock routines
-  before the write lock is released.
-
-  SYNOPSIS
-    update_status()
-
-  DESCRIPTION
-    When we employ concurrent insert lock, we save current length of the file
-    during the lock phase. We do not read further saved value, as we don't
-    want to interfere with undergoing concurrent insert. Writers update file
-    length info during unlock with update_status().
-
-  NOTE
-    For log tables concurrent insert works different. The reason is that
-    log tables are always opened and locked. And as they do not unlock
-    tables, the file length after writes should be updated in a different
-    way.
-*/
-
-void ha_tina::update_status()
-{
-  /* correct local_saved_data_file_length for writers */
-  share->saved_data_file_length= local_saved_data_file_length;
-}
-
-
-/*
   Open a database file. Keep in mind that tables are caches, so
   this will not be called for every request. Any sort of positions
   that need to be reset should be kept in the ::extra() call.
 */
-int ha_tina::open(const char *name, int, uint32_t)
+int ha_tina::doOpen(const TableIdentifier &identifier, int , uint32_t )
 {
-  if (!(share= get_share(name)))
+  if (not (share= get_share(identifier.getPath().c_str())))
     return(ENOENT);
 
   if (share->crashed)
@@ -894,7 +793,7 @@ int ha_tina::open(const char *name, int, uint32_t)
   }
 
   local_data_file_version= share->data_file_version;
-  if ((data_file= my_open(share->data_file_name, O_RDONLY, MYF(0))) == -1)
+  if ((data_file= internal::my_open(share->data_file_name.c_str(), O_RDONLY, MYF(0))) == -1)
     return(0);
 
   /*
@@ -902,16 +801,10 @@ int ha_tina::open(const char *name, int, uint32_t)
     so that they could save/update local_saved_data_file_length value
     during locking. This is needed to enable concurrent inserts.
   */
-  thr_lock_data_init(&share->lock, &lock, (void*) this);
   ref_length=sizeof(off_t);
-
-  share->lock.get_status= tina_get_status;
-  share->lock.update_status= tina_update_status;
-  share->lock.check_status= tina_check_status;
 
   return(0);
 }
-
 
 /*
   Close a database file. We remove ourselves from the shared strucutre.
@@ -920,7 +813,7 @@ int ha_tina::open(const char *name, int, uint32_t)
 int ha_tina::close(void)
 {
   int rc= 0;
-  rc= my_close(data_file, MYF(0));
+  rc= internal::my_close(data_file, MYF(0));
   return(free_share() || rc);
 }
 
@@ -929,14 +822,12 @@ int ha_tina::close(void)
   of the file and appends the data. In an error case it really should
   just truncate to the original position (this is not done yet).
 */
-int ha_tina::write_row(unsigned char * buf)
+int ha_tina::doInsertRecord(unsigned char * buf)
 {
   int size;
 
   if (share->crashed)
       return(HA_ERR_CRASHED_ON_USAGE);
-
-  ha_statistic_increment(&SSV::ha_write_count);
 
   size= encode_quote(buf);
 
@@ -945,7 +836,7 @@ int ha_tina::write_row(unsigned char * buf)
       return(-1);
 
    /* use pwrite, as concurrent reader could have changed the position */
-  if (my_write(share->tina_write_filedes, (unsigned char*)buffer.ptr(), size,
+  if (internal::my_write(share->tina_write_filedes, (unsigned char*)buffer.ptr(), size,
                MYF(MY_WME | MY_NABP)))
     return(-1);
 
@@ -970,7 +861,7 @@ int ha_tina::open_update_temp_file_if_needed()
   if (!share->update_file_opened)
   {
     if ((update_temp_file=
-           my_create(fn_format(updated_fname, share->table_name.c_str(),
+           internal::my_create(internal::fn_format(updated_fname, share->table_name.c_str(),
                                "", CSN_EXT,
                                MY_REPLACE_EXT | MY_UNPACK_FILENAME),
                      0, O_RDWR | O_TRUNC, MYF(MY_WME))) < 0)
@@ -989,22 +880,17 @@ int ha_tina::open_update_temp_file_if_needed()
   This will be called in a table scan right before the previous ::rnd_next()
   call.
 */
-int ha_tina::update_row(const unsigned char *, unsigned char * new_data)
+int ha_tina::doUpdateRecord(const unsigned char *, unsigned char * new_data)
 {
   int size;
   int rc= -1;
-
-  ha_statistic_increment(&SSV::ha_update_count);
-
-  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
-    table->timestamp_field->set_time();
 
   size= encode_quote(new_data);
 
   /*
     During update we mark each updating record as deleted
     (see the chain_append()) then write new one to the temporary data file.
-    At the end of the sequence in the rnd_end() we append all non-marked
+    At the end of the sequence in the doEndTableScan() we append all non-marked
     records from the data file to the temporary data file then rename it.
     The temp_file_length is used to calculate new data file length.
   */
@@ -1014,7 +900,7 @@ int ha_tina::update_row(const unsigned char *, unsigned char * new_data)
   if (open_update_temp_file_if_needed())
     goto err;
 
-  if (my_write(update_temp_file, (unsigned char*)buffer.ptr(), size,
+  if (internal::my_write(update_temp_file, (unsigned char*)buffer.ptr(), size,
                MYF(MY_WME | MY_NABP)))
     goto err;
   temp_file_length+= size;
@@ -1034,9 +920,8 @@ err:
   The table will then be deleted/positioned based on the ORDER (so RANDOM,
   DESC, ASC).
 */
-int ha_tina::delete_row(const unsigned char *)
+int ha_tina::doDeleteRecord(const unsigned char *)
 {
-  ha_statistic_increment(&SSV::ha_delete_count);
 
   if (chain_append())
     return(-1);
@@ -1070,8 +955,8 @@ int ha_tina::init_data_file()
   if (local_data_file_version != share->data_file_version)
   {
     local_data_file_version= share->data_file_version;
-    if (my_close(data_file, MYF(0)) ||
-        (data_file= my_open(share->data_file_name, O_RDONLY, MYF(0))) == -1)
+    if (internal::my_close(data_file, MYF(0)) ||
+        (data_file= internal::my_open(share->data_file_name.c_str(), O_RDONLY, MYF(0))) == -1)
       return 1;
   }
   file_buff->init_buff(data_file);
@@ -1107,7 +992,7 @@ int ha_tina::init_data_file()
 
 */
 
-int ha_tina::rnd_init(bool)
+int ha_tina::doStartTableScan(bool)
 {
   /* set buffer to the beginning of the file */
   if (share->crashed || init_data_file())
@@ -1116,9 +1001,9 @@ int ha_tina::rnd_init(bool)
   current_position= next_position= 0;
   stats.records= 0;
   records_is_known= 0;
-  chain_ptr= chain;
+  chain.clear();
 
-  init_alloc_root(&blobroot, BLOB_MEMROOT_ALLOC_SIZE);
+  blobroot.init_alloc_root(BLOB_MEMROOT_ALLOC_SIZE);
 
   return(0);
 }
@@ -1144,7 +1029,7 @@ int ha_tina::rnd_next(unsigned char *buf)
   if (share->crashed)
       return(HA_ERR_CRASHED_ON_USAGE);
 
-  ha_statistic_increment(&SSV::ha_read_rnd_next_count);
+  ha_statistic_increment(&system_status_var::ha_read_rnd_next_count);
 
   current_position= next_position;
 
@@ -1170,20 +1055,20 @@ int ha_tina::rnd_next(unsigned char *buf)
 */
 void ha_tina::position(const unsigned char *)
 {
-  my_store_ptr(ref, ref_length, current_position);
+  internal::my_store_ptr(ref, ref_length, current_position);
   return;
 }
 
 
 /*
   Used to fetch a row from a posiion stored with ::position().
-  my_get_ptr() retrieves the data for you.
+  internal::my_get_ptr() retrieves the data for you.
 */
 
 int ha_tina::rnd_pos(unsigned char * buf, unsigned char *pos)
 {
-  ha_statistic_increment(&SSV::ha_read_rnd_count);
-  current_position= (off_t)my_get_ptr(pos,ref_length);
+  ha_statistic_increment(&system_status_var::ha_read_rnd_count);
+  current_position= (off_t)internal::my_get_ptr(pos,ref_length);
   return(find_current_row(buf));
 }
 
@@ -1205,14 +1090,14 @@ int ha_tina::info(uint32_t)
   to the given "hole", stored in the buffer. "Valid" here means,
   not listed in the chain of deleted records ("holes").
 */
-bool ha_tina::get_write_pos(off_t *end_pos, tina_set *closest_hole)
+bool ha_tina::get_write_pos(off_t *end_pos, vector< pair<off_t, off_t> >::iterator &closest_hole)
 {
-  if (closest_hole == chain_ptr) /* no more chains */
+  if (closest_hole == chain.end()) /* no more chains */
     *end_pos= file_buff->end();
   else
     *end_pos= std::min(file_buff->end(),
-                       closest_hole->begin);
-  return (closest_hole != chain_ptr) && (*end_pos == closest_hole->begin);
+                       closest_hole->first);
+  return (closest_hole != chain.end()) && (*end_pos == closest_hole->first);
 }
 
 
@@ -1222,17 +1107,16 @@ bool ha_tina::get_write_pos(off_t *end_pos, tina_set *closest_hole)
   slots to clean up all of the dead space we have collected while
   performing deletes/updates.
 */
-int ha_tina::rnd_end()
+int ha_tina::doEndTableScan()
 {
-  char updated_fname[FN_REFLEN];
   off_t file_buffer_start= 0;
 
-  free_root(&blobroot, MYF(0));
+  blobroot.free_root(MYF(0));
   records_is_known= 1;
 
-  if ((chain_ptr - chain)  > 0)
+  if (chain.size() > 0)
   {
-    tina_set *ptr= chain;
+    vector< pair<off_t, off_t> >::iterator ptr= chain.begin();
 
     /*
       Re-read the beginning of a file (as the buffer should point to the
@@ -1244,8 +1128,7 @@ int ha_tina::rnd_end()
       The sort is needed when there were updates/deletes with random orders.
       It sorts so that we move the firts blocks to the beginning.
     */
-    my_qsort(chain, (size_t)(chain_ptr - chain), sizeof(tina_set),
-             (qsort_cmp)sort_set);
+    sort(chain.begin(), chain.end());
 
     off_t write_begin= 0, write_end;
 
@@ -1266,7 +1149,7 @@ int ha_tina::rnd_end()
       /* if there is something to write, write it */
       if (write_length)
       {
-        if (my_write(update_temp_file,
+        if (internal::my_write(update_temp_file,
                      (unsigned char*) (file_buff->ptr() +
                                (write_begin - file_buff->start())),
                      (size_t)write_length, MYF_RW))
@@ -1276,10 +1159,10 @@ int ha_tina::rnd_end()
       if (in_hole)
       {
         /* skip hole */
-        while (file_buff->end() <= ptr->end && file_buffer_start != -1)
+        while (file_buff->end() <= ptr->second && file_buffer_start != -1)
           file_buffer_start= file_buff->read_next();
-        write_begin= ptr->end;
-        ptr++;
+        write_begin= ptr->second;
+        ++ptr;
       }
       else
         write_begin= write_end;
@@ -1289,15 +1172,15 @@ int ha_tina::rnd_end()
 
     }
 
-    if (my_sync(update_temp_file, MYF(MY_WME)) ||
-        my_close(update_temp_file, MYF(0)))
+    if (internal::my_sync(update_temp_file, MYF(MY_WME)) ||
+        internal::my_close(update_temp_file, MYF(0)))
       return(-1);
 
     share->update_file_opened= false;
 
     if (share->tina_write_opened)
     {
-      if (my_close(share->tina_write_filedes, MYF(0)))
+      if (internal::my_close(share->tina_write_filedes, MYF(0)))
         return(-1);
       /*
         Mark that the writer fd is closed, so that init_tina_writer()
@@ -1310,15 +1193,15 @@ int ha_tina::rnd_end()
       Close opened fildes's. Then move updated file in place
       of the old datafile.
     */
-    if (my_close(data_file, MYF(0)) ||
-        my_rename(fn_format(updated_fname, share->table_name.c_str(),
-                            "", CSN_EXT,
-                            MY_REPLACE_EXT | MY_UNPACK_FILENAME),
-                  share->data_file_name, MYF(0)))
+    std::string rename_file= share->table_name;
+    rename_file.append(CSN_EXT);
+    if (internal::my_close(data_file, MYF(0)) ||
+        internal::my_rename(rename_file.c_str(),
+                            share->data_file_name.c_str(), MYF(0)))
       return(-1);
 
     /* Open the file again */
-    if (((data_file= my_open(share->data_file_name, O_RDONLY, MYF(0))) == -1))
+    if (((data_file= internal::my_open(share->data_file_name.c_str(), O_RDONLY, MYF(0))) == -1))
       return(-1);
     /*
       As we reopened the data file, increase share->data_file_version
@@ -1345,7 +1228,7 @@ int ha_tina::rnd_end()
 
   return(0);
 error:
-  my_close(update_temp_file, MYF(0));
+  internal::my_close(update_temp_file, MYF(0));
   share->update_file_opened= false;
   return(-1);
 }
@@ -1383,9 +1266,10 @@ int ha_tina::delete_all_rows()
   this (the database will call ::open() if it needs to).
 */
 
-int Tina::doCreateTable(Session *, const char *table_name,
+int Tina::doCreateTable(Session &session,
                         Table& table_arg,
-                        drizzled::message::Table& create_proto)
+                        const drizzled::TableIdentifier &identifier,
+                        drizzled::message::Table &create_proto)
 {
   char name_buff[FN_REFLEN];
   int create_file;
@@ -1393,9 +1277,15 @@ int Tina::doCreateTable(Session *, const char *table_name,
   /*
     check columns
   */
-  for (Field **field= table_arg.s->field; *field; field++)
+  const drizzled::TableShare::Fields fields(table_arg.getShare()->getFields());
+  for (drizzled::TableShare::Fields::const_iterator iter= fields.begin();
+       iter != fields.end();
+       iter++)
   {
-    if ((*field)->real_maybe_null())
+    if (not *iter) // Historical legacy for NULL array end.
+      continue;
+
+    if ((*iter)->real_maybe_null())
     {
       my_error(ER_CHECK_NOT_IMPLEMENTED, MYF(0), "nullable columns");
       return(HA_ERR_UNSUPPORTED);
@@ -1403,24 +1293,22 @@ int Tina::doCreateTable(Session *, const char *table_name,
   }
 
 
-  if ((create_file= my_create(fn_format(name_buff, table_name, "", CSM_EXT,
-                                        MY_REPLACE_EXT|MY_UNPACK_FILENAME), 0,
-                              O_RDWR | O_TRUNC,MYF(MY_WME))) < 0)
+  if ((create_file= internal::my_create(internal::fn_format(name_buff, identifier.getPath().c_str(), "", CSM_EXT,
+                                                            MY_REPLACE_EXT|MY_UNPACK_FILENAME), 0,
+                                        O_RDWR | O_TRUNC,MYF(MY_WME))) < 0)
     return(-1);
 
   write_meta_file(create_file, 0, false);
-  my_close(create_file, MYF(0));
+  internal::my_close(create_file, MYF(0));
 
-  if ((create_file= my_create(fn_format(name_buff, table_name, "", CSV_EXT,
-                                        MY_REPLACE_EXT|MY_UNPACK_FILENAME),0,
-                              O_RDWR | O_TRUNC,MYF(MY_WME))) < 0)
+  if ((create_file= internal::my_create(internal::fn_format(name_buff, identifier.getPath().c_str(), "", CSV_EXT,
+                                                            MY_REPLACE_EXT|MY_UNPACK_FILENAME),0,
+                                        O_RDWR | O_TRUNC,MYF(MY_WME))) < 0)
     return(-1);
 
-  my_close(create_file, MYF(0));
+  internal::my_close(create_file, MYF(0));
 
-  pthread_mutex_lock(&proto_cache_mutex);
-  proto_cache.insert(make_pair(table_name, create_proto));
-  pthread_mutex_unlock(&proto_cache_mutex);
+  session.storeTableMessage(identifier, create_proto);
 
   return 0;
 }
@@ -1435,8 +1323,6 @@ DRIZZLE_DECLARE_PLUGIN
   "CSV storage engine",
   PLUGIN_LICENSE_GPL,
   tina_init_func, /* Plugin Init */
-  tina_done_func, /* Plugin Deinit */
-  NULL,                       /* status variables                */
   NULL,                       /* system variables                */
   NULL                        /* config options                  */
 }

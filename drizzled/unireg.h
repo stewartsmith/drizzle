@@ -23,7 +23,11 @@
 #ifndef DRIZZLED_UNIREG_H
 #define DRIZZLED_UNIREG_H
 
-void unireg_end(void) __attribute__((noreturn));
+namespace drizzled
+{
+
 void unireg_abort(int exit_code) __attribute__((noreturn));
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_UNIREG_H */

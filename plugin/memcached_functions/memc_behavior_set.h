@@ -40,14 +40,14 @@
 #include <string>
 
 /* implements memc_behavior_set */
-class MemcachedBehaviorSet : public Item_str_func
+class MemcachedBehaviorSet : public drizzled::Item_str_func
 {
 public:
   MemcachedBehaviorSet()
     : 
       Item_str_func(),
-      failure_buff("0", &my_charset_bin),
-      success_buff("1", &my_charset_bin),
+      failure_buff("0", &drizzled::my_charset_bin),
+      success_buff("1", &drizzled::my_charset_bin),
       behavior_map(),
       dist_settings_map(),
       hash_settings_map(),
@@ -151,7 +151,7 @@ public:
     return "memc_behavior_set";
   }
 
-  String *val_str(String *);
+  drizzled::String *val_str(drizzled::String *);
 
   void fix_length_and_dec()
   {
@@ -161,8 +161,8 @@ public:
 private:
   void setFailureString(const char *error);
 
-  String failure_buff;
-  String success_buff;
+  drizzled::String failure_buff;
+  drizzled::String success_buff;
 
   std::map<const std::string, memcached_behavior> behavior_map;
   std::map<const std::string, uint64_t> dist_settings_map;

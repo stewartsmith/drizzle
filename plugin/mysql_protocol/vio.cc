@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /*
   Note that we can't have assertion on file descriptors;  The reason for
@@ -19,102 +19,236 @@
   we are working on.  In this case we should just return read errors from
   the file descriptior.
 */
-
-#define DONT_MAP_VIO
 #include "config.h"
 #include "vio.h"
 #include <string.h>
-
+#include <drizzled/util/test.h>
+#include <sys/socket.h>
+#include <string.h>
+#include <sys/types.h>
+#include <netinet/tcp.h>
+#include <netinet/in.h>
+#include <sys/poll.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <netdb.h>
+#include <algorithm>
 #include <cstdlib>
 #include <cassert>
 #include <cstdio>
 #include <fcntl.h>
 
-/*
- * Helper to fill most of the Vio* with defaults.
- */
+using namespace std;
 
-static void drizzleclient_vio_init(Vio* vio, enum enum_vio_type type,
-                     int sd, uint32_t flags)
+Vio::Vio(int nsd)
+: closed(false),
+sd(nsd),
+fcntl_mode(0),
+read_pos(NULL),
+read_end(NULL)
 {
-  memset(vio, 0, sizeof(*vio));
-  vio->type	= type;
-  vio->sd	= sd;
-  if ((flags & VIO_BUFFERED_READ) &&
-      !(vio->read_buffer= (char*)malloc(VIO_READ_BUFFER_SIZE)))
-    flags&= ~VIO_BUFFERED_READ;
+  closed= false;
+  sd= nsd;
+
+  /*
+    We call fcntl() to set the flags and then immediately read them back
+    to make sure that we and the system are in agreement on the state of
+    things.
+
+    An example of why we need to do this is FreeBSD (and apparently some
+    other BSD-derived systems, like Mac OS X), where the system sometimes
+    reports that the socket is set for non-blocking when it really will
+    block.
+  */
+  fcntl(sd, F_SETFL, 0);
+  fcntl_mode= fcntl(sd, F_GETFL);
+
+  memset(&local, 0, sizeof(local));
+  memset(&remote, 0, sizeof(remote));
+}
+
+Vio::~Vio()
+{
+ if (!closed)
+    close();
+}
+
+int Vio::close()
+{
+  int r=0;
+  if (!closed)
   {
-    vio->viodelete	=drizzleclient_vio_delete;
-    vio->vioerrno	=drizzleclient_vio_errno;
-    vio->read= (flags & VIO_BUFFERED_READ) ? drizzleclient_vio_read_buff : drizzleclient_vio_read;
-    vio->write		=drizzleclient_vio_write;
-    vio->fastsend	=drizzleclient_vio_fastsend;
-    vio->viokeepalive	=drizzleclient_vio_keepalive;
-    vio->should_retry	=drizzleclient_vio_should_retry;
-    vio->was_interrupted=drizzleclient_vio_was_interrupted;
-    vio->vioclose	=drizzleclient_vio_close;
-    vio->peer_addr	=drizzleclient_vio_peer_addr;
-    vio->vioblocking	=drizzleclient_vio_blocking;
-    vio->is_blocking	=drizzleclient_vio_is_blocking;
-    vio->timeout	=drizzleclient_vio_timeout;
+    assert(sd >= 0);
+    if (shutdown(sd, SHUT_RDWR))
+      r= -1;
+    if (::close(sd))
+      r= -1;
+  }
+  closed= true;
+  sd=   -1;
+
+  return r;
+}
+
+size_t Vio::read(unsigned char* buf, size_t size)
+{
+  size_t r;
+
+  /* Ensure nobody uses vio_read_buff and vio_read simultaneously */
+  assert(read_end == read_pos);
+  r= ::read(sd, buf, size);
+
+  return r;
+}
+
+size_t Vio::write(const unsigned char* buf, size_t size)
+{
+  size_t r;
+
+  r = ::write(sd, buf, size);
+
+  return r;
+}
+
+int Vio::blocking(bool set_blocking_mode, bool *old_mode)
+{
+  int r=0;
+
+  // make sure ptr is not NULL:
+  if (NULL != old_mode)
+    *old_mode= drizzled::test(!(fcntl_mode & O_NONBLOCK));
+
+  if (sd >= 0)
+  {
+    int old_fcntl=fcntl_mode;
+    if (set_blocking_mode)
+      fcntl_mode &= ~O_NONBLOCK; /* clear bit */
+    else
+      fcntl_mode |= O_NONBLOCK; /* set bit */
+    if (old_fcntl != fcntl_mode)
+    {
+      r= fcntl(sd, F_SETFL, fcntl_mode);
+      if (r == -1)
+      {
+        fcntl_mode= old_fcntl;
+      }
+    }
+  }
+
+  return r;
+}
+
+int Vio::fastsend()
+{
+  int nodelay = 1;
+  int error;
+
+  error= setsockopt(sd, IPPROTO_TCP, TCP_NODELAY,
+                    &nodelay, sizeof(nodelay));
+  if (error != 0)
+  {
+    perror("setsockopt");
+  }
+
+  return error;
+}
+
+int32_t Vio::keepalive(bool set_keep_alive)
+{
+  int r= 0;
+  uint32_t opt= 0;
+
+  if (set_keep_alive)
+    opt= 1;
+
+  r= setsockopt(sd, SOL_SOCKET, SO_KEEPALIVE, (char *) &opt, sizeof(opt));
+  if (r != 0)
+  {
+    perror("setsockopt");
+    assert(r == 0);
+  }
+
+  return r;
+}
+
+bool Vio::should_retry() const
+{
+  int en = errno;
+  return (en == EAGAIN || en == EINTR ||
+          en == EWOULDBLOCK);
+}
+
+bool Vio::was_interrupted() const
+{
+  int en= errno;
+  return (en == EAGAIN || en == EINTR ||
+          en == EWOULDBLOCK || en == ETIMEDOUT);
+}
+
+bool Vio::peer_addr(char *buf, uint16_t *port, size_t buflen) const
+{
+  int error;
+  char port_buf[NI_MAXSERV];
+  socklen_t al = sizeof(remote);
+
+  if (getpeername(sd, (struct sockaddr *) (&remote),
+                  &al) != 0)
+  {
+    return true;
+  }
+
+  if ((error= getnameinfo((struct sockaddr *)(&remote),
+                          al,
+                          buf, buflen,
+                          port_buf, NI_MAXSERV, NI_NUMERICHOST|NI_NUMERICSERV)))
+  {
+    return true;
+  }
+
+  *port= (uint16_t)strtol(port_buf, (char **)NULL, 10);
+
+  return false;
+}
+
+void Vio::timeout(bool is_sndtimeo, int32_t t)
+{
+  int error;
+
+  /* POSIX specifies time as struct timeval. */
+  struct timeval wait_timeout;
+  wait_timeout.tv_sec= t;
+  wait_timeout.tv_usec= 0;
+
+  assert(t >= 0 && t <= INT32_MAX);
+  assert(sd != -1);
+  error= setsockopt(sd, SOL_SOCKET, is_sndtimeo ? SO_SNDTIMEO : SO_RCVTIMEO,
+                    &wait_timeout,
+                    (socklen_t)sizeof(struct timeval));
+  if (error == -1 && errno != ENOPROTOOPT)
+  {
+    perror("setsockopt");
+    assert(error == 0);
   }
 }
 
-
-/* Reset initialized VIO to use with another transport type */
-
-void drizzleclient_vio_reset(Vio* vio, enum enum_vio_type type,
-               int sd, uint32_t flags)
+int Vio::get_errno() const
 {
-  free(vio->read_buffer);
-  drizzleclient_vio_init(vio, type, sd, flags);
+  return errno;
+}
+
+int Vio::get_fd() const
+{
+  return sd;
 }
 
 
-/* Open the socket or TCP/IP connection and read the fnctl() status */
-
-Vio *drizzleclient_vio_new(int sd, enum enum_vio_type type, uint32_t flags)
+char *Vio::get_read_pos() const
 {
-  Vio *vio = (Vio*) malloc(sizeof(Vio));
-
-  if (vio != NULL)
-  {
-    drizzleclient_vio_init(vio, type, sd, flags);
-    sprintf(vio->desc, "TCP/IP (%d)", vio->sd);
-    /*
-      We call fcntl() to set the flags and then immediately read them back
-      to make sure that we and the system are in agreement on the state of
-      things.
-
-      An example of why we need to do this is FreeBSD (and apparently some
-      other BSD-derived systems, like Mac OS X), where the system sometimes
-      reports that the socket is set for non-blocking when it really will
-      block.
-    */
-    fcntl(sd, F_SETFL, 0);
-    vio->fcntl_mode= fcntl(sd, F_GETFL);
-  }
-  return vio;
+  return read_pos;
 }
 
-
-void drizzleclient_vio_delete(Vio* vio)
+char *Vio::get_read_end() const
 {
-  if (!vio)
-    return; /* It must be safe to delete null pointers. */
-
-  if (vio->type != VIO_CLOSED)
-    vio->vioclose(vio);
-  free((unsigned char*) vio->read_buffer);
-  free((unsigned char*) vio);
+  return read_end;
 }
 
-
-/*
-  Cleanup memory allocated by vio or the
-  components below it when application finish
-
-*/
-void drizzleclient_vio_end(void)
-{
-}

@@ -31,6 +31,8 @@
 
 using namespace std;
 
+namespace drizzled
+{
 
 /****************************************************************************
 ** long int
@@ -47,7 +49,7 @@ int Field_long::store(const char *from,uint32_t len, const CHARSET_INFO * const 
   error= get_int(cs, from, len, &rnd, UINT32_MAX, INT32_MIN, INT32_MAX);
   store_tmp= (long) rnd;
 #ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
+  if (getTable()->getShare()->db_low_byte_first)
   {
     int4store(ptr, store_tmp);
   }
@@ -83,7 +85,7 @@ int Field_long::store(double nr)
     set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
 
 #ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
+  if (getTable()->getShare()->db_low_byte_first)
   {
     int4store(ptr,res);
   }
@@ -120,7 +122,7 @@ int Field_long::store(int64_t nr, bool unsigned_val)
     set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
 
 #ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
+  if (getTable()->getShare()->db_low_byte_first)
   {
     int4store(ptr,res);
   }
@@ -138,7 +140,7 @@ double Field_long::val_real(void)
   ASSERT_COLUMN_MARKED_FOR_READ;
 
 #ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
+  if (getTable()->getShare()->db_low_byte_first)
     j=sint4korr(ptr);
   else
 #endif
@@ -153,9 +155,8 @@ int64_t Field_long::val_int(void)
   ASSERT_COLUMN_MARKED_FOR_READ;
 
   /* See the comment in Field_long::store(int64_t) */
-  assert(table->in_use == current_session);
 #ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
+  if (getTable()->getShare()->db_low_byte_first)
     j=sint4korr(ptr);
   else
 #endif
@@ -176,7 +177,7 @@ String *Field_long::val_str(String *val_buffer,
   ASSERT_COLUMN_MARKED_FOR_READ;
 
 #ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
+  if (getTable()->getShare()->db_low_byte_first)
     j=sint4korr(ptr);
   else
 #endif
@@ -192,7 +193,7 @@ int Field_long::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   int32_t a,b;
 #ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
+  if (getTable()->getShare()->db_low_byte_first)
   {
     a=sint4korr(a_ptr);
     b=sint4korr(b_ptr);
@@ -210,7 +211,7 @@ int Field_long::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 void Field_long::sort_string(unsigned char *to,uint32_t )
 {
 #ifdef WORDS_BIGENDIAN
-  if (!table->s->db_low_byte_first)
+  if (!getTable()->getShare()->db_low_byte_first)
   {
     to[0] = (char) (ptr[0] ^ 128);		/* Revers signbit */
     to[1]   = ptr[1];
@@ -245,7 +246,7 @@ unsigned char *Field_long::pack(unsigned char* to, const unsigned char *from,
 {
   int32_t val;
 #ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
+  if (getTable()->getShare()->db_low_byte_first)
     val = sint4korr(from);
   else
 #endif
@@ -278,7 +279,7 @@ const unsigned char *Field_long::unpack(unsigned char* to, const unsigned char *
     longget(val, from);
 
 #ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
+  if (getTable()->getShare()->db_low_byte_first)
     int4store(to, val);
   else
 #endif
@@ -286,3 +287,4 @@ const unsigned char *Field_long::unpack(unsigned char* to, const unsigned char *
   return from + sizeof(val);
 }
 
+} /* namespace drizzled */

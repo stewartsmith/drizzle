@@ -21,9 +21,12 @@
 #ifndef DRIZZLED_SELECT_RESULT_H
 #define DRIZZLED_SELECT_RESULT_H
 
-class JOIN;
+namespace drizzled
+{
 
-class select_result :public drizzled::memory::SqlAlloc {
+class Join;
+
+class select_result :public memory::SqlAlloc {
 protected:
   Session *session;
   Select_Lex_Unit *unit;
@@ -32,7 +35,7 @@ public:
   {
     session= current_session;
   }
-  virtual ~select_result() {};
+  virtual ~select_result() {}
   virtual int prepare(List<Item> &,
                       Select_Lex_Unit *u)
   {
@@ -48,7 +51,7 @@ public:
   { return fields.elements; }
   virtual bool send_fields(List<Item> &list)=0;
   virtual bool send_data(List<Item> &items)=0;
-  virtual bool initialize_tables (JOIN *)
+  virtual bool initialize_tables (Join *)
   { return 0; }
   virtual bool send_eof()=0;
   virtual void abort() {}
@@ -71,5 +74,7 @@ public:
   }
 
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SELECT_RESULT_H */

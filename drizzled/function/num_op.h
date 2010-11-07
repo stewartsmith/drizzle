@@ -22,6 +22,9 @@
 
 #include <drizzled/function/numhybrid.h>
 
+namespace drizzled
+{
+
 /* Base class for operations like '+', '-', '*' */
 
 class Item_num_op :public Item_func_numhybrid
@@ -40,5 +43,6 @@ class Item_num_op :public Item_func_numhybrid
   { assert(0); return 0; }
 };
 
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_NUM_OP_H */

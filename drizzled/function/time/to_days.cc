@@ -18,10 +18,13 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include "drizzled/function/time/to_days.h"
 #include "drizzled/error.h"
 #include "drizzled/temporal.h"
+
+namespace drizzled
+{
 
 /* 
  * We intepret the first argument as a DateTime and then convert
@@ -48,7 +51,7 @@ int64_t Item_func_to_days::val_int()
    * error and return 0, setting the null_value flag to true.
    */
   /* Grab the first argument as a DateTime object */
-  drizzled::DateTime temporal;
+  DateTime temporal;
   Item_result arg0_result_type= args[0]->result_type();
   
   switch (arg0_result_type)
@@ -79,13 +82,18 @@ int64_t Item_func_to_days::val_int()
           return false;
         }
 
-        if (! temporal.from_string(res->c_ptr(), res->length()))
+        if (res != &tmp)
+        {
+          tmp.copy(*res);
+        }
+
+        if (! temporal.from_string(tmp.c_ptr(), tmp.length()))
         {
           /* 
           * Could not interpret the function argument as a temporal value, 
           * so throw an error and return 0
           */
-          my_error(ER_INVALID_DATETIME_VALUE, MYF(0), res->c_ptr());
+          my_error(ER_INVALID_DATETIME_VALUE, MYF(0), tmp.c_ptr());
           return 0;
         }
       }
@@ -117,7 +125,12 @@ int64_t Item_func_to_days::val_int()
           return false;
         }
 
-        my_error(ER_INVALID_DATETIME_VALUE, MYF(0), res->c_ptr());
+        if (res != &tmp)
+        {
+          tmp.copy(*res);
+        }
+
+        my_error(ER_INVALID_DATETIME_VALUE, MYF(0), tmp.c_ptr());
         return 0;
       }
   }
@@ -140,7 +153,7 @@ int64_t Item_func_to_days::val_int_endpoint(bool left_endp, bool *incl_endp)
    * the appropriate end-point integer.
    */
   /* Grab the first argument as a DateTime object */
-  drizzled::DateTime temporal;
+  DateTime temporal;
   Item_result arg0_result_type= args[0]->result_type();
   
   switch (arg0_result_type)
@@ -171,13 +184,18 @@ int64_t Item_func_to_days::val_int_endpoint(bool left_endp, bool *incl_endp)
           return 0;
         }
 
-        if (! temporal.from_string(res->c_ptr(), res->length()))
+        if (res != &tmp)
+        {
+          tmp.copy(*res);
+        }
+
+        if (! temporal.from_string(tmp.c_ptr(), tmp.length()))
         {
           /* 
           * Could not interpret the function argument as a temporal value, 
           * so throw an error and return 0
           */
-          my_error(ER_INVALID_DATETIME_VALUE, MYF(0), res->c_ptr());
+          my_error(ER_INVALID_DATETIME_VALUE, MYF(0), tmp.c_ptr());
           return 0;
         }
       }
@@ -209,7 +227,12 @@ int64_t Item_func_to_days::val_int_endpoint(bool left_endp, bool *incl_endp)
           return 0;
         }
 
-        my_error(ER_INVALID_DATETIME_VALUE, MYF(0), res->c_ptr());
+        if (res != &tmp)
+        {
+          tmp.copy(*res);
+        }
+
+        my_error(ER_INVALID_DATETIME_VALUE, MYF(0), tmp.c_ptr());
         return 0;
       }
   }
@@ -253,3 +276,5 @@ int64_t Item_func_to_days::val_int_endpoint(bool left_endp, bool *incl_endp)
     *incl_endp= true;
   return julian_day_number;
 }
+
+} /* namespace drizzled */

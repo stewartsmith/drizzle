@@ -1,0 +1,2 @@
+--replace 1 #
+select count(*) from data_dictionary.INNODB_INTERNAL_TABLES;

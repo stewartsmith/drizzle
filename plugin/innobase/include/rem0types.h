@@ -11,8 +11,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -41,6 +41,6 @@ TEXT or VARCHAR column also in the UTF-8 charset. In that charset,
 a character may take at most 3 bytes.
 This constant MUST NOT BE CHANGED, or the compatibility of InnoDB data
 files would be at risk! */
-#define REC_MAX_INDEX_COL_LEN	768
+#define REC_MAX_INDEX_COL_LEN	1024
 
 #endif

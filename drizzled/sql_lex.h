@@ -36,9 +36,13 @@
 #include "drizzled/key_part_spec.h"
 #include "drizzled/index_hint.h"
 #include "drizzled/statement.h"
+#include "drizzled/optimizer/explain_plan.h"
 
 #include <bitset>
 #include <string>
+
+namespace drizzled
+{
 
 class select_result_interceptor;
 
@@ -50,13 +54,16 @@ class file_exchange;
 class Lex_Column;
 class Item_outer_ref;
 
+} /* namespace drizzled */
+
 /*
   The following hack is needed because mysql_yacc.cc does not define
   YYSTYPE before including this file
 */
 
 #ifdef DRIZZLE_SERVER
-# include <drizzled/set_var.h>
+/* set_var should change to set_var here ... */
+# include <drizzled/sys_var.h>
 # include <drizzled/item/func.h>
 # ifdef DRIZZLE_YACC
 #  define LEX_YYSTYPE void *
@@ -80,6 +87,9 @@ class Item_outer_ref;
 
 #define DERIVED_NONE	0
 #define DERIVED_SUBQUERY	1
+
+namespace drizzled
+{
 
 typedef List<Item> List_item;
 
@@ -239,20 +249,20 @@ public:
       UNCACHEABLE_EXPLAIN
       UNCACHEABLE_PREPARE
   */
-  uint8_t uncacheable;
+  std::bitset<8> uncacheable;
   enum sub_select_type linkage;
   bool no_table_names_allowed; /* used for global order by */
   bool no_error; /* suppress error message (convert it to warnings) */
 
   static void *operator new(size_t size)
   {
-    return drizzled::memory::sql_alloc(size);
+    return memory::sql_alloc(size);
   }
-  static void *operator new(size_t size, drizzled::memory::Root *mem_root)
-  { return (void*) alloc_root(mem_root, (uint32_t) size); }
+  static void *operator new(size_t size, memory::Root *mem_root)
+  { return (void*) mem_root->alloc_root((uint32_t) size); }
   static void operator delete(void *, size_t)
   {  }
-  static void operator delete(void *, drizzled::memory::Root *)
+  static void operator delete(void *, memory::Root *)
   {}
   Select_Lex_Node(): linkage(UNSPECIFIED_TYPE) {}
   virtual ~Select_Lex_Node() {}
@@ -274,13 +284,12 @@ public:
   virtual uint32_t get_in_sum_expr();
   virtual TableList* get_table_list();
   virtual List<Item>* get_item_list();
-  virtual uint32_t get_table_join_options();
   virtual TableList *add_table_to_list(Session *session, Table_ident *table,
-                                        LEX_STRING *alias,
-                                        uint32_t table_options,
-                                        thr_lock_type flags= TL_UNLOCK,
-                                        List<Index_hint> *hints= 0,
-                                        LEX_STRING *option= 0);
+                                       LEX_STRING *alias,
+                                       const std::bitset<NUM_OF_TABLE_OPTIONS>& table_options,
+                                       thr_lock_type flags= TL_UNLOCK,
+                                       List<Index_hint> *hints= 0,
+                                       LEX_STRING *option= 0);
   virtual void set_lock_for_tables(thr_lock_type)
   {}
 
@@ -296,7 +305,7 @@ private:
 */
 class Session;
 class select_result;
-class JOIN;
+class Join;
 class select_union;
 class Select_Lex_Unit: public Select_Lex_Node {
 protected:
@@ -395,6 +404,64 @@ public:
 class Select_Lex: public Select_Lex_Node
 {
 public:
+
+  Select_Lex() :
+    context(),
+    db(0),
+    where(0),
+    having(0),
+    cond_value(),
+    having_value(),
+    parent_lex(0),
+    olap(UNSPECIFIED_OLAP_TYPE),
+    table_list(),
+    group_list(),
+    item_list(),
+    interval_list(),
+    is_item_list_lookup(false),
+    join(0),
+    top_join_list(),
+    join_list(0),
+    embedding(0),
+    sj_nests(),
+    leaf_tables(0),
+    type(optimizer::ST_PRIMARY),
+    order_list(),
+    gorder_list(0),
+    select_limit(0),
+    offset_limit(0),
+    ref_pointer_array(0),
+    select_n_having_items(0),
+    cond_count(0),
+    between_count(0),
+    max_equal_elems(0),
+    select_n_where_fields(0),
+    parsing_place(NO_MATTER),
+    with_sum_func(0),
+    in_sum_expr(0),
+    select_number(0),
+    nest_level(0),
+    inner_sum_func_list(0),
+    with_wild(0),
+    braces(0),
+    having_fix_field(0),
+    inner_refs_list(),
+    n_sum_items(0),
+    n_child_sum_items(0),
+    explicit_limit(0),
+    subquery_in_having(0),
+    is_correlated(0),
+    exclude_from_table_unique_test(0),
+    non_agg_fields(),
+    cur_pos_in_select_list(0),
+    prev_join_using(0),
+    full_group_by_flag(),
+    current_index_hint_type(INDEX_HINT_IGNORE),
+    current_index_hint_clause(),
+    index_hints(0)
+  {
+  }
+
   Name_resolution_context context;
   char *db;
   /* An Item representing the WHERE clause */
@@ -413,7 +480,7 @@ public:
   List<Item> item_list;  /* list of fields & expressions */
   List<String> interval_list;
   bool is_item_list_lookup;
-  JOIN *join; /* after JOIN::prepare it is pointer to corresponding JOIN */
+  Join *join; /* after Join::prepare it is pointer to corresponding JOIN */
   List<TableList> top_join_list; /* join list of the top level          */
   List<TableList> *join_list;    /* list for the currently parsed join  */
   TableList *embedding;          /* table embedding to the above list   */
@@ -424,7 +491,7 @@ public:
     by TableList::next_leaf, so leaf_tables points to the left-most leaf.
   */
   TableList *leaf_tables;
-  std::string type; /* type of select for EXPLAIN          */
+  enum drizzled::optimizer::select_type type; /* type of select for EXPLAIN */
 
   SQL_LIST order_list;                /* ORDER clause */
   SQL_LIST *gorder_list;
@@ -449,7 +516,6 @@ public:
   enum_parsing_place parsing_place; /* where we are parsing expression */
   bool with_sum_func;   /* sum function indicator */
 
-  uint32_t table_join_options;
   uint32_t in_sum_expr;
   uint32_t select_number; /* number of select (used for EXPLAIN) */
   int8_t nest_level;     /* nesting level of select */
@@ -505,6 +571,7 @@ public:
           defined as SUM_FUNC_USED.
   */
   std::bitset<2> full_group_by_flag;
+
   void init_query();
   void init_select();
   Select_Lex_Unit* master_unit();
@@ -542,7 +609,7 @@ public:
   TableList* add_table_to_list(Session *session,
                                Table_ident *table,
                                LEX_STRING *alias,
-                               uint32_t table_options,
+                               const std::bitset<NUM_OF_TABLE_OPTIONS>& table_options,
                                thr_lock_type flags= TL_UNLOCK,
                                List<Index_hint> *hints= 0,
                                LEX_STRING *option= 0);
@@ -553,7 +620,6 @@ public:
   void add_joined_table(TableList *table);
   TableList *convert_right_join();
   List<Item>* get_item_list();
-  uint32_t get_table_join_options();
   void set_lock_for_tables(thr_lock_type lock_type);
   inline void init_order()
   {
@@ -574,7 +640,6 @@ public:
   bool test_limit();
 
   friend void lex_start(Session *session);
-  Select_Lex() : n_sum_items(0), n_child_sum_items(0) {}
   void make_empty_select()
   {
     init_query();
@@ -583,7 +648,7 @@ public:
   bool setup_ref_array(Session *session, uint32_t order_group_num);
   void print(Session *session, String *str, enum_query_type query_type);
   static void print_order(String *str,
-                          order_st *order,
+                          Order *order,
                           enum_query_type query_type);
   void print_limit(Session *session, String *str, enum_query_type query_type);
   void fix_prepare_information(Session *session, Item **conds, Item **having_conds);
@@ -728,7 +793,12 @@ enum enum_comment_state
   DISCARD_COMMENT
 };
 
+} /* namespace drizzled */
+
 #include "drizzled/lex_input_stream.h"
+
+namespace drizzled
+{
 
 /* The state of the lex parsing. This is saved in the Session struct */
 class LEX : public Query_tables_list
@@ -800,7 +870,7 @@ public:
   SQL_LIST save_list;
   CreateField *last_field;
   Item_sum *in_sum_func;
-  drizzled::plugin::Function *udf;
+  plugin::Function *udf;
   uint32_t type;
   /*
     This variable is used in post-parse stage to declare that sum-functions,
@@ -813,7 +883,7 @@ public:
   */
   nesting_map allow_sum_func;
   enum_sql_command sql_command;
-  drizzled::statement::Statement *statement;
+  statement::Statement *statement;
   /*
     Usually `expr` rule of yacc is quite reused but some commands better
     not support subqueries which comes standard with this rule, like
@@ -828,7 +898,7 @@ public:
     enum ha_rkey_function ha_rkey_mode;
     enum xa_option_words xa_opt;
   };
-  enum enum_var_type option_type;
+  sql_var_t option_type;
 
   int nest_level;
   uint8_t describe;
@@ -838,9 +908,6 @@ public:
   */
   uint8_t derived_tables;
 
-  /* Only true when FULL symbol is found (e.g. SHOW FULL PROCESSLIST) */
-  bool verbose;
-  
   /* Was the IGNORE symbol found in statement */
   bool ignore;
 
@@ -870,9 +937,6 @@ public:
   TableList *unlink_first_table(bool *link_to_local);
   void link_first_table_back(TableList *first, bool link_to_local);
   void first_lists_tables_same();
-
-  bool only_view_structure();
-  bool need_correct_ident();
 
   void cleanup_after_one_table_open();
 
@@ -918,16 +982,48 @@ public:
     }
     return false;
   }
+  bool is_cross; // CROSS keyword was used
+  bool isCacheable()
+  {
+    return cacheable;
+  }
+  void setCacheable(bool val)
+  {
+    cacheable= val;
+  }
+
+  void reset()
+  {
+    sum_expr_used= false;
+  }
+
+  void setSumExprUsed()
+  {
+    sum_expr_used= true;
+  }
+
+  bool isSumExprUsed()
+  {
+    return sum_expr_used;
+  }
+
+  void start(Session *session);
+  void end();
+
+private: 
+  bool cacheable;
+  bool sum_expr_used;
 };
 
 extern void lex_start(Session *session);
-extern void lex_end(LEX *lex);
 extern void trim_whitespace(const CHARSET_INFO * const cs, LEX_STRING *str);
 extern bool is_lex_native_function(const LEX_STRING *name);
 
 /**
   @} (End of group Semantic_Analysis)
 */
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLE_SERVER */
 #endif /* DRIZZLED_SQL_LEX_H */

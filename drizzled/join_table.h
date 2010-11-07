@@ -34,7 +34,12 @@
 #include "drizzled/join_cache.h"
 #include "drizzled/optimizer/key_use.h"
 
+#include "drizzled/records.h"
+
 #include <bitset>
+
+namespace drizzled
+{
 
 /* Values for JoinTable::packed_info */
 #define TAB_INFO_HAVE_VALUE 1
@@ -115,10 +120,10 @@ public:
     embedding_map(0)
   {}
   Table *table;
-  drizzled::optimizer::KeyUse *keyuse; /**< pointer to first used key */
-  drizzled::optimizer::SqlSelect *select;
+  optimizer::KeyUse *keyuse; /**< pointer to first used key */
+  optimizer::SqlSelect *select;
   COND *select_cond;
-  drizzled::optimizer::QuickSelectInterface *quick;
+  optimizer::QuickSelectInterface *quick;
   /**
     The value of select_cond before we've attempted to do Index Condition
     Pushdown. We may need to restore everything back if we first choose one
@@ -146,14 +151,14 @@ public:
 
   Read_record_func read_first_record;
   Next_select_func next_select;
-  READ_RECORD	read_record;
+  ReadRecord	read_record;
   /*
     Currently the following two fields are used only for a [NOT] IN subquery
     if it is executed by an alternative full table scan when the left operand of
     the subquery predicate is evaluated to NULL.
   */
   Read_record_func save_read_first_record; /**< to save read_first_record */
-  int (*save_read_record) (READ_RECORD *); /**< to save read_record.read_record */
+  int (*save_read_record) (ReadRecord *); /**< to save read_record.read_record */
   double worst_seeks;
   key_map	const_keys; /**< Keys with constant part */
   key_map	checked_keys; /**< Keys checked in find_best */
@@ -195,8 +200,8 @@ public:
   */
   ha_rows limit;
   table_reference_st	ref;
-  JOIN_CACHE cache;
-  JOIN *join;
+  JoinCache cache;
+  Join *join;
 
   /**
      ptr  - this join tab should do an InsideOut scan. Points
@@ -234,10 +239,12 @@ public:
   {
     return (select && select->quick &&
             (select->quick->get_type() ==
-             drizzled::optimizer::QuickSelectInterface::QS_TYPE_GROUP_MIN_MAX));
+             optimizer::QuickSelectInterface::QS_TYPE_GROUP_MIN_MAX));
   }
 
   void readCachedRecord();
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_JOIN_TABLE_H */

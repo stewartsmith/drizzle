@@ -46,30 +46,7 @@ public:
                      const char *in_tab_filters);
 
   /** Destructor */
-  ~FilteredReplicator() 
-  {
-    if (sch_re)
-    {
-      pcre_free(sch_re);
-    }
-    if (tab_re)
-    {
-      pcre_free(tab_re);
-    }
-
-    pthread_mutex_destroy(&sch_vector_lock);
-    pthread_mutex_destroy(&tab_vector_lock);
-    pthread_mutex_destroy(&sysvar_sch_lock);
-    pthread_mutex_destroy(&sysvar_tab_lock);
-  }
-
-  /**
-   * Returns whether the replicator is active
-   */
-  virtual bool isEnabled() const;
-
-  virtual void enable();
-  virtual void disable();
+  ~FilteredReplicator();
 
   /**
    * Replicate a Transaction message to an Applier.
@@ -84,10 +61,14 @@ public:
    * the supplied message to their own controlled memory storage
    * area.
    *
+   * @param Applier to replicate to
+   * @param Session descriptor
    * @param Transaction message to be replicated
    */
-  void replicate(drizzled::plugin::TransactionApplier *in_applier, 
-                 drizzled::message::Transaction &to_replicate);
+  drizzled::plugin::ReplicationReturnCode
+  replicate(drizzled::plugin::TransactionApplier *in_applier,
+            drizzled::Session &in_session,
+            drizzled::message::Transaction &to_replicate);
   
   /**
    * Populate the vector of schemas to filter from the

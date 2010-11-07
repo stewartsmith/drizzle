@@ -1,0 +1,23 @@
+#
+# Test of REPLACE with MyISAM and MEMORY
+#
+
+--disable_warnings
+drop table if exists t1;
+--enable_warnings
+
+#
+# Test when using replace on a key that has used up it's whole range
+#
+
+create table t1 (a int not null auto_increment primary key, b char(20) default "default_value");
+insert into t1 values (126,"first"),(63, "middle"),(1,"last");
+--error ER_DUP_ENTRY, ER_DUP_KEY
+insert into t1 values (1,"error");
+replace into t1 values (1,"error");
+replace into t1 values (126,"first updated");
+replace into t1 values (63,default);
+select * from t1 order by a;
+drop table t1;
+
+# End of 4.1 tests

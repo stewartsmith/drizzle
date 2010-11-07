@@ -37,11 +37,13 @@
 #include "drizzled/charset.h"
 
 #include <fcntl.h>
+#include <errno.h>
 
 #include "transaction_log.h"
 #include "print_transaction_message.h"
 
 #include <drizzled/message/transaction.pb.h>
+#include <drizzled/replication_services.h>
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/io/coded_stream.h>
@@ -99,9 +101,11 @@ String *PrintTransactionMessageFunction::val_str(String *str)
   int log_file= open(filename.c_str(), O_RDONLY);
   if (log_file == -1)
   {
+    char errmsg[STRERROR_MAX];
+    strerror_r(errno, errmsg, sizeof(errmsg));
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to open transaction log file %s.  Got error: %s\n"), 
                   filename.c_str(), 
-                  strerror(errno));
+                  errmsg);
     null_value= true;
     return NULL;
   }
@@ -117,6 +121,7 @@ String *PrintTransactionMessageFunction::val_str(String *str)
   uint32_t message_type;
   if (! coded_input->ReadLittleEndian32(&message_type))
   {
+    delete coded_input;
     delete file_input;
 
     /** @todo Error message for this... */
@@ -124,12 +129,32 @@ String *PrintTransactionMessageFunction::val_str(String *str)
     return NULL;
   }
 
+  /* Validate message type */
+  if (message_type != ReplicationServices::TRANSACTION)
+  {
+    fprintf(stderr, _("GPB message is not a valid type.\n"));
+    delete coded_input;
+    delete file_input;
+    null_value= true;
+    return NULL;
+  }
+
   uint32_t message_size;
   if (! coded_input->ReadLittleEndian32(&message_size))
   {
+    delete coded_input;
     delete file_input;
 
     /** @todo Error message for this... */
+    null_value= true;
+    return NULL;
+  }
+
+  if (message_size > INT_MAX)
+  {
+    fprintf(stderr, _("GPB message is not a valid size.\n"));
+    delete coded_input;
+    delete file_input;
     null_value= true;
     return NULL;
   }
@@ -139,8 +164,10 @@ String *PrintTransactionMessageFunction::val_str(String *str)
   bool result= coded_input->ReadRaw(buffer, message_size);
   if (result == false)
   {
+    char errmsg[STRERROR_MAX];
+    strerror_r(errno, errmsg, sizeof(errmsg));
     fprintf(stderr, _("Could not read transaction message.\n"));
-    fprintf(stderr, _("GPB ERROR: %s.\n"), strerror(errno));
+    fprintf(stderr, _("GPB ERROR: %s.\n"), errmsg);
     fprintf(stderr, _("Raw buffer read: %s.\n"), buffer);
   }
 
@@ -157,8 +184,20 @@ String *PrintTransactionMessageFunction::val_str(String *str)
   string transaction_text;
   protobuf::TextFormat::PrintToString(transaction_message, &transaction_text);
 
+  std::string::size_type begin_uuid;
+  while ((begin_uuid= transaction_text.find("uuid")) != string::npos)
+  {
+    std::string::size_type end_uuid= transaction_text.find('\n', begin_uuid); 
+    if (end_uuid != string::npos)
+    {
+      transaction_text.erase(begin_uuid, end_uuid - begin_uuid);
+    }
+  }
+
   if (str->alloc(transaction_text.length()))
   {
+    delete coded_input;
+    delete file_input;
     null_value= true;
     return NULL;
   }

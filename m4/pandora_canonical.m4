@@ -4,7 +4,7 @@ dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
 dnl Which version of the canonical setup we're using
-AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.93])
+AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.161])
 
 AC_DEFUN([PANDORA_FORCE_DEPEND_TRACKING],[
   AC_ARG_ENABLE([fat-binaries],
@@ -23,32 +23,28 @@ AC_DEFUN([PANDORA_FORCE_DEPEND_TRACKING],[
   ])
 ])
 
+AC_DEFUN([PANDORA_BLOCK_BAD_OPTIONS],[
+  AS_IF([test "x${prefix}" = "x"],[
+    AC_MSG_ERROR([--prefix requires an argument])
+  ])
+])
+
 dnl The standard setup for how we build Pandora projects
 AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   AC_REQUIRE([PANDORA_FORCE_DEPEND_TRACKING])
   ifdef([m4_define],,[define([m4_define],   defn([define]))])
   ifdef([m4_undefine],,[define([m4_undefine],   defn([undefine]))])
   m4_define([PCT_ALL_ARGS],[$*])
-  m4_define([PCT_USE_GNULIB],[no])
   m4_define([PCT_REQUIRE_CXX],[no])
-  m4_define([PCT_IGNORE_SHARED_PTR],[no])
   m4_define([PCT_FORCE_GCC42],[no])
-  m4_define([PCT_SRC_IN_SRC],[no])
+  m4_define([PCT_DONT_SUPPRESS_INCLUDE],[no])
   m4_define([PCT_VERSION_FROM_VC],[no])
   m4_define([PCT_USE_VISIBILITY],[yes])
   m4_foreach([pct_arg],[$*],[
     m4_case(pct_arg,
-      [use-gnulib], [
-        m4_undefine([PCT_USE_GNULIB])
-        m4_define([PCT_USE_GNULIB],[yes])
-      ],
       [require-cxx], [
         m4_undefine([PCT_REQUIRE_CXX])
         m4_define([PCT_REQUIRE_CXX],[yes])
-      ],
-      [ignore-shared-ptr], [
-        m4_undefine([PCT_IGNORE_SHARED_PTR])
-        m4_define([PCT_IGNORE_SHARED_PTR],[yes])
       ],
       [force-gcc42], [
         m4_undefine([PCT_FORCE_GCC42])
@@ -58,15 +54,25 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
         m4_undefine([PCT_USE_VISIBILITY])
         m4_define([PCT_USE_VISIBILITY],[no])
       ],
-      [src-in-src], [
-        m4_undefine([PCT_SRC_IN_SRC])
-        m4_define([PCT_SRC_IN_SRC],[yes])
+      [dont-suppress-include], [
+        m4_undefine([PCT_DONT_SUPPRESS_INCLUDE])
+        m4_define([PCT_DONT_SUPPRESS_INCLUDE],[yes])
       ],
       [version-from-vc], [
         m4_undefine([PCT_VERSION_FROM_VC])
         m4_define([PCT_VERSION_FROM_VC],[yes])
     ])
   ])
+
+  AC_CONFIG_MACRO_DIR([m4])
+
+  m4_if(m4_substr(m4_esyscmd(test -d src && echo 0),0,1),0,[
+    AC_CONFIG_HEADERS([src/config.h])
+  ],[
+    AC_CONFIG_HEADERS([config.h])
+  ])
+
+  PANDORA_BLOCK_BAD_OPTIONS
 
   # We need to prevent canonical target
   # from injecting -O2 into CFLAGS - but we won't modify anything if we have
@@ -78,17 +84,42 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   
   AC_CANONICAL_TARGET
   
-  AM_INIT_AUTOMAKE(-Wall -Werror nostdinc subdir-objects foreign)
+  m4_if(PCT_DONT_SUPRESS_INCLUDE,yes,[
+    AM_INIT_AUTOMAKE(-Wall -Werror -Wno-portability subdir-objects foreign tar-ustar)
+  ],[
+    AM_INIT_AUTOMAKE(-Wall -Werror -Wno-portability nostdinc subdir-objects foreign tar-ustar)
+  ])
+
   m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
-  m4_if(PCT_USE_GNULIB,yes,[ gl_EARLY ])
+  m4_if(m4_substr(m4_esyscmd(test -d gnulib && echo 0),0,1),0,[
+    gl_EARLY
+  ],[
+    PANDORA_EXTENSIONS 
+  ])
   
   AC_REQUIRE([AC_PROG_CC])
-  AC_REQUIRE([PANDORA_MAC_GCC42])
+  m4_if(PCT_FORCE_GCC42, [yes], [
+    AC_REQUIRE([PANDORA_ENSURE_GCC_VERSION])
+  ])
   AC_REQUIRE([PANDORA_64BIT])
 
   m4_if(PCT_VERSION_FROM_VC,yes,[
     PANDORA_VC_VERSION
+  ],[
+    PANDORA_TEST_VC_DIR
+
+    changequote(<<, >>)dnl
+    PANDORA_RELEASE_ID=`echo $VERSION | sed 's/[^0-9]//g'`
+    changequote([, ])dnl
+
+    PANDORA_RELEASE_COMMENT=""
+    AC_DEFINE_UNQUOTED([PANDORA_RELEASE_VERSION],["$VERSION"],
+                       [Version of the software])
+
+    AC_SUBST(PANDORA_RELEASE_COMMENT)
+    AC_SUBST(PANDORA_RELEASE_VERSION)
+    AC_SUBST(PANDORA_RELEASE_ID)
   ])
   PANDORA_VERSION
 
@@ -99,9 +130,6 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   AM_PROG_CC_C_O
 
 
-  m4_if(PCT_FORCE_GCC42, [yes], [
-    AS_IF([test "$GCC" = "yes"], PANDORA_ENSURE_GCC_VERSION)
-  ])
 
   PANDORA_PLATFORM
 
@@ -115,17 +143,11 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
     AS_IF([test "$ac_cv_cxx_stdcxx_98" = "no"],[
       AC_MSG_ERROR([No working C++ Compiler has been found. ${PACKAGE} requires a C++ compiler that can handle C++98])
     ])
-
   ])
+  PANDORA_CXX_CSTDINT
+  PANDORA_CXX_CINTTYPES
   
-  PANDORA_SHARED_PTR
-  m4_if(PCT_IGNORE_SHARED_PTR, [no], [
-    AS_IF([test "$ac_cv_shared_ptr_namespace" = "missing"],[
-      AC_MSG_WARN([a usable shared_ptr implementation was not found. Let someone know what your platform is.])
-    ])
-  ])
-  
-  m4_if(PCT_USE_GNULIB, [yes], [
+  m4_if(m4_substr(m4_esyscmd(test -d gnulib && echo 0),0,1),0,[
     gl_INIT
     AC_CONFIG_LIBOBJ_DIR([gnulib])
   ])
@@ -140,8 +162,12 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   AC_C_RESTRICT
 
   AC_HEADER_TIME
+  AC_STRUCT_TM
   AC_TYPE_SIZE_T
   AC_SYS_LARGEFILE
+  PANDORA_CLOCK_GETTIME
+
+  AC_CHECK_HEADERS(sys/socket.h)
 
   # off_t is not a builtin type
   AC_CHECK_SIZEOF(off_t, 4)
@@ -175,11 +201,9 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
     AC_DEFINE([TIME_T_UNSIGNED], 1, [Define to 1 if time_t is unsigned])
   ])
 
-  dnl AC_FUNC_ALLOCA would test for stack direction if we didn't have a working
-  dnl alloca - but we need to know it anyway for check_stack_overrun.
-  PANDORA_STACK_DIRECTION
-
   AC_CHECK_LIBM
+  dnl Bug on FreeBSD - LIBM check doesn't set the damn variable
+  AC_SUBST([LIBM])
   
   AC_CHECK_FUNC(setsockopt, [], [AC_CHECK_LIB(socket, setsockopt)])
   AC_CHECK_FUNC(bind, [], [AC_CHECK_LIB(bind, bind)])
@@ -201,12 +225,12 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
 
   PANDORA_HAVE_GCC_ATOMICS
 
+  save_CFLAGS="${CFLAGS}"
+  CFLAGS="${CFLAGS} -Werror"
+  PANDORA_CHECK_VISIBILITY
+  CFLAGS="${save_CFLAGS}"
   m4_if(PCT_USE_VISIBILITY,[yes],[
-    dnl We need to inject error into the cflags to test if visibility works or not
-    save_CFLAGS="${CFLAGS}"
-    CFLAGS="${CFLAGS} -Werror"
-    PANDORA_VISIBILITY
-    CFLAGS="${save_CFLAGS}"
+    PANDORA_ENABLE_VISIBILITY
   ])
 
   PANDORA_HEADER_ASSERT
@@ -220,22 +244,114 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
 
   AC_CHECK_PROGS([DOXYGEN], [doxygen])
   AC_CHECK_PROGS([PERL], [perl])
+  AC_CHECK_PROGS([DPKG_GENSYMBOLS], [dpkg-gensymbols], [:])
+  AC_CHECK_PROGS([LCOV], [lcov], [echo lcov not found])
+  AC_CHECK_PROGS([LCOV_GENHTML], [genhtml], [echo genhtml not found])
+
+  AC_CHECK_PROGS([SPHINXBUILD], [sphinx-build], [:])
+  AS_IF([test "x${SPHINXBUILD}" != "x:"],[
+    AC_CACHE_CHECK([if sphinx is new enough],[ac_cv_recent_sphinx],[
+    
+    ${SPHINXBUILD} -Q -C -b man -d conftest.d . . >/dev/null 2>&1
+    AS_IF([test $? -eq 0],[ac_cv_recent_sphinx=yes],
+          [ac_cv_recent_sphinx=no])
+    rm -rf conftest.d
+    ])
+  ])
+
+  AM_CONDITIONAL(HAVE_DPKG_GENSYMBOLS,[test "x${DPKG_GENSYMBOLS}" != "x:"])
+  AM_CONDITIONAL(HAVE_SPHINX,[test "x${SPHINXBUILD}" != "x:"])
+  AM_CONDITIONAL(HAVE_RECENT_SPHINX,[test "x${ac_cv_recent_sphinx}" = "xyes"])
+
+  m4_if(m4_substr(m4_esyscmd(test -d po && echo 0),0,1),0, [
+    AM_PO_SUBDIRS
+    IT_PROG_INTLTOOL([0.35],[no-xml])
+    
+    GETTEXT_PACKAGE=$PACKAGE
+    AC_CHECK_LIB(intl, libintl_gettext)
+    AC_SUBST([GETTEXT_PACKAGE])
+    AS_IF([test "x${USE_NLS}" = "xyes" -a "x${pandora_have_intltool}" = "xyes"],
+          [AC_DEFINE([ENABLE_NLS],[1],[Turn on language support])
+           AC_CONFIG_FILES([po/Makefile.in])
+      ])
+  ])
+  AM_CONDITIONAL(BUILD_PO,[test "x${USE_NLS}" = "xyes" -a "x${pandora_have_intltool}" = "xyes"])
 
   AS_IF([test "x${gl_LIBOBJS}" != "x"],[
     AS_IF([test "$GCC" = "yes"],[
-      AM_CPPFLAGS="-isystem \$(top_srcdir)/gnulib -isystem \$(top_builddir)/gnulib ${AM_CPPFLAGS}"
+      AM_CPPFLAGS="-isystem \${top_srcdir}/gnulib -isystem \${top_builddir}/gnulib ${AM_CPPFLAGS}"
     ],[
-    AM_CPPFLAGS="-I\$(top_srcdir)/gnulib -I\$(top_builddir)/gnulib ${AM_CPPFLAGS}"
+    AM_CPPFLAGS="-I\${top_srcdir}/gnulib -I\${top_builddir}/gnulib ${AM_CPPFLAGS}"
     ])
   ])
-  AS_IF([test "PCT_SRC_IN_SRC" = "yes"],[
+  m4_if(m4_substr(m4_esyscmd(test -d src && echo 0),0,1),0,[
     AM_CPPFLAGS="-I\$(top_srcdir)/src -I\$(top_builddir)/src ${AM_CPPFLAGS}"
+  ],[
+    AM_CPPFLAGS="-I\$(top_srcdir) -I\$(top_builddir) ${AM_CPPFLAGS}"
   ])
 
   PANDORA_USE_PIPE
 
+  AH_TOP([
+#ifndef __CONFIG_H__
+#define __CONFIG_H__
 
-  AM_CPPFLAGS="-I\${top_srcdir} -I\${top_builddir} ${AM_CPPFLAGS}"
+/* _SYS_FEATURE_TESTS_H is Solaris, _FEATURES_H is GCC */
+#if defined( _SYS_FEATURE_TESTS_H) || defined(_FEATURES_H)
+#error "You should include config.h as your first include file"
+#endif
+
+#include "config/top.h"
+])
+  mkdir -p config
+  cat > config/top.h.stamp <<EOF_CONFIG_TOP
+
+#if defined(i386) && !defined(__i386__)
+#define __i386__
+#endif
+
+#if defined(_FILE_OFFSET_BITS)
+# undef _FILE_OFFSET_BITS
+#endif
+EOF_CONFIG_TOP
+
+  diff config/top.h.stamp config/top.h >/dev/null 2>&1 || mv config/top.h.stamp config/top.h
+  rm -f config/top.h.stamp
+
+  AH_BOTTOM([
+#if defined(__cplusplus)
+# include CSTDINT_H
+# include CINTTYPES_H
+#else
+# include <stdint.h>
+# include <inttypes.h>
+#endif
+
+#if !defined(HAVE_ULONG) && !defined(__USE_MISC)
+typedef unsigned long int ulong;
+#endif
+
+/* To hide the platform differences between MS Windows and Unix, I am
+ * going to use the Microsoft way and #define the Microsoft-specific
+ * functions to the unix way. Microsoft use a separate subsystem for sockets,
+ * but Unix normally just use a filedescriptor on the same functions. It is
+ * a lot easier to map back to the unix way with macros than going the other
+ * way without side effect ;-)
+ */
+#ifdef TARGET_OS_WINDOWS
+#define random() rand()
+#define srandom(a) srand(a)
+#define get_socket_errno() WSAGetLastError()
+#else
+#define INVALID_SOCKET -1
+#define SOCKET_ERROR -1
+#define closesocket(a) close(a)
+#define get_socket_errno() errno
+#endif
+
+#endif /* __CONFIG_H__ */
+  ])
+
   AM_CFLAGS="${AM_CFLAGS} ${CC_WARNINGS} ${CC_PROFILING} ${CC_COVERAGE}"
   AM_CXXFLAGS="${AM_CXXFLAGS} ${CXX_WARNINGS} ${CC_PROFILING} ${CC_COVERAGE}"
 

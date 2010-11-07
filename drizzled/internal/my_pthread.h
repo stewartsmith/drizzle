@@ -11,27 +11,18 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /* Defines to make different thread packages compatible */
 
 #ifndef DRIZZLED_INTERNAL_MY_PTHREAD_H
 #define DRIZZLED_INTERNAL_MY_PTHREAD_H
 
-#include <stdint.h>
 #include <unistd.h>
-#include <signal.h>
 
 #ifndef ETIME
 #define ETIME ETIMEDOUT				/* For FreeBSD */
 #endif
-
-#ifdef  __cplusplus
-#define EXTERNC extern "C"
-extern "C" {
-#else
-#define EXTERNC
-#endif /* __cplusplus */
 
 #include <pthread.h>
 #ifndef _REENTRANT
@@ -44,40 +35,14 @@ extern "C" {
 #include <synch.h>
 #endif
 
+namespace drizzled
+{
+namespace internal
+{
+
 #define pthread_key(T,V) pthread_key_t V
 #define pthread_handler_t void *
 typedef void *(* pthread_handler)(void *);
-
-
-/*
-  We define my_sigset() and use that instead of the system sigset() so that
-  we can favor an implementation based on sigaction(). On some systems, such
-  as Mac OS X, sigset() results in flags such as SA_RESTART being set, and
-  we want to make sure that no such flags are set.
-*/
-#if !defined(my_sigset)
-#define my_sigset(A,B) do { struct sigaction l_s; sigset_t l_set; int l_rc; \
-                            assert((A) != 0);                          \
-                            sigemptyset(&l_set);                            \
-                            l_s.sa_handler = (B);                           \
-                            l_s.sa_mask   = l_set;                          \
-                            l_s.sa_flags   = 0;                             \
-                            l_rc= sigaction((A), &l_s, (struct sigaction *) NULL);\
-                            assert(l_rc == 0);                         \
-                          } while (0)
-#elif defined(HAVE_SIGSET) && !defined(my_sigset)
-#define my_sigset(A,B) sigset((A),(B))
-#elif !defined(my_sigset)
-#define my_sigset(A,B) signal((A),(B))
-#endif
-
-#ifndef my_pthread_attr_setprio
-#ifdef HAVE_PTHREAD_ATTR_SETPRIO
-#define my_pthread_attr_setprio(A,B) pthread_attr_setprio((A),(B))
-#else
-extern void my_pthread_attr_setprio(pthread_attr_t *attr, int priority);
-#endif
-#endif
 
 #if !defined(HAVE_PTHREAD_YIELD_ONE_ARG) && !defined(HAVE_PTHREAD_YIELD_ZERO_ARG)
 /* no pthread_yield() available */
@@ -111,28 +76,6 @@ extern void my_pthread_attr_setprio(pthread_attr_t *attr, int priority);
 }
 #endif /* !set_timespec_nsec */
 
-	/* safe_mutex adds checking to mutex for easier debugging */
-
-typedef struct st_safe_mutex_t
-{
-  pthread_mutex_t global,mutex;
-  const char *file;
-  uint32_t line,count;
-  pthread_t thread;
-} safe_mutex_t;
-
-int safe_mutex_init(safe_mutex_t *mp, const pthread_mutexattr_t *attr,
-                    const char *file, uint32_t line);
-int safe_mutex_lock(safe_mutex_t *mp, bool try_lock, const char *file, uint32_t line);
-int safe_mutex_unlock(safe_mutex_t *mp,const char *file, uint32_t line);
-int safe_mutex_destroy(safe_mutex_t *mp,const char *file, uint32_t line);
-int safe_cond_wait(pthread_cond_t *cond, safe_mutex_t *mp,const char *file,
-		   uint32_t line);
-int safe_cond_timedwait(pthread_cond_t *cond, safe_mutex_t *mp,
-			struct timespec *abstime, const char *file, uint32_t line);
-void safe_mutex_global_init(void);
-void safe_mutex_end(void);
-
 	/* Wrappers if safe mutex is actually used */
 #define safe_mutex_assert_owner(mp)
 #define safe_mutex_assert_not_owner(mp)
@@ -164,83 +107,13 @@ extern const char *my_thread_name(void);
 
 /* All thread specific variables are in the following struct */
 
-/*
-  Drizzle can survive with 32K, but some glibc libraries require > 128K stack
-  to resolve hostnames. Also recursive stored procedures needs stack.
-*/
-#define DEFAULT_THREAD_STACK	(256*INT32_C(1024))
+/**
+  A default thread stack size of zero means that we are going to use
+  the OS defined thread stack size (this varies from OS to OS).
+ */
+#define DEFAULT_THREAD_STACK	0
 
-struct st_my_thread_var
-{
-  pthread_cond_t suspend;
-  pthread_mutex_t mutex;
-  pthread_mutex_t * volatile current_mutex;
-  pthread_cond_t * volatile current_cond;
-  pthread_t pthread_self;
-  uint64_t id;
-  int volatile abort;
-  bool init;
-  struct st_my_thread_var *next,**prev;
-  void *opt_info;
-};
+} /* namespace internal */
+} /* namespace drizzled */
 
-extern struct st_my_thread_var *_my_thread_var(void);
-#define my_thread_var (_my_thread_var())
-/*
-  Keep track of shutdown,signal, and main threads so that my_end() will not
-  report errors with them
-*/
-
-/* Which kind of thread library is in use */
-
-#define THD_LIB_OTHER 1
-#define THD_LIB_NPTL  2
-#define THD_LIB_LT    4
-
-extern uint32_t thd_lib_detected;
-
-/*
-  thread_safe_xxx functions are for critical statistic or counters.
-  The implementation is guaranteed to be thread safe, on all platforms.
-  Note that the calling code should *not* assume the counter is protected
-  by the mutex given, as the implementation of these helpers may change
-  to use my_atomic operations instead.
-*/
-
-#ifndef thread_safe_increment
-#define thread_safe_increment(V,L) \
-        (pthread_mutex_lock((L)), (V)++, pthread_mutex_unlock((L)))
-#define thread_safe_decrement(V,L) \
-        (pthread_mutex_lock((L)), (V)--, pthread_mutex_unlock((L)))
-#endif
-
-#ifndef thread_safe_add
-#define thread_safe_add(V,C,L) \
-        (pthread_mutex_lock((L)), (V)+=(C), pthread_mutex_unlock((L)))
-#define thread_safe_sub(V,C,L) \
-        (pthread_mutex_lock((L)), (V)-=(C), pthread_mutex_unlock((L)))
-#endif
-
-/*
-  statistics_xxx functions are for non critical statistic,
-  maintained in global variables.
-  - race conditions can occur, making the result slightly inaccurate.
-  - the lock given is not honored.
-*/
-#define statistic_decrement(V,L) (V)--
-#define statistic_increment(V,L) (V)++
-#define statistic_add(V,C,L)     (V)+=(C)
-#define statistic_sub(V,C,L)     (V)-=(C)
-
-/*
-  No locking needed, the counter is owned by the thread
-*/
-#define status_var_increment(V) (V)++
-#define status_var_decrement(V) (V)--
-#define status_var_add(V,C)     (V)+=(C)
-#define status_var_sub(V,C)     (V)-=(C)
-
-#ifdef  __cplusplus
-}
-#endif
 #endif /* DRIZZLED_INTERNAL_MY_PTHREAD_H */

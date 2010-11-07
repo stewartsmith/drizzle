@@ -20,6 +20,11 @@
 #ifndef DRIZZLED_SQL_STATE_H
 #define DRIZZLED_SQL_STATE_H
 
+namespace drizzled
+{
+
 const char *drizzle_errno_to_sqlstate(uint32_t drizzle_errno);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SQL_STATE_H */

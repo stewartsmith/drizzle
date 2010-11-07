@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 
 /**
@@ -45,6 +45,8 @@
 #include <drizzled/field/datetime.h>
 #include <drizzled/field/varstring.h>
 
+namespace drizzled
+{
 
 static void do_field_eq(CopyField *copy)
 {
@@ -141,12 +143,12 @@ set_field_to_null(Field *field)
     return 0;
   }
   field->reset();
-  if (field->table->in_use->count_cuted_fields == CHECK_FIELD_WARN)
+  if (field->getTable()->in_use->count_cuted_fields == CHECK_FIELD_WARN)
   {
     field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
     return 0;
   }
-  if (!field->table->in_use->no_errors)
+  if (!field->getTable()->in_use->no_errors)
     my_error(ER_BAD_NULL_ERROR, MYF(0), field->field_name);
   return -1;
 }
@@ -192,17 +194,17 @@ set_field_to_null_with_conversions(Field *field, bool no_conversions)
     return 0;					// Ok to set time to NULL
   }
   field->reset();
-  if (field == field->table->next_number_field)
+  if (field == field->getTable()->next_number_field)
   {
-    field->table->auto_increment_field_not_null= false;
+    field->getTable()->auto_increment_field_not_null= false;
     return 0;				  // field is set in fill_record()
   }
-  if (field->table->in_use->count_cuted_fields == CHECK_FIELD_WARN)
+  if (field->getTable()->in_use->count_cuted_fields == CHECK_FIELD_WARN)
   {
     field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_BAD_NULL_ERROR, 1);
     return 0;
   }
-  if (!field->table->in_use->no_errors)
+  if (!field->getTable()->in_use->no_errors)
     my_error(ER_BAD_NULL_ERROR, MYF(0), field->field_name);
   return -1;
 }
@@ -282,7 +284,7 @@ static void do_copy_next_number(CopyField *copy)
   if (*copy->from_null_ptr & copy->from_bit)
   {
     /* Same as in set_field_to_null_with_conversions() */
-    copy->to_field->table->auto_increment_field_not_null= false;
+    copy->to_field->getTable()->auto_increment_field_not_null= false;
     copy->to_field->reset();
   }
   else
@@ -443,7 +445,7 @@ static void do_varstring1(CopyField *copy)
   if (length > copy->to_length- 1)
   {
     length= copy->to_length - 1;
-    if (copy->from_field->table->in_use->count_cuted_fields)
+    if (copy->from_field->getTable()->in_use->count_cuted_fields)
       copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                   ER_WARN_DATA_TRUNCATED, 1);
   }
@@ -479,7 +481,7 @@ static void do_varstring2(CopyField *copy)
   if (length > copy->to_length- HA_KEY_BLOB_LENGTH)
   {
     length=copy->to_length-HA_KEY_BLOB_LENGTH;
-    if (copy->from_field->table->in_use->count_cuted_fields)
+    if (copy->from_field->getTable()->in_use->count_cuted_fields)
       copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                   ER_WARN_DATA_TRUNCATED, 1);
   }
@@ -534,9 +536,9 @@ void CopyField::set(unsigned char *to,Field *from)
     to_ptr[0]= 1;                             // Null as default value
     to_null_ptr= (unsigned char*) to_ptr++;
     to_bit= 1;
-    if (from->table->maybe_null)
+    if (from->getTable()->maybe_null)
     {
-      null_row= &from->table->null_row;
+      null_row= &from->getTable()->null_row;
       do_copy= do_outer_field_to_null_str;
     }
     else
@@ -595,7 +597,7 @@ void CopyField::set(Field *to,Field *from,bool save)
         do_copy= do_copy_null;
       else
       {
-        null_row= &from->table->null_row;
+        null_row= &from->getTable()->null_row;
         do_copy= do_outer_field_null;
       }
     }
@@ -603,7 +605,7 @@ void CopyField::set(Field *to,Field *from,bool save)
     {
       if (to_field->type() == DRIZZLE_TYPE_TIMESTAMP)
         do_copy= do_copy_timestamp;               // Automatic timestamp
-      else if (to_field == to_field->table->next_number_field)
+      else if (to_field == to_field->getTable()->next_number_field)
         do_copy= do_copy_next_number;
       else
         do_copy= do_copy_not_null;
@@ -630,8 +632,8 @@ void CopyField::set(Field *to,Field *from,bool save)
 CopyField::Copy_func *
 CopyField::get_copy_func(Field *to,Field *from)
 {
-  bool compatible_db_low_byte_first= (to->table->s->db_low_byte_first ==
-                                     from->table->s->db_low_byte_first);
+  bool compatible_db_low_byte_first= (to->getTable()->getShare()->db_low_byte_first ==
+                                     from->getTable()->getShare()->db_low_byte_first);
   if (to->flags & BLOB_FLAG)
   {
     if (!(from->flags & BLOB_FLAG) || from->charset() != to->charset())
@@ -639,8 +641,8 @@ CopyField::get_copy_func(Field *to,Field *from)
     if (from_length != to_length || !compatible_db_low_byte_first)
     {
       // Correct pointer to point at char pointer
-      to_ptr+= to_length - to->table->s->blob_ptr_size;
-      from_ptr+= from_length- from->table->s->blob_ptr_size;
+      to_ptr+= to_length - to->getTable()->getShare()->blob_ptr_size;
+      from_ptr+= from_length- from->getTable()->getShare()->blob_ptr_size;
       return do_copy_blob;
     }
   }
@@ -658,7 +660,7 @@ CopyField::get_copy_func(Field *to,Field *from)
       */
       if (to->real_type() != from->real_type() ||
           !compatible_db_low_byte_first ||
-          (((to->table->in_use->variables.sql_mode & (MODE_NO_ZERO_DATE | MODE_INVALID_DATES)) && to->type() == DRIZZLE_TYPE_DATE) || to->type() == DRIZZLE_TYPE_DATETIME))
+          (((to->getTable()->in_use->variables.sql_mode & (MODE_NO_ZERO_DATE | MODE_INVALID_DATES)) && to->type() == DRIZZLE_TYPE_DATE) || to->type() == DRIZZLE_TYPE_DATETIME))
       {
         if (from->real_type() == DRIZZLE_TYPE_ENUM)
         {
@@ -686,15 +688,15 @@ CopyField::get_copy_func(Field *to,Field *from)
         return do_field_string;
       else if (to->real_type() == DRIZZLE_TYPE_VARCHAR)
       {
-        if (((Field_varstring*) to)->length_bytes !=
-            ((Field_varstring*) from)->length_bytes)
+        if (((Field_varstring*) to)->pack_length_no_ptr() !=
+            ((Field_varstring*) from)->pack_length_no_ptr())
         {
           return do_field_string;
         }
         
         if (to_length != from_length)
         {
-          return (((Field_varstring*) to)->length_bytes == 1 ?
+          return (((Field_varstring*) to)->pack_length_no_ptr() == 1 ?
                   (from->charset()->mbmaxlen == 1 ? do_varstring1 :
                                                     do_varstring1_mb) :
                   (from->charset()->mbmaxlen == 1 ? do_varstring2 :
@@ -757,7 +759,7 @@ CopyField::get_copy_func(Field *to,Field *from)
 int field_conv(Field *to,Field *from)
 {
   if (to->real_type() == from->real_type() &&
-      !(to->type() == DRIZZLE_TYPE_BLOB && to->table->copy_blobs))
+      !(to->type() == DRIZZLE_TYPE_BLOB && to->getTable()->copy_blobs))
   {
     /* Please god, will someone rewrite this to be readable :( */
     if (to->pack_length() == from->pack_length() &&
@@ -765,9 +767,9 @@ int field_conv(Field *to,Field *from)
         to->real_type() != DRIZZLE_TYPE_ENUM &&
         (to->real_type() != DRIZZLE_TYPE_DECIMAL || (to->field_length == from->field_length && (((Field_num*)to)->dec == ((Field_num*)from)->dec))) &&
         from->charset() == to->charset() &&
-	to->table->s->db_low_byte_first == from->table->s->db_low_byte_first &&
-        (!(to->table->in_use->variables.sql_mode & (MODE_NO_ZERO_DATE | MODE_INVALID_DATES)) || (to->type() != DRIZZLE_TYPE_DATE && to->type() != DRIZZLE_TYPE_DATETIME)) &&
-        (from->real_type() != DRIZZLE_TYPE_VARCHAR || ((Field_varstring*)from)->length_bytes == ((Field_varstring*)to)->length_bytes))
+	to->getTable()->getShare()->db_low_byte_first == from->getTable()->getShare()->db_low_byte_first &&
+        (!(to->getTable()->in_use->variables.sql_mode & (MODE_NO_ZERO_DATE | MODE_INVALID_DATES)) || (to->type() != DRIZZLE_TYPE_DATE && to->type() != DRIZZLE_TYPE_DATETIME)) &&
+        (from->real_type() != DRIZZLE_TYPE_VARCHAR || ((Field_varstring*)from)->pack_length_no_ptr() == ((Field_varstring*)to)->pack_length_no_ptr()))
     {						// Identical fields
       /* This may happen if one does 'UPDATE ... SET x=x' */
       if (to->ptr != from->ptr)
@@ -783,7 +785,7 @@ int field_conv(Field *to,Field *from)
       Copy value if copy_blobs is set, or source is not a string and
       we have a pointer to its internal string conversion buffer.
     */
-    if (to->table->copy_blobs ||
+    if (to->getTable()->copy_blobs ||
         (!blob->value.is_alloced() &&
          from->real_type() != DRIZZLE_TYPE_VARCHAR))
       blob->value.copy();
@@ -821,3 +823,5 @@ int field_conv(Field *to,Field *from)
   else
     return to->store(from->val_int(), test(from->flags & UNSIGNED_FLAG));
 }
+
+} /* namespace drizzled */

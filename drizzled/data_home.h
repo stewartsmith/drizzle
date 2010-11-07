@@ -20,8 +20,16 @@
 #ifndef DRIZZLED_DATA_HOME_H
 #define DRIZZLED_DATA_HOME_H
 
-extern uint32_t drizzle_data_home_len;
-extern char *drizzle_data_home,
-             drizzle_real_data_home[], drizzle_unpacked_real_data_home[];
+#include <boost/filesystem.hpp>
+
+namespace drizzled
+{
+
+extern boost::filesystem::path full_data_home;
+
+boost::filesystem::path& getDataHome();
+boost::filesystem::path& getDataHomeCatalog();
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_DATA_HOME_H */

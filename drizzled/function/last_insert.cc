@@ -18,13 +18,15 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/last_insert.h>
 #include <drizzled/session.h>
 
+namespace drizzled
+{
+
 int64_t Item_func_last_insert_id::val_int()
 {
-  Session *session= current_session;
   assert(fixed == 1);
   if (arg_count)
   {
@@ -37,11 +39,12 @@ int64_t Item_func_last_insert_id::val_int()
       LAST_INSERT_ID(X) take precedence over an generated auto_increment
       value for this row.
     */
-    session->arg_of_last_insert_id_function= true;
-    session->first_successful_insert_id_in_prev_stmt= value;
+    getSession().arg_of_last_insert_id_function= true;
+    getSession().first_successful_insert_id_in_prev_stmt= value;
+
     return value;
   }
-  return session->read_first_successful_insert_id_in_prev_stmt();
+  return getSession().read_first_successful_insert_id_in_prev_stmt();
 }
 
 
@@ -50,3 +53,4 @@ bool Item_func_last_insert_id::fix_fields(Session *session, Item **ref)
   return Item_int_func::fix_fields(session, ref);
 }
 
+} /* namespace drizzled */

@@ -23,10 +23,10 @@
 
 #include <drizzled/statement.h>
 
-class Session;
-
 namespace drizzled
 {
+class Session;
+
 namespace statement
 {
 
@@ -35,10 +35,28 @@ class Flush : public Statement
 public:
   Flush(Session *in_session)
     :
-      Statement(in_session)
+    Statement(in_session),
+    flush_log(false),
+    flush_tables(false),
+    flush_tables_with_read_lock(false),
+    flush_status(false)
   {}
 
   bool execute();
+
+private:
+  bool flush_log;
+  bool flush_tables;
+  bool flush_tables_with_read_lock;
+  bool flush_status;
+
+public:
+  void setFlushLog(bool f) { flush_log= f; }
+  void setFlushTables(bool f) { flush_tables= f; }
+  void setFlushTablesWithReadLock(bool f) {
+    flush_tables= flush_tables_with_read_lock= f;
+  }
+  void setFlushStatus(bool f) { flush_status= f; }
 
 private:
 
@@ -58,8 +76,8 @@ private:
   bool reloadCache();
 };
 
-} /* end namespace statement */
+} /* namespace statement */
 
-} /* end namespace drizzled */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_STATEMENT_FLUSH_H */

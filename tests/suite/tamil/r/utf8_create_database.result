@@ -1,0 +1,26 @@
+drop database if exists `அம்மா`;
+drop database if exists `தமிழ்`;
+drop database if exists `ஜன்னல்`;
+drop database if exists `வணக்கம்‎`;
+CREATE DATABASE `அம்மா`;
+CREATE DATABASE `தமிழ்`;
+CREATE DATABASE `ஜன்னல்`;
+CREATE DATABASE `வணக்கம்‎`;
+SHOW DATABASES;
+Database
+DATA_DICTIONARY
+INFORMATION_SCHEMA
+mysql
+test
+அம்மா
+ஜன்னல்
+தமிழ்
+வணக்கம்‎
+USE `அம்மா`;
+USE `தமிழ்`;
+USE `ஜன்னல்`;
+USE `வணக்கம்‎`;
+DROP DATABASE `அம்மா`;
+DROP DATABASE `தமிழ்`;
+DROP DATABASE `ஜன்னல்`;
+DROP DATABASE `வணக்கம்‎`;

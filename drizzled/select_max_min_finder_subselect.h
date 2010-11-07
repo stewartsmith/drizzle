@@ -20,6 +20,9 @@
 #ifndef DRIZZLED_SELECT_MAX_MIN_FINDER_SUBSELECT_H
 #define DRIZZLED_SELECT_MAX_MIN_FINDER_SUBSELECT_H
 
+namespace drizzled
+{
+
 /* used in independent ALL/ANY optimisation */
 class select_max_min_finder_subselect :public select_subselect
 {
@@ -37,5 +40,7 @@ public:
   bool cmp_decimal();
   bool cmp_str();
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SELECT_MAX_MIN_FINDER_SUBSELECT_H */

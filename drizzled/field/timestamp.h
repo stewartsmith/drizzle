@@ -23,6 +23,9 @@
 
 #include <drizzled/field/str.h>
 
+namespace drizzled
+{
+
 class TableShare;
 typedef struct charset_info_st CHARSET_INFO;
 
@@ -45,19 +48,19 @@ public:
                   const char *field_name_arg,
                   const CHARSET_INFO * const cs);
   enum_field_types type() const { return DRIZZLE_TYPE_TIMESTAMP;}
-  enum ha_base_keytype key_type() const { return HA_KEYTYPE_ULONG_INT; }
+  enum ha_base_keytype key_type() const { return HA_KEYTYPE_ULONGLONG; }
   enum Item_result cmp_type () const { return INT_RESULT; }
   int  store(const char *to,uint32_t length,
              const CHARSET_INFO * const charset);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
-  int  reset(void) { ptr[0]=ptr[1]=ptr[2]=ptr[3]=0; return 0; }
+  int  reset(void) { ptr[0]=ptr[1]=ptr[2]=ptr[3]=ptr[4]=ptr[5]=ptr[6]=ptr[7]=0; return 0; }
   double val_real(void);
   int64_t val_int(void);
   String *val_str(String*,String *);
   int cmp(const unsigned char *,const unsigned char *);
   void sort_string(unsigned char *buff,uint32_t length);
-  uint32_t pack_length() const { return 4; }
+  uint32_t pack_length() const { return 8; }
   void sql_type(String &str) const;
   bool can_be_compared_as_int64_t() const { return true; }
   bool zero_pack() const { return 0; }
@@ -66,11 +69,15 @@ public:
 
   /* Get TIMESTAMP field value as seconds since begging of Unix Epoch */
   long get_timestamp(bool *null_value);
-  void store_timestamp(time_t timestamp);
+private:
+  void store_timestamp(int64_t timestamp);
   bool get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
   bool get_time(DRIZZLE_TIME *ltime);
+public:
   timestamp_auto_set_type get_auto_set_type() const;
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FIELD_TIMESTAMP_H */
 

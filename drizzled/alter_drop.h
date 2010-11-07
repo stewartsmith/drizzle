@@ -22,15 +22,20 @@
 
 #include "drizzled/memory/sql_alloc.h"
 
-class Item;
-namespace drizzled { namespace memory { class Root; } }
+namespace drizzled
+{
 
-class AlterDrop :public drizzled::memory::SqlAlloc {
+namespace memory { class Root; }
+
+class Item;
+
+class AlterDrop :public memory::SqlAlloc {
 public:
   enum drop_type
   {
     KEY,
-    COLUMN
+    COLUMN,
+    FOREIGN_KEY
   };
   const char *name;
   enum drop_type type;
@@ -43,10 +48,12 @@ public:
     Used to make a clone of this object for ALTER/CREATE TABLE
     @sa comment for Key_part_spec::clone
   */
-  AlterDrop *clone(drizzled::memory::Root *mem_root) const
+  AlterDrop *clone(memory::Root *mem_root) const
   {
     return new (mem_root) AlterDrop(*this);
   }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ALTER_DROP_H */

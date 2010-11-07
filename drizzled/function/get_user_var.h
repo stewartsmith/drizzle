@@ -20,18 +20,27 @@
 #ifndef DRIZZLED_FUNCTION_GET_USER_VAR_H
 #define DRIZZLED_FUNCTION_GET_USER_VAR_H
 
-class user_var_entry;
 #include <drizzled/function/func.h>
+
+namespace drizzled
+{
+
+class user_var_entry;
 
 class Item_func_get_user_var :public Item_func
 {
   user_var_entry *var_entry;
   Item_result m_cached_result_type;
+  Session &session;
 
 public:
   LEX_STRING name; // keep it public
-  Item_func_get_user_var(LEX_STRING a):
-    Item_func(), m_cached_result_type(STRING_RESULT), name(a) {}
+  Item_func_get_user_var(Session &session_arg, LEX_STRING a):
+    Item_func(),
+    m_cached_result_type(STRING_RESULT),
+    session(session_arg),
+    name(a)
+  {}
   enum Functype functype() const { return GUSERVAR_FUNC; }
   LEX_STRING get_name() { return name; }
   double val_real();
@@ -51,5 +60,7 @@ public:
   { return const_item() ? 0 : RAND_TABLE_BIT; }
   bool eq(const Item *item, bool binary_cmp) const;
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_GET_USER_VAR_H */

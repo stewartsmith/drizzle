@@ -22,6 +22,9 @@
 
 #include "drizzled/function/math/int.h"
 
+namespace drizzled
+{
+
 class Item_func_to_days :public Item_int_func
 {
 public:
@@ -36,5 +39,7 @@ public:
   }
   int64_t val_int_endpoint(bool left_endp, bool *incl_endp);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_TIME_TO_DAYS_H */

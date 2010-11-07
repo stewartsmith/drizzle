@@ -22,6 +22,13 @@
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/savepoint.h>
+#include "drizzled/transaction_services.h"
+#include "drizzled/named_savepoint.h"
+
+#include <string>
+#include <deque>
+
+using namespace std;
 
 namespace drizzled
 {
@@ -34,45 +41,43 @@ bool statement::Savepoint::execute()
   }
   else
   {
-    SAVEPOINT **sv, *newsv;
-    for (sv= &session->transaction.savepoints; *sv; sv= &(*sv)->prev)
+    /*
+     * Look through the savepoints.  If we find one with
+     * the same name, delete it.
+     */
+    TransactionServices &transaction_services= TransactionServices::singleton();
+    deque<NamedSavepoint> &savepoints= session->transaction.savepoints;
+    deque<NamedSavepoint>::iterator iter;
+
+    for (iter= savepoints.begin();
+         iter != savepoints.end();
+         ++iter)
     {
+      NamedSavepoint &sv= *iter;
+      const string &sv_name= sv.getName();
       if (my_strnncoll(system_charset_info,
                        (unsigned char *) session->lex->ident.str,
                        session->lex->ident.length,
-                       (unsigned char *) (*sv)->name,
-                       (*sv)->length) == 0)
-        return false;
+                       (unsigned char *) sv_name.c_str(),
+                       sv_name.size()) == 0)
+        break;
     }
-    if (*sv) /* old savepoint of the same name exists */
+    if (iter != savepoints.end())
     {
-      newsv= *sv;
-      ha_release_savepoint(session, *sv); // it cannot fail
-      *sv= (*sv)->prev;
+      NamedSavepoint &sv= *iter;
+      (void) transaction_services.releaseSavepoint(session, sv);
+      savepoints.erase(iter);
     }
-    else if ((newsv= (SAVEPOINT *) alloc_root(&session->transaction.mem_root,
-                                              savepoint_alloc_size)) == 0)
-    {
-      my_error(ER_OUT_OF_RESOURCES, MYF(0));
-      return false;
-    }
-    newsv->name= strmake_root(&session->transaction.mem_root,
-                              session->lex->ident.str,
-                              session->lex->ident.length);
-    newsv->length= session->lex->ident.length;
-    /*
-       if we'll get an error here, don't add new savepoint to the list.
-       we'll lose a little bit of memory in transaction mem_root, but it'll
-       be free'd when transaction ends anyway
-     */
-    if (ha_savepoint(session, newsv))
+    
+    NamedSavepoint newsv(session->lex->ident.str, session->lex->ident.length);
+
+    if (transaction_services.setSavepoint(session, newsv))
     {
       return true;
     }
     else
     {
-      newsv->prev= session->transaction.savepoints;
-      session->transaction.savepoints= newsv;
+      savepoints.push_front(newsv);
       session->my_ok();
     }
   }
@@ -80,4 +85,3 @@ bool statement::Savepoint::execute()
 }
 
 } /* namespace drizzled */
-

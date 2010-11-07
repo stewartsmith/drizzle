@@ -35,8 +35,7 @@ INSERT IGNORE INTO t1 (col1) VALUES ('2a');
 Warnings:
 Warning	1265	Data truncated for column 'col1' at row 1
 INSERT IGNORE INTO t1 values (1/0);
-Warnings:
-Error	1365	Division by 0
+ERROR 22012: Division by 0
 INSERT IGNORE INTO t1 values (-2147483649);
 Warnings:
 Warning	1264	Out of range value for column 'col1' at row 1
@@ -65,7 +64,6 @@ col1
 -2147483648
 2147483647
 2
-NULL
 -2147483648
 2147483647
 -2147483648
@@ -105,8 +103,7 @@ INSERT IGNORE INTO t1 (col1) VALUES ('2a');
 Warnings:
 Warning	1265	Data truncated for column 'col1' at row 1
 INSERT IGNORE INTO t1 values (1/0);
-Warnings:
-Error	1365	Division by 0
+ERROR 22012: Division by 0
 INSERT IGNORE INTO t1 VALUES (-9223372036854775809);
 Warnings:
 Warning	1264	Out of range value for column 'col1' at row 1
@@ -133,7 +130,6 @@ col1
 -9223372036854774000
 9223372036854775700
 2
-NULL
 -9223372036854775808
 -9223372036854775808
 -9223372036854775808
@@ -197,8 +193,7 @@ INSERT IGNORE INTO t1 (col1) VALUES ('2a');
 Warnings:
 Warning	1265	Data truncated for column 'col1' at row 1
 INSERT IGNORE INTO t1 values (1/0);
-Warnings:
-Error	1365	Division by 0
+ERROR 22012: Division by 0
 INSERT IGNORE INTO t1 VALUES (1000);
 Warnings:
 Warning	1264	Out of range value for column 'col1' at row 1
@@ -236,38 +231,33 @@ col1
 99.99
 99.99
 NULL
-NULL
 DROP TABLE t1;
 CREATE TABLE t1 (col1 CHAR(5), col2 VARCHAR(6));
 INSERT INTO t1 VALUES ('hello', 'hello');
 INSERT INTO t1 VALUES ('he', 'he');
 INSERT INTO t1 VALUES ('hello   ', 'hello ');
-Warnings:
-Note	1265	Data truncated for column 'col1' at row 1
+ERROR 22001: Data too long for column 'col1' at row 1
 INSERT INTO t1 (col1) VALUES ('hellobob');
 ERROR 22001: Data too long for column 'col1' at row 1
 INSERT INTO t1 (col2) VALUES ('hellobob');
 ERROR 22001: Data too long for column 'col2' at row 1
 INSERT INTO t1 (col2) VALUES ('hello  ');
-Warnings:
-Note	1265	Data truncated for column 'col2' at row 1
+ERROR 22001: Data too long for column 'col2' at row 1
 UPDATE t1 SET col1 ='hellobob' WHERE col1 ='he';
 ERROR 22001: Data too long for column 'col1' at row 2
 UPDATE t1 SET col2 ='hellobob' WHERE col2 ='he';
 ERROR 22001: Data too long for column 'col2' at row 2
 INSERT IGNORE INTO t1 VALUES ('hellobob', 'hellobob');
 Warnings:
-Warning	1265	Data truncated for column 'col1' at row 1
-Warning	1265	Data truncated for column 'col2' at row 1
+Error	1406	Data too long for column 'col1' at row 1
+Error	1406	Data too long for column 'col2' at row 1
 UPDATE IGNORE t1 SET col2 ='hellotrudy' WHERE col2 ='he';
 Warnings:
-Warning	1265	Data truncated for column 'col2' at row 2
+Error	1406	Data too long for column 'col2' at row 2
 SELECT * FROM t1;
 col1	col2
-NULL	hello 
 he	hellot
 hello	hello
-hello	hello 
 hello	hellob
 DROP TABLE t1;
 CREATE TABLE t1 (col1 enum('red','blue','green'));
@@ -322,9 +312,9 @@ CREATE TABLE t1 (col1 INT NOT NULL default 99, col2 CHAR(6) NOT NULL);
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `col1` int NOT NULL DEFAULT '99',
-  `col2` varchar(6) NOT NULL
-) ENGINE=DEFAULT
+  `col1` INT NOT NULL DEFAULT '99',
+  `col2` VARCHAR(6) COLLATE utf8_general_ci NOT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 INSERT INTO t1 VALUES (1, 'hello');
 INSERT INTO t1 (col2) VALUES ('hello2');
 INSERT INTO t1 (col2) VALUES (NULL);
@@ -429,45 +419,45 @@ alter table t1 modify a bigint not null;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` bigint NOT NULL,
-  `b` date NOT NULL
-) ENGINE=DEFAULT
+  `a` BIGINT NOT NULL,
+  `b` DATE NOT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1(a int, b timestamp);
 alter table t1 add primary key(a);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int NOT NULL,
-  `b` timestamp NULL DEFAULT NULL,
+  `a` INT NOT NULL,
+  `b` TIMESTAMP NULL DEFAULT NULL,
   PRIMARY KEY (`a`)
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1(a int, b timestamp default 20050102030405);
 alter table t1 add primary key(a);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int NOT NULL,
-  `b` timestamp NULL DEFAULT '2005-01-02 03:04:05',
+  `a` INT NOT NULL,
+  `b` TIMESTAMP NULL DEFAULT '2005-01-02 03:04:05',
   PRIMARY KEY (`a`)
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 (date date not null);
 create table t2 select date from t1;
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `date` date NOT NULL
-) ENGINE=DEFAULT
+  `date` DATE NOT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t2,t1;
 create table t1 (i int)
-comment '123456789*123456789*123456789*123456789*123456789*123456789*';
+comment='123456789*123456789*123456789*123456789*123456789*123456789*';
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `i` int DEFAULT NULL
-) ENGINE=DEFAULT COMMENT='123456789*123456789*123456789*123456789*123456789*123456789*'
+  `i` INT DEFAULT NULL
+) ENGINE=DEFAULT COMMENT='123456789*123456789*123456789*123456789*123456789*123456789*' COLLATE = utf8_general_ci
 drop table t1;
 create table t1(col1 int, col2 int, 
 col3 int, col4 int,

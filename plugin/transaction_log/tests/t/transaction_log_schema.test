@@ -1,0 +1,78 @@
+# transaction_log_schema
+# Test of CREATE / DROP /ALTER SCHEMA statements and how the transaction log
+# captures / represents them
+
+# Ignore startup/shutdown events
+--disable_query_log
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
+--enable_query_log
+
+
+--echo Simple CREATE / DROP test
+--echo Testing simple CREATE SCHEMA 
+CREATE SCHEMA my_test_schema;
+--source ../plugin/transaction_log/tests/t/check_transaction_log.inc
+--echo
+
+--echo Testing simple DROP SCHEMA
+DROP SCHEMA my_test_schema;
+--source ../plugin/transaction_log/tests/t/check_transaction_log.inc
+--echo
+
+# Truncate the log file to reset for the next test
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
+--echo
+
+--echo Testing DROP SCHEMA on non-empty schema
+CREATE SCHEMA my_test_schema;
+CREATE TABLE my_test_schema.t1 (a int not null, primary key(a));
+CREATE TABLE my_test_schema.t2 LIKE my_test_schema.t1;
+CREATE TABLE my_test_schema.t3 LIKE my_test_schema.t2;
+
+--echo We truncate the log to simplify test validation
+--echo we are mainly concerned that we see 4 new entries 
+--echo once we have issued the DROP SCHEMA statement
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
+--echo
+
+
+DROP SCHEMA my_test_schema;
+# We check to see that t1,t2,t3 are DROPped as well
+--echo The implied DROP TABLE statements for t1->t3
+--echo do not come in any deterministic order t1 may or may not be first
+--echo ,therefore we have to satisfy ourselves that we have 4 items in the log
+--echo after issuing the DROP SCHEMA
+--echo We do check the first entry (OFFSET=0) as this should be the first of 3 DROP TABLE messages
+
+--replace_regex /start_timestamp: [0-9]+/START_TIMESTAMP/g /end_timestamp: [0-9]+/END_TIMESTAMP/g /creation_timestamp: [0-9]+/CREATE_TIMESTAMP/ /update_timestamp: [0-9]+/UPDATE_TIMESTAMP/ /table_name: "t[1|2|3]"/table_name:  TABLE_NAME/ /transaction_id: [0-9]+/TRANSACTION_ID/
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',0);
+
+
+--source ../plugin/transaction_log/tests/t/check_transaction_log.inc
+--echo
+
+# Truncate the log file to reset for the next test
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
+--echo
+
+--echo Testing simple CREATE SCHEMA
+CREATE SCHEMA my_test_schema;
+USE my_test_schema;
+CREATE TABLE t1 (a INT NOT NULL AUTO_INCREMENT, b CHAR(50), PRIMARY KEY(a));
+ALTER SCHEMA my_test_schema COLLATE utf8_turkish_ci; 
+SHOW CREATE TABLE t1;
+--source ../plugin/transaction_log/tests/t/check_transaction_log.inc
+--echo
+CREATE TABLE t2 LIKE t1;
+--source ../plugin/transaction_log/tests/t/check_transaction_log.inc
+--echo
+DROP SCHEMA my_test_schema;
+
+# Truncate the log file to reset for the next test
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
+--echo
+
+
+
+
+

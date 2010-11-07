@@ -21,30 +21,75 @@
 #ifndef DRIZZLED_SECURITY_CONTEXT_H
 #define DRIZZLED_SECURITY_CONTEXT_H
 
+#include <string>
+
+namespace drizzled
+{
 
 /**
-  @class Security_context
+  @class SecurityContext
   @brief A set of Session members describing the current authenticated user.
 */
 
-class Security_context {
+class SecurityContext {
 public:
-  Security_context() {}
-  /*
-    host - host of the client
-    user - user of the client, set to NULL until the user has been read from
-    the connection
-    priv_user - The user privilege we are using. May be "" for anonymous user.
-    ip - client IP
-  */
+  enum PasswordType
+  {
+    PLAIN_TEXT,
+    MYSQL_HASH
+  };
+
+  SecurityContext():
+    password_type(PLAIN_TEXT)
+  { }
+
+  const std::string& getIp() const
+  {
+    return ip;
+  }
+
+  void setIp(const char *newip)
+  {
+    ip.assign(newip);
+  }
+
+  const std::string& getUser() const
+  {
+    return user;
+  }
+
+  void setUser(const std::string &newuser)
+  {
+    user.assign(newuser);
+  }
+
+  PasswordType getPasswordType(void) const
+  {
+    return password_type;
+  }
+
+  void setPasswordType(PasswordType newpassword_type)
+  {
+    password_type= newpassword_type;
+  }
+
+  const std::string& getPasswordContext() const
+  {
+    return password_context;
+  }
+
+  void setPasswordContext(const char *newpassword_context, size_t size)
+  {
+    password_context.assign(newpassword_context, size);
+  }
+
+private:
+  PasswordType password_type;
   std::string user;
   std::string ip;
-
-  void skip_grants();
-  inline const char *priv_host_name()
-  {
-    return (ip.c_str() ? ip.c_str() : (char *)"%");
-  }
+  std::string password_context;
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SECURITY_CONTEXT_H */

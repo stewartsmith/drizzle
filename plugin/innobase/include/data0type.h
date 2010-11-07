@@ -11,8 +11,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -117,7 +117,7 @@ columns, and for them the precise type is usually not used at all.
 
 #define DATA_ENGLISH	4	/* English language character string: this
 				is a relic from pre-MySQL time and only used
-				for InnoDB's own system tables */
+				for InnoDBs own system tables */
 #define DATA_ERROR	111	/* another relic from pre-MySQL time */
 
 #define DATA_MYSQL_TYPE_MASK 255 /* AND with this mask to extract the MySQL

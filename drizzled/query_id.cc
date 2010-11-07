@@ -22,6 +22,9 @@
 #include <drizzled/query_id.h>
 #include "drizzled/internal/my_pthread.h"
 
+namespace drizzled
+{
+
 Query_id::Query_id()
 {
   the_query_id= 1;
@@ -42,3 +45,5 @@ uint64_t Query_id::next()
 
   return ret;
 }
+
+} /* namespace drizzled */

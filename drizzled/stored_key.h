@@ -20,8 +20,11 @@
 #ifndef DRIZZLED_STORED_KEY_H
 #define DRIZZLED_STORED_KEY_H
 
+namespace drizzled
+{
+
 /** class to store an field/item as a key struct */
-class StoredKey :public drizzled::memory::SqlAlloc
+class StoredKey :public memory::SqlAlloc
 {
 public:
   bool null_key; /**< If true, the value of the key has a null part */
@@ -59,12 +62,11 @@ public:
                                     null,
                                     1,
                                     field_arg->field_name,
-                                    field_arg->table->s,
                                     field_arg->charset());
-      to_field->init(field_arg->table);
+      to_field->init(field_arg->getTable());
     }
     else
-      to_field= field_arg->new_key_field(session->mem_root, field_arg->table,
+      to_field= field_arg->new_key_field(session->mem_root, field_arg->getTable(),
                                         ptr, null, 1);
 
     to_field->setWriteSet();
@@ -81,7 +83,7 @@ public:
   enum store_key_result copy()
   {
     enum store_key_result result;
-    Session *session= to_field->table->in_use;
+    Session *session= to_field->getTable()->in_use;
     enum_check_fields saved_count_cuted_fields= session->count_cuted_fields;
     session->count_cuted_fields= CHECK_FIELD_IGNORE;
     result= copy_inner();
@@ -172,5 +174,7 @@ protected:
     return (err > 2 ?  STORE_KEY_FATAL : (store_key_result) err);
   }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_STORED_KEY_H */

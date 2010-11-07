@@ -11,11 +11,13 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /* Read record based on a key */
 
 #include "myisam_priv.h"
+
+using namespace drizzled;
 
 	/* Read a record using key */
 	/* Ordinary search_flag is 0 ; Give error if no record with key */
@@ -65,9 +67,6 @@ int mi_rkey(MI_INFO *info, unsigned char *buf, int inx, const unsigned char *key
 
   if (fast_mi_readinfo(info))
     goto err;
-
-  if (share->concurrent_insert)
-    pthread_rwlock_rdlock(&share->key_root_lock[inx]);
 
   nextflag=myisam_read_vec[search_flag];
   use_key_length=pack_key_length;
@@ -133,8 +132,6 @@ int mi_rkey(MI_INFO *info, unsigned char *buf, int inx, const unsigned char *key
       if (res == 2)
       {
         info->lastpos= HA_OFFSET_ERROR;
-        if (share->concurrent_insert)
-          pthread_rwlock_unlock(&share->key_root_lock[inx]);
         return((errno= HA_ERR_KEY_NOT_FOUND));
       }
       /*
@@ -149,8 +146,6 @@ int mi_rkey(MI_INFO *info, unsigned char *buf, int inx, const unsigned char *key
       }
     }
   }
-  if (share->concurrent_insert)
-    pthread_rwlock_unlock(&share->key_root_lock[inx]);
 
   /* Calculate length of the found key;  Used by mi_rnext_same */
   if ((keyinfo->flag & HA_VAR_LENGTH_KEY) && last_used_keyseg &&

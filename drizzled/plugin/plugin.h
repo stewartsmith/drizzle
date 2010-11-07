@@ -25,17 +25,20 @@
 
 namespace drizzled
 {
+namespace module
+{
+class Module;
+}
+
 namespace plugin
 {
-
-class Module;
 
 class Plugin
 {
 private:
   const std::string name;
   bool is_active;
-  Module *module;
+  module::Module *module;
   const std::string type_name;
 
   Plugin();
@@ -46,6 +49,15 @@ public:
   explicit Plugin(std::string in_name, std::string in_type_name);
   virtual ~Plugin() {}
 
+  /*
+   * This method is called for all plug-ins on shutdown,
+   * _before_ the plug-ins are deleted. It can be used
+   * when shutdown code references other plug-ins.
+   */
+  virtual void shutdownPlugin()
+  {
+  }
+ 
   void activate()
   {
     is_active= true;
@@ -66,7 +78,7 @@ public:
     return name;
   } 
 
-  void setModule(Module *module_arg)
+  void setModule(module::Module *module_arg)
   {
     module= module_arg;
   }

@@ -1,0 +1,6 @@
+SET GLOBAL transaction_log_truncate_debug= true;
+SELECT * FROM DATA_DICTIONARY.PLUGINS
+WHERE DATA_DICTIONARY.PLUGINS.PLUGIN_NAME LIKE 'Transaction%';
+PLUGIN_NAME	PLUGIN_TYPE	IS_ACTIVE	MODULE_NAME
+transaction_log_applier	TransactionApplier	NO	transaction_log
+SET GLOBAL transaction_log_truncate_debug= true;

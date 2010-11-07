@@ -16,15 +16,10 @@
 
 #include "config.h"
 
-/* Include these before the openssl headers, because they are BROKEN AS CRAP */
 #include <cstdio>
 #include <cstddef>
 
-#if defined(HAVE_LIBGNUTLS_OPENSSL)
-# include <gnutls/openssl.h>
-#else
-# include <openssl/md5.h>
-#endif /* HAVE_GNUTLS_OPENSSL */
+#include <gcrypt.h>
 
 #include <drizzled/plugin/function.h>
 #include <drizzled/item/func.h>
@@ -73,12 +68,12 @@ String *Md5Function::val_str(String *str)
 
   null_value= false;
 
-  unsigned char digest[16];
   str->set_charset(&my_charset_bin);
-  MD5_CTX context;
-  MD5_Init(&context);
-  MD5_Update(&context, (unsigned char *) sptr->ptr(), sptr->length());
-  MD5_Final(digest, &context);
+
+  gcry_md_hd_t md5_context;
+  gcry_md_open(&md5_context, GCRY_MD_MD5, 0);
+  gcry_md_write(md5_context, sptr->ptr(), sptr->length());  
+  unsigned char *digest= gcry_md_read(md5_context, 0);
 
   snprintf((char *) str->ptr(), 33,
     "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
@@ -88,23 +83,30 @@ String *Md5Function::val_str(String *str)
     digest[12], digest[13], digest[14], digest[15]);
   str->length((uint32_t) 32);
 
+  gcry_md_close(md5_context);
+
   return str;
 }
 
 
 plugin::Create_function<Md5Function> *md5udf= NULL;
 
-static int initialize(plugin::Registry &registry)
+static int initialize(module::Context &context)
 {
-  md5udf= new plugin::Create_function<Md5Function>("md5");
-  registry.add(md5udf);
-  return 0;
-}
+  /* Initialize libgcrypt */
+  if (not gcry_check_version(GCRYPT_VERSION))
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR, _("libgcrypt library version mismatch\n"));
+    return 1;
+  }
+  /* Disable secure memory.  */
+  gcry_control (GCRYCTL_DISABLE_SECMEM, 0);
 
-static int finalize(plugin::Registry &registry)
-{
-  registry.remove(md5udf);
-  delete md5udf;
+  /* Tell Libgcrypt that initialization has completed. */
+  gcry_control (GCRYCTL_INITIALIZATION_FINISHED, 0);
+
+  md5udf= new plugin::Create_function<Md5Function>("md5");
+  context.add(md5udf);
   return 0;
 }
 
@@ -117,8 +119,6 @@ DRIZZLE_DECLARE_PLUGIN
   "UDF for computing md5sum",
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
-  finalize,   /* Plugin Deinit */
-  NULL,   /* status variables */
   NULL,   /* system variables */
   NULL    /* config options */
 }

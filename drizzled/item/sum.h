@@ -23,22 +23,23 @@
 /* classes for sum functions */
 
 
-#include "drizzled/my_tree.h"
+#include "drizzled/tree.h"
 #include <drizzled/hybrid_type.h>
 #include <drizzled/item.h>
 #include <drizzled/item/field.h>
 #include <drizzled/item/bin_string.h>
 
-extern "C"
+namespace drizzled
+{
+
 int group_concat_key_cmp_with_distinct(void* arg, const void* key1,
                                        const void* key2);
 
-extern "C"
 int group_concat_key_cmp_with_order(void* arg, const void* key1,
                                     const void* key2);
 
 class Select_Lex;
-struct order_st;
+struct Order;
 
 /*
   Class Item_sum is the base class used for special expressions that SQL calls
@@ -981,7 +982,7 @@ class Item_func_group_concat : public Item_sum
    */
   Unique *unique_filter;
   Table *table;
-  order_st **order;
+  Order **order;
   Name_resolution_context *context;
   /** The number of ORDER BY items. */
   uint32_t arg_count_order;
@@ -1045,5 +1046,7 @@ public:
   virtual bool change_context_processor(unsigned char *cntx)
     { context= (Name_resolution_context *)cntx; return false; }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_SUM_H */

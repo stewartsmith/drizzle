@@ -1,0 +1,68 @@
+--disable_warnings
+DROP TABLE IF EXISTS b;
+--enable_warnings
+
+connect (con1, localhost, root,,);
+CREATE TABLE b (i int,  PRIMARY KEY (i));
+INSERT INTO b VALUES (1);
+
+connect (con2, localhost, drizzle,,);
+INSERT INTO b VALUES (2);
+
+connect (con3, localhost, drizzle,,);
+INSERT INTO b VALUES (3);
+
+connect (con4, localhost, drizzle,,);
+INSERT INTO b VALUES (4);
+
+connect (con5, localhost, drizzle,,);
+INSERT INTO b VALUES (5);
+
+connect (con6, localhost, drizzle,,);
+INSERT INTO b VALUES (6);
+
+connect (con7, localhost, drizzle,,);
+INSERT INTO b VALUES (7);
+
+connect (con8, localhost, drizzle,,);
+INSERT INTO b VALUES (8);
+
+connect (con9, localhost, drizzle,,);
+INSERT INTO b VALUES (9);
+
+connect (con10, localhost, drizzle,,);
+INSERT INTO b VALUES (10);
+
+connect (con11, localhost, drizzle,,);
+INSERT INTO b VALUES (11);
+
+connect (con12, localhost, drizzle,,);
+INSERT INTO b VALUES (12);
+
+connect (con13, localhost, drizzle,,);
+INSERT INTO b VALUES (13);
+
+disconnect con8;
+disconnect con9;
+disconnect con10;
+disconnect con11;
+disconnect con12;
+disconnect con13;
+
+#A sleep is needed here because on disconnect a scoreboard slot is marked 
+#as being done in the session destructor. The client would have already
+#been disconnected before the scoreboard slot is marked as being done. So
+#its possible that the connect below could fail to reserve a slot in this
+#test as the scoreboard would be full.  
+--sleep 1
+
+connect (con14, localhost, drizzle_test,,);
+INSERT INTO b VALUES (14);
+
+--sleep 1
+SELECT USER, COUNT_SELECT, COUNT_DELETE, COUNT_UPDATE, COUNT_INSERT, COUNT_ROLLBACK, COUNT_COMMIT, COUNT_CREATE, COUNT_ALTER, COUNT_DROP, COUNT_ADMIN FROM DATA_DICTIONARY.CURRENT_SQL_COMMANDS;
+
+DROP TABLE b;
+
+--replace_column 2 #
+show global status;

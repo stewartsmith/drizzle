@@ -1,0 +1,31 @@
+# Test Suite for ALTER TABLE syntax
+
+--disable_warnings
+drop table if exists t1;
+--enable_warnings
+
+# Test Case for Bug:588487 from Patric Crews
+# Using 'ALTER TABLE <> ENABLE KEYS' on a BlitzDB table locks up the server
+
+--warning 1071
+CREATE TABLE `t1` (
+  `col_varchar_10_key` varchar(10),
+  `col_varchar_10` varchar(10),
+  `col_int` int,
+  `col_varchar_1024_key` varchar(1024),
+  `col_varchar_1024` varchar(1024),
+  `col_int_key` int,
+  pk integer auto_increment,
+  /*Indices*/
+  key (`col_varchar_10_key` ),
+  key (`col_varchar_1024_key` ),
+  key (`col_int_key` ),
+  primary key (pk)
+) ENGINE=blitzdb ;
+
+--error ER_UNSUPPORTED_EXTENSION
+ALTER TABLE `t1` DISABLE KEYS;
+--error ER_UNSUPPORTED_EXTENSION
+ALTER TABLE `t1` ENABLE KEYS;
+
+DROP TABLE `t1`;

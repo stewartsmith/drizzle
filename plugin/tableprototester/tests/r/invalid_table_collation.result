@@ -1,0 +1,5 @@
+SHOW CREATE TABLE test.invalid_table_collation;
+Table	Create Table
+invalid_table_collation	CREATE TABLE `invalid_table_collation` (
+  `number` INT
+) ENGINE=tableprototester COMMENT='Invalid table collation ' COLLATE = pi_pi_pi

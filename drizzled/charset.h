@@ -23,15 +23,14 @@
 #include <cstddef>
 #include "drizzled/definitions.h"
 
+namespace drizzled
+{
+
 typedef struct charset_info_st CHARSET_INFO;
 
 extern CHARSET_INFO *all_charsets[256];
 extern CHARSET_INFO compiled_charsets[];
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* character sets */
 void *cs_alloc(size_t size);
 
@@ -91,8 +90,6 @@ extern size_t escape_quotes_for_drizzle(const CHARSET_INFO *charset_info,
 					char *to, size_t to_length,
 					const char *from, size_t length);
 
-#ifdef __cplusplus
-}
-#endif
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_CHARSET_H */

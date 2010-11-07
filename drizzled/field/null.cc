@@ -22,6 +22,9 @@
 #include "config.h"
 #include <drizzled/field/null.h>
 
+namespace drizzled
+{
+
 unsigned char Field_null::null[1]={1};
 
 /****************************************************************************
@@ -33,3 +36,4 @@ void Field_null::sql_type(String &res) const
   res.set_ascii(STRING_WITH_LEN("null"));
 }
 
+} /* namespace drizzled */

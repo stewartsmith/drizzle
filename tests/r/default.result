@@ -28,7 +28,7 @@ y varbinary(5) NOT NULL DEFAULT ' ',
 z varbinary(20) NOT NULL DEFAULT ' ',
 a1 varbinary(30) NOT NULL DEFAULT ' ',
 b1 blob NULL)
-ENGINE=InnoDB DEFAULT COLLATE utf8_bin;
+ENGINE=InnoDB DEFAULT COLLATE=utf8_bin;
 INSERT into t1 (b) values ('1');
 SHOW WARNINGS;
 Level	Code	Message
@@ -63,39 +63,39 @@ y varbinary(5) NOT NULL DEFAULT ' ',
 z varbinary(20) NOT NULL DEFAULT ' ',
 a1 varbinary(30) NOT NULL DEFAULT ' ',
 b1 blob NULL)
-ENGINE=MyISAM DEFAULT COLLATE utf8_bin;
+ENGINE=MyISAM DEFAULT COLLATE=utf8_bin;
 SHOW CREATE TABLE t2;
 Table	Create Table
 t2	CREATE TEMPORARY TABLE `t2` (
-  `a` varbinary(30) NOT NULL DEFAULT ' ',
-  `b` varbinary(1) NOT NULL DEFAULT ' ',
-  `c` varbinary(4) NOT NULL DEFAULT '0000',
-  `d` blob,
-  `e` blob,
-  `f` blob,
-  `g` blob,
-  `h` blob,
-  `i` blob,
-  `j` blob,
-  `k` blob,
-  `l` blob,
-  `m` blob,
-  `n` blob,
-  `o` blob,
-  `p` blob,
-  `q` varbinary(30) NOT NULL DEFAULT ' ',
-  `r` varbinary(30) NOT NULL DEFAULT ' ',
-  `s` blob,
-  `t` varbinary(4) NOT NULL DEFAULT ' ',
-  `u` varbinary(1) NOT NULL DEFAULT ' ',
-  `v` varbinary(30) NOT NULL DEFAULT ' ',
-  `w` varbinary(30) NOT NULL DEFAULT ' ',
-  `x` blob,
-  `y` varbinary(5) NOT NULL DEFAULT ' ',
-  `z` varbinary(20) NOT NULL DEFAULT ' ',
-  `a1` varbinary(30) NOT NULL DEFAULT ' ',
-  `b1` blob
-) ENGINE=MyISAM
+  `a` VARBINARY(30) NOT NULL DEFAULT 0x20,
+  `b` VARBINARY(1) NOT NULL DEFAULT 0x20,
+  `c` VARBINARY(4) NOT NULL DEFAULT 0x30303030,
+  `d` BLOB,
+  `e` BLOB,
+  `f` BLOB,
+  `g` BLOB,
+  `h` BLOB,
+  `i` BLOB,
+  `j` BLOB,
+  `k` BLOB,
+  `l` BLOB,
+  `m` BLOB,
+  `n` BLOB,
+  `o` BLOB,
+  `p` BLOB,
+  `q` VARBINARY(30) NOT NULL DEFAULT 0x20,
+  `r` VARBINARY(30) NOT NULL DEFAULT 0x20,
+  `s` BLOB,
+  `t` VARBINARY(4) NOT NULL DEFAULT 0x20,
+  `u` VARBINARY(1) NOT NULL DEFAULT 0x20,
+  `v` VARBINARY(30) NOT NULL DEFAULT 0x20,
+  `w` VARBINARY(30) NOT NULL DEFAULT 0x20,
+  `x` BLOB,
+  `y` VARBINARY(5) NOT NULL DEFAULT 0x20,
+  `z` VARBINARY(20) NOT NULL DEFAULT 0x20,
+  `a1` VARBINARY(30) NOT NULL DEFAULT 0x20,
+  `b1` BLOB
+) ENGINE=MyISAM COLLATE = utf8_bin
 INSERT into t2 (b) values ('1');
 SHOW WARNINGS;
 Level	Code	Message

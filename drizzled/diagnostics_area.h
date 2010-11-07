@@ -20,6 +20,9 @@
 #ifndef DRIZZLED_DIAGNOSTICS_AREA_H
 #define DRIZZLED_DIAGNOSTICS_AREA_H
 
+namespace drizzled
+{
+
 /**
   Stores status of the currently executed statement.
   Cleared at the beginning of the statement, and then
@@ -123,5 +126,7 @@ private:
     - warn_list, warn_count,
   */
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_DIAGNOSTICS_AREA_H */

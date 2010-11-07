@@ -18,11 +18,14 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/item/uint.h>
 #include <drizzled/item/num.h>
 #include <drizzled/item/string.h>
 #include <drizzled/item/decimal.h>
+
+namespace drizzled
+{
 
 /**
   @details
@@ -55,3 +58,4 @@ Item_num *Item_uint::neg()
   return item->neg();
 }
 
+} /* namespace drizzled */

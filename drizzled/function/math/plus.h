@@ -23,6 +23,9 @@
 #include <drizzled/function/func.h>
 #include <drizzled/function/additive_op.h>
 
+namespace drizzled
+{
+
 class Item_func_plus :public Item_func_additive_op
 {
 public:
@@ -33,5 +36,6 @@ public:
   my_decimal *decimal_op(my_decimal *);
 };
 
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_MATH_PLUS_H */

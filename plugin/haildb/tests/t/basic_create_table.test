@@ -1,0 +1,7 @@
+CREATE TABLE t1 (a int primary key);
+SHOW CREATE TABLE t1;
+--error ER_TABLE_EXISTS_ERROR
+CREATE TABLE t1 (a int primary key);
+CREATE TABLE t2 (a int primary key, b varchar(20), c bigint);
+
+DROP TABLE t1, t2;

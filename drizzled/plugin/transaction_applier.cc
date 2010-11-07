@@ -27,18 +27,13 @@ using namespace std;
 namespace drizzled
 {
 
-bool plugin::TransactionApplier::addPlugin(plugin::TransactionApplier *applier)
+bool plugin::TransactionApplier::addPlugin(plugin::TransactionApplier *)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  /** @TODO ReplicationServices should indicate error in some way here */
-  replication_services.attachApplier(applier);
   return false;
 }
 
-void plugin::TransactionApplier::removePlugin(plugin::TransactionApplier *applier)
+void plugin::TransactionApplier::removePlugin(plugin::TransactionApplier *)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  replication_services.detachApplier(applier);
 }
 
 } /* namespace drizzled */

@@ -29,6 +29,9 @@
 
 */
 
+namespace drizzled
+{
+
 class Item_int_with_ref :public Item_int
 {
   Item *ref;
@@ -46,5 +49,7 @@ public:
   virtual Item *real_item() { return ref; }
   virtual const Item *real_item() const { return ref; }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_INT_WITH_REF_H */

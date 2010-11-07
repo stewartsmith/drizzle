@@ -24,7 +24,7 @@
 # if defined(__SUNPRO_CC)
 #  include <drizzled/atomic/sun_studio.h>
 # endif
-# if !defined(__ICC) && (defined(HAVE_GCC_ATOMIC_BUILTINS) || defined(__SUNPRO_CC))
+# if !defined(__ICC) && !defined(__clang__) && (defined(HAVE_GCC_ATOMIC_BUILTINS) || defined(__SUNPRO_CC))
 #  include <drizzled/atomic/gcc_traits.h>
 #  define ATOMIC_TRAITS internal::gcc_traits
 # else  /* use pthread impl */
@@ -58,6 +58,11 @@ public:
 
   atomic_impl() : atomic_base<I>(), traits() {}
 
+  value_type add_and_fetch( D addend )
+  {
+    return traits.add_and_fetch(&this->my_value, addend);
+  }
+
   value_type fetch_and_add( D addend )
   {
     return traits.fetch_and_add(&this->my_value, addend);
@@ -78,7 +83,7 @@ public:
     return traits.fetch_and_store(&this->my_value, value);
   }
 
-  value_type compare_and_swap( value_type value, value_type comparand )
+  bool compare_and_swap( value_type value, value_type comparand )
   {
     return traits.compare_and_swap(&this->my_value, value, comparand);
   }
@@ -102,7 +107,7 @@ protected:
 public:
   atomic_impl<I,D,T>& operator+=( D addend )
   {
-    fetch_and_add(addend)+addend;
+    increment(addend);
     return *this;
   }
 
@@ -113,15 +118,15 @@ public:
     return operator+=(D(0)-addend);
   }
 
-  value_type increment() {
-    return fetch_and_add(1)+1;
+  value_type increment()
+  {
+    return add_and_fetch(1);
   }
 
-  value_type decrement() {
-    return fetch_and_add(D(-1))-1;
+  value_type decrement()
+  {
+    return add_and_fetch(D(-1));
   }
-
-
 };
 
 } /* namespace internal */

@@ -1,0 +1,10 @@
+use data_dictionary;
+select count(*) from data_dictionary.INNODB_STATUS ;
+count(*)
+43
+show create table INNODB_STATUS;
+Table	Create Table
+INNODB_STATUS	CREATE TABLE `INNODB_STATUS` (
+  `VARIABLE_NAME` VARCHAR(256) NOT NULL,
+  `VARIABLE_VALUE` VARCHAR(256) NOT NULL
+) ENGINE=FunctionEngine COLLATE = utf8_general_ci

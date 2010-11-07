@@ -18,8 +18,11 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/str/conv_charset.h>
+
+namespace drizzled
+{
 
 String *Item_func_conv_charset::val_str(String *str)
 {
@@ -27,7 +30,7 @@ String *Item_func_conv_charset::val_str(String *str)
   if (use_cached_value)
     return null_value ? 0 : &str_value;
   String *arg= args[0]->val_str(str);
-  uint32_t dummy_errors;
+  size_t dummy_errors;
   if (!arg)
   {
     null_value=1;
@@ -53,3 +56,4 @@ void Item_func_conv_charset::print(String *str, enum_query_type query_type)
   str->append(')');
 }
 
+} /* namespace drizzled */

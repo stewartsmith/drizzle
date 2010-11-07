@@ -1,0 +1,7 @@
+--source include/have_linux.inc
+--source include/have_valgrind.inc
+SET SESSION storage_engine=pbxt;
+create table t1 (a int auto_increment primary key);
+insert into t1 values (),(),(),();
+select * from t1;
+drop table t1;

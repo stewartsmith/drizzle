@@ -40,15 +40,15 @@
   * @file
       The memc_append_by_key UDF
 */
-class MemcachedAppendByKey : public Item_int_func
+class MemcachedAppendByKey : public drizzled::Item_int_func
 {
-  String failure_buff;
-  String value;
+  drizzled::String failure_buff;
+  drizzled::String value;
 public:
   MemcachedAppendByKey()
     :
       Item_int_func(),
-      failure_buff("failure ...", &my_charset_bin)
+      failure_buff("failure ...", &drizzled::my_charset_bin)
   {}
 
   const char *func_name() const

@@ -18,8 +18,10 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
 #include <drizzled/item/uint.h>
+
+namespace drizzled
+{
 
 Item_uint::Item_uint(const char *str_arg, uint32_t length):
   Item_int(str_arg, length)
@@ -56,5 +58,4 @@ int Item_uint::save_in_field(Field *field, bool no_conversions)
   return Item_int::save_in_field(field, no_conversions);
 }
 
-
-
+} /* namespace drizzled */

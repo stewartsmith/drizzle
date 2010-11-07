@@ -11,8 +11,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -30,6 +30,8 @@ Created 9/8/1995 Heikki Tuuri
 
 #ifdef __WIN__
 #include <windows.h>
+#else
+#include <sys/select.h>
 #endif
 
 #ifndef UNIV_HOTBACKUP
@@ -133,15 +135,6 @@ os_thread_create(
 			      0,	/* thread runs immediately */
 			      &win_thread_id);
 
-	if (srv_set_thread_priorities) {
-
-		/* Set created thread priority the same as a normal query
-		in MYSQL: we try to prevent starvation of threads by
-		assigning same priority QUERY_PRIOR to all */
-
-		ut_a(SetThreadPriority(thread, srv_query_thread_priority));
-	}
-
 	if (thread_id) {
 		*thread_id = win_thread_id;
 	}
@@ -200,14 +193,6 @@ os_thread_create(
 #ifndef UNIV_HPUX10
 	pthread_attr_destroy(&attr);
 #endif
-	if (srv_set_thread_priorities) {
-
-                  struct sched_param tmp_sched_param;
-
-                  memset(&tmp_sched_param, 0, sizeof(tmp_sched_param));
-                  tmp_sched_param.sched_priority= srv_query_thread_priority;
-                  (void)pthread_setschedparam(pthread, SCHED_OTHER, &tmp_sched_param);
-	}
 
 	if (thread_id) {
 		*thread_id = pthread;
@@ -237,6 +222,7 @@ os_thread_exit(
 #ifdef __WIN__
 	ExitThread((DWORD)exit_value);
 #else
+	pthread_detach(pthread_self());
 	pthread_exit(exit_value);
 #endif
 }

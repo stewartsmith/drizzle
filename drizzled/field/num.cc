@@ -26,6 +26,9 @@
 #include <drizzled/session.h>
 #include "drizzled/internal/my_sys.h"
 
+namespace drizzled
+{
+
 /**
   Numeric fields base class constructor.
 */
@@ -71,11 +74,11 @@ int Field_num::check_int(const CHARSET_INFO * const cs, const char *str, int len
     char buff[128];
     String tmp(buff, (uint32_t) sizeof(buff), system_charset_info);
     tmp.copy(str, length, system_charset_info);
-    push_warning_printf(table->in_use, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(getTable()->in_use, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                         ER_TRUNCATED_WRONG_VALUE_FOR_FIELD,
                         ER(ER_TRUNCATED_WRONG_VALUE_FOR_FIELD),
                         "integer", tmp.c_ptr(), field_name,
-                        (uint32_t) table->in_use->row_count);
+                        (uint32_t) getTable()->in_use->row_count);
     return 1;
   }
   /* Test if we have garbage at the end of the given string. */
@@ -129,7 +132,7 @@ bool Field_num::get_int(const CHARSET_INFO * const cs, const char *from, uint32_
     goto out_of_range;
   }
 
-  if (table->in_use->count_cuted_fields &&
+  if (getTable()->in_use->count_cuted_fields &&
       check_int(cs, from, len, end, error))
     return 1;
   return 0;
@@ -216,3 +219,4 @@ uint32_t Field_num::is_equal(CreateField *new_field_ptr)
 }
 
 
+} /* namespace drizzled */

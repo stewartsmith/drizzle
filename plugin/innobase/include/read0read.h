@@ -11,8 +11,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -182,9 +182,6 @@ struct cursor_view_struct{
 				/*!< Memory heap for the cursor view */
 	read_view_t*	read_view;
 				/*!< Consistent read view of the cursor*/
-	ulint		n_mysql_tables_in_use;
-				/*!< number of Innobase tables used in the
-				processing of this cursor */
 };
 
 #ifndef UNIV_NONINL

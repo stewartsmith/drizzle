@@ -1,4 +1,0 @@
-CREATE DATABASE INFORMATION_SCHEMA;
-ERROR HY000: Can't create database 'information_schema'; database exists
-CREATE SCHEMA INFORMATION_SCHEMA;
-ERROR HY000: Can't create database 'information_schema'; database exists

@@ -24,8 +24,10 @@
 #include "drizzled/common.h"
 #include "drizzled/lex_string.h"
 #include "drizzled/comp_creator.h"
-#include <drizzled/table_identifier.h>
+#include "drizzled/identifier.h"
 
+namespace drizzled
+{
 
 class Session;
 class TableList;
@@ -44,7 +46,7 @@ bool mysql_insert_select_prepare(Session *session);
 bool update_precheck(Session *session, TableList *tables);
 bool delete_precheck(Session *session, TableList *tables);
 bool insert_precheck(Session *session, TableList *tables);
-bool create_table_precheck(drizzled::TableIdentifier &identifier);
+bool create_table_precheck(TableIdentifier &identifier);
 
 Item *negate_expression(Session *session, Item *expr);
 
@@ -76,15 +78,17 @@ bool check_simple_select();
 void mysql_init_select(LEX *lex);
 bool mysql_new_select(LEX *lex, bool move_down);
 
-int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
-                         const std::string& schema_table_name);
+int prepare_new_schema_table(Session *session, LEX *lex,
+                             const std::string& schema_table_name);
 
 Item * all_any_subquery_creator(Item *left_expr,
                                 chooser_compare_func_creator cmp,
                                 bool all,
                                 Select_Lex *select_lex);
 
-void sql_kill(Session *session, unsigned long id, bool only_kill_query);
+void sql_kill(Session *session, int64_t id, bool only_kill_query);
 char* query_table_status(Session *session,const char *db,const char *table_name);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SQL_PARSE_H */

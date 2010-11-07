@@ -21,6 +21,7 @@
 #include "drizzled/session.h"
 #include "drizzled/item/uint.h"
 #include "drizzled/item/float.h"
+#include "drizzled/item/string.h"
 #include "drizzled/optimizer/explain_plan.h"
 #include "drizzled/optimizer/position.h"
 #include "drizzled/optimizer/quick_ror_intersect_select.h"
@@ -29,11 +30,15 @@
 #include "drizzled/join.h"
 #include "drizzled/internal/m_string.h"
 
+#include <cstdio>
 #include <string>
 #include <sstream>
+#include <bitset>
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 static const string access_method_str[]=
 {
@@ -50,6 +55,20 @@ static const string access_method_str[]=
   "unique_subquery",
   "index_subquery",
   "index_merge"
+};
+
+static const string select_type_str[]=
+{
+  "PRIMARY",
+  "SIMPLE",
+  "DERIVED",
+  "DEPENDENT SUBQUERY",
+  "UNCACHEABLE SUBQUERY",
+  "SUBQUERY",
+  "DEPENDENT UNION",
+  "UNCACHEABLE_UNION",
+  "UNION",
+  "UNION RESULT"
 };
 
 void optimizer::ExplainPlan::printPlan()
@@ -73,8 +92,8 @@ void optimizer::ExplainPlan::printPlan()
   {
     item_list.push_back(new Item_int((int32_t)
                         join->select_lex->select_number));
-    item_list.push_back(new Item_string(join->select_lex->type.c_str(),
-                                        join->select_lex->type.length(),
+    item_list.push_back(new Item_string(select_type_str[join->select_lex->type].c_str(),
+                                        select_type_str[join->select_lex->type].length(),
                                         cs));
     for (uint32_t i= 0; i < 7; i++)
       item_list.push_back(item_null);
@@ -100,8 +119,8 @@ void optimizer::ExplainPlan::printPlan()
     /* id */
     item_list.push_back(new Item_null);
     /* select_type */
-    item_list.push_back(new Item_string(join->select_lex->type.c_str(),
-                                        join->select_lex->type.length(),
+    item_list.push_back(new Item_string(select_type_str[join->select_lex->type].c_str(),
+                                        select_type_str[join->select_lex->type].length(),
                                         cs));
     /* table */
     {
@@ -180,8 +199,8 @@ void optimizer::ExplainPlan::printPlan()
       item_list.push_back(new Item_uint((uint32_t)
             join->select_lex->select_number));
       /* select_type */
-      item_list.push_back(new Item_string(join->select_lex->type.c_str(),
-                                          join->select_lex->type.length(),
+      item_list.push_back(new Item_string(select_type_str[join->select_lex->type].c_str(),
+                                          select_type_str[join->select_lex->type].length(),
                                           cs));
       if (tab->type == AM_ALL && tab->select && tab->select->quick)
       {
@@ -217,7 +236,7 @@ void optimizer::ExplainPlan::printPlan()
       /* Build "possible_keys" value and add it to item_list */
       if (tab->keys.any())
       {
-        for (uint32_t j= 0; j < table->s->keys; j++)
+        for (uint32_t j= 0; j < table->getShare()->sizeKeys(); j++)
         {
           if (tab->keys.test(j))
           {
@@ -237,11 +256,11 @@ void optimizer::ExplainPlan::printPlan()
       /* Build "key", "key_len", and "ref" values and add them to item_list */
       if (tab->ref.key_parts)
       {
-        KEY *key_info= table->key_info+ tab->ref.key;
+        KeyInfo *key_info= table->key_info+ tab->ref.key;
         item_list.push_back(new Item_string(key_info->name,
                                             strlen(key_info->name),
                                             system_charset_info));
-        uint32_t length= int64_t2str(tab->ref.key_length, keylen_str_buf, 10) -
+        uint32_t length= internal::int64_t2str(tab->ref.key_length, keylen_str_buf, 10) -
                                      keylen_str_buf;
         item_list.push_back(new Item_string(keylen_str_buf, 
                                             length,
@@ -258,10 +277,10 @@ void optimizer::ExplainPlan::printPlan()
       }
       else if (tab->type == AM_NEXT)
       {
-        KEY *key_info=table->key_info+ tab->index;
+        KeyInfo *key_info=table->key_info+ tab->index;
         item_list.push_back(new Item_string(key_info->name,
               strlen(key_info->name),cs));
-        uint32_t length= int64_t2str(key_info->key_length, keylen_str_buf, 10) -
+        uint32_t length= internal::int64_t2str(key_info->key_length, keylen_str_buf, 10) -
                                      keylen_str_buf;
         item_list.push_back(new Item_string(keylen_str_buf,
                                             length,
@@ -468,16 +487,16 @@ bool optimizer::ExplainPlan::explainUnion(Session *session,
        sl= sl->next_select())
   {
     // drop UNCACHEABLE_EXPLAIN, because it is for internal usage only
-    uint8_t uncacheable= (sl->uncacheable & ~UNCACHEABLE_EXPLAIN);
+    sl->uncacheable.reset(UNCACHEABLE_EXPLAIN);
     if (&session->lex->select_lex == sl)
     {
       if (sl->first_inner_unit() || sl->next_select())
       {
-        sl->type.assign("PRIMARY");
+        sl->type= optimizer::ST_PRIMARY;
       }
       else
       {
-        sl->type.assign("SIMPLE");
+        sl->type= optimizer::ST_SIMPLE;
       }
     }
     else
@@ -486,42 +505,42 @@ bool optimizer::ExplainPlan::explainUnion(Session *session,
       {
         if (sl->linkage == DERIVED_TABLE_TYPE)
         {
-          sl->type.assign("DERIVED");
+          sl->type= optimizer::ST_DERIVED;
         }
         else
         {
-          if (uncacheable & UNCACHEABLE_DEPENDENT)
+          if (sl->uncacheable.test(UNCACHEABLE_DEPENDENT))
           {
-            sl->type.assign("DEPENDENT SUBQUERY");
+            sl->type= optimizer::ST_DEPENDENT_SUBQUERY;
           }
           else
           {
-            if (uncacheable)
+            if (sl->uncacheable.any())
             {
-              sl->type.assign("UNCACHEABLE SUBQUERY");
+              sl->type= optimizer::ST_UNCACHEABLE_SUBQUERY;
             }
             else
             {
-              sl->type.assign("SUBQUERY");
+              sl->type= optimizer::ST_SUBQUERY;
             }
           }
         }
       }
       else
       {
-        if (uncacheable & UNCACHEABLE_DEPENDENT)
+        if (sl->uncacheable.test(UNCACHEABLE_DEPENDENT))
         {
-          sl->type.assign("DEPENDENT UNION");
+          sl->type= optimizer::ST_DEPENDENT_UNION;
         }
         else
         {
-          if (uncacheable)
+          if (sl->uncacheable.any())
           {
-            sl->type.assign("UNCACHEABLE_UNION");
+            sl->type= optimizer::ST_UNCACHEABLE_UNION;
           }
           else
           {
-            sl->type.assign("UNION");
+            sl->type= optimizer::ST_UNION;
           }
         }
       }
@@ -532,7 +551,7 @@ bool optimizer::ExplainPlan::explainUnion(Session *session,
   if (unit->is_union())
   {
     unit->fake_select_lex->select_number= UINT_MAX; // just for initialization
-    unit->fake_select_lex->type.assign("UNION RESULT");
+    unit->fake_select_lex->type= optimizer::ST_UNION_RESULT;
     unit->fake_select_lex->options|= SELECT_DESCRIBE;
     if (! (res= unit->prepare(session, result, SELECT_NO_UNLOCK | SELECT_DESCRIBE)))
     {
@@ -551,8 +570,8 @@ bool optimizer::ExplainPlan::explainUnion(Session *session,
                       first->item_list,
                       first->where,
                       first->order_list.elements + first->group_list.elements,
-                      (order_st*) first->order_list.first,
-                      (order_st*) first->group_list.first,
+                      (Order*) first->order_list.first,
+                      (Order*) first->group_list.first,
                       first->having,
                       first->options | session->options | SELECT_DESCRIBE,
                       result, 
@@ -561,3 +580,5 @@ bool optimizer::ExplainPlan::explainUnion(Session *session,
   }
   return (res || session->is_error());
 }
+
+} /* namespace drizzled */

@@ -1,24 +1,4 @@
-AC_LIB_HAVE_LINKFLAGS(curl,,
-  [#include <curl/curl.h>],
-  [
-    CURL *handle;
-    handle=curl_easy_init();
-  ])
+PANDORA_HAVE_LIBCURL
 AS_IF([test "x$ac_cv_libcurl" = "xno"],
-  AC_MSG_WARN([libcurl development lib not found: not building auth_http plugin. On Debian this is found in libcurl4-gnutls-dev. On RedHat it's in libcurl-devel.]),[
-  AC_CACHE_CHECK([if libcurl has CURLOPT_USERNAME],
-                 [drizzle_cv_curl_have_username],[
-     AC_COMPILE_IFELSE([
-       AC_LANG_PROGRAM(
-         [[
-           CURL *handle;
-           handle=curl_easy_init();
-           rv= curl_easy_setopt(curl_handle, CURLOPT_USERNAME, "foo");
-         ]])],
-       [drizzle_cv_curl_have_username=yes],
-       [drizzle_cv_curl_have_username=no])])
-  AS_IF([test "x$drizzle_cv_curl_have_username" = "xyes"],
-        AC_DEFINE([HAVE_CURLOPT_USERNAME],[1],
-                  [Does libcurl provide the CURLOPT_USERNAME constant]))
-
-  ])
+  AC_MSG_WARN([libcurl not found: not building auth_http]))
+PANDORA_ADD_PLUGIN_DEP_LIB([${LIBCURL}])

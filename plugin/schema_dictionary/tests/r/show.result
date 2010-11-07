@@ -1,0 +1,984 @@
+create schema everything;
+use everything;
+DROP TABLE IF EXISTS `branch`;
+Warnings:
+Note	1051	Unknown table 'branch'
+CREATE TABLE `branch` (
+`branch_id` int NOT NULL default '0',
+`project_id` int NOT NULL default '0',
+PRIMARY KEY  (`branch_id`)
+) ;
+DROP TABLE IF EXISTS `container`;
+Warnings:
+Note	1051	Unknown table 'container'
+CREATE TABLE `container` (
+`container_id` int NOT NULL auto_increment,
+`context` text,
+`parent_container` int default NULL,
+PRIMARY KEY  (`container_id`)
+)  AUTO_INCREMENT=312;
+DROP TABLE IF EXISTS `document`;
+Warnings:
+Note	1051	Unknown table 'document'
+CREATE TABLE `document` (
+`document_id` int NOT NULL auto_increment,
+`doctext` text,
+PRIMARY KEY  (`document_id`)
+)  AUTO_INCREMENT=623;
+DROP TABLE IF EXISTS `genstats_attributes`;
+Warnings:
+Note	1051	Unknown table 'genstats_attributes'
+CREATE TABLE `genstats_attributes` (
+`genstats_attributes_id` int NOT NULL default '0',
+`predicates` text NOT NULL,
+`attributes` text NOT NULL,
+PRIMARY KEY  (`genstats_attributes_id`)
+) ENGINE=InnoDB;
+DROP TABLE IF EXISTS `htmlcode`;
+Warnings:
+Note	1051	Unknown table 'htmlcode'
+CREATE TABLE `htmlcode` (
+`htmlcode_id` int NOT NULL auto_increment,
+`code` text,
+PRIMARY KEY  (`htmlcode_id`)
+)  AUTO_INCREMENT=516;
+DROP TABLE IF EXISTS `htmlpage`;
+Warnings:
+Note	1051	Unknown table 'htmlpage'
+CREATE TABLE `htmlpage` (
+`htmlpage_id` int NOT NULL auto_increment,
+`pagetype_nodetype` int default NULL,
+`displaytype` varchar(20) default NULL,
+`page` text,
+`parent_container` int default NULL,
+`ownedby_theme` int NOT NULL default '0',
+`permissionneeded` char(1) NOT NULL default 'r',
+`MIMEtype` varchar(255) NOT NULL default 'text/html',
+PRIMARY KEY  (`htmlpage_id`)
+)  AUTO_INCREMENT=564;
+DROP TABLE IF EXISTS `image`;
+Warnings:
+Note	1051	Unknown table 'image'
+CREATE TABLE `image` (
+`image_id` int NOT NULL auto_increment,
+`src` varchar(255) default NULL,
+`alt` varchar(255) default NULL,
+`thumbsrc` varchar(255) default NULL,
+`description` text,
+PRIMARY KEY  (`image_id`)
+)  AUTO_INCREMENT=138;
+DROP TABLE IF EXISTS `javascript`;
+Warnings:
+Note	1051	Unknown table 'javascript'
+CREATE TABLE `javascript` (
+`javascript_id` int NOT NULL default '0',
+`code` text NOT NULL,
+`comment` text NOT NULL,
+`dynamic` int NOT NULL default '0',
+PRIMARY KEY  (`javascript_id`)
+) ;
+DROP TABLE IF EXISTS `knowledge_item`;
+Warnings:
+Note	1051	Unknown table 'knowledge_item'
+CREATE TABLE `knowledge_item` (
+`knowledge_item_id` int NOT NULL default '0',
+`item` text NOT NULL,
+`question` int NOT NULL default '0',
+PRIMARY KEY  (`knowledge_item_id`)
+) ;
+DROP TABLE IF EXISTS `links`;
+Warnings:
+Note	1051	Unknown table 'links'
+CREATE TABLE `links` (
+`from_node` int NOT NULL default '0',
+`to_node` int NOT NULL default '0',
+`linktype` int NOT NULL default '0',
+`hits` int default '0',
+`food` int default '0',
+PRIMARY KEY  (`from_node`,`to_node`,`linktype`)
+) ;
+DROP TABLE IF EXISTS `mail`;
+Warnings:
+Note	1051	Unknown table 'mail'
+CREATE TABLE `mail` (
+`mail_id` int NOT NULL default '0',
+`from_address` char(80) NOT NULL default '',
+`attachment_file` int NOT NULL default '0',
+PRIMARY KEY  (`mail_id`)
+) ;
+DROP TABLE IF EXISTS `node`;
+Warnings:
+Note	1051	Unknown table 'node'
+CREATE TABLE `node` (
+`node_id` int NOT NULL auto_increment,
+`type_nodetype` int NOT NULL default '0',
+`title` char(240) NOT NULL default '',
+`author_user` int NOT NULL default '0',
+`createtime` datetime NOT NULL,
+`modified` datetime NOT NULL,
+`hits` int default '0',
+`loc_location` int default '0',
+`reputation` int NOT NULL default '0',
+`lockedby_user` int NOT NULL default '0',
+`locktime` datetime NOT NULL,
+`authoraccess` char(4) NOT NULL default 'iiii',
+`groupaccess` char(5) NOT NULL default 'iiiii',
+`otheraccess` char(5) NOT NULL default 'iiiii',
+`guestaccess` char(5) NOT NULL default 'iiiii',
+`dynamicauthor_permission` int NOT NULL default '-1',
+`dynamicgroup_permission` int NOT NULL default '-1',
+`dynamicother_permission` int NOT NULL default '-1',
+`dynamicguest_permission` int NOT NULL default '-1',
+`group_usergroup` int NOT NULL default '-1',
+PRIMARY KEY  (`node_id`),
+KEY `title` (`title`,`type_nodetype`),
+KEY `author` (`author_user`),
+KEY `type` (`type_nodetype`)
+)  AUTO_INCREMENT=641;
+DROP TABLE IF EXISTS `nodegroup`;
+Warnings:
+Note	1051	Unknown table 'nodegroup'
+CREATE TABLE `nodegroup` (
+`nodegroup_id` int NOT NULL auto_increment,
+`rank` int NOT NULL default '0',
+`node_id` int NOT NULL default '0',
+`orderby` int default NULL,
+PRIMARY KEY  (`nodegroup_id`,`rank`)
+)  AUTO_INCREMENT=624;
+DROP TABLE IF EXISTS `nodelet`;
+Warnings:
+Note	1051	Unknown table 'nodelet'
+CREATE TABLE `nodelet` (
+`nodelet_id` int NOT NULL auto_increment,
+`nltext` text,
+`nlcode` text,
+`nlgoto` int default NULL,
+`parent_container` int default NULL,
+`lastupdate` int NOT NULL default '0',
+`updateinterval` int NOT NULL default '0',
+`mini_nodelet` int NOT NULL default '0',
+PRIMARY KEY  (`nodelet_id`)
+)  AUTO_INCREMENT=495;
+DROP TABLE IF EXISTS `nodemethod`;
+Warnings:
+Note	1051	Unknown table 'nodemethod'
+CREATE TABLE `nodemethod` (
+`nodemethod_id` int NOT NULL default '0',
+`supports_nodetype` int NOT NULL default '0',
+`code` text NOT NULL,
+PRIMARY KEY  (`nodemethod_id`)
+) ;
+DROP TABLE IF EXISTS `nodetype`;
+Warnings:
+Note	1051	Unknown table 'nodetype'
+CREATE TABLE `nodetype` (
+`nodetype_id` int NOT NULL auto_increment,
+`restrict_nodetype` int default '0',
+`extends_nodetype` int default '0',
+`restrictdupes` int default '0',
+`sqltable` char(255) default NULL,
+`grouptable` char(40) default '',
+`defaultauthoraccess` char(4) NOT NULL default 'iiii',
+`defaultgroupaccess` char(5) NOT NULL default 'iiiii',
+`defaultotheraccess` char(5) NOT NULL default 'iiiii',
+`defaultguestaccess` char(5) NOT NULL default 'iiiii',
+`defaultgroup_usergroup` int NOT NULL default '-1',
+`defaultauthor_permission` int NOT NULL default '-1',
+`defaultgroup_permission` int NOT NULL default '-1',
+`defaultother_permission` int NOT NULL default '-1',
+`defaultguest_permission` int NOT NULL default '-1',
+`maxrevisions` int NOT NULL default '-1',
+`canworkspace` int NOT NULL default '-1',
+PRIMARY KEY  (`nodetype_id`)
+)  AUTO_INCREMENT=561;
+DROP TABLE IF EXISTS `project`;
+Warnings:
+Note	1051	Unknown table 'project'
+CREATE TABLE `project` (
+`project_id` int NOT NULL default '0',
+`description` text NOT NULL,
+`last_update` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
+`short_description` varchar(250) NOT NULL default '',
+`url_cvs` varchar(250) NOT NULL default '',
+`url_faq` varchar(250) NOT NULL default '',
+`long_description` text NOT NULL,
+PRIMARY KEY  (`project_id`)
+) ;
+DROP TABLE IF EXISTS `project_document`;
+Warnings:
+Note	1051	Unknown table 'project_document'
+CREATE TABLE `project_document` (
+`project_document_id` int NOT NULL default '0',
+`project_id` int NOT NULL default '0',
+PRIMARY KEY  (`project_document_id`)
+) ;
+DROP TABLE IF EXISTS `question`;
+Warnings:
+Note	1051	Unknown table 'question'
+CREATE TABLE `question` (
+`question_id` int NOT NULL default '0',
+`faq_id` int NOT NULL default '0',
+`project_id` int NOT NULL default '0',
+`rank` int NOT NULL default '0',
+`orderby` int NOT NULL default '0',
+`description` text NOT NULL,
+PRIMARY KEY  (`question_id`,`rank`)
+) ;
+DROP TABLE IF EXISTS `redirects`;
+Warnings:
+Note	1051	Unknown table 'redirects'
+CREATE TABLE `redirects` (
+`redirects_id` int NOT NULL default '0',
+`url` text NOT NULL,
+PRIMARY KEY  (`redirects_id`)
+) ;
+DROP TABLE IF EXISTS `releases`;
+Warnings:
+Note	1051	Unknown table 'releases'
+CREATE TABLE `releases` (
+`releases_id` int NOT NULL default '0',
+`branch_id` int NOT NULL default '0',
+`description` text,
+`url_targz` varchar(250) NOT NULL default '',
+`url_osx` varchar(250) NOT NULL default '',
+`url_rpm` varchar(250) NOT NULL default '',
+`project_id` int NOT NULL default '0',
+`version` varchar(30) NOT NULL default 'latest',
+`created` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
+`url_source_rpm` char(250) NOT NULL,
+PRIMARY KEY  (`releases_id`)
+) ;
+DROP TABLE IF EXISTS `revision`;
+Warnings:
+Note	1051	Unknown table 'revision'
+CREATE TABLE `revision` (
+`node_id` int NOT NULL default '0',
+`inside_workspace` int NOT NULL default '0',
+`revision_id` int NOT NULL default '0',
+`xml` text NOT NULL,
+`tstamp` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
+PRIMARY KEY  (`node_id`,`inside_workspace`,`revision_id`)
+) ;
+DROP TABLE IF EXISTS `setting`;
+Warnings:
+Note	1051	Unknown table 'setting'
+CREATE TABLE `setting` (
+`setting_id` int NOT NULL auto_increment,
+`vars` text NOT NULL,
+PRIMARY KEY  (`setting_id`)
+)  AUTO_INCREMENT=623;
+DROP TABLE IF EXISTS `symlink`;
+Warnings:
+Note	1051	Unknown table 'symlink'
+CREATE TABLE `symlink` (
+`symlink_id` int NOT NULL default '0',
+`symlink_node` int NOT NULL default '0',
+PRIMARY KEY  (`symlink_id`)
+) ;
+DROP TABLE IF EXISTS `themesetting`;
+Warnings:
+Note	1051	Unknown table 'themesetting'
+CREATE TABLE `themesetting` (
+`themesetting_id` int NOT NULL default '0',
+`parent_theme` int NOT NULL default '0',
+PRIMARY KEY  (`themesetting_id`)
+) ;
+DROP TABLE IF EXISTS `typeversion`;
+Warnings:
+Note	1051	Unknown table 'typeversion'
+CREATE TABLE `typeversion` (
+`typeversion_id` int NOT NULL default '0',
+`version` int NOT NULL default '0',
+PRIMARY KEY  (`typeversion_id`)
+) ;
+DROP TABLE IF EXISTS `user`;
+Warnings:
+Note	1051	Unknown table 'user'
+CREATE TABLE `user` (
+`user_id` int NOT NULL auto_increment,
+`nick` varchar(20) default NULL,
+`passwd` varchar(10) default NULL,
+`realname` varchar(40) default NULL,
+`email` varchar(40) default NULL,
+`lasttime` datetime default NULL,
+`karma` int default '0',
+`inside_workspace` int NOT NULL default '0',
+PRIMARY KEY  (`user_id`)
+)  AUTO_INCREMENT=623;
+DROP TABLE IF EXISTS `version`;
+Warnings:
+Note	1051	Unknown table 'version'
+CREATE TABLE `version` (
+`version_id` int NOT NULL default '0',
+`version` int NOT NULL default '1',
+PRIMARY KEY  (`version_id`)
+) ;
+DROP TABLE IF EXISTS `weblog`;
+Warnings:
+Note	1051	Unknown table 'weblog'
+CREATE TABLE `weblog` (
+`tstamp` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
+`linkedby_user` int NOT NULL default '0',
+`removedby_user` int NOT NULL default '0',
+`linkedtime` datetime NOT NULL,
+`weblog_id` int NOT NULL default '0',
+`to_node` int NOT NULL default '0',
+`entry_id` int NOT NULL auto_increment,
+PRIMARY KEY  (`entry_id`),
+KEY `tstamp` (`tstamp`)
+) ;
+DROP TABLE IF EXISTS `workspace`;
+Warnings:
+Note	1051	Unknown table 'workspace'
+CREATE TABLE `workspace` (
+`workspace_id` int NOT NULL default '0',
+PRIMARY KEY  (`workspace_id`)
+) ;
+show tables;
+Tables_in_everything
+branch
+container
+document
+genstats_attributes
+htmlcode
+htmlpage
+image
+javascript
+knowledge_item
+links
+mail
+node
+nodegroup
+nodelet
+nodemethod
+nodetype
+project
+project_document
+question
+redirects
+releases
+revision
+setting
+symlink
+themesetting
+typeversion
+user
+version
+weblog
+workspace
+show create table branch;
+Table	Create Table
+branch	CREATE TABLE `branch` (
+  `branch_id` INT NOT NULL DEFAULT '0',
+  `project_id` INT NOT NULL DEFAULT '0',
+  PRIMARY KEY (`branch_id`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+show create table container;
+Table	Create Table
+container	CREATE TABLE `container` (
+  `container_id` INT NOT NULL AUTO_INCREMENT,
+  `context` TEXT COLLATE utf8_general_ci,
+  `parent_container` INT DEFAULT NULL,
+  PRIMARY KEY (`container_id`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci AUTO_INCREMENT=312
+show create table document;
+Table	Create Table
+document	CREATE TABLE `document` (
+  `document_id` INT NOT NULL AUTO_INCREMENT,
+  `doctext` TEXT COLLATE utf8_general_ci,
+  PRIMARY KEY (`document_id`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci AUTO_INCREMENT=623
+show create table genstats_attributes;
+Table	Create Table
+genstats_attributes	CREATE TABLE `genstats_attributes` (
+  `genstats_attributes_id` INT NOT NULL DEFAULT '0',
+  `predicates` TEXT COLLATE utf8_general_ci NOT NULL,
+  `attributes` TEXT COLLATE utf8_general_ci NOT NULL,
+  PRIMARY KEY (`genstats_attributes_id`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+show create table htmlcode;
+Table	Create Table
+htmlcode	CREATE TABLE `htmlcode` (
+  `htmlcode_id` INT NOT NULL AUTO_INCREMENT,
+  `code` TEXT COLLATE utf8_general_ci,
+  PRIMARY KEY (`htmlcode_id`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci AUTO_INCREMENT=516
+show create table htmlpage;
+Table	Create Table
+htmlpage	CREATE TABLE `htmlpage` (
+  `htmlpage_id` INT NOT NULL AUTO_INCREMENT,
+  `pagetype_nodetype` INT DEFAULT NULL,
+  `displaytype` VARCHAR(20) COLLATE utf8_general_ci DEFAULT NULL,
+  `page` TEXT COLLATE utf8_general_ci,
+  `parent_container` INT DEFAULT NULL,
+  `ownedby_theme` INT NOT NULL DEFAULT '0',
+  `permissionneeded` VARCHAR(1) COLLATE utf8_general_ci NOT NULL DEFAULT 'r',
+  `MIMEtype` VARCHAR(255) COLLATE utf8_general_ci NOT NULL DEFAULT 'text/html',
+  PRIMARY KEY (`htmlpage_id`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci AUTO_INCREMENT=564
+show create table image;
+Table	Create Table
+image	CREATE TABLE `image` (
+  `image_id` INT NOT NULL AUTO_INCREMENT,
+  `src` VARCHAR(255) COLLATE utf8_general_ci DEFAULT NULL,
+  `alt` VARCHAR(255) COLLATE utf8_general_ci DEFAULT NULL,
+  `thumbsrc` VARCHAR(255) COLLATE utf8_general_ci DEFAULT NULL,
+  `description` TEXT COLLATE utf8_general_ci,
+  PRIMARY KEY (`image_id`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci AUTO_INCREMENT=138
+show create table javascript;
+Table	Create Table
+javascript	CREATE TABLE `javascript` (
+  `javascript_id` INT NOT NULL DEFAULT '0',
+  `code` TEXT COLLATE utf8_general_ci NOT NULL,
+  `comment` TEXT COLLATE utf8_general_ci NOT NULL,
+  `dynamic` INT NOT NULL DEFAULT '0',
+  PRIMARY KEY (`javascript_id`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+show create table knowledge_item;
+Table	Create Table
+knowledge_item	CREATE TABLE `knowledge_item` (
+  `knowledge_item_id` INT NOT NULL DEFAULT '0',
+  `item` TEXT COLLATE utf8_general_ci NOT NULL,
+  `question` INT NOT NULL DEFAULT '0',
+  PRIMARY KEY (`knowledge_item_id`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+show create table links;
+Table	Create Table
+links	CREATE TABLE `links` (
+  `from_node` INT NOT NULL DEFAULT '0',
+  `to_node` INT NOT NULL DEFAULT '0',
+  `linktype` INT NOT NULL DEFAULT '0',
+  `hits` INT DEFAULT '0',
+  `food` INT DEFAULT '0',
+  PRIMARY KEY (`from_node`,`to_node`,`linktype`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+show create table mail;
+Table	Create Table
+mail	CREATE TABLE `mail` (
+  `mail_id` INT NOT NULL DEFAULT '0',
+  `from_address` VARCHAR(80) COLLATE utf8_general_ci NOT NULL DEFAULT '',
+  `attachment_file` INT NOT NULL DEFAULT '0',
+  PRIMARY KEY (`mail_id`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+show create table node;
+Table	Create Table
+node	CREATE TABLE `node` (
+  `node_id` INT NOT NULL AUTO_INCREMENT,
+  `type_nodetype` INT NOT NULL DEFAULT '0',
+  `title` VARCHAR(240) COLLATE utf8_general_ci NOT NULL DEFAULT '',
+  `author_user` INT NOT NULL DEFAULT '0',
+  `createtime` DATETIME NOT NULL,
+  `modified` DATETIME NOT NULL,
+  `hits` INT DEFAULT '0',
+  `loc_location` INT DEFAULT '0',
+  `reputation` INT NOT NULL DEFAULT '0',
+  `lockedby_user` INT NOT NULL DEFAULT '0',
+  `locktime` DATETIME NOT NULL,
+  `authoraccess` VARCHAR(4) COLLATE utf8_general_ci NOT NULL DEFAULT 'iiii',
+  `groupaccess` VARCHAR(5) COLLATE utf8_general_ci NOT NULL DEFAULT 'iiiii',
+  `otheraccess` VARCHAR(5) COLLATE utf8_general_ci NOT NULL DEFAULT 'iiiii',
+  `guestaccess` VARCHAR(5) COLLATE utf8_general_ci NOT NULL DEFAULT 'iiiii',
+  `dynamicauthor_permission` INT NOT NULL DEFAULT '-1',
+  `dynamicgroup_permission` INT NOT NULL DEFAULT '-1',
+  `dynamicother_permission` INT NOT NULL DEFAULT '-1',
+  `dynamicguest_permission` INT NOT NULL DEFAULT '-1',
+  `group_usergroup` INT NOT NULL DEFAULT '-1',
+  PRIMARY KEY (`node_id`),
+  KEY `title` (`title`,`type_nodetype`),
+  KEY `author` (`author_user`),
+  KEY `type` (`type_nodetype`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci AUTO_INCREMENT=641
+show create table nodegroup;
+Table	Create Table
+nodegroup	CREATE TABLE `nodegroup` (
+  `nodegroup_id` INT NOT NULL AUTO_INCREMENT,
+  `rank` INT NOT NULL DEFAULT '0',
+  `node_id` INT NOT NULL DEFAULT '0',
+  `orderby` INT DEFAULT NULL,
+  PRIMARY KEY (`nodegroup_id`,`rank`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci AUTO_INCREMENT=624
+show create table nodelet;
+Table	Create Table
+nodelet	CREATE TABLE `nodelet` (
+  `nodelet_id` INT NOT NULL AUTO_INCREMENT,
+  `nltext` TEXT COLLATE utf8_general_ci,
+  `nlcode` TEXT COLLATE utf8_general_ci,
+  `nlgoto` INT DEFAULT NULL,
+  `parent_container` INT DEFAULT NULL,
+  `lastupdate` INT NOT NULL DEFAULT '0',
+  `updateinterval` INT NOT NULL DEFAULT '0',
+  `mini_nodelet` INT NOT NULL DEFAULT '0',
+  PRIMARY KEY (`nodelet_id`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci AUTO_INCREMENT=495
+show create table nodemethod;
+Table	Create Table
+nodemethod	CREATE TABLE `nodemethod` (
+  `nodemethod_id` INT NOT NULL DEFAULT '0',
+  `supports_nodetype` INT NOT NULL DEFAULT '0',
+  `code` TEXT COLLATE utf8_general_ci NOT NULL,
+  PRIMARY KEY (`nodemethod_id`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+show create table nodetype;
+Table	Create Table
+nodetype	CREATE TABLE `nodetype` (
+  `nodetype_id` INT NOT NULL AUTO_INCREMENT,
+  `restrict_nodetype` INT DEFAULT '0',
+  `extends_nodetype` INT DEFAULT '0',
+  `restrictdupes` INT DEFAULT '0',
+  `sqltable` VARCHAR(255) COLLATE utf8_general_ci DEFAULT NULL,
+  `grouptable` VARCHAR(40) COLLATE utf8_general_ci DEFAULT '',
+  `defaultauthoraccess` VARCHAR(4) COLLATE utf8_general_ci NOT NULL DEFAULT 'iiii',
+  `defaultgroupaccess` VARCHAR(5) COLLATE utf8_general_ci NOT NULL DEFAULT 'iiiii',
+  `defaultotheraccess` VARCHAR(5) COLLATE utf8_general_ci NOT NULL DEFAULT 'iiiii',
+  `defaultguestaccess` VARCHAR(5) COLLATE utf8_general_ci NOT NULL DEFAULT 'iiiii',
+  `defaultgroup_usergroup` INT NOT NULL DEFAULT '-1',
+  `defaultauthor_permission` INT NOT NULL DEFAULT '-1',
+  `defaultgroup_permission` INT NOT NULL DEFAULT '-1',
+  `defaultother_permission` INT NOT NULL DEFAULT '-1',
+  `defaultguest_permission` INT NOT NULL DEFAULT '-1',
+  `maxrevisions` INT NOT NULL DEFAULT '-1',
+  `canworkspace` INT NOT NULL DEFAULT '-1',
+  PRIMARY KEY (`nodetype_id`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci AUTO_INCREMENT=561
+show create table project;
+Table	Create Table
+project	CREATE TABLE `project` (
+  `project_id` INT NOT NULL DEFAULT '0',
+  `description` TEXT COLLATE utf8_general_ci NOT NULL,
+  `last_update` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `short_description` VARCHAR(250) COLLATE utf8_general_ci NOT NULL DEFAULT '',
+  `url_cvs` VARCHAR(250) COLLATE utf8_general_ci NOT NULL DEFAULT '',
+  `url_faq` VARCHAR(250) COLLATE utf8_general_ci NOT NULL DEFAULT '',
+  `long_description` TEXT COLLATE utf8_general_ci NOT NULL,
+  PRIMARY KEY (`project_id`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+show create table project_document;
+Table	Create Table
+project_document	CREATE TABLE `project_document` (
+  `project_document_id` INT NOT NULL DEFAULT '0',
+  `project_id` INT NOT NULL DEFAULT '0',
+  PRIMARY KEY (`project_document_id`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+show create table question;
+Table	Create Table
+question	CREATE TABLE `question` (
+  `question_id` INT NOT NULL DEFAULT '0',
+  `faq_id` INT NOT NULL DEFAULT '0',
+  `project_id` INT NOT NULL DEFAULT '0',
+  `rank` INT NOT NULL DEFAULT '0',
+  `orderby` INT NOT NULL DEFAULT '0',
+  `description` TEXT COLLATE utf8_general_ci NOT NULL,
+  PRIMARY KEY (`question_id`,`rank`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+show create table redirects;
+Table	Create Table
+redirects	CREATE TABLE `redirects` (
+  `redirects_id` INT NOT NULL DEFAULT '0',
+  `url` TEXT COLLATE utf8_general_ci NOT NULL,
+  PRIMARY KEY (`redirects_id`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+show create table releases;
+Table	Create Table
+releases	CREATE TABLE `releases` (
+  `releases_id` INT NOT NULL DEFAULT '0',
+  `branch_id` INT NOT NULL DEFAULT '0',
+  `description` TEXT COLLATE utf8_general_ci,
+  `url_targz` VARCHAR(250) COLLATE utf8_general_ci NOT NULL DEFAULT '',
+  `url_osx` VARCHAR(250) COLLATE utf8_general_ci NOT NULL DEFAULT '',
+  `url_rpm` VARCHAR(250) COLLATE utf8_general_ci NOT NULL DEFAULT '',
+  `project_id` INT NOT NULL DEFAULT '0',
+  `version` VARCHAR(30) COLLATE utf8_general_ci NOT NULL DEFAULT 'latest',
+  `created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `url_source_rpm` VARCHAR(250) COLLATE utf8_general_ci NOT NULL,
+  PRIMARY KEY (`releases_id`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+show create table revision;
+Table	Create Table
+revision	CREATE TABLE `revision` (
+  `node_id` INT NOT NULL DEFAULT '0',
+  `inside_workspace` INT NOT NULL DEFAULT '0',
+  `revision_id` INT NOT NULL DEFAULT '0',
+  `xml` TEXT COLLATE utf8_general_ci NOT NULL,
+  `tstamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`node_id`,`inside_workspace`,`revision_id`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+show create table setting;
+Table	Create Table
+setting	CREATE TABLE `setting` (
+  `setting_id` INT NOT NULL AUTO_INCREMENT,
+  `vars` TEXT COLLATE utf8_general_ci NOT NULL,
+  PRIMARY KEY (`setting_id`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci AUTO_INCREMENT=623
+show create table symlink;
+Table	Create Table
+symlink	CREATE TABLE `symlink` (
+  `symlink_id` INT NOT NULL DEFAULT '0',
+  `symlink_node` INT NOT NULL DEFAULT '0',
+  PRIMARY KEY (`symlink_id`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+show create table themesetting;
+Table	Create Table
+themesetting	CREATE TABLE `themesetting` (
+  `themesetting_id` INT NOT NULL DEFAULT '0',
+  `parent_theme` INT NOT NULL DEFAULT '0',
+  PRIMARY KEY (`themesetting_id`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+show create table typeversion;
+Table	Create Table
+typeversion	CREATE TABLE `typeversion` (
+  `typeversion_id` INT NOT NULL DEFAULT '0',
+  `version` INT NOT NULL DEFAULT '0',
+  PRIMARY KEY (`typeversion_id`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+show create table user;
+Table	Create Table
+user	CREATE TABLE `user` (
+  `user_id` INT NOT NULL AUTO_INCREMENT,
+  `nick` VARCHAR(20) COLLATE utf8_general_ci DEFAULT NULL,
+  `passwd` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `realname` VARCHAR(40) COLLATE utf8_general_ci DEFAULT NULL,
+  `email` VARCHAR(40) COLLATE utf8_general_ci DEFAULT NULL,
+  `lasttime` DATETIME DEFAULT NULL,
+  `karma` INT DEFAULT '0',
+  `inside_workspace` INT NOT NULL DEFAULT '0',
+  PRIMARY KEY (`user_id`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci AUTO_INCREMENT=623
+show create table version;
+Table	Create Table
+version	CREATE TABLE `version` (
+  `version_id` INT NOT NULL DEFAULT '0',
+  `version` INT NOT NULL DEFAULT '1',
+  PRIMARY KEY (`version_id`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+show create table weblog;
+Table	Create Table
+weblog	CREATE TABLE `weblog` (
+  `tstamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `linkedby_user` INT NOT NULL DEFAULT '0',
+  `removedby_user` INT NOT NULL DEFAULT '0',
+  `linkedtime` DATETIME NOT NULL,
+  `weblog_id` INT NOT NULL DEFAULT '0',
+  `to_node` INT NOT NULL DEFAULT '0',
+  `entry_id` INT NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`entry_id`),
+  KEY `tstamp` (`tstamp`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+show create table workspace;
+Table	Create Table
+workspace	CREATE TABLE `workspace` (
+  `workspace_id` INT NOT NULL DEFAULT '0',
+  PRIMARY KEY (`workspace_id`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+show columns from branch;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+branch_id	INTEGER	NO	0	NO	
+project_id	INTEGER	NO	0	NO	
+show columns from container;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+container_id	INTEGER	NO		NO	
+context	TEXT	YES		YES	
+parent_container	INTEGER	YES		YES	
+show columns from document;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+document_id	INTEGER	NO		NO	
+doctext	TEXT	YES		YES	
+show columns from genstats_attributes;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+genstats_attributes_id	INTEGER	NO	0	NO	
+predicates	TEXT	NO		NO	
+attributes	TEXT	NO		NO	
+show columns from htmlcode;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+htmlcode_id	INTEGER	NO		NO	
+code	TEXT	YES		YES	
+show columns from htmlpage;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+htmlpage_id	INTEGER	NO		NO	
+pagetype_nodetype	INTEGER	YES		YES	
+displaytype	VARCHAR	YES		YES	
+page	TEXT	YES		YES	
+parent_container	INTEGER	YES		YES	
+ownedby_theme	INTEGER	NO	0	NO	
+permissionneeded	VARCHAR	NO	r	NO	
+MIMEtype	VARCHAR	NO	text/html	NO	
+show columns from image;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+image_id	INTEGER	NO		NO	
+src	VARCHAR	YES		YES	
+alt	VARCHAR	YES		YES	
+thumbsrc	VARCHAR	YES		YES	
+description	TEXT	YES		YES	
+show columns from javascript;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+javascript_id	INTEGER	NO	0	NO	
+code	TEXT	NO		NO	
+comment	TEXT	NO		NO	
+dynamic	INTEGER	NO	0	NO	
+show columns from knowledge_item;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+knowledge_item_id	INTEGER	NO	0	NO	
+item	TEXT	NO		NO	
+question	INTEGER	NO	0	NO	
+show columns from links;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+from_node	INTEGER	NO	0	NO	
+to_node	INTEGER	NO	0	NO	
+linktype	INTEGER	NO	0	NO	
+hits	INTEGER	YES	0	NO	
+food	INTEGER	YES	0	NO	
+show columns from mail;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+mail_id	INTEGER	NO	0	NO	
+from_address	VARCHAR	NO		NO	
+attachment_file	INTEGER	NO	0	NO	
+show columns from node;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+node_id	INTEGER	NO		NO	
+type_nodetype	INTEGER	NO	0	NO	
+title	VARCHAR	NO		NO	
+author_user	INTEGER	NO	0	NO	
+createtime	DATETIME	NO		NO	
+modified	DATETIME	NO		NO	
+hits	INTEGER	YES	0	NO	
+loc_location	INTEGER	YES	0	NO	
+reputation	INTEGER	NO	0	NO	
+lockedby_user	INTEGER	NO	0	NO	
+locktime	DATETIME	NO		NO	
+authoraccess	VARCHAR	NO	iiii	NO	
+groupaccess	VARCHAR	NO	iiiii	NO	
+otheraccess	VARCHAR	NO	iiiii	NO	
+guestaccess	VARCHAR	NO	iiiii	NO	
+dynamicauthor_permission	INTEGER	NO	-1	NO	
+dynamicgroup_permission	INTEGER	NO	-1	NO	
+dynamicother_permission	INTEGER	NO	-1	NO	
+dynamicguest_permission	INTEGER	NO	-1	NO	
+group_usergroup	INTEGER	NO	-1	NO	
+show columns from nodegroup;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+nodegroup_id	INTEGER	NO		NO	
+rank	INTEGER	NO	0	NO	
+node_id	INTEGER	NO	0	NO	
+orderby	INTEGER	YES		YES	
+show columns from nodelet;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+nodelet_id	INTEGER	NO		NO	
+nltext	TEXT	YES		YES	
+nlcode	TEXT	YES		YES	
+nlgoto	INTEGER	YES		YES	
+parent_container	INTEGER	YES		YES	
+lastupdate	INTEGER	NO	0	NO	
+updateinterval	INTEGER	NO	0	NO	
+mini_nodelet	INTEGER	NO	0	NO	
+show columns from nodemethod;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+nodemethod_id	INTEGER	NO	0	NO	
+supports_nodetype	INTEGER	NO	0	NO	
+code	TEXT	NO		NO	
+show columns from nodetype;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+nodetype_id	INTEGER	NO		NO	
+restrict_nodetype	INTEGER	YES	0	NO	
+extends_nodetype	INTEGER	YES	0	NO	
+restrictdupes	INTEGER	YES	0	NO	
+sqltable	VARCHAR	YES		YES	
+grouptable	VARCHAR	YES		NO	
+defaultauthoraccess	VARCHAR	NO	iiii	NO	
+defaultgroupaccess	VARCHAR	NO	iiiii	NO	
+defaultotheraccess	VARCHAR	NO	iiiii	NO	
+defaultguestaccess	VARCHAR	NO	iiiii	NO	
+defaultgroup_usergroup	INTEGER	NO	-1	NO	
+defaultauthor_permission	INTEGER	NO	-1	NO	
+defaultgroup_permission	INTEGER	NO	-1	NO	
+defaultother_permission	INTEGER	NO	-1	NO	
+defaultguest_permission	INTEGER	NO	-1	NO	
+maxrevisions	INTEGER	NO	-1	NO	
+canworkspace	INTEGER	NO	-1	NO	
+show columns from project;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+project_id	INTEGER	NO	0	NO	
+description	TEXT	NO		NO	
+last_update	TIMESTAMP	NO	CURRENT_TIMESTAMP	NO	CURRENT_TIMESTAMP
+short_description	VARCHAR	NO		NO	
+url_cvs	VARCHAR	NO		NO	
+url_faq	VARCHAR	NO		NO	
+long_description	TEXT	NO		NO	
+show columns from project_document;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+project_document_id	INTEGER	NO	0	NO	
+project_id	INTEGER	NO	0	NO	
+show columns from question;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+question_id	INTEGER	NO	0	NO	
+faq_id	INTEGER	NO	0	NO	
+project_id	INTEGER	NO	0	NO	
+rank	INTEGER	NO	0	NO	
+orderby	INTEGER	NO	0	NO	
+description	TEXT	NO		NO	
+show columns from redirects;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+redirects_id	INTEGER	NO	0	NO	
+url	TEXT	NO		NO	
+show columns from releases;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+releases_id	INTEGER	NO	0	NO	
+branch_id	INTEGER	NO	0	NO	
+description	TEXT	YES		YES	
+url_targz	VARCHAR	NO		NO	
+url_osx	VARCHAR	NO		NO	
+url_rpm	VARCHAR	NO		NO	
+project_id	INTEGER	NO	0	NO	
+version	VARCHAR	NO	latest	NO	
+created	TIMESTAMP	NO	CURRENT_TIMESTAMP	NO	CURRENT_TIMESTAMP
+url_source_rpm	VARCHAR	NO		NO	
+show columns from revision;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+node_id	INTEGER	NO	0	NO	
+inside_workspace	INTEGER	NO	0	NO	
+revision_id	INTEGER	NO	0	NO	
+xml	TEXT	NO		NO	
+tstamp	TIMESTAMP	NO	CURRENT_TIMESTAMP	NO	CURRENT_TIMESTAMP
+show columns from setting;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+setting_id	INTEGER	NO		NO	
+vars	TEXT	NO		NO	
+show columns from symlink;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+symlink_id	INTEGER	NO	0	NO	
+symlink_node	INTEGER	NO	0	NO	
+show columns from themesetting;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+themesetting_id	INTEGER	NO	0	NO	
+parent_theme	INTEGER	NO	0	NO	
+show columns from typeversion;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+typeversion_id	INTEGER	NO	0	NO	
+version	INTEGER	NO	0	NO	
+show columns from user;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+user_id	INTEGER	NO		NO	
+nick	VARCHAR	YES		YES	
+passwd	VARCHAR	YES		YES	
+realname	VARCHAR	YES		YES	
+email	VARCHAR	YES		YES	
+lasttime	DATETIME	YES		YES	
+karma	INTEGER	YES	0	NO	
+inside_workspace	INTEGER	NO	0	NO	
+show columns from version;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+version_id	INTEGER	NO	0	NO	
+version	INTEGER	NO	1	NO	
+show columns from weblog;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+tstamp	TIMESTAMP	NO	CURRENT_TIMESTAMP	NO	CURRENT_TIMESTAMP
+linkedby_user	INTEGER	NO	0	NO	
+removedby_user	INTEGER	NO	0	NO	
+linkedtime	DATETIME	NO		NO	
+weblog_id	INTEGER	NO	0	NO	
+to_node	INTEGER	NO	0	NO	
+entry_id	INTEGER	NO		NO	
+show columns from workspace;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+workspace_id	INTEGER	NO	0	NO	
+show indexes from branch;
+Table	Unique	Key_name	Seq_in_index	Column_name
+branch	YES	PRIMARY	1	branch_id
+show indexes from container;
+Table	Unique	Key_name	Seq_in_index	Column_name
+container	YES	PRIMARY	1	container_id
+show indexes from document;
+Table	Unique	Key_name	Seq_in_index	Column_name
+document	YES	PRIMARY	1	document_id
+show indexes from genstats_attributes;
+Table	Unique	Key_name	Seq_in_index	Column_name
+genstats_attributes	YES	PRIMARY	1	genstats_attributes_id
+show indexes from htmlcode;
+Table	Unique	Key_name	Seq_in_index	Column_name
+htmlcode	YES	PRIMARY	1	htmlcode_id
+show indexes from htmlpage;
+Table	Unique	Key_name	Seq_in_index	Column_name
+htmlpage	YES	PRIMARY	1	htmlpage_id
+show indexes from image;
+Table	Unique	Key_name	Seq_in_index	Column_name
+image	YES	PRIMARY	1	image_id
+show indexes from javascript;
+Table	Unique	Key_name	Seq_in_index	Column_name
+javascript	YES	PRIMARY	1	javascript_id
+show indexes from knowledge_item;
+Table	Unique	Key_name	Seq_in_index	Column_name
+knowledge_item	YES	PRIMARY	1	knowledge_item_id
+show indexes from links;
+Table	Unique	Key_name	Seq_in_index	Column_name
+links	YES	PRIMARY	1	from_node
+links	YES	PRIMARY	2	to_node
+links	YES	PRIMARY	3	linktype
+show indexes from mail;
+Table	Unique	Key_name	Seq_in_index	Column_name
+mail	YES	PRIMARY	1	mail_id
+show indexes from node;
+Table	Unique	Key_name	Seq_in_index	Column_name
+node	YES	PRIMARY	1	node_id
+node	NO	title	1	title
+node	NO	title	2	type_nodetype
+node	NO	author	1	author_user
+node	NO	type	1	type_nodetype
+show indexes from nodegroup;
+Table	Unique	Key_name	Seq_in_index	Column_name
+nodegroup	YES	PRIMARY	1	nodegroup_id
+nodegroup	YES	PRIMARY	2	rank
+show indexes from nodelet;
+Table	Unique	Key_name	Seq_in_index	Column_name
+nodelet	YES	PRIMARY	1	nodelet_id
+show indexes from nodemethod;
+Table	Unique	Key_name	Seq_in_index	Column_name
+nodemethod	YES	PRIMARY	1	nodemethod_id
+show indexes from nodetype;
+Table	Unique	Key_name	Seq_in_index	Column_name
+nodetype	YES	PRIMARY	1	nodetype_id
+show indexes from project;
+Table	Unique	Key_name	Seq_in_index	Column_name
+project	YES	PRIMARY	1	project_id
+show indexes from project_document;
+Table	Unique	Key_name	Seq_in_index	Column_name
+project_document	YES	PRIMARY	1	project_document_id
+show indexes from question;
+Table	Unique	Key_name	Seq_in_index	Column_name
+question	YES	PRIMARY	1	question_id
+question	YES	PRIMARY	2	rank
+show indexes from redirects;
+Table	Unique	Key_name	Seq_in_index	Column_name
+redirects	YES	PRIMARY	1	redirects_id
+show indexes from releases;
+Table	Unique	Key_name	Seq_in_index	Column_name
+releases	YES	PRIMARY	1	releases_id
+show indexes from revision;
+Table	Unique	Key_name	Seq_in_index	Column_name
+revision	YES	PRIMARY	1	node_id
+revision	YES	PRIMARY	2	inside_workspace
+revision	YES	PRIMARY	3	revision_id
+show indexes from setting;
+Table	Unique	Key_name	Seq_in_index	Column_name
+setting	YES	PRIMARY	1	setting_id
+show indexes from symlink;
+Table	Unique	Key_name	Seq_in_index	Column_name
+symlink	YES	PRIMARY	1	symlink_id
+show indexes from themesetting;
+Table	Unique	Key_name	Seq_in_index	Column_name
+themesetting	YES	PRIMARY	1	themesetting_id
+show indexes from typeversion;
+Table	Unique	Key_name	Seq_in_index	Column_name
+typeversion	YES	PRIMARY	1	typeversion_id
+show indexes from user;
+Table	Unique	Key_name	Seq_in_index	Column_name
+user	YES	PRIMARY	1	user_id
+show indexes from version;
+Table	Unique	Key_name	Seq_in_index	Column_name
+version	YES	PRIMARY	1	version_id
+show indexes from weblog;
+Table	Unique	Key_name	Seq_in_index	Column_name
+weblog	YES	PRIMARY	1	entry_id
+weblog	NO	tstamp	1	tstamp
+show indexes from workspace;
+Table	Unique	Key_name	Seq_in_index	Column_name
+workspace	YES	PRIMARY	1	workspace_id
+drop schema everything;

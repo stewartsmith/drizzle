@@ -26,10 +26,10 @@
 
 #include <string>
 
-class Session;
-
 namespace drizzled
 {
+class Session;
+
 namespace plugin
 {
 
@@ -50,11 +50,13 @@ public:
    */
   virtual bool pre(Session *) {return false;}
   virtual bool post(Session *) {return false;}
+  virtual bool postEnd(Session*) {return false;}
 
   static bool addPlugin(Logging *handler);
   static void removePlugin(Logging *handler);
   static bool preDo(Session *session);
   static bool postDo(Session *session);
+  static bool postEndDo(Session *session);
 };
 
 } /* namespace plugin */

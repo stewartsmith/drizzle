@@ -11,16 +11,20 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /* Functions to handle typelib */
 
-#include "drizzled/internal/mysys_priv.h"
-#include "drizzled/internal/m_string.h"
-#include "drizzled/charset_info.h"
+#include "config.h"
+
 #include <stdio.h>
 
-using namespace drizzled;
+#include "drizzled/internal/m_string.h"
+#include "drizzled/charset_info.h"
+#include "drizzled/typelib.h"
+
+namespace drizzled
+{
 
 static const char field_separator=',';
 
@@ -205,17 +209,17 @@ TYPELIB *copy_typelib(memory::Root *root, TYPELIB *from)
   if (!from)
     return NULL;
 
-  if (!(to= (TYPELIB*) alloc_root(root, sizeof(TYPELIB))))
+  if (!(to= (TYPELIB*) root->alloc_root(sizeof(TYPELIB))))
     return NULL;
 
   if (!(to->type_names= (const char **)
-        alloc_root(root, (sizeof(char *) + sizeof(int)) * (from->count + 1))))
+        root->alloc_root((sizeof(char *) + sizeof(int)) * (from->count + 1))))
     return NULL;
   to->type_lengths= (unsigned int *)(to->type_names + from->count + 1);
   to->count= from->count;
   if (from->name)
   {
-    if (!(to->name= strdup_root(root, from->name)))
+    if (!(to->name= root->strdup_root(from->name)))
       return NULL;
   }
   else
@@ -223,8 +227,7 @@ TYPELIB *copy_typelib(memory::Root *root, TYPELIB *from)
 
   for (i= 0; i < from->count; i++)
   {
-    if (!(to->type_names[i]= strmake_root(root, from->type_names[i],
-                                          from->type_lengths[i])))
+    if (!(to->type_names[i]= root->strmake_root(from->type_names[i], from->type_lengths[i])))
       return NULL;
     to->type_lengths[i]= from->type_lengths[i];
   }
@@ -233,3 +236,5 @@ TYPELIB *copy_typelib(memory::Root *root, TYPELIB *from)
 
   return to;
 }
+
+} /* namespace drizzled */

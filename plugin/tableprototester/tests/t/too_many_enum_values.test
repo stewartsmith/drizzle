@@ -1,0 +1,4 @@
+SHOW CREATE TABLE too_many_enum_values;
+--error ER_CORRUPT_TABLE_DEFINITION
+SELECT * FROM too_many_enum_values;
+

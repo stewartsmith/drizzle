@@ -1,21 +1,4 @@
 DROP TABLE IF EXISTS t0,t1,t2,t3,t4,t5;
-select * from information_schema.SCHEMATA where schema_name > 'm';
-CATALOG_NAME	SCHEMA_NAME	DEFAULT_CHARACTER_SET_NAME	DEFAULT_COLLATION_NAME	SQL_PATH
-NULL	mysql	utf8	utf8_general_ci	NULL
-NULL	test	utf8	utf8_general_ci	NULL
-select schema_name from information_schema.schemata;
-schema_name
-information_schema
-mysql
-test
-show databases like 't%';
-Database (t%)
-test
-show databases;
-Database
-information_schema
-mysql
-test
 create database mysqltest;
 create table mysqltest.t1(a int, b VARCHAR(30), KEY string_data (b));
 create table test.t2(a int);
@@ -23,76 +6,60 @@ create table t3(a int, KEY a_data (a));
 create table mysqltest.t4(a int);
 create table t5 (id int auto_increment primary key);
 insert into t5 values (10);
-select table_name from information_schema.TABLES
+select table_name from data_dictionary.tables
 where table_schema = "mysqltest" and table_name like "t%";
 table_name
 t1
 t4
-select * from information_schema.STATISTICS where TABLE_SCHEMA = "mysqltest";
-TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	NON_UNIQUE	INDEX_SCHEMA	INDEX_NAME	SEQ_IN_INDEX	COLUMN_NAME	COLLATION	CARDINALITY	SUB_PART	PACKED	NULLABLE	INDEX_TYPE	COMMENT	INDEX_COMMENT
-NULL	mysqltest	t1	1	mysqltest	string_data	1	b	A	0	NULL	NULL	YES	BTREE		
+select * from data_dictionary.indexes where TABLE_SCHEMA = "mysqltest";
+TABLE_SCHEMA	TABLE_NAME	INDEX_NAME	IS_USED_IN_PRIMARY	IS_UNIQUE	IS_NULLABLE	KEY_LENGTH	INDEX_TYPE	INDEX_COMMENT
+mysqltest	t1	string_data	NO	NO	YES	120	UNKNOWN	NULL
 show tables like 't%';
 Tables_in_test (t%)
 t2
 t3
 t5
-show full columns from t3 like "a%";
-Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
-a	int	NULL	YES	MUL	NULL		#	
-select * from information_schema.COLUMNS where table_name="t1"
+show table status;
+Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
+#	test	t5	STANDARD	InnoDB	#	#	#	#	#
+show columns from t3 like "a%";
+Field	Type	Null	Default	Default_is_NULL	On_Update
+a	INTEGER	YES		YES	
+select * from data_dictionary.columns where table_name="t1"
 and column_name= "a";
-TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	ORDINAL_POSITION	COLUMN_DEFAULT	IS_NULLABLE	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	CHARACTER_SET_NAME	COLLATION_NAME	COLUMN_TYPE	COLUMN_KEY	EXTRA	PRIVILEGES	COLUMN_COMMENT	STORAGE	FORMAT
-NULL	mysqltest	t1	a	1	NULL	YES	int	NULL	NULL	10	0	NULL	NULL	int					Default	Default
-select table_name, column_name, privileges from information_schema.columns 
+TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	COLUMN_TYPE	ORDINAL_POSITION	COLUMN_DEFAULT	COLUMN_DEFAULT_IS_NULL	COLUMN_DEFAULT_UPDATE	IS_AUTO_INCREMENT	IS_NULLABLE	IS_INDEXED	IS_USED_IN_PRIMARY	IS_UNIQUE	IS_MULTI	IS_FIRST_IN_MULTI	INDEXES_FOUND_IN	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	ENUM_VALUES	COLLATION_NAME	COLUMN_COMMENT
+mysqltest	t1	a	INTEGER	0	NULL	YES		NO	YES	NO	NO	NO	NO	NO	0	INTEGER	0	0	0	0	NULL		NULL
+select table_name, column_name from data_dictionary.columns 
 where table_schema = 'mysqltest' and table_name = 't1';
-table_name	column_name	privileges
-t1	a	
-t1	b	
+table_name	column_name
+t1	a
+t1	b
 show columns from mysqltest.t1;
-Field	Type	Null	Key	Default	Extra
-a	int	YES		NULL	
-b	varchar(30)	YES	MUL	NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+a	INTEGER	YES		YES	
+b	VARCHAR	YES		YES	
 drop tables mysqltest.t4, mysqltest.t1, t2, t3, t5;
 drop database mysqltest;
-select * from information_schema.CHARACTER_SETS
-where CHARACTER_SET_NAME like 'latin1%';
-CHARACTER_SET_NAME	DEFAULT_COLLATE_NAME	DESCRIPTION	MAXLEN
-select * from information_schema.COLLATIONS
-where COLLATION_NAME like 'latin1%';
-COLLATION_NAME	CHARACTER_SET_NAME	DESCRIPTION	ID	IS_DEFAULT	IS_COMPILED	SORTLEN
-select * from information_schema.COLLATION_CHARACTER_SET_APPLICABILITY
-where COLLATION_NAME like 'latin1%';
-COLLATION_NAME	CHARACTER_SET_NAME
-select * from information_schema.table_names;
-ERROR 42S02: Unknown table 'table_names' in information_schema
-select column_type from information_schema.columns
-where table_schema="information_schema" and table_name="COLUMNS" and
+select column_type from data_dictionary.columns
+where table_schema="data_dictionary" and table_name="COLUMNS" and
 (column_name="character_set_name" or column_name="collation_name");
 column_type
-varchar(64)
-varchar(64)
-select TABLE_ROWS from information_schema.tables where 
-table_schema="information_schema" and table_name="COLUMNS";
-TABLE_ROWS
-0
-select table_type from information_schema.tables
+VARCHAR
+select count(*) from data_dictionary.tables where 
+table_schema="data_dictionary" and table_name="COLUMNS";
+count(*)
+#
+select count(*) from data_dictionary.tables
 where table_schema="mysql" and table_name="user";
-table_type
-select table_schema,table_name, column_name from
-information_schema.columns 
-where data_type = 'longtext';
+count(*)
+#
+select table_schema, table_name, column_name from data_dictionary.columns where data_type = 'longtext';
 table_schema	table_name	column_name
-select table_name, column_name, data_type from information_schema.columns
-where data_type = 'datetime';
+select table_name, column_name, data_type from data_dictionary.columns where data_type = 'datetime';
 table_name	column_name	data_type
-INNODB_TRX	trx_started	datetime
-INNODB_TRX	trx_wait_started	datetime
-TABLES	CREATE_TIME	datetime
-TABLES	UPDATE_TIME	datetime
-TABLES	CHECK_TIME	datetime
-SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES A
+SELECT COUNT(*) FROM data_dictionary.tables A
 WHERE NOT EXISTS 
-(SELECT * FROM INFORMATION_SCHEMA.COLUMNS B
+(SELECT * FROM data_dictionary.columns B
 WHERE A.TABLE_SCHEMA = B.TABLE_SCHEMA
 AND A.TABLE_NAME = B.TABLE_NAME);
 COUNT(*)
@@ -107,118 +74,89 @@ x_real REAL,
 x_float FLOAT,
 x_double_precision DOUBLE PRECISION );
 SELECT COLUMN_NAME, CHARACTER_MAXIMUM_LENGTH, CHARACTER_OCTET_LENGTH
-FROM INFORMATION_SCHEMA.COLUMNS
+FROM data_dictionary.columns
 WHERE TABLE_NAME= 't1';
 COLUMN_NAME	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH
-x_bigint	NULL	NULL
-x_integer	NULL	NULL
-x_int	NULL	NULL
-x_decimal	NULL	NULL
-x_numeric	NULL	NULL
-x_real	NULL	NULL
-x_float	NULL	NULL
-x_double_precision	NULL	NULL
+x_bigint	0	0
+x_decimal	0	0
+x_double_precision	0	0
+x_float	0	0
+x_int	0	0
+x_integer	0	0
+x_numeric	0	0
+x_real	0	0
 drop table t1;
-SELECT table_schema, count(*) FROM information_schema.TABLES
+SELECT table_schema, count(*) FROM data_dictionary.tables
 WHERE table_name NOT LIKE 'ndb_%' AND 
-table_name NOT LIKE 'falcon%' AND
-table_name NOT LIKE 'MEMCACHED%'
-GROUP BY TABLE_SCHEMA;
+table_name NOT LIKE 'falcon%'
+GROUP BY TABLE_SCHEMA ORDER BY table_schema;
 table_schema	count(*)
-information_schema	24
-show create database information_schema;
-Database	Create Database
-information_schema	CREATE DATABASE `information_schema`
+DATA_DICTIONARY	#
+INFORMATION_SCHEMA	#
 create table t1(f1 LONGBLOB, f2 LONGTEXT);
 select column_name,data_type,CHARACTER_OCTET_LENGTH,
 CHARACTER_MAXIMUM_LENGTH
-from information_schema.columns
+from data_dictionary.columns
 where table_name='t1';
 column_name	data_type	CHARACTER_OCTET_LENGTH	CHARACTER_MAXIMUM_LENGTH
-f1	blob	4294967295	4294967295
-f2	text	4294967295	4294967295
+f1	BLOB	0	0
+f2	BLOB	0	0
 drop table t1;
 create table t1(f1 int, f2 int, f3 BIGINT, f4 int,
 f5 BIGINT, f6 int, f7 int);
 select column_name, NUMERIC_PRECISION, NUMERIC_SCALE
-from information_schema.columns
+from data_dictionary.columns
 where table_name='t1';
 column_name	NUMERIC_PRECISION	NUMERIC_SCALE
-f1	10	0
-f2	10	0
-f3	19	0
-f4	10	0
-f5	19	0
-f6	10	0
-f7	10	0
+f1	0	0
+f2	0	0
+f3	0	0
+f4	0	0
+f5	0	0
+f6	0	0
+f7	0	0
 drop table t1;
 create table t1 (a int not null, b int);
-use information_schema;
-select column_name, column_default from columns
+select column_name, column_default from data_dictionary.columns
 where table_schema='test' and table_name='t1';
 column_name	column_default
 a	NULL
 b	NULL
 use test;
 show columns from t1;
-Field	Type	Null	Key	Default	Extra
-a	int	NO		NULL	
-b	int	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+a	INTEGER	NO		NO	
+b	INTEGER	YES		YES	
 drop table t1;
-alter database information_schema;
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '' at line 1
-drop database information_schema;
-ERROR 42000: Access denied for user ''@'' to database 'information_schema'
-use information_schema;
-drop table tables;
-ERROR 42000: Access denied for user ''@'' to database 'information_schema'
-alter table tables;
-ERROR 42000: Access denied for user ''@'' to database 'information_schema'
-use information_schema;
-create temporary table schemata(f1 char(10));
-ERROR 42000: Access denied for user ''@'' to database 'information_schema'
 use test;
 create table t1(id int);
 insert into t1(id) values (1);
 select 1 from (select 1 from test.t1) a;
 1
 1
-use information_schema;
+use data_dictionary;
 select 1 from (select 1 from test.t1) a;
 1
 1
 use test;
 drop table t1;
-create temporary table t1(f1 int, index(f1));
-show columns from t1;
-Field	Type	Null	Key	Default	Extra
-f1	int	YES	MUL	NULL	
-describe t1;
-Field	Type	Null	Key	Default	Extra
-f1	int	YES	MUL	NULL	
-show indexes from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	1	f1	1	f1	A	0	NULL	NULL	YES	BTREE		
-drop table t1;
 create table t1(f1 varbinary(32), f2 varbinary(64));
 select character_maximum_length, character_octet_length
-from information_schema.columns where table_name='t1';
+from data_dictionary.columns where table_name='t1';
 character_maximum_length	character_octet_length
-32	32
-64	64
+32	128
+64	256
 drop table t1;
 select column_type, group_concat(table_schema, '.', table_name), count(*) as num
-from information_schema.columns where
-table_schema='information_schema' and
+from data_dictionary.columns where
+table_schema='data_dictionary' and
 (column_type = 'varchar(7)' or column_type = 'varchar(20)'
  or column_type = 'varchar(27)')
 group by column_type order by column_type, num;
 column_type	group_concat(table_schema, '.', table_name)	num
-varchar(20)	information_schema.MODULES	1
-varchar(27)	information_schema.COLUMNS	1
 create table t1(f1 char(1) not null, f2 char(9) not null);
 select CHARACTER_MAXIMUM_LENGTH, CHARACTER_OCTET_LENGTH from
-information_schema.columns where table_schema='test' and table_name = 't1';
+data_dictionary.columns where table_schema='test' and table_name = 't1';
 CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH
 1	4
 9	36
@@ -227,158 +165,151 @@ set @a:= '.';
 create table t1(f1 char(5));
 create table t2(f1 char(5));
 select concat(@a, table_name), @a, table_name
-from information_schema.tables where table_schema = 'test';
+from data_dictionary.tables where table_schema = 'test';
 concat(@a, table_name)	@a	table_name
 .t1	.	t1
 .t2	.	t2
 drop table t1,t2;
 SELECT t.table_name, c1.column_name
-FROM information_schema.tables t
+FROM data_dictionary.tables t
 INNER JOIN
-information_schema.columns c1
+data_dictionary.columns c1
 ON t.table_schema = c1.table_schema AND
 t.table_name = c1.table_name
-WHERE t.table_schema = 'information_schema' AND
+WHERE t.table_schema = 'data_dictionary' AND
 c1.ordinal_position =
 ( SELECT COALESCE(MIN(c2.ordinal_position),1)
-FROM information_schema.columns c2
+FROM data_dictionary.columns c2
 WHERE c2.table_schema = t.table_schema AND
 c2.table_name = t.table_name AND
 c2.column_name LIKE '%SCHEMA%'
         )
 AND t.table_name NOT LIKE 'falcon%'
-  AND t.table_name NOT LIKE 'MEMCACHED%';
+  ORDER BY t.table_name, c1.column_name;
 table_name	column_name
-CHARACTER_SETS	CHARACTER_SET_NAME
+CHARACTER_SETS	DEFAULT_COLLATE_NAME
 COLLATIONS	COLLATION_NAME
-COLLATION_CHARACTER_SET_APPLICABILITY	COLLATION_NAME
 COLUMNS	TABLE_SCHEMA
-GLOBAL_STATUS	VARIABLE_NAME
-GLOBAL_VARIABLES	VARIABLE_NAME
-INNODB_CMP	page_size
-INNODB_CMPMEM	page_size
-INNODB_CMPMEM_RESET	page_size
-INNODB_CMP_RESET	page_size
-INNODB_LOCKS	lock_id
-INNODB_LOCK_WAITS	requesting_trx_id
-INNODB_TRX	trx_id
-KEY_COLUMN_USAGE	CONSTRAINT_SCHEMA
-MODULES	MODULE_NAME
-PLUGINS	PLUGIN_NAME
-PROCESSLIST	ID
-REFERENTIAL_CONSTRAINTS	CONSTRAINT_SCHEMA
-SCHEMATA	SCHEMA_NAME
-SESSION_STATUS	VARIABLE_NAME
-SESSION_VARIABLES	VARIABLE_NAME
-STATISTICS	TABLE_SCHEMA
+CUMULATIVE_SQL_COMMANDS	COUNT_SELECT
+CUMULATIVE_USER_STATS	BYTES_RECEIVED
+CURRENT_SQL_COMMANDS	IP
+DRIZZLE_PROTOCOL_STATUS	VARIABLE_VALUE
+FOREIGN_KEYS	CONSTRAINT_SCHEMA
+GLOBAL_STATEMENTS	VARIABLE_VALUE
+GLOBAL_STATUS	VARIABLE_VALUE
+GLOBAL_VARIABLES	VARIABLE_VALUE
+INDEXES	TABLE_SCHEMA
+INDEX_PARTS	TABLE_SCHEMA
+INNODB_CMP	COMPRESS_OPS
+INNODB_CMPMEM	PAGES_USED
+INNODB_CMPMEM_RESET	PAGES_USED
+INNODB_CMP_RESET	COMPRESS_OPS
+INNODB_LOCKS	LOCK_TRX_ID
+INNODB_LOCK_WAITS	REQUESTED_LOCK_ID
+INNODB_STATUS	VARIABLE_VALUE
+INNODB_TRX	TRX_STATE
+MODULES	MODULE_VERSION
+MYSQL_PROTOCOL_STATUS	VARIABLE_VALUE
+PLUGINS	PLUGIN_TYPE
+PROCESSLIST	USER
+REPLICATION_STREAMS	APPLIER
+SCHEMAS	SCHEMA_NAME
+SCOREBOARD_STATISTICS	NUMBER_OF_RANGE_LOCKS
+SESSION_STATEMENTS	VARIABLE_VALUE
+SESSION_STATUS	VARIABLE_VALUE
+SESSION_VARIABLES	VARIABLE_VALUE
 TABLES	TABLE_SCHEMA
+TABLE_CACHE	TABLE_SCHEMA
 TABLE_CONSTRAINTS	CONSTRAINT_SCHEMA
+TABLE_DEFINITION_CACHE	TABLE_SCHEMA
+USER_LOCKS	SESSION_ID
 SELECT t.table_name, c1.column_name
-FROM information_schema.tables t
+FROM data_dictionary.tables t
 INNER JOIN
-information_schema.columns c1
+data_dictionary.columns c1
 ON t.table_schema = c1.table_schema AND
 t.table_name = c1.table_name
-WHERE t.table_schema = 'information_schema' AND
+WHERE t.table_schema = 'data_dictionary' AND
 c1.ordinal_position =
 ( SELECT COALESCE(MIN(c2.ordinal_position),1)
-FROM information_schema.columns c2
-WHERE c2.table_schema = 'information_schema' AND
+FROM data_dictionary.columns c2
+WHERE c2.table_schema = 'data_dictionary' AND
 c2.table_name = t.table_name AND
 c2.column_name LIKE '%SCHEMA%'
         )
 AND t.table_name NOT LIKE 'falcon%'
-  AND t.table_name NOT LIKE 'MEMCACHED%';
+  ORDER BY t.table_name, c1.column_name;
 table_name	column_name
-CHARACTER_SETS	CHARACTER_SET_NAME
+CHARACTER_SETS	DEFAULT_COLLATE_NAME
 COLLATIONS	COLLATION_NAME
-COLLATION_CHARACTER_SET_APPLICABILITY	COLLATION_NAME
 COLUMNS	TABLE_SCHEMA
-GLOBAL_STATUS	VARIABLE_NAME
-GLOBAL_VARIABLES	VARIABLE_NAME
-INNODB_CMP	page_size
-INNODB_CMPMEM	page_size
-INNODB_CMPMEM_RESET	page_size
-INNODB_CMP_RESET	page_size
-INNODB_LOCKS	lock_id
-INNODB_LOCK_WAITS	requesting_trx_id
-INNODB_TRX	trx_id
-KEY_COLUMN_USAGE	CONSTRAINT_SCHEMA
-MODULES	MODULE_NAME
-PLUGINS	PLUGIN_NAME
-PROCESSLIST	ID
-REFERENTIAL_CONSTRAINTS	CONSTRAINT_SCHEMA
-SCHEMATA	SCHEMA_NAME
-SESSION_STATUS	VARIABLE_NAME
-SESSION_VARIABLES	VARIABLE_NAME
-STATISTICS	TABLE_SCHEMA
+CUMULATIVE_SQL_COMMANDS	COUNT_SELECT
+CUMULATIVE_USER_STATS	BYTES_RECEIVED
+CURRENT_SQL_COMMANDS	IP
+DRIZZLE_PROTOCOL_STATUS	VARIABLE_VALUE
+FOREIGN_KEYS	CONSTRAINT_SCHEMA
+GLOBAL_STATEMENTS	VARIABLE_VALUE
+GLOBAL_STATUS	VARIABLE_VALUE
+GLOBAL_VARIABLES	VARIABLE_VALUE
+INDEXES	TABLE_SCHEMA
+INDEX_PARTS	TABLE_SCHEMA
+INNODB_CMP	COMPRESS_OPS
+INNODB_CMPMEM	PAGES_USED
+INNODB_CMPMEM_RESET	PAGES_USED
+INNODB_CMP_RESET	COMPRESS_OPS
+INNODB_LOCKS	LOCK_TRX_ID
+INNODB_LOCK_WAITS	REQUESTED_LOCK_ID
+INNODB_STATUS	VARIABLE_VALUE
+INNODB_TRX	TRX_STATE
+MODULES	MODULE_VERSION
+MYSQL_PROTOCOL_STATUS	VARIABLE_VALUE
+PLUGINS	PLUGIN_TYPE
+PROCESSLIST	USER
+REPLICATION_STREAMS	APPLIER
+SCHEMAS	SCHEMA_NAME
+SCOREBOARD_STATISTICS	NUMBER_OF_RANGE_LOCKS
+SESSION_STATEMENTS	VARIABLE_VALUE
+SESSION_STATUS	VARIABLE_VALUE
+SESSION_VARIABLES	VARIABLE_VALUE
 TABLES	TABLE_SCHEMA
+TABLE_CACHE	TABLE_SCHEMA
 TABLE_CONSTRAINTS	CONSTRAINT_SCHEMA
-SELECT MAX(table_name) FROM information_schema.tables;
+TABLE_DEFINITION_CACHE	TABLE_SCHEMA
+USER_LOCKS	SESSION_ID
+SELECT MAX(table_name) FROM data_dictionary.tables;
 MAX(table_name)
-TABLE_CONSTRAINTS
-SELECT table_name from information_schema.tables
+VIEW_TABLE_USAGE
+SELECT table_name from data_dictionary.tables
 WHERE table_name=(SELECT MAX(table_name)
-FROM information_schema.tables);
+FROM data_dictionary.tables)
+ORDER BY table_name;
 table_name
-TABLE_CONSTRAINTS
+VIEW_TABLE_USAGE
 create table t1 (f1 int);
 create table t2 (f1 int, f2 int);
-select table_name from information_schema.tables
-where table_schema = 'test' and table_name not in
-(select table_name from information_schema.columns
-where table_schema = 'test' and column_name = 'f3');
-table_name
-t1
-t2
 drop table t1,t2;
-select 1 as f1 from information_schema.tables  where "CHARACTER_SETS"=
-(select cast(table_name as char)  from information_schema.tables
+select 1 as f1 from data_dictionary.tables  where "CHARACTER_SETS"=
+(select cast(table_name as char)  from data_dictionary.tables
 order by table_name limit 1) limit 1;
 f1
 1
 select t.table_name, group_concat(t.table_schema, '.', t.table_name),
 count(*) as num1
-from information_schema.tables t
-inner join information_schema.columns c1
+from data_dictionary.tables t
+inner join data_dictionary.columns c1
 on t.table_schema = c1.table_schema AND t.table_name = c1.table_name
-where t.table_schema = 'information_schema' AND
+where t.table_schema = 'data_dictionary' AND
 t.table_name not like 'falcon%' AND
-t.table_name not like 'MEMCACHED%' AND
 c1.ordinal_position =
 (select isnull(c2.column_type) -
 isnull(group_concat(c2.table_schema, '.', c2.table_name)) +
 count(*) as num
-from information_schema.columns c2 where
-c2.table_schema='information_schema' and
+from data_dictionary.columns c2 where
+c2.table_schema='data_dictionary' and
 (c2.column_type = 'varchar(7)' or c2.column_type = 'varchar(20)')
 group by c2.column_type order by num limit 1)
 group by t.table_name order by num1, t.table_name;
 table_name	group_concat(t.table_schema, '.', t.table_name)	num1
-CHARACTER_SETS	information_schema.CHARACTER_SETS	1
-COLLATIONS	information_schema.COLLATIONS	1
-COLLATION_CHARACTER_SET_APPLICABILITY	information_schema.COLLATION_CHARACTER_SET_APPLICABILITY	1
-COLUMNS	information_schema.COLUMNS	1
-GLOBAL_STATUS	information_schema.GLOBAL_STATUS	1
-GLOBAL_VARIABLES	information_schema.GLOBAL_VARIABLES	1
-INNODB_CMP	information_schema.INNODB_CMP	1
-INNODB_CMPMEM	information_schema.INNODB_CMPMEM	1
-INNODB_CMPMEM_RESET	information_schema.INNODB_CMPMEM_RESET	1
-INNODB_CMP_RESET	information_schema.INNODB_CMP_RESET	1
-INNODB_LOCKS	information_schema.INNODB_LOCKS	1
-INNODB_LOCK_WAITS	information_schema.INNODB_LOCK_WAITS	1
-INNODB_TRX	information_schema.INNODB_TRX	1
-KEY_COLUMN_USAGE	information_schema.KEY_COLUMN_USAGE	1
-MODULES	information_schema.MODULES	1
-PLUGINS	information_schema.PLUGINS	1
-PROCESSLIST	information_schema.PROCESSLIST	1
-REFERENTIAL_CONSTRAINTS	information_schema.REFERENTIAL_CONSTRAINTS	1
-SCHEMATA	information_schema.SCHEMATA	1
-SESSION_STATUS	information_schema.SESSION_STATUS	1
-SESSION_VARIABLES	information_schema.SESSION_VARIABLES	1
-STATISTICS	information_schema.STATISTICS	1
-TABLES	information_schema.TABLES	1
-TABLE_CONSTRAINTS	information_schema.TABLE_CONSTRAINTS	1
 alter database;
 ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '' at line 1
 alter database test;
@@ -393,689 +324,37 @@ f6 bigint not null default 10,
 f7 datetime not null,
 f8 datetime default '2006-01-01'
 );
-select column_default from information_schema.columns where table_name= 't1';
-column_default
-NULL
-NULL
-
-NULL
-NULL
-10
-NULL
-2006-01-01 00:00:00
 show columns from t1;
-Field	Type	Null	Key	Default	Extra
-f1	varchar(50)	YES		NULL	
-f2	varchar(50)	NO		NULL	
-f3	varchar(50)	YES			
-f4	varchar(50)	YES		NULL	
-f5	bigint	NO		NULL	
-f6	bigint	NO		10	
-f7	datetime	NO		NULL	
-f8	datetime	YES		2006-01-01 00:00:00	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+f1	VARCHAR	YES		YES	
+f2	VARCHAR	NO		NO	
+f3	VARCHAR	YES		NO	
+f4	VARCHAR	YES		YES	
+f5	BIGINT	NO		NO	
+f6	BIGINT	NO	10	NO	
+f7	DATETIME	NO		NO	
+f8	DATETIME	YES	2006-01-01 00:00:00	NO	
 drop table t1;
-show fields from information_schema.table_names;
-ERROR 42S02: Unknown table 'table_names' in information_schema
-show keys from information_schema.table_names;
-ERROR 42S02: Unknown table 'table_names' in information_schema
 SET max_heap_table_size = DEFAULT;
 USE test;
 End of 5.0 tests.
-SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA
-WHERE SCHEMA_NAME ='information_schema';
+SELECT SCHEMA_NAME FROM data_dictionary.schemas
+WHERE SCHEMA_NAME ='data_dictionary';
 SCHEMA_NAME
-information_schema
-SELECT TABLE_COLLATION FROM INFORMATION_SCHEMA.TABLES
+data_dictionary
+SELECT TABLE_COLLATION FROM data_dictionary.tables
 WHERE TABLE_SCHEMA='mysql' and TABLE_NAME= 'db';
 TABLE_COLLATION
-select * from information_schema.columns where table_schema = NULL;
-TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	ORDINAL_POSITION	COLUMN_DEFAULT	IS_NULLABLE	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	CHARACTER_SET_NAME	COLLATION_NAME	COLUMN_TYPE	COLUMN_KEY	EXTRA	PRIVILEGES	COLUMN_COMMENT	STORAGE	FORMAT
-select * from `information_schema`.`COLUMNS` where `TABLE_NAME` = NULL;
-TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	ORDINAL_POSITION	COLUMN_DEFAULT	IS_NULLABLE	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	CHARACTER_SET_NAME	COLLATION_NAME	COLUMN_TYPE	COLUMN_KEY	EXTRA	PRIVILEGES	COLUMN_COMMENT	STORAGE	FORMAT
-select * from `information_schema`.`KEY_COLUMN_USAGE` where `TABLE_SCHEMA` = NULL;
-CONSTRAINT_CATALOG	CONSTRAINT_SCHEMA	CONSTRAINT_NAME	TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	ORDINAL_POSITION	POSITION_IN_UNIQUE_CONSTRAINT	REFERENCED_TABLE_SCHEMA	REFERENCED_TABLE_NAME	REFERENCED_COLUMN_NAME
-select * from `information_schema`.`KEY_COLUMN_USAGE` where `TABLE_NAME` = NULL;
-CONSTRAINT_CATALOG	CONSTRAINT_SCHEMA	CONSTRAINT_NAME	TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	ORDINAL_POSITION	POSITION_IN_UNIQUE_CONSTRAINT	REFERENCED_TABLE_SCHEMA	REFERENCED_TABLE_NAME	REFERENCED_COLUMN_NAME
-select * from `information_schema`.`REFERENTIAL_CONSTRAINTS` where `CONSTRAINT_SCHEMA` = NULL;
-CONSTRAINT_CATALOG	CONSTRAINT_SCHEMA	CONSTRAINT_NAME	UNIQUE_CONSTRAINT_CATALOG	UNIQUE_CONSTRAINT_SCHEMA	UNIQUE_CONSTRAINT_NAME	MATCH_OPTION	UPDATE_RULE	DELETE_RULE	TABLE_NAME	REFERENCED_TABLE_NAME
-select * from `information_schema`.`REFERENTIAL_CONSTRAINTS` where `TABLE_NAME` = NULL;
-CONSTRAINT_CATALOG	CONSTRAINT_SCHEMA	CONSTRAINT_NAME	UNIQUE_CONSTRAINT_CATALOG	UNIQUE_CONSTRAINT_SCHEMA	UNIQUE_CONSTRAINT_NAME	MATCH_OPTION	UPDATE_RULE	DELETE_RULE	TABLE_NAME	REFERENCED_TABLE_NAME
-select * from information_schema.schemata where schema_name = NULL;
-CATALOG_NAME	SCHEMA_NAME	DEFAULT_CHARACTER_SET_NAME	DEFAULT_COLLATION_NAME	SQL_PATH
-select * from `information_schema`.`STATISTICS` where `TABLE_SCHEMA` = NULL;
-TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	NON_UNIQUE	INDEX_SCHEMA	INDEX_NAME	SEQ_IN_INDEX	COLUMN_NAME	COLLATION	CARDINALITY	SUB_PART	PACKED	NULLABLE	INDEX_TYPE	COMMENT	INDEX_COMMENT
-select * from `information_schema`.`STATISTICS` where `TABLE_NAME` = NULL;
-TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	NON_UNIQUE	INDEX_SCHEMA	INDEX_NAME	SEQ_IN_INDEX	COLUMN_NAME	COLLATION	CARDINALITY	SUB_PART	PACKED	NULLABLE	INDEX_TYPE	COMMENT	INDEX_COMMENT
-select * from information_schema.tables where table_schema = NULL;
-TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	TABLE_TYPE	ENGINE	VERSION	ROW_FORMAT	TABLE_ROWS	AVG_ROW_LENGTH	DATA_LENGTH	MAX_DATA_LENGTH	INDEX_LENGTH	DATA_FREE	AUTO_INCREMENT	CREATE_TIME	UPDATE_TIME	CHECK_TIME	TABLE_COLLATION	CHECKSUM	CREATE_OPTIONS	TABLE_COMMENT
-select * from information_schema.tables where table_catalog = NULL;
-TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	TABLE_TYPE	ENGINE	VERSION	ROW_FORMAT	TABLE_ROWS	AVG_ROW_LENGTH	DATA_LENGTH	MAX_DATA_LENGTH	INDEX_LENGTH	DATA_FREE	AUTO_INCREMENT	CREATE_TIME	UPDATE_TIME	CHECK_TIME	TABLE_COLLATION	CHECKSUM	CREATE_OPTIONS	TABLE_COMMENT
-select * from information_schema.tables where table_name = NULL;
-TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	TABLE_TYPE	ENGINE	VERSION	ROW_FORMAT	TABLE_ROWS	AVG_ROW_LENGTH	DATA_LENGTH	MAX_DATA_LENGTH	INDEX_LENGTH	DATA_FREE	AUTO_INCREMENT	CREATE_TIME	UPDATE_TIME	CHECK_TIME	TABLE_COLLATION	CHECKSUM	CREATE_OPTIONS	TABLE_COMMENT
-select * from `information_schema`.`TABLE_CONSTRAINTS` where `TABLE_SCHEMA` = NULL;
-CONSTRAINT_CATALOG	CONSTRAINT_SCHEMA	CONSTRAINT_NAME	TABLE_SCHEMA	TABLE_NAME	CONSTRAINT_TYPE
-select * from `information_schema`.`TABLE_CONSTRAINTS` where `TABLE_NAME` = NULL;
-CONSTRAINT_CATALOG	CONSTRAINT_SCHEMA	CONSTRAINT_NAME	TABLE_SCHEMA	TABLE_NAME	CONSTRAINT_TYPE
 #
 # Test that the query is visible to self and others.
 #
-SELECT info FROM information_schema.processlist WHERE id = CONNECTION_ID();
+SELECT info FROM data_dictionary.processlist WHERE id = CONNECTION_ID();
 info
-SELECT info FROM information_schema.processlist WHERE id = CONNECTION_ID()
-show processlist;
-Id	User	Host	db	Command	Time	State	Info
-#	#	#	test	Query	#	#	show processlist
-#	#	#	test	Sleep	#	#	
-#	#	#	mysqltest	Sleep	#	#	
+SELECT info FROM data_dictionary.processlist WHERE id = CONNECTION_ID()
 SELECT info, command, db
-FROM information_schema.processlist
+FROM data_dictionary.processlist
 WHERE id = CONNECTION_ID();
 info	command	db
+FROM data_dictionary.processlist
 SELECT info, command, db
-FROM information_schema.processlist
 WHERE id = CONNECTION_ID()	Query	test
-SELECT *
-FROM information_schema.character_sets
-ORDER BY character_set_name;
-CHARACTER_SET_NAME	DEFAULT_COLLATE_NAME	DESCRIPTION	MAXLEN
-binary	binary		1
-utf8	utf8_general_ci	UTF-8 Unicode	4
-SELECT *
-FROM information_schema.collations
-ORDER BY collation_name;
-COLLATION_NAME	CHARACTER_SET_NAME	DESCRIPTION	ID	IS_DEFAULT	IS_COMPILED	SORTLEN
-binary	binary	63	0	Yes	1	0
-utf8_bin	utf8	46	0	Yes	1	0
-utf8_czech_ci	utf8	234	0	Yes	8	0
-utf8_danish_ci	utf8	235	0	Yes	8	0
-utf8_esperanto_ci	utf8	241	0	Yes	8	0
-utf8_estonian_ci	utf8	230	0	Yes	8	0
-utf8_general_ci	utf8	45	0	Yes	1	0
-utf8_hungarian_ci	utf8	242	0	Yes	8	0
-utf8_icelandic_ci	utf8	225	0	Yes	8	0
-utf8_latvian_ci	utf8	226	0	Yes	8	0
-utf8_lithuanian_ci	utf8	236	0	Yes	8	0
-utf8_persian_ci	utf8	240	0	Yes	8	0
-utf8_polish_ci	utf8	229	0	Yes	8	0
-utf8_romanian_ci	utf8	227	0	Yes	8	0
-utf8_roman_ci	utf8	239	0	Yes	8	0
-utf8_sinhala_ci	utf8	243	0	Yes	8	0
-utf8_slovak_ci	utf8	237	0	Yes	8	0
-utf8_slovenian_ci	utf8	228	0	Yes	8	0
-utf8_spanish2_ci	utf8	238	0	Yes	8	0
-utf8_spanish_ci	utf8	231	0	Yes	8	0
-utf8_swedish_ci	utf8	232	0	Yes	8	0
-utf8_turkish_ci	utf8	233	0	Yes	8	0
-utf8_unicode_ci	utf8	224	0	Yes	8	0
-SELECT * 
-FROM information_schema.collation_character_set_applicability
-ORDER BY collation_name;
-COLLATION_NAME	CHARACTER_SET_NAME
-binary	binary
-utf8_bin	utf8
-utf8_czech_ci	utf8
-utf8_danish_ci	utf8
-utf8_esperanto_ci	utf8
-utf8_estonian_ci	utf8
-utf8_general_ci	utf8
-utf8_hungarian_ci	utf8
-utf8_icelandic_ci	utf8
-utf8_latvian_ci	utf8
-utf8_lithuanian_ci	utf8
-utf8_persian_ci	utf8
-utf8_polish_ci	utf8
-utf8_romanian_ci	utf8
-utf8_roman_ci	utf8
-utf8_sinhala_ci	utf8
-utf8_slovak_ci	utf8
-utf8_slovenian_ci	utf8
-utf8_spanish2_ci	utf8
-utf8_spanish_ci	utf8
-utf8_swedish_ci	utf8
-utf8_turkish_ci	utf8
-utf8_unicode_ci	utf8
-SELECT table_name, column_name
-FROM information_schema.columns
-WHERE table_name NOT LIKE 'MEMCACHED%'
-ORDER BY table_name;
-table_name	column_name
-CHARACTER_SETS	CHARACTER_SET_NAME
-CHARACTER_SETS	DEFAULT_COLLATE_NAME
-CHARACTER_SETS	DESCRIPTION
-CHARACTER_SETS	MAXLEN
-COLLATIONS	SORTLEN
-COLLATIONS	IS_COMPILED
-COLLATIONS	IS_DEFAULT
-COLLATIONS	ID
-COLLATIONS	DESCRIPTION
-COLLATIONS	CHARACTER_SET_NAME
-COLLATIONS	COLLATION_NAME
-COLLATION_CHARACTER_SET_APPLICABILITY	CHARACTER_SET_NAME
-COLLATION_CHARACTER_SET_APPLICABILITY	COLLATION_NAME
-COLUMNS	CHARACTER_SET_NAME
-COLUMNS	COLLATION_NAME
-COLUMNS	COLUMN_TYPE
-COLUMNS	COLUMN_KEY
-COLUMNS	EXTRA
-COLUMNS	PRIVILEGES
-COLUMNS	COLUMN_COMMENT
-COLUMNS	STORAGE
-COLUMNS	FORMAT
-COLUMNS	NUMERIC_SCALE
-COLUMNS	NUMERIC_PRECISION
-COLUMNS	CHARACTER_OCTET_LENGTH
-COLUMNS	TABLE_CATALOG
-COLUMNS	TABLE_SCHEMA
-COLUMNS	TABLE_NAME
-COLUMNS	COLUMN_NAME
-COLUMNS	ORDINAL_POSITION
-COLUMNS	COLUMN_DEFAULT
-COLUMNS	IS_NULLABLE
-COLUMNS	DATA_TYPE
-COLUMNS	CHARACTER_MAXIMUM_LENGTH
-GLOBAL_STATUS	VARIABLE_VALUE
-GLOBAL_STATUS	VARIABLE_NAME
-GLOBAL_VARIABLES	VARIABLE_NAME
-GLOBAL_VARIABLES	VARIABLE_VALUE
-INNODB_CMP	uncompress_time
-INNODB_CMP	uncompress_ops
-INNODB_CMP	compress_time
-INNODB_CMP	compress_ops_ok
-INNODB_CMP	compress_ops
-INNODB_CMP	page_size
-INNODB_CMPMEM	relocation_time
-INNODB_CMPMEM	relocation_ops
-INNODB_CMPMEM	pages_free
-INNODB_CMPMEM	pages_used
-INNODB_CMPMEM	page_size
-INNODB_CMPMEM_RESET	relocation_time
-INNODB_CMPMEM_RESET	relocation_ops
-INNODB_CMPMEM_RESET	pages_free
-INNODB_CMPMEM_RESET	pages_used
-INNODB_CMPMEM_RESET	page_size
-INNODB_CMP_RESET	uncompress_time
-INNODB_CMP_RESET	uncompress_ops
-INNODB_CMP_RESET	compress_time
-INNODB_CMP_RESET	compress_ops_ok
-INNODB_CMP_RESET	compress_ops
-INNODB_CMP_RESET	page_size
-INNODB_LOCKS	lock_data
-INNODB_LOCKS	lock_rec
-INNODB_LOCKS	lock_page
-INNODB_LOCKS	lock_space
-INNODB_LOCKS	lock_index
-INNODB_LOCKS	lock_table
-INNODB_LOCKS	lock_type
-INNODB_LOCKS	lock_mode
-INNODB_LOCKS	lock_trx_id
-INNODB_LOCKS	lock_id
-INNODB_LOCK_WAITS	blocking_lock_id
-INNODB_LOCK_WAITS	blocking_trx_id
-INNODB_LOCK_WAITS	requested_lock_id
-INNODB_LOCK_WAITS	requesting_trx_id
-INNODB_TRX	trx_query
-INNODB_TRX	trx_mysql_thread_id
-INNODB_TRX	trx_weight
-INNODB_TRX	trx_wait_started
-INNODB_TRX	trx_requested_lock_id
-INNODB_TRX	trx_started
-INNODB_TRX	trx_state
-INNODB_TRX	trx_id
-KEY_COLUMN_USAGE	ORDINAL_POSITION
-KEY_COLUMN_USAGE	POSITION_IN_UNIQUE_CONSTRAINT
-KEY_COLUMN_USAGE	REFERENCED_TABLE_SCHEMA
-KEY_COLUMN_USAGE	REFERENCED_TABLE_NAME
-KEY_COLUMN_USAGE	REFERENCED_COLUMN_NAME
-KEY_COLUMN_USAGE	COLUMN_NAME
-KEY_COLUMN_USAGE	TABLE_NAME
-KEY_COLUMN_USAGE	TABLE_SCHEMA
-KEY_COLUMN_USAGE	TABLE_CATALOG
-KEY_COLUMN_USAGE	CONSTRAINT_NAME
-KEY_COLUMN_USAGE	CONSTRAINT_SCHEMA
-KEY_COLUMN_USAGE	CONSTRAINT_CATALOG
-MODULES	MODULE_LICENSE
-MODULES	MODULE_DESCRIPTION
-MODULES	MODULE_LIBRARY
-MODULES	IS_BUILTIN
-MODULES	MODULE_AUTHOR
-MODULES	MODULE_VERSION
-MODULES	MODULE_NAME
-PLUGINS	MODULE_NAME
-PLUGINS	IS_ACTIVE
-PLUGINS	PLUGIN_TYPE
-PLUGINS	PLUGIN_NAME
-PROCESSLIST	INFO
-PROCESSLIST	STATE
-PROCESSLIST	TIME
-PROCESSLIST	COMMAND
-PROCESSLIST	DB
-PROCESSLIST	HOST
-PROCESSLIST	USER
-PROCESSLIST	ID
-REFERENTIAL_CONSTRAINTS	REFERENCED_TABLE_NAME
-REFERENTIAL_CONSTRAINTS	TABLE_NAME
-REFERENTIAL_CONSTRAINTS	DELETE_RULE
-REFERENTIAL_CONSTRAINTS	UPDATE_RULE
-REFERENTIAL_CONSTRAINTS	MATCH_OPTION
-REFERENTIAL_CONSTRAINTS	UNIQUE_CONSTRAINT_NAME
-REFERENTIAL_CONSTRAINTS	UNIQUE_CONSTRAINT_SCHEMA
-REFERENTIAL_CONSTRAINTS	UNIQUE_CONSTRAINT_CATALOG
-REFERENTIAL_CONSTRAINTS	CONSTRAINT_NAME
-REFERENTIAL_CONSTRAINTS	CONSTRAINT_SCHEMA
-REFERENTIAL_CONSTRAINTS	CONSTRAINT_CATALOG
-SCHEMATA	SQL_PATH
-SCHEMATA	DEFAULT_COLLATION_NAME
-SCHEMATA	DEFAULT_CHARACTER_SET_NAME
-SCHEMATA	SCHEMA_NAME
-SCHEMATA	CATALOG_NAME
-SESSION_STATUS	VARIABLE_NAME
-SESSION_STATUS	VARIABLE_VALUE
-SESSION_VARIABLES	VARIABLE_VALUE
-SESSION_VARIABLES	VARIABLE_NAME
-STATISTICS	INDEX_COMMENT
-STATISTICS	COMMENT
-STATISTICS	INDEX_TYPE
-STATISTICS	NULLABLE
-STATISTICS	PACKED
-STATISTICS	SUB_PART
-STATISTICS	CARDINALITY
-STATISTICS	COLLATION
-STATISTICS	COLUMN_NAME
-STATISTICS	TABLE_CATALOG
-STATISTICS	TABLE_SCHEMA
-STATISTICS	TABLE_NAME
-STATISTICS	NON_UNIQUE
-STATISTICS	INDEX_SCHEMA
-STATISTICS	INDEX_NAME
-STATISTICS	SEQ_IN_INDEX
-TABLES	DATA_FREE
-TABLES	AUTO_INCREMENT
-TABLES	CREATE_TIME
-TABLES	UPDATE_TIME
-TABLES	CHECK_TIME
-TABLES	TABLE_COLLATION
-TABLES	CHECKSUM
-TABLES	CREATE_OPTIONS
-TABLES	TABLE_COMMENT
-TABLES	INDEX_LENGTH
-TABLES	MAX_DATA_LENGTH
-TABLES	DATA_LENGTH
-TABLES	TABLE_CATALOG
-TABLES	TABLE_SCHEMA
-TABLES	TABLE_NAME
-TABLES	TABLE_TYPE
-TABLES	ENGINE
-TABLES	VERSION
-TABLES	ROW_FORMAT
-TABLES	TABLE_ROWS
-TABLES	AVG_ROW_LENGTH
-TABLE_CONSTRAINTS	TABLE_NAME
-TABLE_CONSTRAINTS	TABLE_SCHEMA
-TABLE_CONSTRAINTS	CONSTRAINT_NAME
-TABLE_CONSTRAINTS	CONSTRAINT_SCHEMA
-TABLE_CONSTRAINTS	CONSTRAINT_CATALOG
-TABLE_CONSTRAINTS	CONSTRAINT_TYPE
-SELECT *
-FROM information_schema.key_column_usage;
-CONSTRAINT_CATALOG	CONSTRAINT_SCHEMA	CONSTRAINT_NAME	TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	ORDINAL_POSITION	POSITION_IN_UNIQUE_CONSTRAINT	REFERENCED_TABLE_SCHEMA	REFERENCED_TABLE_NAME	REFERENCED_COLUMN_NAME
-SELECT * 
-FROM information_schema.referential_constraints;
-CONSTRAINT_CATALOG	CONSTRAINT_SCHEMA	CONSTRAINT_NAME	UNIQUE_CONSTRAINT_CATALOG	UNIQUE_CONSTRAINT_SCHEMA	UNIQUE_CONSTRAINT_NAME	MATCH_OPTION	UPDATE_RULE	DELETE_RULE	TABLE_NAME	REFERENCED_TABLE_NAME
-SELECT catalog_name, schema_name
-FROM information_schema.schemata
-ORDER BY schema_name;
-catalog_name	schema_name
-NULL	information_schema
-NULL	mysql
-NULL	test
-SELECT *
-FROM information_schema.session_status
-ORDER BY variable_name;
-VARIABLE_NAME	VARIABLE_VALUE
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-SHOW STATUS;
-Variable_name	Value
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-SELECT *
-FROM information_schema.global_status
-ORDER BY variable_name;
-VARIABLE_NAME	VARIABLE_VALUE
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-SELECT *
-FROM information_schema.table_constraints;
-CONSTRAINT_CATALOG	CONSTRAINT_SCHEMA	CONSTRAINT_NAME	TABLE_SCHEMA	TABLE_NAME	CONSTRAINT_TYPE
-SELECT table_schema, table_name
-FROM information_schema.tables
-WHERE table_name NOT LIKE 'MEMCACHED%'
-ORDER BY table_name;
-table_schema	table_name
-information_schema	CHARACTER_SETS
-information_schema	COLLATIONS
-information_schema	COLLATION_CHARACTER_SET_APPLICABILITY
-information_schema	COLUMNS
-information_schema	GLOBAL_STATUS
-information_schema	GLOBAL_VARIABLES
-information_schema	INNODB_CMP
-information_schema	INNODB_CMPMEM
-information_schema	INNODB_CMPMEM_RESET
-information_schema	INNODB_CMP_RESET
-information_schema	INNODB_LOCKS
-information_schema	INNODB_LOCK_WAITS
-information_schema	INNODB_TRX
-information_schema	KEY_COLUMN_USAGE
-information_schema	MODULES
-information_schema	PLUGINS
-information_schema	PROCESSLIST
-information_schema	REFERENTIAL_CONSTRAINTS
-information_schema	SCHEMATA
-information_schema	SESSION_STATUS
-information_schema	SESSION_VARIABLES
-information_schema	STATISTICS
-information_schema	TABLES
-information_schema	TABLE_CONSTRAINTS

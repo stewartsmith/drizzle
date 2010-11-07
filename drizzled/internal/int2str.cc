@@ -11,11 +11,15 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include "config.h"
 #include "drizzled/internal/m_string.h"
 
+namespace drizzled
+{
+namespace internal
+{
 
 /*
   Converts integer to its string representation in decimal notation.
@@ -67,3 +71,6 @@ char *int10_to_str(int32_t val,char *dst,int radix)
   while ((*dst++ = *p++) != 0) ;
   return dst-1;
 }
+
+} /* namespace internal */
+} /* namespace drizzled */

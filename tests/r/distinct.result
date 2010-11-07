@@ -175,7 +175,7 @@ explain SELECT distinct t3.a FROM t3,t2,t1 WHERE t3.a=t1.b AND t1.a=t2.a;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ALL	PRIMARY	NULL	NULL	NULL	4	Using temporary
 1	SIMPLE	t2	ref	a	a	4	test.t1.a	1	Using index
-1	SIMPLE	t3	ref	a	a	5	test.t1.b	1	Using index
+1	SIMPLE	t3	ref	a	a	5	test.t1.b	1	Using where; Using index
 SELECT distinct t3.a FROM t3,t2,t1 WHERE t3.a=t1.b AND t1.a=t2.a;
 a
 1
@@ -190,14 +190,47 @@ insert into t3 select * from t4;
 explain select distinct t1.a from t1,t3 where t1.a=t3.a;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	index	PRIMARY	PRIMARY	4	NULL	4	Using index; Using temporary
-1	SIMPLE	t3	ref	a	a	5	test.t1.a	1	Using index; Distinct
+1	SIMPLE	t3	ref	a	a	5	test.t1.a	1	Using where; Using index; Distinct
 select distinct t1.a from t1,t3 where t1.a=t3.a;
 a
 1
 2
+show status like 'Handler%';
+Variable_name	Value
+Handler_commit	#
+Handler_delete	#
+Handler_prepare	#
+Handler_read_first	#
+Handler_read_key	#
+Handler_read_next	#
+Handler_read_prev	#
+Handler_read_rnd	#
+Handler_read_rnd_next	#
+Handler_rollback	#
+Handler_savepoint	#
+Handler_savepoint_rollback	#
+Handler_update	#
+Handler_write	#
+flush status;
 select distinct 1 from t1,t3 where t1.a=t3.a;
 1
 1
+show status like 'Handler%';
+Variable_name	Value
+Handler_commit	#
+Handler_delete	#
+Handler_prepare	#
+Handler_read_first	#
+Handler_read_key	#
+Handler_read_next	#
+Handler_read_prev	#
+Handler_read_rnd	#
+Handler_read_rnd_next	#
+Handler_rollback	#
+Handler_savepoint	#
+Handler_savepoint_rollback	#
+Handler_update	#
+Handler_write	#
 explain SELECT distinct t1.a from t1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	index	NULL	PRIMARY	4	NULL	4	Using index
@@ -364,8 +397,8 @@ INSERT INTO t2(infoID, shipcode) VALUES
 SELECT DISTINCTROW email, shipcode FROM t1, t2 WHERE t1.infoID=t2.infoID;
 email	shipcode
 test1@testdomain.com	Z001
-test2@testdomain.com	Z001
 test2@testdomain.com	R002
+test2@testdomain.com	Z001
 test3@testdomain.com	Z001
 SELECT DISTINCTROW email FROM t1 ORDER BY dateentered DESC;
 email
@@ -496,8 +529,8 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 EXPLAIN SELECT DISTINCT t1_1.a, t1_1.b FROM t1 t1_1, t1 t1_2
 WHERE t1_1.a = t1_2.a;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1_2	index	PRIMARY	PRIMARY	4	NULL	3	Using index; Using temporary
 1	SIMPLE	t1_1	ALL	PRIMARY	NULL	NULL	NULL	3	Using where; Using join buffer
+1	SIMPLE	t1_2	index	PRIMARY	PRIMARY	4	NULL	3	Using index; Using temporary
 EXPLAIN SELECT a FROM t1 GROUP BY a;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	index	NULL	PRIMARY	4	NULL	3	Using index

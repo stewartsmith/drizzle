@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 
 /**
@@ -35,8 +35,10 @@
 #include <math.h>
 #include <algorithm>
 
-using namespace drizzled;
 using namespace std;
+
+namespace drizzled
+{
 
 extern const double log_10[309];
 
@@ -719,9 +721,11 @@ get_date_from_str(Session *session, String *str, enum enum_drizzle_timestamp_typ
   }
 
   if (error > 0)
+  {
     make_truncated_value_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                  str->ptr(), str->length(),
                                  warn_type, warn_name);
+  }
 
   return value;
 }
@@ -760,30 +764,31 @@ get_date_from_str(Session *session, String *str, enum enum_drizzle_timestamp_typ
 */
 
 enum Arg_comparator::enum_date_cmp_type
-Arg_comparator::can_compare_as_dates(Item *a, Item *b, uint64_t *const_value)
+Arg_comparator::can_compare_as_dates(Item *in_a, Item *in_b,
+                                     uint64_t *const_value)
 {
   enum enum_date_cmp_type cmp_type= CMP_DATE_DFLT;
   Item *str_arg= 0, *date_arg= 0;
 
-  if (a->type() == Item::ROW_ITEM || b->type() == Item::ROW_ITEM)
+  if (in_a->type() == Item::ROW_ITEM || in_b->type() == Item::ROW_ITEM)
     return CMP_DATE_DFLT;
 
-  if (a->is_datetime())
+  if (in_a->is_datetime())
   {
-    if (b->is_datetime())
+    if (in_b->is_datetime())
       cmp_type= CMP_DATE_WITH_DATE;
-    else if (b->result_type() == STRING_RESULT)
+    else if (in_b->result_type() == STRING_RESULT)
     {
       cmp_type= CMP_DATE_WITH_STR;
-      date_arg= a;
-      str_arg= b;
+      date_arg= in_a;
+      str_arg= in_b;
     }
   }
-  else if (b->is_datetime() && a->result_type() == STRING_RESULT)
+  else if (in_b->is_datetime() && in_a->result_type() == STRING_RESULT)
   {
     cmp_type= CMP_STR_WITH_DATE;
-    date_arg= b;
-    str_arg= a;
+    date_arg= in_b;
+    str_arg= in_a;
   }
 
   if (cmp_type != CMP_DATE_DFLT)
@@ -817,7 +822,7 @@ Arg_comparator::can_compare_as_dates(Item *a, Item *b, uint64_t *const_value)
       String *str_val;
       String tmp;
       /* DateTime used to pick up as many string conversion possibilities as possible. */
-      drizzled::DateTime temporal;
+      DateTime temporal;
 
       str_val= str_arg->val_str(&tmp);
       if (! str_val)
@@ -2030,8 +2035,7 @@ void Item_func_between::fix_length_and_dec()
     ge_cmp.set_datetime_cmp_func(args, args + 1);
     le_cmp.set_datetime_cmp_func(args, args + 2);
   }
-  else if (args[0]->real_item()->type() == FIELD_ITEM &&
-           session->lex->sql_command != SQLCOM_SHOW_CREATE)
+  else if (args[0]->real_item()->type() == FIELD_ITEM)
   {
     Item_field *field_item= (Item_field*) (args[0]->real_item());
     if (field_item->field->can_be_compared_as_int64_t())
@@ -3064,7 +3068,7 @@ static int cmp_decimal(void *, my_decimal *a, my_decimal *b)
 
 void in_vector::sort()
 {
-  my_qsort2(base,used_count,size,compare, (void *) collation);
+  internal::my_qsort2(base,used_count,size,compare, (void *) collation);
 }
 
 
@@ -3673,7 +3677,6 @@ void Item_func_in::fix_length_and_dec()
         comparison type accordingly.
       */
       if (args[0]->real_item()->type() == FIELD_ITEM &&
-          session->lex->sql_command != SQLCOM_SHOW_CREATE &&
           cmp_type != INT_RESULT)
       {
         Item_field *field_item= (Item_field*) (args[0]->real_item());
@@ -4355,7 +4358,7 @@ int64_t Item_func_like::val_int()
 	 	    res->ptr(),res->ptr()+res->length(),
 		    res2->ptr(),res2->ptr()+res2->length(),
 		    make_escape_code(cmp.cmp_collation.collation, escape),
-                    wild_one,wild_many) ? 0 : 1;
+                    internal::wild_one,internal::wild_many) ? 0 : 1;
 }
 
 
@@ -4372,9 +4375,9 @@ Item_func::optimize_type Item_func_like::select_optimize() const
     if (!res2)
       return OPTIMIZE_NONE;
 
-    if (*res2->ptr() != wild_many)
+    if (*res2->ptr() != internal::wild_many)
     {
-      if (args[0]->result_type() != STRING_RESULT || *res2->ptr() != wild_one)
+      if (args[0]->result_type() != STRING_RESULT || *res2->ptr() != internal::wild_one)
 	return OPTIMIZE_OP;
     }
   }
@@ -4430,11 +4433,11 @@ bool Item_func_like::fix_fields(Session *session, Item **ref)
       */
 
       if (len > MIN_TURBOBM_PATTERN_LEN + 2 &&
-          *first == wild_many &&
-          *last  == wild_many)
+          *first == internal::wild_many &&
+          *last  == internal::wild_many)
       {
         const char* tmp = first + 1;
-        for (; *tmp != wild_many && *tmp != wild_one; tmp++)
+        for (; *tmp != internal::wild_many && *tmp != internal::wild_one; tmp++)
         {
           if (escape == tmp)
             break;
@@ -5097,7 +5100,7 @@ int64_t Item_equal::val_int()
   while ((item_field= it++))
   {
     /* Skip fields of non-const tables. They haven't been read yet */
-    if (item_field->field->table->const_table)
+    if (item_field->field->getTable()->const_table)
     {
       if ((null_value= item_field->null_value) || eval_item->cmp(item_field))
         return 0;
@@ -5169,3 +5172,4 @@ void Item_equal::print(String *str, enum_query_type query_type)
   str->append(')');
 }
 
+} /* namespace drizzled */

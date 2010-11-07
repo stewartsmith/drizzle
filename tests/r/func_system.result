@@ -6,7 +6,7 @@ database() = "test"
 1
 select user() like "%@%";
 user() like "%@%"
-1
+#
 select version() > "2009.01.756";
 version() > "2009.01.756"
 1
@@ -14,15 +14,15 @@ explain extended select database(), user();
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No tables used
 Warnings:
-Note	1003	select database() AS `database()`,user() AS `user()`
+Note	1003	select schema() AS `database()`,user() AS `user()`
 create table t1 (version char(60)) select database(), user(), version() as 'version';
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `database()` varbinary(136) DEFAULT NULL,
-  `user()` varbinary(308) DEFAULT NULL,
-  `version` varchar(60) DEFAULT NULL
-) ENGINE=DEFAULT
+  `database()` VARBINARY(136) DEFAULT NULL,
+  `user()` VARBINARY(308) DEFAULT NULL,
+  `version` VARCHAR(60) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 select TRUE,FALSE,NULL;
 TRUE	FALSE	NULL

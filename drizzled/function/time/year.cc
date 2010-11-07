@@ -18,10 +18,13 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include "drizzled/temporal.h"
 #include "drizzled/error.h"
 #include "drizzled/function/time/year.h"
+
+namespace drizzled
+{
 
 int64_t Item_func_year::val_int()
 {
@@ -35,7 +38,7 @@ int64_t Item_func_year::val_int()
   }
 
   /* Grab the first argument as a DateTime object */
-  drizzled::DateTime temporal;
+  DateTime temporal;
   Item_result arg0_result_type= args[0]->result_type();
   
   switch (arg0_result_type)
@@ -54,13 +57,19 @@ int64_t Item_func_year::val_int()
         char buff[DRIZZLE_MAX_LENGTH_DATETIME_AS_STRING];
         String tmp(buff,sizeof(buff), &my_charset_utf8_bin);
         String *res= args[0]->val_str(&tmp);
-        if (! temporal.from_string(res->c_ptr(), res->length()))
+
+        if (res && (res != &tmp))
+        {
+          tmp.copy(*res);
+        }
+
+        if (! temporal.from_string(tmp.c_ptr(), tmp.length()))
         {
           /* 
           * Could not interpret the function argument as a temporal value, 
           * so throw an error and return 0
           */
-          my_error(ER_INVALID_DATETIME_VALUE, MYF(0), res->c_ptr());
+          my_error(ER_INVALID_DATETIME_VALUE, MYF(0), tmp.c_ptr());
           return 0;
         }
       }
@@ -82,7 +91,12 @@ int64_t Item_func_year::val_int()
 
         res= args[0]->val_str(&tmp);
 
-        my_error(ER_INVALID_DATETIME_VALUE, MYF(0), res->c_ptr());
+        if (res && (res != &tmp))
+        {
+          tmp.copy(*res);
+        }
+
+        my_error(ER_INVALID_DATETIME_VALUE, MYF(0), tmp.c_ptr());
         return 0;
       }
   }
@@ -100,7 +114,7 @@ int64_t Item_func_year::val_int_endpoint(bool left_endp, bool *incl_endp)
   }
 
   /* Grab the first argument as a DateTime object */
-  drizzled::DateTime temporal;
+  DateTime temporal;
   
   if (! temporal.from_int64_t(args[0]->val_int()))
   {
@@ -127,3 +141,4 @@ int64_t Item_func_year::val_int_endpoint(bool left_endp, bool *incl_endp)
   return (int64_t) temporal.years();
 }
 
+} /* namespace drizzled */

@@ -543,8 +543,6 @@ d varchar(100) NOT NULL,
 primary key (a,b(132),c,d),
 key a (a,b)
 );
-Warnings:
-Warning	1071	Specified key was too long; max key length is 767 bytes
 insert into t2 select 
 x3.a,  -- 3
 concat('val-', x3.a + 3*x4.a), -- 12
@@ -554,7 +552,7 @@ from t1 x3, t1 x4, t1 C, t1 D where x3.a < 3 and x4.a < 4 and D.a < 4;
 delete from t2  where a = 2 and b = 'val-2' order by a,b,c,d limit 30;
 explain select c from t2 where a = 2 and b = 'val-2' group by c;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	ref	PRIMARY,a	a	770	const,const	36	Using where; Using index
+1	SIMPLE	t2	#	PRIMARY,a	a	#	const,const	#	#
 select c from t2 where a = 2 and b = 'val-2' group by c;
 c
 val-74

@@ -1,0 +1,78 @@
+package drizzled.message;
+option optimize_for = SPEED;
+
+option java_package = "org.drizzle.messages";
+option java_outer_classname = "ResultSetMessage";
+
+import "table.proto";
+import "schema.proto";
+
+
+/*
+ * Some minimal information transferred in the header of Statement
+ * submessage classes which identifies metadata about a specific
+ * field involved in a Statemet.
+ */
+message FieldMeta
+{
+  required string field_name = 1; /* Name of the field */
+  optional string field_alias = 2;
+  required string table_name = 3;
+  optional string table_alias = 4;
+  required string schema_name = 5;
+}
+
+/*
+ * Minimal information transferred in the header of Statement submessage
+ * classes which identifies metadata about the schema objects being
+ * modified in a Statement.
+ */
+message TableMeta
+{
+  required string schema_name = 1; /* Name of the containing schema */
+  required string table_name = 2; /* Name of the table */
+  optional string table_alias = 3; /* alias if defined */
+}
+
+
+/*
+ * Represents a single record being returned
+ *
+ * @note 
+ *
+ * A ResultSet contains one or more SelectRecord submessages, each
+ * of which represents a single record returned
+ */
+message SelectRecord
+{
+  repeated bytes record_value = 1;
+  repeated bool is_null = 2;
+}
+
+message SelectHeader
+{
+  repeated TableMeta table_meta = 1; /* Minimal metadata about the table affected */
+  repeated FieldMeta field_meta = 2; /* Collection of metadata about fields affected */
+}
+
+message SelectData
+{
+  required uint32 segment_id = 1; /* The segment number */
+  required bool end_segment = 2; /* Is this the final segment? */
+  repeated SelectRecord record = 3; /* The records inserted */
+}
+/*
+ * The message is composed the hash of the query, 
+ * a header (SelectHeader) containing metadata about:
+ * returned tables and fields.
+ * One or more data * segments (SelectData) containing the actual records
+ * being returned.
+ */
+message Resultset
+{
+  required string key= 1; /* contains a hashed value of: query + schema*/
+  required string schema= 2; /*current schema */
+  optional string sql = 3; /* May contain the original SQL string */
+  optional SelectHeader select_header = 4;
+  optional SelectData select_data = 5;
+}

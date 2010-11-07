@@ -22,6 +22,9 @@
 
 #include "drizzled/item.h"
 
+namespace drizzled
+{
+
 extern uint32_t lower_case_table_names;
 
 class Item_ident :public Item
@@ -92,5 +95,7 @@ public:
   my_decimal *val_decimal(my_decimal *dec);
   void make_field(SendField *tmp_field);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_IDENT_H */

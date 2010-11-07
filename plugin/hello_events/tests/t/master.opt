@@ -1,0 +1,1 @@
+--plugin-add=hello_events --hello-events1.enable --hello-events1.watch-tables=t2 --hello-events1.watch-databases=events

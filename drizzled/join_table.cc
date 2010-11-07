@@ -22,13 +22,15 @@
 #include <drizzled/join_table.h>
 #include <drizzled/field/blob.h>
 
+namespace drizzled
+{
 
 void JoinTable::readCachedRecord()
 {
   unsigned char *pos;
   uint32_t length;
   bool last_record;
-  CACHE_FIELD *copy,*end_field;
+  CacheField *copy,*end_field;
 
   last_record= this->cache.record_nr++ == this->cache.ptr_record;
   pos= this->cache.pos;
@@ -68,3 +70,5 @@ void JoinTable::readCachedRecord()
   }
   this->cache.pos=pos;
 }
+
+} /* namespace drizzled */

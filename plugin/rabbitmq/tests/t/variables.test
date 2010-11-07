@@ -1,0 +1,1 @@
+SELECT * FROM data_dictionary.modules WHERE module_name = 'rabbitmq';

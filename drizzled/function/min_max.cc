@@ -18,9 +18,12 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/min_max.h>
 #include <drizzled/item/cmpfunc.h>
+
+namespace drizzled
+{
 
 void Item_func_min_max::fix_length_and_dec()
 {
@@ -51,7 +54,7 @@ void Item_func_min_max::fix_length_and_dec()
     agg_arg_charsets(collation, args, arg_count, MY_COLL_CMP_CONV, 1);
     if (datetime_found)
     {
-      session= current_session;
+      session= getSessionPtr();
       compare_as_dates= true;
     }
   }
@@ -276,3 +279,4 @@ my_decimal *Item_func_min_max::val_decimal(my_decimal *dec)
   return res;
 }
 
+} /* namespace drizzled */

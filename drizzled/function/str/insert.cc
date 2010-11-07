@@ -18,10 +18,13 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/str/insert.h>
 #include <drizzled/error.h>
 #include <drizzled/session.h>
+
+namespace drizzled
+{
 
 String *Item_func_insert::val_str(String *str)
 {
@@ -39,9 +42,9 @@ String *Item_func_insert::val_str(String *str)
       args[3]->null_value)
     goto null;
 
-  if ((start < 0) || (start > res->length()))
+  if ((start < 0) || (start > static_cast<int64_t>(res->length())))
     return res;                                 // Wrong param; skip insert
-  if ((length < 0) || (length > res->length()))
+  if ((length < 0) || (length > static_cast<int64_t>(res->length())))
     length= res->length();
 
   /* start and length are now sufficiently valid to pass to charpos function */
@@ -49,18 +52,18 @@ String *Item_func_insert::val_str(String *str)
    length= res->charpos((int) length, (uint32_t) start);
 
   /* Re-testing with corrected params */
-  if (start > res->length())
+  if (start > static_cast<int64_t>(res->length()))
     return res;
-  if (length > res->length() - start)
+  if (length > static_cast<int64_t>(res->length()) - start)
     length= res->length() - start;
 
   if ((uint64_t) (res->length() - length + res2->length()) >
-      (uint64_t) current_session->variables.max_allowed_packet)
+      (uint64_t) session.variables.max_allowed_packet)
   {
-    push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
 			ER_WARN_ALLOWED_PACKET_OVERFLOWED,
 			ER(ER_WARN_ALLOWED_PACKET_OVERFLOWED),
-			func_name(), current_session->variables.max_allowed_packet);
+			func_name(), session.variables.max_allowed_packet);
     goto null;
   }
   res=copy_if_not_alloced(str,res,res->length());
@@ -88,3 +91,5 @@ void Item_func_insert::fix_length_and_dec()
   }
   max_length= (ulong) max_result_length;
 }
+
+} /* namespace drizzled */

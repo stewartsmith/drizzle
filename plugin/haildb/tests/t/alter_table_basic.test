@@ -1,0 +1,35 @@
+# originally from csv.test (and who knows what it was doing there)
+#
+# tests different types of alter table that some should be fast, others
+# copying.
+# rather useless without EXPLAIN ALTER TABLE though
+
+create table t1 (v varchar(32) not null);
+insert into t1 values ('def'),('abc'),('hij'),('3r4f');
+--sorted_result
+select * from t1;
+# Fast alter, no copy performed
+alter table t1 change v v2 varchar(32);
+--sorted_result
+select * from t1;
+# Fast alter, no copy performed
+alter table t1 change v2 v varchar(64);
+--sorted_result
+select * from t1;
+update t1 set v = 'lmn' where v = 'hij';
+--sorted_result
+select * from t1;
+# Regular alter table
+alter table t1 add i int auto_increment not null primary key first;
+--sorted_result
+select * from t1;
+update t1 set i=5 where i=3;
+--sorted_result
+select * from t1;
+alter table t1 change i i bigint;
+--sorted_result
+select * from t1;
+alter table t1 add unique key (i, v);
+--sorted_result
+select * from t1 where i between 2 and 4 and v in ('def','3r4f','lmn');
+drop table t1;

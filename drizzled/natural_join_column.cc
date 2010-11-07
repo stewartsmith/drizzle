@@ -22,10 +22,13 @@
 #include <drizzled/table_list.h>
 #include <drizzled/session.h>
 
+namespace drizzled
+{
+
 Natural_join_column::Natural_join_column(Field *field_param,
                                          TableList *tab)
 {
-  assert(tab->table == field_param->table);
+  assert(tab->table == field_param->getTable());
   table_field= field_param;
   table_ref= tab;
   is_common= false;
@@ -63,7 +66,9 @@ const char *Natural_join_column::db_name()
     Test that TableList::db is the same as TableShare::db to
     ensure consistency. 
   */
-  assert(!strcmp(table_ref->db,
-                      table_ref->table->s->db.str));
-  return table_ref->db;
+  assert(!strcmp(table_ref->getSchemaName(), table_ref->table->getShare()->getSchemaName()));
+
+  return table_ref->getSchemaName();
 }
+
+} /* namespace drizzled */

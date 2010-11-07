@@ -19,10 +19,11 @@
 
 #include "config.h"
 #include "drizzled/plugin/error_message.h"
-#include "drizzled/plugin/registry.h"
 
 #include "drizzled/gettext.h"
 
+#include <cstdio>
+#include <algorithm>
 #include <vector>
 
 using namespace std;
@@ -67,7 +68,9 @@ public:
 
   inline result_type operator()(argument_type handler)
   {
-    if (handler->errmsg(session, priority, format, ap))
+    va_list handler_ap;
+    va_copy(handler_ap, ap);
+    if (handler->errmsg(session, priority, format, handler_ap))
     {
       /* we're doing the errmsg plugin api,
          so we can't trust the errmsg api to emit our error messages
@@ -77,15 +80,17 @@ public:
       fprintf(stderr,
               _("errmsg plugin '%s' errmsg() failed"),
               handler->getName().c_str());
+      va_end(handler_ap);
       return true;
     }
+    va_end(handler_ap);
     return false;
   }
 }; 
 
 
 bool plugin::ErrorMessage::vprintf(Session *session, int priority,
-                                 char const *format, va_list ap)
+                                   char const *format, va_list ap)
 {
 
   /* check to see if any errmsg plugin has been loaded

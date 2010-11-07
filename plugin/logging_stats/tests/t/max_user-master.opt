@@ -1,0 +1,1 @@
+--plugin-add=logging_stats --logging-stats.max-user-count=505

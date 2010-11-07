@@ -20,6 +20,9 @@
 #ifndef DRIZZLED_STRFUNC_H
 #define DRIZZLED_STRFUNC_H
 
+namespace drizzled
+{
+
 typedef struct charset_info_st CHARSET_INFO;
 typedef struct st_typelib TYPELIB;
 
@@ -30,4 +33,7 @@ uint32_t find_type(const TYPELIB *lib, const char *find, uint32_t length,
                    bool part_match);
 uint32_t find_type2(const TYPELIB *lib, const char *find, uint32_t length,
                     const CHARSET_INFO *cs);
+
+} /* namespace drizzled */
+
 #endif /* DRIZZLED_STRFUNC_H */

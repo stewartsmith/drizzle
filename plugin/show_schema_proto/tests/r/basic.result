@@ -1,21 +1,2 @@
 SELECT SHOW_SCHEMA_PROTO('not_exists');
-ERROR 42000: Unknown database 'not_exists'
-CREATE DATABASE foobar COLLATE = utf8_bin;
-SELECT SHOW_SCHEMA_PROTO('foobar');
-SHOW_SCHEMA_PROTO('foobar')
-name: "foobar"
-collation: "utf8_bin"
-
-DROP DATABASE foobar;
-CREATE DATABASE foobar;
-SELECT SHOW_SCHEMA_PROTO('foobar');
-SHOW_SCHEMA_PROTO('foobar')
-name: "foobar"
-
-ALTER DATABASE foobar COLLATE = utf8_bin;
-SELECT SHOW_SCHEMA_PROTO('foobar');
-SHOW_SCHEMA_PROTO('foobar')
-name: "foobar"
-collation: "utf8_bin"
-
-DROP DATABASE foobar;
+ERROR 42000: Unknown schema 'not_exists'

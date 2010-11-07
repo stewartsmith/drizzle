@@ -1,0 +1,23 @@
+# vim:ft=automake
+# included from Top Level Makefile.am
+# All paths should be given relative to the root
+
+if BUILD_WIN32
+libdrizzle_libdrizzle_la_SOURCES+= \
+				   win32/alloca.c \
+				   win32/conn_uds.c \
+				   win32/mingw/poll.c
+endif
+
+noinst_HEADERS+= \
+		 win32/alloca.h \
+		 win32/mingw/errno.h \
+		 win32/mingw/poll.h \
+		 win32/windows/inttypes.h \
+		 win32/windows/stdint.h
+
+EXTRA_DIST+= \
+	     win32/drizzle.sln \
+	     win32/libdrizzle.vcproj \
+	     win32/windows/errno.h
+

@@ -18,9 +18,12 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include "drizzled/function/time/period_add.h"
 #include "drizzled/calendar.h"
+
+namespace drizzled
+{
 
 int64_t Item_func_period_add::val_int()
 {
@@ -34,3 +37,5 @@ int64_t Item_func_period_add::val_int()
 
   return (int64_t) months_to_year_month(year_month_to_months(period) + months);
 }
+
+} /* namespace drizzled */

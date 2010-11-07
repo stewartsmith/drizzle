@@ -22,9 +22,9 @@ create TEMPORARY TABLE t2 engine=MEMORY select * from t1;
 create TEMPORARY TABLE IF NOT EXISTS t2 (a int) engine=MEMORY;
 
 # This should give errors
---error 1050
+--error ER_TABLE_EXISTS_ERROR
 CREATE TEMPORARY TABLE t1 (a int not null, b char (10) not null);
---error 1050
+--error ER_TABLE_EXISTS_ERROR
 ALTER TABLE t1 RENAME t2;
 
 select * from t2;
@@ -88,6 +88,7 @@ INSERT INTO t1 VALUES ('2002-10-24 14:50:32'),('2002-10-24 14:50:33'),('2002-10-
 
 flush status;
 select * from t1 group by d;
+--replace_column 2 #
 show status like "created_tmp%tables";
 drop table t1;
 
@@ -123,11 +124,11 @@ drop table t1, t2;
 CREATE TABLE t1 (i INT);
 CREATE TEMPORARY TABLE t2 (i INT);
 
---error 1051
+--error ER_BAD_TABLE_ERROR
 DROP TEMPORARY TABLE t2, t1;
 
 # Table t2 should have been dropped.
---error 1146
+--error ER_NO_SUCH_TABLE
 SELECT * FROM t2;
 # But table t1 should still be there.
 SELECT * FROM t1;

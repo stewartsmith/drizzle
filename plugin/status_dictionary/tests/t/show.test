@@ -1,0 +1,13 @@
+# Drizzle's plugin/modules dictionary.
+
+use data_dictionary;
+
+# Test show commands.
+
+--disable_result_log
+SHOW STATUS;
+--enable_result_log
+
+--disable_result_log
+SHOW VARIABLES;
+--enable_result_log

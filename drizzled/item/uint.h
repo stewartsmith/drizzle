@@ -22,6 +22,9 @@
 
 #include <drizzled/item/int.h>
 
+namespace drizzled
+{
+
 class Item_uint :public Item_int
 {
 public:
@@ -37,5 +40,7 @@ public:
   Item_num *neg ();
   uint32_t decimal_precision() const { return max_length; }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_UINT_H */

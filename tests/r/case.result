@@ -38,25 +38,13 @@ select (CASE "two" when "one" then 1.00 WHEN "two" then 2.00 END) +0.0;
 (CASE "two" when "one" then 1.00 WHEN "two" then 2.00 END) +0.0
 2.00
 select case 1/0 when "a" then "true" else "false" END;
-case 1/0 when "a" then "true" else "false" END
-false
-Warnings:
-Error	1365	Division by 0
+ERROR 22012: Division by 0
 select case 1/0 when "a" then "true" END;
-case 1/0 when "a" then "true" END
-NULL
-Warnings:
-Error	1365	Division by 0
+ERROR 22012: Division by 0
 select (case 1/0 when "a" then "true" END);
-(case 1/0 when "a" then "true" END)
-NULL
-Warnings:
-Error	1365	Division by 0
+ERROR 22012: Division by 0
 select (case 1/0 when "a" then "true" END) + 0.0;
-(case 1/0 when "a" then "true" END) + 0.0
-NULL
-Warnings:
-Error	1365	Division by 0
+ERROR 22012: Division by 0
 select case when 1>0 then "TRUE" else "FALSE" END;
 case when 1>0 then "TRUE" else "FALSE" END
 TRUE
@@ -106,19 +94,19 @@ CASE WHEN 1 THEN 0.1e1 else '1' END AS c12
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` varchar(1) CHARACTER SET utf8 COLLATE utf8_bin DEFAULT NULL,
-  `c2` varchar(1) CHARACTER SET utf8 COLLATE utf8_bin DEFAULT NULL,
-  `c3` varbinary(4) NOT NULL,
-  `c4` varbinary(4) NOT NULL,
-  `c5` varbinary(4) NOT NULL,
-  `c6` varbinary(4) NOT NULL,
-  `c7` decimal(2,1) NOT NULL,
-  `c8` decimal(2,1) NOT NULL,
-  `c9` decimal(2,1) DEFAULT NULL,
-  `c10` double NOT NULL,
-  `c11` double NOT NULL,
-  `c12` varbinary(5) NOT NULL
-) ENGINE=DEFAULT
+  `c1` VARCHAR(1) COLLATE utf8_bin DEFAULT NULL,
+  `c2` VARCHAR(1) COLLATE utf8_bin DEFAULT NULL,
+  `c3` VARBINARY(4) NOT NULL,
+  `c4` VARBINARY(4) NOT NULL,
+  `c5` VARBINARY(4) NOT NULL,
+  `c6` VARBINARY(4) NOT NULL,
+  `c7` DECIMAL(2,1) NOT NULL,
+  `c8` DECIMAL(2,1) NOT NULL,
+  `c9` DECIMAL(2,1) DEFAULT NULL,
+  `c10` DOUBLE NOT NULL,
+  `c11` DOUBLE NOT NULL,
+  `c12` VARBINARY(5) NOT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 DROP TABLE t1;
 SELECT CASE 
 WHEN 1 
@@ -156,14 +144,14 @@ Note	1003	select coalesce(1) AS `COALESCE(1)`,coalesce(1.0) AS `COALESCE(1.0)`,c
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `COALESCE(1)` int NOT NULL,
-  `COALESCE(1.0)` decimal(2,1) NOT NULL,
-  `COALESCE('a')` varchar(1) NOT NULL,
-  `COALESCE(1,1.0)` decimal(2,1) NOT NULL,
-  `COALESCE(1,'1')` varbinary(4) NOT NULL,
-  `COALESCE(1.1,'1')` varbinary(4) NOT NULL,
-  `COALESCE('a' COLLATE utf8_bin,'b')` varchar(1) CHARACTER SET utf8 COLLATE utf8_bin DEFAULT NULL
-) ENGINE=DEFAULT
+  `COALESCE(1)` INT NOT NULL,
+  `COALESCE(1.0)` DECIMAL(2,1) NOT NULL,
+  `COALESCE('a')` VARCHAR(1) COLLATE utf8_general_ci NOT NULL,
+  `COALESCE(1,1.0)` DECIMAL(2,1) NOT NULL,
+  `COALESCE(1,'1')` VARBINARY(4) NOT NULL,
+  `COALESCE(1.1,'1')` VARBINARY(4) NOT NULL,
+  `COALESCE('a' COLLATE utf8_bin,'b')` VARCHAR(1) COLLATE utf8_bin DEFAULT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 DROP TABLE t1;
 SELECT 'case+union+test'
 UNION 

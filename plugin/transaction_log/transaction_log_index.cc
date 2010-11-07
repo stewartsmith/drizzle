@@ -42,7 +42,6 @@ TransactionLogIndex *transaction_log_index= NULL; /* The singleton transaction l
 
 TransactionLogIndex::TransactionLogIndex(TransactionLog &in_log) :
   log(in_log),
-  log_file(-1),
   index_file(-1),
   index_file_path(),
   has_error(false),
@@ -51,9 +50,12 @@ TransactionLogIndex::TransactionLogIndex(TransactionLog &in_log) :
   max_end_timestamp(0),
   min_transaction_id(0),
   max_transaction_id(0),
-  num_log_entries(0)
+  entries(),
+  transaction_entries()
 {
   (void) pthread_mutex_init(&index_lock, NULL);
+  entries.reserve(1024);
+  transaction_entries.reserve(1024);
   open();
 }
 
@@ -62,6 +64,19 @@ TransactionLogIndex::~TransactionLogIndex()
   entries.clear();
   transaction_entries.clear();
   pthread_mutex_destroy(&index_lock);
+}
+
+void TransactionLogIndex::clear()
+{
+  pthread_mutex_lock(&index_lock);
+  min_end_timestamp= 0;
+  max_end_timestamp= 0;
+  min_transaction_id= 0;
+  max_transaction_id= 0;
+  entries.clear();
+  transaction_entries.clear();
+  clearError();
+  pthread_mutex_unlock(&index_lock);
 }
 
 void TransactionLogIndex::open()
@@ -107,7 +122,7 @@ uint64_t TransactionLogIndex::getMaxTransactionId() const
 
 uint64_t TransactionLogIndex::getNumLogEntries() const
 {
-  return num_log_entries;
+  return entries.size();
 }
 
 uint64_t TransactionLogIndex::getNumTransactionEntries() const
@@ -125,6 +140,22 @@ TransactionLog::TransactionEntries &TransactionLogIndex::getTransactionEntries()
   return transaction_entries;
 }
 
+size_t TransactionLogIndex::getTransactionEntriesSizeInBytes()
+{
+  return transaction_entries.capacity() * sizeof(TransactionLog::TransactionEntries::value_type);
+}
+
+size_t TransactionLogIndex::getEntriesSizeInBytes()
+{
+  return entries.capacity() * sizeof(TransactionLog::Entries::value_type);
+}
+
+
+size_t TransactionLogIndex::getSizeInBytes()
+{
+  return sizeof(this) + getEntriesSizeInBytes() + getTransactionEntriesSizeInBytes();
+}
+
 void TransactionLogIndex::addEntry(const TransactionLogEntry &entry,
                                    const message::Transaction &transaction,
                                    uint32_t checksum)
@@ -136,7 +167,6 @@ void TransactionLogIndex::addEntry(const TransactionLogEntry &entry,
     min_transaction_id= transaction.transaction_context().transaction_id();
     min_end_timestamp= transaction.transaction_context().end_timestamp();
   }
-  num_log_entries++;
   max_transaction_id= transaction.transaction_context().transaction_id();
   max_end_timestamp= transaction.transaction_context().end_timestamp();
   entries.push_back(entry);

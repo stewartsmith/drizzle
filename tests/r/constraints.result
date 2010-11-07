@@ -21,9 +21,9 @@ alter table t1 add constraint constraint_2 unique key_2(a);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int DEFAULT NULL,
+  `a` INT DEFAULT NULL,
   UNIQUE KEY `constraint_1` (`a`),
   UNIQUE KEY `key_1` (`a`),
   UNIQUE KEY `key_2` (`a`)
-) ENGINE=InnoDB
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;

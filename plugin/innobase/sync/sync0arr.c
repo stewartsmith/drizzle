@@ -18,8 +18,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -227,24 +227,21 @@ sync_array_create(
 				SYNC_ARRAY_MUTEX: determines the type
 				of mutex protecting the data structure */
 {
+	ulint		sz;
 	sync_array_t*	arr;
-	sync_cell_t*	cell_array;
-	sync_cell_t*	cell;
-	ulint		i;
 
 	ut_a(n_cells > 0);
 
 	/* Allocate memory for the data structures */
 	arr = ut_malloc(sizeof(sync_array_t));
+	memset(arr, 0x0, sizeof(*arr));
 
-	cell_array = ut_malloc(sizeof(sync_cell_t) * n_cells);
+	sz = sizeof(sync_cell_t) * n_cells;
+	arr->array = ut_malloc(sz);
+	memset(arr->array, 0x0, sz);
 
 	arr->n_cells = n_cells;
-	arr->n_reserved = 0;
-	arr->array = cell_array;
 	arr->protection = protection;
-	arr->sg_count = 0;
-	arr->res_count = 0;
 
 	/* Then create the mutex to protect the wait array complex */
 	if (protection == SYNC_ARRAY_OS_MUTEX) {
@@ -253,13 +250,6 @@ sync_array_create(
 		mutex_create(&arr->mutex, SYNC_NO_ORDER_CHECK);
 	} else {
 		ut_error;
-	}
-
-	for (i = 0; i < n_cells; i++) {
-		cell = sync_array_get_nth_cell(arr, i);
-	cell->wait_object = NULL;
-		cell->waiting = FALSE;
-		cell->signal_count = 0;
 	}
 
 	return(arr);

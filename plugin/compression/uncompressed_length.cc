@@ -25,6 +25,7 @@
 #include <string>
 
 using namespace std;
+using namespace drizzled;
 
 
 int64_t Item_func_uncompressed_length::val_int()

@@ -1,0 +1,12 @@
+--replace_column 1 #
+
+SELECT COUNT(FUNCTION_NAME) FROM DATA_DICTIONARY.FUNCTIONS;
+
+CREATE TABLE function_names SELECT FUNCTION_NAME FROM DATA_DICTIONARY.FUNCTIONS;
+
+--replace_column 1 #
+SELECT COUNT(*) FROM function_names;
+
+DROP TABLE function_names;
+
+

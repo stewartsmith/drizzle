@@ -11,8 +11,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -28,9 +28,7 @@ Created 5/11/2006 Osku Salerma
 #define HA_INNODB_PROTOTYPES_H
 
 #include "trx0types.h"
-#if defined(BUILD_DRIZZLE)
-# include "drizzled/charset_info.h"
-#else
+#if !defined(BUILD_DRIZZLE)
 # include "m_ctype.h" /* CHARSET_INFO */
 
 /*********************************************************************//**
@@ -43,10 +41,10 @@ innobase_convert_string(
        void*           to,             /*!< out: converted string */
        ulint           to_length,      /*!< in: number of bytes reserved
                                        for the converted string */
-       CHARSET_INFO*   to_cs,          /*!< in: character set to convert to */
+       drizzled::CHARSET_INFO*   to_cs,          /*!< in: character set to convert to */
        const void*     from,           /*!< in: string to convert */
        ulint           from_length,    /*!< in: number of bytes to convert */
-       CHARSET_INFO*   from_cs,        /*!< in: character set to convert from */
+       drizzled::CHARSET_INFO*   from_cs,        /*!< in: character set to convert from */
        uint*           errors);        /*!< out: number of errors encountered
                                        during the conversion */
 
@@ -219,7 +217,7 @@ UNIV_INTERN
 void
 innobase_convert_from_table_id(
 /*===========================*/
-	const struct charset_info_st*	cs,	/*!< in: the 'from' character set */
+	const void*		cs,	/*!< in: the 'from' character set */
 	char*			to,	/*!< out: converted identifier */
 	const char*		from,	/*!< in: identifier to convert */
 	ulint			len);	/*!< in: length of 'to', in bytes; should
@@ -230,7 +228,7 @@ UNIV_INTERN
 void
 innobase_convert_from_id(
 /*=====================*/
-	const struct charset_info_st*	cs,	/*!< in: the 'from' character set */
+	const void*		cs,	/*!< in: the 'from' character set */
 	char*			to,	/*!< out: converted identifier */
 	const char*		from,	/*!< in: identifier to convert */
 	ulint			len);	/*!< in: length of 'to', in bytes; should
@@ -247,7 +245,7 @@ innobase_casedn_str(
 Determines the connection character set.
 @return	connection character set */
 UNIV_INTERN
-const struct charset_info_st*
+const void *
 innobase_get_charset(
 /*=================*/
 	void*	mysql_thd);	/*!< in: MySQL thread handle */
@@ -291,5 +289,17 @@ thd_lock_wait_timeout(
 /*==================*/
 	void*	thd);	/*!< in: thread handle (THD*), or NULL to query
 			the global innodb_lock_wait_timeout */
+
+UNIV_INTERN
+bool
+innobase_isspace(
+	const void * cs,
+	char char_to_test);
+
+UNIV_INTERN
+int
+innobase_fast_mutex_init(
+	os_fast_mutex_t*        fast_mutex);
+		
 
 #endif

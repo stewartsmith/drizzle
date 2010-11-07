@@ -44,12 +44,14 @@
 #include "drizzled/field/datetime.h"
 #include "drizzled/field/varstring.h"
 #include "drizzled/temporal.h"
+#include "drizzled/item/string.h"
 
 #include <algorithm>
 
-using namespace drizzled;
 using namespace std;
 
+namespace drizzled
+{
 
 /** Create a field suitable for create of table. */
 CreateField::CreateField(Field *old_field, Field *orig_field)
@@ -68,7 +70,7 @@ CreateField::CreateField(Field *old_field, Field *orig_field)
 
   /* Fix if the original table had 4 byte pointer blobs */
   if (flags & BLOB_FLAG)
-    pack_length= (pack_length - old_field->table->s->blob_ptr_size + portable_sizeof_char_ptr);
+    pack_length= (pack_length - old_field->getTable()->getShare()->blob_ptr_size + portable_sizeof_char_ptr);
 
   switch (sql_type) 
   {
@@ -86,23 +88,24 @@ CreateField::CreateField(Field *old_field, Field *orig_field)
       break;
   }
 
-  if (flags & (ENUM_FLAG | SET_FLAG))
+  if (flags & ENUM_FLAG)
     interval= ((Field_enum*) old_field)->typelib;
   else
     interval= 0;
   def= 0;
   char_length= length;
 
-  if (!(flags & (NO_DEFAULT_VALUE_FLAG )) &&
+  if (!(flags & (NO_DEFAULT_VALUE_FLAG)) &&
+      !(flags & AUTO_INCREMENT_FLAG) &&
       old_field->ptr && orig_field &&
       (sql_type != DRIZZLE_TYPE_TIMESTAMP ||                /* set def only if */
-       old_field->table->timestamp_field != old_field ||  /* timestamp field */
+       old_field->getTable()->timestamp_field != old_field ||  /* timestamp field */
        unireg_check == Field::TIMESTAMP_UN_FIELD))        /* has default val */
   {
     ptrdiff_t diff;
 
     /* Get the value from default_values */
-    diff= (ptrdiff_t) (orig_field->table->s->default_values - orig_field->table->record[0]);
+    diff= (ptrdiff_t) (orig_field->getTable()->getDefaultValues() - orig_field->getTable()->getInsertRecord());
     orig_field->move_field_offset(diff);	// Points now at default_values
     if (! orig_field->is_real_null())
     {
@@ -112,7 +115,7 @@ CreateField::CreateField(Field *old_field, Field *orig_field)
       pos= (char*) memory::sql_strmake(res->ptr(), res->length());
       def= new Item_string(pos, res->length(), charset);
     }
-    orig_field->move_field_offset(-diff);	// Back to record[0]
+    orig_field->move_field_offset(-diff);	// Back to getInsertRecord()
   }
 }
 
@@ -163,7 +166,6 @@ void CreateField::init_for_tmp_table(enum_field_types sql_type_arg,
   interval= 0;
   charset= &my_charset_bin;
   decimals= decimals_arg & FIELDFLAG_MAX_DEC;
-  pack_flag= 0;
 
   if (! maybe_null)
     flags= NOT_NULL_FLAG;
@@ -297,14 +299,14 @@ bool CreateField::init(Session *,
     case DRIZZLE_TYPE_TIMESTAMP:
       if (!fld_length)
       {
-        length= drizzled::DateTime::MAX_STRING_LENGTH;
+        length= DateTime::MAX_STRING_LENGTH;
       }
 
       /* This assert() should be correct due to absence of length
          specifiers for timestamp. Previous manipulation also wasn't
          ever called (from examining lcov)
       */
-      assert(length == (uint32_t)drizzled::DateTime::MAX_STRING_LENGTH);
+      assert(length == (uint32_t)DateTime::MAX_STRING_LENGTH);
 
       flags|= UNSIGNED_FLAG;
       if (fld_default_value)
@@ -346,15 +348,15 @@ bool CreateField::init(Session *,
       }
       break;
     case DRIZZLE_TYPE_DATE:
-      length= drizzled::Date::MAX_STRING_LENGTH;
+      length= Date::MAX_STRING_LENGTH;
       break;
     case DRIZZLE_TYPE_DATETIME:
-      length= drizzled::DateTime::MAX_STRING_LENGTH;
+      length= DateTime::MAX_STRING_LENGTH;
       break;
     case DRIZZLE_TYPE_ENUM:
       {
         /* Should be safe. */
-        pack_length= get_enum_pack_length(fld_interval_list->elements);
+        pack_length= 4;
 
         List_iterator<String> it(*fld_interval_list);
         String *tmp;
@@ -387,3 +389,5 @@ bool CreateField::init(Session *,
 
   return false; /* success */
 }
+
+} /* namespace drizzled */

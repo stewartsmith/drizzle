@@ -1,5 +1,13 @@
+/*
+  Message format for tables.
+*/
 package drizzled.message;
 option optimize_for = SPEED;
+
+option java_package = "org.drizzle.messages";
+option java_outer_classname = "TableMessage";
+
+import "engine.proto";
 
 message Table {
 
@@ -7,28 +15,11 @@ message Table {
     STANDARD = 0;
     TEMPORARY = 1;
     INTERNAL = 2;
-  }
-
-  message StorageEngine {
-
-    message EngineOption {
-      enum EngineOptionType {
-        BOOL = 0;
-        INTEGER = 1;
-        STRING = 2;
-      }
-
-      required string option_name = 1;
-      required string option_value = 2;
-      required EngineOptionType option_type = 3;
-    }
-
-    required string name = 1;
-    repeated EngineOption option = 2;
+    FUNCTION = 3;
   }
 
   message TableOptions {
-    optional uint64 auto_increment = 1;
+    optional bool has_user_set_auto_increment_value = 1;
     optional string collation = 2;
     optional uint32 collation_id = 3;
     optional string data_file_name = 5;
@@ -37,39 +28,39 @@ message Table {
     optional uint64 min_rows = 8;
     optional uint64 auto_increment_value = 9;
     optional uint32 avg_row_length = 11;
-    optional uint32 key_block_size = 12;
     optional uint32 block_size = 13;
     optional string comment = 14;
-    optional bool pack_keys = 15;
     optional bool pack_record = 16;
     optional bool checksum = 17;
     optional bool page_checksum = 18;
     optional bool delay_key_write = 19;
-
-    enum RowType {
-    	 ROW_TYPE_DEFAULT = 0;
-	 ROW_TYPE_FIXED = 1;
-	 ROW_TYPE_DYNAMIC = 2;
-      	 ROW_TYPE_COMPRESSED = 3;
-         ROW_TYPE_REDUNDANT = 4;
-	 ROW_TYPE_COMPACT = 5;
-	 ROW_TYPE_PAGE = 6;
-    }
-
-    optional RowType row_type = 20;
-  }
-
-  message TableStats {
-    optional uint32 avg_row_length = 1;
-    optional uint64 max_rows = 2;
-    optional uint32 min_rows = 3;
   }
 
   message ForeignKeyConstraint {
-    required string name = 1;
-    required Field dependent = 2;
-    required Field parent = 3;
-    /** @TODO Finish this off... */
+    optional string name = 1;
+    repeated string column_names = 2;
+    required string references_table_name = 3;
+    repeated string references_columns = 4;
+
+    enum ForeignKeyMatchOption {
+      MATCH_UNDEFINED = 0;
+      MATCH_FULL = 1;
+      MATCH_PARTIAL = 2;
+      MATCH_SIMPLE = 3;
+    }
+    required ForeignKeyMatchOption match = 5;
+
+    enum ForeignKeyOption {
+      OPTION_UNDEF = 0;
+      OPTION_RESTRICT = 1;
+      OPTION_CASCADE = 2;
+      OPTION_SET_NULL = 3;
+      OPTION_NO_ACTION = 4;
+      OPTION_SET_DEFAULT = 5;
+    }
+
+    required ForeignKeyOption update_option = 6 [ default = OPTION_UNDEF ];
+    required ForeignKeyOption delete_option = 7 [ default = OPTION_UNDEF ];
   }
 
   message Field {
@@ -83,15 +74,8 @@ message Table {
       BIGINT = 5;
       DECIMAL = 6;
       DATE = 7;
-      TIME = 8;
       TIMESTAMP = 9;
       DATETIME = 10;
-    }
-
-    enum FieldFormatType {
-      DefaultFormat= 0;
-      FixedFormat= 1;
-      DynamicFormat= 2;
     }
 
     message FieldOptions {
@@ -99,10 +83,8 @@ message Table {
       optional string update_value = 2;
       optional bool default_null = 3 [default = false];
       optional bytes default_bin_value = 4;
-    }
-
-    message TimestampFieldOptions {
-      optional bool auto_updates = 1 [default = false];
+      optional string default_expression = 5;
+      optional string update_expression = 6;
     }
 
     message FieldConstraints {
@@ -124,8 +106,7 @@ message Table {
       optional string collation = 4;
     }
 
-    message SetFieldOptions {
-      required uint32 count_elements = 1;
+    message EnumerationValues {
       optional uint32 collation_id = 2;
       optional string collation = 3;
       repeated string field_value = 4;
@@ -133,21 +114,19 @@ message Table {
 
     required string name = 1;
     required FieldType type = 2;
-    optional FieldFormatType format = 3;
     optional FieldOptions options = 4;
     optional FieldConstraints constraints = 5;
     optional NumericFieldOptions numeric_options = 6;
     optional StringFieldOptions string_options = 7;
 
     optional string comment = 16; /* Reserve 0-15 for frequently accessed attributes */
-    optional SetFieldOptions set_options = 17;
-    optional TimestampFieldOptions timestamp_options = 18;
+    optional EnumerationValues enumeration_values = 17;
   }
 
   message Index {
 
     enum IndexType {
-    /* Kept in sync with enum ha_key_alg if only for stewart's sanity. */
+    /* Kept in sync with enum ha_key_alg if only for stewart sanity. */
       UNKNOWN_INDEX = 0;
       BTREE = 1;
       RTREE = 2;
@@ -157,13 +136,11 @@ message Table {
 
     message IndexPart {
       required uint32 fieldnr = 1;
-      optional int32 compare_length = 2;
+      optional uint32 compare_length = 2;
       optional bool in_reverse_order = 3 [default = false];
-
-      optional uint32 key_type = 101; /* THIS MUST DIE. Along with pack_flag*/
     }
 
-    message IndexOptions {
+    message Options {
       optional bool pack_key = 1;
       optional bool binary_pack_key = 2;
       optional bool var_length_key = 3;
@@ -179,19 +156,27 @@ message Table {
     required IndexType type = 4 [default = UNKNOWN_INDEX];
     required uint32 key_length = 5;
     repeated IndexPart index_part = 6;
-    optional IndexOptions options= 7;
+    optional Options options= 7;
     optional string comment = 8;
   }
 
   required string name = 1;
+  required string schema = 6;
   required TableType type = 5;
-  required StorageEngine engine = 2;
+  required Engine engine = 2;
   repeated Field field = 3;
   repeated Index indexes = 4;
 
   repeated ForeignKeyConstraint fk_constraint = 8;
   optional TableOptions options = 9;
-  optional TableStats stats = 10;
+  required uint64 creation_timestamp= 11 [default = 0];
+  required uint64 update_timestamp= 12 [default = 0];
+  optional string catalog = 13;
+  optional string uuid = 14;
+  /*
+    A version value of 0, means that it was never set.
+    */
+  optional uint64 version = 15;
 }
 
 message AlterTable {

@@ -37,47 +37,47 @@ KEY (ulong),
 KEY (ulonglong,ulong),
 KEY (options,flags)
 );
-show full fields from t1;
-Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
-auto	int	NULL	NO	PRI	NULL	auto_increment	#	
-string	varchar(10)	utf8_general_ci	YES		hello		#	
-tiny	int	NULL	NO	MUL	0		#	
-short	int	NULL	NO	MUL	1		#	
-medium	int	NULL	NO	MUL	0		#	
-long_int	int	NULL	NO		0		#	
-longlong	bigint	NULL	NO	MUL	0		#	
-real_float	double	NULL	NO	MUL	0		#	
-real_double	double	NULL	YES		NULL		#	
-utiny	int	NULL	NO	MUL	0		#	
-ushort	int	NULL	NO	MUL	0		#	
-umedium	int	NULL	NO	MUL	0		#	
-ulong	int	NULL	NO	MUL	0		#	
-ulonglong	bigint	NULL	NO	MUL	0		#	
-time_stamp	timestamp	NULL	YES		NULL		#	
-date_field	date	NULL	YES		NULL		#	
-date_time	datetime	NULL	YES		NULL		#	
-blob_col	blob	NULL	YES		NULL		#	
-tinyblob_col	blob	NULL	YES		NULL		#	
-mediumblob_col	blob	NULL	NO		NULL		#	
-longblob_col	blob	NULL	NO		NULL		#	
-options	enum('one','two','tree')	utf8_general_ci	NO	MUL	NULL		#	
-flags	enum('one','two','tree')	utf8_general_ci	NO		one		#	
+show fields from t1;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+auto	INTEGER	NO		NO	
+string	VARCHAR	YES	hello	NO	
+tiny	INTEGER	NO	0	NO	
+short	INTEGER	NO	1	NO	
+medium	INTEGER	NO	0	NO	
+long_int	INTEGER	NO	0	NO	
+longlong	BIGINT	NO	0	NO	
+real_float	DOUBLE	NO	0.0	NO	
+real_double	DOUBLE	YES		YES	
+utiny	INTEGER	NO	0	NO	
+ushort	INTEGER	NO	00000	NO	
+umedium	INTEGER	NO	0	NO	
+ulong	INTEGER	NO	0	NO	
+ulonglong	BIGINT	NO	0	NO	
+time_stamp	TIMESTAMP	YES		YES	
+date_field	DATE	YES		YES	
+date_time	DATETIME	YES		YES	
+blob_col	BLOB	YES		YES	
+tinyblob_col	BLOB	YES		YES	
+mediumblob_col	BLOB	NO		NO	
+longblob_col	BLOB	NO		NO	
+options	ENUM	NO		NO	
+flags	ENUM	NO	one	NO	
 show keys from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	PRIMARY	1	auto	A	0	NULL	NULL		BTREE		
-t1	1	utiny	1	utiny	A	0	NULL	NULL		BTREE		
-t1	1	tiny	1	tiny	A	0	NULL	NULL		BTREE		
-t1	1	short	1	short	A	0	NULL	NULL		BTREE		
-t1	1	any_name	1	medium	A	0	NULL	NULL		BTREE		
-t1	1	longlong	1	longlong	A	0	NULL	NULL		BTREE		
-t1	1	real_float	1	real_float	A	0	NULL	NULL		BTREE		
-t1	1	ushort	1	ushort	A	0	NULL	NULL		BTREE		
-t1	1	umedium	1	umedium	A	0	NULL	NULL		BTREE		
-t1	1	ulong	1	ulong	A	0	NULL	NULL		BTREE		
-t1	1	ulonglong	1	ulonglong	A	0	NULL	NULL		BTREE		
-t1	1	ulonglong	2	ulong	A	0	NULL	NULL		BTREE		
-t1	1	options	1	options	A	0	NULL	NULL		BTREE		
-t1	1	options	2	flags	A	0	NULL	NULL		BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	YES	PRIMARY	1	auto
+t1	NO	utiny	1	utiny
+t1	NO	tiny	1	tiny
+t1	NO	short	1	short
+t1	NO	any_name	1	medium
+t1	NO	longlong	1	longlong
+t1	NO	real_float	1	real_float
+t1	NO	ushort	1	ushort
+t1	NO	umedium	1	umedium
+t1	NO	ulong	1	ulong
+t1	NO	ulonglong	1	ulonglong
+t1	NO	ulonglong	2	ulong
+t1	NO	options	1	options
+t1	NO	options	2	flags
 CREATE UNIQUE INDEX test on t1 ( auto ) ;
 CREATE INDEX test2 on t1 ( ulonglong,ulong) ;
 CREATE INDEX test3 on t1 ( medium ) ;
@@ -128,73 +128,73 @@ one	one
 drop table t2;
 create table t2 select * from t1;
 update t2 set string="changed" where auto=16;
-show full columns from t1;
-Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
-auto	int	NULL	NO	PRI	NULL	auto_increment	#	
-string	varchar(10)	utf8_general_ci	YES		hello		#	
-tiny	int	NULL	NO	MUL	0		#	
-short	int	NULL	NO	MUL	1		#	
-medium	int	NULL	NO	MUL	0		#	
-long_int	int	NULL	NO		0		#	
-longlong	bigint	NULL	NO	MUL	0		#	
-real_float	double	NULL	NO	MUL	0		#	
-real_double	double	NULL	YES		NULL		#	
-utiny	int	NULL	NO	MUL	0		#	
-ushort	int	NULL	NO	MUL	0		#	
-umedium	int	NULL	NO	MUL	0		#	
-ulong	int	NULL	NO	MUL	0		#	
-ulonglong	bigint	NULL	NO	MUL	0		#	
-time_stamp	timestamp	NULL	YES		NULL		#	
-date_field	date	NULL	YES		NULL		#	
-date_time	datetime	NULL	YES		NULL		#	
-blob_col	blob	NULL	YES		NULL		#	
-tinyblob_col	blob	NULL	YES		NULL		#	
-mediumblob_col	blob	NULL	NO		NULL		#	
-longblob_col	blob	NULL	NO		NULL		#	
-options	enum('one','two','tree')	utf8_general_ci	NO	MUL	NULL		#	
-flags	enum('one','two','tree')	utf8_general_ci	NO		one		#	
-show full columns from t2;
-Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
-auto	int	NULL	NO		0		#	
-string	varchar(10)	utf8_general_ci	YES		hello		#	
-tiny	int	NULL	NO		0		#	
-short	int	NULL	NO		1		#	
-medium	int	NULL	NO		0		#	
-long_int	int	NULL	NO		0		#	
-longlong	bigint	NULL	NO		0		#	
-real_float	double	NULL	NO		0		#	
-real_double	double	NULL	YES		NULL		#	
-utiny	int	NULL	NO		0		#	
-ushort	int	NULL	NO		0		#	
-umedium	int	NULL	NO		0		#	
-ulong	int	NULL	NO		0		#	
-ulonglong	bigint	NULL	NO		0		#	
-time_stamp	timestamp	NULL	YES		NULL		#	
-date_field	date	NULL	YES		NULL		#	
-date_time	datetime	NULL	YES		NULL		#	
-blob_col	blob	NULL	YES		NULL		#	
-tinyblob_col	blob	NULL	YES		NULL		#	
-mediumblob_col	blob	NULL	NO		NULL		#	
-longblob_col	blob	NULL	NO		NULL		#	
-options	enum('one','two','tree')	utf8_general_ci	NO		NULL		#	
-flags	enum('one','two','tree')	utf8_general_ci	NO		one		#	
+show columns from t1;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+auto	INTEGER	NO		NO	
+string	VARCHAR	YES	hello	NO	
+tiny	INTEGER	NO	0	NO	
+short	INTEGER	NO	1	NO	
+medium	INTEGER	NO	0	NO	
+long_int	INTEGER	NO	0	NO	
+longlong	BIGINT	NO	0	NO	
+real_float	DOUBLE	NO	0	NO	
+real_double	DOUBLE	YES		YES	
+utiny	INTEGER	NO	0	NO	
+ushort	INTEGER	NO	0	NO	
+umedium	INTEGER	NO	0	NO	
+ulong	INTEGER	NO	0	NO	
+ulonglong	BIGINT	NO	0	NO	
+time_stamp	TIMESTAMP	YES		YES	
+date_field	DATE	YES		YES	
+date_time	DATETIME	YES		YES	
+blob_col	BLOB	YES		YES	
+tinyblob_col	BLOB	YES		YES	
+mediumblob_col	BLOB	NO		NO	
+longblob_col	BLOB	NO		NO	
+options	ENUM	NO		NO	
+flags	ENUM	NO	one	NO	
+show columns from t2;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+auto	INTEGER	NO	0	NO	
+string	VARCHAR	YES	hello	NO	
+tiny	INTEGER	NO	0	NO	
+short	INTEGER	NO	1	NO	
+medium	INTEGER	NO	0	NO	
+long_int	INTEGER	NO	0	NO	
+longlong	BIGINT	NO	0	NO	
+real_float	DOUBLE	NO	0	NO	
+real_double	DOUBLE	YES		YES	
+utiny	INTEGER	NO	0	NO	
+ushort	INTEGER	NO	0	NO	
+umedium	INTEGER	NO	0	NO	
+ulong	INTEGER	NO	0	NO	
+ulonglong	BIGINT	NO	0	NO	
+time_stamp	TIMESTAMP	YES		YES	
+date_field	DATE	YES		YES	
+date_time	DATETIME	YES		YES	
+blob_col	BLOB	YES		YES	
+tinyblob_col	BLOB	YES		YES	
+mediumblob_col	BLOB	NO		NO	
+longblob_col	BLOB	NO		NO	
+options	ENUM	NO		NO	
+flags	ENUM	NO	one	NO	
 select t1.auto,t2.auto from t1,t2 where t1.auto=t2.auto and ((t1.string<>t2.string and (t1.string is not null or t2.string is not null)) or (t1.tiny<>t2.tiny and (t1.tiny is not null or t2.tiny is not null)) or (t1.short<>t2.short and (t1.short is not null or t2.short is not null)) or (t1.medium<>t2.medium and (t1.medium is not null or t2.medium is not null)) or (t1.long_int<>t2.long_int and (t1.long_int is not null or t2.long_int is not null)) or (t1.longlong<>t2.longlong and (t1.longlong is not null or t2.longlong is not null)) or (t1.real_float<>t2.real_float and (t1.real_float is not null or t2.real_float is not null)) or (t1.real_double<>t2.real_double and (t1.real_double is not null or t2.real_double is not null)) or (t1.utiny<>t2.utiny and (t1.utiny is not null or t2.utiny is not null)) or (t1.ushort<>t2.ushort and (t1.ushort is not null or t2.ushort is not null)) or (t1.umedium<>t2.umedium and (t1.umedium is not null or t2.umedium is not null)) or (t1.ulong<>t2.ulong and (t1.ulong is not null or t2.ulong is not null)) or (t1.ulonglong<>t2.ulonglong and (t1.ulonglong is not null or t2.ulonglong is not null)) or (t1.time_stamp<>t2.time_stamp and (t1.time_stamp is not null or t2.time_stamp is not null)) or (t1.date_field<>t2.date_field and (t1.date_field is not null or t2.date_field is not null)) or (t1.date_time<>t2.date_time and (t1.date_time is not null or t2.date_time is not null)) or (t1.tinyblob_col<>t2.tinyblob_col and (t1.tinyblob_col is not null or t2.tinyblob_col is not null)) or (t1.mediumblob_col<>t2.mediumblob_col and (t1.mediumblob_col is not null or t2.mediumblob_col is not null)) or (t1.options<>t2.options and (t1.options is not null or t2.options is not null)) or (t1.flags<>t2.flags and (t1.flags is not null or t2.flags is not null)));
 auto	auto
 select t1.auto,t2.auto from t1,t2 where t1.auto=t2.auto and not (t1.string<=>t2.string and t1.tiny<=>t2.tiny and t1.short<=>t2.short and t1.medium<=>t2.medium and t1.long_int<=>t2.long_int and t1.longlong<=>t2.longlong and t1.real_float<=>t2.real_float and t1.real_double<=>t2.real_double and t1.utiny<=>t2.utiny and t1.ushort<=>t2.ushort and t1.umedium<=>t2.umedium and t1.ulong<=>t2.ulong and t1.ulonglong<=>t2.ulonglong and t1.time_stamp<=>t2.time_stamp and t1.date_field<=>t2.date_field and t1.date_time<=>t2.date_time and t1.tinyblob_col<=>t2.tinyblob_col and t1.mediumblob_col<=>t2.mediumblob_col and t1.options<=>t2.options and t1.flags<=>t2.flags);
 auto	auto
 drop table t2;
 create table t2 (primary key (auto)) select auto+1 as auto,1 as t1, 'a' as t2, repeat('a',256) as t3, binary repeat('b',256) as t4, repeat('a',4096) as t5, binary repeat('b',4096) as t6, '' as t7, binary '' as t8 from t1;
-show full columns from t2;
-Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
-auto	bigint	NULL	NO	PRI	NULL		#	
-t1	int	NULL	NO		NULL		#	
-t2	varchar(1)	utf8_general_ci	NO		NULL		#	
-t3	varchar(256)	utf8_general_ci	YES		NULL		#	
-t4	varbinary(256)	NULL	YES		NULL		#	
-t5	text	utf8_general_ci	YES		NULL		#	
-t6	blob	NULL	YES		NULL		#	
-t7	varchar(0)	utf8_general_ci	NO		NULL		#	
-t8	varbinary(0)	NULL	YES		NULL		#	
+show columns from t2;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+auto	BIGINT	NO		NO	
+t1	INTEGER	NO		NO	
+t2	VARCHAR	NO		NO	
+t3	VARCHAR	YES		YES	
+t4	VARBINARY	YES		YES	
+t5	TEXT	YES		YES	
+t6	BLOB	YES		YES	
+t7	VARCHAR	NO		NO	
+t8	VARBINARY	YES		YES	
 select t1,t2,length(t3),length(t4),length(t5),length(t6),t7,t8 from t2;
 t1	t2	length(t3)	length(t4)	length(t5)	length(t6)	t7	t8
 1	a	256	256	4096	4096		
@@ -207,11 +207,11 @@ create table t2 select * from t1;
 create table t3 select * from t1, t2;
 ERROR 42S21: Duplicate column name 'c'
 create table t3 select t1.c AS c1, t2.c AS c2,1 as "const" from t1, t2;
-show full columns from t3;
-Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
-c1	int	NULL	YES		NULL		#	
-c2	int	NULL	YES		NULL		#	
-const	int	NULL	NO		NULL		#	
+show columns from t3;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+c1	INTEGER	YES		YES	
+c2	INTEGER	YES		YES	
+const	INTEGER	NO		NO	
 drop table t1,t2,t3;
 create table t1 ( myfield INT NOT NULL, UNIQUE INDEX (myfield), unique (myfield), index(myfield));
 drop table t1;

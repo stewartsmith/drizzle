@@ -1,0 +1,163 @@
+drop table if exists t1;
+show variables like 'version';
+Variable_name	Value
+version	####.##.####
+select version();
+version()
+####.##.####
+select database();
+database()
+test
+CREATE TABLE `t1` (
+`col_bigint` bigint,
+`col_text` text,
+`col_char` char (1),
+`col_enum` enum ('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'),
+`col_int` int,
+`col_char_not_null` char (1) not null,
+`col_int_not_null_key` int not null,
+`col_text_not_null` text not null,
+`col_enum_not_null_key` enum ('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') not null,
+`col_int_key` int,
+`col_char_key` char (1),
+`col_enum_not_null` enum ('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') not null,
+`col_text_not_null_key` text not null,
+pk integer auto_increment,
+`col_bigint_key` bigint,
+`col_int_not_null` int not null,
+`col_bigint_not_null` bigint not null,
+`col_bigint_not_null_key` bigint not null,
+`col_char_not_null_key` char (1) not null,
+`col_text_key` text,
+`col_enum_key` enum ('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'),
+/*Indices*/
+key (`col_int_not_null_key` ),
+key (`col_enum_not_null_key` ),
+key (`col_int_key` ),
+key (`col_char_key` ),
+key (`col_text_not_null_key`  (255)),
+primary key (pk),
+key (`col_bigint_key` ),
+key (`col_bigint_not_null_key` ),
+key (`col_char_not_null_key` ),
+key (`col_text_key`  (255)),
+key (`col_enum_key` )) ENGINE=innodb;
+set AUTOCOMMIT=OFF;
+select SQL_BIG_RESULT table_schema, 
+table_name, 
+CASE WHEN table_type = 'STANDARD' THEN 'table' 
+WHEN table_type = 'FUNCTION' then 'function' 
+ELSE 'misc' END, 
+column_name,
+CASE WHEN IS_USED_IN_PRIMARY = 'YES' THEN 'primary' 
+WHEN IS_INDEXED = 'YES' THEN 'indexed' 
+ELSE 'indexed' END 
+FROM data_dictionary.tables INNER JOIN
+data_dictionary.columns USING(table_schema, table_name) ORDER BY table_schema, table_name limit 20;
+table_schema	table_name	CASE WHEN table_type = 'STANDARD' THEN 'table' 
+WHEN table_type = 'FUNCTION' then 'function' 
+ELSE 'misc' END	column_name	CASE WHEN IS_USED_IN_PRIMARY = 'YES' THEN 'primary' 
+WHEN IS_INDEXED = 'YES' THEN 'indexed' 
+ELSE 'indexed' END 
+
+DATA_DICTIONARY	CHARACTER_SETS	misc	CHARACTER_SET_NAME	indexed
+DATA_DICTIONARY	CHARACTER_SETS	misc	DEFAULT_COLLATE_NAME	indexed
+DATA_DICTIONARY	CHARACTER_SETS	misc	DESCRIPTION	indexed
+DATA_DICTIONARY	CHARACTER_SETS	misc	MAXLEN	indexed
+DATA_DICTIONARY	COLLATIONS	misc	CHARACTER_SET_NAME	indexed
+DATA_DICTIONARY	COLLATIONS	misc	COLLATION_NAME	indexed
+DATA_DICTIONARY	COLLATIONS	misc	DESCRIPTION	indexed
+DATA_DICTIONARY	COLLATIONS	misc	ID	indexed
+DATA_DICTIONARY	COLLATIONS	misc	IS_DEFAULT	indexed
+DATA_DICTIONARY	COLLATIONS	misc	IS_COMPILED	indexed
+DATA_DICTIONARY	COLLATIONS	misc	SORTLEN	indexed
+DATA_DICTIONARY	COLUMNS	misc	TABLE_SCHEMA	indexed
+DATA_DICTIONARY	COLUMNS	misc	TABLE_NAME	indexed
+DATA_DICTIONARY	COLUMNS	misc	COLUMN_NAME	indexed
+DATA_DICTIONARY	COLUMNS	misc	COLUMN_TYPE	indexed
+DATA_DICTIONARY	COLUMNS	misc	ORDINAL_POSITION	indexed
+DATA_DICTIONARY	COLUMNS	misc	COLUMN_DEFAULT	indexed
+DATA_DICTIONARY	COLUMNS	misc	COLUMN_DEFAULT_IS_NULL	indexed
+DATA_DICTIONARY	COLUMNS	misc	COLUMN_DEFAULT_UPDATE	indexed
+DATA_DICTIONARY	COLUMNS	misc	IS_AUTO_INCREMENT	indexed
+CREATE SCHEMA randgen_query_test;
+USE randgen_query_test;
+CREATE TABLE t1 (a INT);
+CREATE TABLE t2 LIKE t1;
+CREATE TABLE t3 LIKE t1;
+CREATE TABLE t4 (b CHAR(500));
+CREATE TABLE t5 LIKE t4;
+select SQL_BIG_RESULT table_schema,
+table_name,
+CASE WHEN table_type = 'STANDARD' THEN 'table'
+            WHEN table_type = 'FUNCTION' then 'function'
+       ELSE 'misc' END,
+column_name,
+CASE WHEN IS_USED_IN_PRIMARY = 'YES' THEN 'primary'
+             WHEN IS_INDEXED = 'YES' THEN 'indexed'
+       ELSE 'indexed' END
+FROM data_dictionary.tables INNER JOIN
+data_dictionary.columns USING(table_schema, table_name) WHERE table_schema NOT IN ('DATA_DICTIONARY','INFORMATION_SCHEMA')
+ORDER BY table_schema, table_name limit 20;
+table_schema	table_name	CASE WHEN table_type = 'STANDARD' THEN 'table'
+            WHEN table_type = 'FUNCTION' then 'function'
+       ELSE 'misc' END	column_name	CASE WHEN IS_USED_IN_PRIMARY = 'YES' THEN 'primary'
+             WHEN IS_INDEXED = 'YES' THEN 'indexed'
+       ELSE 'indexed' END
+
+randgen_query_test	t1	misc	a	indexed
+randgen_query_test	t2	misc	a	indexed
+randgen_query_test	t3	misc	a	indexed
+randgen_query_test	t4	misc	b	indexed
+randgen_query_test	t5	misc	b	indexed
+test	t1	misc	col_bigint	indexed
+test	t1	misc	col_text	indexed
+test	t1	misc	col_char	indexed
+test	t1	misc	col_enum	indexed
+test	t1	misc	col_int	indexed
+test	t1	misc	col_char_not_null	indexed
+test	t1	misc	col_int_not_null_key	indexed
+test	t1	misc	col_text_not_null	indexed
+test	t1	misc	col_enum_not_null_key	indexed
+test	t1	misc	col_int_key	indexed
+test	t1	misc	col_char_key	indexed
+test	t1	misc	col_enum_not_null	indexed
+test	t1	misc	col_text_not_null_key	indexed
+test	t1	misc	pk	primary
+test	t1	misc	col_bigint_key	indexed
+DROP SCHEMA randgen_query_test;
+USE test;
+select AVG(`col_int_key`) + AVG(`col_int`) AS average1,
+(SUM(`col_int_key`) + SUM(`col_int`)) / COUNT(*) AS average2,
+COUNT(*) AS count FROM t1;
+average1	average2	count
+NULL	NULL	0
+select collation_name,character_set_name FROM data_dictionary.collations;
+collation_name	character_set_name
+binary	binary
+utf8_bin	utf8_general_ci
+utf8_czech_ci	utf8_general_ci
+utf8_danish_ci	utf8_general_ci
+utf8_esperanto_ci	utf8_general_ci
+utf8_estonian_ci	utf8_general_ci
+utf8_general_ci	utf8_general_ci
+utf8_hungarian_ci	utf8_general_ci
+utf8_icelandic_ci	utf8_general_ci
+utf8_latvian_ci	utf8_general_ci
+utf8_lithuanian_ci	utf8_general_ci
+utf8_persian_ci	utf8_general_ci
+utf8_polish_ci	utf8_general_ci
+utf8_roman_ci	utf8_general_ci
+utf8_romanian_ci	utf8_general_ci
+utf8_sinhala_ci	utf8_general_ci
+utf8_slovak_ci	utf8_general_ci
+utf8_slovenian_ci	utf8_general_ci
+utf8_spanish2_ci	utf8_general_ci
+utf8_spanish_ci	utf8_general_ci
+utf8_swedish_ci	utf8_general_ci
+utf8_turkish_ci	utf8_general_ci
+utf8_unicode_ci	utf8_general_ci
+select COUNT(*) from data_dictionary.tables;
+COUNT(*)
+####.##.####
+DROP TABLE t1;

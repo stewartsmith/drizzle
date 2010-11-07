@@ -1,0 +1,2 @@
+SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='io_capacity';
+show variables like 'innodb_io_capacity';

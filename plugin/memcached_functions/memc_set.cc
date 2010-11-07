@@ -42,6 +42,7 @@
 #include <string>
 
 using namespace std;
+using namespace drizzled;
 
 int64_t MemcachedSet::val_int()
 {

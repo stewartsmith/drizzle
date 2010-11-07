@@ -56,7 +56,7 @@ bool statement::InsertSelect::execute()
 
   if (! (res= session->openTablesLock(all_tables)))
   {
-    DRIZZLE_INSERT_SELECT_START(session->query);
+    DRIZZLE_INSERT_SELECT_START(session->query.c_str());
     /* Skip first table, which is the table we are inserting in */
     TableList *second_table= first_table->next_local;
     select_lex->table_list.first= (unsigned char*) second_table;
@@ -75,6 +75,7 @@ bool statement::InsertSelect::execute()
                          session->lex, 
                          sel_result, 
                          OPTION_SETUP_TABLES_DONE);
+
       /*
          Invalidate the table in the query cache if something changed
          after unlocking when changes become visible.

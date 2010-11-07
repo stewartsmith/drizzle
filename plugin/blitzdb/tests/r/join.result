@@ -1,0 +1,107 @@
+drop table if exists t1, t2;
+create table t1 (a int) engine = blitzdb;
+create table t2 (a int) engine = blitzdb;
+insert into t1 values (1), (2), (3);
+insert into t2 values (1), (4), (8);
+select * from t1 JOIN t2 where t1.a = t2.a;
+a	a
+1	1
+select * from t1 LEFT JOIN t2 on t1.a = t2.a;
+a	a
+1	1
+2	NULL
+3	NULL
+select * from t1 RIGHT JOIN t2 on t1.a = t2.a;
+a	a
+1	1
+NULL	4
+NULL	8
+select * from t1 UNION select * from t2;
+a
+1
+2
+3
+4
+8
+drop table t1, t2;
+create table t1 (id int, name varchar(32)) engine = blitzdb;
+create table t2 (id int, job_id int) engine = blitzdb;
+create table t3 (job_id int, job_name varchar(32)) engine = blitzdb;
+insert into t1 values (1, 'Alex');
+insert into t1 values (2, 'Bob');
+insert into t1 values (3, 'Curt');
+insert into t1 values (4, 'Dan');
+insert into t1 values (5, 'Edgar');
+insert into t2 values (1, 1);
+insert into t2 values (2, 1);
+insert into t2 values (3, 3);
+insert into t2 values (4, 2);
+insert into t2 values (5, 4);
+insert into t3 values (1, 'Software Engineer');
+insert into t3 values (2, 'Civil Engineer');
+insert into t3 values (3, 'Electrical Engineer');
+insert into t3 values (4, 'Mechanical Engineer');
+select
+t1.name, t3.job_name
+from
+t1 join (t2, t3)
+on
+(t1.id = t2.id and t2.job_id = t3.job_id);
+name	job_name
+Alex	Software Engineer
+Bob	Software Engineer
+Curt	Electrical Engineer
+Dan	Civil Engineer
+Edgar	Mechanical Engineer
+select
+t1.name, t3.job_name
+from
+t1 right join (t2, t3)
+on
+(t1.id = t2.id and t2.job_id = t3.job_id);
+name	job_name
+Alex	Software Engineer
+NULL	Civil Engineer
+NULL	Electrical Engineer
+NULL	Mechanical Engineer
+Bob	Software Engineer
+NULL	Civil Engineer
+NULL	Electrical Engineer
+NULL	Mechanical Engineer
+NULL	Software Engineer
+NULL	Civil Engineer
+Curt	Electrical Engineer
+NULL	Mechanical Engineer
+NULL	Software Engineer
+Dan	Civil Engineer
+NULL	Electrical Engineer
+NULL	Mechanical Engineer
+NULL	Software Engineer
+NULL	Civil Engineer
+NULL	Electrical Engineer
+Edgar	Mechanical Engineer
+delete from t3 where job_id = 4;
+select
+t1.name, t3.job_name
+from
+t1 join (t2, t3)
+on
+(t1.id = t2.id and t2.job_id = t3.job_id);
+name	job_name
+Alex	Software Engineer
+Bob	Software Engineer
+Curt	Electrical Engineer
+Dan	Civil Engineer
+select
+t1.name, t3.job_name
+from
+t1 left join (t2, t3)
+on
+(t1.id = t2.id and t2.job_id = t3.job_id);
+name	job_name
+Alex	Software Engineer
+Bob	Software Engineer
+Curt	Electrical Engineer
+Dan	Civil Engineer
+Edgar	NULL
+drop table t1, t2, t3;

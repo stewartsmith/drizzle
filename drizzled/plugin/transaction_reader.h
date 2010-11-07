@@ -24,7 +24,8 @@
 #ifndef DRIZZLED_PLUGIN_TRANSACTION_READER_H
 #define DRIZZLED_PLUGIN_TRANSACTION_READER_H
 
-#include <drizzled/replication_services.h> /* For global transaction ID typedef */
+#include "drizzled/plugin/plugin.h"
+#include "drizzled/replication_services.h" /* For global transaction ID typedef */
 
 /**
  * @file Defines the API for a TransactionReader
@@ -69,7 +70,7 @@ public:
                     message::Transaction *to_fill)= 0;
 };
 
-} /* end namespace drizzled::plugin */
+} /* end namespace plugin */
 } /* end namespace drizzled */
 
 #endif /* DRIZZLED_PLUGIN_TRANSACTION_READER_H */

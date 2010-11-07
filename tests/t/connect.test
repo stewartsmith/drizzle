@@ -15,7 +15,7 @@ connect (con2,localhost,root,,test);
 show tables;
 
 --replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
---error 1049
+--error ER_BAD_DB_ERROR
 connect (fail_con,localhost,root,z,test2);
 --replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
 connect (fail_con,localhost,root,z,);
@@ -30,13 +30,13 @@ connect (con4,localhost,test,gambling,test);
 show tables;
 
 --replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
---error 1049
+--error ER_BAD_DB_ERROR
 connect (fail_con,localhost,test,,test2);
 --replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
---error 1049
+--error ER_BAD_DB_ERROR
 connect (fail_con,localhost,test,,"");
 --replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
---error 1049
+--error ER_BAD_DB_ERROR
 connect (fail_con,localhost,test,zorro,test2);
 --replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
 connect (fail_con,localhost,test,zorro,);
@@ -45,13 +45,13 @@ connect (fail_con,localhost,test,zorro,);
 
 
 --replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
---error 1049
+--error ER_BAD_DB_ERROR
 connect (fail_con,localhost,test,,test2);
 --replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
 connect (fail_con,localhost,test,,);
 --disconnect fail_con
 --replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
---error 1049
+--error ER_BAD_DB_ERROR
 connect (fail_con,localhost,test,zorro,test2);
 --replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
 connect (fail_con,localhost,test,zorro,);
@@ -69,7 +69,7 @@ create temporary table t2(id integer not null auto_increment primary key);
 set @id := 1;
 delete from t1 where id like @id;
 disconnect con7;
---sleep 5
+--sleep 0.5
 connection default;
 drop table t1;
 

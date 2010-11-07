@@ -22,6 +22,10 @@
 
 #include <drizzled/function/func.h>
 
+
+namespace drizzled
+{
+
 /*
   Objects of this class are used for ROLLUP queries to wrap up
   each constant item referred to in GROUP BY list.
@@ -52,5 +56,6 @@ public:
   }
 };
 
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_ROLLUP_CONST_H */

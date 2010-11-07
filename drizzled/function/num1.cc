@@ -19,10 +19,12 @@
 
 #include "config.h"
 
-#include CSTDINT_H
 #include <cassert>
 
 #include <drizzled/function/num1.h>
+
+namespace drizzled
+{
 
 /**
   Set result type for a numeric function of one argument
@@ -56,4 +58,4 @@ void Item_func_num1::fix_num_length_and_dec()
 }
 
 
-
+} /* namespace drizzled */

@@ -25,6 +25,9 @@
 #include <drizzled/table.h>
 #include <drizzled/session.h>
 
+namespace drizzled
+{
+
 extern my_decimal decimal_zero;
 
 /****************************************************************************
@@ -121,14 +124,16 @@ void Field_decimal::set_value_on_overflow(my_decimal *decimal_value,
 
 bool Field_decimal::store_value(const my_decimal *decimal_value)
 {
-  int error= 0;
-
-  if (warn_if_overflow(my_decimal2binary(E_DEC_FATAL_ERROR & ~E_DEC_OVERFLOW,
-                                         decimal_value, ptr, precision, dec)))
+  int error= my_decimal2binary(E_DEC_FATAL_ERROR & ~E_DEC_OVERFLOW,
+                                         decimal_value, ptr, precision, dec);
+  if (warn_if_overflow(error))
   {
-    my_decimal buff;
-    set_value_on_overflow(&buff, decimal_value->sign());
-    my_decimal2binary(E_DEC_FATAL_ERROR, &buff, ptr, precision, dec);
+    if (error != E_DEC_TRUNCATED)
+    {
+      my_decimal buff;
+      set_value_on_overflow(&buff, decimal_value->sign());
+      my_decimal2binary(E_DEC_FATAL_ERROR, &buff, ptr, precision, dec);
+    }
     error= 1;
   }
   return(error);
@@ -147,17 +152,17 @@ int Field_decimal::store(const char *from, uint32_t length,
                            ~(E_DEC_OVERFLOW | E_DEC_BAD_NUM),
                            from, length, charset_arg,
                            &decimal_value)) &&
-      table->in_use->abort_on_warning)
+      getTable()->in_use->abort_on_warning)
   {
     /* Because "from" is not NUL-terminated and we use %s in the ER() */
     String from_as_str;
     from_as_str.copy(from, length, &my_charset_bin);
 
-    push_warning_printf(table->in_use, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+    push_warning_printf(getTable()->in_use, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                         ER_TRUNCATED_WRONG_VALUE_FOR_FIELD,
                         ER(ER_TRUNCATED_WRONG_VALUE_FOR_FIELD),
                         "decimal", from_as_str.c_ptr(), field_name,
-                        (uint32_t) table->in_use->row_count);
+                        (uint32_t) getTable()->in_use->row_count);
 
     return(err);
   }
@@ -177,11 +182,11 @@ int Field_decimal::store(const char *from, uint32_t length,
       String from_as_str;
       from_as_str.copy(from, length, &my_charset_bin);
 
-      push_warning_printf(table->in_use, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+      push_warning_printf(getTable()->in_use, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                           ER_TRUNCATED_WRONG_VALUE_FOR_FIELD,
                           ER(ER_TRUNCATED_WRONG_VALUE_FOR_FIELD),
                           "decimal", from_as_str.c_ptr(), field_name,
-                          (uint32_t) table->in_use->row_count);
+                          (uint32_t) getTable()->in_use->row_count);
       my_decimal_set_zero(&decimal_value);
 
       break;
@@ -213,11 +218,11 @@ int Field_decimal::store(double nr)
     if (check_overflow(err))
       set_value_on_overflow(&decimal_value, decimal_value.sign());
     /* Only issue a warning if store_value doesn't issue an warning */
-    table->in_use->got_warning= 0;
+    getTable()->in_use->got_warning= 0;
   }
   if (store_value(&decimal_value))
     err= 1;
-  else if (err && !table->in_use->got_warning)
+  else if (err && !getTable()->in_use->got_warning)
     err= warn_if_overflow(err);
   return(err);
 }
@@ -236,11 +241,11 @@ int Field_decimal::store(int64_t nr, bool unsigned_val)
     if (check_overflow(err))
       set_value_on_overflow(&decimal_value, decimal_value.sign());
     /* Only issue a warning if store_value doesn't issue an warning */
-    table->in_use->got_warning= 0;
+    getTable()->in_use->got_warning= 0;
   }
   if (store_value(&decimal_value))
     err= 1;
-  else if (err && !table->in_use->got_warning)
+  else if (err && not getTable()->in_use->got_warning)
     err= warn_if_overflow(err);
   return err;
 }
@@ -353,35 +358,6 @@ uint32_t Field_decimal::pack_length_from_metadata(uint32_t field_metadata)
 }
 
 
-/**
-  Check to see if field size is compatible with destination.
-
-  This method is used in row-based replication to verify that the slave's
-  field size is less than or equal to the master's field size. The
-  encoded field metadata (from the master or source) is decoded and compared
-  to the size of this field (the slave or destination).
-
-  @param   field_metadata   Encoded size in field metadata
-
-  @retval 0 if this field's size is < the source field's size
-  @retval 1 if this field's size is >= the source field's size
-*/
-int Field_decimal::compatible_field_size(uint32_t field_metadata)
-{
-  int compatible= 0;
-  uint32_t const source_precision= (field_metadata >> 8U) & 0x00ff;
-  uint32_t const source_decimal= field_metadata & 0x00ff;
-  uint32_t const source_size= my_decimal_get_binary_size(source_precision,
-                                                         source_decimal);
-  uint32_t const destination_size= row_pack_length();
-  compatible= (source_size <= destination_size);
-  if (compatible)
-    compatible= (source_precision <= precision) &&
-      (source_decimal <= decimals());
-  return (compatible);
-}
-
-
 uint32_t Field_decimal::is_equal(CreateField *new_field_ptr)
 {
   return ((new_field_ptr->sql_type == real_type()) &&
@@ -447,3 +423,4 @@ resizing using the precision and decimals from the slave.
   return from+len;
 }
 
+} /* namespace drizzled */

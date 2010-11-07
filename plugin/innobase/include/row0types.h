@@ -11,8 +11,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -56,7 +56,7 @@ typedef struct row_ext_struct row_ext_t;
 /* MySQL data types */
 #if defined(BUILD_DRIZZLE)
 # if defined(__cplusplus)
-typedef class Table TABLE;
+typedef drizzled::Table TABLE;
 # else
 typedef void TABLE;
 # endif /* cplusplus */

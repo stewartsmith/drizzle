@@ -1,4 +1,6 @@
+# vim:ft=automake
 # Copyright (C) 2001, 2004, 2006 MySQL AB & Innobase Oy
+# Copyright (C) 2010 Brian Aker, Joe Daly, Monty Taylor
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -11,315 +13,362 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-noinst_HEADERS+=	plugin/innobase/include/btr0btr.h \
-			plugin/innobase/include/btr0btr.ic \
-			plugin/innobase/include/btr0cur.h \
-			plugin/innobase/include/btr0cur.ic \
-			plugin/innobase/include/btr0pcur.h \
-			plugin/innobase/include/btr0pcur.ic \
-			plugin/innobase/include/btr0sea.h \
-			plugin/innobase/include/btr0sea.ic \
-			plugin/innobase/include/btr0types.h \
-			plugin/innobase/include/buf0buddy.h \
-			plugin/innobase/include/buf0buddy.ic \
-			plugin/innobase/include/buf0buf.h \
-			plugin/innobase/include/buf0buf.ic \
-			plugin/innobase/include/buf0flu.h \
-			plugin/innobase/include/buf0flu.ic \
-			plugin/innobase/include/buf0lru.h \
-			plugin/innobase/include/buf0lru.ic \
-			plugin/innobase/include/buf0rea.h \
-			plugin/innobase/include/buf0types.h \
-			plugin/innobase/include/data0data.h \
-			plugin/innobase/include/data0data.ic \
-			plugin/innobase/include/data0type.h \
-			plugin/innobase/include/data0type.ic \
-			plugin/innobase/include/data0types.h \
-			plugin/innobase/include/db0err.h \
-			plugin/innobase/include/dict0boot.h \
-			plugin/innobase/include/dict0boot.ic \
-			plugin/innobase/include/dict0crea.h \
-			plugin/innobase/include/dict0crea.ic \
-			plugin/innobase/include/dict0dict.h \
-			plugin/innobase/include/dict0dict.ic \
-			plugin/innobase/include/dict0load.h \
-			plugin/innobase/include/dict0load.ic \
-			plugin/innobase/include/dict0mem.h \
-			plugin/innobase/include/dict0mem.ic \
-			plugin/innobase/include/dict0types.h \
-			plugin/innobase/include/dyn0dyn.h \
-			plugin/innobase/include/dyn0dyn.ic \
-			plugin/innobase/include/eval0eval.h \
-			plugin/innobase/include/eval0eval.ic \
-			plugin/innobase/include/eval0proc.h \
-			plugin/innobase/include/eval0proc.ic \
-			plugin/innobase/include/fil0fil.h \
-			plugin/innobase/include/fsp0fsp.h \
-			plugin/innobase/include/fsp0fsp.ic \
-			plugin/innobase/include/fsp0types.h \
-			plugin/innobase/include/fut0fut.h \
-			plugin/innobase/include/fut0fut.ic \
-			plugin/innobase/include/fut0lst.h \
-			plugin/innobase/include/fut0lst.ic \
-			plugin/innobase/include/ha0ha.h \
-			plugin/innobase/include/ha0ha.ic \
-			plugin/innobase/include/ha0storage.h \
-			plugin/innobase/include/ha0storage.ic \
-			plugin/innobase/include/hash0hash.h \
-			plugin/innobase/include/hash0hash.ic \
-			plugin/innobase/include/ibuf0ibuf.h \
-			plugin/innobase/include/ibuf0ibuf.ic \
-			plugin/innobase/include/ibuf0types.h \
-			plugin/innobase/include/lock0iter.h \
-			plugin/innobase/include/lock0lock.h \
-			plugin/innobase/include/lock0lock.ic \
-			plugin/innobase/include/lock0priv.h \
-			plugin/innobase/include/lock0priv.ic \
-			plugin/innobase/include/lock0types.h \
-			plugin/innobase/include/log0log.h \
-			plugin/innobase/include/log0log.ic \
-			plugin/innobase/include/log0recv.h \
-			plugin/innobase/include/log0recv.ic \
-			plugin/innobase/include/mach0data.h \
-			plugin/innobase/include/mach0data.ic \
-			plugin/innobase/include/mem0dbg.h \
-			plugin/innobase/include/mem0dbg.ic \
-			plugin/innobase/include/mem0mem.h \
-			plugin/innobase/include/mem0mem.ic \
-			plugin/innobase/include/mem0pool.h \
-			plugin/innobase/include/mem0pool.ic \
-			plugin/innobase/include/mtr0log.h \
-			plugin/innobase/include/mtr0log.ic \
-			plugin/innobase/include/mtr0mtr.h \
-			plugin/innobase/include/mtr0mtr.ic \
-			plugin/innobase/include/mtr0types.h \
-			plugin/innobase/include/mysql_addons.h \
-			plugin/innobase/include/os0file.h \
-			plugin/innobase/include/os0proc.h \
-			plugin/innobase/include/os0proc.ic \
-			plugin/innobase/include/os0sync.h \
-			plugin/innobase/include/os0sync.ic \
-			plugin/innobase/include/os0thread.h \
-			plugin/innobase/include/os0thread.ic \
-			plugin/innobase/include/page0cur.h \
-			plugin/innobase/include/page0cur.ic \
-			plugin/innobase/include/page0page.h \
-			plugin/innobase/include/page0page.ic \
-			plugin/innobase/include/page0zip.h \
-			plugin/innobase/include/page0zip.ic \
-			plugin/innobase/include/page0types.h \
-			plugin/innobase/include/pars0grm.h \
-			plugin/innobase/include/pars0opt.h \
-			plugin/innobase/include/pars0opt.ic \
-			plugin/innobase/include/pars0pars.h \
-			plugin/innobase/include/pars0pars.ic \
-			plugin/innobase/include/pars0sym.h \
-			plugin/innobase/include/pars0sym.ic \
-			plugin/innobase/include/pars0types.h \
-			plugin/innobase/include/que0que.h \
-			plugin/innobase/include/que0que.ic \
-			plugin/innobase/include/que0types.h \
-			plugin/innobase/include/read0read.h \
-			plugin/innobase/include/read0read.ic \
-			plugin/innobase/include/read0types.h \
-			plugin/innobase/include/rem0cmp.h \
-			plugin/innobase/include/rem0cmp.ic \
-			plugin/innobase/include/rem0rec.h \
-			plugin/innobase/include/rem0rec.ic \
-			plugin/innobase/include/rem0types.h \
-			plugin/innobase/include/row0ext.h \
-			plugin/innobase/include/row0ext.ic \
-			plugin/innobase/include/row0ins.h \
-			plugin/innobase/include/row0ins.ic \
-			plugin/innobase/include/row0merge.h \
-			plugin/innobase/include/row0mysql.h \
-			plugin/innobase/include/row0mysql.ic \
-			plugin/innobase/include/row0purge.h \
-			plugin/innobase/include/row0purge.ic \
-			plugin/innobase/include/row0row.h \
-			plugin/innobase/include/row0row.ic \
-			plugin/innobase/include/row0sel.h \
-			plugin/innobase/include/row0sel.ic \
-			plugin/innobase/include/row0types.h \
-			plugin/innobase/include/row0uins.h \
-			plugin/innobase/include/row0uins.ic \
-			plugin/innobase/include/row0umod.h \
-			plugin/innobase/include/row0umod.ic \
-			plugin/innobase/include/row0undo.h \
-			plugin/innobase/include/row0undo.ic \
-			plugin/innobase/include/row0upd.h \
-			plugin/innobase/include/row0upd.ic \
-			plugin/innobase/include/row0vers.h \
-			plugin/innobase/include/row0vers.ic \
-			plugin/innobase/include/srv0que.h \
-			plugin/innobase/include/srv0srv.h \
-			plugin/innobase/include/srv0srv.ic \
-			plugin/innobase/include/srv0start.h \
-			plugin/innobase/include/sync0arr.h \
-			plugin/innobase/include/sync0arr.ic \
-			plugin/innobase/include/sync0rw.h \
-			plugin/innobase/include/sync0rw.ic \
-			plugin/innobase/include/sync0sync.h \
-			plugin/innobase/include/sync0sync.ic \
-			plugin/innobase/include/sync0types.h \
-			plugin/innobase/include/thr0loc.h \
-			plugin/innobase/include/thr0loc.ic \
-			plugin/innobase/include/trx0i_s.h \
-			plugin/innobase/include/trx0purge.h \
-			plugin/innobase/include/trx0purge.ic \
-			plugin/innobase/include/trx0rec.h \
-			plugin/innobase/include/trx0rec.ic \
-			plugin/innobase/include/trx0roll.h \
-			plugin/innobase/include/trx0roll.ic \
-			plugin/innobase/include/trx0rseg.h \
-			plugin/innobase/include/trx0rseg.ic \
-			plugin/innobase/include/trx0sys.h \
-			plugin/innobase/include/trx0sys.ic \
-			plugin/innobase/include/trx0trx.h \
-			plugin/innobase/include/trx0trx.ic \
-			plugin/innobase/include/trx0types.h \
-			plugin/innobase/include/trx0undo.h \
-			plugin/innobase/include/trx0undo.ic \
-			plugin/innobase/include/trx0xa.h \
-			plugin/innobase/include/univ.i \
-			plugin/innobase/include/usr0sess.h \
-			plugin/innobase/include/usr0sess.ic \
-			plugin/innobase/include/usr0types.h \
-			plugin/innobase/include/ut0auxconf.h \
-			plugin/innobase/include/ut0byte.h \
-			plugin/innobase/include/ut0byte.ic \
-			plugin/innobase/include/ut0dbg.h \
-			plugin/innobase/include/ut0lst.h \
-			plugin/innobase/include/ut0mem.h \
-			plugin/innobase/include/ut0mem.ic \
-			plugin/innobase/include/ut0rnd.h \
-			plugin/innobase/include/ut0rnd.ic \
-			plugin/innobase/include/ut0sort.h \
-			plugin/innobase/include/ut0ut.h \
-			plugin/innobase/include/ut0ut.ic \
-			plugin/innobase/include/ut0vec.h \
-			plugin/innobase/include/ut0vec.ic \
-			plugin/innobase/include/ut0list.h \
-			plugin/innobase/include/ut0list.ic \
-			plugin/innobase/include/ut0wqueue.h \
-			plugin/innobase/include/ha_prototypes.h \
-			plugin/innobase/mem/mem0dbg.c \
-			plugin/innobase/handler/ha_innodb.h \
-			plugin/innobase/include/handler0alter.h \
-			plugin/innobase/handler/handler0vars.h \
-			plugin/innobase/handler/i_s.h
+noinst_HEADERS+= \
+                 plugin/innobase/include/btr0btr.h \
+                 plugin/innobase/include/btr0btr.ic \
+                 plugin/innobase/include/btr0cur.h \
+                 plugin/innobase/include/btr0cur.ic \
+                 plugin/innobase/include/btr0pcur.h \
+                 plugin/innobase/include/btr0pcur.ic \
+                 plugin/innobase/include/btr0sea.h \
+                 plugin/innobase/include/btr0sea.ic \
+                 plugin/innobase/include/btr0types.h \
+                 plugin/innobase/include/buf0buddy.h \
+                 plugin/innobase/include/buf0buddy.ic \
+                 plugin/innobase/include/buf0buf.h \
+                 plugin/innobase/include/buf0buf.ic \
+                 plugin/innobase/include/buf0flu.h \
+                 plugin/innobase/include/buf0flu.ic \
+                 plugin/innobase/include/buf0lru.h \
+                 plugin/innobase/include/buf0lru.ic \
+                 plugin/innobase/include/buf0rea.h \
+                 plugin/innobase/include/buf0types.h \
+                 plugin/innobase/include/data0data.h \
+                 plugin/innobase/include/data0data.ic \
+                 plugin/innobase/include/data0type.h \
+                 plugin/innobase/include/data0type.ic \
+                 plugin/innobase/include/data0types.h \
+                 plugin/innobase/include/db0err.h \
+                 plugin/innobase/include/dict0boot.h \
+                 plugin/innobase/include/dict0boot.ic \
+                 plugin/innobase/include/dict0crea.h \
+                 plugin/innobase/include/dict0crea.ic \
+                 plugin/innobase/include/dict0dict.h \
+                 plugin/innobase/include/dict0dict.ic \
+                 plugin/innobase/include/dict0load.h \
+                 plugin/innobase/include/dict0load.ic \
+                 plugin/innobase/include/dict0mem.h \
+                 plugin/innobase/include/dict0mem.ic \
+                 plugin/innobase/include/dict0types.h \
+                 plugin/innobase/include/dyn0dyn.h \
+                 plugin/innobase/include/dyn0dyn.ic \
+                 plugin/innobase/include/eval0eval.h \
+                 plugin/innobase/include/eval0eval.ic \
+                 plugin/innobase/include/eval0proc.h \
+                 plugin/innobase/include/eval0proc.ic \
+                 plugin/innobase/include/fil0fil.h \
+                 plugin/innobase/include/fsp0fsp.h \
+                 plugin/innobase/include/fsp0fsp.ic \
+                 plugin/innobase/include/fsp0types.h \
+                 plugin/innobase/include/fut0fut.h \
+                 plugin/innobase/include/fut0fut.ic \
+                 plugin/innobase/include/fut0lst.h \
+                 plugin/innobase/include/fut0lst.ic \
+                 plugin/innobase/include/ha0ha.h \
+                 plugin/innobase/include/ha0ha.ic \
+                 plugin/innobase/include/ha0storage.h \
+                 plugin/innobase/include/ha0storage.ic \
+                 plugin/innobase/include/hash0hash.h \
+                 plugin/innobase/include/hash0hash.ic \
+                 plugin/innobase/include/ibuf0ibuf.h \
+                 plugin/innobase/include/ibuf0ibuf.ic \
+                 plugin/innobase/include/ibuf0types.h \
+                 plugin/innobase/include/lock0iter.h \
+                 plugin/innobase/include/lock0lock.h \
+                 plugin/innobase/include/lock0lock.ic \
+                 plugin/innobase/include/lock0priv.h \
+                 plugin/innobase/include/lock0priv.ic \
+                 plugin/innobase/include/lock0types.h \
+                 plugin/innobase/include/log0log.h \
+                 plugin/innobase/include/log0log.ic \
+                 plugin/innobase/include/log0recv.h \
+                 plugin/innobase/include/log0recv.ic \
+                 plugin/innobase/include/mach0data.h \
+                 plugin/innobase/include/mach0data.ic \
+                 plugin/innobase/include/mem0dbg.h \
+                 plugin/innobase/include/mem0dbg.ic \
+                 plugin/innobase/include/mem0mem.h \
+                 plugin/innobase/include/mem0mem.ic \
+                 plugin/innobase/include/mem0pool.h \
+                 plugin/innobase/include/mem0pool.ic \
+                 plugin/innobase/include/mtr0log.h \
+                 plugin/innobase/include/mtr0log.ic \
+                 plugin/innobase/include/mtr0mtr.h \
+                 plugin/innobase/include/mtr0mtr.ic \
+                 plugin/innobase/include/mtr0types.h \
+                 plugin/innobase/include/mysql_addons.h \
+                 plugin/innobase/include/os0file.h \
+                 plugin/innobase/include/os0proc.h \
+                 plugin/innobase/include/os0proc.ic \
+                 plugin/innobase/include/os0sync.h \
+                 plugin/innobase/include/os0sync.ic \
+                 plugin/innobase/include/os0thread.h \
+                 plugin/innobase/include/os0thread.ic \
+                 plugin/innobase/include/page0cur.h \
+                 plugin/innobase/include/page0cur.ic \
+                 plugin/innobase/include/page0page.h \
+                 plugin/innobase/include/page0page.ic \
+                 plugin/innobase/include/page0zip.h \
+                 plugin/innobase/include/page0zip.ic \
+                 plugin/innobase/include/page0types.h \
+                 plugin/innobase/include/pars0opt.h \
+                 plugin/innobase/include/pars0opt.ic \
+                 plugin/innobase/include/pars0pars.h \
+                 plugin/innobase/include/pars0pars.ic \
+                 plugin/innobase/include/pars0sym.h \
+                 plugin/innobase/include/pars0sym.ic \
+                 plugin/innobase/include/pars0types.h \
+                 plugin/innobase/include/que0que.h \
+                 plugin/innobase/include/que0que.ic \
+                 plugin/innobase/include/que0types.h \
+                 plugin/innobase/include/read0read.h \
+                 plugin/innobase/include/read0read.ic \
+                 plugin/innobase/include/read0types.h \
+                 plugin/innobase/include/rem0cmp.h \
+                 plugin/innobase/include/rem0cmp.ic \
+                 plugin/innobase/include/rem0rec.h \
+                 plugin/innobase/include/rem0rec.ic \
+                 plugin/innobase/include/rem0types.h \
+                 plugin/innobase/include/row0ext.h \
+                 plugin/innobase/include/row0ext.ic \
+                 plugin/innobase/include/row0ins.h \
+                 plugin/innobase/include/row0ins.ic \
+                 plugin/innobase/include/row0merge.h \
+                 plugin/innobase/include/row0mysql.h \
+                 plugin/innobase/include/row0mysql.ic \
+                 plugin/innobase/include/row0purge.h \
+                 plugin/innobase/include/row0purge.ic \
+                 plugin/innobase/include/row0row.h \
+                 plugin/innobase/include/row0row.ic \
+                 plugin/innobase/include/row0sel.h \
+                 plugin/innobase/include/row0sel.ic \
+                 plugin/innobase/include/row0types.h \
+                 plugin/innobase/include/row0uins.h \
+                 plugin/innobase/include/row0uins.ic \
+                 plugin/innobase/include/row0umod.h \
+                 plugin/innobase/include/row0umod.ic \
+                 plugin/innobase/include/row0undo.h \
+                 plugin/innobase/include/row0undo.ic \
+                 plugin/innobase/include/row0upd.h \
+                 plugin/innobase/include/row0upd.ic \
+                 plugin/innobase/include/row0vers.h \
+                 plugin/innobase/include/row0vers.ic \
+                 plugin/innobase/include/srv0que.h \
+                 plugin/innobase/include/srv0srv.h \
+                 plugin/innobase/include/srv0srv.ic \
+                 plugin/innobase/include/srv0start.h \
+                 plugin/innobase/include/sync0arr.h \
+                 plugin/innobase/include/sync0arr.ic \
+                 plugin/innobase/include/sync0rw.h \
+                 plugin/innobase/include/sync0rw.ic \
+                 plugin/innobase/include/sync0sync.h \
+                 plugin/innobase/include/sync0sync.ic \
+                 plugin/innobase/include/sync0types.h \
+                 plugin/innobase/include/thr0loc.h \
+                 plugin/innobase/include/thr0loc.ic \
+                 plugin/innobase/include/trx0i_s.h \
+                 plugin/innobase/include/trx0purge.h \
+                 plugin/innobase/include/trx0purge.ic \
+                 plugin/innobase/include/trx0rec.h \
+                 plugin/innobase/include/trx0rec.ic \
+                 plugin/innobase/include/trx0roll.h \
+                 plugin/innobase/include/trx0roll.ic \
+                 plugin/innobase/include/trx0rseg.h \
+                 plugin/innobase/include/trx0rseg.ic \
+                 plugin/innobase/include/trx0sys.h \
+                 plugin/innobase/include/trx0sys.ic \
+                 plugin/innobase/include/trx0trx.h \
+                 plugin/innobase/include/trx0trx.ic \
+                 plugin/innobase/include/trx0types.h \
+                 plugin/innobase/include/trx0undo.h \
+                 plugin/innobase/include/trx0undo.ic \
+                 plugin/innobase/include/trx0xa.h \
+                 plugin/innobase/include/univ.i \
+                 plugin/innobase/include/usr0sess.h \
+                 plugin/innobase/include/usr0sess.ic \
+                 plugin/innobase/include/usr0types.h \
+                 plugin/innobase/include/ut0auxconf.h \
+                 plugin/innobase/include/ut0byte.h \
+                 plugin/innobase/include/ut0byte.ic \
+                 plugin/innobase/include/ut0dbg.h \
+                 plugin/innobase/include/ut0lst.h \
+                 plugin/innobase/include/ut0mem.h \
+                 plugin/innobase/include/ut0mem.ic \
+                 plugin/innobase/include/ut0rnd.h \
+                 plugin/innobase/include/ut0rnd.ic \
+                 plugin/innobase/include/ut0sort.h \
+                 plugin/innobase/include/ut0ut.h \
+                 plugin/innobase/include/ut0ut.ic \
+                 plugin/innobase/include/ut0vec.h \
+                 plugin/innobase/include/ut0vec.ic \
+                 plugin/innobase/include/ut0list.h \
+                 plugin/innobase/include/ut0list.ic \
+                 plugin/innobase/include/ut0wqueue.h \
+                 plugin/innobase/include/ha_prototypes.h \
+                 plugin/innobase/include/handler0alter.h \
+                 plugin/innobase/mem/mem0dbg.c \
+                 plugin/innobase/handler/ha_innodb.h \
+                 plugin/innobase/handler/handler0vars.h \
+                 plugin/innobase/handler/status_function.h \
+                 plugin/innobase/handler/internal_dictionary.h \
+                 plugin/innobase/handler/data_dictionary.h
 
-noinst_LTLIBRARIES+=	plugin/innobase/libinnobase.la plugin/innobase/libpars.la
+if BUILD_INNOBASE_PLUGIN
+noinst_LTLIBRARIES+= \
+                     plugin/innobase/libinnobase.la \
+		     plugin/innobase/libpars.la
+endif
+
 plugin_innobase_libinnobase_la_CFLAGS=	${AM_CFLAGS} ${INNOBASE_SKIP_WARNINGS} -I$(top_srcdir)/plugin/innobase/include -DBUILD_DRIZZLE
 plugin_innobase_libinnobase_la_CXXFLAGS=${AM_CXXFLAGS} ${INNOBASE_SKIP_WARNINGS} -I$(top_srcdir)/plugin/innobase/include -DBUILD_DRIZZLE
-plugin_innobase_libinnobase_la_SOURCES=	plugin/innobase/btr/btr0btr.c \
-			plugin/innobase/btr/btr0cur.c \
-			plugin/innobase/btr/btr0pcur.c \
-			plugin/innobase/btr/btr0sea.c \
-			plugin/innobase/buf/buf0buddy.c \
-			plugin/innobase/buf/buf0buf.c \
-			plugin/innobase/buf/buf0flu.c	\
-			plugin/innobase/buf/buf0lru.c \
-			plugin/innobase/buf/buf0rea.c \
-			plugin/innobase/data/data0data.c \
-			plugin/innobase/data/data0type.c \
-			plugin/innobase/dict/dict0boot.c \
-			plugin/innobase/dict/dict0crea.c \
-			plugin/innobase/dict/dict0dict.c \
-			plugin/innobase/dict/dict0load.c \
-			plugin/innobase/dict/dict0mem.c \
-			plugin/innobase/dyn/dyn0dyn.c	\
-			plugin/innobase/eval/eval0eval.c \
-			plugin/innobase/eval/eval0proc.c \
-			plugin/innobase/fil/fil0fil.c \
-			plugin/innobase/fsp/fsp0fsp.c \
-			plugin/innobase/fut/fut0fut.c	\
-			plugin/innobase/fut/fut0lst.c \
-			plugin/innobase/ha/ha0ha.c \
-			plugin/innobase/ha/ha0storage.c \
-			plugin/innobase/ha/hash0hash.c \
-			plugin/innobase/ibuf/ibuf0ibuf.c \
-			plugin/innobase/lock/lock0iter.c \
-			plugin/innobase/lock/lock0lock.c \
-			plugin/innobase/log/log0log.c \
-			plugin/innobase/log/log0recv.c \
-			plugin/innobase/mach/mach0data.c \
-			plugin/innobase/mem/mem0mem.c \
-			plugin/innobase/mem/mem0pool.c \
-			plugin/innobase/mtr/mtr0log.c	\
-			plugin/innobase/mtr/mtr0mtr.c \
-			plugin/innobase/os/os0file.c \
-			plugin/innobase/os/os0proc.c \
-			plugin/innobase/os/os0sync.c \
-			plugin/innobase/os/os0thread.c \
-			plugin/innobase/page/page0cur.c \
-			plugin/innobase/page/page0page.c \
-			plugin/innobase/page/page0zip.c \
-			plugin/innobase/pars/pars0opt.c \
-			plugin/innobase/pars/pars0pars.c \
-			plugin/innobase/pars/pars0sym.c \
-			plugin/innobase/que/que0que.c \
-			plugin/innobase/read/read0read.c \
-			plugin/innobase/rem/rem0cmp.c \
-			plugin/innobase/rem/rem0rec.c \
-			plugin/innobase/row/row0ext.c	\
-			plugin/innobase/row/row0ins.c \
-			plugin/innobase/row/row0merge.c \
-			plugin/innobase/row/row0mysql.c \
-			plugin/innobase/row/row0purge.c \
-			plugin/innobase/row/row0row.c	\
-			plugin/innobase/row/row0sel.c \
-			plugin/innobase/row/row0uins.c \
-			plugin/innobase/row/row0umod.c \
-			plugin/innobase/row/row0undo.c \
-			plugin/innobase/row/row0upd.c \
-			plugin/innobase/row/row0vers.c \
-			plugin/innobase/srv/srv0que.c \
-			plugin/innobase/srv/srv0srv.c \
-			plugin/innobase/srv/srv0start.c \
-			plugin/innobase/sync/sync0arr.c \
-			plugin/innobase/sync/sync0rw.c \
-			plugin/innobase/sync/sync0sync.c \
-			plugin/innobase/thr/thr0loc.c	\
-			plugin/innobase/trx/trx0i_s.c	\
-			plugin/innobase/trx/trx0purge.c \
-			plugin/innobase/trx/trx0rec.c \
-			plugin/innobase/trx/trx0roll.c \
-			plugin/innobase/trx/trx0rseg.c \
-			plugin/innobase/trx/trx0sys.c \
-			plugin/innobase/trx/trx0trx.c \
-			plugin/innobase/trx/trx0undo.c \
-			plugin/innobase/usr/usr0sess.c \
-			plugin/innobase/ut/ut0byte.c \
-			plugin/innobase/ut/ut0dbg.c \
-			plugin/innobase/ut/ut0list.c \
-			plugin/innobase/ut/ut0mem.c \
-			plugin/innobase/ut/ut0rnd.c \
-			plugin/innobase/ut/ut0ut.c \
-			plugin/innobase/ut/ut0vec.c \
-			plugin/innobase/ut/ut0wqueue.c
+plugin_innobase_libinnobase_la_SOURCES= \
+                                        plugin/innobase/btr/btr0btr.c \
+                                        plugin/innobase/btr/btr0cur.c \
+                                        plugin/innobase/btr/btr0pcur.c \
+                                        plugin/innobase/btr/btr0sea.c \
+                                        plugin/innobase/buf/buf0buddy.c \
+                                        plugin/innobase/buf/buf0buf.c \
+                                        plugin/innobase/buf/buf0flu.c	\
+                                        plugin/innobase/buf/buf0lru.c \
+                                        plugin/innobase/buf/buf0rea.c \
+                                        plugin/innobase/data/data0data.c \
+                                        plugin/innobase/data/data0type.c \
+                                        plugin/innobase/dict/dict0boot.c \
+                                        plugin/innobase/dict/dict0crea.c \
+                                        plugin/innobase/dict/dict0dict.c \
+                                        plugin/innobase/dict/dict0load.c \
+                                        plugin/innobase/dict/dict0mem.c \
+                                        plugin/innobase/dyn/dyn0dyn.c	\
+                                        plugin/innobase/eval/eval0eval.c \
+                                        plugin/innobase/eval/eval0proc.c \
+                                        plugin/innobase/fil/fil0fil.c \
+                                        plugin/innobase/fsp/fsp0fsp.c \
+                                        plugin/innobase/fut/fut0fut.c	\
+                                        plugin/innobase/fut/fut0lst.c \
+                                        plugin/innobase/ha/ha0ha.c \
+                                        plugin/innobase/ha/ha0storage.c \
+                                        plugin/innobase/ha/hash0hash.c \
+                                        plugin/innobase/ibuf/ibuf0ibuf.c \
+                                        plugin/innobase/lock/lock0iter.c \
+                                        plugin/innobase/lock/lock0lock.c \
+                                        plugin/innobase/log/log0log.c \
+                                        plugin/innobase/log/log0recv.c \
+                                        plugin/innobase/mach/mach0data.c \
+                                        plugin/innobase/mem/mem0mem.c \
+                                        plugin/innobase/mem/mem0pool.c \
+                                        plugin/innobase/mtr/mtr0log.c	\
+                                        plugin/innobase/mtr/mtr0mtr.c \
+                                        plugin/innobase/os/os0file.c \
+                                        plugin/innobase/os/os0proc.c \
+                                        plugin/innobase/os/os0sync.c \
+                                        plugin/innobase/os/os0thread.c \
+                                        plugin/innobase/page/page0cur.c \
+                                        plugin/innobase/page/page0page.c \
+                                        plugin/innobase/page/page0zip.c \
+                                        plugin/innobase/pars/pars0opt.c \
+                                        plugin/innobase/pars/pars0pars.c \
+                                        plugin/innobase/pars/pars0sym.c \
+                                        plugin/innobase/que/que0que.c \
+                                        plugin/innobase/read/read0read.c \
+                                        plugin/innobase/rem/rem0cmp.c \
+                                        plugin/innobase/rem/rem0rec.c \
+                                        plugin/innobase/row/row0ext.c	\
+                                        plugin/innobase/row/row0ins.c \
+                                        plugin/innobase/row/row0merge.c \
+                                        plugin/innobase/row/row0mysql.c \
+                                        plugin/innobase/row/row0purge.c \
+                                        plugin/innobase/row/row0row.c	\
+                                        plugin/innobase/row/row0sel.c \
+                                        plugin/innobase/row/row0uins.c \
+                                        plugin/innobase/row/row0umod.c \
+                                        plugin/innobase/row/row0undo.c \
+                                        plugin/innobase/row/row0upd.c \
+                                        plugin/innobase/row/row0vers.c \
+                                        plugin/innobase/srv/srv0que.c \
+                                        plugin/innobase/srv/srv0srv.c \
+                                        plugin/innobase/srv/srv0start.c \
+                                        plugin/innobase/sync/sync0arr.c \
+                                        plugin/innobase/sync/sync0rw.c \
+                                        plugin/innobase/sync/sync0sync.c \
+                                        plugin/innobase/thr/thr0loc.c	\
+                                        plugin/innobase/trx/trx0i_s.c	\
+                                        plugin/innobase/trx/trx0purge.c \
+                                        plugin/innobase/trx/trx0rec.c \
+                                        plugin/innobase/trx/trx0roll.c \
+                                        plugin/innobase/trx/trx0rseg.c \
+                                        plugin/innobase/trx/trx0sys.c \
+                                        plugin/innobase/trx/trx0trx.c \
+                                        plugin/innobase/trx/trx0undo.c \
+                                        plugin/innobase/usr/usr0sess.c \
+                                        plugin/innobase/ut/ut0byte.c \
+                                        plugin/innobase/ut/ut0dbg.c \
+                                        plugin/innobase/ut/ut0list.c \
+                                        plugin/innobase/ut/ut0mem.c \
+                                        plugin/innobase/ut/ut0rnd.c \
+                                        plugin/innobase/ut/ut0ut.c \
+                                        plugin/innobase/ut/ut0vec.c \
+                                        plugin/innobase/ut/ut0wqueue.c
 
-# lexyy.c has lots of redundant decls, but it's generated anyway 
-plugin_innobase_libpars_la_CFLAGS=	${AM_CFLAGS} ${NO_UNREACHED} \
-			${NO_REDUNDANT_DECLS} ${INNOBASE_SKIP_WARNINGS} \
+# pars0lex.c and pars0grm.c have lots of redundant decls 
+# and unused/undefeind stuf, but are generated anyway 
+plugin_innobase_libpars_la_CFLAGS=	${AM_CFLAGS} ${NO_WERROR} \
 			-I$(top_srcdir)/plugin/innobase/include \
 			-DBUILD_DRIZZLE
-plugin_innobase_libpars_la_SOURCES= 	plugin/innobase/pars/lexyy.c \
+plugin_innobase_libpars_la_SOURCES= 	plugin/innobase/pars/pars0lex.c \
 			plugin/innobase/pars/pars0grm.c
 
 plugin_innobase_libinnobase_la_LIBADD=	plugin/innobase/libpars.la
 
-EXTRA_DIST+=	plugin/innobase/CMakeLists.txt \
-		plugin/innobase/pars/make_bison.sh \
-		plugin/innobase/pars/make_flex.sh \
-		plugin/innobase/pars/pars0grm.y \
-		plugin/innobase/pars/pars0lex.l \
-		plugin/innobase/ut/ut0auxconf_atomic_pthread_t_gcc.c \
-		plugin/innobase/ut/ut0auxconf_atomic_pthread_t_solaris.c \
-		plugin/innobase/ut/ut0auxconf_have_solaris_atomics.c \
-		plugin/innobase/ut/ut0auxconf_pause.c \
-		plugin/innobase/ut/ut0auxconf_sizeof_pthread_t.c
+plugin/innobase/pars/pars0grm.c: plugin/innobase/pars/pars0grm.y
+	$(AM_V_GEN) $(YACC) -d plugin/innobase/pars/pars0grm.y -o plugin/innobase/pars/pars0grm.tab.c
+	@mv plugin/innobase/pars/pars0grm.tab.h plugin/innobase/include/pars0grm.h
+	@sed -e 's/pars0grm.tab.c/pars0grm.c/; s/^\(\(YYSTYPE\|int\) yy\(char\|nerrs\)\)/static \1/; s/\(\(YYSTYPE\|int\) yy\(lval\|parse\)\)/UNIV_INTERN \1/;' < plugin/innobase/pars/pars0grm.tab.c > plugin/innobase/pars/pars0grm.c
+	@rm plugin/innobase/pars/pars0grm.tab.c
+
+plugin/innobase/include/pars0grm.h: plugin/innobase/pars/pars0grm.c
+	@if test ! -f $@; then \
+	  rm -f $<; \
+	  $(MAKE) $(AM_MAKEFLAGS) $<; \
+	else :; fi
+
+plugin/innobase/pars/pars0lex.c: plugin/innobase/pars/pars0lex.l
+	$(AM_V_GEN)$(LEX) -oplugin/innobase/pars/_flex_tmp.c $<
+# AIX needs its includes done in a certain order, so include "univ.i" first
+# to be sure we get it right.
+	@echo '#include "univ.i"' > $@
+# flex assigns a pointer to an int in one place without a cast, resulting in
+# a warning on Win64.  Add the cast.  Also define some symbols as static.
+	@sed -e 's/_flex_tmp.c/'`basename $@`'/' \
+	     -e 's/\(int offset = \)\((yy_c_buf_p) - (yytext_ptr)\);/\1(int)(\2);/' \
+	     -e 's/\(void yy\(restart\|_\(delete\|flush\)_buffer\)\)/static \1/' \
+	     -e 's/\(void yy_switch_to_buffer\)/__attribute__((unused)) static \1/' \
+	     -e 's/\(void yy\(push\|pop\)_buffer_state\)/__attribute__((unused)) static \1/' \
+	     -e 's/\(YY_BUFFER_STATE yy_create_buffer\)/static \1/' \
+	     -e 's/\(\(int\|void\) yy[gs]et_\)/__attribute__((unused)) static \1/' \
+	     -e 's/\(void \*\?yy\(\(re\)\?alloc\|free\)\)/static \1/' \
+	     -e 's/\(extern \)\?\(int yy\(leng\|lineno\|_flex_debug\)\)/static \2/' \
+	     -e 's/\(int yylex_destroy\)/__attribute__((unused)) static \1/' \
+	     -e 's/\(extern \)\?\(int yylex \)/UNIV_INTERN \2/' \
+	     -e 's/^\(\(FILE\|char\) *\* *yyget\)/__attribute__((unused)) static \1/' \
+	     -e 's/^\(extern \)\?\(\(FILE\|char\) *\* *yy\)/static \2/' \
+              < plugin/innobase/pars/_flex_tmp.c >> $@
+	@rm plugin/innobase/pars/_flex_tmp.c
+
+BUILT_MAINT_SRC+= \
+	     plugin/innobase/pars/pars0lex.c \
+	     plugin/innobase/pars/pars0grm.c \
+	     plugin/innobase/include/pars0grm.h
+
+EXTRA_DIST+= \
+             plugin/innobase/CMakeLists.txt \
+             plugin/innobase/pars/pars0grm.y \
+             plugin/innobase/pars/pars0lex.l \
+             plugin/innobase/ut/ut0auxconf_atomic_pthread_t_gcc.c \
+             plugin/innobase/ut/ut0auxconf_atomic_pthread_t_solaris.c \
+             plugin/innobase/ut/ut0auxconf_have_solaris_atomics.c \
+             plugin/innobase/ut/ut0auxconf_pause.c \
+             plugin/innobase/ut/ut0auxconf_sizeof_pthread_t.c
 
 

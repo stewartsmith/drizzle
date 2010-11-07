@@ -83,15 +83,15 @@ drop table t1;
 # (for both strings and numbers)
 #
 create table t1 (ix timestamp);
---error 1685 # Bad unix timestamp
+--error ER_INVALID_UNIX_TIMESTAMP_VALUE # Bad unix timestamp
 insert into t1 values (0),(20030101010160),(20030101016001),(20030101240101),(20030132010101),(20031301010101),(20031200000000),(20030000000000);
 select ix+0 from t1;
 truncate table t1;
---error 1685 # Bad unix timestamp
+--error ER_INVALID_UNIX_TIMESTAMP_VALUE # Bad unix timestamp
 insert into t1 values ("00000000000000"),("20030101010160"),("20030101016001"),("20030101240101"),("20030132010101"),("20031301010101"),("20031200000000"),("20030000000000");
 select ix+0 from t1;
 truncate table t1;
---error 1685 # Bad unix timestamp
+--error ER_INVALID_UNIX_TIMESTAMP_VALUE # Bad unix timestamp
 insert into t1 values ("0000-00-00 00:00:00 some trailer"),("2003-01-01 00:00:00 some trailer");
 select ix+0 from t1;
 drop table t1;
@@ -100,9 +100,9 @@ drop table t1;
 # Test for TIMESTAMP column with default now() and on update now() clauses
 #
 
---error 1293
+--error ER_TOO_MUCH_AUTO_TIMESTAMP_COLS
 create table t1 (t1 timestamp default now(), t2 timestamp on update now());
---error 1293
+--error ER_TOO_MUCH_AUTO_TIMESTAMP_COLS
 create table t1 (t1 timestamp on update now(), t2 timestamp default now() on update now());
 
 # Let us test TIMESTAMP auto-update behaviour
@@ -332,5 +332,5 @@ PRIMARY KEY (`id`)
 ) AUTO_INCREMENT=1;
 
 show fields from t1;
-select is_nullable from INFORMATION_SCHEMA.COLUMNS where TABLE_NAME='t1' and COLUMN_NAME='posted_on';
+select is_nullable from data_dictionary.columns where TABLE_NAME='t1' and COLUMN_NAME='posted_on';
 drop table t1;

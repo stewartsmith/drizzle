@@ -29,7 +29,7 @@ namespace drizzled
 namespace optimizer
 {
 
-class QuickRange : public drizzled::memory::SqlAlloc
+class QuickRange : public memory::SqlAlloc
 {
 public:
   unsigned char *min_key;

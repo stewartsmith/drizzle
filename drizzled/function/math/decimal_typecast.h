@@ -22,6 +22,9 @@
 
 #include <drizzled/function/func.h>
 
+namespace drizzled
+{
+
 class Item_decimal_typecast :public Item_func
 {
   my_decimal decimal_value;
@@ -42,5 +45,6 @@ public:
   virtual void print(String *str, enum_query_type query_type);
 };
 
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_MATH_DECIMAL_TYPECAST_H */

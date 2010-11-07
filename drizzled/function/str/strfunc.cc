@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 
 /**
@@ -28,7 +28,6 @@
 #include "config.h"
 #include <zlib.h>
 #include <drizzled/query_id.h>
-#include <uuid/uuid.h>
 #include <drizzled/error.h>
 #include <drizzled/function/str/strfunc.h>
 
@@ -36,6 +35,9 @@
 #include "drizzled/internal/my_static.h"
 
 using namespace std;
+
+namespace drizzled
+{
 
 Item_str_func::~Item_str_func() {}
 
@@ -105,3 +107,4 @@ void Item_str_func::left_right_max_length()
 
 String my_empty_string("",default_charset_info);
 
+} /* namespace drizzled */

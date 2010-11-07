@@ -1,0 +1,27 @@
+connect (a,localhost,root,,);
+connect (b,localhost,root,,);
+
+connection a;
+create table t1 (a int);
+insert into t1 values (1);
+begin;
+select a from t1 where a=1 for update;
+
+connection b;
+--error ER_LOCK_WAIT_TIMEOUT
+update t1 set a=2 where a=1;
+
+connection a;
+commit;
+
+connection b;
+select * from t1;
+update t1 set a=2 where a=1;
+select * from t1;
+
+disconnect a;
+disconnect b;
+
+connection default;
+
+DROP TABLE t1;

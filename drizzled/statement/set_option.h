@@ -23,10 +23,10 @@
 
 #include <drizzled/statement.h>
 
-class Session;
-
 namespace drizzled
 {
+class Session;
+
 namespace statement
 {
 

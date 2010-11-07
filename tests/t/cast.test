@@ -37,7 +37,7 @@ select
 select cast(1000 as CHAR(3));
 
 # Should throw an error about 'abc' being too large for a char(2)
---error 1292
+--error ER_TRUNCATED_WRONG_VALUE
 create table t1 select
   cast('ab'  AS char)    as c1,
   cast('a '  AS char)    as c2,
@@ -45,19 +45,19 @@ create table t1 select
   cast('a  ' AS char(2)) as c4,
   cast('a'   AS char(2)) as c5;
 
-#
-# CAST to NCHAR with/without length
-#
-select
-  cast('ÆÇ'  AS char)    as c1,
-  cast('Æ '  AS char)    as c2,
-  cast('ÆÇÈ' AS char(2)) as c3,
-  cast('Æ  ' AS char(2)) as c4,
-  cast('Æ'   AS char(2)) as c5;
+##
+## CAST to NCHAR with/without length
+##
+#select
+#  cast('ÆÇ'  AS char)    as c1,
+#  cast('Æ '  AS char)    as c2,
+#  cast('ÆÇÈ' AS char(2)) as c3,
+#  cast('Æ  ' AS char(2)) as c4,
+#  cast('Æ'   AS char(2)) as c5;
 
 # BUG in drizzletest - can't handle these chars right
 # # Should throw an error about incorrect
-#--error 1292
+#--error ER_TRUNCATED_WRONG_VALUE
 #create table t1 select
 #  cast('ÆÇ'  AS char)    as c1,
 #  cast('Æ '  AS char)    as c2,

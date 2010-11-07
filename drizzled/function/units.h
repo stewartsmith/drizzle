@@ -23,6 +23,9 @@
 #include <drizzled/function/func.h>
 #include <drizzled/function/math/real.h>
 
+namespace drizzled
+{
+
 class Item_func_units :public Item_real_func
 {
   char *name;
@@ -35,5 +38,7 @@ public:
   void fix_length_and_dec()
   { decimals= NOT_FIXED_DEC; max_length= float_length(decimals); }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_UNITS_H */

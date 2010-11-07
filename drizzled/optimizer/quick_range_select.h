@@ -22,10 +22,13 @@
 
 #include "drizzled/optimizer/range.h"
 
-class Cursor;
+#include <boost/dynamic_bitset.hpp>
+#include <vector>
 
 namespace drizzled
 {
+
+class Cursor;
 
 namespace optimizer
 {
@@ -44,9 +47,9 @@ protected:
 
   /** Members to deal with case when this quick select is a ROR-merged scan */
   bool in_ror_merged_scan;
-  MyBitmap column_bitmap;
-  MyBitmap *save_read_set;
-  MyBitmap *save_write_set;
+  boost::dynamic_bitset<> *column_bitmap;
+  boost::dynamic_bitset<> *save_read_set;
+  boost::dynamic_bitset<> *save_write_set;
   bool free_file; /**< True when this->file is "owned" by this quick select */
 
   /* Range pointers to be used when not using MRR interface */
@@ -56,11 +59,10 @@ protected:
   /** Members needed to use the MRR interface */
   QuickRangeSequenceContext qr_traversal_ctx;
   uint32_t mrr_buf_size; /**< copy from session->variables.read_rnd_buff_size */
-  HANDLER_BUFFER *mrr_buf_desc; /**< the Cursor buffer */
 
   /** Info about index we're scanning */
   KEY_PART *key_parts;
-  KEY_PART_INFO *key_part_info;
+  KeyPartInfo *key_part_info;
 
   bool dont_free; /**< Used by QuickSelectDescending */
 
@@ -99,14 +101,13 @@ public:
 
   uint32_t mrr_flags; /**< Flags to be used with MRR interface */
 
-  drizzled::memory::Root alloc;
+  memory::Root alloc;
 
   QuickRangeSelect(Session *session,
                      Table *table,
                      uint32_t index_arg,
                      bool no_alloc,
-                     drizzled::memory::Root *parent_alloc,
-                     bool *create_err);
+                     memory::Root *parent_alloc);
 
   ~QuickRangeSelect();
 
@@ -121,7 +122,7 @@ public:
    * QuickRangeSelect::get_next()
    *
    * NOTES
-   * Record is read into table->record[0]
+   * Record is read into table->getInsertRecord()
    *
    * RETURN
    * @retval 0			Found row
@@ -221,12 +222,11 @@ private:
       Use default MRR implementation for reverse scans. No table engine
       currently can do an MRR scan with output in reverse index order.
     */
-    mrr_buf_desc= NULL;
     mrr_flags|= HA_MRR_USE_DEFAULT_IMPL;
     mrr_buf_size= 0;
   }
 
-  friend class ::TRP_ROR_INTERSECT; 
+  friend class ::drizzled::RorIntersectReadPlan; 
 
   friend
   QuickRangeSelect *get_quick_select_for_ref(Session *session, Table *table,
@@ -247,7 +247,7 @@ private:
                                             SEL_ARG *key_tree,
                                             uint32_t mrr_flags,
                                             uint32_t mrr_buf_size,
-                                            drizzled::memory::Root *alloc);
+                                            memory::Root *alloc);
   friend class QuickSelectDescending;
 
   friend class QuickIndexMergeSelect;
@@ -262,7 +262,7 @@ private:
                                           uint32_t n_ranges, 
                                           uint32_t flags);
 
-  friend void select_describe(JOIN *join, 
+  friend void select_describe(Join *join, 
                               bool need_tmp_table, 
                               bool need_order,
                               bool distinct,
@@ -295,13 +295,13 @@ private:
 
   int reset(void) 
   { 
-    rev_it.rewind(); 
+    rev_it= rev_ranges.begin();
     return QuickRangeSelect::reset();
   }
 
-  List<QuickRange> rev_ranges;
+  std::vector<QuickRange *> rev_ranges;
 
-  List_iterator<QuickRange> rev_it;
+  std::vector<QuickRange *>::iterator rev_it;
 
 };
 

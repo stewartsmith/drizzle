@@ -117,19 +117,19 @@ drop table t1;
 # Bug #2368 Multibyte charsets do not check that incoming data is well-formed
 #
 create table t1 (s1 char(10));
---error 1366
+--error ER_TRUNCATED_WRONG_VALUE_FOR_FIELD
 insert into t1 values (0x41FF);
 select hex(s1) from t1;
 drop table t1;
 
 create table t1 (s1 varchar(10));
---error 1366
+--error ER_TRUNCATED_WRONG_VALUE_FOR_FIELD
 insert into t1 values (0x41FF);
 select hex(s1) from t1;
 drop table t1;
 
 create table t1 (s1 text);
---error 1366
+--error ER_TRUNCATED_WRONG_VALUE_FOR_FIELD
 insert into t1 values (0x41FF);
 select hex(s1) from t1;
 drop table t1;
@@ -138,9 +138,8 @@ drop table t1;
 # Bug 2699
 # UTF8 breaks primary keys for cols > 333 characters
 #
---error 1071
-create table t1 (a text, primary key(a(360)));
-
+--error ER_TOO_LONG_KEY
+create table t1 (a text, primary key(a(360))) engine=innodb;
 
 #
 # Bug 2959
@@ -626,7 +625,7 @@ drop table t1;
 CREATE TEMPORARY TABLE t1 (
   a varchar(255) NOT NULL default '',
   KEY a (a)
-) ENGINE=MyISAM COLLATE utf8_general_ci;
+) ENGINE=MyISAM COLLATE=utf8_general_ci;
 insert into t1 values (0xe880bd);
 insert into t1 values (0x5b);
 select hex(a) from t1;
@@ -967,12 +966,6 @@ SELECT predicted_order, hex(utf8_encoding) FROM t1 ORDER BY utf8_encoding COLLAT
 DROP TABLE t1;
 
 --echo End of 5.1 tests
-
---source include/weight_string.inc
---source include/weight_string_l1.inc
-
---source include/weight_string.inc
---source include/weight_string_l1.inc
 
 #
 # Check strnxfrm() with odd length

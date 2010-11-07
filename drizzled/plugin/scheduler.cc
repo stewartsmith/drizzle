@@ -18,15 +18,20 @@
  */
 
 #include "config.h"
+
+#include <algorithm>
+
 #include "drizzled/plugin/scheduler.h"
-#include "drizzled/plugin/registry.h"
 
 #include "drizzled/gettext.h"
+#include "drizzled/errmsg_print.h"
 
 using namespace std;
 
 namespace drizzled
 {
+
+extern size_t my_thread_stack_size;
 
 vector<plugin::Scheduler *> all_schedulers;
 

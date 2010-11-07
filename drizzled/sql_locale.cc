@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /*
   The beginnings of locale(7) support.
@@ -22,6 +22,9 @@
 #include "drizzled/sql_locale.h"
 #include "drizzled/typelib.h"
 #include "drizzled/charset_info.h"
+
+namespace drizzled
+{
 
 /***** LOCALE BEGIN ar_AE: Arabic - United Arab Emirates *****/
 static const char *my_locale_month_names_ar_AE[13] =
@@ -2609,3 +2612,5 @@ MY_LOCALE *my_locale_by_name(const char *name)
   }
   return NULL;
 }
+
+} /* namespace drizzled */

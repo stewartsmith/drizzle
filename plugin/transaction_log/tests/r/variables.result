@@ -1,0 +1,10 @@
+SELECT * FROM DATA_DICTIONARY.GLOBAL_VARIABLES
+WHERE Variable_name LIKE 'transaction_log%';
+VARIABLE_NAME	VARIABLE_VALUE
+transaction_log_enable	ON
+transaction_log_enable_checksum	OFF
+transaction_log_file	transaction.log
+transaction_log_flush_frequency	1
+transaction_log_num_write_buffers	8
+transaction_log_truncate_debug	OFF
+transaction_log_use_replicator	default

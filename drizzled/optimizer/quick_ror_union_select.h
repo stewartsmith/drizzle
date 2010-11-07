@@ -105,7 +105,7 @@ public:
 
   void add_keys_and_lengths(String *key_names, String *used_lengths);
   void add_info_string(String *str);
-  bool is_keys_used(const MyBitmap *fields);
+  bool is_keys_used(const boost::dynamic_bitset<>& fields);
 
   bool push_quick_back(QuickSelectInterface *quick_sel_range);
 
@@ -113,7 +113,7 @@ public:
 
   /** Priority queue for merge operation */
   std::priority_queue<QuickSelectInterface *, std::vector<QuickSelectInterface *>, compare_functor > *queue;
-  drizzled::memory::Root alloc; /**< Memory pool for this and merged quick selects data. */
+  memory::Root alloc; /**< Memory pool for this and merged quick selects data. */
 
   Session *session; /**< current thread */
   unsigned char *cur_rowid; /**< buffer used in get_next() */

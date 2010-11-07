@@ -32,6 +32,18 @@ bool statement::DropIndex::execute()
 {
   TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
   TableList *all_tables= session->lex->query_tables;
+
+  /* Chicken/Egg... we need to search for the table, to know if the table exists, so we can build a full identifier from it */
+  message::Table original_table_message;
+  {
+    TableIdentifier identifier(first_table->getSchemaName(), first_table->getTableName());
+    if (plugin::StorageEngine::getTableDefinition(*session, identifier, original_table_message) != EEXIST)
+    {
+      my_error(ER_BAD_TABLE_ERROR, MYF(0), identifier.getSQLPath().c_str());
+      return true;
+    }
+  }
+
   /*
      CREATE INDEX and DROP INDEX are implemented by calling ALTER
      TABLE with proper arguments.
@@ -51,17 +63,44 @@ bool statement::DropIndex::execute()
 
   memset(&create_info, 0, sizeof(create_info));
   create_info.db_type= 0;
-  create_info.row_type= ROW_TYPE_NOT_USED;
-  create_info.default_table_charset= get_default_db_collation(session->db.c_str());
 
-  bool res= alter_table(session, 
-                        first_table->db, 
-                        first_table->table_name,
-                        &create_info, 
-                        &create_table_proto, 
-                        first_table,
-                        &alter_info,
-                        0, (order_st*) 0, 0);
+  bool res;
+  if (original_table_message.type() == message::Table::STANDARD )
+  {
+    TableIdentifier identifier(first_table->getSchemaName(), first_table->getTableName());
+
+    create_info.default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier);
+
+    res= alter_table(session, 
+                     identifier,
+                     identifier,
+                     &create_info, 
+                     original_table_message,
+                     create_table_proto, 
+                     first_table,
+                     &alter_info,
+                     0, (Order*) 0, 0);
+  }
+  else
+  {
+    TableIdentifier catch22(first_table->getSchemaName(), first_table->getTableName());
+    Table *table= session->find_temporary_table(catch22);
+    assert(table);
+    {
+      TableIdentifier identifier(first_table->getSchemaName(), first_table->getTableName(), table->getShare()->getPath());
+      create_info.default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier);
+
+      res= alter_table(session, 
+                       identifier,
+                       identifier,
+                       &create_info, 
+                       original_table_message,
+                       create_table_proto, 
+                       first_table,
+                       &alter_info,
+                       0, (Order*) 0, 0);
+    }
+  }
   return res;
 }
 

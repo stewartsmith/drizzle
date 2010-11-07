@@ -393,13 +393,13 @@ INSERT INTO t1 (topic,date,pseudo) VALUES
 ('43506','2002-10-02','joce'),('40143','2002-08-03','joce');
 EXPLAIN EXTENDED SELECT DISTINCT date FROM t1 WHERE date='2002-08-03';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
-1	SIMPLE	t1	index	NULL	PRIMARY	153	NULL	2	100.00	Using where; Using index
+1	SIMPLE	t1	index	NULL	PRIMARY	154	NULL	2	100.00	Using where; Using index
 Warnings:
 Note	1003	select distinct `test`.`t1`.`date` AS `date` from `test`.`t1` where (`test`.`t1`.`date` = '2002-08-03')
 EXPLAIN EXTENDED SELECT (SELECT DISTINCT date FROM t1 WHERE date='2002-08-03');
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	PRIMARY	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No tables used
-2	SUBQUERY	t1	index	NULL	PRIMARY	153	NULL	2	100.00	Using where; Using index
+2	SUBQUERY	t1	index	NULL	PRIMARY	154	NULL	2	100.00	Using where; Using index
 Warnings:
 Note	1003	select (select distinct `test`.`t1`.`date` AS `date` from `test`.`t1` where (`test`.`t1`.`date` = '2002-08-03')) AS `(SELECT DISTINCT date FROM t1 WHERE date='2002-08-03')`
 SELECT DISTINCT date FROM t1 WHERE date='2002-08-03';
@@ -704,7 +704,7 @@ id
 1
 EXPLAIN EXTENDED SELECT * FROM t2 WHERE id IN (SELECT 1);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
-1	PRIMARY	t2	ref	id	id	5	const	1	100.00	Using index
+1	PRIMARY	t2	ref	id	id	5	const	1	100.00	Using where; Using index
 Warnings:
 Note	1249	Select 2 was reduced during optimization
 Note	1003	select `test`.`t2`.`id` AS `id` from `test`.`t2` where (`test`.`t2`.`id` = 1)
@@ -716,7 +716,7 @@ id
 2
 EXPLAIN EXTENDED SELECT * FROM t2 WHERE id IN (SELECT 1+(select 1));
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
-1	PRIMARY	t2	ref	id	id	5	const	1	100.00	Using index
+1	PRIMARY	t2	ref	id	id	5	const	1	100.00	Using where; Using index
 Warnings:
 Note	1249	Select 3 was reduced during optimization
 Note	1249	Select 2 was reduced during optimization
@@ -892,7 +892,7 @@ a	t1.a in (select t2.a from t2,t3 where t3.a=t2.a)
 explain extended SELECT t1.a, t1.a in (select t2.a from t2,t3 where t3.a=t2.a) FROM t1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	PRIMARY	t1	index	NULL	PRIMARY	4	NULL	4	100.00	Using index
-2	DEPENDENT SUBQUERY	t2	ref_or_null	a	a	5	func	2	100.00	Using index
+2	DEPENDENT SUBQUERY	t2	ref_or_null	a	a	5	func	2	100.00	Using where; Using index
 2	DEPENDENT SUBQUERY	t3	ALL	NULL	NULL	NULL	NULL	3	100.00	Using where; Using join buffer
 Warnings:
 Note	1003	select `test`.`t1`.`a` AS `a`,<in_optimizer>(`test`.`t1`.`a`,<exists>(select 1 AS `Not_used` from `test`.`t2` join `test`.`t3` where ((`test`.`t3`.`a` = `test`.`t2`.`a`) and ((<cache>(`test`.`t1`.`a`) = `test`.`t2`.`a`) or isnull(`test`.`t2`.`a`))) having <is_not_null_test>(`test`.`t2`.`a`))) AS `t1.a in (select t2.a from t2,t3 where t3.a=t2.a)` from `test`.`t1`
@@ -991,25 +991,25 @@ CREATE TEMPORARY TABLE t1 ENGINE=MyISAM SELECT * FROM (SELECT 1 as a,(SELECT 1))
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `a` int NOT NULL DEFAULT '0',
-  `(SELECT 1)` int NOT NULL DEFAULT '0'
-) ENGINE=MyISAM
+  `a` INT NOT NULL DEFAULT '0',
+  `(SELECT 1)` INT NOT NULL DEFAULT '0'
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 drop table t1;
 CREATE TEMPORARY TABLE t1 ENGINE=MyISAM SELECT * FROM (SELECT 1 as a,(SELECT a)) a;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `a` int NOT NULL DEFAULT '0',
-  `(SELECT a)` int NOT NULL DEFAULT '0'
-) ENGINE=MyISAM
+  `a` INT NOT NULL DEFAULT '0',
+  `(SELECT a)` INT NOT NULL DEFAULT '0'
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 drop table t1;
 CREATE TEMPORARY TABLE t1 ENGINE=MyISAM SELECT * FROM (SELECT 1 as a,(SELECT a+0)) a;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `a` int NOT NULL DEFAULT '0',
-  `(SELECT a+0)` int NOT NULL DEFAULT '0'
-) ENGINE=MyISAM
+  `a` INT NOT NULL DEFAULT '0',
+  `(SELECT a+0)` INT NOT NULL DEFAULT '0'
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 drop table t1;
 CREATE TEMPORARY TABLE t1 ENGINE=MyISAM SELECT (SELECT 1 as a UNION SELECT 1+1 limit 1,1) as a;
 select * from t1;
@@ -1018,8 +1018,8 @@ a
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `a` bigint NOT NULL
-) ENGINE=MyISAM
+  `a` BIGINT NOT NULL
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 drop table t1;
 create table t1 (a int);
 insert into t1 values (1), (2), (3);
@@ -1434,7 +1434,7 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	PRIMARY	t3	ALL	NULL	NULL	NULL	NULL	3	100.00	Using where
 2	SUBQUERY	t2	system	NULL	NULL	NULL	NULL	0	0.00	const row not found
 Warnings:
-Note	1003	select `test`.`t3`.`a` AS `a` from `test`.`t3` where <not>((`test`.`t3`.`a` < (select max('0') from `test`.`t2`)))
+Note	1003	select `test`.`t3`.`a` AS `a` from `test`.`t3` where <not>((`test`.`t3`.`a` < (select max(NULL) from `test`.`t2`)))
 select * from t3 where a >= some (select b from t2);
 a
 explain extended select * from t3 where a >= some (select b from t2);
@@ -1442,7 +1442,7 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	PRIMARY	t3	ALL	NULL	NULL	NULL	NULL	3	100.00	Using where
 2	SUBQUERY	t2	system	NULL	NULL	NULL	NULL	0	0.00	const row not found
 Warnings:
-Note	1003	select `test`.`t3`.`a` AS `a` from `test`.`t3` where <nop>((`test`.`t3`.`a` >= (select min('0') from `test`.`t2`)))
+Note	1003	select `test`.`t3`.`a` AS `a` from `test`.`t3` where <nop>((`test`.`t3`.`a` >= (select min(NULL) from `test`.`t2`)))
 select * from t3 where a >= all (select b from t2 group by 1);
 a
 6
@@ -1453,7 +1453,7 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	PRIMARY	t3	ALL	NULL	NULL	NULL	NULL	3	100.00	Using where
 2	SUBQUERY	t2	system	NULL	NULL	NULL	NULL	0	0.00	const row not found
 Warnings:
-Note	1003	select `test`.`t3`.`a` AS `a` from `test`.`t3` where <not>((`test`.`t3`.`a` < <max>(select '0' AS `b` from `test`.`t2` group by 1)))
+Note	1003	select `test`.`t3`.`a` AS `a` from `test`.`t3` where <not>((`test`.`t3`.`a` < <max>(select NULL AS `b` from `test`.`t2` group by 1)))
 select * from t3 where a >= some (select b from t2 group by 1);
 a
 explain extended select * from t3 where a >= some (select b from t2 group by 1);
@@ -1461,7 +1461,7 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	PRIMARY	t3	ALL	NULL	NULL	NULL	NULL	3	100.00	Using where
 2	SUBQUERY	t2	system	NULL	NULL	NULL	NULL	0	0.00	const row not found
 Warnings:
-Note	1003	select `test`.`t3`.`a` AS `a` from `test`.`t3` where <nop>((`test`.`t3`.`a` >= <min>(select '0' AS `b` from `test`.`t2` group by 1)))
+Note	1003	select `test`.`t3`.`a` AS `a` from `test`.`t3` where <nop>((`test`.`t3`.`a` >= <min>(select NULL AS `b` from `test`.`t2` group by 1)))
 select * from t3 where NULL >= any (select b from t2);
 a
 explain extended select * from t3 where NULL >= any (select b from t2);
@@ -2966,14 +2966,14 @@ FROM t1 WHERE a > '2000-01-01';
 SHOW CREATE TABLE t2;
 Table	Create Table
 t2	CREATE TEMPORARY TABLE `t2` (
-  `sub_a` datetime DEFAULT NULL
-) ENGINE=MyISAM
+  `sub_a` DATETIME DEFAULT NULL
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 CREATE TEMPORARY TABLE t3 ENGINE=MyISAM AS (SELECT a FROM t1 WHERE a < '2000-01-01') UNION (SELECT a FROM t1 WHERE a > '2000-01-01');
 SHOW CREATE TABLE t3;
 Table	Create Table
 t3	CREATE TEMPORARY TABLE `t3` (
-  `a` datetime DEFAULT NULL
-) ENGINE=MyISAM
+  `a` DATETIME DEFAULT NULL
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 DROP TABLE t1,t2,t3;
 #
 # Bug 24653: sorting by expressions containing subselects
@@ -3964,8 +3964,6 @@ CREATE TABLE t1 (
 a varchar(255) default NULL,
 b timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
 INDEX idx(a,b));
-Warnings:
-Warning	1071	Specified key was too long; max key length is 767 bytes
 CREATE TABLE t2 (
 a varchar(255) default NULL);
 INSERT INTO t1 VALUES ('abcdefghijk','2007-05-07 06:00:24');
@@ -4528,8 +4526,8 @@ ERROR 42000: You have an error in your SQL syntax; check the manual that corresp
 SELECT * FROM t1 JOIN  (t1 t1a)  ON 1;
 a	a
 1	1
-2	1
 1	2
+2	1
 2	2
 SELECT * FROM t1 JOIN ((t1 t1a)) ON 1;
 a	a

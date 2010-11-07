@@ -22,6 +22,9 @@
 
 #include <drizzled/function/math/int.h>
 
+namespace drizzled
+{
+
 class Item_func_quarter :public Item_int_func
 {
 public:
@@ -36,6 +39,6 @@ public:
   }
 };
 
-
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_TIME_QUARTER_H */

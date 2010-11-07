@@ -1,0 +1,19 @@
+/*
+  Represents engine name and options.
+*/
+package drizzled.message;
+option optimize_for = SPEED;
+
+option java_package = "org.drizzle.messages";
+option java_outer_classname = "EngineMessage";
+
+message Engine {
+
+  message Option {
+    required string name = 1;
+    optional string state = 2;
+  }
+
+  required string name = 1;
+  repeated Option options = 2;
+}

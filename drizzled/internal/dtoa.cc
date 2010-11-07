@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA */
 
 /****************************************************************
 
@@ -46,6 +46,11 @@
 #include <algorithm>
 
 using namespace std;
+
+namespace drizzled
+{
+namespace internal
+{
 
 /* Magic value returned by dtoa() to indicate overflow */
 #define DTOA_OVERFLOW 9999
@@ -1946,8 +1951,8 @@ static char *dtoa(double d, int mode, int ndigits, int *decpt, int *sign,
     *sign= 0;
 
   /* If infinity, set decpt to DTOA_OVERFLOW, if 0 set it to 1 */
-  if (((word0(d) & Exp_mask) == Exp_mask && (*decpt= DTOA_OVERFLOW)) ||
-      (!dval(d) && (*decpt= 1)))
+  if ((((word0(d) & Exp_mask) == Exp_mask) && ((*decpt= DTOA_OVERFLOW) != 0)) ||
+      (!dval(d) && ((*decpt= 1) != 0)))
   {
     /* Infinity, NaN, 0 */
     char *res= (char*) malloc(2);
@@ -2468,3 +2473,6 @@ ret1:
     *rve= s;
   return s0;
 }
+
+} /* namespace internal */
+} /* namespace drizzled */

@@ -18,9 +18,12 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/str/make_set.h>
 #include <drizzled/session.h>
+
+namespace drizzled
+{
 
 void Item_func_make_set::update_used_tables()
 {
@@ -31,11 +34,11 @@ void Item_func_make_set::update_used_tables()
 }
 
 
-void Item_func_make_set::split_sum_func(Session *session, Item **ref_pointer_array,
+void Item_func_make_set::split_sum_func(Session *session_arg, Item **ref_pointer_array,
 					List<Item> &fields)
 {
-  item->split_sum_func(session, ref_pointer_array, fields, &item, true);
-  Item_str_func::split_sum_func(session, ref_pointer_array, fields);
+  item->split_sum_func(session_arg, ref_pointer_array, fields, &item, true);
+  Item_str_func::split_sum_func(session_arg, ref_pointer_array, fields);
 }
 
 
@@ -121,7 +124,8 @@ Item *Item_func_make_set::transform(Item_transformer transformer, unsigned char 
     change records at each execution.
   */
   if (item != new_item)
-    current_session->change_item_tree(&item, new_item);
+    session.change_item_tree(&item, new_item);
+
   return Item_str_func::transform(transformer, arg);
 }
 
@@ -138,3 +142,4 @@ void Item_func_make_set::print(String *str, enum_query_type query_type)
   str->append(')');
 }
 
+} /* namespace drizzled */

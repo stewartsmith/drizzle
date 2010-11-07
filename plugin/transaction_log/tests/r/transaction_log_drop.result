@@ -1,0 +1,184 @@
+Testing simple DROP 
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1(a INT NOT NULL, PRIMARY KEY(a));
+DROP TABLE t1;
+Check transaction_log_entries
+SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+COUNT(*)
+3
+
+Check transaction_log_transactions
+SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+COUNT(*)
+3
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  TRANSACTION_ID
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: DROP_TABLE
+  START_TIMESTAMP
+  END_TIMESTAMP
+  drop_table_statement {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    if_exists_clause: false
+  }
+}
+
+
+
+SET GLOBAL transaction_log_truncate_debug= true;
+
+Testing multi-table DROP
+DROP TABLE IF EXISTS t1, t2, t3;
+CREATE TABLE t1(a INT NOT NULL, PRIMARY KEY(a));
+CREATE TABLE t2 LIKE t1;
+CREATE TABLE t3 LIKE t2;
+DROP TABLE t1, t2, t3;
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log', entry_offset) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS ORDER BY TRANSACTION_ID DESC LIMIT 3;
+PRINT_TRANSACTION_MESSAGE('transaction.log', entry_offset)
+transaction_context {
+  server_id: 1
+  TRANSACTION_ID
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: DROP_TABLE
+  START_TIMESTAMP
+  END_TIMESTAMP
+  drop_table_statement {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t3"
+    }
+    if_exists_clause: false
+  }
+}
+
+transaction_context {
+  server_id: 1
+  TRANSACTION_ID
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: DROP_TABLE
+  START_TIMESTAMP
+  END_TIMESTAMP
+  drop_table_statement {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t2"
+    }
+    if_exists_clause: false
+  }
+}
+
+transaction_context {
+  server_id: 1
+  TRANSACTION_ID
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: DROP_TABLE
+  START_TIMESTAMP
+  END_TIMESTAMP
+  drop_table_statement {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    if_exists_clause: false
+  }
+}
+
+SET GLOBAL transaction_log_truncate_debug= true;
+
+Testing DROP IF EXISTS positive
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1(a INT NOT NULL, PRIMARY KEY(a));
+DROP TABLE IF EXISTS t1;
+Check transaction_log_entries
+SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+COUNT(*)
+3
+
+Check transaction_log_transactions
+SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+COUNT(*)
+3
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  TRANSACTION_ID
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: DROP_TABLE
+  START_TIMESTAMP
+  END_TIMESTAMP
+  drop_table_statement {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    if_exists_clause: true
+  }
+}
+
+
+
+SET GLOBAL transaction_log_truncate_debug= true;
+
+Testing DROP IF EXISTS negative
+DROP TABLE IF EXISTS t1;
+Warnings:
+Note	1051	Unknown table 't1'
+Check transaction_log_entries
+SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+COUNT(*)
+1
+
+Check transaction_log_transactions
+SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+COUNT(*)
+1
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  TRANSACTION_ID
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: DROP_TABLE
+  START_TIMESTAMP
+  END_TIMESTAMP
+  drop_table_statement {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    if_exists_clause: true
+  }
+}
+
+
+
+SET GLOBAL transaction_log_truncate_debug= true;
+

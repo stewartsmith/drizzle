@@ -1,0 +1,104 @@
+# Test routine for the DECIMAL Type in BlitzDB
+
+--disable_warnings
+drop table if exists t1, t2;
+--enable_warnings
+
+# Basic operations on an indexless table
+create table t1 (a decimal, b decimal) engine = blitzdb;
+insert into t1 values (1,0);
+insert into t1 values (1,1);
+insert into t1 values (1,2);
+insert into t1 values (1,4);
+insert into t1 values (1,8);
+select * from t1;
+select * from t1 where b <= 2;
+drop table t1;
+
+# Test the max number of possible digits
+create table t2 (a decimal(65,0)) engine = blitzdb;
+insert into t2 select repeat(1, 65);
+--error ER_WARN_DATA_OUT_OF_RANGE
+insert into t2 select repeat(1, 66);
+select * from t2;
+drop table t2;
+
+create table t2 (a decimal(65,8)) engine = blitzdb;
+insert into t2 select repeat(1, 57);
+--error ER_WARN_DATA_OUT_OF_RANGE
+insert into t2 select repeat(1, 58);
+
+delete from t2;
+
+--error ER_WARN_DATA_OUT_OF_RANGE # Out of Range
+insert into t2 values (
+  -1111111111111111111111111111111111111111111111111111111111
+);
+
+insert into t2 values (
+  1111111111111111111111111111111111111111111111111.11111111
+);
+
+--error ER_WARN_DATA_TRUNCATED # Truncated
+insert into t2 values (
+  111111111111111111111111111111111111111111111111.111111111
+);
+
+select * from t2;
+drop table t2;
+
+# Test case for a bug reported by Stewart Smith
+create table t1 (
+   id int NOT NULL auto_increment,
+   datatype_id int DEFAULT '0' NOT NULL,
+   minvalue decimal(20,10) DEFAULT '0.0000000000' NOT NULL,
+   maxvalue decimal(20,10) DEFAULT '0.0000000000' NOT NULL,
+   valuename varchar(20),
+   forecolor int,
+   backcolor int,
+   primary key (id),
+   index datatype_id (datatype_id)
+) engine = blitzdb;
+
+insert into t1 values ('1', '4', '0.0000000000', '0.0000000000', 'Ei saja', '0', '16776960');
+insert into t1 values ('2', '4', '1.0000000000', '1.0000000000', 'Sajab', '16777215', '255');
+insert into t1 values ('3', '1', '2.0000000000', '49.0000000000', '', '0', '16777215');
+insert into t1 values ('60', '11', '0.0000000000', '0.0000000000', 'Rikkis', '16777215', '16711680');
+insert into t1 values ('4', '12', '1.0000000000', '1.0000000000', 'nork sadu', '65280', '14474460');
+insert into t1 values ('5', '12', '2.0000000000', '2.0000000000', 'keskmine sadu', '255', '14474460');
+insert into t1 values ('6', '12', '3.0000000000', '3.0000000000', 'tugev sadu', '127', '14474460');
+insert into t1 values ('43', '39', '6.0000000000', '6.0000000000', 'lobjakas', '13107327', '16763080');
+insert into t1 values ('40', '39', '2.0000000000', '2.0000000000', 'vihm', '8355839', '16777215');
+insert into t1 values ('53', '1', '-35.0000000000', '-5.0000000000', '', '0', '16777215');
+insert into t1 values ('12', '21', '21.0000000000', '21.0000000000', 'Kuiv', '13158600', '16777215');
+insert into t1 values ('14', '21', '22.0000000000', '22.0000000000', 'Niiske', '9869055', '16777215');
+insert into t1 values ('16', '21', '31.0000000000', '31.0000000000', 'Kuiv', '13158600', '16777215');
+insert into t1 values ('17', '21', '12.0000000000', '12.0000000000', 'Niiske', '9869055', '16777215');
+insert into t1 values ('18', '21', '32.0000000000', '32.0000000000', 'Niiske', '9869055', '16777215');
+insert into t1 values ('21', '21', '11.0000000000', '11.0000000000', 'Kuiv', '13158600', '16777215');
+insert into t1 values ('22', '33', '21.0000000000', '21.0000000000', 'Pilves, kuiv', '8355711', '12632256');
+insert into t1 values ('24', '33', '22.0000000000', '22.0000000000', 'Pilves, niiske', '8355711', '12632319');
+insert into t1 values ('26', '33', '31.0000000000', '31.0000000000', 'Selge, kuiv', '16777215', '12632256');
+insert into t1 values ('27', '33', '12.0000000000', '12.0000000000', 'Sajab, niiske', '0', '12632319');
+insert into t1 values ('28', '33', '32.0000000000', '32.0000000000', 'Selge, niiske', '16777215', '12632319');
+insert into t1 values ('31', '33', '11.0000000000', '11.0000000000', 'Sajab, kuiv', '0', '12632256');
+insert into t1 values ('32', '11', '1.0000000000', '1.0000000000', 'Korras', '16777215', '49152');
+insert into t1 values ('34', '21', '134.0000000000', '134.0000000000', 'Hoiatus, M+S!', '255', '13158600');
+insert into t1 values ('39', '39', '1.0000000000', '1.0000000000', 'ei saja', '11206570', '16777215');
+insert into t1 values ('44', '39', '4.0000000000', '5.0000000000', 'lumi', '16711680', '16763080');
+insert into t1 values ('45', '12', '0.0000000000', '0.0000000000', '', '16777215', '14474460');
+
+select * from t1 order by id;
+select * from t1 where minvalue <= 1 and maxvalue >= -1 order by id;
+drop table t1;
+
+# Exponent overflow bug
+create table t1 (a decimal(10,0)) engine = blitzdb;
+--error ER_TRUNCATED_WRONG_VALUE_FOR_FIELD incorrect decimal value
+insert into t1 values ("1e4294967295");
+select * from t1;
+delete from t1;
+--error ER_TRUNCATED_WRONG_VALUE_FOR_FIELD incorrect decimal value
+insert into t1 values("1e4294967297");
+select * from t1;
+drop table t1;

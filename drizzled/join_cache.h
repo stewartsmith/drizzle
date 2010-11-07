@@ -20,29 +20,43 @@
 #ifndef DRIZZLED_JOIN_CACHE_H
 #define DRIZZLED_JOIN_CACHE_H
 
+namespace drizzled
+{
+
 class Field_blob;
 typedef JoinTable JoinTable;
 
 /**
-  CACHE_FIELD and JOIN_CACHE is used on full join to cache records in outer
+  CacheField and JoinCache is used on full join to cache records in outer
   table
 */
-typedef struct st_cache_field {
+class CacheField {
   /*
     Where source data is located (i.e. this points to somewhere in
-    tableX->record[0])
+    tableX->getInsertRecord())
   */
+public:
   unsigned char *str;
   uint32_t length; /* Length of data at *str, in bytes */
   uint32_t blob_length; /* Valid IFF blob_field != 0 */
   Field_blob *blob_field;
   bool strip; /* true <=> Strip endspaces ?? */
-
   Table *get_rowid; /* _ != NULL <=> */
-} CACHE_FIELD;
 
-typedef struct st_join_cache
+  CacheField():
+    str(NULL),
+    length(0),
+    blob_length(0),
+    blob_field(NULL),
+    strip(false),
+    get_rowid(NULL)
+  {}
+
+};
+
+class JoinCache
 {
+public:
   unsigned char *buff;
   unsigned char *pos;    /* Start of free space in the buffer */
   unsigned char *end;
@@ -59,14 +73,32 @@ typedef struct st_join_cache
   uint32_t fields;
   uint32_t length;
   uint32_t blobs;
-  CACHE_FIELD *field;
-  CACHE_FIELD **blob_ptr;
-  drizzled::optimizer::SqlSelect *select;
-} JOIN_CACHE;
+  CacheField *field;
+  CacheField **blob_ptr;
+  optimizer::SqlSelect *select;
+
+  JoinCache():
+    buff(NULL),
+    pos(NULL),
+    end(NULL),
+    records(0),
+    record_nr(0),
+    ptr_record(0),
+    fields(0),
+    length(0),
+    blobs(0),
+    field(NULL),
+    blob_ptr(NULL),
+    select(NULL)
+  {}
+
+  void reset_cache_read();
+  void reset_cache_write();
+  bool store_record_in_cache();
+};
 
 int join_init_cache(Session *session, JoinTable *tables, uint32_t table_count);
-void reset_cache_read(JOIN_CACHE *cache);
-void reset_cache_write(JOIN_CACHE *cache);
-bool store_record_in_cache(JOIN_CACHE *cache);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_JOIN_CACHE_H */

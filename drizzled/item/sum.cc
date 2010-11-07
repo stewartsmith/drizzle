@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 
 /**
@@ -21,6 +21,7 @@
   Sum functions (COUNT, MIN...)
 */
 #include "config.h"
+#include <cstdio>
 #include <math.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>
@@ -40,8 +41,10 @@
 
 #include <algorithm>
 
-using namespace drizzled;
 using namespace std;
+
+namespace drizzled
+{
 
 extern my_decimal decimal_zero;
 extern plugin::StorageEngine *heap_engine;
@@ -518,8 +521,10 @@ Field *Item_sum::create_tmp_field(bool ,
         convert_blob_length > Field_varstring::MAX_SIZE ||
         !convert_blob_length)
       return make_string_field(table);
+
+    table->setVariableWidth();
     field= new Field_varstring(convert_blob_length, maybe_null,
-                               name, table->s, collation.collation);
+                               name, collation.collation);
     break;
   case DECIMAL_RESULT:
     field= new Field_decimal(max_length, maybe_null, name,
@@ -874,10 +879,6 @@ my_decimal *Item_sum_sum::val_decimal(my_decimal *val)
 
 /***************************************************************************/
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Declarations for auxilary C-callbacks */
 
 static int simple_raw_key_cmp(void* arg, const void* key1, const void* key2)
@@ -892,10 +893,6 @@ static int item_sum_distinct_walk(void *element,
 {
   return ((Item_sum_distinct*) (item))->unique_walk_function(element);
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 /* Item_sum_distinct */
 
@@ -958,6 +955,7 @@ void Item_sum_distinct::fix_length_and_dec()
 {
   assert(args[0]->fixed);
 
+  null_value= maybe_null= true;
   table_field_type= args[0]->field_type();
 
   /* Adjust tmp table type according to the chosen aggregation type */
@@ -1029,11 +1027,11 @@ bool Item_sum_distinct::setup(Session *session)
   field_def.init_for_tmp_table(table_field_type, args[0]->max_length,
                                args[0]->decimals, args[0]->maybe_null);
 
-  if (! (table= create_virtual_tmp_table(session, field_list)))
+  if (! (table= session->getInstanceTable(field_list)))
     return(true);
 
   /* XXX: check that the case of CHAR(0) works OK */
-  tree_key_length= table->s->reclength - table->s->null_bytes;
+  tree_key_length= table->getShare()->getRecordLength() - table->getShare()->null_bytes;
 
   /*
     Unique handles all unique elements in a tree until they can't fit
@@ -1052,9 +1050,9 @@ bool Item_sum_distinct::setup(Session *session)
 
 bool Item_sum_distinct::add()
 {
-  args[0]->save_in_field(table->field[0], false);
+  args[0]->save_in_field(table->getField(0), false);
   is_evaluated= false;
-  if (!table->field[0]->is_null())
+  if (!table->getField(0)->is_null())
   {
     assert(tree);
     null_value= 0;
@@ -1062,7 +1060,7 @@ bool Item_sum_distinct::add()
       '0' values are also stored in the tree. This doesn't matter
       for SUM(DISTINCT), but is important for AVG(DISTINCT)
     */
-    return tree->unique_add(table->field[0]->ptr);
+    return tree->unique_add(table->getField(0)->ptr);
   }
   return 0;
 }
@@ -1070,9 +1068,9 @@ bool Item_sum_distinct::add()
 
 bool Item_sum_distinct::unique_walk_function(void *element)
 {
-  memcpy(table->field[0]->ptr, element, tree_key_length);
+  memcpy(table->getField(0)->ptr, element, tree_key_length);
   ++count;
-  val.traits->add(&val, table->field[0]);
+  val.traits->add(&val, table->getField(0));
   return 0;
 }
 
@@ -1114,7 +1112,7 @@ void Item_sum_distinct::calculate_val_and_count()
      */
     if (tree)
     {
-      table->field[0]->set_notnull();
+      table->getField(0)->set_notnull();
       tree->walk(item_sum_distinct_walk, (void*) this);
     }
     is_evaluated= true;
@@ -1259,9 +1257,10 @@ Field *Item_sum_avg::create_tmp_field(bool group, Table *table,
       The easiest way is to do this is to store both value in a string
       and unpack on access.
     */
+    table->setVariableWidth();
     field= new Field_varstring(((hybrid_type == DECIMAL_RESULT) ?
                                 dec_bin_size : sizeof(double)) + sizeof(int64_t),
-                               0, name, table->s, &my_charset_bin);
+                               0, name, &my_charset_bin);
   }
   else if (hybrid_type == DECIMAL_RESULT)
     field= new Field_decimal(max_length, maybe_null, name,
@@ -1475,7 +1474,8 @@ Field *Item_sum_variance::create_tmp_field(bool group, Table *table,
       The easiest way is to do this is to store both value in a string
       and unpack on access.
     */
-    field= new Field_varstring(sizeof(double)*2 + sizeof(int64_t), 0, name, table->s, &my_charset_bin);
+    table->setVariableWidth();
+    field= new Field_varstring(sizeof(double)*2 + sizeof(int64_t), 0, name, &my_charset_bin);
   }
   else
     field= new Field_double(max_length, maybe_null, name, decimals, true);
@@ -2498,8 +2498,8 @@ int simple_str_key_cmp(void* arg, unsigned char* key1, unsigned char* key2)
 int composite_key_cmp(void* arg, unsigned char* key1, unsigned char* key2)
 {
   Item_sum_count_distinct* item = (Item_sum_count_distinct*)arg;
-  Field **field    = item->table->field;
-  Field **field_end= field + item->table->s->fields;
+  Field **field    = item->table->getFields();
+  Field **field_end= field + item->table->getShare()->sizeFields();
   uint32_t *lengths=item->field_lengths;
   for (; field < field_end; ++field)
   {
@@ -2514,10 +2514,6 @@ int composite_key_cmp(void* arg, unsigned char* key1, unsigned char* key2)
   return 0;
 }
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 static int count_distinct_walk(void *,
                                uint32_t ,
                                void *arg)
@@ -2525,12 +2521,6 @@ static int count_distinct_walk(void *,
   (*((uint64_t*)arg))++;
   return 0;
 }
-
-#ifdef __cplusplus
-}
-#endif
-
-
 
 void Item_sum_count_distinct::cleanup()
 {
@@ -2549,7 +2539,6 @@ void Item_sum_count_distinct::cleanup()
     is_evaluated= false;
     if (table)
     {
-      table->free_tmp_table(table->in_use);
       table= 0;
     }
     delete tmp_table_param;
@@ -2614,15 +2603,17 @@ bool Item_sum_count_distinct::setup(Session *session)
   tmp_table_param->force_copy_fields= force_copy_fields;
   assert(table == 0);
 
-  if (!(table= create_tmp_table(session, tmp_table_param, list, (order_st*) 0, 1,
+  if (!(table= create_tmp_table(session, tmp_table_param, list, (Order*) 0, 1,
 				0,
 				(select_lex->options | session->options),
 				HA_POS_ERROR, (char*)"")))
+  {
     return true;
+  }
   table->cursor->extra(HA_EXTRA_NO_ROWS);		// Don't update rows
   table->no_rows=1;
 
-  if (table->s->db_type() == heap_engine)
+  if (table->getShare()->db_type() == heap_engine)
   {
     /*
       No blobs, otherwise it would have been MyISAM: set up a compare
@@ -2630,8 +2621,8 @@ bool Item_sum_count_distinct::setup(Session *session)
     */
     qsort_cmp2 compare_key;
     void* cmp_arg;
-    Field **field= table->field;
-    Field **field_end= field + table->s->fields;
+    Field **field= table->getFields();
+    Field **field_end= field + table->getShare()->sizeFields();
     bool all_binary= true;
 
     for (tree_key_length= 0; field < field_end; ++field)
@@ -2652,7 +2643,7 @@ bool Item_sum_count_distinct::setup(Session *session)
     }
     else
     {
-      if (table->s->fields == 1)
+      if (table->getShare()->sizeFields() == 1)
       {
         /*
           If we have only one field, which is the most common use of
@@ -2661,7 +2652,7 @@ bool Item_sum_count_distinct::setup(Session *session)
           about other fields.
         */
         compare_key= (qsort_cmp2) simple_str_key_cmp;
-        cmp_arg= (void*) table->field[0];
+        cmp_arg= (void*) table->getField(0);
         /* tree_key_length has been set already */
       }
       else
@@ -2669,8 +2660,8 @@ bool Item_sum_count_distinct::setup(Session *session)
         uint32_t *length;
         compare_key= (qsort_cmp2) composite_key_cmp;
         cmp_arg= (void*) this;
-        field_lengths= (uint32_t*) session->alloc(table->s->fields * sizeof(uint32_t));
-        for (tree_key_length= 0, length= field_lengths, field= table->field;
+        field_lengths= (uint32_t*) session->alloc(table->getShare()->sizeFields() * sizeof(uint32_t));
+        for (tree_key_length= 0, length= field_lengths, field= table->getFields();
              field < field_end; ++field, ++length)
         {
           *length= (*field)->pack_length();
@@ -2725,9 +2716,13 @@ bool Item_sum_count_distinct::add()
   copy_fields(tmp_table_param);
   copy_funcs(tmp_table_param->items_to_copy);
 
-  for (Field **field=table->field ; *field ; field++)
+  for (Field **field= table->getFields() ; *field ; field++)
+  {
     if ((*field)->is_real_null(0))
+    {
       return 0;					// Don't count NULL
+    }
+  }
 
   is_evaluated= false;
   if (tree)
@@ -2738,9 +2733,9 @@ bool Item_sum_count_distinct::add()
       bloat the tree without providing any valuable info. Besides,
       key_length used to initialize the tree didn't include space for them.
     */
-    return tree->unique_add(table->record[0] + table->s->null_bytes);
+    return tree->unique_add(table->record[0] + table->getShare()->null_bytes);
   }
-  if ((error= table->cursor->ha_write_row(table->record[0])) &&
+  if ((error= table->cursor->insertRecord(table->record[0])) &&
       table->cursor->is_fatal_error(error, HA_CHECK_DUP))
     return true;
   return false;
@@ -2827,7 +2822,7 @@ int group_concat_key_cmp_with_distinct(void* arg, const void* key1,
     */
     Field *field= item->get_tmp_table_field();
     int res;
-    uint32_t offset= field->offset(field->table->record[0])-table->s->null_bytes;
+    uint32_t offset= field->offset(field->getTable()->record[0])-table->getShare()->null_bytes;
     if((res= field->cmp((unsigned char*)key1 + offset, (unsigned char*)key2 + offset)))
       return res;
   }
@@ -2836,14 +2831,14 @@ int group_concat_key_cmp_with_distinct(void* arg, const void* key1,
 
 
 /**
-  function of sort for syntax: GROUP_CONCAT(expr,... order_st BY col,... )
+  function of sort for syntax: GROUP_CONCAT(expr,... ORDER BY col,... )
 */
 
 int group_concat_key_cmp_with_order(void* arg, const void* key1,
                                     const void* key2)
 {
   Item_func_group_concat* grp_item= (Item_func_group_concat*) arg;
-  order_st **order_item, **end;
+  Order **order_item, **end;
   Table *table= grp_item->table;
 
   for (order_item= grp_item->order, end=order_item+ grp_item->arg_count_order;
@@ -2864,8 +2859,8 @@ int group_concat_key_cmp_with_order(void* arg, const void* key1,
     if (field && !item->const_item())
     {
       int res;
-      uint32_t offset= (field->offset(field->table->record[0]) -
-                    table->s->null_bytes);
+      uint32_t offset= (field->offset(field->getTable()->record[0]) -
+                    table->getShare()->null_bytes);
       if ((res= field->cmp((unsigned char*)key1 + offset, (unsigned char*)key2 + offset)))
         return (*order_item)->asc ? res : -res;
     }
@@ -2887,7 +2882,7 @@ int dump_leaf_key(unsigned char* key, uint32_t ,
                   Item_func_group_concat *item)
 {
   Table *table= item->table;
-  String tmp((char *)table->record[1], table->s->reclength,
+  String tmp((char *)table->getUpdateRecord(), table->getShare()->getRecordLength(),
              default_charset_info);
   String tmp2;
   String *result= &item->result;
@@ -2914,9 +2909,9 @@ int dump_leaf_key(unsigned char* key, uint32_t ,
         because it contains both order and arg list fields.
       */
       Field *field= (*arg)->get_tmp_table_field();
-      uint32_t offset= (field->offset(field->table->record[0]) -
-                    table->s->null_bytes);
-      assert(offset < table->s->reclength);
+      uint32_t offset= (field->offset(field->getTable()->record[0]) -
+                    table->getShare()->null_bytes);
+      assert(offset < table->getShare()->getRecordLength());
       res= field->val_str(&tmp, key + offset);
     }
     else
@@ -2987,10 +2982,10 @@ Item_func_group_concat(Name_resolution_context *context_arg,
     order - arg_count_order
   */
   if (!(args= (Item**) memory::sql_alloc(sizeof(Item*) * arg_count +
-                                 sizeof(order_st*)*arg_count_order)))
+                                 sizeof(Order*)*arg_count_order)))
     return;
 
-  order= (order_st**)(args + arg_count);
+  order= (Order**)(args + arg_count);
 
   /* fill args items of show and sort */
   List_iterator_fast<Item> li(*select_list);
@@ -3000,8 +2995,8 @@ Item_func_group_concat(Name_resolution_context *context_arg,
 
   if (arg_count_order)
   {
-    order_st **order_ptr= order;
-    for (order_st *order_item= (order_st*) order_list->first;
+    Order **order_ptr= order;
+    for (Order *order_item= (Order*) order_list->first;
          order_item != NULL;
          order_item= order_item->next)
     {
@@ -3047,7 +3042,7 @@ void Item_func_group_concat::cleanup()
   if (warning)
   {
     char warn_buff[DRIZZLE_ERRMSG_SIZE];
-    sprintf(warn_buff, ER(ER_CUT_VALUE_GROUP_CONCAT), count_cut_values);
+    snprintf(warn_buff, sizeof(warn_buff), ER(ER_CUT_VALUE_GROUP_CONCAT), count_cut_values);
     warning->set_msg(current_session, warn_buff);
     warning= 0;
   }
@@ -3063,7 +3058,6 @@ void Item_func_group_concat::cleanup()
     if (table)
     {
       Session *session= table->in_use;
-      table->free_tmp_table(session);
       table= 0;
       if (tree)
       {
@@ -3078,7 +3072,7 @@ void Item_func_group_concat::cleanup()
       if (warning)
       {
         char warn_buff[DRIZZLE_ERRMSG_SIZE];
-        sprintf(warn_buff, ER(ER_CUT_VALUE_GROUP_CONCAT), count_cut_values);
+        snprintf(warn_buff, sizeof(warn_buff), ER(ER_CUT_VALUE_GROUP_CONCAT), count_cut_values);
         warning->set_msg(session, warn_buff);
         warning= 0;
       }
@@ -3135,14 +3129,14 @@ bool Item_func_group_concat::add()
   {
     /* Filter out duplicate rows. */
     uint32_t count= unique_filter->elements_in_tree();
-    unique_filter->unique_add(table->record[0] + table->s->null_bytes);
+    unique_filter->unique_add(table->record[0] + table->getShare()->null_bytes);
     if (count == unique_filter->elements_in_tree())
       row_eligible= false;
   }
 
   TREE_ELEMENT *el= 0;                          // Only for safety
   if (row_eligible && tree)
-    el= tree_insert(tree, table->record[0] + table->s->null_bytes, 0,
+    el= tree_insert(tree, table->record[0] + table->getShare()->null_bytes, 0,
                     tree->custom_arg);
   /*
     If the row is not a duplicate (el->count == 1)
@@ -3151,7 +3145,7 @@ bool Item_func_group_concat::add()
   */
   if (row_eligible && !warning_for_row &&
       (!tree || (el->count == 1 && distinct && !arg_count_order)))
-    dump_leaf_key(table->record[0] + table->s->null_bytes, 1, this);
+    dump_leaf_key(table->record[0] + table->getShare()->null_bytes, 1, this);
 
   return 0;
 }
@@ -3253,7 +3247,7 @@ bool Item_func_group_concat::setup(Session *session)
   {
     /*
       Currently we have to force conversion of BLOB values to VARCHAR's
-      if we are to store them in TREE objects used for order_st BY and
+      if we are to store them in TREE objects used for ORDER BY and
       DISTINCT. This leads to truncation if the BLOB's size exceeds
       Field_varstring::MAX_SIZE.
     */
@@ -3265,14 +3259,17 @@ bool Item_func_group_concat::setup(Session *session)
     We have to create a temporary table to get descriptions of fields
     (types, sizes and so on).
 
-    Note that in the table, we first have the order_st BY fields, then the
+    Note that in the table, we first have the ORDER BY fields, then the
     field list.
   */
   if (!(table= create_tmp_table(session, tmp_table_param, all_fields,
-                                (order_st*) 0, 0, true,
+                                (Order*) 0, 0, true,
                                 (select_lex->options | session->options),
                                 HA_POS_ERROR, (char*) "")))
+  {
     return(true);
+  }
+
   table->cursor->extra(HA_EXTRA_NO_ROWS);
   table->no_rows= 1;
 
@@ -3281,14 +3278,14 @@ bool Item_func_group_concat::setup(Session *session)
      Don't reserve space for NULLs: if any of gconcat arguments is NULL,
      the row is not added to the result.
   */
-  uint32_t tree_key_length= table->s->reclength - table->s->null_bytes;
+  uint32_t tree_key_length= table->getShare()->getRecordLength() - table->getShare()->null_bytes;
 
   if (arg_count_order)
   {
     tree= &tree_base;
     /*
       Create a tree for sorting. The tree is used to sort (according to the
-      syntax of this function). If there is no order_st BY clause, we don't
+      syntax of this function). If there is no ORDER BY clause, we don't
       create this tree.
     */
     init_tree(tree, (uint32_t) min(session->variables.max_heap_table_size,
@@ -3322,7 +3319,7 @@ void Item_func_group_concat::make_unique()
 double Item_func_group_concat::val_real()
 {
   String *res;  res=val_str(&str_value);
-  return res ? my_atof(res->c_ptr()) : 0.0;
+  return res ? internal::my_atof(res->c_ptr()) : 0.0;
 }
 
 int64_t Item_func_group_concat::val_int()
@@ -3333,7 +3330,7 @@ int64_t Item_func_group_concat::val_int()
   if (!(res= val_str(&str_value)))
     return (int64_t) 0;
   end_ptr= (char*) res->ptr()+ res->length();
-  return my_strtoll10(res->ptr(), &end_ptr, &error);
+  return internal::my_strtoll10(res->ptr(), &end_ptr, &error);
 }
 
 String* Item_func_group_concat::val_str(String* )
@@ -3396,3 +3393,5 @@ Item_func_group_concat::~Item_func_group_concat()
   if (!original && unique_filter)
     delete unique_filter;
 }
+
+} /* namespace drizzled */

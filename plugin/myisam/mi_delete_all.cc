@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /* Remove all rows from a MyISAM table */
 /* This clears the status information and truncates files */
@@ -50,7 +50,7 @@ int mi_delete_all_rows(MI_INFO *info)
     If we are using delayed keys or if the user has done changes to the tables
     since it was locked then there may be key blocks in the key cache
   */
-  flush_key_blocks(share->key_cache, share->kfile, FLUSH_IGNORE_CHANGED);
+  flush_key_blocks(share->getKeyCache(), share->kfile, FLUSH_IGNORE_CHANGED);
   if (ftruncate(info->dfile, 0) || ftruncate(share->kfile, share->base.keystart))
     goto err;
   _mi_writeinfo(info,WRITEINFO_UPDATE_KEYFILE);

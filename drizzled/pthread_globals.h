@@ -21,19 +21,25 @@
 #define DRIZZLED_PTHREAD_GLOBALS_H
 
 #include <pthread.h>
+#include <boost/thread/recursive_mutex.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/shared_mutex.hpp>
+#include <boost/thread/condition_variable.hpp>
 
-extern pthread_mutex_t LOCK_create_db;
-extern pthread_mutex_t LOCK_open;
-extern pthread_mutex_t LOCK_thread_count;
-extern pthread_mutex_t LOCK_status;
-extern pthread_mutex_t LOCK_global_read_lock;
-extern pthread_mutex_t LOCK_global_system_variables;
+namespace drizzled
+{
 
-extern pthread_rwlock_t LOCK_system_variables_hash;
-extern pthread_cond_t COND_refresh;
-extern pthread_cond_t COND_thread_count;
-extern pthread_cond_t COND_global_read_lock;
-extern pthread_attr_t connection_attrib;
+extern boost::mutex LOCK_open;
+extern boost::mutex LOCK_global_system_variables;
+extern boost::mutex LOCK_thread_count;
+
+typedef boost::unique_lock<boost::mutex>  boost_unique_lock_t;
+
+extern boost::condition_variable_any COND_refresh;
+extern boost::condition_variable COND_thread_count;
+extern boost::condition_variable COND_server_end;
 extern pthread_t signal_thread;
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_PTHREAD_GLOBALS_H */

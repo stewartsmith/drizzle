@@ -40,16 +40,16 @@
 #include "drizzled/charset.h"
 
 /* implements memc_servers_set */
-class MemcachedServersSet : public Item_int_func
+class MemcachedServersSet : public drizzled::Item_int_func
 {
 private:
-  String failure_buff;
-  String value;
+  drizzled::String failure_buff;
+  drizzled::String value;
 public:
   MemcachedServersSet()
     :
       Item_int_func(),
-      failure_buff("FAILURE", &my_charset_bin)
+      failure_buff("FAILURE", &drizzled::my_charset_bin)
   {}
 
   ~MemcachedServersSet() {}
@@ -65,9 +65,9 @@ public:
   {
     max_length= 32;
     args[0]->collation.set(
-      get_charset_by_csname(args[0]->collation.collation->csname,
-                            MY_CS_BINSORT),
-      DERIVATION_COERCIBLE);
+      drizzled::get_charset_by_csname(args[0]->collation.collation->csname,
+                                      MY_CS_BINSORT),
+                                      drizzled::DERIVATION_COERCIBLE);
   }
   bool check_argument_count(int n)
   {

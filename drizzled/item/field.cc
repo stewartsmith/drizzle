@@ -18,10 +18,11 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/session.h>
 #include <drizzled/table.h>
 #include <drizzled/error.h>
+#include <drizzled/join.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/item/cmpfunc.h>
@@ -29,7 +30,10 @@
 #include <drizzled/item/outer_ref.h>
 #include <drizzled/plugin/client.h>
 
-using namespace drizzled;
+#include <boost/dynamic_bitset.hpp>
+
+namespace drizzled
+{
 
 /**
   Store the pointer to this item field into a list if not already there.
@@ -82,9 +86,9 @@ bool Item_field::collect_item_field_processor(unsigned char *arg)
 
 bool Item_field::find_item_in_field_list_processor(unsigned char *arg)
 {
-  KEY_PART_INFO *first_non_group_part= *((KEY_PART_INFO **) arg);
-  KEY_PART_INFO *last_part= *(((KEY_PART_INFO **) arg) + 1);
-  KEY_PART_INFO *cur_part;
+  KeyPartInfo *first_non_group_part= *((KeyPartInfo **) arg);
+  KeyPartInfo *last_part= *(((KeyPartInfo **) arg) + 1);
+  KeyPartInfo *cur_part;
 
   for (cur_part= first_non_group_part; cur_part != last_part; cur_part++)
   {
@@ -106,15 +110,15 @@ bool Item_field::find_item_in_field_list_processor(unsigned char *arg)
 bool Item_field::register_field_in_read_map(unsigned char *arg)
 {
   Table *table= (Table *) arg;
-  if (field->table == table || !table)
-    field->table->setReadSet(field->field_index);
+  if (field->getTable() == table || !table)
+    field->getTable()->setReadSet(field->field_index);
 
   return 0;
 }
 
 
 Item_field::Item_field(Field *f)
-  :Item_ident(0, NULL, *f->table_name, f->field_name),
+  :Item_ident(0, NULL, f->getTable()->getAlias(), f->field_name),
    item_equal(0), no_const_subst(0),
    have_privileges(0), any_privileges(0)
 {
@@ -134,11 +138,17 @@ Item_field::Item_field(Field *f)
   Item_field (this is important in prepared statements).
 */
 
-Item_field::Item_field(Session *, Name_resolution_context *context_arg,
-                       Field *f)
-  :Item_ident(context_arg, f->table->s->db.str, *f->table_name, f->field_name),
-   item_equal(0), no_const_subst(0),
-   have_privileges(0), any_privileges(0)
+Item_field::Item_field(Session *,
+                       Name_resolution_context *context_arg,
+                       Field *f) :
+  Item_ident(context_arg,
+             f->getTable()->getShare()->getSchemaName(),
+             f->getTable()->getAlias(),
+             f->field_name),
+   item_equal(0),
+   no_const_subst(0),
+   have_privileges(0),
+   any_privileges(0)
 {
   set_field(f);
 }
@@ -146,13 +156,18 @@ Item_field::Item_field(Session *, Name_resolution_context *context_arg,
 
 Item_field::Item_field(Name_resolution_context *context_arg,
                        const char *db_arg,const char *table_name_arg,
-                       const char *field_name_arg)
-  :Item_ident(context_arg, db_arg,table_name_arg,field_name_arg),
-   field(0), result_field(0), item_equal(0), no_const_subst(0),
-   have_privileges(0), any_privileges(0)
+                       const char *field_name_arg) :
+  Item_ident(context_arg, db_arg,table_name_arg,field_name_arg),
+   field(0),
+   result_field(0),
+   item_equal(0),
+   no_const_subst(0),
+   have_privileges(0),
+   any_privileges(0)
 {
   Select_Lex *select= current_session->lex->current_select;
   collation.set(DERIVATION_IMPLICIT);
+
   if (select && select->parsing_place != IN_HAVING)
       select->select_n_where_fields++;
 }
@@ -161,14 +176,14 @@ Item_field::Item_field(Name_resolution_context *context_arg,
   Constructor need to process subselect with temporary tables (see Item)
 */
 
-Item_field::Item_field(Session *session, Item_field *item)
-  :Item_ident(session, item),
-   field(item->field),
-   result_field(item->result_field),
-   item_equal(item->item_equal),
-   no_const_subst(item->no_const_subst),
-   have_privileges(item->have_privileges),
-   any_privileges(item->any_privileges)
+Item_field::Item_field(Session *session, Item_field *item) :
+  Item_ident(session, item),
+  field(item->field),
+  result_field(item->result_field),
+  item_equal(item->item_equal),
+  no_const_subst(item->no_const_subst),
+  have_privileges(item->have_privileges),
+  any_privileges(item->any_privileges)
 {
   collation.set(DERIVATION_IMPLICIT);
 }
@@ -179,15 +194,13 @@ void Item_field::set_field(Field *field_par)
   maybe_null=field->maybe_null();
   decimals= field->decimals();
   max_length= field_par->max_display_length();
-  table_name= *field_par->table_name;
+  table_name= field_par->getTable()->getAlias();
   field_name= field_par->field_name;
-  db_name= field_par->table->s->db.str;
-  alias_name_used= field_par->table->alias_name_used;
+  db_name= field_par->getTable()->getShare()->getSchemaName();
+  alias_name_used= field_par->getTable()->alias_name_used;
   unsigned_flag=test(field_par->flags & UNSIGNED_FLAG);
   collation.set(field_par->charset(), field_par->derivation());
   fixed= 1;
-  if (field->table->s->tmp_table == SYSTEM_TMP_TABLE)
-    any_privileges= 0;
 }
 
 
@@ -354,16 +367,16 @@ bool Item_field::eq(const Item *item, bool) const
 	   (!my_strcasecmp(table_alias_charset, item_field->table_name,
 			   table_name) &&
 	    (!item_field->db_name || !db_name ||
-	     (item_field->db_name && !strcmp(item_field->db_name,
+	     (item_field->db_name && !strcasecmp(item_field->db_name,
 					     db_name))))));
 }
 
 
 table_map Item_field::used_tables() const
 {
-  if (field->table->const_table)
+  if (field->getTable()->const_table)
     return 0;					// const item
-  return (depended_from ? OUTER_REF_TABLE_BIT : field->table->map);
+  return (depended_from ? OUTER_REF_TABLE_BIT : field->getTable()->map);
 }
 
 enum Item_result Item_field::result_type () const
@@ -519,7 +532,7 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
       {
         if (*from_field != view_ref_found)
         {
-          prev_subselect_item->used_tables_cache|= (*from_field)->table->map;
+          prev_subselect_item->used_tables_cache|= (*from_field)->getTable()->map;
           prev_subselect_item->const_item_cache= 0;
           set_field(*from_field);
           if (!last_checked_context->select_lex->having_fix_field &&
@@ -686,7 +699,7 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
     {
       Item_ref *rf;
       rf= new Item_ref(context,
-                       (cached_table->db[0] ? cached_table->db : 0),
+                       (cached_table->getSchemaName()[0] ? cached_table->getSchemaName() : 0),
                        (char*) cached_table->alias, (char*) field_name);
       if (!rf)
         return -1;
@@ -778,7 +791,8 @@ bool Item_field::fix_fields(Session *session, Item **reference)
       {
         uint32_t counter;
         enum_resolution_type resolution;
-        Item** res= find_item_in_list(this, session->lex->current_select->item_list,
+        Item** res= find_item_in_list(session,
+                                      this, session->lex->current_select->item_list,
                                       &counter, REPORT_EXCEPT_NOT_FOUND,
                                       &resolution);
         if (!res)
@@ -876,8 +890,8 @@ bool Item_field::fix_fields(Session *session, Item **reference)
   }
   else if (session->mark_used_columns != MARK_COLUMNS_NONE)
   {
-    Table *table= field->table;
-    MyBitmap *current_bitmap, *other_bitmap;
+    Table *table= field->getTable();
+    boost::dynamic_bitset<> *current_bitmap, *other_bitmap;
     if (session->mark_used_columns == MARK_COLUMNS_READ)
     {
       current_bitmap= table->read_set;
@@ -888,9 +902,10 @@ bool Item_field::fix_fields(Session *session, Item **reference)
       current_bitmap= table->write_set;
       other_bitmap=   table->read_set;
     }
-    if (! current_bitmap->testAndSet(field->field_index))
+    //if (! current_bitmap->testAndSet(field->field_index))
+    if (! current_bitmap->test(field->field_index))
     {
-      if (! other_bitmap->isBitSet(field->field_index))
+      if (! other_bitmap->test(field->field_index))
       {
         /* First usage of column */
         table->used_fields++;                     // Used to optimize loops
@@ -1188,7 +1203,7 @@ void Item_field::update_null_value()
     need to set no_errors to prevent warnings about type conversion
     popping up.
   */
-  Session *session= field->table->in_use;
+  Session *session= field->getTable()->in_use;
   int no_errors;
 
   no_errors= session->no_errors;
@@ -1225,7 +1240,7 @@ Item *Item_field::update_value_transformer(unsigned char *select_arg)
   Select_Lex *select= (Select_Lex*)select_arg;
   assert(fixed);
 
-  if (field->table != select->context.table_list->table)
+  if (field->getTable() != select->context.table_list->table)
   {
     List<Item> *all_fields= &select->join->all_fields;
     Item **ref_pointer_array= select->ref_pointer_array;
@@ -1244,15 +1259,23 @@ Item *Item_field::update_value_transformer(unsigned char *select_arg)
 
 void Item_field::print(String *str, enum_query_type query_type)
 {
-  if (field && field->table->const_table)
+  if (field && field->getTable()->const_table)
   {
     char buff[MAX_FIELD_WIDTH];
     String tmp(buff,sizeof(buff),str->charset());
     field->val_str(&tmp);
-    str->append('\'');
-    str->append(tmp);
-    str->append('\'');
+    if (field->is_null())  {
+      str->append("NULL");
+    }
+    else {
+      str->append('\'');
+      str->append(tmp);
+      str->append('\'');
+    }
     return;
   }
   Item_ident::print(str, query_type);
 }
+
+
+} /* namespace drizzled */

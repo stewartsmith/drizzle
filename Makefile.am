@@ -22,40 +22,58 @@ check_PROGRAMS =
 noinst_HEADERS =
 nobase_nodist_include_HEADERS =
 nobase_dist_include_HEADERS =
+dist_include_HEADERS =
+sbin_PROGRAMS =
 lib_LTLIBRARIES = 
 noinst_LTLIBRARIES =
 noinst_PROGRAMS =
-
-# Process this file with automake to create Makefile.in
-if BUILD_GETTEXT
-  po=po
-endif
+man_MANS =
+bin_PROGRAMS =
 
 VERSION=$(PANDORA_RELEASE_VERSION)
 
-SUBDIRS = ${po} \
-	  gnulib \
-	  .
+SUBDIRS = .
+if BUILD_PO
+SUBDIRS += po
+endif
 
 DIST_SUBDIRS = ${SUBDIRS} tests
 
-BUILT_SOURCES=		drizzled/configmake.h
-EXTRA_DIST=		config/config.rpath m4/gnulib-cache.m4 \
-			config/autorun.sh Doxyfile \
-			config/bzr_revinfo \
-			extra/run_cpplint.sh  \
-			extra/cpplint.py \
-			extra/clean_source.sh \
-			config/make-lint.py
+BUILT_SOURCES=
+BUILT_MAINT_SRC=
+EXTRA_DIST= \
+	    .quickly \
+	    ChangeLog \
+	    COPYING.Boost \
+	    COPYING.BSD \
+	    DRIZZLE.FAQ \
+	    EXCEPTIONS-CLIENT \
+	    config/autorun.sh \
+	    config/config.rpath \
+	    config/drizzle.ver \
+	    config/make-lint.py \
+	    config/pandora_vc_revinfo \
+	    config/pre_hook.sh \
+	    config/uncrustify.cfg \
+	    extra/clean_source.sh \
+	    extra/cpplint.py \
+	    extra/run_cpplint.sh \
+	    po/Makefile.in.in \
+	    ${top_srcdir}/m4/pandora*m4
 
 
 CLEANFILES=		${BUILT_SOURCES}
 DISTCLEANFILES=		ac_available_languages_fragment \
 			.plugin.scan \
 			config/bzr_revinfo \
-			config/top.h
+			config/top.h \
+			intltool-extract \
+			intltool-merge \
+			intltool-update
 
-MAINTAINERCLEANFILES=	autom4te.cache
+MAINTAINERCLEANFILES= \
+		      autom4te.cache \
+		      ChangeLog
 
 EXTRA_LTLIBRARIES=
 pkgplugin_LTLIBRARIES=
@@ -64,22 +82,8 @@ include config/pandora-plugin.am
 EXTRA_DIST+=	${man_MANS}
 
 .PHONY: \
-	indent \
-	test
+	indent
 
-
-# Target 'test' will run the regression test suite using the built server.
-#
-# If you are running in a shared environment, users can avoid clashing
-# port numbers by setting individual small numbers 1-100 to the
-# environment variable MTR_BUILD_THREAD. The script "test-run"
-# will then calculate the various port numbers it needs from this,
-# making sure each user use different ports.
-
-test: test-drizzle
-
-doxygen:
-	doxygen Doxyfile
 
 indent:
 	for f in `find ${top_srcdir} -type f | grep -v innobase |\
@@ -88,6 +92,8 @@ indent:
                -o indentoutput.tmp && mv indentoutput.tmp "$$f" ;\
         done
 
+BUILT_SOURCES+= drizzled/configmake.h
+nobase_nodist_include_HEADERS+= drizzled/configmake.h
 drizzled/configmake.h: ${top_srcdir}/Makefile.in
 	@echo "Making $@"
 	@rm -f $@-t $@
@@ -131,21 +137,46 @@ drizzled/configmake.h: ${top_srcdir}/Makefile.in
 
 clean-local:
 	find . -name '*.gcno' | xargs rm -f 
+	-rm -rf docs/api docs/dev docs/_build docs/doctrees
 
+ChangeLog:
+	bzr log --gnu > ChangeLog
 include config/lint-source.am
+include config/lcov.am
 
+include docs/include.am
+include drizzled/message/include.am
 include drizzled/include.am
 include drizzled/internal/include.am
 include drizzled/algorithm/include.am
 include drizzled/util/include.am
-include drizzled/message/include.am
 include client/include.am
 include extra/include.am
 include support-files/include.am
 include tests/include.am
+include unittests/include.am
+include libdrizzle/include.am
+include win32/include.am
+
+TESTS += ${check_PROGRAMS}
 
 merge-clean:
 	find ./ | $(GREP) \.orig | xargs rm -f
+	find ./ | $(GREP) \.moved | xargs rm -f
 	find ./ | $(GREP) \.rej | xargs rm -f
 	find ./ | $(GREP) \~$$ | xargs rm -f
 	bzr unknowns
+
+install-exec-hook:
+	cd $(DESTDIR)$(sbindir) && \
+	mv -f drizzled$(EXEEXT) drizzled7$(EXEEXT) && \
+	$(LN_S) drizzled7$(EXEEXT) drizzled$(EXEEXT)
+
+install-data-hook:
+	cd $(DESTDIR)$(man8dir) && \
+	mv -f drizzled.8 drizzled7.8 && \
+	$(LN_S) drizzled7.8 drizzled.8
+
+uninstall-hook:
+	rm $(DESTDIR)$(man8dir)/drizzled7.8
+	rm $(DESTDIR)$(sbindir)/drizzled7$(EXEEXT)

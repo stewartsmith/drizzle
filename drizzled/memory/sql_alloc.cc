@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 
 /* Mallocs for used in threads */
@@ -31,16 +31,14 @@
 namespace drizzled
 {
 
-extern "C" void sql_alloc_error_handler(void);
-
-extern "C" void sql_alloc_error_handler(void)
+static void sql_alloc_error_handler(void)
 {
   errmsg_printf(ERRMSG_LVL_ERROR, "%s",ER(ER_OUT_OF_RESOURCES));
 }
 
 void memory::init_sql_alloc(memory::Root *mem_root, size_t block_size, size_t)
 {
-  memory::init_alloc_root(mem_root, block_size);
+  mem_root->init_alloc_root(block_size);
   mem_root->error_handler= sql_alloc_error_handler;
 }
 
@@ -48,15 +46,17 @@ void memory::init_sql_alloc(memory::Root *mem_root, size_t block_size, size_t)
 void *memory::sql_alloc(size_t Size)
 {
   memory::Root *root= current_mem_root();
-  return memory::alloc_root(root,Size);
+  return root->alloc_root(Size);
 }
 
 
 void *memory::sql_calloc(size_t size)
 {
   void *ptr;
+
   if ((ptr=memory::sql_alloc(size)))
     memset(ptr, 0, size);
+
   return ptr;
 }
 
@@ -103,12 +103,12 @@ void *memory::SqlAlloc::operator new[](size_t size)
 
 void *memory::SqlAlloc::operator new[](size_t size, memory::Root *mem_root)
 {
-  return memory::alloc_root(mem_root, size);
+  return mem_root->alloc_root(size);
 }
 
 void *memory::SqlAlloc::operator new(size_t size, memory::Root *mem_root)
 {
-  return memory::alloc_root(mem_root, size);
+  return mem_root->alloc_root(size);
 }
 
 } /* namespace drizzled */

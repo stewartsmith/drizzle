@@ -71,10 +71,10 @@ bool statement::RenameTable::renameTables(TableList *table_list)
   if (wait_if_global_read_lock(session, 0, 1))
     return true;
 
-  pthread_mutex_lock(&LOCK_open); /* Rename table lock for exclusive access */
+  LOCK_open.lock(); /* Rename table lock for exclusive access */
   if (lock_table_names_exclusively(session, table_list))
   {
-    pthread_mutex_unlock(&LOCK_open);
+    LOCK_open.unlock();
     goto err;
   }
 
@@ -105,18 +105,18 @@ bool statement::RenameTable::renameTables(TableList *table_list)
     higher concurrency - query_cache_invalidate can take minutes to
     complete.
   */
-  pthread_mutex_unlock(&LOCK_open);
+  LOCK_open.unlock();
 
   /* Lets hope this doesn't fail as the result will be messy */
   if (! error)
   {
-    write_bin_log(session, session->query, session->query_length);
+    write_bin_log(session, session->query.c_str());
     session->my_ok();
   }
 
-  pthread_mutex_lock(&LOCK_open); /* unlock all tables held */
+  LOCK_open.lock(); /* unlock all tables held */
   unlock_table_names(table_list, NULL);
-  pthread_mutex_unlock(&LOCK_open);
+  LOCK_open.unlock();
 
 err:
   start_waiting_global_read_lock(session);
@@ -147,33 +147,31 @@ bool statement::RenameTable::rename(TableList *ren_table,
   const char *new_alias, *old_alias;
 
   {
-    old_alias= ren_table->table_name;
+    old_alias= ren_table->getTableName();
     new_alias= new_table_name;
   }
 
   plugin::StorageEngine *engine= NULL;
   message::Table table_proto;
 
-  TableIdentifier old_identifier(ren_table->db, old_alias, NO_TMP_TABLE);
+  TableIdentifier old_identifier(ren_table->getSchemaName(), old_alias, message::Table::STANDARD);
 
-  if (plugin::StorageEngine::getTableDefinition(*session, old_identifier, &table_proto) != EEXIST)
+  if (plugin::StorageEngine::getTableDefinition(*session, old_identifier, table_proto) != EEXIST)
   {
-    my_error(ER_NO_SUCH_TABLE, MYF(0), ren_table->db, old_alias);
+    my_error(ER_NO_SUCH_TABLE, MYF(0), ren_table->getSchemaName(), old_alias);
     return true;
   }
 
   engine= plugin::StorageEngine::findByName(*session, table_proto.engine().name());
 
-  TableIdentifier new_identifier(new_db, new_alias, NO_TMP_TABLE);
-  if (plugin::StorageEngine::getTableDefinition(*session, new_identifier) != ENOENT)
+  TableIdentifier new_identifier(new_db, new_alias, message::Table::STANDARD);
+  if (plugin::StorageEngine::doesTableExist(*session, new_identifier))
   {
     my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_alias);
     return 1; // This can't be skipped
   }
 
-  rc= mysql_rename_table(engine,
-                         ren_table->db, old_alias,
-                         new_db, new_alias, 0);
+  rc= mysql_rename_table(*session, engine, old_identifier, new_identifier);
   if (rc && ! skip_error)
     return true;
 
@@ -188,7 +186,7 @@ TableList *statement::RenameTable::renameTablesInList(TableList *table_list,
   for (ren_table= table_list; ren_table; ren_table= new_table->next_local)
   {
     new_table= ren_table->next_local;
-    if (rename(ren_table, new_table->db, new_table->table_name, skip_error))
+    if (rename(ren_table, new_table->getSchemaName(), new_table->getTableName(), skip_error))
       return ren_table;
   }
   return 0;

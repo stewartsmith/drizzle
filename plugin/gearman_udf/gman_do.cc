@@ -18,6 +18,7 @@
 #include "function_map.h"
 
 using namespace std;
+using namespace drizzled;
 
 extern "C"
 {

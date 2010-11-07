@@ -11,13 +11,20 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /* Get date in a printable form: yyyy-mm-dd hh:mm:ss */
 
-#include "drizzled/internal/mysys_priv.h"
+#include "config.h"
+
+#include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/m_string.h"
-#include <stdio.h>
+#include <cstdio>
+
+namespace drizzled
+{
+namespace internal
+{
 
 /*
   get date as string
@@ -71,3 +78,6 @@ void get_date(register char * to, int flag, time_t date)
 	     start_time->tm_min,
 	     start_time->tm_sec);
 } /* get_date */
+
+} /* namespace internal */
+} /* namespace drizzled */

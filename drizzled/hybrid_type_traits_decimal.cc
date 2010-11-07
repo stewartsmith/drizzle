@@ -26,6 +26,8 @@
 #include <algorithm>
 
 using namespace std;
+namespace drizzled
+{
 
 /* Hybrid_type_traits_decimal */
 static const Hybrid_type_traits_decimal decimal_traits_instance;
@@ -119,3 +121,5 @@ const Hybrid_type_traits_decimal *Hybrid_type_traits_decimal::instance()
 
 Hybrid_type_traits_decimal::Hybrid_type_traits_decimal()
 {}
+
+} /* namespace drizzled */

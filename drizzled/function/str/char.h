@@ -22,6 +22,9 @@
 
 #include <drizzled/function/str/strfunc.h>
 
+namespace drizzled
+{
+
 class Item_func_char :public Item_str_func
 {
 public:
@@ -36,5 +39,7 @@ public:
   }
   const char *func_name() const { return "char"; }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_STR_CHAR_H */

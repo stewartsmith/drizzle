@@ -25,8 +25,13 @@
  * @TODO Convert HA_XXX defines into enums and/or bitmaps
  */
 
+#include "definitions.h"
+
 #ifndef DRIZZLED_BASE_H
 #define DRIZZLED_BASE_H
+
+namespace drizzled
+{
 
 /* The following is bits in the flag parameter to ha_open() */
 
@@ -189,7 +194,6 @@ enum ha_base_keytype {
   HA_KEYTYPE_ULONG_INT=9,
   HA_KEYTYPE_LONGLONG=10,
   HA_KEYTYPE_ULONGLONG=11,
-  HA_KEYTYPE_UINT24=13,
   /* Varchar (0-255 bytes) with length packed with 1 byte */
   HA_KEYTYPE_VARTEXT1=15,               /* Key is sorted as letters */
   HA_KEYTYPE_VARBINARY1=16,             /* Key is sorted as unsigned chars */
@@ -197,8 +201,6 @@ enum ha_base_keytype {
   HA_KEYTYPE_VARTEXT2=17,		/* Key is sorted as letters */
   HA_KEYTYPE_VARBINARY2=18		/* Key is sorted as unsigned chars */
 };
-
-#define HA_MAX_KEYTYPE	31		/* Must be log2-1 */
 
 	/* These flags kan be OR:ed to key-flag */
 
@@ -209,11 +211,6 @@ enum ha_base_keytype {
 #define HA_UNIQUE_CHECK		256	/* Check the key for uniqueness */
 #define HA_NULL_ARE_EQUAL	2048	/* NULL in key are cmp as equal */
 #define HA_GENERATED_KEY	8192	/* Automaticly generated key */
-
-        /* The combination of the above can be used for key type comparison. */
-#define HA_KEYFLAG_MASK (HA_NOSAME | HA_PACK_KEY | HA_AUTO_KEY | \
-                         HA_BINARY_PACK_KEY | HA_UNIQUE_CHECK | \
-                         HA_NULL_ARE_EQUAL | HA_GENERATED_KEY)
 
 #define HA_KEY_HAS_PART_KEY_SEG 65536   /* Key contains partial segments */
 
@@ -410,12 +407,10 @@ typedef unsigned long key_part_map;
 #define MBR_WITHIN      2048
 #define MBR_DISJOINT    4096
 #define MBR_EQUAL       8192
-#define MBR_DATA        16384
 #define SEARCH_NULL_ARE_EQUAL 32768	/* NULL in keys are equal */
 #define SEARCH_NULL_ARE_NOT_EQUAL 65536	/* NULL in keys are not equal */
 
 	/* bits in opt_flag */
-#define QUICK_USED	1
 #define READ_CACHE_USED	2
 #define READ_CHECK_USED 4
 #define KEY_READ_USED	8
@@ -429,10 +424,8 @@ typedef unsigned long key_part_map;
 #define HA_STATE_DELETED	8
 #define HA_STATE_NEXT_FOUND	16	/* Next found record (record before) */
 #define HA_STATE_PREV_FOUND	32	/* Prev found record (record after) */
-#define HA_STATE_NO_KEY		64	/* Last read didn't find record */
 #define HA_STATE_KEY_CHANGED	128
 #define HA_STATE_WRITE_AT_END	256	/* set in _ps_find_writepos */
-#define HA_STATE_BUFF_SAVED	512	/* If current keybuff is info->buff */
 #define HA_STATE_ROW_CHANGED	1024	/* To invalide ROW cache */
 #define HA_STATE_EXTEND_BLOCK	2048
 #define HA_STATE_RNEXT_SAME	4096	/* rnext_same occupied lastkey2 */
@@ -482,29 +475,34 @@ enum data_file_type {
 */
 #define NULL_RANGE	64
 
-typedef struct st_key_range
+class key_range
 {
+public:
   const unsigned char *key;
   uint32_t length;
   enum ha_rkey_function flag;
   key_part_map keypart_map;
-} key_range;
+};
 
-typedef struct st_key_multi_range
+class KEY_MULTI_RANGE
 {
+public:
   key_range start_key;
   key_range end_key;
   char  *ptr;                 /* Free to use by caller (ptr to row etc) */
   uint32_t  range_flag;           /* key range flags see above */
-} KEY_MULTI_RANGE;
+};
 
 
 /* For number of records */
 typedef uint64_t	ha_rows;
-#define rows2double(A)	uint64_t2double(A)
+inline static double rows2double(ha_rows rows)
+{  
+  return uint64_t2double(rows);
+}
 
-#define HA_POS_ERROR	(~ (ha_rows) 0)
-#define HA_OFFSET_ERROR	(~ (my_off_t) 0)
+#define HA_POS_ERROR	(~ (::drizzled::ha_rows) 0)
+#define HA_OFFSET_ERROR	(~ (::drizzled::internal::my_off_t) 0)
 
 #if SIZEOF_OFF_T == 4
 #define MAX_FILE_SIZE	INT32_MAX
@@ -512,6 +510,12 @@ typedef uint64_t	ha_rows;
 #define MAX_FILE_SIZE	INT64_MAX
 #endif
 
-#define HA_VARCHAR_PACKLENGTH(field_length) ((field_length) < 256 ? 1 :2)
+inline static uint32_t ha_varchar_packlength(uint32_t field_length)
+{
+  return (field_length < 256 ? 1 :2);
+}
+
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_BASE_H */

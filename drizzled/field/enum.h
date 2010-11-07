@@ -23,16 +23,19 @@
 
 #include "drizzled/field/str.h"
 
-class Field_enum :public Field_str 
+namespace drizzled
 {
-protected:
-  uint32_t packlength;
+
+class Field_enum :public Field_str
+{
 public:
 
   using Field::store;
   using Field::val_int;
   using Field::val_str;
   using Field::cmp;
+
+  static const int max_supported_elements = 0x10000;
 
   /** Internal storage for the string values of the ENUM */
   TYPELIB *typelib;
@@ -41,7 +44,6 @@ public:
              unsigned char *null_ptr_arg,
              unsigned char null_bit_arg,
              const char *field_name_arg,
-             uint32_t packlength_arg,
              TYPELIB *typelib_arg,
              const CHARSET_INFO * const charset_arg)
     :Field_str(ptr_arg,
@@ -50,13 +52,12 @@ public:
                null_bit_arg,
 	             field_name_arg,
                charset_arg),
-    packlength(packlength_arg),
     typelib(typelib_arg)
   {
     flags|= ENUM_FLAG;
   }
-  Field *new_field(drizzled::memory::Root *root, Table *new_table, bool keep_type);
-  enum ha_base_keytype key_type() const;
+  Field *new_field(memory::Root *root, Table *new_table, bool keep_type);
+  enum ha_base_keytype key_type() const { return HA_KEYTYPE_ULONG_INT; }
   int  store(const char *to, uint32_t length, const CHARSET_INFO * const);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
@@ -80,10 +81,7 @@ public:
   {
     return INT_RESULT;
   }
-  uint32_t pack_length() const
-  {
-    return (uint32_t) packlength;
-  }
+  uint32_t pack_length() const { return 4; }
   uint32_t size_of() const
   {
     return sizeof(*this);
@@ -92,19 +90,11 @@ public:
   {
     return DRIZZLE_TYPE_ENUM;
   }
-  uint32_t pack_length_from_metadata(uint32_t field_metadata)
-  {
-    return (field_metadata & 0x00ff);
-  }
-  uint32_t row_pack_length()
-  { 
-    return pack_length();
-  }
   virtual bool zero_pack() const
   {
     return false;
   }
-  bool optimize_range(uint32_t, uint32_t) 
+  bool optimize_range(uint32_t, uint32_t)
   {
     return false;
   }
@@ -115,5 +105,7 @@ public:
   /* enum and set are sorted as integers */
   const CHARSET_INFO *sort_charset(void) const { return &my_charset_bin; }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FIELD_ENUM_H */

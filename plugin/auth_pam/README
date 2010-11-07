@@ -10,7 +10,7 @@ auth       required     pam_unix.so
 account    required     pam_unix.so
 
 Into a file located here:
-/etc/pam.d/drizzled
+/etc/pam.d/drizzle
 
 Please send email to the drizzle mailing list on Launchpad if you would like
 to contribute.

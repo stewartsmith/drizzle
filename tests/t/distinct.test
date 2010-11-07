@@ -86,10 +86,12 @@ insert into t3 select * from t4;
 explain select distinct t1.a from t1,t3 where t1.a=t3.a;
 #flush status;
 select distinct t1.a from t1,t3 where t1.a=t3.a;
-#show status like 'Handler%';
-#flush status;
+--replace_column 2 #
+show status like 'Handler%';
+flush status;
 select distinct 1 from t1,t3 where t1.a=t3.a;
-#show status like 'Handler%';
+--replace_column 2 #
+show status like 'Handler%';
 
 explain SELECT distinct t1.a from t1;
 explain SELECT distinct t1.a from t1 order by a desc;
@@ -233,6 +235,7 @@ INSERT INTO t2(infoID, shipcode) VALUES
       (1, 'Z001'),
       (2, 'R002');
 
+--sorted_result
 SELECT DISTINCTROW email, shipcode FROM t1, t2 WHERE t1.infoID=t2.infoID;
 SELECT DISTINCTROW email FROM t1 ORDER BY dateentered DESC;
 SELECT DISTINCTROW email, shipcode FROM t1, t2 WHERE t1.infoID=t2.infoID ORDER BY dateentered DESC;
@@ -343,6 +346,7 @@ INSERT INTO t1 VALUES (1,1), (2,1), (3,1);
 EXPLAIN SELECT DISTINCT a FROM t1;
 EXPLAIN SELECT DISTINCT a,b FROM t1;
 EXPLAIN SELECT DISTINCT t1_1.a, t1_1.b FROM t1 t1_1, t1 t1_2;
+--sorted_result
 EXPLAIN SELECT DISTINCT t1_1.a, t1_1.b FROM t1 t1_1, t1 t1_2
   WHERE t1_1.a = t1_2.a;
 EXPLAIN SELECT a FROM t1 GROUP BY a;

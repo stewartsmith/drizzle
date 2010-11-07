@@ -11,12 +11,12 @@ insert into t1 values (2,4,3,5,"PENDING",1,7);
 alter table t1
 add column col4_5 varchar(20) not null after col4,
 add column col7 varchar(30) not null after col5,
-add column col8 datetime not null, drop column to_be_deleted,
+add column col8 datetime not null default '1000-01-01 00:00:00', drop column to_be_deleted,
 change column col2 fourth varchar(30) not null after col3,
 modify column col6 int not null first;
 select * from t1;
 col6	col1	col3	fourth	col4	col4_5	col5	col7	col8
-1	2	3	4	5		PENDING		0000-00-00 00:00:00
+1	2	3	4	5		PENDING		1000-01-01 00:00:00
 drop table t1;
 create table t1 (bandID INT NOT NULL PRIMARY KEY, payoutID int NOT NULL);
 insert into t1 (bandID,payoutID) VALUES (1,6),(2,6),(3,4),(4,9),(5,10),(6,1),(7,12),(8,12);
@@ -50,11 +50,11 @@ NAME varchar(80) DEFAULT '' NOT NULL,
 PRIMARY KEY (GROUP_ID,LANG_ID),
 KEY NAME (NAME));
 ALTER TABLE t1 CHANGE NAME NAME CHAR(80) not null;
-SHOW FULL COLUMNS FROM t1;
-Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
-GROUP_ID	int	NULL	NO	PRI	0		#	
-LANG_ID	int	NULL	NO	PRI	0		#	
-NAME	varchar(80)	utf8_general_ci	NO	MUL	NULL		#	
+show COLUMNS FROM t1;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+GROUP_ID	INTEGER	NO	0	NO	
+LANG_ID	INTEGER	NO	0	NO	
+NAME	VARCHAR	NO		NO	
 DROP TABLE t1;
 create table t1 (n int);
 insert into t1 values(9),(3),(12),(10);
@@ -99,7 +99,7 @@ select * from mysqltest.t1;
 name
 mysqltest
 alter table t1 rename mysqltest.t1;
-ERROR 42S01: Table 't1' already exists
+ERROR 42S01: Table 'mysqltest.t1' already exists
 select * from t1;
 name
 current
@@ -116,24 +116,24 @@ key (n3, n4, n1, n2),
 key (n4, n1, n2, n3) );
 alter table t1;
 show keys from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	n1	1	n1	A	0	NULL	NULL		BTREE		
-t1	1	n1_2	1	n1	A	0	NULL	NULL		BTREE		
-t1	1	n1_2	2	n2	A	0	NULL	NULL	YES	BTREE		
-t1	1	n1_2	3	n3	A	0	NULL	NULL	YES	BTREE		
-t1	1	n1_2	4	n4	A	0	NULL	NULL	YES	BTREE		
-t1	1	n2	1	n2	A	0	NULL	NULL	YES	BTREE		
-t1	1	n2	2	n3	A	0	NULL	NULL	YES	BTREE		
-t1	1	n2	3	n4	A	0	NULL	NULL	YES	BTREE		
-t1	1	n2	4	n1	A	0	NULL	NULL		BTREE		
-t1	1	n3	1	n3	A	0	NULL	NULL	YES	BTREE		
-t1	1	n3	2	n4	A	0	NULL	NULL	YES	BTREE		
-t1	1	n3	3	n1	A	0	NULL	NULL		BTREE		
-t1	1	n3	4	n2	A	0	NULL	NULL	YES	BTREE		
-t1	1	n4	1	n4	A	0	NULL	NULL	YES	BTREE		
-t1	1	n4	2	n1	A	0	NULL	NULL		BTREE		
-t1	1	n4	3	n2	A	0	NULL	NULL	YES	BTREE		
-t1	1	n4	4	n3	A	0	NULL	NULL	YES	BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	YES	n1	1	n1
+t1	NO	n1_2	1	n1
+t1	NO	n1_2	2	n2
+t1	NO	n1_2	3	n3
+t1	NO	n1_2	4	n4
+t1	NO	n2	1	n2
+t1	NO	n2	2	n3
+t1	NO	n2	3	n4
+t1	NO	n2	4	n1
+t1	NO	n3	1	n3
+t1	NO	n3	2	n4
+t1	NO	n3	3	n1
+t1	NO	n3	4	n2
+t1	NO	n4	1	n4
+t1	NO	n4	2	n1
+t1	NO	n4	3	n2
+t1	NO	n4	4	n3
 set autocommit=0;
 begin;
 insert into t1 values(10,RAND()*1000,RAND()*1000,RAND());
@@ -152,32 +152,32 @@ alter table t1 enable keys;
 Warnings:
 Note	1031	Table storage engine for 't1' doesn't have this option
 show keys from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	n1	1	n1	A	2	NULL	NULL		BTREE		
-t1	1	n1_2	1	n1	A	2	NULL	NULL		BTREE		
-t1	1	n1_2	2	n2	A	2	NULL	NULL	YES	BTREE		
-t1	1	n1_2	3	n3	A	2	NULL	NULL	YES	BTREE		
-t1	1	n1_2	4	n4	A	2	NULL	NULL	YES	BTREE		
-t1	1	n2	1	n2	A	2	NULL	NULL	YES	BTREE		
-t1	1	n2	2	n3	A	2	NULL	NULL	YES	BTREE		
-t1	1	n2	3	n4	A	2	NULL	NULL	YES	BTREE		
-t1	1	n2	4	n1	A	2	NULL	NULL		BTREE		
-t1	1	n3	1	n3	A	2	NULL	NULL	YES	BTREE		
-t1	1	n3	2	n4	A	2	NULL	NULL	YES	BTREE		
-t1	1	n3	3	n1	A	2	NULL	NULL		BTREE		
-t1	1	n3	4	n2	A	2	NULL	NULL	YES	BTREE		
-t1	1	n4	1	n4	A	2	NULL	NULL	YES	BTREE		
-t1	1	n4	2	n1	A	2	NULL	NULL		BTREE		
-t1	1	n4	3	n2	A	2	NULL	NULL	YES	BTREE		
-t1	1	n4	4	n3	A	2	NULL	NULL	YES	BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	YES	n1	1	n1
+t1	NO	n1_2	1	n1
+t1	NO	n1_2	2	n2
+t1	NO	n1_2	3	n3
+t1	NO	n1_2	4	n4
+t1	NO	n2	1	n2
+t1	NO	n2	2	n3
+t1	NO	n2	3	n4
+t1	NO	n2	4	n1
+t1	NO	n3	1	n3
+t1	NO	n3	2	n4
+t1	NO	n3	3	n1
+t1	NO	n3	4	n2
+t1	NO	n4	1	n4
+t1	NO	n4	2	n1
+t1	NO	n4	3	n2
+t1	NO	n4	4	n3
 drop table t1;
 create table t1 (i int not null auto_increment primary key);
 alter table t1 rename t2;
 alter table t2 rename t1, add c char(10) comment "no comment";
 show columns from t1;
-Field	Type	Null	Key	Default	Extra
-i	int	NO	PRI	NULL	auto_increment
-c	varchar(10)	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+i	INTEGER	NO		NO	
+c	VARCHAR	YES		YES	
 drop table t1;
 create table t1 (a int, b int);
 set autocommit=0;
@@ -286,18 +286,18 @@ commit;
 set autocommit=1;
 alter table t1 add unique (a,b), add key (b);
 show keys from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	a	1	a	A	6	NULL	NULL	YES	BTREE		
-t1	0	a	2	b	A	300	NULL	NULL	YES	BTREE		
-t1	1	b	1	b	A	300	NULL	NULL	YES	BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	YES	a	1	a
+t1	YES	a	2	b
+t1	NO	b	1	b
 analyze table t1;
 Table	Op	Msg_type	Msg_text
 test.t1	analyze	status	OK
 show keys from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	a	1	a	A	6	NULL	NULL	YES	BTREE		
-t1	0	a	2	b	A	300	NULL	NULL	YES	BTREE		
-t1	1	b	1	b	A	300	NULL	NULL	YES	BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	YES	a	1	a
+t1	YES	a	2	b
+t1	NO	b	1	b
 drop table t1;
 CREATE TEMPORARY TABLE t1 (
 Host varchar(16) NOT NULL default '',
@@ -306,23 +306,8 @@ PRIMARY KEY  (Host,User),
 KEY  (Host)
 ) ENGINE=MyISAM;
 ALTER TABLE t1 DISABLE KEYS;
-SHOW INDEX FROM t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	PRIMARY	1	Host	A	NULL	NULL	NULL		BTREE		
-t1	0	PRIMARY	2	User	A	0	NULL	NULL		BTREE		
-t1	1	Host	1	Host	A	NULL	NULL	NULL		BTREE	disabled	
 INSERT INTO t1 VALUES ('localhost','root'),('localhost','');
-SHOW INDEX FROM t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	PRIMARY	1	Host	A	NULL	NULL	NULL		BTREE		
-t1	0	PRIMARY	2	User	A	2	NULL	NULL		BTREE		
-t1	1	Host	1	Host	A	NULL	NULL	NULL		BTREE	disabled	
 ALTER TABLE t1 ENABLE KEYS;
-SHOW INDEX FROM t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	PRIMARY	1	Host	A	NULL	NULL	NULL		BTREE		
-t1	0	PRIMARY	2	User	A	2	NULL	NULL		BTREE		
-t1	1	Host	1	Host	A	NULL	NULL	NULL		BTREE		
 CHECK TABLES t1;
 Table	Op	Msg_type	Msg_text
 test.t1	check	status	OK
@@ -350,25 +335,28 @@ drop table if exists t1;
 create TEMPORARY table t1 (a int, b int, c int, d int, e int, f int, g int, h int,i int, primary key (a,b,c,d,e,f,g,i,h)) engine=MyISAM;
 insert into t1 (a,b,c,d,e,f,g,h,i) values(1,1,1,1,1,1,1,1,1);
 show table status like 't1';
-Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
+Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
+#	test	t1	TEMPORARY	MyISAM	#	#	#	#	#
 alter table t1 modify a int;
 show table status like 't1';
-Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
+Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
+#	test	t1	TEMPORARY	MyISAM	#	#	#	#	#
 drop table t1;
 create TEMPORARY table t1 (a int not null default 0, b int not null default 0, c int not null default 0, d int not null default 0, e int not null default 0, f int not null default 0, g int not null default 0, h int not null default 0,i int not null default 0, primary key (a,b,c,d,e,f,g,i,h)) engine=MyISAM;
 insert into t1 (a) values(1);
 show table status like 't1';
-Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
+Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
+#	test	t1	TEMPORARY	MyISAM	#	#	#	#	#
 drop table t1;
 CREATE TABLE t1 (a int PRIMARY KEY, b INT UNIQUE);
 ALTER TABLE t1 DROP PRIMARY KEY;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int NOT NULL,
-  `b` int DEFAULT NULL,
+  `a` INT NOT NULL,
+  `b` INT DEFAULT NULL,
   UNIQUE KEY `b` (`b`)
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 ALTER TABLE t1 DROP PRIMARY KEY;
 ERROR 42000: Can't DROP 'PRIMARY'; check that column/key exists
 DROP TABLE t1;
@@ -389,62 +377,62 @@ drop table t1;
 drop table if exists t1;
 create table t1 (a int, key(a));
 show indexes from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	1	a	1	a	A	0	NULL	NULL	YES	BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	NO	a	1	a
 "this used not to disable the index"
 alter table t1 modify a int;
 show indexes from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	1	a	1	a	A	0	NULL	NULL	YES	BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	NO	a	1	a
 alter table t1 enable keys;
 Warnings:
 Note	1031	Table storage engine for 't1' doesn't have this option
 show indexes from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	1	a	1	a	A	0	NULL	NULL	YES	BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	NO	a	1	a
 alter table t1 modify a bigint;
 show indexes from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	1	a	1	a	A	0	NULL	NULL	YES	BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	NO	a	1	a
 alter table t1 enable keys;
 Warnings:
 Note	1031	Table storage engine for 't1' doesn't have this option
 show indexes from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	1	a	1	a	A	0	NULL	NULL	YES	BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	NO	a	1	a
 alter table t1 add b char(10);
 show indexes from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	1	a	1	a	A	0	NULL	NULL	YES	BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	NO	a	1	a
 alter table t1 add c decimal(10,2);
 show indexes from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	1	a	1	a	A	0	NULL	NULL	YES	BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	NO	a	1	a
 "this however did"
 alter table t1;
 show indexes from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	1	a	1	a	A	0	NULL	NULL	YES	BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	NO	a	1	a
 desc t1;
-Field	Type	Null	Key	Default	Extra
-a	bigint	YES	MUL	NULL	
-b	varchar(10)	YES		NULL	
-c	decimal(10,2)	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+a	BIGINT	YES		YES	
+b	VARCHAR	YES		YES	
+c	DECIMAL	YES		YES	
 alter table t1 add d decimal(15,5);
 "The key should still be disabled"
 show indexes from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	1	a	1	a	A	0	NULL	NULL	YES	BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	NO	a	1	a
 drop table t1;
 "Now will test with one unique index"
 create table t1(a int, b char(10), unique(a));
 show indexes from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	a	1	a	A	0	NULL	NULL	YES	BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	YES	a	1	a
 alter table t1;
 show indexes from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	a	1	a	A	0	NULL	NULL	YES	BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	YES	a	1	a
 alter table t1 enable keys;
 Warnings:
 Note	1031	Table storage engine for 't1' doesn't have this option
@@ -452,34 +440,34 @@ Note	1031	Table storage engine for 't1' doesn't have this option
 "Unique index, no change"
 alter table t1 modify a int;
 show indexes from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	a	1	a	A	0	NULL	NULL	YES	BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	YES	a	1	a
 "Change the type implying data copy"
 "Unique index, no change"
 alter table t1 modify a bigint;
 show indexes from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	a	1	a	A	0	NULL	NULL	YES	BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	YES	a	1	a
 alter table t1 modify a bigint;
 show indexes from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	a	1	a	A	0	NULL	NULL	YES	BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	YES	a	1	a
 alter table t1 modify a int;
 show indexes from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	a	1	a	A	0	NULL	NULL	YES	BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	YES	a	1	a
 drop table t1;
 "Now will test with one unique and one non-unique index"
 create table t1(a int, b char(10), unique(a), key(b));
 show indexes from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	a	1	a	A	0	NULL	NULL	YES	BTREE		
-t1	1	b	1	b	A	0	NULL	NULL	YES	BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	YES	a	1	a
+t1	NO	b	1	b
 alter table t1;
 show indexes from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	a	1	a	A	0	NULL	NULL	YES	BTREE		
-t1	1	b	1	b	A	0	NULL	NULL	YES	BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	YES	a	1	a
+t1	NO	b	1	b
 alter table t1 enable keys;
 Warnings:
 Note	1031	Table storage engine for 't1' doesn't have this option
@@ -487,35 +475,35 @@ Note	1031	Table storage engine for 't1' doesn't have this option
 "The non-unique index will be disabled"
 alter table t1 modify a int;
 show indexes from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	a	1	a	A	0	NULL	NULL	YES	BTREE		
-t1	1	b	1	b	A	0	NULL	NULL	YES	BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	YES	a	1	a
+t1	NO	b	1	b
 alter table t1 enable keys;
 Warnings:
 Note	1031	Table storage engine for 't1' doesn't have this option
 show indexes from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	a	1	a	A	0	NULL	NULL	YES	BTREE		
-t1	1	b	1	b	A	0	NULL	NULL	YES	BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	YES	a	1	a
+t1	NO	b	1	b
 "Change the type implying data copy"
 "The non-unique index will be disabled"
 alter table t1 modify a bigint;
 show indexes from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	a	1	a	A	0	NULL	NULL	YES	BTREE		
-t1	1	b	1	b	A	0	NULL	NULL	YES	BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	YES	a	1	a
+t1	NO	b	1	b
 "Change again the type, but leave the indexes as_is"
 alter table t1 modify a int;
 show indexes from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	a	1	a	A	0	NULL	NULL	YES	BTREE		
-t1	1	b	1	b	A	0	NULL	NULL	YES	BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	YES	a	1	a
+t1	NO	b	1	b
 "Try the same. When data is no copied on similar tables, this is noop"
 alter table t1 modify a int;
 show indexes from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	a	1	a	A	0	NULL	NULL	YES	BTREE		
-t1	1	b	1	b	A	0	NULL	NULL	YES	BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	YES	a	1	a
+t1	NO	b	1	b
 drop table t1;
 create database mysqltest;
 create table t1 (c1 int);
@@ -528,7 +516,7 @@ create table t1 (c1 int);
 use mysqltest;
 drop database mysqltest;
 alter table test.t1 rename t1;
-ERROR 3D000: No database selected
+ERROR 3D000: No schema selected
 alter table test.t1 rename test.t1;
 use test;
 drop table t1;
@@ -537,28 +525,28 @@ CREATE INDEX i1 ON t1(a);
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int DEFAULT NULL,
+  `a` INT DEFAULT NULL,
   KEY `i1` (`a`)
-) ENGINE=DEFAULT ROW_FORMAT=COMPACT
+) ENGINE=DEFAULT ROW_FORMAT='COMPACT' COLLATE = utf8_general_ci
 DROP INDEX i1 ON t1;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int DEFAULT NULL
-) ENGINE=DEFAULT ROW_FORMAT=COMPACT
+  `a` INT DEFAULT NULL
+) ENGINE=DEFAULT ROW_FORMAT='COMPACT' COLLATE = utf8_general_ci
 DROP TABLE t1;
 DROP TABLE IF EXISTS bug24219;
 DROP TABLE IF EXISTS bug24219_2;
 CREATE TABLE bug24219 (a INT, INDEX(a));
 SHOW INDEX FROM bug24219;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-bug24219	1	a	1	a	A	0	NULL	NULL	YES	BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+bug24219	NO	a	1	a
 ALTER TABLE bug24219 RENAME TO bug24219_2, DISABLE KEYS;
 Warnings:
 Note	1031	Table storage engine for 'bug24219' doesn't have this option
 SHOW INDEX FROM bug24219_2;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-bug24219_2	1	a	1	a	A	0	NULL	NULL	YES	BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+bug24219_2	NO	a	1	a
 DROP TABLE bug24219_2;
 drop table if exists table_24562;
 create table table_24562(
@@ -674,8 +662,8 @@ drop table table_24562;
 create table t1 (mycol int not null);
 alter table t1 alter column mycol set default 0;
 desc t1;
-Field	Type	Null	Key	Default	Extra
-mycol	int	NO		0	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+mycol	INTEGER	NO	0	NO	
 drop table t1;
 create TEMPORARY table t1(id int primary key auto_increment) engine=MEMORY;
 insert into t1 values (null);
@@ -801,44 +789,48 @@ CREATE TABLE `t+1` (c1 INT);
 ALTER TABLE  `t+1` RENAME `t+2`;
 CREATE TABLE `t+1` (c1 INT);
 ALTER TABLE  `t+1` RENAME `t+2`;
-ERROR 42S01: Table 't+2' already exists
+ERROR 42S01: Table 'test.t+2' already exists
 DROP TABLE   `t+1`, `t+2`;
 CREATE TEMPORARY TABLE `tt+1` (c1 INT);
 ALTER TABLE  `tt+1` RENAME `tt+2`;
 CREATE TEMPORARY TABLE `tt+1` (c1 INT);
 ALTER TABLE  `tt+1` RENAME `tt+2`;
-ERROR 42S01: Table 'tt+2' already exists
+ERROR 42S01: Table 'test.#tt+2' already exists
 SHOW CREATE TABLE `tt+1`;
 Table	Create Table
 tt+1	CREATE TEMPORARY TABLE `tt+1` (
-  `c1` int DEFAULT NULL
-) ENGINE=DEFAULT
+  `c1` INT DEFAULT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 SHOW CREATE TABLE `tt+2`;
 Table	Create Table
 tt+2	CREATE TEMPORARY TABLE `tt+2` (
-  `c1` int DEFAULT NULL
-) ENGINE=DEFAULT
+  `c1` INT DEFAULT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 DROP TABLE   `tt+1`, `tt+2`;
 CREATE TEMPORARY TABLE `#sql1` (c1 INT);
 CREATE TEMPORARY TABLE `@0023sql2` (c1 INT);
 SHOW TABLES;
 Tables_in_test
+#sql1
+@0023sql2
 ALTER TABLE `#sql1`      RENAME `@0023sql1`;
 ALTER TABLE `@0023sql2`  RENAME `#sql2`;
 SHOW TABLES;
 Tables_in_test
+#sql2
+@0023sql1
 INSERT INTO `#sql2`      VALUES (1);
 INSERT INTO `@0023sql1`  VALUES (2);
 SHOW CREATE TABLE `#sql2`;
 Table	Create Table
 #sql2	CREATE TEMPORARY TABLE `#sql2` (
-  `c1` int DEFAULT NULL
-) ENGINE=DEFAULT
+  `c1` INT DEFAULT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 SHOW CREATE TABLE `@0023sql1`;
 Table	Create Table
 @0023sql1	CREATE TEMPORARY TABLE `@0023sql1` (
-  `c1` int DEFAULT NULL
-) ENGINE=DEFAULT
+  `c1` INT DEFAULT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 DROP TABLE `#sql2`, `@0023sql1`;
 DROP TABLE IF EXISTS t1;
 DROP TABLE IF EXISTS t2;
@@ -848,12 +840,12 @@ char_field CHAR(10),
 INDEX(`int_field`)
 );
 DESCRIBE t1;
-Field	Type	Null	Key	Default	Extra
-int_field	int	NO	MUL	NULL	
-char_field	varchar(10)	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+int_field	INTEGER	NO		NO	
+char_field	VARCHAR	YES		YES	
 SHOW INDEXES FROM t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	1	int_field	1	int_field	A	0	NULL	NULL		BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	NO	int_field	1	int_field
 INSERT INTO t1 VALUES (1, "edno"), (1, "edno"), (2, "dve"), (3, "tri"), (5, "pet");
 "Non-copy data change - new frm, but old data and index files"
 ALTER TABLE t1 CHANGE int_field unsigned_int_field INTEGER NOT NULL, RENAME t2;
@@ -867,18 +859,18 @@ unsigned_int_field	char_field
 3	tri
 5	pet
 DESCRIBE t2;
-Field	Type	Null	Key	Default	Extra
-unsigned_int_field	int	NO	MUL	NULL	
-char_field	varchar(10)	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+unsigned_int_field	INTEGER	NO		NO	
+char_field	VARCHAR	YES		YES	
 DESCRIBE t2;
-Field	Type	Null	Key	Default	Extra
-unsigned_int_field	int	NO	MUL	NULL	
-char_field	varchar(10)	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+unsigned_int_field	INTEGER	NO		NO	
+char_field	VARCHAR	YES		YES	
 ALTER TABLE t2 MODIFY unsigned_int_field BIGINT NOT NULL;
 DESCRIBE t2;
-Field	Type	Null	Key	Default	Extra
-unsigned_int_field	bigint	NO	MUL	NULL	
-char_field	varchar(10)	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+unsigned_int_field	BIGINT	NO		NO	
+char_field	VARCHAR	YES		YES	
 DROP TABLE t2;
 CREATE TABLE t1 (f1 INT, f2 INT, f3 INT);
 INSERT INTO t1 VALUES (1, 2, NULL);

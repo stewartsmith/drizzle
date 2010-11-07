@@ -22,6 +22,9 @@
 
 #include <drizzled/function/str/strfunc.h>
 
+namespace drizzled
+{
+
 class Item_func_date_format :public Item_str_func
 {
   int fixed_length;
@@ -37,5 +40,7 @@ public:
   uint32_t format_length(const String *format);
   bool eq(const Item *item, bool binary_cmp) const;
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_TIME_DATE_FORMAT_H */

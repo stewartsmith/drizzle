@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /*
   Delete of records and truncate of tables.
@@ -29,8 +29,11 @@
 #include "drizzled/optimizer/range.h"
 #include "drizzled/records.h"
 #include "drizzled/internal/iocache.h"
+#include "drizzled/transaction_services.h"
+#include "drizzled/filesort.h"
 
-using namespace drizzled;
+namespace drizzled
+{
 
 /**
   Implement DELETE SQL word.
@@ -47,7 +50,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
   int		error;
   Table		*table;
   optimizer::SqlSelect *select= NULL;
-  READ_RECORD	info;
+  ReadRecord	info;
   bool          using_limit=limit != HA_POS_ERROR;
   bool		transactional_table, const_cond;
   bool          const_cond_result;
@@ -69,7 +72,10 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
   table->map=1;
 
   if (mysql_prepare_delete(session, table_list, &conds))
-    goto err;
+  {
+    DRIZZLE_DELETE_DONE(1, 0);
+    return true;
+  }
 
   /* check ORDER BY even if it can be ignored */
   if (order && order->elements)
@@ -78,18 +84,19 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
     List<Item>   fields;
     List<Item>   all_fields;
 
-    memset(&tables, 0, sizeof(tables));
     tables.table = table;
     tables.alias = table_list->alias;
 
       if (select_lex->setup_ref_array(session, order->elements) ||
 	  setup_order(session, select_lex->ref_pointer_array, &tables,
-                    fields, all_fields, (order_st*) order->first))
-    {
-      delete select;
-      free_underlaid_joins(session, &session->lex->select_lex);
-      goto err;
-    }
+                    fields, all_fields, (Order*) order->first))
+      {
+        delete select;
+        free_underlaid_joins(session, &session->lex->select_lex);
+        DRIZZLE_DELETE_DONE(1, 0);
+
+        return true;
+      }
   }
 
   const_cond= (!conds || conds->const_item());
@@ -156,7 +163,11 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
   table->quick_keys.reset();		// Can't use 'only index'
   select= optimizer::make_select(table, 0, 0, conds, 0, &error);
   if (error)
-    goto err;
+  {
+    DRIZZLE_DELETE_DONE(1, 0);
+    return true;
+  }
+
   if ((select && select->check_quick(session, false, limit)) || !limit)
   {
     delete select;
@@ -186,28 +197,28 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
   if (order && order->elements)
   {
     uint32_t         length= 0;
-    SORT_FIELD  *sortorder;
+    SortField  *sortorder;
     ha_rows examined_rows;
 
     if ((!select || table->quick_keys.none()) && limit != HA_POS_ERROR)
-      usable_index= optimizer::get_index_for_order(table, (order_st*)(order->first), limit);
+      usable_index= optimizer::get_index_for_order(table, (Order*)(order->first), limit);
 
     if (usable_index == MAX_KEY)
     {
-      table->sort.io_cache= new IO_CACHE;
-      memset(table->sort.io_cache, 0, sizeof(IO_CACHE));
+      FileSort filesort(*session);
+      table->sort.io_cache= new internal::IO_CACHE;
 
 
-      if (!(sortorder= make_unireg_sortorder((order_st*) order->first,
-                                             &length, NULL)) ||
-	  (table->sort.found_records = filesort(session, table, sortorder, length,
-                                                select, HA_POS_ERROR, 1,
-                                                &examined_rows))
-	  == HA_POS_ERROR)
+      if (not (sortorder= make_unireg_sortorder((Order*) order->first, &length, NULL)) ||
+	  (table->sort.found_records = filesort.run(table, sortorder, length,
+						    select, HA_POS_ERROR, 1,
+						    examined_rows)) == HA_POS_ERROR)
       {
         delete select;
         free_underlaid_joins(session, &session->lex->select_lex);
-        goto err;
+
+        DRIZZLE_DELETE_DONE(1, 0);
+        return true;
       }
       /*
         Filesort has already found and selected the rows we want to delete,
@@ -224,13 +235,18 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
   {
     delete select;
     free_underlaid_joins(session, select_lex);
-    goto err;
+    DRIZZLE_DELETE_DONE(1, 0);
+    return true;
   }
 
   if (usable_index==MAX_KEY)
-    init_read_record(&info,session,table,select,1,1);
+  {
+    info.init_read_record(session,table,select,1,1);
+  }
   else
-    init_read_record_idx(&info, session, table, 1, usable_index);
+  {
+    info.init_read_record_idx(session, table, 1, usable_index);
+  }
 
   session->set_proc_info("updating");
 
@@ -242,7 +258,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
     // session->is_error() is tested to disallow delete row on error
     if (!(select && select->skip_record())&& ! session->is_error() )
     {
-      if (!(error= table->cursor->ha_delete_row(table->record[0])))
+      if (!(error= table->cursor->deleteRecord(table->getInsertRecord())))
       {
 	deleted++;
 	if (!--limit && using_limit)
@@ -274,7 +290,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
     error= 1;					// Aborted
 
   session->set_proc_info("end");
-  end_read_record(&info);
+  info.end_read_record();
 
 cleanup:
 
@@ -297,15 +313,15 @@ cleanup:
   transactional_table= table->cursor->has_transactions();
 
   if (!transactional_table && deleted > 0)
-    session->transaction.stmt.modified_non_trans_table= true;
+    session->transaction.stmt.markModifiedNonTransData();
 
   /* See similar binlogging code in sql_update.cc, for comments */
-  if ((error < 0) || session->transaction.stmt.modified_non_trans_table)
+  if ((error < 0) || session->transaction.stmt.hasModifiedNonTransData())
   {
-    if (session->transaction.stmt.modified_non_trans_table)
-      session->transaction.all.modified_non_trans_table= true;
+    if (session->transaction.stmt.hasModifiedNonTransData())
+      session->transaction.all.markModifiedNonTransData();
   }
-  assert(transactional_table || !deleted || session->transaction.stmt.modified_non_trans_table);
+  assert(transactional_table || !deleted || session->transaction.stmt.hasModifiedNonTransData());
   free_underlaid_joins(session, select_lex);
 
   DRIZZLE_DELETE_DONE((error >= 0 || session->is_error()), deleted);
@@ -319,11 +335,9 @@ cleanup:
     session->main_da.reset_diagnostics_area();    
     session->my_ok((ha_rows) session->row_count_func);
   }
-  return (error >= 0 || session->is_error());
+  session->status_var.deleted_row_count+= deleted;
 
-err:
-  DRIZZLE_DELETE_DONE(1, 0);
-  return true;
+  return (error >= 0 || session->is_error());
 }
 
 
@@ -382,22 +396,22 @@ int mysql_prepare_delete(Session *session, TableList *table_list, Item **conds)
 bool mysql_truncate(Session& session, TableList *table_list)
 {
   bool error;
+  TransactionServices &transaction_services= TransactionServices::singleton();
 
   uint64_t save_options= session.options;
   table_list->lock_type= TL_WRITE;
   session.options&= ~(OPTION_BEGIN | OPTION_NOT_AUTOCOMMIT);
-  ha_enable_transaction(&session, false);
   mysql_init_select(session.lex);
   error= mysql_delete(&session, table_list, (COND*) 0, (SQL_LIST*) 0,
                       HA_POS_ERROR, 0L, true);
-  ha_enable_transaction(&session, true);
   /*
     Safety, in case the engine ignored ha_enable_transaction(false)
     above. Also clears session->transaction.*.
   */
-  error= ha_autocommit_or_rollback(&session, error);
-  ha_commit(&session);
+  error= transaction_services.autocommitOrRollback(&session, error);
   session.options= save_options;
 
   return error;
 }
+
+} /* namespace drizzled */

@@ -1,0 +1,5 @@
+SHOW TABLES;
+Tables_in_test
+invalid_table_collation
+t1
+too_many_enum_values

@@ -474,17 +474,17 @@ select t1.* , t2.col as t2_col from t1 left join t2 on (t1.col1=t2.col2)
 # Let us also test various ambiguos and potentially ambiguos cases 
 # related to aliases
 #
---error 1052
+--error ER_NON_UNIQ_ERROR
 select col1 as col, col from t1 order by col;
---error 1052
+--error ER_NON_UNIQ_ERROR
 select t1.col as c1, t2.col as c2 from t1, t2 where t1.col1=t2.col2
   order by col;
---error 1052
+--error ER_NON_UNIQ_ERROR
 select t1.col as c1, t2.col as c2 from t1, t2 where t1.col1=t2.col2
   order by col;
---error 1052
+--error ER_NON_UNIQ_ERROR
 select col1 from t1, t2 where t1.col1=t2.col2 order by col;
---error 1052
+--error ER_NON_UNIQ_ERROR
 select t1.col as t1_col, t2.col2 from t1, t2 where t1.col1=t2.col2
   order by col;
 
@@ -580,10 +580,10 @@ SELECT a + 1 AS num FROM t1 ORDER BY 30 - num;
 SELECT CONCAT('test', a) AS str FROM t1 ORDER BY UPPER(str);
 SELECT a + 1 AS num FROM t1 GROUP BY 30 - num;
 SELECT a + 1 AS num FROM t1 HAVING 30 - num;
---error 1054
+--error ER_BAD_FIELD_ERROR
 SELECT a + 1 AS num, num + 1 FROM t1;
 SELECT a + 1 AS num, (select num + 2 FROM t1 LIMIT 1) FROM t1;
---error 1054
+--error ER_BAD_FIELD_ERROR
 SELECT a.a + 1 AS num FROM t1 a JOIN t1 b ON num = b.a;
 DROP TABLE t1;
 
@@ -594,25 +594,25 @@ DROP TABLE t1;
 CREATE TABLE bug25126 (
   val int NOT NULL AUTO_INCREMENT PRIMARY KEY
 );
---error 1054
+--error ER_BAD_FIELD_ERROR
 UPDATE bug25126 SET MissingCol = MissingCol;
---error 1054
+--error ER_BAD_FIELD_ERROR
 UPDATE bug25126 SET val = val ORDER BY MissingCol;
 UPDATE bug25126 SET val = val ORDER BY val;
 UPDATE bug25126 SET val = 1 ORDER BY val;
---error 1054
+--error ER_BAD_FIELD_ERROR
 UPDATE bug25126 SET val = 1 ORDER BY MissingCol;
---error 1054
+--error ER_BAD_FIELD_ERROR
 UPDATE bug25126 SET val = 1 ORDER BY val, MissingCol;
---error 1054
+--error ER_BAD_FIELD_ERROR
 UPDATE bug25126 SET val = MissingCol ORDER BY MissingCol;
---error 1054
+--error ER_BAD_FIELD_ERROR
 UPDATE bug25126 SET MissingCol = 1 ORDER BY val, MissingCol;
---error 1054
+--error ER_BAD_FIELD_ERROR
 UPDATE bug25126 SET MissingCol = 1 ORDER BY MissingCol;
---error 1054
+--error ER_BAD_FIELD_ERROR
 UPDATE bug25126 SET MissingCol = val ORDER BY MissingCol;
---error 1054
+--error ER_BAD_FIELD_ERROR
 UPDATE bug25126 SET MissingCol = MissingCol ORDER BY MissingCol;
 DROP TABLE bug25126;
 
@@ -624,9 +624,9 @@ DROP TABLE bug25126;
 CREATE TABLE t1 (a int);
 
 SELECT p.a AS val, q.a AS val1 FROM t1 p, t1 q ORDER BY val > 1;
---error 1052
+--error ER_NON_UNIQ_ERROR
 SELECT p.a AS val, q.a AS val FROM t1 p, t1 q ORDER BY val;
---error 1052
+--error ER_NON_UNIQ_ERROR
 SELECT p.a AS val, q.a AS val FROM t1 p, t1 q ORDER BY val > 1;
 
 DROP TABLE t1;
@@ -742,11 +742,16 @@ INSERT INTO t1 SELECT a +16, b +16 FROM t1;
 INSERT INTO t1 SELECT a +32, b +32 FROM t1;
 INSERT INTO t1 SELECT a +64, b +64 FROM t1;
 
+--error ER_KEY_DOES_NOT_EXITS
 SELECT a FROM t1 IGNORE INDEX FOR GROUP BY (a, ab) GROUP BY a;
+
+SELECT a FROM t1 IGNORE INDEX FOR GROUP BY (primary, ab) GROUP BY a;
 
 SELECT @tmp_tables_after = @tmp_tables_before ;
 
+--error ER_KEY_DOES_NOT_EXITS
 SELECT a FROM t1 IGNORE INDEX FOR ORDER BY (a, ab) ORDER BY a;
+SELECT a FROM t1 IGNORE INDEX FOR ORDER BY (primary, ab) ORDER BY a;
 
 SELECT @tmp_tables_after = @tmp_tables_before;
 

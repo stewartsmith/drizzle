@@ -5,7 +5,7 @@ mysqltest	CREATE DATABASE `mysqltest` COLLATE = utf8_bin
 alter database mysqltest collate = utf8_general_ci;
 show create database mysqltest;
 Database	Create Database
-mysqltest	CREATE DATABASE `mysqltest`
+mysqltest	CREATE DATABASE `mysqltest` COLLATE = utf8_general_ci
 alter database mysqltest collate = utf8_bin;
 show create database mysqltest;
 Database	Create Database
@@ -34,13 +34,13 @@ Ab
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10) COLLATE utf8_bin DEFAULT NULL
-) ENGINE=InnoDB
+  `a` VARCHAR(10) COLLATE utf8_bin DEFAULT NULL
+) ENGINE=DEFAULT COLLATE = utf8_bin
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `a` varchar(10) DEFAULT NULL
-) ENGINE=InnoDB
+  `a` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 select count(*) from t1 where a='a';
 count(*)
 1

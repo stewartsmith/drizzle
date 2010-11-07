@@ -19,7 +19,13 @@
  */
 
 #include "config.h"
-
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <drizzled/configmake.h>
+using namespace std;
+#include <boost/program_options.hpp>
+namespace po= boost::program_options;
 #include "azio.h"
 #include <string.h>
 #include <assert.h>
@@ -28,43 +34,123 @@
 #include <fcntl.h>
 #include "drizzled/charset_info.h"
 #include "drizzled/internal/m_string.h"
-#include "drizzled/my_getopt.h"
 
 #define SHOW_VERSION "0.1"
 
-extern "C" bool
-get_one_option(int optid, const struct my_option *opt, char *argument);
+using namespace drizzled;
 
-static void get_options(int *argc,char * * *argv);
-static void print_version(void);
-static void usage(void);
-static const char *opt_tmpdir;
-static const char *new_auto_increment;
+string opt_tmpdir;
 uint64_t new_auto_increment_value;
-static const char *load_default_groups[]= { "archive_reader", 0 };
-static char **default_argv;
-int opt_check, opt_force, opt_quiet, opt_backup= 0, opt_extract_table_message;
-int opt_autoincrement;
+bool opt_check, 
+  opt_force,
+  opt_backup, 
+  opt_extract_table_message, 
+  opt_silent,
+  opt_quiet,
+  opt_quick,
+  opt_autoincrement;
 
 int main(int argc, char *argv[])
 {
+try
+{
+  po::options_description commandline_options("Options used only in command line");
+  commandline_options.add_options()
+  ("force,f",po::value<bool>(&opt_force)->default_value(false)->zero_tokens(),
+  "Restart with -r if there are any errors in the table")
+  ("help,?","Display this help and exit")
+  ("version,V","Print version and exit")
+  ("no-defaults", po::value<bool>()->default_value(false)->zero_tokens(),
+  "Configuration file defaults are not used if no-defaults is set")
+  ;
+
+  po::options_description archive_reader_options("Options specific to the archive reader");
+  archive_reader_options.add_options()
+  ("tmpdir,t",po::value<string>(&opt_tmpdir)->default_value(""),
+  "Path for temporary files.") 
+  ("set-auto-increment,A",po::value<uint64_t>(&new_auto_increment_value)->default_value(0),
+  "Force auto_increment to start at this or higher value. If no value is given, then sets the next auto_increment value to the highest used value for the auto key + 1.")
+  ("silent,s",po::value<bool>(&opt_silent)->default_value(false)->zero_tokens(),
+  "Only print errors. One can use two -s to make archive_reader very silent.")
+  ("quick,q",po::value<bool>(&opt_quick)->default_value(false)->zero_tokens(),
+  "Faster repair but not modifying the data")
+  ("repair,r",po::value<bool>(&opt_quick)->default_value(false)->zero_tokens(),
+  "Repair a damaged Archive version 3 or above file.")
+  ("back-up,b",po::value<bool>(&opt_backup)->default_value(false)->zero_tokens(),
+  "Make a backup of an archive table.")
+  ("check,c",po::value<bool>(&opt_check)->default_value(false)->zero_tokens(),
+  "Check table for errors")
+  ("extract-table-message,e",po::value<bool>(&opt_extract_table_message)->default_value(false)->zero_tokens(),
+  "Extract the table protobuf message.")
+  ;
+
   unsigned int ret;
   azio_stream reader_handle;
 
-  my_init();
-  MY_INIT(argv[0]);
-  get_options(&argc, &argv);
+  std::string system_config_dir_archive_reader(SYSCONFDIR); 
+  system_config_dir_archive_reader.append("/drizzle/archive_reader.cnf");
 
+  std::string user_config_dir((getenv("XDG_CONFIG_HOME")? getenv("XDG_CONFIG_HOME"):"~/.config"));
+  
+  po::options_description long_options("Allowed Options");
+  long_options.add(commandline_options).add(archive_reader_options);
+
+  po::variables_map vm;
+  po::store(po::parse_command_line(argc,argv,long_options),vm);
+
+  if (! vm["no-defaults"].as<bool>())
+  {
+    std::string user_config_dir_archive_reader(user_config_dir);
+    user_config_dir_archive_reader.append("/drizzle/archive_reader.cnf");
+  
+    ifstream user_archive_reader_ifs(user_config_dir_archive_reader.c_str());
+    po::store(parse_config_file(user_archive_reader_ifs, archive_reader_options), vm);
+
+    ifstream system_archive_reader_ifs(system_config_dir_archive_reader.c_str());
+    store(parse_config_file(system_archive_reader_ifs, archive_reader_options), vm);
+
+  }
+  po::notify(vm);
+
+  if (vm.count("force") || vm.count("quiet") || vm.count("tmpdir"))
+    cout << "Not implemented yet";
+
+  if (vm.count("version"))
+  {
+    printf("%s  Ver %s, for %s-%s (%s)\n", internal::my_progname, SHOW_VERSION,
+        HOST_VENDOR, HOST_OS, HOST_CPU);
+    exit(0);
+  }
+  
+  if (vm.count("set-auto-increment"))
+  {
+    opt_autoincrement= true;
+  }
+
+  if (vm.count("help") || argc == 0)
+  {
+    printf("%s  Ver %s, for %s-%s (%s)\n", internal::my_progname, SHOW_VERSION,
+        HOST_VENDOR, HOST_OS, HOST_CPU);
+    puts("This software comes with ABSOLUTELY NO WARRANTY. This is free "
+         "software,\n"
+         "and you are welcome to modify and redistribute it under the GPL "
+         "license\n");
+    puts("Read and modify Archive files directly\n");
+    printf("Usage: %s [OPTIONS] file_to_be_looked_at [file_for_backup]\n", internal::my_progname);
+    cout << long_options << endl;    
+    exit(0); 
+  }
+  
   if (argc < 1)
   {
     printf("No file specified. \n");
-    return 0;
+    return -1;
   }
 
   if (!(ret= azopen(&reader_handle, argv[0], O_RDONLY, AZ_METHOD_BLOCK)))
   {
     printf("Could not open Archive file\n");
-    return 0;
+    return -1;
   }
 
   if (opt_autoincrement)
@@ -236,7 +322,7 @@ int main(int argc, char *argv[])
   {
     int frm_file;
     char *ptr;
-    frm_file= my_open(argv[1], O_CREAT|O_RDWR, MYF(0));
+    frm_file= internal::my_open(argv[1], O_CREAT|O_RDWR, MYF(0));
     ptr= (char *)malloc(sizeof(char) * reader_handle.frm_length);
     if (ptr == NULL)
     {
@@ -244,8 +330,8 @@ int main(int argc, char *argv[])
       goto end;
     }
     azread_frm(&reader_handle, ptr);
-    my_write(frm_file, (unsigned char*) ptr, reader_handle.frm_length, MYF(0));
-    my_close(frm_file, MYF(0));
+    internal::my_write(frm_file, (unsigned char*) ptr, reader_handle.frm_length, MYF(0));
+    internal::my_close(frm_file, MYF(0));
     free(ptr);
   }
 
@@ -253,120 +339,13 @@ end:
   printf("\n");
   azclose(&reader_handle);
 
-  my_end();
-  return 0;
+  internal::my_end();
+
 }
-
-bool get_one_option(int optid, const struct my_option *opt, char *argument)
-{
-  (void)opt;
-  switch (optid) {
-  case 'b':
-    opt_backup= 1;
-    break;
-  case 'c':
-    opt_check= 1;
-    break;
-  case 'e':
-    opt_extract_table_message= 1;
-    break;
-  case 'f':
-    opt_force= 1;
-    printf("Not implemented yet\n");
-    break;
-  case 'q':
-    opt_quiet= 1;
-    printf("Not implemented yet\n");
-    break;
-  case 'V':
-    print_version();
-    exit(0);
-  case 't':
-    printf("Not implemented yet\n");
-    break;
-  case 'A':
-    opt_autoincrement= 1;
-    if (argument)
-      new_auto_increment_value= strtoull(argument, NULL, 0);
-    else
-      new_auto_increment_value= 0;
-    break;
-  case '?':
-    usage();
-    exit(0);
-  }
-  return 0;
-}
-
-static struct my_option my_long_options[] =
-{
-  {"backup", 'b',
-   "Make a backup of an archive table.",
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"check", 'c', "Check table for errors.",
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"extract-table-message", 'e',
-   "Extract the table protobuf message.",
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"force", 'f',
-   "Restart with -r if there are any errors in the table.",
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"help", '?',
-   "Display this help and exit.",
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"quick", 'q', "Faster repair by not modifying the data file.",
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"repair", 'r', "Repair a damaged Archive version 3 or above file.",
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"set-auto-increment", 'A',
-   "Force auto_increment to start at this or higher value. If no value is given, then sets the next auto_increment value to the highest used value for the auto key + 1.",
-   (char**) &new_auto_increment,
-   (char**) &new_auto_increment,
-   0, GET_ULL, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"silent", 's',
-   "Only print errors. One can use two -s to make archive_reader very silent.",
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"tmpdir", 't',
-   "Path for temporary files.",
-   (char**) &opt_tmpdir,
-   0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"version", 'V',
-   "Print version and exit.",
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  { 0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
-};
-
-static void usage(void)
-{
-  print_version();
-  puts("Copyright (C) 2007 MySQL AB");
-  puts("This software comes with ABSOLUTELY NO WARRANTY. This is free software,\
-       \nand you are welcome to modify and redistribute it under the GPL \
-       license\n");
-  puts("Read and modify Archive files directly\n");
-  printf("Usage: %s [OPTIONS] file_to_be_looked_at [file_for_backup]\n", my_progname);
-  print_defaults("drizzle", load_default_groups);
-  my_print_help(my_long_options);
-}
-
-static void print_version(void)
-{
-  printf("%s  Ver %s, for %s-%s (%s)\n", my_progname, SHOW_VERSION,
-         HOST_VENDOR, HOST_OS, HOST_CPU);
-}
-
-static void get_options(int *argc, char ***argv)
-{
-  load_defaults("drizzle", load_default_groups, argc, argv);
-  default_argv= *argv;
-
-  handle_options(argc, argv, my_long_options, get_one_option);
-
-  if (*argc == 0)
+  catch(exception &e)
   {
-    usage();
-    exit(-1);
+    cerr<<"Error"<<e.what()<<endl;
   }
+  return 0;
+}
 
-  return;
-} /* get options */

@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /**
   @file
@@ -25,6 +25,7 @@
 */
 #include "config.h"
 
+#include <cstdio>
 #include <limits.h>
 
 #include <drizzled/sql_select.h>
@@ -37,8 +38,10 @@
 #include <drizzled/check_stack_overrun.h>
 #include <drizzled/item/ref_null_helper.h>
 #include <drizzled/item/direct_ref.h>
+#include <drizzled/join.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 extern plugin::StorageEngine *myisam_engine;
 
@@ -87,7 +90,7 @@ void Item_subselect::init(Select_Lex *select_lex,
   if (unit->item)
   {
     /*
-      Item can be changed in JOIN::prepare while engine in JOIN::optimize
+      Item can be changed in JOIN::prepare while engine in Join::optimize
       => we do not copy old_engine here
     */
     engine= unit->item->engine;
@@ -169,7 +172,7 @@ Item_subselect::~Item_subselect()
 }
 
 Item_subselect::trans_res
-Item_subselect::select_transformer(JOIN *)
+Item_subselect::select_transformer(Join *)
 {
   return(RES_OK);
 }
@@ -178,7 +181,6 @@ Item_subselect::select_transformer(JOIN *)
 bool Item_subselect::fix_fields(Session *session_param, Item **ref)
 {
   char const *save_where= session_param->where;
-  uint8_t uncacheable;
   bool res;
 
   assert(fixed == 0);
@@ -206,18 +208,26 @@ bool Item_subselect::fix_fields(Session *session_param, Item **ref)
 
       // did we changed top item of WHERE condition
       if (unit->outer_select()->where == (*ref))
-	unit->outer_select()->where= substitution; // correct WHERE for PS
+      {
+        unit->outer_select()->where= substitution; // correct WHERE for PS
+      }
       else if (unit->outer_select()->having == (*ref))
-	unit->outer_select()->having= substitution; // correct HAVING for PS
+      {
+        unit->outer_select()->having= substitution; // correct HAVING for PS
+      }
 
       (*ref)= substitution;
       substitution->name= name;
       if (have_to_be_excluded)
-	engine->exclude();
+      {
+        engine->exclude();
+      }
       substitution= 0;
       session->where= "checking transformed subquery";
-      if (!(*ref)->fixed)
-	ret= (*ref)->fix_fields(session, ref);
+      if (! (*ref)->fixed)
+      {
+        ret= (*ref)->fix_fields(session, ref);
+      }
       session->where= save_where;
       return ret;
     }
@@ -232,11 +242,13 @@ bool Item_subselect::fix_fields(Session *session_param, Item **ref)
   else
     goto err;
 
-  if ((uncacheable= engine->uncacheable()))
+  if (engine->uncacheable())
   {
     const_item_cache= 0;
-    if (uncacheable & UNCACHEABLE_RAND)
+    if (engine->uncacheable(UNCACHEABLE_RAND))
+    {
       used_tables_cache|= RAND_TABLE_BIT;
+    }
   }
   fixed= 1;
 
@@ -256,7 +268,7 @@ bool Item_subselect::walk(Item_processor processor, bool walk_subquery,
     {
       List_iterator<Item> li(lex->item_list);
       Item *item;
-      order_st *order;
+      Order *order;
 
       if (lex->where && (lex->where)->walk(processor, walk_subquery, argument))
         return 1;
@@ -269,12 +281,12 @@ bool Item_subselect::walk(Item_processor processor, bool walk_subquery,
         if (item->walk(processor, walk_subquery, argument))
           return 1;
       }
-      for (order= (order_st*) lex->order_list.first ; order; order= order->next)
+      for (order= (Order*) lex->order_list.first ; order; order= order->next)
       {
         if ((*order->item)->walk(processor, walk_subquery, argument))
           return 1;
       }
-      for (order= (order_st*) lex->group_list.first ; order; order= order->next)
+      for (order= (Order*) lex->group_list.first ; order; order= order->next)
       {
         if ((*order->item)->walk(processor, walk_subquery, argument))
           return 1;
@@ -378,7 +390,7 @@ Item *Item_subselect::get_tmp_table_item(Session *session_arg)
 
 void Item_subselect::update_used_tables()
 {
-  if (!engine->uncacheable())
+  if (! engine->uncacheable())
   {
     // did all used tables become static?
     if (!(used_tables_cache & ~engine->upper_select_const_tables()))
@@ -494,7 +506,7 @@ void Item_singlerow_subselect::reset()
   Make rollback for it, or special name resolving mode in 5.0.
 */
 Item_subselect::trans_res
-Item_singlerow_subselect::select_transformer(JOIN *join)
+Item_singlerow_subselect::select_transformer(Join *join)
 {
   if (changed)
     return(RES_OK);
@@ -522,7 +534,7 @@ Item_singlerow_subselect::select_transformer(JOIN *join)
     if (session->lex->describe)
     {
       char warn_buff[DRIZZLE_ERRMSG_SIZE];
-      sprintf(warn_buff, ER(ER_SELECT_REDUCED), select_lex->select_number);
+      snprintf(warn_buff, sizeof(warn_buff), ER(ER_SELECT_REDUCED), select_lex->select_number);
       push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
 		   ER_SELECT_REDUCED, warn_buff);
     }
@@ -974,7 +986,7 @@ my_decimal *Item_in_subselect::val_decimal(my_decimal *decimal_value)
 */
 
 Item_subselect::trans_res
-Item_in_subselect::single_value_transformer(JOIN *join,
+Item_in_subselect::single_value_transformer(Join *join,
 					    const Comp_creator *func)
 {
   Select_Lex *select_lex= join->select_lex;
@@ -1001,7 +1013,7 @@ Item_in_subselect::single_value_transformer(JOIN *join,
     later in this method.
   */
   if ((abort_on_null || (upper_item && upper_item->top_level())) &&
-      !select_lex->master_unit()->uncacheable && !func->eqne_op())
+      select_lex->master_unit()->uncacheable.none() && !func->eqne_op())
   {
     if (substitution)
     {
@@ -1097,7 +1109,7 @@ Item_in_subselect::single_value_transformer(JOIN *join,
 			      (char *)"<no matter>",
 			      (char *)in_left_expr_name);
 
-    master_unit->uncacheable|= UNCACHEABLE_DEPENDENT;
+    master_unit->uncacheable.set(UNCACHEABLE_DEPENDENT);
   }
 
   if (!abort_on_null && left_expr->maybe_null && !pushed_cond_guards)
@@ -1156,11 +1168,11 @@ Item_in_subselect::single_value_transformer(JOIN *join,
 */
 
 Item_subselect::trans_res
-Item_in_subselect::single_value_in_to_exists_transformer(JOIN * join, const Comp_creator *func)
+Item_in_subselect::single_value_in_to_exists_transformer(Join * join, const Comp_creator *func)
 {
   Select_Lex *select_lex= join->select_lex;
 
-  select_lex->uncacheable|= UNCACHEABLE_DEPENDENT;
+  select_lex->uncacheable.set(UNCACHEABLE_DEPENDENT);
   if (join->having || select_lex->with_sum_func ||
       select_lex->group_list.elements)
   {
@@ -1318,7 +1330,7 @@ Item_in_subselect::single_value_in_to_exists_transformer(JOIN * join, const Comp
 	if (session->lex->describe)
 	{
 	  char warn_buff[DRIZZLE_ERRMSG_SIZE];
-	  sprintf(warn_buff, ER(ER_SELECT_REDUCED), select_lex->select_number);
+	  snprintf(warn_buff, sizeof(warn_buff), ER(ER_SELECT_REDUCED), select_lex->select_number);
 	  push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
 		       ER_SELECT_REDUCED, warn_buff);
 	}
@@ -1332,7 +1344,7 @@ Item_in_subselect::single_value_in_to_exists_transformer(JOIN * join, const Comp
 
 
 Item_subselect::trans_res
-Item_in_subselect::row_value_transformer(JOIN *join)
+Item_in_subselect::row_value_transformer(Join *join)
 {
   Select_Lex *select_lex= join->select_lex;
   uint32_t cols_num= left_expr->cols();
@@ -1366,7 +1378,7 @@ Item_in_subselect::row_value_transformer(JOIN *join)
     optimizer->keep_top_level_cache();
 
     session->lex->current_select= current;
-    master_unit->uncacheable|= UNCACHEABLE_DEPENDENT;
+    master_unit->uncacheable.set(UNCACHEABLE_DEPENDENT);
 
     if (!abort_on_null && left_expr->maybe_null && !pushed_cond_guards)
     {
@@ -1409,7 +1421,7 @@ Item_in_subselect::row_value_transformer(JOIN *join)
 */
 
 Item_subselect::trans_res
-Item_in_subselect::row_value_in_to_exists_transformer(JOIN * join)
+Item_in_subselect::row_value_in_to_exists_transformer(Join * join)
 {
   Select_Lex *select_lex= join->select_lex;
   Item *having_item= 0;
@@ -1418,7 +1430,7 @@ Item_in_subselect::row_value_in_to_exists_transformer(JOIN * join)
                         select_lex->group_list.first ||
                         !select_lex->table_list.elements);
 
-  select_lex->uncacheable|= UNCACHEABLE_DEPENDENT;
+  select_lex->uncacheable.set(UNCACHEABLE_DEPENDENT);
   if (is_having_used)
   {
     /*
@@ -1607,7 +1619,7 @@ Item_in_subselect::row_value_in_to_exists_transformer(JOIN * join)
 
 
 Item_subselect::trans_res
-Item_in_subselect::select_transformer(JOIN *join)
+Item_in_subselect::select_transformer(Join *join)
 {
   return select_in_like_transformer(join, Eq_creator::instance());
 }
@@ -1635,7 +1647,7 @@ Item_in_subselect::select_transformer(JOIN *join)
 */
 
 Item_subselect::trans_res
-Item_in_subselect::select_in_like_transformer(JOIN *join, const Comp_creator *func)
+Item_in_subselect::select_in_like_transformer(Join *join, const Comp_creator *func)
 {
   Select_Lex *current= session->lex->current_select, *up;
   const char *save_where= session->where;
@@ -1645,7 +1657,7 @@ Item_in_subselect::select_in_like_transformer(JOIN *join, const Comp_creator *fu
   {
     /*
       IN/SOME/ALL/ANY subqueries aren't support LIMIT clause. Without it
-      order_st BY clause becomes meaningless thus we drop it here.
+      ORDER BY clause becomes meaningless thus we drop it here.
     */
     Select_Lex *sl= current->master_unit()->first_select();
     for (; sl; sl= sl->next_select())
@@ -1838,7 +1850,7 @@ bool Item_in_subselect::setup_engine()
 
 bool Item_in_subselect::init_left_expr_cache()
 {
-  JOIN *outer_join= NULL;
+  Join *outer_join= NULL;
 
   outer_join= unit->outer_select()->join;
   if (! outer_join || ! outer_join->tables || ! outer_join->join_tab)
@@ -1877,7 +1889,7 @@ bool Item_in_subselect::is_expensive_processor(unsigned char *)
 
 
 Item_subselect::trans_res
-Item_allany_subselect::select_transformer(JOIN *join)
+Item_allany_subselect::select_transformer(Join *join)
 {
   exec_method= IN_TO_EXISTS;
   if (upper_item)
@@ -1969,7 +1981,7 @@ void subselect_uniquesubquery_engine::cleanup()
 {
   /* Tell handler we don't need the index anymore */
   if (tab->table->cursor->inited)
-    tab->table->cursor->ha_index_end();
+    tab->table->cursor->endIndexScan();
   return;
 }
 
@@ -2014,7 +2026,7 @@ int subselect_single_select_engine::prepare()
 {
   if (prepared)
     return 0;
-  join= new JOIN(session, select_lex->item_list,
+  join= new Join(session, select_lex->item_list,
 		 select_lex->options | SELECT_NO_UNLOCK, result);
   if (!join || !result)
     return 1; /* Fatal error is set already. */
@@ -2027,8 +2039,8 @@ int subselect_single_select_engine::prepare()
 		    select_lex->where,
 		    select_lex->order_list.elements +
 		    select_lex->group_list.elements,
-		    (order_st*) select_lex->order_list.first,
-		    (order_st*) select_lex->group_list.first,
+		    (Order*) select_lex->order_list.first,
+		    (Order*) select_lex->group_list.first,
 		    select_lex->having,
 		    select_lex, select_lex->master_unit()))
     return 1;
@@ -2130,7 +2142,7 @@ void subselect_uniquesubquery_engine::fix_length_and_dec(Item_cache **)
 
 int  init_read_record_seq(JoinTable *tab);
 int join_read_always_key_or_null(JoinTable *tab);
-int join_read_next_same_or_null(READ_RECORD *info);
+int join_read_next_same_or_null(ReadRecord *info);
 
 int subselect_single_select_engine::exec()
 {
@@ -2149,7 +2161,7 @@ int subselect_single_select_engine::exec()
       session->lex->current_select= save_select;
       return(join->error ? join->error : 1);
     }
-    if (!select_lex->uncacheable && session->lex->describe &&
+    if (select_lex->uncacheable.none() && session->lex->describe &&
         !(join->select_options & SELECT_DESCRIBE) &&
         join->need_tmp && item->const_item())
     {
@@ -2159,8 +2171,8 @@ int subselect_single_select_engine::exec()
         called by EXPLAIN and we need to preserve the initial query structure
         so we can display it.
        */
-      select_lex->uncacheable|= UNCACHEABLE_EXPLAIN;
-      select_lex->master_unit()->uncacheable|= UNCACHEABLE_EXPLAIN;
+      select_lex->uncacheable.set(UNCACHEABLE_EXPLAIN);
+      select_lex->master_unit()->uncacheable.set(UNCACHEABLE_EXPLAIN);
       if (join->init_save_join_tab())
         return(1);
     }
@@ -2169,15 +2181,15 @@ int subselect_single_select_engine::exec()
       return(1);
     }
   }
-  if (select_lex->uncacheable &&
-      select_lex->uncacheable != UNCACHEABLE_EXPLAIN
-      && executed)
+  if (select_lex->uncacheable.any() &&
+      ! select_lex->uncacheable.test(UNCACHEABLE_EXPLAIN) &&
+      executed)
   {
     if (join->reinit())
     {
       session->where= save_where;
       session->lex->current_select= save_select;
-      return(1);
+      return 1;
     }
     item->reset();
     item->assigned((executed= 0));
@@ -2276,11 +2288,11 @@ int subselect_uniquesubquery_engine::scan_table()
   Table *table= tab->table;
 
   if (table->cursor->inited)
-    table->cursor->ha_index_end();
+    table->cursor->endIndexScan();
 
-  table->cursor->ha_rnd_init(1);
+  table->cursor->startTableScan(1);
   table->cursor->extra_opt(HA_EXTRA_CACHE,
-                         current_session->variables.read_buff_size);
+                           current_session->variables.read_buff_size);
   table->null_row= 0;
   for (;;)
   {
@@ -2301,7 +2313,7 @@ int subselect_uniquesubquery_engine::scan_table()
     }
   }
 
-  table->cursor->ha_rnd_end();
+  table->cursor->endTableScan();
   return(error != 0);
 }
 
@@ -2352,8 +2364,7 @@ bool subselect_uniquesubquery_engine::copy_ref_key()
 {
   for (StoredKey **copy= tab->ref.key_copy ; *copy ; copy++)
   {
-    enum StoredKey::store_key_result store_res;
-    store_res= (*copy)->copy();
+    StoredKey::store_key_result store_res= (*copy)->copy();
     tab->ref.key_err= store_res;
 
     /*
@@ -2456,7 +2467,7 @@ int subselect_uniquesubquery_engine::exec()
     return(scan_table());
 
   if (!table->cursor->inited)
-    table->cursor->ha_index_init(tab->ref.key, 0);
+    table->cursor->startIndexScan(tab->ref.key, 0);
   error= table->cursor->index_read_map(table->record[0],
                                      tab->ref.key_buff,
                                      make_prev_keypart_map(tab->ref.key_parts),
@@ -2569,7 +2580,7 @@ int subselect_indexsubquery_engine::exec()
     return(scan_table());
 
   if (!table->cursor->inited)
-    table->cursor->ha_index_init(tab->ref.key, 1);
+    table->cursor->startIndexScan(tab->ref.key, 1);
   error= table->cursor->index_read_map(table->record[0],
                                      tab->ref.key_buff,
                                      make_prev_keypart_map(tab->ref.key_parts),
@@ -2631,15 +2642,27 @@ uint32_t subselect_union_engine::cols()
 }
 
 
-uint8_t subselect_single_select_engine::uncacheable()
+bool subselect_single_select_engine::uncacheable()
 {
-  return select_lex->uncacheable;
+  return select_lex->uncacheable.any();
 }
 
 
-uint8_t subselect_union_engine::uncacheable()
+bool subselect_single_select_engine::uncacheable(uint32_t bit_pos)
 {
-  return unit->uncacheable;
+  return select_lex->uncacheable.test(bit_pos);
+}
+
+
+bool subselect_union_engine::uncacheable()
+{
+  return unit->uncacheable.any();
+}
+
+
+bool subselect_union_engine::uncacheable(uint32_t bit_pos)
+{
+  return unit->uncacheable.test(bit_pos);
 }
 
 
@@ -2703,11 +2726,11 @@ void subselect_union_engine::print(String *str, enum_query_type query_type)
 void subselect_uniquesubquery_engine::print(String *str,
                                             enum_query_type query_type)
 {
-  char *table_name= tab->table->s->table_name.str;
+  char *table_name= const_cast<char *>(tab->table->getShare()->getTableName());
   str->append(STRING_WITH_LEN("<primary_index_lookup>("));
   tab->ref.items[0]->print(str, query_type);
   str->append(STRING_WITH_LEN(" in "));
-  if (tab->table->s->table_category == TABLE_CATEGORY_TEMPORARY)
+  if (tab->table->getShare()->isTemporaryCategory())
   {
     /*
       Temporary tables' names change across runs, so they can't be used for
@@ -2716,8 +2739,8 @@ void subselect_uniquesubquery_engine::print(String *str,
     str->append(STRING_WITH_LEN("<temporary table>"));
   }
   else
-    str->append(table_name, tab->table->s->table_name.length);
-  KEY *key_info= tab->table->key_info+ tab->ref.key;
+    str->append(table_name, tab->table->getShare()->getTableNameSize());
+  KeyInfo *key_info= tab->table->key_info+ tab->ref.key;
   str->append(STRING_WITH_LEN(" on "));
   str->append(key_info->name);
   if (cond)
@@ -2740,7 +2763,7 @@ void subselect_uniquesubquery_engine::print(String *str)
   for (uint32_t i= 0; i < key_info->key_parts; i++)
     tab->ref.items[i]->print(str);
   str->append(STRING_WITH_LEN(" in "));
-  str->append(tab->table->s->table_name.str, tab->table->s->table_name.length);
+  str->append(tab->table->getShare()->getTableName(), tab->table->getShare()->getTableNameSize());
   str->append(STRING_WITH_LEN(" on "));
   str->append(key_info->name);
   if (cond)
@@ -2758,8 +2781,8 @@ void subselect_indexsubquery_engine::print(String *str,
   str->append(STRING_WITH_LEN("<index_lookup>("));
   tab->ref.items[0]->print(str, query_type);
   str->append(STRING_WITH_LEN(" in "));
-  str->append(tab->table->s->table_name.str, tab->table->s->table_name.length);
-  KEY *key_info= tab->table->key_info+ tab->ref.key;
+  str->append(tab->table->getShare()->getTableName(), tab->table->getShare()->getTableNameSize());
+  KeyInfo *key_info= tab->table->key_info+ tab->ref.key;
   str->append(STRING_WITH_LEN(" on "));
   str->append(key_info->name);
   if (check_null)
@@ -2936,7 +2959,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
   select_union  *tmp_result_sink;
   /* The table into which the subquery is materialized. */
   Table         *tmp_table;
-  KEY           *tmp_key; /* The only index on the temporary table. */
+  KeyInfo           *tmp_key; /* The only index on the temporary table. */
   uint32_t          tmp_key_parts; /* Number of keyparts in tmp_key. */
   Item_in_subselect *item_in= (Item_in_subselect *) item;
 
@@ -2949,10 +2972,11 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
   */
   if (!(tmp_result_sink= new select_union))
     return(true);
+
   if (tmp_result_sink->create_result_table(
                          session, tmp_columns, true,
                          session->options | TMP_TABLE_ALL_COLUMNS,
-                         "materialized subselect", true))
+                         "materialized subselect"))
     return(true);
 
   tmp_table= tmp_result_sink->table;
@@ -2966,14 +2990,14 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
      table since it will not be used, and tell the caller we failed to
      initialize the engine.
   */
-  if (tmp_table->s->keys == 0)
+  if (tmp_table->getShare()->sizeKeys() == 0)
   {
-    assert(tmp_table->s->db_type() == myisam_engine);
+    assert(tmp_table->getShare()->db_type() == myisam_engine);
     assert(
-      tmp_table->s->uniques ||
+      tmp_table->getShare()->uniques ||
       tmp_table->key_info->key_length >= tmp_table->cursor->getEngine()->max_key_length() ||
       tmp_table->key_info->key_parts > tmp_table->cursor->getEngine()->max_key_parts());
-    tmp_table->free_tmp_table(session);
+    tmp_table= NULL;
     delete result;
     result= NULL;
     return(true);
@@ -2984,7 +3008,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
     Make sure there is only one index on the temp table, and it doesn't have
     the extra key part created when s->uniques > 0.
   */
-  assert(tmp_table->s->keys == 1 && tmp_columns->elements == tmp_key_parts);
+  assert(tmp_table->getShare()->sizeKeys() == 1 && tmp_columns->elements == tmp_key_parts);
 
 
   /* 2. Create/initialize execution related objects. */
@@ -3010,7 +3034,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
         (Item**) session->alloc(sizeof(Item*) * tmp_key_parts)))
     return(true);
 
-  KEY_PART_INFO *cur_key_part= tmp_key->key_part;
+  KeyPartInfo *cur_key_part= tmp_key->key_part;
   StoredKey **ref_key= tab->ref.key_copy;
   unsigned char *cur_ref_buff= tab->ref.key_buff;
 
@@ -3064,7 +3088,9 @@ subselect_hash_sj_engine::~subselect_hash_sj_engine()
 {
   delete result;
   if (tab)
-    tab->table->free_tmp_table(session);
+  {
+    tab->table= NULL;
+  }
 }
 
 
@@ -3072,7 +3098,7 @@ subselect_hash_sj_engine::~subselect_hash_sj_engine()
   Cleanup performed after each PS execution.
 
   @detail
-  Called in the end of JOIN::prepare for PS from Item_subselect::cleanup.
+  Called in the end of Join::prepare for PS from Item_subselect::cleanup.
 */
 
 void subselect_hash_sj_engine::cleanup()
@@ -3117,7 +3143,7 @@ int subselect_hash_sj_engine::exec()
     /*
       TODO:
       - Unlock all subquery tables as we don't need them. To implement this
-        we need to add new functionality to JOIN::join_free that can unlock
+        we need to add new functionality to Join::join_free that can unlock
         all tables in a subquery (and all its subqueries).
       - The temp table used for grouping in the subquery can be freed
         immediately after materialization (yet it's done together with
@@ -3172,3 +3198,5 @@ void subselect_hash_sj_engine::print(String *str, enum_query_type query_type)
            "<the access method for lookups is not yet created>"
          ));
 }
+
+} /* namespace drizzled */

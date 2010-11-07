@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 
 /* Copy data from a textfile to table */
@@ -31,9 +31,12 @@
 #include <fcntl.h>
 #include <algorithm>
 #include <climits>
+#include <boost/filesystem.hpp>
 
-using namespace drizzled;
+namespace fs=boost::filesystem;
 using namespace std;
+namespace drizzled
+{
 
 class READ_INFO {
   int	cursor;
@@ -47,7 +50,7 @@ class READ_INFO {
   int	*stack,*stack_pos;
   bool	found_end_of_line,start_of_line,eof;
   bool  need_end_io_cache;
-  IO_CACHE cache;
+  internal::IO_CACHE cache;
 
 public:
   bool error,line_cuted,found_null,enclosed;
@@ -72,7 +75,7 @@ public:
   */
   void end_io_cache()
   {
-    ::end_io_cache(&cache);
+    internal::end_io_cache(&cache);
     need_end_io_cache = 0;
   }
 
@@ -84,12 +87,12 @@ public:
   void set_io_cache_arg(void* arg) { cache.arg = arg; }
 };
 
-static int read_fixed_length(Session *session, COPY_INFO &info, TableList *table_list,
+static int read_fixed_length(Session *session, CopyInfo &info, TableList *table_list,
                              List<Item> &fields_vars, List<Item> &set_fields,
                              List<Item> &set_values, READ_INFO &read_info,
 			     uint32_t skip_lines,
 			     bool ignore_check_option_errors);
-static int read_sep_field(Session *session, COPY_INFO &info, TableList *table_list,
+static int read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
                           List<Item> &fields_vars, List<Item> &set_fields,
                           List<Item> &set_values, READ_INFO &read_info,
 			  String &enclosed, uint32_t skip_lines,
@@ -121,21 +124,21 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
                 List<Item> &set_values,
                 enum enum_duplicates handle_duplicates, bool ignore)
 {
-  char name[FN_REFLEN];
   int file;
   Table *table= NULL;
   int error;
   String *field_term=ex->field_term,*escaped=ex->escaped;
   String *enclosed=ex->enclosed;
   bool is_fifo=0;
-  char *db= table_list->db;			// This is never null
-  assert(db);
+
+  assert(table_list->getSchemaName()); // This should never be null
+
   /*
     If path for cursor is not defined, we will use the current database.
     If this is not set, we will use the directory where the table to be
     loaded is located
   */
-  const char *tdb= session->db.empty() ? db  : session->db.c_str();		// Result is never null
+  const char *tdb= session->db.empty() ? table_list->getSchemaName()  : session->db.c_str();		// Result is never null
   assert(tdb);
   uint32_t skip_lines= ex->skip_lines;
   bool transactional_table;
@@ -167,7 +170,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
   */
   if (unique_table(table_list, table_list->next_global))
   {
-    my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->table_name);
+    my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->getTableName());
     return(true);
   }
 
@@ -177,7 +180,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
   if (!fields_vars.elements)
   {
     Field **field;
-    for (field=table->field; *field ; field++)
+    for (field= table->getFields(); *field ; field++)
       fields_vars.push_back(new Item_field(*field));
     table->setWriteSet();
     table->timestamp_field_type= TIMESTAMP_NO_AUTO_SET;
@@ -251,70 +254,77 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
     return(true);
   }
 
+  fs::path to_file(ex->file_name);
+  fs::path target_path(fs::system_complete(getDataHomeCatalog()));
+  if (not to_file.has_root_directory())
   {
-#ifdef DONT_ALLOW_FULL_LOAD_DATA_PATHS
-    ex->file_name+=dirname_length(ex->file_name);
-#endif
-    if (!dirname_length(ex->file_name))
+    int count_elements= 0;
+    for (fs::path::iterator iter= to_file.begin();
+         iter != to_file.end();
+         ++iter, ++count_elements)
+    { }
+
+    if (count_elements == 1)
     {
-      strcpy(name, drizzle_real_data_home);
-      strncat(name, tdb, FN_REFLEN-strlen(drizzle_real_data_home)-1);
-      (void) fn_format(name, ex->file_name, name, "",
-		       MY_RELATIVE_PATH | MY_UNPACK_FILENAME);
+      target_path /= tdb;
     }
-    else
+    target_path /= to_file;
+  }
+  else
+  {
+    target_path= to_file;
+  }
+
+  if (not secure_file_priv.string().empty())
+  {
+    if (target_path.file_string().substr(0, secure_file_priv.file_string().size()) != secure_file_priv.file_string())
     {
-      (void) fn_format(name, ex->file_name, drizzle_real_data_home, "",
-		       MY_RELATIVE_PATH | MY_UNPACK_FILENAME);
-
-      if (opt_secure_file_priv &&
-          strncmp(opt_secure_file_priv, name, strlen(opt_secure_file_priv)))
-      {
-        /* Read only allowed from within dir specified by secure_file_priv */
-        my_error(ER_OPTION_PREVENTS_STATEMENT, MYF(0), "--secure-file-priv");
-        return(true);
-      }
-
-      struct stat stat_info;
-      if (stat(name,&stat_info))
-      {
-        my_error(ER_FILE_NOT_FOUND, MYF(0), name, errno);
-	return(true);
-      }
-
-      // if we are not in slave thread, the cursor must be:
-      if (!((stat_info.st_mode & S_IROTH) == S_IROTH &&  // readable by others
-            (stat_info.st_mode & S_IFLNK) != S_IFLNK && // and not a symlink
-            ((stat_info.st_mode & S_IFREG) == S_IFREG ||
-             (stat_info.st_mode & S_IFIFO) == S_IFIFO)))
-      {
-	my_error(ER_TEXTFILE_NOT_READABLE, MYF(0), name);
-	return(true);
-      }
-      if ((stat_info.st_mode & S_IFIFO) == S_IFIFO)
-	is_fifo = 1;
-    }
-    if ((file=my_open(name,O_RDONLY,MYF(MY_WME))) < 0)
-    {
-      my_error(ER_CANT_OPEN_FILE, MYF(0), name, errno);
+      /* Read only allowed from within dir specified by secure_file_priv */
+      my_error(ER_OPTION_PREVENTS_STATEMENT, MYF(0), "--secure-file-priv");
       return(true);
     }
   }
 
-  COPY_INFO info;
+  struct stat stat_info;
+  if (stat(target_path.file_string().c_str(), &stat_info))
+  {
+    my_error(ER_FILE_NOT_FOUND, MYF(0), target_path.file_string().c_str(), errno);
+    return(true);
+  }
+
+  // if we are not in slave thread, the cursor must be:
+  if (!((stat_info.st_mode & S_IROTH) == S_IROTH &&  // readable by others
+        (stat_info.st_mode & S_IFLNK) != S_IFLNK && // and not a symlink
+        ((stat_info.st_mode & S_IFREG) == S_IFREG ||
+         (stat_info.st_mode & S_IFIFO) == S_IFIFO)))
+  {
+    my_error(ER_TEXTFILE_NOT_READABLE, MYF(0), target_path.file_string().c_str());
+    return(true);
+  }
+  if ((stat_info.st_mode & S_IFIFO) == S_IFIFO)
+    is_fifo = 1;
+
+
+  if ((file=internal::my_open(target_path.file_string().c_str(), O_RDONLY,MYF(MY_WME))) < 0)
+  {
+    my_error(ER_CANT_OPEN_FILE, MYF(0), target_path.file_string().c_str(), errno);
+    return(true);
+  }
+  CopyInfo info;
   memset(&info, 0, sizeof(info));
   info.ignore= ignore;
   info.handle_duplicates=handle_duplicates;
   info.escape_char=escaped->length() ? (*escaped)[0] : INT_MAX;
 
+  SchemaIdentifier identifier(session->db);
   READ_INFO read_info(file, tot_length,
-                      ex->cs ? ex->cs : get_default_db_collation(session->db.c_str()),
-		      *field_term,*ex->line_start, *ex->line_term, *enclosed,
+                      ex->cs ? ex->cs : plugin::StorageEngine::getSchemaCollation(identifier),
+		      *field_term, *ex->line_start, *ex->line_term, *enclosed,
 		      info.escape_char, is_fifo);
   if (read_info.error)
   {
     if	(file >= 0)
-      my_close(file,MYF(0));			// no files in net reading
+      internal::my_close(file,MYF(0));			// no files in net reading
     return(true);				// Can't allocate buffers
   }
 
@@ -372,10 +382,10 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
     table->next_number_field=0;
   }
   if (file >= 0)
-    my_close(file,MYF(0));
+    internal::my_close(file,MYF(0));
   free_blobs(table);				/* if pack_blob was used */
   table->copy_blobs=0;
-  session->count_cuted_fields= CHECK_FIELD_IGNORE;
+  session->count_cuted_fields= CHECK_FIELD_ERROR_FOR_NULL;
   /*
      simulated killing in the middle of per-row loop
      must be effective for binlogging
@@ -386,17 +396,19 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
     error= -1;				// Error on read
     goto err;
   }
-  sprintf(name, ER(ER_LOAD_INFO), (uint32_t) info.records, (uint32_t) info.deleted,
-	  (uint32_t) (info.records - info.copied), (uint32_t) session->cuted_fields);
 
-  if (session->transaction.stmt.modified_non_trans_table)
-    session->transaction.all.modified_non_trans_table= true;
+  char msg[FN_REFLEN];
+  snprintf(msg, sizeof(msg), ER(ER_LOAD_INFO), info.records, info.deleted,
+	   (info.records - info.copied), session->cuted_fields);
+
+  if (session->transaction.stmt.hasModifiedNonTransData())
+    session->transaction.all.markModifiedNonTransData();
 
   /* ok to client sent only after binlog write and engine commit */
-  session->my_ok(info.copied + info.deleted, 0, 0L, name);
+  session->my_ok(info.copied + info.deleted, 0, 0L, msg);
 err:
   assert(transactional_table || !(info.copied || info.deleted) ||
-              session->transaction.stmt.modified_non_trans_table);
+              session->transaction.stmt.hasModifiedNonTransData());
   table->cursor->ha_release_auto_increment();
   table->auto_increment_field_not_null= false;
   session->abort_on_warning= 0;
@@ -409,7 +421,7 @@ err:
 ****************************************************************************/
 
 static int
-read_fixed_length(Session *session, COPY_INFO &info, TableList *table_list,
+read_fixed_length(Session *session, CopyInfo &info, TableList *table_list,
                   List<Item> &fields_vars, List<Item> &set_fields,
                   List<Item> &set_values, READ_INFO &read_info,
                   uint32_t skip_lines, bool ignore_check_option_errors)
@@ -442,7 +454,7 @@ read_fixed_length(Session *session, COPY_INFO &info, TableList *table_list,
     }
     it.rewind();
     unsigned char *pos=read_info.row_start;
-#ifdef HAVE_purify
+#ifdef HAVE_VALGRIND
     read_info.row_end[0]=0;
 #endif
 
@@ -528,7 +540,7 @@ read_fixed_length(Session *session, COPY_INFO &info, TableList *table_list,
 
 
 static int
-read_sep_field(Session *session, COPY_INFO &info, TableList *table_list,
+read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
                List<Item> &fields_vars, List<Item> &set_fields,
                List<Item> &set_values, READ_INFO &read_info,
 	       String &enclosed, uint32_t skip_lines,
@@ -774,8 +786,8 @@ READ_INFO::READ_INFO(int file_par, size_t tot_length,
 
 
   /* Set of a stack for unget if long terminators */
-  uint32_t length= max(field_term_length,line_term_length)+1;
-  set_if_bigger(length,line_start.length());
+  size_t length= max(field_term_length,line_term_length)+1;
+  set_if_bigger(length, line_start.length());
   stack= stack_pos= (int*) memory::sql_alloc(sizeof(int)*length);
 
   if (!(buffer=(unsigned char*) calloc(1, buff_length+1)))
@@ -784,8 +796,8 @@ READ_INFO::READ_INFO(int file_par, size_t tot_length,
   {
     end_of_buff=buffer+buff_length;
     if (init_io_cache(&cache,(false) ? -1 : cursor, 0,
-		      (false) ? READ_NET :
-		      (is_fifo ? READ_FIFO : READ_CACHE),0L,1,
+		      (false) ? internal::READ_NET :
+		      (is_fifo ? internal::READ_FIFO : internal::READ_CACHE),0L,1,
 		      MYF(MY_WME)))
     {
       free((unsigned char*) buffer);
@@ -809,7 +821,7 @@ READ_INFO::~READ_INFO()
   if (!error)
   {
     if (need_end_io_cache)
-      ::end_io_cache(&cache);
+      internal::end_io_cache(&cache);
     free(buffer);
     error=1;
   }
@@ -1141,3 +1153,4 @@ bool READ_INFO::find_start_of_fields()
 }
 
 
+} /* namespace drizzled */

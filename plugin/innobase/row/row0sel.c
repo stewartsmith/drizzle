@@ -18,8 +18,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -3352,27 +3352,6 @@ row_search_for_mysql(
 	}
 
 #if 0
-	/* August 19, 2005 by Heikki: temporarily disable this error
-	print until the cursor lock count is done correctly.
-	See bugs #12263 and #12456!*/
-
-	if (trx->n_mysql_tables_in_use == 0
-	    && UNIV_UNLIKELY(prebuilt->select_lock_type == LOCK_NONE)) {
-		/* Note that if MySQL uses an InnoDB temp table that it
-		created inside LOCK TABLES, then n_mysql_tables_in_use can
-		be zero; in that case select_lock_type is set to LOCK_X in
-		::start_stmt. */
-
-		fputs("InnoDB: Error: MySQL is trying to perform a SELECT\n"
-		      "InnoDB: but it has not locked"
-		      " any tables in ::external_lock()!\n",
-		      stderr);
-		trx_print(stderr, trx, 600);
-		fputc('\n', stderr);
-	}
-#endif
-
-#if 0
 	fprintf(stderr, "Match mode %lu\n search tuple ",
 		(ulong) match_mode);
 	dtuple_print(search_tuple);
@@ -3494,11 +3473,9 @@ row_search_for_mysql(
 
 		/* Even if the condition is unique, MySQL seems to try to
 		retrieve also a second row if a primary key contains more than
-		1 column. Return immediately if this is not a HANDLER
-		command. */
+		1 column.*/
 
-		if (UNIV_UNLIKELY(direction != 0
-				  && !prebuilt->used_in_HANDLER)) {
+		if (UNIV_UNLIKELY(direction != 0)) {
 
 			err = DB_RECORD_NOT_FOUND;
 			goto func_exit;
@@ -3520,7 +3497,6 @@ row_search_for_mysql(
 	    && unique_search
 	    && dict_index_is_clust(index)
 	    && !prebuilt->templ_contains_blob
-	    && !prebuilt->used_in_HANDLER
 	    && (prebuilt->mysql_row_len < UNIV_PAGE_SIZE / 8)) {
 
 		mode = PAGE_CUR_GE;
@@ -4304,7 +4280,6 @@ requires_clust_rec:
 	    && prebuilt->select_lock_type == LOCK_NONE
 	    && !prebuilt->templ_contains_blob
 	    && !prebuilt->clust_index_was_generated
-	    && !prebuilt->used_in_HANDLER
 	    && prebuilt->template_type
 	    != ROW_MYSQL_DUMMY_TEMPLATE) {
 
@@ -4363,8 +4338,7 @@ got_row:
 	even after a unique search. */
 
 	if (!unique_search_from_clust_index
-	    || prebuilt->select_lock_type != LOCK_NONE
-	    || prebuilt->used_in_HANDLER) {
+	    || prebuilt->select_lock_type != LOCK_NONE) {
 
 		/* Inside an update always store the cursor position */
 

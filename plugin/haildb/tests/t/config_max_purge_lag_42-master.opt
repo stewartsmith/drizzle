@@ -1,0 +1,1 @@
+ --innodb.max-purge-lag=42

@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /* Common defines for all clients */
 #ifndef CLIENT_CLIENT_PRIV_H
@@ -19,7 +19,6 @@
 
 #include "config.h"
 #include <libdrizzle/drizzle_client.h>
-#include "drizzled/my_getopt.h"
 #include "drizzled/internal/my_sys.h"
 
 #include "client/get_password.h"

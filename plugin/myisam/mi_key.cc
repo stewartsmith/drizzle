@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /* Functions to handle keys */
 
@@ -23,13 +23,16 @@
 #include <math.h>
 #include <cassert>
 
+using namespace drizzled;
+using namespace std;
+
 #define CHECK_KEYS                              /* Enable safety checks */
 
 #define FIX_LENGTH(cs, pos, length, char_length)                            \
             do {                                                            \
               if (length > char_length)                                     \
                 char_length= my_charpos(cs, pos, pos+length, char_length);  \
-              set_if_smaller(char_length,length);                           \
+              drizzled::set_if_smaller(char_length,length);                           \
             } while(0)
 
 static int _mi_put_key_in_record(MI_INFO *info,uint32_t keynr,unsigned char *record);
@@ -50,7 +53,7 @@ static int _mi_put_key_in_record(MI_INFO *info,uint32_t keynr,unsigned char *rec
 */
 
 uint32_t _mi_make_key(register MI_INFO *info, uint32_t keynr, unsigned char *key,
-		  const unsigned char *record, my_off_t filepos)
+                      const unsigned char *record, drizzled::internal::my_off_t filepos)
 {
   unsigned char *pos;
   unsigned char *start;
@@ -59,10 +62,10 @@ uint32_t _mi_make_key(register MI_INFO *info, uint32_t keynr, unsigned char *key
   start=key;
   for (keyseg=info->s->keyinfo[keynr].seg ; keyseg->type ;keyseg++)
   {
-    enum ha_base_keytype type=(enum ha_base_keytype) keyseg->type;
+    enum drizzled::ha_base_keytype type=(enum drizzled::ha_base_keytype) keyseg->type;
     uint32_t length=keyseg->length;
     uint32_t char_length;
-    const CHARSET_INFO * const cs=keyseg->charset;
+    const drizzled::CHARSET_INFO * const cs=keyseg->charset;
 
     if (keyseg->null_bit)
     {
@@ -95,7 +98,7 @@ uint32_t _mi_make_key(register MI_INFO *info, uint32_t keynr, unsigned char *key
       uint32_t tmp_length= (pack_length == 1 ? (uint) *(unsigned char*) pos :
                         uint2korr(pos));
       pos+= pack_length;			/* Skip VARCHAR length */
-      set_if_smaller(length,tmp_length);
+      drizzled::set_if_smaller(length,tmp_length);
       FIX_LENGTH(cs, pos, length, char_length);
       store_key_length_inc(key,char_length);
       memcpy(key, pos, char_length);
@@ -106,7 +109,7 @@ uint32_t _mi_make_key(register MI_INFO *info, uint32_t keynr, unsigned char *key
     {
       uint32_t tmp_length=_mi_calc_blob_length(keyseg->bit_start,pos);
       memcpy(&pos, pos+keyseg->bit_start, sizeof(char*));
-      set_if_smaller(length,tmp_length);
+      drizzled::set_if_smaller(length,tmp_length);
       FIX_LENGTH(cs, pos, length, char_length);
       store_key_length_inc(key,char_length);
       memcpy(key, pos, char_length);
@@ -115,7 +118,7 @@ uint32_t _mi_make_key(register MI_INFO *info, uint32_t keynr, unsigned char *key
     }
     else if (keyseg->flag & HA_SWAP_KEY)
     {						/* Numerical column */
-      if (type == HA_KEYTYPE_DOUBLE)
+      if (type == drizzled::HA_KEYTYPE_DOUBLE)
       {
 	double nr;
 	float8get(nr,pos);
@@ -163,7 +166,7 @@ uint32_t _mi_make_key(register MI_INFO *info, uint32_t keynr, unsigned char *key
 */
 
 uint32_t _mi_pack_key(register MI_INFO *info, uint32_t keynr, unsigned char *key, unsigned char *old,
-                  key_part_map keypart_map, HA_KEYSEG **last_used_keyseg)
+                      drizzled::key_part_map keypart_map, HA_KEYSEG **last_used_keyseg)
 {
   unsigned char *start_key=key;
   HA_KEYSEG *keyseg;
@@ -174,11 +177,11 @@ uint32_t _mi_pack_key(register MI_INFO *info, uint32_t keynr, unsigned char *key
   for (keyseg= info->s->keyinfo[keynr].seg ; keyseg->type && keypart_map;
        old+= keyseg->length, keyseg++)
   {
-    enum ha_base_keytype type= (enum ha_base_keytype) keyseg->type;
+    enum drizzled::ha_base_keytype type= (enum drizzled::ha_base_keytype) keyseg->type;
     uint32_t length= keyseg->length;
     uint32_t char_length;
     unsigned char *pos;
-    const CHARSET_INFO * const cs=keyseg->charset;
+    const drizzled::CHARSET_INFO * const cs=keyseg->charset;
     keypart_map>>= 1;
     if (keyseg->null_bit)
     {
@@ -195,7 +198,7 @@ uint32_t _mi_pack_key(register MI_INFO *info, uint32_t keynr, unsigned char *key
     {
       unsigned char *end=pos+length;
 
-      if (type != HA_KEYTYPE_BINARY)
+      if (type != drizzled::HA_KEYTYPE_BINARY)
       {
 	while (end > pos && end[-1] == ' ')
 	  end--;
@@ -212,7 +215,7 @@ uint32_t _mi_pack_key(register MI_INFO *info, uint32_t keynr, unsigned char *key
       /* Length of key-part used with mi_rkey() always 2 */
       uint32_t tmp_length=uint2korr(pos);
       pos+=2;
-      set_if_smaller(length,tmp_length);	/* Safety */
+      drizzled::set_if_smaller(length,tmp_length);	/* Safety */
       FIX_LENGTH(cs, pos, length, char_length);
       store_key_length_inc(key,char_length);
       old+=2;					/* Skip length */
@@ -372,7 +375,7 @@ err:
 
 	/* Here when key reads are used */
 
-int _mi_read_key_record(MI_INFO *info, my_off_t filepos, unsigned char *buf)
+int _mi_read_key_record(MI_INFO *info, drizzled::internal::my_off_t filepos, unsigned char *buf)
 {
   fast_mi_writeinfo(info);
   if (filepos != HA_OFFSET_ERROR)
@@ -444,19 +447,16 @@ uint64_t retrieve_auto_increment(MI_INFO *info,const unsigned char *record)
   const unsigned char *key= (unsigned char*) record + keyseg->start;
 
   switch (keyseg->type) {
-  case HA_KEYTYPE_BINARY:
+  case drizzled::HA_KEYTYPE_BINARY:
     value=(uint64_t)  *(unsigned char*) key;
     break;
-  case HA_KEYTYPE_LONG_INT:
+  case drizzled::HA_KEYTYPE_LONG_INT:
     s_value= (int64_t) sint4korr(key);
     break;
-  case HA_KEYTYPE_ULONG_INT:
+  case drizzled::HA_KEYTYPE_ULONG_INT:
     value=(uint64_t) uint4korr(key);
     break;
-  case HA_KEYTYPE_UINT24:
-    value=(uint64_t) uint3korr(key);
-    break;
-  case HA_KEYTYPE_DOUBLE:                       /* This shouldn't be used */
+  case drizzled::HA_KEYTYPE_DOUBLE:                       /* This shouldn't be used */
   {
     double f_1;
     float8get(f_1,key);
@@ -464,10 +464,10 @@ uint64_t retrieve_auto_increment(MI_INFO *info,const unsigned char *record)
     value = (f_1 < 0.0) ? 0 : (uint64_t) f_1;
     break;
   }
-  case HA_KEYTYPE_LONGLONG:
+  case drizzled::HA_KEYTYPE_LONGLONG:
     s_value= sint8korr(key);
     break;
-  case HA_KEYTYPE_ULONGLONG:
+  case drizzled::HA_KEYTYPE_ULONGLONG:
     value= uint8korr(key);
     break;
   default:

@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /*
   Defines: int64_t2str();
@@ -40,6 +40,11 @@
 #include "config.h"
 
 #include "m_string.h"
+
+namespace drizzled
+{
+namespace internal
+{
 
 #if !defined(int64_t2str) && !defined(HAVE_LONGLONG2STR)
 
@@ -145,3 +150,6 @@ char *int64_t10_to_str(int64_t val,char *dst,int radix)
   return dst-1;
 }
 #endif
+
+} /* namespace internal */
+} /* namespace drizzled */

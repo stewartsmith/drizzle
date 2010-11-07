@@ -33,7 +33,6 @@
  */
 
 #include "config.h"
-#include <drizzled/plugin/registry.h>
 #include <drizzled/plugin.h>
 #include <drizzled/gettext.h>
 #include <drizzled/plugin/transaction_applier.h>
@@ -46,77 +45,25 @@
 using namespace std;
 using namespace drizzled;
 
-static bool sysvar_default_replicator_enable= false;
-
-bool DefaultReplicator::isEnabled() const
-{
-  return sysvar_default_replicator_enable;
-}
-
-void DefaultReplicator::enable()
-{
-  sysvar_default_replicator_enable= true;
-}
-
-void DefaultReplicator::disable()
-{
-  sysvar_default_replicator_enable= false;
-}
-
-void DefaultReplicator::replicate(plugin::TransactionApplier *in_applier, message::Transaction &to_replicate)
+plugin::ReplicationReturnCode
+DefaultReplicator::replicate(plugin::TransactionApplier *in_applier,
+                             Session &in_session,
+                             message::Transaction &to_replicate)
 {
   /* 
    * We do absolutely nothing but call the applier's apply() method, passing
    * along the supplied Transaction.  Yep, told you it was simple...
    */
-  in_applier->apply(to_replicate);
+  return in_applier->apply(in_session, to_replicate);
 }
 
 static DefaultReplicator *default_replicator= NULL; /* The singleton replicator */
 
-static int init(plugin::Registry &registry)
+static int init(module::Context &context)
 {
   default_replicator= new DefaultReplicator("default_replicator");
-  registry.add(default_replicator);
+  context.add(default_replicator);
   return 0;
 }
 
-static int deinit(plugin::Registry &registry)
-{
-  if (default_replicator)
-  {
-    registry.remove(default_replicator);
-    delete default_replicator;
-  }
-  return 0;
-}
-
-static DRIZZLE_SYSVAR_BOOL(
-  enable,
-  sysvar_default_replicator_enable,
-  PLUGIN_VAR_NOCMDARG,
-  N_("Enable default replicator"),
-  NULL, /* check func */
-  NULL, /* update func */
-  false /* default */);
-
-static drizzle_sys_var* default_replicator_system_variables[]= {
-  DRIZZLE_SYSVAR(enable),
-  NULL
-};
-
-DRIZZLE_DECLARE_PLUGIN
-{
-  DRIZZLE_VERSION_ID,
-  "default_replicator",
-  "0.1",
-  "Jay Pipes",
-  N_("Default Replicator"),
-  PLUGIN_LICENSE_GPL,
-  init, /* Plugin Init */
-  deinit, /* Plugin Deinit */
-  NULL, /* status variables */
-  default_replicator_system_variables, /* system variables */
-  NULL    /* config options */
-}
-DRIZZLE_DECLARE_PLUGIN_END;
+DRIZZLE_PLUGIN(init,  NULL, NULL);

@@ -179,9 +179,9 @@ create table t1 (da date default '1962-03-03 23:33:34', dt datetime default '196
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `da` date DEFAULT '1962-03-03',
-  `dt` datetime DEFAULT '1962-03-03 00:00:00'
-) ENGINE=DEFAULT
+  `da` DATE DEFAULT '1962-03-03',
+  `dt` DATETIME DEFAULT '1962-03-03 00:00:00'
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 insert into t1 values ();
 insert into t1 values ('2007-03-23 13:49:38','2007-03-23 13:49:38');
 insert into t1 values ('2007-03-23 13:49:38','2007-03-23 13:49:38');
@@ -268,10 +268,10 @@ f2	f3
 select f1,f2,f3 from t1,t2,t3 where (f1,'1') in ((f2,'1'),(f3,'1'));
 f1	f2	f3
 2001-01-01	2001-01-01 00:00:00	2001-01-01 00:00:00
-2001-01-01	2001-02-03 12:34:56	2001-01-01 00:00:00
-2001-01-01	2002-04-06 11:22:33	2001-01-01 00:00:00
 2001-01-01	2001-01-01 00:00:00	2001-02-03 12:34:56
 2001-01-01	2001-01-01 00:00:00	2002-04-06 11:22:33
+2001-01-01	2001-02-03 12:34:56	2001-01-01 00:00:00
+2001-01-01	2002-04-06 11:22:33	2001-01-01 00:00:00
 select f1 from t1 where ('1',f1) in (('1','01-01-01'),('1','2001-1-1 0:0:0'),('1','02-02-02'));
 f1
 2001-01-01
@@ -341,58 +341,58 @@ drop table t1;
 create table t1 (f1 date, f2 datetime, f3 varchar(20));
 create table t2 as select coalesce(f1,f1) as f4 from t1;
 desc t2;
-Field	Type	Null	Key	Default	Extra
-f4	date	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+f4	DATE	YES		YES	
 create table t3 as select coalesce(f1,f2) as f4 from t1;
 desc t3;
-Field	Type	Null	Key	Default	Extra
-f4	datetime	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+f4	DATETIME	YES		YES	
 create table t4 as select coalesce(f2,f2) as f4 from t1;
 desc t4;
-Field	Type	Null	Key	Default	Extra
-f4	datetime	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+f4	DATETIME	YES		YES	
 create table t5 as select coalesce(f1,f3) as f4 from t1;
 desc t5;
-Field	Type	Null	Key	Default	Extra
-f4	varbinary(80)	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+f4	VARBINARY	YES		YES	
 create table t6 as select coalesce(f2,f3) as f4 from t1;
 desc t6;
-Field	Type	Null	Key	Default	Extra
-f4	varbinary(80)	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+f4	VARBINARY	YES		YES	
 create table t7 as select coalesce(makedate(1997,1),f2) as f4 from t1;
 desc t7;
-Field	Type	Null	Key	Default	Extra
-f4	datetime	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+f4	DATETIME	YES		YES	
 create table t8 as select coalesce(cast('01-01-01' as datetime),f2) as f4
 from t1;
 desc t8;
-Field	Type	Null	Key	Default	Extra
-f4	datetime	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+f4	DATETIME	YES		YES	
 create table t9 as select case when 1 then cast('01-01-01' as date)
 when 0 then cast('01-01-01' as date) end as f4 from t1;
 desc t9;
-Field	Type	Null	Key	Default	Extra
-f4	date	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+f4	DATE	YES		YES	
 create table t10 as select case when 1 then cast('01-01-01' as datetime)
 when 0 then cast('01-01-01' as datetime) end as f4 from t1;
 desc t10;
-Field	Type	Null	Key	Default	Extra
-f4	datetime	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+f4	DATETIME	YES		YES	
 create table t11 as select if(1, cast('01-01-01' as datetime),
 cast('01-01-01' as date)) as f4 from t1;
 desc t11;
-Field	Type	Null	Key	Default	Extra
-f4	date	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+f4	DATE	YES		YES	
 create table t12 as select least(cast('01-01-01' as datetime),
 cast('01-01-01' as date)) as f4 from t1;
 desc t12;
-Field	Type	Null	Key	Default	Extra
-f4	date	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+f4	DATE	YES		YES	
 create table t13 as select ifnull(cast('01-01-01' as datetime),
 cast('01-01-01' as date)) as f4 from t1;
 desc t13;
-Field	Type	Null	Key	Default	Extra
-f4	date	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+f4	DATE	YES		YES	
 drop tables t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12,t13;
 ###################################################################
 create table t1 (a int);
@@ -405,19 +405,6 @@ create table t1 (id int not null, cur_date datetime not null);
 create table t2 (id int not null, cur_date date not null);
 insert into t1 (id, cur_date) values (1, '2007-04-25 18:30:22');
 insert into t2 (id, cur_date) values (1, '2007-04-25');
-set @@optimizer_switch=no_semijoin;
-explain extended
-select * from t1
-where id in (select id from t1 as x1 where (t1.cur_date is null));
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
-1	PRIMARY	t1	ALL	NULL	NULL	NULL	NULL	1	100.00	Using where
-2	DEPENDENT SUBQUERY	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Impossible WHERE
-Warnings:
-Note	1276	Field or reference 'test.t1.cur_date' of SELECT #2 was resolved in SELECT #1
-Note	1003	select `test`.`t1`.`id` AS `id`,`test`.`t1`.`cur_date` AS `cur_date` from `test`.`t1` where <in_optimizer>(`test`.`t1`.`id`,<exists>(select 1 AS `Not_used` from `test`.`t1` `x1` where 0))
-select * from t1
-where id in (select id from t1 as x1 where (t1.cur_date is null));
-id	cur_date
 explain extended
 select * from t2
 where id in (select id from t2 as x1 where (t2.cur_date is null));
@@ -462,9 +449,9 @@ create table t1 (da date default '1962-03-03 23:33:34', dt datetime default '196
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `da` date DEFAULT '1962-03-03',
-  `dt` datetime DEFAULT '1962-03-03 00:00:00'
-) ENGINE=DEFAULT
+  `da` DATE DEFAULT '1962-03-03',
+  `dt` DATETIME DEFAULT '1962-03-03 00:00:00'
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 insert into t1 values ();
 insert into t1 values ('2007-03-23 13:49:38','2007-03-23 13:49:38');
 insert into t1 values ('2007-03-23 13:49:38','2007-03-23 13:49:38');

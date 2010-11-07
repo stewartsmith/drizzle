@@ -21,12 +21,26 @@
 #ifndef DRIZZLED_CURRENT_SESSION_H
 #define DRIZZLED_CURRENT_SESSION_H
 
+#include <pthread.h>
+#include <boost/thread/tss.hpp>
+
+namespace drizzled
+{
+
 class Session;
 
-namespace drizzled { namespace memory { class Root; } }
+namespace memory { class Root; }
 
 Session *_current_session(void);
-#define current_session _current_session()
-drizzled::memory::Root *current_mem_root(void);
+#define current_session ::drizzled::_current_session()
+memory::Root *current_mem_root(void);
+
+typedef boost::thread_specific_ptr<Session> MySessionVar;
+typedef boost::thread_specific_ptr<memory::Root *> MyMemoryRootVar;
+
+MySessionVar &currentSession(void);
+MyMemoryRootVar &currentMemRoot(void);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_CURRENT_SESSION_H */

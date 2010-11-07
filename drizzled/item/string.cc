@@ -18,15 +18,18 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/session.h>
 #include <drizzled/error.h>
 #include <drizzled/item/string.h>
 
+namespace drizzled
+{
+
 Item *Item_string::safe_charset_converter(const CHARSET_INFO * const tocs)
 {
   Item_string *conv;
-  uint32_t conv_errors;
+  size_t conv_errors;
   char *ptr;
   String tmp, cstr, *ostr= val_str(&tmp);
   cstr.copy(ostr->ptr(), ostr->length(), ostr->charset(), tocs, &conv_errors);
@@ -54,7 +57,7 @@ Item *Item_string::safe_charset_converter(const CHARSET_INFO * const tocs)
 Item *Item_static_string_func::safe_charset_converter(const CHARSET_INFO * const tocs)
 {
   Item_string *conv;
-  uint32_t conv_errors;
+  size_t conv_errors;
   String tmp, cstr, *ostr= val_str(&tmp);
   cstr.copy(ostr->ptr(), ostr->length(), ostr->charset(), tocs, &conv_errors);
   if (conv_errors ||
@@ -172,4 +175,4 @@ int Item_string::save_in_field(Field *field, bool)
 }
 
 
-
+} /* namespace drizzled */

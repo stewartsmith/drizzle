@@ -23,6 +23,9 @@
 #include <drizzled/item/ident.h>
 #include <drizzled/item/field.h>
 
+namespace drizzled
+{
+
 class Item_default_value : public Item_field
 {
 public:
@@ -50,5 +53,7 @@ public:
 
   Item *transform(Item_transformer transformer, unsigned char *args);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_DEFAULT_VALUE_H */

@@ -22,6 +22,9 @@
 #include <drizzled/error.h>
 #include "drizzled/charset.h"
 
+namespace drizzled
+{
+
 static const char *binary_keyword= "BINARY";
 
 String *Item_func_set_collation::val_str(String *str)
@@ -93,5 +96,6 @@ void Item_func_set_collation::print(String *str, enum_query_type query_type)
   str->append(')');
 }
 
+} /* namespace drizzled */
 
 

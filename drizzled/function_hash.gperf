@@ -25,6 +25,8 @@
 #include <drizzled/sql_yacc.h>
 #include <drizzled/lex_symbol.h>
 
+using namespace drizzled;
+
 /*
   Symbols are broken into separated arrays to allow field names with
   same name as functions.

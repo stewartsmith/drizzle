@@ -22,6 +22,11 @@
 #define DRIZZLED_SELECT_SEND_H
 
 #include <drizzled/plugin/client.h>
+#include <drizzled/plugin/query_cache.h>
+#include <drizzled/plugin/transactional_storage_engine.h>
+
+namespace drizzled
+{
 
 class select_send :public select_result {
   /**
@@ -39,7 +44,7 @@ public:
       InnoDB adaptive hash S-latch to avoid thread deadlocks if it was reserved
       by session
     */
-    drizzled::plugin::StorageEngine::releaseTemporaryLatches(session);
+    plugin::TransactionalStorageEngine::releaseTemporaryLatches(session);
 
     /* Unlock tables before sending packet to gain some speed */
     if (session->lock)
@@ -92,7 +97,7 @@ public:
       InnoDB adaptive hash S-latch to avoid thread deadlocks if it was reserved
       by session
     */
-    drizzled::plugin::StorageEngine::releaseTemporaryLatches(session);
+    plugin::TransactionalStorageEngine::releaseTemporaryLatches(session);
 
     List_iterator_fast<Item> li(items);
     char buff[MAX_FIELD_WIDTH];
@@ -107,11 +112,17 @@ public:
         break;
       }
     }
+    /* Insert this record to the Resultset into the cache */
+    if (session->query_cache_key != "" && session->getResultsetMessage() != NULL)
+      plugin::QueryCache::insertRecord(session, items);
+
     session->sent_row_count++;
     if (session->is_error())
       return true;
     return session->client->flush();
   }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SELECT_SEND_H */

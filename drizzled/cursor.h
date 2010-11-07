@@ -22,7 +22,9 @@
 
 #include <drizzled/xid.h>
 #include <drizzled/discrete_interval.h>
-#include <drizzled/table_identifier.h>
+#include <drizzled/identifier.h>
+#include <drizzled/definitions.h>
+#include <drizzled/key_map.h>
 
 /* Definitions for parameters to do with Cursor-routines */
 
@@ -36,39 +38,26 @@
 
 #include <drizzled/message/table.pb.h>
 
-/* Bits to show what an alter table will do */
-#include <drizzled/sql_bitmap.h>
-
-#include <drizzled/cursor.h>
-
 #include <bitset>
 #include <algorithm>
 
-#define HA_MAX_ALTER_FLAGS 40
+namespace drizzled
+{
 
+#define HA_MAX_ALTER_FLAGS 40
 
 typedef std::bitset<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
 
 extern uint64_t refresh_version;  /* Increments on each reload */
 
-
-typedef bool (*qc_engine_callback)(Session *session, char *table_key,
-                                      uint32_t key_length,
-                                      uint64_t *engine_data);
-
-
-/* The Cursor for a table type.  Will be included in the Table structure */
-
 class Table;
 class TableList;
 class TableShare;
 class Select_Lex_Unit;
-struct st_foreign_key_info;
-typedef struct st_foreign_key_info FOREIGN_KEY_INFO;
-struct order_st;
+class ForeignKeyInfo;
+struct Order;
 
 class Item;
-struct st_table_log_memory_entry;
 
 class LEX;
 class Select_Lex;
@@ -77,22 +66,20 @@ class select_result;
 class CreateField;
 class sys_var_str;
 class Item_ident;
-typedef struct st_sort_field SORT_FIELD;
 
 typedef List<Item> List_item;
-
-typedef struct st_savepoint SAVEPOINT;
-extern uint32_t savepoint_alloc_size;
 extern KEY_CREATE_INFO default_key_create_info;
 
 /* Forward declaration for condition pushdown to storage engine */
 typedef class Item COND;
 
-typedef struct system_status_var SSV;
+typedef struct system_status_var system_status_var;
 
-class COST_VECT;
+namespace optimizer
+{
+  class CostVector;
+}
 
-uint32_t calculate_key_len(Table *, uint, const unsigned char *, key_part_map);
 /*
   bitmap with first N+1 bits set
   (keypart_map for a key prefix of [0..N] keyparts)
@@ -149,10 +136,6 @@ inline key_part_map make_prev_keypart_map(T a)
   present, its length is one byte <not-sure> which must be set to 0xFF
   at all times. </not-sure>
 
-  If the table has columns of type BIT, then certain bits from those columns
-  may be stored in null_bytes as well. Grep around for Field_bit for
-  details.
-
   For blob columns (see Field_blob), the record buffer stores length of the
   data, following by memory pointer to the blob data. The pointer is owned
   by the storage engine and is valid until the next operation.
@@ -160,28 +143,34 @@ inline key_part_map make_prev_keypart_map(T a)
   If a blob column has NULL value, then its length and blob data pointer
   must be set to 0.
 */
-
-class Cursor :public drizzled::memory::SqlAlloc
+class Cursor
 {
-protected:
-  TableShare *table_share;   /* The table definition */
-  Table *table;               /* The current open table */
+  Table &table;               /* The current open table */
+  plugin::StorageEngine &engine;      /* storage engine of this Cursor */
 
+protected:
   ha_rows estimation_rows_to_insert;
+
 public:
-  drizzled::plugin::StorageEngine *engine;      /* storage engine of this Cursor */
-  inline drizzled::plugin::StorageEngine *getEngine() const	/* table_type for handler */
+  inline plugin::StorageEngine *getEngine() const	/* table_type for handler */
   {
-    return engine;
+    return &engine;
   }
   unsigned char *ref;				/* Pointer to current row */
   unsigned char *dup_ref;			/* Pointer to duplicate row */
+
+  TableShare *getShare();
+
+  Table *getTable() const
+  {
+    return &table;
+  }
 
   ha_statistics stats;
   /** MultiRangeRead-related members: */
   range_seq_t mrr_iter;    /* Interator to traverse the range sequence */
   RANGE_SEQ_IF mrr_funcs;  /* Range sequence traversal functions */
-  HANDLER_BUFFER *multi_range_buffer; /* MRR buffer info */
+
   uint32_t ranges_in_seq; /* Total number of ranges in the traversed sequence */
   /* true <=> source MRR ranges and the output are ordered */
   bool mrr_is_output_sorted;
@@ -190,18 +179,13 @@ public:
   bool mrr_have_range;
 
   bool eq_range;
-  /*
-    true <=> the engine guarantees that returned records are within the range
-    being scanned.
-  */
-  bool in_range_check_pushed_down;
 
   /** Current range (the one we're now returning rows from) */
   KEY_MULTI_RANGE mrr_cur_range;
 
   /** The following are for read_range() */
   key_range save_end_range, *end_range;
-  KEY_PART_INFO *range_key_part;
+  KeyPartInfo *range_key_part;
   int key_compare_result_on_equal;
 
   uint32_t errkey;				/* Last dup key */
@@ -211,7 +195,6 @@ public:
   uint32_t ref_length;
   enum {NONE=0, INDEX, RND} inited;
   bool locked;
-  bool implicit_emptied;                /* Can be !=0 only if HEAP */
 
   /**
     next_insert_id is the next value which should be inserted into the
@@ -223,6 +206,11 @@ public:
     get_auto_increment().
   */
   uint64_t next_insert_id;
+  uint64_t getNextInsertId()
+  {
+    return next_insert_id;
+  }
+
   /**
     insert id for the current row (*autogenerated*; if not
     autogenerated, it's 0).
@@ -236,17 +224,17 @@ public:
   */
   Discrete_interval auto_inc_interval_for_cur_row;
 
-  Cursor(drizzled::plugin::StorageEngine &engine_arg, TableShare &share_arg);
+  Cursor(plugin::StorageEngine &engine_arg, Table &share_arg);
   virtual ~Cursor(void);
-  virtual Cursor *clone(drizzled::memory::Root *mem_root);
+  virtual Cursor *clone(memory::Root *mem_root);
 
   /* ha_ methods: pubilc wrappers for private virtual API */
 
-  int ha_open(Table *table, const char *name, int mode, int test_if_locked);
-  int ha_index_init(uint32_t idx, bool sorted);
-  int ha_index_end();
-  int ha_rnd_init(bool scan);
-  int ha_rnd_end();
+  int ha_open(const TableIdentifier &identifier, int mode, int test_if_locked);
+  int startIndexScan(uint32_t idx, bool sorted);
+  int endIndexScan();
+  int startTableScan(bool scan);
+  int endTableScan();
   int ha_reset();
 
   /* this is necessary in many places, e.g. in HANDLER command */
@@ -255,13 +243,13 @@ public:
   /**
     These functions represent the public interface to *users* of the
     Cursor class, hence they are *not* virtual. For the inheritance
-    interface, see the (private) functions write_row(), update_row(),
-    and delete_row() below.
+    interface, see the (private) functions doInsertRecord(), doUpdateRecord(),
+    and doDeleteRecord() below.
   */
   int ha_external_lock(Session *session, int lock_type);
-  int ha_write_row(unsigned char * buf);
-  int ha_update_row(const unsigned char * old_data, unsigned char * new_data);
-  int ha_delete_row(const unsigned char * buf);
+  int insertRecord(unsigned char * buf);
+  int updateRecord(const unsigned char * old_data, unsigned char * new_data);
+  int deleteRecord(const unsigned char * buf);
   void ha_release_auto_increment();
 
   /** to be actually called to get 'check()' functionality*/
@@ -280,7 +268,6 @@ public:
 
   void adjust_next_insert_id_after_explicit_value(uint64_t nr);
   int update_auto_increment();
-  virtual void change_table_ptr(Table *table_arg, TableShare *share);
 
   /* Estimates calculation */
   virtual double scan_time(void)
@@ -293,12 +280,11 @@ public:
   virtual ha_rows multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
                                               void *seq_init_param,
                                               uint32_t n_ranges, uint32_t *bufsz,
-                                              uint32_t *flags, COST_VECT *cost);
+                                              uint32_t *flags, optimizer::CostVector *cost);
   virtual int multi_range_read_info(uint32_t keyno, uint32_t n_ranges, uint32_t keys,
-                                    uint32_t *bufsz, uint32_t *flags, COST_VECT *cost);
+                                    uint32_t *bufsz, uint32_t *flags, optimizer::CostVector *cost);
   virtual int multi_range_read_init(RANGE_SEQ_IF *seq, void *seq_init_param,
-                                    uint32_t n_ranges, uint32_t mode,
-                                    HANDLER_BUFFER *buf);
+                                    uint32_t n_ranges, uint32_t mode);
   virtual int multi_range_read_next(char **range_info);
 
 
@@ -322,6 +308,8 @@ public:
     (table_flags() & (HA_HAS_RECORDS | HA_STATS_RECORDS_IS_EXACT)) != 0
   */
   virtual ha_rows records();
+  virtual uint64_t tableSize();
+  virtual uint64_t rowSize();
   /**
     Return upper bound of current number of records in the table
     (max. of how many records one will retrieve when doing a full table scan)
@@ -330,12 +318,6 @@ public:
   */
   virtual ha_rows estimate_rows_upper_bound()
   { return stats.records+EXTRA_RECORDS; }
-
-  /**
-    Get the row type from the storage engine.  If this method returns
-    ROW_TYPE_NOT_USED, the information in HA_CREATE_INFO should be used.
-  */
-  virtual enum row_type get_row_type() const { return ROW_TYPE_NOT_USED; }
 
   virtual const char *index_type(uint32_t)
   { assert(0); return "";}
@@ -350,11 +332,11 @@ public:
      row if available. If the key value is null, begin at the first key of the
      index.
   */
-  virtual int index_read_map(unsigned char * buf, const unsigned char * key,
+  virtual int index_read_map(unsigned char * buf, const unsigned char *key,
                              key_part_map keypart_map,
                              enum ha_rkey_function find_flag)
   {
-    uint32_t key_len= calculate_key_len(table, active_index, key, keypart_map);
+    uint32_t key_len= calculate_key_len(active_index, keypart_map);
     return  index_read(buf, key, key_len, find_flag);
   }
   /**
@@ -376,6 +358,11 @@ public:
   virtual int index_last(unsigned char *)
    { return  HA_ERR_WRONG_COMMAND; }
   virtual int index_next_same(unsigned char *, const unsigned char *, uint32_t);
+
+private:
+  uint32_t calculate_key_len(uint32_t key_position, key_part_map keypart_map_arg);
+public:
+
   /**
      @brief
      The following functions works like index_read, but it find the last
@@ -384,7 +371,7 @@ public:
   virtual int index_read_last_map(unsigned char * buf, const unsigned char * key,
                                   key_part_map keypart_map)
   {
-    uint32_t key_len= calculate_key_len(table, active_index, key, keypart_map);
+    uint32_t key_len= calculate_key_len(active_index, keypart_map);
     return index_read_last(buf, key, key_len);
   }
   virtual int read_range_first(const key_range *start_key,
@@ -392,23 +379,9 @@ public:
                                bool eq_range, bool sorted);
   virtual int read_range_next();
   int compare_key(key_range *range);
-  int compare_key2(key_range *range);
   virtual int rnd_next(unsigned char *)=0;
   virtual int rnd_pos(unsigned char *, unsigned char *)=0;
-  /**
-    One has to use this method when to find
-    random position by record as the plain
-    position() call doesn't work for some
-    handlers for random position.
-  */
-  virtual int rnd_pos_by_record(unsigned char *record);
   virtual int read_first_row(unsigned char *buf, uint32_t primary_key);
-  /**
-    The following function is only needed for tables that may be temporary
-    tables during joins.
-  */
-  virtual int restart_rnd_next(unsigned char *, unsigned char *)
-    { return HA_ERR_WRONG_COMMAND; }
   virtual int rnd_same(unsigned char *, uint32_t)
     { return HA_ERR_WRONG_COMMAND; }
   virtual ha_rows records_in_range(uint32_t, key_range *, key_range *)
@@ -443,12 +416,11 @@ public:
   */
   virtual void try_semi_consistent_read(bool) {}
   virtual void unlock_row(void) {}
-  virtual int start_stmt(Session *, thr_lock_type)
-  {return 0;}
   virtual void get_auto_increment(uint64_t offset, uint64_t increment,
                                   uint64_t nb_desired_values,
                                   uint64_t *first_value,
-                                  uint64_t *nb_reserved_values);
+                                  uint64_t *nb_reserved_values)= 0;
+
   void set_next_insert_id(uint64_t id)
   {
     next_insert_id= id;
@@ -469,8 +441,6 @@ public:
       insert_id_for_cur_row;
   }
 
-  virtual void update_create_info(HA_CREATE_INFO *) {}
-  int check_old_types(void);
   /* end of the list of admin commands */
 
   virtual int indexes_are_disabled(void) {return 0;}
@@ -493,20 +463,10 @@ public:
    */
   virtual bool can_switch_engines(void) { return true; }
   /** used in REPLACE; is > 0 if table is referred by a FOREIGN KEY */
-  virtual int get_foreign_key_list(Session *, List<FOREIGN_KEY_INFO> *)
+  virtual int get_foreign_key_list(Session *, List<ForeignKeyInfo> *)
   { return 0; }
   virtual uint32_t referenced_by_foreign_key() { return 0;}
   virtual void free_foreign_key_create_info(char *) {}
-  /** The following can be called without an open Cursor */
-
-  virtual int add_index(Table *, KEY *, uint32_t)
-  { return (HA_ERR_WRONG_COMMAND); }
-  virtual int prepare_drop_index(Table *, uint32_t *, uint32_t)
-  { return (HA_ERR_WRONG_COMMAND); }
-  virtual int final_drop_index(Table *)
-  { return (HA_ERR_WRONG_COMMAND); }
-
-  virtual uint32_t checksum(void) const { return 0; }
 
   /**
     Is not invoked for non-transactional temporary tables.
@@ -549,13 +509,12 @@ public:
 
 protected:
   /* Service methods for use by storage engines. */
-  void ha_statistic_increment(ulong SSV::*offset) const;
+  void ha_statistic_increment(uint64_t system_status_var::*offset) const;
   void **ha_data(Session *) const;
-  Session *ha_session(void) const;
 
 private:
   /* Private helpers */
-  inline void mark_trx_read_write();
+  inline void setTransactionReadWrite();
 private:
   /*
     Low-level primitives for storage engines.  These should be
@@ -563,30 +522,31 @@ private:
     the corresponding 'ha_*' method above.
   */
 
-  virtual int open(const char *name, int mode, uint32_t test_if_locked)=0;
-  virtual int index_init(uint32_t idx, bool)
+  virtual int open(const char *, int , uint32_t ) { assert(0); return -1; }
+  virtual int doOpen(const TableIdentifier &identifier, int mode, uint32_t test_if_locked);
+  virtual int doStartIndexScan(uint32_t idx, bool)
   { active_index= idx; return 0; }
-  virtual int index_end() { active_index= MAX_KEY; return 0; }
+  virtual int doEndIndexScan() { active_index= MAX_KEY; return 0; }
   /**
-    rnd_init() can be called two times without rnd_end() in between
+    doStartTableScan() can be called two times without doEndTableScan() in between
     (it only makes sense if scan=1).
     then the second call should prepare for the new table scan (e.g
     if rnd_init allocates the cursor, second call should position it
     to the start of the table, no need to deallocate and allocate it again
   */
-  virtual int rnd_init(bool scan)= 0;
-  virtual int rnd_end() { return 0; }
-  virtual int write_row(unsigned char *)
+  virtual int doStartTableScan(bool scan)= 0;
+  virtual int doEndTableScan() { return 0; }
+  virtual int doInsertRecord(unsigned char *)
   {
     return HA_ERR_WRONG_COMMAND;
   }
 
-  virtual int update_row(const unsigned char *, unsigned char *)
+  virtual int doUpdateRecord(const unsigned char *, unsigned char *)
   {
     return HA_ERR_WRONG_COMMAND;
   }
 
-  virtual int delete_row(const unsigned char *)
+  virtual int doDeleteRecord(const unsigned char *)
   {
     return HA_ERR_WRONG_COMMAND;
   }
@@ -623,7 +583,7 @@ private:
   {
     return 0;
   }
-  virtual void release_auto_increment(void) { return; };
+  virtual void release_auto_increment(void) { return; }
   /** admin commands - called from mysql_admin_table */
   virtual int check(Session *)
   { return HA_ADMIN_NOT_IMPLEMENTED; }
@@ -675,56 +635,17 @@ private:
 };
 
 extern const char *ha_row_type[];
-extern const char *binlog_format_names[];
-extern uint32_t total_ha, total_ha_2pc;
-
-       /* Wrapper functions */
-#define ha_commit(session) (ha_commit_trans((session), true))
-#define ha_rollback(session) (ha_rollback_trans((session), true))
 
 /* basic stuff */
-int ha_init_errors(void);
-int ha_init(void);
-int ha_end(void);
+void ha_init_errors(void);
 
-/* transactions: interface to plugin::StorageEngine functions */
-int ha_commit_one_phase(Session *session, bool all);
-int ha_rollback_trans(Session *session, bool all);
-
-/* transactions: these functions never call plugin::StorageEngine functions directly */
-int ha_commit_trans(Session *session, bool all);
-int ha_autocommit_or_rollback(Session *session, int error);
-int ha_enable_transaction(Session *session, bool on);
-
-/* savepoints */
-int ha_rollback_to_savepoint(Session *session, SAVEPOINT *sv);
-int ha_savepoint(Session *session, SAVEPOINT *sv);
-int ha_release_savepoint(Session *session, SAVEPOINT *sv);
-
-/* these are called by storage engines */
-void trans_register_ha(Session *session, bool all, drizzled::plugin::StorageEngine *engine);
-
-uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length);
-bool tablename_to_filename(const char *from, char *to, size_t to_length);
-
-
-/*
-  Storage engine has to assume the transaction will end up with 2pc if
-   - there is more than one 2pc-capable storage engine available
-   - in the current transaction 2pc was not disabled yet
-*/
-#define trans_need_2pc(session, all)                   ((total_ha_2pc > 1) && \
-        !((all ? &session->transaction.all : &session->transaction.stmt)->no_2pc))
-
-
-bool mysql_xa_recover(Session *session);
-
-SORT_FIELD * make_unireg_sortorder(order_st *order, uint32_t *length,
-                                   SORT_FIELD *sortorder);
+class SortField;
+SortField *make_unireg_sortorder(Order *order, uint32_t *length,
+                                 SortField *sortorder);
 int setup_order(Session *session, Item **ref_pointer_array, TableList *tables,
-                List<Item> &fields, List <Item> &all_fields, order_st *order);
+                List<Item> &fields, List <Item> &all_fields, Order *order);
 int setup_group(Session *session, Item **ref_pointer_array, TableList *tables,
-                List<Item> &fields, List<Item> &all_fields, order_st *order,
+                List<Item> &fields, List<Item> &all_fields, Order *order,
                 bool *hidden_group_fields);
 bool fix_inner_refs(Session *session, List<Item> &all_fields, Select_Lex *select,
                     Item **ref_pointer_array);
@@ -743,37 +664,38 @@ int prepare_create_field(CreateField *sql_field,
                          int *timestamps, int *timestamps_with_niladic);
 
 bool mysql_create_table(Session *session,
-                        drizzled::TableIdentifier &identifier,
+                        TableIdentifier &identifier,
                         HA_CREATE_INFO *create_info,
-                        drizzled::message::Table *table_proto,
+                        message::Table &table_proto,
                         AlterInfo *alter_info,
                         bool tmp_table, uint32_t select_field_count,
                         bool is_if_not_exists);
 
 bool mysql_create_table_no_lock(Session *session,
-                                drizzled::TableIdentifier &identifier,
+                                TableIdentifier &identifier,
                                 HA_CREATE_INFO *create_info,
-                                drizzled::message::Table *table_proto,
+                                message::Table &table_proto,
                                 AlterInfo *alter_info,
-                                bool tmp_table,
-                                uint32_t select_field_count,
+                                bool tmp_table, uint32_t select_field_count,
                                 bool is_if_not_exists);
 
-bool mysql_create_like_table(Session* session, TableList* table, TableList* src_table,
-                             drizzled::message::Table& create_table_proto,
-                             drizzled::plugin::StorageEngine*,
+bool mysql_create_like_table(Session* session,
+                             TableIdentifier &destination_identifier,
+                             TableList* table, TableList* src_table,
+                             message::Table &create_table_proto,
                              bool is_if_not_exists,
                              bool is_engine_set);
 
-bool mysql_rename_table(drizzled::plugin::StorageEngine *base, const char *old_db,
-                        const char * old_name, const char *new_db,
-                        const char * new_name, uint32_t flags);
+bool mysql_rename_table(Session &session,
+                        plugin::StorageEngine *base,
+                        TableIdentifier &old_identifier,
+                        TableIdentifier &new_identifier);
 
 bool mysql_prepare_update(Session *session, TableList *table_list,
-                          Item **conds, uint32_t order_num, order_st *order);
+                          Item **conds, uint32_t order_num, Order *order);
 int mysql_update(Session *session,TableList *tables,List<Item> &fields,
                  List<Item> &values,COND *conds,
-                 uint32_t order_num, order_st *order, ha_rows limit,
+                 uint32_t order_num, Order *order, ha_rows limit,
                  enum enum_duplicates handle_duplicates, bool ignore);
 bool mysql_prepare_insert(Session *session, TableList *table_list, Table *table,
                           List<Item> &fields, List_item *values,
@@ -796,19 +718,12 @@ TableShare *get_table_share(Session *session, TableList *table_list, char *key,
                              uint32_t key_length, uint32_t db_flags, int *error);
 TableShare *get_cached_table_share(const char *db, const char *table_name);
 bool reopen_name_locked_table(Session* session, TableList* table_list, bool link_in);
-Table *table_cache_insert_placeholder(Session *session, const char *key,
-                                      uint32_t key_length);
-bool lock_table_name_if_not_cached(Session *session, const char *db,
-                                   const char *table_name, Table **table);
-bool reopen_table(Table *table);
 bool reopen_tables(Session *session,bool get_locks,bool in_refresh);
-void close_data_files_and_morph_locks(Session *session, const char *db,
-                                      const char *table_name);
 void close_handle_and_leave_table_as_lock(Table *table);
 bool wait_for_tables(Session *session);
 bool table_is_used(Table *table, bool wait_for_name_lock);
-Table *drop_locked_tables(Session *session,const char *db, const char *table_name);
-void abort_locked_tables(Session *session,const char *db, const char *table_name);
+Table *drop_locked_tables(Session *session, const drizzled::TableIdentifier &identifier);
+void abort_locked_tables(Session *session, const drizzled::TableIdentifier &identifier);
 extern Field *not_found_field;
 extern Field *view_ref_found;
 
@@ -828,8 +743,7 @@ find_field_in_table_ref(Session *session, TableList *table_list,
 Field *
 find_field_in_table(Session *session, Table *table, const char *name, uint32_t length,
                     bool allow_rowid, uint32_t *cached_field_index_ptr);
-Field *
-find_field_in_table_sef(Table *table, const char *name);
 
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_CURSOR_H */

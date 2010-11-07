@@ -18,11 +18,14 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include "drizzled/temporal.h"
 #include "drizzled/error.h"
 #include "drizzled/session.h"
 #include "drizzled/function/time/month.h"
+
+namespace drizzled
+{
 
 int64_t Item_func_month::val_int()
 {
@@ -36,7 +39,7 @@ int64_t Item_func_month::val_int()
   }
 
   /* Grab the first argument as a DateTime object */
-  drizzled::DateTime temporal;
+  DateTime temporal;
   Item_result arg0_result_type= args[0]->result_type();
   
   switch (arg0_result_type)
@@ -55,13 +58,19 @@ int64_t Item_func_month::val_int()
         char buff[DRIZZLE_MAX_LENGTH_DATETIME_AS_STRING];
         String tmp(buff,sizeof(buff), &my_charset_utf8_bin);
         String *res= args[0]->val_str(&tmp);
-        if (! temporal.from_string(res->c_ptr(), res->length()))
+
+        if (res && (res != &tmp))
+        {
+          tmp.copy(*res);
+        }
+
+        if (! temporal.from_string(tmp.c_ptr(), tmp.length()))
         {
           /* 
           * Could not interpret the function argument as a temporal value, 
           * so throw an error and return 0
           */
-          my_error(ER_INVALID_DATETIME_VALUE, MYF(0), res->c_ptr());
+          my_error(ER_INVALID_DATETIME_VALUE, MYF(0), tmp.c_ptr());
           return 0;
         }
       }
@@ -83,7 +92,12 @@ int64_t Item_func_month::val_int()
 
         res= args[0]->val_str(&tmp);
 
-        my_error(ER_INVALID_DATETIME_VALUE, MYF(0), res->c_ptr());
+        if (res && (res != &tmp))
+        {
+          tmp.copy(*res);
+        }
+
+        my_error(ER_INVALID_DATETIME_VALUE, MYF(0), tmp.c_ptr());
         return 0;
       }
   }
@@ -114,3 +128,5 @@ String* Item_func_monthname::val_str(String* str)
   str->set(month_name, strlen(month_name), system_charset_info);
   return str;
 }
+
+} /* namespace drizzled */

@@ -22,13 +22,14 @@
 
 #include <drizzled/my_hash.h>
 #include <drizzled/xid.h>
-#include "drizzled/internal/my_pthread.h"
 #include "drizzled/charset.h"
 #include "drizzled/global_charset_info.h"
 #include "drizzled/charset_info.h"
 
-XID::XID()
-{}
+#include <boost/thread/mutex.hpp>
+
+namespace drizzled
+{
 
 bool XID::eq(XID *xid)
 {
@@ -115,11 +116,11 @@ uint32_t XID::key_length()
 /***************************************************************************
   Handling of XA id cacheing
 ***************************************************************************/
-pthread_mutex_t LOCK_xid_cache;
+boost::mutex LOCK_xid_cache;
 HASH xid_cache;
 
-extern "C" unsigned char *xid_get_hash_key(const unsigned char *, size_t *, bool);
-extern "C" void xid_free_hash(void *);
+unsigned char *xid_get_hash_key(const unsigned char *, size_t *, bool);
+void xid_free_hash(void *);
 
 unsigned char *xid_get_hash_key(const unsigned char *ptr, size_t *length,
                         bool )
@@ -137,7 +138,6 @@ void xid_free_hash(void *ptr)
 
 bool xid_cache_init()
 {
-  pthread_mutex_init(&LOCK_xid_cache, MY_MUTEX_INIT_FAST);
   return hash_init(&xid_cache, &my_charset_bin, 100, 0, 0,
                    xid_get_hash_key, xid_free_hash, 0) != 0;
 }
@@ -147,15 +147,14 @@ void xid_cache_free()
   if (hash_inited(&xid_cache))
   {
     hash_free(&xid_cache);
-    pthread_mutex_destroy(&LOCK_xid_cache);
   }
 }
 
 XID_STATE *xid_cache_search(XID *xid)
 {
-  pthread_mutex_lock(&LOCK_xid_cache);
+  LOCK_xid_cache.lock();
   XID_STATE *res=(XID_STATE *)hash_search(&xid_cache, xid->key(), xid->key_length());
-  pthread_mutex_unlock(&LOCK_xid_cache);
+  LOCK_xid_cache.unlock();
   return res;
 }
 
@@ -163,11 +162,15 @@ bool xid_cache_insert(XID *xid, enum xa_states xa_state)
 {
   XID_STATE *xs;
   bool res;
-  pthread_mutex_lock(&LOCK_xid_cache);
+  LOCK_xid_cache.lock();
   if (hash_search(&xid_cache, xid->key(), xid->key_length()))
+  {
     res= false;
+  }
   else if ((xs = new XID_STATE) == NULL)
+  {
     res= true;
+  }
   else
   {
     xs->xa_state=xa_state;
@@ -175,21 +178,23 @@ bool xid_cache_insert(XID *xid, enum xa_states xa_state)
     xs->in_session=0;
     res= my_hash_insert(&xid_cache, (unsigned char*)xs);
   }
-  pthread_mutex_unlock(&LOCK_xid_cache);
+  LOCK_xid_cache.unlock();
   return res;
 }
 
 bool xid_cache_insert(XID_STATE *xid_state)
 {
-  pthread_mutex_lock(&LOCK_xid_cache);
+  LOCK_xid_cache.lock();
   bool res=my_hash_insert(&xid_cache, (unsigned char*)xid_state);
-  pthread_mutex_unlock(&LOCK_xid_cache);
+  LOCK_xid_cache.unlock();
   return res;
 }
 
 void xid_cache_delete(XID_STATE *xid_state)
 {
-  pthread_mutex_lock(&LOCK_xid_cache);
+  LOCK_xid_cache.lock();
   hash_delete(&xid_cache, (unsigned char *)xid_state);
-  pthread_mutex_unlock(&LOCK_xid_cache);
+  LOCK_xid_cache.unlock();
 }
+
+} /* namespace drizzled */

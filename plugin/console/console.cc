@@ -17,26 +17,41 @@
 #include <drizzled/gettext.h>
 #include <drizzled/plugin/listen_tcp.h>
 #include <drizzled/plugin/client.h>
+#include <drizzled/session.h>
+#include <drizzled/module/option_map.h>
 
 #include <iostream>
+
+#include <boost/program_options.hpp>
 
 using namespace std;
 using namespace drizzled;
 
+namespace po= boost::program_options;
+
 static bool enabled= false;
 static bool debug_enabled= false;
+
 
 class ClientConsole: public plugin::Client
 {
   bool is_dead;
   uint32_t column;
   uint32_t max_column;
+  const std::string &username;
+  const std::string &password;
+  const std::string &db;
 
 public:
-  ClientConsole():
+  ClientConsole(const std::string &username_arg,
+                const std::string &password_arg,
+                const std::string &db_arg) :
     is_dead(false),
     column(0),
-    max_column(0)
+    max_column(0),
+    username(username_arg),
+    password(password_arg),
+    db(db_arg)
   {}
 
   virtual void printDebug(const char *message)
@@ -84,7 +99,8 @@ public:
   virtual bool authenticate(void)
   {
     printDebug("authenticate");
-    return true;
+    session->getSecurityContext().setUser(username);
+    return session->checkUser(password, db);
   }
 
   virtual bool readCommand(char **packet, uint32_t *packet_length)
@@ -258,10 +274,19 @@ public:
 class ListenConsole: public plugin::Listen
 {
   int pipe_fds[2];
+  const std::string username;
+  const std::string password;
+  const std::string db;
 
 public:
-  ListenConsole(std::string name_arg)
-    : plugin::Listen(name_arg)
+  ListenConsole(const std::string &name_arg,
+                const std::string &username_arg,
+                const std::string &password_arg,
+                const std::string &db_arg) :
+    plugin::Listen(name_arg),
+    username(username_arg),
+    password(password_arg),
+    db(db_arg)
   {
     pipe_fds[0]= -1;
   }
@@ -280,7 +305,7 @@ public:
     if (debug_enabled)
       enabled= true;
 
-    if (enabled == false)
+    if (not enabled)
       return false;
 
     if (pipe(pipe_fds) == -1)
@@ -298,37 +323,43 @@ public:
   {
     char buffer[1];
     assert(read(fd, buffer, 1) == 1);
-    return new ClientConsole;
+    return new ClientConsole(username, password, db);
   }
 };
 
-static ListenConsole *listen_obj= NULL;
-
-static int init(drizzled::plugin::Registry &registry)
+static int init(drizzled::module::Context &context)
 {
-  listen_obj= new ListenConsole("console");
-  registry.add(listen_obj);
+  const module::option_map &vm= context.getOptions();
+  const string username(vm.count("username") ? vm["username"].as<string>() : "");
+  const string password(vm.count("password") ? vm["password"].as<string>() : "");
+  const string db(vm.count("db") ? vm["db"].as<string>() : "");
+  context.registerVariable(new sys_var_bool_ptr("enable", &enabled));
+  context.registerVariable(new sys_var_bool_ptr("debug_enable", &debug_enabled));
+  context.registerVariable(new sys_var_const_string_val("username", username));
+  context.registerVariable(new sys_var_const_string_val("password", password));
+  context.registerVariable(new sys_var_const_string_val("db", db));
+  context.add(new ListenConsole("console", username, password, db));
   return 0;
 }
 
-static int deinit(drizzled::plugin::Registry &registry)
+static void init_options(drizzled::module::option_context &context)
 {
-  registry.remove(listen_obj);
-  delete listen_obj;
-  return 0;
+  context("enable",
+          po::value<bool>(&enabled)->default_value(false)->zero_tokens(),
+          N_("Enable the console."));
+  context("debug",
+          po::value<bool>(&debug_enabled)->default_value(false)->zero_tokens(),
+          N_("Turn on extra debugging."));
+  context("username",
+          po::value<string>(),
+          N_("User to use for auth."));
+  context("password",
+          po::value<string>(),
+          N_("Password to use for auth."));
+  context("db",
+          po::value<string>(),
+          N_("Default database to use."));
 }
-
-static DRIZZLE_SYSVAR_BOOL(enable, enabled, PLUGIN_VAR_NOCMDARG,
-                           N_("Enable the console."), NULL, NULL, false);
-
-static DRIZZLE_SYSVAR_BOOL(debug, debug_enabled, PLUGIN_VAR_NOCMDARG,
-                           N_("Turn on extra debugging."), NULL, NULL, false);
-
-static drizzle_sys_var* vars[]= {
-  DRIZZLE_SYSVAR(enable),
-  DRIZZLE_SYSVAR(debug),
-  NULL
-};
 
 DRIZZLE_DECLARE_PLUGIN
 {
@@ -339,9 +370,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Console Client",
   PLUGIN_LICENSE_BSD,
   init,   /* Plugin Init */
-  deinit, /* Plugin Deinit */
-  NULL,   /* status variables */
-  vars,   /* system variables */
-  NULL    /* config options */
+  NULL,   /* system variables */
+  init_options    /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

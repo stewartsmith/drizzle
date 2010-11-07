@@ -1,4 +1,6 @@
+# vim:ft=automake
 # Copyright (C) 2000-2006 MySQL AB
+# Copyright (c) 2010 Monty Taylor
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
@@ -12,8 +14,8 @@
 #
 # You should have received a copy of the GNU Library General Public
 # License along with this library; if not, write to the Free
-# Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
-# MA 02111-1307, USA
+# Software Foundation, Inc., 51 Franklin Place - Suite 330, Boston,
+# MA 02110-1301, USA
 
 benchdir_root=		$(prefix)
 testdir =	        $(benchdir_root)/mysql-test
@@ -21,25 +23,23 @@ EXTRA_SCRIPTS = 	tests/valgrind.supp $(PRESCRIPTS)
 GENSCRIPTS =		tests/dtr tests/mtr tests/test-run
 PRESCRIPTS =		tests/test-run.pl tests/stress-test.pl
 PLUGIN_TESTS =		$(pandora_plugin_test_list)
-ALL_TESTS =		main,big,$(PLUGIN_TESTS)
+NORMAL_TESTS =		main,jp,tamil,regression,$(PLUGIN_TESTS)
+ALL_TESTS =		main,big,jp,tamil,regression,$(PLUGIN_TESTS)
 noinst_SCRIPTS =	$(GENSCRIPTS) $(PRESCRIPTS)
 CLEANFILES += 		$(GENSCRIPTS) tests/mtr
-noinst_PROGRAMS += 	tests/resolve_stack_dump
-tests_resolve_stack_dump_SOURCES = tests/resolve_stack_dump.cc
-tests_resolve_stack_dump_LDADD = ${TEST_LDADD}
-
-TEST_LDADD=		drizzled/internal/libinternal.la \
-			$(LIBINTL)
 
 TEST_RUN= $(PERL) -I../$(top_srcdir)/tests/lib \
 		../${top_srcdir}/tests/test-run.pl \
+		--top-srcdir=../${top_srcdir} \
+		--top-builddir=../${top_builddir} \
 		--vardir=../${top_builddir}/tests/var \
 		--suitepath=../${top_srcdir}/plugin \
 		--testdir=../${top_srcdir}/tests \
-		--mtr-build-thread=$$$$
+		--dtr-build-thread=$$$$
 
 EXTRA_DIST += \
 	$(EXTRA_SCRIPTS) \
+	${srcdir}/tests/README.stress \
 	${srcdir}/tests/suite \
 	${srcdir}/tests/t \
 	${srcdir}/tests/include/*.inc \
@@ -47,11 +47,13 @@ EXTRA_DIST += \
 	${srcdir}/tests/include/*.test \
 	${srcdir}/tests/r/*.result \
 	${srcdir}/tests/r/*.require \
+	${srcdir}/tests/r/pbxt/*result \
 	${srcdir}/tests/std_data \
 	${srcdir}/tests/lib/*.pl \
-	${srcdir}/tests/lib/My/*.pm
+	${srcdir}/tests/lib/My/*.pm \
+	tests/strip-valgrind
 
-check: test-drizzle
+check-local: test-drizzle
 
 # dtr - a shortcut for executing test-run.pl
 tests/dtr:
@@ -85,7 +87,7 @@ tests/test-run: tests/var
 # will then calculate the various port numbers it needs from this,
 # making sure each user use different ports.
 
-test: test-drizzle
+test: check
 
 # Please keep the list of tests in alphabetical order for ease of
 # maintenance and verification
@@ -94,22 +96,25 @@ test-all:
 	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(ALL_TESTS))
 
 test-drizzle:
-	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=main,$(PLUGIN_TESTS))
+	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS))
 
 test-valgrind:
-	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --valgrind --force --suite=main,$(PLUGIN_TESTS))
+	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --valgrind --force --suite=$(NORMAL_TESTS) && python strip-valgrind)
 
 test-valgrind-suppressions:
-	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --valgrind --valgrind-option='--gen-suppressions=all' --valgrind-option='--show-reachable=yes' --force --suite=main,$(PLUGIN_TESTS))
+	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --valgrind --valgrind-option='--gen-suppressions=all' --valgrind-option='--show-reachable=yes' --force --suite=$(NORMAL_TESTS) && python strip-valgrind)
 
 test-junitxml:
-	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=main,$(PLUGIN_TESTS) --subunit | subunit2junitxml --no-passthrough > junit-format.xml )
+	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS) --subunit | subunit2junitxml --no-passthrough > junit-format.xml )
 
 test-big:
 	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=big )
 
 test-big-junitxml:
 	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=big --subunit | subunit2junitxml --no-passthrough > junit-format-big.xml )
+
+test-jp:
+	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=jp )
 
 test-plugins:
 	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(PLUGIN_TESTS) )

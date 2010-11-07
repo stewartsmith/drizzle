@@ -1,0 +1,34 @@
+# Drizzle's data dictionary.
+
+use data_dictionary;
+
+show create table CHARACTER_SETS ;
+show create table COLLATIONS ;
+
+SELECT * FROM character_sets ORDER BY CHARACTER_SET_NAME;
+SELECT * FROM collations ORDER BY COLLATION_NAME;
+
+#
+# do a query on the CHARACTER_SET table in I_S 
+#
+SELECT *
+FROM data_dictionary.character_sets
+ORDER BY character_set_name;
+
+#
+# perform a query on the COLLATIONS table
+#
+SELECT *
+FROM data_dictionary.collations
+ORDER BY collation_name;
+
+
+# Test for data_dictionary.CHARACTER_SETS &
+select * from data_dictionary.CHARACTER_SETS
+where CHARACTER_SET_NAME like 'latin1%';
+
+# Test for data_dictionary.COLLATIONS &
+
+--replace_column 5 #
+select * from data_dictionary.COLLATIONS
+where COLLATION_NAME like 'latin1%';

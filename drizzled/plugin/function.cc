@@ -20,24 +20,29 @@
 
 /* This implements 'user defined functions' */
 #include "config.h"
+
+#include <boost/unordered_map.hpp>
+
 #include <drizzled/gettext.h>
-#include "drizzled/hash.h"
 #include "drizzled/plugin/function.h"
+
+#include "drizzled/util/string.h"
 
 using namespace std;
 
 namespace drizzled
 {
 
-typedef hash_map<string, const plugin::Function *> UdfMap;
-static UdfMap udf_registry;
+static plugin::Function::UdfMap udf_registry;
+
+const plugin::Function::UdfMap &plugin::Function::getMap()
+{
+  return udf_registry;
+}
 
 bool plugin::Function::addPlugin(const plugin::Function *udf)
 {
-  string lower_name(udf->getName());
-  transform(lower_name.begin(), lower_name.end(),
-            lower_name.begin(), ::tolower);
-  if (udf_registry.find(lower_name) != udf_registry.end())
+  if (udf_registry.find(udf->getName()) != udf_registry.end())
   {
     errmsg_printf(ERRMSG_LVL_ERROR,
                   _("A function named %s already exists!\n"),
@@ -45,7 +50,7 @@ bool plugin::Function::addPlugin(const plugin::Function *udf)
     return true;
   }
   pair<UdfMap::iterator, bool> ret=
-    udf_registry.insert(make_pair(lower_name, udf));
+    udf_registry.insert(make_pair(udf->getName(), udf));
   if (ret.second == false)
   {
     errmsg_printf(ERRMSG_LVL_ERROR,
@@ -58,18 +63,12 @@ bool plugin::Function::addPlugin(const plugin::Function *udf)
 
 void plugin::Function::removePlugin(const plugin::Function *udf)
 {
-  string lower_name(udf->getName());
-  transform(lower_name.begin(), lower_name.end(),
-            lower_name.begin(), ::tolower);
-  udf_registry.erase(lower_name);
+  udf_registry.erase(udf->getName());
 }
 
 const plugin::Function *plugin::Function::get(const char *name, size_t length)
 {
-  string lower_name(name, length);
-  transform(lower_name.begin(), lower_name.end(),
-            lower_name.begin(), ::tolower);
-  UdfMap::iterator iter= udf_registry.find(lower_name);
+  UdfMap::iterator iter= udf_registry.find(std::string(name, length));
   if (iter == udf_registry.end())
   {
     return NULL;

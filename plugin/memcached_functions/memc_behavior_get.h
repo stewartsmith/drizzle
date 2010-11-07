@@ -43,14 +43,14 @@
  * @file
  *   The memc_behavior_get UDF
  */
-class MemcachedBehaviorGet : public Item_str_func
+class MemcachedBehaviorGet : public drizzled::Item_str_func
 {
 public:
   MemcachedBehaviorGet()
     : 
       Item_str_func(),
-      failure_buff("FAILURE", &my_charset_bin),
-      return_buff("", &my_charset_bin),
+      failure_buff("FAILURE", &drizzled::my_charset_bin),
+      return_buff("", &drizzled::my_charset_bin),
       behavior_map(),
       behavior_reverse_map(),
       dist_settings_reverse_map(),
@@ -230,7 +230,7 @@ public:
     return "memc_behavior_set";
   }
 
-  String *val_str(String *);
+  drizzled::String *val_str(drizzled::String *);
 
   void fix_length_and_dec()
   {
@@ -240,8 +240,8 @@ public:
 private:
   void setFailureString(const char *error);
 
-  String failure_buff;
-  String return_buff;
+  drizzled::String failure_buff;
+  drizzled::String return_buff;
 
   /*
    * std::map for behavioral get/set UDFs

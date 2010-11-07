@@ -1,0 +1,137 @@
+###############################################################################
+# drizzledump_restore.test
+#
+# Purpose:  Tests if drizzledump output can be used to successfully restore
+#           tables and data.  
+#           We CREATE a table, drizzledump it to a file, ALTER the original
+#           table's name, recreate the table from the drizzledump file, then
+#           utilize include/diff_tables to compare the original and recreated
+#           tables.
+#
+#           We use several examples from drizzledump.test here and include
+#           the relevant bug numbers and headers from that test.
+#
+# NOTE:     This test is not currently complete and offers only basic
+#           cases of drizzledump output being restored. 
+#           Also, does NOT work with -X (xml) output!
+#           
+# Author:   pcrews
+# Created:  2009-05-21
+# Last Change:
+# Change date:
+###############################################################################
+
+#--source include/have_log_bin.inc
+
+
+# Define drizzledumpfile here.  It is used to capture drizzledump output
+# in order to test the output's ability to restore an exact copy of the table
+let $drizzledumpfile = $DRIZZLETEST_VARDIR/tmp/drizzledumpfile.sql;
+
+--echo # Pre-test cleanup
+--disable_warnings
+DROP TABLE IF EXISTS t1;
+--enable_warnings
+
+--echo # Begin tests
+--echo #
+--echo # Bug#2005 Long decimal comparison bug.
+--echo #
+CREATE TABLE t1 (a DECIMAL(64, 20));
+INSERT INTO t1 VALUES ("1234567890123456789012345678901234567890"),
+("0987654321098765432109876543210987654321");
+--exec $DRIZZLE_DUMP --compact test t1 > $drizzledumpfile
+let $table_name = test.t1;
+--source include/drizzledump.inc
+
+--echo #
+--echo # Bug#3361 mysqldump quotes DECIMAL values inconsistently
+--echo #
+CREATE TABLE t1 (a DECIMAL(10,5), b FLOAT);
+# Check at first how mysql work with quoted decimal
+INSERT INTO t1 VALUES (1.2345, 2.3456);
+INSERT INTO t1 VALUES ('1.2345', 2.3456);
+INSERT INTO t1 VALUES ("1.2345", 2.3456);
+INSERT INTO t1 VALUES (1.2345, 2.3456);
+INSERT INTO t1 VALUES ('1.2345', 2.3456);
+INSERT INTO t1 VALUES ("1.2345", 2.3456);
+
+# check how drizzledump make quoting
+--exec $DRIZZLE_DUMP --compact test t1 > $drizzledumpfile
+let $table_name = test.t1;
+--source include/drizzledump.inc
+
+
+--echo #
+--echo # WL#2319 Exclude Tables from dump
+--echo #
+CREATE TABLE t1 (a INT);
+CREATE TABLE t2 (a INT);
+INSERT INTO t1 VALUES (1),(2),(3);
+INSERT INTO t2 VALUES (4),(5),(6);
+--exec $DRIZZLE_DUMP --skip-comments --ignore-table=test.t1 test > $drizzledumpfile
+let $table_name = test.t2;
+--source include/drizzledump.inc
+DROP TABLE t1;
+
+--echo #
+--echo # Bug#8830 mysqldump --skip-extended-insert causes --hex-blob to dump wrong values
+--echo #
+CREATE TABLE t1 (`b` blob);
+INSERT INTO `t1` VALUES (0x602010000280100005E71A);
+--exec $DRIZZLE_DUMP --skip-extended-insert test --skip-comments t1 > $drizzledumpfile
+let $table_name = test.t1;
+--source include/drizzledump.inc
+
+--echo #
+--echo # Bug#550091 in Drizzle: "drizzledump dumps data_dictionary"
+--echo #
+# We create a table in the test database
+# We create an additional database and create a table there
+# We dump all, then attempt to recreate and do some basic queries against
+# our previously created tables
+#
+# We don't explicitly check the dumpfile for data_dictionary or
+# information_schema output, but this test was failing on
+# the unpatched drizzledump during dumping of data_dictionary
+# information
+
+
+CREATE TABLE t1 (a char(100), b int);
+INSERT INTO t1 values ('a',100);
+INSERT INTO t1 values ('b',200);
+
+CREATE SCHEMA drizzledump_test;
+USE drizzledump_test;
+CREATE TABLE t1 (a int, b char(100));
+INSERT INTO t1 VALUES (1, 'abbazabba');
+
+# dump all databases here
+--exec $DRIZZLE_DUMP --skip-comments --compact -A > $drizzledumpfile
+
+--echo DROP original schemas
+DROP DATABASE test;
+DROP DATABASE drizzledump_test;
+
+--echo Ensure we don't have those tables (verify we restored something)
+--ERROR 1146
+SELECT * FROM test.t1;
+--ERROR 1146
+SELECT * FROM drizzledump_test.t1;
+
+--echo Restoring from dumpfile
+--exec $DRIZZLE < $drizzledumpfile
+
+USE test;
+SELECT * FROM t1;
+SELECT * FROM drizzledump_test.t1;
+--echo Cleanup
+DROP DATABASE drizzledump_test;
+DROP TABLE t1;
+
+--echo # End tests
+
+--echo # Cleanup
+--echo # remove drizzledumpfile
+--error 0,1
+--remove_file $drizzledumpfile

@@ -20,8 +20,10 @@
 #ifndef DRIZZLED_FUNCTION_STR_STRFUNC_H
 #define DRIZZLED_FUNCTION_STR_STRFUNC_H
 
-
 #include <drizzled/function/func.h>
+
+namespace drizzled
+{
 
 /* This file defines all string functions */
 
@@ -43,5 +45,7 @@ public:
   void left_right_max_length();
   bool fix_fields(Session *session, Item **ref);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_STR_STRFUNC_H */

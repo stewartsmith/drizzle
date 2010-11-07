@@ -24,19 +24,21 @@
 #include <string>
 #include <drizzled/message/table.pb.h>
 
+#include <boost/program_options.hpp>
+
 using namespace std;
 using namespace drizzled;
+
+namespace po=boost::program_options;
 
 /*
   Written from Google proto example
 */
 
-static void fill_engine(message::Table::StorageEngine *engine)
+static void fill_engine(message::Engine *engine)
 {
-  int16_t x;
-
   engine->set_name("InnoDB");
-  message::Table::StorageEngine::EngineOption *option;
+  message::Engine::Option *option;
 
   string option_names[2]= {
     "INDEX_DIRECTORY"
@@ -49,12 +51,11 @@ static void fill_engine(message::Table::StorageEngine *engine)
   };
 
   /* Add some engine options */
-  for (x= 0; x < 2; x++)
+  for (int16_t x= 0; x < 2; x++)
   {
-    option= engine->add_option();
-    option->set_option_name(option_names[x]);
-    option->set_option_value(option_values[x]);
-    option->set_option_type(message::Table::StorageEngine::EngineOption::STRING);
+    option= engine->add_options();
+    option->set_name(option_names[x]);
+    option->set_state(option_values[x]);
   }
 }
 
@@ -78,6 +79,13 @@ static void new_index_to_table(message::Table *table,
   index->set_is_primary(is_primary);
   index->set_is_unique(is_unique);
 
+  int key_length= 0;
+
+  for(int i=0; i< num_index_parts; i++)
+    key_length+= compare_lengths[i];
+
+  index->set_key_length(key_length);
+
   while (x < num_index_parts)
   {
     index_part= index->add_index_part();
@@ -99,7 +107,7 @@ static void fill_table(message::Table *table, const char *name)
   message::Table::Field::FieldConstraints *field_constraints;
   message::Table::Field::StringFieldOptions *string_field_options;
   message::Table::Field::NumericFieldOptions *numeric_field_options;
-  message::Table::Field::SetFieldOptions *set_field_options;
+  message::Table::Field::EnumerationValues *enumeration_options;
 
   table->set_name(name);
   table->set_type(message::Table::STANDARD);
@@ -112,7 +120,7 @@ static void fill_table(message::Table *table, const char *name)
     field_constraints= field->mutable_constraints();
     string_field_options= field->mutable_string_options();
 
-    sprintf(buffer, "sample%u", x);
+    snprintf(buffer, sizeof(buffer), "sample%u", x);
 
     field->set_name(buffer);
     field->set_type(message::Table::Field::VARCHAR);
@@ -139,11 +147,10 @@ static void fill_table(message::Table *table, const char *name)
     field->set_type(message::Table::Field::ENUM);
     field->set_name("colors");
 
-    set_field_options= field->mutable_set_options();
-    set_field_options->add_field_value("red");
-    set_field_options->add_field_value("blue");
-    set_field_options->add_field_value("green");
-    set_field_options->set_count_elements(set_field_options->field_value_size());
+    enumeration_options= field->mutable_enumeration_values();
+    enumeration_options->add_field_value("red");
+    enumeration_options->add_field_value("blue");
+    enumeration_options->add_field_value("green");
   }
   /* Write out a BLOB */
   {
@@ -185,26 +192,77 @@ static void fill_table(message::Table *table, const char *name)
   }
 
   /* Do engine-specific stuff */
-  message::Table::StorageEngine *engine= table->mutable_engine();
+  message::Engine *engine= table->mutable_engine();
   fill_engine(engine);
 
 }
 
+static void fill_table1(message::Table *table)
+{
+  message::Table::Field *field;
+  message::Table::TableOptions *tableopts;
+
+  table->set_name("t1");
+  table->set_type(message::Table::INTERNAL);
+
+  tableopts= table->mutable_options();
+  tableopts->set_comment("Table without a StorageEngine message");
+
+  {
+    field= table->add_field();
+    field->set_name("number");
+    field->set_type(message::Table::Field::INTEGER);
+  }
+
+}
+
+
 int main(int argc, char* argv[])
 {
+  int table_number= 0;
+
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-  if (argc != 2)
+  po::options_description desc("Allowed options");
+  desc.add_options()
+    ("help", "produce help message")
+    ("table-number,t", po::value<int>(&table_number)->default_value(0), "Table Number");
+
+  po::variables_map vm;
+  po::positional_options_description p;
+  p.add("table-name", 1);
+
+  // Disable allow_guessing
+  int style = po::command_line_style::default_style & ~po::command_line_style::allow_guessing;
+
+  po::store(po::command_line_parser(argc, argv).options(desc).style(style).
+            positional(p).run(), vm);
+
+  if (not vm.count("table-name"))
   {
-    cerr << "Usage:  " << argv[0] << " SCHEMA" << endl;
-    return -1;
+    fprintf(stderr, "Expected Table name argument\n\n");
+    cerr << desc << endl;
+    exit(EXIT_FAILURE);
   }
 
   message::Table table;
 
-  fill_table(&table, "example_table");
+  switch (table_number)
+  {
+  case 0:
+    fill_table(&table, "example_table");
+    break;
+  case 1:
+    fill_table1(&table);
+    break;
+  default:
+    fprintf(stderr, "Invalid table number.\n\n");
+    cerr << desc << endl;
+    exit(EXIT_FAILURE);
+  }
 
-  fstream output(argv[1], ios::out | ios::trunc | ios::binary);
+  fstream output(vm["table-name"].as<string>().c_str(),
+                 ios::out | ios::trunc | ios::binary);
   if (!table.SerializeToOstream(&output))
   {
     cerr << "Failed to write schema." << endl;

@@ -28,10 +28,10 @@
 #include <vector>
 #include <functional>
 
-class Item_func;
-
 namespace drizzled
 {
+
+class Item_func;
 
 namespace memory
 {
@@ -46,7 +46,7 @@ namespace plugin
  */
 class Function
   : public Plugin,
-    public std::unary_function<drizzled::memory::Root*, Item_func *>
+    public std::unary_function<memory::Root*, Item_func *>
 {
   Function();
   Function(const Function &);
@@ -54,7 +54,7 @@ class Function
 public:
   Function(std::string in_name)
    : Plugin(in_name, "Function"),
-     std::unary_function<drizzled::memory::Root*, Item_func *>()
+     std::unary_function<memory::Root*, Item_func *>()
   { }
   virtual result_type operator()(argument_type root) const= 0;
   virtual ~Function() {}
@@ -75,6 +75,9 @@ public:
    */
   static const plugin::Function *get(const char *name, size_t len=0);
 
+  typedef boost::unordered_map<std::string, const plugin::Function *, util::insensitive_hash, util::insensitive_equal_to> UdfMap;
+
+  static const UdfMap &getMap();
 };
 
 template<class T>

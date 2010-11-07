@@ -25,7 +25,7 @@ send DROP DATABASE mysqltest_1;
 # When fixed: Reject dropping db because of the read lock.
 connection con1;
 let $wait_condition=
-  select count(*) = 1 from information_schema.processlist
+  select count(*) = 1 from data_dictionary.processlist
   where state = "Waiting for release of readlock"
   and info = "DROP DATABASE mysqltest_1";
 --source include/wait_condition.inc

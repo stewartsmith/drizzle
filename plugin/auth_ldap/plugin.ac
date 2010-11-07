@@ -1,0 +1,5 @@
+PANDORA_HAVE_LIBLDAP
+AS_IF([test "x$ac_cv_libldap" = "xno"],
+      AC_MSG_WARN([libldap not found: not building auth_ldap plugin.]))
+
+PANDORA_ADD_PLUGIN_DEP_LIB([${LTLIBLDAP}])

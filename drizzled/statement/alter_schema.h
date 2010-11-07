@@ -23,10 +23,10 @@
 
 #include <drizzled/statement/create_schema.h>
 
-class Session;
-
 namespace drizzled
 {
+class Session;
+
 namespace statement
 {
 
@@ -36,13 +36,14 @@ public:
   AlterSchema(Session *in_session)
     :
       CreateSchema(in_session)
-  { }
+  { 
+  }
 
   bool execute();
 };
 
-} /* end namespace statement */
+} /* namespace statement */
 
-} /* end namespace drizzled */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_STATEMENT_ALTER_SCHEMA_H */

@@ -1,0 +1,167 @@
+drop table if exists t1, t2;
+SET SQL_WARNINGS=1;
+create table t1 (a int);
+create table t1 (a int);
+ERROR 42S01: Table 'test.t1' already exists
+show count(*) errors;
+@@session.error_count
+1
+show errors;
+Level	Code	Message
+Error	1050	Table 'test.t1' already exists
+show warnings;
+Level	Code	Message
+Error	1050	Table 'test.t1' already exists
+create table t (i);
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near ')' at line 1
+show count(*) errors;
+@@session.error_count
+1
+show errors;
+Level	Code	Message
+Error	1064	You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near ')' at line 1
+insert into t1 values (1);
+insert into t1 values ("hej");
+ERROR HY000: Incorrect integer value: 'hej' for column 'a' at row 1
+insert into t1 values ("hej"),("då");
+ERROR HY000: Incorrect integer value: 'hej' for column 'a' at row 1
+set SQL_WARNINGS=1;
+insert into t1 values ("hej");
+ERROR HY000: Incorrect integer value: 'hej' for column 'a' at row 1
+insert into t1 values ("hej"),("då");
+ERROR HY000: Incorrect integer value: 'hej' for column 'a' at row 1
+drop table t1;
+set SQL_WARNINGS=0;
+drop temporary table if exists not_exists;
+Warnings:
+Note	1051	Unknown table 'not_exists'
+drop table if exists not_exists_table;
+Warnings:
+Note	1051	Unknown table 'not_exists_table'
+show warnings limit 1;
+Level	Code	Message
+Note	1051	Unknown table 'not_exists_table'
+drop database if exists not_exists_db;
+Warnings:
+Note	1008	Can't drop database 'not_exists_db'; database doesn't exist
+show count(*) warnings;
+@@session.warning_count
+1
+create table t1(id int);
+create table if not exists t1(id int);
+Warnings:
+Note	1050	Table 't1' already exists
+select @@warning_count;
+@@warning_count
+1
+drop table t1;
+create table t1(a int, b int not null, c date, d char(5));
+load data infile '../std_data_ln/warnings_loaddata.dat' into table t1 fields terminated by ',';
+ERROR 22004: Column set to default value; NULL supplied to NOT NULL column 'b' at row 2
+select @@warning_count;
+@@warning_count
+2
+drop table t1;
+create table t1(a int NOT NULL, b int, c char(5));
+insert into t1 values(-1,100,'mysql'),(10,-1,'mysql ab'),(500,256,'open source'),(20,NULL,'test');
+ERROR 22001: Data too long for column 'c' at row 2
+insert into t1 values(-1,100,'mysql'),(10,-1,'dri '),(500,256,'zzle'),(20,NULL,'test');
+alter table t1 modify c char(4);
+ERROR 01000: Data truncated for column 'c' at row 1
+alter table t1 add d char(2);
+update t1 set a=NULL where a=10;
+ERROR 23000: Column 'a' cannot be null
+update t1 set c='drizzle' where c='test';
+ERROR 22001: Data too long for column 'c' at row 4
+update t1 set d=c;
+ERROR 22001: Data too long for column 'd' at row 1
+create table t2(a int NOT NULL, b char(3));
+insert into t2 select b,c from t1;
+ERROR 22001: Data too long for column 'b' at row 1
+insert into t2(b) values('mysqlab');
+ERROR HY000: Field 'a' doesn't have a default value
+insert into t2(a) values(1);
+set sql_warnings=1;
+insert into t2(a,b) values(1,'mysqlab');
+ERROR 22001: Data too long for column 'b' at row 1
+insert into t2(a,b) values(1,'mys');
+set sql_warnings=0;
+drop table t1, t2;
+create table t1(a char(10));
+alter table t1 add b char;
+set max_error_count=10;
+update t1 set b=a;
+ERROR 22001: Data too long for column 'b' at row 1
+alter table t1 modify b char(10);
+update t1 set b=a;
+select @@warning_count;
+@@warning_count
+0
+set max_error_count=0;
+show variables like 'max_error_count';
+Variable_name	Value
+max_error_count	0
+update t1 set b='hi';
+select @@warning_count;
+@@warning_count
+0
+show warnings;
+Level	Code	Message
+set max_error_count=65535;
+show variables like 'max_error_count';
+Variable_name	Value
+max_error_count	65535
+set max_error_count=10;
+show variables like 'max_error_count';
+Variable_name	Value
+max_error_count	10
+drop table t1;
+create table t1 (a int);
+insert into t1 (a) values (1), (2), (3), (4), (5), (6), (7), (8), (9), (10);
+update t1 set a='abc';
+ERROR HY000: Incorrect integer value: 'abc' for column 'a' at row 1
+show warnings limit 2, 1;
+Level	Code	Message
+show warnings limit 0, 10;
+Level	Code	Message
+Error	1366	Incorrect integer value: 'abc' for column 'a' at row 1
+Warning	1196	Some non-transactional changed tables couldn't be rolled back
+show warnings limit 9, 1;
+Level	Code	Message
+show warnings limit 10, 1;
+Level	Code	Message
+show warnings limit 9, 2;
+Level	Code	Message
+show warnings limit 0, 0;
+Level	Code	Message
+show warnings limit 1;
+Level	Code	Message
+Error	1366	Incorrect integer value: 'abc' for column 'a' at row 1
+show warnings limit 0;
+Level	Code	Message
+show warnings limit 1, 0;
+Level	Code	Message
+select * from t1 limit 0;
+a
+select * from t1 limit 1, 0;
+a
+select * from t1 limit 0, 0;
+a
+drop table t1;
+End of 4.1 tests
+create table t1 (c_char char(255), c_varchar varchar(255), c_tinytext blob);
+set @c = repeat(' ', 256);
+set @q = repeat('q', 256);
+insert into t1 values(@c, @c, @c);
+ERROR 22001: Data too long for column 'c_char' at row 1
+show warnings;
+Level	Code	Message
+Error	1406	Data too long for column 'c_char' at row 1
+Warning	1196	Some non-transactional changed tables couldn't be rolled back
+insert into t1 values(@q, NULL, NULL);
+ERROR 22001: Data too long for column 'c_char' at row 1
+insert into t1 values(NULL, @q, NULL);
+ERROR 22001: Data too long for column 'c_varchar' at row 1
+insert into t1 values(NULL, NULL, @q);
+drop table t1;
+End of Drizzle tests

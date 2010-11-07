@@ -27,6 +27,7 @@
 #include <cassert>
 #include <algorithm>
 
+using namespace drizzled;
 using namespace std;
 
 template<class T>
@@ -296,14 +297,6 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register unsigned char *a,
       a=  end;
       b+= 4; /* sizeof(long int); */
       break;
-    case HA_KEYTYPE_UINT24:
-      l_1=mi_uint3korr(a);
-      l_2=mi_uint3korr(b);
-      if (piks && (flag = CMP_NUM(l_1,l_2)))
-        return ((keyseg->flag & HA_REVERSE_SORT) ? -flag : flag);
-      a=  end;
-      b+= 3;
-      break;
     case HA_KEYTYPE_DOUBLE:
       mi_float8get(d_1,a);
       mi_float8get(d_2,b);
@@ -427,7 +420,6 @@ HA_KEYSEG *ha_find_null(HA_KEYSEG *keyseg, unsigned char *a)
       }
     case HA_KEYTYPE_LONG_INT:
     case HA_KEYTYPE_ULONG_INT:
-    case HA_KEYTYPE_UINT24:
     case HA_KEYTYPE_LONGLONG:
     case HA_KEYTYPE_ULONGLONG:
     case HA_KEYTYPE_DOUBLE:

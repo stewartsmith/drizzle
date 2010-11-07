@@ -24,10 +24,10 @@
 #include "drizzled/statement.h"
 #include "drizzled/foreign_key.h"
 
-class Session;
-
 namespace drizzled
 {
+class Session;
+
 namespace statement
 {
 
@@ -45,14 +45,18 @@ public:
   }
 
   bool execute();
-  drizzled::message::Table create_table_proto;
-  drizzled::message::Table::Field *current_proto_field;
+  message::Table create_table_message;
+  message::Table &createTableMessage()
+  {
+    return create_table_message;
+  };
+  message::Table::Field *current_proto_field;
   HA_CREATE_INFO create_info;
   AlterInfo alter_info;
   KEY_CREATE_INFO key_create_info;
-  enum Foreign_key::fk_match_opt fk_match_option;
-  enum Foreign_key::fk_option fk_update_opt;
-  enum Foreign_key::fk_option fk_delete_opt;
+  message::Table::ForeignKeyConstraint::ForeignKeyMatchOption fk_match_option;
+  message::Table::ForeignKeyConstraint::ForeignKeyOption fk_update_opt;
+  message::Table::ForeignKeyConstraint::ForeignKeyOption fk_delete_opt;
 
   /* The text in a CHANGE COLUMN clause in ALTER TABLE */
   char *change;
@@ -71,10 +75,12 @@ public:
   bool is_create_table_like;
   bool is_if_not_exists;
   bool is_engine_set;
+
+  bool validateCreateTableOption();
 };
 
-} /* end namespace statement */
+} /* namespace statement */
 
-} /* end namespace drizzled */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_STATEMENT_CREATE_TABLE_H */

@@ -22,6 +22,9 @@
 
 #include "drizzled/field.h"
 
+namespace drizzled
+{
+
 class Item;
 typedef struct st_typelib TYPELIB;
 
@@ -31,7 +34,7 @@ typedef struct st_typelib TYPELIB;
  * Basically, all information for a new or altered field
  * definition is contained in the Create_field class.
  */
-class CreateField :public drizzled::memory::SqlAlloc
+class CreateField :public memory::SqlAlloc
 {
 public:
   const char *field_name; /**< Name of the field to be created */
@@ -62,12 +65,11 @@ public:
 
   uint8_t interval_id;	// For rea_create_table
   uint32_t offset;
-  uint32_t pack_flag;
 
   CreateField() :after(0) {}
   CreateField(Field *field, Field *orig_field);
   /* Used to make a clone of this object for ALTER/CREATE TABLE */
-  CreateField *clone(drizzled::memory::Root *mem_root) const
+  CreateField *clone(memory::Root *mem_root) const
     { return new (mem_root) CreateField(*this); }
   void create_length_to_internal_length(void);
 
@@ -123,5 +125,7 @@ public:
             uint32_t uint_geom_type,
             enum column_format_type column_format);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_CREATE_FIELD_H */

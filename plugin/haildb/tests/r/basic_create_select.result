@@ -1,0 +1,16 @@
+create table t1 (d int primary key);
+create table t2 (d int primary key);
+insert into t1 values ("100000000");
+insert into t2 values (2);
+create table t3 (d int primary key) as select t2.d from t2 union select t1.d from t1;
+select * from t3;
+d
+2
+100000000
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `d` INT NOT NULL,
+  PRIMARY KEY (`d`) USING BTREE
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
+drop table t1, t2, t3;

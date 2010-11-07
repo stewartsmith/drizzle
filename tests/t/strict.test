@@ -38,9 +38,10 @@ UPDATE t1 SET col1= MOD(col1,0) WHERE col1 > 0;
 INSERT INTO t1 (col1) VALUES ('');
 --error ER_TRUNCATED_WRONG_VALUE_FOR_FIELD
 INSERT INTO t1 (col1) VALUES ('a59b');
---error 1265
+--error ER_WARN_DATA_TRUNCATED
 INSERT INTO t1 (col1) VALUES ('1a');
 INSERT IGNORE INTO t1 (col1) VALUES ('2a');
+--error ER_DIVISION_BY_ZERO
 INSERT IGNORE INTO t1 values (1/0);
 INSERT IGNORE INTO t1 values (-2147483649);
 INSERT IGNORE INTO t1 values (2147643648);
@@ -94,9 +95,10 @@ UPDATE t1 SET col1= MOD(col1,0) WHERE col1 > 0;
 INSERT INTO t1 (col1) VALUES ('');
 --error ER_TRUNCATED_WRONG_VALUE_FOR_FIELD
 INSERT INTO t1 (col1) VALUES ('a59b');
---error 1265
+--error ER_WARN_DATA_TRUNCATED
 INSERT INTO t1 (col1) VALUES ('1a');
 INSERT IGNORE INTO t1 (col1) VALUES ('2a');
+--error ER_DIVISION_BY_ZERO
 INSERT IGNORE INTO t1 values (1/0);
 INSERT IGNORE INTO t1 VALUES (-9223372036854775809);
 INSERT IGNORE INTO t1 VALUES (9223372036854775808);
@@ -121,14 +123,14 @@ INSERT INTO t1 VALUES (10.55);
 # this statement errors due to decimal truncation. The number
 # used in insertion is chosen to test that this this error does
 # in fact occur
---error 1265 
+--error ER_WARN_DATA_TRUNCATED 
 INSERT INTO t1 VALUES (10.5555);
 INSERT INTO t1 VALUES (0);
 INSERT INTO t1 VALUES (-10.55);
 # this statement errors due to decimal truncation. The number
 # used in insertion is chosen to test that this this error does
 # in fact occur
---error 1265
+--error ER_WARN_DATA_TRUNCATED
 INSERT INTO t1 VALUES (-10.5555);
 INSERT INTO t1 VALUES (11);
 INSERT INTO t1 VALUES (1e+01);
@@ -143,13 +145,13 @@ INSERT INTO t1 VALUES ('10.55');
 # this statement errors due to decimal truncation. The number
 # used in insertion is chosen to test that this this error does
 # in fact occur
---error 1265 
+--error ER_WARN_DATA_TRUNCATED 
 INSERT INTO t1 VALUES ('10.5555');
 INSERT INTO t1 VALUES ('-10.55');
 # this statement errors due to decimal truncation. The number 
 # used in insertion is chosen to test that this error does 
 # in fact occur
---error 1265 
+--error ER_WARN_DATA_TRUNCATED 
 INSERT INTO t1 VALUES ('-10.5555');
 INSERT INTO t1 VALUES ('11');
 INSERT INTO t1 VALUES ('1e+01');
@@ -186,15 +188,16 @@ UPDATE t1 SET col1 =col1 * 50000 WHERE col1 =11;
 UPDATE t1 SET col1 =col1 / 0 WHERE col1 > 0;
 --error ER_DIVISION_BY_ZERO
 UPDATE t1 SET col1= MOD(col1,0) WHERE col1 > 0;
-#--error 1265
+#--error ER_WARN_DATA_TRUNCATED
 --error ER_TRUNCATED_WRONG_VALUE_FOR_FIELD
 INSERT INTO t1 (col1) VALUES ('');
-#--error 1265
+#--error ER_WARN_DATA_TRUNCATED
 --error ER_TRUNCATED_WRONG_VALUE_FOR_FIELD
 INSERT INTO t1 (col1) VALUES ('a59b');
 --error ER_TRUNCATED_WRONG_VALUE_FOR_FIELD
 INSERT INTO t1 (col1) VALUES ('1a');
 INSERT IGNORE INTO t1 (col1) VALUES ('2a');
+--error ER_DIVISION_BY_ZERO
 INSERT IGNORE INTO t1 values (1/0);
 INSERT IGNORE INTO t1 VALUES (1000);
 INSERT IGNORE INTO t1 VALUES (-1000);
@@ -212,15 +215,17 @@ DROP TABLE t1;
 CREATE TABLE t1 (col1 CHAR(5), col2 VARCHAR(6));
 INSERT INTO t1 VALUES ('hello', 'hello');
 INSERT INTO t1 VALUES ('he', 'he');
+--error ER_DATA_TOO_LONG
 INSERT INTO t1 VALUES ('hello   ', 'hello ');
---error 1406
+--error ER_DATA_TOO_LONG
 INSERT INTO t1 (col1) VALUES ('hellobob');
---error 1406
+--error ER_DATA_TOO_LONG
 INSERT INTO t1 (col2) VALUES ('hellobob');
+--error ER_DATA_TOO_LONG
 INSERT INTO t1 (col2) VALUES ('hello  ');
---error 1406
+--error ER_DATA_TOO_LONG
 UPDATE t1 SET col1 ='hellobob' WHERE col1 ='he';
---error 1406
+--error ER_DATA_TOO_LONG
 UPDATE t1 SET col2 ='hellobob' WHERE col2 ='he';
 INSERT IGNORE INTO t1 VALUES ('hellobob', 'hellobob');
 UPDATE IGNORE t1 SET col2 ='hellotrudy' WHERE col2 ='he';
@@ -234,17 +239,17 @@ CREATE TABLE t1 (col1 enum('red','blue','green'));
 INSERT INTO t1 VALUES ('red');
 INSERT INTO t1 VALUES ('blue');
 INSERT INTO t1 VALUES ('green');
---error 1691 # Bad enum
+--error ER_INVALID_ENUM_VALUE # Bad enum
 INSERT INTO t1 (col1) VALUES ('yellow');
---error 1691 # Bad enum
+--error ER_INVALID_ENUM_VALUE # Bad enum
 INSERT INTO t1 (col1) VALUES ('redd');
---error 1691 # Bad enum
+--error ER_INVALID_ENUM_VALUE # Bad enum
 INSERT INTO t1 VALUES ('');
---error 1691 # Bad enum
+--error ER_INVALID_ENUM_VALUE # Bad enum
 UPDATE t1 SET col1 ='yellow' WHERE col1 ='green';
---error 1691 # Bad enum
+--error ER_INVALID_ENUM_VALUE # Bad enum
 INSERT IGNORE INTO t1 VALUES ('yellow');
---error 1691 # Bad enum
+--error ER_INVALID_ENUM_VALUE # Bad enum
 UPDATE IGNORE t1 SET col1 ='yellow' WHERE col1 ='blue';
 SELECT * FROM t1;
 DROP TABLE t1;
@@ -254,17 +259,17 @@ DROP TABLE t1;
 CREATE TABLE t1 (col1 INT NOT NULL, col2 CHAR(5) NOT NULL, col3 DATE NOT NULL);
 INSERT INTO t1 VALUES (100, 'hello', '2004-08-20');
 INSERT INTO t1 (col1,col2,col3) VALUES (101, 'hell2', '2004-08-21');
---error 1048
+--error ER_BAD_NULL_ERROR
 INSERT INTO t1 (col1,col2,col3) VALUES (NULL, '', '2004-01-01');
---error 1048
+--error ER_BAD_NULL_ERROR
 INSERT INTO t1 (col1,col2,col3) VALUES (102, NULL, '2004-01-01');
---error 1048
+--error ER_BAD_NULL_ERROR
 INSERT INTO t1 VALUES (103,'',NULL);
---error 1048
+--error ER_BAD_NULL_ERROR
 UPDATE t1 SET col1=NULL WHERE col1 =100;
---error 1048
+--error ER_BAD_NULL_ERROR
 UPDATE t1 SET col2 =NULL WHERE col2 ='hello';
---error 1048
+--error ER_BAD_NULL_ERROR
 UPDATE t1 SET col2 =NULL where col3 IS NOT NULL;
 INSERT IGNORE INTO t1 values (NULL,NULL,NULL);
 SELECT * FROM t1;
@@ -277,15 +282,15 @@ CREATE TABLE t1 (col1 INT NOT NULL default 99, col2 CHAR(6) NOT NULL);
 SHOW CREATE TABLE t1;
 INSERT INTO t1 VALUES (1, 'hello');
 INSERT INTO t1 (col2) VALUES ('hello2');
---error 1048
+--error ER_BAD_NULL_ERROR
 INSERT INTO t1 (col2) VALUES (NULL);
---error 1364
+--error ER_NO_DEFAULT_FOR_FIELD
 INSERT INTO t1 (col1) VALUES (2);
---error 1364
+--error ER_NO_DEFAULT_FOR_FIELD
 INSERT INTO t1 VALUES(default(col1),default(col2));
---error 1364
+--error ER_NO_DEFAULT_FOR_FIELD
 INSERT INTO t1 (col1) SELECT 1;
---error 1048
+--error ER_BAD_NULL_ERROR
 INSERT INTO t1 SELECT 1,NULL;
 INSERT IGNORE INTO t1 values (NULL,NULL);
 --error ER_NO_DEFAULT_FOR_FIELD
@@ -301,11 +306,11 @@ DROP TABLE t1;
 
 create table t1 (charcol char(255), varcharcol varchar(255),
        varbinarycol varbinary(255));
---error 1406
+--error ER_DATA_TOO_LONG
 insert into t1 (charcol) values (repeat('x',256));
---error 1406
+--error ER_DATA_TOO_LONG
 insert into t1 (varcharcol) values (repeat('x',256));
---error 1406
+--error ER_DATA_TOO_LONG
 insert into t1 (varbinarycol) values (repeat('x',256));
 select * from t1;
 drop table t1;
@@ -315,17 +320,17 @@ drop table t1;
 #
 
 create table t1 (col1 char(3), col2 integer);
---error 1292
+--error ER_TRUNCATED_WRONG_VALUE
 insert into t1 (col1) values (cast(1000 as char(3)));
---error 1292
+--error ER_TRUNCATED_WRONG_VALUE
 insert into t1 (col1) values (cast(1000E+0 as char(3)));
---error 1292
+--error ER_TRUNCATED_WRONG_VALUE
 insert into t1 (col1) values (cast(1000.0 as char(3)));
---error 1292
+--error ER_TRUNCATED_WRONG_VALUE
 insert into t1 (col2) values (cast('abc' as DECIMAL));
---error 1292
+--error ER_TRUNCATED_WRONG_VALUE
 insert into t1 (col2) values (10E+0 + 'a');
---error 1265
+--error ER_WARN_DATA_TRUNCATED
 insert into t1 (col2) values ('10a');
 insert into t1 (col2) values (cast('10a' as DECIMAL));
 insert into t1 (col2) values (cast('10' as DECIMAL));
@@ -336,38 +341,38 @@ drop table t1;
 
 # Test fields with no default value that are NOT NULL (Bug #5986)
 CREATE TABLE t1 (i int not null);
---error 1364
+--error ER_NO_DEFAULT_FOR_FIELD
 INSERT INTO t1 VALUES ();
---error 1364
+--error ER_NO_DEFAULT_FOR_FIELD
 INSERT INTO t1 VALUES (DEFAULT);
---error 1364
+--error ER_NO_DEFAULT_FOR_FIELD
 INSERT INTO t1 VALUES (DEFAULT(i));
 ALTER TABLE t1 ADD j int;
---error 1364
+--error ER_NO_DEFAULT_FOR_FIELD
 INSERT INTO t1 SET j = 1;
---error 1364
+--error ER_NO_DEFAULT_FOR_FIELD
 INSERT INTO t1 SET j = 1, i = DEFAULT;
---error 1364
+--error ER_NO_DEFAULT_FOR_FIELD
 INSERT INTO t1 SET j = 1, i = DEFAULT(i);
---error 1364
+--error ER_NO_DEFAULT_FOR_FIELD
 INSERT INTO t1 VALUES (DEFAULT,1);
 DROP TABLE t1;
 CREATE TABLE t1 (i int not null);
---error 1364
+--error ER_NO_DEFAULT_FOR_FIELD
 INSERT INTO t1 VALUES ();
---error 1364
+--error ER_NO_DEFAULT_FOR_FIELD
 INSERT INTO t1 VALUES (DEFAULT);
 # DEFAULT(i) is an error even with the default sql_mode
---error 1364
+--error ER_NO_DEFAULT_FOR_FIELD
 INSERT INTO t1 VALUES (DEFAULT(i));
 ALTER TABLE t1 ADD j int;
---error 1364
+--error ER_NO_DEFAULT_FOR_FIELD
 INSERT INTO t1 SET j = 1;
---error 1364
+--error ER_NO_DEFAULT_FOR_FIELD
 INSERT INTO t1 SET j = 1, i = DEFAULT;
---error 1364
+--error ER_NO_DEFAULT_FOR_FIELD
 INSERT INTO t1 SET j = 1, i = DEFAULT(i);
---error 1364
+--error ER_NO_DEFAULT_FOR_FIELD
 INSERT INTO t1 VALUES (DEFAULT,1);
 DROP TABLE t1;
 
@@ -375,9 +380,9 @@ DROP TABLE t1;
 # Bugs #8295 and #8296: varchar and varbinary conversion
 #
 
---error 1074
+--error ER_TOO_BIG_FIELDLENGTH
 create table t1(a varchar(65537));
---error 1074
+--error ER_TOO_BIG_FIELDLENGTH
 create table t1(a varbinary(65537));
 
 #
@@ -416,7 +421,7 @@ show create table t2;
 drop table t2,t1;
 
 create table t1 (i int)
-comment '123456789*123456789*123456789*123456789*123456789*123456789*';
+comment='123456789*123456789*123456789*123456789*123456789*123456789*';
 --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
@@ -451,7 +456,7 @@ drop table t1;
 #
 # Bug#27069 set with identical elements are created
 #
---error 1291
+--error ER_DUPLICATED_VALUE_IN_TYPE
 create table t1 (f1 enum('a','a'));
 
 --echo End of 5.0 tests

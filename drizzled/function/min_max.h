@@ -22,6 +22,9 @@
 
 #include <drizzled/function/func.h>
 
+namespace drizzled
+{
+
 class Item_func_min_max :public Item_func
 {
   Item_result cmp_type;
@@ -62,5 +65,7 @@ public:
   Item_func_max(List<Item> &list) :Item_func_min_max(list,-1) {}
   const char *func_name() const { return "greatest"; }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_MIN_MAX_H */

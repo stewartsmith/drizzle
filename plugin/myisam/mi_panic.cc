@@ -11,11 +11,12 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include "myisam_priv.h"
 
 using namespace std;
+using namespace drizzled;
 
 	/* if flag == HA_PANIC_CLOSE then all misam files are closed */
 	/* if flag == HA_PANIC_WRITE then all misam files are unlocked and
@@ -30,24 +31,24 @@ int mi_panic(enum ha_panic_function flag)
   int error=0;
   MI_INFO *info;
 
-  pthread_mutex_lock(&THR_LOCK_myisam);
+  THR_LOCK_myisam.lock();
   list<MI_INFO *>::iterator it= myisam_open_list.begin();
   while (it != myisam_open_list.end())
   {
     info= *it;
     switch (flag) {
     case HA_PANIC_CLOSE:
-      pthread_mutex_unlock(&THR_LOCK_myisam);	/* Not exactly right... */
+      THR_LOCK_myisam.unlock();	/* Not exactly right... */
       if (mi_close(info))
 	error=errno;
-      pthread_mutex_lock(&THR_LOCK_myisam);
+      THR_LOCK_myisam.lock();
       break;
     case HA_PANIC_WRITE:		/* Do this to free databases */
 #ifdef CANT_OPEN_FILES_TWICE
       if (info->s->options & HA_OPTION_READ_ONLY_DATA)
 	break;
 #endif
-      if (flush_key_blocks(info->s->key_cache, info->s->kfile, FLUSH_RELEASE))
+      if (flush_key_blocks(info->s->getKeyCache(), info->s->kfile, FLUSH_RELEASE))
 	error=errno;
       if (info->opt_flag & WRITE_CACHE_USED)
 	if (flush_io_cache(&info->rec_cache))
@@ -56,7 +57,7 @@ int mi_panic(enum ha_panic_function flag)
       {
 	if (flush_io_cache(&info->rec_cache))
 	  error=errno;
-	reinit_io_cache(&info->rec_cache,READ_CACHE,0,
+	reinit_io_cache(&info->rec_cache,internal::READ_CACHE,0,
 		       (bool) (info->lock_type != F_UNLCK),1);
       }
       if (info->lock_type != F_UNLCK && ! info->was_locked)
@@ -66,9 +67,9 @@ int mi_panic(enum ha_panic_function flag)
 	  error=errno;
       }
 #ifdef CANT_OPEN_FILES_TWICE
-      if (info->s->kfile >= 0 && my_close(info->s->kfile,MYF(0)))
+      if (info->s->kfile >= 0 && internal::my_close(info->s->kfile,MYF(0)))
 	error = errno;
-      if (info->dfile >= 0 && my_close(info->dfile,MYF(0)))
+      if (info->dfile >= 0 && internal::my_close(info->dfile,MYF(0)))
 	error = errno;
       info->s->kfile=info->dfile= -1;	/* Files aren't open anymore */
       break;
@@ -78,13 +79,13 @@ int mi_panic(enum ha_panic_function flag)
       {					/* Open closed files */
 	char name_buff[FN_REFLEN];
 	if (info->s->kfile < 0)
-	  if ((info->s->kfile= my_open(fn_format(name_buff,info->filename,"",
+	  if ((info->s->kfile= internal::my_open(internal::fn_format(name_buff,info->filename,"",
 					      N_NAME_IEXT,4),info->mode,
 				    MYF(MY_WME))) < 0)
 	    error = errno;
 	if (info->dfile < 0)
 	{
-	  if ((info->dfile= my_open(fn_format(name_buff,info->filename,"",
+	  if ((info->dfile= internal::my_open(internal::fn_format(name_buff,info->filename,"",
 					      N_NAME_DEXT,4),info->mode,
 				    MYF(MY_WME))) < 0)
 	    error = errno;
@@ -102,7 +103,7 @@ int mi_panic(enum ha_panic_function flag)
     }
     ++it;
   }
-  pthread_mutex_unlock(&THR_LOCK_myisam);
+  THR_LOCK_myisam.unlock();
   if (!error)
     return(0);
   return(errno=error);

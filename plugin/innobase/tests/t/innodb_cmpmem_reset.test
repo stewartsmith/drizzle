@@ -1,0 +1,7 @@
+use data_dictionary;
+
+# Add in the qualification because there is an extra row on 32-bit for
+#  PAGE_SIZE==64. But we don't care about that.
+select * from INNODB_CMPMEM_RESET where PAGE_SIZE > 64;
+
+show create table INNODB_CMPMEM_RESET;

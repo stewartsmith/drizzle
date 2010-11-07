@@ -1,0 +1,26 @@
+show create table data_dictionary.TABLE_DEFINITION_CACHE;
+Table	Create Table
+TABLE_DEFINITION_CACHE	CREATE TABLE `TABLE_DEFINITION_CACHE` (
+  `TABLE_SCHEMA` VARCHAR(256) NOT NULL,
+  `TABLE_NAME` VARCHAR(256) NOT NULL,
+  `VERSION` BIGINT NOT NULL,
+  `TABLE_COUNT` BIGINT NOT NULL,
+  `IS_NAME_LOCKED` VARCHAR(5) NOT NULL
+) ENGINE=FunctionEngine COLLATE = utf8_general_ci
+select count(*) FROM data_dictionary.TABLE_DEFINITION_CACHE;
+count(*)
+#
+flush tables;
+select * FROM data_dictionary.TABLE_DEFINITION_CACHE  ORDER BY TABLE_SCHEMA, TABLE_NAME;
+TABLE_SCHEMA	TABLE_NAME	VERSION	TABLE_COUNT	IS_NAME_LOCKED
+#	table_definition_cache	#	#	#
+create table a ( a int);
+create table b ( b int);
+select * FROM a,b;
+a	b
+select * FROM data_dictionary.TABLE_DEFINITION_CACHE  ORDER BY TABLE_SCHEMA, TABLE_NAME;
+TABLE_SCHEMA	TABLE_NAME	VERSION	TABLE_COUNT	IS_NAME_LOCKED
+#	table_definition_cache	#	#	#
+#	a	#	#	#
+#	b	#	#	#
+DROP TABLES a,b;

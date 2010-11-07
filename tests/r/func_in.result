@@ -349,9 +349,9 @@ JOIN t1 ON t3.a=t1.a
 JOIN t2 ON t3.a=t2.a
 JOIN t4 WHERE t4.a IN (t1.b, t2.b);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t3	index	PRIMARY	PRIMARY	4	NULL	4	Using index
 1	SIMPLE	t1	eq_ref	PRIMARY	PRIMARY	4	test.t3.a	1	
 1	SIMPLE	t2	ALL	PRIMARY	NULL	NULL	NULL	5	Using where; Using join buffer
+1	SIMPLE	t3	index	PRIMARY	PRIMARY	4	NULL	4	Using index
 1	SIMPLE	t4	ALL	PRIMARY	NULL	NULL	NULL	7	Range checked for each record (index map: 0x1)
 SELECT STRAIGHT_JOIN * FROM t3 
 JOIN t1 ON t3.a=t1.a 
@@ -367,9 +367,9 @@ EXPLAIN SELECT STRAIGHT_JOIN
 FROM t3, t1, t2
 WHERE t3.a=t1.a AND t3.a=t2.a;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	PRIMARY	t3	index	PRIMARY	PRIMARY	4	NULL	4	Using index
 1	PRIMARY	t1	eq_ref	PRIMARY	PRIMARY	4	test.t3.a	1	
 1	PRIMARY	t2	ALL	PRIMARY	NULL	NULL	NULL	5	Using where; Using join buffer
+1	PRIMARY	t3	index	PRIMARY	PRIMARY	4	NULL	4	Using index
 2	DEPENDENT SUBQUERY	t4	index	NULL	PRIMARY	4	NULL	7	Using where; Using index
 SELECT STRAIGHT_JOIN 
 (SELECT SUM(t4.a) FROM t4 WHERE t4.a IN (t1.b, t2.b)) 
@@ -457,9 +457,7 @@ DROP TABLE t1,t2,t3,t4;
 CREATE TABLE t1 (id int not null);
 INSERT INTO t1 VALUES (1),(2);
 SELECT id FROM t1 WHERE id IN(4564, (SELECT IF(1=0,1,1/0)) );
-id
-Warnings:
-Error	1365	Division by 0
+ERROR 22012: Division by 0
 DROP TABLE t1;
 End of 5.0 tests
 create TEMPORARY table t1(f1 char(1)) ENGINE=MYISAM;

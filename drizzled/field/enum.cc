@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-
 #include "config.h"
+#include <boost/lexical_cast.hpp>
 #include "drizzled/field/enum.h"
 #include "drizzled/error.h"
 #include "drizzled/table.h"
@@ -29,7 +29,8 @@
 #include <sstream>
 #include <string>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 /****************************************************************************
 ** enum type.
@@ -37,58 +38,23 @@ using namespace drizzled;
 ** If one uses this string in a number context one gets the type number.
 ****************************************************************************/
 
-enum ha_base_keytype Field_enum::key_type() const
-{
-  switch (packlength) 
-  {
-    default: return HA_KEYTYPE_BINARY;
-    case 2: assert(1);
-    case 3: assert(1);
-    case 4: return HA_KEYTYPE_ULONG_INT;
-    case 8: return HA_KEYTYPE_ULONGLONG;
-  }
-}
-
 void Field_enum::store_type(uint64_t value)
 {
-  switch (packlength) {
-  case 1: ptr[0]= (unsigned char) value;  break;
-  case 2:
+  value--; /* we store as starting from 0, although SQL starts from 1 */
+
 #ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
+  if (getTable()->getShare()->db_low_byte_first)
   {
-    int2store(ptr,(unsigned short) value);
+    int4store(ptr, (unsigned short) value);
   }
   else
 #endif
-    shortstore(ptr,(unsigned short) value);
-  break;
-  case 3: int3store(ptr,(long) value); break;
-  case 4:
-#ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
-  {
-    int4store(ptr,value);
-  }
-  else
-#endif
-    longstore(ptr,(long) value);
-  break;
-  case 8:
-#ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
-  {
-    int8store(ptr,value);
-  }
-  else
-#endif
-    int64_tstore(ptr,value); break;
-  }
+    longstore(ptr, (unsigned short) value);
 }
 
 /**
  * Given a supplied string, looks up the string in the internal typelib
- * and stores the found key.  Upon not finding an entry in the typelib, 
+ * and stores the found key.  Upon not finding an entry in the typelib,
  * we always throw an error.
  */
 int Field_enum::store(const char *from, uint32_t length, const CHARSET_INFO * const)
@@ -135,7 +101,7 @@ int Field_enum::store(double from)
  * @note MySQL allows 0 values, saying that 0 is "the index of the
  * blank string error", whatever that means.  Uhm, Drizzle doesn't
  * allow this.  To store an ENUM column value using an integer, you
- * must specify the 1-based index of the enum column definition's 
+ * must specify the 1-based index of the enum column definition's
  * key.
  */
 int Field_enum::store(int64_t from, bool)
@@ -144,10 +110,8 @@ int Field_enum::store(int64_t from, bool)
 
   if (from <= 0 || (uint64_t) from > typelib->count)
   {
-    /* Convert the integer to a string using stringstream */
-    std::stringstream ss;
-    std::string tmp;
-    ss << from; ss >> tmp;
+    /* Convert the integer to a string using boost::lexical_cast */
+    std::string tmp(boost::lexical_cast<std::string>(from));
 
     my_error(ER_INVALID_ENUM_VALUE, MYF(ME_FATALERROR), tmp.c_str());
     return 1;
@@ -165,46 +129,14 @@ int64_t Field_enum::val_int(void)
 {
   ASSERT_COLUMN_MARKED_FOR_READ;
 
-  switch (packlength) {
-  case 1:
-    return (int64_t) ptr[0];
-  case 2:
-  {
-    uint16_t tmp;
+  uint16_t tmp;
 #ifdef WORDS_BIGENDIAN
-    if (table->s->db_low_byte_first)
-      tmp=sint2korr(ptr);
-    else
+  if (getTable()->getShare()->db_low_byte_first)
+    tmp= sint4korr(ptr);
+  else
 #endif
-      shortget(tmp,ptr);
-    return (int64_t) tmp;
-  }
-  case 3:
-    return (int64_t) uint3korr(ptr);
-  case 4:
-  {
-    uint32_t tmp;
-#ifdef WORDS_BIGENDIAN
-    if (table->s->db_low_byte_first)
-      tmp=uint4korr(ptr);
-    else
-#endif
-      longget(tmp,ptr);
-    return (int64_t) tmp;
-  }
-  case 8:
-  {
-    int64_t tmp;
-#ifdef WORDS_BIGENDIAN
-    if (table->s->db_low_byte_first)
-      tmp=sint8korr(ptr);
-    else
-#endif
-      int64_tget(tmp,ptr);
-    return tmp;
-  }
-  }
-  return 0;					// impossible
+    longget(tmp,ptr);
+  return ((int64_t) tmp) + 1; /* SQL is from 1, we store from 0 */
 }
 
 String *Field_enum::val_str(String *, String *val_ptr)
@@ -214,11 +146,14 @@ String *Field_enum::val_str(String *, String *val_ptr)
   ASSERT_COLUMN_MARKED_FOR_READ;
 
   if (!tmp || tmp > typelib->count)
+  {
     val_ptr->set("", 0, field_charset);
+  }
   else
-    val_ptr->set((const char*) typelib->type_names[tmp-1],
-		 typelib->type_lengths[tmp-1],
-		 field_charset);
+  {
+    val_ptr->set((const char*) typelib->type_names[tmp-1], typelib->type_lengths[tmp-1], field_charset);
+  }
+
   return val_ptr;
 }
 
@@ -226,18 +161,18 @@ int Field_enum::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   unsigned char *old= ptr;
   ptr= (unsigned char*) a_ptr;
-  uint64_t a=Field_enum::val_int();
+  uint64_t a= Field_enum::val_int();
   ptr= (unsigned char*) b_ptr;
-  uint64_t b=Field_enum::val_int();
+  uint64_t b= Field_enum::val_int();
   ptr= old;
   return (a < b) ? -1 : (a > b) ? 1 : 0;
 }
 
 void Field_enum::sort_string(unsigned char *to,uint32_t )
 {
-  uint64_t value=Field_enum::val_int();
-  to+=packlength-1;
-  for (uint32_t i=0 ; i < packlength ; i++)
+  uint64_t value=Field_enum::val_int()-1; /* SQL is 1 based, stored as 0 based*/
+  to+=pack_length() -1;
+  for (uint32_t i=0 ; i < pack_length() ; i++)
   {
     *to-- = (unsigned char) (value & 255);
     value>>=8;
@@ -256,7 +191,7 @@ void Field_enum::sql_type(String &res) const
   uint32_t *len= typelib->type_lengths;
   for (const char **pos= typelib->type_names; *pos; pos++, len++)
   {
-    uint32_t dummy_errors;
+    size_t dummy_errors;
     if (flag)
       res.append(',');
     /* convert to res.charset() == utf8, then quote */
@@ -272,6 +207,10 @@ Field *Field_enum::new_field(memory::Root *root, Table *new_table,
 {
   Field_enum *res= (Field_enum*) Field::new_field(root, new_table, keep_type);
   if (res)
+  {
     res->typelib= copy_typelib(root, typelib);
+  }
   return res;
 }
+
+} /* namespace drizzled */

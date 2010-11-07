@@ -22,6 +22,9 @@
 
 #include <drizzled/item/string.h>
 
+namespace drizzled
+{
+
 class Item_blob :public Item_string
 {
 public:
@@ -32,5 +35,6 @@ public:
   enum_field_types field_type() const { return DRIZZLE_TYPE_BLOB; }
 };
 
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_BLOB_H */

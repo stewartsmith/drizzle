@@ -22,6 +22,9 @@
 
 #include <drizzled/function/time/date.h>
 
+namespace drizzled
+{
+
 class Item_func_from_unixtime :public Item_date_func
 {
   Session *session;
@@ -33,5 +36,7 @@ class Item_func_from_unixtime :public Item_date_func
   void fix_length_and_dec();
   bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_TIME_FROM_UNIXTIME_H */

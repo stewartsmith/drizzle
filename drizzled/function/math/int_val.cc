@@ -18,8 +18,11 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/math/int_val.h>
+
+namespace drizzled
+{
 
 void Item_func_int_val::fix_num_length_and_dec()
 {
@@ -63,3 +66,4 @@ void Item_func_int_val::find_num_type()
   return;
 }
 
+} /* namespace drizzled */

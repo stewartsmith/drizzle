@@ -77,6 +77,8 @@ select count(*) from t2;
 count(*)
 500
 insert into  t2 select t1.* from t1, t2 t, t3 where  t1.id1 = t.id2 and t.id2 = t3.id3;
+ERROR HY000: Temporary table too large, rerun with SQL_BIG_RESULT.
+insert into  t2 select SQL_BIG_RESULT t1.* from t1, t2 t, t3 where  t1.id1 = t.id2 and t.id2 = t3.id3;
 select count(*) from t2;
 count(*)
 25500

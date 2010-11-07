@@ -129,9 +129,11 @@ drop table t1;
 #
 
 create table t1 select 1 as 'a';
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 create table t1 select 9223372036854775809 as 'a';
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 select * from t1;
 drop table t1;

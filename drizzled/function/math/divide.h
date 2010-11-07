@@ -23,11 +23,15 @@
 #include <drizzled/function/func.h>
 #include <drizzled/function/num_op.h>
 
+namespace drizzled
+{
+
 class Item_func_div :public Item_num_op
 {
+  Session *session;
 public:
   uint32_t prec_increment;
-  Item_func_div(Item *a,Item *b) :Item_num_op(a,b) {}
+  Item_func_div(Session *arg, Item *a,Item *b) :Item_num_op(a,b), session(arg) {}
   int64_t int_op() { assert(0); return 0; }
   double real_op();
   my_decimal *decimal_op(my_decimal *);
@@ -36,5 +40,6 @@ public:
   void result_precision();
 };
 
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_MATH_DIVIDE_H */

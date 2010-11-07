@@ -23,12 +23,16 @@
 */
 
 #include "config.h"
-#include <drizzled/session.h>
-#include <drizzled/plugin/authentication.h>
+
 #include <security/pam_appl.h>
 #if !defined(__sun) && !defined(__FreeBSD__)
 #include <security/pam_misc.h>
 #endif
+
+#include "drizzled/security_context.h"
+#include "drizzled/plugin/authentication.h"
+
+using namespace drizzled;
 
 typedef struct {
     const char *name;
@@ -102,17 +106,18 @@ class Auth_pam : public drizzled::plugin::Authentication
 public:
   Auth_pam(std::string name_arg)
     : drizzled::plugin::Authentication(name_arg) {}
-  virtual bool authenticate(Session *session, const char *password)
+  virtual bool authenticate(const SecurityContext &sctx,
+                            const std::string &password)
   {
     int retval;
     auth_pam_userinfo userinfo= { NULL, NULL };
     struct pam_conv conv_info= { &auth_pam_talker, (void*)&userinfo };
     pam_handle_t *pamh= NULL;
 
-    userinfo.name= session->security_ctx.user.c_str();
-    userinfo.password= password;
+    userinfo.name= sctx.getUser().c_str();
+    userinfo.password= password.c_str();
 
-    retval= pam_start("check_user", userinfo.name, &conv_info, &pamh);
+    retval= pam_start("drizzle", userinfo.name, &conv_info, &pamh);
 
     if (retval == PAM_SUCCESS)
       retval= pam_authenticate(pamh, PAM_DISALLOW_NULL_AUTHTOK);
@@ -129,22 +134,10 @@ public:
 
 static Auth_pam *auth= NULL;
 
-static int initialize(drizzled::plugin::Registry &registry)
+static int initialize(drizzled::module::Context &context)
 {
   auth= new Auth_pam("auth_pam");
-  registry.add(auth);
-  return 0;
-}
-
-static int finalize(drizzled::plugin::Registry &registry)
-{
-
-  if (auth)
-  {
-    registry.remove(auth);
-    delete auth;
-  }
-
+  context.add(auth);
   return 0;
 }
 
@@ -157,8 +150,6 @@ DRIZZLE_DECLARE_PLUGIN
   "PAM based authenication.",
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
-  finalize, /* Plugin Deinit */
-  NULL,   /* status variables */
   NULL,   /* system variables */
   NULL    /* config options */
 }

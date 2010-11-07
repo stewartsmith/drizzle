@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include "myisam_priv.h"
 
@@ -37,8 +37,6 @@ int mi_rprev(MI_INFO *info, unsigned char *buf, int inx)
   if (fast_mi_readinfo(info))
     return(errno);
   changed=_mi_test_if_changed(info);
-  if (share->concurrent_insert)
-    pthread_rwlock_rdlock(&share->key_root_lock[inx]);
   if (!flag)
     error=_mi_search_last(info, share->keyinfo+inx,
 			  share->state.key_root[inx]);
@@ -64,7 +62,6 @@ int mi_rprev(MI_INFO *info, unsigned char *buf, int inx)
 	  break;
       }
     }
-    pthread_rwlock_unlock(&share->key_root_lock[inx]);
   }
   info->update&= (HA_STATE_CHANGED | HA_STATE_ROW_CHANGED);
   info->update|= HA_STATE_PREV_FOUND;

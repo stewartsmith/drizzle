@@ -14,7 +14,7 @@ drop table if exists t1;
 
 create table t1 (b char(0) not null);
 create table if not exists t1 (b char(0) not null);
---error 1048
+--error ER_BAD_NULL_ERROR
 insert into t1 values (""),(null);
 select * from t1;
 drop table t1;
@@ -26,18 +26,18 @@ drop table t1;
 # Test of some CREATE TABLE'S that should fail
 #
 
---error 1146
+--error ER_NO_SUCH_TABLE
 create temporary table t2 engine=MEMORY select * from t1;
---error 1146
+--error ER_NO_SUCH_TABLE
 create table t2 select auto+1 from t1;
 drop table if exists t1,t2;
---error 1167
+--error ER_WRONG_KEY_COLUMN
 create table t1 (b char(0) not null, index(b));
---error 1163
+--error ER_TABLE_CANT_HANDLE_BLOB
 create temporary table t1 (a int not null,b text) engine=MEMORY;
 drop table if exists t1;
 
---error 1075
+--error ER_WRONG_AUTO_KEY
 create temporary table t1 (ordid int not null auto_increment, ord  varchar(50) not null, primary key (ord,ordid)) engine=MEMORY;
 
 -- error 1049
@@ -46,32 +46,36 @@ create table `a/a` (a int);
 --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table `a/a`;
 create table t1 like `a/a`;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
+show create table t1;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
+show create table `t1`;
 drop table `a/a`;
 drop table `t1`;
---error 1103
+--error ER_WRONG_TABLE_NAME
 create table `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa` (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa int);
---error 1059
+--error ER_TOO_LONG_IDENT
 create table a (`aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa` int);
 
 #
 # Some wrong defaults, so these creates should fail too (Bug #5902)
 #
---error 1067
+--error ER_INVALID_DEFAULT
 create table t1 (a datetime default now());
---error 1294
+--error ER_INVALID_ON_UPDATE
 create table t1 (a datetime on update now());
---error 1067
+--error ER_INVALID_DEFAULT
 create table t1 (a int default 100 auto_increment);
 # TODO: Should this really fail? What's wrong with default 1000 ???
-#--error 1067
+#--error ER_INVALID_DEFAULT
 #create table t1 (a int default 1000);
---error 1067
+--error ER_INVALID_DEFAULT
 create table t1 (a varchar(5) default 'abcdef');
 
 create table t1 (a varchar(5) default 'abcde');
 insert into t1 values();
 select * from t1;
---error 1067
+--error ER_INVALID_DEFAULT
 alter table t1 alter column a set default 'abcdef';
 drop table t1;
 
@@ -95,13 +99,13 @@ create table mysqltest.test2$ (a int);
 drop table mysqltest.test2$;
 drop database mysqltest;
 
---error 1103
+--error ER_WRONG_TABLE_NAME
 create table `` (a int);
---error 1103
+--error ER_WRONG_TABLE_NAME
 drop table if exists ``;
---error 1166
+--error ER_WRONG_COLUMN_NAME
 create table t1 (`` int);
---error 1280
+--error ER_WRONG_NAME_FOR_INDEX
 create table t1 (i int, index `` (i)); 
 
 #
@@ -140,13 +144,13 @@ create table t2 (a int) select * from t1;
 describe t1;
 describe t2;
 drop table if exists t2;
---error 1060
+--error ER_DUP_FIELDNAME
 create table t2 (a int, a float) select * from t1;               
 drop table if exists t2;
---error 1060
+--error ER_DUP_FIELDNAME
 create table t2 (a int) select a as b, a+1 as b from t1;         
 drop table if exists t2;
---error 1060
+--error ER_DUP_FIELDNAME
 create table t2 (b int) select a as b, a+1 as b from t1;         
 drop table if exists t1,t2;
 
@@ -158,7 +162,7 @@ CREATE TABLE t1 (a int not null);
 INSERT INTO t1 values (1),(2),(1);
 --error ER_DUP_ENTRY
 CREATE TABLE t2 (primary key(a)) SELECT * FROM t1;
---error 1146
+--error ER_NO_SUCH_TABLE
 SELECT * from t2;
 DROP TABLE t1;
 DROP TABLE IF EXISTS t2;
@@ -185,7 +189,7 @@ SELECT @@storage_engine;
 CREATE TEMPORARY TABLE t1 (a int not null);
 show create table t1;
 drop table t1;
---error 1286
+--error ER_UNKNOWN_STORAGE_ENGINE
 SET SESSION storage_engine="gemini";
 SELECT @@storage_engine;
 CREATE TEMPORARY TABLE t1 (a int not null);
@@ -199,11 +203,11 @@ drop table t1;
 #
 create table t1 ( k1 varchar(2), k2 int, primary key(k1,k2));
 insert into t1 values ("a", 1), ("b", 2);
---error 1048
+--error ER_BAD_NULL_ERROR
 insert into t1 values ("c", NULL);
---error 1048
+--error ER_BAD_NULL_ERROR
 insert into t1 values (NULL, 3);
---error 1048
+--error ER_BAD_NULL_ERROR
 insert into t1 values (NULL, NULL);
 drop table t1;
 
@@ -219,11 +223,11 @@ drop table t1;
 #
 
 create table t1 select 1,2,3;
---error 1364
+--error ER_NO_DEFAULT_FOR_FIELD
 create table if not exists t1 select 1,2;
---error 1136
+--error ER_WRONG_VALUE_COUNT_ON_ROW
 create table if not exists t1 select 1,2,3,4;
---error 1364
+--error ER_NO_DEFAULT_FOR_FIELD
 create table if not exists t1 select 1;
 select * from t1;
 drop table t1;
@@ -242,7 +246,8 @@ create table if not exists t1 select 3 as 'a',4 as 'b';
 --error ER_DUP_ENTRY
 create table if not exists t1 select 3 as 'a',3 as 'b';
 show warnings;
-show status like "Opened_tables";
+--replace_column 3 # 4 # 5 #
+select * from DATA_DICTIONARY.TABLE_DEFINITION_CACHE WHERE TABLE_COUNT > 1 ORDER BY TABLE_SCHEMA, TABLE_NAME;
 select * from t1;
 drop table t1;
 
@@ -251,11 +256,11 @@ drop table t1;
 #   "Table truncated when creating another table name with Spaces"
 #
 
---error 1103
+--error ER_WRONG_TABLE_NAME
 create table `t1 `(a int);
---error 1102
+--error ER_WRONG_DB_NAME
 create database `db1 `;
---error 1166
+--error ER_WRONG_COLUMN_NAME
 create table t1(`a ` int);
 
 #
@@ -263,11 +268,11 @@ create table t1(`a ` int);
 #   "Parser permits multiple commas without syntax error"
 #
 
---error 1064
+--error ER_PARSE_ERROR
 create table t1 (a int,);
---error 1064
+--error ER_PARSE_ERROR
 create table t1 (a int,,b int);
---error 1064
+--error ER_PARSE_ERROR
 create table t1 (,b int);
 
 #
@@ -276,7 +281,7 @@ create table t1 (,b int);
 
 create table t1 (a int, key(a));
 create table t2 (b int, foreign key(b) references t1(a), key(b));
---error 1217
+--error ER_ROW_IS_REFERENCED
 drop table if exists t1,t2;
 drop table if exists t2,t1;
 
@@ -315,17 +320,17 @@ create table t2 like t3;
 --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t2;
 select * from t2;
+--error ER_TABLE_EXISTS_ERROR
 create table t3 like t1;
---error 1050
+--error ER_TABLE_EXISTS_ERROR
 create table t3 like mysqltest.t3;
---error 1049
+--error ER_BAD_DB_ERROR
 create table non_existing_database.t1 like t1;
 --error ER_NO_SUCH_TABLE
 create table t3 like non_existing_table;
---error 1050
+--error ER_TABLE_EXISTS_ERROR
 create temporary table t3 like t1;
 drop table t1, t2, t3;
-drop table t3;
 drop database mysqltest;
 
 #
@@ -336,7 +341,7 @@ SELECT @@storage_engine;
 CREATE TEMPORARY TABLE t1 (a int not null);
 show create table t1;
 drop table t1;
---error 1286
+--error ER_UNKNOWN_STORAGE_ENGINE
 SET SESSION storage_engine="gemini";
 SELECT @@storage_engine;
 CREATE TEMPORARY TABLE t1 (a int not null);
@@ -407,9 +412,9 @@ drop table t1, t2;
 #
 
 create table t1(cenum enum('a'));
---error 1291
+--error ER_DUPLICATED_VALUE_IN_TYPE
 create table t2(cenum enum('a','a'));
---error 1291
+--error ER_DUPLICATED_VALUE_IN_TYPE
 create table t3(cenum enum('a','A','a','c','c'));
 drop table t1;
 
@@ -429,9 +434,9 @@ use test;
 #
 
 ## TODO: Is this really a bug? It works in Drizzle. Should it?
-#--error 1280
+#--error ER_WRONG_NAME_FOR_INDEX
 #create table t1 (a int, index `primary` (a));
-#--error 1280
+#--error ER_WRONG_NAME_FOR_INDEX
 #create table t1 (a int, index `PRIMARY` (a));
 #
 #create table t1 (`primary` int, index(`primary`));
@@ -442,9 +447,9 @@ use test;
 #show create table t2;
 #
 #create table t3 (a int);
-#--error 1280
+#--error ER_WRONG_NAME_FOR_INDEX
 #alter table t3 add index `primary` (a);
-#--error 1280
+#--error ER_WRONG_NAME_FOR_INDEX
 #alter table t3 add index `PRIMARY` (a);
 #
 #create table t4 (`primary` int);
@@ -480,7 +485,7 @@ drop table t1, t2, t3;
 # an improper fix is present.
 #
 create table t1 (a int);
---error 1093
+--error ER_UPDATE_TABLE_USED
 create table t1 select * from t1;
 ## TODO: Huh? --error ER_WRONG_OBJECT
 #create table t2 union = (t1) select * from t1;
@@ -491,11 +496,11 @@ drop table t1;
 #
 # Bug#10413: Invalid column name is not rejected
 #
---error 1103
+--error ER_WRONG_TABLE_NAME
 create table t1(column.name int);
---error 1103
+--error ER_WRONG_TABLE_NAME
 create table t1(test.column.name int);
---error 1102
+--error ER_WRONG_DB_NAME
 create table t1(xyz.t1.name int);
 create table t1(t1.name int);
 create table t2(test.t2.name int);
@@ -568,7 +573,7 @@ create table t1 (
 show create table t1;
 drop table t1;
 
---error 1364
+--error ER_NO_DEFAULT_FOR_FIELD
 create table t1 ( 
   a varchar(12) collate utf8_bin not null, 
   b int not null, primary key (a)
@@ -1022,7 +1027,7 @@ show create table t1;
 # to be rewritten to hit the limit
 #
 # Ensure limit is really 64 keys
---error 1069
+--error ER_TOO_MANY_KEYS
 alter table t1 add key 
  a065_long_123456789_123456789_123456789_123456789_123456789_1234 (
   c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15,c16);
@@ -1036,12 +1041,12 @@ c8 int, c9 int, c10 int, c11 int, c12 int, c13 int, c14 int, c15 int,
 c16 int, c17 int);
 
 # Get error for max key parts
---error 1070
+--error ER_TOO_MANY_KEY_PARTS
 alter table t1 add key i1 (
  c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15,c16, c17);
 
 # Get error for max key-name length
---error 1059
+--error ER_TOO_LONG_IDENT
 alter table t1 add key 
  a001_long_123456789_123456789_123456789_123456789_123456789_12345 (c1);
 
@@ -1096,11 +1101,11 @@ DROP TABLE t1;
 # precedence
 
 CREATE TEMPORARY TABLE t1(c1 VARCHAR(33), KEY USING BTREE (c1) USING HASH) ENGINE=MEMORY;
-SHOW INDEX FROM t1;
+#SHOW INDEX FROM t1;
 DROP TABLE t1;
 
 CREATE TEMPORARY TABLE t1(c1 VARCHAR(33), KEY USING HASH (c1) USING BTREE) ENGINE=MEMORY;
-SHOW INDEX FROM t1;
+#SHOW INDEX FROM t1;
 DROP TABLE t1;
 
 
@@ -1146,36 +1151,36 @@ drop table t1,t2;
 # Test incorrect database names
 #
 
---error 1102
+--error ER_WRONG_DB_NAME
 CREATE DATABASE aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
---error 1102
+--error ER_WRONG_DB_NAME
 DROP DATABASE aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
 # TODO: enable these tests when RENAME DATABASE is implemented.
-# --error 1049
+# --error ER_BAD_DB_ERROR
 # RENAME DATABASE aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa TO a;
-# --error 1102
+# --error ER_WRONG_DB_NAME
 # RENAME DATABASE mysqltest TO aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 # create database mysqltest;
-# --error 1102
+# --error ER_WRONG_DB_NAME
 # RENAME DATABASE mysqltest TO aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 # drop database mysqltest;
 
---error 1102
+--error ER_WRONG_DB_NAME
 USE aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
---error 1102
+#--error ER_WRONG_DB_NAME
 SHOW CREATE DATABASE aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-#
-# Bug#21432 Database/Table name limited to 64 bytes, not chars, problems with multi-byte
-#
+##
+## Bug#21432 Database/Table name limited to 64 bytes, not chars, problems with multi-byte
+##
 
 create database имя_базы_в_кодировке_утф8_длиной_больше_чем_45;
 use имя_базы_в_кодировке_утф8_длиной_больше_чем_45;
 select database();
 use test;
 
-select SCHEMA_NAME from information_schema.schemata
+select SCHEMA_NAME from data_dictionary.schemas
 where schema_name='имя_базы_в_кодировке_утф8_длиной_больше_чем_45';
 
 drop database имя_базы_в_кодировке_утф8_длиной_больше_чем_45;
@@ -1189,13 +1194,13 @@ create table имя_таблицы_в_кодировке_утф8_длиной_б
 # database, table, field, key
 select * from имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48;
 
-select TABLE_NAME from information_schema.tables where
+select TABLE_NAME from data_dictionary.tables where
 table_schema='test';
 
-select COLUMN_NAME from information_schema.columns where
+select COLUMN_NAME from data_dictionary.columns where
 table_schema='test';
 
-select INDEX_NAME from information_schema.statistics where
+select INDEX_NAME from data_dictionary.indexes where
 table_schema='test';
 
 --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
@@ -1203,18 +1208,18 @@ show create table имя_таблицы_в_кодировке_утф8_длино
 
 drop table имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48;
 
-
+#
 #
 # Bug#25629 CREATE TABLE LIKE does not work with INFORMATION_SCHEMA
 #
---error 1478
-create table t1 like information_schema.processlist;
-create table t1 like information_schema.processlist engine=innodb;
+--error ER_CANT_CREATE_TABLE
+create table t1 like data_dictionary.processlist;
+create table t1 like data_dictionary.processlist engine=innodb;
 show create table t1;
 drop table t1;
---error 1478
-create temporary table t1 like information_schema.processlist;
-create temporary table t1 like information_schema.processlist engine=myisam;
+--error ER_CANT_CREATE_TABLE
+create temporary table t1 like data_dictionary.processlist;
+create temporary table t1 like data_dictionary.processlist engine=myisam;
 show create table t1;
 drop table t1;
 
@@ -1242,7 +1247,7 @@ CREATE TABLE t1(
   c4 VARCHAR(255) NOT NULL DEFAULT 'a',
   c5 VARCHAR(255) COLLATE utf8_unicode_ci NULL DEFAULT 'b',
   c6 VARCHAR(255))
-  COLLATE utf8_bin;
+  COLLATE=utf8_bin;
 
 --echo
 
@@ -1309,7 +1314,7 @@ ALTER TABLE t1 ADD INDEX(c1);
 --echo
 
 CREATE TABLE t3(c1 DATETIME NOT NULL);
---error 1686 # Bad datetime
+--error ER_INVALID_DATETIME_VALUE # Bad datetime
 INSERT INTO t3 VALUES (0);
 
 --echo

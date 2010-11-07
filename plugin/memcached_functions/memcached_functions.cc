@@ -275,7 +275,7 @@ void cleanupMemcUDF()
   delete memc_decrement;
 }
 
-static int memcachedInit(drizzled::plugin::Registry &registry)
+static int memcachedInit(drizzled::module::Context &context)
 {
   if (initMemcUDF())
   {
@@ -284,63 +284,63 @@ static int memcachedInit(drizzled::plugin::Registry &registry)
 
   memc= memcached_create(NULL);
 
-  registry.add(memc_servers_set);
-  registry.add(memc_behavior_set);
-  registry.add(memc_behavior_get);
-  registry.add(memc_stats);
-  registry.add(memc_get);
-  registry.add(memc_get_by_key);
-  registry.add(memc_set);
-  registry.add(memc_set_by_key);
-  registry.add(memc_add);
-  registry.add(memc_add_by_key);
-  registry.add(memc_replace);
-  registry.add(memc_replace_by_key);
-  registry.add(memc_delete);
-  registry.add(memc_delete_by_key);
-  registry.add(memc_append);
-  registry.add(memc_append_by_key);
-  registry.add(memc_prepend);
-  registry.add(memc_prepend_by_key);
-  registry.add(memc_cas);
-  registry.add(memc_cas_by_key);
-  registry.add(memc_serv_count);
-  registry.add(memc_version);
-  registry.add(memc_increment);
-  registry.add(memc_decrement);
+  context.add(memc_servers_set);
+  context.add(memc_behavior_set);
+  context.add(memc_behavior_get);
+  context.add(memc_stats);
+  context.add(memc_get);
+  context.add(memc_get_by_key);
+  context.add(memc_set);
+  context.add(memc_set_by_key);
+  context.add(memc_add);
+  context.add(memc_add_by_key);
+  context.add(memc_replace);
+  context.add(memc_replace_by_key);
+  context.add(memc_delete);
+  context.add(memc_delete_by_key);
+  context.add(memc_append);
+  context.add(memc_append_by_key);
+  context.add(memc_prepend);
+  context.add(memc_prepend_by_key);
+  context.add(memc_cas);
+  context.add(memc_cas_by_key);
+  context.add(memc_serv_count);
+  context.add(memc_version);
+  context.add(memc_increment);
+  context.add(memc_decrement);
 
   return 0;
 }
 
-static int memcachedDone(drizzled::plugin::Registry &registry)
+static int memcachedDone(drizzled::module::Context &context)
 {
 
   memcached_free(memc);
 
-  registry.remove(memc_servers_set);
-  registry.remove(memc_behavior_set);
-  registry.remove(memc_behavior_get);
-  registry.remove(memc_stats);
-  registry.remove(memc_get);
-  registry.remove(memc_get_by_key);
-  registry.remove(memc_set);
-  registry.remove(memc_set_by_key);
-  registry.remove(memc_add);
-  registry.remove(memc_add_by_key);
-  registry.remove(memc_replace);
-  registry.remove(memc_replace_by_key);
-  registry.remove(memc_delete);
-  registry.remove(memc_delete_by_key);
-  registry.remove(memc_append);
-  registry.remove(memc_append_by_key);
-  registry.remove(memc_prepend);
-  registry.remove(memc_prepend_by_key);
-  registry.remove(memc_cas);
-  registry.remove(memc_cas_by_key);
-  registry.remove(memc_serv_count);
-  registry.remove(memc_version);
-  registry.remove(memc_increment);
-  registry.remove(memc_decrement);
+  context.remove(memc_servers_set);
+  context.remove(memc_behavior_set);
+  context.remove(memc_behavior_get);
+  context.remove(memc_stats);
+  context.remove(memc_get);
+  context.remove(memc_get_by_key);
+  context.remove(memc_set);
+  context.remove(memc_set_by_key);
+  context.remove(memc_add);
+  context.remove(memc_add_by_key);
+  context.remove(memc_replace);
+  context.remove(memc_replace_by_key);
+  context.remove(memc_delete);
+  context.remove(memc_delete_by_key);
+  context.remove(memc_append);
+  context.remove(memc_append_by_key);
+  context.remove(memc_prepend);
+  context.remove(memc_prepend_by_key);
+  context.remove(memc_cas);
+  context.remove(memc_cas_by_key);
+  context.remove(memc_serv_count);
+  context.remove(memc_version);
+  context.remove(memc_increment);
+  context.remove(memc_decrement);
 
   cleanupMemcUDF();
 
@@ -357,7 +357,6 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_GPL,
   memcachedInit,
   memcachedDone,
-  NULL,
   NULL,
   NULL
 }

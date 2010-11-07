@@ -27,6 +27,9 @@
 #ifndef DRIZZLED_INDEX_HINT_H
 #define DRIZZLED_INDEX_HINT_H
 
+namespace drizzled
+{
+
 /*
   String names used to print a statement with index hints.
   Keep in sync with index_hint_type.
@@ -53,7 +56,7 @@ enum index_hint_type
                              INDEX_HINT_MASK_ORDER)
 
 /* Single element of an USE/FORCE/IGNORE INDEX list specified as a SQL hint  */
-class Index_hint : public drizzled::memory::SqlAlloc
+class Index_hint : public memory::SqlAlloc
 {
 public:
   /* The type of the hint : USE/FORCE/IGNORE */
@@ -76,5 +79,7 @@ public:
 
   void print(Session *session, String *str);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_INDEX_HINT_H */

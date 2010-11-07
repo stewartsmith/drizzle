@@ -3,7 +3,7 @@
 drop table if exists t1,t2;
 --enable_warnings
 
---error 1054
+--error ER_BAD_FIELD_ERROR
 set @a := foo;
 set @a := connection_id() + 3;
 select @a - connection_id();
@@ -77,32 +77,6 @@ select @a,@a:="hello",@a,@a:=3,@a,@a:="hello again" from t1 group by i;
 drop table t1;
 
 #
-# Bug #2244: User variables didn't copy collation and derivation
-# attributes from values they were initialized to.
-#
-
-set @a='test';
-select collation(@a),coercibility(@a);
-select @a='TEST';
-select @a='TEST' collate utf8_bin;
-
-set @a='test' collate utf8_general_ci;
-select collation(@a),coercibility(@a);
-select @a='TEST';
-select @a='TEST' collate utf8_bin;
-
-#
-# Check the same invoking Item_set_user_var
-#
-select collation(@a:='test');
-select coercibility(@a:='test');
-select collation(@a:='test' collate utf8_bin);
-select coercibility(@a:='test' collate utf8_bin);
-select (@a:='test' collate utf8_bin) = 'TEST';
-select collation(@a),coercibility(@a);
-select (@a:='test' collate utf8_bin) = 'TEST' collate utf8_general_ci;
-
-#
 # Bug #6321 strange error:
 #   string function FIELD(<uservariable content NULL>, ...)
 #
@@ -110,16 +84,9 @@ set @var= NULL ;
 select FIELD( @var,'1it','Hit') as my_column;
 
 #
-# Bug#9425 A user variable doesn't always have implicit coercibility
-#
-select @v, coercibility(@v);
-set @v1=null, @v2=1, @v3=1.1, @v4=now();
-select coercibility(@v1),coercibility(@v2),coercibility(@v3),coercibility(@v4);
-
-#
 # Bug #9286  SESSION/GLOBAL should be disallowed for user variables
 #
---error 1064
+--error ER_PARSE_ERROR
 set session @honk=99;
 
 #
@@ -153,7 +120,7 @@ show create table t1;
 drop table t1;
 
 # This is not supported by Drizzle
---error 1064
+--error ER_PARSE_ERROR
 set @first_var= cast(NULL as integer);
 #create table t1 select @first_var;
 #--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
@@ -226,7 +193,7 @@ drop table t1;
 #
 # Bug#19024 - SHOW COUNT(*) WARNINGS not return Errors 
 #
---error 1064
+--error ER_PARSE_ERROR
 insert into city 'blah';
 SHOW COUNT(*) WARNINGS;
 SHOW COUNT(*) ERRORS;

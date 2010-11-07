@@ -31,6 +31,9 @@
 #ifndef DRIZZLED_TZFILE_H
 #define DRIZZLED_TZFILE_H
 
+namespace drizzled
+{
+
 #ifndef TZDIR
 #define TZDIR	"/usr/share/zoneinfo" /* Time zone object file directory */
 #endif /* !defined TZDIR */
@@ -141,6 +144,6 @@ struct tzhead {
   that will probably do.
 */
 
-#define isleap(y) (((y) % 4) == 0 && (((y) % 100) != 0 || ((y) % 400) == 0))
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_TZFILE_H */

@@ -101,6 +101,20 @@ public:
   void addEntry(const TransactionLogEntry &entry,
                 const drizzled::message::Transaction &transaction,
                 uint32_t checksum);
+  /**
+   * Clears all data out of the transaction log
+   * index.
+   *
+   * @note
+   *
+   * No locks are taken here.  Currently only used in debugging.
+   */
+  void clear();
+
+  /* Some methods returning size in bytes of the index and its parts */
+  size_t getTransactionEntriesSizeInBytes();
+  size_t getEntriesSizeInBytes();
+  size_t getSizeInBytes();
 private:
   /* Don't allows these */
   TransactionLogIndex();
@@ -117,7 +131,6 @@ private:
   void clearError();
 
   TransactionLog &log; ///< The transaction log instance
-  int log_file; ///< File descriptor for the transaction log file
   int index_file; ///< File descriptor for the transaction log on-disk index file
   const std::string index_file_path; ///< Filename of the on-disk transaction log index
   bool has_error; ///< Index is in error mode?
@@ -127,7 +140,6 @@ private:
   uint64_t max_end_timestamp; ///< Maximim end timestamp in log
   uint64_t min_transaction_id; ///< Minimum transaction ID in log
   uint64_t max_transaction_id; ///< Maximum transaction ID in log
-  uint64_t num_log_entries; ///< Total number of log entries in log
 
   TransactionLog::Entries entries; ///< Collection of information about the entries in the log
   TransactionLog::TransactionEntries transaction_entries; ///<

@@ -18,6 +18,7 @@
 #include "function_map.h"
 
 using namespace std;
+using namespace drizzled;
 
 String *Item_func_gman_servers_set::val_str(String *str)
 {

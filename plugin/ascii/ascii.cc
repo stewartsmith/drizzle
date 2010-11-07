@@ -68,17 +68,10 @@ int64_t AsciiFunction::val_int()
 
 plugin::Create_function<AsciiFunction> *asciiudf= NULL;
 
-static int initialize(plugin::Registry &registry)
+static int initialize(module::Context &context)
 {
   asciiudf= new plugin::Create_function<AsciiFunction>("ascii");
-  registry.add(asciiudf);
-  return 0;
-}
-
-static int finalize(plugin::Registry &registry)
-{
-  registry.remove(asciiudf);
-  delete asciiudf;
+  context.add(asciiudf);
   return 0;
 }
 
@@ -91,8 +84,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Return the ASCII value of a character",
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
-  finalize,   /* Plugin Deinit */
-  NULL,   /* status variables */
   NULL,   /* system variables */
   NULL    /* config options */
 }

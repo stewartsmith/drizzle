@@ -37,10 +37,6 @@
 #include <cstdlib>
 #include <cerrno>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 namespace drizzled
 {
 
@@ -53,6 +49,13 @@ namespace drizzled
 class CachedDirectory
 {
 public:
+  enum FILTER {
+    NONE,
+    DIRECTORY,
+    FILE,
+    MAX
+  };
+
   class Entry
   {
     Entry();
@@ -83,6 +86,7 @@ public:
    * @param[in] File extensions to allow
    */
   CachedDirectory(const std::string& in_path, std::set<std::string>& allowed_exts);
+  CachedDirectory(const std::string& in_path, enum CachedDirectory::FILTER filter);
 
   /**
    * Destructor.  Cleans up any resources we've taken 
@@ -149,12 +153,26 @@ private:
    * @retval false Failure
    */
   bool open(const std::string &in_path, std::set<std::string> &allowable_exts);
+  bool open(const std::string &in_path, std::set<std::string> &allowed_exts, enum CachedDirectory::FILTER filter);
+
+  friend std::ostream& operator<<(std::ostream& output, CachedDirectory &directory)
+  {
+    output << "CachedDirectory:(Path: " << directory.getPath() << ")\n";
+
+    CachedDirectory::Entries files= directory.getEntries();
+
+    for (CachedDirectory::Entries::iterator fileIter= files.begin();
+         fileIter != files.end(); fileIter++)
+    {
+      CachedDirectory::Entry *entry= *fileIter;
+      output << "\t(" << entry->filename << ")\n";
+    }
+
+    return output;  // for multiple << operators.
+  }
+
 };
 
 } /* namespace drizzled */
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* DRIZZLED_CACHED_DIRECTORY_H */

@@ -23,6 +23,9 @@
 #include <drizzled/function/func.h>
 #include <drizzled/function/math/int.h>
 
+namespace drizzled
+{
+
 class Item_func_field :public Item_int_func
 {
   String value,tmp;
@@ -34,5 +37,7 @@ public:
   const char *func_name() const { return "field"; }
   void fix_length_and_dec();
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_FIELD_H */

@@ -1,0 +1,25 @@
+/*
+  Represents events on the server
+*/
+package drizzled.message;
+option optimize_for = SPEED;
+
+option java_package = "org.drizzle.messages";
+option java_outer_classname = "EventMessage";
+
+
+/*
+ * An Event message can represent any Drizzle related action that
+ * a replication stream reader may be interested in, such as starting
+ * up or shutting down Drizzle.
+ */
+message Event
+{
+  enum Type
+  {
+    STARTUP = 0;         /* Drizzle startup */
+    SHUTDOWN = 1;        /* Normal Drizzle shutdown */
+  }
+
+  required Type type = 1;
+}

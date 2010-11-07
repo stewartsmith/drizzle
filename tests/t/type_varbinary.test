@@ -49,11 +49,12 @@ select hex(cast(0x10 as binary(2)));
 # 
 create table t1 (b varbinary(2), vb varbinary(2));
 insert into t1 values(0x4120, 0x4120);
---error 1406 data too longer for column b
+--error ER_DATA_TOO_LONG data too longer for column b
 insert into t1 values(0x412020, 0x412020);
 drop table t1;
 create table t1 (c char(2), vc varchar(2));
 insert into t1 values(0x4120, 0x4120);
+--error ER_DATA_TOO_LONG
 insert into t1 values(0x412020, 0x412020);
 drop table t1;
 

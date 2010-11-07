@@ -23,6 +23,9 @@
 #include "drizzled/item.h"
 #include <math.h>
 
+namespace drizzled
+{
+
 static const Hybrid_type_traits real_traits_instance;
 
 Item_result Hybrid_type_traits::type() const
@@ -98,3 +101,5 @@ Hybrid_type_traits::Hybrid_type_traits()
 
 Hybrid_type_traits::~Hybrid_type_traits()
 {}
+
+} /* namespace drizzled */

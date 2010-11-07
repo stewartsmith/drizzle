@@ -28,6 +28,8 @@
 #include <drizzled/session.h>
 #include "drizzled/charset.h"
 
+namespace drizzled
+{
 
 DTCollation::DTCollation()
 {
@@ -230,72 +232,10 @@ bool agg_item_charsets(DTCollation &coll, const char *fname,
                        Item **args, uint32_t nargs, uint32_t flags,
                        int item_sep)
 {
-  Item **arg, *safe_args[2];
-
-  memset(safe_args, 0, sizeof(safe_args));
-
   if (agg_item_collations(coll, fname, args, nargs, flags, item_sep))
     return true;
 
-  /*
-    For better error reporting: save the first and the second argument.
-    We need this only if the the number of args is 3 or 2:
-    - for a longer argument list, "Illegal mix of collations"
-      doesn't display each argument's characteristics.
-    - if nargs is 1, then this error cannot happen.
-  */
-  if (nargs >=2 && nargs <= 3)
-  {
-    safe_args[0]= args[0];
-    safe_args[1]= args[item_sep];
-  }
-
-  Session *session= current_session;
-  bool res= false;
-  uint32_t i;
-
-  for (i= 0, arg= args; i < nargs; i++, arg+= item_sep)
-  {
-    Item* conv;
-    uint32_t dummy_offset;
-    if (!String::needs_conversion(0, (*arg)->collation.collation,
-                                  coll.collation,
-                                  &dummy_offset))
-      continue;
-
-    if (!(conv= (*arg)->safe_charset_converter(coll.collation)))
-    {
-      if (nargs >=2 && nargs <= 3)
-      {
-        /* restore the original arguments for better error message */
-        args[0]= safe_args[0];
-        args[item_sep]= safe_args[1];
-      }
-      my_coll_agg_error(args, nargs, fname, item_sep);
-      res= true;
-      break; // we cannot return here, we need to restore "arena".
-    }
-    if ((*arg)->type() == Item::FIELD_ITEM)
-      ((Item_field *)(*arg))->no_const_subst= 1;
-    /*
-      If in statement prepare, then we create a converter for two
-      constant items, do it once and then reuse it.
-      If we're in execution of a prepared statement, arena is NULL,
-      and the conv was created in runtime memory. This can be
-      the case only if the argument is a parameter marker ('?'),
-      because for all true constants the charset converter has already
-      been created in prepare. In this case register the change for
-      rollback.
-    */
-    session->change_item_tree(arg, conv);
-    /*
-      We do not check conv->fixed, because Item_func_conv_charset which can
-      be return by safe_charset_converter can't be fixed at creation
-    */
-    conv->fix_fields(session, arg);
-  }
-
-  return res;
+  return false;
 }
 
 
@@ -334,3 +274,4 @@ void my_coll_agg_error(Item** args, uint32_t count, const char *fname,
     my_error(ER_CANT_AGGREGATE_NCOLLATIONS,MYF(0),fname);
 }
 
+} /* namespace drizzled */

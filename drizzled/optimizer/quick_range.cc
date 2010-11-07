@@ -20,7 +20,8 @@
 #include "config.h"
 #include "drizzled/optimizer/quick_range.h"
 
-using namespace drizzled;
+namespace drizzled
+{
 
 optimizer::QuickRange::QuickRange()
   :
@@ -32,3 +33,5 @@ optimizer::QuickRange::QuickRange()
     min_keypart_map(0),
     max_keypart_map(0)
 {}
+
+} /* namespace drizzled */

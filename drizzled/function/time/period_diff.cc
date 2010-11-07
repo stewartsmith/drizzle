@@ -18,9 +18,12 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include "drizzled/function/time/period_diff.h"
 #include "drizzled/calendar.h"
+
+namespace drizzled
+{
 
 int64_t Item_func_period_diff::val_int()
 {
@@ -32,3 +35,5 @@ int64_t Item_func_period_diff::val_int()
     return 0;
   return (int64_t) (year_month_to_months(period1) -year_month_to_months(period2));
 }
+
+} /* namespace drizzled */

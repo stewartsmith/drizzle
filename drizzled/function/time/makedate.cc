@@ -18,9 +18,12 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include "drizzled/function/time/makedate.h"
 #include "drizzled/time_functions.h"
+
+namespace drizzled
+{
 
 /**
   MAKEDATE(a,b) is a date function that creates a date value
@@ -104,3 +107,4 @@ err:
   return 0;
 }
 
+} /* namespace drizzled */

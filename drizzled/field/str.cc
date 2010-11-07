@@ -26,7 +26,13 @@
 #include <drizzled/session.h>
 #include "drizzled/internal/m_string.h"
 
+namespace drizzled
+{
+
+namespace internal
+{
 extern char _dig_vec_upper[];
+}
 
 Field_str::Field_str(unsigned char *ptr_arg,
                      uint32_t len_arg,
@@ -67,17 +73,10 @@ Field_str::Field_str(unsigned char *ptr_arg,
 int
 Field_str::report_if_important_data(const char *field_ptr, const char *end)
 {
-  if ((field_ptr < end) && table->in_use->count_cuted_fields)
+  if ((field_ptr < end) && getTable()->in_use->count_cuted_fields)
   {
-    if (test_if_important_data(field_charset, field_ptr, end))
-    {
-      if (table->in_use->abort_on_warning)
-        set_warning(DRIZZLE_ERROR::WARN_LEVEL_ERROR, ER_DATA_TOO_LONG, 1);
-      else
-        set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
-    }
-    else /* If we lost only spaces then produce a NOTE, not a WARNING */
-      set_warning(DRIZZLE_ERROR::WARN_LEVEL_NOTE, ER_WARN_DATA_TRUNCATED, 1);
+    set_warning(DRIZZLE_ERROR::WARN_LEVEL_ERROR, ER_DATA_TOO_LONG, 1);
+
     return 2;
   }
   return 0;
@@ -135,10 +134,10 @@ int Field_str::store(double nr)
 
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
-  length= my_gcvt(nr, MY_GCVT_ARG_DOUBLE, local_char_length, buff, &error);
+  length= internal::my_gcvt(nr, internal::MY_GCVT_ARG_DOUBLE, local_char_length, buff, &error);
   if (error)
   {
-    if (table->in_use->abort_on_warning)
+    if (getTable()->in_use->abort_on_warning)
       set_warning(DRIZZLE_ERROR::WARN_LEVEL_ERROR, ER_DATA_TOO_LONG, 1);
     else
       set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
@@ -184,8 +183,8 @@ bool check_string_copy_error(Field_str *field,
     {
       *t++= '\\';
       *t++= 'x';
-      *t++= _dig_vec_upper[((unsigned char) *pos) >> 4];
-      *t++= _dig_vec_upper[((unsigned char) *pos) & 15];
+      *t++= internal::_dig_vec_upper[((unsigned char) *pos) >> 4];
+      *t++= internal::_dig_vec_upper[((unsigned char) *pos) & 15];
     }
   }
   if (end_orig > end)
@@ -195,14 +194,14 @@ bool check_string_copy_error(Field_str *field,
     *t++= '.';
   }
   *t= '\0';
-  push_warning_printf(field->table->in_use,
-                      field->table->in_use->abort_on_warning ?
+  push_warning_printf(field->getTable()->in_use,
+                      field->getTable()->in_use->abort_on_warning ?
                       DRIZZLE_ERROR::WARN_LEVEL_ERROR :
                       DRIZZLE_ERROR::WARN_LEVEL_WARN,
                       ER_TRUNCATED_WRONG_VALUE_FOR_FIELD,
                       ER(ER_TRUNCATED_WRONG_VALUE_FOR_FIELD),
                       "string", tmp, field->field_name,
-                      (uint32_t) field->table->in_use->row_count);
+                      (uint32_t) field->getTable()->in_use->row_count);
   return true;
 }
 
@@ -211,3 +210,4 @@ uint32_t Field_str::max_data_length() const
   return field_length + (field_length > 255 ? 2 : 1);
 }
 
+} /* namespace drizzled */

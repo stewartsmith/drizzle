@@ -23,11 +23,16 @@
 #include <drizzled/function/func.h>
 #include <drizzled/function/math/int.h>
 
+namespace drizzled
+{
+
 class Item_func_integer :public Item_int_func
 {
 public:
   inline Item_func_integer(Item *a) :Item_int_func(a) {}
   void fix_length_and_dec();
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_MATH_INTEGER_H */

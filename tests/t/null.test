@@ -7,7 +7,9 @@ drop table if exists t1, t2;
 # Testing of NULL in a lot of different places
 #
 
+--error ER_DIVISION_BY_ZERO
 select null,\N,isnull(null),isnull(1/0),isnull(1/0 = null),ifnull(null,1),ifnull(null,"TRUE"),ifnull("TRUE","ERROR"),1/0 is null,1 is not null;
+--error ER_DIVISION_BY_ZERO
 explain extended select null,\N,isnull(null),isnull(1/0),isnull(1/0 = null),ifnull(null,1),ifnull(null,"TRUE"),ifnull("TRUE","ERROR"),1/0 is null,1 is not null;
 select CONCAT(1, NULL),1+NULL,1-NULL;
 select NULL=NULL,NULL<>NULL,IFNULL(NULL,1.1)+0,CONCAT(IFNULL(NULL,1), 0);
@@ -65,29 +67,29 @@ CREATE TABLE t1 (a varchar(16) NOT NULL default '', b int NOT NULL default 0, c 
 
 # Test INSERT with NULL
 
---error 1048
+--error ER_BAD_NULL_ERROR
 INSERT INTO t1 (a) values (null);
---error 1048
+--error ER_BAD_NULL_ERROR
 INSERT INTO t1 (a) values (1/null);
---error 1048
+--error ER_BAD_NULL_ERROR
 INSERT INTO t1 (a) values (null),(null);
---error 1048
+--error ER_BAD_NULL_ERROR
 INSERT INTO t1 (b) values (null);
---error 1048
+--error ER_BAD_NULL_ERROR
 INSERT INTO t1 (b) values (1/null);
---error 1048
+--error ER_BAD_NULL_ERROR
 INSERT INTO t1 (b) values (null),(null);
---error 1048
+--error ER_BAD_NULL_ERROR
 INSERT INTO t1 (c) values (null);
---error 1048
+--error ER_BAD_NULL_ERROR
 INSERT INTO t1 (c) values (1/null);
---error 1048
+--error ER_BAD_NULL_ERROR
 INSERT INTO t1 (c) values (null),(null);
---error 1048
+--error ER_BAD_NULL_ERROR
 INSERT INTO t1 (d) values (null);
---error 1048
+--error ER_BAD_NULL_ERROR
 INSERT INTO t1 (d) values (1/null);
---error 1048
+--error ER_BAD_NULL_ERROR
 INSERT INTO t1 (d) values (null),(null);
 
 # Test UPDATE with NULLs
@@ -99,15 +101,15 @@ UPDATE t1 SET d= NULL;
 # Insert a default row in order to test UPDATE to NULL error
 INSERT INTO t1 VALUES ();
 
---error 1048
+--error ER_BAD_NULL_ERROR
 UPDATE t1 SET a=1/NULL;
---error 1048
+--error ER_BAD_NULL_ERROR
 UPDATE t1 SET a=NULL;
---error 1048
+--error ER_BAD_NULL_ERROR
 UPDATE t1 SET b=NULL;
---error 1048
+--error ER_BAD_NULL_ERROR
 UPDATE t1 SET c=NULL;
---error 1048
+--error ER_BAD_NULL_ERROR
 UPDATE t1 SET d=NULL;
 
 truncate table t1;
@@ -117,8 +119,9 @@ truncate table t1;
 # as 1048, only gives a "row" number.
 # @TODO Is there really a reason for a separate error 
 # just for LOAD DATA INFILE?
---error 1263
-LOAD DATA INFILE '../std_data_ln/null_test.txt' INTO TABLE t1 FIELDS ENCLOSED BY '"';
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+--error ER_WARN_NULL_TO_NOTNULL
+eval LOAD DATA INFILE '$DRIZZLETEST_VARDIR/std_data_ln/null_test.txt' INTO TABLE t1 FIELDS ENCLOSED BY '"';
 
 drop table t1;
 
@@ -233,11 +236,11 @@ select
 #create table bug19145c (e enum('a','b','c') not null default 'b' , s set('x', 'y', 'z') not null default 'y' ) engine=MyISAM;
 
 # Invalid default value for 's'
-#--error 1067
+#--error ER_INVALID_DEFAULT
 #create table bug19145setnotnulldefaultnull (e enum('a','b','c')          default null, s set('x', 'y', 'z') not null default null) engine=MyISAM;
 
 # Invalid default value for 'e'
-#--error 1067
+#--error ER_INVALID_DEFAULT
 #create table bug19145enumnotnulldefaultnull (e enum('a','b','c') not null default null, s set('x', 'y', 'z')          default null) engine=MyISAM;
 
 #alter table bug19145a alter column e set default null;
@@ -249,11 +252,11 @@ select
 #alter table bug19145b add column (i int);
 
 # Invalid default value for 'e'
-#--error 1067
+#--error ER_INVALID_DEFAULT
 #alter table bug19145c alter column e set default null;
 
 # Invalid default value for 's'
-#--error 1067
+#--error ER_INVALID_DEFAULT
 #alter table bug19145c alter column s set default null;
 #alter table bug19145c add column (i int);
 

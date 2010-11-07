@@ -30,16 +30,23 @@
 
 #include <stdint.h>
 
+namespace drizzled
+{
+
+/* Global value for how we extend our temporary directory */
+#define GLOBAL_TEMPORARY_EXT ".temporary"
+
 /* These paths are converted to other systems (WIN95) before use */
 
 #define LANGUAGE	"english/"
 #define TEMP_PREFIX	"MY"
 #define LOG_PREFIX	"ML"
-#define PROGDIR		"bin/"
 
-#define ER(X) error_message((X))
+#define ER(X) ::drizzled::error_message((X))
 
-#define LIBLEN FN_REFLEN-FN_LEN			/* Max l{ngd p} dev */
+/* buffer size for strerror_r() */
+#define STRERROR_MAX 256
+
 /* extra 4+4 bytes for slave tmp tables */
 #define MAX_DBKEY_LENGTH (NAME_LEN*2+1+1+4+4)
 #define MAX_ALIAS_NAME 256
@@ -80,23 +87,13 @@
 #define MAX_SORT_MEMORY (2048*1024-MALLOC_OVERHEAD)
 #define MIN_SORT_MEMORY (32*1024-MALLOC_OVERHEAD)
 
-/* Memory allocated when parsing a statement / saving a statement */
-#define MEM_ROOT_BLOCK_SIZE       8192
-#define MEM_ROOT_PREALLOC         8192
-
 #define DEFAULT_ERROR_COUNT	64
 #define EXTRA_RECORDS	10			/* Extra records in sort */
-#define SCROLL_EXTRA	5			/* Extra scroll-rows. */
-#define FIELD_NAME_USED ((uint32_t) 32768)		/* Bit set if fieldname used */
-#define FIELD_NR_MASK	16383			/* To get fieldnumber */
-#define FERR		-1			/* Error from my_functions */
-#define CREATE_MODE	0			/* Default mode on new files */
 #define NAMES_SEP_CHAR	'\377'			/* Char to sep. names */
 
 #define READ_RECORD_BUFFER	(uint32_t) (IO_SIZE*8) /* Pointer_buffer_size */
 #define DISK_BUFFER_SIZE	(uint32_t) (IO_SIZE*16) /* Size of diskbuffer */
 
-#define ME_INFO (ME_HOLDTANG+ME_OLDWIN+ME_NOREFRESH)
 #define ME_ERROR (ME_BELL+ME_OLDWIN+ME_NOREFRESH)
 #define MYF_RW MYF(MY_WME+MY_NABP)		/* Vid my_read & my_write */
 
@@ -114,9 +111,6 @@
 */
 
 #define BIN_LOG_HEADER_SIZE    4
-
-#define COLUMN_FORMAT_MASK 7
-#define COLUMN_FORMAT_SHIFT 3
 
 /* Below are #defines that used to be in mysql_priv.h */
 /***************************************************************************
@@ -141,12 +135,8 @@
 #define STACK_MIN_SIZE_FOR_OPEN 1024*80
 #define STACK_BUFF_ALLOC        352     ///< For stack overrun checks
 
-#define TEMP_POOL_SIZE          128
-
 #define QUERY_ALLOC_BLOCK_SIZE		8192
 #define QUERY_ALLOC_PREALLOC_SIZE   	8192
-#define TRANS_ALLOC_BLOCK_SIZE		4096
-#define TRANS_ALLOC_PREALLOC_SIZE	4096
 #define RANGE_ALLOC_BLOCK_SIZE		4096
 #define TABLE_ALLOC_BLOCK_SIZE		1024
 #define WARN_ALLOC_BLOCK_SIZE		2048
@@ -158,7 +148,6 @@
 */
 #define MIN_FILE_LENGTH_TO_USE_ROW_CACHE (10L*1024*1024)
 #define MIN_ROWS_TO_USE_TABLE_CACHE	 100
-#define MIN_ROWS_TO_USE_BULK_INSERT	 100
 
 /**
   The following is used to decide if MySQL should use table scanning
@@ -199,8 +188,6 @@
 
 /** Characters shown for the command in 'show processlist'. */
 #define PROCESS_LIST_WIDTH 100
-/* Characters shown for the command in 'information_schema.processlist' */
-#define PROCESS_LIST_INFO_WIDTH 65535
 
 #define PRECISION_FOR_DOUBLE 53
 #define PRECISION_FOR_FLOAT  24
@@ -209,11 +196,6 @@
 #define DEFAULT_CONCURRENCY	10
 #define FLUSH_TIME		0		/**< Don't flush tables */
 #define MAX_CONNECT_ERRORS	10		///< errors before disabling host
-
-#define INTERRUPT_PRIOR 10
-#define CONNECT_PRIOR	9
-#define WAIT_PRIOR	8
-#define QUERY_PRIOR	6
 
 /* Bits from testflag */
 enum test_flag_bit
@@ -234,35 +216,28 @@ enum test_flag_bit
 #define MODE_NO_ZERO_DATE		(2)
 #define MODE_INVALID_DATES		(MODE_NO_ZERO_DATE*2)
 
-/* @@optimizer_switch flags */
-#define OPTIMIZER_SWITCH_NO_MATERIALIZATION 1
-#define OPTIMIZER_SWITCH_NO_SEMIJOIN 2
-
 #define MY_CHARSET_BIN_MB_MAXLEN 1
 
 // uncachable cause
-#define UNCACHEABLE_DEPENDENT   1
-#define UNCACHEABLE_RAND        2
-#define UNCACHEABLE_SIDEEFFECT	4
+static const uint32_t UNCACHEABLE_DEPENDENT= 1;
+static const uint32_t UNCACHEABLE_RAND= 2;
+static const uint32_t UNCACHEABLE_SIDEEFFECT= 3;
 /// forcing to save JOIN for explain
-#define UNCACHEABLE_EXPLAIN     8
+static const uint32_t UNCACHEABLE_EXPLAIN= 4;
 /** Don't evaluate subqueries in prepare even if they're not correlated */
-#define UNCACHEABLE_PREPARE    16
+static const uint32_t UNCACHEABLE_PREPARE= 5;
 /* For uncorrelated SELECT in an UNION with some correlated SELECTs */
-#define UNCACHEABLE_UNITED     32
+static const uint32_t UNCACHEABLE_UNITED= 6;
 
 /* Used to check GROUP BY list in the MODE_ONLY_FULL_GROUP_BY mode */
 #define UNDEF_POS (-1)
 
-/* sql_show.cc:show_log_files() */
-#define SHOW_LOG_STATUS_FREE "FREE"
-#define SHOW_LOG_STATUS_INUSE "IN USE"
-
 /* Options to add_table_to_list() */
-#define TL_OPTION_UPDATING	1
-#define TL_OPTION_FORCE_INDEX	2
-#define TL_OPTION_IGNORE_LEAVES 4
-#define TL_OPTION_ALIAS         8
+static const uint32_t TL_OPTION_UPDATING= 0;
+static const uint32_t TL_OPTION_FORCE_INDEX= 1;
+static const uint32_t TL_OPTION_IGNORE_LEAVES= 2;
+static const uint32_t TL_OPTION_ALIAS= 3;
+static const uint32_t NUM_OF_TABLE_OPTIONS= 4;
 
 /* Some portable defines */
 
@@ -282,14 +257,6 @@ enum test_flag_bit
 
 #define STRING_BUFFER_USUAL_SIZE 80
 
-/*
-  Some defines for exit codes for ::is_equal class functions.
-*/
-#define IS_EQUAL_NO 0
-#define IS_EQUAL_YES 1
-#define IS_EQUAL_PACK_LENGTH 2
-
-
 typedef void *range_seq_t;
 
 enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
@@ -304,8 +271,6 @@ enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
 #define HA_ADMIN_INVALID         -5
 #define HA_ADMIN_REJECT          -6
 
-#define HA_NOT_DELETE_WITH_CACHE (1 << 18)
-
 /* bits in index_flags(index_number) for what you can do with index */
 #define HA_READ_NEXT            1       /* TODO really use this flag */
 #define HA_READ_PREV            2       /* supports ::index_prev */
@@ -318,7 +283,6 @@ enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
   set for unordered (e.g. HASH) indexes.
 */
 #define HA_KEY_SCAN_NOT_ROR     128
-#define HA_DO_INDEX_COND_PUSHDOWN  256 /* Supports Index Condition Pushdown */
 
 /* operations for disable/enable indexes */
 #define HA_KEY_SWITCH_NONUNIQ      0
@@ -380,11 +344,6 @@ enum start_transaction_option_t
 #define HA_CREATE_USED_CHARSET          (1L << 8)
 #define HA_CREATE_USED_DEFAULT_CHARSET  (1L << 9)
 #define HA_CREATE_USED_ROW_FORMAT       (1L << 15)
-#define HA_CREATE_USED_KEY_BLOCK_SIZE   (1L << 19)
-#define HA_CREATE_USED_BLOCK_SIZE       (1L << 22)
-
-#define MAXGTRIDSIZE 64
-#define MAXBQUALSIZE 64
 
 /*
   The below two are not used (and not handled) in this milestone of this WL
@@ -425,11 +384,7 @@ enum start_transaction_option_t
 #define HA_MRR_USE_DEFAULT_IMPL 64
 
 typedef int myf;
-#define MYF(v)		(myf) (v)
-
-#define MY_I_S_MAYBE_NULL 1
-#define MY_I_S_UNSIGNED   2
-
+#define MYF(v)		(static_cast<drizzled::myf>(v))
 
 /*
    "Declared Type Collation"
@@ -464,7 +419,6 @@ typedef int myf;
 
 #define MTYP_TYPENR(type) (type & 127)  /* Remove bits from type */
 
-#define f_packtype(x)   (((x) >> FIELDFLAG_PACK_SHIFT) & 15)
 #define f_settype(x)    (((int) x) << FIELDFLAG_PACK_SHIFT)
 
 
@@ -528,18 +482,12 @@ template <class T> void set_if_smaller(T &a, const T &b)
 static const uint32_t ONCE_ALLOC_INIT= 4096;
 /* Typical record cash */
 static const uint32_t RECORD_CACHE_SIZE= 64*1024;
-/* Typical key cash */
-static const uint32_t KEY_CACHE_SIZE= 8*1024*1024;
-
-/* Default size of a key cache block  */
-static const uint32_t KEY_CACHE_BLOCK_SIZE= 1024;
 
 
 /* Some things that this system doesn't have */
 
 /* Some defines of functions for portability */
 
-#undef remove    /* Crashes MySQL on SCO 5.0.0 */
 #ifndef uint64_t2double
 #define uint64_t2double(A) ((double) (uint64_t) (A))
 #endif
@@ -548,10 +496,6 @@ static const uint32_t KEY_CACHE_BLOCK_SIZE= 1024;
 #define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
 #endif
 #define ulong_to_double(X) ((double) (ulong) (X))
-
-#ifndef STACK_DIRECTION
-#error "please add -DSTACK_DIRECTION=1 or -1 to your CPPFLAGS"
-#endif
 
 /* From limits.h instead */
 #ifndef DBL_MIN
@@ -606,10 +550,6 @@ static const uint32_t KEY_CACHE_BLOCK_SIZE= 1024;
 #endif
 
 #define MY_FILEPOS_ERROR  -1
-
-/* Defines for time function */
-#define SCALE_SEC  100
-#define SCALE_USEC  10000
 
 #define DRIZZLE_SERVER
 
@@ -679,5 +619,10 @@ static const uint32_t KEY_CACHE_BLOCK_SIZE= 1024;
 # undef _DTRACE_VERSION
 # define _DTRACE_VERSION 0
 #endif
+
+typedef uint64_t table_map;   /* Used for table bits in join */
+typedef uint32_t nesting_map; /* Used for flags of nesting constructs */
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_DEFINITIONS_H */

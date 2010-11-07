@@ -1,0 +1,80 @@
+# Used to build Makefile.in
+
+if BUILD_PBXT_PLUGIN
+noinst_LTLIBRARIES+= 		plugin/pbxt/libpbxt.la
+endif
+
+noinst_HEADERS+= \
+                 plugin/pbxt/src/backup_xt.h \
+                 plugin/pbxt/src/bsearch_xt.h \
+                 plugin/pbxt/src/cache_xt.h \
+                 plugin/pbxt/src/ccutils_xt.h \
+                 plugin/pbxt/src/database_xt.h \
+                 plugin/pbxt/src/datadic_xt.h \
+                 plugin/pbxt/src/datalog_xt.h \
+                 plugin/pbxt/src/discover_xt.h \
+                 plugin/pbxt/src/filesys_xt.h \
+                 plugin/pbxt/src/ha_pbxt.h \
+                 plugin/pbxt/src/ha_xtsys.h \
+                 plugin/pbxt/src/hashtab_xt.h \
+                 plugin/pbxt/src/heap_xt.h \
+                 plugin/pbxt/src/index_xt.h \
+                 plugin/pbxt/src/linklist_xt.h \
+                 plugin/pbxt/src/locklist_xt.h \
+                 plugin/pbxt/src/lock_xt.h \
+                 plugin/pbxt/src/memory_xt.h \
+                 plugin/pbxt/src/myxt_xt.h \
+                 plugin/pbxt/src/pbms.h \
+                 plugin/pbxt/src/pthread_xt.h \
+                 plugin/pbxt/src/restart_xt.h \
+                 plugin/pbxt/src/sortedlist_xt.h \
+                 plugin/pbxt/src/strutil_xt.h \
+                 plugin/pbxt/src/systab_xt.h \
+                 plugin/pbxt/src/tabcache_xt.h \
+                 plugin/pbxt/src/table_xt.h \
+                 plugin/pbxt/src/thread_xt.h \
+                 plugin/pbxt/src/trace_xt.h \
+                 plugin/pbxt/src/util_xt.h \
+                 plugin/pbxt/src/xaction_xt.h \
+                 plugin/pbxt/src/xactlog_xt.h \
+                 plugin/pbxt/src/xt_config.h \
+                 plugin/pbxt/src/xt_defs.h \
+                 plugin/pbxt/src/xt_errno.h
+
+
+plugin_pbxt_libpbxt_la_CXXFLAGS=	${AM_CXXFLAGS} -DDRIZZLED ${PBXT_EXTRA_CXXFLAGS}
+plugin_pbxt_libpbxt_la_CFLAGS=		${AM_CFLAGS} -DDRIZZLED
+
+plugin_pbxt_libpbxt_la_SOURCES= \
+                                plugin/pbxt/src/bsearch_xt.cc \
+                                plugin/pbxt/src/cache_xt.cc \
+                                plugin/pbxt/src/ccutils_xt.cc \
+                                plugin/pbxt/src/database_xt.cc \
+                                plugin/pbxt/src/datadic_xt.cc \
+                                plugin/pbxt/src/datalog_xt.cc \
+                                plugin/pbxt/src/discover_xt.cc \
+                                plugin/pbxt/src/filesys_xt.cc \
+                                plugin/pbxt/src/ha_xtsys.cc \
+                                plugin/pbxt/src/hashtab_xt.cc \
+                                plugin/pbxt/src/heap_xt.cc \
+                                plugin/pbxt/src/index_xt.cc \
+                                plugin/pbxt/src/linklist_xt.cc \
+                                plugin/pbxt/src/lock_xt.cc \
+                                plugin/pbxt/src/memory_xt.cc \
+                                plugin/pbxt/src/myxt_xt.cc \
+                                plugin/pbxt/src/pthread_xt.cc \
+                                plugin/pbxt/src/restart_xt.cc \
+                                plugin/pbxt/src/sortedlist_xt.cc \
+                                plugin/pbxt/src/strutil_xt.cc \
+                                plugin/pbxt/src/systab_xt.cc \
+                                plugin/pbxt/src/tabcache_xt.cc \
+                                plugin/pbxt/src/table_xt.cc \
+                                plugin/pbxt/src/thread_xt.cc \
+                                plugin/pbxt/src/trace_xt.cc \
+                                plugin/pbxt/src/util_xt.cc \
+                                plugin/pbxt/src/xaction_xt.cc \
+                                plugin/pbxt/src/xactlog_xt.cc
+
+EXTRA_DIST+= \
+             plugin/pbxt/bin/xtstat_xt.cc \
+             plugin/pbxt/src/backup_xt.cc

@@ -20,6 +20,9 @@
 #ifndef DRIZZLED_ITEM_RETURN_DATE_TIME_H
 #define DRIZZLED_ITEM_RETURN_DATE_TIME_H
 
+namespace drizzled
+{
+
 /* for show tables */
 class Item_return_date_time :public Item_string
 {
@@ -32,5 +35,6 @@ public:
   enum_field_types field_type() const { return date_time_field_type; }
 };
 
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_RETURN_DATE_TIME_H */

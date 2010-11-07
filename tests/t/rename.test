@@ -19,14 +19,14 @@ rename table t3 to t4, t2 to t3, t1 to t2, t4 to t1;
 select * from t1;
 
 # The following should give errors
---error 1050,1050
+--error ER_TABLE_EXISTS_ERROR, ER_TABLE_EXISTS_ERROR
 rename table t1 to t2;
---error 1050,1050
+--error ER_TABLE_EXISTS_ERROR, ER_TABLE_EXISTS_ERROR
 rename table t1 to t1;
---error 1050,1050
+--error ER_TABLE_EXISTS_ERROR, ER_TABLE_EXISTS_ERROR
 rename table t3 to t4, t2 to t3, t1 to t2, t4 to t2;
 show tables like "t_";
---error 1050,1050
+--error ER_TABLE_EXISTS_ERROR, ER_TABLE_EXISTS_ERROR
 rename table t3 to t1, t2 to t3, t1 to t2, t4 to t1;
 --error ER_NO_SUCH_TABLE
 rename table t3 to t4, t5 to t3, t1 to t2, t4 to t1;

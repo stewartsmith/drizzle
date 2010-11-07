@@ -11,8 +11,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -38,14 +38,6 @@ Created 11/5/1995 Heikki Tuuri
 #include "srv0start.h"
 #include "srv0srv.h"
 
-/** The size in blocks of the area where the random read-ahead algorithm counts
-the accessed pages when deciding whether to read-ahead */
-#define	BUF_READ_AHEAD_RANDOM_AREA	BUF_READ_AHEAD_AREA
-
-/** There must be at least this many pages in buf_pool in the area to start
-a random read-ahead */
-#define BUF_READ_AHEAD_RANDOM_THRESHOLD	(1 + BUF_READ_AHEAD_RANDOM_AREA / 2)
-
 /** The linear read-ahead area size */
 #define	BUF_READ_AHEAD_LINEAR_AREA	BUF_READ_AHEAD_AREA
 
@@ -62,7 +54,8 @@ flag is cleared and the x-lock released by an i/o-handler thread.
 @return 1 if a read request was queued, 0 if the page already resided
 in buf_pool, or if the page is in the doublewrite buffer blocks in
 which case it is never read into the pool, or if the tablespace does
-not exist or is being dropped */
+not exist or is being dropped 
+@return 1 if read request is issued. 0 if it is not */
 static
 ulint
 buf_read_page_low(
@@ -165,45 +158,13 @@ buf_read_page_low(
 }
 
 /********************************************************************//**
-Applies a random read-ahead in buf_pool if there are at least a threshold
-value of accessed pages from the random read-ahead area. Does not read any
-page, not even the one at the position (space, offset), if the read-ahead
-mechanism is not activated. NOTE 1: the calling thread may own latches on
-pages: to avoid deadlocks this function must be written such that it cannot
-end up waiting for these latches! NOTE 2: the calling thread must want
-access to the page given: this rule is set to prevent unintended read-aheads
-performed by ibuf routines, a situation which could result in a deadlock if
-the OS does not support asynchronous i/o.
-@return number of page read requests issued; NOTE that if we read ibuf
-pages, it may happen that the page at the given page number does not
-get read even if we return a positive value! */
-static
-ulint
-buf_read_ahead_random(
-/*==================*/
-	ulint	space,	/*!< in: space id */
-	ulint	zip_size,/*!< in: compressed page size in bytes, or 0 */
-	ulint	offset)	/*!< in: page number of a page which the current thread
-			wants to access */
-{
-	(void)space;
-	(void)zip_size;
-	(void)offset;
-	/* We have currently disabled random readahead */
-	return(0);
-
-}
-
-/********************************************************************//**
 High-level function which reads a page asynchronously from a file to the
 buffer buf_pool if it is not already there. Sets the io_fix flag and sets
 an exclusive lock on the buffer frame. The flag is cleared and the x-lock
-released by the i/o-handler thread. Does a random read-ahead if it seems
-sensible.
-@return number of page read requests issued: this can be greater than
-1 if read-ahead occurred */
+released by the i/o-handler thread.
+@return TRUE if page has been read in, FALSE in case of failure */
 UNIV_INTERN
-ulint
+ibool
 buf_read_page(
 /*==========*/
 	ulint	space,	/*!< in: space id */
@@ -212,20 +173,17 @@ buf_read_page(
 {
 	ib_int64_t	tablespace_version;
 	ulint		count;
-	ulint		count2;
 	ulint		err;
 
 	tablespace_version = fil_space_get_version(space);
 
-	count = buf_read_ahead_random(space, zip_size, offset);
-
 	/* We do the i/o in the synchronous aio mode to save thread
 	switches: hence TRUE */
 
-	count2 = buf_read_page_low(&err, TRUE, BUF_READ_ANY_PAGE, space,
-				   zip_size, FALSE,
-				   tablespace_version, offset);
-	srv_buf_pool_reads+= count2;
+        count = buf_read_page_low(&err, TRUE, BUF_READ_ANY_PAGE, space,
+                                  zip_size, FALSE,
+                                  tablespace_version, offset);
+        srv_buf_pool_reads += count;
 	if (err == DB_TABLESPACE_DELETED) {
 		ut_print_timestamp(stderr);
 		fprintf(stderr,
@@ -242,7 +200,7 @@ buf_read_page(
 	/* Increment number of I/O operations used for LRU policy. */
 	buf_LRU_stat_inc_io();
 
-	return(count + count2);
+        return(count);
 }
 
 /********************************************************************//**
@@ -369,9 +327,17 @@ buf_read_ahead_linear(
 			fail_count++;
 
 		} else if (pred_bpage) {
-			int res = (ut_ulint_cmp(
-				       buf_page_get_LRU_position(bpage),
-				       buf_page_get_LRU_position(pred_bpage)));
+                       /* Note that buf_page_is_accessed() returns
+                       the time of the first access.  If some blocks
+                       of the extent existed in the buffer pool at
+                       the time of a linear access pattern, the first
+                       access times may be nonmonotonic, even though
+                       the latest access times were linear.  The
+                       threshold (srv_read_ahead_factor) should help
+                       a little against this. */
+                       int res = ut_ulint_cmp(
+                               buf_page_is_accessed(bpage),
+                               buf_page_is_accessed(pred_bpage));
 			/* Accesses not in the right order */
 			if (res != 0 && res != asc_or_desc) {
 				fail_count++;
@@ -514,7 +480,7 @@ buf_read_ahead_linear(
 	LRU policy decision. */
 	buf_LRU_stat_inc_io();
 
-	++srv_read_ahead_seq;
+	buf_pool->stat.n_ra_pages_read += count;
 	return(count);
 }
 

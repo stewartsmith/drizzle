@@ -13,7 +13,8 @@ delete from t1 where a=4;
 insert into t1 values (NULL,5),(NULL,6);
 select * from t1;
 delete from t1 where a=6;
-#show table status like "t1";
+--replace_column 1 #  6 # 7 # 8 # 9 # 10 #
+show table status like "t1";
 replace t1 values (3,1);
 ALTER TABLE t1 add c int;
 replace t1 values (3,3,3);
@@ -135,7 +136,7 @@ delete from t1 where a=0;
 update t1 set a=0 where b=5;
 select * from t1 order by b;
 delete from t1 where a=0;
---error 1048
+--error ER_BAD_NULL_ERROR
 update t1 set a=NULL where b=6;
 update t1 set a=300 where b=7;
 insert into t1(a,b)values(NULL,8);
@@ -150,7 +151,7 @@ delete from t1 where a=0;
 update t1 set a=0 where b=12;
 select * from t1 order by b;
 delete from t1 where a=0;
---error 1048
+--error ER_BAD_NULL_ERROR
 update t1 set a=NULL where b=13;
 update t1 set a=500 where b=14;
 select * from t1 order by b;
@@ -168,7 +169,7 @@ drop table t1;
 
 create table t1 (a bigint);
 insert into t1 values (1), (2), (3), (0), (0);
---error 1062
+--error ER_DUP_ENTRY
 alter table t1 modify a bigint not null auto_increment primary key; 
 select * from t1;
 drop table t1;
@@ -197,7 +198,7 @@ insert into t1 values (0,1),(1,2),(2,3);
 select * from t1;
 #set sql_mode= '';
 alter table t1 modify b varchar(255);
---error 1062
+--error ER_DUP_ENTRY
 insert into t1 values (0,4);
 select * from t1;
 drop table t1;

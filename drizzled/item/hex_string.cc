@@ -18,14 +18,17 @@
  */
 
 #include "config.h"
+
 #include <drizzled/error.h>
 #include <drizzled/item/string.h>
 #include <drizzled/item/hex_string.h>
 
 #include <algorithm>
 
-using namespace drizzled;
 using namespace std;
+
+namespace drizzled
+{
 
 static char _dig_vec_lower[] =
   "0123456789abcdefghijklmnopqrstuvwxyz";
@@ -63,7 +66,7 @@ int64_t Item_hex_string::val_int()
   // following assert is redundant, because fixed=1 assigned in constructor
   assert(fixed == 1);
   char *end= (char*) str_value.ptr()+str_value.length(),
-       *ptr= end - min(str_value.length(),(uint32_t)sizeof(int64_t));
+       *ptr= end - min(str_value.length(), sizeof(int64_t));
 
   uint64_t value=0;
   for (; ptr != end ; ptr++)
@@ -113,7 +116,7 @@ warn:
 void Item_hex_string::print(String *str, enum_query_type)
 {
   char *end= (char*) str_value.ptr() + str_value.length(),
-       *ptr= end - min(str_value.length(), (uint32_t)sizeof(int64_t));
+       *ptr= end - min(str_value.length(), sizeof(int64_t));
   str->append("0x");
   for (; ptr != end ; ptr++)
   {
@@ -147,3 +150,4 @@ Item *Item_hex_string::safe_charset_converter(const CHARSET_INFO * const tocs)
 }
 
 
+} /* namespace drizzled */

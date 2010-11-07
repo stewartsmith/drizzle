@@ -2,9 +2,6 @@
 # included from Top Level Makefile.am
 # All paths should be given relative to the root
 
-
-extra_my_print_defaults_SOURCES= extra/my_print_defaults.cc
-extra_my_print_defaults_LDADD= \
-		drizzled/internal/libinternal.la \
-		gnulib/libgnu.la \
-		$(LIBINTL)
+noinst_PROGRAMS+= \
+		  extra/mysql_password_hash
+extra_mysql_password_hash_LDADD= libdrizzle/libdrizzle.la

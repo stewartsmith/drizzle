@@ -14,6 +14,12 @@ enable_query_log;
 eval create $temp table t1 (v varchar(10), c char(10), t text);
 insert into t1 values('+ ', '+ ', '+ ');
 set @a=repeat(' ',20);
+--error 1406
+insert into t1 values (concat('+',@a),concat('+',@a),concat('+',@a));
+set @a=repeat(' ',10);
+--error 1406
+insert into t1 values (concat('+',@a),concat('+',@a),concat('+',@a));
+set @a=repeat(' ',9);
 insert into t1 values (concat('+',@a),concat('+',@a),concat('+',@a));
 select concat('*',v,'*',c,'*',t,'*') from t1;
 
@@ -189,7 +195,7 @@ alter table t1 modify a varchar(10);
 insert into t1 values ('a '),('a  '),('a   '),('a         ');
 --error ER_DUP_ENTRY
 insert into t1 values ('a     ');
---error ER_DUP_ENTRY
+--error 1406
 insert into t1 values ('a          ');
 --error ER_DUP_ENTRY
 insert into t1 values ('a ');

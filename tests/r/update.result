@@ -198,43 +198,43 @@ a
 0
 show status like 'handler_read%';
 Variable_name	Value
-Handler_read_first	1
-Handler_read_key	2
-Handler_read_next	0
-Handler_read_prev	0
-Handler_read_rnd	0
-Handler_read_rnd_next	0
+Handler_read_first	#
+Handler_read_key	#
+Handler_read_next	#
+Handler_read_prev	#
+Handler_read_rnd	#
+Handler_read_rnd_next	#
 flush status;
 update t1 set a=9999 order by a limit 1;
 update t1 set b=9999 order by a limit 1;
 show status like 'handler_read%';
 Variable_name	Value
-Handler_read_first	2
-Handler_read_key	12
-Handler_read_next	0
-Handler_read_prev	0
-Handler_read_rnd	2
-Handler_read_rnd_next	18
+Handler_read_first	#
+Handler_read_key	#
+Handler_read_next	#
+Handler_read_prev	#
+Handler_read_rnd	#
+Handler_read_rnd_next	#
 flush status;
 delete from t1 order by a limit 1;
 show status like 'handler_read%';
 Variable_name	Value
-Handler_read_first	1
-Handler_read_key	6
-Handler_read_next	0
-Handler_read_prev	0
-Handler_read_rnd	1
-Handler_read_rnd_next	9
+Handler_read_first	#
+Handler_read_key	#
+Handler_read_next	#
+Handler_read_prev	#
+Handler_read_rnd	#
+Handler_read_rnd_next	#
 flush status;
 delete from t1 order by a desc limit 1;
 show status like 'handler_read%';
 Variable_name	Value
-Handler_read_first	1
-Handler_read_key	6
-Handler_read_next	0
-Handler_read_prev	0
-Handler_read_rnd	1
-Handler_read_rnd_next	8
+Handler_read_first	#
+Handler_read_key	#
+Handler_read_next	#
+Handler_read_prev	#
+Handler_read_rnd	#
+Handler_read_rnd_next	#
 alter table t1 disable keys;
 Warnings:
 Note	1031	Table storage engine for 't1' doesn't have this option
@@ -242,12 +242,12 @@ flush status;
 delete from t1 order by a limit 1;
 show status like 'handler_read%';
 Variable_name	Value
-Handler_read_first	1
-Handler_read_key	6
-Handler_read_next	0
-Handler_read_prev	0
-Handler_read_rnd	1
-Handler_read_rnd_next	7
+Handler_read_first	#
+Handler_read_key	#
+Handler_read_next	#
+Handler_read_prev	#
+Handler_read_rnd	#
+Handler_read_rnd_next	#
 select * from t1;
 a	b
 0	0
@@ -282,12 +282,12 @@ flush status;
 update t2 set a=3 where a=2;
 show status like 'handler_read%';
 Variable_name	Value
-Handler_read_first	0
-Handler_read_key	6
-Handler_read_next	1
-Handler_read_prev	0
-Handler_read_rnd	1
-Handler_read_rnd_next	0
+Handler_read_first	#
+Handler_read_key	#
+Handler_read_next	#
+Handler_read_prev	#
+Handler_read_rnd	#
+Handler_read_rnd_next	#
 drop table t1, t2;
 create table t1(f1 int, `*f2` int);
 insert into t1 values (1,1);
@@ -319,40 +319,43 @@ SELECT user_id FROM t1 WHERE request_id=9999999999999;
 user_id
 show status like '%Handler_read%';
 Variable_name	Value
-Handler_read_first	0
-Handler_read_key	2
-Handler_read_next	0
-Handler_read_prev	0
-Handler_read_rnd	0
-Handler_read_rnd_next	0
+Handler_read_first	#
+Handler_read_key	#
+Handler_read_next	#
+Handler_read_prev	#
+Handler_read_rnd	#
+Handler_read_rnd_next	#
 SELECT user_id FROM t1 WHERE request_id=999999999999999999999999999999;
 user_id
 show status like '%Handler_read%';
 Variable_name	Value
-Handler_read_first	0
-Handler_read_key	4
-Handler_read_next	0
-Handler_read_prev	0
-Handler_read_rnd	0
-Handler_read_rnd_next	0
+Handler_read_first	#
+Handler_read_key	#
+Handler_read_next	#
+Handler_read_prev	#
+Handler_read_rnd	#
+Handler_read_rnd_next	#
 UPDATE t1 SET user_id=null WHERE request_id=9999999999999;
 show status like '%Handler_read%';
 Variable_name	Value
-Handler_read_first	0
-Handler_read_key	6
-Handler_read_next	0
-Handler_read_prev	0
-Handler_read_rnd	0
-Handler_read_rnd_next	0
+Handler_read_first	#
+Handler_read_key	#
+Handler_read_next	#
+Handler_read_prev	#
+Handler_read_rnd	#
+Handler_read_rnd_next	#
 UPDATE t1 SET user_id=null WHERE request_id=999999999999999999999999999999;
+Warnings:
+Warning	1264	Out of range value for column 'request_id' at row 1
+Warning	1264	Out of range value for column 'request_id' at row 1
 show status like '%Handler_read%';
 Variable_name	Value
-Handler_read_first	0
-Handler_read_key	6
-Handler_read_next	0
-Handler_read_prev	0
-Handler_read_rnd	0
-Handler_read_rnd_next	0
+Handler_read_first	#
+Handler_read_key	#
+Handler_read_next	#
+Handler_read_prev	#
+Handler_read_rnd	#
+Handler_read_rnd_next	#
 DROP TABLE t1;
 CREATE TABLE t1 (
 a int,
@@ -400,4 +403,5 @@ count(*)
 drop table t1,t2;
 CREATE TABLE t1(col1 enum('a','b') NOT NULL, col2 enum('a','b') DEFAULT NULL, KEY col2 (col2));
 UPDATE t1 SET col1 = "crash" WHERE col2 = now() ;
+drop table t1;
 End of 5.0 tests

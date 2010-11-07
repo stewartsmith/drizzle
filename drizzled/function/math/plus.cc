@@ -18,8 +18,11 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/math/plus.h>
+
+namespace drizzled
+{
 
 double Item_func_plus::real_op()
 {
@@ -64,3 +67,5 @@ my_decimal *Item_func_plus::decimal_op(my_decimal *decimal_value)
     return decimal_value;
   return 0;
 }
+
+} /* namespace drizzled */

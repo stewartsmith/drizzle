@@ -22,12 +22,18 @@
 
 #include <drizzled/function/str/strfunc.h>
 
+namespace drizzled
+{
+
 class Item_func_rpad :public Item_str_func
 {
+  Session &session;
   String tmp_value, rpad_str;
 public:
-  Item_func_rpad(Item *arg1,Item *arg2,Item *arg3)
-    :Item_str_func(arg1,arg2,arg3) {}
+  Item_func_rpad(Session &session_arg, Item *arg1, Item *arg2, Item *arg3) :
+    Item_str_func(arg1,arg2,arg3),
+    session(session_arg)
+  {}
   String *val_str(String *);
   void fix_length_and_dec();
   const char *func_name() const { return "rpad"; }
@@ -36,13 +42,21 @@ public:
 
 class Item_func_lpad :public Item_str_func
 {
+  Session &session;
   String tmp_value, lpad_str;
 public:
-  Item_func_lpad(Item *arg1,Item *arg2,Item *arg3)
-    :Item_str_func(arg1,arg2,arg3) {}
+  Item_func_lpad(Session &session_arg,
+                 Item *arg1,
+                 Item *arg2,
+                 Item *arg3) :
+    Item_str_func(arg1, arg2, arg3) ,
+    session(session_arg)
+  {}
   String *val_str(String *);
   void fix_length_and_dec();
   const char *func_name() const { return "lpad"; }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_STR_PAD_H */

@@ -78,7 +78,7 @@ public:
   virtual in_port_t getPort(void) const= 0;
 };
 
-} /* end namespace drizzled::plugin */
+} /* end namespace plugin */
 } /* end namespace drizzled */
 
 #endif /* DRIZZLED_PLUGIN_LISTEN_TCP_H */

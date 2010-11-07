@@ -28,8 +28,9 @@
 #include <algorithm>
 
 using namespace std;
-using namespace drizzled;
 
+namespace drizzled
+{
 
 optimizer::QuickRorUnionSelect::QuickRorUnionSelect(Session *session_param,
                                                     Table *table)
@@ -71,7 +72,7 @@ int optimizer::QuickRorUnionSelect::init()
     new priority_queue<optimizer::QuickSelectInterface *,
                        vector<optimizer::QuickSelectInterface *>,
                        optimizer::compare_functor >(optimizer::compare_functor(this));
-  if (! (cur_rowid= (unsigned char*) alloc_root(&alloc, 2*head->cursor->ref_length)))
+  if (! (cur_rowid= (unsigned char*) alloc.alloc_root(2 * head->cursor->ref_length)))
   {
     return 0;
   }
@@ -126,7 +127,7 @@ int optimizer::QuickRorUnionSelect::reset()
     queue->push(*it);
   }
 
-  if (head->cursor->ha_rnd_init(1))
+  if (head->cursor->startTableScan(1))
   {
     return 0;
   }
@@ -156,14 +157,13 @@ optimizer::QuickRorUnionSelect::~QuickRorUnionSelect()
   quick_selects.clear();
   if (head->cursor->inited != Cursor::NONE)
   {
-    head->cursor->ha_rnd_end();
+    head->cursor->endTableScan();
   }
-  free_root(&alloc,MYF(0));
-  return;
+  alloc.free_root(MYF(0));
 }
 
 
-bool optimizer::QuickRorUnionSelect::is_keys_used(const MyBitmap *fields)
+bool optimizer::QuickRorUnionSelect::is_keys_used(const boost::dynamic_bitset<>& fields)
 {
   for (vector<optimizer::QuickSelectInterface *>::iterator it= quick_selects.begin();
        it != quick_selects.end();
@@ -269,3 +269,4 @@ void optimizer::QuickRorUnionSelect::add_keys_and_lengths(String *key_names,
   }
 }
 
+} /* namespace drizzled */

@@ -1,3 +1,4 @@
+# vim:ft=automake
 #  Copyright (C) 2009 Sun Microsystems
 #
 #  This program is free software; you can redistribute it and/or modify
@@ -13,7 +14,9 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
+if BUILD_MYISAM_PLUGIN
 noinst_LTLIBRARIES+=	plugin/myisam/libmyisam.la 
+endif
 noinst_HEADERS+=	\
 			plugin/myisam/ha_myisam.h \
 			plugin/myisam/keycache.h \

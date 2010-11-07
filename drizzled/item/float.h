@@ -22,6 +22,9 @@
 
 #include <drizzled/item/num.h>
 
+namespace drizzled
+{
+
 class Item_float :public Item_num
 {
   char *presentation;
@@ -73,6 +76,8 @@ public:
 
   Item *safe_charset_converter(const CHARSET_INFO * const tocs);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_FLOAT_H */
 

@@ -1,0 +1,9 @@
+--echo run slap
+--exec $DRIZZLE_SLAP --number-int-cols=2 --auto-generate-sql --auto-generate-sql-guid-primary --auto-generate-sql-load-type=update --auto-generate-sql-execute-number=5 --auto-generate-sql-write-number=2 --iterations=2 --commit=2  --only-print  2>&1 > $DRIZZLETEST_VARDIR/tmp/slap.out
+
+--echo pipe into drizzle command line utility
+--exec $DRIZZLE test < $DRIZZLETEST_VARDIR/tmp/slap.out
+
+--echo remove tmp file
+--remove_file  $DRIZZLETEST_VARDIR/tmp/slap.out
+

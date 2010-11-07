@@ -1,0 +1,38 @@
+DROP TABLE IF EXISTS t1, `t``1`, `t 1`;
+drop database if exists client_test_db;
+pbxt.location
+note     : The storage engine for the table doesn't support optimize
+pbxt.statistics
+note     : The storage engine for the table doesn't support optimize
+create table `t``1`(a int);
+create table `t 1`(a int);
+test.t 1                                           OK
+test.t`1                                           OK
+drop table `t``1`, `t 1`;
+create database d_bug25347;
+use d_bug25347;
+create table t_bug25347 (a int) engine=MyISAM;
+insert into t_bug25347 values (1),(2),(3);
+flush tables;
+removing and creating
+d_bug25347.t_bug25347
+Error    : Incorrect file format 't_bug25347'
+error    : Corrupt
+insert into t_bug25347 values (4),(5),(6);
+ERROR HY000: Incorrect file format 't_bug25347'
+d_bug25347.t_bug25347
+warning  : Number of rows changed from 0 to 3
+status   : OK
+insert into t_bug25347 values (7),(8),(9);
+select * from t_bug25347;
+a
+1
+2
+3
+7
+8
+9
+drop table t_bug25347;
+drop database d_bug25347;
+use test;
+End of 5.0 tests

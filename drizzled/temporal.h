@@ -285,22 +285,6 @@ public:
 
 
   /**
-   * Operator overload for adding/subtracting a TemporalInterval
-   * instance to this temporal.
-   *
-   * @param TemporalInterval instance to add/subtract to/from
-   */
-  Date& operator+=(const TemporalIntervalYear &rhs);
-  Date& operator+=(const TemporalIntervalDayOrLess &rhs);
-  Date& operator+=(const TemporalIntervalDayOrWeek &rhs);
-  Date& operator+=(const TemporalIntervalYearMonth &rhs);
-  Date& operator-=(const TemporalIntervalYear &rhs);
-  Date& operator-=(const TemporalIntervalDayOrLess &rhs);
-  Date& operator-=(const TemporalIntervalDayOrWeek &rhs);
-  Date& operator-=(const TemporalIntervalYearMonth &rhs);
-
-
-  /**
    * Operator overload for when a DateTime instance is
    * assigned to a Date.  We do a copy of the DateTime's
    * date-related components.
@@ -329,7 +313,7 @@ public:
    *
    * @param C-String to fill.
    * @param Length of to C-String
-   * @returns length of string written (not including trailing '\0').
+   * @returns length of string written (including trailing '\0').
    *          If output was truncated, returns length that would have
    *          been outputted.
    */
@@ -349,7 +333,7 @@ public:
    * successful.
    *
    * @param String to convert from
-   * @param Length of supplied string
+   * @param Length of supplied string (not including trailing '\0').
    */
   virtual bool from_string(const char *from, size_t from_len);
 

@@ -113,11 +113,11 @@ create table t1 (a int primary key);
 insert into t1 values(1),(2);
 select t1.a from t1 as t1 left join t1 as t2 using (a) left join t1 as t3 using (a) left join t1 as t4 using (a) left join t1 as t5 using (a) left join t1 as t6 using (a) left join t1 as t7 using (a) left join t1 as t8 using (a) left join t1 as t9 using (a) left join t1 as t10 using (a) left join t1 as t11 using (a) left join t1 as t12 using (a) left join t1 as t13 using (a) left join t1 as t14 using (a) left join t1 as t15 using (a) left join t1 as t16 using (a) left join t1 as t17 using (a) left join t1 as t18 using (a) left join t1 as t19 using (a) left join t1 as t20 using (a) left join t1 as t21 using (a) left join t1 as t22 using (a) left join t1 as t23 using (a) left join t1 as t24 using (a) left join t1 as t25 using (a) left join t1 as t26 using (a) left join t1 as t27 using (a) left join t1 as t28 using (a) left join t1 as t29 using (a) left join t1 as t30 using (a) left join t1 as t31 using (a);
 --replace_result "31 tables" "XX tables" "61 tables" "XX tables"
---error 1116
+--error ER_TOO_MANY_TABLES
 select t1.a from t1 as t1 left join t1 as t2 using (a) left join t1 as t3 using (a) left join t1 as t4 using (a) left join t1 as t5 using (a) left join t1 as t6 using (a) left join t1 as t7 using (a) left join t1 as t8 using (a) left join t1 as t9 using (a) left join t1 as t10 using (a) left join t1 as t11 using (a) left join t1 as t12 using (a) left join t1 as t13 using (a) left join t1 as t14 using (a) left join t1 as t15 using (a) left join t1 as t16 using (a) left join t1 as t17 using (a) left join t1 as t18 using (a) left join t1 as t19 using (a) left join t1 as t20 using (a) left join t1 as t21 using (a) left join t1 as t22 using (a) left join t1 as t23 using (a) left join t1 as t24 using (a) left join t1 as t25 using (a) left join t1 as t26 using (a) left join t1 as t27 using (a) left join t1 as t28 using (a) left join t1 as t29 using (a) left join t1 as t30 using (a) left join t1 as t31 using (a) left join t1 as t32 using (a) left join t1 as t33 using (a) left join t1 as t34 using (a) left join t1 as t35 using (a) left join t1 as t36 using (a) left join t1 as t37 using (a) left join t1 as t38 using (a) left join t1 as t39 using (a) left join t1 as t40 using (a) left join t1 as t41 using (a) left join t1 as t42 using (a) left join t1 as t43 using (a) left join t1 as t44 using (a) left join t1 as t45 using (a) left join t1 as t46 using (a) left join t1 as t47 using (a) left join t1 as t48 using (a) left join t1 as t49 using (a) left join t1 as t50 using (a) left join t1 as t51 using (a) left join t1 as t52 using (a) left join t1 as t53 using (a) left join t1 as t54 using (a) left join t1 as t55 using (a) left join t1 as t56 using (a) left join t1 as t57 using (a) left join t1 as t58 using (a) left join t1 as t59 using (a) left join t1 as t60 using (a) left join t1 as t61 using (a) left join t1 as t62 using (a) left join t1 as t63 using (a) left join t1 as t64 using (a) left join t1 as t65 using (a);
 select a from t1 as t1 left join t1 as t2 using (a) left join t1 as t3 using (a) left join t1 as t4 using (a) left join t1 as t5 using (a) left join t1 as t6 using (a) left join t1 as t7 using (a) left join t1 as t8 using (a) left join t1 as t9 using (a) left join t1 as t10 using (a) left join t1 as t11 using (a) left join t1 as t12 using (a) left join t1 as t13 using (a) left join t1 as t14 using (a) left join t1 as t15 using (a) left join t1 as t16 using (a) left join t1 as t17 using (a) left join t1 as t18 using (a) left join t1 as t19 using (a) left join t1 as t20 using (a) left join t1 as t21 using (a) left join t1 as t22 using (a) left join t1 as t23 using (a) left join t1 as t24 using (a) left join t1 as t25 using (a) left join t1 as t26 using (a) left join t1 as t27 using (a) left join t1 as t28 using (a) left join t1 as t29 using (a) left join t1 as t30 using (a) left join t1 as t31 using (a);
 --replace_result "31 tables" "XX tables" "61 tables" "XX tables"
---error 1116
+--error ER_TOO_MANY_TABLES
 select a from t1 as t1 left join t1 as t2 using (a) left join t1 as t3 using (a) left join t1 as t4 using (a) left join t1 as t5 using (a) left join t1 as t6 using (a) left join t1 as t7 using (a) left join t1 as t8 using (a) left join t1 as t9 using (a) left join t1 as t10 using (a) left join t1 as t11 using (a) left join t1 as t12 using (a) left join t1 as t13 using (a) left join t1 as t14 using (a) left join t1 as t15 using (a) left join t1 as t16 using (a) left join t1 as t17 using (a) left join t1 as t18 using (a) left join t1 as t19 using (a) left join t1 as t20 using (a) left join t1 as t21 using (a) left join t1 as t22 using (a) left join t1 as t23 using (a) left join t1 as t24 using (a) left join t1 as t25 using (a) left join t1 as t26 using (a) left join t1 as t27 using (a) left join t1 as t28 using (a) left join t1 as t29 using (a) left join t1 as t30 using (a) left join t1 as t31 using (a) left join t1 as t32 using (a) left join t1 as t33 using (a) left join t1 as t34 using (a) left join t1 as t35 using (a) left join t1 as t36 using (a) left join t1 as t37 using (a) left join t1 as t38 using (a) left join t1 as t39 using (a) left join t1 as t40 using (a) left join t1 as t41 using (a) left join t1 as t42 using (a) left join t1 as t43 using (a) left join t1 as t44 using (a) left join t1 as t45 using (a) left join t1 as t46 using (a) left join t1 as t47 using (a) left join t1 as t48 using (a) left join t1 as t49 using (a) left join t1 as t50 using (a) left join t1 as t51 using (a) left join t1 as t52 using (a) left join t1 as t53 using (a) left join t1 as t54 using (a) left join t1 as t55 using (a) left join t1 as t56 using (a) left join t1 as t57 using (a) left join t1 as t58 using (a) left join t1 as t59 using (a) left join t1 as t60 using (a) left join t1 as t61 using (a) left join t1 as t62 using (a) left join t1 as t63 using (a) left join t1 as t64 using (a) left join t1 as t65 using (a);
 drop table t1;
 
@@ -151,6 +151,7 @@ INSERT INTO t1 (d) VALUES ('2001-08-01'),(NULL);
 SELECT * FROM t1 LEFT JOIN t2 USING (d) WHERE t2.d IS NULL;
 SELECT * FROM t1 LEFT JOIN t2 USING (d) WHERE d IS NULL;
 SELECT * from t1 WHERE t1.d IS NULL;
+--error ER_DIVISION_BY_ZERO
 SELECT * FROM t1 WHERE 1/0 IS NULL;
 DROP TABLE t1,t2;
 
@@ -248,6 +249,7 @@ CREATE TEMPORARY TABLE t2 (
   PRIMARY KEY  (id)
 ) ENGINE=MyISAM;
 INSERT INTO t2 VALUES (1,'s1'),(2,'s2'),(3,'s3'),(4,'s4'),(5,'s5');
+--sorted_result
 select t1.*, t2.*  from t1, t2 where t2.id=t1.t2_id limit 2;
 drop table t1,t2;
 
@@ -400,9 +402,11 @@ select t1.c as b, t1.b as a, t2.a as c
 from t1 join (t2 join t4 on b + 1 = y) on t1.c = t4.c;
 
 # Views with bigger natural join
+--sorted_result
 select * from t1 natural join (t2 natural join t3);
 
 # Nested natural/using joins.
+--sorted_result
 select * from (t1 natural join t2) natural join (t3 natural join t4);
 select * from (t1 natural join t2) natural left join (t3 natural join t4);
 select * from (t3 natural join t4) natural right join (t1 natural join t2);
@@ -443,11 +447,14 @@ select * from t1 natural left join (t4 natural join t5) where t5.z is not NULL;
 select * from t1 join (t2 join t4 on b + 1 = y) on t1.c = t4.c;
 select * from (t2 join t4 on b + 1 = y) join t1 on t1.c = t4.c;
 select * from t1 natural join (t2 join t4 on b + 1 = y);
+--sorted_result
 select * from (t1 cross join t2) join (t3 cross join t4) on (a < y and t2.b < t3.c);
 
 # MySQL extension - 'join ... on' over nested comma operator
+--sorted_result
 select * from (t1, t2) join (t3, t4) on (a < y and t2.b < t3.c);
 select * from (t1 natural join t2) join (t3 natural join t4) on a = y;
+--sorted_result
 select * from ((t3 join (t1 join t2 on c > a) on t3.b < t2.a) join t4 on y > t1.c) join t5 on z = t1.b + 3;
 
 # MySQL extension - refererence qualified coalesced columns
@@ -456,6 +463,7 @@ select * from t1 natural join (t4 natural join t5) where t4.y > 7;
 select * from (t4 natural join t5) natural join t1 where t4.y > 7;
 select * from t1 natural left join (t4 natural join t5) where t4.y > 7;
 select * from (t4 natural join t5) natural right join t1 where t4.y > 7;
+--sorted_result
 select * from (t1 natural join t2) join (t3 natural join t4) on t1.b = t3.b;
 
 # MySQL extension - select qualified columns of NJ columns
@@ -576,6 +584,7 @@ flush status;
 select * from t1, t2, t3 where t3.a=t1.a and t2.a=t1.b;
 explain select * from t1, t2, t3 where t3.a=t1.a and t2.a=t1.b;
 --echo We expect rnd_next=5, and read_key must be 0 because of short-cutting:
+--replace_column 2 #
 show status like 'Handler_read%'; 
 drop table t1, t2, t3;
 
@@ -606,12 +615,14 @@ create table t2 (a int, b int, primary key(a));
 insert into t2 select @v:=A.a+10*B.a, @v  from t1 A, t1 B;
 
 explain select * from t1;
+--replace_column 2 #
 show status like '%cost%';
 select 'The cost of accessing t1 (dont care if it changes' '^';
 
 select 'vv: Following query must use ALL(t1), eq_ref(A), eq_ref(B): vv' Z;
 
 explain select * from t1, t2 A, t2 B where A.a = t1.a and B.a=A.b;
+--replace_column 2 #
 show status like '%cost%';
 select '^^: The above should be ~= 20 + cost(select * from t1). Value less than 20 is an error' Z;
 

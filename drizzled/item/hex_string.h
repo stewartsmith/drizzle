@@ -22,6 +22,9 @@
 
 #include <drizzled/item/basic_constant.h>
 
+namespace drizzled
+{
+
 class Item_hex_string: public Item_basic_constant
 {
 public:
@@ -46,5 +49,6 @@ public:
   virtual Item *safe_charset_converter(const CHARSET_INFO * const tocs);
 };
 
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_HEX_STRING_H */

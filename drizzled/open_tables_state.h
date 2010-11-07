@@ -21,6 +21,10 @@
 #ifndef DRIZZLED_OPEN_TABLES_STATE_H
 #define DRIZZLED_OPEN_TABLES_STATE_H
 
+#include "drizzled/lock.h"
+
+namespace drizzled
+{
 
 /**
   Class that holds information about tables which were opened and locked
@@ -36,6 +40,7 @@ public:
     base tables that were opened with @see open_tables().
   */
   Table *open_tables;
+
   /**
     List of temporary tables used by this thread. Contains user-level
     temporary tables, created with CREATE TEMPORARY TABLE, and
@@ -59,43 +64,36 @@ public:
     the 'LOCK_TABLES' chapter of the MySQL manual.
     See also lock_tables() for details.
   */
-  DRIZZLE_LOCK *lock;
+  DrizzleLock *lock;
 
   /*
     CREATE-SELECT keeps an extra lock for the table being
     created. This field is used to keep the extra lock available for
     lower level routines, which would otherwise miss that lock.
    */
-  DRIZZLE_LOCK *extra_lock;
+  DrizzleLock *extra_lock;
 
   uint64_t version;
   uint32_t current_tablenr;
 
   /*
-    Flags with information about the open tables state.
-  */
-  bool backups_available;
-
-  /*
     This constructor serves for creation of Open_tables_state instances
     which are used as backup storage.
   */
-  Open_tables_state() : backups_available(false) { }
+  Open_tables_state() :
+    open_tables(0),
+    temporary_tables(0),
+    derived_tables(0),
+    lock(0),
+    extra_lock(0),
+    version(0),
+    current_tablenr(0)
+  { }
   virtual ~Open_tables_state() {}
 
   Open_tables_state(uint64_t version_arg);
-
-  void set_open_tables_state(Open_tables_state *state)
-  {
-    *this= *state;
-  }
-
-  void reset_open_tables_state()
-  {
-    open_tables= temporary_tables= derived_tables= NULL;
-    extra_lock= lock= NULL;
-    backups_available= false;
-  }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_OPEN_TABLES_STATE_H */

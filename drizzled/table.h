@@ -24,6 +24,7 @@
 #define DRIZZLED_TABLE_H
 
 #include <string>
+#include <boost/dynamic_bitset.hpp>
 
 #include "drizzled/order.h"
 #include "drizzled/filesort_info.h"
@@ -32,16 +33,19 @@
 #include "drizzled/cursor.h"
 #include "drizzled/lex_string.h"
 #include "drizzled/table_list.h"
-#include "drizzled/table_share.h"
+#include "drizzled/definition/table.h"
 #include "drizzled/atomics.h"
 #include "drizzled/query_id.h"
+
+namespace drizzled
+{
 
 class Item;
 class Item_subselect;
 class Select_Lex_Unit;
 class Select_Lex;
 class COND_EQUAL;
-class Security_context;
+class SecurityContext;
 class TableList;
 class Field_timestamp;
 class Field_blob;
@@ -51,55 +55,140 @@ extern uint64_t refresh_version;
 typedef enum enum_table_category TABLE_CATEGORY;
 typedef struct st_columndef MI_COLUMNDEF;
 
-bool create_myisam_from_heap(Session *session, Table *table,
-                             MI_COLUMNDEF *start_recinfo,
-                             MI_COLUMNDEF **recinfo,
-                             int error, bool ignore_last_dupp_key_error);
-
 /**
  * Class representing a set of records, either in a temporary, 
  * normal, or derived table.
  */
 class Table 
 {
+  Field **field; /**< Pointer to fields collection */
 public:
 
-  TableShare *s; /**< Pointer to the shared metadata about the table */
-  Field **field; /**< Pointer to fields collection */
+  Field **getFields() const
+  {
+    return field;
+  }
+
+  Field *getField(uint32_t arg) const
+  {
+    return field[arg];
+  }
+
+  void setFields(Field **arg)
+  {
+    field= arg;
+  }
+
+  void setFieldAt(Field *arg, uint32_t arg_pos)
+  {
+    field[arg_pos]= arg;
+  }
 
   Cursor *cursor; /**< Pointer to the storage engine's Cursor managing this table */
+private:
   Table *next;
-  Table *prev;
+public:
+  Table *getNext() const
+  {
+    return next;
+  }
 
-  MyBitmap *read_set; /* Active column sets */
-  MyBitmap *write_set; /* Active column sets */
+  Table **getNextPtr()
+  {
+    return &next;
+  }
+
+  void setNext(Table *arg)
+  {
+    next= arg;
+  }
+
+  void unlink()
+  {
+    getNext()->setPrev(getPrev());		/* remove from used chain */
+    getPrev()->setNext(getNext());
+  }
+
+private:
+  Table *prev;
+public:
+  Table *getPrev() const
+  {
+    return prev;
+  }
+
+  Table **getPrevPtr()
+  {
+    return &prev;
+  }
+
+  void setPrev(Table *arg)
+  {
+    prev= arg;
+  }
+
+  boost::dynamic_bitset<> *read_set; /* Active column sets */
+  boost::dynamic_bitset<> *write_set; /* Active column sets */
 
   uint32_t tablenr;
   uint32_t db_stat; /**< information about the cursor as in Cursor.h */
 
-  MyBitmap def_read_set; /**< Default read set of columns */
-  MyBitmap def_write_set; /**< Default write set of columns */
-  MyBitmap tmp_set; /* Not sure about this... */
+  boost::dynamic_bitset<> def_read_set; /**< Default read set of columns */
+  boost::dynamic_bitset<> def_write_set; /**< Default write set of columns */
+  boost::dynamic_bitset<> tmp_set; /* Not sure about this... */
 
   Session *in_use; /**< Pointer to the current session using this object */
+  Session *getSession()
+  {
+    return in_use;
+  }
+
+  unsigned char *getInsertRecord()
+  {
+    return record[0];
+  }
+
+  unsigned char *getUpdateRecord()
+  {
+    return record[1];
+  }
 
   unsigned char *record[2]; /**< Pointer to "records" */
-  unsigned char *insert_values; /* used by INSERT ... UPDATE */
-  KEY  *key_info; /**< data of keys in database */
+  std::vector<unsigned char> insert_values; /* used by INSERT ... UPDATE */
+  KeyInfo  *key_info; /**< data of keys in database */
   Field *next_number_field; /**< Set if next_number is activated. @TODO What the heck is the difference between this and the next member? */
   Field *found_next_number_field; /**< Points to the "next-number" field (autoincrement field) */
   Field_timestamp *timestamp_field; /**< Points to the auto-setting timestamp field, if any */
 
   TableList *pos_in_table_list; /* Element referring to this table */
-  order_st *group;
-  const char *alias; /**< alias or table name if no alias */
+  Order *group;
+  
+  const char *getAlias() const
+  {
+    return _alias.c_str();
+  }
+
+  void clearAlias()
+  {
+    _alias.clear();
+  }
+
+  void setAlias(const char *arg)
+  {
+    _alias= arg;
+  }
+
+private:
+  std::string _alias; /**< alias or table name if no alias */
+public:
+
   unsigned char *null_flags;
 
   uint32_t lock_position; /**< Position in DRIZZLE_LOCK.table */
   uint32_t lock_data_start; /**< Start pos. in DRIZZLE_LOCK.locks */
   uint32_t lock_count; /**< Number of locks */
   uint32_t used_fields;
-  uint32_t status; /* What's in record[0] */
+  uint32_t status; /* What's in getInsertRecord() */
   /* number of select if it is derived table */
   uint32_t derived_select_number;
   int current_lock; /**< Type of lock on table */
@@ -119,7 +208,9 @@ public:
   bool null_row;
 
   bool force_index;
-  bool distinct,const_table,no_rows;
+  bool distinct;
+  bool const_table;
+  bool no_rows;
   bool key_read;
   bool no_keyread;
   /*
@@ -234,57 +325,116 @@ public:
   uint32_t quick_key_parts[MAX_KEY];
   uint32_t quick_n_ranges[MAX_KEY];
 
-  drizzled::memory::Root mem_root;
-  filesort_info_st sort;
+private:
+  memory::Root mem_root;
+
+  void init_mem_root()
+  {
+    init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+  }
+public:
+  memory::Root *getMemRoot()
+  {
+    if (not mem_root.alloc_root_inited())
+    {
+      init_mem_root();
+    }
+
+    return &mem_root;
+  }
+
+  void *alloc_root(size_t arg)
+  {
+    if (not mem_root.alloc_root_inited())
+    {
+      init_mem_root();
+    }
+
+    return mem_root.alloc_root(arg);
+  }
+
+  char *strmake_root(const char *str_arg, size_t len_arg)
+  {
+    if (not mem_root.alloc_root_inited())
+    {
+      init_mem_root();
+    }
+
+    return mem_root.strmake_root(str_arg, len_arg);
+  }
+
+  filesort_info sort;
 
   Table();
+  virtual ~Table();
 
   int report_error(int error);
   /**
    * Free information allocated by openfrm
    *
    * @param If true if we also want to free table_share
+   * @note this should all be the destructor
    */
-  int closefrm(bool free_share);
+  int delete_table(bool free_share= false);
 
   void resetTable(Session *session, TableShare *share, uint32_t db_stat_arg);
 
   /* SHARE methods */
-  inline TableShare *getShare() { return s; } /* Get rid of this long term */
-  inline void setShare(TableShare *new_share) { s= new_share; } /* Get rid of this long term */
-  inline uint32_t sizeKeys() { return s->keys; }
-  inline uint32_t sizeFields() { return s->fields; }
-  inline uint32_t getRecordLength() { return s->reclength; }
-  inline uint32_t sizeBlobFields() { return s->blob_fields; }
-  inline uint32_t *getBlobField() { return s->blob_field; }
-  inline uint32_t getNullBytes() { return s->null_bytes; }
-  inline uint32_t getNullFields() { return s->null_fields; }
-  inline unsigned char *getDefaultValues() { return s->default_values; }
+  virtual const TableShare *getShare() const= 0; /* Get rid of this long term */
+  virtual TableShare *getMutableShare()= 0; /* Get rid of this long term */
+  virtual bool hasShare() const= 0; /* Get rid of this long term */
+  virtual void setShare(TableShare *new_share)= 0; /* Get rid of this long term */
 
-  inline bool isDatabaseLowByteFirst() { return s->db_low_byte_first; } /* Portable row format */
-  inline bool isNameLock() { return s->name_lock; }
-  inline bool isReplaceWithNameLock() { return s->replace_with_name_lock; }
-  inline bool isWaitingOnCondition() { return s->waiting_on_cond; } /* Protection against free */
+  virtual void release(void)= 0;
+
+  uint32_t sizeKeys() { return getMutableShare()->sizeKeys(); }
+  uint32_t sizeFields() { return getMutableShare()->sizeFields(); }
+  uint32_t getRecordLength() const { return getShare()->getRecordLength(); }
+  uint32_t sizeBlobFields() { return getMutableShare()->blob_fields; }
+  uint32_t *getBlobField() { return &getMutableShare()->blob_field[0]; }
+
+public:
+  virtual bool hasVariableWidth() const
+  {
+    return getShare()->hasVariableWidth(); // We should calculate this.
+  }
+
+  virtual void setVariableWidth(void);
+
+  Field_blob *getBlobFieldAt(uint32_t arg) const
+  {
+    if (arg < getShare()->blob_fields)
+      return (Field_blob*) field[getShare()->blob_field[arg]]; /*NOTE: Using 'Table.field' NOT SharedTable.field. */
+
+    return NULL;
+  }
+  inline uint8_t getBlobPtrSize() { return getShare()->blob_ptr_size; }
+  inline uint32_t getNullBytes() { return getShare()->null_bytes; }
+  inline uint32_t getNullFields() { return getShare()->null_fields; }
+  inline unsigned char *getDefaultValues() { return  getMutableShare()->getDefaultValues(); }
+  inline const char *getSchemaName()  const { return getShare()->getSchemaName(); }
+  inline const char *getTableName()  const { return getShare()->getTableName(); }
+
+  inline bool isDatabaseLowByteFirst() { return getShare()->db_low_byte_first; } /* Portable row format */
+  inline bool isNameLock() const { return getShare()->isNameLock(); }
+  inline bool isReplaceWithNameLock() { return getShare()->replace_with_name_lock; }
 
   uint32_t index_flags(uint32_t idx) const
   {
-    return s->storage_engine->index_flags(s->key_info[idx].algorithm);
+    return getShare()->storage_engine->index_flags(getShare()->getKeyInfo(idx).algorithm);
   }
 
-  inline drizzled::plugin::StorageEngine *getEngine() const	/* table_type for handler */
+  inline plugin::StorageEngine *getEngine() const   /* table_type for handler */
   {
-    return s->storage_engine;
+    return getShare()->storage_engine;
   }
 
-  /* For TMP tables, should be pulled out as a class */
-  void updateCreateInfo(drizzled::message::Table *table_proto);
-  void setup_tmp_table_column_bitmaps(unsigned char *bitmaps);
-  bool create_myisam_tmp_table(KEY *keyinfo,
-                               MI_COLUMNDEF *start_recinfo,
-                               MI_COLUMNDEF **recinfo,
-                               uint64_t options);
-  void free_tmp_table(Session *session);
-  bool open_tmp_table();
+  Cursor &getCursor() const /* table_type for handler */
+  {
+    assert(cursor);
+    return *cursor;
+  }
+
   size_t max_row_length(const unsigned char *data);
   uint32_t find_shortest_key(const key_map *usable_keys);
   bool compare_record(Field **ptr);
@@ -296,6 +446,7 @@ public:
   void restoreRecord();
   void restoreRecordAsDefault();
   void emptyRecord();
+
 
   /* See if this can be blown away */
   inline uint32_t getDBStat () { return db_stat; }
@@ -319,7 +470,7 @@ public:
   bool fill_item_list(List<Item> *item_list) const;
   void clear_column_bitmaps(void);
   void prepare_for_position(void);
-  void mark_columns_used_by_index_no_reset(uint32_t index, MyBitmap *map);
+  void mark_columns_used_by_index_no_reset(uint32_t index, boost::dynamic_bitset<>& bitmap);
   void mark_columns_used_by_index_no_reset(uint32_t index);
   void mark_columns_used_by_index(uint32_t index);
   void restore_column_maps_after_mark_index();
@@ -327,31 +478,15 @@ public:
   void mark_columns_needed_for_update(void);
   void mark_columns_needed_for_delete(void);
   void mark_columns_needed_for_insert(void);
-  inline void column_bitmaps_set(MyBitmap *read_set_arg,
-                                 MyBitmap *write_set_arg)
-  {
-    read_set= read_set_arg;
-    write_set= write_set_arg;
-  }
-  /**
-   * Find field in table, no side effects, only purpose is to check for field
-   * in table object and get reference to the field if found.
-   *
-   * @param Name of field searched for
-   *
-   * @retval
-   *  0 field is not found
-   * @retval
-   *  non-0 pointer to field
-   */
-  Field *find_field_in_table_sef(const char *name);
+  void column_bitmaps_set(boost::dynamic_bitset<>& read_set_arg,
+                          boost::dynamic_bitset<>& write_set_arg);
 
-  void restore_column_map(my_bitmap_map *old);
+  void restore_column_map(const boost::dynamic_bitset<>& old);
 
-  my_bitmap_map *use_all_columns(MyBitmap *bitmap);
+  const boost::dynamic_bitset<> use_all_columns(boost::dynamic_bitset<>& map);
   inline void use_all_columns()
   {
-    column_bitmaps_set(&s->all_set, &s->all_set);
+    column_bitmaps_set(getMutableShare()->all_set, getMutableShare()->all_set);
   }
 
   inline void default_column_bitmaps()
@@ -363,52 +498,52 @@ public:
   /* Both of the below should go away once we can move this bit to the field objects */
   inline bool isReadSet(uint32_t index)
   {
-    return read_set->isBitSet(index);
+    return read_set->test(index);
   }
 
   inline void setReadSet(uint32_t index)
   {
-    read_set->setBit(index);
+    read_set->set(index);
   }
 
   inline void setReadSet()
   {
-    read_set->setAll();
+    read_set->set();
   }
 
   inline void clearReadSet(uint32_t index)
   {
-    read_set->clearBit(index);
+    read_set->reset(index);
   }
 
   inline void clearReadSet()
   {
-    read_set->clearAll();
+    read_set->reset();
   }
 
   inline bool isWriteSet(uint32_t index)
   {
-    return write_set->isBitSet(index);
+    return write_set->test(index);
   }
 
   inline void setWriteSet(uint32_t index)
   {
-    write_set->setBit(index);
+    write_set->set(index);
   }
 
   inline void setWriteSet()
   {
-    write_set->setAll();
+    write_set->set();
   }
 
   inline void clearWriteSet(uint32_t index)
   {
-    write_set->clearBit(index);
+    write_set->reset(index);
   }
 
   inline void clearWriteSet()
   {
-    write_set->clearAll();
+    write_set->reset();
   }
 
   /* Is table open or should be treated as such by name-locking? */
@@ -421,7 +556,7 @@ public:
   */
   inline bool needs_reopen_or_name_lock()
   { 
-    return s->version != refresh_version;
+    return getShare()->getVersion() != refresh_version;
   }
 
   /**
@@ -436,17 +571,16 @@ public:
   {
     null_row= 1;
     status|= STATUS_NULL_ROW;
-    memset(null_flags, 255, s->null_bytes);
+    memset(null_flags, 255, getShare()->null_bytes);
   }
 
-  bool rename_temporary_table(const char *db, const char *table_name);
   void free_io_cache();
   void filesort_free_buffers(bool full= false);
   void intern_close_table();
 
   void print_error(int error, myf errflag)
   {
-    s->storage_engine->print_error(error, errflag, *this);
+    getShare()->storage_engine->print_error(error, errflag, *this);
   }
 
   /**
@@ -463,61 +597,248 @@ public:
 
     return(cursor->errkey);
   }
+
+  /*
+    This is a short term fix. Long term we will used the TableIdentifier to do the actual comparison.
+  */
+  bool operator<(const Table &right) const
+  {
+    int result= strcasecmp(this->getShare()->getSchemaName(), right.getShare()->getSchemaName());
+
+    if (result <  0)
+      return true;
+
+    if (result >  0)
+      return false;
+
+    result= strcasecmp(this->getShare()->getTableName(), right.getShare()->getTableName());
+
+    if (result <  0)
+      return true;
+
+    if (result >  0)
+      return false;
+
+    if (this->getShare()->getTableProto()->type()  < right.getShare()->getTableProto()->type())
+      return true;
+
+    return false;
+  }
+
+  static bool compare(const Table *a, const Table *b)
+  {
+    return *a < *b;
+  }
+
+  friend std::ostream& operator<<(std::ostream& output, const Table &table)
+  {
+    if (table.getShare())
+    {
+      output << "Table:(";
+      output << table.getShare()->getSchemaName();
+      output << ", ";
+      output <<  table.getShare()->getTableName();
+      output << ", ";
+      output <<  table.getShare()->getTableTypeAsString();
+      output << ")";
+    }
+    else
+    {
+      output << "Table:(has no share)";
+    }
+
+    return output;  // for multiple << operators.
+  }
+
+public:
+  virtual bool isPlaceHolder(void) const
+  {
+    return false;
+  }
 };
 
-Table *create_virtual_tmp_table(Session *session, List<CreateField> &field_list);
-
-typedef struct st_foreign_key_info
+/**
+ * @class
+ *  ForeignKeyInfo
+ *
+ * @brief
+ *  This class defines the information for foreign keys.
+ */
+class ForeignKeyInfo
 {
-  LEX_STRING *forein_id;
-  LEX_STRING *referenced_db;
-  LEX_STRING *referenced_table;
-  LEX_STRING *update_method;
-  LEX_STRING *delete_method;
-  LEX_STRING *referenced_key_name;
-  List<LEX_STRING> foreign_fields;
-  List<LEX_STRING> referenced_fields;
-} FOREIGN_KEY_INFO;
+public:
+    /**
+     * @brief
+     *  This is the constructor with all properties set.
+     *
+     * @param[in] in_foreign_id The id of the foreign key
+     * @param[in] in_referenced_db The referenced database name of the foreign key
+     * @param[in] in_referenced_table The referenced table name of the foreign key
+     * @param[in] in_update_method The update method of the foreign key.
+     * @param[in] in_delete_method The delete method of the foreign key.
+     * @param[in] in_referenced_key_name The name of referenced key
+     * @param[in] in_foreign_fields The foreign fields
+     * @param[in] in_referenced_fields The referenced fields
+     */
+    ForeignKeyInfo(LEX_STRING *in_foreign_id,
+                   LEX_STRING *in_referenced_db,
+                   LEX_STRING *in_referenced_table,
+                   LEX_STRING *in_update_method,
+                   LEX_STRING *in_delete_method,
+                   LEX_STRING *in_referenced_key_name,
+                   List<LEX_STRING> in_foreign_fields,
+                   List<LEX_STRING> in_referenced_fields)
+    :
+      foreign_id(in_foreign_id),
+      referenced_db(in_referenced_db),
+      referenced_table(in_referenced_table),
+      update_method(in_update_method),
+      delete_method(in_delete_method),
+      referenced_key_name(in_referenced_key_name),
+      foreign_fields(in_foreign_fields),
+      referenced_fields(in_referenced_fields)
+    {}
 
+    /**
+     * @brief
+     *  This is the default constructor. All properties are set to default values for their types.
+     */
+    ForeignKeyInfo()
+    : foreign_id(NULL), referenced_db(NULL), referenced_table(NULL),
+      update_method(NULL), delete_method(NULL), referenced_key_name(NULL)
+    {}
 
+    /**
+     * @brief
+     *  Gets the foreign id.
+     *
+     * @ retval  the foreign id
+     */
+    const LEX_STRING *getForeignId() const
+    {
+        return foreign_id;
+    }
+
+    /**
+     * @brief
+     *  Gets the name of the referenced database.
+     *
+     * @ retval  the name of the referenced database
+     */
+    const LEX_STRING *getReferencedDb() const
+    {
+        return referenced_db;
+    }
+
+    /**
+     * @brief
+     *  Gets the name of the referenced table.
+     *
+     * @ retval  the name of the referenced table
+     */
+    const LEX_STRING *getReferencedTable() const
+    {
+        return referenced_table;
+    }
+
+    /**
+     * @brief
+     *  Gets the update method.
+     *
+     * @ retval  the update method
+     */
+    const LEX_STRING *getUpdateMethod() const
+    {
+        return update_method;
+    }
+
+    /**
+     * @brief
+     *  Gets the delete method.
+     *
+     * @ retval  the delete method
+     */
+    const LEX_STRING *getDeleteMethod() const
+    {
+        return delete_method;
+    }
+
+    /**
+     * @brief
+     *  Gets the name of the referenced key.
+     *
+     * @ retval  the name of the referenced key
+     */
+    const LEX_STRING *getReferencedKeyName() const
+    {
+        return referenced_key_name;
+    }
+
+    /**
+     * @brief
+     *  Gets the foreign fields.
+     *
+     * @ retval  the foreign fields
+     */
+    const List<LEX_STRING> &getForeignFields() const
+    {
+        return foreign_fields;
+    }
+
+    /**
+     * @brief
+     *  Gets the referenced fields.
+     *
+     * @ retval  the referenced fields
+     */
+    const List<LEX_STRING> &getReferencedFields() const
+    {
+        return referenced_fields;
+    }
+private:
+    /**
+     * The foreign id.
+     */
+    LEX_STRING *foreign_id;
+    /**
+     * The name of the reference database.
+     */
+    LEX_STRING *referenced_db;
+    /**
+     * The name of the reference table.
+     */
+    LEX_STRING *referenced_table;
+    /**
+     * The update method.
+     */
+    LEX_STRING *update_method;
+    /**
+     * The delete method.
+     */
+    LEX_STRING *delete_method;
+    /**
+     * The name of the referenced key.
+     */
+    LEX_STRING *referenced_key_name;
+    /**
+     * The foreign fields.
+     */
+    List<LEX_STRING> foreign_fields;
+    /**
+     * The referenced fields.
+     */
+    List<LEX_STRING> referenced_fields;
+};
 
 class TableList;
 
-#define JOIN_TYPE_LEFT	1
-#define JOIN_TYPE_RIGHT	2
+#define JOIN_TYPE_LEFT  1
+#define JOIN_TYPE_RIGHT 2
 
 struct st_lex;
 class select_union;
 class Tmp_Table_Param;
 
-typedef struct st_changed_table_list
-{
-  struct	st_changed_table_list *next;
-  char		*key;
-  uint32_t key_length;
-} CHANGED_TableList;
-
-struct open_table_list_st
-{
-  std::string	db;
-  std::string	table;
-  uint32_t in_use;
-  uint32_t locked;
-
-  open_table_list_st() :
-    in_use(0),
-    locked(0)
-  { }
-
-};
-
-TableShare *alloc_table_share(TableList *table_list, char *key,
-                               uint32_t key_length);
-int open_table_def(Session& session, TableShare *share);
-void open_table_error(TableShare *share, int error, int db_errno, int errarg);
-int open_table_from_share(Session *session, TableShare *share, const char *alias,
-                          uint32_t db_stat, uint32_t ha_open_flags,
-                          Table *outparam);
 void free_blobs(Table *table);
 int set_zone(int nr,int min_zone,int max_zone);
 uint32_t convert_period_to_month(uint32_t period);
@@ -526,32 +847,27 @@ uint32_t convert_month_to_period(uint32_t month);
 int test_if_number(char *str,int *res,bool allow_wildcards);
 void change_byte(unsigned char *,uint,char,char);
 
-namespace drizzled { namespace optimizer { class SqlSelect; } }
+namespace optimizer { class SqlSelect; }
 
-ha_rows filesort(Session *session,
-                 Table *form,
-                 struct st_sort_field *sortorder,
-		             uint32_t s_length,
-                 drizzled::optimizer::SqlSelect *select,
-		             ha_rows max_rows,
-                 bool sort_positions,
-                 ha_rows *examined_rows);
-
-void filesort_free_buffers(Table *table, bool full);
 void change_double_for_sort(double nr,unsigned char *to);
 double my_double_round(double value, int64_t dec, bool dec_unsigned,
                        bool truncate);
-int get_quick_record(drizzled::optimizer::SqlSelect *select);
+int get_quick_record(optimizer::SqlSelect *select);
 
 void find_date(char *pos,uint32_t *vek,uint32_t flag);
 TYPELIB *convert_strings_to_array_type(char * *typelibs, char * *end);
-TYPELIB *typelib(drizzled::memory::Root *mem_root, List<String> &strings);
+TYPELIB *typelib(memory::Root *mem_root, List<String> &strings);
 ulong get_form_pos(int file, unsigned char *head, TYPELIB *save_names);
-ulong next_io_size(ulong pos);
 void append_unescaped(String *res, const char *pos, uint32_t length);
 
 int rename_file_ext(const char * from,const char * to,const char * ext);
 bool check_column_name(const char *name);
+bool check_db_name(Session *session, SchemaIdentifier &schema);
 bool check_table_name(const char *name, uint32_t length);
+
+} /* namespace drizzled */
+
+#include "drizzled/table/instance.h"
+#include "drizzled/table/concurrent.h"
 
 #endif /* DRIZZLED_TABLE_H */

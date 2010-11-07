@@ -25,6 +25,9 @@
 #include <drizzled/item/func.h>
 #include <drizzled/plugin/function.h>
 
+namespace drizzled
+{
+
 /**
   Public function builder interface.
   The parser (sql/sql_yacc.yy) uses a factory / builder pattern to
@@ -141,7 +144,7 @@ public:
     @return An item representing the parsed function call
   */
   Item *create(Session *session,
-               const drizzled::plugin::Function *fct,
+               const plugin::Function *fct,
                List<Item> *item_list);
 
   /** Singleton. */
@@ -173,5 +176,7 @@ create_func_cast(Session *session, Item *a, Cast_target cast_type,
 
 int item_create_init();
 void item_create_cleanup();
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_CREATE_H */

@@ -22,7 +22,9 @@
 #include <drizzled/error.h>
 #include <drizzled/plugin/listen_tcp.h>
 #include <drizzled/errmsg_print.h>
+#include <drizzled/constrained_value.h>
 
+#include <cstdio>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <fcntl.h>
@@ -30,15 +32,15 @@
 #include <netinet/tcp.h>
 #include <cerrno>
 
-extern uint32_t back_log;
-extern uint32_t drizzled_bind_timeout;
-
 using namespace std;
 
 #define MAX_ACCEPT_RETRY	10	// Test accept this many times
 
 namespace drizzled
 {
+extern back_log_constraints back_log;
+extern uint32_t drizzled_bind_timeout;
+
 
 int plugin::ListenTcp::acceptTcp(int fd)
 {
@@ -192,24 +194,24 @@ bool plugin::ListenTcp::getFileDescriptors(std::vector<int> &fds)
         break;
       }
 
-      errmsg_printf(ERRMSG_LVL_INFO, _("Retrying bind() on %u"), getPort());
+      errmsg_printf(ERRMSG_LVL_INFO, _("Retrying bind() on %u\n"), getPort());
       this_wait= retry * retry / 3 + 1;
       sleep(this_wait);
     }
 
     if (ret < 0)
     {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("bind() failed with errno: %d"),
+      errmsg_printf(ERRMSG_LVL_ERROR, _("bind() failed with errno: %d\n"),
                     errno);
       errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("Do you already have another drizzled running?"));
+                    _("Do you already have another drizzled running?\n"));
       return true;
     }
 
     if (listen(fd, (int) back_log) < 0)
     {
       errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("listen() failed with errno %d"), errno);
+                    _("listen() failed with errno %d\n"), errno);
       return true;
     }
 

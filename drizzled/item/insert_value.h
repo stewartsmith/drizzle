@@ -22,6 +22,9 @@
 
 #include "drizzled/item/field.h"
 
+namespace drizzled
+{
+
 /*
   Item_insert_value -- an implementation of VALUES() function.
   You can use the VALUES(col_name) function in the UPDATE clause
@@ -59,5 +62,7 @@ public:
             (this->*processor)(args);
   }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_INSERT_VALUE_H */

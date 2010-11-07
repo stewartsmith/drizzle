@@ -11,16 +11,22 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /* Open a temporary file and cache it with io_cache. Delete it on close */
 
-#include "drizzled/internal/mysys_priv.h"
+#include "config.h"
+
+#include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/m_string.h"
 #include "drizzled/internal/my_static.h"
-#include "drizzled/my_error.h"
 #include "drizzled/internal/iocache.h"
+#include "drizzled/error.h"
 
+namespace drizzled
+{
+namespace internal
+{
 
 	/*
 	** Open tempfile cached by IO_CACHE
@@ -88,3 +94,6 @@ void close_cached_file(IO_CACHE *cache)
   }
   return;
 }
+
+} /* namespace internal */
+} /* namespace drizzled */

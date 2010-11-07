@@ -29,7 +29,6 @@ create index it3i3 on t3i (c1, c2);
 insert into t1i select * from t1;
 insert into t2i select * from t2;
 insert into t3i select * from t3;
-set @@optimizer_switch=no_semijoin;
 /********************************************************************
 * Simple tests.
 ********************************************************************/
@@ -432,7 +431,6 @@ DROP TABLE columns;
 Test that BLOBs are not materialized (except when arguments of some functions).
 */
 # force materialization to be always considered
-set @@optimizer_switch=no_semijoin;
 set @prefix_len = 6;
 set @blob_len = 16;
 set @suffix_len = @blob_len - @prefix_len;
@@ -842,7 +840,7 @@ drop table t1, t2, t3;
 /******************************************************************************
 * Test the cache of the left operand of IN.
 ******************************************************************************/
-set @@optimizer_switch=no_semijoin;
+# Test that default values of Cached_item are not used for comparison
 create temporary table t1 (s1 int) ENGINE=MyISAM;
 create temporary table t2 (s2 int) ENGINE=MyISAM;
 insert into t1 values (5),(1),(0);

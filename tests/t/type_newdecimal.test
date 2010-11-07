@@ -105,6 +105,7 @@ drop table t1;
 #
 # Trydy's tests
 #
+--error ER_DIVISION_BY_ZERO
 select 1e10/0e0;
 #create table wl1612 (col1 int, col2 decimal(38,10), col3 numeric(38,10));
 #insert into wl1612 values(1,12345678901234567890.1234567890,12345678901234567890.1234567890);
@@ -722,10 +723,12 @@ select 0.07 * 0.07;
 select 1E-500 = 0;
 #-- should return 1 (true).
 #
+--error ER_DIVISION_BY_ZERO
 select 1 / 1E-500;
 #
 #-- should return SQLSTATE 22012 division by zero.
 #
+--error ER_DIVISION_BY_ZERO
 select 1 / 0;
 #-- should return SQLSTATE 22012 division by zero.
 #
@@ -828,14 +831,14 @@ INSERT INTO Sow6_2f VALUES (10.55);
 # This INSERT statement will give an error since truncation of a
 # decimal number in Drizzle is an error. See bug#337038 for further
 # details.
---error 1265
+--error ER_WARN_DATA_TRUNCATED
 INSERT INTO Sow6_2f VALUES (10.5555);
 #-- should return OK
 INSERT INTO Sow6_2f VALUES (-10.55);
 # This INSERT statement will give an error since truncation of a
 # decimal number in Drizzle is an error. See bug#337038 for further
 # details.
---error 1265
+--error ER_WARN_DATA_TRUNCATED
 INSERT INTO Sow6_2f VALUES (-10.5555);
 #-- should return OK
 INSERT INTO Sow6_2f VALUES (11);
@@ -849,6 +852,7 @@ INSERT INTO Sow6_2f VALUES (101.55);
 #-- error 1365
 #UPDATE Sow6_2f SET col1 = col1 / 0 WHERE col1 > 0;
 #-- should return SQLSTATE 22012 division by zero
+--error ER_DIVISION_BY_ZERO
 SELECT MOD(col1,0) FROM Sow6_2f;
 #-- should return SQLSTATE 22012 division by zero
 -- error 1366
@@ -865,6 +869,7 @@ select 10.3330000000000/12.34500000;
 # Bug #10404
 #
 
+--error ER_DIVISION_BY_ZERO
 select 0/0;
 
 #
@@ -901,6 +906,7 @@ DROP TABLE t1;
 # Bug #10599: problem with NULL
 #
 
+--error ER_DIVISION_BY_ZERO
 select abs(10/0);
 select abs(NULL);
 
@@ -911,9 +917,9 @@ create table t1( d1 decimal(18), d2 decimal(20), d3 decimal (22));
 insert into t1 values(1,-1,-1);
 drop table t1;
 create table t1 (col1 decimal(5,2), col2 numeric(5,2));
---error 1264
+--error ER_WARN_DATA_OUT_OF_RANGE
 insert into t1 values (999.999,999.999);
---error 1264
+--error ER_WARN_DATA_OUT_OF_RANGE
 insert into t1 values (-999.999,-999.999);
 select * from t1;
 drop table t1;
@@ -958,21 +964,21 @@ select cast('1.00000001335143196001808973960578441619873046875E-10' as decimal(3
 # Bug #11708 (conversion to decimal fails in decimal part)
 #
 select ln(14000) c1, convert(ln(14000),decimal(5,3)) c2, cast(ln(14000) as decimal(5,3)) c3;
---error 1427
+--error ER_M_BIGGER_THAN_D
 select convert(ln(14000),decimal(2,3)) c1;
---error 1427
+--error ER_M_BIGGER_THAN_D
 select cast(ln(14000) as decimal(2,3)) c1;
  
 #
 # Bug #8449 (Silent column changes)
 #
---error 1426
+--error ER_TOO_BIG_PRECISION
 create table t1 (sl decimal(70,30));
---error 1425
+--error ER_TOO_BIG_SCALE
 create table t1 (sl decimal(32,31));
---error 1425
+--error ER_TOO_BIG_SCALE
 create table t1 (sl decimal(0,38));
---error 1427
+--error ER_M_BIGGER_THAN_D
 create table t1 (sl decimal(0,30));
 create table t1 (sl decimal(5, 5));
 --replace_regex /ENGINE=[a-z]*/ENGINE=X/i
@@ -997,7 +1003,7 @@ drop table t1;
 #
 # Bug #13667 (Inconsistency for decimal(m,d) specification
 #
---error 1427
+--error ER_M_BIGGER_THAN_D
 create table t (d decimal(0,10));
 
 #
@@ -1040,7 +1046,7 @@ SELECT CAST(my_varchar AS DECIMAL(65,30)), my_varchar FROM t1;
 # This UPDATE statement will give an error since truncation of a
 # decimal number in Drizzle is an error. See bug#337038 for further
 # details.
---error 1265
+--error ER_WARN_DATA_TRUNCATED
 UPDATE t1 SET my_decimal = my_float;
 
 # Expected result   0.000000000011754943372854760000
@@ -1052,14 +1058,14 @@ SELECT my_decimal, my_float   FROM t1;
 # This UPDATE statement will give an error since truncation of a
 # decimal number in Drizzle is an error. See bug#337038 for further
 # details.
---error 1265
+--error ER_WARN_DATA_TRUNCATED
 UPDATE t1 SET my_decimal = my_double;
 SELECT my_decimal, my_double  FROM t1;
 --enable_warnings
 # This UPDATE statement will give an error since truncation of a
 # decimal number in Drizzle is an error. See bug#337038 for further
 # details.
---error 1265
+--error ER_WARN_DATA_TRUNCATED
 UPDATE t1 SET my_decimal = my_varchar;
 SELECT my_decimal, my_varchar FROM t1;
 
@@ -1200,7 +1206,7 @@ DROP TABLE t1;
 # This CREATE statement will give an error since truncation of a
 # decimal number in Drizzle is an error. See bug#337038 for further
 # details.
---error 1265
+--error ER_WARN_DATA_TRUNCATED
 CREATE TABLE t1 SELECT 0.123456789012345678901234567890123456 AS f1;
 
 # too many decimal places, AND too many digits altogether (90 = 45+45).
@@ -1224,6 +1230,6 @@ select cast(98.6 as decimal(2,0));
 #
 ## Bug337038 Decimal truncation is warning, not error
 #
---error 1067
+--error ER_INVALID_DEFAULT
 create table t1 (f1 decimal not null default 17.49);
 

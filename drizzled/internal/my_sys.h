@@ -37,7 +37,7 @@
 #include "drizzled/internal/aio_result.h"
 
 #include "drizzled/memory/root.h"
-#include "drizzled/my_error.h"
+#include "drizzled/error.h"
 
 #ifndef errno				/* did we already get it? */
 #ifdef HAVE_ERRNO_AS_DEFINE
@@ -49,9 +49,16 @@ extern int errno;			/* declare errno */
 
 #include <drizzled/dynamic_array.h>
 
+#ifdef HAVE_SYS_MMAN_H 
 #include <sys/mman.h>
+#endif
 
 #include "drizzled/qsort_cmp.h"
+
+namespace drizzled
+{
+namespace internal
+{
 
 #ifndef MAP_NOSYNC
 #define MAP_NOSYNC      0
@@ -60,13 +67,20 @@ extern int errno;			/* declare errno */
 #define MAP_NORESERVE 0         /* For irix and AIX */
 #endif
 
+/*
+  EDQUOT is used only in 3 C files only in mysys/. If it does not exist on
+  system, we set it to some value which can never happen.
+*/
+#ifndef EDQUOT
+#define EDQUOT (-1)
+#endif
 
 /* Sun Studio does not inject this into main namespace yet */
 #if defined(__cplusplus)
   using std::FILE;
 #endif
 
-#define MY_INIT(name);		{ my_progname= name; my_init(); }
+#define MY_INIT(name);		{ ::drizzled::internal::my_progname= name; ::drizzled::internal::my_init(); }
 
 
 	/* General bitmaps for my_func's */
@@ -89,24 +103,17 @@ extern int errno;			/* declare errno */
 #define MY_DONT_OVERWRITE_FILE 1024	/* my_copy: Don't overwrite file */
 #define MY_THREADSAFE 2048      /* my_seek(): lock fd mutex */
 
-#define ME_HIGHBYTE	8	/* Shift for colours */
-#define ME_NOCUR	1	/* Don't use curses message */
 #define ME_OLDWIN	2	/* Use old window */
 #define ME_BELL		4	/* Ring bell then printing message */
 #define ME_HOLDTANG	8	/* Don't delete last keys */
-#define ME_WAITTOT	16	/* Wait for errtime secs of for a action */
 #define ME_WAITTANG	32	/* Wait for a user action  */
 #define ME_NOREFRESH	64	/* Dont refresh screen */
 #define ME_NOINPUT	128	/* Dont use the input libary */
-#define ME_COLOUR1	((1 << ME_HIGHBYTE))	/* Possibly error-colours */
-#define ME_COLOUR2	((2 << ME_HIGHBYTE))
-#define ME_COLOUR3	((3 << ME_HIGHBYTE))
 
 	/* Bits in last argument to fn_format */
 #define MY_REPLACE_DIR		1	/* replace dir in name with 'dir' */
 #define MY_REPLACE_EXT		2	/* replace extension with 'ext' */
 #define MY_UNPACK_FILENAME	4	/* Unpack name (~ -> home) */
-#define MY_PACK_FILENAME	8	/* Pack name (home -> ~) */
 #define MY_RESOLVE_SYMLINKS	16	/* Resolve all symbolic links */
 #define MY_RETURN_REAL_PATH	32	/* return full path for file */
 #define MY_SAFE_PATH		64	/* Return NULL if too long path */
@@ -130,9 +137,6 @@ extern int errno;			/* declare errno */
 #define GETDATE_GMT		8
 #define GETDATE_FIXEDLENGTH	16
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 typedef uint64_t my_off_t;
 
@@ -143,8 +147,6 @@ extern const char *my_progname;		/* program-name (printed in errors) */
 extern uint32_t my_file_limit;
 
 /* statistics */
-extern uint32_t	my_file_opened,my_stream_opened, my_tmp_file_created;
-extern uint32_t    my_file_total_opened;
 extern uint	mysys_usage_id;
 extern bool	my_init_done;
 
@@ -169,21 +171,34 @@ extern const char *my_defaults_file;
 
 extern bool timed_mutexes;
 
-typedef struct wild_file_pack	/* Struct to hold info when selecting files */
+typedef class wild_file_pack	/* Struct to hold info when selecting files */
 {
+public:
   uint		wilds;		/* How many wildcards */
   uint		not_pos;	/* Start of not-theese-files */
   char *	*wild;		/* Pointer to wildcards */
+
+  wild_file_pack():
+    wilds(0),
+    not_pos(0),
+    wild(NULL)
+  {}
+
 } WF_PACK;
 
 enum cache_type
 {
-  TYPE_NOT_SET= 0, READ_CACHE, WRITE_CACHE,
-  SEQ_READ_APPEND		/* sequential read or append */,
-  READ_FIFO, READ_NET,WRITE_NET};
+  TYPE_NOT_SET= 0,
+  READ_CACHE,
+  WRITE_CACHE,
+  READ_FIFO,
+  READ_NET,
+  WRITE_NET
+};
 
-typedef struct st_record_cache	/* Used when cacheing records */
+typedef struct record_cache	/* Used when cacheing records */
 {
+public:
   int file;
   int	rc_seek,error,inited;
   uint	rc_length,read_length,reclength;
@@ -194,6 +209,24 @@ typedef struct st_record_cache	/* Used when cacheing records */
   my_aio_result aio_result;
 #endif
   enum cache_type type;
+
+  record_cache():
+    file(0),
+    rc_seek(0),
+    error(0),
+    inited(0),
+    rc_length(0),
+    read_length(0),
+    reclength(0),
+    rc_record_pos(0),
+    end_of_file(0),
+    rc_buff(NULL),
+    rc_buff2(NULL),
+    rc_pos(NULL),
+    rc_end(NULL),
+    rc_request_pos(NULL)
+  {}
+
 } RECORD_CACHE;
 
 
@@ -223,9 +256,6 @@ typedef struct st_record_cache	/* Used when cacheing records */
 
 #define my_b_tell(info) ((info)->pos_in_file + \
 			 (size_t) (*(info)->current_pos - (info)->request_pos))
-
-#define my_b_get_buffer_start(info) (info)->request_pos
-
 
 #define my_b_bytes_in_cache(info) (size_t) (*(info)->current_end - \
 					  *(info)->current_pos)
@@ -299,8 +329,8 @@ extern char * my_load_path(char * to, const char *path,
 extern int wild_compare(const char *str,const char *wildstr,
                         bool str_is_pattern);
 extern WF_PACK *wf_comp(char * str);
-extern int wf_test(struct wild_file_pack *wf_pack,const char *name);
-extern void wf_end(struct wild_file_pack *buffer);
+extern int wf_test(wild_file_pack *wf_pack,const char *name);
+extern void wf_end(wild_file_pack *buffer);
 extern bool array_append_string_unique(const char *str,
                                           const char **array, size_t size);
 extern void get_date(char * to,int timeflag,time_t use_time);
@@ -349,8 +379,7 @@ extern void thd_increment_bytes_sent(uint32_t length);
 extern void thd_increment_bytes_received(uint32_t length);
 extern void thd_increment_net_big_packet_count(uint32_t length);
 
-#ifdef __cplusplus
-}
-#endif
+} /* namespace internal */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_INTERNAL_MY_SYS_H */

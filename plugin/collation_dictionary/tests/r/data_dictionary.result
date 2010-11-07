@@ -1,0 +1,88 @@
+use data_dictionary;
+show create table CHARACTER_SETS ;
+Table	Create Table
+CHARACTER_SETS	CREATE TABLE `CHARACTER_SETS` (
+  `CHARACTER_SET_NAME` VARCHAR(256) NOT NULL,
+  `DEFAULT_COLLATE_NAME` VARCHAR(256) NOT NULL,
+  `DESCRIPTION` VARCHAR(256) NOT NULL,
+  `MAXLEN` BIGINT NOT NULL
+) ENGINE=FunctionEngine COLLATE = utf8_general_ci
+show create table COLLATIONS ;
+Table	Create Table
+COLLATIONS	CREATE TABLE `COLLATIONS` (
+  `CHARACTER_SET_NAME` VARCHAR(256) NOT NULL,
+  `COLLATION_NAME` VARCHAR(256) NOT NULL,
+  `DESCRIPTION` VARCHAR(256) NOT NULL,
+  `ID` BIGINT NOT NULL,
+  `IS_DEFAULT` VARCHAR(5) NOT NULL,
+  `IS_COMPILED` VARCHAR(5) NOT NULL,
+  `SORTLEN` BIGINT NOT NULL
+) ENGINE=FunctionEngine COLLATE = utf8_general_ci
+SELECT * FROM character_sets ORDER BY CHARACTER_SET_NAME;
+CHARACTER_SET_NAME	DEFAULT_COLLATE_NAME	DESCRIPTION	MAXLEN
+binary	binary		1
+utf8	utf8_general_ci	UTF-8 Unicode	4
+SELECT * FROM collations ORDER BY COLLATION_NAME;
+CHARACTER_SET_NAME	COLLATION_NAME	DESCRIPTION	ID	IS_DEFAULT	IS_COMPILED	SORTLEN
+binary	binary	binary	63	YES	YES	1
+utf8_general_ci	utf8_bin	utf8	46	NO	YES	1
+utf8_general_ci	utf8_czech_ci	utf8	234	NO	YES	8
+utf8_general_ci	utf8_danish_ci	utf8	235	NO	YES	8
+utf8_general_ci	utf8_esperanto_ci	utf8	241	NO	YES	8
+utf8_general_ci	utf8_estonian_ci	utf8	230	NO	YES	8
+utf8_general_ci	utf8_general_ci	utf8	45	YES	YES	1
+utf8_general_ci	utf8_hungarian_ci	utf8	242	NO	YES	8
+utf8_general_ci	utf8_icelandic_ci	utf8	225	NO	YES	8
+utf8_general_ci	utf8_latvian_ci	utf8	226	NO	YES	8
+utf8_general_ci	utf8_lithuanian_ci	utf8	236	NO	YES	8
+utf8_general_ci	utf8_persian_ci	utf8	240	NO	YES	8
+utf8_general_ci	utf8_polish_ci	utf8	229	NO	YES	8
+utf8_general_ci	utf8_romanian_ci	utf8	227	NO	YES	8
+utf8_general_ci	utf8_roman_ci	utf8	239	NO	YES	8
+utf8_general_ci	utf8_sinhala_ci	utf8	243	NO	YES	8
+utf8_general_ci	utf8_slovak_ci	utf8	237	NO	YES	8
+utf8_general_ci	utf8_slovenian_ci	utf8	228	NO	YES	8
+utf8_general_ci	utf8_spanish2_ci	utf8	238	NO	YES	8
+utf8_general_ci	utf8_spanish_ci	utf8	231	NO	YES	8
+utf8_general_ci	utf8_swedish_ci	utf8	232	NO	YES	8
+utf8_general_ci	utf8_turkish_ci	utf8	233	NO	YES	8
+utf8_general_ci	utf8_unicode_ci	utf8	224	NO	YES	8
+SELECT *
+FROM data_dictionary.character_sets
+ORDER BY character_set_name;
+CHARACTER_SET_NAME	DEFAULT_COLLATE_NAME	DESCRIPTION	MAXLEN
+binary	binary		1
+utf8	utf8_general_ci	UTF-8 Unicode	4
+SELECT *
+FROM data_dictionary.collations
+ORDER BY collation_name;
+CHARACTER_SET_NAME	COLLATION_NAME	DESCRIPTION	ID	IS_DEFAULT	IS_COMPILED	SORTLEN
+binary	binary	binary	63	YES	YES	1
+utf8_general_ci	utf8_bin	utf8	46	NO	YES	1
+utf8_general_ci	utf8_czech_ci	utf8	234	NO	YES	8
+utf8_general_ci	utf8_danish_ci	utf8	235	NO	YES	8
+utf8_general_ci	utf8_esperanto_ci	utf8	241	NO	YES	8
+utf8_general_ci	utf8_estonian_ci	utf8	230	NO	YES	8
+utf8_general_ci	utf8_general_ci	utf8	45	YES	YES	1
+utf8_general_ci	utf8_hungarian_ci	utf8	242	NO	YES	8
+utf8_general_ci	utf8_icelandic_ci	utf8	225	NO	YES	8
+utf8_general_ci	utf8_latvian_ci	utf8	226	NO	YES	8
+utf8_general_ci	utf8_lithuanian_ci	utf8	236	NO	YES	8
+utf8_general_ci	utf8_persian_ci	utf8	240	NO	YES	8
+utf8_general_ci	utf8_polish_ci	utf8	229	NO	YES	8
+utf8_general_ci	utf8_romanian_ci	utf8	227	NO	YES	8
+utf8_general_ci	utf8_roman_ci	utf8	239	NO	YES	8
+utf8_general_ci	utf8_sinhala_ci	utf8	243	NO	YES	8
+utf8_general_ci	utf8_slovak_ci	utf8	237	NO	YES	8
+utf8_general_ci	utf8_slovenian_ci	utf8	228	NO	YES	8
+utf8_general_ci	utf8_spanish2_ci	utf8	238	NO	YES	8
+utf8_general_ci	utf8_spanish_ci	utf8	231	NO	YES	8
+utf8_general_ci	utf8_swedish_ci	utf8	232	NO	YES	8
+utf8_general_ci	utf8_turkish_ci	utf8	233	NO	YES	8
+utf8_general_ci	utf8_unicode_ci	utf8	224	NO	YES	8
+select * from data_dictionary.CHARACTER_SETS
+where CHARACTER_SET_NAME like 'latin1%';
+CHARACTER_SET_NAME	DEFAULT_COLLATE_NAME	DESCRIPTION	MAXLEN
+select * from data_dictionary.COLLATIONS
+where COLLATION_NAME like 'latin1%';
+CHARACTER_SET_NAME	COLLATION_NAME	DESCRIPTION	ID	IS_DEFAULT	IS_COMPILED	SORTLEN

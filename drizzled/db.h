@@ -21,86 +21,15 @@
 #ifndef DRIZZLED_DB_H
 #define DRIZZLED_DB_H
 
-namespace drizzled { namespace message { class Schema; } }
+namespace drizzled {
 
-class NormalisedDatabaseName;
+namespace message { class Schema; }
 
-bool mysql_create_db(Session *session, const NormalisedDatabaseName &database_name, drizzled::message::Schema *schema_message, bool is_if_not_exists);
-bool mysql_alter_db(Session *session, const NormalisedDatabaseName &database_name, drizzled::message::Schema *schema_message);
-bool mysql_rm_db(Session *session, const NormalisedDatabaseName &database_name, bool if_exists);
-bool mysql_change_db(Session *session, const NormalisedDatabaseName &new_db_name, bool force_switch);
+bool mysql_create_db(Session *session, const message::Schema &schema_message, const bool is_if_not_exists);
+bool mysql_alter_db(Session *session, const message::Schema &schema_message);
+bool mysql_rm_db(Session *session, SchemaIdentifier &identifier, const bool if_exists);
+bool mysql_change_db(Session *session, SchemaIdentifier &identifier);
 
-bool check_db_dir_existence(const char *db_name);
-int get_database_metadata(const char *dbname, drizzled::message::Schema *db);
-
-const CHARSET_INFO *get_default_db_collation(const char *db_name);
-
-class NonNormalisedDatabaseName
-{
-private:
-  std::string database_name;
-
-  /* Copying a NonNormalisedDatabaseName is always wrong, it's
-     immutable and should be passed by reference */
-  NonNormalisedDatabaseName(const NonNormalisedDatabaseName&);
-
-  NonNormalisedDatabaseName operator=(const NonNormalisedDatabaseName&);
-
-public:
-  explicit NonNormalisedDatabaseName(const std::string db) :
-    database_name(db)
-  {
-  }
-
-  const std::string &to_string(void) const
-  {
-    return database_name;
-  }
-};
-
-class NormalisedDatabaseName
-{
-private:
-  char* database_name;
-
-  /* Copying a NormalisedDatabaseName is always wrong, it's
-     immutable and should be passed by reference */
-  NormalisedDatabaseName(const NormalisedDatabaseName&);
-  NormalisedDatabaseName operator=(const NormalisedDatabaseName&);
-
-public:
-  explicit NormalisedDatabaseName(const NonNormalisedDatabaseName &dbname);
-
-  ~NormalisedDatabaseName();
-
-  const std::string to_string() const
-  {
-    std::string tmp(database_name);
-    return tmp;
-  }
-
-  bool isValid() const;
-};
-
-class DatabasePathName
-{
-private:
-  std::string database_path;
-
-  /* Copying a DatabasePathName is always wrong, it's
-     immutable and should be passed by reference. */
-  DatabasePathName(const DatabasePathName&);
-  DatabasePathName operator=(const DatabasePathName&);
-
-public:
-  explicit DatabasePathName(const NormalisedDatabaseName &database_name);
-
-  const std::string to_string() const
-  {
-    return database_path;
-  }
-
-  bool exists() const;
-};
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_DB_H */

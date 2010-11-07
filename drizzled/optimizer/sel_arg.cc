@@ -21,9 +21,10 @@
 #include "drizzled/optimizer/range.h"
 #include "drizzled/optimizer/range_param.h"
 #include "drizzled/optimizer/sel_arg.h"
+#include "drizzled/util/test.h"
 
-using namespace drizzled;
-
+namespace drizzled
+{
 
 /* Functions to fix up the tree after insert and delete */
 static void left_rotate(optimizer::SEL_ARG **root, optimizer::SEL_ARG *leaf)
@@ -254,7 +255,7 @@ int optimizer::SEL_ARG::store_max_key(KEY_PART *key, unsigned char **range_key, 
 
 optimizer::SEL_ARG::SEL_ARG(optimizer::SEL_ARG &arg)
   :
-    drizzled::memory::SqlAlloc()
+    memory::SqlAlloc()
 {
   type= arg.type;
   min_flag= arg.min_flag;
@@ -719,3 +720,4 @@ optimizer::SEL_ARG *optimizer::rb_delete_fixup(optimizer::SEL_ARG *root,
 }
 
 
+} /* namespace drizzled */

@@ -21,6 +21,9 @@
 #include <math.h>
 #include <drizzled/function/math/tan.h>
 
+namespace drizzled
+{
+
 double Item_func_tan::val_real()
 {
   assert(fixed == 1);
@@ -30,3 +33,4 @@ double Item_func_tan::val_real()
   return fix_result(tan(value));
 }
 
+} /* namespace drizzled */

@@ -11,16 +11,24 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "drizzled/internal/mysys_priv.h"
-#include "drizzled/my_error.h"
+#include "config.h"
+
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/error.h"
 
 #include <fcntl.h>
 
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
+
+
+namespace drizzled
+{
+namespace internal
+{
 
 /*
   Open a file
@@ -77,7 +85,6 @@ int my_close(int fd, myf MyFlags)
     if (MyFlags & (MY_FAE | MY_WME))
       my_error(EE_BADCLOSE, MYF(ME_BELL+ME_WAITTANG), "unknown", errno);
   }
-  my_file_opened--;
 
   return(err);
 } /* my_close */
@@ -104,9 +111,6 @@ int my_register_filename(int fd, const char *FileName, uint32_t error_message_nu
 {
   if ((int) fd >= 0)
   {
-    my_file_opened++;
-    my_file_total_opened++;
-
     return fd;
   }
   else
@@ -121,3 +125,6 @@ int my_register_filename(int fd, const char *FileName, uint32_t error_message_nu
   }
   return -1;
 }
+
+} /* namespace internal */
+} /* namespace drizzled */

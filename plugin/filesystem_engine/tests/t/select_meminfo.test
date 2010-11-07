@@ -1,0 +1,11 @@
+--disable_warnings
+DROP TABLE IF EXISTS t1;
+--enable_warnings
+
+CREATE TABLE t1 (a int) ENGINE=FILESYSTEM,FILE="../../filesystem_ln/select_meminfo.data",FORMAT="KEY_VALUE",COL_SEPARATOR=": ";
+
+SELECT * FROM t1;
+
+SHOW CREATE TABLE t1;
+
+DROP TABLE t1;

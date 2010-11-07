@@ -22,6 +22,9 @@
 
 #include <drizzled/function/str/strfunc.h>
 
+namespace drizzled
+{
+
 class Item_str_conv :public Item_str_func
 {
 protected:
@@ -49,5 +52,7 @@ public:
   const char *func_name() const { return "ucase"; }
   void fix_length_and_dec();
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_STR_STR_CONV_H */

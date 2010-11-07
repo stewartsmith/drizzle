@@ -28,7 +28,7 @@ select * from t1 where (a is null or a = 7) and b=7;
 select * from t1 where a is null and b=9 or a is null and b=7 limit 3;
 select * from t1 where a > 1 and a < 3 limit 1;
 select * from t1 where a > 8 and a < 9;
---error 1005
+--error ER_CANT_CREATE_TABLE
 create table t2 like t1;
 create temporary table t2 like t1;
 show create table t2;
@@ -230,7 +230,7 @@ create table t1 (
   index (id),
   index (id2)
 );
---error 1048
+--error ER_BAD_NULL_ERROR
 insert into t1 values(null,null),(1,1);
 select * from t1;
 select * from t1 where id <=> null;

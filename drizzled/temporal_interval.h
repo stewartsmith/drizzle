@@ -73,7 +73,7 @@ public:
    * Sets whether or not this object specifies a negative interval
    * @param[in] in_neg true if this is a negative interval, false if not
    */
-  void setNegative(bool in_neg= true)
+  inline void setNegative(bool in_neg= true)
   {
     neg= in_neg;
   }
@@ -81,7 +81,7 @@ public:
   /**
    * reverse boolean value of the negative flag
    */
-  void toggleNegative()
+  inline void toggleNegative()
   {
     neg= !neg;
   }
@@ -90,10 +90,31 @@ public:
    * @retval true this is a negative temporal interval
    * @retval false this is a positive temporal interval
    */
-  bool getNegative() const
+  inline bool getNegative() const
   {
     return neg;
   }
+
+  inline uint32_t  get_year() { return year; }
+  inline void set_year(uint32_t new_year) { year = new_year; }
+
+  inline uint32_t  get_month(){ return month; }
+  inline void set_month(uint32_t new_month) { month = new_month; }
+
+  inline uint32_t  get_day(){ return day; }
+  inline void set_day(uint32_t new_day) { day = new_day; }
+
+  inline uint32_t  get_hour(){ return hour; }
+  inline void set_hour(uint32_t new_hour) { hour = new_hour; }
+
+  inline uint64_t  get_minute(){ return minute; }
+  inline void set_minute(uint32_t new_minute) { minute = new_minute; }
+
+  inline uint64_t  get_second(){ return second; }
+  inline void set_second(uint32_t new_second) { second = new_second; }
+
+  inline uint64_t  get_second_part(){ return second_part; }
+  inline void set_second_part(uint32_t new_second_part) { second_part = new_second_part; }
 
   /**
    * Populate this TemporalInterval from a string value
@@ -176,6 +197,6 @@ private:
 
 };
 
-} /* end namespace drizzled */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_TEMPORAL_INTERVAL_H */

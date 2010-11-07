@@ -79,17 +79,17 @@ String *ShowSchemaProtoFunction::val_str(String *str)
   const char* db= db_sptr->c_ptr_safe();
 
   string proto_as_text("");
-  message::Schema proto;
+  message::SchemaPtr proto;
 
-  int err= get_database_metadata(db, &proto);
 
-  if (err != 0)
+  SchemaIdentifier schema_identifier(db);
+  if (not plugin::StorageEngine::getSchemaDefinition(schema_identifier, proto))
   {
     my_error(ER_BAD_DB_ERROR, MYF(0), db);
     return NULL;
   }
 
-  protobuf::TextFormat::PrintToString(proto, &proto_as_text);
+  protobuf::TextFormat::PrintToString(*proto, &proto_as_text);
 
   if (str->alloc(proto_as_text.length()))
   {
@@ -106,17 +106,10 @@ String *ShowSchemaProtoFunction::val_str(String *str)
 
 plugin::Create_function<ShowSchemaProtoFunction> *show_schema_proto_func= NULL;
 
-static int initialize(plugin::Registry &registry)
+static int initialize(module::Context &context)
 {
   show_schema_proto_func= new plugin::Create_function<ShowSchemaProtoFunction>("show_schema_proto");
-  registry.add(show_schema_proto_func);
-  return 0;
-}
-
-static int finalize(plugin::Registry &registry)
-{
-  registry.remove(show_schema_proto_func);
-  delete show_schema_proto_func;
+  context.add(show_schema_proto_func);
   return 0;
 }
 
@@ -129,8 +122,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Shows text representation of schema definition proto",
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
-  finalize,   /* Plugin Deinit */
-  NULL,   /* status variables */
   NULL,   /* system variables */
   NULL    /* config options */
 }

@@ -28,21 +28,19 @@
 
 #include "drizzled/base.h"
 
+namespace drizzled
+{
+
 class Session;
 class TableList;
 typedef struct st_ha_check_opt HA_CHECK_OPT;
 class Table;
-typedef struct st_key KEY;
 typedef struct st_ha_create_information HA_CREATE_INFO;
 class AlterInfo;
 class Cursor;
 
-/* Flags for conversion functions. */
-static const uint32_t FN_FROM_IS_TMP(1 << 0);
-static const uint32_t FN_TO_IS_TMP(1 << 0);
-
-namespace drizzled { namespace message { class Table; } }
-namespace drizzled { class TableIdentifier; }
+namespace message { class Table; }
+class TableIdentifier;
 
 int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
                          bool drop_temporary);
@@ -50,14 +48,12 @@ void write_bin_log_drop_table(Session *session,
                               bool if_exists, const char *db_name,
                               const char *table_name);
 bool quick_rm_table(Session& session,
-                    drizzled::TableIdentifier &identifier);
+                    TableIdentifier &identifier);
 void close_cached_table(Session *session, Table *table);
 
 void wait_while_table_is_used(Session *session, Table *table,
                               enum ha_extra_function function);
 
-bool mysql_checksum_table(Session* session, TableList* table_list,
-                          HA_CHECK_OPT* check_opt);
 bool mysql_check_table(Session* session, TableList* table_list,
                        HA_CHECK_OPT* check_opt);
 bool mysql_analyze_table(Session* session, TableList* table_list,
@@ -66,52 +62,12 @@ bool mysql_optimize_table(Session* session, TableList* table_list,
                           HA_CHECK_OPT* check_opt);
 
 void write_bin_log(Session *session,
-                   char const *query, size_t query_length);
+                   char const *query);
 
-bool is_primary_key(KEY *key_info);
+bool is_primary_key(KeyInfo *key_info);
 const char* is_primary_key_name(const char* key_name);
-bool check_engine(Session *, const char *, drizzled::message::Table *, HA_CREATE_INFO *);
+bool check_engine(Session *, const char *, message::Table *, HA_CREATE_INFO *);
 void set_table_default_charset(HA_CREATE_INFO *create_info, const char *db);
-/*
-  Preparation for table creation
-
-  SYNOPSIS
-    mysql_prepare_create_table()
-      session                       Thread object.
-      create_info               Create information (like MAX_ROWS).
-      alter_info                List of columns and indexes to create
-      tmp_table                 If a temporary table is to be created.
-      db_options          INOUT Table options (like HA_OPTION_PACK_RECORD).
-      file                      The Cursor for the new table.
-      key_info_buffer     OUT   An array of KEY structs for the indexes.
-      key_count           OUT   The number of elements in the array.
-      select_field_count        The number of fields coming from a select table.
-
-  DESCRIPTION
-    Prepares the table and key structures for table creation.
-
-  NOTES
-    sets create_info->varchar if the table has a varchar
-
-  RETURN VALUES
-    false    OK
-    true     error
-*/
-int mysql_prepare_create_table(Session *session,
-                               HA_CREATE_INFO *create_info,
-                               drizzled::message::Table *create_proto,
-                               AlterInfo *alter_info,
-                               bool tmp_table,
-                               uint32_t *db_options,
-                               Cursor *file,
-                               KEY **key_info_buffer,
-                               uint32_t *key_count,
-                               int select_field_count);
-
-
-/* Conversion functions */
-size_t build_tmptable_filename(char *buff, size_t bufflen);
-size_t build_table_filename(char *buff, size_t bufflen, const char *db,
-                            const char *table_name, bool is_tmp);
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SQL_TABLE_H */

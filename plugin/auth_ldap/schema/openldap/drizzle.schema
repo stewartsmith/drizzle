@@ -1,0 +1,13 @@
+# Copyright (c) 2010 Edward "Koko" Konetzko <konetzed@quixoticagony.com>
+attributetype ( 1.3.6.1.4.1.35583.1.1
+    NAME 'drizzleUserMysqlPassword'
+        DESC 'Attribute for mysql > 4.1 hash'
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )
+#
+objectclass ( 1.3.6.1.4.1.35583.1
+    NAME 'drizzleUser'
+        DESC 'Drizzle ldap user authentication Extensions'
+    SUP top
+    AUXILIARY
+    MAY ( drizzleUserMysqlPassword ) )
+

@@ -24,21 +24,32 @@
 #include <drizzled/error.h>
 #include <drizzled/check_stack_overrun.h>
 
+namespace drizzled
+{
+
 /****************************************************************************
 	Check stack size; Send error if there isn't enough stack to continue
 ****************************************************************************/
-#if STACK_DIRECTION < 0
-#define used_stack(A,B) (long) (A - B)
+#if defined(STACK_DIRECTION) && (STACK_DIRECTION < 0)
+static const bool stack_direction_negative = true;
 #else
-#define used_stack(A,B) (long) (B - A)
+static const bool stack_direction_negative = false;
 #endif
+
+template <typename A_T, typename B_T>
+inline static long used_stack(A_T A, B_T B)
+{
+  if (stack_direction_negative)
+    return (long) (A - B);
+  else
+    return (long) (B - A);
+}
 
 extern size_t my_thread_stack_size;
 
 bool check_stack_overrun(Session *session, long margin, void *)
 {
   long stack_used;
-  assert(session == current_session);
   if ((stack_used=used_stack(session->thread_stack,(char*) &stack_used)) >=
       (long) (my_thread_stack_size - margin))
   {
@@ -49,3 +60,5 @@ bool check_stack_overrun(Session *session, long margin, void *)
   }
   return false;
 }
+
+} /* namespace drizzled */

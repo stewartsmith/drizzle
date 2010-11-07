@@ -67,7 +67,7 @@ public:
 
   pthread_traits() {}
 
-  inline value_type fetch_and_add(volatile value_type *value, D addend )
+  inline value_type add_and_fetch(volatile value_type *value, D addend )
   {
     my_lock.lock();
     *value += addend;
@@ -76,11 +76,20 @@ public:
     return ret;
   }
 
+  inline value_type fetch_and_add(volatile value_type *value, D addend )
+  {
+    my_lock.lock();
+    value_type ret= *value;
+    *value += addend;
+    my_lock.unlock();
+    return ret;
+  }
+
   inline value_type fetch_and_increment(volatile value_type *value)
   {
     my_lock.lock();
-    *value++;
     value_type ret= *value;
+    (*value)++;
     my_lock.unlock();
     return ret;
   }
@@ -88,8 +97,8 @@ public:
   inline value_type fetch_and_decrement(volatile value_type *value)
   {
     my_lock.lock();
-    *value--;
     value_type ret= *value;
+    (*value)--;
     my_lock.unlock();
     return ret;
   }
@@ -98,27 +107,30 @@ public:
                                     value_type new_value )
   {
     my_lock.lock();
-    *value= new_value;
     value_type ret= *value;
+    *value= new_value;
     my_lock.unlock();
     return ret;
   }
 
-  inline value_type compare_and_swap(volatile value_type *value,
+  inline bool compare_and_swap(volatile value_type *value,
                                      value_type new_value,
                                      value_type comparand )
   {
     my_lock.lock();
-    if (*value == comparand)
+    bool ret= (*value == comparand);
+    if (ret)
       *value= new_value;
-    value_type ret= *value;
     my_lock.unlock();
     return ret;
   }
 
   inline value_type fetch(const volatile value_type *value) const volatile
   {
-    return *value;
+    const_cast<pthread_traits *>(this)->my_lock.lock();
+    value_type ret= *value;
+    const_cast<pthread_traits *>(this)->my_lock.unlock();
+    return ret;
   }
 
   inline value_type store_with_release(volatile value_type *value,

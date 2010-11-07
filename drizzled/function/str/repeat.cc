@@ -18,11 +18,14 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/str/repeat.h>
 #include <drizzled/error.h>
 #include <drizzled/function/str/alloc_buffer.h>
 #include <drizzled/session.h>
+
+namespace drizzled
+{
 
 void Item_func_repeat::fix_length_and_dec()
 {
@@ -81,12 +84,12 @@ String *Item_func_repeat::val_str(String *str)
     return res;
   length=res->length();
   // Safe length check
-  if (length > current_session->variables.max_allowed_packet / (uint) count)
+  if (length > session.variables.max_allowed_packet / (uint) count)
   {
-    push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                         ER_WARN_ALLOWED_PACKET_OVERFLOWED,
                         ER(ER_WARN_ALLOWED_PACKET_OVERFLOWED),
-                        func_name(), current_session->variables.max_allowed_packet);
+                        func_name(), session.variables.max_allowed_packet);
     goto err;
   }
   tot_length= length*(uint) count;
@@ -106,3 +109,4 @@ err:
   return 0;
 }
 
+} /* namespace drizzled */

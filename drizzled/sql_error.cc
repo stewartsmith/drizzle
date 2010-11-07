@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA */
 
 /**********************************************************************
 This file contains the implementation of error and warnings related
@@ -43,6 +43,7 @@ This file contains the implementation of error and warnings related
 
 #include "config.h"
 
+#include <cstdio>
 #include <stdarg.h>
 
 #include <drizzled/session.h>
@@ -52,7 +53,9 @@ This file contains the implementation of error and warnings related
 #include <drizzled/plugin/client.h>
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 /*
   Store a new message in an error object
@@ -62,7 +65,7 @@ using namespace drizzled;
 */
 void DRIZZLE_ERROR::set_msg(Session *session, const char *msg_arg)
 {
-  msg= strdup_root(&session->warn_root, msg_arg);
+  msg= session->warn_root.strdup_root(msg_arg);
 }
 
 /*
@@ -81,10 +84,10 @@ void DRIZZLE_ERROR::set_msg(Session *session, const char *msg_arg)
 
 void drizzle_reset_errors(Session *session, bool force)
 {
-  if (session->query_id != session->warn_id || force)
+  if (session->getQueryId() != session->getWarningQueryId() || force)
   {
-    session->warn_id= session->query_id;
-    free_root(&session->warn_root,MYF(0));
+    session->setWarningQueryId(session->getQueryId());
+    session->warn_root.free_root(MYF(0));
     memset(session->warn_count, 0, sizeof(session->warn_count));
     if (force)
       session->total_warn_count= 0;
@@ -118,7 +121,7 @@ DRIZZLE_ERROR *push_warning(Session *session, DRIZZLE_ERROR::enum_warning_level 
       !(session->options & OPTION_SQL_NOTES))
     return(0);
 
-  if (session->query_id != session->warn_id)
+  if (session->getQueryId() != session->getWarningQueryId())
     drizzle_reset_errors(session, 0);
   session->got_warning= 1;
 
@@ -241,3 +244,5 @@ bool mysqld_show_warnings(Session *session,
   session->my_eof();
   return(false);
 }
+
+} /* namespace drizzled */

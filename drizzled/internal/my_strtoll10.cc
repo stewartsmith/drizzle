@@ -11,11 +11,16 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include "config.h"
 #include "drizzled/internal/m_string.h"
 #include <errno.h>
+
+namespace drizzled
+{
+namespace internal
+{
 
 #define MAX_NEGATIVE_NUMBER	((uint64_t) 0x8000000000000000LL)
 #define INIT_CNT  9
@@ -234,3 +239,6 @@ no_conv:
   *endptr= (char *) nptr;
   return 0;
 }
+
+} /* namespace internal */
+} /* namespace drizzled */

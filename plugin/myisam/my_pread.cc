@@ -11,12 +11,14 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include "myisam_priv.h"
-#include "drizzled/my_error.h"
-#include <errno.h>
+#include "drizzled/error.h"
+#include <cerrno>
 #include <unistd.h>
+
+using namespace drizzled;
 
 /*
   Read a chunk of bytes from a file from a given position
@@ -39,7 +41,7 @@
     #             Number of bytes read
 */
 
-size_t my_pread(int Filedes, unsigned char *Buffer, size_t Count, my_off_t offset,
+size_t my_pread(int Filedes, unsigned char *Buffer, size_t Count, internal::my_off_t offset,
                 myf MyFlags)
 {
   size_t readbytes;
@@ -94,7 +96,7 @@ size_t my_pread(int Filedes, unsigned char *Buffer, size_t Count, my_off_t offse
 */
 
 size_t my_pwrite(int Filedes, const unsigned char *Buffer, size_t Count,
-                 my_off_t offset, myf MyFlags)
+                 internal::my_off_t offset, myf MyFlags)
 {
   size_t writenbytes, written;
   uint32_t errors;
@@ -114,8 +116,6 @@ size_t my_pwrite(int Filedes, const unsigned char *Buffer, size_t Count,
       offset+=writenbytes;
     }
 #ifndef NO_BACKGROUND
-    if (my_thread_var->abort)
-      MyFlags&= ~ MY_WAIT_IF_FULL;		/* End if aborted by user */
     if ((errno == ENOSPC || errno == EDQUOT) &&
         (MyFlags & MY_WAIT_IF_FULL))
     {

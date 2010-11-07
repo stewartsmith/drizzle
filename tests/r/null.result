@@ -1,19 +1,8 @@
 drop table if exists t1, t2;
 select null,\N,isnull(null),isnull(1/0),isnull(1/0 = null),ifnull(null,1),ifnull(null,"TRUE"),ifnull("TRUE","ERROR"),1/0 is null,1 is not null;
-NULL	NULL	isnull(null)	isnull(1/0)	isnull(1/0 = null)	ifnull(null,1)	ifnull(null,"TRUE")	ifnull("TRUE","ERROR")	1/0 is null	1 is not null
-NULL	NULL	1	1	1	1	TRUE	TRUE	1	1
-Warnings:
-Error	1365	Division by 0
-Error	1365	Division by 0
-Error	1365	Division by 0
+ERROR 22012: Division by 0
 explain extended select null,\N,isnull(null),isnull(1/0),isnull(1/0 = null),ifnull(null,1),ifnull(null,"TRUE"),ifnull("TRUE","ERROR"),1/0 is null,1 is not null;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No tables used
-Warnings:
-Error	1365	Division by 0
-Error	1365	Division by 0
-Error	1365	Division by 0
-Note	1003	select NULL AS `NULL`,NULL AS `NULL`,isnull(NULL) AS `isnull(null)`,isnull((1 / 0)) AS `isnull(1/0)`,isnull(((1 / 0) = NULL)) AS `isnull(1/0 = null)`,ifnull(NULL,1) AS `ifnull(null,1)`,ifnull(NULL,'TRUE') AS `ifnull(null,"TRUE")`,ifnull('TRUE','ERROR') AS `ifnull("TRUE","ERROR")`,isnull((1 / 0)) AS `1/0 is null`,(1 is not null) AS `1 is not null`
+ERROR 22012: Division by 0
 select CONCAT(1, NULL),1+NULL,1-NULL;
 CONCAT(1, NULL)	1+NULL	1-NULL
 NULL	NULL	NULL
@@ -125,7 +114,7 @@ ERROR 23000: Column 'c' cannot be null
 UPDATE t1 SET d=NULL;
 ERROR 23000: Column 'd' cannot be null
 truncate table t1;
-LOAD DATA INFILE '../std_data_ln/null_test.txt' INTO TABLE t1 FIELDS ENCLOSED BY '"';
+LOAD DATA INFILE 'DRIZZLETEST_VARDIR/std_data_ln/null_test.txt' INTO TABLE t1 FIELDS ENCLOSED BY '"';
 ERROR 22004: Column set to default value; NULL supplied to NOT NULL column 'a' at row 1
 drop table t1;
 create table t1 (a int not null, b int not null, index idx(a));
@@ -181,45 +170,45 @@ rpad(null, 10, 'str') as c38;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c00` varbinary(0) DEFAULT NULL,
-  `c01` varchar(6) DEFAULT NULL,
-  `c02` varchar(6) DEFAULT NULL,
-  `c03` varchar(6) NOT NULL,
-  `c04` varchar(6) DEFAULT NULL,
-  `c05` varchar(6) DEFAULT NULL,
-  `c06` varchar(6) DEFAULT NULL,
-  `c07` varchar(6) DEFAULT NULL,
-  `c08` varchar(6) DEFAULT NULL,
-  `c09` varchar(6) DEFAULT NULL,
-  `c10` varchar(6) DEFAULT NULL,
-  `c11` varchar(6) DEFAULT NULL,
-  `c12` varchar(6) DEFAULT NULL,
-  `c13` varchar(6) DEFAULT NULL,
-  `c14` varchar(0) DEFAULT NULL,
-  `c15` varchar(0) DEFAULT NULL,
-  `c16` varchar(6) DEFAULT NULL,
-  `c17` varchar(6) DEFAULT NULL,
-  `c18` varchar(0) DEFAULT NULL,
-  `c19` varchar(6) DEFAULT NULL,
-  `c20` varchar(6) DEFAULT NULL,
-  `c21` varchar(6) DEFAULT NULL,
-  `c22` varchar(6) DEFAULT NULL,
-  `c23` varchar(9) DEFAULT NULL,
-  `c24` varchar(9) DEFAULT NULL,
-  `c25` varchar(12) DEFAULT NULL,
-  `c26` varchar(7) DEFAULT NULL,
-  `c27` varchar(7) DEFAULT NULL,
-  `c29` varchar(381) DEFAULT NULL,
-  `c30` varchar(317) DEFAULT NULL,
-  `c31` varchar(192) DEFAULT NULL,
-  `c32` varchar(0) DEFAULT NULL,
-  `c33` varchar(3) DEFAULT NULL,
-  `c34` varchar(3) DEFAULT NULL,
-  `c35` varchar(3) DEFAULT NULL,
-  `c36` varchar(3) DEFAULT NULL,
-  `c37` varchar(10) DEFAULT NULL,
-  `c38` varchar(10) DEFAULT NULL
-) ENGINE=DEFAULT
+  `c00` VARBINARY(0) DEFAULT NULL,
+  `c01` VARCHAR(6) COLLATE utf8_general_ci DEFAULT NULL,
+  `c02` VARCHAR(6) COLLATE utf8_general_ci DEFAULT NULL,
+  `c03` VARCHAR(6) COLLATE utf8_general_ci NOT NULL,
+  `c04` VARCHAR(6) COLLATE utf8_general_ci DEFAULT NULL,
+  `c05` VARCHAR(6) COLLATE utf8_general_ci DEFAULT NULL,
+  `c06` VARCHAR(6) COLLATE utf8_general_ci DEFAULT NULL,
+  `c07` VARCHAR(6) COLLATE utf8_general_ci DEFAULT NULL,
+  `c08` VARCHAR(6) COLLATE utf8_general_ci DEFAULT NULL,
+  `c09` VARCHAR(6) COLLATE utf8_general_ci DEFAULT NULL,
+  `c10` VARCHAR(6) COLLATE utf8_general_ci DEFAULT NULL,
+  `c11` VARCHAR(6) COLLATE utf8_general_ci DEFAULT NULL,
+  `c12` VARCHAR(6) COLLATE utf8_general_ci DEFAULT NULL,
+  `c13` VARCHAR(6) COLLATE utf8_general_ci DEFAULT NULL,
+  `c14` VARCHAR(0) COLLATE utf8_general_ci DEFAULT NULL,
+  `c15` VARCHAR(0) COLLATE utf8_general_ci DEFAULT NULL,
+  `c16` VARCHAR(6) COLLATE utf8_general_ci DEFAULT NULL,
+  `c17` VARCHAR(6) COLLATE utf8_general_ci DEFAULT NULL,
+  `c18` VARCHAR(0) COLLATE utf8_general_ci DEFAULT NULL,
+  `c19` VARCHAR(6) COLLATE utf8_general_ci DEFAULT NULL,
+  `c20` VARCHAR(6) COLLATE utf8_general_ci DEFAULT NULL,
+  `c21` VARCHAR(6) COLLATE utf8_general_ci DEFAULT NULL,
+  `c22` VARCHAR(6) COLLATE utf8_general_ci DEFAULT NULL,
+  `c23` VARCHAR(9) COLLATE utf8_general_ci DEFAULT NULL,
+  `c24` VARCHAR(9) COLLATE utf8_general_ci DEFAULT NULL,
+  `c25` VARCHAR(12) COLLATE utf8_general_ci DEFAULT NULL,
+  `c26` VARCHAR(7) COLLATE utf8_general_ci DEFAULT NULL,
+  `c27` VARCHAR(7) COLLATE utf8_general_ci DEFAULT NULL,
+  `c29` VARCHAR(381) COLLATE utf8_general_ci DEFAULT NULL,
+  `c30` VARCHAR(317) COLLATE utf8_general_ci DEFAULT NULL,
+  `c31` VARCHAR(192) COLLATE utf8_general_ci DEFAULT NULL,
+  `c32` VARCHAR(0) COLLATE utf8_general_ci DEFAULT NULL,
+  `c33` VARCHAR(3) COLLATE utf8_general_ci DEFAULT NULL,
+  `c34` VARCHAR(3) COLLATE utf8_general_ci DEFAULT NULL,
+  `c35` VARCHAR(3) COLLATE utf8_general_ci DEFAULT NULL,
+  `c36` VARCHAR(3) COLLATE utf8_general_ci DEFAULT NULL,
+  `c37` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `c38` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 select 
 case 'str' when 'STR' then 'str' when null then 'null' end as c01,
@@ -240,17 +229,17 @@ CREATE TABLE t1 (a DECIMAL (1, 0) , b DECIMAL (1, 0) );
 INSERT INTO t1 (a, b) VALUES (0, 0);
 CREATE TABLE t2 SELECT IFNULL(a, b) FROM t1;
 DESCRIBE t2;
-Field	Type	Null	Key	Default	Extra
-IFNULL(a, b)	decimal(1,0)	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+IFNULL(a, b)	DECIMAL	YES		YES	
 DROP TABLE t2;
 CREATE TABLE t2 SELECT IFNULL(a, NULL) FROM t1;
 DESCRIBE t2;
-Field	Type	Null	Key	Default	Extra
-IFNULL(a, NULL)	decimal(1,0)	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+IFNULL(a, NULL)	DECIMAL	YES		YES	
 DROP TABLE t2;
 CREATE TABLE t2 SELECT IFNULL(NULL, b) FROM t1;
 DESCRIBE t2;
-Field	Type	Null	Key	Default	Extra
-IFNULL(NULL, b)	decimal(1,0)	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+IFNULL(NULL, b)	DECIMAL	YES		YES	
 DROP TABLE t1, t2;
 # End of 5.0 tests

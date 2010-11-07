@@ -22,30 +22,21 @@
 #define DRIZZLED_TABLE_PROTO_H
 
 namespace drizzled {
+/*
+  Maximum length of comments.
 
-int drizzle_write_proto_file(const std::string file_name,
-                             message::Table *table_proto);
+  These are historical limits that no longer need to apply.
+*/
+#define TABLE_COMMENT_MAXLEN 2048
+#define COLUMN_COMMENT_MAXLEN 1024
+#define INDEX_COMMENT_MAXLEN 1024
 
-int parse_table_proto(Session& session,
-                      message::Table &table,
-                      TableShare *share);
-
-int fill_table_proto(message::Table *table_proto,
-                     const char *table_name,
-                     List<CreateField> &create_fields,
-                     HA_CREATE_INFO *create_info,
-                     uint32_t keys,
-                     KEY *key_info);
-
-int rename_table_proto_file(const char *from, const char* to);
-int delete_table_proto_file(const char *file_name);
-
-int rea_create_table(Session *session,
-                     TableIdentifier &identifier,
-                     message::Table *table_proto,
-                     HA_CREATE_INFO *create_info,
-                     List<CreateField> &create_field,
-                     uint32_t key_count,KEY *key_info);
+bool rea_create_table(Session *session,
+                      TableIdentifier &identifier,
+                      message::Table &table_proto,
+                      HA_CREATE_INFO *create_info,
+                      List<CreateField> &create_field,
+                      uint32_t key_count,KeyInfo *key_info);
 
 } /* namespace drizzled */
 

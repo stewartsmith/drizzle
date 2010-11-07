@@ -1,0 +1,1 @@
+ --innodb.additional-mem-pool-size=33554432

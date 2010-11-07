@@ -21,6 +21,9 @@
 #ifndef DRIZZLED_SELECT_EXISTS_SUBSELECT_H
 #define DRIZZLED_SELECT_EXISTS_SUBSELECT_H
 
+namespace drizzled
+{
+
 /* EXISTS subselect interface class */
 class select_exists_subselect :public select_subselect
 {
@@ -29,5 +32,7 @@ public:
     :select_subselect(item_arg){}
   bool send_data(List<Item> &items);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SELECT_EXISTS_SUBSELECT_H */

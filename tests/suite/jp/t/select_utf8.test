@@ -1,0 +1,75 @@
+--disable_warnings
+drop table if exists `Ｔ１`;
+drop table if exists `Ｔ２`;
+drop table if exists `Ｔ３`;
+drop table if exists `Ｔ４`;
+drop table if exists `Ｔ５`;
+drop table if exists `Ｔ６`;
+drop table if exists `Ｔ７`;
+drop table if exists `Ｔ８`;
+drop table if exists `Ｔ９`;
+--enable_warnings
+
+#
+# Test Displaying Japanese charact in utf8 encoding
+#
+
+CREATE TABLE `Ｔ１` (c1 char(20), INDEX(c1))  engine = innodb;
+CREATE TABLE `Ｔ２` (c1 char(20), INDEX(c1))  engine = innodb;
+CREATE TABLE `Ｔ３` (c1 char(20), INDEX(c1))  engine = innodb;
+CREATE TEMPORARY TABLE `Ｔ４` (c1 char(20), INDEX(c1))  engine = myisam;
+CREATE TEMPORARY TABLE `Ｔ５` (c1 char(20), INDEX(c1))  engine = myisam;
+CREATE TEMPORARY TABLE `Ｔ６` (c1 char(20), INDEX(c1))  engine = myisam;
+CREATE TEMPORARY TABLE `Ｔ７` (c1 char(20), INDEX(c1))  engine = MEMORY;
+CREATE TEMPORARY TABLE `Ｔ８` (c1 char(20), INDEX(c1))  engine = MEMORY;
+CREATE TEMPORARY TABLE `Ｔ９` (c1 char(20), INDEX(c1))  engine = MEMORY;
+
+#Load the following data in each table
+# jisx0201 hankaku-katakana data
+# jisx0208 data
+# jisx0212 supplemental character data
+
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+eval LOAD DATA INFILE '$DRIZZLETEST_VARDIR/std_data_ln/jisx0201_utf8.dat' INTO TABLE `Ｔ１`;
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+--error ER_DATA_TOO_LONG
+eval LOAD DATA INFILE '$DRIZZLETEST_VARDIR/std_data_ln/jisx0208_utf8.dat' INTO TABLE `Ｔ２`;
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+eval LOAD DATA INFILE '$DRIZZLETEST_VARDIR/std_data_ln/jisx0212_utf8.dat' INTO TABLE `Ｔ３`;
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+eval LOAD DATA INFILE '$DRIZZLETEST_VARDIR/std_data_ln/jisx0201_utf8.dat' INTO TABLE `Ｔ４`;
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+--error ER_DATA_TOO_LONG
+eval LOAD DATA INFILE '$DRIZZLETEST_VARDIR/std_data_ln/jisx0208_utf8.dat' INTO TABLE `Ｔ５`;
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+eval LOAD DATA INFILE '$DRIZZLETEST_VARDIR/std_data_ln/jisx0212_utf8.dat' INTO TABLE `Ｔ６`;
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+eval LOAD DATA INFILE '$DRIZZLETEST_VARDIR/std_data_ln/jisx0201_utf8.dat' INTO TABLE `Ｔ７`;
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+--error ER_DATA_TOO_LONG
+eval LOAD DATA INFILE '$DRIZZLETEST_VARDIR/std_data_ln/jisx0208_utf8.dat' INTO TABLE `Ｔ８`;
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+eval LOAD DATA INFILE '$DRIZZLETEST_VARDIR/std_data_ln/jisx0212_utf8.dat' INTO TABLE `Ｔ９`;
+
+#InnoDB
+SELECT * FROM `Ｔ１`;
+SELECT * FROM `Ｔ２`;
+SELECT * FROM `Ｔ３`;
+#MyISAM
+SELECT * FROM `Ｔ４`;
+SELECT * FROM `Ｔ５`;
+SELECT * FROM `Ｔ６`;
+#MEMORY
+SELECT * FROM `Ｔ７`;
+SELECT * FROM `Ｔ８`;
+SELECT * FROM `Ｔ９`;
+
+drop table `Ｔ１`;
+drop table `Ｔ２`;
+drop table `Ｔ３`;
+drop table `Ｔ４`;
+drop table `Ｔ５`;
+drop table `Ｔ６`;
+drop table `Ｔ７`;
+drop table `Ｔ８`;
+drop table `Ｔ９`;

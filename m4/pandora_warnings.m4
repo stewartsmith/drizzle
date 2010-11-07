@@ -30,7 +30,7 @@ AC_DEFUN([PANDORA_WARNINGS],[
   AC_REQUIRE([PANDORA_BUILDING_FROM_VC])
   m4_if(PW_WARN_ALWAYS_ON, [yes],
     [ac_cv_warnings_as_errors=yes],
-    AS_IF([test "$ac_cv_building_from_vc" = "yes"],
+    AS_IF([test "$pandora_building_from_vc" = "yes"],
           [ac_cv_warnings_as_errors=yes],
           [ac_cv_warnings_as_errors=no]))
 
@@ -87,6 +87,40 @@ AC_DEFUN([PANDORA_WARNINGS],[
             F_DIAGNOSTICS_SHOW_OPTION="-fdiagnostics-show-option"
           ])
 
+    AC_CACHE_CHECK([whether it is safe to use -Wformat],
+      [ac_cv_safe_to_use_wformat_],
+      [save_CFLAGS="$CFLAGS"
+       dnl Use -Werror here instead of ${W_FAIL} so that we don't spew
+       dnl conversion warnings to all the tarball folks
+       CFLAGS="-Wconversion -Werror -pedantic ${AM_CFLAGS} ${CFLAGS}"
+       AC_COMPILE_IFELSE(
+         [AC_LANG_PROGRAM([[
+#include <stdio.h>
+#include <stdint.h>
+#include <inttypes.h>
+void foo(bool a)
+{
+  uint64_t test_u= 0;
+  printf("This is a %" PRIu64 "test\n", test_u);
+}
+         ]],[[
+foo(0);
+         ]])],
+         [ac_cv_safe_to_use_wformat_=yes],
+         [ac_cv_safe_to_use_wformat_=no])
+       CFLAGS="$save_CFLAGS"])
+    AS_IF([test "$ac_cv_safe_to_use_wformat_" = "yes"],[
+      W_FORMAT="-Wformat"
+      W_FORMAT_2="-Wformat=2"
+      NO_FORMAT="-Wno-format"
+      ],[
+      W_FORMAT="-Wno-format"
+      W_FORMAT_2="-Wno-format"
+      NO_FORMAT="-Wno-format"
+    ])
+
+
+ 
     AC_CACHE_CHECK([whether it is safe to use -Wconversion],
       [ac_cv_safe_to_use_wconversion_],
       [save_CFLAGS="$CFLAGS"
@@ -135,19 +169,27 @@ uint16_t x= htons(80);
 
     AS_IF([test "$INTELCC" = "yes"],[
       m4_if(PW_LESS_WARNINGS,[no],[
-        BASE_WARNINGS="-w1 -Werror -Wcheck -Wformat -Wp64 -Woverloaded-virtual -Wcast-qual"
+        BASE_WARNINGS="-w1 -Werror -Wcheck ${W_FORMAT} -Wp64 -Woverloaded-virtual -Wcast-qual -diag-disable 188"
       ],[
-        BASE_WARNINGS="-w1 -Wcheck -Wformat -Wp64 -Woverloaded-virtual -Wcast-qual -diag-disable 981"
+        dnl 2203 is like old-style-cast
+        dnl 1684 is like strict-aliasing
+        dnl 188 is about using enums as bitfields
+        dnl 1683 is a warning about _EXPLICIT_ casting, which we want
+        BASE_WARNINGS="-w1 -Werror -Wcheck ${W_FORMAT} -Wp64 -Woverloaded-virtual -Wcast-qual -diag-disable 188,981,2259,2203,1683,1684"
       ])
       CC_WARNINGS="${BASE_WARNINGS}"
       CXX_WARNINGS="${BASE_WARNINGS}"
+      PROTOSKIP_WARNINGS="-diag-disable 188,981,967,2259,1683,1684,2203"
+      
     ],[
       m4_if(PW_LESS_WARNINGS,[no],[
-        BASE_WARNINGS_FULL="-Wformat=2 ${W_CONVERSION} -Wstrict-aliasing"
+        BASE_WARNINGS_FULL="${W_FORMAT_2} ${W_CONVERSION} -Wstrict-aliasing"
         CC_WARNINGS_FULL="-Wswitch-default -Wswitch-enum -Wwrite-strings"
         CXX_WARNINGS_FULL="-Weffc++ -Wold-style-cast"
+        NO_OLD_STYLE_CAST="-Wno-old-style-cast"
+        NO_EFF_CXX="-Wno-effc++"
       ],[
-        BASE_WARNINGS_FULL="-Wformat ${NO_STRICT_ALIASING}"
+        BASE_WARNINGS_FULL="${W_FORMAT_2} ${NO_STRICT_ALIASING}"
       ])
 
       AS_IF([test "${ac_cv_assert}" = "no"],
@@ -167,7 +209,7 @@ uint16_t x= htons(80);
         [ac_cv_safe_to_use_Wextra_=no])
       CFLAGS="$save_CFLAGS"])
 
-      BASE_WARNINGS="${W_FAIL} -pedantic -Wall -Wundef -Wshadow ${NO_UNUSED} ${F_DIAGNOSTICS_SHOW_OPTION} ${CFLAG_VISIBILITY} ${BASE_WARNINGS_FULL}"
+      BASE_WARNINGS="${W_FAIL} -pedantic -Wall -Wundef -Wshadow ${NO_UNUSED} ${F_DIAGNOSTICS_SHOW_OPTION} ${BASE_WARNINGS_FULL}"
       AS_IF([test "$ac_cv_safe_to_use_Wextra_" = "yes"],
             [BASE_WARNINGS="${BASE_WARNINGS} -Wextra"],
             [BASE_WARNINGS="${BASE_WARNINGS} -W"])
@@ -291,7 +333,9 @@ inline const EnumDescriptor* GetEnumDescriptor<Table_TableOptions_RowType>() {
       PROTOSKIP_WARNINGS="-Wno-effc++ -Wno-shadow -Wno-missing-braces ${NO_ATTRIBUTES}"
       NO_WERROR="-Wno-error"
       INNOBASE_SKIP_WARNINGS="-Wno-shadow -Wno-cast-align"
-      
+      AS_IF([test "$host_vendor" = "apple"],[
+        BOOSTSKIP_WARNINGS="-Wno-uninitialized"
+      ])
     ])
   ])
 
@@ -329,9 +373,10 @@ inline const EnumDescriptor* GetEnumDescriptor<Table_TableOptions_RowType>() {
       CXX_WARNINGS_FULL="-erroff=attrskipunsup,doubunder,reftotemp,inllargeuse,truncwarn1,signextwarn,inllargeint"
     ])
 
-    CC_WARNINGS="-v -errtags=yes ${W_FAIL} ${CC_WARNINGS_FULL} ${CFLAG_VISIBILITY}"
-    CXX_WARNINGS="+w +w2 -xwe -xport64 -errtags=yes ${CXX_WARNINGS_FULL} ${W_FAIL} ${CFLAG_VISIBILITY}"
+    CC_WARNINGS="-v -errtags=yes ${W_FAIL} ${CC_WARNINGS_FULL}"
+    CXX_WARNINGS="+w +w2 -xwe -xport64 -errtags=yes ${CXX_WARNINGS_FULL} ${W_FAIL}"
     PROTOSKIP_WARNINGS="-erroff=attrskipunsup,doubunder,reftotemp,wbadinitl,identexpected,inllargeuse,truncwarn1,signextwarn,partinit,notused,badargtype2w,wbadinit"
+    BOOSTSKIP_WARNINGS="-erroff=attrskipunsup,doubunder,reftotemp,inllargeuse,truncwarn1,signextwarn,inllargeint,hidef,wvarhidenmem"
     NO_UNREACHED="-erroff=E_STATEMENT_NOT_REACHED"
     NO_WERROR="-errwarn=%none"
 
@@ -342,7 +387,10 @@ inline const EnumDescriptor* GetEnumDescriptor<Table_TableOptions_RowType>() {
   AC_SUBST(NO_UNREACHED)
   AC_SUBST(NO_SHADOW)
   AC_SUBST(NO_STRICT_ALIASING)
+  AC_SUBST(NO_EFF_CXX)
+  AC_SUBST(NO_OLD_STYLE_CAST)
   AC_SUBST(PROTOSKIP_WARNINGS)
+  AC_SUBST(BOOSTSKIP_WARNINGS)
   AC_SUBST(INNOBASE_SKIP_WARNINGS)
   AC_SUBST(NO_WERROR)
   AC_SUBST([GCOV_LIBS])

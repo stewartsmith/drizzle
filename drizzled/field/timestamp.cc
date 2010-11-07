@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-
 #include "config.h"
+#include <boost/lexical_cast.hpp>
 #include <drizzled/field/timestamp.h>
 #include <drizzled/error.h>
 #include <drizzled/tztime.h>
@@ -31,6 +31,9 @@
 #include <sstream>
 
 #include "drizzled/temporal.h"
+
+namespace drizzled
+{
 
 /**
   TIMESTAMP type holds datetime values in range from 1970-01-01 00:00:01 UTC to
@@ -84,7 +87,7 @@ Field_timestamp::Field_timestamp(unsigned char *ptr_arg,
                                  TableShare *share,
                                  const CHARSET_INFO * const cs)
   :Field_str(ptr_arg,
-             drizzled::DateTime::MAX_STRING_LENGTH - 1 /* no \0 */,
+             DateTime::MAX_STRING_LENGTH - 1 /* no \0 */,
              null_ptr_arg,
              null_bit_arg,
              field_name_arg,
@@ -93,10 +96,10 @@ Field_timestamp::Field_timestamp(unsigned char *ptr_arg,
   /* For 4.0 MYD and 4.0 InnoDB compatibility */
   flags|= UNSIGNED_FLAG;
   unireg_check= unireg_check_arg;
-  if (! share->timestamp_field && unireg_check != NONE)
+  if (! share->getTimestampField() && unireg_check != NONE)
   {
     /* This timestamp has auto-update */
-    share->timestamp_field= this;
+    share->setTimestampField(this);
     flags|= TIMESTAMP_FLAG;
     if (unireg_check != TIMESTAMP_DN_FIELD)
       flags|= ON_UPDATE_NOW_FLAG;
@@ -107,7 +110,7 @@ Field_timestamp::Field_timestamp(bool maybe_null_arg,
                                  const char *field_name_arg,
                                  const CHARSET_INFO * const cs)
   :Field_str((unsigned char*) NULL,
-             drizzled::DateTime::MAX_STRING_LENGTH - 1 /* no \0 */,
+             DateTime::MAX_STRING_LENGTH - 1 /* no \0 */,
              maybe_null_arg ? (unsigned char*) "": 0,
              0,
              field_name_arg,
@@ -139,7 +142,7 @@ timestamp_auto_set_type Field_timestamp::get_auto_set_type() const
       function should be called only for first of them (i.e. the one
       having auto-set property).
     */
-    assert(table->timestamp_field == this);
+    assert(getTable()->timestamp_field == this);
     /* Fall-through */
   case TIMESTAMP_DNUN_FIELD:
     return TIMESTAMP_AUTO_SET_ON_BOTH;
@@ -157,7 +160,7 @@ int Field_timestamp::store(const char *from,
                            uint32_t len,
                            const CHARSET_INFO * const )
 {
-  drizzled::Timestamp temporal;
+  Timestamp temporal;
 
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
@@ -184,7 +187,8 @@ int Field_timestamp::store(double from)
     std::stringstream ss;
     std::string tmp;
     ss.precision(18); /* 18 places should be fine for error display of double input. */
-    ss << from; ss >> tmp;
+    ss << from; 
+    ss >> tmp;
 
     my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(ME_FATALERROR), tmp.c_str());
     return 2;
@@ -200,13 +204,11 @@ int Field_timestamp::store(int64_t from, bool)
    * Try to create a DateTime from the supplied integer.  Throw an error
    * if unable to create a valid DateTime.  
    */
-  drizzled::Timestamp temporal;
+  Timestamp temporal;
   if (! temporal.from_int64_t(from))
   {
-    /* Convert the integer to a string using stringstream */
-    std::stringstream ss;
-    std::string tmp;
-    ss << from; ss >> tmp;
+    /* Convert the integer to a string using boost::lexical_cast */
+    std::string tmp(boost::lexical_cast<std::string>(from));
 
     my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(ME_FATALERROR), tmp.c_str());
     return 2;
@@ -226,18 +228,18 @@ double Field_timestamp::val_real(void)
 
 int64_t Field_timestamp::val_int(void)
 {
-  uint32_t temp;
+  uint64_t temp;
 
   ASSERT_COLUMN_MARKED_FOR_READ;
 
 #ifdef WORDS_BIGENDIAN
-  if (table && table->s->db_low_byte_first)
-    temp= uint4korr(ptr);
+  if (getTable() && getTable()->getShare()->db_low_byte_first)
+    temp= uint8korr(ptr);
   else
 #endif
-    longget(temp, ptr);
+    int64_tget(temp, ptr);
 
-  drizzled::Timestamp temporal;
+  Timestamp temporal;
   (void) temporal.from_time_t((time_t) temp);
 
   /* We must convert into a "timestamp-formatted integer" ... */
@@ -248,7 +250,7 @@ int64_t Field_timestamp::val_int(void)
 
 String *Field_timestamp::val_str(String *val_buffer, String *)
 {
-  uint32_t temp;
+  uint64_t temp;
   char *to;
   int to_len= field_length + 1;
 
@@ -256,15 +258,15 @@ String *Field_timestamp::val_str(String *val_buffer, String *)
   to= (char *) val_buffer->ptr();
 
 #ifdef WORDS_BIGENDIAN
-  if (table && table->s->db_low_byte_first)
-    temp= uint4korr(ptr);
+  if (getTable() && getTable()->getShare()->db_low_byte_first)
+    temp= uint8korr(ptr);
   else
 #endif
-    longget(temp, ptr);
+    int64_tget(temp, ptr);
 
   val_buffer->set_charset(&my_charset_bin);	/* Safety */
 
-  drizzled::Timestamp temporal;
+  Timestamp temporal;
   (void) temporal.from_time_t((time_t) temp);
 
   int rlen;
@@ -277,18 +279,18 @@ String *Field_timestamp::val_str(String *val_buffer, String *)
 
 bool Field_timestamp::get_date(DRIZZLE_TIME *ltime, uint32_t)
 {
-  uint32_t temp;
+  uint64_t temp;
 
 #ifdef WORDS_BIGENDIAN
-  if (table && table->s->db_low_byte_first)
-    temp= uint4korr(ptr);
+  if (getTable() && getTable()->getShare()->db_low_byte_first)
+    temp= uint8korr(ptr);
   else
 #endif
-    longget(temp, ptr);
+    int64_tget(temp, ptr);
   
   memset(ltime, 0, sizeof(*ltime));
 
-  drizzled::Timestamp temporal;
+  Timestamp temporal;
   (void) temporal.from_time_t((time_t) temp);
 
   /* @TODO Goodbye the below code when DRIZZLE_TIME is finally gone.. */
@@ -311,40 +313,48 @@ bool Field_timestamp::get_time(DRIZZLE_TIME *ltime)
 
 int Field_timestamp::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
-  int32_t a,b;
+  int64_t a,b;
 #ifdef WORDS_BIGENDIAN
-  if (table && table->s->db_low_byte_first)
+  if (getTable() && getTable()->getShare()->db_low_byte_first)
   {
-    a=sint4korr(a_ptr);
-    b=sint4korr(b_ptr);
+    a=sint8korr(a_ptr);
+    b=sint8korr(b_ptr);
   }
   else
 #endif
   {
-  longget(a,a_ptr);
-  longget(b,b_ptr);
+    int64_tget(a, a_ptr);
+    int64_tget(b, b_ptr);
   }
-  return ((uint32_t) a < (uint32_t) b) ? -1 : ((uint32_t) a > (uint32_t) b) ? 1 : 0;
+  return ((uint64_t) a < (uint64_t) b) ? -1 : ((uint64_t) a > (uint64_t) b) ? 1 : 0;
 }
 
 
 void Field_timestamp::sort_string(unsigned char *to,uint32_t )
 {
 #ifdef WORDS_BIGENDIAN
-  if (!table || !table->s->db_low_byte_first)
+  if (!getTable() || !getTable()->getShare()->db_low_byte_first)
   {
     to[0] = ptr[0];
     to[1] = ptr[1];
     to[2] = ptr[2];
     to[3] = ptr[3];
+    to[4] = ptr[4];
+    to[5] = ptr[5];
+    to[6] = ptr[6];
+    to[7] = ptr[7];
   }
   else
 #endif
   {
-    to[0] = ptr[3];
-    to[1] = ptr[2];
-    to[2] = ptr[1];
-    to[3] = ptr[0];
+    to[0] = ptr[7];
+    to[1] = ptr[6];
+    to[2] = ptr[5];
+    to[3] = ptr[4];
+    to[4] = ptr[3];
+    to[5] = ptr[2];
+    to[6] = ptr[1];
+    to[7] = ptr[0];
   }
 }
 
@@ -355,15 +365,15 @@ void Field_timestamp::sql_type(String &res) const
 
 void Field_timestamp::set_time()
 {
-  Session *session= table ? table->in_use : current_session;
-  long tmp= (long) session->query_start();
+  Session *session= getTable() ? getTable()->in_use : current_session;
+  time_t tmp= session->query_start();
   set_notnull();
   store_timestamp(tmp);
 }
 
 void Field_timestamp::set_default()
 {
-  if (table->timestamp_field == this &&
+  if (getTable()->timestamp_field == this &&
       unireg_check != TIMESTAMP_UN_FIELD)
     set_time();
   else
@@ -375,22 +385,24 @@ long Field_timestamp::get_timestamp(bool *null_value)
   if ((*null_value= is_null()))
     return 0;
 #ifdef WORDS_BIGENDIAN
-  if (table && table->s->db_low_byte_first)
-    return sint4korr(ptr);
+  if (getTable() && getTable()->getShare()->db_low_byte_first)
+    return sint8korr(ptr);
 #endif
-  long tmp;
-  longget(tmp,ptr);
+  int64_t tmp;
+  int64_tget(tmp, ptr);
   return tmp;
 }
 
-void Field_timestamp::store_timestamp(time_t timestamp)
+void Field_timestamp::store_timestamp(int64_t timestamp)
 {
 #ifdef WORDS_BIGENDIAN
-  if (table && table->s->db_low_byte_first)
+  if (getTable() && getTable()->getShare()->db_low_byte_first)
   {
-    int4store(ptr,timestamp);
+    int8store(ptr, timestamp);
   }
   else
 #endif
-    longstore(ptr,(uint32_t) timestamp);
+    int64_tstore(ptr, timestamp);
 }
+
+} /* namespace drizzled */

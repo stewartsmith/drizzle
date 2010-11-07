@@ -20,8 +20,8 @@
 #ifndef DRIZZLED_OPTIMIZER_TABLE_READ_PLAN_H
 #define DRIZZLED_OPTIMIZER_TABLE_READ_PLAN_H
 
-class SEL_TREE;
-struct st_ror_scan_info;
+#include "drizzled/util/functors.h"
+#include <algorithm>
 
 namespace drizzled
 {
@@ -31,12 +31,14 @@ namespace optimizer
 
 class Parameter;
 class SEL_ARG;
+class SEL_TREE;
+class RorScanInfo;
 
 /*
   Table rows retrieval plan. Range optimizer creates QuickSelectInterface-derived
   objects from table read plans.
 */
-class TABLE_READ_PLAN
+class TableReadPlan
 {
 public:
   /*
@@ -70,32 +72,32 @@ public:
   */
   virtual QuickSelectInterface *make_quick(Parameter *param,
                                            bool retrieve_full_rows,
-                                           drizzled::memory::Root *parent_alloc= NULL) = 0;
+                                           memory::Root *parent_alloc= NULL) = 0;
 
-  /* Table read plans are allocated on drizzled::memory::Root and are never deleted */
-  static void *operator new(size_t size, drizzled::memory::Root *mem_root)
+  /* Table read plans are allocated on memory::Root and are never deleted */
+  static void *operator new(size_t size, memory::Root *mem_root)
   { 
-    return (void*) alloc_root(mem_root, (uint32_t) size); 
+    return (void*) mem_root->alloc_root((uint32_t) size); 
   }
 
   static void operator delete(void *, size_t)
   { }
 
-  static void operator delete(void *, drizzled::memory::Root *)
+  static void operator delete(void *, memory::Root *)
     { /* Never called */ }
 
-  virtual ~TABLE_READ_PLAN() {} /* Remove gcc warning */
+  virtual ~TableReadPlan() {} /* Remove gcc warning */
 
 };
 
 
 /*
   Plan for a QuickRangeSelect scan.
-  TRP_RANGE::make_quick ignores retrieve_full_rows parameter because
+  RangeReadPlan::make_quick ignores retrieve_full_rows parameter because
   QuickRangeSelect doesn't distinguish between 'index only' scans and full
   record retrieval scans.
 */
-class TRP_RANGE : public TABLE_READ_PLAN
+class RangeReadPlan : public TableReadPlan
 {
 
 public:
@@ -105,36 +107,39 @@ public:
   uint32_t     mrr_flags;
   uint32_t     mrr_buf_size;
 
-  TRP_RANGE(SEL_ARG *key_arg, uint32_t idx_arg, uint32_t mrr_flags_arg)
+  RangeReadPlan(SEL_ARG *key_arg, uint32_t idx_arg, uint32_t mrr_flags_arg)
     :
       key(key_arg),
       key_idx(idx_arg),
       mrr_flags(mrr_flags_arg)
   {}
-  virtual ~TRP_RANGE() {}                     /* Remove gcc warning */
+  virtual ~RangeReadPlan() {}                     /* Remove gcc warning */
 
-  QuickSelectInterface *make_quick(Parameter *param, bool, drizzled::memory::Root *parent_alloc);
+  QuickSelectInterface *make_quick(Parameter *param, bool, memory::Root *parent_alloc);
 
 };
 
 
 /* Plan for QuickRorIntersectSelect scan. */
-
-class TRP_ROR_INTERSECT : public TABLE_READ_PLAN
+class RorIntersectReadPlan : public TableReadPlan
 {
 public:
-  TRP_ROR_INTERSECT() {}                      /* Remove gcc warning */
-  virtual ~TRP_ROR_INTERSECT() {}             /* Remove gcc warning */
+
+  RorIntersectReadPlan() {}                      /* Remove gcc warning */
+  virtual ~RorIntersectReadPlan() {}             /* Remove gcc warning */
+
   QuickSelectInterface *make_quick(Parameter *param,
                                    bool retrieve_full_rows,
-                                   drizzled::memory::Root *parent_alloc);
+                                   memory::Root *parent_alloc);
 
   /* Array of pointers to ROR range scans used in this intersection */
-  struct st_ror_scan_info **first_scan;
-  struct st_ror_scan_info **last_scan; /* End of the above array */
-  struct st_ror_scan_info *cpk_scan;  /* Clustered PK scan, if there is one */
+  RorScanInfo **first_scan;
+  RorScanInfo **last_scan; /* End of the above array */
+  RorScanInfo *cpk_scan;  /* Clustered PK scan, if there is one */
+
   bool is_covering; /* true if no row retrieval phase is necessary */
   double index_scan_costs; /* SUM(cost(index_scan)) */
+
 };
 
 
@@ -144,16 +149,16 @@ public:
   is ignored by make_quick.
 */
 
-class TRP_ROR_UNION : public TABLE_READ_PLAN
+class RorUnionReadPlan : public TableReadPlan
 {
 public:
-  TRP_ROR_UNION() {}                          /* Remove gcc warning */
-  virtual ~TRP_ROR_UNION() {}                 /* Remove gcc warning */
+  RorUnionReadPlan() {}                          /* Remove gcc warning */
+  virtual ~RorUnionReadPlan() {}                 /* Remove gcc warning */
   QuickSelectInterface *make_quick(Parameter *param,
                                    bool retrieve_full_rows,
-                                   drizzled::memory::Root *parent_alloc);
-  TABLE_READ_PLAN **first_ror; /* array of ptrs to plans for merged scans */
-  TABLE_READ_PLAN **last_ror;  /* end of the above array */
+                                   memory::Root *parent_alloc);
+  TableReadPlan **first_ror; /* array of ptrs to plans for merged scans */
+  TableReadPlan **last_ror;  /* end of the above array */
 };
 
 
@@ -163,16 +168,16 @@ public:
   is ignored by make_quick.
 */
 
-class TRP_INDEX_MERGE : public TABLE_READ_PLAN
+class IndexMergeReadPlan : public TableReadPlan
 {
 public:
-  TRP_INDEX_MERGE() {}                        /* Remove gcc warning */
-  virtual ~TRP_INDEX_MERGE() {}               /* Remove gcc warning */
+  IndexMergeReadPlan() {}                        /* Remove gcc warning */
+  virtual ~IndexMergeReadPlan() {}               /* Remove gcc warning */
   QuickSelectInterface *make_quick(Parameter *param,
                                    bool retrieve_full_rows,
-                                   drizzled::memory::Root *parent_alloc);
-  TRP_RANGE **range_scans; /* array of ptrs to plans of merged scans */
-  TRP_RANGE **range_scans_end; /* end of the array */
+                                   memory::Root *parent_alloc);
+  RangeReadPlan **range_scans; /* array of ptrs to plans of merged scans */
+  RangeReadPlan **range_scans_end; /* end of the array */
 };
 
 
@@ -180,16 +185,16 @@ public:
   Plan for a QuickGroupMinMaxSelect scan.
 */
 
-class TRP_GROUP_MIN_MAX : public TABLE_READ_PLAN
+class GroupMinMaxReadPlan : public TableReadPlan
 {
 private:
   bool have_min;
   bool have_max;
-  KEY_PART_INFO *min_max_arg_part;
+  KeyPartInfo *min_max_arg_part;
   uint32_t group_prefix_len;
   uint32_t used_key_parts;
   uint32_t group_key_parts;
-  KEY *index_info;
+  KeyInfo *index_info;
   uint32_t index;
   uint32_t key_infix_len;
   unsigned char key_infix[MAX_KEY_LENGTH];
@@ -201,20 +206,20 @@ public:
   ha_rows quick_prefix_records;
 
 public:
-  TRP_GROUP_MIN_MAX(bool have_min_arg, 
-                    bool have_max_arg,
-                    KEY_PART_INFO *min_max_arg_part_arg,
-                    uint32_t group_prefix_len_arg, 
-                    uint32_t used_key_parts_arg,
-                    uint32_t group_key_parts_arg, 
-                    KEY *index_info_arg,
-                    uint32_t index_arg, 
-                    uint32_t key_infix_len_arg,
-                    unsigned char *key_infix_arg,
-                    SEL_TREE *tree_arg, 
-                    SEL_ARG *index_tree_arg,
-                    uint32_t param_idx_arg, 
-                    ha_rows quick_prefix_records_arg)
+  GroupMinMaxReadPlan(bool have_min_arg, 
+                      bool have_max_arg,
+                      KeyPartInfo *min_max_arg_part_arg,
+                      uint32_t group_prefix_len_arg, 
+                      uint32_t used_key_parts_arg,
+                      uint32_t group_key_parts_arg, 
+                      KeyInfo *index_info_arg,
+                      uint32_t index_arg, 
+                      uint32_t key_infix_len_arg,
+                      unsigned char *key_infix_arg,
+                      SEL_TREE *tree_arg, 
+                      SEL_ARG *index_tree_arg,
+                      uint32_t param_idx_arg, 
+                      ha_rows quick_prefix_records_arg)
     :
       have_min(have_min_arg),
       have_max(have_max_arg),
@@ -233,11 +238,11 @@ public:
       if (key_infix_len)
         memcpy(this->key_infix, key_infix_arg, key_infix_len);
     }
-  virtual ~TRP_GROUP_MIN_MAX() {}             /* Remove gcc warning */
+  virtual ~GroupMinMaxReadPlan() {}             /* Remove gcc warning */
 
   QuickSelectInterface *make_quick(Parameter *param,
                                    bool retrieve_full_rows,
-                                   drizzled::memory::Root *parent_alloc);
+                                   memory::Root *parent_alloc);
 };
 
 

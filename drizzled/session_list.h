@@ -20,14 +20,15 @@
 #ifndef DRIZZLED_SESSION_LIST_H
 #define DRIZZLED_SESSION_LIST_H
 
-#include <vector>
-
-class Session;
+#include <list>
 
 namespace drizzled
 {
 
-std::vector<Session *> &getSessionList();
+class Session;
+typedef Session* SessionPtr;
+typedef std::list<SessionPtr> SessionList;
+SessionList &getSessionList();
 
 }
 

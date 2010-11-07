@@ -1,11 +1,26 @@
-#SELECT SHOW_SCHEMA_PROTO('test');
---error 1049
+#
+#  None of these functions can be tested. As soon as you add any
+#  non-deterministic data to the proto you immediatly lose the ability to
+#  print them in a test.
+#
+#  What should you do? Use DD to look at the field since it purely uses the
+#  Google protobuffer message.
+#
+#
+#
+#
+##SELECT SHOW_SCHEMA_PROTO('test');
+--error ER_BAD_DB_ERROR
 SELECT SHOW_SCHEMA_PROTO('not_exists');
-CREATE DATABASE foobar COLLATE = utf8_bin;
-SELECT SHOW_SCHEMA_PROTO('foobar');
-DROP DATABASE foobar;
-CREATE DATABASE foobar;
-SELECT SHOW_SCHEMA_PROTO('foobar');
-ALTER DATABASE foobar COLLATE = utf8_bin;
-SELECT SHOW_SCHEMA_PROTO('foobar');
-DROP DATABASE foobar;
+#CREATE DATABASE foobar COLLATE = utf8_bin;
+#SELECT SHOW_SCHEMA_PROTO('foobar');
+#
+#DROP DATABASE foobar;
+#CREATE DATABASE foobar;
+#SELECT SHOW_SCHEMA_PROTO('foobar');
+#
+#ALTER DATABASE foobar COLLATE = utf8_bin;
+#
+#SELECT SHOW_SCHEMA_PROTO('foobar');
+#
+#DROP DATABASE foobar;

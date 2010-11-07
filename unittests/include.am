@@ -1,0 +1,51 @@
+# vim:ft=automake
+# included from Top Level Makefile.am
+# All paths should be given relative to the root
+
+if HAVE_LIBGTEST
+check_PROGRAMS += unittests/unittests
+endif
+
+noinst_HEADERS += \
+		  unittests/plugin/plugin_stubs.h \
+		  unittests/temporal_generator.h
+
+EXTRA_DIST += \
+	      unittests/client_server.c
+
+unit: unittests/unittests
+	unittests/unittests
+
+# Removed temporal_interval_test, it is not cleaning up after itself. -Brian
+#
+#		      unittests/temporal_interval_test.cc
+#		     
+
+unittests_unittests_SOURCES = \
+			      unittests/atomics_test.cc \
+			      unittests/calendar_test.cc \
+			      unittests/constrained_value.cc \
+			      unittests/date_test.cc \
+			      unittests/date_time_test.cc \
+			      unittests/generators.cc \
+                              unittests/global_buffer_test.cc \
+                              unittests/libdrizzle_test.cc \
+			      unittests/main.cc \
+			      unittests/micro_timestamp_test.cc \
+			      unittests/nano_timestamp_test.cc \
+			      unittests/option_context.cc \
+			      unittests/plugin/authentication_test.cc \
+			      unittests/plugin/client_test.cc \
+			      unittests/plugin/error_message_test.cc \
+			      unittests/pthread_atomics_test.cc \
+			      unittests/table_identifier.cc \
+			      unittests/temporal_format_test.cc \
+			      unittests/temporal_generator.cc \
+			      unittests/time_test.cc \
+			      unittests/timestamp_test.cc \
+			      unittests/utf8_test.cc
+
+unittests_unittests_LDADD= \
+  $(filter-out drizzled/main.$(OBJEXT), ${am_drizzled_drizzled_OBJECTS}) \
+  ${drizzled_drizzled_LDADD} ${LTLIBGTEST} ${BOOST_LIBS} \
+  libdrizzle/libdrizzle.la

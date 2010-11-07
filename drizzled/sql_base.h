@@ -20,17 +20,20 @@
 #ifndef DRIZZLED_SQL_BASE_H
 #define DRIZZLED_SQL_BASE_H
 
-#include <stdint.h>
 #include <drizzled/table.h>
+#include <drizzled/table/concurrent.h>
 
+namespace drizzled
+{
 class TableShare;
 class Name_resolution_context;
 
 void table_cache_free(void);
 bool table_cache_init(void);
-void assign_new_table_id(TableShare *share);
 uint32_t cached_open_tables(void);
 uint32_t cached_table_definitions(void);
+
+table::Cache &get_open_cache();
 
 void kill_drizzle(void);
 
@@ -88,7 +91,8 @@ enum enum_resolution_type {
   RESOLVED_WITH_NO_ALIAS,
   RESOLVED_AGAINST_ALIAS
 };
-Item ** find_item_in_list(Item *item, List<Item> &items, uint32_t *counter,
+Item ** find_item_in_list(Session *session,
+                          Item *item, List<Item> &items, uint32_t *counter,
                           find_item_error_report_type report_error,
                           enum_resolution_type *resolution);
 bool insert_fields(Session *session, Name_resolution_context *context,
@@ -128,28 +132,17 @@ TableList *find_table_in_list(TableList *table,
                                const char *table_name);
 TableList *unique_table(TableList *table, TableList *table_list,
                         bool check_alias= false);
-void remove_db_from_cache(const char *db);
 
-/* bits for last argument to remove_table_from_cache() */
+/* bits for last argument to table::Cache::singleton().removeTable() */
 #define RTFC_NO_FLAG                0x0000
 #define RTFC_OWNED_BY_Session_FLAG      0x0001
 #define RTFC_WAIT_OTHER_THREAD_FLAG 0x0002
 #define RTFC_CHECK_KILLED_FLAG      0x0004
-bool remove_table_from_cache(Session *session, const char *db, const char *table,
-                             uint32_t flags);
 
 void mem_alloc_error(size_t size);
 
 bool fill_record(Session* session, List<Item> &fields, List<Item> &values, bool ignore_errors= false);
 bool fill_record(Session *session, Field **field, List<Item> &values, bool ignore_errors= false);
-bool list_open_tables(const char *db,
-                      const char *wild,
-                      bool(*func)(Table *table,
-                                  open_table_list_st& open_list,
-                                  drizzled::plugin::InfoSchemaTable *schema_table),
-                      Table *display,
-                      drizzled::plugin::InfoSchemaTable *schema_table);
-
 inline TableList *find_table_in_global_list(TableList *table,
                                              const char *db_name,
                                              const char *table_name)
@@ -157,4 +150,7 @@ inline TableList *find_table_in_global_list(TableList *table,
   return find_table_in_list(table, &TableList::next_global,
                             db_name, table_name);
 }
+
+} /* namespace drizzled */
+
 #endif /* DRIZZLED_SQL_BASE_H */

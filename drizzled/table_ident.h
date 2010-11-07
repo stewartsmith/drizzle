@@ -21,8 +21,13 @@
 #ifndef DRIZZLED_TABLE_IDENT_H
 #define DRIZZLED_TABLE_IDENT_H
 
+#include "drizzled/session.h"
+
+namespace drizzled
+{
+
 /* Structure for db & table in sql_yacc */
-class Table_ident :public drizzled::memory::SqlAlloc
+class Table_ident :public memory::SqlAlloc
 {
 public:
   LEX_STRING db;
@@ -33,7 +38,7 @@ public:
   {
     db= db_arg;
   }
-  inline Table_ident(LEX_STRING table_arg)
+  explicit Table_ident(LEX_STRING table_arg)
     :table(table_arg), sel((Select_Lex_Unit *)0)
   {
     db.str=0;
@@ -44,7 +49,7 @@ public:
     Later, if there was an alias specified for the table, it will be set
     by add_table_to_list.
   */
-  inline Table_ident(Select_Lex_Unit *s) : sel(s)
+  explicit Table_ident(Select_Lex_Unit *s) : sel(s)
   {
     /* We must have a table name here as this is used with add_table_to_list */
     db.str= empty_c_string;                    /* a subject to casedn_str */
@@ -58,5 +63,7 @@ public:
     db.str= db_name; db.length= (uint32_t) strlen(db_name);
   }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_TABLE_IDENT_H */

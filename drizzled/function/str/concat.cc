@@ -18,7 +18,7 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/str/concat.h>
 #include <drizzled/error.h>
 #include <drizzled/session.h>
@@ -26,6 +26,9 @@
 #include <algorithm>
 
 using namespace std;
+
+namespace drizzled
+{
 
 String *Item_func_concat::val_str(String *str)
 {
@@ -45,80 +48,80 @@ String *Item_func_concat::val_str(String *str)
     if (res->length() == 0)
     {
       if (!(res=args[i]->val_str(str)))
-	goto null;
+        goto null;
     }
     else
     {
       if (!(res2=args[i]->val_str(use_as_buff)))
-	goto null;
+        goto null;
       if (res2->length() == 0)
-	continue;
+        continue;
       if (res->length()+res2->length() >
-	  current_session->variables.max_allowed_packet)
+          session.variables.max_allowed_packet)
       {
-	push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-			    ER_WARN_ALLOWED_PACKET_OVERFLOWED,
-			    ER(ER_WARN_ALLOWED_PACKET_OVERFLOWED), func_name(),
-			    current_session->variables.max_allowed_packet);
-	goto null;
+        push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                            ER_WARN_ALLOWED_PACKET_OVERFLOWED,
+                            ER(ER_WARN_ALLOWED_PACKET_OVERFLOWED), func_name(),
+                            session.variables.max_allowed_packet);
+        goto null;
       }
       if (!is_const && res->alloced_length() >= res->length()+res2->length())
       {						// Use old buffer
-	res->append(*res2);
+        res->append(*res2);
       }
       else if (str->alloced_length() >= res->length()+res2->length())
       {
-	if (str == res2)
-	  str->replace(0,0,*res);
-	else
-	{
-	  str->copy(*res);
-	  str->append(*res2);
-	}
+        if (str == res2)
+          str->replace(0,0,*res);
+        else
+        {
+          str->copy(*res);
+          str->append(*res2);
+        }
         res= str;
         use_as_buff= &tmp_value;
       }
       else if (res == &tmp_value)
       {
-	if (res->append(*res2))			// Must be a blob
-	  goto null;
+        if (res->append(*res2))			// Must be a blob
+          goto null;
       }
       else if (res2 == &tmp_value)
       {						// This can happend only 1 time
-	if (tmp_value.replace(0,0,*res))
-	  goto null;
-	res= &tmp_value;
-	use_as_buff=str;			// Put next arg here
+        if (tmp_value.replace(0,0,*res))
+          goto null;
+        res= &tmp_value;
+        use_as_buff=str;			// Put next arg here
       }
       else if (tmp_value.is_alloced() && res2->ptr() >= tmp_value.ptr() &&
-	       res2->ptr() <= tmp_value.ptr() + tmp_value.alloced_length())
+               res2->ptr() <= tmp_value.ptr() + tmp_value.alloced_length())
       {
-	/*
-	  This happens really seldom:
-	  In this case res2 is sub string of tmp_value.  We will
-	  now work in place in tmp_value to set it to res | res2
-	*/
-	/* Chop the last characters in tmp_value that isn't in res2 */
-	tmp_value.length((uint32_t) (res2->ptr() - tmp_value.ptr()) +
-			 res2->length());
-	/* Place res2 at start of tmp_value, remove chars before res2 */
-	if (tmp_value.replace(0,(uint32_t) (res2->ptr() - tmp_value.ptr()),
-			      *res))
-	  goto null;
-	res= &tmp_value;
-	use_as_buff=str;			// Put next arg here
+        /*
+          This happens really seldom:
+          In this case res2 is sub string of tmp_value.  We will
+          now work in place in tmp_value to set it to res | res2
+        */
+        /* Chop the last characters in tmp_value that isn't in res2 */
+        tmp_value.length((uint32_t) (res2->ptr() - tmp_value.ptr()) +
+                         res2->length());
+        /* Place res2 at start of tmp_value, remove chars before res2 */
+        if (tmp_value.replace(0,(uint32_t) (res2->ptr() - tmp_value.ptr()),
+                              *res))
+          goto null;
+        res= &tmp_value;
+        use_as_buff=str;			// Put next arg here
       }
       else
       {						// Two big const strings
         /*
-          NOTE: We should be prudent in the initial allocation unit -- the
+          @note We should be prudent in the initial allocation unit -- the
           size of the arguments is a function of data distribution, which
           can be any. Instead of overcommitting at the first row, we grow
           the allocated amount by the factor of 2. This ensures that no
           more than 25% of memory will be overcommitted on average.
         */
 
-        uint32_t concat_len= res->length() + res2->length();
+        size_t concat_len= res->length() + res2->length();
 
         if (tmp_value.alloced_length() < concat_len)
         {
@@ -136,11 +139,11 @@ String *Item_func_concat::val_str(String *str)
           }
         }
 
-	if (tmp_value.copy(*res) || tmp_value.append(*res2))
-	  goto null;
+        if (tmp_value.copy(*res) || tmp_value.append(*res2))
+          goto null;
 
-	res= &tmp_value;
-	use_as_buff=str;
+        res= &tmp_value;
+        use_as_buff=str;
       }
       is_const= 0;
     }
@@ -166,7 +169,7 @@ void Item_func_concat::fix_length_and_dec()
     if (args[i]->collation.collation->mbmaxlen != collation.collation->mbmaxlen)
       max_result_length+= (args[i]->max_length /
                            args[i]->collation.collation->mbmaxlen) *
-                           collation.collation->mbmaxlen;
+        collation.collation->mbmaxlen;
     else
       max_result_length+= args[i]->max_length;
   }
@@ -215,34 +218,34 @@ String *Item_func_concat_ws::val_str(String *str)
       continue;					// Skip NULL
 
     if (res->length() + sep_str->length() + res2->length() >
-	current_session->variables.max_allowed_packet)
+        session.variables.max_allowed_packet)
     {
-      push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-			  ER_WARN_ALLOWED_PACKET_OVERFLOWED,
-			  ER(ER_WARN_ALLOWED_PACKET_OVERFLOWED), func_name(),
-			  current_session->variables.max_allowed_packet);
+      push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                          ER_WARN_ALLOWED_PACKET_OVERFLOWED,
+                          ER(ER_WARN_ALLOWED_PACKET_OVERFLOWED), func_name(),
+                          session.variables.max_allowed_packet);
       goto null;
     }
     if (res->alloced_length() >=
-	res->length() + sep_str->length() + res2->length())
+        res->length() + sep_str->length() + res2->length())
     {						// Use old buffer
       res->append(*sep_str);			// res->length() > 0 always
       res->append(*res2);
     }
     else if (str->alloced_length() >=
-	     res->length() + sep_str->length() + res2->length())
+             res->length() + sep_str->length() + res2->length())
     {
       /* We have room in str;  We can't get any errors here */
       if (str == res2)
       {						// This is quote uncommon!
-	str->replace(0,0,*sep_str);
-	str->replace(0,0,*res);
+        str->replace(0,0,*sep_str);
+        str->replace(0,0,*res);
       }
       else
       {
-	str->copy(*res);
-	str->append(*sep_str);
-	str->append(*res2);
+        str->copy(*res);
+        str->append(*sep_str);
+        str->append(*res2);
       }
       res=str;
       use_as_buff= &tmp_value;
@@ -250,45 +253,45 @@ String *Item_func_concat_ws::val_str(String *str)
     else if (res == &tmp_value)
     {
       if (res->append(*sep_str) || res->append(*res2))
-	goto null; // Must be a blob
+        goto null; // Must be a blob
     }
     else if (res2 == &tmp_value)
     {						// This can happend only 1 time
       if (tmp_value.replace(0,0,*sep_str) || tmp_value.replace(0,0,*res))
-	goto null;
+        goto null;
       res= &tmp_value;
       use_as_buff=str;				// Put next arg here
     }
     else if (tmp_value.is_alloced() && res2->ptr() >= tmp_value.ptr() &&
-	     res2->ptr() < tmp_value.ptr() + tmp_value.alloced_length())
+             res2->ptr() < tmp_value.ptr() + tmp_value.alloced_length())
     {
       /*
-	This happens really seldom:
-	In this case res2 is sub string of tmp_value.  We will
-	now work in place in tmp_value to set it to res | sep_str | res2
+        This happens really seldom:
+        In this case res2 is sub string of tmp_value.  We will
+        now work in place in tmp_value to set it to res | sep_str | res2
       */
       /* Chop the last characters in tmp_value that isn't in res2 */
       tmp_value.length((uint32_t) (res2->ptr() - tmp_value.ptr()) +
-		       res2->length());
+                       res2->length());
       /* Place res2 at start of tmp_value, remove chars before res2 */
       if (tmp_value.replace(0,(uint32_t) (res2->ptr() - tmp_value.ptr()),
-			    *res) ||
-	  tmp_value.replace(res->length(),0, *sep_str))
-	goto null;
+                            *res) ||
+          tmp_value.replace(res->length(),0, *sep_str))
+        goto null;
       res= &tmp_value;
       use_as_buff=str;			// Put next arg here
     }
     else
     {						// Two big const strings
       /*
-        NOTE: We should be prudent in the initial allocation unit -- the
+        @note We should be prudent in the initial allocation unit -- the
         size of the arguments is a function of data distribution, which can
         be any. Instead of overcommitting at the first row, we grow the
         allocated amount by the factor of 2. This ensures that no more than
         25% of memory will be overcommitted on average.
       */
 
-      uint32_t concat_len= res->length() + sep_str->length() + res2->length();
+      size_t concat_len= res->length() + sep_str->length() + res2->length();
 
       if (tmp_value.alloced_length() < concat_len)
       {
@@ -307,9 +310,9 @@ String *Item_func_concat_ws::val_str(String *str)
       }
 
       if (tmp_value.copy(*res) ||
-	  tmp_value.append(*sep_str) ||
-	  tmp_value.append(*res2))
-	goto null;
+          tmp_value.append(*sep_str) ||
+          tmp_value.append(*res2))
+        goto null;
       res= &tmp_value;
       use_as_buff=str;
     }
@@ -331,9 +334,9 @@ void Item_func_concat_ws::fix_length_and_dec()
     return;
 
   /*
-     arg_count cannot be less than 2,
-     it is done on parser level in sql_yacc.yy
-     so, (arg_count - 2) is safe here.
+    arg_count cannot be less than 2,
+    it is done on parser level in sql_yacc.yy
+    so, (arg_count - 2) is safe here.
   */
   max_result_length= (uint64_t) args[0]->max_length * (arg_count - 2);
   for (uint32_t i=1 ; i < arg_count ; i++)
@@ -347,3 +350,4 @@ void Item_func_concat_ws::fix_length_and_dec()
   max_length= (ulong) max_result_length;
 }
 
+} /* namespace drizzled */

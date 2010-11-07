@@ -41,6 +41,7 @@
 #include <string>
 
 using namespace std;
+using namespace drizzled;
 
 String *MemcachedIncrement::val_str(String *str)
 {

@@ -1,21 +1,22 @@
 #
-# Tests the INFORMATION_SCHEMA views which come with the transaction
+# Tests the DATA_DICTIONARY views which come with the transaction
 # log
 #
+
+# Truncate the log file to reset for the next test
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
 
 # Populate log with some records...
 --source ../plugin/transaction_log/tests/t/insert.inc
 
-# Query the INFORMATION_SCHEMA views and verify
+# Query the DATA_DICTIONARY views and verify
 # that the information contained in them matches
 # the transaction log.
+--source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 
---replace_column 2 X 7 X 8 X
-SELECT * FROM INFORMATION_SCHEMA.TRANSACTION_LOG;
---replace_column 1 X 3 X
-SELECT * FROM INFORMATION_SCHEMA.TRANSACTION_LOG_ENTRIES;
---replace_column 1 X 4 X 5 X
-SELECT * FROM INFORMATION_SCHEMA.TRANSACTION_LOG_TRANSACTIONS;
+--echo Dump log contents
+--replace_regex /start_timestamp: [0-9]+/START_TIMESTAMP/g /end_timestamp: [0-9]+/END_TIMESTAMP/g /creation_timestamp: [0-9]+/CREATE_TIMESTAMP/ /update_timestamp: [0-9]+/UPDATE_TIMESTAMP/ /transaction_id: [0-9]+/TRANSACTION_ID/
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 
 # Truncate the log file to reset for the next test
 --source ../plugin/transaction_log/tests/t/truncate_log.inc

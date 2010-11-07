@@ -30,8 +30,8 @@
 #include "config.h"
 #include "drizzled/show.h"
 #include "drizzled/gettext.h"
-#include "drizzled/plugin/info_schema_table.h"
-
+#include <boost/program_options.hpp>
+#include <drizzled/module/option_map.h>
 #include "stats_table.h"
 #include "analysis_table.h"
 #include "sysvar_holder.h"
@@ -39,26 +39,16 @@
 #include <string>
 #include <map>
 
+namespace po=boost::program_options;
 using namespace std;
 using namespace drizzled;
 
 /*
- * Vectors of columns for I_S tables.
+ * DATA_DICTIONARY tables.
  */
-static vector<const plugin::ColumnInfo *> memcached_stats_columns;
-static vector<const plugin::ColumnInfo *> memcached_analysis_columns;
+static AnalysisTableTool *analysis_table_tool; 
 
-/*
- * Methods for I_S tables.
- */
-static plugin::InfoSchemaMethods *memcached_stats_methods= NULL;
-static plugin::InfoSchemaMethods *memcached_analysis_methods= NULL;
-
-/*
- * I_S tables.
- */
-static plugin::InfoSchemaTable *memcached_stats_table= NULL;
-static plugin::InfoSchemaTable *memcached_analysis_table= NULL;
+static StatsTableTool *stats_table_tool;
 
 /*
  * System variable related variables.
@@ -66,152 +56,35 @@ static plugin::InfoSchemaTable *memcached_analysis_table= NULL;
 static char *sysvar_memcached_servers= NULL;
 
 /**
- * Populate the vectors of columns for each I_S table.
- *
- * @return false on success; true on failure.
- */
-static bool initColumns()
-{
-  if (createMemcachedStatsColumns(memcached_stats_columns))
-  {
-    return true;
-  }
-
-  if (createMemcachedAnalysisColumns(memcached_analysis_columns))
-  {
-    return true;
-  }
-
-  return false;
-}
-
-/**
- * Clear the vectors of columns for each I_S table.
- */
-static void cleanupColumns()
-{
-  clearMemcachedColumns(memcached_stats_columns);
-  clearMemcachedColumns(memcached_analysis_columns);
-}
-
-/**
- * Initialize the methods for each I_S table.
- *
- * @return false on success; true on failure
- */
-static bool initMethods()
-{
-  memcached_stats_methods= new(std::nothrow) 
-    MemcachedStatsISMethods();
-  if (! memcached_stats_methods)
-  {
-    return true;
-  }
-
-  memcached_analysis_methods= new(std::nothrow) 
-    MemcachedAnalysisISMethods();
-  if (! memcached_analysis_methods)
-  {
-    return true;
-  }
-
-  return false;
-}
-
-/**
- * Delete memory allocated for the I_S table methods.
- */
-static void cleanupMethods()
-{
-  delete memcached_stats_methods;
-  delete memcached_analysis_methods;
-}
-
-/**
- * Initialize the I_S tables related to memcached.
- *
- * @return false on success; true on failure
- */
-static bool initMemcachedTables()
-{
-  memcached_stats_table= new(std::nothrow) plugin::InfoSchemaTable("MEMCACHED_STATS",
-                                                           memcached_stats_columns,
-                                                           -1, -1, false, false, 0,
-                                                           memcached_stats_methods);
-  if (! memcached_stats_table)
-  {
-    return true;
-  }
-
-  memcached_analysis_table= 
-    new(std::nothrow) plugin::InfoSchemaTable("MEMCACHED_ANALYSIS",
-                                      memcached_analysis_columns,
-                                      -1, -1, false, false, 0,
-                                      memcached_analysis_methods);
-  if (! memcached_analysis_table)
-  {
-    return true;
-  }
-
-  return false;
-}
-
-/**
- * Delete memory allocated for the I_S tables.
- */
-static void cleanupMemcachedTables()
-{
-  delete memcached_stats_table;
-  delete memcached_analysis_table;
-}
-
-/**
  * Initialize the memcached stats plugin.
  *
  * @param[in] registry the drizzled::plugin::Registry singleton
  * @return false on success; true on failure.
  */
-static int init(plugin::Registry &registry)
+static int init(module::Context &context)
 {
-  if (initMethods())
+  const module::option_map &vm= context.getOptions();
+
+  if(vm.count("servers"))
   {
-    return 1;
+    sysvar_memcached_servers= strdup(vm["servers"].as<string>().c_str());
   }
 
-  if (initColumns())
+  else
   {
-    return 1;
-  }
-
-  if (initMemcachedTables())
-  {
-    return 1;
+    sysvar_memcached_servers= strdup("");
   }
 
   SysvarHolder &sysvar_holder= SysvarHolder::singleton();
   sysvar_holder.setServersString(sysvar_memcached_servers);
+  sysvar_holder.setMemoryPtr(sysvar_memcached_servers);
 
   /* we are good to go */
-  registry.add(memcached_stats_table);
-  registry.add(memcached_analysis_table);
+  stats_table_tool= new(std::nothrow)StatsTableTool; 
+  context.add(stats_table_tool);
 
-  return 0;
-}
-
-/**
- * Clean up the memcached stats plugin.
- *
- * @param[in] registry the drizzled::plugin::Registry singleton
- * @return false on success; true on failure
- */
-static int deinit(plugin::Registry &registry)
-{
-  registry.remove(memcached_stats_table);
-  registry.remove(memcached_analysis_table);
-
-  cleanupMethods();
-  cleanupColumns();
-  cleanupMemcachedTables();
+  analysis_table_tool= new(std::nothrow)AnalysisTableTool;
+  context.add(analysis_table_tool);
 
   return 0;
 }
@@ -257,6 +130,13 @@ static DRIZZLE_SYSVAR_STR(servers,
                           set_memc_servers, /* update func */
                           ""); /* default value */
 
+static void init_options(drizzled::module::option_context &context)
+{
+  context("servers",
+          po::value<string>(),
+          N_("List of memcached servers."));
+}
+
 static drizzle_sys_var *system_variables[]=
 {
   DRIZZLE_SYSVAR(servers),
@@ -272,9 +152,7 @@ DRIZZLE_DECLARE_PLUGIN
   N_("Memcached Stats as I_S tables"),
   PLUGIN_LICENSE_BSD,
   init,   /* Plugin Init      */
-  deinit, /* Plugin Deinit    */
-  NULL,   /* status variables */
   system_variables, /* system variables */
-  NULL    /* config options   */
+  init_options    /* config options   */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

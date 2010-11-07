@@ -27,7 +27,8 @@
 #include <drizzled/item/default_value.h>
 #include <drizzled/field/null.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool Item_insert_value::eq(const Item *item, bool binary_cmp) const
 {
@@ -68,15 +69,14 @@ bool Item_insert_value::fix_fields(Session *session, Item **)
 
   Item_field *field_arg= (Item_field *)arg;
 
-  if (field_arg->field->table->insert_values)
+  if (field_arg->field->getTable()->insert_values.size())
   {
     Field *def_field= (Field*) memory::sql_alloc(field_arg->field->size_of());
     if (!def_field)
       return true;
     memcpy(def_field, field_arg->field, field_arg->field->size_of());
     def_field->move_field_offset((ptrdiff_t)
-                                 (def_field->table->insert_values -
-                                  def_field->table->record[0]));
+                                 (&def_field->getTable()->insert_values[0] - def_field->getTable()->record[0]));
     set_field(def_field);
   }
   else
@@ -86,7 +86,7 @@ bool Item_insert_value::fix_fields(Session *session, Item **)
     tmp_field= new Field_null(0, 0, field_arg->field->field_name, &my_charset_bin);
     if (tmp_field)
     {
-      tmp_field->init(field_arg->field->table);
+      tmp_field->init(field_arg->field->getTable());
       set_field(tmp_field);
     }
   }
@@ -102,4 +102,4 @@ void Item_insert_value::print(String *str, enum_query_type query_type)
 }
 
 
-
+} /* namespace drizzled */

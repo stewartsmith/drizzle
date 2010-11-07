@@ -22,6 +22,7 @@
 
 #include "drizzled/optimizer/range.h"
 
+#include <boost/dynamic_bitset.hpp>
 #include <vector>
 
 namespace drizzled
@@ -126,7 +127,7 @@ public:
 
   void add_keys_and_lengths(String *key_names, String *used_lengths);
   void add_info_string(String *str);
-  bool is_keys_used(const MyBitmap *fields);
+  bool is_keys_used(const boost::dynamic_bitset<>& fields);
 
   bool push_quick_back(QuickRangeSelect *quick_sel_range);
 
@@ -139,7 +140,7 @@ public:
   /* true if this select is currently doing a clustered PK scan */
   bool  doing_pk_scan;
 
-  drizzled::memory::Root alloc;
+  memory::Root alloc;
   Session *session;
 
   /**
@@ -161,7 +162,7 @@ public:
   int read_keys_and_merge();
 
   /* used to get rows collected in Unique */
-  READ_RECORD read_record;
+  ReadRecord read_record;
 };
 
 } /* namespace optimizer */

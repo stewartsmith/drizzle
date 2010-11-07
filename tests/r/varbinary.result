@@ -39,13 +39,13 @@ create table table_28127_a(0b02 int);
 show create table table_28127_a;
 Table	Create Table
 table_28127_a	CREATE TABLE `table_28127_a` (
-  `0b02` int DEFAULT NULL
-) ENGINE=DEFAULT
+  `0b02` INT DEFAULT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 create table table_28127_b(0b2 int);
 show create table table_28127_b;
 Table	Create Table
 table_28127_b	CREATE TABLE `table_28127_b` (
-  `0b2` int DEFAULT NULL
-) ENGINE=DEFAULT
+  `0b2` INT DEFAULT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table table_28127_a;
 drop table table_28127_b;

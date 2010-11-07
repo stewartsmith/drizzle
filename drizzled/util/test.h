@@ -23,6 +23,9 @@
 
 #if defined(__cplusplus)
 
+namespace drizzled
+{
+
 template <class T>
 inline bool test(const T a)
 {
@@ -34,6 +37,8 @@ inline bool test_all_bits(const T a, const U b)
 {
   return ((a & b) == b);
 }
+
+} /* namespace drizzled */
 
 #else
 # define test(a)    ((a) ? 1 : 0)

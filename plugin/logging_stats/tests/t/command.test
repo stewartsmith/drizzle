@@ -1,0 +1,51 @@
+--disable_warnings
+DROP TABLE IF EXISTS a;
+DROP TABLE IF EXISTS b;
+--enable_warnings
+CREATE TABLE a (i int,  PRIMARY KEY (i));
+ALTER TABLE a ADD COLUMN j int;
+DROP TABLE A;
+CREATE TABLE a (i int,  PRIMARY KEY (i));
+INSERT INTO a VALUES (1);
+DELETE FROM a WHERE i=1;
+START TRANSACTION;
+INSERT INTO a VALUES (1);
+ROLLBACK;
+START TRANSACTION;
+INSERT INTO a VALUES (1);
+COMMIT;
+
+# The statistics are incremented after the statements have already returned
+# so its possible a query could be missed if we do not wait
+--sleep 1 
+SELECT USER, COUNT_SELECT, COUNT_DELETE, COUNT_UPDATE, COUNT_INSERT, COUNT_ROLLBACK, COUNT_COMMIT, COUNT_CREATE, COUNT_ALTER, COUNT_DROP, COUNT_ADMIN  FROM DATA_DICTIONARY.CURRENT_SQL_COMMANDS;
+
+# disable the plugin
+set global logging_stats_enable=false;
+SELECT USER, COUNT_SELECT, COUNT_DELETE, COUNT_UPDATE, COUNT_INSERT, COUNT_ROLLBACK, COUNT_COMMIT, COUNT_CREATE, COUNT_ALTER, COUNT_DROP, COUNT_ADMIN FROM DATA_DICTIONARY.CURRENT_SQL_COMMANDS;
+# renable it
+set global logging_stats_enable=true;
+
+
+#check the stats for the current session
+SHOW CREATE TABLE data_dictionary.SESSION_STATEMENTS;
+--replace_column 1 #
+SELECT count(*) FROM data_dictionary.SESSION_STATEMENTS;
+SELECT * FROM data_dictionary.SESSION_STATEMENTS;
+
+#check stats for all active sessions
+connect (con1, localhost, root,,);
+CREATE TABLE b (i int,  PRIMARY KEY (i));
+INSERT INTO b VALUES (1);
+connect (con2, localhost, drizzle,,);
+INSERT INTO b VALUES (2);
+
+
+
+--sleep 1
+SELECT USER, COUNT_SELECT, COUNT_DELETE, COUNT_UPDATE, COUNT_INSERT, COUNT_ROLLBACK, COUNT_COMMIT, COUNT_CREATE, COUNT_ALTER, COUNT_DROP, COUNT_ADMIN FROM DATA_DICTIONARY.CURRENT_SQL_COMMANDS;
+
+#dont select memory usage it will vary between 32/64 bit and compilers
+SELECT SCOREBOARD_SIZE, NUMBER_OF_RANGE_LOCKS, MAX_USERS_LOGGED FROM DATA_DICTIONARY.SCOREBOARD_STATISTICS;
+
+DROP TABLE a,b;

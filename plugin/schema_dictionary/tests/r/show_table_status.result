@@ -1,0 +1,40 @@
+FLUSH TABLES;
+create schema schema_a;
+use schema_a;
+create table a (a int);
+insert into a values (1), (2), (3);
+create temporary table a (a int) engine=memory;
+show table status;
+Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
+#	schema_a	a	STANDARD	InnoDB	#	#	#	#	#
+#	schema_a	a	TEMPORARY	MEMORY	#	#	#	#	#
+create schema schema_b;
+use schema_b;
+create table a (a int);
+create table b (a int);
+insert into a select * from schema_a.a;
+insert into b select * from schema_a.a;
+select * from a;
+a
+select * from b;
+a
+show table status;
+Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
+#	schema_b	a	STANDARD	InnoDB	#	#	#	#	#
+#	schema_b	b	STANDARD	InnoDB	#	#	#	#	#
+create temporary table a (a int);
+insert into b select * from schema_a.a;
+show table status;
+Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
+#	schema_b	a	STANDARD	InnoDB	#	#	#	#	#
+#	schema_b	a	TEMPORARY	InnoDB	#	#	#	#	#
+#	schema_b	b	STANDARD	InnoDB	#	#	#	#	#
+drop schema schema_a;
+show table status;
+Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
+#	schema_b	a	STANDARD	InnoDB	#	#	#	#	#
+#	schema_b	a	TEMPORARY	InnoDB	#	#	#	#	#
+#	schema_b	b	STANDARD	InnoDB	#	#	#	#	#
+drop schema schema_b;
+show table status;
+Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment

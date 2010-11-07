@@ -11,9 +11,11 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include "myisam_priv.h"
+
+using namespace drizzled;
 
 	/*
 	   Read next row with the same key as previous read
@@ -36,8 +38,6 @@ int mi_rnext(MI_INFO *info, unsigned char *buf, int inx)
 
   if (fast_mi_readinfo(info))
     return(errno);
-  if (info->s->concurrent_insert)
-    pthread_rwlock_rdlock(&info->s->key_root_lock[inx]);
   changed=_mi_test_if_changed(info);
   if (!flag)
   {
@@ -81,17 +81,12 @@ int mi_rnext(MI_INFO *info, unsigned char *buf, int inx)
     }
     if (!error && res == 2)
     {
-      if (info->s->concurrent_insert)
-        pthread_rwlock_unlock(&info->s->key_root_lock[inx]);
       info->lastpos= HA_OFFSET_ERROR;
       return(errno= HA_ERR_END_OF_FILE);
     }
   }
 
-  if (info->s->concurrent_insert)
-    pthread_rwlock_unlock(&info->s->key_root_lock[inx]);
-
-	/* Don't clear if database-changed */
+  /* Don't clear if database-changed */
   info->update&= (HA_STATE_CHANGED | HA_STATE_ROW_CHANGED);
   info->update|= HA_STATE_NEXT_FOUND;
 

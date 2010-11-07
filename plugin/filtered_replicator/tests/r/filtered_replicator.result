@@ -1,0 +1,337 @@
+set global filtered_replicator_filteredtables=t2;
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (
+id INT NOT NULL PRIMARY KEY
+, padding VARCHAR(200) NOT NULL
+);
+INSERT INTO t1 VALUES (1, "I love testing.");
+INSERT INTO t1 VALUES (2, "I hate testing.");
+DROP TABLE t1;
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (
+id INT NOT NULL PRIMARY KEY
+, padding VARCHAR(200) NOT NULL
+);
+INSERT INTO t1 VALUES (1, "I love testing."), (2, "I hate testing.");
+DROP TABLE IF EXISTS t1;
+DROP TABLE IF EXISTS t2;
+CREATE TABLE t1 (
+id INT NOT NULL PRIMARY KEY
+, padding VARCHAR(200) NOT NULL
+);
+INSERT INTO t1 VALUES (1, "I love testing.");
+INSERT INTO t1 VALUES (2, "I hate testing.");
+CREATE TABLE t2 (
+id INT NOT NULL PRIMARY KEY
+, padding VARCHAR(200) NOT NULL
+);
+INSERT INTO t2 SELECT * FROM t1;
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (
+id INT NOT NULL
+, padding VARCHAR(200) NOT NULL
+, PRIMARY KEY (id)
+);
+INSERT INTO t1 VALUES (1, "I love testing.");
+INSERT INTO t1 VALUES (2, "I hate testing.");
+ALTER TABLE t1 ADD dummy INT;
+ALTER TABLE t1 ADD INDEX ix_padding (padding(20));
+DROP TABLE t1;
+DROP SCHEMA IF EXISTS my_new_schema;
+CREATE SCHEMA my_new_warnings;
+DROP SCHEMA my_new_warnings;
+DROP TABLE IF EXISTS t1, t2;
+CREATE TABLE t1 (
+id INT NOT NULL
+, padding VARCHAR(200) NOT NULL
+, PRIMARY KEY (id)
+);
+RENAME TABLE t1 TO t2;
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (
+id INT NOT NULL
+, padding VARCHAR(200) NOT NULL
+, PRIMARY KEY (id)
+);
+INSERT INTO t1 VALUES (1, "I love testing.");
+INSERT INTO t1 VALUES (2, "I hate testing.");
+DELETE FROM t1 where id = 1;
+DROP TABLE t1;
+CREATE TABLE t1 (
+id INT NOT NULL
+, other INT NOT NULL
+, PRIMARY KEY (id)
+);
+INSERT INTO t1 VALUES (1, 1);
+INSERT INTO t1 VALUES (2, 2);
+INSERT INTO t1 VALUES (3, 3);
+INSERT INTO t1 VALUES (4, 4);
+INSERT INTO t1 VALUES (5, 5);
+INSERT INTO t1 VALUES (6, 6);
+INSERT INTO t1 VALUES (7, 7);
+INSERT INTO t1 VALUES (8, 8);
+DELETE FROM t1;
+DROP TABLE t1;
+Start Test of LP Bug #496101
+CREATE TABLE t1 (
+id INT NOT NULL
+, padding VARCHAR(200) NOT NULL
+, PRIMARY KEY (id)
+);
+START TRANSACTION;
+INSERT INTO t1 VALUES (1, "I love testing.");
+INSERT INTO t1 VALUES (2, "I hate testing.");
+DELETE FROM t1 where id = 1;
+COMMIT;
+DROP TABLE t1;
+End Test of LP Bug #496101
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (
+id INT NOT NULL
+, padding VARCHAR(200) NOT NULL
+, PRIMARY KEY (id)
+);
+INSERT INTO t1 VALUES (1, "I love testing.");
+INSERT INTO t1 VALUES (2, "I hate testing.");
+UPDATE t1 SET padding= "XXX" WHERE id= 1;
+UPDATE t1 SET padding= "AAA";
+DROP TABLE t1;
+CREATE TABLE t1 (
+id int AUTO_INCREMENT NOT NULL PRIMARY KEY
+, name varchar(1024)
+, alias varchar(1024)
+);
+INSERT INTO t1 (name,alias) VALUES ("jeff lebowski","dude");
+UPDATE t1 SET alias = "the dude" WHERE alias = "dude";
+DROP TABLE t1;
+CREATE TABLE t1 (
+id INT NOT NULL
+, counter INT NOT NULL
+, PRIMARY KEY (id)
+);
+INSERT INTO t1 (id, counter) VALUES (1,1),(2,2),(3,3);
+UPDATE t1 SET counter = counter + 1 WHERE id = 1;
+UPDATE t1 SET counter = counter + 1 WHERE id IN (2,3);
+DROP TABLE t1;
+CREATE TABLE t1 (
+id INT NOT NULL
+, padding VARCHAR(200) NOT NULL
+, PRIMARY KEY (id)
+);
+INSERT INTO t1 VALUES (1, "I love testing.");
+INSERT INTO t1 VALUES (2, "I hate testing.");
+UPDATE t1 SET id = 4 WHERE id = 2;
+DROP TABLE t1;
+START TRANSACTION;
+DROP TABLE IF EXISTS `test`.`t1`;
+COMMIT;
+START TRANSACTION;
+CREATE TABLE `test`.`t1` (   `id` INT NOT NULL,   `padding` VARCHAR(200) COLLATE utf8_general_ci NOT NULL,   PRIMARY KEY (`id`) ) ENGINE=InnoDB COLLATE = utf8_general_ci;
+COMMIT;
+START TRANSACTION;
+INSERT INTO `test`.`t1` (`id`,`padding`) VALUES (1,'I love testing.');
+COMMIT;
+START TRANSACTION;
+INSERT INTO `test`.`t1` (`id`,`padding`) VALUES (2,'I hate testing.');
+COMMIT;
+START TRANSACTION;
+DROP TABLE `test`.`t1`;
+COMMIT;
+START TRANSACTION;
+DROP TABLE IF EXISTS `test`.`t1`;
+COMMIT;
+START TRANSACTION;
+CREATE TABLE `test`.`t1` (   `id` INT NOT NULL,   `padding` VARCHAR(200) COLLATE utf8_general_ci NOT NULL,   PRIMARY KEY (`id`) ) ENGINE=InnoDB COLLATE = utf8_general_ci;
+COMMIT;
+START TRANSACTION;
+INSERT INTO `test`.`t1` (`id`,`padding`) VALUES (1,'I love testing.');
+INSERT INTO `test`.`t1` (`id`,`padding`) VALUES (2,'I hate testing.');
+COMMIT;
+START TRANSACTION;
+DROP TABLE IF EXISTS `test`.`t1`;
+COMMIT;
+START TRANSACTION;
+CREATE TABLE `test`.`t1` (   `id` INT NOT NULL,   `padding` VARCHAR(200) COLLATE utf8_general_ci NOT NULL,   PRIMARY KEY (`id`) ) ENGINE=InnoDB COLLATE = utf8_general_ci;
+COMMIT;
+START TRANSACTION;
+INSERT INTO `test`.`t1` (`id`,`padding`) VALUES (1,'I love testing.');
+COMMIT;
+START TRANSACTION;
+INSERT INTO `test`.`t1` (`id`,`padding`) VALUES (2,'I hate testing.');
+COMMIT;
+START TRANSACTION;
+DROP TABLE IF EXISTS `test`.`t1`;
+COMMIT;
+START TRANSACTION;
+CREATE TABLE `test`.`t1` (   `id` INT NOT NULL,   `padding` VARCHAR(200) COLLATE utf8_general_ci NOT NULL,   PRIMARY KEY (`id`) ) ENGINE=InnoDB COLLATE = utf8_general_ci;
+COMMIT;
+START TRANSACTION;
+INSERT INTO `test`.`t1` (`id`,`padding`) VALUES (1,'I love testing.');
+COMMIT;
+START TRANSACTION;
+INSERT INTO `test`.`t1` (`id`,`padding`) VALUES (2,'I hate testing.');
+COMMIT;
+START TRANSACTION;
+ALTER TABLE t1 ADD dummy INT;
+COMMIT;
+START TRANSACTION;
+ALTER TABLE t1 ADD INDEX ix_padding (padding(20));
+COMMIT;
+START TRANSACTION;
+DROP TABLE `test`.`t1`;
+COMMIT;
+START TRANSACTION;
+DROP SCHEMA `my_new_schema`;
+COMMIT;
+START TRANSACTION;
+CREATE SCHEMA `my_new_warnings` COLLATE utf8_general_ci;
+COMMIT;
+START TRANSACTION;
+DROP SCHEMA `my_new_warnings`;
+COMMIT;
+START TRANSACTION;
+DROP TABLE IF EXISTS `test`.`t1`;
+COMMIT;
+START TRANSACTION;
+CREATE TABLE `test`.`t1` (   `id` INT NOT NULL,   `padding` VARCHAR(200) COLLATE utf8_general_ci NOT NULL,   PRIMARY KEY (`id`) ) ENGINE=InnoDB COLLATE = utf8_general_ci;
+COMMIT;
+START TRANSACTION;
+RENAME TABLE t1 TO t2;
+COMMIT;
+START TRANSACTION;
+DROP TABLE IF EXISTS `test`.`t1`;
+COMMIT;
+START TRANSACTION;
+CREATE TABLE `test`.`t1` (   `id` INT NOT NULL,   `padding` VARCHAR(200) COLLATE utf8_general_ci NOT NULL,   PRIMARY KEY (`id`) ) ENGINE=InnoDB COLLATE = utf8_general_ci;
+COMMIT;
+START TRANSACTION;
+INSERT INTO `test`.`t1` (`id`,`padding`) VALUES (1,'I love testing.');
+COMMIT;
+START TRANSACTION;
+INSERT INTO `test`.`t1` (`id`,`padding`) VALUES (2,'I hate testing.');
+COMMIT;
+START TRANSACTION;
+DELETE FROM `test`.`t1` WHERE `id`=1;
+COMMIT;
+START TRANSACTION;
+DROP TABLE `test`.`t1`;
+COMMIT;
+START TRANSACTION;
+CREATE TABLE `test`.`t1` (   `id` INT NOT NULL,   `other` INT NOT NULL,   PRIMARY KEY (`id`) ) ENGINE=InnoDB COLLATE = utf8_general_ci;
+COMMIT;
+START TRANSACTION;
+INSERT INTO `test`.`t1` (`id`,`other`) VALUES (1,1);
+COMMIT;
+START TRANSACTION;
+INSERT INTO `test`.`t1` (`id`,`other`) VALUES (2,2);
+COMMIT;
+START TRANSACTION;
+INSERT INTO `test`.`t1` (`id`,`other`) VALUES (3,3);
+COMMIT;
+START TRANSACTION;
+INSERT INTO `test`.`t1` (`id`,`other`) VALUES (4,4);
+COMMIT;
+START TRANSACTION;
+INSERT INTO `test`.`t1` (`id`,`other`) VALUES (5,5);
+COMMIT;
+START TRANSACTION;
+INSERT INTO `test`.`t1` (`id`,`other`) VALUES (6,6);
+COMMIT;
+START TRANSACTION;
+INSERT INTO `test`.`t1` (`id`,`other`) VALUES (7,7);
+COMMIT;
+START TRANSACTION;
+INSERT INTO `test`.`t1` (`id`,`other`) VALUES (8,8);
+COMMIT;
+START TRANSACTION;
+DELETE FROM `test`.`t1` WHERE `id`=1;
+DELETE FROM `test`.`t1` WHERE `id`=2;
+DELETE FROM `test`.`t1` WHERE `id`=3;
+DELETE FROM `test`.`t1` WHERE `id`=4;
+DELETE FROM `test`.`t1` WHERE `id`=5;
+DELETE FROM `test`.`t1` WHERE `id`=6;
+DELETE FROM `test`.`t1` WHERE `id`=7;
+DELETE FROM `test`.`t1` WHERE `id`=8;
+COMMIT;
+START TRANSACTION;
+DROP TABLE `test`.`t1`;
+COMMIT;
+START TRANSACTION;
+CREATE TABLE `test`.`t1` (   `id` INT NOT NULL,   `padding` VARCHAR(200) COLLATE utf8_general_ci NOT NULL,   PRIMARY KEY (`id`) ) ENGINE=InnoDB COLLATE = utf8_general_ci;
+COMMIT;
+START TRANSACTION;
+INSERT INTO `test`.`t1` (`id`,`padding`) VALUES (1,'I love testing.');
+INSERT INTO `test`.`t1` (`id`,`padding`) VALUES (2,'I hate testing.');
+DELETE FROM `test`.`t1` WHERE `id`=1;
+COMMIT;
+START TRANSACTION;
+DROP TABLE `test`.`t1`;
+COMMIT;
+START TRANSACTION;
+DROP TABLE IF EXISTS `test`.`t1`;
+COMMIT;
+START TRANSACTION;
+CREATE TABLE `test`.`t1` (   `id` INT NOT NULL,   `padding` VARCHAR(200) COLLATE utf8_general_ci NOT NULL,   PRIMARY KEY (`id`) ) ENGINE=InnoDB COLLATE = utf8_general_ci;
+COMMIT;
+START TRANSACTION;
+INSERT INTO `test`.`t1` (`id`,`padding`) VALUES (1,'I love testing.');
+COMMIT;
+START TRANSACTION;
+INSERT INTO `test`.`t1` (`id`,`padding`) VALUES (2,'I hate testing.');
+COMMIT;
+START TRANSACTION;
+UPDATE `test`.`t1` SET `padding`='XXX' WHERE `id`=1;
+COMMIT;
+START TRANSACTION;
+UPDATE `test`.`t1` SET `padding`='AAA' WHERE `id`=1;
+UPDATE `test`.`t1` SET `padding`='AAA' WHERE `id`=2;
+COMMIT;
+START TRANSACTION;
+DROP TABLE `test`.`t1`;
+COMMIT;
+START TRANSACTION;
+CREATE TABLE `test`.`t1` (   `id` INT NOT NULL AUTO_INCREMENT,   `name` VARCHAR(1024) COLLATE utf8_general_ci DEFAULT NULL,   `alias` VARCHAR(1024) COLLATE utf8_general_ci DEFAULT NULL,   PRIMARY KEY (`id`) ) ENGINE=InnoDB COLLATE = utf8_general_ci;
+COMMIT;
+START TRANSACTION;
+INSERT INTO `test`.`t1` (`id`,`name`,`alias`) VALUES (1,'jeff lebowski','dude');
+COMMIT;
+START TRANSACTION;
+UPDATE `test`.`t1` SET `alias`='the dude' WHERE `id`=1;
+COMMIT;
+START TRANSACTION;
+DROP TABLE `test`.`t1`;
+COMMIT;
+START TRANSACTION;
+CREATE TABLE `test`.`t1` (   `id` INT NOT NULL,   `counter` INT NOT NULL,   PRIMARY KEY (`id`) ) ENGINE=InnoDB COLLATE = utf8_general_ci;
+COMMIT;
+START TRANSACTION;
+INSERT INTO `test`.`t1` (`id`,`counter`) VALUES (1,1);
+INSERT INTO `test`.`t1` (`id`,`counter`) VALUES (2,2);
+INSERT INTO `test`.`t1` (`id`,`counter`) VALUES (3,3);
+COMMIT;
+START TRANSACTION;
+UPDATE `test`.`t1` SET `counter`=2 WHERE `id`=1;
+COMMIT;
+START TRANSACTION;
+UPDATE `test`.`t1` SET `counter`=3 WHERE `id`=2;
+UPDATE `test`.`t1` SET `counter`=4 WHERE `id`=3;
+COMMIT;
+START TRANSACTION;
+DROP TABLE `test`.`t1`;
+COMMIT;
+START TRANSACTION;
+CREATE TABLE `test`.`t1` (   `id` INT NOT NULL,   `padding` VARCHAR(200) COLLATE utf8_general_ci NOT NULL,   PRIMARY KEY (`id`) ) ENGINE=InnoDB COLLATE = utf8_general_ci;
+COMMIT;
+START TRANSACTION;
+INSERT INTO `test`.`t1` (`id`,`padding`) VALUES (1,'I love testing.');
+COMMIT;
+START TRANSACTION;
+INSERT INTO `test`.`t1` (`id`,`padding`) VALUES (2,'I hate testing.');
+COMMIT;
+START TRANSACTION;
+UPDATE `test`.`t1` SET `id`=4 WHERE `id`=2;
+COMMIT;
+START TRANSACTION;
+DROP TABLE `test`.`t1`;
+COMMIT;
+SET GLOBAL transaction_log_truncate_debug= true;

@@ -27,6 +27,12 @@
 
 #include "config.h"
 
+#include "drizzled/definitions.h"
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 #include <strings.h>
 #include <limits.h>
 
@@ -58,6 +64,14 @@ CachedDirectory::CachedDirectory(const string& in_path, set<string>& allowed_ext
   (void) open(in_path, allowed_exts);
 }
 
+CachedDirectory::CachedDirectory(const string& in_path, enum CachedDirectory::FILTER filter) :
+  error(0)
+{
+  set<string> empty;
+  // TODO: Toss future exception
+  (void) open(in_path, empty, filter);
+}
+
 
 CachedDirectory::~CachedDirectory()
 {
@@ -77,6 +91,11 @@ bool CachedDirectory::open(const string &in_path)
 }
 
 bool CachedDirectory::open(const string &in_path, set<string> &allowed_exts)
+{
+  return open(in_path, allowed_exts, CachedDirectory::NONE);
+}
+
+bool CachedDirectory::open(const string &in_path, set<string> &allowed_exts, enum CachedDirectory::FILTER filter)
 {
   DIR *dirp= opendir(in_path.c_str());
 
@@ -108,6 +127,7 @@ bool CachedDirectory::open(const string &in_path, set<string> &allowed_exts)
   while ((retcode= readdir_r(dirp, &buffer.entry, &result)) == 0 &&
          result != NULL)
   {
+    std::string buffered_fullpath;
     if (! allowed_exts.empty())
     {
       char *ptr= rindex(result->d_name, '.');
@@ -125,7 +145,52 @@ bool CachedDirectory::open(const string &in_path, set<string> &allowed_exts)
     }
     else
     {
-      entries.push_back(new Entry(result->d_name));
+      switch (filter)
+      {
+      case DIRECTORY:
+        {
+          struct stat entrystat;
+
+          if (result->d_name[0] == '.') // We don't pass back anything hidden at the moment.
+            continue;
+
+          buffered_fullpath.append(in_path);
+          if (buffered_fullpath[buffered_fullpath.length()] != '/')
+            buffered_fullpath.append(1, FN_LIBCHAR);
+
+          buffered_fullpath.assign(result->d_name);
+
+          stat(buffered_fullpath.c_str(), &entrystat);
+
+          if (S_ISDIR(entrystat.st_mode))
+          {
+            entries.push_back(new Entry(result->d_name));
+          }
+        }
+        break;
+      case FILE:
+        {
+          struct stat entrystat;
+
+          buffered_fullpath.append(in_path);
+          if (buffered_fullpath[buffered_fullpath.length()] != '/')
+            buffered_fullpath.append(1, FN_LIBCHAR);
+
+          buffered_fullpath.assign(result->d_name);
+
+          stat(buffered_fullpath.c_str(), &entrystat);
+
+          if (S_ISREG(entrystat.st_mode))
+          {
+            entries.push_back(new Entry(result->d_name));
+          }
+        }
+        break;
+      case NONE:
+      case MAX:
+        entries.push_back(new Entry(result->d_name));
+        break;
+      }
     }
   }
     

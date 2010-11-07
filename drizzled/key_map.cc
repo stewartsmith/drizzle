@@ -21,6 +21,9 @@
 
 #include <drizzled/key_map.h>
 
+namespace drizzled
+{
+
 bool is_keymap_prefix(const key_map& map, const uint32_t prefix_size)
 {
   size_t pos= 0;
@@ -68,3 +71,5 @@ void key_map_subtract(key_map& map1, key_map& map2)
   map1&= map2.flip();
   map2.flip();
 }
+
+} /* namespace drizzled */

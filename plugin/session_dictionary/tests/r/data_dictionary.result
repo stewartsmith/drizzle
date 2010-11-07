@@ -1,0 +1,25 @@
+use data_dictionary;
+show create table PROCESSLIST ;
+Table	Create Table
+PROCESSLIST	CREATE TABLE `PROCESSLIST` (
+  `ID` BIGINT NOT NULL,
+  `USER` VARCHAR(16) NOT NULL,
+  `HOST` VARCHAR(1025) NOT NULL,
+  `DB` VARCHAR(256) NOT NULL,
+  `COMMAND` VARCHAR(16) NOT NULL,
+  `TIME` BIGINT NOT NULL,
+  `STATE` VARCHAR(256) DEFAULT NULL,
+  `INFO` VARCHAR(100) DEFAULT NULL
+) ENGINE=FunctionEngine COLLATE = utf8_general_ci
+SELECT ID FROM processlist;
+ID
+#
+SELECT ID FROM processlist ORDER BY ID;
+ID
+#
+SELECT a.ID FROM processlist as a, processlist as b ORDER BY ID;
+ID
+#
+SELECT a.ID FROM processlist as a, data_dictionary.processlist as b;
+ID
+#

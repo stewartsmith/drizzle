@@ -37,14 +37,14 @@
 #include <libmemcached/memcached.h>
 
 /* implements memc_stats */
-class MemcachedStats: public Item_str_func
+class MemcachedStats: public drizzled::Item_str_func
 {
 public:
   MemcachedStats()
     :
       Item_str_func(),
-      failure_buff("FAILURE: ", &my_charset_bin),
-      results_buff("", &my_charset_bin)
+      failure_buff("FAILURE: ", &drizzled::my_charset_bin),
+      results_buff("", &drizzled::my_charset_bin)
   {
   }
 
@@ -53,7 +53,7 @@ public:
     return "memc_stats";
   }
 
-  String *val_str(String *);
+  drizzled::String *val_str(drizzled::String *);
 
   void fix_length_and_dec()
   {
@@ -63,8 +63,8 @@ public:
 private:
   void setFailureString(const char *error);
 
-  String failure_buff;
-  String results_buff;
+  drizzled::String failure_buff;
+  drizzled::String results_buff;
 };
 
 #endif /* PLUGIN_MEMCACHED_FUNCTIONS_MEMC_STATS_H */

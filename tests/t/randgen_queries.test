@@ -1,0 +1,100 @@
+--disable_warnings
+drop table if exists t1;
+--enable_warnings
+
+# execute all the queries that randgen uses to setup and run its tests
+--replace_column 2 ####.##.####
+show variables like 'version';
+--replace_column 1 ####.##.####
+select version();
+select database();
+
+CREATE TABLE `t1` (
+`col_bigint` bigint,
+`col_text` text,
+`col_char` char (1),
+`col_enum` enum ('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'),
+`col_int` int,
+`col_char_not_null` char (1) not null,
+`col_int_not_null_key` int not null,
+`col_text_not_null` text not null,
+`col_enum_not_null_key` enum ('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') not null,
+`col_int_key` int,
+`col_char_key` char (1),
+`col_enum_not_null` enum ('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') not null,
+`col_text_not_null_key` text not null,
+pk integer auto_increment,
+`col_bigint_key` bigint,
+`col_int_not_null` int not null,
+`col_bigint_not_null` bigint not null,
+`col_bigint_not_null_key` bigint not null,
+`col_char_not_null_key` char (1) not null,
+`col_text_key` text,
+`col_enum_key` enum ('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'),
+/*Indices*/
+key (`col_int_not_null_key` ),
+key (`col_enum_not_null_key` ),
+key (`col_int_key` ),
+key (`col_char_key` ),
+key (`col_text_not_null_key`  (255)),
+primary key (pk),
+key (`col_bigint_key` ),
+key (`col_bigint_not_null_key` ),
+key (`col_char_not_null_key` ),
+key (`col_text_key`  (255)),
+key (`col_enum_key` )) ENGINE=innodb;
+set AUTOCOMMIT=OFF;
+
+# bookkeeping query in Executor/Drizzle.pm in randgen
+select SQL_BIG_RESULT table_schema, 
+       table_name, 
+       CASE WHEN table_type = 'STANDARD' THEN 'table' 
+            WHEN table_type = 'FUNCTION' then 'function' 
+       ELSE 'misc' END, 
+       column_name,
+       CASE WHEN IS_USED_IN_PRIMARY = 'YES' THEN 'primary' 
+             WHEN IS_INDEXED = 'YES' THEN 'indexed' 
+       ELSE 'indexed' END 
+       FROM data_dictionary.tables INNER JOIN
+            data_dictionary.columns USING(table_schema, table_name) ORDER BY table_schema, table_name limit 20;
+# end bookkeeping test
+
+# bookkeeping query in Executor/Drizzle.pm in randgen - variant 1
+# test of non-DATA_DICTIONARY / INFORMATION_SCHEMA tables
+CREATE SCHEMA randgen_query_test;
+USE randgen_query_test;
+CREATE TABLE t1 (a INT);
+CREATE TABLE t2 LIKE t1;
+CREATE TABLE t3 LIKE t1;
+CREATE TABLE t4 (b CHAR(500));
+CREATE TABLE t5 LIKE t4;
+
+select SQL_BIG_RESULT table_schema,
+       table_name,
+       CASE WHEN table_type = 'STANDARD' THEN 'table'
+            WHEN table_type = 'FUNCTION' then 'function'
+       ELSE 'misc' END,
+       column_name,
+       CASE WHEN IS_USED_IN_PRIMARY = 'YES' THEN 'primary'
+             WHEN IS_INDEXED = 'YES' THEN 'indexed'
+       ELSE 'indexed' END
+       FROM data_dictionary.tables INNER JOIN
+            data_dictionary.columns USING(table_schema, table_name) WHERE table_schema NOT IN ('DATA_DICTIONARY','INFORMATION_SCHEMA')
+       ORDER BY table_schema, table_name limit 20;
+
+DROP SCHEMA randgen_query_test;
+USE test;
+# end bookkeeping test
+
+
+select AVG(`col_int_key`) + AVG(`col_int`) AS average1,
+                        (SUM(`col_int_key`) + SUM(`col_int`)) / COUNT(*) AS average2,
+                        COUNT(*) AS count FROM t1;
+
+--sorted_result
+select collation_name,character_set_name FROM data_dictionary.collations;
+--replace_column 1 ####.##.####
+--sorted_result
+select COUNT(*) from data_dictionary.tables;
+
+DROP TABLE t1;

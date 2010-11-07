@@ -20,9 +20,11 @@
 #include "config.h"
 #include <drizzled/function/math/decimal_typecast.h>
 #include <drizzled/error.h>
-#include <drizzled/current_session.h>
+#include <drizzled/session.h>
 #include "drizzled/internal/m_string.h"
 
+namespace drizzled
+{
 
 String *Item_decimal_typecast::val_str(String *str)
 {
@@ -85,7 +87,7 @@ my_decimal *Item_decimal_typecast::val_decimal(my_decimal *dec)
   return dec;
 
 err:
-  push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+  push_warning_printf(getSessionPtr(), DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                       ER_WARN_DATA_OUT_OF_RANGE,
                       ER(ER_WARN_DATA_OUT_OF_RANGE),
                       name, 1);
@@ -104,15 +106,16 @@ void Item_decimal_typecast::print(String *str, enum_query_type query_type)
   args[0]->print(str, query_type);
   str->append(STRING_WITH_LEN(" as decimal("));
 
-  end=int10_to_str(precision, len_buf,10);
+  end=internal::int10_to_str(precision, len_buf,10);
   str->append(len_buf, (uint32_t) (end - len_buf));
 
   str->append(',');
 
-  end=int10_to_str(decimals, len_buf,10);
+  end=internal::int10_to_str(decimals, len_buf,10);
   str->append(len_buf, (uint32_t) (end - len_buf));
 
   str->append(')');
   str->append(')');
 }
 
+} /* namespace drizzled */

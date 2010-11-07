@@ -23,11 +23,12 @@
 
 #include <drizzled/statement.h>
 #include <drizzled/message/schema.pb.h>
-
-class Session;
+#include <uuid/uuid.h>
 
 namespace drizzled
 {
+class Session;
+
 namespace statement
 {
 
@@ -39,11 +40,24 @@ public:
       Statement(in_session),
       is_if_not_exists(false)
   {
+    schema_message.set_creation_timestamp(time(NULL));
+    schema_message.set_update_timestamp(time(NULL));
+
+    /* 36 characters for uuid string +1 for NULL */
+    uuid_t uu;
+    char uuid_string[37];
+    uuid_generate_random(uu);
+    uuid_unparse(uu, uuid_string);
+    schema_message.set_uuid(uuid_string, 36);
+
+    schema_message.set_version(1);
   }
 
   bool execute();
   bool is_if_not_exists;
-  drizzled::message::Schema schema_message;
+  message::Schema schema_message;
+
+  bool validateSchemaOptions();
 };
 
 } /* end namespace statement */

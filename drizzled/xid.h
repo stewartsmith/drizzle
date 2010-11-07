@@ -20,6 +20,11 @@
 #ifndef DRIZZLED_XID_H
 #define DRIZZLED_XID_H
 
+#include <cstring>
+
+namespace drizzled
+{
+
 extern uint32_t server_id;
 
 /**
@@ -30,15 +35,13 @@ extern uint32_t server_id;
 
 */
 
-typedef uint64_t my_xid; // this line is the same as in log_event.h
+typedef uint64_t my_xid;
 
 #define DRIZZLE_XIDDATASIZE 128
 #define DRIZZLE_XID_PREFIX "MySQLXid"
 #define DRIZZLE_XID_PREFIX_LEN 8 // must be a multiple of 8
 #define DRIZZLE_XID_OFFSET (DRIZZLE_XID_PREFIX_LEN+sizeof(server_id))
 #define DRIZZLE_XID_GTRID_LEN (DRIZZLE_XID_OFFSET+sizeof(my_xid))
-
-#define XIDDATASIZE DRIZZLE_XIDDATASIZE
 
 class XID {
 
@@ -47,9 +50,15 @@ public:
   long formatID;
   long gtrid_length;
   long bqual_length;
-  char data[XIDDATASIZE];  // not \0-terminated !
+  char data[DRIZZLE_XIDDATASIZE];  // not \0-terminated !
 
-  XID();
+  XID() :
+    formatID(-1), /* -1 == null */
+    gtrid_length(0),
+    bqual_length(0)
+  {
+    memset(data, 0, DRIZZLE_XIDDATASIZE);
+  }
   bool eq(XID *xid);
   bool eq(long g, long b, const char *d);
   void set(XID *xid);
@@ -72,13 +81,23 @@ public:
   http://www.opengroup.org/bookstore/catalog/c193.htm
 
 */
-struct st_drizzle_xid {
+
+class drizzle_xid {
+public:
   long formatID;
   long gtrid_length;
   long bqual_length;
   char data[DRIZZLE_XIDDATASIZE];  /* Not \0-terminated */
+
+  drizzle_xid() :
+    formatID(0),
+    gtrid_length(0),
+    bqual_length(0)
+  {
+    memset(data, 0, DRIZZLE_XIDDATASIZE);
+  }
 };
-typedef struct st_drizzle_xid DRIZZLE_XID;
+typedef class drizzle_xid DRIZZLE_XID;
 
 enum xa_states {XA_NOTR=0, XA_ACTIVE, XA_IDLE, XA_PREPARED};
 extern const char *xa_state_names[];
@@ -87,12 +106,19 @@ extern const char *xa_state_names[];
 #define MIN_XID_LIST_SIZE  128
 #define MAX_XID_LIST_SIZE  (1024*128)
 
-typedef struct st_xid_state {
+class XID_STATE 
+{
+public:
+  XID_STATE() :
+    xid(),
+    xa_state(XA_NOTR),
+    in_session(false)
+  {}
   /* For now, this is only used to catch duplicated external xids */
   XID  xid;                           // transaction identifier
   enum xa_states xa_state;            // used by external XA only
   bool in_session;
-} XID_STATE;
+};
 
 bool xid_cache_init(void);
 void xid_cache_free(void);
@@ -100,5 +126,7 @@ XID_STATE *xid_cache_search(XID *xid);
 bool xid_cache_insert(XID *xid, enum xa_states xa_state);
 bool xid_cache_insert(XID_STATE *xid_state);
 void xid_cache_delete(XID_STATE *xid_state);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_XID_H */

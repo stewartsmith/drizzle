@@ -23,7 +23,6 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#include "drizzled/my_getopt.h"
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -56,7 +55,7 @@ int main(int argc, char *argv[])
   struct timeval start_time, end_time;
   long int timing;
 
-  my_init();
+  drizzled::internal::my_init();
   MY_INIT(argv[0]);
 
   if (argc != 1)
@@ -91,7 +90,7 @@ int main(int argc, char *argv[])
     azclose(&reader_handle);
   }
 
-  my_end();
+  drizzled::internal::my_end();
 
   return 0;
 }

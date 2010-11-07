@@ -4,31 +4,28 @@
 
 CLIENT_LDADD= \
 	      drizzled/internal/libinternal.la \
-	      $(LIBDRIZZLE) \
+	      libdrizzle/libdrizzle.la \
 	      $(LIBINTL) \
 	      $(LIBZ) \
-	      gnulib/libgnu.la \
 	      client/libgetpassword.la
 
 noinst_LTLIBRARIES+= \
 		     client/libgetpassword.la
 
 noinst_PROGRAMS+= \
-		  client/drizzletest \
-		  extra/my_print_defaults
+		  client/drizzletest
 
-bin_PROGRAMS= \
-	      client/drizzle \
-	      client/drizzledump \
-	      client/drizzleimport \
-	      client/drizzleslap
+bin_PROGRAMS+= \
+	       client/drizzle \
+	       client/drizzledump \
+	       client/drizzleimport \
+	       client/drizzleslap
 
-man_MANS= \
-	  client/drizzle.1 \
-	  client/drizzled.8 \
-	  client/drizzledump.1 \
-	  client/drizzleimport.1 \
-	  client/drizzleslap.1
+man_MANS+= \
+	   client/drizzle.1 \
+	   client/drizzled.8 \
+	   client/drizzleimport.1 \
+	   client/drizzleslap.1
 
 client_libgetpassword_la_SOURCES= client/get_password.cc
 
@@ -37,21 +34,39 @@ noinst_HEADERS+= \
 		 client/errname.h \
 		 client/get_password.h \
 		 client/linebuffer.h \
-		 drizzled/configmake.h
-
+                 client/conclusions.h \
+                 client/drizzledump_data.h \
+                 client/drizzledump_drizzle.h \
+                 client/drizzledump_mysql.h \
+                 client/option_string.h \
+                 client/statement.h \
+                 client/stats.h \
+                 client/thread_context.h \
+                 client/wakeup.h
 
 client_drizzle_SOURCES=		client/drizzle.cc client/linebuffer.cc
-client_drizzle_LDADD=		${CLIENT_LDADD} ${READLINE_LIBS}
+client_drizzle_LDADD=		${READLINE_LIBS} ${BOOST_LIBS} \
+				libdrizzle/libdrizzle.la \
+				$(LIBINTL) \
+				$(LIBZ) \
+				client/libgetpassword.la
 
-client_drizzledump_SOURCES=	client/drizzledump.cc
-client_drizzledump_LDADD=	${CLIENT_LDADD}
+client_drizzledump_SOURCES= \
+			    client/drizzledump.cc \
+			    client/drizzledump_data.cc \
+			    client/drizzledump_drizzle.cc \
+			    client/drizzledump_mysql.cc
+
+client_drizzledump_LDADD=	${CLIENT_LDADD} ${BOOST_LIBS}
 
 client_drizzleimport_SOURCES=	client/drizzleimport.cc
-client_drizzleimport_LDADD=	${CLIENT_LDADD}
+client_drizzleimport_LDADD=	${CLIENT_LDADD} ${BOOST_LIBS}
 
 client_drizzleslap_SOURCES=	client/drizzleslap.cc
-client_drizzleslap_LDADD=	${CLIENT_LDADD}
+client_drizzleslap_LDADD=	${CLIENT_LDADD} ${BOOST_LIBS}
+client_drizzleslap_CXXFLAGS=	${AM_CXXFLAGS} ${BOOSTSKIP_WARNINGS}
 
 client_drizzletest_SOURCES=	client/drizzletest.cc client/errname.cc
-client_drizzletest_LDADD=	${CLIENT_LDADD} ${LIBPCRE}
+client_drizzletest_LDADD=	${CLIENT_LDADD} ${BOOST_LIBS} ${LIBPCRE} 
+ 
 

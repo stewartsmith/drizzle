@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /****************************************************************************
  Add all options from files named "group".cnf from the default_directories
@@ -33,7 +33,9 @@
  --print-defaults	  ; Print the modified command line and exit
 ****************************************************************************/
 
-#include "drizzled/internal/mysys_priv.h"
+#include "config.h"
+
+#include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/m_string.h"
 #include "drizzled/charset_info.h"
 #include <drizzled/configmake.h>
@@ -48,9 +50,12 @@
 #include <cstdio>
 #include <algorithm>
 
-
-using namespace drizzled;
 using namespace std;
+
+namespace drizzled
+{
+namespace internal
+{
 
 const char *my_defaults_file=0;
 const char *my_defaults_group_suffix=0;
@@ -176,7 +181,7 @@ int my_search_option_files(const char *conf_file, int *argc, char ***argv,
     TYPELIB *group= ctx->group;
 
     if (!(extra_groups=
-	  (const char**)alloc_root(ctx->alloc,
+	  (const char**)ctx->alloc->alloc_root(
                                    (2*group->count+1)*sizeof(char*))))
       goto err;
 
@@ -186,7 +191,7 @@ int my_search_option_files(const char *conf_file, int *argc, char ***argv,
       extra_groups[i]= group->type_names[i]; /** copy group */
 
       len= strlen(extra_groups[i]);
-      if (!(ptr= (char *)alloc_root(ctx->alloc, len+instance_len+1)))
+      if (!(ptr= (char *)ctx->alloc->alloc_root( len+instance_len+1)))
 	goto err;
 
       extra_groups[i+group->count]= ptr;
@@ -284,7 +289,7 @@ int handle_default_option(void *in_ctx, const char *group_name,
 
   if (find_type((char *)group_name, ctx->group, 3))
   {
-    if (!(tmp= (char *)alloc_root(ctx->alloc, strlen(option) + 1)))
+    if (!(tmp= (char *)ctx->alloc->alloc_root(strlen(option) + 1)))
       return 1;
     if (insert_dynamic(ctx->args, (unsigned char*) &tmp))
       return 1;
@@ -319,26 +324,37 @@ int get_defaults_options(int argc, char **argv,
   int org_argc= argc, prev_argc= 0;
   *defaults= *extra_defaults= *group_suffix= 0;
 
+  const std::string DEFAULTS_FILE("--defaults-file=");
+  const std::string DEFAULTS_EXTRA_FILE("--defaults-extra-file=");
+  const std::string DEFAULTS_GROUP_SUFFIX("--defaults-group-suffix=");
+
   while (argc >= 2 && argc != prev_argc)
   {
     /* Skip program name or previously handled argument */
     argv++;
     prev_argc= argc;                            /* To check if we found */
-    if (!*defaults && (strncmp(*argv,"--defaults-file=", sizeof("--defaults-file=")) == 0))
+    if (!*defaults && (strncmp(*argv,
+                               DEFAULTS_FILE.c_str(),
+                               DEFAULTS_FILE.size()) == 0))
     {
-      *defaults= *argv + sizeof("--defaults-file=")-1;
+      *defaults= *argv + DEFAULTS_FILE.size();
        argc--;
        continue;
     }
-    if (!*extra_defaults && (strncmp(*argv, "--defaults-extra-file=", sizeof("--defaults-extra-file=")) == 0))
+    if (!*extra_defaults && (strncmp(*argv, 
+                                     DEFAULTS_EXTRA_FILE.c_str(),
+                                     DEFAULTS_EXTRA_FILE.size()) == 0))
     {
-      *extra_defaults= *argv + sizeof("--defaults-extra-file=")-1;
+      *extra_defaults= *argv + DEFAULTS_EXTRA_FILE.size();
       argc--;
       continue;
     }
-    if (!*group_suffix && (strncmp(*argv, "--defaults-group-suffix=", sizeof("--defaults-group-suffix=")) == 0))
+    if (!*group_suffix && (strncmp(*argv, 
+                                   DEFAULTS_GROUP_SUFFIX.c_str(),
+                                   DEFAULTS_GROUP_SUFFIX.size()) == 0))
+
     {
-      *group_suffix= *argv + sizeof("--defaults-group-suffix=")-1;
+      *group_suffix= *argv + DEFAULTS_GROUP_SUFFIX.size();
       argc--;
       continue;
     }
@@ -383,15 +399,13 @@ int load_defaults(const char *conf_file, const char **groups,
 {
   DYNAMIC_ARRAY args;
   TYPELIB group;
-  bool found_print_defaults= 0;
   uint32_t args_used= 0;
   int error= 0;
-  memory::Root alloc;
+  memory::Root alloc(512);
   char *ptr,**res;
   struct handle_option_ctx ctx;
 
   init_default_directories();
-  init_alloc_root(&alloc,512);
   /*
     Check if the user doesn't want any default option processing
     --no-defaults is always the first option
@@ -400,8 +414,7 @@ int load_defaults(const char *conf_file, const char **groups,
   {
     /* remove the --no-defaults argument and return only the other arguments */
     uint32_t i;
-    if (!(ptr=(char*) alloc_root(&alloc,sizeof(alloc)+
-				 (*argc + 1)*sizeof(char*))))
+    if (!(ptr=(char*) alloc.alloc_root(sizeof(alloc)+ (*argc + 1)*sizeof(char*))))
       goto err;
     res= (char**) (ptr+sizeof(alloc));
     memset(res,0,(*argc + 1));
@@ -435,8 +448,7 @@ int load_defaults(const char *conf_file, const char **groups,
     Here error contains <> 0 only if we have a fully specified conf_file
     or a forced default file
   */
-  if (!(ptr=(char*) alloc_root(&alloc,sizeof(alloc)+
-			       (args.elements + *argc +1) *sizeof(char*))))
+  if (!(ptr=(char*) alloc.alloc_root(sizeof(alloc)+ (args.elements + *argc +1) *sizeof(char*))))
     goto err;
   res= (char**) (ptr+sizeof(alloc));
 
@@ -451,12 +463,6 @@ int load_defaults(const char *conf_file, const char **groups,
     Check if we wan't to see the new argument list
     This options must always be the last of the default options
   */
-  if (*argc >= 2 && !strcmp(argv[0][1],"--print-defaults"))
-  {
-    found_print_defaults=1;
-    --*argc; ++*argv;				/* skip argument */
-  }
-
   if (*argc)
     memcpy(res+1+args.elements, *argv + 1, (*argc-1)*sizeof(char*));
   res[args.elements+ *argc]=0;			/* last null */
@@ -465,16 +471,7 @@ int load_defaults(const char *conf_file, const char **groups,
   *argv= static_cast<char**>(res);
   *(memory::Root*) ptr= alloc;			/* Save alloc root for free */
   delete_dynamic(&args);
-  if (found_print_defaults)
-  {
-    int i;
-    printf("%s would have been started with the following arguments:\n",
-	   **argv);
-    for (i=1 ; i < *argc ; i++)
-      printf("%s ", (*argv)[i]);
-    puts("");
-    exit(0);
-  }
+
   return(error);
 
  err:
@@ -487,7 +484,7 @@ void free_defaults(char **argv)
 {
   memory::Root ptr;
   memcpy(&ptr, (char*) argv - sizeof(ptr), sizeof(ptr));
-  free_root(&ptr,MYF(0));
+  ptr.free_root(MYF(0));
 }
 
 
@@ -676,7 +673,7 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
                                 ptr, name, line)))
 	  goto err;
 
-        drizzled::CachedDirectory dir_cache(ptr);
+        CachedDirectory dir_cache(ptr);
 
         if (dir_cache.fail())
         {
@@ -691,12 +688,12 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
           goto err;
         }
 
-        drizzled::CachedDirectory::Entries files= dir_cache.getEntries();
-        drizzled::CachedDirectory::Entries::iterator file_iter= files.begin();
+        CachedDirectory::Entries files= dir_cache.getEntries();
+        CachedDirectory::Entries::iterator file_iter= files.begin();
 
         while (file_iter != files.end())
         {
-          drizzled::CachedDirectory::Entry *entry= *file_iter;
+          CachedDirectory::Entry *entry= *file_iter;
           ext= fn_ext(entry->filename.c_str());
 
           /* check extension */
@@ -939,10 +936,9 @@ void print_defaults(const char *conf_file, const char **groups)
     }
   }
   puts("\nThe following options may be given as the first argument:\n\
---print-defaults	Print the program argument list and exit\n\
---no-defaults		Don't read default options from any options file\n\
---defaults-file=#	Only read default options from the given file #\n\
---defaults-extra-file=# Read this file after the global files are read");
+  --no-defaults		Don't read default options from any options file\n\
+  --defaults-file=#	Only read default options from the given file #\n\
+  --defaults-extra-file=# Read this file after the global files are read");
 }
 
 /*
@@ -983,3 +979,6 @@ static void init_default_directories(void)
   ADD_COMMON_DIRECTORIES();
   ADD_DIRECTORY("~/");
 }
+
+} /* namespace internal */
+} /* namespace drizzled */

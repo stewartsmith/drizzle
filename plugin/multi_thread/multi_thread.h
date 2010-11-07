@@ -11,7 +11,7 @@
 
   You should have received a copy of the GNU General Public License
   along with this program; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #ifndef PLUGIN_MULTI_THREAD_MULTI_THREAD_H
 #define PLUGIN_MULTI_THREAD_MULTI_THREAD_H
@@ -29,44 +29,22 @@ class MultiThreadScheduler: public drizzled::plugin::Scheduler
 {
 private:
   drizzled::atomic<uint32_t> thread_count;
-  pthread_attr_t attr;
 
 public:
   MultiThreadScheduler(const char *name_arg): 
     Scheduler(name_arg)
   {
-    struct sched_param tmp_sched_param;
-
-    memset(&tmp_sched_param, 0, sizeof(struct sched_param));
-
-    /* Setup attribute parameter for session threads. */
-    (void) pthread_attr_init(&attr);
-    (void) pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-    pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
-
-    tmp_sched_param.sched_priority= WAIT_PRIOR;
-    (void) pthread_attr_setschedparam(&attr, &tmp_sched_param);
-
+    setStackSize();
     thread_count= 0;
   }
 
   ~MultiThreadScheduler();
-  bool addSession(Session *session);
-  void killSessionNow(Session *session);
+  bool addSession(drizzled::Session *session);
+  void killSessionNow(drizzled::Session *session);
   
-  void runSession(Session *session)
-  {
-    if (my_thread_init())
-    {
-      session->disconnect(ER_OUT_OF_RESOURCES, true);
-      statistic_increment(aborted_connects, &LOCK_status);
-      killSessionNow(session);
-    }
-
-    session->thread_stack= (char*) &session;
-    session->run();
-    killSessionNow(session);
-  }
+  void runSession(drizzled::Session *session);
+private:
+  void setStackSize();
 };
 
 #endif /* PLUGIN_MULTI_THREAD_MULTI_THREAD_H */

@@ -1,6 +1,6 @@
---error 1582
+--error ER_WRONG_PARAMCOUNT_TO_FUNCTION
 select sleep();
---error 1582
+--error ER_WRONG_PARAMCOUNT_TO_FUNCTION
 select sleep(10,10);
 select sleep('a');
 show warnings;
@@ -12,8 +12,3 @@ select sleep(0.13);
 select sleep(0);
 select sleep(1);
 select sleep(1.5);
-select sleep(2);
-select sleep(2.23);
-select sleep(2.9);
-select sleep(5);
-select sleep(5.7);

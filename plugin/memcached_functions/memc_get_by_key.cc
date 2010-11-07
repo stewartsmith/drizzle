@@ -40,6 +40,7 @@
 #include <string>
 
 using namespace std;
+using namespace drizzled;
 
 String *MemcachedGetByKey::val_str(String *str)
 {

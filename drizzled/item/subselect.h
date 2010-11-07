@@ -27,10 +27,14 @@
 #include "drizzled/item/ref.h"
 #include "drizzled/item/field.h"
 #include "drizzled/item/bin_string.h"
+#include "drizzled/util/test.h"
+
+namespace drizzled
+{
 
 class Select_Lex;
 class Select_Lex_Unit;
-class JOIN;
+class Join;
 class select_result_interceptor;
 class subselect_engine;
 class subselect_hash_sj_engine;
@@ -100,7 +104,7 @@ public:
   {
     null_value= 1;
   }
-  virtual trans_res select_transformer(JOIN *join);
+  virtual trans_res select_transformer(Join *join);
   bool assigned() { return value_assigned; }
   void assigned(bool a) { value_assigned= a; }
   enum Type type() const;
@@ -174,7 +178,7 @@ public:
   subs_type substype() { return SINGLEROW_SUBS; }
 
   void reset();
-  trans_res select_transformer(JOIN *join);
+  trans_res select_transformer(Join *join);
   void store(uint32_t i, Item* item);
   double val_real();
   int64_t val_int ();
@@ -353,13 +357,13 @@ public:
     null_value= 0;
     was_null= 0;
   }
-  trans_res select_transformer(JOIN *join);
-  trans_res select_in_like_transformer(JOIN *join, const Comp_creator *func);
-  trans_res single_value_transformer(JOIN *join, const Comp_creator *func);
-  trans_res row_value_transformer(JOIN * join);
-  trans_res single_value_in_to_exists_transformer(JOIN * join,
+  trans_res select_transformer(Join *join);
+  trans_res select_in_like_transformer(Join *join, const Comp_creator *func);
+  trans_res single_value_transformer(Join *join, const Comp_creator *func);
+  trans_res row_value_transformer(Join * join);
+  trans_res single_value_in_to_exists_transformer(Join * join,
                                                   const Comp_creator *func);
-  trans_res row_value_in_to_exists_transformer(JOIN * join);
+  trans_res row_value_in_to_exists_transformer(Join * join);
   virtual bool exec();
   int64_t val_int();
   double val_real();
@@ -397,12 +401,12 @@ public:
 
   // only ALL subquery has upper not
   subs_type substype() { return all?ALL_SUBS:ANY_SUBS; }
-  trans_res select_transformer(JOIN *join);
+  trans_res select_transformer(Join *join);
   virtual void print(String *str, enum_query_type query_type);
 };
 
 
-class subselect_engine: public drizzled::memory::SqlAlloc
+class subselect_engine: public memory::SqlAlloc
 {
 protected:
   select_result_interceptor *result; /* results storage class */
@@ -418,7 +422,7 @@ public:
                          INDEXSUBQUERY_ENGINE, HASH_SJ_ENGINE};
 
   subselect_engine(Item_subselect *si, select_result_interceptor *res)
-    :session(0)
+    :session(NULL)
   {
     result= res;
     item= si;
@@ -426,7 +430,7 @@ public:
     res_field_type= DRIZZLE_TYPE_VARCHAR;
     maybe_null= 0;
   }
-  virtual ~subselect_engine() {}; // to satisfy compiler
+  virtual ~subselect_engine() {} // to satisfy compiler
   virtual void cleanup()= 0;
 
   /*
@@ -459,11 +463,12 @@ public:
   */
   virtual int exec()= 0;
   virtual uint32_t cols()= 0; /* return number of columns in select */
-  virtual uint8_t uncacheable()= 0; /* query is uncacheable */
+  virtual bool uncacheable()= 0; /* query is uncacheable */
+  virtual bool uncacheable(uint32_t bit_pos)= 0; /* query is uncacheable */
   enum Item_result type() { return res_type; }
   enum_field_types field_type() { return res_field_type; }
   virtual void exclude()= 0;
-  virtual bool may_be_null() { return maybe_null; };
+  virtual bool may_be_null() { return maybe_null; }
   virtual table_map upper_select_const_tables()= 0;
   static table_map calc_const_tables(TableList *);
   virtual void print(String *str, enum_query_type query_type)= 0;
@@ -486,7 +491,7 @@ class subselect_single_select_engine: public subselect_engine
   bool optimized; /* simple subselect is optimized */
   bool executed; /* simple subselect is executed */
   Select_Lex *select_lex; /* corresponding select_lex */
-  JOIN * join; /* corresponding JOIN structure */
+  Join * join; /* corresponding JOIN structure */
 public:
   subselect_single_select_engine(Select_Lex *select,
 				 select_result_interceptor *result,
@@ -496,7 +501,8 @@ public:
   void fix_length_and_dec(Item_cache** row);
   int exec();
   uint32_t cols();
-  uint8_t uncacheable();
+  bool uncacheable();
+  bool uncacheable(uint32_t bit_pos);
   void exclude();
   table_map upper_select_const_tables();
   virtual void print (String *str, enum_query_type query_type);
@@ -524,7 +530,8 @@ public:
   void fix_length_and_dec(Item_cache** row);
   int exec();
   uint32_t cols();
-  uint8_t uncacheable();
+  bool uncacheable();
+  bool uncacheable(uint32_t bit_pos);
   void exclude();
   table_map upper_select_const_tables();
   virtual void print (String *str, enum_query_type query_type);
@@ -569,7 +576,7 @@ protected:
   bool null_keypart; /* TRUE <=> constructed search tuple has a NULL */
 public:
 
-  // constructor can assign Session because it will be called after JOIN::prepare
+  // constructor can assign Session because it will be called after Join::prepare
   subselect_uniquesubquery_engine(Session *session_arg, JoinTable *tab_arg,
 				  Item_subselect *subs, Item *where)
     :subselect_engine(subs, 0), tab(tab_arg), cond(where)
@@ -581,7 +588,8 @@ public:
   void fix_length_and_dec(Item_cache** row);
   int exec();
   uint32_t cols() { return 1; }
-  uint8_t uncacheable() { return UNCACHEABLE_DEPENDENT; }
+  bool uncacheable() { return true; }
+  bool uncacheable(uint32_t) { return true; }
   void exclude();
   table_map upper_select_const_tables() { return 0; }
   virtual void print (String *str, enum_query_type query_type);
@@ -630,7 +638,7 @@ class subselect_indexsubquery_engine: public subselect_uniquesubquery_engine
   Item *having;
 public:
 
-  // constructor can assign Session because it will be called after JOIN::prepare
+  // constructor can assign Session because it will be called after Join::prepare
   subselect_indexsubquery_engine(Session *session_arg, JoinTable *tab_arg,
 				 Item_subselect *subs, Item *where,
                                  Item *having_arg, bool chk_null)
@@ -678,7 +686,7 @@ protected:
     QEP to execute the subquery and materialize its result into a
     temporary table. Created during the first call to exec().
   */
-  JOIN *materialize_join;
+  Join *materialize_join;
   /* Temp table context of the outer select's JOIN. */
   Tmp_Table_Param *tmp_param;
 
@@ -703,5 +711,7 @@ public:
   }
   virtual enum_engine_type engine_type() { return HASH_SJ_ENGINE; }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_SUBSELECT_H */

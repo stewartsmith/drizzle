@@ -18,10 +18,13 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/time/sysdate_local.h>
 #include <drizzled/tztime.h>
 #include <drizzled/session.h>
+
+namespace drizzled
+{
 
 /**
     Converts current time in time_t to DRIZZLE_TIME represenatation for local
@@ -63,7 +66,7 @@ void Item_func_sysdate_local::fix_length_and_dec()
 {
   decimals= 0;
   collation.set(&my_charset_bin);
-  max_length= drizzled::DateTime::MAX_STRING_LENGTH*MY_CHARSET_BIN_MB_MAXLEN;
+  max_length= DateTime::MAX_STRING_LENGTH*MY_CHARSET_BIN_MB_MAXLEN;
 }
 
 
@@ -84,3 +87,4 @@ int Item_func_sysdate_local::save_in_field(Field *to, bool )
   return 0;
 }
 
+} /* namespace drizzled */

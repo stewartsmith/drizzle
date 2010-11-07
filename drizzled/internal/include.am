@@ -16,74 +16,69 @@
 
 noinst_LTLIBRARIES+= drizzled/internal/libinternal.la
 
+EXTRA_DIST+= drizzled/internal/CHARSET_INFO.txt
 noinst_HEADERS+= \
 		drizzled/internal/aio_result.h \
+		drizzled/internal/getrusage.h \
 		drizzled/internal/iocache.h \
 		drizzled/internal/m_string.h \
 		drizzled/internal/my_bit.h \
 		drizzled/internal/my_pthread.h \
 		drizzled/internal/my_static.h \
 		drizzled/internal/my_sys.h \
-		drizzled/internal/my_uctype.h \
-		drizzled/internal/mysys_priv.h \
 		drizzled/internal/t_ctype.h \
-		drizzled/internal/utf8.h
+		drizzled/internal/thread_var.h
 
 drizzled_internal_libinternal_la_LIBADD= \
-		drizzled/libcharset.la \
-		drizzled/libcached_directory.la \
-		drizzled/libdynamic_array.la \
-		drizzled/liberror.la \
-		drizzled/libgetopt.la \
-		drizzled/libmemory.la \
-		drizzled/libtypelib.la
+					 ${BOOST_LIBS} \
+					 drizzled/libcharset.la \
+					 drizzled/libcached_directory.la \
+					 drizzled/libdynamic_array.la \
+					 drizzled/liberror.la \
+					 drizzled/libgetopt.la \
+					 drizzled/libmemory.la \
+					 drizzled/libtypelib.la \
+					 drizzled/libserialutil.la
 
 drizzled_internal_libinternal_la_SOURCES= \
-		drizzled/internal/bmove_upp.cc \
-		drizzled/internal/checksum.cc \
-		drizzled/internal/ctype-bin.cc \
-		drizzled/internal/ctype-mb.cc \
-		drizzled/internal/ctype-simple.cc \
-		drizzled/internal/ctype-uca.cc \
-		drizzled/internal/ctype-utf8.cc \
-		drizzled/internal/ctype.cc \
-		drizzled/internal/default.cc \
-		drizzled/internal/dtoa.cc \
-		drizzled/internal/int2str.cc \
-		drizzled/internal/llstr.cc \
-		drizzled/internal/longlong2str.cc \
-		drizzled/internal/mf_arr_appstr.cc \
-		drizzled/internal/mf_cache.cc \
-		drizzled/internal/mf_dirname.cc \
-		drizzled/internal/mf_fn_ext.cc \
-		drizzled/internal/mf_format.cc \
-		drizzled/internal/mf_getdate.cc \
-		drizzled/internal/mf_iocache.cc \
-		drizzled/internal/mf_loadpath.cc \
-		drizzled/internal/mf_pack.cc \
-		drizzled/internal/mf_qsort.cc \
-		drizzled/internal/mf_qsort2.cc \
-		drizzled/internal/mf_radix.cc \
-		drizzled/internal/mf_same.cc \
-		drizzled/internal/mf_sort.cc \
-		drizzled/internal/mf_tempfile.cc \
-		drizzled/internal/mf_wcomp.cc \
-		drizzled/internal/my_access.cc \
-		drizzled/internal/my_bit.cc \
-		drizzled/internal/my_copy.cc \
-		drizzled/internal/my_create.cc \
-		drizzled/internal/my_delete.cc \
-		drizzled/internal/my_getsystime.cc \
-		drizzled/internal/my_init.cc \
-		drizzled/internal/my_open.cc \
-		drizzled/internal/my_read.cc \
-		drizzled/internal/my_redel.cc \
-		drizzled/internal/my_rename.cc \
-		drizzled/internal/my_static.cc \
-		drizzled/internal/my_strtoll10.cc \
-		drizzled/internal/my_symlink.cc \
-		drizzled/internal/my_symlink2.cc \
-		drizzled/internal/my_sync.cc \
-		drizzled/internal/my_thr_init.cc \
-		drizzled/internal/my_write.cc \
-		drizzled/internal/ptr_cmp.cc
+					  drizzled/internal/bmove_upp.cc \
+					  drizzled/internal/checksum.cc \
+					  drizzled/internal/default.cc \
+					  drizzled/internal/dtoa.cc \
+					  drizzled/internal/int2str.cc \
+					  drizzled/internal/llstr.cc \
+					  drizzled/internal/longlong2str.cc \
+					  drizzled/internal/mf_arr_appstr.cc \
+					  drizzled/internal/mf_cache.cc \
+					  drizzled/internal/mf_dirname.cc \
+					  drizzled/internal/mf_fn_ext.cc \
+					  drizzled/internal/mf_format.cc \
+					  drizzled/internal/mf_getdate.cc \
+					  drizzled/internal/mf_iocache.cc \
+					  drizzled/internal/mf_loadpath.cc \
+					  drizzled/internal/mf_pack.cc \
+					  drizzled/internal/mf_qsort.cc \
+					  drizzled/internal/mf_qsort2.cc \
+					  drizzled/internal/mf_radix.cc \
+					  drizzled/internal/mf_same.cc \
+					  drizzled/internal/mf_sort.cc \
+					  drizzled/internal/mf_tempfile.cc \
+					  drizzled/internal/mf_wcomp.cc \
+					  drizzled/internal/my_access.cc \
+					  drizzled/internal/my_bit.cc \
+					  drizzled/internal/my_copy.cc \
+					  drizzled/internal/my_create.cc \
+					  drizzled/internal/my_delete.cc \
+					  drizzled/internal/my_init.cc \
+					  drizzled/internal/my_open.cc \
+					  drizzled/internal/my_read.cc \
+					  drizzled/internal/my_redel.cc \
+					  drizzled/internal/my_rename.cc \
+					  drizzled/internal/my_static.cc \
+					  drizzled/internal/my_strtoll10.cc \
+					  drizzled/internal/my_symlink.cc \
+					  drizzled/internal/my_symlink2.cc \
+					  drizzled/internal/my_sync.cc \
+					  drizzled/internal/my_thr_init.cc \
+					  drizzled/internal/my_write.cc \
+					  drizzled/internal/ptr_cmp.cc

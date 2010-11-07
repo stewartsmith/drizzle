@@ -22,6 +22,9 @@
 
 #include <stddef.h>
 
+namespace drizzled
+{
+
 /*
   LEX_STRING -- a pair of a C-string and its length.
 */
@@ -37,5 +40,6 @@ typedef struct drizzle_lex_string
 #define STRING_WITH_LEN(X) (X), (static_cast<size_t>((sizeof(X) - 1)))
 #define C_STRING_WITH_LEN(X) (const_cast<char *>((X))), (static_cast<size_t>((sizeof(X) - 1)))
 
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_LEX_STRING_H */

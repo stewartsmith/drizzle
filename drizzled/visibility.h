@@ -29,31 +29,43 @@
 
 /**
  *
- * DRIZZLE_API is used for the public API symbols. It either DLL imports or
+ * DRIZZLED_API is used for the public API symbols. It either DLL imports or
  * DLL exports (or does nothing for static build).
  *
- * DRIZZLE_LOCAL is used for non-api symbols.
+ * DRIZZLED_LOCAL is used for non-api symbols.
  */
 
-#if defined(BUILDING_DRIZZLE)
-# if defined(HAVE_VISIBILITY)
-#  define DRIZZLE_API __attribute__ ((visibility("default")))
-#  define DRIZZLE_LOCAL  __attribute__ ((visibility("hidden")))
-# elif defined (__SUNPRO_C) && (__SUNPRO_C >= 0x550)
-#  define DRIZZLE_API __global
-#  define DRIZZLE_API __hidden
+#if defined(BUILDING_DRIZZLED) && defined(HAVE_VISIBILITY)
+# if defined(__GNUC__)
+#  define DRIZZLED_API __attribute__ ((visibility("default")))
+#  define DRIZZLED_INTERNAL_API __attribute__ ((visibility("hidden")))
+#  define DRIZZLED_API_DEPRECATED __attribute__ ((deprecated,visibility("default")))
+#  define DRIZZLED_LOCAL  __attribute__ ((visibility("hidden")))
+# elif (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x550)) || (defined(__SUNPRO_CC) && (__SUNPRO_CC >= 0x550))
+#  define DRIZZLED_API __global
+#  define DRIZZLED_INTERNAL_API __hidden
+#  define DRIZZLED_API_DEPRECATED __global
+#  define DRIZZLED_LOCAL __hidden
 # elif defined(_MSC_VER)
-#  define DRIZZLE_API extern __declspec(dllexport) 
-#  define DRIZZLE_LOCAL
-# endif /* defined(HAVE_VISIBILITY) */
-#else  /* defined(BUILDING_DRIZZLE) */
+#  define DRIZZLED_API extern __declspec(dllexport)
+#  define DRIZZLED_INTERNAL_API extern __declspec(dllexport)
+#  define DRIZZLED_DEPRECATED_API extern __declspec(dllexport)
+#  define DRIZZLED_LOCAL
+# endif
+#else  /* defined(BUILDING_DRIZZLED) && defined(HAVE_VISIBILITY) */
 # if defined(_MSC_VER)
-#  define DRIZZLE_API extern __declspec(dllimport) 
-#  define DRIZZLE_LOCAL
+#  define DRIZZLED_API extern __declspec(dllimport)
+#  define DRIZZLED_INTERNAL_API extern __declspec(dllimport)
+#  define DRIZZLED_API_DEPRECATED extern __declspec(dllimport)
+#  define DRIZZLED_LOCAL
 # else
-#  define DRIZZLE_API
-#  define DRIZZLE_LOCAL
+#  define DRIZZLED_API
+#  define DRIZZLED_INTERNAL_API
+#  define DRIZZLED_API_DEPRECATED
+#  define DRIZZLED_LOCAL
 # endif /* defined(_MSC_VER) */
-#endif /* defined(BUILDING_DRIZZLE) */
+#endif  /* defined(BUILDING_DRIZZLED) && defined(HAVE_VISIBILITY) */
+
+
 
 #endif /* DRIZZLED_VISIBILITY_H */

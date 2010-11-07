@@ -2,16 +2,16 @@ drop table if exists t1, t2;
 SET SQL_WARNINGS=1;
 create table t1 (a int);
 create table t1 (a int);
-ERROR 42S01: Table 't1' already exists
+ERROR 42S01: Table 'test.t1' already exists
 show count(*) errors;
 @@session.error_count
 1
 show errors;
 Level	Code	Message
-Error	1050	Table 't1' already exists
+Error	1050	Table 'test.t1' already exists
 show warnings;
 Level	Code	Message
-Error	1050	Table 't1' already exists
+Error	1050	Table 'test.t1' already exists
 create table t (i);
 ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near ')' at line 1
 show count(*) errors;
@@ -43,7 +43,7 @@ Level	Code	Message
 Note	1051	Unknown table 'not_exists_table'
 drop database if exists not_exists_db;
 Warnings:
-Note	1008	Can't drop database 'not_exists_db'; database doesn't exist
+Note	1008	Can't drop schema 'not_exists_db'; schema doesn't exist
 show count(*) warnings;
 @@session.warning_count
 1
@@ -56,7 +56,7 @@ select @@warning_count;
 1
 drop table t1;
 create table t1(a int, b int not null, c date, d char(5));
-load data infile '../std_data_ln/warnings_loaddata.dat' into table t1 fields terminated by ',';
+load data infile 'DRIZZLETEST_VARDIR/std_data_ln/warnings_loaddata.dat' into table t1 fields terminated by ',';
 ERROR 22004: Column set to default value; NULL supplied to NOT NULL column 'b' at row 2
 select @@warning_count;
 @@warning_count
@@ -152,13 +152,10 @@ create table t1 (c_char char(255), c_varchar varchar(255), c_tinytext blob);
 set @c = repeat(' ', 256);
 set @q = repeat('q', 256);
 insert into t1 values(@c, @c, @c);
-Warnings:
-Note	1265	Data truncated for column 'c_char' at row 1
-Note	1265	Data truncated for column 'c_varchar' at row 1
+ERROR 22001: Data too long for column 'c_char' at row 1
 show warnings;
 Level	Code	Message
-Note	1265	Data truncated for column 'c_char' at row 1
-Note	1265	Data truncated for column 'c_varchar' at row 1
+Error	1406	Data too long for column 'c_char' at row 1
 insert into t1 values(@q, NULL, NULL);
 ERROR 22001: Data too long for column 'c_char' at row 1
 insert into t1 values(NULL, @q, NULL);

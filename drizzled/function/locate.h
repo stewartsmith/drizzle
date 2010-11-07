@@ -23,6 +23,9 @@
 #include <drizzled/function/func.h>
 #include <drizzled/function/math/int.h>
 
+namespace drizzled
+{
+
 class Item_func_locate :public Item_int_func
 {
   String value1,value2;
@@ -35,5 +38,7 @@ public:
   void fix_length_and_dec();
   virtual void print(String *str, enum_query_type query_type);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_LOCATE_H */

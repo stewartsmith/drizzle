@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /*
   Static variables for MyISAM library. All definied here for easy making of
@@ -31,7 +31,7 @@ uint	myisam_quick_table_bits=9;
 uint32_t myisam_block_size= MI_KEY_BLOCK_LENGTH;		/* Best by test */
 uint32_t myisam_concurrent_insert= 2;
 uint32_t myisam_bulk_insert_tree_size=8192*1024;
-uint32_t data_pointer_size=4;
+uint32_t data_pointer_size= 6;
 
 /*
   read_vec[] is used for converting between P_READ_KEY.. and SEARCH_

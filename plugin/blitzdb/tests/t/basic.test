@@ -1,0 +1,228 @@
+# Basic Test Routine for unindexed BlitzDB Tables
+
+--disable_warnings
+drop table if exists t1, t2;
+--enable_warnings
+
+# CREATE TABLE
+create table t1 (a int, b double, c float) engine = blitzdb;
+create table t2 (a int, b text, c blob) engine = blitzdb;
+
+--error ER_TABLE_EXISTS_ERROR
+create table t1 (a int, b double, c float) engine = blitzdb;
+--error ER_TABLE_EXISTS_ERROR
+create table t2 (a int, b text, c blob) engine = blitzdb;
+--error ER_TABLE_EXISTS_ERROR
+create table t1 (a int) engine = blitzdb;
+--error ER_TABLE_EXISTS_ERROR
+create table t2 (a int) engine = blitzdb;
+
+show tables;
+drop table t1, t2;
+
+# INSERT SYNTAX
+create table t1 (a int, b int, c varchar(255)) engine = blitzdb;
+
+insert into t1 values (1, 8, "one");
+select * from t1;
+insert into t1 values (2, 7, "two");
+insert into t1 values (3, 6, "three");
+insert into t1 values (4, 5, "four");
+insert into t1 values (5, 4, "five");
+insert into t1 values (6, 3, "six");
+insert into t1 values (7, 2, "seven");
+insert into t1 values (8, 1, "eight");
+select count(*) from t1;
+
+# TABLE SCAN
+select c from t1 where a = 4;
+select c from t1 where a > 5;
+select * from t1;
+select * from t1 where a = 1 or b = 1;
+select substring(c, 1, 3) from t1;
+select substring(c, 1, 2) from t1;
+select substring(c, 1, 1) from t1;
+
+# UPDATE SYNTAX
+update t1 set c = "first half" where a <= 4;
+update t1 set c = "second half" where a > 4;
+select * from t1;
+
+# Delete Rows. Backup t1 to t2 first.
+create table t2 (a int, b int, c varchar(255))
+  engine = blitzdb (select * from t1);
+
+show create table t2;
+select count(*) from t2;
+
+delete from t1 where c = "first half";
+delete from t1 where c = "second half";
+select count(*) from t1;
+drop table t1;
+
+rename table t2 to t1;
+select * from t1;
+drop table t1;
+
+# UPDATE followed by ORDER BY on a keyless table.
+create table t1 (id int) engine = blitzdb;
+insert into t1 values (100), (100);
+update t1 set id = id+1 ORDER BY id LIMIT 2;
+update t1 set id = id+1 ORDER BY id LIMIT 2;
+update t1 set id = id+1 ORDER BY id LIMIT 2;
+update t1 set id = id+1 ORDER BY id LIMIT 2;
+select * from t1;
+drop table t1;
+
+# Add and Drop columns with ALTER TABLE.
+create table t1 (a int) engine = blitzdb;
+insert into t1 values (1), (2), (3), (4);
+alter table t1 add b int;
+select * from t1;
+update t1 set b = 1 where a = 1;
+update t1 set b = 2 where a = 2;
+update t1 set b = 3 where a = 3;
+update t1 set b = 4 where a = 4;
+select * from t1;
+alter table t1 add c text;
+update t1 set c = "added column" where a = 1;
+update t1 set c = "added column" where a = 2;
+update t1 set c = "added column" where a = 3;
+update t1 set c = "added column" where a = 4;
+select * from t1;
+#alter table t1 drop a;
+#alter table t1 drop b;
+#select * from t1;
+drop table t1;
+
+# GROUP BY syntax.
+create table t1 (name varchar(32), point int) engine = blitzdb;
+insert into t1 values ('aaa', 10);
+insert into t1 values ('bbb', 20);
+insert into t1 values ('ccc', 30);
+insert into t1 values ('aaa', 10);
+insert into t1 values ('bbb', 20);
+insert into t1 values ('ccc', 30);
+insert into t1 values ('aaa', 10);
+insert into t1 values ('bbb', 20);
+insert into t1 values ('ccc', 30);
+select * from t1;
+select name, sum(point) from t1 group by name;
+drop table t1;
+
+# Test(9): Pattern Matching with LIKE syntax.
+create table t1 (string varchar(255)) engine = blitzdb;
+insert into t1 values('accompany'), ('balcony'), ('bunny'), ('company');
+insert into t1 values('accompanied'), ('amazed'), ('busted'), ('decreased');
+insert into t1 values('achiever'), ('blender'), ('ether'), ('launcher');
+insert into t1 values('ampersand'), ('compound'), ('comprehend'), ('wand');
+
+select * from t1 where string like '%ny';
+select * from t1 where string like '%ed';
+select * from t1 where string like '%er';
+select * from t1 where string like '%nd';
+
+select * from t1 where string like 'a%';
+select * from t1 where string like 'ac%';
+select * from t1 where string like 'acc%';
+
+select * from t1 where string like '____';
+select * from t1 where string like '_____';
+select * from t1 where string like '___________';
+drop table t1;
+
+# NULL values
+create table t1 (a int not null, b int) engine = blitzdb;
+insert into t1 values (1, NULL), (2, NULL), (3, NULL), (4, NULL);
+insert into t1 values (5, NULL), (6, NULL), (7, NULL), (8, NULL);
+
+--error ER_BAD_NULL_ERROR # NOT NULL Violation
+insert into t1 values (NULL, 1);
+
+select * from t1;
+select * from t1 where a is null;
+select * from t1 where b is null;
+drop table t1;
+
+# Test (11): DATE type
+create table t1 (name varchar(64), dob date) engine = blitzdb;
+insert into t1 values ('Bernstein', '1971-10-29');
+insert into t1 values ('Codd', '1923-08-23');
+insert into t1 values ('Lovelace', '1815-12-10');
+insert into t1 values ('Tower', '1949-06-17');
+insert into t1 values ('Turing', '1912-06-23');
+insert into t1 values ('Thompson', '1943-02-04');
+select * from t1;
+select name from t1 order by dob;
+select name from t1 order by dob desc;
+select name from t1 where dob < '1900-01-01';
+select name from t1 where dob > '1950-01-01';
+select name from t1 where dob = '1943-02-04';
+drop table t1;
+
+# Test(12): Boundary Check
+create table t1 (a int) engine = blitzdb;
+--error ER_WARN_DATA_OUT_OF_RANGE
+insert into t1 values(2147483649);
+--error ER_WARN_DATA_OUT_OF_RANGE
+insert into t1 values(-2147483649);
+insert into t1 values(2147483647);
+select * from t1;
+drop table t1;
+
+# ASCII boundary 
+create table t1 (a varchar(32)) engine = blitzdb; 
+insert into t1 select repeat('x', 4);
+insert into t1 select repeat('x', 6);
+insert into t1 select repeat('x', 8);
+insert into t1 select repeat('x', 16);
+insert into t1 select repeat('x', 32);
+--error ER_DATA_TOO_LONG
+insert into t1 select repeat('x', 33);
+select * from t1;
+
+create table t2 (a varchar(16383)) engine = blitzdb; # Theoretical Max
+insert into t2 select repeat('x', 16383);
+--error ER_DATA_TOO_LONG
+insert into t2 select repeat('x', 16384);
+select count(*) from t2;
+drop table t1, t2;
+
+# Multibyte
+create table t1 (a varchar(32)) engine = blitzdb; 
+insert into t1 select repeat('あ', 8);
+insert into t1 select repeat('あ', 32);
+--error ER_DATA_TOO_LONG
+insert into t1 select repeat('あ', 33);
+select * from t1;
+
+create table t2 (a varchar(16383)) engine = blitzdb;
+insert into t2 select repeat('値', 16383);
+--error ER_DATA_TOO_LONG
+insert into t2 select repeat('値', 16384);
+select count(*) from t2;
+drop table t1, t2;
+
+# INSERT by SELECT. 
+create table t1 (a int, b varchar(255)) engine = blitzdb;
+insert into t1 values (1, 'one'), (2, 'two'), (3, 'three'), (4, 'four');
+insert into t1 values (5, 'five'), (6, 'six'), (7, 'seven'), (8, 'eight');
+
+create table t2 (a int, b varchar(255), c double) engine = blitzdb;
+insert into t2 (a, b) select a, b from t1 where a > 4;
+insert into t2 (a) select a from t1 where a = 1;
+select * from t2;
+delete from t2;
+
+insert into t2 (a, b) select * from t1;
+select * from t2;
+drop table t1;
+
+# Large VARCHAR type (exceeds BlitzDB's stack space).
+create table t1 (a int, b varchar(2048)) engine = blitzdb;
+insert into t1 values (1, 'abcdefghijklmn');
+insert into t1 values (1, 'abcdefghijklmn');
+insert into t1 values (1, 'abcdefghijklmn');
+insert into t1 values (1, 'abcdefghijklmn');
+select * from t1;
+drop table t1;

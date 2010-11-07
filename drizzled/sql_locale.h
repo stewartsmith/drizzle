@@ -20,6 +20,9 @@
 #ifndef DRIZZLED_SQL_LOCALE_H
 #define DRIZZLED_SQL_LOCALE_H
 
+namespace drizzled
+{
+
 typedef struct st_typelib TYPELIB;
 
 typedef struct my_locale_st
@@ -49,5 +52,7 @@ extern MY_LOCALE *my_default_lc_time_names;
 
 MY_LOCALE *my_locale_by_name(const char *name);
 MY_LOCALE *my_locale_by_number(uint32_t number);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SQL_LOCALE_H */

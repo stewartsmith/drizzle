@@ -1,0 +1,5 @@
+create table t1 (a int default null);
+select COLUMN_NAME,COLUMN_DEFAULT,COLUMN_DEFAULT_IS_NULL FROM DATA_DICTIONARY.COLUMNS WHERE table_schema="test" and table_name="t1";
+COLUMN_NAME	COLUMN_DEFAULT	COLUMN_DEFAULT_IS_NULL
+a	NULL	YES
+drop table t1;

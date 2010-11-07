@@ -11,7 +11,7 @@ connect (sample,localhost,sample,password,d1);
 connection sample;
 select database();
 create database d2;
---error 1007
+--error ER_DB_CREATE_EXISTS
 create database D1;
 drop database d2;
 disconnect sample;

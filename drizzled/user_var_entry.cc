@@ -21,6 +21,9 @@
 #include <drizzled/session.h>
 #include "drizzled/internal/m_string.h"
 
+namespace drizzled
+{
+
 /** Get the value of a variable as a double. */
 
 double user_var_entry::val_real(bool *null_value)
@@ -40,7 +43,7 @@ double user_var_entry::val_real(bool *null_value)
     return result;
   }
   case STRING_RESULT:
-    return my_atof(value);                      // This is null terminated
+    return internal::my_atof(value);                      // This is null terminated
   case ROW_RESULT:
     assert(1);				// Impossible
     break;
@@ -70,7 +73,7 @@ int64_t user_var_entry::val_int(bool *null_value) const
   case STRING_RESULT:
   {
     int error;
-    return my_strtoll10(value, (char**) 0, &error);// String is null terminated
+    return internal::my_strtoll10(value, (char**) 0, &error);// String is null terminated
   }
   case ROW_RESULT:
     assert(1);				// Impossible
@@ -204,3 +207,5 @@ bool user_var_entry::update_hash(bool set_null, void *ptr, uint32_t arg_length,
 
   return false;
 }
+
+} /* namespace drizzled */

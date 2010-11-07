@@ -14,7 +14,7 @@ SUFFIXES += .cc.linted .h.linted
 clean-local: cleanlints
 
 
-check-local: linted ${srcdir}/config/lint-rules.am
+installcheck-local: linted ${srcdir}/config/lint-rules.am
 
 linted:
 

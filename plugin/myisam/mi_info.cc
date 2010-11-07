@@ -11,17 +11,19 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /* Return useful base information for an open table */
 
 #include "myisam_priv.h"
 #include <sys/stat.h>
-#include "drizzled/my_error.h"
+#include "drizzled/error.h"
+
+using namespace drizzled;
 
 	/* Get position to last record */
 
-my_off_t mi_position(MI_INFO *info)
+internal::my_off_t mi_position(MI_INFO *info)
 {
   return info->lastpos;
 }
@@ -40,10 +42,8 @@ int mi_status(MI_INFO *info, register MI_ISAMINFO *x, uint32_t flag)
     return(0);				/* Compatible with ISAM */
   if (!(flag & HA_STATUS_NO_LOCK))
   {
-    pthread_mutex_lock(&share->intern_lock);
     _mi_readinfo(info,F_RDLCK,0);
     fast_mi_writeinfo(info);
-    pthread_mutex_unlock(&share->intern_lock);
   }
   if (flag & HA_STATUS_VARIABLE)
   {

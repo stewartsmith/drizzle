@@ -1,12 +1,12 @@
 #
-# Bug #24200: Provide backwards compatibility mode for 4.x "rollback on
-# transaction timeout"
+# This once provided compatibility for innodb_rollback_on_timeout, now it is
+# just a test feeder file for innodb-myisam
+#
 #
 --disable_warnings
 drop table if exists t1;
 --enable_warnings
 
-show variables like 'innodb_rollback_on_timeout';
 create table t1 (a int not null primary key) engine = innodb;
 insert into t1 values (1);
 commit;

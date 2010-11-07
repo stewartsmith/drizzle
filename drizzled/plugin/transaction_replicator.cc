@@ -31,7 +31,6 @@ namespace drizzled
 bool plugin::TransactionReplicator::addPlugin(plugin::TransactionReplicator *replicator)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
-  /** @TODO ReplicationServices should indicate error in some way here */
   replication_services.attachReplicator(replicator);
   return false;
 }

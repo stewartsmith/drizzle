@@ -39,6 +39,7 @@
 #include <string>
 
 using namespace std;
+using namespace drizzled;
 
 
 int64_t MemcachedDelete::val_int()

@@ -1,0 +1,11 @@
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (c1 INT, c2 VARCHAR(10)) ENGINE=FILESYSTEM,FILE="../../filesystem_ln/select_skip_blank_line.data",ROW_SEPARATOR=";\n";
+SELECT * FROM t1;
+c1	c2
+111	aaa
+222	bbb
+333	ccc
+444	ddd
+888	eee
+999	fff
+DROP TABLE t1;

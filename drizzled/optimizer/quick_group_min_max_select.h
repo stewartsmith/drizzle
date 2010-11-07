@@ -22,6 +22,8 @@
 
 #include "drizzled/optimizer/range.h"
 
+#include <vector>
+
 namespace drizzled
 {
 
@@ -66,8 +68,8 @@ class QuickGroupMinMaxSelect : public QuickSelectInterface
 private:
 
   Cursor *cursor; /**< The Cursor used to get data. */
-  JOIN *join; /**< Descriptor of the current query */
-  KEY *index_info; /**< The index chosen for data access */
+  Join *join; /**< Descriptor of the current query */
+  KeyInfo *index_info; /**< The index chosen for data access */
   unsigned char *record; /**< Buffer where the next record is returned. */
   unsigned char *tmp_record; /**< Temporary storage for next_min(), next_max(). */
   unsigned char *group_prefix; /**< Key prefix consisting of the GROUP fields. */
@@ -77,11 +79,11 @@ private:
   bool have_min; /**< Specify whether we are computing */
   bool have_max; /**< a MIN, a MAX, or both. */
   bool seen_first_key; /**< Denotes whether the first key was retrieved.*/
-  KEY_PART_INFO *min_max_arg_part; /** The keypart of the only argument field of all MIN/MAX functions. */
+  KeyPartInfo *min_max_arg_part; /** The keypart of the only argument field of all MIN/MAX functions. */
   uint32_t min_max_arg_len; /**< The length of the MIN/MAX argument field */
   unsigned char *key_infix; /**< Infix of constants from equality predicates. */
   uint32_t key_infix_len;
-  DYNAMIC_ARRAY min_max_ranges; /**< Array of range ptrs for the MIN/MAX field. */
+  std::vector<QuickRange *> min_max_ranges; /**< Array of range ptrs for the MIN/MAX field. */
   uint32_t real_prefix_len; /**< Length of key prefix extended with key_infix. */
   uint32_t real_key_parts;  /**< A number of keyparts in the above value.      */
   List<Item_sum> *min_functions;
@@ -93,9 +95,9 @@ public:
 
   /*
     The following two members are public to allow easy access from
-    TRP_GROUP_MIN_MAX::make_quick()
+    GroupMinMaxReadPlan::make_quick()
   */
-  drizzled::memory::Root alloc; /**< Memory pool for this and quick_prefix_select data. */
+  memory::Root alloc; /**< Memory pool for this and quick_prefix_select data. */
   QuickRangeSelect *quick_prefix_select; /**< For retrieval of group prefixes. */
 
 private:
@@ -215,14 +217,14 @@ private:
    * DESCRIPTION
    * The method iterates through all MIN functions and updates the result value
    * of each function by calling Item_sum::reset(), which in turn picks the new
-   * result value from this->head->record[0], previously updated by
+   * result value from this->head->getInsertRecord(), previously updated by
    * next_min(). The updated value is stored in a member variable of each of the
    * Item_sum objects, depending on the value type.
    *
    * IMPLEMENTATION
    * The update must be done separately for MIN and MAX, immediately after
    * next_min() was called and before next_max() is called, because both MIN and
-   * MAX take their result value from the same buffer this->head->record[0]
+   * MAX take their result value from the same buffer this->head->getInsertRecord()
    * (i.e.  this->record).
    *
    * RETURN
@@ -239,14 +241,14 @@ private:
    * DESCRIPTION
    * The method iterates through all MAX functions and updates the result value
    * of each function by calling Item_sum::reset(), which in turn picks the new
-   * result value from this->head->record[0], previously updated by
+   * result value from this->head->getInsertRecord(), previously updated by
    * next_max(). The updated value is stored in a member variable of each of the
    * Item_sum objects, depending on the value type.
    *
    * IMPLEMENTATION
    * The update must be done separately for MIN and MAX, immediately after
    * next_max() was called, because both MIN and MAX take their result value
-   * from the same buffer this->head->record[0] (i.e.  this->record).
+   * from the same buffer this->head->getInsertRecord() (i.e.  this->record).
    *
    * RETURN
    * None
@@ -279,20 +281,20 @@ public:
      None
    */
   QuickGroupMinMaxSelect(Table *table, 
-                         JOIN *join, 
+                         Join *join, 
                          bool have_min,
                          bool have_max, 
-                         KEY_PART_INFO *min_max_arg_part,
+                         KeyPartInfo *min_max_arg_part,
                          uint32_t group_prefix_len, 
                          uint32_t group_key_parts,
                          uint32_t used_key_parts, 
-                         KEY *index_info,
+                         KeyInfo *index_info,
                          uint use_index, 
                          double read_cost, 
                          ha_rows records,
                          uint key_infix_len, 
                          unsigned char *key_infix,
-                         drizzled::memory::Root *parent_alloc);
+                         memory::Root *parent_alloc);
 
   ~QuickGroupMinMaxSelect();
 

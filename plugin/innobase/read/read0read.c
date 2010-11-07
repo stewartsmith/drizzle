@@ -11,8 +11,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -422,11 +422,6 @@ read_cursor_view_create_for_mysql(
 	curview = (cursor_view_t*) mem_heap_alloc(heap, sizeof(cursor_view_t));
 	curview->heap = heap;
 
-	/* Drop cursor tables from consideration when evaluating the need of
-	auto-commit */
-	curview->n_mysql_tables_in_use = cr_trx->n_mysql_tables_in_use;
-	cr_trx->n_mysql_tables_in_use = 0;
-
 	mutex_enter(&kernel_mutex);
 
 	curview->read_view = read_view_create_low(
@@ -503,7 +498,6 @@ read_cursor_view_close_for_mysql(
 
 	/* Add cursor's tables to the global count of active tables that
 	belong to this transaction */
-	trx->n_mysql_tables_in_use += curview->n_mysql_tables_in_use;
 
 	mutex_enter(&kernel_mutex);
 

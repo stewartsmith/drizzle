@@ -1,0 +1,3 @@
+select * from data_dictionary.plugins WHERE PLUGIN_TYPE="storageengine" AND PLUGIN_NAME="schema";
+PLUGIN_NAME	PLUGIN_TYPE	IS_ACTIVE	MODULE_NAME
+schema	StorageEngine	YES	SchemaEngine

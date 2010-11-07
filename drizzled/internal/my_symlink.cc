@@ -11,12 +11,19 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "drizzled/internal/mysys_priv.h"
-#include "drizzled/my_error.h"
+#include "config.h"
+
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/error.h"
 #include "drizzled/internal/m_string.h"
 #include <errno.h>
+
+namespace drizzled
+{
+namespace internal
+{
 
 bool test_if_hard_path(const char *dir_name)
 {
@@ -26,3 +33,6 @@ bool test_if_hard_path(const char *dir_name)
     return (true);
   return false;
 } /* test_if_hard_path */
+
+} /* namespace internal */
+} /* namespace drizzled */

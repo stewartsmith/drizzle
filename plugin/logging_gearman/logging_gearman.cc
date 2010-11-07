@@ -21,14 +21,24 @@
 #include <drizzled/plugin/logging.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
-
+#include <boost/program_options.hpp>
+#include <drizzled/module/option_map.h>
 #include <libgearman/gearman.h>
+#include <limits.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <cstdio>
+#include <cerrno>
 
+using namespace drizzled;
+namespace po= boost::program_options;
 
 /* TODO make this dynamic as needed */
 static const int MAX_MSG_LEN= 32*1024;
 
-static bool sysvar_logging_gearman_enable= false;
+static bool sysvar_logging_gearman_enable;
 static char* sysvar_logging_gearman_host= NULL;
 static char* sysvar_logging_gearman_function= NULL;
 
@@ -37,7 +47,6 @@ static char* sysvar_logging_gearman_function= NULL;
    until the Session has a good utime "now" we can use
    will have to use this instead */
 
-#include <sys/time.h>
 static uint64_t get_microtime()
 {
 #if defined(HAVE_GETHRTIME)
@@ -162,7 +171,7 @@ static unsigned char *quotify (const unsigned char *src, size_t srclen,
   return dst;
 }
 
-class LoggingGearman : public drizzled::plugin::Logging
+class LoggingGearman : public plugin::Logging
 {
 
   int gearman_client_ok;
@@ -171,7 +180,7 @@ class LoggingGearman : public drizzled::plugin::Logging
 public:
 
   LoggingGearman()
-    : drizzled::plugin::Logging("LoggingGearman"),
+    : plugin::Logging("LoggingGearman"),
       gearman_client_ok(0)
   {
     gearman_return_t ret;
@@ -185,8 +194,10 @@ public:
 
     if (gearman_client_create(&gearman_client) == NULL)
     {
+      char errmsg[STRERROR_MAX];
+      strerror_r(errno, errmsg, sizeof(errmsg));
       errmsg_printf(ERRMSG_LVL_ERROR, _("fail gearman_client_create(): %s"),
-                    strerror(errno));
+                    errmsg);
       return;
     }
 
@@ -250,7 +261,7 @@ public:
                // dont need to quote the db name, always CSV safe
                (int)session->db.length(), dbs,
                // do need to quote the query
-               quotify((unsigned char *)session->getQueryString(),
+               quotify((const unsigned char *)session->getQueryString().c_str(),
                        session->getQueryLength(), qs, sizeof(qs)),
                // command_name is defined in drizzled/sql_parse.cc
                // dont need to quote the command name, always CSV safe
@@ -283,20 +294,19 @@ public:
 
 static LoggingGearman *handler= NULL;
 
-static int logging_gearman_plugin_init(drizzled::plugin::Registry &registry)
+static int logging_gearman_plugin_init(module::Context &context)
 {
   handler= new LoggingGearman();
-  registry.add(handler);
+  context.add(handler);
 
   return 0;
 }
 
-static int logging_gearman_plugin_deinit(drizzled::plugin::Registry &registry)
+static void init_options(drizzled::module::option_context &context)
 {
-  registry.remove(handler);
-  delete handler;
-
-  return 0;
+  context("enable",
+          po::value<bool>(&sysvar_logging_gearman_enable)->default_value(false)->zero_tokens(),
+          N_("Enable logging to a gearman server"));
 }
 
 static DRIZZLE_SYSVAR_BOOL(
@@ -336,15 +346,13 @@ static drizzle_sys_var* logging_gearman_system_variables[]= {
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-    "logging_gearman",
+    "logging-gearman",
     "0.1",
     "Mark Atwood <mark@fallenpegasus.com>",
     N_("Log queries to a Gearman server"),
     PLUGIN_LICENSE_GPL,
     logging_gearman_plugin_init,
-    logging_gearman_plugin_deinit,
-    NULL,   /* status variables */
     logging_gearman_system_variables,
-    NULL
+    init_options
 }
 DRIZZLE_DECLARE_PLUGIN_END;

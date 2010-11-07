@@ -11,8 +11,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -28,7 +28,6 @@ Smart ALTER TABLE
 #include <drizzled/table.h>
 #include <drizzled/field/varstring.h>
 #include "drizzled/internal/my_sys.h"
-#include "drizzled/my_error.h"
 
 extern "C" {
 #include "log0log.h"
@@ -130,7 +129,7 @@ innobase_col_to_mysql(
 }
 
 /*************************************************************//**
-Copies an InnoDB record to table->record[0]. */
+Copies an InnoDB record to table->getInsertRecord(). */
 extern "C" UNIV_INTERN
 void
 innobase_rec_to_mysql(
@@ -141,13 +140,13 @@ innobase_rec_to_mysql(
 	const ulint*		offsets)	/*!< in: rec_get_offsets(
 						rec, index, ...) */
 {
-	uint	n_fields	= table->s->fields;
+	uint	n_fields	= table->getShare()->sizeFields();
 	uint	i;
 
 	ut_ad(n_fields == dict_table_get_n_user_cols(index->table));
 
 	for (i = 0; i < n_fields; i++) {
-		Field*		field	= table->field[i];
+		Field*		field	= table->getField(i);
 		ulint		ipos;
 		ulint		ilen;
 		const unsigned char*	ifield;
@@ -180,21 +179,22 @@ null_field:
 }
 
 /*************************************************************//**
-Resets table->record[0]. */
+Resets table->getInsertRecord(). */
 extern "C" UNIV_INTERN
 void
 innobase_rec_reset(
 /*===============*/
 	Table*			table)		/*!< in/out: MySQL table */
 {
-	uint	n_fields	= table->s->fields;
+	uint	n_fields	= table->getShare()->sizeFields();
 	uint	i;
 
 	for (i = 0; i < n_fields; i++) {
-		table->field[i]->set_default();
+		table->getField(i)->set_default();
 	}
 }
 
+#if 0 // This is a part of the fast index code.
 /******************************************************************//**
 Removes the filename encoding of a database and table name. */
 static
@@ -222,6 +222,7 @@ innobase_convert_tablename(
 	}
 }
 
+
 /*******************************************************************//**
 This function checks that index keys are sensible.
 @return	0 or error number */
@@ -229,7 +230,7 @@ static
 int
 innobase_check_index_keys(
 /*======================*/
-	const KEY*	key_info,	/*!< in: Indexes to be created */
+	const KeyInfo*	key_info,	/*!< in: Indexes to be created */
 	ulint		num_of_keys)	/*!< in: Number of indexes to
 					be created */
 {
@@ -239,13 +240,13 @@ innobase_check_index_keys(
 	ut_ad(num_of_keys);
 
 	for (key_num = 0; key_num < num_of_keys; key_num++) {
-		const KEY&	key = key_info[key_num];
+		const KeyInfo&	key = key_info[key_num];
 
 		/* Check that the same index name does not appear
 		twice in indexes to be created. */
 
 		for (ulint i = 0; i < key_num; i++) {
-			const KEY&	key2 = key_info[i];
+			const KeyInfo&	key2 = key_info[i];
 
 			if (0 == strcmp(key.name, key2.name)) {
 				errmsg_printf(ERRMSG_LVL_ERROR, "InnoDB: key name `%s` appears"
@@ -261,7 +262,7 @@ innobase_check_index_keys(
 		that the same colum does not appear twice in the index. */
 
 		for (ulint i = 0; i < key.key_parts; i++) {
-			const KEY_PART_INFO&	key_part1
+			const KeyPartInfo&	key_part1
 				= key.key_part[i];
 			const Field*		field
 				= key_part1.field;
@@ -301,7 +302,7 @@ innobase_check_index_keys(
 			}
 
 			for (ulint j = 0; j < i; j++) {
-				const KEY_PART_INFO&	key_part2
+				const KeyPartInfo&	key_part2
 					= key.key_part[j];
 
 				if (strcmp(key_part1.field->field_name,
@@ -328,7 +329,7 @@ static
 void
 innobase_create_index_field_def(
 /*============================*/
-	KEY_PART_INFO*		key_part,	/*!< in: MySQL key definition */
+	KeyPartInfo*		key_part,	/*!< in: MySQL key definition */
 	mem_heap_t*		heap,		/*!< in: memory heap */
 	merge_index_field_t*	index_field)	/*!< out: index field
 						definition for key_part */
@@ -368,7 +369,7 @@ static
 void
 innobase_create_index_def(
 /*======================*/
-	KEY*			key,		/*!< in: key definition */
+	KeyInfo*			key,		/*!< in: key definition */
 	bool			new_primary,	/*!< in: TRUE=generating
 						a new primary key
 						on the table */
@@ -485,6 +486,7 @@ ENDIF
 
 
 @return	key definitions or NULL */
+
 static
 merge_index_def_t*
 innobase_create_key_def(
@@ -493,7 +495,7 @@ innobase_create_key_def(
 	const dict_table_t*table,		/*!< in: table definition */
 	mem_heap_t*	heap,		/*!< in: heap where space for key
 					definitions are allocated */
-	KEY*		key_info,	/*!< in: Indexes to be created */
+	KeyInfo*		key_info,	/*!< in: Indexes to be created */
 	ulint&		n_keys)		/*!< in/out: Number of indexes to
 					be created */
 {
@@ -597,6 +599,7 @@ innobase_create_temporary_tablename(
 	return(name);
 }
 
+
 /*******************************************************************//**
 Create indexes.
 @return	0 or error number */
@@ -604,8 +607,9 @@ UNIV_INTERN
 int
 ha_innobase::add_index(
 /*===================*/
+                       Session *session,
 	Table*	i_table,	/*!< in: Table where indexes are created */
-	KEY*	key_info,	/*!< in: Indexes to be created */
+	KeyInfo*	key_info,	/*!< in: Indexes to be created */
 	uint	num_of_keys)	/*!< in: Number of indexes to be created */
 {
 	dict_index_t**	index;		/*!< Index to be created */
@@ -618,7 +622,7 @@ ha_innobase::add_index(
 	ulint		num_created	= 0;
 	ibool		dict_locked	= FALSE;
 	ulint		new_primary;
-	ulint		error;
+	int		error;
 
 	ut_a(i_table);
 	ut_a(key_info);
@@ -628,7 +632,7 @@ ha_innobase::add_index(
 		return(HA_ERR_WRONG_COMMAND);
 	}
 
-	update_session();
+	update_session(session);
 
 	heap = mem_heap_create(1024);
 
@@ -645,14 +649,18 @@ ha_innobase::add_index(
 	innodb_table = indexed_table
 		= dict_table_get(prebuilt->table->name, FALSE);
 
-	/* Check that index keys are sensible */
-
-	error = innobase_check_index_keys(key_info, num_of_keys);
+	/* Check if the index name is reserved. */
+	if (innobase_index_name_is_reserved(trx, key_info, num_of_keys)) {
+		error = -1;
+	} else {
+		/* Check that index keys are sensible */
+		error = innobase_check_index_keys(key_info, num_of_keys);
+	}
 
 	if (UNIV_UNLIKELY(error)) {
 err_exit:
 		mem_heap_free(heap);
-		trx_general_rollback_for_mysql(trx, FALSE, NULL);
+		trx_general_rollback_for_mysql(trx, NULL);
 		trx_free_for_mysql(trx);
 		trx_commit_for_mysql(prebuilt->trx);
 		return(error);
@@ -750,10 +758,11 @@ err_exit:
 	ut_ad(error == DB_SUCCESS);
 
 	/* Commit the data dictionary transaction in order to release
-	the table locks on the system tables.  Unfortunately, this
-	means that if MySQL crashes while creating a new primary key
-	inside row_merge_build_indexes(), indexed_table will not be
-	dropped on crash recovery.  Thus, it will become orphaned. */
+	the table locks on the system tables.  This means that if
+	MySQL crashes while creating a new primary key inside
+	row_merge_build_indexes(), indexed_table will not be dropped
+	by trx_rollback_active().  It will have to be recovered or
+	dropped by the database administrator. */
 	trx_commit_for_mysql(trx);
 
 	row_mysql_unlock_data_dictionary(trx);
@@ -852,6 +861,7 @@ error_handling:
 		indexed_table->n_mysql_handles_opened++;
 
 		error = row_merge_drop_table(trx, innodb_table);
+		innodb_table = indexed_table;
 		goto convert_error;
 
 	case DB_TOO_BIG_RECORD:
@@ -866,7 +876,9 @@ error:
 		/* fall through */
 	default:
 		if (new_primary) {
-			row_merge_drop_table(trx, indexed_table);
+			if (indexed_table != innodb_table) {
+				row_merge_drop_table(trx, indexed_table);
+			}
 		} else {
 			if (!dict_locked) {
 				row_mysql_lock_data_dictionary(trx);
@@ -908,6 +920,7 @@ UNIV_INTERN
 int
 ha_innobase::prepare_drop_index(
 /*============================*/
+                                Session *session,
 	Table*	i_table,	/*!< in: Table where indexes are dropped */
 	uint*	key_num,	/*!< in: Key nums to be dropped */
 	uint	num_of_keys)	/*!< in: Number of keys to be dropped */
@@ -923,7 +936,7 @@ ha_innobase::prepare_drop_index(
 		return(HA_ERR_WRONG_COMMAND);
 	}
 
-	update_session();
+	update_session(session);
 
 	trx_search_latch_release_if_reserved(prebuilt->trx);
 	trx = prebuilt->trx;
@@ -944,7 +957,7 @@ ha_innobase::prepare_drop_index(
 	}
 
 	for (n_key = 0; n_key < num_of_keys; n_key++) {
-		const KEY*	key;
+		const KeyInfo*	key;
 		dict_index_t*	index;
 
 		key = i_table->key_info + key_num[n_key];
@@ -1108,6 +1121,7 @@ UNIV_INTERN
 int
 ha_innobase::final_drop_index(
 /*==========================*/
+                              Session *session,
 	Table*	)		/*!< in: Table where indexes are dropped */
 {
 	dict_index_t*	index;		/*!< Index to be dropped */
@@ -1118,7 +1132,7 @@ ha_innobase::final_drop_index(
 		return(HA_ERR_WRONG_COMMAND);
 	}
 
-	update_session();
+	update_session(session);
 
 	trx_search_latch_release_if_reserved(prebuilt->trx);
 	trx_start_if_not_started(prebuilt->trx);
@@ -1199,3 +1213,4 @@ func_exit:
 
 	return(err);
 }
+#endif

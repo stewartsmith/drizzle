@@ -1,0 +1,10 @@
+create table t1 (a int primary key);
+insert into t1 values (4);
+select * from t1;
+begin;
+insert into t1 values (5);
+--error ER_DUP_KEY,  ER_DUP_ENTRY
+insert into t1 values (1),(2),(3),(4);
+commit;
+select * from t1;
+drop table t1;

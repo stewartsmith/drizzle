@@ -18,8 +18,11 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/item/decimal.h>
+
+namespace drizzled
+{
 
 Item_decimal::Item_decimal(const char *str_arg, uint32_t length,
                            const CHARSET_INFO * const charset)
@@ -142,3 +145,5 @@ int Item_decimal::save_in_field(Field *field, bool)
   return field->store_decimal(&decimal_value);
 }
 
+
+} /* namespace drizzled */

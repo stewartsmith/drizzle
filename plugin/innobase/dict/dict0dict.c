@@ -11,8 +11,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -52,11 +52,6 @@ UNIV_INTERN dict_index_t*	dict_ind_compact;
 #include "que0que.h"
 #include "rem0cmp.h"
 #include "row0merge.h"
-#if defined(BUILD_DRIZZLE)
-# include "drizzled/charset_info.h"
-#else
-# include "m_ctype.h" /* my_isspace() */
-#endif /* BUILD_DRIZZLE */
 #include "ha_prototypes.h" /* innobase_strcasecmp() */
 
 #include <ctype.h>
@@ -86,9 +81,10 @@ static char	dict_ibfk[] = "_ibfk_";
 
 /*******************************************************************//**
 Tries to find column names for the index and sets the col field of the
-index. */
+index.
+@return TRUE if the column names were found */
 static
-void
+ibool
 dict_index_find_cols(
 /*=================*/
 	dict_table_t*	table,	/*!< in: table */
@@ -1173,7 +1169,7 @@ dict_col_name_is_reserved(
 	ulint			i;
 
 	for (i = 0; i < UT_ARR_SIZE(reserved_names); i++) {
-		if (strcmp(name, reserved_names[i]) == 0) {
+		if (innobase_strcasecmp(name, reserved_names[i]) == 0) {
 
 			return(TRUE);
 		}
@@ -1203,7 +1199,7 @@ dict_index_too_big_for_undo(
 		= TRX_UNDO_PAGE_HDR - TRX_UNDO_PAGE_HDR_SIZE
 		+ 2 /* next record pointer */
 		+ 1 /* type_cmpl */
-		+ 11 /* trx->undo_no */ - 11 /* table->id */
+		+ 11 /* trx->undo_no */ + 11 /* table->id */
 		+ 1 /* rec_get_info_bits() */
 		+ 11 /* DB_TRX_ID */
 		+ 11 /* DB_ROLL_PTR */
@@ -1435,7 +1431,7 @@ add_field_size:
 
 /**********************************************************************//**
 Adds an index to the dictionary cache.
-@return	DB_SUCCESS or DB_TOO_BIG_RECORD */
+@return	DB_SUCCESS, DB_TOO_BIG_RECORD, or DB_CORRUPTION */
 UNIV_INTERN
 ulint
 dict_index_add_to_cache(
@@ -1461,7 +1457,10 @@ dict_index_add_to_cache(
 	ut_a(!dict_index_is_clust(index)
 	     || UT_LIST_GET_LEN(table->indexes) == 0);
 
-	dict_index_find_cols(table, index);
+	if (!dict_index_find_cols(table, index)) {
+
+		return(DB_CORRUPTION);
+	}
 
 	/* Build the cache internal representation of the index,
 	containing also the added system fields */
@@ -1669,9 +1668,10 @@ dict_index_remove_from_cache(
 
 /*******************************************************************//**
 Tries to find column names for the index and sets the col field of the
-index. */
+index.
+@return TRUE if the column names were found */
 static
-void
+ibool
 dict_index_find_cols(
 /*=================*/
 	dict_table_t*	table,	/*!< in: table */
@@ -1696,17 +1696,21 @@ dict_index_find_cols(
 			}
 		}
 
+#ifdef UNIV_DEBUG
 		/* It is an error not to find a matching column. */
 		fputs("InnoDB: Error: no matching column for ", stderr);
 		ut_print_name(stderr, NULL, FALSE, field->name);
 		fputs(" in ", stderr);
 		dict_index_name_print(stderr, NULL, index);
 		fputs("!\n", stderr);
-		ut_error;
+#endif /* UNIV_DEBUG */
+		return(FALSE);
 
 found:
 		;
 	}
+
+	return(TRUE);
 }
 #endif /* !UNIV_HOTBACKUP */
 
@@ -1745,11 +1749,11 @@ dict_index_add_col(
 	if (field->fixed_len > DICT_MAX_INDEX_COL_LEN) {
 		field->fixed_len = 0;
 	}
-#if DICT_MAX_INDEX_COL_LEN != 768
+#if DICT_MAX_INDEX_COL_LEN != 1024
 	/* The comparison limit above must be constant.  If it were
 	changed, the disk format of some fixed-length columns would
 	change, which would be a disaster. */
-# error "DICT_MAX_INDEX_COL_LEN != 768"
+# error "DICT_MAX_INDEX_COL_LEN != 1024"
 #endif
 
 	if (!(col->prtype & DATA_NOT_NULL)) {
@@ -2618,7 +2622,7 @@ static
 const char*
 dict_accept(
 /*========*/
-	const struct charset_info_st*	cs,/*!< in: the character set of ptr */
+	const void*	cs,/*!< in: the character set of ptr */
 	const char*	ptr,	/*!< in: scan from this */
 	const char*	string,	/*!< in: accept only this string as the next
 				non-whitespace string */
@@ -2629,7 +2633,7 @@ dict_accept(
 
 	*success = FALSE;
 
-	while (my_isspace(cs, *ptr)) {
+	while (innobase_isspace(cs, *ptr)) {
 		ptr++;
 	}
 
@@ -2654,7 +2658,7 @@ static
 const char*
 dict_scan_id(
 /*=========*/
-	const struct charset_info_st*	cs,/*!< in: the character set of ptr */
+	const void*	cs,/*!< in: the character set of ptr */
 	const char*	ptr,	/*!< in: scanned to */
 	mem_heap_t*	heap,	/*!< in: heap where to allocate the id
 				(NULL=id will not be allocated, but it
@@ -2676,7 +2680,7 @@ dict_scan_id(
 
 	*id = NULL;
 
-	while (my_isspace(cs, *ptr)) {
+	while (innobase_isspace(cs, *ptr)) {
 		ptr++;
 	}
 
@@ -2707,7 +2711,7 @@ dict_scan_id(
 			len++;
 		}
 	} else {
-		while (!my_isspace(cs, *ptr) && *ptr != '(' && *ptr != ')'
+		while (!innobase_isspace(cs, *ptr) && *ptr != '(' && *ptr != ')'
 		       && (accept_also_dot || *ptr != '.')
 		       && *ptr != ',' && *ptr != '\0') {
 
@@ -2773,7 +2777,7 @@ static
 const char*
 dict_scan_col(
 /*==========*/
-	const struct charset_info_st*	cs,	/*!< in: the character set of ptr */
+	const void*	cs,	/*!< in: the character set of ptr */
 	const char*		ptr,	/*!< in: scanned to */
 	ibool*			success,/*!< out: TRUE if success */
 	dict_table_t*		table,	/*!< in: table in which the column is */
@@ -2824,7 +2828,7 @@ static
 const char*
 dict_scan_table_name(
 /*=================*/
-	const struct charset_info_st*	cs,/*!< in: the character set of ptr */
+	const void*	cs,/*!< in: the character set of ptr */
 	const char*	ptr,	/*!< in: scanned to */
 	dict_table_t**	table,	/*!< out: table object or NULL */
 	const char*	name,	/*!< in: foreign key table name */
@@ -2923,7 +2927,7 @@ static
 const char*
 dict_skip_word(
 /*===========*/
-	const struct charset_info_st*	cs,/*!< in: the character set of ptr */
+	const void*	cs,/*!< in: the character set of ptr */
 	const char*	ptr,	/*!< in: scanned to */
 	ibool*		success)/*!< out: TRUE if success, FALSE if just spaces
 				left in string or a syntax error */
@@ -3109,7 +3113,7 @@ dict_create_foreign_constraints_low(
 /*================================*/
 	trx_t*		trx,	/*!< in: transaction */
 	mem_heap_t*	heap,	/*!< in: memory heap */
-	const struct charset_info_st*	cs,/*!< in: the character set of sql_string */
+	const void*	cs,/*!< in: the character set of sql_string */
 	const char*	sql_string,
 				/*!< in: CREATE TABLE or ALTER TABLE statement
 				where foreign keys are declared like:
@@ -3228,11 +3232,11 @@ loop:
 
 		ut_a(success);
 
-		if (!my_isspace(cs, *ptr) && *ptr != '"' && *ptr != '`') {
+		if (!innobase_isspace(cs, *ptr) && *ptr != '"' && *ptr != '`') {
 			goto loop;
 		}
 
-		while (my_isspace(cs, *ptr)) {
+		while (innobase_isspace(cs, *ptr)) {
 			ptr++;
 		}
 
@@ -3275,7 +3279,7 @@ loop:
 		goto loop;
 	}
 
-	if (!my_isspace(cs, *ptr)) {
+	if (!innobase_isspace(cs, *ptr)) {
 		goto loop;
 	}
 
@@ -3364,7 +3368,7 @@ col_loop1:
 	}
 	ptr = dict_accept(cs, ptr, "REFERENCES", &success);
 
-	if (!success || !my_isspace(cs, *ptr)) {
+	if (!success || !innobase_isspace(cs, *ptr)) {
 		dict_foreign_report_syntax_err(
 			name, start_of_latest_foreign, ptr);
 		return(DB_CANNOT_ADD_CONSTRAINT);
@@ -3744,7 +3748,7 @@ dict_foreign_parse_drop_constraints(
 	const char*		ptr;
 	const char*		id;
 	FILE*			ef	= dict_foreign_err_file;
-	const struct charset_info_st*	cs;
+	const void*	cs;
 
 	ut_a(trx);
 	ut_a(trx->mysql_thd);
@@ -3755,7 +3759,7 @@ dict_foreign_parse_drop_constraints(
 
 	*constraints_to_drop = mem_heap_alloc(heap, 1000 * sizeof(char*));
 
-	str = dict_strip_comments(*(trx->mysql_query_str));
+	str = dict_strip_comments((trx->mysql_query_str));
 	ptr = str;
 
 	ut_ad(mutex_own(&(dict_sys->mutex)));
@@ -3770,14 +3774,14 @@ loop:
 
 	ptr = dict_accept(cs, ptr, "DROP", &success);
 
-	if (!my_isspace(cs, *ptr)) {
+	if (!innobase_isspace(cs, *ptr)) {
 
 		goto loop;
 	}
 
 	ptr = dict_accept(cs, ptr, "FOREIGN", &success);
 
-	if (!success || !my_isspace(cs, *ptr)) {
+	if (!success || !innobase_isspace(cs, *ptr)) {
 
 		goto loop;
 	}
@@ -4647,6 +4651,26 @@ dict_ind_init(void)
 	dict_ind_redundant->cached = dict_ind_compact->cached = TRUE;
 }
 
+/**********************************************************************//**
+Frees dict_ind_redundant and dict_ind_compact. */
+static
+void
+dict_ind_free(void)
+/*===============*/
+{
+	dict_table_t*	table;
+
+	table = dict_ind_compact->table;
+	dict_mem_index_free(dict_ind_compact);
+	dict_ind_compact = NULL;
+	dict_mem_table_free(table);
+
+	table = dict_ind_redundant->table;
+	dict_mem_index_free(dict_ind_redundant);
+	dict_ind_redundant = NULL;
+	dict_mem_table_free(table);
+}
+
 #ifndef UNIV_HOTBACKUP
 /**********************************************************************//**
 Get index by name
@@ -4772,4 +4796,55 @@ dict_table_check_for_dup_indexes(
 	}
 }
 #endif /* UNIV_DEBUG */
+
+/**************************************************************************
+Closes the data dictionary module. */
+UNIV_INTERN
+void
+dict_close(void)
+/*============*/
+{
+	ulint	i;
+
+	/* Free the hash elements. We don't remove them from the table
+	because we are going to destroy the table anyway. */
+	for (i = 0; i < hash_get_n_cells(dict_sys->table_hash); i++) {
+		dict_table_t*	table;
+
+		table = HASH_GET_FIRST(dict_sys->table_hash, i);
+
+		while (table) {
+			dict_table_t*	prev_table = table;
+
+			table = HASH_GET_NEXT(name_hash, prev_table);
+#ifdef UNIV_DEBUG
+			ut_a(prev_table->magic_n == DICT_TABLE_MAGIC_N);
+#endif
+			/* Acquire only because it's a pre-condition. */
+			mutex_enter(&dict_sys->mutex);
+
+			dict_table_remove_from_cache(prev_table);
+
+			mutex_exit(&dict_sys->mutex);
+		}
+	}
+
+	hash_table_free(dict_sys->table_hash);
+
+	/* The elements are the same instance as in dict_sys->table_hash,
+	therefore we don't delete the individual elements. */
+	hash_table_free(dict_sys->table_id_hash);
+
+	dict_ind_free();
+
+	mutex_free(&dict_sys->mutex);
+
+	rw_lock_free(&dict_operation_lock);
+	memset(&dict_operation_lock, 0x0, sizeof(dict_operation_lock));
+
+	mutex_free(&dict_foreign_err_mutex);
+
+	mem_free(dict_sys);
+	dict_sys = NULL;
+}
 #endif /* !UNIV_HOTBACKUP */

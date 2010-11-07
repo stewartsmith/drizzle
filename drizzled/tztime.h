@@ -34,6 +34,9 @@
 
 #include "drizzled/memory/sql_alloc.h"
 
+namespace drizzled
+{
+
 class String;
 typedef struct st_drizzle_time DRIZZLE_TIME;
 
@@ -43,7 +46,7 @@ typedef struct st_drizzle_time DRIZZLE_TIME;
   Actual time zones which are specified by DB, or via offset
   or use system functions are its descendants.
 */
-class Time_zone: public drizzled::memory::SqlAlloc
+class Time_zone: public memory::SqlAlloc
 {
 public:
   Time_zone() {}                              /* Remove gcc warning */
@@ -69,7 +72,7 @@ public:
 
   /**
     We need this only for surpressing warnings, objects of this type are
-    allocated on drizzled::memory::Root and should not require destruction.
+    allocated on memory::Root and should not require destruction.
   */
   virtual ~Time_zone() {};
 };
@@ -77,6 +80,7 @@ public:
 extern Time_zone * my_tz_SYSTEM;
 extern Time_zone * my_tz_find(Session *session, const String *name);
 extern bool     my_tz_init(Session *org_session, const char *default_tzname);
-extern time_t   sec_since_epoch_TIME(DRIZZLE_TIME *t);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_TZTIME_H */

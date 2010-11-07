@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /*
   deletes a table
@@ -19,13 +19,15 @@
 
 #include "myisam_priv.h"
 
+using namespace drizzled;
+
 int mi_delete_table(const char *name)
 {
   char from[FN_REFLEN];
 
-  fn_format(from,name,"",MI_NAME_IEXT,MY_UNPACK_FILENAME|MY_APPEND_EXT);
-  if (my_delete_with_symlink(from, 0))
+  internal::fn_format(from,name,"",MI_NAME_IEXT,MY_UNPACK_FILENAME|MY_APPEND_EXT);
+  if (internal::my_delete_with_symlink(from, 0))
     return(errno);
-  fn_format(from,name,"",MI_NAME_DEXT,MY_UNPACK_FILENAME|MY_APPEND_EXT);
-  return(my_delete_with_symlink(from, MYF(MY_WME)) ? errno : 0);
+  internal::fn_format(from,name,"",MI_NAME_DEXT,MY_UNPACK_FILENAME|MY_APPEND_EXT);
+  return(internal::my_delete_with_symlink(from, MYF(MY_WME)) ? errno : 0);
 }

@@ -1,0 +1,65 @@
+# Test coercibility function
+--source include/have_coercibility_function.inc
+
+# Should be 0
+select coercibility('hello' collate utf8_roman_ci);
+
+# Should be 1
+# Can't figure out any way of doing this without an error (probably as it should be)
+
+# Should be 2
+set @a='hello';
+select coercibility(@a);
+
+# Should be 3
+select coercibility(user());
+
+# Should be 4
+select coercibility('hello');
+
+# Should be 5
+select coercibility(NULL);
+
+# From func_group.test
+create table t1 (a char(10));
+insert into t1 values ('a'),('b'),('c');
+select coercibility(max(a)) from t1;
+drop table t1;
+
+# From func_str.test
+explain extended select coercibility(conv(130,16,10));
+
+# Next 3 from user_var.test
+
+#
+# Bug #2244: User variables didn't copy collation and derivation
+# attributes from values they were initialized to.
+#
+
+set @a='test';
+select collation(@a),coercibility(@a);
+select @a='TEST';
+select @a='TEST' collate utf8_bin;
+
+set @a='test' collate utf8_general_ci;
+select collation(@a),coercibility(@a);
+select @a='TEST';
+select @a='TEST' collate utf8_bin;
+
+#
+# Check the same invoking Item_set_user_var
+#
+select collation(@a:='test');
+select coercibility(@a:='test');
+select collation(@a:='test' collate utf8_bin);
+select coercibility(@a:='test' collate utf8_bin);
+select (@a:='test' collate utf8_bin) = 'TEST';
+select collation(@a),coercibility(@a);
+select (@a:='test' collate utf8_bin) = 'TEST' collate utf8_general_ci;
+
+#
+# Bug#9425 A user variable doesn't always have implicit coercibility
+#
+select @v, coercibility(@v);
+set @v1=null, @v2=1, @v3=1.1, @v4=now();
+select coercibility(@v1),coercibility(@v2),coercibility(@v3),coercibility(@v4);

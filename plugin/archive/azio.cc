@@ -23,6 +23,8 @@
 #include <cstdlib>
 #include <cassert>
 
+using namespace drizzled;
+
 static int const az_magic[3] = {0xfe, 0x03, 0x01}; /* az magic header */
 
 static unsigned int azwrite(azio_stream *s, void *buf, unsigned int len);
@@ -50,7 +52,7 @@ extern "C" pthread_handler_t run_task(void *p)
   size_t offset;
   azio_stream *s= (azio_stream *)p;
 
-  my_thread_init();
+  internal::my_thread_init();
 
   while (1)
   {
@@ -75,7 +77,7 @@ extern "C" pthread_handler_t run_task(void *p)
     pthread_mutex_unlock(&s->container.thresh_mutex);
   }
 
-  my_thread_end();
+  internal::my_thread_end();
 
   return 0;
 }
@@ -227,7 +229,7 @@ int azopen(azio_stream *s, const char *path, int Flags, az_method method)
   s->stream.avail_out = AZ_BUFSIZE_WRITE;
 
   errno = 0;
-  s->file = fd < 0 ? my_open(path, Flags, MYF(0)) : fd;
+  s->file = fd < 0 ? internal::my_open(path, Flags, MYF(0)) : fd;
 #ifdef AZIO_AIO
   s->container.fd= s->file;
 #endif
@@ -439,7 +441,7 @@ int destroy (azio_stream *s)
     if (s->mode == 'w')
     {
       err = deflateEnd(&(s->stream));
-      my_sync(s->file, MYF(0));
+      internal::my_sync(s->file, MYF(0));
     }
     else if (s->mode == 'r')
       err = inflateEnd(&(s->stream));
@@ -447,7 +449,7 @@ int destroy (azio_stream *s)
 
   do_aio_cleanup(s);
 
-  if (s->file > 0 && my_close(s->file, MYF(0)))
+  if (s->file > 0 && internal::my_close(s->file, MYF(0)))
       err = Z_ERRNO;
 
   s->file= -1;
@@ -756,7 +758,7 @@ int ZEXPORT azflush (azio_stream *s,int flush)
     err= do_flush(s, flush);
 
     if (err) return err;
-    my_sync(s->file, MYF(0));
+    internal::my_sync(s->file, MYF(0));
     return  s->z_err == Z_STREAM_END ? Z_OK : s->z_err;
   }
 }

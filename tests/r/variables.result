@@ -1,12 +1,12 @@
 drop table if exists t1,t2;
-set @my_key_buffer_size           =@@global.key_buffer_size;
 set @my_max_connect_errors        =@@global.max_connect_errors;
 set @my_max_heap_table_size       =@@global.max_heap_table_size;
 set @my_max_join_size             =@@global.max_join_size;
-set @my_drizzle_protocol_buffer_length =@@global.drizzle_protocol_buffer_length;
+set @my_mysql_protocol_buffer_length =@@global.mysql_protocol_buffer_length;
 set @my_server_id                 =@@global.server_id;
 set @my_storage_engine            =@@global.storage_engine;
 set @my_myisam_sort_buffer_size	  =@@global.myisam_sort_buffer_size;
+set @my_tx_isolation	  =@@global.tx_isolation;
 set @`test`=1;
 select @test, @`test`, @TEST, @`TEST`, @"teSt";
 @test	@`test`	@TEST	@`TEST`	@"teSt"
@@ -84,36 +84,36 @@ set max_join_size=100;
 show variables like 'max_join_size';
 Variable_name	Value
 max_join_size	100
-select * from information_schema.session_variables where variable_name like 'max_join_size';
+select * from data_dictionary.session_variables where variable_name like 'max_join_size';
 VARIABLE_NAME	VARIABLE_VALUE
-MAX_JOIN_SIZE	100
+max_join_size	100
 show global variables like 'max_join_size';
 Variable_name	Value
 max_join_size	10
-select * from information_schema.global_variables where variable_name like 'max_join_size';
+select * from data_dictionary.global_variables where variable_name like 'max_join_size';
 VARIABLE_NAME	VARIABLE_VALUE
-MAX_JOIN_SIZE	10
+max_join_size	10
 set GLOBAL max_join_size=2000;
 show global variables like 'max_join_size';
 Variable_name	Value
 max_join_size	2000
-select * from information_schema.global_variables where variable_name like 'max_join_size';
+select * from data_dictionary.global_variables where variable_name like 'max_join_size';
 VARIABLE_NAME	VARIABLE_VALUE
-MAX_JOIN_SIZE	2000
+max_join_size	2000
 set max_join_size=DEFAULT;
 show variables like 'max_join_size';
 Variable_name	Value
 max_join_size	2000
-select * from information_schema.session_variables where variable_name like 'max_join_size';
+select * from data_dictionary.session_variables where variable_name like 'max_join_size';
 VARIABLE_NAME	VARIABLE_VALUE
-MAX_JOIN_SIZE	2000
+max_join_size	2000
 set GLOBAL max_join_size=DEFAULT;
 show global variables like 'max_join_size';
 Variable_name	Value
 max_join_size	2147483647
-select * from information_schema.global_variables where variable_name like 'max_join_size';
+select * from data_dictionary.global_variables where variable_name like 'max_join_size';
 VARIABLE_NAME	VARIABLE_VALUE
-MAX_JOIN_SIZE	2147483647
+max_join_size	2147483647
 set @@max_join_size=1000, @@global.max_join_size=2000;
 select @@local.max_join_size, @@global.max_join_size;
 @@local.max_join_size	@@global.max_join_size
@@ -144,89 +144,83 @@ set global timed_mutexes=ON;
 show variables like 'timed_mutexes';
 Variable_name	Value
 timed_mutexes	ON
-select * from information_schema.session_variables where variable_name like 'timed_mutexes';
+select * from data_dictionary.session_variables where variable_name like 'timed_mutexes';
 VARIABLE_NAME	VARIABLE_VALUE
-TIMED_MUTEXES	ON
+timed_mutexes	ON
 set global timed_mutexes=0;
 show variables like 'timed_mutexes';
 Variable_name	Value
 timed_mutexes	OFF
-select * from information_schema.session_variables where variable_name like 'timed_mutexes';
+select * from data_dictionary.session_variables where variable_name like 'timed_mutexes';
 VARIABLE_NAME	VARIABLE_VALUE
-TIMED_MUTEXES	OFF
+timed_mutexes	OFF
 set storage_engine=MYISAM, storage_engine="MEMORY";
 show local variables like 'storage_engine';
 Variable_name	Value
 storage_engine	MEMORY
-select * from information_schema.session_variables where variable_name like 'storage_engine';
+select * from data_dictionary.session_variables where variable_name like 'storage_engine';
 VARIABLE_NAME	VARIABLE_VALUE
-STORAGE_ENGINE	MEMORY
+storage_engine	MEMORY
 show global variables like 'storage_engine';
 Variable_name	Value
 storage_engine	InnoDB
-select * from information_schema.global_variables where variable_name like 'storage_engine';
+select * from data_dictionary.global_variables where variable_name like 'storage_engine';
 VARIABLE_NAME	VARIABLE_VALUE
-STORAGE_ENGINE	InnoDB
+storage_engine	InnoDB
 set GLOBAL myisam_max_sort_file_size=2000000;
 show global variables like 'myisam_max_sort_file_size';
 Variable_name	Value
 myisam_max_sort_file_size	2000000
-select * from information_schema.global_variables where variable_name like 'myisam_max_sort_file_size';
+select * from data_dictionary.global_variables where variable_name like 'myisam_max_sort_file_size';
 VARIABLE_NAME	VARIABLE_VALUE
-MYISAM_MAX_SORT_FILE_SIZE	2000000
+myisam_max_sort_file_size	2000000
 set GLOBAL myisam_max_sort_file_size=default;
 show global variables like 'myisam_max_sort_file_size';
 Variable_name	Value
 myisam_max_sort_file_size	2147483647
-select * from information_schema.global_variables where variable_name like 'myisam_max_sort_file_size';
+select * from data_dictionary.global_variables where variable_name like 'myisam_max_sort_file_size';
 VARIABLE_NAME	VARIABLE_VALUE
-MYISAM_MAX_SORT_FILE_SIZE	2147483647
-set global drizzle_protocol_buffer_length=1024;
-show global variables like 'drizzle_protocol_buffer_%';
+myisam_max_sort_file_size	2147483647
+set global mysql_protocol_buffer_length=1024;
+show global variables like 'mysql_protocol_buffer_%';
 Variable_name	Value
-drizzle_protocol_buffer_length	1024
-select * from information_schema.global_variables where variable_name like 'drizzle_protocol_buffer_%';
+mysql_protocol_buffer_length	1024
+select * from data_dictionary.global_variables where variable_name like 'mysql_protocol_buffer_%';
 VARIABLE_NAME	VARIABLE_VALUE
-DRIZZLE_PROTOCOL_BUFFER_LENGTH	1024
-show global variables like 'drizzle_protocol_buffer_%';
+mysql_protocol_buffer_length	1024
+show global variables like 'mysql_protocol_buffer_%';
 Variable_name	Value
-drizzle_protocol_buffer_length	1024
-select * from information_schema.global_variables where variable_name like 'drizzle_protocol_buffer_%';
+mysql_protocol_buffer_length	1024
+select * from data_dictionary.global_variables where variable_name like 'mysql_protocol_buffer_%';
 VARIABLE_NAME	VARIABLE_VALUE
-DRIZZLE_PROTOCOL_BUFFER_LENGTH	1024
-set global drizzle_protocol_buffer_length=1;
+mysql_protocol_buffer_length	1024
+set global mysql_protocol_buffer_length=1;
 Warnings:
 Error	1292	Truncated incorrect buffer_length value: '1'
-show variables like 'drizzle_protocol_buffer_length';
+show variables like 'mysql_protocol_buffer_length';
 Variable_name	Value
-drizzle_protocol_buffer_length	1024
-set global drizzle_protocol_buffer_length=2000000000;
+mysql_protocol_buffer_length	1024
+set global mysql_protocol_buffer_length=2000000000;
 Warnings:
 Error	1292	Truncated incorrect buffer_length value: '2000000000'
-show variables like 'drizzle_protocol_buffer_length';
+show variables like 'mysql_protocol_buffer_length';
 Variable_name	Value
-drizzle_protocol_buffer_length	1048576
+mysql_protocol_buffer_length	1048576
 show variables like '%alloc%';
 Variable_name	Value
 innodb_use_sys_malloc	ON
 query_alloc_block_size	8192
 query_prealloc_size	8192
-range_alloc_block_size	
-transaction_alloc_block_size	8192
-transaction_prealloc_size	4096
-select * from information_schema.session_variables where variable_name like '%alloc%';
+range_alloc_block_size	4096
+select * from data_dictionary.session_variables where variable_name like '%alloc%';
 VARIABLE_NAME	VARIABLE_VALUE
-INNODB_USE_SYS_MALLOC	ON
-QUERY_ALLOC_BLOCK_SIZE	8192
-QUERY_PREALLOC_SIZE	8192
-RANGE_ALLOC_BLOCK_SIZE	
-TRANSACTION_ALLOC_BLOCK_SIZE	8192
-TRANSACTION_PREALLOC_SIZE	4096
+innodb_use_sys_malloc	ON
+query_alloc_block_size	8192
+query_prealloc_size	8192
+range_alloc_block_size	4096
 set @@range_alloc_block_size=1024*16;
 set @@query_alloc_block_size=1024*17+2;
 set @@query_prealloc_size=1024*18;
-set @@transaction_alloc_block_size=1024*20-1;
-set @@transaction_prealloc_size=1024*21-1;
 select @@query_alloc_block_size;
 @@query_alloc_block_size
 17408
@@ -235,36 +229,27 @@ Variable_name	Value
 innodb_use_sys_malloc	ON
 query_alloc_block_size	17408
 query_prealloc_size	18432
-range_alloc_block_size	
-transaction_alloc_block_size	19456
-transaction_prealloc_size	20480
-select * from information_schema.session_variables where variable_name like '%alloc%';
+range_alloc_block_size	16384
+select * from data_dictionary.session_variables where variable_name like '%alloc%';
 VARIABLE_NAME	VARIABLE_VALUE
-INNODB_USE_SYS_MALLOC	ON
-QUERY_ALLOC_BLOCK_SIZE	17408
-QUERY_PREALLOC_SIZE	18432
-RANGE_ALLOC_BLOCK_SIZE	
-TRANSACTION_ALLOC_BLOCK_SIZE	19456
-TRANSACTION_PREALLOC_SIZE	20480
+innodb_use_sys_malloc	ON
+query_alloc_block_size	17408
+query_prealloc_size	18432
+range_alloc_block_size	16384
 set @@range_alloc_block_size=default;
 set @@query_alloc_block_size=default, @@query_prealloc_size=default;
-set transaction_alloc_block_size=default, @@transaction_prealloc_size=default;
 show variables like '%alloc%';
 Variable_name	Value
 innodb_use_sys_malloc	ON
 query_alloc_block_size	8192
 query_prealloc_size	8192
-range_alloc_block_size	
-transaction_alloc_block_size	8192
-transaction_prealloc_size	4096
-select * from information_schema.session_variables where variable_name like '%alloc%';
+range_alloc_block_size	4096
+select * from data_dictionary.session_variables where variable_name like '%alloc%';
 VARIABLE_NAME	VARIABLE_VALUE
-INNODB_USE_SYS_MALLOC	ON
-QUERY_ALLOC_BLOCK_SIZE	8192
-QUERY_PREALLOC_SIZE	8192
-RANGE_ALLOC_BLOCK_SIZE	
-TRANSACTION_ALLOC_BLOCK_SIZE	8192
-TRANSACTION_PREALLOC_SIZE	4096
+innodb_use_sys_malloc	ON
+query_alloc_block_size	8192
+query_prealloc_size	8192
+range_alloc_block_size	4096
 SELECT @@version LIKE 'non-existent';
 @@version LIKE 'non-existent'
 0
@@ -311,7 +296,7 @@ set global max_write_lock_count=100;
 set global myisam_sort_buffer_size=100;
 Warnings:
 Error	1292	Truncated incorrect sort_buffer_size value: '100'
-set global drizzle_protocol_buffer_length=100;
+set global mysql_protocol_buffer_length=100;
 Warnings:
 Error	1292	Truncated incorrect buffer_length value: '100'
 set read_buffer_size=100;
@@ -334,51 +319,14 @@ set tmp_table_size=100;
 Warnings:
 Error	1292	Truncated incorrect tmp_table_size value: '100'
 set tx_isolation="READ-COMMITTED";
-create temporary table t1 (a int not null auto_increment, primary key(a));
-create temporary table t2 (a int not null auto_increment, primary key(a));
-insert into t1 values(null),(null),(null);
-insert into t2 values(null),(null),(null);
-set global key_buffer_size=100000;
-select @@key_buffer_size;
-@@key_buffer_size
-98304
-select * from t1 where a=2;
-a
-2
-select * from t2 where a=3;
-a
-3
-check table t1,t2;
-Table	Op	Msg_type	Msg_text
-test.t1	check	status	OK
-test.t2	check	status	OK
-select max(a) +1, max(a) +2 into @xx,@yy from t1;
-drop table t1,t2;
-select @@xxxxxxxxxx;
-ERROR HY000: Unknown system variable 'xxxxxxxxxx'
-select 1;
-1
-1
-select @@session.key_buffer_size;
-ERROR HY000: Variable 'key_buffer_size' is a GLOBAL variable
 set global myisam_max_sort_file_size=4294967296;
 show global variables like 'myisam_max_sort_file_size';
 Variable_name	Value
 myisam_max_sort_file_size	MAX_FILE_SIZE
-select * from information_schema.global_variables where variable_name like 'myisam_max_sort_file_size';
+select * from data_dictionary.global_variables where variable_name like 'myisam_max_sort_file_size';
 VARIABLE_NAME	VARIABLE_VALUE
-MYISAM_MAX_SORT_FILE_SIZE	MAX_FILE_SIZE
+myisam_max_sort_file_size	MAX_FILE_SIZE
 set global myisam_max_sort_file_size=default;
-set @@global.global.key_buffer_size= 1;
-ERROR HY000: Unknown system variable 'global'
-set GLOBAL global.key_buffer_size= 1;
-ERROR HY000: Unknown system variable 'global'
-SELECT @@global.global.key_buffer_size;
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'key_buffer_size' at line 1
-SELECT @@global.session.key_buffer_size;
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'key_buffer_size' at line 1
-SELECT @@global.local.key_buffer_size;
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'key_buffer_size' at line 1
 create temporary table t1 (
 c1 int,
 c2 int,
@@ -388,23 +336,23 @@ c5 bigint);
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `c1` int DEFAULT NULL,
-  `c2` int DEFAULT NULL,
-  `c3` int DEFAULT NULL,
-  `c4` int DEFAULT NULL,
-  `c5` bigint DEFAULT NULL
-) ENGINE=MyISAM
+  `c1` INT DEFAULT NULL,
+  `c2` INT DEFAULT NULL,
+  `c3` INT DEFAULT NULL,
+  `c4` INT DEFAULT NULL,
+  `c5` BIGINT DEFAULT NULL
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 drop table t1;
 set @arg00= 8, @arg01= 8.8, @arg02= 'a string', @arg03= 0.2e0;
 create temporary table t1 as select @arg00 as c1, @arg01 as c2, @arg02 as c3, @arg03 as c4;
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `c1` bigint DEFAULT NULL,
-  `c2` decimal(65,30) DEFAULT NULL,
-  `c3` text,
-  `c4` double DEFAULT NULL
-) ENGINE=MyISAM
+  `c1` BIGINT DEFAULT NULL,
+  `c2` DECIMAL(65,30) DEFAULT NULL,
+  `c3` TEXT COLLATE utf8_general_ci,
+  `c4` DOUBLE DEFAULT NULL
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 drop table t1;
 SET GLOBAL table_open_cache=-1;
 Warnings:
@@ -412,9 +360,9 @@ Error	1292	Truncated incorrect table_open_cache value: '18446744073709551615'
 SHOW VARIABLES LIKE 'table_open_cache';
 Variable_name	Value
 table_open_cache	100
-SELECT * FROM INFORMATION_SCHEMA.SESSION_VARIABLES WHERE VARIABLE_NAME LIKE 'table_open_cache';
+SELECT * FROM DATA_DICTIONARY.SESSION_VARIABLES WHERE VARIABLE_NAME LIKE 'table_open_cache';
 VARIABLE_NAME	VARIABLE_VALUE
-TABLE_OPEN_CACHE	100
+table_open_cache	100
 SET GLOBAL table_open_cache=DEFAULT;
 *** Various tests with LC_TIME_NAMES
 *** LC_TIME_NAMES: testing case insensitivity
@@ -532,12 +480,12 @@ set @@global.character_set_filesystem=utf8;
 ERROR HY000: Unknown system variable 'character_set_filesystem'
 set character_set_filesystem=utf8;
 ERROR HY000: Unknown system variable 'character_set_filesystem'
-set @old_sql_big_selects = @@sql_big_selects;
+set @sql_big_selects = @@sql_big_selects;
 set @@sql_big_selects = 1;
 show variables like 'sql_big_selects';
 Variable_name	Value
 sql_big_selects	ON
-set @@sql_big_selects = @old_sql_big_selects;
+set @@sql_big_selects = @sql_big_selects;
 set @@sql_notes = 0, @@sql_warnings = 0;
 show variables like 'sql_notes';
 Variable_name	Value
@@ -585,19 +533,56 @@ hostname	#
 End of 5.0 tests
 set global flush_time                =@my_flush_time;
 ERROR HY000: Unknown system variable 'flush_time'
-set global key_buffer_size           =@my_key_buffer_size;
 set global max_connect_errors        =@my_max_connect_errors;
 set global max_heap_table_size       =@my_max_heap_table_size;
 set global max_join_size             =@my_max_join_size;
 set global max_write_lock_count      =default;
-set global myisam_data_pointer_size  =@my_myisam_data_pointer_size;
-ERROR 42000: Incorrect argument type to variable 'myisam_data_pointer_size'
-set global drizzle_protocol_buffer_length= @my_drizzle_protocol_buffer_length;
+set global mysql_protocol_buffer_length= @my_mysql_protocol_buffer_length;
 set global server_id                 =@my_server_id;
 set global storage_engine            =@my_storage_engine;
 set global thread_cache_size         =@my_thread_cache_size;
 ERROR HY000: Unknown system variable 'thread_cache_size'
 set global myisam_sort_buffer_size   =@my_myisam_sort_buffer_size;
+SHOW GLOBAL VARIABLES LIKE 'max_join_size';
+Variable_name	Value
+max_join_size	2147483647
+SHOW LOCAL VARIABLES LIKE 'max_join_size';
+Variable_name	Value
+max_join_size	100
+set GLOBAL bulk_insert_buffer_size=DEFAULT;
+set GLOBAL join_buffer_size=DEFAULT;
+set GLOBAL max_allowed_packet=DEFAULT;
+set GLOBAL max_connect_errors=DEFAULT;
+set GLOBAL max_heap_table_size=DEFAULT;
+set GLOBAL max_join_size=DEFAULT;
+set GLOBAL max_sort_length=DEFAULT;
+set GLOBAL max_write_lock_count=DEFAULT;
+set GLOBAL myisam_sort_buffer_size=DEFAULT;
+set GLOBAL mysql_protocol_buffer_length=DEFAULT;
+set GLOBAL read_buffer_size=DEFAULT;
+set GLOBAL read_rnd_buffer_size=DEFAULT;
+set GLOBAL server_id=DEFAULT;
+set GLOBAL sort_buffer_size=DEFAULT;
+set GLOBAL table_open_cache=DEFAULT;
+set GLOBAL storage_engine= @my_storage_engine;
+set GLOBAL tmp_table_size=DEFAULT;
+set GLOBAL tx_isolation= @my_tx_isolation;
+set SESSION bulk_insert_buffer_size=DEFAULT;
+set SESSION join_buffer_size=DEFAULT;
+set SESSION max_allowed_packet=DEFAULT;
+set SESSION max_heap_table_size=DEFAULT;
+set SESSION max_join_size=DEFAULT;
+set SESSION max_sort_length=DEFAULT;
+set SESSION read_buffer_size=DEFAULT;
+set SESSION read_rnd_buffer_size=DEFAULT;
+set SESSION sort_buffer_size=DEFAULT;
+set SESSION sql_big_selects=DEFAULT;
+set SESSION sql_buffer_result=DEFAULT;
+set SESSION sql_select_limit=DEFAULT;
+set SESSION sql_warnings=DEFAULT;
+set SESSION storage_engine= @my_storage_engine;
+set SESSION tmp_table_size=DEFAULT;
+set SESSION tx_isolation= @my_tx_isolation;
 show global variables where variable_name='table_definition_cache' or Variable_name='table_lock_wait_timeout';
 Variable_name	Value
 table_definition_cache	#

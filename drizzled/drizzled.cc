@@ -18,8 +18,9 @@
  */
 
 #include "config.h"
-#include <drizzled/configmake.h>
-#include <drizzled/atomics.h>
+#include "drizzled/configmake.h"
+#include "drizzled/atomics.h"
+#include "drizzled/data_home.h"
 
 #include <netdb.h>
 #include <sys/types.h>
@@ -27,12 +28,19 @@
 #include <netinet/in.h>
 #include <signal.h>
 #include <limits.h>
+#include <stdexcept>
+
+#include <boost/program_options.hpp>
+#include "drizzled/program_options/config_file.h"
+#include <boost/thread/recursive_mutex.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/shared_mutex.hpp>
+#include <boost/thread/condition_variable.hpp>
+#include <boost/filesystem.hpp>
 
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/my_bit.h"
 #include <drizzled/my_hash.h>
-#include <drizzled/stacktrace.h>
-#include "drizzled/my_error.h"
 #include <drizzled/error.h>
 #include <drizzled/errmsg_print.h>
 #include <drizzled/tztime.h>
@@ -48,10 +56,19 @@
 #include "drizzled/plugin/error_message.h"
 #include "drizzled/plugin/client.h"
 #include "drizzled/plugin/scheduler.h"
+#include "drizzled/plugin/xa_resource_manager.h"
+#include "drizzled/plugin/monitored_in_transaction.h"
+#include "drizzled/replication_services.h" /* For ReplicationServices::evaluateRegisteredPlugins() */
 #include "drizzled/probes.h"
 #include "drizzled/session_list.h"
 #include "drizzled/charset.h"
 #include "plugin/myisam/myisam.h"
+#include "drizzled/drizzled.h"
+#include "drizzled/module/registry.h"
+#include "drizzled/module/load_list.h"
+#include "drizzled/global_buffer.h"
+
+#include "drizzled/plugin/event_observer.h"
 
 #include <google/protobuf/stubs/common.h>
 
@@ -71,28 +88,15 @@
 #endif
 #include <sys/socket.h>
 
-#include <locale.h>
-
-#define mysqld_charset &my_charset_utf8_general_ci
-
-#ifdef HAVE_purify
-#define IF_PURIFY(A,B) (A)
-#else
-#define IF_PURIFY(A,B) (B)
-#endif
-
-#define MAX_MEM_TABLE_SIZE SIZE_MAX
 
 #include <errno.h>
 #include <sys/stat.h>
-#include "drizzled/my_getopt.h"
+#include "drizzled/option.h"
 #ifdef HAVE_SYSENT_H
 #include <sysent.h>
 #endif
 #include <pwd.h>				// For getpwent
 #include <grp.h>
-
-#include <sys/resource.h>
 
 #ifdef HAVE_SELECT_H
 #  include <select.h>
@@ -121,6 +125,33 @@
 #include <sys/fpu.h>
 #endif
 
+#include "drizzled/internal/my_pthread.h"			// For thr_setconcurency()
+#include "drizzled/constrained_value.h"
+
+#include <drizzled/gettext.h>
+
+
+#ifdef HAVE_VALGRIND
+#define IF_PURIFY(A,B) (A)
+#else
+#define IF_PURIFY(A,B) (B)
+#endif
+
+#define MAX_MEM_TABLE_SIZE SIZE_MAX
+#include <iostream>
+#include <fstream>
+
+
+using namespace std;
+namespace fs=boost::filesystem;
+namespace po=boost::program_options;
+namespace dpo=drizzled::program_options;
+
+
+namespace drizzled
+{
+
+#define mysqld_charset &my_charset_utf8_general_ci
 inline void setup_fpu()
 {
 #if defined(__FreeBSD__) && defined(HAVE_IEEEFP_H)
@@ -150,50 +181,13 @@ inline void setup_fpu()
 #endif /* __i386__ && HAVE_FPU_CONTROL_H && _FPU_DOUBLE */
 }
 
-#include "drizzled/internal/my_pthread.h"			// For thr_setconcurency()
-
-#include <drizzled/gettext.h>
-
 #ifdef SOLARIS
 extern "C" int gethostname(char *name, int namelen);
 #endif
 
-using namespace std;
-using namespace drizzled;
-
-/* Constants */
-
-
-const char *show_comp_option_name[]= {"YES", "NO", "DISABLED"};
-static const char *optimizer_switch_names[]=
-{
-  "no_materialization", "no_semijoin",
-  NULL
-};
-
-/* Corresponding defines are named OPTIMIZER_SWITCH_XXX */
-static const unsigned int optimizer_switch_names_len[]=
-{
-  /*no_materialization*/          19,
-  /*no_semijoin*/                 11
-};
-
-TYPELIB optimizer_switch_typelib= { array_elements(optimizer_switch_names)-1,"",
-                                    optimizer_switch_names,
-                                    (unsigned int *)optimizer_switch_names_len };
-
-static const char *tc_heuristic_recover_names[]=
-{
-  "COMMIT", "ROLLBACK", NULL
-};
-static TYPELIB tc_heuristic_recover_typelib=
-{
-  array_elements(tc_heuristic_recover_names)-1,"",
-  tc_heuristic_recover_names, NULL
-};
-
 const char *first_keyword= "first";
 const char * const DRIZZLE_CONFIG_NAME= "drizzled";
+
 #define GET_HA_ROWS GET_ULL
 
 const char *tx_isolation_names[] =
@@ -206,8 +200,7 @@ TYPELIB tx_isolation_typelib= {array_elements(tx_isolation_names)-1,"",
 /*
   Used with --help for detailed option
 */
-static bool opt_help= false;
-static bool opt_help_extended= false;
+bool opt_help= false;
 
 arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
 {{&Arg_comparator::compare_string,     &Arg_comparator::compare_e_string},
@@ -218,13 +211,9 @@ arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
 
 /* static variables */
 
-static bool volatile select_thread_in_use;
-static bool volatile ready_to_exit;
-static bool opt_debugging= 0;
+static bool opt_debugging= false;
 static uint32_t wake_thread;
-static uint32_t killed_threads;
-static char *drizzled_user, *drizzled_chroot;
-static char *language_ptr;
+static char *drizzled_chroot;
 static const char *default_character_set_name;
 static const char *character_set_filesystem_name;
 static char *lc_time_names_name;
@@ -234,14 +223,15 @@ static const char *compiled_default_collation_name= "utf8_general_ci";
 
 /* Global variables */
 
-bool locked_in_memory;
+bool volatile ready_to_exit;
+char *drizzled_user;
+bool volatile select_thread_in_use;
 bool volatile abort_loop;
 bool volatile shutdown_in_progress;
-uint32_t max_used_connections;
-const string opt_scheduler_default("multi_thread");
-char *opt_scheduler= NULL;
+char *opt_scheduler_default;
+const char *opt_scheduler= NULL;
 
-size_t my_thread_stack_size= 65536;
+size_t my_thread_stack_size= 0;
 
 /*
   Legacy global plugin::StorageEngine. These will be removed (please do not add more).
@@ -249,21 +239,17 @@ size_t my_thread_stack_size= 65536;
 plugin::StorageEngine *heap_engine;
 plugin::StorageEngine *myisam_engine;
 
-char* opt_secure_file_priv= 0;
-
-static bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
+bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
 
 uint32_t drizzled_bind_timeout;
 std::bitset<12> test_flags;
 uint32_t dropping_tables, ha_open_options;
 uint32_t tc_heuristic_recover= 0;
 uint64_t session_startup_options;
-uint32_t back_log;
+back_log_constraints back_log(50);
 uint32_t server_id;
 uint64_t table_cache_size;
 size_t table_def_size;
-uint64_t aborted_threads;
-uint64_t aborted_connects;
 uint64_t max_connect_errors;
 uint32_t global_thread_id= 1UL;
 pid_t current_pid;
@@ -307,19 +293,22 @@ const double log_10[] = {
 time_t server_start_time;
 time_t flush_status_time;
 
-char drizzle_home[FN_REFLEN], pidfile_name[FN_REFLEN], system_time_zone[30];
+fs::path basedir(PREFIX);
+fs::path pid_file;
+fs::path secure_file_priv("");
+fs::path plugin_dir;
+fs::path system_config_dir(SYSCONFDIR);
+
+
+char system_time_zone[30];
 char *default_tz_name;
 char glob_hostname[FN_REFLEN];
-char drizzle_real_data_home[FN_REFLEN],
-     language[FN_REFLEN], 
-     *opt_tc_log_file;
-char drizzle_unpacked_real_data_home[FN_REFLEN];
+
+char *opt_tc_log_file;
 const key_map key_map_empty(0);
 key_map key_map_full(0);                        // Will be initialized later
 
-uint32_t drizzle_data_home_len;
-char drizzle_data_home_buff[2], *drizzle_data_home=drizzle_real_data_home;
-char *drizzle_tmpdir= NULL;
+std::string drizzle_tmpdir;
 char *opt_drizzle_tmpdir= NULL;
 
 /** name of reference on left espression in rewritten IN subquery */
@@ -333,9 +322,9 @@ my_decimal decimal_zero;
 
 FILE *stderror_file=0;
 
-struct system_variables global_system_variables;
-struct system_variables max_system_variables;
-struct system_status_var global_status_var;
+struct drizzle_system_variables global_system_variables;
+struct drizzle_system_variables max_system_variables;
+struct global_counters current_global_counters;
 
 const CHARSET_INFO *system_charset_info, *files_charset_info ;
 const CHARSET_INFO *table_alias_charset;
@@ -347,40 +336,27 @@ SHOW_COMP_OPTION have_symlink;
 
 /* Thread specific variables */
 
-pthread_key_t THR_Mem_root;
-pthread_key_t THR_Session;
-pthread_mutex_t LOCK_create_db;
-pthread_mutex_t LOCK_open;
-pthread_mutex_t LOCK_thread_count;
-pthread_mutex_t LOCK_status;
-pthread_mutex_t LOCK_global_read_lock;
-pthread_mutex_t LOCK_global_system_variables;
+boost::mutex LOCK_open;
+boost::mutex LOCK_global_system_variables;
+boost::mutex LOCK_thread_count;
 
-pthread_rwlock_t	LOCK_system_variables_hash;
-pthread_cond_t COND_refresh, COND_thread_count, COND_global_read_lock;
+boost::condition_variable_any COND_refresh;
+boost::condition_variable COND_thread_count;
 pthread_t signal_thread;
-pthread_cond_t  COND_server_end;
+boost::condition_variable COND_server_end;
 
 /* Static variables */
 
-static bool segfaulted;
-#ifdef HAVE_STACK_TRACE_ON_SEGV
-static bool opt_do_pstack;
-#endif /* HAVE_STACK_TRACE_ON_SEGV */
 int cleanup_done;
-static char *drizzle_home_ptr, *pidfile_name_ptr;
-static int defaults_argc;
-static char **defaults_argv;
 
-struct passwd *user_info;
-static pthread_t select_thread;
-static uint32_t thr_kill_signal;
+passwd *user_info;
 
-/**
-  Number of currently active user connections. The variable is protected by
-  LOCK_thread_count.
-*/
-drizzled::atomic<uint32_t> connection_count;
+atomic<uint32_t> connection_count;
+
+global_buffer_constraint<uint64_t> global_sort_buffer(0);
+global_buffer_constraint<uint64_t> global_join_buffer(0);
+global_buffer_constraint<uint64_t> global_read_rnd_buffer(0);
+global_buffer_constraint<uint64_t> global_read_buffer(0);
 
 /** 
   Refresh value. We use to test this to find out if a refresh even has happened recently.
@@ -390,19 +366,44 @@ uint64_t refresh_version;  /* Increments on each reload */
 /* Function declarations */
 bool drizzle_rm_tmp_tables();
 
-extern "C" pthread_handler_t signal_hand(void *arg);
 static void drizzle_init_variables(void);
-static void get_options(int *argc,char **argv);
-extern "C" bool drizzled_get_one_option(int, const struct my_option *, char *);
-static int init_thread_environment();
-static const char *get_relative_path(const char *path);
-static void fix_paths(string &progname);
-extern "C" pthread_handler_t handle_slave(void *arg);
-static void clean_up(bool print_message);
+static void get_options();
+static void fix_paths();
 
 static void usage(void);
-static void clean_up_mutexes(void);
 void close_connections(void);
+
+fs::path base_plugin_dir(PKGPLUGINDIR);
+
+po::options_description config_options("Config File Options");
+po::options_description long_options("Kernel Options");
+po::options_description plugin_load_options("Plugin Loading Options");
+po::options_description plugin_options("Plugin Options");
+po::options_description initial_options("Config and Plugin Loading");
+po::options_description full_options("Kernel and Plugin Loading and Plugin");
+vector<string> unknown_options;
+vector<string> defaults_file_list;
+po::variables_map vm;
+
+fs::path data_home(LOCALSTATEDIR);
+fs::path full_data_home(LOCALSTATEDIR);
+
+po::variables_map &getVariablesMap()
+{
+  return vm;
+}
+
+fs::path& getDataHome()
+{
+  return data_home;
+}
+
+fs::path& getDataHomeCatalog()
+{
+  static fs::path data_home_catalog(getDataHome());
+  return data_home_catalog;
+}
+
  
 /****************************************************************************
 ** Code to end drizzled
@@ -414,22 +415,23 @@ void close_connections(void)
   plugin::Listen::shutdown();
 
   /* kill connection thread */
-  (void) pthread_mutex_lock(&LOCK_thread_count);
-
-  while (select_thread_in_use)
   {
-    struct timespec abstime;
-    int error;
+    boost::mutex::scoped_lock scopedLock(LOCK_thread_count);
 
-    set_timespec(abstime, 2);
-    for (uint32_t tmp=0 ; tmp < 10 && select_thread_in_use; tmp++)
+    while (select_thread_in_use)
     {
-      error=pthread_cond_timedwait(&COND_thread_count,&LOCK_thread_count, &abstime);
-      if (error != EINTR)
-        break;
+      boost::xtime xt; 
+      xtime_get(&xt, boost::TIME_UTC); 
+      xt.sec += 2; 
+
+      for (uint32_t tmp=0 ; tmp < 10 && select_thread_in_use; tmp++)
+      {
+        bool success= COND_thread_count.timed_wait(scopedLock, xt);
+        if (not success)
+          break;
+      }
     }
   }
-  (void) pthread_mutex_unlock(&LOCK_thread_count);
 
 
   /*
@@ -440,28 +442,17 @@ void close_connections(void)
 
   Session *tmp;
 
-  (void) pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
-
-  for( vector<Session*>::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
   {
-    tmp= *it;
-    tmp->killed= Session::KILL_CONNECTION;
-    tmp->scheduler->killSession(tmp);
-    DRIZZLE_CONNECTION_DONE(tmp->thread_id);
-    if (tmp->mysys_var)
+    boost::mutex::scoped_lock scoped(LOCK_thread_count);
+    for( SessionList::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
     {
-      tmp->mysys_var->abort=1;
-      pthread_mutex_lock(&tmp->mysys_var->mutex);
-      if (tmp->mysys_var->current_cond)
-      {
-        pthread_mutex_lock(tmp->mysys_var->current_mutex);
-        pthread_cond_broadcast(tmp->mysys_var->current_cond);
-        pthread_mutex_unlock(tmp->mysys_var->current_mutex);
-      }
-      pthread_mutex_unlock(&tmp->mysys_var->mutex);
+      tmp= *it;
+      tmp->killed= Session::KILL_CONNECTION;
+      tmp->scheduler->killSession(tmp);
+      DRIZZLE_CONNECTION_DONE(tmp->thread_id);
+      tmp->lockOnSys();
     }
   }
-  (void) pthread_mutex_unlock(&LOCK_thread_count); // For unlink from list
 
   if (connection_count)
     sleep(2);                                   // Give threads time to die
@@ -473,52 +464,15 @@ void close_connections(void)
   */
   for (;;)
   {
-    (void) pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
+    boost::mutex::scoped_lock scoped(LOCK_thread_count);
     if (getSessionList().empty())
     {
-      (void) pthread_mutex_unlock(&LOCK_thread_count);
       break;
     }
     tmp= getSessionList().front();
     /* Close before unlock, avoiding crash. See LP bug#436685 */
     tmp->client->close();
-    (void) pthread_mutex_unlock(&LOCK_thread_count);
   }
-}
-
-extern "C" void print_signal_warning(int sig);
-
-extern "C" void print_signal_warning(int sig)
-{
-  if (global_system_variables.log_warnings)
-    errmsg_printf(ERRMSG_LVL_WARN, _("Got signal %d from thread %"PRIu64),
-                  sig, global_thread_id);
-#ifndef HAVE_BSD_SIGNALS
-  my_sigset(sig,print_signal_warning);		/* int. thread system calls */
-#endif
-  if (sig == SIGALRM)
-    alarm(2);					/* reschedule alarm */
-}
-
-/**
-  cleanup all memory and end program nicely.
-
-    If SIGNALS_DONT_BREAK_READ is defined, this function is called
-    by the main thread. To get Drizzle to shut down nicely in this case
-    (Mac OS X) we have to call exit() instead if pthread_exit().
-
-  @note
-    This function never returns.
-*/
-void unireg_end(void)
-{
-  clean_up(1);
-  my_thread_end();
-#if defined(SIGNALS_DONT_BREAK_READ)
-  exit(0);
-#else
-  pthread_exit(0);				// Exit is in main thread
-#endif
 }
 
 
@@ -527,34 +481,24 @@ void unireg_abort(int exit_code)
 
   if (exit_code)
     errmsg_printf(ERRMSG_LVL_ERROR, _("Aborting\n"));
-  else if (opt_help || opt_help_extended)
+  else if (opt_help)
     usage();
   clean_up(!opt_help && (exit_code));
-  clean_up_mutexes();
-  my_end();
+  internal::my_end();
   exit(exit_code);
 }
 
 
-static void clean_up(bool print_message)
+void clean_up(bool print_message)
 {
   if (cleanup_done++)
     return;
 
   table_cache_free();
-  TableShare::cacheStop();
-  set_var_free();
   free_charsets();
-  ha_end();
-  plugin::Registry &plugins= plugin::Registry::singleton();
-  plugin_shutdown(plugins);
+  module::Registry &modules= module::Registry::singleton();
+  modules.shutdownModules();
   xid_cache_free();
-  free_status_vars();
-  if (defaults_argv)
-    free_defaults(defaults_argv);
-  free(drizzle_tmpdir);
-  if (opt_secure_file_priv)
-    free(opt_secure_file_priv);
 
   deinit_temporal_formats();
 
@@ -562,21 +506,15 @@ static void clean_up(bool print_message)
   google::protobuf::ShutdownProtobufLibrary();
 #endif
 
-  (void) unlink(pidfile_name);	// This may not always exist
+  (void) unlink(pid_file.file_string().c_str());	// This may not always exist
 
   if (print_message && server_start_time)
-    errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_SHUTDOWN_COMPLETE)),my_progname);
-  /* Returns NULL on globerrs, we don't want to try to free that */
-  //void *freeme=
-  (void *)my_error_unregister(ER_ERROR_FIRST, ER_ERROR_LAST);
-  // TODO!!!! EPIC FAIL!!!! This sefaults if uncommented.
-/*  if (freeme != NULL)
-    free(freeme);  */
-  (void) pthread_mutex_lock(&LOCK_thread_count);
+    errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_SHUTDOWN_COMPLETE)),internal::my_progname);
+  LOCK_thread_count.lock();
   ready_to_exit=1;
   /* do the broadcast inside the lock to ensure that my_end() is not called */
-  (void) pthread_cond_broadcast(&COND_server_end);
-  (void) pthread_mutex_unlock(&LOCK_thread_count);
+  COND_server_end.notify_all();
+  LOCK_thread_count.unlock();
 
   /*
     The following lines may never be executed as the main thread may have
@@ -585,27 +523,11 @@ static void clean_up(bool print_message)
 } /* clean_up */
 
 
-static void clean_up_mutexes()
-{
-  (void) pthread_mutex_destroy(&LOCK_create_db);
-  (void) pthread_mutex_destroy(&LOCK_open);
-  (void) pthread_mutex_destroy(&LOCK_thread_count);
-  (void) pthread_mutex_destroy(&LOCK_status);
-  (void) pthread_mutex_destroy(&LOCK_global_system_variables);
-  (void) pthread_rwlock_destroy(&LOCK_system_variables_hash);
-  (void) pthread_mutex_destroy(&LOCK_global_read_lock);
-  (void) pthread_cond_destroy(&COND_thread_count);
-  (void) pthread_cond_destroy(&COND_server_end);
-  (void) pthread_cond_destroy(&COND_refresh);
-  (void) pthread_cond_destroy(&COND_global_read_lock);
-}
-
-
 /* Change to run as another user if started with --user */
 
-static struct passwd *check_user(const char *user)
+passwd *check_user(const char *user)
 {
-  struct passwd *tmp_user_info;
+  passwd *tmp_user_info;
   uid_t user_id= geteuid();
 
   // Don't bother if we aren't superuser
@@ -663,45 +585,22 @@ err:
 
 }
 
-static void set_user(const char *user, struct passwd *user_info_arg)
+void set_user(const char *user, passwd *user_info_arg)
 {
   assert(user_info_arg != 0);
-  /*
-    We can get a SIGSEGV when calling initgroups() on some systems when NSS
-    is configured to use LDAP and the server is statically linked.  We set
-    calling_initgroups as a flag to the SIGSEGV handler that is then used to
-    output a specific message to help the user resolve this problem.
-  */
-  calling_initgroups= true;
   initgroups((char*) user, user_info_arg->pw_gid);
-  calling_initgroups= false;
   if (setgid(user_info_arg->pw_gid) == -1)
   {
-    sql_perror("setgid");
+    sql_perror(N_("Set process group ID failed"));
     unireg_abort(1);
   }
   if (setuid(user_info_arg->pw_uid) == -1)
   {
-    sql_perror("setuid");
+    sql_perror(N_("Set process user ID failed"));
     unireg_abort(1);
   }
 }
 
-
-static void set_effective_user(struct passwd *user_info_arg)
-{
-  assert(user_info_arg != 0);
-  if (setregid((gid_t)-1, user_info_arg->pw_gid) == -1)
-  {
-    sql_perror("setregid");
-    unireg_abort(1);
-  }
-  if (setreuid((uid_t)-1, user_info_arg->pw_uid) == -1)
-  {
-    sql_perror("setreuid");
-    unireg_abort(1);
-  }
-}
 
 
 /** Change root user if started with @c --chroot . */
@@ -709,24 +608,9 @@ static void set_root(const char *path)
 {
   if ((chroot(path) == -1) || !chdir("/"))
   {
-    sql_perror("chroot");
+    sql_perror(N_("Process chroot failed"));
     unireg_abort(1);
   }
-}
-
-extern "C" void end_thread_signal(int );
-
-/** Called when a thread is aborted. */
-extern "C" void end_thread_signal(int )
-{
-  Session *session=current_session;
-  if (session)
-  {
-    statistic_increment(killed_threads, &LOCK_status);
-    session->scheduler->killSessionNow(session);
-    DRIZZLE_CONNECTION_DONE(session->thread_id);
-  }
-  return;
 }
 
 
@@ -747,192 +631,20 @@ void Session::unlink(Session *session)
 
   session->cleanup();
 
-  (void) pthread_mutex_lock(&LOCK_thread_count);
-  pthread_mutex_lock(&session->LOCK_delete);
+  boost::mutex::scoped_lock scoped(LOCK_thread_count);
+  session->lockForDelete();
 
   getSessionList().erase(remove(getSessionList().begin(),
                          getSessionList().end(),
                          session));
+  if (unlikely(plugin::EventObserver::disconnectSession(*session)))
+  {
+    // We should do something about an error...
+  }
 
   delete session;
-  (void) pthread_mutex_unlock(&LOCK_thread_count);
-
-  return;
 }
 
-
-#ifdef THREAD_SPECIFIC_SIGPIPE
-/**
-
-  @todo
-    One should have to fix that thr_alarm know about this thread too.
-*/
-extern "C" void abort_thread(int )
-{
-  Session *session=current_session;
-  if (session)
-    session->killed= Session::KILL_CONNECTION;
-  return;;
-}
-#endif
-
-#if defined(BACKTRACE_DEMANGLE)
-#include <cxxabi.h>
-extern "C" char *my_demangle(const char *mangled_name, int *status)
-{
-  return abi::__cxa_demangle(mangled_name, NULL, NULL, status);
-}
-#endif
-
-extern "C" void handle_segfault(int sig);
-
-extern "C" void handle_segfault(int sig)
-{
-  time_t curr_time;
-  struct tm tm;
-
-  /*
-    Strictly speaking, one needs a mutex here
-    but since we have got SIGSEGV already, things are a mess
-    so not having the mutex is not as bad as possibly using a buggy
-    mutex - so we keep things simple
-  */
-  if (segfaulted)
-  {
-    fprintf(stderr, _("Fatal signal %d while backtracing\n"), sig);
-    exit(1);
-  }
-
-  segfaulted = 1;
-
-  curr_time= time(NULL);
-  if(curr_time == (time_t)-1)
-  {
-    fprintf(stderr, "Fetal: time() call failed\n");
-    exit(1);
-  }
-
-  localtime_r(&curr_time, &tm);
-  
-  fprintf(stderr,"%02d%02d%02d %2d:%02d:%02d - drizzled got signal %d;\n"
-          "This could be because you hit a bug. It is also possible that "
-          "this binary\n or one of the libraries it was linked against is "
-          "corrupt, improperly built,\n or misconfigured. This error can "
-          "also be caused by malfunctioning hardware.\n",
-          tm.tm_year % 100, tm.tm_mon+1, tm.tm_mday,
-          tm.tm_hour, tm.tm_min, tm.tm_sec,
-          sig);
-  fprintf(stderr, _("We will try our best to scrape up some info that "
-                    "will hopefully help diagnose\n"
-                    "the problem, but since we have already crashed, "
-                    "something is definitely wrong\nand this may fail.\n\n"));
-  fprintf(stderr, "key_buffer_size=%u\n",
-          (uint32_t) dflt_key_cache->key_cache_mem_size);
-  fprintf(stderr, "read_buffer_size=%ld\n", (long) global_system_variables.read_buff_size);
-  fprintf(stderr, "max_used_connections=%u\n", max_used_connections);
-  fprintf(stderr, "connection_count=%u\n", uint32_t(connection_count));
-  fprintf(stderr, _("It is possible that drizzled could use up to \n"
-                    "key_buffer_size + (read_buffer_size + "
-                    "sort_buffer_size)*thread_count\n"
-                    "bytes of memory\n"
-                    "Hope that's ok; if not, decrease some variables in the "
-                    "equation.\n\n"));
-
-#ifdef HAVE_STACKTRACE
-  Session *session= current_session;
-
-  if (! (test_flags.test(TEST_NO_STACKTRACE)))
-  {
-    fprintf(stderr,"session: 0x%lx\n",(long) session);
-    fprintf(stderr,_("Attempting backtrace. You can use the following "
-                     "information to find out\n"
-                     "where drizzled died. If you see no messages after this, "
-                     "something went\n"
-                     "terribly wrong...\n"));
-    print_stacktrace(session ? (unsigned char*) session->thread_stack : (unsigned char*) 0,
-                     my_thread_stack_size);
-  }
-  if (session)
-  {
-    const char *kreason= "UNKNOWN";
-    switch (session->killed) {
-    case Session::NOT_KILLED:
-      kreason= "NOT_KILLED";
-      break;
-    case Session::KILL_BAD_DATA:
-      kreason= "KILL_BAD_DATA";
-      break;
-    case Session::KILL_CONNECTION:
-      kreason= "KILL_CONNECTION";
-      break;
-    case Session::KILL_QUERY:
-      kreason= "KILL_QUERY";
-      break;
-    case Session::KILLED_NO_VALUE:
-      kreason= "KILLED_NO_VALUE";
-      break;
-    }
-    fprintf(stderr, _("Trying to get some variables.\n"
-                      "Some pointers may be invalid and cause the "
-                      "dump to abort...\n"));
-    safe_print_str("session->query", session->query, 1024);
-    fprintf(stderr, "session->thread_id=%"PRIu32"\n", (uint32_t) session->thread_id);
-    fprintf(stderr, "session->killed=%s\n", kreason);
-  }
-  fflush(stderr);
-#endif /* HAVE_STACKTRACE */
-
-  if (calling_initgroups)
-    fprintf(stderr, _("\nThis crash occurred while the server was calling "
-                      "initgroups(). This is\n"
-                      "often due to the use of a drizzled that is statically "
-                      "linked against glibc\n"
-                      "and configured to use LDAP in /etc/nsswitch.conf. "
-                      "You will need to either\n"
-                      "upgrade to a version of glibc that does not have this "
-                      "problem (2.3.4 or\n"
-                      "later when used with nscd), disable LDAP in your "
-                      "nsswitch.conf, or use a\n"
-                      "drizzled that is not statically linked.\n"));
-
-  if (thd_lib_detected == THD_LIB_LT && !getenv("LD_ASSUME_KERNEL"))
-    fprintf(stderr,
-            _("\nYou are running a statically-linked LinuxThreads binary "
-              "on an NPTL system.\n"
-              "This can result in crashes on some distributions due "
-              "to LT/NPTL conflicts.\n"
-              "You should either build a dynamically-linked binary, or force "
-              "LinuxThreads\n"
-              "to be used with the LD_ASSUME_KERNEL environment variable. "
-              "Please consult\n"
-              "the documentation for your distribution on how to do that.\n"));
-
-  if (locked_in_memory)
-  {
-    fprintf(stderr,
-            _("\nThe '--memlock' argument, which was enabled, uses system "
-              "calls that are\n"
-              "unreliable and unstable on some operating systems and "
-              "operating-system\n"
-              "versions (notably, some versions of Linux).  "
-              "This crash could be due to use\n"
-              "of those buggy OS calls.  You should consider whether you "
-              "really need the\n"
-              "'--memlock' parameter and/or consult the OS "
-              "distributor about 'mlockall'\n bugs.\n"));
-  }
-
-#ifdef HAVE_WRITE_CORE
-  if (test_flags.test(TEST_CORE_ON_SIGNAL))
-  {
-    fprintf(stderr, _("Writing a core file\n"));
-    fflush(stderr);
-    write_core(sig);
-  }
-#endif
-
-  exit(1);
-}
 
 #ifndef SA_RESETHAND
 #define SA_RESETHAND 0
@@ -941,296 +653,516 @@ extern "C" void handle_segfault(int sig)
 #define SA_NODEFER 0
 #endif
 
-static void init_signals(void)
+
+
+
+const char *load_default_groups[]= 
 {
-  sigset_t set;
-  struct sigaction sa;
+  DRIZZLE_CONFIG_NAME, "server", 0, 0
+};
 
-  if (!(test_flags.test(TEST_NO_STACKTRACE) || 
-        test_flags.test(TEST_CORE_ON_SIGNAL)))
+static void find_plugin_dir(string progname)
+{
+  if (progname[0] != FN_LIBCHAR)
   {
-    sa.sa_flags = SA_RESETHAND | SA_NODEFER;
-    sigemptyset(&sa.sa_mask);
-    sigprocmask(SIG_SETMASK,&sa.sa_mask,NULL);
-
-    init_stacktrace();
-    sa.sa_handler=handle_segfault;
-    sigaction(SIGSEGV, &sa, NULL);
-    sigaction(SIGABRT, &sa, NULL);
-#ifdef SIGBUS
-    sigaction(SIGBUS, &sa, NULL);
-#endif
-    sigaction(SIGILL, &sa, NULL);
-    sigaction(SIGFPE, &sa, NULL);
+    /* We have a relative path and need to find the absolute */
+    char working_dir[FN_REFLEN];
+    char *working_dir_ptr= working_dir;
+    working_dir_ptr= getcwd(working_dir_ptr, FN_REFLEN);
+    string new_path(working_dir);
+    if (*(new_path.end()-1) != '/')
+      new_path.push_back('/');
+    if (progname[0] == '.' && progname[1] == '/')
+      new_path.append(progname.substr(2));
+    else
+      new_path.append(progname);
+    progname.swap(new_path);
   }
 
-  if (test_flags.test(TEST_CORE_ON_SIGNAL))
+  /* Now, trim off the exe name */
+  string progdir(progname.substr(0, progname.rfind(FN_LIBCHAR)+1));
+  if (progdir.rfind(".libs/") != string::npos)
   {
-    /* Change limits so that we will get a core file */
-    struct rlimit rl;
-    rl.rlim_cur = rl.rlim_max = RLIM_INFINITY;
-    if (setrlimit(RLIMIT_CORE, &rl) && global_system_variables.log_warnings)
-        errmsg_printf(ERRMSG_LVL_WARN,
-                      _("setrlimit could not change the size of core files "
-                        "to 'infinity';  We may not be able to generate a "
-                        "core file on signals"));
+    progdir.assign(progdir.substr(0, progdir.rfind(".libs/")));
   }
-  (void) sigemptyset(&set);
-  my_sigset(SIGPIPE,SIG_IGN);
-  sigaddset(&set,SIGPIPE);
-#ifndef IGNORE_SIGHUP_SIGQUIT
-  sigaddset(&set,SIGQUIT);
-  sigaddset(&set,SIGHUP);
-#endif
-  sigaddset(&set,SIGTERM);
+  string testlofile(progdir);
+  testlofile.append("drizzled.lo");
+  string testofile(progdir);
+  testofile.append("drizzled.o");
+  struct stat testfile_stat;
+  if (not (stat(testlofile.c_str(), &testfile_stat) && stat(testofile.c_str(), &testfile_stat)))
+  {
+    /* We are in a source dir! Plugin dir is ../plugin/.libs */
+    size_t last_libchar_pos= progdir.rfind(FN_LIBCHAR,progdir.size()-2)+1;
+    base_plugin_dir= progdir.substr(0,last_libchar_pos);
+    base_plugin_dir /= "plugin";
+    base_plugin_dir /= ".libs";
+  }
 
-  /* Fix signals if blocked by parents (can happen on Mac OS X) */
-  sigemptyset(&sa.sa_mask);
-  sa.sa_flags = 0;
-  sa.sa_handler = print_signal_warning;
-  sigaction(SIGTERM, &sa, (struct sigaction*) 0);
-  sa.sa_flags = 0;
-  sa.sa_handler = print_signal_warning;
-  sigaction(SIGHUP, &sa, (struct sigaction*) 0);
-#ifdef SIGTSTP
-  sigaddset(&set,SIGTSTP);
-#endif
-  if (test_flags.test(TEST_SIGINT))
+  if (plugin_dir.root_directory() == "")
   {
-    my_sigset(thr_kill_signal, end_thread_signal);
-    // May be SIGINT
-    sigdelset(&set, thr_kill_signal);
+    fs::path full_plugin_dir(fs::system_complete(base_plugin_dir));
+    full_plugin_dir /= plugin_dir;
+    plugin_dir= full_plugin_dir;
   }
-  else
-    sigaddset(&set,SIGINT);
-  sigprocmask(SIG_SETMASK,&set,NULL);
-  pthread_sigmask(SIG_SETMASK,&set,NULL);
-  return;;
 }
 
-void my_message_sql(uint32_t error, const char *str, myf MyFlags);
-
-/**
-  All global error messages are sent here where the first one is stored
-  for the client.
-*/
-void my_message_sql(uint32_t error, const char *str, myf MyFlags)
+static void notify_plugin_dir(fs::path in_plugin_dir)
 {
-  Session *session;
-  /*
-    Put here following assertion when situation with EE_* error codes
-    will be fixed
-  */
-  if ((session= current_session))
+  plugin_dir= in_plugin_dir;
+  if (plugin_dir.root_directory() == "")
   {
-    if (MyFlags & ME_FATALERROR)
-      session->is_fatal_error= 1;
+    fs::path full_plugin_dir(fs::system_complete(basedir));
+    full_plugin_dir /= plugin_dir;
+    plugin_dir= full_plugin_dir;
+  }
+}
 
-    /*
-      TODO: There are two exceptions mechanism (Session and sp_rcontext),
-      this could be improved by having a common stack of handlers.
-    */
-    if (session->handle_error(error, str,
-                          DRIZZLE_ERROR::WARN_LEVEL_ERROR))
-      return;;
+static void expand_secure_file_priv(fs::path in_secure_file_priv)
+{
+  secure_file_priv= fs::system_complete(in_secure_file_priv);
+}
 
-    /*
-      session->lex->current_select == 0 if lex structure is not inited
-      (not query command (COM_QUERY))
-    */
-    if (! (session->lex->current_select &&
-        session->lex->current_select->no_error && !session->is_fatal_error))
+static void check_limits_aii(uint64_t in_auto_increment_increment)
+{
+  global_system_variables.auto_increment_increment= 1;
+  if (in_auto_increment_increment < 1 || in_auto_increment_increment > UINT64_MAX)
+  {
+    cout << N_("Error: Invalid Value for auto_increment_increment");
+    exit(-1);
+  }
+  global_system_variables.auto_increment_increment= in_auto_increment_increment;
+}
+
+static void check_limits_aio(uint64_t in_auto_increment_offset)
+{
+  global_system_variables.auto_increment_offset= 1;
+  if (in_auto_increment_offset < 1 || in_auto_increment_offset > UINT64_MAX)
+  {
+    cout << N_("Error: Invalid Value for auto_increment_offset");
+    exit(-1);
+  }
+  global_system_variables.auto_increment_offset= in_auto_increment_offset;
+}
+
+static void check_limits_completion_type(uint32_t in_completion_type)
+{
+  global_system_variables.completion_type= 0;
+  if (in_completion_type > 2)
+  {
+    cout << N_("Error: Invalid Value for completion_type");
+    exit(-1);
+  }
+  global_system_variables.completion_type= in_completion_type;
+}
+
+
+static void check_limits_dpi(uint32_t in_div_precincrement)
+{
+  global_system_variables.div_precincrement= 4;
+  if (in_div_precincrement > DECIMAL_MAX_SCALE)
+  {
+    cout << N_("Error: Invalid Value for div-precision-increment");
+    exit(-1);
+  }
+  global_system_variables.div_precincrement= in_div_precincrement;
+}
+
+static void check_limits_gcml(uint64_t in_group_concat_max_len)
+{
+  global_system_variables.group_concat_max_len= 1024;
+  if (in_group_concat_max_len > ULONG_MAX || in_group_concat_max_len < 4)
+  {
+    cout << N_("Error: Invalid Value for group_concat_max_len");
+    exit(-1);
+  }
+  global_system_variables.group_concat_max_len= in_group_concat_max_len;
+}
+
+static void check_limits_join_buffer_size(uint64_t in_join_buffer_size)
+{
+  global_system_variables.join_buff_size= (128*1024L);
+  if (in_join_buffer_size < IO_SIZE*2 || in_join_buffer_size > ULONG_MAX)
+  {
+    cout << N_("Error: Invalid Value for join_buffer_size");
+    exit(-1);
+  }
+  in_join_buffer_size-= in_join_buffer_size % IO_SIZE;
+  global_system_variables.join_buff_size= in_join_buffer_size;
+}
+
+static void check_limits_map(uint32_t in_max_allowed_packet)
+{
+  global_system_variables.max_allowed_packet= (64*1024*1024L);
+  if (in_max_allowed_packet < 1024 || in_max_allowed_packet > 1024*1024L*1024L)
+  {
+    cout << N_("Error: Invalid Value for max_allowed_packet");
+    exit(-1);
+  }
+  in_max_allowed_packet-= in_max_allowed_packet % 1024;
+  global_system_variables.max_allowed_packet= in_max_allowed_packet;
+}
+
+static void check_limits_mce(uint64_t in_max_connect_errors)
+{
+  max_connect_errors= MAX_CONNECT_ERRORS;
+  if (in_max_connect_errors < 1 || in_max_connect_errors > ULONG_MAX)
+  {
+    cout << N_("Error: Invalid Value for max_connect_errors");
+    exit(-1);
+  }
+  max_connect_errors= in_max_connect_errors;
+}
+
+static void check_limits_max_err_cnt(uint64_t in_max_error_count)
+{
+  global_system_variables.max_error_count= DEFAULT_ERROR_COUNT;
+  if (in_max_error_count > 65535)
+  {
+    cout << N_("Error: Invalid Value for max_error_count");
+    exit(-1);
+  }
+  global_system_variables.max_error_count= in_max_error_count;
+}
+
+static void check_limits_mhts(uint64_t in_max_heap_table_size)
+{
+  global_system_variables.max_heap_table_size= (16*1024*1024L);
+  if (in_max_heap_table_size < 16384 || in_max_heap_table_size > MAX_MEM_TABLE_SIZE)
+  {
+    cout << N_("Error: Invalid Value for max_heap_table_size");
+    exit(-1);
+  }
+  in_max_heap_table_size-= in_max_heap_table_size % 1024;
+  global_system_variables.max_heap_table_size= in_max_heap_table_size;
+}
+
+static void check_limits_merl(uint64_t in_min_examined_row_limit)
+{
+  global_system_variables.min_examined_row_limit= 0;
+  if (in_min_examined_row_limit > ULONG_MAX)
+  {
+    cout << N_("Error: Invalid Value for min_examined_row_limit");
+    exit(-1);
+  }
+  global_system_variables.min_examined_row_limit= in_min_examined_row_limit;
+}
+
+static void check_limits_max_join_size(drizzled::ha_rows in_max_join_size)
+{
+  global_system_variables.max_join_size= INT32_MAX;
+  if ((uint64_t)in_max_join_size < 1 || (uint64_t)in_max_join_size > INT32_MAX)
+  {
+    cout << N_("Error: Invalid Value for max_join_size");
+    exit(-1);
+  }
+  global_system_variables.max_join_size= in_max_join_size;
+}
+
+static void check_limits_mlfsd(int64_t in_max_length_for_sort_data)
+{
+  global_system_variables.max_length_for_sort_data= 1024;
+  if (in_max_length_for_sort_data < 4 || in_max_length_for_sort_data > 8192*1024L)
+  {
+    cout << N_("Error: Invalid Value for max_length_for_sort_data");
+    exit(-1);
+  }
+  global_system_variables.max_length_for_sort_data= in_max_length_for_sort_data;
+}
+
+static void check_limits_msfk(uint64_t in_max_seeks_for_key)
+{
+  global_system_variables.max_seeks_for_key= ULONG_MAX;
+  if (in_max_seeks_for_key < 1 || in_max_seeks_for_key > ULONG_MAX)
+  {
+    cout << N_("Error: Invalid Value for max_seeks_for_key");
+    exit(-1);
+  }
+  global_system_variables.max_seeks_for_key= in_max_seeks_for_key;
+}
+
+static void check_limits_max_sort_length(size_t in_max_sort_length)
+{
+  global_system_variables.max_sort_length= 1024;
+  if ((int64_t)in_max_sort_length < 4 || (int64_t)in_max_sort_length > 8192*1024L)
+  {
+    cout << N_("Error: Invalid Value for max_sort_length");
+    exit(-1);
+  }
+  global_system_variables.max_sort_length= in_max_sort_length;
+}
+
+static void check_limits_osd(uint32_t in_optimizer_search_depth)
+{
+  global_system_variables.optimizer_search_depth= 0;
+  if (in_optimizer_search_depth > MAX_TABLES + 2)
+  {
+    cout << N_("Error: Invalid Value for optimizer_search_depth");
+    exit(-1);
+  }
+  global_system_variables.optimizer_search_depth= in_optimizer_search_depth;
+}
+
+static void check_limits_pbs(uint64_t in_preload_buff_size)
+{
+  global_system_variables.preload_buff_size= (32*1024L);
+  if (in_preload_buff_size < 1024 || in_preload_buff_size > 1024*1024*1024L)
+  {
+    cout << N_("Error: Invalid Value for preload_buff_size");
+    exit(-1);
+  }
+  global_system_variables.preload_buff_size= in_preload_buff_size;
+}
+
+static void check_limits_qabs(uint32_t in_query_alloc_block_size)
+{
+  global_system_variables.query_alloc_block_size= QUERY_ALLOC_BLOCK_SIZE;
+  if (in_query_alloc_block_size < 1024)
+  {
+    cout << N_("Error: Invalid Value for query_alloc_block_size");
+    exit(-1);
+  }
+  in_query_alloc_block_size-= in_query_alloc_block_size % 1024;
+  global_system_variables.query_alloc_block_size= in_query_alloc_block_size;
+}
+
+static void check_limits_qps(uint32_t in_query_prealloc_size)
+{
+  global_system_variables.query_prealloc_size= QUERY_ALLOC_PREALLOC_SIZE;
+  if (in_query_prealloc_size < QUERY_ALLOC_PREALLOC_SIZE)
+  {
+    cout << N_("Error: Invalid Value for query_prealloc_size");
+    exit(-1);
+  }
+  in_query_prealloc_size-= in_query_prealloc_size % 1024;
+  global_system_variables.query_prealloc_size= in_query_prealloc_size;
+}
+
+static void check_limits_rabs(size_t in_range_alloc_block_size)
+{
+  global_system_variables.range_alloc_block_size= RANGE_ALLOC_BLOCK_SIZE;
+  if (in_range_alloc_block_size < RANGE_ALLOC_BLOCK_SIZE)
+  {
+    cout << N_("Error: Invalid Value for range_alloc_block_size");
+    exit(-1);
+  }
+  in_range_alloc_block_size-= in_range_alloc_block_size % 1024;
+  global_system_variables.range_alloc_block_size= in_range_alloc_block_size;
+}
+
+static void check_limits_read_buffer_size(int32_t in_read_buff_size)
+{
+  global_system_variables.read_buff_size= (128*1024L);
+  if (in_read_buff_size < IO_SIZE*2 || in_read_buff_size > INT32_MAX)
+  {
+    cout << N_("Error: Invalid Value for read_buff_size");
+    exit(-1);
+  }
+  in_read_buff_size-= in_read_buff_size % IO_SIZE;
+  global_system_variables.read_buff_size= in_read_buff_size;
+}
+
+static void check_limits_read_rnd_buffer_size(uint32_t in_read_rnd_buff_size)
+{
+  global_system_variables.read_rnd_buff_size= (256*1024L);
+  if (in_read_rnd_buff_size < 64 || in_read_rnd_buff_size > UINT32_MAX)
+  {
+    cout << N_("Error: Invalid Value for read_rnd_buff_size");
+    exit(-1);
+  }
+  global_system_variables.read_rnd_buff_size= in_read_rnd_buff_size;
+}
+
+static void check_limits_sort_buffer_size(size_t in_sortbuff_size)
+{
+  global_system_variables.sortbuff_size= MAX_SORT_MEMORY;
+  if ((uint32_t)in_sortbuff_size < MIN_SORT_MEMORY)
+  {
+    cout << N_("Error: Invalid Value for sort_buff_size");
+    exit(-1);
+  }
+  global_system_variables.sortbuff_size= in_sortbuff_size;
+}
+
+static void check_limits_tdc(uint32_t in_table_def_size)
+{
+  table_def_size= 128;
+  if (in_table_def_size < 1 || in_table_def_size > 512*1024L)
+  {
+    cout << N_("Error: Invalid Value for table_def_size");
+    exit(-1);
+  }
+  table_def_size= in_table_def_size;
+}
+
+static void check_limits_toc(uint32_t in_table_cache_size)
+{
+  table_cache_size= TABLE_OPEN_CACHE_DEFAULT;
+  if (in_table_cache_size < TABLE_OPEN_CACHE_MIN || in_table_cache_size > 512*1024L)
+  {
+    cout << N_("Error: Invalid Value for table_cache_size");
+    exit(-1);
+  }
+  table_cache_size= in_table_cache_size;
+}
+
+static void check_limits_tlwt(uint64_t in_table_lock_wait_timeout)
+{
+  table_lock_wait_timeout= 50;
+  if (in_table_lock_wait_timeout < 1 || in_table_lock_wait_timeout > 1024*1024*1024)
+  {
+    cout << N_("Error: Invalid Value for table_lock_wait_timeout");
+    exit(-1);
+  }
+  table_lock_wait_timeout= in_table_lock_wait_timeout;
+}
+
+static void check_limits_thread_stack(uint32_t in_my_thread_stack_size)
+{
+  my_thread_stack_size= in_my_thread_stack_size - (in_my_thread_stack_size % 1024);
+}
+
+static void check_limits_tmp_table_size(uint64_t in_tmp_table_size)
+{
+  global_system_variables.tmp_table_size= 16*1024*1024L;
+  if (in_tmp_table_size < 1024 || in_tmp_table_size > MAX_MEM_TABLE_SIZE)
+  {
+    cout << N_("Error: Invalid Value for table_lock_wait_timeout");
+    exit(-1);
+  }
+  global_system_variables.tmp_table_size= in_tmp_table_size;
+}
+
+static void check_limits_transaction_message_threshold(size_t in_transaction_message_threshold)
+{
+  global_system_variables.transaction_message_threshold= 1024*1024;
+  if ((int64_t) in_transaction_message_threshold < 128*1024 || (int64_t)in_transaction_message_threshold > 1024*1024)
+  {
+    cout << N_("Error: Invalid Value for transaction_message_threshold valid values are between 131072 - 1048576 bytes");
+    exit(-1);
+  }
+  global_system_variables.transaction_message_threshold= in_transaction_message_threshold;
+}
+
+static pair<string, string> parse_size_suffixes(string s)
+{
+  size_t equal_pos= s.find("=");
+  if (equal_pos != string::npos)
+  {
+    string arg_key(s.substr(0, equal_pos));
+    string arg_val(s.substr(equal_pos+1));
+
+    try
     {
-      if (! session->main_da.is_error())            // Return only first message
+      size_t size_suffix_pos= arg_val.find_last_of("kmgKMG");
+      if (size_suffix_pos == arg_val.size()-1)
       {
-        if (error == 0)
-          error= ER_UNKNOWN_ERROR;
-        if (str == NULL)
-          str= ER(error);
-        session->main_da.set_error_status(error, str);
+        char suffix= arg_val[size_suffix_pos];
+        string size_val(arg_val.substr(0, size_suffix_pos));
+
+        uint64_t base_size= boost::lexical_cast<uint64_t>(size_val);
+        uint64_t new_size= 0;
+
+        switch (suffix)
+        {
+        case 'K':
+        case 'k':
+          new_size= base_size * 1024;
+          break;
+        case 'M':
+        case 'm':
+          new_size= base_size * 1024 * 1024;
+          break;
+        case 'G':
+        case 'g':
+          new_size= base_size * 1024 * 1024 * 1024;
+          break;
+        }
+        return make_pair(arg_key,
+                         boost::lexical_cast<string>(new_size));
       }
     }
-
-    if (!session->no_warnings_for_error && !session->is_fatal_error)
+    catch (...)
     {
-      /*
-        Suppress infinite recursion if there a memory allocation error
-        inside push_warning.
-      */
-      session->no_warnings_for_error= true;
-      push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR, error, str);
-      session->no_warnings_for_error= false;
+      /* Screw it, let the normal parser take over */
     }
   }
-  if (!session || MyFlags & ME_NOREFRESH)
-    errmsg_printf(ERRMSG_LVL_ERROR, "%s: %s",my_progname,str);
+
+  return make_pair(string(""), string(""));
 }
 
-
-static const char *load_default_groups[]= {
-DRIZZLE_CONFIG_NAME, "server", 0, 0};
-
-static int show_starttime(SHOW_VAR *var, char *buff)
+static pair<string, string> parse_size_arg(string s)
 {
-  var->type= SHOW_LONG;
-  var->value= buff;
-  *((long *)buff)= (long) (time(NULL) - server_start_time);
-  return 0;
+  if (s.find("--") == 0)
+  {
+    return parse_size_suffixes(s.substr(2));
+  }
+  return make_pair(string(""), string(""));
 }
 
-static int show_flushstatustime(SHOW_VAR *var, char *buff)
+static void process_defaults_files()
 {
-  var->type= SHOW_LONG;
-  var->value= buff;
-  *((long *)buff)= (long) (time(NULL) - flush_status_time);
-  return 0;
+  for (vector<string>::iterator iter= defaults_file_list.begin();
+       iter != defaults_file_list.end();
+       ++iter)
+  {
+    fs::path file_location= *iter;
+
+    ifstream input_defaults_file(file_location.file_string().c_str());
+    
+    po::parsed_options file_parsed=
+      dpo::parse_config_file(input_defaults_file, full_options, true);
+    vector<string> file_unknown= 
+      po::collect_unrecognized(file_parsed.options, po::include_positional);
+
+    for (vector<string>::iterator it= file_unknown.begin();
+         it != file_unknown.end();
+         ++it)
+    {
+      string new_unknown_opt("--");
+      new_unknown_opt.append(*it);
+      ++it;
+      if (it != file_unknown.end())
+      {
+        if ((*it) != "true")
+        {
+          new_unknown_opt.push_back('=');
+          new_unknown_opt.append(*it);
+        }
+      }
+      else
+      {
+        break;
+      }
+      unknown_options.push_back(new_unknown_opt);
+    }
+    store(file_parsed, vm);
+  }
 }
 
-static int show_open_tables(SHOW_VAR *var, char *buff)
+static void compose_defaults_file_list(vector<string> in_options)
 {
-  var->type= SHOW_LONG;
-  var->value= buff;
-  *((long *)buff)= (long)cached_open_tables();
-  return 0;
+  for (vector<string>::iterator it= in_options.begin();
+       it != in_options.end();
+       ++it)
+  {
+    fs::path p(*it);
+    if (fs::is_regular_file(p))
+      defaults_file_list.push_back(*it);
+    else
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("Defaults file '%s' not found\n"), (*it).c_str());
+      unireg_abort(1);
+    }
+
+  }
 }
 
-static int show_table_definitions(SHOW_VAR *var, char *buff)
-{
-  var->type= SHOW_LONG;
-  var->value= buff;
-  *((long *)buff)= (long)cached_table_definitions();
-  return 0;
-}
-
-static st_show_var_func_container
-show_open_tables_cont= { &show_open_tables };
-static st_show_var_func_container
-show_table_definitions_cont= { &show_table_definitions };
-static st_show_var_func_container
-show_starttime_cont= { &show_starttime };
-static st_show_var_func_container
-show_flushstatustime_cont= { &show_flushstatustime };
-
-/*
-  Variables shown by SHOW STATUS in alphabetical order
-*/
-static SHOW_VAR com_status_vars[]= {
-  {"admin_commands",       (char*) offsetof(STATUS_VAR, com_other), SHOW_LONG_STATUS},
-  {"alter_db",             (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_ALTER_DB]), SHOW_LONG_STATUS},
-  {"alter_table",          (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_ALTER_TABLE]), SHOW_LONG_STATUS},
-  {"analyze",              (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_ANALYZE]), SHOW_LONG_STATUS},
-  {"begin",                (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_BEGIN]), SHOW_LONG_STATUS},
-  {"change_db",            (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_CHANGE_DB]), SHOW_LONG_STATUS},
-  {"check",                (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_CHECK]), SHOW_LONG_STATUS},
-  {"checksum",             (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_CHECKSUM]), SHOW_LONG_STATUS},
-  {"commit",               (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_COMMIT]), SHOW_LONG_STATUS},
-  {"create_db",            (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_CREATE_DB]), SHOW_LONG_STATUS},
-  {"create_index",         (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_CREATE_INDEX]), SHOW_LONG_STATUS},
-  {"create_table",         (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_CREATE_TABLE]), SHOW_LONG_STATUS},
-  {"delete",               (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_DELETE]), SHOW_LONG_STATUS},
-  {"drop_db",              (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_DROP_DB]), SHOW_LONG_STATUS},
-  {"drop_index",           (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_DROP_INDEX]), SHOW_LONG_STATUS},
-  {"drop_table",           (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_DROP_TABLE]), SHOW_LONG_STATUS},
-  {"empty_query",          (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_EMPTY_QUERY]), SHOW_LONG_STATUS},
-  {"flush",                (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_FLUSH]), SHOW_LONG_STATUS},
-  {"insert",               (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_INSERT]), SHOW_LONG_STATUS},
-  {"insert_select",        (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_INSERT_SELECT]), SHOW_LONG_STATUS},
-  {"kill",                 (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_KILL]), SHOW_LONG_STATUS},
-  {"load",                 (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_LOAD]), SHOW_LONG_STATUS},
-  {"release_savepoint",    (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_RELEASE_SAVEPOINT]), SHOW_LONG_STATUS},
-  {"rename_table",         (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_RENAME_TABLE]), SHOW_LONG_STATUS},
-  {"replace",              (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_REPLACE]), SHOW_LONG_STATUS},
-  {"replace_select",       (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_REPLACE_SELECT]), SHOW_LONG_STATUS},
-  {"rollback",             (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_ROLLBACK]), SHOW_LONG_STATUS},
-  {"rollback_to_savepoint",(char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_ROLLBACK_TO_SAVEPOINT]), SHOW_LONG_STATUS},
-  {"savepoint",            (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SAVEPOINT]), SHOW_LONG_STATUS},
-  {"select",               (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SELECT]), SHOW_LONG_STATUS},
-  {"set_option",           (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SET_OPTION]), SHOW_LONG_STATUS},
-  {"show_create_db",       (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_CREATE_DB]), SHOW_LONG_STATUS},
-  {"show_create_table",    (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_CREATE]), SHOW_LONG_STATUS},
-  {"show_databases",       (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_DATABASES]), SHOW_LONG_STATUS},
-  {"show_engine_status",   (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_ENGINE_STATUS]), SHOW_LONG_STATUS},
-  {"show_errors",          (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_ERRORS]), SHOW_LONG_STATUS},
-  {"show_fields",          (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_FIELDS]), SHOW_LONG_STATUS},
-  {"show_keys",            (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_KEYS]), SHOW_LONG_STATUS},
-  {"show_open_tables",     (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_OPEN_TABLES]), SHOW_LONG_STATUS},
-  {"show_processlist",     (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_PROCESSLIST]), SHOW_LONG_STATUS},
-  {"show_status",          (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_STATUS]), SHOW_LONG_STATUS},
-  {"show_table_status",    (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_TABLE_STATUS]), SHOW_LONG_STATUS},
-  {"show_tables",          (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_TABLES]), SHOW_LONG_STATUS},
-  {"show_variables",       (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_VARIABLES]), SHOW_LONG_STATUS},
-  {"show_warnings",        (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_WARNS]), SHOW_LONG_STATUS},
-  {"truncate",             (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_TRUNCATE]), SHOW_LONG_STATUS},
-  {"unlock_tables",        (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_UNLOCK_TABLES]), SHOW_LONG_STATUS},
-  {"update",               (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_UPDATE]), SHOW_LONG_STATUS},
-  {NULL, NULL, SHOW_LONGLONG}
-};
-
-static SHOW_VAR status_vars[]= {
-  {"Aborted_clients",          (char*) &aborted_threads,        SHOW_LONGLONG},
-  {"Aborted_connects",         (char*) &aborted_connects,       SHOW_LONGLONG},
-  {"Bytes_received",           (char*) offsetof(STATUS_VAR, bytes_received), SHOW_LONGLONG_STATUS},
-  {"Bytes_sent",               (char*) offsetof(STATUS_VAR, bytes_sent), SHOW_LONGLONG_STATUS},
-  {"Com",                      (char*) com_status_vars, SHOW_ARRAY},
-  {"Connections",              (char*) &global_thread_id, SHOW_INT_NOFLUSH},
-  {"Created_tmp_disk_tables",  (char*) offsetof(STATUS_VAR, created_tmp_disk_tables), SHOW_LONG_STATUS},
-  {"Created_tmp_files",	       (char*) &my_tmp_file_created,SHOW_INT},
-  {"Created_tmp_tables",       (char*) offsetof(STATUS_VAR, created_tmp_tables), SHOW_LONG_STATUS},
-  {"Flush_commands",           (char*) &refresh_version,    SHOW_INT_NOFLUSH},
-  {"Handler_commit",           (char*) offsetof(STATUS_VAR, ha_commit_count), SHOW_LONG_STATUS},
-  {"Handler_delete",           (char*) offsetof(STATUS_VAR, ha_delete_count), SHOW_LONG_STATUS},
-  {"Handler_prepare",          (char*) offsetof(STATUS_VAR, ha_prepare_count),  SHOW_LONG_STATUS},
-  {"Handler_read_first",       (char*) offsetof(STATUS_VAR, ha_read_first_count), SHOW_LONG_STATUS},
-  {"Handler_read_key",         (char*) offsetof(STATUS_VAR, ha_read_key_count), SHOW_LONG_STATUS},
-  {"Handler_read_next",        (char*) offsetof(STATUS_VAR, ha_read_next_count), SHOW_LONG_STATUS},
-  {"Handler_read_prev",        (char*) offsetof(STATUS_VAR, ha_read_prev_count), SHOW_LONG_STATUS},
-  {"Handler_read_rnd",         (char*) offsetof(STATUS_VAR, ha_read_rnd_count), SHOW_LONG_STATUS},
-  {"Handler_read_rnd_next",    (char*) offsetof(STATUS_VAR, ha_read_rnd_next_count), SHOW_LONG_STATUS},
-  {"Handler_rollback",         (char*) offsetof(STATUS_VAR, ha_rollback_count), SHOW_LONG_STATUS},
-  {"Handler_savepoint",        (char*) offsetof(STATUS_VAR, ha_savepoint_count), SHOW_LONG_STATUS},
-  {"Handler_savepoint_rollback",(char*) offsetof(STATUS_VAR, ha_savepoint_rollback_count), SHOW_LONG_STATUS},
-  {"Handler_update",           (char*) offsetof(STATUS_VAR, ha_update_count), SHOW_LONG_STATUS},
-  {"Handler_write",            (char*) offsetof(STATUS_VAR, ha_write_count), SHOW_LONG_STATUS},
-  {"Key_blocks_not_flushed",   (char*) offsetof(KEY_CACHE, global_blocks_changed), SHOW_KEY_CACHE_LONG},
-  {"Key_blocks_unused",        (char*) offsetof(KEY_CACHE, blocks_unused), SHOW_KEY_CACHE_LONG},
-  {"Key_blocks_used",          (char*) offsetof(KEY_CACHE, blocks_used), SHOW_KEY_CACHE_LONG},
-  {"Key_read_requests",        (char*) offsetof(KEY_CACHE, global_cache_r_requests), SHOW_KEY_CACHE_LONGLONG},
-  {"Key_reads",                (char*) offsetof(KEY_CACHE, global_cache_read), SHOW_KEY_CACHE_LONGLONG},
-  {"Key_write_requests",       (char*) offsetof(KEY_CACHE, global_cache_w_requests), SHOW_KEY_CACHE_LONGLONG},
-  {"Key_writes",               (char*) offsetof(KEY_CACHE, global_cache_write), SHOW_KEY_CACHE_LONGLONG},
-  {"Last_query_cost",          (char*) offsetof(STATUS_VAR, last_query_cost), SHOW_DOUBLE_STATUS},
-  {"Max_used_connections",     (char*) &max_used_connections,  SHOW_INT},
-  {"Open_files",               (char*) &my_file_opened,    SHOW_INT_NOFLUSH},
-  {"Open_streams",             (char*) &my_stream_opened,  SHOW_INT_NOFLUSH},
-  {"Open_table_definitions",   (char*) &show_table_definitions_cont, SHOW_FUNC},
-  {"Open_tables",              (char*) &show_open_tables_cont,       SHOW_FUNC},
-  {"Opened_files",             (char*) &my_file_total_opened, SHOW_INT_NOFLUSH},
-  {"Opened_tables",            (char*) offsetof(STATUS_VAR, opened_tables), SHOW_LONG_STATUS},
-  {"Opened_table_definitions", (char*) offsetof(STATUS_VAR, opened_shares), SHOW_LONG_STATUS},
-  {"Questions",                (char*) offsetof(STATUS_VAR, questions), SHOW_LONG_STATUS},
-  {"Select_full_join",         (char*) offsetof(STATUS_VAR, select_full_join_count), SHOW_LONG_STATUS},
-  {"Select_full_range_join",   (char*) offsetof(STATUS_VAR, select_full_range_join_count), SHOW_LONG_STATUS},
-  {"Select_range",             (char*) offsetof(STATUS_VAR, select_range_count), SHOW_LONG_STATUS},
-  {"Select_range_check",       (char*) offsetof(STATUS_VAR, select_range_check_count), SHOW_LONG_STATUS},
-  {"Select_scan",	       (char*) offsetof(STATUS_VAR, select_scan_count), SHOW_LONG_STATUS},
-  {"Slow_queries",             (char*) offsetof(STATUS_VAR, long_query_count), SHOW_LONG_STATUS},
-  {"Sort_merge_passes",	       (char*) offsetof(STATUS_VAR, filesort_merge_passes), SHOW_LONG_STATUS},
-  {"Sort_range",	       (char*) offsetof(STATUS_VAR, filesort_range_count), SHOW_LONG_STATUS},
-  {"Sort_rows",		       (char*) offsetof(STATUS_VAR, filesort_rows), SHOW_LONG_STATUS},
-  {"Sort_scan",		       (char*) offsetof(STATUS_VAR, filesort_scan_count), SHOW_LONG_STATUS},
-  {"Table_locks_immediate",    (char*) &locks_immediate,        SHOW_INT},
-  {"Table_locks_waited",       (char*) &locks_waited,           SHOW_INT},
-  {"Threads_connected",        (char*) &connection_count,       SHOW_INT},
-  {"Uptime",                   (char*) &show_starttime_cont,         SHOW_FUNC},
-  {"Uptime_since_flush_status",(char*) &show_flushstatustime_cont,   SHOW_FUNC},
-  {NULL, NULL, SHOW_LONGLONG}
-};
-
-static int init_common_variables(const char *conf_file_name, int argc,
-                                 char **argv, const char **groups)
+int init_common_variables(int argc, char **argv, module::Registry &plugins)
 {
   time_t curr_time;
-  umask(((~my_umask) & 0666));
+  umask(((~internal::my_umask) & 0666));
   my_decimal_set_zero(&decimal_zero); // set decimal_zero constant;
   tzset();			// Set tzname
 
@@ -1241,17 +1173,16 @@ static int init_common_variables(const char *conf_file_name, int argc,
   max_system_variables.pseudo_thread_id= UINT32_MAX;
   server_start_time= flush_status_time= curr_time;
 
-  if (init_thread_environment())
-    return 1;
   drizzle_init_variables();
 
+  find_plugin_dir(argv[0]);
   {
     struct tm tm_tmp;
     localtime_r(&server_start_time,&tm_tmp);
     strncpy(system_time_zone, tzname[tm_tmp.tm_isdst != 0 ? 1 : 0],
             sizeof(system_time_zone)-1);
 
- }
+  }
   /*
     We set SYSTEM time zone as reasonable default and
     also for failure of my_tz_init() and bootstrap mode.
@@ -1263,35 +1194,380 @@ static int init_common_variables(const char *conf_file_name, int argc,
   if (gethostname(glob_hostname,sizeof(glob_hostname)) < 0)
   {
     strncpy(glob_hostname, STRING_WITH_LEN("localhost"));
-      errmsg_printf(ERRMSG_LVL_WARN, _("gethostname failed, using '%s' as hostname"),
-                      glob_hostname);
-    strncpy(pidfile_name, STRING_WITH_LEN("drizzle"));
+    errmsg_printf(ERRMSG_LVL_WARN, _("gethostname failed, using '%s' as hostname"),
+                  glob_hostname);
+    pid_file= "drizzle";
   }
   else
-    strncpy(pidfile_name, glob_hostname, sizeof(pidfile_name)-5);
-  strcpy(fn_ext(pidfile_name),".pid");		// Add proper extension
+  {
+    pid_file= glob_hostname;
+  }
+  pid_file.replace_extension(".pid");
 
-  /*
-    Add server status variables to the dynamic list of
-    status variables that is shown by SHOW STATUS.
-    Later, in plugin_init, new entries could be added to that list.
+  system_config_dir /= "drizzle";
+  std::string system_config_file_drizzle("drizzled.cnf");
+
+  config_options.add_options()
+  ("help,?", po::value<bool>(&opt_help)->default_value(false)->zero_tokens(),
+  N_("Display this help and exit."))
+  ("no-defaults", po::value<bool>()->default_value(false)->zero_tokens(),
+  N_("Configuration file defaults are not used if no-defaults is set"))
+  ("defaults-file", po::value<vector<string> >()->composing()->notifier(&compose_defaults_file_list),
+   N_("Configuration file to use"))
+  ("config-dir", po::value<fs::path>(&system_config_dir),
+   N_("Base location for config files"))
+  ("plugin-dir", po::value<fs::path>(&plugin_dir)->notifier(&notify_plugin_dir),
+  N_("Directory for plugins."))
+  ;
+
+  plugin_load_options.add_options()
+  ("plugin-add", po::value<vector<string> >()->composing()->notifier(&compose_plugin_add),
+  N_("Optional comma separated list of plugins to load at startup in addition "
+     "to the default list of plugins. "
+     "[for example: --plugin_add=crc32,logger_gearman]"))    
+  ("plugin-remove", po::value<vector<string> >()->composing()->notifier(&compose_plugin_remove),
+  N_("Optional comma separated list of plugins to not load at startup. Effectively "
+     "removes a plugin from the list of plugins to be loaded. "
+     "[for example: --plugin_remove=crc32,logger_gearman]"))
+  ("plugin-load", po::value<string>()->notifier(&notify_plugin_load)->default_value(PANDORA_PLUGIN_LIST),
+  N_("Optional comma separated list of plugins to load at starup instead of "
+     "the default plugin load list. "
+     "[for example: --plugin_load=crc32,logger_gearman]"))
+  ;
+
+  long_options.add_options()
+  ("auto-increment-increment", po::value<uint64_t>(&global_system_variables.auto_increment_increment)->default_value(1)->notifier(&check_limits_aii),
+  N_("Auto-increment columns are incremented by this"))
+  ("auto-increment-offset", po::value<uint64_t>(&global_system_variables.auto_increment_offset)->default_value(1)->notifier(&check_limits_aio),
+  N_("Offset added to Auto-increment columns. Used when auto-increment-increment != 1"))
+  ("basedir,b", po::value<fs::path>(&basedir),
+  N_("Path to installation directory. All paths are usually resolved "
+     "relative to this."))
+  ("chroot,r", po::value<string>(),
+  N_("Chroot drizzled daemon during startup."))
+  ("collation-server", po::value<string>(),
+  N_("Set the default collation."))      
+  ("completion-type", po::value<uint32_t>(&global_system_variables.completion_type)->default_value(0)->notifier(&check_limits_completion_type),
+  N_("Default completion type."))
+  ("core-file",  N_("Write core on errors."))
+  ("datadir", po::value<fs::path>(&data_home),
+  N_("Path to the database root."))
+  ("default-storage-engine", po::value<string>(),
+  N_("Set the default storage engine for tables."))
+  ("default-time-zone", po::value<string>(),
+  N_("Set the default time zone."))
+  ("exit-info,T", po::value<long>(),
+  N_("Used for debugging;  Use at your own risk!"))
+  ("gdb", po::value<bool>(&opt_debugging)->default_value(false)->zero_tokens(),
+  N_("Set up signals usable for debugging"))
+  ("lc-time-name", po::value<string>(),
+  N_("Set the language used for the month names and the days of the week."))
+  ("log-warnings,W", po::value<bool>(&global_system_variables.log_warnings)->default_value(false)->zero_tokens(),
+  N_("Log some not critical warnings to the log file."))  
+  ("pid-file", po::value<fs::path>(&pid_file),
+  N_("Pid file used by drizzled."))
+  ("port-open-timeout", po::value<uint32_t>(&drizzled_bind_timeout)->default_value(0),
+  N_("Maximum time in seconds to wait for the port to become free. "))
+  ("secure-file-priv", po::value<fs::path>(&secure_file_priv)->notifier(expand_secure_file_priv),
+  N_("Limit LOAD DATA, SELECT ... OUTFILE, and LOAD_FILE() to files "
+     "within specified directory"))
+  ("server-id", po::value<uint32_t>(&server_id)->default_value(0),
+  N_("Uniquely identifies the server instance in the community of "
+     "replication partners."))
+  ("skip-stack-trace",  
+  N_("Don't print a stack trace on failure."))
+  ("symbolic-links,s", po::value<bool>(&internal::my_use_symdir)->default_value(IF_PURIFY(false,true))->zero_tokens(),
+  N_("Enable symbolic link support."))
+  ("timed-mutexes", po::value<bool>(&internal::timed_mutexes)->default_value(false)->zero_tokens(),
+  N_("Specify whether to time mutexes (only InnoDB mutexes are currently "
+     "supported)")) 
+  ("tmpdir,t", po::value<string>(),
+  N_("Path for temporary files."))
+  ("transaction-isolation", po::value<string>(),
+  N_("Default transaction isolation level."))
+  ("transaction-message-threshold", po::value<size_t>(&global_system_variables.transaction_message_threshold)->default_value(1024*1024)->notifier(&check_limits_transaction_message_threshold),
+  N_("Max message size written to transaction log, valid values 131072 - 1048576 bytes."))
+  ("user,u", po::value<string>(),
+  N_("Run drizzled daemon as user."))  
+  ("version,V", 
+  N_("Output version information and exit."))
+  ("back-log", po::value<back_log_constraints>(&back_log),
+  N_("The number of outstanding connection requests Drizzle can have. This "
+     "comes into play when the main Drizzle thread gets very many connection "
+     "requests in a very short time."))
+  ("bulk-insert-buffer-size", 
+  po::value<uint64_t>(&global_system_variables.bulk_insert_buff_size)->default_value(8192*1024),
+  N_("Size of tree cache used in bulk insert optimization. Note that this is "
+     "a limit per thread!"))
+  ("div-precision-increment",  po::value<uint32_t>(&global_system_variables.div_precincrement)->default_value(4)->notifier(&check_limits_dpi),
+  N_("Precision of the result of '/' operator will be increased on that "
+     "value."))
+  ("group-concat-max-len", po::value<uint64_t>(&global_system_variables.group_concat_max_len)->default_value(1024)->notifier(&check_limits_gcml),
+  N_("The maximum length of the result of function  group_concat."))
+  ("join-buffer-size", po::value<uint64_t>(&global_system_variables.join_buff_size)->default_value(128*1024L)->notifier(&check_limits_join_buffer_size),
+  N_("The size of the buffer that is used for full joins."))
+  ("join-heap-threshold",
+  po::value<uint64_t>()->default_value(0),
+  N_("A global cap on the amount of memory that can be allocated by session join buffers (0 means unlimited)"))
+  ("max-allowed-packet", po::value<uint32_t>(&global_system_variables.max_allowed_packet)->default_value(64*1024*1024L)->notifier(&check_limits_map),
+  N_("Max packetlength to send/receive from to server."))
+  ("max-connect-errors", po::value<uint64_t>(&max_connect_errors)->default_value(MAX_CONNECT_ERRORS)->notifier(&check_limits_mce),
+  N_("If there is more than this number of interrupted connections from a "
+     "host this host will be blocked from further connections."))
+  ("max-error-count", po::value<uint64_t>(&global_system_variables.max_error_count)->default_value(DEFAULT_ERROR_COUNT)->notifier(&check_limits_max_err_cnt),
+  N_("Max number of errors/warnings to store for a statement."))
+  ("max-heap-table-size", po::value<uint64_t>(&global_system_variables.max_heap_table_size)->default_value(16*1024*1024L)->notifier(&check_limits_mhts),
+  N_("Don't allow creation of heap tables bigger than this."))
+  ("max-join-size", po::value<drizzled::ha_rows>(&global_system_variables.max_join_size)->default_value(INT32_MAX)->notifier(&check_limits_max_join_size),
+  N_("Joins that are probably going to read more than max_join_size records "
+     "return an error."))
+  ("max-length-for-sort-data", po::value<uint64_t>(&global_system_variables.max_length_for_sort_data)->default_value(1024)->notifier(&check_limits_mlfsd),
+  N_("Max number of bytes in sorted records."))
+  ("max-seeks-for-key", po::value<uint64_t>(&global_system_variables.max_seeks_for_key)->default_value(ULONG_MAX)->notifier(&check_limits_msfk),
+  N_("Limit assumed max number of seeks when looking up rows based on a key"))
+  ("max-sort-length", po::value<size_t>(&global_system_variables.max_sort_length)->default_value(1024)->notifier(&check_limits_max_sort_length),  
+  N_("The number of bytes to use when sorting BLOB or TEXT values "
+     "(only the first max_sort_length bytes of each value are used; the "
+     "rest are ignored)."))
+  ("max-write-lock-count", po::value<uint64_t>(&max_write_lock_count)->default_value(UINT64_MAX),
+  N_("After this many write locks, allow some read locks to run in between."))
+  ("min-examined-row-limit", po::value<uint64_t>(&global_system_variables.min_examined_row_limit)->default_value(0)->notifier(&check_limits_merl),
+  N_("Don't log queries which examine less than min_examined_row_limit "
+     "rows to file."))
+  ("disable-optimizer-prune",
+  N_("Do not apply any heuristic(s) during query optimization to prune, "
+     "thus perform an exhaustive search from the optimizer search space."))
+  ("optimizer-search-depth", po::value<uint32_t>(&global_system_variables.optimizer_search_depth)->default_value(0)->notifier(&check_limits_osd),
+  N_("Maximum depth of search performed by the query optimizer. Values "
+     "larger than the number of relations in a query result in better query "
+     "plans, but take longer to compile a query. Smaller values than the "
+     "number of tables in a relation result in faster optimization, but may "
+     "produce very bad query plans. If set to 0, the system will "
+     "automatically pick a reasonable value; if set to MAX_TABLES+2, the "
+     "optimizer will switch to the original find_best (used for "
+     "testing/comparison)."))
+  ("preload-buffer-size", po::value<uint64_t>(&global_system_variables.preload_buff_size)->default_value(32*1024L)->notifier(&check_limits_pbs),
+  N_("The size of the buffer that is allocated when preloading indexes"))
+  ("query-alloc-block-size", 
+  po::value<uint32_t>(&global_system_variables.query_alloc_block_size)->default_value(QUERY_ALLOC_BLOCK_SIZE)->notifier(&check_limits_qabs),
+  N_("Allocation block size for query parsing and execution"))
+  ("query-prealloc-size",
+  po::value<uint32_t>(&global_system_variables.query_prealloc_size)->default_value(QUERY_ALLOC_PREALLOC_SIZE)->notifier(&check_limits_qps),
+  N_("Persistent buffer for query parsing and execution"))
+  ("range-alloc-block-size",
+  po::value<size_t>(&global_system_variables.range_alloc_block_size)->default_value(RANGE_ALLOC_BLOCK_SIZE)->notifier(&check_limits_rabs),
+  N_("Allocation block size for storing ranges during optimization"))
+  ("read-buffer-size",
+  po::value<uint32_t>(&global_system_variables.read_buff_size)->default_value(128*1024L)->notifier(&check_limits_read_buffer_size),
+  N_("Each thread that does a sequential scan allocates a buffer of this "
+      "size for each table it scans. If you do many sequential scans, you may "
+      "want to increase this value."))
+  ("read-buffer-threshold",
+  po::value<uint64_t>()->default_value(0),
+  N_("A global cap on the size of read-buffer-size (0 means unlimited)"))
+  ("read-rnd-buffer-size",
+  po::value<uint32_t>(&global_system_variables.read_rnd_buff_size)->default_value(256*1024L)->notifier(&check_limits_read_rnd_buffer_size),
+  N_("When reading rows in sorted order after a sort, the rows are read "
+     "through this buffer to avoid a disk seeks. If not set, then it's set "
+     "to the value of record_buffer."))
+  ("read-rnd-threshold",
+  po::value<uint64_t>()->default_value(0),
+  N_("A global cap on the size of read-rnd-buffer-size (0 means unlimited)"))
+  ("scheduler", po::value<string>(),
+  N_("Select scheduler to be used (by default multi-thread)."))
+  ("sort-buffer-size",
+  po::value<size_t>(&global_system_variables.sortbuff_size)->default_value(MAX_SORT_MEMORY)->notifier(&check_limits_sort_buffer_size),
+  N_("Each thread that needs to do a sort allocates a buffer of this size."))
+  ("sort-heap-threshold",
+  po::value<uint64_t>()->default_value(0),
+  N_("A global cap on the amount of memory that can be allocated by session sort buffers (0 means unlimited)"))
+  ("table-definition-cache", po::value<size_t>(&table_def_size)->default_value(128)->notifier(&check_limits_tdc),
+  N_("The number of cached table definitions."))
+  ("table-open-cache", po::value<uint64_t>(&table_cache_size)->default_value(TABLE_OPEN_CACHE_DEFAULT)->notifier(&check_limits_toc),
+  N_("The number of cached open tables."))
+  ("table-lock-wait-timeout", po::value<uint64_t>(&table_lock_wait_timeout)->default_value(50)->notifier(&check_limits_tlwt),
+  N_("Timeout in seconds to wait for a table level lock before returning an "
+     "error. Used only if the connection has active cursors."))
+  ("thread-stack", po::value<size_t>(&my_thread_stack_size)->default_value(DEFAULT_THREAD_STACK)->notifier(&check_limits_thread_stack),
+  N_("The stack size for each thread."))
+  ("tmp-table-size", 
+  po::value<uint64_t>(&global_system_variables.tmp_table_size)->default_value(16*1024*1024L)->notifier(&check_limits_tmp_table_size),
+  N_("If an internal in-memory temporary table exceeds this size, Drizzle will"
+     " automatically convert it to an on-disk MyISAM table."))
+  ;
+
+  full_options.add(long_options);
+  full_options.add(plugin_load_options);
+
+  initial_options.add(config_options);
+  initial_options.add(plugin_load_options);
+
+  int style = po::command_line_style::default_style & ~po::command_line_style::allow_guessing;
+  /* Get options about where config files and the like are */
+  po::parsed_options parsed= po::command_line_parser(argc, argv).style(style).
+    options(initial_options).allow_unregistered().run();
+  unknown_options=
+    po::collect_unrecognized(parsed.options, po::include_positional);
+
+  try
+  {
+    po::store(parsed, vm);
+  }
+  catch (...)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Duplicate entry for command line option\n"));
+    unireg_abort(1);
+  }
+
+  if (not vm["no-defaults"].as<bool>())
+  {
+    defaults_file_list.insert(defaults_file_list.begin(),
+                              system_config_file_drizzle);
+
+    fs::path config_conf_d_location(system_config_dir);
+    config_conf_d_location /= "conf.d";
+
+    CachedDirectory config_conf_d(config_conf_d_location.file_string());
+    if (not config_conf_d.fail())
+    {
+
+      for (CachedDirectory::Entries::const_iterator iter= config_conf_d.getEntries().begin();
+           iter != config_conf_d.getEntries().end();
+           ++iter)
+      {
+        string file_entry((*iter)->filename);
+
+        if (not file_entry.empty()
+            && file_entry != "."
+            && file_entry != "..")
+        {
+          fs::path the_entry(config_conf_d_location);
+          the_entry /= file_entry;
+          defaults_file_list.push_back(the_entry.file_string());
+        }
+      }
+    }
+  }
+
+  /* TODO: here is where we should add a process_env_vars */
+
+  /* We need a notify here so that plugin_init will work properly */
+  try
+  {
+    po::notify(vm);
+  }
+  catch (po::validation_error &err)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR,  
+                  _("%s: %s.\n"
+                    "Use --help to get a list of available options\n"),
+                  internal::my_progname, err.what());
+    unireg_abort(1);
+  }
+
+  process_defaults_files();
+
+  /* Process with notify a second time because a config file may contain
+     plugin loader options */
+
+  try
+  {
+    po::notify(vm);
+  }
+  catch (po::validation_error &err)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("%s: %s.\n"
+                    "Use --help to get a list of available options\n"),
+                  internal::my_progname, err.what());
+    unireg_abort(1);
+  }
+
+  /* At this point, we've read all the options we need to read from files and
+     collected most of them into unknown options - now let's load everything
   */
-  if (add_status_vars(status_vars))
-    return 1; // an error was already reported
 
-  load_defaults(conf_file_name, groups, &argc, &argv);
-  defaults_argv=argv;
-  defaults_argc=argc;
-  get_options(&defaults_argc, defaults_argv);
+  if (plugin_init(plugins, plugin_options))
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize plugins\n"));
+    unireg_abort(1);
+  }
+
+  full_options.add(plugin_options);
+
+  vector<string> final_unknown_options;
+  try
+  {
+    po::parsed_options final_parsed=
+      po::command_line_parser(unknown_options).style(style).
+      options(full_options).extra_parser(parse_size_arg).run();
+
+    final_unknown_options=
+      po::collect_unrecognized(final_parsed.options, po::include_positional);
+
+    po::store(final_parsed, vm);
+
+  }
+  catch (po::validation_error &err)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("%s: %s.\n"
+                    "Use --help to get a list of available options\n"),
+                  internal::my_progname, err.what());
+    unireg_abort(1);
+  }
+  catch (po::invalid_command_line_syntax &err)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("%s: %s.\n"
+                    "Use --help to get a list of available options\n"),
+                  internal::my_progname, err.what());
+    unireg_abort(1);
+  }
+  catch (po::unknown_option &err)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("%s\nUse --help to get a list of available options\n"),
+                  err.what());
+    unireg_abort(1);
+  }
+
+  try
+  {
+    po::notify(vm);
+  }
+  catch (po::validation_error &err)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR,  
+                  _("%s: %s.\n"
+                    "Use --help to get a list of available options\n"),
+                  internal::my_progname, err.what());
+    unireg_abort(1);
+  }
+
+  get_options();
+
+  /* Inverted Booleans */
+
+  global_system_variables.optimizer_prune_level=
+    vm.count("disable-optimizer-prune") ? false : true;
+
+  if (vm.count("help") == 0 && vm.count("help-extended") == 0)
+  {
+    if ((user_info= check_user(drizzled_user)))
+    {
+      set_user(drizzled_user, user_info);
+    }
+  }
+
+  fix_paths();
 
   current_pid= getpid();		/* Save for later ref */
   init_time();				/* Init time-functions (read zone) */
 
-  if (init_errmessage())	/* Read error messages from file */
-    return 1;
   if (item_create_init())
     return 1;
-  if (set_var_init())
+  if (sys_var_init())
     return 1;
   /* Creates static regex matching for temporal values */
   if (! init_temporal_formats())
@@ -1300,22 +1576,26 @@ static int init_common_variables(const char *conf_file_name, int argc,
   if (!(default_charset_info=
         get_charset_by_csname(default_character_set_name, MY_CS_PRIMARY)))
   {
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Error getting default charset"));
     return 1;                           // Eof of the list
   }
+
+  if (vm.count("scheduler"))
+    opt_scheduler= vm["scheduler"].as<string>().c_str();
 
   if (default_collation_name)
   {
     const CHARSET_INFO * const default_collation= get_charset_by_name(default_collation_name);
-    if (!default_collation)
+    if (not default_collation)
     {
-          errmsg_printf(ERRMSG_LVL_ERROR, _(ER(ER_UNKNOWN_COLLATION)), default_collation_name);
+      errmsg_printf(ERRMSG_LVL_ERROR, _(ER(ER_UNKNOWN_COLLATION)), default_collation_name);
       return 1;
     }
-    if (!my_charset_same(default_charset_info, default_collation))
+    if (not my_charset_same(default_charset_info, default_collation))
     {
-          errmsg_printf(ERRMSG_LVL_ERROR, _(ER(ER_COLLATION_CHARSET_MISMATCH)),
-                      default_collation_name,
-                      default_charset_info->csname);
+      errmsg_printf(ERRMSG_LVL_ERROR, _(ER(ER_COLLATION_CHARSET_MISMATCH)),
+                    default_collation_name,
+                    default_charset_info->csname);
       return 1;
     }
     default_charset_info= default_collation;
@@ -1323,17 +1603,18 @@ static int init_common_variables(const char *conf_file_name, int argc,
   /* Set collactions that depends on the default collation */
   global_system_variables.collation_server=	 default_charset_info;
 
-  global_system_variables.optimizer_switch= 0;
-
-  if (!(character_set_filesystem=
-        get_charset_by_csname(character_set_filesystem_name, MY_CS_PRIMARY)))
+  if (not (character_set_filesystem=
+           get_charset_by_csname(character_set_filesystem_name, MY_CS_PRIMARY)))
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Error setting collation"));
     return 1;
+  }
   global_system_variables.character_set_filesystem= character_set_filesystem;
 
   if (!(my_default_lc_time_names=
         my_locale_by_name(lc_time_names_name)))
   {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown locale: '%s'"), lc_time_names_name);
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown locale: '%s'"), lc_time_names_name);
     return 1;
   }
   global_system_variables.lc_time_names= my_default_lc_time_names;
@@ -1345,94 +1626,41 @@ static int init_common_variables(const char *conf_file_name, int argc,
 }
 
 
-static int init_thread_environment()
-{
-  (void) pthread_mutex_init(&LOCK_create_db, NULL);
-  (void) pthread_mutex_init(&LOCK_open, NULL);
-  (void) pthread_mutex_init(&LOCK_thread_count,MY_MUTEX_INIT_FAST);
-  (void) pthread_mutex_init(&LOCK_status,MY_MUTEX_INIT_FAST);
-  (void) pthread_mutex_init(&LOCK_global_system_variables, MY_MUTEX_INIT_FAST);
-  (void) pthread_rwlock_init(&LOCK_system_variables_hash, NULL);
-  (void) pthread_mutex_init(&LOCK_global_read_lock, MY_MUTEX_INIT_FAST);
-  (void) pthread_cond_init(&COND_thread_count,NULL);
-  (void) pthread_cond_init(&COND_server_end,NULL);
-  (void) pthread_cond_init(&COND_refresh,NULL);
-  (void) pthread_cond_init(&COND_global_read_lock,NULL);
-
-  if (pthread_key_create(&THR_Session,NULL) ||
-      pthread_key_create(&THR_Mem_root,NULL))
-  {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Can't create thread-keys"));
-    return 1;
-  }
-  return 0;
-}
-
-
-static int init_server_components(plugin::Registry &plugins)
+int init_server_components(module::Registry &plugins)
 {
   /*
     We need to call each of these following functions to ensure that
     all things are initialized so that unireg_abort() doesn't fail
   */
   if (table_cache_init())
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Could not initialize table cache\n"));
     unireg_abort(1);
-  TableShare::cacheStart();
+  }
+
+  // Resize the definition Cache at startup
+  definition::Cache::singleton().rehash(table_def_size);
 
   setup_fpu();
-  init_thr_lock();
 
   /* Setup logs */
 
   if (xid_cache_init())
   {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Out of memory"));
+    errmsg_printf(ERRMSG_LVL_ERROR, _("XA cache initialization failed: Out of memory\n"));
     unireg_abort(1);
   }
 
   /* Allow storage engine to give real error messages */
-  if (ha_init_errors())
-    return(1);
+  ha_init_errors();
 
-  if (plugin_init(plugins, &defaults_argc, defaults_argv,
-                  ((opt_help) ? true : false)))
-  {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize plugins."));
-    unireg_abort(1);
-  }
 
-  if (opt_help || opt_help_extended)
+  if (opt_help)
     unireg_abort(0);
 
-  /* we do want to exit if there are any other unknown options */
-  if (defaults_argc > 1)
+  if (plugin_finalize(plugins))
   {
-    int ho_error;
-    char **tmp_argv= defaults_argv;
-    struct my_option no_opts[]=
-    {
-      {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
-    };
-    /*
-      We need to eat any 'loose' arguments first before we conclude
-      that there are unprocessed options.
-      But we need to preserve defaults_argv pointer intact for
-      free_defaults() to work. Thus we use a copy here.
-    */
-    my_getopt_skip_unknown= 0;
-
-    if ((ho_error= handle_options(&defaults_argc, &tmp_argv, no_opts,
-                                  drizzled_get_one_option)))
-      unireg_abort(ho_error);
-
-    if (defaults_argc)
-    {
-      fprintf(stderr,
-              _("%s: Too many arguments (first extra is '%s').\n"
-                "Use --verbose --help to get a list of available options\n"),
-              my_progname, *tmp_argv);
-      unireg_abort(1);
-    }
+    unireg_abort(1);
   }
 
   string scheduler_name;
@@ -1443,6 +1671,7 @@ static int init_server_components(plugin::Registry &plugins)
   else
   {
     scheduler_name= opt_scheduler_default;
+    opt_scheduler= opt_scheduler_default; 
   }
 
   if (plugin::Scheduler::setPlugin(scheduler_name))
@@ -1450,13 +1679,6 @@ static int init_server_components(plugin::Registry &plugins)
       errmsg_printf(ERRMSG_LVL_ERROR,
                    _("No scheduler found, cannot continue!\n"));
       unireg_abort(1);
-  }
-
-  /* We have to initialize the storage engines before CSV logging */
-  if (ha_init())
-  {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Can't init databases"));
-    unireg_abort(1);
   }
 
   /*
@@ -1479,182 +1701,22 @@ static int init_server_components(plugin::Registry &plugins)
     engine= plugin::StorageEngine::findByName(name);
     if (engine == NULL)
     {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown/unsupported table type: %s"),
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown/unsupported storage engine: %s\n"),
                     default_storage_engine_str);
       unireg_abort(1);
     }
-    if (!engine->is_enabled())
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Default storage engine (%s) is not available"),
-                    default_storage_engine_str);
-      unireg_abort(1);
-      //assert(global_system_variables.storage_engine);
-    }
-    else
-    {
-      /*
-        Need to unlock as global_system_variables.storage_engine
-        was acquired during plugin_init()
-      */
-      global_system_variables.storage_engine= engine;
-    }
+    global_system_variables.storage_engine= engine;
   }
 
-  if (plugin::StorageEngine::recover(0))
+  if (plugin::XaResourceManager::recoverAllXids())
   {
+    /* This function alredy generates error messages */
     unireg_abort(1);
   }
-
-#if defined(MCL_CURRENT)
-  if (locked_in_memory && !getuid())
-  {
-    if (setreuid((uid_t)-1, 0) == -1)
-    {                        // this should never happen
-      sql_perror("setreuid");
-      unireg_abort(1);
-    }
-    if (mlockall(MCL_CURRENT))
-    {
-      if (global_system_variables.log_warnings)
-            errmsg_printf(ERRMSG_LVL_WARN, _("Failed to lock memory. Errno: %d\n"),errno);
-      locked_in_memory= 0;
-    }
-    if (user_info)
-      set_user(drizzled_user, user_info);
-  }
-  else
-#endif
-    locked_in_memory=0;
 
   init_update_queries();
+
   return(0);
-}
-
-
-int main(int argc, char **argv)
-{
-#if defined(ENABLE_NLS)
-# if defined(HAVE_LOCALE_H)
-  setlocale(LC_ALL, "");
-# endif
-  bindtextdomain("drizzle", LOCALEDIR);
-  textdomain("drizzle");
-#endif
-
-  plugin::Registry &plugins= plugin::Registry::singleton();
-  plugin::Client *client;
-  Session *session;
-
-  MY_INIT(argv[0]);		// init my_sys library & pthreads
-  /* nothing should come before this line ^^^ */
-
-  /* Set signal used to kill Drizzle */
-#if defined(SIGUSR2)
-  thr_kill_signal= thd_lib_detected == THD_LIB_LT ? SIGINT : SIGUSR2;
-#else
-  thr_kill_signal= SIGINT;
-#endif
-
-  if (init_common_variables(DRIZZLE_CONFIG_NAME,
-			    argc, argv, load_default_groups))
-    unireg_abort(1);				// Will do exit
-
-  init_signals();
-
-
-  select_thread=pthread_self();
-  select_thread_in_use=1;
-
-  if (chdir(drizzle_real_data_home) && !opt_help)
-  {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Data directory %s does not exist\n"), drizzle_real_data_home);
-    unireg_abort(1);
-  }
-  drizzle_data_home= drizzle_data_home_buff;
-  drizzle_data_home[0]=FN_CURLIB;		// all paths are relative from here
-  drizzle_data_home[1]=0;
-  drizzle_data_home_len= 2;
-
-  if ((user_info= check_user(drizzled_user)))
-  {
-#if defined(MCL_CURRENT)
-    if (locked_in_memory) // getuid() == 0 here
-      set_effective_user(user_info);
-    else
-#endif
-      set_user(drizzled_user, user_info);
-  }
-
-  if (server_id == 0)
-  {
-    server_id= 1;
-  }
-
-  if (init_server_components(plugins))
-    unireg_abort(1);
-
-  if (plugin::Listen::setup())
-    unireg_abort(1);
-
-  /*
-    init signals & alarm
-    After this we can't quit by a simple unireg_abort
-  */
-  error_handler_hook= my_message_sql;
-
-  if (drizzle_rm_tmp_tables() ||
-      my_tz_init((Session *)0, default_tz_name))
-  {
-    abort_loop= true;
-    select_thread_in_use=0;
-    (void) pthread_kill(signal_thread, SIGTERM);
-
-    (void) unlink(pidfile_name);	// Not needed anymore
-
-    exit(1);
-  }
-
-  init_status_vars();
-
-  errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_STARTUP)), my_progname,
-                PANDORA_RELEASE_VERSION, COMPILATION_COMMENT);
-
-
-  /* Listen for new connections and start new session for each connection
-     accepted. The listen.getClient() method will return NULL when the server
-     should be shutdown. */
-  while ((client= plugin::Listen::getClient()) != NULL)
-  {
-    if (!(session= new Session(client)))
-    {
-      delete client;
-      continue;
-    }
-
-    /* If we error on creation we drop the connection and delete the session. */
-    if (session->schedule())
-      Session::unlink(session);
-  }
-
-  /* (void) pthread_attr_destroy(&connection_attrib); */
-
-
-  (void) pthread_mutex_lock(&LOCK_thread_count);
-  select_thread_in_use=0;			// For close_connections
-  (void) pthread_mutex_unlock(&LOCK_thread_count);
-  (void) pthread_cond_broadcast(&COND_thread_count);
-
-  /* Wait until cleanup is done */
-  (void) pthread_mutex_lock(&LOCK_thread_count);
-  while (!ready_to_exit)
-    pthread_cond_wait(&COND_server_end,&LOCK_thread_count);
-  (void) pthread_mutex_unlock(&LOCK_thread_count);
-
-  clean_up(1);
-  plugin::Registry::shutdown();
-  clean_up_mutexes();
-  my_end();
-  return 0;
 }
 
 
@@ -1679,8 +1741,6 @@ enum options_drizzled
   OPT_LOCAL_INFILE,
   OPT_BACK_LOG,
   OPT_JOIN_BUFF_SIZE,
-  OPT_KEY_BUFFER_SIZE, OPT_KEY_CACHE_BLOCK_SIZE,
-  OPT_KEY_CACHE_DIVISION_LIMIT, OPT_KEY_CACHE_AGE_THRESHOLD,
   OPT_MAX_ALLOWED_PACKET,
   OPT_MAX_CONNECT_ERRORS,
   OPT_MAX_HEP_TABLE_SIZE,
@@ -1720,38 +1780,37 @@ enum options_drizzled
   OPT_TIMED_MUTEXES,
   OPT_TABLE_LOCK_WAIT_TIMEOUT,
   OPT_PLUGIN_ADD,
+  OPT_PLUGIN_REMOVE,
   OPT_PLUGIN_LOAD,
   OPT_PLUGIN_DIR,
   OPT_PORT_OPEN_TIMEOUT,
   OPT_SECURE_FILE_PRIV,
-  OPT_MIN_EXAMINED_ROW_LIMIT
+  OPT_MIN_EXAMINED_ROW_LIMIT,
+  OPT_PRINT_DEFAULTS
 };
 
 
-struct my_option my_long_options[] =
+struct option my_long_options[] =
 {
+
   {"help", '?', N_("Display this help and exit."),
    (char**) &opt_help, (char**) &opt_help, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
    0, 0},
-  {"help-extended", '?',
-   N_("Display this help and exit after initializing plugins."),
-   (char**) &opt_help_extended, (char**) &opt_help_extended,
-   0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"auto-increment-increment", OPT_AUTO_INCREMENT,
    N_("Auto-increment columns are incremented by this"),
    (char**) &global_system_variables.auto_increment_increment,
    (char**) &max_system_variables.auto_increment_increment, 0, GET_ULL,
-   OPT_ARG, 1, 1, UINT64_MAX, 0, 1, 0 },
+   OPT_ARG, 1, 1, INT64_MAX, 0, 1, 0 },
   {"auto-increment-offset", OPT_AUTO_INCREMENT_OFFSET,
    N_("Offset added to Auto-increment columns. Used when "
       "auto-increment-increment != 1"),
    (char**) &global_system_variables.auto_increment_offset,
    (char**) &max_system_variables.auto_increment_offset, 0, GET_ULL, OPT_ARG,
-   1, 1, UINT64_MAX, 0, 1, 0 },
+   1, 1, INT64_MAX, 0, 1, 0 },
   {"basedir", 'b',
    N_("Path to installation directory. All paths are usually resolved "
       "relative to this."),
-   (char**) &drizzle_home_ptr, (char**) &drizzle_home_ptr, 0, GET_STR, REQUIRED_ARG,
+   NULL, NULL, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
   {"chroot", 'r',
    N_("Chroot drizzled daemon during startup."),
@@ -1772,8 +1831,7 @@ struct my_option my_long_options[] =
    NO_ARG, 0, 0, 0, 0, 0, 0},
   {"datadir", 'h',
    N_("Path to the database root."),
-   (char**) &drizzle_data_home,
-   (char**) &drizzle_data_home, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   NULL, NULL, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"default-storage-engine", OPT_STORAGE_ENGINE,
    N_("Set the default storage engine (table type) for tables."),
    (char**)&default_storage_engine_str, (char**)&default_storage_engine_str,
@@ -1782,12 +1840,6 @@ struct my_option my_long_options[] =
    N_("Set the default time zone."),
    (char**) &default_tz_name, (char**) &default_tz_name,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
-#ifdef HAVE_STACK_TRACE_ON_SEGV
-  {"enable-pstack", OPT_DO_PSTACK,
-   N_("Print a symbolic stack trace on failure."),
-   (char**) &opt_do_pstack, (char**) &opt_do_pstack, 0, GET_BOOL, NO_ARG, 0, 0,
-   0, 0, 0, 0},
-#endif /* HAVE_STACK_TRACE_ON_SEGV */
   /* See how it's handled in get_one_option() */
   {"exit-info", 'T',
    N_("Used for debugging;  Use at your own risk!"),
@@ -1798,10 +1850,6 @@ struct my_option my_long_options[] =
    N_("Set up signals usable for debugging"),
    (char**) &opt_debugging, (char**) &opt_debugging,
    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"language", 'L',
-   N_("(IGNORED)"),
-   (char**) &language_ptr, (char**) &language_ptr, 0, GET_STR, REQUIRED_ARG,
-   0, 0, 0, 0, 0, 0},
   {"lc-time-names", OPT_LC_TIME_NAMES,
    N_("Set the language used for the month names and the days of the week."),
    (char**) &lc_time_names_name,
@@ -1812,13 +1860,9 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.log_warnings,
    (char**) &max_system_variables.log_warnings, 0, GET_BOOL, OPT_ARG, 1, 0, 0,
    0, 0, 0},
-  {"memlock", OPT_MEMLOCK,
-   N_("Lock drizzled in memory."),
-   (char**) &locked_in_memory,
-   (char**) &locked_in_memory, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"pid-file", OPT_PID_FILE,
-   N_("Pid file used by safe_mysqld."),
-   (char**) &pidfile_name_ptr, (char**) &pidfile_name_ptr, 0, GET_STR,
+   N_("Pid file used by drizzled."),
+   NULL, NULL, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"port-open-timeout", OPT_PORT_OPEN_TIMEOUT,
    N_("Maximum time in seconds to wait for the port to become free. "
@@ -1828,7 +1872,7 @@ struct my_option my_long_options[] =
   {"secure-file-priv", OPT_SECURE_FILE_PRIV,
    N_("Limit LOAD DATA, SELECT ... OUTFILE, and LOAD_FILE() to files "
       "within specified directory"),
-   (char**) &opt_secure_file_priv, (char**) &opt_secure_file_priv, 0,
+   NULL, NULL, 0,
    GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"server-id",	OPT_SERVER_ID,
    N_("Uniquely identifies the server instance in the community of "
@@ -1841,7 +1885,7 @@ struct my_option my_long_options[] =
    0, 0, 0, 0},
   {"symbolic-links", 's',
    N_("Enable symbolic link support."),
-   (char**) &my_use_symdir, (char**) &my_use_symdir, 0, GET_BOOL, NO_ARG,
+   (char**) &internal::my_use_symdir, (char**) &internal::my_use_symdir, 0, GET_BOOL, NO_ARG,
    /*
      The system call realpath() produces warnings under valgrind and
      purify. These are not suppressed: instead we disable symlinks
@@ -1851,7 +1895,7 @@ struct my_option my_long_options[] =
   {"timed_mutexes", OPT_TIMED_MUTEXES,
    N_("Specify whether to time mutexes (only InnoDB mutexes are currently "
       "supported)"),
-   (char**) &timed_mutexes, (char**) &timed_mutexes, 0, GET_BOOL, NO_ARG, 0,
+   (char**) &internal::timed_mutexes, (char**) &internal::timed_mutexes, 0, GET_BOOL, NO_ARG, 0,
     0, 0, 0, 0, 0},
   {"tmpdir", 't',
    N_("Path for temporary files."),
@@ -1898,41 +1942,11 @@ struct my_option my_long_options[] =
    (char**) &max_system_variables.join_buff_size, 0, GET_UINT64,
    REQUIRED_ARG, 128*1024L, IO_SIZE*2+MALLOC_OVERHEAD, ULONG_MAX,
    MALLOC_OVERHEAD, IO_SIZE, 0},
-  {"key_buffer_size", OPT_KEY_BUFFER_SIZE,
-   N_("The size of the buffer used for index blocks for MyISAM tables. "
-      "Increase this to get better index handling (for all reads and multiple "
-      "writes) to as much as you can afford;"),
-   (char**) &dflt_key_cache_var.param_buff_size,
-   (char**) 0,
-   0, (GET_ULL),
-   REQUIRED_ARG, KEY_CACHE_SIZE, MALLOC_OVERHEAD, SIZE_MAX, MALLOC_OVERHEAD,
-   IO_SIZE, 0},
-  {"key_cache_age_threshold", OPT_KEY_CACHE_AGE_THRESHOLD,
-   N_("This characterizes the number of hits a hot block has to be untouched "
-      "until it is considered aged enough to be downgraded to a warm block. "
-      "This specifies the percentage ratio of that number of hits to the "
-      "total number of blocks in key cache"),
-   (char**) &dflt_key_cache_var.param_age_threshold,
-   (char**) 0,
-   0, (GET_UINT32), REQUIRED_ARG,
-   300, 100, ULONG_MAX, 0, 100, 0},
-  {"key_cache_block_size", OPT_KEY_CACHE_BLOCK_SIZE,
-   N_("The default size of key cache blocks"),
-   (char**) &dflt_key_cache_var.param_block_size,
-   (char**) 0,
-   0, (GET_UINT32), REQUIRED_ARG,
-   KEY_CACHE_BLOCK_SIZE, 512, 1024 * 16, 0, 512, 0},
-  {"key_cache_division_limit", OPT_KEY_CACHE_DIVISION_LIMIT,
-   N_("The minimum percentage of warm blocks in key cache"),
-   (char**) &dflt_key_cache_var.param_division_limit,
-   (char**) 0,
-   0, (GET_UINT32) , REQUIRED_ARG, 100,
-   1, 100, 0, 1, 0},
   {"max_allowed_packet", OPT_MAX_ALLOWED_PACKET,
    N_("Max packetlength to send/receive from to server."),
    (char**) &global_system_variables.max_allowed_packet,
    (char**) &max_system_variables.max_allowed_packet, 0, GET_UINT32,
-   REQUIRED_ARG, 1024*1024L, 1024, 1024L*1024L*1024L, MALLOC_OVERHEAD, 1024, 0},
+   REQUIRED_ARG, 64*1024*1024L, 1024, 1024L*1024L*1024L, MALLOC_OVERHEAD, 1024, 0},
   {"max_connect_errors", OPT_MAX_CONNECT_ERRORS,
    N_("If there is more than this number of interrupted connections from a "
       "host this host will be blocked from further connections."),
@@ -1947,7 +1961,7 @@ struct my_option my_long_options[] =
    N_("Don't allow creation of heap tables bigger than this."),
    (char**) &global_system_variables.max_heap_table_size,
    (char**) &max_system_variables.max_heap_table_size, 0, GET_ULL,
-   REQUIRED_ARG, 16*1024*1024L, 16384, MAX_MEM_TABLE_SIZE,
+   REQUIRED_ARG, 16*1024*1024L, 16384, (int64_t)MAX_MEM_TABLE_SIZE,
    MALLOC_OVERHEAD, 1024, 0},
   {"max_join_size", OPT_MAX_JOIN_SIZE,
    N_("Joins that are probably going to read more than max_join_size records "
@@ -2004,19 +2018,25 @@ struct my_option my_long_options[] =
    0, GET_UINT, OPT_ARG, 0, 0, MAX_TABLES+2, 0, 1, 0},
   {"plugin_dir", OPT_PLUGIN_DIR,
    N_("Directory for plugins."),
-   (char**) &opt_plugin_dir_ptr, (char**) &opt_plugin_dir_ptr, 0,
+   NULL, NULL, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"plugin_add", OPT_PLUGIN_ADD,
    N_("Optional comma separated list of plugins to load at startup in addition "
       "to the default list of plugins. "
       "[for example: --plugin_add=crc32,logger_gearman]"),
-   (char**) &opt_plugin_add, (char**) &opt_plugin_add, 0,
+   NULL, NULL, 0,
+   GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+  {"plugin_remove", OPT_PLUGIN_ADD,
+   N_("Optional comma separated list of plugins to not load at startup. Effectively "
+      "removes a plugin from the list of plugins to be loaded. "
+      "[for example: --plugin_remove=crc32,logger_gearman]"),
+   NULL, NULL, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"plugin_load", OPT_PLUGIN_LOAD,
    N_("Optional comma separated list of plugins to load at starup instead of "
       "the default plugin load list. "
       "[for example: --plugin_load=crc32,logger_gearman]"),
-   (char**) &opt_plugin_load, (char**) &opt_plugin_load, 0,
+   NULL, NULL, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"preload_buffer_size", OPT_PRELOAD_BUFFER_SIZE,
    N_("The size of the buffer that is allocated when preloading indexes"),
@@ -2038,7 +2058,7 @@ struct my_option my_long_options[] =
    N_("Allocation block size for storing ranges during optimization"),
    (char**) &global_system_variables.range_alloc_block_size,
    (char**) &max_system_variables.range_alloc_block_size, 0, GET_SIZE,
-   REQUIRED_ARG, RANGE_ALLOC_BLOCK_SIZE, RANGE_ALLOC_BLOCK_SIZE, SIZE_MAX,
+   REQUIRED_ARG, RANGE_ALLOC_BLOCK_SIZE, RANGE_ALLOC_BLOCK_SIZE, (int64_t)SIZE_MAX,
    0, 1024, 0},
   {"read_buffer_size", OPT_RECORD_BUFFER,
     N_("Each thread that does a sequential scan allocates a buffer of this "
@@ -2065,7 +2085,7 @@ struct my_option my_long_options[] =
    N_("Each thread that needs to do a sort allocates a buffer of this size."),
    (char**) &global_system_variables.sortbuff_size,
    (char**) &max_system_variables.sortbuff_size, 0, GET_SIZE, REQUIRED_ARG,
-   MAX_SORT_MEMORY, MIN_SORT_MEMORY+MALLOC_OVERHEAD*8, SIZE_MAX,
+   MAX_SORT_MEMORY, MIN_SORT_MEMORY+MALLOC_OVERHEAD*8, (int64_t)SIZE_MAX,
    MALLOC_OVERHEAD, 1, 0},
   {"table_definition_cache", OPT_TABLE_DEF_CACHE,
    N_("The number of cached table definitions."),
@@ -2074,7 +2094,7 @@ struct my_option my_long_options[] =
   {"table_open_cache", OPT_TABLE_OPEN_CACHE,
    N_("The number of cached open tables."),
    (char**) &table_cache_size, (char**) &table_cache_size, 0, GET_UINT64,
-   REQUIRED_ARG, TABLE_OPEN_CACHE_DEFAULT, 1, 512*1024L, 0, 1, 0},
+   REQUIRED_ARG, TABLE_OPEN_CACHE_DEFAULT, TABLE_OPEN_CACHE_MIN, 512*1024L, 0, 1, 0},
   {"table_lock_wait_timeout", OPT_TABLE_LOCK_WAIT_TIMEOUT,
    N_("Timeout in seconds to wait for a table level lock before returning an "
       "error. Used only if the connection has active cursors."),
@@ -2085,23 +2105,13 @@ struct my_option my_long_options[] =
    (char**) &my_thread_stack_size,
    (char**) &my_thread_stack_size, 0, GET_SIZE,
    REQUIRED_ARG,DEFAULT_THREAD_STACK,
-   UINT32_C(1024*512), SIZE_MAX, 0, 1024, 0},
+   UINT32_C(1024*512), (int64_t)SIZE_MAX, 0, 1024, 0},
   {"tmp_table_size", OPT_TMP_TABLE_SIZE,
    N_("If an internal in-memory temporary table exceeds this size, Drizzle will"
       " automatically convert it to an on-disk MyISAM table."),
    (char**) &global_system_variables.tmp_table_size,
    (char**) &max_system_variables.tmp_table_size, 0, GET_ULL,
-   REQUIRED_ARG, 16*1024*1024L, 1024, MAX_MEM_TABLE_SIZE, 0, 1, 0},
-  {"transaction_alloc_block_size", OPT_TRANS_ALLOC_BLOCK_SIZE,
-   N_("Allocation block size for transactions to be stored in binary log"),
-   (char**) &global_system_variables.trans_alloc_block_size,
-   (char**) &max_system_variables.trans_alloc_block_size, 0, GET_UINT,
-   REQUIRED_ARG, QUERY_ALLOC_BLOCK_SIZE, 1024, ULONG_MAX, 0, 1024, 0},
-  {"transaction_prealloc_size", OPT_TRANS_PREALLOC_SIZE,
-   N_("Persistent buffer for transactions to be stored in binary log"),
-   (char**) &global_system_variables.trans_prealloc_size,
-   (char**) &max_system_variables.trans_prealloc_size, 0, GET_UINT,
-   REQUIRED_ARG, TRANS_ALLOC_PREALLOC_SIZE, 1024, ULONG_MAX, 0, 1024, 0},
+   REQUIRED_ARG, 16*1024*1024L, 1024, (int64_t)MAX_MEM_TABLE_SIZE, 0, 1, 0},
   {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 
@@ -2111,7 +2121,7 @@ static void print_version(void)
     Note: the instance manager keys off the string 'Ver' so it can find the
     version from the output of 'drizzled --version', so don't change it!
   */
-  printf("%s  Ver %s for %s-%s on %s (%s)\n",my_progname,
+  printf("%s  Ver %s for %s-%s on %s (%s)\n",internal::my_progname,
 	 PANDORA_RELEASE_VERSION, HOST_VENDOR, HOST_OS, HOST_CPU,
          COMPILATION_COMMENT);
 }
@@ -2127,19 +2137,19 @@ static void usage(void)
          "This software comes with ABSOLUTELY NO WARRANTY. "
          "This is free software,\n"
          "and you are welcome to modify and redistribute it under the GPL "
-         "license\n\n"
-         "Starts the Drizzle database server\n"));
+         "license\n\n"));
 
-  printf(_("Usage: %s [OPTIONS]\n"), my_progname);
-  {
-     print_defaults(DRIZZLE_CONFIG_NAME,load_default_groups);
-     puts("");
  
-     /* Print out all the options including plugin supplied options */
-     my_print_help_inc_plugins(my_long_options);
-  }
-}
+  printf(_("Usage: %s [OPTIONS]\n"), internal::my_progname);
 
+  po::options_description all_options("Drizzled Options");
+  all_options.add(config_options);
+  all_options.add(plugin_load_options);
+  all_options.add(long_options);
+  all_options.add(plugin_options);
+  cout << all_options << endl;
+
+}
 
 /**
   Initialize all Drizzle global variables to default values.
@@ -2160,22 +2170,15 @@ static void usage(void)
 static void drizzle_init_variables(void)
 {
   /* Things reset to zero */
-  drizzle_home[0]= pidfile_name[0]= 0;
   opt_tc_log_file= (char *)"tc.log";      // no hostname in tc_log file name !
-  opt_secure_file_priv= 0;
-  segfaulted= 0;
   cleanup_done= 0;
-  defaults_argc= 0;
-  defaults_argv= 0;
   dropping_tables= ha_open_options=0;
   test_flags.reset();
   wake_thread=0;
   abort_loop= select_thread_in_use= false;
   ready_to_exit= shutdown_in_progress= 0;
-  aborted_threads= aborted_connects= 0;
-  max_used_connections= 0;
   drizzled_user= drizzled_chroot= 0;
-  memset(&global_status_var, 0, sizeof(global_status_var));
+  memset(&current_global_counters, 0, sizeof(current_global_counters));
   key_map_full.set();
 
   /* Character sets */
@@ -2185,22 +2188,10 @@ static void drizzle_init_variables(void)
   character_set_filesystem= &my_charset_bin;
 
   /* Things with default values that are not zero */
-  drizzle_home_ptr= drizzle_home;
-  pidfile_name_ptr= pidfile_name;
-  language_ptr= language;
-  drizzle_data_home= drizzle_real_data_home;
   session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_SQL_NOTES);
   refresh_version= 1L;	/* Increments on each reload */
   global_thread_id= 1UL;
   getSessionList().clear();
-
-  /* Set directory paths */
-  strncpy(language, LANGUAGE, sizeof(language)-1);
-  strncpy(drizzle_real_data_home, get_relative_path(LOCALSTATEDIR),
-          sizeof(drizzle_real_data_home)-1);
-  drizzle_data_home_buff[0]=FN_CURLIB;	// all paths are relative from here
-  drizzle_data_home_buff[1]=0;
-  drizzle_data_home_len= 2;
 
   /* Variables in libraries */
   default_character_set_name= "utf8";
@@ -2215,6 +2206,34 @@ static void drizzle_init_variables(void)
   max_system_variables.select_limit=    (uint64_t) HA_POS_ERROR;
   global_system_variables.max_join_size= (uint64_t) HA_POS_ERROR;
   max_system_variables.max_join_size=   (uint64_t) HA_POS_ERROR;
+  max_system_variables.auto_increment_increment= UINT64_MAX;
+  max_system_variables.auto_increment_offset= UINT64_MAX;
+  max_system_variables.completion_type= 2;
+  max_system_variables.log_warnings= true;
+  max_system_variables.bulk_insert_buff_size= ULONG_MAX;
+  max_system_variables.div_precincrement= DECIMAL_MAX_SCALE;
+  max_system_variables.group_concat_max_len= ULONG_MAX;
+  max_system_variables.join_buff_size= ULONG_MAX;
+  max_system_variables.max_allowed_packet= 1024L*1024L*1024L;
+  max_system_variables.max_error_count= 65535;
+  max_system_variables.max_heap_table_size= MAX_MEM_TABLE_SIZE;
+  max_system_variables.max_join_size= INT32_MAX;
+  max_system_variables.max_length_for_sort_data= 8192*1024L;
+  max_system_variables.max_seeks_for_key= ULONG_MAX;
+  max_system_variables.max_sort_length= 8192*1024L;
+  max_system_variables.min_examined_row_limit= ULONG_MAX;
+  max_system_variables.optimizer_prune_level= 1;
+  max_system_variables.optimizer_search_depth= MAX_TABLES+2;
+  max_system_variables.preload_buff_size= 1024*1024*1024L;
+  max_system_variables.query_alloc_block_size= UINT32_MAX;
+  max_system_variables.query_prealloc_size= UINT32_MAX;
+  max_system_variables.range_alloc_block_size= SIZE_MAX;
+  max_system_variables.read_buff_size= INT32_MAX;
+  max_system_variables.read_rnd_buff_size= UINT32_MAX;
+  max_system_variables.sortbuff_size= SIZE_MAX;
+  max_system_variables.tmp_table_size= MAX_MEM_TABLE_SIZE;
+
+  opt_scheduler_default= (char*) "multi_thread";
 
   /* Variables that depends on compile options */
 #ifdef HAVE_BROKEN_REALPATH
@@ -2223,163 +2242,138 @@ static void drizzle_init_variables(void)
   have_symlink=SHOW_OPTION_YES;
 #endif
 
-  const char *tmpenv;
-  if (!(tmpenv = getenv("MY_BASEDIR_VERSION")))
-    tmpenv = PREFIX;
-  (void) strncpy(drizzle_home, tmpenv, sizeof(drizzle_home)-1);
-  
   connection_count= 0;
-}
-
-
-extern "C" bool
-drizzled_get_one_option(int optid, const struct my_option *opt,
-                        char *argument)
-{
-  switch(optid) {
-  case 'a':
-    global_system_variables.tx_isolation= ISO_SERIALIZABLE;
-    break;
-  case 'b':
-    strncpy(drizzle_home,argument,sizeof(drizzle_home)-1);
-    break;
-  case 'C':
-    if (default_collation_name == compiled_default_collation_name)
-      default_collation_name= 0;
-    break;
-  case 'h':
-    strncpy(drizzle_real_data_home,argument, sizeof(drizzle_real_data_home)-1);
-    /* Correct pointer set by my_getopt (for embedded library) */
-    drizzle_data_home= drizzle_real_data_home;
-    drizzle_data_home_len= strlen(drizzle_data_home);
-    break;
-  case 'u':
-    if (!drizzled_user || !strcmp(drizzled_user, argument))
-      drizzled_user= argument;
-    else
-      errmsg_printf(ERRMSG_LVL_WARN, _("Ignoring user change to '%s' because the user was "
-                          "set to '%s' earlier on the command line\n"),
-                        argument, drizzled_user);
-    break;
-  case 'L':
-    strncpy(language, argument, sizeof(language)-1);
-    break;
-  case 'V':
-    print_version();
-    exit(0);
-  case 'W':
-    if (!argument)
-      global_system_variables.log_warnings++;
-    else if (argument == disabled_my_option)
-      global_system_variables.log_warnings= 0L;
-    else
-      global_system_variables.log_warnings= atoi(argument);
-    break;
-  case 'T':
-    if (argument)
-    {
-      test_flags.set((uint32_t) atoi(argument));
-    }
-    break;
-  case (int) OPT_WANT_CORE:
-    test_flags.set(TEST_CORE_ON_SIGNAL);
-    break;
-  case (int) OPT_SKIP_STACK_TRACE:
-    test_flags.set(TEST_NO_STACKTRACE);
-    break;
-  case (int) OPT_SKIP_SYMLINKS:
-    my_use_symdir=0;
-    break;
-  case (int) OPT_BIND_ADDRESS:
-    {
-      struct addrinfo *res_lst, hints;
-
-      memset(&hints, 0, sizeof(struct addrinfo));
-      hints.ai_socktype= SOCK_STREAM;
-      hints.ai_protocol= IPPROTO_TCP;
-
-      if (getaddrinfo(argument, NULL, &hints, &res_lst) != 0)
-      {
-          errmsg_printf(ERRMSG_LVL_ERROR, _("Can't start server: cannot resolve hostname!"));
-        exit(1);
-      }
-
-      if (res_lst->ai_next)
-      {
-          errmsg_printf(ERRMSG_LVL_ERROR, _("Can't start server: bind-address refers to "
-                          "multiple interfaces!"));
-        exit(1);
-      }
-      freeaddrinfo(res_lst);
-    }
-    break;
-  case (int) OPT_PID_FILE:
-    strncpy(pidfile_name, argument, sizeof(pidfile_name)-1);
-    break;
-  case OPT_SERVER_ID:
-    break;
-  case OPT_TX_ISOLATION:
-    {
-      int type;
-      type= find_type_or_exit(argument, &tx_isolation_typelib, opt->name);
-      global_system_variables.tx_isolation= (type-1);
-      break;
-    }
-  case OPT_TC_HEURISTIC_RECOVER:
-    tc_heuristic_recover= find_type_or_exit(argument,
-                                            &tc_heuristic_recover_typelib,
-                                            opt->name);
-    break;
-  }
-
-  return 0;
-}
-
-extern "C" void option_error_reporter(enum loglevel level, const char *format, ...);
-
-extern "C" void option_error_reporter(enum loglevel level, const char *format, ...)
-{
-  va_list args;
-  va_start(args, format);
-
-  /* Don't print warnings for --loose options during bootstrap */
-  if (level == ERROR_LEVEL || global_system_variables.log_warnings)
-  {
-    plugin::ErrorMessage::vprintf(current_session, ERROR_LEVEL, format, args);
-  }
-  va_end(args);
 }
 
 
 /**
   @todo
-  - FIXME add EXIT_TOO_MANY_ARGUMENTS to "drizzled/my_error.h" and return that code?
+  - FIXME add EXIT_TOO_MANY_ARGUMENTS to "drizzled/error.h" and return that code?
 */
-static void get_options(int *argc,char **argv)
+static void get_options()
 {
-  int ho_error;
 
-  my_getopt_error_reporter= option_error_reporter;
+  fs::path &data_home_catalog= getDataHomeCatalog();
+  data_home_catalog= getDataHome();
+  data_home_catalog /= "local"; 
 
-  string progname(argv[0]);
+  if (vm.count("user"))
+  {
+    if (! drizzled_user || ! strcmp(drizzled_user, vm["user"].as<string>().c_str()))
+      drizzled_user= (char *)vm["user"].as<string>().c_str();
+
+    else
+      errmsg_printf(ERRMSG_LVL_WARN, _("Ignoring user change to '%s' because the user was "
+                                       "set to '%s' earlier on the command line\n"),
+                    vm["user"].as<string>().c_str(), drizzled_user);
+  }
+
+  if (vm.count("version"))
+  {
+    print_version();
+    exit(0);
+  }
+
+  if (vm.count("sort-heap-threshold"))
+  {
+    if ((vm["sort-heap-threshold"].as<uint64_t>() > 0) and
+      (vm["sort-heap-threshold"].as<uint64_t>() < 
+      global_system_variables.sortbuff_size))
+    {
+      cout << N_("Error: sort-heap-threshold cannot be less than sort-buffer-size") << endl;
+      exit(-1);
+    }
+
+    global_sort_buffer.setMaxSize(vm["sort-heap-threshold"].as<uint64_t>());
+  }
+
+  if (vm.count("join-heap-threshold"))
+  {
+    if ((vm["join-heap-threshold"].as<uint64_t>() > 0) and
+      (vm["join-heap-threshold"].as<uint64_t>() <
+      global_system_variables.join_buff_size))
+    {
+      cout << N_("Error: join-heap-threshold cannot be less than join-buffer-size") << endl;
+      exit(-1);
+    }
+
+    global_join_buffer.setMaxSize(vm["join-heap-threshold"].as<uint64_t>());
+  }
+
+  if (vm.count("read-rnd-threshold"))
+  {
+    if ((vm["read-rnd-threshold"].as<uint64_t>() > 0) and
+      (vm["read-rnd-threshold"].as<uint64_t>() <
+      global_system_variables.read_rnd_buff_size))
+    {
+      cout << N_("Error: read-rnd-threshold cannot be less than read-rnd-buffer-size") << endl;
+      exit(-1);
+    }
+
+    global_read_rnd_buffer.setMaxSize(vm["read-rnd-threshold"].as<uint64_t>());
+  }
+
+  if (vm.count("read-buffer-threshold"))
+  {
+    if ((vm["read-buffer-threshold"].as<uint64_t>() > 0) and
+      (vm["read-buffer-threshold"].as<uint64_t>() <
+      global_system_variables.read_buff_size))
+    {
+      cout << N_("Error: read-buffer-threshold cannot be less than read-buffer-size") << endl;
+      exit(-1);
+    }
+
+    global_read_buffer.setMaxSize(vm["read-buffer-threshold"].as<uint64_t>());
+  }
+
+  if (vm.count("exit-info"))
+  {
+    if (vm["exit-info"].as<long>())
+    {
+      test_flags.set((uint32_t) vm["exit-info"].as<long>());
+    }
+  }
+
+  if (vm.count("want-core"))
+  {
+    test_flags.set(TEST_CORE_ON_SIGNAL);
+  }
+
+  if (vm.count("skip-stack-trace"))
+  {
+    test_flags.set(TEST_NO_STACKTRACE);
+  }
+
+  if (vm.count("skip-symlinks"))
+  {
+    internal::my_use_symdir=0;
+  }
+
+  if (vm.count("transaction-isolation"))
+  {
+    int type;
+    type= find_type_or_exit((char *)vm["transaction-isolation"].as<string>().c_str(), &tx_isolation_typelib, "transaction-isolation");
+    global_system_variables.tx_isolation= (type-1);
+  }
+
+  /* @TODO Make this all strings */
+  if (vm.count("default-storage-engine"))
+  {
+    default_storage_engine_str= (char *)vm["default-storage-engine"].as<string>().c_str();
+  }
 
   /* Skip unknown options so that they may be processed later by plugins */
   my_getopt_skip_unknown= true;
 
-  if ((ho_error= handle_options(argc, &argv, my_long_options,
-                                drizzled_get_one_option)))
-    exit(ho_error);
-  (*argc)++; /* add back one for the progname handle_options removes */
-             /* no need to do this for argv as we are discarding it. */
 
 #if defined(HAVE_BROKEN_REALPATH)
-  my_use_symdir=0;
-  my_disable_symlinks=1;
+  internal::my_use_symdir=0;
+  internal::my_disable_symlinks=1;
   have_symlink=SHOW_OPTION_NO;
 #else
-  if (!my_use_symdir)
+  if (!internal::my_use_symdir)
   {
-    my_disable_symlinks=1;
+    internal::my_disable_symlinks=1;
     have_symlink=SHOW_OPTION_DISABLED;
   }
 #endif
@@ -2393,154 +2387,66 @@ static void get_options(int *argc,char **argv)
 
   if (drizzled_chroot)
     set_root(drizzled_chroot);
-  fix_paths(progname);
 
   /*
     Set some global variables from the global_system_variables
     In most cases the global variables will not be used
   */
-  my_default_record_cache_size=global_system_variables.read_buff_size;
+  internal::my_default_record_cache_size=global_system_variables.read_buff_size;
 }
 
 
-static const char *get_relative_path(const char *path)
+static void fix_paths()
 {
-  if (test_if_hard_path(path) &&
-      (strncmp(path, PREFIX, strlen(PREFIX)) == 0) &&
-      strcmp(PREFIX,FN_ROOTDIR))
+  fs::path pid_file_path(pid_file);
+  if (pid_file_path.root_path().string() == "")
   {
-    if (strlen(PREFIX) < strlen(path))
-      path+=(size_t) strlen(PREFIX);
-    while (*path == FN_LIBCHAR)
-      path++;
+    pid_file_path= getDataHome();
+    pid_file_path /= pid_file;
   }
-  return path;
-}
+  pid_file= pid_file_path;
 
-
-static void fix_paths(string &progname)
-{
-  char buff[FN_REFLEN],*pos,rp_buff[PATH_MAX];
-  convert_dirname(drizzle_home,drizzle_home,NULL);
-  /* Resolve symlinks to allow 'drizzle_home' to be a relative symlink */
-#if defined(HAVE_BROKEN_REALPATH)
-   my_load_path(drizzle_home, drizzle_home, NULL);
-#else
-  if (!realpath(drizzle_home,rp_buff))
-    my_load_path(rp_buff, drizzle_home, NULL);
-  rp_buff[FN_REFLEN-1]= '\0';
-  strcpy(drizzle_home,rp_buff);
-  /* Ensure that drizzle_home ends in FN_LIBCHAR */
-  pos= strchr(drizzle_home, '\0');
-#endif
-  if (pos[-1] != FN_LIBCHAR)
+  if (not opt_help)
   {
-    pos[0]= FN_LIBCHAR;
-    pos[1]= 0;
-  }
-  convert_dirname(drizzle_real_data_home,drizzle_real_data_home,NULL);
-  (void) fn_format(buff, drizzle_real_data_home, "", "",
-                   (MY_RETURN_REAL_PATH|MY_RESOLVE_SYMLINKS));
-  (void) unpack_dirname(drizzle_unpacked_real_data_home, buff);
-  convert_dirname(language,language,NULL);
-  (void) my_load_path(drizzle_home, drizzle_home,""); // Resolve current dir
-  (void) my_load_path(drizzle_real_data_home, drizzle_real_data_home,drizzle_home);
-  (void) my_load_path(pidfile_name, pidfile_name,drizzle_real_data_home);
-
-  if (opt_plugin_dir_ptr == NULL)
-  {
-    /* No plugin dir has been specified. Figure out where the plugins are */
-    if (progname[0] != FN_LIBCHAR)
-    {
-      /* We have a relative path and need to find the absolute */
-      char working_dir[FN_REFLEN];
-      char *working_dir_ptr= working_dir;
-      working_dir_ptr= getcwd(working_dir_ptr, FN_REFLEN);
-      string new_path(working_dir);
-      if (*(new_path.end()-1) != '/')
-        new_path.push_back('/');
-      if (progname[0] == '.' && progname[1] == '/')
-        new_path.append(progname.substr(2));
-      else
-        new_path.append(progname);
-      progname.swap(new_path);
-    }
-
-    /* Now, trim off the exe name */
-    string progdir(progname.substr(0, progname.rfind(FN_LIBCHAR)+1));
-    if (progdir.rfind(".libs/") != string::npos)
-    {
-      progdir.assign(progdir.substr(0, progdir.rfind(".libs/")));
-    }
-    string testfile(progdir);
-    testfile.append("drizzled.o");
-    struct stat testfile_stat;
-    if (stat(testfile.c_str(), &testfile_stat))
-    {
-      /* drizzled.o doesn't exist - we are not in a source dir.
-       * Go on as usual
-       */
-      (void) my_load_path(opt_plugin_dir, get_relative_path(PKGPLUGINDIR),
-                                          drizzle_home);
-    }
-    else
-    {
-      /* We are in a source dir! Plugin dir is ../plugin/.libs */
-      size_t last_libchar_pos= progdir.rfind(FN_LIBCHAR,progdir.size()-2)+1;
-      string source_plugindir(progdir.substr(0,last_libchar_pos));
-      source_plugindir.append("plugin/.libs");
-      (void) my_load_path(opt_plugin_dir, source_plugindir.c_str(), "");
-    }
-  }
-  else
-  {
-    (void) my_load_path(opt_plugin_dir, opt_plugin_dir_ptr, drizzle_home);
-  }
-  opt_plugin_dir_ptr= opt_plugin_dir;
-
-  const char *sharedir= get_relative_path(PKGDATADIR);
-  if (test_if_hard_path(sharedir))
-    strncpy(buff,sharedir,sizeof(buff)-1);
-  else
-  {
-    strcpy(buff, drizzle_home);
-    strncat(buff, sharedir, sizeof(buff)-strlen(drizzle_home)-1);
-  }
-  convert_dirname(buff,buff,NULL);
-  (void) my_load_path(language,language,buff);
-
-  {
-    char *tmp_string;
+    const char *tmp_string= getenv("TMPDIR") ? getenv("TMPDIR") : NULL;
     struct stat buf;
+    drizzle_tmpdir.clear();
 
-    tmp_string= getenv("TMPDIR");
-
-    if (opt_drizzle_tmpdir)
-      drizzle_tmpdir= strdup(opt_drizzle_tmpdir);
-    else if (tmp_string == NULL)
-      drizzle_tmpdir= strdup(P_tmpdir);
-    else
-      drizzle_tmpdir= strdup(tmp_string);
-
-    assert(drizzle_tmpdir);
-
-    if (stat(drizzle_tmpdir, &buf) || (S_ISDIR(buf.st_mode) == false))
+    if (vm.count("tmpdir"))
     {
+      drizzle_tmpdir.append(vm["tmpdir"].as<string>());
+    }
+    else if (tmp_string == NULL)
+    {
+      drizzle_tmpdir.append(getDataHome().file_string());
+      drizzle_tmpdir.push_back(FN_LIBCHAR);
+      drizzle_tmpdir.append(GLOBAL_TEMPORARY_EXT);
+    }
+    else
+    {
+      drizzle_tmpdir.append(tmp_string);
+    }
+
+    drizzle_tmpdir= fs::path(fs::system_complete(fs::path(drizzle_tmpdir))).file_string();
+    assert(drizzle_tmpdir.size());
+
+    if (mkdir(drizzle_tmpdir.c_str(), 0777) == -1)
+    {
+      if (errno != EEXIST)
+      {
+        perror(drizzle_tmpdir.c_str());
+        exit(1);
+      }
+    }
+
+    if (stat(drizzle_tmpdir.c_str(), &buf) || (S_ISDIR(buf.st_mode) == false))
+    {
+      perror(drizzle_tmpdir.c_str());
       exit(1);
     }
   }
 
-  /*
-    Convert the secure-file-priv option to system format, allowing
-    a quick strcmp to check if read or write is in an allowed dir
-   */
-  if (opt_secure_file_priv)
-  {
-    convert_dirname(buff, opt_secure_file_priv, NULL);
-    free(opt_secure_file_priv);
-    opt_secure_file_priv= strdup(buff);
-    if (opt_secure_file_priv == NULL)
-      exit(1);
-  }
 }
+
+} /* namespace drizzled */
 

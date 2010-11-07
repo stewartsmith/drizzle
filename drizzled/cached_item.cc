@@ -30,8 +30,10 @@
 #include <drizzled/session.h>
 #include <algorithm>
 
-using namespace drizzled;
 using namespace std;
+
+namespace drizzled
+{
 
 /**
   Create right type of Cached_item for an item.
@@ -183,4 +185,4 @@ bool Cached_item_decimal::cmp()
   return false;
 }
 
-
+} /* namespace drizzled */

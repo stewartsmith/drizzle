@@ -18,12 +18,13 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/plugin/client.h>
 #include <drizzled/item/null.h>
 #include <drizzled/lex_string.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool Item_null::eq(const Item *item, bool) const
 { return item->type() == type(); }
@@ -112,3 +113,5 @@ bool Item_null::send(plugin::Client *client, String *)
 {
   return client->store();
 }
+
+} /* namespace drizzled */

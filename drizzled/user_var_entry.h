@@ -23,6 +23,9 @@
 
 #include "drizzled/query_id.h"
 
+namespace drizzled
+{
+
 // this is needed for user_vars hash
 class user_var_entry
 {
@@ -39,7 +42,7 @@ class user_var_entry
   { 
     name.str= strdup(arg);
     name.length= strlen(arg);
-  };
+  }
 
   ~user_var_entry()
   {
@@ -68,5 +71,7 @@ class user_var_entry
                    Item_result type, const CHARSET_INFO * const cs, Derivation dv,
                    bool unsigned_arg);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_USER_VAR_ENTRY_H */

@@ -49,12 +49,15 @@
 #include "drizzled/field/varstring.h"
 #include "drizzled/internal/m_string.h"
 
+#include <cstdio>
 #include <math.h>
 #include <algorithm>
 #include <float.h>
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 const String my_null_string("NULL", 4, default_charset_info);
 
@@ -467,7 +470,7 @@ bool Item::get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
     if (number_to_datetime(value, ltime, fuzzydate, &was_cut) == -1L)
     {
       char buff[22], *end;
-      end= int64_t10_to_str(value, buff, -10);
+      end= internal::int64_t10_to_str(value, buff, -10);
       make_truncated_value_warning(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                    buff, (int) (end-buff), DRIZZLE_TIMESTAMP_NONE,
                                    NULL);
@@ -612,11 +615,6 @@ bool Item::change_context_processor(unsigned char *)
   return false;
 }
 
-bool Item::reset_query_id_processor(unsigned char *)
-{
-  return false;
-}
-
 bool Item::register_field_in_read_map(unsigned char *)
 {
   return false;
@@ -694,21 +692,6 @@ bool Item::is_expensive()
     is_expensive_cache= walk(&Item::is_expensive_processor, 0,
                              (unsigned char*)0);
   return test(is_expensive_cache);
-}
-
-int Item::save_in_field_no_warnings(Field *field, bool no_conversions)
-{
-  int res;
-  Table *table= field->table;
-  Session *session= table->in_use;
-  enum_check_fields tmp= session->count_cuted_fields;
-  ulong sql_mode= session->variables.sql_mode;
-  session->variables.sql_mode&= ~(MODE_NO_ZERO_DATE);
-  session->count_cuted_fields= CHECK_FIELD_IGNORE;
-  res= save_in_field(field, no_conversions);
-  session->count_cuted_fields= tmp;
-  session->variables.sql_mode= sql_mode;
-  return res;
 }
 
 /*
@@ -805,7 +788,7 @@ void mark_as_dependent(Session *session, Select_Lex *last, Select_Lex *current,
   if (session->lex->describe & DESCRIBE_EXTENDED)
   {
     char warn_buff[DRIZZLE_ERRMSG_SIZE];
-    sprintf(warn_buff, ER(ER_WARN_FIELD_RESOLVED),
+    snprintf(warn_buff, sizeof(warn_buff), ER(ER_WARN_FIELD_RESOLVED),
             db_name, (db_name[0] ? "." : ""),
             table_name, (table_name [0] ? "." : ""),
             resolved_item->field_name,
@@ -847,7 +830,7 @@ void mark_select_range_as_dependent(Session *session,
                   0);
     }
     else
-      prev_subselect_item->used_tables_cache|= found_field->table->map;
+      prev_subselect_item->used_tables_cache|= found_field->getTable()->map;
     prev_subselect_item->const_item_cache= 0;
     mark_as_dependent(session, last_select, current_sel, resolved_item,
                       dependent);
@@ -868,12 +851,12 @@ void mark_select_range_as_dependent(Session *session,
     - the found item on success
     - NULL if find_item is not in group_list
 */
-static Item** find_field_in_group_list(Item *find_item, order_st *group_list)
+static Item** find_field_in_group_list(Item *find_item, Order *group_list)
 {
   const char *db_name;
   const char *table_name;
   const char *field_name;
-  order_st *found_group= NULL;
+  Order *found_group= NULL;
   int found_match_degree= 0;
   Item_ident *cur_field;
   int cur_match_degree= 0;
@@ -899,7 +882,7 @@ static Item** find_field_in_group_list(Item *find_item, order_st *group_list)
 
   assert(field_name != 0);
 
-  for (order_st *cur_group= group_list ; cur_group ; cur_group= cur_group->next)
+  for (Order *cur_group= group_list ; cur_group ; cur_group= cur_group->next)
   {
     if ((*(cur_group->item))->real_item()->type() == Item::FIELD_ITEM)
     {
@@ -924,7 +907,7 @@ static Item** find_field_in_group_list(Item *find_item, order_st *group_list)
         if (cur_field->db_name && db_name)
         {
           /* If field_name is also qualified by a database name. */
-          if (strcmp(cur_field->db_name, db_name))
+          if (strcasecmp(cur_field->db_name, db_name))
             /* Same field names, different databases. */
             return NULL;
           ++cur_match_degree;
@@ -961,7 +944,7 @@ Item** resolve_ref_in_select_and_group(Session *session, Item_ident *ref, Select
 {
   Item **group_by_ref= NULL;
   Item **select_ref= NULL;
-  order_st *group_list= (order_st*) select->group_list.first;
+  Order *group_list= (Order*) select->group_list.first;
   bool ambiguous_fields= false;
   uint32_t counter;
   enum_resolution_type resolution;
@@ -970,7 +953,8 @@ Item** resolve_ref_in_select_and_group(Session *session, Item_ident *ref, Select
     Search for a column or derived column named as 'ref' in the SELECT
     clause of the current select.
   */
-  if (!(select_ref= find_item_in_list(ref, *(select->get_item_list()),
+  if (!(select_ref= find_item_in_list(session,
+                                      ref, *(select->get_item_list()),
                                       &counter, REPORT_EXCEPT_NOT_FOUND,
                                       &resolution)))
     return NULL; /* Some error occurred. */
@@ -1140,11 +1124,16 @@ Field *Item::make_string_field(Table *table)
   Field *field;
   assert(collation.collation);
   if (max_length/collation.collation->mbmaxlen > CONVERT_IF_BIGGER_TO_BLOB)
+  {
     field= new Field_blob(max_length, maybe_null, name,
                           collation.collation);
+  }
   else
-    field= new Field_varstring(max_length, maybe_null, name, table->s,
+  {
+    table->setVariableWidth();
+    field= new Field_varstring(max_length, maybe_null, name,
                                collation.collation);
+  }
 
   if (field)
     field->init(table);
@@ -1600,19 +1589,25 @@ static Field *create_tmp_field_from_item(Session *,
     if ((type= item->field_type()) == DRIZZLE_TYPE_DATETIME ||
         type == DRIZZLE_TYPE_DATE ||
         type == DRIZZLE_TYPE_TIMESTAMP)
+    {
       new_field= item->tmp_table_field_from_field_type(table, 1);
-    /*
-      Make sure that the blob fits into a Field_varstring which has
-      2-byte lenght.
-    */
+      /*
+        Make sure that the blob fits into a Field_varstring which has
+        2-byte lenght.
+      */
+    }
     else if (item->max_length/item->collation.collation->mbmaxlen > 255 &&
              convert_blob_length <= Field_varstring::MAX_SIZE &&
              convert_blob_length)
+    {
+      table->setVariableWidth();
       new_field= new Field_varstring(convert_blob_length, maybe_null,
-                                     item->name, table->s,
-                                     item->collation.collation);
+                                     item->name, item->collation.collation);
+    }
     else
+    {
       new_field= item->make_string_field(table);
+    }
     new_field->set_derivation(item->collation.derivation);
     break;
   case DECIMAL_RESULT:
@@ -1678,13 +1673,12 @@ static Field *create_tmp_field_from_item(Session *,
 Field *create_tmp_field(Session *session,
                         Table *table,
                         Item *item,
-                        Item::Type type, 
-                        Item ***copy_func, 
+                        Item::Type type,
+                        Item ***copy_func,
                         Field **from_field,
-                        Field **default_field, 
-                        bool group, 
+                        Field **default_field,
+                        bool group,
                         bool modify_item,
-                        bool, 
                         bool make_copy_field,
                         uint32_t convert_blob_length)
 {
@@ -1775,3 +1769,4 @@ Field *create_tmp_field(Session *session,
   }
 }
 
+} /* namespace drizzled */

@@ -21,31 +21,35 @@
 /**
  * @file
  *
- * Defines the JOIN class
+ * Defines the Join class
  */
 
 #ifndef DRIZZLED_JOIN_H
 #define DRIZZLED_JOIN_H
 
 #include <drizzled/optimizer/position.h>
+#include "drizzled/sql_select.h"
 #include <bitset>
 
-class JOIN :public drizzled::memory::SqlAlloc
+namespace drizzled
 {
-  JOIN(const JOIN &rhs);                        /**< not implemented */
-  JOIN& operator=(const JOIN &rhs);             /**< not implemented */
+
+class Join :public memory::SqlAlloc
+{
+  Join(const Join &rhs);                        /**< not implemented */
+  Join& operator=(const Join &rhs);             /**< not implemented */
 
   /**
    * Contains a partial query execution plan which is extended during
    * cost-based optimization.
    */
-  drizzled::optimizer::Position positions[MAX_TABLES+1];
+  optimizer::Position positions[MAX_TABLES+1];
 
   /**
    * Contains the optimal query execution plan after cost-based optimization
    * has taken place. 
    */
-  drizzled::optimizer::Position best_positions[MAX_TABLES+1];
+  optimizer::Position best_positions[MAX_TABLES+1];
 
 public:
   JoinTable *join_tab;
@@ -98,17 +102,17 @@ public:
 
   /*
     simple_xxxxx is set if order_st/GROUP BY doesn't include any references
-    to other tables than the first non-constant table in the JOIN.
+    to other tables than the first non-constant table in the Join.
     It's also set if order_st/GROUP BY is empty.
   */
   bool simple_order;
   bool simple_group;
   /**
     Is set only in case if we have a GROUP BY clause
-    and no order_st BY after constant elimination of 'order'.
+    and no ORDER BY after constant elimination of 'order'.
   */
   bool no_order;
-  /** Is set if we have a GROUP BY and we have order_st BY on a constant. */
+  /** Is set if we have a GROUP BY and we have ORDER BY on a constant. */
   bool skip_sort_order;
   bool union_part; /**< this subselect is part of union */
   bool optimized; /**< flag to avoid double optimization in EXPLAIN */
@@ -143,7 +147,7 @@ public:
   Select_Lex_Unit *unit;
   /** select that processed */
   Select_Lex *select_lex;
-  drizzled::optimizer::SqlSelect *select; /**< created in optimization phase */
+  optimizer::SqlSelect *select; /**< created in optimization phase */
 
   /**
     Bitmap of nested joins embedding the position at the end of the current
@@ -173,9 +177,9 @@ public:
   uint64_t select_options;
   select_result *result;
   Tmp_Table_Param tmp_table_param;
-  DRIZZLE_LOCK *lock;
+  DrizzleLock *lock;
 
-  JOIN *tmp_join; /**< copy of this JOIN to be used with temporary tables */
+  Join *tmp_join; /**< copy of this Join to be used with temporary tables */
   ROLLUP rollup;				/**< Used with rollup */
   DYNAMIC_ARRAY keyuse;
   Item::cond_result cond_value;
@@ -191,8 +195,8 @@ public:
   List<Item> tmp_fields_list3;
   int error;
 
-  order_st *order;
-  order_st *group_list; /**< hold parameters of mysql_select */
+  Order *order;
+  Order *group_list; /**< hold parameters of mysql_select */
   COND *conds;                            // ---"---
   Item *conds_history; /**< store WHERE for explain */
   TableList *tables_list; /**< hold 'tables' parameter of mysql_select */
@@ -215,13 +219,13 @@ public:
     allocations that occur in repetition at execution time will result in
     excessive memory usage.
   */
-  SORT_FIELD *sortorder;                        // make_unireg_sortorder()
+  SortField *sortorder;                        // make_unireg_sortorder()
   Table **table_reexec;                         // make_simple_join()
   JoinTable *join_tab_reexec;                    // make_simple_join()
   /* end of allocation caching storage */
 
   /** Constructors */
-  JOIN(Session *session_arg, 
+  Join(Session *session_arg, 
        List<Item> &fields_arg, 
        uint64_t select_options_arg,
        select_result *result_arg)
@@ -399,8 +403,8 @@ public:
               uint32_t wind_num,
               COND *conds,
               uint32_t og_num,
-              order_st *order,
-              order_st *group,
+              Order *order,
+              Order *group,
               Item *having,
               Select_Lex *select,
               Select_Lex_Unit *unit);
@@ -442,7 +446,7 @@ public:
     memory consumption.
   */
   void join_free();
-  /** Cleanup this JOIN, possibly for reuse */
+  /** Cleanup this Join, possibly for reuse */
   void cleanup(bool full);
   void clear();
   bool save_join_tab();
@@ -467,7 +471,7 @@ public:
   void copyPartialPlanIntoOptimalPlan(uint32_t size)
   {
     memcpy(best_positions, positions, 
-           sizeof(drizzled::optimizer::Position) * size);
+           sizeof(optimizer::Position) * size);
   }
 
   void cache_const_exprs();
@@ -477,7 +481,7 @@ public:
    * @return a reference to the specified position in the optimal
    *         query plan
    */
-  drizzled::optimizer::Position &getPosFromOptimalPlan(uint32_t index)
+  optimizer::Position &getPosFromOptimalPlan(uint32_t index)
   {
     return best_positions[index];
   }
@@ -487,7 +491,7 @@ public:
    * @return a reference to the specified position in the partial
    *         query plan
    */
-  drizzled::optimizer::Position &getPosFromPartialPlan(uint32_t index)
+  optimizer::Position &getPosFromPartialPlan(uint32_t index)
   {
     return positions[index];
   }
@@ -496,7 +500,7 @@ public:
    * @param[in] index the index of the position to set
    * @param[in] in_pos the value to set the position to
    */
-  void setPosInPartialPlan(uint32_t index, drizzled::optimizer::Position &in_pos)
+  void setPosInPartialPlan(uint32_t index, optimizer::Position &in_pos)
   {
     positions[index]= in_pos;
   }
@@ -504,7 +508,7 @@ public:
   /**
    * @return a pointer to the first position in the partial query plan
    */
-  drizzled::optimizer::Position *getFirstPosInPartialPlan()
+  optimizer::Position *getFirstPosInPartialPlan()
   {
     return positions;
   }
@@ -514,19 +518,21 @@ public:
    *                  query plan
    * @return a pointer to the position in the partial query plan
    */
-  drizzled::optimizer::Position *getSpecificPosInPartialPlan(int32_t index)
+  optimizer::Position *getSpecificPosInPartialPlan(int32_t index)
   {
     return positions + index;
   }
 
 };
 
-enum_nested_loop_state evaluate_join_record(JOIN *join, JoinTable *join_tab, int error);
-enum_nested_loop_state evaluate_null_complemented_join_record(JOIN *join, JoinTable *join_tab);
-enum_nested_loop_state flush_cached_records(JOIN *join, JoinTable *join_tab, bool skip_last);
-enum_nested_loop_state end_send(JOIN *join, JoinTable *join_tab, bool end_of_records);
-enum_nested_loop_state end_write(JOIN *join, JoinTable *join_tab, bool end_of_records);
-enum_nested_loop_state end_update(JOIN *join, JoinTable *join_tab, bool end_of_records);
-enum_nested_loop_state end_unique_update(JOIN *join, JoinTable *join_tab, bool end_of_records);
+enum_nested_loop_state evaluate_join_record(Join *join, JoinTable *join_tab, int error);
+enum_nested_loop_state evaluate_null_complemented_join_record(Join *join, JoinTable *join_tab);
+enum_nested_loop_state flush_cached_records(Join *join, JoinTable *join_tab, bool skip_last);
+enum_nested_loop_state end_send(Join *join, JoinTable *join_tab, bool end_of_records);
+enum_nested_loop_state end_write(Join *join, JoinTable *join_tab, bool end_of_records);
+enum_nested_loop_state end_update(Join *join, JoinTable *join_tab, bool end_of_records);
+enum_nested_loop_state end_unique_update(Join *join, JoinTable *join_tab, bool end_of_records);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_JOIN_H */

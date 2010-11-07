@@ -12,25 +12,12 @@ FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+Place, Suite 330, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
 /******************************************************
 SQL parser lexical analyzer: input file for the GNU Flex lexer generator
-
-The InnoDB parser is frozen because MySQL takes care of SQL parsing.
-Therefore we normally keep the InnoDB parser C files as they are, and do
-not automatically generate them from pars0grm.y and pars0lex.l.
-
-How to make the InnoDB parser and lexer C files:
-
-1. Run ./make_flex.sh to generate lexer files.
-
-2. Run ./make_bison.sh to generate parser files.
-
-These instructions seem to work at least with bison-1.875d and flex-2.5.31 on
-Linux.
 
 Created 12/14/1997 Heikki Tuuri
 *******************************************************/
@@ -47,7 +34,6 @@ Created 12/14/1997 Heikki Tuuri
 %option noyy_scan_buffer
 %option noyy_scan_bytes
 %option noyy_scan_string
-%option nounistd
 
 %{
 #define YYSTYPE que_node_t*
@@ -661,3 +647,29 @@ In the state 'id', only two actions are possible (defined below). */
 }
 
 %%
+
+/* yylex_destroy() is not defined before Flex 2.5.9
+   so we attempt to define something that should be good enough
+   for old Flex - such as that found on CentOS 5
+*/
+#if !defined(YY_FLEX_MAJOR_VERSION) || YY_FLEX_MAJOR_VERSION < 2 \
+  || (YY_FLEX_MAJOR_VERSION == 2                                        \
+      && (!defined(YY_FLEX_MINOR_VERSION) || YY_FLEX_MINOR_VERSION < 5  \
+          || (YY_FLEX_MINOR_VERSION == 5                                \
+              && (!defined(YY_FLEX_SUBMINOR_VERSION)                    \
+                  || YY_FLEX_SUBMINOR_VERSION < 9))))
+# define yylex_destroy() yy_delete_buffer(YY_CURRENT_BUFFER)
+#endif
+
+/**********************************************************************
+Release any resources used by the lexer. */
+UNIV_INTERN
+void
+pars_lexer_close(void)
+/*==================*/
+{
+	yylex_destroy();
+	free(stringbuf);
+	stringbuf = NULL;
+	stringbuf_len_alloc = stringbuf_len = 0;
+}

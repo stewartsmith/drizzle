@@ -27,12 +27,16 @@
 #include "drizzled/item/sum.h"
 #include "drizzled/item/int.h"
 #include "drizzled/item/float.h"
+#include "drizzled/item/string.h"
 #include "drizzled/item/decimal.h"
 #include "drizzled/function/math/int.h"
 #include "drizzled/function/numhybrid.h"
 #include "drizzled/session.h"
 #include "drizzled/common.h"
 #include "drizzled/qsort_cmp.h"
+
+namespace drizzled
+{
 
 extern Item_result item_cmp_type(Item_result a,Item_result b);
 class Item_bool_func2;
@@ -50,7 +54,7 @@ uint64_t get_datetime_value(Session *session,
                             Item *warn_item, 
                             bool *is_null);
 
-class Arg_comparator: public drizzled::memory::SqlAlloc
+class Arg_comparator: public memory::SqlAlloc
 {
   Item **a, **b;
   arg_cmp_func func;
@@ -762,7 +766,7 @@ public:
 
 /* A vector of values of some type  */
 
-class in_vector :public drizzled::memory::SqlAlloc
+class in_vector :public memory::SqlAlloc
 {
 public:
   char *base;
@@ -774,7 +778,7 @@ public:
   in_vector() {}
   in_vector(uint32_t elements,uint32_t element_length,qsort2_cmp cmp_func,
   	    const CHARSET_INFO * const cmp_coll)
-    :base((char*) drizzled::memory::sql_calloc(elements*element_length)),
+    :base((char*) memory::sql_calloc(elements*element_length)),
      size(element_length), compare(cmp_func), collation(cmp_coll),
      count(elements), used_count(elements) {}
   virtual ~in_vector() {}
@@ -940,7 +944,7 @@ public:
 ** Classes for easy comparing of non const items
 */
 
-class cmp_item :public drizzled::memory::SqlAlloc
+class cmp_item :public memory::SqlAlloc
 {
 public:
   const CHARSET_INFO *cmp_charset;
@@ -1577,7 +1581,7 @@ public:
   { return fields.head()->collation.collation; }
 };
 
-class COND_EQUAL: public drizzled::memory::SqlAlloc
+class COND_EQUAL: public memory::SqlAlloc
 {
 public:
   uint32_t max_members;               /* max number of members the current level
@@ -1704,5 +1708,7 @@ inline Item *and_conds(Item *a, Item *b)
 }
 
 Item *and_expressions(Item *a, Item *b, Item **org_item);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_CMPFUNC_H */

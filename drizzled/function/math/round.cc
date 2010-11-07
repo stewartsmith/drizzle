@@ -26,6 +26,10 @@
 #include <algorithm>
 
 #include "drizzled/function/math/round.h"
+#include "drizzled/util/test.h"
+
+namespace drizzled
+{
 
 extern const double log_10[309];
 
@@ -199,10 +203,10 @@ int64_t Item_func_round::int_op()
 
   if (truncate)
     value= (unsigned_flag) ?
-      ((uint64_t) value / tmp) * tmp : (value / tmp) * tmp;
+      (int64_t)(((uint64_t) value / tmp) * tmp) : (value / tmp) * tmp;
   else
     value= (unsigned_flag || value >= 0) ?
-      my_unsigned_round((uint64_t) value, tmp) :
+      (int64_t)(my_unsigned_round((uint64_t) value, tmp)) :
       -(int64_t) my_unsigned_round((uint64_t) -value, tmp);
   return value;
 }
@@ -228,3 +232,4 @@ my_decimal *Item_func_round::decimal_op(my_decimal *decimal_value)
   return 0;
 }
 
+} /* namespace drizzled */

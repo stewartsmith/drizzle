@@ -20,11 +20,18 @@
 #ifndef DRIZZLED_FUNCTION_STR_LOAD_FILE_H
 #define DRIZZLED_FUNCTION_STR_LOAD_FILE_H
 
+namespace drizzled
+{
+
 class Item_load_file :public Item_str_func
 {
+  Session &session;
   String tmp_value;
 public:
-  Item_load_file(Item *a) :Item_str_func(a) {}
+  Item_load_file(Session &session_arg, Item *a) :
+    Item_str_func(a),
+    session(session_arg)
+  {}
   String *val_str(String *);
   const char *func_name() const { return "load_file"; }
   void fix_length_and_dec()
@@ -34,5 +41,7 @@ public:
     max_length=MAX_BLOB_WIDTH;
   }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_STR_LOAD_FILE_H */

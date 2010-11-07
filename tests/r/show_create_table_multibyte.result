@@ -1,0 +1,7 @@
+create table `чем` (a int comment 'чем');
+show create table `чем`;
+Table	Create Table
+чем	CREATE TABLE `чем` (
+  `a` INT DEFAULT NULL COMMENT 'чем'
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+drop table `чем`;

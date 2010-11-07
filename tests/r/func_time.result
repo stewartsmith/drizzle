@@ -634,9 +634,9 @@ last_day('2001-02-12')
 create table t1 select last_day('2000-02-05') as a,
 from_days(to_days("960101")) as b;
 describe t1;
-Field	Type	Null	Key	Default	Extra
-a	date	NO		NULL	
-b	date	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+a	DATE	NO		NO	
+b	DATE	YES		YES	
 select * from t1;
 a	b
 2000-02-29	1996-01-01
@@ -805,18 +805,18 @@ WHERE t1.day BETWEEN
 '2005.09.01' - INTERVAL 6 MONTH AND t2.day;
 id	day	id	day
 1	2005-06-01	1	2005-08-01
-3	2005-07-01	1	2005-08-01
 1	2005-06-01	2	2005-06-15
 1	2005-06-01	3	2005-07-15
+3	2005-07-01	1	2005-08-01
 3	2005-07-01	3	2005-07-15
 SELECT * FROM t1, t2 
 WHERE CAST(t1.day AS DATE) BETWEEN 
 '2005.09.01' - INTERVAL 6 MONTH AND t2.day;
 id	day	id	day
 1	2005-06-01	1	2005-08-01
-3	2005-07-01	1	2005-08-01
 1	2005-06-01	2	2005-06-15
 1	2005-06-01	3	2005-07-15
+3	2005-07-01	1	2005-08-01
 3	2005-07-01	3	2005-07-15
 DROP TABLE t1,t2;
 create table t1 (field DATE);

@@ -11,8 +11,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -333,6 +333,12 @@ UNIV_INTERN
 void
 trx_sys_file_format_tag_init(void);
 /*==============================*/
+/*****************************************************************//**
+Shutdown/Close the transaction system. */
+UNIV_INTERN
+void
+trx_sys_close(void);
+/*===============*/
 /*****************************************************************//**
 Get the name representation of the file format from its id.
 @return	pointer to the name */

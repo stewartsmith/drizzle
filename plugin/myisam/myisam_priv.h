@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /* This file is included by all internal myisam files */
 
@@ -21,7 +21,7 @@
 #include "config.h"
 #include "myisam.h"			/* Structs & some defines */
 #include "myisampack.h"			/* packing of keys */
-#include "drizzled/my_tree.h"
+#include "drizzled/tree.h"
 #include "drizzled/internal/my_pthread.h"
 #include <drizzled/thr_lock.h>
 #include <drizzled/common.h>
@@ -31,23 +31,27 @@
 #include <string.h>
 #include <list>
 
+#include <boost/thread/mutex.hpp>
+
 #if defined(my_write)
 #undef my_write				/* undef map from my_nosys; We need test-if-disk full */
 #endif
 
-#ifdef	__cplusplus
-extern "C" {
-#endif
+/* Typical key cash */
+static const uint32_t KEY_CACHE_SIZE= 8*1024*1024;
+
+/* Default size of a key cache block  */
+static const uint32_t KEY_CACHE_BLOCK_SIZE= 1024;
 
 typedef struct st_mi_status_info
 {
-  ha_rows records;			/* Rows in table */
-  ha_rows del;				/* Removed rows */
-  my_off_t empty;			/* lost space in datafile */
-  my_off_t key_empty;			/* lost space in indexfile */
-  my_off_t key_file_length;
-  my_off_t data_file_length;
-  ha_checksum checksum;
+  drizzled::ha_rows records;			/* Rows in table */
+  drizzled::ha_rows del;				/* Removed rows */
+  drizzled::internal::my_off_t empty;			/* lost space in datafile */
+  drizzled::internal::my_off_t key_empty;			/* lost space in indexfile */
+  drizzled::internal::my_off_t key_file_length;
+  drizzled::internal::my_off_t data_file_length;
+  drizzled::internal::ha_checksum checksum;
 } MI_STATUS_INFO;
 
 typedef struct st_mi_state_info
@@ -70,22 +74,22 @@ typedef struct st_mi_state_info
   } header;
 
   MI_STATUS_INFO state;
-  ha_rows split;			/* number of split blocks */
-  my_off_t dellink;			/* Link to next removed block */
+  drizzled::ha_rows split;			/* number of split blocks */
+  drizzled::internal::my_off_t dellink;			/* Link to next removed block */
   uint64_t auto_increment;
   ulong process;			/* process that updated table last */
   ulong unique;				/* Unique number for this process */
   ulong update_count;			/* Updated for each write lock */
   ulong status;
   ulong *rec_per_key_part;
-  my_off_t *key_root;			/* Start of key trees */
-  my_off_t *key_del;			/* delete links for trees */
-  my_off_t rec_per_key_rows;		/* Rows when calculating rec_per_key */
+  drizzled::internal::my_off_t *key_root;			/* Start of key trees */
+  drizzled::internal::my_off_t *key_del;			/* delete links for trees */
+  drizzled::internal::my_off_t rec_per_key_rows;		/* Rows when calculating rec_per_key */
 
   ulong sec_index_changed;		/* Updated when new sec_index */
   ulong sec_index_used;			/* which extra index are in use */
   uint64_t key_map;			/* Which keys are in use */
-  ha_checksum checksum;                 /* Table checksum */
+  drizzled::internal::ha_checksum checksum;                 /* Table checksum */
   ulong version;			/* timestamp of create */
   time_t create_time;			/* Time when created database */
   time_t recover_time;			/* Time for last recover */
@@ -114,11 +118,11 @@ typedef struct st_mi_state_info
 
 typedef struct st_mi_base_info
 {
-  my_off_t keystart;			/* Start of keys */
-  my_off_t max_data_file_length;
-  my_off_t max_key_file_length;
-  my_off_t margin_key_file_length;
-  ha_rows records,reloc;		/* Create information */
+  drizzled::internal::my_off_t keystart;			/* Start of keys */
+  drizzled::internal::my_off_t max_data_file_length;
+  drizzled::internal::my_off_t max_key_file_length;
+  drizzled::internal::my_off_t margin_key_file_length;
+  drizzled::ha_rows records,reloc;		/* Create information */
   ulong mean_row_length;		/* Create information */
   ulong reclength;			/* length of unpacked record */
   ulong pack_reclength;			/* Length of full packed rec. */
@@ -164,7 +168,7 @@ typedef struct st_mi_isam_pack {
 
 #define MAX_NONMAPPED_INSERTS 1000
 
-class Session;
+namespace drizzled { class Session; }
 
 typedef struct st_mi_isam_share {	/* Shared between opens */
   MI_STATE_INFO state;
@@ -173,33 +177,42 @@ typedef struct st_mi_isam_share {	/* Shared between opens */
   MI_KEYDEF  *keyinfo;			/* Key definitions */
   MI_UNIQUEDEF *uniqueinfo;		/* unique definitions */
   HA_KEYSEG *keyparts;			/* key part info */
-  MI_COLUMNDEF *rec;			/* Pointer to field information */
+  drizzled::MI_COLUMNDEF *rec;			/* Pointer to field information */
   MI_PACK    pack;			/* Data about packed records */
   MI_BLOB    *blobs;			/* Pointer to blobs */
-  std::list<Session *> *in_use;         /* List of threads using this table */
+  std::list<drizzled::Session *> *in_use;         /* List of threads using this table */
   char  *unique_file_name;		/* realpath() of index file */
   char  *data_file_name,		/* Resolved path names from symlinks */
         *index_file_name;
   unsigned char *file_map;			/* mem-map of file if possible */
-  KEY_CACHE *key_cache;			/* ref to the current key cache */
+private:
+  drizzled::KEY_CACHE key_cache;			/* ref to the current key cache */
+public:
+  drizzled::KEY_CACHE *getKeyCache()
+  {
+    return &key_cache;
+  }
+
+  void setKeyCache();
+
   MI_DECODE_TREE *decode_trees;
   uint16_t *decode_tables;
-  int (*read_record)(struct st_myisam_info*, my_off_t, unsigned char*);
+  int (*read_record)(struct st_myisam_info*, drizzled::internal::my_off_t, unsigned char*);
   int (*write_record)(struct st_myisam_info*, const unsigned char*);
-  int (*update_record)(struct st_myisam_info*, my_off_t, const unsigned char*);
+  int (*update_record)(struct st_myisam_info*, drizzled::internal::my_off_t, const unsigned char*);
   int (*delete_record)(struct st_myisam_info*);
-  int (*read_rnd)(struct st_myisam_info*, unsigned char*, my_off_t, bool);
+  int (*read_rnd)(struct st_myisam_info*, unsigned char*, drizzled::internal::my_off_t, bool);
   int (*compare_record)(struct st_myisam_info*, const unsigned char *);
   /* Function to use for a row checksum. */
-  ha_checksum (*calc_checksum)(struct st_myisam_info*, const unsigned char *);
+  drizzled::internal::ha_checksum (*calc_checksum)(struct st_myisam_info*, const unsigned char *);
   int (*compare_unique)(struct st_myisam_info*, MI_UNIQUEDEF *,
-			const unsigned char *record, my_off_t pos);
-  size_t (*file_read)(MI_INFO *, unsigned char *, size_t, my_off_t, myf);
-  size_t (*file_write)(MI_INFO *, const unsigned char *, size_t, my_off_t, myf);
+			const unsigned char *record, drizzled::internal::my_off_t pos);
+  size_t (*file_read)(MI_INFO *, unsigned char *, size_t, drizzled::internal::my_off_t, drizzled::myf);
+  size_t (*file_write)(MI_INFO *, const unsigned char *, size_t, drizzled::internal::my_off_t, drizzled::myf);
   ulong this_process;			/* processid */
   ulong last_process;			/* For table-change-check */
   ulong last_version;			/* Version on start */
-  ulong options;			/* Options used */
+  uint64_t options;			/* Options used */
   ulong min_pack_length;		/* Theese are used by packed data */
   ulong max_pack_length;
   ulong state_diff_length;
@@ -211,8 +224,8 @@ typedef struct st_mi_isam_share {	/* Shared between opens */
   uint	reopen;				/* How many times reopened */
   uint	w_locks,r_locks,tot_locks;	/* Number of read/write locks */
   uint	blocksize;			/* blocksize of keyfile */
-  myf write_flag;
-  enum data_file_type data_file_type;
+  drizzled::myf write_flag;
+  enum drizzled::data_file_type data_file_type;
   /* Below flag is needed to make log tables work with concurrent insert */
   bool is_log_table;
 
@@ -221,13 +234,9 @@ typedef struct st_mi_isam_share {	/* Shared between opens */
     not_flushed,
     temporary,delay_key_write,
     concurrent_insert;
-  THR_LOCK lock;
-  pthread_mutex_t intern_lock;		/* Locking for use with _locking */
-  pthread_rwlock_t *key_root_lock;
-  my_off_t mmaped_length;
+  drizzled::internal::my_off_t mmaped_length;
   uint32_t     nonmmaped_inserts;           /* counter of writing in non-mmaped
                                            area */
-  pthread_rwlock_t mmap_lock;
 } MYISAM_SHARE;
 
 
@@ -249,8 +258,8 @@ struct st_myisam_info {
   MI_BLOB     *blobs;			/* Pointer to blobs */
   MI_BIT_BUFF  bit_buff;
   /* accumulate indexfile changes between write's */
-  TREE	        *bulk_insert;
-  Session *in_use;                      /* Thread using this table          */
+  drizzled::TREE	        *bulk_insert;
+  drizzled::Session *in_use;                      /* Thread using this table          */
   char *filename;			/* parameter to open filename       */
   unsigned char *buff,				/* Temp area for key                */
 	*lastkey,*lastkey2;		/* Last used search key             */
@@ -260,19 +269,19 @@ struct st_myisam_info {
         *int_maxpos;			/*  -""-  */
   uint32_t  int_nod_flag;			/*  -""-  */
   uint32_t int_keytree_version;		/*  -""-  */
-  int (*read_record)(struct st_myisam_info*, my_off_t, unsigned char*);
+  int (*read_record)(struct st_myisam_info*, drizzled::internal::my_off_t, unsigned char*);
   ulong this_unique;			/* uniq filenumber or thread */
   ulong last_unique;			/* last unique number */
   ulong this_loop;			/* counter for this open */
   ulong last_loop;			/* last used counter */
-  my_off_t lastpos,			/* Last record position */
+  drizzled::internal::my_off_t lastpos,			/* Last record position */
 	nextpos;			/* Position to next record */
-  my_off_t save_lastpos;
-  my_off_t pos;				/* Intern variable */
-  my_off_t last_keypage;		/* Last key page read */
-  my_off_t last_search_keypage;		/* Last keypage when searching */
-  my_off_t dupp_key_pos;
-  ha_checksum checksum;                 /* Temp storage for row checksum */
+  drizzled::internal::my_off_t save_lastpos;
+  drizzled::internal::my_off_t pos;				/* Intern variable */
+  drizzled::internal::my_off_t last_keypage;		/* Last key page read */
+  drizzled::internal::my_off_t last_search_keypage;		/* Last keypage when searching */
+  drizzled::internal::my_off_t dupp_key_pos;
+  drizzled::internal::ha_checksum checksum;                 /* Temp storage for row checksum */
   /* QQ: the folloing two xxx_length fields should be removed,
      as they are not compatible with parallel repair */
   ulong packed_length,blob_length;	/* Length of found, packed record */
@@ -282,7 +291,7 @@ struct st_myisam_info {
   int	lastinx;			/* Last used index */
   uint	lastkey_length;			/* Length of key in lastkey */
   uint	last_rkey_length;		/* Last length in mi_rkey() */
-  enum ha_rkey_function last_key_func;  /* CONTAIN, OVERLAP, etc */
+  enum drizzled::ha_rkey_function last_key_func;  /* CONTAIN, OVERLAP, etc */
   uint32_t  save_lastkey_length;
   uint32_t  pack_key_length;                /* For MYISAMMRG */
   uint16_t last_used_keyseg;              /* For MyISAMMRG */
@@ -292,9 +301,9 @@ struct st_myisam_info {
   uint	data_changed;			/* Somebody has changed data */
   uint	save_update;			/* When using KEY_READ */
   int	save_lastinx;
-  IO_CACHE rec_cache;			/* When cacheing records */
+  drizzled::internal::IO_CACHE rec_cache;			/* When cacheing records */
   uint32_t  preload_buff_size;              /* When preloading indexes */
-  myf lock_wait;			/* is 0 or MY_DONT_WAIT */
+  drizzled::myf lock_wait;			/* is 0 or MY_DONT_WAIT */
   bool was_locked;			/* Was locked in panic */
   bool append_insert_at_end;		/* Set if concurrent insert */
   bool quick_mode;
@@ -304,7 +313,7 @@ struct st_myisam_info {
 
   index_cond_func_t index_cond_func;   /* Index condition function */
   void *index_cond_func_arg;           /* parameter for the func */
-  THR_LOCK_DATA lock;
+  drizzled::THR_LOCK_DATA lock;
   unsigned char  *rtree_recursion_state;	/* For RTREE */
   int     rtree_recursion_depth;
 };
@@ -312,7 +321,7 @@ struct st_myisam_info {
 typedef struct st_buffpek {
   off_t file_pos;                    /* Where we are in the sort file */
   unsigned char *base,*key;                     /* Key pointers */
-  ha_rows count;                        /* Number of rows in table */
+  drizzled::ha_rows count;                        /* Number of rows in table */
   ulong mem_count;                      /* numbers of keys in memory */
   ulong max_keys;                       /* Max keys in buffert */
 } BUFFPEK;
@@ -320,8 +329,8 @@ typedef struct st_buffpek {
 typedef struct st_mi_sort_param
 {
   pthread_t  thr;
-  IO_CACHE read_cache, tempfile, tempfile_for_exceptions;
-  DYNAMIC_ARRAY buffpek;
+  drizzled::internal::IO_CACHE read_cache, tempfile, tempfile_for_exceptions;
+  drizzled::DYNAMIC_ARRAY buffpek;
   MI_BIT_BUFF   bit_buff;               /* For parallel repair of packrec. */
 
   /*
@@ -331,7 +340,7 @@ typedef struct st_mi_sort_param
   uint64_t unique[MI_MAX_KEY_SEG+1];
   uint64_t notnull[MI_MAX_KEY_SEG+1];
 
-  my_off_t pos,max_pos,filepos,start_recpos;
+  drizzled::internal::my_off_t pos,max_pos,filepos,start_recpos;
   uint32_t key, key_length,real_key_length,sortbuff_size;
   uint32_t maxbuffers, keys, find_length, sort_keys_length;
   bool fix_datafile, master;
@@ -349,9 +358,9 @@ typedef struct st_mi_sort_param
   int (*key_write)(struct st_mi_sort_param *, const void *);
   void (*lock_in_memory)(MI_CHECK *);
   int (*write_keys)(struct st_mi_sort_param *, register unsigned char **,
-                     uint32_t , struct st_buffpek *, IO_CACHE *);
-  unsigned int (*read_to_buffer)(IO_CACHE *,struct st_buffpek *, uint);
-  int (*write_key)(struct st_mi_sort_param *, IO_CACHE *,unsigned char *,
+                     uint32_t , struct st_buffpek *, drizzled::internal::IO_CACHE *);
+  unsigned int (*read_to_buffer)(drizzled::internal::IO_CACHE *,struct st_buffpek *, uint);
+  int (*write_key)(struct st_mi_sort_param *, drizzled::internal::IO_CACHE *,unsigned char *,
                        uint, uint);
 } MI_SORT_PARAM;
 
@@ -463,7 +472,7 @@ typedef struct st_mi_sort_param
 #define MI_UNIQUE_HASH_TYPE	HA_KEYTYPE_ULONG_INT
 #define mi_unique_store(A,B)    mi_int4store((A),(B))
 
-extern pthread_mutex_t THR_LOCK_myisam;
+extern boost::mutex THR_LOCK_myisam;
 
 	/* Some extern variables */
 
@@ -488,29 +497,29 @@ typedef struct st_mi_s_param
 
 	/* Prototypes for intern functions */
 
-extern int _mi_read_dynamic_record(MI_INFO *info,my_off_t filepos,unsigned char *buf);
+extern int _mi_read_dynamic_record(MI_INFO *info,drizzled::internal::my_off_t filepos,unsigned char *buf);
 extern int _mi_write_dynamic_record(MI_INFO*, const unsigned char*);
-extern int _mi_update_dynamic_record(MI_INFO*, my_off_t, const unsigned char*);
+extern int _mi_update_dynamic_record(MI_INFO*, drizzled::internal::my_off_t, const unsigned char*);
 extern int _mi_delete_dynamic_record(MI_INFO *info);
 extern int _mi_cmp_dynamic_record(MI_INFO *info,const unsigned char *record);
-extern int _mi_read_rnd_dynamic_record(MI_INFO *, unsigned char *,my_off_t, bool);
+extern int _mi_read_rnd_dynamic_record(MI_INFO *, unsigned char *,drizzled::internal::my_off_t, bool);
 extern int _mi_write_blob_record(MI_INFO*, const unsigned char*);
-extern int _mi_update_blob_record(MI_INFO*, my_off_t, const unsigned char*);
-extern int _mi_read_static_record(MI_INFO *info, my_off_t filepos,unsigned char *buf);
+extern int _mi_update_blob_record(MI_INFO*, drizzled::internal::my_off_t, const unsigned char*);
+extern int _mi_read_static_record(MI_INFO *info, drizzled::internal::my_off_t filepos,unsigned char *buf);
 extern int _mi_write_static_record(MI_INFO*, const unsigned char*);
-extern int _mi_update_static_record(MI_INFO*, my_off_t, const unsigned char*);
+extern int _mi_update_static_record(MI_INFO*, drizzled::internal::my_off_t, const unsigned char*);
 extern int _mi_delete_static_record(MI_INFO *info);
 extern int _mi_cmp_static_record(MI_INFO *info,const unsigned char *record);
-extern int _mi_read_rnd_static_record(MI_INFO*, unsigned char *,my_off_t, bool);
+extern int _mi_read_rnd_static_record(MI_INFO*, unsigned char *,drizzled::internal::my_off_t, bool);
 extern int _mi_ck_write(MI_INFO *info,uint32_t keynr,unsigned char *key,uint32_t length);
 extern int _mi_ck_real_write_btree(MI_INFO *info, MI_KEYDEF *keyinfo,
                                    unsigned char *key, uint32_t key_length,
-                                   my_off_t *root, uint32_t comp_flag);
-extern int _mi_enlarge_root(MI_INFO *info,MI_KEYDEF *keyinfo,unsigned char *key, my_off_t *root);
+                                   drizzled::internal::my_off_t *root, uint32_t comp_flag);
+extern int _mi_enlarge_root(MI_INFO *info,MI_KEYDEF *keyinfo,unsigned char *key, drizzled::internal::my_off_t *root);
 extern int _mi_insert(MI_INFO *info,MI_KEYDEF *keyinfo,unsigned char *key,
 		      unsigned char *anc_buff,unsigned char *key_pos,unsigned char *key_buff,
 		      unsigned char *father_buff, unsigned char *father_keypos,
-		      my_off_t father_page, bool insert_last);
+		      drizzled::internal::my_off_t father_page, bool insert_last);
 extern int _mi_split_page(MI_INFO *info,MI_KEYDEF *keyinfo,unsigned char *key,
 			  unsigned char *buff,unsigned char *key_buff, bool insert_last);
 extern unsigned char *_mi_find_half_pos(uint32_t nod_flag,MI_KEYDEF *keyinfo,unsigned char *page,
@@ -551,7 +560,7 @@ extern int _mi_mark_file_changed(MI_INFO *info);
 extern int _mi_decrement_open_count(MI_INFO *info);
 extern int _mi_check_index(MI_INFO *info,int inx);
 extern int _mi_search(MI_INFO *info,MI_KEYDEF *keyinfo,unsigned char *key,uint32_t key_len,
-		      uint32_t nextflag,my_off_t pos);
+		      uint32_t nextflag,drizzled::internal::my_off_t pos);
 extern int _mi_bin_search(struct st_myisam_info *info,MI_KEYDEF *keyinfo,
 			  unsigned char *page,unsigned char *key,uint32_t key_len,uint32_t comp_flag,
 			  unsigned char * *ret_pos,unsigned char *buff, bool *was_last_key);
@@ -561,11 +570,11 @@ extern int _mi_seq_search(MI_INFO *info,MI_KEYDEF *keyinfo,unsigned char *page,
 extern int _mi_prefix_search(MI_INFO *info,MI_KEYDEF *keyinfo,unsigned char *page,
 			  unsigned char *key,uint32_t key_len,uint32_t comp_flag,
 			  unsigned char **ret_pos,unsigned char *buff, bool *was_last_key);
-extern my_off_t _mi_kpos(uint32_t nod_flag,unsigned char *after_key);
-extern void _mi_kpointer(MI_INFO *info,unsigned char *buff,my_off_t pos);
-extern my_off_t _mi_dpos(MI_INFO *info, uint32_t nod_flag,unsigned char *after_key);
-extern my_off_t _mi_rec_pos(MYISAM_SHARE *info, unsigned char *ptr);
-void _mi_dpointer(MI_INFO *info, unsigned char *buff,my_off_t pos);
+extern drizzled::internal::my_off_t _mi_kpos(uint32_t nod_flag,unsigned char *after_key);
+extern void _mi_kpointer(MI_INFO *info,unsigned char *buff,drizzled::internal::my_off_t pos);
+extern drizzled::internal::my_off_t _mi_dpos(MI_INFO *info, uint32_t nod_flag,unsigned char *after_key);
+extern drizzled::internal::my_off_t _mi_rec_pos(MYISAM_SHARE *info, unsigned char *ptr);
+void _mi_dpointer(MI_INFO *info, unsigned char *buff,drizzled::internal::my_off_t pos);
 extern uint32_t _mi_get_static_key(MI_KEYDEF *keyinfo,uint32_t nod_flag,unsigned char * *page,
 			       unsigned char *key);
 extern uint32_t _mi_get_pack_key(MI_KEYDEF *keyinfo,uint32_t nod_flag,unsigned char * *page,
@@ -582,23 +591,23 @@ extern uint32_t _mi_keylength_part(MI_KEYDEF *keyinfo, register unsigned char *k
 			       HA_KEYSEG *end);
 extern unsigned char *_mi_move_key(MI_KEYDEF *keyinfo,unsigned char *to,unsigned char *from);
 extern int _mi_search_next(MI_INFO *info,MI_KEYDEF *keyinfo,unsigned char *key,
-			   uint32_t key_length,uint32_t nextflag,my_off_t pos);
-extern int _mi_search_first(MI_INFO *info,MI_KEYDEF *keyinfo,my_off_t pos);
-extern int _mi_search_last(MI_INFO *info,MI_KEYDEF *keyinfo,my_off_t pos);
-extern unsigned char *_mi_fetch_keypage(MI_INFO *info,MI_KEYDEF *keyinfo,my_off_t page,
+			   uint32_t key_length,uint32_t nextflag,drizzled::internal::my_off_t pos);
+extern int _mi_search_first(MI_INFO *info,MI_KEYDEF *keyinfo,drizzled::internal::my_off_t pos);
+extern int _mi_search_last(MI_INFO *info,MI_KEYDEF *keyinfo,drizzled::internal::my_off_t pos);
+extern unsigned char *_mi_fetch_keypage(MI_INFO *info,MI_KEYDEF *keyinfo,drizzled::internal::my_off_t page,
 				int level,unsigned char *buff,int return_buffer);
-extern int _mi_write_keypage(MI_INFO *info,MI_KEYDEF *keyinfo,my_off_t page,
+extern int _mi_write_keypage(MI_INFO *info,MI_KEYDEF *keyinfo,drizzled::internal::my_off_t page,
 			     int level, unsigned char *buff);
-extern int _mi_dispose(MI_INFO *info,MI_KEYDEF *keyinfo,my_off_t pos,
+extern int _mi_dispose(MI_INFO *info,MI_KEYDEF *keyinfo,drizzled::internal::my_off_t pos,
                       int level);
-extern my_off_t _mi_new(MI_INFO *info,MI_KEYDEF *keyinfo,int level);
+extern drizzled::internal::my_off_t _mi_new(MI_INFO *info,MI_KEYDEF *keyinfo,int level);
 extern uint32_t _mi_make_key(MI_INFO *info,uint32_t keynr,unsigned char *key,
-			 const unsigned char *record,my_off_t filepos);
+			 const unsigned char *record,drizzled::internal::my_off_t filepos);
 extern uint32_t _mi_pack_key(register MI_INFO *info, uint32_t keynr, unsigned char *key,
-                         unsigned char *old, key_part_map keypart_map,
+                         unsigned char *old, drizzled::key_part_map keypart_map,
                          HA_KEYSEG **last_used_keyseg);
-extern int _mi_read_key_record(MI_INFO *info,my_off_t filepos,unsigned char *buf);
-extern int _mi_read_cache(IO_CACHE *info,unsigned char *buff,my_off_t pos,
+extern int _mi_read_key_record(MI_INFO *info,drizzled::internal::my_off_t filepos,unsigned char *buf);
+extern int _mi_read_cache(drizzled::internal::IO_CACHE *info,unsigned char *buff,drizzled::internal::my_off_t pos,
 			  uint32_t length,int re_read_if_possibly);
 extern uint64_t retrieve_auto_increment(MI_INFO *info,const unsigned char *record);
 
@@ -613,14 +622,14 @@ extern ulong _mi_rec_unpack(MI_INFO *info,unsigned char *to,unsigned char *from,
 			    ulong reclength);
 extern bool _mi_rec_check(MI_INFO *info,const unsigned char *record, unsigned char *packpos,
                              ulong packed_length, bool with_checkum);
-extern int _mi_write_part_record(MI_INFO *info,my_off_t filepos,ulong length,
-				 my_off_t next_filepos,unsigned char **record,
+extern int _mi_write_part_record(MI_INFO *info,drizzled::internal::my_off_t filepos,ulong length,
+				 drizzled::internal::my_off_t next_filepos,unsigned char **record,
 				 ulong *reclength,int *flag);
 extern void _mi_print_key(FILE *stream,HA_KEYSEG *keyseg,const unsigned char *key,
 			  uint32_t length);
 extern bool _mi_read_pack_info(MI_INFO *info,bool fix_keys);
-extern int _mi_read_pack_record(MI_INFO *info,my_off_t filepos,unsigned char *buf);
-extern int _mi_read_rnd_pack_record(MI_INFO*, unsigned char *,my_off_t, bool);
+extern int _mi_read_pack_record(MI_INFO *info,drizzled::internal::my_off_t filepos,unsigned char *buf);
+extern int _mi_read_rnd_pack_record(MI_INFO*, unsigned char *,drizzled::internal::my_off_t, bool);
 extern int _mi_pack_rec_unpack(MI_INFO *info, MI_BIT_BUFF *bit_buff,
                                unsigned char *to, unsigned char *from, ulong reclength);
 
@@ -633,9 +642,9 @@ typedef struct st_mi_block_info {	/* Parameter to _mi_get_block_info */
   ulong data_len;
   ulong block_len;
   ulong blob_len;
-  my_off_t filepos;
-  my_off_t next_filepos;
-  my_off_t prev_filepos;
+  drizzled::internal::my_off_t filepos;
+  drizzled::internal::my_off_t next_filepos;
+  drizzled::internal::my_off_t prev_filepos;
   uint32_t second_read;
   uint32_t offset;
 } MI_BLOCK_INFO;
@@ -670,21 +679,21 @@ typedef struct st_mi_block_info {	/* Parameter to _mi_get_block_info */
 #define fast_mi_writeinfo(INFO) if (!(INFO)->s->tot_locks) (void) _mi_writeinfo((INFO),0)
 #define fast_mi_readinfo(INFO) ((INFO)->lock_type == F_UNLCK) && _mi_readinfo((INFO),F_RDLCK,1)
 
-extern uint32_t _mi_get_block_info(MI_BLOCK_INFO *,int, my_off_t);
+extern uint32_t _mi_get_block_info(MI_BLOCK_INFO *,int, drizzled::internal::my_off_t);
 extern uint32_t _mi_rec_pack(MI_INFO *info,unsigned char *to,const unsigned char *from);
 extern uint32_t _mi_pack_get_block_info(MI_INFO *myisam, MI_BIT_BUFF *bit_buff,
                                     MI_BLOCK_INFO *info, unsigned char **rec_buff_p,
-                                    int file, my_off_t filepos);
+                                    int file, drizzled::internal::my_off_t filepos);
 extern void _my_store_blob_length(unsigned char *pos,uint32_t pack_length,uint32_t length);
 extern void mi_report_error(int errcode, const char *file_name);
 extern size_t mi_mmap_pread(MI_INFO *info, unsigned char *Buffer,
-                            size_t Count, my_off_t offset, myf MyFlags);
+                            size_t Count, drizzled::internal::my_off_t offset, drizzled::myf MyFlags);
 extern size_t mi_mmap_pwrite(MI_INFO *info, const unsigned char *Buffer,
-                             size_t Count, my_off_t offset, myf MyFlags);
+                             size_t Count, drizzled::internal::my_off_t offset, drizzled::myf MyFlags);
 extern size_t mi_nommap_pread(MI_INFO *info, unsigned char *Buffer,
-                              size_t Count, my_off_t offset, myf MyFlags);
+                              size_t Count, drizzled::internal::my_off_t offset, drizzled::myf MyFlags);
 extern size_t mi_nommap_pwrite(MI_INFO *info, const unsigned char *Buffer,
-                               size_t Count, my_off_t offset, myf MyFlags);
+                               size_t Count, drizzled::internal::my_off_t offset, drizzled::myf MyFlags);
 
 uint32_t mi_state_info_write(int file, MI_STATE_INFO *state, uint32_t pWrite);
 uint32_t mi_state_info_read_dsk(int file, MI_STATE_INFO *state, bool pRead);
@@ -692,35 +701,30 @@ uint32_t mi_base_info_write(int file, MI_BASE_INFO *base);
 int mi_keyseg_write(int file, const HA_KEYSEG *keyseg);
 uint32_t mi_keydef_write(int file, MI_KEYDEF *keydef);
 uint32_t mi_uniquedef_write(int file, MI_UNIQUEDEF *keydef);
-uint32_t mi_recinfo_write(int file, MI_COLUMNDEF *recinfo);
+uint32_t mi_recinfo_write(int file, drizzled::MI_COLUMNDEF *recinfo);
 extern int mi_disable_indexes(MI_INFO *info);
 extern int mi_enable_indexes(MI_INFO *info);
 extern int mi_indexes_are_disabled(MI_INFO *info);
 ulong _my_calc_total_blob_length(MI_INFO *info, const unsigned char *record);
-ha_checksum mi_checksum(MI_INFO *info, const unsigned char *buf);
-ha_checksum mi_static_checksum(MI_INFO *info, const unsigned char *buf);
+drizzled::internal::ha_checksum mi_checksum(MI_INFO *info, const unsigned char *buf);
+drizzled::internal::ha_checksum mi_static_checksum(MI_INFO *info, const unsigned char *buf);
 bool mi_check_unique(MI_INFO *info, MI_UNIQUEDEF *def, unsigned char *record,
-		     ha_checksum unique_hash, my_off_t pos);
-ha_checksum mi_unique_hash(MI_UNIQUEDEF *def, const unsigned char *buf);
+		     drizzled::internal::ha_checksum unique_hash, drizzled::internal::my_off_t pos);
+drizzled::internal::ha_checksum mi_unique_hash(MI_UNIQUEDEF *def, const unsigned char *buf);
 int _mi_cmp_static_unique(MI_INFO *info, MI_UNIQUEDEF *def,
-			   const unsigned char *record, my_off_t pos);
+			   const unsigned char *record, drizzled::internal::my_off_t pos);
 int _mi_cmp_dynamic_unique(MI_INFO *info, MI_UNIQUEDEF *def,
-			   const unsigned char *record, my_off_t pos);
+			   const unsigned char *record, drizzled::internal::my_off_t pos);
 int mi_unique_comp(MI_UNIQUEDEF *def, const unsigned char *a, const unsigned char *b,
 		   bool null_are_equal);
-void mi_get_status(void* param, int concurrent_insert);
-void mi_update_status(void* param);
-void mi_restore_status(void* param);
-void mi_copy_status(void* to,void *from);
-bool mi_check_status(void* param);
 
 extern MI_INFO *test_if_reopen(char *filename);
 bool check_table_is_closed(const char *name, const char *where);
 int mi_open_datafile(MI_INFO *info, MYISAM_SHARE *share, int file_to_dup);
 int mi_open_keyfile(MYISAM_SHARE *share);
 void mi_setup_functions(register MYISAM_SHARE *share);
-bool mi_dynmap_file(MI_INFO *info, my_off_t size);
-void mi_remap_file(MI_INFO *info, my_off_t size);
+bool mi_dynmap_file(MI_INFO *info, drizzled::internal::my_off_t size);
+void mi_remap_file(MI_INFO *info, drizzled::internal::my_off_t size);
 
 int mi_check_index_cond(register MI_INFO *info, uint32_t keynr, unsigned char *record);
 
@@ -731,8 +735,7 @@ void mi_check_print_warning(MI_CHECK *param, const char *fmt,...);
 void mi_check_print_info(MI_CHECK *param, const char *fmt,...);
 int flush_pending_blocks(MI_SORT_PARAM *param);
 int thr_write_keys(MI_SORT_PARAM *sort_param);
-pthread_handler_t thr_find_all_keys(void *arg);
-int flush_blocks(MI_CHECK *param, KEY_CACHE *key_cache, int file);
+int flush_blocks(MI_CHECK *param, drizzled::KEY_CACHE *key_cache, int file);
 
 int sort_write_record(MI_SORT_PARAM *sort_param);
 int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages, size_t);
@@ -741,18 +744,13 @@ extern void mi_set_index_cond_func(MI_INFO *info, index_cond_func_t func,
                                    void *func_arg);
 /* Just for myisam legacy */
 extern size_t my_pwrite(int Filedes,const unsigned char *Buffer,size_t Count,
-		      my_off_t offset,myf MyFlags);
-extern size_t my_pread(int Filedes,unsigned char *Buffer,size_t Count,my_off_t offset,
-		     myf MyFlags);
+                        drizzled::internal::my_off_t offset,drizzled::myf MyFlags);
+extern size_t my_pread(int Filedes,unsigned char *Buffer,size_t Count,drizzled::internal::my_off_t offset,
+                       drizzled::myf MyFlags);
 
 /* Needed for handler */
-void mi_disable_non_unique_index(MI_INFO *info, ha_rows rows);
+void mi_disable_non_unique_index(MI_INFO *info, drizzled::ha_rows rows);
 void _mi_report_crashed(MI_INFO *file, const char *message, const char *sfile,
                         uint32_t sline);
-
-#ifdef __cplusplus
-}
-#endif
-
 
 #endif /* PLUGIN_MYISAM_MYISAM_PRIV_H */

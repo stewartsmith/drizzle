@@ -11,12 +11,14 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "drizzled/internal/mysys_priv.h"
+#include "config.h"
+
+#include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/m_string.h"
 #include "my_static.h"
-#include "drizzled/my_error.h"
+#include "drizzled/error.h"
 #include <stdio.h>
 #include <errno.h>
 #include <string>
@@ -25,6 +27,10 @@
 #endif
 
 using namespace std;
+namespace drizzled
+{
+namespace internal
+{
 
 /*
   @brief
@@ -67,7 +73,7 @@ int create_temp_file(char *to, const char *dir, const char *prefix,
     dir= P_tmpdir;
   if (strlen(dir)+prefix_str.length() > FN_REFLEN-2)
   {
-    errno=errno= ENAMETOOLONG;
+    errno= ENAMETOOLONG;
     return(file);
   }
   strcpy(convert_dirname(to,dir,NULL),prefix_str.c_str());
@@ -87,8 +93,9 @@ int create_temp_file(char *to, const char *dir, const char *prefix,
     (void) my_delete(to, MYF(MY_WME | ME_NOINPUT));
     errno=tmp;
   }
-  if (file >= 0)
-    my_tmp_file_created++;
 
   return(file);
 }
+
+} /* namespace internal */
+} /* namespace drizzled */

@@ -18,8 +18,11 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/item/cache_int.h>
+
+namespace drizzled
+{
 
 void Item_cache_int::store(Item *item)
 {
@@ -52,3 +55,4 @@ my_decimal *Item_cache_int::val_decimal(my_decimal *decimal_val)
 }
 
 
+} /* namespace drizzled */

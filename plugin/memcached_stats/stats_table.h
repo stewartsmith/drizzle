@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2009, Padraig O'Sullivan
  * All rights reserved.
  *
@@ -27,23 +27,39 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+
 #ifndef PLUGIN_MEMCACHED_STATS_STATS_TABLE_H
 #define PLUGIN_MEMCACHED_STATS_STATS_TABLE_H
 
-#include "drizzled/plugin/info_schema_table.h"
+#include "drizzled/plugin/table_function.h"
+#include "drizzled/field.h"
 
-#include <vector>
+#include <libmemcached/memcached.h>
 
-class MemcachedStatsISMethods : public drizzled::plugin::InfoSchemaMethods
+class StatsTableTool : public drizzled::plugin::TableFunction
 {
 public:
-  virtual int fillTable(Session *session,
-                        Table *table,
-                        drizzled::plugin::InfoSchemaTable *schema_table);
+
+  StatsTableTool();
+
+  class Generator : public drizzled::plugin::TableFunction::Generator
+  {
+  public:
+    Generator(drizzled::Field **arg);
+
+    ~Generator();
+
+    bool populate();
+  private:
+    uint32_t host_number;
+    uint32_t number_of_hosts;
+    memcached_st *memc;
+  };
+
+  Generator *generator(drizzled::Field **arg)
+  {
+    return new Generator(arg);
+  }
 };
-
-bool createMemcachedStatsColumns(std::vector<const drizzled::plugin::ColumnInfo *> &cols);
-
-void clearMemcachedColumns(std::vector<const drizzled::plugin::ColumnInfo *> &cols);
 
 #endif /* PLUGIN_MEMCACHED_STATS_STATS_TABLE_H */

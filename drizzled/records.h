@@ -1,4 +1,4 @@
-/*
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2009 Sun Microsystems
@@ -20,26 +20,98 @@
 #ifndef DRIZZLED_RECORDS_H
 #define DRIZZLED_RECORDS_H
 
-/**
-  Initialize READ_RECORD structure to perform full index scan (in forward
-  direction) using read_record.read_record() interface.
+namespace drizzled
+{
 
-    This function has been added at late stage and is used only by
-    UPDATE/DELETE. Other statements perform index scans using
-    join_read_first/next functions.
+struct ReadRecord {			/* Parameter to read_record */
+  Table *table;			/* Head-form */
+  Cursor *cursor;
+  Table **forms;			/* head and ref forms */
+  int (*read_record)(ReadRecord *);
+  Session *session;
+  optimizer::SqlSelect *select;
+  uint32_t cache_records;
+  uint32_t ref_length;
+  uint32_t struct_length;
+  uint32_t reclength;
+  uint32_t rec_cache_size;
+  uint32_t error_offset;
+  uint32_t index;
+  unsigned char *ref_pos;				/* pointer to form->refpos */
+  unsigned char *record;
+  unsigned char *rec_buf;                /* to read field values  after filesort */
+private:
+  unsigned char	*cache;
+public:
+  unsigned char *getCache()
+  {
+    return cache;
+  }
+  unsigned char *cache_pos;
+  unsigned char *cache_end;
+  unsigned char *read_positions;
+  internal::IO_CACHE *io_cache;
+  bool print_error;
+  bool ignore_not_found_rows;
+  JoinTable *do_insideout_scan;
+  ReadRecord() :
+    table(NULL),
+    cursor(NULL),
+    forms(0),
+    read_record(0),
+    session(0),
+    select(0),
+    cache_records(0),
+    ref_length(0),
+    struct_length(0),
+    reclength(0),
+    rec_cache_size(0),
+    error_offset(0),
+    index(0),
+    ref_pos(0),
+    record(0),
+    rec_buf(0),
+    cache(0),
+    cache_pos(0),
+    cache_end(0),
+    read_positions(0),
+    io_cache(0),
+    print_error(0),
+    ignore_not_found_rows(0),
+    do_insideout_scan(0)
+  {
+  }
 
-  @param info         READ_RECORD structure to initialize.
-  @param session          Thread handle
-  @param table        Table to be accessed
-  @param print_error  If true, call table->print_error() if an error
-                      occurs (except for end-of-records error)
-  @param idx          index to scan
-*/
-void init_read_record_idx(READ_RECORD *info, 
-                          Session *session, 
-                          Table *table,
-                          bool print_error, 
-                          uint32_t idx);
+  void init()
+  {
+    table= NULL;
+    cursor= NULL;
+    forms= 0;
+    read_record= 0;
+    session= 0;
+    select= 0;
+    cache_records= 0;
+    ref_length= 0;
+    struct_length= 0;
+    reclength= 0;
+    rec_cache_size= 0;
+    error_offset= 0;
+    index= 0;
+    ref_pos= 0;
+    record= 0;
+    rec_buf= 0;
+    cache= 0;
+    cache_pos= 0;
+    cache_end= 0;
+    read_positions= 0;
+    io_cache= 0;
+    print_error= 0;
+    ignore_not_found_rows= 0;
+    do_insideout_scan= 0;
+  }
+
+  virtual ~ReadRecord()
+  { }
 
 /*
   init_read_record is used to scan by using a number of different methods.
@@ -109,13 +181,40 @@ void init_read_record_idx(READ_RECORD *info,
     This is the most basic access method of a table using rnd_init,
     rnd_next and rnd_end. No indexes are used.
 */
-void init_read_record(READ_RECORD *info, 
-                      Session *session, 
-                      Table *reg_form,
-                      drizzled::optimizer::SqlSelect *select,
-                      int use_record_cache, 
-                      bool print_errors);
+  void init_read_record(Session *session, 
+                        Table *reg_form,
+                        optimizer::SqlSelect *select,
+                        int use_record_cache, 
+                        bool print_errors);
 
-void end_read_record(READ_RECORD *info);
+  void end_read_record();
+
+
+/**
+  Initialize ReadRecord structure to perform full index scan (in forward
+  direction) using read_record.read_record() interface.
+
+    This function has been added at late stage and is used only by
+    UPDATE/DELETE. Other statements perform index scans using
+    join_read_first/next functions.
+
+  @param info         ReadRecord structure to initialize.
+  @param session          Thread handle
+  @param table        Table to be accessed
+  @param print_error  If true, call table->print_error() if an error
+                      occurs (except for end-of-records error)
+  @param idx          index to scan
+                    */
+  void init_read_record_idx(Session *session, 
+                            Table *table,
+                            bool print_error, 
+                            uint32_t idx);
+
+  void init_reard_record_sequential();
+
+  bool init_rr_cache();
+};
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_RECORDS_H */

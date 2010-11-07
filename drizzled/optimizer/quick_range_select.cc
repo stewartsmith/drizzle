@@ -21,26 +21,25 @@
 #include "drizzled/session.h"
 #include "drizzled/optimizer/quick_range.h"
 #include "drizzled/optimizer/quick_range_select.h"
-#include "drizzled/sql_bitmap.h"
 #include "drizzled/internal/m_string.h"
 #include <fcntl.h>
-#include "drizzled/memory/multi_malloc.h"
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 
 optimizer::QuickRangeSelect::QuickRangeSelect(Session *session,
                                               Table *table,
                                               uint32_t key_nr,
                                               bool no_alloc,
-                                              memory::Root *parent_alloc,
-                                              bool *create_error)
+                                              memory::Root *parent_alloc)
   :
     cursor(NULL),
     ranges(),
     in_ror_merged_scan(false),
-    column_bitmap(),
+    column_bitmap(NULL),
     save_read_set(NULL),
     save_write_set(NULL),
     free_file(false),
@@ -48,14 +47,11 @@ optimizer::QuickRangeSelect::QuickRangeSelect(Session *session,
     last_range(NULL),
     qr_traversal_ctx(),
     mrr_buf_size(0),
-    mrr_buf_desc(NULL),
     key_parts(NULL),
     dont_free(false),
     mrr_flags(0),
     alloc()
 {
-  my_bitmap_map *bitmap= NULL;
-
   sorted= 0;
   index= key_nr;
   head= table;
@@ -64,7 +60,6 @@ optimizer::QuickRangeSelect::QuickRangeSelect(Session *session,
 
   /* 'session' is not accessible in QuickRangeSelect::reset(). */
   mrr_buf_size= session->variables.read_rnd_buff_size;
-  mrr_buf_desc= NULL;
 
   if (! no_alloc && ! parent_alloc)
   {
@@ -81,22 +76,7 @@ optimizer::QuickRangeSelect::QuickRangeSelect(Session *session,
   record= head->record[0];
   save_read_set= head->read_set;
   save_write_set= head->write_set;
-
-  /* Allocate a bitmap for used columns. Using memory::sql_alloc instead of malloc
-     simply as a "fix" to the MySQL 6.0 code that also free()s it at the
-     same time we destroy the mem_root.
-   */
-
-  bitmap= reinterpret_cast<my_bitmap_map*>(memory::sql_alloc(head->s->column_bitmap_size));
-  if (! bitmap)
-  {
-    column_bitmap.setBitmap(NULL);
-    *create_error= 1;
-  }
-  else
-  {
-    column_bitmap.init(bitmap, head->s->fields);
-  }
+  column_bitmap= new boost::dynamic_bitset<>(table->getShare()->sizeFields());
 }
 
 
@@ -104,7 +84,7 @@ int optimizer::QuickRangeSelect::init()
 {
   if (cursor->inited != Cursor::NONE)
     cursor->ha_index_or_rnd_end();
-  return (cursor->ha_index_init(index, 1));
+  return (cursor->startIndexScan(index, 1));
 }
 
 
@@ -136,14 +116,10 @@ optimizer::QuickRangeSelect::~QuickRangeSelect()
       }
     }
     delete_dynamic(&ranges); /* ranges are allocated in alloc */
-    free_root(&alloc,MYF(0));
+    delete column_bitmap;
+    alloc.free_root(MYF(0));
   }
-  head->column_bitmaps_set(save_read_set, save_write_set);
-  assert(mrr_buf_desc == NULL);
-  if (mrr_buf_desc)
-  {
-    free(mrr_buf_desc);
-  }
+  head->column_bitmaps_set(*save_read_set, *save_write_set);
 }
 
 
@@ -159,7 +135,7 @@ int optimizer::QuickRangeSelect::init_ror_merged_scan(bool reuse_handler)
     {
       return 0;
     }
-    head->column_bitmaps_set(&column_bitmap, &column_bitmap);
+    head->column_bitmaps_set(*column_bitmap, *column_bitmap);
     goto end;
   }
 
@@ -185,7 +161,7 @@ int optimizer::QuickRangeSelect::init_ror_merged_scan(bool reuse_handler)
     goto failure;
   }
 
-  head->column_bitmaps_set(&column_bitmap, &column_bitmap);
+  head->column_bitmaps_set(*column_bitmap, *column_bitmap);
 
   if (cursor->ha_external_lock(session, F_RDLCK))
     goto failure;
@@ -216,13 +192,13 @@ end:
   }
   head->prepare_for_position();
   head->cursor= org_file;
-  column_bitmap= *head->read_set;
-  head->column_bitmaps_set(&column_bitmap, &column_bitmap);
+  *column_bitmap|= *head->read_set;
+  head->column_bitmaps_set(*column_bitmap, *column_bitmap);
 
   return 0;
 
 failure:
-  head->column_bitmaps_set(save_read_set, save_write_set);
+  head->column_bitmaps_set(*save_read_set, *save_write_set);
   delete cursor;
   cursor= save_file;
   return 0;
@@ -242,7 +218,7 @@ bool optimizer::QuickRangeSelect::unique_key_range() const
     optimizer::QuickRange *tmp= *((optimizer::QuickRange**)ranges.buffer);
     if ((tmp->flag & (EQ_RANGE | NULL_RANGE)) == EQ_RANGE)
     {
-      KEY *key=head->key_info+index;
+      KeyInfo *key=head->key_info+index;
       return ((key->flags & (HA_NOSAME)) == HA_NOSAME &&
 	      key->key_length == tmp->min_length);
     }
@@ -253,49 +229,21 @@ bool optimizer::QuickRangeSelect::unique_key_range() const
 
 int optimizer::QuickRangeSelect::reset()
 {
-  uint32_t buf_size= 0;
-  unsigned char *mrange_buff= NULL;
   int error= 0;
-  HANDLER_BUFFER empty_buf;
   last_range= NULL;
   cur_range= (optimizer::QuickRange**) ranges.buffer;
 
-  if (cursor->inited == Cursor::NONE && (error= cursor->ha_index_init(index, 1)))
+  if (cursor->inited == Cursor::NONE && (error= cursor->startIndexScan(index, 1)))
   {
     return error;
   }
 
-  /* Allocate buffer if we need one but haven't allocated it yet */
-  if (mrr_buf_size && ! mrr_buf_desc)
-  {
-    buf_size= mrr_buf_size;
-    while (buf_size && ! memory::multi_malloc(false,
-                                              &mrr_buf_desc,
-                                              sizeof(*mrr_buf_desc),
-                                              &mrange_buff,
-                                              buf_size,
-                                              NULL))
-    {
-      /* Try to shrink the buffers until both are 0. */
-      buf_size/= 2;
-    }
-    if (! mrr_buf_desc)
-    {
-      return HA_ERR_OUT_OF_MEM;
-    }
-
-    /* Initialize the Cursor buffer. */
-    mrr_buf_desc->buffer= mrange_buff;
-    mrr_buf_desc->buffer_end= mrange_buff + buf_size;
-    mrr_buf_desc->end_of_used_area= mrange_buff;
-  }
-
-  if (! mrr_buf_desc)
-  {
-    empty_buf.buffer= NULL;
-    empty_buf.buffer_end= NULL;
-    empty_buf.end_of_used_area= NULL;
-  }
+  /*
+    (in the past) Allocate buffer if we need one but haven't allocated it yet 
+    There is a later assert in th code that hoped to catch random free() that might
+    have done this.
+  */
+  assert(not (mrr_buf_size));
 
   if (sorted)
   {
@@ -308,8 +256,7 @@ int optimizer::QuickRangeSelect::reset()
   error= cursor->multi_range_read_init(&seq_funcs,
                                        (void*) this,
                                        ranges.elements,
-                                       mrr_flags,
-                                       mrr_buf_desc ? mrr_buf_desc : &empty_buf);
+                                       mrr_flags);
   return error;
 }
 
@@ -323,7 +270,7 @@ int optimizer::QuickRangeSelect::get_next()
       We don't need to signal the bitmap change as the bitmap is always the
       same for this head->cursor
     */
-    head->column_bitmaps_set(&column_bitmap, &column_bitmap);
+    head->column_bitmaps_set(*column_bitmap, *column_bitmap);
   }
 
   int result= cursor->multi_range_read_next(&dummy);
@@ -331,7 +278,7 @@ int optimizer::QuickRangeSelect::get_next()
   if (in_ror_merged_scan)
   {
     /* Restore bitmaps set on entry */
-    head->column_bitmaps_set(save_read_set, save_write_set);
+    head->column_bitmaps_set(*save_read_set, *save_write_set);
   }
   return result;
 }
@@ -457,22 +404,21 @@ int optimizer::QuickRangeSelect::cmp_next(optimizer::QuickRange *range_arg)
 
 int optimizer::QuickRangeSelect::cmp_prev(optimizer::QuickRange *range_arg)
 {
-  int cmp;
   if (range_arg->flag & NO_MIN_RANGE)
-    return 0;					/* key can't be to small */
+    return 0; /* key can't be to small */
 
-  cmp= key_cmp(key_part_info,
-               range_arg->min_key,
-               range_arg->min_length);
+  int cmp= key_cmp(key_part_info,
+                   range_arg->min_key,
+                   range_arg->min_length);
   if (cmp > 0 || (cmp == 0 && (range_arg->flag & NEAR_MIN) == false))
     return 0;
-  return 1;                                     // outside of range
+  return 1; // outside of range
 }
 
 
 void optimizer::QuickRangeSelect::add_info_string(String *str)
 {
-  KEY *key_info= head->key_info + index;
+  KeyInfo *key_info= head->key_info + index;
   str->append(key_info->name);
 }
 
@@ -482,9 +428,9 @@ void optimizer::QuickRangeSelect::add_keys_and_lengths(String *key_names,
 {
   char buf[64];
   uint32_t length;
-  KEY *key_info= head->key_info + index;
+  KeyInfo *key_info= head->key_info + index;
   key_names->append(key_info->name);
-  length= int64_t2str(max_used_key_length, buf, 10) - buf;
+  length= internal::int64_t2str(max_used_key_length, buf, 10) - buf;
   used_lengths->append(buf, length);
 }
 
@@ -500,25 +446,29 @@ void optimizer::QuickRangeSelect::add_keys_and_lengths(String *key_names,
  */
 optimizer::QuickSelectDescending::QuickSelectDescending(optimizer::QuickRangeSelect *q, uint32_t, bool *)
   :
-    optimizer::QuickRangeSelect(*q),
-    rev_it(rev_ranges)
+    optimizer::QuickRangeSelect(*q)
 {
-  optimizer::QuickRange *r= NULL;
-
   optimizer::QuickRange **pr= (optimizer::QuickRange**) ranges.buffer;
   optimizer::QuickRange **end_range= pr + ranges.elements;
   for (; pr != end_range; pr++)
-    rev_ranges.push_front(*pr);
+  {
+    rev_ranges.push_back(*pr);
+  }
+  rev_it= rev_ranges.begin();
 
   /* Remove EQ_RANGE flag for keys that are not using the full key */
-  for (r = rev_it++; r; r= rev_it++)
+  for (vector<optimizer::QuickRange *>::iterator it= rev_ranges.begin();
+       it != rev_ranges.end();
+       ++it)
   {
+    optimizer::QuickRange *r= *it;
     if ((r->flag & EQ_RANGE) &&
         head->key_info[index].key_length != r->max_length)
+    {
       r->flag&= ~EQ_RANGE;
+    }
   }
-  rev_it.rewind();
-  q->dont_free= 1;				// Don't free shared mem
+  q->dont_free= 1; // Don't free shared mem
   delete q;
 }
 
@@ -546,15 +496,19 @@ int optimizer::QuickSelectDescending::get_next()
 		           cursor->index_prev(record));
       if (! result)
       {
-        if (cmp_prev(*rev_it.ref()) == 0)
-          return 0;
+          if (cmp_prev(*(rev_it - 1)) == 0)
+            return 0;
       }
       else if (result != HA_ERR_END_OF_FILE)
         return result;
     }
 
-    if (! (last_range= rev_it++))
-      return HA_ERR_END_OF_FILE;		// All ranges used
+    if (rev_it == rev_ranges.end())
+    {
+      return HA_ERR_END_OF_FILE; // All ranges used
+    }
+    last_range= *rev_it;
+    ++rev_it;
 
     if (last_range->flag & NO_MAX_RANGE)        // Read last record
     {
@@ -615,3 +569,4 @@ bool optimizer::QuickSelectDescending::range_reads_after_key(optimizer::QuickRan
 }
 
 
+} /* namespace drizzled */

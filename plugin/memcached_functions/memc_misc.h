@@ -36,13 +36,13 @@
 #include <drizzled/function/str/strfunc.h>
 
 /* implements memc_libmemcached_version */
-class MemcachedVersion : public Item_str_func
+class MemcachedVersion : public drizzled::Item_str_func
 {
 public:
   MemcachedVersion()
     : 
       Item_str_func(),
-      failure_buff("FAILURE", &my_charset_bin)
+      failure_buff("FAILURE", &drizzled::my_charset_bin)
   {}
 
   const char *func_name() const
@@ -50,7 +50,7 @@ public:
     return "memc_libmemcached_version";
   }
 
-  String *val_str(String *);
+  drizzled::String *val_str(drizzled::String *);
 
   void fix_length_and_dec()
   {
@@ -58,12 +58,12 @@ public:
   }
 
 private:
-  String buffer;
-  String failure_buff;
+  drizzled::String buffer;
+  drizzled::String failure_buff;
 };
 
 /* implements memc_server_count */
-class MemcachedServerCount : public Item_int_func
+class MemcachedServerCount : public drizzled::Item_int_func
 {
 public:
   MemcachedServerCount()

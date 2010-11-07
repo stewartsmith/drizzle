@@ -23,6 +23,9 @@
 #include <drizzled/function/func.h>
 #include <drizzled/function/math/int.h>
 
+namespace drizzled
+{
+
 class Item_func_find_in_set :public Item_int_func
 {
   String value,value2;
@@ -35,5 +38,7 @@ public:
   const char *func_name() const { return "find_in_set"; }
   void fix_length_and_dec();
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_FIND_IN_SET_H */

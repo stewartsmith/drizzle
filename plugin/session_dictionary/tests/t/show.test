@@ -1,0 +1,7 @@
+# Drizzle's session dictionary
+#
+# test that SHOW PROCESSLIST works correctly
+#
+--disable_result_log
+show processlist;
+--enable_result_log

@@ -26,9 +26,9 @@ create TEMPORARY TABLE IF NOT EXISTS t2 (a int) engine=MEMORY;
 Warnings:
 Note	1050	Table 't2' already exists
 CREATE TEMPORARY TABLE t1 (a int not null, b char (10) not null);
-ERROR 42S01: Table 't1' already exists
+ERROR 42S01: Table 'test.#t1' already exists
 ALTER TABLE t1 RENAME t2;
-ERROR 42S01: Table 't2' already exists
+ERROR 42S01: Table 'test.#t2' already exists
 select * from t2;
 a	b
 4	e
@@ -95,8 +95,8 @@ d
 2002-10-24 14:50:40
 show status like "created_tmp%tables";
 Variable_name	Value
-Created_tmp_disk_tables	0
-Created_tmp_tables	1
+Created_tmp_disk_tables	#
+Created_tmp_tables	#
 drop table t1;
 create table t1 (a int, b int, index(a), index(b));
 create table t2 (c int auto_increment, d varchar(255), primary key (c));

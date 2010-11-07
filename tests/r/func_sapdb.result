@@ -109,9 +109,9 @@ create table t1
 select makedate(1997,1) as f1,
 date("1997-12-31 23:59:59.000001") as f8;
 describe t1;
-Field	Type	Null	Key	Default	Extra
-f1	date	YES		NULL	
-f8	date	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+f1	DATE	YES		YES	
+f8	DATE	YES		YES	
 select * from t1;
 f1	f8
 1997-01-01	1997-12-31

@@ -23,6 +23,9 @@
 #include <drizzled/session.h>
 #include <drizzled/table.h>
 
+namespace drizzled
+{
+
 const char *Field_iterator_table::name()
 {
   return (*ptr)->field_name;
@@ -31,13 +34,13 @@ const char *Field_iterator_table::name()
 
 void Field_iterator_table::set(TableList *table)
 {
-  ptr= table->table->field;
+  ptr= table->table->getFields();
 }
 
 
 void Field_iterator_table::set_table(Table *table)
 {
-  ptr= table->field;
+  ptr= table->getFields();
 }
 
 
@@ -64,7 +67,7 @@ void Field_iterator_natural_join::next()
   cur_column_ref= column_ref_it++;
   assert(!cur_column_ref || ! cur_column_ref->table_field ||
               cur_column_ref->table_ref->table ==
-              cur_column_ref->table_field->table);
+              cur_column_ref->table_field->getTable());
 }
 
 
@@ -125,9 +128,9 @@ const char *Field_iterator_table_ref::table_name()
   if (table_ref->is_natural_join)
     return natural_join_it.column_ref()->table_name();
 
-  assert(!strcmp(table_ref->table_name,
-                      table_ref->table->s->table_name.str));
-  return table_ref->table_name;
+  assert(!strcmp(table_ref->getTableName(),
+                 table_ref->table->getShare()->getTableName()));
+  return table_ref->getTableName();
 }
 
 
@@ -140,8 +143,8 @@ const char *Field_iterator_table_ref::db_name()
     Test that TableList::db is the same as TableShare::db to
     ensure consistency. 
   */
-  assert(!strcmp(table_ref->db, table_ref->table->s->db.str));
-  return table_ref->db;
+  assert(!strcmp(table_ref->getSchemaName(), table_ref->table->getShare()->getSchemaName()));
+  return table_ref->getSchemaName();
 }
 
 
@@ -197,7 +200,7 @@ Field_iterator_table_ref::get_or_create_column_ref(TableList *parent_table_ref)
     /* The field belongs to a stored table. */
     Field *tmp_field= table_field_it.field();
     nj_col= new Natural_join_column(tmp_field, table_ref);
-    field_count= table_ref->table->s->fields;
+    field_count= table_ref->table->getShare()->sizeFields();
   }
   else
   {
@@ -212,7 +215,7 @@ Field_iterator_table_ref::get_or_create_column_ref(TableList *parent_table_ref)
     assert(nj_col);
   }
   assert(!nj_col->table_field ||
-              nj_col->table_ref->table == nj_col->table_field->table);
+              nj_col->table_ref->table == nj_col->table_field->getTable());
 
   /*
     If the natural join column was just created add it to the list of
@@ -277,7 +280,8 @@ Field_iterator_table_ref::get_natural_column_ref()
   nj_col= natural_join_it.column_ref();
   assert(nj_col &&
               (!nj_col->table_field ||
-               nj_col->table_ref->table == nj_col->table_field->table));
+               nj_col->table_ref->table == nj_col->table_field->getTable()));
   return nj_col;
 }
 
+} /* namespace drizzled */

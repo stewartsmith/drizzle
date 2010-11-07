@@ -12,17 +12,14 @@
 
    You should have received a copy of the GNU Library General Public
    License along with this library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
-   MA 02111-1307, USA */
+   Software Foundation, Inc., 51 Franklin Place - Suite 330, Boston,
+   MA 02110-1301, USA */
 
 #ifndef PLUGIN_MYISAM_MY_HANDLER_H
 #define PLUGIN_MYISAM_MY_HANDLER_H
 
 #include "drizzled/charset_info.h"
 #include <plugin/myisam/myisampack.h>
-#ifdef	__cplusplus
-extern "C" {
-#endif
 
 /*
   There is a hard limit for the maximum number of keys as there are only
@@ -48,7 +45,7 @@ extern "C" {
 
 typedef struct st_HA_KEYSEG		/* Key-portion */
 {
-  const CHARSET_INFO *charset;
+  const drizzled::CHARSET_INFO *charset;
   uint32_t start;				/* Start of key in record */
   uint32_t null_pos;			/* position to NULL indicator */
   uint16_t bit_pos;                       /* Position to bit part */
@@ -107,11 +104,10 @@ typedef struct st_HA_KEYSEG		/* Key-portion */
 #define clr_rec_bits(bit_ptr, bit_ofs, bit_len) \
   set_rec_bits(0, bit_ptr, bit_ofs, bit_len)
 
-extern int ha_compare_text(const CHARSET_INFO * const, unsigned char *, uint, unsigned char *, uint, bool, bool);
+extern int ha_compare_text(const drizzled::CHARSET_INFO * const, unsigned char *, uint, unsigned char *, uint, bool, bool);
 
 extern HA_KEYSEG *ha_find_null(HA_KEYSEG *keyseg, unsigned char *a);
 void my_handler_error_register(void);
-void my_handler_error_unregister(void);
 extern int ha_key_cmp(HA_KEYSEG *keyseg, unsigned char *a,unsigned char *b,
                       uint32_t key_length,uint32_t nextflag,uint32_t *diff_length);
 
@@ -121,8 +117,5 @@ extern int ha_key_cmp(HA_KEYSEG *keyseg, unsigned char *a,unsigned char *b,
   this amount of bytes.
 */
 #define portable_sizeof_char_ptr 8
-#ifdef	__cplusplus
-}
-#endif
 
 #endif /* PLUGIN_MYISAM_MY_HANDLER_H */

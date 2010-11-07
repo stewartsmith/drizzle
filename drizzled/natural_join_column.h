@@ -22,6 +22,9 @@
 
 #include "drizzled/memory/sql_alloc.h"
 
+namespace drizzled
+{
+
 class Field;
 class TableList;
 class Item;
@@ -32,7 +35,7 @@ class Item;
   Field (for tables).
 */
 
-class Natural_join_column: public drizzled::memory::SqlAlloc
+class Natural_join_column: public memory::SqlAlloc
 {
 public:
   Field            *table_field; /* Column reference of table or temp view. */
@@ -54,6 +57,6 @@ public:
   const char *db_name();
 };
 
-
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_NATURAL_JOIN_COLUMN_H */

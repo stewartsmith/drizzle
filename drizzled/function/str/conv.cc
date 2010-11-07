@@ -21,6 +21,9 @@
 #include <drizzled/function/str/conv.h>
 #include "drizzled/internal/m_string.h"
 
+namespace drizzled
+{
+
 String *Item_func_conv::val_str(String *str)
 {
   assert(fixed == 1);
@@ -48,10 +51,11 @@ String *Item_func_conv::val_str(String *str)
     dec= (int64_t) my_strntoull(res->charset(), res->ptr(), res->length(),
                                  from_base, &endptr, &err);
 
-  ptr= int64_t2str(dec, ans, to_base);
+  ptr= internal::int64_t2str(dec, ans, to_base);
   if (str->copy(ans, (uint32_t) (ptr-ans), default_charset()))
     return &my_empty_string;
   return str;
 }
 
 
+} /* namespace drizzled */

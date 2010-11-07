@@ -11,12 +11,12 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include "config.h"
 
 #include "drizzled/charset.h"
-#include "drizzled/my_error.h"
+#include "drizzled/error.h"
 #include "drizzled/charset_info.h"
 #include "drizzled/internal/m_string.h"
 #include <drizzled/configmake.h>
@@ -24,6 +24,8 @@
 
 using namespace std;
 
+namespace drizzled
+{
 
 /*
   We collect memory in this vector that we free on delete.
@@ -379,3 +381,5 @@ size_t escape_quotes_for_drizzle(const CHARSET_INFO *charset_info,
   *to= 0;
   return overflow ? UINT32_MAX : (uint32_t) (to - to_start);
 }
+
+} /* namespace drizzled */

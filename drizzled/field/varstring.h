@@ -24,6 +24,9 @@
 #include <drizzled/field/str.h>
 #include <string>
 
+namespace drizzled
+{
+
 class Field_varstring :public Field_str {
 public:
 
@@ -38,33 +41,33 @@ public:
     length_bytes.
   */
   static const uint32_t MAX_SIZE;
+private:
   /* Store number of bytes used to store length (1 or 2) */
   uint32_t length_bytes;
+public:
   Field_varstring(unsigned char *ptr_arg,
                   uint32_t len_arg,
                   uint32_t length_bytes_arg,
                   unsigned char *null_ptr_arg,
                   unsigned char null_bit_arg,
                   const char *field_name_arg,
-                  TableShare *share,
                   const CHARSET_INFO * const cs);
   Field_varstring(uint32_t len_arg,
                   bool maybe_null_arg,
                   const char *field_name_arg,
-                  TableShare *share,
                   const CHARSET_INFO * const cs);
 
   enum_field_types type() const { return DRIZZLE_TYPE_VARCHAR; }
   enum ha_base_keytype key_type() const;
-  uint32_t row_pack_length() { return field_length; }
   bool zero_pack() const { return 0; }
   int  reset(void) { memset(ptr, 0, field_length+length_bytes); return 0; }
   uint32_t pack_length() const { return (uint32_t) field_length+length_bytes; }
+  uint32_t pack_length_no_ptr() const { return length_bytes; }
   uint32_t key_length() const { return (uint32_t) field_length; }
   uint32_t sort_length() const
   {
     return (uint32_t) field_length + (field_charset == &my_charset_bin ?
-                                    length_bytes : 0);
+                                      length_bytes : 0);
   }
   int  store(const char *to,uint32_t length, const CHARSET_INFO * const charset);
 
@@ -106,11 +109,13 @@ public:
   enum_field_types real_type() const { return DRIZZLE_TYPE_VARCHAR; }
   bool has_charset(void) const
   { return charset() == &my_charset_bin ? false : true; }
-  Field *new_field(drizzled::memory::Root *root, Table *new_table, bool keep_type);
-  Field *new_key_field(drizzled::memory::Root *root, Table *new_table,
+  Field *new_field(memory::Root *root, Table *new_table, bool keep_type);
+  Field *new_key_field(memory::Root *root, Table *new_table,
                        unsigned char *new_ptr, unsigned char *new_null_ptr,
                        uint32_t new_null_bit);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FIELD_VARSTRING_H */
 

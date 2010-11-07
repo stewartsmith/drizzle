@@ -1,0 +1,111 @@
+#
+# Drizzle Client Library
+#
+# Copyright (C) 2008 Eric Day (eday@oddments.org)
+# All rights reserved.
+#
+# Use and distribution licensed under the BSD license.  See
+# the COPYING.BSD file in the root source directory for full text.
+#
+#
+
+lib_LTLIBRARIES+= libdrizzle/libdrizzle.la
+
+if HAVE_LIBSQLITE3
+SQLITE_PROGS= examples/sqlite_server
+endif
+
+noinst_PROGRAMS+= \
+	examples/client \
+	examples/simple \
+	examples/simple_multi \
+	examples/pipe_query \
+	examples/server \
+	examples/proxy \
+	$(SQLITE_PROGS)
+
+libdrizzle_libdrizzle_la_CFLAGS= \
+	${AM_CFLAGS} \
+        ${CFLAG_VISIBILITY} \
+	-DBUILDING_LIBDRIZZLE
+
+libdrizzle_libdrizzle_la_LDFLAGS= \
+	$(AM_LDFLAGS) \
+	-version-info \
+	$(LIBDRIZZLE_LIBRARY_VERSION)
+
+libdrizzle_libdrizzle_la_SOURCES= \
+	libdrizzle/drizzle.c \
+	libdrizzle/conn.c \
+	libdrizzle/conn_uds.c \
+	libdrizzle/handshake.c \
+	libdrizzle/command.c \
+	libdrizzle/query.c \
+	libdrizzle/result.c \
+	libdrizzle/column.c \
+	libdrizzle/row.c \
+	libdrizzle/field.c \
+	libdrizzle/pack.c \
+	libdrizzle/state.c \
+	libdrizzle/sha1.c
+
+examples_server_CFLAGS= $(AM_CFLAGS)
+examples_server_SOURCES= examples/server.c
+examples_server_LDADD= libdrizzle/libdrizzle.la
+
+examples_proxy_CFLAGS= $(AM_CFLAGS)
+examples_proxy_SOURCES= examples/proxy.c
+examples_proxy_LDADD= libdrizzle/libdrizzle.la
+
+examples_client_LDADD= libdrizzle/libdrizzle.la
+examples_simple_LDADD= libdrizzle/libdrizzle.la
+examples_simple_multi_LDADD= libdrizzle/libdrizzle.la
+examples_pipe_query_LDADD= libdrizzle/libdrizzle.la
+
+if HAVE_LIBSQLITE3
+examples_sqlite_server_CFLAGS= $(AM_CFLAGS)
+examples_sqlite_server_LDFLAGS= libdrizzle/libdrizzle.la $(LTLIBSQLITE3)
+examples_sqlite_server_DEPENDENCIES= libdrizzle/libdrizzle.la
+examples_sqlite_server_SOURCES= examples/sqlite_server.c
+endif
+
+nobase_dist_include_HEADERS+= \
+	libdrizzle/drizzle.h \
+	libdrizzle/drizzle_client.h \
+	libdrizzle/drizzle_server.h \
+	libdrizzle/conn.h \
+	libdrizzle/conn_client.h \
+	libdrizzle/conn_server.h \
+	libdrizzle/handshake_client.h \
+	libdrizzle/handshake_server.h \
+	libdrizzle/command_client.h \
+	libdrizzle/command_server.h \
+	libdrizzle/query.h \
+	libdrizzle/result.h \
+	libdrizzle/result_client.h \
+	libdrizzle/result_server.h \
+	libdrizzle/column.h \
+	libdrizzle/column_client.h \
+	libdrizzle/column_server.h \
+	libdrizzle/row_client.h \
+	libdrizzle/row_server.h \
+	libdrizzle/field_client.h \
+	libdrizzle/field_server.h \
+	libdrizzle/constants.h \
+	libdrizzle/structs.h \
+	libdrizzle/visibility.h
+
+noinst_HEADERS+= \
+	libdrizzle/common.h \
+	libdrizzle/drizzle_local.h \
+	libdrizzle/conn_local.h \
+	libdrizzle/pack.h \
+	libdrizzle/state.h \
+	libdrizzle/sha1.h
+
+CLEANFILES+= \
+	doxerr.log \
+	libdrizzle/drizzle_client.h.gch \
+	libdrizzle/drizzle_server.h.gch \
+	libdrizzle/common.h.gch
+

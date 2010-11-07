@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /*
   get_ptr_compare(len) returns a pointer to a optimal byte-compare function
@@ -19,11 +19,17 @@
   The bytes are compare as unsigned chars.
   */
 
-#include "drizzled/internal/mysys_priv.h"
+#include "config.h"
+#include "drizzled/internal/my_sys.h"
 
 #include <assert.h>
 
 #include "plugin/myisam/myisampack.h"
+
+namespace drizzled
+{
+namespace internal
+{
 
 static int ptr_compare(size_t *compare_length, unsigned char **a, unsigned char **b);
 static int ptr_compare_0(size_t *compare_length, unsigned char **a, unsigned char **b);
@@ -193,3 +199,5 @@ my_off_t my_get_ptr(unsigned char *ptr, size_t pack_length)
  return pos;
 }
 
+} /* namespace internal */
+} /* namespace drizzled */

@@ -20,6 +20,9 @@
 #ifndef DRIZZLED_ITEM_TYPE_HOLDER_H
 #define DRIZZLED_ITEM_TYPE_HOLDER_H
 
+namespace drizzled
+{
+
 typedef struct st_typelib TYPELIB;
 class String;
 class my_decimal;
@@ -111,5 +114,6 @@ public:
   static enum_field_types get_real_type(Item *item);
 };
 
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_TYPE_HOLDER_H */

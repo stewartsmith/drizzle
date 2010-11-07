@@ -34,6 +34,9 @@
   should be seen once out-of-bound data is removed.
 */
 
+namespace drizzled
+{
+
 class Lex_input_stream
 {
 public:
@@ -355,12 +358,6 @@ public:
   /** Current state of the lexical analyser. */
   enum my_lex_states next_state;
 
-  /**
-    Position of ';' in the stream, to delimit multiple queries.
-    This delimiter is in the raw buffer.
-  */
-  const char *found_semicolon;
-
   /** Token character bitmaps, to detect 7bit strings. */
   unsigned char tok_bitmap;
 
@@ -387,4 +384,7 @@ public:
   const char *m_cpp_text_end;
 
 };
+
+} /* namespace drizzled */
+
 #endif /* DRIZZLED_LEX_INPUT_STREAM_H */

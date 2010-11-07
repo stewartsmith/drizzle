@@ -36,7 +36,7 @@ void optimizer::add_key_part(DYNAMIC_ARRAY *keyuse_array,
                              optimizer::KeyField *key_field)
 {
   Field *field= key_field->getField();
-  Table *form= field->table;
+  Table *form= field->getTable();
 
   if (key_field->isEqualityCondition() &&
       ! (key_field->getOptimizeFlags() & KEY_OPTIMIZE_EXISTS))
@@ -51,7 +51,7 @@ void optimizer::add_key_part(DYNAMIC_ARRAY *keyuse_array,
       {
         if (field->eq(form->key_info[key].key_part[part].field))
         {
-          optimizer::KeyUse keyuse(field->table,
+          optimizer::KeyUse keyuse(field->getTable(),
                                    key_field->getValue(),
                                    key_field->getValue()->used_tables(),
                                    key,
@@ -68,30 +68,30 @@ void optimizer::add_key_part(DYNAMIC_ARRAY *keyuse_array,
   }
 }
 
-void optimizer::add_key_fields_for_nj(JOIN *join,
+void optimizer::add_key_fields_for_nj(Join *join,
                                       TableList *nested_join_table,
                                       optimizer::KeyField **end,
                                       uint32_t *and_level,
                                       vector<optimizer::SargableParam> &sargables)
 {
-  List_iterator<TableList> li(nested_join_table->nested_join->join_list);
-  List_iterator<TableList> li2(nested_join_table->nested_join->join_list);
+  List_iterator<TableList> li(nested_join_table->getNestedJoin()->join_list);
+  List_iterator<TableList> li2(nested_join_table->getNestedJoin()->join_list);
   bool have_another= false;
   table_map tables= 0;
   TableList *table;
-  assert(nested_join_table->nested_join);
+  assert(nested_join_table->getNestedJoin());
 
   while ((table= li++) || (have_another && (li=li2, have_another=false,
                                             (table= li++))))
   {
-    if (table->nested_join)
+    if (table->getNestedJoin())
     {
       if (! table->on_expr)
       {
         /* It's a semi-join nest. Walk into it as if it wasn't a nest */
         have_another= true;
         li2= li;
-        li= List_iterator<TableList>(table->nested_join->join_list);
+        li= List_iterator<TableList>(table->getNestedJoin()->join_list);
       }
       else
         add_key_fields_for_nj(join, table, end, and_level, sargables);
@@ -244,7 +244,7 @@ void optimizer::add_key_field(optimizer::KeyField **key_fields,
   {
     // Don't remove column IS NULL on a LEFT JOIN table
     if (! eq_func || (*value)->type() != Item::NULL_ITEM ||
-        ! field->table->maybe_null || field->null_ptr)
+        ! field->getTable()->maybe_null || field->null_ptr)
       return;					// Not a key. Skip it
     exists_optimize= KEY_OPTIMIZE_EXISTS;
     assert(num_values == 1);
@@ -256,23 +256,23 @@ void optimizer::add_key_field(optimizer::KeyField **key_fields,
     for (uint32_t i= 0; i < num_values; i++)
     {
       used_tables|= (value[i])->used_tables();
-      if (! ((value[i])->used_tables() & (field->table->map | RAND_TABLE_BIT)))
+      if (! ((value[i])->used_tables() & (field->getTable()->map | RAND_TABLE_BIT)))
         optimizable= 1;
     }
     if (! optimizable)
       return;
-    if (! (usable_tables & field->table->map))
+    if (! (usable_tables & field->getTable()->map))
     {
       if (! eq_func || (*value)->type() != Item::NULL_ITEM ||
-          ! field->table->maybe_null || field->null_ptr)
+          ! field->getTable()->maybe_null || field->null_ptr)
         return;					// Can't use left join optimize
       exists_optimize= KEY_OPTIMIZE_EXISTS;
     }
     else
     {
-      JoinTable *stat= field->table->reginfo.join_tab;
+      JoinTable *stat= field->getTable()->reginfo.join_tab;
       key_map possible_keys= field->key_start;
-      possible_keys&= field->table->keys_in_use_for_query;
+      possible_keys&= field->getTable()->keys_in_use_for_query;
       stat[0].keys|= possible_keys;             // Add possible keys
 
       /*
@@ -413,7 +413,7 @@ void optimizer::add_key_equal_fields(optimizer::KeyField **key_fields,
   }
 }
 
-void optimizer::add_key_fields(JOIN *join,
+void optimizer::add_key_fields(Join *join,
                                optimizer::KeyField **key_fields,
                                uint32_t *and_level,
                                COND *cond,

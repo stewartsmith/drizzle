@@ -22,6 +22,9 @@
 
 #include <drizzled/function/func.h>
 
+namespace drizzled
+{
+
 /*
   This item represents user variable used as out parameter (e.g in LOAD DATA),
   and it is supposed to be used only for this purprose. So it is simplified
@@ -49,5 +52,7 @@ public:
   void set_null_value(const CHARSET_INFO * const cs);
   void set_value(const char *str, uint32_t length, const CHARSET_INFO * const cs);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_USER_VAR_AS_OUT_PARAM_H */

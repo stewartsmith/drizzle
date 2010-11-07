@@ -1,0 +1,12 @@
+# Drizzle's plugin/modules dictionary.
+
+use data_dictionary;
+
+--replace_column 1 #
+SELECT count(*) FROM plugins;
+
+--replace_column 1 #
+SELECT count(*) FROM modules;
+
+show create table MODULES ;
+show create table PLUGINS ;

@@ -1,0 +1,35 @@
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (a int) ENGINE=FILESYSTEM,FILE="../../filesystem_ln/select_cpuinfo.data",FORMAT="KEY_VALUE",COL_SEPARATOR=":";
+SELECT * FROM t1;
+address sizes	apicid	bogomips	cache size	cache_alignment	clflush size	core id	cpu MHz	cpu cores	cpu family	cpuid level	flags	fpu	fpu_exception	initial apicid	model	model name	physical id	power management	processor	siblings	stepping	vendor_id	wp
+36 bits physical, 48 bits virtual	0	5999.27	6144 KB	64	64	0	2000.000	2	6	13	fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx lm constant_tsc arch_perfmon pebs bts rep_good nopl pni monitor ds_cpl vmx smx est tm2 ssse3 cx16 xtpr sse4_1 lahf_lm	yes	yes	0	23	Intel(R) Core(TM)2 Duo CPU     E8400  @ 3.00GHz	0	NULL	0	2	10	GenuineIntel	yes
+36 bits physical, 48 bits virtual	1	5999.08	6144 KB	64	64	1	2000.000	2	6	13	fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx lm constant_tsc arch_perfmon pebs bts rep_good nopl pni monitor ds_cpl vmx smx est tm2 ssse3 cx16 xtpr sse4_1 lahf_lm	yes	yes	1	23	Intel(R) Core(TM)2 Duo CPU     E8400  @ 3.00GHz	0	NULL	1	2	10	GenuineIntel	yes
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `address sizes` VARCHAR(34),
+  `apicid` VARCHAR(2),
+  `bogomips` VARCHAR(8),
+  `cache size` VARCHAR(8),
+  `cache_alignment` VARCHAR(3),
+  `clflush size` VARCHAR(3),
+  `core id` VARCHAR(2),
+  `cpu MHz` VARCHAR(9),
+  `cpu cores` VARCHAR(2),
+  `cpu family` VARCHAR(2),
+  `cpuid level` VARCHAR(3),
+  `flags` VARCHAR(249),
+  `fpu` VARCHAR(4),
+  `fpu_exception` VARCHAR(4),
+  `initial apicid` VARCHAR(2),
+  `model` VARCHAR(3),
+  `model name` VARCHAR(48),
+  `physical id` VARCHAR(2),
+  `power management` VARCHAR(1),
+  `processor` VARCHAR(2),
+  `siblings` VARCHAR(2),
+  `stepping` VARCHAR(3),
+  `vendor_id` VARCHAR(13),
+  `wp` VARCHAR(4)
+) ENGINE=FILESYSTEM FILE='../../filesystem_ln/select_cpuinfo.data', FORMAT='KEY_VALUE', COL_SEPARATOR=':' COLLATE = utf8_general_ci
+DROP TABLE t1;

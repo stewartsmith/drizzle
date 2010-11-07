@@ -22,15 +22,25 @@
 
 #include <drizzled/function/str/strfunc.h>
 
+namespace drizzled
+{
+
 class Item_func_repeat :public Item_str_func
 {
+  Session &session;
   String tmp_value;
 public:
-  Item_func_repeat(Item *arg1,Item *arg2) :Item_str_func(arg1,arg2) {}
+  Item_func_repeat(Session &session_arg,
+                   Item *arg1,
+                   Item *arg2) :
+    Item_str_func(arg1,arg2),
+    session(session_arg)
+  {}
   String *val_str(String *);
   void fix_length_and_dec();
   const char *func_name() const { return "repeat"; }
 };
 
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_STR_REPEAT_H */

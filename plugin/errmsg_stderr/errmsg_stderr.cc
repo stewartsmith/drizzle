@@ -21,20 +21,21 @@
 #include <drizzled/plugin/error_message.h>
 #include <drizzled/gettext.h>
 #include <drizzled/plugin.h>
-#include <drizzled/plugin/registry.h>
 
 #include <stdio.h>  /* for vsnprintf */
 #include <stdarg.h>  /* for va_list */
 #include <unistd.h>  /* for write(2) */
 
+using namespace drizzled;
+
 /* todo, make this dynamic as needed */
 #define MAX_MSG_LEN 8192
 
-class Error_message_stderr : public drizzled::plugin::ErrorMessage
+class Error_message_stderr : public plugin::ErrorMessage
 {
 public:
   Error_message_stderr()
-   : drizzled::plugin::ErrorMessage("Error_message_stderr") {}
+   : plugin::ErrorMessage("Error_message_stderr") {}
   virtual bool errmsg(Session *, int , const char *format, va_list ap)
   {
     char msgbuf[MAX_MSG_LEN];
@@ -54,22 +55,11 @@ public:
 };
 
 static Error_message_stderr *handler= NULL;
-static int errmsg_stderr_plugin_init(drizzled::plugin::Registry &registry)
+static int errmsg_stderr_plugin_init(module::Context &context)
 {
   handler= new Error_message_stderr();
-  registry.add(handler);
+  context.add(handler);
 
-  return 0;
-}
-
-static int errmsg_stderr_plugin_deinit(drizzled::plugin::Registry &registry)
-{
-
-  if (handler)
-  {
-    registry.remove(handler);
-    delete handler;
-  }
   return 0;
 }
 
@@ -82,8 +72,6 @@ DRIZZLE_DECLARE_PLUGIN
   N_("Error Messages to stderr"),
   PLUGIN_LICENSE_GPL,
   errmsg_stderr_plugin_init,
-  errmsg_stderr_plugin_deinit,
-  NULL, /* status variables */
   NULL, /* system variables */
   NULL
 }

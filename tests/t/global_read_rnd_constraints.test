@@ -1,0 +1,19 @@
+# Test is disabled because drizzleslap error code is now different on different platforms
+
+# Setup table for tests
+USE test;
+
+#--source include/setup-global-constraints.inc
+
+# We appear to need to beef up the table to use the read_rnd buffer at all
+#alter table t1 modify charcol1 varchar(255);
+#alter table t1 modify charcol2 varchar(255);
+#insert into t1 select SQL_BIG_RESULT * from t1;
+#insert into t1 select SQL_BIG_RESULT * from t1;
+#insert into t1 select SQL_BIG_RESULT * from t1;
+#insert into t1 select SQL_BIG_RESULT * from t1;
+#insert into t1 select SQL_BIG_RESULT * from t1;
+
+# Test for read_rnd buffer constraint
+#--error 134
+#--exec $DRIZZLE_SLAP -q "SELECT SQL_BIG_RESULT * FROM t1 ORDER BY 1" -c100 --iterations=1 --number-of-queries=1000 --create-schema=test

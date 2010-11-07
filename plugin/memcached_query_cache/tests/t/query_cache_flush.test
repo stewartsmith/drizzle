@@ -1,0 +1,31 @@
+# we are assuming the memcached binary is contained in PATH or
+# common directories we might expect it to be in
+--exec sh ../plugin/memcached_query_cache/start_mc.sh stop
+--exec sh ../plugin/memcached_query_cache/start_mc.sh start
+
+--disable_warnings
+DROP TABLE IF EXISTS `t1`;
+--enable_warnings
+
+--replace_result $MC_PORT MC_A_PORT
+set global query_cache_servers= "127.0.0.1:$MC_PORT";
+
+CREATE TABLE `t1` (id integer NOT NULL auto_increment primary key, name varchar(20), age int);
+INSERT INTO `t1` (name, age) values ("leila", 20);
+INSERT INTO `t1` (name, age) values ("lockman", 2);
+INSERT INTO `t1` (name, age) values ("ali", 22);
+
+set query_cache_enable= ON;
+select * from t1;
+select * from t1;
+select d.schema, d.sql from data_dictionary.query_cache_entries d where d.sql like "select * from t1";
+select query_cache_flush();
+select d.schema, d.sql from data_dictionary.query_cache_entries d where d.sql like "select * from t1";
+select count(*) from data_dictionary.query_cache_entries d;
+select * from t1;
+select count(*) from data_dictionary.query_cache_entries d;
+select d.schema, d.sql from data_dictionary.query_cache_entries d where d.sql like "select * from t1";
+
+
+--exec sh  ../plugin/memcached_query_cache/start_mc.sh stop
+

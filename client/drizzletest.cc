@@ -1,6 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
- *
+ * 
+ *  Copyright (C) 2010 Vijay Samuel
  *  Copyright (C) 2008 MySQL
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -44,6 +45,7 @@
 #include <map>
 #include <string>
 #include <sstream>
+#include <fstream>
 #include <iostream>
 #include <vector>
 #include <algorithm>
@@ -54,30 +56,32 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include <boost/program_options.hpp>
 
 #include PCRE_HEADER
 
 #include <stdarg.h>
+#include <boost/unordered_map.hpp>
 
 #include "errname.h"
 
 /* Added this for string translation. */
 #include "drizzled/gettext.h"
-#include "drizzled/hash.h"
-#include "drizzled/my_time.h"
+#include "drizzled/drizzle_time.h"
 #include "drizzled/charset.h"
+#include <drizzled/configmake.h>
 
 #ifndef DRIZZLE_RETURN_SERVER_GONE
 #define DRIZZLE_RETURN_HANDSHAKE_FAILED DRIZZLE_RETURN_ERROR_CODE
 #endif
-
+namespace po= boost::program_options;
 using namespace std;
+using namespace drizzled;
 
 extern "C"
-{
-  unsigned char *get_var_key(const unsigned char* var, size_t *len, bool);
-  bool get_one_option(int optid, const struct my_option *, char *argument);
-}
+unsigned char *get_var_key(const unsigned char* var, size_t *len, bool);
+
+int get_one_option(int optid, const struct option *, char *argument);
 
 #define MAX_VAR_NAME_LENGTH    256
 #define MAX_COLUMNS            256
@@ -95,16 +99,11 @@ enum {
 };
 
 static int record= 0, opt_sleep= -1;
-static char *opt_db= NULL, *opt_pass= NULL;
-const char *opt_user= NULL, *opt_host= NULL, *unix_sock= NULL,
-           *opt_basedir= "./";
-const char *opt_logdir= "";
-const char *opt_include= NULL, *opt_charsets_dir;
-const char *opt_testdir= NULL;
+static char *opt_pass= NULL;
+const char *unix_sock= NULL;
 static uint32_t opt_port= 0;
-static int opt_max_connect_retries;
+static uint32_t opt_max_connect_retries;
 static bool silent= false, verbose= false;
-static bool tty_password= false;
 static bool opt_mark_progress= false;
 static bool parsing_disabled= false;
 static bool display_result_vertically= false,
@@ -115,9 +114,21 @@ static bool disable_info= true;
 static bool abort_on_error= true;
 static bool server_initialized= false;
 static bool is_windows= false;
-static char **default_argv;
-static const char *load_default_groups[]= { "drizzletest", "client", 0 };
+static bool use_drizzle_protocol= false;
 static char line_buffer[MAX_DELIMITER_LENGTH], *line_buffer_pos= line_buffer;
+
+std::string opt_basedir,
+  opt_charsets_dir,
+  opt_db,
+  opt_host,
+  opt_include,
+  opt_testdir,
+  opt_logdir,
+  password,
+  opt_password,
+  result_file_name,
+  opt_user,
+  opt_protocol;
 
 static uint32_t start_lineno= 0; /* Start line of current command */
 
@@ -188,7 +199,6 @@ typedef struct
 master_pos_st master_pos;
 
 /* if set, all results are concated and compared against this file */
-const char *result_file_name= NULL;
 
 typedef struct st_var
 {
@@ -207,7 +217,7 @@ typedef struct st_var
 VAR var_reg[10];
 
 
-drizzled::hash_map<string, VAR *> var_hash;
+boost::unordered_map<string, VAR *> var_hash;
 
 struct st_connection
 {
@@ -773,6 +783,7 @@ static void check_command_args(struct st_command *command,
     const struct command_arg *arg= &args[i];
     arg->ds->clear();
 
+    bool known_arg_type= true;
     switch (arg->type) {
       /* A string */
     case ARG_STRING:
@@ -807,9 +818,10 @@ static void check_command_args(struct st_command *command,
       break;
 
     default:
-      assert("Unknown argument type");
+      known_arg_type= false;
       break;
     }
+    assert(known_arg_type);
 
     /* Check required arg */
     if (arg->ds->length() == 0 && arg->required)
@@ -919,7 +931,6 @@ static void free_used_memory(void)
 
   free_all_replace();
   free(opt_pass);
-  free_defaults(default_argv);
 
   return;
 }
@@ -928,7 +939,7 @@ static void free_used_memory(void)
 static void cleanup_and_exit(int exit_code)
 {
   free_used_memory();
-  my_end();
+  internal::my_end();
 
   if (!silent) {
     switch (exit_code) {
@@ -1001,11 +1012,11 @@ void die(const char *fmt, ...)
   }
 
   /* Dump the result that has been accumulated so far to .log file */
-  if (result_file_name && ds_res.length())
+  if (! result_file_name.empty() && ds_res.length())
     dump_result_to_log_file(ds_res.c_str(), ds_res.length());
 
   /* Dump warning messages */
-  if (result_file_name && ds_warning_messages.length())
+  if (! result_file_name.empty() && ds_warning_messages.length())
     dump_warning_messages();
 
   /*
@@ -1141,9 +1152,9 @@ static void cat_file(string* ds, const char* filename)
   uint32_t len;
   char buff[512];
 
-  if ((fd= my_open(filename, O_RDONLY, MYF(0))) < 0)
+  if ((fd= internal::my_open(filename, O_RDONLY, MYF(0))) < 0)
     die("Failed to open file '%s'", filename);
-  while((len= my_read(fd, (unsigned char*)&buff,
+  while((len= internal::my_read(fd, (unsigned char*)&buff,
                       sizeof(buff), MYF(0))) > 0)
   {
     char *p= buff, *start= buff;
@@ -1165,7 +1176,7 @@ static void cat_file(string* ds, const char* filename)
     /* Output any chars that might be left */
     ds->append(start, p-start);
   }
-  my_close(fd, MYF(0));
+  internal::my_close(fd, MYF(0));
 }
 
 
@@ -1350,10 +1361,10 @@ static int compare_files2(int fd, const char* filename2)
   const char *fname= filename2;
   string tmpfile;
 
-  if ((fd2= my_open(fname, O_RDONLY, MYF(0))) < 0)
+  if ((fd2= internal::my_open(fname, O_RDONLY, MYF(0))) < 0)
   {
-    my_close(fd, MYF(0));
-    if (opt_testdir != NULL)
+    internal::my_close(fd, MYF(0));
+    if (! opt_testdir.empty())
     {
       tmpfile= opt_testdir;
       if (tmpfile[tmpfile.length()] != '/')
@@ -1361,17 +1372,17 @@ static int compare_files2(int fd, const char* filename2)
       tmpfile.append(filename2);
       fname= tmpfile.c_str();
     }
-    if ((fd2= my_open(fname, O_RDONLY, MYF(0))) < 0)
+    if ((fd2= internal::my_open(fname, O_RDONLY, MYF(0))) < 0)
     {
-      my_close(fd, MYF(0));
+      internal::my_close(fd, MYF(0));
     
       die("Failed to open second file: '%s'", fname);
     }
   }
-  while((len= my_read(fd, (unsigned char*)&buff,
+  while((len= internal::my_read(fd, (unsigned char*)&buff,
                       sizeof(buff), MYF(0))) > 0)
   {
-    if ((len2= my_read(fd2, (unsigned char*)&buff2,
+    if ((len2= internal::my_read(fd2, (unsigned char*)&buff2,
                        sizeof(buff2), MYF(0))) < len)
     {
       /* File 2 was smaller */
@@ -1391,14 +1402,14 @@ static int compare_files2(int fd, const char* filename2)
       break;
     }
   }
-  if (!error && my_read(fd2, (unsigned char*)&buff2,
+  if (!error && internal::my_read(fd2, (unsigned char*)&buff2,
                         sizeof(buff2), MYF(0)) > 0)
   {
     /* File 1 was smaller */
     error= RESULT_LENGTH_MISMATCH;
   }
 
-  my_close(fd2, MYF(0));
+  internal::my_close(fd2, MYF(0));
 
   return error;
 }
@@ -1422,12 +1433,12 @@ static int compare_files(const char* filename1, const char* filename2)
   int fd;
   int error;
 
-  if ((fd= my_open(filename1, O_RDONLY, MYF(0))) < 0)
+  if ((fd= internal::my_open(filename1, O_RDONLY, MYF(0))) < 0)
     die("Failed to open first file: '%s'", filename1);
 
   error= compare_files2(fd, filename2);
 
-  my_close(fd, MYF(0));
+  internal::my_close(fd, MYF(0));
 
   return error;
 }
@@ -1451,26 +1462,26 @@ static int string_cmp(string* ds, const char *fname)
   int fd;
   char temp_file_path[FN_REFLEN];
 
-  if ((fd= create_temp_file(temp_file_path, NULL,
+  if ((fd= internal::create_temp_file(temp_file_path, NULL,
                             "tmp", MYF(MY_WME))) < 0)
     die("Failed to create temporary file for ds");
 
   /* Write ds to temporary file and set file pos to beginning*/
-  if (my_write(fd, (unsigned char *) ds->c_str(), ds->length(),
+  if (internal::my_write(fd, (unsigned char *) ds->c_str(), ds->length(),
                MYF(MY_FNABP | MY_WME)) ||
       lseek(fd, 0, SEEK_SET) == MY_FILEPOS_ERROR)
   {
-    my_close(fd, MYF(0));
+    internal::my_close(fd, MYF(0));
     /* Remove the temporary file */
-    my_delete(temp_file_path, MYF(0));
+    internal::my_delete(temp_file_path, MYF(0));
     die("Failed to write file '%s'", temp_file_path);
   }
 
   error= compare_files2(fd, fname);
 
-  my_close(fd, MYF(0));
+  internal::my_close(fd, MYF(0));
   /* Remove the temporary file */
-  my_delete(temp_file_path, MYF(0));
+  internal::my_delete(temp_file_path, MYF(0));
 
   return(error);
 }
@@ -1493,12 +1504,12 @@ static void check_result(string* ds)
   const char* mess= "Result content mismatch\n";
 
 
-  assert(result_file_name);
+  assert(result_file_name.c_str());
 
-  if (access(result_file_name, F_OK) != 0)
-    die("The specified result file does not exist: '%s'", result_file_name);
+  if (access(result_file_name.c_str(), F_OK) != 0)
+    die("The specified result file does not exist: '%s'", result_file_name.c_str());
 
-  switch (string_cmp(ds, result_file_name)) {
+  switch (string_cmp(ds, result_file_name.c_str())) {
   case RESULT_OK:
     break; /* ok */
   case RESULT_LENGTH_MISMATCH:
@@ -1512,25 +1523,25 @@ static void check_result(string* ds)
     */
     char reject_file[FN_REFLEN];
     size_t reject_length;
-    dirname_part(reject_file, result_file_name, &reject_length);
+    internal::dirname_part(reject_file, result_file_name.c_str(), &reject_length);
 
     if (access(reject_file, W_OK) == 0)
     {
       /* Result file directory is writable, save reject file there */
-      fn_format(reject_file, result_file_name, NULL,
+      internal::fn_format(reject_file, result_file_name.c_str(), NULL,
                 ".reject", MY_REPLACE_EXT);
     }
     else
     {
       /* Put reject file in opt_logdir */
-      fn_format(reject_file, result_file_name, opt_logdir,
+      internal::fn_format(reject_file, result_file_name.c_str(), opt_logdir.c_str(),
                 ".reject", MY_REPLACE_DIR | MY_REPLACE_EXT);
     }
     str_to_file(reject_file, ds->c_str(), ds->length());
 
     ds->erase(); /* Don't create a .log file */
 
-    show_diff(NULL, result_file_name, reject_file);
+    show_diff(NULL, result_file_name.c_str(), reject_file);
     die("%s",mess);
     break;
   }
@@ -1564,7 +1575,7 @@ static void check_require(string* ds, const string &fname)
   if (string_cmp(ds, fname.c_str()))
   {
     char reason[FN_REFLEN];
-    fn_format(reason, fname.c_str(), "", "", MY_REPLACE_EXT | MY_REPLACE_DIR);
+    internal::fn_format(reason, fname.c_str(), "", "", MY_REPLACE_EXT | MY_REPLACE_DIR);
     abort_not_supported_test("Test requires: '%s'", reason);
   }
   return;
@@ -1702,7 +1713,7 @@ VAR* var_get(const char *var_name, const char **var_name_end, bool raw,
       die("Too long variable name: %s", save_var_name);
 
     string save_var_name_str(save_var_name, length);
-    drizzled::hash_map<string, VAR*>::iterator iter=
+    boost::unordered_map<string, VAR*>::iterator iter=
       var_hash.find(save_var_name_str);
     if (iter == var_hash.end())
     {
@@ -1740,7 +1751,7 @@ err:
 static VAR *var_obtain(const char *name, int len)
 {
   string var_name(name, len);
-  drizzled::hash_map<string, VAR*>::iterator iter=
+  boost::unordered_map<string, VAR*>::iterator iter=
     var_hash.find(var_name);
   if (iter != var_hash.end())
     return (*iter).second;
@@ -2144,12 +2155,12 @@ static int open_file(const char *name)
 {
   char buff[FN_REFLEN];
 
-  if (!test_if_hard_path(name))
+  if (!internal::test_if_hard_path(name))
   {
-    sprintf(buff,"%s%s",opt_basedir,name);
+    snprintf(buff, sizeof(buff), "%s%s",opt_basedir.c_str(),name);
     name=buff;
   }
-  fn_format(buff, name, "", "", MY_UNPACK_FILENAME);
+  internal::fn_format(buff, name, "", "", MY_UNPACK_FILENAME);
 
   if (cur_file == file_stack_end)
     die("Source directives are nesting too deep");
@@ -2200,7 +2211,7 @@ static void do_source(struct st_command *command)
     ; /* Do nothing */
   else
   {
-    if (opt_testdir != NULL)
+    if (! opt_testdir.empty())
     {
       string testdir(opt_testdir);
       if (testdir[testdir.length()] != '/')
@@ -2468,7 +2479,7 @@ static void do_remove_file(struct st_command *command)
                      rm_args, sizeof(rm_args)/sizeof(struct command_arg),
                      ' ');
 
-  error= my_delete(ds_filename.c_str(), MYF(0)) != 0;
+  error= internal::my_delete(ds_filename.c_str(), MYF(0)) != 0;
   handle_command_error(command, error);
   return;
 }
@@ -2502,7 +2513,7 @@ static void do_copy_file(struct st_command *command)
                      sizeof(copy_file_args)/sizeof(struct command_arg),
                      ' ');
 
-  error= (my_copy(ds_from_file.c_str(), ds_to_file.c_str(),
+  error= (internal::my_copy(ds_from_file.c_str(), ds_to_file.c_str(),
                   MYF(MY_DONT_OVERWRITE_FILE)) != 0);
   handle_command_error(command, error);
   return;
@@ -2600,7 +2611,7 @@ static void do_mkdir(struct st_command *command)
                      mkdir_args, sizeof(mkdir_args)/sizeof(struct command_arg),
                      ' ');
 
-  error= mkdir(ds_dirname.c_str(), (0777 & my_umask_dir)) != 0;
+  error= mkdir(ds_dirname.c_str(), (0777 & internal::my_umask_dir)) != 0;
   handle_command_error(command, error);
   return;
 }
@@ -2991,10 +3002,10 @@ static void do_perl(struct st_command *command)
   read_until_delimiter(&ds_script, &ds_delimiter);
 
   /* Create temporary file name */
-  if ((fd= create_temp_file(temp_file_path, getenv("MYSQLTEST_VARDIR"),
+  if ((fd= internal::create_temp_file(temp_file_path, getenv("MYSQLTEST_VARDIR"),
                             "tmp", MYF(MY_WME))) < 0)
     die("Failed to create temporary file for perl command");
-  my_close(fd, MYF(0));
+  internal::my_close(fd, MYF(0));
 
   str_to_file(temp_file_path, ds_script.c_str(), ds_script.length());
 
@@ -3014,7 +3025,7 @@ static void do_perl(struct st_command *command)
   error= pclose(res_file);
 
   /* Remove the temporary file */
-  my_delete(temp_file_path, MYF(0));
+  internal::my_delete(temp_file_path, MYF(0));
 
   handle_command_error(command, WEXITSTATUS(error));
   return;
@@ -3120,7 +3131,7 @@ static void do_sync_with_master2(long offset)
   if (!master_pos.file[0])
     die("Calling 'sync_with_master' without calling 'save_master_pos'");
 
-  sprintf(query_buf, "select master_pos_wait('%s', %ld)", master_pos.file,
+  snprintf(query_buf, sizeof(query_buf), "select master_pos_wait('%s', %ld)", master_pos.file,
           master_pos.pos + offset);
 
 wait_for_position:
@@ -3307,14 +3318,14 @@ static int do_sleep(struct st_command *command, bool real_sleep)
   bool error= false;
   char *p= command->first_argument;
   char *sleep_start, *sleep_end= command->end;
-  double sleep_val;
+  double sleep_val= 0;
 
   while (my_isspace(charset_info, *p))
     p++;
   if (!*p)
     die("Missing argument to %.*s", command->first_word_len, command->query);
   sleep_start= p;
-  /* Check that arg starts with a digit, not handled by my_strtod */
+  /* Check that arg starts with a digit, not handled by internal::my_strtod */
   if (!my_isdigit(charset_info, *sleep_start))
     die("Invalid argument to %.*s \"%s\"", command->first_word_len,
         command->query,command->first_argument);
@@ -3347,7 +3358,7 @@ static void do_get_file_name(struct st_command *command, string &dest)
   if (*p)
     *p++= 0;
   command->last_argument= p;
-  if (opt_testdir != NULL)
+  if (! opt_testdir.empty())
   {
     dest= opt_testdir;
     if (dest[dest.length()] != '/')
@@ -3684,16 +3695,16 @@ static void do_close_connection(struct st_command *command)
 */
 
 static void safe_connect(drizzle_con_st *con, const char *name,
-                         const char *host, const char *user, const char *pass,
-                         const char *db, int port)
+                         const string host, const string user, const char *pass,
+                         const string db, uint32_t port)
 {
-  int failed_attempts= 0;
+  uint32_t failed_attempts= 0;
   static uint32_t connection_retry_sleep= 100000; /* Microseconds */
   drizzle_return_t ret;
 
-  drizzle_con_set_tcp(con, host, port);
-  drizzle_con_set_auth(con, user, pass);
-  drizzle_con_set_db(con, db);
+  drizzle_con_set_tcp(con, host.c_str(), port);
+  drizzle_con_set_auth(con, user.c_str(), pass);
+  drizzle_con_set_db(con, db.c_str());
   while((ret= drizzle_con_connect(con)) != DRIZZLE_RETURN_OK)
   {
     /*
@@ -3835,9 +3846,9 @@ static int connect_n_handle_errors(struct st_command *command,
 
 static void do_connect(struct st_command *command)
 {
-  int con_port= opt_port;
+  uint32_t con_port= opt_port;
   const char *con_options;
-  bool con_ssl= 0, con_compress= 0;
+  bool con_ssl= 0;
   struct st_connection* con_slot;
 
   string ds_connection_name;
@@ -3883,7 +3894,7 @@ static void do_connect(struct st_command *command)
     if (*ds_sock.c_str() != FN_LIBCHAR)
     {
       char buff[FN_REFLEN];
-      fn_format(buff, ds_sock.c_str(), TMPDIR, "", 0);
+      internal::fn_format(buff, ds_sock.c_str(), TMPDIR, "", 0);
       ds_sock.clear();
       ds_sock.append(buff);
     }
@@ -3903,8 +3914,6 @@ static void do_connect(struct st_command *command)
       end++;
     if (!strncmp(con_options, "SSL", 3))
       con_ssl= 1;
-    else if (!strncmp(con_options, "COMPRESS", 8))
-      con_compress= 1;
     else
       die("Illegal option to connect: %.*s",
           (int) (end - con_options), con_options);
@@ -3930,6 +3939,7 @@ static void do_connect(struct st_command *command)
     die("Failed on drizzle_create()");
   if (!drizzle_con_create(con_slot->drizzle, &con_slot->con))
     die("Failed on drizzle_con_create()");
+  drizzle_con_add_options(&con_slot->con, use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL);
 
   /* Use default db name */
   if (ds_database.length() == 0)
@@ -4493,8 +4503,6 @@ static void check_eol_junk(const char *eol)
   return;
 }
 
-
-
 /*
   Create a command from a set of lines
 
@@ -4512,7 +4520,7 @@ static void check_eol_junk(const char *eol)
   terminated by new line '\n' regardless how many "delimiter" it contain.
 */
 
-#define MAX_QUERY (256*1024*2) /* 256K -- a test in sp-big is >128K */
+#define MAX_QUERY (768*1024*2) /* 256K -- a test in sp-big is >128K */
 static char read_command_buf[MAX_QUERY];
 
 static int read_command(struct st_command** command_ptr)
@@ -4574,205 +4582,6 @@ static int read_command(struct st_command** command_ptr)
   return(0);
 }
 
-
-static struct my_option my_long_options[] =
-{
-  {"help", '?', "Display this help and exit.", 0, 0, 0, GET_NO_ARG, NO_ARG,
-   0, 0, 0, 0, 0, 0},
-  {"basedir", 'b', "Basedir for tests.", (char**) &opt_basedir,
-   (char**) &opt_basedir, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"character-sets-dir", OPT_CHARSETS_DIR,
-   "Directory where character sets are.", (char**) &opt_charsets_dir,
-   (char**) &opt_charsets_dir, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"database", 'D', "Database to use.", (char**) &opt_db, (char**) &opt_db, 0,
-   GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"host", 'h', "Connect to host.", (char**) &opt_host, (char**) &opt_host, 0,
-   GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"include", 'i', "Include SQL before each test case.", (char**) &opt_include,
-   (char**) &opt_include, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"testdir", OPT_TESTDIR, "Path to use to search for test files",
-   (char**) &opt_testdir,
-   (char**) &opt_testdir, 0,GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"logdir", OPT_LOG_DIR, "Directory for log files", (char**) &opt_logdir,
-   (char**) &opt_logdir, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"mark-progress", OPT_MARK_PROGRESS,
-   "Write linenumber and elapsed time to <testname>.progress ",
-   (char**) &opt_mark_progress, (char**) &opt_mark_progress, 0,
-   GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"max-connect-retries", OPT_MAX_CONNECT_RETRIES,
-   "Max number of connection attempts when connecting to server",
-   (char**) &opt_max_connect_retries, (char**) &opt_max_connect_retries, 0,
-   GET_INT, REQUIRED_ARG, 500, 1, 10000, 0, 0, 0},
-  {"password", 'P', "Password to use when connecting to server.",
-   0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"port", 'p', "Port number to use for connection or 0 for default to, in "
-   "order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
-   "built-in default (" STRINGIFY_ARG(DRIZZLE_PORT) ").",
-   0, 0, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"quiet", 's', "Suppress all normal output.", (char**) &silent,
-   (char**) &silent, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"record", 'r', "Record output of test_file into result file.",
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"result-file", 'R', "Read/Store result from/in this file.",
-   (char**) &result_file_name, (char**) &result_file_name, 0,
-   GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"silent", 's', "Suppress all normal output. Synonym for --quiet.",
-   (char**) &silent, (char**) &silent, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"sleep", 'T', "Sleep always this many seconds on sleep commands.",
-   (char**) &opt_sleep, (char**) &opt_sleep, 0, GET_INT, REQUIRED_ARG, -1, -1, 0,
-   0, 0, 0},
-  {"tail-lines", OPT_TAIL_LINES,
-   "Number of lines of the resul to include in a failure report",
-   (char**) &opt_tail_lines, (char**) &opt_tail_lines, 0,
-   GET_INT, REQUIRED_ARG, 0, 0, 10000, 0, 0, 0},
-  {"test-file", 'x', "Read test from/in this file (default stdin).",
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"timer-file", 'm', "File where the timing in micro seconds is stored.",
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"tmpdir", 't', "Temporary directory where sockets are put.",
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"user", 'u', "User for login.", (char**) &opt_user, (char**) &opt_user, 0,
-   GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"verbose", 'v', "Write more.", (char**) &verbose, (char**) &verbose, 0,
-   GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"version", 'V', "Output version information and exit.",
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  { 0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
-};
-
-
-static void print_version(void)
-{
-  printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n",my_progname,MTEST_VERSION,
-         drizzle_version(),HOST_VENDOR,HOST_OS,HOST_CPU);
-}
-
-static void usage(void)
-{
-  print_version();
-  printf("MySQL AB, by Sasha, Matt, Monty & Jani\n");
-  printf("Drizzle version modified by Brian, Jay, Monty Taylor, PatG and Stewart\n");
-  printf("This software comes with ABSOLUTELY NO WARRANTY\n\n");
-  printf("Runs a test against the DRIZZLE server and compares output with a results file.\n\n");
-  printf("Usage: %s [OPTIONS] [database] < test_file\n", my_progname);
-  my_print_help(my_long_options);
-  printf("  --no-defaults       Don't read default options from any options file.\n");
-  my_print_variables(my_long_options);
-}
-
-bool get_one_option(int optid, const struct my_option *, char *argument)
-{
-  char *endchar= NULL;
-  uint64_t temp_drizzle_port= 0;
-
-  switch(optid) {
-  case 'r':
-    record = 1;
-    break;
-  case 'x':
-  {
-    char buff[FN_REFLEN];
-    if (!test_if_hard_path(argument))
-    {
-      sprintf(buff,"%s%s",opt_basedir,argument);
-      argument= buff;
-    }
-    fn_format(buff, argument, "", "", MY_UNPACK_FILENAME);
-    assert(cur_file == file_stack && cur_file->file == 0);
-    if (!(cur_file->file= fopen(buff, "r")))
-      die("Could not open '%s' for reading: errno = %d", buff, errno);
-    if (!(cur_file->file_name= strdup(buff)))
-      die("Out of memory");
-    cur_file->lineno= 1;
-    break;
-  }
-  case 'm':
-  {
-    static char buff[FN_REFLEN];
-    if (!test_if_hard_path(argument))
-    {
-      sprintf(buff,"%s%s",opt_basedir,argument);
-      argument= buff;
-    }
-    fn_format(buff, argument, "", "", MY_UNPACK_FILENAME);
-    timer_file= buff;
-    unlink(timer_file);       /* Ignore error, may not exist */
-    break;
-  }
-  case 'p':
-    temp_drizzle_port= (uint64_t) strtoul(argument, &endchar, 10);
-    /* if there is an alpha character this is not a valid port */
-    if (strlen(endchar) != 0)
-    {
-      fprintf(stderr, _("Non-integer value supplied for port.  If you are trying to enter a password please use --password instead.\n"));
-      exit(1);
-    }
-    /* If the port number is > 65535 it is not a valid port
-       This also helps with potential data loss casting unsigned long to a
-       uint32_t. */
-    if ((temp_drizzle_port == 0) || (temp_drizzle_port > 65535))
-    {
-      fprintf(stderr, _("Value supplied for port is not valid.\n"));
-      exit(1);
-    }
-    else
-    {
-      opt_port= (uint32_t) temp_drizzle_port;
-    }
-    break;
-  case 'P':
-    if (argument)
-    {
-      if (opt_pass)
-        free(opt_pass);
-      opt_pass = strdup(argument);
-      if (opt_pass == NULL)
-        die("Out of memory");
-      while (*argument)
-      {
-        /* Overwriting password with 'x' */
-        *argument++= 'x';
-      }
-      tty_password= 0;
-    }
-    else
-      tty_password= 1;
-    break;
-  case 't':
-    strncpy(TMPDIR, argument, sizeof(TMPDIR));
-    break;
-  case 'V':
-    print_version();
-    exit(0);
-  case '?':
-    usage();
-    exit(0);
-  }
-  return 0;
-}
-
-
-static int parse_args(int argc, char **argv)
-{
-  load_defaults("drizzle",load_default_groups,&argc,&argv);
-  default_argv= argv;
-
-  if ((handle_options(&argc, &argv, my_long_options, get_one_option)))
-    exit(1);
-
-  if (argc > 1)
-  {
-    usage();
-    exit(1);
-  }
-  if (argc == 1)
-    opt_db= *argv;
-  if (tty_password)
-    opt_pass= client_get_tty_password(NULL);          /* purify tested */
-
-  return 0;
-}
-
 /*
   Write the content of str into file
 
@@ -4789,23 +4598,23 @@ void str_to_file2(const char *fname, const char *str, int size, bool append)
   int fd;
   char buff[FN_REFLEN];
   int flags= O_WRONLY | O_CREAT;
-  if (!test_if_hard_path(fname))
+  if (!internal::test_if_hard_path(fname))
   {
-    sprintf(buff,"%s%s",opt_basedir,fname);
+    snprintf(buff, sizeof(buff), "%s%s",opt_basedir.c_str(),fname);
     fname= buff;
   }
-  fn_format(buff, fname, "", "", MY_UNPACK_FILENAME);
+  internal::fn_format(buff, fname, "", "", MY_UNPACK_FILENAME);
 
   if (!append)
     flags|= O_TRUNC;
-  if ((fd= my_open(buff, flags,
+  if ((fd= internal::my_open(buff, flags,
                    MYF(MY_WME | MY_FFNF))) < 0)
     die("Could not open '%s' for writing: errno = %d", buff, errno);
   if (append && lseek(fd, 0, SEEK_END) == MY_FILEPOS_ERROR)
     die("Could not find end of file '%s': errno = %d", buff, errno);
-  if (my_write(fd, (unsigned char*)str, size, MYF(MY_WME|MY_FNABP)))
+  if (internal::my_write(fd, (unsigned char*)str, size, MYF(MY_WME|MY_FNABP)))
     die("write failed");
-  my_close(fd, MYF(0));
+  internal::my_close(fd, MYF(0));
 }
 
 /*
@@ -4827,8 +4636,8 @@ void str_to_file(const char *fname, const char *str, int size)
 void dump_result_to_log_file(const char *buf, int size)
 {
   char log_file[FN_REFLEN];
-  str_to_file(fn_format(log_file, result_file_name, opt_logdir, ".log",
-                        *opt_logdir ? MY_REPLACE_DIR | MY_REPLACE_EXT :
+  str_to_file(internal::fn_format(log_file, result_file_name.c_str(), opt_logdir.c_str(), ".log",
+                        ! opt_logdir.empty() ? MY_REPLACE_DIR | MY_REPLACE_EXT :
                         MY_REPLACE_EXT),
               buf, size);
   fprintf(stderr, "\nMore results from queries before failure can be found in %s\n",
@@ -4838,9 +4647,9 @@ void dump_result_to_log_file(const char *buf, int size)
 void dump_progress(void)
 {
   char progress_file[FN_REFLEN];
-  str_to_file(fn_format(progress_file, result_file_name,
-                        opt_logdir, ".progress",
-                        *opt_logdir ? MY_REPLACE_DIR | MY_REPLACE_EXT :
+  str_to_file(internal::fn_format(progress_file, result_file_name.c_str(),
+                        opt_logdir.c_str(), ".progress",
+                        ! opt_logdir.empty() ? MY_REPLACE_DIR | MY_REPLACE_EXT :
                         MY_REPLACE_EXT),
               ds_progress.c_str(), ds_progress.length());
 }
@@ -4849,8 +4658,8 @@ void dump_warning_messages(void)
 {
   char warn_file[FN_REFLEN];
 
-  str_to_file(fn_format(warn_file, result_file_name, opt_logdir, ".warnings",
-                        *opt_logdir ? MY_REPLACE_DIR | MY_REPLACE_EXT :
+  str_to_file(internal::fn_format(warn_file, result_file_name.c_str(), opt_logdir.c_str(), ".warnings",
+                        ! opt_logdir.empty() ? MY_REPLACE_DIR | MY_REPLACE_EXT :
                         MY_REPLACE_EXT),
               ds_warning_messages.c_str(), ds_warning_messages.length());
 }
@@ -5548,17 +5357,157 @@ static void mark_progress(struct st_command*, int line)
 
 }
 
+static void check_retries(uint32_t in_opt_max_connect_retries)
+{
+  if (in_opt_max_connect_retries > 10000 || opt_max_connect_retries<1)
+  {
+    cout << N_("Error: Invalid Value for opt_max_connect_retries"); 
+    exit(-1);
+  }
+  opt_max_connect_retries= in_opt_max_connect_retries;
+}
+
+static void check_tail_lines(uint32_t in_opt_tail_lines)
+{
+  if (in_opt_tail_lines > 10000)
+  {
+    cout << N_("Error: Invalid Value for opt_tail_lines"); 
+    exit(-1);
+  }
+  opt_tail_lines= in_opt_tail_lines;
+}
+
+static void check_sleep(int32_t in_opt_sleep)
+{
+  if (in_opt_sleep < -1)
+  {
+    cout << N_("Error: Invalid Value for opt_sleep"); 
+    exit(-1);
+  }
+  opt_sleep= in_opt_sleep;
+}
 
 int main(int argc, char **argv)
+{
+try
 {
   struct st_command *command;
   bool q_send_flag= 0, abort_flag= 0;
   uint32_t command_executed= 0, last_command_executed= 0;
   string save_file("");
   struct stat res_info;
-  MY_INIT(argv[0]);
 
   TMPDIR[0]= 0;
+
+  internal::my_init();
+
+  po::options_description commandline_options("Options used only in command line");
+  commandline_options.add_options()
+  ("help,?", "Display this help and exit.")
+  ("mark-progress", po::value<bool>(&opt_mark_progress)->default_value(false)->zero_tokens(),
+  "Write linenumber and elapsed time to <testname>.progress ")
+  ("sleep,T", po::value<int32_t>(&opt_sleep)->default_value(-1)->notifier(&check_sleep),
+  "Sleep always this many seconds on sleep commands.")
+  ("test-file,x", po::value<string>(),
+  "Read test from/in this file (default stdin).")
+  ("timer-file,f", po::value<string>(),
+  "File where the timing in micro seconds is stored.")
+  ("tmpdir,t", po::value<string>(),
+  "Temporary directory where sockets are put.")
+  ("verbose,v", po::value<bool>(&verbose)->default_value(false),
+  "Write more.")
+  ("version,V", "Output version information and exit.")
+  ("no-defaults", po::value<bool>()->default_value(false)->zero_tokens(),
+  "Configuration file defaults are not used if no-defaults is set")
+  ;
+
+  po::options_description test_options("Options specific to the drizzleimport");
+  test_options.add_options()
+  ("basedir,b", po::value<string>(&opt_basedir)->default_value(""),
+  "Basedir for tests.")
+  ("character-sets-dir", po::value<string>(&opt_charsets_dir)->default_value(""),
+  "Directory where character sets are.")
+  ("database,D", po::value<string>(&opt_db)->default_value(""),
+  "Database to use.")
+  ("include,i", po::value<string>(&opt_include)->default_value(""),
+  "Include SQL before each test case.")  
+  ("testdir", po::value<string>(&opt_testdir)->default_value(""),
+  "Path to use to search for test files")
+  ("logdir", po::value<string>(&opt_logdir)->default_value(""),
+  "Directory for log files")
+  ("max-connect-retries", po::value<uint32_t>(&opt_max_connect_retries)->default_value(500)->notifier(&check_retries),
+  "Max number of connection attempts when connecting to server")
+  ("quiet,s", po::value<bool>(&silent)->default_value(false)->zero_tokens(),
+  "Suppress all normal output.")
+  ("record,r", "Record output of test_file into result file.")
+  ("result-file,R", po::value<string>(&result_file_name)->default_value(""),
+  "Read/Store result from/in this file.")
+  ("silent,s", po::value<bool>(&silent)->default_value(false)->zero_tokens(),
+  "Suppress all normal output. Synonym for --quiet.")
+  ("tail-lines", po::value<uint32_t>(&opt_tail_lines)->default_value(0)->notifier(&check_tail_lines),
+  "Number of lines of the resul to include in a failure report")
+  ;
+
+  po::options_description client_options("Options specific to the client");
+  client_options.add_options()
+
+  ("host,h", po::value<string>(&opt_host)->default_value("localhost"),
+  "Connect to host.")
+  ("password,P", po::value<string>(&password)->default_value("PASSWORD_SENTINEL"),
+  "Password to use when connecting to server.")
+  ("port,p", po::value<uint32_t>(&opt_port)->default_value(0),
+  "Port number to use for connection or 0 for default")
+  ("protocol", po::value<string>(&opt_protocol),
+  "The protocol of connection (mysql or drizzle).")
+  ("user,u", po::value<string>(&opt_user)->default_value(""),
+  "User for login.")
+  ;
+
+  po::positional_options_description p;
+  p.add("database", 1);
+
+  po::options_description long_options("Allowed Options");
+  long_options.add(commandline_options).add(test_options).add(client_options);
+
+  std::string system_config_dir_test(SYSCONFDIR); 
+  system_config_dir_test.append("/drizzle/drizzletest.cnf");
+
+  std::string system_config_dir_client(SYSCONFDIR); 
+  system_config_dir_client.append("/drizzle/client.cnf");
+
+  std::string user_config_dir((getenv("XDG_CONFIG_HOME")? getenv("XDG_CONFIG_HOME"):"~/.config"));
+
+  po::variables_map vm;
+
+  // Disable allow_guessing
+  int style = po::command_line_style::default_style & ~po::command_line_style::allow_guessing;
+
+  po::store(po::command_line_parser(argc, argv).options(long_options).
+            style(style).positional(p).extra_parser(parse_password_arg).run(),
+            vm);
+
+  if (! vm["no-defaults"].as<bool>())
+  {
+    std::string user_config_dir_test(user_config_dir);
+    user_config_dir_test.append("/drizzle/drizzletest.cnf"); 
+
+    std::string user_config_dir_client(user_config_dir);
+    user_config_dir_client.append("/drizzle/client.cnf");
+
+    ifstream user_test_ifs(user_config_dir_test.c_str());
+    po::store(parse_config_file(user_test_ifs, test_options), vm);
+
+    ifstream user_client_ifs(user_config_dir_client.c_str());
+    po::store(parse_config_file(user_client_ifs, client_options), vm);
+
+    ifstream system_test_ifs(system_config_dir_test.c_str());
+    store(parse_config_file(system_test_ifs, test_options), vm);
+
+    ifstream system_client_ifs(system_config_dir_client.c_str());
+    po::store(parse_config_file(system_client_ifs, client_options), vm);
+  }
+
+  po::notify(vm);
 
   /* Init expected errors */
   memset(&saved_expected_errors, 0, sizeof(saved_expected_errors));
@@ -5596,7 +5545,125 @@ int main(int argc, char **argv)
   ds_progress.reserve(2048);
   ds_warning_messages.reserve(2048);
 
-  parse_args(argc, argv);
+ 
+  if (vm.count("record"))
+  {
+    record = 1;
+  }
+
+  if (vm.count("test-file"))
+  {
+    string tmp= vm["test-file"].as<string>();
+    char buff[FN_REFLEN];
+    if (!internal::test_if_hard_path(tmp.c_str()))
+    {
+      snprintf(buff, sizeof(buff), "%s%s",opt_basedir.c_str(),tmp.c_str());
+      tmp= buff;
+    }
+    internal::fn_format(buff, tmp.c_str(), "", "", MY_UNPACK_FILENAME);
+    assert(cur_file == file_stack && cur_file->file == 0);
+    if (!(cur_file->file= fopen(buff, "r")))
+    {
+      fprintf(stderr, _("Could not open '%s' for reading: errno = %d"), buff, errno);
+      return EXIT_ARGUMENT_INVALID;
+    }
+    if (!(cur_file->file_name= strdup(buff)))
+    {
+      fprintf(stderr, _("Out of memory"));
+      return EXIT_OUT_OF_MEMORY;
+    }
+    cur_file->lineno= 1;
+  }
+
+  if (vm.count("timer-file"))
+  {
+    string tmp= vm["timer-file"].as<string>().c_str();
+    static char buff[FN_REFLEN];
+    if (!internal::test_if_hard_path(tmp.c_str()))
+    {
+      snprintf(buff, sizeof(buff), "%s%s",opt_basedir.c_str(),tmp.c_str());
+      tmp= buff;
+    }
+    internal::fn_format(buff, tmp.c_str(), "", "", MY_UNPACK_FILENAME);
+    timer_file= buff;
+    unlink(timer_file);       /* Ignore error, may not exist */
+  }
+
+  if (vm.count("protocol"))
+  {
+    std::transform(opt_protocol.begin(), opt_protocol.end(),
+      opt_protocol.begin(), ::tolower);
+
+    if (not opt_protocol.compare("mysql"))
+      use_drizzle_protocol=false;
+    else if (not opt_protocol.compare("drizzle"))
+      use_drizzle_protocol=true;
+    else
+    {
+      cout << _("Error: Unknown protocol") << " '" << opt_protocol << "'" << endl;
+      exit(-1);
+    }
+  }
+
+  if (vm.count("port"))
+  {
+    /* If the port number is > 65535 it is not a valid port
+       This also helps with potential data loss casting unsigned long to a
+       uint32_t. */
+    if (opt_port > 65535)
+    {
+      fprintf(stderr, _("Value supplied for port is not valid.\n"));
+      exit(EXIT_ARGUMENT_INVALID);
+    }
+  }
+
+  if( vm.count("password") )
+  {
+    if (!opt_password.empty())
+      opt_password.erase();
+    if (password == PASSWORD_SENTINEL)
+    {
+      opt_password= "";
+    }
+    else
+    {
+      opt_password= password;
+      tty_password= false;
+    }
+  }
+  else
+  {
+      tty_password= true;
+  }
+
+  if (vm.count("tmpdir"))
+  {
+    strncpy(TMPDIR, vm["tmpdir"].as<string>().c_str(), sizeof(TMPDIR));
+  }
+
+  if (vm.count("version"))
+  {
+    printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n",internal::my_progname,MTEST_VERSION,
+    drizzle_version(),HOST_VENDOR,HOST_OS,HOST_CPU);
+    exit(0);
+  }
+  
+  if (vm.count("help"))
+  {
+    printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n",internal::my_progname,MTEST_VERSION,
+    drizzle_version(),HOST_VENDOR,HOST_OS,HOST_CPU);
+    printf("MySQL AB, by Sasha, Matt, Monty & Jani\n");
+    printf("Drizzle version modified by Brian, Jay, Monty Taylor, PatG and Stewart\n");
+    printf("This software comes with ABSOLUTELY NO WARRANTY\n\n");
+    printf("Runs a test against the DRIZZLE server and compares output with a results file.\n\n");
+    printf("Usage: %s [OPTIONS] [database] < test_file\n", internal::my_progname);
+    exit(0);
+  }
+
+  if (tty_password)
+  {
+    opt_pass= client_get_tty_password(NULL);          /* purify tested */
+  }
 
   server_initialized= 1;
   if (cur_file == file_stack && cur_file->file == 0)
@@ -5612,10 +5679,10 @@ int main(int argc, char **argv)
     die("Failed in drizzle_create()");
   if (!( drizzle_con_create(cur_con->drizzle, &cur_con->con)))
     die("Failed in drizzle_con_create()");
+  drizzle_con_add_options(&cur_con->con, use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL);
 
   if (!(cur_con->name = strdup("default")))
     die("Out of memory");
-
   safe_connect(&cur_con->con, cur_con->name, opt_host, opt_user, opt_pass,
                opt_db, opt_port);
 
@@ -5632,9 +5699,9 @@ int main(int argc, char **argv)
   /* Update $drizzleclient_get_server_version to that of current connection */
   var_set_drizzleclient_get_server_version(&cur_con->con);
 
-  if (opt_include)
+  if (! opt_include.empty())
   {
-    open_file(opt_include);
+    open_file(opt_include.c_str());
   }
 
   while (!read_command(&command) && !abort_flag)
@@ -5938,14 +6005,14 @@ int main(int argc, char **argv)
   */
   if (ds_res.length())
   {
-    if (result_file_name)
+    if (! result_file_name.empty())
     {
       /* A result file has been specified */
 
       if (record)
       {
         /* Recording - dump the output from test to result file */
-        str_to_file(result_file_name, ds_res.c_str(), ds_res.length());
+        str_to_file(result_file_name.c_str(), ds_res.c_str(), ds_res.length());
       }
       else
       {
@@ -5968,7 +6035,7 @@ int main(int argc, char **argv)
   }
 
   if (!command_executed &&
-      result_file_name && !stat(result_file_name, &res_info))
+      ! result_file_name.empty() && !stat(result_file_name.c_str(), &res_info))
   {
     /*
       my_stat() successful on result file. Check if we have not run a
@@ -5980,16 +6047,23 @@ int main(int argc, char **argv)
     die("No queries executed but result file found!");
   }
 
-  if ( opt_mark_progress && result_file_name )
+  if ( opt_mark_progress && ! result_file_name.empty() )
     dump_progress();
 
   /* Dump warning messages */
-  if (result_file_name && ds_warning_messages.length())
+  if (! result_file_name.empty() && ds_warning_messages.length())
     dump_warning_messages();
 
   timer_output();
   /* Yes, if we got this far the test has suceeded! Sakila smiles */
   cleanup_and_exit(0);
+}
+
+  catch(exception &err)
+  {
+    cerr<<err.what()<<endl;
+  }
+
   return 0; /* Keep compiler happy too */
 }
 
@@ -6031,7 +6105,19 @@ void timer_output(void)
 
 uint64_t timer_now(void)
 {
-  return my_micro_time() / 1000;
+#if defined(HAVE_GETHRTIME)
+  return gethrtime()/1000/1000;
+#else
+  uint64_t newtime;
+  struct timeval t;
+  /*
+    The following loop is here because gettimeofday may fail on some systems
+  */
+  while (gettimeofday(&t, NULL) != 0)
+  {}
+  newtime= (uint64_t)t.tv_sec * 1000000 + t.tv_usec;
+  return newtime/1000;
+#endif  /* defined(HAVE_GETHRTIME) */
 }
 
 
@@ -6560,14 +6646,23 @@ int reg_replace(char** buf_p, int* buf_len_p, char *pattern,
     /* Repeatedly replace the string with the matched regex */
     string subject(in_string);
     size_t replace_length= strlen(replace);
+    size_t length_of_replacement= strlen(replace);
     size_t current_position= 0;
     int rc= 0;
-    while(0 >= (rc= pcre_exec(re, NULL, subject.c_str() + current_position, subject.length() - current_position,
-                      0, 0, ovector, 3)))
+
+    while (true) 
     {
+      rc= pcre_exec(re, NULL, subject.c_str(), subject.length(), 
+                    current_position, 0, ovector, 3);
+      if (rc < 0)
+      {
+        break;
+      }
+
       current_position= static_cast<size_t>(ovector[0]);
       replace_length= static_cast<size_t>(ovector[1] - ovector[0]);
-      subject.replace(current_position, replace_length, replace, replace_length);
+      subject.replace(current_position, replace_length, replace, length_of_replacement);
+      current_position= current_position + length_of_replacement;
     }
 
     char *new_buf = (char *) malloc(subject.length() + 1);

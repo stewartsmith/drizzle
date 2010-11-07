@@ -22,10 +22,14 @@
 
 #include <drizzled/function/numhybrid.h>
 
+namespace drizzled
+{
+
 /* function where type of result detected by first argument */
 class Item_func_num1: public Item_func_numhybrid
 {
 public:
+  Item_func_num1(): Item_func_numhybrid() {}
   Item_func_num1(Item *a) :Item_func_numhybrid(a) {}
   Item_func_num1(Item *a, Item *b) :Item_func_numhybrid(a, b) {}
 
@@ -35,5 +39,6 @@ public:
   { assert(0); return 0; }
 };
 
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_NUM1_H */

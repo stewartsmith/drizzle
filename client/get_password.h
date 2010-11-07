@@ -20,14 +20,13 @@
 #ifndef CLIENT_GET_PASSWORD_H
 #define CLIENT_GET_PASSWORD_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <string>
 
-  char *client_get_tty_password(const char *opt_message);
+char *client_get_tty_password(const char *opt_message);
 
-#ifdef __cplusplus
-}
-#endif
+std::pair<std::string, std::string> parse_password_arg(std::string s);
+
+extern bool tty_password;
+extern const std::string PASSWORD_SENTINEL;
 
 #endif /* CLIENT_GET_PASSWORD_H */

@@ -1,0 +1,8 @@
+SHOW TABLES like 't1';
+Tables_in_test (t1)
+t1
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `number` INT
+) COMMENT='Table without a StorageEngine message'

@@ -1,0 +1,4 @@
+CREATE TABLE t1 (pk int primary key, a varbinary(767) unique);
+drop table t1;
+CREATE TABLE t1 (pk int primary key, a varbinary(4097) unique);
+ERROR 42000: Specified key was too long; max key length is 767 bytes

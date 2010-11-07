@@ -1,0 +1,45 @@
+create schema a;
+create schema b;
+create schema c;
+use a;
+create temporary table a ( a int );
+create temporary table b ( a int );
+create temporary table c ( a int );
+create temporary table d ( a int );
+use b;
+create temporary table a ( a int );
+create temporary table c ( a int );
+create temporary table d ( a int );
+use c;
+create temporary table a ( a int );
+create temporary table b ( a int );
+create temporary table d ( a int );
+show temporary tables;
+TABLE_SCHEMA	TABLE_NAME	RECORDS	RECORD_LENGTH	ENGINE
+c	d	#	#	#
+c	b	#	#	#
+c	a	#	#	#
+b	d	#	#	#
+b	c	#	#	#
+b	a	#	#	#
+a	d	#	#	#
+a	c	#	#	#
+a	b	#	#	#
+a	a	#	#	#
+show temporary tables LIKE "a";
+TABLE_SCHEMA	TABLE_NAME	RECORDS	RECORD_LENGTH	ENGINE
+c	a	#	#	#
+b	a	#	#	#
+a	a	#	#	#
+show temporary tables WHERE TABLE_SCHEMA="b";
+TABLE_SCHEMA	TABLE_NAME	RECORDS	RECORD_LENGTH	ENGINE
+b	d	#	#	#
+b	c	#	#	#
+b	a	#	#	#
+drop schema b;
+show temporary tables WHERE TABLE_SCHEMA="b";
+TABLE_SCHEMA	TABLE_NAME	RECORDS	RECORD_LENGTH	ENGINE
+drop schema a;
+drop schema c;
+show temporary tables;
+TABLE_SCHEMA	TABLE_NAME	RECORDS	RECORD_LENGTH	ENGINE

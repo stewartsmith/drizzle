@@ -24,10 +24,14 @@
 #include "drizzled/memory/sql_alloc.h"
 #include "drizzled/lex_string.h"
 
-class Item;
-namespace drizzled { namespace memory { class Root; } }
+namespace drizzled
+{
 
-class Key_part_spec :public drizzled::memory::SqlAlloc {
+namespace memory { class Root; }
+
+class Item;
+
+class Key_part_spec :public memory::SqlAlloc {
 public:
   LEX_STRING field_name;
   uint32_t length;
@@ -47,8 +51,12 @@ public:
     @return If out of memory, 0 is returned and an error is set in
     Session.
   */
-  Key_part_spec *clone(drizzled::memory::Root *mem_root) const
-  { return new (mem_root) Key_part_spec(*this); }
+  Key_part_spec *clone(memory::Root *mem_root) const
+  {
+    return new (mem_root) Key_part_spec(*this);
+  }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_KEY_PART_SPEC_H */

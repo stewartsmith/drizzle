@@ -37,15 +37,15 @@
 #include <string>
 
 /* implements memc_cas */
-class MemcachedCas : public Item_int_func
+class MemcachedCas : public drizzled::Item_int_func
 {
-  String value;
-  String failure_buff;
+  drizzled::String value;
+  drizzled::String failure_buff;
 public:
   MemcachedCas()
     :
       Item_int_func(),
-      failure_buff("error ... ", &my_charset_bin)
+      failure_buff("error ... ", &drizzled::my_charset_bin)
   {}
 
   const char *func_name() const

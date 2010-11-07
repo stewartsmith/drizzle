@@ -2,12 +2,18 @@
 # Tests multi-value INSERT statements and the transaction log
 #
 
+# Ignore startup/shutdown events
+--disable_query_log
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
+--enable_query_log
+
+
 # Populate log with some records...
 --source ../plugin/transaction_log/tests/t/insert_multi.inc
 
 # Read in the transaction.log.
 
---exec ../drizzled/message/transaction_reader var/master-data/transaction.log
+--exec ../drizzled/message/transaction_reader var/master-data/local/transaction.log
 
 # Truncate the log file to reset for the next test
 --source ../plugin/transaction_log/tests/t/truncate_log.inc

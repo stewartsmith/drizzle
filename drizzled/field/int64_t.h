@@ -23,6 +23,9 @@
 
 #include <drizzled/field/num.h>
 
+namespace drizzled
+{
+
 class Field_int64_t :public Field_num {
 public:
 
@@ -78,5 +81,7 @@ public:
                               bool low_byte_first);
 
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FIELD_INT64_T_H */

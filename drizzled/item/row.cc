@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include "config.h"
 #include <drizzled/error.h>
@@ -19,7 +19,8 @@
 
 #include <drizzled/item/row.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 /**
   Row items used for comparing rows and IN operations on rows:
@@ -197,3 +198,5 @@ void Item_row::bring_value()
   for (uint32_t i= 0; i < arg_count; i++)
     items[i]->bring_value();
 }
+
+} /* namespace drizzled */

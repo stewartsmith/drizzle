@@ -11,23 +11,25 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /* Update an old row in a MyISAM table */
 
 #include "myisam_priv.h"
 #include <drizzled/util/test.h>
 
+using namespace drizzled;
+
 int mi_update(register MI_INFO *info, const unsigned char *oldrec, unsigned char *newrec)
 {
   int flag,key_changed,save_errno;
-  register my_off_t pos;
+  register internal::my_off_t pos;
   uint32_t i;
   unsigned char old_key[MI_MAX_KEY_BUFF],*new_key;
   bool auto_key_changed=0;
   uint64_t changed;
   MYISAM_SHARE *share= info->s;
-  ha_checksum old_checksum= 0;
+  internal::ha_checksum old_checksum= 0;
 
   if (!(info->update & HA_STATE_AKTIV))
   {
@@ -123,7 +125,7 @@ int mi_update(register MI_INFO *info, const unsigned char *oldrec, unsigned char
     */
     MI_STATUS_INFO state;
     ha_rows org_split;
-    my_off_t org_delete_link;
+    internal::my_off_t org_delete_link;
 
     memcpy(&state, info->state, sizeof(state));
     org_split=	     share->state.split;

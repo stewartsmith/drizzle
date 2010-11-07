@@ -23,30 +23,15 @@
 
 #include "drizzled/internal/my_sys.h"
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
+namespace drizzled
+{
+namespace internal
+{
 
 struct st_io_cache;
 typedef int (*IO_CACHE_CALLBACK)(struct st_io_cache*);
 
-typedef struct st_io_cache_share
-{
-  pthread_mutex_t       mutex;           /* To sync on reads into buffer. */
-  pthread_cond_t        cond;            /* To wait for signals. */
-  pthread_cond_t        cond_writer;     /* For a synchronized writer. */
-  /* Offset in file corresponding to the first byte of buffer. */
-  my_off_t              pos_in_file;
-  /* If a synchronized write cache is the source of the data. */
-  struct st_io_cache    *source_cache;
-  unsigned char                 *buffer;         /* The read buffer. */
-  unsigned char                 *read_end;       /* Behind last valid byte of buffer. */
-  int                   running_threads; /* threads not in lock. */
-  int                   total_threads;   /* threads sharing the cache. */
-  int                   error;           /* Last error. */
-} IO_CACHE_SHARE;
-
-typedef struct st_io_cache    /* Used when cacheing files */
+struct st_io_cache    /* Used when cacheing files */
 {
   /* Offset in file corresponding to the first byte of unsigned char* buffer. */
   my_off_t pos_in_file;
@@ -85,19 +70,6 @@ typedef struct st_io_cache    /* Used when cacheing files */
     WRITE_CACHE, and &read_pos and &read_end respectively otherwise
   */
   unsigned char  **current_pos, **current_end;
-  /*
-    The lock is for append buffer used in SEQ_READ_APPEND cache
-    need mutex copying from append buffer to read buffer.
-  */
-  pthread_mutex_t append_buffer_lock;
-  /*
-    The following is used when several threads are reading the
-    same file in parallel. They are synchronized on disk
-    accesses reading the cached part of the file asynchronously.
-    It should be set to NULL to disable the feature.  Only
-    READ_CACHE mode is supported.
-  */
-  IO_CACHE_SHARE *share;
   /*
     A caller will use my_b_read() macro to read from the cache
     if the data is already in cache, it will be simply copied with
@@ -162,7 +134,50 @@ typedef struct st_io_cache    /* Used when cacheing files */
   my_off_t aio_read_pos;
   my_aio_result aio_result;
 #endif
-} IO_CACHE;
+
+  st_io_cache() :
+    pos_in_file(0),
+    end_of_file(0),
+    read_pos(0),
+    read_end(0),
+    buffer(0),
+    request_pos(0),
+    write_buffer(0),
+    append_read_pos(0),
+    write_pos(0),
+    write_end(0),
+    current_pos(0),
+    current_end(0),
+    read_function(0),
+    write_function(0),
+    type(TYPE_NOT_SET),
+    error(0),
+    pre_read(0),
+    post_read(0),
+    pre_close(0),
+    arg(0),
+    file_name(0),
+    dir(0),
+    prefix(0),
+    file(0),
+    seek_not_done(0),
+    buffer_length(0),
+    read_length(0),
+    myflags(0),
+    alloced_buffer(0)
+#ifdef HAVE_AIOWAIT
+    ,
+    inited(0),
+    aio_read_pos(0),
+    aio_result(0)
+#endif
+  { }
+
+  ~st_io_cache()
+  { }
+};
+
+typedef struct st_io_cache IO_CACHE;    /* Used when cacheing files */
 
 extern int init_io_cache(IO_CACHE *info,int file,size_t cachesize,
                          enum cache_type type,my_off_t seek_offset,
@@ -171,9 +186,6 @@ extern bool reinit_io_cache(IO_CACHE *info,enum cache_type type,
                             my_off_t seek_offset,bool use_async_io,
                             bool clear_cache);
 extern void setup_io_cache(IO_CACHE* info);
-extern void init_io_cache_share(IO_CACHE *read_cache, IO_CACHE_SHARE *cshare,
-                                IO_CACHE *write_cache, uint32_t num_threads);
-extern void remove_io_thread(IO_CACHE *info);
 extern int _my_b_get(IO_CACHE *info);
 extern int _my_b_async_read(IO_CACHE *info,unsigned char *Buffer,size_t Count);
 
@@ -190,8 +202,7 @@ extern bool open_cached_file(IO_CACHE *cache,const char *dir,
 extern bool real_open_cached_file(IO_CACHE *cache);
 extern void close_cached_file(IO_CACHE *cache);
 
-#if defined(__cplusplus)
-}
-#endif
+} /* namespace internal */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_INTERNAL_IOCACHE_H */

@@ -26,6 +26,9 @@
 #
 
 eval SET SESSION STORAGE_ENGINE = $engine_type;
+SET @orig_lock_wait_timeout= @@innodb_lock_wait_timeout; 
+SET GLOBAL innodb_lock_wait_timeout=2;
+
 
 --disable_warnings
 drop table if exists t1,t2,t3,t1m,t1i,t2m,t2i,t4;
@@ -541,7 +544,7 @@ drop table t1;
 # Bug #28652: assert when alter innodb table operation
 #
 create table t1(a int) engine=innodb;
-alter table t1 comment '123';
+alter table t1 comment='123';
 show create table t1;
 drop table t1;
 
@@ -857,7 +860,7 @@ CREATE TABLE t1(c INT)
 --echo
 
 SELECT table_schema, table_name, row_format
-FROM INFORMATION_SCHEMA.TABLES
+FROM data_dictionary.TABLES
 WHERE table_schema = DATABASE() AND table_name = 't1';
 
 --echo
@@ -869,7 +872,7 @@ ALTER TABLE t1 ROW_FORMAT = REDUNDANT;
 --echo
 
 SELECT table_schema, table_name, row_format
-FROM INFORMATION_SCHEMA.TABLES
+FROM data_dictionary.TABLES
 WHERE table_schema = DATABASE() AND table_name = 't1';
 
 --echo
@@ -978,17 +981,14 @@ create table t1(f1 varchar(5) unique, f2 timestamp NOT NULL DEFAULT
 insert into t1(f1) values(1);
 --replace_column 1 #
 select @a:=f2 from t1;
---sleep 5
 update t1 set f1=1;
 --replace_column 1 #
 select @b:=f2 from t1;
 select if(@a=@b,"ok","wrong");
---sleep 5
 insert into t1(f1) values (1) on duplicate key update f1="1";
 --replace_column 1 #
 select @b:=f2 from t1;
 select if(@a=@b,"ok","wrong");
---sleep 5
 insert into t1(f1) select f1 from t1 on duplicate key update f1="1";
 --replace_column 1 #
 select @b:=f2 from t1;
@@ -1093,5 +1093,7 @@ ALTER TABLE t1 CHANGE id id2 INT;
 
 DROP TABLE t2;
 DROP TABLE t1;
+
+SET innodb_lock_wait_timeout=@orig_lock_wait_timeout ;
 
 --echo End of 5.1 tests

@@ -1,0 +1,21 @@
+# Drizzle's data dictionary, column specific test.
+
+CREATE SCHEMA test_columns;
+
+use test_columns;
+CREATE TABLE types (
+  a integer,
+  b bigint,
+  c varchar(10),
+  d double,
+  e blob,
+  f enum("yes", "no"),
+  g decimal,
+  h date,
+  j timestamp,
+  k datetime
+);
+
+SELECT DATA_TYPE  FROM data_dictionary.columns WHERE TABLE_SCHEMA="test_columns" GROUP BY DATA_TYPE;
+
+DROP SCHEMA test_columns;

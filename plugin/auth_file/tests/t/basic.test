@@ -1,0 +1,22 @@
+--replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
+--replace_regex /@'.*?'/@'LOCALHOST'/
+--error ER_ACCESS_DENIED_ERROR
+connect (bad_user,localhost,bad_user,,,);
+
+--replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
+connect (auth_file,localhost,auth_file,,,);
+connection auth_file;
+SELECT 1;
+
+--replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
+connect (auth_file_password,localhost,auth_file_password,test_password,,);
+connection auth_file_password;
+SELECT 1;
+
+--replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
+--replace_regex /@'.*?'/@'LOCALHOST'/
+--error ER_ACCESS_DENIED_ERROR
+connect (bad_user_password,localhost,auth_file_password,bad_password,,);
+
+# Test that the command line client processes direct passwords properly
+--exec $TOP_BUILDDIR/client/drizzle --host=localhost --port=$MASTER_MYPORT -e "SELECT 1" --user=auth_file_password --password=test_password 2>&1

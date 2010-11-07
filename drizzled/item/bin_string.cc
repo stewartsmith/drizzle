@@ -20,7 +20,8 @@
 #include "config.h"
 #include <drizzled/item/bin_string.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 /*
   bin item.
@@ -59,3 +60,4 @@ Item_bin_string::Item_bin_string(const char *str, uint32_t str_length)
 }
 
 
+} /* namespace drizzled */

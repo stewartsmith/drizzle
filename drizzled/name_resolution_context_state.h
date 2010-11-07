@@ -20,6 +20,9 @@
 #ifndef DRIZZLED_NAME_RESOLUTION_CONTEXT_STATE_H
 #define DRIZZLED_NAME_RESOLUTION_CONTEXT_STATE_H
 
+namespace drizzled
+{
+
 class TableList;
 class Name_resolution_context;
 
@@ -50,5 +53,6 @@ public:
 
 };
 
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_NAME_RESOLUTION_CONTEXT_STATE_H */

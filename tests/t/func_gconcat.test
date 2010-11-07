@@ -69,9 +69,9 @@ set group_concat_max_len = 1024;
 
 # Test errors
 
---error 1111
+--error ER_INVALID_GROUP_FUNC_USE
 select group_concat(sum(c)) from t1 group by grp;
---error 1054
+--error ER_BAD_FIELD_ERROR
 select grp,group_concat(c order by 2) from t1 group by grp;
 
 drop table t1;

@@ -11,11 +11,13 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 	/* Functions to handle fixed-length-records */
 
 #include "myisam_priv.h"
+
+using namespace drizzled;
 
 int _mi_write_static_record(MI_INFO *info, const unsigned char *record)
 {
@@ -23,7 +25,7 @@ int _mi_write_static_record(MI_INFO *info, const unsigned char *record)
   if (info->s->state.dellink != HA_OFFSET_ERROR &&
       !info->append_insert_at_end)
   {
-    my_off_t filepos=info->s->state.dellink;
+    internal::my_off_t filepos=info->s->state.dellink;
     info->rec_cache.seek_not_done=1;		/* We have done a seek */
     if (info->s->file_read(info, &temp[0],info->s->base.rec_reflength,
 		info->s->state.dellink+1,
@@ -84,7 +86,7 @@ int _mi_write_static_record(MI_INFO *info, const unsigned char *record)
   return 1;
 }
 
-int _mi_update_static_record(MI_INFO *info, my_off_t pos, const unsigned char *record)
+int _mi_update_static_record(MI_INFO *info, internal::my_off_t pos, const unsigned char *record)
 {
   info->rec_cache.seek_not_done=1;		/* We have done a seek */
   return (info->s->file_write(info,
@@ -139,7 +141,7 @@ int _mi_cmp_static_record(register MI_INFO *info, register const unsigned char *
 
 
 int _mi_cmp_static_unique(MI_INFO *info, MI_UNIQUEDEF *def,
-			  const unsigned char *record, my_off_t pos)
+			  const unsigned char *record, internal::my_off_t pos)
 {
   info->rec_cache.seek_not_done=1;		/* We have done a seek */
   if (info->s->file_read(info, info->rec_buff, info->s->base.reclength,
@@ -155,7 +157,7 @@ int _mi_cmp_static_unique(MI_INFO *info, MI_UNIQUEDEF *def,
 	/*	   1 if record is deleted */
 	/*	  MY_FILE_ERROR on read-error or locking-error */
 
-int _mi_read_static_record(register MI_INFO *info, register my_off_t pos,
+int _mi_read_static_record(register MI_INFO *info, register internal::my_off_t pos,
 			   register unsigned char *record)
 {
   int error;
@@ -190,7 +192,7 @@ int _mi_read_static_record(register MI_INFO *info, register my_off_t pos,
 
 
 int _mi_read_rnd_static_record(MI_INFO *info, unsigned char *buf,
-			       register my_off_t filepos,
+			       register internal::my_off_t filepos,
 			       bool skip_deleted_blocks)
 {
   int locked,error,cache_read;

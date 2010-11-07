@@ -27,12 +27,13 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/show.h>
 
+namespace drizzled
+{
+
 class Session;
 class TableList;
 class Item;
 
-namespace drizzled
-{
 namespace statement
 {
 
@@ -57,6 +58,11 @@ public:
    */
   virtual bool execute()= 0;
 
+  Session *getSession()
+  {
+    return session;
+  }
+
 protected:
 
   /**
@@ -65,8 +71,8 @@ protected:
   Session *session;
 };
 
-} /* end namespace statement */
+} /* namespace statement */
 
-} /* end namespace drizzled */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_STATEMENT_H */

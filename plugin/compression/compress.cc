@@ -26,6 +26,7 @@
 #include <string>
 
 using namespace std;
+using namespace drizzled;
 
 String *Item_func_compress::val_str(String *str)
 {

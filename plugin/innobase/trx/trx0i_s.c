@@ -11,8 +11,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -27,6 +27,8 @@ table cache" for later retrieval.
 
 Created July 17, 2007 Vasil Dimov
 *******************************************************/
+
+#include "config.h"
 
 #if !defined(BUILD_DRIZZLE)
 # include <mysql/plugin.h>
@@ -62,7 +64,7 @@ Created July 17, 2007 Vasil Dimov
 /** @brief The maximum number of chunks to allocate for a table cache.
 
 The rows of a table cache are stored in a set of chunks. When a new
-row is added a new chunk is allocated if necessary.  Assuming that the
+row is added a new chunk is allocated if necessary. Assuming that the
 first one is 1024 rows (TABLE_CACHE_INITIAL_ROWSNUM) and each
 subsequent is N/2 where N is the number of rows we have allocated till
 now, then 39th chunk would accommodate 1677416425 rows and all chunks
@@ -236,6 +238,27 @@ table_cache_init(
 		/* the memory is actually allocated in
 		table_cache_create_empty_row() */
 		table_cache->chunks[i].base = NULL;
+	}
+}
+
+/*******************************************************************//**
+Frees a table cache. */
+static
+void
+table_cache_free(
+/*=============*/
+	i_s_table_cache_t*	table_cache)	/*!< in/out: table cache */
+{
+	ulint	i;
+
+	for (i = 0; i < MEM_CHUNKS_IN_TABLE_CACHE; i++) {
+
+		/* the memory is actually allocated in
+		table_cache_create_empty_row() */
+		if (table_cache->chunks[i].base) {
+			mem_free(table_cache->chunks[i].base);
+			table_cache->chunks[i].base = NULL;
+		}
 	}
 }
 
@@ -437,14 +460,14 @@ fill_trx_row(
 		row->trx_mysql_thread_id = 0;
 	}
 
-	if (trx->mysql_query_str != NULL && *trx->mysql_query_str != NULL) {
+	if (trx->mysql_query_str != NULL) {
 
-		if (strlen(*trx->mysql_query_str)
+		if (strlen(trx->mysql_query_str)
 		    > TRX_I_S_TRX_QUERY_MAX_LEN) {
 
 			char	query[TRX_I_S_TRX_QUERY_MAX_LEN + 1];
 
-			memcpy(query, *trx->mysql_query_str,
+			memcpy(query, trx->mysql_query_str,
 			       TRX_I_S_TRX_QUERY_MAX_LEN);
 			query[TRX_I_S_TRX_QUERY_MAX_LEN] = '\0';
 
@@ -455,7 +478,7 @@ fill_trx_row(
 		} else {
 
 			row->trx_query = ha_storage_put_str_memlim(
-				cache->storage, *trx->mysql_query_str,
+				cache->storage, trx->mysql_query_str,
 				MAX_ALLOWED_FOR_STORAGE(cache));
 		}
 
@@ -1255,6 +1278,22 @@ trx_i_s_cache_init(
 	cache->mem_allocd = 0;
 
 	cache->is_truncated = FALSE;
+}
+
+/*******************************************************************//**
+Free the INFORMATION SCHEMA trx related cache. */
+UNIV_INTERN
+void
+trx_i_s_cache_free(
+/*===============*/
+	trx_i_s_cache_t*	cache)	/*!< in, own: cache to free */
+{
+	hash_table_free(cache->locks_hash);
+	ha_storage_free(cache->storage);
+	table_cache_free(&cache->innodb_trx);
+	table_cache_free(&cache->innodb_locks);
+	table_cache_free(&cache->innodb_lock_waits);
+	memset(cache, 0, sizeof *cache);
 }
 
 /*******************************************************************//**

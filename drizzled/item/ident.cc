@@ -23,8 +23,12 @@
 #include <drizzled/current_session.h>
 #include <drizzled/item/ident.h>
 
-using namespace drizzled;
+#include <cstdio>
+
 using namespace std;
+
+namespace drizzled
+{
 
 const uint32_t NO_CACHED_FIELD_INDEX= UINT32_MAX;
 
@@ -80,21 +84,22 @@ bool Item_ident::remove_dependence_processor(unsigned char * arg)
 const char *Item_ident::full_name() const
 {
   char *tmp;
+	size_t tmp_len;
   if (!table_name || !field_name)
     return field_name ? field_name : name ? name : "tmp_field";
   if (db_name && db_name[0])
   {
-    tmp=(char*) memory::sql_alloc((uint32_t) strlen(db_name)+(uint32_t) strlen(table_name)+
-                          (uint32_t) strlen(field_name)+3);
-    sprintf(tmp,"%s.%s.%s",db_name,table_name,field_name);
+    tmp_len= strlen(db_name)+strlen(table_name)+strlen(field_name)+3;
+    tmp= (char*) memory::sql_alloc(tmp_len);
+    snprintf(tmp, tmp_len, "%s.%s.%s",db_name,table_name,field_name);
   }
   else
   {
     if (table_name[0])
     {
-      tmp= (char*) memory::sql_alloc((uint32_t) strlen(table_name) +
-                             (uint32_t) strlen(field_name) + 2);
-      sprintf(tmp, "%s.%s", table_name, field_name);
+      tmp_len=strlen(table_name)+strlen(field_name)+2;
+      tmp= (char*) memory::sql_alloc(tmp_len);
+      snprintf(tmp, tmp_len, "%s.%s", table_name, field_name);
     }
     else
       tmp= (char*) field_name;
@@ -186,8 +191,9 @@ void Item_ident_for_show::make_field(SendField *tmp_field)
   tmp_field->charsetnr= field->charset()->number;
   tmp_field->length=field->field_length;
   tmp_field->type=field->type();
-  tmp_field->flags= field->table->maybe_null ?
+  tmp_field->flags= field->getTable()->maybe_null ?
     (field->flags & ~NOT_NULL_FLAG) : field->flags;
   tmp_field->decimals= field->decimals();
 }
 
+} /* namespace drizzled */

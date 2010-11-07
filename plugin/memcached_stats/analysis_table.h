@@ -30,18 +30,29 @@
 #ifndef PLUGIN_MEMCACHED_STATS_ANALYSIS_TABLE_H
 #define PLUGIN_MEMCACHED_STATS_ANALYSIS_TABLE_H
 
-#include "drizzled/plugin/info_schema_table.h"
+#include "drizzled/plugin/table_function.h"
+#include "drizzled/field.h"
 
-#include <vector>
-
-class MemcachedAnalysisISMethods : public drizzled::plugin::InfoSchemaMethods
+class AnalysisTableTool : public drizzled::plugin::TableFunction
 {
 public:
-  virtual int fillTable(Session *session,
-                        Table *table,
-                        drizzled::plugin::InfoSchemaTable *schema_table);
-};
 
-bool createMemcachedAnalysisColumns(std::vector<const drizzled::plugin::ColumnInfo *> &cols);
+  AnalysisTableTool();
+
+  class Generator : public drizzled::plugin::TableFunction::Generator
+  {
+  public:
+    Generator(drizzled::Field **arg);
+
+    bool populate();
+  private:
+    bool is_done;
+  };
+
+  Generator *generator(drizzled::Field **arg)
+  {
+    return new Generator(arg);
+  }
+};
 
 #endif /* PLUGIN_MEMCACHED_STATS_ANALYSIS_TABLE_H */

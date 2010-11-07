@@ -11,8 +11,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -333,6 +333,13 @@ trx_undo_parse_discard_latest(
 	byte*	end_ptr,/*!< in: buffer end */
 	page_t*	page,	/*!< in: page or NULL */
 	mtr_t*	mtr);	/*!< in: mtr or NULL */
+/************************************************************************
+Frees an undo log memory copy. */
+UNIV_INTERN
+void
+trx_undo_mem_free(
+/*==============*/
+	trx_undo_t*	undo);		/* in: the undo object to be freed */
 
 /* Types of an undo log segment */
 #define	TRX_UNDO_INSERT		1	/* contains undo entries for inserts */

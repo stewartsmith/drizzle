@@ -22,6 +22,9 @@
 
 #include <drizzled/item/ref.h>
 
+namespace drizzled
+{
+
 /*
   The same as Item_ref, but get value from val_* family of method to get
   value of item on which it referred instead of result* family.
@@ -48,5 +51,7 @@ public:
   bool get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
   virtual Ref_Type ref_type() { return DIRECT_REF; }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_DIRECT_REF_H */

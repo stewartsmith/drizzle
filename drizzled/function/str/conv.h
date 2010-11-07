@@ -22,6 +22,9 @@
 
 #include <drizzled/function/str/strfunc.h>
 
+namespace drizzled
+{
+
 class Item_func_conv :public Item_str_func
 {
 public:
@@ -35,5 +38,7 @@ public:
     maybe_null= 1;
   }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_STR_CONV_H */

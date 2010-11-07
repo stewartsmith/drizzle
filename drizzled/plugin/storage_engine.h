@@ -24,20 +24,23 @@
 #include <drizzled/definitions.h>
 #include <drizzled/plugin.h>
 #include <drizzled/handler_structs.h>
-#include <drizzled/message/table.pb.h>
+#include <drizzled/message.h>
 #include "drizzled/plugin/plugin.h"
 #include "drizzled/sql_string.h"
-#include "drizzled/table_identifier.h"
+#include "drizzled/identifier.h"
 #include "drizzled/cached_directory.h"
+#include "drizzled/plugin/monitored_in_transaction.h"
 
 #include <bitset>
 #include <string>
 #include <vector>
 #include <set>
 
+namespace drizzled
+{
+
 class TableList;
 class Session;
-class XID;
 class Cursor;
 typedef struct st_hash HASH;
 
@@ -54,30 +57,27 @@ enum engine_flag_bits {
   HTON_BIT_NOT_USER_SELECTABLE,
   HTON_BIT_TEMPORARY_NOT_SUPPORTED,   // Having temporary tables not supported
   HTON_BIT_TEMPORARY_ONLY,
-  HTON_BIT_FILE_BASED, // use for check_lowercase_names
-  HTON_BIT_HAS_DATA_DICTIONARY,
   HTON_BIT_DOES_TRANSACTIONS,
   HTON_BIT_STATS_RECORDS_IS_EXACT,
   HTON_BIT_NULL_IN_KEY,
   HTON_BIT_CAN_INDEX_BLOBS,
-  HTON_BIT_PRIMARY_KEY_REQUIRED_FOR_POSITION,
   HTON_BIT_PRIMARY_KEY_IN_READ_INDEX,
   HTON_BIT_PARTIAL_COLUMN_READ,
   HTON_BIT_TABLE_SCAN_ON_INDEX,
-  HTON_BIT_MRR_CANT_SORT,
   HTON_BIT_FAST_KEY_READ,
   HTON_BIT_NO_BLOBS,
   HTON_BIT_HAS_RECORDS,
   HTON_BIT_NO_AUTO_INCREMENT,
   HTON_BIT_DUPLICATE_POS,
   HTON_BIT_AUTO_PART_KEY,
-  HTON_BIT_NEED_READ_RANGE_BUFFER,
   HTON_BIT_REQUIRE_PRIMARY_KEY,
   HTON_BIT_REQUIRES_KEY_COLUMNS_FOR_DELETE,
   HTON_BIT_PRIMARY_KEY_REQUIRED_FOR_DELETE,
   HTON_BIT_NO_PREFIX_CHAR_KEYS,
   HTON_BIT_HAS_CHECKSUM,
   HTON_BIT_SKIP_STORE_LOCK,
+  HTON_BIT_SCHEMA_DICTIONARY,
+  HTON_BIT_FOREIGN_KEYS,
   HTON_BIT_SIZE
 };
 
@@ -87,38 +87,38 @@ static const std::bitset<HTON_BIT_SIZE> HTON_HIDDEN(1 << HTON_BIT_HIDDEN);
 static const std::bitset<HTON_BIT_SIZE> HTON_NOT_USER_SELECTABLE(1 << HTON_BIT_NOT_USER_SELECTABLE);
 static const std::bitset<HTON_BIT_SIZE> HTON_TEMPORARY_NOT_SUPPORTED(1 << HTON_BIT_TEMPORARY_NOT_SUPPORTED);
 static const std::bitset<HTON_BIT_SIZE> HTON_TEMPORARY_ONLY(1 << HTON_BIT_TEMPORARY_ONLY);
-static const std::bitset<HTON_BIT_SIZE> HTON_FILE_BASED(1 << HTON_BIT_FILE_BASED);
-static const std::bitset<HTON_BIT_SIZE> HTON_HAS_DATA_DICTIONARY(1 << HTON_BIT_HAS_DATA_DICTIONARY);
 static const std::bitset<HTON_BIT_SIZE> HTON_HAS_DOES_TRANSACTIONS(1 << HTON_BIT_DOES_TRANSACTIONS);
 static const std::bitset<HTON_BIT_SIZE> HTON_STATS_RECORDS_IS_EXACT(1 << HTON_BIT_STATS_RECORDS_IS_EXACT);
 static const std::bitset<HTON_BIT_SIZE> HTON_NULL_IN_KEY(1 << HTON_BIT_NULL_IN_KEY);
 static const std::bitset<HTON_BIT_SIZE> HTON_CAN_INDEX_BLOBS(1 << HTON_BIT_CAN_INDEX_BLOBS);
-static const std::bitset<HTON_BIT_SIZE> HTON_PRIMARY_KEY_REQUIRED_FOR_POSITION(1 << HTON_BIT_PRIMARY_KEY_REQUIRED_FOR_POSITION);
 static const std::bitset<HTON_BIT_SIZE> HTON_PRIMARY_KEY_IN_READ_INDEX(1 << HTON_BIT_PRIMARY_KEY_IN_READ_INDEX);
 static const std::bitset<HTON_BIT_SIZE> HTON_PARTIAL_COLUMN_READ(1 << HTON_BIT_PARTIAL_COLUMN_READ);
 static const std::bitset<HTON_BIT_SIZE> HTON_TABLE_SCAN_ON_INDEX(1 << HTON_BIT_TABLE_SCAN_ON_INDEX);
-static const std::bitset<HTON_BIT_SIZE> HTON_MRR_CANT_SORT(1 << HTON_BIT_MRR_CANT_SORT);
 static const std::bitset<HTON_BIT_SIZE> HTON_FAST_KEY_READ(1 << HTON_BIT_FAST_KEY_READ);
 static const std::bitset<HTON_BIT_SIZE> HTON_NO_BLOBS(1 << HTON_BIT_NO_BLOBS);
 static const std::bitset<HTON_BIT_SIZE> HTON_HAS_RECORDS(1 << HTON_BIT_HAS_RECORDS);
 static const std::bitset<HTON_BIT_SIZE> HTON_NO_AUTO_INCREMENT(1 << HTON_BIT_NO_AUTO_INCREMENT);
 static const std::bitset<HTON_BIT_SIZE> HTON_DUPLICATE_POS(1 << HTON_BIT_DUPLICATE_POS);
 static const std::bitset<HTON_BIT_SIZE> HTON_AUTO_PART_KEY(1 << HTON_BIT_AUTO_PART_KEY);
-static const std::bitset<HTON_BIT_SIZE> HTON_NEED_READ_RANGE_BUFFER(1 << HTON_BIT_NEED_READ_RANGE_BUFFER);
 static const std::bitset<HTON_BIT_SIZE> HTON_REQUIRE_PRIMARY_KEY(1 << HTON_BIT_REQUIRE_PRIMARY_KEY);
 static const std::bitset<HTON_BIT_SIZE> HTON_REQUIRES_KEY_COLUMNS_FOR_DELETE(1 << HTON_BIT_REQUIRES_KEY_COLUMNS_FOR_DELETE);
 static const std::bitset<HTON_BIT_SIZE> HTON_PRIMARY_KEY_REQUIRED_FOR_DELETE(1 << HTON_BIT_PRIMARY_KEY_REQUIRED_FOR_DELETE);
 static const std::bitset<HTON_BIT_SIZE> HTON_NO_PREFIX_CHAR_KEYS(1 << HTON_BIT_NO_PREFIX_CHAR_KEYS);
 static const std::bitset<HTON_BIT_SIZE> HTON_HAS_CHECKSUM(1 << HTON_BIT_HAS_CHECKSUM);
 static const std::bitset<HTON_BIT_SIZE> HTON_SKIP_STORE_LOCK(1 << HTON_BIT_SKIP_STORE_LOCK);
+static const std::bitset<HTON_BIT_SIZE> HTON_HAS_SCHEMA_DICTIONARY(1 << HTON_BIT_SCHEMA_DICTIONARY);
+static const std::bitset<HTON_BIT_SIZE> HTON_HAS_FOREIGN_KEYS(1 << HTON_BIT_FOREIGN_KEYS);
 
 
 class Table;
+class NamedSavepoint;
 
-namespace drizzled
-{
 namespace plugin
 {
+
+typedef std::vector<StorageEngine *> EngineVector;
+
+typedef std::set<std::string> TableNameList;
 
 extern const std::string UNKNOWN_STRING;
 extern const std::string DEFAULT_DEFINITION_FILE_EXT;
@@ -131,36 +131,38 @@ extern const std::string DEFAULT_DEFINITION_FILE_EXT;
   usually StorageEngine instance is defined statically in ha_xxx.cc as
 
   static StorageEngine { ... } xxx_engine;
-
-  savepoint_*, prepare, recover, and *_by_xid pointers can be 0.
 */
-class StorageEngine : public Plugin
+class StorageEngine : public Plugin,
+                      public MonitoredInTransaction
 {
 public:
   typedef uint64_t Table_flags;
 
 private:
-
-  /*
-    Name used for storage engine.
-  */
-  const bool two_phase_commit;
-  bool enabled;
-
   const std::bitset<HTON_BIT_SIZE> flags; /* global Cursor flags */
-  /*
-    to store per-savepoint data storage engine is provided with an area
-    of a requested size (0 is ok here).
-    savepoint_offset must be initialized statically to the size of
-    the needed memory to store per-savepoint information.
-    After xxx_init it is changed to be an offset to savepoint storage
-    area and need not be used by storage engine.
-    see binlog_engine and binlog_savepoint_set/rollback for an example.
-  */
-  size_t savepoint_offset;
-  size_t orig_savepoint_offset;
 
-  void setTransactionReadWrite(Session& session);
+  static EngineVector &getSchemaEngines();
+
+  virtual void setTransactionReadWrite(Session& session);
+
+  /*
+   * Indicates to a storage engine the start of a
+   * new SQL statement.
+   */
+  virtual void doStartStatement(Session *session)
+  {
+    (void) session;
+  }
+
+  /*
+   * Indicates to a storage engine the end of
+   * the current SQL statement in the supplied
+   * Session.
+   */
+  virtual void doEndStatement(Session *session)
+  {
+    (void) session;
+  }
 
 protected:
   std::string table_definition_ext;
@@ -191,42 +193,24 @@ protected:
     @brief
     Used as a protobuf storage currently by TEMP only engines.
   */
-  typedef std::map <std::string, drizzled::message::Table> ProtoCache;
+  typedef std::map <std::string, message::Table> ProtoCache;
   ProtoCache proto_cache;
   pthread_mutex_t proto_cache_mutex;
-
-  /**
-   * Implementing classes should override these to provide savepoint
-   * functionality.
-   */
-  virtual int savepoint_set_hook(Session *, void *) { return 0; }
-
-  virtual int savepoint_rollback_hook(Session *, void *) { return 0; }
-
-  virtual int savepoint_release_hook(Session *, void *) { return 0; }
 
 public:
 
   StorageEngine(const std::string name_arg,
-                const std::bitset<HTON_BIT_SIZE> &flags_arg= HTON_NO_FLAGS,
-                size_t savepoint_offset_arg= 0,
-                bool support_2pc= false);
+                const std::bitset<HTON_BIT_SIZE> &flags_arg= HTON_NO_FLAGS);
 
   virtual ~StorageEngine();
 
-  virtual int doGetTableDefinition(Session& session,
-                                   const char *path,
-                                   const char *db,
-                                   const char *table_name,
-                                   const bool is_tmp,
-                                   drizzled::message::Table *table_proto)
+  virtual int doGetTableDefinition(Session &session,
+                                   const drizzled::TableIdentifier &identifier,
+                                   message::Table &table_message)
   {
     (void)session;
-    (void)path;
-    (void)db;
-    (void)table_name;
-    (void)is_tmp;
-    (void)table_proto;
+    (void)identifier;
+    (void)table_message;
 
     return ENOENT;
   }
@@ -238,32 +222,6 @@ protected:
   virtual bool get_error_message(int error, String *buf);
 public:
   virtual void print_error(int error, myf errflag, Table& table);
-
-  /*
-    each storage engine has it's own memory area (actually a pointer)
-    in the session, for storing per-connection information.
-    It is accessed as
-
-      session->ha_data[xxx_engine.slot]
-
-   slot number is initialized by MySQL after xxx_init() is called.
-  */
-  uint32_t slot;
-
-  inline uint32_t getSlot (void) { return slot; }
-  inline uint32_t getSlot (void) const { return slot; }
-  inline void setSlot (uint32_t value) { slot= value; }
-
-  bool has_2pc()
-  {
-    return two_phase_commit;
-  }
-
-
-  bool is_enabled() const
-  {
-    return enabled;
-  }
 
   bool is_user_selectable() const
   {
@@ -277,80 +235,29 @@ public:
 
   // @todo match check_flag interface
   virtual uint32_t index_flags(enum  ha_key_alg) const { return 0; }
-
-
-  void enable() { enabled= true; }
-  void disable() { enabled= false; }
+  virtual void startStatement(Session *session)
+  {
+    doStartStatement(session);
+  }
+  virtual void endStatement(Session *session)
+  {
+    doEndStatement(session);
+  }
 
   /*
-    StorageEngine methods:
-
-    close_connection is only called if
-    session->ha_data[xxx_engine.slot] is non-zero, so even if you don't need
-    this storage area - set it to something, so that MySQL would know
-    this storage engine was accessed in this connection
-  */
+   * Called during Session::cleanup() for all engines
+   */
   virtual int close_connection(Session  *)
   {
     return 0;
   }
-  /*
-    'all' is true if it's a real commit, that makes persistent changes
-    'all' is false if it's not in fact a commit but an end of the
-    statement that is part of the transaction.
-    NOTE 'all' is also false in auto-commit mode where 'end of statement'
-    and 'real commit' mean the same event.
-  */
-  virtual int  commit(Session *, bool)
-  {
-    return 0;
-  }
-
-  virtual int  rollback(Session *, bool)
-  {
-    return 0;
-  }
-
-  /*
-    The void * points to an uninitialized storage area of requested size
-    (see savepoint_offset description)
-  */
-  int savepoint_set(Session *session, void *sp)
-  {
-    return savepoint_set_hook(session, (unsigned char *)sp+savepoint_offset);
-  }
-
-  /*
-    The void * points to a storage area, that was earlier passed
-    to the savepoint_set call
-  */
-  int savepoint_rollback(Session *session, void *sp)
-  {
-     return savepoint_rollback_hook(session,
-                                    (unsigned char *)sp+savepoint_offset);
-  }
-
-  int savepoint_release(Session *session, void *sp)
-  {
-    return savepoint_release_hook(session,
-                                  (unsigned char *)sp+savepoint_offset);
-  }
-
-  virtual int  prepare(Session *, bool) { return 0; }
-  virtual int  recover(XID *, uint32_t) { return 0; }
-  virtual int  commit_by_xid(XID *) { return 0; }
-  virtual int  rollback_by_xid(XID *) { return 0; }
-  virtual Cursor *create(TableShare &, drizzled::memory::Root *)= 0;
+  virtual Cursor *create(Table &)= 0;
   /* args: path */
-  virtual void drop_database(char*) { }
-  virtual int start_consistent_snapshot(Session *) { return 0; }
   virtual bool flush_logs() { return false; }
   virtual bool show_status(Session *, stat_print_fn *, enum ha_stat_type)
   {
     return false;
   }
-
-  virtual int release_temporary_latches(Session *) { return false; }
 
   /**
     If frm_error() is called then we will use this to find out what file
@@ -366,61 +273,86 @@ public:
   virtual const char **bas_ext() const =0;
 
 protected:
-  virtual int doCreateTable(Session *session,
-                            const char *table_name,
-                            Table& table_arg,
-                            drizzled::message::Table& proto)= 0;
+  virtual int doCreateTable(Session &session,
+                            Table &table_arg,
+                            const drizzled::TableIdentifier &identifier,
+                            message::Table &message)= 0;
 
-  virtual int doRenameTable(Session* session,
-                            const char *from, const char *to);
-
+  virtual int doRenameTable(Session &session,
+                            const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to)= 0;
 
 public:
 
-  int renameTable(Session *session, const char *from, const char *to) 
-  {
-    setTransactionReadWrite(*session);
+  int renameTable(Session &session, const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to);
 
-    return doRenameTable(session, from, to);
-  }
+  virtual void doGetTableIdentifiers(CachedDirectory &directory,
+                                     const drizzled::SchemaIdentifier &schema_identifier,
+                                     TableIdentifiers &set_of_identifiers)= 0;
 
-  // TODO: move these to protected
-  virtual void doGetTableNames(drizzled::CachedDirectory &directory,
-                               std::string& db_name,
-                               std::set<std::string>& set_of_names);
-  virtual int doDropTable(Session& session,
-                          const std::string table_path)= 0;
-
-  const char *checkLowercaseNames(const char *path, char *tmp_path);
+  virtual int doDropTable(Session &session,
+                          const drizzled::TableIdentifier &identifier)= 0;
 
   /* Class Methods for operating on plugin */
   static bool addPlugin(plugin::StorageEngine *engine);
   static void removePlugin(plugin::StorageEngine *engine);
 
   static int getTableDefinition(Session& session,
-                                TableIdentifier &identifier,
-                                message::Table *table_proto= NULL);
-  static int getTableDefinition(Session& session,
-                                const char* path,
-                                const char *db,
-                                const char *table_name,
-                                const bool is_tmp,
-                                message::Table *table_proto= NULL);
+                                const drizzled::TableIdentifier &identifier,
+                                message::Table &table_proto,
+                                bool include_temporary_tables= true);
+  static bool doesTableExist(Session &session,
+                             const drizzled::TableIdentifier &identifier,
+                             bool include_temporary_tables= true);
 
-  static plugin::StorageEngine *findByName(std::string find_str);
-  static plugin::StorageEngine *findByName(Session& session,
-                                           std::string find_str);
+  virtual bool doDoesTableExist(Session& session, const drizzled::TableIdentifier &identifier);
+
+  static plugin::StorageEngine *findByName(const std::string &find_str);
+  static plugin::StorageEngine *findByName(Session& session, const std::string &find_str);
+
   static void closeConnection(Session* session);
   static void dropDatabase(char* path);
-  static int commitOrRollbackByXID(XID *xid, bool commit);
-  static int releaseTemporaryLatches(Session *session);
   static bool flushLogs(plugin::StorageEngine *db_type);
-  static int recover(HASH *commit_list);
-  static int startConsistentSnapshot(Session *session);
   static int dropTable(Session& session,
-                       drizzled::TableIdentifier &identifier,
-                       bool generate_warning);
-  static void getTableNames(std::string& db_name, std::set<std::string> &set_of_names);
+                       const drizzled::TableIdentifier &identifier);
+  static int dropTable(Session& session,
+                       StorageEngine &engine,
+                       const drizzled::TableIdentifier &identifier);
+  static void getIdentifiers(Session &session,
+                             const SchemaIdentifier &schema_identifier,
+                             TableIdentifiers &set_of_identifiers);
+
+  // Check to see if any SE objects to creation.
+  static bool canCreateTable(const drizzled::TableIdentifier &identifier);
+  virtual bool doCanCreateTable(const drizzled::TableIdentifier &identifier)
+  { (void)identifier;  return true; }
+
+  // @note All schema methods defined here
+  static void getIdentifiers(Session &session, SchemaIdentifiers &schemas);
+  static bool getSchemaDefinition(const drizzled::TableIdentifier &identifier, message::SchemaPtr &proto);
+  static bool getSchemaDefinition(const drizzled::SchemaIdentifier &identifier, message::SchemaPtr &proto);
+  static bool doesSchemaExist(const drizzled::SchemaIdentifier &identifier);
+  static const CHARSET_INFO *getSchemaCollation(const drizzled::SchemaIdentifier &identifier);
+  static bool createSchema(const drizzled::message::Schema &schema_message);
+  static bool dropSchema(const drizzled::SchemaIdentifier &identifier);
+  static bool alterSchema(const drizzled::message::Schema &schema_message);
+
+  // @note make private/protected
+  virtual void doGetSchemaIdentifiers(SchemaIdentifiers&)
+  { }
+
+  virtual bool doGetSchemaDefinition(const drizzled::SchemaIdentifier&, drizzled::message::SchemaPtr&)
+  { 
+    return false; 
+  }
+
+  virtual bool doCreateSchema(const drizzled::message::Schema&)
+  { return false; }
+
+  virtual bool doAlterSchema(const drizzled::message::Schema&)
+  { return false; }
+
+  virtual bool doDropSchema(const drizzled::SchemaIdentifier&)
+  { return false; }
 
   static inline const std::string &resolveName(const StorageEngine *engine)
   {
@@ -428,14 +360,12 @@ public:
   }
 
   static int createTable(Session& session,
-                         drizzled::TableIdentifier &identifier,
-                         bool update_create_info,
-                         drizzled::message::Table& table_proto,
-                         bool used= true);
+                         const drizzled::TableIdentifier &identifier,
+                         message::Table& table_proto);
 
   static void removeLostTemporaryTables(Session &session, const char *directory);
 
-  Cursor *getCursor(TableShare &share, drizzled::memory::Root *alloc);
+  Cursor *getCursor(Table &share);
 
   uint32_t max_record_length() const
   { return std::min((unsigned int)HA_MAX_REC_LENGTH, max_supported_record_length()); }
@@ -456,10 +386,44 @@ public:
   virtual uint32_t max_supported_key_part_length(void) const { return 255; }
 
   /* TODO-> Make private */
-  static int readDefinitionFromPath(TableIdentifier &identifier, message::Table &proto);
-  static int deleteDefinitionFromPath(TableIdentifier &identifier);
-  static int renameDefinitionFromPath(TableIdentifier &dest, TableIdentifier &src);
-  static int writeDefinitionFromPath(TableIdentifier &identifier, message::Table &proto);
+  static int deleteDefinitionFromPath(const drizzled::TableIdentifier &identifier);
+  static int renameDefinitionFromPath(const drizzled::TableIdentifier &dest, const drizzled::TableIdentifier &src);
+  static int writeDefinitionFromPath(const drizzled::TableIdentifier &identifier, message::Table &proto);
+  static bool readTableFile(const std::string &path, message::Table &table_message);
+
+public:
+  /* 
+   * The below are simple virtual overrides for the plugin::MonitoredInTransaction
+   * interface.
+   */
+  virtual bool participatesInSqlTransaction() const
+  {
+    return false; /* plugin::StorageEngine is non-transactional in terms of SQL */
+  }
+  virtual bool participatesInXaTransaction() const
+  {
+    return false; /* plugin::StorageEngine is non-transactional in terms of XA */
+  }
+  virtual bool alwaysRegisterForXaTransaction() const
+  {
+    return false;
+  }
+
+  virtual bool validateCreateTableOption(const std::string &key, const std::string &state)
+  {
+    (void)key;
+    (void)state;
+
+    return false;
+  }
+
+  virtual bool validateCreateSchemaOption(const std::string &key, const std::string &state)
+  {
+    (void)key;
+    (void)state;
+
+    return false;
+  }
 };
 
 } /* namespace plugin */

@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /* Remove a row from a MyISAM table */
 
@@ -19,18 +19,20 @@
 #include "drizzled/internal/m_string.h"
 #include <drizzled/util/test.h>
 
+using namespace drizzled;
+
 static int d_search(MI_INFO *info,MI_KEYDEF *keyinfo,uint32_t comp_flag,
-                    unsigned char *key,uint32_t key_length,my_off_t page,unsigned char *anc_buff);
+                    unsigned char *key,uint32_t key_length,internal::my_off_t page,unsigned char *anc_buff);
 static int del(MI_INFO *info,MI_KEYDEF *keyinfo,unsigned char *key,unsigned char *anc_buff,
-	       my_off_t leaf_page,unsigned char *leaf_buff,unsigned char *keypos,
-	       my_off_t next_block,unsigned char *ret_key);
+	       internal::my_off_t leaf_page,unsigned char *leaf_buff,unsigned char *keypos,
+	       internal::my_off_t next_block,unsigned char *ret_key);
 static int underflow(MI_INFO *info,MI_KEYDEF *keyinfo,unsigned char *anc_buff,
-		     my_off_t leaf_page,unsigned char *leaf_buff,unsigned char *keypos);
+		     internal::my_off_t leaf_page,unsigned char *leaf_buff,unsigned char *keypos);
 static uint32_t remove_key(MI_KEYDEF *keyinfo,uint32_t nod_flag,unsigned char *keypos,
 		       unsigned char *lastkey,unsigned char *page_end,
-		       my_off_t *next_block);
+		       internal::my_off_t *next_block);
 static int _mi_ck_real_delete(register MI_INFO *info,MI_KEYDEF *keyinfo,
-			      unsigned char *key, uint32_t key_length, my_off_t *root);
+			      unsigned char *key, uint32_t key_length, internal::my_off_t *root);
 
 
 int mi_delete(MI_INFO *info,const unsigned char *record)
@@ -122,11 +124,11 @@ int _mi_ck_delete(register MI_INFO *info, uint32_t keynr, unsigned char *key,
 
 
 static int _mi_ck_real_delete(register MI_INFO *info, MI_KEYDEF *keyinfo,
-			      unsigned char *key, uint32_t key_length, my_off_t *root)
+			      unsigned char *key, uint32_t key_length, internal::my_off_t *root)
 {
   int error;
   uint32_t nod_flag;
-  my_off_t old_root;
+  internal::my_off_t old_root;
   unsigned char *root_buff;
 
   if ((old_root=*root) == HA_OFFSET_ERROR)
@@ -183,13 +185,13 @@ err:
 
 static int d_search(register MI_INFO *info, register MI_KEYDEF *keyinfo,
                     uint32_t comp_flag, unsigned char *key, uint32_t key_length,
-                    my_off_t page, unsigned char *anc_buff)
+                    internal::my_off_t page, unsigned char *anc_buff)
 {
   int flag,ret_value,save_flag;
   uint32_t length,nod_flag,search_key_length;
   bool last_key;
   unsigned char *leaf_buff,*keypos;
-  my_off_t leaf_page= 0, next_block;
+  internal::my_off_t leaf_page= 0, next_block;
   unsigned char lastkey[MI_MAX_KEY_BUFF];
 
   search_key_length= (comp_flag & SEARCH_FIND) ? key_length : USE_WHOLE_KEY;
@@ -264,7 +266,7 @@ static int d_search(register MI_INFO *info, register MI_KEYDEF *keyinfo,
 	goto err;
       }
       ret_value=_mi_insert(info,keyinfo,key,anc_buff,keypos,lastkey,
-			   (unsigned char*) 0,(unsigned char*) 0,(my_off_t) 0,(bool) 0);
+			   (unsigned char*) 0,(unsigned char*) 0,(internal::my_off_t) 0,(bool) 0);
     }
   }
   if (ret_value == 0 && mi_getint(anc_buff) > keyinfo->block_length)
@@ -286,14 +288,14 @@ err:
 	/* Remove a key that has a page-reference */
 
 static int del(register MI_INFO *info, register MI_KEYDEF *keyinfo, unsigned char *key,
-	       unsigned char *anc_buff, my_off_t leaf_page, unsigned char *leaf_buff,
+	       unsigned char *anc_buff, internal::my_off_t leaf_page, unsigned char *leaf_buff,
 	       unsigned char *keypos,		/* Pos to where deleted key was */
-	       my_off_t next_block,
+	       internal::my_off_t next_block,
 	       unsigned char *ret_key)		/* key before keypos in anc_buff */
 {
   int ret_value,length;
   uint32_t a_length,nod_flag,tmp;
-  my_off_t next_page;
+  internal::my_off_t next_page;
   unsigned char keybuff[MI_MAX_KEY_BUFF],*endpos,*next_buff,*key_start, *prev_key;
   MYISAM_SHARE *share=info->s;
   MI_KEY_PARAM s_temp;
@@ -332,7 +334,7 @@ static int del(register MI_INFO *info, register MI_KEYDEF *keyinfo, unsigned cha
 				&tmp))
 	    goto err;
 	  ret_value=_mi_insert(info,keyinfo,key,leaf_buff,endpos,keybuff,
-			       (unsigned char*) 0,(unsigned char*) 0,(my_off_t) 0,0);
+			       (unsigned char*) 0,(unsigned char*) 0,(internal::my_off_t) 0,0);
 	}
       }
       if (_mi_write_keypage(info,keyinfo,leaf_page,DFLT_INIT_HITS,leaf_buff))
@@ -362,7 +364,7 @@ static int del(register MI_INFO *info, register MI_KEYDEF *keyinfo, unsigned cha
 			      prev_key, prev_key,
 			      keybuff,&s_temp);
   if (length > 0)
-    bmove_upp((unsigned char*) endpos+length,(unsigned char*) endpos,(uint) (endpos-keypos));
+    internal::bmove_upp((unsigned char*) endpos+length,(unsigned char*) endpos,(uint) (endpos-keypos));
   else
     memmove(keypos,keypos-length, (int) (endpos-keypos)+length);
   (*keyinfo->store_key)(keyinfo,keypos,&s_temp);
@@ -384,14 +386,14 @@ err:
 
 static int underflow(register MI_INFO *info, register MI_KEYDEF *keyinfo,
 		     unsigned char *anc_buff,
-		     my_off_t leaf_page,/* Ancestor page and underflow page */
+		     internal::my_off_t leaf_page,/* Ancestor page and underflow page */
 		     unsigned char *leaf_buff,
 		     unsigned char *keypos)	/* Position to pos after key */
 {
   int t_length;
   uint32_t length,anc_length,buff_length,leaf_length,p_length,s_length,nod_flag,
        key_reflength,key_length;
-  my_off_t next_page;
+  internal::my_off_t next_page;
   unsigned char anc_key[MI_MAX_KEY_BUFF],leaf_key[MI_MAX_KEY_BUFF],
         *buff,*endpos,*next_keypos,*anc_pos,*half_pos,*temp_pos,*prev_key,
         *after_key;
@@ -446,7 +448,7 @@ static int underflow(register MI_INFO *info, register MI_KEYDEF *keyinfo,
     length=buff_length-p_length;
     endpos=buff+length+leaf_length+t_length;
     /* buff will always be larger than before !*/
-    bmove_upp((unsigned char*) endpos, (unsigned char*) buff+buff_length,length);
+    internal::bmove_upp((unsigned char*) endpos, (unsigned char*) buff+buff_length,length);
     memcpy(buff, leaf_buff, leaf_length);
     (*keyinfo->store_key)(keyinfo,buff+leaf_length,&s_temp);
     buff_length=(uint) (endpos-buff);
@@ -455,7 +457,7 @@ static int underflow(register MI_INFO *info, register MI_KEYDEF *keyinfo,
     /* remove key from anc_buff */
 
     if (!(s_length=remove_key(keyinfo,key_reflength,keypos,anc_key,
-                              anc_buff+anc_length,(my_off_t *) 0)))
+                              anc_buff+anc_length,(internal::my_off_t *) 0)))
       goto err;
 
     anc_length-=s_length;
@@ -491,7 +493,7 @@ static int underflow(register MI_INFO *info, register MI_KEYDEF *keyinfo,
 				    prev_key, prev_key,
 				    leaf_key, &s_temp);
       if (t_length >= 0)
-	bmove_upp((unsigned char*) endpos+t_length,(unsigned char*) endpos,
+	internal::bmove_upp((unsigned char*) endpos+t_length,(unsigned char*) endpos,
 		  (uint) (endpos-keypos));
       else
 	memmove(keypos,keypos-t_length,(uint) (endpos-keypos)+t_length);
@@ -558,7 +560,7 @@ static int underflow(register MI_INFO *info, register MI_KEYDEF *keyinfo,
 
   /* remove key from anc_buff */
   if (!(s_length= remove_key(keyinfo,key_reflength,keypos,anc_key,
-                             anc_buff+anc_length,(my_off_t *) 0)))
+                             anc_buff+anc_length,(internal::my_off_t *) 0)))
     goto err;
 
   anc_length-=s_length;
@@ -590,7 +592,7 @@ static int underflow(register MI_INFO *info, register MI_KEYDEF *keyinfo,
 				  anc_pos, anc_pos,
 				  leaf_key,&s_temp);
     if (t_length > 0)
-      bmove_upp((unsigned char*) temp_pos+t_length,(unsigned char*) temp_pos,
+      internal::bmove_upp((unsigned char*) temp_pos+t_length,(unsigned char*) temp_pos,
 		(uint) (temp_pos-keypos));
     else
       memmove(keypos,keypos-t_length,(uint) (temp_pos-keypos)+t_length);
@@ -632,7 +634,7 @@ static uint32_t remove_key(MI_KEYDEF *keyinfo, uint32_t nod_flag,
 		       unsigned char *keypos,	/* Where key starts */
 		       unsigned char *lastkey,	/* key to be removed */
 		       unsigned char *page_end, /* End of page */
-		       my_off_t *next_block)	/* ptr to next block */
+		       internal::my_off_t *next_block)	/* ptr to next block */
 {
   int s_length;
   unsigned char *start;
@@ -666,7 +668,7 @@ static uint32_t remove_key(MI_KEYDEF *keyinfo, uint32_t nod_flag,
 	if (next_length > prev_length)
 	{
 	  /* We have to copy data from the current key to the next key */
-	  bmove_upp(keypos, (lastkey+next_length),
+	  internal::bmove_upp(keypos, (lastkey+next_length),
 		    (next_length-prev_length));
 	  keypos-=(next_length-prev_length)+prev_pack_length;
 	  store_key_length(keypos,prev_length);
@@ -713,8 +715,8 @@ static uint32_t remove_key(MI_KEYDEF *keyinfo, uint32_t nod_flag,
 	  if (next_length >= prev_length)
 	  {		/* Key after is based on deleted key */
 	    uint32_t pack_length,tmp;
-	    bmove_upp(keypos, (lastkey+next_length),
-		      tmp=(next_length-prev_length));
+	    internal::bmove_upp(keypos, (lastkey+next_length),
+		                tmp=(next_length-prev_length));
 	    rest_length+=tmp;
 	    pack_length= prev_length ? get_pack_length(rest_length): 0;
 	    keypos-=tmp+pack_length+prev_pack_length;

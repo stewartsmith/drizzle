@@ -11,20 +11,22 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
+
+#include "config.h"
 
 #define DRIZZLE_LEX 1
-#include "config.h"
+
 #include <drizzled/my_hash.h>
 #include <drizzled/error.h>
 #include <drizzled/nested_join.h>
 #include <drizzled/query_id.h>
+#include "drizzled/transaction_services.h"
 #include <drizzled/sql_parse.h>
 #include <drizzled/data_home.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/show.h>
 #include <drizzled/db.h>
-#include <drizzled/plugin/info_schema_table.h>
 #include <drizzled/function/time/unix_timestamp.h>
 #include <drizzled/function/get_system_var.h>
 #include <drizzled/item/cmpfunc.h>
@@ -40,11 +42,13 @@
 #include "drizzled/session_list.h"
 #include "drizzled/global_charset_info.h"
 
-
 #include "drizzled/plugin/logging.h"
-#include "drizzled/plugin/info_schema_table.h"
+#include "drizzled/plugin/query_rewrite.h"
+#include "drizzled/plugin/query_cache.h"
+#include "drizzled/plugin/authorization.h"
 #include "drizzled/optimizer/explain_plan.h"
 #include "drizzled/pthread_globals.h"
+#include "drizzled/plugin/event_observer.h"
 
 #include <limits.h>
 
@@ -53,14 +57,17 @@
 
 #include "drizzled/internal/my_sys.h"
 
-using namespace drizzled;
 using namespace std;
+
+extern int DRIZZLEparse(void *session); // from sql_yacc.cc
+
+namespace drizzled
+{
 
 /* Prototypes */
 bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 static bool parse_sql(Session *session, Lex_input_stream *lip);
-static void mysql_parse(Session *session, const char *inBuf, uint32_t length,
-                 const char ** found_semicolon);
+void mysql_parse(Session *session, const char *inBuf, uint32_t length);
 
 /**
   @defgroup Runtime_Environment Runtime Environment
@@ -124,23 +131,11 @@ void init_update_queries(void)
   sql_command_flags[SQLCOM_REPLACE]=        CF_CHANGES_DATA | CF_HAS_ROW_COUNT;
   sql_command_flags[SQLCOM_REPLACE_SELECT]= CF_CHANGES_DATA | CF_HAS_ROW_COUNT;
 
-  sql_command_flags[SQLCOM_SHOW_STATUS]=      CF_STATUS_COMMAND;
-  sql_command_flags[SQLCOM_SHOW_DATABASES]=   CF_STATUS_COMMAND;
-  sql_command_flags[SQLCOM_SHOW_OPEN_TABLES]= CF_STATUS_COMMAND;
-  sql_command_flags[SQLCOM_SHOW_FIELDS]=      CF_STATUS_COMMAND;
-  sql_command_flags[SQLCOM_SHOW_KEYS]=        CF_STATUS_COMMAND;
-  sql_command_flags[SQLCOM_SHOW_VARIABLES]=   CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_WARNS]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_ERRORS]= CF_STATUS_COMMAND;
-  sql_command_flags[SQLCOM_SHOW_ENGINE_STATUS]= CF_STATUS_COMMAND;
-  sql_command_flags[SQLCOM_SHOW_PROCESSLIST]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_CREATE_DB]=  CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_CREATE]=  CF_STATUS_COMMAND;
 
-   sql_command_flags[SQLCOM_SHOW_TABLES]=       (CF_STATUS_COMMAND |
-                                               CF_SHOW_TABLE_COMMAND);
-  sql_command_flags[SQLCOM_SHOW_TABLE_STATUS]= (CF_STATUS_COMMAND |
-                                                CF_SHOW_TABLE_COMMAND);
   /*
     The following admin table operations are allowed
     on log tables.
@@ -181,7 +176,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   session->command= command;
   session->lex->sql_command= SQLCOM_END; /* to avoid confusing VIEW detectors */
   session->set_time();
-  session->query_id= query_id.value();
+  session->setQueryId(query_id.value());
 
   switch( command ) {
   /* Ignore these statements. */
@@ -189,26 +184,34 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     break;
   /* Increase id and count all other statements. */
   default:
-    statistic_increment(session->status_var.questions, &LOCK_status);
+    session->status_var.questions++;
     query_id.next();
   }
 
   /* TODO: set session->lex->sql_command to SQLCOM_END here */
 
   plugin::Logging::preDo(session);
+  if (unlikely(plugin::EventObserver::beforeStatement(*session)))
+  {
+    // We should do something about an error...
+  }
 
   session->server_status&=
            ~(SERVER_QUERY_NO_INDEX_USED | SERVER_QUERY_NO_GOOD_INDEX_USED);
   switch (command) {
   case COM_INIT_DB:
   {
-    string database_name(packet);
-    NonNormalisedDatabaseName non_normalised_database_name(database_name);
-    NormalisedDatabaseName normalised_database_name(non_normalised_database_name);
+    if (packet_length == 0)
+    {
+      my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
+      break;
+    }
 
-    status_var_increment(session->status_var.com_stat[SQLCOM_CHANGE_DB]);
+    string tmp(packet, packet_length);
 
-    if (! mysql_change_db(session, normalised_database_name, false))
+    SchemaIdentifier identifier(tmp);
+
+    if (not mysql_change_db(session, identifier))
     {
       session->my_ok();
     }
@@ -218,12 +221,12 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   {
     if (! session->readAndStoreQuery(packet, packet_length))
       break;					// fatal error is set
-    DRIZZLE_QUERY_START(session->query,
+    DRIZZLE_QUERY_START(session->query.c_str(),
                         session->thread_id,
                         const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));
-    const char* end_of_stmt= NULL;
 
-    mysql_parse(session, session->query, session->query_length, &end_of_stmt);
+    plugin::QueryRewriter::rewriteQuery(session->db, session->query);
+    mysql_parse(session, session->query.c_str(), session->query.length());
 
     break;
   }
@@ -234,7 +237,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     break;
   case COM_SHUTDOWN:
   {
-    status_var_increment(session->status_var.com_other);
+    session->status_var.com_other++;
     session->my_eof();
     session->close_thread_tables();			// Free before kill
     kill_drizzle();
@@ -242,7 +245,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     break;
   }
   case COM_PING:
-    status_var_increment(session->status_var.com_other);
+    session->status_var.com_other++;
     session->my_ok();				// Tell client we are alive
     break;
   case COM_SLEEP:
@@ -255,7 +258,8 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
   /* If commit fails, we should be able to reset the OK status. */
   session->main_da.can_overwrite_status= true;
-  ha_autocommit_or_rollback(session, session->is_error());
+  TransactionServices &transaction_services= TransactionServices::singleton();
+  transaction_services.autocommitOrRollback(session, session->is_error());
   session->main_da.can_overwrite_status= false;
 
   session->transaction.stmt.reset();
@@ -270,7 +274,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   if (session->killed == Session::KILL_QUERY || session->killed == Session::KILL_BAD_DATA)
   {
     session->killed= Session::NOT_KILLED;
-    session->mysys_var->abort= 0;
+    session->setAbort(false);
   }
 
   /* Can not be true, but do not take chances in production. */
@@ -308,16 +312,19 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   session->close_thread_tables();
 
   plugin::Logging::postDo(session);
+  if (unlikely(plugin::EventObserver::afterStatement(*session)))
+  {
+    // We should do something about an error...
+  }
 
   /* Store temp state for processlist */
   session->set_proc_info("cleaning up");
   session->command= COM_SLEEP;
   memset(session->process_list_info, 0, PROCESS_LIST_WIDTH);
-  session->query= 0;
-  session->query_length= 0;
+  session->query.clear();
 
   session->set_proc_info(NULL);
-  free_root(session->mem_root,MYF(memory::KEEP_PREALLOC));
+  session->mem_root->free_root(MYF(memory::KEEP_PREALLOC));
 
   if (DRIZZLE_QUERY_DONE_ENABLED() || DRIZZLE_COMMAND_DONE_ENABLED())
   {
@@ -357,57 +364,34 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     1                 out of memory or SHOW commands are not allowed
                       in this version of the server.
 */
+static bool _schema_select(Session *session, Select_Lex *sel,
+                           const string& schema_table_name)
+{
+  LEX_STRING db, table;
+  bitset<NUM_OF_TABLE_OPTIONS> table_options;
+  /*
+     We have to make non const db_name & table_name
+     because of lower_case_table_names
+  */
+  session->make_lex_string(&db, "data_dictionary", sizeof("data_dictionary"), false);
+  session->make_lex_string(&table, schema_table_name, false);
 
-int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
-                         const string& schema_table_name)
+  if (! sel->add_table_to_list(session, new Table_ident(db, table),
+                               NULL, table_options, TL_READ))
+  {
+    return true;
+  }
+  return false;
+}
+
+int prepare_new_schema_table(Session *session, LEX *lex,
+                             const string& schema_table_name)
 {
   Select_Lex *schema_select_lex= NULL;
 
-
-  if (schema_table_name.compare("TABLES") == 0 ||
-      schema_table_name.compare("TABLE_NAMES") == 0)
-  {
-    size_t dummy;
-    if (lex->select_lex.db == NULL &&
-        lex->copy_db_to(&lex->select_lex.db, &dummy))
-    {
-      return (1);
-    }
-    schema_select_lex= new Select_Lex();
-    schema_select_lex->db= lex->select_lex.db;
-
-    string database_name(schema_select_lex->db);
-    NonNormalisedDatabaseName non_normalised_database_name(database_name);
-    NormalisedDatabaseName normalised_database_name(non_normalised_database_name);
-
-    schema_select_lex->table_list.first= NULL;
-
-    if (! normalised_database_name.isValid())
-    {
-      my_error(ER_WRONG_DB_NAME, MYF(0),
-               normalised_database_name.to_string().c_str());
-      return (1);
-    }
-  }
-  else if (schema_table_name.compare("COLUMNS") == 0 ||
-           schema_table_name.compare("STATISTICS") == 0)
-  {
-    assert(table_ident);
-    TableList **query_tables_last= lex->query_tables_last;
-    schema_select_lex= new Select_Lex();
-    /* 'parent_lex' is used in init_query() so it must be before it. */
-    schema_select_lex->parent_lex= lex;
-    schema_select_lex->init_query();
-    if (! schema_select_lex->add_table_to_list(session, table_ident, 0, 0, TL_READ))
-    {
-      return (1);
-    }
-    lex->query_tables_last= query_tables_last;
-  }
-
   Select_Lex *select_lex= lex->current_select;
   assert(select_lex);
-  if (make_schema_select(session, select_lex, schema_table_name))
+  if (_schema_select(session, select_lex, schema_table_name))
   {
     return(1);
   }
@@ -458,10 +442,10 @@ mysql_execute_command(Session *session)
   /* list of all tables in query */
   TableList *all_tables;
   /* A peek into the query string */
-  size_t proc_info_len= session->query_length > PROCESS_LIST_WIDTH ?
-                        PROCESS_LIST_WIDTH : session->query_length;
+  size_t proc_info_len= session->query.length() > PROCESS_LIST_WIDTH ?
+                        PROCESS_LIST_WIDTH : session->query.length();
 
-  memcpy(session->process_list_info, session->query, proc_info_len);
+  memcpy(session->process_list_info, session->query.c_str(), proc_info_len);
   session->process_list_info[proc_info_len]= '\0';
 
   /*
@@ -499,15 +483,11 @@ mysql_execute_command(Session *session)
     drizzle_reset_errors(session, 0);
   }
 
-  status_var_increment(session->status_var.com_stat[lex->sql_command]);
-
-  assert(session->transaction.stmt.modified_non_trans_table == false);
+  assert(session->transaction.stmt.hasModifiedNonTransData() == false);
 
   /* now we are ready to execute the statement */
   res= lex->statement->execute();
-
   session->set_proc_info("query end");
-
   /*
     The return value for ROW_COUNT() is "implementation dependent" if the
     statement is not DELETE, INSERT or UPDATE, but -1 is what JDBC and ODBC
@@ -521,7 +501,6 @@ mysql_execute_command(Session *session)
 
   return (res || session->is_error());
 }
-
 bool execute_sqlcom_select(Session *session, TableList *all_tables)
 {
   LEX	*lex= session->lex;
@@ -534,7 +513,7 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
       param->select_limit=
         new Item_int((uint64_t) session->variables.select_limit);
   }
-  if (!(res= session->openTablesLock(all_tables)))
+  if (not (res= session->openTablesLock(all_tables)))
   {
     if (lex->describe)
     {
@@ -569,7 +548,13 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
     {
       if (!result && !(result= new select_send()))
         return true;
+
+      /* Init the Query Cache plugin */
+      plugin::QueryCache::prepareResultset(session); 
       res= handle_select(session, lex, result, 0);
+      /* Send the Resultset to the cache */
+      plugin::QueryCache::setResultset(session); 
+
       if (result != lex->result)
         delete result;
     }
@@ -723,7 +708,7 @@ void create_select_for_variable(const char *var_name)
   */
   if ((var= get_system_var(session, OPT_SESSION, tmp, null_lex_string)))
   {
-    end+= sprintf(buff, "@@session.%s", var_name);
+    end+= snprintf(buff, sizeof(buff), "@@session.%s", var_name);
     var->set_name(buff, end-buff, system_charset_info);
     session->add_item_to_list(var);
   }
@@ -737,78 +722,61 @@ void create_select_for_variable(const char *var_name)
   @param       session     Current thread
   @param       inBuf   Begining of the query text
   @param       length  Length of the query text
-  @param[out]  found_semicolon For multi queries, position of the character of
-                               the next query in the query text.
 */
 
-static void mysql_parse(Session *session, const char *inBuf, uint32_t length,
-                 const char ** found_semicolon)
+void mysql_parse(Session *session, const char *inBuf, uint32_t length)
 {
-  /*
-    Warning.
-    The purpose of query_cache_send_result_to_client() is to lookup the
-    query in the query cache first, to avoid parsing and executing it.
-    So, the natural implementation would be to:
-    - first, call query_cache_send_result_to_client,
-    - second, if caching failed, initialise the lexical and syntactic parser.
-    The problem is that the query cache depends on a clean initialization
-    of (among others) lex->safe_to_cache_query and session->server_status,
-    which are reset respectively in
-    - lex_start()
-    - mysql_reset_session_for_next_command()
-    So, initializing the lexical analyser *before* using the query cache
-    is required for the cache to work properly.
-    FIXME: cleanup the dependencies in the code to simplify this.
-  */
-  lex_start(session);
+  uint64_t start_time= my_getsystime();
+  session->lex->start(session);
   session->reset_for_next_command();
-
+  /* Check if the Query is Cached if and return true if yes
+   * TODO the plugin has to make sure that the query is cacheble
+   * by setting the query_safe_cache param to TRUE
+   */
+  bool res= true;
+  if (plugin::QueryCache::isCached(session))
   {
-    LEX *lex= session->lex;
-
-    Lex_input_stream lip(session, inBuf, length);
-
-    bool err= parse_sql(session, &lip);
-    *found_semicolon= lip.found_semicolon;
-
-    if (!err)
+    res= plugin::QueryCache::sendCachedResultset(session);
+  }
+  if (not res)
+  {
+    return;
+  }
+  LEX *lex= session->lex;
+  Lex_input_stream lip(session, inBuf, length);
+  bool err= parse_sql(session, &lip);
+  if (!err)
+  {
     {
+      if (! session->is_error())
       {
-	if (! session->is_error())
-	{
-          /*
-            Binlog logs a string starting from session->query and having length
-            session->query_length; so we set session->query_length correctly (to not
-            log several statements in one event, when we executed only first).
-            We set it to not see the ';' (otherwise it would get into binlog
-            and Query_log_event::print() would give ';;' output).
-            This also helps display only the current query in SHOW
-            PROCESSLIST.
-            Note that we don't need LOCK_thread_count to modify query_length.
-          */
-          if (*found_semicolon &&
-              (session->query_length= (ulong)(*found_semicolon - session->query)))
-            session->query_length--;
-          DRIZZLE_QUERY_EXEC_START(session->query,
-                                   session->thread_id,
-                                   const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));
-          /* Actually execute the query */
+        DRIZZLE_QUERY_EXEC_START(session->query.c_str(),
+                                 session->thread_id,
+                                 const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));
+        // Implement Views here --Brian
+        /* Actually execute the query */
+        try 
+        {
           mysql_execute_command(session);
-          DRIZZLE_QUERY_EXEC_DONE(0);
-	}
+        }
+        catch (...)
+        {
+          // Just try to catch any random failures that could have come
+          // during execution.
+        }
+        DRIZZLE_QUERY_EXEC_DONE(0);
       }
     }
-    else
-    {
-      assert(session->is_error());
-    }
-    lex->unit.cleanup();
-    session->set_proc_info("freeing items");
-    session->end_statement();
-    session->cleanup_after_query();
   }
-
-  return;
+  else
+  {
+    assert(session->is_error());
+  }
+  lex->unit.cleanup();
+  session->set_proc_info("freeing items");
+  session->end_statement();
+  session->cleanup_after_query();
+  session->status_var.execution_time_nsec+= my_getsystime() - start_time;
 }
 
 
@@ -831,7 +799,7 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
 {
   register CreateField *new_field;
   LEX  *lex= session->lex;
-  drizzled::statement::AlterTable *statement= (drizzled::statement::AlterTable *)lex->statement;
+  statement::AlterTable *statement= (statement::AlterTable *)lex->statement;
 
   if (check_identifier_name(field_name, ER_TOO_LONG_IDENT))
     return true;
@@ -936,14 +904,14 @@ void store_position_for_column(const char *name)
 */
 
 TableList *Select_Lex::add_table_to_list(Session *session,
-					     Table_ident *table,
-					     LEX_STRING *alias,
-					     uint32_t table_options,
-					     thr_lock_type lock_type,
-					     List<Index_hint> *index_hints_arg,
-                                             LEX_STRING *option)
+					                     Table_ident *table,
+					                     LEX_STRING *alias,
+					                     const bitset<NUM_OF_TABLE_OPTIONS>& table_options,
+					                     thr_lock_type lock_type,
+					                     List<Index_hint> *index_hints_arg,
+                                         LEX_STRING *option)
 {
-  register TableList *ptr;
+  TableList *ptr;
   TableList *previous_table_ref; /* The table preceding the current one. */
   char *alias_str;
   LEX *lex= session->lex;
@@ -951,7 +919,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   if (!table)
     return NULL;				// End of memory
   alias_str= alias ? alias->str : table->table.str;
-  if (!test(table_options & TL_OPTION_ALIAS) &&
+  if (! table_options.test(TL_OPTION_ALIAS) &&
       check_table_name(table->table.str, table->table.length))
   {
     my_error(ER_WRONG_TABLE_NAME, MYF(0), table->table.str);
@@ -960,18 +928,15 @@ TableList *Select_Lex::add_table_to_list(Session *session,
 
   if (table->is_derived_table() == false && table->db.str)
   {
-    string database_name(table->db.str);
-    NonNormalisedDatabaseName non_normalised_database_name(database_name);
-    NormalisedDatabaseName normalised_database_name(non_normalised_database_name);
+    my_casedn_str(files_charset_info, table->db.str);
 
-    if (! normalised_database_name.isValid())
+    SchemaIdentifier schema_identifier(string(table->db.str));
+    if (not check_db_name(session, schema_identifier))
     {
-      my_error(ER_WRONG_DB_NAME, MYF(0), normalised_database_name.to_string().c_str());
+
+      my_error(ER_WRONG_DB_NAME, MYF(0), table->db.str);
       return NULL;
     }
-
-    strncpy(table->db.str, normalised_database_name.to_string().c_str(),
-            table->db.length);
   }
 
   if (!alias)					/* Alias is case sensitive */
@@ -987,46 +952,28 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   }
   if (!(ptr = (TableList *) session->calloc(sizeof(TableList))))
     return NULL;
+
   if (table->db.str)
   {
-    ptr->is_fqtn= true;
-    ptr->db= table->db.str;
+    ptr->setIsFqtn(true);
+    ptr->setSchemaName(table->db.str);
     ptr->db_length= table->db.length;
   }
-  else if (lex->copy_db_to(&ptr->db, &ptr->db_length))
+  else if (lex->copy_db_to(ptr->getSchemaNamePtr(), &ptr->db_length))
     return NULL;
   else
-    ptr->is_fqtn= false;
+    ptr->setIsFqtn(false);
 
   ptr->alias= alias_str;
-  ptr->is_alias= alias ? true : false;
+  ptr->setIsAlias(alias ? true : false);
   if (table->table.length)
     table->table.length= my_casedn_str(files_charset_info, table->table.str);
-  ptr->table_name=table->table.str;
+  ptr->setTableName(table->table.str);
   ptr->table_name_length=table->table.length;
   ptr->lock_type=   lock_type;
-  ptr->updating=    test(table_options & TL_OPTION_UPDATING);
-  ptr->force_index= test(table_options & TL_OPTION_FORCE_INDEX);
-  ptr->ignore_leaves= test(table_options & TL_OPTION_IGNORE_LEAVES);
+  ptr->force_index= table_options.test(TL_OPTION_FORCE_INDEX);
+  ptr->ignore_leaves= table_options.test(TL_OPTION_IGNORE_LEAVES);
   ptr->derived=	    table->sel;
-  if (!ptr->derived && !my_strcasecmp(system_charset_info, ptr->db,
-                                      INFORMATION_SCHEMA_NAME.c_str()))
-  {
-    plugin::InfoSchemaTable *schema_table= plugin::InfoSchemaTable::getTable(ptr->table_name);
-    if (!schema_table ||
-        (schema_table->isHidden() &&
-         ((sql_command_flags[lex->sql_command].test(CF_BIT_STATUS_COMMAND)) == 0 ||
-          /*
-            this check is used for show columns|keys from I_S hidden table
-          */
-          lex->sql_command == SQLCOM_SHOW_FIELDS ||
-          lex->sql_command == SQLCOM_SHOW_KEYS)))
-    {
-      my_error(ER_UNKNOWN_TABLE, MYF(0),
-               ptr->table_name, INFORMATION_SCHEMA_NAME.c_str());
-      return NULL;
-    }
-  }
   ptr->select_lex=  lex->current_select;
   ptr->index_hints= index_hints_arg;
   ptr->option= option ? option->str : 0;
@@ -1039,7 +986,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
 	 tables=tables->next_local)
     {
       if (!my_strcasecmp(table_alias_charset, alias_str, tables->alias) &&
-	  !strcmp(ptr->db, tables->db))
+	  !strcasecmp(ptr->getSchemaName(), tables->getSchemaName()))
       {
 	my_error(ER_NONUNIQ_TABLE, MYF(0), alias_str);
 	return NULL;
@@ -1108,12 +1055,11 @@ bool Select_Lex::init_nested_join(Session *session)
   if (!(ptr= (TableList*) session->calloc(ALIGN_SIZE(sizeof(TableList))+
                                        sizeof(nested_join_st))))
     return true;
-  nested_join= ptr->nested_join=
-    ((nested_join_st*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList))));
-
+  ptr->setNestedJoin(((nested_join_st*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList)))));
+  nested_join= ptr->getNestedJoin();
   join_list->push_front(ptr);
-  ptr->embedding= embedding;
-  ptr->join_list= join_list;
+  ptr->setEmbedding(embedding);
+  ptr->setJoinList(join_list);
   ptr->alias= (char*) "(nested_join)";
   embedding= ptr;
   join_list= &nested_join->join_list;
@@ -1143,15 +1089,15 @@ TableList *Select_Lex::end_nested_join(Session *)
 
   assert(embedding);
   ptr= embedding;
-  join_list= ptr->join_list;
-  embedding= ptr->embedding;
-  nested_join= ptr->nested_join;
+  join_list= ptr->getJoinList();
+  embedding= ptr->getEmbedding();
+  nested_join= ptr->getNestedJoin();
   if (nested_join->join_list.elements == 1)
   {
     TableList *embedded= nested_join->join_list.head();
     join_list->pop();
-    embedded->join_list= join_list;
-    embedded->embedding= embedding;
+    embedded->setJoinList(join_list);
+    embedded->setEmbedding(embedding);
     join_list->push_front(embedded);
     ptr= embedded;
   }
@@ -1184,13 +1130,12 @@ TableList *Select_Lex::nest_last_join(Session *session)
   List<TableList> *embedded_list;
 
   if (!(ptr= (TableList*) session->calloc(ALIGN_SIZE(sizeof(TableList))+
-                                       sizeof(nested_join_st))))
+                                          sizeof(nested_join_st))))
     return NULL;
-  nested_join= ptr->nested_join=
-    ((nested_join_st*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList))));
-
-  ptr->embedding= embedding;
-  ptr->join_list= join_list;
+  ptr->setNestedJoin(((nested_join_st*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList)))));
+  nested_join= ptr->getNestedJoin();
+  ptr->setEmbedding(embedding);
+  ptr->setJoinList(join_list);
   ptr->alias= (char*) "(nest_last_join)";
   embedded_list= &nested_join->join_list;
   embedded_list->empty();
@@ -1198,8 +1143,8 @@ TableList *Select_Lex::nest_last_join(Session *session)
   for (uint32_t i=0; i < 2; i++)
   {
     TableList *table= join_list->pop();
-    table->join_list= embedded_list;
-    table->embedding= ptr;
+    table->setJoinList(embedded_list);
+    table->setEmbedding(ptr);
     embedded_list->push_back(table);
     if (table->natural_join)
     {
@@ -1235,8 +1180,8 @@ TableList *Select_Lex::nest_last_join(Session *session)
 void Select_Lex::add_joined_table(TableList *table)
 {
   join_list->push_front(table);
-  table->join_list= join_list;
-  table->embedding= embedding;
+  table->setJoinList(join_list);
+  table->setEmbedding(embedding);
 }
 
 
@@ -1296,16 +1241,12 @@ TableList *Select_Lex::convert_right_join()
 
 void Select_Lex::set_lock_for_tables(thr_lock_type lock_type)
 {
-  bool for_update= lock_type >= TL_READ_NO_INSERT;
-
   for (TableList *tables= (TableList*) table_list.first;
        tables;
        tables= tables->next_local)
   {
     tables->lock_type= lock_type;
-    tables->updating=  for_update;
   }
-  return;
 }
 
 
@@ -1316,11 +1257,11 @@ void Select_Lex::set_lock_for_tables(thr_lock_type lock_type)
     This object is created for any union construct containing a union
     operation and also for any single select union construct of the form
     @verbatim
-    (SELECT ... order_st BY order_list [LIMIT n]) order_st BY ...
+    (SELECT ... ORDER BY order_list [LIMIT n]) ORDER BY ...
     @endvarbatim
     or of the form
     @varbatim
-    (SELECT ... order_st BY LIMIT n) order_st BY ...
+    (SELECT ... ORDER BY LIMIT n) ORDER BY ...
     @endvarbatim
 
   @param session_arg		   thread handle
@@ -1351,7 +1292,7 @@ bool Select_Lex_Unit::add_fake_select_lex(Session *session_arg)
   fake_select_lex->select_limit= 0;
 
   fake_select_lex->context.outer_context=first_sl->context.outer_context;
-  /* allow item list resolving in fake select for order_st BY */
+  /* allow item list resolving in fake select for ORDER BY */
   fake_select_lex->context.resolve_in_select_list= true;
   fake_select_lex->context.select_lex= fake_select_lex;
 
@@ -1359,8 +1300,8 @@ bool Select_Lex_Unit::add_fake_select_lex(Session *session_arg)
   {
     /*
       This works only for
-      (SELECT ... order_st BY list [LIMIT n]) order_st BY order_list [LIMIT m],
-      (SELECT ... LIMIT n) order_st BY order_list [LIMIT m]
+      (SELECT ... ORDER BY list [LIMIT n]) ORDER BY order_list [LIMIT m],
+      (SELECT ... LIMIT n) ORDER BY order_list [LIMIT m]
       just before the parser starts processing order_list
     */
     global_parameters= fake_select_lex;
@@ -1494,27 +1435,34 @@ void add_join_natural(TableList *a, TableList *b, List<String> *using_fields,
 */
 
 static unsigned int
-kill_one_thread(Session *, ulong id, bool only_kill_query)
+kill_one_thread(Session *, session_id_t id, bool only_kill_query)
 {
   Session *tmp= NULL;
-  uint32_t error=ER_NO_SUCH_THREAD;
-  pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
+  uint32_t error= ER_NO_SUCH_THREAD;
   
-  for( vector<Session*>::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
   {
-    if ((*it)->thread_id == id)
+    boost::mutex::scoped_lock scoped(LOCK_thread_count);
+    for (SessionList::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
     {
-      tmp= *it;
-      pthread_mutex_lock(&tmp->LOCK_delete);	// Lock from delete
-      break;
+      if ((*it)->thread_id == id)
+      {
+        tmp= *it;
+        tmp->lockForDelete();
+        break;
+      }
     }
   }
-  pthread_mutex_unlock(&LOCK_thread_count);
+
   if (tmp)
   {
-    tmp->awake(only_kill_query ? Session::KILL_QUERY : Session::KILL_CONNECTION);
-    error=0;
-    pthread_mutex_unlock(&tmp->LOCK_delete);
+
+    if (tmp->isViewable())
+    {
+      tmp->awake(only_kill_query ? Session::KILL_QUERY : Session::KILL_CONNECTION);
+      error= 0;
+    }
+
+    tmp->unlockForDelete();
   }
   return(error);
 }
@@ -1530,7 +1478,7 @@ kill_one_thread(Session *, ulong id, bool only_kill_query)
     only_kill_query     Should it kill the query or the connection
 */
 
-void sql_kill(Session *session, ulong id, bool only_kill_query)
+void sql_kill(Session *session, int64_t id, bool only_kill_query)
 {
   uint32_t error;
   if (!(error= kill_one_thread(session, id, only_kill_query)))
@@ -1682,9 +1630,15 @@ bool insert_precheck(Session *session, TableList *)
 
 bool create_table_precheck(TableIdentifier &identifier)
 {
-  if (strcmp(identifier.getDBName(), "information_schema") == 0)
+  if (not plugin::StorageEngine::canCreateTable(identifier))
   {
-    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.c_str());
+    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", identifier.getSchemaName().c_str());
+    return true;
+  }
+
+  if (not plugin::StorageEngine::doesSchemaExist(identifier))
+  {
+    my_error(ER_BAD_DB_ERROR, MYF(0), identifier.getSchemaName().c_str());
     return true;
   }
 
@@ -1800,8 +1754,6 @@ bool check_identifier_name(LEX_STRING *str, uint32_t err_code,
   return true;
 }
 
-extern int DRIZZLEparse(void *session); // from sql_yacc.cc
-
 
 /**
   This is a wrapper of DRIZZLEparse(). All the code should call parse_sql()
@@ -1819,7 +1771,7 @@ static bool parse_sql(Session *session, Lex_input_stream *lip)
 {
   assert(session->m_lip == NULL);
 
-  DRIZZLE_QUERY_PARSE_START(session->query);
+  DRIZZLE_QUERY_PARSE_START(session->query.c_str());
 
   /* Set Lex_input_stream. */
 
@@ -1847,3 +1799,5 @@ static bool parse_sql(Session *session, Lex_input_stream *lip)
 /**
   @} (end of group Runtime_Environment)
 */
+
+} /* namespace drizzled */

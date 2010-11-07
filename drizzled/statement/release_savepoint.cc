@@ -22,35 +22,46 @@
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/release_savepoint.h>
+#include "drizzled/transaction_services.h"
+#include "drizzled/named_savepoint.h"
+
+#include <string>
+
+using namespace std;
 
 namespace drizzled
 {
 
 bool statement::ReleaseSavepoint::execute()
 {
-  SAVEPOINT *sv;
-  for (sv= session->transaction.savepoints; sv; sv= sv->prev)
+  /*
+   * Look through the deque of savepoints.  If we
+   * find one with the same name, we release it and
+   * unbind it from our deque.
+   */
+  TransactionServices &transaction_services= TransactionServices::singleton();
+  deque<NamedSavepoint> &savepoints= session->transaction.savepoints;
+  deque<NamedSavepoint>::iterator iter;
+
+  for (iter= savepoints.begin();
+       iter != savepoints.end();
+       ++iter)
   {
+    NamedSavepoint &sv= *iter;
+    const string &sv_name= sv.getName();
     if (my_strnncoll(system_charset_info,
-                     (unsigned char *) session->lex->ident.str, 
+                     (unsigned char *) session->lex->ident.str,
                      session->lex->ident.length,
-                     (unsigned char *) sv->name, 
-                     sv->length) == 0)
-    {
+                     (unsigned char *) sv_name.c_str(),
+                     sv_name.size()) == 0)
       break;
-    }
   }
-  if (sv)
+  if (iter != savepoints.end())
   {
-    if (ha_release_savepoint(session, sv))
-    {
-      return true;
-    }
-    else
-    {
-      session->my_ok();
-    }
-    session->transaction.savepoints= sv->prev;
+    NamedSavepoint &sv= *iter;
+    (void) transaction_services.releaseSavepoint(session, sv);
+    savepoints.erase(iter);
+    session->my_ok();
   }
   else
   {
@@ -63,4 +74,3 @@ bool statement::ReleaseSavepoint::execute()
 }
 
 } /* namespace drizzled */
-

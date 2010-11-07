@@ -1,0 +1,85 @@
+SET AUTOCOMMIT= 0;
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	0
+BEGIN;
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	0
+DROP SCHEMA IF EXISTS boundaries;
+Warnings:
+Note	1008	Can't drop database 'boundaries'; database doesn't exist
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	2
+COMMIT;
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	2
+SET AUTOCOMMIT= 1;
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	2
+BEGIN;
+DROP SCHEMA IF EXISTS boundaries;
+Warnings:
+Note	1008	Can't drop database 'boundaries'; database doesn't exist
+COMMIT;
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	4
+CREATE TABLE commit_test (a int);
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	4
+INSERT into commit_test VALUES (10);
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	4
+INSERT into commit_test VALUES (10), (20);
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	4
+INSERT into commit_test VALUES (10);
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	4
+BEGIN;
+INSERT into commit_test VALUES (10);
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	4
+COMMIT;
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	6
+BEGIN;
+INSERT into commit_test VALUES (10);
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	6
+ROLLBACK;
+Warnings:
+Warning	1196	Some non-transactional changed tables couldn't be rolled back
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	6
+BEGIN;
+INSERT into commit_test VALUES (10);
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	6
+COMMIT;
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	8
+SET AUTOCOMMIT= 0;
+INSERT into commit_test VALUES (10);
+INSERT into commit_test VALUES (10);
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	8
+drop table commit_test;
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	9

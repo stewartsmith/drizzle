@@ -11,7 +11,7 @@
 
   You should have received a copy of the GNU General Public License
   along with this program; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include "config.h"
 
@@ -26,25 +26,19 @@
 #include "drizzled/sql_select.h"
 #include "drizzled/strfunc.h"
 
-using namespace drizzled;
 using namespace std;
+
+namespace drizzled
+{
 
 class Item;
 class Item_field;
 
-uint32_t TableList::create_table_def_key(char *key)
-{
-  return TableShare::createKey(key, db, table_name);
-}
-
-bool TableList::set_insert_values(memory::Root *mem_root)
+bool TableList::set_insert_values(memory::Root *)
 {
   if (table)
   {
-    if (!table->insert_values &&
-        !(table->insert_values= (unsigned char *)alloc_root(mem_root,
-                                                   table->s->rec_buff_length)))
-      return true;
+    table->insert_values.resize(table->getShare()->rec_buff_length);
   }
 
   return false;
@@ -62,6 +56,11 @@ TableList *TableList::find_underlying_table(Table *table_to_find)
     return this;
 
   return NULL;
+}
+
+bool TableList::isCartesian() const
+{
+  return false;
 }
 
 bool TableList::placeholder()
@@ -154,7 +153,7 @@ bool TableList::process_index_hints(Table *tbl)
 {
   /* initialize the result variables */
   tbl->keys_in_use_for_query= tbl->keys_in_use_for_group_by=
-    tbl->keys_in_use_for_order_by= tbl->s->keys_in_use;
+    tbl->keys_in_use_for_order_by= tbl->getShare()->keys_in_use;
 
   /* index hint list processing */
   if (index_hints)
@@ -179,7 +178,7 @@ bool TableList::process_index_hints(Table *tbl)
     /* iterate over the hints list */
     while ((hint= iter++))
     {
-      uint32_t pos;
+      uint32_t pos= 0;
 
       /* process empty USE INDEX () */
       if (hint->type == INDEX_HINT_USE && !hint->key_name.str)
@@ -206,16 +205,11 @@ bool TableList::process_index_hints(Table *tbl)
         Check if an index with the given name exists and get his offset in
         the keys bitmask for the table
       */
-      if (tbl->s->keynames.type_names == 0 ||
-          (pos= find_type(&tbl->s->keynames, hint->key_name.str,
-                          hint->key_name.length, 1)) <= 0)
+      if (not tbl->getShare()->doesKeyNameExist(hint->key_name.str, hint->key_name.length, pos))
       {
         my_error(ER_KEY_DOES_NOT_EXITS, MYF(0), hint->key_name.str, alias);
         return 1;
       }
-
-      pos--;
-
       /* add to the appropriate clause mask */
       if (hint->clause & INDEX_HINT_MASK_JOIN)
         index_join[hint->type].set(pos);
@@ -326,3 +320,5 @@ void TableList::print(Session *session, String *str, enum_query_type query_type)
     }
   }
 }
+
+} /* namespace drizzled */

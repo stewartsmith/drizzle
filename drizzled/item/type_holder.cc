@@ -31,6 +31,9 @@
 
 using namespace std;
 
+namespace drizzled
+{
+
 Item_type_holder::Item_type_holder(Session *session, Item *item)
   :Item(session, item), enum_set_typelib(0), fld_type(get_real_type(item))
 {
@@ -240,7 +243,6 @@ Field *Item_type_holder::make_field_by_type(Table *table)
                           null_ptr,
                           0,
                           name,
-                          get_enum_pack_length(enum_set_typelib->count),
                           enum_set_typelib,
                           collation.collation);
     if (field)
@@ -313,3 +315,4 @@ void Item_result_field::cleanup()
   return;
 }
 
+} /* namespace drizzled */

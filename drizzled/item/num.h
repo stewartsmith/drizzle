@@ -22,6 +22,9 @@
 
 #include "drizzled/item/basic_constant.h"
 
+namespace drizzled
+{
+
 class Item_num: public Item_basic_constant
 {
 public:
@@ -29,5 +32,7 @@ public:
   virtual Item_num *neg()= 0;
   Item *safe_charset_converter(const CHARSET_INFO * const tocs);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_NUM_H */

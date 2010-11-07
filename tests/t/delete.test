@@ -112,7 +112,11 @@ select * from t12;
 -- error 1242
 delete from t11 where t11.b <> (select b from t2 where t11.a < t2.a);
 select * from t11;
-delete ignore from t11 where t11.b <> (select b from t2 where t11.a < t2.a);
+
+# PBXT doesn't currently support DELETE IGNORE and turns it into plain DELETE
+if (`select if (@@storage_engine = 'PBXT', 0, 1)`) { 
+  delete ignore from t11 where t11.b <> (select b from t2 where t11.a < t2.a);
+}
 select * from t11;
 drop table t11, t12, t2;
 
@@ -243,3 +247,7 @@ CREATE TABLE db2.t1 AS SELECT * FROM db1.t2;
 CREATE TABLE db2.t2 AS SELECT * FROM db2.t1;
 CREATE TABLE t1 AS SELECT * FROM db2.t2;
 CREATE TABLE t2 AS SELECT * FROM t1;
+
+DROP DATABASE db1;
+DROP DATABASE db2;
+DROP TABLE t1, t2;

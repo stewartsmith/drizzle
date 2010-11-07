@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /* There may be prolems include all of theese. Try to test in
    configure with ones are needed? */
@@ -22,9 +22,6 @@
 #ifndef DRIZZLED_INTERNAL_M_STRING_H
 #define DRIZZLED_INTERNAL_M_STRING_H
 
-#ifndef __USE_GNU
-#define __USE_GNU				/* We want to use my_stpcpy */
-#endif
 #if defined(HAVE_STRINGS_H)
 #include <strings.h>
 #endif
@@ -32,10 +29,9 @@
 #include <string.h>
 #endif
 
-#include <stdint.h>
 #include <stdlib.h>
 #include <stddef.h>
-#include <assert.h>
+#include <cassert>
 #include <limits.h>
 #include <ctype.h>
 
@@ -44,12 +40,10 @@
 #include <memory.h>
 #endif
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
-
-#define strmov_overlapp(A,B) my_stpcpy(A,B)
-#define strmake_overlapp(A,B,C) strmake(A,B,C)
+namespace drizzled
+{
+namespace internal
+{
 
 extern void bmove_upp(unsigned char *dst,const unsigned char *src,size_t len);
 
@@ -60,9 +54,6 @@ extern	char *strfield(char *src,int fields,int chars,int blanks,
 extern	char *strfill(char * s,size_t len,char fill);
 extern	char *strkey(char *dst,char *head,char *tail,char *flags);
 extern	char *strmake(char *dst,const char *src,size_t length);
-#ifndef strmake_overlapp
-extern	char *strmake_overlapp(char *dst,const char *src, size_t length);
-#endif
 
 extern	char *strsuff(const char *src,const char *suffix);
 extern	char *strxcat(char *dst,const char *src, ...);
@@ -70,15 +61,6 @@ extern	char *strxmov(char *dst,const char *src, ...);
 extern	char *strxcpy(char *dst,const char *src, ...);
 extern	char *strxncat(char *dst,size_t len, const char *src, ...);
 extern	char *strxncpy(char *dst,size_t len, const char *src, ...);
-
-/* Prototypes of normal stringfunctions (with may ours) */
-
-#ifdef WANT_STRING_PROTOTYPES
-extern char *strcat(char *, const char *);
-extern char *strchr(const char *, char);
-extern char *strrchr(const char *, char);
-extern char *strcpy(char *, const char *);
-#endif
 
 /* Conversion routines */
 typedef enum {
@@ -129,11 +111,6 @@ extern char *int64_t2str(int64_t val,char *dst,int radix);
 extern char *int64_t10_to_str(int64_t val,char *dst,int radix);
 
 
-#if defined(__cplusplus)
-}
-#endif
-
-
 /**
   Skip trailing space.
 
@@ -151,5 +128,8 @@ skip_trailing_space(const unsigned char *ptr, size_t len)
     continue;
   return end+1;
 }
+
+} /* namespace internal */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_INTERNAL_M_STRING_H */

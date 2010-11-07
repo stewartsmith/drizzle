@@ -11,8 +11,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -44,14 +44,12 @@ sess_t*
 sess_open(void);
 /*============*/
 /*********************************************************************//**
-Closes a session, freeing the memory occupied by it, if it is in a state
-where it should be closed.
-@return	TRUE if closed */
+Closes a session, freeing the memory occupied by it. */
 UNIV_INTERN
-ibool
-sess_try_close(
-/*===========*/
-	sess_t*		sess);	/*!< in, own: session object */
+void
+sess_close(
+/*=======*/
+	sess_t*		sess);		/* in, own: session object */
 
 /* The session handle. All fields are protected by the kernel mutex */
 struct sess_struct{

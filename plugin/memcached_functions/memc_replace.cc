@@ -41,6 +41,7 @@
 #include <string>
 
 using namespace std;
+using namespace drizzled;
 
 int64_t MemcachedReplace::val_int()
 {

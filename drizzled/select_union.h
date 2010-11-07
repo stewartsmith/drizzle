@@ -21,6 +21,8 @@
 #ifndef DRIZZLED_SELECT_UNION_H
 #define DRIZZLED_SELECT_UNION_H
 
+namespace drizzled
+{
 
 class select_union :public select_result_interceptor
 {
@@ -28,7 +30,9 @@ class select_union :public select_result_interceptor
 public:
   Table *table;
 
-  select_union() :table(0) {}
+  select_union() :table(0) { }
+  ~select_union() { }
+
   int prepare(List<Item> &list, Select_Lex_Unit *u);
   bool send_data(List<Item> &items);
   bool send_eof();
@@ -36,7 +40,9 @@ public:
   void cleanup();
   bool create_result_table(Session *session, List<Item> *column_types,
                            bool is_distinct, uint64_t options,
-                           const char *alias, bool bit_fields_as_long);
+                           const char *alias);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SELECT_UNION_H */

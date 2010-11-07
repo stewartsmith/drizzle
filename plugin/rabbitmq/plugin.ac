@@ -1,0 +1,18 @@
+AC_LIB_HAVE_LINKFLAGS(rabbitmq,,
+  [
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+#include <stdint.h>
+#include <amqp.h>
+#include <amqp_framing.h>
+
+#include <unistd.h>
+  ],
+  [
+amqp_new_connection();
+])
+AS_IF([test "$ac_cv_librabbitmq" = "no"],
+ [AC_MSG_WARN([Couldn't find rabbitmq c client support, rabbitmq log will not be built.])])
+

@@ -1,26 +1,9 @@
-AC_LIB_HAVE_LINKFLAGS(gnutls-openssl,,[
-    #include <string.h>
-    #include <gnutls/openssl.h>
+AC_LIB_HAVE_LINKFLAGS(gcrypt,,[
+    #include <gcrypt.h>
   ],[
-    MD5_CTX context;
-    MD5_Init (&context);
+    void *digest, *source;
+    gcry_md_hash_buffer(GCRY_MD_MD5, digest, source, 0);
   ])
-AS_IF([test "x$ac_cv_libgnutls_openssl" = "xyes"],[
-  ac_cv_build_md5=yes
-  LTMD5PLUGINDEP=${LTLIBGNUTLS_OPENSSL}
-],[
-  AC_LIB_HAVE_LINKFLAGS(crypto,,[
-    #include <string.h>
-    #include <openssl/md5.h>
-  ],[
-    MD5_CTX context;
-    MD5_Init (&context);
-  ])
-  AS_IF([test "x$ac_cv_libcrypto" = "xyes"],[
-    ac_cv_build_md5=yes
-    LTMD5PLUGINDEP=${LTLIBCRYPTO}
-  ],[
-    AC_MSG_WARN([MD5 not found in either gnutls or crypto lib not building md5 plugin. On Debian this is found in libgnutls-dev. On RedHat it is in gnutls-devel.])
-  ])
+AS_IF([test "x$ac_cv_libgcrypt" = "xno"],[
+    AC_MSG_WARN([MD5 not found in libgcrypt: not building md5 plugin. On Debian this is found in libgcrypt11-dev. On RedHat it is in libgcrypt-devel.])
 ])
-AC_SUBST(LTMD5PLUGINDEP)

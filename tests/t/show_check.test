@@ -46,6 +46,7 @@ drop table t1;
 show variables like "server_id%";
 show variables like "SERVER_id%";
 show variables like "this_doesn't_exists%";
+--replace_column 1 #  6 # 7 # 8 # 9 # 10 #
 show table status from test like "this_doesn't_exists%";
 show databases;
 show databases like "test%";
@@ -89,7 +90,7 @@ create table t1 (
   ) comment = 'it\'s a table' ;
 --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
-show full columns from t1;
+show columns from t1;
 drop table t1;
 
 create table t1 (a int not null, unique aa (a));
@@ -101,24 +102,17 @@ create table t1 (a int not null, primary key (a));
 show create table t1;
 drop table t1;
 
-flush tables;
-show open tables;
-create table t1(n int);
-insert into t1 values (1);
-show open tables;
-drop table t1;
-
 create temporary table t1 (a int not null, b VARCHAR(10), INDEX (b) ) COMMENT="test" ENGINE=MYISAM ROW_FORMAT=fixed;
 show create table t1;
 alter table t1 ROW_FORMAT=dynamic;
 show create table t1;
-ALTER TABLE t1 COMMENT="" ROW_FORMAT=default;
+ALTER TABLE t1 COMMENT="", ROW_FORMAT='default';
 show create table t1;
 drop table t1;
 
 create table t1 (a decimal(9,2), b decimal (9,0), e double(9,2), f double(5,0), h float(3,2), i float(3,0));
 show columns from t1;
-show full columns from t1;
+show columns from t1;
 drop table t1;
 
 #
@@ -216,37 +210,37 @@ CREATE TEMPORARY TABLE t3 (
 insert into t1 values (1),(2);
 insert into t2 values (1),(2);
 insert into t3 values (1,1),(2,2);
---replace_column 6 # 7 # 8 # 9 #
+--replace_column 1 #  6 # 7 # 8 # 9 # 10 #
 show table status;
 insert into t1 values (3),(4);
 insert into t2 values (3),(4);
 insert into t3 values (3,3),(4,4);
---replace_column 6 # 7 # 8 # 9 #
+--replace_column 1 #  6 # 7 # 8 # 9 # 10 #
 show table status;
 insert into t1 values (5);
 insert into t2 values (5);
 insert into t3 values (5,5);
---replace_column 6 # 7 # 8 # 9 #
+--replace_column 1 #  6 # 7 # 8 # 9 # 10 #
 show table status;
 delete from t1 where a=3;
 delete from t2 where b=3;
 delete from t3 where a=3;
---replace_column 6 # 7 # 8 # 9 # 10 #
+--replace_column 1 #  6 # 7 # 8 # 9 # 10 #
 show table status;
 truncate table t1;
 truncate table t2;
 truncate table t3;
---replace_column 6 # 7 # 8 # 9 #
+--replace_column 1 #  6 # 7 # 8 # 9 # 10 #
 show table status;
 insert into t1 values (5);
 insert into t2 values (5);
 insert into t3 values (5,5);
---replace_column 6 # 7 # 8 # 9 #
+--replace_column 1 #  6 # 7 # 8 # 9 # 10 #
 show table status;
 delete from t1 where a=5;
 delete from t2 where b=5;
 delete from t3 where a=5;
---replace_column 6 # 7 # 8 # 9 # 10 #
+--replace_column 1 #  6 # 7 # 8 # 9 # 10 #
 show table status;
 
 drop table t1, t2, t3;
@@ -305,73 +299,9 @@ SHOW CREATE TABLE t1;
 DROP TABLE t1;
 
 #
-# BUG 12183 -  SHOW OPEN TABLES behavior doesn't match grammar
-# First we close all open tables with FLUSH tables and then we open some.
-#
-
---echo
---echo # Bug#12183: SHOW OPEN TABLES behavior doesn't match grammar.
---echo
-
-# NOTE: SHOW OPEN TABLES does not sort result list by database or table names.
-# Tables are listed in the order they were opened. We can not use the system
-# database (mysql) for the test here, because we have no control over the order
-# of opening tables in it. Consequently, we can not use 'SHOW OPEN TABLES'.
-
---disable_warnings
-DROP DATABASE IF EXISTS mysqltest1;
---enable_warnings
-
-CREATE DATABASE mysqltest1;
-use mysqltest1;
-
---echo
-
-CREATE TABLE t1(a INT);
-CREATE TABLE t2(a INT);
-
---echo
-
---disable_ps_protocol
-FLUSH TABLES;
-
---echo
-
-SELECT 1 FROM t1;
-SELECT 1 FROM t2;
-
---echo
-
-SHOW OPEN TABLES FROM mysqltest1;
-
---echo
-
-SHOW OPEN TABLES FROM mysqltest1 LIKE 'z%';
-
---echo
-
-SHOW OPEN TABLES FROM mysqltest1 LIKE 't1%';
-
---echo
-
-SHOW OPEN TABLES FROM mysqltest1 LIKE '%1%';
-
---echo
-
-FLUSH TABLES;
---enable_ps_protocol
-
---echo
-
-DROP DATABASE mysqltest1;
-use test;
-
---echo
-
-#
 # BUG #12591 (SHOW TABLES FROM dbname produces wrong error message)
 #
---error 1049
+--error ER_BAD_DB_ERROR
 SHOW TABLES FROM non_existing_database;
 
 --echo End of 4.1 tests
@@ -406,29 +336,13 @@ drop table `mysqlttest\1`.`a\b`;
 drop database `mysqlttest\1`;
 
 #
-# Bug#24392: SHOW ENGINE MUTEX STATUS is a synonym for SHOW INNODB STATUS
-#
-
---error ER_UNKNOWN_STORAGE_ENGINE
-show engine foobar status;
---error 1064
-show engine foobar logs;
---error 1064
-show engine foobar mutex;
-
---error ER_UNKNOWN_STORAGE_ENGINE
-show engine mutex status;
-
-show engine csv status;
-
-#
-# Bug#25081 SHOW FULL TABLES on table with latin chars in name fails
+# Bug#25081 show TABLES on table with latin chars in name fails
 #
 --disable_warnings
 drop table if exists `été`;
 --enable_warnings
 create table `été` (field1 int);
-show full tables;
+show tables;
 drop table `été`;
 
 #

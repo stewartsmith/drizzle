@@ -1,0 +1,28 @@
+# Drizzle's information_schema
+
+# Slap tests for concurrency
+CREATE SCHEMA drizzleslap;
+
+--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from information_schema.CHECK_CONSTRAINTS" --delimiter=";"
+--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from information_schema.COLUMNS" --delimiter=";"
+--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from information_schema.COLUMN_DOMAIN_USAGE" --delimiter=";"
+--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from information_schema.COLUMN_PRIVILEGES" --delimiter=";"
+--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from information_schema.CONSTRAINT_COLUMN_USAGE" --delimiter=";"
+--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from information_schema.CONSTRAINT_TABLE_USAGE" --delimiter=";"
+--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from information_schema.DOMAINS" --delimiter=";"
+--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from information_schema.DOMAIN_CONSTRAINTS" --delimiter=";"
+--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from information_schema.KEY_COLUMN_USAGE" --delimiter=";"
+--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from information_schema.PARAMETERS" --delimiter=";"
+--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from information_schema.REFERENTIAL_CONSTRAINTS" --delimiter=";"
+--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from information_schema.ROUTINES" --delimiter=";"
+--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from information_schema.ROUTINE_COLUMNS" --delimiter=";"
+--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from information_schema.SCHEMATA" --delimiter=";"
+--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from information_schema.TABLES" --delimiter=";"
+--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from information_schema.TABLE_CONSTRAINTS" --delimiter=";"
+--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from information_schema.TABLE_PRIVILEGES" --delimiter=";"
+--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from information_schema.VIEWS" --delimiter=";"
+--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from information_schema.VIEW_COLUMN_USAGE" --delimiter=";"
+--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from information_schema.VIEW_TABLE_USAGE" --delimiter=";"
+
+
+DROP SCHEMA drizzleslap;

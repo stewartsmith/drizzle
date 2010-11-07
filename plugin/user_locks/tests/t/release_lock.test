@@ -1,0 +1,12 @@
+# 
+# We explicitly whether or not a connection 
+#
+SET @lock_name="release_lock_test";
+
+# We should now obtain the lock
+SELECT get_lock(@lock_name);
+SELECT if ((is_used_lock(@lock_name) = CONNECTION_ID()), "YES", "NO");
+SELECT release_lock(@lock_name);
+# Lock should now be un-owned
+SELECT is_used_lock(@lock_name);
+SELECT release_lock(@lock_name);

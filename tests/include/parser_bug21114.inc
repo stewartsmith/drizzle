@@ -31,7 +31,7 @@ eval CREATE TABLE $FCT(
   col2 int not null,
   col3 varchar(10),
   CONSTRAINT pk PRIMARY KEY (col1, col2)
-) ENGINE $engine_type;
+) ENGINE=$engine_type;
 
 eval CREATE TABLE bug21114_child(
   pk int not null,
@@ -43,7 +43,7 @@ eval CREATE TABLE bug21114_child(
     REFERENCES $FCT(col1, col2),
   CONSTRAINT fk_fct_space FOREIGN KEY (fk_col3, fk_col4)
     REFERENCES $FCT (col1, col2)
-) ENGINE $engine_type;
+) ENGINE=$engine_type;
 
 --enable_query_log
 --enable_result_log

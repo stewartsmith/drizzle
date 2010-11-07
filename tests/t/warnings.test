@@ -7,24 +7,24 @@ drop table if exists t1, t2;
 SET SQL_WARNINGS=1;
 
 create table t1 (a int);
---error 1050
+--error ER_TABLE_EXISTS_ERROR
 create table t1 (a int);
 show count(*) errors;
 show errors;
 show warnings;
---error 1064
+--error ER_PARSE_ERROR
 create table t (i);
 show count(*) errors;
 show errors;
 insert into t1 values (1);
---error 1366
+--error ER_TRUNCATED_WRONG_VALUE_FOR_FIELD
 insert into t1 values ("hej");
---error 1366
+--error ER_TRUNCATED_WRONG_VALUE_FOR_FIELD
 insert into t1 values ("hej"),("då");
 set SQL_WARNINGS=1;
---error 1366
+--error ER_TRUNCATED_WRONG_VALUE_FOR_FIELD
 insert into t1 values ("hej");
---error 1366
+--error ER_TRUNCATED_WRONG_VALUE_FOR_FIELD
 insert into t1 values ("hej"),("då");
 drop table t1;
 set SQL_WARNINGS=0;
@@ -50,8 +50,9 @@ drop table t1;
 #
 
 create table t1(a int, b int not null, c date, d char(5));
---error 1263
-load data infile '../std_data_ln/warnings_loaddata.dat' into table t1 fields terminated by ',';
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+--error ER_WARN_NULL_TO_NOTNULL
+eval load data infile '$DRIZZLETEST_VARDIR/std_data_ln/warnings_loaddata.dat' into table t1 fields terminated by ',';
 # PS doesn't work good with @@warning_count
 --disable_ps_protocol
 select @@warning_count;
@@ -65,42 +66,42 @@ drop table t1;
 create table t1(a int NOT NULL, b int, c char(5));
 
 # Error data to big for character field
---error 1406
+--error ER_DATA_TOO_LONG
 insert into t1 values(-1,100,'mysql'),(10,-1,'mysql ab'),(500,256,'open source'),(20,NULL,'test');
 insert into t1 values(-1,100,'mysql'),(10,-1,'dri '),(500,256,'zzle'),(20,NULL,'test');
 
 # Error as changing width truncates data
---error 1265  
+--error ER_WARN_DATA_TRUNCATED  
 alter table t1 modify c char(4);
 alter table t1 add d char(2);
 
 # Error trying to insert NULL data into NOT NULL field
---error 1048
+--error ER_BAD_NULL_ERROR
 update t1 set a=NULL where a=10;
 
 # Error data to big for character field
---error 1406
+--error ER_DATA_TOO_LONG
 update t1 set c='drizzle' where c='test';
 
 # Error data to big for character field
---error 1406
+--error ER_DATA_TOO_LONG
 update t1 set d=c;
 
 create table t2(a int NOT NULL, b char(3));
 
 # Error data to big for character field
---error 1406
+--error ER_DATA_TOO_LONG
 insert into t2 select b,c from t1;
 
 # Error 'a' doesn't have a default value
---error 1364
+--error ER_NO_DEFAULT_FOR_FIELD
 insert into t2(b) values('mysqlab');
 insert into t2(a) values(1);
 
 set sql_warnings=1;
 
 # Error data to big for character field
---error 1406
+--error ER_DATA_TOO_LONG
 insert into t2(a,b) values(1,'mysqlab');
 insert into t2(a,b) values(1,'mys');
 
@@ -126,7 +127,7 @@ alter table t1 add b char;
 set max_error_count=10;
 
 # Error data to big for character field
---error 1406
+--error ER_DATA_TOO_LONG
 update t1 set b=a;
 
 alter table t1 modify b char(10);
@@ -156,7 +157,7 @@ drop table t1;
 create table t1 (a int);
 insert into t1 (a) values (1), (2), (3), (4), (5), (6), (7), (8), (9), (10);
 # Incorrect integer value abc for column a
---error 1366
+--error ER_TRUNCATED_WRONG_VALUE_FOR_FIELD
 update t1 set a='abc';
 show warnings limit 2, 1;
 show warnings limit 0, 10;
@@ -180,11 +181,12 @@ set @c = repeat(' ', 256);
 set @q = repeat('q', 256);
 
 # BUG, 309791 currently only gives a warning but should give error
+--error ER_DATA_TOO_LONG
 insert into t1 values(@c, @c, @c);
 show warnings;
---error 1406
+--error ER_DATA_TOO_LONG
 insert into t1 values(@q, NULL, NULL);
---error 1406
+--error ER_DATA_TOO_LONG
 insert into t1 values(NULL, @q, NULL);
 insert into t1 values(NULL, NULL, @q);
 

@@ -11,11 +11,18 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "drizzled/internal/mysys_priv.h"
-#include "drizzled/my_error.h"
+#include "config.h"
+
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/error.h"
 #include <errno.h>
+
+namespace drizzled
+{
+namespace internal
+{
 
 
 /*
@@ -76,3 +83,6 @@ size_t my_read(int Filedes, unsigned char *Buffer, size_t Count, myf MyFlags)
   }
   return(readbytes);
 } /* my_read */
+
+} /* namespace internal */
+} /* namespace drizzled */

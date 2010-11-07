@@ -18,12 +18,15 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/str/export_set.h>
 
 #include <algorithm>
 
 using namespace std;
+
+namespace drizzled
+{
 
 String* Item_func_export_set::val_str(String* str)
 {
@@ -71,7 +74,7 @@ String* Item_func_export_set::val_str(String* str)
   case 3:
     {
       /* errors is not checked - assume "," can always be converted */
-      uint32_t errors;
+      size_t errors;
       sep_buf.copy(STRING_WITH_LEN(","), &my_charset_bin, collation.collation, &errors);
       sep = &sep_buf;
     }
@@ -104,3 +107,4 @@ void Item_func_export_set::fix_length_and_dec()
     return;
 }
 
+} /* namespace drizzled */

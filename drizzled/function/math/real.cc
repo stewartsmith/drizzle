@@ -21,6 +21,9 @@
 #include <math.h>
 #include <drizzled/function/math/real.h>
 
+namespace drizzled
+{
+
 
 String *Item_real_func::val_str(String *str)
 {
@@ -55,3 +58,4 @@ void Item_real_func::fix_length_and_dec()
   max_length= float_length(decimals);
 }
 
+} /* namespace drizzled */

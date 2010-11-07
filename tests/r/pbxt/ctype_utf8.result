@@ -1,0 +1,1376 @@
+drop table if exists t1,t2;
+select left(0xD0B0D0B1D0B2,1);
+left(0xD0B0D0B1D0B2,1)
+�
+select right(0xD0B0D0B2D0B2,1);
+right(0xD0B0D0B2D0B2,1)
+�
+select locate('he','hello');
+locate('he','hello')
+1
+select locate('he','hello',2);
+locate('he','hello',2)
+0
+select locate('lo','hello',2);
+locate('lo','hello',2)
+4
+select locate('HE','hello');
+locate('HE','hello')
+1
+select locate('HE','hello',2);
+locate('HE','hello',2)
+0
+select locate('LO','hello',2);
+locate('LO','hello',2)
+4
+select locate('HE','hello' collate utf8_bin);
+locate('HE','hello' collate utf8_bin)
+0
+select locate('HE','hello' collate utf8_bin,2);
+locate('HE','hello' collate utf8_bin,2)
+0
+select locate('LO','hello' collate utf8_bin,2);
+locate('LO','hello' collate utf8_bin,2)
+0
+select locate(0xD0B1, 0xD0B0D0B1D0B2);
+locate(0xD0B1, 0xD0B0D0B1D0B2)
+3
+select locate(0xD091, 0xD0B0D0B1D0B2);
+locate(0xD091, 0xD0B0D0B1D0B2)
+0
+select locate(0xD0B1, 0xD0B0D091D0B2);
+locate(0xD0B1, 0xD0B0D091D0B2)
+0
+select length(0xD0B1), char_length(0xD0B1);
+length(0xD0B1)	char_length(0xD0B1)
+2	2
+select 'a' like 'a';
+'a' like 'a'
+1
+select 'A' like 'a';
+'A' like 'a'
+1
+select 'A' like 'a' collate utf8_bin;
+'A' like 'a' collate utf8_bin
+0
+select 0xD0B0D0B1D0B2 like concat('%',0xD0B1,'%');
+0xD0B0D0B1D0B2 like concat('%',0xD0B1,'%')
+1
+select 'Günter André' like 'GÜNTER%';
+'Günter André' like 'GÜNTER%'
+1
+SELECT 'a' = 'a ';
+'a' = 'a '
+1
+SELECT 'a\0' < 'a';
+'a\0' < 'a'
+1
+SELECT 'a\0' < 'a ';
+'a\0' < 'a '
+1
+SELECT 'a\t' < 'a';
+'a\t' < 'a'
+1
+SELECT 'a\t' < 'a ';
+'a\t' < 'a '
+1
+SELECT 'a' = 'a ' collate utf8_bin;
+'a' = 'a ' collate utf8_bin
+1
+SELECT 'a\0' < 'a' collate utf8_bin;
+'a\0' < 'a' collate utf8_bin
+1
+SELECT 'a\0' < 'a ' collate utf8_bin;
+'a\0' < 'a ' collate utf8_bin
+1
+SELECT 'a\t' < 'a' collate utf8_bin;
+'a\t' < 'a' collate utf8_bin
+1
+SELECT 'a\t' < 'a ' collate utf8_bin;
+'a\t' < 'a ' collate utf8_bin
+1
+CREATE TABLE t1 (a char(10) not null);
+INSERT INTO t1 VALUES ('a'),('a\0'),('a\t'),('a ');
+SELECT hex(a),STRCMP(a,'a'), STRCMP(a,'a ') FROM t1;
+hex(a)	STRCMP(a,'a')	STRCMP(a,'a ')
+61	0	0
+6100	-1	-1
+6109	-1	-1
+6120	0	0
+DROP TABLE t1;
+select insert('txs',2,1,'hi'),insert('is ',4,0,'a'),insert('txxxxt',2,4,'es');
+insert('txs',2,1,'hi')	insert('is ',4,0,'a')	insert('txxxxt',2,4,'es')
+this	is a	test
+select insert("aa",100,1,"b"),insert("aa",1,3,"b");
+insert("aa",100,1,"b")	insert("aa",1,3,"b")
+aa	b
+select char_length(left(@a:='න ',5)), length(@a), @a;
+char_length(left(@a:='න ',5))	length(@a)	@a
+2	4	න 
+create table t1 select date_format("2004-01-19 10:10:10", "%Y-%m-%d");
+show create table t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `date_format("2004-01-19 10:10:10", "%Y-%m-%d")` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=PBXT COLLATE = utf8_general_ci
+select * from t1;
+date_format("2004-01-19 10:10:10", "%Y-%m-%d")
+2004-01-19
+drop table t1;
+create table t1 (s1 char(10));
+insert into t1 values (0x41FF);
+ERROR HY000: Incorrect string value: '\xFF' for column 's1' at row 1
+select hex(s1) from t1;
+hex(s1)
+drop table t1;
+create table t1 (s1 varchar(10));
+insert into t1 values (0x41FF);
+ERROR HY000: Incorrect string value: '\xFF' for column 's1' at row 1
+select hex(s1) from t1;
+hex(s1)
+drop table t1;
+create table t1 (s1 text);
+insert into t1 values (0x41FF);
+ERROR HY000: Incorrect string value: '\xFF' for column 's1' at row 1
+select hex(s1) from t1;
+hex(s1)
+drop table t1;
+create table t1 (a text, primary key(a(360))) engine=innodb;
+ERROR 42000: Specified key was too long; max key length is 1023 bytes
+CREATE TABLE t1 ( a varchar(10) );
+INSERT INTO t1 VALUES ( 'test' );
+SELECT a.a, b.a FROM t1 a, t1 b WHERE a.a = b.a;
+a	a
+test	test
+SELECT a.a, b.a FROM t1 a, t1 b WHERE a.a = 'test' and b.a = 'test';
+a	a
+test	test
+SELECT a.a, b.a FROM t1 a, t1 b WHERE a.a = b.a and a.a = 'test';
+a	a
+test	test
+DROP TABLE t1;
+create table t1 (a char(255));
+insert into t1 values('b'),('b');
+select * from t1 where a = 'b';
+a
+b
+b
+select * from t1 where a = 'b' and a = 'b';
+a
+b
+b
+select * from t1 where a = 'b' and a != 'b';
+a
+drop table t1;
+CREATE TABLE t1 (a enum ('Y', 'N') DEFAULT 'N' COLLATE utf8_unicode_ci);
+ALTER TABLE t1 ADD COLUMN b CHAR(20);
+DROP TABLE t1;
+create table t1 (c varchar(30), unique(c(10)));
+insert into t1 values ('1'),('2'),('3'),('x'),('y'),('z');
+insert into t1 values ('aaaaaaaaaa');
+insert into t1 values ('aaaaaaaaaaa');
+ERROR 23000: Duplicate entry 'aaaaaaaaaa' for key 'c'
+insert into t1 values ('aaaaaaaaaaaa');
+ERROR 23000: Duplicate entry 'aaaaaaaaaa' for key 'c'
+insert into t1 values (repeat('b',20));
+select c c1 from t1 where c='1';
+c1
+1
+select c c2 from t1 where c='2';
+c2
+2
+select c c3 from t1 where c='3';
+c3
+3
+select c cx from t1 where c='x';
+cx
+x
+select c cy from t1 where c='y';
+cy
+y
+select c cz from t1 where c='z';
+cz
+z
+select c ca10 from t1 where c='aaaaaaaaaa';
+ca10
+aaaaaaaaaa
+select c cb20 from t1 where c=repeat('b',20);
+cb20
+bbbbbbbbbbbbbbbbbbbb
+drop table t1;
+create table t1 (c varchar(30), unique(c(10))) engine=innodb;
+insert into t1 values ('1'),('2'),('3'),('x'),('y'),('z');
+insert into t1 values ('aaaaaaaaaa');
+insert into t1 values ('aaaaaaaaaaa');
+ERROR 23000: Duplicate entry 'aaaaaaaaaa' for key 'c'
+insert into t1 values ('aaaaaaaaaaaa');
+ERROR 23000: Duplicate entry 'aaaaaaaaaa' for key 'c'
+insert into t1 values (repeat('b',20));
+select c c1 from t1 where c='1';
+c1
+1
+select c c2 from t1 where c='2';
+c2
+2
+select c c3 from t1 where c='3';
+c3
+3
+select c cx from t1 where c='x';
+cx
+x
+select c cy from t1 where c='y';
+cy
+y
+select c cz from t1 where c='z';
+cz
+z
+select c ca10 from t1 where c='aaaaaaaaaa';
+ca10
+aaaaaaaaaa
+select c cb20 from t1 where c=repeat('b',20);
+cb20
+bbbbbbbbbbbbbbbbbbbb
+drop table t1;
+create TEMPORARY table t1 (c char(3), unique (c(2))) engine=myisam;
+insert into t1 values ('1'),('2'),('3'),('4'),('x'),('y'),('z');
+insert into t1 values ('a');
+insert into t1 values ('aa');
+insert into t1 values ('aaa');
+ERROR 23000: Duplicate entry 'aa' for key 'c'
+insert into t1 values ('b');
+insert into t1 values ('bb');
+insert into t1 values ('bbb');
+ERROR 23000: Duplicate entry 'bb' for key 'c'
+insert into t1 values ('킱');
+insert into t1 values ('킱킱');
+insert into t1 values ('킱킱킱');
+ERROR 23000: Duplicate entry '킱킱' for key 'c'
+drop table t1;
+create table t1 (c char(3), unique (c(2))) engine=innodb;
+insert into t1 values ('1'),('2'),('3'),('4'),('x'),('y'),('z');
+insert into t1 values ('a');
+insert into t1 values ('aa');
+insert into t1 values ('aaa');
+ERROR 23000: Duplicate entry 'aa' for key 'c'
+insert into t1 values ('b');
+insert into t1 values ('bb');
+insert into t1 values ('bbb');
+ERROR 23000: Duplicate entry 'bb' for key 'c'
+insert into t1 values ('킱');
+insert into t1 values ('킱킱');
+insert into t1 values ('킱킱킱');
+ERROR 23000: Duplicate entry '킱킱' for key 'c'
+drop table t1;
+create TEMPORARY table t1 (
+c char(10),
+unique key a using hash (c(2))
+) engine=MEMORY;
+insert into t1 values ('1'),('2'),('3'),('4'),('x'),('y'),('z');
+insert into t1 values ('a');
+insert into t1 values ('aa');
+insert into t1 values ('aaa');
+ERROR 23000: Duplicate entry 'aa' for key 'a'
+insert into t1 values ('b');
+insert into t1 values ('bb');
+insert into t1 values ('bbb');
+ERROR 23000: Duplicate entry 'bb' for key 'a'
+insert into t1 values ('킱');
+insert into t1 values ('킱킱');
+insert into t1 values ('킱킱킱');
+ERROR 23000: Duplicate entry '킱킱' for key 'a'
+select c as c_all from t1 order by c;
+c_all
+1
+2
+3
+4
+a
+aa
+b
+bb
+x
+y
+z
+킱
+킱킱
+select c as c_a from t1 where c='a';
+c_a
+a
+select c as c_a from t1 where c='킱';
+c_a
+킱
+drop table t1;
+create TEMPORARY table t1 (
+c char(10),
+unique key a using btree (c(2))
+) engine=MEMORY;
+show create table t1;
+Table	Create Table
+t1	CREATE TEMPORARY TABLE `t1` (
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  UNIQUE KEY `a` (`c`(2)) USING BTREE
+) ENGINE=MEMORY COLLATE = utf8_general_ci
+insert into t1 values ('1'),('2'),('3'),('4'),('x'),('y'),('z');
+insert into t1 values ('a');
+insert into t1 values ('aa');
+insert into t1 values ('aaa');
+ERROR 23000: Duplicate entry 'aa' for key 'a'
+insert into t1 values ('b');
+insert into t1 values ('bb');
+insert into t1 values ('bbb');
+ERROR 23000: Duplicate entry 'bb' for key 'a'
+insert into t1 values ('킱');
+insert into t1 values ('킱킱');
+insert into t1 values ('킱킱킱');
+ERROR 23000: Duplicate entry '킱킱' for key 'a'
+select c as c_all from t1 order by c;
+c_all
+1
+2
+3
+4
+a
+aa
+b
+bb
+x
+y
+z
+킱
+킱킱
+select c as c_a from t1 where c='a';
+c_a
+a
+select c as c_a from t1 where c='킱';
+c_a
+킱
+drop table t1;
+create TEMPORARY table t1 (
+str varchar(255) not null,
+key str  (str(2))
+) engine=myisam;
+INSERT INTO t1 VALUES ('str');
+INSERT INTO t1 VALUES ('str2');
+select * from t1 where str='str';
+str
+str
+drop table t1;
+create table t1 (
+str varchar(255) not null,
+key str  (str(2))
+) engine=innodb;
+INSERT INTO t1 VALUES ('str');
+INSERT INTO t1 VALUES ('str2');
+select * from t1 where str='str';
+str
+str
+drop table t1;
+create temporary table t1 (
+str varchar(255) not null,
+key str using btree (str(2))
+) engine=MEMORY;
+INSERT INTO t1 VALUES ('str');
+INSERT INTO t1 VALUES ('str2');
+select * from t1 where str='str';
+str
+str
+drop table t1;
+create temporary table t1 (
+str varchar(255) not null,
+key str using hash (str(2))
+) engine=MEMORY;
+INSERT INTO t1 VALUES ('str');
+INSERT INTO t1 VALUES ('str2');
+select * from t1 where str='str';
+str
+str
+drop table t1;
+create table t1 (
+str varchar(255) not null,
+key str (str(2))
+) engine=innodb;
+INSERT INTO t1 VALUES ('str');
+INSERT INTO t1 VALUES ('str2');
+select * from t1 where str='str';
+str
+str
+drop table t1;
+CREATE TABLE t1 (a varchar(32));
+INSERT INTO t1 VALUES ('test');
+SELECT a FROM t1 WHERE a LIKE '%te';
+a
+DROP TABLE t1;
+CREATE TABLE t1 (
+subject varchar(255) collate utf8_unicode_ci,
+p varchar(15)
+) ENGINE=InnoDB;
+INSERT INTO t1 values ('킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱','abcdefghijklmno');
+INSERT INTO t1 VALUES ('aaa','bbb');
+SELECT length(subject) FROM t1;
+length(subject)
+765
+3
+SELECT length(subject) FROM t1 ORDER BY 1;
+length(subject)
+3
+765
+DROP TABLE t1;
+CREATE TEMPORARY TABLE t1 (
+id       int NOT NULL auto_increment,
+list_id  int NOT NULL,
+term     TEXT NOT NULL,
+PRIMARY KEY(id),
+INDEX(list_id, term(4))
+) ENGINE=MYISAM;
+INSERT INTO t1 SET list_id = 1, term = "letterc";
+INSERT INTO t1 SET list_id = 1, term = "letterb";
+INSERT INTO t1 SET list_id = 1, term = "lettera";
+INSERT INTO t1 SET list_id = 1, term = "letterd";
+SELECT id FROM t1 WHERE (list_id = 1) AND (term = "letterc");
+id
+1
+SELECT id FROM t1 WHERE (list_id = 1) AND (term = "letterb");
+id
+2
+SELECT id FROM t1 WHERE (list_id = 1) AND (term = "lettera");
+id
+3
+SELECT id FROM t1 WHERE (list_id = 1) AND (term = "letterd");
+id
+4
+DROP TABLE t1;
+CREATE TEMPORARY TABLE t1 (
+id int NOT NULL auto_increment,
+list_id int NOT NULL,
+term text NOT NULL,
+PRIMARY KEY(id),
+INDEX(list_id, term(19))
+) ENGINE=MyISAM;
+INSERT INTO t1 set list_id = 1, term = "testétest";
+INSERT INTO t1 set list_id = 1, term = "testetest";
+INSERT INTO t1 set list_id = 1, term = "testètest";
+SELECT id, term FROM t1 where (list_id = 1) AND (term = "testétest");
+id	term
+1	testétest
+2	testetest
+3	testètest
+SELECT id, term FROM t1 where (list_id = 1) AND (term = "testetest");
+id	term
+1	testétest
+2	testetest
+3	testètest
+SELECT id, term FROM t1 where (list_id = 1) AND (term = "testètest");
+id	term
+1	testétest
+2	testetest
+3	testètest
+DROP TABLE t1;
+create table t1 (
+a int primary key,
+b varchar(6),
+index b3(b(3))
+) engine=innodb;
+insert into t1 values(1,'foo'),(2,'foobar');
+select * from t1 where b like 'foob%';
+a	b
+2	foobar
+alter table t1 engine=innodb;
+select * from t1 where b like 'foob%';
+a	b
+2	foobar
+drop table t1;
+create table t1 (
+a enum('☃','☄','킱') not null default '킱'
+);
+create table t2 select concat(a,'') as a from t1;
+show create table t2;
+Table	Create Table
+t2	CREATE TABLE `t2` (
+  `a` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=PBXT COLLATE = utf8_general_ci
+drop table t2;
+drop table t1;
+select 'c' like '\_' as want0;
+want0
+0
+SELECT SUBSTR('☃☄킱',-2);
+SUBSTR('☃☄킱',-2)
+☄킱
+create table t1 select repeat('a',4000) a;
+delete from t1;
+insert into t1 values ('a'), ('a '), ('a\t');
+select collation(a),hex(a) from t1 order by hex(a);
+collation(a)	hex(a)
+utf8_general_ci	61
+utf8_general_ci	6109
+utf8_general_ci	6120
+drop table t1;
+create table t1 select repeat('a',50) as c1 ;
+insert into t1 values('abcdef');
+insert into t1 values('_bcdef');
+insert into t1 values('a_cdef');
+insert into t1 values('ab_def');
+insert into t1 values('abc_ef');
+insert into t1 values('abcd_f');
+insert into t1 values('abcde_');
+select c1 as c1u from t1 where c1 like 'ab\_def';
+c1u
+ab_def
+select c1 as c2h from t1 where c1 like 'ab#_def' escape '#';
+c2h
+ab_def
+drop table t1;
+drop table if exists t1;
+create table t1 as select repeat(' ', 64) as s1;
+select collation(s1) from t1;
+collation(s1)
+utf8_general_ci
+delete from t1;
+insert into t1 values ('a'),('ae'),('ä');
+insert into t1 values ('o'),('oe'),('ö');
+insert into t1 values ('s'),('ss'),('ß');
+insert into t1 values ('u'),('ue'),('ü');
+select s1, hex(s1) from t1 order by s1, binary s1;
+s1	hex(s1)
+a	61
+ä	C3A4
+ae	6165
+o	6F
+ö	C3B6
+oe	6F65
+s	73
+ß	C39F
+ss	7373
+u	75
+ü	C3BC
+ue	7565
+select group_concat(s1 order by binary s1) from t1 group by s1;
+group_concat(s1 order by binary s1)
+a,ä
+ae
+o,ö
+oe
+s,ß
+ss
+u,ü
+ue
+drop table t1;
+create table t1 select repeat('a',4000) a;
+delete from t1;
+insert into t1 values ('a'), ('a '), ('a\t');
+select collation(a),hex(a) from t1 order by hex(a);
+collation(a)	hex(a)
+utf8_general_ci	61
+utf8_general_ci	6109
+utf8_general_ci	6120
+drop table t1;
+create table t1 select repeat('a',50) as c1 ;
+insert into t1 values('abcdef');
+insert into t1 values('_bcdef');
+insert into t1 values('a_cdef');
+insert into t1 values('ab_def');
+insert into t1 values('abc_ef');
+insert into t1 values('abcd_f');
+insert into t1 values('abcde_');
+select c1 as c1u from t1 where c1 like 'ab\_def';
+c1u
+ab_def
+select c1 as c2h from t1 where c1 like 'ab#_def' escape '#';
+c2h
+ab_def
+drop table t1;
+create table t1 (a varchar(10));
+insert into t1 values ('test');
+select ifnull(a,'') from t1;
+ifnull(a,'')
+test
+drop table t1;
+select repeat('+',3) as h union select NULL;
+h
++++
+NULL
+select ifnull(NULL, 'string');
+ifnull(NULL, 'string')
+string
+create table t1 (s1 char(5) collate utf8_lithuanian_ci);
+insert into t1 values ('I'),('K'),('Y');
+select * from t1 where s1 < 'K' and s1 = 'Y';
+s1
+I
+Y
+select * from t1 where 'K' > s1 and s1 = 'Y';
+s1
+I
+Y
+drop table t1;
+create table t1 (s1 char(5) collate utf8_czech_ci);
+insert into t1 values ('c'),('d'),('h'),('ch'),('CH'),('cH'),('Ch'),('i');
+select * from t1 where s1 > 'd' and s1 = 'CH';
+s1
+ch
+CH
+Ch
+select * from t1 where 'd' < s1 and s1 = 'CH';
+s1
+ch
+CH
+Ch
+select * from t1 where s1 = 'cH' and s1 <> 'ch';
+s1
+cH
+select * from t1 where 'cH' = s1 and s1 <> 'ch';
+s1
+cH
+drop table t1;
+create table t1 (a varchar(255));
+insert into t1 values (1.0);
+drop table t1;
+create table t1 (
+id int not null,
+city varchar(20) not null,
+key (city(7),id)
+);
+insert into t1 values (1,'Durban North');
+insert into t1 values (2,'Durban');
+select * from t1 where city = 'Durban';
+id	city
+2	Durban
+select * from t1 where city = 'Durban ';
+id	city
+2	Durban
+drop table t1;
+CREATE TEMPORARY TABLE t1 (
+`id` int NOT NULL auto_increment,
+`country` varchar(100) NOT NULL default '',
+`shortcode` varchar(100) NOT NULL default '',
+`operator` varchar(100) NOT NULL default '',
+`momid` varchar(30) NOT NULL default '',
+`keyword` varchar(160) NOT NULL default '',
+`content` varchar(160) NOT NULL default '',
+`second_token` varchar(160) default NULL,
+`gateway_id` int NOT NULL default '0',
+`created` datetime NULL,
+`msisdn` varchar(15) NOT NULL default '',
+PRIMARY KEY  (`id`),
+UNIQUE KEY `MSCCSPK_20030521130957121` (`momid`),
+KEY `IX_mobile_originated_message_keyword` (`keyword`),
+KEY `IX_mobile_originated_message_created` (`created`),
+KEY `IX_mobile_originated_message_support` (`msisdn`,`momid`,`keyword`,`gateway_id`,`created`)
+) ENGINE=MyISAM;
+INSERT INTO t1 VALUES 
+(1,'blah','464','aaa','fkc1c9ilc20x0hgae7lx6j09','ERR','킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱','G', 3,'2005-06-01 17:30:43','1234567890'),
+(2,'blah','464','aaa','haxpl2ilc20x00bj4tt2m5ti','11','11 g','G',3,'2005-06-02 22:43:10','1234567890');
+CREATE TABLE t2 (
+`msisdn` varchar(15) NOT NULL default '',
+`operator_id` int NOT NULL default '0',
+`created` datetime NULL,
+UNIQUE KEY `PK_user` (`msisdn`)
+) ENGINE=InnoDB;
+INSERT INTO t2 VALUES ('1234567890',2,'2005-05-24 13:53:25');
+SELECT content, t2.msisdn FROM t1, t2 WHERE t1.msisdn = '1234567890';
+content	msisdn
+킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱	1234567890
+11 g	1234567890
+DROP TABLE t1,t2;
+create table t1 (a char(20));
+insert into t1 values ('12'),('킱킲');
+alter table t1 modify a char(2);
+select char_length(a), length(a), a from t1 order by a;
+char_length(a)	length(a)	a
+2	2	12
+2	6	킱킲
+drop table t1;
+select 'andre%' like 'andre킱%' escape '킱';
+'andre%' like 'andre킱%' escape '킱'
+1
+select 'a\\' like 'a\\';
+'a\\' like 'a\\'
+1
+select 'aa\\' like 'a%\\';
+'aa\\' like 'a%\\'
+1
+create table t1 (a char(10), key(a));
+insert into t1 values ("a"),("abc"),("abcd"),("hello"),("test");
+select * from t1 where a like "abc%";
+a
+abc
+abcd
+select * from t1 where a like concat("abc","%");
+a
+abc
+abcd
+select * from t1 where a like "ABC%";
+a
+abc
+abcd
+select * from t1 where a like "test%";
+a
+test
+select * from t1 where a like "te_t";
+a
+test
+select * from t1 where a like "%a%";
+a
+a
+abc
+abcd
+select * from t1 where a like "%abcd%";
+a
+abcd
+select * from t1 where a like "%abc\d%";
+a
+abcd
+drop table t1;
+CREATE TEMPORARY TABLE t1 (
+a varchar(255) NOT NULL default '',
+KEY a (a)
+) ENGINE=MyISAM COLLATE=utf8_general_ci;
+insert into t1 values (0xe880bd);
+insert into t1 values (0x5b);
+select hex(a) from t1;
+hex(a)
+5B
+E880BD
+drop table t1;
+create table t1 (a varchar(255));
+select * from t1 where find_in_set('-1', a);
+a
+drop table t1;
+create table t1 (a int);
+insert into t1 values (48),(49),(50);
+select distinct char(a) from t1;
+char(a)
+0
+1
+2
+drop table t1;
+CREATE TABLE t1 (t TINYTEXT);
+INSERT INTO t1 VALUES(REPEAT('a', 100));
+CREATE TEMPORARY TABLE t2 SELECT COALESCE(t) AS bug FROM t1;
+SELECT LENGTH(bug) FROM t2;
+LENGTH(bug)
+100
+DROP TABLE t2;
+DROP TABLE t1;
+CREATE TABLE t1 (item varchar(255));
+INSERT INTO t1 VALUES ('\\');
+INSERT INTO t1 VALUES ('\\');
+INSERT INTO t1 VALUES ('Cote d\'Ivoire');
+INSERT INTO t1 VALUES ('Cote d\'Ivoire');
+SELECT item FROM t1 ORDER BY item;
+item
+Cote d'Ivoire
+Cote d'Ivoire
+\
+\
+DROP TABLE t1;
+DROP TABLE IF EXISTS t1;
+Warnings:
+Note	1051	Unknown table 't1'
+CREATE TEMPORARY TABLE t1(a VARCHAR(255), KEY(a)) ENGINE=MyISAM;
+INSERT INTO t1 VALUES('uuABCDEFGHIGKLMNOPRSTUVWXYZbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb');
+INSERT INTO t1 VALUES('uu');
+check table t1;
+Table	Op	Msg_type	Msg_text
+test.t1	check	status	OK
+INSERT INTO t1 VALUES('uU');
+check table t1;
+Table	Op	Msg_type	Msg_text
+test.t1	check	status	OK
+INSERT INTO t1 VALUES('uu');
+check table t1;
+Table	Op	Msg_type	Msg_text
+test.t1	check	status	OK
+INSERT INTO t1 VALUES('uuABC');
+check table t1;
+Table	Op	Msg_type	Msg_text
+test.t1	check	status	OK
+INSERT INTO t1 VALUES('UuABC');
+check table t1;
+Table	Op	Msg_type	Msg_text
+test.t1	check	status	OK
+INSERT INTO t1 VALUES('uuABC');
+check table t1;
+Table	Op	Msg_type	Msg_text
+test.t1	check	status	OK
+alter table t1 add b int;
+INSERT INTO t1 VALUES('uuABCDEFGHIGKLMNOPRSTUVWXYZÌbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',1);
+INSERT INTO t1 VALUES('uuABCDEFGHIGKLMNOPRSTUVWXYZÌbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',2);
+delete from t1 where b=1;
+INSERT INTO t1 VALUES('UUABCDEFGHIGKLMNOPRSTUVWXYZÌbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',1);
+check table t1;
+Table	Op	Msg_type	Msg_text
+test.t1	check	status	OK
+INSERT INTO t1 VALUES('uuABCDEFGHIGKLMNOPRSTUVWXYZÌbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',3);
+INSERT INTO t1 VALUES('uuABCDEFGHIGKLMNOPRSTUVWXYZÌbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',4);
+delete from t1 where b=3;
+INSERT INTO t1 VALUES('uUABCDEFGHIGKLMNOPRSTUVWXYZÌbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',3);
+check table t1;
+Table	Op	Msg_type	Msg_text
+test.t1	check	status	OK
+drop table t1;
+create table t1 (s1 char(5));
+insert into t1 values
+('a'),('b'),(null),('킁aaaa'),('Ã¼'),('Y');
+create index it1 on t1 (s1);
+select s1 as before_delete_general_ci from t1 where s1 like '킁aaa%';
+before_delete_general_ci
+킁aaaa
+delete from t1 where s1 = 'Y';
+select s1 as after_delete_general_ci from t1 where s1 like '킁aaa%';
+after_delete_general_ci
+킁aaaa
+drop table t1;
+create table t1 (s1 char(5) collate utf8_unicode_ci);
+insert into t1 values
+('a'),('b'),(null),('킁aaaa'),('Ã¼'),('Y');
+create index it1 on t1 (s1);
+select s1 as before_delete_unicode_ci from t1 where s1 like '킁aaa%';
+before_delete_unicode_ci
+킁aaaa
+delete from t1 where s1 = 'Y';
+select s1 as after_delete_unicode_ci from t1 where s1 like '킁aaa%';
+after_delete_unicode_ci
+킁aaaa
+drop table t1;
+create table t1 (s1 char(5) collate utf8_bin);
+insert into t1 values
+('a'),('b'),(null),('킁aaaa'),('Ã¼'),('Y');
+create index it1 on t1 (s1);
+select s1 as before_delete_bin from t1 where s1 like '킁aaa%';
+before_delete_bin
+킁aaaa
+delete from t1 where s1 = 'Y';
+select s1 as after_delete_bin from t1 where s1 like '킁aaa%';
+after_delete_bin
+킁aaaa
+drop table t1;
+CREATE TEMPORARY TABLE t1 (id int PRIMARY KEY,
+a varchar(16) collate utf8_unicode_ci NOT NULL default '',
+b int,
+f varchar(128) default 'XXX',
+INDEX (a(4))
+) ENGINE=MyISAM COLLATE=utf8_unicode_ci;
+INSERT INTO t1(id, a, b) VALUES
+(1, 'cccc', 50), (2, 'cccc', 70), (3, 'cccc', 30),
+(4, 'cccc', 30), (5, 'cccc', 20), (6, 'bbbbbb', 40),
+(7, 'dddd', 30), (8, 'aaaa', 10), (9, 'aaaa', 50),
+(10, 'eeeee', 40), (11, 'bbbbbb', 60);
+SELECT id, a, b FROM t1;
+id	a	b
+1	cccc	50
+2	cccc	70
+3	cccc	30
+4	cccc	30
+5	cccc	20
+6	bbbbbb	40
+7	dddd	30
+8	aaaa	10
+9	aaaa	50
+10	eeeee	40
+11	bbbbbb	60
+SELECT id, a, b FROM t1 WHERE a BETWEEN 'aaaa' AND 'bbbbbb';
+id	a	b
+8	aaaa	10
+9	aaaa	50
+6	bbbbbb	40
+11	bbbbbb	60
+SELECT id, a FROM t1 WHERE a='bbbbbb';
+id	a
+6	bbbbbb
+11	bbbbbb
+SELECT id, a FROM t1 WHERE a='bbbbbb' ORDER BY b;
+id	a
+6	bbbbbb
+11	bbbbbb
+DROP TABLE t1;
+CREATE TEMPORARY TABLE t1 (
+a CHAR(13) DEFAULT '',
+INDEX(a)
+) ENGINE=MyISAM COLLATE=utf8_general_ci;
+INSERT INTO t1 VALUES 
+('KÃli KÃli 2-4'), ('KÃli KÃli 2-4'),
+('KÃli KÃli 2+4'), ('KÃli KÃli 2+4'),
+('KÃli KÃli 2-6'), ('KÃli KÃli 2-6');
+CREATE TABLE t2 SELECT * FROM t1;
+INSERT INTO t1 SELECT * FROM t2;
+DROP TABLE t2;
+SELECT a FROM t1 WHERE a LIKE 'KÃli KÃli 2+4';
+a
+KÃli KÃli 2+4
+KÃli KÃli 2+4
+KÃli KÃli 2+4
+KÃli KÃli 2+4
+EXPLAIN SELECT a FROM t1 WHERE a LIKE 'KÃli KÃli 2+4';
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t1	range	a	a	55	NULL	4	Using where; Using index
+EXPLAIN SELECT a FROM t1 WHERE a = 'KÃli KÃli 2+4';
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t1	ref	a	a	55	const	4	Using where; Using index
+DROP TABLE t1;
+CREATE TEMPORARY TABLE t1 (
+a char(255) DEFAULT '', 
+KEY(a(10))
+) ENGINE=MyISAM COLLATE=utf8_general_ci;
+INSERT INTO t1 VALUES ('KÃli KÃli 2-4');
+SELECT * FROM t1 WHERE a LIKE 'KÃli KÃli 2%';
+a
+KÃli KÃli 2-4
+INSERT INTO t1 VALUES ('KÃli KÃli 2-4');
+SELECT * FROM t1 WHERE a LIKE 'KÃli KÃli 2%';
+a
+KÃli KÃli 2-4
+KÃli KÃli 2-4
+DROP TABLE t1;
+CREATE TEMPORARY TABLE t1 (
+a char(255) DEFAULT ''
+) ENGINE=MyISAM COLLATE=utf8_general_ci;
+INSERT INTO t1 VALUES ('KÃli KÃli 2-4');
+INSERT INTO t1 VALUES ('KÃli KÃli 2-4');
+SELECT * FROM t1 WHERE a LIKE 'KÃli KÃli 2%';
+a
+KÃli KÃli 2-4
+KÃli KÃli 2-4
+ALTER TABLE t1 ADD KEY (a(10));
+SELECT * FROM t1 WHERE a LIKE 'KÃli KÃli 2%';
+a
+KÃli KÃli 2-4
+KÃli KÃli 2-4
+DROP TABLE t1;
+CREATE TEMPORARY TABLE t1 (
+id int NOT NULL default '0',
+tid int NOT NULL default '0',
+val text NOT NULL,
+INDEX idx(tid, val(10))
+) ENGINE=MyISAM;
+INSERT INTO t1 VALUES
+(40988,72,'VOLNÝ ADSL'),(41009,72,'VOLNÝ ADSL'),
+(41032,72,'VOLNÝ ADSL'),(41038,72,'VOLNÝ ADSL'),
+(41063,72,'VOLNÝ ADSL'),(41537,72,'VOLNÝ ADSL Office'),
+(42141,72,'VOLNÝ ADSL'),(42565,72,'VOLNÝ ADSL Combi'),
+(42749,72,'VOLNÝ ADSL'),(44205,72,'VOLNÝ ADSL');
+SELECT * FROM t1 WHERE tid=72 and val LIKE 'VOLNY ADSL';
+id	tid	val
+40988	72	VOLNÝ ADSL
+41009	72	VOLNÝ ADSL
+41032	72	VOLNÝ ADSL
+41038	72	VOLNÝ ADSL
+41063	72	VOLNÝ ADSL
+42141	72	VOLNÝ ADSL
+42749	72	VOLNÝ ADSL
+44205	72	VOLNÝ ADSL
+SELECT * FROM t1 WHERE tid=72 and val LIKE 'VOLNÝ ADSL';
+id	tid	val
+40988	72	VOLNÝ ADSL
+41009	72	VOLNÝ ADSL
+41032	72	VOLNÝ ADSL
+41038	72	VOLNÝ ADSL
+41063	72	VOLNÝ ADSL
+42141	72	VOLNÝ ADSL
+42749	72	VOLNÝ ADSL
+44205	72	VOLNÝ ADSL
+SELECT * FROM t1 WHERE tid=72 and val LIKE '%VOLNÝ ADSL';
+id	tid	val
+40988	72	VOLNÝ ADSL
+41009	72	VOLNÝ ADSL
+41032	72	VOLNÝ ADSL
+41038	72	VOLNÝ ADSL
+41063	72	VOLNÝ ADSL
+42141	72	VOLNÝ ADSL
+42749	72	VOLNÝ ADSL
+44205	72	VOLNÝ ADSL
+ALTER TABLE t1 DROP KEY idx;
+ALTER TABLE t1 ADD KEY idx (tid,val(11));
+SELECT * FROM t1 WHERE tid=72 and val LIKE 'VOLNÝ ADSL';
+id	tid	val
+40988	72	VOLNÝ ADSL
+41009	72	VOLNÝ ADSL
+41032	72	VOLNÝ ADSL
+41038	72	VOLNÝ ADSL
+41063	72	VOLNÝ ADSL
+42141	72	VOLNÝ ADSL
+42749	72	VOLNÝ ADSL
+44205	72	VOLNÝ ADSL
+DROP TABLE t1;
+create table t1(a char(200) collate utf8_unicode_ci NOT NULL default '')
+collate=utf8_unicode_ci;
+insert into t1 values (unhex('65')), (unhex('C3A9')), (unhex('65'));
+explain select distinct a from t1;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	3	Using temporary
+select distinct a from t1;
+a
+e
+explain select a from t1 group by a;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	3	Using temporary; Using filesort
+select a from t1 group by a;
+a
+e
+drop table t1;
+create table t1(a char(10));
+insert into t1 values ('123'), ('456');
+explain
+select substr(Z.a,-1), Z.a from t1 as Y join t1 as Z on Y.a=Z.a order by 1;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	Y	ALL	NULL	NULL	NULL	NULL	2	Using temporary; Using filesort
+1	SIMPLE	Z	ALL	NULL	NULL	NULL	NULL	2	Using where; Using join buffer
+select substr(Z.a,-1), Z.a from t1 as Y join t1 as Z on Y.a=Z.a order by 1;
+substr(Z.a,-1)	a
+3	123
+6	456
+drop table t1;
+CREATE TABLE t1(id varchar(20) NOT NULL);
+INSERT INTO t1 VALUES ('xxx'), ('aa'), ('yyy'), ('aa');
+SELECT id FROM t1;
+id
+xxx
+aa
+yyy
+aa
+SELECT DISTINCT id FROM t1;
+id
+xxx
+aa
+yyy
+SELECT DISTINCT id FROM t1 ORDER BY id;
+id
+aa
+xxx
+yyy
+DROP TABLE t1;
+select hex(char(195));
+hex(char(195))
+C3
+select hex(char(196));
+hex(char(196))
+C4
+select hex(char(2557));
+hex(char(2557))
+09FD
+create table t1 (a char(1));
+create table t2 (a char(1));
+insert into t1 values('a'),('a'),(0xE38182),(0xE38182);
+insert into t1 values('i'),('i'),(0xE38184),(0xE38184);
+select * from t1 union distinct select * from t2;
+a
+a
+あ
+i
+い
+drop table t1,t2;
+create table t1 (a varchar(10), b int);
+insert into t1 values ('a',1);
+select concat(a, if(b>10, 'x' 'x', 'y' 'y')) from t1;
+concat(a, if(b>10, 'x' 'x', 'y' 'y'))
+ayy
+select concat(a, if(b>10, 'x' 'Ã¦', 'y' '킁')) from t1;
+concat(a, if(b>10, 'x' 'Ã¦', 'y' '킁'))
+ay킁
+drop table t1;
+CREATE TABLE t1 (
+colA int NOT NULL,
+colB varchar(255) NOT NULL,
+PRIMARY KEY  (colA)
+) ENGINE=InnoDB;
+INSERT INTO t1 (colA, colB) VALUES (1, 'foo'), (2, 'foo bar');
+CREATE TABLE t2 (
+colA int NOT NULL,
+colB varchar(255) NOT NULL,
+KEY bad  (colA,colB(3))
+) ENGINE=InnoDB;
+INSERT INTO t2 (colA, colB) VALUES (1, 'foo'),(2, 'foo bar');
+SELECT * FROM t1 JOIN t2 ON t1.colA=t2.colA AND t1.colB=t2.colB
+WHERE t1.colA < 3;
+colA	colB	colA	colB
+1	foo	1	foo
+2	foo bar	2	foo bar
+DROP TABLE t1, t2;
+SELECT '½1234567890' UNION SELECT '1';
+½1234567890
+½1234567890
+1
+SELECT '½1234567890' UNION SELECT 1;
+½1234567890
+½1234567890
+1
+SELECT '1' UNION SELECT '킱1234567890';
+1
+1
+킱
+SELECT 1 UNION SELECT '킱1234567890';
+1
+1
+킱1
+CREATE TABLE t1 (c VARCHAR(11));
+CREATE TABLE t2 (b CHAR(1), i INT);
+INSERT INTO t1 (c) VALUES ('킱1234567890');
+INSERT INTO t2 (b, i) VALUES ('1', 1);
+SELECT c FROM t1 UNION SELECT b FROM t2;
+c
+킱1234567890
+1
+SELECT c FROM t1 UNION SELECT i FROM t2;
+c
+킱1234567890
+1
+SELECT b FROM t2 UNION SELECT c FROM t1;
+b
+1
+킱1234567890
+SELECT i FROM t2 UNION SELECT c FROM t1;
+i
+1
+킱1234567890
+DROP TABLE t1, t2;
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (
+predicted_order int NOT NULL,
+utf8_encoding VARCHAR(10) NOT NULL
+);
+INSERT INTO t1 VALUES (19, x'E0B696'), (30, x'E0B69AE0B798'), (61, x'E0B6AF'), (93, x'E0B799'), (52, x'E0B6A6'), (73, x'E0B6BBE0B78AE2808D'), (3, x'E0B686'), (56, x'E0B6AA'), (55, x'E0B6A9'), (70, x'E0B6B9'), (94, x'E0B79A'), (80, x'E0B785'), (25, x'E0B69AE0B791'), (48, x'E0B6A2'), (13, x'E0B690'), (86, x'E0B793'), (91, x'E0B79F'), (81, x'E0B786'), (79, x'E0B784'), (14, x'E0B691'), (99, x'E0B78A'), (8, x'E0B68B'), (68, x'E0B6B7'), (22, x'E0B69A'), (16, x'E0B693'), (33, x'E0B69AE0B7B3'), (38, x'E0B69AE0B79D'), (21, x'E0B683'), (11, x'E0B68E'), (77, x'E0B782'), (40, x'E0B69AE0B78A'), (101, x'E0B78AE2808DE0B6BB'), (35, x'E0B69AE0B79A'), (1, x'E0B7B4'), (9, x'E0B68C'), (96, x'E0B79C'), (6, x'E0B689'), (95, x'E0B79B'), (88, x'E0B796'), (64, x'E0B6B3'), (26, x'E0B69AE0B792'), (82, x'E0B78F'), (28, x'E0B69AE0B794'), (39, x'E0B69AE0B79E'), (97, x'E0B79D'), (2, x'E0B685'), (75, x'E0B780'), (34, x'E0B69AE0B799'), (69, x'E0B6B8'), (83, x'E0B790'), (18, x'E0B695'), (90, x'E0B7B2'), (17, x'E0B694'), (72, x'E0B6BB'), (66, x'E0B6B5'), (59, x'E0B6AD'), (44, x'E0B69E'), (15, x'E0B692'), (23, x'E0B69AE0B78F'), (65, x'E0B6B4'), (42, x'E0B69C'), (63, x'E0B6B1'), (85, x'E0B792'), (47, x'E0B6A1'), (49, x'E0B6A3'), (92, x'E0B7B3'), (78, x'E0B783'), (36, x'E0B69AE0B79B'), (4, x'E0B687'), (24, x'E0B69AE0B790'), (87, x'E0B794'), (37, x'E0B69AE0B79C'), (32, x'E0B69AE0B79F'), (29, x'E0B69AE0B796'), (43, x'E0B69D'), (62, x'E0B6B0'), (100, x'E0B78AE2808DE0B6BA'), (60, x'E0B6AE'), (45, x'E0B69F'), (12, x'E0B68F'), (46, x'E0B6A0'), (50, x'E0B6A5'), (51, x'E0B6A4'), (5, x'E0B688'), (76, x'E0B781'), (89, x'E0B798'), (74, x'E0B6BD'), (10, x'E0B68D'), (57, x'E0B6AB'), (71, x'E0B6BA'), (58, x'E0B6AC'), (27, x'E0B69AE0B793'), (54, x'E0B6A8'), (84, x'E0B791'), (31, x'E0B69AE0B7B2'), (98, x'E0B79E'), (53, x'E0B6A7'), (41, x'E0B69B'), (67, x'E0B6B6'), (7, x'E0B68A'), (20, x'E0B682');
+SELECT predicted_order, hex(utf8_encoding) FROM t1 ORDER BY utf8_encoding COLLATE utf8_sinhala_ci;
+predicted_order	hex(utf8_encoding)
+1	E0B7B4
+2	E0B685
+3	E0B686
+4	E0B687
+5	E0B688
+6	E0B689
+7	E0B68A
+8	E0B68B
+9	E0B68C
+10	E0B68D
+11	E0B68E
+12	E0B68F
+13	E0B690
+14	E0B691
+15	E0B692
+16	E0B693
+17	E0B694
+18	E0B695
+19	E0B696
+20	E0B682
+21	E0B683
+22	E0B69A
+23	E0B69AE0B78F
+24	E0B69AE0B790
+25	E0B69AE0B791
+26	E0B69AE0B792
+27	E0B69AE0B793
+28	E0B69AE0B794
+29	E0B69AE0B796
+30	E0B69AE0B798
+31	E0B69AE0B7B2
+32	E0B69AE0B79F
+33	E0B69AE0B7B3
+34	E0B69AE0B799
+35	E0B69AE0B79A
+36	E0B69AE0B79B
+37	E0B69AE0B79C
+38	E0B69AE0B79D
+39	E0B69AE0B79E
+40	E0B69AE0B78A
+41	E0B69B
+42	E0B69C
+43	E0B69D
+44	E0B69E
+45	E0B69F
+46	E0B6A0
+47	E0B6A1
+48	E0B6A2
+49	E0B6A3
+50	E0B6A5
+51	E0B6A4
+52	E0B6A6
+53	E0B6A7
+54	E0B6A8
+55	E0B6A9
+56	E0B6AA
+57	E0B6AB
+58	E0B6AC
+59	E0B6AD
+60	E0B6AE
+61	E0B6AF
+62	E0B6B0
+63	E0B6B1
+64	E0B6B3
+65	E0B6B4
+66	E0B6B5
+67	E0B6B6
+68	E0B6B7
+69	E0B6B8
+70	E0B6B9
+71	E0B6BA
+72	E0B6BB
+73	E0B6BBE0B78AE2808D
+74	E0B6BD
+75	E0B780
+76	E0B781
+77	E0B782
+78	E0B783
+79	E0B784
+80	E0B785
+81	E0B786
+82	E0B78F
+83	E0B790
+84	E0B791
+85	E0B792
+86	E0B793
+87	E0B794
+88	E0B796
+89	E0B798
+90	E0B7B2
+91	E0B79F
+92	E0B7B3
+93	E0B799
+94	E0B79A
+95	E0B79B
+96	E0B79C
+97	E0B79D
+98	E0B79E
+99	E0B78A
+100	E0B78AE2808DE0B6BA
+101	E0B78AE2808DE0B6BB
+DROP TABLE t1;
+End of 5.1 tests
+set max_sort_length=5;
+select @@max_sort_length;
+@@max_sort_length
+5
+create table t1 (a varchar(128) collate utf8_general_ci);
+insert into t1 values ('a'),('b'),('c');
+select * from t1 order by a;
+a
+a
+b
+c
+alter table t1 modify a varchar(128) collate utf8_bin;
+select * from t1 order by a;
+a
+a
+b
+c
+drop table t1;
+set max_sort_length=default;
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (
+predicted_order int NOT NULL,
+utf8_encoding VARCHAR(10) NOT NULL
+);
+INSERT INTO t1 VALUES (19, x'E0B696'), (30, x'E0B69AE0B798'), (61, x'E0B6AF'), (93, x'E0B799'), (52, x'E0B6A6'), (73, x'E0B6BBE0B78AE2808D'), (3, x'E0B686'), (56, x'E0B6AA'), (55, x'E0B6A9'), (70, x'E0B6B9'), (94, x'E0B79A'), (80, x'E0B785'), (25, x'E0B69AE0B791'), (48, x'E0B6A2'), (13, x'E0B690'), (86, x'E0B793'), (91, x'E0B79F'), (81, x'E0B786'), (79, x'E0B784'), (14, x'E0B691'), (99, x'E0B78A'), (8, x'E0B68B'), (68, x'E0B6B7'), (22, x'E0B69A'), (16, x'E0B693'), (33, x'E0B69AE0B7B3'), (38, x'E0B69AE0B79D'), (21, x'E0B683'), (11, x'E0B68E'), (77, x'E0B782'), (40, x'E0B69AE0B78A'), (101, x'E0B78AE2808DE0B6BB'), (35, x'E0B69AE0B79A'), (1, x'E0B7B4'), (9, x'E0B68C'), (96, x'E0B79C'), (6, x'E0B689'), (95, x'E0B79B'), (88, x'E0B796'), (64, x'E0B6B3'), (26, x'E0B69AE0B792'), (82, x'E0B78F'), (28, x'E0B69AE0B794'), (39, x'E0B69AE0B79E'), (97, x'E0B79D'), (2, x'E0B685'), (75, x'E0B780'), (34, x'E0B69AE0B799'), (69, x'E0B6B8'), (83, x'E0B790'), (18, x'E0B695'), (90, x'E0B7B2'), (17, x'E0B694'), (72, x'E0B6BB'), (66, x'E0B6B5'), (59, x'E0B6AD'), (44, x'E0B69E'), (15, x'E0B692'), (23, x'E0B69AE0B78F'), (65, x'E0B6B4'), (42, x'E0B69C'), (63, x'E0B6B1'), (85, x'E0B792'), (47, x'E0B6A1'), (49, x'E0B6A3'), (92, x'E0B7B3'), (78, x'E0B783'), (36, x'E0B69AE0B79B'), (4, x'E0B687'), (24, x'E0B69AE0B790'), (87, x'E0B794'), (37, x'E0B69AE0B79C'), (32, x'E0B69AE0B79F'), (29, x'E0B69AE0B796'), (43, x'E0B69D'), (62, x'E0B6B0'), (100, x'E0B78AE2808DE0B6BA'), (60, x'E0B6AE'), (45, x'E0B69F'), (12, x'E0B68F'), (46, x'E0B6A0'), (50, x'E0B6A5'), (51, x'E0B6A4'), (5, x'E0B688'), (76, x'E0B781'), (89, x'E0B798'), (74, x'E0B6BD'), (10, x'E0B68D'), (57, x'E0B6AB'), (71, x'E0B6BA'), (58, x'E0B6AC'), (27, x'E0B69AE0B793'), (54, x'E0B6A8'), (84, x'E0B791'), (31, x'E0B69AE0B7B2'), (98, x'E0B79E'), (53, x'E0B6A7'), (41, x'E0B69B'), (67, x'E0B6B6'), (7, x'E0B68A'), (20, x'E0B682');
+SELECT predicted_order, hex(utf8_encoding) FROM t1 ORDER BY utf8_encoding COLLATE utf8_sinhala_ci;
+predicted_order	hex(utf8_encoding)
+1	E0B7B4
+2	E0B685
+3	E0B686
+4	E0B687
+5	E0B688
+6	E0B689
+7	E0B68A
+8	E0B68B
+9	E0B68C
+10	E0B68D
+11	E0B68E
+12	E0B68F
+13	E0B690
+14	E0B691
+15	E0B692
+16	E0B693
+17	E0B694
+18	E0B695
+19	E0B696
+20	E0B682
+21	E0B683
+22	E0B69A
+23	E0B69AE0B78F
+24	E0B69AE0B790
+25	E0B69AE0B791
+26	E0B69AE0B792
+27	E0B69AE0B793
+28	E0B69AE0B794
+29	E0B69AE0B796
+30	E0B69AE0B798
+31	E0B69AE0B7B2
+32	E0B69AE0B79F
+33	E0B69AE0B7B3
+34	E0B69AE0B799
+35	E0B69AE0B79A
+36	E0B69AE0B79B
+37	E0B69AE0B79C
+38	E0B69AE0B79D
+39	E0B69AE0B79E
+40	E0B69AE0B78A
+41	E0B69B
+42	E0B69C
+43	E0B69D
+44	E0B69E
+45	E0B69F
+46	E0B6A0
+47	E0B6A1
+48	E0B6A2
+49	E0B6A3
+50	E0B6A5
+51	E0B6A4
+52	E0B6A6
+53	E0B6A7
+54	E0B6A8
+55	E0B6A9
+56	E0B6AA
+57	E0B6AB
+58	E0B6AC
+59	E0B6AD
+60	E0B6AE
+61	E0B6AF
+62	E0B6B0
+63	E0B6B1
+64	E0B6B3
+65	E0B6B4
+66	E0B6B5
+67	E0B6B6
+68	E0B6B7
+69	E0B6B8
+70	E0B6B9
+71	E0B6BA
+72	E0B6BB
+73	E0B6BBE0B78AE2808D
+74	E0B6BD
+75	E0B780
+76	E0B781
+77	E0B782
+78	E0B783
+79	E0B784
+80	E0B785
+81	E0B786
+82	E0B78F
+83	E0B790
+84	E0B791
+85	E0B792
+86	E0B793
+87	E0B794
+88	E0B796
+89	E0B798
+90	E0B7B2
+91	E0B79F
+92	E0B7B3
+93	E0B799
+94	E0B79A
+95	E0B79B
+96	E0B79C
+97	E0B79D
+98	E0B79E
+99	E0B78A
+100	E0B78AE2808DE0B6BA
+101	E0B78AE2808DE0B6BB
+DROP TABLE t1;
+select CAST('☂ ' as char(1));
+CAST('☂ ' as char(1))
+☂
+Warnings:
+Warning	1292	Truncated incorrect CHAR(1) value: '☂ '
+show warnings;
+Level	Code	Message
+Warning	1292	Truncated incorrect CHAR(1) value: '☂ '
+SELECT "☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃";
+☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃
+☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃

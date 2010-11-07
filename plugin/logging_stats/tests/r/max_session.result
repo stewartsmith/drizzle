@@ -1,0 +1,70 @@
+DROP TABLE IF EXISTS b;
+CREATE TABLE b (i int,  PRIMARY KEY (i));
+INSERT INTO b VALUES (1);
+INSERT INTO b VALUES (2);
+INSERT INTO b VALUES (3);
+INSERT INTO b VALUES (4);
+INSERT INTO b VALUES (5);
+INSERT INTO b VALUES (6);
+INSERT INTO b VALUES (7);
+INSERT INTO b VALUES (8);
+INSERT INTO b VALUES (9);
+INSERT INTO b VALUES (10);
+INSERT INTO b VALUES (11);
+INSERT INTO b VALUES (12);
+INSERT INTO b VALUES (13);
+INSERT INTO b VALUES (14);
+SELECT USER, COUNT_SELECT, COUNT_DELETE, COUNT_UPDATE, COUNT_INSERT, COUNT_ROLLBACK, COUNT_COMMIT, COUNT_CREATE, COUNT_ALTER, COUNT_DROP, COUNT_ADMIN FROM DATA_DICTIONARY.CURRENT_SQL_COMMANDS;
+USER	COUNT_SELECT	COUNT_DELETE	COUNT_UPDATE	COUNT_INSERT	COUNT_ROLLBACK	COUNT_COMMIT	COUNT_CREATE	COUNT_ALTER	COUNT_DROP	COUNT_ADMIN
+drizzle	0	0	0	1	0	0	0	0	0	0
+drizzle_test	0	0	0	1	0	0	0	0	0	0
+root	0	0	0	0	0	0	0	0	1	0
+drizzle	0	0	0	1	0	0	0	0	0	0
+root	0	0	0	1	0	0	1	0	0	0
+drizzle	0	0	0	1	0	0	0	0	0	0
+drizzle	0	0	0	1	0	0	0	0	0	0
+drizzle	0	0	0	1	0	0	0	0	0	0
+drizzle	0	0	0	1	0	0	0	0	0	0
+DROP TABLE b;
+show global status;
+Variable_name	Value
+Aborted_clients	#
+Aborted_connects	#
+Bytes_received	#
+Bytes_sent	#
+Connections	#
+Created_tmp_disk_tables	#
+Created_tmp_tables	#
+Flush_commands	#
+Handler_commit	#
+Handler_delete	#
+Handler_prepare	#
+Handler_read_first	#
+Handler_read_key	#
+Handler_read_next	#
+Handler_read_prev	#
+Handler_read_rnd	#
+Handler_read_rnd_next	#
+Handler_rollback	#
+Handler_savepoint	#
+Handler_savepoint_rollback	#
+Handler_update	#
+Handler_write	#
+Last_query_cost	#
+Max_used_connections	#
+Questions	#
+Select_full_join	#
+Select_full_range_join	#
+Select_range	#
+Select_range_check	#
+Select_scan	#
+Sessions_connected	#
+Slow_queries	#
+Sort_merge_passes	#
+Sort_range	#
+Sort_rows	#
+Sort_scan	#
+Table_locks_immediate	#
+Table_locks_waited	#
+Uptime	#
+Uptime_since_flush_status	#

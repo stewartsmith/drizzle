@@ -23,6 +23,9 @@
 #ifndef DRIZZLED_LEX_SYMBOL_H
 #define DRIZZLED_LEX_SYMBOL_H
 
+namespace drizzled
+{
+
 typedef struct st_sym_group {
   const char *name;
   const char *needed_define;
@@ -45,5 +48,6 @@ extern SYM_GROUP sym_group_common;
 extern SYM_GROUP sym_group_geom;
 extern SYM_GROUP sym_group_rtree;
 
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_LEX_SYMBOL_H */

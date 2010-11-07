@@ -1,0 +1,39 @@
+# Drizzle's dictionary for status/variables
+
+use data_dictionary;
+
+show create table GLOBAL_STATUS ;
+show create table GLOBAL_VARIABLES ;
+
+show create table SESSION_STATUS;
+show create table SESSION_VARIABLES;
+
+--replace_column 1 #
+SELECT count(*) FROM data_dictionary.GLOBAL_STATUS;
+
+--replace_column 1 #
+SELECT count(*) FROM data_dictionary.GLOBAL_VARIABLES;
+
+--replace_column 1 #
+SELECT count(*) FROM data_dictionary.SESSION_STATUS;
+
+--replace_column 1 #
+SELECT count(*) FROM data_dictionary.SESSION_VARIABLES;
+
+# Slap tests for concurrency
+CREATE SCHEMA drizzleslap;
+
+#--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.SESSION_STATEMENTS" --delimiter=";"
+#--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.SESSION_STATUS" --delimiter=";"
+#--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.global_statements" --delimiter=";"
+#--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.global_status" --delimiter=";"
+#--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.global_variables" --delimiter=";"
+#
+#--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="SELECT a.VARIABLE_NAME FROM data_dictionary.GLOBAL_STATEMENTS as a, data_dictionary.GLOBAL_STATEMENTS as b ORDER BY VARIABLE_NAME LIMIT 100" --delimiter=";"
+#--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="SELECT a.VARIABLE_NAME FROM data_dictionary.GLOBAL_STATUS as a, data_dictionary.GLOBAL_STATUS as b ORDER BY VARIABLE_NAME LIMIT 100" --delimiter=";"
+#--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="SELECT a.VARIABLE_NAME FROM data_dictionary.GLOBAL_VARIABLES as a, data_dictionary.GLOBAL_VARIABLES as b LIMIT 100" --delimiter=";"
+#--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="SELECT a.VARIABLE_NAME FROM data_dictionary.SESSION_STATEMENTS as a, data_dictionary.SESSION_STATEMENTS as b ORDER BY VARIABLE_NAME LIMIT 100" --delimiter=";"
+#--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="SELECT a.VARIABLE_NAME FROM data_dictionary.SESSION_STATUS as a, data_dictionary.SESSION_STATUS as b ORDER BY VARIABLE_NAME LIMIT 100" --delimiter=";"
+#--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="SELECT a.VARIABLE_NAME FROM data_dictionary.SESSION_VARIABLES as a, data_dictionary.SESSION_VARIABLES as b ORDER BY VARIABLE_NAME LIMIT 100" --delimiter=";"
+
+DROP SCHEMA drizzleslap;

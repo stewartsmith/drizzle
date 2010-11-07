@@ -11,8 +11,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -120,10 +120,8 @@ trx_create(
 
 	trx->mysql_thd = NULL;
 	trx->mysql_query_str = NULL;
-	trx->active_trans = 0;
 	trx->duplicates = 0;
 
-	trx->n_mysql_tables_in_use = 0;
 	trx->mysql_n_tables_locked = 0;
 
 	trx->mysql_log_file_name = NULL;
@@ -271,15 +269,12 @@ trx_free(
 		srv_conc_force_exit_innodb(trx);
 	}
 
-	if (trx->n_mysql_tables_in_use != 0
-	    || trx->mysql_n_tables_locked != 0) {
+	if (trx->mysql_n_tables_locked != 0) {
 
 		ut_print_timestamp(stderr);
 		fprintf(stderr,
 			"  InnoDB: Error: MySQL is freeing a thd\n"
-			"InnoDB: though trx->n_mysql_tables_in_use is %lu\n"
 			"InnoDB: and trx->mysql_n_tables_locked is %lu.\n",
-			(ulong)trx->n_mysql_tables_in_use,
 			(ulong)trx->mysql_n_tables_locked);
 
 		trx_print(stderr, trx, 600);
@@ -803,7 +798,7 @@ trx_commit_off_kernel(
 		in exactly the same order as commit lsn's, if the transactions
 		have different rollback segments. To get exactly the same
 		order we should hold the kernel mutex up to this point,
-		adding to to the contention of the kernel mutex. However, if
+		adding to the contention of the kernel mutex. However, if
 		a transaction T2 is able to see modifications made by
 		a transaction T1, T2 will always get a bigger transaction
 		number and a bigger commit lsn than T1. */
@@ -950,7 +945,7 @@ trx_commit_off_kernel(
 /****************************************************************//**
 Cleans up a transaction at database startup. The cleanup is needed if
 the transaction already got to the middle of a commit when the database
-crashed, andf we cannot roll it back. */
+crashed, and we cannot roll it back. */
 UNIV_INTERN
 void
 trx_cleanup_at_db_startup(
@@ -1697,9 +1692,8 @@ trx_print(
 
 	putc('\n', f);
 
-	if (trx->n_mysql_tables_in_use > 0 || trx->mysql_n_tables_locked > 0) {
-		fprintf(f, "mysql tables in use %lu, locked %lu\n",
-			(ulong) trx->n_mysql_tables_in_use,
+	if (trx->mysql_n_tables_locked > 0) {
+		fprintf(f, "mysql tables in locked %lu\n",
 			(ulong) trx->mysql_n_tables_locked);
 	}
 

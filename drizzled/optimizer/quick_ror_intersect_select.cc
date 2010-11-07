@@ -28,7 +28,9 @@
 #include <vector>
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 
 optimizer::QuickRorIntersectSelect::QuickRorIntersectSelect(Session *session_param,
@@ -52,8 +54,15 @@ optimizer::QuickRorIntersectSelect::QuickRorIntersectSelect(Session *session_par
   {
     memset(&alloc, 0, sizeof(memory::Root));
   }
-  last_rowid= (unsigned char*) alloc_root(parent_alloc ? parent_alloc : &alloc,
-                                          head->cursor->ref_length);
+
+  if (parent_alloc)
+  {
+    last_rowid= (unsigned char*) parent_alloc->alloc_root(head->cursor->ref_length);
+  }
+  else
+  {
+    last_rowid= (unsigned char*) alloc.alloc_root(head->cursor->ref_length);
+  }
 }
 
 
@@ -64,10 +73,10 @@ optimizer::QuickRorIntersectSelect::~QuickRorIntersectSelect()
            DeletePtr());
   quick_selects.clear();
   delete cpk_quick;
-  free_root(&alloc,MYF(0));
+  alloc.free_root(MYF(0));
   if (need_to_fetch_row && head->cursor->inited != Cursor::NONE)
   {
-    head->cursor->ha_rnd_end();
+    head->cursor->endTableScan();
   }
   return;
 }
@@ -110,7 +119,7 @@ int optimizer::QuickRorIntersectSelect::init_ror_merged_scan(bool reuse_handler)
     ++it;
   }
 
-  if (need_to_fetch_row && head->cursor->ha_rnd_init(1))
+  if (need_to_fetch_row && head->cursor->startTableScan(1))
   {
     return 0;
   }
@@ -143,7 +152,7 @@ optimizer::QuickRorIntersectSelect::push_quick_back(optimizer::QuickRangeSelect 
 }
 
 
-bool optimizer::QuickRorIntersectSelect::is_keys_used(const MyBitmap *fields)
+bool optimizer::QuickRorIntersectSelect::is_keys_used(const boost::dynamic_bitset<>& fields)
 {
   for (vector<optimizer::QuickRangeSelect *>::iterator it= quick_selects.begin();
        it != quick_selects.end();
@@ -245,7 +254,7 @@ void optimizer::QuickRorIntersectSelect::add_info_string(String *str)
        it != quick_selects.end();
        ++it)
   {
-    KEY *key_info= head->key_info + (*it)->index;
+    KeyInfo *key_info= head->key_info + (*it)->index;
     if (! first)
       str->append(',');
     else
@@ -254,7 +263,7 @@ void optimizer::QuickRorIntersectSelect::add_info_string(String *str)
   }
   if (cpk_quick)
   {
-    KEY *key_info= head->key_info + cpk_quick->index;
+    KeyInfo *key_info= head->key_info + cpk_quick->index;
     str->append(',');
     str->append(key_info->name);
   }
@@ -272,7 +281,7 @@ void optimizer::QuickRorIntersectSelect::add_keys_and_lengths(String *key_names,
        it != quick_selects.end();
        ++it)
   {
-    KEY *key_info= head->key_info + (*it)->index;
+    KeyInfo *key_info= head->key_info + (*it)->index;
     if (first)
     {
       first= false;
@@ -283,18 +292,19 @@ void optimizer::QuickRorIntersectSelect::add_keys_and_lengths(String *key_names,
       used_lengths->append(',');
     }
     key_names->append(key_info->name);
-    length= int64_t2str((*it)->max_used_key_length, buf, 10) - buf;
+    length= internal::int64_t2str((*it)->max_used_key_length, buf, 10) - buf;
     used_lengths->append(buf, length);
   }
 
   if (cpk_quick)
   {
-    KEY *key_info= head->key_info + cpk_quick->index;
+    KeyInfo *key_info= head->key_info + cpk_quick->index;
     key_names->append(',');
     key_names->append(key_info->name);
-    length= int64_t2str(cpk_quick->max_used_key_length, buf, 10) - buf;
+    length= internal::int64_t2str(cpk_quick->max_used_key_length, buf, 10) - buf;
     used_lengths->append(',');
     used_lengths->append(buf, length);
   }
 }
 
+} /* namespace drizzled */

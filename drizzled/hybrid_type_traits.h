@@ -21,6 +21,10 @@
 #define DRIZZLED_HYBRID_TYPE_TRAITS_H
 
 #include "drizzled/common.h"
+#include "drizzled/item_result.h"
+
+namespace drizzled
+{
 
 class Item;
 class Field;
@@ -56,5 +60,7 @@ public:
   virtual ~Hybrid_type_traits();
 
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_HYBRID_TYPE_TRAITS_H */

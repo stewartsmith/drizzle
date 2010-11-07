@@ -22,9 +22,24 @@
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
 #include PCRE_HEADER
+#include <limits.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <string>
+#include <boost/format.hpp>
+#include <boost/program_options.hpp>
+#include <drizzled/module/option_map.h>
+#include <cstdio>
+#include <cerrno>
 
-/* TODO make this dynamic as needed */
-static const int MAX_MSG_LEN= 32*1024;
+namespace po= boost::program_options;
+using namespace drizzled;
+using namespace std;
+
+#define ESCAPE_CHAR      '\\'
+#define SEPARATOR_CHAR   ','
 
 static bool sysvar_logging_query_enable= false;
 static char* sysvar_logging_query_filename= NULL;
@@ -38,7 +53,6 @@ static unsigned long sysvar_logging_query_threshold_big_examined= 0;
    until the Session has a good utime "now" we can use
    will have to use this instead */
 
-#include <sys/time.h>
 static uint64_t get_microtime()
 {
 #if defined(HAVE_GETHRTIME)
@@ -71,97 +85,78 @@ static uint64_t get_microtime()
 
 */
 
-static unsigned char *quotify (const unsigned char *src, size_t srclen,
-                               unsigned char *dst, size_t dstlen)
+static void quotify(const string &src, string &dst)
 {
   static const char hexit[]= { '0', '1', '2', '3', '4', '5', '6', '7',
 			  '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
-  size_t dst_ndx;  /* ndx down the dst */
-  size_t src_ndx;  /* ndx down the src */
-
-  assert(dst);
-  assert(dstlen > 0);
-
-  for (dst_ndx= 0,src_ndx= 0; src_ndx < srclen; src_ndx++)
+  string::const_iterator src_iter;
+  
+  for (src_iter= src.begin(); src_iter < src.end(); ++src_iter)
   {
-
-    /* Worst case, need 5 dst bytes for the next src byte.
-       backslash x hexit hexit null
-       so if not enough room, just terminate the string and return
-    */
-    if ((dstlen - dst_ndx) < 5)
+    if (static_cast<unsigned char>(*src_iter) > 0x7f)
     {
-      dst[dst_ndx]= (unsigned char)0x00;
-      return dst;
+      dst.push_back(*src_iter);
     }
-
-    if (src[src_ndx] > 0x7f)
+    else if (*src_iter == 0x00)  // null
     {
-      // pass thru high bit characters, they are non-ASCII UTF8 Unicode
-      dst[dst_ndx++]= src[src_ndx];
+      dst.push_back(ESCAPE_CHAR); dst.push_back('0');
     }
-    else if (src[src_ndx] == 0x00)  // null
+    else if (*src_iter == 0x07)  // bell
     {
-      dst[dst_ndx++]= 0x5C; dst[dst_ndx++]= (unsigned char) '0';
+      dst.push_back(ESCAPE_CHAR); dst.push_back('a');
     }
-    else if (src[src_ndx] == 0x07)  // bell
+    else if (*src_iter == 0x08)  // backspace
     {
-      dst[dst_ndx++]= 0x5C; dst[dst_ndx++]= (unsigned char) 'a';
+      dst.push_back(ESCAPE_CHAR); dst.push_back('b');
     }
-    else if (src[src_ndx] == 0x08)  // backspace
+    else if (*src_iter == 0x09)  // horiz tab
     {
-      dst[dst_ndx++]= 0x5C; dst[dst_ndx++]= (unsigned char) 'b';
+      dst.push_back(ESCAPE_CHAR); dst.push_back('t');
     }
-    else if (src[src_ndx] == 0x09)  // horiz tab
+    else if (*src_iter == 0x0a)  // line feed
     {
-      dst[dst_ndx++]= 0x5C; dst[dst_ndx++]= (unsigned char) 't';
+      dst.push_back(ESCAPE_CHAR); dst.push_back('n');
     }
-    else if (src[src_ndx] == 0x0a)  // line feed
+    else if (*src_iter == 0x0b)  // vert tab
     {
-      dst[dst_ndx++]= 0x5C; dst[dst_ndx++]= (unsigned char) 'n';
+      dst.push_back(ESCAPE_CHAR); dst.push_back('v');
     }
-    else if (src[src_ndx] == 0x0b)  // vert tab
+    else if (*src_iter == 0x0c)  // formfeed
     {
-      dst[dst_ndx++]= 0x5C; dst[dst_ndx++]= (unsigned char) 'v';
+      dst.push_back(ESCAPE_CHAR); dst.push_back('f');
     }
-    else if (src[src_ndx] == 0x0c)  // formfeed
+    else if (*src_iter == 0x0d)  // carrage return
     {
-      dst[dst_ndx++]= 0x5C; dst[dst_ndx++]= (unsigned char) 'f';
+      dst.push_back(ESCAPE_CHAR); dst.push_back('r');
     }
-    else if (src[src_ndx] == 0x0d)  // carrage return
+    else if (*src_iter == 0x1b)  // escape
     {
-      dst[dst_ndx++]= 0x5C; dst[dst_ndx++]= (unsigned char) 'r';
+      dst.push_back(ESCAPE_CHAR); dst.push_back('e');
     }
-    else if (src[src_ndx] == 0x1b)  // escape
+    else if (*src_iter == 0x22)  // quotation mark
     {
-      dst[dst_ndx++]= 0x5C; dst[dst_ndx++]= (unsigned char) 'e';
+      dst.push_back(ESCAPE_CHAR); dst.push_back(0x22);
     }
-    else if (src[src_ndx] == 0x22)  // quotation mark
+    else if (*src_iter == SEPARATOR_CHAR)
     {
-      dst[dst_ndx++]= 0x5C; dst[dst_ndx++]= 0x22;
+      dst.push_back(ESCAPE_CHAR); dst.push_back(SEPARATOR_CHAR);
     }
-    else if (src[src_ndx] == 0x2C)  // comma
+    else if (*src_iter == ESCAPE_CHAR)
     {
-      dst[dst_ndx++]= 0x5C; dst[dst_ndx++]= 0x2C;
+      dst.push_back(ESCAPE_CHAR); dst.push_back(ESCAPE_CHAR);
     }
-    else if (src[src_ndx] == 0x5C)  // backslash
+    else if ((*src_iter < 0x20) || (*src_iter == 0x7F))  // other unprintable ASCII
     {
-      dst[dst_ndx++]= 0x5C; dst[dst_ndx++]= 0x5C;
-    }
-    else if ((src[src_ndx] < 0x20) || (src[src_ndx] == 0x7F))  // other unprintable ASCII
-    {
-      dst[dst_ndx++]= 0x5C;
-      dst[dst_ndx++]= (unsigned char) 'x';
-      dst[dst_ndx++]= hexit[(src[src_ndx] >> 4) & 0x0f];
-      dst[dst_ndx++]= hexit[src[src_ndx] & 0x0f];
+      dst.push_back(ESCAPE_CHAR);
+      dst.push_back('x');
+      dst.push_back(hexit[(*src_iter >> 4) & 0x0f]);
+      dst.push_back(hexit[*src_iter & 0x0f]);
     }
     else  // everything else
     {
-      dst[dst_ndx++]= src[src_ndx];
+      dst.push_back(*src_iter);
     }
-    dst[dst_ndx]= '\0';
   }
-  return dst;
 }
 
 
@@ -171,11 +166,16 @@ class Logging_query: public drizzled::plugin::Logging
   pcre *re;
   pcre_extra *pe;
 
+  /** Format of the output string */
+  boost::format formatter;
+
 public:
 
   Logging_query()
     : drizzled::plugin::Logging("Logging_query"),
-      fd(-1), re(NULL), pe(NULL)
+      fd(-1), re(NULL), pe(NULL),
+      formatter("%1%,%2%,%3%,\"%4%\",\"%5%\",\"%6%\",%7%,%8%,"
+                "%9%,%10%,%11%,%12%,%13%,%14%,\"%15%\"\n")
   {
 
     /* if there is no destination filename, dont bother doing anything */
@@ -187,9 +187,11 @@ public:
              S_IRUSR|S_IWUSR);
     if (fd < 0)
     {
+      char errmsg[STRERROR_MAX];
+      strerror_r(errno, errmsg, sizeof(errmsg));
       errmsg_printf(ERRMSG_LVL_ERROR, _("fail open() fn=%s er=%s\n"),
                     sysvar_logging_query_filename,
-                    strerror(errno));
+                    errmsg);
       return;
     }
 
@@ -222,20 +224,9 @@ public:
     }
   }
 
-
-  virtual bool pre (Session *)
-  {
-    /* we could just not have a pre entrypoint at all,
-       and have logging_pre == NULL
-       but we have this here for the sake of being an example */
-    return false;
-  }
-
   virtual bool post (Session *session)
   {
-    char msgbuf[MAX_MSG_LEN];
-    int msgbuf_len= 0;
-    int wrv;
+    size_t wrv;
 
     assert(session != NULL);
 
@@ -269,70 +260,101 @@ public:
     if (re)
     {
       int this_pcre_rc;
-      this_pcre_rc = pcre_exec(re, pe, session->query, session->query_length, 0, 0, NULL, 0);
+      this_pcre_rc= pcre_exec(re, pe, session->query.c_str(), session->query.length(), 0, 0, NULL, 0);
       if (this_pcre_rc < 0)
         return false;
     }
 
     // buffer to quotify the query
-    unsigned char qs[255];
-  
+    string qs;
+    
+    // Since quotify() builds the quoted string incrementally, we can
+    // avoid some reallocating if we reserve some space up front.
+    qs.reserve(session->getQueryLength());
+    
+    quotify(session->getQueryString(), qs);
+    
     // to avoid trying to printf %s something that is potentially NULL
     const char *dbs= session->db.empty() ? "" : session->db.c_str();
-  
-    msgbuf_len=
-      snprintf(msgbuf, MAX_MSG_LEN,
-               "%"PRIu64",%"PRIu64",%"PRIu64",\"%.*s\",\"%s\",\"%.*s\","
-               "%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64","
-               "%"PRIu32",%"PRIu32",%"PRIu32",\"%s\"\n",
-               t_mark,
-               session->thread_id,
-               session->getQueryId(),
-               // dont need to quote the db name, always CSV safe
-               (int)session->db.length(), dbs,
-               // do need to quote the query
-               quotify((unsigned char *)session->getQueryString(),
-                       session->getQueryLength(), qs, sizeof(qs)),
-               // command_name is defined in drizzled/sql_parse.cc
-               // dont need to quote the command name, always CSV safe
-               (int)command_name[session->command].length,
-               command_name[session->command].str,
-               // counters are at end, to make it easier to add more
-               (t_mark - session->getConnectMicroseconds()),
-               (t_mark - session->start_utime),
-               (t_mark - session->utime_after_lock),
-               session->sent_row_count,
-               session->examined_row_count,
-               session->tmp_table,
-               session->total_warn_count,
-               session->getServerId(),
-               glob_hostname
-               );
-  
+
+    formatter % t_mark
+              % session->thread_id
+              % session->getQueryId()
+              % dbs
+              % qs
+              % command_name[session->command].str
+              % (t_mark - session->getConnectMicroseconds())
+              % (t_mark - session->start_utime)
+              % (t_mark - session->utime_after_lock)
+              % session->sent_row_count
+              % session->examined_row_count
+              % session->tmp_table
+              % session->total_warn_count
+              % session->getServerId()
+              % glob_hostname;
+
+    string msgbuf= formatter.str();
+
     // a single write has a kernel thread lock, thus no need mutex guard this
-    wrv= write(fd, msgbuf, msgbuf_len);
-    assert(wrv == msgbuf_len);
-  
+    wrv= write(fd, msgbuf.c_str(), msgbuf.length());
+    assert(wrv == msgbuf.length());
+
     return false;
   }
 };
 
 static Logging_query *handler= NULL;
 
-static int logging_query_plugin_init(drizzled::plugin::Registry &registry)
+static int logging_query_plugin_init(drizzled::module::Context &context)
 {
+
+  const module::option_map &vm= context.getOptions();
+  if (vm.count("threshold-slow"))
+  {
+    if (sysvar_logging_query_threshold_slow > UINT32_MAX)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for threshold-slow"));
+      return 1;
+    }
+  }
+
+  if (vm.count("threshold-big-resultset"))
+  {
+    if (sysvar_logging_query_threshold_big_resultset > UINT32_MAX)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for threshold-big-resultset"));
+      return 1;
+    }
+  }
+
+  if (vm.count("threshold-big-examined"))
+  {
+    if (sysvar_logging_query_threshold_big_examined > UINT32_MAX)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for threshold-big-examined"));
+      return 1;
+    }
+  }
   handler= new Logging_query();
-  registry.add(handler);
+  context.add(handler);
 
   return 0;
 }
 
-static int logging_query_plugin_deinit(drizzled::plugin::Registry &registry)
+static void init_options(drizzled::module::option_context &context)
 {
-  registry.remove(handler);
-  delete handler;
-
-  return 0;
+  context("enable",
+          po::value<bool>(&sysvar_logging_query_enable)->default_value(false)->zero_tokens(),
+          N_("Enable logging to CSV file"));
+  context("threshold-slow",
+          po::value<unsigned long>(&sysvar_logging_query_threshold_slow)->default_value(0),
+          N_("Threshold for logging slow queries, in microseconds"));
+  context("threshold-big-resultset",
+          po::value<unsigned long>(&sysvar_logging_query_threshold_big_resultset)->default_value(0),
+          N_("Threshold for logging big queries, for rows returned"));
+  context("threshold-big-examined",
+          po::value<unsigned long>(&sysvar_logging_query_threshold_big_examined)->default_value(0),
+          N_("Threshold for logging big queries, for rows examined"));
 }
 
 static DRIZZLE_SYSVAR_BOOL(
@@ -411,15 +433,13 @@ static drizzle_sys_var* logging_query_system_variables[]= {
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "logging_query",
+  "logging-query",
   "0.2",
   "Mark Atwood <mark@fallenpegasus.com>",
   N_("Log queries to a CSV file"),
   PLUGIN_LICENSE_GPL,
   logging_query_plugin_init,
-  logging_query_plugin_deinit,
-  NULL,   /* status variables */
   logging_query_system_variables,
-  NULL
+  init_options
 }
 DRIZZLE_DECLARE_PLUGIN_END;

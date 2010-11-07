@@ -23,7 +23,12 @@
 
 #include "drizzled/lex_symbol.h"
 
+namespace drizzled
+{
+
 /* len is unsigned int instead of size_t to match the in_word_set method */
 const SYMBOL *lookup_symbol(const char *s, unsigned int len, bool function);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_LOOKUP_SYMBOL_H */

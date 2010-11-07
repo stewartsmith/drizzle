@@ -17,22 +17,62 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include "drizzled/sql_sort.h"
 #ifndef DRIZZLED_FILESORT_INFO_H
 #define DRIZZLED_FILESORT_INFO_H
 
-/* Information on state of filesort */
-struct filesort_info_st
+
+namespace drizzled
 {
-  IO_CACHE *io_cache;           /* If sorted through filesort */
+
+/* Information on state of filesort */
+class filesort_info
+{
+public:
+  internal::st_io_cache *io_cache;           /* If sorted through filesort */
   unsigned char     **sort_keys;        /* Buffer for sorting keys */
   unsigned char     *buffpek;           /* Buffer for buffpek structures */
   uint32_t      buffpek_len;        /* Max number of buffpeks in the buffer */
   unsigned char     *addon_buf;         /* Pointer to a buffer if sorted with fields */
   size_t    addon_length;       /* Length of the buffer */
-  struct st_sort_addon_field *addon_field;     /* Pointer to the fields info */
-  void    (*unpack)(struct st_sort_addon_field *, unsigned char *); /* To unpack back */
+  sort_addon_field *addon_field;     /* Pointer to the fields info */
+  void    (*unpack)(sort_addon_field *, unsigned char *); /* To unpack back */
   unsigned char     *record_pointers;    /* If sorted in memory */
   ha_rows   found_records;      /* How many records in sort */
+
+  filesort_info() :
+    io_cache(0),
+    sort_keys(0),
+    buffpek(0),
+    buffpek_len(0),
+    addon_buf(0),
+    addon_length(0),
+    addon_field(0),
+    unpack(0),
+    record_pointers(0),
+    found_records()
+  { }
+
+  filesort_info(const filesort_info& arg) :
+    io_cache(arg.io_cache),
+    sort_keys(arg.sort_keys),
+    buffpek(arg.buffpek),
+    buffpek_len(arg.buffpek_len),
+    addon_buf(arg.addon_buf),
+    addon_length(arg.addon_length),
+    addon_field(arg.addon_field),
+    unpack(arg.unpack),
+    record_pointers(arg.record_pointers),
+    found_records(arg.found_records)
+  {
+  }
+
+  ~filesort_info()
+  {
+  }
+
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FILESORT_INFO_H */

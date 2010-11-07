@@ -1,0 +1,3 @@
+SHOW VARIABLES LIKE 'innodb_log_group_home_dir';
+SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='log_group_home_dir';
+

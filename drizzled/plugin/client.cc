@@ -18,21 +18,25 @@
  */
 
 #include "config.h"
+#include <cstdio>
 #include "drizzled/plugin/client.h"
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 bool plugin::Client::store(const DRIZZLE_TIME *from)
 {
-  char buff[40];
-  uint32_t length;
+  const size_t buff_len= 40;
+  char buff[buff_len];
+  uint32_t length= 0;
   uint32_t day;
 
   switch (from->time_type)
   {
   case DRIZZLE_TIMESTAMP_DATETIME:
-    length= sprintf(buff, "%04d-%02d-%02d %02d:%02d:%02d",
+    length= snprintf(buff, (buff_len-length), "%04d-%02d-%02d %02d:%02d:%02d",
                     (int) from->year,
                     (int) from->month,
                     (int) from->day,
@@ -40,11 +44,11 @@ bool plugin::Client::store(const DRIZZLE_TIME *from)
                     (int) from->minute,
                     (int) from->second);
     if (from->second_part)
-      length+= sprintf(buff+length, ".%06d", (int)from->second_part);
+      length+= snprintf(buff+length, (buff_len-length), ".%06d", (int)from->second_part);
     break;
 
   case DRIZZLE_TIMESTAMP_DATE:
-    length= sprintf(buff, "%04d-%02d-%02d",
+    length= snprintf(buff, (buff_len-length), "%04d-%02d-%02d",
                     (int) from->year,
                     (int) from->month,
                     (int) from->day);
@@ -52,13 +56,13 @@ bool plugin::Client::store(const DRIZZLE_TIME *from)
 
   case DRIZZLE_TIMESTAMP_TIME:
     day= (from->year || from->month) ? 0 : from->day;
-    length= sprintf(buff, "%s%02ld:%02d:%02d",
+    length= snprintf(buff, (buff_len-length), "%s%02ld:%02d:%02d",
                     from->neg ? "-" : "",
                     (long) day*24L+(long) from->hour,
                     (int) from->minute,
                     (int) from->second);
     if (from->second_part)
-      length+= sprintf(buff+length, ".%06d", (int)from->second_part);
+      length+= snprintf(buff+length, (buff_len-length), ".%06d", (int)from->second_part);
     break;
 
   case DRIZZLE_TIMESTAMP_NONE:
@@ -77,3 +81,6 @@ bool plugin::Client::store(const char *from)
     return store();
   return store(from, strlen(from));
 }
+
+
+} /* namespace drizzled */

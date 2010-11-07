@@ -2,10 +2,11 @@
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008-2009 Sun Microsystems
+ *  Copyright (c) 2010 Jay Pipes <jaypipes@gmail.com>
  *
  *  Authors:
  *
- *  Jay Pipes <joinfu@sun.com>
+ *  Jay Pipes <jaypipes@gmail.com.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,18 +26,13 @@
 /**
  * @file
  *
- * Defines the API of the default transaction log.
- *
- * @see drizzled/plugin/replicator.h
- * @see drizzled/plugin/applier.h
+ * Defines the API of the transaction log file descriptor.
  *
  * @details
  *
- * The TransactionLog applies events it receives from the ReplicationServices
- * server component to a simple log file on disk.
- * 
- * Transactions are received in no guaranteed order and the command log
- * is in charge of writing these events to the log as they are received.
+ * Basically, the TransactionLog is a descriptor for a log
+ * file containing transaction messages that is written by
+ * the TransactionLogApplier plugin(s).
  */
 
 #ifndef PLUGIN_TRANSACTION_LOG_TRANSACTION_LOG_H
@@ -44,21 +40,15 @@
 
 #include <drizzled/atomics.h>
 #include <drizzled/replication_services.h>
-#include <drizzled/plugin/transaction_replicator.h>
-#include <drizzled/plugin/transaction_applier.h>
 
 #include "transaction_log_entry.h"
 
 #include <vector>
 #include <string>
 
-class TransactionLog: public drizzled::plugin::TransactionApplier 
+class TransactionLog
 {
 public:
-  static const uint32_t HEADER_TRAILER_BYTES= sizeof(uint32_t) + /* 4-byte msg type header */
-                                              sizeof(uint32_t) + /* 4-byte length header */
-                                              sizeof(uint32_t); /* 4 byte checksum trailer */
-
   typedef std::vector<TransactionLogEntry> Entries;
   typedef std::vector<TransactionLogTransactionEntry> TransactionEntries;
   /**
@@ -71,33 +61,16 @@ public:
     ONLINE,
     WRITING
   };
-  static const uint32_t SYNC_METHOD_OS= 0; ///< Rely on operating system to sync log file
-  static const uint32_t SYNC_METHOD_EVERY_WRITE= 1; //< Sync on every write to the log file
-  static const uint32_t SYNC_METHOD_EVERY_SECOND= 2; ///< Sync no more than once a second
+  static const uint32_t FLUSH_FREQUENCY_OS= 0; ///< Rely on operating system to sync log file
+  static const uint32_t FLUSH_FREQUENCY_EVERY_WRITE= 1; //< Sync on every write to the log file
+  static const uint32_t FLUSH_FREQUENCY_EVERY_SECOND= 2; ///< Sync no more than once a second
 public:
-  TransactionLog(std::string name_arg,
-                 const std::string &in_log_file_path,
+  TransactionLog(const std::string in_log_file_path,
+                 uint32_t in_flush_frequency,
                  bool in_do_checksum);
 
   /** Destructor */
   ~TransactionLog();
-
-  /**
-   * Applies a Transaction to the serial log
-   *
-   * @note
-   *
-   * It is important to note that memory allocation for the 
-   * supplied pointer is not guaranteed after the completion 
-   * of this function -- meaning the caller can dispose of the
-   * supplied message.  Therefore, appliers which are
-   * implementing an asynchronous replication system must copy
-   * the supplied message to their own controlled memory storage
-   * area.
-   *
-   * @param Transaction message to be replicated
-   */
-  void apply(const drizzled::message::Transaction &to_apply);
 
   /**
    * Returns the current offset into the log
@@ -124,6 +97,44 @@ public:
   {
     return state;
   }
+
+  /**
+   * Static helper method which returns the transaction
+   * log entry size in bytes of a given transaction
+   * message.
+   *
+   * @param[in] Transaction message
+   */
+  static size_t getLogEntrySize(const drizzled::message::Transaction &trx);
+
+  /**
+   * Method which packs into a raw byte buffer
+   * a transaction log entry.  Supplied buffer should
+   * be of adequate size.
+   *
+   * Returns a pointer to the start of the original
+   * buffer.
+   *
+   * @param[in]   Transaction message to pack
+   * @param[in]   Raw byte buffer
+   * @param[out]  Pointer to storage for checksum of message
+   */
+  uint8_t *packTransactionIntoLogEntry(const drizzled::message::Transaction &trx,
+                                       uint8_t *buffer,
+                                       uint32_t *checksum_out);
+
+  /**
+   * Writes a chunk of data to the log file of a specified
+   * length and returns the offset at which the chunk of
+   * data was written.
+   *
+   * @param[in] Bytes to write
+   * @param[in[ Length of bytes to write
+   *
+   * @retval
+   *  Returns the write offset if the write succeeded, OFF_T_MAX otherwise.
+   */
+  off_t writeEntry(const uint8_t *data, size_t data_length);
 
   /**
    * Truncates the existing log file
@@ -164,6 +175,10 @@ public:
    */
   const std::string &getErrorMessage() const;
 private:
+  static const uint32_t HEADER_TRAILER_BYTES= sizeof(uint32_t) + /* 4-byte msg type header */
+                                              sizeof(uint32_t) + /* 4-byte length header */
+                                              sizeof(uint32_t); /* 4 byte checksum trailer */
+
   /* Don't allows these */
   TransactionLog();
   TransactionLog(const TransactionLog &other);
@@ -174,7 +189,7 @@ private:
   void clearError();
   /**
    * Helper method which synchronizes/flushes the transaction log file
-   * according to the transaction_log_sync_method system variable
+   * according to the transaction_log_flush_frequency system variable
    *
    * @retval
    *   0 == Success
@@ -185,13 +200,14 @@ private:
 
   int log_file; ///< Handle for our log file
   Status state; ///< The state the log is in
-  drizzled::atomic<bool> do_checksum; ///< Do a CRC32 checksum when writing Transaction message to log?
   const std::string log_file_path; ///< Full path to the log file
   std::string log_file_name; ///< Name of the log file
   drizzled::atomic<off_t> log_offset; ///< Offset in log file where log will write next command
   bool has_error; ///< Is the log in error?
   std::string error_message; ///< Current error message
-  time_t last_sync_time; ///< Last time the log file was synced (only set in SYNC_METHOD_EVERY_SECOND)
+  uint32_t flush_frequency; ///< Determines behaviour of syncing log file
+  time_t last_sync_time; ///< Last time the log file was synced (only set in FLUSH_FREQUENCY_EVERY_SECOND)
+  bool do_checksum; ///< Do a CRC32 checksum when writing Transaction message to log?
 };
 
 #endif /* PLUGIN_TRANSACTION_LOG_TRANSACTION_LOG_H */

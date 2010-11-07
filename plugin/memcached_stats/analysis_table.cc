@@ -28,27 +28,54 @@
  */
 
 #include "config.h"
-#include "drizzled/session.h"
-#include "drizzled/show.h"
 
 #include "analysis_table.h"
 #include "sysvar_holder.h"
 
-#include <libmemcached/memcached.h>
+#include "drizzled/error.h"
 
-#include <string>
-#include <vector>
+#include <libmemcached/memcached.h>
+#include <libmemcached/server.h>
 
 using namespace std;
 using namespace drizzled;
 
-int MemcachedAnalysisISMethods::fillTable(Session *,
-                                          Table *table,
-                                          plugin::InfoSchemaTable *schema_table)
+AnalysisTableTool::AnalysisTableTool() :
+  plugin::TableFunction("DATA_DICTIONARY", "MEMCACHED_ANALYSIS")
 {
-  const CHARSET_INFO * const scs= system_charset_info;
+  add_field("SERVERS_ANALYZED", plugin::TableFunction::NUMBER);
+  add_field("AVERAGE_ITEM_SIZE", plugin::TableFunction::NUMBER);
+  add_field("NODE_WITH_MOST_MEM_CONSUMPTION");
+  add_field("USED_BYTES", plugin::TableFunction::NUMBER);
+  add_field("NODE_WITH_LEAST_FREE_SPACE");
+  add_field("FREE_BYTES", plugin::TableFunction::NUMBER);
+  add_field("NODE_WITH_LONGEST_UPTIME");
+  add_field("LONGEST_UPTIME", plugin::TableFunction::NUMBER);
+  add_field("POOL_WIDE_HIT_RATIO", plugin::TableFunction::NUMBER); 
+}
+
+AnalysisTableTool::Generator::Generator(Field **arg) :
+  plugin::TableFunction::Generator(arg)
+{
+  is_done= false;
+}
+
+bool AnalysisTableTool::Generator::populate()
+{
+  if (is_done)
+  {
+    return false;
+  }
+  is_done= true;
+
   SysvarHolder &sysvar_holder= SysvarHolder::singleton();
   const string servers_string= sysvar_holder.getServersString();
+
+  if (servers_string.empty()) 
+  {       
+    my_printf_error(ER_UNKNOWN_ERROR, _("No value in MEMCACHED_STATS_SERVERS variable."), MYF(0));
+    return false;
+  }    
 
   memcached_return rc;
   memcached_st *serv= memcached_create(NULL);
@@ -64,163 +91,21 @@ int MemcachedAnalysisISMethods::fillTable(Session *,
   if (server_count > 1)
   {
     memcached_analysis_st *report= memcached_analyze(serv, stats, &rc);
-    table->restoreRecordAsDefault();
 
-    table->setWriteSet(0);
-    table->setWriteSet(1);
-    table->setWriteSet(2);
-    table->setWriteSet(3);
-    table->setWriteSet(4);
-    table->setWriteSet(5);
-    table->setWriteSet(6);
-    table->setWriteSet(7);
-    table->setWriteSet(8);
-
-    table->field[0]->store(server_count);
-    table->field[1]->store(report->average_item_size);
-
-    table->field[2]->store(memcached_server_name(serv, 
-                                                 servers[report->most_consumed_server]),
-                           64,
-                           scs);
-    table->field[3]->store(report->most_used_bytes);
-    table->field[4]->store(memcached_server_name(serv, 
-                                                 servers[report->least_free_server]),
-                           64,
-                           scs);
-    table->field[5]->store(report->least_remaining_bytes);
-    table->field[6]->store(memcached_server_name(serv, 
-                                                 servers[report->oldest_server]),
-                           64,
-                           scs);
-    table->field[7]->store(report->longest_uptime);
-    table->field[8]->store(report->pool_hit_ratio);
-
-    /* store the actual record now */
-    schema_table->addRow(table->record[0], table->s->reclength);
+    push(static_cast<uint64_t>(server_count));
+    push(static_cast<uint64_t>(report->average_item_size));
+    push(memcached_server_name(serv, servers[report->most_consumed_server]));
+    push(report->most_used_bytes);
+    push(memcached_server_name(serv, servers[report->least_free_server]));
+    push(report->least_remaining_bytes);
+    push(memcached_server_name(serv, servers[report->oldest_server]));
+    push(static_cast<uint64_t>(report->longest_uptime));
+    push(static_cast<int64_t>(report->pool_hit_ratio));
     free(report);
-  }
+  } 
 
   memcached_stat_free(serv, stats);
   memcached_free(serv);
-  return 0;
+
+  return true;
 }
-
-bool createMemcachedAnalysisColumns(vector<const plugin::ColumnInfo *> &cols)
-{
-  /*
-   * Create each column for the memcached analysis table.
-   */
-  const plugin::ColumnInfo *num_analyzed= new(std::nothrow) plugin::ColumnInfo("SERVERS_ANALYZED",
-                                                               4,
-                                                               DRIZZLE_TYPE_LONGLONG,
-                                                               0,
-                                                               0, 
-                                                               "Num of Servers Analyzed");
-  if (! num_analyzed)
-  {
-    return true;
-  }
-
-  const plugin::ColumnInfo *avg_size= new(std::nothrow) plugin::ColumnInfo("AVERAGE_ITEM_SIZE",
-                                                           4,
-                                                           DRIZZLE_TYPE_LONGLONG,
-                                                           0,
-                                                           0, 
-                                                           "Average Item Size");
-  if (! avg_size)
-  {
-    return true;
-  }
-
-  const plugin::ColumnInfo *mem_node= new(std::nothrow) plugin::ColumnInfo("NODE_WITH_MOST_MEM_CONSUMPTION",
-                                                           32,
-                                                           DRIZZLE_TYPE_VARCHAR,
-                                                           0,
-                                                           0,
-                                                           "Node with Most Memory Consumption");
-  if (! mem_node)
-  {
-    return true;
-  }
-
-  const plugin::ColumnInfo *used_bytes= new(std::nothrow) plugin::ColumnInfo("USED_BYTES",
-                                                             4,
-                                                             DRIZZLE_TYPE_LONGLONG,
-                                                             0,
-                                                             0,
-                                                             "Used Bytes");
-  if (! used_bytes)
-  {
-    return true;
-  }
-
-  const plugin::ColumnInfo *free_node= new(std::nothrow) plugin::ColumnInfo("NODE_WITH_LEAST_FREE_SPACE",
-                                                            32,
-                                                            DRIZZLE_TYPE_VARCHAR,
-                                                            0,
-                                                            0,
-                                                            "Node with Least Free Space");
-  if (! free_node)
-  {
-    return true;
-  }
-
-  const plugin::ColumnInfo *free_bytes= new(std::nothrow) plugin::ColumnInfo("FREE_BYTES",
-                                                             4,
-                                                             DRIZZLE_TYPE_LONGLONG,
-                                                             0,
-                                                             0,
-                                                             "Free Bytes");
-  if (! free_bytes)
-  {
-    return true;
-  }
-
-  const plugin::ColumnInfo *up_node= new(std::nothrow) plugin::ColumnInfo("NODE_WITH_LONGEST_UPTIME",
-                                                          32,
-                                                          DRIZZLE_TYPE_VARCHAR,
-                                                          0,
-                                                          0,
-                                                          "Node with Longest Uptime");
-  if (! up_node)
-  {
-    return true;
-  }
-
-  const plugin::ColumnInfo *uptime= new(std::nothrow) plugin::ColumnInfo("LONGEST_UPTIME",
-                                                         4,
-                                                         DRIZZLE_TYPE_LONGLONG,
-                                                         0,
-                                                         0,
-                                                         "Longest Uptime");
-  if (! uptime)
-  {
-    return true;
-  }
-
-  const plugin::ColumnInfo *hit_ratio= new(std::nothrow) plugin::ColumnInfo("POOL_WIDE_HIT_RATIO",
-                                                            4,
-                                                            DRIZZLE_TYPE_LONGLONG,
-                                                            0,
-                                                            0,
-                                                            "Pool-wide Hit Ratio");
-  if (! hit_ratio)
-  {
-    return true;
-  }
-
-
-  cols.push_back(num_analyzed);
-  cols.push_back(avg_size);
-  cols.push_back(mem_node);
-  cols.push_back(used_bytes);
-  cols.push_back(free_node);
-  cols.push_back(free_bytes);
-  cols.push_back(up_node);
-  cols.push_back(uptime);
-  cols.push_back(hit_ratio);
-
-  return false;
-}
-

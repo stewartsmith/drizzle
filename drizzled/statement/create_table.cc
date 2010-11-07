@@ -23,7 +23,10 @@
 #include <drizzled/lock.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/create_table.h>
-#include <drizzled/table_identifier.h>
+#include <drizzled/message.h>
+#include <drizzled/identifier.h>
+
+#include <iostream>
 
 namespace drizzled
 {
@@ -39,17 +42,17 @@ bool statement::CreateTable::execute()
   bool res= false;
   bool link_to_local= false;
   bool lex_identified_temp_table= 
-    create_table_proto.type() == drizzled::message::Table::TEMPORARY;
+    create_table_message.type() == message::Table::TEMPORARY;
 
   if (is_engine_set)
   {
     create_info.db_type= 
-      plugin::StorageEngine::findByName(*session, create_table_proto.engine().name());
+      plugin::StorageEngine::findByName(*session, create_table_message.engine().name());
 
     if (create_info.db_type == NULL)
     {
       my_error(ER_UNKNOWN_STORAGE_ENGINE, MYF(0), 
-               create_table_proto.name().c_str());
+               create_table_message.engine().name().c_str());
 
       return true;
     }
@@ -59,23 +62,16 @@ bool statement::CreateTable::execute()
     create_info.db_type= session->getDefaultStorageEngine();
   }
 
-
-  /* 
-    Now we set the name in our Table proto so that it will match 
-    create_info.db_type.
-  */
+  if (not validateCreateTableOption())
   {
-    message::Table::StorageEngine *protoengine;
-
-    protoengine= create_table_proto.mutable_engine();
-    protoengine->set_name(create_info.db_type->getName());
+    return true;
   }
 
 
   /* If CREATE TABLE of non-temporary table, do implicit commit */
-  if (! lex_identified_temp_table)
+  if (not lex_identified_temp_table)
   {
-    if (! session->endActiveTransaction())
+    if (not session->endActiveTransaction())
     {
       return true;
     }
@@ -84,14 +80,11 @@ bool statement::CreateTable::execute()
   TableList *create_table= session->lex->unlink_first_table(&link_to_local);
   TableList *select_tables= session->lex->query_tables;
 
+  drizzled::message::init(create_table_message, create_table_message.name(), create_table->getSchemaName(), create_info.db_type->getName());
 
-  /*
-    Now that we have the engine, we can figure out the table identifier. We need the engine in order
-    to determine if the table is transactional or not if it is temp.
-  */
-  TableIdentifier new_table_identifier(create_table->db,
-                                       create_table->table_name,
-                                       create_table_proto.type() != message::Table::TEMPORARY ? NO_TMP_TABLE : TEMP_TABLE);
+  TableIdentifier new_table_identifier(create_table->getSchemaName(),
+                                       create_table->getTableName(),
+                                       create_table_message.type());
 
   if (create_table_precheck(new_table_identifier))
   {
@@ -130,19 +123,19 @@ bool statement::CreateTable::execute()
     select_lex->options|= SELECT_NO_UNLOCK;
     unit->set_limit(select_lex);
 
-    if (! lex_identified_temp_table)
+    if (not lex_identified_temp_table)
     {
       session->lex->link_first_table_back(create_table, link_to_local);
-      create_table->create= true;
+      create_table->setCreate(true);
     }
 
-    if (! (res= session->openTablesLock(session->lex->query_tables)))
+    if (not (res= session->openTablesLock(session->lex->query_tables)))
     {
       /*
          Is table which we are changing used somewhere in other parts
          of query
        */
-      if (! lex_identified_temp_table)
+      if (not lex_identified_temp_table)
       {
         TableList *duplicate= NULL;
         create_table= session->lex->unlink_first_table(&link_to_local);
@@ -167,12 +160,13 @@ bool statement::CreateTable::execute()
       if ((result= new select_create(create_table,
                                      is_if_not_exists,
                                      &create_info,
-                                     &create_table_proto,
+                                     create_table_message,
                                      &alter_info,
                                      select_lex->item_list,
                                      session->lex->duplicates,
                                      session->lex->ignore,
-                                     select_tables)))
+                                     select_tables,
+                                     new_table_identifier)))
       {
         /*
            CREATE from SELECT give its Select_Lex for SELECT,
@@ -182,7 +176,7 @@ bool statement::CreateTable::execute()
         delete result;
       }
     }
-    else if (! lex_identified_temp_table)
+    else if (not lex_identified_temp_table)
     {
       create_table= session->lex->unlink_first_table(&link_to_local);
     }
@@ -193,10 +187,10 @@ bool statement::CreateTable::execute()
     if (is_create_table_like)
     {
       res= mysql_create_like_table(session, 
+                                   new_table_identifier,
                                    create_table, 
                                    select_tables,
-                                   create_table_proto,
-                                   create_info.db_type, 
+                                   create_table_message,
                                    is_if_not_exists,
                                    is_engine_set);
     }
@@ -205,7 +199,7 @@ bool statement::CreateTable::execute()
 
       for (int32_t x= 0; x < alter_info.alter_proto.added_field_size(); x++)
       {
-        message::Table::Field *field= create_table_proto.add_field();
+        message::Table::Field *field= create_table_message.add_field();
 
         *field= alter_info.alter_proto.added_field(x);
       }
@@ -213,13 +207,14 @@ bool statement::CreateTable::execute()
       res= mysql_create_table(session, 
                               new_table_identifier,
                               &create_info,
-                              &create_table_proto,
+                              create_table_message,
                               &alter_info, 
                               false, 
                               0,
                               is_if_not_exists);
     }
-    if (! res)
+
+    if (not res)
     {
       session->my_ok();
     }
@@ -232,6 +227,31 @@ bool statement::CreateTable::execute()
   start_waiting_global_read_lock(session);
 
   return res;
+}
+
+bool statement::CreateTable::validateCreateTableOption()
+{
+  bool rc= true;
+  size_t num_engine_options= create_table_message.engine().options_size();
+
+  assert(create_info.db_type);
+
+  for (size_t y= 0; y < num_engine_options; ++y)
+  {
+    bool valid= create_info.db_type->validateCreateTableOption(create_table_message.engine().options(y).name(),
+                                                               create_table_message.engine().options(y).state());
+
+    if (not valid)
+    {
+      my_error(ER_UNKNOWN_ENGINE_OPTION, MYF(0),
+               create_table_message.engine().options(y).name().c_str(),
+               create_table_message.engine().options(y).state().c_str());
+
+      rc= false;
+    }
+  }
+
+  return rc;
 }
 
 } /* namespace drizzled */

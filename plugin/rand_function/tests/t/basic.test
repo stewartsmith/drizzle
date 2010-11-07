@@ -1,0 +1,21 @@
+explain extended select rand(999999),rand();
+#
+# Bug #7281: problem with rand()
+#
+
+--error ER_BAD_FIELD_ERROR
+select rand(rand);
+
+#
+# Bug #6172 RAND(a) should only accept constant values as arguments
+#
+CREATE TABLE t1 (a INT);
+
+INSERT INTO t1 VALUES (1),(1),(1),(2);
+SELECT RAND(2) * 1000, RAND(a) * 1000 FROM t1;
+SELECT RAND(2) * 1000, RAND(a) * 1000 FROM t1 WHERE a = 1;
+INSERT INTO t1 VALUES (3);
+SELECT RAND(2) * 1000, RAND(a) * 1000 FROM t1;
+SELECT RAND(2) * 1000, RAND(a) * 1000 FROM t1 WHERE a = 1;
+
+DROP TABLE t1;

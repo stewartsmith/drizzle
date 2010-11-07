@@ -32,7 +32,7 @@ plugin::Create_function<Item_func_gman_do_high_background>
 plugin::Create_function<Item_func_gman_do_low_background>
   *gman_do_low_background= NULL;
 
-static int gearman_udf_plugin_init(drizzled::plugin::Registry &registry)
+static int gearman_udf_plugin_init(drizzled::module::Context &context)
 {
   gman_servers_set= new plugin::Create_function<Item_func_gman_servers_set>("gman_servers_set");
   gman_do= new plugin::Create_function<Item_func_gman_do>("gman_do");
@@ -41,32 +41,13 @@ static int gearman_udf_plugin_init(drizzled::plugin::Registry &registry)
   gman_do_background= new plugin::Create_function<Item_func_gman_do_background>("gman_do_background");
   gman_do_high_background= new plugin::Create_function<Item_func_gman_do_high_background>("gman_do_high_background");
   gman_do_low_background= new plugin::Create_function<Item_func_gman_do_low_background>("gman_do_low_background");
-  registry.add(gman_servers_set);
-  registry.add(gman_do);
-  registry.add(gman_do_high);
-  registry.add(gman_do_low);
-  registry.add(gman_do_background);
-  registry.add(gman_do_high_background);
-  registry.add(gman_do_low_background);
-  return 0;
-}
-
-static int gearman_udf_plugin_deinit(drizzled::plugin::Registry &registry)
-{
-  registry.remove(gman_do_low_background);
-  registry.remove(gman_do_high_background);
-  registry.remove(gman_do_background);
-  registry.remove(gman_do_low);
-  registry.remove(gman_do_high);
-  registry.remove(gman_do);
-  registry.remove(gman_servers_set);
-  delete gman_do_low_background;
-  delete gman_do_high_background;
-  delete gman_do_background;
-  delete gman_do_low;
-  delete gman_do_high;
-  delete gman_do;
-  delete gman_servers_set;
+  context.add(gman_servers_set);
+  context.add(gman_do);
+  context.add(gman_do_high);
+  context.add(gman_do_low);
+  context.add(gman_do_background);
+  context.add(gman_do_high_background);
+  context.add(gman_do_low_background);
   return 0;
 }
 
@@ -79,8 +60,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Gearman Client UDFs",
   PLUGIN_LICENSE_BSD,
   gearman_udf_plugin_init, /* Plugin Init */
-  gearman_udf_plugin_deinit, /* Plugin Deinit */
-  NULL,   /* status variables */
   NULL,   /* system variables */
   NULL    /* config options */
 }

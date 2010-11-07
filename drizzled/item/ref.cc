@@ -18,7 +18,7 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include "drizzled/session.h"
 #include "drizzled/error.h"
 #include "drizzled/show.h"
@@ -26,7 +26,8 @@
 #include "drizzled/plugin/client.h"
 #include "drizzled/item/sum.h"
 
-using namespace drizzled;
+namespace drizzled
+{
 
 Item_ref::Item_ref(Name_resolution_context *context_arg,
                    Item **item, const char *table_name_arg,
@@ -183,6 +184,8 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
           condition, so that we can give a better error message -
           ER_WRONG_FIELD_WITH_GROUP, instead of the less informative
           ER_BAD_FIELD_ERROR which we produce now.
+
+          @todo determine if this is valid.
         */
         if ((place != IN_HAVING ||
              (!select->with_sum_func &&
@@ -243,7 +246,7 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
               } while (outer_context && outer_context->select_lex &&
                        cached_table->select_lex != outer_context->select_lex);
             }
-            prev_subselect_item->used_tables_cache|= from_field->table->map;
+            prev_subselect_item->used_tables_cache|= from_field->getTable()->map;
             prev_subselect_item->const_item_cache= 0;
             break;
           }
@@ -575,3 +578,5 @@ void Item_ref::fix_after_pullout(Select_Lex *new_parent, Item **)
     depended_from= NULL;
   }
 }
+
+} /* namespace drizzled */

@@ -11,8 +11,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -40,3 +40,17 @@ Created November 07, 2007 Vasil Dimov
 
 #include "mysql_addons.h"
 #include "univ.i"
+#include "drizzled/session.h"
+
+/**
+  Return the session id of a user session
+  @param pointer to Session object
+  @return session's id
+*/
+extern "C"
+unsigned long session_get_thread_id(const void *ptr)
+{
+  const drizzled::Session *session= (const drizzled::Session *)ptr;
+  return (unsigned long) session->getSessionId();
+}
+

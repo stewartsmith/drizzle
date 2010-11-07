@@ -20,8 +20,10 @@
 #ifndef DRIZZLED_ITEM_CACHE_ROW_H
 #define DRIZZLED_ITEM_CACHE_ROW_H
 
-#include <stdint.h>
 #include <drizzled/item/cache.h>
+
+namespace drizzled
+{
 
 class Item_cache;
 class Item;
@@ -67,5 +69,7 @@ public:
   void cleanup();
 
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_CACHE_ROW_H */

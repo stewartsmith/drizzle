@@ -19,8 +19,11 @@ INSERT INTO t1 VALUES
 
 set tmp_table_size=1024;
 
---replace_regex /in table '[^']+'/in table 'tmp_table'/
+--error ER_USE_SQL_BIG_RESULT
 SELECT MAX(a) FROM t1 GROUP BY a,b;
+
+--replace_regex /in table '[^']+'/in table 'tmp_table'/
+SELECT SQL_BIG_RESULT MAX(a) FROM t1 GROUP BY a,b;
 
 set tmp_table_size=default;
 

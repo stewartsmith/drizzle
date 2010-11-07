@@ -113,7 +113,7 @@ select level,id from t1 where level=1;
 select level,id,parent_id from t1 where level=1;
 eval alter table t1 engine=$engine_type;
 --replace_column 7 #
-show keys from t1;
+#show keys from t1;
 drop table t1;
 
 #
@@ -152,7 +152,7 @@ create index skr on t1 (a);
 insert into t1 values (3,""), (4,"testing");
 analyze table t1;
 --replace_column 7 #
-show keys from t1;
+#show keys from t1;
 drop table t1;
 
 
@@ -339,7 +339,7 @@ drop table t1;
 eval create $temp table t1 (a int not null, b int not null,c int not null,
 key(a),primary key(a,b), unique(c),key(a),unique(b)) ENGINE = $engine_type;
 --replace_column 7 #
-show index from t1;
+#show index from t1;
 drop table t1;
 
 #
@@ -518,7 +518,7 @@ insert into t1 values("hello",1),("world",2);
 select * from t1 order by b desc;
 eval alter table t1 ENGINE=$engine_type;
 --replace_column 7 #
-show keys from t1;
+#show keys from t1;
 drop table t1;
 
 #
@@ -687,7 +687,7 @@ drop table t1;
 #
 
 eval create $temp table t1 (t int not null default 1, key (t)) engine=$engine_type;
-desc t1;
+#desc t1;
 drop table t1;
 
 #
@@ -991,9 +991,6 @@ insert t3 select * from t1;
 insert t4 select * from t1;
 insert t5 select * from t1;
 insert t6 select * from t1;
-checksum table t1, t2, t3, t4, t5, t6, t7;
-checksum table t1, t2, t3, t4, t5, t6, t7;
-checksum table t1, t2, t3, t4, t5, t6, t7;
 # #show table status;
 drop table t1,t2,t3, t4, t5, t6;
 
@@ -1564,53 +1561,6 @@ INSERT INTO t2 VALUES(3);
 DROP TABLE t2;
 }
 # End of FOREIGN tests
-
-if ($test_transactions)
-{
-#
-# Test that checksum table uses a consistent read Bug #12669
-#
-connect (a,localhost,root,,);
-connect (b,localhost,root,,);
-connection a;
-eval create $temp table t1(a int not null) engine=$engine_type DEFAULT CHARSET=latin1;
-insert into t1 values (1),(2);
-set autocommit=0;
-checksum table t1;
-connection b;
-insert into t1 values(3);
-connection a;
-#
-# Here checksum should not see insert
-#
-checksum table t1;
-connection a;
-commit;
-checksum table t1;
-commit;
-drop table t1;
-#
-# autocommit = 1
-#
-connection a;
-eval create $temp table t1(a int not null) engine=$engine_type DEFAULT CHARSET=latin1;
-insert into t1 values (1),(2);
-set autocommit=1;
-checksum table t1;
-connection b;
-set autocommit=1;
-insert into t1 values(3);
-connection a;
-#
-# Here checksum sees insert
-#
-checksum table t1;
-drop table t1;
-
-connection default;
-disconnect a;
-disconnect b;
-}
 
 # tests for bugs #9802 and #13778
 

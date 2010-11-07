@@ -21,7 +21,7 @@
 #ifndef DRIZZLED_UNIQUE_H
 #define DRIZZLED_UNIQUE_H
 
-#include "drizzled/my_tree.h"
+#include "drizzled/tree.h"
 /*
    Unique -- class for unique (removing of duplicates).
    Puts all values to the TREE. If the tree becomes too big,
@@ -30,17 +30,19 @@
    memory simultaneously with iteration, so it should be ~2-3x faster.
  */
 
-typedef struct st_io_cache IO_CACHE;
-
-class Unique :public drizzled::memory::SqlAlloc
+namespace drizzled
 {
-  DYNAMIC_ARRAY file_ptrs;
-  ulong max_elements;
+
+namespace internal
+{
+typedef struct st_io_cache IO_CACHE;
+}
+
+class Unique : public memory::SqlAlloc
+{
   size_t max_in_memory_size;
-  IO_CACHE *file;
   TREE tree;
   unsigned char *record_pointers;
-  bool flush();
   uint32_t size;
 
 public:
@@ -51,19 +53,17 @@ public:
   ulong elements_in_tree() { return tree.elements_in_tree; }
   inline bool unique_add(void *ptr)
   {
-    if (tree.elements_in_tree > max_elements && flush())
-      return(1);
-    return(!tree_insert(&tree, ptr, 0, tree.custom_arg));
+    return (not tree_insert(&tree, ptr, 0, tree.custom_arg));
   }
 
   bool get(Table *table);
   static double get_use_cost(uint32_t *buffer, uint32_t nkeys, uint32_t key_size,
                              size_t max_in_memory_size);
   inline static int get_cost_calc_buff_size(ulong nkeys, uint32_t key_size,
-                                            size_t max_in_memory_size)
+                                            size_t sortbuff_size)
   {
     register size_t max_elems_in_tree=
-      (1 + max_in_memory_size / ALIGN_SIZE(sizeof(TREE_ELEMENT)+key_size));
+      (1 + sortbuff_size / ALIGN_SIZE(sizeof(TREE_ELEMENT)+key_size));
     return (int) (sizeof(uint32_t)*(1 + nkeys/max_elems_in_tree));
   }
 
@@ -73,5 +73,7 @@ public:
   friend int unique_write_to_file(unsigned char* key, uint32_t count, Unique *unique);
   friend int unique_write_to_ptrs(unsigned char* key, uint32_t count, Unique *unique);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_UNIQUE_H */

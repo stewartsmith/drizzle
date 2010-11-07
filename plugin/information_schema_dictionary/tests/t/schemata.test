@@ -1,0 +1,56 @@
+#
+# 
+#
+
+--sorted_result
+select * from INFORMATION_SCHEMA.SCHEMATA;
+
+use information_schema;
+show schemas;
+--sorted_result
+select * from INFORMATION_SCHEMA.SCHEMATA;
+--sorted_result
+select * from INFORMATION_SCHEMA.SCHEMATA WHERE CATALOG_NAME=NULL;
+--sorted_result
+select * from INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_OWNER=NULL;
+--sorted_result
+select * from INFORMATION_SCHEMA.SCHEMATA WHERE DEFAULT_CHARACTER_SET_CATALOG=NULL;
+--sorted_result
+select * from INFORMATION_SCHEMA.SCHEMATA WHERE DEFAULT_CHARACTER_SET_SCHEMA=NULL;
+--sorted_result
+select * from INFORMATION_SCHEMA.SCHEMATA WHERE DEFAULT_CHARACTER_SET_NAME=NULL;
+--sorted_result
+select * from INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME="data_dictionary";
+--sorted_result
+select * from INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME="information_schema";
+select * from INFORMATION_SCHEMA.SCHEMATA ORDER BY SCHEMA_NAME;
+select * from INFORMATION_SCHEMA.SCHEMATA ORDER BY SCHEMA_NAME,CATALOG_NAME;
+select * from INFORMATION_SCHEMA.SCHEMATA ORDER BY CATALOG_NAME,SCHEMA_NAME;
+
+## Now lets test schema creation;
+create schema a;
+create schema b;
+create schema c;
+create schema d;
+create schema ds;
+create schema aa;
+
+--sorted_result
+SELECT * FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME="a";
+--sorted_result
+SELECT * FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME like "a%";
+--sorted_result
+SELECT * FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME like "%a";
+--sorted_result
+SELECT * FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME like "%s";
+--sorted_result
+SELECT * FROM INFORMATION_SCHEMA.SCHEMATA;
+SELECT * FROM INFORMATION_SCHEMA.SCHEMATA ORDER BY SCHEMA_NAME;
+
+
+drop schema a;
+drop schema b;
+drop schema c;
+drop schema d;
+drop schema ds;
+drop schema aa;

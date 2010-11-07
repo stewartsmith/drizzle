@@ -25,7 +25,7 @@ drop table t1;
 #
 CREATE TABLE t1 (id int, s varchar(20));
 INSERT INTO t1 VALUES (1, 'one'), (2, 'two'), (3, 'three');
---error 1364
+--error ER_NO_DEFAULT_FOR_FIELD
 SELECT s, 32 AS mi FROM t1 GROUP BY s HAVING DEFAULT(mi) IS NULL;
 DROP TABLE t1;
 

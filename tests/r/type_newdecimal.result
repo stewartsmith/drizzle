@@ -52,14 +52,14 @@ if(1, 1.1, 1.2)	if(0, 1.1, 1.2)	if(0.1, 1.1, 1.2)	if(0, 1, 1.1)	if(0, NULL, 1.2)
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `if(1, 1.1, 1.2)` decimal(2,1) NOT NULL,
-  `if(0, 1.1, 1.2)` decimal(2,1) NOT NULL,
-  `if(0.1, 1.1, 1.2)` decimal(2,1) NOT NULL,
-  `if(0, 1, 1.1)` decimal(2,1) NOT NULL,
-  `if(0, NULL, 1.2)` decimal(2,1) DEFAULT NULL,
-  `if(1, 0.22e1, 1.1)` double NOT NULL,
-  `if(1E0, 1.1, 1.2)` decimal(2,1) NOT NULL
-) ENGINE=X
+  `if(1, 1.1, 1.2)` DECIMAL(2,1) NOT NULL,
+  `if(0, 1.1, 1.2)` DECIMAL(2,1) NOT NULL,
+  `if(0.1, 1.1, 1.2)` DECIMAL(2,1) NOT NULL,
+  `if(0, 1, 1.1)` DECIMAL(2,1) NOT NULL,
+  `if(0, NULL, 1.2)` DECIMAL(2,1) DEFAULT NULL,
+  `if(1, 0.22e1, 1.1)` DOUBLE NOT NULL,
+  `if(1E0, 1.1, 1.2)` DECIMAL(2,1) NOT NULL
+) ENGINE=X COLLATE = utf8_general_ci
 drop table t1;
 create table t1 select nullif(1.1, 1.1), nullif(1.1, 1.2), nullif(1.1, 0.11e1), nullif(1.0, 1), nullif(1, 1.0), nullif(1, 1.1);
 select * from t1;
@@ -68,13 +68,13 @@ NULL	1.1	NULL	NULL	NULL	1
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `nullif(1.1, 1.1)` decimal(2,1) DEFAULT NULL,
-  `nullif(1.1, 1.2)` decimal(2,1) DEFAULT NULL,
-  `nullif(1.1, 0.11e1)` decimal(2,1) DEFAULT NULL,
-  `nullif(1.0, 1)` decimal(2,1) DEFAULT NULL,
-  `nullif(1, 1.0)` int DEFAULT NULL,
-  `nullif(1, 1.1)` int DEFAULT NULL
-) ENGINE=X
+  `nullif(1.1, 1.1)` DECIMAL(2,1) DEFAULT NULL,
+  `nullif(1.1, 1.2)` DECIMAL(2,1) DEFAULT NULL,
+  `nullif(1.1, 0.11e1)` DECIMAL(2,1) DEFAULT NULL,
+  `nullif(1.0, 1)` DECIMAL(2,1) DEFAULT NULL,
+  `nullif(1, 1.0)` INT DEFAULT NULL,
+  `nullif(1, 1.1)` INT DEFAULT NULL
+) ENGINE=X COLLATE = utf8_general_ci
 drop table t1;
 create table t1 (a decimal(4,2));
 insert into t1 value (10000), (1.1e10), ("11111"), (100000.1);
@@ -124,17 +124,14 @@ create table t1 select round(15.4,-1), truncate(-5678.123451,-3), abs(-1.1), -(-
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `round(15.4,-1)` decimal(3,0) NOT NULL,
-  `truncate(-5678.123451,-3)` decimal(4,0) NOT NULL,
-  `abs(-1.1)` decimal(3,1) NOT NULL,
-  `-(-1.1)` decimal(2,1) NOT NULL
-) ENGINE=X
+  `round(15.4,-1)` DECIMAL(3,0) NOT NULL,
+  `truncate(-5678.123451,-3)` DECIMAL(4,0) NOT NULL,
+  `abs(-1.1)` DECIMAL(3,1) NOT NULL,
+  `-(-1.1)` DECIMAL(2,1) NOT NULL
+) ENGINE=X COLLATE = utf8_general_ci
 drop table t1;
 select 1e10/0e0;
-1e10/0e0
-NULL
-Warnings:
-Error	1365	Division by 0
+ERROR 22012: Division by 0
 select 1/3;
 1/3
 0.3333
@@ -532,8 +529,8 @@ create table t1 as select 0.5;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `0.5` decimal(2,1) NOT NULL
-) ENGINE=X
+  `0.5` DECIMAL(2,1) NOT NULL
+) ENGINE=X COLLATE = utf8_general_ci
 drop table t1;
 select round(1.5),round(2.5);
 round(1.5)	round(2.5)
@@ -545,15 +542,9 @@ select 1E-500 = 0;
 1E-500 = 0
 1
 select 1 / 1E-500;
-1 / 1E-500
-NULL
-Warnings:
-Error	1365	Division by 0
+ERROR 22012: Division by 0
 select 1 / 0;
-1 / 0
-NULL
-Warnings:
-Error	1365	Division by 0
+ERROR 22012: Division by 0
 CREATE TABLE Sow6_2f (col1 NUMERIC(4,2));
 INSERT INTO Sow6_2f VALUES (10.55);
 INSERT INTO Sow6_2f VALUES (10.5555);
@@ -565,14 +556,7 @@ INSERT INTO Sow6_2f VALUES (11);
 INSERT INTO Sow6_2f VALUES (101.55);
 ERROR 22003: Out of range value for column 'col1' at row 1
 SELECT MOD(col1,0) FROM Sow6_2f;
-MOD(col1,0)
-NULL
-NULL
-NULL
-Warnings:
-Error	1365	Division by 0
-Error	1365	Division by 0
-Error	1365	Division by 0
+ERROR 22012: Division by 0
 INSERT INTO Sow6_2f VALUES ('a59b');
 ERROR HY000: Incorrect decimal value: 'a59b' for column 'col1' at row 1
 drop table Sow6_2f;
@@ -580,10 +564,7 @@ select 10.3330000000000/12.34500000;
 10.3330000000000/12.34500000
 0.83701903604698258
 select 0/0;
-0/0
-NULL
-Warnings:
-Error	1365	Division by 0
+ERROR 22012: Division by 0
 select 9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999 as x;
 x
 99999999999999999999999999999999999999999999999999999999999999999
@@ -614,10 +595,7 @@ f1	f2
 9999999999999999999999999999999999.00000000000000000000	0.00
 DROP TABLE t1;
 select abs(10/0);
-abs(10/0)
-NULL
-Warnings:
-Error	1365	Division by 0
+ERROR 22012: Division by 0
 select abs(NULL);
 abs(NULL)
 NULL
@@ -683,15 +661,15 @@ create table t1 (sl decimal(5, 5));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `sl` decimal(5,5) DEFAULT NULL
-) ENGINE=X
+  `sl` DECIMAL(5,5) DEFAULT NULL
+) ENGINE=X COLLATE = utf8_general_ci
 drop table t1;
 create table t1 (sl decimal(65, 30));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `sl` decimal(65,30) DEFAULT NULL
-) ENGINE=X
+  `sl` DECIMAL(65,30) DEFAULT NULL
+) ENGINE=X COLLATE = utf8_general_ci
 drop table t1;
 create table t1 (
 f0 decimal (30,30) not null DEFAULT 0,
@@ -699,9 +677,9 @@ f1 decimal (0,0) not null default 0);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `f0` decimal(30,30) NOT NULL DEFAULT '0.000000000000000000000000000000',
-  `f1` decimal(10,0) NOT NULL DEFAULT '0'
-) ENGINE=X
+  `f0` DECIMAL(30,30) NOT NULL DEFAULT '0',
+  `f1` DECIMAL(10,0) NOT NULL DEFAULT '0'
+) ENGINE=X COLLATE = utf8_general_ci
 drop table t1;
 create table t (d decimal(0,10));
 ERROR 42000: For float(M,D), double(M,D) or decimal(M,D), M must be >= D (column 'd').
@@ -714,11 +692,11 @@ my_decimal DECIMAL(65,30)
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `my_float` double DEFAULT NULL,
-  `my_double` double DEFAULT NULL,
-  `my_varchar` varchar(50) DEFAULT NULL,
-  `my_decimal` decimal(65,30) DEFAULT NULL
-) ENGINE=X
+  `my_float` DOUBLE DEFAULT NULL,
+  `my_double` DOUBLE DEFAULT NULL,
+  `my_varchar` VARCHAR(50) COLLATE utf8_general_ci DEFAULT NULL,
+  `my_decimal` DECIMAL(65,30) DEFAULT NULL
+) ENGINE=X COLLATE = utf8_general_ci
 begin;
 INSERT INTO t1 SET my_float = 1.175494345e-32,
 my_double = 1.175494345e-32,

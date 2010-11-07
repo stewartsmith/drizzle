@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /* sql_yacc.yy */
 
@@ -36,119 +36,17 @@
 #define YYINITDEPTH 100
 #define YYMAXDEPTH 3200                        /* Because of 64K stack */
 #define Lex (YYSession->lex)
+
 #include "config.h"
-#include <drizzled/foreign_key.h>
-#include <drizzled/lex_symbol.h>
-#include <drizzled/function/locate.h>
-#include <drizzled/function/str/char.h>
-#include <drizzled/function/str/collation.h>
-#include <drizzled/function/str/database.h>
-#include <drizzled/function/str/insert.h>
-#include <drizzled/function/str/left.h>
-#include <drizzled/function/str/repeat.h>
-#include <drizzled/function/str/replace.h>
-#include <drizzled/function/str/reverse.h>
-#include <drizzled/function/str/right.h>
-#include <drizzled/function/str/set_collation.h>
-#include <drizzled/function/str/substr.h>
-#include <drizzled/function/str/trim.h>
-#include <drizzled/function/str/user.h>
-#include <drizzled/function/str/weight_string.h>
-
-#include <drizzled/function/time/curdate.h>
-#include <drizzled/function/time/date_add_interval.h>
-#include <drizzled/function/time/dayofmonth.h>
-#include <drizzled/function/time/extract.h>
-#include <drizzled/function/time/hour.h>
-#include <drizzled/function/time/microsecond.h>
-#include <drizzled/function/time/minute.h>
-#include <drizzled/function/time/month.h>
-#include <drizzled/function/time/now.h>
-#include <drizzled/function/time/quarter.h>
-#include <drizzled/function/time/second.h>
-#include <drizzled/function/time/sysdate_local.h>
-#include <drizzled/function/time/timestamp_diff.h>
-#include <drizzled/function/time/typecast.h>
-#include <drizzled/function/time/year.h>
-
-#include <drizzled/error.h>
-#include <drizzled/nested_join.h>
-#include <drizzled/sql_parse.h>
-#include <drizzled/item/copy_string.h>
-#include <drizzled/item/cmpfunc.h>
-#include <drizzled/item/uint.h>
-#include <drizzled/item/null.h>
-#include <drizzled/session.h>
-#include <drizzled/item/func.h>
-#include <drizzled/sql_base.h>
-#include <drizzled/item/create.h>
-#include <drizzled/item/default_value.h>
-#include <drizzled/item/insert_value.h>
-#include <drizzled/lex_string.h>
-#include <drizzled/function/get_system_var.h>
-#include <drizzled/thr_lock.h>
-#include <drizzled/message/table.pb.h>
-#include <drizzled/message/schema.pb.h>
-#include <drizzled/statement.h>
-#include <drizzled/statement/alter_schema.h>
-#include <drizzled/statement/alter_table.h>
-#include <drizzled/statement/analyze.h>
-#include <drizzled/statement/change_schema.h>
-#include <drizzled/statement/check.h>
-#include <drizzled/statement/checksum.h>
-#include <drizzled/statement/commit.h>
-#include <drizzled/statement/create_index.h>
-#include <drizzled/statement/create_schema.h>
-#include <drizzled/statement/create_table.h>
-#include <drizzled/statement/delete.h>
-#include <drizzled/statement/drop_index.h>
-#include <drizzled/statement/drop_schema.h>
-#include <drizzled/statement/drop_table.h>
-#include <drizzled/statement/empty_query.h>
-#include <drizzled/statement/flush.h>
-#include <drizzled/statement/insert.h>
-#include <drizzled/statement/insert_select.h>
-#include <drizzled/statement/kill.h>
-#include <drizzled/statement/load.h>
-#include <drizzled/statement/release_savepoint.h>
-#include <drizzled/statement/rename_table.h>
-#include <drizzled/statement/replace.h>
-#include <drizzled/statement/replace_select.h>
-#include <drizzled/statement/rollback.h>
-#include <drizzled/statement/rollback_to_savepoint.h>
-#include <drizzled/statement/savepoint.h>
-#include <drizzled/statement/select.h>
-#include <drizzled/statement/set_option.h>
-#include <drizzled/statement/show_create.h>
-#include <drizzled/statement/show_create_schema.h>
-#include <drizzled/statement/show_engine_status.h>
-#include <drizzled/statement/show_errors.h>
-#include <drizzled/statement/show_processlist.h>
-#include <drizzled/statement/show_status.h>
-#include <drizzled/statement/show_warnings.h>
-#include <drizzled/statement/start_transaction.h>
-#include <drizzled/statement/truncate.h>
-#include <drizzled/statement/unlock_tables.h>
-#include <drizzled/statement/update.h>
-#include <drizzled/db.h>
-#include "drizzled/global_charset_info.h"
-#include "drizzled/pthread_globals.h"
-#include "drizzled/charset.h"
-#include "drizzled/internal/m_string.h"
-
-
-using namespace drizzled;
-
-class Table_ident;
-class Item;
-class Item_num;
+#include <cstdio>
+#include "drizzled/parser.h"
 
 int yylex(void *yylval, void *yysession);
 
 #define yyoverflow(A,B,C,D,E,F)               \
   {                                           \
     ulong val= *(F);                          \
-    if (my_yyoverflow((B), (D), &val))        \
+    if (drizzled::my_yyoverflow((B), (D), &val)) \
     {                                         \
       yyerror((char*) (A));                   \
       return 2;                               \
@@ -169,12 +67,21 @@ int yylex(void *yylval, void *yysession);
 #define DRIZZLE_YYABORT_UNLESS(A)         \
   if (!(A))                             \
   {                                     \
-    my_parse_error(ER(ER_SYNTAX_ERROR));\
+    struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };\
+    my_parse_error(&pass);\
     DRIZZLE_YYABORT;                      \
   }
 
 
 #define YYDEBUG 0
+
+namespace drizzled
+{
+
+class Table_ident;
+class Item;
+class Item_num;
+
 
 static bool check_reserved_words(LEX_STRING *name)
 {
@@ -196,9 +103,18 @@ static bool check_reserved_words(LEX_STRING *name)
   parser.
 */
 
-static void my_parse_error(const char *s)
+struct my_parse_error_st {
+  const char *s;
+  Session *session;
+};
+
+static void my_parse_error(void *arg)
 {
-  Session *session= current_session;
+ struct my_parse_error_st *ptr= (struct my_parse_error_st *)arg;
+
+  const char *s= ptr->s;
+  Session *session= ptr->session;
+
   Lex_input_stream *lip= session->m_lip;
 
   const char *yytext= lip->get_tok_start();
@@ -242,7 +158,9 @@ static void DRIZZLEerror(const char *s)
   /* "parse error" changed into "syntax error" between bison 1.75 and 1.875 */
   if (strcmp(s,"parse error") == 0 || strcmp(s,"syntax error") == 0)
     s= ER(ER_SYNTAX_ERROR);
-  my_parse_error(s);
+
+  struct my_parse_error_st pass= { s, session };
+  my_parse_error(&pass);
 }
 
 /**
@@ -334,7 +252,7 @@ static Item* handle_sql2003_note184_exception(Session *session,
    @return <code>false</code> if successful, <code>true</code> if an error was
    reported. In the latter case parsing should stop.
  */
-static bool add_select_to_union_list(LEX *lex, bool is_union_distinct)
+static bool add_select_to_union_list(Session *session, LEX *lex, bool is_union_distinct)
 {
   if (lex->result)
   {
@@ -344,7 +262,8 @@ static bool add_select_to_union_list(LEX *lex, bool is_union_distinct)
   }
   if (lex->current_select->linkage == GLOBAL_OPTIONS_TYPE)
   {
-    my_parse_error(ER(ER_SYNTAX_ERROR));
+    struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), session };
+    my_parse_error(&pass);
     return true;
   }
   /* This counter shouldn't be incremented for UNION parts */
@@ -366,12 +285,13 @@ static bool add_select_to_union_list(LEX *lex, bool is_union_distinct)
    @return false if successful, true if an error was reported. In the latter
    case parsing should stop.
  */
-static bool setup_select_in_parentheses(LEX *lex)
+static bool setup_select_in_parentheses(Session *session, LEX *lex)
 {
   Select_Lex * sel= lex->current_select;
   if (sel->set_braces(1))
   {
-    my_parse_error(ER(ER_SYNTAX_ERROR));
+    struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), session };
+    my_parse_error(&pass);
     return true;
   }
   if (sel->linkage == UNION_TYPE &&
@@ -379,7 +299,8 @@ static bool setup_select_in_parentheses(LEX *lex)
       sel->master_unit()->first_select()->linkage ==
       UNION_TYPE)
   {
-    my_parse_error(ER(ER_SYNTAX_ERROR));
+    struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), session };
+    my_parse_error(&pass);
     return true;
   }
   if (sel->linkage == UNION_TYPE &&
@@ -396,50 +317,69 @@ static bool setup_select_in_parentheses(LEX *lex)
   return false;
 }
 
+static Item* reserved_keyword_function(Session *session, const std::string &name, List<Item> *item_list)
+{
+  const plugin::Function *udf= plugin::Function::get(name.c_str(), name.length());
+  Item *item= NULL;
+
+  if (udf)
+  {
+    item= Create_udf_func::s_singleton.create(session, udf, item_list);
+  } else {
+    my_error(ER_SP_DOES_NOT_EXIST, MYF(0), "FUNCTION", name.c_str());
+  }
+
+  return item;
+}
+
+} /* namespace drizzled; */
+
+using namespace drizzled;
 %}
 %union {
   int  num;
   ulong ulong_num;
   uint64_t ulonglong_number;
   int64_t longlong_number;
-  LEX_STRING lex_str;
-  LEX_STRING *lex_str_ptr;
-  LEX_SYMBOL symbol;
-  Table_ident *table;
+  drizzled::LEX_STRING lex_str;
+  drizzled::LEX_STRING *lex_str_ptr;
+  drizzled::LEX_SYMBOL symbol;
+  drizzled::Table_ident *table;
   char *simple_string;
-  Item *item;
-  Item_num *item_num;
-  List<Item> *item_list;
-  List<String> *string_list;
-  String *string;
-  Key_part_spec *key_part;
-  const ::drizzled::plugin::Function *udf;
-  TableList *table_list;
-  struct sys_var_with_base variable;
-  enum enum_var_type var_type;
-  Key::Keytype key_type;
-  enum ha_key_alg key_alg;
-  enum row_type row_type;
-  enum column_format_type column_format_type;
-  enum ha_rkey_function ha_rkey_mode;
-  enum enum_tx_isolation tx_isolation;
-  enum Cast_target cast_type;
-  const CHARSET_INFO *charset;
-  thr_lock_type lock_type;
-  interval_type interval, interval_time_st;
-  enum enum_drizzle_timestamp_type date_time_type;
-  Select_Lex *select_lex;
-  chooser_compare_func_creator boolfunc2creator;
-  struct st_lex *lex;
-  struct p_elem_val *p_elem_value;
-  enum index_hint_type index_hint;
-  enum enum_filetype filetype;
-  enum ha_build_method build_method;
-  enum Foreign_key::fk_option m_fk_option;
+  drizzled::Item *item;
+  drizzled::Item_num *item_num;
+  drizzled::List<drizzled::Item> *item_list;
+  drizzled::List<drizzled::String> *string_list;
+  drizzled::String *string;
+  drizzled::Key_part_spec *key_part;
+  const drizzled::plugin::Function *udf;
+  drizzled::TableList *table_list;
+  struct drizzled::sys_var_with_base variable;
+  enum drizzled::sql_var_t var_type;
+  drizzled::Key::Keytype key_type;
+  enum drizzled::ha_key_alg key_alg;
+  enum drizzled::column_format_type column_format_type;
+  enum drizzled::ha_rkey_function ha_rkey_mode;
+  enum drizzled::enum_tx_isolation tx_isolation;
+  enum drizzled::Cast_target cast_type;
+  const drizzled::CHARSET_INFO *charset;
+  drizzled::thr_lock_type lock_type;
+  drizzled::interval_type interval, interval_time_st;
+  enum drizzled::enum_drizzle_timestamp_type date_time_type;
+  drizzled::Select_Lex *select_lex;
+  drizzled::chooser_compare_func_creator boolfunc2creator;
+  struct drizzled::st_lex *lex;
+  enum drizzled::index_hint_type index_hint;
+  enum drizzled::enum_filetype filetype;
+  enum drizzled::ha_build_method build_method;
+  drizzled::message::Table::ForeignKeyConstraint::ForeignKeyOption m_fk_option;
 }
 
 %{
+namespace drizzled
+{
 bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
+}
 %}
 
 %pure_parser                                    /* We have threads */
@@ -447,7 +387,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
   Currently there are 88 shift/reduce conflicts.
   We should not introduce new conflicts any more.
 */
-%expect 88
+%expect 94
 
 /*
    Comments for TOKENS.
@@ -492,8 +432,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  BIN_NUM
 %token  BIT_SYM                       /* MYSQL-FUNC */
 %token  BLOB_SYM                      /* SQL-2003-R */
-%token  BLOCK_SIZE_SYM
-%token  BLOCK_SYM
 %token  BOOLEAN_SYM                   /* SQL-2003-R */
 %token  BOOL_SYM
 %token  BOTH                          /* SQL-2003-R */
@@ -583,6 +521,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  ESCAPED
 %token  ESCAPE_SYM                    /* SQL-2003-R */
 %token  EXCLUSIVE_SYM
+%token  EXECUTE_SYM
 %token  EXISTS                        /* SQL-2003-R */
 %token  EXTENDED_SYM
 %token  EXTRACT_SYM                   /* SQL-2003-N */
@@ -758,7 +697,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  SET_VAR
 %token  SHARE_SYM
 %token  SHOW
-%token  SHUTDOWN
 %token  SIMPLE_SYM                    /* SQL-2003-N */
 %token  SNAPSHOT_SYM
 %token  SPECIFIC_SYM                  /* SQL-2003-R */
@@ -833,7 +771,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  VAR_SAMP_SYM
 %token  WARNINGS
 %token  WEEK_SYM
-%token  WEIGHT_STRING_SYM
 %token  WHEN_SYM                      /* SQL-2003-R */
 %token  WHERE                         /* SQL-2003-R */
 %token  WITH                          /* SQL-2003-R */
@@ -866,6 +803,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         IDENT_sys TEXT_STRING_sys TEXT_STRING_literal
         opt_component
         BIN_NUM TEXT_STRING_filesystem ident_or_empty
+        execute_var_or_string
         opt_constraint constraint opt_ident
 
 %type <lex_str_ptr>
@@ -893,11 +831,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         delete_option
 
 %type <ulong_num>
-        ulong_num real_ulong_num
-        ws_nweights
-        ws_level_flag_desc ws_level_flag_reverse ws_level_flags
-        opt_ws_levels ws_level_list ws_level_list_item ws_level_number
-        ws_level_range ws_level_list_or_range 
+        ulong_num
 
 %type <ulonglong_number>
         ulonglong_num
@@ -953,8 +887,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
 %type <interval_time_st> interval_time_stamp
 
-%type <row_type> row_types
-
 %type <column_format_type> column_format_types
 
 %type <tx_isolation> isolation_types
@@ -982,7 +914,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         insert_values update delete truncate rename
         show describe load alter flush
         begin commit rollback savepoint release
-        analyze check start checksum
+        analyze check start
         field_list field_list_item field_spec kill column_def key_def
         select_item_list select_item values_list no_braces
         opt_limit_clause delete_limit_clause fields opt_values values
@@ -1003,6 +935,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         subselect_end select_var_list select_var_list_init opt_len
         opt_extended_describe
         statement
+        execute
         opt_field_or_var_spec fields_or_vars opt_load_data_set_spec
         init_key_options key_options key_opts key_opt key_using_alg
 END_OF_INPUT
@@ -1069,12 +1002,12 @@ statement:
           alter
         | analyze
         | check
-        | checksum
         | commit
         | create
         | delete
         | describe
         | drop
+        | execute
         | flush
         | insert
         | kill
@@ -1117,13 +1050,13 @@ create:
             statement->create_info.default_table_charset= NULL;
             lex->name.str= 0;
 
-	    message::Table *proto= &statement->create_table_proto;
+	    message::Table &proto= statement->create_table_message;
 	   
-	    proto->set_name($5->table.str);
-	    if($2)
-	      proto->set_type(message::Table::TEMPORARY);
+	    proto.set_name($5->table.str);
+	    if ($2)
+	      proto.set_type(message::Table::TEMPORARY);
 	    else
-	      proto->set_type(message::Table::STANDARD);
+	      proto.set_type(message::Table::STANDARD);
           }
           create2
           {
@@ -1271,6 +1204,42 @@ opt_as:
 opt_create_database_options:
           /* empty */ {}
         | default_collation_schema {}
+        | opt_database_custom_options {}
+        ;
+
+opt_database_custom_options:
+        custom_database_option
+        | custom_database_option ',' opt_database_custom_options
+        ;
+
+custom_database_option:
+          ident_or_text
+        {
+          statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
+          drizzled::message::Engine::Option *opt= statement->schema_message.mutable_engine()->add_options();
+
+          opt->set_name($1.str);
+        }
+        | ident_or_text equal ident_or_text
+        {
+          statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
+          drizzled::message::Engine::Option *opt= statement->schema_message.mutable_engine()->add_options();
+
+          opt->set_name($1.str);
+          opt->set_state($3.str);
+        }
+        | ident_or_text equal ulonglong_num
+        {
+          statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
+          char number_as_string[22];
+
+          snprintf(number_as_string, sizeof(number_as_string), "%"PRIu64, $3);
+
+          drizzled::message::Engine::Option *opt= statement->schema_message.mutable_engine()->add_options();
+
+          opt->set_name($1.str);
+          opt->set_state(number_as_string);
+        }
         ;
 
 opt_table_options:
@@ -1297,32 +1266,23 @@ create_table_options:
           create_table_option
         | create_table_option     create_table_options
         | create_table_option ',' create_table_options
-        ;
 
 create_table_option:
-          ENGINE_SYM opt_equal ident_or_text
+          custom_engine_option;
+
+custom_engine_option:
+        ENGINE_SYM equal ident_or_text
           {
             statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
-            message::Table::StorageEngine *protoengine;
-            protoengine= ((statement::CreateTable *)Lex->statement)->create_table_proto.mutable_engine();
 
             statement->is_engine_set= true;
 
-            protoengine->set_name($3.str);
-          }
-        | BLOCK_SIZE_SYM opt_equal ulong_num
-          {
-	    message::Table::TableOptions *tableopts;
-            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
-	    tableopts= ((statement::CreateTable *)Lex->statement)->create_table_proto.mutable_options();
-
-            tableopts->set_block_size($3);
-            statement->create_info.used_fields|= HA_CREATE_USED_BLOCK_SIZE;
+            ((statement::CreateTable *)Lex->statement)->create_table_message.mutable_engine()->set_name($3.str);
           }
         | COMMENT_SYM opt_equal TEXT_STRING_sys
           {
 	    message::Table::TableOptions *tableopts;
-	    tableopts= ((statement::CreateTable *)Lex->statement)->create_table_proto.mutable_options();
+	    tableopts= ((statement::CreateTable *)Lex->statement)->create_table_message.mutable_options();
 
 	    tableopts->set_comment($3.str);
           }
@@ -1331,31 +1291,29 @@ create_table_option:
 	    message::Table::TableOptions *tableopts;
             statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
 
-	    tableopts= ((statement::CreateTable *)Lex->statement)->create_table_proto.mutable_options();
+	    tableopts= ((statement::CreateTable *)Lex->statement)->create_table_message.mutable_options();
 
             statement->create_info.auto_increment_value=$3;
             statement->create_info.used_fields|= HA_CREATE_USED_AUTO;
 	    tableopts->set_auto_increment_value($3);
           }
-        | ROW_FORMAT_SYM opt_equal row_types
+        |  ident_or_text equal ident_or_text
           {
-            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
+	    drizzled::message::Engine::Option *opt= ((statement::CreateTable *)Lex->statement)->create_table_message.mutable_engine()->add_options();
 
-            statement->create_info.row_type= $3;
-            statement->create_info.used_fields|= HA_CREATE_USED_ROW_FORMAT;
-            statement->alter_info.flags.set(ALTER_ROW_FORMAT);
+            opt->set_name($1.str);
+            opt->set_state($3.str);
+          }
+        | ident_or_text equal ulonglong_num
+          {
+            char number_as_string[22];
+            snprintf(number_as_string, sizeof(number_as_string), "%"PRIu64, $3);
+
+	    drizzled::message::Engine::Option *opt= ((statement::CreateTable *)Lex->statement)->create_table_message.mutable_engine()->add_options();
+            opt->set_name($1.str);
+            opt->set_state(number_as_string);
           }
         | default_collation
-        | KEY_BLOCK_SIZE opt_equal ulong_num
-          {
-            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
-
-            statement->create_info.used_fields|= HA_CREATE_USED_KEY_BLOCK_SIZE;
-
-            message::Table::TableOptions *tableopts;
-            tableopts= ((statement::CreateTable *)Lex->statement)->create_table_proto.mutable_options();
-            tableopts->set_key_block_size($3);
-          }
         ;
 
 default_collation:
@@ -1392,15 +1350,6 @@ column_format_types:
         | FIXED_SYM   { $$= COLUMN_FORMAT_TYPE_FIXED; }
         | DYNAMIC_SYM { $$= COLUMN_FORMAT_TYPE_DYNAMIC; };
 
-row_types:
-          DEFAULT        { $$= ROW_TYPE_DEFAULT; }
-        | FIXED_SYM      { $$= ROW_TYPE_FIXED; }
-        | DYNAMIC_SYM    { $$= ROW_TYPE_DYNAMIC; }
-        | COMPRESSED_SYM { $$= ROW_TYPE_COMPRESSED; }
-        | REDUNDANT_SYM  { $$= ROW_TYPE_REDUNDANT; }
-        | COMPACT_SYM    { $$= ROW_TYPE_COMPACT; }
-        | PAGE_SYM       { $$= ROW_TYPE_PAGE; }
-        ;
 
 opt_select_from:
           opt_limit_clause {}
@@ -1449,12 +1398,13 @@ key_def:
           {
             LEX *lex=Lex;
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-            Key *key= new Foreign_key($4.str ? $4 : $1, lex->col_list,
+            Key *key= new Foreign_key($1.str ? $1 : $4, lex->col_list,
                                       $8,
                                       lex->ref_list,
                                       statement->fk_delete_opt,
                                       statement->fk_update_opt,
                                       statement->fk_match_option);
+
             statement->alter_info.key_list.push_back(key);
             key= new Key(Key::MULTIPLE, $1.str ? $1 : $4,
                          &default_key_create_info, 1,
@@ -1667,11 +1617,18 @@ type:
               $$=DRIZZLE_TYPE_BLOB;
               Lex->length=(char*) 0; /* use default length */
 
-            statement::CreateTable *statement=
-              (statement::CreateTable *)Lex->statement;
+              statement::CreateTable *statement=
+                (statement::CreateTable *)Lex->statement;
 
-            if (statement->current_proto_field)
-              statement->current_proto_field->set_type(message::Table::Field::BLOB);
+              if (statement->current_proto_field)
+              {
+                statement->current_proto_field->set_type(message::Table::Field::BLOB);
+                message::Table::Field::StringFieldOptions *string_field_options;
+
+                string_field_options= statement->current_proto_field->mutable_string_options();
+                string_field_options->set_collation_id(my_charset_bin.number);
+                string_field_options->set_collation(my_charset_bin.name);
+              }
             }
           | TEXT_SYM
             {
@@ -1957,74 +1914,6 @@ opt_default:
         | DEFAULT {}
         ;
 
-ws_nweights:
-        '(' real_ulong_num
-        {
-          if ($2 == 0)
-          {
-            my_parse_error(ER(ER_SYNTAX_ERROR));
-            DRIZZLE_YYABORT;
-          }
-        }
-        ')'
-        { $$= $2; }
-        ;
-
-ws_level_flag_desc:
-        ASC { $$= 0; }
-        | DESC { $$= 1 << MY_STRXFRM_DESC_SHIFT; }
-        ;
-
-ws_level_flag_reverse:
-        REVERSE_SYM { $$= 1 << MY_STRXFRM_REVERSE_SHIFT; } ;
-
-ws_level_flags:
-        /* empty */ { $$= 0; }
-        | ws_level_flag_desc { $$= $1; }
-        | ws_level_flag_desc ws_level_flag_reverse { $$= $1 | $2; }
-        | ws_level_flag_reverse { $$= $1 ; }
-        ;
-
-ws_level_number:
-        real_ulong_num
-        {
-          $$= $1 < 1 ? 1 : ($1 > MY_STRXFRM_NLEVELS ? MY_STRXFRM_NLEVELS : $1);
-          $$--;
-        }
-        ;
-
-ws_level_list_item:
-        ws_level_number ws_level_flags
-        {
-          $$= (1 | $2) << $1;
-        }
-        ;
-
-ws_level_list:
-        ws_level_list_item { $$= $1; }
-        | ws_level_list ',' ws_level_list_item { $$|= $3; }
-        ;
-
-ws_level_range:
-        ws_level_number '-' ws_level_number
-        {
-          uint32_t start= $1;
-          uint32_t end= $3;
-          for ($$= 0; start <= end; start++)
-            $$|= (1 << start);
-        }
-        ;
-
-ws_level_list_or_range:
-        ws_level_list { $$= $1; }
-        | ws_level_range { $$= $1; }
-        ;
-
-opt_ws_levels:
-        /* empty*/ { $$= 0; }
-        | LEVEL_SYM ws_level_list_or_range { $$= $2; }
-        ;
-
 opt_primary:
           /* empty */
         | PRIMARY_SYM
@@ -2060,29 +1949,29 @@ ref_list:
 
 opt_match_clause:
           /* empty */
-          { ((statement::CreateTable *)Lex->statement)->fk_match_option= Foreign_key::FK_MATCH_UNDEF; }
+          { ((statement::CreateTable *)Lex->statement)->fk_match_option= drizzled::message::Table::ForeignKeyConstraint::MATCH_UNDEFINED; }
         | MATCH FULL
-          { ((statement::CreateTable *)Lex->statement)->fk_match_option= Foreign_key::FK_MATCH_FULL; }
+          { ((statement::CreateTable *)Lex->statement)->fk_match_option= drizzled::message::Table::ForeignKeyConstraint::MATCH_FULL; }
         | MATCH PARTIAL
-          { ((statement::CreateTable *)Lex->statement)->fk_match_option= Foreign_key::FK_MATCH_PARTIAL; }
+          { ((statement::CreateTable *)Lex->statement)->fk_match_option= drizzled::message::Table::ForeignKeyConstraint::MATCH_PARTIAL; }
         | MATCH SIMPLE_SYM
-          { ((statement::CreateTable *)Lex->statement)->fk_match_option= Foreign_key::FK_MATCH_SIMPLE; }
+          { ((statement::CreateTable *)Lex->statement)->fk_match_option= drizzled::message::Table::ForeignKeyConstraint::MATCH_SIMPLE; }
         ;
 
 opt_on_update_delete:
           /* empty */
           {
-            ((statement::CreateTable *)Lex->statement)->fk_update_opt= Foreign_key::FK_OPTION_UNDEF;
-            ((statement::CreateTable *)Lex->statement)->fk_delete_opt= Foreign_key::FK_OPTION_UNDEF;
+            ((statement::CreateTable *)Lex->statement)->fk_update_opt= drizzled::message::Table::ForeignKeyConstraint::OPTION_UNDEF;
+            ((statement::CreateTable *)Lex->statement)->fk_delete_opt= drizzled::message::Table::ForeignKeyConstraint::OPTION_UNDEF;
           }
         | ON UPDATE_SYM delete_option
           {
             ((statement::CreateTable *)Lex->statement)->fk_update_opt= $3;
-            ((statement::CreateTable *)Lex->statement)->fk_delete_opt= Foreign_key::FK_OPTION_UNDEF;
+            ((statement::CreateTable *)Lex->statement)->fk_delete_opt= drizzled::message::Table::ForeignKeyConstraint::OPTION_UNDEF;
           }
         | ON DELETE_SYM delete_option
           {
-            ((statement::CreateTable *)Lex->statement)->fk_update_opt= Foreign_key::FK_OPTION_UNDEF;
+            ((statement::CreateTable *)Lex->statement)->fk_update_opt= drizzled::message::Table::ForeignKeyConstraint::OPTION_UNDEF;
             ((statement::CreateTable *)Lex->statement)->fk_delete_opt= $3;
           }
         | ON UPDATE_SYM delete_option
@@ -2100,11 +1989,11 @@ opt_on_update_delete:
         ;
 
 delete_option:
-          RESTRICT      { $$= Foreign_key::FK_OPTION_RESTRICT; }
-        | CASCADE       { $$= Foreign_key::FK_OPTION_CASCADE; }
-        | SET NULL_SYM  { $$= Foreign_key::FK_OPTION_SET_NULL; }
-        | NO_SYM ACTION { $$= Foreign_key::FK_OPTION_NO_ACTION; }
-        | SET DEFAULT   { $$= Foreign_key::FK_OPTION_DEFAULT;  }
+          RESTRICT      { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_RESTRICT; }
+        | CASCADE       { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_CASCADE; }
+        | SET NULL_SYM  { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_SET_NULL; }
+        | NO_SYM ACTION { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_NO_ACTION; }
+        | SET DEFAULT   { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_SET_DEFAULT;  }
         ;
 
 key_type:
@@ -2236,9 +2125,7 @@ alter:
               DRIZZLE_YYABORT;
             lex->col_list.empty();
             lex->select_lex.init_order();
-            lex->select_lex.db=
-              ((TableList*) lex->select_lex.table_list.first)->db;
-            statement->create_info.row_type= ROW_TYPE_NOT_USED;
+            lex->select_lex.db= const_cast<char *>(((TableList*) lex->select_lex.table_list.first)->getSchemaName());
             statement->alter_info.build_method= $2;
           }
           alter_commands
@@ -2372,7 +2259,8 @@ alter_list_item:
         | DROP FOREIGN KEY_SYM opt_ident
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-
+            statement->alter_info.drop_list.push_back(new AlterDrop(AlterDrop::FOREIGN_KEY,
+                                                                    $4.str));
             statement->alter_info.flags.set(ALTER_DROP_INDEX);
             statement->alter_info.flags.set(ALTER_FOREIGN_KEY);
           }
@@ -2439,17 +2327,6 @@ alter_list_item:
               DRIZZLE_YYABORT;
             }
 
-            if ($3->db.str)
-            {
-              std::string database_name($3->db.str);
-              NonNormalisedDatabaseName non_normalised_database_name(database_name);
-              NormalisedDatabaseName normalised_database_name(non_normalised_database_name);
-              if (! normalised_database_name.isValid())
-              {
-                my_error(ER_WRONG_TABLE_NAME, MYF(0), $3->table.str);
-                DRIZZLE_YYABORT;
-              }
-            }
             lex->name= $3->table;
             statement->alter_info.flags.set(ALTER_RENAME);
           }
@@ -2537,21 +2414,6 @@ start_transaction_opts:
           }
         ;
 
-
-checksum:
-          CHECKSUM_SYM table_or_tables
-          {
-            LEX *lex=Lex;
-            lex->sql_command = SQLCOM_CHECKSUM;
-            lex->statement= new(std::nothrow) statement::Checksum(YYSession);
-            if (lex->statement == NULL)
-              DRIZZLE_YYABORT;
-          }
-          table_list
-          {}
-        ;
-
-
 analyze:
           ANALYZE_SYM table_or_tables
           {
@@ -2634,7 +2496,7 @@ select_init:
 select_paren:
           SELECT_SYM select_part2
           {
-            if (setup_select_in_parentheses(Lex))
+            if (setup_select_in_parentheses(YYSession, Lex))
               DRIZZLE_YYABORT;
           }
         | '(' select_paren ')'
@@ -2644,7 +2506,7 @@ select_paren:
 select_paren_derived:
           SELECT_SYM select_part2_derived
           {
-            if (setup_select_in_parentheses(Lex))
+            if (setup_select_in_parentheses(YYSession, Lex))
               DRIZZLE_YYABORT;
           }
         | '(' select_paren_derived ')'
@@ -2657,13 +2519,15 @@ select_init2:
             Select_Lex * sel= lex->current_select;
             if (lex->current_select->set_braces(0))
             {
-              my_parse_error(ER(ER_SYNTAX_ERROR));
+              struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
+              my_parse_error(&pass);
               DRIZZLE_YYABORT;
             }
             if (sel->linkage == UNION_TYPE &&
                 sel->master_unit()->first_select()->braces)
             {
-              my_parse_error(ER(ER_SYNTAX_ERROR));
+              struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
+              my_parse_error(&pass);
               DRIZZLE_YYABORT;
             }
           }
@@ -3014,7 +2878,7 @@ bit_expr:
         | bit_expr '*' bit_expr %prec '*'
           { $$= new Item_func_mul($1,$3); }
         | bit_expr '/' bit_expr %prec '/'
-          { $$= new Item_func_div($1,$3); }
+          { $$= new Item_func_div(YYSession,$1,$3); }
         | bit_expr '%' bit_expr %prec '%'
           { $$= new Item_func_mod($1,$3); }
         | bit_expr DIV_SYM bit_expr %prec DIV_SYM
@@ -3067,6 +2931,9 @@ simple_expr:
         | literal
         | variable
         | sum_expr
+          {
+            Lex->setSumExprUsed();
+          }
         | '+' simple_expr %prec NEG { $$= $2; }
         | '-' simple_expr %prec NEG
           { $$= new (YYSession->mem_root) Item_func_neg($2); }
@@ -3138,7 +3005,12 @@ function_call_keyword:
           { $$= new (YYSession->mem_root) Item_func_char(*$3); }
         | CURRENT_USER optional_braces
           {
-            $$= new (YYSession->mem_root) Item_func_current_user(Lex->current_context());
+            std::string user_str("user");
+            if (! ($$= reserved_keyword_function(YYSession, user_str, NULL)))
+            {
+              DRIZZLE_YYABORT;
+            }
+            Lex->setCacheable(false);
           }
         | DATE_SYM '(' expr ')'
           { $$= new (YYSession->mem_root) Item_date_typecast($3); }
@@ -3147,7 +3019,7 @@ function_call_keyword:
         | HOUR_SYM '(' expr ')'
           { $$= new (YYSession->mem_root) Item_func_hour($3); }
         | INSERT '(' expr ',' expr ',' expr ',' expr ')'
-          { $$= new (YYSession->mem_root) Item_func_insert($3,$5,$7,$9); }
+          { $$= new (YYSession->mem_root) Item_func_insert(*YYSession, $3, $5, $7, $9); }
         | INTERVAL_SYM '(' expr ',' expr ')' %prec INTERVAL_SYM
           {
             Session *session= YYSession;
@@ -3195,7 +3067,12 @@ function_call_keyword:
           { $$= new (YYSession->mem_root) Item_func_trim($5,$3); }
         | USER '(' ')'
           {
-            $$= new (YYSession->mem_root) Item_func_user();
+            std::string user_str("user");
+            if (! ($$= reserved_keyword_function(YYSession, user_str, NULL)))
+            {
+              DRIZZLE_YYABORT;
+            }
+            Lex->setCacheable(false);
           }
         | YEAR_SYM '(' expr ')'
           { $$= new (YYSession->mem_root) Item_func_year($3); }
@@ -3223,6 +3100,7 @@ function_call_nonkeyword:
         | CURDATE optional_braces
           {
             $$= new (YYSession->mem_root) Item_func_curdate_local();
+            Lex->setCacheable(false);
           }
         | DATE_ADD_INTERVAL '(' expr ',' INTERVAL_SYM expr interval ')' %prec INTERVAL_SYM
           { $$= new (YYSession->mem_root) Item_date_add_interval($3,$6,$7,0); }
@@ -3233,10 +3111,12 @@ function_call_nonkeyword:
         | NOW_SYM optional_braces
           {
             $$= new (YYSession->mem_root) Item_func_now_local();
+            Lex->setCacheable(false);
           }
         | NOW_SYM '(' expr ')'
           {
             $$= new (YYSession->mem_root) Item_func_now_local($3);
+            Lex->setCacheable(false);
           }
         | POSITION_SYM '(' bit_expr IN_SYM expr ')'
           { $$ = new (YYSession->mem_root) Item_func_locate($5,$3); }
@@ -3248,17 +3128,61 @@ function_call_nonkeyword:
         | SUBDATE_SYM '(' expr ',' INTERVAL_SYM expr interval ')'
           { $$= new (YYSession->mem_root) Item_date_add_interval($3, $6, $7, 1); }
         | SUBSTRING '(' expr ',' expr ',' expr ')'
-          { $$= new (YYSession->mem_root) Item_func_substr($3,$5,$7); }
+          {
+            std::string reverse_str("substr");
+            List<Item> *args= new (YYSession->mem_root) List<Item>;
+            args->push_back($3);
+            args->push_back($5);
+            args->push_back($7);
+            if (! ($$= reserved_keyword_function(YYSession, reverse_str, args)))
+            {
+              DRIZZLE_YYABORT;
+            }
+          }
         | SUBSTRING '(' expr ',' expr ')'
-          { $$= new (YYSession->mem_root) Item_func_substr($3,$5); }
+          {
+            std::string reverse_str("substr");
+            List<Item> *args= new (YYSession->mem_root) List<Item>;
+            args->push_back($3);
+            args->push_back($5);
+            if (! ($$= reserved_keyword_function(YYSession, reverse_str, args)))
+            {
+              DRIZZLE_YYABORT;
+            }
+          }
         | SUBSTRING '(' expr FROM expr FOR_SYM expr ')'
-          { $$= new (YYSession->mem_root) Item_func_substr($3,$5,$7); }
+          {
+            std::string reverse_str("substr");
+            List<Item> *args= new (YYSession->mem_root) List<Item>;
+            args->push_back($3);
+            args->push_back($5);
+            args->push_back($7);
+            if (! ($$= reserved_keyword_function(YYSession, reverse_str, args)))
+            {
+              DRIZZLE_YYABORT;
+            }
+          }
         | SUBSTRING '(' expr FROM expr ')'
-          { $$= new (YYSession->mem_root) Item_func_substr($3,$5); }
+          {
+            std::string reverse_str("substr");
+            List<Item> *args= new (YYSession->mem_root) List<Item>;
+            args->push_back($3);
+            args->push_back($5);
+            if (! ($$= reserved_keyword_function(YYSession, reverse_str, args)))
+            {
+              DRIZZLE_YYABORT;
+            }
+          }
         | SYSDATE optional_braces
-          { $$= new (YYSession->mem_root) Item_func_sysdate_local(); }
+          { 
+            $$= new (YYSession->mem_root) Item_func_sysdate_local(); 
+            Lex->setCacheable(false);
+          }
         | SYSDATE '(' expr ')'
-          { $$= new (YYSession->mem_root) Item_func_sysdate_local($3); }
+          { 
+            $$= new (YYSession->mem_root) Item_func_sysdate_local($3); 
+            Lex->setCacheable(false);
+          }
         | TIMESTAMP_ADD '(' interval_time_stamp ',' expr ',' expr ')'
           { $$= new (YYSession->mem_root) Item_date_add_interval($7,$5,$3,0); }
         | TIMESTAMP_DIFF '(' interval_time_stamp ',' expr ',' expr ')'
@@ -3266,10 +3190,12 @@ function_call_nonkeyword:
         | UTC_DATE_SYM optional_braces
           {
             $$= new (YYSession->mem_root) Item_func_curdate_utc();
+            Lex->setCacheable(false);
           }
         | UTC_TIMESTAMP_SYM optional_braces
           {
             $$= new (YYSession->mem_root) Item_func_now_utc();
+            Lex->setCacheable(false);
           }
         ;
 
@@ -3285,8 +3211,13 @@ function_call_conflict:
           { $$= new (YYSession->mem_root) Item_func_collation($3); }
         | DATABASE '(' ')'
           {
-            $$= new (YYSession->mem_root) Item_func_database();
-          }
+            std::string database_str("database");
+            if (! ($$= reserved_keyword_function(YYSession, database_str, NULL)))
+            {
+              DRIZZLE_YYABORT;
+            }
+            Lex->setCacheable(false);
+	  }
         | IF '(' expr ',' expr ',' expr ')'
           { $$= new (YYSession->mem_root) Item_func_if($3,$5,$7); }
         | MICROSECOND_SYM '(' expr ')'
@@ -3296,26 +3227,21 @@ function_call_conflict:
         | QUARTER_SYM '(' expr ')'
           { $$ = new (YYSession->mem_root) Item_func_quarter($3); }
         | REPEAT_SYM '(' expr ',' expr ')'
-          { $$= new (YYSession->mem_root) Item_func_repeat($3,$5); }
+          { $$= new (YYSession->mem_root) Item_func_repeat(*YYSession, $3, $5); }
         | REPLACE '(' expr ',' expr ',' expr ')'
-          { $$= new (YYSession->mem_root) Item_func_replace($3,$5,$7); }
+          { $$= new (YYSession->mem_root) Item_func_replace(*YYSession, $3, $5, $7); }
         | REVERSE_SYM '(' expr ')'
-          { $$= new (YYSession->mem_root) Item_func_reverse($3); }
+          {
+            std::string reverse_str("reverse");
+            List<Item> *args= new (YYSession->mem_root) List<Item>;
+            args->push_back($3);
+            if (! ($$= reserved_keyword_function(YYSession, reverse_str, args)))
+            {
+              DRIZZLE_YYABORT;
+            }
+          }
         | TRUNCATE_SYM '(' expr ',' expr ')'
           { $$= new (YYSession->mem_root) Item_func_round($3,$5,1); }
-        | WEIGHT_STRING_SYM '(' expr opt_ws_levels ')'
-          { $$= new (YYSession->mem_root) Item_func_weight_string($3, 0, $4); }
-        | WEIGHT_STRING_SYM '(' expr AS CHAR_SYM ws_nweights opt_ws_levels ')'
-          {
-            $$= new (YYSession->mem_root)
-                Item_func_weight_string($3, $6, $7|MY_STRXFRM_PAD_WITH_SPACE);
-          }
-        | WEIGHT_STRING_SYM '(' expr AS BINARY ws_nweights ')'
-          {
-            $3= create_func_char_cast(YYSession, $3, $6, &my_charset_bin);
-            $$= new (YYSession->mem_root)
-                Item_func_weight_string($3, $6, MY_STRXFRM_PAD_WITH_SPACE);
-          }
         ;
 
 /*
@@ -3371,6 +3297,7 @@ function_call_generic:
             {
               DRIZZLE_YYABORT;
             }
+            Lex->setCacheable(false);
           }
         ;
 
@@ -3479,17 +3406,20 @@ variable_aux:
           ident_or_text SET_VAR expr
           {
             $$= new Item_func_set_user_var($1, $3);
+            Lex->setCacheable(false);
           }
         | ident_or_text
           {
-            $$= new Item_func_get_user_var($1);
+            $$= new Item_func_get_user_var(*YYSession, $1);
+            Lex->setCacheable(false);
           }
         | '@' opt_var_ident_type ident_or_text opt_component
           {
             /* disallow "SELECT @@global.global.variable" */
             if ($3.str && $4.str && check_reserved_words(&$3))
             {
-              my_parse_error(ER(ER_SYNTAX_ERROR));
+              struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
+              my_parse_error(&pass);
               DRIZZLE_YYABORT;
             }
             if (!($$= get_system_var(YYSession, $2, $3, $4)))
@@ -3531,7 +3461,8 @@ in_sum_expr:
             LEX *lex= Lex;
             if (lex->current_select->inc_in_sum_expr())
             {
-              my_parse_error(ER(ER_SYNTAX_ERROR));
+              struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
+              my_parse_error(&pass);
               DRIZZLE_YYABORT;
             }
           }
@@ -3646,13 +3577,19 @@ join_table:
             left-associative joins.
           */
           table_ref normal_join table_ref %prec TABLE_REF_PRIORITY
-          { DRIZZLE_YYABORT_UNLESS($1 && ($$=$3)); }
+          { 
+            DRIZZLE_YYABORT_UNLESS($1 && ($$=$3));
+            Lex->is_cross= false;
+          }
         | table_ref STRAIGHT_JOIN table_factor
-          { DRIZZLE_YYABORT_UNLESS($1 && ($$=$3)); $3->straight=1; }
+          { 
+            DRIZZLE_YYABORT_UNLESS($1 && ($$=$3)); $3->straight=1; 
+          }
         | table_ref normal_join table_ref
           ON
           {
             DRIZZLE_YYABORT_UNLESS($1 && $3);
+            DRIZZLE_YYABORT_UNLESS( not Lex->is_cross );
             /* Change the current name resolution context to a local context. */
             if (push_new_name_resolution_context(YYSession, $1, $3))
               DRIZZLE_YYABORT;
@@ -3772,7 +3709,7 @@ join_table:
 normal_join:
           JOIN_SYM {}
         | INNER_SYM JOIN_SYM {}
-        | CROSS JOIN_SYM {}
+        | CROSS JOIN_SYM { Lex->is_cross= true; }
         ;
 
 /*
@@ -3785,13 +3722,11 @@ normal_join:
 /* Warning - may return NULL in case of incomplete SELECT */
 table_factor:
           {
-            Select_Lex *sel= Lex->current_select;
-            sel->table_join_options= 0;
           }
           table_ident opt_table_alias opt_key_definition
           {
             if (!($$= Lex->current_select->add_table_to_list(YYSession, $2, $3,
-                             Lex->current_select->get_table_join_options(),
+                             0,
                              Lex->lock_option,
                              Lex->current_select->pop_index_hints())))
               DRIZZLE_YYABORT;
@@ -3805,7 +3740,8 @@ table_factor:
             {
               if (sel->set_braces(1))
               {
-                my_parse_error(ER(ER_SYNTAX_ERROR));
+                struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
+                my_parse_error(&pass);
                 DRIZZLE_YYABORT;
               }
               /* select in braces, can't contain global parameters */
@@ -3842,7 +3778,7 @@ table_factor:
             /* Use $2 instead of Lex->current_select as derived table will
                alter value of Lex->current_select. */
             if (!($3 || $5) && $2->embedding &&
-                !$2->embedding->nested_join->join_list.elements)
+                !$2->embedding->getNestedJoin()->join_list.elements)
             {
               /* we have a derived table ($3 == NULL) but no alias,
                  Since we are nested in further parentheses so we
@@ -3870,7 +3806,8 @@ table_factor:
             else if (($3->select_lex && $3->select_lex->master_unit()->is_union()) || $5)
             {
               /* simple nested joins cannot have aliases or unions */
-              my_parse_error(ER(ER_SYNTAX_ERROR));
+              struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
+              my_parse_error(&pass);
               DRIZZLE_YYABORT;
             }
             else
@@ -3884,7 +3821,7 @@ select_derived_union:
           UNION_SYM
           union_option
           {
-            if (add_select_to_union_list(Lex, (bool)$3))
+            if (add_select_to_union_list(YYSession, Lex, (bool)$3))
               DRIZZLE_YYABORT;
           }
           query_specification
@@ -3906,13 +3843,15 @@ select_init2_derived:
             Select_Lex * sel= lex->current_select;
             if (lex->current_select->set_braces(0))
             {
-              my_parse_error(ER(ER_SYNTAX_ERROR));
+              struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
+              my_parse_error(&pass);
               DRIZZLE_YYABORT;
             }
             if (sel->linkage == UNION_TYPE &&
                 sel->master_unit()->first_select()->braces)
             {
-              my_parse_error(ER(ER_SYNTAX_ERROR));
+              struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
+              my_parse_error(&pass);
               DRIZZLE_YYABORT;
             }
           }
@@ -3952,7 +3891,8 @@ select_derived:
               DRIZZLE_YYABORT;
             if (!$3 && $$)
             {
-              my_parse_error(ER(ER_SYNTAX_ERROR));
+              struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
+              my_parse_error(&pass);
               DRIZZLE_YYABORT;
             }
           }
@@ -3964,7 +3904,8 @@ select_derived2:
             lex->derived_tables|= DERIVED_SUBQUERY;
             if (!lex->expr_allows_subselect)
             {
-              my_parse_error(ER(ER_SYNTAX_ERROR));
+              struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
+              my_parse_error(&pass);
               DRIZZLE_YYABORT;
             }
             if (lex->current_select->linkage == GLOBAL_OPTIONS_TYPE ||
@@ -3995,12 +3936,13 @@ select_derived_init:
             if (!sel->embedding || sel->end_nested_join(lex->session))
             {
               /* we are not in parentheses */
-              my_parse_error(ER(ER_SYNTAX_ERROR));
+              struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
+              my_parse_error(&pass);
               DRIZZLE_YYABORT;
             }
             embedding= Lex->current_select->embedding;
             $$= embedding &&
-                !embedding->nested_join->join_list.elements;
+                !embedding->getNestedJoin()->join_list.elements;
             /* return true if we are deeply nested */
           }
         ;
@@ -4143,7 +4085,7 @@ table_alias:
 opt_table_alias:
           /* empty */ { $$=0; }
         | table_alias ident
-          { $$= (LEX_STRING*) memory::sql_memdup(&$2,sizeof(LEX_STRING)); }
+          { $$= (drizzled::LEX_STRING*) memory::sql_memdup(&$2,sizeof(drizzled::LEX_STRING)); }
         ;
 
 opt_all:
@@ -4379,38 +4321,20 @@ delete_limit_clause:
         ;
 
 ulong_num:
-          NUM           { int error; $$= (ulong) my_strtoll10($1.str, (char**) 0, &error); }
+          NUM           { int error; $$= (ulong) internal::my_strtoll10($1.str, (char**) 0, &error); }
         | HEX_NUM       { $$= (ulong) strtol($1.str, (char**) 0, 16); }
-        | LONG_NUM      { int error; $$= (ulong) my_strtoll10($1.str, (char**) 0, &error); }
-        | ULONGLONG_NUM { int error; $$= (ulong) my_strtoll10($1.str, (char**) 0, &error); }
-        | DECIMAL_NUM   { int error; $$= (ulong) my_strtoll10($1.str, (char**) 0, &error); }
-        | FLOAT_NUM     { int error; $$= (ulong) my_strtoll10($1.str, (char**) 0, &error); }
+        | LONG_NUM      { int error; $$= (ulong) internal::my_strtoll10($1.str, (char**) 0, &error); }
+        | ULONGLONG_NUM { int error; $$= (ulong) internal::my_strtoll10($1.str, (char**) 0, &error); }
+        | DECIMAL_NUM   { int error; $$= (ulong) internal::my_strtoll10($1.str, (char**) 0, &error); }
+        | FLOAT_NUM     { int error; $$= (ulong) internal::my_strtoll10($1.str, (char**) 0, &error); }
         ;
-
-real_ulong_num:
-          NUM           { int error; $$= (ulong) my_strtoll10($1.str, (char**) 0, &error); }
-        | HEX_NUM       { $$= (ulong) strtol($1.str, (char**) 0, 16); }
-        | LONG_NUM      { int error; $$= (ulong) my_strtoll10($1.str, (char**) 0, &error); }
-        | ULONGLONG_NUM { int error; $$= (ulong) my_strtoll10($1.str, (char**) 0, &error); }
-        | dec_num_error { }
-	;
 
 ulonglong_num:
-          NUM           { int error; $$= (uint64_t) my_strtoll10($1.str, (char**) 0, &error); }
-        | ULONGLONG_NUM { int error; $$= (uint64_t) my_strtoll10($1.str, (char**) 0, &error); }
-        | LONG_NUM      { int error; $$= (uint64_t) my_strtoll10($1.str, (char**) 0, &error); }
-        | DECIMAL_NUM   { int error; $$= (uint64_t) my_strtoll10($1.str, (char**) 0, &error); }
-        | FLOAT_NUM     { int error; $$= (uint64_t) my_strtoll10($1.str, (char**) 0, &error); }
-        ;
-
-dec_num_error:
-          dec_num
-          { my_parse_error(ER(ER_ONLY_INTEGERS_ALLOWED)); }
-        ;
-
-dec_num:
-          DECIMAL_NUM
-        | FLOAT_NUM
+          NUM           { int error; $$= (uint64_t) internal::my_strtoll10($1.str, (char**) 0, &error); }
+        | ULONGLONG_NUM { int error; $$= (uint64_t) internal::my_strtoll10($1.str, (char**) 0, &error); }
+        | LONG_NUM      { int error; $$= (uint64_t) internal::my_strtoll10($1.str, (char**) 0, &error); }
+        | DECIMAL_NUM   { int error; $$= (uint64_t) internal::my_strtoll10($1.str, (char**) 0, &error); }
+        | FLOAT_NUM     { int error; $$= (uint64_t) internal::my_strtoll10($1.str, (char**) 0, &error); }
         ;
 
 select_var_list_init:
@@ -4433,7 +4357,7 @@ select_var_ident:
           {
             LEX *lex=Lex;
             if (lex->result)
-              ((select_dumpvar *)lex->result)->var_list.push_back( new my_var($2,0,0,(enum_field_types)0));
+              ((select_dumpvar *)lex->result)->var_list.push_back( new var($2,0,0,(enum_field_types)0));
             else
               /*
                 The parser won't create select_result instance only
@@ -4453,6 +4377,7 @@ into_destination:
           OUTFILE TEXT_STRING_filesystem
           {
             LEX *lex= Lex;
+            lex->setCacheable(false);
             if (!(lex->exchange= new file_exchange($2.str, 0)) ||
                 !(lex->result= new select_export(lex->exchange)))
               DRIZZLE_YYABORT;
@@ -4463,6 +4388,7 @@ into_destination:
             LEX *lex=Lex;
             if (!lex->describe)
             {
+              lex->setCacheable(false);
               if (!(lex->exchange= new file_exchange($2.str,1)))
                 DRIZZLE_YYABORT;
               if (!(lex->result= new select_dump(lex->exchange)))
@@ -4470,7 +4396,7 @@ into_destination:
             }
           }
         | select_var_list_init
-          { }
+          {Lex->setCacheable(false);}
         ;
 
 /*
@@ -4537,6 +4463,40 @@ opt_temporary:
           /* empty */ { $$= 0; }
         | TEMPORARY_SYM { $$= 1; }
         ;
+
+/*
+  Execute a string as dynamic SQL.
+  */
+
+execute:
+       EXECUTE_SYM execute_var_or_string
+       {
+       }
+
+
+execute_var_or_string:
+         ident_or_text
+         {
+            LEX *lex= Lex;
+            statement::Execute *statement= new(std::nothrow) statement::Execute(YYSession);
+            lex->statement= statement;
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
+
+            statement->setQuery($1);
+         }
+        | '@' ident_or_text
+        {
+          LEX *lex= Lex;
+          statement::Execute *statement= new(std::nothrow) statement::Execute(YYSession);
+          lex->statement= statement;
+          if (lex->statement == NULL)
+            DRIZZLE_YYABORT;
+
+          statement->setVar();
+          statement->setQuery($2);
+        }
+
 /*
 ** Insert : add new data to table
 */
@@ -4835,92 +4795,269 @@ show:
           {}
         ;
 
+/* SHOW SCHEMAS */
 show_param:
            DATABASES show_wild
            {
              LEX *lex= Lex;
-             lex->sql_command= SQLCOM_SHOW_DATABASES;
+             Session *session= YYSession;
+
+             lex->sql_command= SQLCOM_SELECT;
              lex->statement=
-               new(std::nothrow) statement::Select(YYSession);
+               new(std::nothrow) statement::Show(session);
              if (lex->statement == NULL)
                DRIZZLE_YYABORT;
-             if (prepare_schema_table(YYSession, lex, 0, "SCHEMATA"))
+
+             std::string column_name= "Database";
+             if (Lex->wild)
+             {
+               column_name.append(" (");
+               column_name.append(Lex->wild->ptr());
+               column_name.append(")");
+             }
+
+             if (Lex->current_select->where)
+             {
+               if (prepare_new_schema_table(session, lex, "SCHEMAS"))
+                 DRIZZLE_YYABORT;
+             }
+             else
+             {
+               if (prepare_new_schema_table(session, lex, "SHOW_SCHEMAS"))
+                 DRIZZLE_YYABORT;
+             }
+
+             Item_field *my_field= new Item_field(&session->lex->current_select->context, NULL, NULL, "SCHEMA_NAME");
+             my_field->is_autogenerated_name= false;
+             my_field->set_name(column_name.c_str(), column_name.length(), system_charset_info);
+
+             if (session->add_item_to_list(my_field))
                DRIZZLE_YYABORT;
+
+              if (session->add_order_to_list(my_field, true))
+                DRIZZLE_YYABORT;
            }
-         | opt_full TABLES opt_db show_wild
+           /* SHOW TABLES */
+         | TABLES opt_db show_wild
            {
              LEX *lex= Lex;
-             lex->sql_command= SQLCOM_SHOW_TABLES;
-             lex->statement=
-               new(std::nothrow) statement::Select(YYSession);
+             Session *session= YYSession;
+
+             lex->sql_command= SQLCOM_SELECT;
+
+             statement::Show *select=
+               new(std::nothrow) statement::Show(YYSession);
+
+             lex->statement= select;
+
              if (lex->statement == NULL)
                DRIZZLE_YYABORT;
-             lex->select_lex.db= $3;
-             if (prepare_schema_table(YYSession, lex, 0, "TABLE_NAMES"))
+
+
+              std::string column_name= "Tables_in_";
+
+              if ($2)
+              {
+		SchemaIdentifier identifier($2);
+                column_name.append($2);
+                lex->select_lex.db= $2;
+                if (not plugin::StorageEngine::doesSchemaExist(identifier))
+                {
+                  my_error(ER_BAD_DB_ERROR, MYF(0), $2);
+                }
+                select->setShowPredicate($2, "");
+              }
+              else if (not session->db.empty())
+              {
+                column_name.append(session->db);
+                select->setShowPredicate(session->db, "");
+              }
+              else
+              {
+                 my_error(ER_NO_DB_ERROR, MYF(0));
+              }
+
+
+             if (Lex->wild)
+             {
+               column_name.append(" (");
+               column_name.append(Lex->wild->ptr());
+               column_name.append(")");
+             }
+
+             if (prepare_new_schema_table(YYSession, lex, "SHOW_TABLES"))
                DRIZZLE_YYABORT;
+
+             Item_field *my_field= new Item_field(&session->lex->current_select->context, NULL, NULL, "TABLE_NAME");
+             my_field->is_autogenerated_name= false;
+             my_field->set_name(column_name.c_str(), column_name.length(), system_charset_info);
+
+             if (session->add_item_to_list(my_field))
+               DRIZZLE_YYABORT;
+
+              if (session->add_order_to_list(my_field, true))
+                DRIZZLE_YYABORT;
            }
+           /* SHOW TEMPORARY TABLES */
+         | TEMPORARY_SYM TABLES show_wild
+           {
+             LEX *lex= Lex;
+             Session *session= YYSession;
+
+             lex->sql_command= SQLCOM_SELECT;
+
+             statement::Show *select=
+               new(std::nothrow) statement::Show(YYSession);
+
+             lex->statement= select;
+
+             if (lex->statement == NULL)
+               DRIZZLE_YYABORT;
+
+
+             if (prepare_new_schema_table(YYSession, lex, "SHOW_TEMPORARY_TABLES"))
+               DRIZZLE_YYABORT;
+
+             if (session->add_item_to_list( new Item_field(&session->lex->current_select->
+                                                           context,
+                                                           NULL, NULL, "*")))
+               DRIZZLE_YYABORT;
+             (session->lex->current_select->with_wild)++;
+
+           }
+           /* SHOW TABLE STATUS */
          | TABLE_SYM STATUS_SYM opt_db show_wild
            {
              LEX *lex= Lex;
-             lex->sql_command= SQLCOM_SHOW_TABLE_STATUS;
-             lex->statement=
-               new(std::nothrow) statement::Select(YYSession);
+             lex->sql_command= SQLCOM_SELECT;
+             statement::Show *select=
+               new(std::nothrow) statement::Show(YYSession);
+
+             lex->statement= select;
+
              if (lex->statement == NULL)
                DRIZZLE_YYABORT;
-             lex->select_lex.db= $3;
-             if (prepare_schema_table(YYSession, lex, 0, "TABLES"))
+
+             Session *session= YYSession;
+
+             std::string column_name= "Tables_in_";
+
+             if ($3)
+             {
+               lex->select_lex.db= $3;
+
+	       SchemaIdentifier identifier($3);
+               if (not plugin::StorageEngine::doesSchemaExist(identifier))
+               {
+                 my_error(ER_BAD_DB_ERROR, MYF(0), $3);
+               }
+
+               select->setShowPredicate($3, "");
+             }
+             else
+             {
+               select->setShowPredicate(session->db, "");
+             }
+
+             if (prepare_new_schema_table(session, lex, "SHOW_TABLE_STATUS"))
                DRIZZLE_YYABORT;
+
+             if (session->add_item_to_list( new Item_field(&session->lex->current_select->
+                                                           context,
+                                                           NULL, NULL, "*")))
+               DRIZZLE_YYABORT;
+             (session->lex->current_select->with_wild)++;
            }
-        | OPEN_SYM TABLES opt_db show_wild
+           /* SHOW COLUMNS FROM table_name */
+        | COLUMNS from_or_in table_ident opt_db show_wild
           {
-            LEX *lex= Lex;
-            lex->sql_command= SQLCOM_SHOW_OPEN_TABLES;
-            lex->statement=
-              new(std::nothrow) statement::Select(YYSession);
-            if (lex->statement == NULL)
-              DRIZZLE_YYABORT;
-            lex->select_lex.db= $3;
-            if (prepare_schema_table(YYSession, lex, 0, "OPEN_TABLES"))
-              DRIZZLE_YYABORT;
+             LEX *lex= Lex;
+             Session *session= YYSession;
+             statement::Show *select;
+
+             lex->sql_command= SQLCOM_SELECT;
+
+             select= new(std::nothrow) statement::Show(session);
+
+             lex->statement= select;
+
+             if (lex->statement == NULL)
+               DRIZZLE_YYABORT;
+
+             if ($4)
+              select->setShowPredicate($4, $3->table.str);
+             else if ($3->db.str)
+              select->setShowPredicate($3->db.str, $3->table.str);
+             else
+              select->setShowPredicate(session->db, $3->table.str);
+
+             {
+               drizzled::TableIdentifier identifier(select->getShowSchema().c_str(), $3->table.str);
+               if (not plugin::StorageEngine::doesTableExist(*session, identifier))
+               {
+                   my_error(ER_NO_SUCH_TABLE, MYF(0),
+                            select->getShowSchema().c_str(), 
+                            $3->table.str);
+               }
+             }
+
+             if (prepare_new_schema_table(session, lex, "SHOW_COLUMNS"))
+               DRIZZLE_YYABORT;
+
+             if (session->add_item_to_list( new Item_field(&session->lex->current_select->
+                                                           context,
+                                                           NULL, NULL, "*")))
+               DRIZZLE_YYABORT;
+             (session->lex->current_select->with_wild)++;
+
           }
-        | ENGINE_SYM ident_or_text STATUS_SYM /* This should either go... well it should go */
-          {
-            Lex->sql_command= SQLCOM_SHOW_ENGINE_STATUS;
-            Lex->statement=
-              new(std::nothrow) statement::ShowEngineStatus(YYSession, $2.str);
-            if (Lex->statement == NULL)
-              DRIZZLE_YYABORT;
-          }
-        | opt_full COLUMNS from_or_in table_ident opt_db show_wild
-          {
-            LEX *lex= Lex;
-            lex->sql_command= SQLCOM_SHOW_FIELDS;
-            lex->statement=
-              new(std::nothrow) statement::Select(YYSession);
-            if (lex->statement == NULL)
-              DRIZZLE_YYABORT;
-            if ($5)
-              $4->change_db($5);
-            if (prepare_schema_table(YYSession, lex, $4, "COLUMNS"))
-              DRIZZLE_YYABORT;
-          }
+          /* SHOW INDEXES from table */
         | keys_or_index from_or_in table_ident opt_db where_clause
           {
-            LEX *lex= Lex;
-            lex->sql_command= SQLCOM_SHOW_KEYS;
-            lex->statement= new(std::nothrow) statement::Select(YYSession);
-            if (lex->statement == NULL)
-              DRIZZLE_YYABORT;
-            if ($4)
-              $3->change_db($4);
-            if (prepare_schema_table(YYSession, lex, $3, "STATISTICS"))
-              DRIZZLE_YYABORT;
+             LEX *lex= Lex;
+             Session *session= YYSession;
+             statement::Show *select;
+
+             lex->sql_command= SQLCOM_SELECT;
+
+             select= new(std::nothrow) statement::Show(session);
+
+             lex->statement= select;
+
+             if (lex->statement == NULL)
+               DRIZZLE_YYABORT;
+
+             if ($4)
+              select->setShowPredicate($4, $3->table.str);
+             else if ($3->db.str)
+              select->setShowPredicate($3->db.str, $3->table.str);
+             else
+              select->setShowPredicate(session->db, $3->table.str);
+
+             {
+               drizzled::TableIdentifier identifier(select->getShowSchema().c_str(), $3->table.str);
+               if (not plugin::StorageEngine::doesTableExist(*session, identifier))
+               {
+                   my_error(ER_NO_SUCH_TABLE, MYF(0),
+                            select->getShowSchema().c_str(), 
+                            $3->table.str);
+               }
+             }
+
+             if (prepare_new_schema_table(session, lex, "SHOW_INDEXES"))
+               DRIZZLE_YYABORT;
+
+             if (session->add_item_to_list( new Item_field(&session->lex->current_select->
+                                                           context,
+                                                           NULL, NULL, "*")))
+               DRIZZLE_YYABORT;
+             (session->lex->current_select->with_wild)++;
           }
         | COUNT_SYM '(' '*' ')' WARNINGS
           {
             (void) create_select_for_variable("warning_count");
             LEX *lex= Lex;
-            lex->statement= new(std::nothrow) statement::Select(YYSession);
+            lex->statement= new(std::nothrow) statement::Show(YYSession);
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
           }
@@ -4928,7 +5065,7 @@ show_param:
           {
             (void) create_select_for_variable("error_count");
             LEX *lex= Lex;
-            lex->statement= new(std::nothrow) statement::Select(YYSession);
+            lex->statement= new(std::nothrow) statement::Show(YYSession);
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
           }
@@ -4947,67 +5084,187 @@ show_param:
               DRIZZLE_YYABORT;
           }
         | opt_var_type STATUS_SYM show_wild
+           {
+             LEX *lex= Lex;
+             lex->sql_command= SQLCOM_SELECT;
+             lex->statement=
+               new(std::nothrow) statement::Show(YYSession);
+             if (lex->statement == NULL)
+               DRIZZLE_YYABORT;
+
+             Session *session= YYSession;
+
+             if ($1 == OPT_GLOBAL)
+             {
+               if (prepare_new_schema_table(session, lex, "GLOBAL_STATUS"))
+                 DRIZZLE_YYABORT;
+             }
+             else
+             {
+               if (prepare_new_schema_table(session, lex, "SESSION_STATUS"))
+                 DRIZZLE_YYABORT;
+             }
+
+             std::string key("Variable_name");
+             std::string value("Value");
+
+             Item_field *my_field= new Item_field(&session->lex->current_select->context, NULL, NULL, "VARIABLE_NAME");
+             my_field->is_autogenerated_name= false;
+             my_field->set_name(key.c_str(), key.length(), system_charset_info);
+
+             if (session->add_item_to_list(my_field))
+               DRIZZLE_YYABORT;
+
+             my_field= new Item_field(&session->lex->current_select->context, NULL, NULL, "VARIABLE_VALUE");
+             my_field->is_autogenerated_name= false;
+             my_field->set_name(value.c_str(), value.length(), system_charset_info);
+
+             if (session->add_item_to_list(my_field))
+               DRIZZLE_YYABORT;
+           }
+        | CREATE TABLE_SYM table_ident
+           {
+             LEX *lex= Lex;
+             lex->sql_command= SQLCOM_SELECT;
+             statement::Show *select=
+               new(std::nothrow) statement::Show(YYSession);
+
+             lex->statement= select;
+
+             if (lex->statement == NULL)
+               DRIZZLE_YYABORT;
+
+             Session *session= YYSession;
+
+             if (prepare_new_schema_table(session, lex, "TABLE_SQL_DEFINITION"))
+               DRIZZLE_YYABORT;
+
+             if ($3->db.str)
+              select->setShowPredicate($3->db.str, $3->table.str);
+             else
+              select->setShowPredicate(session->db, $3->table.str);
+
+             std::string key("Table");
+             std::string value("Create Table");
+
+             Item_field *my_field= new Item_field(&session->lex->current_select->context, NULL, NULL, "TABLE_NAME");
+             my_field->is_autogenerated_name= false;
+             my_field->set_name(key.c_str(), key.length(), system_charset_info);
+
+             if (session->add_item_to_list(my_field))
+               DRIZZLE_YYABORT;
+
+             my_field= new Item_field(&session->lex->current_select->context, NULL, NULL, "TABLE_SQL_DEFINITION");
+             my_field->is_autogenerated_name= false;
+             my_field->set_name(value.c_str(), value.length(), system_charset_info);
+
+             if (session->add_item_to_list(my_field))
+               DRIZZLE_YYABORT;
+           }
+        | PROCESSLIST_SYM
           {
-            LEX *lex= Lex;
-            lex->sql_command= SQLCOM_SHOW_STATUS;
-            lex->statement=
-              new(std::nothrow) statement::ShowStatus(YYSession,
-                                                    &LOCK_status);
-            if (lex->statement == NULL)
-              DRIZZLE_YYABORT;
-            lex->option_type= $1;
-            if (prepare_schema_table(YYSession, lex, 0, "STATUS"))
-              DRIZZLE_YYABORT;
-          }
-        | opt_full PROCESSLIST_SYM
-          {
-            Lex->sql_command= SQLCOM_SHOW_PROCESSLIST;
-            Lex->statement=
-              new(std::nothrow) statement::ShowProcesslist(YYSession);
-            if (Lex->statement == NULL)
-              DRIZZLE_YYABORT;
+           {
+             LEX *lex= Lex;
+             lex->sql_command= SQLCOM_SELECT;
+             lex->statement=
+               new(std::nothrow) statement::Show(YYSession);
+             if (lex->statement == NULL)
+               DRIZZLE_YYABORT;
+
+             Session *session= YYSession;
+
+             if (prepare_new_schema_table(session, lex, "PROCESSLIST"))
+               DRIZZLE_YYABORT;
+
+             if (session->add_item_to_list( new Item_field(&session->lex->current_select->
+                                                           context,
+                                                           NULL, NULL, "*")))
+               DRIZZLE_YYABORT;
+             (session->lex->current_select->with_wild)++;
+           }
           }
         | opt_var_type  VARIABLES show_wild
-          {
-            LEX *lex= Lex;
-            lex->sql_command= SQLCOM_SHOW_VARIABLES;
-            lex->statement=
-              new(std::nothrow) statement::Select(YYSession);
-            if (lex->statement == NULL)
-              DRIZZLE_YYABORT;
-            lex->option_type= $1;
-            if (prepare_schema_table(YYSession, lex, 0, "VARIABLES"))
-              DRIZZLE_YYABORT;
-          }
+           {
+             LEX *lex= Lex;
+             lex->sql_command= SQLCOM_SELECT;
+             lex->statement=
+               new(std::nothrow) statement::Show(YYSession);
+             if (lex->statement == NULL)
+               DRIZZLE_YYABORT;
+
+             Session *session= YYSession;
+
+             if ($1 == OPT_GLOBAL)
+             {
+               if (prepare_new_schema_table(session, lex, "GLOBAL_VARIABLES"))
+                 DRIZZLE_YYABORT;
+             }
+             else
+             {
+               if (prepare_new_schema_table(session, lex, "SESSION_VARIABLES"))
+                 DRIZZLE_YYABORT;
+             }
+
+             std::string key("Variable_name");
+             std::string value("Value");
+
+             Item_field *my_field= new Item_field(&session->lex->current_select->context, NULL, NULL, "VARIABLE_NAME");
+             my_field->is_autogenerated_name= false;
+             my_field->set_name(key.c_str(), key.length(), system_charset_info);
+
+             if (session->add_item_to_list(my_field))
+               DRIZZLE_YYABORT;
+
+             my_field= new Item_field(&session->lex->current_select->context, NULL, NULL, "VARIABLE_VALUE");
+             my_field->is_autogenerated_name= false;
+             my_field->set_name(value.c_str(), value.length(), system_charset_info);
+
+             if (session->add_item_to_list(my_field))
+               DRIZZLE_YYABORT;
+           }
         | CREATE DATABASE opt_if_not_exists ident
-          {
-            Lex->sql_command=SQLCOM_SHOW_CREATE_DB;
-            statement::ShowCreateSchema *statement= new(std::nothrow) statement::ShowCreateSchema(YYSession);
-            Lex->statement= statement;
-            if (Lex->statement == NULL)
-              DRIZZLE_YYABORT;
-            statement->is_if_not_exists= $3;
-            Lex->name= $4;
-          }
-        | CREATE TABLE_SYM table_ident
-          {
-            LEX *lex= Lex;
-            lex->sql_command = SQLCOM_SHOW_CREATE;
-            lex->statement= new(std::nothrow) statement::ShowCreate(YYSession);
-            if (lex->statement == NULL)
-              DRIZZLE_YYABORT;
-            if (!lex->select_lex.add_table_to_list(YYSession, $3, NULL,0))
-              DRIZZLE_YYABORT;
-          }
+           {
+             LEX *lex= Lex;
+             lex->sql_command= SQLCOM_SELECT;
+             statement::Show *select=
+               new(std::nothrow) statement::Show(YYSession);
+
+             lex->statement= select;
+
+             if (lex->statement == NULL)
+               DRIZZLE_YYABORT;
+
+             Session *session= YYSession;
+
+             if (prepare_new_schema_table(session, lex, "SCHEMA_SQL_DEFINITION"))
+               DRIZZLE_YYABORT;
+
+             if ($4.str)
+              select->setShowPredicate($4.str);
+             else
+              select->setShowPredicate(session->db);
+
+             std::string key("Database");
+             std::string value("Create Database");
+
+             Item_field *my_field= new Item_field(&session->lex->current_select->context, NULL, NULL, "SCHEMA_NAME");
+             my_field->is_autogenerated_name= false;
+             my_field->set_name(key.c_str(), key.length(), system_charset_info);
+
+             if (session->add_item_to_list(my_field))
+               DRIZZLE_YYABORT;
+
+             my_field= new Item_field(&session->lex->current_select->context, NULL, NULL, "SCHEMA_SQL_DEFINITION");
+             my_field->is_autogenerated_name= false;
+             my_field->set_name(value.c_str(), value.length(), system_charset_info);
+
+             if (session->add_item_to_list(my_field))
+               DRIZZLE_YYABORT;
+           }
 
 opt_db:
           /* empty */  { $$= 0; }
         | from_or_in ident { $$= $2.str; }
-        ;
-
-opt_full:
-          /* empty */ { Lex->verbose= false; }
-        | FULL        { Lex->verbose= true; }
         ;
 
 from_or_in:
@@ -5036,18 +5293,43 @@ show_wild:
 describe:
           describe_command table_ident
           {
+            Session *session= YYSession;
+            statement::Show *select;
             LEX *lex= Lex;
             lex->lock_option= TL_READ;
             mysql_init_select(lex);
             lex->current_select->parsing_place= SELECT_LIST;
-            lex->sql_command= SQLCOM_SHOW_FIELDS;
-            lex->statement= new(std::nothrow) statement::Select(YYSession);
+            lex->sql_command= SQLCOM_SELECT;
+            select= new(std::nothrow) statement::Show(session);
+            lex->statement= select;
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
             lex->select_lex.db= 0;
-            lex->verbose= 0;
-            if (prepare_schema_table(YYSession, lex, $2, "COLUMNS"))
-              DRIZZLE_YYABORT;
+
+             if ($2->db.str)
+              select->setShowPredicate($2->db.str, $2->table.str);
+             else
+              select->setShowPredicate(session->db, $2->table.str);
+
+             {
+               drizzled::TableIdentifier identifier(select->getShowSchema().c_str(), $2->table.str);
+               if (not plugin::StorageEngine::doesTableExist(*session, identifier))
+               {
+                   my_error(ER_NO_SUCH_TABLE, MYF(0),
+                            select->getShowSchema().c_str(), 
+                            $2->table.str);
+               }
+             }
+
+             if (prepare_new_schema_table(session, lex, "SHOW_COLUMNS"))
+               DRIZZLE_YYABORT;
+
+             if (session->add_item_to_list( new Item_field(&session->lex->current_select->
+                                                           context,
+                                                           NULL, NULL, "*")))
+               DRIZZLE_YYABORT;
+             (session->lex->current_select->with_wild)++;
+
           }
           opt_describe_column {}
         | describe_command opt_extended_describe
@@ -5104,14 +5386,26 @@ flush_options:
 
 flush_option:
           table_or_tables
-          { Lex->type|= REFRESH_TABLES; }
+          {
+            statement::Flush *statement= (statement::Flush*)Lex->statement;
+            statement->setFlushTables(true);
+          }
           opt_table_list {}
         | TABLES WITH READ_SYM LOCK_SYM
-          { Lex->type|= REFRESH_TABLES | REFRESH_READ_LOCK; }
+          {
+            statement::Flush *statement= (statement::Flush*)Lex->statement;
+            statement->setFlushTablesWithReadLock(true);
+          }
         | LOGS_SYM
-          { Lex->type|= REFRESH_LOG; }
+          {
+            statement::Flush *statement= (statement::Flush*)Lex->statement;
+            statement->setFlushLog(true);
+          }
         | STATUS_SYM
-          { Lex->type|= REFRESH_STATUS; }
+          {
+            statement::Flush *statement= (statement::Flush*)Lex->statement;
+            statement->setFlushStatus(true);
+          }
         ;
 
 opt_table_list:
@@ -5389,12 +5683,12 @@ NUM_literal:
           NUM
           {
             int error;
-            $$ = new Item_int($1.str, (int64_t) my_strtoll10($1.str, NULL, &error), $1.length);
+            $$ = new Item_int($1.str, (int64_t) internal::my_strtoll10($1.str, NULL, &error), $1.length);
           }
         | LONG_NUM
           {
             int error;
-            $$ = new Item_int($1.str, (int64_t) my_strtoll10($1.str, NULL, &error), $1.length);
+            $$ = new Item_int($1.str, (int64_t) internal::my_strtoll10($1.str, NULL, &error), $1.length);
           }
         | ULONGLONG_NUM
           { $$ = new Item_uint($1.str, $1.length); }
@@ -5536,13 +5830,13 @@ field_ident:
           {
             TableList *table=
               reinterpret_cast<TableList*>(Lex->current_select->table_list.first);
-            if (my_strcasecmp(table_alias_charset, $1.str, table->db))
+            if (my_strcasecmp(table_alias_charset, $1.str, table->getSchemaName()))
             {
               my_error(ER_WRONG_DB_NAME, MYF(0), $1.str);
               DRIZZLE_YYABORT;
             }
             if (my_strcasecmp(table_alias_charset, $3.str,
-                              table->table_name))
+                              table->getTableName()))
             {
               my_error(ER_WRONG_TABLE_NAME, MYF(0), $3.str);
               DRIZZLE_YYABORT;
@@ -5666,8 +5960,6 @@ keyword_sp:
         | AVG_ROW_LENGTH           {}
         | AVG_SYM                  {}
         | BIT_SYM                  {}
-        | BLOCK_SIZE_SYM           {}
-        | BLOCK_SYM                {}
         | BOOL_SYM                 {}
         | BOOLEAN_SYM              {}
         | BTREE_SYM                {}
@@ -5685,6 +5977,7 @@ keyword_sp:
         | CONSISTENT_SYM           {}
         | CUBE_SYM                 {}
         | DATA_SYM                 {}
+        | DATABASES                {}
         | DATAFILE_SYM             {}
         | DATETIME_SYM             {}
         | DATE_SYM                 {}
@@ -5768,7 +6061,6 @@ keyword_sp:
         | SESSION_SYM              {}
         | SIMPLE_SYM               {}
         | SHARE_SYM                {}
-        | SHUTDOWN                 {}
         | SNAPSHOT_SYM             {}
         | SQL_BUFFER_RESULT        {}
         | STATUS_SYM               {}
@@ -5797,7 +6089,6 @@ keyword_sp:
         | VALUE_SYM                {}
         | WARNINGS                 {}
         | WEEK_SYM                 {}
-        | WEIGHT_STRING_SYM        {}
         | WORK_SYM                 {}
         | YEAR_SYM                 {}
         ;
@@ -6067,7 +6358,7 @@ union_clause:
 union_list:
           UNION_SYM union_option
           {
-            if (add_select_to_union_list(Lex, (bool)$2))
+            if (add_select_to_union_list(YYSession, Lex, (bool)$2))
               DRIZZLE_YYABORT;
           }
           select_init
@@ -6137,7 +6428,7 @@ query_expression_body:
         | query_expression_body
           UNION_SYM union_option
           {
-            if (add_select_to_union_list(Lex, (bool)$3))
+            if (add_select_to_union_list(YYSession, Lex, (bool)$3))
               DRIZZLE_YYABORT;
           }
           query_specification
@@ -6160,7 +6451,8 @@ subselect_start:
             LEX *lex=Lex;
             if (!lex->expr_allows_subselect)
             {
-              my_parse_error(ER(ER_SYNTAX_ERROR));
+              struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
+              my_parse_error(&pass);
               DRIZZLE_YYABORT;
             }
             /*

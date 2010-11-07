@@ -21,11 +21,13 @@
 #define DRIZZLED_NESTED_JOIN_H
 
 #include <drizzled/sql_list.h>
-#include <drizzled/sql_bitmap.h>
 #include <drizzled/item.h>
 #include <drizzled/table_list.h>
 
 #include <bitset>
+
+namespace drizzled
+{
 
 struct nested_join_st
 {
@@ -62,6 +64,18 @@ struct nested_join_st
   table_map sj_corr_tables;
 
   List<Item> sj_outer_expr_list;
+
+  /**
+     True if this join nest node is completely covered by the query execution
+     plan. This means two things.
+
+     1. All tables on its @c join_list are covered by the plan.
+
+     2. All child join nest nodes are fully covered.
+   */
+  bool is_fully_covered() const { return join_list.elements == counter_; }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_NESTED_JOIN_H */

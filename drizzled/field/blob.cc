@@ -30,6 +30,9 @@
 
 using namespace std;
 
+namespace drizzled
+{
+
 static uint32_t blob_pack_length_to_max_length(uint32_t arg)
 {
   return max(UINT32_MAX,
@@ -58,7 +61,7 @@ Field_blob::Field_blob(unsigned char *ptr_arg,
 {
   flags|= BLOB_FLAG;
   share->blob_fields++;
-  /* TODO: why do not fill table->s->blob_field array here? */
+  /* TODO: why do not fill table->getShare()->blob_field array here? */
 }
 
 void Field_blob::store_length(unsigned char *i_ptr,
@@ -82,7 +85,7 @@ void Field_blob::store_length(unsigned char *i_ptr,
 
 void Field_blob::store_length(unsigned char *i_ptr, uint32_t i_number)
 {
-  store_length(i_ptr, i_number, table->s->db_low_byte_first);
+  store_length(i_ptr, i_number, getTable()->getShare()->db_low_byte_first);
 }
 
 
@@ -112,13 +115,14 @@ uint32_t Field_blob::get_packed_size(const unsigned char *ptr_arg,
 
 uint32_t Field_blob::get_length(uint32_t row_offset)
 {
-  return get_length(ptr+row_offset, table->s->db_low_byte_first);
+  return get_length(ptr+row_offset,
+                    getTable()->getShare()->db_low_byte_first);
 }
 
 
 uint32_t Field_blob::get_length(const unsigned char *ptr_arg)
 {
-  return get_length(ptr_arg, table->s->db_low_byte_first);
+  return get_length(ptr_arg, getTable()->getShare()->db_low_byte_first);
 }
 
 
@@ -156,7 +160,7 @@ int Field_blob::store(const char *from,uint32_t length, const CHARSET_INFO * con
 
   if (from == value.ptr())
   {
-    uint32_t dummy_offset;
+    size_t dummy_offset;
     if (!String::needs_conversion(length, cs, field_charset, &dummy_offset))
     {
       Field_blob::store_length(length);
@@ -333,7 +337,7 @@ int Field_blob::cmp_binary(const unsigned char *a_ptr, const unsigned char *b_pt
 
   diff= memcmp(a,b,min(a_length,b_length));
 
-  return diff ? diff : (int) (a_length - b_length);
+  return diff ? diff : (unsigned int) (a_length - b_length);
 }
 
 /* The following is used only when comparing a key */
@@ -455,7 +459,7 @@ void Field_blob::sort_string(unsigned char *to,uint32_t length)
 
 uint32_t Field_blob::pack_length() const
 {
-  return (uint32_t) (sizeof(uint32_t)+table->s->blob_ptr_size);
+  return (uint32_t) (sizeof(uint32_t) + portable_sizeof_char_ptr);
 }
 
 void Field_blob::sql_type(String &res) const
@@ -516,7 +520,7 @@ const unsigned char *Field_blob::unpack(unsigned char *,
                                         bool low_byte_first)
 {
   uint32_t const length= get_length(from, low_byte_first);
-  table->setWriteSet(field_index);
+  getTable()->setWriteSet(field_index);
   store(reinterpret_cast<const char*>(from) + sizeof(uint32_t),
         length, field_charset);
   return(from + sizeof(uint32_t) + length);
@@ -559,3 +563,5 @@ uint32_t Field_blob::max_display_length()
 {
     return (uint32_t) 4294967295U;
 }
+
+} /* namespace drizzled */

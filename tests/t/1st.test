@@ -9,4 +9,5 @@ drop database if exists pbxt;
 --enable_warnings
 
 show databases;
+select concat("Starting in ", database());
 show tables in mysql;

@@ -17,17 +17,20 @@ explain extended select round(5.5),round(-5.5);
 select round(5.64,1),round(5.64,2),round(5.64,-1),round(5.64,-2);
 select abs(-10), sign(-5), sign(5), sign(0);
 explain extended select abs(-10), sign(-5), sign(5), sign(0);
+--error ER_DIVISION_BY_ZERO
 select log(exp(10)),exp(log(sqrt(10))*2),log(-1),log(NULL),log(1,1),log(3,9),log(-1,2),log(NULL,2);
 explain extended select log(exp(10)),exp(log(sqrt(10))*2),log(-1),log(NULL),log(1,1),log(3,9),log(-1,2),log(NULL,2);
+--error ER_DIVISION_BY_ZERO
 select ln(exp(10)),exp(ln(sqrt(10))*2),ln(-1),ln(0),ln(NULL);
 explain extended select ln(exp(10)),exp(ln(sqrt(10))*2),ln(-1),ln(0),ln(NULL);
+--error ER_DIVISION_BY_ZERO
 select log2(8),log2(15),log2(-2),log2(0),log2(NULL);
 explain extended select log2(8),log2(15),log2(-2),log2(0),log2(NULL);
+--error ER_DIVISION_BY_ZERO
 select log10(100),log10(18),log10(-4),log10(0),log10(NULL);
 explain extended select log10(100),log10(18),log10(-4),log10(0),log10(NULL);
 select pow(10,log10(10)),power(2,4);
 explain extended select pow(10,log10(10)),power(2,4);
-explain extended select rand(999999),rand();
 select pi(),format(sin(pi()/2),6),format(cos(pi()/2),6),format(abs(tan(pi())),6),format(cot(1),6),format(asin(1),6),format(acos(0),6),format(atan(1),6);
 explain extended select pi(),format(sin(pi()/2),6),format(cos(pi()/2),6),format(abs(tan(pi())),6),format(cot(1),6),format(asin(1),6),format(acos(0),6),format(atan(1),6);
 select degrees(pi()),radians(360);
@@ -64,13 +67,6 @@ select format(4.55, 1), format(4.551, 1);
 
 explain extended select degrees(pi()),radians(360);
 
-#
-# Bug #7281: problem with rand()
-#
-
---error 1054
-select rand(rand);
-
 # End of 4.1 tests
 
 #
@@ -105,20 +101,6 @@ drop table t1;
 # Bug #11402: abs() forces rest of calculation to
 #
 select abs(-2) * -2;
-
-#
-# Bug #6172 RAND(a) should only accept constant values as arguments
-#
-CREATE TABLE t1 (a INT);
-
-INSERT INTO t1 VALUES (1),(1),(1),(2);
-SELECT RAND(2) * 1000, RAND(a) * 1000 FROM t1;
-SELECT RAND(2) * 1000, RAND(a) * 1000 FROM t1 WHERE a = 1;
-INSERT INTO t1 VALUES (3);
-SELECT RAND(2) * 1000, RAND(a) * 1000 FROM t1;
-SELECT RAND(2) * 1000, RAND(a) * 1000 FROM t1 WHERE a = 1;
-
-DROP TABLE t1;  
 
 # End of 4.1 tests
 

@@ -36,14 +36,24 @@ Note	1051	Unknown table 't1'
 create temporary table t1 (ordid int not null auto_increment, ord  varchar(50) not null, primary key (ord,ordid)) engine=MEMORY;
 ERROR 42000: Incorrect table definition; there can be only one auto column and it must be defined as a key
 create table not_existing_database.test (a int);
-ERROR 42000: Unknown database 'not_existing_database'
+ERROR 42000: Unknown schema 'not_existing_database'
 create table `a/a` (a int);
 show create table `a/a`;
 Table	Create Table
 a/a	CREATE TABLE `a/a` (
-  `a` int DEFAULT NULL
-) ENGINE=DEFAULT
+  `a` INT DEFAULT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 create table t1 like `a/a`;
+show create table t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` INT DEFAULT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
+show create table `t1`;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` INT DEFAULT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table `a/a`;
 drop table `t1`;
 create table `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa` (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa int);
@@ -76,7 +86,7 @@ create table t1 (t1.index int);
 drop table t1;
 drop database if exists mysqltest;
 Warnings:
-Note	1008	Can't drop database 'mysqltest'; database doesn't exist
+Note	1008	Can't drop schema 'mysqltest'; schema doesn't exist
 create database mysqltest;
 create table mysqltest.$test1 (a$1 int, $b int, c$ int);
 insert into mysqltest.$test1 values (1,2,3);
@@ -107,35 +117,35 @@ drop table t1,t2;
 create table t1(x varchar(50) );
 create table t2 select x from t1 where 1=2;
 describe t1;
-Field	Type	Null	Key	Default	Extra
-x	varchar(50)	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+x	VARCHAR	YES		YES	
 describe t2;
-Field	Type	Null	Key	Default	Extra
-x	varchar(50)	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+x	VARCHAR	YES		YES	
 drop table t2;
 create table t2 select now() as a , curdate() as c , 1+1 as d , 1.0 + 1 as e , 33333333333333333 + 3 as f;
 describe t2;
-Field	Type	Null	Key	Default	Extra
-a	datetime	YES		NULL	
-c	date	NO		NULL	
-d	int	NO		NULL	
-e	decimal(3,1)	NO		NULL	
-f	bigint	NO		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+a	DATETIME	YES		YES	
+c	DATE	NO		NO	
+d	INTEGER	NO		NO	
+e	DECIMAL	NO		NO	
+f	BIGINT	NO		NO	
 drop table t2;
 create table t2 select CAST("2001-12-29" AS DATE) as d, CAST("2001-12-29  20:45:11" AS DATETIME) as dt;
 describe t2;
-Field	Type	Null	Key	Default	Extra
-d	date	YES		NULL	
-dt	datetime	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+d	DATE	YES		YES	
+dt	DATETIME	YES		YES	
 drop table t1,t2;
 create table t1 (a int);
 create table t2 (a int) select * from t1;
 describe t1;
-Field	Type	Null	Key	Default	Extra
-a	int	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+a	INTEGER	YES		YES	
 describe t2;
-Field	Type	Null	Key	Default	Extra
-a	int	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+a	INTEGER	YES		YES	
 drop table if exists t2;
 create table t2 (a int, a float) select * from t1;
 ERROR 42S21: Duplicate column name 'a'
@@ -166,8 +176,8 @@ create table t1 (a int not null, b int, primary key(a), key (b), key (b), key (b
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int NOT NULL,
-  `b` int DEFAULT NULL,
+  `a` INT NOT NULL,
+  `b` INT DEFAULT NULL,
   PRIMARY KEY (`a`),
   KEY `b` (`b`),
   KEY `b_2` (`b`),
@@ -200,7 +210,7 @@ t1	CREATE TABLE `t1` (
   KEY `b_29` (`b`),
   KEY `b_30` (`b`),
   KEY `b_31` (`b`)
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 select if(1,'1','0'), month("2002-08-02");
 drop table t1;
@@ -217,8 +227,8 @@ CREATE TEMPORARY TABLE t1 (a int not null);
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `a` int NOT NULL
-) ENGINE=MEMORY
+  `a` INT NOT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 drop table t1;
 SET SESSION storage_engine="gemini";
 ERROR 42000: Unknown table engine 'gemini'
@@ -229,8 +239,8 @@ CREATE TEMPORARY TABLE t1 (a int not null);
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `a` int NOT NULL
-) ENGINE=MEMORY
+  `a` INT NOT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 SET SESSION storage_engine=default;
 drop table t1;
 create table t1 ( k1 varchar(2), k2 int, primary key(k1,k2));
@@ -270,9 +280,8 @@ show warnings;
 Level	Code	Message
 Note	1050	Table 't1' already exists
 Error	1062	Duplicate entry '3' for key 'PRIMARY'
-show status like "Opened_tables";
-Variable_name	Value
-Opened_tables	2
+select * from DATA_DICTIONARY.TABLE_DEFINITION_CACHE WHERE TABLE_COUNT > 1 ORDER BY TABLE_SCHEMA, TABLE_NAME;
+TABLE_SCHEMA	TABLE_NAME	VERSION	TABLE_COUNT	IS_NAME_LOCKED
 select * from t1;
 a	b
 1	1
@@ -281,7 +290,7 @@ drop table t1;
 create table `t1 `(a int);
 ERROR 42000: Incorrect table name 't1 '
 create database `db1 `;
-ERROR 42000: Incorrect database name 'db1 '
+ERROR 42000: Incorrect schema name 'db1 '
 create table t1(`a ` int);
 ERROR 42000: Incorrect column name 'a '
 create table t1 (a int,);
@@ -305,9 +314,9 @@ create table t3 like t1;
 show create table t3;
 Table	Create Table
 t3	CREATE TABLE `t3` (
-  `id` int NOT NULL,
-  `name` varchar(20) DEFAULT NULL
-) ENGINE=DEFAULT
+  `id` INT NOT NULL,
+  `name` VARCHAR(20) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 select * from t3;
 id	name
 create table if not exists t3 like t1;
@@ -320,17 +329,17 @@ create temporary table t3 like t2;
 show create table t3;
 Table	Create Table
 t3	CREATE TEMPORARY TABLE `t3` (
-  `id` int NOT NULL
-) ENGINE=DEFAULT
+  `id` INT NOT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 select * from t3;
 id
 drop table t3;
 show create table t3;
 Table	Create Table
 t3	CREATE TABLE `t3` (
-  `id` int NOT NULL,
-  `name` varchar(20) DEFAULT NULL
-) ENGINE=DEFAULT
+  `id` INT NOT NULL,
+  `name` VARCHAR(20) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 select * from t3;
 id	name
 drop table t2, t3;
@@ -340,29 +349,29 @@ create temporary table t3 like mysqltest.t3;
 show create table t3;
 Table	Create Table
 t3	CREATE TEMPORARY TABLE `t3` (
-  `id` int NOT NULL,
-  `name` varchar(20) DEFAULT NULL
-) ENGINE=DEFAULT
+  `id` INT NOT NULL,
+  `name` VARCHAR(20) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 create table t2 like t3;
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `id` int NOT NULL,
-  `name` varchar(20) DEFAULT NULL
-) ENGINE=DEFAULT
+  `id` INT NOT NULL,
+  `name` VARCHAR(20) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 select * from t2;
 id	name
 create table t3 like t1;
+ERROR 42S01: Table 't3' already exists
 create table t3 like mysqltest.t3;
 ERROR 42S01: Table 't3' already exists
 create table non_existing_database.t1 like t1;
-ERROR 42000: Unknown database 'non_existing_database'
+ERROR 42000: Unknown schema 'non_existing_database'
 create table t3 like non_existing_table;
 ERROR 42S02: Table 'test.non_existing_table' doesn't exist
 create temporary table t3 like t1;
 ERROR 42S01: Table 't3' already exists
 drop table t1, t2, t3;
-drop table t3;
 drop database mysqltest;
 SET SESSION storage_engine="MEMORY";
 SELECT @@storage_engine;
@@ -372,8 +381,8 @@ CREATE TEMPORARY TABLE t1 (a int not null);
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `a` int NOT NULL
-) ENGINE=MEMORY
+  `a` INT NOT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 drop table t1;
 SET SESSION storage_engine="gemini";
 ERROR 42000: Unknown table engine 'gemini'
@@ -384,8 +393,8 @@ CREATE TEMPORARY TABLE t1 (a int not null);
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `a` int NOT NULL
-) ENGINE=MEMORY
+  `a` INT NOT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 SET SESSION storage_engine=default;
 drop table t1;
 create table t1(a int,b int,c int,d date,e char,f datetime,h blob);
@@ -418,14 +427,14 @@ ifnull(f,cast('2000-01-01'              as datetime)) as f,
 ifnull(h,cast('yet another binary data' as binary))   as h
 from t1;
 explain t2;
-Field	Type	Null	Key	Default	Extra
-a	int	YES		NULL	
-b	bigint	NO		NULL	
-c	bigint	NO		NULL	
-d	date	YES		NULL	
-e	varchar(1)	YES		NULL	
-f	datetime	YES		NULL	
-h	blob	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+a	INTEGER	YES		YES	
+b	BIGINT	NO		NO	
+c	BIGINT	NO		NO	
+d	DATE	YES		YES	
+e	VARCHAR	YES		YES	
+f	DATETIME	YES		YES	
+h	BLOB	YES		YES	
 select * from t2;
 a	b	c	d	e	f	h
 1	-7	7	2000-01-01	b	2000-01-01 00:00:00	yet another binary data
@@ -436,46 +445,46 @@ create table t2 select ifnull(a,a), ifnull(b,b), ifnull(d,d), ifnull(e,e), ifnul
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `ifnull(a,a)` int DEFAULT NULL,
-  `ifnull(b,b)` int DEFAULT NULL,
-  `ifnull(d,d)` int DEFAULT NULL,
-  `ifnull(e,e)` bigint DEFAULT NULL,
-  `ifnull(f,f)` double(3,2) DEFAULT NULL,
-  `ifnull(g,g)` double(4,3) DEFAULT NULL,
-  `ifnull(h,h)` decimal(5,4) DEFAULT NULL,
-  `ifnull(j,j)` date DEFAULT NULL,
-  `ifnull(k,k)` timestamp NULL DEFAULT NULL,
-  `ifnull(l,l)` datetime DEFAULT NULL,
-  `ifnull(m,m)` varchar(1) DEFAULT NULL,
-  `ifnull(o,o)` varchar(10) DEFAULT NULL
-) ENGINE=DEFAULT
+  `ifnull(a,a)` INT DEFAULT NULL,
+  `ifnull(b,b)` INT DEFAULT NULL,
+  `ifnull(d,d)` INT DEFAULT NULL,
+  `ifnull(e,e)` BIGINT DEFAULT NULL,
+  `ifnull(f,f)` DOUBLE(3,2) DEFAULT NULL,
+  `ifnull(g,g)` DOUBLE(4,3) DEFAULT NULL,
+  `ifnull(h,h)` DECIMAL(5,4) DEFAULT NULL,
+  `ifnull(j,j)` DATE DEFAULT NULL,
+  `ifnull(k,k)` TIMESTAMP NULL DEFAULT NULL,
+  `ifnull(l,l)` DATETIME DEFAULT NULL,
+  `ifnull(m,m)` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL,
+  `ifnull(o,o)` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1,t2;
 create table t1(str varchar(10) default 'def',strnull varchar(10),intg int default '10',rel double default '3.14');
 insert into t1 values ('','',0,0.0);
 describe t1;
-Field	Type	Null	Key	Default	Extra
-str	varchar(10)	YES		def	
-strnull	varchar(10)	YES		NULL	
-intg	int	YES		10	
-rel	double	YES		3.14	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+str	VARCHAR	YES	def	NO	
+strnull	VARCHAR	YES		YES	
+intg	INTEGER	YES	10	NO	
+rel	DOUBLE	YES	3.14	NO	
 create table t2 select default(str) as str, default(strnull) as strnull, default(intg) as intg, default(rel) as rel from t1;
 describe t2;
-Field	Type	Null	Key	Default	Extra
-str	varchar(10)	YES		NULL	
-strnull	varchar(10)	YES		NULL	
-intg	int	YES		NULL	
-rel	double	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+str	VARCHAR	YES		YES	
+strnull	VARCHAR	YES		YES	
+intg	INTEGER	YES		YES	
+rel	DOUBLE	YES		YES	
 drop table t1, t2;
 create table t1(name varchar(10), age int default -1);
 describe t1;
-Field	Type	Null	Key	Default	Extra
-name	varchar(10)	YES		NULL	
-age	int	YES		-1	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+name	VARCHAR	YES		YES	
+age	INTEGER	YES	-1	NO	
 create table t2(name varchar(10), age int default - 1);
 describe t2;
-Field	Type	Null	Key	Default	Extra
-name	varchar(10)	YES		NULL	
-age	int	YES		-1	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+name	VARCHAR	YES		YES	
+age	INTEGER	YES	-1	NO	
 drop table t1, t2;
 create table t1(cenum enum('a'));
 create table t2(cenum enum('a','a'));
@@ -515,15 +524,15 @@ ERROR 42000: Incorrect table name 'column'
 create table t1(test.column.name int);
 ERROR 42000: Incorrect table name 'column'
 create table t1(xyz.t1.name int);
-ERROR 42000: Incorrect database name 'xyz'
+ERROR 42000: Incorrect schema name 'xyz'
 create table t1(t1.name int);
 create table t2(test.t2.name int);
 drop table t1,t2;
 CREATE TABLE t1 (f1 VARCHAR(255));
 CREATE TABLE t2 AS SELECT LEFT(f1,171) AS f2 FROM t1 UNION SELECT LEFT(f1,171) AS f2 FROM t1;
 DESC t2;
-Field	Type	Null	Key	Default	Extra
-f2	varchar(171)	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+f2	VARCHAR	YES		YES	
 DROP TABLE t1,t2;
 CREATE TABLE t12913 (f1 ENUM ('a','b')) AS SELECT 'a' AS f1;
 SELECT * FROM t12913;
@@ -534,15 +543,15 @@ create database mysqltest;
 use mysqltest;
 drop database mysqltest;
 create table test.t1 like x;
-ERROR 3D000: No database selected
+ERROR 3D000: No schema selected
 drop table if exists test.t1;
 create database mysqltest;
 create database if not exists mysqltest;
 Warnings:
-Note	1007	Can't create database 'mysqltest'; database exists
+Note	1007	Can't create schema 'mysqltest'; schema exists
 show create database mysqltest;
 Database	Create Database
-mysqltest	CREATE DATABASE `mysqltest`
+mysqltest	CREATE DATABASE `mysqltest` COLLATE = utf8_general_ci
 drop database mysqltest;
 use test;
 create table t1 (a int);
@@ -557,9 +566,9 @@ primary key (a)
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(112) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
+  `a` VARCHAR(112) COLLATE utf8_bin NOT NULL,
   PRIMARY KEY (`a`)
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 CREATE TABLE t2 (
 a int default NULL
@@ -572,10 +581,10 @@ b int not null, primary key (a)
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(12) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
-  `b` int NOT NULL,
+  `a` VARCHAR(12) COLLATE utf8_bin NOT NULL,
+  `b` INT NOT NULL,
   PRIMARY KEY (`a`)
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 ( 
 a varchar(12) collate utf8_bin not null, 
@@ -589,11 +598,11 @@ b int null, primary key (a)
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `b` int DEFAULT NULL,
-  `a` varchar(12) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
-  `c` int NOT NULL,
+  `b` INT DEFAULT NULL,
+  `a` VARCHAR(12) COLLATE utf8_bin NOT NULL,
+  `c` INT NOT NULL,
   PRIMARY KEY (`a`)
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 ( 
 a varchar(12) collate utf8_bin not null,
@@ -602,10 +611,10 @@ b int not null, primary key (a)
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(12) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
-  `b` int NOT NULL,
+  `a` VARCHAR(12) COLLATE utf8_bin NOT NULL,
+  `b` INT NOT NULL,
   PRIMARY KEY (`a`)
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 ( 
 a varchar(12) collate utf8_bin,
@@ -614,10 +623,10 @@ b int not null, primary key (a)
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(12) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
-  `b` int NOT NULL,
+  `a` VARCHAR(12) COLLATE utf8_bin NOT NULL,
+  `b` INT NOT NULL,
   PRIMARY KEY (`a`)
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1, t2;
 create table t1 ( 
 a1 int not null,
@@ -650,11 +659,11 @@ select a1,a2 from t1;
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `a` int DEFAULT '3',
-  `b` int DEFAULT '3',
-  `a1` int DEFAULT NULL,
-  `a2` int DEFAULT NULL
-) ENGINE=DEFAULT
+  `a` INT DEFAULT '3',
+  `b` INT DEFAULT '3',
+  `a1` INT DEFAULT NULL,
+  `a2` INT DEFAULT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1, t2;
 create table t1 select * from t2;
 ERROR 42S02: Table 'test.t2' doesn't exist
@@ -825,22 +834,22 @@ c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15,c16)
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` int DEFAULT NULL,
-  `c2` int DEFAULT NULL,
-  `c3` int DEFAULT NULL,
-  `c4` int DEFAULT NULL,
-  `c5` int DEFAULT NULL,
-  `c6` int DEFAULT NULL,
-  `c7` int DEFAULT NULL,
-  `c8` int DEFAULT NULL,
-  `c9` int DEFAULT NULL,
-  `c10` int DEFAULT NULL,
-  `c11` int DEFAULT NULL,
-  `c12` int DEFAULT NULL,
-  `c13` int DEFAULT NULL,
-  `c14` int DEFAULT NULL,
-  `c15` int DEFAULT NULL,
-  `c16` int DEFAULT NULL,
+  `c1` INT DEFAULT NULL,
+  `c2` INT DEFAULT NULL,
+  `c3` INT DEFAULT NULL,
+  `c4` INT DEFAULT NULL,
+  `c5` INT DEFAULT NULL,
+  `c6` INT DEFAULT NULL,
+  `c7` INT DEFAULT NULL,
+  `c8` INT DEFAULT NULL,
+  `c9` INT DEFAULT NULL,
+  `c10` INT DEFAULT NULL,
+  `c11` INT DEFAULT NULL,
+  `c12` INT DEFAULT NULL,
+  `c13` INT DEFAULT NULL,
+  `c14` INT DEFAULT NULL,
+  `c15` INT DEFAULT NULL,
+  `c16` INT DEFAULT NULL,
   KEY `a001_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
   KEY `a002_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
   KEY `a003_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
@@ -905,27 +914,27 @@ t1	CREATE TABLE `t1` (
   KEY `a062_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
   KEY `a063_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
   KEY `a064_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`)
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 flush tables;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` int DEFAULT NULL,
-  `c2` int DEFAULT NULL,
-  `c3` int DEFAULT NULL,
-  `c4` int DEFAULT NULL,
-  `c5` int DEFAULT NULL,
-  `c6` int DEFAULT NULL,
-  `c7` int DEFAULT NULL,
-  `c8` int DEFAULT NULL,
-  `c9` int DEFAULT NULL,
-  `c10` int DEFAULT NULL,
-  `c11` int DEFAULT NULL,
-  `c12` int DEFAULT NULL,
-  `c13` int DEFAULT NULL,
-  `c14` int DEFAULT NULL,
-  `c15` int DEFAULT NULL,
-  `c16` int DEFAULT NULL,
+  `c1` INT DEFAULT NULL,
+  `c2` INT DEFAULT NULL,
+  `c3` INT DEFAULT NULL,
+  `c4` INT DEFAULT NULL,
+  `c5` INT DEFAULT NULL,
+  `c6` INT DEFAULT NULL,
+  `c7` INT DEFAULT NULL,
+  `c8` INT DEFAULT NULL,
+  `c9` INT DEFAULT NULL,
+  `c10` INT DEFAULT NULL,
+  `c11` INT DEFAULT NULL,
+  `c12` INT DEFAULT NULL,
+  `c13` INT DEFAULT NULL,
+  `c14` INT DEFAULT NULL,
+  `c15` INT DEFAULT NULL,
+  `c16` INT DEFAULT NULL,
   KEY `a001_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
   KEY `a002_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
   KEY `a003_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
@@ -990,7 +999,7 @@ t1	CREATE TABLE `t1` (
   KEY `a062_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
   KEY `a063_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
   KEY `a064_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`)
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 (c1 int, c2 int, c3 int, c4 int, c5 int, c6 int, c7 int, 
 c8 int, c9 int, c10 int, c11 int, c12 int, c13 int, c14 int, c15 int, c16 int);
@@ -1126,22 +1135,22 @@ c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15,c16);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` int DEFAULT NULL,
-  `c2` int DEFAULT NULL,
-  `c3` int DEFAULT NULL,
-  `c4` int DEFAULT NULL,
-  `c5` int DEFAULT NULL,
-  `c6` int DEFAULT NULL,
-  `c7` int DEFAULT NULL,
-  `c8` int DEFAULT NULL,
-  `c9` int DEFAULT NULL,
-  `c10` int DEFAULT NULL,
-  `c11` int DEFAULT NULL,
-  `c12` int DEFAULT NULL,
-  `c13` int DEFAULT NULL,
-  `c14` int DEFAULT NULL,
-  `c15` int DEFAULT NULL,
-  `c16` int DEFAULT NULL,
+  `c1` INT DEFAULT NULL,
+  `c2` INT DEFAULT NULL,
+  `c3` INT DEFAULT NULL,
+  `c4` INT DEFAULT NULL,
+  `c5` INT DEFAULT NULL,
+  `c6` INT DEFAULT NULL,
+  `c7` INT DEFAULT NULL,
+  `c8` INT DEFAULT NULL,
+  `c9` INT DEFAULT NULL,
+  `c10` INT DEFAULT NULL,
+  `c11` INT DEFAULT NULL,
+  `c12` INT DEFAULT NULL,
+  `c13` INT DEFAULT NULL,
+  `c14` INT DEFAULT NULL,
+  `c15` INT DEFAULT NULL,
+  `c16` INT DEFAULT NULL,
   KEY `a001_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
   KEY `a002_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
   KEY `a003_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
@@ -1206,27 +1215,27 @@ t1	CREATE TABLE `t1` (
   KEY `a062_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
   KEY `a063_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
   KEY `a064_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`)
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 flush tables;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` int DEFAULT NULL,
-  `c2` int DEFAULT NULL,
-  `c3` int DEFAULT NULL,
-  `c4` int DEFAULT NULL,
-  `c5` int DEFAULT NULL,
-  `c6` int DEFAULT NULL,
-  `c7` int DEFAULT NULL,
-  `c8` int DEFAULT NULL,
-  `c9` int DEFAULT NULL,
-  `c10` int DEFAULT NULL,
-  `c11` int DEFAULT NULL,
-  `c12` int DEFAULT NULL,
-  `c13` int DEFAULT NULL,
-  `c14` int DEFAULT NULL,
-  `c15` int DEFAULT NULL,
-  `c16` int DEFAULT NULL,
+  `c1` INT DEFAULT NULL,
+  `c2` INT DEFAULT NULL,
+  `c3` INT DEFAULT NULL,
+  `c4` INT DEFAULT NULL,
+  `c5` INT DEFAULT NULL,
+  `c6` INT DEFAULT NULL,
+  `c7` INT DEFAULT NULL,
+  `c8` INT DEFAULT NULL,
+  `c9` INT DEFAULT NULL,
+  `c10` INT DEFAULT NULL,
+  `c11` INT DEFAULT NULL,
+  `c12` INT DEFAULT NULL,
+  `c13` INT DEFAULT NULL,
+  `c14` INT DEFAULT NULL,
+  `c15` INT DEFAULT NULL,
+  `c16` INT DEFAULT NULL,
   KEY `a001_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
   KEY `a002_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
   KEY `a003_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
@@ -1291,7 +1300,7 @@ t1	CREATE TABLE `t1` (
   KEY `a062_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
   KEY `a063_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
   KEY `a064_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`)
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 alter table t1 add key 
 a065_long_123456789_123456789_123456789_123456789_123456789_1234 (
 c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15,c16);
@@ -1309,24 +1318,24 @@ ERROR 42000: Identifier name 'a001_long_123456789_123456789_123456789_123456789_
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` int DEFAULT NULL,
-  `c2` int DEFAULT NULL,
-  `c3` int DEFAULT NULL,
-  `c4` int DEFAULT NULL,
-  `c5` int DEFAULT NULL,
-  `c6` int DEFAULT NULL,
-  `c7` int DEFAULT NULL,
-  `c8` int DEFAULT NULL,
-  `c9` int DEFAULT NULL,
-  `c10` int DEFAULT NULL,
-  `c11` int DEFAULT NULL,
-  `c12` int DEFAULT NULL,
-  `c13` int DEFAULT NULL,
-  `c14` int DEFAULT NULL,
-  `c15` int DEFAULT NULL,
-  `c16` int DEFAULT NULL,
-  `c17` int DEFAULT NULL
-) ENGINE=DEFAULT
+  `c1` INT DEFAULT NULL,
+  `c2` INT DEFAULT NULL,
+  `c3` INT DEFAULT NULL,
+  `c4` INT DEFAULT NULL,
+  `c5` INT DEFAULT NULL,
+  `c6` INT DEFAULT NULL,
+  `c7` INT DEFAULT NULL,
+  `c8` INT DEFAULT NULL,
+  `c9` INT DEFAULT NULL,
+  `c10` INT DEFAULT NULL,
+  `c11` INT DEFAULT NULL,
+  `c12` INT DEFAULT NULL,
+  `c13` INT DEFAULT NULL,
+  `c14` INT DEFAULT NULL,
+  `c15` INT DEFAULT NULL,
+  `c16` INT DEFAULT NULL,
+  `c17` INT DEFAULT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 
 Bug #26104 Bug on foreign key class constructor
@@ -1362,14 +1371,8 @@ DROP TABLE t1;
 CREATE TABLE t1(c1 VARCHAR(33), KEY (c1) USING BTREE);
 DROP TABLE t1;
 CREATE TEMPORARY TABLE t1(c1 VARCHAR(33), KEY USING BTREE (c1) USING HASH) ENGINE=MEMORY;
-SHOW INDEX FROM t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	1	c1	1	c1	NULL	0	NULL	NULL	YES	HASH		
 DROP TABLE t1;
 CREATE TEMPORARY TABLE t1(c1 VARCHAR(33), KEY USING HASH (c1) USING BTREE) ENGINE=MEMORY;
-SHOW INDEX FROM t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	1	c1	1	c1	A	NULL	NULL	NULL	YES	BTREE		
 DROP TABLE t1;
 End of 5.0 tests
 CREATE TABLE t1 (a int, b int);
@@ -1396,20 +1399,20 @@ SELECT * from t2;
 a	b
 drop table t1,t2;
 CREATE DATABASE aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
-ERROR 42000: Incorrect database name 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+ERROR 42000: Incorrect schema name 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 DROP DATABASE aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
-ERROR 42000: Incorrect database name 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+ERROR 42000: Incorrect schema name 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 USE aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
-ERROR 42000: Incorrect database name 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+ERROR 42000: Incorrect schema name 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 SHOW CREATE DATABASE aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
-ERROR 42000: Incorrect database name 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+Database	Create Database
 create database имя_базы_в_кодировке_утф8_длиной_больше_чем_45;
 use имя_базы_в_кодировке_утф8_длиной_больше_чем_45;
 select database();
 database()
 имя_базы_в_кодировке_утф8_длиной_больше_чем_45
 use test;
-select SCHEMA_NAME from information_schema.schemata
+select SCHEMA_NAME from data_dictionary.schemas
 where schema_name='имя_базы_в_кодировке_утф8_длиной_больше_чем_45';
 SCHEMA_NAME
 имя_базы_в_кодировке_утф8_длиной_больше_чем_45
@@ -1421,56 +1424,56 @@ index имя_индекса_в_кодировке_утф8_длиной_боль�
 );
 select * from имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48;
 имя_поля_в_кодировке_утф8_длиной_больше_чем_45
-select TABLE_NAME from information_schema.tables where
+select TABLE_NAME from data_dictionary.tables where
 table_schema='test';
 TABLE_NAME
 имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48
-select COLUMN_NAME from information_schema.columns where
+select COLUMN_NAME from data_dictionary.columns where
 table_schema='test';
 COLUMN_NAME
 имя_поля_в_кодировке_утф8_длиной_больше_чем_45
-select INDEX_NAME from information_schema.statistics where
+select INDEX_NAME from data_dictionary.indexes where
 table_schema='test';
 INDEX_NAME
 имя_индекса_в_кодировке_утф8_длиной_больше_чем_48
 show create table имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48;
 Table	Create Table
 имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48	CREATE TABLE `имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48` (
-  `имя_поля_в_кодировке_утф8_длиной_больше_чем_45` int DEFAULT NULL,
+  `имя_поля_в_кодировке_утф8_длиной_больше_чем_45` INT DEFAULT NULL,
   KEY `имя_индекса_в_кодировке_утф8_длиной_больше_чем_48` (`имя_поля_в_кодировке_утф8_длиной_больше_чем_45`)
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48;
-create table t1 like information_schema.processlist;
-ERROR HY000: Table storage engine 'INFORMATION_ENGINE' does not support the create option 'TEMPORARY'
-create table t1 like information_schema.processlist engine=innodb;
+create table t1 like data_dictionary.processlist;
+ERROR HY000: Can't create table 'test.t1' (errno: 1)
+create table t1 like data_dictionary.processlist engine=innodb;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `ID` bigint NOT NULL DEFAULT '0',
-  `USER` varchar(16) NOT NULL DEFAULT '',
-  `HOST` varchar(64) NOT NULL DEFAULT '',
-  `DB` varchar(64) DEFAULT NULL,
-  `COMMAND` varchar(16) NOT NULL DEFAULT '',
-  `TIME` bigint NOT NULL DEFAULT '0',
-  `STATE` varchar(64) DEFAULT NULL,
-  `INFO` varchar(16383) DEFAULT NULL
-) ENGINE=InnoDB
+  `ID` BIGINT NOT NULL,
+  `USER` VARCHAR(16) NOT NULL,
+  `HOST` VARCHAR(1025) NOT NULL,
+  `DB` VARCHAR(256) NOT NULL,
+  `COMMAND` VARCHAR(16) NOT NULL,
+  `TIME` BIGINT NOT NULL,
+  `STATE` VARCHAR(256) DEFAULT NULL,
+  `INFO` VARCHAR(100) DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table t1;
-create temporary table t1 like information_schema.processlist;
-ERROR HY000: Table storage engine 'INFORMATION_ENGINE' does not support the create option 'TEMPORARY'
-create temporary table t1 like information_schema.processlist engine=myisam;
+create temporary table t1 like data_dictionary.processlist;
+ERROR HY000: Can't create table 'test.#t1' (errno: 138)
+create temporary table t1 like data_dictionary.processlist engine=myisam;
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `ID` bigint NOT NULL DEFAULT '0',
-  `USER` varchar(16) NOT NULL DEFAULT '',
-  `HOST` varchar(64) NOT NULL DEFAULT '',
-  `DB` varchar(64) DEFAULT NULL,
-  `COMMAND` varchar(16) NOT NULL DEFAULT '',
-  `TIME` bigint NOT NULL DEFAULT '0',
-  `STATE` varchar(64) DEFAULT NULL,
-  `INFO` varchar(16383) DEFAULT NULL
-) ENGINE=MyISAM
+  `ID` BIGINT NOT NULL,
+  `USER` VARCHAR(16) NOT NULL,
+  `HOST` VARCHAR(1025) NOT NULL,
+  `DB` VARCHAR(256) NOT NULL,
+  `COMMAND` VARCHAR(16) NOT NULL,
+  `TIME` BIGINT NOT NULL,
+  `STATE` VARCHAR(256) DEFAULT NULL,
+  `INFO` VARCHAR(100) DEFAULT NULL
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 drop table t1;
 
 # --
@@ -1488,31 +1491,31 @@ c3 INT NOT NULL COMMENT 'column3',
 c4 VARCHAR(255) NOT NULL DEFAULT 'a',
 c5 VARCHAR(255) COLLATE utf8_unicode_ci NULL DEFAULT 'b',
 c6 VARCHAR(255))
-COLLATE utf8_bin;
+COLLATE=utf8_bin;
 
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` int DEFAULT '12' COMMENT 'column1',
-  `c2` int DEFAULT NULL COMMENT 'column2',
-  `c3` int NOT NULL COMMENT 'column3',
-  `c4` varchar(255) COLLATE utf8_bin NOT NULL DEFAULT 'a',
-  `c5` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT 'b',
-  `c6` varchar(255) COLLATE utf8_bin DEFAULT NULL
-) ENGINE=DEFAULT
+  `c1` INT DEFAULT '12' COMMENT 'column1',
+  `c2` INT DEFAULT NULL COMMENT 'column2',
+  `c3` INT NOT NULL COMMENT 'column3',
+  `c4` VARCHAR(255) COLLATE utf8_bin NOT NULL DEFAULT 'a',
+  `c5` VARCHAR(255) COLLATE utf8_unicode_ci DEFAULT 'b',
+  `c6` VARCHAR(255) COLLATE utf8_bin DEFAULT NULL
+) ENGINE=DEFAULT COLLATE = utf8_bin
 
 CREATE TABLE t2 AS SELECT * FROM t1;
 
 SHOW CREATE TABLE t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `c1` int DEFAULT '12' COMMENT 'column1',
-  `c2` int DEFAULT NULL COMMENT 'column2',
-  `c3` int NOT NULL COMMENT 'column3',
-  `c4` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL DEFAULT 'a',
-  `c5` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT 'b',
-  `c6` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin DEFAULT NULL
-) ENGINE=DEFAULT
+  `c1` INT DEFAULT '12' COMMENT 'column1',
+  `c2` INT DEFAULT NULL COMMENT 'column2',
+  `c3` INT NOT NULL COMMENT 'column3',
+  `c4` VARCHAR(255) COLLATE utf8_bin NOT NULL DEFAULT 'a',
+  `c5` VARCHAR(255) COLLATE utf8_unicode_ci DEFAULT 'b',
+  `c6` VARCHAR(255) COLLATE utf8_bin DEFAULT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 
 DROP TABLE t2;
 

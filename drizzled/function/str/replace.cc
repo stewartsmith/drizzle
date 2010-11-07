@@ -18,10 +18,13 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/str/replace.h>
 #include <drizzled/error.h>
 #include <drizzled/session.h>
+
+namespace drizzled
+{
 
 /**
   Replace all occurences of string2 in string1 with string3.
@@ -83,13 +86,13 @@ redo:
             if (*i++ != *j++) goto skip;
           offset= (int) (ptr-res->ptr());
           if (res->length()-from_length + to_length >
-              current_session->variables.max_allowed_packet)
+              session.variables.max_allowed_packet)
           {
-            push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+            push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                 ER_WARN_ALLOWED_PACKET_OVERFLOWED,
                                 ER(ER_WARN_ALLOWED_PACKET_OVERFLOWED),
                                 func_name(),
-                                current_session->variables.max_allowed_packet);
+                                session.variables.max_allowed_packet);
 
             goto null;
           }
@@ -111,12 +114,12 @@ skip:
     do
     {
       if (res->length()-from_length + to_length >
-          current_session->variables.max_allowed_packet)
+          session.variables.max_allowed_packet)
       {
-        push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+        push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                             ER_WARN_ALLOWED_PACKET_OVERFLOWED,
                             ER(ER_WARN_ALLOWED_PACKET_OVERFLOWED), func_name(),
-                            current_session->variables.max_allowed_packet);
+                            session.variables.max_allowed_packet);
         goto null;
       }
       if (!alloced)
@@ -157,3 +160,4 @@ void Item_func_replace::fix_length_and_dec()
 }
 
 
+} /* namespace drizzled */

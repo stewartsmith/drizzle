@@ -22,13 +22,16 @@
 
 #include "drizzled/memory/sql_alloc.h"
 #include "drizzled/sql_string.h"
-#include "drizzled/my_decimal.h"
+#include "drizzled/decimal.h"
+
+namespace drizzled
+{
 
 class Item;
 class Session;
 class Field;
 
-class Cached_item :public drizzled::memory::SqlAlloc
+class Cached_item :public memory::SqlAlloc
 {
 public:
   bool null_value;
@@ -88,5 +91,7 @@ public:
 };
 
 Cached_item *new_Cached_item(Session *session, Item *item);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_CACHED_ITEM_H */

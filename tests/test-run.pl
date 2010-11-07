@@ -22,15 +22,15 @@ use utf8;
 #
 #   - To make this Perl script easy to alter even for those that not
 #     code Perl that often, keeep the coding style as close as possible to
-#     the C/C++ MySQL coding standard.
+#     the C/C++ drizzle coding standard.
 #
 #   - All lists of arguments to send to commands are Perl lists/arrays,
 #     not strings we append args to. Within reason, most string
 #     concatenation for arguments should be avoided.
 #
 #   - Functions defined in the main program are not to be prefixed,
-#     functions in "library files" are to be prefixed with "mtr_" (for
-#     Mysql-Test-Run). There are some exceptions, code that fits best in
+#     functions in "library files" are to be prefixed with "dtr_" (for
+#     Drizzle-Test-Run). There are some exceptions, code that fits best in
 #     the main program, but are put into separate files to avoid
 #     clutter, may be without prefix.
 #
@@ -52,7 +52,7 @@ use utf8;
 # A nice way to trace the execution of this script while debugging
 # is to use the Devel::Trace package found at
 # "http://www.plover.com/~mjd/perl/Trace/" and run this script like
-# "perl -d:Trace drizzle-test-run.pl"
+# "perl -d:Trace test-run.pl"
 #
 
 
@@ -77,17 +77,17 @@ use warnings;
 select(STDOUT);
 $| = 1; # Automatically flush STDOUT
 
-require "mtr_cases.pl";
-require "mtr_process.pl";
-require "mtr_timer.pl";
-require "mtr_io.pl";
-require "mtr_gcov.pl";
-require "mtr_gprof.pl";
-require "mtr_report.pl";
-require "mtr_match.pl";
-require "mtr_misc.pl";
-require "mtr_stress.pl";
-require "mtr_unique.pl";
+require "dtr_cases.pl";
+require "dtr_process.pl";
+require "dtr_timer.pl";
+require "dtr_io.pl";
+require "dtr_gcov.pl";
+require "dtr_gprof.pl";
+require "dtr_report.pl";
+require "dtr_match.pl";
+require "dtr_misc.pl";
+require "dtr_stress.pl";
+require "dtr_unique.pl";
 
 $Devel::Trace::TRACE= 1;
 
@@ -98,10 +98,10 @@ $Devel::Trace::TRACE= 1;
 ##############################################################################
 
 # Misc global variables
-our $mysql_version_id;
+our $drizzle_version_id;
 our $glob_suite_path=             undef;
-our $glob_mysql_test_dir=         undef;
-our $glob_mysql_bench_dir=        undef;
+our $glob_drizzle_test_dir=         undef;
+our $glob_drizzle_bench_dir=        undef;
 our $glob_scriptname=             undef;
 our $glob_timers=                 undef;
 our @glob_test_mode;
@@ -115,9 +115,10 @@ our $path_timefile;
 our $path_snapshot;
 our $path_drizzletest_log;
 our $path_current_test_log;
-our $path_my_basedir;
 
 our $opt_vardir;                 # A path but set directly on cmd line
+our $opt_top_srcdir;
+our $opt_top_builddir;
 our $path_vardir_trace;          # unix formatted opt_vardir for trace files
 our $opt_tmpdir;                 # A path but set directly on cmd line
 our $opt_suitepath;
@@ -126,16 +127,18 @@ our $opt_testdir;
 our $opt_subunit;
 
 our $default_vardir;
+our $default_top_srcdir;
+our $default_top_builddir;
 
 our $opt_usage;
 our $opt_suites;
-our $opt_suites_default= "main"; # Default suites to run
+our $opt_suites_default= "main,jp"; # Default suites to run
 our $opt_script_debug= 0;  # Script debugging, enable with --script-debug
 our $opt_verbose= 0;  # Verbose output, enable with --verbose
 
 our $opt_repeat_test= 1;
 
-our $exe_master_mysqld;
+our $exe_master_drizzled;
 our $exe_drizzle;
 our $exe_drizzle_client_test;
 our $exe_bug25714;
@@ -145,12 +148,12 @@ our $exe_drizzleslap;
 our $exe_drizzleimport;
 our $exe_drizzle_fix_system_tables;
 our $exe_drizzletest;
-our $exe_slave_mysqld;
-our $exe_my_print_defaults;
+our $exe_slave_drizzled;
 our $exe_perror;
 our $lib_udf_example;
 our $lib_example_plugin;
 our $exe_libtool;
+our $exe_schemawriter;
 
 our $opt_bench= 0;
 our $opt_small_bench= 0;
@@ -158,7 +161,7 @@ our $opt_small_bench= 0;
 our @opt_combinations;
 our $opt_skip_combination;
 
-our @opt_extra_mysqld_opt;
+our @opt_extra_drizzled_opt;
 
 our $opt_compress;
 
@@ -174,7 +177,7 @@ our $opt_fast;
 our $opt_force;
 our $opt_reorder= 0;
 our $opt_enable_disabled;
-our $opt_mem= $ENV{'MTR_MEM'};
+our $opt_mem= $ENV{'DTR_MEM'};
 
 our $opt_gcov;
 our $opt_gcov_err;
@@ -193,7 +196,7 @@ our $opt_manual_dbx;
 our $opt_manual_ddd;
 our $opt_manual_debug;
 # Magic number -69.4 results in traditional test ports starting from 9306.
-our $opt_mtr_build_thread=-69.4;
+our $opt_dtr_build_thread=-69.4;
 our $opt_debugger;
 our $opt_client_debugger;
 
@@ -238,9 +241,10 @@ our $opt_timer= 1;
 our $opt_user;
 
 my $opt_valgrind= 0;
-my $opt_valgrind_mysqld= 0;
+my $opt_valgrind_drizzled= 0;
 my $opt_valgrind_drizzletest= 0;
-my @default_valgrind_args= ("--show-reachable=yes");
+my $opt_valgrind_drizzleslap= 0;
+my @default_valgrind_args= ("--show-reachable=yes --malloc-fill=0xDEADBEEF --free-fill=0xDEADBEEF");
 my @valgrind_args;
 my $opt_valgrind_path;
 my $opt_callgrind;
@@ -265,12 +269,13 @@ our @data_dir_lst;
 our $used_default_engine;
 our $debug_compiled_binaries;
 
-our %mysqld_variables;
+our %drizzled_variables;
 
 my $source_dist= 0;
 
 our $opt_max_save_core= 5;
 my $num_saved_cores= 0;  # Number of core files saved in vardir/log/ so far.
+our $secondary_port_offset= 50;
 
 ######################################################################
 #
@@ -281,7 +286,7 @@ my $num_saved_cores= 0;  # Number of core files saved in vardir/log/ so far.
 sub main ();
 sub initial_setup ();
 sub command_line_setup ();
-sub set_mtr_build_thread_ports($);
+sub set_dtr_build_thread_ports($);
 sub datadir_list_setup ();
 sub executable_setup ();
 sub environment_setup ();
@@ -289,10 +294,10 @@ sub kill_running_servers ();
 sub remove_stale_vardir ();
 sub setup_vardir ();
 sub check_running_as_root();
-sub mysqld_wait_started($);
+sub drizzled_wait_started($);
 sub run_benchmarks ($);
 sub initialize_servers ();
-sub mysql_install_db ();
+sub drizzle_install_db ();
 sub copy_install_db ($$);
 sub run_testcase ($);
 sub run_testcase_stop_servers ($$$);
@@ -301,8 +306,8 @@ sub run_testcase_check_skip_test($);
 sub report_failure_and_restart ($);
 sub do_before_start_master ($);
 sub do_before_start_slave ($);
-sub mysqld_start ($$$);
-sub mysqld_arguments ($$$$);
+sub drizzled_start ($$$);
+sub drizzled_arguments ($$$$);
 sub stop_all_servers ();
 sub run_drizzletest ($);
 sub collapse_path ($);
@@ -321,7 +326,7 @@ sub main () {
 
   command_line_setup();
 
-  check_debug_support(\%mysqld_variables);
+  check_debug_support(\%drizzled_variables);
 
   executable_setup();
 
@@ -362,7 +367,7 @@ sub main () {
       {
 	my $extra_suite= $extra_suites{$dir};
 	if (defined $extra_suite){
-	  mtr_report("Found extra suite: $extra_suite");
+	  dtr_report("Found extra suite: $extra_suite");
 	  $opt_suites= "$extra_suite,$opt_suites";
 	  last;
 	}
@@ -381,14 +386,14 @@ sub main () {
 	# Count max number of slaves used by a test case
 	if ( $test->{slave_num} > $max_slave_num) {
 	  $max_slave_num= $test->{slave_num};
-	  mtr_error("Too many slaves") if $max_slave_num > 3;
+	  dtr_error("Too many slaves") if $max_slave_num > 3;
 	}
 
 	# Count max number of masters used by a test case
 	if ( $test->{master_num} > $max_master_num) {
 	  $max_master_num= $test->{master_num};
-	  mtr_error("Too many masters") if $max_master_num > 2;
-	  mtr_error("Too few masters") if $max_master_num < 1;
+	  dtr_error("Too many masters") if $max_master_num > 2;
+	  dtr_error("Too few masters") if $max_master_num < 1;
 	}
       }
       $use_innodb||= $test->{'innodb_test'};
@@ -403,7 +408,7 @@ sub main () {
     run_tests($tests);
   }
 
-  mtr_exit(0);
+  dtr_exit(0);
 }
 
 ##############################################################################
@@ -414,7 +419,7 @@ sub main () {
 
 #
 # When an option is no longer used by this program, it must be explicitly
-# ignored or else it will be passed through to mysqld.  GetOptions will call
+# ignored or else it will be passed through to drizzled.  GetOptions will call
 # this subroutine once for each such option on the command line.  See
 # Getopt::Long documentation.
 #
@@ -432,17 +437,17 @@ sub command_line_setup () {
   my $opt_comment;
 
   # If so requested, we try to avail ourselves of a unique build thread number.
-  if ( $ENV{'MTR_BUILD_THREAD'} ) {
-    if ( lc($ENV{'MTR_BUILD_THREAD'}) eq 'auto' ) {
+  if ( $ENV{'DTR_BUILD_THREAD'} ) {
+    if ( lc($ENV{'DTR_BUILD_THREAD'}) eq 'auto' ) {
       print "Requesting build thread... ";
-      $ENV{'MTR_BUILD_THREAD'} = mtr_require_unique_id_and_wait("/tmp/mysql-test-ports", 200, 299);
-      print "got ".$ENV{'MTR_BUILD_THREAD'}."\n";
+      $ENV{'DTR_BUILD_THREAD'} = dtr_require_unique_id_and_wait("/tmp/drizzle-test-ports", 200, 299);
+      print "got ".$ENV{'DTR_BUILD_THREAD'}."\n";
     }
   }
 
-  if ( $ENV{'MTR_BUILD_THREAD'} )
+  if ( $ENV{'DTR_BUILD_THREAD'} )
   {
-    set_mtr_build_thread_ports($ENV{'MTR_BUILD_THREAD'});
+    set_dtr_build_thread_ports($ENV{'DTR_BUILD_THREAD'});
   }
 
   # This is needed for test log evaluation in "gen-build-status-page"
@@ -454,7 +459,7 @@ sub command_line_setup () {
   # Note: Keep list, and the order, in sync with usage at end of this file
 
   # Options that are no longer used must still be processed, because all
-  # unprocessed options are passed directly to mysqld.  The user will be
+  # unprocessed options are passed directly to drizzled.  The user will be
   # warned that the option is being ignored.
   #
   # Put the complete option string here.  For example, to remove the --suite
@@ -484,15 +489,15 @@ sub command_line_setup () {
              'master_port=i'            => \$opt_master_myport,
              'slave_port=i'             => \$opt_slave_myport,
              'memc_port=i'              => \$opt_memc_myport,
-	     'mtr-build-thread=i'       => \$opt_mtr_build_thread,
+	     'dtr-build-thread=i'       => \$opt_dtr_build_thread,
 
              # Test case authoring
              'record'                   => \$opt_record,
              'check-testcases'          => \$opt_check_testcases,
              'mark-progress'            => \$opt_mark_progress,
 
-             # Extra options used when starting mysqld
-             'mysqld=s'                 => \@opt_extra_mysqld_opt,
+             # Extra options used when starting drizzled
+             'drizzled=s'                 => \@opt_extra_drizzled_opt,
              'engine=s'                 => \$opt_engine,
 
              # Run test on running server
@@ -515,8 +520,8 @@ sub command_line_setup () {
 	     'debugger=s'               => \$opt_debugger,
 	     'client-debugger=s'        => \$opt_client_debugger,
              'strace-client'            => \$opt_strace_client,
-             'master-binary=s'          => \$exe_master_mysqld,
-             'slave-binary=s'           => \$exe_slave_mysqld,
+             'master-binary=s'          => \$exe_master_drizzled,
+             'slave-binary=s'           => \$exe_slave_drizzled,
              'max-save-core=i'          => \$opt_max_save_core,
 
              # Coverage, profiling etc
@@ -524,7 +529,8 @@ sub command_line_setup () {
              'gprof'                    => \$opt_gprof,
              'valgrind|valgrind-all'    => \$opt_valgrind,
              'valgrind-drizzletest'       => \$opt_valgrind_drizzletest,
-             'valgrind-mysqld'          => \$opt_valgrind_mysqld,
+             'valgrind-drizzleslap'       => \$opt_valgrind_drizzleslap,
+             'valgrind-drizzled'          => \$opt_valgrind_drizzled,
              'valgrind-options=s'       => sub {
 	       my ($opt, $value)= @_;
 	       # Deprecated option unless it's what we know pushbuild uses
@@ -555,9 +561,11 @@ sub command_line_setup () {
 	     # Directories
              'tmpdir=s'                 => \$opt_tmpdir,
              'vardir=s'                 => \$opt_vardir,
+             'top-builddir=s'           => \$opt_top_builddir,
+             'top-srcdir=s'             => \$opt_top_srcdir,
              'suitepath=s'              => \$opt_suitepath,
              'testdir=s'                => \$opt_testdir,
-             'benchdir=s'               => \$glob_mysql_bench_dir,
+             'benchdir=s'               => \$glob_drizzle_bench_dir,
              'mem'                      => \$opt_mem,
 
              # Misc
@@ -594,13 +602,13 @@ sub command_line_setup () {
 
   $glob_scriptname=  basename($0);
 
-  if ($opt_mtr_build_thread != 0)
+  if ($opt_dtr_build_thread != 0)
   {
-    set_mtr_build_thread_ports($opt_mtr_build_thread)
+    set_dtr_build_thread_ports($opt_dtr_build_thread)
   }
-  elsif ($ENV{'MTR_BUILD_THREAD'})
+  elsif ($ENV{'DTR_BUILD_THREAD'})
   {
-    $opt_mtr_build_thread= $ENV{'MTR_BUILD_THREAD'};
+    $opt_dtr_build_thread= $ENV{'DTR_BUILD_THREAD'};
   }
 
   if ( -d "../drizzled" )
@@ -611,31 +619,33 @@ sub command_line_setup () {
   # Find the absolute path to the test directory
   if ( ! $opt_testdir )
   {
-    $glob_mysql_test_dir=  cwd();
+    $glob_drizzle_test_dir=  cwd();
   } 
   else
   {
-    $glob_mysql_test_dir= $opt_testdir;
+    $glob_drizzle_test_dir= $opt_testdir;
   }
-  $default_vardir= "$glob_mysql_test_dir/var";
+  $default_vardir= "$glob_drizzle_test_dir/var";
+  $default_top_srcdir= "$glob_drizzle_test_dir/..";
+  $default_top_builddir= "$glob_drizzle_test_dir/..";
 
   if ( ! $opt_suitepath )
   {
-    $glob_suite_path= "$glob_mysql_test_dir/../plugin";
+    $glob_suite_path= "$glob_drizzle_test_dir/../plugin";
   }
   else
   {
     $glob_suite_path= $opt_suitepath;
   }
   # In most cases, the base directory we find everything relative to,
-  # is the parent directory of the "mysql-test" directory. For source
+  # is the parent directory of the "drizzle-test" directory. For source
   # distributions, TAR binary distributions and some other packages.
-  $glob_basedir= dirname($glob_mysql_test_dir);
+  $glob_basedir= dirname($glob_drizzle_test_dir);
 
   # In the RPM case, binaries and libraries are installed in the
   # default system locations, instead of having our own private base
-  # directory. And we install "/usr/share/mysql-test". Moving up one
-  # more directory relative to "mysql-test" gives us a usable base
+  # directory. And we install "/usr/share/drizzle-test". Moving up one
+  # more directory relative to "drizzle-test" gives us a usable base
   # directory for RPM installs.
   if ( ! $source_dist and ! -d "$glob_basedir/bin" )
   {
@@ -653,42 +663,39 @@ sub command_line_setup () {
     $glob_builddir="..";
   }
 
-  # Expect mysql-bench to be located adjacent to the source tree, by default
-  $glob_mysql_bench_dir= "$glob_basedir/../mysql-bench"
-    unless defined $glob_mysql_bench_dir;
-  $glob_mysql_bench_dir= undef
-    unless -d $glob_mysql_bench_dir;
+  # Expect drizzle-bench to be located adjacent to the source tree, by default
+  $glob_drizzle_bench_dir= "$glob_basedir/../drizzle-bench"
+    unless defined $glob_drizzle_bench_dir;
+  $glob_drizzle_bench_dir= undef
+    unless -d $glob_drizzle_bench_dir;
 
-  $path_my_basedir=
-    $source_dist ? $glob_mysql_test_dir : $glob_basedir;
-
-  $glob_timers= mtr_init_timers();
+  $glob_timers= dtr_init_timers();
 
   #
-  # Find the mysqld executable to be able to find the mysqld version
+  # Find the drizzled executable to be able to find the drizzled version
   # number as early as possible
   #
 
   # Look for the client binaries directory
-  $path_client_bindir= mtr_path_exists("$glob_builddir/client",
+  $path_client_bindir= dtr_path_exists("$glob_builddir/client",
                                        "$glob_basedir/client",
 				       "$glob_basedir/bin");
 
   if (!$opt_extern)
   {
-    $exe_drizzled=       mtr_exe_exists ("$glob_basedir/drizzled/drizzled",
+    $exe_drizzled=       dtr_exe_exists ("$glob_basedir/drizzled/drizzled",
 				       "$path_client_bindir/drizzled",
 				       "$glob_basedir/libexec/drizzled",
 				       "$glob_basedir/bin/drizzled",
 				       "$glob_basedir/sbin/drizzled",
                                        "$glob_builddir/drizzled/drizzled");
 
-    # Use the mysqld found above to find out what features are available
-    collect_mysqld_features();
+    # Use the drizzled found above to find out what features are available
+    collect_drizzled_features();
   }
   else
   {
-    $mysqld_variables{'port'}= 4427;
+    $drizzled_variables{'port'}= 4427;
   }
 
   if (!$opt_engine)
@@ -708,7 +715,7 @@ sub command_line_setup () {
   {
     if ( $arg =~ /^--skip-/ )
     {
-      push(@opt_extra_mysqld_opt, $arg);
+      push(@opt_extra_drizzled_opt, $arg);
     }
     elsif ( $arg =~ /^--$/ )
     {
@@ -729,14 +736,14 @@ sub command_line_setup () {
   # --------------------------------------------------------------------------
   # Find out default storage engine being used(if any)
   # --------------------------------------------------------------------------
-  foreach my $arg ( @opt_extra_mysqld_opt )
+  foreach my $arg ( @opt_extra_drizzled_opt )
   {
     if ( $arg =~ /default-storage-engine=(\S+)/ )
     {
       $used_default_engine= $1;
     }
   }
-  mtr_report("Using default engine '$used_default_engine'")
+  dtr_report("Using default engine '$used_default_engine'")
     if defined $used_default_engine;
 
   # --------------------------------------------------------------------------
@@ -744,9 +751,9 @@ sub command_line_setup () {
   # --------------------------------------------------------------------------
   if ( defined $opt_mem )
   {
-    mtr_error("Can't use --mem and --vardir at the same time ")
+    dtr_error("Can't use --mem and --vardir at the same time ")
       if $opt_vardir;
-    mtr_error("Can't use --mem and --tmpdir at the same time ")
+    dtr_error("Can't use --mem and --tmpdir at the same time ")
       if $opt_tmpdir;
 
     # Search through list of locations that are known
@@ -758,9 +765,9 @@ sub command_line_setup () {
     {
       if ( -d $fs )
       {
-	mtr_report("Using tmpfs in $fs");
+	dtr_report("Using tmpfs in $fs");
 	$opt_mem= "$fs/var";
-	$opt_mem .= $opt_mtr_build_thread if $opt_mtr_build_thread;
+	$opt_mem .= $opt_dtr_build_thread if $opt_dtr_build_thread;
 	last;
       }
     }
@@ -772,6 +779,24 @@ sub command_line_setup () {
   if ( ! $opt_vardir )
   {
     $opt_vardir= $default_vardir;
+  }
+
+  if ( ! $opt_top_srcdir )
+  {
+    $opt_top_srcdir= $default_top_srcdir;
+  }
+  else
+  {
+    $opt_top_srcdir= rel2abs($opt_top_srcdir);
+  }
+
+  if ( ! $opt_top_builddir )
+  {
+    $opt_top_builddir= $default_top_builddir;
+  }
+  else
+  {
+    $opt_top_builddir= rel2abs($opt_top_builddir);
   }
 
   $path_vardir_trace= $opt_vardir;
@@ -791,7 +816,7 @@ sub command_line_setup () {
 # --------------------------------------------------------------------------
   if ( $opt_record and ! @opt_cases )
   {
-    mtr_error("Will not run in record mode without a specific test case");
+    dtr_error("Will not run in record mode without a specific test case");
   }
 
   if ( $opt_record )
@@ -812,7 +837,7 @@ sub command_line_setup () {
   # --------------------------------------------------------------------------
   if ( $opt_gcov and ! $source_dist )
   {
-    mtr_error("Coverage test needs the source - please use source dist");
+    dtr_error("Coverage test needs the source - please use source dist");
   }
 
   # --------------------------------------------------------------------------
@@ -826,42 +851,48 @@ sub command_line_setup () {
     $glob_debugger= 1;
     if ( $opt_extern )
     {
-      mtr_error("Can't use --extern when using debugger");
+      dtr_error("Can't use --extern when using debugger");
     }
   }
 
   # --------------------------------------------------------------------------
   # Check if special exe was selected for master or slave
   # --------------------------------------------------------------------------
-  $exe_master_mysqld= $exe_master_mysqld || $exe_drizzled;
-  $exe_slave_mysqld=  $exe_slave_mysqld  || $exe_drizzled;
+  $exe_master_drizzled= $exe_master_drizzled || $exe_drizzled;
+  $exe_slave_drizzled=  $exe_slave_drizzled  || $exe_drizzled;
 
   # --------------------------------------------------------------------------
   # Check valgrind arguments
   # --------------------------------------------------------------------------
   if ( $opt_valgrind or $opt_valgrind_path or @valgrind_args)
   {
-    mtr_report("Turning on valgrind for all executables");
+    dtr_report("Turning on valgrind for all executables");
     $opt_valgrind= 1;
-    $opt_valgrind_mysqld= 1;
+    $opt_valgrind_drizzled= 1;
     $opt_valgrind_drizzletest= 1;
+    $ENV{'VALGRIND_RUN'} = '1';
   }
-  elsif ( $opt_valgrind_mysqld )
+  elsif ( $opt_valgrind_drizzled )
   {
-    mtr_report("Turning on valgrind for mysqld(s) only");
+    dtr_report("Turning on valgrind for drizzled(s) only");
     $opt_valgrind= 1;
   }
   elsif ( $opt_valgrind_drizzletest )
   {
-    mtr_report("Turning on valgrind for drizzletest and drizzle_client_test only");
+    dtr_report("Turning on valgrind for drizzletest and drizzle_client_test only");
+    $opt_valgrind= 1;
+  }
+  elsif ( $opt_valgrind_drizzleslap )
+  {
+    dtr_report("Turning on valgrind for drizzleslap only");
     $opt_valgrind= 1;
   }
 
   if ( $opt_callgrind )
   {
-    mtr_report("Turning on valgrind with callgrind for mysqld(s)");
+    dtr_report("Turning on valgrind with callgrind for drizzled(s)");
     $opt_valgrind= 1;
-    $opt_valgrind_mysqld= 1;
+    $opt_valgrind_drizzled= 1;
 
     # Set special valgrind options unless options passed on command line
     push(@valgrind_args, "--trace-children=yes")
@@ -870,9 +901,9 @@ sub command_line_setup () {
 
   if ( $opt_massif )
   {
-    mtr_report("Valgrind with Massif tool for drizzled(s)");
+    dtr_report("Valgrind with Massif tool for drizzled(s)");
     $opt_valgrind= 1;
-    $opt_valgrind_mysqld= 1;
+    $opt_valgrind_drizzled= 1;
   }
 
   if ( $opt_valgrind )
@@ -881,7 +912,7 @@ sub command_line_setup () {
     push(@valgrind_args, @default_valgrind_args)
       unless @valgrind_args;
 
-    mtr_report("Running valgrind with options \"",
+    dtr_report("Running valgrind with options \"",
 	       join(" ", @valgrind_args), "\"");
   }
 
@@ -922,78 +953,82 @@ sub command_line_setup () {
 
   $master->[0]=
   {
-   pid           => 0,
-   type          => "master",
-   idx           => 0,
-   path_myddir   => "$opt_vardir/master-data",
-   path_myerr    => "$opt_vardir/log/master.err",
-   path_pid      => "$opt_vardir/run/master.pid",
-   path_sock     => "$sockdir/master.sock",
-   port          =>  $opt_master_myport,
-   start_timeout =>  400, # enough time create innodb tables
-   cluster       =>  0, # index in clusters list
-   start_opts    => [],
+   pid            => 0,
+   type           => "master",
+   idx            => 0,
+   path_myddir    => "$opt_vardir/master-data",
+   path_myerr     => "$opt_vardir/log/master.err",
+   path_pid       => "$opt_vardir/run/master.pid",
+   path_sock      => "$sockdir/master.sock",
+   port           =>  $opt_master_myport,
+   secondary_port =>  $opt_master_myport + $secondary_port_offset,
+   start_timeout  =>  400, # enough time create innodb tables
+   cluster        =>  0, # index in clusters list
+   start_opts     => [],
   };
 
   $master->[1]=
   {
-   pid           => 0,
-   type          => "master",
-   idx           => 1,
-   path_myddir   => "$opt_vardir/master1-data",
-   path_myerr    => "$opt_vardir/log/master1.err",
-   path_pid      => "$opt_vardir/run/master1.pid",
-   path_sock     => "$sockdir/master1.sock",
-   port          => $opt_master_myport + 1,
-   start_timeout => 400, # enough time create innodb tables
-   cluster       =>  0, # index in clusters list
-   start_opts    => [],
+   pid            => 0,
+   type           => "master",
+   idx            => 1,
+   path_myddir    => "$opt_vardir/master1-data",
+   path_myerr     => "$opt_vardir/log/master1.err",
+   path_pid       => "$opt_vardir/run/master1.pid",
+   path_sock      => "$sockdir/master1.sock",
+   port           => $opt_master_myport + 1,
+   secondary_port => $opt_master_myport + 1 + $secondary_port_offset,
+   start_timeout  => 400, # enough time create innodb tables
+   cluster        =>  0, # index in clusters list
+   start_opts     => [],
   };
 
   $slave->[0]=
   {
-   pid           => 0,
-   type          => "slave",
-   idx           => 0,
-   path_myddir   => "$opt_vardir/slave-data",
-   path_myerr    => "$opt_vardir/log/slave.err",
-   path_pid    => "$opt_vardir/run/slave.pid",
-   path_sock   => "$sockdir/slave.sock",
-   port   => $opt_slave_myport,
-   start_timeout => 400,
-
-   cluster       =>  1, # index in clusters list
-   start_opts    => [],
+   pid            => 0,
+   type           => "slave",
+   idx            => 0,
+   path_myddir    => "$opt_vardir/slave-data",
+   path_myerr     => "$opt_vardir/log/slave.err",
+   path_pid       => "$opt_vardir/run/slave.pid",
+   path_sock      => "$sockdir/slave.sock",
+   port           => $opt_slave_myport,
+   secondary_port => $opt_slave_myport + $secondary_port_offset,
+   start_timeout  => 400,
+   cluster        =>  1, # index in clusters list
+   start_opts     => [],
   };
 
   $slave->[1]=
   {
-   pid           => 0,
-   type          => "slave",
-   idx           => 1,
-   path_myddir   => "$opt_vardir/slave1-data",
-   path_myerr    => "$opt_vardir/log/slave1.err",
-   path_pid    => "$opt_vardir/run/slave1.pid",
-   path_sock   => "$sockdir/slave1.sock",
-   port   => $opt_slave_myport + 1,
-   start_timeout => 300,
-   cluster       =>  -1, # index in clusters list
-   start_opts    => [],
+   pid            => 0,
+   type           => "slave",
+   idx            => 1,
+   path_myddir    => "$opt_vardir/slave1-data",
+   path_myerr     => "$opt_vardir/log/slave1.err",
+   path_pid       => "$opt_vardir/run/slave1.pid",
+   path_sock      => "$sockdir/slave1.sock",
+   port           => $opt_slave_myport + 1,
+   secondary_port => $opt_slave_myport + 1 + $secondary_port_offset,
+   start_timeout  => 300,
+   cluster        =>  -1, # index in clusters list
+   start_opts     => [],
   };
 
   $slave->[2]=
   {
-   pid           => 0,
-   type          => "slave",
-   idx           => 2,
-   path_myddir   => "$opt_vardir/slave2-data",
-   path_myerr    => "$opt_vardir/log/slave2.err",
-   path_pid    => "$opt_vardir/run/slave2.pid",
-   path_sock   => "$sockdir/slave2.sock",
-   port   => $opt_slave_myport + 2,
-   start_timeout => 300,
-   cluster       =>  -1, # index in clusters list
-   start_opts    => [],
+   pid            => 0,
+   type           => "slave",
+   idx            => 2,
+   path_myddir    => "$opt_vardir/slave2-data",
+   path_myerr     => "$opt_vardir/log/slave2.err",
+   path_pid       => "$opt_vardir/run/slave2.pid",
+   path_sock      => "$sockdir/slave2.sock",
+   port           => $opt_slave_myport + 2,
+   secondary_port => $opt_slave_myport + 2 + $secondary_port_offset,
+   start_timeout  => 300,
+   cluster        =>  -1, # index in clusters list
+   start_opts     => [],
   };
 
 
@@ -1007,12 +1042,12 @@ sub command_line_setup () {
     warn("Currenty broken --extern");
 
     # Setup master->[0] with the settings for the extern server
-    $master->[0]->{'path_sock'}=  $opt_socket ? $opt_socket : "/tmp/mysql.sock";
-    mtr_report("Using extern server at '$master->[0]->{path_sock}'");
+    $master->[0]->{'path_sock'}=  $opt_socket ? $opt_socket : "/tmp/drizzle.sock";
+    dtr_report("Using extern server at '$master->[0]->{path_sock}'");
   }
   else
   {
-    mtr_error("--socket can only be used in combination with --extern")
+    dtr_error("--socket can only be used in combination with --extern")
       if $opt_socket;
   }
 
@@ -1028,15 +1063,41 @@ sub command_line_setup () {
     # When both --valgrind and --debug is selected, send
     # all output to the trace file, making it possible to
     # see the exact location where valgrind complains
-    foreach my $mysqld (@{$master}, @{$slave})
+    foreach my $drizzled (@{$master}, @{$slave})
     {
-      my $sidx= $mysqld->{idx} ? "$mysqld->{idx}" : "";
-      $mysqld->{path_myerr}=
-	"$opt_vardir/log/" . $mysqld->{type} . "$sidx.trace";
+      my $sidx= $drizzled->{idx} ? "$drizzled->{idx}" : "";
+      $drizzled->{path_myerr}=
+	"$opt_vardir/log/" . $drizzled->{type} . "$sidx.trace";
     }
   }
 }
 
+sub gimme_a_good_port($)
+{
+  my $port_to_test= shift;
+  if ($port_to_test == 8000)
+  {
+    $port_to_test = 8001;
+  }
+  my $is_port_bad= 1;
+  while ($is_port_bad) {
+    my $sock = new IO::Socket::INET( PeerAddr => 'localhost',
+                                     PeerPort => $port_to_test,
+                                     Proto => 'tcp' );
+    if ($sock) {
+      close($sock);
+      $port_to_test += 1;
+      if ($port_to_test >= 32767) {
+        $port_to_test = 5001;
+      }
+
+    } else {
+      $is_port_bad= 0;
+    }
+  }
+  return $port_to_test;
+
+}
 #
 # To make it easier for different devs to work on the same host,
 # an environment variable can be used to control all ports. A small
@@ -1044,7 +1105,7 @@ sub command_line_setup () {
 #
 # Note the MASTER_MYPORT has to be set the same in all 4.x and 5.x
 # versions of this script, else a 4.0 test run might conflict with a
-# 5.1 test run, even if different MTR_BUILD_THREAD is used. This means
+# 5.1 test run, even if different DTR_BUILD_THREAD is used. This means
 # all port numbers might not be used in this version of the script.
 #
 # Also note the limitation of ports we are allowed to hand out. This
@@ -1053,26 +1114,28 @@ sub command_line_setup () {
 # But a fairly safe range seems to be 5001 - 32767
 #
 
-sub set_mtr_build_thread_ports($) {
-  my $mtr_build_thread= shift;
+sub set_dtr_build_thread_ports($) {
+  my $dtr_build_thread= shift;
 
-  if ( lc($mtr_build_thread) eq 'auto' ) {
+  if ( lc($dtr_build_thread) eq 'auto' ) {
     print "Requesting build thread... ";
-    $ENV{'MTR_BUILD_THREAD'} = $mtr_build_thread = mtr_require_unique_id_and_wait("/tmp/mysql-test-ports", 200, 299);
-    print "got ".$mtr_build_thread."\n";
+    $ENV{'DTR_BUILD_THREAD'} = $dtr_build_thread = dtr_require_unique_id_and_wait("/tmp/drizzle-test-ports", 200, 299);
+    print "got ".$dtr_build_thread."\n";
   }
 
-  $mtr_build_thread= (($mtr_build_thread * 10) % 2000) - 1000;
+  $dtr_build_thread= (($dtr_build_thread * 10) % 2000) - 1000;
 
   # Up to two masters, up to three slaves
   # A magic value in command_line_setup depends on these equations.
-  $opt_master_myport=         $mtr_build_thread + 9000; # and 1
-  $opt_slave_myport=          $opt_master_myport + 2;  # and 3 4
-  $opt_memc_myport= $opt_master_myport + 10;
+  $opt_master_myport=         gimme_a_good_port($dtr_build_thread + 9000); # and 1
+
+
+  $opt_slave_myport=          gimme_a_good_port($opt_master_myport + 2);  # and 3 4
+  $opt_memc_myport= gimme_a_good_port($opt_master_myport + 10);
 
   if ( $opt_master_myport < 5001 or $opt_master_myport + 10 >= 32767 )
   {
-    mtr_error("MTR_BUILD_THREAD number results in a port",
+    dtr_error("DTR_BUILD_THREAD number results in a port",
               "outside 5001 - 32767",
               "($opt_master_myport - $opt_master_myport + 10)");
   }
@@ -1101,103 +1164,64 @@ sub datadir_list_setup () {
 ##############################################################################
 
 
-sub collect_mysqld_features () {
+sub collect_drizzled_features () {
   my $found_variable_list_start= 0;
   my $tmpdir= tempdir(CLEANUP => 0); # Directory removed by this function
 
   #
-  # Execute "mysqld --help --verbose" to get a list
+  # Execute "drizzled --help" to get a list
   # list of all features and settings
   #
-  # --no-defaults and --skip-grant-tables are to avoid loading
+  # --no-defaults are to avoid loading
   # system-wide configs and plugins
   #
-  # --datadir must exist, mysqld will chdir into it
-  #
-  my $list= `$exe_drizzled --no-defaults --datadir=$tmpdir --skip-grant-tables --verbose --help`;
+  my $list= `$exe_drizzled --no-defaults --help`;
 
   foreach my $line (split('\n', $list))
   {
     # First look for version
-    if ( !$mysql_version_id )
+    if ( !$drizzle_version_id )
     {
       # Look for version
       my $exe_name= basename($exe_drizzled);
-      mtr_verbose("exe_name: $exe_name");
+      dtr_verbose("exe_name: $exe_name");
       if ( $line =~ /^\S*$exe_name\s\sVer\s([0-9]*)\.([0-9]*)\.([0-9]*)/ )
       {
 	#print "Major: $1 Minor: $2 Build: $3\n";
-	$mysql_version_id= $1*10000 + $2*100 + $3;
-	#print "mysql_version_id: $mysql_version_id\n";
-	mtr_report("MySQL Version $1.$2.$3");
-      }
-    }
-    else
-    {
-      if (!$found_variable_list_start)
-      {
-	# Look for start of variables list
-	if ( $line =~ /[\-]+\s[\-]+/ )
-	{
-	  $found_variable_list_start= 1;
-	}
-      }
-      else
-      {
-	# Put variables into hash
-	if ( $line =~ /^([\S]+)[ \t]+(.*?)\r?$/ )
-	{
-	  # print "$1=\"$2\"\n";
-	  $mysqld_variables{$1}= $2;
-	}
-	else
-	{
-	  # The variable list is ended with a blank line
-	  if ( $line =~ /^[\s]*$/ )
-	  {
-	    last;
-	  }
-	  else
-	  {
-	    # Send out a warning, we should fix the variables that has no
-	    # space between variable name and it's value
-	    # or should it be fixed width column parsing? It does not
-	    # look like that in function my_print_variables in my_getopt.c
-	    mtr_warning("Could not parse variable list line : $line");
-	  }
-	}
+	$drizzle_version_id= $1*10000 + $2*100 + $3;
+	#print "drizzle_version_id: $drizzle_version_id\n";
+	dtr_report("Drizzle Version $1.$2.$3");
       }
     }
   }
   rmtree($tmpdir);
-  mtr_error("Could not find version of MySQL") unless $mysql_version_id;
-  mtr_error("Could not find variabes list") unless $found_variable_list_start;
+  dtr_error("Could not find version of Drizzle") unless $drizzle_version_id;
 
 }
 
 
 sub run_query($$) {
-  my ($mysqld, $query)= @_;
+  my ($drizzled, $query)= @_;
 
   my $args;
-  mtr_init_args(\$args);
+  dtr_init_args(\$args);
 
-  mtr_add_arg($args, "--no-defaults");
-  mtr_add_arg($args, "--skip-stack-trace");
-  mtr_add_arg($args, "--user=%s", $opt_user);
-  mtr_add_arg($args, "--port=%d", $mysqld->{'port'});
-  mtr_add_arg($args, "--silent"); # Tab separated output
-  mtr_add_arg($args, "-e '%s'", $query);
+  dtr_add_arg($args, "--no-defaults");
+  dtr_add_arg($args, "--skip-stack-trace");
+  dtr_add_arg($args, "--user=%s", $opt_user);
+  dtr_add_arg($args, "--port=%d", $drizzled->{'port'});
+  dtr_add_arg($args, "--silent"); # Tab separated output
+  dtr_add_arg($args, "-e '%s'", $query);
 
   my $cmd= "$exe_drizzle " . join(' ', @$args);
-  mtr_verbose("cmd: $cmd");
+  dtr_verbose("cmd: $cmd");
   return `$cmd`;
 }
 
 
-sub collect_mysqld_features_from_running_server ()
+sub collect_drizzled_features_from_running_server ()
 {
-  my $list= run_query($master->[0], "use mysql; SHOW VARIABLES");
+  my $list= run_query($master->[0], "use drizzle; SHOW VARIABLES");
 
   foreach my $line (split('\n', $list))
   {
@@ -1205,7 +1229,7 @@ sub collect_mysqld_features_from_running_server ()
     if ( $line =~ /^([\S]+)[ \t]+(.*?)\r?$/ )
     {
       print "$1=\"$2\"\n";
-      $mysqld_variables{$1}= $2;
+      $drizzled_variables{$1}= $2;
     }
   }
 }
@@ -1223,44 +1247,43 @@ sub executable_setup () {
     $exe_libtool= "../libtool";
     if ($opt_valgrind or $glob_debugger)
     {
-      mtr_report("Using \"$exe_libtool\" when running valgrind or debugger");
+      dtr_report("Using \"$exe_libtool\" when running valgrind or debugger");
     }
   }
-
-# Look for my_print_defaults
-  $exe_my_print_defaults=
-    mtr_exe_exists(
-        "$path_client_bindir/my_print_defaults",
-        "$glob_basedir/extra/my_print_defaults",
-        "$glob_builddir/extra/my_print_defaults");
 
 # Look for perror
   $exe_perror= "perror";
 
 # Look for the client binaries
-  $exe_drizzledump= mtr_exe_exists("$path_client_bindir/drizzledump");
-  $exe_drizzleimport= mtr_exe_exists("$path_client_bindir/drizzleimport");
-  $exe_drizzle=          mtr_exe_exists("$path_client_bindir/drizzle");
+  $exe_drizzledump= dtr_exe_exists("$path_client_bindir/drizzledump");
+  $exe_drizzleimport= dtr_exe_exists("$path_client_bindir/drizzleimport");
+  $exe_drizzle=          dtr_exe_exists("$path_client_bindir/drizzle");
 
   if (!$opt_extern)
   {
 # Look for SQL scripts directory
-     if ( $mysql_version_id >= 50100 )
+     if ( $drizzle_version_id >= 50100 )
      {
-         $exe_drizzleslap= mtr_exe_exists("$path_client_bindir/drizzleslap");
+         $exe_drizzleslap= dtr_exe_exists("$path_client_bindir/drizzleslap");
      }
+  }
+
+# Look for schema_writer
+  {
+    $exe_schemawriter= dtr_exe_exists("$glob_basedir/drizzled/message/schema_writer",
+                                      "$glob_builddir/drizzled/message/schema_writer");
   }
 
 # Look for drizzletest executable
   {
-    $exe_drizzletest= mtr_exe_exists("$path_client_bindir/drizzletest");
+    $exe_drizzletest= dtr_exe_exists("$path_client_bindir/drizzletest");
   }
 
 # Look for drizzle_client_test executable which may _not_ exist in
 # some versions, test using it should be skipped
   {
     $exe_drizzle_client_test=
-      mtr_exe_maybe_exists(
+      dtr_exe_maybe_exists(
           "$glob_basedir/tests/drizzle_client_test",
           "$glob_basedir/bin/drizzle_client_test");
   }
@@ -1268,18 +1291,25 @@ sub executable_setup () {
 # Look for bug25714 executable which may _not_ exist in
 # some versions, test using it should be skipped
   $exe_bug25714=
-    mtr_exe_maybe_exists(
+    dtr_exe_maybe_exists(
         "$glob_basedir/tests/bug25714");
 }
 
 
 
-sub generate_cmdline_mysqldump ($) {
-  my($mysqld) = @_;
+sub generate_cmdline_drizzledump ($) {
+  my($drizzled) = @_;
   return
-    mtr_native_path($exe_drizzledump) .
+    dtr_native_path($exe_drizzledump) .
       " --no-defaults -uroot " .
-      "--port=$mysqld->{'port'} ";
+      "--port=$drizzled->{'port'} ";
+}
+
+sub generate_cmdline_drizzle ($) {
+  my($drizzled) = @_;
+  return
+    dtr_native_path($exe_drizzle) .
+    " -uroot --port=$drizzled->{'port'} ";
 }
 
 
@@ -1295,25 +1325,25 @@ sub drizzle_client_test_arguments()
   my $exe= $exe_drizzle_client_test;
 
   my $args;
-  mtr_init_args(\$args);
+  dtr_init_args(\$args);
   if ( $opt_valgrind_drizzletest )
   {
     valgrind_arguments($args, \$exe);
   }
 
-  mtr_add_arg($args, "--no-defaults");
-  mtr_add_arg($args, "--testcase");
-  mtr_add_arg($args, "--user=root");
-  mtr_add_arg($args, "--port=$master->[0]->{'port'}");
+  dtr_add_arg($args, "--no-defaults");
+  dtr_add_arg($args, "--testcase");
+  dtr_add_arg($args, "--user=root");
+  dtr_add_arg($args, "--port=$master->[0]->{'port'}");
 
-  if ( $opt_extern || $mysql_version_id >= 50000 )
+  if ( $opt_extern || $drizzle_version_id >= 50000 )
   {
-    mtr_add_arg($args, "--vardir=$opt_vardir")
+    dtr_add_arg($args, "--vardir=$opt_vardir")
   }
 
   if ( $opt_debug )
   {
-    mtr_add_arg($args,
+    dtr_add_arg($args,
       "--debug=d:t:A,$path_vardir_trace/log/drizzle_client_test.trace");
   }
 
@@ -1321,7 +1351,7 @@ sub drizzle_client_test_arguments()
 }
 
 
-# Note that some env is setup in spawn/run, in "mtr_process.pl"
+# Note that some env is setup in spawn/run, in "dtr_process.pl"
 
 sub environment_setup () {
 
@@ -1360,7 +1390,7 @@ sub environment_setup () {
   my $deb_version;
   if (  $opt_valgrind and -d $debug_libraries_path and
         (! -e '/etc/debian_version' or
-	 ($deb_version= mtr_grab_file('/etc/debian_version')) !~ /^[0-9]+\.[0-9]$/ or
+	 ($deb_version= dtr_grab_file('/etc/debian_version')) !~ /^[0-9]+\.[0-9]$/ or
          $deb_version > 3.1 ) )
   {
     push(@ld_library_paths, $debug_libraries_path);
@@ -1370,24 +1400,24 @@ sub environment_setup () {
 				$ENV{'LD_LIBRARY_PATH'} ?
 				split(':', $ENV{'LD_LIBRARY_PATH'}) : (),
                                 @ld_library_paths);
-  mtr_debug("LD_LIBRARY_PATH: $ENV{'LD_LIBRARY_PATH'}");
+  dtr_debug("LD_LIBRARY_PATH: $ENV{'LD_LIBRARY_PATH'}");
 
   $ENV{'DYLD_LIBRARY_PATH'}= join(":", @ld_library_paths,
 				  $ENV{'DYLD_LIBRARY_PATH'} ?
 				  split(':', $ENV{'DYLD_LIBRARY_PATH'}) : ());
-  mtr_debug("DYLD_LIBRARY_PATH: $ENV{'DYLD_LIBRARY_PATH'}");
+  dtr_debug("DYLD_LIBRARY_PATH: $ENV{'DYLD_LIBRARY_PATH'}");
 
   # The environment variable used for shared libs on AIX
   $ENV{'SHLIB_PATH'}= join(":", @ld_library_paths,
                            $ENV{'SHLIB_PATH'} ?
                            split(':', $ENV{'SHLIB_PATH'}) : ());
-  mtr_debug("SHLIB_PATH: $ENV{'SHLIB_PATH'}");
+  dtr_debug("SHLIB_PATH: $ENV{'SHLIB_PATH'}");
 
   # The environment variable used for shared libs on hp-ux
   $ENV{'LIBPATH'}= join(":", @ld_library_paths,
                         $ENV{'LIBPATH'} ?
                         split(':', $ENV{'LIBPATH'}) : ());
-  mtr_debug("LIBPATH: $ENV{'LIBPATH'}");
+  dtr_debug("LIBPATH: $ENV{'LIBPATH'}");
 
   # --------------------------------------------------------------------------
   # Also command lines in .opt files may contain env vars
@@ -1398,7 +1428,7 @@ sub environment_setup () {
   $ENV{'UMASK_DIR'}=          "0770"; # The octal *string*
   
   #
-  # MySQL tests can produce output in various character sets
+  # drizzle tests can produce output in various character sets
   # (especially, ctype_xxx.test). To avoid confusing Perl
   # with output which is incompatible with the current locale
   # settings, we reset the current values of LC_ALL and LC_CTYPE to "C".
@@ -1410,8 +1440,10 @@ sub environment_setup () {
   
   $ENV{'LC_COLLATE'}=         "C";
   $ENV{'USE_RUNNING_SERVER'}= $opt_extern;
-  $ENV{'DRIZZLE_TEST_DIR'}=     collapse_path($glob_mysql_test_dir);
-  $ENV{'MYSQLTEST_VARDIR'}=   $opt_vardir;
+  $ENV{'DRIZZLE_TEST_DIR'}=     collapse_path($glob_drizzle_test_dir);
+  $ENV{'DRIZZLETEST_VARDIR'}=   $opt_vardir;
+  $ENV{'TOP_SRCDIR'}= $opt_top_srcdir;
+  $ENV{'TOP_BUILDDIR'}= $opt_top_builddir;
   $ENV{'DRIZZLE_TMP_DIR'}=      $opt_tmpdir;
   $ENV{'MASTER_MYSOCK'}=      $master->[0]->{'path_sock'};
   $ENV{'MASTER_MYSOCK1'}=     $master->[1]->{'path_sock'};
@@ -1422,74 +1454,104 @@ sub environment_setup () {
   $ENV{'SLAVE_MYPORT1'}=      $slave->[1]->{'port'};
   $ENV{'SLAVE_MYPORT2'}=      $slave->[2]->{'port'};
   $ENV{'MC_PORT'}=            $opt_memc_myport;
-  $ENV{'DRIZZLE_TCP_PORT'}=     $mysqld_variables{'port'};
+  $ENV{'DRIZZLE_TCP_PORT'}=     $drizzled_variables{'drizzle-protocol.port'};
 
-  $ENV{'MTR_BUILD_THREAD'}=      $opt_mtr_build_thread;
+  $ENV{'DTR_BUILD_THREAD'}=      $opt_dtr_build_thread;
 
-  $ENV{'EXE_MYSQL'}=          $exe_drizzle;
+  $ENV{'EXE_DRIZZLE'}=          $exe_drizzle;
 
 
   # ----------------------------------------------------
   # Setup env to childs can execute myqldump
   # ----------------------------------------------------
-  my $cmdline_mysqldump= generate_cmdline_mysqldump($master->[0]);
-  my $cmdline_mysqldumpslave= generate_cmdline_mysqldump($slave->[0]);
+  my $cmdline_drizzledump= generate_cmdline_drizzledump($master->[0]);
+  my $cmdline_drizzledumpslave= generate_cmdline_drizzledump($slave->[0]);
+  my $cmdline_drizzledump_secondary= dtr_native_path($exe_drizzledump) .
+       " --no-defaults -uroot " .
+       " --port=$master->[0]->{'secondary_port'} ";
 
   if ( $opt_debug )
   {
-    $cmdline_mysqldump .=
-      " --debug=d:t:A,$path_vardir_trace/log/mysqldump-master.trace";
-    $cmdline_mysqldumpslave .=
-      " --debug=d:t:A,$path_vardir_trace/log/mysqldump-slave.trace";
+    $cmdline_drizzledump .=
+      " --debug=d:t:A,$path_vardir_trace/log/drizzledump-master.trace";
+    $cmdline_drizzledumpslave .=
+      " --debug=d:t:A,$path_vardir_trace/log/drizzledump-slave.trace";
+    $cmdline_drizzledump_secondary .=
+      " --debug=d:t:A,$path_vardir_trace/log/drizzledump-drizzle.trace";
   }
-  $ENV{'DRIZZLE_DUMP'}= $cmdline_mysqldump;
-  $ENV{'DRIZZLE_DUMP_SLAVE'}= $cmdline_mysqldumpslave;
+  $ENV{'DRIZZLE_DUMP'}= $cmdline_drizzledump;
+  $ENV{'DRIZZLE_DUMP_SLAVE'}= $cmdline_drizzledumpslave;
+  $ENV{'DRIZZLE_DUMP_SECONDARY'}= $cmdline_drizzledump_secondary;
 
   # ----------------------------------------------------
-  # Setup env so childs can execute mysqlslap
+  # Setup env so we can execute drizzle client
+  # ----------------------------------------------------
+  #my $cmdline_drizzle = generate_cmdline_drizzle($master->[0]);
+  #$ENV{'DRIZZLE'}= $cmdline_drizzle;
+
+  # ----------------------------------------------------
+  # Setup env so childs can execute drizzleslap
   # ----------------------------------------------------
   if ( $exe_drizzleslap )
   {
-    my $cmdline_drizzleslap=
-      mtr_native_path($exe_drizzleslap) .
+    my $cmdline_drizzleslap;
+
+    if ( $opt_valgrind_drizzleslap )
+    {
+      $cmdline_drizzleslap= "$glob_basedir/libtool --mode=execute valgrind --log-file=$opt_vardir/log/drizzleslap-valgrind.log ";
+    }
+    $cmdline_drizzleslap .=
+      dtr_native_path($exe_drizzleslap) .
       " -uroot " .
       "--port=$master->[0]->{'port'} ";
+    my $cmdline_drizzleslap_secondary=
+      dtr_native_path($exe_drizzleslap) .
+      " -uroot " .
+      " --port=$master->[0]->{'secondary_port'} ";
 
     if ( $opt_debug )
    {
       $cmdline_drizzleslap .=
         " --debug=d:t:A,$path_vardir_trace/log/drizzleslap.trace";
+      $cmdline_drizzleslap_secondary .=
+        " --debug=d:t:A,$path_vardir_trace/log/drizzleslap.trace";
     }
     $ENV{'DRIZZLE_SLAP'}= $cmdline_drizzleslap;
+    $ENV{'DRIZZLE_SLAP_SECONDARY'}= $cmdline_drizzleslap_secondary;
   }
 
 
 
   # ----------------------------------------------------
-  # Setup env so childs can execute mysqlimport
+  # Setup env so childs can execute drizzleimport
   # ----------------------------------------------------
-  my $cmdline_mysqlimport=
-    mtr_native_path($exe_drizzleimport) .
+  my $cmdline_drizzleimport=
+    dtr_native_path($exe_drizzleimport) .
     " -uroot " .
     "--port=$master->[0]->{'port'} ";
 
   if ( $opt_debug )
   {
-    $cmdline_mysqlimport .=
-      " --debug=d:t:A,$path_vardir_trace/log/mysqlimport.trace";
+    $cmdline_drizzleimport .=
+      " --debug=d:t:A,$path_vardir_trace/log/drizzleimport.trace";
   }
-  $ENV{'DRIZZLE_IMPORT'}= $cmdline_mysqlimport;
+  $ENV{'DRIZZLE_IMPORT'}= $cmdline_drizzleimport;
 
 
   # ----------------------------------------------------
-  # Setup env so childs can execute mysql
+  # Setup env so childs can execute drizzle
   # ----------------------------------------------------
-  my $cmdline_mysql=
-    mtr_native_path($exe_drizzle) .
+  my $cmdline_drizzle=
+    dtr_native_path($exe_drizzle) .
     " --no-defaults --host=localhost  --user=root --password= " .
     "--port=$master->[0]->{'port'} ";
+  my $cmdline_drizzle_secondary=
+    dtr_native_path($exe_drizzle) .
+    " --no-defaults --host=localhost  --user=root --password= " .
+    " --port=$master->[0]->{'secondary_port'} ";
 
-  $ENV{'MYSQL'}= $cmdline_mysql;
+  $ENV{'DRIZZLE'}= $cmdline_drizzle;
+  $ENV{'DRIZZLE_SECONDARY'}= $cmdline_drizzle_secondary;
 
   # ----------------------------------------------------
   # Setup env so childs can execute bug25714
@@ -1503,37 +1565,32 @@ sub environment_setup () {
 
 
   # ----------------------------------------------------
-  # Setup env so childs can execute mysql_fix_system_tables
+  # Setup env so childs can execute drizzle_fix_system_tables
   # ----------------------------------------------------
   #if ( !$opt_extern)
   if ( 0 )
   {
-    my $cmdline_mysql_fix_system_tables=
+    my $cmdline_drizzle_fix_system_tables=
       "$exe_drizzle_fix_system_tables --no-defaults --host=localhost " .
       "--user=root --password= " .
       "--basedir=$glob_basedir --bindir=$path_client_bindir --verbose " .
       "--port=$master->[0]->{'port'} ";
-    $ENV{'DRIZZLE_FIX_SYSTEM_TABLES'}=  $cmdline_mysql_fix_system_tables;
+    $ENV{'DRIZZLE_FIX_SYSTEM_TABLES'}=  $cmdline_drizzle_fix_system_tables;
 
   }
 
   # ----------------------------------------------------
-  # Setup env so childs can execute my_print_defaults
-  # ----------------------------------------------------
-  $ENV{'DRIZZLE_MY_PRINT_DEFAULTS'}= mtr_native_path($exe_my_print_defaults);
-
-  # ----------------------------------------------------
   # Setup env so childs can shutdown the server
   # ----------------------------------------------------
-  $ENV{'DRIZZLED_SHUTDOWN'}= mtr_native_path($exe_drizzle);
+  $ENV{'DRIZZLED_SHUTDOWN'}= dtr_native_path($exe_drizzle);
 
   # ----------------------------------------------------
   # Setup env so childs can execute perror  
   # ----------------------------------------------------
-  $ENV{'MY_PERROR'}= mtr_native_path($exe_perror);
+  $ENV{'MY_PERROR'}= dtr_native_path($exe_perror);
 
   # ----------------------------------------------------
-  # Add the path where mysqld will find ha_example.so
+  # Add the path where drizzled will find ha_example.so
   # ----------------------------------------------------
   $ENV{'EXAMPLE_PLUGIN'}=
     ($lib_example_plugin ? basename($lib_example_plugin) : "");
@@ -1541,23 +1598,11 @@ sub environment_setup () {
     ($lib_example_plugin ? "--plugin_dir=" . dirname($lib_example_plugin) : "");
 
   # ----------------------------------------------------
-  # Setup env so childs can execute myisampack and myisamchk
-  # ----------------------------------------------------
-#  $ENV{'MYISAMCHK'}= mtr_native_path(mtr_exe_exists(
-#                       "$path_client_bindir/myisamchk",
-#                       "$glob_basedir/storage/myisam/myisamchk",
-#                       "$glob_basedir/myisam/myisamchk"));
-#  $ENV{'MYISAMPACK'}= mtr_native_path(mtr_exe_exists(
-#                        "$path_client_bindir/myisampack",
-#                        "$glob_basedir/storage/myisam/myisampack",
-#                        "$glob_basedir/myisam/myisampack"));
-
-  # ----------------------------------------------------
   # We are nice and report a bit about our settings
   # ----------------------------------------------------
   if (!$opt_extern)
   {
-    print "Using MTR_BUILD_THREAD      = $ENV{MTR_BUILD_THREAD}\n";
+    print "Using DTR_BUILD_THREAD      = $ENV{DTR_BUILD_THREAD}\n";
     print "Using MASTER_MYPORT         = $ENV{MASTER_MYPORT}\n";
     print "Using MASTER_MYPORT1        = $ENV{MASTER_MYPORT1}\n";
     print "Using SLAVE_MYPORT          = $ENV{SLAVE_MYPORT}\n";
@@ -1587,9 +1632,9 @@ sub signal_setup () {
 
 sub handle_int_signal () {
   $SIG{INT}= 'DEFAULT';         # If we get a ^C again, we die...
-  mtr_warning("got INT signal, cleaning up.....");
+  dtr_warning("got INT signal, cleaning up.....");
   stop_all_servers();
-  mtr_error("We die from ^C signal from user");
+  dtr_error("We die from ^C signal from user");
 }
 
 
@@ -1601,11 +1646,11 @@ sub handle_int_signal () {
 
 sub kill_running_servers () {
   {
-    # Ensure that no old mysqld test servers are running
+    # Ensure that no old drizzled test servers are running
     # This is different from terminating processes we have
     # started from this run of the script, this is terminating
     # leftovers from previous runs.
-    mtr_kill_leftovers();
+    dtr_kill_leftovers();
    }
 }
 
@@ -1615,17 +1660,17 @@ sub kill_running_servers () {
 #
 sub remove_stale_vardir () {
 
-  mtr_report("Removing Stale Files");
+  dtr_report("Removing Stale Files");
 
   # Safety!
-  mtr_error("No, don't remove the vardir when running with --extern")
+  dtr_error("No, don't remove the vardir when running with --extern")
     if $opt_extern;
 
-  mtr_verbose("opt_vardir: $opt_vardir");
+  dtr_verbose("opt_vardir: $opt_vardir");
   if ( $opt_vardir eq $default_vardir )
   {
     #
-    # Running with "var" in mysql-test dir
+    # Running with "var" in drizzle-test dir
     #
     if ( -l $opt_vardir)
     {
@@ -1634,44 +1679,44 @@ sub remove_stale_vardir () {
       if ( $opt_mem and readlink($opt_vardir) eq $opt_mem )
       {
 	# Remove the directory which the link points at
-	mtr_verbose("Removing " . readlink($opt_vardir));
-	mtr_rmtree(readlink($opt_vardir));
+	dtr_verbose("Removing " . readlink($opt_vardir));
+	dtr_rmtree(readlink($opt_vardir));
 
 	# Remove the "var" symlink
-	mtr_verbose("unlink($opt_vardir)");
+	dtr_verbose("unlink($opt_vardir)");
 	unlink($opt_vardir);
       }
       elsif ( $opt_mem )
       {
 	# Just remove the "var" symlink
-	mtr_report("WARNING: Removing '$opt_vardir' symlink it's wrong");
+	dtr_report("WARNING: Removing '$opt_vardir' symlink it's wrong");
 
-	mtr_verbose("unlink($opt_vardir)");
+	dtr_verbose("unlink($opt_vardir)");
 	unlink($opt_vardir);
       }
       else
       {
-	# Some users creates a soft link in mysql-test/var to another area
+	# Some users creates a soft link in drizzle-test/var to another area
 	# - allow it, but remove all files in it
 
-	mtr_report("WARNING: Using the 'mysql-test/var' symlink");
+	dtr_report("WARNING: Using the 'drizzle-test/var' symlink");
 
 	# Make sure the directory where it points exist
-	mtr_error("The destination for symlink $opt_vardir does not exist")
+	dtr_error("The destination for symlink $opt_vardir does not exist")
 	  if ! -d readlink($opt_vardir);
 
 	foreach my $bin ( glob("$opt_vardir/*") )
 	{
-	  mtr_verbose("Removing bin $bin");
-	  mtr_rmtree($bin);
+	  dtr_verbose("Removing bin $bin");
+	  dtr_rmtree($bin);
 	}
       }
     }
     else
     {
       # Remove the entire "var" dir
-      mtr_verbose("Removing $opt_vardir/");
-      mtr_rmtree("$opt_vardir/");
+      dtr_verbose("Removing $opt_vardir/");
+      dtr_rmtree("$opt_vardir/");
     }
 
     if ( $opt_mem )
@@ -1679,8 +1724,8 @@ sub remove_stale_vardir () {
       # A symlink from var/ to $opt_mem will be set up
       # remove the $opt_mem dir to assure the symlink
       # won't point at an old directory
-      mtr_verbose("Removing $opt_mem");
-      mtr_rmtree($opt_mem);
+      dtr_verbose("Removing $opt_mem");
+      dtr_rmtree($opt_mem);
     }
 
   }
@@ -1690,14 +1735,14 @@ sub remove_stale_vardir () {
     # Running with "var" in some other place
     #
 
-    # Remove the var/ dir in mysql-test dir if any
+    # Remove the var/ dir in drizzle-test dir if any
     # this could be an old symlink that shouldn't be there
-    mtr_verbose("Removing $default_vardir");
-    mtr_rmtree($default_vardir);
+    dtr_verbose("Removing $default_vardir");
+    dtr_rmtree($default_vardir);
 
     # Remove the "var" dir
-    mtr_verbose("Removing $opt_vardir/");
-    mtr_rmtree("$opt_vardir/");
+    dtr_verbose("Removing $opt_vardir/");
+    dtr_rmtree("$opt_vardir/");
   }
 }
 
@@ -1705,42 +1750,42 @@ sub remove_stale_vardir () {
 # Create var and the directories needed in var
 #
 sub setup_vardir() {
-  mtr_report("Creating Directories");
+  dtr_report("Creating Directories");
 
   if ( $opt_vardir eq $default_vardir )
   {
     #
-    # Running with "var" in mysql-test dir
+    # Running with "var" in drizzle-test dir
     #
     if ( -l $opt_vardir )
     {
       #  it's a symlink
 
       # Make sure the directory where it points exist
-      mtr_error("The destination for symlink $opt_vardir does not exist")
+      dtr_error("The destination for symlink $opt_vardir does not exist")
 	if ! -d readlink($opt_vardir);
     }
     elsif ( $opt_mem )
     {
       # Runinng with "var" as a link to some "memory" location, normally tmpfs
-      mtr_verbose("Creating $opt_mem");
+      dtr_verbose("Creating $opt_mem");
       mkpath($opt_mem);
 
-      mtr_report("Symlinking 'var' to '$opt_mem'");
+      dtr_report("Symlinking 'var' to '$opt_mem'");
       symlink($opt_mem, $opt_vardir);
     }
   }
 
   if ( ! -d $opt_vardir )
   {
-    mtr_verbose("Creating $opt_vardir");
+    dtr_verbose("Creating $opt_vardir");
     mkpath($opt_vardir);
   }
 
   # Ensure a proper error message if vardir couldn't be created
   unless ( -d $opt_vardir and -w $opt_vardir )
   {
-    mtr_error("Writable 'var' directory is needed, use the " .
+    dtr_error("Writable 'var' directory is needed, use the " .
 	      "'--vardir=<path>' option");
   }
 
@@ -1752,13 +1797,19 @@ sub setup_vardir() {
   # Create new data dirs
   foreach my $data_dir (@data_dir_lst)
   {
-    mkpath("$data_dir/mysql");
-    mkpath("$data_dir/test");
+    mkpath("$data_dir/local/mysql");
+    system("$exe_schemawriter mysql $data_dir/local/mysql/db.opt");
+
+    mkpath("$data_dir/local/test");
+    system("$exe_schemawriter test $data_dir/local/test/db.opt");
   }
 
   # Make a link std_data_ln in var/ that points to std_data
-  symlink(collapse_path("$glob_mysql_test_dir/std_data"),
+  symlink(collapse_path("$glob_drizzle_test_dir/std_data"),
           "$opt_vardir/std_data_ln");
+
+  symlink(collapse_path("$glob_suite_path/filesystem_engine/tests/t"),
+          "$opt_vardir/filesystem_ln");
 
   # Remove old log files
   foreach my $name (glob("r/*.progress r/*.log r/*.warnings"))
@@ -1767,6 +1818,8 @@ sub setup_vardir() {
   }
   system("chmod -R ugo+r $opt_vardir");
   system("chmod -R ugo+r $opt_vardir/std_data_ln/*");
+  system("chmod -R ugo+rw $opt_vardir/filesystem_ln/*");
+  system("chmod -R ugo+w $glob_suite_path/filesystem_engine/tests/t");
 }
 
 
@@ -1774,7 +1827,7 @@ sub  check_running_as_root () {
   # Check if running as root
   # i.e a file can be read regardless what mode we set it to
   my $test_file= "$opt_vardir/test_running_as_root.txt";
-  mtr_tofile($test_file, "MySQL");
+  dtr_tofile($test_file, "Drizzle");
   chmod(oct("0000"), $test_file);
 
   my $result="";
@@ -1790,10 +1843,10 @@ sub  check_running_as_root () {
   my $file_mode= (stat($test_file))[2] & 07777;
 
   $ENV{'DRIZZLE_TEST_ROOT'}= "NO";
-  mtr_verbose("result: $result, file_mode: $file_mode");
-  if ($result eq "MySQL" && $file_mode == 0)
+  dtr_verbose("result: $result, file_mode: $file_mode");
+  if ($result eq "Drizzle" && $file_mode == 0)
   {
-    mtr_warning("running this script as _root_ will cause some " .
+    dtr_warning("running this script as _root_ will cause some " .
                 "tests to be skipped");
     $ENV{'DRIZZLE_TEST_ROOT'}= "YES";
   }
@@ -1805,20 +1858,20 @@ sub  check_running_as_root () {
 
 
 sub check_debug_support ($) {
-  my $mysqld_variables= shift;
+  my $drizzled_variables= shift;
 
-  if ( ! $mysqld_variables->{'debug'} )
+  if ( ! $drizzled_variables->{'debug'} )
   {
-    #mtr_report("Binaries are not debug compiled");
+    #dtr_report("Binaries are not debug compiled");
     $debug_compiled_binaries= 0;
 
     if ( $opt_debug )
     {
-      mtr_error("Can't use --debug, binaries does not support it");
+      dtr_error("Can't use --debug, binaries does not support it");
     }
     return;
   }
-  mtr_report("Binaries are debug compiled");
+  dtr_report("Binaries are debug compiled");
   $debug_compiled_binaries= 1;
 }
 
@@ -1835,42 +1888,42 @@ sub run_benchmarks ($) {
   my $args;
 
   {
-    mysqld_start($master->[0],[],[]);
+    drizzled_start($master->[0],[],[]);
     if ( ! $master->[0]->{'pid'} )
     {
-      mtr_error("Can't start the mysqld server");
+      dtr_error("Can't start the drizzled server");
     }
   }
 
-  mtr_init_args(\$args);
+  dtr_init_args(\$args);
 
-  mtr_add_arg($args, "--user=%s", $opt_user);
+  dtr_add_arg($args, "--user=%s", $opt_user);
 
   if ( $opt_small_bench )
   {
-    mtr_add_arg($args, "--small-test");
-    mtr_add_arg($args, "--small-tables");
+    dtr_add_arg($args, "--small-test");
+    dtr_add_arg($args, "--small-tables");
   }
 
-  chdir($glob_mysql_bench_dir)
-    or mtr_error("Couldn't chdir to '$glob_mysql_bench_dir': $!");
+  chdir($glob_drizzle_bench_dir)
+    or dtr_error("Couldn't chdir to '$glob_drizzle_bench_dir': $!");
 
   if ( ! $benchmark )
   {
-    mtr_run("$glob_mysql_bench_dir/run-all-tests", $args, "", "", "", "");
+    dtr_run("$glob_drizzle_bench_dir/run-all-tests", $args, "", "", "", "");
     # FIXME check result code?!
   }
   elsif ( -x $benchmark )
   {
-    mtr_run("$glob_mysql_bench_dir/$benchmark", $args, "", "", "", "");
+    dtr_run("$glob_drizzle_bench_dir/$benchmark", $args, "", "", "", "");
     # FIXME check result code?!
   }
   else
   {
-    mtr_error("Benchmark $benchmark not found");
+    dtr_error("Benchmark $benchmark not found");
   }
 
-  chdir($glob_mysql_test_dir);          # Go back
+  chdir($glob_drizzle_test_dir);          # Go back
 
   {
     stop_masters();
@@ -1887,13 +1940,13 @@ sub run_benchmarks ($) {
 sub run_tests () {
   my ($tests)= @_;
 
-  mtr_print_thick_line();
+  dtr_print_thick_line();
 
-  mtr_timer_start($glob_timers,"suite", 60 * $opt_suite_timeout);
+  dtr_timer_start($glob_timers,"suite", 60 * $opt_suite_timeout);
 
-  mtr_report_tests_not_skipped_though_disabled($tests);
+  dtr_report_tests_not_skipped_though_disabled($tests);
 
-  mtr_print_header();
+  dtr_print_header();
 
   foreach my $tinfo ( @$tests )
   {
@@ -1904,13 +1957,13 @@ sub run_tests () {
 	  next;
 	}
 
-      mtr_timer_start($glob_timers,"testcase", 60 * $opt_testcase_timeout);
+      dtr_timer_start($glob_timers,"testcase", 60 * $opt_testcase_timeout);
       run_testcase($tinfo);
-      mtr_timer_stop($glob_timers,"testcase");
+      dtr_timer_stop($glob_timers,"testcase");
     }
   }
 
-  mtr_print_line();
+  dtr_print_line();
 
   if ( ! $glob_debugger and
        ! $opt_extern )
@@ -1927,9 +1980,9 @@ sub run_tests () {
     gprof_collect(); # collect coverage information
   }
 
-  mtr_report_stats($tests);
+  dtr_report_stats($tests);
 
-  mtr_timer_stop($glob_timers,"suite");
+  dtr_timer_stop($glob_timers,"suite");
 }
 
 
@@ -1949,12 +2002,12 @@ sub initialize_servers () {
     # vardir does not already exist it should be created
     if ( ! -d $opt_vardir )
     {
-      mtr_report("Creating '$opt_vardir'");
+      dtr_report("Creating '$opt_vardir'");
       setup_vardir();
     }
     else
     {
-      mtr_verbose("No need to create '$opt_vardir' it already exists");
+      dtr_verbose("No need to create '$opt_vardir' it already exists");
     }
   }
   else
@@ -1966,7 +2019,7 @@ sub initialize_servers () {
       remove_stale_vardir();
       setup_vardir();
 
-      mysql_install_db();
+      drizzle_install_db();
       if ( $opt_force )
       {
 	# Save a snapshot of the freshly installed db
@@ -1977,15 +2030,15 @@ sub initialize_servers () {
   }
   check_running_as_root();
 
-  mtr_log_init("$opt_vardir/log/drizzle-test-run.log");
+  dtr_log_init("$opt_vardir/log/drizzle-test-run.log");
 
 }
 
-sub mysql_install_db () {
+sub drizzle_install_db () {
 
   if ($max_master_num > 1)
   {
-    copy_install_db('master', $master->[1]->{'path_myddir'});
+    copy_install_db('master', $master->[1]->{'path_myddir'} . "/local");
   }
 
   # Install the number of slave databses needed
@@ -2002,10 +2055,10 @@ sub copy_install_db ($$) {
   my $type=      shift;
   my $data_dir=  shift;
 
-  mtr_report("Installing \u$type Database");
+  dtr_report("Installing \u$type Database");
 
   # Just copy the installed db from first master
-  mtr_copy_dir($master->[0]->{'path_myddir'}, $data_dir);
+  dtr_copy_dir($master->[0]->{'path_myddir'}, $data_dir);
 
 }
 
@@ -2023,8 +2076,8 @@ sub restore_slave_databases ($) {
     {
       my $data_dir= $slave->[$idx]->{'path_myddir'};
       my $name= basename($data_dir);
-      mtr_rmtree($data_dir);
-      mtr_copy_dir("$path_snapshot/$name", $data_dir);
+      dtr_rmtree($data_dir);
+      dtr_copy_dir("$path_snapshot/$name", $data_dir);
     }
   }
 }
@@ -2043,8 +2096,8 @@ sub run_testcase_check_skip_test($)
 
   if ( $tinfo->{'skip'} )
   {
-    mtr_report_test_name($tinfo);
-    mtr_report_test_skipped($tinfo);
+    dtr_report_test_name($tinfo);
+    dtr_report_test_skipped($tinfo);
     return 1;
   }
 
@@ -2058,7 +2111,7 @@ sub do_before_run_drizzletest($)
   my $args;
 
   # Remove old files produced by drizzletest
-  my $base_file= mtr_match_extension($tinfo->{'result_file'},
+  my $base_file= dtr_match_extension($tinfo->{'result_file'},
 				    "result"); # Trim extension
   unlink("$base_file.reject");
   unlink("$base_file.progress");
@@ -2072,9 +2125,9 @@ sub do_after_run_drizzletest($)
   my $tinfo= shift;
 
   # Save info from this testcase run to drizzletest.log
-  mtr_appendfile_to_file($path_current_test_log, $path_drizzletest_log)
+  dtr_appendfile_to_file($path_current_test_log, $path_drizzletest_log)
     if -f $path_current_test_log;
-  mtr_appendfile_to_file($path_timefile, $path_drizzletest_log)
+  dtr_appendfile_to_file($path_timefile, $path_drizzletest_log)
     if -f $path_timefile;
 }
 
@@ -2086,12 +2139,12 @@ sub run_testcase_mark_logs($$)
   # Write a marker to all log files
 
   # The file indicating current test name
-  mtr_tonewfile($path_current_test_log, $log_msg);
+  dtr_tonewfile($path_current_test_log, $log_msg);
 
-  # each mysqld's .err file
-  foreach my $mysqld (@{$master}, @{$slave})
+  # each drizzled's .err file
+  foreach my $drizzled (@{$master}, @{$slave})
   {
-    mtr_tofile($mysqld->{path_myerr}, $log_msg);
+    dtr_tofile($drizzled->{path_myerr}, $log_msg);
   }
 
 }
@@ -2119,7 +2172,7 @@ sub find_testcase_skipped_reason($)
 
   if ( ! $reason )
   {
-    mtr_warning("Could not find reason for skipping test in $path_timefile");
+    dtr_warning("Could not find reason for skipping test in $path_timefile");
     $reason= "Detected by testcase(reason unknown) ";
   }
   $tinfo->{'comment'}= $reason;
@@ -2139,7 +2192,7 @@ sub find_testcase_skipped_reason($)
 
 # We don't start and kill the servers for each testcase. But some
 # testcases needs a restart, because they specify options to start
-# mysqld with. After that testcase, we need to restart again, to set
+# drizzled with. After that testcase, we need to restart again, to set
 # back the normal options.
 
 sub run_testcase ($) {
@@ -2150,7 +2203,7 @@ sub run_testcase ($) {
   # -------------------------------------------------------
 
   $ENV{'TZ'}= $tinfo->{'timezone'};
-  mtr_verbose("Setting timezone: $tinfo->{'timezone'}");
+  dtr_verbose("Setting timezone: $tinfo->{'timezone'}");
 
   my $master_restart= run_testcase_need_master_restart($tinfo);
   my $slave_restart= run_testcase_need_slave_restart($tinfo);
@@ -2160,9 +2213,9 @@ sub run_testcase ($) {
     # Can't restart a running server that may be in use
     if ( $opt_extern )
     {
-      mtr_report_test_name($tinfo);
+      dtr_report_test_name($tinfo);
       $tinfo->{comment}= "Can't restart a running server";
-      mtr_report_test_skipped($tinfo);
+      dtr_report_test_skipped($tinfo);
       return;
     }
 
@@ -2172,12 +2225,12 @@ sub run_testcase ($) {
   # Write to all log files to indicate start of testcase
   run_testcase_mark_logs($tinfo, "CURRENT_TEST: $tinfo->{name}\n");
 
-  my $died= mtr_record_dead_children();
+  my $died= dtr_record_dead_children();
   if ($died or $master_restart or $slave_restart)
   {
     if (run_testcase_start_servers($tinfo))
     {
-      mtr_report_test_name($tinfo);
+      dtr_report_test_name($tinfo);
       report_failure_and_restart($tinfo);
       return 1;
     }
@@ -2188,8 +2241,8 @@ sub run_testcase ($) {
   # ----------------------------------------------------------------------
   if ( $opt_start_and_exit or $opt_start_dirty )
   {
-    mtr_timer_stop_all($glob_timers);
-    mtr_report("\nServers started, exiting");
+    dtr_timer_stop_all($glob_timers);
+    dtr_report("\nServers started, exiting");
     exit(0);
   }
 
@@ -2197,13 +2250,13 @@ sub run_testcase ($) {
     do_before_run_drizzletest($tinfo);
 
     my $res= run_drizzletest($tinfo);
-    mtr_report_test_name($tinfo);
+    dtr_report_test_name($tinfo);
 
     do_after_run_drizzletest($tinfo);
 
     if ( $res == 0 )
     {
-      mtr_report_test_passed($tinfo);
+      dtr_report_test_passed($tinfo);
     }
     elsif ( $res == 62 )
     {
@@ -2211,7 +2264,7 @@ sub run_testcase ($) {
 
       # Try to get reason from drizzletest.log
       find_testcase_skipped_reason($tinfo);
-      mtr_report_test_skipped($tinfo);
+      dtr_report_test_skipped($tinfo);
     }
     elsif ( $res == 63 )
     {
@@ -2247,13 +2300,13 @@ sub run_testcase ($) {
 #
 sub save_installed_db () {
 
-  mtr_report("Saving snapshot of installed databases");
-  mtr_rmtree($path_snapshot);
+  dtr_report("Saving snapshot of installed databases");
+  dtr_rmtree($path_snapshot);
 
   foreach my $data_dir (@data_dir_lst)
   {
     my $name= basename($data_dir);
-    mtr_copy_dir("$data_dir", "$path_snapshot/$name");
+    dtr_copy_dir("$data_dir", "$path_snapshot/$name");
   }
 }
 
@@ -2272,7 +2325,7 @@ sub save_files_before_restore($$) {
   {
     last if $opt_max_save_core > 0 && $num_saved_cores >= $opt_max_save_core;
     my $core_name= basename($core_file);
-    mtr_report("Saving $core_name");
+    dtr_report("Saving $core_name");
     mkdir($save_name) if ! -d $save_name;
     rename("$core_file", "$save_name/$core_name");
     ++$num_saved_cores;
@@ -2289,27 +2342,27 @@ sub restore_installed_db ($) {
 
   if ( -d $path_snapshot)
   {
-    mtr_report("Restoring snapshot of databases");
+    dtr_report("Restoring snapshot of databases");
 
     foreach my $data_dir (@data_dir_lst)
     {
       my $name= basename($data_dir);
       save_files_before_restore($test_name, $data_dir);
-      mtr_rmtree("$data_dir");
-      mtr_copy_dir("$path_snapshot/$name", "$data_dir");
+      dtr_rmtree("$data_dir");
+      dtr_copy_dir("$path_snapshot/$name", "$data_dir");
     }
   }
   else
   {
     # No snapshot existed
-    mtr_error("No snapshot existed");
+    dtr_error("No snapshot existed");
   }
 }
 
 sub report_failure_and_restart ($) {
   my $tinfo= shift;
 
-  mtr_report_test_failed($tinfo);
+  dtr_report_test_failed($tinfo);
   print "\n";
   if ( $opt_force )
   {
@@ -2318,19 +2371,19 @@ sub report_failure_and_restart ($) {
 
     # Restore the snapshot of the installed test db
     restore_installed_db($tinfo->{'name'});
-    mtr_report("Resuming Tests\n");
+    dtr_report("Resuming Tests\n");
     return;
   }
 
   my $test_mode= join(" ", @::glob_test_mode) || "default";
-  mtr_report("Aborting: $tinfo->{'name'} failed in $test_mode mode. ");
-  mtr_report("To continue, re-run with '--force'.");
+  dtr_report("Aborting: $tinfo->{'name'} failed in $test_mode mode. ");
+  dtr_report("To continue, re-run with '--force'.");
   if ( ! $glob_debugger and
        ! $opt_extern )
   {
     stop_all_servers();
   }
-  mtr_exit(1);
+  dtr_exit(1);
 
 }
 
@@ -2342,11 +2395,11 @@ sub run_master_init_script ($) {
   # Run master initialization shell script if one exists
   if ( $init_script )
   {
-    my $ret= mtr_run("/bin/sh", [$init_script], "", "", "", "");
+    my $ret= dtr_run("/bin/sh", [$init_script], "", "", "", "");
     if ( $ret != 0 )
     {
       # FIXME rewrite those scripts to return 0 if successful
-      # mtr_warning("$init_script exited with code $ret");
+      # dtr_warning("$init_script exited with code $ret");
     }
   }
 }
@@ -2405,11 +2458,11 @@ sub do_before_start_slave ($) {
   # Run slave initialization shell script if one exists
   if ( $init_script )
   {
-    my $ret= mtr_run("/bin/sh", [$init_script], "", "", "", "");
+    my $ret= dtr_run("/bin/sh", [$init_script], "", "", "", "");
     if ( $ret != 0 )
     {
       # FIXME rewrite those scripts to return 0 if successful
-      # mtr_warning("$init_script exited with code $ret");
+      # dtr_warning("$init_script exited with code $ret");
     }
   }
 
@@ -2420,13 +2473,13 @@ sub do_before_start_slave ($) {
 }
 
 
-sub mysqld_arguments ($$$$) {
+sub drizzled_arguments ($$$$) {
   my $args=              shift;
-  my $mysqld=            shift;
+  my $drizzled=            shift;
   my $extra_opt=         shift;
   my $slave_master_info= shift;
 
-  my $idx= $mysqld->{'idx'};
+  my $idx= $drizzled->{'idx'};
   my $sidx= "";                 # Index as string, 0 is empty string
   if ( $idx> 0 )
   {
@@ -2435,69 +2488,60 @@ sub mysqld_arguments ($$$$) {
 
   my $prefix= "";               # If drizzletest server arg
 
-  mtr_add_arg($args, "%s--no-defaults", $prefix);
-
-  $path_my_basedir= collapse_path($path_my_basedir);
-  mtr_add_arg($args, "%s--basedir=%s", $prefix, $path_my_basedir);
+  dtr_add_arg($args, "%s--no-defaults", $prefix);
 
   if ($opt_engine)
   {
-    mtr_add_arg($args, "%s--default-storage-engine=%s", $prefix, $opt_engine);
+    dtr_add_arg($args, "%s--default-storage-engine=%s", $prefix, $opt_engine);
   }
 
-  if ( $mysql_version_id >= 50036)
+  if ( $drizzle_version_id >= 50036)
   {
-    # By default, prevent the started mysqld to access files outside of vardir
-    mtr_add_arg($args, "%s--secure-file-priv=%s", $prefix, $opt_vardir);
+    # By default, prevent the started drizzled to access files outside of vardir
+    dtr_add_arg($args, "%s--secure-file-priv=%s", $prefix, $opt_vardir);
   }
 
-  mtr_add_arg($args, "%s--tmpdir=$opt_tmpdir", $prefix);
+  dtr_add_arg($args, "%s--tmpdir=$opt_tmpdir", $prefix);
 
   # Increase default connect_timeout to avoid intermittent
   # disconnects when test servers are put under load
   # see BUG#28359
-  mtr_add_arg($args, "%s--drizzle-protocol-connect-timeout=60", $prefix);
+  dtr_add_arg($args, "%s--mysql-protocol.connect-timeout=60", $prefix);
 
 
-  # When mysqld is run by a root user(euid is 0), it will fail
+  # When drizzled is run by a root user(euid is 0), it will fail
   # to start unless we specify what user to run as, see BUG#30630
   my $euid= $>;
-  if (grep(/^--user/, @$extra_opt, @opt_extra_mysqld_opt) == 0) {
-    mtr_add_arg($args, "%s--user=root", $prefix);
+  if (grep(/^--user/, @$extra_opt, @opt_extra_drizzled_opt) == 0) {
+    dtr_add_arg($args, "%s--user=root", $prefix);
   }
 
-  mtr_add_arg($args, "%s--pid-file=%s", $prefix,
-	      $mysqld->{'path_pid'});
+  dtr_add_arg($args, "%s--pid-file=%s", $prefix,
+	      $drizzled->{'path_pid'});
 
-  mtr_add_arg($args, "%s--drizzle-protocol-port=%d", $prefix,
-                $mysqld->{'port'});
+  dtr_add_arg($args, "%s--mysql-protocol.port=%d", $prefix,
+              $drizzled->{'port'});
 
-  mtr_add_arg($args, "%s--mysql-protocol-port=%d", $prefix,
-                $mysqld->{'port'} + 50);
+  dtr_add_arg($args, "%s--drizzle-protocol.port=%d", $prefix,
+              $drizzled->{'secondary_port'});
 
-  mtr_add_arg($args, "%s--datadir=%s", $prefix,
-	      $mysqld->{'path_myddir'});
+  dtr_add_arg($args, "%s--datadir=%s", $prefix,
+	      $drizzled->{'path_myddir'});
 
   # Check if "extra_opt" contains --skip-log-bin
-  if ( $mysqld->{'type'} eq 'master' )
+  if ( $drizzled->{'type'} eq 'master' )
   {
-    mtr_add_arg($args, "%s--server-id=%d", $prefix,
+    dtr_add_arg($args, "%s--server-id=%d", $prefix,
 	       $idx > 0 ? $idx + 101 : 1);
 
-    mtr_add_arg($args, "%s--loose-innodb_data_file_path=ibdata1:10M:autoextend",
-		$prefix);
+    dtr_add_arg($args,
+      "%s--innodb.data-file-path=ibdata1:20M:autoextend", $prefix);
 
-    mtr_add_arg($args, "%s--loose-innodb-lock-wait-timeout=5", $prefix);
-
-    if ( $idx > 0 or !$use_innodb)
-    {
-      mtr_add_arg($args, "%s--loose-skip-innodb", $prefix);
-    }
   }
   else
   {
-    mtr_error("unknown mysqld type")
-      unless $mysqld->{'type'} eq 'slave';
+    dtr_error("unknown drizzled type")
+      unless $drizzled->{'type'} eq 'slave';
 
     # Directory where slaves find the dumps generated by "load data"
     # on the server. The path need to have constant length otherwise
@@ -2508,40 +2552,39 @@ sub mysqld_arguments ($$$$) {
     {
       foreach my $arg ( @$slave_master_info )
       {
-        mtr_add_arg($args, "%s%s", $prefix, $arg);
+        dtr_add_arg($args, "%s%s", $prefix, $arg);
       }
     }
     else
     {
       my $slave_server_id=  2 + $idx;
       my $slave_rpl_rank= $slave_server_id;
-      mtr_add_arg($args, "%s--server-id=%d", $prefix, $slave_server_id);
+      dtr_add_arg($args, "%s--server-id=%d", $prefix, $slave_server_id);
     }
   } # end slave
 
   if ( $opt_debug )
   {
-    mtr_add_arg($args, "%s--debug=d:t:i:A,%s/log/%s%s.trace",
-                $prefix, $path_vardir_trace, $mysqld->{'type'}, $sidx);
+    dtr_add_arg($args, "%s--debug=d:t:i:A,%s/log/%s%s.trace",
+                $prefix, $path_vardir_trace, $drizzled->{'type'}, $sidx);
   }
 
-  mtr_add_arg($args, "%s--key_buffer_size=1M", $prefix);
-  mtr_add_arg($args, "%s--sort_buffer=256K", $prefix);
-  mtr_add_arg($args, "%s--max_heap_table_size=1M", $prefix);
+  dtr_add_arg($args, "%s--sort-buffer-size=256K", $prefix);
+  dtr_add_arg($args, "%s--max-heap-table-size=1M", $prefix);
 
   if ( $opt_warnings )
   {
-    mtr_add_arg($args, "%s--log-warnings", $prefix);
+    dtr_add_arg($args, "%s--log-warnings", $prefix);
   }
 
-  # Indicate to "mysqld" it will be debugged in debugger
+  # Indicate to "drizzled" it will be debugged in debugger
   if ( $glob_debugger )
   {
-    mtr_add_arg($args, "%s--gdb", $prefix);
+    dtr_add_arg($args, "%s--gdb", $prefix);
   }
 
   my $found_skip_core= 0;
-  foreach my $arg ( @opt_extra_mysqld_opt, @$extra_opt )
+  foreach my $arg ( @opt_extra_drizzled_opt, @$extra_opt )
   {
     # Allow --skip-core-file to be set in <testname>-[master|slave].opt file
     if ($arg eq "--skip-core-file")
@@ -2550,12 +2593,12 @@ sub mysqld_arguments ($$$$) {
     }
     else
     {
-      mtr_add_arg($args, "%s%s", $prefix, $arg);
+      dtr_add_arg($args, "%s%s", $prefix, $arg);
     }
   }
   if ( !$found_skip_core )
   {
-    mtr_add_arg($args, "%s%s", $prefix, "--core-file");
+    dtr_add_arg($args, "%s%s", $prefix, "--core-file");
   }
 
   return $args;
@@ -2564,12 +2607,12 @@ sub mysqld_arguments ($$$$) {
 
 ##############################################################################
 #
-#  Start mysqld and return the PID
+#  Start drizzled and return the PID
 #
 ##############################################################################
 
-sub mysqld_start ($$$) {
-  my $mysqld=            shift;
+sub drizzled_start ($$$) {
+  my $drizzled=            shift;
   my $extra_opt=         shift;
   my $slave_master_info= shift;
 
@@ -2578,30 +2621,30 @@ sub mysqld_start ($$$) {
   my $pid= -1;
   my $wait_for_pid_file= 1;
 
-  my $type= $mysqld->{'type'};
-  my $idx= $mysqld->{'idx'};
+  my $type= $drizzled->{'type'};
+  my $idx= $drizzled->{'idx'};
 
   if ( $type eq 'master' )
   {
-    $exe= $exe_master_mysqld;
+    $exe= $exe_master_drizzled;
   }
   elsif ( $type eq 'slave' )
   {
-    $exe= $exe_slave_mysqld;
+    $exe= $exe_slave_drizzled;
   }
   else
   {
-    mtr_error("Unknown 'type' \"$type\" passed to mysqld_start");
+    dtr_error("Unknown 'type' \"$type\" passed to drizzled_start");
   }
 
-  mtr_init_args(\$args);
+  dtr_init_args(\$args);
 
-  if ( $opt_valgrind_mysqld )
+  if ( $opt_valgrind_drizzled )
   {
     valgrind_arguments($args, \$exe);
   }
 
-  mysqld_arguments($args,$mysqld,$extra_opt,$slave_master_info);
+  drizzled_arguments($args,$drizzled,$extra_opt,$slave_master_info);
 
   if ( $opt_gdb || $opt_manual_gdb)
   {
@@ -2622,7 +2665,7 @@ sub mysqld_start ($$$) {
   elsif ( $opt_manual_debug )
   {
      print "\nStart $type in your debugger\n" .
-           "dir: $glob_mysql_test_dir\n" .
+           "dir: $glob_drizzle_test_dir\n" .
            "exe: $exe\n" .
 	   "args:  " . join(" ", @$args)  . "\n\n" .
 	   "Waiting ....\n";
@@ -2637,73 +2680,74 @@ sub mysqld_start ($$$) {
   }
 
   # Remove the pidfile
-  unlink($mysqld->{'path_pid'});
+  unlink($drizzled->{'path_pid'});
 
   if ( defined $exe )
   {
-    $pid= mtr_spawn($exe, $args, "",
-		    $mysqld->{'path_myerr'},
-		    $mysqld->{'path_myerr'},
+    dtr_verbose("running Drizzle with: $exe @$args");
+    $pid= dtr_spawn($exe, $args, "",
+		    $drizzled->{'path_myerr'},
+		    $drizzled->{'path_myerr'},
 		    "",
 		    { append_log_file => 1 });
   }
 
 
-  if ( $wait_for_pid_file && !sleep_until_file_created($mysqld->{'path_pid'},
-						       $mysqld->{'start_timeout'},
+  if ( $wait_for_pid_file && !sleep_until_file_created($drizzled->{'path_pid'},
+						       $drizzled->{'start_timeout'},
 						       $pid))
   {
 
-    mtr_error("Failed to start mysqld $mysqld->{'type'}");
+    dtr_error("Failed to start drizzled $drizzled->{'type'}");
   }
 
 
   # Remember pid of the started process
-  $mysqld->{'pid'}= $pid;
+  $drizzled->{'pid'}= $pid;
 
   # Remember options used when starting
-  $mysqld->{'start_opts'}= $extra_opt;
-  $mysqld->{'start_slave_master_info'}= $slave_master_info;
+  $drizzled->{'start_opts'}= $extra_opt;
+  $drizzled->{'start_slave_master_info'}= $slave_master_info;
 
-  mtr_verbose("mysqld pid: $pid");
+  dtr_verbose("drizzled pid: $pid");
   return $pid;
 }
 
 
 sub stop_all_servers () {
 
-  mtr_report("Stopping All Servers");
+  dtr_report("Stopping All Servers");
 
   my %admin_pids; # hash of admin processes that requests shutdown
   my @kill_pids;  # list of processes to shutdown/kill
   my $pid;
 
   # Start shutdown of all started masters
-  foreach my $mysqld (@{$slave}, @{$master})
+  foreach my $drizzled (@{$slave}, @{$master})
   {
-    if ( $mysqld->{'pid'} )
+    if ( $drizzled->{'pid'} )
     {
-      $pid= mtr_server_shutdown($mysqld);
+      $pid= dtr_server_shutdown($drizzled);
       $admin_pids{$pid}= 1;
 
       push(@kill_pids,{
-		       pid      => $mysqld->{'pid'},
-                       real_pid => $mysqld->{'real_pid'},
-		       pidfile  => $mysqld->{'path_pid'},
-		       sockfile => $mysqld->{'path_sock'},
-		       port     => $mysqld->{'port'},
-                       errfile  => $mysqld->{'path_myerr'},
+		       pid      => $drizzled->{'pid'},
+                       real_pid => $drizzled->{'real_pid'},
+		       pidfile  => $drizzled->{'path_pid'},
+		       sockfile => $drizzled->{'path_sock'},
+		       port     => $drizzled->{'port'},
+                       errfile  => $drizzled->{'path_myerr'},
 		      });
 
-      $mysqld->{'pid'}= 0; # Assume we are done with it
+      $drizzled->{'pid'}= 0; # Assume we are done with it
     }
   }
 
   # Wait blocking until all shutdown processes has completed
-  mtr_wait_blocking(\%admin_pids);
+  dtr_wait_blocking(\%admin_pids);
 
   # Make sure that process has shutdown else try to kill them
-  mtr_check_stop_servers(\@kill_pids);
+  dtr_check_stop_servers(\@kill_pids);
 }
 
 
@@ -2717,32 +2761,32 @@ sub run_testcase_need_master_restart($)
   if ( $tinfo->{'master_sh'} )
   {
     $do_restart= 1;           # Always restart if script to run
-    mtr_verbose("Restart master: Always restart if script to run");
+    dtr_verbose("Restart master: Always restart if script to run");
   }
   if ( $tinfo->{'force_restart'} )
   {
     $do_restart= 1; # Always restart if --force-restart in -opt file
-    mtr_verbose("Restart master: Restart forced with --force-restart");
+    dtr_verbose("Restart master: Restart forced with --force-restart");
   }
   elsif( $tinfo->{'component_id'} eq 'im' )
   {
     $do_restart= 1;
-    mtr_verbose("Restart master: Always restart for im tests");
+    dtr_verbose("Restart master: Always restart for im tests");
   }
   elsif ( $master->[0]->{'running_master_options'} and
 	  $master->[0]->{'running_master_options'}->{'timezone'} ne
 	  $tinfo->{'timezone'})
   {
     $do_restart= 1;
-    mtr_verbose("Restart master: Different timezone");
+    dtr_verbose("Restart master: Different timezone");
   }
   # Check that running master was started with same options
   # as the current test requires
-  elsif (! mtr_same_opts($master->[0]->{'start_opts'},
+  elsif (! dtr_same_opts($master->[0]->{'start_opts'},
                          $tinfo->{'master_opt'}) )
   {
     # Chech that diff is binlog format only
-    my $diff_opts= mtr_diff_opts($master->[0]->{'start_opts'},$tinfo->{'master_opt'});
+    my $diff_opts= dtr_diff_opts($master->[0]->{'start_opts'},$tinfo->{'master_opt'});
     if (scalar(@$diff_opts) eq 2) 
     {
       $do_restart= 1;
@@ -2750,7 +2794,7 @@ sub run_testcase_need_master_restart($)
     else
     {
       $do_restart= 1;
-      mtr_verbose("Restart master: running with different options '" .
+      dtr_verbose("Restart master: running with different options '" .
 	         join(" ", @{$tinfo->{'master_opt'}}) . "' != '" .
 	  	join(" ", @{$master->[0]->{'start_opts'}}) . "'" );
     }
@@ -2760,12 +2804,12 @@ sub run_testcase_need_master_restart($)
     if ( $opt_extern )
     {
       $do_restart= 0;
-      mtr_verbose("No restart: using extern master");
+      dtr_verbose("No restart: using extern master");
     }
     else
     {
       $do_restart= 1;
-      mtr_verbose("Restart master: master is not started");
+      dtr_verbose("Restart master: master is not started");
     }
   }
   return $do_restart;
@@ -2780,16 +2824,16 @@ sub run_testcase_need_slave_restart($)
 
   if ( $max_slave_num == 0)
   {
-    mtr_verbose("Skip slave restart: No testcase use slaves");
+    dtr_verbose("Skip slave restart: No testcase use slaves");
   }
   else
   {
 
     # Check if any slave is currently started
     my $any_slave_started= 0;
-    foreach my $mysqld (@{$slave})
+    foreach my $drizzled (@{$slave})
     {
-      if ( $mysqld->{'pid'} )
+      if ( $drizzled->{'pid'} )
       {
 	$any_slave_started= 1;
 	last;
@@ -2798,12 +2842,12 @@ sub run_testcase_need_slave_restart($)
 
     if ($any_slave_started)
     {
-      mtr_verbose("Restart slave: Slave is started, always restart");
+      dtr_verbose("Restart slave: Slave is started, always restart");
       $do_slave_restart= 1;
     }
     elsif ( $tinfo->{'slave_num'} )
     {
-      mtr_verbose("Restart slave: Test need slave");
+      dtr_verbose("Restart slave: Test need slave");
       $do_slave_restart= 1;
     }
   }
@@ -2837,24 +2881,24 @@ sub run_testcase_stop_servers($$$) {
     delete $master->[0]->{'running_master_options'}; # Forget history
 
     # Start shutdown of all started masters
-    foreach my $mysqld (@{$master})
+    foreach my $drizzled (@{$master})
     {
-      if ( $mysqld->{'pid'} )
+      if ( $drizzled->{'pid'} )
       {
-        $pid= mtr_server_shutdown($mysqld);
+        $pid= dtr_server_shutdown($drizzled);
 
         $admin_pids{$pid}= 1;
 
         push(@kill_pids,{
-              pid      => $mysqld->{'pid'},
-              real_pid => $mysqld->{'real_pid'},
-              pidfile  => $mysqld->{'path_pid'},
-              sockfile => $mysqld->{'path_sock'},
-              port     => $mysqld->{'port'},
-              errfile   => $mysqld->{'path_myerr'},
+              pid      => $drizzled->{'pid'},
+              real_pid => $drizzled->{'real_pid'},
+              pidfile  => $drizzled->{'path_pid'},
+              sockfile => $drizzled->{'path_sock'},
+              port     => $drizzled->{'port'},
+              errfile   => $drizzled->{'path_myerr'},
         });
 
-        $mysqld->{'pid'}= 0; # Assume we are done with it
+        $drizzled->{'pid'}= 0; # Assume we are done with it
       }
     }
   }
@@ -2865,24 +2909,24 @@ sub run_testcase_stop_servers($$$) {
     delete $slave->[0]->{'running_slave_options'}; # Forget history
 
     # Start shutdown of all started slaves
-    foreach my $mysqld (@{$slave})
+    foreach my $drizzled (@{$slave})
     {
-      if ( $mysqld->{'pid'} )
+      if ( $drizzled->{'pid'} )
       {
-        $pid= mtr_server_shutdown($mysqld);
+        $pid= dtr_server_shutdown($drizzled);
 
         $admin_pids{$pid}= 1;
 
         push(@kill_pids,{
-              pid      => $mysqld->{'pid'},
-              real_pid => $mysqld->{'real_pid'},
-              pidfile  => $mysqld->{'path_pid'},
-              sockfile => $mysqld->{'path_sock'},
-              port     => $mysqld->{'port'},
-              errfile  => $mysqld->{'path_myerr'},
+              pid      => $drizzled->{'pid'},
+              real_pid => $drizzled->{'real_pid'},
+              pidfile  => $drizzled->{'path_pid'},
+              sockfile => $drizzled->{'path_sock'},
+              port     => $drizzled->{'port'},
+              errfile  => $drizzled->{'path_myerr'},
         });
 
-        $mysqld->{'pid'}= 0; # Assume we are done with it
+        $drizzled->{'pid'}= 0; # Assume we are done with it
       }
     }
   }
@@ -2893,11 +2937,11 @@ sub run_testcase_stop_servers($$$) {
   # ----------------------------------------------------------------------
 
   # Wait blocking until all shutdown processes has completed
-  mtr_wait_blocking(\%admin_pids);
+  dtr_wait_blocking(\%admin_pids);
 
 
   # Make sure that process has shutdown else try to kill them
-  mtr_check_stop_servers(\@kill_pids);
+  dtr_check_stop_servers(\@kill_pids);
 }
 
 
@@ -2915,14 +2959,14 @@ sub run_testcase_start_servers($) {
   my $tinfo= shift;
   my $tname= $tinfo->{'name'};
 
-  if ( $tinfo->{'component_id'} eq 'mysqld' )
+  if ( $tinfo->{'component_id'} eq 'drizzled' )
   {
     if ( !$master->[0]->{'pid'} )
     {
-      # Master mysqld is not started
+      # Master drizzled is not started
       do_before_start_master($tinfo);
 
-      mysqld_start($master->[0],$tinfo->{'master_opt'},[]);
+      drizzled_start($master->[0],$tinfo->{'master_opt'},[]);
 
     }
 
@@ -2943,7 +2987,7 @@ sub run_testcase_start_servers($) {
     {
       if ( ! $slave->[$idx]->{'pid'} )
       {
-	mysqld_start($slave->[$idx],$tinfo->{'slave_opt'},
+	drizzled_start($slave->[$idx],$tinfo->{'slave_opt'},
 		     $tinfo->{'slave_mi'});
 
       }
@@ -2953,17 +2997,17 @@ sub run_testcase_start_servers($) {
     $slave->[0]->{'running_slave_options'}= $tinfo;
   }
 
-  # Wait for mysqld's to start
-  foreach my $mysqld (@{$master},@{$slave})
+  # Wait for drizzled's to start
+  foreach my $drizzled (@{$master},@{$slave})
   {
 
-    next if !$mysqld->{'pid'};
+    next if !$drizzled->{'pid'};
 
-    if (mysqld_wait_started($mysqld))
+    if (drizzled_wait_started($drizzled))
     {
       # failed to start
       $tinfo->{'comment'}=
-	"Failed to start $mysqld->{'type'} mysqld $mysqld->{'idx'}";
+	"Failed to start $drizzled->{'type'} drizzled $drizzled->{'idx'}";
       return 1;
     }
   }
@@ -2982,48 +3026,48 @@ sub run_testcase_start_servers($) {
 sub run_check_testcase ($$) {
 
   my $mode=     shift;
-  my $mysqld=   shift;
+  my $drizzled=   shift;
 
-  my $name= "check-" . $mysqld->{'type'} . $mysqld->{'idx'};
+  my $name= "check-" . $drizzled->{'type'} . $drizzled->{'idx'};
 
   my $args;
-  mtr_init_args(\$args);
+  dtr_init_args(\$args);
 
-  mtr_add_arg($args, "--no-defaults");
-  mtr_add_arg($args, "--silent");
-  mtr_add_arg($args, "--tmpdir=%s", $opt_tmpdir);
+  dtr_add_arg($args, "--no-defaults");
+  dtr_add_arg($args, "--silent");
+  dtr_add_arg($args, "--tmpdir=%s", $opt_tmpdir);
 
-  mtr_add_arg($args, "--port=%d", $mysqld->{'port'});
-  mtr_add_arg($args, "--database=test");
-  mtr_add_arg($args, "--user=%s", $opt_user);
-  mtr_add_arg($args, "--password=");
+  dtr_add_arg($args, "--port=%d", $drizzled->{'port'});
+  dtr_add_arg($args, "--database=test");
+  dtr_add_arg($args, "--user=%s", $opt_user);
+  dtr_add_arg($args, "--password=");
 
-  mtr_add_arg($args, "-R");
-  mtr_add_arg($args, "$opt_vardir/tmp/$name.result");
+  dtr_add_arg($args, "-R");
+  dtr_add_arg($args, "$opt_vardir/tmp/$name.result");
 
   if ( $mode eq "before" )
   {
-    mtr_add_arg($args, "--record");
+    dtr_add_arg($args, "--record");
   }
 
   if ( $opt_testdir )
   {
-    mtr_add_arg($args, "--testdir=%s", $opt_testdir);
+    dtr_add_arg($args, "--testdir=%s", $opt_testdir);
   }
 
-  my $res = mtr_run_test($exe_drizzletest,$args,
+  my $res = dtr_run_test($exe_drizzletest,$args,
 	        "include/check-testcase.test", "", "", "");
 
   if ( $res == 1  and $mode eq "after")
   {
-    mtr_run("diff",["-u",
+    dtr_run("diff",["-u",
 		    "$opt_vardir/tmp/$name.result",
 		    "$opt_vardir/tmp/$name.reject"],
 	    "", "", "", "");
   }
   elsif ( $res )
   {
-    mtr_error("Could not execute 'check-testcase' $mode testcase");
+    dtr_error("Could not execute 'check-testcase' $mode testcase");
   }
   return $res;
 }
@@ -3038,18 +3082,18 @@ sub run_report_features () {
   my $args;
 
   {
-    mysqld_start($master->[0],[],[]);
+    drizzled_start($master->[0],[],[]);
     if ( ! $master->[0]->{'pid'} )
     {
-      mtr_error("Can't start the mysqld server");
+      dtr_error("Can't start the drizzled server");
     }
-    mysqld_wait_started($master->[0]);
+    drizzled_wait_started($master->[0]);
   }
 
   my $tinfo = {};
   $tinfo->{'name'} = 'report features';
   $tinfo->{'result_file'} = undef;
-  $tinfo->{'component_id'} = 'mysqld';
+  $tinfo->{'component_id'} = 'drizzled';
   $tinfo->{'path'} = 'include/report-features.test';
   $tinfo->{'timezone'}=  "GMT-3";
   $tinfo->{'slave_num'} = 0;
@@ -3070,56 +3114,56 @@ sub run_drizzletest ($) {
   my $exe= $exe_drizzletest;
   my $args;
 
-  mtr_init_args(\$args);
+  dtr_init_args(\$args);
 
-  mtr_add_arg($args, "--no-defaults");
-  mtr_add_arg($args, "--silent");
-  mtr_add_arg($args, "--tmpdir=%s", $opt_tmpdir);
-  mtr_add_arg($args, "--logdir=%s/log", $opt_vardir);
+  dtr_add_arg($args, "--no-defaults");
+  dtr_add_arg($args, "--silent");
+  dtr_add_arg($args, "--tmpdir=%s", $opt_tmpdir);
+  dtr_add_arg($args, "--logdir=%s/log", $opt_vardir);
 
   # Log line number and time  for each line in .test file
-  mtr_add_arg($args, "--mark-progress")
+  dtr_add_arg($args, "--mark-progress")
     if $opt_mark_progress;
 
   {
-    mtr_add_arg($args, "--port=%d", $master->[0]->{'port'});
-    mtr_add_arg($args, "--database=test");
-    mtr_add_arg($args, "--user=%s", $opt_user);
-    mtr_add_arg($args, "--password=");
+    dtr_add_arg($args, "--port=%d", $master->[0]->{'port'});
+    dtr_add_arg($args, "--database=test");
+    dtr_add_arg($args, "--user=%s", $opt_user);
+    dtr_add_arg($args, "--password=");
   }
 
   if ( $opt_strace_client )
   {
     $exe=  "strace";            # FIXME there are ktrace, ....
-    mtr_add_arg($args, "-o");
-    mtr_add_arg($args, "%s/log/drizzletest.strace", $opt_vardir);
-    mtr_add_arg($args, "$exe_drizzletest");
+    dtr_add_arg($args, "-o");
+    dtr_add_arg($args, "%s/log/drizzletest.strace", $opt_vardir);
+    dtr_add_arg($args, "$exe_drizzletest");
   }
 
   if ( $opt_timer )
   {
-    mtr_add_arg($args, "--timer-file=%s/log/timer", $opt_vardir);
+    dtr_add_arg($args, "--timer-file=%s/log/timer", $opt_vardir);
   }
 
   if ( $opt_compress )
   {
-    mtr_add_arg($args, "--compress");
+    dtr_add_arg($args, "--compress");
   }
 
   if ( $opt_sleep )
   {
-    mtr_add_arg($args, "--sleep=%d", $opt_sleep);
+    dtr_add_arg($args, "--sleep=%d", $opt_sleep);
   }
 
   if ( $opt_debug )
   {
-    mtr_add_arg($args, "--debug=d:t:A,%s/log/drizzletest.trace",
+    dtr_add_arg($args, "--debug=d:t:A,%s/log/drizzletest.trace",
 		$path_vardir_trace);
   }
 
   if ( $opt_testdir )
   {
-    mtr_add_arg($args, "--testdir=%s", $opt_testdir);
+    dtr_add_arg($args, "--testdir=%s", $opt_testdir);
   }
 
 
@@ -3127,7 +3171,7 @@ sub run_drizzletest ($) {
   # export DRIZZLE_TEST variable containing <path>/drizzletest <args>
   # ----------------------------------------------------------------------
   $ENV{'DRIZZLE_TEST'}=
-    mtr_native_path($exe_drizzletest) . " " . join(" ", @$args);
+    dtr_native_path($exe_drizzletest) . " " . join(" ", @$args);
 
   # ----------------------------------------------------------------------
   # Add arguments that should not go into the DRIZZLE_TEST env var
@@ -3139,23 +3183,23 @@ sub run_drizzletest ($) {
     # We do this here, since we do not want to Valgrind the nested invocations
     # of drizzletest; that would mess up the stderr output causing test failure.
     my @args_saved = @$args;
-    mtr_init_args(\$args);
+    dtr_init_args(\$args);
     valgrind_arguments($args, \$exe);
-    mtr_add_arg($args, "%s", $_) for @args_saved;
+    dtr_add_arg($args, "%s", $_) for @args_saved;
   }
 
-  mtr_add_arg($args, "--test-file=%s", $tinfo->{'path'});
+  dtr_add_arg($args, "--test-file=%s", $tinfo->{'path'});
 
   # Number of lines of resut to include in failure report
-  mtr_add_arg($args, "--tail-lines=20");
+  dtr_add_arg($args, "--tail-lines=20");
 
   if ( defined $tinfo->{'result_file'} ) {
-    mtr_add_arg($args, "--result-file=%s", $tinfo->{'result_file'});
+    dtr_add_arg($args, "--result-file=%s", $tinfo->{'result_file'});
   }
 
   if ( $opt_record )
   {
-    mtr_add_arg($args, "--record");
+    dtr_add_arg($args, "--record");
   }
 
   if ( $opt_client_gdb )
@@ -3173,24 +3217,24 @@ sub run_drizzletest ($) {
 
   if ( $opt_check_testcases )
   {
-    foreach my $mysqld (@{$master}, @{$slave})
+    foreach my $drizzled (@{$master}, @{$slave})
     {
-      if ($mysqld->{'pid'})
+      if ($drizzled->{'pid'})
       {
-	run_check_testcase("before", $mysqld);
+	run_check_testcase("before", $drizzled);
       }
     }
   }
 
-  my $res = mtr_run_test($exe,$args,"","",$path_timefile,"");
+  my $res = dtr_run_test($exe,$args,"","",$path_timefile,"");
 
   if ( $opt_check_testcases )
   {
-    foreach my $mysqld (@{$master}, @{$slave})
+    foreach my $drizzled (@{$master}, @{$slave})
     {
-      if ($mysqld->{'pid'})
+      if ($drizzled->{'pid'})
       {
-	if (run_check_testcase("after", $mysqld))
+	if (run_check_testcase("after", $drizzled))
 	{
 	  # Check failed, mark the test case with that info
 	  $tinfo->{'check_testcase_failed'}= 1;
@@ -3220,15 +3264,15 @@ sub dbx_arguments {
   if ( $type eq "client" )
   {
     # write init file for client
-    mtr_tofile($dbx_init_file,
+    dtr_tofile($dbx_init_file,
                "runargs $str\n" .
                "run\n");
   }
   else
   {
     # write init file for drizzled
-    mtr_tofile($dbx_init_file,
-               "stop in mysql_parse\n" .
+    dtr_tofile($dbx_init_file,
+               "stop in __1cIdrizzledLmysql_parse6Fpn0AHSession_pkcI_v_\n" .
                "runargs $str\n" .
                "run\n" .
                "\n");
@@ -3245,14 +3289,14 @@ sub dbx_arguments {
   }
 
   $$args= [];
-  mtr_add_arg($$args, "-title");
-  mtr_add_arg($$args, "$type");
-  mtr_add_arg($$args, "-e");
+  dtr_add_arg($$args, "-title");
+  dtr_add_arg($$args, "$type");
+  dtr_add_arg($$args, "-e");
 
-  mtr_add_arg($$args, "dbx");
-  mtr_add_arg($$args, "-c");
-  mtr_add_arg($$args, "source $dbx_init_file");
-  mtr_add_arg($$args, "$$exe");
+  dtr_add_arg($$args, "dbx");
+  dtr_add_arg($$args, "-c");
+  dtr_add_arg($$args, "source $dbx_init_file");
+  dtr_add_arg($$args, "$$exe");
 
   $$exe= "xterm";
 }
@@ -3264,6 +3308,18 @@ sub gdb_arguments {
   my $args= shift;
   my $exe=  shift;
   my $type= shift;
+  # We add needed, extra lines to gdbinit on OS X
+  my $extra_gdb_init = '' ;
+  if ($^O eq 'darwin')
+  {
+    $extra_gdb_init= "set env DYLD_INSERT_LIBRARIES /usr/lib/libgmalloc.dylib\n".
+                 "set env MallocStackLogging 1\n".
+                 "set env MallocScribble 1\n".
+                 "set env MallocPreScribble 1\n".
+                 "set env MallocStackLogging 1\n".
+                 "set env MallocStackLoggingNoCompact 1\n".
+                 "set env MallocGuardEdges 1\n" ;
+  }
 
   # Write $args to gdb init file
   my $str= join(" ", @$$args);
@@ -3275,26 +3331,30 @@ sub gdb_arguments {
   if ( $type eq "client" )
   {
     # write init file for client
-    mtr_tofile($gdb_init_file,
+    dtr_tofile($gdb_init_file,
 	       "set args $str\n" .
+               "$extra_gdb_init" .
 	       "break main\n");
   }
   else
   {
-    # write init file for mysqld
-    mtr_tofile($gdb_init_file,
+    # write init file for drizzled
+    dtr_tofile($gdb_init_file,
 	       "set args $str\n" .
-	       "break mysql_parse\n" .
+               "$extra_gdb_init" .
+               "set breakpoint pending on\n" .
+	       "break drizzled::mysql_parse\n" .
 	       "commands 1\n" .
 	       "disable 1\n" .
 	       "end\n" .
+               "set breakpoint pending off\n" .
 	       "run");
   }
 
   if ( $opt_manual_gdb )
   {
      print "\nTo start gdb for $type, type in another window:\n";
-     print "gdb -cd $glob_mysql_test_dir -x $gdb_init_file $$exe\n";
+     print "$glob_drizzle_test_dir/../libtool --mode=execute gdb -cd $glob_drizzle_test_dir -x $gdb_init_file $$exe\n";
 
      # Indicate the exe should not be started
      $$exe= undef;
@@ -3302,20 +3362,20 @@ sub gdb_arguments {
   }
 
   $$args= [];
-  mtr_add_arg($$args, "-title");
-  mtr_add_arg($$args, "$type");
-  mtr_add_arg($$args, "-e");
+  dtr_add_arg($$args, "-title");
+  dtr_add_arg($$args, "$type");
+  dtr_add_arg($$args, "-e");
 
   if ( $exe_libtool )
   {
-    mtr_add_arg($$args, $exe_libtool);
-    mtr_add_arg($$args, "--mode=execute");
+    dtr_add_arg($$args, $exe_libtool);
+    dtr_add_arg($$args, "--mode=execute");
   }
 
-  mtr_add_arg($$args, "gdb");
-  mtr_add_arg($$args, "-x");
-  mtr_add_arg($$args, "$gdb_init_file");
-  mtr_add_arg($$args, "$$exe");
+  dtr_add_arg($$args, "gdb");
+  dtr_add_arg($$args, "-x");
+  dtr_add_arg($$args, "$gdb_init_file");
+  dtr_add_arg($$args, "$$exe");
 
   $$exe= "xterm";
 }
@@ -3339,17 +3399,17 @@ sub ddd_arguments {
   if ( $type eq "client" )
   {
     # write init file for client
-    mtr_tofile($gdb_init_file,
+    dtr_tofile($gdb_init_file,
 	       "set args $str\n" .
 	       "break main\n");
   }
   else
   {
-    # write init file for mysqld
-    mtr_tofile($gdb_init_file,
+    # write init file for drizzled
+    dtr_tofile($gdb_init_file,
 	       "file $$exe\n" .
 	       "set args $str\n" .
-	       "break mysql_parse\n" .
+	       "break drizzled::mysql_parse\n" .
 	       "commands 1\n" .
 	       "disable 1\n" .
 	       "end");
@@ -3358,7 +3418,7 @@ sub ddd_arguments {
   if ( $opt_manual_ddd )
   {
      print "\nTo start ddd for $type, type in another window:\n";
-     print "ddd -cd $glob_mysql_test_dir -x $gdb_init_file $$exe\n";
+     print "ddd -cd $glob_drizzle_test_dir -x $gdb_init_file $$exe\n";
 
      # Indicate the exe should not be started
      $$exe= undef;
@@ -3370,15 +3430,15 @@ sub ddd_arguments {
   if ( $exe_libtool )
   {
     $$exe= $exe_libtool;
-    mtr_add_arg($$args, "--mode=execute");
-    mtr_add_arg($$args, "ddd");
+    dtr_add_arg($$args, "--mode=execute");
+    dtr_add_arg($$args, "ddd");
   }
   else
   {
     $$exe= "ddd";
   }
-  mtr_add_arg($$args, "--command=$gdb_init_file");
-  mtr_add_arg($$args, "$save_exe");
+  dtr_add_arg($$args, "--command=$gdb_init_file");
+  dtr_add_arg($$args, "$save_exe");
 }
 
 
@@ -3416,7 +3476,7 @@ sub debugger_arguments {
 #  }
   else
   {
-    mtr_error("Unknown argument \"$debugger\" passed to --debugger");
+    dtr_error("Unknown argument \"$debugger\" passed to --debugger");
   }
 }
 
@@ -3430,26 +3490,25 @@ sub valgrind_arguments {
 
   if ( $opt_callgrind)
   {
-    mtr_add_arg($args, "--tool=callgrind");
-    mtr_add_arg($args, "--base=$opt_vardir/log");
+    dtr_add_arg($args, "--tool=callgrind");
   }
   elsif ($opt_massif)
   {
-    mtr_add_arg($args, "--tool=massif");
+    dtr_add_arg($args, "--tool=massif");
   }
   else
   {
-    mtr_add_arg($args, "--tool=memcheck"); # From >= 2.1.2 needs this option
-    mtr_add_arg($args, "--leak-check=yes");
-    mtr_add_arg($args, "--num-callers=16");
-    mtr_add_arg($args, "--suppressions=%s/valgrind.supp", $glob_mysql_test_dir)
-      if -f "$glob_mysql_test_dir/valgrind.supp";
+    dtr_add_arg($args, "--tool=memcheck"); # From >= 2.1.2 needs this option
+    dtr_add_arg($args, "--leak-check=yes");
+    dtr_add_arg($args, "--num-callers=16");
+    dtr_add_arg($args, "--suppressions=%s/valgrind.supp", $glob_drizzle_test_dir)
+      if -f "$glob_drizzle_test_dir/valgrind.supp";
   }
 
   # Add valgrind options, can be overriden by user
-  mtr_add_arg($args, '%s', $_) for (@valgrind_args);
+  dtr_add_arg($args, '%s', $_) for (@valgrind_args);
 
-  mtr_add_arg($args, $$exe);
+  dtr_add_arg($args, $$exe);
 
   $$exe= $opt_valgrind_path || "valgrind";
 
@@ -3463,12 +3522,12 @@ sub valgrind_arguments {
 }
 
 
-sub mysqld_wait_started($){
-  my $mysqld= shift;
+sub drizzled_wait_started($){
+  my $drizzled= shift;
 
-  if (sleep_until_file_created($mysqld->{'path_pid'},
-            $mysqld->{'start_timeout'},
-            $mysqld->{'pid'}) == 0)
+  if (sleep_until_file_created($drizzled->{'path_pid'},
+            $drizzled->{'start_timeout'},
+            $drizzled->{'pid'}) == 0)
   {
     # Failed to wait for pid file
     return 1;
@@ -3476,7 +3535,7 @@ sub mysqld_wait_started($){
 
   # Get the "real pid" of the process, it will be used for killing
   # the process in ActiveState's perl on windows
-  $mysqld->{'real_pid'}= mtr_get_pid_from_file($mysqld->{'path_pid'});
+  $drizzled->{'real_pid'}= dtr_get_pid_from_file($drizzled->{'path_pid'});
 
   return 0;
 }
@@ -3546,7 +3605,7 @@ Options to control directories to use
                         using a builtin list of standard locations
                         for tmpfs (/dev/shm)
                         The option can also be set using environment
-                        variable MTR_MEM=[DIR]
+                        variable DTR_MEM=[DIR]
 
 Options to control what test suites or cases to run
 
@@ -3562,7 +3621,7 @@ Options to control what test suites or cases to run
                         list of suite names.
                         The default is: "$opt_suites_default"
   skip-rpl              Skip the replication test cases.
-  combination="ARG1 .. ARG2" Specify a set of "mysqld" arguments for one
+  combination="ARG1 .. ARG2" Specify a set of "drizzled" arguments for one
                         combination.
   skip-combination      Skip any combination options and combinations files
   repeat-test=n         How many times to repeat each test (default: 1)
@@ -3571,8 +3630,8 @@ Options that specify ports
 
   master_port=PORT      Specify the port number used by the first master
   slave_port=PORT       Specify the port number used by the first slave
-  mtr-build-thread=#    Specify unique collection of ports. Can also be set by
-                        setting the environment variable MTR_BUILD_THREAD.
+  dtr-build-thread=#    Specify unique collection of ports. Can also be set by
+                        setting the environment variable DTR_BUILD_THREAD.
 
 Options for test case authoring
 
@@ -3582,7 +3641,7 @@ Options for test case authoring
 
 Options that pass on options
 
-  mysqld=ARGS           Specify additional arguments to "mysqld"
+  drizzled=ARGS           Specify additional arguments to "drizzled"
 
 Options to run test on running server
 
@@ -3594,18 +3653,18 @@ Options for debugging the product
   client-ddd            Start drizzletest client in ddd
   client-debugger=NAME  Start drizzletest in the selected debugger
   client-gdb            Start drizzletest client in gdb
-  ddd                   Start mysqld in ddd
+  ddd                   Start drizzled in ddd
   debug                 Dump trace output for all servers and client programs
-  debugger=NAME         Start mysqld in the selected debugger
-  gdb                   Start the mysqld(s) in gdb
-  manual-debug          Let user manually start mysqld in debugger, before
+  debugger=NAME         Start drizzled in the selected debugger
+  gdb                   Start the drizzled(s) in gdb
+  manual-debug          Let user manually start drizzled in debugger, before
                         running test(s)
-  manual-gdb            Let user manually start mysqld in gdb, before running
+  manual-gdb            Let user manually start drizzled in gdb, before running
                         test(s)
-  manual-ddd            Let user manually start mysqld in ddd, before running
+  manual-ddd            Let user manually start drizzled in ddd, before running
                         test(s)
-  master-binary=PATH    Specify the master "mysqld" to use
-  slave-binary=PATH     Specify the slave "mysqld" to use
+  master-binary=PATH    Specify the master "drizzled" to use
+  slave-binary=PATH     Specify the slave "drizzled" to use
   strace-client         Create strace output for drizzletest client
   max-save-core         Limit the number of core files saved (to avoid filling
                         up disks for heavily crashing server). Defaults to
@@ -3615,12 +3674,13 @@ Options for coverage, profiling etc
 
   gcov                  FIXME
   gprof                 See online documentation on how to use it.
-  valgrind              Run the "drizzletest" and "mysqld" executables using
+  valgrind              Run the "drizzletest" and "drizzled" executables using
                         valgrind with default options
   valgrind-all          Synonym for --valgrind
-  valgrind-drizzletest    Run the "drizzletest" and "drizzle_client_test" executable
+  valgrind-drizzleslap  Run "drizzleslap" with valgrind.
+  valgrind-drizzletest  Run the "drizzletest" and "drizzle_client_test" executable
                         with valgrind
-  valgrind-mysqld       Run the "mysqld" executable with valgrind
+  valgrind-drizzled       Run the "drizzled" executable with valgrind
   valgrind-options=ARGS Deprecated, use --valgrind-option
   valgrind-option=ARGS  Option to give valgrind, replaces default option(s),
                         can be specified more then once
@@ -3644,11 +3704,11 @@ Misc options
 
   testcase-timeout=MINUTES Max test case run time (default $default_testcase_timeout)
   suite-timeout=MINUTES Max test suite run time (default $default_suite_timeout)
-  warnings | log-warnings Pass --log-warnings to mysqld
+  warnings | log-warnings Pass --log-warnings to drizzled
 
   sleep=SECONDS         Passed to drizzletest, will be used as fixed sleep time
 
 HERE
-  mtr_exit(1);
+  dtr_exit(1);
 
 }

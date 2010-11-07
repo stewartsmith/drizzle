@@ -19,12 +19,12 @@ insert into t1 values (700101000000);
 insert into t1 values (991231235959);
 insert into t1 values (10000101000000);
 insert into t1 values (99991231235959);
---error 1686 # Bad datetime
+--error ER_INVALID_DATETIME_VALUE # Bad datetime
 insert into t1 values (20030100000000);
---error 1686 # Bad datetime
+--error ER_INVALID_DATETIME_VALUE # Bad datetime
 insert into t1 values (20030000000000);
 select * from t1;
---error 1686 # Bad datetime
+--error ER_INVALID_DATETIME_VALUE # Bad datetime
 delete from t1 where t > 0;
 # try earliest datetime end point which is actually a friggin datetime, not a 0.
 delete from t1 where t > "0001-01-01 00:00:00";
@@ -35,40 +35,40 @@ insert into t1 values("000101");
 insert into t1 values("691231");
 insert into t1 values("700101");
 insert into t1 values("991231");
---error 1686 # Bad datetime
+--error ER_INVALID_DATETIME_VALUE # Bad datetime
 insert into t1 values("00000101");
 insert into t1 values("00010101");
 insert into t1 values("99991231");
---error 1686 # Bad datetime
+--error ER_INVALID_DATETIME_VALUE # Bad datetime
 insert into t1 values("00101000000");
---error 1686 # Bad datetime
+--error ER_INVALID_DATETIME_VALUE # Bad datetime
 insert into t1 values("691231000000");
---error 1686 # Bad datetime
+--error ER_INVALID_DATETIME_VALUE # Bad datetime
 insert into t1 values("700101000000");
---error 1686 # Bad datetime
+--error ER_INVALID_DATETIME_VALUE # Bad datetime
 insert into t1 values("991231235959");
 insert into t1 values("10000101000000");
 insert into t1 values("99991231235959");
---error 1686 # Bad datetime
+--error ER_INVALID_DATETIME_VALUE # Bad datetime
 insert into t1 values("20030100000000");
---error 1686 # Bad datetime
+--error ER_INVALID_DATETIME_VALUE # Bad datetime
 insert into t1 values("20030000000000");
 
 # Strange dates
---error 1686 # Bad datetime
+--error ER_INVALID_DATETIME_VALUE # Bad datetime
 insert into t1 values ("2003-003-03");
 
 # Bug #7308: ISO-8601 date format not handled correctly
---error 1686 # Bad datetime
+--error ER_INVALID_DATETIME_VALUE # Bad datetime
 insert into t1 values ("20030102T131415");
 insert into t1 values ("2001-01-01T01:01:01");
---error 1686 # Bad datetime
+--error ER_INVALID_DATETIME_VALUE # Bad datetime
 insert into t1 values ("2001-1-1T1:01:01");
 select * from t1;
 
 # Test some wrong dates
 truncate table t1;
---error 1686 # Bad datetime
+--error ER_INVALID_DATETIME_VALUE # Bad datetime
 insert into t1 values("2003-0303 12:13:14");
 select * from t1;
 drop table t1;
@@ -124,18 +124,18 @@ drop table t1;
 # warnings (for both strings and numbers)
 #
 create table t1 (t datetime);
---error 1686 # Bad datetime
+--error ER_INVALID_DATETIME_VALUE # Bad datetime
 insert into t1 values (20030102030460),(20030102036301),(20030102240401),
                       (20030132030401),(20031302030401),(100001202030401);
 select * from t1;
 delete from t1;
---error 1686 # Bad datetime
+--error ER_INVALID_DATETIME_VALUE # Bad datetime
 insert into t1 values
   ("2003-01-02 03:04:60"),("2003-01-02 03:63:01"),("2003-01-02 24:04:01"),
   ("2003-01-32 03:04:01"),("2003-13-02 03:04:01"), ("10000-12-02 03:04:00");
 select * from t1;
 delete from t1;
---error 1686 # Bad datetime
+--error ER_INVALID_DATETIME_VALUE # Bad datetime
 insert into t1 values ("0000-00-00 00:00:00 some trailer"),("2003-01-01 00:00:00 some trailer");
 select * from t1 order by t;
 drop table t1;
@@ -148,7 +148,7 @@ create table t1 (dt datetime);
 # These dates should be treated as dates in 21st century
 insert into t1 values ("12-01-01"), ("01-01-01 01:00:00");
 # Zero dates are still special :/
---error 1686 # Yeah special uh no its wrong
+--error ER_INVALID_DATETIME_VALUE # Yeah special uh no its wrong
 insert into t1 values ("00-00-00"), ("00-00-00 00:00:00");
 select * from t1;
 drop table t1;
@@ -190,11 +190,11 @@ insert into t1 values ('2007-03-23 13:49:38','2007-03-23 13:49:38');
 insert into t1 values ('2007-03-23 13:49:38','2007-03-23 13:49:38');
 insert into t1 set dt='2007-03-23 13:49:38',da=dt;
 # Test error handling
---error 1686 # Bad date
+--error ER_INVALID_DATETIME_VALUE # Bad date
 insert into t1 values ('2007-03-32','2007-03-23 13:49:38');
 select * from t1;
 drop table t1;
---error 1686 # Bad datetime
+--error ER_INVALID_DATETIME_VALUE # Bad datetime
 create table t1 (da date default '1962-03-32 23:33:34', dt datetime default '1962-03-03');
 
 
@@ -231,6 +231,7 @@ select * from t1,t2 where if(1,'01-02-03 12:34:56','') in (f1, f2);
 create table t3(f3 varchar(20));
 insert into t3 select * from t2;
 select * from t2,t3 where f2 in (f3,'03-04-05');
+--sorted_result
 select f1,f2,f3 from t1,t2,t3 where (f1,'1') in ((f2,'1'),(f3,'1'));
 select f1 from t1 where ('1',f1) in (('1','01-01-01'),('1','2001-1-1 0:0:0'),('1','02-02-02'));
 drop table t1,t2,t3;
@@ -273,9 +274,9 @@ drop table t1;
 create table t1(f1 datetime);
 insert into t1 values('2001-01-01'),('2002-02-02');
 select * from t1 where f1 between 20020101 and 20070101000000;
---error 1686 # 2002010 is not a datetime.
+--error ER_INVALID_DATETIME_VALUE # 2002010 is not a datetime.
 select * from t1 where f1 between 2002010 and 20070101000000;
---error 1686 # 2007010100000 is not a datetime.
+--error ER_INVALID_DATETIME_VALUE # 2007010100000 is not a datetime.
 select * from t1 where f1 between 20020101 and 2007010100000;
 drop table t1;
 
@@ -333,13 +334,6 @@ create table t2 (id int not null, cur_date date not null);
 insert into t1 (id, cur_date) values (1, '2007-04-25 18:30:22');
 insert into t2 (id, cur_date) values (1, '2007-04-25');
 
-set @@optimizer_switch=no_semijoin;
-explain extended
-select * from t1
-where id in (select id from t1 as x1 where (t1.cur_date is null));
-select * from t1
-where id in (select id from t1 as x1 where (t1.cur_date is null));
-
 explain extended
 select * from t2
 where id in (select id from t2 as x1 where (t2.cur_date is null));
@@ -375,9 +369,9 @@ insert into t1 values ('2007-03-23 13:49:38','2007-03-23 13:49:38');
 insert into t1 values ('2007-03-23 13:49:38','2007-03-23 13:49:38');
 insert into t1 set dt='2007-03-23 13:49:38',da=dt;
 # Test error handling
---error 1686 # Bad date
+--error ER_INVALID_DATETIME_VALUE # Bad date
 insert into t1 values ('2007-03-32','2007-03-23 13:49:38');
 select * from t1;
 drop table t1;
---error 1686 # Bad date
+--error ER_INVALID_DATETIME_VALUE # Bad date
 create table t1 (da date default '1962-03-32 23:33:34', dt datetime default '1962-03-03');

@@ -1,0 +1,7 @@
+create table t1 (a int primary key);
+insert into t1 values ();
+ERROR HY000: Field 'a' doesn't have a default value
+select COLUMN_NAME,COLUMN_DEFAULT,COLUMN_DEFAULT_IS_NULL FROM DATA_DICTIONARY.COLUMNS WHERE TABLE_SCHEMA="test" AND TABLE_NAME="t1";
+COLUMN_NAME	COLUMN_DEFAULT	COLUMN_DEFAULT_IS_NULL
+a	NULL	NO
+drop table t1;

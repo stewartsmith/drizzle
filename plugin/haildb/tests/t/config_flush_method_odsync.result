@@ -1,0 +1,6 @@
+SHOW VARIABLES LIKE 'innodb_flush_method';
+Variable_name	Value
+innodb_flush_method	 
+SELECT * FROM DATA_DICTIONARY.INNODB_CONFIGURATION WHERE NAME='flush_method';
+NAME	TYPE	VALUE
+flush_method	TEXT	fsync

@@ -41,11 +41,11 @@
 #include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>
 
-class HexdumpTransactionMessageFunction : public Item_str_func
+class HexdumpTransactionMessageFunction : public drizzled::Item_str_func
 {
 public:
   HexdumpTransactionMessageFunction() : Item_str_func() {}
-  String *val_str(String*);
+  drizzled::String *val_str(drizzled::String*);
 
   void fix_length_and_dec();
 

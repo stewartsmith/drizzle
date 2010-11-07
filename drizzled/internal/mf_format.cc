@@ -11,9 +11,11 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "drizzled/internal/mysys_priv.h"
+#include "config.h"
+
+#include "drizzled/internal/my_sys.h"
 
 #include <fcntl.h>
 
@@ -26,6 +28,11 @@
 #include "drizzled/internal/m_string.h"
 
 using namespace std;
+
+namespace drizzled
+{
+namespace internal
+{
 
 /*
   Formats a filename with possible replace of directory of extension
@@ -158,3 +165,6 @@ size_t strlength(const char *str)
   }
   return((size_t) (found - str));
 } /* strlength */
+
+} /* namespace internal */
+} /* namespace drizzled */

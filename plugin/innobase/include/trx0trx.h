@@ -11,8 +11,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -179,7 +179,7 @@ trx_commit_off_kernel(
 /****************************************************************//**
 Cleans up a transaction at database startup. The cleanup is needed if
 the transaction already got to the middle of a commit when the database
-crashed, andf we cannot roll it back. */
+crashed, and we cannot roll it back. */
 UNIV_INTERN
 void
 trx_cleanup_at_db_startup(
@@ -511,9 +511,6 @@ struct trx_struct{
 					in trx_commit_complete_for_mysql() */
 	unsigned	dict_operation:2;/**< @see enum trx_dict_op */
 	unsigned	duplicates:2;	/*!< TRX_DUP_IGNORE | TRX_DUP_REPLACE */
-	unsigned	active_trans:2;	/*!< 1 - if a transaction in MySQL
-					is active. 2 - if prepare_commit_mutex
-					was taken */
 	unsigned	has_search_latch:1;
 					/* TRUE if this trx has latched the
 					search system latch in S-mode */
@@ -544,7 +541,7 @@ struct trx_struct{
 	/*------------------------------*/
 	void*		mysql_thd;	/*!< MySQL thread handle corresponding
 					to this trx, or NULL */
-	char**		mysql_query_str;/* pointer to the field in mysqld_thd
+	const char*	mysql_query_str;/* pointer to the field in mysqld_thd
 					which contains the pointer to the
 					current SQL query string */
 	const char*	mysql_log_file_name;
@@ -560,10 +557,6 @@ struct trx_struct{
 	ulint		mysql_process_no;/* since in Linux, 'top' reports
 					process id's and not thread id's, we
 					store the process number too */
-	/*------------------------------*/
-	ulint		n_mysql_tables_in_use; /* number of Innobase tables
-					used in the processing of the current
-					SQL statement in MySQL */
 	ulint		mysql_n_tables_locked;
 					/* how many tables the current SQL
 					statement uses, except those

@@ -22,7 +22,7 @@ AC_DEFUN([PANDORA_OPTIMIZE],[
     dnl with using AC_CC_STD_C99 above
     CC="${CC} -std=gnu99"
 
-    AM_CPPFLAGS="-ggdb3 ${AM_CPPFLAGS}"
+    AM_CPPFLAGS="-g ${AM_CPPFLAGS}"
 
     DEBUG_CFLAGS="-O0"
     DEBUG_CXXFLAGS="-O0"
@@ -31,10 +31,6 @@ AC_DEFUN([PANDORA_OPTIMIZE],[
     OPTIMIZE_CXXFLAGS="-O3"
   ])
   AS_IF([test "$INTELCC" = "yes"],[
-    dnl Once we can use a modern autoconf, we can replace the std=gnu99 here
-    dnl with using AC_CC_STD_C99 above
-    CC="${CC} -std=c99"
-
     AM_CPPFLAGS="-g ${AM_CPPFLAGS}"
 
     DEBUG_CFLAGS="-O0"

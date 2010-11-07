@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /* Some useful string utility functions used by the MySQL server */
 #include "config.h"
@@ -20,6 +20,9 @@
 #include "drizzled/typelib.h"
 #include "drizzled/charset_info.h"
 #include "drizzled/global_charset_info.h"
+
+namespace drizzled
+{
 
 /*
   Return bitmap for strings used in a set
@@ -158,3 +161,4 @@ uint32_t find_type2(const TYPELIB *typelib, const char *x, uint32_t length,
   return(0);
 } /* find_type */
 
+} /* namespace drizzled */

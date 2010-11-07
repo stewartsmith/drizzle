@@ -18,10 +18,10 @@ SELECT 2147483647E+02,21474836.47E+06;
 2147483647E+02	21474836.47E+06
 214748364700	21474836470000
 create table t1 (f1 float,f2 float);
-show full columns from t1;
-Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
-f1	double	NULL	YES		NULL		#	
-f2	double	NULL	YES		NULL		#	
+show columns from t1;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+f1	DOUBLE	YES		YES	
+f2	DOUBLE	YES		YES	
 insert into t1 values(10,10),(1e+5,1e+5),(1234567890,1234567890),(1e+10,1e+10),(1e+15,1e+15),(1e+20,1e+20),(1e+50,1e+50),(1e+150,1e+150);
 insert into t1 values(-10,-10),(1e-5,1e-5),(1e-10,1e-10),(1e-15,1e-15),(1e-20,1e-20),(1e-50,1e-50),(1e-150,1e-150);
 select * from t1;
@@ -88,11 +88,11 @@ col1	col2	col3	col4
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `col1` double DEFAULT NULL,
-  `col2` double(22,5) DEFAULT NULL,
-  `col3` double DEFAULT NULL,
-  `col4` double DEFAULT NULL
-) ENGINE=DEFAULT
+  `col1` DOUBLE DEFAULT NULL,
+  `col2` DOUBLE(22,5) DEFAULT NULL,
+  `col3` DOUBLE DEFAULT NULL,
+  `col4` DOUBLE DEFAULT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1,t2;
 create table t1 (a float);
 insert into t1 values (1);
@@ -101,20 +101,20 @@ max(a)	min(a)	avg(a)
 1	1	1
 drop table t1;
 create table t1 (f float, f2 float, f3 float, d double, d2 float, d3 double, de decimal, de2 decimal(6), de3 decimal(5,2), n numeric, n2 numeric(8), n3 numeric(7,6));
-show full columns from t1;
-Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
-f	double	NULL	YES		NULL		#	
-f2	double	NULL	YES		NULL		#	
-f3	double	NULL	YES		NULL		#	
-d	double	NULL	YES		NULL		#	
-d2	double	NULL	YES		NULL		#	
-d3	double	NULL	YES		NULL		#	
-de	decimal(10,0)	NULL	YES		NULL		#	
-de2	decimal(6,0)	NULL	YES		NULL		#	
-de3	decimal(5,2)	NULL	YES		NULL		#	
-n	decimal(10,0)	NULL	YES		NULL		#	
-n2	decimal(8,0)	NULL	YES		NULL		#	
-n3	decimal(7,6)	NULL	YES		NULL		#	
+show columns from t1;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+f	DOUBLE	YES		YES	
+f2	DOUBLE	YES		YES	
+f3	DOUBLE	YES		YES	
+d	DOUBLE	YES		YES	
+d2	DOUBLE	YES		YES	
+d3	DOUBLE	YES		YES	
+de	DECIMAL	YES		YES	
+de2	DECIMAL	YES		YES	
+de3	DECIMAL	YES		YES	
+n	DECIMAL	YES		YES	
+n2	DECIMAL	YES		YES	
+n3	DECIMAL	YES		YES	
 drop table t1;
 create table t1 (a  decimal(7,3) not null, key (a));
 insert into t1 values ("0"),("-0.00"),("-0.01"),("-0.002"),("1");
@@ -201,30 +201,30 @@ d
 show create table t3;
 Table	Create Table
 t3	CREATE TABLE `t3` (
-  `d` double DEFAULT NULL
-) ENGINE=DEFAULT
+  `d` DOUBLE DEFAULT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1, t2, t3;
 create table t1 select  105213674794682365.00 + 0.0 x;
 show warnings;
 Level	Code	Message
 desc  t1;
-Field	Type	Null	Key	Default	Extra
-x	decimal(21,2)	NO		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+x	DECIMAL	NO		NO	
 drop table t1;
 create table t1 select 0.0 x;
 desc t1;
-Field	Type	Null	Key	Default	Extra
-x	decimal(2,1)	NO		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+x	DECIMAL	NO		NO	
 create table t2 select 105213674794682365.00 y;
 desc t2;
-Field	Type	Null	Key	Default	Extra
-y	decimal(20,2)	NO		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+y	DECIMAL	NO		NO	
 create table t3 select x+y a from t1,t2;
 show warnings;
 Level	Code	Message
 desc t3;
-Field	Type	Null	Key	Default	Extra
-a	decimal(21,2)	NO		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+a	DECIMAL	NO		NO	
 drop table t1,t2,t3;
 select 1e-308, 1.00000001e-300, 100000000e-300;
 1e-308	1.00000001e-300	100000000e-300

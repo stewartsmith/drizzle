@@ -1,1 +1,1 @@
---default-replicator-enable --transaction-log-enable --scheduler=multi_thread
+--transaction-log.enable --scheduler=multi_thread

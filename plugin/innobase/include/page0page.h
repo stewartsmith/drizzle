@@ -11,8 +11,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -76,8 +76,11 @@ typedef	byte		page_header_t;
 				header which are set in a page create */
 /*----*/
 #define	PAGE_LEVEL	 26	/* level of the node in an index tree; the
-				leaf level is the level 0 */
-#define	PAGE_INDEX_ID	 28	/* index id where the page belongs */
+				leaf level is the level 0.  This field should
+				not be written to after page creation. */
+#define	PAGE_INDEX_ID	 28	/* index id where the page belongs.
+				This field should not be written to after
+				page creation. */
 #define PAGE_BTR_SEG_LEAF 36	/* file segment header for the leaf pages in
 				a B-tree: defined only on the root page of a
 				B-tree, but not in the root of an ibuf tree */

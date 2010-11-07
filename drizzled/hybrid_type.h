@@ -20,8 +20,10 @@
 #ifndef DRIZZLED_HYBRID_TYPE_H
 #define DRIZZLED_HYBRID_TYPE_H
 
-#include <stdint.h>
-#include <drizzled/my_decimal.h>
+#include <drizzled/decimal.h>
+
+namespace drizzled
+{
 
 /*************************************************************************/
 /*
@@ -59,6 +61,6 @@ public:
   Hybrid_type(const Hybrid_type &rhs) :traits(rhs.traits) {}
 };
 
-
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_HYBRID_TYPE_H */

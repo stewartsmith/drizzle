@@ -1,0 +1,4 @@
+# Only linux has the call that we need to really make this plugin work.
+--source include/have_linux.inc
+--replace_column 1 #
+select count(*) from DATA_DICTIONARY.session_usage;

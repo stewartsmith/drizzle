@@ -27,6 +27,9 @@
 
 #include <string>
 
+namespace drizzled
+{
+
 /**
  * Class representing a BLOB data type column
  */
@@ -96,7 +99,7 @@ public:
   */
   uint32_t pack_length_no_ptr() const
   { return (uint32_t) (sizeof(uint32_t)); }
-  uint32_t row_pack_length() { return pack_length_no_ptr(); }
+
   uint32_t sort_length() const;
   virtual uint32_t max_data_length() const
   {
@@ -183,6 +186,8 @@ public:
   { return charset() == &my_charset_bin ? false : true; }
   uint32_t max_display_length();
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FIELD_BLOB_H */
 

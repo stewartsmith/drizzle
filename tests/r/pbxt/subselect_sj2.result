@@ -1,0 +1,362 @@
+drop table if exists t0, t1, t2, t3;
+create table t0 (a int);
+insert into t0 values (0),(1),(2),(3),(4),(5),(6),(7),(8),(9);
+create table t1 (
+a int, 
+b int
+);
+insert into t1 values (1,1),(1,1),(2,2);
+create table t2 (
+a int,
+b int,
+key(b)
+);
+insert into t2 select a, a/2 from t0;
+select * from t1;
+a	b
+1	1
+1	1
+2	2
+select * from t2;
+a	b
+0	0
+1	1
+2	1
+3	2
+4	2
+5	3
+6	3
+7	4
+8	4
+9	5
+explain select * from t2 where b in (select a from t1);
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	PRIMARY	t2	ALL	NULL	NULL	NULL	NULL	10	Using where
+2	SUBQUERY	t1	ALL	NULL	NULL	NULL	NULL	3	
+select * from t2 where b in (select a from t1);
+a	b
+1	1
+2	1
+3	2
+4	2
+create table t3 (
+a int, 
+b int,
+key(b),
+pk1 char(100), pk2 char(100), pk3 char(100),
+primary key(pk1, pk2, pk3)
+) engine=innodb;
+insert into t3 select a,a, a,a,a from t0;
+explain select * from t3 where b in (select a from t1);
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	PRIMARY	t3	ALL	NULL	NULL	NULL	NULL	10	Using where
+2	SUBQUERY	t1	ALL	NULL	NULL	NULL	NULL	3	
+select * from t3 where b in (select a from t1);
+a	b	pk1	pk2	pk3
+1	1	1	1	1
+2	2	2	2	2
+set @save_max_heap_table_size= @@max_heap_table_size;
+set max_heap_table_size=16384;
+set @save_join_buffer_size = @@join_buffer_size;
+drop table t3;
+create table t3 (
+a int, 
+b int,
+key(b),
+pk1 char(100), pk2 char(100),
+primary key(pk1, pk2)
+) engine=innodb;
+insert into t3 select 
+A.a + 10*B.a, A.a + 10*B.a, A.a + 10*B.a, A.a + 10*B.a 
+from t0 A, t0 B where B.a <5;
+explain select * from t3 where b in (select a from t0);
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	PRIMARY	t3	ALL	NULL	NULL	NULL	NULL	50	Using where
+2	SUBQUERY	t0	ALL	NULL	NULL	NULL	NULL	10	
+select * from t3 where b in (select A.a+B.a from t0 A, t0 B where B.a<5);
+a	b	pk1	pk2
+0	0	0	0
+1	1	1	1
+10	10	10	10
+11	11	11	11
+12	12	12	12
+13	13	13	13
+2	2	2	2
+3	3	3	3
+4	4	4	4
+5	5	5	5
+6	6	6	6
+7	7	7	7
+8	8	8	8
+9	9	9	9
+set join_buffer_size= @save_join_buffer_size;
+set max_heap_table_size= @save_max_heap_table_size;
+explain select * from t1 where a in (select b from t2);
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	PRIMARY	t1	ALL	NULL	NULL	NULL	NULL	3	Using where
+2	SUBQUERY	t2	ALL	NULL	NULL	NULL	NULL	10	
+select * from t1;
+a	b
+1	1
+1	1
+2	2
+select * from t1 where a in (select b from t2);
+a	b
+1	1
+1	1
+2	2
+drop table t1, t2, t3;
+set @save_join_buffer_size = @@join_buffer_size;
+set join_buffer_size=8000;
+Warnings:
+Error	1292	Truncated incorrect join_buffer_size value: '8000'
+create table t1 (a int, filler1 varbinary(20), filler2 varbinary(20));
+insert into t1 select a, 'filler123456', 'filler123456' from t0;
+insert into t1 select a+10, 'filler123456', 'filler123456' from t0;
+create table t2 as select * from t1;
+insert into t1 select a+20, 'filler123456', 'filler123456' from t0;
+insert into t1 values (2, 'duplicate ok', 'duplicate ok');
+insert into t1 values (18, 'duplicate ok', 'duplicate ok');
+insert into t2 values (3, 'duplicate ok', 'duplicate ok');
+insert into t2 values (19, 'duplicate ok', 'duplicate ok');
+explain select 
+a, mid(filler1, 1,10), length(filler1)=length(filler2) as Z 
+from t1 t0 where a in (select a from t2 it);
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	PRIMARY	t0	ALL	NULL	NULL	NULL	NULL	32	Using where
+2	SUBQUERY	it	ALL	NULL	NULL	NULL	NULL	22	
+select 
+a, mid(filler1, 1,10), length(filler1)=length(filler2) as Z 
+from t1 t0 where a in (select a from t2 it);
+a	mid(filler1, 1,10)	Z
+0	filler1234	1
+1	filler1234	1
+2	filler1234	1
+3	filler1234	1
+4	filler1234	1
+5	filler1234	1
+6	filler1234	1
+7	filler1234	1
+8	filler1234	1
+9	filler1234	1
+10	filler1234	1
+11	filler1234	1
+12	filler1234	1
+13	filler1234	1
+14	filler1234	1
+15	filler1234	1
+16	filler1234	1
+17	filler1234	1
+18	filler1234	1
+19	filler1234	1
+2	duplicate 	1
+18	duplicate 	1
+explain select 
+a, mid(filler1, 1,10), length(filler1)=length(filler2) 
+from t2 t0 where a in (select a from t1 it);
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	PRIMARY	t0	ALL	NULL	NULL	NULL	NULL	22	Using where
+2	SUBQUERY	it	ALL	NULL	NULL	NULL	NULL	32	
+select 
+a, mid(filler1, 1,10), length(filler1)=length(filler2) 
+from t2 t0 where a in (select a from t1 it);
+a	mid(filler1, 1,10)	length(filler1)=length(filler2)
+0	filler1234	1
+1	filler1234	1
+2	filler1234	1
+3	filler1234	1
+4	filler1234	1
+5	filler1234	1
+6	filler1234	1
+7	filler1234	1
+8	filler1234	1
+9	filler1234	1
+10	filler1234	1
+11	filler1234	1
+12	filler1234	1
+13	filler1234	1
+14	filler1234	1
+15	filler1234	1
+16	filler1234	1
+17	filler1234	1
+18	filler1234	1
+19	filler1234	1
+3	duplicate 	1
+19	duplicate 	1
+insert into t1 select a+20, 'filler123456', 'filler123456' from t0;
+insert into t1 select a+20, 'filler123456', 'filler123456' from t0;
+explain select 
+a, mid(filler1, 1,10), length(filler1)=length(filler2) as Z 
+from t1 t0 where a in (select a from t2 it);
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	PRIMARY	t0	ALL	NULL	NULL	NULL	NULL	52	Using where
+2	SUBQUERY	it	ALL	NULL	NULL	NULL	NULL	22	
+select 
+a, mid(filler1, 1,10), length(filler1)=length(filler2) as Z 
+from t1 t0 where a in (select a from t2 it);
+a	mid(filler1, 1,10)	Z
+0	filler1234	1
+1	filler1234	1
+2	filler1234	1
+3	filler1234	1
+4	filler1234	1
+5	filler1234	1
+6	filler1234	1
+7	filler1234	1
+8	filler1234	1
+9	filler1234	1
+10	filler1234	1
+11	filler1234	1
+12	filler1234	1
+13	filler1234	1
+14	filler1234	1
+15	filler1234	1
+16	filler1234	1
+17	filler1234	1
+18	filler1234	1
+19	filler1234	1
+2	duplicate 	1
+18	duplicate 	1
+explain select 
+a, mid(filler1, 1,10), length(filler1)=length(filler2) 
+from t2 t0 where a in (select a from t1 it);
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	PRIMARY	t0	ALL	NULL	NULL	NULL	NULL	22	Using where
+2	SUBQUERY	it	ALL	NULL	NULL	NULL	NULL	52	
+select 
+a, mid(filler1, 1,10), length(filler1)=length(filler2) 
+from t2 t0 where a in (select a from t1 it);
+a	mid(filler1, 1,10)	length(filler1)=length(filler2)
+0	filler1234	1
+1	filler1234	1
+2	filler1234	1
+3	filler1234	1
+4	filler1234	1
+5	filler1234	1
+6	filler1234	1
+7	filler1234	1
+8	filler1234	1
+9	filler1234	1
+10	filler1234	1
+11	filler1234	1
+12	filler1234	1
+13	filler1234	1
+14	filler1234	1
+15	filler1234	1
+16	filler1234	1
+17	filler1234	1
+18	filler1234	1
+19	filler1234	1
+3	duplicate 	1
+19	duplicate 	1
+drop table t1, t2;
+create table t1 (a int, b int, key(a));
+create table t2 (a int, b int, key(a));
+create table t3 (a int, b int, key(a));
+insert into t1 select a,a from t0;
+insert into t2 select a,a from t0;
+insert into t3 select a,a from t0;
+t2 and t3 must be use 'ref', not 'ALL':
+explain select * 
+from t0 where a in
+(select t2.a+t3.a from t1 left join (t2 join t3) on t2.a=t1.a and t3.a=t1.a);
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	PRIMARY	t0	ALL	NULL	NULL	NULL	NULL	10	Using where
+2	SUBQUERY	t1	ALL	NULL	NULL	NULL	NULL	10	
+2	SUBQUERY	t2	ref	a	a	5	test.t1.a	2	
+2	SUBQUERY	t3	ref	a	a	5	test.t1.a	2	
+drop table t0, t1,t2,t3;
+CREATE TABLE t1 (
+ID int NOT NULL auto_increment,
+Name char(35) NOT NULL default '',
+Country char(3) NOT NULL default '',
+Population int NOT NULL default '0',
+PRIMARY KEY  (ID),
+INDEX (Population),
+INDEX (Country) 
+);
+CREATE TABLE t2 (
+Code char(3) NOT NULL default '',
+Name char(52) NOT NULL default '',
+SurfaceArea float(10,2) NOT NULL default '0.00',
+Population int NOT NULL default '0',
+Capital int default NULL,
+PRIMARY KEY  (Code),
+UNIQUE INDEX (Name),
+INDEX (Population)
+);
+CREATE TABLE t3 (
+Country char(3) NOT NULL default '',
+Language char(30) NOT NULL default '',
+Percentage float(3,1) NOT NULL default '0.0',
+PRIMARY KEY  (Country, Language),
+INDEX (Percentage)
+);
+EXPLAIN
+SELECT Name FROM t2 
+WHERE t2.Code IN (SELECT Country FROM t1 WHERE Population > 5000000)
+AND
+t2.Code IN (SELECT Country FROM t3 
+WHERE Language='English' AND Percentage > 10 AND
+t2.Population > 100000);
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	PRIMARY	t2	ALL	NULL	NULL	NULL	NULL	16	Using where
+3	DEPENDENT SUBQUERY	t3	unique_subquery	PRIMARY,Percentage	PRIMARY	136	func,const	1	Using where
+2	SUBQUERY	t1	ALL	Population	NULL	NULL	NULL	30	Using where
+DROP TABLE t1,t2,t3;
+CREATE TABLE t1 (
+Code char(3) NOT NULL DEFAULT '',
+Name char(52) NOT NULL DEFAULT '',
+Continent enum('Asia','Europe','North America','Africa','Oceania','Antarctica','South America') NOT NULL DEFAULT 'Asia',
+Region char(26) NOT NULL DEFAULT '',
+SurfaceArea float(10,2) NOT NULL DEFAULT '0.00',
+IndepYear int DEFAULT NULL,
+Population int NOT NULL DEFAULT '0',
+LifeExpectancy float(3,1) DEFAULT NULL,
+GNP float(10,2) DEFAULT NULL,
+GNPOld float(10,2) DEFAULT NULL,
+LocalName char(45) NOT NULL DEFAULT '',
+GovernmentForm char(45) NOT NULL DEFAULT '',
+HeadOfState char(60) DEFAULT NULL,
+Capital int DEFAULT NULL,
+Code2 char(2) NOT NULL DEFAULT '',
+PRIMARY KEY (Code)
+);
+CREATE TABLE t2 (
+ID int NOT NULL, 
+Name char(35) NOT NULL DEFAULT '',
+CountryCode char(3) NOT NULL DEFAULT '',
+Population int NOT NULL DEFAULT '0',
+PRIMARY KEY (ID),
+KEY CountryCode (CountryCode)
+);
+Fill the table with test data
+This must not use LooseScan:
+EXPLAIN SELECT Name FROM t1 
+WHERE t1.Code IN (
+SELECT t2.CountryCode FROM t2 WHERE Population > 5000000);
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	PRIMARY	t1	ALL	NULL	NULL	NULL	NULL	31	Using where
+2	SUBQUERY	t2	ALL	NULL	NULL	NULL	NULL	125	Using where
+SELECT Name FROM t1 
+WHERE t1.Code IN (
+SELECT t2.CountryCode FROM t2 WHERE Population > 5000000);
+Name
+drop table t1, t2;
+#
+# MySQL BUG #42742: crash in setup_sj_materialization, Copy_field::set
+# 
+create table t3 ( c1 date) engine=innodb;
+insert into t3 values ('2009-10-22'),('2142-10-22');
+create table t2 (c1 tinytext,c2 text,c6 timestamp) engine=innodb;
+select * from t3;
+c1
+2009-10-22
+2142-10-22
+explain select 1 from t2 where  c2 in (select 1 from t3, t2) and  c1 in (select convert(c6,char(1)) from t2);
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	PRIMARY	t2	ALL	NULL	NULL	NULL	NULL	1	Using where
+3	SUBQUERY	t2	ALL	NULL	NULL	NULL	NULL	1	
+2	SUBQUERY	t2	ALL	NULL	NULL	NULL	NULL	1	
+2	SUBQUERY	t3	ALL	NULL	NULL	NULL	NULL	2	Using join buffer
+drop table t2, t3;

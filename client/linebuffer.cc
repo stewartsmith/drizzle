@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /* readline for batch mode */
 
@@ -22,6 +22,7 @@
 #include <vector>
 
 using namespace std;
+using namespace drizzled;
 
 LineBuffer::LineBuffer(uint32_t my_max_size,FILE *my_file)
   :
@@ -44,9 +45,7 @@ char *LineBuffer::readline()
 
   if (file && !eof)
   {
-    if ((read_count= my_read(fileno(file),
-                             (unsigned char *) (&line[0]),
-                             max_size-1,MYF(MY_WME))))
+    if ((read_count= read(fileno(file), (&line[0]), max_size-1)))
     {
       line[read_count+1]= '\0';
       buffer << &line[0];

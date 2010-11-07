@@ -25,13 +25,16 @@
 
 #include "drizzled/definitions.h"
 
+namespace drizzled
+{
+
 /*
   Such interval is "discrete": it is the set of
   { auto_inc_interval_min + k * increment,
     0 <= k <= (auto_inc_interval_values-1) }
   Where "increment" is maintained separately by the user of this class (and is
   currently only session->variables.auto_increment_increment).
-  It mustn't derive from drizzled::memory::SqlAlloc, because SET INSERT_ID needs to
+  It mustn't derive from memory::SqlAlloc, because SET INSERT_ID needs to
   allocate memory which must stay allocated for use by the next statement.
 */
 class Discrete_interval {
@@ -51,14 +54,14 @@ public:
     interval_min(start), interval_values(val),
     interval_max((val == UINT64_MAX) ? val : start + val * incr),
     next(NULL)
-  {};
+  {}
   Discrete_interval() :
     interval_min(0), interval_values(0),
     interval_max(0), next(NULL)
-  {};
-  uint64_t minimum() const { return interval_min;    };
-  uint64_t values()  const { return interval_values; };
-  uint64_t maximum() const { return interval_max;    };
+  {}
+  uint64_t minimum() const { return interval_min;    }
+  uint64_t values()  const { return interval_values; }
+  uint64_t maximum() const { return interval_max;    }
   /*
     If appending [3,5] to [1,2], we merge both in [1,5] (they should have the
     same increment for that, user of the class has to ensure that). That is
@@ -80,7 +83,7 @@ public:
       return 0;
     }
     return 1;
-  };
+  }
 };
 
 
@@ -111,7 +114,7 @@ private:
 public:
   Discrete_intervals_list() :
     head(NULL), tail(NULL),
-    current(NULL), elements(0) {};
+    current(NULL), elements(0) {}
   Discrete_intervals_list(const Discrete_intervals_list& from) :
     head(NULL), tail(NULL),
     current(NULL), elements(0)
@@ -147,9 +150,9 @@ public:
       current= current->next;
     return tmp;
   }
-  ~Discrete_intervals_list() { empty(); };
-  uint64_t minimum()     const { return (head ? head->minimum() : 0); };
-  uint64_t maximum()     const { return (head ? tail->maximum() : 0); };
+  ~Discrete_intervals_list() { empty(); }
+  uint64_t minimum()     const { return (head ? head->minimum() : 0); }
+  uint64_t maximum()     const { return (head ? tail->maximum() : 0); }
   uint32_t      nb_elements() const { return elements; }
 
   bool append(uint64_t start, uint64_t val, uint64_t incr)
@@ -178,5 +181,7 @@ public:
   }
 
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_DISCRETE_INTERVAL_H */

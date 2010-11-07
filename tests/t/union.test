@@ -23,7 +23,7 @@ select 't1',b,count(*) from t1 group by b UNION select 't2',b,count(*) from t2 g
 (select a,b from t1 limit 2)  union all (select a,b from t2 order by a) limit 4;
 (select a,b from t1 limit 2)  union all (select a,b from t2 order by a limit 1);
 (select a,b from t1 limit 2)  union all (select a,b from t2 order by a limit 1) order by b desc;
---error 1250
+--error ER_TABLENAME_NOT_ALLOWED_HERE
 (select a,b from t1 limit 2)  union all (select a,b from t2 order by a limit 1) order by t1.b;
 --replace_column 9 #
 explain extended (select a,b from t1 limit 2)  union all (select a,b from t2 order by a limit 1) order by b desc;
@@ -41,35 +41,35 @@ explain select a,b from t1 union all select a,b from t2;
 
 --error  1054
 explain select xx from t1 union select 1;
---error 1222
+--error ER_WRONG_NUMBER_OF_COLUMNS_IN_SELECT
 explain select a,b from t1 union select 1;
---error 1222
+--error ER_WRONG_NUMBER_OF_COLUMNS_IN_SELECT
 explain select 1 union select a,b from t1 union select 1;
---error 1222
+--error ER_WRONG_NUMBER_OF_COLUMNS_IN_SELECT
 explain select a,b from t1 union select 1 limit 0;
 
---error 1221
+--error ER_WRONG_USAGE
 select a,b from t1 into outfile 'skr' union select a,b from t2;
 
---error 1221
+--error ER_WRONG_USAGE
 select a,b from t1 order by a union select a,b from t2;
 
---error 1221
+--error ER_WRONG_USAGE
 insert into t3 select a from t1 order by a union select a from t2;
 
---error 1222
+--error ER_WRONG_NUMBER_OF_COLUMNS_IN_SELECT
 create table t3 select a,b from t1 union select a from t2;
 
---error 1222
+--error ER_WRONG_NUMBER_OF_COLUMNS_IN_SELECT
 select a,b from t1 union select a from t2;
 
---error 1222
+--error ER_WRONG_NUMBER_OF_COLUMNS_IN_SELECT
 select * from t1 union select a from t2;
 
---error 1222
+--error ER_WRONG_NUMBER_OF_COLUMNS_IN_SELECT
 select a from t1 union select * from t2;
 
---error 1234
+--error ER_CANT_USE_OPTION_HERE
 select * from t1 union select SQL_BUFFER_RESULT * from t2;
 
 # Test CREATE, INSERT and REPLACE
@@ -83,13 +83,13 @@ drop table t1,t2,t3;
 #
 # Test some unions without tables
 #
---error 1096
+--error ER_NO_TABLES_USED
 select * union select 1;
 select 1 as a,(select a union select a);
---error 1054
+--error ER_BAD_FIELD_ERROR
 (select 1) union (select 2) order by 0;
 SELECT @a:=1 UNION SELECT @a:=@a+1;
---error 1054
+--error ER_BAD_FIELD_ERROR
 (SELECT 1) UNION (SELECT 2) ORDER BY (SELECT a);
 (SELECT 1,3) UNION (SELECT 2,1) ORDER BY (SELECT 2);
 
@@ -219,7 +219,7 @@ select found_rows();
 (SELECT SQL_CALC_FOUND_ROWS * FROM t1) UNION all (SELECT * FROM t2 LIMIT 1);
 select found_rows();
 # This used to work in 4.0 but not anymore in 4.1
---error 1064
+--error ER_PARSE_ERROR
 (SELECT SQL_CALC_FOUND_ROWS * FROM t1 LIMIT 1) UNION SELECT * FROM t2 LIMIT 1;
 #select found_rows();
 
@@ -250,14 +250,14 @@ SELECT * FROM t1 UNION SELECT * FROM t2 ORDER BY a desc LIMIT 1;
 (SELECT * FROM t1 ORDER by a) UNION ALL (SELECT * FROM t2 ORDER BY a) ORDER BY A desc LIMIT 4;
 
 # Wrong usage
---error 1234
+--error ER_CANT_USE_OPTION_HERE
 (SELECT * FROM t1) UNION all (SELECT SQL_CALC_FOUND_ROWS * FROM t2) LIMIT 1;
 
 create temporary table t1 select a from t1 union select a from t2;
 drop temporary table t1;
---error 1093
+--error ER_UPDATE_TABLE_USED
 create table t1 select a from t1 union select a from t2;
---error 1054
+--error ER_BAD_FIELD_ERROR
 select a from t1 union select a from t2 order by t2.a;
 drop table t1,t2;
 
@@ -457,7 +457,7 @@ insert into t2 select * from t1;
 insert into t1 select * from t2;
 insert into t2 select * from t1;
 set local tmp_table_size=1024;
-select count(*) from (select * from t1 union all select * from t2 order by 1) b;
+select SQL_BIG_RESULT count(*) from (select SQL_BIG_RESULT * from t1 union all select * from t2 order by 1) b;
 select count(*) from t1;
 select count(*) from t2;
 drop table t1,t2;
@@ -474,18 +474,24 @@ insert t1 select a+1, a+b from t1;
 insert t1 select a+1, a+b from t1;
 insert t1 select a+1, a+b from t1;
 FLUSH STATUS;
+--replace_column 2 #
 show status like 'Slow_queries';
 select count(*) from t1 where a=7;
+--replace_column 2 #
 show status like 'Slow_queries';
 select count(*) from t1 where b=13;
+--replace_column 2 #
 show status like 'Slow_queries';
 select count(*) from t1 where b=13 union select count(*) from t1 where a=7;
+--replace_column 2 #
 show status like 'Slow_queries';
 select count(*) from t1 where a=7 union select count(*) from t1 where b=13;
+--replace_column 2 #
 show status like 'Slow_queries';
 # additional test for examined rows
 flush status;
 select a from t1 where b not in (1,2,3) union select a from t1 where b not in (4,5,6); 
+--replace_column 2 #
 show status like 'Slow_queries';
 drop table t1;
 
@@ -542,7 +548,7 @@ set sql_select_limit=default;
 #
 CREATE TABLE t1 (i int default NULL,c char(1) default NULL,KEY i (i));
 CREATE TABLE t2 (i int default NULL,c char(1) default NULL,KEY i (i));
---error 1054
+--error ER_BAD_FIELD_ERROR
 explain (select * from t1) union (select * from t2) order by not_existing_column;
 drop table t1, t2;
 
@@ -596,7 +602,7 @@ insert into t2 values ('bbb');
 create table t3 (a ENUM('Yes', 'No') NOT NULL);
 create table t4 (a ENUM('aaa', 'bbb') NOT NULL);
 insert into t3 values (1);
---error 1691 # Bad enum
+--error ER_INVALID_ENUM_VALUE # Bad enum
 insert into t4 values (3);
 select "1" as a union select a from t1;
 select a as a from t1 union select "1";
@@ -647,7 +653,7 @@ select count(*) from t1;
 drop table t1;
 
 # Drizzle doesn't support specifying character set, it is all UTF8
---error 1064
+--error ER_PARSE_ERROR
 create table t2 (
 a char character set utf8 collate utf8_swedish_ci,
 b char character set utf8 collate utf8_spanish_ci);
@@ -655,12 +661,12 @@ b char character set utf8 collate utf8_spanish_ci);
 create table t2 (
 a char collate utf8_swedish_ci,
 b char collate utf8_spanish_ci);
---error 1271
+--error ER_CANT_AGGREGATE_NCOLLATIONS
 create table t1 as
 (select a from t2) union
 (select b from t2);
 
---error 1166
+--error ER_WRONG_COLUMN_NAME
 create table t1 as
 (select a collate utf8_swedish_ci from t2) union
 (select b from t2);
@@ -740,9 +746,9 @@ select concat('value is: ', @val) union select 'some text';
 # Bug#15949 union + illegal mix of collations (IMPLICIT + COERCIBLE)
 #
 select concat('a', 'b' collate utf8_bin);
-create table t1 (foo varchar(100)) collate utf8_bin;
+create table t1 (foo varchar(100)) collate=utf8_bin;
 insert into t1 (foo) values ("foo");
---error 1146
+--error ER_NO_SUCH_TABLE
 select foo from t1 union select 'bar' as foo from dual;
 select foo from t1 union select 'bar' as foo;
 drop table t1;
@@ -801,7 +807,7 @@ create table t1 (a varchar(5));
 create table t2 select * from t1 union select 'abcdefghijkl';
 --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t2;
-select row_format from information_schema.TABLES where table_schema="test" and table_name="t2";
+select row_format from data_dictionary.TABLES where table_schema="test" and table_name="t2";
 --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t2;
 drop table t1,t2;
@@ -950,7 +956,7 @@ CREATE TABLE t1 (a int);
 INSERT INTO t1 VALUES (3),(1),(2),(4),(1);
 
 SELECT a FROM (SELECT a FROM t1 UNION SELECT a FROM t1 ORDER BY a) AS test;
---error 1054 
+--error ER_BAD_FIELD_ERROR 
 SELECT a FROM (SELECT a FROM t1 UNION SELECT a FROM t1 ORDER BY c) AS test;
 
 DROP TABLE t1;
@@ -958,11 +964,11 @@ DROP TABLE t1;
 #
 # Bug#23345: Wrongly allowed INTO in a non-last select of a UNION.
 #
---error 1221
+--error ER_WRONG_USAGE
 (select 1 into @var) union (select 1);
 (select 1) union (select 1 into @var);
 select @var;
---error 1172
+--error ER_TOO_MANY_ROWS
 (select 2) union (select 1 into @var);
 
 #

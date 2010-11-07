@@ -28,6 +28,9 @@
 
 #include <drizzled/item/string.h>
 
+namespace drizzled
+{
+
 class Item_empty_string :public Item_string
 {
 public:
@@ -36,5 +39,7 @@ public:
     { name= const_cast<char*>(header); max_length= cs ? length * cs->mbmaxlen : length; }
   void make_field(SendField *field);
 };
+
+} /* namespace drizzled */
   
 #endif /* DRIZZLED_ITEM_EMPTY_STRING_H */

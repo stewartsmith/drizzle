@@ -27,6 +27,9 @@
 #include <algorithm>
 #include "drizzled/memory/sql_alloc.h"
 
+namespace drizzled
+{
+
 /** Struct to handle simple linked lists. */
 typedef struct st_sql_list {
   uint32_t elements;
@@ -85,7 +88,7 @@ typedef struct st_sql_list {
   @note We never call a destructor for instances of this class.
 */
 
-struct list_node :public drizzled::memory::SqlAlloc
+struct list_node : public memory::SqlAlloc
 {
   list_node *next;
   void *info;
@@ -102,7 +105,7 @@ struct list_node :public drizzled::memory::SqlAlloc
 
 extern list_node end_of_list;
 
-class base_list :public drizzled::memory::SqlAlloc
+class base_list :public memory::SqlAlloc
 {
 protected:
   list_node *first,**last;
@@ -121,7 +124,7 @@ public:
     relies on this behaviour. This logic is quite tricky: please do not use
     it in any new code.
   */
-  inline base_list(const base_list &tmp) :drizzled::memory::SqlAlloc()
+  inline base_list(const base_list &tmp) :memory::SqlAlloc()
   {
     elements= tmp.elements;
     first= tmp.first;
@@ -138,7 +141,7 @@ public:
     }
     return 1;
   }
-  inline bool push_back(void *info, drizzled::memory::Root *mem_root)
+  inline bool push_back(void *info, memory::Root *mem_root)
   {
     if (((*last)=new (mem_root) list_node(info, &end_of_list)))
     {
@@ -381,10 +384,10 @@ template <class T> class List :public base_list
 public:
   inline List() :base_list() {}
   inline List(const List<T> &tmp) :base_list(tmp) {}
-  inline List(const List<T> &tmp, drizzled::memory::Root *mem_root) :
+  inline List(const List<T> &tmp, memory::Root *mem_root) :
     base_list(tmp, mem_root) {}
   inline bool push_back(T *a) { return base_list::push_back(a); }
-  inline bool push_back(T *a, drizzled::memory::Root *mem_root)
+  inline bool push_back(T *a, memory::Root *mem_root)
   { return base_list::push_back(a, mem_root); }
   inline bool push_front(T *a) { return base_list::push_front(a); }
   inline T* head() {return (T*) base_list::head(); }
@@ -428,7 +431,7 @@ protected:
   inline T *replace(T *)   { return (T*) 0; }
   inline T *replace(List<T> &) { return (T*) 0; }
   inline void remove(void)  { }
-  inline void after(T *a)   { }
+  inline void after(T *)   { }
   inline T** ref(void)	    { return (T**) 0; }
 
 public:
@@ -462,7 +465,7 @@ public:
 template <typename T>
 inline
 void
-list_copy_and_replace_each_value(List<T> &list, drizzled::memory::Root *mem_root)
+list_copy_and_replace_each_value(List<T> &list, memory::Root *mem_root)
 {
   /* Make a deep copy of each element */
   List_iterator<T> it(list);
@@ -471,5 +474,6 @@ list_copy_and_replace_each_value(List<T> &list, drizzled::memory::Root *mem_root
     it.replace(el->clone(mem_root));
 }
 
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SQL_LIST_H */

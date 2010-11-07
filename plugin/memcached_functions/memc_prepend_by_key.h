@@ -40,15 +40,15 @@
 
 
 /* implements memc_prepend_by_key */
-class MemcachedPrependByKey : public Item_int_func
+class MemcachedPrependByKey : public drizzled::Item_int_func
 {
-  String failure_buff;
-  String value;
+  drizzled::String failure_buff;
+  drizzled::String value;
 public:
   MemcachedPrependByKey()
     :
       Item_int_func(),
-      failure_buff("failure ...", &my_charset_bin)
+      failure_buff("failure ...", &drizzled::my_charset_bin)
   {}
 
   const char *func_name() const

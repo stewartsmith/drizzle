@@ -20,9 +20,11 @@
 #ifndef DRIZZLED_HA_STATISTICS_H
 #define DRIZZLED_HA_STATISTICS_H
 
-#include <stdint.h>
 #include <drizzled/definitions.h>
 #include <time.h>
+
+namespace drizzled
+{
 
 class ha_statistics
 {
@@ -56,5 +58,7 @@ public:
     create_time(0), check_time(0), update_time(0)
   {}
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_HA_STATISTICS_H */

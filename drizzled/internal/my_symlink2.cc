@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /*
   Advanced symlink handling.
@@ -20,9 +20,16 @@
   rename files and symlinks like they would be one unit.
 */
 
-#include "drizzled/internal/mysys_priv.h"
-#include "drizzled/my_error.h"
+#include "config.h"
+
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/error.h"
 #include "drizzled/internal/m_string.h"
+
+namespace drizzled
+{
+namespace internal
+{
 
 int my_create_with_symlink(const char *linkname, const char *filename,
                            int createflags, int access_flags, myf MyFlags)
@@ -57,13 +64,13 @@ int my_create_with_symlink(const char *linkname, const char *filename,
   {
     if (!access(filename,F_OK))
     {
-      errno= errno= EEXIST;
+      errno= EEXIST;
       my_error(EE_CANTCREATEFILE, MYF(0), filename, EEXIST);
       return(-1);
     }
     if (create_link && !access(linkname,F_OK))
     {
-      errno= errno= EEXIST;
+      errno= EEXIST;
       my_error(EE_CANTCREATEFILE, MYF(0), linkname, EEXIST);
       return(-1);
     }
@@ -187,3 +194,6 @@ int my_rename_with_symlink(const char *from, const char *to, myf MyFlags)
   }
   return(result);
 }
+
+} /* namespace internal */
+} /* namespace drizzled */

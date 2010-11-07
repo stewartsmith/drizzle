@@ -1,0 +1,83 @@
+SET AUTOCOMMIT= 0;
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	0
+BEGIN;
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	0
+DROP SCHEMA IF EXISTS boundaries;
+Warnings:
+Note	1008	Can't drop schema 'boundaries'; schema doesn't exist
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	1
+COMMIT;
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	1
+SET AUTOCOMMIT= 1;
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	1
+BEGIN;
+DROP SCHEMA IF EXISTS boundaries;
+Warnings:
+Note	1008	Can't drop schema 'boundaries'; schema doesn't exist
+COMMIT;
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	2
+CREATE TABLE commit_test (a int);
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	2
+INSERT into commit_test VALUES (10);
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	2
+INSERT into commit_test VALUES (10), (20);
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	2
+INSERT into commit_test VALUES (10);
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	2
+BEGIN;
+INSERT into commit_test VALUES (10);
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	2
+COMMIT;
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	3
+BEGIN;
+INSERT into commit_test VALUES (10);
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	3
+ROLLBACK;
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	3
+BEGIN;
+INSERT into commit_test VALUES (10);
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	3
+COMMIT;
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	4
+SET AUTOCOMMIT= 0;
+INSERT into commit_test VALUES (10);
+INSERT into commit_test VALUES (10);
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	4
+drop table commit_test;
+SHOW STATUS LIKE 'Handler_commit%';
+Variable_name	Value
+Handler_commit	5

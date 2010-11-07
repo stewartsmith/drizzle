@@ -23,6 +23,9 @@
 #include <drizzled/function/func.h>
 #include <drizzled/function/math/int.h>
 
+namespace drizzled
+{
+
 class Item_func_int_div :public Item_int_func
 {
 public:
@@ -38,5 +41,7 @@ public:
   }
 
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_MATH_INT_DIVIDE_H */

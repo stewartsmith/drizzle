@@ -21,15 +21,17 @@
 #ifndef DRIZZLED_LEX_COLUMN_H
 #define DRIZZLED_LEX_COLUMN_H
 
+namespace drizzled
+{
 
-
-class Lex_Column : public drizzled::memory::SqlAlloc
+class Lex_Column : public memory::SqlAlloc
 {
 public:
   String column;
   uint32_t rights;
-  Lex_Column (const String& x,const  uint& y ): column (x),rights (y) {}
+  Lex_Column (const String& x,const  uint32_t& y ): column (x),rights (y) {}
 };
 
+}
 
 #endif /* DRIZZLED_LEX_COLUMN_H */

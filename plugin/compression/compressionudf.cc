@@ -28,27 +28,16 @@ plugin::Create_function<Item_func_uncompress> *uncompressudf= NULL;
 plugin::Create_function<Item_func_uncompressed_length>
   *uncompressed_lengthudf= NULL;
 
-static int compressionudf_plugin_init(plugin::Registry &registry)
+static int compressionudf_plugin_init(module::Context &context)
 {
   compressudf= new plugin::Create_function<Item_func_compress>("compress");
   uncompressudf=
     new plugin::Create_function<Item_func_uncompress>("uncompress");
   uncompressed_lengthudf=
     new plugin::Create_function<Item_func_uncompressed_length>("uncompressed_length");
-  registry.add(compressudf);
-  registry.add(uncompressudf);
-  registry.add(uncompressed_lengthudf);
-  return 0;
-}
-
-static int compressionudf_plugin_deinit(plugin::Registry &registry)
-{
-  registry.remove(compressudf);
-  registry.remove(uncompressudf);
-  registry.remove(uncompressed_lengthudf);
-  delete compressudf;
-  delete uncompressudf;
-  delete uncompressed_lengthudf;
+  context.add(compressudf);
+  context.add(uncompressudf);
+  context.add(uncompressed_lengthudf);
   return 0;
 }
 
@@ -61,8 +50,6 @@ DRIZZLE_DECLARE_PLUGIN
   "UDFs for compression functions",
   PLUGIN_LICENSE_GPL,
   compressionudf_plugin_init, /* Plugin Init */
-  compressionudf_plugin_deinit, /* Plugin Deinit */
-  NULL,   /* status variables */
   NULL,   /* system variables */
   NULL    /* config options */
 }

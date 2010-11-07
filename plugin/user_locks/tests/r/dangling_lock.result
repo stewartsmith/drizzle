@@ -1,0 +1,7 @@
+set @lock_name= "dangling_lock";
+SELECT get_lock(@lock_name);
+get_lock(@lock_name)
+1
+SELECT if ((is_used_lock(@lock_name) = CONNECTION_ID()), "YES", "NO");
+if ((is_used_lock(@lock_name) = CONNECTION_ID()), "YES", "NO")
+YES

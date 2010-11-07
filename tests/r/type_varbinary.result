@@ -13,9 +13,9 @@ create table t1 (s1 varbinary(20), s2 varbinary(20));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `s1` varbinary(20) DEFAULT NULL,
-  `s2` varbinary(20) DEFAULT NULL
-) ENGINE=DEFAULT
+  `s1` VARBINARY(20) DEFAULT NULL,
+  `s2` VARBINARY(20) DEFAULT NULL
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 insert into t1 values (0x41,0x4100),(0x41,0x4120),(0x4100,0x4120);
 select hex(s1), hex(s2) from t1;
 hex(s1)	hex(s2)
@@ -81,9 +81,7 @@ drop table t1;
 create table t1 (c char(2), vc varchar(2));
 insert into t1 values(0x4120, 0x4120);
 insert into t1 values(0x412020, 0x412020);
-Warnings:
-Note	1265	Data truncated for column 'c' at row 1
-Note	1265	Data truncated for column 'vc' at row 1
+ERROR 22001: Data too long for column 'c' at row 1
 drop table t1;
 create table t1 (b varbinary(2), vb varbinary(2));
 insert into t1 values(0x4120, 0x4120);

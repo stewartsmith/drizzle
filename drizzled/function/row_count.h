@@ -23,6 +23,9 @@
 #include <drizzled/function/func.h>
 #include <drizzled/function/math/int.h>
 
+namespace drizzled
+{
+
 class Item_func_row_count :public Item_int_func
 {
 public:
@@ -32,5 +35,6 @@ public:
   void fix_length_and_dec() { decimals= 0; maybe_null=0; }
 };
 
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_ROW_COUNT_H */

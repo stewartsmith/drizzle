@@ -37,7 +37,7 @@ CREATE TABLE t1 (a varbinary(30) NOT NULL DEFAULT ' ',
                  z varbinary(20) NOT NULL DEFAULT ' ',
                  a1 varbinary(30) NOT NULL DEFAULT ' ',
 		 b1 blob NULL)
-ENGINE=InnoDB DEFAULT COLLATE utf8_bin;
+ENGINE=InnoDB DEFAULT COLLATE=utf8_bin;
 
 INSERT into t1 (b) values ('1');
 SHOW WARNINGS;
@@ -71,7 +71,7 @@ CREATE TEMPORARY TABLE t2 (a varbinary(30) NOT NULL DEFAULT ' ',
                  z varbinary(20) NOT NULL DEFAULT ' ',
                  a1 varbinary(30) NOT NULL DEFAULT ' ',
 		 b1 blob NULL)
-ENGINE=MyISAM DEFAULT COLLATE utf8_bin;
+ENGINE=MyISAM DEFAULT COLLATE=utf8_bin;
 
 SHOW CREATE TABLE t2;
 INSERT into t2 (b) values ('1');
@@ -103,7 +103,7 @@ drop table t2;
 #      multiple-row statement, the preceding rows will have been inserted.
 #
 create table bug20691 (i int, d datetime NOT NULL, dn datetime NULL);
---error 1364
+--error ER_NO_DEFAULT_FOR_FIELD
 insert into bug20691 values (7, DEFAULT, DEFAULT), (7, '1975-07-10 07:10:03', '1978-01-13 14:08:51'), (7, DEFAULT, DEFAULT);
 insert into bug20691 values (7, '1975-07-10 07:10:03', DEFAULT);
 select * from bug20691 order by i asc;
@@ -118,10 +118,10 @@ create table bug20691 (
   i decimal not null,
   x int);
 insert into bug20691 values (3, '0007-01-01', 11, 17, '0019-01-01 00:00:00', 23, 1);
---error 1364
+--error ER_NO_DEFAULT_FOR_FIELD
 insert into bug20691 (x) values (2);
 insert into bug20691 values (3, '0007-01-01', 11, 17, '0019-01-01 00:00:00', 23, 3);
---error 1364
+--error ER_NO_DEFAULT_FOR_FIELD
 insert into bug20691 values (DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, 4);
 select * from bug20691 order by x asc;
 drop table bug20691;

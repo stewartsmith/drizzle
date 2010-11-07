@@ -1,0 +1,27 @@
+SELECT value from data_dictionary.random_number LIMIT 10;
+value
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+CREATE TABLE t1 SELECT value from data_dictionary.random_number LIMIT 20;
+SELECT count(*) from t1;
+count(*)
+20
+INSERT INTO t1 SELECT value from data_dictionary.random_number LIMIT 10;
+SELECT count(*) from t1;
+count(*)
+30
+SELECT value from data_dictionary.random_number GROUP BY value LIMIT 10;
+value
+#
+select count(value) from data_dictionary.random_number;
+count(value)
+#
+DROP TABLE t1;

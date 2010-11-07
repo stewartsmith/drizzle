@@ -22,15 +22,26 @@
 
 #include <drizzled/function/str/strfunc.h>
 
+namespace drizzled
+{
+
 class Item_func_replace :public Item_str_func
 {
-  String tmp_value,tmp_value2;
+  String tmp_value, tmp_value2;
+  Session &session;
 public:
-  Item_func_replace(Item *org,Item *find,Item *replace)
-    :Item_str_func(org,find,replace) {}
+  Item_func_replace(Session &session_arg,
+                    Item *org,
+                    Item *find,
+                    Item *replace) :
+    Item_str_func(org, find, replace),
+    session(session_arg)
+  {}
   String *val_str(String *);
   void fix_length_and_dec();
   const char *func_name() const { return "replace"; }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_STR_REPLACE_H */

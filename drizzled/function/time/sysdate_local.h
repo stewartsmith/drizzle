@@ -22,6 +22,9 @@
 
 #include <drizzled/function/time/now.h>
 
+namespace drizzled
+{
+
 /*
   This is like NOW(), but always uses the real current time, not the
   query_start(). This matches the Oracle behavior.
@@ -46,5 +49,7 @@ public:
     used_tables_cache|= RAND_TABLE_BIT;
   }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_TIME_SYSDATE_LOCAL_H */

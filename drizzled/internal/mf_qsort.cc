@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /*
   qsort implementation optimized for comparison of pointers
@@ -20,8 +20,16 @@
 */
 
 
-#include "drizzled/internal/mysys_priv.h"
+#include "config.h"
+
+#include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/m_string.h"
+
+namespace drizzled
+{
+namespace internal
+{
+
 /* We need to use qsort with 2 different compare functions */
 #ifdef QSORT_EXTRA_CMP_ARGUMENT
 #define CMP(A,B) ((*cmp)(cmp_argument,(A),(B)))
@@ -101,7 +109,7 @@ void my_qsort(void *base_ptr, size_t count, size_t size,
   low  = (char*) base_ptr;
   high = low+ size * (count - 1);
   stack_ptr = stack + 1;
-#ifdef HAVE_purify
+#ifdef HAVE_VALGRIND
   /* The first element in the stack will be accessed for the last POP */
   stack[0].low=stack[0].high=0;
 #endif
@@ -207,3 +215,6 @@ void my_qsort(void *base_ptr, size_t count, size_t size,
   free(pivot);
   return;
 }
+
+} /* namespace internal */
+} /* namespace drizzled */

@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /* open a isam-database */
 
@@ -29,6 +29,7 @@
 
 
 using namespace std;
+using namespace drizzled;
 
 static void setup_key_functions(MI_KEYDEF *keyinfo);
 static unsigned char *mi_keydef_read(unsigned char *ptr, MI_KEYDEF *keydef);
@@ -75,7 +76,7 @@ MI_INFO *test_if_reopen(char *filename)
   have an open count of 0.
 ******************************************************************************/
 
-MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
+MI_INFO *mi_open(const drizzled::TableIdentifier &identifier, int mode, uint32_t open_flags)
 {
   int lock_error,kfile,open_mode,save_errno,have_rtree=0;
   uint32_t i,j,len,errpos,head_length,base_pos,offset,info_length,keys,
@@ -87,7 +88,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
   MI_INFO info,*m_info,*old_info;
   MYISAM_SHARE share_buff,*share;
   ulong rec_per_key_part[HA_MAX_POSSIBLE_KEY*MI_MAX_KEY_SEG];
-  my_off_t key_root[HA_MAX_POSSIBLE_KEY],key_del[MI_MAX_KEY_BLOCK_SIZE];
+  internal::my_off_t key_root[HA_MAX_POSSIBLE_KEY],key_del[MI_MAX_KEY_BLOCK_SIZE];
   uint64_t max_key_file_length, max_data_file_length;
 
   kfile= -1;
@@ -96,12 +97,16 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
   head_length=sizeof(share_buff.state.header);
   memset(&info, 0, sizeof(info));
 
-  (void)fn_format(org_name,name,"",MI_NAME_IEXT, MY_UNPACK_FILENAME);
+  (void)internal::fn_format(org_name,
+                            identifier.getPath().c_str(), 
+                            "",
+                            MI_NAME_IEXT,
+                            MY_UNPACK_FILENAME);
   if (!realpath(org_name,rp_buff))
-    my_load_path(rp_buff,org_name, NULL);
+    internal::my_load_path(rp_buff,org_name, NULL);
   rp_buff[FN_REFLEN-1]= '\0';
   strcpy(name_buff,rp_buff);
-  pthread_mutex_lock(&THR_LOCK_myisam);
+  THR_LOCK_myisam.lock();
   if (!(old_info=test_if_reopen(name_buff)))
   {
     share= &share_buff;
@@ -109,18 +114,18 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     share_buff.state.rec_per_key_part=rec_per_key_part;
     share_buff.state.key_root=key_root;
     share_buff.state.key_del=key_del;
-    share_buff.key_cache= dflt_key_cache;
+    share_buff.setKeyCache();
 
-    if ((kfile=my_open(name_buff,(open_mode=O_RDWR),MYF(0))) < 0)
+    if ((kfile=internal::my_open(name_buff,(open_mode=O_RDWR),MYF(0))) < 0)
     {
       if ((errno != EROFS && errno != EACCES) ||
 	  mode != O_RDONLY ||
-	  (kfile=my_open(name_buff,(open_mode=O_RDONLY),MYF(0))) < 0)
+	  (kfile=internal::my_open(name_buff,(open_mode=O_RDONLY),MYF(0))) < 0)
 	goto err;
     }
     share->mode=open_mode;
     errpos=1;
-    if (my_read(kfile, share->state.header.file_version, head_length,
+    if (internal::my_read(kfile, share->state.header.file_version, head_length,
 		MYF(MY_NABP)))
     {
       errno= HA_ERR_NOT_A_TABLE;
@@ -132,12 +137,12 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
       goto err;
     }
     share->options= mi_uint2korr(share->state.header.options);
-    if (share->options &
-	~(HA_OPTION_PACK_RECORD | HA_OPTION_PACK_KEYS |
-	  HA_OPTION_COMPRESS_RECORD | HA_OPTION_READ_ONLY_DATA |
-	  HA_OPTION_TEMP_COMPRESS_RECORD |
-          HA_OPTION_TMP_TABLE
-          ))
+    static const uint64_t OLD_FILE_OPTIONS= HA_OPTION_PACK_RECORD |
+	    HA_OPTION_PACK_KEYS |
+	    HA_OPTION_COMPRESS_RECORD | HA_OPTION_READ_ONLY_DATA |
+	    HA_OPTION_TEMP_COMPRESS_RECORD |
+	    HA_OPTION_TMP_TABLE;
+    if (share->options & ~OLD_FILE_OPTIONS)
     {
       errno=HA_ERR_OLD_FILE;
       goto err;
@@ -150,7 +155,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     if (!strcmp(name_buff, org_name) || sym_link_size == -1)
       (void) strcpy(index_name, org_name);
     *strrchr(org_name, '.')= '\0';
-    (void) fn_format(data_name,org_name,"",MI_NAME_DEXT,
+    (void) internal::fn_format(data_name,org_name,"",MI_NAME_DEXT,
                      MY_APPEND_EXT|MY_UNPACK_FILENAME|MY_RESOLVE_SYMLINKS);
 
     info_length=mi_uint2korr(share->state.header.header_length);
@@ -165,7 +170,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
 
     lseek(kfile,0,SEEK_SET);
     errpos=3;
-    if (my_read(kfile,disk_cache,info_length,MYF(MY_NABP)))
+    if (internal::my_read(kfile,disk_cache,info_length,MYF(MY_NABP)))
     {
       errno=HA_ERR_CRASHED;
       goto err;
@@ -222,8 +227,8 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
       errno=HA_ERR_UNSUPPORTED;
       goto err;
     }
-    share->base.max_data_file_length=(my_off_t) max_data_file_length;
-    share->base.max_key_file_length=(my_off_t) max_key_file_length;
+    share->base.max_data_file_length=(internal::my_off_t) max_data_file_length;
+    share->base.max_key_file_length=(internal::my_off_t) max_key_file_length;
 
     if (share->options & HA_OPTION_COMPRESS_RECORD)
       share->base.max_key_length+=2;	/* For safety */
@@ -246,8 +251,6 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
            &share->state.key_root,keys*sizeof(uint64_t),
            &share->state.key_del,
            (share->state.header.max_block_size_index*sizeof(uint64_t)),
-           &share->key_root_lock,sizeof(pthread_rwlock_t)*keys,
-           &share->mmap_lock,sizeof(pthread_rwlock_t),
            NULL))
       goto err;
     errpos=4;
@@ -255,9 +258,9 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     memcpy(share->state.rec_per_key_part, rec_per_key_part,
            sizeof(long)*key_parts);
     memcpy(share->state.key_root, key_root,
-           sizeof(my_off_t)*keys);
+           sizeof(internal::my_off_t)*keys);
     memcpy(share->state.key_del, key_del,
-           sizeof(my_off_t) * share->state.header.max_block_size_index);
+           sizeof(internal::my_off_t) * share->state.header.max_block_size_index);
     strcpy(share->unique_file_name, name_buff);
     share->unique_name_length= strlen(name_buff);
     strcpy(share->index_file_name,  index_name);
@@ -388,17 +391,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     disk_cache= NULL;
     mi_setup_functions(share);
     share->is_log_table= false;
-    thr_lock_init(&share->lock);
-    pthread_mutex_init(&share->intern_lock,MY_MUTEX_INIT_FAST);
-    for (i=0; i<keys; i++)
-      pthread_rwlock_init(&share->key_root_lock[i], NULL);
-    pthread_rwlock_init(&share->mmap_lock, NULL);
-    if (!thr_lock_inited)
-    {
-      /* Probably a single threaded program; Don't use concurrent inserts */
-      myisam_concurrent_insert=0;
-    }
-    else if (myisam_concurrent_insert)
+    if (myisam_concurrent_insert)
     {
       share->concurrent_insert=
 	((share->options & (HA_OPTION_READ_ONLY_DATA | HA_OPTION_TMP_TABLE |
@@ -407,11 +400,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
 	 (open_flags & HA_OPEN_TMP_TABLE) || have_rtree) ? 0 : 1;
       if (share->concurrent_insert)
       {
-	share->lock.get_status= mi_get_status;
-	share->lock.copy_status= mi_copy_status;
-	share->lock.update_status= mi_update_status;
-        share->lock.restore_status= mi_restore_status;
-	share->lock.check_status= mi_check_status;
+        assert(0);
       }
     }
   }
@@ -437,7 +426,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
                      share->base.max_key_length),
          &info.lastkey,share->base.max_key_length*3+1,
          &info.first_mbr_key, share->base.max_key_length,
-         &info.filename,strlen(name)+1,
+         &info.filename, identifier.getPath().length()+1,
          &info.rtree_recursion_state,have_rtree ? 1024 : 0,
          NULL))
     goto err;
@@ -446,7 +435,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
   if (!have_rtree)
     info.rtree_recursion_state= NULL;
 
-  strcpy(info.filename,name);
+  strcpy(info.filename, identifier.getPath().c_str());
   memcpy(info.blobs,share->blobs,sizeof(MI_BLOB)*share->base.blobs);
   info.lastkey2=info.lastkey+share->base.max_key_length;
 
@@ -467,7 +456,6 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
   info.bulk_insert=0;
   info.errkey= -1;
   info.page_changed=1;
-  pthread_mutex_lock(&share->intern_lock);
   info.read_record=share->read_record;
   share->reopen++;
   share->write_flag=MYF(MY_NABP | MY_WAIT_IF_FULL);
@@ -497,20 +485,18 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
 
   share->delay_key_write= 1;
   info.state= &share->state.state;	/* Change global values by default */
-  pthread_mutex_unlock(&share->intern_lock);
 
   /* Allocate buffer for one record */
 
   /* prerequisites: memset(info, 0) && info->s=share; are met. */
-  if (!mi_alloc_rec_buff(&info, -1, &info.rec_buff))
+  if (!mi_alloc_rec_buff(&info, SIZE_MAX, &info.rec_buff))
     goto err;
   memset(info.rec_buff, 0, mi_get_rec_buff_len(&info, info.rec_buff));
 
   *m_info=info;
-  thr_lock_data_init(&share->lock,&m_info->lock,(void*) m_info);
   myisam_open_list.push_front(m_info);
 
-  pthread_mutex_unlock(&THR_LOCK_myisam);
+  THR_LOCK_myisam.unlock();
   return(m_info);
 
 err:
@@ -520,13 +506,13 @@ err:
   if ((save_errno == HA_ERR_CRASHED) ||
       (save_errno == HA_ERR_CRASHED_ON_USAGE) ||
       (save_errno == HA_ERR_CRASHED_ON_REPAIR))
-    mi_report_error(save_errno, name);
+    mi_report_error(save_errno, identifier.getPath().c_str());
   switch (errpos) {
   case 6:
     free((unsigned char*) m_info);
     /* fall through */
   case 5:
-    my_close(info.dfile,MYF(0));
+    internal::my_close(info.dfile,MYF(0));
     if (old_info)
       break;					/* Don't remove open table */
     /* fall through */
@@ -536,13 +522,13 @@ err:
   case 3:
     /* fall through */
   case 1:
-    my_close(kfile,MYF(0));
+    internal::my_close(kfile,MYF(0));
     /* fall through */
   case 0:
   default:
     break;
   }
-  pthread_mutex_unlock(&THR_LOCK_myisam);
+  THR_LOCK_myisam.unlock();
   errno=save_errno;
   return (NULL);
 } /* mi_open */
@@ -558,7 +544,7 @@ unsigned char *mi_alloc_rec_buff(MI_INFO *info, size_t length, unsigned char **b
     unsigned char *newptr = *buf;
 
     /* to simplify initial init of info->rec_buf in mi_open and mi_extra */
-    if (length == (ulong) -1)
+    if (length == SIZE_MAX)
     {
       if (info->s->options & HA_OPTION_COMPRESS_RECORD)
         length= max(info->s->base.pack_reclength, info->s->max_pack_length);
@@ -588,7 +574,7 @@ unsigned char *mi_alloc_rec_buff(MI_INFO *info, size_t length, unsigned char **b
 
 static uint64_t mi_safe_mul(uint64_t a, uint64_t b)
 {
-  uint64_t max_val= ~ (uint64_t) 0;		/* my_off_t is unsigned */
+  uint64_t max_val= ~ (uint64_t) 0;		/* internal::my_off_t is unsigned */
 
   if (!a || max_val / a < b)
     return max_val;
@@ -753,7 +739,7 @@ uint32_t mi_state_info_write(int file, MI_STATE_INFO *state, uint32_t pWrite)
   if (pWrite & 1)
     return(my_pwrite(file, buff, (size_t) (ptr-buff), 0L,
 			  MYF(MY_NABP | MY_THREADSAFE)) != 0);
-  return(my_write(file, buff, (size_t) (ptr-buff),
+  return(internal::my_write(file, buff, (size_t) (ptr-buff),
 		       MYF(MY_NABP)) != 0);
 }
 
@@ -779,7 +765,7 @@ static unsigned char *mi_state_info_read(unsigned char *ptr, MI_STATE_INFO *stat
   state->state.empty	= mi_sizekorr(ptr);	ptr +=8;
   state->state.key_empty= mi_sizekorr(ptr);	ptr +=8;
   state->auto_increment=mi_uint8korr(ptr);	ptr +=8;
-  state->state.checksum=(ha_checksum) mi_uint8korr(ptr);	ptr +=8;
+  state->state.checksum=(internal::ha_checksum) mi_uint8korr(ptr);	ptr +=8;
   state->process= mi_uint4korr(ptr);		ptr +=4;
   state->unique = mi_uint4korr(ptr);		ptr +=4;
   state->status = mi_uint4korr(ptr);		ptr +=4;
@@ -820,7 +806,7 @@ uint32_t mi_state_info_read_dsk(int file, MI_STATE_INFO *state, bool pRead)
     if (my_pread(file, buff, state->state_length,0L, MYF(MY_NABP)))
       return 1;
   }
-  else if (my_read(file, buff, state->state_length,MYF(MY_NABP)))
+  else if (internal::my_read(file, buff, state->state_length,MYF(MY_NABP)))
     return 1;
   mi_state_info_read(buff, state);
 
@@ -865,7 +851,7 @@ uint32_t mi_base_info_write(int file, MI_BASE_INFO *base)
   mi_int4store(ptr,UINT32_C(0));         		ptr +=4;
 
   memset(ptr, 0, 6);					ptr +=6; /* extra */
-  return my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
+  return internal::my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
 }
 
 
@@ -919,7 +905,7 @@ uint32_t mi_keydef_write(int file, MI_KEYDEF *keydef)
   mi_int2store(ptr,keydef->keylength);		ptr +=2;
   mi_int2store(ptr,keydef->minlength);		ptr +=2;
   mi_int2store(ptr,keydef->maxlength);		ptr +=2;
-  return my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
+  return internal::my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
 }
 
 static unsigned char *mi_keydef_read(unsigned char *ptr, MI_KEYDEF *keydef)
@@ -961,7 +947,7 @@ int mi_keyseg_write(int file, const HA_KEYSEG *keyseg)
   mi_int4store(ptr, pos);
   ptr+=4;
 
-  return my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
+  return internal::my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
 }
 
 
@@ -1001,7 +987,7 @@ uint32_t mi_uniquedef_write(int file, MI_UNIQUEDEF *def)
   *ptr++=  (unsigned char) def->key;
   *ptr++ = (unsigned char) def->null_are_equal;
 
-  return my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
+  return internal::my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
 }
 
 static unsigned char *mi_uniquedef_read(unsigned char *ptr, MI_UNIQUEDEF *def)
@@ -1025,7 +1011,7 @@ uint32_t mi_recinfo_write(int file, MI_COLUMNDEF *recinfo)
   mi_int2store(ptr,recinfo->length);	ptr +=2;
   *ptr++ = recinfo->null_bit;
   mi_int2store(ptr,recinfo->null_pos);	ptr+= 2;
-  return my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
+  return internal::my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
 }
 
 static unsigned char *mi_recinfo_read(unsigned char *ptr, MI_COLUMNDEF *recinfo)
@@ -1049,7 +1035,7 @@ exist a dup()-like call that would give us two different file descriptors.
 int mi_open_datafile(MI_INFO *info, MYISAM_SHARE *share, int file_to_dup)
 {
   (void)file_to_dup; 
-  info->dfile=my_open(share->data_file_name, share->mode,
+  info->dfile=internal::my_open(share->data_file_name, share->mode,
                       MYF(MY_WME));
   return info->dfile >= 0 ? 0 : 1;
 }
@@ -1057,7 +1043,7 @@ int mi_open_datafile(MI_INFO *info, MYISAM_SHARE *share, int file_to_dup)
 
 int mi_open_keyfile(MYISAM_SHARE *share)
 {
-  if ((share->kfile=my_open(share->unique_file_name, share->mode,
+  if ((share->kfile=internal::my_open(share->unique_file_name, share->mode,
                             MYF(MY_WME))) < 0)
     return 1;
   return 0;

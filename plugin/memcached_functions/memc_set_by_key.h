@@ -37,15 +37,15 @@
 #include <string>
 
 /* implements memc_set_by_key */
-class MemcachedSetByKey : public Item_int_func
+class MemcachedSetByKey : public drizzled::Item_int_func
 {
-  String value;
-  String failure_buff;
+  drizzled::String value;
+  drizzled::String failure_buff;
 public:
   MemcachedSetByKey()
     :
       Item_int_func(),
-      failure_buff("error ...", &my_charset_bin)
+      failure_buff("error ...", &drizzled::my_charset_bin)
   {}
 
   const char *func_name() const

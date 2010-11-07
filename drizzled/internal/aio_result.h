@@ -23,10 +23,20 @@
 
 #ifdef HAVE_AIOWAIT
 #include <sys/asynch.h>      /* Used by record-cache */
+
+namespace drizzled
+{
+namespace internal
+{
+
 typedef struct my_aio_result {
   aio_result_t result;
   int         pending;
 } my_aio_result;
+
+} /* namespace internal */
+} /* namespace drizzled */
+
 #endif
 
 #endif /* DRIZZLED_INTERNAL_AIO_RESULT_H */

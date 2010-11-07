@@ -135,58 +135,10 @@ hello again	hello	hello again	3	hello again	hello again
 hello again	hello	hello again	3	hello again	hello again
 hello again	hello	hello again	3	hello again	hello again
 drop table t1;
-set @a='test';
-select collation(@a),coercibility(@a);
-collation(@a)	coercibility(@a)
-utf8_general_ci	2
-select @a='TEST';
-@a='TEST'
-1
-select @a='TEST' collate utf8_bin;
-@a='TEST' collate utf8_bin
-0
-set @a='test' collate utf8_general_ci;
-select collation(@a),coercibility(@a);
-collation(@a)	coercibility(@a)
-utf8_general_ci	2
-select @a='TEST';
-@a='TEST'
-1
-select @a='TEST' collate utf8_bin;
-@a='TEST' collate utf8_bin
-0
-select collation(@a:='test');
-collation(@a:='test')
-utf8_general_ci
-select coercibility(@a:='test');
-coercibility(@a:='test')
-2
-select collation(@a:='test' collate utf8_bin);
-collation(@a:='test' collate utf8_bin)
-utf8_bin
-select coercibility(@a:='test' collate utf8_bin);
-coercibility(@a:='test' collate utf8_bin)
-2
-select (@a:='test' collate utf8_bin) = 'TEST';
-(@a:='test' collate utf8_bin) = 'TEST'
-0
-select collation(@a),coercibility(@a);
-collation(@a)	coercibility(@a)
-utf8_bin	2
-select (@a:='test' collate utf8_bin) = 'TEST' collate utf8_general_ci;
-(@a:='test' collate utf8_bin) = 'TEST' collate utf8_general_ci
-1
 set @var= NULL ;
 select FIELD( @var,'1it','Hit') as my_column;
 my_column
 0
-select @v, coercibility(@v);
-@v	coercibility(@v)
-NULL	2
-set @v1=null, @v2=1, @v3=1.1, @v4=now();
-select coercibility(@v1),coercibility(@v2),coercibility(@v3),coercibility(@v4);
-coercibility(@v1)	coercibility(@v2)	coercibility(@v3)	coercibility(@v4)
-2	2	2	2
 set session @honk=99;
 ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '@honk=99' at line 1
 select @@local.max_allowed_packet;
@@ -216,8 +168,8 @@ create table t1 select @first_var;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `@first_var` blob
-) ENGINE=DEFAULT
+  `@first_var` BLOB
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 set @first_var= cast(NULL as integer);
 ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'integer)' at line 1
@@ -226,16 +178,16 @@ create table t1 select @first_var;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `@first_var` blob
-) ENGINE=DEFAULT
+  `@first_var` BLOB
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 set @first_var= concat(NULL);
 create table t1 select @first_var;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `@first_var` blob
-) ENGINE=DEFAULT
+  `@first_var` BLOB
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 set @first_var=1;
 set @first_var= cast(NULL as CHAR);
@@ -243,8 +195,8 @@ create table t1 select @first_var;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `@first_var` text
-) ENGINE=DEFAULT
+  `@first_var` TEXT COLLATE utf8_general_ci
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 set @a=18446744071710965857;
 select @a;

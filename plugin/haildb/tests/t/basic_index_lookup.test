@@ -1,0 +1,31 @@
+create table t1 (a int primary key);
+insert into t1 values (1),(2),(3),(4),(100),(200);
+--replace_column 9 #
+explain select * from t1 order by a;
+select * from t1 order by a;
+--replace_column 9 #
+explain select * from t1 where a>4;
+select * from t1 where a>4;
+--replace_column 9 #
+explain select * from t1 where a<4;
+select * from t1 where a<4;
+--replace_column 9 #
+explain select * from t1 where a=4;
+select * from t1 where a=4;
+drop table t1;
+
+create table t1 (a int primary key, b varchar(100));
+insert into t1 values (1, "hello"), (2, "world"), (3, "Beaker"), (4, "Cricket");
+--replace_column 9 #
+EXPLAIN SELECT b FROM t1 WHERE a=1;
+SELECT b FROM t1 WHERE a=1;
+--replace_column 9 #
+EXPLAIN SELECT b FROM t1 WHERE a=2;
+SELECT b FROM t1 WHERE a=2;
+--replace_column 9 #
+EXPLAIN SELECT b FROM t1 WHERE a=3;
+SELECT b FROM t1 WHERE a=3;
+--replace_column 9 #
+EXPLAIN SELECT b FROM t1 WHERE a=4;
+SELECT b FROM t1 WHERE a=4;
+DROP TABLE t1;

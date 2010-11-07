@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /*
   UNION  of select's
@@ -23,6 +23,9 @@
 #include <drizzled/item/type_holder.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/sql_union.h>
+
+namespace drizzled
+{
 
 bool drizzle_union(Session *session, LEX *, select_result *result,
 		   Select_Lex_Unit *unit, uint64_t setup_tables_done_option)
@@ -56,17 +59,18 @@ bool select_union::send_data(List<Item> &values)
     unit->offset_limit_cnt--;
     return 0;
   }
-  fill_record(session, table->field, values, true);
+  fill_record(session, table->getFields(), values, true);
   if (session->is_error())
     return 1;
 
-  if ((error= table->cursor->ha_write_row(table->record[0])))
+  if ((error= table->cursor->insertRecord(table->getInsertRecord())))
   {
     /* create_myisam_from_heap will generate error if needed */
-    if (table->cursor->is_fatal_error(error, HA_CHECK_DUP) &&
-        create_myisam_from_heap(session, table, tmp_table_param.start_recinfo,
-                                &tmp_table_param.recinfo, error, 1))
-      return 1;
+    if (table->cursor->is_fatal_error(error, HA_CHECK_DUP))
+    {
+      my_error(ER_USE_SQL_BIG_RESULT, MYF(0));
+      return true;
+    }
   }
   return 0;
 }
@@ -101,7 +105,6 @@ bool select_union::flush()
                          duplicates on insert
       options            create options
       table_alias        name of the temporary table
-      bit_fields_as_long convert bit fields to uint64_t
 
   DESCRIPTION
     Create a temporary table that is used to store the result of a UNION,
@@ -115,20 +118,22 @@ bool select_union::flush()
 bool
 select_union::create_result_table(Session *session_arg, List<Item> *column_types,
                                   bool is_union_distinct, uint64_t options,
-                                  const char *table_alias,
-                                  bool bit_fields_as_long)
+                                  const char *table_alias)
 {
-  assert(table == 0);
+  assert(table == NULL);
   tmp_table_param.init();
   tmp_table_param.field_count= column_types->elements;
-  tmp_table_param.bit_fields_as_long= bit_fields_as_long;
 
   if (! (table= create_tmp_table(session_arg, &tmp_table_param, *column_types,
-                                 (order_st*) 0, is_union_distinct, 1,
+                                 (Order*) NULL, is_union_distinct, 1,
                                  options, HA_POS_ERROR, (char*) table_alias)))
+  {
     return true;
+  }
+
   table->cursor->extra(HA_EXTRA_WRITE_CACHE);
   table->cursor->extra(HA_EXTRA_IGNORE_DUP_KEY);
+
   return false;
 }
 
@@ -171,12 +176,12 @@ Select_Lex_Unit::init_prepare_fake_select_lex(Session *session_arg)
     fake_select_lex->context.first_name_resolution_table=
     fake_select_lex->get_table_list();
 
-  for (order_st *order= (order_st *) global_parameters->order_list.first;
+  for (Order *order= (Order *) global_parameters->order_list.first;
        order;
        order= order->next)
     order->item= &order->item_ptr;
 
-  for (order_st *order= (order_st *)global_parameters->order_list.first;
+  for (Order *order= (Order *)global_parameters->order_list.first;
        order;
        order=order->next)
   {
@@ -248,7 +253,7 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
   {
     bool can_skip_order_by;
     sl->options|=  SELECT_NO_UNLOCK;
-    JOIN *join= new JOIN(session_arg, sl->item_list,
+    Join *join= new Join(session_arg, sl->item_list,
 			 sl->options | session_arg->options | additional_options,
 			 tmp_result);
     /*
@@ -273,8 +278,8 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
                                 sl->order_list.elements) +
                                sl->group_list.elements,
                                can_skip_order_by ?
-                               (order_st*) 0 : (order_st *)sl->order_list.first,
-                               (order_st*) sl->group_list.first,
+                               (Order*) NULL : (Order *)sl->order_list.first,
+                               (Order*) sl->group_list.first,
                                sl->having,
                                sl, this);
     /* There are no * in the statement anymore (for PS) */
@@ -353,12 +358,12 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
                      TMP_TABLE_ALL_COLUMNS);
 
     if (union_result->create_result_table(session, &types, test(union_distinct),
-                                          create_options, "", false))
+                                          create_options, ""))
       goto err;
     memset(&result_table_list, 0, sizeof(result_table_list));
-    result_table_list.db= (char*) "";
+    result_table_list.setSchemaName((char*) "");
     result_table_list.alias= "union";
-    result_table_list.table_name= (char *) "union";
+    result_table_list.setTableName((char *) "union");
     result_table_list.table= table= union_result->table;
 
     session_arg->lex->current_select= lex_select_save;
@@ -395,11 +400,11 @@ bool Select_Lex_Unit::exec()
   uint64_t add_rows=0;
   ha_rows examined_rows= 0;
 
-  if (executed && !uncacheable && !describe)
-    return(false);
+  if (executed && uncacheable.none() && ! describe)
+    return false;
   executed= 1;
 
-  if (uncacheable || !item || !item->assigned() || describe)
+  if (uncacheable.any() || ! item || ! item->assigned() || describe)
   {
     if (item)
       item->reset_value_registration();
@@ -431,7 +436,7 @@ bool Select_Lex_Unit::exec()
 	{
 	  offset_limit_cnt= 0;
 	  /*
-	    We can't use LIMIT at this stage if we are using order_st BY for the
+	    We can't use LIMIT at this stage if we are using ORDER BY for the
 	    whole query
 	  */
 	  if (sl->order_list.first || describe)
@@ -508,7 +513,7 @@ bool Select_Lex_Unit::exec()
     {
       set_limit(global_parameters);
       init_prepare_fake_select_lex(session);
-      JOIN *join= fake_select_lex->join;
+      Join *join= fake_select_lex->join;
       if (!join)
       {
 	/*
@@ -519,7 +524,7 @@ bool Select_Lex_Unit::exec()
           don't let it allocate the join. Perhaps this is because we need
           some special parameter values passed to join constructor?
 	*/
-	if (!(fake_select_lex->join= new JOIN(session, item_list,
+	if (!(fake_select_lex->join= new Join(session, item_list,
 					      fake_select_lex->options, result)))
 	{
 	  fake_select_lex->table_list.empty();
@@ -536,8 +541,8 @@ bool Select_Lex_Unit::exec()
                               &result_table_list,
                               0, item_list, NULL,
                               global_parameters->order_list.elements,
-                              (order_st*)global_parameters->order_list.first,
-                              (order_st*) NULL, NULL,
+                              (Order*)global_parameters->order_list.first,
+                              (Order*) NULL, NULL,
                               fake_select_lex->options | SELECT_NO_UNLOCK,
                               result, this, fake_select_lex);
       }
@@ -559,8 +564,8 @@ bool Select_Lex_Unit::exec()
                                 &result_table_list,
                                 0, item_list, NULL,
                                 global_parameters->order_list.elements,
-                                (order_st*)global_parameters->order_list.first,
-                                (order_st*) NULL, NULL,
+                                (Order*)global_parameters->order_list.first,
+                                (Order*) NULL, NULL,
                                 fake_select_lex->options | SELECT_NO_UNLOCK,
                                 result, this, fake_select_lex);
         }
@@ -603,8 +608,6 @@ bool Select_Lex_Unit::cleanup()
   {
     delete union_result;
     union_result=0; // Safety
-    if (table)
-      table->free_tmp_table(session);
     table= 0; // Safety
   }
 
@@ -613,7 +616,7 @@ bool Select_Lex_Unit::cleanup()
 
   if (fake_select_lex)
   {
-    JOIN *join;
+    Join *join;
     if ((join= fake_select_lex->join))
     {
       join->tables_list= 0;
@@ -622,8 +625,8 @@ bool Select_Lex_Unit::cleanup()
     error|= fake_select_lex->cleanup();
     if (fake_select_lex->order_list.elements)
     {
-      order_st *ord;
-      for (ord= (order_st*)fake_select_lex->order_list.first; ord; ord= ord->next)
+      Order *ord;
+      for (ord= (Order*)fake_select_lex->order_list.first; ord; ord= ord->next)
         (*ord->item)->cleanup();
     }
   }
@@ -732,3 +735,5 @@ void Select_Lex::cleanup_all_joins(bool full)
     for (sl= unit->first_select(); sl; sl= sl->next_select())
       sl->cleanup_all_joins(full);
 }
+
+} /* namespace drizzled */

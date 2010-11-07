@@ -23,6 +23,9 @@
 
 #include <drizzled/field/num.h>
 
+namespace drizzled
+{
+
 /* New decimal/numeric field which use fixed point arithmetic */
 class Field_decimal :public Field_num {
 public:
@@ -79,12 +82,12 @@ public:
   uint32_t size_of() const { return sizeof(*this); }
   uint32_t pack_length() const { return (uint32_t) bin_size; }
   uint32_t pack_length_from_metadata(uint32_t field_metadata);
-  uint32_t row_pack_length() { return pack_length(); }
-  int compatible_field_size(uint32_t field_metadata);
   uint32_t is_equal(CreateField *new_field);
   virtual const unsigned char *unpack(unsigned char* to, const unsigned char *from,
                                       uint32_t param_data, bool low_byte_first);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FIELD_DECIMAL_H */
 

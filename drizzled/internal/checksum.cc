@@ -11,12 +11,18 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 
-#include "drizzled/internal/mysys_priv.h"
+#include "config.h"
+#include "drizzled/internal/my_sys.h"
 
 #include <zlib.h>
+
+namespace drizzled
+{
+namespace internal
+{
 
 /*
   Calculate a long checksum for a memoryblock.
@@ -33,3 +39,5 @@ ha_checksum my_checksum(ha_checksum crc, const unsigned char *pos, size_t length
   return ha_checksum(crc32((uint32_t)crc, pos, uInt(length)));
 }
 
+} /* namespace internal */
+} /* namespace drizzled */

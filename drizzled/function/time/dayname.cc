@@ -18,9 +18,12 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/time/dayname.h>
 #include <drizzled/session.h>
+
+namespace drizzled
+{
 
 String* Item_func_dayname::val_str(String* str)
 {
@@ -37,3 +40,4 @@ String* Item_func_dayname::val_str(String* str)
   return str;
 }
 
+} /* namespace drizzled */

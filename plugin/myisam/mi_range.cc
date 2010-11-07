@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /*
   Gives a approximated number of how many records there is between two keys.
@@ -20,9 +20,11 @@
 
 #include "myisam_priv.h"
 
+using namespace drizzled;
+
 static ha_rows _mi_record_pos(MI_INFO *, const unsigned char *, key_part_map,
                               enum ha_rkey_function);
-static double _mi_search_pos(MI_INFO *,MI_KEYDEF *,unsigned char *, uint,uint,my_off_t);
+static double _mi_search_pos(MI_INFO *,MI_KEYDEF *,unsigned char *, uint,uint,internal::my_off_t);
 static uint32_t _mi_keynr(MI_INFO *info,MI_KEYDEF *,unsigned char *, unsigned char *,uint32_t *);
 
 /*
@@ -54,8 +56,6 @@ ha_rows mi_records_in_range(MI_INFO *info, int inx,
   if (fast_mi_readinfo(info))
     return(HA_POS_ERROR);
   info->update&= (HA_STATE_CHANGED+HA_STATE_ROW_CHANGED);
-  if (info->s->concurrent_insert)
-    pthread_rwlock_rdlock(&info->s->key_root_lock[inx]);
 
   switch(info->s->keyinfo[inx].key_alg){
   case HA_KEY_ALG_BTREE:
@@ -72,8 +72,6 @@ ha_rows mi_records_in_range(MI_INFO *info, int inx,
       res=HA_POS_ERROR;
   }
 
-  if (info->s->concurrent_insert)
-    pthread_rwlock_unlock(&info->s->key_root_lock[inx]);
   fast_mi_writeinfo(info);
 
   return(res);
@@ -151,7 +149,7 @@ static ha_rows _mi_record_pos(MI_INFO *info, const unsigned char *key,
 static double _mi_search_pos(register MI_INFO *info,
 			     register MI_KEYDEF *keyinfo,
 			     unsigned char *key, uint32_t key_len, uint32_t nextflag,
-			     register my_off_t pos)
+			     register internal::my_off_t pos)
 {
   int flag;
   uint32_t nod_flag, keynr, max_keynr= 0;

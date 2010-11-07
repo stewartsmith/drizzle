@@ -22,10 +22,13 @@
 
 #include <drizzled/item.h>
 
+namespace drizzled
+{
+
 class Item_basic_constant :public Item
 {
 public:
-  Item_basic_constant() : Item() {};
+  Item_basic_constant() : Item() {}
 
   /* to prevent drop fixed flag (no need parent cleanup call) */
   void cleanup()
@@ -39,5 +42,7 @@ public:
       name= orig_name;
   }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_BASIC_CONSTANT_H */

@@ -33,10 +33,13 @@
 #include "drizzled/temporal_format.h"
 #include "drizzled/temporal.h"
 
-#include <string> /** C++ string class used */
 #include <string.h>
-#include <vector>
 #include PCRE_HEADER
+
+#include <string>
+#include <vector>
+
+using namespace std;
 
 namespace drizzled
 {
@@ -108,7 +111,7 @@ bool TemporalFormat::matches(const char *data, size_t data_len, Temporal *to)
     return false;
 
   /* C++ string class easy to use substr() method is very useful here */
-  std::string copy_data(data, data_len);
+  string copy_data(data, data_len);
   /* 
    * OK, we have the expected substring matches, so grab
    * the various temporal parts from the subject string
@@ -197,7 +200,6 @@ bool TemporalFormat::matches(const char *data, size_t data_len, Temporal *to)
   return true;
 }
 
-} /* end namespace drizzled */
 
 #define COUNT_KNOWN_FORMATS 19
 
@@ -235,7 +237,7 @@ static struct temporal_format_args __format_args[COUNT_KNOWN_FORMATS]=
 , {"^(\\d{2})[-/.](\\d{1,2})[-/.](\\d{1,2})[\\s+](\\d{2}):(\\d{2}):(\\d{2})$", 1, 2, 3, 4, 5, 6, 0, 0} /* YY[/-.][M]M[/-.][D]D HH:mm:SS */
 , {"^(\\d{2})[-/.](\\d{1,2})[-/.](\\d{1,2})[\\s+](\\d{2}):(\\d{2})$", 1, 2, 3, 4, 5, 0, 0, 0} /* YY[/-.][M]M[/-.][D]D HH:mm */
 , {"^(\\d{4})[-/.](\\d{1,2})[-/.](\\d{1,2})[\\s+](\\d{2}):(\\d{2})$", 1, 2, 3, 4, 5, 0, 0, 0} /* YYYY[/-.][M]M[/-.][D]D HH:mm */
-, {"^(\\d{4})[-/.](\\d{1,2})[-/.](\\d{1,2})$", 1, 2, 3, 0, 0, 0, 0, 0} /* YYYY-[M]M-[D]D, YYYY.[M]M.[D]D, YYYY/[M]M/[D]D */
+, {"^(\\d{4})[-/.](\\d{1,2})[-/.](\\d{1,2})$", 1, 2, 3, 0, 0, 0, 0, 0} /* YYYY-[M]M-[D]D, YYYY.[M]M.[D]D, YYYY/[M]M/[D]D */ 
 , {"^(\\d{4})(\\d{2})(\\d{2})$", 1, 2, 3, 0, 0, 0, 0, 0} /* YYYYMMDD */
 , {"^(\\d{2})[-/.]*(\\d{2})[-/.]*(\\d{4})$", 3, 1, 2, 0, 0, 0, 0, 0} /* MM[-/.]DD[-/.]YYYY (US common format)*/
 , {"^(\\d{2})[-/.]*(\\d{2})[-/.]*(\\d{2})$", 1, 2, 3, 0, 0, 0, 0, 0} /* YY[-/.]MM[-/.]DD */
@@ -249,10 +251,10 @@ static struct temporal_format_args __format_args[COUNT_KNOWN_FORMATS]=
 , {"^(\\d{1,2})\\.(\\d{1,6})$", 0, 0, 0, 0, 0, 1, 2, 0} /* [S]S.uuuuuu */
 };
 
-std::vector<drizzled::TemporalFormat *> known_datetime_formats;
-std::vector<drizzled::TemporalFormat *> known_date_formats;
-std::vector<drizzled::TemporalFormat *> known_time_formats;
-std::vector<drizzled::TemporalFormat *> all_temporal_formats;
+vector<TemporalFormat *> known_datetime_formats;
+vector<TemporalFormat *> known_date_formats;
+vector<TemporalFormat *> known_time_formats;
+vector<TemporalFormat *> all_temporal_formats;
 
 /**
  * We allocate and initialize all known date/time formats.
@@ -262,14 +264,14 @@ std::vector<drizzled::TemporalFormat *> all_temporal_formats;
 bool init_temporal_formats()
 {
   /* Compile all the regular expressions for the datetime formats */
-  drizzled::TemporalFormat *tmp;
+  TemporalFormat *tmp;
   struct temporal_format_args current_format_args;
   int32_t x;
   
   for (x= 0; x<COUNT_KNOWN_FORMATS; ++x)
   {
     current_format_args= __format_args[x];
-    tmp= new drizzled::TemporalFormat(current_format_args.pattern);
+    tmp= new TemporalFormat(current_format_args.pattern);
     tmp->set_year_part_index(current_format_args.year_part_index);
     tmp->set_month_part_index(current_format_args.month_part_index);
     tmp->set_day_part_index(current_format_args.day_part_index);
@@ -301,7 +303,7 @@ bool init_temporal_formats()
 /** Free all allocated temporal formats */
 void deinit_temporal_formats()
 {
-  std::vector<drizzled::TemporalFormat *>::iterator p= all_temporal_formats.begin();
+  vector<TemporalFormat *>::iterator p= all_temporal_formats.begin();
   while (p != all_temporal_formats.end())
   {
     delete *p;
@@ -312,3 +314,5 @@ void deinit_temporal_formats()
   known_time_formats.clear();
   all_temporal_formats.clear();
 }
+
+} /* end namespace drizzled */

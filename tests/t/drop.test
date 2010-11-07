@@ -6,13 +6,13 @@ drop database if exists mysqltest;
 drop database if exists client_test_db;
 --enable_warnings
 
---error 1051
+--error ER_BAD_TABLE_ERROR
 drop table t1;
 create table t1(n int);
 insert into t1 values(1);
 create temporary table t1( n int);
 insert into t1 values(2);
---error 1050
+--error ER_TABLE_EXISTS_ERROR
 create table t1(n int);
 drop table t1;
 select * from t1;
@@ -37,14 +37,14 @@ create database mysqltest;
 # (tableN instead on tN)
 #
 use mysqltest;
---error 1051
+--error ER_BAD_TABLE_ERROR
 drop table table1, table2, table3, table4, table5, table6,
 table7, table8, table9, table10, table11, table12, table13,
 table14, table15, table16, table17, table18, table19, table20,
 table21, table22, table23, table24, table25, table26, table27,
 table28;
 
---error 1051
+--error ER_BAD_TABLE_ERROR
 drop table table1, table2, table3, table4, table5, table6,
 table7, table8, table9, table10, table11, table12, table13,
 table14, table15, table16, table17, table18, table19, table20,
@@ -56,24 +56,24 @@ drop database mysqltest;
 
 # test drop/create database and FLUSH TABLES WITH READ LOCK
 flush tables with read lock;
---error 1209,1223
+--error ER_DROP_DB_WITH_READ_LOCK, ER_CANT_UPDATE_WITH_READLOCK
 create database mysqltest;
 unlock tables;
 create database mysqltest;
 show databases;
 flush tables with read lock;
---error 1208,1223
+--error ER_DROP_DB_WITH_READ_LOCK, ER_CANT_UPDATE_WITH_READLOCK
 drop database mysqltest;
 unlock tables;
 drop database mysqltest;
 show databases;
---error 1008
+--error ER_DB_DROP_EXISTS
 drop database mysqltest;
 
 # test create table and FLUSH TABLES WITH READ LOCK
 drop table t1;
 flush tables with read lock;
---error 1223
+--error ER_CANT_UPDATE_WITH_READLOCK
 create table t1(n int);
 unlock tables;
 create table t1(n int);
@@ -81,43 +81,6 @@ show tables;
 drop table t1;
 
 # End of 4.1 tests
-
-
-#
-# Test for bug#21216 "Simultaneous DROP TABLE and SHOW OPEN TABLES causes
-# server to crash". Crash (caused by failed assertion in 5.0 or by null
-# pointer dereference in 5.1) happened when one ran SHOW OPEN TABLES
-# while concurrently doing DROP TABLE (or RENAME TABLE, CREATE TABLE LIKE
-# or any other command that takes name-lock) in other connection.
-# 
-# Also includes test for similar bug#12212 "Crash that happens during
-# removing of database name from cache" reappeared in 5.1 as bug#19403
-# In its case crash happened when one concurrently executed DROP DATABASE
-# and one of name-locking command.
-# 
---disable_warnings
-drop database if exists mysqltest;
-drop table if exists t1;
---enable_warnings
-create table t1 (i int);
-create database mysqltest;
-connect (addconroot1, localhost, root,,);
---send drop table t1
-connect (addconroot2, localhost, root,,);
-# Server should not crash in any of the following statements
---disable_result_log
-show open tables;
---enable_result_log
---send drop database mysqltest
-connection default;
-select 1;
-connection addconroot1;
---reap
-connection addconroot2;
---reap
-disconnect addconroot1;
-disconnect addconroot2;
-connection default;
 
 --echo End of 5.0 tests
 
@@ -129,10 +92,6 @@ create table mysql_test.t1(f1 int);
 create table mysql_test.`#sql-347f_7` (f1 int);
 create table mysql_test.`#sql-347f_8` (f1 int);
 drop table mysql_test.`#sql-347f_8`;
-## TODO: Uncommenting this causes drop database to fail, but I don't know that
-#  I care to fix it, since it's testing .frm implementation which is being 
-#  replaced.
-#copy_file $MYSQLTEST_VARDIR/master-data/mysql_test/t1.frm $MYSQLTEST_VARDIR/master-data/mysql_test/#sql-347f_6.frm;
 drop database mysql_test;
 
 #

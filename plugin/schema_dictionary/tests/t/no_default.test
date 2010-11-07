@@ -1,0 +1,6 @@
+create table t1 (a int primary key);
+--error ER_NO_DEFAULT_FOR_FIELD
+insert into t1 values ();
+select COLUMN_NAME,COLUMN_DEFAULT,COLUMN_DEFAULT_IS_NULL FROM DATA_DICTIONARY.COLUMNS WHERE TABLE_SCHEMA="test" AND TABLE_NAME="t1";
+drop table t1;
+

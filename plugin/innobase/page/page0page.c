@@ -11,8 +11,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -677,7 +677,7 @@ page_copy_rec_list_end(
 
 				if (UNIV_UNLIKELY
 				    (!page_zip_decompress(new_page_zip,
-							  new_page))) {
+							  new_page, FALSE))) {
 					ut_error;
 				}
 				ut_ad(page_validate(new_page, index));
@@ -790,7 +790,7 @@ page_copy_rec_list_start(
 
 				if (UNIV_UNLIKELY
 				    (!page_zip_decompress(new_page_zip,
-							  new_page))) {
+							  new_page, FALSE))) {
 					ut_error;
 				}
 				ut_ad(page_validate(new_page, index));

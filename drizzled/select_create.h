@@ -20,27 +20,33 @@
 #ifndef DRIZZLED_SELECT_CREATE_H
 #define DRIZZLED_SELECT_CREATE_H
 
+namespace drizzled
+{
+
 class select_create: public select_insert {
-  order_st *group;
+  Order *group;
   TableList *create_table;
   bool is_if_not_exists;
   HA_CREATE_INFO *create_info;
-  drizzled::message::Table *table_proto;
+  message::Table &table_proto;
   TableList *select_tables;
   AlterInfo *alter_info;
   Field **field;
   /* lock data for tmp table */
-  DRIZZLE_LOCK *m_lock;
+  DrizzleLock *m_lock;
   /* m_lock or session->extra_lock */
-  DRIZZLE_LOCK **m_plock;
+  DrizzleLock **m_plock;
+  TableIdentifier &identifier;
+
 public:
   select_create (TableList *table_arg,
                  bool is_if_not_exists_arg,
                  HA_CREATE_INFO *create_info_par,
-                 drizzled::message::Table *proto,
+                 message::Table &proto,
                  AlterInfo *alter_info_arg,
                  List<Item> &select_fields,enum_duplicates duplic, bool ignore,
-                 TableList *select_tables_arg)
+                 TableList *select_tables_arg,
+                 TableIdentifier &identifier_arg)
     :select_insert (NULL, NULL, &select_fields, 0, 0, duplic, ignore),
     create_table(table_arg),
     is_if_not_exists(is_if_not_exists_arg),
@@ -48,7 +54,8 @@ public:
     table_proto(proto),
     select_tables(select_tables_arg),
     alter_info(alter_info_arg),
-    m_plock(NULL)
+    m_plock(NULL),
+    identifier(identifier_arg)
     {}
   int prepare(List<Item> &list, Select_Lex_Unit *u);
 
@@ -56,12 +63,14 @@ public:
   void send_error(uint32_t errcode,const char *err);
   bool send_eof();
   void abort();
-  virtual bool can_rollback_data() { return 1; }
+  virtual bool can_rollback_data() { return true; }
 
   // Needed for access from local class MY_HOOKS in prepare(), since session is proteted.
   const Session *get_session(void) { return session; }
-  const HA_CREATE_INFO *get_create_info() { return create_info; };
+  const HA_CREATE_INFO *get_create_info() { return create_info; }
   int prepare2(void) { return 0; }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SELECT_CREATE_H */

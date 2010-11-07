@@ -34,11 +34,9 @@ namespace drizzled
 bool statement::ChangeSchema::execute()
 {
   Select_Lex *select_lex= &session->lex->select_lex;
-  string database_name(select_lex->db);
-  NonNormalisedDatabaseName non_normalised_database_name(database_name);
-  NormalisedDatabaseName normalised_database_name(non_normalised_database_name);
 
-  if (! mysql_change_db(session, normalised_database_name, false))
+  SchemaIdentifier identifier(select_lex->db);
+  if (not mysql_change_db(session, identifier))
   {
     session->my_ok();
   }

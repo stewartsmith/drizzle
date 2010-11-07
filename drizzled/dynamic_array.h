@@ -23,9 +23,8 @@
 
 #include <stddef.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+namespace drizzled
+{
 
 typedef struct st_dynamic_array
 {
@@ -59,8 +58,6 @@ extern int  get_index_dynamic(DYNAMIC_ARRAY *array, unsigned char * element);
 #define reset_dynamic(array) ((array)->elements= 0)
 #define sort_dynamic(A,cmp) my_qsort((A)->buffer, (A)->elements, (A)->size_of_element, (cmp))
 
-#ifdef __cplusplus
-}
-#endif
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_DYNAMIC_ARRAY_H */

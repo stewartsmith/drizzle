@@ -1,0 +1,4 @@
+# Always allow root user with no password for drizzletest program
+root
+auth_file
+auth_file_password:test_password

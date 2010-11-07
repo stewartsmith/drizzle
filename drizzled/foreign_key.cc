@@ -25,10 +25,58 @@
 #include "drizzled/error.h"
 #include "drizzled/create_field.h"
 #include "drizzled/internal/my_sys.h"
+#include "drizzled/table_ident.h"
 
-using namespace drizzled;
+namespace drizzled
+{
 
 extern const CHARSET_INFO *system_charset_info;
+
+void add_foreign_key_to_table_message(
+    message::Table *table_message,
+    const char* fkey_name,
+    List<Key_part_spec> &cols,
+    Table_ident *table,
+    List<Key_part_spec> &ref_cols,
+    message::Table::ForeignKeyConstraint::ForeignKeyOption delete_opt_arg,
+    message::Table::ForeignKeyConstraint::ForeignKeyOption update_opt_arg,
+    message::Table::ForeignKeyConstraint::ForeignKeyMatchOption match_opt_arg)
+{
+  message::Table::ForeignKeyConstraint *pfkey= table_message->add_fk_constraint();
+  if (fkey_name)
+    pfkey->set_name(fkey_name);
+  else if (table_message->has_name())
+  {
+    std::string name(table_message->name());
+    char number[20];
+
+    name.append("_ibfk_");
+    snprintf(number, sizeof(number), "%d", table_message->fk_constraint_size());
+    name.append(number);
+
+    pfkey->set_name(name);
+  }
+
+  pfkey->set_match(match_opt_arg);
+  pfkey->set_update_option(update_opt_arg);
+  pfkey->set_delete_option(delete_opt_arg);
+
+  pfkey->set_references_table_name(table->table.str);
+
+  Key_part_spec *keypart;
+  List_iterator<Key_part_spec> col_it(cols);
+  while ((keypart= col_it++))
+  {
+    pfkey->add_column_names(keypart->field_name.str);
+  }
+
+  List_iterator<Key_part_spec> ref_it(ref_cols);
+  while ((keypart= ref_it++))
+  {
+    pfkey->add_references_columns(keypart->field_name.str);
+  }
+
+}
 
 Foreign_key::Foreign_key(const Foreign_key &rhs, memory::Root *mem_root)
   :Key(rhs),
@@ -136,5 +184,4 @@ bool Foreign_key::validate(List<CreateField> &table_fields)
   return false;
 }
 
-
-
+} /* namespace drizzled */

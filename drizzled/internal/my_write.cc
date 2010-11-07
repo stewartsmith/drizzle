@@ -11,12 +11,19 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "drizzled/internal/mysys_priv.h"
-#include "drizzled/my_error.h"
-#include <errno.h>
+#include "config.h"
 
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/internal/thread_var.h"
+#include "drizzled/error.h"
+#include <cerrno>
+
+namespace drizzled
+{
+namespace internal
+{
 
 	/* Write a chunk of bytes to a file */
 
@@ -41,36 +48,6 @@ size_t my_write(int Filedes, const unsigned char *Buffer, size_t Count, myf MyFl
       Count-=writenbytes;
     }
     errno=errno;
-#ifndef NO_BACKGROUND
-    if (my_thread_var->abort)
-      MyFlags&= ~ MY_WAIT_IF_FULL;		/* End if aborted by user */
-    if ((errno == ENOSPC || errno == EDQUOT) &&
-        (MyFlags & MY_WAIT_IF_FULL))
-    {
-      if (!(errors++ % MY_WAIT_GIVE_USER_A_MESSAGE))
-	my_error(EE_DISK_FULL,MYF(ME_BELL | ME_NOREFRESH),
-		 "unknown", errno,MY_WAIT_FOR_USER_TO_FIX_PANIC);
-      sleep(MY_WAIT_FOR_USER_TO_FIX_PANIC);
-      continue;
-    }
-
-    if ((writenbytes == 0 || writenbytes == (size_t) -1))
-    {
-      if (errno == EINTR)
-      {
-        continue;                               /* Interrupted */
-      }
-
-      if (!writenbytes && !errors++)		/* Retry once */
-      {
-        /* We may come here if the file quota is exeeded */
-        errno=EFBIG;				/* Assume this is the error */
-        continue;
-      }
-    }
-    else
-      continue;					/* Retry */
-#endif
     if (MyFlags & (MY_NABP | MY_FNABP))
     {
       if (MyFlags & (MY_WME | MY_FAE | MY_FNABP))
@@ -87,3 +64,6 @@ size_t my_write(int Filedes, const unsigned char *Buffer, size_t Count, myf MyFl
     return(0);			/* Want only errors */
   return(writenbytes+written);
 } /* my_write */
+
+} /* namespace internal */
+} /* namespace drizzled */

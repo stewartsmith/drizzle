@@ -1,0 +1,4 @@
+use data_dictionary;
+SELECT * FROM data_dictionary.replication_streams;
+REPLICATOR	APPLIER
+filtered_replicator	transaction_log_applier

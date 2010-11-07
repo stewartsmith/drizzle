@@ -1,0 +1,408 @@
+DROP TABLE IF EXISTS t0,t1,t2,t3,t4,t5;
+select count(*) from data_dictionary.SCHEMAS where schema_name > 'm';
+count(*)
+#
+select count(*) from data_dictionary.schemas;
+count(*)
+#
+show databases like 't%';
+Database (t%)
+test
+show databases;
+Database
+DATA_DICTIONARY
+INFORMATION_SCHEMA
+mysql
+test
+create database mysqltest;
+create table mysqltest.t1(a int, b VARCHAR(30), KEY string_data (b));
+create table test.t2(a int);
+create table t3(a int, KEY a_data (a));
+create table mysqltest.t4(a int);
+create table t5 (id int auto_increment primary key);
+insert into t5 values (10);
+select table_name from data_dictionary.TABLES
+where table_schema = "mysqltest" and table_name like "t%";
+table_name
+t1
+t4
+show tables like 't%';
+Tables_in_test (t%)
+t2
+t3
+t5
+show table status;
+Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
+#	test	t5	STANDARD	PBXT	#	#	#	#	#
+show columns from t3 like "a%";
+Field	Type	Null	Default	Default_is_NULL	On_Update
+a	INTEGER	YES		YES	
+select * from data_dictionary.COLUMNS where table_name="t1"
+and column_name= "a";
+TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	COLUMN_TYPE	ORDINAL_POSITION	COLUMN_DEFAULT	COLUMN_DEFAULT_IS_NULL	COLUMN_DEFAULT_UPDATE	IS_NULLABLE	IS_INDEXED	IS_USED_IN_PRIMARY	IS_UNIQUE	IS_MULTI	IS_FIRST_IN_MULTI	INDEXES_FOUND_IN	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	COLLATION_NAME	COLUMN_COMMENT
+mysqltest	t1	a	INTEGER	0	NULL	YES		YES	NO	NO	NO	NO	NO	0	INTEGER	0	0	0	0		NULL
+select table_name, column_name from data_dictionary.columns 
+where table_schema = 'mysqltest' and table_name = 't1';
+table_name	column_name
+t1	a
+t1	b
+show columns from mysqltest.t1;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+a	INTEGER	YES		YES	
+b	VARCHAR	YES		YES	
+drop tables mysqltest.t4, mysqltest.t1, t2, t3, t5;
+drop database mysqltest;
+select * from data_dictionary.CHARACTER_SETS
+where CHARACTER_SET_NAME like 'latin1%';
+CHARACTER_SET_NAME	DEFAULT_COLLATE_NAME	DESCRIPTION	MAXLEN
+select * from data_dictionary.COLLATIONS
+where COLLATION_NAME like 'latin1%';
+CHARACTER_SET_NAME	COLLATION_NAME	DESCRIPTION	ID	IS_DEFAULT	IS_COMPILED	SORTLEN
+select DATA_TYPE from data_dictionary.columns
+where table_schema="data_dictionary" and table_name="COLUMNS" and
+(column_name="character_set_name" or column_name="collation_name");
+DATA_TYPE
+VARCHAR
+select TABLE_TYPE from data_dictionary.tables where 
+table_schema="data_dictionary" and table_name="COLUMNS";
+TABLE_TYPE
+FUNCTION
+select table_type from data_dictionary.tables
+where table_schema="mysql" and table_name="user";
+table_type
+select table_schema,table_name, column_name from
+data_dictionary.columns 
+where DATA_TYPE = 'longtext';
+table_schema	table_name	column_name
+select table_name, column_name, DATA_TYPE from data_dictionary.columns
+where DATA_TYPE = 'datetime';
+table_name	column_name	DATA_TYPE
+SELECT COUNT(*) FROM DATA_DICTIONARY.TABLES A
+WHERE NOT EXISTS 
+(SELECT * FROM DATA_DICTIONARY.COLUMNS B
+WHERE A.TABLE_SCHEMA = B.TABLE_SCHEMA
+AND A.TABLE_NAME = B.TABLE_NAME);
+COUNT(*)
+0
+create table t1
+( x_bigint BIGINT,
+x_integer INTEGER,
+x_int int,
+x_decimal DECIMAL(5,3),
+x_numeric NUMERIC(5,3),
+x_real REAL,
+x_float FLOAT,
+x_double_precision DOUBLE PRECISION );
+SELECT COLUMN_NAME, CHARACTER_MAXIMUM_LENGTH, CHARACTER_OCTET_LENGTH
+FROM DATA_DICTIONARY.COLUMNS
+WHERE TABLE_NAME= 't1';
+COLUMN_NAME	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH
+x_bigint	0	0
+x_decimal	0	0
+x_double_precision	0	0
+x_float	0	0
+x_int	0	0
+x_integer	0	0
+x_numeric	0	0
+x_real	0	0
+drop table t1;
+SELECT table_schema, count(*) FROM data_dictionary.TABLES
+WHERE table_name NOT LIKE 'ndb_%' AND 
+table_name NOT LIKE 'falcon%' AND
+ENGINE IS NULL
+GROUP BY TABLE_SCHEMA;
+table_schema	count(*)
+create table t1(f1 LONGBLOB, f2 LONGTEXT);
+select column_name, DATA_TYPE, CHARACTER_OCTET_LENGTH,
+CHARACTER_MAXIMUM_LENGTH
+from data_dictionary.columns
+where table_name='t1';
+column_name	DATA_TYPE	CHARACTER_OCTET_LENGTH	CHARACTER_MAXIMUM_LENGTH
+f1	BLOB	0	0
+f2	BLOB	0	0
+drop table t1;
+create table t1(f1 int, f2 int, f3 BIGINT, f4 int,
+f5 BIGINT, f6 int, f7 int);
+select column_name, NUMERIC_PRECISION, NUMERIC_SCALE
+from data_dictionary.columns
+where table_name='t1';
+column_name	NUMERIC_PRECISION	NUMERIC_SCALE
+f1	0	0
+f2	0	0
+f3	0	0
+f4	0	0
+f5	0	0
+f6	0	0
+f7	0	0
+drop table t1;
+create table t1 (a int not null, b int);
+use data_dictionary;
+select column_name, column_default,column_default_is_null from columns
+where table_schema='test' and table_name='t1';
+column_name	column_default	column_default_is_null
+a	NULL	NO
+b	NULL	YES
+use test;
+show columns from t1;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+a	INTEGER	NO		NO	
+b	INTEGER	YES		YES	
+drop table t1;
+alter database data_dictionary;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '' at line 1
+use data_dictionary;
+use data_dictionary;
+create temporary table schemas(f1 char(10));
+ERROR 42000: Access denied for user ''@'' to database 'data_dictionary'
+use test;
+create table t1(id int);
+insert into t1(id) values (1);
+select 1 from (select 1 from test.t1) a;
+1
+1
+use data_dictionary;
+select 1 from (select 1 from test.t1) a;
+1
+1
+use test;
+drop table t1;
+create temporary table t1(f1 int, index(f1));
+show columns from t1;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+f1	INTEGER	YES		YES	
+describe t1;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+f1	INTEGER	YES		YES	
+show indexes from t1;
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	NO	f1	1	f1
+drop table t1;
+create table t1(f1 varbinary(32), f2 varbinary(64));
+select character_maximum_length, character_octet_length
+from data_dictionary.columns where table_name='t1';
+character_maximum_length	character_octet_length
+32	128
+64	256
+drop table t1;
+select DATA_TYPE, group_concat(table_schema, '.', table_name) as a, count(*) as num
+from data_dictionary.columns where
+table_schema='data_dictionary' and
+(DATA_TYPE = 'varchar' or DATA_TYPE = 'varchar'
+ or DATA_TYPE = 'varchar')
+group by DATA_TYPE order by DATA_TYPE, num;
+DATA_TYPE	a	num
+VARCHAR	#	165
+Warnings:
+Warning	#	1 line(s) were cut by GROUP_CONCAT()
+create table t1(f1 char(1) not null, f2 char(9) not null);
+select CHARACTER_MAXIMUM_LENGTH, CHARACTER_OCTET_LENGTH from
+data_dictionary.columns where table_schema='test' and table_name = 't1';
+CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH
+1	4
+9	36
+drop table t1;
+set @a:= '.';
+create table t1(f1 char(5));
+create table t2(f1 char(5));
+select concat(@a, table_name), @a, table_name
+from data_dictionary.tables where table_schema = 'test';
+concat(@a, table_name)	@a	table_name
+.t1	.	t1
+.t2	.	t2
+drop table t1,t2;
+SELECT t.table_name, c1.column_name
+FROM data_dictionary.tables t
+INNER JOIN
+data_dictionary.columns c1
+ON t.table_schema = c1.table_schema AND
+t.table_name = c1.table_name
+WHERE t.table_schema = 'data_dictionary' AND
+c1.ordinal_position =
+( SELECT COALESCE(MIN(c2.ordinal_position),1)
+FROM data_dictionary.columns c2
+WHERE c2.table_schema = t.table_schema AND
+c2.table_name = t.table_name AND
+c2.column_name LIKE '%SCHEMA%'
+        )
+AND t.table_name NOT LIKE 'falcon%'
+  AND t.ENGINE IS NULL;
+table_name	column_name
+SELECT t.table_name, c1.column_name
+FROM data_dictionary.tables t
+INNER JOIN
+data_dictionary.columns c1
+ON t.table_schema = c1.table_schema AND
+t.table_name = c1.table_name
+WHERE t.table_schema = 'data_dictionary' AND
+c1.ordinal_position =
+( SELECT COALESCE(MIN(c2.ordinal_position),1)
+FROM data_dictionary.columns c2
+WHERE c2.table_schema = 'data_dictionary' AND
+c2.table_name = t.table_name AND
+c2.column_name LIKE '%SCHEMA%'
+        )
+AND t.table_name NOT LIKE 'falcon%'
+  AND t.ENGINE IS NULL;
+table_name	column_name
+SELECT MAX(table_name) FROM data_dictionary.tables;
+MAX(table_name)
+VIEW_TABLE_USAGE
+SELECT table_name from data_dictionary.tables
+WHERE table_name=(SELECT MAX(table_name)
+FROM data_dictionary.tables);
+table_name
+VIEW_TABLE_USAGE
+create table t1 (f1 int);
+create table t2 (f1 int, f2 int);
+select table_name from data_dictionary.tables
+where table_schema = 'test' and table_name not in
+(select table_name from data_dictionary.columns
+where table_schema = 'test' and column_name = 'f3');
+table_name
+t1
+t2
+drop table t1,t2;
+select 1 as f1 from data_dictionary.tables  where "CHARACTER_SETS"=
+(select cast(table_name as char)  from data_dictionary.tables
+order by table_name limit 1) limit 1;
+f1
+1
+select t.table_name, group_concat(t.table_schema, '.', t.table_name),
+count(*) as num1
+from data_dictionary.tables t
+inner join data_dictionary.columns c1
+on t.table_schema = c1.table_schema AND t.table_name = c1.table_name
+where t.table_schema = 'data_dictionary' AND
+t.table_name not like 'falcon%' AND
+t.ENGINE IS NULL AND
+c1.ordinal_position =
+(select isnull(c2.DATA_TYPE) -
+isnull(group_concat(c2.table_schema, '.', c2.table_name)) +
+count(*) as num
+from data_dictionary.columns c2 where
+c2.table_schema='data_dictionary' and
+(c2.DATA_TYPE = 'varchar' or c2.DATA_TYPE = 'varchar')
+group by c2.DATA_TYPE order by num limit 1)
+group by t.table_name order by num1, t.table_name;
+table_name	group_concat(t.table_schema, '.', t.table_name)	num1
+alter database;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '' at line 1
+alter database test;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '' at line 1
+create table t1 (
+f1 varchar(50),
+f2 varchar(50) not null,
+f3 varchar(50) default '',
+f4 varchar(50) default NULL,
+f5 bigint not null,
+f6 bigint not null default 10,
+f7 datetime not null,
+f8 datetime default '2006-01-01'
+);
+select column_name,column_default,column_default_is_null from data_dictionary.columns where table_name= 't1';
+column_name	column_default	column_default_is_null
+f1	NULL	YES
+f2	NULL	NO
+f3		NO
+f4	NULL	YES
+f5	NULL	NO
+f6	10	NO
+f7	NULL	NO
+f8	2006-01-01 00:00:00	NO
+show columns from t1;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+f1	VARCHAR	YES		YES	
+f2	VARCHAR	NO		NO	
+f3	VARCHAR	YES		NO	
+f4	VARCHAR	YES		YES	
+f5	BIGINT	NO		NO	
+f6	BIGINT	NO	10	NO	
+f7	DATETIME	NO		NO	
+f8	DATETIME	YES	2006-01-01 00:00:00	NO	
+drop table t1;
+SET max_heap_table_size = DEFAULT;
+USE test;
+End of 5.0 tests.
+SELECT SCHEMA_NAME FROM DATA_DICTIONARY.SCHEMAS
+WHERE SCHEMA_NAME ='data_dictionary';
+SCHEMA_NAME
+data_dictionary
+SELECT TABLE_COLLATION FROM DATA_DICTIONARY.TABLES
+WHERE TABLE_SCHEMA='mysql' and TABLE_NAME= 'db';
+TABLE_COLLATION
+select * from data_dictionary.columns where table_schema = NULL;
+TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	COLUMN_TYPE	ORDINAL_POSITION	COLUMN_DEFAULT	COLUMN_DEFAULT_IS_NULL	COLUMN_DEFAULT_UPDATE	IS_NULLABLE	IS_INDEXED	IS_USED_IN_PRIMARY	IS_UNIQUE	IS_MULTI	IS_FIRST_IN_MULTI	INDEXES_FOUND_IN	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	COLLATION_NAME	COLUMN_COMMENT
+select * from `data_dictionary`.`COLUMNS` where `TABLE_NAME` = NULL;
+TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	COLUMN_TYPE	ORDINAL_POSITION	COLUMN_DEFAULT	COLUMN_DEFAULT_IS_NULL	COLUMN_DEFAULT_UPDATE	IS_NULLABLE	IS_INDEXED	IS_USED_IN_PRIMARY	IS_UNIQUE	IS_MULTI	IS_FIRST_IN_MULTI	INDEXES_FOUND_IN	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	COLLATION_NAME	COLUMN_COMMENT
+select * from `data_dictionary`.`INDEXES` where `TABLE_SCHEMA` = NULL;
+TABLE_SCHEMA	TABLE_NAME	INDEX_NAME	IS_USED_IN_PRIMARY	IS_UNIQUE	IS_NULLABLE	KEY_LENGTH	INDEX_TYPE	INDEX_COMMENT
+select * from `data_dictionary`.`INDEXES` where `TABLE_NAME` = NULL;
+TABLE_SCHEMA	TABLE_NAME	INDEX_NAME	IS_USED_IN_PRIMARY	IS_UNIQUE	IS_NULLABLE	KEY_LENGTH	INDEX_TYPE	INDEX_COMMENT
+select * from data_dictionary.schemas where schema_name = NULL;
+SCHEMA_NAME	DEFAULT_COLLATION_NAME	SCHEMA_CREATION_TIME	SCHEMA_UPDATE_TIME
+select * from data_dictionary.tables where table_schema = NULL;
+TABLE_SCHEMA	TABLE_NAME	TABLE_TYPE	ENGINE	ROW_FORMAT	TABLE_COLLATION	TABLE_CREATION_TIME	TABLE_UPDATE_TIME	TABLE_COMMENT
+select * from data_dictionary.tables where table_name = NULL;
+TABLE_SCHEMA	TABLE_NAME	TABLE_TYPE	ENGINE	ROW_FORMAT	TABLE_COLLATION	TABLE_CREATION_TIME	TABLE_UPDATE_TIME	TABLE_COMMENT
+#
+# Test that the query is visible to self and others.
+#
+SELECT info FROM data_dictionary.processlist WHERE id = CONNECTION_ID();
+info
+SELECT info FROM data_dictionary.processlist WHERE id = CONNECTION_ID()
+SELECT * FROM data_dictionary.character_sets ORDER BY character_set_name;
+CHARACTER_SET_NAME	DEFAULT_COLLATE_NAME	DESCRIPTION	MAXLEN
+#	#	#	1
+#	#	#	4
+SELECT * FROM data_dictionary.collations ORDER BY collation_name;
+CHARACTER_SET_NAME	COLLATION_NAME	DESCRIPTION	ID	IS_DEFAULT	IS_COMPILED	SORTLEN
+binary	binary	binary	63	YES	YES	1
+utf8_general_ci	utf8_bin	utf8	46	NO	YES	1
+utf8_general_ci	utf8_czech_ci	utf8	234	NO	YES	8
+utf8_general_ci	utf8_danish_ci	utf8	235	NO	YES	8
+utf8_general_ci	utf8_esperanto_ci	utf8	241	NO	YES	8
+utf8_general_ci	utf8_estonian_ci	utf8	230	NO	YES	8
+utf8_general_ci	utf8_general_ci	utf8	45	YES	YES	1
+utf8_general_ci	utf8_hungarian_ci	utf8	242	NO	YES	8
+utf8_general_ci	utf8_icelandic_ci	utf8	225	NO	YES	8
+utf8_general_ci	utf8_latvian_ci	utf8	226	NO	YES	8
+utf8_general_ci	utf8_lithuanian_ci	utf8	236	NO	YES	8
+utf8_general_ci	utf8_persian_ci	utf8	240	NO	YES	8
+utf8_general_ci	utf8_polish_ci	utf8	229	NO	YES	8
+utf8_general_ci	utf8_romanian_ci	utf8	227	NO	YES	8
+utf8_general_ci	utf8_roman_ci	utf8	239	NO	YES	8
+utf8_general_ci	utf8_sinhala_ci	utf8	243	NO	YES	8
+utf8_general_ci	utf8_slovak_ci	utf8	237	NO	YES	8
+utf8_general_ci	utf8_slovenian_ci	utf8	228	NO	YES	8
+utf8_general_ci	utf8_spanish2_ci	utf8	238	NO	YES	8
+utf8_general_ci	utf8_spanish_ci	utf8	231	NO	YES	8
+utf8_general_ci	utf8_swedish_ci	utf8	232	NO	YES	8
+utf8_general_ci	utf8_turkish_ci	utf8	233	NO	YES	8
+utf8_general_ci	utf8_unicode_ci	utf8	224	NO	YES	8
+SELECT table_name, column_name
+FROM data_dictionary.columns
+WHERE table_name IN
+(SELECT table_name FROM data_dictionary.tables 
+WHERE ENGINE IS NULL)
+ORDER BY table_name;
+table_name	column_name
+SELECT count(schema_name) FROM data_dictionary.schemas ORDER BY schema_name;
+count(schema_name)
+#
+SELECT count(*) FROM data_dictionary.session_status ORDER BY variable_name;
+count(*)
+#
+SELECT count(*) FROM data_dictionary.session_variables ORDER BY variable_name;
+count(*)
+#
+SELECT count(*) FROM data_dictionary.global_status ORDER BY variable_name;
+count(*)
+#
+SELECT count(*) FROM data_dictionary.global_variables ORDER BY variable_name;
+count(*)
+#
+SELECT table_schema, table_name FROM data_dictionary.tables WHERE ENGINE IS NULL ORDER BY table_name;
+table_schema	table_name
+SELECT count(*) FROM data_dictionary.plugins;
+count(*)
+#

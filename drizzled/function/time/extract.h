@@ -22,6 +22,9 @@
 
 #include <drizzled/function/math/int.h>
 
+namespace drizzled
+{
+
 class Item_extract :public Item_int_func
 {
   String value;
@@ -37,5 +40,7 @@ class Item_extract :public Item_int_func
   bool eq(const Item *item, bool binary_cmp) const;
   virtual void print(String *str, enum_query_type query_type);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_TIME_EXTRACT_H */

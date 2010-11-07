@@ -18,8 +18,11 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/str/left.h>
+
+namespace drizzled
+{
 
 String *Item_func_left::val_str(String *str)
 {
@@ -51,3 +54,4 @@ void Item_func_left::fix_length_and_dec()
   left_right_max_length();
 }
 
+} /* namespace drizzled */

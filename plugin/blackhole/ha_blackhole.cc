@@ -11,7 +11,7 @@
 
   You should have received a copy of the GNU General Public License
   along with this program; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include "config.h"
 #include <drizzled/table.h>
@@ -34,10 +34,15 @@
 
 using namespace std;
 using namespace google;
+using namespace drizzled;
 
 #define BLACKHOLE_EXT ".blk"
 
+static pthread_mutex_t blackhole_mutex;
+
+
 static const char *ha_blackhole_exts[] = {
+  BLACKHOLE_EXT,
   NULL
 };
 
@@ -48,75 +53,44 @@ class BlackholeEngine : public drizzled::plugin::StorageEngine
 
 public:
   BlackholeEngine(const string &name_arg)
-   : drizzled::plugin::StorageEngine(name_arg, HTON_FILE_BASED |
+   : drizzled::plugin::StorageEngine(name_arg,
                                      HTON_NULL_IN_KEY |
                                      HTON_CAN_INDEX_BLOBS |
                                      HTON_SKIP_STORE_LOCK |
-                                     HTON_AUTO_PART_KEY |
-                                     HTON_HAS_DATA_DICTIONARY),
+                                     HTON_AUTO_PART_KEY),
     blackhole_open_tables()
   {
     table_definition_ext= BLACKHOLE_EXT;
   }
 
-  virtual Cursor *create(TableShare &table,
-                         drizzled::memory::Root *mem_root)
+  virtual ~BlackholeEngine()
   {
-    return new (mem_root) ha_blackhole(*this, table);
+    pthread_mutex_destroy(&blackhole_mutex);
+  }
+
+  virtual Cursor *create(Table &table)
+  {
+    return new ha_blackhole(*this, table);
   }
 
   const char **bas_ext() const {
     return ha_blackhole_exts;
   }
 
-  int doCreateTable(Session*,
-                    const char *,
+  int doCreateTable(Session&,
                     Table&,
+                    const drizzled::TableIdentifier &identifier,
                     drizzled::message::Table&);
 
-  int doDropTable(Session&, const string table_name);
+  int doDropTable(Session&, const drizzled::TableIdentifier &identifier);
 
   BlackholeShare *findOpenTable(const string table_name);
   void addOpenTable(const string &table_name, BlackholeShare *);
   void deleteOpenTable(const string &table_name);
 
   int doGetTableDefinition(Session& session,
-                           const char* path,
-                           const char *db,
-                           const char *table_name,
-                           const bool is_tmp,
-                           drizzled::message::Table *table_proto);
-
-  void doGetTableNames(drizzled::CachedDirectory &directory,
-                       string&, set<string>& set_of_names)
-  {
-    drizzled::CachedDirectory::Entries entries= directory.getEntries();
-
-    for (drizzled::CachedDirectory::Entries::iterator entry_iter= entries.begin();
-         entry_iter != entries.end(); ++entry_iter)
-    {
-      drizzled::CachedDirectory::Entry *entry= *entry_iter;
-      const string *filename= &entry->filename;
-
-      assert(filename->size());
-
-      const char *ext= strchr(filename->c_str(), '.');
-
-      if (ext == NULL || my_strcasecmp(system_charset_info, ext, BLACKHOLE_EXT) ||
-         (filename->compare(0, strlen(TMP_FILE_PREFIX), TMP_FILE_PREFIX) == 0))
-      {  }
-      else
-      {
-        char uname[NAME_LEN + 1];
-        uint32_t file_name_len;
-
-        file_name_len= filename_to_tablename(filename->c_str(), uname, sizeof(uname));
-        // TODO: Remove need for memory copy here
-        uname[file_name_len - sizeof(BLACKHOLE_EXT) + 1]= '\0'; // Subtract ending, place NULL
-        set_of_names.insert(uname);
-      }
-    }
-  }
+                           const drizzled::TableIdentifier &identifier,
+                           drizzled::message::Table &table_message);
 
   /* The following defines can be increased if necessary */
   uint32_t max_supported_keys()          const { return BLACKHOLE_MAX_KEY; }
@@ -132,8 +106,62 @@ public:
             HA_KEYREAD_ONLY);
   }
 
+  bool doDoesTableExist(Session& session, const drizzled::TableIdentifier &identifier);
+  int doRenameTable(Session&, const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to);
+  void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
+                             const drizzled::SchemaIdentifier &schema_identifier,
+                             drizzled::TableIdentifiers &set_of_identifiers);
 };
 
+
+void BlackholeEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
+                                            const drizzled::SchemaIdentifier &schema_identifier,
+                                            drizzled::TableIdentifiers &set_of_identifiers)
+{
+  drizzled::CachedDirectory::Entries entries= directory.getEntries();
+
+  for (drizzled::CachedDirectory::Entries::iterator entry_iter= entries.begin();
+       entry_iter != entries.end(); ++entry_iter)
+  {
+    drizzled::CachedDirectory::Entry *entry= *entry_iter;
+    const string *filename= &entry->filename;
+
+    assert(filename->size());
+
+    const char *ext= strchr(filename->c_str(), '.');
+
+    if (ext == NULL || my_strcasecmp(system_charset_info, ext, BLACKHOLE_EXT) ||
+        (filename->compare(0, strlen(TMP_FILE_PREFIX), TMP_FILE_PREFIX) == 0))
+    {  }
+    else
+    {
+      char uname[NAME_LEN + 1];
+      uint32_t file_name_len;
+
+      file_name_len= TableIdentifier::filename_to_tablename(filename->c_str(), uname, sizeof(uname));
+      // TODO: Remove need for memory copy here
+      uname[file_name_len - sizeof(BLACKHOLE_EXT) + 1]= '\0'; // Subtract ending, place NULL
+
+      set_of_identifiers.push_back(TableIdentifier(schema_identifier, uname));
+    }
+  }
+}
+
+int BlackholeEngine::doRenameTable(Session&, const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to)
+{
+  int error= 0;
+
+  for (const char **ext= bas_ext(); *ext ; ext++)
+  {
+    if (rename_file_ext(from.getPath().c_str(), to.getPath().c_str(), *ext))
+    {
+      if ((error=errno) != ENOENT)
+        break;
+      error= 0;
+    }
+  }
+  return error;
+}
 
 BlackholeShare *BlackholeEngine::findOpenTable(const string table_name)
 {
@@ -157,17 +185,13 @@ void BlackholeEngine::deleteOpenTable(const string &table_name)
 }
 
 
-/* Static declarations for shared structures */
-
-static pthread_mutex_t blackhole_mutex;
-
 
 /*****************************************************************************
 ** BLACKHOLE tables
 *****************************************************************************/
 
 ha_blackhole::ha_blackhole(drizzled::plugin::StorageEngine &engine_arg,
-                           TableShare &table_arg)
+                           Table &table_arg)
   :Cursor(engine_arg, table_arg), share(NULL)
 { }
 
@@ -176,8 +200,8 @@ int ha_blackhole::open(const char *name, int, uint32_t)
   if (!(share= get_share(name)))
     return(HA_ERR_OUT_OF_MEM);
 
-  thr_lock_data_init(&share->lock, &lock, NULL);
-  return(0);
+  lock.init(&share->lock);
+  return 0;
 }
 
 int ha_blackhole::close(void)
@@ -186,14 +210,15 @@ int ha_blackhole::close(void)
   return 0;
 }
 
-int BlackholeEngine::doCreateTable(Session*, const char *path,
+int BlackholeEngine::doCreateTable(Session&,
                                    Table&,
+                                   const drizzled::TableIdentifier &identifier,
                                    drizzled::message::Table& proto)
 {
   string serialized_proto;
   string new_path;
 
-  new_path= path;
+  new_path= identifier.getPath();
   new_path+= BLACKHOLE_EXT;
   fstream output(new_path.c_str(), ios::out | ios::binary);
 
@@ -212,9 +237,10 @@ int BlackholeEngine::doCreateTable(Session*, const char *path,
 }
 
 
-int BlackholeEngine::doDropTable(Session&, const string path)
+int BlackholeEngine::doDropTable(Session&,
+                                 const drizzled::TableIdentifier &identifier)
 {
-  string new_path(path);
+  string new_path(identifier.getPath());
 
   new_path+= BLACKHOLE_EXT;
 
@@ -229,16 +255,28 @@ int BlackholeEngine::doDropTable(Session&, const string path)
 }
 
 
+bool BlackholeEngine::doDoesTableExist(Session&,
+                                       const drizzled::TableIdentifier &identifier)
+{
+  string proto_path(identifier.getPath());
+  proto_path.append(BLACKHOLE_EXT);
+
+  if (access(proto_path.c_str(), F_OK))
+  {
+    return false;
+  }
+
+  return true;
+}
+
+
 int BlackholeEngine::doGetTableDefinition(Session&,
-                                          const char* path,
-                                          const char *,
-                                          const char *,
-                                          const bool,
-                                          drizzled::message::Table *table_proto)
+                                          const drizzled::TableIdentifier &identifier,
+                                          drizzled::message::Table &table_proto)
 {
   string new_path;
 
-  new_path= path;
+  new_path= identifier.getPath();
   new_path+= BLACKHOLE_EXT;
 
   int fd= open(new_path.c_str(), O_RDONLY);
@@ -251,17 +289,25 @@ int BlackholeEngine::doGetTableDefinition(Session&,
   google::protobuf::io::ZeroCopyInputStream* input=
     new google::protobuf::io::FileInputStream(fd);
 
-  if (! input)
+  if (not input)
     return HA_ERR_CRASHED_ON_USAGE;
 
-  if (table_proto && ! table_proto->ParseFromZeroCopyStream(input))
+  if (not table_proto.ParseFromZeroCopyStream(input))
   {
     close(fd);
     delete input;
+    if (not table_proto.IsInitialized())
+    {
+      my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
+               table_proto.InitializationErrorString().c_str());
+      return ER_CORRUPT_TABLE_DEFINITION;
+    }
+
     return HA_ERR_CRASHED_ON_USAGE;
   }
 
   delete input;
+
   return EEXIST;
 }
 
@@ -270,12 +316,12 @@ const char *ha_blackhole::index_type(uint32_t)
   return("BTREE");
 }
 
-int ha_blackhole::write_row(unsigned char *)
+int ha_blackhole::doInsertRecord(unsigned char *)
 {
-  return(table->next_number_field ? update_auto_increment() : 0);
+  return(getTable()->next_number_field ? update_auto_increment() : 0);
 }
 
-int ha_blackhole::rnd_init(bool)
+int ha_blackhole::doStartTableScan(bool)
 {
   return(0);
 }
@@ -358,7 +404,7 @@ BlackholeShare *ha_blackhole::get_share(const char *table_name)
 {
   pthread_mutex_lock(&blackhole_mutex);
 
-  BlackholeEngine *a_engine= static_cast<BlackholeEngine *>(engine);
+  BlackholeEngine *a_engine= static_cast<BlackholeEngine *>(getEngine());
   share= a_engine->findOpenTable(table_name);
 
   if (share == NULL)
@@ -383,7 +429,7 @@ void ha_blackhole::free_share()
   pthread_mutex_lock(&blackhole_mutex);
   if (!--share->use_count)
   {
-    BlackholeEngine *a_engine= static_cast<BlackholeEngine *>(engine);
+    BlackholeEngine *a_engine= static_cast<BlackholeEngine *>(getEngine());
     a_engine->deleteOpenTable(share->table_name);
     delete share;
   }
@@ -398,32 +444,23 @@ BlackholeShare::BlackholeShare(const string table_name_arg)
 
 BlackholeShare::~BlackholeShare()
 {
-  thr_lock_delete(&lock);
+  lock.deinit();
 }
 
 
 static drizzled::plugin::StorageEngine *blackhole_engine= NULL;
 
-static int blackhole_init(drizzled::plugin::Registry &registry)
+static int blackhole_init(drizzled::module::Context &context)
 {
 
   blackhole_engine= new BlackholeEngine("BLACKHOLE");
-  registry.add(blackhole_engine);
+  context.add(blackhole_engine);
   
   pthread_mutex_init(&blackhole_mutex, MY_MUTEX_INIT_FAST);
 
   return 0;
 }
 
-static int blackhole_fini(drizzled::plugin::Registry &registry)
-{
-  registry.remove(blackhole_engine);
-  delete blackhole_engine;
-
-  pthread_mutex_destroy(&blackhole_mutex);
-
-  return 0;
-}
 
 DRIZZLE_DECLARE_PLUGIN
 {
@@ -434,8 +471,6 @@ DRIZZLE_DECLARE_PLUGIN
   "/dev/null storage engine (anything you write to it disappears)",
   PLUGIN_LICENSE_GPL,
   blackhole_init,     /* Plugin Init */
-  blackhole_fini,     /* Plugin Deinit */
-  NULL,               /* status variables */
   NULL,               /* system variables */
   NULL                /* config options   */
 }

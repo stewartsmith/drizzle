@@ -15,10 +15,10 @@ FOREIGN KEY (t1_id) REFERENCES t1(id)  ON UPDATE CASCADE) ENGINE=INNODB;
 CREATE TABLE t3 (id INT PRIMARY KEY, t2_id INT, INDEX par_ind (t2_id),
 FOREIGN KEY (id, t2_id) REFERENCES t2(t1_id, id)  ON DELETE CASCADE) ENGINE=INNODB;
 
-select * from information_schema.TABLE_CONSTRAINTS where
-TABLE_SCHEMA= "test";
-select * from information_schema.KEY_COLUMN_USAGE where
-TABLE_SCHEMA= "test";
+#select * from information_schema.OLD_TABLE_CONSTRAINTS where
+#TABLE_SCHEMA= "test";
+--sorted_result
+select * from data_dictionary.indexes where TABLE_SCHEMA= "test";
 
 drop table t3, t2, t1;
 
@@ -44,13 +44,13 @@ CREATE TABLE t5(b1 INT, b2 INT, INDEX (b1, b2),
                 FOREIGN KEY (b1, b2) REFERENCES t4(b1, b2)
                 ON UPDATE RESTRICT ON DELETE CASCADE) ENGINE=INNODB;
 		
-select a.CONSTRAINT_SCHEMA, b.TABLE_NAME, CONSTRAINT_TYPE,
-       b.CONSTRAINT_NAME, UNIQUE_CONSTRAINT_SCHEMA, UNIQUE_CONSTRAINT_NAME,
-       MATCH_OPTION, UPDATE_RULE, DELETE_RULE, b.REFERENCED_TABLE_NAME
-from information_schema.TABLE_CONSTRAINTS a,
-     information_schema.REFERENTIAL_CONSTRAINTS b
-where a.CONSTRAINT_SCHEMA = 'test' and a.CONSTRAINT_SCHEMA = b.CONSTRAINT_SCHEMA and
-a.CONSTRAINT_NAME = b.CONSTRAINT_NAME;
+#select a.CONSTRAINT_SCHEMA, b.TABLE_NAME, CONSTRAINT_TYPE,
+#       b.CONSTRAINT_NAME, UNIQUE_CONSTRAINT_SCHEMA, UNIQUE_CONSTRAINT_NAME,
+#       MATCH_OPTION, UPDATE_RULE, DELETE_RULE, b.REFERENCED_TABLE_NAME
+#from information_schema.OLD_TABLE_CONSTRAINTS a,
+#     information_schema.OLD_REFERENTIAL_CONSTRAINTS b
+#where a.CONSTRAINT_SCHEMA = 'test' and a.CONSTRAINT_SCHEMA = b.CONSTRAINT_SCHEMA and
+#a.CONSTRAINT_NAME = b.CONSTRAINT_NAME;
 drop tables t5, t4, t3, t2, t1;
 
 #
@@ -71,9 +71,9 @@ create table `t-1` (
   constraint fk_t1_1 foreign key (idtype) references `t-2` (id)
 ) engine=innodb;
 use test;
-select referenced_table_schema, referenced_table_name 
-from information_schema.key_column_usage
-where constraint_schema = 'db-1';
+#select referenced_table_schema, referenced_table_name 
+#from data_dictionary.indexes
+#where constraint_schema = 'db-1';
 drop database `db-1`;
 
 #
@@ -83,8 +83,8 @@ create table t1(id int primary key) engine = Innodb;
 create table t2(pid int, foreign key (pid) references t1(id)) engine = Innodb;
 set foreign_key_checks = 0;
 drop table t1;
-select UNIQUE_CONSTRAINT_NAME
-from information_schema.referential_constraints
-where constraint_schema = schema();
+#select UNIQUE_CONSTRAINT_NAME
+#from data_dictionary.OLD_referential_constraints
+#where constraint_schema = schema();
 drop table t2;
 set foreign_key_checks = 1;

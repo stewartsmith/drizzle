@@ -26,25 +26,28 @@
 #define DRIZZLED_FIELD_H
 
 #include "drizzled/sql_error.h"
-#include "drizzled/my_decimal.h"
+#include "drizzled/decimal.h"
 #include "drizzled/key_map.h"
-#include "drizzled/sql_bitmap.h"
 #include "drizzled/sql_list.h"
 #include "drizzled/structs.h"
 #include "drizzled/charset_info.h"
+#include "drizzled/item_result.h"
 
 #include <string>
 #include <vector>
+
+namespace drizzled
+{
 
 #define DATETIME_DEC                     6
 #define DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE FLOATING_POINT_BUFFER
 
 #ifdef DEBUG
-#define ASSERT_COLUMN_MARKED_FOR_READ assert(!table || (table->read_set == NULL || isReadSet()))
-#define ASSERT_COLUMN_MARKED_FOR_WRITE assert(!table || (table->write_set == NULL || isWriteSet()))
+#define ASSERT_COLUMN_MARKED_FOR_READ assert(!getTable() || (getTable()->read_set == NULL || isReadSet()))
+#define ASSERT_COLUMN_MARKED_FOR_WRITE assert(!getTable() || (getTable()->write_set == NULL || isWriteSet()))
 #else
-#define ASSERT_COLUMN_MARKED_FOR_READ
-#define ASSERT_COLUMN_MARKED_FOR_WRITE
+#define ASSERT_COLUMN_MARKED_FOR_READ assert(getTable())
+#define ASSERT_COLUMN_MARKED_FOR_WRITE assert(getTable())
 #endif
 
 typedef struct st_typelib TYPELIB;
@@ -55,14 +58,9 @@ class SendField;
 class CreateField;
 class TableShare;
 class Field;
-struct st_cache_field;
+struct CacheField;
 
 int field_conv(Field *to,Field *from);
-
-inline uint32_t get_enum_pack_length(int elements)
-{
-  return elements < 256 ? 1 : 2;
-}
 
 /**
  * Class representing a Field in a Table
@@ -92,9 +90,27 @@ public:
    * @note You can use table->in_use as replacement for current_session member
    * only inside of val_*() and store() members (e.g. you can't use it in cons)
    */
+private:
   Table *table;
+public:
+  Table *getTable()
+  {
+    assert(table);
+    return table;
+  }
+
+  Table *getTable() const
+  {
+    assert(table);
+    return table;
+  }
+
+  void setTable(Table *table_arg)
+  {
+    table= table_arg;
+  }
+
   Table *orig_table; /**< Pointer to the original Table. @TODO What is "the original table"? */
-  const char **table_name; /**< Pointer to the name of the table. @TODO This is redundant with Table::table_name. */
   const char *field_name; /**< Name of the field */
   LEX_STRING comment; /**< A comment about the field */
 
@@ -137,8 +153,10 @@ public:
   bool is_created_from_null_item;
 
   static void *operator new(size_t size);
-  static void *operator new(size_t size, drizzled::memory::Root *mem_root);
+  static void *operator new(size_t size, memory::Root *mem_root);
   static void operator delete(void *, size_t)
+  { }
+  static void operator delete(void *, memory::Root *)
   { }
 
   Field(unsigned char *ptr_arg,
@@ -186,12 +204,6 @@ public:
      This trickery is used to decrease a number of malloc calls.
   */
   virtual String *val_str(String*, String *)=0;
-  /**
-   * Interpret field value as an integer but return the result as a string.
-   *
-   * This is used for printing bit_fields as numbers while debugging.
-   */
-  String *val_int_as_str(String *val_buffer, bool unsigned_flag);
   /*
    str_needs_quotes() returns true if the value returned by val_str() needs
    to be quoted when used in constructing an SQL query.
@@ -204,7 +216,7 @@ public:
      Check whether a field type can be partially indexed by a key.
 
      This is a static method, rather than a virtual function, because we need
-     to check the type of a non-Field in drizzled::alter_table().
+     to check the type of a non-Field in alter_table().
 
      @param type  field type
 
@@ -259,35 +271,6 @@ public:
    * table, which is located on disk).
    */
   virtual uint32_t pack_length_in_rec() const;
-  /**
-    Check to see if field size is compatible with destination.
-
-    This method is used in row-based replication to verify that the slave's
-    field size is less than or equal to the master's field size. The
-    encoded field metadata (from the master or source) is decoded and compared
-    to the size of this field (the slave or destination).
-
-    @param   field_metadata   Encoded size in field metadata
-
-    @retval 0 if this field's size is < the source field's size
-    @retval 1 if this field's size is >= the source field's size
-  */
-  virtual int compatible_field_size(uint32_t field_metadata);
-  virtual uint32_t pack_length_from_metadata(uint32_t field_metadata);
-
-  /*
-    This method is used to return the size of the data in a row-based
-    replication row record. The default implementation of returning 0 is
-    designed to allow fields that do not use metadata to return true (1)
-    from compatible_field_size() which uses this function in the comparison.
-    The default value for field metadata for fields that do not have
-    metadata is 0. Thus, 0 == 0 means the fields are compatible in size.
-
-    Note: While most classes that override this method return pack_length(),
-    the classes Field_varstring, and Field_blob return
-    field_length + 1, field_length, and pack_length_no_ptr() respectfully.
-  */
-  virtual uint32_t row_pack_length();
 
   /**
    * Return the "real size" of the data in memory.
@@ -364,15 +347,15 @@ public:
     return false;
   }
   virtual void free() {}
-  virtual Field *new_field(drizzled::memory::Root *root,
+  virtual Field *new_field(memory::Root *root,
                            Table *new_table,
                            bool keep_type);
-  virtual Field *new_key_field(drizzled::memory::Root *root, Table *new_table,
+  virtual Field *new_key_field(memory::Root *root, Table *new_table,
                                unsigned char *new_ptr,
                                unsigned char *new_null_ptr,
                                uint32_t new_null_bit);
   /** This is used to generate a field in Table from TableShare */
-  Field *clone(drizzled::memory::Root *mem_root, Table *new_table);
+  Field *clone(memory::Root *mem_root, Table *new_table);
   inline void move_field(unsigned char *ptr_arg,unsigned char *null_ptr_arg,unsigned char null_bit_arg)
   {
     ptr= ptr_arg;
@@ -567,12 +550,12 @@ public:
     return max_length;
   }
 
-  inline uint32_t offset(unsigned char *record)
+  inline uint32_t offset(const unsigned char *record)
   {
     return (uint32_t) (ptr - record);
   }
   void copy_from_tmp(int offset);
-  uint32_t fill_cache_field(struct st_cache_field *copy);
+  uint32_t fill_cache_field(CacheField *copy);
   virtual bool get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
   virtual bool get_time(DRIZZLE_TIME *ltime);
   virtual const CHARSET_INFO *charset(void) const { return &my_charset_bin; }
@@ -737,7 +720,13 @@ public:
   void setWriteSet(bool arg= true);
 };
 
+} /* namespace drizzled */
+
+/** @TODO Why is this in the middle of the file???*/
 #include "drizzled/create_field.h"
+
+namespace drizzled
+{
 
 /**
  * A class for sending field information to a client.
@@ -766,7 +755,7 @@ public:
 /**
  * A class for quick copying data to fields
  */
-class CopyField :public drizzled::memory::SqlAlloc
+class CopyField :public memory::SqlAlloc
 {
   /**
     Convenience definition of a copy function returned by
@@ -796,20 +785,6 @@ public:
   void (*do_copy2)(CopyField *);		// Used to handle null values
 };
 
-Field *make_field(TableShare *share,
-                  drizzled::memory::Root *root,
-                  unsigned char *ptr,
-                  uint32_t field_length,
-                  bool is_nullable,
-                  unsigned char *null_pos,
-                  unsigned char null_bit,
-                  uint8_t decimals,
-                  enum_field_types field_type,
-                  const CHARSET_INFO * cs,
-                  Field::utype unireg_check,
-                  TYPELIB *interval,
-                  const char *field_name);
-
 uint32_t pack_length_to_packflag(uint32_t type);
 uint32_t calc_pack_length(enum_field_types type,uint32_t length);
 int set_field_to_null(Field *field);
@@ -831,5 +806,7 @@ int set_field_to_null_with_conversions(Field *field, bool no_conversions);
 bool test_if_important_data(const CHARSET_INFO * const cs,
                             const char *str,
                             const char *strend);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FIELD_H */

@@ -18,9 +18,13 @@ explain extended select CASE 1 when 1 then "one" WHEN 2 then "two" ELSE "more" E
 select CASE 2.0 when 1 then "one" WHEN 2.0 then "two" ELSE "more" END;
 select (CASE "two" when "one" then "1" WHEN "two" then "2" END);
 select (CASE "two" when "one" then 1.00 WHEN "two" then 2.00 END) +0.0;
+--error ER_DIVISION_BY_ZERO
 select case 1/0 when "a" then "true" else "false" END;
+--error ER_DIVISION_BY_ZERO
 select case 1/0 when "a" then "true" END;
+--error ER_DIVISION_BY_ZERO
 select (case 1/0 when "a" then "true" END);
+--error ER_DIVISION_BY_ZERO
 select (case 1/0 when "a" then "true" END) + 0.0;
 select case when 1>0 then "TRUE" else "FALSE" END;
 select case when 1<0 then "TRUE" else "FALSE" END;
@@ -66,14 +70,14 @@ CREATE TABLE t1 SELECT
 SHOW CREATE TABLE t1;
 DROP TABLE t1;
 
---error 1267
+--error ER_CANT_AGGREGATE_2COLLATIONS
 SELECT CASE 
   WHEN 1 
   THEN 'a' COLLATE utf8_bin 
   ELSE 'a' COLLATE utf8_swedish_ci
   END;
 
---error 1270
+--error ER_CANT_AGGREGATE_3COLLATIONS
 SELECT CASE 'a' COLLATE utf8_bin
   WHEN 'a' COLLATE utf8_danish_ci  THEN 1
   WHEN 'a' COLLATE utf8_swedish_ci THEN 2
@@ -96,7 +100,7 @@ CASE 'a' WHEN 'A' COLLATE utf8_bin        THEN '1' ELSE 2 END
 #
 # Check COALESCE argument types aggregation
 
---error 1267
+--error ER_CANT_AGGREGATE_2COLLATIONS
 CREATE TABLE t1 SELECT COALESCE('a' COLLATE utf8_swedish_ci,'b' COLLATE utf8_bin);
 CREATE TABLE t1 SELECT 
  COALESCE(1), COALESCE(1.0),COALESCE('a'),

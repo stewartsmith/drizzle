@@ -18,8 +18,11 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/locate.h>
+
+namespace drizzled
+{
 
 void Item_func_locate::fix_length_and_dec()
 {
@@ -47,7 +50,7 @@ int64_t Item_func_locate::val_int()
   {
     start0= start= args[2]->val_int() - 1;
 
-    if ((start < 0) || (start > a->length()))
+    if ((start < 0) || (start > static_cast<int64_t>(a->length())))
       return 0;
 
     /* start is now sufficiently valid to pass to charpos function */
@@ -83,3 +86,4 @@ void Item_func_locate::print(String *str, enum_query_type query_type)
   str->append(')');
 }
 
+} /* namespace drizzled */

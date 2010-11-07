@@ -26,7 +26,12 @@
 #include "drizzled/temporal_interval.h"
 #include "drizzled/time_functions.h"
 
-bool drizzled::TemporalInterval::initFromItem(Item *args, interval_type int_type, String *str_value)
+namespace drizzled
+{
+
+bool TemporalInterval::initFromItem(Item *args,
+                                    interval_type int_type,
+                                    String *str_value)
 {
   uint64_t array[MAX_STRING_ELEMENTS];
   int64_t value= 0;
@@ -181,7 +186,7 @@ bool drizzled::TemporalInterval::initFromItem(Item *args, interval_type int_type
   return false;
 }
 
-bool drizzled::TemporalInterval::addDate(DRIZZLE_TIME *ltime, interval_type int_type)
+bool TemporalInterval::addDate(DRIZZLE_TIME *ltime, interval_type int_type)
 {
   long period, sign;
 
@@ -288,9 +293,11 @@ null_date:
   return 1;
 }
 
-bool drizzled::TemporalInterval::getIntervalFromString(const char *str,uint32_t length, const CHARSET_INFO * const cs,
-    uint32_t count, uint64_t *values,
-    bool transform_msec)
+bool TemporalInterval::getIntervalFromString(const char *str,
+                                             uint32_t length,
+                                             const CHARSET_INFO * const cs,
+                                             uint32_t count, uint64_t *values,
+                                             bool transform_msec)
 {
   const char *end= str+length;
   uint32_t x;
@@ -304,7 +311,7 @@ bool drizzled::TemporalInterval::getIntervalFromString(const char *str,uint32_t 
     const char *start= str;
     for (value= 0 ; str != end && my_isdigit(cs,*str) ; str++)
       value= value * 10L + (int64_t) (*str - '0');
-    if (transform_msec && x == count - 1) // microseconds always last
+    if (transform_msec && (x == count - 1 || str == end)) // microseconds always last
     {
       long msec_length= 6 - (str - start);
       if (msec_length > 0)
@@ -316,12 +323,15 @@ bool drizzled::TemporalInterval::getIntervalFromString(const char *str,uint32_t 
     if (str == end && x != count-1)
     {
       x++;
-      /* Change values[0...x-1] -> values[0...count-1] */
-      bmove_upp((unsigned char*) (values+count), (unsigned char*) (values+x),
-          sizeof(*values)*x);
+      /* Change values[0...x-1] -> values[count-x...count-1] */
+      internal::bmove_upp((unsigned char*) (values+count),
+                          (unsigned char*) (values+x),
+                          sizeof(*values)*x);
       memset(values, 0, sizeof(*values)*(count-x));
       break;
     }
   }
   return (str != end);
 }
+
+} /* namespace drizzled */

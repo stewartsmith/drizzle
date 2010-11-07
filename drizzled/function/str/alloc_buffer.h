@@ -22,9 +22,14 @@
 
 #include <drizzled/function/str/strfunc.h>
 
+namespace drizzled
+{
+
 String* alloc_buffer(String *res,
                      String *str,
                      String *tmp_value,
                      ulong length);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_STR_ALLOC_BUFFER_H */

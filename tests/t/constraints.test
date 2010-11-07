@@ -25,6 +25,7 @@ create table t1 (a int null);
 alter table t1 add constraint constraint_1 unique (a);
 alter table t1 add constraint unique key_1(a);
 alter table t1 add constraint constraint_2 unique key_2(a);
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 

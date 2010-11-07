@@ -21,6 +21,9 @@
 #include <math.h>
 #include <drizzled/function/numhybrid.h>
 
+namespace drizzled
+{
+
 void Item_func_numhybrid::fix_num_length_and_dec()
 {}
 
@@ -174,3 +177,5 @@ my_decimal *Item_func_numhybrid::val_decimal(my_decimal *decimal_value)
   }
   return val;
 }
+
+} /* namespace drizzled */

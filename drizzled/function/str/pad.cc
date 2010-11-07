@@ -18,11 +18,14 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/str/pad.h>
 #include <drizzled/error.h>
 #include <drizzled/function/str/alloc_buffer.h>
 #include <drizzled/session.h>
+
+namespace drizzled
+{
 
 void Item_func_rpad::fix_length_and_dec()
 {
@@ -88,12 +91,12 @@ String *Item_func_rpad::val_str(String *str)
   pad_char_length= rpad->numchars();
 
   byte_count= count * collation.collation->mbmaxlen;
-  if ((uint64_t) byte_count > current_session->variables.max_allowed_packet)
+  if ((uint64_t) byte_count > session.variables.max_allowed_packet)
   {
-    push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
 			ER_WARN_ALLOWED_PACKET_OVERFLOWED,
 			ER(ER_WARN_ALLOWED_PACKET_OVERFLOWED),
-			func_name(), current_session->variables.max_allowed_packet);
+			func_name(), session.variables.max_allowed_packet);
     goto err;
   }
   if (args[2]->null_value || !pad_char_length)
@@ -193,12 +196,12 @@ String *Item_func_lpad::val_str(String *str)
   pad_char_length= pad->numchars();
   byte_count= count * collation.collation->mbmaxlen;
 
-  if ((uint64_t) byte_count > current_session->variables.max_allowed_packet)
+  if ((uint64_t) byte_count > session.variables.max_allowed_packet)
   {
-    push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
 			ER_WARN_ALLOWED_PACKET_OVERFLOWED,
 			ER(ER_WARN_ALLOWED_PACKET_OVERFLOWED),
-			func_name(), current_session->variables.max_allowed_packet);
+			func_name(), session.variables.max_allowed_packet);
     goto err;
   }
 
@@ -226,3 +229,4 @@ err:
   return 0;
 }
 
+} /* namespace drizzled */

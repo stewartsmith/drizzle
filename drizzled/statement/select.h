@@ -23,25 +23,24 @@
 
 #include <drizzled/statement.h>
 
-class Session;
-
 namespace drizzled
 {
+class Session;
+
 namespace statement
 {
 
 class Select : public Statement
 {
 public:
-  Select(Session *in_session)
-    :
-      Statement(in_session)
+  Select(Session *in_session) :
+    Statement(in_session)
   {}
 
   bool execute();
 };
 
-} /* end namespace statement */
-} /* end namespace drizzled */
+} /* namespace statement */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_STATEMENT_SELECT_H */

@@ -22,6 +22,9 @@
 
 #include <drizzled/item/num.h>
 
+namespace drizzled
+{
+
 /* decimal (fixed point) constant */
 class Item_decimal :public Item_num
 {
@@ -61,5 +64,7 @@ public:
   bool eq(const Item *, bool binary_cmp) const;
   void set_decimal_value(my_decimal *value_par);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_DECIMAL_H */

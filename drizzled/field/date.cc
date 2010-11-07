@@ -19,6 +19,8 @@
  */
 
 #include "config.h"
+#include <boost/lexical_cast.hpp>
+
 #include "drizzled/field/date.h"
 #include "drizzled/error.h"
 #include "drizzled/table.h"
@@ -30,6 +32,9 @@
 
 #include <sstream>
 #include <string>
+
+namespace drizzled
+{
 
 
 /****************************************************************************
@@ -59,37 +64,6 @@ int Field_date::store(const char *from,
                          uint32_t len,
                          const CHARSET_INFO * const )
 {
-#ifdef NOTDEFINED
-  long tmp;
-  DRIZZLE_TIME l_time;
-  int error;
-  Session *session= table ? table->in_use : current_session;
-  enum enum_drizzle_timestamp_type ret;
-  if ((ret= str_to_datetime(from, len, &l_time,
-                            (TIME_FUZZY_DATE |
-                             (session->variables.sql_mode &
-                              (MODE_NO_ZERO_DATE | MODE_INVALID_DATES))),
-                            &error)) <= DRIZZLE_TIMESTAMP_ERROR)
-  {
-    tmp= 0;
-    error= 2;
-  }
-  else
-  {
-    tmp= l_time.day + l_time.month*32 + l_time.year*16*32;
-    if (!error && (ret != DRIZZLE_TIMESTAMP_DATE) &&
-        (l_time.hour || l_time.minute || l_time.second || l_time.second_part))
-      error= 3;                                 // Datetime was cut (note)
-  }
-
-  if (error)
-    set_datetime_warning(error == 3 ? DRIZZLE_ERROR::WARN_LEVEL_NOTE :
-                         DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                         ER_WARN_DATA_TRUNCATED,
-                         from, len, DRIZZLE_TIMESTAMP_DATE, 1);
-
-  int3store(ptr, tmp);
-#endif /* NOTDEFINED */
   /* 
    * Try to create a DateTime from the supplied string.  Throw an error
    * if unable to create a valid DateTime.  A DateTime is used so that
@@ -97,15 +71,15 @@ int Field_date::store(const char *from,
    * and matches on datetime format strings can occur.
    */
   ASSERT_COLUMN_MARKED_FOR_WRITE;
-  drizzled::DateTime temporal;
+  DateTime temporal;
   if (! temporal.from_string(from, (size_t) len))
   {
     my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR), from);
     return 2;
   }
   /* Create the stored integer format. @TODO This should go away. Should be up to engine... */
-  uint32_t int_value= (temporal.years() * 16 * 32) + (temporal.months() * 32) + temporal.days();
-  int3store(ptr, int_value);
+  uint32_t int_value= (temporal.years() * 10000) + (temporal.months() * 100) + temporal.days();
+  int4store(ptr, int_value);
   return 0;
 }
 
@@ -133,21 +107,19 @@ int Field_date::store(int64_t from, bool)
    * if unable to create a valid DateTime.  
    */
   ASSERT_COLUMN_MARKED_FOR_WRITE;
-  drizzled::DateTime temporal;
+  DateTime temporal;
   if (! temporal.from_int64_t(from))
   {
-    /* Convert the integer to a string using stringstream */
-    std::stringstream ss;
-    std::string tmp;
-    ss << from; ss >> tmp;
+    /* Convert the integer to a string using boost::lexical_cast */
+    std::string tmp(boost::lexical_cast<std::string>(from)); 
 
     my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR), tmp.c_str());
     return 2;
   }
 
   /* Create the stored integer format. @TODO This should go away. Should be up to engine... */
-  uint32_t int_value= (temporal.years() * 16 * 32) + (temporal.months() * 32) + temporal.days();
-  int3store(ptr, int_value);
+  uint32_t int_value= (temporal.years() * 10000) + (temporal.months() * 100) + temporal.days();
+  int4store(ptr, int_value);
   return 0;
 }
 
@@ -159,7 +131,7 @@ int Field_date::store_time(DRIZZLE_TIME *ltime,
   if (time_type == DRIZZLE_TIMESTAMP_DATE ||
       time_type == DRIZZLE_TIMESTAMP_DATETIME)
   {
-    tmp=ltime->year*16*32+ltime->month*32+ltime->day;
+    tmp= ltime->year*10000 + ltime->month*100 + ltime->day;
     if (check_date(ltime, tmp != 0,
                    (TIME_FUZZY_DATE |
                     (current_session->variables.sql_mode &
@@ -189,7 +161,7 @@ int Field_date::store_time(DRIZZLE_TIME *ltime,
     error= 1;
     set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
   }
-  int3store(ptr,tmp);
+  int4store(ptr,tmp);
   return error;
 }
 
@@ -204,34 +176,32 @@ int64_t Field_date::val_int(void)
 
   ASSERT_COLUMN_MARKED_FOR_READ;
 
-  j= uint3korr(ptr);
-  j= (j % 32L)+(j / 32L % 16L)*100L + (j/(16L*32L))*10000L;
+  j= uint4korr(ptr);
 
   return (int64_t) j;
 }
 
-String *Field_date::val_str(String *val_buffer,
-			       String *)
+String *Field_date::val_str(String *val_buffer, String *)
 {
   val_buffer->alloc(field_length);
   val_buffer->length(field_length);
-  uint32_t tmp=(uint32_t) uint3korr(ptr);
-  int part;
+  uint32_t tmp=(uint32_t) uint4korr(ptr);
+  int32_t part;
   char *pos=(char*) val_buffer->ptr()+10;
 
   ASSERT_COLUMN_MARKED_FOR_READ;
 
   /* Open coded to get more speed */
   *pos--=0;					// End NULL
-  part=(int) (tmp & 31);
+  part=(int32_t) (tmp % 100);
   *pos--= (char) ('0'+part%10);
   *pos--= (char) ('0'+part/10);
   *pos--= '-';
-  part=(int) (tmp >> 5 & 15);
+  part=(int32_t) (tmp/100%100);
   *pos--= (char) ('0'+part%10);
   *pos--= (char) ('0'+part/10);
   *pos--= '-';
-  part=(int) (tmp >> 9);
+  part=(int32_t) (tmp/10000);
   *pos--= (char) ('0'+part%10); part/=10;
   *pos--= (char) ('0'+part%10); part/=10;
   *pos--= (char) ('0'+part%10); part/=10;
@@ -241,10 +211,10 @@ String *Field_date::val_str(String *val_buffer,
 
 bool Field_date::get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
 {
-  uint32_t tmp=(uint32_t) uint3korr(ptr);
-  ltime->day=   tmp & 31;
-  ltime->month= (tmp >> 5) & 15;
-  ltime->year=  (tmp >> 9);
+  uint32_t tmp=(uint32_t) uint4korr(ptr);
+  ltime->day=		(int) (tmp%100);
+  ltime->month= 	(int) (tmp/100%100);
+  ltime->year= 		(int) (tmp/10000);
   ltime->time_type= DRIZZLE_TIMESTAMP_DATE;
   ltime->hour= ltime->minute= ltime->second= ltime->second_part= ltime->neg= 0;
   return ((!(fuzzydate & TIME_FUZZY_DATE) && (!ltime->month || !ltime->day)) ?
@@ -259,19 +229,22 @@ bool Field_date::get_time(DRIZZLE_TIME *ltime)
 int Field_date::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   uint32_t a,b;
-  a=(uint32_t) uint3korr(a_ptr);
-  b=(uint32_t) uint3korr(b_ptr);
+  a=(uint32_t) uint4korr(a_ptr);
+  b=(uint32_t) uint4korr(b_ptr);
   return (a < b) ? -1 : (a > b) ? 1 : 0;
 }
 
 void Field_date::sort_string(unsigned char *to,uint32_t )
 {
-  to[0] = ptr[2];
-  to[1] = ptr[1];
-  to[2] = ptr[0];
+  to[0] = ptr[3];
+  to[1] = ptr[2];
+  to[2] = ptr[1];
+  to[3] = ptr[0];
 }
 
 void Field_date::sql_type(String &res) const
 {
   res.set_ascii(STRING_WITH_LEN("date"));
 }
+
+} /* namespace drizzled */

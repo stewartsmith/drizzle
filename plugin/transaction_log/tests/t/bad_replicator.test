@@ -1,0 +1,16 @@
+#
+# Tests that an error occurs on startup for a bad replicator
+# name in startup vairable --transaction-log-use-replicator
+#
+
+# Truncate the log file to reset for the next test
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
+
+# Query the DATA_DICTIONARY views and ensure no transaction log
+# was de-activated because of bad replicator name
+
+SELECT * FROM DATA_DICTIONARY.PLUGINS
+WHERE DATA_DICTIONARY.PLUGINS.PLUGIN_NAME LIKE 'Transaction%';
+
+# Truncate the log file to reset for the next test
+--source ../plugin/transaction_log/tests/t/truncate_log.inc

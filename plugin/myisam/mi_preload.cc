@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /*
   Preload indexes into key cache
@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include <drizzled/util/test.h>
 
-
+using namespace drizzled;
 
 /*
   Preload pages of the index file for a table into the key cache
@@ -49,8 +49,8 @@ int mi_preload(MI_INFO *info, uint64_t key_map, bool ignore_leaves)
   MYISAM_SHARE* share= info->s;
   uint32_t keys= share->state.header.keys;
   MI_KEYDEF *keyinfo= share->keyinfo;
-  my_off_t key_file_length= share->state.state.key_file_length;
-  my_off_t pos= share->base.keystart;
+  internal::my_off_t key_file_length= share->state.state.key_file_length;
+  internal::my_off_t pos= share->base.keystart;
 
   if (!keys || !mi_is_any_key_active(key_map) || key_file_length == pos)
     return(0);
@@ -67,7 +67,7 @@ int mi_preload(MI_INFO *info, uint64_t key_map, bool ignore_leaves)
     }
   }
   else
-    block_length= share->key_cache->key_cache_block_size;
+    block_length= share->getKeyCache()->key_cache_block_size;
 
   length= info->preload_buff_size/block_length * block_length;
   set_if_bigger(length, block_length);
@@ -75,13 +75,13 @@ int mi_preload(MI_INFO *info, uint64_t key_map, bool ignore_leaves)
   if (!(buff= (unsigned char *) malloc(length)))
     return(errno= HA_ERR_OUT_OF_MEM);
 
-  if (flush_key_blocks(share->key_cache,share->kfile, FLUSH_RELEASE))
+  if (flush_key_blocks(share->getKeyCache(), share->kfile, FLUSH_RELEASE))
     goto err;
 
   do
   {
     /* Read the next block of index file into the preload buffer */
-    if ((my_off_t) length > (key_file_length-pos))
+    if ((internal::my_off_t) length > (key_file_length-pos))
       length= (uint32_t) (key_file_length-pos);
     if (my_pread(share->kfile, (unsigned char*) buff, length, pos, MYF(MY_FAE|MY_FNABP)))
       goto err;
@@ -93,7 +93,7 @@ int mi_preload(MI_INFO *info, uint64_t key_map, bool ignore_leaves)
       {
         if (mi_test_if_nod(buff))
         {
-          if (key_cache_insert(share->key_cache,
+          if (key_cache_insert(share->getKeyCache(),
                                share->kfile, pos, DFLT_INIT_HITS,
                               (unsigned char*) buff, block_length))
 	    goto err;
@@ -105,7 +105,7 @@ int mi_preload(MI_INFO *info, uint64_t key_map, bool ignore_leaves)
     }
     else
     {
-      if (key_cache_insert(share->key_cache,
+      if (key_cache_insert(share->getKeyCache(),
                            share->kfile, pos, DFLT_INIT_HITS,
                            (unsigned char*) buff, length))
 	goto err;

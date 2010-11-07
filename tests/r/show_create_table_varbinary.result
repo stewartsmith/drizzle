@@ -1,0 +1,37 @@
+CREATE TABLE t1 (a varbinary(4) default '');
+show create table t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` VARBINARY(4) DEFAULT ''
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+drop table t1;
+create table t2 (a varbinary(4) default 'foo');
+show create table t2;
+Table	Create Table
+t2	CREATE TABLE `t2` (
+  `a` VARBINARY(4) DEFAULT 0x666F6F
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+drop table t2;
+create table t3 (a varbinary(4) default 0x01020304);
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `a` VARBINARY(4) DEFAULT 0x01020304
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+drop table t3;
+create table t4 (a varbinary(4) default '\n');
+show create table t4;
+Table	Create Table
+t4	CREATE TABLE `t4` (
+  `a` VARBINARY(4) DEFAULT 0x0A
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+drop table t4;
+CREATE TABLE `t4` (
+`a` varbinary(4) DEFAULT 0x0A
+) ENGINE=InnoDB;
+SHOW CREATE TABLE t4;
+Table	Create Table
+t4	CREATE TABLE `t4` (
+  `a` VARBINARY(4) DEFAULT 0x0A
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+DROP TABLE t4;

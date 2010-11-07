@@ -1,0 +1,39 @@
+use data_dictionary;
+show create table GLOBAL_STATUS ;
+Table	Create Table
+GLOBAL_STATUS	CREATE TABLE `GLOBAL_STATUS` (
+  `VARIABLE_NAME` VARCHAR(256) NOT NULL,
+  `VARIABLE_VALUE` VARCHAR(1024) NOT NULL
+) ENGINE=FunctionEngine COLLATE = utf8_general_ci
+show create table GLOBAL_VARIABLES ;
+Table	Create Table
+GLOBAL_VARIABLES	CREATE TABLE `GLOBAL_VARIABLES` (
+  `VARIABLE_NAME` VARCHAR(256) NOT NULL,
+  `VARIABLE_VALUE` VARCHAR(1024) NOT NULL
+) ENGINE=FunctionEngine COLLATE = utf8_general_ci
+show create table SESSION_STATUS;
+Table	Create Table
+SESSION_STATUS	CREATE TABLE `SESSION_STATUS` (
+  `VARIABLE_NAME` VARCHAR(256) NOT NULL,
+  `VARIABLE_VALUE` VARCHAR(1024) NOT NULL
+) ENGINE=FunctionEngine COLLATE = utf8_general_ci
+show create table SESSION_VARIABLES;
+Table	Create Table
+SESSION_VARIABLES	CREATE TABLE `SESSION_VARIABLES` (
+  `VARIABLE_NAME` VARCHAR(256) NOT NULL,
+  `VARIABLE_VALUE` VARCHAR(1024) NOT NULL
+) ENGINE=FunctionEngine COLLATE = utf8_general_ci
+SELECT count(*) FROM data_dictionary.GLOBAL_STATUS;
+count(*)
+#
+SELECT count(*) FROM data_dictionary.GLOBAL_VARIABLES;
+count(*)
+#
+SELECT count(*) FROM data_dictionary.SESSION_STATUS;
+count(*)
+#
+SELECT count(*) FROM data_dictionary.SESSION_VARIABLES;
+count(*)
+#
+CREATE SCHEMA drizzleslap;
+DROP SCHEMA drizzleslap;

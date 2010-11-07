@@ -20,13 +20,32 @@ dnl  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 AC_PREREQ(2.59)dnl		Minimum Autoconf version required.
 dnl Version from the AC_INIT call below is overridden later
 dnl So don't update it here
-AC_INIT([drizzle],[7],[http://bugs.launchpad.net/drizzle])
+AC_INIT([drizzle7],[7],[http://bugs.launchpad.net/drizzle])
 AC_CONFIG_SRCDIR([drizzled/drizzled.cc])
-AC_CONFIG_AUX_DIR(config)
-AC_CONFIG_HEADERS([config.h])
-AC_CONFIG_MACRO_DIR([m4])
+AC_CONFIG_AUX_DIR([config])
 
-PANDORA_CANONICAL_TARGET(less-warnings, warnings-always-on, use-gnulib, require-cxx, force-gcc42, skip-visibility, version-from-vc)
+PANDORA_CANONICAL_TARGET(less-warnings, warnings-always-on, require-cxx, force-gcc42, version-from-vc, skip-visibility)
+
+LIBDRIZZLE_LIBRARY_VERSION=1:0:0
+#                          | | |
+#                   +------+ | +---+
+#                   |        |     |
+#                current:revision:age
+#                   |        |     |
+#                   |        |     +- increment if interfaces have been added
+#                   |        |        set to zero if interfaces have been
+#                   |        |        removed or changed
+#                   |        +- increment if source code has changed
+#                   |           set to zero if current is incremented
+#                   +- increment if interfaces have been added, removed or
+#                      changed
+AC_SUBST(LIBDRIZZLE_LIBRARY_VERSION)
+
+# libdrizzle versioning when linked with GNU ld.
+AS_IF([test "$lt_cv_prog_gnu_ld" = "yes"],[
+  LD_VERSION_SCRIPT="-Wl,--version-script=\$(top_srcdir)/config/drizzle.ver"
+  ])
+AC_SUBST(LD_VERSION_SCRIPT)
 
 dnl Set the default datadir location to /usr/local/var/drizzle. If a
 dnl localstatedir is explicitly given, just use that.
@@ -38,13 +57,9 @@ AC_PATH_PROG(GPERF, gperf)
 AS_IF([test "x$GPERF" = "x"],
       AC_MSG_ERROR("Drizzle requires gperf to build."))
 
-AC_CHECK_PROGS(YACC, ['bison -y'])
-AS_IF([test "x$YACC" = "x" -a "$ac_cv_building_from_bzr" = "yes"],[
-  AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
-])
+# libexecinfo provides backtrace_symbols on FreeBSD
+AC_SEARCH_LIBS(backtrace_symbols, [execinfo])
 
-
-PANDORA_WITH_GETTEXT
 PANDORA_RUN_CPPLINT
 
 PANDORA_REQUIRE_LIBPROTOBUF
@@ -54,18 +69,24 @@ PANDORA_REQUIRE_PROTOC
 AC_LANG_PUSH(C++)
 PANDORA_REQUIRE_PTHREAD
 PANDORA_REQUIRE_LIBUUID
-PANDORA_REQUIRE_LIBDRIZZLE
 PANDORA_REQUIRE_LIBZ
 PANDORA_REQUIRE_LIBPCRE
 PANDORA_REQUIRE_LIBREADLINE
 PANDORA_REQUIRE_LIBDL
 AC_LANG_POP
 
+DRIZZLE_STACK_DIRECTION
+
 PANDORA_USE_BETTER_MALLOC
 
 PANDORA_DRIZZLE_BUILD
-AC_DEFINE([BUILDING_DRIZZLE],[1],
+AC_DEFINE([BUILDING_DRIZZLED],[1],
           [Define indicating we are building and not consuming drizzle.])
+
+PANDORA_HAVE_LIBGTEST
+PANDORA_HAVE_LIBSQLITE3
+
+AC_CHECK_FUNC(inet_ntoa, [], [AC_CHECK_LIB(nsl, inet_ntoa)])
 
 
 AC_ARG_WITH([server-suffix],
@@ -106,20 +127,26 @@ AC_DEFINE_UNQUOTED([COMPILATION_COMMENT],["$COMPILATION_COMMENT"],
 
 dnl Has to be done late, as the plugin may need to check for existence of
 dnl functions tested above
-PANDORA_PLUGINS([drizzled/plugin/load_list.h])
+PANDORA_PLUGINS([drizzled/module/load_list.h])
 
 dnl GCC Precompiled Header Support
 dnl re-enable later
 dnl AM_CONDITIONAL([BUILD_GCC_PCH],[test "$GCC" = "yes"])
 AM_CONDITIONAL([BUILD_GCC_PCH],[test "no" = "yes"])
 
+AS_IF([test "$lt_cv_prog_gnu_ld" = "yes"],[
+  LDFLAGS="${LDFLAGS} ${LD_VERSION_SCRIPT}"
+  ])
+
+WITH_VALGRIND
+
 AC_CONFIG_FILES(Makefile dnl
- gnulib/Makefile dnl
- po/Makefile.in dnl
  tests/Makefile dnl
  drizzled/plugin/version.h dnl
+ support-files/libdrizzle.pc dnl
  support-files/drizzle.server support-files/drizzle-log-rotate
  support-files/smf/install.sh dnl
+ support-files/drizzle.spec dnl
  support-files/smf/drizzle.xml dnl
  support-files/smf/drizzle)
 
@@ -145,21 +172,32 @@ echo "Configuration summary for $PACKAGE_NAME version $VERSION $PANDORA_RELEASE_
 echo ""
 echo "   * Installation prefix:       $prefix"
 echo "   * System type:               $host_vendor-$host_os"
+echo "   * pandora-build version:     PANDORA_CANONICAL_VERSION"
 echo "   * Host CPU:                  $host_cpu"
 echo "   * C Compiler:                $CC_VERSION"
 echo "   * C++ Compiler:              $CXX_VERSION"
-echo "   * Build auth_pam:            $ac_cv_libpam"
 echo "   * Assertions enabled:        $ac_cv_assert"
 echo "   * Debug enabled:             $with_debug"
 echo "   * Profiling enabled:         $ac_profiling"
 echo "   * Coverage enabled:          $ac_coverage"
 echo "   * Warnings as failure:       $ac_cv_warnings_as_errors"
-echo "   * C++ cstdint location:      $ac_cv_cxx_cstdint"
-echo "   * C++ hash_map location:     $ac_cv_cxx_hash_map"
-echo "   * C++ hash namespace:        $ac_cv_cxx_hash_namespace"
-echo "   * C++ shared_ptr namespace:  $ac_cv_shared_ptr_namespace"
 echo ""
 echo "---"
+
+case "$host_os" in
+  *freebsd*)
+    echo "*****"
+    echo "*"
+    echo "*  NOTE: You are on FreeBSD. BSD make will not work."
+    echo "*"
+    echo "*   use 'gmake' To build Drizzle"
+    echo "*"
+    echo "*  And ensure that /usr/local/lib/gcc44 is in your LD_LIBRARY_PATH"
+    echo "*" 
+    echo "*****"
+  ;;
+esac
+
 
 dnl libtoolize scans configure.ac  and needs to see some text
 m4_define([LIBTOOLIZE_AC_INIT], [])

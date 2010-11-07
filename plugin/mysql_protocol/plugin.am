@@ -1,0 +1,11 @@
+EXTRA_DIST+= \
+	plugin/mysql_protocol/prototest/prototest/__init__.py \
+	plugin/mysql_protocol/prototest/prototest/mysql/__init__.py \
+	plugin/mysql_protocol/prototest/prototest/mysql/bitfield.py \
+	plugin/mysql_protocol/prototest/prototest/mysql/column.py \
+	plugin/mysql_protocol/prototest/prototest/mysql/command.py \
+	plugin/mysql_protocol/prototest/prototest/mysql/handshake.py \
+	plugin/mysql_protocol/prototest/prototest/mysql/packet.py \
+	plugin/mysql_protocol/prototest/prototest/mysql/result.py \
+	plugin/mysql_protocol/prototest/drizzle_flood \
+	plugin/mysql_protocol/prototest/drizzle_prototest

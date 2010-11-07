@@ -23,6 +23,9 @@
 #include <drizzled/function/func.h>
 #include <drizzled/function/math/int.h>
 
+namespace drizzled
+{
+
 class Item_func_last_insert_id :public Item_int_func
 {
 public:
@@ -37,5 +40,7 @@ public:
   }
   bool fix_fields(Session *session, Item **ref);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_LAST_INSERT_H */

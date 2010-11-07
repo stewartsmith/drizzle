@@ -1,0 +1,83 @@
+# Tests of various SAVEPOINT functionality
+
+# Test for Bug #534806 - SAVEPOINT without active transaction
+# triggers assert in InnoDB handler
+
+--echo Start Test of Bug 534806
+
+SET AUTOCOMMIT = 0;
+CREATE TABLE t1 (id INT NOT NULL PRIMARY KEY);
+COMMIT;
+UPDATE t1 SET id = 2 WHERE id != 2 LIMIT 0;
+SAVEPOINT A;
+
+--echo End Test of Bug 534806
+
+DROP TABLE t1;
+
+# Let's test the non-edge case for SAVEPOINTS:
+#
+# Typical usage pattern of starting a transaction, doing
+# some work, savepointing, do more work, savepointing, etc
+# and committing without any rollbacks or savepoint releases.
+
+CREATE TABLE t1 (id INT NOT NULL PRIMARY KEY);
+START TRANSACTION;
+INSERT INTO t1 VALUES (1);
+SAVEPOINT A;
+INSERT INTO t1 VALUES (2);
+SAVEPOINT B;
+INSERT INTO t1 VALUES (3);
+COMMIT;
+
+# t1 should now have 1,2,3 in it.
+SELECT * FROM t1;
+
+# We now test another typical usage pattern, similar to above,
+# but we issue a ROLLBACK at the end instead of a COMMIT.  All
+# work done in all savepoints should be rolled back.
+
+START TRANSACTION;
+INSERT INTO t1 VALUES (4);
+SAVEPOINT A;
+INSERT INTO t1 VALUES (5);
+SAVEPOINT B;
+INSERT INTO t1 VALUES (6);
+ROLLBACK;
+
+# t1 should still have 1,2,3 in it.
+SELECT * FROM t1;
+
+# We now test the final typical usage pattern, where we
+# ROLLBACK work to a specific SAVEPOINT and then COMMIT.
+
+START TRANSACTION;
+INSERT INTO t1 VALUES (4);
+SAVEPOINT A;
+INSERT INTO t1 VALUES (5);
+SAVEPOINT B;
+INSERT INTO t1 VALUES (6);
+ROLLBACK TO SAVEPOINT A;
+COMMIT;
+
+# t1 should have 1,2,3,4 in it.
+SELECT * FROM t1;
+DROP TABLE t1;
+
+# 
+# Test for Bug #542299
+#
+# segfault on ROLLBACK TO SAVEPOINT A - during randgen
+#
+--echo Start Test of Bug 542299
+
+CREATE TABLE t1 (a int,id integer auto_increment,b int,/*Indices*/key (a ),primary key (id)) ENGINE=innodb;
+INSERT INTO t1 VALUES  (100, NULL, 100) ,  (100, NULL, 100) ,  (100, NULL, 100) ,  (100, NULL, 100) ,  (100, NULL, 100) ,  (100, NULL, 100) ,  (100, NULL, 100) ,  (100, NULL, 100);
+SET AUTOCOMMIT=OFF;
+DELETE FROM t1 WHERE 1 = 1 LIMIT 1;
+COMMIT; /* OR ROLLBACK... */
+SAVEPOINT A;
+INSERT INTO t1 ( a, b ) VALUES ( 1 , 9 );
+ROLLBACK TO SAVEPOINT A;
+
+--echo End Test of Bug 542299

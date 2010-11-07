@@ -4,6 +4,6 @@ database()
 d1
 create database d2;
 create database D1;
-ERROR HY000: Can't create database 'd1'; database exists
+ERROR HY000: Can't create schema 'D1'; schema exists
 drop database d2;
 drop database d1;

@@ -198,7 +198,7 @@ class RangeParameter;
     SEL_ARG object we can construct during one range analysis invocation.
 */
 
-class SEL_ARG :public drizzled::memory::SqlAlloc
+class SEL_ARG :public memory::SqlAlloc
 {
 public:
   uint8_t min_flag,max_flag,maybe_flag;

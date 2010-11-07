@@ -18,8 +18,11 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/math/int_divide.h>
+
+namespace drizzled
+{
 
 /* Integer division */
 int64_t Item_func_int_div::val_int()
@@ -35,7 +38,7 @@ int64_t Item_func_int_div::val_int()
     return 0;
   }
   return (unsigned_flag ?
-          (uint64_t) value / (uint64_t) val2 :
+          (int64_t)((uint64_t) value / (uint64_t) val2) :
           value / val2);
 }
 
@@ -50,3 +53,4 @@ void Item_func_int_div::fix_length_and_dec()
   unsigned_flag=args[0]->unsigned_flag | args[1]->unsigned_flag;
 }
 
+} /* namespace drizzled */

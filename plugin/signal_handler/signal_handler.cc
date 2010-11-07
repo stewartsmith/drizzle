@@ -22,22 +22,34 @@
 #include "drizzled/pthread_globals.h"
 #include "drizzled/internal/my_pthread.h"
 #include "drizzled/internal/my_sys.h"
+#include "drizzled/plugin/daemon.h"
+#include "drizzled/signal_handler.h"
+
+#include "drizzled/drizzled.h"
+
+#include <boost/thread/thread.hpp>
+#include <boost/filesystem.hpp>
 
 #include <sys/stat.h>
 #include <fcntl.h>
 
+
 static bool kill_in_progress= false;
-static bool volatile signal_thread_in_use= false;
+void signal_hand(void);
+
+namespace drizzled
+{
 extern int cleanup_done;
-extern "C" pthread_handler_t signal_hand(void *);
 extern bool volatile abort_loop;
 extern bool volatile shutdown_in_progress;
-extern char pidfile_name[FN_REFLEN];
-
-extern std::bitset<12> test_flags;
-
+extern boost::filesystem::path pid_file;
 /* Prototypes -> all of these should be factored out into a propper shutdown */
 extern void close_connections(void);
+extern std::bitset<12> test_flags;
+}
+
+using namespace drizzled;
+
 
 
 /**
@@ -51,26 +63,21 @@ extern void close_connections(void);
     or stop, we just want to kill the server.
 */
 
-static void kill_server(void *sig_ptr)
+static void kill_server(int sig)
 {
-  int sig=(int) (long) sig_ptr;			// This is passed a int
   // if there is a signal during the kill in progress, ignore the other
   if (kill_in_progress)				// Safety
     return;
   kill_in_progress=true;
   abort_loop=1;					// This should be set
   if (sig != 0) // 0 is not a valid signal number
-    my_sigset(sig, SIG_IGN);                    /* purify inspected */
+    ignore_signal(sig);                    /* purify inspected */
   if (sig == SIGTERM || sig == 0)
-    errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_NORMAL_SHUTDOWN)),my_progname);
+    errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_NORMAL_SHUTDOWN)),internal::my_progname);
   else
-    errmsg_printf(ERRMSG_LVL_ERROR, _(ER(ER_GOT_SIGNAL)),my_progname,sig);
-
+    errmsg_printf(ERRMSG_LVL_ERROR, _(ER(ER_GOT_SIGNAL)),internal::my_progname,sig);
   close_connections();
-  if (sig != SIGTERM && sig != 0)
-    unireg_abort(1);
-  else
-    unireg_end();
+  clean_up(1);
 }
 
 /**
@@ -81,8 +88,7 @@ static void create_pid_file()
   int file;
   char buff[1024];
 
-  assert(pidfile_name[0]);
-  if ((file = open(pidfile_name, O_CREAT|O_WRONLY|O_TRUNC, S_IRWXU|S_IRGRP|S_IROTH)) > 0)
+  if ((file = open(pid_file.file_string().c_str(), O_CREAT|O_WRONLY|O_TRUNC, S_IRWXU|S_IRGRP|S_IROTH)) > 0)
   {
     int length;
 
@@ -95,22 +101,23 @@ static void create_pid_file()
     }
     (void)close(file); /* We can ignore the error, since we are going to error anyway at this point */
   }
-  snprintf(buff, 1024, "Can't start server: can't create PID file (%s)", pidfile_name);
+  memset(buff, 0, sizeof(buff));
+  snprintf(buff, sizeof(buff)-1, "Can't start server: can't create PID file (%s)", pid_file.file_string().c_str());
   sql_perror(buff);
   exit(1);
 }
 
 
 /** This threads handles all signals and alarms. */
-pthread_handler_t signal_hand(void *)
+void signal_hand()
 {
   sigset_t set;
   int sig;
-  my_thread_init();				// Init new thread
+  internal::my_thread_init();				// Init new thread
+  boost::this_thread::at_thread_exit(&internal::my_thread_end);
   signal_thread_in_use= true;
 
-  if (thd_lib_detected != THD_LIB_LT && 
-      (test_flags.test(TEST_SIGINT)))
+  if ((test_flags.test(TEST_SIGINT)))
   {
     (void) sigemptyset(&set);			// Setup up SIGINT for debug
     (void) sigaddset(&set,SIGINT);		// For debugging
@@ -118,22 +125,26 @@ pthread_handler_t signal_hand(void *)
   }
   (void) sigemptyset(&set);			// Setup up SIGINT for debug
 #ifndef IGNORE_SIGHUP_SIGQUIT
-  (void) sigaddset(&set,SIGQUIT);
-  (void) sigaddset(&set,SIGHUP);
+  if (sigaddset(&set,SIGQUIT))
+  {
+    std::cerr << "failed setting sigaddset() with SIGQUIT\n";
+  }
+  if (sigaddset(&set,SIGHUP))
+  {
+    std::cerr << "failed setting sigaddset() with SIGHUP\n";
+  }
 #endif
-  (void) sigaddset(&set,SIGTERM);
-  (void) sigaddset(&set,SIGTSTP);
+  if (sigaddset(&set,SIGTERM))
+  {
+    std::cerr << "failed setting sigaddset() with SIGTERM\n";
+  }
+  if (sigaddset(&set,SIGTSTP))
+  {
+    std::cerr << "failed setting sigaddset() with SIGTSTP\n";
+  }
 
   /* Save pid to this process (or thread on Linux) */
   create_pid_file();
-
-#ifdef HAVE_STACK_TRACE_ON_SEGV
-  if (opt_do_pstack)
-  {
-    sprintf(pstack_file_name,"drizzled-%lu-%%d-%%d.backtrace", (uint32_t)getpid());
-    pstack_install_segv_action(pstack_file_name);
-  }
-#endif /* HAVE_STACK_TRACE_ON_SEGV */
 
   /*
     signal to init that we are ready
@@ -147,37 +158,45 @@ pthread_handler_t signal_hand(void *)
     (Asked MontyW over the phone about this.) -Brian
 
   */
-  if (pthread_mutex_lock(&LOCK_thread_count) == 0)
-    (void) pthread_mutex_unlock(&LOCK_thread_count);
-  (void) pthread_cond_broadcast(&COND_thread_count);
+  LOCK_thread_count.lock();
+  LOCK_thread_count.unlock();
+  COND_thread_count.notify_all();
 
-  (void) pthread_sigmask(SIG_BLOCK,&set,NULL);
+  if (pthread_sigmask(SIG_BLOCK, &set, NULL))
+  {
+    std::cerr << "Failed to set pthread_sigmask() in signal handler\n";
+  }
+
   for (;;)
   {
     int error;					// Used when debugging
+
     if (shutdown_in_progress && !abort_loop)
     {
       sig= SIGTERM;
       error=0;
     }
     else
-      while ((error= sigwait(&set,&sig)) == EINTR) ;
+    {
+      while ((error= sigwait(&set, &sig)) == EINTR) ;
+    }
+
     if (cleanup_done)
     {
-      my_thread_end();
       signal_thread_in_use= false;
 
-      return NULL;
+      return;
     }
     switch (sig) {
     case SIGTERM:
     case SIGQUIT:
     case SIGKILL:
+    case SIGTSTP:
       /* switch to the old log message processing */
       if (!abort_loop)
       {
         abort_loop=1;				// mark abort for threads
-        kill_server((void*) sig);	// MIT THREAD has a alarm thread
+        kill_server(sig);		// MIT THREAD has a alarm thread
       }
       break;
     case SIGHUP:
@@ -193,68 +212,69 @@ pthread_handler_t signal_hand(void *)
   }
 }
 
-
-static int init(drizzled::plugin::Registry&)
+class SignalHandler :
+  public drizzled::plugin::Daemon
 {
-  int error;
-  pthread_attr_t thr_attr;
-  size_t my_thread_stack_size= 65536;
+  SignalHandler(const SignalHandler &);
+  SignalHandler& operator=(const SignalHandler &);
+  boost::thread thread;
 
-  (void) pthread_attr_init(&thr_attr);
-  pthread_attr_setscope(&thr_attr, PTHREAD_SCOPE_SYSTEM);
-  (void) pthread_attr_setdetachstate(&thr_attr, PTHREAD_CREATE_DETACHED);
+public:
+  SignalHandler() :
+    drizzled::plugin::Daemon("Signal Handler")
   {
-    struct sched_param tmp_sched_param;
-
-    memset(&tmp_sched_param, 0, sizeof(tmp_sched_param));
-    tmp_sched_param.sched_priority= INTERRUPT_PRIOR;
-    (void)pthread_attr_setschedparam(&thr_attr, &tmp_sched_param);
+    // @todo fix spurious wakeup issue
+    boost::mutex::scoped_lock scopedLock(LOCK_thread_count);
+    thread= boost::thread(signal_hand);
+    signal_thread= thread.native_handle();
+    COND_thread_count.wait(scopedLock);
   }
-#if defined(__ia64__) || defined(__ia64)
-  /*
-    Peculiar things with ia64 platforms - it seems we only have half the
-    stack size in reality, so we have to double it here
+
+  /**
+    This is mainly needed when running with purify, but it's still nice to
+    know that all child threads have died when drizzled exits.
   */
-  pthread_attr_setstacksize(&thr_attr, my_thread_stack_size*2);
-# else
-  pthread_attr_setstacksize(&thr_attr, my_thread_stack_size);
-#endif
-
-  (void) pthread_mutex_lock(&LOCK_thread_count);
-  if ((error=pthread_create(&signal_thread, &thr_attr, signal_hand, 0)))
+  ~SignalHandler()
   {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Can't create interrupt-thread (error %d, errno: %d)"),
-                    error,errno);
-    exit(1);
+    /*
+      Wait up to 100000 micro-seconds for signal thread to die. We use this mainly to
+      avoid getting warnings that internal::my_thread_end has not been called
+    */
+    bool completed= false;
+    /*
+     * We send SIGTERM and then do a timed join. If that fails we will on
+     * the last pthread_kill() call SIGTSTP. OSX (and FreeBSD) seem to
+     * prefer this. -Brian
+   */
+    uint32_t count= 2; // How many times to try join and see if the caller died.
+    while (not completed and count--)
+    {
+      int error;
+      int signal= count == 1 ? SIGTSTP : SIGTERM;
+      
+      if ((error= pthread_kill(thread.native_handle(), signal)))
+      {
+        char buffer[1024]; // No reason for number;
+        strerror_r(error, buffer, sizeof(buffer));
+        std::cerr << "pthread_kill() error on shutdown of signal thread (" << buffer << ")\n";
+        break;
+      }
+      else
+      {
+        boost::posix_time::milliseconds duration(100);
+        completed= thread.timed_join(duration);
+      }
+    }
   }
-  (void) pthread_cond_wait(&COND_thread_count,&LOCK_thread_count);
-  pthread_mutex_unlock(&LOCK_thread_count);
+};
 
-  (void) pthread_attr_destroy(&thr_attr);
+static int init(drizzled::module::Context& context)
+{
+  context.add(new SignalHandler);
 
   return 0;
 }
 
-/**
-  This is mainly needed when running with purify, but it's still nice to
-  know that all child threads have died when drizzled exits.
-*/
-static int deinit(drizzled::plugin::Registry&)
-{
-  uint32_t i;
-  /*
-    Wait up to 10 seconds for signal thread to die. We use this mainly to
-    avoid getting warnings that my_thread_end has not been called
-  */
-  for (i= 0 ; i < 100 && signal_thread_in_use; i++)
-  {
-    if (pthread_kill(signal_thread, SIGTERM) != ESRCH)
-      break;
-    usleep(100);				// Give it time to die
-  }
-
-  return 0;
-}
 
 static drizzle_sys_var* system_variables[]= {
   NULL
@@ -269,8 +289,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Default Signal Handler",
   PLUGIN_LICENSE_GPL,
   init, /* Plugin Init */
-  deinit, /* Plugin Deinit */
-  NULL,   /* status variables */
   system_variables,   /* system variables */
   NULL    /* config options */
 }

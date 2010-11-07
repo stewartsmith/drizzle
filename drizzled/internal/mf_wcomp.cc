@@ -11,11 +11,18 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /* Funktions for comparing with wild-cards */
 
-#include "drizzled/internal/mysys_priv.h"
+#include "config.h"
+
+#include "drizzled/internal/my_sys.h"
+
+namespace drizzled
+{
+namespace internal
+{
 
 	/* Test if a string is "comparable" to a wild-card string */
 	/* returns 0 if the strings are "comparable" */
@@ -86,3 +93,6 @@ int wild_compare(register const char *str, register const char *wildstr,
   }
   return (*str != 0);
 } /* wild_compare */
+
+} /* namespace internal */
+} /* namespace drizzled */

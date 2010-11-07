@@ -18,8 +18,11 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/str/alloc_buffer.h>
+
+namespace drizzled
+{
 
 String* alloc_buffer(String *res,String *str,String *tmp_value,
                             ulong length)
@@ -41,3 +44,5 @@ String* alloc_buffer(String *res,String *str,String *tmp_value,
   res->length(length);
   return res;
 }
+
+} /* namespace drizzled */

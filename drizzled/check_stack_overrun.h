@@ -20,6 +20,9 @@
 #ifndef DRIZZLED_CHECK_STACK_OVERRUN_H
 #define DRIZZLED_CHECK_STACK_OVERRUN_H
 
+namespace drizzled
+{
+
 /**
   @note
   Note: The 'buf' parameter is necessary, even if it is unused here.
@@ -28,5 +31,7 @@
   - Passing to check_stack_overrun() prevents the compiler from removing it.
 */
 bool check_stack_overrun(Session *session, long margin, void *buff);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_CHECK_STACK_OVERRUN_H */

@@ -23,10 +23,13 @@
 #include "drizzled/time_functions.h"
 #include "drizzled/internal/m_string.h"
 
+#include <cstdio>
 #include <algorithm>
 
 using namespace std;
 
+namespace drizzled
+{
 
 /**
   Create a formated date/time value in a string.
@@ -91,7 +94,7 @@ static bool make_date_time(String *format, DRIZZLE_TIME *l_time,
       case 'D':
 	if (type == DRIZZLE_TIMESTAMP_TIME)
 	  return 1;
-	length= int10_to_str(l_time->day, intbuff, 10) - intbuff;
+	length= internal::int10_to_str(l_time->day, intbuff, 10) - intbuff;
 	str->append_with_prefill(intbuff, length, 1, '0');
 	if (l_time->day >= 10 &&  l_time->day <= 19)
 	  str->append(STRING_WITH_LEN("th"));
@@ -114,62 +117,62 @@ static bool make_date_time(String *format, DRIZZLE_TIME *l_time,
 	}
 	break;
       case 'Y':
-	length= int10_to_str(l_time->year, intbuff, 10) - intbuff;
+	length= internal::int10_to_str(l_time->year, intbuff, 10) - intbuff;
 	str->append_with_prefill(intbuff, length, 4, '0');
 	break;
       case 'y':
-	length= int10_to_str(l_time->year%100, intbuff, 10) - intbuff;
+	length= internal::int10_to_str(l_time->year%100, intbuff, 10) - intbuff;
 	str->append_with_prefill(intbuff, length, 2, '0');
 	break;
       case 'm':
-	length= int10_to_str(l_time->month, intbuff, 10) - intbuff;
+	length= internal::int10_to_str(l_time->month, intbuff, 10) - intbuff;
 	str->append_with_prefill(intbuff, length, 2, '0');
 	break;
       case 'c':
-	length= int10_to_str(l_time->month, intbuff, 10) - intbuff;
+	length= internal::int10_to_str(l_time->month, intbuff, 10) - intbuff;
 	str->append_with_prefill(intbuff, length, 1, '0');
 	break;
       case 'd':
-	length= int10_to_str(l_time->day, intbuff, 10) - intbuff;
+	length= internal::int10_to_str(l_time->day, intbuff, 10) - intbuff;
 	str->append_with_prefill(intbuff, length, 2, '0');
 	break;
       case 'e':
-	length= int10_to_str(l_time->day, intbuff, 10) - intbuff;
+	length= internal::int10_to_str(l_time->day, intbuff, 10) - intbuff;
 	str->append_with_prefill(intbuff, length, 1, '0');
 	break;
       case 'f':
-	length= int10_to_str(l_time->second_part, intbuff, 10) - intbuff;
+	length= internal::int10_to_str(l_time->second_part, intbuff, 10) - intbuff;
 	str->append_with_prefill(intbuff, length, 6, '0');
 	break;
       case 'H':
-	length= int10_to_str(l_time->hour, intbuff, 10) - intbuff;
+	length= internal::int10_to_str(l_time->hour, intbuff, 10) - intbuff;
 	str->append_with_prefill(intbuff, length, 2, '0');
 	break;
       case 'h':
       case 'I':
 	hours_i= (l_time->hour%24 + 11)%12+1;
-	length= int10_to_str(hours_i, intbuff, 10) - intbuff;
+	length= internal::int10_to_str(hours_i, intbuff, 10) - intbuff;
 	str->append_with_prefill(intbuff, length, 2, '0');
 	break;
       case 'i':					/* minutes */
-	length= int10_to_str(l_time->minute, intbuff, 10) - intbuff;
+	length= internal::int10_to_str(l_time->minute, intbuff, 10) - intbuff;
 	str->append_with_prefill(intbuff, length, 2, '0');
 	break;
       case 'j':
 	if (type == DRIZZLE_TIMESTAMP_TIME)
 	  return 1;
-	length= int10_to_str(calc_daynr(l_time->year,l_time->month,
+	length= internal::int10_to_str(calc_daynr(l_time->year,l_time->month,
 					l_time->day) -
 		     calc_daynr(l_time->year,1,1) + 1, intbuff, 10) - intbuff;
 	str->append_with_prefill(intbuff, length, 3, '0');
 	break;
       case 'k':
-	length= int10_to_str(l_time->hour, intbuff, 10) - intbuff;
+	length= internal::int10_to_str(l_time->hour, intbuff, 10) - intbuff;
 	str->append_with_prefill(intbuff, length, 1, '0');
 	break;
       case 'l':
 	hours_i= (l_time->hour%24 + 11)%12+1;
-	length= int10_to_str(hours_i, intbuff, 10) - intbuff;
+	length= internal::int10_to_str(hours_i, intbuff, 10) - intbuff;
 	str->append_with_prefill(intbuff, length, 1, '0');
 	break;
       case 'p':
@@ -177,7 +180,7 @@ static bool make_date_time(String *format, DRIZZLE_TIME *l_time,
 	str->append(hours_i < 12 ? "AM" : "PM",2);
 	break;
       case 'r':
-	length= sprintf(intbuff,
+	length= snprintf(intbuff, sizeof(intbuff), 
 		    ((l_time->hour % 24) < 12) ?
                     "%02d:%02d:%02d AM" : "%02d:%02d:%02d PM",
 		    (l_time->hour+11)%12+1,
@@ -187,11 +190,11 @@ static bool make_date_time(String *format, DRIZZLE_TIME *l_time,
 	break;
       case 'S':
       case 's':
-	length= int10_to_str(l_time->second, intbuff, 10) - intbuff;
+	length= internal::int10_to_str(l_time->second, intbuff, 10) - intbuff;
 	str->append_with_prefill(intbuff, length, 2, '0');
 	break;
       case 'T':
-	length= sprintf(intbuff,
+	length= snprintf(intbuff, sizeof(intbuff), 
 		    "%02d:%02d:%02d",
 		    l_time->hour,
 		    l_time->minute,
@@ -204,7 +207,7 @@ static bool make_date_time(String *format, DRIZZLE_TIME *l_time,
 	uint32_t year;
 	if (type == DRIZZLE_TIMESTAMP_TIME)
 	  return 1;
-	length= int10_to_str(calc_week(l_time,
+	length= internal::int10_to_str(calc_week(l_time,
 				       (*ptr) == 'U' ?
 				       WEEK_FIRST_WEEKDAY : WEEK_MONDAY_FIRST,
 				       &year),
@@ -218,7 +221,7 @@ static bool make_date_time(String *format, DRIZZLE_TIME *l_time,
 	uint32_t year;
 	if (type == DRIZZLE_TIMESTAMP_TIME)
 	  return 1;
-	length= int10_to_str(calc_week(l_time,
+	length= internal::int10_to_str(calc_week(l_time,
 				       ((*ptr) == 'V' ?
 					(WEEK_YEAR | WEEK_FIRST_WEEKDAY) :
 					(WEEK_YEAR | WEEK_MONDAY_FIRST)),
@@ -238,7 +241,7 @@ static bool make_date_time(String *format, DRIZZLE_TIME *l_time,
 			  WEEK_YEAR | WEEK_FIRST_WEEKDAY :
 			  WEEK_YEAR | WEEK_MONDAY_FIRST),
 			 &year);
-	length= int10_to_str(year, intbuff, 10) - intbuff;
+	length= internal::int10_to_str(year, intbuff, 10) - intbuff;
 	str->append_with_prefill(intbuff, length, 4, '0');
       }
       break;
@@ -247,7 +250,7 @@ static bool make_date_time(String *format, DRIZZLE_TIME *l_time,
 	  return 1;
 	weekday=calc_weekday(calc_daynr(l_time->year,l_time->month,
 					l_time->day),1);
-	length= int10_to_str(weekday, intbuff, 10) - intbuff;
+	length= internal::int10_to_str(weekday, intbuff, 10) - intbuff;
 	str->append_with_prefill(intbuff, length, 1, '0');
 	break;
 
@@ -432,3 +435,4 @@ null_date:
   return 0;
 }
 
+} /* namespace drizzled */

@@ -18,6 +18,7 @@
  */
 
 #include "config.h"
+#include <boost/lexical_cast.hpp>
 #include "drizzled/function/time/from_days.h"
 #include "drizzled/error.h"
 #include "drizzled/temporal.h"
@@ -25,11 +26,14 @@
 #include <sstream>
 #include <string>
 
+namespace drizzled
+{
+
 /**
  * Interpret the first argument as a Julian Day Number and fill
  * our supplied temporal object.
  */
-bool Item_func_from_days::get_temporal(drizzled::Date &to)
+bool Item_func_from_days::get_temporal(Date &to)
 {
   assert(fixed);
 
@@ -51,12 +55,12 @@ bool Item_func_from_days::get_temporal(drizzled::Date &to)
   if (! to.from_julian_day_number(int_value))
   {
     /* Bad input, throw an error */
-    std::stringstream ss;
-    std::string tmp;
-    ss << int_value; ss >> tmp;
+    std::string tmp(boost::lexical_cast<std::string>(int_value));
 
     my_error(ER_ARGUMENT_OUT_OF_RANGE, MYF(ME_FATALERROR), tmp.c_str(), func_name());
     return false;
   }
   return true;
 }
+
+} /* namespace drizzled */

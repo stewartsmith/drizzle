@@ -1,0 +1,97 @@
+drop table if exists t1;
+create table t1 (a int, b int, c int, primary key(a), index(b)) engine = blitzdb;
+insert into t1 values (1, 1, 100), (2, 2, 200), (3, 3, 300), (4, 4, 400);
+insert into t1 values (5, 5, 500), (6, 6, 600), (7, 7, 700), (8, 8, 800);
+select * from t1 order by (a);
+a	b	c
+1	1	100
+2	2	200
+3	3	300
+4	4	400
+5	5	500
+6	6	600
+7	7	700
+8	8	800
+select * from t1 order by (a) desc;
+a	b	c
+8	8	800
+7	7	700
+6	6	600
+5	5	500
+4	4	400
+3	3	300
+2	2	200
+1	1	100
+explain select * from t1 where a <= 4;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t1	range	PRIMARY	PRIMARY	4	NULL	4	Using where
+select * from t1 where a <= 4;
+a	b	c
+1	1	100
+2	2	200
+3	3	300
+4	4	400
+explain select * from t1 where a > 2 and a < 6;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t1	range	PRIMARY	PRIMARY	4	NULL	4	Using where
+select * from t1 where a > 2 and a < 6;
+a	b	c
+3	3	300
+4	4	400
+5	5	500
+explain select * from t1 where b <= 4;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t1	range	b	b	5	NULL	4	Using where
+select * from t1 where b <= 4;
+a	b	c
+1	1	100
+2	2	200
+3	3	300
+4	4	400
+explain select * from t1 where b > 2 and b < 6;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t1	range	b	b	5	NULL	4	Using where
+select * from t1 where b > 2 and b < 6;
+a	b	c
+3	3	300
+4	4	400
+5	5	500
+explain select c from t1 where a = 8;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t1	const	PRIMARY	PRIMARY	4	const	1	
+select c from t1 where a = 8;
+c
+800
+explain select c from t1 where b = 3;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t1	ref	b	b	5	const	4	Using where
+select c from t1 where b = 3;
+c
+300
+select * from t1 where a = 1;
+a	b	c
+1	1	100
+select * from t1 where b = 1;
+a	b	c
+1	1	100
+delete from t1 where a = 1;
+select * from t1 where a = 1;
+a	b	c
+select * from t1 where b = 1;
+a	b	c
+select * from t1 where a >= 2 and a <= 4;
+a	b	c
+2	2	200
+3	3	300
+4	4	400
+select * from t1 where b >= 2 and b <= 4;
+a	b	c
+2	2	200
+3	3	300
+4	4	400
+delete from t1 where a >= 2 and a <= 4;
+select * from t1 where a >= 2 and a <= 4;
+a	b	c
+select * from t1 where b >= 2 and b <= 4;
+a	b	c
+drop table t1;

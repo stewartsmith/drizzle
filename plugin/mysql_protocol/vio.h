@@ -11,126 +11,130 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-/*
- * Vio Lite.
- * Purpose: include file for Vio that will work with C and C++
- */
 
 #ifndef PLUGIN_MYSQL_PROTOCOL_VIO_H
-#define	PLUGIN_MYSQL_PROTOCOL_VIO_H
+#define PLUGIN_MYSQL_PROTOCOL_VIO_H
 
 #include <sys/socket.h>
 #include <errno.h>
 
-/* Simple vio interface in C;  The functions are implemented in violite.c */
-
-enum enum_vio_type
+/**
+ *@brief Virtual I/O layer, only used with TCP/IP sockets at the moment.
+ */
+class Vio
 {
-  VIO_CLOSED, VIO_TYPE_TCPIP, VIO_TYPE_SOCKET, VIO_TYPE_NAMEDPIPE,
-  VIO_TYPE_SSL, VIO_TYPE_SHARED_MEMORY
+public:
+  /**
+   * Constructor. 
+   * @param[in] sd Descriptor to use.
+   */
+  Vio(int sd);
+  ~Vio();
+
+  /**
+   *Close the connection.
+   *@returns 0 on success.
+   */
+  int close();
+
+  /**
+   * Read some data from the remote end.
+   *@param[out] buf A buffer to write the new data to.
+   *@param[in] size The size of the buffer
+   *@returns The number of bytes read.
+   */
+  size_t read(unsigned char* buf, size_t size);
+  
+  /**
+   * Write some data to the remote end.
+   *@param[in] buf A buffer that contains the data to send.
+   *@param[in] size The size of the buffer
+   *@returns The number of bytes written.
+   */
+  size_t write(const unsigned char* buf, size_t size);
+
+  /**
+   * Set device blocking mode.
+   *@param[in] set_blocking_mode Whether the device should block. true sets blocking mode, false clears it.
+   *@param[out] old_mode This will be set to the previous blocking mode.
+   *@returns 0 on success.
+   */
+  int blocking(bool set_blocking_mode, bool *old_mode);
+
+  /**
+   * Enables fast sending.
+   * Setting this sets the TCP_NODELAY socket option.
+   *@returns 0 on succcess.
+   */
+  int fastsend();
+
+  /**
+   * Sets or clears the keepalive option.
+   *@param[in] set_keep_alive Whether to set or clear the flag. True Sets keepalive, false clears it.
+   *@returns 0 on success.
+   */
+  int32_t keepalive(bool set_keep_alive);
+
+  /**
+   *@returns true if the caller should retry the last operation.
+   */
+  bool should_retry() const;
+
+  /**
+   *@returns true if the last operation was interrupted.
+   */
+  bool was_interrupted() const;
+
+  /**
+   *Gets the address details of the peer.
+   @param[out] buf Buffer that will recieve the peer address.
+   @param[out] port Port of remote end.
+   @param[in] buflen Size of buf.
+   @returns True on success, false otherwise.
+   */
+  bool peer_addr(char *buf, uint16_t *port, size_t buflen) const;
+
+  /**
+   * Sets either the send, or recieve timeouts for the socket.
+   *@param[in] is_sndtimeo Set to true to change the send timeout, false to change the recieve timeout.
+   *@param[in] timeout The new timeout to set, in seconds.
+   */
+  void timeout(bool is_sndtimeo, int32_t timeout);
+
+  /**
+   * Returns the last error code.
+   *@returns the last error code, as described in errno.h
+   */
+  int get_errno() const;
+
+  /**
+   * Get the underlying descriptor this class is using.
+   *@returns The descriptor passed in to the constructor of this class.
+   */
+  int get_fd() const;
+
+  /**
+   * Returns the current read position.
+   */
+  char *get_read_pos() const;
+
+  /**
+   * Returns the current write position.
+   */
+  char *get_read_end() const;
+
+private:
+  bool closed;
+  int sd;
+  int fcntl_mode; /* Buffered fcntl(sd,F_GETFL) */
+  struct sockaddr_storage local; /* Local internet address */
+  struct sockaddr_storage remote; /* Remote internet address */
+  char *read_pos; /* start of unfetched data in the read buffer */
+  char *read_end; /* end of unfetched data */
+
 };
 
-typedef struct st_vio Vio;
-
-#define VIO_BUFFERED_READ 2                     /* use buffered read */
-#define VIO_READ_BUFFER_SIZE 16384              /* size of read buffer */
-
-Vio*	drizzleclient_vio_new(int sd, enum enum_vio_type type, unsigned int flags);
-
-void	drizzleclient_vio_delete(Vio* vio);
-int	drizzleclient_vio_close(Vio* vio);
-void    drizzleclient_vio_reset(Vio* vio, enum enum_vio_type type, int sd, uint32_t flags);
-size_t	drizzleclient_vio_read(Vio *vio, unsigned char *	buf, size_t size);
-size_t  drizzleclient_vio_read_buff(Vio *vio, unsigned char * buf, size_t size);
-size_t	drizzleclient_vio_write(Vio *vio, const unsigned char * buf, size_t size);
-int	drizzleclient_vio_blocking(Vio *vio, bool onoff, bool *old_mode);
-bool	drizzleclient_vio_is_blocking(Vio *vio);
-/* setsockopt TCP_NODELAY at IPPROTO_TCP level, when possible */
-int	drizzleclient_vio_fastsend(Vio *vio);
-/* setsockopt SO_KEEPALIVE at SOL_SOCKET level, when possible */
-int32_t	drizzleclient_vio_keepalive(Vio *vio, bool	onoff);
-/* Whenever we should retry the last read/write operation. */
-bool	drizzleclient_vio_should_retry(Vio *vio);
-/* Check that operation was timed out */
-bool	drizzleclient_vio_was_interrupted(Vio *vio);
-/* Short text description of the socket for those, who are curious.. */
-const char* drizzleclient_vio_description(Vio *vio);
-/* Return the type of the connection */
-enum enum_vio_type drizzleclient_vio_type(Vio* vio);
-/* Return last error number */
-int	drizzleclient_vio_errno(Vio*vio);
-/* Get socket number */
-int drizzleclient_vio_fd(Vio*vio);
-/* Remote peer's address and name in text form */
-bool drizzleclient_vio_peer_addr(Vio *vio, char *buf, uint16_t *port, size_t buflen);
-bool drizzleclient_vio_poll_read(Vio *vio, int timeout);
-bool drizzleclient_vio_peek_read(Vio *vio, unsigned int *bytes);
-
-void drizzleclient_vio_end(void);
-
-void drizzleclient_vio_ignore_timeout(Vio *vio, bool is_sndtimeo, int32_t timeout);
-void drizzleclient_vio_timeout(Vio *vio, bool is_sndtimeo, int32_t timeout);
-
-#if !defined(DONT_MAP_VIO)
-#define drizzleclient_vio_delete(vio) 			(vio)->viodelete(vio)
-#define drizzleclient_vio_errno(vio)	 			(vio)->vioerrno(vio)
-#define drizzleclient_vio_read(vio, buf, size)                ((vio)->read)(vio,buf,size)
-#define drizzleclient_vio_write(vio, buf, size)               ((vio)->write)(vio, buf, size)
-#define drizzleclient_vio_blocking(vio, set_blocking_mode, old_mode)\
- 	(vio)->vioblocking(vio, set_blocking_mode, old_mode)
-#define drizzleclient_vio_is_blocking(vio) 			(vio)->is_blocking(vio)
-#define drizzleclient_vio_fastsend(vio)			(vio)->fastsend(vio)
-#define drizzleclient_vio_keepalive(vio, set_keep_alive)	(vio)->viokeepalive(vio, set_keep_alive)
-#define drizzleclient_vio_should_retry(vio) 			(vio)->should_retry(vio)
-#define drizzleclient_vio_was_interrupted(vio) 		(vio)->was_interrupted(vio)
-#define drizzleclient_vio_close(vio)				((vio)->vioclose)(vio)
-#define drizzleclient_vio_peer_addr(vio, buf, prt, buflen)	(vio)->peer_addr(vio, buf, prt, buflen)
-#define drizzleclient_vio_timeout(vio, which, seconds)	(vio)->timeout(vio, which, seconds)
-#endif /* !defined(DONT_MAP_VIO) */
-
-/* This enumerator is used in parser - should be always visible */
-enum SSL_type
-{
-  SSL_TYPE_NOT_SPECIFIED= -1,
-  SSL_TYPE_NONE,
-  SSL_TYPE_ANY,
-  SSL_TYPE_X509,
-  SSL_TYPE_SPECIFIED
-};
-
-/* HFTODO - hide this if we don't want client in embedded server */
-/* This structure is for every connection on both sides */
-struct st_vio
-{
-  int		sd;		/* int - real or imaginary */
-  int			fcntl_mode;	/* Buffered fcntl(sd,F_GETFL) */
-  struct sockaddr_storage	local;		/* Local internet address */
-  struct sockaddr_storage	remote;		/* Remote internet address */
-  int addrLen;                          /* Length of remote address */
-  enum enum_vio_type	type;		/* Type of connection */
-  char			desc[30];	/* String description */
-  char                  *read_pos;      /* start of unfetched data in the
-                                           read buffer */
-  char                  *read_end;      /* end of unfetched data */
-
-  /* function pointers. They are similar for socket/SSL/whatever */
-  void    (*viodelete)(Vio*);
-  int32_t     (*vioerrno)(Vio*);
-  size_t  (*read)(Vio*, unsigned char *, size_t);
-  size_t  (*write)(Vio*, const unsigned char *, size_t);
-  int32_t     (*vioblocking)(Vio*, bool, bool *);
-  bool (*is_blocking)(Vio*);
-  int32_t     (*viokeepalive)(Vio*, bool);
-  int32_t     (*fastsend)(Vio*);
-  bool (*peer_addr)(Vio*, char *, uint16_t *, size_t);
-  void    (*in_addr)(Vio*, struct sockaddr_storage*);
-  bool (*should_retry)(Vio*);
-  bool (*was_interrupted)(Vio*);
-  int32_t     (*vioclose)(Vio*);
-  void	  (*timeout)(Vio*, bool is_sndtimeo, int32_t timeout);
-  char                  *read_buffer;   /* buffer for drizzleclient_vio_read_buff */
-};
 
 #endif /* PLUGIN_MYSQL_PROTOCOL_VIO_H */

@@ -46,25 +46,18 @@ public:
 
 String *VersionFunction::val_str(String *str)
 {
-  str->set(version().c_str(), version().size(),
+  str->set(::drizzled::version().c_str(), ::drizzled::version().size(),
            system_charset_info);
   return str;
 }
 
 plugin::Create_function<VersionFunction> *versionudf= NULL;
 
-static int initialize(plugin::Registry &registry)
+static int initialize(module::Context &context)
 {
   versionudf= new plugin::Create_function<VersionFunction>("version");
-  registry.add(versionudf);
+  context.add(versionudf);
   return 0;
 }
 
-static int finalize(plugin::Registry &registry)
-{
-   registry.remove(versionudf);
-   delete versionudf;
-   return 0;
-}
-
-DRIZZLE_PLUGIN(initialize, finalize, NULL, NULL);
+DRIZZLE_PLUGIN(initialize, NULL, NULL);

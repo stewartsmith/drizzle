@@ -23,6 +23,9 @@
 
 #include <drizzled/field/real.h>
 
+namespace drizzled
+{
+
 class Field_double :public Field_real {
 public:
 
@@ -62,9 +65,10 @@ public:
   int cmp(const unsigned char *,const unsigned char *);
   void sort_string(unsigned char *buff,uint32_t length);
   uint32_t pack_length() const { return sizeof(double); }
-  uint32_t row_pack_length() { return pack_length(); }
   void sql_type(String &str) const;
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FIELD_DOUBLE_H */
 

@@ -11,16 +11,23 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "drizzled/internal/mysys_priv.h"
+#include "config.h"
+
+#include "drizzled/internal/my_sys.h"
 #include "my_static.h"
-#include "drizzled/my_error.h"
+#include "drizzled/error.h"
 #include "drizzled/internal/m_string.h"
 #include "drizzled/charset_info.h"
 #include "drizzled/charset.h"
 #include <cstdio>
 #include <cstdlib>
+
+namespace drizzled
+{
+namespace internal
+{
 
 bool my_init_done= 0;
 uint	mysys_usage_id= 0;              /* Incremented for each my_init() */
@@ -55,7 +62,6 @@ bool my_init(void)
   mysys_usage_id++;
   my_umask= 0660;                       /* Default umask for new files */
   my_umask_dir= 0700;                   /* Default umask for new directories */
-  init_glob_errs();
 #if defined(HAVE_PTHREAD_INIT)
   pthread_init();
 #endif
@@ -84,10 +90,12 @@ bool my_init(void)
 void my_end()
 {
   free_charsets();
-  my_error_unregister_all();
 
   my_thread_end();
   my_thread_global_end();
 
   my_init_done=0;
 } /* my_end */
+
+} /* namespace internal */
+} /* namespace drizzled */

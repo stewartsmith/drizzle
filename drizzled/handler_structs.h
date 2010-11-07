@@ -37,61 +37,13 @@
 #include <drizzled/lex_string.h>
 #include "drizzled/global_charset_info.h"
 
-
-class Ha_trx_info;
-struct st_key;
-typedef struct st_key KEY;
-struct st_key_cache;
-typedef struct st_key_cache KEY_CACHE;
-
 namespace drizzled
 {
+
 namespace plugin
 {
 class StorageEngine;
 }
-}
-
-struct Session_TRANS
-{
-  Session_TRANS() {};
-
-  /* true is not all entries in the engines[] support 2pc */
-  bool        no_2pc;
-  /* storage engines that registered in this transaction */
-  Ha_trx_info *ha_list;
-  /*
-    The purpose of this flag is to keep track of non-transactional
-    tables that were modified in scope of:
-    - transaction, when the variable is a member of
-    Session::transaction.all
-    - top-level statement or sub-statement, when the variable is a
-    member of Session::transaction.stmt
-    This member has the following life cycle:
-    * stmt.modified_non_trans_table is used to keep track of
-    modified non-transactional tables of top-level statements. At
-    the end of the previous statement and at the beginning of the session,
-    it is reset to false.  If such functions
-    as mysql_insert, mysql_update, mysql_delete etc modify a
-    non-transactional table, they set this flag to true.  At the
-    end of the statement, the value of stmt.modified_non_trans_table
-    is merged with all.modified_non_trans_table and gets reset.
-    * all.modified_non_trans_table is reset at the end of transaction
-
-    * Since we do not have a dedicated context for execution of a
-    sub-statement, to keep track of non-transactional changes in a
-    sub-statement, we re-use stmt.modified_non_trans_table.
-    At entrance into a sub-statement, a copy of the value of
-    stmt.modified_non_trans_table (containing the changes of the
-    outer statement) is saved on stack. Then
-    stmt.modified_non_trans_table is reset to false and the
-    substatement is executed. Then the new value is merged with the
-    saved value.
-  */
-  bool modified_non_trans_table;
-
-  void reset() { no_2pc= false; modified_non_trans_table= false; }
-};
 
 typedef struct st_ha_create_information
 {
@@ -100,20 +52,41 @@ typedef struct st_ha_create_information
   uint64_t auto_increment_value;
   uint32_t table_options;
   uint32_t used_fields;
-  enum row_type row_type;
-  drizzled::plugin::StorageEngine *db_type;
+  plugin::StorageEngine *db_type;
   bool table_existed;			/* 1 in create if table existed */
+
+  st_ha_create_information() :
+    table_charset(0),
+    default_table_charset(0),
+    alias(0),
+    auto_increment_value(0),
+    table_options(0),
+    used_fields(0),
+    db_type(0),
+    table_existed(0)
+  { }
 } HA_CREATE_INFO;
 
 typedef struct st_ha_alter_information
 {
-  KEY  *key_info_buffer;
+  KeyInfo  *key_info_buffer;
   uint32_t key_count;
   uint32_t index_drop_count;
   uint32_t *index_drop_buffer;
   uint32_t index_add_count;
   uint32_t *index_add_buffer;
   void *data;
+
+  st_ha_alter_information() :
+    key_info_buffer(0),
+    key_count(0),
+    index_drop_count(0),
+    index_drop_buffer(0),
+    index_add_count(0),
+    index_add_buffer(0),
+    data(0)
+  { }
+
 } HA_ALTER_INFO;
 
 
@@ -163,18 +136,6 @@ typedef struct st_range_seq_if
   uint32_t (*next) (range_seq_t seq, KEY_MULTI_RANGE *range);
 } RANGE_SEQ_IF;
 
-/*
-  This is a buffer area that the handler can use to store rows.
-  'end_of_used_area' should be kept updated after calls to
-  read-functions so that other parts of the code can use the
-  remaining area (until next read calls is issued).
-*/
-
-typedef struct st_handler_buffer
-{
-  unsigned char *buffer;         /* Buffer one can start using */
-  unsigned char *buffer_end;     /* End of buffer */
-  unsigned char *end_of_used_area;     /* End of area that was used by handler */
-} HANDLER_BUFFER;
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_HANDLER_STRUCTS_H */

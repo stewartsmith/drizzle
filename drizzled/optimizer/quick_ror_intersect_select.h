@@ -22,6 +22,7 @@
 
 #include "drizzled/optimizer/range.h"
 
+#include <boost/dynamic_bitset.hpp>
 #include <vector>
 
 namespace drizzled
@@ -54,7 +55,7 @@ public:
   QuickRorIntersectSelect(Session *session, 
                              Table *table,
                              bool retrieve_full_rows,
-                             drizzled::memory::Root *parent_alloc);
+                             memory::Root *parent_alloc);
 
   ~QuickRorIntersectSelect();
 
@@ -117,7 +118,7 @@ public:
 
   void add_keys_and_lengths(String *key_names, String *used_lengths);
   void add_info_string(String *str);
-  bool is_keys_used(const MyBitmap *fields);
+  bool is_keys_used(const boost::dynamic_bitset<>& fields);
 
   /**
    * Initialize this quick select to be a part of a ROR-merged scan.
@@ -159,7 +160,7 @@ public:
    */
   QuickRangeSelect *cpk_quick;
 
-  drizzled::memory::Root alloc; /**< Memory pool for this and merged quick selects data. */
+  memory::Root alloc; /**< Memory pool for this and merged quick selects data. */
   Session *session; /**< Pointer to the current session */
   bool need_to_fetch_row; /**< if true, do retrieve full table records. */
   /** in top-level quick select, true if merged scans where initialized */

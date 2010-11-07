@@ -32,6 +32,8 @@
 
 using namespace std;
 
+namespace drizzled
+{
 
 /****************************************************************************
  Field type int64_t int (8 bytes)
@@ -51,13 +53,13 @@ int Field_int64_t::store(const char *from,uint32_t len, const CHARSET_INFO * con
     set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
     error= 1;
   }
-  else if (table->in_use->count_cuted_fields &&
+  else if (getTable()->in_use->count_cuted_fields &&
            check_int(cs, from, len, end, error))
     error= 1;
   else
     error= 0;
 #ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
+  if (getTable()->getShare()->db_low_byte_first)
   {
     int8store(ptr,tmp);
   }
@@ -94,7 +96,7 @@ int Field_int64_t::store(double nr)
     set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
 
 #ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
+  if (getTable()->getShare()->db_low_byte_first)
   {
     int8store(ptr,res);
   }
@@ -112,7 +114,7 @@ int Field_int64_t::store(int64_t nr, bool )
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
 #ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
+  if (getTable()->getShare()->db_low_byte_first)
   {
     int8store(ptr,nr);
   }
@@ -130,7 +132,7 @@ double Field_int64_t::val_real(void)
   ASSERT_COLUMN_MARKED_FOR_READ;
 
 #ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
+  if (getTable()->getShare()->db_low_byte_first)
   {
     j=sint8korr(ptr);
   }
@@ -149,7 +151,7 @@ int64_t Field_int64_t::val_int(void)
   ASSERT_COLUMN_MARKED_FOR_READ;
 
 #ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
+  if (getTable()->getShare()->db_low_byte_first)
     j=sint8korr(ptr);
   else
 #endif
@@ -171,7 +173,7 @@ String *Field_int64_t::val_str(String *val_buffer,
   ASSERT_COLUMN_MARKED_FOR_READ;
 
 #ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
+  if (getTable()->getShare()->db_low_byte_first)
     j=sint8korr(ptr);
   else
 #endif
@@ -187,7 +189,7 @@ int Field_int64_t::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   int64_t a,b;
 #ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
+  if (getTable()->getShare()->db_low_byte_first)
   {
     a=sint8korr(a_ptr);
     b=sint8korr(b_ptr);
@@ -204,7 +206,7 @@ int Field_int64_t::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 void Field_int64_t::sort_string(unsigned char *to,uint32_t )
 {
 #ifdef WORDS_BIGENDIAN
-  if (!table->s->db_low_byte_first)
+  if (!getTable()->getShare()->db_low_byte_first)
   {
     to[0] = (char) (ptr[0] ^ 128);		/* Revers signbit */
     to[1]   = ptr[1];
@@ -248,7 +250,7 @@ unsigned char *Field_int64_t::pack(unsigned char* to, const unsigned char *from,
 {
   int64_t val;
 #ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
+  if (getTable()->getShare()->db_low_byte_first)
      val = sint8korr(from);
   else
 #endif
@@ -281,7 +283,7 @@ const unsigned char *Field_int64_t::unpack(unsigned char* to, const unsigned cha
     int64_tget(val, from);
 
 #ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
+  if (getTable()->getShare()->db_low_byte_first)
     int8store(to, val);
   else
 #endif
@@ -289,3 +291,4 @@ const unsigned char *Field_int64_t::unpack(unsigned char* to, const unsigned cha
   return from + sizeof(val);
 }
 
+} /* namespace drizzled */

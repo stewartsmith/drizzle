@@ -11,8 +11,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -177,7 +177,9 @@ row_update_prebuilt_trx(
 					in MySQL handle */
 	trx_t*		trx);		/*!< in: transaction handle */
 /*********************************************************************//**
-Unlocks AUTO_INC type locks that were possibly reserved by a trx. */
+Unlocks AUTO_INC type locks that were possibly reserved by a trx. This
+function should be called at the the end of an SQL statement, by the
+connection thread that owns the transaction (trx->mysql_thd). */
 UNIV_INTERN
 void
 row_unlock_table_autoinc_for_mysql(
@@ -596,13 +598,6 @@ struct row_prebuilt_struct {
 					to read just columns defined in
 					the index (i.e., no read of the
 					clustered index record necessary) */
-	unsigned	used_in_HANDLER:1;/*!< TRUE if we have been using this
-					handle in a MySQL HANDLER low level
-					index cursor command: then we must
-					store the pcur position even in a
-					unique search from a clustered index,
-					because HANDLER allows NEXT and PREV
-					in such a situation */
 	unsigned	template_type:2;/*!< ROW_MYSQL_WHOLE_ROW,
 					ROW_MYSQL_REC_FIELDS,
 					ROW_MYSQL_DUMMY_TEMPLATE, or
@@ -754,8 +749,6 @@ struct row_prebuilt_struct {
 					store it here so that we can return
 					it to MySQL */
 	/*----------------------*/
-	UT_LIST_NODE_T(row_prebuilt_t)	prebuilts;
-					/*!< list node of table->prebuilts */
 	ulint		magic_n2;	/*!< this should be the same as
 					magic_n */
 };

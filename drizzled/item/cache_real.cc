@@ -21,6 +21,9 @@
 #include <math.h>
 #include <drizzled/item/cache_real.h>
 
+namespace drizzled
+{
+
 void Item_cache_real::store(Item *item)
 {
   value= item->val_result();
@@ -49,4 +52,6 @@ my_decimal *Item_cache_real::val_decimal(my_decimal *decimal_val)
   double2my_decimal(E_DEC_FATAL_ERROR, value, decimal_val);
   return decimal_val;
 }
+
+} /* namespace drizzled */
 

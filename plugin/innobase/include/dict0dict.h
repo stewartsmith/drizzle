@@ -11,8 +11,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -704,7 +704,7 @@ dict_index_find_on_id_low(
 	dulint	id);	/*!< in: index id */
 /**********************************************************************//**
 Adds an index to the dictionary cache.
-@return	DB_SUCCESS or error code */
+@return	DB_SUCCESS, DB_TOO_BIG_RECORD, or DB_CORRUPTION */
 UNIV_INTERN
 ulint
 dict_index_add_to_cache(
@@ -1134,6 +1134,13 @@ UNIV_INTERN
 void
 dict_ind_init(void);
 /*===============*/
+
+/**********************************************************************//**
+Closes the data dictionary module. */
+UNIV_INTERN
+void
+dict_close(void);
+/*============*/
 
 #ifndef UNIV_NONINL
 #include "dict0dict.ic"
