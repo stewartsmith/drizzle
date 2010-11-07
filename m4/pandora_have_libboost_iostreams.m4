@@ -7,7 +7,7 @@ AC_DEFUN([_PANDORA_SEARCH_BOOST_IOSTREAMS],[
   AC_REQUIRE([AC_LIB_PREFIX])
 
   dnl --------------------------------------------------------------------
-  dnl  Check for Boost.Filesystem
+  dnl  Check for Boost.Iostreams
   dnl --------------------------------------------------------------------
 
   AC_LANG_PUSH(C++)
