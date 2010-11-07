@@ -111,7 +111,7 @@ void ReadRecord::init_read_record(Session *session_arg,
                   rr_unpack_from_tempfile : rr_from_tempfile);
 
     io_cache=tempfile;
-    reinit_io_cache(io_cache,internal::READ_CACHE,0L,0,0);
+    io_cache->reinit_io_cache(internal::READ_CACHE,0L,0,0);
     ref_pos=table->cursor->ref;
     if (!table->cursor->inited)
       table->cursor->startTableScan(0);

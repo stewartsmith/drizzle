@@ -341,9 +341,10 @@ int mysql_update(Session *session, TableList *table_list,
       */
 
       internal::IO_CACHE tempfile;
-      if (open_cached_file(&tempfile, drizzle_tmpdir.c_str(),TEMP_PREFIX,
-			   DISK_BUFFER_SIZE, MYF(MY_WME)))
+      if (tempfile.open_cached_file(drizzle_tmpdir.c_str(),TEMP_PREFIX, DISK_BUFFER_SIZE, MYF(MY_WME)))
+      {
 	goto err;
+      }
 
       /* If quick select is used, initialize it before retrieving rows. */
       if (select && select->quick && select->quick->reset())
@@ -416,7 +417,7 @@ int mysql_update(Session *session, TableList *table_list,
 	select= new optimizer::SqlSelect;
 	select->head=table;
       }
-      if (reinit_io_cache(&tempfile,internal::READ_CACHE,0L,0,0))
+      if (tempfile.reinit_io_cache(internal::READ_CACHE,0L,0,0))
 	error=1;
       // Read row ptrs from this cursor
       memcpy(select->file, &tempfile, sizeof(tempfile));
