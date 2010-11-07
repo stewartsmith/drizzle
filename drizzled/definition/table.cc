@@ -1383,7 +1383,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
                                 decimals,
                                 field_type,
                                 charset,
-                                (Field::utype) MTYP_TYPENR(unireg_type),
+                                MTYP_TYPENR(unireg_type),
                                 ((field_type == DRIZZLE_TYPE_ENUM) ?
                                  &intervals[interval_nr++]
                                  : (TYPELIB*) 0),
