@@ -10,10 +10,13 @@ plugins.
 
 Drizzle supports SQL92, with custom extensions for advanced users.
 
-It has been designed for modern environments which are 64bit, have lots of
-cores, many gigs of memory, and where a database is needed that will fit into the infrastructure
-of the environment (compared to classic solutions where the database is a
-world unto itself).
+Historically, database servers have dictated infrastructure - you must use
+the inbuilt authentication system, the inbuilt logging system etc. Drizzle takes
+a different approach; it aims to integrate with your existing infrastructure,
+becoming a part of it instead of an island.
+
+Drizzle has been designed for modern environments which are 64bit, multi-core
+with gigabytes of memory.
 
 Drizzle is open source software, and is maintained by a number of
-individuals and companies for the better advancement of all who participate. 
+individuals and companies for the better advancement of all who participate.
