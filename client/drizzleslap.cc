@@ -119,11 +119,6 @@ namespace po= boost::program_options;
 static char *shared_memory_base_name=0;
 #endif
 
-/* Global Thread counter */
-uint32_t thread_counter;
-boost::mutex counter_mutex;
-boost::condition_variable_any count_threshhold;
-
 client::Wakeup master_wakeup;
 
 /* Global Thread timer */
@@ -383,12 +378,6 @@ end:
     run_query(con, NULL, "COMMIT", strlen("COMMIT"));
 
   slap_close(con);
-
-  {
-    boost::mutex::scoped_lock scopedLock(counter_mutex);
-    thread_counter--;
-    count_threshhold.notify_one();
-  }
 
   delete ctx;
 }
@@ -1924,16 +1913,17 @@ static void timer_thread()
   }
 }
 
+typedef boost::shared_ptr<boost::thread> Thread;
+typedef std::vector <Thread> Threads;
 static void run_scheduler(Stats *sptr, Statement **stmts, uint32_t concur, uint64_t limit)
 {
   uint32_t real_concurrency;
   struct timeval start_time, end_time;
 
-  {
-    boost::mutex::scoped_lock lock(counter_mutex);
+  Threads threads;
 
+  {
     OptionString *sql_type;
-    thread_counter= 0;
 
     master_wakeup.reset();
 
@@ -1970,8 +1960,10 @@ static void run_scheduler(Stats *sptr, Statement **stmts, uint32_t concur, uint6
           real_concurrency++;
 
           /* now you create the thread */
-          boost::thread new_thread(boost::bind(&run_task, con));
-          thread_counter++;
+          Thread thread;
+          thread= Thread(new boost::thread(boost::bind(&run_task, con)));
+          threads.push_back(thread);
+
         }
       }
     }
@@ -1987,7 +1979,9 @@ static void run_scheduler(Stats *sptr, Statement **stmts, uint32_t concur, uint6
         timer_alarm= true;
       }
 
-      boost::thread new_thread(&timer_thread);
+      Thread thread;
+      thread= Thread(new boost::thread(&timer_thread));
+      threads.push_back(thread);
     }
   }
 
@@ -1998,16 +1992,9 @@ static void run_scheduler(Stats *sptr, Statement **stmts, uint32_t concur, uint6
   /*
     We loop until we know that all children have cleaned up.
   */
+  for (Threads::iterator iter= threads.begin(); iter != threads.end(); iter++)
   {
-    boost::mutex::scoped_lock scopedLock(counter_mutex);
-    while (thread_counter)
-    {
-      boost::xtime xt; 
-      xtime_get(&xt, boost::TIME_UTC); 
-      xt.sec += 3;
-
-      count_threshhold.timed_wait(scopedLock, xt);
-    }
+    (*iter)->join();
   }
 
   gettimeofday(&end_time, NULL);
