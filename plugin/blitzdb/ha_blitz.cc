@@ -168,6 +168,42 @@ int BlitzEngine::doRenameTable(drizzled::Session &,
   BlitzData blitz_table;
   uint32_t nkeys;
 
+  BlitzData dict;
+  int ecode;
+  /* Write the table definition to system table. */
+  if ((ecode = dict.open_system_table(from.getPath(), HDBOWRITER)) != 0)
+    return ecode;
+
+  drizzled::message::Table proto;
+  char *proto_string;
+  int proto_string_len;
+
+  proto_string = dict.get_system_entry(BLITZ_TABLE_PROTO_KEY.c_str(),
+                                       BLITZ_TABLE_PROTO_KEY.length(),
+                                       &proto_string_len);
+
+  if (proto_string == NULL) {
+    return ENOMEM;
+  }
+
+  if (!proto.ParseFromArray(proto_string, proto_string_len)) {
+    free(proto_string);
+    return HA_ERR_CRASHED_ON_USAGE;
+  }
+
+  free(proto_string);
+
+  proto.set_name(to.getTableName());
+  proto.set_schema(to.getSchemaName());
+  proto.set_catalog(to.getCatalogName());
+
+  if (!dict.write_table_definition(proto)) {
+    dict.close_system_table();
+    return HA_ERR_CRASHED_ON_USAGE;
+  }
+
+  dict.close_system_table();
+
   /* Find out the number of indexes in this table. This information
      is required because BlitzDB creates a file for each indexes.*/
   if (blitz_table.open_data_table(from.getPath().c_str(), HDBOREADER) != 0)
