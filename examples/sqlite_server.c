@@ -310,7 +310,7 @@ static int row_cb(void *data, int field_count, char **fields, char **columns)
   sqlite_server *server= (sqlite_server *)data;
   drizzle_return_t ret;
   int x;
-  size_t sizes[8192];
+  size_t *sizes= (size_t*)malloc(sizeof(size_t)*8192);
 
   if (server->send_columns == true)
   {
@@ -376,6 +376,8 @@ static int row_cb(void *data, int field_count, char **fields, char **columns)
   }
 
   server->rows++;
+
+  free(sizes);
 
   return 0;
 }
