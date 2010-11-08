@@ -260,7 +260,7 @@ ArchiveShare::~ArchiveShare()
 
 bool ArchiveShare::prime(uint64_t *auto_increment)
 {
-  azio_stream archive_tmp;
+  auto_ptr<azio_stream> archive_tmp(new azio_stream);
 
   /*
     We read the meta file, but do not mark it dirty. Since we are not
@@ -268,19 +268,19 @@ bool ArchiveShare::prime(uint64_t *auto_increment)
     anything but reading... open it for write and we will generate null
     compression writes).
   */
-  if (!(azopen(&archive_tmp, data_file_name.c_str(), O_RDONLY,
+  if (!(azopen(archive_tmp.get(), data_file_name.c_str(), O_RDONLY,
                AZ_METHOD_BLOCK)))
     return false;
 
-  *auto_increment= archive_tmp.auto_increment + 1;
-  rows_recorded= (ha_rows)archive_tmp.rows;
-  crashed= archive_tmp.dirty;
+  *auto_increment= archive_tmp->auto_increment + 1;
+  rows_recorded= (ha_rows)archive_tmp->rows;
+  crashed= archive_tmp->dirty;
   if (version < global_version)
   {
     version_rows= rows_recorded;
     version= global_version;
   }
-  azclose(&archive_tmp);
+  azclose(archive_tmp.get());
 
   return true;
 }
