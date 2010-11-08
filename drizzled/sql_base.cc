@@ -393,7 +393,7 @@ void Session::close_open_tables()
   if (found_old_table)
   {
     /* Tell threads waiting for refresh that something has happened */
-    broadcast_refresh();
+    locking::broadcast_refresh();
   }
 }
 
@@ -693,7 +693,7 @@ void Session::unlink_open_table(Table *find)
   }
 
   // Notify any 'refresh' threads
-  broadcast_refresh();
+  locking::broadcast_refresh();
 }
 
 
@@ -1345,7 +1345,7 @@ bool Session::reopen_tables(bool get_locks, bool)
   if (get_locks && tables)
     delete [] tables;
 
-  broadcast_refresh();
+  locking::broadcast_refresh();
 
   return(error);
 }
@@ -1433,7 +1433,7 @@ void Session::close_old_data_files(bool morph_locks, bool send_refresh)
     }
   }
   if (found)
-    broadcast_refresh();
+    locking::broadcast_refresh();
 }
 
 
@@ -1539,7 +1539,7 @@ Table *drop_locked_tables(Session *session, const drizzled::TableIdentifier &ide
   }
   *prev=0;
   if (found)
-    broadcast_refresh();
+    locking::broadcast_refresh();
 
   return(found);
 }

@@ -1714,7 +1714,7 @@ void Session::close_cached_table(Table *table)
   unlink_open_table(table);
 
   /* When lock on LOCK_open is freed other threads can continue */
-  broadcast_refresh();
+  locking::broadcast_refresh();
 }
 
 /*

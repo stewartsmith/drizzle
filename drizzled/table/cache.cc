@@ -243,7 +243,7 @@ bool Cache::removeTable(Session *session, TableIdentifier &identifier, uint32_t 
         Signal any thread waiting for tables to be freed to
         reopen their tables
       */
-      broadcast_refresh();
+      locking::broadcast_refresh();
       if (!(flags & RTFC_CHECK_KILLED_FLAG) || !session->killed)
       {
         dropping_tables++;

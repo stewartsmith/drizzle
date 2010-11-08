@@ -716,7 +716,7 @@ void TableList::unlock_table_name()
   if (table)
   {
     table::remove_table(static_cast<table::Concurrent *>(table));
-    broadcast_refresh();
+    locking::broadcast_refresh();
   }
 }
 
@@ -869,7 +869,7 @@ void TableList::unlock_table_names(TableList *last_table)
     table_iter->unlock_table_name();
   }
 
-  broadcast_refresh();
+  locking::broadcast_refresh();
 }
 
 
@@ -1176,10 +1176,14 @@ bool Session::makeGlobalReadLockBlockCommit()
     handling, it is not necessary to also signal COND_refresh.
 */
 
+namespace locking {
+
 void broadcast_refresh(void)
 {
   COND_refresh.notify_all();
   COND_global_read_lock.notify_all();
+}
+
 }
 
 

@@ -22,6 +22,7 @@
 
 #include <vector>
 #include "drizzled/thr_lock.h"
+#include "drizzled/locking/global.h"
 
 namespace drizzled
 {
@@ -91,9 +92,6 @@ public:
 #define DRIZZLE_LOCK_IGNORE_FLUSH                 0x0002
 #define DRIZZLE_LOCK_NOTIFY_IF_NEED_REOPEN        0x0004
 #define DRIZZLE_OPEN_TEMPORARY_ONLY               0x0008
-
-void broadcast_refresh(void);
-
 
 } /* namespace drizzled */
 
