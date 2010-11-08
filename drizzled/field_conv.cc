@@ -688,6 +688,17 @@ CopyField::get_copy_func(Field *to,Field *from)
         return do_field_string;
       else if (to->real_type() == DRIZZLE_TYPE_VARCHAR)
       {
+        /* Field_blob is not part of the Field_varstring hierarchy,
+           and casting to varstring for calling pack_length_no_ptr()
+           is always incorrect. Previously the below comparison has
+           always evaluated to false as pack_length_no_ptr() for BLOB
+           will return 4 and varstring can only be <= 2.
+           If your brain slightly bleeds as to why this worked for
+           so many years, you are in no way alone.
+        */
+        if (from->flags & BLOB_FLAG)
+          return do_field_string;
+
         if ((dynamic_cast<Field_varstring*>(to))->pack_length_no_ptr() !=
             (dynamic_cast<Field_varstring*>(from))->pack_length_no_ptr())
         {
