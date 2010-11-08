@@ -112,5 +112,5 @@ void table_cache_dictionary::TableDefinitionCache::Generator::fill()
   push(static_cast<uint64_t>(share->getTableCount()));
 
   /* IS_NAME_LOCKED */
-  push(share->isNameLock());
+  push(false);
 }
