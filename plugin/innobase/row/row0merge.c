@@ -1534,6 +1534,8 @@ row_merge_blocks_copy(
 
 	heap = row_merge_heap_create(index, &buf, &offsets0, &offsets1);
 
+        buf = mem_heap_alloc(heap, sizeof(mrec_buf_t) * 3);
+
 	/* Write a record and read the next record.  Split the output
 	file in two halves, which can be merged on the following pass. */
 
