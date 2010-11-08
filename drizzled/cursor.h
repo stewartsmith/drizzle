@@ -475,7 +475,7 @@ public:
     or partitioned.
 
     @note that one can NOT rely on table->in_use in store_lock().  It may
-    refer to a different thread if called from mysql_lock_abort_for_thread().
+    refer to a different thread if called from abortLockForThread().
 
     @note If the table is MERGE, store_lock() can return less locks
     than lock_count() claimed. This can happen when the MERGE children

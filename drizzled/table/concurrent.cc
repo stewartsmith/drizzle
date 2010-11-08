@@ -63,7 +63,7 @@ bool Concurrent::reopen_name_locked_table(TableList* table_list, Session *sessio
 {
   safe_mutex_assert_owner(LOCK_open.native_handle());
 
-  if (session->killed)
+  if (session->getKilled())
     return true;
 
   TableIdentifier identifier(table_list->getSchemaName(), table_list->getTableName());
@@ -177,7 +177,7 @@ retry:
       /* Free share and wait until it's released by all threads */
       TableShare::release(share);
 
-      if (!session->killed)
+      if (not session->getKilled())
       {
         drizzle_reset_errors(session, 1);         // Clear warnings
         session->clear_error();                 // Clear error message

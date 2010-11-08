@@ -200,7 +200,7 @@ bool Cache::removeTable(Session *session, TableIdentifier &identifier, uint32_t 
       {
         /*
           Mark that table is going to be deleted from cache. This will
-          force threads that are in mysql_lock_tables() (but not yet
+          force threads that are in lockTables() (but not yet
           in thr_multi_lock()) to abort it's locks, close all tables and retry
         */
         in_use->some_tables_deleted= true;
@@ -223,7 +223,7 @@ bool Cache::removeTable(Session *session, TableIdentifier &identifier, uint32_t 
         {
           /* Do not handle locks of MERGE children. */
           if (session_table->db_stat)	// If table is open
-            signalled|= mysql_lock_abort_for_thread(session, session_table);
+            signalled|= session->abortLockForThread(session_table);
         }
       }
       else
@@ -243,8 +243,8 @@ bool Cache::removeTable(Session *session, TableIdentifier &identifier, uint32_t 
         Signal any thread waiting for tables to be freed to
         reopen their tables
       */
-      broadcast_refresh();
-      if (!(flags & RTFC_CHECK_KILLED_FLAG) || !session->killed)
+      locking::broadcast_refresh();
+      if (not (flags & RTFC_CHECK_KILLED_FLAG) || not session->getKilled())
       {
         dropping_tables++;
         if (likely(signalled))

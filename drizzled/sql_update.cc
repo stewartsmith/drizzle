@@ -148,7 +148,7 @@ int mysql_update(Session *session, TableList *table_list,
   Select_Lex    *select_lex= &session->lex->select_lex;
   uint64_t     id;
   List<Item> all_fields;
-  Session::killed_state killed_status= Session::NOT_KILLED;
+  Session::killed_state_t killed_status= Session::NOT_KILLED;
 
   DRIZZLE_UPDATE_START(session->query.c_str());
   if (session->openTablesLock(table_list))
@@ -374,7 +374,7 @@ int mysql_update(Session *session, TableList *table_list,
       session->set_proc_info("Searching rows for update");
       ha_rows tmp_limit= limit;
 
-      while (!(error=info.read_record(&info)) && !session->killed)
+      while (not(error= info.read_record(&info)) && not session->getKilled())
       {
 	if (!(select && select->skip_record()))
 	{
@@ -397,7 +397,7 @@ int mysql_update(Session *session, TableList *table_list,
 	else
 	  table->cursor->unlock_row();
       }
-      if (session->killed && !error)
+      if (session->getKilled() && not error)
 	error= 1;				// Aborted
       limit= tmp_limit;
       table->cursor->try_semi_consistent_read(0);
@@ -467,9 +467,9 @@ int mysql_update(Session *session, TableList *table_list,
   can_compare_record= (! (table->cursor->getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ)) ||
                        table->write_set->is_subset_of(*table->read_set));
 
-  while (! (error=info.read_record(&info)) && !session->killed)
+  while (not (error=info.read_record(&info)) && not session->getKilled())
   {
-    if (! (select && select->skip_record()))
+    if (not (select && select->skip_record()))
     {
       if (table->cursor->was_semi_consistent_read())
         continue;  /* repeat the read of the same row if it still exists */
@@ -546,7 +546,7 @@ int mysql_update(Session *session, TableList *table_list,
     It's assumed that if an error was set in combination with an effective
     killed status then the error is due to killing.
   */
-  killed_status= session->killed; // get the status of the volatile
+  killed_status= session->getKilled(); // get the status of the volatile
   // simulated killing after the loop must be ineffective for binlogging
   error= (killed_status == Session::NOT_KILLED)?  error : 1;
 

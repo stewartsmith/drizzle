@@ -142,7 +142,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
   assert(tdb);
   uint32_t skip_lines= ex->skip_lines;
   bool transactional_table;
-  Session::killed_state killed_status= Session::NOT_KILLED;
+  Session::killed_state_t killed_status= Session::NOT_KILLED;
 
   /* Escape and enclosed character may be a utf8 4-byte character */
   if (escaped->length() > 4 || enclosed->length() > 4)
@@ -390,7 +390,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
      simulated killing in the middle of per-row loop
      must be effective for binlogging
   */
-  killed_status= (error == 0)? Session::NOT_KILLED : session->killed;
+  killed_status= (error == 0)? Session::NOT_KILLED : session->getKilled();
   if (error)
   {
     error= -1;				// Error on read
@@ -436,7 +436,7 @@ read_fixed_length(Session *session, CopyInfo &info, TableList *table_list,
 
   while (!read_info.read_fixed_length())
   {
-    if (session->killed)
+    if (session->getKilled())
     {
       session->send_kill_message();
       return(1);
@@ -509,7 +509,7 @@ read_fixed_length(Session *session, CopyInfo &info, TableList *table_list,
                           ER(ER_WARN_TOO_MANY_RECORDS), session->row_count);
     }
 
-    if (session->killed ||
+    if (session->getKilled() ||
         fill_record(session, set_fields, set_values,
                     ignore_check_option_errors))
       return(1);
@@ -558,7 +558,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
 
   for (;;it.rewind())
   {
-    if (session->killed)
+    if (session->getKilled())
     {
       session->send_kill_message();
       return(1);
@@ -691,7 +691,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
       }
     }
 
-    if (session->killed ||
+    if (session->getKilled() ||
         fill_record(session, set_fields, set_values,
                     ignore_check_option_errors))
       return(1);
@@ -712,7 +712,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                           ER_WARN_TOO_MANY_RECORDS, ER(ER_WARN_TOO_MANY_RECORDS),
                           session->row_count);
-      if (session->killed)
+      if (session->getKilled())
         return(1);
     }
     session->row_count++;

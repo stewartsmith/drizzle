@@ -591,7 +591,7 @@ int Join::optimize()
     return 1;
   }
   if (const_tables && !(select_options & SELECT_NO_UNLOCK))
-    mysql_unlock_some_tables(session, table, const_tables);
+    session->unlockSomeTables(table, const_tables);
   if (!conds && outer_join)
   {
     /* Handle the case where we have an OUTER JOIN without a WHERE */
@@ -1788,7 +1788,7 @@ bool Join::setup_subquery_materialization()
     is called after all rows are sent, but before EOF packet is sent.
 
     For a simple SELECT with no subqueries this function performs a full
-    cleanup of the Join and calls mysql_unlock_read_tables to free used base
+    cleanup of the Join and calls unlockReadTables to free used base
     tables.
 
     If a Join is executed for a subquery or if it has a subquery, we can't
@@ -1860,7 +1860,7 @@ void Join::join_free()
       TODO: unlock tables even if the join isn't top level select in the
       tree.
     */
-    mysql_unlock_read_tables(session, lock);           // Don't free join->lock
+    session->unlockReadTables(lock);           // Don't free join->lock
     lock= 0;
   }
 
@@ -2462,7 +2462,7 @@ enum_nested_loop_state evaluate_join_record(Join *join, JoinTable *join_tab, int
     return NESTED_LOOP_ERROR;
   if (error < 0)
     return NESTED_LOOP_NO_MORE_ROWS;
-  if (join->session->killed)			// Aborted by user
+  if (join->session->getKilled())			// Aborted by user
   {
     join->session->send_kill_message();
     return NESTED_LOOP_KILLED;
@@ -2674,7 +2674,7 @@ enum_nested_loop_state flush_cached_records(Join *join, JoinTable *join_tab, boo
   info= &join_tab->read_record;
   do
   {
-    if (join->session->killed)
+    if (join->session->getKilled())
     {
       join->session->send_kill_message();
       return NESTED_LOOP_KILLED;
@@ -2806,7 +2806,7 @@ enum_nested_loop_state end_write(Join *join, JoinTable *, bool end_of_records)
 {
   Table *table= join->tmp_table;
 
-  if (join->session->killed)			// Aborted by user
+  if (join->session->getKilled())			// Aborted by user
   {
     join->session->send_kill_message();
     return NESTED_LOOP_KILLED;
@@ -2852,7 +2852,7 @@ enum_nested_loop_state end_update(Join *join, JoinTable *, bool end_of_records)
 
   if (end_of_records)
     return NESTED_LOOP_OK;
-  if (join->session->killed)			// Aborted by user
+  if (join->session->getKilled())			// Aborted by user
   {
     join->session->send_kill_message();
     return NESTED_LOOP_KILLED;
@@ -2917,7 +2917,7 @@ enum_nested_loop_state end_unique_update(Join *join, JoinTable *, bool end_of_re
 
   if (end_of_records)
     return NESTED_LOOP_OK;
-  if (join->session->killed)			// Aborted by user
+  if (join->session->getKilled())			// Aborted by user
   {
     join->session->send_kill_message();
     return NESTED_LOOP_KILLED;
@@ -4182,7 +4182,7 @@ static bool best_extension_by_limited_search(Join *join,
                                              uint32_t prune_level)
 {
   Session *session= join->session;
-  if (session->killed)  // Abort
+  if (session->getKilled())  // Abort
     return(true);
 
   /*
@@ -5880,7 +5880,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
     join->best_read= 1.0;
   }
   /* Generate an execution plan from the found optimal join order. */
-  return (join->session->killed || get_best_combination(join));
+  return (join->session->getKilled() || get_best_combination(join));
 }
 
 /**

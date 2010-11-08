@@ -1805,7 +1805,7 @@ trx_is_interrupted(
 /*===============*/
   trx_t*  trx)  /*!< in: transaction */
 {
-  return(trx && trx->mysql_thd && static_cast<Session*>(trx->mysql_thd)->killed);
+  return(trx && trx->mysql_thd && static_cast<Session*>(trx->mysql_thd)->getKilled());
 }
 
 /**************************************************************//**
@@ -2774,11 +2774,11 @@ InnobaseEngine::close_connection(
 
   ut_a(trx);
 
-  assert(session->killed != Session::NOT_KILLED ||
+  assert(session->getKilled() != Session::NOT_KILLED ||
          trx->conc_state == TRX_NOT_STARTED);
 
   /* Warn if rolling back some things... */
-  if (session->killed != Session::NOT_KILLED &&
+  if (session->getKilled() != Session::NOT_KILLED &&
       trx->conc_state != TRX_NOT_STARTED &&
       trx->undo_no.low > 0 &&
       global_system_variables.log_warnings)

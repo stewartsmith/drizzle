@@ -1,12 +1,11 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2010 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ *  the Free Software Foundation; version 2 of the License.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -18,31 +17,19 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include <drizzled/show.h>
-#include <drizzled/session.h>
-#include <drizzled/lock.h>
-#include <drizzled/statement/unlock_tables.h>
+#ifndef DRIZZLED_LOCKING_GLOBAL_H
+#define DRIZZLED_LOCKING_GLOBAL_H
 
 namespace drizzled
 {
 
-bool statement::UnlockTables::execute()
+namespace locking
 {
-  /*
-     It is critical for mysqldump --single-transaction --master-data that
-     UNLOCK TABLES does not implicitely commit a connection which has only
-     done FLUSH TABLES WITH READ LOCK + BEGIN. If this assumption becomes
-     false, mysqldump will not work.
-   */
-  if (session->isGlobalReadLock())
-  {
-    session->unlockGlobalReadLock();
-  }
-  session->my_ok();
 
-  return false;
-}
+void broadcast_refresh(void);
 
+
+} /* namespace global */
 } /* namespace drizzled */
 
+#endif /* DRIZZLED_LOCKING_GLOBAL_H */
