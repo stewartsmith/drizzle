@@ -94,7 +94,7 @@ protected:
   struct option *option_limits; /**< Updated by by sys_var_init() */
   bool m_allow_empty_value; /**< Does variable allow an empty value? */
 public:
-  sys_var(const std::string name_arg, sys_after_update_func func= NULL)
+  sys_var(const std::string &name_arg, sys_after_update_func func= NULL)
     :
     name(name_arg),
     after_update(func),
@@ -266,9 +266,10 @@ class sys_var_bool_ptr :public sys_var
 {
 public:
   bool *value;
-  sys_var_bool_ptr(const char *name_arg, bool *value_arg)
-    :sys_var(name_arg),value(value_arg)
-  {  }
+  sys_var_bool_ptr(const std::string &name_arg, bool *value_arg,
+                   sys_after_update_func func= NULL) :
+    sys_var(name_arg, func), value(value_arg)
+  { }
   bool check(Session *session, set_var *var)
   {
     return check_enum(session, var, &bool_typelib);
