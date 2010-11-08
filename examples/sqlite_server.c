@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
   bool mysql= false;
   in_port_t port= 0;
   drizzle_return_t ret;
-  sqlite_server *server= (sqllite_server*)malloc(sizeof(sqlite_server));
+  sqlite_server *server= (sqlite_server*)malloc(sizeof(sqlite_server));
   drizzle_con_st *con_listen= (drizzle_con_st*)malloc(sizeof(drizzle_con_st));
 
   server->db= NULL;
