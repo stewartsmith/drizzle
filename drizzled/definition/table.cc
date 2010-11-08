@@ -2107,7 +2107,6 @@ Field *TableShare::make_field(unsigned char *ptr,
                                  null_bit,
                                  field_name,
                                  this,
-                                 calc_pack_length(DRIZZLE_TYPE_LONG, 0),
                                  field_charset);
   case DRIZZLE_TYPE_DECIMAL:
     return new (&mem_root) Field_decimal(ptr,
