@@ -1201,7 +1201,7 @@ static bool internal_alter_table(Session *session,
     /* Close lock if this is a transactional table */
     if (session->lock)
     {
-      session->mysql_unlock_tables(session->lock);
+      session->unlockTables(session->lock);
       session->lock= 0;
     }
 
@@ -1444,7 +1444,7 @@ copy_data_between_tables(Session *session,
   /* 
    * LP Bug #552420 
    *
-   * Since open_temporary_table() doesn't invoke mysql_lock_tables(), we
+   * Since open_temporary_table() doesn't invoke lockTables(), we
    * don't get the usual automatic call to StorageEngine::startStatement(), so
    * we manually call it here...
    */

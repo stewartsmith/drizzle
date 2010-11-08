@@ -1676,7 +1676,7 @@ void wait_while_table_is_used(Session *session, Table *table,
 
   table->cursor->extra(function);
   /* Mark all tables that are in use as 'old' */
-  session->mysql_lock_abort(table);	/* end threads waiting on lock */
+  session->abortLock(table);	/* end threads waiting on lock */
 
   /* Wait until all there are no other threads that has this table open */
   TableIdentifier identifier(table->getShare()->getSchemaName(), table->getShare()->getTableName());
@@ -1707,7 +1707,7 @@ void Session::close_cached_table(Table *table)
   /* Close lock if this is not got with LOCK TABLES */
   if (lock)
   {
-    mysql_unlock_tables(lock);
+    unlockTables(lock);
     lock= NULL;			// Start locked threads
   }
   /* Close all copies of 'table'.  This also frees all LOCK TABLES lock */
@@ -1829,7 +1829,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       LOCK_open.lock(); /* Lock type is TL_WRITE and we lock to repair the table */
       const char *old_message=session->enter_cond(COND_refresh, LOCK_open,
                                                   "Waiting to get writelock");
-      session->mysql_lock_abort(table->table);
+      session->abortLock(table->table);
       TableIdentifier identifier(table->table->getShare()->getSchemaName(), table->table->getShare()->getTableName());
       table::Cache::singleton().removeTable(session, identifier, RTFC_WAIT_OTHER_THREAD_FLAG | RTFC_CHECK_KILLED_FLAG);
       session->exit_cond(old_message);

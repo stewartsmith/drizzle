@@ -87,7 +87,7 @@ public:
 
 };
 
-/* mysql_lock_tables() and open_table() flags bits */
+/* lockTables() and open_table() flags bits */
 #define DRIZZLE_LOCK_IGNORE_GLOBAL_READ_LOCK      0x0001
 #define DRIZZLE_LOCK_IGNORE_FLUSH                 0x0002
 #define DRIZZLE_LOCK_NOTIFY_IF_NEED_REOPEN        0x0004

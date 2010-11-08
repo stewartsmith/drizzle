@@ -591,7 +591,7 @@ int Join::optimize()
     return 1;
   }
   if (const_tables && !(select_options & SELECT_NO_UNLOCK))
-    session->mysql_unlock_some_tables(table, const_tables);
+    session->unlockSomeTables(table, const_tables);
   if (!conds && outer_join)
   {
     /* Handle the case where we have an OUTER JOIN without a WHERE */
@@ -1788,7 +1788,7 @@ bool Join::setup_subquery_materialization()
     is called after all rows are sent, but before EOF packet is sent.
 
     For a simple SELECT with no subqueries this function performs a full
-    cleanup of the Join and calls mysql_unlock_read_tables to free used base
+    cleanup of the Join and calls unlockReadTables to free used base
     tables.
 
     If a Join is executed for a subquery or if it has a subquery, we can't
@@ -1860,7 +1860,7 @@ void Join::join_free()
       TODO: unlock tables even if the join isn't top level select in the
       tree.
     */
-    session->mysql_unlock_read_tables(lock);           // Don't free join->lock
+    session->unlockReadTables(lock);           // Don't free join->lock
     lock= 0;
   }
 

@@ -49,7 +49,7 @@ public:
     /* Unlock tables before sending packet to gain some speed */
     if (session->lock)
     {
-      session->mysql_unlock_tables(session->lock);
+      session->unlockTables(session->lock);
       session->lock= 0;
     }
     session->my_eof();

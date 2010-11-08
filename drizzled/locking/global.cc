@@ -27,17 +27,17 @@
 
   When not using LOCK TABLES:
 
-  - For each SQL statement mysql_lock_tables() is called for all involved
+  - For each SQL statement lockTables() is called for all involved
     tables.
-    - mysql_lock_tables() will call
+    - lockTables() will call
       table_handler->external_lock(session,locktype) for each table.
       This is followed by a call to thr_multi_lock() for all tables.
 
-  - When statement is done, we call mysql_unlock_tables().
+  - When statement is done, we call unlockTables().
     This will call DrizzleLock::unlock() followed by
     table_handler->external_lock(session, F_UNLCK) for each table.
 
-  - Note that mysql_unlock_tables() may be called several times as
+  - Note that unlockTables() may be called several times as
     MySQL in some cases can free some tables earlier than others.
 
   - The above is true both for normal and temporary tables.
@@ -47,8 +47,8 @@
 
   When using LOCK TABLES:
 
-  - LOCK Table will call mysql_lock_tables() for all tables.
-    mysql_lock_tables() will call
+  - LOCK Table will call lockTables() for all tables.
+    lockTables() will call
     table_handler->external_lock(session,locktype) for each table.
     This is followed by a call to thr_multi_lock() for all tables.
 
@@ -60,7 +60,7 @@
 
   - When statement is done, we will call ha_commit_stmt(session);
 
-  - When calling UNLOCK TABLES we call mysql_unlock_tables() for all
+  - When calling UNLOCK TABLES we call unlockTables() for all
     tables used in LOCK TABLES
 
   If table_handler->external_lock(session, locktype) fails, we call
@@ -111,7 +111,7 @@ static void print_lock_error(int error, const char *);
   Lock tables.
 
   SYNOPSIS
-    mysql_lock_tables()
+    lockTables()
     tables                      An array of pointers to the tables to lock.
     count                       The number of tables to lock.
     flags                       Options:
@@ -119,7 +119,7 @@ static void print_lock_error(int error, const char *);
       DRIZZLE_LOCK_IGNORE_FLUSH                 Ignore a flush tables.
       DRIZZLE_LOCK_NOTIFY_IF_NEED_REOPEN        Instead of reopening altered
                                               or dropped tables by itself,
-                                              mysql_lock_tables() should
+                                              lockTables() should
                                               notify upper level and rely
                                               on caller doing this.
     need_reopen                 Out parameter, TRUE if some tables were altered
@@ -172,7 +172,7 @@ void DrizzleLock::reset(void)
 }
 
 
-DrizzleLock *Session::mysql_lock_tables(Table **tables, uint32_t count, uint32_t flags, bool *need_reopen)
+DrizzleLock *Session::lockTables(Table **tables, uint32_t count, uint32_t flags, bool *need_reopen)
 {
   DrizzleLock *sql_lock;
   Table *write_lock_used;
@@ -325,7 +325,7 @@ retry:
     send_kill_message();
     if (sql_lock)
     {
-      mysql_unlock_tables(sql_lock);
+      unlockTables(sql_lock);
       sql_lock= NULL;
     }
   }
@@ -367,7 +367,7 @@ int Session::lock_external(Table **tables, uint32_t count)
 }
 
 
-void Session::mysql_unlock_tables(DrizzleLock *sql_lock)
+void Session::unlockTables(DrizzleLock *sql_lock)
 {
   if (sql_lock->lock_count)
     sql_lock->unlock(sql_lock->lock_count);
@@ -377,18 +377,18 @@ void Session::mysql_unlock_tables(DrizzleLock *sql_lock)
 }
 
 /**
-  Unlock some of the tables locked by mysql_lock_tables.
+  Unlock some of the tables locked by lockTables.
 
   This will work even if get_lock_data fails (next unlock will free all)
 */
 
-void Session::mysql_unlock_some_tables(Table **table, uint32_t count)
+void Session::unlockSomeTables(Table **table, uint32_t count)
 {
   DrizzleLock *sql_lock;
   Table *write_lock_used;
   if ((sql_lock= get_lock_data(table, count, false,
                                &write_lock_used)))
-    mysql_unlock_tables(sql_lock);
+    unlockTables(sql_lock);
 }
 
 
@@ -396,7 +396,7 @@ void Session::mysql_unlock_some_tables(Table **table, uint32_t count)
   unlock all tables locked for read.
 */
 
-void Session::mysql_unlock_read_tables(DrizzleLock *sql_lock)
+void Session::unlockReadTables(DrizzleLock *sql_lock)
 {
   uint32_t i,found;
 
@@ -471,15 +471,15 @@ void Session::mysql_unlock_read_tables(DrizzleLock *sql_lock)
                           effect is desired.
 */
 
-void Session::mysql_lock_remove(Table *table)
+void Session::removeLock(Table *table)
 {
-  mysql_unlock_some_tables(&table, /* table count */ 1);
+  unlockSomeTables(&table, /* table count */ 1);
 }
 
 
 /** Abort all other threads waiting to get lock in table. */
 
-void Session::mysql_lock_abort(Table *table)
+void Session::abortLock(Table *table)
 {
   DrizzleLock *locked;
   Table *write_lock_used;
@@ -506,7 +506,7 @@ void Session::mysql_lock_abort(Table *table)
     1  Table was locked by at least one other thread
 */
 
-bool Session::mysql_lock_abort_for_thread(Table *table)
+bool Session::abortLockForThread(Table *table)
 {
   DrizzleLock *locked;
   Table *write_lock_used;
