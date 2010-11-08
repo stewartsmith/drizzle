@@ -950,7 +950,7 @@ int ha_archive::repair()
 int ha_archive::optimize()
 {
   int rc= 0;
-  azio_stream writer;
+  auto_ptr<azio_stream> writer(new azio_stream);
 
   init_archive_reader();
 
@@ -973,13 +973,13 @@ int ha_archive::optimize()
   std::string writer_filename= share->table_name;
   writer_filename.append(ARN);
 
-  if (!(azopen(&writer, writer_filename.c_str(), O_CREAT|O_RDWR, AZ_METHOD_BLOCK)))
+  if (!(azopen(writer.get(), writer_filename.c_str(), O_CREAT|O_RDWR, AZ_METHOD_BLOCK)))
   {
     free(proto_string);
     return(HA_ERR_CRASHED_ON_USAGE);
   }
 
-  azwrite_frm(&writer, proto_string, archive.frm_length);
+  azwrite_frm(writer.get(), proto_string, archive.frm_length);
 
   /*
     An extended rebuild is a lot more effort. We open up each row and re-record it.
@@ -1017,7 +1017,7 @@ int ha_archive::optimize()
         if (rc != 0)
           break;
 
-        real_write_row(getTable()->getInsertRecord(), &writer);
+        real_write_row(getTable()->getInsertRecord(), writer.get());
         /*
           Long term it should be possible to optimize this so that
           it is not called on each row.
@@ -1037,7 +1037,7 @@ int ha_archive::optimize()
               (share->archive_write.auto_increment= auto_value) + 1;
         }
       }
-      share->rows_recorded= (ha_rows)writer.rows;
+      share->rows_recorded= (ha_rows)writer->rows;
     }
 
     if (rc && rc != HA_ERR_END_OF_FILE)
@@ -1046,7 +1046,7 @@ int ha_archive::optimize()
     }
   }
 
-  azclose(&writer);
+  azclose(writer.get());
   share->dirty= false;
 
   azclose(&archive);
@@ -1058,7 +1058,7 @@ int ha_archive::optimize()
   return(rc);
 error:
   free(proto_string);
-  azclose(&writer);
+  azclose(writer.get());
 
   return(rc);
 }
