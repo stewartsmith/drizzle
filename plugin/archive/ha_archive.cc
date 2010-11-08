@@ -502,7 +502,7 @@ int ArchiveEngine::doCreateTable(Session &,
                                  drizzled::message::Table& proto)
 {
   int error= 0;
-  azio_stream create_stream;            /* Archive file we are working with */
+  auto_ptr<azio_stream> create_stream(new azio_stream);
   uint64_t auto_increment_value;
   string serialized_proto;
 
@@ -529,7 +529,7 @@ int ArchiveEngine::doCreateTable(Session &,
   named_file.append(ARZ);
 
   errno= 0;
-  if (azopen(&create_stream, named_file.c_str(), O_CREAT|O_RDWR,
+  if (azopen(create_stream.get(), named_file.c_str(), O_CREAT|O_RDWR,
              AZ_METHOD_BLOCK) == 0)
   {
     error= errno;
@@ -548,7 +548,7 @@ int ArchiveEngine::doCreateTable(Session &,
     return(error ? error : -1);
   }
 
-  if (azwrite_frm(&create_stream, serialized_proto.c_str(),
+  if (azwrite_frm(create_stream.get(), serialized_proto.c_str(),
                   serialized_proto.length()))
   {
     unlink(named_file.c_str());
@@ -560,7 +560,7 @@ int ArchiveEngine::doCreateTable(Session &,
   {
     int write_length;
 
-    write_length= azwrite_comment(&create_stream,
+    write_length= azwrite_comment(create_stream.get(),
                                   proto.options().comment().c_str(),
                                   proto.options().comment().length());
 
@@ -577,10 +577,10 @@ int ArchiveEngine::doCreateTable(Session &,
     Yes you need to do this, because the starting value
     for the autoincrement may not be zero.
   */
-  create_stream.auto_increment= auto_increment_value ?
+  create_stream->auto_increment= auto_increment_value ?
     auto_increment_value - 1 : 0;
 
-  if (azclose(&create_stream))
+  if (azclose(create_stream.get()))
   {
     error= errno;
     unlink(named_file.c_str());
