@@ -47,7 +47,7 @@ bool statement::ReplaceSelect::execute()
 
   unit->set_limit(select_lex);
 
-  if (wait_if_global_read_lock(session, false, true))
+  if (session->wait_if_global_read_lock(false, true))
   {
     return true;
   }

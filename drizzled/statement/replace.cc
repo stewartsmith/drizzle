@@ -38,7 +38,7 @@ bool statement::Replace::execute()
     return true;
   }
 
-  if (wait_if_global_read_lock(session, false, true))
+  if (session->wait_if_global_read_lock(false, true))
   {
     return true;
   }

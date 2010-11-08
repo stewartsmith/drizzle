@@ -108,8 +108,6 @@ static boost::condition_variable_any COND_global_read_lock;
 static DrizzleLock *get_lock_data(Session *session, Table **table,
                                   uint32_t count,
                                   bool should_lock, Table **write_locked);
-static int lock_external(Session *session, Table **table,uint32_t count);
-static int unlock_external(Session *session, Table **table,uint32_t count);
 static void print_lock_error(int error, const char *);
 
 /*
@@ -117,7 +115,6 @@ static void print_lock_error(int error, const char *);
 
   SYNOPSIS
     mysql_lock_tables()
-    session                         The current thread.
     tables                      An array of pointers to the tables to lock.
     count                       The number of tables to lock.
     flags                       Options:
@@ -178,8 +175,7 @@ void DrizzleLock::reset(void)
 }
 
 
-DrizzleLock *mysql_lock_tables(Session *session, Table **tables, uint32_t count,
-                                uint32_t flags, bool *need_reopen)
+DrizzleLock *Session::mysql_lock_tables(Table **tables, uint32_t count, uint32_t flags, bool *need_reopen)
 {
   DrizzleLock *sql_lock;
   Table *write_lock_used;
@@ -190,7 +186,7 @@ DrizzleLock *mysql_lock_tables(Session *session, Table **tables, uint32_t count,
 
   for (;;)
   {
-    if (! (sql_lock= get_lock_data(session, tables, count, true,
+    if (! (sql_lock= get_lock_data(this, tables, count, true,
                                    &write_lock_used)))
       break;
 
@@ -201,13 +197,13 @@ DrizzleLock *mysql_lock_tables(Session *session, Table **tables, uint32_t count,
 	Someone has issued LOCK ALL TABLES FOR READ and we want a write lock
 	Wait until the lock is gone
       */
-      if (wait_if_global_read_lock(session, 1, 1))
+      if (wait_if_global_read_lock(1, 1))
       {
         /* Clear the lock type of all lock data to avoid reusage. */
         reset_lock_data_and_free(&sql_lock);
 	break;
       }
-      if (session->version != refresh_version)
+      if (version != refresh_version)
       {
         /* Clear the lock type of all lock data to avoid reusage. */
         reset_lock_data_and_free(&sql_lock);
@@ -215,7 +211,7 @@ DrizzleLock *mysql_lock_tables(Session *session, Table **tables, uint32_t count,
       }
     }
     
-    session->set_proc_info("Notify start statement");
+    set_proc_info("Notify start statement");
     /*
      * Here, we advise all storage engines involved in the
      * statement that we are starting a new statement
@@ -236,24 +232,23 @@ DrizzleLock *mysql_lock_tables(Session *session, Table **tables, uint32_t count,
 
       for_each(involved_engines.begin(),
                involved_engines.end(),
-               bind2nd(mem_fun(&plugin::StorageEngine::startStatement), session));
+               bind2nd(mem_fun(&plugin::StorageEngine::startStatement), this));
     }
 
-    session->set_proc_info("External lock");
+    set_proc_info("External lock");
     /*
      * Here, the call to lock_external() informs the
      * all engines for all tables used in this statement
      * of the type of lock that Drizzle intends to take on a 
      * specific table.
      */
-    if (sql_lock->table_count && lock_external(session, sql_lock->getTable(),
-                                               sql_lock->table_count))
+    if (sql_lock->table_count && lock_external(sql_lock->getTable(), sql_lock->table_count))
     {
       /* Clear the lock type of all lock data to avoid reusage. */
       reset_lock_data_and_free(&sql_lock);
       break;
     }
-    session->set_proc_info("Table lock");
+    set_proc_info("Table lock");
     /* Copy the lock data array. thr_multi_lock() reorders its contens. */
     memcpy(sql_lock->getLocks() + sql_lock->lock_count,
            sql_lock->getLocks(),
@@ -262,22 +257,22 @@ DrizzleLock *mysql_lock_tables(Session *session, Table **tables, uint32_t count,
     rc= thr_lock_errno_to_mysql[(int) thr_multi_lock(sql_lock->getLocks() +
                                                      sql_lock->lock_count,
                                                      sql_lock->lock_count,
-                                                     session->lock_id)];
+                                                     this->lock_id)];
     if (rc > 1)                                 /* a timeout or a deadlock */
     {
       if (sql_lock->table_count)
-        unlock_external(session, sql_lock->getTable(), sql_lock->table_count);
+        unlock_external(sql_lock->getTable(), sql_lock->table_count);
       reset_lock_data_and_free(&sql_lock);
       my_error(rc, MYF(0));
       break;
     }
     else if (rc == 1)                           /* aborted */
     {
-      session->some_tables_deleted=1;		// Try again
+      some_tables_deleted= 1;		// Try again
       sql_lock->lock_count= 0;                  // Locks are already freed
       // Fall through: unlock, reset lock data, free and retry
     }
-    else if (!session->some_tables_deleted || (flags & DRIZZLE_LOCK_IGNORE_FLUSH))
+    else if (not some_tables_deleted || (flags & DRIZZLE_LOCK_IGNORE_FLUSH))
     {
       /*
         Thread was killed or lock aborted. Let upper level close all
@@ -285,20 +280,20 @@ DrizzleLock *mysql_lock_tables(Session *session, Table **tables, uint32_t count,
       */
       break;
     }
-    else if (!session->open_tables)
+    else if (not open_tables)
     {
       // Only using temporary tables, no need to unlock
-      session->some_tables_deleted= 0;
+      some_tables_deleted= 0;
       break;
     }
-    session->set_proc_info(0);
+    set_proc_info(0);
 
     /* going to retry, unlock all tables */
     if (sql_lock->lock_count)
         sql_lock->unlock(sql_lock->lock_count);
 
     if (sql_lock->table_count)
-      unlock_external(session, sql_lock->getTable(), sql_lock->table_count);
+      unlock_external(sql_lock->getTable(), sql_lock->table_count);
 
     /*
       If thr_multi_lock fails it resets lock type for tables, which
@@ -313,32 +308,32 @@ DrizzleLock *mysql_lock_tables(Session *session, Table **tables, uint32_t count,
      */
     for_each(involved_engines.begin(),
              involved_engines.end(),
-             bind2nd(mem_fun(&plugin::StorageEngine::endStatement), session));
+             bind2nd(mem_fun(&plugin::StorageEngine::endStatement), this));
 retry:
     if (flags & DRIZZLE_LOCK_NOTIFY_IF_NEED_REOPEN)
     {
       *need_reopen= true;
       break;
     }
-    if (wait_for_tables(session))
+    if (wait_for_tables(this))
       break;					// Couldn't open tables
   }
-  session->set_proc_info(0);
-  if (session->killed)
+  set_proc_info(0);
+  if (killed)
   {
-    session->send_kill_message();
+    send_kill_message();
     if (sql_lock)
     {
-      mysql_unlock_tables(session,sql_lock);
+      mysql_unlock_tables(sql_lock);
       sql_lock= NULL;
     }
   }
-  session->set_time_after_lock();
+  set_time_after_lock();
   return (sql_lock);
 }
 
 
-static int lock_external(Session *session, Table **tables, uint32_t count)
+int Session::lock_external(Table **tables, uint32_t count)
 {
   int lock_type,error;
   for (uint32_t i= 1 ; i <= count ; i++, tables++)
@@ -350,13 +345,13 @@ static int lock_external(Session *session, Table **tables, uint32_t count)
 	 (*tables)->reginfo.lock_type <= TL_READ_NO_INSERT))
       lock_type=F_RDLCK;
 
-    if ((error=(*tables)->cursor->ha_external_lock(session,lock_type)))
+    if ((error=(*tables)->cursor->ha_external_lock(this,lock_type)))
     {
       print_lock_error(error, (*tables)->cursor->getEngine()->getName().c_str());
       while (--i)
       {
         tables--;
-	(*tables)->cursor->ha_external_lock(session, F_UNLCK);
+	(*tables)->cursor->ha_external_lock(this, F_UNLCK);
 	(*tables)->current_lock=F_UNLCK;
       }
       return error;
@@ -371,12 +366,12 @@ static int lock_external(Session *session, Table **tables, uint32_t count)
 }
 
 
-void mysql_unlock_tables(Session *session, DrizzleLock *sql_lock)
+void Session::mysql_unlock_tables(DrizzleLock *sql_lock)
 {
   if (sql_lock->lock_count)
     sql_lock->unlock(sql_lock->lock_count);
   if (sql_lock->table_count)
-    unlock_external(session, sql_lock->getTable(), sql_lock->table_count);
+    unlock_external(sql_lock->getTable(), sql_lock->table_count);
   delete sql_lock;
 }
 
@@ -386,13 +381,13 @@ void mysql_unlock_tables(Session *session, DrizzleLock *sql_lock)
   This will work even if get_lock_data fails (next unlock will free all)
 */
 
-void mysql_unlock_some_tables(Session *session, Table **table, uint32_t count)
+void Session::mysql_unlock_some_tables(Table **table, uint32_t count)
 {
   DrizzleLock *sql_lock;
   Table *write_lock_used;
-  if ((sql_lock= get_lock_data(session, table, count, false,
+  if ((sql_lock= get_lock_data(this, table, count, false,
                                &write_lock_used)))
-    mysql_unlock_tables(session, sql_lock);
+    mysql_unlock_tables(sql_lock);
 }
 
 
@@ -400,18 +395,18 @@ void mysql_unlock_some_tables(Session *session, Table **table, uint32_t count)
   unlock all tables locked for read.
 */
 
-void mysql_unlock_read_tables(Session *session, DrizzleLock *sql_lock)
+void Session::mysql_unlock_read_tables(DrizzleLock *sql_lock)
 {
   uint32_t i,found;
 
   /* Move all write locks first */
-  THR_LOCK_DATA **lock=sql_lock->getLocks();
+  THR_LOCK_DATA **lock_local= sql_lock->getLocks();
   for (i=found=0 ; i < sql_lock->lock_count ; i++)
   {
     if (sql_lock->getLocks()[i]->type >= TL_WRITE_ALLOW_READ)
     {
-      std::swap(*lock, sql_lock->getLocks()[i]);
-      lock++;
+      std::swap(*lock_local, sql_lock->getLocks()[i]);
+      lock_local++;
       found++;
     }
   }
@@ -438,7 +433,7 @@ void mysql_unlock_read_tables(Session *session, DrizzleLock *sql_lock)
   /* Unlock all read locked tables */
   if (i != found)
   {
-    unlock_external(session,table,i-found);
+    unlock_external(table, i - found);
     sql_lock->table_count=found;
   }
   /* Fix the lock positions in Table */
@@ -452,7 +447,6 @@ void mysql_unlock_read_tables(Session *session, DrizzleLock *sql_lock)
     found+= tbl->lock_count;
     table++;
   }
-  return;
 }
 
 
@@ -476,20 +470,20 @@ void mysql_unlock_read_tables(Session *session, DrizzleLock *sql_lock)
                           effect is desired.
 */
 
-void mysql_lock_remove(Session *session, Table *table)
+void Session::mysql_lock_remove(Table *table)
 {
-  mysql_unlock_some_tables(session, &table, /* table count */ 1);
+  mysql_unlock_some_tables(&table, /* table count */ 1);
 }
 
 
 /** Abort all other threads waiting to get lock in table. */
 
-void mysql_lock_abort(Session *session, Table *table)
+void Session::mysql_lock_abort(Table *table)
 {
   DrizzleLock *locked;
   Table *write_lock_used;
 
-  if ((locked= get_lock_data(session, &table, 1, false,
+  if ((locked= get_lock_data(this, &table, 1, false,
                              &write_lock_used)))
   {
     for (uint32_t x= 0; x < locked->lock_count; x++)
@@ -511,13 +505,13 @@ void mysql_lock_abort(Session *session, Table *table)
     1  Table was locked by at least one other thread
 */
 
-bool mysql_lock_abort_for_thread(Session *session, Table *table)
+bool Session::mysql_lock_abort_for_thread(Table *table)
 {
   DrizzleLock *locked;
   Table *write_lock_used;
   bool result= false;
 
-  if ((locked= get_lock_data(session, &table, 1, false,
+  if ((locked= get_lock_data(this, &table, 1, false,
                              &write_lock_used)))
   {
     for (uint32_t i= 0; i < locked->lock_count; i++)
@@ -532,7 +526,7 @@ bool mysql_lock_abort_for_thread(Session *session, Table *table)
 
 /** Unlock a set of external. */
 
-static int unlock_external(Session *session, Table **table, uint32_t count)
+int Session::unlock_external(Table **table, uint32_t count)
 {
   int error,error_code;
 
@@ -542,7 +536,7 @@ static int unlock_external(Session *session, Table **table, uint32_t count)
     if ((*table)->current_lock != F_UNLCK)
     {
       (*table)->current_lock = F_UNLCK;
-      if ((error=(*table)->cursor->ha_external_lock(session, F_UNLCK)))
+      if ((error=(*table)->cursor->ha_external_lock(this, F_UNLCK)))
       {
 	error_code=error;
 	print_lock_error(error_code, (*table)->cursor->getEngine()->getName().c_str());
@@ -623,7 +617,7 @@ static DrizzleLock *get_lock_data(Session *session, Table **table_ptr, uint32_t 
     }
     locks_start= locks;
     locks= table->cursor->store_lock(session, locks,
-                                   should_lock == false ? TL_IGNORE : lock_type);
+                                     should_lock == false ? TL_IGNORE : lock_type);
     if (should_lock)
     {
       table->lock_position=   (uint32_t) (to - table_buf);
@@ -788,7 +782,7 @@ static bool wait_for_locked_table_names(Session *session, TableList *table_list)
     1	Fatal error (end of memory ?)
 */
 
-static bool lock_table_names(Session *session, TableList *table_list)
+bool Session::lock_table_names(TableList *table_list)
 {
   bool got_all_locks=1;
   TableList *lock_table;
@@ -796,14 +790,14 @@ static bool lock_table_names(Session *session, TableList *table_list)
   for (lock_table= table_list; lock_table; lock_table= lock_table->next_local)
   {
     int got_lock;
-    if ((got_lock= lock_table_name(session, lock_table)) < 0)
+    if ((got_lock= lock_table_name(this, lock_table)) < 0)
       goto end;					// Fatal error
     if (got_lock)
       got_all_locks=0;				// Someone is using table
   }
 
   /* If some table was in use, wait until we got the lock */
-  if (!got_all_locks && wait_for_locked_table_names(session, table_list))
+  if (!got_all_locks && wait_for_locked_table_names(this, table_list))
     goto end;
   return false;
 
@@ -833,9 +827,9 @@ end:
   @retval FALSE Name lock successfully acquired.
 */
 
-bool lock_table_names_exclusively(Session *session, TableList *table_list)
+bool Session::lock_table_names_exclusively(TableList *table_list)
 {
-  if (lock_table_names(session, table_list))
+  if (lock_table_names(table_list))
     return true;
 
   /*
@@ -1053,8 +1047,7 @@ static inline bool must_wait(bool is_not_commit)
           global_read_lock_blocks_commit));
 }
 
-bool wait_if_global_read_lock(Session *session, bool abort_on_refresh,
-                              bool is_not_commit)
+bool Session::wait_if_global_read_lock(bool abort_on_refresh, bool is_not_commit)
 {
   const char *old_message= NULL;
   bool result= 0, need_exit_cond;
@@ -1069,7 +1062,7 @@ bool wait_if_global_read_lock(Session *session, bool abort_on_refresh,
   LOCK_global_read_lock.lock();
   if ((need_exit_cond= must_wait(is_not_commit)))
   {
-    if (session->isGlobalReadLock())		// This thread had the read locks
+    if (isGlobalReadLock())		// This thread had the read locks
     {
       if (is_not_commit)
         my_message(ER_CANT_UPDATE_WITH_READLOCK,
@@ -1082,16 +1075,17 @@ bool wait_if_global_read_lock(Session *session, bool abort_on_refresh,
       */
       return is_not_commit;
     }
-    old_message=session->enter_cond(COND_global_read_lock, LOCK_global_read_lock,
-                                    "Waiting for release of readlock");
-    while (must_wait(is_not_commit) && ! session->killed &&
-	   (!abort_on_refresh || session->version == refresh_version))
+    old_message= enter_cond(COND_global_read_lock, LOCK_global_read_lock,
+                            "Waiting for release of readlock");
+
+    while (must_wait(is_not_commit) && not killed &&
+	   (!abort_on_refresh || version == refresh_version))
     {
       boost_unique_lock_t scoped(LOCK_global_read_lock, boost::adopt_lock_t());
       COND_global_read_lock.wait(scoped);
       scoped.release();
     }
-    if (session->killed)
+    if (killed)
       result=1;
   }
   if (not abort_on_refresh && not result)
@@ -1102,9 +1096,13 @@ bool wait_if_global_read_lock(Session *session, bool abort_on_refresh,
     and if old_message is set
   */
   if (unlikely(need_exit_cond))
-    session->exit_cond(old_message); // this unlocks LOCK_global_read_lock
+  {
+    exit_cond(old_message); // this unlocks LOCK_global_read_lock
+  }
   else
+  {
     LOCK_global_read_lock.unlock();
+  }
 
   return result;
 }

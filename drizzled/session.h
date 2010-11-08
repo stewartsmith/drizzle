@@ -739,10 +739,25 @@ public:
     _global_read_lock= arg;
   }
 
-  void unlockGlobalReadLock();
-  void startWaitingGlobalReadLock();
-  bool makeGlobalReadLockBlockCommit();
+  DrizzleLock *mysql_lock_tables(Table **tables, uint32_t count, uint32_t flags, bool *need_reopen);
   bool lockGlobalReadLock();
+  bool lock_table_names(TableList *table_list);
+  bool lock_table_names_exclusively(TableList *table_list);
+  bool makeGlobalReadLockBlockCommit();
+  bool mysql_lock_abort_for_thread(Table *table);
+  bool wait_if_global_read_lock(bool abort_on_refresh, bool is_not_commit);
+  void mysql_lock_abort(Table *table);
+  void mysql_lock_remove(Table *table);
+  void mysql_unlock_read_tables(DrizzleLock *sql_lock);
+  void mysql_unlock_some_tables(Table **table, uint32_t count);
+  void mysql_unlock_tables(DrizzleLock *sql_lock);
+  void startWaitingGlobalReadLock();
+  void unlockGlobalReadLock();
+
+private:
+  int unlock_external(Table **table, uint32_t count);
+  int lock_external(Table **tables, uint32_t count);
+public:
 
   uint32_t server_status;
   uint32_t open_options;

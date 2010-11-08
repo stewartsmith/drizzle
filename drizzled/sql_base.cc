@@ -1232,7 +1232,7 @@ void Session::close_data_files_and_morph_locks(TableIdentifier &identifier)
       If we are not under LOCK TABLES we should have only one table
       open and locked so it makes sense to remove the lock at once.
     */
-    mysql_unlock_tables(this, lock);
+    mysql_unlock_tables(lock);
     lock= 0;
   }
 
@@ -1325,8 +1325,8 @@ bool Session::reopen_tables(bool get_locks, bool)
     */
     some_tables_deleted= false;
 
-    if ((local_lock= mysql_lock_tables(this, tables, (uint32_t) (tables_ptr - tables),
-                                 flags, &not_used)))
+    if ((local_lock= mysql_lock_tables(tables, (uint32_t) (tables_ptr - tables),
+                                       flags, &not_used)))
     {
       /* unused */
     }
@@ -1392,8 +1392,8 @@ void Session::close_old_data_files(bool morph_locks, bool send_refresh)
               lock on it. This will also give them a chance to close their
               instances of this table.
             */
-            mysql_lock_abort(this, ulcktbl);
-            mysql_lock_remove(this, ulcktbl);
+            mysql_lock_abort(ulcktbl);
+            mysql_lock_remove(ulcktbl);
             ulcktbl->lock_count= 0;
           }
           if ((ulcktbl != table) && ulcktbl->db_stat)
@@ -1513,7 +1513,7 @@ Table *drop_locked_tables(Session *session, const drizzled::TableIdentifier &ide
     next=table->getNext();
     if (table->getShare()->getCacheKey() == identifier.getKey())
     {
-      mysql_lock_remove(session, table);
+      session->mysql_lock_remove(table);
 
       if (!found)
       {
@@ -1559,7 +1559,7 @@ void abort_locked_tables(Session *session, const drizzled::TableIdentifier &iden
     if (table->getShare()->getCacheKey() == identifier.getKey())
     {
       /* If MERGE child, forward lock handling to parent. */
-      mysql_lock_abort(session, table);
+      session->mysql_lock_abort(table);
       break;
     }
   }
@@ -1742,7 +1742,7 @@ Table *Session::openTableLock(TableList *table_list, thr_lock_type lock_type)
 
     assert(lock == 0);	// You must lock everything at once
     if ((table->reginfo.lock_type= lock_type) != TL_UNLOCK)
-      if (! (lock= mysql_lock_tables(this, &table_list->table, 1, 0, &refresh)))
+      if (! (lock= mysql_lock_tables(&table_list->table, 1, 0, &refresh)))
         table= 0;
   }
 
@@ -1805,8 +1805,7 @@ int Session::lock_tables(TableList *tables, uint32_t count, bool *need_reopen)
       *(ptr++)= table->table;
   }
 
-  if (!(session->lock= mysql_lock_tables(session, start, (uint32_t) (ptr - start),
-                                         lock_flag, need_reopen)))
+  if (!(session->lock= session->mysql_lock_tables(start, (uint32_t) (ptr - start), lock_flag, need_reopen)))
   {
     return -1;
   }

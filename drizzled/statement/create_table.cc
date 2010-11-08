@@ -109,7 +109,7 @@ bool statement::CreateTable::execute()
      TABLE in the same way. That way we avoid that a new table is
      created during a gobal read lock.
    */
-  if (! (need_start_waiting= ! wait_if_global_read_lock(session, 0, 1)))
+  if (! (need_start_waiting= not session->wait_if_global_read_lock(0, 1)))
   {
     /* put tables back for PS rexecuting */
     session->lex->link_first_table_back(create_table, link_to_local);

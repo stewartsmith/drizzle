@@ -500,7 +500,7 @@ int TransactionServices::commitTransaction(Session *session, bool normal_transac
 
   if (resource_contexts.empty() == false)
   {
-    if (is_real_trans && wait_if_global_read_lock(session, 0, 0))
+    if (is_real_trans && session->wait_if_global_read_lock(false, false))
     {
       rollbackTransaction(session, normal_transaction);
       return 1;

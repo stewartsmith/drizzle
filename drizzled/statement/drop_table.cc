@@ -61,7 +61,7 @@ static bool mysql_rm_table(Session *session, TableList *tables, bool if_exists, 
 
   if (not drop_temporary)
   {
-    if (not (need_start_waiting= !wait_if_global_read_lock(session, false, true)))
+    if (not (need_start_waiting= not session->wait_if_global_read_lock(false, true)))
       return true;
   }
 

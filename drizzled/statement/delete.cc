@@ -40,7 +40,7 @@ bool statement::Delete::execute()
   unit->set_limit(select_lex);
   bool need_start_waiting= false;
 
-  if (! (need_start_waiting= ! wait_if_global_read_lock(session, 0, 1)))
+  if (! (need_start_waiting= not session->wait_if_global_read_lock(0, 1)))
   {
     return true;
   }

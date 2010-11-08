@@ -140,7 +140,7 @@ bool statement::AlterTable::execute()
     return true;
   }
 
-  if (not (need_start_waiting= ! wait_if_global_read_lock(session, 0, 1)))
+  if (not (need_start_waiting= not session->wait_if_global_read_lock(0, 1)))
   {
     return true;
   }
@@ -1201,7 +1201,7 @@ static bool internal_alter_table(Session *session,
     /* Close lock if this is a transactional table */
     if (session->lock)
     {
-      mysql_unlock_tables(session, session->lock);
+      session->mysql_unlock_tables(session->lock);
       session->lock= 0;
     }
 

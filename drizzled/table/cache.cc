@@ -223,7 +223,7 @@ bool Cache::removeTable(Session *session, TableIdentifier &identifier, uint32_t 
         {
           /* Do not handle locks of MERGE children. */
           if (session_table->db_stat)	// If table is open
-            signalled|= mysql_lock_abort_for_thread(session, session_table);
+            signalled|= session->mysql_lock_abort_for_thread(session_table);
         }
       }
       else

@@ -49,7 +49,7 @@ bool statement::InsertSelect::execute()
 
   unit->set_limit(select_lex);
 
-  if (! (need_start_waiting= ! wait_if_global_read_lock(session, 0, 1)))
+  if (! (need_start_waiting= not session->wait_if_global_read_lock(false, true)))
   {
     return true;
   }

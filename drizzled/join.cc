@@ -591,7 +591,7 @@ int Join::optimize()
     return 1;
   }
   if (const_tables && !(select_options & SELECT_NO_UNLOCK))
-    mysql_unlock_some_tables(session, table, const_tables);
+    session->mysql_unlock_some_tables(table, const_tables);
   if (!conds && outer_join)
   {
     /* Handle the case where we have an OUTER JOIN without a WHERE */
@@ -1860,7 +1860,7 @@ void Join::join_free()
       TODO: unlock tables even if the join isn't top level select in the
       tree.
     */
-    mysql_unlock_read_tables(session, lock);           // Don't free join->lock
+    session->mysql_unlock_read_tables(lock);           // Don't free join->lock
     lock= 0;
   }
 

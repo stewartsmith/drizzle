@@ -101,7 +101,7 @@ bool mysql_create_db(Session *session, const message::Schema &schema_message, co
     has the global read lock and refuses the operation with
     ER_CANT_UPDATE_WITH_READLOCK if applicable.
   */
-  if (wait_if_global_read_lock(session, 0, 1))
+  if (session->wait_if_global_read_lock(false, true))
   {
     return false;
   }
@@ -165,7 +165,7 @@ bool mysql_alter_db(Session *session, const message::Schema &schema_message)
     has the global read lock and refuses the operation with
     ER_CANT_UPDATE_WITH_READLOCK if applicable.
   */
-  if ((wait_if_global_read_lock(session, 0, 1)))
+  if ((session->wait_if_global_read_lock(false, true)))
     return false;
 
   bool success;
@@ -234,7 +234,7 @@ bool mysql_rm_db(Session *session, SchemaIdentifier &schema_identifier, const bo
     has the global read lock and refuses the operation with
     ER_CANT_UPDATE_WITH_READLOCK if applicable.
   */
-  if (wait_if_global_read_lock(session, 0, 1))
+  if (session->wait_if_global_read_lock(false, true))
   {
     return -1;
   }
@@ -360,7 +360,7 @@ static int rm_table_part2(Session *session, TableList *tables)
 
   LOCK_open.lock(); /* Part 2 of rm a table */
 
-  if (lock_table_names_exclusively(session, tables))
+  if (session->lock_table_names_exclusively(tables))
   {
     LOCK_open.unlock();
     return 1;
