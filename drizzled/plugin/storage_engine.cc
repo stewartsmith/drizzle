@@ -375,8 +375,12 @@ int StorageEngine::getTableDefinition(Session& session,
 
   if (include_temporary_tables)
   {
-    if (session.doGetTableDefinition(identifier, table_message) == EEXIST)
+    Table *table= session.find_temporary_table(identifier);
+    if (table)
+    {
+      table_message.CopyFrom(*table->getShare()->getTableProto());
       return EEXIST;
+    }
   }
 
   EngineVector::iterator iter=
