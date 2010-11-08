@@ -289,7 +289,10 @@ int small_test(az_method method)
 int size_test(uint64_t length, uint64_t rows_to_test_for,
               az_method method)
 {
-  azio_stream writer_handle, reader_handle;
+  std::auto_ptr<azio_stream> writer_handle_ap(new azio_stream);
+  std::auto_ptr<azio_stream> reader_handle_ap(new azio_stream);
+  azio_stream &writer_handle= *writer_handle_ap.get();
+  azio_stream &reader_handle= *reader_handle_ap.get();
   uint64_t write_length;
   uint64_t read_length;
   uint64_t count;
