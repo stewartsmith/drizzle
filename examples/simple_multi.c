@@ -19,12 +19,16 @@ int main(int argc, char *argv[])
 {
   const char *query= "SELECT table_schema,table_name FROM tables";
   drizzle_st drizzle;
-  drizzle_con_st con[SIMPLE_MULTI_COUNT];
-  drizzle_result_st result[SIMPLE_MULTI_COUNT];
-  drizzle_query_st ql[SIMPLE_MULTI_COUNT];
+  drizzle_con_st *con[SIMPLE_MULTI_COUNT];
+  drizzle_result_st *result[SIMPLE_MULTI_COUNT];
+  drizzle_query_st *ql[SIMPLE_MULTI_COUNT];
   drizzle_return_t ret;
   drizzle_row_t row;
   int x;
+
+  con= (drizzle_con_st)malloc(sizeof(drizzle_con_st) * SIMPLE_MULTI_COUNT);
+  result= (drizzle_result_st)malloc(sizeof(drizzle_result_st) * SIMPLE_MULTI_COUNT);
+  ql= (drizzle_query_st)malloc(sizeof(drizzle_query_st) * SIMPLE_MULTI_COUNT);
 
   if (drizzle_create(&drizzle) == NULL)
   {
@@ -92,5 +96,8 @@ int main(int argc, char *argv[])
 
   drizzle_free(&drizzle);
 
+  free(con);
+  free(result);
+  free(ql);
   return 0;
 }
