@@ -699,8 +699,8 @@ CopyField::get_copy_func(Field *to,Field *from)
         if (from->flags & BLOB_FLAG)
           return do_field_string;
 
-        if ((dynamic_cast<Field_varstring*>(to))->pack_length_no_ptr() !=
-            (dynamic_cast<Field_varstring*>(from))->pack_length_no_ptr())
+        if ((static_cast<Field_varstring*>(to))->pack_length_no_ptr() !=
+            (static_cast<Field_varstring*>(from))->pack_length_no_ptr())
         {
           return do_field_string;
         }
