@@ -30,7 +30,7 @@ LineBuffer::LineBuffer(uint32_t my_max_size,FILE *my_file)
     max_size(my_max_size)
 {
   if (my_file)
-    file_stream = new boost::iostreams::stream<boost::iostreams::file_descriptor>(fileno(my_file), true);
+    file_stream = new boost::iostreams::stream<boost::iostreams::file_descriptor>(fileno(my_file), boost::iostreams::never_close_handle);
   else
     file_stream = new std::stringstream;
   line.reserve(max_size);
