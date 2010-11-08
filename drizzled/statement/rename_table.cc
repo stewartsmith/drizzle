@@ -115,7 +115,7 @@ bool statement::RenameTable::renameTables(TableList *table_list)
   }
 
   LOCK_open.lock(); /* unlock all tables held */
-  unlock_table_names(table_list, NULL);
+  table_list->unlock_table_names();
   LOCK_open.unlock();
 
 err:

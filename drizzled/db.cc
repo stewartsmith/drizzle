@@ -384,7 +384,7 @@ static int rm_table_part2(Session *session, TableList *tables)
       continue;
     case -1:
       error= 1;
-      unlock_table_names(tables, NULL);
+      tables->unlock_table_names();
       LOCK_open.unlock();
       session->no_warnings_for_error= 0;
 
@@ -412,7 +412,7 @@ static int rm_table_part2(Session *session, TableList *tables)
       if (session->killed)
       {
         error= -1;
-        unlock_table_names(tables, NULL);
+        tables->unlock_table_names();
         LOCK_open.unlock();
         session->no_warnings_for_error= 0;
 
@@ -476,7 +476,7 @@ static int rm_table_part2(Session *session, TableList *tables)
   }
 
   LOCK_open.lock(); /* final bit in rm table lock */
-  unlock_table_names(tables, NULL);
+  tables->unlock_table_names();
   LOCK_open.unlock();
   session->no_warnings_for_error= 0;
 

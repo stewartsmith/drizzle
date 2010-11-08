@@ -94,10 +94,6 @@ public:
 
 void broadcast_refresh(void);
 
-/* Lock based on name */
-void unlock_table_name(TableList *table_list);
-void unlock_table_names(TableList *table_list, TableList *last_table);
-bool lock_table_names_exclusively(Session *session, TableList *table_list);
 
 } /* namespace drizzled */
 

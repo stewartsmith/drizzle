@@ -105,9 +105,6 @@ static boost::condition_variable_any COND_global_read_lock;
   @{
 */
 
-static DrizzleLock *get_lock_data(Session *session, Table **table,
-                                  uint32_t count,
-                                  bool should_lock, Table **write_locked);
 static void print_lock_error(int error, const char *);
 
 /*
@@ -186,7 +183,7 @@ DrizzleLock *Session::mysql_lock_tables(Table **tables, uint32_t count, uint32_t
 
   for (;;)
   {
-    if (! (sql_lock= get_lock_data(this, tables, count, true,
+    if (! (sql_lock= get_lock_data(tables, count, true,
                                    &write_lock_used)))
       break;
 
@@ -385,7 +382,7 @@ void Session::mysql_unlock_some_tables(Table **table, uint32_t count)
 {
   DrizzleLock *sql_lock;
   Table *write_lock_used;
-  if ((sql_lock= get_lock_data(this, table, count, false,
+  if ((sql_lock= get_lock_data(table, count, false,
                                &write_lock_used)))
     mysql_unlock_tables(sql_lock);
 }
@@ -483,7 +480,7 @@ void Session::mysql_lock_abort(Table *table)
   DrizzleLock *locked;
   Table *write_lock_used;
 
-  if ((locked= get_lock_data(this, &table, 1, false,
+  if ((locked= get_lock_data(&table, 1, false,
                              &write_lock_used)))
   {
     for (uint32_t x= 0; x < locked->lock_count; x++)
@@ -511,7 +508,7 @@ bool Session::mysql_lock_abort_for_thread(Table *table)
   Table *write_lock_used;
   bool result= false;
 
-  if ((locked= get_lock_data(this, &table, 1, false,
+  if ((locked= get_lock_data(&table, 1, false,
                              &write_lock_used)))
   {
     for (uint32_t i= 0; i < locked->lock_count; i++)
@@ -559,8 +556,8 @@ int Session::unlock_external(Table **table, uint32_t count)
   @param write_lock_used   Store pointer to last table with WRITE_ALLOW_WRITE
 */
 
-static DrizzleLock *get_lock_data(Session *session, Table **table_ptr, uint32_t count,
-				 bool should_lock, Table **write_lock_used)
+DrizzleLock *Session::get_lock_data(Table **table_ptr, uint32_t count,
+                                    bool should_lock, Table **write_lock_used)
 {
   uint32_t lock_count;
   DrizzleLock *sql_lock;
@@ -616,8 +613,7 @@ static DrizzleLock *get_lock_data(Session *session, Table **table_ptr, uint32_t 
       }
     }
     locks_start= locks;
-    locks= table->cursor->store_lock(session, locks,
-                                     should_lock == false ? TL_IGNORE : lock_type);
+    locks= table->cursor->store_lock(this, locks, should_lock == false ? TL_IGNORE : lock_type);
     if (should_lock)
     {
       table->lock_position=   (uint32_t) (to - table_buf);
@@ -650,7 +646,6 @@ static DrizzleLock *get_lock_data(Session *session, Table **table_ptr, uint32_t 
 /**
   Put a not open table with an old refresh version in the table cache.
 
-  @param session			Thread handler
   @param table_list		Lock first table in this list
   @param check_in_use           Do we need to check if table already in use by us
 
@@ -674,7 +669,7 @@ static DrizzleLock *get_lock_data(Session *session, Table **table_ptr, uint32_t 
     > 0  table locked, but someone is using it
 */
 
-static int lock_table_name(Session *session, TableList *table_list)
+int Session::lock_table_name(TableList *table_list)
 {
   TableIdentifier identifier(table_list->getSchemaName(), table_list->getTableName());
   const TableIdentifier::Key &key(identifier.getKey());
@@ -694,7 +689,7 @@ static int lock_table_name(Session *session, TableList *table_list)
         continue;
       }
 
-      if (table->in_use == session)
+      if (table->in_use == this)
       {
         table->getMutableShare()->resetVersion();                  // Ensure no one can use this
         table->locked_by_name= true;
@@ -704,7 +699,7 @@ static int lock_table_name(Session *session, TableList *table_list)
   }
 
   table::Placeholder *table= NULL;
-  if (!(table= session->table_cache_insert_placeholder(identifier)))
+  if (!(table= table_cache_insert_placeholder(identifier)))
   {
     return -1;
   }
@@ -712,15 +707,15 @@ static int lock_table_name(Session *session, TableList *table_list)
   table_list->table= reinterpret_cast<Table *>(table);
 
   /* Return 1 if table is in use */
-  return(test(table::Cache::singleton().removeTable(session, identifier, RTFC_NO_FLAG)));
+  return(test(table::Cache::singleton().removeTable(this, identifier, RTFC_NO_FLAG)));
 }
 
 
-void unlock_table_name(TableList *table_list)
+void TableList::unlock_table_name()
 {
-  if (table_list->table)
+  if (table)
   {
-    table::remove_table(static_cast<table::Concurrent *>(table_list->table));
+    table::remove_table(static_cast<table::Concurrent *>(table));
     broadcast_refresh();
   }
 }
@@ -746,7 +741,7 @@ static bool locked_named_table(TableList *table_list)
 }
 
 
-static bool wait_for_locked_table_names(Session *session, TableList *table_list)
+bool Session::wait_for_locked_table_names(TableList *table_list)
 {
   bool result= false;
 
@@ -756,12 +751,12 @@ static bool wait_for_locked_table_names(Session *session, TableList *table_list)
 
   while (locked_named_table(table_list))
   {
-    if (session->killed)
+    if (killed)
     {
       result=1;
       break;
     }
-    session->wait_for_condition(LOCK_open, COND_refresh);
+    wait_for_condition(LOCK_open, COND_refresh);
     LOCK_open.lock(); /* Wait for a table to unlock and then lock it */
   }
   return result;
@@ -790,19 +785,19 @@ bool Session::lock_table_names(TableList *table_list)
   for (lock_table= table_list; lock_table; lock_table= lock_table->next_local)
   {
     int got_lock;
-    if ((got_lock= lock_table_name(this, lock_table)) < 0)
+    if ((got_lock= lock_table_name(lock_table)) < 0)
       goto end;					// Fatal error
     if (got_lock)
       got_all_locks=0;				// Someone is using table
   }
 
   /* If some table was in use, wait until we got the lock */
-  if (!got_all_locks && wait_for_locked_table_names(this, table_list))
+  if (!got_all_locks && wait_for_locked_table_names(table_list))
     goto end;
   return false;
 
 end:
-  unlock_table_names(table_list, lock_table);
+  table_list->unlock_table_names(table_list);
 
   return true;
 }
@@ -811,7 +806,6 @@ end:
 /**
   Unlock all tables in list with a name lock.
 
-  @param session        Thread handle.
   @param table_list Names of tables to lock.
 
   @note
@@ -866,12 +860,15 @@ bool Session::lock_table_names_exclusively(TableList *table_list)
     1	Fatal error (end of memory ?)
 */
 
-void unlock_table_names(TableList *table_list, TableList *last_table)
+void TableList::unlock_table_names(TableList *last_table)
 {
-  for (TableList *table= table_list;
-       table != last_table;
-       table= table->next_local)
-    unlock_table_name(table);
+  for (TableList *table_iter= this;
+       table_iter != last_table;
+       table_iter= table_iter->next_local)
+  {
+    table_iter->unlock_table_name();
+  }
+
   broadcast_refresh();
 }
 
