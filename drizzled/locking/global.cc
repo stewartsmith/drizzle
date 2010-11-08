@@ -312,9 +312,13 @@ retry:
       *need_reopen= true;
       break;
     }
+
     if (wait_for_tables(this))
+    {
       break;					// Couldn't open tables
+    }
   }
+
   set_proc_info(0);
   if (killed)
   {
@@ -779,27 +783,31 @@ bool Session::wait_for_locked_table_names(TableList *table_list)
 
 bool Session::lock_table_names(TableList *table_list)
 {
-  bool got_all_locks=1;
+  bool got_all_locks= true;
   TableList *lock_table;
 
   for (lock_table= table_list; lock_table; lock_table= lock_table->next_local)
   {
     int got_lock;
     if ((got_lock= lock_table_name(lock_table)) < 0)
-      goto end;					// Fatal error
+    {
+      table_list->unlock_table_names(table_list);
+      return true; // Fatal error
+    }
+
     if (got_lock)
-      got_all_locks=0;				// Someone is using table
+      got_all_locks= false;				// Someone is using table
   }
 
   /* If some table was in use, wait until we got the lock */
-  if (!got_all_locks && wait_for_locked_table_names(table_list))
-    goto end;
+  if (not got_all_locks && wait_for_locked_table_names(table_list))
+  {
+    table_list->unlock_table_names(table_list);
+
+    return true;
+  }
+
   return false;
-
-end:
-  table_list->unlock_table_names(table_list);
-
-  return true;
 }
 
 
