@@ -165,7 +165,8 @@ try
 
   if (opt_autoincrement)
   {
-    azio_stream writer_handle;
+    std::auto_ptr<azio_stream> writer_handle_ap(new azio_stream);
+    azio_stream &writer_handle= *writer_handle_ap.get();
 
     if (new_auto_increment_value)
     {
