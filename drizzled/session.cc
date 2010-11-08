@@ -170,7 +170,7 @@ Session::Session(plugin::Client *client_arg) :
   first_successful_insert_id_in_prev_stmt(0),
   first_successful_insert_id_in_cur_stmt(0),
   limit_found_rows(0),
-  global_read_lock(0),
+  _global_read_lock(NONE),
   some_tables_deleted(false),
   no_errors(false),
   password(false),
@@ -358,7 +358,9 @@ void Session::cleanup(void)
   close_temporary_tables();
 
   if (global_read_lock)
-    unlock_global_read_lock(this);
+  {
+    unlockGlobalReadLock();
+  }
 
   cleanup_done= true;
 }

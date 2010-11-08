@@ -69,16 +69,16 @@ bool statement::Flush::reloadCache()
   {
     if (session && flush_tables_with_read_lock)
     {
-      if (lock_global_read_lock(session))
+      if (session->lockGlobalReadLock())
       {
         return true; /* Killed */
       }
       result= session->close_cached_tables(tables, true, true);
 
-      if (make_global_read_lock_block_commit(session)) /* Killed */
+      if (session->makeGlobalReadLockBlockCommit()) /* Killed */
       {
         /* Don't leave things in a half-locked state */
-        unlock_global_read_lock(session);
+        session->unlockGlobalReadLock();
         return true;
       }
     }

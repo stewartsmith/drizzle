@@ -146,9 +146,10 @@ bool statement::CreateTable::execute()
              Release the protection against the global read lock and wake
              everyone, who might want to set a global read lock.
            */
-          start_waiting_global_read_lock(session);
+          session->startWaitingGlobalReadLock();
           /* put tables back for PS rexecuting */
           session->lex->link_first_table_back(create_table, link_to_local);
+
           return true;
         }
       }
@@ -224,7 +225,7 @@ bool statement::CreateTable::execute()
      Release the protection against the global read lock and wake
      everyone, who might want to set a global read lock.
    */
-  start_waiting_global_read_lock(session);
+  session->startWaitingGlobalReadLock();
 
   return res;
 }

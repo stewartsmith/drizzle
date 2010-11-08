@@ -119,7 +119,7 @@ bool statement::RenameTable::renameTables(TableList *table_list)
   LOCK_open.unlock();
 
 err:
-  start_waiting_global_read_lock(session);
+  session->startWaitingGlobalReadLock();
 
   return error;
 }

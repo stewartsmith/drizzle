@@ -560,7 +560,7 @@ int TransactionServices::commitTransaction(Session *session, bool normal_transac
     error= commitPhaseOne(session, normal_transaction) ? (cookie ? 2 : 1) : 0;
 end:
     if (is_real_trans)
-      start_waiting_global_read_lock(session);
+      session->startWaitingGlobalReadLock();
   }
   return error;
 }

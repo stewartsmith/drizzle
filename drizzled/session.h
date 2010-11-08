@@ -718,7 +718,32 @@ public:
   uint32_t row_count;
   session_id_t thread_id;
   uint32_t tmp_table;
-  uint32_t global_read_lock;
+  enum global_read_lock_t
+  {
+    NONE= 0,
+    GOT_GLOBAL_READ_LOCK= 1,
+    MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT= 2
+  };
+private:
+  global_read_lock_t _global_read_lock;
+
+public:
+
+  global_read_lock_t isGlobalReadLock() const
+  {
+    return _global_read_lock;
+  }
+
+  void setGlobalReadLock(global_read_lock_t arg)
+  {
+    _global_read_lock= arg;
+  }
+
+  void unlockGlobalReadLock();
+  void startWaitingGlobalReadLock();
+  bool makeGlobalReadLockBlockCommit();
+  bool lockGlobalReadLock();
+
   uint32_t server_status;
   uint32_t open_options;
   uint32_t select_number; /**< number of select (used for EXPLAIN) */

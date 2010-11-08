@@ -73,7 +73,9 @@ static bool mysql_rm_table(Session *session, TableList *tables, bool if_exists, 
   error= mysql_rm_table_part2(session, tables, if_exists, drop_temporary);
 
   if (need_start_waiting)
-    start_waiting_global_read_lock(session);
+  {
+    session->startWaitingGlobalReadLock();
+  }
 
   if (error)
     return true;

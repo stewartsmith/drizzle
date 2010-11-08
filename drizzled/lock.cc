@@ -946,7 +946,7 @@ static void print_lock_error(int error, const char *table)
   - call to wait_if_global_read_lock(). When this returns 0, no global read
   lock is owned; if argument abort_on_refresh was 0, none can be obtained.
   - job
-  - if abort_on_refresh was 0, call to start_waiting_global_read_lock() to
+  - if abort_on_refresh was 0, call to session->startWaitingGlobalReadLock() to
   allow other threads to get the global read lock. I.e. removal of the
   protection.
   (Note: it's a bit like an implementation of rwlock).
@@ -967,7 +967,7 @@ static void print_lock_error(int error, const char *table)
   currently opened and being updated to close (so it's possible that there is
   a moment where all new updates of server are stalled *and* FLUSH TABLES WITH
   READ LOCK is, too).
-  3) make_global_read_lock_block_commit().
+  3) session::makeGlobalReadLockBlockCommit().
   If we have merged 1) and 3) into 1), we would have had this deadlock:
   imagine thread 1 and 2, in non-autocommit mode, thread 3, and an InnoDB
   table t.
@@ -991,33 +991,31 @@ volatile uint32_t global_read_lock_blocks_commit=0;
 static volatile uint32_t protect_against_global_read_lock=0;
 static volatile uint32_t waiting_for_read_lock=0;
 
-#define GOT_GLOBAL_READ_LOCK               1
-#define MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT 2
-
-bool lock_global_read_lock(Session *session)
+bool Session::lockGlobalReadLock()
 {
-  if (!session->global_read_lock)
+  if (isGlobalReadLock() == Session::NONE)
   {
     const char *old_message;
     LOCK_global_read_lock.lock();
-    old_message=session->enter_cond(COND_global_read_lock, LOCK_global_read_lock,
-                                    "Waiting to get readlock");
+    old_message= enter_cond(COND_global_read_lock, LOCK_global_read_lock,
+                            "Waiting to get readlock");
 
     waiting_for_read_lock++;
     boost_unique_lock_t scopedLock(LOCK_global_read_lock, boost::adopt_lock_t());
-    while (protect_against_global_read_lock && !session->killed)
+    while (protect_against_global_read_lock && not killed)
       COND_global_read_lock.wait(scopedLock);
     waiting_for_read_lock--;
     scopedLock.release();
-    if (session->killed)
+    if (killed)
     {
-      session->exit_cond(old_message);
+      exit_cond(old_message);
       return true;
     }
-    session->global_read_lock= GOT_GLOBAL_READ_LOCK;
+    setGlobalReadLock(Session::GOT_GLOBAL_READ_LOCK);
     global_read_lock++;
-    session->exit_cond(old_message); // this unlocks LOCK_global_read_lock
+    exit_cond(old_message); // this unlocks LOCK_global_read_lock
   }
+
   /*
     We DON'T set global_read_lock_blocks_commit now, it will be set after
     tables are flushed (as the present function serves for FLUSH TABLES WITH
@@ -1030,22 +1028,22 @@ bool lock_global_read_lock(Session *session)
 }
 
 
-void unlock_global_read_lock(Session *session)
+void Session::unlockGlobalReadLock(void)
 {
   uint32_t tmp;
 
   {
     boost_unique_lock_t scopedLock(LOCK_global_read_lock);
     tmp= --global_read_lock;
-    if (session->global_read_lock == MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT)
+    if (isGlobalReadLock() == Session::MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT)
       --global_read_lock_blocks_commit;
   }
   /* Send the signal outside the mutex to avoid a context switch */
-  if (!tmp)
+  if (not tmp)
   {
     COND_global_read_lock.notify_all();
   }
-  session->global_read_lock= 0;
+  setGlobalReadLock(Session::NONE);
 }
 
 static inline bool must_wait(bool is_not_commit)
@@ -1071,7 +1069,7 @@ bool wait_if_global_read_lock(Session *session, bool abort_on_refresh,
   LOCK_global_read_lock.lock();
   if ((need_exit_cond= must_wait(is_not_commit)))
   {
-    if (session->global_read_lock)		// This thread had the read locks
+    if (session->isGlobalReadLock())		// This thread had the read locks
     {
       if (is_not_commit)
         my_message(ER_CANT_UPDATE_WITH_READLOCK,
@@ -1096,8 +1094,9 @@ bool wait_if_global_read_lock(Session *session, bool abort_on_refresh,
     if (session->killed)
       result=1;
   }
-  if (!abort_on_refresh && !result)
+  if (not abort_on_refresh && not result)
     protect_against_global_read_lock++;
+
   /*
     The following is only true in case of a global read locks (which is rare)
     and if old_message is set
@@ -1106,51 +1105,59 @@ bool wait_if_global_read_lock(Session *session, bool abort_on_refresh,
     session->exit_cond(old_message); // this unlocks LOCK_global_read_lock
   else
     LOCK_global_read_lock.unlock();
+
   return result;
 }
 
 
-void start_waiting_global_read_lock(Session *session)
+void Session::startWaitingGlobalReadLock()
 {
   bool tmp;
-  if (unlikely(session->global_read_lock))
+  if (unlikely(isGlobalReadLock()))
     return;
+
   LOCK_global_read_lock.lock();
   tmp= (!--protect_against_global_read_lock &&
         (waiting_for_read_lock || global_read_lock_blocks_commit));
   LOCK_global_read_lock.unlock();
+
   if (tmp)
     COND_global_read_lock.notify_all();
-  return;
 }
 
 
-bool make_global_read_lock_block_commit(Session *session)
+bool Session::makeGlobalReadLockBlockCommit()
 {
   bool error;
   const char *old_message;
   /*
     If we didn't succeed lock_global_read_lock(), or if we already suceeded
-    make_global_read_lock_block_commit(), do nothing.
+    Session::makeGlobalReadLockBlockCommit(), do nothing.
   */
-  if (session->global_read_lock != GOT_GLOBAL_READ_LOCK)
+  if (isGlobalReadLock() != Session::GOT_GLOBAL_READ_LOCK)
     return false;
   LOCK_global_read_lock.lock();
   /* increment this BEFORE waiting on cond (otherwise race cond) */
   global_read_lock_blocks_commit++;
-  old_message= session->enter_cond(COND_global_read_lock, LOCK_global_read_lock,
-                                   "Waiting for all running commits to finish");
-  while (protect_against_global_read_lock && !session->killed)
+  old_message= enter_cond(COND_global_read_lock, LOCK_global_read_lock,
+                          "Waiting for all running commits to finish");
+  while (protect_against_global_read_lock && not killed)
   {
     boost_unique_lock_t scopedLock(LOCK_global_read_lock, boost::adopt_lock_t());
     COND_global_read_lock.wait(scopedLock);
     scopedLock.release();
   }
-  if ((error= test(session->killed)))
+  if ((error= test(killed)))
+  {
     global_read_lock_blocks_commit--; // undo what we did
+  }
   else
-    session->global_read_lock= MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT;
-  session->exit_cond(old_message); // this unlocks LOCK_global_read_lock
+  {
+    setGlobalReadLock(Session::MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT);
+  }
+
+  exit_cond(old_message); // this unlocks LOCK_global_read_lock
+
   return error;
 }
 

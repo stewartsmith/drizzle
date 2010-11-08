@@ -141,7 +141,7 @@ bool mysql_create_db(Session *session, const message::Schema &schema_message, co
       session->my_ok(1);
     }
   }
-  start_waiting_global_read_lock(session);
+  session->startWaitingGlobalReadLock();
 
   return error;
 }
@@ -192,7 +192,7 @@ bool mysql_alter_db(Session *session, const message::Schema &schema_message)
       my_error(ER_ALTER_SCHEMA, MYF(0), schema_message.name().c_str());
     }
   }
-  start_waiting_global_read_lock(session);
+  session->startWaitingGlobalReadLock();
 
   return success;
 }
@@ -343,7 +343,7 @@ exit:
       mysql_change_db_impl(session);
   }
 
-  start_waiting_global_read_lock(session);
+  session->startWaitingGlobalReadLock();
 
   return error;
 }
