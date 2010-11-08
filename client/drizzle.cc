@@ -159,6 +159,7 @@ typedef Function drizzle_compentry_func_t;
 #define vidattr(A) {}      // Can't get this to work
 #endif
 #include <boost/program_options.hpp>
+#include <boost/scoped_ptr.hpp>
 #include "drizzled/program_options/config_file.h"
 
 using namespace std;
@@ -1834,7 +1835,7 @@ extern "C"
 void handle_sigint(int sig)
 {
   char kill_buffer[40];
-  auto_ptr<drizzle_con_st> kill_drizzle(new drizzle_con_st);
+  boost::scoped_ptr<drizzle_con_st> kill_drizzle(new drizzle_con_st);
   drizzle_result_st res;
   drizzle_return_t ret;
 

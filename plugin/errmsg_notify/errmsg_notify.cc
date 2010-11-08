@@ -23,6 +23,7 @@
 #include <stdarg.h>  /* for va_list */
 #include <unistd.h>  /* for write(2) */
 #include <libnotifymm.h>
+#include <boost/scoped_ptr.hpp>
 
 #include <string>
 #include <vector>
@@ -73,7 +74,7 @@ public:
     {
       if (!n.show())
 #else
-      auto_ptr<Glib::Error> error;
+      boost::scoped_ptr<Glib::Error> error;
       if (!n.show(error))
 #endif
       {

@@ -20,6 +20,7 @@
 #include <string.h>
 #include <algorithm>
 #include <memory>
+#include <boost/scoped_ptr.hpp>
 
 #include "drizzled/charset_info.h"
 #include "drizzled/internal/m_string.h"
@@ -87,10 +88,10 @@ MI_INFO *mi_open(const drizzled::TableIdentifier &identifier, int mode, uint32_t
   unsigned char *disk_cache= NULL;
   unsigned char *disk_pos, *end_pos;
   MI_INFO info,*m_info,*old_info;
-  auto_ptr<MYISAM_SHARE> share_buff_ap(new MYISAM_SHARE);
+  boost::scoped_ptr<MYISAM_SHARE> share_buff_ap(new MYISAM_SHARE);
   MYISAM_SHARE &share_buff= *share_buff_ap.get();
   MYISAM_SHARE *share;
-  auto_ptr<ulong> rec_per_key_part_ap(new ulong[HA_MAX_POSSIBLE_KEY*MI_MAX_KEY_SEG]);
+  boost::scoped_ptr<ulong> rec_per_key_part_ap(new ulong[HA_MAX_POSSIBLE_KEY*MI_MAX_KEY_SEG]);
   ulong *rec_per_key_part= rec_per_key_part_ap.get();
   internal::my_off_t key_root[HA_MAX_POSSIBLE_KEY],key_del[MI_MAX_KEY_BLOCK_SIZE];
   uint64_t max_key_file_length, max_data_file_length;

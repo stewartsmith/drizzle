@@ -25,6 +25,7 @@
 #include <drizzled/configmake.h>
 using namespace std;
 #include <boost/program_options.hpp>
+#include <boost/scoped_ptr.hpp>
 namespace po= boost::program_options;
 #include "azio.h"
 #include <string.h>
@@ -86,7 +87,7 @@ try
   ;
 
   unsigned int ret;
-  std::auto_ptr<azio_stream> reader_handle_ap(new azio_stream);
+  boost::scoped_ptr<azio_stream> reader_handle_ap(new azio_stream);
   azio_stream &reader_handle= *reader_handle_ap.get();
 
   std::string system_config_dir_archive_reader(SYSCONFDIR); 
@@ -165,7 +166,7 @@ try
 
   if (opt_autoincrement)
   {
-    std::auto_ptr<azio_stream> writer_handle_ap(new azio_stream);
+    boost::scoped_ptr<azio_stream> writer_handle_ap(new azio_stream);
     azio_stream &writer_handle= *writer_handle_ap.get();
 
     if (new_auto_increment_value)
@@ -263,7 +264,7 @@ try
     uint64_t row_count= 0;
     char *buffer;
 
-    std::auto_ptr<azio_stream> writer_handle_ap(new azio_stream);
+    boost::scoped_ptr<azio_stream> writer_handle_ap(new azio_stream);
     azio_stream &writer_handle= *writer_handle_ap.get();
 
     buffer= (char *)malloc(reader_handle.longest_row);

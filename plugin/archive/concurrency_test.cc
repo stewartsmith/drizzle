@@ -45,6 +45,8 @@
 #define snprintf _snprintf
 #endif
 
+#include <boost/scoped_ptr.hpp>
+
 #include "azio.h"
 
 #define DEFAULT_INITIAL_LOAD 10000
@@ -137,7 +139,7 @@ void scheduler(az_method use_aio)
 {
   unsigned int x;
   uint64_t total;
-  std::auto_ptr<azio_stream> writer_handle_ap(new azio_stream);
+  boost::scoped_ptr<azio_stream> writer_handle_ap(new azio_stream);
   azio_stream &writer_handle= *writer_handle_ap.get();
   thread_context_st *context;
   pthread_t mainthread;            /* Thread descriptor */
@@ -265,7 +267,7 @@ void *run_concurrent_task(void *p)
   uint64_t count;
   int ret;
   int error;
-  std::auto_ptr<azio_stream> reader_handle_ap(new azio_stream);
+  boost::scoped_ptr<azio_stream> reader_handle_ap(new azio_stream);
   azio_stream &reader_handle= *reader_handle_ap.get();
 
   if (!(ret= azopen(&reader_handle, TEST_FILENAME, O_RDONLY,

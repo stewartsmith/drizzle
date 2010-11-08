@@ -19,6 +19,7 @@
 
 #include "plugin/archive/archive_engine.h"
 #include <memory>
+#include <boost/scoped_ptr.hpp>
 
 using namespace std;
 using namespace drizzled;
@@ -165,7 +166,7 @@ int ArchiveEngine::doGetTableDefinition(Session&,
     error= EEXIST;
 
   {
-    auto_ptr<azio_stream> proto_stream(new azio_stream);
+    boost::scoped_ptr<azio_stream> proto_stream(new azio_stream);
     char* proto_string;
     if (azopen(proto_stream.get(), proto_path.c_str(), O_RDONLY, AZ_METHOD_BLOCK) == 0)
       return HA_ERR_CRASHED_ON_USAGE;
@@ -260,7 +261,7 @@ ArchiveShare::~ArchiveShare()
 
 bool ArchiveShare::prime(uint64_t *auto_increment)
 {
-  auto_ptr<azio_stream> archive_tmp(new azio_stream);
+  boost::scoped_ptr<azio_stream> archive_tmp(new azio_stream);
 
   /*
     We read the meta file, but do not mark it dirty. Since we are not
@@ -502,7 +503,7 @@ int ArchiveEngine::doCreateTable(Session &,
                                  drizzled::message::Table& proto)
 {
   int error= 0;
-  auto_ptr<azio_stream> create_stream(new azio_stream);
+  boost::scoped_ptr<azio_stream> create_stream(new azio_stream);
   uint64_t auto_increment_value;
   string serialized_proto;
 
@@ -950,7 +951,7 @@ int ha_archive::repair()
 int ha_archive::optimize()
 {
   int rc= 0;
-  auto_ptr<azio_stream> writer(new azio_stream);
+  boost::scoped_ptr<azio_stream> writer(new azio_stream);
 
   init_archive_reader();
 

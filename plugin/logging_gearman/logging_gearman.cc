@@ -18,6 +18,9 @@
  */
 
 #include "config.h"
+
+#include <boost/scoped_array.hpp>
+
 #include <drizzled/plugin/logging.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
@@ -227,7 +230,7 @@ public:
 
   virtual bool post(Session *session)
   {
-    std::auto_ptr<char> msgbuf(new char[MAX_MSG_LEN]);
+    boost::scoped_array<char> msgbuf(new char[MAX_MSG_LEN]);
     int msgbuf_len= 0;
   
     assert(session != NULL);
