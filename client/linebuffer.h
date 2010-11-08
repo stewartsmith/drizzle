@@ -18,20 +18,21 @@
 
 #include <vector>
 #include <sstream>
+#include <iostream>
+#include <boost/iostreams/stream.hpp>
+#include <boost/iostreams/device/file_descriptor.hpp>
 
 class LineBuffer
 {
 public:
   LineBuffer(uint32_t max_size,FILE *file);
-
   void addString(const std::string &argument);
   char *readline();
 private:
   FILE *file;
-  std::stringstream buffer;
   std::vector<char> line;
+  std::iostream *file_stream;
   uint32_t max_size;
-  bool eof;
 };
 
 #endif /* CLIENT_LINEBUFFER_H */

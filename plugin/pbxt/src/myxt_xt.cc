@@ -3060,7 +3060,7 @@ xtPublic MX_CONST_CHARSET_INFO *myxt_getcharset(bool convert)
 		THD *thd = current_thd;
 
 		if (thd)
-			return (MX_CHARSET_INFO *)thd_charset(thd);
+			return (MX_CHARSET_INFO *)thd->charset();
 	}
 	return (MX_CHARSET_INFO *)&my_charset_utf8_general_ci;
 }

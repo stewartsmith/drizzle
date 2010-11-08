@@ -16,18 +16,18 @@ CREATE TEMPORARY TABLE `Ｔ６` (c1 char(20), INDEX(c1))  engine = myisam;
 CREATE TEMPORARY TABLE `Ｔ７` (c1 char(20), INDEX(c1))  engine = MEMORY;
 CREATE TEMPORARY TABLE `Ｔ８` (c1 char(20), INDEX(c1))  engine = MEMORY;
 CREATE TEMPORARY TABLE `Ｔ９` (c1 char(20), INDEX(c1))  engine = MEMORY;
-LOAD DATA INFILE '../../std_data_ln/jisx0201_utf8.dat' INTO TABLE `Ｔ１`;
-LOAD DATA INFILE '../../std_data_ln/jisx0208_utf8.dat' INTO TABLE `Ｔ２`;
+LOAD DATA INFILE 'DRIZZLETEST_VARDIR/std_data_ln/jisx0201_utf8.dat' INTO TABLE `Ｔ１`;
+LOAD DATA INFILE 'DRIZZLETEST_VARDIR/std_data_ln/jisx0208_utf8.dat' INTO TABLE `Ｔ２`;
 ERROR 22001: Data too long for column 'c1' at row 30
-LOAD DATA INFILE '../../std_data_ln/jisx0212_utf8.dat' INTO TABLE `Ｔ３`;
-LOAD DATA INFILE '../../std_data_ln/jisx0201_utf8.dat' INTO TABLE `Ｔ４`;
-LOAD DATA INFILE '../../std_data_ln/jisx0208_utf8.dat' INTO TABLE `Ｔ５`;
+LOAD DATA INFILE 'DRIZZLETEST_VARDIR/std_data_ln/jisx0212_utf8.dat' INTO TABLE `Ｔ３`;
+LOAD DATA INFILE 'DRIZZLETEST_VARDIR/std_data_ln/jisx0201_utf8.dat' INTO TABLE `Ｔ４`;
+LOAD DATA INFILE 'DRIZZLETEST_VARDIR/std_data_ln/jisx0208_utf8.dat' INTO TABLE `Ｔ５`;
 ERROR 22001: Data too long for column 'c1' at row 30
-LOAD DATA INFILE '../../std_data_ln/jisx0212_utf8.dat' INTO TABLE `Ｔ６`;
-LOAD DATA INFILE '../../std_data_ln/jisx0201_utf8.dat' INTO TABLE `Ｔ７`;
-LOAD DATA INFILE '../../std_data_ln/jisx0208_utf8.dat' INTO TABLE `Ｔ８`;
+LOAD DATA INFILE 'DRIZZLETEST_VARDIR/std_data_ln/jisx0212_utf8.dat' INTO TABLE `Ｔ６`;
+LOAD DATA INFILE 'DRIZZLETEST_VARDIR/std_data_ln/jisx0201_utf8.dat' INTO TABLE `Ｔ７`;
+LOAD DATA INFILE 'DRIZZLETEST_VARDIR/std_data_ln/jisx0208_utf8.dat' INTO TABLE `Ｔ８`;
 ERROR 22001: Data too long for column 'c1' at row 30
-LOAD DATA INFILE '../../std_data_ln/jisx0212_utf8.dat' INTO TABLE `Ｔ９`;
+LOAD DATA INFILE 'DRIZZLETEST_VARDIR/std_data_ln/jisx0212_utf8.dat' INTO TABLE `Ｔ９`;
 SELECT * FROM `Ｔ１`;
 c1
  !"#$%&'()*+,-./

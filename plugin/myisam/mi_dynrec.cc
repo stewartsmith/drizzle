@@ -997,7 +997,7 @@ uint32_t _mi_rec_pack(MI_INFO *info, register unsigned char *to,
       }
       else if (type == FIELD_VARCHAR)
       {
-        uint32_t pack_length= HA_VARCHAR_PACKLENGTH(rec->length -1);
+        uint32_t pack_length= ha_varchar_packlength(rec->length -1);
 	uint32_t tmp_length;
         if (pack_length == 1)
         {
@@ -1117,7 +1117,7 @@ bool _mi_rec_check(MI_INFO *info,const unsigned char *record, unsigned char *rec
       }
       else if (type == FIELD_VARCHAR)
       {
-        uint32_t pack_length= HA_VARCHAR_PACKLENGTH(rec->length -1);
+        uint32_t pack_length= ha_varchar_packlength(rec->length -1);
 	uint32_t tmp_length;
         if (pack_length == 1)
         {
@@ -1190,7 +1190,7 @@ ulong _mi_rec_unpack(register MI_INFO *info, register unsigned char *to, unsigne
     {
       if (type == FIELD_VARCHAR)
       {
-        uint32_t pack_length= HA_VARCHAR_PACKLENGTH(rec_length-1);
+        uint32_t pack_length= ha_varchar_packlength(rec_length-1);
         if (pack_length == 1)
         {
           length= (uint) *(unsigned char*) from;

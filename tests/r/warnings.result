@@ -56,7 +56,7 @@ select @@warning_count;
 1
 drop table t1;
 create table t1(a int, b int not null, c date, d char(5));
-load data infile '../../std_data_ln/warnings_loaddata.dat' into table t1 fields terminated by ',';
+load data infile 'DRIZZLETEST_VARDIR/std_data_ln/warnings_loaddata.dat' into table t1 fields terminated by ',';
 ERROR 22004: Column set to default value; NULL supplied to NOT NULL column 'b' at row 2
 select @@warning_count;
 @@warning_count

@@ -64,15 +64,6 @@ namespace drizzled
 
 extern bool volatile shutdown_in_progress;
 
-static bool add_table(table::Concurrent *arg)
-{
-  table::CacheMap &open_cache(table::getCache());
-
-  table::CacheMap::iterator returnable= open_cache.insert(make_pair(arg->getShare()->getCacheKey(), arg));
-
-  return not (returnable == open_cache.end());
-}
-
 bool table_cache_init(void)
 {
   return false;
@@ -152,7 +143,7 @@ void Table::free_io_cache()
 {
   if (sort.io_cache)
   {
-    close_cached_file(sort.io_cache);
+    sort.io_cache->close_cached_file();
     delete sort.io_cache;
     sort.io_cache= 0;
   }
@@ -810,7 +801,7 @@ table::Placeholder *Session::table_cache_insert_placeholder(const drizzled::Tabl
   TableIdentifier identifier(arg.getSchemaName(), arg.getTableName(), message::Table::INTERNAL);
   table::Placeholder *table= new table::Placeholder(this, identifier);
 
-  if (not add_table(table))
+  if (not table::Cache::singleton().insert(table))
   {
     delete table;
 
@@ -1168,7 +1159,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
             LOCK_open.unlock();
             return NULL;
           }
-          (void)add_table(new_table);
+          (void)table::Cache::singleton().insert(new_table);
         }
       }
 

@@ -175,32 +175,36 @@ struct st_io_cache    /* Used when cacheing files */
 
   ~st_io_cache()
   { }
+
+  void close_cached_file();
+  bool real_open_cached_file();
+  int end_io_cache();
+  int init_io_cache(int file, size_t cachesize,
+                    enum cache_type type, my_off_t seek_offset,
+                    bool use_async_io, myf cache_myflags);
+  void init_functions();
+
+  bool reinit_io_cache(enum cache_type type_arg,
+                       my_off_t seek_offset,
+                       bool use_async_io,
+                       bool clear_cache);
+  void setup_io_cache();
+  bool open_cached_file(const char *dir,
+                        const char *prefix, size_t cache_size,
+                        myf cache_myflags);
+
 };
 
 typedef struct st_io_cache IO_CACHE;    /* Used when cacheing files */
 
-extern int init_io_cache(IO_CACHE *info,int file,size_t cachesize,
-                         enum cache_type type,my_off_t seek_offset,
-                         bool use_async_io, myf cache_myflags);
-extern bool reinit_io_cache(IO_CACHE *info,enum cache_type type,
-                            my_off_t seek_offset,bool use_async_io,
-                            bool clear_cache);
-extern void setup_io_cache(IO_CACHE* info);
-extern int _my_b_get(IO_CACHE *info);
-extern int _my_b_async_read(IO_CACHE *info,unsigned char *Buffer,size_t Count);
+extern int _my_b_get(st_io_cache *info);
+extern int _my_b_async_read(st_io_cache *info,unsigned char *Buffer,size_t Count);
 
-extern int my_block_write(IO_CACHE *info, const unsigned char *Buffer,
+extern int my_block_write(st_io_cache *info, const unsigned char *Buffer,
                           size_t Count, my_off_t pos);
-extern int my_b_flush_io_cache(IO_CACHE *info, int need_append_buffer_lock);
+extern int my_b_flush_io_cache(st_io_cache *info, int need_append_buffer_lock);
 
 #define flush_io_cache(info) my_b_flush_io_cache((info),1)
-
-extern int end_io_cache(IO_CACHE *info);
-extern bool open_cached_file(IO_CACHE *cache,const char *dir,
-                             const char *prefix, size_t cache_size,
-                             myf cache_myflags);
-extern bool real_open_cached_file(IO_CACHE *cache);
-extern void close_cached_file(IO_CACHE *cache);
 
 } /* namespace internal */
 } /* namespace drizzled */

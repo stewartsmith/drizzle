@@ -68,6 +68,7 @@ drizzle_st *drizzle_create(drizzle_st *drizzle)
     printf("Error at WSAStartup()\n");
 #endif
   struct sigaction act;
+  memset(&act, 0, sizeof(act));
 
   act.sa_handler = SIG_IGN;
   sigaction(SIGPIPE, &act, NULL);

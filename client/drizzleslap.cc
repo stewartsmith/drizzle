@@ -103,6 +103,7 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 #include <boost/program_options.hpp>
+#include <drizzled/atomics.h>
 
 #define SLAP_VERSION "1.5"
 
@@ -118,11 +119,6 @@ namespace po= boost::program_options;
 static char *shared_memory_base_name=0;
 #endif
 
-/* Global Thread counter */
-uint32_t thread_counter;
-boost::mutex counter_mutex;
-boost::condition_variable_any count_threshhold;
-
 client::Wakeup master_wakeup;
 
 /* Global Thread timer */
@@ -131,6 +127,8 @@ boost::mutex timer_alarm_mutex;
 boost::condition_variable_any timer_alarm_threshold;
 
 std::vector < std::string > primary_keys;
+
+drizzled::atomic<size_t> connection_count;
 
 static string host, 
   opt_password, 
@@ -380,12 +378,6 @@ end:
     run_query(con, NULL, "COMMIT", strlen("COMMIT"));
 
   slap_close(con);
-
-  {
-    boost::mutex::scoped_lock scopedLock(counter_mutex);
-    thread_counter--;
-    count_threshhold.notify_one();
-  }
 
   delete ctx;
 }
@@ -764,15 +756,11 @@ void concurrency_loop(drizzle_con_st &con, uint32_t current, OptionString *eptr)
     if (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary)
       generate_primary_key_list(con, eptr);
 
-    if (commit_rate)
-      run_query(con, NULL, "SET AUTOCOMMIT=0", strlen("SET AUTOCOMMIT=0"));
-
     if (not pre_system.empty())
     {
       int ret= system(pre_system.c_str());
       assert(ret != -1);
     }
-       
 
     /*
       Pre statements are always run after all other logic so they can
@@ -1673,7 +1661,9 @@ static int run_query(drizzle_con_st &con, drizzle_result_st *result,
 
   if (opt_only_print)
   {
-    printf("%.*s;\n", len, query);
+    printf("/* CON: %lu */ %.*s;\n",
+           (size_t)drizzle_context(drizzle_con_drizzle(&con)),
+           len, query);
     return 0;
   }
 
@@ -1780,7 +1770,9 @@ static void create_schema(drizzle_con_st &con, const char *db, Statement *stmt, 
 
   if (opt_only_print)
   {
-    printf("use %s;\n", db);
+    printf("/* CON: %lu */ use %s;\n",
+           (size_t)drizzle_context(drizzle_con_drizzle(&con)),
+           db);
   }
   else
   {
@@ -1917,16 +1909,17 @@ static void timer_thread()
   }
 }
 
+typedef boost::shared_ptr<boost::thread> Thread;
+typedef std::vector <Thread> Threads;
 static void run_scheduler(Stats *sptr, Statement **stmts, uint32_t concur, uint64_t limit)
 {
   uint32_t real_concurrency;
   struct timeval start_time, end_time;
 
-  {
-    boost::mutex::scoped_lock lock(counter_mutex);
+  Threads threads;
 
+  {
     OptionString *sql_type;
-    thread_counter= 0;
 
     master_wakeup.reset();
 
@@ -1963,8 +1956,10 @@ static void run_scheduler(Stats *sptr, Statement **stmts, uint32_t concur, uint6
           real_concurrency++;
 
           /* now you create the thread */
-          boost::thread new_thread(boost::bind(&run_task, con));
-          thread_counter++;
+          Thread thread;
+          thread= Thread(new boost::thread(boost::bind(&run_task, con)));
+          threads.push_back(thread);
+
         }
       }
     }
@@ -1980,7 +1975,9 @@ static void run_scheduler(Stats *sptr, Statement **stmts, uint32_t concur, uint6
         timer_alarm= true;
       }
 
-      boost::thread new_thread(&timer_thread);
+      Thread thread;
+      thread= Thread(new boost::thread(&timer_thread));
+      threads.push_back(thread);
     }
   }
 
@@ -1991,16 +1988,9 @@ static void run_scheduler(Stats *sptr, Statement **stmts, uint32_t concur, uint6
   /*
     We loop until we know that all children have cleaned up.
   */
+  for (Threads::iterator iter= threads.begin(); iter != threads.end(); iter++)
   {
-    boost::mutex::scoped_lock scopedLock(counter_mutex);
-    while (thread_counter)
-    {
-      boost::xtime xt; 
-      xtime_get(&xt, boost::TIME_UTC); 
-      xt.sec += 3;
-
-      count_threshhold.timed_wait(scopedLock, xt);
-    }
+    (*iter)->join();
   }
 
   gettimeofday(&end_time, NULL);
@@ -2348,9 +2338,6 @@ void statement_cleanup(Statement *stmt)
 
 void slap_close(drizzle_con_st &con)
 {
-  if (opt_only_print)
-    return;
-
   drizzle_free(drizzle_con_drizzle(&con));
 }
 
@@ -2361,9 +2348,6 @@ void slap_connect(drizzle_con_st &con, bool connect_to_schema)
   int connect_error= 1;
   drizzle_return_t ret;
   drizzle_st *drizzle;
-
-  if (opt_only_print)
-    return;
 
   if (opt_delayed_start)
     usleep(random()%opt_delayed_start);
@@ -2378,6 +2362,11 @@ void slap_connect(drizzle_con_st &con, bool connect_to_schema)
     fprintf(stderr,"%s: Error creating drizzle object\n", internal::my_progname);
     abort();
   }
+
+  drizzle_set_context(drizzle, (void*)(connection_count.fetch_and_increment()));
+
+  if (opt_only_print)
+    return;
 
   for (uint32_t x= 0; x < 10; x++)
   {

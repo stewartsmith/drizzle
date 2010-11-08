@@ -28,6 +28,7 @@ unittests_unittests_SOURCES = \
 			      unittests/date_test.cc \
 			      unittests/date_time_test.cc \
 			      unittests/generators.cc \
+                              unittests/global_buffer_test.cc \
                               unittests/libdrizzle_test.cc \
 			      unittests/main.cc \
 			      unittests/micro_timestamp_test.cc \

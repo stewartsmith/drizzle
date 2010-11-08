@@ -11,12 +11,14 @@ drop table if exists t1;
 # So use a dummy PK here.
 create table t1 (id int not null auto_increment primary key, a text, b text);
 start transaction;
-load data infile '../../std_data_ln/loaddata2.dat' into table t1 fields terminated by ',' enclosed by '''' (a, b);
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+eval load data infile '$DRIZZLETEST_VARDIR/std_data_ln/loaddata2.dat' into table t1 fields terminated by ',' enclosed by '''' (a, b);
 commit;
 select count(*) from t1;
 truncate table t1;
 start transaction;
-load data infile '../../std_data_ln/loaddata2.dat' into table t1 fields terminated by ',' enclosed by '''' (a, b);
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+eval load data infile '$DRIZZLETEST_VARDIR/std_data_ln/loaddata2.dat' into table t1 fields terminated by ',' enclosed by '''' (a, b);
 rollback;
 select count(*) from t1;
 

@@ -75,7 +75,7 @@ public:
   */
   void end_io_cache()
   {
-    internal::end_io_cache(&cache);
+    cache.end_io_cache();
     need_end_io_cache = 0;
   }
 
@@ -795,10 +795,10 @@ READ_INFO::READ_INFO(int file_par, size_t tot_length,
   else
   {
     end_of_buff=buffer+buff_length;
-    if (init_io_cache(&cache,(false) ? -1 : cursor, 0,
-		      (false) ? internal::READ_NET :
-		      (is_fifo ? internal::READ_FIFO : internal::READ_CACHE),0L,1,
-		      MYF(MY_WME)))
+    if (cache.init_io_cache((false) ? -1 : cursor, 0,
+                            (false) ? internal::READ_NET :
+                            (is_fifo ? internal::READ_FIFO : internal::READ_CACHE),0L,1,
+                            MYF(MY_WME)))
     {
       free((unsigned char*) buffer);
       error=1;
@@ -821,7 +821,7 @@ READ_INFO::~READ_INFO()
   if (!error)
   {
     if (need_end_io_cache)
-      internal::end_io_cache(&cache);
+      cache.end_io_cache();
     free(buffer);
     error=1;
   }
