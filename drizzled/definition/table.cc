@@ -444,9 +444,6 @@ TableShare::TableShare(TableIdentifier::Type type_arg) :
   errarg(0),
   blob_ptr_size(0),
   db_low_byte_first(false),
-  name_lock(false),
-  replace_with_name_lock(false),
-  waiting_on_cond(false),
   keys_in_use(0),
   keys_for_keyread(0),
   event_observers(NULL)
@@ -513,9 +510,6 @@ TableShare::TableShare(TableIdentifier &identifier, const TableIdentifier::Key &
   errarg(0),
   blob_ptr_size(0),
   db_low_byte_first(false),
-  name_lock(false),
-  replace_with_name_lock(false),
-  waiting_on_cond(false),
   keys_in_use(0),
   keys_for_keyread(0),
   event_observers(NULL)
@@ -588,9 +582,6 @@ TableShare::TableShare(const TableIdentifier &identifier) : // Just used during 
   errarg(0),
   blob_ptr_size(0),
   db_low_byte_first(false),
-  name_lock(false),
-  replace_with_name_lock(false),
-  waiting_on_cond(false),
   keys_in_use(0),
   keys_for_keyread(0),
   event_observers(NULL)
@@ -670,9 +661,6 @@ TableShare::TableShare(TableIdentifier::Type type_arg,
   errarg(0),
   blob_ptr_size(0),
   db_low_byte_first(false),
-  name_lock(false),
-  replace_with_name_lock(false),
-  waiting_on_cond(false),
   keys_in_use(0),
   keys_for_keyread(0),
   event_observers(NULL)
@@ -744,14 +732,6 @@ TableShare::~TableShare()
   */
   if (tmp_table == message::Table::STANDARD)
   {
-    /* share->mutex is locked in release_table_share() */
-    while (waiting_on_cond)
-    {
-      cond.notify_all();
-      boost::mutex::scoped_lock scoped(mutex, boost::adopt_lock_t());
-      cond.wait(scoped);
-      scoped.release();
-    }
     /* No thread refers to this anymore */
     mutex.unlock();
   }
