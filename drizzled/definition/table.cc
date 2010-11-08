@@ -114,7 +114,6 @@ void TableShare::release(TableShare *share)
   if (to_be_deleted)
   {
     TableIdentifier identifier(share->getSchemaName(), share->getTableName());
-    plugin::EventObserver::deregisterTableEvents(*share);
    
     definition::Cache::singleton().erase(identifier);
     return;
@@ -136,7 +135,6 @@ void TableShare::release(TableSharePtr &share)
   if (to_be_deleted)
   {
     TableIdentifier identifier(share->getSchemaName(), share->getTableName());
-    plugin::EventObserver::deregisterTableEvents(*share);
    
     definition::Cache::singleton().erase(identifier);
     return;
@@ -153,7 +151,6 @@ void TableShare::release(TableIdentifier &identifier)
     if (share->ref_count == 0)
     {
       share->lock();
-      plugin::EventObserver::deregisterTableEvents(*share);
       definition::Cache::singleton().erase(identifier);
     }
   }
@@ -206,11 +203,11 @@ static TableSharePtr foundTableShare(TableSharePtr share)
 
 TableSharePtr TableShare::getShareCreate(Session *session, 
                                          TableIdentifier &identifier,
-                                         int *in_error)
+                                         int &in_error)
 {
   TableSharePtr share;
 
-  *in_error= 0;
+  in_error= 0;
 
   /* Read table definition from cache */
   if ((share= definition::Cache::singleton().find(identifier)))
@@ -231,7 +228,7 @@ TableSharePtr TableShare::getShareCreate(Session *session,
 
   if (share->open_table_def(*session, identifier))
   {
-    *in_error= share->error;
+    in_error= share->error;
     definition::Cache::singleton().erase(identifier);
 
     return TableSharePtr();
@@ -740,6 +737,8 @@ TableShare::~TableShare()
 
   delete table_proto;
   table_proto= NULL;
+
+  plugin::EventObserver::deregisterTableEvents(*this);
 
   mem_root.free_root(MYF(0));                 // Free's share
 }

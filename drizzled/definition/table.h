@@ -638,7 +638,7 @@ public:
   static TableSharePtr getShare(TableIdentifier &identifier);
   static TableSharePtr getShareCreate(Session *session, 
                                       TableIdentifier &identifier,
-                                      int *error);
+                                      int &error);
 
   friend std::ostream& operator<<(std::ostream& output, const TableShare &share)
   {
