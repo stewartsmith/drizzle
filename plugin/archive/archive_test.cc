@@ -22,6 +22,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <cstdlib>
+#include <memory>
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -111,7 +112,10 @@ int small_test(az_method method)
   int error;
   unsigned int x;
   int written_rows= 0;
-  azio_stream writer_handle, reader_handle;
+  std::auto_ptr<azio_stream> writer_handle_ap(new azio_stream);
+  std::auto_ptr<azio_stream> reader_handle_ap(new azio_stream);
+  azio_stream &writer_handle= *writer_handle_ap.get();
+  azio_stream &reader_handle= *reader_handle_ap.get();
 
   memcpy(test_string, TEST_STRING_INIT, 1024);
 
