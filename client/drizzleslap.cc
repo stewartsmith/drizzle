@@ -560,7 +560,8 @@ int main(int argc, char **argv)
     }
 
     uint64_t temp_drizzle_port= 0;
-    drizzle_con_st con;
+    auto_ptr<drizzle_con_st> con_ap(new drizzle_con_st);
+    drizzle_con_st &con= *con_ap.get();
     OptionString *eptr;
 
     // Disable allow_guessing
