@@ -265,7 +265,8 @@ void *run_concurrent_task(void *p)
   uint64_t count;
   int ret;
   int error;
-  azio_stream reader_handle;
+  std::auto_ptr<azio_stream> reader_handle_ap(new azio_stream);
+  azio_stream &reader_handle= *reader_handle_ap.get();
 
   if (!(ret= azopen(&reader_handle, TEST_FILENAME, O_RDONLY,
                     context->use_aio)))
