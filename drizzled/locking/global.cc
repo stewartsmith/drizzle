@@ -320,7 +320,7 @@ retry:
   }
 
   set_proc_info(0);
-  if (killed)
+  if (getKilled())
   {
     send_kill_message();
     if (sql_lock)
@@ -755,7 +755,7 @@ bool Session::wait_for_locked_table_names(TableList *table_list)
 
   while (locked_named_table(table_list))
   {
-    if (killed)
+    if (getKilled())
     {
       result=1;
       break;
@@ -1001,11 +1001,11 @@ bool Session::lockGlobalReadLock()
 
     waiting_for_read_lock++;
     boost_unique_lock_t scopedLock(LOCK_global_read_lock, boost::adopt_lock_t());
-    while (protect_against_global_read_lock && not killed)
+    while (protect_against_global_read_lock && not getKilled())
       COND_global_read_lock.wait(scopedLock);
     waiting_for_read_lock--;
     scopedLock.release();
-    if (killed)
+    if (getKilled())
     {
       exit_cond(old_message);
       return true;
@@ -1083,14 +1083,14 @@ bool Session::wait_if_global_read_lock(bool abort_on_refresh, bool is_not_commit
     old_message= enter_cond(COND_global_read_lock, LOCK_global_read_lock,
                             "Waiting for release of readlock");
 
-    while (must_wait(is_not_commit) && not killed &&
+    while (must_wait(is_not_commit) && not getKilled() &&
 	   (!abort_on_refresh || version == refresh_version))
     {
       boost_unique_lock_t scoped(LOCK_global_read_lock, boost::adopt_lock_t());
       COND_global_read_lock.wait(scoped);
       scoped.release();
     }
-    if (killed)
+    if (getKilled())
       result=1;
   }
   if (not abort_on_refresh && not result)
@@ -1144,13 +1144,13 @@ bool Session::makeGlobalReadLockBlockCommit()
   global_read_lock_blocks_commit++;
   old_message= enter_cond(COND_global_read_lock, LOCK_global_read_lock,
                           "Waiting for all running commits to finish");
-  while (protect_against_global_read_lock && not killed)
+  while (protect_against_global_read_lock && not getKilled())
   {
     boost_unique_lock_t scopedLock(LOCK_global_read_lock, boost::adopt_lock_t());
     COND_global_read_lock.wait(scopedLock);
     scopedLock.release();
   }
-  if ((error= test(killed)))
+  if ((error= test(getKilled())))
   {
     global_read_lock_blocks_commit--; // undo what we did
   }

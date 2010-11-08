@@ -3147,7 +3147,7 @@ enum_nested_loop_state sub_select_cache(Join *join, JoinTable *join_tab, bool en
       rc= sub_select(join,join_tab,end_of_records);
     return rc;
   }
-  if (join->session->killed)		// If aborted by user
+  if (join->session->getKilled())		// If aborted by user
   {
     join->session->send_kill_message();
     return NESTED_LOOP_KILLED;
@@ -3958,7 +3958,7 @@ enum_nested_loop_state end_write_group(Join *join, JoinTable *, bool end_of_reco
   Table *table=join->tmp_table;
   int	  idx= -1;
 
-  if (join->session->killed)
+  if (join->session->getKilled())
   {						// Aborted by user
     join->session->send_kill_message();
     return NESTED_LOOP_KILLED;
@@ -5099,7 +5099,7 @@ int remove_dup_with_compare(Session *session, Table *table, Field **first_field,
   error=cursor->rnd_next(record);
   for (;;)
   {
-    if (session->killed)
+    if (session->getKilled())
     {
       session->send_kill_message();
       error=0;
@@ -5217,7 +5217,7 @@ int remove_dup_with_hash_index(Session *session,
   for (;;)
   {
     unsigned char *org_key_pos;
-    if (session->killed)
+    if (session->getKilled())
     {
       session->send_kill_message();
       error=0;

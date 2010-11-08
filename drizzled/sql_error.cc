@@ -134,7 +134,7 @@ DRIZZLE_ERROR *push_warning(Session *session, DRIZZLE_ERROR::enum_warning_level 
 
     session->no_warnings_for_error= 1;
 
-    session->killed= Session::KILL_BAD_DATA;
+    session->setKilled(Session::KILL_BAD_DATA);
     my_message(code, msg, MYF(0));
 
     session->no_warnings_for_error= no_warnings_for_error;

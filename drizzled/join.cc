@@ -2462,7 +2462,7 @@ enum_nested_loop_state evaluate_join_record(Join *join, JoinTable *join_tab, int
     return NESTED_LOOP_ERROR;
   if (error < 0)
     return NESTED_LOOP_NO_MORE_ROWS;
-  if (join->session->killed)			// Aborted by user
+  if (join->session->getKilled())			// Aborted by user
   {
     join->session->send_kill_message();
     return NESTED_LOOP_KILLED;
@@ -2674,7 +2674,7 @@ enum_nested_loop_state flush_cached_records(Join *join, JoinTable *join_tab, boo
   info= &join_tab->read_record;
   do
   {
-    if (join->session->killed)
+    if (join->session->getKilled())
     {
       join->session->send_kill_message();
       return NESTED_LOOP_KILLED;
@@ -2806,7 +2806,7 @@ enum_nested_loop_state end_write(Join *join, JoinTable *, bool end_of_records)
 {
   Table *table= join->tmp_table;
 
-  if (join->session->killed)			// Aborted by user
+  if (join->session->getKilled())			// Aborted by user
   {
     join->session->send_kill_message();
     return NESTED_LOOP_KILLED;
@@ -2852,7 +2852,7 @@ enum_nested_loop_state end_update(Join *join, JoinTable *, bool end_of_records)
 
   if (end_of_records)
     return NESTED_LOOP_OK;
-  if (join->session->killed)			// Aborted by user
+  if (join->session->getKilled())			// Aborted by user
   {
     join->session->send_kill_message();
     return NESTED_LOOP_KILLED;
@@ -2917,7 +2917,7 @@ enum_nested_loop_state end_unique_update(Join *join, JoinTable *, bool end_of_re
 
   if (end_of_records)
     return NESTED_LOOP_OK;
-  if (join->session->killed)			// Aborted by user
+  if (join->session->getKilled())			// Aborted by user
   {
     join->session->send_kill_message();
     return NESTED_LOOP_KILLED;
@@ -4182,7 +4182,7 @@ static bool best_extension_by_limited_search(Join *join,
                                              uint32_t prune_level)
 {
   Session *session= join->session;
-  if (session->killed)  // Abort
+  if (session->getKilled())  // Abort
     return(true);
 
   /*
@@ -5880,7 +5880,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
     join->best_read= 1.0;
   }
   /* Generate an execution plan from the found optimal join order. */
-  return (join->session->killed || get_best_combination(join));
+  return (join->session->getKilled() || get_best_combination(join));
 }
 
 /**

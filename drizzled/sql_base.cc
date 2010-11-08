@@ -93,7 +93,7 @@ void table_cache_free(void)
   By leaving the table in the table cache, it disallows any other thread
   to open the table
 
-  session->killed will be set if we run out of memory
+  session->getKilled() will be set if we run out of memory
 
   If closing a MERGE child, the calling function has to take care for
   closing the parent too, if necessary.
@@ -258,7 +258,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
 
       bool found= true;
       /* Wait until all threads has closed all the tables we had locked */
-      while (found && ! session->killed)
+      while (found && ! session->getKilled())
       {
         found= false;
         for (table::CacheMap::const_iterator iter= table::getCache().begin();
@@ -766,7 +766,7 @@ void Session::wait_for_condition(boost::mutex &mutex, boost::condition_variable_
       mutex is unlocked
     */
     boost_unique_lock_t scopedLock(mutex, boost::adopt_lock_t());
-    if (not killed)
+    if (not getKilled())
     {
       cond.wait(scopedLock);
     }
@@ -909,7 +909,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
   if (check_stack_overrun(this, STACK_MIN_SIZE_FOR_OPEN, (unsigned char *)&alias))
     return NULL;
 
-  if (killed)
+  if (getKilled())
     return NULL;
 
   TableIdentifier identifier(table_list->getSchemaName(), table_list->getTableName());
@@ -1446,7 +1446,7 @@ bool wait_for_tables(Session *session)
   session->set_proc_info("Waiting for tables");
   {
     boost_unique_lock_t lock(LOCK_open);
-    while (!session->killed)
+    while (not session->getKilled())
     {
       session->some_tables_deleted= false;
       session->close_old_data_files(false, dropping_tables != 0);
@@ -1456,7 +1456,7 @@ bool wait_for_tables(Session *session)
       }
       COND_refresh.wait(lock);
     }
-    if (session->killed)
+    if (session->getKilled())
       result= true;					// aborted
     else
     {

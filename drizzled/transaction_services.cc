@@ -707,7 +707,7 @@ int TransactionServices::rollbackTransaction(Session *session, bool normal_trans
    */
   if (is_real_trans &&
       session->transaction.all.hasModifiedNonTransData() &&
-      session->killed != Session::KILL_CONNECTION)
+      session->getKilled() != Session::KILL_CONNECTION)
   {
     push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                  ER_WARNING_NOT_COMPLETE_ROLLBACK,

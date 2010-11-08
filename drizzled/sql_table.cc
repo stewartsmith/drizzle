@@ -190,7 +190,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
       if ((locked_table= drop_locked_tables(session, tmp_identifier)))
         table->table= locked_table;
 
-      if (session->killed)
+      if (session->getKilled())
       {
         error= -1;
         goto err_with_placeholders;
@@ -1833,7 +1833,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       TableIdentifier identifier(table->table->getShare()->getSchemaName(), table->table->getShare()->getTableName());
       table::Cache::singleton().removeTable(session, identifier, RTFC_WAIT_OTHER_THREAD_FLAG | RTFC_CHECK_KILLED_FLAG);
       session->exit_cond(old_message);
-      if (session->killed)
+      if (session->getKilled())
 	goto err;
       open_for_modify= 0;
     }

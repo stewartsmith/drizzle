@@ -409,7 +409,7 @@ static int rm_table_part2(Session *session, TableList *tables)
       if ((locked_table= drop_locked_tables(session, identifier)))
         table->table= locked_table;
 
-      if (session->killed)
+      if (session->getKilled())
       {
         error= -1;
         tables->unlock_table_names();
@@ -526,7 +526,7 @@ static long drop_tables_via_filenames(Session *session,
     tot_list_next= &table_list->next_local;
     deleted++;
   }
-  if (session->killed)
+  if (session->getKilled())
     return -1;
 
   if (tot_list)

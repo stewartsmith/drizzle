@@ -1529,7 +1529,7 @@ copy_data_between_tables(Session *session,
   to->restoreRecordAsDefault();        // Create empty record
   while (!(error=info.read_record(&info)))
   {
-    if (session->killed)
+    if (session->getKilled())
     {
       session->send_kill_message();
       error= 1;

@@ -244,7 +244,7 @@ bool Cache::removeTable(Session *session, TableIdentifier &identifier, uint32_t 
         reopen their tables
       */
       locking::broadcast_refresh();
-      if (!(flags & RTFC_CHECK_KILLED_FLAG) || !session->killed)
+      if (not (flags & RTFC_CHECK_KILLED_FLAG) || not session->getKilled())
       {
         dropping_tables++;
         if (likely(signalled))

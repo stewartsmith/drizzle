@@ -447,7 +447,7 @@ void close_connections(void)
     for( SessionList::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
     {
       tmp= *it;
-      tmp->killed= Session::KILL_CONNECTION;
+      tmp->setKilled(Session::KILL_CONNECTION);
       tmp->scheduler->killSession(tmp);
       DRIZZLE_CONNECTION_DONE(tmp->thread_id);
       tmp->lockOnSys();
@@ -544,7 +544,7 @@ passwd *check_user(const char *user)
     }
     return NULL;
   }
-  if (!user)
+  if (not user)
   {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Fatal error: Please read \"Security\" section of "
                       "the manual to find out how to run drizzled as root!\n"));

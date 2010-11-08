@@ -770,7 +770,7 @@ public:
   enum_tx_isolation session_tx_isolation;
   enum_check_fields count_cuted_fields;
 
-  enum killed_state
+  enum killed_state_t
   {
     NOT_KILLED,
     KILL_BAD_DATA,
@@ -778,7 +778,25 @@ public:
     KILL_QUERY,
     KILLED_NO_VALUE /* means none of the above states apply */
   };
-  killed_state volatile killed;
+private:
+  killed_state_t volatile _killed;
+
+public:
+
+  void setKilled(killed_state_t arg)
+  {
+    _killed= arg;
+  }
+
+  killed_state_t getKilled()
+  {
+    return _killed;
+  }
+
+  volatile killed_state_t *getKilledPtr() // Do not use this method, it is here for historical convience.
+  {
+    return &_killed;
+  }
 
   bool some_tables_deleted;
   bool no_errors;
@@ -993,7 +1011,7 @@ public:
    */
   void cleanup_after_query();
   bool storeGlobals();
-  void awake(Session::killed_state state_to_set);
+  void awake(Session::killed_state_t state_to_set);
   /**
    * Pulls thread-specific variables into Session state.
    *
@@ -1183,8 +1201,8 @@ public:
   void end_statement();
   inline int killed_errno() const
   {
-    killed_state killed_val; /* to cache the volatile 'killed' */
-    return (killed_val= killed) != KILL_BAD_DATA ? killed_val : 0;
+    killed_state_t killed_val; /* to cache the volatile 'killed' */
+    return (killed_val= _killed) != KILL_BAD_DATA ? killed_val : 0;
   }
   void send_kill_message() const;
   /* return true if we will abort query if we make a warning now */

@@ -156,7 +156,7 @@ int optimizer::QuickIndexMergeSelect::read_keys_and_merge()
       break;
     }
 
-    if (session->killed)
+    if (session->getKilled())
       return 0;
 
     /* skip row if it will be retrieved by clustered PK scan */

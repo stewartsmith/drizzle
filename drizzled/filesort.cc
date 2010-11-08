@@ -541,7 +541,7 @@ ha_rows FileSort::find_all_keys(SortParam *param,
   unsigned char *ref_pos,*next_pos,ref_buff[MAX_REFLENGTH];
   internal::my_off_t record;
   Table *sort_form;
-  volatile Session::killed_state *killed= &getSession().killed;
+  volatile Session::killed_state_t *killed= getSession().getKilledPtr();
   Cursor *file;
   boost::dynamic_bitset<> *save_read_set= NULL;
   boost::dynamic_bitset<> *save_write_set= NULL;
@@ -1216,8 +1216,8 @@ int FileSort::merge_buffers(SortParam *param, internal::IO_CACHE *from_file,
   buffpek *buffpek_inst;
   qsort2_cmp cmp;
   void *first_cmp_arg;
-  volatile Session::killed_state *killed= &getSession().killed;
-  Session::killed_state not_killable;
+  volatile Session::killed_state_t *killed= getSession().getKilledPtr();
+  Session::killed_state_t not_killable;
 
   getSession().status_var.filesort_merge_passes++;
   if (param->not_killable)
