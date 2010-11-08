@@ -58,7 +58,58 @@ class TableIdentifier : public SchemaIdentifier
 {
 public:
   typedef message::Table::TableType Type;
-  typedef std::vector<char> Key;
+
+  class Key
+  {
+    std::vector<char> key_buffer;
+    size_t hash_value;
+
+  public:
+
+    Key() :
+      hash_value(0)
+    {
+    }
+
+    const char *vector() const
+    {
+      return &key_buffer[0];
+    }
+
+    std::vector<char> &vectorPtr()
+    {
+      return key_buffer;
+    }
+
+    void set(size_t resize_arg, const std::string &a, const std::string &b);
+
+    friend bool operator==(const Key &left, const Key &right)
+    {
+      if (left.hash_value == right.hash_value and left.key_buffer.size() == right.key_buffer.size())
+      {
+        if (memcmp(&left.key_buffer[0], &right.key_buffer[0], left.key_buffer.size()) == 0)
+          return true;
+      }
+
+      return false;
+    }
+
+    friend bool operator<(const Key &left, const Key &right)
+    {
+      return left.key_buffer < right.key_buffer;
+    }
+
+    size_t size() const
+    {
+      return key_buffer.size();
+    }
+
+    size_t getHashValue() const
+    {
+      return hash_value;
+    }
+  };
+
 private:
 
   Type type;
@@ -118,11 +169,25 @@ public:
     return false;
   }
 
+  static bool isView(message::Table::TableType arg) // Not a SQL view, but a view for I_S
+  {
+    switch (arg)
+    {
+    default:
+    case message::Table::STANDARD:
+    case message::Table::TEMPORARY:
+    case message::Table::INTERNAL:
+      break;
+    case message::Table::FUNCTION:
+      return true;
+    }
+
+    return false;
+  }
+
   bool isView() const // Not a SQL view, but a view for I_S
   {
-    if (type == message::Table::FUNCTION)
-      return true;
-    return false;
+    return isView(type);
   }
 
   Type getType() const
@@ -193,63 +258,21 @@ public:
 
   friend bool operator==(TableIdentifier &left, TableIdentifier &right)
   {
-    if (left.getKey() == right.getKey())
-      return true;
+    if (left.getHashValue() == right.getHashValue())
+    {
+      if (left.getKey() == right.getKey())
+        return true;
+    }
 
     return false;
   }
 
   static uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length);
-  static size_t build_table_filename(std::string &buff, const char *db, const char *table_name, bool is_tmp);
+  static size_t build_table_filename(std::string &path, const std::string &db, const std::string &table_name, bool is_tmp);
   static size_t build_tmptable_filename(std::string &buffer);
   static size_t build_tmptable_filename(std::vector<char> &buffer);
 
-  /*
-    Create a table cache key
-
-    SYNOPSIS
-    createKey()
-    key			Create key here (must be of size MAX_DBKEY_LENGTH)
-    table_list		Table definition
-
-    IMPLEMENTATION
-    The table cache_key is created from:
-    db_name + \0
-    table_name + \0
-
-    if the table is a tmp table, we add the following to make each tmp table
-    unique on the slave:
-
-    4 bytes for master thread id
-    4 bytes pseudo thread id
-
-    RETURN
-    Length of key
-  */
-  static uint32_t createKey(char *key, const char *db_arg, const char *table_name_arg)
-  {
-    uint32_t key_length;
-    char *key_pos= key;
-
-    key_pos= strcpy(key_pos, db_arg) + strlen(db_arg);
-    key_pos= strcpy(key_pos+1, table_name_arg) +
-      strlen(table_name_arg);
-    key_length= (uint32_t)(key_pos-key)+1;
-
-    return key_length;
-  }
-
-  static uint32_t createKey(char *key, const TableIdentifier &identifier)
-  {
-    uint32_t key_length;
-    char *key_pos= key;
-
-    key_pos= strcpy(key_pos, identifier.getSchemaName().c_str()) + identifier.getSchemaName().length();
-    key_pos= strcpy(key_pos + 1, identifier.getTableName().c_str()) + identifier.getTableName().length();
-    key_length= (uint32_t)(key_pos-key)+1;
-
-    return key_length;
-  }
+public:
 
   size_t getHashValue() const
   {
@@ -263,6 +286,7 @@ public:
 };
 
 std::size_t hash_value(TableIdentifier const& b);
+std::size_t hash_value(TableIdentifier::Key const& b);
 
 typedef std::vector <TableIdentifier> TableIdentifiers;
 

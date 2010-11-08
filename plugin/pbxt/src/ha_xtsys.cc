@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Paul McCullagh
  *
@@ -59,7 +59,7 @@
  */
 
 #ifdef DRIZZLED
-ha_xtsys::ha_xtsys(handlerton *hton, TableShare& table_arg):
+ha_xtsys::ha_xtsys(handlerton *hton, Table& table_arg):
 handler(*hton, table_arg),
 ha_open_tab(NULL)
 {
@@ -96,7 +96,7 @@ int ha_xtsys::open(const char *table_path, int XT_UNUSED(mode), uint XT_UNUSED(t
 	try_(a) {
 		xt_ha_open_database_of_table(self, (XTPathStrPtr) table_path);
 
-		ha_open_tab = XTSystemTableShare::openSystemTable(self, table_path, table);
+		ha_open_tab = XTSystemTableShare::openSystemTable(self, table_path, getTable());
 		MYSQL_INIT_LOCK(ha_lock, ha_open_tab->ost_share->sts_my_lock);
 		ref_length = ha_open_tab->getRefLen();
 	}

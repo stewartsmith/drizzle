@@ -29,6 +29,7 @@
  */
 
 #include <cassert>
+#include <vector>
 #include <boost/program_options.hpp>
 
 #include "drizzled/module/manifest.h"
@@ -37,7 +38,7 @@
 
 namespace drizzled
 {
-class sys_var;
+class set_var;
 
 void module_shutdown(module::Registry &registry);
 
@@ -53,20 +54,25 @@ class Module
   const Manifest *manifest;
 
 public:
+  typedef std::vector<sys_var *> Variables;
   Library *plugin_dl;
   bool isInited;
-  sys_var *system_vars;         /* server variables for this plugin */
+  Variables system_vars;         /* server variables for this plugin */
+  Variables sys_vars;
   Module(const Manifest *manifest_arg,
          Library *library_arg) :
     name(manifest_arg->name),
     manifest(manifest_arg),
     plugin_dl(library_arg),
     isInited(false),
-    system_vars(NULL)
+    system_vars(),
+    sys_vars()
   {
     assert(manifest != NULL);
   }
-      
+
+  ~Module();
+
   const std::string& getName() const
   {
     return name;
@@ -77,6 +83,21 @@ public:
     return *manifest;
   }
 
+  void addMySysVar(sys_var *var)
+  {
+    sys_vars.push_back(var);
+    addSysVar(var);
+  }
+
+  void addSysVar(sys_var *var)
+  {
+    system_vars.push_back(var);
+  }
+
+  Variables &getSysVars()
+  {
+    return system_vars;
+  }
 };
 
 } /* namespace module */

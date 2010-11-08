@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Original author: Paul McCullagh
  * Continued development: Barry Leslie
@@ -29,6 +29,8 @@
 
 #include "cslib/CSConfig.h"
 #include <inttypes.h>
+
+#include "defs_ms.h"
 
 #include "cslib/CSGlobal.h"
 #include "cslib/CSSocket.h"
@@ -448,7 +450,10 @@ void MSConnectionHandler::handlePut()
 	new_(metadata, CSStringBuffer(80));
 	push_(metadata);
 	
-	blob_len = iInputStream->getContentLength();
+	 if (! iInputStream->getContentLength(&blob_len)) {
+		CSException::throwException(CS_CONTEXT, CS_ERR_MISSING_HTTP_HEADER, "Missing content length header");
+	 }
+	 
 	
 	// Collect the meta data.
 	for (uint32_t i = 0; i < iInputStream->numHeaders(); i++) {

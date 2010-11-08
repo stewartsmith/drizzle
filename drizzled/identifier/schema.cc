@@ -27,6 +27,9 @@
 #include "drizzled/current_session.h"
 #include "drizzled/internal/my_sys.h"
 
+#include "drizzled/util/tablename_to_filename.h"
+#include "drizzled/util/backtrace.h"
+
 #include <algorithm>
 #include <sstream>
 #include <cstdio>
@@ -41,16 +44,12 @@ namespace drizzled
 extern string drizzle_tmpdir;
 extern pid_t current_pid;
 
-static const char hexchars[]= "0123456789abcdef";
-
-static bool tablename_to_filename(const string &from, string &to);
-
 static size_t build_schema_filename(string &path, const string &db)
 {
-  string dbbuff("");
+  path.append("");
   bool conversion_error= false;
 
-  conversion_error= tablename_to_filename(db, dbbuff);
+  conversion_error= util::tablename_to_filename(db, path);
   if (conversion_error)
   {
     errmsg_printf(ERRMSG_LVL_ERROR,
@@ -58,71 +57,25 @@ static size_t build_schema_filename(string &path, const string &db)
                     "name length restrictions."));
     return 0;
   }
-   
-
-  path.append(dbbuff);
 
   return path.length();
 }
 
-
-/*
-  Translate a table name to a cursor name (WL #1324).
-
-  SYNOPSIS
-    tablename_to_filename()
-      from                      The table name
-      to                OUT     The cursor name
-
-  RETURN
-    true if errors happen. false on success.
-*/
-static bool tablename_to_filename(const string &from, string &to)
-{
-  
-  string::const_iterator iter= from.begin();
-  for (; iter != from.end(); ++iter)
-  {
-    if ((*iter >= '0' && *iter <= '9') ||
-        (*iter >= 'a' && *iter <= 'z') ||
-        /* OSX defines an extra set of high-bit and multi-byte characters
-          that cannot be used on the filesystem. Instead of trying to sort
-          those out, we'll just escape encode all high-bit-set chars on OSX.
-          It won't really hurt anything - it'll just make some filenames ugly. */
-#if !defined(TARGET_OS_OSX)
-        ((unsigned char)*iter >= 128) ||
-#endif
-        (*iter == '_') ||
-        (*iter == ' ') ||
-        (*iter == '-'))
-    {
-      to.push_back(*iter);
-      continue;
-    }
-
-    if ((*iter >= 'A' && *iter <= 'Z'))
-    {
-      to.push_back(tolower(*iter));
-      continue;
-    }
-   
-    /* We need to escape this char in a way that can be reversed */
-    to.push_back('@');
-    to.push_back(hexchars[(*iter >> 4) & 15]);
-    to.push_back(hexchars[(*iter) & 15]);
-  }
-
-  if (internal::check_if_legal_tablename(to.c_str()))
-  {
-    to.append("@@@");
-  }
-  return false;
-}
-
 SchemaIdentifier::SchemaIdentifier(const std::string &db_arg) :
   db(db_arg),
-  db_path("")
+  db_path(""),
+  catalog("LOCAL")
 { 
+#if 0
+  string::size_type lastPos= db.find_first_of('/', 0);
+
+  if (lastPos != std::string::npos) 
+  {
+    catalog= db.substr(0, lastPos);
+    db.erase(0, lastPos + 1);
+  }
+#endif
+
   if (not db_arg.empty())
   {
     drizzled::build_schema_filename(db_path, db);

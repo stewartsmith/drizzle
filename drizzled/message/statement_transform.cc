@@ -31,6 +31,7 @@
 
 #include "config.h"
 
+#include <boost/lexical_cast.hpp>
 #include "drizzled/message/statement_transform.h"
 #include "drizzled/message/transaction.pb.h"
 #include "drizzled/message/table.pb.h"
@@ -126,6 +127,11 @@ transformStatementToSql(const Statement &source,
 
   switch (source.type())
   {
+  case Statement::ROLLBACK:
+    {
+      sql_strings.push_back("ROLLBACK");
+      break;
+    }
   case Statement::INSERT:
     {
       if (! source.has_insert_header())
@@ -1036,8 +1042,6 @@ transformTableOptionsToSql(const Table::TableOptions &options,
   if (sql_variant == ANSI)
     return NONE; /* ANSI does not support table options... */
 
-  stringstream ss;
-
   if (options.has_comment())
   {
     destination.append(" COMMENT=", 9);
@@ -1066,35 +1070,27 @@ transformTableOptionsToSql(const Table::TableOptions &options,
 
   if (options.has_max_rows())
   {
-    ss << options.max_rows();
     destination.append("\nMAX_ROWS = ", 12);
-    destination.append(ss.str());
-    ss.clear();
+    destination.append(boost::lexical_cast<string>(options.max_rows()));
   }
 
   if (options.has_min_rows())
   {
-    ss << options.min_rows();
     destination.append("\nMIN_ROWS = ", 12);
-    destination.append(ss.str());
-    ss.clear();
+    destination.append(boost::lexical_cast<string>(options.min_rows()));
   }
 
   if (options.has_user_set_auto_increment_value()
       && options.has_auto_increment_value())
   {
-    ss << options.auto_increment_value();
     destination.append(" AUTO_INCREMENT=", 16);
-    destination.append(ss.str());
-    ss.clear();
+    destination.append(boost::lexical_cast<string>(options.auto_increment_value()));
   }
 
   if (options.has_avg_row_length())
   {
-    ss << options.avg_row_length();
     destination.append("\nAVG_ROW_LENGTH = ", 18);
-    destination.append(ss.str());
-    ss.clear();
+    destination.append(boost::lexical_cast<string>(options.avg_row_length()));
   }
 
   if (options.has_checksum() &&
@@ -1160,10 +1156,8 @@ transformIndexDefinitionToSql(const Table::Index &index,
       {
         if (part.compare_length() != field.string_options().length())
         {
-          stringstream ss;
           destination.push_back('(');
-          ss << part.compare_length();
-          destination.append(ss.str());
+          destination.append(boost::lexical_cast<string>(part.compare_length()));
           destination.push_back(')');
         }
       }
@@ -1202,8 +1196,6 @@ static void transformForeignKeyOptionToSql(Table::ForeignKeyConstraint::ForeignK
 {
   switch (opt)
   {
-  case Table::ForeignKeyConstraint::OPTION_UNDEF:
-    break;
   case Table::ForeignKeyConstraint::OPTION_RESTRICT:
     destination.append("RESTRICT");
     break;
@@ -1213,10 +1205,11 @@ static void transformForeignKeyOptionToSql(Table::ForeignKeyConstraint::ForeignK
   case Table::ForeignKeyConstraint::OPTION_SET_NULL:
     destination.append("SET NULL");
     break;
+  case Table::ForeignKeyConstraint::OPTION_UNDEF:
   case Table::ForeignKeyConstraint::OPTION_NO_ACTION:
     destination.append("NO ACTION");
     break;
-  case Table::ForeignKeyConstraint::OPTION_DEFAULT:
+  case Table::ForeignKeyConstraint::OPTION_SET_DEFAULT:
     destination.append("SET DEFAULT");
     break;
   }
@@ -1269,13 +1262,13 @@ transformForeignKeyConstraintDefinitionToSql(const Table::ForeignKeyConstraint &
 
   destination.push_back(')');
 
-  if (fkey.update_option() != Table::ForeignKeyConstraint::OPTION_UNDEF)
+  if (fkey.has_update_option() and fkey.update_option() != Table::ForeignKeyConstraint::OPTION_UNDEF)
   {
     destination.append(" ON UPDATE ", 11);
     transformForeignKeyOptionToSql(fkey.update_option(), destination);
   }
 
-  if (fkey.delete_option() != Table::ForeignKeyConstraint::OPTION_UNDEF)
+  if (fkey.has_delete_option() and fkey.delete_option() != Table::ForeignKeyConstraint::OPTION_UNDEF)
   {
     destination.append(" ON DELETE ", 11);
     transformForeignKeyOptionToSql(fkey.delete_option(), destination);
@@ -1325,9 +1318,8 @@ transformFieldDefinitionToSql(const Table::Field &field,
       else
         destination.append(" VARCHAR(", 9);
 
-      stringstream ss;
-      ss << field.string_options().length() << ")";
-      destination.append(ss.str());
+      destination.append(boost::lexical_cast<string>(field.string_options().length()));
+      destination.append(")");
     }
     break;
   case Table::Field::BLOB:

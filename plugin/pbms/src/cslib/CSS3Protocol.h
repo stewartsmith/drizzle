@@ -16,19 +16,25 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  *  Created by Barry Leslie on 10/02/09.
  *
  */
 
 #include "CSHTTPStream.h"
+#include "CSMd5.h"
 class S3ProtocolCon;
 
 #define PUB_KEY_BIT		((uint8_t)1)
 #define PRIV_KEY_BIT	((uint8_t)2)
 #define SERVER_BIT		((uint8_t)4)
 
+
+typedef struct S3Range {
+	 off64_t startByte;
+	 off64_t endByte;
+} S3RangeRec, *S3RangePtr;
 
 class CSS3Protocol: public CSRefObject {
 	private:
@@ -39,7 +45,8 @@ class CSS3Protocol: public CSRefObject {
 	CSString *s3_private_key;
 	
 	uint8_t	s3_ready; // A flag to indicate if the S3 protocol has been fully initialised.
-	uint32_t s3_maxRetrys; 
+	uint32_t s3_maxRetries; 
+	uint32_t s3_sleepTime; 
 	
 	CSString *s3_getSignature(const char *verb, 
 								const char *md5, 
@@ -95,6 +102,9 @@ class CSS3Protocol: public CSRefObject {
 		}
 	}
 
+	void s3_setMaxRetries(uint32_t retries){s3_maxRetries = retries;}
+	void s3_setSleepTime(uint32_t nap_time){s3_sleepTime = nap_time;}
+	
 	const char *s3_getPrivateKey() { return s3_private_key->getCString();}
 	
 	bool s3_isReady() { return ((s3_ready & SERVER_BIT) && (s3_ready & PUB_KEY_BIT) && (s3_ready & PRIV_KEY_BIT));}
@@ -105,7 +115,8 @@ class CSS3Protocol: public CSRefObject {
 	CSVector *s3_send(CSInputStream *input, const char *bucket, const char *key, off64_t size, const char *content_type = NULL, Md5Digest *digest = NULL, const char *s3Authorization = NULL, time_t s3AuthorizationTime = 0);
 
 	// s3_receive() returns false if the object was not found.
-	CSVector *s3_receive(CSOutputStream *output, const char *bucket, const char *key, bool *found);
+	// If 'output' is NULL then only the headers will be fetched.
+	CSVector *s3_receive(CSOutputStream *output, const char *bucket, const char *key, bool *found, S3RangePtr range = NULL, time_t *last_modified = NULL);
 
 	// s3_delete() returns false if the object was not found.
 	bool s3_delete(const char *bucket, const char *key);

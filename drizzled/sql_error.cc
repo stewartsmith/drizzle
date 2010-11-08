@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA */
 
 /**********************************************************************
 This file contains the implementation of error and warnings related
@@ -134,7 +134,7 @@ DRIZZLE_ERROR *push_warning(Session *session, DRIZZLE_ERROR::enum_warning_level 
 
     session->no_warnings_for_error= 1;
 
-    session->killed= Session::KILL_BAD_DATA;
+    session->setKilled(Session::KILL_BAD_DATA);
     my_message(code, msg, MYF(0));
 
     session->no_warnings_for_error= no_warnings_for_error;

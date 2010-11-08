@@ -36,7 +36,7 @@ Note	1051	Unknown table 't1'
 create temporary table t1 (ordid int not null auto_increment, ord  varchar(50) not null, primary key (ord,ordid)) engine=MEMORY;
 ERROR 42000: Incorrect table definition; there can be only one auto column and it must be defined as a key
 create table not_existing_database.test (a int);
-ERROR 42000: Unknown database 'not_existing_database'
+ERROR 42000: Unknown schema 'not_existing_database'
 create table `a/a` (a int);
 show create table `a/a`;
 Table	Create Table
@@ -86,7 +86,7 @@ create table t1 (t1.index int);
 drop table t1;
 drop database if exists mysqltest;
 Warnings:
-Note	1008	Can't drop database 'mysqltest'; database doesn't exist
+Note	1008	Can't drop schema 'mysqltest'; schema doesn't exist
 create database mysqltest;
 create table mysqltest.$test1 (a$1 int, $b int, c$ int);
 insert into mysqltest.$test1 values (1,2,3);
@@ -290,7 +290,7 @@ drop table t1;
 create table `t1 `(a int);
 ERROR 42000: Incorrect table name 't1 '
 create database `db1 `;
-ERROR 42000: Incorrect database name 'db1 '
+ERROR 42000: Incorrect schema name 'db1 '
 create table t1(`a ` int);
 ERROR 42000: Incorrect column name 'a '
 create table t1 (a int,);
@@ -366,7 +366,7 @@ ERROR 42S01: Table 't3' already exists
 create table t3 like mysqltest.t3;
 ERROR 42S01: Table 't3' already exists
 create table non_existing_database.t1 like t1;
-ERROR 42000: Unknown database 'non_existing_database'
+ERROR 42000: Unknown schema 'non_existing_database'
 create table t3 like non_existing_table;
 ERROR 42S02: Table 'test.non_existing_table' doesn't exist
 create temporary table t3 like t1;
@@ -524,7 +524,7 @@ ERROR 42000: Incorrect table name 'column'
 create table t1(test.column.name int);
 ERROR 42000: Incorrect table name 'column'
 create table t1(xyz.t1.name int);
-ERROR 42000: Incorrect database name 'xyz'
+ERROR 42000: Incorrect schema name 'xyz'
 create table t1(t1.name int);
 create table t2(test.t2.name int);
 drop table t1,t2;
@@ -543,12 +543,12 @@ create database mysqltest;
 use mysqltest;
 drop database mysqltest;
 create table test.t1 like x;
-ERROR 3D000: No database selected
+ERROR 3D000: No schema selected
 drop table if exists test.t1;
 create database mysqltest;
 create database if not exists mysqltest;
 Warnings:
-Note	1007	Can't create database 'mysqltest'; database exists
+Note	1007	Can't create schema 'mysqltest'; schema exists
 show create database mysqltest;
 Database	Create Database
 mysqltest	CREATE DATABASE `mysqltest` COLLATE = utf8_general_ci
@@ -1399,13 +1399,13 @@ SELECT * from t2;
 a	b
 drop table t1,t2;
 CREATE DATABASE aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
-ERROR 42000: Incorrect database name 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+ERROR 42000: Incorrect schema name 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 DROP DATABASE aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
-ERROR 42000: Incorrect database name 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+ERROR 42000: Incorrect schema name 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 USE aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
-ERROR 42000: Incorrect database name 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+ERROR 42000: Incorrect schema name 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 SHOW CREATE DATABASE aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
-ERROR 42000: Incorrect database name 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+Database	Create Database
 create database имя_базы_в_кодировке_утф8_длиной_больше_чем_45;
 use имя_базы_в_кодировке_утф8_длиной_больше_чем_45;
 select database();

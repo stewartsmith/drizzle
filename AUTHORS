@@ -1,16 +1,74 @@
-Brian Aker
-Elliot Murphy
-Jay Pipes
-Joe Daly
-Lee Bieber
-Mark Atwood
-Monty Taylor
-Padraig O'Sullivan
-Patrick Galbraith
-Stewart Smith
-Toru Maesaka
-
--- 
 All code descends from the work by Michael Widenius and David Axmark the original authors.
 Many others from MySQL AB have participated in the creation of this as well,
 Please see "SHOW AUTHORS" in MySQL 5.1 for a complete list of names. 
+-----------
+Andrew Ettinger 
+Andrew Garner 
+Andrew Hutchings 
+Andrey Hristov 
+Andrey Zhakov 
+Andy Lester 
+Antony Curtis 
+Arjen Lentz
+Barry Leslie
+Biping Meng 
+Brian Aker 
+C.J. Adams-Collier 
+Clint Fewbar
+David Axmark 
+David Shrewsbury 
+Dennis Schoen 
+Devananda van der Veen
+Diego Medina 
+Diego Pettenò 
+Djellel E. Difallah 
+Edward "Koko" Konetzko 
+Elan Ruusamäe 
+Elliot Murphy 
+Eric Day 
+Eric Herman 
+Eric Lambert 
+Felipe 
+Gleb Shchepa
+Grant Limberg 
+Harrison Fisk 
+Hartmut Holzgraefe 
+Jay Pipes 
+Jim Winstead 
+Jobin Augustine
+Joe Daly 
+Kristian Nielsen 
+Lee Bieber 
+LinuxJedi 
+Lu Guanqun 
+Marcus Eriksson 
+Mark Atwood 
+Mats Kindahl 
+Monty Taylor 
+Moriyoshi Koizumi 
+Nathan Williams 
+Nobuhiro Iwamatsu
+Padraig O'Sullivan 
+Patrick Crews 
+Patrick Galbraith 
+Paul McCullagh 
+Paweł Blokus 
+Peter Lieverdink 
+Prafulla Tekawade
+Ronald Bradford
+Robert Collins 
+Robert Klahn 
+Sanders King 
+Siddharth Prakash Singh 
+Snowstalker 
+Stewart Smith 
+Tim Davies 
+Tim Martin 
+Tim Penhey 
+Toru Maesaka 
+Trond Norbye 
+Vijay Samuel 
+Vladimir Kolesnikov 
+Yanbo Wu 
+Yoshinori Sano 
+Zimin 

@@ -1,0 +1,6 @@
+SHOW VARIABLES LIKE 'innodb_buffer_pool_size';
+Variable_name	Value
+innodb_buffer_pool_size	20971520
+SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='buffer_pool_size';
+NAME	TYPE	VALUE
+buffer_pool_size	ULINT	20971520

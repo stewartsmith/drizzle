@@ -36,13 +36,14 @@ namespace plugin
 {
   class MonitoredInTransaction;
   class XaResourceManager;
+  class XaStorageEngine;
   class TransactionalStorageEngine;
 }
 
 class Session;
 class NamedSavepoint;
 class Field;
- 
+
 /**
  * This is a class which manages the XA transaction processing
  * in the server
@@ -51,17 +52,8 @@ class TransactionServices
 {
 public:
   static const size_t DEFAULT_RECORD_SIZE= 100;
-  typedef uint64_t TransactionId;
-  /**
-   * Constructor
-   */
-  TransactionServices()
-  {
-    /**
-     * @todo set transaction ID to the last one from an applier...
-     */
-    current_transaction_id= 0;
-  }
+  
+  TransactionServices();
 
   /**
    * Singleton method
@@ -118,6 +110,7 @@ public:
    */
   void cleanupTransactionMessage(message::Transaction *in_transaction,
                                  Session *in_session);
+
   /**
    * Helper method which initializes a Statement message
    *
@@ -259,6 +252,28 @@ public:
    * @param use_update_record If true, uses the values from the update row instead
    */
   void deleteRecord(Session *in_session, Table *in_table, bool use_update_record= false);
+
+  /**
+   * Used to undo effects of a failed statement.
+   *
+   * An SQL statement, like an UPDATE, that affects multiple rows could
+   * potentially fail mid-way through processing the rows. In such a case,
+   * the successfully modified rows that preceeded the failing row would
+   * have been added to the Statement message. This method is used for
+   * rolling back that change.
+   *
+   * @note
+   * This particular failure is seen on column constraint violations
+   * during a multi-row UPDATE and a multi-row INSERT..SELECT.
+   *
+   * @param in_session Pointer to the Session containing the Statement
+   * @param count The number of records to remove from Statement.
+   *
+   * @retval true Successfully removed 'count' records
+   * @retval false Failure
+   */
+  bool removeStatementRecords(Session *in_session, uint32_t count);
+
   /**
    * Creates a CreateSchema Statement GPB message and adds it
    * to the Session's active Transaction GPB message for pushing
@@ -412,23 +427,36 @@ public:
                                       plugin::MonitoredInTransaction *monitored,
                                       plugin::TransactionalStorageEngine *engine,
                                       plugin::XaResourceManager *resource_manager);
-  TransactionId getNextTransactionId()
-  {
-    return current_transaction_id.increment();
-  }
-  TransactionId getCurrentTransactionId()
-  {
-    return current_transaction_id;
-  }
+
+  uint64_t getCurrentTransactionId(Session *session);
+
+  void allocateNewTransactionId();
+ 
+  /**************
+   * Events API
+   **************/
+
   /**
-   * DEBUG ONLY.  See plugin::TransactionLog::truncate()
+   * Send server startup event.
+   *
+   * @param session Session pointer
+   *
+   * @retval true Success
+   * @retval false Failure
    */
-  void resetTransactionId()
-  {
-    current_transaction_id= 0;
-  }
+  bool sendStartupEvent(Session *session);
+
+  /**
+   * Send server shutdown event.
+   *
+   * @param session Session pointer
+   *
+   * @retval true Success
+   * @retval false Failure
+   */
+  bool sendShutdownEvent(Session *session);
+
 private:
-  atomic<TransactionId> current_transaction_id;
 
   /**
    * Checks if a field has been updated 
@@ -442,6 +470,38 @@ private:
                       Table *in_table,
                       const unsigned char *old_record,
                       const unsigned char *new_record);
+
+  /**
+   * Create a Transaction that contains event information and send it off.
+   *
+   * This differs from other uses of Transaction in that we don't use the
+   * message associated with Session. We create a totally new message and
+   * use it.
+   *
+   * @param session Session pointer
+   * @param event Event message to send
+   *
+   * @note Used by the public Events API.
+   *
+   * @returns Non-zero on error
+   */
+  int sendEvent(Session *session, const message::Event &event);
+
+  /**
+   * Helper method which checks the UpdateHeader to determine 
+   * if it needs to be finalized.  
+   *
+   * @param[in] statement Statement message container to check 
+   * @param[in] in_table Pointer to the Table being updated
+   * @param[in] old_record Pointer to the old data in the record
+   * @param[in] new_record Pointer to the new data in the record
+   */
+  bool useExistingUpdateHeader(message::Statement &statement,
+                               Table *in_table,
+                               const unsigned char *old_record,
+                               const unsigned char *new_record);
+
+  plugin::XaStorageEngine *xa_storage_engine;
 };
 
 } /* namespace drizzled */

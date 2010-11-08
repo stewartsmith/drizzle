@@ -33,6 +33,29 @@ class DrizzleDumpConnection;
 class DrizzleDumpDatabase;
 class DrizzleDumpData;
 
+class DrizzleDumpForeignKey
+{
+  public:
+    DrizzleDumpConnection *dcon;
+    std::string constraintName;
+
+    DrizzleDumpForeignKey(std::string name, DrizzleDumpConnection* connection) :
+      dcon(connection),
+      constraintName(name)
+    { }
+
+    virtual ~DrizzleDumpForeignKey() { }
+
+    std::string parentColumns;
+    std::string childColumns;
+    std::string childTable;
+    std::string matchOption;
+    std::string deleteRule;
+    std::string updateRule;
+
+    friend std::ostream& operator <<(std::ostream &os, const DrizzleDumpForeignKey &obj);
+};
+
 class DrizzleDumpIndex
 {
   public:
@@ -41,7 +64,10 @@ class DrizzleDumpIndex
 
     DrizzleDumpIndex(std::string &index, DrizzleDumpConnection* connection) :
       dcon(connection),
-      indexName(index)
+      indexName(index),
+      isPrimary(false),
+      isUnique(false),
+      isHash(false)
     { }
 
     virtual ~DrizzleDumpIndex() { }
@@ -49,6 +75,7 @@ class DrizzleDumpIndex
     bool isPrimary;
     bool isUnique;
     bool isHash;
+    uint32_t length;
 
     std::vector<std::string> columns;
     friend std::ostream& operator <<(std::ostream &os, const DrizzleDumpIndex &obj);
@@ -59,7 +86,12 @@ class DrizzleDumpField
   public:
     DrizzleDumpField(std::string &field, DrizzleDumpConnection* connection) :
       dcon(connection),
-      fieldName(field)
+      fieldName(field),
+      isNull(false),
+      isUnsigned(false),
+      isAutoIncrement(false),
+      defaultIsNull(false),
+      convertDateTime(false)
     { }
 
     virtual ~DrizzleDumpField() { }
@@ -96,7 +128,8 @@ class DrizzleDumpTable
   public:
     DrizzleDumpTable(std::string &table, DrizzleDumpConnection* connection) :
       dcon(connection),
-      tableName(table)
+      tableName(table),
+      database(NULL)
     { }
 
     virtual ~DrizzleDumpTable() { }
@@ -106,15 +139,18 @@ class DrizzleDumpTable
 
     virtual bool populateFields() { return false; }
     virtual bool populateIndexes() { return false; }
+    virtual bool populateFkeys() { return false; }
     virtual DrizzleDumpData* getData() { return NULL; }
     std::vector<DrizzleDumpField*> fields;
     std::vector<DrizzleDumpIndex*> indexes;
+    std::vector<DrizzleDumpForeignKey*> fkeys;
 
     friend std::ostream& operator <<(std::ostream &os, const DrizzleDumpTable &obj);
     std::string tableName;
     std::string displayName;
     std::string engineName;
     std::string collate;
+    std::string comment;
 
     // Currently MySQL only, hard to do in Drizzle
     uint64_t autoIncrement;
@@ -156,15 +192,16 @@ class DrizzleDumpData
     drizzle_result_st *result;
     DrizzleDumpData(DrizzleDumpTable *dataTable, DrizzleDumpConnection *connection) :
       dcon(connection),
-      table(dataTable)
+      table(dataTable),
+      result(NULL)
     { }
 
     virtual ~DrizzleDumpData() { }
     friend std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj);
 
-    virtual std::ostream& checkDateTime(std::ostream &os, const char*, uint32_t) const { return os; }
+    virtual std::string checkDateTime(const char*, uint32_t) const { return std::string(""); }
     std::string convertHex(const unsigned char* from, size_t from_size) const;
-    std::string escape(const char* from, size_t from_size) const;
+    static std::string escape(const char* from, size_t from_size);
 };
 
 class DrizzleDumpConnection
@@ -202,8 +239,8 @@ class DrizzleDumpConnection
 
     void freeResult(drizzle_result_st* result);
     bool setDB(std::string databaseName);
-    bool usingDrizzleProtocol(void) { return drizzleProtocol; }
-    bool getServerType(void) { return serverType; }
+    bool usingDrizzleProtocol(void) const { return drizzleProtocol; }
+    bool getServerType(void) const { return serverType; }
     const char* getServerVersion(void) { return drizzle_con_server_version(&connection); }
 };
 
@@ -224,7 +261,8 @@ class DrizzleStringBuf : public std::streambuf
 
     void writeString(std::string &str)
     {
-      connection->queryNoResult(str);
+      if (not connection->queryNoResult(str))
+        throw 1;
     }
 
     void setConnection(DrizzleDumpConnection *conn) { connection= conn; }
@@ -253,23 +291,23 @@ class DrizzleStringBuf : public std::streambuf
 
     int	sync()
     {
-        size_t len = size_t(pptr() - pbase());
-        std::string temp(pbase(), len);
+      size_t len = size_t(pptr() - pbase());
+      std::string temp(pbase(), len);
 
-        /* Drop newlines */
-        temp.erase(std::remove(temp.begin(), temp.end(), '\n'), temp.end());
+      /* Drop newlines */
+      temp.erase(std::remove(temp.begin(), temp.end(), '\n'), temp.end());
 
-        if (temp.compare(0, 2, "--") == 0)
-        {
-          /* Drop comments */
-          setp(pbase(), epptr());
-        }
-        if (temp.find(";") != std::string::npos)
-        {
-            writeString(temp);
-            setp(pbase(), epptr());
-        }
-        return 0;
+      if (temp.compare(0, 2, "--") == 0)
+      {
+        /* Drop comments */
+        setp(pbase(), epptr());
+      }
+      if (temp.find(";") != std::string::npos)
+      {
+        writeString(temp);
+        setp(pbase(), epptr());
+      }
+      return 0;
     }
 };
 

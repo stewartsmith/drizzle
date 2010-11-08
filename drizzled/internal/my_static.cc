@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /*
   Static variables for mysys library. All definied here for easy making of
@@ -64,7 +64,7 @@ uint32_t  sf_malloc_count= 0;		/* Number of times NEW() was called */
 unsigned char *sf_min_adress= (unsigned char*) ~(unsigned long) 0L,
      *sf_max_adress= (unsigned char*) 0L;
 /* Root of the linked list of struct st_irem */
-struct st_irem *sf_malloc_root = NULL;
+irem *sf_malloc_root = NULL;
 
 	/* from my_alarm */
 int volatile my_have_got_alarm=0;	/* declare variable to reset */

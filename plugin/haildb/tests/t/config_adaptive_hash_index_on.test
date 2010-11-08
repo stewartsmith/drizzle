@@ -1,0 +1,2 @@
+SHOW VARIABLES LIKE 'innodb_adaptive_hash_index';
+SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='adaptive_hash_index';

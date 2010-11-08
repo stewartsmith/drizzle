@@ -30,7 +30,7 @@ String *Item_func_conv_charset::val_str(String *str)
   if (use_cached_value)
     return null_value ? 0 : &str_value;
   String *arg= args[0]->val_str(str);
-  uint32_t dummy_errors;
+  size_t dummy_errors;
   if (!arg)
   {
     null_value=1;

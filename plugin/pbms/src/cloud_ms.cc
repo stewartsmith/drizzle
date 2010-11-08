@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  *  Created by Barry Leslie on 3/20/09.
  *
@@ -269,43 +269,40 @@ void CloudDB::cl_restoreDB()
 	release_(src_objectKey);
 	push_(list);
 	
+	
 	// Go through the list copying the keys.
-	try_(a) {
-		dst_cloudRef = src_cloudRef;
-		dst_cloud = src_cloud;
-		dst_cloud->retain();
+	dst_cloudRef = src_cloudRef;
+	dst_cloud = src_cloud;
+	dst_cloud->retain();
 	
-		while ((key = (CSString*)(list->take(0))) ) {
-			push_(key);
+	push_ref_(dst_cloud); // Push a reference to dst_cloud so that what ever it references will be released.
 
-			// The source key name must be parsed to get its
-			// destination cloud reference. The destination for
-			// the BLOBs may not all be in the same cloud. 
-			CloudObjectKey::parseObjectKey(key->getCString(), &cloudKey);
-			
-			// Reset the destination cloud if required.
-			if (cloudKey.cloud_ref != dst_cloudRef) {
-				if (dst_cloud) {
-					dst_cloud->release();
-					dst_cloud = NULL;
-				}
-				dst_cloudRef = 	cloudKey.cloud_ref;
-				dst_cloud = MSCloudInfo::getCloudInfo(dst_cloudRef);
+	while ((key = (CSString*)(list->take(0))) ) {
+		push_(key);
+
+		// The source key name must be parsed to get its
+		// destination cloud reference. The destination for
+		// the BLOBs may not all be in the same cloud. 
+		CloudObjectKey::parseObjectKey(key->getCString(), &cloudKey);
+		
+		// Reset the destination cloud if required.
+		if (cloudKey.cloud_ref != dst_cloudRef) {
+			if (dst_cloud) {
+				dst_cloud->release();
+				dst_cloud = NULL;
 			}
-
-			// Copy the BLOB to the recovered database.
-			dst_objectKey->setObjectKey(&cloudKey);
-			src_cloud->copy(RETAIN(dst_cloud), dst_objectKey->getCString(), key->getCString());
-			release_(key);
-			
+			dst_cloudRef = 	cloudKey.cloud_ref;
+			dst_cloud = MSCloudInfo::getCloudInfo(dst_cloudRef);
 		}
+
+		// Copy the BLOB to the recovered database.
+		dst_objectKey->setObjectKey(&cloudKey);
+		src_cloud->copy(RETAIN(dst_cloud), dst_objectKey->getCString(), key->getCString());
+		release_(key);
+		
 	}
 	
-	finally_(a) {
-		if (dst_cloud)
-			dst_cloud->release();
-	}
-	finally_end_block(a);
+	release_(dst_cloud);
 	
 	blob_recovery_no = 0;
 	release_(list);

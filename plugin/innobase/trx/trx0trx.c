@@ -11,8 +11,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -798,7 +798,7 @@ trx_commit_off_kernel(
 		in exactly the same order as commit lsn's, if the transactions
 		have different rollback segments. To get exactly the same
 		order we should hold the kernel mutex up to this point,
-		adding to to the contention of the kernel mutex. However, if
+		adding to the contention of the kernel mutex. However, if
 		a transaction T2 is able to see modifications made by
 		a transaction T1, T2 will always get a bigger transaction
 		number and a bigger commit lsn than T1. */
@@ -945,7 +945,7 @@ trx_commit_off_kernel(
 /****************************************************************//**
 Cleans up a transaction at database startup. The cleanup is needed if
 the transaction already got to the middle of a commit when the database
-crashed, andf we cannot roll it back. */
+crashed, and we cannot roll it back. */
 UNIV_INTERN
 void
 trx_cleanup_at_db_startup(

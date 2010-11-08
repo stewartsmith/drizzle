@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /**
  * @file
@@ -59,6 +59,10 @@ void memory::Root::init_alloc_root(size_t block_size_arg)
   error_handler= 0;
   block_num= 4;			/* We shift this with >>2 */
   first_block_usage= 0;
+}
+
+memory::Root::~Root()
+{
 }
 
 

@@ -22,6 +22,7 @@
 
 #include "drizzled/optimizer/range.h"
 
+#include <boost/dynamic_bitset.hpp>
 #include <vector>
 
 namespace drizzled
@@ -117,7 +118,7 @@ public:
 
   void add_keys_and_lengths(String *key_names, String *used_lengths);
   void add_info_string(String *str);
-  bool is_keys_used(const MyBitmap *fields);
+  bool is_keys_used(const boost::dynamic_bitset<>& fields);
 
   /**
    * Initialize this quick select to be a part of a ROR-merged scan.

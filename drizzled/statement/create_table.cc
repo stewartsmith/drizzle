@@ -23,6 +23,7 @@
 #include <drizzled/lock.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/create_table.h>
+#include <drizzled/message.h>
 #include <drizzled/identifier.h>
 
 #include <iostream>
@@ -66,14 +67,6 @@ bool statement::CreateTable::execute()
     return true;
   }
 
-  /* 
-    Now we set the name in our Table proto so that it will match 
-    create_info.db_type.
-  */
-  {
-    create_table_message.mutable_engine()->set_name(create_info.db_type->getName());
-  }
-
 
   /* If CREATE TABLE of non-temporary table, do implicit commit */
   if (not lex_identified_temp_table)
@@ -87,16 +80,10 @@ bool statement::CreateTable::execute()
   TableList *create_table= session->lex->unlink_first_table(&link_to_local);
   TableList *select_tables= session->lex->query_tables;
 
+  drizzled::message::init(create_table_message, create_table_message.name(), create_table->getSchemaName(), create_info.db_type->getName());
 
-  /*
-    Now that we have the engine, we can figure out the table identifier. We need the engine in order
-    to determine if the table is transactional or not if it is temp.
-  */
-
-  create_table_message.set_schema(create_table->db);
-
-  TableIdentifier new_table_identifier(create_table->db,
-                                       create_table->table_name,
+  TableIdentifier new_table_identifier(create_table->getSchemaName(),
+                                       create_table->getTableName(),
                                        create_table_message.type());
 
   if (create_table_precheck(new_table_identifier))
@@ -122,7 +109,7 @@ bool statement::CreateTable::execute()
      TABLE in the same way. That way we avoid that a new table is
      created during a gobal read lock.
    */
-  if (! (need_start_waiting= ! wait_if_global_read_lock(session, 0, 1)))
+  if (! (need_start_waiting= not session->wait_if_global_read_lock(0, 1)))
   {
     /* put tables back for PS rexecuting */
     session->lex->link_first_table_back(create_table, link_to_local);
@@ -159,9 +146,10 @@ bool statement::CreateTable::execute()
              Release the protection against the global read lock and wake
              everyone, who might want to set a global read lock.
            */
-          start_waiting_global_read_lock(session);
+          session->startWaitingGlobalReadLock();
           /* put tables back for PS rexecuting */
           session->lex->link_first_table_back(create_table, link_to_local);
+
           return true;
         }
       }
@@ -237,7 +225,7 @@ bool statement::CreateTable::execute()
      Release the protection against the global read lock and wake
      everyone, who might want to set a global read lock.
    */
-  start_waiting_global_read_lock(session);
+  session->startWaitingGlobalReadLock();
 
   return res;
 }

@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Original author: Paul McCullagh (H&G2JCtL)
  * Continued development: Barry Leslie
@@ -47,7 +47,7 @@
  * Core System String Buffers
  */
 
-CSStringBuffer_::CSStringBuffer_():
+CSStringBufferImpl::CSStringBufferImpl():
 iBuffer(NULL),
 iGrow(0),
 iSize(0),
@@ -56,7 +56,7 @@ myStrLen(0)
 	iGrow = 20;
 }
 
-CSStringBuffer_::CSStringBuffer_(uint32_t grow):
+CSStringBufferImpl::CSStringBufferImpl(uint32_t grow):
 iBuffer(NULL),
 iGrow(0),
 iSize(0),
@@ -65,12 +65,12 @@ myStrLen(0)
 	iGrow = grow;
 }
 
-CSStringBuffer_::~CSStringBuffer_()
+CSStringBufferImpl::~CSStringBufferImpl()
 {
 	clear();
 }
 
-void CSStringBuffer_::clear()
+void CSStringBufferImpl::clear()
 {
 	if (iBuffer)
 		cs_free(iBuffer);
@@ -79,7 +79,7 @@ void CSStringBuffer_::clear()
 	myStrLen = 0; 
 }
 
-void CSStringBuffer_::append(char ch)
+void CSStringBufferImpl::append(char ch)
 {
 	if (iSize == myStrLen) {
 		cs_realloc((void **) &iBuffer, iSize + iGrow);
@@ -89,7 +89,7 @@ void CSStringBuffer_::append(char ch)
 	myStrLen++;
 }
 
-void CSStringBuffer_::append(const char *str, size_t len)
+void CSStringBufferImpl::append(const char *str, size_t len)
 {
 	if (myStrLen + len > iSize) {
 		size_t add = len;
@@ -103,23 +103,31 @@ void CSStringBuffer_::append(const char *str, size_t len)
 	myStrLen += len;
 }
 
-void CSStringBuffer_::append(int value)
+void CSStringBufferImpl::append(int value)
 {
 	char buffer[100];
 
-	snprintf(buffer, 100, "%"PRId32"", value);
+	snprintf(buffer, 100, "%d", value);
 	append(buffer);
 }
 
-void CSStringBuffer_::append(uint32_t value)
+void CSStringBufferImpl::append(uint32_t value)
 {
 	char buffer[100];
 
-	snprintf(buffer, 100, "%"PRIu32"", value);
+	snprintf(buffer, 100, "%"PRIu32, value);
 	append(buffer);
 }
 
-char *CSStringBuffer_::getCString()
+void CSStringBufferImpl::append(uint64_t value)
+{
+	char buffer[100];
+
+	snprintf(buffer, 100, "%"PRIu64, value);
+	append(buffer);
+}
+
+char *CSStringBufferImpl::getCString()
 {
 	if (iSize == myStrLen) {
 		cs_realloc((void **) &iBuffer, iSize + 1);
@@ -129,7 +137,7 @@ char *CSStringBuffer_::getCString()
 	return iBuffer;
 }
 
-char *CSStringBuffer_::take()
+char *CSStringBufferImpl::take()
 {
 	char *buf;
 
@@ -144,7 +152,7 @@ char *CSStringBuffer_::take()
 	return buf;
 }
 
-void CSStringBuffer_::setLength(uint32_t len)
+void CSStringBufferImpl::setLength(uint32_t len)
 {
 	if (len > iSize) {
 		cs_realloc((void **) &iBuffer, len + 1);
@@ -153,28 +161,28 @@ void CSStringBuffer_::setLength(uint32_t len)
 	myStrLen = len;
 }
 
-uint32_t CSStringBuffer_::ignore(uint32_t pos, char ch)
+uint32_t CSStringBufferImpl::ignore(uint32_t pos, char ch)
 {
 	while (pos < myStrLen && iBuffer[pos] == ch)
 		pos++;
 	return pos;
 }
 
-uint32_t CSStringBuffer_::find(uint32_t pos, char ch)
+uint32_t CSStringBufferImpl::find(uint32_t pos, char ch)
 {
 	while (pos < myStrLen && iBuffer[pos] != ch)
 		pos++;
 	return pos;
 }
 
-uint32_t CSStringBuffer_::trim(uint32_t pos, char ch)
+uint32_t CSStringBufferImpl::trim(uint32_t pos, char ch)
 {
 	while (pos > 0 && iBuffer[pos-1] == ch)
 		pos--;
 	return pos;
 }
 
-CSString *CSStringBuffer_::substr(uint32_t pos, uint32_t len)
+CSString *CSStringBufferImpl::substr(uint32_t pos, uint32_t len)
 {
 	CSString *s = CSString::newString(iBuffer + pos, len);
 
@@ -185,21 +193,6 @@ CSString *CSStringBuffer_::substr(uint32_t pos, uint32_t len)
  * ---------------------------------------------------------------
  * Generic Strings
  */
-
-CSString *CSString::newString(const char *cstr)
-{
-	return CSCString::newString(cstr);
-}
-
-CSString *CSString::newString(const char *bytes, uint32_t len)
-{
-	return CSCString::newString(bytes, len);
-}
-
-CSString *CSString::newString(CSStringBuffer *sb)
-{
-	return CSCString::newString(sb);
-}
 
 CSString *CSString::concat(CSString *cat_str)
 {
@@ -267,10 +260,10 @@ uint32_t CSString::hashKey()
 	return (h);
 }
 
-uint32_t CSString::locate(const char *w_cstr, s_int count)
+uint32_t CSString::locate(const char *w_cstr, int32_t count)
 {
-	s_int len = length();
-	s_int i;
+	int32_t len = length();
+	int32_t i;
 
 	if (count >= 0) {
 		i = 0;
@@ -285,7 +278,7 @@ uint32_t CSString::locate(const char *w_cstr, s_int count)
 	}
 	else {
 		count = -count;
-		i = len - (s_int) strlen(w_cstr);
+		i = len - (int32_t) strlen(w_cstr);
 		while (i >= 0) {
 			if (startsWith((uint32_t) i, w_cstr)) {
 				count--;
@@ -357,12 +350,12 @@ CSString *CSString::substr(uint32_t index)
 	
 }
 
-CSString *CSString::left(const char *w_cstr, s_int count)
+CSString *CSString::left(const char *w_cstr, int32_t count)
 {
 	uint32_t idx = locate(w_cstr, count);
 
 	if (idx == (uint32_t)-1)
-		return CSCString::newString("");
+		return CSString::newString("");
 	return substr(0, idx);
 }
 
@@ -371,13 +364,12 @@ CSString *CSString::left(const char *w_cstr)
 	return left(w_cstr, 1);
 }
 
-CSString *CSString::right(const char *w_cstr, s_int count)
+CSString *CSString::right(const char *w_cstr, int32_t count)
 {
 	uint32_t idx = locate(w_cstr, count);
 
 	if (idx == (uint32_t)-1) {
-		this->retain();
-		return this;
+		return RETAIN(this);
 	}
 	
 	if (idx == length())
@@ -436,45 +428,50 @@ bool CSString::equals(const char *str)
  * Standard C String
  */
 
-CSCString::CSCString():
-CSString(),
+CSString::CSString():
 myCString(NULL),
 myStrLen(0)
 {
 }
 
-CSCString::~CSCString()
+CSString::CSString(const char *cstr):
+myCString(cs_strdup(cstr)),
+myStrLen(strlen(cstr))
+{
+}
+
+CSString::~CSString()
 {
 	if (myCString)
 		cs_free(myCString);
 }
 
-const char *CSCString::getCString()
+const char *CSString::getCString()
 {
 	return myCString;
 }
 
-CS_CHAR CSCString::charAt(uint32_t pos)
+CS_CHAR CSString::charAt(uint32_t pos)
 {
 	if (pos < myStrLen)
 		return (CS_CHAR) (unsigned char) myCString[pos];
 	return (CS_CHAR) 0;
 }
 
-CS_CHAR CSCString::upperCharAt(uint32_t pos)
+CS_CHAR CSString::upperCharAt(uint32_t pos)
 {
 	if (pos < myStrLen)
 		return (CS_CHAR) (unsigned char) toupper(myCString[pos]);
 	return (CS_CHAR) 0;
 }
 
-void CSCString::setCharAt(uint32_t pos, CS_CHAR ch)
+void CSString::setCharAt(uint32_t pos, CS_CHAR ch)
 {
 	if (pos < myStrLen)
 		myCString[pos] = (unsigned char) ch;
 }
 
-int CSCString::compare(const char *val, uint32_t len)
+int CSString::compare(const char *val, uint32_t len)
 {
 	const char *pa = myCString, *pb = val;
 	int r = 0;
@@ -497,12 +494,12 @@ int CSCString::compare(const char *val, uint32_t len)
 	return_(r);
 }
 
-int CSCString::compare(CSString *val)
+int CSString::compare(CSString *val)
 {
 	return compare(val->getCString(), (uint32_t)-1);
 }
 
-bool CSCString::startsWith(uint32_t index, const char *w_str)
+bool CSString::startsWith(uint32_t index, const char *w_str)
 {
 	uint32_t len = strlen(w_str);
 	char *str;
@@ -519,19 +516,19 @@ bool CSCString::startsWith(uint32_t index, const char *w_str)
 	return (*w_str == 0);
 }
 
-void CSCString::setLength(uint32_t len)
+void CSString::setLength(uint32_t len)
 {
 	cs_realloc((void **) &myCString, len+1);
 	myCString[len] = 0;
 	myStrLen = len;
 }
 
-CSString *CSCString::clone(uint32_t pos, uint32_t len)
+CSString *CSString::clone(uint32_t pos, uint32_t len)
 {
-	CSCString *str = NULL;
+	CSString *str = NULL;
 	
 	enter_();
-	new_(str, CSCString());
+	new_(str, CSString());
 	push_(str);
 	
 	str->myCString = (char *) cs_malloc(len + 1);
@@ -554,22 +551,22 @@ CSString *CSCString::clone(uint32_t pos, uint32_t len)
 	return_(str);
 }
 
-CSObject *CSCString::getKey()
+CSObject *CSString::getKey()
 {
 	return (CSObject *) this;
 }
 
-int CSCString::compareKey(CSObject *key)
+int CSString::compareKey(CSObject *key)
 {
 	return compare((CSString *) key);
 }
 
-CSCString *CSCString::newString(const char *cstr)
+CSString *CSString::newString(const char *cstr)
 {
-	CSCString *str;
+	CSString *str;
 	
 	enter_();
-	new_(str, CSCString());
+	new_(str, CSString());
 	push_(str);
 	str->myCString = cs_strdup(cstr);
 	str->myStrLen = strlen(cstr);
@@ -577,12 +574,12 @@ CSCString *CSCString::newString(const char *cstr)
 	return_(str);
 }
 
-CSCString *CSCString::newString(const char *bytes, uint32_t len)
+CSString *CSString::newString(const char *bytes, uint32_t len)
 {
-	CSCString *str;
+	CSString *str;
 	
 	enter_();
-	new_(str, CSCString());
+	new_(str, CSString());
 	push_(str);
 	str->myStrLen = len;
 	str->myCString = (char *) cs_malloc(len+1);
@@ -592,18 +589,18 @@ CSCString *CSCString::newString(const char *bytes, uint32_t len)
 	return_(str);
 }
 
-CSCString *CSCString::newString(CSStringBuffer *sb)
+CSString *CSString::newString(CSStringBuffer *sb)
 {
-	CSCString *str;
+	CSString *str;
 	
 	enter_();
 	push_(sb);
-	new_(str, CSCString());
+	new_(str, CSString());
 	push_(str);
-	str->myCString = sb->take();
 	str->myStrLen = sb->length();
+	str->myCString = sb->take();
 	pop_(str);
-	release_(sb);
+	pop_(sb); // pop this do not release it because CSStringBuffer is NOT a CSRefObject. 
 	return_(str);
 }
 

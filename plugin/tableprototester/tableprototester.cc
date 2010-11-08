@@ -57,7 +57,7 @@ public:
     table_definition_ext= TABLEPROTOTESTER_EXT;
   }
 
-  virtual Cursor *create(TableShare &table)
+  virtual Cursor *create(Table &table)
   {
     return new TableProtoTesterCursor(*this, table);
   }
@@ -128,7 +128,7 @@ bool TableProtoTesterEngine::doDoesTableExist(Session&, const drizzled::TableIde
 }
 
 TableProtoTesterCursor::TableProtoTesterCursor(drizzled::plugin::StorageEngine &engine_arg,
-                           TableShare &table_arg) :
+                                               Table &table_arg) :
   Cursor(engine_arg, table_arg)
 { }
 
@@ -263,7 +263,7 @@ const char *TableProtoTesterCursor::index_type(uint32_t)
 
 int TableProtoTesterCursor::doInsertRecord(unsigned char *)
 {
-  return(table->next_number_field ? update_auto_increment() : 0);
+  return(getTable()->next_number_field ? update_auto_increment() : 0);
 }
 
 int TableProtoTesterCursor::doStartTableScan(bool)

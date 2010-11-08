@@ -11,8 +11,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -33,12 +33,10 @@ Created 11/5/1995 Heikki Tuuri
 High-level function which reads a page asynchronously from a file to the
 buffer buf_pool if it is not already there. Sets the io_fix flag and sets
 an exclusive lock on the buffer frame. The flag is cleared and the x-lock
-released by the i/o-handler thread. Does a random read-ahead if it seems
-sensible.
-@return number of page read requests issued: this can be greater than
-1 if read-ahead occurred */
+released by the i/o-handler thread.
+@return TRUE if page has been read in, FALSE in case of failure */
 UNIV_INTERN
-ulint
+ibool
 buf_read_page(
 /*==========*/
 	ulint	space,	/*!< in: space id */

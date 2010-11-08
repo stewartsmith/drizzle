@@ -28,7 +28,6 @@
 #include "drizzled/sql_error.h"
 #include "drizzled/decimal.h"
 #include "drizzled/key_map.h"
-#include "drizzled/sql_bitmap.h"
 #include "drizzled/sql_list.h"
 #include "drizzled/structs.h"
 #include "drizzled/charset_info.h"
@@ -47,8 +46,8 @@ namespace drizzled
 #define ASSERT_COLUMN_MARKED_FOR_READ assert(!getTable() || (getTable()->read_set == NULL || isReadSet()))
 #define ASSERT_COLUMN_MARKED_FOR_WRITE assert(!getTable() || (getTable()->write_set == NULL || isWriteSet()))
 #else
-#define ASSERT_COLUMN_MARKED_FOR_READ
-#define ASSERT_COLUMN_MARKED_FOR_WRITE
+#define ASSERT_COLUMN_MARKED_FOR_READ assert(getTable())
+#define ASSERT_COLUMN_MARKED_FOR_WRITE assert(getTable())
 #endif
 
 typedef struct st_typelib TYPELIB;
@@ -156,6 +155,8 @@ public:
   static void *operator new(size_t size);
   static void *operator new(size_t size, memory::Root *mem_root);
   static void operator delete(void *, size_t)
+  { }
+  static void operator delete(void *, memory::Root *)
   { }
 
   Field(unsigned char *ptr_arg,

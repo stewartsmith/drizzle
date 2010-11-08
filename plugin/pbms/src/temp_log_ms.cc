@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Original author: Paul McCullagh
  * Continued development: Barry Leslie
@@ -30,6 +30,8 @@
 #include "cslib/CSConfig.h"
 
 #include <stddef.h>
+
+#include "defs_ms.h"
 
 #include "cslib/CSGlobal.h"
 #include "cslib/CSStrUtil.h"
@@ -111,18 +113,22 @@ MSTempLogFile::~MSTempLogFile()
 MSTempLogFile *MSTempLogFile::newTempLogFile(uint32_t id, MSTempLog *temp_log, CSFile *file)
 {
 	MSTempLogFile *f;
+	enter_();
 	
-	if (!(f = new MSTempLogFile())) {
-		temp_log->release();
-		file->release();
+	push_(temp_log);
+	push_(file);
+	
+	if (!(f = new MSTempLogFile())) 
 		CSException::throwOSError(CS_CONTEXT, ENOMEM);
-	}
+
 	f->myTempLogID = id;
+	
+	pop_(file);
+	f->setFile(file);
+	
+	pop_(temp_log);
 	f->myTempLog = temp_log;
-	f->myFile = file;
-	f->myFilePath = file->myFilePath;
-	f->myFilePath->retain();
-	return f;
+	return_(f);
 }
 
 MSTempLog::MSTempLog(uint32_t id, MSDatabase *db, off64_t file_size):
@@ -261,6 +267,70 @@ void MSTempLogThread::close()
 	}
 }
 
+bool MSTempLogThread::try_ReleaseBLOBReference(CSThread *self, CSStringBuffer *buffer, uint32_t tab_id, int type, uint64_t blob_id, uint32_t auth_code)
+{
+	volatile bool rtc = true;
+	try_(a) {
+		/* Release the BLOB reference. */
+		MSOpenTable *otab;
+
+		if (type == MS_TL_REPO_REF) {
+			MSRepoFile	*repo_file;
+
+			if ((repo_file = iTempLogDatabase->getRepoFileFromPool(tab_id, true))) {
+				frompool_(repo_file);
+				repo_file->checkBlob(buffer, blob_id, auth_code, iTempLogFile->myTempLogID, iLogOffset);
+				backtopool_(repo_file);
+			}
+		}
+		else {
+			if ((otab = MSTableList::getOpenTableByID(iTempLogDatabase->myDatabaseID, tab_id))) {
+				frompool_(otab);
+				if (type == MS_TL_BLOB_REF) {
+					otab->checkBlob(buffer, blob_id, auth_code, iTempLogFile->myTempLogID, iLogOffset);
+					backtopool_(otab);
+				}
+				else {
+					ASSERT(type == MS_TL_TABLE_REF);
+					if ((type == MS_TL_TABLE_REF) && otab->deleteReferences(iTempLogFile->myTempLogID, iLogOffset, &myMustQuit)) {
+						/* Delete the file now... */
+						MSTable			*tab;
+						CSPath			*from_path;
+						MSOpenTablePool *tab_pool;
+
+						tab = otab->getDBTable();
+						from_path = otab->getDBTable()->getTableFile();
+
+						pop_(otab);
+
+						push_(from_path);
+						tab->retain();
+						push_(tab);
+
+						tab_pool = MSTableList::lockTablePoolForDeletion(otab); // This returns otab to the pool.
+						frompool_(tab_pool);
+
+						from_path->removeFile();
+						tab->myDatabase->removeTable(tab);
+
+						backtopool_(tab_pool); // The will unlock and close the table pool freeing all tables in it.
+						pop_(tab);				// Returning the pool will have released this. (YUK!)
+						release_(from_path);
+					}
+					else 
+						backtopool_(otab);
+				}
+			}
+		}
+		
+		rtc = false;
+	}
+	
+	catch_(a);
+	cont_(a);
+	return rtc;
+}
+
 bool MSTempLogThread::doWork()
 {
 	size_t				tfer;
@@ -308,7 +378,6 @@ bool MSTempLogThread::doWork()
 			uint32_t then;
 			time_t	now;
 
-			CLOBBER_PROTECT(blob_id);
 			/*
 			 * Items in the temp log are never updated.
 			 * If a temp operation is canceled then the object 
@@ -330,61 +399,8 @@ bool MSTempLogThread::doWork()
 				myWaitTime = MSTempLog::adjustWaitTime(then, now);
 				break;
 			}
-
-			try_(a) {
-				/* Release the BLOB reference. */
-				MSOpenTable *otab;
-
-				if (type == MS_TL_REPO_REF) {
-					MSRepoFile	*repo_file;
-
-					if ((repo_file = iTempLogDatabase->getRepoFileFromPool(tab_id, true))) {
-						frompool_(repo_file);
-						repo_file->checkBlob(buffer, blob_id, auth_code, iTempLogFile->myTempLogID, iLogOffset);
-						backtopool_(repo_file);
-					}
-				}
-				else {
-					if ((otab = MSTableList::getOpenTableByID(iTempLogDatabase->myDatabaseID, tab_id))) {
-						frompool_(otab);
-						if (type == MS_TL_BLOB_REF) {
-							otab->checkBlob(buffer, blob_id, auth_code, iTempLogFile->myTempLogID, iLogOffset);
-							backtopool_(otab);
-						}
-						else {
-							ASSERT(type == MS_TL_TABLE_REF);
-							if ((type == MS_TL_TABLE_REF) && otab->deleteReferences(iTempLogFile->myTempLogID, iLogOffset, &myMustQuit)) {
-								/* Delete the file now... */
-								MSTable			*tab;
-								CSPath			*from_path;
-								MSOpenTablePool *tab_pool;
-
-								tab = otab->getDBTable();
-								from_path = otab->getDBTable()->getTableFile();
-
-								pop_(otab);
-
-								push_(from_path);
-								tab->retain();
-								push_(tab);
-
-								tab_pool = MSTableList::lockTablePoolForDeletion(otab); // This returns otab to the pool.
-								frompool_(tab_pool);
-
-								from_path->removeFile();
-								tab->myDatabase->removeTable(tab);
-
-								backtopool_(tab_pool); // The will unlock and close the table pool freeing all tables in it.
-								pop_(tab);				// Returning the pool will have released this. (YUK!)
-								release_(from_path);
-							}
-							else 
-								backtopool_(otab);
-						}
-					}
-				}
-			}
-			catch_(a) {
+		
+			if (try_ReleaseBLOBReference(self, buffer, tab_id, type, blob_id, auth_code)) {
 				int err = self->myException.getErrorCode();
 				
 				if (err == MS_ERR_TABLE_LOCKED) {
@@ -401,7 +417,7 @@ bool MSTempLogThread::doWork()
 				else
 					self->myException.log(NULL);
 			}
-			cont_(a);
+
 		}
 		else {
 			// Only part of the data read, don't wait very long to try again:

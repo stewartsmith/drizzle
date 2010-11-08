@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /*
   Delete of records and truncate of tables.
@@ -30,6 +30,7 @@
 #include "drizzled/records.h"
 #include "drizzled/internal/iocache.h"
 #include "drizzled/transaction_services.h"
+#include "drizzled/filesort.h"
 
 namespace drizzled
 {
@@ -56,7 +57,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
   ha_rows	deleted= 0;
   uint32_t usable_index= MAX_KEY;
   Select_Lex   *select_lex= &session->lex->select_lex;
-  Session::killed_state killed_status= Session::NOT_KILLED;
+  Session::killed_state_t killed_status= Session::NOT_KILLED;
 
   if (session->openTablesLock(table_list))
   {
@@ -71,7 +72,10 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
   table->map=1;
 
   if (mysql_prepare_delete(session, table_list, &conds))
-    goto err;
+  {
+    DRIZZLE_DELETE_DONE(1, 0);
+    return true;
+  }
 
   /* check ORDER BY even if it can be ignored */
   if (order && order->elements)
@@ -85,12 +89,14 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
 
       if (select_lex->setup_ref_array(session, order->elements) ||
 	  setup_order(session, select_lex->ref_pointer_array, &tables,
-                    fields, all_fields, (order_st*) order->first))
-    {
-      delete select;
-      free_underlaid_joins(session, &session->lex->select_lex);
-      goto err;
-    }
+                    fields, all_fields, (Order*) order->first))
+      {
+        delete select;
+        free_underlaid_joins(session, &session->lex->select_lex);
+        DRIZZLE_DELETE_DONE(1, 0);
+
+        return true;
+      }
   }
 
   const_cond= (!conds || conds->const_item());
@@ -157,7 +163,11 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
   table->quick_keys.reset();		// Can't use 'only index'
   select= optimizer::make_select(table, 0, 0, conds, 0, &error);
   if (error)
-    goto err;
+  {
+    DRIZZLE_DELETE_DONE(1, 0);
+    return true;
+  }
+
   if ((select && select->check_quick(session, false, limit)) || !limit)
   {
     delete select;
@@ -191,23 +201,24 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
     ha_rows examined_rows;
 
     if ((!select || table->quick_keys.none()) && limit != HA_POS_ERROR)
-      usable_index= optimizer::get_index_for_order(table, (order_st*)(order->first), limit);
+      usable_index= optimizer::get_index_for_order(table, (Order*)(order->first), limit);
 
     if (usable_index == MAX_KEY)
     {
+      FileSort filesort(*session);
       table->sort.io_cache= new internal::IO_CACHE;
 
 
-      if (!(sortorder= make_unireg_sortorder((order_st*) order->first,
-                                             &length, NULL)) ||
-	  (table->sort.found_records = filesort(session, table, sortorder, length,
-                                                select, HA_POS_ERROR, 1,
-                                                &examined_rows))
-	  == HA_POS_ERROR)
+      if (not (sortorder= make_unireg_sortorder((Order*) order->first, &length, NULL)) ||
+	  (table->sort.found_records = filesort.run(table, sortorder, length,
+						    select, HA_POS_ERROR, 1,
+						    examined_rows)) == HA_POS_ERROR)
       {
         delete select;
         free_underlaid_joins(session, &session->lex->select_lex);
-        goto err;
+
+        DRIZZLE_DELETE_DONE(1, 0);
+        return true;
       }
       /*
         Filesort has already found and selected the rows we want to delete,
@@ -224,7 +235,8 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
   {
     delete select;
     free_underlaid_joins(session, select_lex);
-    goto err;
+    DRIZZLE_DELETE_DONE(1, 0);
+    return true;
   }
 
   if (usable_index==MAX_KEY)
@@ -240,7 +252,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
 
   table->mark_columns_needed_for_delete();
 
-  while (!(error=info.read_record(&info)) && !session->killed &&
+  while (!(error=info.read_record(&info)) && !session->getKilled() &&
 	 ! session->is_error())
   {
     // session->is_error() is tested to disallow delete row on error
@@ -273,7 +285,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
     else
       table->cursor->unlock_row();  // Row failed selection, release lock on it
   }
-  killed_status= session->killed;
+  killed_status= session->getKilled();
   if (killed_status != Session::NOT_KILLED || session->is_error())
     error= 1;					// Aborted
 
@@ -324,11 +336,8 @@ cleanup:
     session->my_ok((ha_rows) session->row_count_func);
   }
   session->status_var.deleted_row_count+= deleted;
-  return (error >= 0 || session->is_error());
 
-err:
-  DRIZZLE_DELETE_DONE(1, 0);
-  return true;
+  return (error >= 0 || session->is_error());
 }
 
 

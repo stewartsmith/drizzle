@@ -1,20 +1,20 @@
 drop table if exists t1, t2;
 create table t1 (a date, b date, c date not null, d date);
-load data infile '../../std_data_ln/loaddata1.dat' into table t1 fields terminated by ',';
-load data infile '../../std_data_ln/loaddata1.dat' into table t1 fields terminated by ',' IGNORE 2 LINES;
+load data infile 'DRIZZLETEST_VARDIR/std_data_ln/loaddata1.dat' into table t1 fields terminated by ',';
+load data infile 'DRIZZLETEST_VARDIR/std_data_ln/loaddata1.dat' into table t1 fields terminated by ',' IGNORE 2 LINES;
 SELECT * from t1;
 a	b	c	d
 2003-02-03	2003-02-03	2003-02-03	NULL
 2003-03-03	2003-03-03	2003-03-03	NULL
 truncate table t1;
-load data infile '../../std_data_ln/loaddata1.dat' into table t1 fields terminated by ',' LINES STARTING BY ',' (b,c,d);
+load data infile 'DRIZZLETEST_VARDIR/std_data_ln/loaddata1.dat' into table t1 fields terminated by ',' LINES STARTING BY ',' (b,c,d);
 SELECT * from t1;
 a	b	c	d
 NULL	2003-02-03	2003-02-03	NULL
 NULL	2003-03-03	2003-03-03	NULL
 drop table t1;
 create table t1 (a text, b text);
-load data infile '../../std_data_ln/loaddata2.dat' into table t1 fields terminated by ',' enclosed by '''';
+load data infile 'DRIZZLETEST_VARDIR/std_data_ln/loaddata2.dat' into table t1 fields terminated by ',' enclosed by '''';
 select concat('|',a,'|'), concat('|',b,'|') from t1;
 concat('|',a,'|')	concat('|',b,'|')
 |Field A|	|Field B|
@@ -23,7 +23,7 @@ concat('|',a,'|')	concat('|',b,'|')
 |Field 6|	| 'Field 7'|
 drop table t1;
 create table t1 (a int, b char(10));
-load data infile '../../std_data_ln/loaddata3.dat' into table t1 fields terminated by '' enclosed by '' ignore 1 lines;
+load data infile 'DRIZZLETEST_VARDIR/std_data_ln/loaddata3.dat' into table t1 fields terminated by '' enclosed by '' ignore 1 lines;
 select * from t1;
 a	b
 1	row 1     
@@ -34,7 +34,7 @@ select * from t1;
 a	b
 drop table t1;
 create table t1 (a varchar(20), b varchar(20));
-load data infile '../../std_data_ln/loaddata_dq.dat' into table t1 fields terminated by ',' enclosed by '"' escaped by '"' (a,b);
+load data infile 'DRIZZLETEST_VARDIR/std_data_ln/loaddata_dq.dat' into table t1 fields terminated by ',' enclosed by '"' escaped by '"' (a,b);
 select * from t1;
 a	b
 field1	field2
@@ -72,7 +72,7 @@ id	c1
 14	.rr.
 15	.rrr.
 16	.rrrr.
-SELECT * INTO OUTFILE 'MYSQLTEST_VARDIR/tmp/t1' FIELDS ENCLOSED BY 'r' FROM t1;
+SELECT * INTO OUTFILE 'DRIZZLETEST_VARDIR/tmp/t1' FIELDS ENCLOSED BY 'r' FROM t1;
 r1r	rrrr
 r2r	rrrrrr
 r3r	rrrrrrrr
@@ -89,32 +89,32 @@ r13r	r.rr.r
 r14r	r.rrrr.r
 r15r	r.rrrrrr.r
 r16r	r.rrrrrrrr.r
-LOAD DATA INFILE 'MYSQLTEST_VARDIR/tmp/t1' INTO TABLE t2 FIELDS ENCLOSED BY 'r';
+LOAD DATA INFILE 'DRIZZLETEST_VARDIR/tmp/t1' INTO TABLE t2 FIELDS ENCLOSED BY 'r';
 SELECT t1.id, c1, c2 FROM t1 LEFT  JOIN t2 ON t1.id=t2.id WHERE c1 != c2;
 id	c1	c2
 SELECT t1.id, c1, c2 FROM t1 RIGHT JOIN t2 ON t1.id=t2.id WHERE c1 != c2;
 id	c1	c2
 DROP TABLE t1,t2;
 create table t1 (a int default 100, b int, c varchar(60));
-load data infile '../../std_data_ln/rpl_loaddata.dat' into table t1 (a, @b) set b=@b+10, c=concat("b=",@b);
+load data infile 'DRIZZLETEST_VARDIR/std_data_ln/rpl_loaddata.dat' into table t1 (a, @b) set b=@b+10, c=concat("b=",@b);
 select * from t1;
 a	b	c
 NULL	20	b=10
 NULL	25	b=15
 truncate table t1;
-load data infile '../../std_data_ln/rpl_loaddata.dat' into table t1 (a, @b) set c= if(a is null,"oops",a);
+load data infile 'DRIZZLETEST_VARDIR/std_data_ln/rpl_loaddata.dat' into table t1 (a, @b) set c= if(a is null,"oops",a);
 select * from t1;
 a	b	c
 NULL	NULL	oops
 NULL	NULL	oops
 truncate table t1;
 set @c:=123;
-load data infile '../../std_data_ln/rpl_loaddata.dat' into table t1 (@a, b) set c= if(@a is null,@c,b);
+load data infile 'DRIZZLETEST_VARDIR/std_data_ln/rpl_loaddata.dat' into table t1 (@a, b) set c= if(@a is null,@c,b);
 select * from t1;
 a	b	c
 100	10	123
 100	15	123
-load data infile '../../std_data_ln/rpl_loaddata.dat' into table t1 (@a, @b);
+load data infile 'DRIZZLETEST_VARDIR/std_data_ln/rpl_loaddata.dat' into table t1 (@a, @b);
 select * from t1;
 a	b	c
 100	10	123
@@ -125,35 +125,35 @@ select @a, @b;
 @a	@b
 NULL	15
 truncate table t1;
-load data infile '../../std_data_ln/loaddata5.dat' into table t1 fields terminated by '' enclosed by '' (a, b) set c="Wow";
+load data infile 'DRIZZLETEST_VARDIR/std_data_ln/loaddata5.dat' into table t1 fields terminated by '' enclosed by '' (a, b) set c="Wow";
 select * from t1;
 a	b	c
 1	2	Wow
 3	4	Wow
 5	6	Wow
 truncate table t1;
-load data infile '../../std_data_ln/loaddata5.dat' into table t1 fields terminated by '' enclosed by '' (a, b) set c=concat(a,"+",b,"+",@c,"+",b,"+",if(c is null,"NIL",c));
+load data infile 'DRIZZLETEST_VARDIR/std_data_ln/loaddata5.dat' into table t1 fields terminated by '' enclosed by '' (a, b) set c=concat(a,"+",b,"+",@c,"+",b,"+",if(c is null,"NIL",c));
 select * from t1;
 a	b	c
 1	2	1+2+123+2+NIL
 3	4	3+4+123+4+NIL
 5	6	5+6+123+6+NIL
-load data infile '../../std_data_ln/loaddata5.dat' into table t1 fields terminated by '' enclosed by '' (a, @b);
+load data infile 'DRIZZLETEST_VARDIR/std_data_ln/loaddata5.dat' into table t1 fields terminated by '' enclosed by '' (a, @b);
 ERROR HY000: Can't load value from file with fixed size rows to variable
 create table t2 (num int primary key, str varchar(10));
 insert into t2 values (10,'Ten'), (15,'Fifteen');
 truncate table t1;
-load data infile '../../std_data_ln/rpl_loaddata.dat' into table t1 (@dummy,@n) set a= @n, c= (select str from t2 where num=@n);
+load data infile 'DRIZZLETEST_VARDIR/std_data_ln/rpl_loaddata.dat' into table t1 (@dummy,@n) set a= @n, c= (select str from t2 where num=@n);
 select * from t1;
 a	b	c
 10	NULL	Ten
 15	NULL	Ten
 show variables like "secure_file_pri%";
 Variable_name	Value
-secure_file_priv	MYSQLTEST_VARDIR/
+secure_file_priv	DRIZZLETEST_VARDIR
 select @@secure_file_priv;
 @@secure_file_priv
-MYSQLTEST_VARDIR/
+DRIZZLETEST_VARDIR
 set @@secure_file_priv= 0;
 ERROR HY000: Variable 'secure_file_priv' is a read only variable
 truncate table t1;
@@ -162,8 +162,7 @@ ERROR HY000: The Drizzle server is running with the --secure-file-priv option so
 select * from t1;
 a	b	c
 select load_file("DRIZZLE_TEST_DIR/t/loaddata.test");
-load_file("DRIZZLE_TEST_DIR/t/loaddata.test")
-NULL
+ERROR HY000: The Drizzle server is running with the --secure-file-priv option so it cannot execute this statement
 drop table t1, t2;
 create table t1(f1 int, f2 timestamp not null default current_timestamp);
 create table t2(f1 int);
@@ -181,10 +180,10 @@ INSERT INTO t1 (c1, c2, c3, c4) VALUES (10, '1970-02-01 01:02:03', 1.1E-100, 1.1
 SELECT * FROM t1;
 c1	c2	c3	c4
 10	1970-02-01 01:02:03	1.1e-100	1.1e100
-SELECT * INTO OUTFILE 'MYSQLTEST_VARDIR/tmp/t1' FIELDS ENCLOSED BY '-' FROM t1;
+SELECT * INTO OUTFILE 'DRIZZLETEST_VARDIR/tmp/t1' FIELDS ENCLOSED BY '-' FROM t1;
 EOF
 TRUNCATE t1;
-LOAD DATA INFILE 'MYSQLTEST_VARDIR/tmp/t1' INTO TABLE t1 FIELDS ENCLOSED BY '-';
+LOAD DATA INFILE 'DRIZZLETEST_VARDIR/tmp/t1' INTO TABLE t1 FIELDS ENCLOSED BY '-';
 SELECT * FROM t1;
 c1	c2	c3	c4
 10	1970-02-01 01:02:03	1.1e-100	1.1e100

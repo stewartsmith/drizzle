@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Original author: Paul McCullagh
  * Continued development: Barry Leslie
@@ -26,8 +26,10 @@
  * Network interface.
  *
  */
-
 #include "cslib/CSConfig.h"
+
+#include "defs_ms.h"
+
 #include "cslib/CSGlobal.h"
 #include "cslib/CSLog.h"
 
@@ -168,16 +170,46 @@ void MSNetwork::startConnectionHandler()
  * Return NULL of a connection cannot be openned, and the
  * thread must quit.
  */
+class OpenConnectioCleanUp : public CSRefObject {
+	bool do_cleanup;
+
+	public:
+	
+	OpenConnectioCleanUp(): CSRefObject(),
+		do_cleanup(false){}
+		
+	~OpenConnectioCleanUp() 
+	{
+		if (do_cleanup) {
+			MSNetwork::unlockListenerSocket();
+		}
+	}
+	
+	void setCleanUp()
+	{
+		do_cleanup = true;
+	}
+	
+	void cancelCleanUp()
+	{
+		do_cleanup = false;
+	}
+	
+};
+
+/*
+ * Return NULL if a connection cannot be openned, and the
+ * thread must quit.
+ */
 CSSocket *MSNetwork::openConnection(MSConnectionHandler *handler)
 {
 	CSSocket *sock = NULL;
-
-	CLOBBER_PROTECT(sock);
+	OpenConnectioCleanUp *cleanup;
 
 	enter_();
 	
 	if(!MSNetwork::gListenerSocket) {
-		return NULL;
+		return_(NULL);
 	}
 	
 	sock = CSSocket::newSocket();
@@ -189,19 +221,18 @@ CSSocket *MSNetwork::openConnection(MSConnectionHandler *handler)
 		return_(NULL);
 	}
 
-	try_(a) {
-		sock->open(MSNetwork::gListenerSocket);
-	}
-	catch_(a) {
-		unlockListenerSocket();
-		throw_();
-	}
-	cont_(a);
+	new_(cleanup, OpenConnectioCleanUp());
+	push_(cleanup);
+	
+	cleanup->setCleanUp();
+	sock->open(MSNetwork::gListenerSocket);
+	cleanup->cancelCleanUp();
 
 	handler->lastUse = gCurrentTime;
 
 	unlockListenerSocket();
 
+	release_(cleanup);
 	pop_(sock);
 	return_(sock);
 }

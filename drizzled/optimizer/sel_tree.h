@@ -31,6 +31,7 @@ namespace optimizer
 class RangeParameter;
 class SEL_IMERGE;
 class SEL_ARG;
+class RorScanInfo;
 
 class SEL_TREE : public drizzled::memory::SqlAlloc
 {
@@ -74,8 +75,8 @@ public:
   key_map ror_scans_map;   /* bitmask of ROR scan-able elements in keys */
   uint32_t n_ror_scans;     /* number of set bits in ror_scans_map */
 
-  struct st_ror_scan_info **ror_scans;     /* list of ROR key scans */
-  struct st_ror_scan_info **ror_scans_end; /* last ROR scan */
+  RorScanInfo **ror_scans;     /* list of ROR key scans */
+  RorScanInfo **ror_scans_end; /* last ROR scan */
   /* Note that #records for each key scan is stored in table->quick_rows */
 
 };

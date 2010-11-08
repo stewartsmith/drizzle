@@ -11,8 +11,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -475,6 +475,7 @@ mem_heap_block_free(
 	len = block->len;
 	block->magic_n = MEM_FREED_BLOCK_MAGIC_N;
 
+#ifndef UNIV_HOTBACKUP
 #ifdef UNIV_MEM_DEBUG
 	/* In the debug version we set the memory to a random combination
 	of hex 0xDE and 0xAD. */
@@ -484,7 +485,6 @@ mem_heap_block_free(
 	UNIV_MEM_ASSERT_AND_FREE(block, len);
 #endif /* UNIV_MEM_DEBUG */
 
-#ifndef UNIV_HOTBACKUP
 	if (type == MEM_HEAP_DYNAMIC || len < UNIV_PAGE_SIZE / 2) {
 
 		ut_ad(!buf_block);
@@ -495,6 +495,14 @@ mem_heap_block_free(
 		buf_block_free(buf_block);
 	}
 #else /* !UNIV_HOTBACKUP */
+#ifdef UNIV_MEM_DEBUG
+	/* In the debug version we set the memory to a random
+	combination of hex 0xDE and 0xAD. */
+
+	mem_erase_buf((byte*)block, len);
+#else /* UNIV_MEM_DEBUG */
+	UNIV_MEM_ASSERT_AND_FREE(block, len);
+#endif /* UNIV_MEM_DEBUG */
 	ut_free(block);
 #endif /* !UNIV_HOTBACKUP */
 }

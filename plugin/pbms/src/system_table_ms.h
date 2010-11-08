@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Original author: Paul McCullagh
  * Continued development: Barry Leslie
@@ -100,6 +100,8 @@ class PBMSSystemTables
 	static void systemTablesStartUp();
 	static void systemTableShutDown();
 
+	private:
+	static bool try_loadSystemTables(CSThread *self, int i, MSDatabase *db);
 };
 
 class MSSystemTableShare;
@@ -133,11 +135,12 @@ public:
 		Field *assumed_str_field = GET_FIELD(mySQLTable, column_index);
 		unsigned char *old_ptr = assumed_str_field->ptr;
 		
-		assumed_str_field->ptr = (unsigned char *)row + assumed_str_field->offset(mySQLTable->getInsertRecord());
 
 #ifdef DRIZZLED
+		assumed_str_field->ptr = (unsigned char *)row + assumed_str_field->offset(mySQLTable->getInsertRecord());
 		assumed_str_field->setReadSet();
 #else
+		assumed_str_field->ptr = (unsigned char *)row + assumed_str_field->offset(mySQLTable->record[0]);
 		assumed_str_field->table->use_all_columns();
 #endif
 		value = assumed_str_field->val_str(value);
@@ -150,11 +153,12 @@ public:
 		Field *assumed_int_field = GET_FIELD(mySQLTable, column_index);
 		unsigned char *old_ptr = assumed_int_field->ptr;
 
-		assumed_int_field->ptr = (unsigned char *)row + assumed_int_field->offset(mySQLTable->getInsertRecord());
 
 #ifdef DRIZZLED
+		assumed_int_field->ptr = (unsigned char *)row + assumed_int_field->offset(mySQLTable->getInsertRecord());
 		assumed_int_field->setReadSet();
 #else
+		assumed_int_field->ptr = (unsigned char *)row + assumed_int_field->offset(mySQLTable->record[0]);
 		assumed_int_field->table->use_all_columns();
 #endif
 		*value = assumed_int_field->val_int();
@@ -310,6 +314,7 @@ public:
 	MSMetaDataTable(MSSystemTableShare *share, TABLE *table);
 	virtual ~MSMetaDataTable();
 
+	void use();
 	void unuse();
 	void seqScanInit();
 	int	getRefLen();
@@ -347,7 +352,7 @@ private:
 	virtual bool returnSubRecord(char *buf);
 	virtual bool returnRow(MSBlobHeadPtr blob, char *buf) { return MSRepositoryTable::returnRow(blob, buf);}
 	virtual void returnRow(char *name, char *value, char *buf);
-	virtual bool resetScan(bool positioned, uint32_t index = 0) { return MSRepositoryTable::resetScan(positioned, index);}
+	virtual bool resetScan(bool positioned, uint32_t index = 0) {bool have_data= false; return resetScan(positioned, &have_data, index);}
 	virtual bool resetScan(bool positioned, bool *have_data, uint32_t iRepoIndex = 0);
 	
 	static MSMetaDataTable *newMSMetaDataTable(MSDatabase *db);

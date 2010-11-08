@@ -4,6 +4,9 @@
 package drizzled.message;
 option optimize_for = SPEED;
 
+option java_package = "org.drizzle.messages";
+option java_outer_classname = "TableMessage";
+
 import "engine.proto";
 
 message Table {
@@ -53,7 +56,7 @@ message Table {
       OPTION_CASCADE = 2;
       OPTION_SET_NULL = 3;
       OPTION_NO_ACTION = 4;
-      OPTION_DEFAULT = 5;
+      OPTION_SET_DEFAULT = 5;
     }
 
     required ForeignKeyOption update_option = 6 [ default = OPTION_UNDEF ];
@@ -123,7 +126,7 @@ message Table {
   message Index {
 
     enum IndexType {
-    /* Kept in sync with enum ha_key_alg if only for stewart's sanity. */
+    /* Kept in sync with enum ha_key_alg if only for stewart sanity. */
       UNKNOWN_INDEX = 0;
       BTREE = 1;
       RTREE = 2;
@@ -169,6 +172,11 @@ message Table {
   required uint64 creation_timestamp= 11 [default = 0];
   required uint64 update_timestamp= 12 [default = 0];
   optional string catalog = 13;
+  optional string uuid = 14;
+  /*
+    A version value of 0, means that it was never set.
+    */
+  optional uint64 version = 15;
 }
 
 message AlterTable {

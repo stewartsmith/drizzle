@@ -39,7 +39,7 @@ int group_concat_key_cmp_with_order(void* arg, const void* key1,
                                     const void* key2);
 
 class Select_Lex;
-struct order_st;
+struct Order;
 
 /*
   Class Item_sum is the base class used for special expressions that SQL calls
@@ -982,7 +982,7 @@ class Item_func_group_concat : public Item_sum
    */
   Unique *unique_filter;
   Table *table;
-  order_st **order;
+  Order **order;
   Name_resolution_context *context;
   /** The number of ORDER BY items. */
   uint32_t arg_count_order;

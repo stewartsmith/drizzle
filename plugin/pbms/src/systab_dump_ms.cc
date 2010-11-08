@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Barry Leslie
  *
@@ -59,8 +59,8 @@
 
 DT_FIELD_INFO pbms_dump_info[]=
 {
-	{"Data",			NULL, NULL, MYSQL_TYPE_LONG_BLOB,	&my_charset_bin,	NOT_NULL_FLAG,	"A BLOB repository record"},
-	{NULL,NULL, NULL, MYSQL_TYPE_STRING,NULL, 0, NULL}
+	{"Data",			NOVAL, NULL, MYSQL_TYPE_LONG_BLOB,	&my_charset_bin,	NOT_NULL_FLAG,	"A BLOB repository record"},
+	{NULL,NOVAL, NULL, MYSQL_TYPE_STRING,NULL, 0, NULL}
 };
 
 DT_KEY_INFO pbms_dump_keys[]=
@@ -157,7 +157,11 @@ bool MSDumpTable::returnDumpRow(char *record, uint64_t record_size, char *buf)
 	 */
 	save_write_set = table->write_set;
 	table->write_set = NULL;
+#ifdef DRIZZLED
+	memset(buf, 0xFF, table->getNullBytes());
+#else
 	memset(buf, 0xFF, table->s->null_bytes);
+#endif
 	
  	for (Field **field=GET_TABLE_FIELDS(table) ; *field ; field++) {
  		curr_field = *field;
@@ -166,7 +170,11 @@ bool MSDumpTable::returnDumpRow(char *record, uint64_t record_size, char *buf)
 #if MYSQL_VERSION_ID < 50114
 		curr_field->ptr = (byte *) buf + curr_field->offset();
 #else
+#ifdef DRIZZLED
 		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->getTable()->getInsertRecord());
+#else
+		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->table->record[0]);
+#endif
 #endif
 		switch (curr_field->field_name[0]) {
 			case 'D':
@@ -254,7 +262,7 @@ bool MSDumpTable::returnRow(MSBlobHeadPtr blob, char *buf)
 	}
 
 
-	return returnDumpRow(iBlobBuffer->getBuffer(0), record_size, buf);
+	return_(returnDumpRow(iBlobBuffer->getBuffer(0), record_size, buf));
 }
 
 //-----------------------
@@ -329,7 +337,7 @@ bool MSDumpTable::returnInfoRow(char *buf)
 	INC_INFO_SPACE(4);
 	memcpy(ptr, sysTablesDump->getBuffer(0), sysTablesDump->length());
 	INC_INFO_SPACE(sysTablesDump->length());
-	sysTablesDump->release();
+	release_(sysTablesDump);
 	sysTablesDump = NULL;
 			
 	tab_info = (TabInfoPtr)ptr;
@@ -426,8 +434,13 @@ void MSDumpTable::insertRow(char *buf)
 	field = (Field_blob *)GET_FIELD(table, 0);
 	
     /* Get the blob record: */
+#ifdef DRIZZLED
     blob_rec= buf + field->offset(table->getInsertRecord());
+    packlength= field->pack_length() - table->getShare()->blob_ptr_size;
+#else
+    blob_rec= buf + field->offset(table->record[0]);
     packlength= field->pack_length() - table->s->blob_ptr_size;
+#endif
 
     memcpy(&blob_ptr, blob_rec +packlength, sizeof(char*));
     length= field->get_length();

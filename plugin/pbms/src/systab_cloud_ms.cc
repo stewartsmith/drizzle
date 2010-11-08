@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Barry Leslie
  *
@@ -57,12 +57,12 @@
 
 DT_FIELD_INFO pbms_cloud_info[]=
 {
-	{"Id",			NULL,	NULL, MYSQL_TYPE_LONG,		NULL,			NOT_NULL_FLAG,	"The Cloud storage reference ID"},
+	{"Id",			NOVAL,	NULL, MYSQL_TYPE_LONG,		NULL,			NOT_NULL_FLAG,	"The Cloud storage reference ID"},
 	{"Server",		1024,	NULL, MYSQL_TYPE_VARCHAR,	&UTF8_CHARSET,	NOT_NULL_FLAG,	"S3 server name"},
 	{"Bucket",		124,	NULL, MYSQL_TYPE_VARCHAR,	&UTF8_CHARSET,	NOT_NULL_FLAG,	"S3 bucket name"},
 	{"PublicKey",	124,	NULL, MYSQL_TYPE_VARCHAR,	&UTF8_CHARSET,	NOT_NULL_FLAG,	"S3 public key"},
 	{"PrivateKey",	124,	NULL, MYSQL_TYPE_VARCHAR,	&UTF8_CHARSET,	NOT_NULL_FLAG,	"S3 private key"},
-	{NULL,NULL, NULL, MYSQL_TYPE_STRING,NULL, 0, NULL}
+	{NULL,NOVAL, NULL, MYSQL_TYPE_STRING,NULL, 0, NULL}
 };
 
 DT_KEY_INFO pbms_cloud_keys[]=
@@ -250,14 +250,22 @@ bool MSCloudTable::seqScanNext(char *buf)
 	save_write_set = table->write_set;
 	table->write_set = NULL;
 
+#ifdef DRIZZLED
+	memset(buf, 0xFF, table->getNullBytes());
+#else
 	memset(buf, 0xFF, table->s->null_bytes);
+#endif
  	for (Field **field=GET_TABLE_FIELDS(table) ; *field ; field++) {
  		curr_field = *field;
 		save = curr_field->ptr;
 #if MYSQL_VERSION_ID < 50114
 		curr_field->ptr = (byte *) buf + curr_field->offset();
 #else
+#ifdef DRIZZLED
 		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->getTable()->getInsertRecord());
+#else
+		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->table->record[0]);
+#endif
 #endif
 		switch (curr_field->field_name[0]) {
 			case 'I':

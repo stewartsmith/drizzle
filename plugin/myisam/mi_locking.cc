@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /*
   locking of isam-tables.
@@ -68,7 +68,7 @@ int mi_lock_database(MI_INFO *info, int lock_type)
       }
       if (info->opt_flag & (READ_CACHE_USED | WRITE_CACHE_USED))
       {
-	if (end_io_cache(&info->rec_cache))
+	if (info->rec_cache.end_io_cache())
 	{
 	  error=errno;
           mi_print_error(info->s, HA_ERR_CRASHED);

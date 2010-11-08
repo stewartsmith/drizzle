@@ -11,8 +11,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -107,7 +107,7 @@ class ha_innobase: public Cursor
 	/* Init values for the class: */
  public:
 	UNIV_INTERN ha_innobase(plugin::StorageEngine &engine,
-                                TableShare &table_arg);
+                                Table &table_arg);
 	UNIV_INTERN ~ha_innobase();
   /**
    * Returns the plugin::TransactionStorageEngine pointer
@@ -119,7 +119,7 @@ class ha_innobase: public Cursor
    */
   UNIV_INTERN plugin::TransactionalStorageEngine *getTransactionalEngine()
   {
-    return static_cast<plugin::TransactionalStorageEngine *>(engine);
+    return static_cast<plugin::TransactionalStorageEngine *>(getEngine());
   }
 
 	UNIV_INTERN const char* index_type(uint key_number);
@@ -250,4 +250,20 @@ trx_t*
 innobase_trx_allocate(
 /*==================*/
 	Session		*session);	/*!< in: user thread handle */
+
+/***********************************************************************
+This function checks each index name for a table against reserved
+system default primary index name 'GEN_CLUST_INDEX'. If a name matches,
+this function pushes an error message to the client, and returns true. */
+extern "C"
+bool
+innobase_index_name_is_reserved(
+/*============================*/
+					/* out: true if index name matches a
+					reserved name */
+	const trx_t*	trx,		/* in: InnoDB transaction handle */
+	const drizzled::KeyInfo*	key_info,/* in: Indexes to be created */
+	ulint		num_of_keys);	/* in: Number of indexes to
+					be created. */
+
 #endif /* INNODB_HANDLER_HA_INNODB_H */

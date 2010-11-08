@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * 2005-01-03	Paul McCullagh
  *
@@ -241,8 +241,8 @@ struct XTThread;
 class XTTask;
 
 /* Run a task. The thread input is the thread that is running the task. */
-typedef xtBool (*XTDoTaskFunc)(struct XTTask *task_data, struct XTThread *thread);
-typedef void (*XTFreeTaskFunc)(struct XTTask *task_data);
+typedef xtBool (*XTDoTaskFunc)(XTTask *task_data, XTThread *thread);
+typedef void (*XTFreeTaskFunc)(XTTask *task_data);
 
 class XTTask {
 	public:

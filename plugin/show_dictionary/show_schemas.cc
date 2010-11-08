@@ -25,13 +25,13 @@ using namespace std;
 using namespace drizzled;
 
 ShowSchemas::ShowSchemas() :
-  plugin::TableFunction("DATA_DICTIONARY", "SHOW_SCHEMAS")
+  show_dictionary::Show("SHOW_SCHEMAS")
 {
   add_field("SCHEMA_NAME");
 }
 
 ShowSchemas::Generator::Generator(Field **arg) :
-  plugin::TableFunction::Generator(arg),
+  show_dictionary::Show::Generator(arg),
   is_schema_primed(false)
 {
 }

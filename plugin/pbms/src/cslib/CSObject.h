@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Original author: Paul McCullagh (H&G2JCtL)
  * Continued development: Barry Leslie
@@ -42,13 +42,24 @@
 // operator out side of a 'for' loop. :)
 #define RETAIN(x) ((x)->retain(),(x))
 
+// A back reference is a reference stored by an object pointing to it's owner.
+// Since the owner will free all of it's object when it is released the  object
+// itself cannot hold a reference to its owner.
+// Use this macro to make it clear that this is what you intended. 
+#define BACK_REFERENCE(x) (x)
+
 class CSObject {
 public:
 	CSObject() { }
 	virtual ~CSObject() { finalize(); }
 
+#ifdef DEBUG
+	virtual void retain(const char *func, const char *file, uint32_t line);
+	virtual void release(const char *func, const char *file, uint32_t line);
+#else
 	virtual void retain();
 	virtual void release();
+#endif
 
 	/*
 	 * All objects are sortable, hashable and linkable,
@@ -75,8 +86,18 @@ public:
 		cs_mm_free(ptr);
 	}
 
-	//virtual void retain(const char *func, const char *file, uint32_t line);
-	//virtual void release(const char *func, const char *file, uint32_t line);
+#endif
+};
+
+class CSStaticObject : public CSObject {
+#ifdef DEBUG
+	virtual void retain(const char *func, const char *file, uint32_t line);
+	virtual void release(const char *func, const char *file, uint32_t line);
+
+	int		iTrackMe;
+#else
+	virtual void retain();
+	virtual void release();
 #endif
 };
 
@@ -85,17 +106,20 @@ public:
 	CSRefObject();
 	virtual ~CSRefObject();
 
+#ifdef DEBUG
+	virtual void startTracking();
+	virtual void retain(const char *func, const char *file, uint32_t line);
+	virtual void release(const char *func, const char *file, uint32_t line);
+
+	int		iTrackMe;
+#else
 	virtual void retain();
 	virtual void release();
-#ifdef DEBUG
-	//virtual void retain(const char *func, const char *file, uint32_t line);
-	//virtual void release(const char *func, const char *file, uint32_t line);
-	int		iTrackMe;
 #endif
 
-#ifndef DEBUG
+	uint32_t getRefCount() { return iRefCount;}
+
 private:
-#endif
 	uint32_t	iRefCount;
 };
 
@@ -104,32 +128,28 @@ public:
 	CSSharedRefObject();
 	virtual ~CSSharedRefObject();
 
-	virtual void retain();
-	virtual void release();
 #ifdef DEBUG
 	virtual void startTracking();
-	//virtual void retain(const char *func, const char *file, uint32_t line);
-	//virtual void release(const char *func, const char *file, uint32_t line);
+	virtual void retain(const char *func, const char *file, uint32_t line);
+	virtual void release(const char *func, const char *file, uint32_t line);
+
 	int		iTrackMe;
+#else
+	virtual void retain();
+	virtual void release();
 #endif
 
-#ifndef DEBUG
+	uint32_t getRefCount() { return iRefCount;}
+
 private:
-#endif
-	uint32_t	iRefCount;
-};
-
-class CSStaticObject : public CSObject {
-	virtual void retain() {}
-	virtual void release(){ finalize();}
-#ifdef DEBUG
-	int		iTrackMe;
-#endif
 	uint32_t	iRefCount;
 };
 
 #ifdef DEBUG
-#define new new(__FUNC__, __FILE__, __LINE__)
+#define new			new(__FUNC__, __FILE__, __LINE__)
+
+#define retain()	retain(__FUNC__, __FILE__, __LINE__)
+#define release()	release(__FUNC__, __FILE__, __LINE__)
 #endif
 
 class CSPooled {

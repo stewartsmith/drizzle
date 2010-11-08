@@ -1,0 +1,127 @@
+USE data_dictionary;
+SHOW TABLES LIKE 'haildb%';
+Tables_in_data_dictionary (haildb%)
+HAILDB_CONFIGURATION
+HAILDB_STATUS
+HAILDB_SYS_COLUMNS
+HAILDB_SYS_FIELDS
+HAILDB_SYS_FOREIGN
+HAILDB_SYS_FOREIGN_COLS
+HAILDB_SYS_INDEXES
+HAILDB_SYS_TABLES
+haildb_table_definitions
+show create table data_dictionary.haildb_sys_tables;
+Table	Create Table
+haildb_sys_tables	CREATE TABLE `haildb_sys_tables` (
+  `NAME` VARBINARY(192),
+  `ID` BIGINT,
+  `N_COLS` INT,
+  `TYPE` INT,
+  `MIX_ID` VARBINARY(192),
+  `MIX_LEN` INT,
+  `CLUSTER_NAME` VARBINARY(192),
+  `SPACE` INT,
+  PRIMARY KEY (`NAME`) USING BTREE
+) ENGINE=InnoDB COLLATE = binary
+show create table data_dictionary.haildb_sys_columns;
+Table	Create Table
+haildb_sys_columns	CREATE TABLE `haildb_sys_columns` (
+  `TABLE_ID` BIGINT,
+  `POS` INT,
+  `NAME` VARBINARY(192),
+  `MTYPE` INT,
+  `PRTYPE` INT,
+  `LEN` INT,
+  `PREC` INT,
+  PRIMARY KEY (`TABLE_ID`,`POS`) USING BTREE
+) ENGINE=InnoDB COLLATE = binary
+show create table data_dictionary.haildb_sys_indexes;
+Table	Create Table
+haildb_sys_indexes	CREATE TABLE `haildb_sys_indexes` (
+  `TABLE_ID` BIGINT,
+  `ID` BIGINT,
+  `NAME` VARBINARY(192),
+  `N_FIELDS` INT,
+  `TYPE` INT,
+  `SPACE` INT,
+  `PAGE_NO` INT,
+  PRIMARY KEY (`TABLE_ID`,`ID`) USING BTREE
+) ENGINE=InnoDB COLLATE = binary
+show create table data_dictionary.haildb_sys_fields;
+Table	Create Table
+haildb_sys_fields	CREATE TABLE `haildb_sys_fields` (
+  `INDEX_ID` BIGINT,
+  `POS` INT,
+  `COL_NAME` VARBINARY(192),
+  PRIMARY KEY (`INDEX_ID`,`POS`) USING BTREE
+) ENGINE=InnoDB COLLATE = binary
+show create table data_dictionary.haildb_sys_foreign;
+Table	Create Table
+haildb_sys_foreign	CREATE TABLE `haildb_sys_foreign` (
+  `ID` BIGINT,
+  `FOR_NAME` VARBINARY(192),
+  `REF_NAME` VARBINARY(192),
+  `N_COLS` INT,
+  PRIMARY KEY (`ID`) USING BTREE,
+  KEY `FOR_IND` (`FOR_NAME`) USING BTREE,
+  KEY `REF_IND` (`REF_NAME`) USING BTREE
+) ENGINE=InnoDB COLLATE = binary
+show create table data_dictionary.haildb_sys_foreign_cols;
+Table	Create Table
+haildb_sys_foreign_cols	CREATE TABLE `haildb_sys_foreign_cols` (
+  `ID` BIGINT,
+  `POS` INT,
+  `FOR_COL_NAME` VARBINARY(192),
+  `REF_COL_NAME` VARBINARY(192),
+  PRIMARY KEY (`ID`,`POS`) USING BTREE
+) ENGINE=InnoDB COLLATE = binary
+select name from data_dictionary.haildb_sys_tables;
+name
+SYS_FOREIGN
+SYS_FOREIGN_COLS
+data_dictionary/haildb_table_definitions
+explain select name from data_dictionary.haildb_sys_tables where name="SYS_FOREIGN";
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	haildb_sys_tables	const	PRIMARY	PRIMARY	195	const	#	Using index
+select name from data_dictionary.haildb_sys_tables where name="SYS_FOREIGN";
+name
+SYS_FOREIGN
+select t.name t,c.name c from data_dictionary.haildb_sys_tables as t, data_dictionary.haildb_sys_columns as c where t.id=c.table_id;
+t	c
+SYS_FOREIGN	ID
+SYS_FOREIGN	FOR_NAME
+SYS_FOREIGN	REF_NAME
+SYS_FOREIGN	N_COLS
+SYS_FOREIGN_COLS	ID
+SYS_FOREIGN_COLS	POS
+SYS_FOREIGN_COLS	FOR_COL_NAME
+SYS_FOREIGN_COLS	REF_COL_NAME
+data_dictionary/haildb_table_definitions	table_name
+data_dictionary/haildb_table_definitions	message
+select t.name as table_name,c.name as column_name from data_dictionary.haildb_sys_tables t,data_dictionary.haildb_sys_columns c where t.id=c.table_id order by table_name,column_name;
+table_name	column_name
+SYS_FOREIGN	FOR_NAME
+SYS_FOREIGN	ID
+SYS_FOREIGN	N_COLS
+SYS_FOREIGN	REF_NAME
+SYS_FOREIGN_COLS	FOR_COL_NAME
+SYS_FOREIGN_COLS	ID
+SYS_FOREIGN_COLS	POS
+SYS_FOREIGN_COLS	REF_COL_NAME
+data_dictionary/haildb_table_definitions	message
+data_dictionary/haildb_table_definitions	table_name
+create table test.t1 (a int primary key, b int, c int, index(b), index(c), index(b,c));
+select name,n_fields from data_dictionary.haildb_sys_indexes i where i.table_id=(select id from data_dictionary.haildb_sys_tables where name="test/t1");
+name	n_fields
+PRIMARY	1
+b	1
+c	1
+b_2	2
+select f.col_name from data_dictionary.haildb_sys_fields f where f.index_id in (select id from data_dictionary.haildb_sys_indexes i where i.table_id=(select id from data_dictionary.haildb_sys_tables where name="test/t1"));
+col_name
+a
+b
+c
+b
+c
+drop table test.t1;

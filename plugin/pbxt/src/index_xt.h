@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * 2005-09-30	Paul McCullagh
  *
@@ -25,7 +25,6 @@
 
 #ifdef DRIZZLED
 #include <drizzled/definitions.h>
-#include <drizzled/sql_bitmap.h>
 #include <drizzled/field.h>
 using drizzled::Field;
 #else
@@ -107,7 +106,6 @@ struct XTIndex;
 struct XTIndBlock;
 struct XTTable;
 struct XTThread;
-class Field;
 
 /*
  * INDEX ROLLBACK
@@ -434,7 +432,12 @@ typedef struct XTIndex {
 	XTPrevItemFunc		mi_prev_item;
 	XTLastItemFunc		mi_last_item;
 	XTSimpleCompFunc	mi_simple_comp_key;
+#ifdef DRIZZLED
+	uint64_t            mi_col_map;					/* Bit-map of columns in the index. */
+    uint64_t            mi_col_map_size;            /* size of this bitmap. */
+#else
 	MX_BITMAP			mi_col_map;					/* Bit-map of columns in the index. */
+#endif
 	u_int				mi_subset_of;				/* Indicates if this index is a complete subset of someother index. */
 	u_int				mi_seg_count;
 	XTIndexSegRec		mi_seg[200];

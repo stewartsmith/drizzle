@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 
 /* create and drop of databases */
@@ -101,7 +101,7 @@ bool mysql_create_db(Session *session, const message::Schema &schema_message, co
     has the global read lock and refuses the operation with
     ER_CANT_UPDATE_WITH_READLOCK if applicable.
   */
-  if (wait_if_global_read_lock(session, 0, 1))
+  if (session->wait_if_global_read_lock(false, true))
   {
     return false;
   }
@@ -141,7 +141,7 @@ bool mysql_create_db(Session *session, const message::Schema &schema_message, co
       session->my_ok(1);
     }
   }
-  start_waiting_global_read_lock(session);
+  session->startWaitingGlobalReadLock();
 
   return error;
 }
@@ -165,7 +165,7 @@ bool mysql_alter_db(Session *session, const message::Schema &schema_message)
     has the global read lock and refuses the operation with
     ER_CANT_UPDATE_WITH_READLOCK if applicable.
   */
-  if ((wait_if_global_read_lock(session, 0, 1)))
+  if ((session->wait_if_global_read_lock(false, true)))
     return false;
 
   bool success;
@@ -192,7 +192,7 @@ bool mysql_alter_db(Session *session, const message::Schema &schema_message)
       my_error(ER_ALTER_SCHEMA, MYF(0), schema_message.name().c_str());
     }
   }
-  start_waiting_global_read_lock(session);
+  session->startWaitingGlobalReadLock();
 
   return success;
 }
@@ -234,7 +234,7 @@ bool mysql_rm_db(Session *session, SchemaIdentifier &schema_identifier, const bo
     has the global read lock and refuses the operation with
     ER_CANT_UPDATE_WITH_READLOCK if applicable.
   */
-  if (wait_if_global_read_lock(session, 0, 1))
+  if (session->wait_if_global_read_lock(false, true))
   {
     return -1;
   }
@@ -272,7 +272,7 @@ bool mysql_rm_db(Session *session, SchemaIdentifier &schema_identifier, const bo
     else
     {
       LOCK_open.lock(); /* After deleting database, remove all cache entries related to schema */
-      remove_db_from_cache(schema_identifier);
+      table::Cache::singleton().removeSchema(schema_identifier);
       LOCK_open.unlock();
 
 
@@ -343,7 +343,7 @@ exit:
       mysql_change_db_impl(session);
   }
 
-  start_waiting_global_read_lock(session);
+  session->startWaitingGlobalReadLock();
 
   return error;
 }
@@ -360,24 +360,7 @@ static int rm_table_part2(Session *session, TableList *tables)
 
   LOCK_open.lock(); /* Part 2 of rm a table */
 
-  /*
-    If we have the table in the definition cache, we don't have to check the
-    .frm cursor to find if the table is a normal table (not view) and what
-    engine to use.
-  */
-
-  for (table= tables; table; table= table->next_local)
-  {
-    TableIdentifier identifier(table->db, table->table_name);
-    TableShare *share;
-    table->setDbType(NULL);
-    if ((share= TableShare::getShare(identifier)))
-    {
-      table->setDbType(share->db_type());
-    }
-  }
-
-  if (lock_table_names_exclusively(session, tables))
+  if (session->lock_table_names_exclusively(tables))
   {
     LOCK_open.unlock();
     return 1;
@@ -388,10 +371,12 @@ static int rm_table_part2(Session *session, TableList *tables)
 
   for (table= tables; table; table= table->next_local)
   {
-    char *db=table->db;
+    const char *db=table->getSchemaName();
+    TableIdentifier identifier(table->getSchemaName(), table->getTableName());
+
     plugin::StorageEngine *table_type;
 
-    error= session->drop_temporary_table(table);
+    error= session->drop_temporary_table(identifier);
 
     switch (error) {
     case  0:
@@ -399,7 +384,7 @@ static int rm_table_part2(Session *session, TableList *tables)
       continue;
     case -1:
       error= 1;
-      unlock_table_names(tables, NULL);
+      tables->unlock_table_names();
       LOCK_open.unlock();
       session->no_warnings_for_error= 0;
 
@@ -411,14 +396,12 @@ static int rm_table_part2(Session *session, TableList *tables)
 
     table_type= table->getDbType();
 
-    TableIdentifier identifier(db, table->table_name);
-
     {
       Table *locked_table;
       abort_locked_tables(session, identifier);
-      remove_table_from_cache(session, identifier,
-                              RTFC_WAIT_OTHER_THREAD_FLAG |
-                              RTFC_CHECK_KILLED_FLAG);
+      table::Cache::singleton().removeTable(session, identifier,
+                                            RTFC_WAIT_OTHER_THREAD_FLAG |
+                                            RTFC_CHECK_KILLED_FLAG);
       /*
         If the table was used in lock tables, remember it so that
         unlock_table_names can free it
@@ -426,10 +409,10 @@ static int rm_table_part2(Session *session, TableList *tables)
       if ((locked_table= drop_locked_tables(session, identifier)))
         table->table= locked_table;
 
-      if (session->killed)
+      if (session->getKilled())
       {
         error= -1;
-        unlock_table_names(tables, NULL);
+        tables->unlock_table_names();
         LOCK_open.unlock();
         session->no_warnings_for_error= 0;
 
@@ -443,7 +426,7 @@ static int rm_table_part2(Session *session, TableList *tables)
       // Table was not found on disk and table can't be created from engine
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                           ER_BAD_TABLE_ERROR, ER(ER_BAD_TABLE_ERROR),
-                          table->table_name);
+                          table->getTableName());
     }
     else
     {
@@ -464,14 +447,14 @@ static int rm_table_part2(Session *session, TableList *tables)
 
     if (error == 0 || (foreign_key_error == false))
     {
-      transaction_services.dropTable(session, string(db), string(table->table_name), true);
+      transaction_services.dropTable(session, string(db), string(table->getTableName()), true);
     }
 
     if (error)
     {
       if (wrong_tables.length())
         wrong_tables.append(',');
-      wrong_tables.append(String(table->table_name,system_charset_info));
+      wrong_tables.append(String(table->getTableName(),system_charset_info));
     }
   }
   /*
@@ -493,7 +476,7 @@ static int rm_table_part2(Session *session, TableList *tables)
   }
 
   LOCK_open.lock(); /* final bit in rm table lock */
-  unlock_table_names(tables, NULL);
+  tables->unlock_table_names();
   LOCK_open.unlock();
   session->no_warnings_for_error= 0;
 
@@ -531,10 +514,10 @@ static long drop_tables_via_filenames(Session *session,
     if (not table_list)
       return -1;
 
-    table_list->db= (char*) (table_list+1);
-    table_list->table_name= strcpy(table_list->db, schema_identifier.getSchemaName().c_str()) + db_len + 1;
-    TableIdentifier::filename_to_tablename((*it).getTableName().c_str(), table_list->table_name, (*it).getTableName().size() + 1);
-    table_list->alias= table_list->table_name;  // If lower_case_table_names=2
+    table_list->setSchemaName((char*) (table_list+1));
+    table_list->setTableName(strcpy((char*) (table_list+1), schema_identifier.getSchemaName().c_str()) + db_len + 1);
+    TableIdentifier::filename_to_tablename((*it).getTableName().c_str(), const_cast<char *>(table_list->getTableName()), (*it).getTableName().size() + 1);
+    table_list->alias= table_list->getTableName();  // If lower_case_table_names=2
     table_list->setInternalTmpTable((strncmp((*it).getTableName().c_str(),
                                              TMP_FILE_PREFIX,
                                              strlen(TMP_FILE_PREFIX)) == 0));
@@ -543,7 +526,7 @@ static long drop_tables_via_filenames(Session *session,
     tot_list_next= &table_list->next_local;
     deleted++;
   }
-  if (session->killed)
+  if (session->getKilled())
     return -1;
 
   if (tot_list)

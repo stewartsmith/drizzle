@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /* Read and write key blocks */
 
@@ -75,7 +75,7 @@ int _mi_write_keypage(register MI_INFO *info, register MI_KEYDEF *keyinfo,
   if ((length=keyinfo->block_length) > IO_SIZE*2 &&
       info->state->key_file_length != page+length)
     length= ((mi_getint(buff)+IO_SIZE-1) & (uint) ~(IO_SIZE-1));
-#ifdef HAVE_purify
+#ifdef HAVE_VALGRIND
   {
     length=mi_getint(buff);
     memset(buff+length, 0, keyinfo->block_length-length);

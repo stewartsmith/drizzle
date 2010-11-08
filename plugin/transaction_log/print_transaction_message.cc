@@ -184,6 +184,16 @@ String *PrintTransactionMessageFunction::val_str(String *str)
   string transaction_text;
   protobuf::TextFormat::PrintToString(transaction_message, &transaction_text);
 
+  std::string::size_type begin_uuid;
+  while ((begin_uuid= transaction_text.find("uuid")) != string::npos)
+  {
+    std::string::size_type end_uuid= transaction_text.find('\n', begin_uuid); 
+    if (end_uuid != string::npos)
+    {
+      transaction_text.erase(begin_uuid, end_uuid - begin_uuid);
+    }
+  }
+
   if (str->alloc(transaction_text.length()))
   {
     delete coded_input;

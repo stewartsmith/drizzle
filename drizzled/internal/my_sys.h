@@ -171,11 +171,19 @@ extern const char *my_defaults_file;
 
 extern bool timed_mutexes;
 
-typedef struct wild_file_pack	/* Struct to hold info when selecting files */
+typedef class wild_file_pack	/* Struct to hold info when selecting files */
 {
+public:
   uint		wilds;		/* How many wildcards */
   uint		not_pos;	/* Start of not-theese-files */
   char *	*wild;		/* Pointer to wildcards */
+
+  wild_file_pack():
+    wilds(0),
+    not_pos(0),
+    wild(NULL)
+  {}
+
 } WF_PACK;
 
 enum cache_type
@@ -188,8 +196,9 @@ enum cache_type
   WRITE_NET
 };
 
-typedef struct st_record_cache	/* Used when cacheing records */
+typedef struct record_cache	/* Used when cacheing records */
 {
+public:
   int file;
   int	rc_seek,error,inited;
   uint	rc_length,read_length,reclength;
@@ -200,6 +209,24 @@ typedef struct st_record_cache	/* Used when cacheing records */
   my_aio_result aio_result;
 #endif
   enum cache_type type;
+
+  record_cache():
+    file(0),
+    rc_seek(0),
+    error(0),
+    inited(0),
+    rc_length(0),
+    read_length(0),
+    reclength(0),
+    rc_record_pos(0),
+    end_of_file(0),
+    rc_buff(NULL),
+    rc_buff2(NULL),
+    rc_pos(NULL),
+    rc_end(NULL),
+    rc_request_pos(NULL)
+  {}
+
 } RECORD_CACHE;
 
 
@@ -302,8 +329,8 @@ extern char * my_load_path(char * to, const char *path,
 extern int wild_compare(const char *str,const char *wildstr,
                         bool str_is_pattern);
 extern WF_PACK *wf_comp(char * str);
-extern int wf_test(struct wild_file_pack *wf_pack,const char *name);
-extern void wf_end(struct wild_file_pack *buffer);
+extern int wf_test(wild_file_pack *wf_pack,const char *name);
+extern void wf_end(wild_file_pack *buffer);
 extern bool array_append_string_unique(const char *str,
                                           const char **array, size_t size);
 extern void get_date(char * to,int timeflag,time_t use_time);

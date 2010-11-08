@@ -1,6 +1,6 @@
 disable_query_log;
 # Server are started in "var/master-data/local", so "../../tmp" will be "var/tmp"
-eval set @tmpdir="../../tmp";
+eval set @tmpdir="$DRIZZLETEST_VARDIR/tmp";
 enable_query_log;
 
 #
@@ -14,51 +14,71 @@ drop table if exists t1;
 create table t1 (`a` blob);
 insert into t1 values("hello world"),("Hello mars"),(NULL);
 disable_query_log;
-eval select * into outfile "../../tmp/outfile-test.1" from t1;
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+eval select * into outfile "$DRIZZLETEST_VARDIR/tmp/outfile-test.1" from t1;
 enable_query_log;
 select load_file(concat(@tmpdir,"/outfile-test.1"));
 disable_query_log;
-eval select * into dumpfile "../../tmp/outfile-test.2" from t1 limit 1;
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+eval select * into dumpfile "$DRIZZLETEST_VARDIR/tmp/outfile-test.2" from t1 limit 1;
 enable_query_log;
 select load_file(concat(@tmpdir,"/outfile-test.2"));
 disable_query_log;
-eval select * into dumpfile "../../tmp/outfile-test.3" from t1 where a is null;
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+eval select * into dumpfile "$DRIZZLETEST_VARDIR/tmp/outfile-test.3" from t1 where a is null;
 enable_query_log;
 select load_file(concat(@tmpdir,"/outfile-test.3"));
 
 # the following should give errors
 
 disable_query_log;
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
 --error ER_FILE_EXISTS_ERROR
-eval select * into outfile "../../tmp/outfile-test.1" from t1;
+eval select * into outfile "$DRIZZLETEST_VARDIR/tmp/outfile-test.1" from t1;
 
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
 --error ER_FILE_EXISTS_ERROR
-eval select * into dumpfile "../../tmp/outfile-test.2" from t1;
+eval select * into dumpfile "$DRIZZLETEST_VARDIR/tmp/outfile-test.2" from t1;
 
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
 --error ER_FILE_EXISTS_ERROR
-eval select * into dumpfile "../../tmp/outfile-test.3" from t1;
+eval select * into dumpfile "$DRIZZLETEST_VARDIR/tmp/outfile-test.3" from t1;
 enable_query_log;
-select load_file(concat(@tmpdir,"/outfile-test.not-exist"));
---remove_file $MYSQLTEST_VARDIR/tmp/outfile-test.1
---remove_file $MYSQLTEST_VARDIR/tmp/outfile-test.2
---remove_file $MYSQLTEST_VARDIR/tmp/outfile-test.3
+
+# The test below drastically shortens $DRIZZLETEST_VARDIR
+# to just VAR and uses a less informative file name
+# This is done to accomodate longer file paths
+# We were seeing error message truncation when
+# the path to the server under test was long (110+ chars)
+
+--disable_query_log
+let $bad_test_file ="$DRIZZLETEST_VARDIR/tmp/bad";
+--enable_query_log
+let $replace_substring = `SELECT SUBSTRING($bad_test_file,1,128)`;
+--replace_result $replace_substring DRIZZLETEST_BAD_FILE $bad_test_file DRIZZLETEST_BAD_FILE
+--error ER_TEXTFILE_NOT_READABLE
+eval select load_file($bad_test_file);
+--remove_file $DRIZZLETEST_VARDIR/tmp/outfile-test.1
+--remove_file $DRIZZLETEST_VARDIR/tmp/outfile-test.2
+--remove_file $DRIZZLETEST_VARDIR/tmp/outfile-test.3
 drop table t1;
 
 # Bug#8191
 disable_query_log;
-eval select 1 into outfile "../../tmp/outfile-test.4";
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+eval select 1 into outfile "$DRIZZLETEST_VARDIR/tmp/outfile-test.4";
 enable_query_log;
+--replace_result $DRIZZLE_TEST_DIR DRIZZLE_TEST_DIR
 select load_file(concat(@tmpdir,"/outfile-test.4"));
---remove_file $MYSQLTEST_VARDIR/tmp/outfile-test.4
+--remove_file $DRIZZLETEST_VARDIR/tmp/outfile-test.4
 
 #
 # Bug #5382: 'explain select into outfile' crashes the server
 #
 
 CREATE TABLE t1 (a INT);
-EXPLAIN 
-  SELECT *
-  INTO OUTFILE '../../tmp/t1.txt'
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+eval EXPLAIN SELECT * INTO OUTFILE '$DRIZZLETEST_VARDIR/tmp/t1.txt' 
   FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"' LINES TERMINATED BY '\r\n'
   FROM t1;
 DROP TABLE t1;
@@ -69,19 +89,21 @@ DROP TABLE t1;
 # Bug#13202  SELECT * INTO OUTFILE ... FROM data_dictionary.schemas now fails
 #
 disable_query_log;
-eval SELECT * INTO OUTFILE "../../tmp/outfile-test.4"
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+eval SELECT * INTO OUTFILE "$DRIZZLETEST_VARDIR/tmp/outfile-test.4"
 FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"'
 FROM data_dictionary.schemas LIMIT 0, 5;
 # enable_query_log;
---remove_file $MYSQLTEST_VARDIR/tmp/outfile-test.4
+--remove_file $DRIZZLETEST_VARDIR/tmp/outfile-test.4
 
 use data_dictionary;
 # disable_query_log;
-eval SELECT * INTO OUTFILE "../../tmp/outfile-test.5"
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+eval SELECT * INTO OUTFILE "$DRIZZLETEST_VARDIR/tmp/outfile-test.5"
 FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"'
 FROM schemas LIMIT 0, 5;
 enable_query_log;
---remove_file $MYSQLTEST_VARDIR/tmp/outfile-test.5
+--remove_file $DRIZZLETEST_VARDIR/tmp/outfile-test.5
 use test;
 
 #

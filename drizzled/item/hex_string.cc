@@ -66,7 +66,7 @@ int64_t Item_hex_string::val_int()
   // following assert is redundant, because fixed=1 assigned in constructor
   assert(fixed == 1);
   char *end= (char*) str_value.ptr()+str_value.length(),
-       *ptr= end - min(str_value.length(),(uint32_t)sizeof(int64_t));
+       *ptr= end - min(str_value.length(), sizeof(int64_t));
 
   uint64_t value=0;
   for (; ptr != end ; ptr++)
@@ -116,7 +116,7 @@ warn:
 void Item_hex_string::print(String *str, enum_query_type)
 {
   char *end= (char*) str_value.ptr() + str_value.length(),
-       *ptr= end - min(str_value.length(), (uint32_t)sizeof(int64_t));
+       *ptr= end - min(str_value.length(), sizeof(int64_t));
   str->append("0x");
   for (; ptr != end ; ptr++)
   {

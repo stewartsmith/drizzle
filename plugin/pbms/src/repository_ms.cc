@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Original author: Paul McCullagh
  * Continued development: Barry Leslie
@@ -331,7 +331,7 @@ void MSRepoFile::update_blob_header(MSOpenTable *otab, uint64_t offset, uint64_t
 		new_(buffer, CSStringBuffer());
 		push_(buffer);
 		buffer->setLength(MS_COMPACTOR_BUFFER_SIZE);
-		CSFile::transfer(otab->myWriteRepoFile, dst_offset + new_head_size, this, offset + head_size, blob_size, buffer->getBuffer(0), MS_COMPACTOR_BUFFER_SIZE);
+		CSFile::transfer(RETAIN(otab->myWriteRepoFile), dst_offset + new_head_size, RETAIN(this), offset + head_size, blob_size, buffer->getBuffer(0), MS_COMPACTOR_BUFFER_SIZE);
 		release_(buffer);
 
 #ifdef HAVE_ALIAS_SUPPORT
@@ -653,7 +653,7 @@ done:
 
 void MSRepoFile::setBlobMetaData(MSOpenTable *otab, uint64_t offset, const char *meta_data, uint16_t meta_data_len, bool reset_alias, const char  *alias)
 {
-	CSMutex				*lock;
+	CSMutex				*mylock;
 	MSRepoPointersRec	ptr;
 	size_t				read_size;
 	uint16_t				new_head_size;
@@ -663,8 +663,8 @@ void MSRepoFile::setBlobMetaData(MSOpenTable *otab, uint64_t offset, const char 
 	
 	enter_();
 	/* Lock the BLOB: */
-	lock = &myRepo->myRepoLock[offset % CS_REPO_REC_LOCK_COUNT];
-	lock_(lock);
+	mylock = &myRepo->myRepoLock[offset % CS_REPO_REC_LOCK_COUNT];
+	lock_(mylock);
 
 	/* Read the header: */
 	if (read(&blob, offset, sizeof(MSBlobHeadRec), 0) < sizeof(MSBlobHeadRec)) {
@@ -742,7 +742,7 @@ void MSRepoFile::setBlobMetaData(MSOpenTable *otab, uint64_t offset, const char 
 		alias_offset = 0;
 	}
 #else
-	uint32_t alias_hash = -1;
+	uint32_t alias_hash = ((uint32_t)-1);
 	if (alias || reset_alias) {
 		CSException::throwException(CS_CONTEXT, MS_ERR_NOT_IMPLEMENTED, "No BLOB alias support.");
 	}
@@ -755,7 +755,7 @@ void MSRepoFile::setBlobMetaData(MSOpenTable *otab, uint64_t offset, const char 
 		
 	update_blob_header(otab, offset, blob_size, head_size, new_head_size);
 		
-	unlock_(lock);
+	unlock_(mylock);
 	exit_();
 
 }
@@ -763,7 +763,7 @@ void MSRepoFile::setBlobMetaData(MSOpenTable *otab, uint64_t offset, const char 
 
 void MSRepoFile::releaseBlob(MSOpenTable *otab, uint64_t offset, uint16_t head_size, uint32_t tab_id, uint64_t blob_id, uint64_t blob_ref_id, uint32_t auth_code)
 {
-	CSMutex				*lock;
+	CSMutex				*mylock;
 	MSRepoPointersRec	ptr;
 	uint32_t			table_ref_count = 0;
 	uint32_t			size;
@@ -776,8 +776,8 @@ void MSRepoFile::releaseBlob(MSOpenTable *otab, uint64_t offset, uint16_t head_s
 
 	enter_();
 	/* Lock the BLOB: */
-	lock = &myRepo->myRepoLock[offset % CS_REPO_REC_LOCK_COUNT];
-	lock_(lock);
+	mylock = &myRepo->myRepoLock[offset % CS_REPO_REC_LOCK_COUNT];
+	lock_(mylock);
 	/* Read the header: */
 	ASSERT(head_size <= MS_OT_BUFFER_SIZE);
 	read_size = read(otab->myOTBuffer, offset, head_size, 0);
@@ -907,13 +907,13 @@ void MSRepoFile::releaseBlob(MSOpenTable *otab, uint64_t offset, uint16_t head_s
 	}
 
 	exit:
-	unlock_(lock);
+	unlock_(mylock);
 	exit_();
 }
 
 void MSRepoFile::commitBlob(MSOpenTable *otab, uint64_t offset, uint16_t head_size, uint32_t tab_id, uint64_t blob_id, uint64_t blob_ref_id, uint32_t auth_code)
 {
-	CSMutex				*lock;
+	CSMutex				*mylock;
 	MSRepoPointersRec	ptr;
 	uint32_t				size;
 	size_t				ref_size, ref_count, read_size;
@@ -921,8 +921,8 @@ void MSRepoFile::commitBlob(MSOpenTable *otab, uint64_t offset, uint16_t head_si
 
 	enter_();
 	/* Lock the BLOB: */
-	lock = &myRepo->myRepoLock[offset % CS_REPO_REC_LOCK_COUNT];
-	lock_(lock);
+	mylock = &myRepo->myRepoLock[offset % CS_REPO_REC_LOCK_COUNT];
+	lock_(mylock);
 	/* Read the header: */
 	ASSERT(head_size <= MS_OT_BUFFER_SIZE);
 	read_size = read(otab->myOTBuffer, offset, head_size, 0);
@@ -996,7 +996,7 @@ void MSRepoFile::commitBlob(MSOpenTable *otab, uint64_t offset, uint16_t head_si
 	}
 	
 	exit:
-	unlock_(lock);
+	unlock_(mylock);
 	exit_();
 }
 
@@ -1051,7 +1051,7 @@ void MSRepoFile::realFreeBlob(MSOpenTable *otab, char *buffer, uint32_t auth_cod
 /* This function will free the BLOB reference, if the record is invalid. */
 void MSRepoFile::freeTableReference(MSOpenTable *otab, uint64_t offset, uint16_t head_size, uint32_t tab_id, uint64_t blob_id, uint32_t auth_code)
 {
-	CSMutex				*lock;
+	CSMutex				*mylock;
 	MSRepoPointersRec	ptr;
 	uint32_t				blob_ref_count = 0;
 	uint32_t				table_ref_count = 0;
@@ -1063,8 +1063,8 @@ void MSRepoFile::freeTableReference(MSOpenTable *otab, uint64_t offset, uint16_t
 
 	enter_();
 	/* Lock the BLOB: */
-	lock = &myRepo->myRepoLock[offset % CS_REPO_REC_LOCK_COUNT];
-	lock_(lock);
+	mylock = &myRepo->myRepoLock[offset % CS_REPO_REC_LOCK_COUNT];
+	lock_(mylock);
 	/* Read the header: */
 	ASSERT(head_size <= MS_OT_BUFFER_SIZE);
 	read_size = read(otab->myOTBuffer, offset, head_size, 0);
@@ -1155,7 +1155,7 @@ void MSRepoFile::freeTableReference(MSOpenTable *otab, uint64_t offset, uint16_t
 		 */
 		write(otab->myOTBuffer + MS_BLOB_STAT_OFFS, offset + MS_BLOB_STAT_OFFS, head_size - MS_BLOB_STAT_OFFS);
 
-	unlock_(lock);
+	unlock_(mylock);
 
 	if (!table_ref_count || !tab_ref)
 		/* Free the table reference, if there are no more
@@ -1168,13 +1168,13 @@ void MSRepoFile::freeTableReference(MSOpenTable *otab, uint64_t offset, uint16_t
 	exit_();
 
 	exit:
-	unlock_(lock);
+	unlock_(mylock);
 	exit_();
 }
 
 void MSRepoFile::checkBlob(CSStringBuffer *buffer, uint64_t offset, uint32_t auth_code, uint32_t temp_log_id, uint32_t temp_log_offset)
 {
-	CSMutex				*lock;
+	CSMutex				*mylock;
 	MSBlobHeadRec		blob;
 	MSRepoPointersRec	ptr;
 	uint32_t				blob_ref_count = 0;
@@ -1189,8 +1189,8 @@ void MSRepoFile::checkBlob(CSStringBuffer *buffer, uint64_t offset, uint32_t aut
 	enter_();
 	
 	/* Lock the BLOB: */
-	lock = &myRepo->myRepoLock[offset % CS_REPO_REC_LOCK_COUNT];
-	lock_(lock);
+	mylock = &myRepo->myRepoLock[offset % CS_REPO_REC_LOCK_COUNT];
+	lock_(mylock);
 
 	/* Read the head of the header: */
 	if (read(&blob, offset, sizeof(MSBlobHeadRec), 0) < sizeof(MSBlobHeadRec)) 
@@ -1276,7 +1276,7 @@ void MSRepoFile::checkBlob(CSStringBuffer *buffer, uint64_t offset, uint32_t aut
 	}
 	
 	exit:
-	unlock_(lock);
+	unlock_(mylock);
 	exit_();
 }
 
@@ -1399,7 +1399,7 @@ uint64_t MSRepository::receiveBlob(MSOpenTable *otab, uint16_t head_size, uint64
 			offset += (uint64_t) tfer;
 			blob_size -= (uint64_t) tfer;
 		}
-		if (checksum) md5.md5_digest(checksum);
+		if (checksum) md5.md5_get_digest(checksum);
 		release_(stream);
 	} else {
 		// Write 1 byte to the end to reserver the space.

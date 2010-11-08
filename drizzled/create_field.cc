@@ -44,6 +44,7 @@
 #include "drizzled/field/datetime.h"
 #include "drizzled/field/varstring.h"
 #include "drizzled/temporal.h"
+#include "drizzled/item/string.h"
 
 #include <algorithm>
 

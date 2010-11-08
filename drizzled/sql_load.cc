@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 
 /* Copy data from a textfile to table */
@@ -75,7 +75,7 @@ public:
   */
   void end_io_cache()
   {
-    internal::end_io_cache(&cache);
+    cache.end_io_cache();
     need_end_io_cache = 0;
   }
 
@@ -124,25 +124,25 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
                 List<Item> &set_values,
                 enum enum_duplicates handle_duplicates, bool ignore)
 {
-  char name[FN_REFLEN];
   int file;
   Table *table= NULL;
   int error;
   String *field_term=ex->field_term,*escaped=ex->escaped;
   String *enclosed=ex->enclosed;
   bool is_fifo=0;
-  char *db= table_list->db;			// This is never null
-  assert(db);
+
+  assert(table_list->getSchemaName()); // This should never be null
+
   /*
     If path for cursor is not defined, we will use the current database.
     If this is not set, we will use the directory where the table to be
     loaded is located
   */
-  const char *tdb= session->db.empty() ? db  : session->db.c_str();		// Result is never null
+  const char *tdb= session->db.empty() ? table_list->getSchemaName()  : session->db.c_str();		// Result is never null
   assert(tdb);
   uint32_t skip_lines= ex->skip_lines;
   bool transactional_table;
-  Session::killed_state killed_status= Session::NOT_KILLED;
+  Session::killed_state_t killed_status= Session::NOT_KILLED;
 
   /* Escape and enclosed character may be a utf8 4-byte character */
   if (escaped->length() > 4 || enclosed->length() > 4)
@@ -170,7 +170,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
   */
   if (unique_table(table_list, table_list->next_global))
   {
-    my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->table_name);
+    my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->getTableName());
     return(true);
   }
 
@@ -254,61 +254,62 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
     return(true);
   }
 
+  fs::path to_file(ex->file_name);
+  fs::path target_path(fs::system_complete(getDataHomeCatalog()));
+  if (not to_file.has_root_directory())
   {
-#ifdef DONT_ALLOW_FULL_LOAD_DATA_PATHS
-    ex->file_name+=dirname_length(ex->file_name);
-#endif
-    if (!internal::dirname_length(ex->file_name))
+    int count_elements= 0;
+    for (fs::path::iterator iter= to_file.begin();
+         iter != to_file.end();
+         ++iter, ++count_elements)
+    { }
+
+    if (count_elements == 1)
     {
-      strcpy(name, getDataHomeCatalog().c_str());
-      strncat(name, "/", 1);
-      strncat(name, tdb, FN_REFLEN-getDataHomeCatalog().size());
-      (void) internal::fn_format(name, ex->file_name, name, "",
-		       MY_RELATIVE_PATH | MY_UNPACK_FILENAME);
+      target_path /= tdb;
     }
-    else
+    target_path /= to_file;
+  }
+  else
+  {
+    target_path= to_file;
+  }
+
+  if (not secure_file_priv.string().empty())
+  {
+    if (target_path.file_string().substr(0, secure_file_priv.file_string().size()) != secure_file_priv.file_string())
     {
-      (void) internal::fn_format(name, ex->file_name, getDataHomeCatalog().c_str(), "",
-		       MY_RELATIVE_PATH | MY_UNPACK_FILENAME);
-
-      if (opt_secure_file_priv)
-      {
-        fs::path secure_file_path(fs::system_complete(fs::path(opt_secure_file_priv)));
-        fs::path target_path(fs::system_complete(fs::path(name)));
-        if (target_path.file_string().substr(0, secure_file_path.file_string().size()) != secure_file_path.file_string())
-        {
-          /* Read only allowed from within dir specified by secure_file_priv */
-          my_error(ER_OPTION_PREVENTS_STATEMENT, MYF(0), "--secure-file-priv");
-          return(true);
-        }
-      }
-
-      struct stat stat_info;
-      if (stat(name,&stat_info))
-      {
-        my_error(ER_FILE_NOT_FOUND, MYF(0), name, errno);
-	return(true);
-      }
-
-      // if we are not in slave thread, the cursor must be:
-      if (!((stat_info.st_mode & S_IROTH) == S_IROTH &&  // readable by others
-            (stat_info.st_mode & S_IFLNK) != S_IFLNK && // and not a symlink
-            ((stat_info.st_mode & S_IFREG) == S_IFREG ||
-             (stat_info.st_mode & S_IFIFO) == S_IFIFO)))
-      {
-	my_error(ER_TEXTFILE_NOT_READABLE, MYF(0), name);
-	return(true);
-      }
-      if ((stat_info.st_mode & S_IFIFO) == S_IFIFO)
-	is_fifo = 1;
-    }
-    if ((file=internal::my_open(name,O_RDONLY,MYF(MY_WME))) < 0)
-    {
-      my_error(ER_CANT_OPEN_FILE, MYF(0), name, errno);
+      /* Read only allowed from within dir specified by secure_file_priv */
+      my_error(ER_OPTION_PREVENTS_STATEMENT, MYF(0), "--secure-file-priv");
       return(true);
     }
   }
 
+  struct stat stat_info;
+  if (stat(target_path.file_string().c_str(), &stat_info))
+  {
+    my_error(ER_FILE_NOT_FOUND, MYF(0), target_path.file_string().c_str(), errno);
+    return(true);
+  }
+
+  // if we are not in slave thread, the cursor must be:
+  if (!((stat_info.st_mode & S_IROTH) == S_IROTH &&  // readable by others
+        (stat_info.st_mode & S_IFLNK) != S_IFLNK && // and not a symlink
+        ((stat_info.st_mode & S_IFREG) == S_IFREG ||
+         (stat_info.st_mode & S_IFIFO) == S_IFIFO)))
+  {
+    my_error(ER_TEXTFILE_NOT_READABLE, MYF(0), target_path.file_string().c_str());
+    return(true);
+  }
+  if ((stat_info.st_mode & S_IFIFO) == S_IFIFO)
+    is_fifo = 1;
+
+
+  if ((file=internal::my_open(target_path.file_string().c_str(), O_RDONLY,MYF(MY_WME))) < 0)
+  {
+    my_error(ER_CANT_OPEN_FILE, MYF(0), target_path.file_string().c_str(), errno);
+    return(true);
+  }
   CopyInfo info;
   memset(&info, 0, sizeof(info));
   info.ignore= ignore;
@@ -389,20 +390,22 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
      simulated killing in the middle of per-row loop
      must be effective for binlogging
   */
-  killed_status= (error == 0)? Session::NOT_KILLED : session->killed;
+  killed_status= (error == 0)? Session::NOT_KILLED : session->getKilled();
   if (error)
   {
     error= -1;				// Error on read
     goto err;
   }
-  snprintf(name, sizeof(name), ER(ER_LOAD_INFO), info.records, info.deleted,
+
+  char msg[FN_REFLEN];
+  snprintf(msg, sizeof(msg), ER(ER_LOAD_INFO), info.records, info.deleted,
 	   (info.records - info.copied), session->cuted_fields);
 
   if (session->transaction.stmt.hasModifiedNonTransData())
     session->transaction.all.markModifiedNonTransData();
 
   /* ok to client sent only after binlog write and engine commit */
-  session->my_ok(info.copied + info.deleted, 0, 0L, name);
+  session->my_ok(info.copied + info.deleted, 0, 0L, msg);
 err:
   assert(transactional_table || !(info.copied || info.deleted) ||
               session->transaction.stmt.hasModifiedNonTransData());
@@ -433,7 +436,7 @@ read_fixed_length(Session *session, CopyInfo &info, TableList *table_list,
 
   while (!read_info.read_fixed_length())
   {
-    if (session->killed)
+    if (session->getKilled())
     {
       session->send_kill_message();
       return(1);
@@ -451,7 +454,7 @@ read_fixed_length(Session *session, CopyInfo &info, TableList *table_list,
     }
     it.rewind();
     unsigned char *pos=read_info.row_start;
-#ifdef HAVE_purify
+#ifdef HAVE_VALGRIND
     read_info.row_end[0]=0;
 #endif
 
@@ -506,7 +509,7 @@ read_fixed_length(Session *session, CopyInfo &info, TableList *table_list,
                           ER(ER_WARN_TOO_MANY_RECORDS), session->row_count);
     }
 
-    if (session->killed ||
+    if (session->getKilled() ||
         fill_record(session, set_fields, set_values,
                     ignore_check_option_errors))
       return(1);
@@ -555,7 +558,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
 
   for (;;it.rewind())
   {
-    if (session->killed)
+    if (session->getKilled())
     {
       session->send_kill_message();
       return(1);
@@ -688,7 +691,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
       }
     }
 
-    if (session->killed ||
+    if (session->getKilled() ||
         fill_record(session, set_fields, set_values,
                     ignore_check_option_errors))
       return(1);
@@ -709,7 +712,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                           ER_WARN_TOO_MANY_RECORDS, ER(ER_WARN_TOO_MANY_RECORDS),
                           session->row_count);
-      if (session->killed)
+      if (session->getKilled())
         return(1);
     }
     session->row_count++;
@@ -783,8 +786,8 @@ READ_INFO::READ_INFO(int file_par, size_t tot_length,
 
 
   /* Set of a stack for unget if long terminators */
-  uint32_t length= max(field_term_length,line_term_length)+1;
-  set_if_bigger(length,line_start.length());
+  size_t length= max(field_term_length,line_term_length)+1;
+  set_if_bigger(length, line_start.length());
   stack= stack_pos= (int*) memory::sql_alloc(sizeof(int)*length);
 
   if (!(buffer=(unsigned char*) calloc(1, buff_length+1)))
@@ -792,10 +795,10 @@ READ_INFO::READ_INFO(int file_par, size_t tot_length,
   else
   {
     end_of_buff=buffer+buff_length;
-    if (init_io_cache(&cache,(false) ? -1 : cursor, 0,
-		      (false) ? internal::READ_NET :
-		      (is_fifo ? internal::READ_FIFO : internal::READ_CACHE),0L,1,
-		      MYF(MY_WME)))
+    if (cache.init_io_cache((false) ? -1 : cursor, 0,
+                            (false) ? internal::READ_NET :
+                            (is_fifo ? internal::READ_FIFO : internal::READ_CACHE),0L,1,
+                            MYF(MY_WME)))
     {
       free((unsigned char*) buffer);
       error=1;
@@ -818,7 +821,7 @@ READ_INFO::~READ_INFO()
   if (!error)
   {
     if (need_end_io_cache)
-      internal::end_io_cache(&cache);
+      cache.end_io_cache();
     free(buffer);
     error=1;
   }

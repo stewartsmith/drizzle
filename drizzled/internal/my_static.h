@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /*
   Static variables for mysys library. All definied here for easy making of
@@ -41,14 +41,24 @@ namespace internal
   boundary.
 */
 
-struct st_irem
+class irem
 {
-  struct st_irem *next;		/* Linked list of structures	   */
-  struct st_irem *prev;		/* Other link			   */
+public:
+  irem *next;		/* Linked list of structures	   */
+  irem *prev;		/* Other link			   */
   char *filename;		/* File in which memory was new'ed */
   uint32_t linenum;		/* Line number in above file	   */
   uint32_t datasize;		/* Size requested		   */
   uint32_t SpecialValue;		/* Underrun marker value	   */
+
+  irem():
+    next(NULL),
+	prev(NULL),
+	filename(0),
+	linenum(0),
+	datasize(0),
+	SpecialValue(0)
+  {}
 };
 
 
@@ -58,7 +68,7 @@ extern volatile int _my_signals;
 
 extern unsigned char	*sf_min_adress,*sf_max_adress;
 extern uint	sf_malloc_count;
-extern struct st_irem *sf_malloc_root;
+extern class irem *sf_malloc_root;
 
 extern uint64_t query_performance_frequency, query_performance_offset;
 

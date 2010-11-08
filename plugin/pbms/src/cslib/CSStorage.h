@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Original author: Paul McCullagh (H&G2JCtL)
  * Continued development: Barry Leslie
@@ -51,7 +51,7 @@ public:
 	/* Value is returned NOT referenced. */
 	CSObject *find(CSObject *key);
 	
-	void remove(CSObject *key);
+	bool remove(CSObject *key);
 
 private:
 	uint32_t iSize;
@@ -100,7 +100,7 @@ public:
 
 class CSLinkedItem : public CSRefObject {
 public:
-	CSLinkedItem(): CSRefObject() { }
+	CSLinkedItem(): CSRefObject(), iNextLink(NULL), iPrevLink(NULL) { }
 	virtual ~CSLinkedItem() { }
 
 	virtual CSObject *getNextLink() { return iNextLink; }
@@ -129,6 +129,7 @@ public:
 
 	/* Value must be given referenced. */
 	void addFront(CSObject *item);
+	void addBack(CSObject *item);
 
 	bool remove(CSObject *item);
 
@@ -147,6 +148,11 @@ private:
 	uint32_t iSize;
 	CSObject *iListFront;
 	CSObject *iListBack;
+};
+
+class CSSyncLinkedList : public CSLinkedList, public CSSync {
+public:
+	CSSyncLinkedList(): CSLinkedList(), CSSync() { }
 };
 
 class CSVector : public CSObject {
@@ -216,19 +222,19 @@ public:
 
 	void clear();
 
-	CSObject *take(uint32_t idx);
+	CSObject *take(uint32_t sparse_idx);
 
-	void remove(uint32_t idx);
+	void remove(uint32_t sparse_idx);
 
 	void removeFirst();
 
 	CSObject *itemAt(uint32_t idx);
 
-	CSObject *get(uint32_t idx);
+	CSObject *get(uint32_t sparse_idx);
 	
-	uint32_t getIndex(uint32_t idx);
+	uint32_t getIndex(uint32_t sparse_idx);
 	
-	void set(uint32_t idx, CSObject *);
+	void set(uint32_t sparse_idx, CSObject *);
 
 	uint32_t size() { return iUsage; }
 

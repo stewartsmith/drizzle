@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /* For use with thr_locks */
 
@@ -19,6 +19,7 @@
 #define DRIZZLED_THR_LOCK_H
 
 #include <boost/thread/mutex.hpp>
+#include <boost/thread/shared_mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 #include <pthread.h>
 
@@ -110,7 +111,7 @@ struct THR_LOCK_DATA {
   THR_LOCK_OWNER *owner;
   struct THR_LOCK_DATA *next,**prev;
   struct THR_LOCK *lock;
-  boost::condition_variable *cond;
+  boost::condition_variable_any *cond;
   enum thr_lock_type type;
   void *status_param;			/* Param to status functions */
 
@@ -186,11 +187,9 @@ public:
 
 
 #define thr_lock_owner_init(owner, info_arg) (owner)->info= (info_arg)
-void thr_lock_info_init(THR_LOCK_INFO *info);
 void thr_lock_init(THR_LOCK *lock);
 enum enum_thr_lock_result thr_multi_lock(THR_LOCK_DATA **data,
                                          uint32_t count, THR_LOCK_OWNER *owner);
-void thr_multi_unlock(THR_LOCK_DATA **data,uint32_t count);
 
 } /* namespace drizzled */
 

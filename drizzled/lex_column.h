@@ -29,7 +29,7 @@ class Lex_Column : public memory::SqlAlloc
 public:
   String column;
   uint32_t rights;
-  Lex_Column (const String& x,const  uint& y ): column (x),rights (y) {}
+  Lex_Column (const String& x,const  uint32_t& y ): column (x),rights (y) {}
 };
 
 }

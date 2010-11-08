@@ -12,7 +12,7 @@
 
   You should have received a copy of the GNU General Public License
   along with this program; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 
 #include "config.h"
@@ -196,7 +196,7 @@ int ArchiveEngine::doGetTableDefinition(Session&,
 
 
 ha_archive::ha_archive(drizzled::plugin::StorageEngine &engine_arg,
-                       TableShare &table_arg)
+                       Table &table_arg)
   :Cursor(engine_arg, table_arg), delayed_insert(0), bulk_insert(0)
 {
   /* Set our original buffer from pre-allocated memory */
@@ -294,7 +294,7 @@ bool ArchiveShare::prime(uint64_t *auto_increment)
 */
 ArchiveShare *ha_archive::get_share(const char *table_name, int *rc)
 {
-  ArchiveEngine *a_engine= static_cast<ArchiveEngine *>(engine);
+  ArchiveEngine *a_engine= static_cast<ArchiveEngine *>(getEngine());
 
   pthread_mutex_lock(&a_engine->mutex());
 
@@ -339,7 +339,7 @@ ArchiveShare *ha_archive::get_share(const char *table_name, int *rc)
 */
 int ha_archive::free_share()
 {
-  ArchiveEngine *a_engine= static_cast<ArchiveEngine *>(engine);
+  ArchiveEngine *a_engine= static_cast<ArchiveEngine *>(getEngine());
 
   pthread_mutex_lock(&a_engine->mutex());
   if (!--share->use_count)
@@ -385,15 +385,12 @@ int ha_archive::init_archive_reader()
   {
     az_method method;
 
-    switch (archive_aio_state())
+    if (archive_aio_state())
     {
-    case false:
-      method= AZ_METHOD_BLOCK;
-      break;
-    case true:
       method= AZ_METHOD_AIO;
-      break;
-    default:
+    }
+    else
+    {
       method= AZ_METHOD_BLOCK;
     }
     if (!(azopen(&archive, share->data_file_name.c_str(), O_RDONLY,
@@ -438,7 +435,7 @@ int ha_archive::doOpen(const TableIdentifier &identifier, int , uint32_t )
 
   assert(share);
 
-  record_buffer.resize(table->getShare()->getRecordLength() + ARCHIVE_ROW_HEADER_SIZE);
+  record_buffer.resize(getTable()->getShare()->getRecordLength() + ARCHIVE_ROW_HEADER_SIZE);
 
   lock.init(&share->_lock);
 
@@ -624,15 +621,15 @@ int ha_archive::real_write_row(unsigned char *buf, azio_stream *writer)
 
 uint32_t ha_archive::max_row_length(const unsigned char *)
 {
-  uint32_t length= (uint32_t)(table->getRecordLength() + table->sizeFields()*2);
+  uint32_t length= (uint32_t)(getTable()->getRecordLength() + getTable()->sizeFields()*2);
   length+= ARCHIVE_ROW_HEADER_SIZE;
 
   uint32_t *ptr, *end;
-  for (ptr= table->getBlobField(), end=ptr + table->sizeBlobFields();
+  for (ptr= getTable()->getBlobField(), end=ptr + getTable()->sizeBlobFields();
        ptr != end ;
        ptr++)
   {
-      length += 2 + ((Field_blob*)table->getField(*ptr))->get_length();
+      length += 2 + ((Field_blob*)getTable()->getField(*ptr))->get_length();
   }
 
   return length;
@@ -647,10 +644,10 @@ unsigned int ha_archive::pack_row(unsigned char *record)
     return(HA_ERR_OUT_OF_MEM);
 
   /* Copy null bits */
-  memcpy(&record_buffer[0], record, table->getShare()->null_bytes);
-  ptr= &record_buffer[0] + table->getShare()->null_bytes;
+  memcpy(&record_buffer[0], record, getTable()->getShare()->null_bytes);
+  ptr= &record_buffer[0] + getTable()->getShare()->null_bytes;
 
-  for (Field **field=table->getFields() ; *field ; field++)
+  for (Field **field=getTable()->getFields() ; *field ; field++)
   {
     if (!((*field)->is_null()))
       ptr= (*field)->pack(ptr, record + (*field)->offset(record));
@@ -674,7 +671,7 @@ int ha_archive::doInsertRecord(unsigned char *buf)
   int rc;
   unsigned char *read_buf= NULL;
   uint64_t temp_auto;
-  unsigned char *record=  table->getInsertRecord();
+  unsigned char *record=  getTable()->getInsertRecord();
 
   if (share->crashed)
     return(HA_ERR_CRASHED_ON_USAGE);
@@ -686,17 +683,17 @@ int ha_archive::doInsertRecord(unsigned char *buf)
       return(HA_ERR_CRASHED_ON_USAGE);
 
 
-  if (table->next_number_field && record == table->getInsertRecord())
+  if (getTable()->next_number_field && record == getTable()->getInsertRecord())
   {
     update_auto_increment();
-    temp_auto= table->next_number_field->val_int();
+    temp_auto= getTable()->next_number_field->val_int();
 
     /*
       We don't support decremening auto_increment. They make the performance
       just cry.
     */
     if (temp_auto <= share->archive_write.auto_increment &&
-        table->getShare()->getKeyInfo(0).flags & HA_NOSAME)
+        getTable()->getShare()->getKeyInfo(0).flags & HA_NOSAME)
     {
       rc= HA_ERR_FOUND_DUPP_KEY;
       goto error;
@@ -748,7 +745,7 @@ int ha_archive::index_read(unsigned char *buf, const unsigned char *key,
 {
   int rc;
   bool found= 0;
-  current_k_offset= table->getShare()->getKeyInfo(0).key_part->offset;
+  current_k_offset= getTable()->getShare()->getKeyInfo(0).key_part->offset;
   current_key= key;
   current_key_len= key_len;
 
@@ -853,13 +850,13 @@ int ha_archive::unpack_row(azio_stream *file_to_read, unsigned char *record)
   }
 
   /* Copy null bits */
-  memcpy(record, ptr, table->getNullBytes());
-  ptr+= table->getNullBytes();
-  for (Field **field= table->getFields() ; *field ; field++)
+  memcpy(record, ptr, getTable()->getNullBytes());
+  ptr+= getTable()->getNullBytes();
+  for (Field **field= getTable()->getFields() ; *field ; field++)
   {
     if (!((*field)->is_null()))
     {
-      ptr= (*field)->unpack(record + (*field)->offset(table->getInsertRecord()), ptr);
+      ptr= (*field)->unpack(record + (*field)->offset(getTable()->getInsertRecord()), ptr);
     }
   }
   return(0);
@@ -894,7 +891,7 @@ int ha_archive::rnd_next(unsigned char *buf)
   current_position= aztell(&archive);
   rc= get_row(&archive, buf);
 
-  table->status=rc ? STATUS_NOT_FOUND: 0;
+  getTable()->status=rc ? STATUS_NOT_FOUND: 0;
 
   return(rc);
 }
@@ -1014,26 +1011,26 @@ int ha_archive::optimize()
 
       for (uint64_t x= 0; x < rows_restored ; x++)
       {
-        rc= get_row(&archive, table->getInsertRecord());
+        rc= get_row(&archive, getTable()->getInsertRecord());
 
         if (rc != 0)
           break;
 
-        real_write_row(table->getInsertRecord(), &writer);
+        real_write_row(getTable()->getInsertRecord(), &writer);
         /*
           Long term it should be possible to optimize this so that
           it is not called on each row.
         */
-        if (table->found_next_number_field)
+        if (getTable()->found_next_number_field)
         {
-          Field *field= table->found_next_number_field;
+          Field *field= getTable()->found_next_number_field;
 
           /* Since we will need to use field to translate, we need to flip its read bit */
           field->setReadSet();
 
           uint64_t auto_value=
-            (uint64_t) field->val_int(table->getInsertRecord() +
-                                       field->offset(table->getInsertRecord()));
+            (uint64_t) field->val_int(getTable()->getInsertRecord() +
+                                       field->offset(getTable()->getInsertRecord()));
           if (share->archive_write.auto_increment < auto_value)
             stats.auto_increment_value=
               (share->archive_write.auto_increment= auto_value) + 1;
@@ -1147,7 +1144,7 @@ int ha_archive::info(uint32_t flag)
 
     stat(share->data_file_name.c_str(), &file_stat);
 
-    stats.mean_rec_length= table->getRecordLength()+ buffer.alloced_length();
+    stats.mean_rec_length= getTable()->getRecordLength()+ buffer.alloced_length();
     stats.data_file_length= file_stat.st_size;
     stats.create_time= file_stat.st_ctime;
     stats.update_time= file_stat.st_mtime;
@@ -1229,7 +1226,7 @@ int ha_archive::check(Session* session)
   read_data_header(&archive);
   for (uint64_t x= 0; x < share->archive_write.rows; x++)
   {
-    rc= get_row(&archive, table->getInsertRecord());
+    rc= get_row(&archive, getTable()->getInsertRecord());
 
     if (rc != 0)
       break;

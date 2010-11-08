@@ -1,0 +1,67 @@
+CREATE TABLE `prim_key` (
+  `id` INT NOT NULL,
+  `val` VARCHAR(20) COLLATE utf8_general_ci DEFAULT NULL,
+  PRIMARY KEY (`id`)
+);
+
+CREATE TABLE `fore_key0` (
+  `id` INT NOT NULL,
+  `id_ref0` INT DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `id_ref0` (`id_ref0`),
+  CONSTRAINT `fore_key0_ibfk_1` FOREIGN KEY (`id_ref0`) REFERENCES
+  `prim_key` (`id`)
+);
+
+CREATE TABLE `fore_key1` (
+  `id` INT NOT NULL,
+  `id_ref1` INT DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `id_ref1` (`id_ref1`),
+  CONSTRAINT `fore_key1_ibfk_1` FOREIGN KEY (`id_ref1`) REFERENCES
+  `prim_key` (`id`) ON UPDATE CASCADE
+);
+
+--sorted_result
+SELECT CONSTRAINT_NAME,TABLE_NAME,COLUMN_NAME,ORDINAL_POSITION FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE;
+
+DROP TABLE fore_key1;
+DROP TABLE fore_key0;
+DROP TABLE prim_key;
+
+# Taken from MySQL example
+CREATE TABLE t1
+(
+  s1 INT,
+  s2 INT,
+  s3 INT,
+  PRIMARY KEY(s3)
+);
+
+CREATE TABLE t3
+(
+  s1 INT,
+  s2 INT,
+  s3 INT,
+  KEY(s1),
+  CONSTRAINT CO FOREIGN KEY (s2)
+  REFERENCES t1(s3)
+);
+
+--sorted_result
+SELECT CONSTRAINT_NAME,TABLE_NAME,COLUMN_NAME,ORDINAL_POSITION FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE;
+
+DROP TABLE t3;
+DROP TABLE t1;
+
+# Taken from SQL Server example
+CREATE TABLE t1 (c1 INT NOT NULL, c2 INT NOT NULL, c3 CHAR(5), c4 INT, c5 INT, constraint pk_t1 PRIMARY KEY (c5,c4));
+
+CREATE TABLE T2 (tc1 INT NOT NULL, c1 INT NOT NULL, c2 INT NOT NULL, c5 CHAR(5), constraint fk_t2 FOREIGN KEY (c1,c2) REFERENCES t1 (c5,c4));
+
+--sorted_result
+SELECT CONSTRAINT_NAME, TABLE_NAME, COLUMN_NAME, ORDINAL_POSITION FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE TABLE_NAME IN ('t1', 't2');
+
+DROP TABLE t2;
+DROP TABLE t1;
+  

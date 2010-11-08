@@ -17,6 +17,11 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
+drizzled/sql_yacc.cc: drizzled/sql_yacc.yy 
+	$(AM_V_YACC)$(am__skipyacc) $(YACC) $(YLFLAGS) $(AM_YFLAGS) -o $@ $<
+	mv drizzled/sql_yacc.hh drizzled/sql_yacc.h
+
+
 
 DTRACEFILES= \
 	     drizzled/cursor.o \
@@ -51,12 +56,15 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/check_stack_overrun.h \
 			      drizzled/common.h \
 			      drizzled/comp_creator.h \
+			      drizzled/constrained_value.h \
 			      drizzled/create_field.h \
 			      drizzled/current_session.h \
 			      drizzled/cursor.h \
 			      drizzled/data_home.h \
 			      drizzled/db.h \
 			      drizzled/decimal.h \
+			      drizzled/definition/cache.h \
+			      drizzled/definition/table.h \
 			      drizzled/definitions.h \
 			      drizzled/diagnostics_area.h \
 			      drizzled/discrete_interval.h \
@@ -85,6 +93,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/field/varstring.h \
 			      drizzled/field_iterator.h \
 			      drizzled/file_exchange.h \
+			      drizzled/filesort.h \
 			      drizzled/filesort_info.h \
 			      drizzled/foreign_key.h \
 			      drizzled/function_container.h \
@@ -173,11 +182,16 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/function_hash.h \
 			      drizzled/generator.h \
 			      drizzled/generator/all_fields.h \
+			      drizzled/generator/all_foreign_keys.h \
+			      drizzled/generator/all_indexes.h \
 			      drizzled/generator/all_tables.h \
 			      drizzled/generator/functions.h \
+			      drizzled/generator/event_observers.h \
 			      drizzled/generator/schema.h \
+			      drizzled/generator/session.h \
 			      drizzled/generator/table.h \
 			      drizzled/gettext.h \
+			      drizzled/global_buffer.h \
 			      drizzled/global_charset_info.h \
 			      drizzled/ha_statistics.h \
 			      drizzled/handler_structs.h \
@@ -241,10 +255,12 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/lex_string.h \
 			      drizzled/lex_symbol.h \
 			      drizzled/lock.h \
+			      drizzled/locking/global.h \
 			      drizzled/lookup_symbol.h \
 			      drizzled/memory/multi_malloc.h \
 			      drizzled/memory/root.h \
 			      drizzled/memory/sql_alloc.h \
+			      drizzled/message.h \
 			      drizzled/module/context.h \
 			      drizzled/module/library.h \
 			      drizzled/module/manifest.h \
@@ -316,6 +332,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/plugin/xa_resource_manager.h \
 			      drizzled/plugin/xa_storage_engine.h \
 			      drizzled/probes.h \
+			      drizzled/program_options/config_file.h \
 			      drizzled/pthread_globals.h \
 			      drizzled/qsort_cmp.h \
 			      drizzled/query_id.h \
@@ -341,9 +358,9 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/session_list.h \
 			      drizzled/set_var.h \
 			      drizzled/show.h \
+			      drizzled/show_type.h \
 			      drizzled/signal_handler.h \
 			      drizzled/sql_base.h \
-			      drizzled/sql_bitmap.h \
 			      drizzled/sql_error.h \
 			      drizzled/sql_lex.h \
 			      drizzled/sql_list.h \
@@ -371,6 +388,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/statement/drop_schema.h \
 			      drizzled/statement/drop_table.h \
 			      drizzled/statement/empty_query.h \
+			      drizzled/statement/execute.h \
 			      drizzled/statement/flush.h \
 			      drizzled/statement/insert.h \
 			      drizzled/statement/insert_select.h \
@@ -385,8 +403,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/statement/savepoint.h \
 			      drizzled/statement/select.h \
 			      drizzled/statement/set_option.h \
-			      drizzled/statement/show_create.h \
-			      drizzled/statement/show_create_schema.h \
+			      drizzled/statement/show.h \
 			      drizzled/statement/show_errors.h \
 			      drizzled/statement/show_warnings.h \
 			      drizzled/statement/start_transaction.h \
@@ -398,16 +415,20 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/strfunc.h \
 			      drizzled/structs.h \
 			      drizzled/symbol_hash.h \
+			      drizzled/sys_var.h \
 			      drizzled/table.h \
+			      drizzled/table/cache.h \
+			      drizzled/table/concurrent.h \
+			      drizzled/table/instance.h \
+			      drizzled/table/placeholder.h \
+			      drizzled/table/shell.h \
+			      drizzled/table/temporary.h \
+			      drizzled/table/unused.h \
 			      drizzled/table_function_container.h \
 			      drizzled/table_ident.h \
 			      drizzled/table_list.h \
- 			      drizzled/statistics_variables.h \
 			      drizzled/table_proto.h \
 			      drizzled/table_reference.h \
-			      drizzled/table_placeholder.h \
-			      drizzled/table_share.h \
-			      drizzled/table_share_instance.h \
 			      drizzled/temporal.h \
 			      drizzled/temporal_format.h \
 			      drizzled/temporal_interval.h \
@@ -422,7 +443,11 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/tztime.h \
 			      drizzled/unique.h \
 			      drizzled/unireg.h \
+ 			      drizzled/statistics_variables.h \
 			      drizzled/user_var_entry.h \
+			      drizzled/utf8/checked.h \
+			      drizzled/utf8/core.h \
+			      drizzled/utf8/unchecked.h \
 			      drizzled/utf8/utf8.h \
 			      drizzled/var.h \
 			      drizzled/version.h \
@@ -464,6 +489,8 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/current_session.cc \
 				 drizzled/cursor.cc \
 				 drizzled/decimal.cc \
+				 drizzled/definition/cache.cc \
+				 drizzled/definition/table.cc \
 				 drizzled/diagnostics_area.cc \
 				 drizzled/drizzle_time.cc \
 				 drizzled/drizzled.cc \
@@ -571,7 +598,10 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/function/units.cc \
 				 drizzled/function/user_var_as_out_param.cc \
 				 drizzled/generator/all_fields.cc \
+				 drizzled/generator/all_foreign_keys.cc \
+				 drizzled/generator/all_indexes.cc \
 				 drizzled/generator/all_tables.cc \
+				 drizzled/generator/event_observers.cc \
 				 drizzled/generator/functions.cc \
 				 drizzled/generator/schema.cc \
 				 drizzled/generator/table.cc \
@@ -620,11 +650,13 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/join_table.cc \
 				 drizzled/key.cc \
 				 drizzled/key_map.cc \
-				 drizzled/lock.cc \
+				 drizzled/locking/global.cc \
 				 drizzled/lookup_symbol.cc \
+				 drizzled/message.cc \
 				 drizzled/module/context.cc \
 				 drizzled/module/library.cc \
 				 drizzled/module/loader.cc \
+				 drizzled/module/module.cc \
 				 drizzled/module/option_context.cc \
 				 drizzled/module/option_map.cc \
 				 drizzled/module/registry.cc \
@@ -684,7 +716,6 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/show.cc \
 				 drizzled/signal_handler.cc \
 				 drizzled/sql_base.cc \
-				 drizzled/sql_bitmap.cc \
 				 drizzled/sql_delete.cc \
 				 drizzled/sql_derived.cc \
 				 drizzled/sql_error.cc \
@@ -715,6 +746,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/statement/drop_schema.cc \
 				 drizzled/statement/drop_table.cc \
 				 drizzled/statement/empty_query.cc \
+				 drizzled/statement/execute.cc \
 				 drizzled/statement/flush.cc \
 				 drizzled/statement/insert.cc \
 				 drizzled/statement/insert_select.cc \
@@ -729,8 +761,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/statement/savepoint.cc \
 				 drizzled/statement/select.cc \
 				 drizzled/statement/set_option.cc \
-				 drizzled/statement/show_create.cc \
-				 drizzled/statement/show_create_schema.cc \
+				 drizzled/statement/show.cc \
 				 drizzled/statement/show_errors.cc \
 				 drizzled/statement/show_warnings.cc \
 				 drizzled/statement/start_transaction.cc \
@@ -739,10 +770,15 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/statement/update.cc \
 				 drizzled/status_helper.cc \
 				 drizzled/strfunc.cc \
+				 drizzled/sys_var.cc \
 				 drizzled/table.cc \
+				 drizzled/table/cache.cc \
+				 drizzled/table/concurrent.cc \
+				 drizzled/table/instance.cc \
+				 drizzled/table/temporary.cc \
+				 drizzled/table/unused.cc \
 				 drizzled/table_function_container.cc \
 				 drizzled/table_list.cc \
-				 drizzled/table_share.cc \
 				 drizzled/thr_lock.cc \
 				 drizzled/time_functions.cc \
 				 drizzled/transaction_services.cc \
@@ -808,7 +844,7 @@ else
 PCHHEADERS = 
 endif
 
-BUILT_MAINT_SRC= \
+BUILT_MAINT_SRC+= \
 		 drizzled/sql_yacc.cc \
 		 drizzled/sql_yacc.h
 

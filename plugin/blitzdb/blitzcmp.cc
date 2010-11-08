@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <config.h>
+#include "config.h"
 #include "ha_blitz.h"
 
 using namespace drizzled;
@@ -35,7 +35,7 @@ int ha_blitz::compare_rows_for_unique_violation(const unsigned char *old_row,
   /* For now, we are only interested in supporting a PRIMARY KEY. In the
      next phase of BlitzDB, this should loop through the key array. */
   if (share->primary_key_exists) {
-    KeyInfo *pk = &table->key_info[table->s->getPrimaryKey()];
+    KeyInfo *pk = &getTable()->key_info[getTable()->getShare()->getPrimaryKey()];
     KeyPartInfo *key_part = pk->key_part;
     KeyPartInfo *key_part_end = key_part + pk->key_parts;
     int key_changed = 0;
@@ -67,13 +67,13 @@ int ha_blitz::compare_rows_for_unique_violation(const unsigned char *old_row,
        would violate the unique contraint. */
     if (key_changed) {
       key = key_buffer;
-      key_len = make_index_key(key, table->s->getPrimaryKey(), new_row);
+      key_len = make_index_key(key, getTable()->getMutableShare()->getPrimaryKey(), new_row);
       fetched = share->dict.get_row(key, key_len, &fetched_len);
 
       /* Key Exists. It's a violation. */
       if (fetched != NULL) {
         free(fetched);
-        this->errkey_id = table->s->getPrimaryKey();
+        this->errkey_id = getTable()->getShare()->getPrimaryKey();
         return HA_ERR_FOUND_DUPP_KEY;
       }
     }
@@ -256,30 +256,7 @@ int packed_key_cmp(BlitzTree *tree, const char *a, const char *b,
       a_next_offset = b_next_offset = curr_part->length;
       break;
     }
-    case HA_KEYTYPE_VARTEXT1: {
-      uint8_t a_varchar_len = *(uint8_t *)a_pos;
-      uint8_t b_varchar_len = *(uint8_t *)b_pos;
-      int key_changed;
-
-      a_pos++;
-      b_pos++;
-
-      *a_compared_len += a_varchar_len + sizeof(a_varchar_len);
-      *b_compared_len += b_varchar_len + sizeof(b_varchar_len);
-
-      /* Compare the texts by respecting collation. */
-      key_changed = my_strnncoll(&my_charset_utf8_general_ci,
-                                 (unsigned char *)a_pos, a_varchar_len,
-                                 (unsigned char *)b_pos, b_varchar_len);
-      if (key_changed < 0)
-        return -1;
-      else if (key_changed > 0)
-        return 1;
-
-      a_next_offset = a_varchar_len;
-      b_next_offset = b_varchar_len;
-      break;
-    }
+    case HA_KEYTYPE_VARTEXT1:
     case HA_KEYTYPE_VARTEXT2: {
       uint16_t a_varchar_len = uint2korr(a_pos);
       uint16_t b_varchar_len = uint2korr(b_pos);

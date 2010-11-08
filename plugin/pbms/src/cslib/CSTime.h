@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Original author: Paul McCullagh (H&G2JCtL)
  * Continued development: Barry Leslie
@@ -35,8 +35,6 @@
 
 #include "CSDefs.h"
 #include "CSObject.h"
-
-using namespace std;
 
 class CSTime : public CSObject  {
 public:
@@ -91,6 +89,12 @@ public:
 	void setUTC1601(uint64_t nsec100);
 	uint64_t getUTC1601();
 
+	/* 
+	 * Tests if the time is more than 'max_age' seconds in the past.
+	 */
+	bool olderThen(time_t max_age);
+
+	static	uint64_t getTimeCurrentTicks();
 private:
 	bool	iIsNull;
 	char	iCString[100];

@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /*
   Derived tables
@@ -54,8 +54,8 @@ bool mysql_handle_derived(LEX *lex, bool (*processor)(Session*, LEX*, TableList*
           Force join->join_tmp creation, because we will use this JOIN
           twice for EXPLAIN and we have to have unchanged join for EXPLAINing
         */
-        sl->uncacheable|= UNCACHEABLE_EXPLAIN;
-        sl->master_unit()->uncacheable|= UNCACHEABLE_EXPLAIN;
+        sl->uncacheable.set(UNCACHEABLE_EXPLAIN);
+        sl->master_unit()->uncacheable.set(UNCACHEABLE_EXPLAIN);
       }
     }
   }
@@ -144,17 +144,12 @@ exit:
     }
     else
     {
-      if (! session->fill_derived_tables())
-      {
-        delete derived_result;
-        derived_result= NULL;
-      }
       orig_table_list->derived_result= derived_result;
       orig_table_list->table= table;
-      orig_table_list->table_name=        const_cast<char *>(table->getShare()->getTableName());
+      orig_table_list->setTableName(const_cast<char *>(table->getShare()->getTableName()));
       orig_table_list->table_name_length= table->getShare()->getTableNameSize();
       table->derived_select_number= first_select->select_number;
-      orig_table_list->db= (char *)"";
+      orig_table_list->setSchemaName((char *)"");
       orig_table_list->db_length= 0;
       /* Force read of table stats in the optimizer */
       table->cursor->info(HA_STATUS_VARIABLE);
@@ -219,8 +214,8 @@ bool mysql_derived_filling(Session *session, LEX *lex, TableList *orig_table_lis
                         first_select->item_list, first_select->where,
                         (first_select->order_list.elements+
                         first_select->group_list.elements),
-                        (order_st *) first_select->order_list.first,
-                        (order_st *) first_select->group_list.first,
+                        (Order *) first_select->order_list.first,
+                        (Order *) first_select->group_list.first,
                         first_select->having,
                         (first_select->options | session->options | SELECT_NO_UNLOCK),
                         derived_result, unit, first_select);

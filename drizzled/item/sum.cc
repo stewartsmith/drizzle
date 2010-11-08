@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 
 /**
@@ -521,8 +521,10 @@ Field *Item_sum::create_tmp_field(bool ,
         convert_blob_length > Field_varstring::MAX_SIZE ||
         !convert_blob_length)
       return make_string_field(table);
+
+    table->setVariableWidth();
     field= new Field_varstring(convert_blob_length, maybe_null,
-                               name, table->getMutableShare(), collation.collation);
+                               name, collation.collation);
     break;
   case DECIMAL_RESULT:
     field= new Field_decimal(max_length, maybe_null, name,
@@ -1025,7 +1027,7 @@ bool Item_sum_distinct::setup(Session *session)
   field_def.init_for_tmp_table(table_field_type, args[0]->max_length,
                                args[0]->decimals, args[0]->maybe_null);
 
-  if (! (table= session->create_virtual_tmp_table(field_list)))
+  if (! (table= session->getInstanceTable(field_list)))
     return(true);
 
   /* XXX: check that the case of CHAR(0) works OK */
@@ -1255,9 +1257,10 @@ Field *Item_sum_avg::create_tmp_field(bool group, Table *table,
       The easiest way is to do this is to store both value in a string
       and unpack on access.
     */
+    table->setVariableWidth();
     field= new Field_varstring(((hybrid_type == DECIMAL_RESULT) ?
                                 dec_bin_size : sizeof(double)) + sizeof(int64_t),
-                               0, name, table->getMutableShare(), &my_charset_bin);
+                               0, name, &my_charset_bin);
   }
   else if (hybrid_type == DECIMAL_RESULT)
     field= new Field_decimal(max_length, maybe_null, name,
@@ -1471,7 +1474,8 @@ Field *Item_sum_variance::create_tmp_field(bool group, Table *table,
       The easiest way is to do this is to store both value in a string
       and unpack on access.
     */
-    field= new Field_varstring(sizeof(double)*2 + sizeof(int64_t), 0, name, table->getMutableShare(), &my_charset_bin);
+    table->setVariableWidth();
+    field= new Field_varstring(sizeof(double)*2 + sizeof(int64_t), 0, name, &my_charset_bin);
   }
   else
     field= new Field_double(max_length, maybe_null, name, decimals, true);
@@ -2599,7 +2603,7 @@ bool Item_sum_count_distinct::setup(Session *session)
   tmp_table_param->force_copy_fields= force_copy_fields;
   assert(table == 0);
 
-  if (!(table= create_tmp_table(session, tmp_table_param, list, (order_st*) 0, 1,
+  if (!(table= create_tmp_table(session, tmp_table_param, list, (Order*) 0, 1,
 				0,
 				(select_lex->options | session->options),
 				HA_POS_ERROR, (char*)"")))
@@ -2834,7 +2838,7 @@ int group_concat_key_cmp_with_order(void* arg, const void* key1,
                                     const void* key2)
 {
   Item_func_group_concat* grp_item= (Item_func_group_concat*) arg;
-  order_st **order_item, **end;
+  Order **order_item, **end;
   Table *table= grp_item->table;
 
   for (order_item= grp_item->order, end=order_item+ grp_item->arg_count_order;
@@ -2978,10 +2982,10 @@ Item_func_group_concat(Name_resolution_context *context_arg,
     order - arg_count_order
   */
   if (!(args= (Item**) memory::sql_alloc(sizeof(Item*) * arg_count +
-                                 sizeof(order_st*)*arg_count_order)))
+                                 sizeof(Order*)*arg_count_order)))
     return;
 
-  order= (order_st**)(args + arg_count);
+  order= (Order**)(args + arg_count);
 
   /* fill args items of show and sort */
   List_iterator_fast<Item> li(*select_list);
@@ -2991,8 +2995,8 @@ Item_func_group_concat(Name_resolution_context *context_arg,
 
   if (arg_count_order)
   {
-    order_st **order_ptr= order;
-    for (order_st *order_item= (order_st*) order_list->first;
+    Order **order_ptr= order;
+    for (Order *order_item= (Order*) order_list->first;
          order_item != NULL;
          order_item= order_item->next)
     {
@@ -3259,7 +3263,7 @@ bool Item_func_group_concat::setup(Session *session)
     field list.
   */
   if (!(table= create_tmp_table(session, tmp_table_param, all_fields,
-                                (order_st*) 0, 0, true,
+                                (Order*) 0, 0, true,
                                 (select_lex->options | session->options),
                                 HA_POS_ERROR, (char*) "")))
   {

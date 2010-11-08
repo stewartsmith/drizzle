@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include "config.h"
 
@@ -59,9 +59,14 @@ using namespace std;
 /** These exist just to prevent symbols from being optimized out */
 typedef drizzled::module::Manifest drizzled_builtin_list[];
 extern drizzled_builtin_list PANDORA_BUILTIN_SYMBOLS_LIST;
+extern drizzled_builtin_list PANDORA_BUILTIN_LOAD_SYMBOLS_LIST;
 drizzled::module::Manifest *drizzled_builtins[]=
 {
   PANDORA_BUILTIN_SYMBOLS_LIST, NULL
+};
+drizzled::module::Manifest *drizzled_load_builtins[]=
+{
+  PANDORA_BUILTIN_LOAD_SYMBOLS_LIST, NULL
 };
 
 namespace drizzled
@@ -75,8 +80,8 @@ typedef vector<string> PluginOptions;
 static PluginOptions opt_plugin_load;
 static PluginOptions opt_plugin_add;
 static PluginOptions opt_plugin_remove;
-char opt_plugin_dir[FN_REFLEN];
 const char *builtin_plugins= PANDORA_BUILTIN_LIST;
+const char *builtin_load_plugins= PANDORA_BUILTIN_LOAD_LIST;
 
 /* Note that 'int version' must be the first field of every plugin
    sub-structure (plugin->info).
@@ -163,9 +168,9 @@ static bool plugin_load_list(module::Registry &registry,
                              bool builtin= false);
 static int test_plugin_options(memory::Root *, module::Module *,
                                po::options_description &long_options);
-static void unlock_variables(Session *session, struct system_variables *vars);
-static void cleanup_variables(Session *session, struct system_variables *vars);
-static void plugin_vars_free_values(sys_var *vars);
+static void unlock_variables(Session *session, drizzle_system_variables *vars);
+static void cleanup_variables(drizzle_system_variables *vars);
+static void plugin_vars_free_values(module::Module::Variables &vars);
 
 /* declared in set_var.cc */
 extern sys_var *intern_find_sys_var(const char *str, uint32_t length, bool no_error);
@@ -290,9 +295,8 @@ static bool plugin_add(module::Registry &registry, memory::Root *tmp_root,
 static void delete_module(module::Module *module)
 {
   /* Free allocated strings before deleting the plugin. */
-  plugin_vars_free_values(module->system_vars);
+  plugin_vars_free_values(module->getSysVars());
   module->isInited= false;
-  mysql_del_sys_var_chain(module->system_vars);
   delete module;
 }
 
@@ -319,16 +323,12 @@ static void plugin_initialize_vars(module::Module *module)
     set the plugin attribute of plugin's sys vars so they are pointing
     to the active plugin
   */
-  if (module->system_vars)
+  for (module::Module::Variables::iterator iter= module->getSysVars().begin();
+       iter != module->getSysVars().end();
+       ++iter)
   {
-    sys_var_pluginvar *var= module->system_vars->cast_pluginvar();
-    for (;;)
-    {
-      var->plugin= module;
-      if (! var->getNext())
-        break;
-      var= var->getNext()->cast_pluginvar();
-    }
+    sys_var *current_var= *iter;
+    current_var->cast_pluginvar()->plugin= module;
   }
 }
 
@@ -398,6 +398,9 @@ bool plugin_init(module::Registry &registry,
 
   initialized= 1;
 
+  PluginOptions builtin_load_list;
+  tokenize(builtin_load_plugins, builtin_load_list, ",", true);
+
   PluginOptions builtin_list;
   tokenize(builtin_plugins, builtin_list, ",", true);
 
@@ -405,22 +408,34 @@ bool plugin_init(module::Registry &registry,
 
   if (opt_plugin_add.size() > 0)
   {
-    opt_plugin_load.insert(opt_plugin_load.end(),
-                           opt_plugin_add.begin(),
-                           opt_plugin_add.end());
+    for (PluginOptions::iterator iter= opt_plugin_add.begin();
+         iter != opt_plugin_add.end();
+         ++iter)
+    {
+      if (find(builtin_list.begin(),
+               builtin_list.end(), *iter) != builtin_list.end())
+      {
+        builtin_load_list.push_back(*iter);
+      }
+      else
+      {
+        opt_plugin_load.push_back(*iter);
+      }
+    }
   }
 
   if (opt_plugin_remove.size() > 0)
   {
     plugin_prune_list(opt_plugin_load, opt_plugin_remove);
-    plugin_prune_list(builtin_list, opt_plugin_remove);
+    plugin_prune_list(builtin_load_list, opt_plugin_remove);
   }
 
 
   /*
     First we register builtin plugins
   */
-  const set<string> builtin_list_set(builtin_list.begin(), builtin_list.end());
+  const set<string> builtin_list_set(builtin_load_list.begin(),
+                                     builtin_load_list.end());
   load_failed= plugin_load_list(registry, &tmp_root,
                                 builtin_list_set, long_options, true);
   if (load_failed)
@@ -558,8 +573,8 @@ void module_shutdown(module::Registry &registry)
     unlock_variables(NULL, &global_system_variables);
     unlock_variables(NULL, &max_system_variables);
 
-    cleanup_variables(NULL, &global_system_variables);
-    cleanup_variables(NULL, &max_system_variables);
+    cleanup_variables(&global_system_variables);
+    cleanup_variables(&max_system_variables);
 
     initialized= 0;
   }
@@ -580,8 +595,8 @@ void module_shutdown(module::Registry &registry)
 
 static const uint32_t EXTRA_OPTIONS= 1; /* handle the NULL option */
 
-typedef DECLARE_DRIZZLE_SYSVAR_BASIC(sysvar_bool_t, bool);
-typedef DECLARE_DRIZZLE_SessionVAR_BASIC(sessionvar_bool_t, bool);
+typedef DECLARE_DRIZZLE_SYSVAR_BOOL(sysvar_bool_t);
+typedef DECLARE_DRIZZLE_SessionVAR_BOOL(sessionvar_bool_t);
 typedef DECLARE_DRIZZLE_SYSVAR_BASIC(sysvar_str_t, char *);
 typedef DECLARE_DRIZZLE_SessionVAR_BASIC(sessionvar_str_t, char *);
 
@@ -797,7 +812,10 @@ sys_var *find_sys_var(Session *, const char *str, uint32_t length)
     then the intern_plugin_lock did not raise an error, so we do it here.
   */
   if (pi && !var)
+  {
     my_error(ER_UNKNOWN_SYSTEM_VARIABLE, MYF(0), (char*) str);
+    assert(false);
+  }
   return(var);
 }
 
@@ -1049,7 +1067,7 @@ static char **mysql_sys_var_ptr_str(Session* a_session, int offset)
 void plugin_sessionvar_init(Session *session)
 {
   session->variables.storage_engine= NULL;
-  cleanup_variables(session, &session->variables);
+  cleanup_variables(&session->variables);
 
   session->variables= global_system_variables;
   session->variables.storage_engine= NULL;
@@ -1066,7 +1084,7 @@ void plugin_sessionvar_init(Session *session)
 /*
   Unlocks all system variables which hold a reference
 */
-static void unlock_variables(Session *, struct system_variables *vars)
+static void unlock_variables(Session *, struct drizzle_system_variables *vars)
 {
   vars->storage_engine= NULL;
 }
@@ -1078,34 +1096,8 @@ static void unlock_variables(Session *, struct system_variables *vars)
   Unlike plugin_vars_free_values() it frees all variables of all plugins,
   it's used on shutdown.
 */
-static void cleanup_variables(Session *session, struct system_variables *vars)
+static void cleanup_variables(drizzle_system_variables *vars)
 {
-  sys_var_pluginvar *pivar;
-  sys_var *var;
-  int flags;
-
-  bookmark_unordered_map::iterator iter= bookmark_hash.begin();
-  for (; iter != bookmark_hash.end() ; ++iter)
-  {
-    const Bookmark &v= (*iter).second;
-    const string key_name((*iter).first);
-    if (v.version > vars->dynamic_variables_version ||
-        !(var= intern_find_sys_var(key_name.c_str(), key_name.size(), true)) ||
-        !(pivar= var->cast_pluginvar()) ||
-        v.type_code != (pivar->plugin_var->flags & PLUGIN_VAR_TYPEMASK))
-      continue;
-
-    flags= pivar->plugin_var->flags;
-
-    if ((flags & PLUGIN_VAR_TYPEMASK) == PLUGIN_VAR_STR &&
-        flags & PLUGIN_VAR_SessionLOCAL && flags & PLUGIN_VAR_MEMALLOC)
-    {
-      char **ptr= (char**) pivar->real_value_ptr(session, OPT_SESSION);
-      free(*ptr);
-      *ptr= NULL;
-    }
-  }
-
   assert(vars->storage_engine == NULL);
 
   free(vars->dynamic_variables_ptr);
@@ -1118,7 +1110,7 @@ static void cleanup_variables(Session *session, struct system_variables *vars)
 void plugin_sessionvar_cleanup(Session *session)
 {
   unlock_variables(session, &session->variables);
-  cleanup_variables(session, &session->variables);
+  cleanup_variables(&session->variables);
 }
 
 
@@ -1133,12 +1125,14 @@ void plugin_sessionvar_cleanup(Session *session)
   @param[in]        vars        Chain of system variables of a plugin
 */
 
-static void plugin_vars_free_values(sys_var *vars)
+static void plugin_vars_free_values(module::Module::Variables &vars)
 {
 
-  for (sys_var *var= vars; var; var= var->getNext())
+  for (module::Module::Variables::iterator iter= vars.begin();
+       iter != vars.end();
+       ++iter)
   {
-    sys_var_pluginvar *piv= var->cast_pluginvar();
+    sys_var_pluginvar *piv= (*iter)->cast_pluginvar();
     if (piv &&
         ((piv->plugin_var->flags & PLUGIN_VAR_TYPEMASK) == PLUGIN_VAR_STR) &&
         (piv->plugin_var->flags & PLUGIN_VAR_MEMALLOC))
@@ -1632,7 +1626,6 @@ static int test_plugin_options(memory::Root *module_root,
                                module::Module *test_module,
                                po::options_description &long_options)
 {
-  struct sys_var_chain chain= { NULL, NULL };
   drizzle_sys_var **opt;
   option *opts= NULL;
   int error;
@@ -1711,25 +1704,21 @@ static int test_plugin_options(memory::Root *module_root,
       assert(v); /* check that an object was actually constructed */
 
       drizzle_add_plugin_sysvar(static_cast<sys_var_pluginvar *>(v));
-      /*
-        Add to the chain of variables.
-        Done like this for easier debugging so that the
-        pointer to v is not lost on optimized builds.
-      */
-      v->chain_sys_var(&chain);
-    }
-    if (chain.first)
-    {
-      chain.last->setNext(NULL);
-      if (mysql_add_sys_var_chain(chain.first, NULL))
+      try
+      {
+        add_sys_var_to_list(v);
+        test_module->addSysVar(v);
+      }
+      catch (...)
       {
         errmsg_printf(ERRMSG_LVL_ERROR,
                       _("Plugin '%s' has conflicting system variables"),
                       test_module->getName().c_str());
         goto err;
       }
-      test_module->system_vars= chain.first;
+
     }
+
     return(0);
   }
 

@@ -99,7 +99,7 @@ bool InnodbReplicationTable::Generator::populate()
     return false;
 
   /* TABLE_NAME */
-  push(ret.id);
+  push(static_cast<int64_t>(ret.id));
 
   /* Message in viewable format */
   bool result= message.ParseFromArray(ret.message, ret.message_length);

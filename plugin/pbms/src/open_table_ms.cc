@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Original author: Paul McCullagh
  * Continued development: Barry Leslie
@@ -27,6 +27,8 @@
  *
  */
 #include "cslib/CSConfig.h"
+
+#include "defs_ms.h"
 
 #include "cslib/CSGlobal.h"
 #include "cslib/CSLog.h"
@@ -97,6 +99,42 @@ void MSOpenTable::returnToPool()
 	MSTableList::releaseTable(this);
 }
 
+// This cleanup class is used to reset the 
+// repository size if something goes wrong.
+class CreateBlobCleanUp : public CSRefObject {
+	bool do_cleanup;
+	uint64_t old_size;
+	MSOpenTable *ot;
+	MSRepository *repo;
+
+	public:
+	
+	CreateBlobCleanUp(): CSRefObject(),
+		do_cleanup(false){}
+		
+	~CreateBlobCleanUp() 
+	{
+		if (do_cleanup) {
+			repo->setRepoFileSize(ot, old_size);
+
+		}
+	}
+	
+	void setCleanUp(MSOpenTable *ot_arg, MSRepository *repo_arg, uint64_t size)
+	{
+		old_size = size;
+		repo = repo_arg;
+		ot = ot_arg;
+		do_cleanup = true;
+	}
+	
+	void cancelCleanUp()
+	{
+		do_cleanup = false;
+	}
+	
+};
+
 void MSOpenTable::createBlob(PBMSBlobURLPtr bh, uint64_t blob_size, char *metadata, uint16_t metadata_size, CSInputStream *stream, CloudKeyPtr cloud_key, Md5Digest *checksum)
 {
 	uint64_t repo_offset;
@@ -110,11 +148,12 @@ void MSOpenTable::createBlob(PBMSBlobURLPtr bh, uint64_t blob_size, char *metada
 	uint64_t repo_id;
 	Md5Digest my_checksum;
 	CloudKeyRec cloud_key_rec;
+	CreateBlobCleanUp *cleanup;
 	enter_();
 	
-	CLOBBER_PROTECT(cloud_key);
-	CLOBBER_PROTECT(checksum);
-
+	new_(cleanup, CreateBlobCleanUp());
+	push_(cleanup);
+	
 	if (!checksum)
 		checksum = &my_checksum;
 		
@@ -125,51 +164,49 @@ void MSOpenTable::createBlob(PBMSBlobURLPtr bh, uint64_t blob_size, char *metada
 	repo_size = myWriteRepo->getRepoFileSize();
 	temp_time =	myWriteRepo->myLastTempTime;
 
-	try_(a) {
-		head_size = myWriteRepo->getDefaultHeaderSize(metadata_size);
-		if (getDB()->myBlobType == MS_STANDARD_STORAGE) {
+	// If an exception occurs the cleanup operation will be called.
+	cleanup->setCleanUp(this, myWriteRepo, repo_size);
+
+	head_size = myWriteRepo->getDefaultHeaderSize(metadata_size);
+	if (getDB()->myBlobType == MS_STANDARD_STORAGE) {
+		pop_(stream);
+		repo_offset = myWriteRepo->receiveBlob(this, head_size, blob_size, checksum, stream);
+	} else {
+		ASSERT(getDB()->myBlobType == MS_CLOUD_STORAGE);
+		CloudDB *cloud = getDB()->myBlobCloud;
+		
+		if (!cloud)
+			CSException::throwException(CS_CONTEXT, CS_ERR_GENERIC_ERROR, "Creating cloud BLOB without cloud.");
+	
+		repo_offset = repo_size + head_size;
+		memset(checksum, 0, sizeof(Md5Digest)); // The checksum is only for local storage.
+		
+		// If there is a stream then the data has not been sent to the cloud yet.
+		if (stream) { 
+			cloud_key = &cloud_key_rec;
+			cloud->cl_getNewKey(cloud_key);
 			pop_(stream);
-			repo_offset = myWriteRepo->receiveBlob(this, head_size, blob_size, checksum, stream);
-		} else {
-			ASSERT(getDB()->myBlobType == MS_CLOUD_STORAGE);
-			CloudDB *cloud = getDB()->myBlobCloud;
-			
-			if (!cloud)
-				CSException::throwException(CS_CONTEXT, CS_ERR_GENERIC_ERROR, "Creating cloud BLOB without cloud.");
-		
-			repo_offset = repo_size + head_size;
-			memset(checksum, 0, sizeof(Md5Digest)); // The checksum is only for local storage.
-			
-			// If there is a stream then the data has not been sent to the cloud yet.
-			if (stream) { 
-				cloud_key = &cloud_key_rec;
-				cloud->cl_getNewKey(cloud_key);
-				pop_(stream);
-				cloud->cl_putData(cloud_key, stream, blob_size);
-			}
-			
+			cloud->cl_putData(cloud_key, stream, blob_size);
 		}
 		
-		repo_id = myWriteRepo->myRepoID;
-		if (isNotATable) {	
-			getDB()->queueForDeletion(this, MS_TL_REPO_REF, repo_id, repo_offset, auth_code, &log_id, &log_offset, &temp_time);
-			formatRepoURL(bh, repo_id, repo_offset, auth_code, blob_size);
-		}
-		else {
-			blob_id = getDBTable()->createBlobHandle(this, myWriteRepo->myRepoID, repo_offset, blob_size, head_size, auth_code);
-			getDB()->queueForDeletion(this, MS_TL_BLOB_REF, getDBTable()->myTableID, blob_id, auth_code, &log_id, &log_offset, &temp_time);
-			formatBlobURL(bh, blob_id, auth_code, blob_size, 0);
-		}
-		
-		myWriteRepo->writeBlobHead(this, repo_offset, myWriteRepo->myRepoDefRefSize, head_size, blob_size, checksum, metadata, metadata_size, blob_id, auth_code, log_id, log_offset, getDB()->myBlobType, cloud_key);
 	}
 	
-	catch_(a);
-	// In the event of an error reset the repository size to its original size.
-	myWriteRepo->setRepoFileSize(this, repo_size);
-	throw_();
+	repo_id = myWriteRepo->myRepoID;
+	if (isNotATable) {	
+		getDB()->queueForDeletion(this, MS_TL_REPO_REF, repo_id, repo_offset, auth_code, &log_id, &log_offset, &temp_time);
+		formatRepoURL(bh, repo_id, repo_offset, auth_code, blob_size);
+	}
+	else {
+		blob_id = getDBTable()->createBlobHandle(this, myWriteRepo->myRepoID, repo_offset, blob_size, head_size, auth_code);
+		getDB()->queueForDeletion(this, MS_TL_BLOB_REF, getDBTable()->myTableID, blob_id, auth_code, &log_id, &log_offset, &temp_time);
+		formatBlobURL(bh, blob_id, auth_code, blob_size, 0);
+	}
 	
-	cont_(a);
+	myWriteRepo->writeBlobHead(this, repo_offset, myWriteRepo->myRepoDefRefSize, head_size, blob_size, checksum, metadata, metadata_size, blob_id, auth_code, log_id, log_offset, getDB()->myBlobType, cloud_key);
+	
+	cleanup->cancelCleanUp();
+	release_(cleanup);
+	
 	exit_();
 }
 
@@ -184,40 +221,42 @@ void MSOpenTable::createBlob(PBMSBlobIDPtr blob_id, uint64_t blob_size, char *me
 	uint32_t	log_id;
 	uint32_t log_offset;
 	uint32_t temp_time;
+	CreateBlobCleanUp *cleanup;
 	enter_();
+	
+	new_(cleanup, CreateBlobCleanUp());
+	push_(cleanup);
 
 	openForWriting();
 	ASSERT(myWriteRepo);
 	auth_code = random();
 	
 	repo_size = myWriteRepo->getRepoFileSize();
-	try_(a) {
-		head_size = myWriteRepo->getDefaultHeaderSize(metadata_size);
+	
+	// If an exception occurs the cleanup operation will be called.
+	cleanup->setCleanUp(this, myWriteRepo, repo_size);
 
-		repo_offset = myWriteRepo->receiveBlob(this, head_size, blob_size);
-		repo_id = myWriteRepo->myRepoID;
-		temp_time = myWriteRepo->myLastTempTime;
-		getDB()->queueForDeletion(this, MS_TL_REPO_REF, repo_id, repo_offset, auth_code, &log_id, &log_offset, &temp_time);
-		myWriteRepo->myLastTempTime = temp_time;
-		myWriteRepo->writeBlobHead(this, repo_offset, myWriteRepo->myRepoDefRefSize, head_size, blob_size, NULL, metadata, metadata_size, 0, auth_code, log_id, log_offset, MS_STANDARD_STORAGE, NULL);
-		// myWriteRepo->setRepoFileSize(this, repo_offset + head_size + blob_size);This is now set by writeBlobHead()
-		
-		blob_id->bi_db_id = getDB()->myDatabaseID;
-		blob_id->bi_blob_id = repo_offset;
-		blob_id->bi_tab_id = repo_id;
-		blob_id->bi_auth_code = auth_code;
-		blob_id->bi_blob_size = blob_size;
-		blob_id->bi_blob_type = MS_URL_TYPE_REPO;
-		blob_id->bi_blob_ref_id = 0;
+	head_size = myWriteRepo->getDefaultHeaderSize(metadata_size);
+
+	repo_offset = myWriteRepo->receiveBlob(this, head_size, blob_size);
+	repo_id = myWriteRepo->myRepoID;
+	temp_time = myWriteRepo->myLastTempTime;
+	getDB()->queueForDeletion(this, MS_TL_REPO_REF, repo_id, repo_offset, auth_code, &log_id, &log_offset, &temp_time);
+	myWriteRepo->myLastTempTime = temp_time;
+	myWriteRepo->writeBlobHead(this, repo_offset, myWriteRepo->myRepoDefRefSize, head_size, blob_size, NULL, metadata, metadata_size, 0, auth_code, log_id, log_offset, MS_STANDARD_STORAGE, NULL);
+	// myWriteRepo->setRepoFileSize(this, repo_offset + head_size + blob_size);This is now set by writeBlobHead()
 	
-	}
+	blob_id->bi_db_id = getDB()->myDatabaseID;
+	blob_id->bi_blob_id = repo_offset;
+	blob_id->bi_tab_id = repo_id;
+	blob_id->bi_auth_code = auth_code;
+	blob_id->bi_blob_size = blob_size;
+	blob_id->bi_blob_type = MS_URL_TYPE_REPO;
+	blob_id->bi_blob_ref_id = 0;
 	
-	catch_(a);
-	// BLOBs created with this method are always created as standard local BLOBs. (No cloud storage)
-	myWriteRepo->setRepoFileSize(this, repo_size);
-	throw_();
-	
-	cont_(a);
+	cleanup->cancelCleanUp();
+	release_(cleanup);
+
 	exit_();
 }
 

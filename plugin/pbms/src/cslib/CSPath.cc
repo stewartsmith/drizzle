@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Original author: Paul McCullagh
  * Continued development: Barry Leslie
@@ -28,18 +28,11 @@
 
 #include "CSConfig.h"
 
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/param.h>
 #include <string.h>
 #include <stdio.h>
 
-static int unix_file_rename(const char *from, const char *to)
-{
-	return rename(from, to);
-}
-
 #include "CSStrUtil.h"
+#include "CSSys.h"
 #include "CSFile.h"
 #include "CSDirectory.h"
 #include "CSPath.h"
@@ -49,6 +42,7 @@ static int unix_file_rename(const char *from, const char *to)
  * ---------------------------------------------------------------
  * CORE SYSTEM PATH
  */
+CSLock	CSPath::iRename_lock;
 
 CSPath *CSPath::iCWD = NULL;
 
@@ -58,40 +52,36 @@ CSPath::~CSPath()
 		iPath->release();
 }
 
+CSFile *CSPath::try_CreateAndOpen(CSThread *self, int mode, bool retry)
+{
+	try_(a) {
+		return openFile(mode | CSFile::CREATE); // success, do not try again.
+	}
+	catch_(a) {
+		if (retry || !CSFile::isDirNotFound(&self->myException))
+			throw_();
+
+		/* Make sure the parent directory exists: */
+		CSPath	*dir = CSPath::newPath(RETAIN(this), "..");
+		push_(dir);
+		dir->makePath();
+		release_(dir);
+
+	}
+	cont_(a);
+	return NULL; 
+}
+
 CSFile *CSPath::createFile(int mode)
 {
-	CSFile	*file;
-	CSPath	*dir;
+	CSFile	*file = NULL;
 	bool	retry = false;
 
-	CLOBBER_PROTECT(retry);
-
 	enter_();
-	/* Create and open the file: */
-	do {
-		try_(a) {
-			file = openFile(mode | CSFile::CREATE);
-			retry = false;
-		}
-		catch_(a) {
-			if (retry || !CSFile::isDirNotFound(&self->myException))
-				throw_();
-
-			/* Make sure the parent directory exists: */
-			dir = CSPath::newPath(RETAIN(this), "..");
-			try_(b) {
-				dir->makePath();
-			}
-			finally_(b) {
-				dir->release();
-			}
-			finally_end_block(b);
-
-			retry = true;
-		}
-		cont_(a);
+	while (file == NULL) {
+		file = try_CreateAndOpen(self, mode, retry);
+		retry = true;
 	}
-	while (retry);
 	return_(file);
 }
 
@@ -157,14 +147,13 @@ void CSPath::makePath()
 	}
 
 	path = CSPath::newPath(RETAIN(this), "..");
-	try_(a) {
-		path->makePath();
-		makeDir();
-	}
-	finally_(a) {
-		path->release();
-	}
-	finally_end_block(a);
+	push_(path);
+	
+	path->makePath();
+	makeDir();
+	
+	release_(path);
+
 	exit_();
 }
 
@@ -227,13 +216,12 @@ void CSPath::copyDir(CSPath *in_to_dir, bool overwrite)
 
 bool CSPath::isLink()
 {
-	struct stat sb;
+	bool link;
 	enter_();
 
-	if (lstat(iPath->getCString(), &sb) == -1)
-		CSException::throwFileError(CS_CONTEXT, iPath, errno);
-		
-	return_(S_ISLNK(sb.st_mode));
+	link = sys_isLink(iPath->getCString());
+	
+	return_(link);
 }
 
 bool CSPath::isEmpty()
@@ -249,14 +237,12 @@ bool CSPath::isEmpty()
 		return_(false);
 
 	dir = openDirectory();
-	try_(a) {
-		if (dir->next())
-			result = false;
-	}
-	finally_(a) {
-		dir->release();	
-	}
-	finally_end_block(a);
+	push_(dir);
+	
+	if (dir->next())
+		result = false;
+
+	release_(dir);
 	return_(result);
 }
 
@@ -274,23 +260,49 @@ void CSPath::emptyDir()
 		CSException::throwFileError(CS_CONTEXT, iPath, ENOTDIR);
 
 	dir = openDirectory();
-	try_(a) {
-		while (dir->next()) {
-			path = CSPath::newPath(RETAIN(this), dir->name());
-			if (dir->isFile())
-				path->remove();
-			else
-				path->removeDir();
-			path->release();
-			path = NULL;
-		}
+	push_(dir);
+
+	while (dir->next()) {
+		path = CSPath::newPath(RETAIN(this), dir->name());
+		push_(path);
+		if (dir->isFile())
+			path->remove();
+		else
+			path->removeDir();
+		release_(path);
 	}
-	finally_(a) {
-		if (path)
-			path->release();
-		dir->release();	
+
+	release_(dir);
+	exit_();
+}
+
+void CSPath::emptyPath()
+{
+	CSDirectory *dir;
+	CSPath		*path = NULL;
+	bool		is_dir;
+
+	enter_();
+	if (!exists(&is_dir))
+		exit_();
+
+	if (!is_dir)
+		CSException::throwFileError(CS_CONTEXT, iPath, ENOTDIR);
+
+	dir = openDirectory();
+	push_(dir);
+
+	while (dir->next()) {
+		path = CSPath::newPath(RETAIN(this), dir->name());
+		push_(path);
+		if (dir->isFile())
+			path->remove();
+		else
+			path->emptyPath();
+		release_(path);
 	}
-	finally_end_block(a);
+
+	release_(dir);
 	exit_();
 }
 
@@ -317,31 +329,31 @@ void CSPath::copyTo(CSPath *to_path, bool overwrite)
 
 void CSPath::moveTo(CSPath *in_to_path)
 {
-	CSPath	*to_path = in_to_path;
+	CSPath	*to_path = NULL;
 	bool	is_dir;
 
 	enter_();
+	push_(in_to_path);
+	
 	if (!exists(NULL))
 		CSException::throwFileError(CS_CONTEXT, iPath, ENOENT);
 
-	try_(a) {
-		if (to_path->exists(&is_dir)) {
-			if (is_dir) {
-			 	to_path = CSPath::newPath(RETAIN(in_to_path), getNameCString());
-			 	if (to_path->exists(NULL))
-					CSException::throwFileError(CS_CONTEXT, to_path->getCString(), EEXIST);
-			}
-			else
-				CSException::throwFileError(CS_CONTEXT, to_path->getCString(), ENOTDIR);
+	if (in_to_path->exists(&is_dir)) {
+		if (is_dir) {
+			to_path = CSPath::newPath(RETAIN(in_to_path), getNameCString());
+			push_(to_path);
+			if (to_path->exists(NULL))
+				CSException::throwFileError(CS_CONTEXT, to_path->getCString(), EEXIST);
+			pop_(to_path);
 		}
-		move(to_path);
-	}
-	finally_(a) {
-		if (to_path != in_to_path)
-			to_path->release();
-	}
-	finally_end_block(a);
+		else
+			CSException::throwFileError(CS_CONTEXT, to_path->getCString(), ENOTDIR);
+	} else
+		to_path = RETAIN(in_to_path);
+		
+	move(to_path);
 
+	release_(in_to_path);
 	exit_();
 }
 
@@ -390,6 +402,14 @@ const char *CSPath::getNameCString()
 	return cs_last_name_of_path(str);
 }
 
+off64_t CSPath::getSize(const char *path)
+{
+	off64_t size;
+
+	info(path, NULL, &size, NULL);
+	return size;
+}
+
 off64_t CSPath::getSize()
 {
 	off64_t size;
@@ -406,40 +426,25 @@ bool CSPath::isDir()
 	return is_dir;
 }
 
-/*
- * ---------------------------------------------------------------
- * A UNIX PATH
- */
-
 bool CSPath::exists(bool *is_dir)
 {
-	int err;
-
-	err = access(iPath->getCString(), F_OK);
-	if (err == -1)
+	if (!sys_exists(iPath->getCString()))
 		return false;
+		
 	if (is_dir)
 		*is_dir = isDir();
 	return true;
 }
 
+void CSPath::info(const char *path, bool *is_dir, off64_t *size, CSTime *mod_time)
+{
+	sys_stat(path, is_dir, size, mod_time);
+	
+}
+
 void CSPath::info(bool *is_dir, off64_t *size, CSTime *mod_time)
 {
-	struct stat sb;
-
-	if (stat(iPath->getCString(), &sb) == -1)
-		CSException::throwFileError(CS_CONTEXT, iPath, errno);
-	if (is_dir)
-		*is_dir = sb.st_mode & S_IFDIR;
-	if (size)
-		*size = sb.st_size;
-	if (mod_time)
-#ifdef __USE_MISC
-		/* This is the Linux version: */
-		mod_time->setUTC1970(sb.st_mtim.tv_sec, sb.st_mtim.tv_nsec);
-#else
-		mod_time->setUTC1970(sb.st_mtime, 0);
-#endif
+	info(iPath->getCString(), is_dir, size, mod_time);
 }
 
 CSFile *CSPath::openFile(int mode)
@@ -456,36 +461,7 @@ CSFile *CSPath::openFile(int mode)
 
 void CSPath::removeFile()
 {
-	if (unlink(iPath->getCString()) == -1) {
-		int err = errno;
-
-		if (err != ENOENT)
-			CSException::throwFileError(CS_CONTEXT, iPath, err);
-	}
-}
-
-static void cs_set_stats(char *path)
-{
-	char		super_path[PATH_MAX];
-	struct stat	stats;
-	char		*ptr;
-
-	ptr = cs_last_name_of_path(path);
-	if (ptr == path) 
-		strcpy(super_path, ".");
-	else {
-		cs_strcpy(PATH_MAX, super_path, path);
-
-		if ((ptr = cs_last_name_of_path(super_path)))
-			*ptr = 0;
-	}
-	if (stat(super_path, &stats) == -1)
-		CSException::throwFileError(CS_CONTEXT, path, errno);
-
-	if (chmod(path, stats.st_mode) == -1)
-		CSException::throwFileError(CS_CONTEXT, path, errno);
-
-	/*chown(path, stats.st_uid, stats.st_gid);*/
+	sys_removeFile(iPath->getCString());
 }
 
 void CSPath::makeDir()
@@ -495,10 +471,7 @@ void CSPath::makeDir()
 	cs_strcpy(PATH_MAX, path, iPath->getCString());
 	cs_remove_dir_char(path);
 
-	if (mkdir(path, S_IRWXU | S_IRWXG | S_IRWXO) == -1)
-		CSException::throwFileError(CS_CONTEXT, iPath, errno);
-
-	cs_set_stats(path);
+	sys_makeDir(path);
 }
 
 CSDirectory *CSPath::openDirectory()
@@ -516,12 +489,7 @@ CSDirectory *CSPath::openDirectory()
 void CSPath::removeDir()
 {			
 	emptyDir();
-	if (rmdir(iPath->getCString()) == -1) {
-		int err = errno;
-
-		if (err != ENOENT)
-			CSException::throwFileError(CS_CONTEXT, iPath, err);
-	}
+	sys_removeDir(iPath->getCString());
 }
 
 void CSPath::rename(const char *name)
@@ -536,13 +504,18 @@ void CSPath::rename(const char *name)
 	cs_add_dir_char(PATH_MAX, new_path);
 	cs_strcat(PATH_MAX, new_path, name);
 	
+	lock_(&iRename_lock); // protect against race condition when testing if the new name exists yet or not.	
+	if (sys_exists(new_path))
+		CSException::throwFileError(CS_CONTEXT, new_path, EEXIST);
+	
 	tmp_path = CSString::newString(new_path);
 	push_(tmp_path);
 	
-	if (unix_file_rename(iPath->getCString(), new_path) == -1)
-		CSException::throwFileError(CS_CONTEXT, iPath, errno);
+	sys_rename(iPath->getCString(), new_path);
 		
 	pop_(tmp_path);
+	unlock_(&iRename_lock);
+	
 	old_path = iPath;
 	iPath = tmp_path;
 	
@@ -552,18 +525,22 @@ void CSPath::rename(const char *name)
 
 void CSPath::move(CSPath *to_path)
 {
+	enter_();
+	lock_(&iRename_lock); // protect against race condition when testing if the new name exists yet or not.	
+	if (to_path->exists())
+		CSException::throwFileError(CS_CONTEXT, to_path->getCString(), EEXIST);
+		
 	/* Cannot move from TD to non-TD: */
-	if (unix_file_rename(iPath->getCString(), to_path->getCString()) == -1)
-		CSException::throwFileError(CS_CONTEXT, iPath, errno);
+	sys_rename(iPath->getCString(), to_path->getCString());
+	unlock_(&iRename_lock);
+	exit_();
 }
 
 CSPath *CSPath::getCWD()
 {
-	char path[MAXPATHLEN];
+	char path[PATH_MAX];
 
-	if (!getcwd(path, MAXPATHLEN))
-		CSException::throwOSError(CS_CONTEXT, errno);
-
+	sys_getcwd(path, PATH_MAX);
 	return newPath(path);
 }
 

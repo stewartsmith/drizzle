@@ -53,8 +53,21 @@ static const uint32_t __normal_days_to_end_month[13]= {0, 31, 59, 90, 120, 150, 
  * Private utility macro for enabling a switch between
  * Gregorian and Julian leap year date arrays.
  */
-#define __DAYS_IN_MONTH(y, c) (const uint32_t *) (IS_LEAP_YEAR((y),(c)) ? __leap_days_in_month : __normal_days_in_month)
-#define __DAYS_TO_END_MONTH(y, c) (const uint32_t *) (IS_LEAP_YEAR((y),(c)) ? __leap_days_to_end_month : __normal_days_to_end_month)
+inline static const uint32_t* days_in_month(uint32_t y, enum calendar c) 
+{
+  if (is_leap_year(y, c))
+    return __leap_days_in_month;
+  else
+    return __normal_days_in_month;
+}
+
+inline static const uint32_t* days_to_end_month(uint32_t y, enum calendar c) 
+{
+  if (is_leap_year(y, c))
+    return __leap_days_to_end_month;
+  else
+    return __normal_days_to_end_month;
+}
 
 
 /**
@@ -289,7 +302,7 @@ bool is_valid_gregorian_date(uint32_t year, uint32_t month, uint32_t day)
     return (day <= __normal_days_in_month[month - 1]);
   else
   {
-    const uint32_t *p_months= __DAYS_IN_MONTH(year, (enum calendar) GREGORIAN);
+    const uint32_t *p_months= days_in_month(year, (enum calendar) GREGORIAN);
     return (day <= p_months[1]);
   }
 }
@@ -303,7 +316,7 @@ bool is_valid_gregorian_date(uint32_t year, uint32_t month, uint32_t day)
  */
 uint32_t days_in_gregorian_year_month(uint32_t year, uint32_t month)
 {
-  const uint32_t *p_months= __DAYS_IN_MONTH(year, GREGORIAN);
+  const uint32_t *p_months= days_in_month(year, GREGORIAN);
   return p_months[month - 1];
 }
 
@@ -414,13 +427,9 @@ uint32_t week_number_from_gregorian_date(uint32_t year
  */
 uint32_t iso_week_number_from_gregorian_date(uint32_t year
                                            , uint32_t month
-                                           , uint32_t day
-                                           , uint32_t *year_out)
+                                           , uint32_t day)
 {
   struct tm broken_time;
-
-  if (year_out != NULL)
-    *year_out= year;
 
   broken_time.tm_year= year;
   broken_time.tm_mon= month - 1; /* struct tm has non-ordinal months */
@@ -440,18 +449,6 @@ uint32_t iso_week_number_from_gregorian_date(uint32_t year
     return 0; /* Not valid for ISO8601:1988 */
 
   uint32_t week_number= (uint32_t) atoi(result);
-
-  /* 
-   * ISO8601:1988 states that if the first week in January
-   * does not contain 4 days, then the resulting week number
-   * shall be 52 or 53, depending on the number of days in the
-   * previous year.  In this case, we adjust the outbound
-   * year parameter down a year.
-   */
-  if (year_out != NULL)
-    if (week_number == 53 || week_number == 52)
-      if (month == 1)
-        *year_out--;
 
   return week_number;
 }

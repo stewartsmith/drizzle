@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /**
   @file
@@ -27,6 +27,7 @@
 #include "drizzled/optimizer/range.h"
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/iocache.h"
+#include "drizzled/drizzled.h"
 
 namespace drizzled
 {
@@ -110,7 +111,7 @@ void ReadRecord::init_read_record(Session *session_arg,
                   rr_unpack_from_tempfile : rr_from_tempfile);
 
     io_cache=tempfile;
-    reinit_io_cache(io_cache,internal::READ_CACHE,0L,0,0);
+    io_cache->reinit_io_cache(internal::READ_CACHE,0L,0,0);
     ref_pos=table->cursor->ref;
     if (!table->cursor->inited)
       table->cursor->startTableScan(0);
@@ -172,6 +173,7 @@ void ReadRecord::end_read_record()
 {                   /* free cache if used */
   if (cache)
   {
+    global_read_rnd_buffer.sub(session->variables.read_rnd_buff_size);
     free((char*) cache);
     cache= NULL;
   }
@@ -206,7 +208,7 @@ static int rr_quick(ReadRecord *info)
   int tmp;
   while ((tmp= info->select->quick->get_next()))
   {
-    if (info->session->killed)
+    if (info->session->getKilled())
     {
       my_error(ER_SERVER_SHUTDOWN, MYF(0));
       return 1;
@@ -270,7 +272,7 @@ int rr_sequential(ReadRecord *info)
   int tmp;
   while ((tmp= info->cursor->rnd_next(info->record)))
   {
-    if (info->session->killed)
+    if (info->session->getKilled())
     {
       info->session->send_kill_message();
       return 1;
@@ -402,13 +404,19 @@ bool ReadRecord::init_rr_cache()
   local_rec_cache_size= cache_records * reclength;
   rec_cache_size= cache_records * ref_length;
 
+  if (not global_read_rnd_buffer.add(session->variables.read_rnd_buff_size))
+  {
+    my_error(ER_OUT_OF_GLOBAL_READRNDMEMORY, MYF(ME_ERROR+ME_WAITTANG));
+    return false;
+  }
+
   // We have to allocate one more byte to use uint3korr (see comments for it)
   if (cache_records <= 2 ||
       !(cache=(unsigned char*) malloc(local_rec_cache_size + cache_records * struct_length + 1)))
   {
     return false;
   }
-#ifdef HAVE_purify
+#ifdef HAVE_VALGRIND
   // Avoid warnings in qsort
   memset(cache, 0, local_rec_cache_size + cache_records * struct_length + 1);
 #endif

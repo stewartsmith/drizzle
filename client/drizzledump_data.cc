@@ -39,6 +39,11 @@ extern bool opt_databases;
 extern bool opt_alldbs;
 extern uint32_t show_progress_size;
 extern bool opt_ignore;
+extern bool opt_compress;
+extern bool opt_drop_database;
+extern bool opt_autocommit;
+extern bool ignore_errors;
+extern std::string opt_destination_database;
 
 extern boost::unordered_set<std::string> ignore_table;
 extern void maybe_exit(int error);
@@ -75,6 +80,21 @@ void DrizzleDumpDatabase::cleanTableName(std::string &tableName)
 
 }
 
+std::ostream& operator <<(std::ostream &os, const DrizzleDumpForeignKey &obj)
+{
+  os << "  CONSTRAINT `" << obj.constraintName << "` FOREIGN KEY ("
+    << obj.parentColumns << ") REFERENCES `" << obj.childTable << "` ("
+    << obj.childColumns << ")";
+
+  if (not obj.deleteRule.empty())
+    os << " ON DELETE " << obj.deleteRule;
+
+  if (not obj.updateRule.empty())
+    os << " ON UPDATE " << obj.updateRule;
+
+  return os;
+}
+
 std::ostream& operator <<(std::ostream &os, const DrizzleDumpIndex &obj)
 {
   if (obj.isPrimary)
@@ -100,6 +120,8 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpIndex &obj)
       os << ",";
     std::string field= *i;
     os << "`" << field << "`";
+    if (obj.length > 0)
+      os << "(" << obj.length << ")";
   }
 
   os << ")";
@@ -170,14 +192,23 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpDatabase &obj)
     /* Love that this variable is the opposite of its name */
     if (not opt_create_db)
     {
-      os << "CREATE DATABASE IF NOT EXISTS `" << obj.databaseName << "`";
+      if (opt_drop_database)
+      {
+        os << "DROP DATABASE IF EXISTS `"
+          << ((opt_destination_database.empty()) ? obj.databaseName
+          : opt_destination_database) << "`" << std::endl;
+      }
+
+      os << "CREATE DATABASE IF NOT EXISTS `"
+        << ((opt_destination_database.empty()) ? obj.databaseName
+        : opt_destination_database) << "`";
       if (not obj.collate.empty())
        os << " COLLATE = " << obj.collate;
 
       os << ";" << std::endl << std::endl;
     }
-
-    os << "USE `" << obj.databaseName << "`;" << std::endl << std::endl;
+    os << "USE `" << ((opt_destination_database.empty()) ? obj.databaseName
+      : opt_destination_database) << "`;" << std::endl << std::endl;
   }
 
   std::vector<DrizzleDumpTable*>::iterator i;
@@ -194,7 +225,10 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpDatabase &obj)
       if (data == NULL)
       {
         std::cerr << "Error: Could not get data for table " << table->displayName << std::endl;
-        maybe_exit(EX_DRIZZLEERR);
+        if (not ignore_errors)
+          maybe_exit(EX_DRIZZLEERR);
+        else
+          continue;
       }
       os << *data;
       delete data;
@@ -210,6 +244,7 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
   bool new_insert= true;
   bool first= true;
   uint64_t rownr= 0;
+  size_t byte_counter= 0;
 
   drizzle_row_t row;
 
@@ -235,23 +270,31 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
   if (opt_disable_keys)
     os << "ALTER TABLE `" << obj.table->displayName << "` DISABLE KEYS;" << std::endl;
 
+  /* Another option that does the opposite of its name, makes me sad :( */
+  if (opt_autocommit)
+    os << "START TRANSACTION;" << std::endl;
+
   std::streampos out_position= os.tellp();
 
   while((row= drizzle_row_next(obj.result)))
   {
     rownr++;
-    if ((rownr % show_progress_size) == 0)
+    if (verbose and (rownr % show_progress_size) == 0)
     {
-      std::cerr << "-- %" << rownr << _(" rows dumped for table ") << obj.table->displayName << std::endl;
+      std::cerr << "-- " << rownr << _(" rows dumped for table ") << obj.table->displayName << std::endl;
     }
 
     size_t* row_sizes= drizzle_row_field_sizes(obj.result);
-    if (not first)
+    for (uint32_t i= 0; i < drizzle_result_column_count(obj.result); i++)
+      byte_counter+= row_sizes[i];
+
+    if (not first and not new_insert)
     {
       if (extended_insert)
         os << "),(";
       else
         os << ");" << std::endl;
+      byte_counter+= 3;
     }
     else
       first= false;
@@ -267,6 +310,7 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
           os << "IGNORE ";
       }
       os << "INTO `" << obj.table->displayName << "` VALUES (";
+      byte_counter+= 28 + obj.table->displayName.length();
       if (extended_insert)
         new_insert= false;
     }
@@ -279,7 +323,7 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
       /* time/date conversion for MySQL connections */
       else if (obj.table->fields[i]->convertDateTime)
       {
-        os << obj.checkDateTime(os, row[i], i);
+        os << obj.checkDateTime(row[i], i);
       }
       else
       {
@@ -288,9 +332,18 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
           /* Hex blob processing or escape text */
           if (((obj.table->fields[i]->type.compare("BLOB") == 0) or
             (obj.table->fields[i]->type.compare("VARBINARY") == 0)))
+          {
             os << obj.convertHex((unsigned char*)row[i], row_sizes[i]);
+            byte_counter+= row_sizes[i];
+          }
+          else if ((obj.table->fields[i]->type.compare("ENUM") == 0) and
+            (strcmp(row[i], "") == 0))
+          {
+            os << "NULL";
+          }
           else
-            os << "'" << obj.escape(row[i], row_sizes[i]) << "'";
+            os << "'" << DrizzleDumpData::escape(row[i], row_sizes[i]) << "'";
+          byte_counter+= 3;
         }
         else
           os << row[i];
@@ -299,15 +352,19 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
         os << ",";
     }
     /* Break insert up if it is too long */
-    if (extended_insert and
-      ((os.tellp() - out_position) >= DRIZZLE_MAX_LINE_LENGTH))
+    if ((extended_insert and
+      (byte_counter >= DRIZZLE_MAX_LINE_LENGTH)) or (not extended_insert))
     {
       os << ");" << std::endl;
       new_insert= true;
-      out_position= os.tellp();
+      byte_counter= 0;
     }
   }
-  os << ");" << std::endl;
+  if (not new_insert)
+    os << ");" << std::endl;
+
+  if (opt_autocommit)
+    os << "COMMIT;" << std::endl;
 
   if (opt_disable_keys)
     os << "ALTER TABLE `" << obj.table->tableName << "` ENABLE KEYS;" << std::endl;
@@ -322,11 +379,14 @@ std::string DrizzleDumpData::convertHex(const unsigned char* from, size_t from_s
   std::ostringstream output;
   if (from_size > 0)
     output << "0x";
+  else
+    output << "''";
+
   while (from_size > 0)
   {
     /* Would be nice if std::hex liked uint8_t, ah well */
     output << std::uppercase << std::hex << std::setw(2) << std::setfill('0') << (unsigned short)(*from);
-    *from++;
+    (void) *from++;
     from_size--;
   }
 
@@ -334,7 +394,7 @@ std::string DrizzleDumpData::convertHex(const unsigned char* from, size_t from_s
 }
 
 /* Ripped out of libdrizzle, hopefully a little safer */
-std::string DrizzleDumpData::escape(const char* from, size_t from_size) const
+std::string DrizzleDumpData::escape(const char* from, size_t from_size)
 {
   std::string output;
 
@@ -345,19 +405,34 @@ std::string DrizzleDumpData::escape(const char* from, size_t from_size) const
       switch (*from)
       {
          case 0:
+           output.append("\\0");
+           break;
          case '\n':
+           output.append("\\n");
+           break;
          case '\r':
+           output.append("\\r");
+           break;
          case '\\':
+           output.append("\\\\");
+           break;
          case '\'':
+           output.append("\\'");
+           break;
          case '"':
+           output.append("\\\"");
+           break;
          case '\032':
-           output.push_back('\\');
+           output.append("\\Z");
+           break;
          default:
+           output.push_back(*from);
            break;
        }
     }
-    output.push_back(*from);
-    *from++;
+    else
+      output.push_back(*from);
+    (void) *from++;
     from_size--;
   }
 
@@ -391,19 +466,35 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpTable &obj)
   std::vector<DrizzleDumpIndex*> output_indexes = obj.indexes;
   for (j= output_indexes.begin(); j != output_indexes.end(); ++j)
   {
-    os << "," << std::endl;;
+    os << "," << std::endl;
     DrizzleDumpIndex *index= *j;
     os << *index;
   }
+
+  std::vector<DrizzleDumpForeignKey*>::iterator k;
+  std::vector<DrizzleDumpForeignKey*> output_fkeys = obj.fkeys;
+  for (k= output_fkeys.begin(); k != output_fkeys.end(); ++k)
+  {
+    os << "," << std::endl;
+    DrizzleDumpForeignKey *fkey= *k;
+    os << *fkey;
+  }
+
   os << std::endl;
-  os << ") ENGINE=" << obj.engineName << " ";
-  if ((obj.dcon->getServerType() == DrizzleDumpConnection::SERVER_MYSQL_FOUND)
-    and (obj.autoIncrement > 0))
+  os << ") ENGINE='" << obj.engineName << "' ";
+  if (obj.autoIncrement > 0)
   {
     os << "AUTO_INCREMENT=" << obj.autoIncrement << " ";
   }
 
-  os << "COLLATE = " << obj.collate << ";" << std::endl << std::endl;
+  os << "COLLATE='" << obj.collate << "'";
+
+  if (not obj.comment.empty())
+  {
+    os << " COMMENT='" << obj.comment << "'";
+  }
+
+  os << ";" << std::endl << std::endl;
 
   return os;
 }
@@ -435,7 +526,7 @@ DrizzleDumpConnection::DrizzleDumpConnection(std::string &host, uint16_t port,
   if (ret != DRIZZLE_RETURN_OK)
   {
     errorHandler(NULL, ret, "when trying to connect");
-    throw;
+    throw 1;
   }
 
   boost::match_flag_type flags = boost::match_default; 
@@ -531,10 +622,15 @@ bool DrizzleDumpConnection::setDB(std::string databaseName)
   return true;
 }
 
-void DrizzleDumpConnection::errorHandler(drizzle_result_st *res, drizzle_return_t ret,
-                     const char *when)
+void DrizzleDumpConnection::errorHandler(drizzle_result_st *res,
+  drizzle_return_t ret, const char *when)
 {
-  if (ret == DRIZZLE_RETURN_ERROR_CODE)
+  if (res == NULL)
+  {
+    std::cerr << _("Got error: ") << drizzle_con_error(&connection) << " "
+      << when << std::endl;
+  }
+  else if (ret == DRIZZLE_RETURN_ERROR_CODE)
   {
     std::cerr << _("Got error: ") << drizzle_result_error(res)
       << " (" << drizzle_result_error_code(res) << ") " << when << std::endl;

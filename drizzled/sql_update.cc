@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 
 /*
@@ -29,7 +29,10 @@
 #include "drizzled/records.h"
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/iocache.h"
+#include "drizzled/transaction_services.h"
+#include "drizzled/filesort.h"
 
+#include <boost/dynamic_bitset.hpp>
 #include <list>
 
 using namespace std;
@@ -51,18 +54,16 @@ namespace drizzled
 
 static void prepare_record_for_error_message(int error, Table *table)
 {
-  Field **field_p;
-  Field *field;
-  uint32_t keynr;
-  MyBitmap unique_map; /* Fields in offended unique. */
-  my_bitmap_map unique_map_buf[bitmap_buffer_size(MAX_FIELDS)];
+  Field **field_p= NULL;
+  Field *field= NULL;
+  uint32_t keynr= 0;
 
   /*
     Only duplicate key errors print the key value.
     If storage engine does always read all columns, we have the value alraedy.
   */
   if ((error != HA_ERR_FOUND_DUPP_KEY) ||
-      !(table->cursor->getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ)))
+      ! (table->cursor->getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ)))
     return;
 
   /*
@@ -73,36 +74,35 @@ static void prepare_record_for_error_message(int error, Table *table)
     return;
 
   /* Create unique_map with all fields used by that index. */
-  unique_map.init(unique_map_buf, table->getMutableShare()->sizeFields());
-  table->mark_columns_used_by_index_no_reset(keynr, &unique_map);
+  boost::dynamic_bitset<> unique_map(table->getShare()->sizeFields()); /* Fields in offended unique. */
+  table->mark_columns_used_by_index_no_reset(keynr, unique_map);
 
   /* Subtract read_set and write_set. */
-  bitmap_subtract(&unique_map, table->read_set);
-  bitmap_subtract(&unique_map, table->write_set);
+  unique_map-= *table->read_set;
+  unique_map-= *table->write_set;
 
   /*
     If the unique index uses columns that are neither in read_set
     nor in write_set, we must re-read the record.
     Otherwise no need to do anything.
   */
-  if (unique_map.isClearAll())
+  if (unique_map.none())
     return;
 
   /* Get identifier of last read record into table->cursor->ref. */
   table->cursor->position(table->getInsertRecord());
   /* Add all fields used by unique index to read_set. */
-  bitmap_union(table->read_set, &unique_map);
+  *table->read_set|= unique_map;
   /* Read record that is identified by table->cursor->ref. */
   (void) table->cursor->rnd_pos(table->getUpdateRecord(), table->cursor->ref);
   /* Copy the newly read columns into the new record. */
   for (field_p= table->getFields(); (field= *field_p); field_p++)
   {
-    if (unique_map.isBitSet(field->field_index))
+    if (unique_map.test(field->field_index))
     {
       field->copy_from_tmp(table->getShare()->rec_buff_length);
     }
   }
-
 
   return;
 }
@@ -129,7 +129,7 @@ static void prepare_record_for_error_message(int error, Table *table)
 
 int mysql_update(Session *session, TableList *table_list,
                  List<Item> &fields, List<Item> &values, COND *conds,
-                 uint32_t order_num, order_st *order,
+                 uint32_t order_num, Order *order,
                  ha_rows limit, enum enum_duplicates,
                  bool ignore)
 {
@@ -148,7 +148,7 @@ int mysql_update(Session *session, TableList *table_list,
   Select_Lex    *select_lex= &session->lex->select_lex;
   uint64_t     id;
   List<Item> all_fields;
-  Session::killed_state killed_status= Session::NOT_KILLED;
+  Session::killed_state_t killed_status= Session::NOT_KILLED;
 
   DRIZZLE_UPDATE_START(session->query.c_str());
   if (session->openTablesLock(table_list))
@@ -165,12 +165,19 @@ int mysql_update(Session *session, TableList *table_list,
   table->quick_keys.reset();
 
   if (mysql_prepare_update(session, table_list, &conds, order_num, order))
-    goto abort;
+  {
+    DRIZZLE_UPDATE_DONE(1, 0, 0);
+    return 1;
+  }
 
   old_covering_keys= table->covering_keys;		// Keys used in WHERE
   /* Check the fields we are going to modify */
   if (setup_fields_with_no_wrap(session, 0, fields, MARK_COLUMNS_WRITE, 0, 0))
-    goto abort;
+  {
+    DRIZZLE_UPDATE_DONE(1, 0, 0);
+    return 1;
+  }
+
   if (table->timestamp_field)
   {
     // Don't set timestamp column if this is modified
@@ -191,7 +198,9 @@ int mysql_update(Session *session, TableList *table_list,
   if (setup_fields(session, 0, values, MARK_COLUMNS_READ, 0, 0))
   {
     free_underlaid_joins(session, select_lex);
-    goto abort;
+    DRIZZLE_UPDATE_DONE(1, 0, 0);
+
+    return 1;
   }
 
   if (select_lex->inner_refs_list.elements &&
@@ -219,7 +228,7 @@ int mysql_update(Session *session, TableList *table_list,
       (table->timestamp_field_type == TIMESTAMP_AUTO_SET_ON_UPDATE ||
        table->timestamp_field_type == TIMESTAMP_AUTO_SET_ON_BOTH))
   {
-    bitmap_union(table->read_set, table->write_set);
+    *table->read_set|= *table->write_set;
   }
   // Don't count on usage of 'only index' when calculating which key to use
   table->covering_keys.reset();
@@ -239,7 +248,10 @@ int mysql_update(Session *session, TableList *table_list,
     session->main_da.reset_diagnostics_area();
     free_underlaid_joins(session, select_lex);
     if (error)
-      goto abort;				// Error in where
+    {
+      DRIZZLE_UPDATE_DONE(1, 0, 0);
+      return 1;
+    }
     DRIZZLE_UPDATE_DONE(0, 0, 0);
     session->my_ok();				// No matching records
     return 0;
@@ -263,7 +275,7 @@ int mysql_update(Session *session, TableList *table_list,
   {
     used_index= select->quick->index;
     used_key_is_modified= (!select->quick->unique_key_range() &&
-                          select->quick->is_keys_used(table->write_set));
+                          select->quick->is_keys_used(*table->write_set));
   }
   else
   {
@@ -271,7 +283,7 @@ int mysql_update(Session *session, TableList *table_list,
     if (used_index == MAX_KEY)                  // no index for sort order
       used_index= table->cursor->key_used_on_scan;
     if (used_index != MAX_KEY)
-      used_key_is_modified= is_key_used(table, used_index, table->write_set);
+      used_key_is_modified= is_key_used(table, used_index, *table->write_set);
   }
 
 
@@ -302,14 +314,14 @@ int mysql_update(Session *session, TableList *table_list,
       uint32_t         length= 0;
       SortField  *sortorder;
       ha_rows examined_rows;
+      FileSort filesort(*session);
 
-      table->sort.io_cache = new internal::IO_CACHE;
+      table->sort.io_cache= new internal::IO_CACHE;
 
       if (!(sortorder=make_unireg_sortorder(order, &length, NULL)) ||
-          (table->sort.found_records= filesort(session, table, sortorder, length,
-                                               select, limit, 1,
-                                               &examined_rows))
-          == HA_POS_ERROR)
+	  (table->sort.found_records= filesort.run(table, sortorder, length,
+						   select, limit, 1,
+						   examined_rows)) == HA_POS_ERROR)
       {
 	goto err;
       }
@@ -329,9 +341,10 @@ int mysql_update(Session *session, TableList *table_list,
       */
 
       internal::IO_CACHE tempfile;
-      if (open_cached_file(&tempfile, drizzle_tmpdir.c_str(),TEMP_PREFIX,
-			   DISK_BUFFER_SIZE, MYF(MY_WME)))
+      if (tempfile.open_cached_file(drizzle_tmpdir.c_str(),TEMP_PREFIX, DISK_BUFFER_SIZE, MYF(MY_WME)))
+      {
 	goto err;
+      }
 
       /* If quick select is used, initialize it before retrieving rows. */
       if (select && select->quick && select->quick->reset())
@@ -361,7 +374,7 @@ int mysql_update(Session *session, TableList *table_list,
       session->set_proc_info("Searching rows for update");
       ha_rows tmp_limit= limit;
 
-      while (!(error=info.read_record(&info)) && !session->killed)
+      while (not(error= info.read_record(&info)) && not session->getKilled())
       {
 	if (!(select && select->skip_record()))
 	{
@@ -384,7 +397,7 @@ int mysql_update(Session *session, TableList *table_list,
 	else
 	  table->cursor->unlock_row();
       }
-      if (session->killed && !error)
+      if (session->getKilled() && not error)
 	error= 1;				// Aborted
       limit= tmp_limit;
       table->cursor->try_semi_consistent_read(0);
@@ -404,7 +417,7 @@ int mysql_update(Session *session, TableList *table_list,
 	select= new optimizer::SqlSelect;
 	select->head=table;
       }
-      if (reinit_io_cache(&tempfile,internal::READ_CACHE,0L,0,0))
+      if (tempfile.reinit_io_cache(internal::READ_CACHE,0L,0,0))
 	error=1;
       // Read row ptrs from this cursor
       memcpy(select->file, &tempfile, sizeof(tempfile));
@@ -451,19 +464,32 @@ int mysql_update(Session *session, TableList *table_list,
     the table handler is returning all columns OR if
     if all updated columns are read
   */
-  can_compare_record= (!(table->cursor->getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ)) ||
-                       bitmap_is_subset(table->write_set, table->read_set));
+  can_compare_record= (! (table->cursor->getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ)) ||
+                       table->write_set->is_subset_of(*table->read_set));
 
-  while (!(error=info.read_record(&info)) && !session->killed)
+  while (not (error=info.read_record(&info)) && not session->getKilled())
   {
-    if (!(select && select->skip_record()))
+    if (not (select && select->skip_record()))
     {
       if (table->cursor->was_semi_consistent_read())
         continue;  /* repeat the read of the same row if it still exists */
 
       table->storeRecord();
       if (fill_record(session, fields, values))
+      {
+        /*
+         * If we updated some rows before this one failed (updated > 0),
+         * then we will need to undo adding those records to the
+         * replication Statement message.
+         */
+        if (updated > 0)
+        {
+          TransactionServices &ts= TransactionServices::singleton();
+          ts.removeStatementRecords(session, updated);
+        }
+
         break;
+      }
 
       found++;
 
@@ -476,15 +502,15 @@ int mysql_update(Session *session, TableList *table_list,
         table->auto_increment_field_not_null= false;
 
         if (!error || error == HA_ERR_RECORD_IS_THE_SAME)
-	{
+        {
           if (error != HA_ERR_RECORD_IS_THE_SAME)
             updated++;
           else
             error= 0;
-	}
-	else if (! ignore ||
+        }
+        else if (! ignore ||
                  table->cursor->is_fatal_error(error, HA_CHECK_DUP_KEY))
-	{
+        {
           /*
             If (ignore && error is ignorable) we don't have to
             do anything; otherwise...
@@ -495,10 +521,10 @@ int mysql_update(Session *session, TableList *table_list,
             flags|= ME_FATALERROR; /* Other handler errors are fatal */
 
           prepare_record_for_error_message(error, table);
-	  table->print_error(error,MYF(flags));
-	  error= 1;
-	  break;
-	}
+          table->print_error(error,MYF(flags));
+          error= 1;
+          break;
+        }
       }
 
       if (!--limit && using_limit)
@@ -520,7 +546,7 @@ int mysql_update(Session *session, TableList *table_list,
     It's assumed that if an error was set in combination with an effective
     killed status then the error is due to killing.
   */
-  killed_status= session->killed; // get the status of the volatile
+  killed_status= session->getKilled(); // get the status of the volatile
   // simulated killing after the loop must be ineffective for binlogging
   error= (killed_status == Session::NOT_KILLED)?  error : 1;
 
@@ -585,7 +611,6 @@ err:
   }
   session->abort_on_warning= 0;
 
-abort:
   DRIZZLE_UPDATE_DONE(1, 0, 0);
   return 1;
 }
@@ -606,7 +631,7 @@ abort:
     true  error
 */
 bool mysql_prepare_update(Session *session, TableList *table_list,
-			 Item **conds, uint32_t order_num, order_st *order)
+			 Item **conds, uint32_t order_num, Order *order)
 {
   List<Item> all_fields;
   Select_Lex *select_lex= &session->lex->select_lex;
@@ -629,7 +654,7 @@ bool mysql_prepare_update(Session *session, TableList *table_list,
     TableList *duplicate;
     if ((duplicate= unique_table(table_list, table_list->next_global)))
     {
-      my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->table_name);
+      my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->getTableName());
       return true;
     }
   }

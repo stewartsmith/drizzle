@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Original author: Paul McCullagh (H&G2JCtL)
  * Continued development: Barry Leslie
@@ -45,13 +45,14 @@ class CSString;
  */
 #define unichar			uint16_t
 
-// CSStringBuffer_ is just a base class to define
-// referenced and non referenced versions on.
-class CSStringBuffer_ {
+/* CSStringBufferImpl is the string buffer implementation.
+ * Of this implementation we have various types.
+ */
+class CSStringBufferImpl {
 public:
-	CSStringBuffer_();
-	CSStringBuffer_(uint32_t grow);
-	~CSStringBuffer_();
+	CSStringBufferImpl();
+	CSStringBufferImpl(uint32_t grow);
+	~CSStringBufferImpl();
 
 	void clear();
 
@@ -64,6 +65,8 @@ public:
 	void append(int value);
 
 	void append(uint32_t value);
+
+	void append(uint64_t value);
 
 	char *getCString();
 
@@ -85,6 +88,14 @@ public:
 
 	CSString *substr(uint32_t pos, uint32_t len);
 
+	void take(CSStringBufferImpl *buf) {
+		clear();
+		iGrow = buf->iGrow;
+		iSize = buf->iSize;
+		myStrLen = buf->myStrLen;
+		iBuffer = buf->take();
+	}
+
 private:
 	char *iBuffer;
 	uint32_t iGrow;
@@ -92,16 +103,24 @@ private:
 	uint32_t myStrLen;
 };
 
-class CSStringBuffer : public CSStringBuffer_, public CSObject {
+class CSStringBuffer : public CSStringBufferImpl, public CSObject {
 public:
-	CSStringBuffer(): CSStringBuffer_(){ }
-	CSStringBuffer(uint32_t grow): CSStringBuffer_(grow){ }
+	CSStringBuffer(): CSStringBufferImpl(), CSObject() { }
+	CSStringBuffer(uint32_t grow): CSStringBufferImpl(grow), CSObject() { }
 };
 
-class CSRefStringBuffer : public CSStringBuffer_, public CSRefObject {
+class CSStaticStringBuffer : public CSStringBufferImpl, public CSStaticObject {
+	virtual void finalize() { clear(); }
+
 public:
-	CSRefStringBuffer(): CSStringBuffer_(){ }
-	CSRefStringBuffer(uint32_t grow): CSStringBuffer_(grow){ }
+	CSStaticStringBuffer(): CSStringBufferImpl(), CSStaticObject() { }
+	CSStaticStringBuffer(uint32_t grow): CSStringBufferImpl(grow), CSStaticObject() { }
+};
+
+class CSRefStringBuffer : public CSStringBufferImpl, public CSRefObject {
+public:
+	CSRefStringBuffer(): CSStringBufferImpl(), CSRefObject() { }
+	CSRefStringBuffer(uint32_t grow): CSStringBufferImpl(grow), CSRefObject() { }
 };
 
 class CSSyncStringBuffer : public CSStringBuffer, public CSSync {
@@ -114,8 +133,9 @@ public:
 
 class CSString : public CSRefObject {
 public:
-	CSString() { }
-	virtual ~CSString() { }
+	CSString();
+	CSString(const char *cstr);
+	virtual ~CSString();
 
 	/*
 	 * Construct a string from a C-style UTF-8
@@ -134,14 +154,14 @@ public:
 	 * The returned string must be
 	 * not be freed by the caller.
 	 */
-	virtual const char *getCString() = 0;
+	virtual const char *getCString();
 
 	/*
 	 * Return the character at a certain point:
 	 */
-	virtual CS_CHAR charAt(uint32_t pos) = 0;
-	virtual CS_CHAR upperCharAt(uint32_t pos) = 0;
-	virtual void setCharAt(uint32_t pos, CS_CHAR ch) = 0;
+	virtual CS_CHAR charAt(uint32_t pos);
+	virtual CS_CHAR upperCharAt(uint32_t pos);
+	virtual void setCharAt(uint32_t pos, CS_CHAR ch);
 
 	/*
 	 * Returns < 0 if this string is
@@ -149,24 +169,24 @@ public:
 	 * > 0 if sortede after.
 	 * The comparison is case-insensitive.
 	 */
-	virtual int compare(CSString *val) = 0;
-	virtual int compare(const char *val, uint32_t len = ((uint32_t) 0xFFFFFFFF)) = 0;
+	virtual int compare(CSString *val);
+	virtual int compare(const char *val, uint32_t len = ((uint32_t) 0xFFFFFFFF));
 
 	/*
 	 * Case sensitive match.
 	 */
-	virtual bool startsWith(uint32_t index, const char *) = 0;
+	virtual bool startsWith(uint32_t index, const char *);
 
 	/* Returns the string length in characters. */
-	virtual uint32_t length() = 0;
-	virtual void setLength(uint32_t len) = 0;
+	virtual uint32_t length() { return myStrLen; }
+	virtual void setLength(uint32_t len);
 
 	virtual bool equals(const char *str);
 
 	/*
 	 * Return a copy of this string.
 	 */
-	virtual CSString *clone(uint32_t pos, uint32_t len) = 0;
+	virtual CSString *clone(uint32_t pos, uint32_t len);
 
 	/*
 	 * Concatinate 2 strings.
@@ -196,7 +216,7 @@ public:
 	 * the length of the string, and search
 	 * from right to left will return 0.
 	 */
-	virtual uint32_t locate(const char *, s_int count);
+	virtual uint32_t locate(const char *, int32_t count);
 	virtual uint32_t locate(uint32_t pos, const char *);
 	virtual uint32_t locate(uint32_t pos, CS_CHAR ch);
 
@@ -205,10 +225,10 @@ public:
 	virtual CSString *substr(uint32_t index, uint32_t size);
 	virtual CSString *substr(uint32_t index);
 
-	virtual CSString *left(const char *, s_int count);
+	virtual CSString *left(const char *, int32_t count);
 	virtual CSString *left(const char *);
 
-	virtual CSString *right(const char *, s_int count);
+	virtual CSString *right(const char *, int32_t count);
 	virtual CSString *right(const char *);
 
 	virtual bool startsWith(const char *);
@@ -221,48 +241,14 @@ public:
 
 	virtual CSString *clone(uint32_t len);
 	virtual CSString *clone();
-};
-
-class CSCString : public CSString {
-public:
-	char *myCString;
-	uint32_t myStrLen;
-
-	CSCString();
-	~CSCString();
-
-
-	virtual const char *getCString();
-
-	virtual CS_CHAR charAt(uint32_t pos);
-
-	virtual CS_CHAR upperCharAt(uint32_t pos);
-
-	virtual void setCharAt(uint32_t pos, CS_CHAR ch);
-
-	virtual int compare(CSString *val);
-	virtual int compare(const char *val, uint32_t len = ((uint32_t) 0xFFFFFFFF));
-
-	virtual bool startsWith(uint32_t index, const char *);
-	virtual bool startsWith(const char *str) { return CSString::startsWith(str);}
-
-	virtual uint32_t length() { return myStrLen; }
-
-	virtual void setLength(uint32_t len);
-
-	virtual CSString *clone(uint32_t pos, uint32_t len);
-	virtual CSString *clone(uint32_t len){ return CSString::clone(len);}
-	virtual CSString *clone(){ return CSString::clone();}
 
 	virtual CSObject *getKey();
 
 	virtual int compareKey(CSObject *);
 
-	static CSCString *newString(const char *cstr);
-
-	static CSCString *newString(const char *bytes, uint32_t len);
-
-	static CSCString *newString(CSStringBuffer *sb);
+private:
+	char *myCString;
+	uint32_t myStrLen;
 };
 
 #endif

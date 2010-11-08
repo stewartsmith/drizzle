@@ -2,6 +2,12 @@
 # test of various UPDATE statements and
 # how the transaction_log captures the relevant data
 
+# Ignore startup/shutdown events
+--disable_query_log
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
+--enable_query_log
+
+
 
 --echo Testing UPDATE basic 
 --disable_warnings
@@ -335,3 +341,61 @@ DROP TABLE t1;
 --source ../plugin/transaction_log/tests/t/truncate_log.inc
 --echo
 
+--echo Testing UPDATE LP Bug#655352
+--disable_warnings
+DROP TABLE IF EXISTS t1;
+--enable_warnings
+
+CREATE TABLE t1 (
+  id INT NOT NULL
+, col0_int INT DEFAULT NULL
+, col1_int INT DEFAULT NULL
+, col2_int INT DEFAULT NULL
+, col3_int INT DEFAULT NULL
+, col4_int INT DEFAULT NULL
+, PRIMARY KEY (id)
+);
+
+INSERT INTO t1 VALUES (1, 2, 3, 4, 5, 6);
+INSERT INTO t1 VALUES (2, 20, 30, 40, 50, 60);
+
+# check that these 2 updates are in different statements
+START TRANSACTION;
+UPDATE t1 SET col0_int = 20 WHERE id = 1;
+UPDATE t1 SET col1_int = 300 WHERE id = 2;
+COMMIT;
+--source ../plugin/transaction_log/tests/t/check_transaction_log.inc
+--echo
+
+# check that these 2 updates are in the same statement
+START TRANSACTION;
+UPDATE t1 SET col0_int = 2000 WHERE id = 1;
+UPDATE t1 SET col0_int = 200 WHERE id = 2;
+COMMIT;
+--source ../plugin/transaction_log/tests/t/check_transaction_log.inc
+--echo
+
+# check that these 2 updates are not in the same statement, given the 2nd
+# updates columns are a subset of the first updates columns
+START TRANSACTION;
+UPDATE t1 SET col0_int = 20000,  col1_int = 30,  col2_int = 40 where id = 1;
+UPDATE t1 SET  col0_int = 2000,  col1_int = 3000  where id = 2;
+COMMIT;
+--source ../plugin/transaction_log/tests/t/check_transaction_log.inc
+--echo
+
+
+#check that these 2 updates are not in the same statement, given the 1st
+# updates columns are a subset of the 2nd updates columns
+START TRANSACTION;
+UPDATE t1 SET col0_int = 200000, col1_int = 300 where id = 1;
+UPDATE t1 SET col0_int = 20000, col1_int = 30000, col2_int = 400 where id = 2;
+COMMIT;
+--source ../plugin/transaction_log/tests/t/check_transaction_log.inc
+--echo
+
+DROP TABLE t1;
+
+# Truncate the log file to reset for the next test
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
+--echo

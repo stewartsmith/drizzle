@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Barry Leslie
  *
@@ -30,6 +30,7 @@
 #include <drizzled/common.h>
 #include <drizzled/plugin.h>
 #include <drizzled/session.h>
+using namespace std;
 using namespace drizzled;
 using namespace drizzled::plugin;
 
@@ -44,6 +45,7 @@ using namespace drizzled::plugin;
 #endif 
 
 #include <inttypes.h>
+#include <string.h>
 
 #include "cslib/CSDefs.h"
 #include "cslib/CSObject.h"
@@ -62,7 +64,7 @@ using namespace drizzled::plugin;
 #endif
 
 
-static int my_port_number = PBMS_PORT;
+uint32_t pbms_port_number = PBMS_PORT;
 
 static char		*my_repository_threshold = NULL;
 static char		*my_temp_log_threshold = NULL;
@@ -121,7 +123,7 @@ struct st_mysql_sys_var
 #endif
 
 //--------------
-uint32_t PBMSParameters::getPortNumber(){ return my_port_number;}
+uint32_t PBMSParameters::getPortNumber(){ return pbms_port_number;}
 
 //--------------
 uint32_t PBMSParameters::getServerID(){ return my_server_id;}
@@ -316,6 +318,25 @@ void PBMSParameters::blackListedDB(const char *db)
 }		
 
 //-----------------
+bool PBMSParameters::try_LocateDB(CSThread *self, const char *db, bool *found)
+{
+	volatile bool rtc = true;
+	try_(a) {
+		lock_(&my_table_list_lock);	
+		
+			
+		*found = (locate_db(my_table_list, db, strlen(db)) != NULL);
+			
+		unlock_(&my_table_list_lock);
+		rtc = false;
+	}
+	
+	catch_(a)
+	cont_(a);
+	return rtc;
+}
+
+//-----------------
 bool PBMSParameters::isBLOBDatabase(const char *db)
 {
 	CSThread *self;
@@ -338,19 +359,9 @@ bool PBMSParameters::isBLOBDatabase(const char *db)
 	if ((err = MSEngine::enterConnectionNoThd(&self, &result)) == 0) {
 
 		inner_();
-		try_(a) {
-			lock_(&my_table_list_lock);	
-			
-				
-			found = (locate_db(my_table_list, db, strlen(db)) != NULL);
-				
-			unlock_(&my_table_list_lock);
-		}
-		
-		catch_(a) {
+		if (try_LocateDB(self, db, &found)) {
 			err = MSEngine::exceptionToResult(&self->myException, &result);
-		}
-		cont_(a);
+		}		
 		outer_();
 	
 	}
@@ -364,14 +375,56 @@ bool PBMSParameters::isBLOBDatabase(const char *db)
 }
 	
 //-----------------
+bool PBMSParameters::try_LocateTable(CSThread *self, const char *db, const char *table, bool *found)
+{
+	volatile bool rtc = true;
+	try_(a) {
+		const char *ptr;
+		int db_len, table_len, match_len;
+		
+		lock_(&my_table_list_lock);	
+				
+		db_len = strlen(db);
+		table_len = strlen(table);
+		
+		ptr = my_table_list;
+		while (ptr) {
+			ptr = locate_db(ptr, db, db_len);
+			if (ptr) {
+				match_len = 0;
+				if (*ptr == '*')
+					match_len = 1;
+				else if (strncmp(ptr, table, table_len) == 0)
+					match_len = table_len;
+					
+				if (match_len) {
+					ptr += match_len;
+					if ((!*ptr) || (*ptr == ',') || isspace(*ptr)) {
+						*found = true;
+						break;
+					}
+				}
+				
+				NEXT_IN_TABLE_LIST(ptr);
+			}
+		}
+			
+		unlock_(&my_table_list_lock);
+		rtc = false;
+	}
+	
+	catch_(a)
+	cont_(a);
+	return rtc;
+}
+
+//-----------------
 bool PBMSParameters::isBLOBTable(const char *db, const char *table)
 {
 	CSThread *self;
 	int		err;
 	PBMSResultRec result;
 	bool found = false;
-	const char *ptr;
-	int db_len, table_len, match_len;
 	
 	if (isBlackListedDB(db))
 		return false;
@@ -388,40 +441,9 @@ bool PBMSParameters::isBLOBTable(const char *db, const char *table)
 	if ((err = MSEngine::enterConnectionNoThd(&self, &result)) == 0) {
 
 		inner_();
-		try_(a) {
-			lock_(&my_table_list_lock);	
-					
-			db_len = strlen(db);
-			table_len = strlen(table);
-			
-			ptr = my_table_list;
-			while (ptr) {
-				ptr = locate_db(ptr, db, db_len);
-				if (ptr) {
-					match_len = 0;
-					if (*ptr == '*')
-						match_len = 1;
-					else if (strncmp(ptr, table, table_len) == 0)
-						match_len = table_len;
-						
-					if (match_len) {
-						ptr += match_len;
-						if ((!*ptr) || (*ptr == ',') || isspace(*ptr)) {
-							found = true;
-							break;
-						}
-					}
-					
-					NEXT_IN_TABLE_LIST(ptr);
-				}
-			}
-				
-			unlock_(&my_table_list_lock);
-		}
-		catch_(a) {
+		if (try_LocateTable(self, db, table, &found)) {
 			err = MSEngine::exceptionToResult(&self->myException, &result);
-		}
-		cont_(a);
+		}		
 		outer_();
 	
 	}
@@ -465,8 +487,8 @@ static void pbms_temp_blob_timeout_func(THD *thd, struct st_mysql_sys_var *var, 
 
 //-----------------
 //-----------------
-static MYSQL_SYSVAR_INT(port, my_port_number,
-	PLUGIN_VAR_OPCMDARG | PLUGIN_VAR_READONLY,
+static MYSQL_SYSVAR_UINT(port, pbms_port_number,
+	PLUGIN_VAR_READONLY,
 	"The port for the server stream-based communications.",
 	NULL, NULL, PBMS_PORT, 0, 64*1024, 1);
 

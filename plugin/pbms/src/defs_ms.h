@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Original author: Paul McCullagh (H&G2JCtL)
  * Continued development: Barry Leslie
@@ -115,6 +115,7 @@
 #define MS_DEFAULT_KEEP_ALIVE		(10) 
 
 #ifdef DRIZZLED
+#include <boost/dynamic_bitset.hpp>
 /* Drizzle is stuck at this level: */
 #define MYSQL_VERSION_ID					60005
 
@@ -131,7 +132,7 @@
 #define MYSQL_THD							Session *
 #define THR_THD								THR_Session
 #define STRUCT_TABLE						class Table
-#define MY_BITMAP							MyBitmap
+#define MY_BITMAP							boost::dynamic_bitset<>
 
 #define MYSQL_TYPE_TIMESTAMP				DRIZZLE_TYPE_TIMESTAMP
 #define MYSQL_TYPE_LONG						DRIZZLE_TYPE_LONG
@@ -145,6 +146,7 @@
 #define MYSQL_PLUGIN_VAR_HEADER				DRIZZLE_PLUGIN_VAR_HEADER
 #define MYSQL_SYSVAR_STR					DRIZZLE_SYSVAR_STR
 #define MYSQL_SYSVAR_INT					DRIZZLE_SYSVAR_INT
+#define MYSQL_SYSVAR_UINT					DRIZZLE_SYSVAR_UINT
 #define MYSQL_SYSVAR						DRIZZLE_SYSVAR
 #define MYSQL_SYSVAR_ULONG					DRIZZLE_SYSVAR_ULONG
 #define MYSQL_SYSVAR_ULONGLONG				DRIZZLE_SYSVAR_ULONGLONG

@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include "config.h"
 
@@ -48,6 +48,7 @@
 #include "drizzled/plugin/authorization.h"
 #include "drizzled/optimizer/explain_plan.h"
 #include "drizzled/pthread_globals.h"
+#include "drizzled/plugin/event_observer.h"
 
 #include <limits.h>
 
@@ -190,6 +191,10 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   /* TODO: set session->lex->sql_command to SQLCOM_END here */
 
   plugin::Logging::preDo(session);
+  if (unlikely(plugin::EventObserver::beforeStatement(*session)))
+  {
+    // We should do something about an error...
+  }
 
   session->server_status&=
            ~(SERVER_QUERY_NO_INDEX_USED | SERVER_QUERY_NO_GOOD_INDEX_USED);
@@ -266,9 +271,9 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     if (! session->main_da.is_set())
       session->send_kill_message();
   }
-  if (session->killed == Session::KILL_QUERY || session->killed == Session::KILL_BAD_DATA)
+  if (session->getKilled() == Session::KILL_QUERY || session->getKilled() == Session::KILL_BAD_DATA)
   {
-    session->killed= Session::NOT_KILLED;
+    session->setKilled(Session::NOT_KILLED);
     session->setAbort(false);
   }
 
@@ -307,6 +312,10 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   session->close_thread_tables();
 
   plugin::Logging::postDo(session);
+  if (unlikely(plugin::EventObserver::afterStatement(*session)))
+  {
+    // We should do something about an error...
+  }
 
   /* Store temp state for processlist */
   session->set_proc_info("cleaning up");
@@ -359,6 +368,7 @@ static bool _schema_select(Session *session, Select_Lex *sel,
                            const string& schema_table_name)
 {
   LEX_STRING db, table;
+  bitset<NUM_OF_TABLE_OPTIONS> table_options;
   /*
      We have to make non const db_name & table_name
      because of lower_case_table_names
@@ -367,7 +377,7 @@ static bool _schema_select(Session *session, Select_Lex *sel,
   session->make_lex_string(&table, schema_table_name, false);
 
   if (! sel->add_table_to_list(session, new Table_ident(db, table),
-                               NULL, 0, TL_READ))
+                               NULL, table_options, TL_READ))
   {
     return true;
   }
@@ -717,7 +727,7 @@ void create_select_for_variable(const char *var_name)
 void mysql_parse(Session *session, const char *inBuf, uint32_t length)
 {
   uint64_t start_time= my_getsystime();
-  lex_start(session);
+  session->lex->start(session);
   session->reset_for_next_command();
   /* Check if the Query is Cached if and return true if yes
    * TODO the plugin has to make sure that the query is cacheble
@@ -894,14 +904,14 @@ void store_position_for_column(const char *name)
 */
 
 TableList *Select_Lex::add_table_to_list(Session *session,
-					     Table_ident *table,
-					     LEX_STRING *alias,
-					     uint32_t table_options,
-					     thr_lock_type lock_type,
-					     List<Index_hint> *index_hints_arg,
-                                             LEX_STRING *option)
+					                     Table_ident *table,
+					                     LEX_STRING *alias,
+					                     const bitset<NUM_OF_TABLE_OPTIONS>& table_options,
+					                     thr_lock_type lock_type,
+					                     List<Index_hint> *index_hints_arg,
+                                         LEX_STRING *option)
 {
-  register TableList *ptr;
+  TableList *ptr;
   TableList *previous_table_ref; /* The table preceding the current one. */
   char *alias_str;
   LEX *lex= session->lex;
@@ -909,7 +919,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   if (!table)
     return NULL;				// End of memory
   alias_str= alias ? alias->str : table->table.str;
-  if (!test(table_options & TL_OPTION_ALIAS) &&
+  if (! table_options.test(TL_OPTION_ALIAS) &&
       check_table_name(table->table.str, table->table.length))
   {
     my_error(ER_WRONG_TABLE_NAME, MYF(0), table->table.str);
@@ -946,10 +956,10 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   if (table->db.str)
   {
     ptr->setIsFqtn(true);
-    ptr->db= table->db.str;
+    ptr->setSchemaName(table->db.str);
     ptr->db_length= table->db.length;
   }
-  else if (lex->copy_db_to(&ptr->db, &ptr->db_length))
+  else if (lex->copy_db_to(ptr->getSchemaNamePtr(), &ptr->db_length))
     return NULL;
   else
     ptr->setIsFqtn(false);
@@ -958,11 +968,11 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   ptr->setIsAlias(alias ? true : false);
   if (table->table.length)
     table->table.length= my_casedn_str(files_charset_info, table->table.str);
-  ptr->table_name=table->table.str;
+  ptr->setTableName(table->table.str);
   ptr->table_name_length=table->table.length;
   ptr->lock_type=   lock_type;
-  ptr->force_index= test(table_options & TL_OPTION_FORCE_INDEX);
-  ptr->ignore_leaves= test(table_options & TL_OPTION_IGNORE_LEAVES);
+  ptr->force_index= table_options.test(TL_OPTION_FORCE_INDEX);
+  ptr->ignore_leaves= table_options.test(TL_OPTION_IGNORE_LEAVES);
   ptr->derived=	    table->sel;
   ptr->select_lex=  lex->current_select;
   ptr->index_hints= index_hints_arg;
@@ -976,7 +986,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
 	 tables=tables->next_local)
     {
       if (!my_strcasecmp(table_alias_charset, alias_str, tables->alias) &&
-	  !strcasecmp(ptr->db, tables->db))
+	  !strcasecmp(ptr->getSchemaName(), tables->getSchemaName()))
       {
 	my_error(ER_NONUNIQ_TABLE, MYF(0), alias_str);
 	return NULL;
@@ -1425,22 +1435,24 @@ void add_join_natural(TableList *a, TableList *b, List<String> *using_fields,
 */
 
 static unsigned int
-kill_one_thread(Session *, ulong id, bool only_kill_query)
+kill_one_thread(Session *, session_id_t id, bool only_kill_query)
 {
   Session *tmp= NULL;
   uint32_t error= ER_NO_SUCH_THREAD;
-  LOCK_thread_count.lock(); // For unlink from list
   
-  for (SessionList::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
   {
-    if ((*it)->thread_id == id)
+    boost::mutex::scoped_lock scoped(LOCK_thread_count);
+    for (SessionList::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
     {
-      tmp= *it;
-      tmp->lockForDelete();
-      break;
+      if ((*it)->thread_id == id)
+      {
+        tmp= *it;
+        tmp->lockForDelete();
+        break;
+      }
     }
   }
-  LOCK_thread_count.unlock();
+
   if (tmp)
   {
 
@@ -1466,7 +1478,7 @@ kill_one_thread(Session *, ulong id, bool only_kill_query)
     only_kill_query     Should it kill the query or the connection
 */
 
-void sql_kill(Session *session, ulong id, bool only_kill_query)
+void sql_kill(Session *session, int64_t id, bool only_kill_query)
 {
   uint32_t error;
   if (!(error= kill_one_thread(session, id, only_kill_query)))

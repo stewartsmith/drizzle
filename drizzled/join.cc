@@ -71,8 +71,8 @@ extern std::bitset<12> test_flags;
 
 /** Declarations of static functions used in this source file. */
 static bool make_group_fields(Join *main_join, Join *curr_join);
-static void calc_group_buffer(Join *join,order_st *group);
-static bool alloc_group_fields(Join *join,order_st *group);
+static void calc_group_buffer(Join *join, Order *group);
+static bool alloc_group_fields(Join *join, Order *group);
 static uint32_t cache_record_length(Join *join, uint32_t index);
 static double prev_record_reads(Join *join, uint32_t idx, table_map found_ref);
 static bool get_best_combination(Join *join);
@@ -102,8 +102,8 @@ static void make_outerjoin_info(Join *join);
 static bool make_join_select(Join *join, optimizer::SqlSelect *select,COND *item);
 static bool make_join_readinfo(Join *join);
 static void update_depend_map(Join *join);
-static void update_depend_map(Join *join, order_st *order);
-static order_st *remove_constants(Join *join,order_st *first_order,COND *cond, bool change_list, bool *simple_order);
+static void update_depend_map(Join *join, Order *order);
+static Order *remove_constants(Join *join,Order *first_order,COND *cond, bool change_list, bool *simple_order);
 static int return_zero_rows(Join *join,
                             select_result *res,
                             TableList *tables,
@@ -121,14 +121,14 @@ static int setup_without_group(Session *session,
                                List<Item> &fields,
                                List<Item> &all_fields,
                                COND **conds,
-                               order_st *order,
-                               order_st *group,
+                               Order *order,
+                               Order *group,
                                bool *hidden_group_fields);
 static bool make_join_statistics(Join *join, TableList *leaves, COND *conds, DYNAMIC_ARRAY *keyuse);
 static uint32_t build_bitmap_for_nested_joins(List<TableList> *join_list, uint32_t first_unused);
-static Table *get_sort_by_table(order_st *a,order_st *b,TableList *tables);
+static Table *get_sort_by_table(Order *a, Order *b,TableList *tables);
 static void reset_nj_counters(List<TableList> *join_list);
-static bool test_if_subpart(order_st *a,order_st *b);
+static bool test_if_subpart(Order *a,Order *b);
 static void restore_prev_nj_state(JoinTable *last);
 static bool add_ref_to_table_cond(Session *session, JoinTable *join_tab);
 static void free_blobs(Field **ptr); /* Rename this method...conflicts with another in global namespace... */
@@ -150,8 +150,8 @@ int Join::prepare(Item ***rref_pointer_array,
                   uint32_t wild_num,
                   COND *conds_init,
                   uint32_t og_num,
-                  order_st *order_init,
-                  order_st *group_init,
+                  Order *order_init,
+                  Order *group_init,
                   Item *having_init,
                   Select_Lex *select_lex_arg,
                   Select_Lex_Unit *unit_arg)
@@ -288,7 +288,7 @@ int Join::prepare(Item ***rref_pointer_array,
 
   if (order)
   {
-    order_st *ord;
+    Order *ord;
     for (ord= order; ord; ord= ord->next)
     {
       Item *item= *ord->item;
@@ -333,12 +333,12 @@ int Join::prepare(Item ***rref_pointer_array,
   {
     /* Caclulate the number of groups */
     send_group_parts= 0;
-    for (order_st *group_tmp= group_list ; group_tmp ; group_tmp= group_tmp->next)
+    for (Order *group_tmp= group_list ; group_tmp ; group_tmp= group_tmp->next)
       send_group_parts++;
   }
 
   if (error)
-    goto err;
+    return(-1);
 
   /* 
    * The below will create the new table for
@@ -347,7 +347,7 @@ int Join::prepare(Item ***rref_pointer_array,
    * @see create_table_from_items() in drizzled/sql_insert.cc
    */
   if (result && result->prepare(fields_list, unit_arg))
-    goto err;
+    return(-1);
 
   /* Init join struct */
   count_field_types(select_lex, &tmp_table_param, all_fields, 0);
@@ -359,18 +359,16 @@ int Join::prepare(Item ***rref_pointer_array,
   if (sum_func_count && !group_list && (func_count || field_count))
   {
     my_message(ER_WRONG_SUM_SELECT,ER(ER_WRONG_SUM_SELECT),MYF(0));
-    goto err;
+    return(-1);
   }
 #endif
   if (select_lex->olap == ROLLUP_TYPE && rollup_init())
-    goto err;
+    return(-1);
+
   if (alloc_func_list())
-    goto err;
+    return(-1);
 
-  return(0); // All OK
-
-err:
-  return(-1);
+  return 0; // All OK
 }
 
 /*
@@ -593,7 +591,7 @@ int Join::optimize()
     return 1;
   }
   if (const_tables && !(select_options & SELECT_NO_UNLOCK))
-    mysql_unlock_some_tables(session, table, const_tables);
+    session->unlockSomeTables(table, const_tables);
   if (!conds && outer_join)
   {
     /* Handle the case where we have an OUTER JOIN without a WHERE */
@@ -655,7 +653,7 @@ int Join::optimize()
 
   /* Optimize distinct away if possible */
   {
-    order_st *org_order= order;
+    Order *org_order= order;
     order= remove_constants(this, order,conds,1, &simple_order);
     if (session->is_error())
     {
@@ -789,7 +787,7 @@ int Join::optimize()
   }
   simple_group= 0;
   {
-    order_st *old_group_list;
+    Order *old_group_list;
     group_list= remove_constants(this, (old_group_list= group_list), conds,
                                  rollup.state == ROLLUP::STATE_NONE,
                                  &simple_group);
@@ -867,12 +865,7 @@ int Join::optimize()
         save_index_subquery_explain_info(join_tab, where);
         join_tab[0].type= AM_UNIQUE_SUBQUERY;
         error= 0;
-        return(unit->item->
-                    change_engine(new
-                                  subselect_uniquesubquery_engine(session,
-                                                                  join_tab,
-                                                                  unit->item,
-                                                                  where)));
+        return(unit->item->change_engine(new subselect_uniquesubquery_engine(session, join_tab, unit->item, where)));
       }
       else if (join_tab[0].type == AM_REF &&
          join_tab[0].ref.items[0]->name == in_left_expr_name)
@@ -881,14 +874,7 @@ int Join::optimize()
         save_index_subquery_explain_info(join_tab, where);
         join_tab[0].type= AM_INDEX_SUBQUERY;
         error= 0;
-        return(unit->item->
-                    change_engine(new
-                                  subselect_indexsubquery_engine(session,
-                                                                 join_tab,
-                                                                 unit->item,
-                                                                 where,
-                                                                 NULL,
-                                                                 0)));
+        return(unit->item->change_engine(new subselect_indexsubquery_engine(session, join_tab, unit->item, where, NULL, 0)));
       }
     } 
     else if (join_tab[0].type == AM_REF_OR_NULL &&
@@ -899,13 +885,7 @@ int Join::optimize()
       error= 0;
       conds= remove_additional_cond(conds);
       save_index_subquery_explain_info(join_tab, conds);
-      return(unit->item->
-      change_engine(new subselect_indexsubquery_engine(session,
-                   join_tab,
-                   unit->item,
-                   conds,
-                                                                   having,
-                   1)));
+      return(unit->item->change_engine(new subselect_indexsubquery_engine(session, join_tab, unit->item, conds, having, 1)));
     }
 
   }
@@ -957,7 +937,7 @@ int Join::optimize()
         Force using of tmp table if sorting by a SP or UDF function due to
         their expensive and probably non-deterministic nature.
       */
-      for (order_st *tmp_order= order; tmp_order ; tmp_order=tmp_order->next)
+      for (Order *tmp_order= order; tmp_order ; tmp_order=tmp_order->next)
       {
         Item *item= *tmp_order->item;
         if (item->is_expensive())
@@ -1001,9 +981,9 @@ int Join::optimize()
 
     tmp_table_param.hidden_field_count= (all_fields.elements -
            fields_list.elements);
-    order_st *tmp_group= ((!simple_group && 
+    Order *tmp_group= ((!simple_group &&
                            ! (test_flags.test(TEST_NO_KEY_GROUP))) ? group_list :
-                                                                     (order_st*) 0);
+                                                                     (Order*) 0);
     /*
       Pushing LIMIT to the temporary table creation is not applicable
       when there is ORDER BY or GROUP BY or there is no GROUP BY, but
@@ -1106,13 +1086,16 @@ int Join::optimize()
       If this join belongs to an uncacheable subquery save
       the original join
     */
-    if (select_lex->uncacheable && !is_top_level_join() &&
+    if (select_lex->uncacheable.any() && 
+        ! is_top_level_join() &&
         init_save_join_tab())
-      return(-1);
+    {
+      return -1;
+    }
   }
 
   error= 0;
-  return(0);
+  return 0;
 
 setup_subq_exit:
   /* Even with zero matching rows, subqueries in the HAVING clause
@@ -1188,14 +1171,16 @@ bool Join::init_save_join_tab()
 {
   if (!(tmp_join= (Join*)session->alloc(sizeof(Join))))
     return 1;
+
   error= 0;              // Ensure that tmp_join.error= 0
   restore_tmp();
+
   return 0;
 }
 
 bool Join::save_join_tab()
 {
-  if (!join_tab_save && select_lex->master_unit()->uncacheable)
+  if (! join_tab_save && select_lex->master_unit()->uncacheable.any())
   {
     if (!(join_tab_save= (JoinTable*)session->memdup((unsigned char*) join_tab,
             sizeof(JoinTable) * tables)))
@@ -1445,7 +1430,7 @@ void Join::exec()
               exec_tmp_table2= create_tmp_table(session,
                                                 &curr_join->tmp_table_param,
                                                 *curr_all_fields,
-                                                (order_st*) 0,
+                                                (Order*) 0,
                                                 curr_join->select_distinct &&
                                                 !curr_join->group_list,
                                                 1, curr_join->select_options,
@@ -1803,7 +1788,7 @@ bool Join::setup_subquery_materialization()
     is called after all rows are sent, but before EOF packet is sent.
 
     For a simple SELECT with no subqueries this function performs a full
-    cleanup of the Join and calls mysql_unlock_read_tables to free used base
+    cleanup of the Join and calls unlockReadTables to free used base
     tables.
 
     If a Join is executed for a subquery or if it has a subquery, we can't
@@ -1835,7 +1820,7 @@ void Join::join_free()
     Optimization: if not EXPLAIN and we are done with the Join,
     free all tables.
   */
-  bool full= (!select_lex->uncacheable && !session->lex->describe);
+  bool full= (select_lex->uncacheable.none() && ! session->lex->describe);
   bool can_unlock= full;
 
   cleanup(full);
@@ -1875,7 +1860,7 @@ void Join::join_free()
       TODO: unlock tables even if the join isn't top level select in the
       tree.
     */
-    mysql_unlock_read_tables(session, lock);           // Don't free join->lock
+    session->unlockReadTables(lock);           // Don't free join->lock
     lock= 0;
   }
 
@@ -2005,7 +1990,7 @@ bool Join::alloc_func_list()
     */
     if (order)
     {
-      order_st *ord;
+      Order *ord;
       for (ord= order; ord; ord= ord->next)
         group_parts++;
     }
@@ -2115,7 +2100,7 @@ bool Join::rollup_init()
   Item *item;
   while ((item= it++))
   {
-    order_st *group_tmp;
+    Order *group_tmp;
     bool found_in_group= 0;
 
     for (group_tmp= group_list; group_tmp; group_tmp= group_tmp->next)
@@ -2144,7 +2129,7 @@ bool Join::rollup_init()
             return 1;
           new_item->fix_fields(session, (Item **) 0);
           session->change_item_tree(it.ref(), new_item);
-          for (order_st *tmp= group_tmp; tmp; tmp= tmp->next)
+          for (Order *tmp= group_tmp; tmp; tmp= tmp->next)
           {
             if (*tmp->item == item)
               session->change_item_tree(tmp->item, new_item);
@@ -2219,7 +2204,7 @@ bool Join::rollup_make_fields(List<Item> &fields_arg, List<Item> &sel_fields, It
     Item *item;
     List_iterator<Item> new_it(rollup.fields[pos]);
     Item **ref_array_start= rollup.ref_pointer_arrays[pos];
-    order_st *start_group;
+    Order *start_group;
 
     /* Point to first hidden field */
     Item **ref_array= ref_array_start + fields_arg.elements-1;
@@ -2261,7 +2246,7 @@ bool Join::rollup_make_fields(List<Item> &fields_arg, List<Item> &sel_fields, It
       else
       {
         /* Check if this is something that is part of this group by */
-        order_st *group_tmp;
+        Order *group_tmp;
         for (group_tmp= start_group, i= pos ;
                   group_tmp ; group_tmp= group_tmp->next, i++)
         {
@@ -2477,7 +2462,7 @@ enum_nested_loop_state evaluate_join_record(Join *join, JoinTable *join_tab, int
     return NESTED_LOOP_ERROR;
   if (error < 0)
     return NESTED_LOOP_NO_MORE_ROWS;
-  if (join->session->killed)			// Aborted by user
+  if (join->session->getKilled())			// Aborted by user
   {
     join->session->send_kill_message();
     return NESTED_LOOP_KILLED;
@@ -2689,7 +2674,7 @@ enum_nested_loop_state flush_cached_records(Join *join, JoinTable *join_tab, boo
   info= &join_tab->read_record;
   do
   {
-    if (join->session->killed)
+    if (join->session->getKilled())
     {
       join->session->send_kill_message();
       return NESTED_LOOP_KILLED;
@@ -2821,7 +2806,7 @@ enum_nested_loop_state end_write(Join *join, JoinTable *, bool end_of_records)
 {
   Table *table= join->tmp_table;
 
-  if (join->session->killed)			// Aborted by user
+  if (join->session->getKilled())			// Aborted by user
   {
     join->session->send_kill_message();
     return NESTED_LOOP_KILLED;
@@ -2837,7 +2822,9 @@ enum_nested_loop_state end_write(Join *join, JoinTable *, bool end_of_records)
       if ((error=table->cursor->insertRecord(table->getInsertRecord())))
       {
         if (!table->cursor->is_fatal_error(error, HA_CHECK_DUP))
-          goto end;
+        {
+          return NESTED_LOOP_OK;
+        }
 
         my_error(ER_USE_SQL_BIG_RESULT, MYF(0));
         return NESTED_LOOP_ERROR;        // Table is_full error
@@ -2852,7 +2839,7 @@ enum_nested_loop_state end_write(Join *join, JoinTable *, bool end_of_records)
       }
     }
   }
-end:
+
   return NESTED_LOOP_OK;
 }
 
@@ -2860,12 +2847,12 @@ end:
 enum_nested_loop_state end_update(Join *join, JoinTable *, bool end_of_records)
 {
   Table *table= join->tmp_table;
-  order_st *group;
+  Order *group;
   int	error;
 
   if (end_of_records)
     return NESTED_LOOP_OK;
-  if (join->session->killed)			// Aborted by user
+  if (join->session->getKilled())			// Aborted by user
   {
     join->session->send_kill_message();
     return NESTED_LOOP_KILLED;
@@ -2930,7 +2917,7 @@ enum_nested_loop_state end_unique_update(Join *join, JoinTable *, bool end_of_re
 
   if (end_of_records)
     return NESTED_LOOP_OK;
-  if (join->session->killed)			// Aborted by user
+  if (join->session->getKilled())			// Aborted by user
   {
     join->session->send_kill_message();
     return NESTED_LOOP_KILLED;
@@ -2997,7 +2984,7 @@ static bool make_group_fields(Join *main_join, Join *curr_join)
 /**
   calc how big buffer we need for comparing group entries.
 */
-static void calc_group_buffer(Join *join,order_st *group)
+static void calc_group_buffer(Join *join, Order *group)
 {
   uint32_t key_length=0, parts=0, null_parts=0;
 
@@ -3076,7 +3063,7 @@ static void calc_group_buffer(Join *join,order_st *group)
 
   Groups are saved in reverse order for easyer check loop.
 */
-static bool alloc_group_fields(Join *join,order_st *group)
+static bool alloc_group_fields(Join *join, Order *group)
 {
   if (group)
   {
@@ -4195,7 +4182,7 @@ static bool best_extension_by_limited_search(Join *join,
                                              uint32_t prune_level)
 {
   Session *session= join->session;
-  if (session->killed)  // Abort
+  if (session->getKilled())  // Abort
     return(true);
 
   /*
@@ -4957,7 +4944,7 @@ static void update_depend_map(Join *join)
 }
 
 /** Update the dependency map for the sort order. */
-static void update_depend_map(Join *join, order_st *order)
+static void update_depend_map(Join *join, Order *order)
 {
   for (; order ; order=order->next)
   {
@@ -4995,12 +4982,12 @@ static void update_depend_map(Join *join, order_st *order)
   @return
     Returns new sort order
 */
-static order_st *remove_constants(Join *join,order_st *first_order, COND *cond, bool change_list, bool *simple_order)
+static Order *remove_constants(Join *join,Order *first_order, COND *cond, bool change_list, bool *simple_order)
 {
   if (join->tables == join->const_tables)
     return change_list ? 0 : first_order;		// No need to sort
 
-  order_st *order,**prev_ptr;
+  Order *order,**prev_ptr;
   table_map first_table= join->join_tab[join->const_tables].table->map;
   table_map not_const_tables= ~join->const_table_map;
   table_map ref;
@@ -5441,8 +5428,8 @@ static int setup_without_group(Session *session,
                                List<Item> &fields,
                                List<Item> &all_fields,
                                COND **conds,
-                               order_st *order,
-                               order_st *group,
+                               Order *order,
+                               Order *group,
                                bool *hidden_group_fields)
 {
   int res;
@@ -5893,7 +5880,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
     join->best_read= 1.0;
   }
   /* Generate an execution plan from the found optimal join order. */
-  return (join->session->killed || get_best_combination(join));
+  return (join->session->getKilled() || get_best_combination(join));
 }
 
 /**
@@ -5953,7 +5940,7 @@ static uint32_t build_bitmap_for_nested_joins(List<TableList> *join_list, uint32
   Return table number if there is only one table in sort order
   and group and order is compatible, else return 0.
 */
-static Table *get_sort_by_table(order_st *a,order_st *b,TableList *tables)
+static Table *get_sort_by_table(Order *a, Order *b,TableList *tables)
 {
   table_map map= (table_map) 0;
 
@@ -6008,7 +5995,7 @@ static void reset_nj_counters(List<TableList> *join_list)
   If first parts has different direction, change it to second part
   (group is sorted like order)
 */
-static bool test_if_subpart(order_st *a,order_st *b)
+static bool test_if_subpart(Order *a, Order *b)
 {
   for (; a && b; a=a->next,b=b->next)
   {

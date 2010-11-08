@@ -32,31 +32,10 @@ namespace statement
 
 class Select : public Statement
 {
-  /* These will move out once we have args for table functions */
-  std::string show_schema;
-  std::string show_table;
-
 public:
-  Select(Session *in_session)
-    :
-      Statement(in_session)
+  Select(Session *in_session) :
+    Statement(in_session)
   {}
-
-  void setShowPredicate(const std::string &schema_arg, const std::string &table_arg)
-  {
-    show_schema= schema_arg;
-    show_table= table_arg;
-  }
-
-  const std::string getShowSchema()
-  {
-    return show_schema;
-  }
-
-  const std::string getShowTable()
-  {
-    return show_table;
-  }
 
   bool execute();
 };

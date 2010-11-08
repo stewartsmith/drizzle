@@ -22,6 +22,7 @@
 
 #include "drizzled/optimizer/range.h"
 
+#include <boost/dynamic_bitset.hpp>
 #include <vector>
 
 namespace drizzled
@@ -126,7 +127,7 @@ public:
 
   void add_keys_and_lengths(String *key_names, String *used_lengths);
   void add_info_string(String *str);
-  bool is_keys_used(const MyBitmap *fields);
+  bool is_keys_used(const boost::dynamic_bitset<>& fields);
 
   bool push_quick_back(QuickRangeSelect *quick_sel_range);
 

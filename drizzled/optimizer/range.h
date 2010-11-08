@@ -256,7 +256,7 @@ public:
    * Returns true if any index used by this quick select
    * uses field which is marked in passed bitmap.
    */
-  virtual bool is_keys_used(const MyBitmap *fields);
+  virtual bool is_keys_used(const boost::dynamic_bitset<>& fields);
 };
 
 struct st_qsel_param;
@@ -345,7 +345,7 @@ QuickRangeSelect *get_quick_select(Parameter *param,
                                    uint32_t mrr_buf_size, 
                                    memory::Root *alloc);
 
-uint32_t get_index_for_order(Table *table, order_st *order, ha_rows limit);
+uint32_t get_index_for_order(Table *table, Order *order, ha_rows limit);
 
 SqlSelect *make_select(Table *head, 
                        table_map const_tables,

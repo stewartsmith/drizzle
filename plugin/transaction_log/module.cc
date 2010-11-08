@@ -44,7 +44,6 @@
 
 #include <drizzled/plugin/plugin.h>
 #include <drizzled/session.h>
-#include <drizzled/set_var.h>
 #include <drizzled/gettext.h>
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
@@ -53,22 +52,24 @@ namespace po= boost::program_options;
 using namespace std;
 using namespace drizzled;
 
-/** 
- * Transaction Log plugin system variable - Is the log enabled? Only used on init().  
- */
-static bool sysvar_transaction_log_enabled= false;
-/** Transaction Log plugin system variable - The path to the log file used */
-static char* sysvar_transaction_log_file= NULL;
-/** 
- * Transaction Log plugin system variable - A debugging variable to assist 
- * in truncating the log file. 
- */
-static bool sysvar_transaction_log_truncate_debug= false;
 /**
  * The name of the main transaction log file on disk.  With no prefix,
  * this goes into Drizzle's $datadir.
  */
 static const char DEFAULT_LOG_FILE_PATH[]= "transaction.log"; /* In datadir... */
+/** 
+ * Transaction Log plugin system variable - Is the log enabled? Only used on init().  
+ */
+static bool sysvar_transaction_log_enabled= false;
+
+/** Transaction Log plugin system variable - The path to the log file used */
+static char* sysvar_transaction_log_file= (char *)DEFAULT_LOG_FILE_PATH;
+
+/** 
+ * Transaction Log plugin system variable - A debugging variable to assist 
+ * in truncating the log file. 
+ */
+static bool sysvar_transaction_log_truncate_debug= false;
 /** 
  * Transaction Log plugin system variable - Should we write a CRC32 checksum for 
  * each written Transaction message?
@@ -92,8 +93,8 @@ static uint32_t sysvar_transaction_log_num_write_buffers= 8;
  * Transaction Log plugin system variable - The name of the replicator plugin
  * to pair the transaction log's applier with.  Defaults to "default"
  */
-static char *sysvar_transaction_log_use_replicator= NULL;
 static const char DEFAULT_USE_REPLICATOR[]= "default";
+static char *sysvar_transaction_log_use_replicator= (char *)DEFAULT_USE_REPLICATOR;
 
 /** DATA_DICTIONARY views */
 static TransactionLogTool *transaction_log_tool;
@@ -146,29 +147,27 @@ static int init(drizzled::module::Context &context)
     }
   }
 
-  if (vm.count("file"))
-  {
-    sysvar_transaction_log_file= strdup(vm["file"].as<string>().c_str());
-  }
-
-  else
-  {
-    sysvar_transaction_log_file= strdup(DEFAULT_LOG_FILE_PATH);
-  }
-
-  if (vm.count("use-replicator"))
-  {
-    sysvar_transaction_log_use_replicator= strdup(vm["use-replicator"].as<string>().c_str());
-  }
-
-  else
-  {
-    sysvar_transaction_log_use_replicator= strdup(DEFAULT_USE_REPLICATOR);
-  }
 
   /* Create and initialize the transaction log itself */
   if (sysvar_transaction_log_enabled)
   {
+    if (vm.count("file"))
+    {
+      sysvar_transaction_log_file= strdup(vm["file"].as<string>().c_str());
+    }
+    else
+    {
+      sysvar_transaction_log_file= strdup(DEFAULT_LOG_FILE_PATH);
+    }
+  
+    if (vm.count("use-replicator"))
+    {
+      sysvar_transaction_log_use_replicator= strdup(vm["use-replicator"].as<string>().c_str());
+    }
+    else
+    {
+      sysvar_transaction_log_use_replicator= strdup(DEFAULT_USE_REPLICATOR);
+    }
     transaction_log= new (nothrow) TransactionLog(string(sysvar_transaction_log_file),
                                                   sysvar_transaction_log_flush_frequency,
                                                   sysvar_transaction_log_checksum_enabled);

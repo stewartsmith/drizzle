@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 
 /* A lexical scanner on a temporary buffer with a yacc interface */
@@ -44,8 +44,8 @@ static int lex_one_token(void *arg, void *yysession);
 */
 static bool add_to_list(Session *session, SQL_LIST &list, Item *item, bool asc)
 {
-  order_st *order;
-  if (!(order = (order_st *) session->alloc(sizeof(order_st))))
+  Order *order;
+  if (!(order = (Order *) session->alloc(sizeof(Order))))
     return(1);
   order->item_ptr= item;
   order->item= &order->item_ptr;
@@ -206,6 +206,11 @@ void Lex_input_stream::body_utf8_append_literal(const LEX_STRING *txt,
   Because of this, it's critical to not do too much things here.
   (We already do too much here)
 */
+void LEX::start(Session *arg)
+{
+  lex_start(arg);
+}
+
 void lex_start(Session *session)
 {
   LEX *lex= session->lex;
@@ -265,23 +270,23 @@ void lex_start(Session *session)
   lex->reset();
 }
 
-void lex_end(LEX *lex)
+void LEX::end()
 {
-  if (lex->yacc_yyss)
+  if (yacc_yyss)
   {
-    free(lex->yacc_yyss);
-    free(lex->yacc_yyvs);
-    lex->yacc_yyss= 0;
-    lex->yacc_yyvs= 0;
+    free(yacc_yyss);
+    free(yacc_yyvs);
+    yacc_yyss= 0;
+    yacc_yyvs= 0;
   }
 
-  delete lex->result;
+  delete result;
 
-  lex->result= 0;
-  lex->setCacheable(true);
+  result= 0;
+  setCacheable(true);
 
-  if (lex->statement) 
-    delete lex->statement;
+  delete statement;
+  statement= NULL;
 }
 
 static int find_keyword(Lex_input_stream *lip, uint32_t len, bool function)
@@ -1299,7 +1304,7 @@ void Select_Lex_Node::init_query()
   options= 0;
   linkage= UNSPECIFIED_TYPE;
   no_error= no_table_names_allowed= 0;
-  uncacheable= 0;
+  uncacheable.reset();
 }
 
 void Select_Lex_Node::init_select()
@@ -1368,7 +1373,6 @@ void Select_Lex::init_select()
   group_list.empty();
   db= 0;
   having= 0;
-  table_join_options= 0;
   in_sum_expr= with_wild= 0;
   options= 0;
   braces= 0;
@@ -1565,19 +1569,19 @@ void Select_Lex::mark_as_dependent(Select_Lex *last)
        s && s != last;
        s= s->outer_select())
   {
-    if (!(s->uncacheable & UNCACHEABLE_DEPENDENT))
+    if (! (s->uncacheable.test(UNCACHEABLE_DEPENDENT)))
     {
       // Select is dependent of outer select
-      s->uncacheable= (s->uncacheable & ~UNCACHEABLE_UNITED) |
-                       UNCACHEABLE_DEPENDENT;
+      s->uncacheable.set(UNCACHEABLE_DEPENDENT);
+      s->uncacheable.set(UNCACHEABLE_UNITED);
       Select_Lex_Unit *munit= s->master_unit();
-      munit->uncacheable= (munit->uncacheable & ~UNCACHEABLE_UNITED) |
-                       UNCACHEABLE_DEPENDENT;
+      munit->uncacheable.set(UNCACHEABLE_UNITED);
+      munit->uncacheable.set(UNCACHEABLE_DEPENDENT);
       for (Select_Lex *sl= munit->first_select(); sl ; sl= sl->next_select())
       {
         if (sl != s &&
-            !(sl->uncacheable & (UNCACHEABLE_DEPENDENT | UNCACHEABLE_UNITED)))
-          sl->uncacheable|= UNCACHEABLE_UNITED;
+            ! (sl->uncacheable.test(UNCACHEABLE_DEPENDENT) && sl->uncacheable.test(UNCACHEABLE_UNITED)))
+          sl->uncacheable.set(UNCACHEABLE_UNITED);
       }
     }
     s->is_correlated= true;
@@ -1602,16 +1606,17 @@ TableList* Select_Lex_Node::get_table_list()
 List<Item>* Select_Lex_Node::get_item_list()
 { return NULL; }
 
-TableList *Select_Lex_Node::add_table_to_list (Session *, Table_ident *, LEX_STRING *, uint32_t,
-                                                  thr_lock_type, List<Index_hint> *, LEX_STRING *)
+TableList *Select_Lex_Node::add_table_to_list(Session *, 
+                                              Table_ident *, 
+                                              LEX_STRING *, 
+                                              const bitset<NUM_OF_TABLE_OPTIONS>&,
+                                              thr_lock_type, 
+                                              List<Index_hint> *, 
+                                              LEX_STRING *)
 {
   return 0;
 }
 
-uint32_t Select_Lex_Node::get_table_join_options()
-{
-  return 0;
-}
 
 /*
   prohibit using LIMIT clause
@@ -1689,10 +1694,6 @@ List<Item>* Select_Lex::get_item_list()
   return &item_list;
 }
 
-uint32_t Select_Lex::get_table_join_options()
-{
-  return table_join_options;
-}
 
 bool Select_Lex::setup_ref_array(Session *session, uint32_t order_group_num)
 {
@@ -1733,7 +1734,7 @@ void Select_Lex_Unit::print(String *str, enum_query_type query_type)
       str->append(STRING_WITH_LEN(" order by "));
       fake_select_lex->print_order(
         str,
-        (order_st *) fake_select_lex->order_list.first,
+        (Order *) fake_select_lex->order_list.first,
         query_type);
     }
     fake_select_lex->print_limit(session, str, query_type);
@@ -1741,7 +1742,7 @@ void Select_Lex_Unit::print(String *str, enum_query_type query_type)
 }
 
 void Select_Lex::print_order(String *str,
-                                order_st *order,
+                                Order *order,
                                 enum_query_type query_type)
 {
   for (; order; order= order->next)
@@ -1876,42 +1877,6 @@ LEX::LEX()
 {
   reset_query_tables_list(true);
   statement= NULL;
-}
-
-/*
-  Detect that we need only table structure of derived table/view
-
-  SYNOPSIS
-    only_view_structure()
-
-  RETURN
-    true yes, we need only structure
-    false no, we need data
-*/
-bool LEX::only_view_structure()
-{
-  if (sql_command == SQLCOM_SHOW_CREATE)
-    return true;
-
-  return false;
-}
-
-/*
-  Should Items_ident be printed correctly
-
-  SYNOPSIS
-    need_correct_ident()
-
-  RETURN
-    true yes, we need only structure
-    false no, we need data
-*/
-bool LEX::need_correct_ident()
-{
-  if (sql_command== SQLCOM_SHOW_CREATE)
-    return true;
-
-  return false;
 }
 
 /**

@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Paul McCullagh (H&G2JCtL)
  *
@@ -1293,13 +1293,13 @@ void CSXMLProcessor::setError(int32_t err, char *msg)
 
 	switch (err) {
 		case CS_XML_ERR_OUT_OF_MEMORY:
-			sprintf(err_message, "AES parse error- insufficient memory");			
+			snprintf(err_message, CS_XML_ERR_MSG_SIZE, "AES parse error- insufficient memory");			
 			break;
 		case CS_XML_ERR_CHAR_TOO_LARGE:
-			sprintf(err_message, "AES parse error- UNICODE character too large to be encoded as UTF-8");			
+			snprintf(err_message, CS_XML_ERR_MSG_SIZE, "AES parse error- UNICODE character too large to be encoded as UTF-8");			
 			break;
 		default:
-			sprintf(err_message, "AES parse error- %s", strerror(err));
+			snprintf(err_message, CS_XML_ERR_MSG_SIZE, "AES parse error- %s", strerror(err));
 			break;
 	}
 }

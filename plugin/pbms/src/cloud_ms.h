@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  *  Created by Barry Leslie on 3/20/09.
  *
@@ -67,17 +67,17 @@ public:
 	}
 
 
-	static MSCloudInfo *getCloudInfo(uint32_t cloudRefId)
+	static MSCloudInfo *getCloudInfo(uint32_t in_cloudRefId)
 	{
 		MSCloudInfo *info;
 		enter_();
 		
 		lock_(gCloudInfo);
 		
-		info = (MSCloudInfo *) gCloudInfo->get(cloudRefId);
+		info = (MSCloudInfo *) gCloudInfo->get(in_cloudRefId);
 		if (!info) {
 			char msg[80];
-			snprintf(msg, 80, "Cloud info with reference ID %"PRIu32" not found", cloudRefId);
+			snprintf(msg, 80, "Cloud info with reference ID %"PRIu32" not found", in_cloudRefId);
 			CSException::throwException(CS_CONTEXT, CS_ERR_GENERIC_ERROR, msg);
 		}
 		info->retain();

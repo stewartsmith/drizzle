@@ -22,7 +22,7 @@
 namespace drizzled
 {
 
-extern "C" const char* MySQLPasswordName;
+extern const char* MySQLPasswordName;
 
 class MySQLPassword: public drizzled::Item_str_func
 {

@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Original author: Paul McCullagh (H&G2JCtL)
  * Continued development: Barry Leslie
@@ -30,12 +30,11 @@
 
 #include <errno.h>
 #include <limits.h>
+#include <stdarg.h>
 
 #include "CSDefs.h"
 #include "CSString.h"
 #include "CSObject.h"
-
-using namespace std;
 
 #define CS_ERR_ASSERTION						-14000
 #define CS_ERR_EOF								-14001
@@ -56,6 +55,8 @@ using namespace std;
 #define CS_ERR_CHECKSUM_ERROR					-14016
 #define CS_ERR_MISSING_HTTP_HEADER				-14017
 #define CS_ERR_OPERATION_NOT_SUPPORTED			-14018
+#define CS_ERR_BODY_INCOMPLETE					-14019
+#define CS_ERR_RECEIVE_TIMEOUT					-14020
 
 #define CS_EXC_CONTEXT_SIZE						300
 #define CS_EXC_MESSAGE_SIZE						(PATH_MAX + 300)
@@ -82,7 +83,9 @@ public:
 	void log(CSThread *self);
 	void log(CSThread *self, const char *message);
 
+	void initException_va(const char *func, const char *file, int line, int err, const char *fmt, va_list ap);
 	void initException(CSException &exception);
+	void initExceptionf(const char *func, const char *file, int line, int err, const char *fmt, ...);
 	void initException(const char *func, const char *file, int line, int err, const char *message);
 	void initAssertion(const char *func, const char *file, int line, const char *message);
 	void getCoreError(uint32_t size, char *buffer, int err);
@@ -98,6 +101,7 @@ public:
 
 	static void throwException(const char *func, const char *file, int line, int err, const char *message, const char *stack);
 	static void throwException(const char *func, const char *file, int line, int err, const char *message);
+	static void throwExceptionf(const char *func, const char *file, int line, int err, const char *fmt, ...);
 	static void throwAssertion(const char *func, const char *file, int line, const char *message);
 	static void throwCoreError(const char *func, const char *file, int line, int err);
 	static void throwCoreError(const char *func, const char *file, int line, int err, const char *item);

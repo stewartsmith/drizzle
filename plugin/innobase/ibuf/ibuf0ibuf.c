@@ -11,8 +11,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -388,6 +388,27 @@ ibuf_count_set(
 	ibuf_counts[space][page_no] = val;
 }
 #endif
+
+/******************************************************************//**
+Closes insert buffer and frees the data structures. */
+UNIV_INTERN
+void
+ibuf_close(void)
+/*============*/
+{
+	mutex_free(&ibuf_pessimistic_insert_mutex);
+	memset(&ibuf_pessimistic_insert_mutex,
+	       0x0, sizeof(ibuf_pessimistic_insert_mutex));
+
+	mutex_free(&ibuf_mutex);
+	memset(&ibuf_mutex, 0x0, sizeof(ibuf_mutex));
+
+	mutex_free(&ibuf_bitmap_mutex);
+	memset(&ibuf_bitmap_mutex, 0x0, sizeof(ibuf_mutex));
+
+	mem_free(ibuf);
+	ibuf = NULL;
+}
 
 /******************************************************************//**
 Updates the size information of the ibuf, assuming the segment size has not

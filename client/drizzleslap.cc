@@ -72,8 +72,14 @@
 */
 
 #include "config.h"
-
 #include "client_priv.h"
+
+#include "option_string.h"
+#include "stats.h"
+#include "thread_context.h"
+#include "conclusions.h"
+#include "wakeup.h"
+
 #include <signal.h>
 #include <stdarg.h>
 #include <sys/types.h>
@@ -88,11 +94,16 @@
 #include <string>
 #include <iostream>
 #include <fstream>
-#include <pthread.h>
 #include <drizzled/configmake.h>
+
 /* Added this for string translation. */
 #include <drizzled/gettext.h>
+
+#include <boost/thread.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/condition_variable.hpp>
 #include <boost/program_options.hpp>
+#include <drizzled/atomics.h>
 
 #define SLAP_VERSION "1.5"
 
@@ -108,20 +119,16 @@ namespace po= boost::program_options;
 static char *shared_memory_base_name=0;
 #endif
 
-/* Global Thread counter */
-uint32_t thread_counter;
-pthread_mutex_t counter_mutex;
-pthread_cond_t count_threshhold;
-uint32_t master_wakeup;
-pthread_mutex_t sleeper_mutex;
-pthread_cond_t sleep_threshhold;
+client::Wakeup master_wakeup;
 
 /* Global Thread timer */
 static bool timer_alarm= false;
-pthread_mutex_t timer_alarm_mutex;
-pthread_cond_t timer_alarm_threshold;
+boost::mutex timer_alarm_mutex;
+boost::condition_variable_any timer_alarm_threshold;
 
 std::vector < std::string > primary_keys;
+
+drizzled::atomic<size_t> connection_count;
 
 static string host, 
   opt_password, 
@@ -161,18 +168,18 @@ string num_blob_cols_opt,
   num_char_cols_opt,
   num_int_cols_opt;
 string opt_label;
-static unsigned int opt_set_random_seed;
+static uint32_t opt_set_random_seed;
 
 string auto_generate_selected_columns_opt;
 
 /* Yes, we do set defaults here */
-static unsigned int num_int_cols= 1;
-static unsigned int num_char_cols= 1;
-static unsigned int num_blob_cols= 0;
-static unsigned int num_blob_cols_size;
-static unsigned int num_blob_cols_size_min;
-static unsigned int num_int_cols_index= 0;
-static unsigned int num_char_cols_index= 0;
+static uint32_t num_int_cols= 1;
+static uint32_t num_char_cols= 1;
+static uint32_t num_blob_cols= 0;
+static uint32_t num_blob_cols_size;
+static uint32_t num_blob_cols_size_min;
+static uint32_t num_int_cols_index= 0;
+static uint32_t num_char_cols_index= 0;
 static uint32_t iterations;
 static uint64_t actual_queries= 0;
 static uint64_t auto_actual_queries;
@@ -185,558 +192,11 @@ string concurrency_str;
 string create_string;
 std::vector <uint32_t> concurrency;
 
-const char *default_dbug_option= "d:t:o,/tmp/drizzleslap.trace";
 std::string opt_csv_str;
 int csv_file;
 
 static int process_options(void);
 static uint32_t opt_drizzle_port= 0;
-
-
-/* Types */
-enum slap_query_t {
-  SELECT_TYPE= 0,
-  UPDATE_TYPE= 1,
-  INSERT_TYPE= 2,
-  UPDATE_TYPE_REQUIRES_PREFIX= 3,
-  CREATE_TABLE_TYPE= 4,
-  SELECT_TYPE_REQUIRES_PREFIX= 5,
-  DELETE_TYPE_REQUIRES_PREFIX= 6
-};
-
-class Statement;
-
-class Statement 
-{
-public:
-  Statement(char *in_string,
-            size_t in_length,
-            slap_query_t in_type,
-            Statement *in_next) :
-    string(in_string),
-    length(in_length),
-    type(in_type),
-    next(in_next)
-  { }
-
-  Statement() :
-    string(NULL),
-    length(0),
-    type(),
-    next(NULL)
-  { }
-
-  ~Statement()
-  {
-    if (string)
-      free(string);
-  }
-   
-  char *getString() const
-  {
-    return string;
-  }
-
-  size_t getLength() const
-  {
-    return length;
-  }
-
-  slap_query_t getType() const
-  {
-    return type;
-  }
-
-  Statement *getNext() const
-  {
-    return next;
-  }
-
-  void setString(char *in_string)
-  {
-    string= in_string;
-  }
-
-  void setString(size_t length_arg)
-  {
-    string= (char *)calloc(length_arg + 1, sizeof(char));
-    length= length_arg;
-  }
-
-  void setString(size_t in_length, char in_char)
-  {
-    string[in_length]= in_char;
-  }
-
-  void setLength(size_t in_length)
-  {
-    length= in_length;
-  }
-
-  void setType(slap_query_t in_type)
-  {
-    type= in_type;
-  }
-
-  void setNext(Statement *in_next)
-  {
-    next= in_next;
-  }
-
-private:
-  char *string;
-  size_t length;
-  slap_query_t type;
-  Statement *next;
-};
-
-class OptionString;
-
-class OptionString 
-{
-public:
-  OptionString(char *in_string,
-               size_t in_length,
-               char *in_option,
-               size_t in_option_length,
-               OptionString *in_next) :
-    string(in_string),
-    length(in_length),
-    option(in_option),
-    option_length(in_option_length),
-    next(in_next)
-  { }  
-
-  OptionString() :
-    string(NULL),
-    length(0),
-    option(NULL),
-    option_length(0),
-    next(NULL)
-  { }
-
-  ~OptionString()
-  {
-    if (getString())
-      free(getString());
-    if (getOption())
-      free(getOption());
-  }
-
-  char *getString() const
-  {
-    return string;
-  }
-
-  size_t getLength() const
-  {
-    return length;
-  }
-
-  char *getOption() const
-  {
-  return option;
-  }
-
-  size_t getOptionLength() const
-  {
-    return option_length;
-  }
-
-  OptionString *getNext() const
-  {
-    return next;
-  }
-
-  void setString(char *in_string)
-  {
-    string= in_string;
-    length= strlen(in_string);
-  }
-
-  void setOption(char *in_option)
-  {
-    option= strdup(in_option);
-    option_length= strlen(in_option);
-  }
-
-  void setNext(OptionString *in_next)
-  {
-    next= in_next;
-  }
-  
-private:
-  char *string;
-  size_t length;
-  char *option;
-  size_t option_length;
-  OptionString *next;
-};
-
-class Stats;
-
-class Stats 
-{
-public:
-  Stats(long int in_timing,
-        uint32_t in_users,
-        uint32_t in_real_users,
-        uint32_t in_rows,
-        long int in_create_timing,
-        uint64_t in_create_count) :
-    timing(in_timing),
-    users(in_users),
-    real_users(in_real_users),
-    rows(in_rows),
-    create_timing(in_create_timing),
-    create_count(in_create_count)
-  { }
-
-  Stats() :
-    timing(0),
-    users(0),
-    real_users(0),
-    rows(0),
-    create_timing(0),
-    create_count(0)
-  { }
-
-  long int getTiming() const
-  {
-    return timing;
-  }
-
-  uint32_t getUsers() const
-  {
-    return users;
-  }   
-
-  uint32_t getRealUsers() const
-  {
-    return real_users;
-  }
-
-  uint64_t getRows() const
-  {
-    return rows;
-  }
-
-  long int getCreateTiming() const
-  {
-    return create_timing;
-  }
-
-  uint64_t getCreateCount() const
-  {
-    return create_count;
-  }
-
-  void setTiming(long int in_timing)
-  {
-  timing= in_timing;
-  }
-
-  void setUsers(uint32_t in_users)
-  {
-    users= in_users;
-  }
-
-  void setRealUsers(uint32_t in_real_users)
-  {
-    real_users= in_real_users;
-  }
-
-  void setRows(uint64_t in_rows)
-  {
-    rows= in_rows;
-  }
-   
-  void setCreateTiming(long int in_create_timing)
-  {
-    create_timing= in_create_timing;
-  }
-
-  void setCreateCount(uint64_t in_create_count)
-  {
-  create_count= in_create_count;
-  }
-  
-private:
-  long int timing;
-  uint32_t users;
-  uint32_t real_users;
-  uint64_t rows;
-  long int create_timing;
-  uint64_t create_count;
-};
-
-class ThreadContext;
-
-class ThreadContext 
-{
-public:
-  ThreadContext(Statement *in_stmt,
-                uint64_t in_limit) :
-    stmt(in_stmt),
-    limit(in_limit)
-  { }
-
-  ThreadContext() :
-    stmt(),
-    limit(0)
-  { }
-
-  Statement *getStmt() const
-  {
-    return stmt;
-  }
-
-  uint64_t getLimit() const
-  {
-    return limit;
-  }
-
-  void setStmt(Statement *in_stmt)
-  {
-    stmt= in_stmt;
-  }
-
-  void setLimit(uint64_t in_limit)
-  {
-    limit= in_limit;
-  }  
-
-private:
-  Statement *stmt;
-  uint64_t limit;
-};
-
-class Conclusions;
-
-class Conclusions 
-{
-
-public:
-  Conclusions(char *in_engine,
-              long int in_avg_timing,
-              long int in_max_timing,
-              long int in_min_timing,
-              uint32_t in_users,
-              uint32_t in_real_users,
-              uint64_t in_avg_rows,
-              long int in_sum_of_time,
-              long int in_std_dev,
-              long int in_create_avg_timing,
-              long int in_create_max_timing,
-              long int in_create_min_timing,
-              uint64_t in_create_count,
-              uint64_t in_max_rows,
-              uint64_t in_min_rows) :
-    engine(in_engine),
-    avg_timing(in_avg_timing),
-    max_timing(in_max_timing),
-    min_timing(in_min_timing),
-    users(in_users),
-    real_users(in_real_users),
-    avg_rows(in_avg_rows),
-    sum_of_time(in_sum_of_time),
-    std_dev(in_std_dev),
-    create_avg_timing(in_create_avg_timing),
-    create_max_timing(in_create_max_timing),
-    create_min_timing(in_create_min_timing),
-    create_count(in_create_count),
-    max_rows(in_max_rows),
-    min_rows(in_min_rows)
-  { }
-
-  Conclusions() :
-    engine(NULL),
-    avg_timing(0),
-    max_timing(0),
-    min_timing(0),
-    users(0),
-    real_users(0),
-    avg_rows(0),
-    sum_of_time(0),
-    std_dev(0),
-    create_avg_timing(0),
-    create_max_timing(0),
-    create_min_timing(0),
-    create_count(0),
-    max_rows(0),
-    min_rows(0)
-  { }
-
-  char *getEngine() const
-  {
-    return engine;
-  }
-  
-  long int getAvgTiming() const
-  {
-    return avg_timing;
-  }
-
-  long int getMaxTiming() const
-  {
-    return max_timing;
-  }
-
-  long int getMinTiming() const
-  {
-    return min_timing;
-  }
-
-  uint32_t getUsers() const
-  {
-    return users;
-  }
-
-  uint32_t getRealUsers() const
-  {
-    return real_users;
-  }
-
-  uint64_t getAvgRows() const
-  {
-    return avg_rows;
-  }   
-
-  long int getSumOfTime() const
-  {
-    return sum_of_time;
-  }
-
-  long int getStdDev() const
-  {
-    return std_dev;
-  }
-
-  long int getCreateAvgTiming() const
-  {
-    return create_avg_timing;
-  }
-
-  long int getCreateMaxTiming() const
-  {
-    return create_max_timing;
-  }
-
-  long int getCreateMinTiming() const
-  {
-    return create_min_timing;
-  }
-   
-  uint64_t getCreateCount() const
-  {
-    return create_count;
-  }
-
-  uint64_t getMinRows() const
-  {
-    return min_rows;
-  }
-
-  uint64_t getMaxRows() const
-  {
-    return max_rows;
-  }
-
-  void setEngine(char *in_engine) 
-  {
-    engine= in_engine;
-  }
-  
-  void setAvgTiming(long int in_avg_timing) 
-  {
-    avg_timing= in_avg_timing;
-  }
-
-  void setMaxTiming(long int in_max_timing) 
-  {
-    max_timing= in_max_timing;
-  }
-
-  void setMinTiming(long int in_min_timing) 
-  {
-    min_timing= in_min_timing;
-  }
-
-  void setUsers(uint32_t in_users) 
-  {
-    users= in_users;
-  }
-
-  void setRealUsers(uint32_t in_real_users) 
-  {
-    real_users= in_real_users;
-  }
-
-  void setAvgRows(uint64_t in_avg_rows) 
-  {
-    avg_rows= in_avg_rows;
-  }   
-
-  void setSumOfTime(long int in_sum_of_time) 
-  {
-    sum_of_time= in_sum_of_time;
-  }
-
-  void setStdDev(long int in_std_dev) 
-  {
-    std_dev= in_std_dev;
-  }
-
-  void setCreateAvgTiming(long int in_create_avg_timing) 
-  {
-    create_avg_timing= in_create_avg_timing;
-  }
-
-  void setCreateMaxTiming(long int in_create_max_timing) 
-  {
-    create_max_timing= in_create_max_timing;
-  }
-
-  void setCreateMinTiming(long int in_create_min_timing) 
-  {
-    create_min_timing= in_create_min_timing;
-  }
-   
-  void setCreateCount(uint64_t in_create_count) 
-  {
-    create_count= in_create_count;
-  }
-
-  void setMinRows(uint64_t in_min_rows) 
-  {
-    min_rows= in_min_rows;
-  }
-
-  void setMaxRows(uint64_t in_max_rows) 
-  {
-    max_rows= in_max_rows;
-  }
-
-private:
-  char *engine;
-  long int avg_timing;
-  long int max_timing;
-  long int min_timing;
-  uint32_t users;
-  uint32_t real_users;
-  uint64_t avg_rows;
-  long int sum_of_time;
-  long int std_dev;
-  /* These are just for create time stats */
-  long int create_avg_timing;
-  long int create_max_timing;
-  long int create_min_timing;
-  uint64_t create_count;
-  /* The following are not used yet */
-  uint64_t max_rows;
-  uint64_t min_rows;
-};
-
 
 static OptionString *engine_options= NULL;
 static OptionString *query_options= NULL;
@@ -745,37 +205,33 @@ static Statement *post_statements= NULL;
 static Statement *create_statements= NULL;
 
 static std::vector <Statement *> query_statements;
-static unsigned int query_statements_count;
+static uint32_t query_statements_count;
 
 
 /* Prototypes */
-void print_conclusions(Conclusions *con);
-void print_conclusions_csv(Conclusions *con);
+void print_conclusions(Conclusions &con);
+void print_conclusions_csv(Conclusions &con);
 void generate_stats(Conclusions *con, OptionString *eng, Stats *sptr);
 uint32_t parse_comma(const char *string, std::vector <uint32_t> &range);
 uint32_t parse_delimiter(const char *script, Statement **stmt, char delm);
 uint32_t parse_option(const char *origin, OptionString **stmt, char delm);
-static int drop_schema(drizzle_con_st *con, const char *db);
+static void drop_schema(drizzle_con_st &con, const char *db);
 uint32_t get_random_string(char *buf, size_t size);
 static Statement *build_table_string(void);
 static Statement *build_insert_string(void);
 static Statement *build_update_string(void);
 static Statement * build_select_string(bool key);
-static int generate_primary_key_list(drizzle_con_st *con, OptionString *engine_stmt);
-static int create_schema(drizzle_con_st *con, const char *db, Statement *stmt,
-                         OptionString *engine_stmt, Stats *sptr);
-static int run_scheduler(Stats *sptr, Statement **stmts, uint32_t concur,
-                         uint64_t limit);
-extern "C" pthread_handler_t run_task(void *p);
-extern "C" pthread_handler_t timer_thread(void *p);
+static int generate_primary_key_list(drizzle_con_st &con, OptionString *engine_stmt);
+static void create_schema(drizzle_con_st &con, const char *db, Statement *stmt, OptionString *engine_stmt, Stats *sptr);
+static void run_scheduler(Stats *sptr, Statement **stmts, uint32_t concur, uint64_t limit);
 void statement_cleanup(Statement *stmt);
 void option_cleanup(OptionString *stmt);
-void concurrency_loop(drizzle_con_st *con, uint32_t current, OptionString *eptr);
-static int run_statements(drizzle_con_st *con, Statement *stmt);
-void slap_connect(drizzle_con_st *con, bool connect_to_schema);
-void slap_close(drizzle_con_st *con);
-static int run_query(drizzle_con_st *con, drizzle_result_st *result, const char *query, int len);
-void standard_deviation (Conclusions *con, Stats *sptr);
+void concurrency_loop(drizzle_con_st &con, uint32_t current, OptionString *eptr);
+static void run_statements(drizzle_con_st &con, Statement *stmt);
+void slap_connect(drizzle_con_st &con, bool connect_to_schema);
+void slap_close(drizzle_con_st &con);
+static int run_query(drizzle_con_st &con, drizzle_result_st *result, const char *query, int len);
+void standard_deviation(Conclusions &con, Stats *sptr);
 
 static const char ALPHANUMERICS[]=
 "0123456789ABCDEFGHIJKLMNOPQRSTWXYZabcdefghijklmnopqrstuvwxyz";
@@ -805,6 +261,127 @@ static void combine_queries(vector<string> queries)
     user_supplied_query.append(delimiter);
   }
 }
+
+
+static void run_task(ThreadContext *ctx)
+{
+  uint64_t counter= 0, queries;
+  uint64_t detach_counter;
+  uint32_t commit_counter;
+  drizzle_con_st con;
+  drizzle_result_st result;
+  drizzle_row_t row;
+  Statement *ptr;
+
+  master_wakeup.wait();
+
+  slap_connect(con, true);
+
+  if (verbose >= 3)
+    printf("connected!\n");
+  queries= 0;
+
+  commit_counter= 0;
+  if (commit_rate)
+    run_query(con, NULL, "SET AUTOCOMMIT=0", strlen("SET AUTOCOMMIT=0"));
+
+limit_not_met:
+  for (ptr= ctx->getStmt(), detach_counter= 0;
+       ptr && ptr->getLength();
+       ptr= ptr->getNext(), detach_counter++)
+  {
+    if (not opt_only_print && detach_rate && !(detach_counter % detach_rate))
+    {
+      slap_close(con);
+      slap_connect(con, true);
+    }
+
+    /*
+      We have to execute differently based on query type. This should become a function.
+    */
+    if ((ptr->getType() == UPDATE_TYPE_REQUIRES_PREFIX) ||
+        (ptr->getType() == SELECT_TYPE_REQUIRES_PREFIX))
+    {
+      int length;
+      uint32_t key_val;
+      char buffer[HUGE_STRING_LENGTH];
+
+      /*
+        This should only happen if some sort of new engine was
+        implemented that didn't properly handle UPDATEs.
+
+        Just in case someone runs this under an experimental engine we don't
+        want a crash so the if() is placed here.
+      */
+      assert(primary_keys.size());
+      if (primary_keys.size())
+      {
+        key_val= (uint32_t)(random() % primary_keys.size());
+        const char *key;
+        key= primary_keys[key_val].c_str();
+
+        assert(key);
+
+        length= snprintf(buffer, HUGE_STRING_LENGTH, "%.*s '%s'",
+                         (int)ptr->getLength(), ptr->getString(), key);
+
+        if (run_query(con, &result, buffer, length))
+        {
+          fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
+                  internal::my_progname, (uint32_t)length, buffer, drizzle_con_error(&con));
+          abort();
+        }
+      }
+    }
+    else
+    {
+      if (run_query(con, &result, ptr->getString(), ptr->getLength()))
+      {
+        fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
+                internal::my_progname, (uint32_t)ptr->getLength(), ptr->getString(), drizzle_con_error(&con));
+        abort();
+      }
+    }
+
+    if (not opt_only_print)
+    {
+      while ((row = drizzle_row_next(&result)))
+        counter++;
+      drizzle_result_free(&result);
+    }
+    queries++;
+
+    if (commit_rate && (++commit_counter == commit_rate))
+    {
+      commit_counter= 0;
+      run_query(con, NULL, "COMMIT", strlen("COMMIT"));
+    }
+
+    /* If the timer is set, and the alarm is not active then end */
+    if (opt_timer_length && timer_alarm == false)
+      goto end;
+
+    /* If limit has been reached, and we are not in a timer_alarm just end */
+    if (ctx->getLimit() && queries == ctx->getLimit() && timer_alarm == false)
+      goto end;
+  }
+
+  if (opt_timer_length && timer_alarm == true)
+    goto limit_not_met;
+
+  if (ctx->getLimit() && queries < ctx->getLimit())
+    goto limit_not_met;
+
+
+end:
+  if (commit_rate)
+    run_query(con, NULL, "COMMIT", strlen("COMMIT"));
+
+  slap_close(con);
+
+  delete ctx;
+}
+
 /**
  * commandline_options is the set of all options that can only be called via the command line.
 
@@ -979,7 +556,7 @@ int main(int argc, char **argv)
     po::notify(vm);
 
     if (process_options())
-      exit(1);
+      abort();
 
     if ( vm.count("help") || vm.count("info"))
     {
@@ -992,7 +569,7 @@ int main(int argc, char **argv)
            "license\n");
       puts("Run a query multiple times against the server\n");
       cout << long_options << endl;
-      exit(0);
+      abort();
     }   
 
     if (vm.count("protocol"))
@@ -1007,7 +584,7 @@ int main(int argc, char **argv)
       else
       {
         cout << _("Error: Unknown protocol") << " '" << opt_protocol << "'" << endl;
-        exit(-1);
+        abort();
       }
     }
     if (vm.count("port")) 
@@ -1017,7 +594,7 @@ int main(int argc, char **argv)
       if ((temp_drizzle_port == 0) || (temp_drizzle_port > 65535))
       {
         fprintf(stderr, _("Value supplied for port is not valid.\n"));
-        exit(1);
+        abort();
       }
       else
       {
@@ -1027,7 +604,7 @@ int main(int argc, char **argv)
 
   if ( vm.count("password") )
   {
-    if (!opt_password.empty())
+    if (not opt_password.empty())
       opt_password.erase();
     if (password == PASSWORD_SENTINEL)
     {
@@ -1050,29 +627,21 @@ int main(int argc, char **argv)
     {
       printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n",internal::my_progname, SLAP_VERSION,
           drizzle_version(),HOST_VENDOR,HOST_OS,HOST_CPU);
-      exit(0);
+      abort();
     }
 
     /* Seed the random number generator if we will be using it. */
     if (auto_generate_sql)
     {
       if (opt_set_random_seed == 0)
-        opt_set_random_seed= (unsigned int)time(NULL);
+        opt_set_random_seed= (uint32_t)time(NULL);
       srandom(opt_set_random_seed);
     }
 
     /* globals? Yes, so we only have to run strlen once */
     delimiter_length= delimiter.length();
 
-    slap_connect(&con, false);
-
-    pthread_mutex_init(&counter_mutex, NULL);
-    pthread_cond_init(&count_threshhold, NULL);
-    pthread_mutex_init(&sleeper_mutex, NULL);
-    pthread_cond_init(&sleep_threshhold, NULL);
-    pthread_mutex_init(&timer_alarm_mutex, NULL);
-    pthread_cond_init(&timer_alarm_threshold, NULL);
-
+    slap_connect(con, false);
 
     /* Main iterations loop */
 burnin:
@@ -1088,36 +657,29 @@ burnin:
       if (concurrency.size())
       {
         for (current= &concurrency[0]; current && *current; current++)
-          concurrency_loop(&con, *current, eptr);
+          concurrency_loop(con, *current, eptr);
       }
       else
       {
         uint32_t infinite= 1;
         do {
-          concurrency_loop(&con, infinite, eptr);
+          concurrency_loop(con, infinite, eptr);
         }
         while (infinite++);
       }
 
-      if (!opt_preserve)
-        drop_schema(&con, create_schema_string.c_str());
+      if (not opt_preserve)
+        drop_schema(con, create_schema_string.c_str());
 
     } while (eptr ? (eptr= eptr->getNext()) : 0);
 
     if (opt_burnin)
       goto burnin;
 
-    pthread_mutex_destroy(&counter_mutex);
-    pthread_cond_destroy(&count_threshhold);
-    pthread_mutex_destroy(&sleeper_mutex);
-    pthread_cond_destroy(&sleep_threshhold);
-    pthread_mutex_destroy(&timer_alarm_mutex);
-    pthread_cond_destroy(&timer_alarm_threshold);
-
-    slap_close(&con);
+    slap_close(con);
 
     /* now free all the strings we created */
-    if (!opt_password.empty())
+    if (not opt_password.empty())
       opt_password.erase();
 
     concurrency.clear();
@@ -1149,7 +711,7 @@ burnin:
   return 0;
 }
 
-void concurrency_loop(drizzle_con_st *con, uint32_t current, OptionString *eptr)
+void concurrency_loop(drizzle_con_st &con, uint32_t current, OptionString *eptr)
 {
   Stats *head_sptr;
   Stats *sptr;
@@ -1160,7 +722,7 @@ void concurrency_loop(drizzle_con_st *con, uint32_t current, OptionString *eptr)
   if (head_sptr == NULL)
   {
     fprintf(stderr,"Error allocating memory in concurrency_loop\n");
-    exit(1);
+    abort();
   }
 
   if (auto_actual_queries)
@@ -1194,15 +756,11 @@ void concurrency_loop(drizzle_con_st *con, uint32_t current, OptionString *eptr)
     if (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary)
       generate_primary_key_list(con, eptr);
 
-    if (commit_rate)
-      run_query(con, NULL, "SET AUTOCOMMIT=0", strlen("SET AUTOCOMMIT=0"));
-
-    if (!pre_system.empty())
+    if (not pre_system.empty())
     {
       int ret= system(pre_system.c_str());
       assert(ret != -1);
     }
-       
 
     /*
       Pre statements are always run after all other logic so they can
@@ -1216,7 +774,7 @@ void concurrency_loop(drizzle_con_st *con, uint32_t current, OptionString *eptr)
     if (post_statements)
       run_statements(con, post_statements);
 
-    if (!post_system.empty())
+    if (not post_system.empty())
     {
       int ret=  system(post_system.c_str());
       assert(ret !=-1);
@@ -1232,17 +790,16 @@ void concurrency_loop(drizzle_con_st *con, uint32_t current, OptionString *eptr)
 
   generate_stats(&conclusion, eptr, head_sptr);
 
-  if (!opt_silent)
-    print_conclusions(&conclusion);
-  if (!opt_csv_str.empty())
-    print_conclusions_csv(&conclusion);
+  if (not opt_silent)
+    print_conclusions(conclusion);
+  if (not opt_csv_str.empty())
+    print_conclusions_csv(conclusion);
 
   delete [] head_sptr;
 }
 
 
-uint
-get_random_string(char *buf, size_t size)
+uint32_t get_random_string(char *buf, size_t size)
 {
   char *buf_ptr= buf;
 
@@ -1262,7 +819,7 @@ static Statement *
 build_table_string(void)
 {
   char       buf[HUGE_STRING_LENGTH];
-  unsigned int        col_count;
+  uint32_t        col_count;
   Statement *ptr;
   string table_string;
 
@@ -1288,9 +845,7 @@ build_table_string(void)
 
   if (auto_generate_sql_secondary_indexes)
   {
-    unsigned int count;
-
-    for (count= 0; count < auto_generate_sql_secondary_indexes; count++)
+    for (uint32_t count= 0; count < auto_generate_sql_secondary_indexes; count++)
     {
       if (count) /* Except for the first pass we add a comma */
         table_string.append(",");
@@ -1299,7 +854,7 @@ build_table_string(void)
           > HUGE_STRING_LENGTH)
       {
         fprintf(stderr, "Memory Allocation error in create table\n");
-        exit(1);
+        abort();
       }
       table_string.append(buf);
     }
@@ -1317,7 +872,7 @@ build_table_string(void)
                      col_count, col_count) > HUGE_STRING_LENGTH)
         {
           fprintf(stderr, "Memory Allocation error in create table\n");
-          exit(1);
+          abort();
         }
       }
       else
@@ -1326,7 +881,7 @@ build_table_string(void)
             > HUGE_STRING_LENGTH)
         {
           fprintf(stderr, "Memory Allocation error in create table\n");
-          exit(1);
+          abort();
         }
       }
       table_string.append(buf);
@@ -1345,7 +900,7 @@ build_table_string(void)
                      col_count, col_count) > HUGE_STRING_LENGTH)
         {
           fprintf(stderr, "Memory Allocation error in creating table\n");
-          exit(1);
+          abort();
         }
       }
       else
@@ -1354,7 +909,7 @@ build_table_string(void)
                      col_count) > HUGE_STRING_LENGTH)
         {
           fprintf(stderr, "Memory Allocation error in creating table\n");
-          exit(1);
+          abort();
         }
       }
       table_string.append(buf);
@@ -1370,7 +925,7 @@ build_table_string(void)
                    col_count) > HUGE_STRING_LENGTH)
       {
         fprintf(stderr, "Memory Allocation error in creating table\n");
-        exit(1);
+        abort();
       }
       table_string.append(buf);
 
@@ -1384,7 +939,7 @@ build_table_string(void)
   if (ptr->getString()==NULL)
   {
     fprintf(stderr, "Memory Allocation error in creating table\n");
-    exit(1);
+    abort();
   }
   ptr->setType(CREATE_TABLE_TYPE);
   strcpy(ptr->getString(), table_string.c_str());
@@ -1401,7 +956,7 @@ static Statement *
 build_update_string(void)
 {
   char       buf[HUGE_STRING_LENGTH];
-  unsigned int        col_count;
+  uint32_t        col_count;
   Statement *ptr;
   string update_string;
 
@@ -1416,7 +971,7 @@ build_update_string(void)
                    random()) > HUGE_STRING_LENGTH)
       {
         fprintf(stderr, "Memory Allocation error in creating update\n");
-        exit(1);
+        abort();
       }
       update_string.append(buf);
 
@@ -1435,7 +990,7 @@ build_update_string(void)
           > HUGE_STRING_LENGTH)
       {
         fprintf(stderr, "Memory Allocation error in creating update\n");
-        exit(1);
+        abort();
       }
       update_string.append(buf);
 
@@ -1453,7 +1008,7 @@ build_update_string(void)
   if (ptr->getString() == NULL)
   {
     fprintf(stderr, "Memory Allocation error in creating update\n");
-    exit(1);
+    abort();
   }
   if (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary)
     ptr->setType(UPDATE_TYPE_REQUIRES_PREFIX);
@@ -1474,7 +1029,7 @@ static Statement *
 build_insert_string(void)
 {
   char       buf[HUGE_STRING_LENGTH];
-  unsigned int        col_count;
+  uint32_t        col_count;
   Statement *ptr;
   string insert_string;
 
@@ -1500,7 +1055,7 @@ build_insert_string(void)
 
   if (auto_generate_sql_secondary_indexes)
   {
-    unsigned int count;
+    uint32_t count;
 
     for (count= 0; count < auto_generate_sql_secondary_indexes; count++)
     {
@@ -1520,7 +1075,7 @@ build_insert_string(void)
       if (snprintf(buf, HUGE_STRING_LENGTH, "%ld", random()) > HUGE_STRING_LENGTH)
       {
         fprintf(stderr, "Memory Allocation error in creating insert\n");
-        exit(1);
+        abort();
       }
       insert_string.append(buf);
 
@@ -1548,9 +1103,9 @@ build_insert_string(void)
 
     for (col_count= 1; col_count <= num_blob_cols; col_count++)
     {
-      unsigned int buf_len;
-      unsigned int size;
-      unsigned int difference= num_blob_cols_size - num_blob_cols_size_min;
+      uint32_t buf_len;
+      uint32_t size;
+      uint32_t difference= num_blob_cols_size - num_blob_cols_size_min;
 
       size= difference ? (num_blob_cols_size_min + (random() % difference)) :
         num_blob_cols_size;
@@ -1573,7 +1128,7 @@ build_insert_string(void)
   if (ptr->getString()==NULL)
   {
     fprintf(stderr, "Memory Allocation error in creating select\n");
-    exit(1);
+    abort();
   }
   ptr->setType(INSERT_TYPE);
   strcpy(ptr->getString(), insert_string.c_str());
@@ -1591,14 +1146,14 @@ static Statement *
 build_select_string(bool key)
 {
   char       buf[HUGE_STRING_LENGTH];
-  unsigned int        col_count;
+  uint32_t        col_count;
   Statement *ptr;
   string query_string;
 
   query_string.reserve(HUGE_STRING_LENGTH);
 
   query_string.append("SELECT ", 7);
-  if (!auto_generate_selected_columns_opt.empty())
+  if (not auto_generate_selected_columns_opt.empty())
   {
     query_string.append(auto_generate_selected_columns_opt.c_str());
   }
@@ -1610,7 +1165,7 @@ build_select_string(bool key)
           > HUGE_STRING_LENGTH)
       {
         fprintf(stderr, "Memory Allocation error in creating select\n");
-        exit(1);
+        abort();
       }
       query_string.append(buf);
 
@@ -1624,7 +1179,7 @@ build_select_string(bool key)
           > HUGE_STRING_LENGTH)
       {
         fprintf(stderr, "Memory Allocation error in creating select\n");
-        exit(1);
+        abort();
       }
       query_string.append(buf);
 
@@ -1638,7 +1193,7 @@ build_select_string(bool key)
           > HUGE_STRING_LENGTH)
       {
         fprintf(stderr, "Memory Allocation error in creating select\n");
-        exit(1);
+        abort();
       }
       query_string.append(buf);
 
@@ -1657,7 +1212,7 @@ build_select_string(bool key)
   if (ptr->getString() == NULL)
   {
     fprintf(stderr, "Memory Allocation error in creating select\n");
-    exit(1);
+    abort();
   }
   if ((key) &&
       (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary))
@@ -1673,7 +1228,7 @@ process_options(void)
 {
   struct stat sbuf;
   OptionString *sql_type;
-  unsigned int sql_type_count= 0;
+  uint32_t sql_type_count= 0;
   ssize_t bytes_read= 0;
   
   if (user.empty())
@@ -1682,15 +1237,15 @@ process_options(void)
   verbose= opt_verbose.length();
 
   /* If something is created we clean it up, otherwise we leave schemas alone */
-  if ( (!create_string.empty()) || auto_generate_sql)
+  if ( (not create_string.empty()) || auto_generate_sql)
     opt_preserve= false;
 
-  if (auto_generate_sql && (!create_string.empty() || !user_supplied_query.empty()))
+  if (auto_generate_sql && (not create_string.empty() || !user_supplied_query.empty()))
   {
     fprintf(stderr,
             "%s: Can't use --auto-generate-sql when create and query strings are specified!\n",
             internal::my_progname);
-    exit(1);
+    abort();
   }
 
   if (auto_generate_sql && auto_generate_sql_guid_primary &&
@@ -1699,7 +1254,7 @@ process_options(void)
     fprintf(stderr,
             "%s: Either auto-generate-sql-guid-primary or auto-generate-sql-add-autoincrement can be used!\n",
             internal::my_progname);
-    exit(1);
+    abort();
   }
 
   if (auto_generate_sql && num_of_query && auto_actual_queries)
@@ -1707,12 +1262,12 @@ process_options(void)
     fprintf(stderr,
             "%s: Either auto-generate-sql-execute-number or number-of-queries can be used!\n",
             internal::my_progname);
-    exit(1);
+    abort();
   }
 
-  parse_comma(!concurrency_str.empty() ? concurrency_str.c_str() : "1", concurrency);
+  parse_comma(not concurrency_str.empty() ? concurrency_str.c_str() : "1", concurrency);
 
-  if (!opt_csv_str.empty())
+  if (not opt_csv_str.empty())
   {
     opt_silent= true;
 
@@ -1727,7 +1282,7 @@ process_options(void)
       {
         fprintf(stderr,"%s: Could not open csv file: %sn\n",
                 internal::my_progname, opt_csv_str.c_str());
-        exit(1);
+        abort();
       }
     }
   }
@@ -1735,7 +1290,7 @@ process_options(void)
   if (opt_only_print)
     opt_silent= true;
 
-  if (!num_int_cols_opt.empty())
+  if (not num_int_cols_opt.empty())
   {
     OptionString *str;
     parse_option(num_int_cols_opt.c_str(), &str, ',');
@@ -1745,7 +1300,7 @@ process_options(void)
     option_cleanup(str);
   }
 
-  if (!num_char_cols_opt.empty())
+  if (not num_char_cols_opt.empty())
   {
     OptionString *str;
     parse_option(num_char_cols_opt.c_str(), &str, ',');
@@ -1757,7 +1312,7 @@ process_options(void)
     option_cleanup(str);
   }
 
-  if (!num_blob_cols_opt.empty())
+  if (not num_blob_cols_opt.empty())
   {
     OptionString *str;
     parse_option(num_blob_cols_opt.c_str(), &str, ',');
@@ -1842,7 +1397,7 @@ process_options(void)
           fprintf(stderr,
                   "%s: Can't perform key test without a primary key!\n",
                   internal::my_progname);
-          exit(1);
+          abort();
         }
 
         query_statements[sql_type_count]= build_select_string(true);
@@ -1878,7 +1433,7 @@ process_options(void)
           fprintf(stderr,
                   "%s: Can't perform update test without a primary key!\n",
                   internal::my_progname);
-          exit(1);
+          abort();
         }
 
         query_statements[sql_type_count]= build_update_string();
@@ -1919,25 +1474,25 @@ process_options(void)
   }
   else
   {
-    if (!create_string.empty() && !stat(create_string.c_str(), &sbuf))
+    if (not create_string.empty() && !stat(create_string.c_str(), &sbuf))
     {
       int data_file;
       std::vector<char> tmp_string;
-      if (!S_ISREG(sbuf.st_mode))
+      if (not S_ISREG(sbuf.st_mode))
       {
         fprintf(stderr,"%s: Create file was not a regular file\n",
                 internal::my_progname);
-        exit(1);
+        abort();
       }
       if ((data_file= open(create_string.c_str(), O_RDWR)) == -1)
       {
         fprintf(stderr,"%s: Could not open create file\n", internal::my_progname);
-        exit(1);
+        abort();
       }
       if ((uint64_t)(sbuf.st_size + 1) > SIZE_MAX)
       {
         fprintf(stderr, "Request for more memory than architecture supports\n");
-        exit(1);
+        abort();
       }
       tmp_string.resize(sbuf.st_size + 1);
       bytes_read= read(data_file, (unsigned char*) &tmp_string[0],
@@ -1949,13 +1504,13 @@ process_options(void)
       }
       parse_delimiter(&tmp_string[0], &create_statements, delimiter[0]);
     }
-    else if (!create_string.empty())
+    else if (not create_string.empty())
     {
       parse_delimiter(create_string.c_str(), &create_statements, delimiter[0]);
     }
 
     /* Set this up till we fully support options on user generated queries */
-    if (!user_supplied_query.empty())
+    if (not user_supplied_query.empty())
     {
       query_statements_count=
         parse_option("default", &query_options, ',');
@@ -1963,26 +1518,26 @@ process_options(void)
       query_statements.resize(query_statements_count);
     }
 
-    if (!user_supplied_query.empty() && !stat(user_supplied_query.c_str(), &sbuf))
+    if (not user_supplied_query.empty() && !stat(user_supplied_query.c_str(), &sbuf))
     {
       int data_file;
       std::vector<char> tmp_string;
 
-      if (!S_ISREG(sbuf.st_mode))
+      if (not S_ISREG(sbuf.st_mode))
       {
         fprintf(stderr,"%s: User query supplied file was not a regular file\n",
                 internal::my_progname);
-        exit(1);
+        abort();
       }
       if ((data_file= open(user_supplied_query.c_str(), O_RDWR)) == -1)
       {
         fprintf(stderr,"%s: Could not open query supplied file\n", internal::my_progname);
-        exit(1);
+        abort();
       }
       if ((uint64_t)(sbuf.st_size + 1) > SIZE_MAX)
       {
         fprintf(stderr, "Request for more memory than architecture supports\n");
-        exit(1);
+        abort();
       }
       tmp_string.resize((size_t)(sbuf.st_size + 1));
       bytes_read= read(data_file, (unsigned char*) &tmp_string[0],
@@ -1992,38 +1547,38 @@ process_options(void)
       {
         fprintf(stderr, "Problem reading file: read less bytes than requested\n");
       }
-      if (!user_supplied_query.empty())
+      if (not user_supplied_query.empty())
         actual_queries= parse_delimiter(&tmp_string[0], &query_statements[0],
                                         delimiter[0]);
     }
-    else if (!user_supplied_query.empty())
+    else if (not user_supplied_query.empty())
     {
       actual_queries= parse_delimiter(user_supplied_query.c_str(), &query_statements[0],
                                       delimiter[0]);
     }
   }
 
-  if (!user_supplied_pre_statements.empty()
+  if (not user_supplied_pre_statements.empty()
       && !stat(user_supplied_pre_statements.c_str(), &sbuf))
   {
     int data_file;
     std::vector<char> tmp_string;
 
-    if (!S_ISREG(sbuf.st_mode))
+    if (not S_ISREG(sbuf.st_mode))
     {
       fprintf(stderr,"%s: User query supplied file was not a regular file\n",
               internal::my_progname);
-      exit(1);
+      abort();
     }
     if ((data_file= open(user_supplied_pre_statements.c_str(), O_RDWR)) == -1)
     {
       fprintf(stderr,"%s: Could not open query supplied file\n", internal::my_progname);
-      exit(1);
+      abort();
     }
     if ((uint64_t)(sbuf.st_size + 1) > SIZE_MAX)
     {
       fprintf(stderr, "Request for more memory than architecture supports\n");
-      exit(1);
+      abort();
     }
     tmp_string.resize((size_t)(sbuf.st_size + 1));
     bytes_read= read(data_file, (unsigned char*) &tmp_string[0],
@@ -2033,39 +1588,39 @@ process_options(void)
     {
       fprintf(stderr, "Problem reading file: read less bytes than requested\n");
     }
-    if (!user_supplied_pre_statements.empty())
+    if (not user_supplied_pre_statements.empty())
       (void)parse_delimiter(&tmp_string[0], &pre_statements,
                             delimiter[0]);
   }
-  else if (!user_supplied_pre_statements.empty())
+  else if (not user_supplied_pre_statements.empty())
   {
     (void)parse_delimiter(user_supplied_pre_statements.c_str(),
                           &pre_statements,
                           delimiter[0]);
   }
 
-  if (!user_supplied_post_statements.empty()
+  if (not user_supplied_post_statements.empty()
       && !stat(user_supplied_post_statements.c_str(), &sbuf))
   {
     int data_file;
     std::vector<char> tmp_string;
 
-    if (!S_ISREG(sbuf.st_mode))
+    if (not S_ISREG(sbuf.st_mode))
     {
       fprintf(stderr,"%s: User query supplied file was not a regular file\n",
               internal::my_progname);
-      exit(1);
+      abort();
     }
     if ((data_file= open(user_supplied_post_statements.c_str(), O_RDWR)) == -1)
     {
       fprintf(stderr,"%s: Could not open query supplied file\n", internal::my_progname);
-      exit(1);
+      abort();
     }
 
     if ((uint64_t)(sbuf.st_size + 1) > SIZE_MAX)
     {
       fprintf(stderr, "Request for more memory than architecture supports\n");
-      exit(1);
+      abort();
     }
     tmp_string.resize((size_t)(sbuf.st_size + 1));
 
@@ -2076,11 +1631,11 @@ process_options(void)
     {
       fprintf(stderr, "Problem reading file: read less bytes than requested\n");
     }
-    if (!user_supplied_post_statements.empty())
+    if (not user_supplied_post_statements.empty())
       (void)parse_delimiter(&tmp_string[0], &post_statements,
                             delimiter[0]);
   }
-  else if (!user_supplied_post_statements.empty())
+  else if (not user_supplied_post_statements.empty())
   {
     (void)parse_delimiter(user_supplied_post_statements.c_str(), &post_statements,
                           delimiter[0]);
@@ -2089,7 +1644,7 @@ process_options(void)
   if (verbose >= 2)
     printf("Parsing engines to use.\n");
 
-  if (!default_engine.empty())
+  if (not default_engine.empty())
     parse_option(default_engine.c_str(), &engine_options, ',');
 
   if (tty_password)
@@ -2098,7 +1653,7 @@ process_options(void)
 }
 
 
-static int run_query(drizzle_con_st *con, drizzle_result_st *result,
+static int run_query(drizzle_con_st &con, drizzle_result_st *result,
                      const char *query, int len)
 {
   drizzle_return_t ret;
@@ -2106,7 +1661,9 @@ static int run_query(drizzle_con_st *con, drizzle_result_st *result,
 
   if (opt_only_print)
   {
-    printf("%.*s;\n", len, query);
+    printf("/* CON: %lu */ %.*s;\n",
+           (size_t)drizzle_context(drizzle_con_drizzle(&con)),
+           len, query);
     return 0;
   }
 
@@ -2116,7 +1673,7 @@ static int run_query(drizzle_con_st *con, drizzle_result_st *result,
   if (result == NULL)
     result= &result_buffer;
 
-  result= drizzle_query(con, result, query, len, &ret);
+  result= drizzle_query(&con, result, query, len, &ret);
 
   if (ret == DRIZZLE_RETURN_OK)
     ret= drizzle_result_buffer(result);
@@ -2129,7 +1686,7 @@ static int run_query(drizzle_con_st *con, drizzle_result_st *result,
 
 
 static int
-generate_primary_key_list(drizzle_con_st *con, OptionString *engine_stmt)
+generate_primary_key_list(drizzle_con_st &con, OptionString *engine_stmt)
 {
   drizzle_result_st result;
   drizzle_row_t row;
@@ -2151,15 +1708,15 @@ generate_primary_key_list(drizzle_con_st *con, OptionString *engine_stmt)
     if (run_query(con, &result, "SELECT id from t1", strlen("SELECT id from t1")))
     {
       fprintf(stderr,"%s: Cannot select GUID primary keys. (%s)\n", internal::my_progname,
-              drizzle_con_error(con));
-      exit(1);
+              drizzle_con_error(&con));
+      abort();
     }
 
     uint64_t num_rows_ret= drizzle_result_row_count(&result);
     if (num_rows_ret > SIZE_MAX)
     {
       fprintf(stderr, "More primary keys than than architecture supports\n");
-      exit(1);
+      abort();
     }
     size_t primary_keys_number_of;
     primary_keys_number_of= (size_t)num_rows_ret;
@@ -2184,15 +1741,12 @@ generate_primary_key_list(drizzle_con_st *con, OptionString *engine_stmt)
   return(0);
 }
 
-static int
-create_schema(drizzle_con_st *con, const char *db, Statement *stmt,
-              OptionString *engine_stmt, Stats *sptr)
+static void create_schema(drizzle_con_st &con, const char *db, Statement *stmt, OptionString *engine_stmt, Stats *sptr)
 {
   char query[HUGE_STRING_LENGTH];
   Statement *ptr;
   Statement *after_create;
   int len;
-  uint64_t count;
   struct timeval start_time, end_time;
 
 
@@ -2206,8 +1760,8 @@ create_schema(drizzle_con_st *con, const char *db, Statement *stmt,
   if (run_query(con, NULL, query, len))
   {
     fprintf(stderr,"%s: Cannot create schema %s : %s\n", internal::my_progname, db,
-            drizzle_con_error(con));
-    exit(1);
+            drizzle_con_error(&con));
+    abort();
   }
   else
   {
@@ -2216,7 +1770,9 @@ create_schema(drizzle_con_st *con, const char *db, Statement *stmt,
 
   if (opt_only_print)
   {
-    printf("use %s;\n", db);
+    printf("/* CON: %lu */ use %s;\n",
+           (size_t)drizzle_context(drizzle_con_drizzle(&con)),
+           db);
   }
   else
   {
@@ -2226,13 +1782,13 @@ create_schema(drizzle_con_st *con, const char *db, Statement *stmt,
     if (verbose >= 3)
       printf("%s;\n", query);
 
-    if (drizzle_select_db(con,  &result, db, &ret) == NULL ||
+    if (drizzle_select_db(&con,  &result, db, &ret) == NULL ||
         ret != DRIZZLE_RETURN_OK)
     {
       fprintf(stderr,"%s: Cannot select schema '%s': %s\n",internal::my_progname, db,
               ret == DRIZZLE_RETURN_ERROR_CODE ?
-              drizzle_result_error(&result) : drizzle_con_error(con));
-      exit(1);
+              drizzle_result_error(&result) : drizzle_con_error(&con));
+      abort();
     }
     drizzle_result_free(&result);
     sptr->setCreateCount(sptr->getCreateCount()+1);
@@ -2245,13 +1801,13 @@ create_schema(drizzle_con_st *con, const char *db, Statement *stmt,
     if (run_query(con, NULL, query, len))
     {
       fprintf(stderr,"%s: Cannot set default engine: %s\n", internal::my_progname,
-              drizzle_con_error(con));
-      exit(1);
+              drizzle_con_error(&con));
+      abort();
     }
     sptr->setCreateCount(sptr->getCreateCount()+1);
   }
 
-  count= 0;
+  uint64_t count= 0;
   after_create= stmt;
 
 limit_not_met:
@@ -2269,9 +1825,9 @@ limit_not_met:
       if (run_query(con, NULL, buffer, strlen(buffer)))
       {
         fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-                internal::my_progname, (uint32_t)ptr->getLength(), ptr->getString(), drizzle_con_error(con));
-        if (!opt_ignore_sql_errors)
-          exit(1);
+                internal::my_progname, (uint32_t)ptr->getLength(), ptr->getString(), drizzle_con_error(&con));
+        if (not opt_ignore_sql_errors)
+          abort();
       }
       sptr->setCreateCount(sptr->getCreateCount()+1);
     }
@@ -2280,9 +1836,9 @@ limit_not_met:
       if (run_query(con, NULL, ptr->getString(), ptr->getLength()))
       {
         fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-                internal::my_progname, (uint32_t)ptr->getLength(), ptr->getString(), drizzle_con_error(con));
-        if (!opt_ignore_sql_errors)
-          exit(1);
+                internal::my_progname, (uint32_t)ptr->getLength(), ptr->getString(), drizzle_con_error(&con));
+        if (not opt_ignore_sql_errors)
+          abort();
       }
       sptr->setCreateCount(sptr->getCreateCount()+1);
     }
@@ -2298,12 +1854,9 @@ limit_not_met:
   gettimeofday(&end_time, NULL);
 
   sptr->setCreateTiming(timedif(end_time, start_time));
-
-  return(0);
 }
 
-static int
-drop_schema(drizzle_con_st *con, const char *db)
+static void drop_schema(drizzle_con_st &con, const char *db)
 {
   char query[HUGE_STRING_LENGTH];
   int len;
@@ -2313,318 +1866,146 @@ drop_schema(drizzle_con_st *con, const char *db)
   if (run_query(con, NULL, query, len))
   {
     fprintf(stderr,"%s: Cannot drop database '%s' ERROR : %s\n",
-            internal::my_progname, db, drizzle_con_error(con));
-    exit(1);
+            internal::my_progname, db, drizzle_con_error(&con));
+    abort();
   }
-
-
-
-  return(0);
 }
 
-static int
-run_statements(drizzle_con_st *con, Statement *stmt)
+static void run_statements(drizzle_con_st &con, Statement *stmt)
 {
-  Statement *ptr;
-
-  for (ptr= stmt; ptr && ptr->getLength(); ptr= ptr->getNext())
+  for (Statement *ptr= stmt; ptr && ptr->getLength(); ptr= ptr->getNext())
   {
     if (run_query(con, NULL, ptr->getString(), ptr->getLength()))
     {
       fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-              internal::my_progname, (uint32_t)ptr->getLength(), ptr->getString(), drizzle_con_error(con));
-      exit(1);
+              internal::my_progname, (uint32_t)ptr->getLength(), ptr->getString(), drizzle_con_error(&con));
+      abort();
     }
   }
-
-  return(0);
 }
 
-static int
-run_scheduler(Stats *sptr, Statement **stmts, uint32_t concur, uint64_t limit)
+
+static void timer_thread()
 {
-  uint32_t y;
-  unsigned int real_concurrency;
-  struct timeval start_time, end_time;
-  OptionString *sql_type;
-  pthread_t mainthread;            /* Thread descriptor */
-  pthread_attr_t attr;          /* Thread attributes */
+  /*
+    We lock around the initial call in case were we in a loop. This
+    also keeps the value properly syncronized across call threads.
+  */
+  master_wakeup.wait();
 
-
-  pthread_attr_init(&attr);
-  pthread_attr_setdetachstate(&attr,
-                              PTHREAD_CREATE_DETACHED);
-
-  pthread_mutex_lock(&counter_mutex);
-  thread_counter= 0;
-
-  pthread_mutex_lock(&sleeper_mutex);
-  master_wakeup= 1;
-  pthread_mutex_unlock(&sleeper_mutex);
-
-  real_concurrency= 0;
-
-  for (y= 0, sql_type= query_options;
-       y < query_statements_count;
-       y++, sql_type= sql_type->getNext())
   {
-    unsigned int options_loop= 1;
+    boost::mutex::scoped_lock scopedLock(timer_alarm_mutex);
 
-    if (sql_type->getOption())
-    {
-      options_loop= strtol(sql_type->getOption(),
-                           (char **)NULL, 10);
-      options_loop= options_loop ? options_loop : 1;
-    }
+    boost::xtime xt; 
+    xtime_get(&xt, boost::TIME_UTC); 
+    xt.sec += opt_timer_length; 
 
-    while (options_loop--)
+    (void)timer_alarm_threshold.timed_wait(scopedLock, xt);
+  }
+
+  {
+    boost::mutex::scoped_lock scopedLock(timer_alarm_mutex);
+    timer_alarm= false;
+  }
+}
+
+typedef boost::shared_ptr<boost::thread> Thread;
+typedef std::vector <Thread> Threads;
+static void run_scheduler(Stats *sptr, Statement **stmts, uint32_t concur, uint64_t limit)
+{
+  uint32_t real_concurrency;
+  struct timeval start_time, end_time;
+
+  Threads threads;
+
+  {
+    OptionString *sql_type;
+
+    master_wakeup.reset();
+
+    real_concurrency= 0;
+
+    uint32_t y;
+    for (y= 0, sql_type= query_options;
+         y < query_statements_count;
+         y++, sql_type= sql_type->getNext())
     {
-      for (uint32_t x= 0; x < concur; x++)
+      uint32_t options_loop= 1;
+
+      if (sql_type->getOption())
       {
-        ThreadContext *con;
-        con= new ThreadContext;
-        if (con == NULL)
-        {
-          fprintf(stderr, "Memory Allocation error in scheduler\n");
-          exit(1);
-        }
-        con->setStmt(stmts[y]);
-        con->setLimit(limit);
+        options_loop= strtol(sql_type->getOption(),
+                             (char **)NULL, 10);
+        options_loop= options_loop ? options_loop : 1;
+      }
 
-        real_concurrency++;
-        /* now you create the thread */
-        if (pthread_create(&mainthread, &attr, run_task,
-                           (void *)con) != 0)
+      while (options_loop--)
+      {
+        for (uint32_t x= 0; x < concur; x++)
         {
-          fprintf(stderr,"%s: Could not create thread\n", internal::my_progname);
-          exit(1);
+          ThreadContext *con;
+          con= new ThreadContext;
+          if (con == NULL)
+          {
+            fprintf(stderr, "Memory Allocation error in scheduler\n");
+            abort();
+          }
+          con->setStmt(stmts[y]);
+          con->setLimit(limit);
+
+          real_concurrency++;
+
+          /* now you create the thread */
+          Thread thread;
+          thread= Thread(new boost::thread(boost::bind(&run_task, con)));
+          threads.push_back(thread);
+
         }
-        thread_counter++;
       }
     }
-  }
 
-  /*
-    The timer_thread belongs to all threads so it too obeys the wakeup
-    call that run tasks obey.
-  */
-  if (opt_timer_length)
-  {
-    pthread_mutex_lock(&timer_alarm_mutex);
-    timer_alarm= true;
-    pthread_mutex_unlock(&timer_alarm_mutex);
-
-    if (pthread_create(&mainthread, &attr, timer_thread,
-                       (void *)&opt_timer_length) != 0)
+    /*
+      The timer_thread belongs to all threads so it too obeys the wakeup
+      call that run tasks obey.
+    */
+    if (opt_timer_length)
     {
-      fprintf(stderr,"%s: Could not create timer thread\n", internal::my_progname);
-      exit(1);
+      {
+        boost::mutex::scoped_lock alarmLock(timer_alarm_mutex);
+        timer_alarm= true;
+      }
+
+      Thread thread;
+      thread= Thread(new boost::thread(&timer_thread));
+      threads.push_back(thread);
     }
   }
 
-  pthread_mutex_unlock(&counter_mutex);
-  pthread_attr_destroy(&attr);
-
-  pthread_mutex_lock(&sleeper_mutex);
-  master_wakeup= 0;
-  pthread_mutex_unlock(&sleeper_mutex);
-  pthread_cond_broadcast(&sleep_threshhold);
+  master_wakeup.start();
 
   gettimeofday(&start_time, NULL);
 
   /*
     We loop until we know that all children have cleaned up.
   */
-  pthread_mutex_lock(&counter_mutex);
-  while (thread_counter)
+  for (Threads::iterator iter= threads.begin(); iter != threads.end(); iter++)
   {
-    struct timespec abstime;
-
-    set_timespec(abstime, 3);
-    pthread_cond_timedwait(&count_threshhold, &counter_mutex, &abstime);
+    (*iter)->join();
   }
-  pthread_mutex_unlock(&counter_mutex);
 
   gettimeofday(&end_time, NULL);
-
 
   sptr->setTiming(timedif(end_time, start_time));
   sptr->setUsers(concur);
   sptr->setRealUsers(real_concurrency);
   sptr->setRows(limit);
-
-  return(0);
-}
-
-
-pthread_handler_t timer_thread(void *p)
-{
-  uint32_t *timer_length= (uint32_t *)p;
-  struct timespec abstime;
-
-
-  /*
-    We lock around the initial call in case were we in a loop. This
-    also keeps the value properly syncronized across call threads.
-  */
-  pthread_mutex_lock(&sleeper_mutex);
-  while (master_wakeup)
-  {
-    pthread_cond_wait(&sleep_threshhold, &sleeper_mutex);
-  }
-  pthread_mutex_unlock(&sleeper_mutex);
-
-  set_timespec(abstime, *timer_length);
-
-  pthread_mutex_lock(&timer_alarm_mutex);
-  pthread_cond_timedwait(&timer_alarm_threshold, &timer_alarm_mutex, &abstime);
-  pthread_mutex_unlock(&timer_alarm_mutex);
-
-  pthread_mutex_lock(&timer_alarm_mutex);
-  timer_alarm= false;
-  pthread_mutex_unlock(&timer_alarm_mutex);
-
-  return(0);
-}
-
-pthread_handler_t run_task(void *p)
-{
-  uint64_t counter= 0, queries;
-  uint64_t detach_counter;
-  unsigned int commit_counter;
-  drizzle_con_st con;
-  drizzle_result_st result;
-  drizzle_row_t row;
-  Statement *ptr;
-  ThreadContext *ctx= (ThreadContext *)p;
-
-  pthread_mutex_lock(&sleeper_mutex);
-  while (master_wakeup)
-  {
-    pthread_cond_wait(&sleep_threshhold, &sleeper_mutex);
-  }
-  pthread_mutex_unlock(&sleeper_mutex);
-
-  slap_connect(&con, true);
-
-  if (verbose >= 3)
-    printf("connected!\n");
-  queries= 0;
-
-  commit_counter= 0;
-  if (commit_rate)
-    run_query(&con, NULL, "SET AUTOCOMMIT=0", strlen("SET AUTOCOMMIT=0"));
-
-limit_not_met:
-  for (ptr= ctx->getStmt(), detach_counter= 0;
-       ptr && ptr->getLength();
-       ptr= ptr->getNext(), detach_counter++)
-  {
-    if (!opt_only_print && detach_rate && !(detach_counter % detach_rate))
-    {
-      slap_close(&con);
-      slap_connect(&con, true);
-    }
-
-    /*
-      We have to execute differently based on query type. This should become a function.
-    */
-    if ((ptr->getType() == UPDATE_TYPE_REQUIRES_PREFIX) ||
-        (ptr->getType() == SELECT_TYPE_REQUIRES_PREFIX))
-    {
-      int length;
-      unsigned int key_val;
-      char buffer[HUGE_STRING_LENGTH];
-
-      /*
-        This should only happen if some sort of new engine was
-        implemented that didn't properly handle UPDATEs.
-
-        Just in case someone runs this under an experimental engine we don't
-        want a crash so the if() is placed here.
-      */
-      assert(primary_keys.size());
-      if (primary_keys.size())
-      {
-        key_val= (unsigned int)(random() % primary_keys.size());
-        const char *key;
-        key= primary_keys[key_val].c_str();
-
-        assert(key);
-
-        length= snprintf(buffer, HUGE_STRING_LENGTH, "%.*s '%s'",
-                         (int)ptr->getLength(), ptr->getString(), key);
-
-        if (run_query(&con, &result, buffer, length))
-        {
-          fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-                  internal::my_progname, (uint32_t)length, buffer, drizzle_con_error(&con));
-          exit(1);
-        }
-      }
-    }
-    else
-    {
-      if (run_query(&con, &result, ptr->getString(), ptr->getLength()))
-      {
-        fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-                internal::my_progname, (uint32_t)ptr->getLength(), ptr->getString(), drizzle_con_error(&con));
-        exit(1);
-      }
-    }
-
-    if (!opt_only_print)
-    {
-      while ((row = drizzle_row_next(&result)))
-        counter++;
-      drizzle_result_free(&result);
-    }
-    queries++;
-
-    if (commit_rate && (++commit_counter == commit_rate))
-    {
-      commit_counter= 0;
-      run_query(&con, NULL, "COMMIT", strlen("COMMIT"));
-    }
-
-    /* If the timer is set, and the alarm is not active then end */
-    if (opt_timer_length && timer_alarm == false)
-      goto end;
-
-    /* If limit has been reached, and we are not in a timer_alarm just end */
-    if (ctx->getLimit() && queries == ctx->getLimit() && timer_alarm == false)
-      goto end;
-  }
-
-  if (opt_timer_length && timer_alarm == true)
-    goto limit_not_met;
-
-  if (ctx->getLimit() && queries < ctx->getLimit())
-    goto limit_not_met;
-
-
-end:
-  if (commit_rate)
-    run_query(&con, NULL, "COMMIT", strlen("COMMIT"));
-
-  slap_close(&con);
-
-  pthread_mutex_lock(&counter_mutex);
-  thread_counter--;
-  pthread_cond_signal(&count_threshhold);
-  pthread_mutex_unlock(&counter_mutex);
-
-  delete ctx;
-
-  return(0);
 }
 
 /*
   Parse records from comma seperated string. : is a reserved character and is used for options
   on variables.
 */
-uint
-parse_option(const char *origin, OptionString **stmt, char delm)
+uint32_t parse_option(const char *origin, OptionString **stmt, char delm)
 {
   char *string;
   char *begin_ptr;
@@ -2674,7 +2055,7 @@ parse_option(const char *origin, OptionString **stmt, char delm)
     if (tmp->getString() == NULL)
     {
       fprintf(stderr,"Error allocating memory while parsing options\n");
-      exit(1);
+      abort();
     }
 
     if (isspace(*begin_ptr))
@@ -2697,8 +2078,7 @@ parse_option(const char *origin, OptionString **stmt, char delm)
   Raw parsing interface. If you want the slap specific parser look at
   parse_option.
 */
-uint
-parse_delimiter(const char *script, Statement **stmt, char delm)
+uint32_t parse_delimiter(const char *script, Statement **stmt, char delm)
 {
   char *retstr;
   char *ptr= (char *)script;
@@ -2715,7 +2095,7 @@ parse_delimiter(const char *script, Statement **stmt, char delm)
     if (tmp == NULL)
     {
       fprintf(stderr,"Error allocating memory while parsing delimiter\n");
-      exit(1);
+      abort();
     }
 
     count++;
@@ -2724,7 +2104,7 @@ parse_delimiter(const char *script, Statement **stmt, char delm)
     if (tmp->getString() == NULL)
     {
       fprintf(stderr,"Error allocating memory while parsing delimiter\n");
-      exit(1);
+      abort();
     }
 
     memcpy(tmp->getString(), ptr, tmp->getLength());
@@ -2739,7 +2119,7 @@ parse_delimiter(const char *script, Statement **stmt, char delm)
     if (tmp->getString() == NULL)
     {
       fprintf(stderr,"Error allocating memory while parsing delimiter\n");
-      exit(1);
+      abort();
     }
     memcpy(tmp->getString(), ptr, tmp->getLength());
     count++;
@@ -2754,13 +2134,12 @@ parse_delimiter(const char *script, Statement **stmt, char delm)
   number ranges from a comma seperated string.
   In restrospect, this is a lousy name from this function.
 */
-uint
-parse_comma(const char *string, std::vector <uint32_t> &range)
+uint32_t parse_comma(const char *string, std::vector <uint32_t> &range)
 {
-  unsigned int count= 1,x; /* We know that there is always one */
+  uint32_t count= 1; /* We know that there is always one */
   char *retstr;
   char *ptr= (char *)string;
-  unsigned int *nptr;
+  uint32_t *nptr;
 
   for (;*ptr; ptr++)
     if (*ptr == ',') count++;
@@ -2770,7 +2149,7 @@ parse_comma(const char *string, std::vector <uint32_t> &range)
   nptr= &range[0];
 
   ptr= (char *)string;
-  x= 0;
+  uint32_t x= 0;
   while ((retstr= strchr(ptr,',')))
   {
     nptr[x++]= atoi(ptr);
@@ -2781,40 +2160,38 @@ parse_comma(const char *string, std::vector <uint32_t> &range)
   return count;
 }
 
-void
-print_conclusions(Conclusions *con)
+void print_conclusions(Conclusions &con)
 {
   printf("Benchmark\n");
-  if (con->getEngine())
-    printf("\tRunning for engine %s\n", con->getEngine());
-  if (!opt_label.empty() || !opt_auto_generate_sql_type.empty())
+  if (con.getEngine())
+    printf("\tRunning for engine %s\n", con.getEngine());
+
+  if (not opt_label.empty() || !opt_auto_generate_sql_type.empty())
   {
     const char *ptr= opt_auto_generate_sql_type.c_str() ? opt_auto_generate_sql_type.c_str() : "query";
     printf("\tLoad: %s\n", !opt_label.empty() ? opt_label.c_str() : ptr);
   }
   printf("\tAverage Time took to generate schema and initial data: %ld.%03ld seconds\n",
-         con->getCreateAvgTiming() / 1000, con->getCreateAvgTiming() % 1000);
+         con.getCreateAvgTiming() / 1000, con.getCreateAvgTiming() % 1000);
   printf("\tAverage number of seconds to run all queries: %ld.%03ld seconds\n",
-         con->getAvgTiming() / 1000, con->getAvgTiming() % 1000);
+         con.getAvgTiming() / 1000, con.getAvgTiming() % 1000);
   printf("\tMinimum number of seconds to run all queries: %ld.%03ld seconds\n",
-         con->getMinTiming() / 1000, con->getMinTiming() % 1000);
+         con.getMinTiming() / 1000, con.getMinTiming() % 1000);
   printf("\tMaximum number of seconds to run all queries: %ld.%03ld seconds\n",
-         con->getMaxTiming() / 1000, con->getMaxTiming() % 1000);
+         con.getMaxTiming() / 1000, con.getMaxTiming() % 1000);
   printf("\tTotal time for tests: %ld.%03ld seconds\n",
-         con->getSumOfTime() / 1000, con->getSumOfTime() % 1000);
-  printf("\tStandard Deviation: %ld.%03ld\n", con->getStdDev() / 1000, con->getStdDev() % 1000);
-  printf("\tNumber of queries in create queries: %"PRIu64"\n", con->getCreateCount());
+         con.getSumOfTime() / 1000, con.getSumOfTime() % 1000);
+  printf("\tStandard Deviation: %ld.%03ld\n", con.getStdDev() / 1000, con.getStdDev() % 1000);
+  printf("\tNumber of queries in create queries: %"PRIu64"\n", con.getCreateCount());
   printf("\tNumber of clients running queries: %u/%u\n",
-         con->getUsers(), con->getRealUsers());
+         con.getUsers(), con.getRealUsers());
   printf("\tNumber of times test was run: %u\n", iterations);
-  printf("\tAverage number of queries per client: %"PRIu64"\n", con->getAvgRows());
+  printf("\tAverage number of queries per client: %"PRIu64"\n", con.getAvgRows());
   printf("\n");
 }
 
-void
-print_conclusions_csv(Conclusions *con)
+void print_conclusions_csv(Conclusions &con)
 {
-  unsigned int x;
   char buffer[HUGE_STRING_LENGTH];
   char label_buffer[HUGE_STRING_LENGTH];
   size_t string_len;
@@ -2822,11 +2199,11 @@ print_conclusions_csv(Conclusions *con)
 
   memset(label_buffer, 0, sizeof(label_buffer));
 
-  if (!opt_label.empty())
+  if (not opt_label.empty())
   {
     string_len= opt_label.length();
 
-    for (x= 0; x < string_len; x++)
+    for (uint32_t x= 0; x < string_len; x++)
     {
       if (temp_label[x] == ',')
         label_buffer[x]= '-';
@@ -2834,11 +2211,11 @@ print_conclusions_csv(Conclusions *con)
         label_buffer[x]= temp_label[x] ;
     }
   }
-  else if (!opt_auto_generate_sql_type.empty())
+  else if (not opt_auto_generate_sql_type.empty())
   {
     string_len= opt_auto_generate_sql_type.length();
 
-    for (x= 0; x < string_len; x++)
+    for (uint32_t x= 0; x < string_len; x++)
     {
       if (opt_auto_generate_sql_type[x] == ',')
         label_buffer[x]= '-';
@@ -2854,17 +2231,17 @@ print_conclusions_csv(Conclusions *con)
   snprintf(buffer, HUGE_STRING_LENGTH,
            "%s,%s,%ld.%03ld,%ld.%03ld,%ld.%03ld,%ld.%03ld,%ld.%03ld,"
            "%u,%u,%u,%"PRIu64"\n",
-           con->getEngine() ? con->getEngine() : "", /* Storage engine we ran against */
+           con.getEngine() ? con.getEngine() : "", /* Storage engine we ran against */
            label_buffer, /* Load type */
-           con->getAvgTiming() / 1000, con->getAvgTiming() % 1000, /* Time to load */
-           con->getMinTiming() / 1000, con->getMinTiming() % 1000, /* Min time */
-           con->getMaxTiming() / 1000, con->getMaxTiming() % 1000, /* Max time */
-           con->getSumOfTime() / 1000, con->getSumOfTime() % 1000, /* Total time */
-           con->getStdDev() / 1000, con->getStdDev() % 1000, /* Standard Deviation */
+           con.getAvgTiming() / 1000, con.getAvgTiming() % 1000, /* Time to load */
+           con.getMinTiming() / 1000, con.getMinTiming() % 1000, /* Min time */
+           con.getMaxTiming() / 1000, con.getMaxTiming() % 1000, /* Max time */
+           con.getSumOfTime() / 1000, con.getSumOfTime() % 1000, /* Total time */
+           con.getStdDev() / 1000, con.getStdDev() % 1000, /* Standard Deviation */
            iterations, /* Iterations */
-           con->getUsers(), /* Children used max_timing */
-           con->getRealUsers(), /* Children used max_timing */
-           con->getAvgRows()  /* Queries run */
+           con.getUsers(), /* Children used max_timing */
+           con.getRealUsers(), /* Children used max_timing */
+           con.getAvgRows()  /* Queries run */
            );
   size_t buff_len= strlen(buffer);
   ssize_t write_ret= write(csv_file, (unsigned char*) buffer, buff_len);
@@ -2877,11 +2254,10 @@ print_conclusions_csv(Conclusions *con)
   }
 }
 
-void
-generate_stats(Conclusions *con, OptionString *eng, Stats *sptr)
+void generate_stats(Conclusions *con, OptionString *eng, Stats *sptr)
 {
   Stats *ptr;
-  unsigned int x;
+  uint32_t x;
 
   con->setMinTiming(sptr->getTiming());
   con->setMaxTiming(sptr->getTiming());
@@ -2911,7 +2287,7 @@ generate_stats(Conclusions *con, OptionString *eng, Stats *sptr)
   else
     con->setEngine(NULL);
 
-  standard_deviation(con, sptr);
+  standard_deviation(*con, sptr);
 
   /* Now we do the create time operations */
   con->setCreateMinTiming(sptr->getCreateTiming());
@@ -2947,11 +2323,10 @@ option_cleanup(OptionString *stmt)
   }
 }
 
-void
-statement_cleanup(Statement *stmt)
+void statement_cleanup(Statement *stmt)
 {
   Statement *ptr, *nptr;
-  if (!stmt)
+  if (not stmt)
     return;
 
   for (ptr= stmt; ptr; ptr= nptr)
@@ -2961,17 +2336,12 @@ statement_cleanup(Statement *stmt)
   }
 }
 
-void
-slap_close(drizzle_con_st *con)
+void slap_close(drizzle_con_st &con)
 {
-  if (opt_only_print)
-    return;
-
-  drizzle_free(drizzle_con_drizzle(con));
+  drizzle_free(drizzle_con_drizzle(&con));
 }
 
-void
-slap_connect(drizzle_con_st *con, bool connect_to_schema)
+void slap_connect(drizzle_con_st &con, bool connect_to_schema)
 {
   /* Connect to server */
   static uint32_t connection_retry_sleep= 100000; /* Microseconds */
@@ -2979,26 +2349,28 @@ slap_connect(drizzle_con_st *con, bool connect_to_schema)
   drizzle_return_t ret;
   drizzle_st *drizzle;
 
-  if (opt_only_print)
-    return;
-
   if (opt_delayed_start)
     usleep(random()%opt_delayed_start);
 
   if ((drizzle= drizzle_create(NULL)) == NULL ||
-      drizzle_con_add_tcp(drizzle, con, host.c_str(), opt_drizzle_port,
+      drizzle_con_add_tcp(drizzle, &con, host.c_str(), opt_drizzle_port,
         user.c_str(),
         opt_password.c_str(),
         connect_to_schema ? create_schema_string.c_str() : NULL,
         use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL) == NULL)
   {
     fprintf(stderr,"%s: Error creating drizzle object\n", internal::my_progname);
-    exit(1);
+    abort();
   }
+
+  drizzle_set_context(drizzle, (void*)(connection_count.fetch_and_increment()));
+
+  if (opt_only_print)
+    return;
 
   for (uint32_t x= 0; x < 10; x++)
   {
-    if ((ret= drizzle_con_connect(con)) == DRIZZLE_RETURN_OK)
+    if ((ret= drizzle_con_connect(&con)) == DRIZZLE_RETURN_OK)
     {
       /* Connect suceeded */
       connect_error= 0;
@@ -3009,35 +2381,32 @@ slap_connect(drizzle_con_st *con, bool connect_to_schema)
   if (connect_error)
   {
     fprintf(stderr,"%s: Error when connecting to server: %d %s\n", internal::my_progname,
-            ret, drizzle_con_error(con));
-    exit(1);
+            ret, drizzle_con_error(&con));
+    abort();
   }
-
-  return;
 }
 
-void
-standard_deviation (Conclusions *con, Stats *sptr)
+void standard_deviation(Conclusions &con, Stats *sptr)
 {
-  unsigned int x;
   long int sum_of_squares;
   double the_catch;
   Stats *ptr;
 
   if (iterations == 1 || iterations == 0)
   {
-    con->setStdDev(0);
+    con.setStdDev(0);
     return;
   }
 
+  uint32_t x;
   for (ptr= sptr, x= 0, sum_of_squares= 0; x < iterations; ptr++, x++)
   {
     long int deviation;
 
-    deviation= ptr->getTiming() - con->getAvgTiming();
+    deviation= ptr->getTiming() - con.getAvgTiming();
     sum_of_squares+= deviation*deviation;
   }
 
   the_catch= sqrt((double)(sum_of_squares/(iterations -1)));
-  con->setStdDev((long int)the_catch);
+  con.setStdDev((long int)the_catch);
 }

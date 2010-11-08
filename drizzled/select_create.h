@@ -24,7 +24,7 @@ namespace drizzled
 {
 
 class select_create: public select_insert {
-  order_st *group;
+  Order *group;
   TableList *create_table;
   bool is_if_not_exists;
   HA_CREATE_INFO *create_info;
@@ -67,7 +67,7 @@ public:
 
   // Needed for access from local class MY_HOOKS in prepare(), since session is proteted.
   const Session *get_session(void) { return session; }
-  const HA_CREATE_INFO *get_create_info() { return create_info; };
+  const HA_CREATE_INFO *get_create_info() { return create_info; }
   int prepare2(void) { return 0; }
 };
 

@@ -106,7 +106,7 @@ int64_t Item_func_sleep::val_int()
 
   /* don't run if not killed */
   pthread_mutex_lock(&LOCK_sleep);
-  while (! session->killed)
+  while (not session->getKilled())
   {
     error= pthread_cond_timedwait(&cond, &LOCK_sleep, &abstime);
     if (error == ETIMEDOUT || error == ETIME)

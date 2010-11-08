@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Original author: Paul McCullagh (H&G2JCtL)
  * Continued development: Barry Leslie
@@ -55,7 +55,16 @@ CSHashTable::~CSHashTable()
 void CSHashTable::setSize(uint32_t size)
 {
 	enter_();
-	cs_realloc((void **) &iTable, sizeof(CSObject *) * size);
+	if (size == 0) {
+		if (iTable) {
+			cs_free(iTable);
+			iTable = NULL;
+		}
+	}
+	else {
+		cs_realloc((void **) &iTable, sizeof(CSObject *) * size);
+		memset(iTable, 0, sizeof(CSObject *) * size);
+	}
 	iSize = size;
 	exit_();
 }
@@ -83,7 +92,7 @@ CSObject *CSHashTable::find(CSObject *key)
 	return NULL;
 }
 
-void CSHashTable::remove(CSObject *key)
+bool CSHashTable::remove(CSObject *key)
 {
 	uint32_t h = key->hashKey();
 	CSObject *item, *prev_item;
@@ -98,11 +107,12 @@ void CSHashTable::remove(CSObject *key)
 			else
 				iTable[h % iSize] = item->getHashLink();
 			item->release();
-			break;
+			return true;
 		}
 		prev_item = item;
 		item = item->getHashLink();
 	}
+	return false;
 }
 
 void CSHashTable::clear()
@@ -182,8 +192,8 @@ CSObject *CSSortedList::takeItemAt(uint32_t idx)
 		
 	item = 	iList[idx];
 	
-	memmove(&iList[idx], &iList[idx+1], (iInUse - idx) * sizeof(CSObject *));
 	iInUse--;
+	memmove(&iList[idx], &iList[idx+1], (iInUse - idx) * sizeof(CSObject *));
 	return item;
 }
 
@@ -193,8 +203,8 @@ void CSSortedList::remove(CSObject *key)
 	uint32_t		idx;
 
 	if ((item = search(key, idx))) {
-		memmove(&iList[idx], &iList[idx+1], (iInUse - idx) * sizeof(CSObject *));
 		iInUse--;
+		memmove(&iList[idx], &iList[idx+1], (iInUse - idx) * sizeof(CSObject *));
 		item->release();
 	}
 }
@@ -251,6 +261,30 @@ void CSLinkedList::addFront(CSObject *item)
 		else
 			iListBack = item;
 		iListFront = item;
+		iSize++;
+	}
+	else
+		/* Must do this or I will have one reference too
+		 * many!
+		 * The input object was given to me referenced,
+		 * but I already have the object on my list, and
+		 * referenced!
+		 */
+		item->release();
+}
+
+void CSLinkedList::addBack(CSObject *item)
+{
+	if (iListBack != item) {
+		remove(item);
+		item->setNextLink(iListBack);
+		item->setPrevLink(NULL);
+		
+		if (iListBack)
+			iListBack->setPrevLink(item);
+		else
+			iListFront = item;
+		iListBack = item;
 		iSize++;
 	}
 	else
@@ -505,6 +539,7 @@ uint32_t CSSparseArray::getIndex(uint32_t idx)
 {
 	uint32_t pos;
 
+	// If search fails then pos will be > iUsage
 	search(idx, pos);
 	return pos;
 }
@@ -655,8 +690,8 @@ void CSOrderedList::remove(CSOrderKey *key)
 		CSOrderedListItemRec ir;
 
 		memcpy(&ir, item, sizeof(CSOrderedListItemRec));
-		memmove(&iList[idx], &iList[idx+1], (iInUse - idx) * sizeof(CSOrderedListItemRec));
 		iInUse--;
+		memmove(&iList[idx], &iList[idx+1], (iInUse - idx) * sizeof(CSOrderedListItemRec));
 		if (ir.li_key)
 			ir.li_key->release();
 		if (ir.li_item)

@@ -21,7 +21,6 @@
 #include "drizzled/session.h"
 #include "drizzled/optimizer/quick_range.h"
 #include "drizzled/optimizer/quick_range_select.h"
-#include "drizzled/sql_bitmap.h"
 #include "drizzled/internal/m_string.h"
 #include <fcntl.h>
 
@@ -35,13 +34,12 @@ optimizer::QuickRangeSelect::QuickRangeSelect(Session *session,
                                               Table *table,
                                               uint32_t key_nr,
                                               bool no_alloc,
-                                              memory::Root *parent_alloc,
-                                              bool *create_error)
+                                              memory::Root *parent_alloc)
   :
     cursor(NULL),
     ranges(),
     in_ror_merged_scan(false),
-    column_bitmap(),
+    column_bitmap(NULL),
     save_read_set(NULL),
     save_write_set(NULL),
     free_file(false),
@@ -54,8 +52,6 @@ optimizer::QuickRangeSelect::QuickRangeSelect(Session *session,
     mrr_flags(0),
     alloc()
 {
-  my_bitmap_map *bitmap= NULL;
-
   sorted= 0;
   index= key_nr;
   head= table;
@@ -80,22 +76,7 @@ optimizer::QuickRangeSelect::QuickRangeSelect(Session *session,
   record= head->record[0];
   save_read_set= head->read_set;
   save_write_set= head->write_set;
-
-  /* Allocate a bitmap for used columns. Using memory::sql_alloc instead of malloc
-     simply as a "fix" to the MySQL 6.0 code that also free()s it at the
-     same time we destroy the mem_root.
-   */
-
-  bitmap= reinterpret_cast<my_bitmap_map*>(memory::sql_alloc(head->getShare()->column_bitmap_size));
-  if (! bitmap)
-  {
-    column_bitmap.setBitmap(NULL);
-    *create_error= 1;
-  }
-  else
-  {
-    column_bitmap.init(bitmap, head->getShare()->sizeFields());
-  }
+  column_bitmap= new boost::dynamic_bitset<>(table->getShare()->sizeFields());
 }
 
 
@@ -135,9 +116,10 @@ optimizer::QuickRangeSelect::~QuickRangeSelect()
       }
     }
     delete_dynamic(&ranges); /* ranges are allocated in alloc */
+    delete column_bitmap;
     alloc.free_root(MYF(0));
   }
-  head->column_bitmaps_set(save_read_set, save_write_set);
+  head->column_bitmaps_set(*save_read_set, *save_write_set);
 }
 
 
@@ -153,7 +135,7 @@ int optimizer::QuickRangeSelect::init_ror_merged_scan(bool reuse_handler)
     {
       return 0;
     }
-    head->column_bitmaps_set(&column_bitmap, &column_bitmap);
+    head->column_bitmaps_set(*column_bitmap, *column_bitmap);
     goto end;
   }
 
@@ -179,7 +161,7 @@ int optimizer::QuickRangeSelect::init_ror_merged_scan(bool reuse_handler)
     goto failure;
   }
 
-  head->column_bitmaps_set(&column_bitmap, &column_bitmap);
+  head->column_bitmaps_set(*column_bitmap, *column_bitmap);
 
   if (cursor->ha_external_lock(session, F_RDLCK))
     goto failure;
@@ -210,13 +192,13 @@ end:
   }
   head->prepare_for_position();
   head->cursor= org_file;
-  column_bitmap= *head->read_set;
-  head->column_bitmaps_set(&column_bitmap, &column_bitmap);
+  *column_bitmap|= *head->read_set;
+  head->column_bitmaps_set(*column_bitmap, *column_bitmap);
 
   return 0;
 
 failure:
-  head->column_bitmaps_set(save_read_set, save_write_set);
+  head->column_bitmaps_set(*save_read_set, *save_write_set);
   delete cursor;
   cursor= save_file;
   return 0;
@@ -288,7 +270,7 @@ int optimizer::QuickRangeSelect::get_next()
       We don't need to signal the bitmap change as the bitmap is always the
       same for this head->cursor
     */
-    head->column_bitmaps_set(&column_bitmap, &column_bitmap);
+    head->column_bitmaps_set(*column_bitmap, *column_bitmap);
   }
 
   int result= cursor->multi_range_read_next(&dummy);
@@ -296,7 +278,7 @@ int optimizer::QuickRangeSelect::get_next()
   if (in_ror_merged_scan)
   {
     /* Restore bitmaps set on entry */
-    head->column_bitmaps_set(save_read_set, save_write_set);
+    head->column_bitmaps_set(*save_read_set, *save_write_set);
   }
   return result;
 }

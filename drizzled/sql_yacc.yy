@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /* sql_yacc.yy */
 
@@ -521,6 +521,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  ESCAPED
 %token  ESCAPE_SYM                    /* SQL-2003-R */
 %token  EXCLUSIVE_SYM
+%token  EXECUTE_SYM
 %token  EXISTS                        /* SQL-2003-R */
 %token  EXTENDED_SYM
 %token  EXTRACT_SYM                   /* SQL-2003-N */
@@ -802,6 +803,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         IDENT_sys TEXT_STRING_sys TEXT_STRING_literal
         opt_component
         BIN_NUM TEXT_STRING_filesystem ident_or_empty
+        execute_var_or_string
         opt_constraint constraint opt_ident
 
 %type <lex_str_ptr>
@@ -933,6 +935,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         subselect_end select_var_list select_var_list_init opt_len
         opt_extended_describe
         statement
+        execute
         opt_field_or_var_spec fields_or_vars opt_load_data_set_spec
         init_key_options key_options key_opts key_opt key_using_alg
 END_OF_INPUT
@@ -1004,6 +1007,7 @@ statement:
         | delete
         | describe
         | drop
+        | execute
         | flush
         | insert
         | kill
@@ -1989,7 +1993,7 @@ delete_option:
         | CASCADE       { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_CASCADE; }
         | SET NULL_SYM  { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_SET_NULL; }
         | NO_SYM ACTION { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_NO_ACTION; }
-        | SET DEFAULT   { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_DEFAULT;  }
+        | SET DEFAULT   { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_SET_DEFAULT;  }
         ;
 
 key_type:
@@ -2121,8 +2125,7 @@ alter:
               DRIZZLE_YYABORT;
             lex->col_list.empty();
             lex->select_lex.init_order();
-            lex->select_lex.db=
-              ((TableList*) lex->select_lex.table_list.first)->db;
+            lex->select_lex.db= const_cast<char *>(((TableList*) lex->select_lex.table_list.first)->getSchemaName());
             statement->alter_info.build_method= $2;
           }
           alter_commands
@@ -3719,13 +3722,11 @@ normal_join:
 /* Warning - may return NULL in case of incomplete SELECT */
 table_factor:
           {
-            Select_Lex *sel= Lex->current_select;
-            sel->table_join_options= 0;
           }
           table_ident opt_table_alias opt_key_definition
           {
             if (!($$= Lex->current_select->add_table_to_list(YYSession, $2, $3,
-                             Lex->current_select->get_table_join_options(),
+                             0,
                              Lex->lock_option,
                              Lex->current_select->pop_index_hints())))
               DRIZZLE_YYABORT;
@@ -4462,6 +4463,40 @@ opt_temporary:
           /* empty */ { $$= 0; }
         | TEMPORARY_SYM { $$= 1; }
         ;
+
+/*
+  Execute a string as dynamic SQL.
+  */
+
+execute:
+       EXECUTE_SYM execute_var_or_string
+       {
+       }
+
+
+execute_var_or_string:
+         ident_or_text
+         {
+            LEX *lex= Lex;
+            statement::Execute *statement= new(std::nothrow) statement::Execute(YYSession);
+            lex->statement= statement;
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
+
+            statement->setQuery($1);
+         }
+        | '@' ident_or_text
+        {
+          LEX *lex= Lex;
+          statement::Execute *statement= new(std::nothrow) statement::Execute(YYSession);
+          lex->statement= statement;
+          if (lex->statement == NULL)
+            DRIZZLE_YYABORT;
+
+          statement->setVar();
+          statement->setQuery($2);
+        }
+
 /*
 ** Insert : add new data to table
 */
@@ -4760,6 +4795,7 @@ show:
           {}
         ;
 
+/* SHOW SCHEMAS */
 show_param:
            DATABASES show_wild
            {
@@ -4768,7 +4804,7 @@ show_param:
 
              lex->sql_command= SQLCOM_SELECT;
              lex->statement=
-               new(std::nothrow) statement::Select(session);
+               new(std::nothrow) statement::Show(session);
              if (lex->statement == NULL)
                DRIZZLE_YYABORT;
 
@@ -4801,6 +4837,7 @@ show_param:
               if (session->add_order_to_list(my_field, true))
                 DRIZZLE_YYABORT;
            }
+           /* SHOW TABLES */
          | TABLES opt_db show_wild
            {
              LEX *lex= Lex;
@@ -4808,8 +4845,8 @@ show_param:
 
              lex->sql_command= SQLCOM_SELECT;
 
-             statement::Select *select=
-               new(std::nothrow) statement::Select(YYSession);
+             statement::Show *select=
+               new(std::nothrow) statement::Show(YYSession);
 
              lex->statement= select;
 
@@ -4861,6 +4898,7 @@ show_param:
               if (session->add_order_to_list(my_field, true))
                 DRIZZLE_YYABORT;
            }
+           /* SHOW TEMPORARY TABLES */
          | TEMPORARY_SYM TABLES show_wild
            {
              LEX *lex= Lex;
@@ -4868,8 +4906,8 @@ show_param:
 
              lex->sql_command= SQLCOM_SELECT;
 
-             statement::Select *select=
-               new(std::nothrow) statement::Select(YYSession);
+             statement::Show *select=
+               new(std::nothrow) statement::Show(YYSession);
 
              lex->statement= select;
 
@@ -4887,12 +4925,13 @@ show_param:
              (session->lex->current_select->with_wild)++;
 
            }
+           /* SHOW TABLE STATUS */
          | TABLE_SYM STATUS_SYM opt_db show_wild
            {
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SELECT;
-             statement::Select *select=
-               new(std::nothrow) statement::Select(YYSession);
+             statement::Show *select=
+               new(std::nothrow) statement::Show(YYSession);
 
              lex->statement= select;
 
@@ -4929,15 +4968,16 @@ show_param:
                DRIZZLE_YYABORT;
              (session->lex->current_select->with_wild)++;
            }
+           /* SHOW COLUMNS FROM table_name */
         | COLUMNS from_or_in table_ident opt_db show_wild
           {
              LEX *lex= Lex;
              Session *session= YYSession;
-             statement::Select *select;
+             statement::Show *select;
 
              lex->sql_command= SQLCOM_SELECT;
 
-             select= new(std::nothrow) statement::Select(session);
+             select= new(std::nothrow) statement::Show(session);
 
              lex->statement= select;
 
@@ -4971,15 +5011,16 @@ show_param:
              (session->lex->current_select->with_wild)++;
 
           }
+          /* SHOW INDEXES from table */
         | keys_or_index from_or_in table_ident opt_db where_clause
           {
              LEX *lex= Lex;
              Session *session= YYSession;
-             statement::Select *select;
+             statement::Show *select;
 
              lex->sql_command= SQLCOM_SELECT;
 
-             select= new(std::nothrow) statement::Select(session);
+             select= new(std::nothrow) statement::Show(session);
 
              lex->statement= select;
 
@@ -5016,7 +5057,7 @@ show_param:
           {
             (void) create_select_for_variable("warning_count");
             LEX *lex= Lex;
-            lex->statement= new(std::nothrow) statement::Select(YYSession);
+            lex->statement= new(std::nothrow) statement::Show(YYSession);
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
           }
@@ -5024,7 +5065,7 @@ show_param:
           {
             (void) create_select_for_variable("error_count");
             LEX *lex= Lex;
-            lex->statement= new(std::nothrow) statement::Select(YYSession);
+            lex->statement= new(std::nothrow) statement::Show(YYSession);
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
           }
@@ -5047,7 +5088,7 @@ show_param:
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SELECT;
              lex->statement=
-               new(std::nothrow) statement::Select(YYSession);
+               new(std::nothrow) statement::Show(YYSession);
              if (lex->statement == NULL)
                DRIZZLE_YYABORT;
 
@@ -5081,13 +5122,52 @@ show_param:
              if (session->add_item_to_list(my_field))
                DRIZZLE_YYABORT;
            }
+        | CREATE TABLE_SYM table_ident
+           {
+             LEX *lex= Lex;
+             lex->sql_command= SQLCOM_SELECT;
+             statement::Show *select=
+               new(std::nothrow) statement::Show(YYSession);
+
+             lex->statement= select;
+
+             if (lex->statement == NULL)
+               DRIZZLE_YYABORT;
+
+             Session *session= YYSession;
+
+             if (prepare_new_schema_table(session, lex, "TABLE_SQL_DEFINITION"))
+               DRIZZLE_YYABORT;
+
+             if ($3->db.str)
+              select->setShowPredicate($3->db.str, $3->table.str);
+             else
+              select->setShowPredicate(session->db, $3->table.str);
+
+             std::string key("Table");
+             std::string value("Create Table");
+
+             Item_field *my_field= new Item_field(&session->lex->current_select->context, NULL, NULL, "TABLE_NAME");
+             my_field->is_autogenerated_name= false;
+             my_field->set_name(key.c_str(), key.length(), system_charset_info);
+
+             if (session->add_item_to_list(my_field))
+               DRIZZLE_YYABORT;
+
+             my_field= new Item_field(&session->lex->current_select->context, NULL, NULL, "TABLE_SQL_DEFINITION");
+             my_field->is_autogenerated_name= false;
+             my_field->set_name(value.c_str(), value.length(), system_charset_info);
+
+             if (session->add_item_to_list(my_field))
+               DRIZZLE_YYABORT;
+           }
         | PROCESSLIST_SYM
           {
            {
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SELECT;
              lex->statement=
-               new(std::nothrow) statement::Select(YYSession);
+               new(std::nothrow) statement::Show(YYSession);
              if (lex->statement == NULL)
                DRIZZLE_YYABORT;
 
@@ -5108,7 +5188,7 @@ show_param:
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SELECT;
              lex->statement=
-               new(std::nothrow) statement::Select(YYSession);
+               new(std::nothrow) statement::Show(YYSession);
              if (lex->statement == NULL)
                DRIZZLE_YYABORT;
 
@@ -5143,25 +5223,44 @@ show_param:
                DRIZZLE_YYABORT;
            }
         | CREATE DATABASE opt_if_not_exists ident
-          {
-            Lex->sql_command=SQLCOM_SHOW_CREATE_DB;
-            statement::ShowCreateSchema *statement= new(std::nothrow) statement::ShowCreateSchema(YYSession);
-            Lex->statement= statement;
-            if (Lex->statement == NULL)
-              DRIZZLE_YYABORT;
-            statement->is_if_not_exists= $3;
-            Lex->name= $4;
-          }
-        | CREATE TABLE_SYM table_ident
-          {
-            LEX *lex= Lex;
-            lex->sql_command = SQLCOM_SHOW_CREATE;
-            lex->statement= new(std::nothrow) statement::ShowCreate(YYSession);
-            if (lex->statement == NULL)
-              DRIZZLE_YYABORT;
-            if (!lex->select_lex.add_table_to_list(YYSession, $3, NULL,0))
-              DRIZZLE_YYABORT;
-          }
+           {
+             LEX *lex= Lex;
+             lex->sql_command= SQLCOM_SELECT;
+             statement::Show *select=
+               new(std::nothrow) statement::Show(YYSession);
+
+             lex->statement= select;
+
+             if (lex->statement == NULL)
+               DRIZZLE_YYABORT;
+
+             Session *session= YYSession;
+
+             if (prepare_new_schema_table(session, lex, "SCHEMA_SQL_DEFINITION"))
+               DRIZZLE_YYABORT;
+
+             if ($4.str)
+              select->setShowPredicate($4.str);
+             else
+              select->setShowPredicate(session->db);
+
+             std::string key("Database");
+             std::string value("Create Database");
+
+             Item_field *my_field= new Item_field(&session->lex->current_select->context, NULL, NULL, "SCHEMA_NAME");
+             my_field->is_autogenerated_name= false;
+             my_field->set_name(key.c_str(), key.length(), system_charset_info);
+
+             if (session->add_item_to_list(my_field))
+               DRIZZLE_YYABORT;
+
+             my_field= new Item_field(&session->lex->current_select->context, NULL, NULL, "SCHEMA_SQL_DEFINITION");
+             my_field->is_autogenerated_name= false;
+             my_field->set_name(value.c_str(), value.length(), system_charset_info);
+
+             if (session->add_item_to_list(my_field))
+               DRIZZLE_YYABORT;
+           }
 
 opt_db:
           /* empty */  { $$= 0; }
@@ -5195,13 +5294,13 @@ describe:
           describe_command table_ident
           {
             Session *session= YYSession;
-            statement::Select *select;
+            statement::Show *select;
             LEX *lex= Lex;
             lex->lock_option= TL_READ;
             mysql_init_select(lex);
             lex->current_select->parsing_place= SELECT_LIST;
             lex->sql_command= SQLCOM_SELECT;
-            select= new(std::nothrow) statement::Select(session);
+            select= new(std::nothrow) statement::Show(session);
             lex->statement= select;
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
@@ -5731,13 +5830,13 @@ field_ident:
           {
             TableList *table=
               reinterpret_cast<TableList*>(Lex->current_select->table_list.first);
-            if (my_strcasecmp(table_alias_charset, $1.str, table->db))
+            if (my_strcasecmp(table_alias_charset, $1.str, table->getSchemaName()))
             {
               my_error(ER_WRONG_DB_NAME, MYF(0), $1.str);
               DRIZZLE_YYABORT;
             }
             if (my_strcasecmp(table_alias_charset, $3.str,
-                              table->table_name))
+                              table->getTableName()))
             {
               my_error(ER_WRONG_TABLE_NAME, MYF(0), $3.str);
               DRIZZLE_YYABORT;

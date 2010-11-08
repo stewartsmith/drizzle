@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /* readline for batch mode */
 
@@ -27,36 +27,25 @@ using namespace drizzled;
 LineBuffer::LineBuffer(uint32_t my_max_size,FILE *my_file)
   :
     file(my_file),
-    line(),
-    max_size(my_max_size),
-    eof(false)
+    max_size(my_max_size)
 {
+  if (my_file)
+    file_stream = new boost::iostreams::stream<boost::iostreams::file_descriptor>(fileno(my_file), true);
+  else
+    file_stream = new std::stringstream;
   line.reserve(max_size);
 }
 
 void LineBuffer::addString(const string &str)
 {
-  buffer << str << endl;
+  (*file_stream) << str << endl;
 }
 
 char *LineBuffer::readline()
 {
-  uint32_t read_count;
+  file_stream->getline(&line[0], max_size);
 
-  if (file && !eof)
-  {
-    if ((read_count= read(fileno(file), (&line[0]), max_size-1)))
-    {
-      line[read_count+1]= '\0';
-      buffer << &line[0];
-    }
-    else
-      eof= true;
-  }
-
-  buffer.getline(&line[0],max_size);
-
-  if (buffer.eof())
+  if (file_stream->fail())
     return 0;
   else
     return &line[0];

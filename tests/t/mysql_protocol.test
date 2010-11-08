@@ -8,6 +8,6 @@ INSERT INTO t1 VALUES (1), (2);
 --exec $DRIZZLE_DUMP --skip-create --skip-comments test t1
 DROP TABLE t1;
 
---exec $MYSQL --ping
+--exec $DRIZZLE --ping
 
 --exec $DRIZZLE_SLAP --silent

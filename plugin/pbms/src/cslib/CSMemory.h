@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Original author: Paul McCullagh (H&G2JCtL)
  * Continued development: Barry Leslie
@@ -66,6 +66,8 @@ void cs_mm_pfree(void **ptr);
 size_t cs_mm_malloc_size(void *ptr);
 void cs_mm_print_track(const char *func, const char *file, uint32_t line, void *p, bool inc, uint32_t ref_cnt, int track_me);
 void cs_mm_track_memory(const char *func, const char *file, uint32_t line, void *p, bool inc, uint32_t ref_cnt, int track_me);
+uint32_t cs_mm_get_check_point();
+void cs_mm_assert_check_point(uint32_t check_point);
 #endif
 
 #endif

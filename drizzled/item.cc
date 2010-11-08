@@ -851,12 +851,12 @@ void mark_select_range_as_dependent(Session *session,
     - the found item on success
     - NULL if find_item is not in group_list
 */
-static Item** find_field_in_group_list(Item *find_item, order_st *group_list)
+static Item** find_field_in_group_list(Item *find_item, Order *group_list)
 {
   const char *db_name;
   const char *table_name;
   const char *field_name;
-  order_st *found_group= NULL;
+  Order *found_group= NULL;
   int found_match_degree= 0;
   Item_ident *cur_field;
   int cur_match_degree= 0;
@@ -882,7 +882,7 @@ static Item** find_field_in_group_list(Item *find_item, order_st *group_list)
 
   assert(field_name != 0);
 
-  for (order_st *cur_group= group_list ; cur_group ; cur_group= cur_group->next)
+  for (Order *cur_group= group_list ; cur_group ; cur_group= cur_group->next)
   {
     if ((*(cur_group->item))->real_item()->type() == Item::FIELD_ITEM)
     {
@@ -944,7 +944,7 @@ Item** resolve_ref_in_select_and_group(Session *session, Item_ident *ref, Select
 {
   Item **group_by_ref= NULL;
   Item **select_ref= NULL;
-  order_st *group_list= (order_st*) select->group_list.first;
+  Order *group_list= (Order*) select->group_list.first;
   bool ambiguous_fields= false;
   uint32_t counter;
   enum_resolution_type resolution;
@@ -1124,11 +1124,16 @@ Field *Item::make_string_field(Table *table)
   Field *field;
   assert(collation.collation);
   if (max_length/collation.collation->mbmaxlen > CONVERT_IF_BIGGER_TO_BLOB)
+  {
     field= new Field_blob(max_length, maybe_null, name,
                           collation.collation);
+  }
   else
-    field= new Field_varstring(max_length, maybe_null, name, table->getMutableShare(),
+  {
+    table->setVariableWidth();
+    field= new Field_varstring(max_length, maybe_null, name,
                                collation.collation);
+  }
 
   if (field)
     field->init(table);
@@ -1187,10 +1192,6 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool)
   case DRIZZLE_TYPE_VARCHAR:
     return make_string_field(table);
   case DRIZZLE_TYPE_BLOB:
-    if (this->type() == Item::TYPE_HOLDER)
-      field= new Field_blob(max_length, maybe_null, name, collation.collation,
-                            1);
-    else
       field= new Field_blob(max_length, maybe_null, name, collation.collation);
     break;					// Blob handled outside of case
   }
@@ -1588,19 +1589,25 @@ static Field *create_tmp_field_from_item(Session *,
     if ((type= item->field_type()) == DRIZZLE_TYPE_DATETIME ||
         type == DRIZZLE_TYPE_DATE ||
         type == DRIZZLE_TYPE_TIMESTAMP)
+    {
       new_field= item->tmp_table_field_from_field_type(table, 1);
-    /*
-      Make sure that the blob fits into a Field_varstring which has
-      2-byte lenght.
-    */
+      /*
+        Make sure that the blob fits into a Field_varstring which has
+        2-byte lenght.
+      */
+    }
     else if (item->max_length/item->collation.collation->mbmaxlen > 255 &&
              convert_blob_length <= Field_varstring::MAX_SIZE &&
              convert_blob_length)
+    {
+      table->setVariableWidth();
       new_field= new Field_varstring(convert_blob_length, maybe_null,
-                                     item->name, table->getMutableShare(),
-                                     item->collation.collation);
+                                     item->name, item->collation.collation);
+    }
     else
+    {
       new_field= item->make_string_field(table);
+    }
     new_field->set_derivation(item->collation.derivation);
     break;
   case DECIMAL_RESULT:

@@ -23,10 +23,13 @@
 
 #include "drizzled/session.h"
 
+#include "drizzled/generator/event_observers.h"
 #include "drizzled/generator/functions.h"
 #include "drizzled/generator/schema.h"
 #include "drizzled/generator/table.h"
 #include "drizzled/generator/all_tables.h"
 #include "drizzled/generator/all_fields.h"
+#include "drizzled/generator/all_indexes.h"
+#include "drizzled/generator/all_foreign_keys.h"
 
 #endif /* DRIZZLED_GENERATOR_H */

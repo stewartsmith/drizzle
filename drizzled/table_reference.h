@@ -29,7 +29,7 @@
 #define DRIZZLED_TABLE_REFERENCE_H
 
 #include <drizzled/base.h>
-#include <drizzled/sql_bitmap.h>
+#include "drizzled/definitions.h"
 
 namespace drizzled
 {

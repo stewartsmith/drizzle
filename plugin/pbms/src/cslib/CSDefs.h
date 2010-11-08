@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Original author: Paul McCullagh (H&G2JCtL)
  * Continued development: Barry Leslie
@@ -35,6 +35,18 @@
 // Use standard portable data types
 #include <stdint.h>
 
+/* Those compilers that support the function
+ * macro (in particular the "pretty" function
+ * macro must be defined here.
+ */
+#ifdef OS_WINDOWS
+#define __FUNC__				__FUNCTION__
+#elif defined(OS_SOLARIS)
+#define __FUNC__				"__func__"
+#else
+#define __FUNC__				__PRETTY_FUNCTION__
+#endif
+
 /*
  * An unsigned integer, 1 byte long:
  */
@@ -47,7 +59,7 @@
  */
 #define s_char			unsigned char
 
-/* PBMS assumes that off_t is 8 bytes so to ensure this always use  off64_t*/
+/* We assumes that off_t is 8 bytes so to ensure this always use  off64_t*/
 #define off64_t			uint64_t
 
 
@@ -71,6 +83,14 @@ class CSThread;
 #define CS_DIR_DELIM		"\\"
 #define IS_DIR_CHAR(ch)		((ch) == CS_DIR_CHAR || (ch) == '/')
 
+#ifndef PATH_MAX
+#define PATH_MAX		MAX_PATH
+#endif
+
+#ifndef NAME_MAX
+#define NAME_MAX		MAX_PATH
+#endif
+
 #else
 
 #define CS_DEFAULT_EOL		"\n"
@@ -83,20 +103,6 @@ class CSThread;
 #define CS_CALL_STACK_SIZE		100
 #define CS_RELEASE_STACK_SIZE	200
 #define CS_JUMP_STACK_SIZE		20
-
-/* Fixed length types */
-
-#ifdef CS_WIN
-
-#ifndef PATH_MAX
-#define PATH_MAX		MAX_PATH
-#endif
-
-#ifndef NAME_MAX
-#define NAME_MAX		MAX_PATH
-#endif
-
-#endif // CS_WIN
 
 /* C string display width sizes including space for a null terminator and possible sign. */
 #define CS_WIDTH_INT_8	5
@@ -299,5 +305,11 @@ typedef union {
 		char *rec_chars;
 		CSIntPtr int_val;
 } CSDiskData;
+
+#define CHECKSUM_VALUE_SIZE			16
+typedef struct {
+	u_char val[CHECKSUM_VALUE_SIZE];
+} Md5Digest;
+
 	
 #endif

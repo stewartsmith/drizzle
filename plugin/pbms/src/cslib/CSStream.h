@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Original Author: Paul McCullagh
  * Continued development: Barry Leslie
@@ -74,6 +74,9 @@ public:
 	 */
 	virtual void reset() = 0; 
 
+	/* Return the name of the file, or whatever: */
+	virtual const char *identify() = 0;
+
 	/*
 	 * Read a line from the input stream. This function
 	 * handles all types of line endings. The function
@@ -109,14 +112,16 @@ public:
 	virtual void flush() = 0;
 
 	/*
-	 *  Writes the specified byte to this output stream.
+	 * Writes the specified byte to this output stream.
 	 */
 	virtual void write(char b) = 0; 
 
 	/*
-	 *  Reset this output stream to the start inorder to restart the write.
+	 * Reset this output stream to the start inorder to restart the write.
 	 */
 	virtual void reset() = 0; 
+
+	virtual const char *identify() = 0;
 
 	/*
 	 * Write a line. Terminator is specific to the
@@ -159,6 +164,8 @@ public:
 	 */
 	virtual void reset(); 
 
+	virtual const char *identify();
+
 	static CSFileInputStream *newStream(CSFile* f);
 	static CSFileInputStream *newStream(CSFile* f, off64_t offset);
 
@@ -183,6 +190,8 @@ public:
 	virtual void write(char b);
 
 	virtual void reset(); 
+
+	virtual const char *identify();
 
 	static CSFileOutputStream *newStream(CSFile* f);
 	static CSFileOutputStream *newStream(CSFile* f, off64_t offset);
@@ -209,6 +218,8 @@ public:
 
 	virtual void reset(); 
 
+	virtual const char *identify();
+
 	static CSSocketInputStream *newStream(CSSocket *s);
 
 private:
@@ -232,6 +243,8 @@ public:
 
 	virtual void reset(); 
 
+	virtual const char *identify();
+
 	static CSSocketOutputStream *newStream(CSSocket *s);
 
 private:
@@ -239,11 +252,10 @@ private:
 };
 
 /* Buffered Stream: */
-#ifdef DEBUG
-#define CS_STREAM_BUFFER_SIZE			11
-//#define CS_STREAM_BUFFER_SIZE			(64 * 1024)
+#ifdef DEBUG_disabled
+#define CS_STREAM_BUFFER_SIZE			80
 #else
-#define CS_STREAM_BUFFER_SIZE			(64 * 1024)
+#define CS_STREAM_BUFFER_SIZE			(32 * 1024)
 #endif
 
 class CSBufferedInputStream : public CSInputStream {
@@ -260,6 +272,8 @@ public:
 	virtual int peek();
 
 	virtual void reset(); 
+
+	virtual const char *identify();
 
 	static CSBufferedInputStream *newStream(CSInputStream* i);
 
@@ -286,6 +300,8 @@ public:
 	virtual void write(char b);
 
 	virtual void reset(); 
+
+	virtual const char *identify();
 
 	static CSBufferedOutputStream *newStream(CSOutputStream* i);
 
@@ -331,6 +347,11 @@ public:
 
 	virtual void reset() {iMemPos = 0;}
 	
+	virtual const char *identify() 
+	{
+		return "memory stream";
+	}
+
 	static CSMemoryInputStream *newStream(const u_char* buffer, uint32_t length);
 
 private:
@@ -362,6 +383,8 @@ public:
 	
 	virtual void reset();
 	
+	virtual const char *identify();
+	
 	static CSMemoryOutputStream *newStream(size_t init_length, size_t min_alloc);
 
 private:
@@ -390,6 +413,11 @@ public:
 	{
 		iMemPos = iMemory;
 		iMemSpace = iMemSize;
+	}
+	
+	virtual const char *identify() 
+	{
+		return "memory stream";
 	}
 	
 	off64_t getSize() { return iMemPos - iMemory; }
@@ -466,6 +494,11 @@ public:
 		doReset = false;
 	}
 
+	virtual const char *identify() 
+	{
+		return "callback stream";
+	}
+
 	static CSCallbackInputStream *newStream(CSStreamReadCallbackFunc callback, void *user_data);
 
 private:
@@ -475,6 +508,7 @@ private:
 	bool havePeek;
 	bool doReset;
 };
+
 #endif
 
 

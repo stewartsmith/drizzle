@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_OPTIMIZER_RANGE_PARAM_H
 #define DRIZZLED_OPTIMIZER_RANGE_PARAM_H
 
+#include <boost/dynamic_bitset.hpp>
+
 #include "drizzled/field.h"
 
 namespace drizzled
@@ -30,6 +32,54 @@ typedef struct st_key_part KEY_PART;
 
 namespace optimizer
 {
+
+class RorScanInfo
+{
+public:
+  RorScanInfo()
+    :
+      idx(0),
+      keynr(0),
+      records(0), 
+      sel_arg(NULL),
+      covered_fields(0),
+      covered_fields_size(0),
+      used_fields_covered(0),
+      key_rec_length(0),
+      index_read_cost(0.0),
+      first_uncovered_field(0),
+      key_components(0)
+  {}
+
+  boost::dynamic_bitset<> bitsToBitset() const;
+
+  void subtractBitset(const boost::dynamic_bitset<>& in_bitset);
+
+  uint32_t findFirstNotSet() const; 
+
+  size_t getBitCount() const;
+
+  uint32_t      idx;      /* # of used key in param->keys */
+  uint32_t      keynr;    /* # of used key in table */
+  ha_rows   records;  /* estimate of # records this scan will return */
+
+  /* Set of intervals over key fields that will be used for row retrieval. */
+  optimizer::SEL_ARG   *sel_arg;
+
+  /* Fields used in the query and covered by this ROR scan. */
+  uint64_t covered_fields;
+  size_t covered_fields_size;
+  uint32_t      used_fields_covered; /* # of set bits in covered_fields */
+  int       key_rec_length; /* length of key record (including rowid) */
+
+  /*
+    Cost of reading all index records with values in sel_arg intervals set
+    (assuming there is no need to access full table records)
+  */
+  double    index_read_cost;
+  uint32_t      first_uncovered_field; /* first unused bit in covered_fields */
+  uint32_t      key_components; /* # of parts in the key */
+};
 
 class RangeParameter
 {
@@ -101,7 +151,6 @@ public:
       max_key_part(0),
       range_count(0),
       quick(false),
-      fields_bitmap_size(0),
       needed_fields(),
       tmp_covered_fields(),
       needed_reg(NULL),
@@ -119,9 +168,8 @@ public:
   unsigned char max_key[MAX_KEY_LENGTH+MAX_FIELD_WIDTH];
   bool quick; // Don't calulate possible keys
 
-  uint32_t fields_bitmap_size;
-  MyBitmap needed_fields;    /* bitmask of fields needed by the query */
-  MyBitmap tmp_covered_fields;
+  boost::dynamic_bitset<> needed_fields;    /* bitmask of fields needed by the query */
+  boost::dynamic_bitset<> tmp_covered_fields;
 
   key_map *needed_reg;        /* ptr to SqlSelect::needed_reg */
 

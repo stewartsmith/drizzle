@@ -11,7 +11,7 @@
 
   You should have received a copy of the GNU General Public License
   along with this program; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include "config.h"
 
@@ -33,11 +33,6 @@ namespace drizzled
 
 class Item;
 class Item_field;
-
-uint32_t TableList::create_table_def_key(char *key)
-{
-  return TableIdentifier::createKey(key, db, table_name);
-}
 
 bool TableList::set_insert_values(memory::Root *)
 {

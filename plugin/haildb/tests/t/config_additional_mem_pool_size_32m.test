@@ -1,0 +1,2 @@
+SHOW VARIABLES LIKE 'innodb_additional_mem_pool_size';
+SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='additional_mem_pool_size';

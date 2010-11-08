@@ -36,7 +36,7 @@ bool statement::CreateIndex::execute()
   /* Chicken/Egg... we need to search for the table, to know if the table exists, so we can build a full identifier from it */
   message::Table original_table_message;
   {
-    TableIdentifier identifier(first_table->db, first_table->table_name);
+    TableIdentifier identifier(first_table->getSchemaName(), first_table->getTableName());
     if (plugin::StorageEngine::getTableDefinition(*session, identifier, original_table_message) != EEXIST)
     {
       my_error(ER_BAD_TABLE_ERROR, MYF(0), identifier.getSQLPath().c_str());
@@ -62,7 +62,7 @@ bool statement::CreateIndex::execute()
   bool res;
   if (original_table_message.type() == message::Table::STANDARD )
   {
-    TableIdentifier identifier(first_table->db, first_table->table_name);
+    TableIdentifier identifier(first_table->getSchemaName(), first_table->getTableName());
     create_info.default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier);
 
     res= alter_table(session, 
@@ -73,14 +73,15 @@ bool statement::CreateIndex::execute()
                      create_table_message, 
                      first_table,
                      &alter_info,
-                     0, (order_st*) 0, 0);
+                     0, (Order*) 0, 0);
   }
   else
   {
-    Table *table= session->find_temporary_table(first_table);
+    TableIdentifier catch22(first_table->getSchemaName(), first_table->getTableName());
+    Table *table= session->find_temporary_table(catch22);
     assert(table);
     {
-      TableIdentifier identifier(first_table->db, first_table->table_name, table->getMutableShare()->getPath());
+      TableIdentifier identifier(first_table->getSchemaName(), first_table->getTableName(), table->getMutableShare()->getPath());
       create_info.default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier);
 
       res= alter_table(session, 
@@ -91,7 +92,7 @@ bool statement::CreateIndex::execute()
                        create_table_message, 
                        first_table,
                        &alter_info,
-                       0, (order_st*) 0, 0);
+                       0, (Order*) 0, 0);
     }
   }
 

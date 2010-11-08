@@ -275,8 +275,7 @@ int64_t Item_extract::val_int()
     case INTERVAL_WEEK:
       return iso_week_number_from_gregorian_date(temporal->years()
                                                , temporal->months()
-                                               , temporal->days()
-                                               , NULL); /* NULL is year_out parameter, which is not needed */
+                                               , temporal->days());
     case INTERVAL_DAY:
       return (int64_t) temporal->days();
     case INTERVAL_DAY_HOUR:	

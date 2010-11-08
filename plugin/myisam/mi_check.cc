@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /* Describe, check and repair of MyISAM tables */
 
@@ -459,7 +459,7 @@ int chk_key(MI_CHECK *param, register MI_INFO *info)
 		  llstr(share->state.key_root[key],buff));
       if (!(param->testflag & T_INFO))
 	return(-1);
-      result= -1;
+      result= UINT32_MAX;
       continue;
     }
     param->key_file_blocks+=keyinfo->block_length;
@@ -478,7 +478,7 @@ int chk_key(MI_CHECK *param, register MI_INFO *info)
 		    llstr(info->state->records,buff2));
 	if (!(param->testflag & T_INFO))
 	return(-1);
-	result= -1;
+	result= UINT32_MAX;
 	continue;
       }
       if (found_keys - full_text_keys == 1 &&
@@ -495,7 +495,7 @@ int chk_key(MI_CHECK *param, register MI_INFO *info)
 	  mi_check_print_error(param,"Key 1 doesn't point at all records");
 	if (!(param->testflag & T_INFO))
 	  return(-1);
-	result= -1;
+	result= UINT32_MAX;
 	continue;
       }
     }
@@ -894,7 +894,7 @@ int chk_data_link(MI_CHECK *param, MI_INFO *info,int extend)
       puts("- check record links");
   }
 
-  if (!mi_alloc_rec_buff(info, -1, &record))
+  if (!mi_alloc_rec_buff(info, SIZE_MAX, &record))
   {
     mi_check_print_error(param,"Not enough memory for record");
     return(-1);
@@ -1434,21 +1434,21 @@ int mi_repair(MI_CHECK *param, register MI_INFO *info,
   if (!param->using_global_keycache)
     assert(0);
 
-  if (init_io_cache(&param->read_cache,info->dfile,
-		    (uint) param->read_buffer_length,
-		    READ_CACHE,share->pack.header_length,1,MYF(MY_WME)))
+  if (param->read_cache.init_io_cache(info->dfile, (uint) param->read_buffer_length, READ_CACHE,share->pack.header_length,1,MYF(MY_WME)))
   {
     memset(&info->rec_cache, 0, sizeof(info->rec_cache));
     goto err;
   }
-  if (!rep_quick)
-    if (init_io_cache(&info->rec_cache,-1,(uint) param->write_buffer_length,
-		      WRITE_CACHE, new_header_length, 1,
-		      MYF(MY_WME | MY_WAIT_IF_FULL)))
+  if (not rep_quick)
+  {
+    if (info->rec_cache.init_io_cache(-1, (uint) param->write_buffer_length, WRITE_CACHE, new_header_length, 1, MYF(MY_WME | MY_WAIT_IF_FULL)))
+    {
       goto err;
+    }
+  }
   info->opt_flag|=WRITE_CACHE_USED;
-  if (!mi_alloc_rec_buff(info, -1, &sort_param.record) ||
-      !mi_alloc_rec_buff(info, -1, &sort_param.rec_buff))
+  if (!mi_alloc_rec_buff(info, SIZE_MAX, &sort_param.record) ||
+      !mi_alloc_rec_buff(info, SIZE_MAX, &sort_param.rec_buff))
   {
     mi_check_print_error(param, "Not enough memory for extra record");
     goto err;
@@ -1641,11 +1641,11 @@ err:
   rec_buff_ptr= NULL;
 
   free(sort_info.buff);
-  end_io_cache(&param->read_cache);
+  param->read_cache.end_io_cache();
   info->opt_flag&= ~(READ_CACHE_USED | WRITE_CACHE_USED);
-  end_io_cache(&info->rec_cache);
+  info->rec_cache.end_io_cache();
   got_error|= flush_blocks(param, share->getKeyCache(), share->kfile);
-  if (!got_error && param->testflag & T_UNPACK)
+  if (not got_error && param->testflag & T_UNPACK)
   {
     share->state.header.options[0]&= (unsigned char) ~HA_OPTION_COMPRESS_RECORD;
     share->pack.header_length=0;
@@ -2045,24 +2045,18 @@ int mi_repair_by_sort(MI_CHECK *param, register MI_INFO *info,
   memset(&sort_info, 0, sizeof(sort_info));
   memset(&sort_param, 0, sizeof(sort_param));
   if (!(sort_info.key_block=
-	alloc_key_blocks(param,
-			 (uint) param->sort_key_blocks,
-			 share->base.max_key_block_length))
-      || init_io_cache(&param->read_cache,info->dfile,
-		       (uint) param->read_buffer_length,
-		       READ_CACHE,share->pack.header_length,1,MYF(MY_WME)) ||
-      (! rep_quick &&
-       init_io_cache(&info->rec_cache,info->dfile,
-		     (uint) param->write_buffer_length,
-		     WRITE_CACHE,new_header_length,1,
-		     MYF(MY_WME | MY_WAIT_IF_FULL) & param->myf_rw)))
+        alloc_key_blocks(param, (uint) param->sort_key_blocks, share->base.max_key_block_length))
+      || param->read_cache.init_io_cache(info->dfile, (uint) param->read_buffer_length, READ_CACHE,share->pack.header_length,1,MYF(MY_WME))
+      || (! rep_quick && info->rec_cache.init_io_cache(info->dfile, (uint) param->write_buffer_length, WRITE_CACHE,new_header_length,1, MYF(MY_WME | MY_WAIT_IF_FULL) & param->myf_rw)))
+  {
     goto err;
+  }
   sort_info.key_block_end=sort_info.key_block+param->sort_key_blocks;
   info->opt_flag|=WRITE_CACHE_USED;
   info->rec_cache.file=info->dfile;		/* for sort_delete_record */
 
-  if (!mi_alloc_rec_buff(info, -1, &sort_param.record) ||
-      !mi_alloc_rec_buff(info, -1, &sort_param.rec_buff))
+  if (!mi_alloc_rec_buff(info, SIZE_MAX, &sort_param.record) ||
+      !mi_alloc_rec_buff(info, SIZE_MAX, &sort_param.rec_buff))
   {
     mi_check_print_error(param, "Not enough memory for extra record");
     goto err;
@@ -2207,7 +2201,7 @@ int mi_repair_by_sort(MI_CHECK *param, register MI_INFO *info,
     if (sort_param.fix_datafile)
     {
       param->read_cache.end_of_file=sort_param.filepos;
-      if (write_data_suffix(&sort_info,1) || end_io_cache(&info->rec_cache))
+      if (write_data_suffix(&sort_info, 1) || info->rec_cache.end_io_cache())
       {
 	goto err;
       }
@@ -2234,8 +2228,7 @@ int mi_repair_by_sort(MI_CHECK *param, register MI_INFO *info,
       info->state->data_file_length=sort_param.max_pos;
 
     param->read_cache.file=info->dfile;		/* re-init read cache */
-    reinit_io_cache(&param->read_cache,READ_CACHE,share->pack.header_length,
-                    1,1);
+    param->read_cache.reinit_io_cache(READ_CACHE,share->pack.header_length, 1,1);
   }
 
   if (param->testflag & T_WRITE_LOOP)
@@ -2293,7 +2286,7 @@ int mi_repair_by_sort(MI_CHECK *param, register MI_INFO *info,
 
 err:
   got_error|= flush_blocks(param, share->getKeyCache(), share->kfile);
-  end_io_cache(&info->rec_cache);
+  info->rec_cache.end_io_cache();
   if (!got_error)
   {
     /* Replace the actual file with the temporary file */
@@ -2337,7 +2330,7 @@ err:
 
   free((unsigned char*) sort_info.key_block);
   free(sort_info.buff);
-  end_io_cache(&param->read_cache);
+  param->read_cache.end_io_cache();
   info->opt_flag&= ~(READ_CACHE_USED | WRITE_CACHE_USED);
   if (!got_error && (param->testflag & T_UNPACK))
   {
@@ -2368,7 +2361,7 @@ int sort_key_read(MI_SORT_PARAM *sort_param, void *key)
     (info->s->rec_reflength+
      _mi_make_key(info, sort_param->key, (unsigned char*) key,
 		  sort_param->record, sort_param->filepos));
-#ifdef HAVE_purify
+#ifdef HAVE_VALGRIND
   memset((unsigned char *)key+sort_param->real_key_length, 0,
          (sort_param->key_length-sort_param->real_key_length));
 #endif
@@ -3276,7 +3269,7 @@ void update_auto_increment_key(MI_CHECK *param, MI_INFO *info,
     We have to use an allocated buffer instead of info->rec_buff as
     _mi_put_key_in_record() may use info->rec_buff
   */
-  if (!mi_alloc_rec_buff(info, -1, &record))
+  if (!mi_alloc_rec_buff(info, SIZE_MAX, &record))
   {
     mi_check_print_error(param,"Not enough memory for extra record");
     return;

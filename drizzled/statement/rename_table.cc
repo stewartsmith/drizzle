@@ -68,11 +68,11 @@ bool statement::RenameTable::renameTables(TableList *table_list)
     return true;
   }
 
-  if (wait_if_global_read_lock(session, 0, 1))
+  if (session->wait_if_global_read_lock(false, true))
     return true;
 
   LOCK_open.lock(); /* Rename table lock for exclusive access */
-  if (lock_table_names_exclusively(session, table_list))
+  if (session->lock_table_names_exclusively(table_list))
   {
     LOCK_open.unlock();
     goto err;
@@ -115,11 +115,11 @@ bool statement::RenameTable::renameTables(TableList *table_list)
   }
 
   LOCK_open.lock(); /* unlock all tables held */
-  unlock_table_names(table_list, NULL);
+  table_list->unlock_table_names();
   LOCK_open.unlock();
 
 err:
-  start_waiting_global_read_lock(session);
+  session->startWaitingGlobalReadLock();
 
   return error;
 }
@@ -147,18 +147,18 @@ bool statement::RenameTable::rename(TableList *ren_table,
   const char *new_alias, *old_alias;
 
   {
-    old_alias= ren_table->table_name;
+    old_alias= ren_table->getTableName();
     new_alias= new_table_name;
   }
 
   plugin::StorageEngine *engine= NULL;
   message::Table table_proto;
 
-  TableIdentifier old_identifier(ren_table->db, old_alias, message::Table::STANDARD);
+  TableIdentifier old_identifier(ren_table->getSchemaName(), old_alias, message::Table::STANDARD);
 
   if (plugin::StorageEngine::getTableDefinition(*session, old_identifier, table_proto) != EEXIST)
   {
-    my_error(ER_NO_SUCH_TABLE, MYF(0), ren_table->db, old_alias);
+    my_error(ER_NO_SUCH_TABLE, MYF(0), ren_table->getSchemaName(), old_alias);
     return true;
   }
 
@@ -186,7 +186,7 @@ TableList *statement::RenameTable::renameTablesInList(TableList *table_list,
   for (ren_table= table_list; ren_table; ren_table= new_table->next_local)
   {
     new_table= ren_table->next_local;
-    if (rename(ren_table, new_table->db, new_table->table_name, skip_error))
+    if (rename(ren_table, new_table->getSchemaName(), new_table->getTableName(), skip_error))
       return ren_table;
   }
   return 0;

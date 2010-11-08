@@ -103,7 +103,7 @@
  *
  */
 
-#include <config.h>
+#include "config.h"
 
 #include "stats_schema.h"
 
@@ -121,13 +121,13 @@ SessionStatementsTool::SessionStatementsTool(LoggingStats *in_logging_stats) :
   add_field("VARIABLE_VALUE", 1024);
 }
 
-SessionStatementsTool::Generator::Generator(Field **arg, LoggingStats *logging_stats) :
+SessionStatementsTool::Generator::Generator(Field **arg, LoggingStats *in_logging_stats) :
   plugin::TableFunction::Generator(arg)
 {
   count= 0;
 
   /* Set user_commands */
-  Scoreboard *current_scoreboard= logging_stats->getCurrentScoreboard();
+  Scoreboard *current_scoreboard= in_logging_stats->getCurrentScoreboard();
 
   uint32_t bucket_number= current_scoreboard->getBucketNumber(&getSession());
 
@@ -187,16 +187,16 @@ GlobalStatementsTool::GlobalStatementsTool(LoggingStats *in_logging_stats) :
   add_field("VARIABLE_VALUE", 1024);
 }
 
-GlobalStatementsTool::Generator::Generator(Field **arg, LoggingStats *logging_stats) :
+GlobalStatementsTool::Generator::Generator(Field **arg, LoggingStats *in_logging_stats) :
   plugin::TableFunction::Generator(arg)
 {
   count= 0;
   /* add the current scoreboard and the saved global statements */
   global_stats_to_display= new GlobalStats();
-  CumulativeStats *cumulativeStats= logging_stats->getCumulativeStats();
-  cumulativeStats->sumCurrentScoreboard(logging_stats->getCurrentScoreboard(), 
+  CumulativeStats *cumulativeStats= in_logging_stats->getCumulativeStats();
+  cumulativeStats->sumCurrentScoreboard(in_logging_stats->getCurrentScoreboard(), 
                                         NULL, global_stats_to_display->getUserCommands());
-  global_stats_to_display->merge(logging_stats->getCumulativeStats()->getGlobalStats()); 
+  global_stats_to_display->merge(in_logging_stats->getCumulativeStats()->getGlobalStats()); 
 }
 
 GlobalStatementsTool::Generator::~Generator()

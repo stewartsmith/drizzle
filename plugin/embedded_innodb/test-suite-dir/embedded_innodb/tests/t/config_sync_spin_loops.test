@@ -1,3 +1,0 @@
-SHOW VARIABLES LIKE 'innodb_sync_spin_loops';
-SELECT * FROM DATA_DICTIONARY.INNODB_CONFIGURATION WHERE NAME='sync_spin_loops';
-

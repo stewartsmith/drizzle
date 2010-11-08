@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Original author: Paul McCullagh (H&G2JCtL)
  * Continued development: Barry Leslie
@@ -29,9 +29,6 @@
 #include "CSConfig.h"
 
 #include <string.h>
-#include <sys/time.h>
-#include <sys/stat.h>
-#include <limits.h>
 
 #include "CSStrUtil.h"
 #include "CSPath.h"
@@ -42,18 +39,6 @@
  * ---------------------------------------------------------------
  * CORE SYSTEM DIRECTORY
  */
-
-CSDirectory::~CSDirectory()
-{
-	enter_();
-	close();
-	if (iPath)
-		iPath->release();
-	if (iEntry)
-		cs_free(iEntry);
-		
-	exit_();
-}
 
 void CSDirectory::print(CSOutputStream *out)
 {
@@ -80,75 +65,14 @@ void CSDirectory::print(CSOutputStream *out)
 	}
 }
 
-/*
- * ---------------------------------------------------------------
- * UNIX DIRECTORY
- */
-
-/*
- * The filter may contain one '*' as wildcard.
- */
-void CSDirectory::open()
-{
-	enter_();
-	if (!(iDir = opendir(iPath->getCString())))
-		CSException::throwFileError(CS_CONTEXT, iPath->getCString(), errno);
-	exit_();
-}
-
-void CSDirectory::close()
-{
-	enter_();
-	if (iDir) {
-		closedir(iDir);
-		iDir = NULL;
-	}
-	exit_();
-}
-
-bool CSDirectory::next()
-{
-	int				err;
-	struct dirent	*result;
-
-	enter_();
-	for (;;) {
-		err = readdir_r(iDir, &iEntry->entry, &result);
-		self->interrupted();
-		if (err)
-			CSException::throwFileError(CS_CONTEXT, iPath->getCString(), err);
-		if (!result)
-			break;
-		/* Filter out '.' and '..': */
-		if (iEntry->entry.d_name[0] == '.') {
-			if (iEntry->entry.d_name[1] == '.') {
-				if (iEntry->entry.d_name[2] == '\0')
-					continue;
-			}
-			else {
-				if (iEntry->entry.d_name[1] == '\0')
-					continue;
-			}
-		}
-		break;
-	}
-	return_(result ? true : false);
-}
-
-void CSDirectory::getFilePath(char *path, size_t size)
-{
-	cs_strcpy(size, path, iPath->getCString());
-	cs_add_dir_char(size, path);
-	cs_strcat(size, path, iEntry->entry.d_name);
-}
-
 void CSDirectory::deleteEntry()
 {
 	char path[PATH_MAX];
 
 	enter_();
-	getFilePath(path, PATH_MAX);
-
+	
+	getEntryPath(path, PATH_MAX);
+	
 	CSPath *cs_path = CSPath::newPath(path);
 	push_(cs_path);
 	cs_path->removeFile();
@@ -159,79 +83,71 @@ void CSDirectory::deleteEntry()
 
 const char *CSDirectory::name()
 {
-	return iEntry->entry.d_name;
+	return entryName();
 }
 
 bool CSDirectory::isFile()
 {
-#ifdef OS_SOLARIS
+	return entryIsFile();
+}
+
+off64_t CSDirectory::getSize()
+{
 	char path[PATH_MAX];
-	struct stat sb;
 
-	getFilePath(path, PATH_MAX);
-
-	if (stat(path, &sb) == -1) {
-		CSException::throwFileError(CS_CONTEXT, path, errno);
-		return false; // Never reached.
-	}
-
-	if ( sb.st_mode & S_IFDIR )
-		return false;
-#else
-	if (iEntry->entry.d_type & DT_DIR)
-		return false;
-#endif
-	return true;
+	getEntryPath(path, PATH_MAX);
+	
+	return CSPath::getSize(path);
 }
 
 void CSDirectory::info(bool *is_dir, off64_t *size, CSTime *mod_time)
 {
 	char path[PATH_MAX];
 
+	getEntryPath(path, PATH_MAX);
+	
+	CSPath::info(path, is_dir, size, mod_time);
+}
+
+bool CSDirectory::exists()
+{
+	CSPath *path;
+	bool yup;
+
 	enter_();
-	getFilePath(path, PATH_MAX);
-
-	CSPath *cs_path = CSPath::newPath(path);
-	push_(cs_path);
-	cs_path->info(is_dir, size, mod_time);
-	release_(cs_path);
-
-	exit_();
+	path = CSPath::newPath(RETAIN(sd_path));
+	push_(path);
+	yup = path->exists();
+	release_(path);
+	return_(yup);
 }
 
 CSDirectory *CSDirectory::newDirectory(CSString *path)
 {
 	CSDirectory *dir;
-	size_t size;
-	enter_();
-	push_(path);
-	
-#ifdef OS_SOLARIS
-	size = pathconf(path->getCString(), _PC_NAME_MAX) + sizeof(struct dirent)  + 1;
-#else
-	size = sizeof(struct dirent);
-#endif
 
 	if (!(dir = new CSDirectory())) {
+		path->release();
 		CSException::throwOSError(CS_CONTEXT, ENOMEM);
 	}
-	pop_(path);
-	dir->iPath = path;
-	push_(dir);
-	
-	dir->iEntry = (union var_dirent *) cs_malloc(size);
-	pop_(dir);
-	
-	return_(dir);
+	dir->sd_path = path;
+	return dir;
 }
 
 CSDirectory *CSDirectory::newDirectory(CSPath *path)
 {
-	CSString *str = path->getString();
-	str->retain();
-	path->release();
+	CSDirectory *dir;
+	enter_();
 	
-	return newDirectory(str);
+	push_(path);
+	dir = newDirectory(RETAIN(path->getString()));
+	release_(path);
+	return_(dir);
+}
+
+CSDirectory *CSDirectory::newDirectory(const char *path)
+{
+	return newDirectory(CSString::newString(path));
 }
 
 

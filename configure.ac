@@ -26,7 +26,7 @@ AC_CONFIG_AUX_DIR([config])
 
 PANDORA_CANONICAL_TARGET(less-warnings, warnings-always-on, require-cxx, force-gcc42, version-from-vc, skip-visibility)
 
-LIBDRIZZLE_LIBRARY_VERSION=0:8:0
+LIBDRIZZLE_LIBRARY_VERSION=1:0:0
 #                          | | |
 #                   +------+ | +---+
 #                   |        |     |
@@ -43,10 +43,9 @@ AC_SUBST(LIBDRIZZLE_LIBRARY_VERSION)
 
 # libdrizzle versioning when linked with GNU ld.
 AS_IF([test "$lt_cv_prog_gnu_ld" = "yes"],[
-  LD_VERSION_SCRIPT="-Wl,--version-script=\$(top_srcdir)/libdrizzle/libdrizzle.ver"
+  LD_VERSION_SCRIPT="-Wl,--version-script=\$(top_srcdir)/config/drizzle.ver"
   ])
 AC_SUBST(LD_VERSION_SCRIPT)
-
 
 dnl Set the default datadir location to /usr/local/var/drizzle. If a
 dnl localstatedir is explicitly given, just use that.
@@ -57,11 +56,6 @@ AS_IF([test "x${localstatedir}" = 'x${prefix}/var'],[
 AC_PATH_PROG(GPERF, gperf)
 AS_IF([test "x$GPERF" = "x"],
       AC_MSG_ERROR("Drizzle requires gperf to build."))
-
-AC_CHECK_PROGS(YACC, ['bison -y'])
-AS_IF([test "x$YACC" = "x" -a "$pandora_building_from_bzr" = "yes"],[
-  AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
-])
 
 # libexecinfo provides backtrace_symbols on FreeBSD
 AC_SEARCH_LIBS(backtrace_symbols, [execinfo])
@@ -139,6 +133,12 @@ dnl GCC Precompiled Header Support
 dnl re-enable later
 dnl AM_CONDITIONAL([BUILD_GCC_PCH],[test "$GCC" = "yes"])
 AM_CONDITIONAL([BUILD_GCC_PCH],[test "no" = "yes"])
+
+AS_IF([test "$lt_cv_prog_gnu_ld" = "yes"],[
+  LDFLAGS="${LDFLAGS} ${LD_VERSION_SCRIPT}"
+  ])
+
+WITH_VALGRIND
 
 AC_CONFIG_FILES(Makefile dnl
  tests/Makefile dnl

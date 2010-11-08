@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /*
   Function to handle quick removal of duplicates
@@ -138,13 +138,13 @@ inline double log2_n_fact(double x)
 */
 
 double Unique::get_use_cost(uint32_t *, uint32_t nkeys, uint32_t key_size,
-                            size_t max_in_memory_size)
+                            size_t max_in_memory_size_arg)
 {
   ulong max_elements_in_tree;
   ulong last_tree_elems;
   double result;
 
-  max_elements_in_tree= ((ulong) max_in_memory_size /
+  max_elements_in_tree= ((ulong) max_in_memory_size_arg /
                          ALIGN_SIZE(sizeof(TREE_ELEMENT)+key_size));
 
   last_tree_elems= nkeys % max_elements_in_tree;

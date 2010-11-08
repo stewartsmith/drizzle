@@ -783,6 +783,7 @@ static void check_command_args(struct st_command *command,
     const struct command_arg *arg= &args[i];
     arg->ds->clear();
 
+    bool known_arg_type= true;
     switch (arg->type) {
       /* A string */
     case ARG_STRING:
@@ -817,9 +818,10 @@ static void check_command_args(struct st_command *command,
       break;
 
     default:
-      assert("Unknown argument type");
+      known_arg_type= false;
       break;
     }
+    assert(known_arg_type);
 
     /* Check required arg */
     if (arg->ds->length() == 0 && arg->required)
@@ -3316,7 +3318,7 @@ static int do_sleep(struct st_command *command, bool real_sleep)
   bool error= false;
   char *p= command->first_argument;
   char *sleep_start, *sleep_end= command->end;
-  double sleep_val;
+  double sleep_val= 0;
 
   while (my_isspace(charset_info, *p))
     p++;
@@ -3846,7 +3848,7 @@ static void do_connect(struct st_command *command)
 {
   uint32_t con_port= opt_port;
   const char *con_options;
-  bool con_ssl= 0, con_compress= 0;
+  bool con_ssl= 0;
   struct st_connection* con_slot;
 
   string ds_connection_name;
@@ -3912,8 +3914,6 @@ static void do_connect(struct st_command *command)
       end++;
     if (!strncmp(con_options, "SSL", 3))
       con_ssl= 1;
-    else if (!strncmp(con_options, "COMPRESS", 8))
-      con_compress= 1;
     else
       die("Illegal option to connect: %.*s",
           (int) (end - con_options), con_options);

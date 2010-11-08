@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  *  Modified by Barry Leslie on 10/21/08.
  *	I have put a C++ wrapper around the data and functions to create an sha1 class.
@@ -58,6 +58,7 @@
 
 #include "CSConfig.h"
 #include <string.h>
+#include <stdint.h>
 
 #include "CSDefs.h"
 #include "CSObject.h"

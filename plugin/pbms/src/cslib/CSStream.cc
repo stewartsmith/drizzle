@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Original author: Paul McCullagh (H&G2JCtL)
  * Continued development: Barry Leslie
@@ -38,8 +38,6 @@
 #include "CSMemory.h"
 #include "CSStream.h"
 #include "CSGlobal.h"
-
-using namespace std;
 
 /*
  * ---------------------------------------------------------------
@@ -183,7 +181,15 @@ int CSFileInputStream::read()
 	return_(size == 0 ? -1 : (int) ch);
 }
 
-void CSFileInputStream::reset() {iReadOffset = 0;}
+void CSFileInputStream::reset()
+{
+	iReadOffset = 0;
+}
+
+const char *CSFileInputStream::identify()
+{
+	return iFile->myFilePath->getCString();
+}
 
 int CSFileInputStream::peek()
 {
@@ -267,7 +273,15 @@ void CSFileOutputStream::write(char b)
 	exit_();
 }
 
-void CSFileOutputStream::reset() {iWriteOffset = 0;}
+void CSFileOutputStream::reset()
+{
+	iWriteOffset = 0;
+}
+
+const char *CSFileOutputStream::identify()
+{
+	return iFile->myFilePath->getCString();
+}
 
 void CSFileOutputStream::close()
 {
@@ -344,6 +358,10 @@ void CSSocketInputStream::reset()
 	exit_();
 }
 
+const char *CSSocketInputStream::identify()
+{
+	return iSocket->identify();
+}
 
 CSSocketInputStream *CSSocketInputStream::newStream(CSSocket *s)
 {
@@ -401,6 +419,11 @@ void CSSocketOutputStream::reset()
 	enter_();
 	CSException::throwException(CS_CONTEXT, CS_ERR_OPERATION_NOT_SUPPORTED, "CSSocketOutputStream::reset() not supported");
 	exit_();
+}
+
+const char *CSSocketOutputStream::identify()
+{
+	return iSocket->identify();
 }
 
 CSSocketOutputStream *CSSocketOutputStream::newStream(CSSocket *s)
@@ -490,6 +513,11 @@ void CSBufferedInputStream::reset()
 	iStream->reset();
 }
 
+const char *CSBufferedInputStream::identify()
+{
+	return iStream->identify();
+}
+
 CSBufferedInputStream *CSBufferedInputStream::newStream(CSInputStream* i)
 {
 	CSBufferedInputStream *s;
@@ -524,8 +552,11 @@ void CSBufferedOutputStream::write(const char *b, size_t len)
 {
 	size_t tfer;
 
+	// If the length of the data being written is greater than half
+	// the buffer size then the data is written directly through
+	// with out buffering.
 	enter_();
-	if (iBuffTotal < CS_STREAM_BUFFER_SIZE) {
+	if (iBuffTotal < CS_STREAM_BUFFER_SIZE/2) {
 		tfer = CS_STREAM_BUFFER_SIZE - iBuffTotal;
 		
 		if (tfer > len)
@@ -537,7 +568,7 @@ void CSBufferedOutputStream::write(const char *b, size_t len)
 	}
 	if (len > 0) {
 		flush();
-		if (len > CS_STREAM_BUFFER_SIZE)
+		if (len > CS_STREAM_BUFFER_SIZE/2)
 			iStream->write(b, len);
 		else {
 			memcpy(iBuffer, b, len);
@@ -549,10 +580,16 @@ void CSBufferedOutputStream::write(const char *b, size_t len)
 
 void CSBufferedOutputStream::flush()
 {
+	size_t len;
+
 	enter_();
-	if (iBuffTotal > 0) {
-		iStream->write((char *) iBuffer, iBuffTotal);
+	if ((len = iBuffTotal)) {
+		/* Discard the contents of the buffer
+		 * if flush fails, because we do
+		 * not know how much was written anyway!
+		 */
 		iBuffTotal = 0;
+		iStream->write((char *) iBuffer, len);
 	}
 	exit_();
 }
@@ -571,6 +608,11 @@ void CSBufferedOutputStream::reset()
 {
 	iBuffTotal = 0;
 	iStream->reset();
+}
+
+const char *CSBufferedOutputStream::identify()
+{
+	return iStream->identify();
 }
 
 CSBufferedOutputStream *CSBufferedOutputStream::newStream(CSOutputStream* i)
@@ -658,6 +700,11 @@ void CSMemoryOutputStream::reset()
 	iMemSpace = iMemTotal;
 }
 
+const char *CSMemoryOutputStream::identify()
+{
+	return "memory stream";
+}
+
 /*
  * ---------------------------------------------------------------
  * STATIC (user) MEMORY OUTPUT STREAM
@@ -691,7 +738,7 @@ void CSStaticMemoryOutputStream::write(const char b)
  * Callback InPUT STREAM
  */
 
-CSCallbackInputStream *CSCallbackInputStream::newStream(CSStreamReadCallbackFunc callback, void *user_data)
+CSCallbackInputStream *CSCallbackInputStream::newStream(CSStreamReadCallbackFunc in_callback, void *user_data)
 {
 	CSCallbackInputStream *s;
 
@@ -699,7 +746,7 @@ CSCallbackInputStream *CSCallbackInputStream::newStream(CSStreamReadCallbackFunc
 		CSException::throwOSError(CS_CONTEXT, ENOMEM);
 	}
 	
-	s->callback = callback;
+	s->callback = in_callback;
 	s->cb_data = user_data;
 	return s;
 }

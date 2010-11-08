@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Original author: Paul McCullagh
  * Continued development: Barry Leslie
@@ -29,11 +29,12 @@
 
 #include "cslib/CSConfig.h"
 
+#include "defs_ms.h"
+
 #include "cslib/CSGlobal.h"
 #include "cslib/CSStrUtil.h"
 #include "cslib/CSStorage.h"
 
-#include "defs_ms.h"
 #include "compactor_ms.h"
 #include "open_table_ms.h"
 #include "repository_ms.h"
@@ -276,7 +277,7 @@ bool MSCompactorThread::doWork()
 				dst_file->write(head->getBuffer(0), dst_offset, head_size);
 
 				/* We have an engine reference, copy the BLOB over: */
-				CSFile::transfer(dst_file, dst_offset + head_size, src_file, src_offset + head_size, blob_size, iCompactBuffer, MS_COMPACTOR_BUFFER_SIZE);
+				CSFile::transfer(RETAIN(dst_file), dst_offset + head_size, RETAIN(src_file), src_offset + head_size, blob_size, iCompactBuffer, MS_COMPACTOR_BUFFER_SIZE);
 
 #ifdef HAVE_ALIAS_SUPPORT
 				/* If the BLOB has an alias update the alias index. */

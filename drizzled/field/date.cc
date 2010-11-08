@@ -19,6 +19,8 @@
  */
 
 #include "config.h"
+#include <boost/lexical_cast.hpp>
+
 #include "drizzled/field/date.h"
 #include "drizzled/error.h"
 #include "drizzled/table.h"
@@ -108,10 +110,8 @@ int Field_date::store(int64_t from, bool)
   DateTime temporal;
   if (! temporal.from_int64_t(from))
   {
-    /* Convert the integer to a string using stringstream */
-    std::stringstream ss;
-    std::string tmp;
-    ss << from; ss >> tmp;
+    /* Convert the integer to a string using boost::lexical_cast */
+    std::string tmp(boost::lexical_cast<std::string>(from)); 
 
     my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR), tmp.c_str());
     return 2;

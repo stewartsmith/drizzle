@@ -25,67 +25,59 @@ using namespace std;
 using namespace drizzled;
 
 SchemasTool::SchemasTool() :
-  plugin::TableFunction("DATA_DICTIONARY", "SCHEMAS")
+  DataDictionary("SCHEMAS")
 {
   add_field("SCHEMA_NAME");
   add_field("DEFAULT_COLLATION_NAME");
   add_field("SCHEMA_CREATION_TIME");
   add_field("SCHEMA_UPDATE_TIME");
+  add_field("SCHEMA_UUID", plugin::TableFunction::STRING, 36, true);
+  add_field("SCHEMA_VERSION", plugin::TableFunction::NUMBER, 0, true);
+  add_field("SCHEMA_USE_COUNT", plugin::TableFunction::NUMBER, 0, true);
 }
 
-SchemasTool::Generator::Generator(Field **arg) :
-  plugin::TableFunction::Generator(arg),
+SchemasTool::Generator::Generator(drizzled::Field **arg) :
+  DataDictionary::Generator(arg),
   schema_generator(getSession())
 {
 }
-  
-bool SchemasTool::Generator::nextSchema()
-{
-  const drizzled::message::Schema *schema_ptr;
-  while ((schema_ptr= schema_generator))
-  {
-    schema.CopyFrom(*schema_ptr);
-    return true;
-  }
-
-  return false;
-}
-
 
 bool SchemasTool::Generator::populate()
 {
-  if (nextSchema())
+  drizzled::message::SchemaPtr schema_ptr;
+  while ((schema_ptr= schema_generator))
   {
-    fill();
+    /* SCHEMA_NAME */
+    push(schema_ptr->name());
+
+    /* DEFAULT_COLLATION_NAME */
+    push(schema_ptr->collation());
+
+    /* SCHEMA_CREATION_TIME */
+    time_t time_arg= schema_ptr->creation_timestamp();
+    char buffer[40];
+    struct tm tm_buffer;
+
+    localtime_r(&time_arg, &tm_buffer);
+    strftime(buffer, sizeof(buffer), "%a %b %d %H:%M:%S %Y", &tm_buffer);
+    push(buffer);
+
+    /* SCHEMA_UPDATE_TIME */
+    time_arg= schema_ptr->update_timestamp();
+    localtime_r(&time_arg, &tm_buffer);
+    strftime(buffer, sizeof(buffer), "%a %b %d %H:%M:%S %Y", &tm_buffer);
+    push(buffer);
+
+    /* SCHEMA_UUID */
+    push(schema_ptr->uuid());
+
+    /* SCHEMA_VERSION */
+    push(schema_ptr->version());
+
+    /* SCHEMA_USE_COUNT */
+    push(schema_ptr->version());
     return true;
   }
 
   return false;
-}
-
-/**
-  A lack of a parsed schema file means we are using defaults.
-*/
-void SchemasTool::Generator::fill()
-{
-  /* SCHEMA_NAME */
-  push(schema.name());
-
-  /* DEFAULT_COLLATION_NAME */
-  push(schema.collation());
-
-  /* SCHEMA_CREATION_TIME */
-  time_t time_arg= schema.creation_timestamp();
-  char buffer[40];
-  struct tm tm_buffer;
-
-  localtime_r(&time_arg, &tm_buffer);
-  strftime(buffer, sizeof(buffer), "%a %b %d %H:%M:%S %Y", &tm_buffer);
-  push(buffer);
-
-  /* SCHEMA_UPDATE_TIME */
-  time_arg= schema.update_timestamp();
-  localtime_r(&time_arg, &tm_buffer);
-  strftime(buffer, sizeof(buffer), "%a %b %d %H:%M:%S %Y", &tm_buffer);
-  push(buffer);
 }

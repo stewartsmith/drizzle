@@ -8,13 +8,13 @@
 flush tables;
 
 # Create a junk proto dfe file on disk
-system echo "this is a junk file for test" >> $MYSQLTEST_VARDIR/master-data/local/test/t1.dfe ;
+system echo "this is a junk file for test" >> $DRIZZLETEST_VARDIR/master-data/local/test/t1.dfe ;
 --replace_column 6 # 7 # 8 # 9 #
 SHOW TABLE STATUS like 't1';
 --error ER_CORRUPT_TABLE_DEFINITION
 show create table t1;
 --error ER_CORRUPT_TABLE_DEFINITION
 drop table if exists t1;
-system rm -f $MYSQLTEST_VARDIR/master-data/local/test/t1.dfe;
+system rm -f $DRIZZLETEST_VARDIR/master-data/local/test/t1.dfe;
 
 #end bug 93

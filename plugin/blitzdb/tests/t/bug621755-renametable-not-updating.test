@@ -1,0 +1,3 @@
+create table t5 (a int);
+alter table t5 engine=blitzdb;
+show create table t5;

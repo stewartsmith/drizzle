@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 
 /* Insert of records */
@@ -31,6 +31,8 @@
 #include "drizzled/pthread_globals.h"
 #include "drizzled/transaction_services.h"
 #include "drizzled/plugin/transactional_storage_engine.h"
+
+#include "drizzled/table/shell.h"
 
 namespace drizzled
 {
@@ -168,7 +170,8 @@ static int check_update_fields(Session *session, TableList *insert_table_list,
       Unmark the timestamp field so that we can check if this is modified
       by update_fields
     */
-    timestamp_mark= table->write_set->testAndClear(table->timestamp_field->field_index);
+    timestamp_mark= table->write_set->test(table->timestamp_field->field_index);
+    table->write_set->reset(table->timestamp_field->field_index);
   }
 
   /* Check the fields we are going to modify */
@@ -273,7 +276,15 @@ bool mysql_insert(Session *session,TableList *table_list,
                            false,
                            (fields.elements || !value_count ||
                             (0) != 0), !ignore))
-    goto abort;
+  {
+    if (table != NULL)
+      table->cursor->ha_release_auto_increment();
+    if (!joins_freed)
+      free_underlaid_joins(session, &session->lex->select_lex);
+    session->abort_on_warning= 0;
+    DRIZZLE_INSERT_DONE(1, 0);
+    return true;
+  }
 
   /* mysql_prepare_insert set table_list->table if it was not set */
   table= table_list->table;
@@ -304,10 +315,26 @@ bool mysql_insert(Session *session,TableList *table_list,
     if (values->elements != value_count)
     {
       my_error(ER_WRONG_VALUE_COUNT_ON_ROW, MYF(0), counter);
-      goto abort;
+
+      if (table != NULL)
+        table->cursor->ha_release_auto_increment();
+      if (!joins_freed)
+        free_underlaid_joins(session, &session->lex->select_lex);
+      session->abort_on_warning= 0;
+      DRIZZLE_INSERT_DONE(1, 0);
+
+      return true;
     }
     if (setup_fields(session, 0, *values, MARK_COLUMNS_READ, 0, 0))
-      goto abort;
+    {
+      if (table != NULL)
+        table->cursor->ha_release_auto_increment();
+      if (!joins_freed)
+        free_underlaid_joins(session, &session->lex->select_lex);
+      session->abort_on_warning= 0;
+      DRIZZLE_INSERT_DONE(1, 0);
+      return true;
+    }
   }
   its.rewind ();
 
@@ -451,7 +478,16 @@ bool mysql_insert(Session *session,TableList *table_list,
     table->cursor->extra(HA_EXTRA_WRITE_CANNOT_REPLACE);
 
   if (error)
-    goto abort;
+  {
+    if (table != NULL)
+      table->cursor->ha_release_auto_increment();
+    if (!joins_freed)
+      free_underlaid_joins(session, &session->lex->select_lex);
+    session->abort_on_warning= 0;
+    DRIZZLE_INSERT_DONE(1, 0);
+    return true;
+  }
+
   if (values_list.elements == 1 && (!(session->options & OPTION_WARNINGS) ||
 				    !session->cuted_fields))
   {
@@ -475,16 +511,8 @@ bool mysql_insert(Session *session,TableList *table_list,
   session->status_var.inserted_row_count+= session->row_count_func;
   session->abort_on_warning= 0;
   DRIZZLE_INSERT_DONE(0, session->row_count_func);
-  return false;
 
-abort:
-  if (table != NULL)
-    table->cursor->ha_release_auto_increment();
-  if (!joins_freed)
-    free_underlaid_joins(session, &session->lex->select_lex);
-  session->abort_on_warning= 0;
-  DRIZZLE_INSERT_DONE(1, 0);
-  return true;
+  return false;
 }
 
 
@@ -716,7 +744,7 @@ int write_record(Session *session, Table *table,CopyInfo *info)
 {
   int error;
   std::vector<unsigned char> key;
-  MyBitmap *save_read_set, *save_write_set;
+  boost::dynamic_bitset<> *save_read_set, *save_write_set;
   uint64_t prev_insert_id= table->cursor->next_insert_id;
   uint64_t insert_id_for_cur_row= 0;
 
@@ -819,7 +847,7 @@ int write_record(Session *session, Table *table,CopyInfo *info)
             table->next_number_field->val_int());
         info->touched++;
         if ((table->cursor->getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ) &&
-             !bitmap_is_subset(table->write_set, table->read_set)) ||
+            ! table->write_set->is_subset_of(*table->read_set)) ||
             table->compare_record())
         {
           if ((error=table->cursor->updateRecord(table->getUpdateRecord(),
@@ -910,7 +938,7 @@ int write_record(Session *session, Table *table,CopyInfo *info)
     */
     if (table->read_set != save_read_set ||
         table->write_set != save_write_set)
-      table->column_bitmaps_set(save_read_set, save_write_set);
+      table->column_bitmaps_set(*save_read_set, *save_write_set);
   }
   else if ((error=table->cursor->insertRecord(table->getInsertRecord())))
   {
@@ -939,8 +967,8 @@ err:
 
 before_err:
   table->cursor->restore_auto_increment(prev_insert_id);
-  table->column_bitmaps_set(save_read_set, save_write_set);
-  return(1);
+  table->column_bitmaps_set(*save_read_set, *save_write_set);
+  return 1;
 }
 
 
@@ -1248,7 +1276,16 @@ bool select_insert::send_data(List<Item> &values)
   store_values(values);
   session->count_cuted_fields= CHECK_FIELD_IGNORE;
   if (session->is_error())
+  {
+    /*
+     * If we fail mid-way through INSERT..SELECT, we need to remove any
+     * records that we added to the current Statement message. We can
+     * use session->row_count to know how many records we have already added.
+     */
+    TransactionServices &ts= TransactionServices::singleton();
+    ts.removeStatementRecords(session, (session->row_count - 1));
     return(1);
+  }
 
   // Release latches in case bulk insert takes a long time
   plugin::TransactionalStorageEngine::releaseTemporaryLatches(session);
@@ -1460,9 +1497,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
                                       DrizzleLock **lock,
 				      TableIdentifier &identifier)
 {
-  Table tmp_table;		// Used during 'CreateField()'
   TableShare share(message::Table::INTERNAL);
-  Table *table= 0;
   uint32_t select_field_count= items->elements;
   /* Add selected items to field list */
   List_iterator_fast<Item> it(*items);
@@ -1478,49 +1513,68 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
       create_info->table_existed= 1;		// Mark that table existed
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                           ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
-                          create_table->table_name);
+                          create_table->getTableName());
       return create_table->table;
     }
 
-    my_error(ER_TABLE_EXISTS_ERROR, MYF(0), create_table->table_name);
+    my_error(ER_TABLE_EXISTS_ERROR, MYF(0), create_table->getTableName());
     return NULL;
   }
 
-  tmp_table.timestamp_field= 0;
-  tmp_table.setShare(&share);
-
-  tmp_table.getMutableShare()->db_create_options= 0;
-  tmp_table.getMutableShare()->blob_ptr_size= portable_sizeof_char_ptr;
-
-  if (not table_proto.engine().name().compare("MyISAM"))
-    tmp_table.getMutableShare()->db_low_byte_first= true;
-  else if (not table_proto.engine().name().compare("MEMORY"))
-    tmp_table.getMutableShare()->db_low_byte_first= true;
-
-  tmp_table.null_row= false;
-  tmp_table.maybe_null= false;
-
-  while ((item=it++))
   {
-    CreateField *cr_field;
-    Field *field, *def_field;
-    if (item->type() == Item::FUNC_ITEM)
-      if (item->result_type() != STRING_RESULT)
-        field= item->tmp_table_field(&tmp_table);
+    table::Shell tmp_table(share);		// Used during 'CreateField()'
+    tmp_table.timestamp_field= 0;
+
+    tmp_table.getMutableShare()->db_create_options= 0;
+    tmp_table.getMutableShare()->blob_ptr_size= portable_sizeof_char_ptr;
+
+    if (not table_proto.engine().name().compare("MyISAM"))
+      tmp_table.getMutableShare()->db_low_byte_first= true;
+    else if (not table_proto.engine().name().compare("MEMORY"))
+      tmp_table.getMutableShare()->db_low_byte_first= true;
+
+    tmp_table.null_row= false;
+    tmp_table.maybe_null= false;
+
+    tmp_table.in_use= session;
+
+    while ((item=it++))
+    {
+      CreateField *cr_field;
+      Field *field, *def_field;
+      if (item->type() == Item::FUNC_ITEM)
+      {
+        if (item->result_type() != STRING_RESULT)
+        {
+          field= item->tmp_table_field(&tmp_table);
+        }
+        else
+        {
+          field= item->tmp_table_field_from_field_type(&tmp_table, 0);
+        }
+      }
       else
-        field= item->tmp_table_field_from_field_type(&tmp_table, 0);
-    else
-      field= create_tmp_field(session, &tmp_table, item, item->type(),
-                              (Item ***) 0, &tmp_field, &def_field, false,
-                              false, false, 0);
-    if (!field ||
-	!(cr_field=new CreateField(field,(item->type() == Item::FIELD_ITEM ?
-					   ((Item_field *)item)->field :
-					   (Field*) 0))))
-      return NULL;
-    if (item->maybe_null)
-      cr_field->flags &= ~NOT_NULL_FLAG;
-    alter_info->create_list.push_back(cr_field);
+      {
+        field= create_tmp_field(session, &tmp_table, item, item->type(),
+                                (Item ***) 0, &tmp_field, &def_field, false,
+                                false, false, 0);
+      }
+
+      if (!field ||
+          !(cr_field=new CreateField(field,(item->type() == Item::FIELD_ITEM ?
+                                            ((Item_field *)item)->field :
+                                            (Field*) 0))))
+      {
+        return NULL;
+      }
+
+      if (item->maybe_null)
+      {
+        cr_field->flags &= ~NOT_NULL_FLAG;
+      }
+
+      alter_info->create_list.push_back(cr_field);
+    }
   }
 
   /*
@@ -1530,6 +1584,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
     creating base table on which name we have exclusive lock. So code below
     should not cause deadlocks or races.
   */
+  Table *table= 0;
   {
     if (not mysql_create_table_no_lock(session,
 				       identifier,
@@ -1547,19 +1602,32 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
           or it was created via different mysqld front-end to the
           cluster. We don't have much options but throw an error.
         */
-        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), create_table->table_name);
+        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), create_table->getTableName());
         return NULL;
       }
 
       if (not identifier.isTmp())
       {
         LOCK_open.lock(); /* CREATE TABLE... has found that the table already exists for insert and is adapting to use it */
-        if (session->reopen_name_locked_table(create_table, false))
+
+        if (create_table->table)
+        {
+          table::Concurrent *concurrent_table= static_cast<table::Concurrent *>(create_table->table);
+
+          if (concurrent_table->reopen_name_locked_table(create_table, session))
+          {
+            quick_rm_table(*session, identifier);
+          }
+          else
+          {
+            table= create_table->table;
+          }
+        }
+        else
         {
           quick_rm_table(*session, identifier);
         }
-        else
-          table= create_table->table;
+
         LOCK_open.unlock();
       }
       else
@@ -1573,21 +1641,20 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
             it preparable for open. But let us do close_temporary_table() here
             just in case.
           */
-          session->drop_temporary_table(create_table);
+          session->drop_temporary_table(identifier);
         }
       }
     }
-    if (!table)                                   // open failed
+    if (not table)                                   // open failed
       return NULL;
   }
 
   table->reginfo.lock_type=TL_WRITE;
-  if (! ((*lock)= mysql_lock_tables(session, &table, 1,
-                                    DRIZZLE_LOCK_IGNORE_FLUSH, &not_used)))
+  if (! ((*lock)= session->lockTables(&table, 1, DRIZZLE_LOCK_IGNORE_FLUSH, &not_used)))
   {
     if (*lock)
     {
-      mysql_unlock_tables(session, *lock);
+      session->unlockTables(*lock);
       *lock= 0;
     }
 
@@ -1719,7 +1786,7 @@ bool select_create::send_eof()
     table->cursor->extra(HA_EXTRA_WRITE_CANNOT_REPLACE);
     if (m_plock)
     {
-      mysql_unlock_tables(session, *m_plock);
+      session->unlockTables(*m_plock);
       *m_plock= NULL;
       m_plock= NULL;
     }
@@ -1749,7 +1816,7 @@ void select_create::abort()
 
   if (m_plock)
   {
-    mysql_unlock_tables(session, *m_plock);
+    session->unlockTables(*m_plock);
     *m_plock= NULL;
     m_plock= NULL;
   }

@@ -11,8 +11,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -247,6 +247,44 @@ trx_purge_sys_create(void)
 
 	purge_sys->view = read_view_oldest_copy_or_open_new(ut_dulint_zero,
 							    purge_sys->heap);
+}
+
+/************************************************************************
+Frees the global purge system control structure. */
+UNIV_INTERN
+void
+trx_purge_sys_close(void)
+/*======================*/
+{
+	ut_ad(!mutex_own(&kernel_mutex));
+
+	que_graph_free(purge_sys->query);
+
+	ut_a(purge_sys->sess->trx->is_purge);
+	purge_sys->sess->trx->conc_state = TRX_NOT_STARTED;
+	sess_close(purge_sys->sess);
+	purge_sys->sess = NULL;
+
+	if (purge_sys->view != NULL) {
+		/* Because acquiring the kernel mutex is a pre-condition
+		of read_view_close(). We don't really need it here. */
+		mutex_enter(&kernel_mutex);
+
+		read_view_close(purge_sys->view);
+		purge_sys->view = NULL;
+
+		mutex_exit(&kernel_mutex);
+	}
+
+	trx_undo_arr_free(purge_sys->arr);
+
+	rw_lock_free(&purge_sys->latch);
+	mutex_free(&purge_sys->mutex);
+
+	mem_heap_free(purge_sys->heap);
+	mem_free(purge_sys);
+
+	purge_sys = NULL;
 }
 
 /*================ UNDO LOG HISTORY LIST =============================*/

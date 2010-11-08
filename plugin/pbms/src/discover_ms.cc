@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  *  Created by Barry Leslie on 8/27/08.
  *
@@ -1148,7 +1148,7 @@ static bool mysql_create_table_no_lock(THD *thd,
     goto err;
   }
 
-  LOCK_open.lock;
+  pthread_mutex_lock(&LOCK_open);
   if (!internal_tmp_table && !(create_info->options & HA_LEX_CREATE_TMP_TABLE))
   {
     if (!access(path,F_OK))
@@ -1256,7 +1256,7 @@ static bool mysql_create_table_no_lock(THD *thd,
 #endif
   error= FALSE;
 unlock_and_end:
-  LOCK_open.unlock;
+  pthread_mutex_unlock(&LOCK_open);
 
 err:
   thd_proc_info(thd, "After create");

@@ -30,6 +30,8 @@
 
 #include <stdint.h>
 
+#include "common.h"
+
 namespace drizzled
 {
 
@@ -219,24 +221,25 @@ enum test_flag_bit
 #define MY_CHARSET_BIN_MB_MAXLEN 1
 
 // uncachable cause
-#define UNCACHEABLE_DEPENDENT   1
-#define UNCACHEABLE_RAND        2
-#define UNCACHEABLE_SIDEEFFECT	4
+static const uint32_t UNCACHEABLE_DEPENDENT= 1;
+static const uint32_t UNCACHEABLE_RAND= 2;
+static const uint32_t UNCACHEABLE_SIDEEFFECT= 3;
 /// forcing to save JOIN for explain
-#define UNCACHEABLE_EXPLAIN     8
+static const uint32_t UNCACHEABLE_EXPLAIN= 4;
 /** Don't evaluate subqueries in prepare even if they're not correlated */
-#define UNCACHEABLE_PREPARE    16
+static const uint32_t UNCACHEABLE_PREPARE= 5;
 /* For uncorrelated SELECT in an UNION with some correlated SELECTs */
-#define UNCACHEABLE_UNITED     32
+static const uint32_t UNCACHEABLE_UNITED= 6;
 
 /* Used to check GROUP BY list in the MODE_ONLY_FULL_GROUP_BY mode */
 #define UNDEF_POS (-1)
 
 /* Options to add_table_to_list() */
-#define TL_OPTION_UPDATING	1
-#define TL_OPTION_FORCE_INDEX	2
-#define TL_OPTION_IGNORE_LEAVES 4
-#define TL_OPTION_ALIAS         8
+static const uint32_t TL_OPTION_UPDATING= 0;
+static const uint32_t TL_OPTION_FORCE_INDEX= 1;
+static const uint32_t TL_OPTION_IGNORE_LEAVES= 2;
+static const uint32_t TL_OPTION_ALIAS= 3;
+static const uint32_t NUM_OF_TABLE_OPTIONS= 4;
 
 /* Some portable defines */
 
@@ -406,8 +409,12 @@ typedef int myf;
 #define MY_COLL_ALLOW_CONV            3
 #define MY_COLL_DISALLOW_NONE         4
 #define MY_COLL_CMP_CONV              7
-#define clear_timestamp_auto_bits(_target_, _bits_) \
-  (_target_)= (enum timestamp_auto_set_type)((int)(_target_) & ~(int)(_bits_))
+
+inline static void clear_timestamp_auto_bits(enum timestamp_auto_set_type &_target_, 
+                                             const enum timestamp_auto_set_type _bits_)
+{
+  _target_= (enum timestamp_auto_set_type)((int)(_target_) & ~_bits_);
+}
 
 /*
  * The following are for the interface with the .frm file
@@ -416,10 +423,23 @@ typedef int myf;
 #define FIELDFLAG_PACK_SHIFT    3
 #define FIELDFLAG_MAX_DEC    31
 
+#ifdef __cplusplus
+// FIXME: T will just be drizzled::Field::utype, but that would
+// require including field.h. Moving the function elsewhere might be a
+// better idea. Leaving it for restructuring.
+template <typename T> 
+T MTYP_TYPENR(const T& type)
+{
+  return static_cast<T>(type & 127);
+}
+#else
 #define MTYP_TYPENR(type) (type & 127)  /* Remove bits from type */
+#endif
 
-#define f_settype(x)    (((int) x) << FIELDFLAG_PACK_SHIFT)
-
+inline static uint32_t f_settype(const enum enum_field_types x)
+{
+  return (uint32_t(x) << FIELDFLAG_PACK_SHIFT);
+}
 
 #ifdef __cplusplus
 template <class T> void set_if_bigger(T &a, const T &b)
@@ -618,6 +638,9 @@ static const uint32_t RECORD_CACHE_SIZE= 64*1024;
 # undef _DTRACE_VERSION
 # define _DTRACE_VERSION 0
 #endif
+
+typedef uint64_t table_map;   /* Used for table bits in join */
+typedef uint32_t nesting_map; /* Used for flags of nesting constructs */
 
 } /* namespace drizzled */
 

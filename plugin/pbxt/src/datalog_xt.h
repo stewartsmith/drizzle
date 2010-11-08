@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * 2005-01-24	Paul McCullagh
  *
@@ -173,19 +173,19 @@ typedef struct XTSeqLogRead {
 	struct XTDatabase		*sl_db;
 
 	virtual					~XTSeqLogRead() { }
-	virtual xtBool			sl_seq_init(struct XTDatabase *db, size_t buffer_size) { (void) buffer_size; sl_db = db; return OK; };
-	virtual void			sl_seq_exit() { };
-	virtual XTOpenFilePtr	sl_seq_open_file() { return NULL; };
-	virtual void			sl_seq_pos(xtLogID *log_id, xtLogOffset *log_offset) { (void) log_id; (void) log_offset; };
+	virtual xtBool			sl_seq_init(struct XTDatabase *db, size_t buffer_size) { (void) buffer_size; sl_db = db; return OK; }
+	virtual void			sl_seq_exit() { }
+	virtual XTOpenFilePtr	sl_seq_open_file() { return NULL; }
+	virtual void			sl_seq_pos(xtLogID *log_id, xtLogOffset *log_offset) { (void) log_id; (void) log_offset; }
 	virtual xtBool			sl_seq_start(xtLogID log_id, xtLogOffset log_offset, xtBool missing_ok) {
 		(void) log_id; (void) log_offset; (void) missing_ok; return OK; 
-	};
+	}
 	virtual xtBool			sl_rnd_read(xtLogOffset log_offset, size_t size, xtWord1 *data, size_t *read, struct XTThread *thread) {
 		(void) log_offset; (void) size; (void) data; (void) read; (void) thread; return OK;
-	};
+	}
 	virtual xtBool			sl_seq_next(XTXactLogBufferDPtr *entry, struct XTThread *thread) {
 		(void) entry; (void) thread; return OK;
-	};
+	}
 	virtual void			sl_seq_skip(size_t size) { (void) size; }
 } XTSeqLogReadRec, *XTSeqLogReadPtr;
 

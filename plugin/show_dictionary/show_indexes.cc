@@ -27,7 +27,7 @@ using namespace std;
 using namespace drizzled;
 
 ShowIndexes::ShowIndexes() :
-  plugin::TableFunction("DATA_DICTIONARY", "SHOW_INDEXES")
+  show_dictionary::Show("SHOW_INDEXES")
 {
   add_field("Table");
   add_field("Unique", plugin::TableFunction::BOOLEAN, 0, false);
@@ -37,14 +37,14 @@ ShowIndexes::ShowIndexes() :
 }
 
 ShowIndexes::Generator::Generator(Field **arg) :
-  plugin::TableFunction::Generator(arg),
+  show_dictionary::Show::Generator(arg),
   is_tables_primed(false),
   is_index_primed(false),
   is_index_part_primed(false),
   index_iterator(0),
   index_part_iterator(0)
 {
-  statement::Select *select= static_cast<statement::Select *>(getSession().lex->statement);
+  statement::Show *select= static_cast<statement::Show *>(getSession().lex->statement);
 
   if (not select->getShowTable().empty() && not select->getShowSchema().empty())
   {

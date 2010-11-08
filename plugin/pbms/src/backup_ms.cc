@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Barry Leslie
  *
@@ -127,10 +127,40 @@ void MSBackupInfo::startBackup(MSDatabase *pbms_db)
 }
 
 //-------------------------------
+class StartDumpCleanUp : public CSRefObject {
+	bool do_cleanup;
+	uint32_t ref_id;
+
+	public:
+	
+	StartDumpCleanUp(): CSRefObject(),
+		do_cleanup(false){}
+		
+	~StartDumpCleanUp() 
+	{
+		if (do_cleanup) {
+			MSBackupInfo::gBackupInfo->remove(ref_id);
+		}
+	}
+	
+	void setCleanUp(uint32_t id)
+	{
+		ref_id = id;
+		do_cleanup = true;
+	}
+	
+	void cancelCleanUp()
+	{
+		do_cleanup = false;
+	}
+	
+};
+
 MSBackupInfo *MSBackupInfo::startDump(MSDatabase *db, uint32_t cloud_ref, uint32_t backup_no)
 {
 	MSBackupInfo *info;
 	uint32_t ref_id;
+	StartDumpCleanUp *cleanup;
 	
 	enter_();
 	push_(db);
@@ -146,17 +176,22 @@ MSBackupInfo *MSBackupInfo::startDump(MSDatabase *db, uint32_t cloud_ref, uint32
 
 	pop_(info);
 	unlock_(gBackupInfo);
-	pop_(db);
+	push_(info);
 	
-	try_(a) {
-		MSBackupTable::saveTable(db);
-	}
-	catch_(a);
-	gBackupInfo->remove(ref_id);
-	info->release();
-	throw_();
+	// Create a cleanup object to handle cleanup
+	// after a possible exception.
+	new_(cleanup, StartDumpCleanUp());
+	push_(cleanup);
+	cleanup->setCleanUp(ref_id);
 	
-	cont_(a);
+	MSBackupTable::saveTable(RETAIN(db));
+	
+	cleanup->cancelCleanUp();
+	release_(cleanup);
+	
+	pop_(info);
+	release_(db);
+
 	return_(info);
 }
 //-------------------------------
@@ -220,111 +255,143 @@ MSBackup *MSBackup::newMSBackup(MSBackupInfo *info)
 	return_(bu);
 }
 
+//-------------------------------
+class StartBackupCleanUp : public CSRefObject {
+	bool do_cleanup;
+	MSBackup *backup;
+
+	public:
+	
+	StartBackupCleanUp(): CSRefObject(),
+		do_cleanup(false){}
+		
+	~StartBackupCleanUp() 
+	{
+		if (do_cleanup) {
+			backup->completeBackup();
+		}
+	}
+	
+	void setCleanUp(MSBackup *bup)
+	{
+		backup = bup;
+		do_cleanup = true;
+	}
+	
+	void cancelCleanUp()
+	{
+		do_cleanup = false;
+	}
+	
+};
+
 void MSBackup::startBackup(MSDatabase *src_db)
 {
 	CSSyncVector	*repo_list;
 	bool			compacting = false;
 	MSRepository	*repo;
+	StartBackupCleanUp *cleanup;
 	enter_();
 
-	try_(a) {
-		bu_SourceDatabase = src_db;
-		repo_list = bu_SourceDatabase->getRepositoryList();
-		// Suspend the compactor before locking the list.
-		bu_Compactor = bu_SourceDatabase->getCompactorThread();
-		if (bu_Compactor) {
-			bu_Compactor->retain();
-			bu_Compactor->suspend();
-		}
+	// Create a cleanup object to handle cleanup
+	// after a possible exception.
+	new_(cleanup, StartBackupCleanUp());
+	push_(cleanup);
+	cleanup->setCleanUp(this);
 
-		// Build the list of repositories to be backed up.
-		lock_(repo_list);
+	bu_SourceDatabase = src_db;
+	repo_list = bu_SourceDatabase->getRepositoryList();
+	// Suspend the compactor before locking the list.
+	bu_Compactor = bu_SourceDatabase->getCompactorThread();
+	if (bu_Compactor) {
+		bu_Compactor->retain();
+		bu_Compactor->suspend();
+	}
 
-		new_(bu_BackupList, CSVector(repo_list->size()));
-		for (uint32_t i = 0; i<repo_list->size(); i++) {
-			if ((repo = (MSRepository *) repo_list->get(i))) {
-				if (!repo->isRemovingFP && !repo->mustBeDeleted) {
-					bu_BackupList->add(RETAIN(repo));
-					if (repo->initBackup() == REPO_COMPACTING) 
-						compacting = true; 
-					
-					if (!repo->myRepoHeadSize) {
-						/* The file has not yet been opened, so the
-						 * garbage count will not be known!
-						 */
-						MSRepoFile *repo_file;
+	// Build the list of repositories to be backed up.
+	lock_(repo_list);
 
-						//repo->retain();
-						//unlock_(myRepostoryList);
-						//push_(repo);
-						repo_file = repo->openRepoFile();
-						repo_file->release();
-						//release_(repo);
-						//lock_(myRepostoryList);
-						//goto retry;
-					}
-					
-					bu_size += repo->myRepoFileSize; 
+	new_(bu_BackupList, CSVector(repo_list->size()));
+	for (uint32_t i = 0; i<repo_list->size(); i++) {
+		if ((repo = (MSRepository *) repo_list->get(i))) {
+			if (!repo->isRemovingFP && !repo->mustBeDeleted) {
+				bu_BackupList->add(RETAIN(repo));
+				if (repo->initBackup() == REPO_COMPACTING) 
+					compacting = true; 
+				
+				if (!repo->myRepoHeadSize) {
+					/* The file has not yet been opened, so the
+					 * garbage count will not be known!
+					 */
+					MSRepoFile *repo_file;
 
+					//repo->retain();
+					//unlock_(myRepostoryList);
+					//push_(repo);
+					repo_file = repo->openRepoFile();
+					repo_file->release();
+					//release_(repo);
+					//lock_(myRepostoryList);
+					//goto retry;
 				}
+				
+				bu_size += repo->myRepoFileSize; 
+
 			}
 		}
-		
-		// Copy the table list to the backup database:
-		uint32_t		next_tab = 0;
-		MSTable		*tab;
-		while ((tab = bu_SourceDatabase->getNextTable(&next_tab))) {
-			push_(tab);
-			bu_Database->addTable(tab->myTableID, tab->myTableName->getCString(), 0, false);
-			release_(tab);
-		}
-		unlock_(repo_list);
-		
-		// Copy over any physical PBMS system tables.
-		PBMSSystemTables::transferSystemTables(RETAIN(bu_Database), RETAIN(bu_SourceDatabase));
-
-		// Load the system tables into the backup database. This will
-		// initialize the database for cloud storage if required.
-		PBMSSystemTables::loadSystemTables(RETAIN(bu_Database));
-		
-		// Set the cloud backup info.
-		bu_Database->myBlobCloud->cl_setBackupInfo(RETAIN(bu_info));
-		
-		
-		// Set the backup number in the pbms_variable tabe. (This is a hidden value.)
-		// This value is used in case a drag and drop restore was done. When a data base is
-		// first loaded this value is checked and if it is not zero then the backup record
-		// will be read and any used to recover any BLOBs.
-		// 
-		char value[20];
-		snprintf(value, 20, "%"PRIu32"", bu_info->getBackupRefId());
-		MSVariableTable::setVariable(RETAIN(bu_Database), BACKUP_NUMBER_VAR, value);
-		
-		// Once the repositories are locked the compactor can be restarted
-		// unless it is in the process of compacting a repository that is
-		// being backed up.
-		if (bu_Compactor && !compacting) {	
-			bu_Compactor->resume();		
-			bu_Compactor->release();		
-			bu_Compactor = NULL;		
-		}
-		
-		// Suspend the transaction writer while the backup is running.
-		MSTransactionManager::suspend(true);
-		bu_TransactionManagerSuspended = true;
-		
-		// Start the backup daemon thread.
-		bu_ID = bu_start_time = time(NULL);
-		start();
 	}
-	catch_(a) {
-		completeBackup();
-		throw_();
-	}
-	cont_(a);
 	
-	exit_();
+	// Copy the table list to the backup database:
+	uint32_t		next_tab = 0;
+	MSTable		*tab;
+	while ((tab = bu_SourceDatabase->getNextTable(&next_tab))) {
+		push_(tab);
+		bu_Database->addTable(tab->myTableID, tab->myTableName->getCString(), 0, false);
+		release_(tab);
+	}
+	unlock_(repo_list);
+	
+	// Copy over any physical PBMS system tables.
+	PBMSSystemTables::transferSystemTables(RETAIN(bu_Database), RETAIN(bu_SourceDatabase));
 
+	// Load the system tables into the backup database. This will
+	// initialize the database for cloud storage if required.
+	PBMSSystemTables::loadSystemTables(RETAIN(bu_Database));
+	
+	// Set the cloud backup info.
+	bu_Database->myBlobCloud->cl_setBackupInfo(RETAIN(bu_info));
+	
+	
+	// Set the backup number in the pbms_variable tabe. (This is a hidden value.)
+	// This value is used in case a drag and drop restore was done. When a data base is
+	// first loaded this value is checked and if it is not zero then the backup record
+	// will be read and any used to recover any BLOBs.
+	// 
+	char value[20];
+	snprintf(value, 20, "%"PRIu32"", bu_info->getBackupRefId());
+	MSVariableTable::setVariable(RETAIN(bu_Database), BACKUP_NUMBER_VAR, value);
+	
+	// Once the repositories are locked the compactor can be restarted
+	// unless it is in the process of compacting a repository that is
+	// being backed up.
+	if (bu_Compactor && !compacting) {	
+		bu_Compactor->resume();		
+		bu_Compactor->release();		
+		bu_Compactor = NULL;		
+	}
+	
+	// Suspend the transaction writer while the backup is running.
+	MSTransactionManager::suspend(true);
+	bu_TransactionManagerSuspended = true;
+	
+	// Start the backup daemon thread.
+	bu_ID = bu_start_time = time(NULL);
+	start();
+	
+	cleanup->cancelCleanUp();
+	release_(cleanup);
+
+	exit_();
 }
 
 void MSBackup::completeBackup()
@@ -379,46 +446,46 @@ void MSBackup::completeBackup()
 
 bool MSBackup::doWork()
 {
-	CSMutex				*my_lock;
-	MSRepository		*src_repo, *dst_repo;
-	MSRepoFile			*src_file, *dst_file;
-	off64_t				src_offset, prev_offset;
-	uint16_t				head_size;
-	uint64_t				blob_size, blob_data_size;
-	CSStringBuffer		*head;
-	MSRepoPointersRec	ptr;
-	uint32_t				table_ref_count;
-	uint32_t				blob_ref_count;
-	int					ref_count;
-	size_t				ref_size;
-	uint32_t				auth_code;
-	uint32_t				tab_id;
-	uint64_t				blob_id;
-	MSOpenTable			*otab;
-	uint32_t				src_repo_id;
-	uint8_t				status;
-	uint8_t				blob_storage_type;
-	uint16_t				tab_index;
-	uint32_t				mod_time;
-	char				transferBuffer[MS_BACKUP_BUFFER_SIZE];
-	CloudKeyRec			cloud_key;
-
-	
 	enter_();
-	bu_BackupRunning = true;
-	bu_State = BU_RUNNING; 
-
-/*
-	// For testing:
-	{
-		int blockit = 0;
-		myWaitTime = 5 * 1000;  // Time in milli-seconds
-		while (blockit)
-			return_(true);
-	}
-*/
-	
 	try_(a) {
+		CSMutex				*my_lock;
+		MSRepository		*src_repo, *dst_repo;
+		MSRepoFile			*src_file, *dst_file;
+		off64_t				src_offset, prev_offset;
+		uint16_t				head_size;
+		uint64_t				blob_size, blob_data_size;
+		CSStringBuffer		*head;
+		MSRepoPointersRec	ptr;
+		uint32_t				table_ref_count;
+		uint32_t				blob_ref_count;
+		int					ref_count;
+		size_t				ref_size;
+		uint32_t				auth_code;
+		uint32_t				tab_id;
+		uint64_t				blob_id;
+		MSOpenTable			*otab;
+		uint32_t				src_repo_id;
+		uint8_t				status;
+		uint8_t				blob_storage_type;
+		uint16_t				tab_index;
+		uint32_t				mod_time;
+		char				transferBuffer[MS_BACKUP_BUFFER_SIZE];
+		CloudKeyRec			cloud_key;
+
+	
+		bu_BackupRunning = true;
+		bu_State = BU_RUNNING; 
+
+	/*
+		// For testing:
+		{
+			int blockit = 0;
+			myWaitTime = 5 * 1000;  // Time in milli-seconds
+			while (blockit)
+				return_(true);
+		}
+	*/
+	
 		new_(head, CSStringBuffer(100));
 		push_(head);
 
@@ -565,7 +632,7 @@ bool MSBackup::doWork()
 						if (blob_storage_type == MS_CLOUD_STORAGE) { 
 							bu_Database->myBlobCloud->cl_backupBLOB(&cloud_key);
 						} else
-							CSFile::transfer(dst_file, dst_offset + head_size, src_file, src_offset + head_size, blob_size, transferBuffer, MS_BACKUP_BUFFER_SIZE);
+							CSFile::transfer(RETAIN(dst_file), dst_offset + head_size, RETAIN(src_file), src_offset + head_size, blob_size, transferBuffer, MS_BACKUP_BUFFER_SIZE);
 					
 						/* Update the references: */
 						ptr.rp_chars = head->getBuffer(0) + src_repo->myRepoBlobHeadSize;

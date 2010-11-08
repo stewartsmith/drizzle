@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Barry Leslie
  *
@@ -28,8 +28,11 @@
 #include <drizzled/common.h>
 #include <drizzled/plugin.h>
 #include <drizzled/session.h>
+#include <boost/program_options.hpp>
+#include <drizzled/module/option_map.h>
 using namespace drizzled;
 using namespace drizzled::plugin;
+namespace po= boost::program_options;
 
 #include "cslib/CSConfig.h"
 #else
@@ -45,7 +48,7 @@ using namespace drizzled::plugin;
 
 
 #include "defs_ms.h"
-
+#include "pbmslib.h"
 
 /////////////////////////
 // Plugin Definition:
@@ -58,17 +61,37 @@ static PBMSEvents *pbms_events= NULL;
 extern int pbms_init_func(module::Context &registry);
 extern struct drizzled::drizzle_sys_var* pbms_system_variables[];
 
-static int my_init(module::Context &registry)
+extern uint32_t pbms_port_number;
+
+static void init_options(drizzled::module::option_context &context)
+{
+  context("port",
+          po::value<uint32_t>(&pbms_port_number)->default_value(DEFAULT_PBMS_PORT),
+          N_("Port number to use for connection or 0 for default PBMS port "));
+}
+
+
+static int my_init(module::Context &context)
 {
 	int rtc;
-	
+        const module::option_map &vm= context.getOptions();
+
+        if (vm.count("port"))
+        {
+          if (pbms_port_number > 65535)
+          {
+            errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid port number\n"));
+            return(-1);
+          }
+        }
+
 	PBMSParameters::startUp();
-	rtc = pbms_init_func(registry);
+	rtc = pbms_init_func(context);
 	if (rtc == 0) {
 		pbms_events = new PBMSEvents();
-		registry.add(pbms_events);
+		context.add(pbms_events);
 	}
-	
+
 	return rtc;
 }
 
@@ -82,7 +105,7 @@ DRIZZLE_DECLARE_PLUGIN
 	PLUGIN_LICENSE_GPL,
 	my_init, /* Plugin Init */
 	pbms_system_variables,          /* system variables                */
-	NULL                                            /* config options                  */
+	init_options                                            /* config options                  */
 }
 DRIZZLE_DECLARE_PLUGIN_END;
 

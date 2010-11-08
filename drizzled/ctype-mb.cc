@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include "config.h"
 
@@ -147,7 +147,6 @@ int my_strcasecmp_mb(const CHARSET_INFO * const  cs,const char *s, const char *t
   return (*t != *s);
 }
 
-
 /*
 ** Compare string against string with wildcard
 **	0 if matched
@@ -155,10 +154,16 @@ int my_strcasecmp_mb(const CHARSET_INFO * const  cs,const char *s, const char *t
 **	 1 if matched with wildcard
 */
 
-#define INC_PTR(cs,A,B) A+=(my_ismbchar(cs,A,B) ? my_ismbchar(cs,A,B) : 1)
+inline static const char* inc_ptr(const charset_info_st *cs, const char *str, const char* str_end)
+{
+  return str + (my_ismbchar(cs, str, str_end) ? my_ismbchar(cs, str, str_end) : 1);
+}
 
-#define likeconv(s,A) (unsigned char) (s)->sort_order[(unsigned char) (A)]
-
+inline static int likeconv(const charset_info_st *cs, const char c) 
+{
+  return (unsigned char) cs->sort_order[(unsigned char) c];
+}
+    
 int my_wildcmp_mb(const CHARSET_INFO * const cs,
 		  const char *str,const char *str_end,
 		  const char *wildstr,const char *wildend,
@@ -193,7 +198,7 @@ int my_wildcmp_mb(const CHARSET_INFO * const cs,
       {
 	if (str == str_end)			/* Skip one char if possible */
 	  return (result);
-	INC_PTR(cs,str,str_end);
+	inc_ptr(cs,str,str_end);
       } while (++wildstr < wildend && *wildstr == w_one);
       if (wildstr == wildend)
 	break;
@@ -214,7 +219,7 @@ int my_wildcmp_mb(const CHARSET_INFO * const cs,
 	{
 	  if (str == str_end)
 	    return (-1);
-	  INC_PTR(cs,str,str_end);
+	  inc_ptr(cs,str,str_end);
 	  continue;
 	}
 	break;					/* Not a wild character */
@@ -229,7 +234,7 @@ int my_wildcmp_mb(const CHARSET_INFO * const cs,
 
       mb=wildstr;
       mb_len= my_ismbchar(cs, wildstr, wildend);
-      INC_PTR(cs,wildstr,wildend);		/* This is compared trough cmp */
+      inc_ptr(cs,wildstr,wildend);		/* This is compared trough cmp */
       cmp=likeconv(cs,cmp);
       do
       {
@@ -251,7 +256,7 @@ int my_wildcmp_mb(const CHARSET_INFO * const cs,
             str++;
             break;
           }
-          INC_PTR(cs,str, str_end);
+          inc_ptr(cs,str, str_end);
         }
 	{
 	  int tmp=my_wildcmp_mb(cs,str,str_end,wildstr,wildend,escape,w_one,
@@ -829,7 +834,7 @@ int my_wildcmp_mb_bin(const CHARSET_INFO * const cs,
       {
 	if (str == str_end)			/* Skip one char if possible */
 	  return (result);
-	INC_PTR(cs,str,str_end);
+	inc_ptr(cs,str,str_end);
       } while (++wildstr < wildend && *wildstr == w_one);
       if (wildstr == wildend)
 	break;
@@ -850,7 +855,7 @@ int my_wildcmp_mb_bin(const CHARSET_INFO * const cs,
 	{
 	  if (str == str_end)
 	    return (-1);
-	  INC_PTR(cs,str,str_end);
+	  inc_ptr(cs,str,str_end);
 	  continue;
 	}
 	break;					/* Not a wild character */
@@ -865,7 +870,7 @@ int my_wildcmp_mb_bin(const CHARSET_INFO * const cs,
 
       mb=wildstr;
       mb_len= my_ismbchar(cs, wildstr, wildend);
-      INC_PTR(cs,wildstr,wildend);		/* This is compared trough cmp */
+      inc_ptr(cs,wildstr,wildend);		/* This is compared trough cmp */
       do
       {
         for (;;)
@@ -885,7 +890,7 @@ int my_wildcmp_mb_bin(const CHARSET_INFO * const cs,
             str++;
             break;
           }
-          INC_PTR(cs,str, str_end);
+          inc_ptr(cs,str, str_end);
         }
 	{
 	  int tmp=my_wildcmp_mb_bin(cs,str,str_end,wildstr,wildend,escape,w_one,w_many);
@@ -1072,7 +1077,12 @@ static char pgFF[256]=
 1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 };
 
-static struct {int page; char *p;} utr11_data[256]=
+static class {
+public:
+  int page; 
+  char *p;
+} 
+  utr11_data[256]=
 {
 {0,NULL},{0,NULL},{0,NULL},{0,NULL},{0,NULL},{0,NULL},{0,NULL},{0,NULL},
 {0,NULL},{0,NULL},{0,NULL},{0,NULL},{0,NULL},{0,NULL},{0,NULL},{0,NULL},

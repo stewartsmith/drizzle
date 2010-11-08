@@ -11,7 +11,7 @@
 
   You should have received a copy of the GNU General Public License
   along with this program; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /*
   Make sure to look at ha_tina.h for more details.
@@ -112,7 +112,7 @@ public:
     pthread_mutex_destroy(&tina_mutex);
   }
 
-  virtual Cursor *create(TableShare &table)
+  virtual Cursor *create(Table &table)
   {
     return new ha_tina(*this, table);
   }
@@ -279,7 +279,7 @@ TinaShare *ha_tina::get_share(const std::string &table_name)
 {
   pthread_mutex_lock(&tina_mutex);
 
-  Tina *a_tina= static_cast<Tina *>(engine);
+  Tina *a_tina= static_cast<Tina *>(getEngine());
   share= a_tina->findOpenTable(table_name);
 
   std::string meta_file_name;
@@ -481,7 +481,7 @@ int ha_tina::free_share()
       share->tina_write_opened= false;
     }
 
-    Tina *a_tina= static_cast<Tina *>(engine);
+    Tina *a_tina= static_cast<Tina *>(getEngine());
     a_tina->deleteOpenTable(share->table_name);
     delete share;
   }
@@ -530,7 +530,7 @@ static off_t find_eoln_buff(Transparent_file *data_buff, off_t begin,
 
 
 
-ha_tina::ha_tina(drizzled::plugin::StorageEngine &engine_arg, TableShare &table_arg)
+ha_tina::ha_tina(drizzled::plugin::StorageEngine &engine_arg, Table &table_arg)
   :Cursor(engine_arg, table_arg),
   /*
     These definitions are found in Cursor.h
@@ -557,7 +557,7 @@ int ha_tina::encode_quote(unsigned char *)
 
   buffer.length(0);
 
-  for (Field **field= table->getFields() ; *field ; field++)
+  for (Field **field= getTable()->getFields() ; *field ; field++)
   {
     const char *ptr;
     const char *end_ptr;
@@ -597,25 +597,25 @@ int ha_tina::encode_quote(unsigned char *)
         {
           buffer.append('\\');
           buffer.append('"');
-          *ptr++;
+          (void) *ptr++;
         }
         else if (*ptr == '\r')
         {
           buffer.append('\\');
           buffer.append('r');
-          *ptr++;
+          (void) *ptr++;
         }
         else if (*ptr == '\\')
         {
           buffer.append('\\');
           buffer.append('\\');
-          *ptr++;
+          (void) *ptr++;
         }
         else if (*ptr == '\n')
         {
           buffer.append('\\');
           buffer.append('n');
-          *ptr++;
+          (void) *ptr++;
         }
         else
           buffer.append(*ptr++);
@@ -675,9 +675,9 @@ int ha_tina::find_current_row(unsigned char *buf)
 
   error= HA_ERR_CRASHED_ON_USAGE;
 
-  memset(buf, 0, table->getShare()->null_bytes);
+  memset(buf, 0, getTable()->getShare()->null_bytes);
 
-  for (Field **field=table->getFields() ; *field ; field++)
+  for (Field **field= getTable()->getFields() ; *field ; field++)
   {
     char curr_char;
 

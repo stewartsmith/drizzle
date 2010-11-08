@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Original author: Paul McCullagh (H&G2JCtL)
  * Continued development: Barry Leslie
@@ -53,7 +53,7 @@ public:
 	const char *getNameCString() { return iName ? iName->getCString() : ""; }
 	const char *getValueCString() { return iValue ? iValue->getCString() : ""; }
 
-	void write(CSOutputStream *out);
+	void write(CSOutputStream *out, bool trace);
 	
 	friend class CSHTTPHeaders;
 private:
@@ -66,7 +66,7 @@ private:
 
 class CSHTTPHeaders {
 public:
-	CSHTTPHeaders(): iHeaders(NULL), iKeepAlive(false), iExpect100Continue(false), iUnknownEpectHeader(false) { }
+	CSHTTPHeaders(CSVector *list = NULL): iHeaders(list), iKeepAlive(false), iExpect100Continue(false), iUnknownEpectHeader(false) { }
 	virtual ~CSHTTPHeaders() { if (iHeaders) iHeaders->release();}
 
 	void clearHeaders();
@@ -78,10 +78,12 @@ public:
 	void addHeader(const char *name, uint32_t nlen, const char *value, uint32_t vlen);
 	void addHeader(CSString *name, CSString *value);
 	void addHeader(const char *name, CSString *value);
+	void addHeader(const char *name, uint64_t value);
 	void removeHeader(const char *name);
 	void removeHeader(CSString *name);
 	CSString *getHeaderValue(const char *name);
-	void writeHeader(CSOutputStream *out);
+	const char *getHeaderCStringValue(const char *name);
+	void writeHeader(CSOutputStream *out, bool trace);
 	bool keepAlive();
 	bool expect100Continue();
 	bool unknownEpectHeader();
@@ -106,14 +108,24 @@ private:
 	bool iUnknownEpectHeader;
 };
 
+class CSRefHTTPHeaders : public CSHTTPHeaders, public CSRefObject {
+public:
+	CSRefHTTPHeaders(CSVector *list):CSHTTPHeaders(list){}
+	~CSRefHTTPHeaders(){}	
+};
+
 class CSHTTPInputStream : public CSInputStream, public CSHTTPHeaders {
 public:
 	CSHTTPInputStream(CSInputStream *s);
 	virtual ~CSHTTPInputStream();
 
-	void readHead();
-	uint64_t getContentLength();
+	void readHead(bool trace = false);
+	void readBody();
+	bool getContentLength(uint64_t *length);
 	const char *getMethod();
+	char *getBodyData() { return iBody.getCString(); };
+	size_t getBodyLength() { return iBody.length(); };
+	void setBody(CSStringBufferImpl *buf) { iBody.take(buf); }
 	int getStatus() { return iStatus; }
 	CSString *getStatusPhrase() { return iStatusPhrase; }
 	CSString *getRequestURI() { return iRequestURI; }
@@ -127,7 +139,9 @@ public:
 
 	virtual int peek();
 
-	virtual void reset() {iInput->reset();}
+	virtual void reset() { iInput->reset(); }
+
+	virtual const char *identify() { return iInput->identify(); }
 
 	static CSHTTPInputStream *newStream(CSInputStream* i);
 
@@ -135,12 +149,13 @@ private:
 	void freeHead();
 
 	// Request-Line   = Method SP Request-URI SP HTTP-Version CRLF
-	CSInputStream *iInput;
-	int		iStatus;
-	CSString *iMethod;
-	CSString *iRequestURI;
-	CSString *iHTTPVersion;
-	CSString *iStatusPhrase;
+	CSInputStream	*iInput;
+	int				iStatus;
+	CSString		*iMethod;
+	CSString		*iRequestURI;
+	CSString		*iHTTPVersion;
+	CSString		*iStatusPhrase;
+	CSStringBuffer	iBody;
 };
 
 class CSHTTPOutputStream : public CSOutputStream, public CSHTTPHeaders {
@@ -153,14 +168,31 @@ public:
 	void setContentLength(uint64_t size) { iContentLength = size; }
 	void setRange(uint64_t size, uint64_t offset, uint64_t total) { iRangeSize = size; iRangeOffset = offset; iTotalLength = total;}
 
-	void writeHead();	// Writes a standard HTTP header.
-	void writeHeaders(); // Write the current headers.
+	void writeHead(bool trace = false);	// Writes a standard HTTP header.
+	void writeHeaders(bool trace = false); // Write the current headers.
 
 	void clearBody();
 	void writeBody();
 
+	// The virtual and non virtual print() methods
+	// must be kept seperate to avoid possible compiler
+	// warnings about hidden methods.
+	void print(const char *str, bool trace);
+	void print(int32_t value, bool trace);
+	void print(uint64_t value, bool trace);
+
+	virtual void print(const char *str) {print(str, false);}
+	virtual void print(CSString *s) {print(s->getCString(), false);}
+	virtual void print(int32_t value) {print(value, false);}
+	virtual void print(uint64_t value) {print(value, false);}
+
 	void appendBody(const char *str);
-	void appendBody(int value);
+	void appendBody(int32_t value);
+	void appendBody(uint32_t value);
+	void appendBody(uint64_t value);
+	const char *getBodyData();
+	size_t getBodyLength();
+	void setBody(CSStringBufferImpl *buf);
 
 	virtual void close();
 
@@ -172,7 +204,9 @@ public:
 
 	virtual void write(char b);
 
-	virtual void reset() {iOutput->reset();}
+	virtual void reset() { iOutput->reset(); }
+
+	virtual const char *identify() { return iOutput->identify(); }
 
 	static const char *getReasonPhrase(int code);
 

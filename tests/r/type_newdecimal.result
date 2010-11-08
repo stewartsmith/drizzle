@@ -131,10 +131,7 @@ t1	CREATE TABLE `t1` (
 ) ENGINE=X COLLATE = utf8_general_ci
 drop table t1;
 select 1e10/0e0;
-1e10/0e0
-NULL
-Warnings:
-Error	1365	Division by 0
+ERROR 22012: Division by 0
 select 1/3;
 1/3
 0.3333
@@ -545,15 +542,9 @@ select 1E-500 = 0;
 1E-500 = 0
 1
 select 1 / 1E-500;
-1 / 1E-500
-NULL
-Warnings:
-Error	1365	Division by 0
+ERROR 22012: Division by 0
 select 1 / 0;
-1 / 0
-NULL
-Warnings:
-Error	1365	Division by 0
+ERROR 22012: Division by 0
 CREATE TABLE Sow6_2f (col1 NUMERIC(4,2));
 INSERT INTO Sow6_2f VALUES (10.55);
 INSERT INTO Sow6_2f VALUES (10.5555);
@@ -565,14 +556,7 @@ INSERT INTO Sow6_2f VALUES (11);
 INSERT INTO Sow6_2f VALUES (101.55);
 ERROR 22003: Out of range value for column 'col1' at row 1
 SELECT MOD(col1,0) FROM Sow6_2f;
-MOD(col1,0)
-NULL
-NULL
-NULL
-Warnings:
-Error	1365	Division by 0
-Error	1365	Division by 0
-Error	1365	Division by 0
+ERROR 22012: Division by 0
 INSERT INTO Sow6_2f VALUES ('a59b');
 ERROR HY000: Incorrect decimal value: 'a59b' for column 'col1' at row 1
 drop table Sow6_2f;
@@ -580,10 +564,7 @@ select 10.3330000000000/12.34500000;
 10.3330000000000/12.34500000
 0.83701903604698258
 select 0/0;
-0/0
-NULL
-Warnings:
-Error	1365	Division by 0
+ERROR 22012: Division by 0
 select 9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999 as x;
 x
 99999999999999999999999999999999999999999999999999999999999999999
@@ -614,10 +595,7 @@ f1	f2
 9999999999999999999999999999999999.00000000000000000000	0.00
 DROP TABLE t1;
 select abs(10/0);
-abs(10/0)
-NULL
-Warnings:
-Error	1365	Division by 0
+ERROR 22012: Division by 0
 select abs(NULL);
 abs(NULL)
 NULL

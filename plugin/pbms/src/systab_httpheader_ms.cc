@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Barry Leslie
  *
@@ -62,7 +62,7 @@ SysTabRec	*MSHTTPHeaderTable::gDefaultMetaDataHeaders;
 DT_FIELD_INFO pbms_metadata_headers_info[]=
 {
 	{"Name", 32,	NULL, MYSQL_TYPE_VARCHAR,	&UTF8_CHARSET,	NOT_NULL_FLAG,	"HTTP field name"},
-	{NULL,	NULL,				NULL, MYSQL_TYPE_STRING,	NULL, 0, NULL}
+	{NULL,	NOVAL,				NULL, MYSQL_TYPE_STRING,	NULL, 0, NULL}
 };
 
 DT_KEY_INFO pbms_metadata_headers_keys[]=
@@ -98,7 +98,7 @@ void MSHTTPHeaderTable::setDefaultMetaDataHeaders(const char *defaults)
 				gDefaultMetaDataHeaders->setStringField(defaults, ptr - defaults);
 				gDefaultMetaDataHeaders->endRecord();
 			}
-			if (!ptr)
+			if (!*ptr)
 				break;
 				
 			defaults = ptr +1;
@@ -135,8 +135,7 @@ void MSHTTPHeaderTable::loadTable(MSDatabase *db)
 		
 		
 	} else if (gDefaultMetaDataHeaders) { // Load the defaults if they exist.
-		headerData = RETAIN(gDefaultMetaDataHeaders);
-		push_(headerData);
+		headerData = gDefaultMetaDataHeaders;
 	}
 
 	if (headerData) {
@@ -148,7 +147,11 @@ void MSHTTPHeaderTable::loadTable(MSDatabase *db)
 			}
 		}
 		
-		release_(headerData); 
+		if (headerData == gDefaultMetaDataHeaders)
+			gDefaultMetaDataHeaders->resetRecord();
+		else {
+			release_(headerData); 
+		}
 	}
 	
 	release_(path);	
@@ -344,14 +347,22 @@ bool MSHTTPHeaderTable::seqScanNext(char *buf)
 	save_write_set = table->write_set;
 	table->write_set = NULL;
 
+#ifdef DRIZZLED
+	memset(buf, 0xFF, table->getNullBytes());
+#else
 	memset(buf, 0xFF, table->s->null_bytes);
+#endif
  	for (Field **field=GET_TABLE_FIELDS(table); *field ; field++) {
  		curr_field = *field;
 		save = curr_field->ptr;
 #if MYSQL_VERSION_ID < 50114
 		curr_field->ptr = (byte *) buf + curr_field->offset();
 #else
+#ifdef DRIZZLED
 		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->getTable()->getInsertRecord());
+#else
+		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->table->record[0]);
+#endif
 #endif
 		switch (curr_field->field_name[0]) {
 			case 'N':

@@ -59,6 +59,9 @@
 #include "drizzled/tztime.h"
 #include "drizzled/signal_handler.h"
 #include "drizzled/replication_services.h"
+#include "drizzled/transaction_services.h"
+
+#include "drizzled/util/backtrace.h"
 
 using namespace drizzled;
 using namespace std;
@@ -201,6 +204,9 @@ static void GoogleProtoErrorThrower(google::protobuf::LogLevel level, const char
   (void)filename;
   (void)line;
   (void)message;
+  std::cerr << "\n";
+  drizzled::util::custom_backtrace();
+  std::cerr << "\n";
   switch(level)
   {
   case google::protobuf::LOGLEVEL_INFO:
@@ -209,6 +215,7 @@ static void GoogleProtoErrorThrower(google::protobuf::LogLevel level, const char
   case google::protobuf::LOGLEVEL_ERROR:
   case google::protobuf::LOGLEVEL_FATAL:
   default:
+    std::cerr << "GoogleProtoErrorThrower(" << filename << ", " << line << ", " << message << ")";
     throw("error in google protocol buffer parsing");
   }
 }
@@ -254,11 +261,11 @@ int main(int argc, char **argv)
 
   if (not opt_help)
   {
-    if (chdir(getDataHome().c_str()))
+    if (chdir(getDataHome().file_string().c_str()))
     {
       errmsg_printf(ERRMSG_LVL_ERROR,
                     _("Data directory %s does not exist\n"),
-                    getDataHome().c_str());
+                    getDataHome().file_string().c_str());
       unireg_abort(1);
     }
     if (mkdir("local", 0700))
@@ -269,15 +276,11 @@ int main(int argc, char **argv)
     {
       errmsg_printf(ERRMSG_LVL_ERROR,
                     _("Local catalog %s/local does not exist\n"),
-                    getDataHome().c_str());
+                    getDataHome().file_string().c_str());
       unireg_abort(1);
     }
-    /* TODO: This is a hack until we can properly support std::string in sys_var*/
-    char **data_home_ptr= getDatadirPtr();
-    fs::path full_data_home_path(fs::system_complete(fs::path(getDataHome())));
-    std::string full_data_home(full_data_home_path.file_string());
-    *data_home_ptr= new char[full_data_home.size()+1] ();
-    memcpy(*data_home_ptr, full_data_home.c_str(), full_data_home.size());
+
+    full_data_home= fs::system_complete(getDataHome());
     getDataHomeCatalog()= "./";
     getDataHome()= "../";
   }
@@ -318,13 +321,26 @@ int main(int argc, char **argv)
     select_thread_in_use=0;
     (void) pthread_kill(signal_thread, SIGTERM);
 
-    (void) unlink(pidfile_name);	// Not needed anymore
+    (void) unlink(pid_file.file_string().c_str());	// Not needed anymore
 
     exit(1);
   }
 
   errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_STARTUP)), internal::my_progname,
                 PANDORA_RELEASE_VERSION, COMPILATION_COMMENT);
+
+
+  TransactionServices &transaction_services= TransactionServices::singleton();
+
+  /* Send server startup event */
+  if ((session= new Session(plugin::Listen::getNullClient())))
+  {
+    currentSession().release();
+    currentSession().reset(session);
+    transaction_services.sendStartupEvent(session);
+    session->lockForDelete();
+    delete session;
+  }
 
 
   /* Listen for new connections and start new session for each connection
@@ -341,6 +357,16 @@ int main(int argc, char **argv)
     /* If we error on creation we drop the connection and delete the session. */
     if (session->schedule())
       Session::unlink(session);
+  }
+
+  /* Send server shutdown event */
+  if ((session= new Session(plugin::Listen::getNullClient())))
+  {
+    currentSession().release();
+    currentSession().reset(session);
+    transaction_services.sendShutdownEvent(session);
+    session->lockForDelete();
+    delete session;
   }
 
   LOCK_thread_count.lock();

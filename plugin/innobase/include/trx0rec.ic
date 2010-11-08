@@ -11,8 +11,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -100,8 +100,8 @@ UNIV_INLINE
 trx_undo_rec_t*
 trx_undo_rec_copy(
 /*==============*/
-	trx_undo_rec_t*	undo_rec,	/*!< in: undo log record */
-	mem_heap_t*	heap)		/*!< in: heap where copied */
+	const trx_undo_rec_t*	undo_rec,	/*!< in: undo log record */
+	mem_heap_t*		heap)		/*!< in: heap where copied */
 {
 	ulint		len;
 

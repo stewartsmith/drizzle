@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Original author: Paul McCullagh
  * Continued development: Barry Leslie
@@ -545,11 +545,11 @@ void MSDatabase::returnRepoFileToPool(MSRepoFile *file)
 	push_(file);
 	if ((repo = file->myRepo)) {
 		if (repo->isRemovingFP) {
-			repo->removeRepoFile(file);
+			repo->removeRepoFile(RETAIN(file));
 			myRepostoryList->wakeup();
 		}
 		else
-			repo->returnRepoFile(file);
+			repo->returnRepoFile(RETAIN(file));
 		repo->release(); /* [++] here is the release.  */
 	}
 	release_(file);
@@ -1076,7 +1076,7 @@ MSDatabase *MSDatabase::getDatabase(uint32_t db_id)
 						int len = ptr - dir_name;
 						ptr++;
 						if ((strtoul(ptr, NULL, 10) == db_id) && len) {
-							db = getDatabase(CSCString::newString(dir_name, len), true);
+							db = getDatabase(CSString::newString(dir_name, len), true);
 							ASSERT(db->myDatabaseID == db_id);
 						}
 					}
@@ -1597,7 +1597,7 @@ void MSDatabase::dropDatabase(MSDatabase *doomedDatabase, const char *db_name )
 			gDatabaseList->remove(doomedDatabase->getKey());
 		if (!self->myMustQuit) 
 			unlock_(gDatabaseList); 
-		ASSERT(doomedDatabase->iRefCount == 1);
+		ASSERT(doomedDatabase->getRefCount() == 1);
 		release_(doomedDatabase);
 		
 	} else {

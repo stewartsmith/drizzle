@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Barry Leslie
  *
@@ -58,17 +58,17 @@
 
 DT_FIELD_INFO pbms_backup_info[]=
 {
-	{"Id",				NULL,	NULL, MYSQL_TYPE_LONG,		NULL,			NOT_NULL_FLAG,	"The backup reference ID"},
+	{"Id",				NOVAL,	NULL, MYSQL_TYPE_LONG,		NULL,			NOT_NULL_FLAG,	"The backup reference ID"},
 	{"Database_Name",	64,		NULL, MYSQL_TYPE_VARCHAR,	&UTF8_CHARSET,	NOT_NULL_FLAG,	"The database name"},
-	{"Database_Id",		NULL,	NULL, MYSQL_TYPE_LONG,		NULL,			0,	"The database ID"},
+	{"Database_Id",		NOVAL,	NULL, MYSQL_TYPE_LONG,		NULL,			0,	"The database ID"},
 	{"Started",			32,		NULL, MYSQL_TYPE_VARCHAR,	&UTF8_CHARSET,	0,	"The start time"},
 	{"Completed",		32,		NULL, MYSQL_TYPE_VARCHAR,	&UTF8_CHARSET,	0,	"The completion time"},
 	{"IsRunning",		3,		NULL, MYSQL_TYPE_VARCHAR,	&UTF8_CHARSET,	0,	"Is the backup still running"},
 	{"IsDump",			3,		NULL, MYSQL_TYPE_VARCHAR,	&UTF8_CHARSET,	0,	"Is the backup the result of a dump"},
 	{"Location",		1024,	NULL, MYSQL_TYPE_VARCHAR,	&UTF8_CHARSET,	0,	"The backup location"},
-	{"Cloud_Ref",		NULL,	NULL, MYSQL_TYPE_LONG,		NULL,			0,	"The S3 cloud reference number refering to the pbms.pbms_cloud table."},
-	{"Cloud_Backup_No",	NULL,	NULL, MYSQL_TYPE_LONG,		NULL,			0,	"The cloud backup number"},
-	{NULL,NULL, NULL, MYSQL_TYPE_STRING,NULL, 0, NULL}
+	{"Cloud_Ref",		NOVAL,	NULL, MYSQL_TYPE_LONG,		NULL,			0,	"The S3 cloud reference number refering to the pbms.pbms_cloud table."},
+	{"Cloud_Backup_No",	NOVAL,	NULL, MYSQL_TYPE_LONG,		NULL,			0,	"The cloud backup number"},
+	{NULL,NOVAL, NULL, MYSQL_TYPE_STRING,NULL, 0, NULL}
 };
 
 DT_KEY_INFO pbms_backup_keys[]=
@@ -268,14 +268,22 @@ bool MSBackupTable::seqScanNext(char *buf)
 
 	new_(timeVal, CSTime());
 	push_(timeVal);
+#ifdef DRIZZLED
+	memset(buf, 0xFF, table->getNullBytes());
+#else
 	memset(buf, 0xFF, table->s->null_bytes);
+#endif
  	for (Field **field=GET_TABLE_FIELDS(table) ; *field ; field++) {
  		curr_field = *field;
 		save = curr_field->ptr;
 #if MYSQL_VERSION_ID < 50114
 		curr_field->ptr = (byte *) buf + curr_field->offset();
 #else
+#ifdef DRIZZLED
 		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->getTable()->getInsertRecord());
+#else
+		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->table->record[0]);
+#endif
 #endif
 		switch (curr_field->field_name[0]) {
 			case 'I':
@@ -458,62 +466,91 @@ void MSBackupTable::updateRow(char *old_data, char *new_data)
 	exit_();
 }
 
+class InsertRowCleanUp : public CSRefObject {
+	bool do_cleanup;
+	CSThread *myself;
+	
+	uint32_t ref_id;
+
+	public:
+	
+	InsertRowCleanUp(CSThread *self): CSRefObject(),
+		do_cleanup(true), myself(self){}
+		
+	~InsertRowCleanUp() 
+	{
+		if (do_cleanup) {
+			myself->logException();
+			if (ref_id)
+				MSBackupInfo::gBackupInfo->remove(ref_id);
+
+		}
+	}
+	
+	void setCleanUp(uint32_t id)
+	{
+		ref_id = id;
+	}
+	
+	void cancelCleanUp()
+	{
+		do_cleanup = false;
+	}
+	
+};
+
 void MSBackupTable::insertRow(char *data) 
 {
 	uint32_t ref_id = 0, db_id, cloud_ref, cloud_backup_no;
 	String name, start, end, isRunning, isDump, location;
 	MSBackupInfo *info = NULL;
 	const char *db_name;
-	bool duplicate = true;
+	InsertRowCleanUp *cleanup;
 
 	enter_();
 
-	try_(a) {
-		getFieldValue(data, 0, &ref_id);
-			
-		// The id must be unique.
-		if (ref_id && MSBackupInfo::gBackupInfo->get(ref_id)) {
-			CSException::throwException(CS_CONTEXT, MS_ERR_DUPLICATE, "Attempt to insert a row with a duplicate key in the "BACKUP_TABLE_NAME" table.");
-		}
-		duplicate = false;
+	new_(cleanup, InsertRowCleanUp(self));
+	push_(cleanup);
+	
+	getFieldValue(data, 0, &ref_id);
 		
-		// The 'Database_Id', 'Start', 'Completion' and "IsDump" fields are ignored.
-		// I still need to get the fields though to advance the field position pointer.
-		getFieldValue(data, 1, &name);
-		getFieldValue(data, 2, &db_id);
-		getFieldValue(data, 3, &start);
-		getFieldValue(data, 4, &end);
-		getFieldValue(data, 5, &isRunning);
-		getFieldValue(data, 6, &isDump);
-		getFieldValue(data, 7, &location);
-		getFieldValue(data, 8, &cloud_ref);
-		getFieldValue(data, 9, &cloud_backup_no);
-		
-		if (ref_id == 0)
-			ref_id = MSBackupInfo::gMaxInfoRef++;
-		else if (ref_id >= MSBackupInfo::gMaxInfoRef)
-			MSBackupInfo::gMaxInfoRef = ref_id +1;
-		
-		db_name	= name.c_ptr();
-		db_id = MSDatabase::getDatabaseID(db_name, false);
-		
-		new_(info, MSBackupInfo(ref_id, db_name, db_id, 0, 0, false, location.c_ptr(), cloud_ref, cloud_backup_no));
-		MSBackupInfo::gBackupInfo->set(ref_id, info);
-		
-		// There is no need to call this now, startBackup() will call it
-		// after the backup is started.
-		// saveTable(RETAIN(myShare->mySysDatabase)); 
-		info->startBackup(RETAIN(myShare->mySysDatabase));
+	// The id must be unique.
+	if (ref_id && MSBackupInfo::gBackupInfo->get(ref_id)) {
+		CSException::throwException(CS_CONTEXT, MS_ERR_DUPLICATE, "Attempt to insert a row with a duplicate key in the "BACKUP_TABLE_NAME" table.");
 	}
 	
-	catch_(a);
-	// It is good to know the details if the backup could not be started.
-	self->logException();
-	if (ref_id && ! duplicate)
-		MSBackupInfo::gBackupInfo->remove(ref_id);
-	throw_();
+	// The 'Database_Id', 'Start', 'Completion' and "IsDump" fields are ignored.
+	// I still need to get the fields though to advance the field position pointer.
+	getFieldValue(data, 1, &name);
+	getFieldValue(data, 2, &db_id);
+	getFieldValue(data, 3, &start);
+	getFieldValue(data, 4, &end);
+	getFieldValue(data, 5, &isRunning);
+	getFieldValue(data, 6, &isDump);
+	getFieldValue(data, 7, &location);
+	getFieldValue(data, 8, &cloud_ref);
+	getFieldValue(data, 9, &cloud_backup_no);
 	
-	cont_(a);
+	if (ref_id == 0)
+		ref_id = MSBackupInfo::gMaxInfoRef++;
+	else if (ref_id >= MSBackupInfo::gMaxInfoRef)
+		MSBackupInfo::gMaxInfoRef = ref_id +1;
+	
+	db_name	= name.c_ptr();
+	db_id = MSDatabase::getDatabaseID(db_name, false);
+	
+	cleanup->setCleanUp(ref_id);
+	new_(info, MSBackupInfo(ref_id, db_name, db_id, 0, 0, false, location.c_ptr(), cloud_ref, cloud_backup_no));
+	MSBackupInfo::gBackupInfo->set(ref_id, info);
+	
+	// There is no need to call this now, startBackup() will call it
+	// after the backup is started.
+	// saveTable(RETAIN(myShare->mySysDatabase)); 
+	info->startBackup(RETAIN(myShare->mySysDatabase));
+
+	cleanup->cancelCleanUp();
+	release_(cleanup);
+	
 	exit_();
 }
 

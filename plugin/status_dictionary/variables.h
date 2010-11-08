@@ -37,7 +37,7 @@ public:
 
   drizzled::drizzle_show_var *getVariables()
   {
-    return enumerate_sys_vars(current_session, false); // Final value unused
+    return enumerate_sys_vars(current_session); // Final value unused
   }
 };
 

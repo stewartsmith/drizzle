@@ -121,7 +121,7 @@ String *Item_func_concat::val_str(String *str)
           more than 25% of memory will be overcommitted on average.
         */
 
-        uint32_t concat_len= res->length() + res2->length();
+        size_t concat_len= res->length() + res2->length();
 
         if (tmp_value.alloced_length() < concat_len)
         {
@@ -291,7 +291,7 @@ String *Item_func_concat_ws::val_str(String *str)
         25% of memory will be overcommitted on average.
       */
 
-      uint32_t concat_len= res->length() + sep_str->length() + res2->length();
+      size_t concat_len= res->length() + sep_str->length() + res2->length();
 
       if (tmp_value.alloced_length() < concat_len)
       {

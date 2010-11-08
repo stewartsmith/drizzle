@@ -35,21 +35,9 @@ The :program:`drizzledump` tool has several available options:
    *data_dictionary* in Drizzle and *information_schema*, *performance_schema*
    and *mysql* in MySQL.
 
-.. option:: -c, --complete-insert
-
-   Dumps using complete insert statements. *CURRENTLY BROKEN*
-
-.. option:: -C, --compress
-
-   Use client/server compression protocol.
-
-.. option:: -F, --flush-logs
-
-   Flush the server logs before commencing with the dump. *CURRENTLY_BROKEN*
-
 .. option:: -f, --force
 
-   Continue even if we get an sql-error. *CURRENTLY_BROKEN*
+   Continue even if we get an sql-error.
 
 .. option:: -?, --help
 
@@ -73,13 +61,12 @@ The :program:`drizzledump` tool has several available options:
       RENAME TABLE
       TRUNCATE TABLE
 
-   Only works with InnoDB.  Automatically disables :option:`--lock-tables`.
+   Only works with InnoDB.
 
-.. option:: --disable-opt
+.. option:: --skip-opt
 
-   A shortcut for :option:`--skip-drop-table`, :option:`--skip-locks`,
-   :option:`--skip-create`, :option:`--slow`, :option:`--skip-extended-insert`
-   and :option:`--skip-disable-keys`
+   A shortcut for :option:`--skip-drop-table`, :option:`--skip-create`, 
+   :option:`--skip-extended-insert` and :option:`--skip-disable-keys`
 
 .. option:: --tables t1 t2 ...
 
@@ -120,13 +107,23 @@ The :program:`drizzledump` tool has several available options:
 .. option:: --compact
 
    Gives a more compact output by disabling header/footer comments and enabling
-   :option:`--skip-add-drop-table`, :option:`--no-set-names`,
-   :option:`--skip-disable-keys` and :option:`--skip-add-locks`.
+   :option:`--skip-add-drop-table`, :option:`--skip-disable-keys` 
+   and :option:`--skip-add-locks`.
 
 .. option:: -B, --databases
 
    Dump several databases.  The databases do not need to follow on after this
    option, they can be anywhere in the command line.
+
+.. option:: -K, --skip-disable-keys
+
+   Do not dump the statements `ALTER TABLE ... DISABLE KEYS` and
+   `ALTER TABLE ... ENABLE KEYS`
+
+.. option:: --ignore-table table
+
+   Do not dump specified table, needs to be in the format `database.table`.
+   Can be specified multiple times for multiple tables.
 
 .. option:: --insert-ignore
 
@@ -139,16 +136,16 @@ The :program:`drizzledump` tool has several available options:
 
 .. option:: -n, --no-create-db
 
-   Do not output the `CREATE DATABASE` statements when using
+   Do not dump the `CREATE DATABASE` statements when using
    :option:`--all-databases` or :option:`--databases`.
+
+.. option:: -t, --skip-create
+   
+   Do not dump the `CREATE TABLE` statements.
 
 .. option:: -d, --no-data
 
    Do not dump the data itself, used to dump the schemas only.
-
-.. option:: --slow
-
-   Dump directly from database to destination rather than using a query buffer.
 
 .. option:: --replace
 

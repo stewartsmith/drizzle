@@ -30,6 +30,8 @@
 #include <drizzled/item/outer_ref.h>
 #include <drizzled/plugin/client.h>
 
+#include <boost/dynamic_bitset.hpp>
+
 namespace drizzled
 {
 
@@ -697,7 +699,7 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
     {
       Item_ref *rf;
       rf= new Item_ref(context,
-                       (cached_table->db[0] ? cached_table->db : 0),
+                       (cached_table->getSchemaName()[0] ? cached_table->getSchemaName() : 0),
                        (char*) cached_table->alias, (char*) field_name);
       if (!rf)
         return -1;
@@ -889,7 +891,7 @@ bool Item_field::fix_fields(Session *session, Item **reference)
   else if (session->mark_used_columns != MARK_COLUMNS_NONE)
   {
     Table *table= field->getTable();
-    MyBitmap *current_bitmap, *other_bitmap;
+    boost::dynamic_bitset<> *current_bitmap, *other_bitmap;
     if (session->mark_used_columns == MARK_COLUMNS_READ)
     {
       current_bitmap= table->read_set;
@@ -900,9 +902,10 @@ bool Item_field::fix_fields(Session *session, Item **reference)
       current_bitmap= table->write_set;
       other_bitmap=   table->read_set;
     }
-    if (! current_bitmap->testAndSet(field->field_index))
+    //if (! current_bitmap->testAndSet(field->field_index))
+    if (! current_bitmap->test(field->field_index))
     {
-      if (! other_bitmap->isBitSet(field->field_index))
+      if (! other_bitmap->test(field->field_index))
       {
         /* First usage of column */
         table->used_fields++;                     // Used to optimize loops

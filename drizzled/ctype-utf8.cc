@@ -12,8 +12,8 @@
 
    You should have received a copy of the GNU Library General Public
    License along with this library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
-   MA 02111-1307, USA */
+   Software Foundation, Inc., 51 Franklin Place - Suite 330, Boston,
+   MA 02110-1301, USA */
 
 /* UTF8 according RFC 2279 */
 /* Written by Alexander Barkov <bar@udm.net> */
@@ -2111,7 +2111,7 @@ my_wc_mb_utf8mb4(const CHARSET_INFO * const,
   else return MY_CS_ILUNI;
 
   if (r + count > e)
-    return MY_CS_TOOSMALLN(count);
+    return my_cs_toosmalln(count);
 
   switch (count) {
     /* Fall through all cases!!! */

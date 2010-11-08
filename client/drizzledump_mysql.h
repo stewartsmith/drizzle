@@ -48,7 +48,7 @@ class DrizzleDumpFieldMySQL : public DrizzleDumpField
 
     ~DrizzleDumpFieldMySQL() { }
 
-    void dateTimeConvert(const char* oldDefault);
+    void dateTimeConvert(void);
     void setCollate(const char* newCollate);
     void setType(const char* raw_type, const char* collation);
 };
@@ -68,6 +68,7 @@ class DrizzleDumpTableMySQL : public DrizzleDumpTable
 
     bool populateFields();
     bool populateIndexes();
+    bool populateFkeys();
     void setEngine(const char* newEngine);
     void setCollate(const char* newCollate);
     DrizzleDumpData* getData(void);
@@ -100,7 +101,7 @@ class DrizzleDumpDataMySQL : public DrizzleDumpData
     std::string convertDate(const char* oldDate) const;
     /* For xx:xx:xx -> INT conversion */
     long convertTime(const char* oldTime) const;
-    std::ostream& checkDateTime(std::ostream &os, const char* item, uint32_t field) const;
+    std::string checkDateTime(const char* item, uint32_t field) const;
 };
 
 #endif /* CLIENT_DRIZZLEDUMP_MYSQL_H */

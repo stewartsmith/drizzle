@@ -27,7 +27,7 @@ namespace drizzled
 String *Item_func_collation::val_str(String *str)
 {
   assert(fixed == 1);
-  uint32_t dummy_errors;
+  size_t dummy_errors;
   const CHARSET_INFO * const cs= args[0]->collation.collation;
 
   null_value= 0;

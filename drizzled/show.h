@@ -43,20 +43,13 @@ class Join;
 class Session;
 struct st_ha_create_information;
 typedef st_ha_create_information HA_CREATE_INFO;
-struct TableList;
+class TableList;
 
 class Table;
 typedef class Item COND;
 
-int store_create_info(TableList *table_list, String *packet, bool is_if_not_exists);
-
 int wild_case_compare(const CHARSET_INFO * const cs, 
                       const char *str,const char *wildstr);
-
-bool drizzled_show_create(Session *session, TableList *table_list, bool is_if_not_exists);
-bool mysqld_show_create_db(Session &session, SchemaIdentifier &, bool if_not_exists);
-
-bool mysqld_show_column_types(Session *session);
 
 int get_quote_char_for_identifier();
 

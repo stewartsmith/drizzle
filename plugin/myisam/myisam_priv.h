@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /* This file is included by all internal myisam files */
 
@@ -212,7 +212,7 @@ public:
   ulong this_process;			/* processid */
   ulong last_process;			/* For table-change-check */
   ulong last_version;			/* Version on start */
-  ulong options;			/* Options used */
+  uint64_t options;			/* Options used */
   ulong min_pack_length;		/* Theese are used by packed data */
   ulong max_pack_length;
   ulong state_diff_length;

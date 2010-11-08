@@ -2,6 +2,11 @@
 # Tests for properly escaping embedded quotes when reading from the transaction log
 #
 
+# Ignore startup/shutdown events
+--disable_query_log
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
+--enable_query_log
+
 CREATE TABLE t (a INT NOT NULL PRIMARY KEY, b VARCHAR(10));
 
 INSERT INTO t VALUES (1, "don't");

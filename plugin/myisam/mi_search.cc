@@ -11,7 +11,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /* key handling functions */
 
@@ -1680,7 +1680,7 @@ _mi_calc_bin_pack_key_length(MI_KEYDEF *keyinfo,uint32_t nod_flag,unsigned char 
   uint32_t length,key_length,ref_length;
 
   s_temp->totlength=key_length=_mi_keylength(keyinfo,key)+nod_flag;
-#ifdef HAVE_purify
+#ifdef HAVE_VALGRIND
   s_temp->n_length= s_temp->n_ref_length=0;	/* For valgrind */
 #endif
   s_temp->key=key;

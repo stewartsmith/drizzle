@@ -11,7 +11,7 @@
 
   You should have received a copy of the GNU General Public License
   along with this program; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include "config.h"
 #include <drizzled/table.h>
@@ -68,7 +68,7 @@ public:
     pthread_mutex_destroy(&blackhole_mutex);
   }
 
-  virtual Cursor *create(TableShare &table)
+  virtual Cursor *create(Table &table)
   {
     return new ha_blackhole(*this, table);
   }
@@ -191,7 +191,7 @@ void BlackholeEngine::deleteOpenTable(const string &table_name)
 *****************************************************************************/
 
 ha_blackhole::ha_blackhole(drizzled::plugin::StorageEngine &engine_arg,
-                           TableShare &table_arg)
+                           Table &table_arg)
   :Cursor(engine_arg, table_arg), share(NULL)
 { }
 
@@ -318,7 +318,7 @@ const char *ha_blackhole::index_type(uint32_t)
 
 int ha_blackhole::doInsertRecord(unsigned char *)
 {
-  return(table->next_number_field ? update_auto_increment() : 0);
+  return(getTable()->next_number_field ? update_auto_increment() : 0);
 }
 
 int ha_blackhole::doStartTableScan(bool)
@@ -404,7 +404,7 @@ BlackholeShare *ha_blackhole::get_share(const char *table_name)
 {
   pthread_mutex_lock(&blackhole_mutex);
 
-  BlackholeEngine *a_engine= static_cast<BlackholeEngine *>(engine);
+  BlackholeEngine *a_engine= static_cast<BlackholeEngine *>(getEngine());
   share= a_engine->findOpenTable(table_name);
 
   if (share == NULL)
@@ -429,7 +429,7 @@ void ha_blackhole::free_share()
   pthread_mutex_lock(&blackhole_mutex);
   if (!--share->use_count)
   {
-    BlackholeEngine *a_engine= static_cast<BlackholeEngine *>(engine);
+    BlackholeEngine *a_engine= static_cast<BlackholeEngine *>(getEngine());
     a_engine->deleteOpenTable(share->table_name);
     delete share;
   }

@@ -25,9 +25,9 @@
  * This plugin is an example events plugin that just prints some info for
  * the events that it is tracking. 
  *  
-set global hello_events_enable = ON;
-set global hello_events_watch_databases = "x";   
-set global hello_events_watch_tables = "x,y";
+set global hello_events1_enable = ON;
+set global hello_events1_watch_databases = "x";   
+set global hello_events1_watch_tables = "x,y";
 
  */
 
@@ -74,72 +74,132 @@ static int32_t sysvar_post_drop_db_position= -1;  // I want my event observer to
 static bool observeBeforeInsertRecord(BeforeInsertRecordEventData &data)
 {
 
-  fprintf(stderr, PLUGIN_NAME" EVENT observeBeforeInsertRecord(%s)\n", data.table.getTableName());
+  static int count= 0;
+  count++;
+  data.session.setVariable("BEFORE_INSERT_RECORD", boost::lexical_cast<std::string>(count));
   return false;
 }
 
 //---
 static void observeAfterInsertRecord(AfterInsertRecordEventData &data)
 {
-  fprintf(stderr, PLUGIN_NAME" EVENT observeAfterInsertRecord(%s) err = %d\n", data.table.getTableName(), data.err);
+  static int count= 0;
+  count++;
+  data.session.setVariable("AFTER_INSERT_RECORD", boost::lexical_cast<std::string>(count));
 }
 
 //---
 static bool observeBeforeDeleteRecord(BeforeDeleteRecordEventData &data)
 {
-  fprintf(stderr, PLUGIN_NAME" EVENT observeBeforeDeleteRecord(%s)\n", data.table.getTableName());
+  static int count= 0;
+  count++;
+  data.session.setVariable("AFTER_DELETE_RECORD", boost::lexical_cast<std::string>(count));
   return false;
 }
 
 //---
 static void observeAfterDeleteRecord(AfterDeleteRecordEventData &data)
 {
-  fprintf(stderr, PLUGIN_NAME" EVENT observeAfterDeleteRecord(%s) err = %d\n", data.table.getTableName(), data.err);
+  static int count= 0;
+  count++;
+  data.session.setVariable("AFTER_DELETE_RECORD", boost::lexical_cast<std::string>(count));
 }
 
 //---
 static bool observeBeforeUpdateRecord(BeforeUpdateRecordEventData &data)
 {
-  fprintf(stderr, PLUGIN_NAME" EVENT observeBeforeUpdateRecord(%s)\n", data.table.getTableName());
+  static int count= 0;
+  count++;
+  data.session.setVariable("BEFORE_UPDATE_RECORD", boost::lexical_cast<std::string>(count));
   return false;
 }
 
 //---
 static void observeAfterUpdateRecord(AfterUpdateRecordEventData &data)
 {
-  fprintf(stderr, PLUGIN_NAME" EVENT observeAfterUpdateRecord(%s) err = %d\n", data.table.getTableName(), data.err);
+  static int count= 0;
+  count++;
+  data.session.setVariable("AFTER_UPDATE_RECORD", boost::lexical_cast<std::string>(count));
 }
 
 //==================================
 // My schema event observers: 
 static void observeAfterDropTable(AfterDropTableEventData &data)
 {
-  fprintf(stderr, PLUGIN_NAME" EVENT observeAfterDropTable(%s) err = %d\n", data.table.getTableName().c_str(), data.err);
+  static int count= 0;
+  count++;
+  data.session.setVariable("AFTER_DROP_TABLE", boost::lexical_cast<std::string>(count));
 }
 
 //---
 static void observeAfterRenameTable(AfterRenameTableEventData &data)
 {
-  fprintf(stderr, PLUGIN_NAME" EVENT observeAfterRenameTable(%s, %s) err = %d\n", data.from.getTableName().c_str(), data.to.getTableName().c_str(), data.err);
+  static int count= 0;
+  count++;
+  data.session.setVariable("AFTER_RENAME_TABLE", boost::lexical_cast<std::string>(count));
 }
 
 //---
 static void observeAfterCreateDatabase(AfterCreateDatabaseEventData &data)
 {
-  fprintf(stderr, PLUGIN_NAME" EVENT observeAfterCreateDatabase(%s) err = %d\n", data.db.c_str(), data.err);
+  static int count= 0;
+  count++;
+  data.session.setVariable("AFTER_CREATE_DATABASE", boost::lexical_cast<std::string>(count));
 }
 
 //---
 static void observeAfterDropDatabase(AfterDropDatabaseEventData &data)
 {
-  fprintf(stderr, PLUGIN_NAME" EVENT observeAfterDropDatabase(%s) err = %d\n", data.db.c_str(), data.err);
+  static int count= 0;
+  count++;
+  data.session.setVariable("AFTER_DROP_DATABASE", boost::lexical_cast<std::string>(count));
+}
+
+//---
+static void observeConnectSession(ConnectSessionEventData &data)
+{
+  static int count= 0;
+  count++;
+  data.session.setVariable("CONNECT_SESSION", boost::lexical_cast<std::string>(count));
+}
+
+//---
+static void observeDisconnectSession(DisconnectSessionEventData &data)
+{
+  static int count= 0;
+  count++;
+  data.session.setVariable("DISCONNECT_SESSION", boost::lexical_cast<std::string>(count));
+}
+
+//---
+static void observeBeforeStatement(BeforeStatementEventData &data)
+{
+  static int count= 0;
+  count++;
+  data.session.setVariable("BEFORE_STATEMENT", boost::lexical_cast<std::string>(count));
+}
+
+//---
+static void observeAfterStatement(AfterStatementEventData &data)
+{
+  static int count= 0;
+  count++;
+  data.session.setVariable("AFTER_STATEMENT", boost::lexical_cast<std::string>(count));
 }
 
 HelloEvents::~HelloEvents()
 {
   /* These are strdup'd in option processing */
-  free(sysvar_table_list);
-  free(sysvar_db_list);
+  if (sysvar_table_list) {
+	free(sysvar_table_list);
+	sysvar_table_list = NULL;
+  }
+  
+  if (sysvar_db_list) {
+	free(sysvar_db_list);
+	sysvar_db_list = NULL;
+  }
+  
 }
 
 //==================================
@@ -181,6 +241,10 @@ void HelloEvents::registerSessionEventsDo(Session &session, EventObserverList &o
     
   registerEvent(observers, AFTER_CREATE_DATABASE);
   registerEvent(observers, AFTER_DROP_DATABASE, sysvar_post_drop_db_position);
+  registerEvent(observers, DISCONNECT_SESSION);
+  registerEvent(observers, CONNECT_SESSION);
+  registerEvent(observers, BEFORE_STATEMENT);
+  registerEvent(observers, AFTER_STATEMENT);
 }
 
 
@@ -229,6 +293,22 @@ bool HelloEvents::observeEventDo(EventData &data)
 
   case AFTER_DROP_DATABASE:
     observeAfterDropDatabase((AfterDropDatabaseEventData &)data);
+    break;
+
+  case CONNECT_SESSION:
+    observeConnectSession((ConnectSessionEventData &)data);
+    break;
+
+  case DISCONNECT_SESSION:
+    observeDisconnectSession((DisconnectSessionEventData &)data);
+    break;
+
+  case BEFORE_STATEMENT:
+    observeBeforeStatement((BeforeStatementEventData &)data);
+    break;
+
+  case AFTER_STATEMENT:
+    observeAfterStatement((AfterStatementEventData &)data);
     break;
 
   default:
@@ -328,7 +408,7 @@ static int init(module::Context &context)
 
   else
   {
-    sysvar_db_list= (char *)"";
+    sysvar_db_list= strdup("");
   }
 
   if (vm.count("watch-tables"))
@@ -338,7 +418,7 @@ static int init(module::Context &context)
 
   else
   {
-    sysvar_table_list= (char *)"";
+    sysvar_table_list= strdup("");
   }
   hello_events= new HelloEvents(PLUGIN_NAME);
 
@@ -420,24 +500,12 @@ static DRIZZLE_SYSVAR_INT(before_update_position,
                            INT32_MAX -1, /* max */
                            0 /* blk */);
 
-static DRIZZLE_SYSVAR_INT(post_drop_db_position,
-                           sysvar_post_drop_db_position,
-                           PLUGIN_VAR_NOCMDARG,
-                           N_("After drop database event observer call position"),
-                           NULL, /* check func */
-                           NULL, /* update func */
-                           -1, /* default */
-                           INT32_MIN +1, /* min */
-                           -1, /* max */
-                           0 /* blk */);
-
 static drizzle_sys_var* system_var[]= {
   DRIZZLE_SYSVAR(watch_databases),
   DRIZZLE_SYSVAR(watch_tables),
   DRIZZLE_SYSVAR(enable),
   DRIZZLE_SYSVAR(before_write_position),
   DRIZZLE_SYSVAR(before_update_position),
-  DRIZZLE_SYSVAR(post_drop_db_position),
   NULL
 };
 

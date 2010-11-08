@@ -11,8 +11,8 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+St, Fifth Floor, Boston, MA 02110-1301 USA
 
 *****************************************************************************/
 
@@ -245,4 +245,35 @@ thr_local_init(void)
 	thr_local_hash = hash_create(OS_THREAD_MAX_N + 100);
 
 	mutex_create(&thr_local_mutex, SYNC_THR_LOCAL);
+}
+
+/********************************************************************
+Close the thread local storage module. */
+UNIV_INTERN
+void
+thr_local_close(void)
+/*=================*/
+{
+	ulint		i;
+
+	ut_a(thr_local_hash != NULL);
+
+	/* Free the hash elements. We don't remove them from the table
+	because we are going to destroy the table anyway. */
+	for (i = 0; i < hash_get_n_cells(thr_local_hash); i++) {
+		thr_local_t*	local;
+
+		local = HASH_GET_FIRST(thr_local_hash, i);
+
+		while (local) {
+			thr_local_t*	prev_local = local;
+
+			local = HASH_GET_NEXT(hash, prev_local);
+			ut_a(prev_local->magic_n == THR_LOCAL_MAGIC_N);
+			mem_free(prev_local);
+		}
+	}
+
+	hash_table_free(thr_local_hash);
+	thr_local_hash = NULL;
 }

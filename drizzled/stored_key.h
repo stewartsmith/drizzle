@@ -62,7 +62,6 @@ public:
                                     null,
                                     1,
                                     field_arg->field_name,
-                                    field_arg->getTable()->getMutableShare(),
                                     field_arg->charset());
       to_field->init(field_arg->getTable());
     }

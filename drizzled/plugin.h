@@ -20,6 +20,9 @@
 #ifndef DRIZZLED_PLUGIN_H
 #define DRIZZLED_PLUGIN_H
 
+#include <boost/program_options.hpp>
+#include <boost/filesystem.hpp>
+
 #include "drizzled/module/manifest.h"
 #include "drizzled/module/module.h"
 #include "drizzled/plugin/version.h"
@@ -27,8 +30,8 @@
 #include "drizzled/definitions.h"
 
 #include "drizzled/lex_string.h"
+#include "drizzled/sys_var.h"
 #include "drizzled/xid.h"
-#include <boost/program_options.hpp>
 
 namespace drizzled
 {
@@ -46,7 +49,7 @@ class sys_var;
 typedef drizzle_lex_string LEX_STRING;
 struct option;
 
-extern char opt_plugin_dir[FN_REFLEN];
+extern boost::filesystem::path plugin_dir;
 
 namespace plugin { class StorageEngine; }
 
@@ -77,34 +80,6 @@ namespace plugin { class StorageEngine; }
   } 
 
 
-/*
-  declarations for SHOW STATUS support in plugins
-*/
-enum enum_mysql_show_type
-{
-  SHOW_UNDEF, SHOW_BOOL, SHOW_INT, SHOW_LONG,
-  SHOW_LONGLONG, SHOW_CHAR, SHOW_CHAR_PTR,
-  SHOW_FUNC,
-  SHOW_LONG_STATUS, SHOW_DOUBLE_STATUS,
-  SHOW_MY_BOOL, SHOW_HA_ROWS, SHOW_SYS, SHOW_INT_NOFLUSH,
-  SHOW_LONGLONG_STATUS, SHOW_DOUBLE, SHOW_SIZE
-};
-
-struct drizzle_show_var {
-  const char *name;
-  char *value;
-  enum enum_mysql_show_type type;
-};
-
-typedef enum enum_mysql_show_type SHOW_TYPE;
-
-
-#define SHOW_VAR_FUNC_BUFF_SIZE 1024
-typedef int (*mysql_show_var_func)(drizzle_show_var *, char *);
-
-struct st_show_var_func_container {
-  mysql_show_var_func func;
-};
 /*
   declarations for server variables and command line options
 */
@@ -197,6 +172,12 @@ typedef void (*mysql_var_update_func)(Session *session,
 */
 
 
+#define DECLARE_DRIZZLE_SYSVAR_BOOL(name) struct { \
+  DRIZZLE_PLUGIN_VAR_HEADER;      \
+  bool *value;                  \
+  bool def_val;           \
+} DRIZZLE_SYSVAR_NAME(name)
+
 #define DECLARE_DRIZZLE_SYSVAR_BASIC(name, type) struct { \
   DRIZZLE_PLUGIN_VAR_HEADER;      \
   type *value;                  \
@@ -220,6 +201,13 @@ typedef void (*mysql_var_update_func)(Session *session,
   DECLARE_SessionVAR_FUNC(type);    \
 } DRIZZLE_SYSVAR_NAME(name)
 
+#define DECLARE_DRIZZLE_SessionVAR_BOOL(name) struct { \
+  DRIZZLE_PLUGIN_VAR_HEADER;      \
+  int offset;                   \
+  bool def_val;           \
+  DECLARE_SessionVAR_FUNC(bool);    \
+} DRIZZLE_SYSVAR_NAME(name)
+
 #define DECLARE_DRIZZLE_SessionVAR_SIMPLE(name, type) struct { \
   DRIZZLE_PLUGIN_VAR_HEADER;      \
   int offset;                   \
@@ -241,10 +229,23 @@ typedef void (*mysql_var_update_func)(Session *session,
   the following declarations are for use by plugin implementors
 */
 
+#define DECLARE_DRIZZLE_SYSVAR_BOOL(name) struct { \
+  DRIZZLE_PLUGIN_VAR_HEADER;      \
+  bool *value;                  \
+  bool def_val;           \
+} DRIZZLE_SYSVAR_NAME(name)
+
+
 #define DRIZZLE_SYSVAR_BOOL(name, varname, opt, comment, check, update, def) \
-DECLARE_DRIZZLE_SYSVAR_BASIC(name, bool) = { \
+  DECLARE_DRIZZLE_SYSVAR_BOOL(name) = { \
   PLUGIN_VAR_BOOL | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, &varname, def}
+
+#define DECLARE_DRIZZLE_SYSVAR_BASIC(name, type) struct { \
+  DRIZZLE_PLUGIN_VAR_HEADER;      \
+  type *value;                  \
+  const type def_val;           \
+} DRIZZLE_SYSVAR_NAME(name)
 
 #define DRIZZLE_SYSVAR_STR(name, varname, opt, comment, check, update, def) \
 DECLARE_DRIZZLE_SYSVAR_BASIC(name, char *) = { \
@@ -282,7 +283,7 @@ DECLARE_DRIZZLE_SYSVAR_SIMPLE(name, uint64_t) = { \
   #name, comment, check, update, &varname, def, min, max, blk }
 
 #define DRIZZLE_SessionVAR_BOOL(name, opt, comment, check, update, def) \
-DECLARE_DRIZZLE_SessionVAR_BASIC(name, char) = { \
+DECLARE_DRIZZLE_SessionVAR_BOOL(name) = { \
   PLUGIN_VAR_BOOL | PLUGIN_VAR_SessionLOCAL | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, -1, def, NULL}
 
@@ -403,37 +404,6 @@ void notify_plugin_load(std::string in_plugin_load);
   @retval >= 0  a file handle that can be passed to dup or internal::my_close
 */
 int mysql_tmpfile(const char *prefix);
-
-/**
-  Check the killed state of a connection
-
-  @details
-  In MySQL support for the KILL statement is cooperative. The KILL
-  statement only sets a "killed" flag. This function returns the value
-  of that flag.  A thread should check it often, especially inside
-  time-consuming loops, and gracefully abort the operation if it is
-  non-zero.
-
-  @param session  user thread connection handle
-  @retval 0  the connection is active
-  @retval 1  the connection has been killed
-*/
-int session_killed(const Session *session);
-
-
-const charset_info_st *session_charset(Session *session);
-
-/**
-  Invalidate the query cache for a given table.
-
-  @param session         user thread connection handle
-  @param key         databasename\\0tablename\\0
-  @param key_length  length of key in bytes, including the NUL bytes
-  @param using_trx   flag: TRUE if using transactions, FALSE otherwise
-*/
-void mysql_query_cache_invalidate4(Session *session,
-                                   const char *key, unsigned int key_length,
-                                   int using_trx);
 
 } /* namespace drizzled */
 

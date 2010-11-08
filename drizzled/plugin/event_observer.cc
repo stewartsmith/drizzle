@@ -28,7 +28,7 @@
 
 #include "drizzled/session.h"
 #include "drizzled/table_list.h"
-#include "drizzled/table_share.h"
+#include "drizzled/definition/table.h"
 #include "drizzled/module/registry.h"
 #include "drizzled/plugin/event_observer.h"
 #include <drizzled/util/functors.h>
@@ -46,7 +46,12 @@ namespace plugin
 
 /*============================*/
   // Basic plugin registration stuff.
-  static vector<EventObserver *> all_event_plugins;
+  EventObserverVector all_event_plugins;
+
+  const EventObserverVector &EventObserver::getEventObservers(void)
+  {
+    return all_event_plugins;
+  }
 
   //---------
   bool EventObserver::addPlugin(EventObserver *handler)
@@ -86,18 +91,16 @@ namespace plugin
 
     EventObserverList()
     {
-      uint32_t i;
-
-      event_observer_lists.reserve(EventObserver::MAX_EVENT_COUNT);
-      for (i=0; i < EventObserver::MAX_EVENT_COUNT; i++)
-      {
-        event_observer_lists[i]= NULL;
-      }
+			// Initialize the list with NULL pointers.
+			event_observer_lists.assign(EventObserver::MAX_EVENT_COUNT, NULL);
     }
 
     ~EventObserverList()
     {
-      clearAllObservers();
+      for_each(event_observer_lists.begin(),
+               event_observer_lists.end(),
+               SafeDeletePtr());
+			event_observer_lists.clear();
     }
 
     /* Add the observer to the observer list for the even, positioning it if required.
@@ -137,15 +140,6 @@ namespace plugin
       }
 
       observers->insert(pair<uint32_t, EventObserver *>(event_pos, eventObserver) );
-    }
-
-    /* Remove all observer from all lists. */
-    void clearAllObservers()
-    {
-      for_each(event_observer_lists.begin(),
-               event_observer_lists.end(),
-               DeletePtr());
-      event_observer_lists.clear();
     }
 
 
@@ -202,19 +196,17 @@ namespace plugin
 
     observers= table_share.getTableObservers();
 
-    if (observers == NULL) 
-    {
-      observers= new EventObserverList();
-      table_share.setTableObservers(observers);
-    } 
-    else 
-    {
-      /* Calling registerTableEvents() for a table that already has
-       * events registered on it is probably a programming error.
-     */
-      observers->clearAllObservers();
+    if (observers != NULL) 
+		{
+			errmsg_printf(ERRMSG_LVL_WARN,
+									_("EventObserver::registerTableEvents(): Table already has events registered on it: probable programming error."));
+			table_share.setTableObservers(NULL);
+      delete observers;
     }
 
+		observers= new EventObserverList();
+		table_share.setTableObservers(observers);
+ 
 
     for_each(all_event_plugins.begin(), all_event_plugins.end(),
              RegisterTableEventsIterate(table_share, *observers));
@@ -225,7 +217,7 @@ namespace plugin
   /* Cleanup before freeing the TableShare object. */
   void EventObserver::deregisterTableEvents(TableShare &table_share)
   {
-    if (all_event_plugins.empty())
+   if (all_event_plugins.empty())
       return;
 
     EventObserverList *observers;
@@ -235,7 +227,6 @@ namespace plugin
     if (observers) 
     {
       table_share.setTableObservers(NULL);
-      observers->clearAllObservers();
       delete observers;
     }
   }
@@ -282,7 +273,7 @@ namespace plugin
     {
       observers= new EventObserverList();
       session.setSchemaObservers(db, observers);
-    }
+   }
 
     for_each(all_event_plugins.begin(), all_event_plugins.end(),
              RegisterSchemaEventsIterate(db, *observers));
@@ -303,7 +294,6 @@ namespace plugin
     if (observers) 
     {
       session.setSchemaObservers(db, NULL);
-      observers->clearAllObservers();
       delete observers;
     }
   }
@@ -342,14 +332,15 @@ namespace plugin
     EventObserverList *observers;
 
     observers= session.getSessionObservers();
+		if (observers) { // This should not happed
+			errmsg_printf(ERRMSG_LVL_WARN,
+									_("EventObserver::registerSessionEvents(): Session already has events registered on it: probable programming error."));
+			session.setSessionObservers(NULL);
+			delete observers;
+		}
 
-    if (observers == NULL) 
-    {
-      observers= new EventObserverList();
-      session.setSessionObservers(observers);
-    }
-
-    observers->clearAllObservers();
+	observers= new EventObserverList();
+	session.setSessionObservers(observers);
 
     for_each(all_event_plugins.begin(), all_event_plugins.end(),
              RegisterSessionEventsIterate(session, *observers));
@@ -370,7 +361,6 @@ namespace plugin
     if (observers) 
     {
       session.setSessionObservers(NULL);
-      observers->clearAllObservers();
       delete observers;
     }
   }
@@ -415,6 +405,9 @@ namespace plugin
   {
     EventObserverList::ObserverMap *eventObservers;
 
+    if (observerList == NULL)
+      return false; // Nobody was interested in the event. :(
+
     eventObservers = observerList->getObservers(event);
 
     if (eventObservers == NULL)
@@ -455,14 +448,14 @@ namespace plugin
   //--------
   bool TableEventData::callEventObservers()
   {
-    observerList= table.s->getTableObservers();
+    observerList= table.getMutableShare()->getTableObservers();
 
     return EventData::callEventObservers();
   }
 
   /*==========================================================*/
   /* Static meathods called by drizzle to notify interested plugins 
-   * of a schema event,
+   * of a schema event.
  */
   bool EventObserver::beforeDropTable(Session &session, const drizzled::TableIdentifier &table)
   {
@@ -502,11 +495,13 @@ namespace plugin
 
   /*==========================================================*/
   /* Static meathods called by drizzle to notify interested plugins 
-   * of a table event,
+   * of a table event.
+   *
+   * A quick test is done first to see if there are any interested observers.
  */
   bool EventObserver::beforeInsertRecord(Table &table, unsigned char *buf)
   {
-    if (all_event_plugins.empty())
+    if (all_event_plugins.empty() || !TableEventData::hasEvents(table))
       return false;
 
     BeforeInsertRecordEventData eventData(*(table.in_use), table, buf);
@@ -515,7 +510,7 @@ namespace plugin
 
   bool EventObserver::afterInsertRecord(Table &table, const unsigned char *buf, int err)
   {
-    if (all_event_plugins.empty())
+    if (all_event_plugins.empty() || !TableEventData::hasEvents(table))
       return false;
 
     AfterInsertRecordEventData eventData(*(table.in_use), table, buf, err);
@@ -524,7 +519,7 @@ namespace plugin
 
   bool EventObserver::beforeDeleteRecord(Table &table, const unsigned char *buf)
   {
-    if (all_event_plugins.empty())
+    if (all_event_plugins.empty() || !TableEventData::hasEvents(table))
       return false;
 
     BeforeDeleteRecordEventData eventData(*(table.in_use), table, buf);
@@ -533,7 +528,7 @@ namespace plugin
 
   bool EventObserver::afterDeleteRecord(Table &table, const unsigned char *buf, int err)
   {
-    if (all_event_plugins.empty())
+    if (all_event_plugins.empty() || !TableEventData::hasEvents(table))
       return false;
 
     AfterDeleteRecordEventData eventData(*(table.in_use), table, buf, err);
@@ -542,7 +537,7 @@ namespace plugin
 
   bool EventObserver::beforeUpdateRecord(Table &table, const unsigned char *old_data, unsigned char *new_data)
   {
-    if (all_event_plugins.empty())
+    if (all_event_plugins.empty() || !TableEventData::hasEvents(table))
       return false;
 
     BeforeUpdateRecordEventData eventData(*(table.in_use), table, old_data, new_data);
@@ -551,7 +546,7 @@ namespace plugin
 
   bool EventObserver::afterUpdateRecord(Table &table, const unsigned char *old_data, unsigned char *new_data, int err)
   {
-    if (all_event_plugins.empty())
+    if (all_event_plugins.empty() || !TableEventData::hasEvents(table))
       return false;
 
     AfterUpdateRecordEventData eventData(*(table.in_use), table, old_data, new_data, err);
@@ -560,11 +555,13 @@ namespace plugin
 
   /*==========================================================*/
   /* Static meathods called by drizzle to notify interested plugins 
-   * of a session event,
- */
+   * of a session event.
+   *
+   * A quick test is done first to see if there are any interested observers.
+*/
   bool EventObserver::beforeCreateDatabase(Session &session, const std::string &db)
   {
-    if (all_event_plugins.empty())
+    if (all_event_plugins.empty() || !SessionEventData::hasEvents(session))
       return false;
 
     BeforeCreateDatabaseEventData eventData(session, db);
@@ -573,7 +570,7 @@ namespace plugin
 
   bool EventObserver::afterCreateDatabase(Session &session, const std::string &db, int err)
   {
-    if (all_event_plugins.empty())
+    if (all_event_plugins.empty() || !SessionEventData::hasEvents(session))
       return false;
 
     AfterCreateDatabaseEventData eventData(session, db, err);
@@ -582,7 +579,7 @@ namespace plugin
 
   bool EventObserver::beforeDropDatabase(Session &session, const std::string &db)
   {
-    if (all_event_plugins.empty())
+    if (all_event_plugins.empty() || !SessionEventData::hasEvents(session))
       return false;
 
     BeforeDropDatabaseEventData eventData(session, db);
@@ -591,10 +588,46 @@ namespace plugin
 
   bool EventObserver::afterDropDatabase(Session &session, const std::string &db, int err)
   {
-    if (all_event_plugins.empty())
+    if (all_event_plugins.empty() || !SessionEventData::hasEvents(session))
       return false;
 
     AfterDropDatabaseEventData eventData(session, db, err);
+    return eventData.callEventObservers();
+  }
+
+  bool EventObserver::connectSession(Session &session)
+  {
+    if (all_event_plugins.empty() || !SessionEventData::hasEvents(session))
+      return false;
+
+    ConnectSessionEventData eventData(session);
+    return eventData.callEventObservers();
+  }
+
+  bool EventObserver::disconnectSession(Session &session)
+  {
+    if (all_event_plugins.empty() || !SessionEventData::hasEvents(session))
+      return false;
+
+    DisconnectSessionEventData eventData(session);
+    return eventData.callEventObservers();
+  }
+
+  bool EventObserver::beforeStatement(Session &session)
+  {
+    if (all_event_plugins.empty() || !SessionEventData::hasEvents(session))
+      return false;
+
+    BeforeStatementEventData eventData(session);
+    return eventData.callEventObservers();
+  }
+
+  bool EventObserver::afterStatement(Session &session)
+  {
+    if (all_event_plugins.empty() || !SessionEventData::hasEvents(session))
+      return false;
+
+    AfterStatementEventData eventData(session);
     return eventData.callEventObservers();
   }
 

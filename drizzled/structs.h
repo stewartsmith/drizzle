@@ -39,7 +39,9 @@ typedef struct st_io_cache IO_CACHE;
 class Table;
 class Field;
 
-struct KeyPartInfo {	/* Info about a key part */
+class KeyPartInfo 
+{	/* Info about a key part */
+public:
   Field *field;
   unsigned int	offset;				/* offset in record (from 0) */
   unsigned int	null_offset;			/* Offset to null_bit in record */
@@ -68,7 +70,9 @@ public:
 };
 
 
-struct KeyInfo {
+class KeyInfo 
+{
+public:
   unsigned int	key_length;		/* Tot length of key */
   enum  ha_key_alg algorithm;
   unsigned long flags;			/* dupp key and pack flags */
@@ -91,7 +95,9 @@ struct KeyInfo {
 
 class JoinTable;
 
-struct RegInfo {		/* Extra info about reg */
+class RegInfo 
+{
+public:		/* Extra info about reg */
   JoinTable *join_tab;	/* Used by SELECT() */
   enum thr_lock_type lock_type;		/* How database is used */
   bool not_exists_optimize;

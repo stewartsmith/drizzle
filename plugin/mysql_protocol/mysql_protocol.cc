@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #include "config.h"
@@ -103,7 +103,7 @@ ClientMySQLProtocol::ClientMySQLProtocol(int fd, bool using_mysql41_protocol_arg
 ClientMySQLProtocol::~ClientMySQLProtocol()
 {
   if (net.vio)
-    vio_close(net.vio);
+    net.vio->close();
 }
 
 int ClientMySQLProtocol::getFileDescriptor(void)
@@ -206,8 +206,6 @@ bool ClientMySQLProtocol::readCommand(char **l_packet, uint32_t *packet_length)
       return false;                       // We have to close it.
 
     net.error= 0;
-    *packet_length= 0;
-    return true;
   }
 
   *l_packet= (char*) net.read_pos;
@@ -419,6 +417,8 @@ void ClientMySQLProtocol::sendError(uint32_t sql_errno, const char *err)
   err= (char*) buff;
 
   drizzleclient_net_write_command(&net,(unsigned char) 255, (unsigned char*) "", 0, (unsigned char*) err, length);
+
+  drizzleclient_net_flush(&net);
 
   session->main_da.can_overwrite_status= false;
 }
@@ -787,7 +787,9 @@ bool ClientMySQLProtocol::checkConnection(void)
 
   session->getSecurityContext().setUser(user);
 
-  return session->checkUser(passwd, passwd_len, l_db);
+  return session->checkUser(string(passwd, passwd_len),
+                            string(l_db ? l_db : ""));
+
 }
 
 bool ClientMySQLProtocol::netStoreData(const unsigned char *from, size_t length)
@@ -882,7 +884,7 @@ void ClientMySQLProtocol::makeScramble(char *scramble)
   uint32_t pointer_seed;
   memcpy(&pointer_seed, &pointer, 4);
   uint32_t random1= (seed + pointer_seed) % random_max;
-  uint32_t random2= (seed + session->variables.pseudo_thread_id + net.vio->sd) % random_max;
+  uint32_t random2= (seed + session->variables.pseudo_thread_id + net.vio->get_fd()) % random_max;
 
   for (char *end= scramble + SCRAMBLE_LENGTH; scramble != end; scramble++)
   {
@@ -1101,7 +1103,7 @@ bool MysqlProtocolStatus::Generator::populate()
 
     if (status_var_ptr->type == SHOW_FUNC)
     {
-      ((mysql_show_var_func)((st_show_var_func_container *)status_var_ptr->value)->func)(&tmp, buff);
+      ((drizzle_show_var_func)((st_show_var_func_container *)status_var_ptr->value)->func)(&tmp, buff);
       value= buff;
       type= tmp.type;
     }

@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Original author: Paul McCullagh (H&G2JCtL)
  * Continued development: Barry Leslie
@@ -29,9 +29,9 @@
 #ifndef __CSLOG_H__
 #define __CSLOG_H__
 
-using namespace std;
+#include <stdio.h>
+#include <stdarg.h>
 
-#include "stdio.h"
 
 #include "CSDefs.h"
 #include "CSString.h"
@@ -47,14 +47,14 @@ public:
 		iStream(s),
 		iHeaderPending(true),
 		iLogLevel(level),
-		iLockThread(0),
 		iLockCount(0)
 		 {
 		pthread_mutex_init(&iMutex, NULL);
+		memset(&iLockThread, 0, sizeof(iLockThread));
 	}
 
 	virtual ~CSLog() {
-		iLockThread = 0;
+		memset(&iLockThread, 0, sizeof(iLockThread));
 		iLockCount = 0;
 		pthread_mutex_destroy(&iMutex);
 	}
@@ -88,6 +88,9 @@ public:
 	void eol(CSThread *self, int level);
 
 	void logLine(CSThread *self, int level, const char *buffer);
+	void log_va(CSThread *self, int level, const char *func, const char *file, int line, const char *fmt, va_list ap);
+	void logf(CSThread *self, int level, const char *fmt, ...);
+	void logf(CSThread *self, int level, const char *func, const char *file, int line, const char *fmt, ...);
 	
 	void flush() {fflush(iStream);}
 private:

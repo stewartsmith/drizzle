@@ -54,7 +54,7 @@ public:
     tcmapdel(blitz_table_cache);
   }
 
-  virtual drizzled::Cursor *create(drizzled::TableShare &table) {
+  virtual drizzled::Cursor *create(drizzled::Table &table) {
     return new ha_blitz(*this, table);
   }
 
@@ -128,7 +128,7 @@ int BlitzEngine::doCreateTable(drizzled::Session &,
 
   /* Temporary fix for blocking composite keys. We need to add this
      check because version 1 doesn't handle composite indexes. */
-  for (uint32_t i = 0; i < table.s->keys; i++) {
+  for (uint32_t i = 0; i < table.getShare()->keys; i++) {
     if (table.key_info[i].key_parts > 1)
       return HA_ERR_UNSUPPORTED;
   }
@@ -142,7 +142,7 @@ int BlitzEngine::doCreateTable(drizzled::Session &,
     return ecode;
 
   /* Create b+tree index(es) for this table. */
-  for (uint32_t i = 0; i < table.s->keys; i++) {
+  for (uint32_t i = 0; i < table.getShare()->keys; i++) {
     if ((ecode = btree.create(identifier.getPath().c_str(), i)) != 0)
       return ecode;
   }
@@ -167,6 +167,42 @@ int BlitzEngine::doRenameTable(drizzled::Session &,
 
   BlitzData blitz_table;
   uint32_t nkeys;
+
+  BlitzData dict;
+  int ecode;
+  /* Write the table definition to system table. */
+  if ((ecode = dict.open_system_table(from.getPath(), HDBOWRITER)) != 0)
+    return ecode;
+
+  drizzled::message::Table proto;
+  char *proto_string;
+  int proto_string_len;
+
+  proto_string = dict.get_system_entry(BLITZ_TABLE_PROTO_KEY.c_str(),
+                                       BLITZ_TABLE_PROTO_KEY.length(),
+                                       &proto_string_len);
+
+  if (proto_string == NULL) {
+    return ENOMEM;
+  }
+
+  if (!proto.ParseFromArray(proto_string, proto_string_len)) {
+    free(proto_string);
+    return HA_ERR_CRASHED_ON_USAGE;
+  }
+
+  free(proto_string);
+
+  proto.set_name(to.getTableName());
+  proto.set_schema(to.getSchemaName());
+  proto.set_catalog(to.getCatalogName());
+
+  if (!dict.write_table_definition(proto)) {
+    dict.close_system_table();
+    return HA_ERR_CRASHED_ON_USAGE;
+  }
+
+  dict.close_system_table();
 
   /* Find out the number of indexes in this table. This information
      is required because BlitzDB creates a file for each indexes.*/
@@ -365,7 +401,7 @@ void BlitzEngine::deleteTableShare(const std::string &table_name) {
 }
 
 ha_blitz::ha_blitz(drizzled::plugin::StorageEngine &engine_arg,
-                   TableShare &table_arg) : Cursor(engine_arg, table_arg),
+                   Table &table_arg) : Cursor(engine_arg, table_arg),
                                             btree_cursor(NULL),
                                             table_scan(false),
                                             table_based(false),
@@ -421,7 +457,7 @@ int ha_blitz::open(const char *table_name, int, uint32_t) {
      will use to uniquely identify a row. The actual allocation is
      done by the kernel so all we do here is specify the size of it.*/
   if (share->primary_key_exists) {
-    ref_length = table->key_info[table->s->getPrimaryKey()].key_length;
+    ref_length = getTable()->key_info[getTable()->getShare()->getPrimaryKey()].key_length;
   } else {
     ref_length = sizeof(held_key_len) + sizeof(uint64_t);
   }
@@ -460,7 +496,7 @@ int ha_blitz::info(uint32_t flag) {
 
 int ha_blitz::doStartTableScan(bool scan) {
   /* Obtain the query type for this scan */
-  sql_command_type = session_sql_command(table->getSession());
+  sql_command_type = session_sql_command(getTable()->getSession());
   table_scan = scan;
   table_based = true;
 
@@ -488,7 +524,7 @@ int ha_blitz::rnd_next(unsigned char *drizzle_buf) {
   held_key = NULL;
 
   if (current_key == NULL) {
-    table->status = STATUS_NOT_FOUND;
+    getTable()->status = STATUS_NOT_FOUND;
     return HA_ERR_END_OF_FILE;
   }
 
@@ -519,7 +555,7 @@ int ha_blitz::rnd_next(unsigned char *drizzle_buf) {
   /* It is now memory-leak-safe to point current_key to next_key. */
   current_key = next_key;
   current_key_len = next_key_len;
-  table->status = 0;
+  getTable()->status = 0;
   return 0;
 }
 
@@ -585,7 +621,7 @@ const char *ha_blitz::index_type(uint32_t /*key_num*/) {
 
 int ha_blitz::doStartIndexScan(uint32_t key_num, bool) {
   active_index = key_num;
-  sql_command_type = session_sql_command(table->getSession());
+  sql_command_type = session_sql_command(getTable()->getSession());
 
   /* This is unlikely to happen but just for assurance, re-obtain
      the lock if this thread already has a certain lock. This makes
@@ -630,7 +666,7 @@ int ha_blitz::index_next(unsigned char *buf) {
   bt_key = btree_cursor[active_index].next_key(&bt_klen);
 
   if (bt_key == NULL) {
-    table->status = STATUS_NOT_FOUND;
+    getTable()->status = STATUS_NOT_FOUND;
     return HA_ERR_END_OF_FILE;
   }
 
@@ -639,7 +675,7 @@ int ha_blitz::index_next(unsigned char *buf) {
 
   if ((row = share->dict.get_row(dict_key, dict_klen, &rlen)) == NULL) {
     free(bt_key);
-    table->status = STATUS_NOT_FOUND;
+    getTable()->status = STATUS_NOT_FOUND;
     return HA_ERR_KEY_NOT_FOUND;
   }
 
@@ -794,14 +830,14 @@ int ha_blitz::doInsertRecord(unsigned char *drizzle_row) {
   ha_statistic_increment(&system_status_var::ha_write_count);
 
   /* Prepare Auto Increment field if one exists. */
-  if (table->next_number_field && drizzle_row == table->getInsertRecord()) {
+  if (getTable()->next_number_field && drizzle_row == getTable()->getInsertRecord()) {
     pthread_mutex_lock(&blitz_utility_mutex);
     if ((rv = update_auto_increment()) != 0) {
       pthread_mutex_unlock(&blitz_utility_mutex);
       return rv;
     }
 
-    uint64_t next_val = table->next_number_field->val_int();
+    uint64_t next_val = getTable()->next_number_field->val_int();
 
     if (next_val > share->auto_increment_value) {
       share->auto_increment_value = next_val;
@@ -932,7 +968,7 @@ int ha_blitz::doUpdateRecord(const unsigned char *old_row,
       /* Now write the new key. */
       prefix_len = make_index_key(key_buffer, i, new_row);
 
-      if (i == table->s->getPrimaryKey()) {
+      if (i == getTable()->getShare()->getPrimaryKey()) {
         key = merge_key(key_buffer, prefix_len, key_buffer, prefix_len, &klen);
         rv = share->btrees[i].write(key, klen);
       } else {
@@ -959,13 +995,13 @@ int ha_blitz::doUpdateRecord(const unsigned char *old_row,
   if (table_based) {
     rv = share->dict.write_row(held_key, held_key_len, row_buf, row_len);
   } else {
-    int klen = make_index_key(key_buffer, table->s->getPrimaryKey(), old_row);
+    int klen = make_index_key(key_buffer, getTable()->getShare()->getPrimaryKey(), old_row);
 
     /* Delete with the old key. */
     share->dict.delete_row(key_buffer, klen);
 
     /* Write with the new key. */
-    klen = make_index_key(key_buffer, table->s->getPrimaryKey(), new_row);
+    klen = make_index_key(key_buffer, getTable()->getShare()->getPrimaryKey(), new_row);
     rv = share->dict.write_row(key_buffer, klen, row_buf, row_len);
   }
 
@@ -1057,12 +1093,12 @@ int ha_blitz::delete_all_rows(void) {
 }
 
 uint32_t ha_blitz::max_row_length(void) {
-  uint32_t length = (table->getRecordLength() + table->sizeFields() * 2);
-  uint32_t *pos = table->getBlobField();
-  uint32_t *end = pos + table->sizeBlobFields();
+  uint32_t length = (getTable()->getRecordLength() + getTable()->sizeFields() * 2);
+  uint32_t *pos = getTable()->getBlobField();
+  uint32_t *end = pos + getTable()->sizeBlobFields();
 
   while (pos != end) {
-    length += 2 + ((Field_blob *)table->getField(*pos))->get_length();
+    length += 2 + ((Field_blob *)getTable()->getField(*pos))->get_length();
     pos++;
   }
 
@@ -1079,12 +1115,12 @@ size_t ha_blitz::make_primary_key(char *pack_to, const unsigned char *row) {
   /* Getting here means that there is a PK in this table. Get the
      binary representation of the PK, pack it to BlitzDB's key buffer
      and return the size of it. */
-  return make_index_key(pack_to, table->s->getPrimaryKey(), row);
+  return make_index_key(pack_to, getTable()->getShare()->getPrimaryKey(), row);
 }
 
 size_t ha_blitz::make_index_key(char *pack_to, int key_num,
                                 const unsigned char *row) {
-  KeyInfo *key = &table->key_info[key_num];
+  KeyInfo *key = &getTable()->key_info[key_num];
   KeyPartInfo *key_part = key->key_part;
   KeyPartInfo *key_part_end = key_part + key->key_parts;
 
@@ -1104,9 +1140,23 @@ size_t ha_blitz::make_index_key(char *pack_to, int key_num,
       *pos++ = 1;
     }
 
-    end = key_part->field->pack(pos, row + key_part->offset);
-    offset = end - pos;
-    pos += offset;
+    /* Here we normalize VARTEXT1 to VARTEXT2 for simplicity. */
+    if (key_part->type == HA_KEYTYPE_VARTEXT1) {
+      /* Extract the length of the string from the row. */
+      uint16_t data_len = *(uint8_t *)(row + key_part->offset);
+
+      /* Copy the length of the string. Use 2 bytes. */
+      int2store(pos, data_len);
+      pos += sizeof(data_len);
+
+      /* Copy the string data */
+      memcpy(pos, row + key_part->offset + sizeof(uint8_t), data_len);
+      pos += data_len;
+    } else {
+      end = key_part->field->pack(pos, row + key_part->offset);
+      offset = end - pos;
+      pos += offset;
+    }
   }
 
   return ((char *)pos - pack_to);
@@ -1145,7 +1195,7 @@ char *ha_blitz::merge_key(const char *a, const size_t a_len, const char *b,
 }
 
 size_t ha_blitz::btree_key_length(const char *key, const int key_num) {
-  KeyInfo *key_info = &table->key_info[key_num];
+  KeyInfo *key_info = &getTable()->key_info[key_num];
   KeyPartInfo *key_part = key_info->key_part;
   KeyPartInfo *key_part_end = key_part + key_info->key_parts;
   char *pos = (char *)key;
@@ -1154,15 +1204,14 @@ size_t ha_blitz::btree_key_length(const char *key, const int key_num) {
 
   for (; key_part != key_part_end; key_part++) {
     if (key_part->null_bit) {
+      pos++;
       rv++;
       if (*key == 0)
         continue;
     }
 
-    if (key_part->type == HA_KEYTYPE_VARTEXT1) {
-      len = *(uint8_t *)pos;
-      rv += len + sizeof(uint8_t);
-    } else if (key_part->type == HA_KEYTYPE_VARTEXT2) {
+    if (key_part->type == HA_KEYTYPE_VARTEXT1 ||
+        key_part->type == HA_KEYTYPE_VARTEXT2) {
       len = uint2korr(pos);
       rv += len + sizeof(uint16_t);
     } else {
@@ -1185,7 +1234,7 @@ void ha_blitz::keep_track_of_key(const char *key, const int klen) {
 /* Converts a native Drizzle index key to BlitzDB's format. */
 char *ha_blitz::native_to_blitz_key(const unsigned char *native_key,
                                     const int key_num, int *return_key_len) {
-  KeyInfo *key = &table->key_info[key_num];
+  KeyInfo *key = &getTable()->key_info[key_num];
   KeyPartInfo *key_part = key->key_part;
   KeyPartInfo *key_part_end = key_part + key->key_parts;
 
@@ -1206,20 +1255,20 @@ char *ha_blitz::native_to_blitz_key(const unsigned char *native_key,
         continue;
     }
 
-    /* This is a temporary workaround for a bug in Drizzle's VARCHAR
-       where a 1 byte representable length varchar's actual data is
-       positioned 2 bytes ahead of the beginning of the buffer. The
-       correct behavior is to be positioned 1 byte ahead. Furthermore,
-       this is only applicable with varchar keys on READ. */
+    /* Normalize a VARTEXT1 key to VARTEXT2. */
     if (key_part->type == HA_KEYTYPE_VARTEXT1) {
-      /* Dereference the 1 byte length of the value. */
-      uint8_t varlen = *(uint8_t *)key_pos;
-      *keybuf_pos++ = varlen;
+      uint16_t str_len = *(uint16_t *)key_pos;
 
-      /* Read the value by skipping 2 bytes. This is the workaround. */
-      memcpy(keybuf_pos, key_pos + sizeof(uint16_t), varlen);
-      offset = (sizeof(uint8_t) + varlen);
-      keybuf_pos += varlen;
+      /* Copy the length of the string over to key buffer. */
+      int2store(keybuf_pos, str_len);
+      keybuf_pos += sizeof(str_len);
+
+      /* Copy the actual value over to the key buffer. */
+      memcpy(keybuf_pos, key_pos + sizeof(str_len), str_len);
+      keybuf_pos += str_len;
+
+      /* NULL byte + Length of str (2 byte) + Actual String. */
+      offset = 1 + sizeof(str_len) + str_len;
     } else {
       end = key_part->field->pack(keybuf_pos, key_pos);
       offset = end - keybuf_pos;
@@ -1240,16 +1289,16 @@ size_t ha_blitz::pack_row(unsigned char *row_buffer,
 
   /* Nothing special to do if the table is fixed length */
   if (share->fixed_length_table) {
-    memcpy(row_buffer, row_to_pack, table->s->getRecordLength());
-    return (size_t)table->s->getRecordLength();
+    memcpy(row_buffer, row_to_pack, getTable()->getShare()->getRecordLength());
+    return (size_t)getTable()->getShare()->getRecordLength();
   }
 
   /* Copy NULL bits */
-  memcpy(row_buffer, row_to_pack, table->s->null_bytes);
-  pos = row_buffer + table->s->null_bytes;
+  memcpy(row_buffer, row_to_pack, getTable()->getShare()->null_bytes);
+  pos = row_buffer + getTable()->getShare()->null_bytes;
 
   /* Pack each field into the buffer */
-  for (Field **field = table->getFields(); *field; field++) {
+  for (Field **field = getTable()->getFields(); *field; field++) {
     if (!((*field)->is_null()))
       pos = (*field)->pack(pos, row_to_pack + (*field)->offset(row_to_pack));
   }
@@ -1270,13 +1319,13 @@ bool ha_blitz::unpack_row(unsigned char *to, const char *from,
   /* Start by copying NULL bits which is the beginning block
      of a Drizzle row. */
   pos = (const unsigned char *)from;
-  memcpy(to, pos, table->s->null_bytes);
-  pos += table->s->null_bytes;
+  memcpy(to, pos, getTable()->getShare()->null_bytes);
+  pos += getTable()->getShare()->null_bytes;
 
   /* Unpack all fields in the provided row. */
-  for (Field **field = table->getFields(); *field; field++) {
+  for (Field **field = getTable()->getFields(); *field; field++) {
     if (!((*field)->is_null())) {
-      pos = (*field)->unpack(to + (*field)->offset(table->getInsertRecord()), pos);
+      pos = (*field)->unpack(to + (*field)->offset(getTable()->getInsertRecord()), pos);
     }
   }
 
@@ -1308,7 +1357,7 @@ static BlitzEngine *blitz_engine = NULL;
 
 BlitzShare *ha_blitz::get_share(const char *name) {
   BlitzShare *share_ptr;
-  BlitzEngine *bz_engine = (BlitzEngine *)engine;
+  BlitzEngine *bz_engine = (BlitzEngine *)getEngine();
   std::string table_path(name);
 
   pthread_mutex_lock(&blitz_utility_mutex);
@@ -1333,14 +1382,14 @@ BlitzShare *ha_blitz::get_share(const char *name) {
   }
 
   /* Prepare Index Structure(s) */
-  KeyInfo *curr = &table->s->getKeyInfo(0);
-  share_ptr->btrees = new BlitzTree[table->s->keys];
+  KeyInfo *curr = &getTable()->getMutableShare()->getKeyInfo(0);
+  share_ptr->btrees = new BlitzTree[getTable()->getShare()->keys];
 
-  for (uint32_t i = 0; i < table->s->keys; i++, curr++) {
+  for (uint32_t i = 0; i < getTable()->getShare()->keys; i++, curr++) {
     share_ptr->btrees[i].open(table_path.c_str(), i, BDBOWRITER);
     share_ptr->btrees[i].parts = new BlitzKeyPart[curr->key_parts];
 
-    if (table->key_info[i].flags & HA_NOSAME)
+    if (getTable()->key_info[i].flags & HA_NOSAME)
       share_ptr->btrees[i].unique = true;
 
     share_ptr->btrees[i].length = curr->key_length;
@@ -1353,7 +1402,7 @@ BlitzShare *ha_blitz::get_share(const char *name) {
       if (f->null_ptr) {
         share_ptr->btrees[i].parts[j].null_bitmask = f->null_bit;
         share_ptr->btrees[i].parts[j].null_pos
-          = (uint32_t)(f->null_ptr - (unsigned char *)table->getInsertRecord());
+          = (uint32_t)(f->null_ptr - (unsigned char *)getTable()->getInsertRecord());
       }
 
       share_ptr->btrees[i].parts[j].flag = curr->key_part[j].key_part_flag;
@@ -1371,13 +1420,13 @@ BlitzShare *ha_blitz::get_share(const char *name) {
   /* Set Meta Data */
   share_ptr->auto_increment_value = share_ptr->dict.read_meta_autoinc();
   share_ptr->table_name = table_path;
-  share_ptr->nkeys = table->s->keys;
+  share_ptr->nkeys = getTable()->getShare()->keys;
   share_ptr->use_count = 1;
 
-  share_ptr->fixed_length_table = !(table->s->db_create_options
+  share_ptr->fixed_length_table = !(getTable()->getShare()->db_create_options
                                     & HA_OPTION_PACK_RECORD);
 
-  if (table->s->getPrimaryKey() >= MAX_KEY)
+  if (getTable()->getShare()->getPrimaryKey() >= MAX_KEY)
     share_ptr->primary_key_exists = false;
   else
     share_ptr->primary_key_exists = true;
@@ -1408,7 +1457,7 @@ int ha_blitz::free_share(void) {
       share->btrees[i].close();
     }
 
-    BlitzEngine *bz_engine = (BlitzEngine *)engine;
+    BlitzEngine *bz_engine = (BlitzEngine *)getEngine();
     bz_engine->deleteTableShare(share->table_name);
 
     delete[] share->btrees;

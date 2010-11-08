@@ -44,6 +44,8 @@ extern int wild_case_compare(const CHARSET_INFO * const cs,
 namespace plugin
 {
 
+#define TABLE_FUNCTION_BLOB_SIZE 2049
+
 // Not thread safe, but plugins are just loaded in a single thread right
 // now.
 static const char *local_string_append(const char *arg1, const char *arg2)
@@ -73,6 +75,7 @@ class TableFunction : public Plugin
   void setName(); // init name
 
   void init();
+
 
 public:
   TableFunction(const char *schema_arg, const char *table_arg) :
@@ -181,6 +184,8 @@ public:
                  TableFunction::ColumnType type,
                  uint32_t field_length,
                  bool is_default_null= false);
+
+  virtual bool visable() { return true; }
 };
 
 } /* namespace plugin */

@@ -30,12 +30,14 @@
 
 #include <string>
 
+#include <boost/filesystem.hpp>
+
 namespace drizzled
 {
 namespace module
 {
 
-class Manifest;
+struct Manifest;
 
 /* A handle for the dynamic library containing a plugin or plugins. */
 class Library
@@ -67,7 +69,7 @@ public:
     return manifest;
   }
 
-  static const std::string getLibraryPath(const std::string &plugin_name);
+  static const boost::filesystem::path getLibraryPath(const std::string &plugin_name);
   static Library *loadLibrary(const std::string &plugin_name, bool builtin);
 };
 
