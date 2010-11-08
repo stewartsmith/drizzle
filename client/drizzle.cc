@@ -61,6 +61,7 @@
 #include <cassert>
 #include <stdarg.h>
 #include <math.h>
+#include <memory>
 #include "client/linebuffer.h"
 #include <signal.h>
 #include <sys/ioctl.h>
@@ -1833,7 +1834,7 @@ extern "C"
 void handle_sigint(int sig)
 {
   char kill_buffer[40];
-  drizzle_con_st kill_drizzle;
+  auto_ptr<drizzle_con_st> kill_drizzle(new drizzle_con_st);
   drizzle_result_st res;
   drizzle_return_t ret;
 
@@ -1842,7 +1843,7 @@ void handle_sigint(int sig)
     goto err;
   }
 
-  if (drizzle_con_add_tcp(&drizzle, &kill_drizzle, current_host.c_str(),
+  if (drizzle_con_add_tcp(&drizzle, kill_drizzle.get(), current_host.c_str(),
     opt_drizzle_port, current_user.c_str(), opt_password.c_str(), NULL,
     use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL) == NULL)
   {
@@ -1853,10 +1854,10 @@ void handle_sigint(int sig)
   sprintf(kill_buffer, "KILL /*!50000 QUERY */ %u",
           drizzle_con_thread_id(&con));
 
-  if (drizzle_query_str(&kill_drizzle, &res, kill_buffer, &ret) != NULL)
+  if (drizzle_query_str(kill_drizzle.get(), &res, kill_buffer, &ret) != NULL)
     drizzle_result_free(&res);
 
-  drizzle_con_free(&kill_drizzle);
+  drizzle_con_free(kill_drizzle.get());
   tee_fprintf(stdout, _("Query aborted by Ctrl+C\n"));
 
   interrupted_query= 1;
