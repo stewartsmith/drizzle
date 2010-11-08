@@ -95,6 +95,7 @@
 #include <iostream>
 #include <fstream>
 #include <drizzled/configmake.h>
+#include <memory>
 
 /* Added this for string translation. */
 #include <drizzled/gettext.h>
@@ -270,7 +271,8 @@ static void run_task(ThreadContext *ctx)
   uint64_t counter= 0, queries;
   uint64_t detach_counter;
   uint32_t commit_counter;
-  drizzle_con_st con;
+  auto_ptr<drizzle_con_st> con_ap(new drizzle_con_st);
+  drizzle_con_st &con= *con_ap.get();
   drizzle_result_st result;
   drizzle_row_t row;
   Statement *ptr;
