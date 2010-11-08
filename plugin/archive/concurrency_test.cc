@@ -37,6 +37,7 @@
 #ifndef __WIN__
 #include <sys/wait.h>
 #endif
+#include <memory>
 
 #ifdef __WIN__
 #define srandom  srand
