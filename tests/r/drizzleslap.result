@@ -1,3 +1,9 @@
+SELECT 1;
+1
+1
+SELECT 1;
+1
+1
 /* CON: 0 */ DROP SCHEMA IF EXISTS `drizzleslap`;
 /* CON: 0 */ CREATE SCHEMA `drizzleslap`;
 /* CON: 0 */ use drizzleslap;
@@ -119,6 +125,12 @@
 /* CON: 0 */ INSERT INTO t1 VALUES (1, 'This is a test');
 /* CON: 20 */ select * from t1;
 /* CON: 0 */ DROP SCHEMA IF EXISTS `drizzleslap`;
+SELECT 1;
+1
+1
+SELECT 1;
+1
+1
 /* CON: 0 */ DROP SCHEMA IF EXISTS `drizzleslap`;
 /* CON: 0 */ CREATE SCHEMA `drizzleslap`;
 /* CON: 0 */ use drizzleslap;
@@ -141,6 +153,42 @@
 /* CON: 2 */ select * from t1;
 /* CON: 2 */ select * from t2;
 /* CON: 0 */ DROP SCHEMA IF EXISTS `drizzleslap`;
+SELECT 1;
+1
+1
+SELECT 1;
+1
+1
+SELECT 1;
+1
+1
+SELECT 1;
+1
+1
+SELECT 1;
+1
+1
+SELECT 1;
+1
+1
+SELECT 1;
+1
+1
+SELECT 1;
+1
+1
+SELECT 1;
+1
+1
+SELECT 1;
+1
+1
+SELECT 1;
+1
+1
+SELECT 1;
+1
+1
 /* CON: 0 */ DROP SCHEMA IF EXISTS `drizzleslap`;
 /* CON: 0 */ CREATE SCHEMA `drizzleslap`;
 /* CON: 0 */ use drizzleslap;
@@ -167,6 +215,9 @@
 /* CON: 2 */ select * from t2;
 /* CON: 0 */ SHOW TABLES;
 /* CON: 0 */ DROP SCHEMA IF EXISTS `drizzleslap`;
+SELECT 1;
+1
+1
 /* CON: 0 */ DROP SCHEMA IF EXISTS `drizzleslap`;
 /* CON: 0 */ CREATE SCHEMA `drizzleslap`;
 /* CON: 0 */ use drizzleslap;
@@ -217,6 +268,36 @@
 /* CON: 2 */ COMMIT;
 /* CON: 0 */ SHOW TABLES;
 /* CON: 0 */ DROP SCHEMA IF EXISTS `drizzleslap`;
+SELECT 1;
+1
+1
+SELECT 1;
+1
+1
+SELECT 1;
+1
+1
+SELECT 1;
+1
+1
+SELECT 1;
+1
+1
+SELECT 1;
+1
+1
+SELECT 1;
+1
+1
+SELECT 1;
+1
+1
+SELECT 1;
+1
+1
+SELECT 1;
+1
+1
 CREATE SCHEMA drizzleslap;
 CREATE TABLE drizzleslap.t1 (id int, name varchar(64));
 SELECT count(*) from drizzleslap.t1;
