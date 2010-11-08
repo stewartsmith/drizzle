@@ -18,6 +18,7 @@
 #include "config.h"
 
 #include "plugin/archive/archive_engine.h"
+#include <memory>
 
 using namespace std;
 using namespace drizzled;
@@ -164,24 +165,24 @@ int ArchiveEngine::doGetTableDefinition(Session&,
     error= EEXIST;
 
   {
-    azio_stream proto_stream;
+    auto_ptr<azio_stream> proto_stream(new azio_stream);
     char* proto_string;
-    if (azopen(&proto_stream, proto_path.c_str(), O_RDONLY, AZ_METHOD_BLOCK) == 0)
+    if (azopen(proto_stream.get(), proto_path.c_str(), O_RDONLY, AZ_METHOD_BLOCK) == 0)
       return HA_ERR_CRASHED_ON_USAGE;
 
-    proto_string= (char*)malloc(sizeof(char) * proto_stream.frm_length);
+    proto_string= (char*)malloc(sizeof(char) * proto_stream->frm_length);
     if (proto_string == NULL)
     {
-      azclose(&proto_stream);
+      azclose(proto_stream.get());
       return ENOMEM;
     }
 
-    azread_frm(&proto_stream, proto_string);
+    azread_frm(proto_stream.get(), proto_string);
 
-    if (table_proto.ParseFromArray(proto_string, proto_stream.frm_length) == false)
+    if (table_proto.ParseFromArray(proto_string, proto_stream->frm_length) == false)
       error= HA_ERR_CRASHED_ON_USAGE;
 
-    azclose(&proto_stream);
+    azclose(proto_stream.get());
     free(proto_string);
   }
 
