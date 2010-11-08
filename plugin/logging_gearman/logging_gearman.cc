@@ -227,7 +227,7 @@ public:
 
   virtual bool post(Session *session)
   {
-    auto_ptr<char> msgbuf(new char[MAX_MSG_LEN]);
+    std::auto_ptr<char> msgbuf(new char[MAX_MSG_LEN]);
     int msgbuf_len= 0;
   
     assert(session != NULL);
