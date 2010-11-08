@@ -209,7 +209,7 @@ uint16_t x= htons(80);
         [ac_cv_safe_to_use_Wextra_=no])
       CFLAGS="$save_CFLAGS"])
 
-      BASE_WARNINGS="${W_FAIL} -pedantic -Wall -Wundef -Wshadow -Wframe-larger-than=32768 ${NO_UNUSED} ${F_DIAGNOSTICS_SHOW_OPTION} ${BASE_WARNINGS_FULL}"
+      BASE_WARNINGS="${W_FAIL} -pedantic -Wall -Wundef -Wshadow ${NO_UNUSED} ${F_DIAGNOSTICS_SHOW_OPTION} ${BASE_WARNINGS_FULL}"
       AS_IF([test "$ac_cv_safe_to_use_Wextra_" = "yes"],
             [BASE_WARNINGS="${BASE_WARNINGS} -Wextra"],
             [BASE_WARNINGS="${BASE_WARNINGS} -W"])
@@ -235,6 +235,25 @@ uint16_t x= htons(80);
       ])
       AS_IF([test "$ac_cv_safe_to_use_Wmissing_declarations_" = "yes"],
             [CXX_WARNINGS="${CXX_WARNINGS} -Wmissing-declarations"])
+  
+      AC_CACHE_CHECK([whether it is safe to use -Wframe-larger-than],
+        [ac_cv_safe_to_use_Wframe_larger_than_],
+        [AC_LANG_PUSH(C++)
+         save_CXXFLAGS="$CXXFLAGS"
+         CXXFLAGS="-Werror -pedantic -Wframe_larger_than=32768 ${AM_CXXFLAGS}"
+         AC_COMPILE_IFELSE([
+           AC_LANG_PROGRAM(
+           [[
+#include <stdio.h>
+           ]], [[]])
+        ],
+        [ac_cv_safe_to_use_Wframe_larger_than_=yes],
+        [ac_cv_safe_to_use_Wframe_larger_than_=no])
+        CXXFLAGS="$save_CXXFLAGS"
+        AC_LANG_POP()
+      ])
+      AS_IF([test "$ac_cv_safe_to_use_Wframe_larger_than_" = "yes"],
+            [CXX_WARNINGS="${CXX_WARNINGS} -Wframe_larger_than=32768"])
   
       AC_CACHE_CHECK([whether it is safe to use -Wlogical-op],
         [ac_cv_safe_to_use_Wlogical_op_],
