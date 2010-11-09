@@ -5406,6 +5406,11 @@ flush_option:
             statement::Flush *statement= (statement::Flush*)Lex->statement;
             statement->setFlushStatus(true);
           }
+        | GLOBAL_SYM STATUS_SYM
+          {
+            statement::Flush *statement= (statement::Flush*)Lex->statement;
+            statement->setFlushGlobalStatus(true);
+          }
         ;
 
 opt_table_list:

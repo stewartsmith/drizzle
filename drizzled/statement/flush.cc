@@ -24,6 +24,7 @@
 #include <drizzled/lock.h>
 #include <drizzled/statement/flush.h>
 #include "drizzled/sql_table.h"
+#include "drizzled/plugin/logging.h"
 
 namespace drizzled
 {
@@ -93,7 +94,14 @@ bool statement::Flush::reloadCache()
     session->refresh_status();
   }
 
- return result;
+  if (session && flush_global_status)
+  {
+    memset(&current_global_counters, 0, sizeof(current_global_counters));
+    plugin::Logging::resetStats(session);
+    session->refresh_status();
+  }
+
+  return result;
 }
 
 }

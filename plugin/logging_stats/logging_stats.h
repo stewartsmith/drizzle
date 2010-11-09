@@ -54,6 +54,8 @@ public:
 
   virtual bool postEnd(drizzled::Session *session);
 
+  virtual bool resetGlobalScoreboard();
+
   bool isEnabled() const
   {
     return is_enabled;
