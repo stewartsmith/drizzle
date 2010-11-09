@@ -1,5 +1,3 @@
--- source include/have_innodb_plugin.inc
-
 create table bug53290 (x bigint) engine=innodb;
 
 insert into bug53290 () values (),(),(),(),(),(),(),(),(),(),(),();
