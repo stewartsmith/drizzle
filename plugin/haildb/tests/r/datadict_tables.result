@@ -82,7 +82,7 @@ SYS_FOREIGN_COLS
 data_dictionary/haildb_table_definitions
 explain select name from data_dictionary.haildb_sys_tables where name="SYS_FOREIGN";
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	haildb_sys_tables	const	PRIMARY	PRIMARY	195	const	#	Using index
+1	SIMPLE	haildb_sys_tables	const	PRIMARY,PRIMARY	PRIMARY	195	const	#	Using index
 select name from data_dictionary.haildb_sys_tables where name="SYS_FOREIGN";
 name
 SYS_FOREIGN

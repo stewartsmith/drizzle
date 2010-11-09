@@ -56,6 +56,8 @@
 
 #include <drizzled/table/shell.h>
 
+#include "drizzled/message/cache.h"
+
 #include <boost/algorithm/string/compare.hpp>
 
 static bool shutdown_has_begun= false; // Once we put in the container for the vector/etc for engines this will go away.
@@ -383,6 +385,12 @@ int StorageEngine::getTableDefinition(Session& session,
     }
   }
 
+  drizzled::message::TablePtr table_ptr;
+  if ((table_ptr= drizzled::message::Cache::singleton().find(identifier)))
+  {
+    table_message.CopyFrom(*(table_ptr.get()));
+  }
+
   EngineVector::iterator iter=
     find_if(vector_of_engines.begin(), vector_of_engines.end(),
             StorageEngineGetTableDefinition(session, identifier, table_message, err));
@@ -391,6 +399,8 @@ int StorageEngine::getTableDefinition(Session& session,
   {
     return ENOENT;
   }
+
+ drizzled::message::Cache::singleton().insert(identifier, table_message);
 
   return err;
 }
@@ -489,6 +499,7 @@ int StorageEngine::dropTable(Session& session,
     }
   }
 
+  drizzled::message::Cache::singleton().erase(identifier);
 
   return error;
 }
