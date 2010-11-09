@@ -78,8 +78,8 @@ TEST(atomic_operations, compare_and_swap)
 
   u235.fetch_and_store(100);
 
-  EXPECT_EQ(false, u235.compare_and_swap(42, 200));
-  EXPECT_EQ(true, u235.compare_and_swap(200, 100));
+  ASSERT_FALSE(u235.compare_and_swap(42, 200));
+  ASSERT_TRUE(u235.compare_and_swap(200, 100));
   EXPECT_EQ(200, u235);
 }
 

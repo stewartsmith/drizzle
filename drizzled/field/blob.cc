@@ -43,7 +43,7 @@ static uint32_t blob_pack_length_to_max_length(uint32_t arg)
 /****************************************************************************
 ** blob type
 ** A blob is saved as a length and a pointer. The length is stored in the
-** packlength slot and may be from 1-4.
+** packlength slot and is sizeof(uint32_t) (4 bytes)
 ****************************************************************************/
 
 Field_blob::Field_blob(unsigned char *ptr_arg,
@@ -51,15 +51,13 @@ Field_blob::Field_blob(unsigned char *ptr_arg,
                        unsigned char null_bit_arg,
 		                   const char *field_name_arg,
                        TableShare *share,
-                       uint32_t blob_pack_length,
                        const CHARSET_INFO * const cs)
   :Field_str(ptr_arg,
-             blob_pack_length_to_max_length(blob_pack_length),
+             blob_pack_length_to_max_length(sizeof(uint32_t)),
              null_ptr_arg,
              null_bit_arg,
              field_name_arg,
-             cs),
-   packlength(blob_pack_length)
+             cs)
 {
   flags|= BLOB_FLAG;
   share->blob_fields++;
@@ -67,115 +65,71 @@ Field_blob::Field_blob(unsigned char *ptr_arg,
 }
 
 void Field_blob::store_length(unsigned char *i_ptr,
-                              uint32_t i_packlength,
                               uint32_t i_number,
                               bool low_byte_first)
 {
 #ifndef WORDS_BIGENDIAN
   (void)low_byte_first;
 #endif
-  switch (i_packlength) {
-  case 1:
-    i_ptr[0]= (unsigned char) i_number;
-    break;
-  case 2:
+
 #ifdef WORDS_BIGENDIAN
-    if (low_byte_first)
-    {
-      int2store(i_ptr,(unsigned short) i_number);
-    }
-    else
-#endif
-      shortstore(i_ptr,(unsigned short) i_number);
-    break;
-  case 3:
-    int3store(i_ptr,i_number);
-    break;
-  case 4:
-#ifdef WORDS_BIGENDIAN
-    if (low_byte_first)
-    {
-      int4store(i_ptr,i_number);
-    }
-    else
-#endif
-      longstore(i_ptr,i_number);
+  if (low_byte_first)
+  {
+    int4store(i_ptr,i_number);
   }
+  else
+#endif
+    longstore(i_ptr,i_number);
 }
 
 
-void Field_blob::store_length(unsigned char *i_ptr, uint32_t i_packlength,
-                  uint32_t i_number)
+void Field_blob::store_length(unsigned char *i_ptr, uint32_t i_number)
 {
-  store_length(i_ptr, i_packlength, i_number, getTable()->getShare()->db_low_byte_first);
+  store_length(i_ptr, i_number, getTable()->getShare()->db_low_byte_first);
 }
 
 
 uint32_t Field_blob::get_length(const unsigned char *pos,
-                                uint32_t packlength_arg,
                                 bool low_byte_first)
 {
 #ifndef WORDS_BIGENDIAN
   (void)low_byte_first;
 #endif
-  switch (packlength_arg) {
-  case 1:
-    return (uint32_t) pos[0];
-  case 2:
-    {
-      uint16_t tmp;
+  uint32_t tmp;
 #ifdef WORDS_BIGENDIAN
-      if (low_byte_first)
-	tmp=sint2korr(pos);
-      else
+  if (low_byte_first)
+    tmp=uint4korr(pos);
+  else
 #endif
-	shortget(tmp,pos);
-      return (uint32_t) tmp;
-    }
-  case 3:
-    return (uint32_t) uint3korr(pos);
-  case 4:
-    {
-      uint32_t tmp;
-#ifdef WORDS_BIGENDIAN
-      if (low_byte_first)
-	tmp=uint4korr(pos);
-      else
-#endif
-	longget(tmp,pos);
-      return (uint32_t) tmp;
-    }
-  }
-  return 0;					// Impossible
+    longget(tmp,pos);
+  return (uint32_t) tmp;
 }
 
 
 uint32_t Field_blob::get_packed_size(const unsigned char *ptr_arg,
                                 bool low_byte_first)
 {
-  return packlength + get_length(ptr_arg, packlength, low_byte_first);
+  return sizeof(uint32_t) + get_length(ptr_arg, low_byte_first);
 }
 
 
 uint32_t Field_blob::get_length(uint32_t row_offset)
 {
-  return get_length(ptr+row_offset, this->packlength,
+  return get_length(ptr+row_offset,
                     getTable()->getShare()->db_low_byte_first);
 }
 
 
 uint32_t Field_blob::get_length(const unsigned char *ptr_arg)
 {
-  return get_length(ptr_arg, this->packlength, getTable()->getShare()->db_low_byte_first);
+  return get_length(ptr_arg, getTable()->getShare()->db_low_byte_first);
 }
 
 
 /**
   Put a blob length field into a record buffer.
 
-  Depending on the maximum length of a blob, its length field is
-  put into 1 to 4 bytes. This is a property of the blob object,
-  described by 'packlength'.
+  Blob length is always stored in sizeof(uint32_t) (4 bytes)
 
   @param pos                 Pointer into the record buffer.
   @param length              The length value to put.
@@ -183,20 +137,7 @@ uint32_t Field_blob::get_length(const unsigned char *ptr_arg)
 
 void Field_blob::put_length(unsigned char *pos, uint32_t length)
 {
-  switch (packlength) {
-  case 1:
-    *pos= (char) length;
-    break;
-  case 2:
-    int2store(pos, length);
-    break;
-  case 3:
-    int3store(pos, length);
-    break;
-  case 4:
     int4store(pos, length);
-    break;
-  }
 }
 
 
@@ -223,7 +164,7 @@ int Field_blob::store(const char *from,uint32_t length, const CHARSET_INFO * con
     if (!String::needs_conversion(length, cs, field_charset, &dummy_offset))
     {
       Field_blob::store_length(length);
-      memmove(ptr+packlength, &from, sizeof(char*));
+      memmove(ptr+sizeof(uint32_t), &from, sizeof(char*));
       return 0;
     }
     if (tmpstr.copy(from, length, cs))
@@ -250,7 +191,7 @@ int Field_blob::store(const char *from,uint32_t length, const CHARSET_INFO * con
 
   Field_blob::store_length(copy_length);
   tmp= value.ptr();
-  memmove(ptr+packlength, &tmp, sizeof(char*));
+  memmove(ptr+sizeof(uint32_t), &tmp, sizeof(char*));
 
   if (check_string_copy_error(this, well_formed_error_pos,
                               cannot_convert_error_pos, from + length, cs))
@@ -292,7 +233,7 @@ double Field_blob::val_real(void)
 
   ASSERT_COLUMN_MARKED_FOR_READ;
 
-  memcpy(&blob,ptr+packlength,sizeof(char*));
+  memcpy(&blob,ptr+sizeof(uint32_t),sizeof(char*));
   if (!blob)
     return 0.0;
   length= get_length(ptr);
@@ -308,7 +249,7 @@ int64_t Field_blob::val_int(void)
 
   ASSERT_COLUMN_MARKED_FOR_READ;
 
-  memcpy(&blob,ptr+packlength,sizeof(char*));
+  memcpy(&blob,ptr+sizeof(uint32_t),sizeof(char*));
   if (!blob)
     return 0;
   uint32_t length=get_length(ptr);
@@ -322,7 +263,7 @@ String *Field_blob::val_str(String *,
 
   ASSERT_COLUMN_MARKED_FOR_READ;
 
-  memcpy(&blob,ptr+packlength,sizeof(char*));
+  memcpy(&blob,ptr+sizeof(uint32_t),sizeof(char*));
   if (!blob)
     val_ptr->set("",0,charset());	// A bit safer than ->length(0)
   else
@@ -338,7 +279,7 @@ my_decimal *Field_blob::val_decimal(my_decimal *decimal_value)
 
   ASSERT_COLUMN_MARKED_FOR_READ;
 
-  memcpy(&blob, ptr+packlength, sizeof(const unsigned char*));
+  memcpy(&blob, ptr+sizeof(uint32_t), sizeof(const unsigned char*));
   if (!blob)
   {
     blob= "";
@@ -366,8 +307,8 @@ int Field_blob::cmp_max(const unsigned char *a_ptr, const unsigned char *b_ptr,
                         uint32_t max_length)
 {
   unsigned char *blob1,*blob2;
-  memcpy(&blob1,a_ptr+packlength,sizeof(char*));
-  memcpy(&blob2,b_ptr+packlength,sizeof(char*));
+  memcpy(&blob1,a_ptr+sizeof(uint32_t),sizeof(char*));
+  memcpy(&blob2,b_ptr+sizeof(uint32_t),sizeof(char*));
   uint32_t a_len= get_length(a_ptr), b_len= get_length(b_ptr);
   set_if_smaller(a_len, max_length);
   set_if_smaller(b_len, max_length);
@@ -381,8 +322,8 @@ int Field_blob::cmp_binary(const unsigned char *a_ptr, const unsigned char *b_pt
   char *a,*b;
   uint32_t diff;
   uint32_t a_length,b_length;
-  memcpy(&a,a_ptr+packlength,sizeof(char*));
-  memcpy(&b,b_ptr+packlength,sizeof(char*));
+  memcpy(&a,a_ptr+sizeof(uint32_t),sizeof(char*));
+  memcpy(&b,b_ptr+sizeof(uint32_t),sizeof(char*));
 
   a_length= get_length(a_ptr);
 
@@ -464,7 +405,7 @@ int Field_blob::key_cmp(const unsigned char *key_ptr, uint32_t max_key_length)
 {
   unsigned char *blob1;
   uint32_t blob_length=get_length(ptr);
-  memcpy(&blob1,ptr+packlength,sizeof(char*));
+  memcpy(&blob1,ptr+sizeof(uint32_t),sizeof(char*));
   const CHARSET_INFO * const cs= charset();
   uint32_t local_char_length= max_key_length / cs->mbmaxlen;
   local_char_length= my_charpos(cs, blob1, blob1+blob_length,
@@ -484,7 +425,7 @@ int Field_blob::key_cmp(const unsigned char *a,const unsigned char *b)
 uint32_t Field_blob::sort_length() const
 {
   return (uint32_t) (current_session->variables.max_sort_length +
-                   (field_charset == &my_charset_bin ? 0 : packlength));
+                     (field_charset == &my_charset_bin ? 0 : sizeof(uint32_t)));
 }
 
 void Field_blob::sort_string(unsigned char *to,uint32_t length)
@@ -503,25 +444,12 @@ void Field_blob::sort_string(unsigned char *to,uint32_t length)
       /*
         Store length of blob last in blob to shorter blobs before longer blobs
       */
-      length-= packlength;
+      length-= sizeof(uint32_t); // size of stored blob length
       pos= to+length;
 
-      switch (packlength) {
-      case 1:
-        *pos= (char) blob_length;
-        break;
-      case 2:
-        mi_int2store(pos, blob_length);
-        break;
-      case 3:
-        mi_int3store(pos, blob_length);
-        break;
-      case 4:
-        mi_int4store(pos, blob_length);
-        break;
-      }
+      mi_int4store(pos, blob_length);
     }
-    memcpy(&blob,ptr+packlength,sizeof(char*));
+    memcpy(&blob,ptr+sizeof(uint32_t),sizeof(char*));
 
     blob_length=my_strnxfrm(field_charset,
                             to, length, blob, blob_length);
@@ -531,7 +459,7 @@ void Field_blob::sort_string(unsigned char *to,uint32_t length)
 
 uint32_t Field_blob::pack_length() const
 {
-  return (uint32_t) (packlength + portable_sizeof_char_ptr);
+  return (uint32_t) (sizeof(uint32_t) + portable_sizeof_char_ptr);
 }
 
 void Field_blob::sql_type(String &res) const
@@ -554,7 +482,7 @@ unsigned char *Field_blob::pack(unsigned char *to, const unsigned char *from,
     length given is smaller than the actual length of the blob, we
     just store the initial bytes of the blob.
   */
-  store_length(to, packlength, min(length, max_length), low_byte_first);
+  store_length(to, min(length, max_length), low_byte_first);
 
   /*
     Store the actual blob data, which will occupy 'length' bytes.
@@ -562,11 +490,11 @@ unsigned char *Field_blob::pack(unsigned char *to, const unsigned char *from,
   if (length > 0)
   {
     get_ptr((unsigned char**) &from);
-    memcpy(to+packlength, from,length);
+    memcpy(to+sizeof(uint32_t), from,length);
   }
 
   ptr= save;					// Restore org row pointer
-  return(to+packlength+length);
+  return(to+sizeof(uint32_t)+length);
 }
 
 /**
@@ -588,16 +516,14 @@ unsigned char *Field_blob::pack(unsigned char *to, const unsigned char *from,
 */
 const unsigned char *Field_blob::unpack(unsigned char *,
                                         const unsigned char *from,
-                                        uint32_t param_data,
+                                        uint32_t,
                                         bool low_byte_first)
 {
-  uint32_t const master_packlength=
-    param_data > 0 ? param_data & 0xFF : packlength;
-  uint32_t const length= get_length(from, master_packlength, low_byte_first);
+  uint32_t const length= get_length(from, low_byte_first);
   getTable()->setWriteSet(field_index);
-  store(reinterpret_cast<const char*>(from) + master_packlength,
+  store(reinterpret_cast<const char*>(from) + sizeof(uint32_t),
         length, field_charset);
-  return(from + master_packlength + length);
+  return(from + sizeof(uint32_t) + length);
 }
 
 /** Create a packed key that will be used for storage from a MySQL row. */
@@ -635,20 +561,7 @@ Field_blob::pack_key(unsigned char *to, const unsigned char *from, uint32_t max_
 
 uint32_t Field_blob::max_display_length()
 {
-  switch (packlength)
-  {
-  case 1:
-    return 255 * field_charset->mbmaxlen;
-  case 2:
-    return 65535 * field_charset->mbmaxlen;
-  case 3:
-    return 16777215 * field_charset->mbmaxlen;
-  case 4:
     return (uint32_t) 4294967295U;
-  default:
-    assert(0); // we should never go here
-    return 0;
-  }
 }
 
 } /* namespace drizzled */

@@ -91,7 +91,7 @@ bool ProcesslistTool::Generator::populate()
     }
 
     /* COMMAND */
-    if ((val= const_cast<char *>(tmp->killed == Session::KILL_CONNECTION ? "Killed" : 0)))
+    if ((val= const_cast<char *>(tmp->getKilled() == Session::KILL_CONNECTION ? "Killed" : 0)))
     {
       push(val);
     }

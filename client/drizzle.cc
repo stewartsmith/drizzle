@@ -2319,6 +2319,12 @@ static bool add_line(string *buffer, char *line, char *in_string,
   {
     *out++='\n';
     uint32_t length=(uint32_t) (out-line);
+    if ((buffer->length() + length) > opt_max_input_line)
+    {
+      status.setExitStatus(1);
+      put_info(_("Not found a delimiter within max_input_line of input"), INFO_ERROR, 0, 0);
+      return 1;
+    }
     if ((!*ml_comment || preserve_comments))
       buffer->append(line, length);
   }

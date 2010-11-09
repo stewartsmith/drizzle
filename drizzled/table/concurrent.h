@@ -50,6 +50,7 @@ public:
                         const char *alias,
                         TableIdentifier &identifier);
   bool reopen_name_locked_table(TableList* table_list, Session *session);
+  virtual void release(void);
 };
 
 } /* namespace table */

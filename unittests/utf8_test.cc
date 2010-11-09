@@ -29,10 +29,10 @@ using namespace drizzled;
 
 TEST(utf8, is_single)
 {
-  EXPECT_EQ(true, utf8::is_single('a'));
+  ASSERT_TRUE(utf8::is_single('a'));
   const char *multi_byte= "ç";
-  EXPECT_EQ(false, utf8::is_single(*multi_byte));
-  EXPECT_EQ(false, utf8::is_single(*(multi_byte + 1)));
+  ASSERT_FALSE(utf8::is_single(*multi_byte));
+  ASSERT_FALSE(utf8::is_single(*(multi_byte + 1)));
 }
 
 TEST(utf8, codepoint_length)

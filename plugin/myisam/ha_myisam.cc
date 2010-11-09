@@ -477,7 +477,7 @@ static int check_definition(MI_KEYDEF *t1_keyinfo, MI_COLUMNDEF *t1_recinfo,
 volatile int *killed_ptr(MI_CHECK *param)
 {
   /* In theory Unsafe conversion, but should be ok for now */
-  return (int*) &(((Session *)(param->session))->killed);
+  return (int*) (((Session *)(param->session))->getKilledPtr());
 }
 
 void mi_check_print_error(MI_CHECK *param, const char *fmt,...)

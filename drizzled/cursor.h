@@ -55,7 +55,7 @@ class TableList;
 class TableShare;
 class Select_Lex_Unit;
 class ForeignKeyInfo;
-struct order_st;
+struct Order;
 
 class Item;
 
@@ -475,7 +475,7 @@ public:
     or partitioned.
 
     @note that one can NOT rely on table->in_use in store_lock().  It may
-    refer to a different thread if called from mysql_lock_abort_for_thread().
+    refer to a different thread if called from abortLockForThread().
 
     @note If the table is MERGE, store_lock() can return less locks
     than lock_count() claimed. This can happen when the MERGE children
@@ -640,12 +640,12 @@ extern const char *ha_row_type[];
 void ha_init_errors(void);
 
 class SortField;
-SortField *make_unireg_sortorder(order_st *order, uint32_t *length,
+SortField *make_unireg_sortorder(Order *order, uint32_t *length,
                                  SortField *sortorder);
 int setup_order(Session *session, Item **ref_pointer_array, TableList *tables,
-                List<Item> &fields, List <Item> &all_fields, order_st *order);
+                List<Item> &fields, List <Item> &all_fields, Order *order);
 int setup_group(Session *session, Item **ref_pointer_array, TableList *tables,
-                List<Item> &fields, List<Item> &all_fields, order_st *order,
+                List<Item> &fields, List<Item> &all_fields, Order *order,
                 bool *hidden_group_fields);
 bool fix_inner_refs(Session *session, List<Item> &all_fields, Select_Lex *select,
                     Item **ref_pointer_array);
@@ -692,10 +692,10 @@ bool mysql_rename_table(Session &session,
                         TableIdentifier &new_identifier);
 
 bool mysql_prepare_update(Session *session, TableList *table_list,
-                          Item **conds, uint32_t order_num, order_st *order);
+                          Item **conds, uint32_t order_num, Order *order);
 int mysql_update(Session *session,TableList *tables,List<Item> &fields,
                  List<Item> &values,COND *conds,
-                 uint32_t order_num, order_st *order, ha_rows limit,
+                 uint32_t order_num, Order *order, ha_rows limit,
                  enum enum_duplicates handle_duplicates, bool ignore);
 bool mysql_prepare_insert(Session *session, TableList *table_list, Table *table,
                           List<Item> &fields, List_item *values,

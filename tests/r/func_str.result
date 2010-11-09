@@ -717,8 +717,8 @@ t
 1000000
 1      
 drop table t1;
-select load_file("lkjlkj");
-ERROR HY000: The file 'lkjlkj' must be in the schema directory or be readable by all
+select load_file(DRIZZLETEST_BAD_FILE);
+ERROR HY000: The file 'DRIZZLETEST_BAD_FILE' must be in the schema directory or be readable by all
 CREATE TABLE t1 (a varchar(10));
 INSERT INTO t1 VALUES ('abc'), ('xyz');
 SELECT a, CONCAT(a,' ',a) AS c FROM t1

@@ -50,7 +50,7 @@ int mi_close(MI_INFO *info)
   }
   if (info->opt_flag & (READ_CACHE_USED | WRITE_CACHE_USED))
   {
-    if (end_io_cache(&info->rec_cache))
+    if (info->rec_cache.end_io_cache())
       error=errno;
     info->opt_flag&= ~(READ_CACHE_USED | WRITE_CACHE_USED);
   }

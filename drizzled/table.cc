@@ -95,15 +95,7 @@ int Table::delete_table(bool free_share)
 
   if (free_share)
   {
-    if (getShare()->getType() == message::Table::STANDARD)
-    {
-      TableShare::release(getMutableShare());
-    }
-    else
-    {
-      delete getShare();
-    }
-    setShare(NULL);
+    release();
   }
 
   return error;
@@ -254,16 +246,6 @@ int set_zone(register int nr, int min_zone, int max_zone)
     return (max_zone);
   return (nr);
 } /* set_zone */
-
-	/* Adjust number to next larger disk buffer */
-
-ulong next_io_size(register ulong pos)
-{
-  register ulong offset;
-  if ((offset= pos & (IO_SIZE-1)))
-    return pos-offset+IO_SIZE;
-  return pos;
-} /* next_io_size */
 
 
 /*
@@ -789,7 +771,7 @@ Field *create_tmp_field_from_field(Session *session, Field *org_field,
 
 Table *
 create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
-		 order_st *group, bool distinct, bool save_sum_fields,
+		 Order *group, bool distinct, bool save_sum_fields,
 		 uint64_t select_options, ha_rows rows_limit,
 		 const char *table_alias)
 {
@@ -823,7 +805,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     {
       group= 0;					// Can't use group key
     }
-    else for (order_st *tmp=group ; tmp ; tmp=tmp->next)
+    else for (Order *tmp=group ; tmp ; tmp=tmp->next)
     {
       /*
         marker == 4 means two things:
@@ -1256,7 +1238,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     keyinfo->rec_per_key= 0;
     keyinfo->algorithm= HA_KEY_ALG_UNDEF;
     keyinfo->name= (char*) "group_key";
-    order_st *cur_group= group;
+    Order *cur_group= group;
     for (; cur_group ; cur_group= cur_group->next, key_part_info++)
     {
       Field *field=(*cur_group->item)->get_tmp_table_field();
@@ -1693,6 +1675,40 @@ bool Table::fill_item_list(List<Item> *item_list) const
       return true;
   }
   return false;
+}
+
+
+void Table::filesort_free_buffers(bool full)
+{
+  if (sort.record_pointers)
+  {
+    free((unsigned char*) sort.record_pointers);
+    sort.record_pointers=0;
+  }
+  if (full)
+  {
+    if (sort.sort_keys )
+    {
+      if ((unsigned char*) sort.sort_keys)
+        free((unsigned char*) sort.sort_keys);
+      sort.sort_keys= 0;
+    }
+    if (sort.buffpek)
+    {
+      if ((unsigned char*) sort.buffpek)
+        free((unsigned char*) sort.buffpek);
+      sort.buffpek= 0;
+      sort.buffpek_len= 0;
+    }
+  }
+
+  if (sort.addon_buf)
+  {
+    free((char *) sort.addon_buf);
+    free((char *) sort.addon_field);
+    sort.addon_buf=0;
+    sort.addon_field=0;
+  }
 }
 
 } /* namespace drizzled */

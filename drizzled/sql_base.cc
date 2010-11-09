@@ -64,15 +64,6 @@ namespace drizzled
 
 extern bool volatile shutdown_in_progress;
 
-static bool add_table(table::Concurrent *arg)
-{
-  table::CacheMap &open_cache(table::getCache());
-
-  table::CacheMap::iterator returnable= open_cache.insert(make_pair(arg->getShare()->getCacheKey(), arg));
-
-  return not (returnable == open_cache.end());
-}
-
 bool table_cache_init(void)
 {
   return false;
@@ -102,7 +93,7 @@ void table_cache_free(void)
   By leaving the table in the table cache, it disallows any other thread
   to open the table
 
-  session->killed will be set if we run out of memory
+  session->getKilled() will be set if we run out of memory
 
   If closing a MERGE child, the calling function has to take care for
   closing the parent too, if necessary.
@@ -152,7 +143,7 @@ void Table::free_io_cache()
 {
   if (sort.io_cache)
   {
-    close_cached_file(sort.io_cache);
+    sort.io_cache->close_cached_file();
     delete sort.io_cache;
     sort.io_cache= 0;
   }
@@ -267,7 +258,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
 
       bool found= true;
       /* Wait until all threads has closed all the tables we had locked */
-      while (found && ! session->killed)
+      while (found && ! session->getKilled())
       {
         found= false;
         for (table::CacheMap::const_iterator iter= table::getCache().begin();
@@ -402,7 +393,7 @@ void Session::close_open_tables()
   if (found_old_table)
   {
     /* Tell threads waiting for refresh that something has happened */
-    broadcast_refresh();
+    locking::broadcast_refresh();
   }
 }
 
@@ -702,7 +693,7 @@ void Session::unlink_open_table(Table *find)
   }
 
   // Notify any 'refresh' threads
-  broadcast_refresh();
+  locking::broadcast_refresh();
 }
 
 
@@ -775,7 +766,7 @@ void Session::wait_for_condition(boost::mutex &mutex, boost::condition_variable_
       mutex is unlocked
     */
     boost_unique_lock_t scopedLock(mutex, boost::adopt_lock_t());
-    if (not killed)
+    if (not getKilled())
     {
       cond.wait(scopedLock);
     }
@@ -810,7 +801,7 @@ table::Placeholder *Session::table_cache_insert_placeholder(const drizzled::Tabl
   TableIdentifier identifier(arg.getSchemaName(), arg.getTableName(), message::Table::INTERNAL);
   table::Placeholder *table= new table::Placeholder(this, identifier);
 
-  if (not add_table(table))
+  if (not table::Cache::singleton().insert(table))
   {
     delete table;
 
@@ -918,7 +909,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
   if (check_stack_overrun(this, STACK_MIN_SIZE_FOR_OPEN, (unsigned char *)&alias))
     return NULL;
 
-  if (killed)
+  if (getKilled())
     return NULL;
 
   TableIdentifier identifier(table_list->getSchemaName(), table_list->getTableName());
@@ -1168,7 +1159,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
             LOCK_open.unlock();
             return NULL;
           }
-          (void)add_table(new_table);
+          (void)table::Cache::singleton().insert(new_table);
         }
       }
 
@@ -1241,7 +1232,7 @@ void Session::close_data_files_and_morph_locks(TableIdentifier &identifier)
       If we are not under LOCK TABLES we should have only one table
       open and locked so it makes sense to remove the lock at once.
     */
-    mysql_unlock_tables(this, lock);
+    unlockTables(lock);
     lock= 0;
   }
 
@@ -1334,8 +1325,8 @@ bool Session::reopen_tables(bool get_locks, bool)
     */
     some_tables_deleted= false;
 
-    if ((local_lock= mysql_lock_tables(this, tables, (uint32_t) (tables_ptr - tables),
-                                 flags, &not_used)))
+    if ((local_lock= lockTables(tables, (uint32_t) (tables_ptr - tables),
+                                       flags, &not_used)))
     {
       /* unused */
     }
@@ -1354,7 +1345,7 @@ bool Session::reopen_tables(bool get_locks, bool)
   if (get_locks && tables)
     delete [] tables;
 
-  broadcast_refresh();
+  locking::broadcast_refresh();
 
   return(error);
 }
@@ -1401,8 +1392,8 @@ void Session::close_old_data_files(bool morph_locks, bool send_refresh)
               lock on it. This will also give them a chance to close their
               instances of this table.
             */
-            mysql_lock_abort(this, ulcktbl);
-            mysql_lock_remove(this, ulcktbl);
+            abortLock(ulcktbl);
+            removeLock(ulcktbl);
             ulcktbl->lock_count= 0;
           }
           if ((ulcktbl != table) && ulcktbl->db_stat)
@@ -1442,7 +1433,7 @@ void Session::close_old_data_files(bool morph_locks, bool send_refresh)
     }
   }
   if (found)
-    broadcast_refresh();
+    locking::broadcast_refresh();
 }
 
 
@@ -1455,7 +1446,7 @@ bool wait_for_tables(Session *session)
   session->set_proc_info("Waiting for tables");
   {
     boost_unique_lock_t lock(LOCK_open);
-    while (!session->killed)
+    while (not session->getKilled())
     {
       session->some_tables_deleted= false;
       session->close_old_data_files(false, dropping_tables != 0);
@@ -1465,7 +1456,7 @@ bool wait_for_tables(Session *session)
       }
       COND_refresh.wait(lock);
     }
-    if (session->killed)
+    if (session->getKilled())
       result= true;					// aborted
     else
     {
@@ -1522,7 +1513,7 @@ Table *drop_locked_tables(Session *session, const drizzled::TableIdentifier &ide
     next=table->getNext();
     if (table->getShare()->getCacheKey() == identifier.getKey())
     {
-      mysql_lock_remove(session, table);
+      session->removeLock(table);
 
       if (!found)
       {
@@ -1548,7 +1539,7 @@ Table *drop_locked_tables(Session *session, const drizzled::TableIdentifier &ide
   }
   *prev=0;
   if (found)
-    broadcast_refresh();
+    locking::broadcast_refresh();
 
   return(found);
 }
@@ -1568,7 +1559,7 @@ void abort_locked_tables(Session *session, const drizzled::TableIdentifier &iden
     if (table->getShare()->getCacheKey() == identifier.getKey())
     {
       /* If MERGE child, forward lock handling to parent. */
-      mysql_lock_abort(session, table);
+      session->abortLock(table);
       break;
     }
   }
@@ -1751,7 +1742,7 @@ Table *Session::openTableLock(TableList *table_list, thr_lock_type lock_type)
 
     assert(lock == 0);	// You must lock everything at once
     if ((table->reginfo.lock_type= lock_type) != TL_UNLOCK)
-      if (! (lock= mysql_lock_tables(this, &table_list->table, 1, 0, &refresh)))
+      if (! (lock= lockTables(&table_list->table, 1, 0, &refresh)))
         table= 0;
   }
 
@@ -1814,8 +1805,7 @@ int Session::lock_tables(TableList *tables, uint32_t count, bool *need_reopen)
       *(ptr++)= table->table;
   }
 
-  if (!(session->lock= mysql_lock_tables(session, start, (uint32_t) (ptr - start),
-                                         lock_flag, need_reopen)))
+  if (!(session->lock= session->lockTables(start, (uint32_t) (ptr - start), lock_flag, need_reopen)))
   {
     return -1;
   }

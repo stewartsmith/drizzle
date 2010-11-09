@@ -271,9 +271,9 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     if (! session->main_da.is_set())
       session->send_kill_message();
   }
-  if (session->killed == Session::KILL_QUERY || session->killed == Session::KILL_BAD_DATA)
+  if (session->getKilled() == Session::KILL_QUERY || session->getKilled() == Session::KILL_BAD_DATA)
   {
-    session->killed= Session::NOT_KILLED;
+    session->setKilled(Session::NOT_KILLED);
     session->setAbort(false);
   }
 
@@ -727,7 +727,7 @@ void create_select_for_variable(const char *var_name)
 void mysql_parse(Session *session, const char *inBuf, uint32_t length)
 {
   uint64_t start_time= my_getsystime();
-  lex_start(session);
+  session->lex->start(session);
   session->reset_for_next_command();
   /* Check if the Query is Cached if and return true if yes
    * TODO the plugin has to make sure that the query is cacheble

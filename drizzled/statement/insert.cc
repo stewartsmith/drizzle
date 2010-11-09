@@ -40,7 +40,7 @@ bool statement::Insert::execute()
     return true;
   }
 
-  if (! (need_start_waiting= ! wait_if_global_read_lock(session, 0, 1)))
+  if (! (need_start_waiting= ! session->wait_if_global_read_lock(false, true)))
   {
     return true;
   }
@@ -59,7 +59,8 @@ bool statement::Insert::execute()
      Release the protection against the global read lock and wake
      everyone, who might want to set a global read lock.
    */
-  start_waiting_global_read_lock(session);
+  session->startWaitingGlobalReadLock();
+
   return res;
 }
 

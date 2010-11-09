@@ -366,6 +366,19 @@ public:
   {
     return mem_root;
   }
+
+  uint64_t xa_id;
+
+  uint64_t getXaId()
+  {
+    return xa_id;
+  }
+
+  void setXaId(uint64_t in_xa_id)
+  {
+    xa_id= in_xa_id; 
+  }
+
   /**
    * Uniquely identifies each statement object in thread scope; change during
    * statement lifetime.
@@ -705,7 +718,51 @@ public:
   uint32_t row_count;
   session_id_t thread_id;
   uint32_t tmp_table;
-  uint32_t global_read_lock;
+  enum global_read_lock_t
+  {
+    NONE= 0,
+    GOT_GLOBAL_READ_LOCK= 1,
+    MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT= 2
+  };
+private:
+  global_read_lock_t _global_read_lock;
+
+public:
+
+  global_read_lock_t isGlobalReadLock() const
+  {
+    return _global_read_lock;
+  }
+
+  void setGlobalReadLock(global_read_lock_t arg)
+  {
+    _global_read_lock= arg;
+  }
+
+  DrizzleLock *lockTables(Table **tables, uint32_t count, uint32_t flags, bool *need_reopen);
+  bool lockGlobalReadLock();
+  bool lock_table_names(TableList *table_list);
+  bool lock_table_names_exclusively(TableList *table_list);
+  bool makeGlobalReadLockBlockCommit();
+  bool abortLockForThread(Table *table);
+  bool wait_if_global_read_lock(bool abort_on_refresh, bool is_not_commit);
+  int lock_table_name(TableList *table_list);
+  void abortLock(Table *table);
+  void removeLock(Table *table);
+  void unlockReadTables(DrizzleLock *sql_lock);
+  void unlockSomeTables(Table **table, uint32_t count);
+  void unlockTables(DrizzleLock *sql_lock);
+  void startWaitingGlobalReadLock();
+  void unlockGlobalReadLock();
+
+private:
+  int unlock_external(Table **table, uint32_t count);
+  int lock_external(Table **tables, uint32_t count);
+  bool wait_for_locked_table_names(TableList *table_list);
+  DrizzleLock *get_lock_data(Table **table_ptr, uint32_t count,
+                             bool should_lock, Table **write_lock_used);
+public:
+
   uint32_t server_status;
   uint32_t open_options;
   uint32_t select_number; /**< number of select (used for EXPLAIN) */
@@ -713,7 +770,7 @@ public:
   enum_tx_isolation session_tx_isolation;
   enum_check_fields count_cuted_fields;
 
-  enum killed_state
+  enum killed_state_t
   {
     NOT_KILLED,
     KILL_BAD_DATA,
@@ -721,7 +778,25 @@ public:
     KILL_QUERY,
     KILLED_NO_VALUE /* means none of the above states apply */
   };
-  killed_state volatile killed;
+private:
+  killed_state_t volatile _killed;
+
+public:
+
+  void setKilled(killed_state_t arg)
+  {
+    _killed= arg;
+  }
+
+  killed_state_t getKilled()
+  {
+    return _killed;
+  }
+
+  volatile killed_state_t *getKilledPtr() // Do not use this method, it is here for historical convience.
+  {
+    return &_killed;
+  }
 
   bool some_tables_deleted;
   bool no_errors;
@@ -936,7 +1011,7 @@ public:
    */
   void cleanup_after_query();
   bool storeGlobals();
-  void awake(Session::killed_state state_to_set);
+  void awake(Session::killed_state_t state_to_set);
   /**
    * Pulls thread-specific variables into Session state.
    *
@@ -1126,8 +1201,8 @@ public:
   void end_statement();
   inline int killed_errno() const
   {
-    killed_state killed_val; /* to cache the volatile 'killed' */
-    return (killed_val= killed) != KILL_BAD_DATA ? killed_val : 0;
+    killed_state_t killed_val; /* to cache the volatile 'killed' */
+    return (killed_val= _killed) != KILL_BAD_DATA ? killed_val : 0;
   }
   void send_kill_message() const;
   /* return true if we will abort query if we make a warning now */
@@ -1534,7 +1609,9 @@ public:
                            message::Table &table_proto);
   bool doDoesTableExist(const drizzled::TableIdentifier &identifier);
 
+private:
   void close_temporary_tables();
+public:
   void close_temporary_table(Table *table);
   // The method below just handles the de-allocation of the table. In
   // a better memory type world, this would not be needed.
@@ -1557,8 +1634,6 @@ public:
   int setup_conds(TableList *leaves, COND **conds);
   int lock_tables(TableList *tables, uint32_t count, bool *need_reopen);
 
-  Table *create_virtual_tmp_table(List<CreateField> &field_list);
-  
   drizzled::util::Storable *getProperty(const std::string &arg)
   {
     return life_properties[arg];

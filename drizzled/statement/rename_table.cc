@@ -68,11 +68,11 @@ bool statement::RenameTable::renameTables(TableList *table_list)
     return true;
   }
 
-  if (wait_if_global_read_lock(session, 0, 1))
+  if (session->wait_if_global_read_lock(false, true))
     return true;
 
   LOCK_open.lock(); /* Rename table lock for exclusive access */
-  if (lock_table_names_exclusively(session, table_list))
+  if (session->lock_table_names_exclusively(table_list))
   {
     LOCK_open.unlock();
     goto err;
@@ -115,11 +115,11 @@ bool statement::RenameTable::renameTables(TableList *table_list)
   }
 
   LOCK_open.lock(); /* unlock all tables held */
-  unlock_table_names(table_list, NULL);
+  table_list->unlock_table_names();
   LOCK_open.unlock();
 
 err:
-  start_waiting_global_read_lock(session);
+  session->startWaitingGlobalReadLock();
 
   return error;
 }

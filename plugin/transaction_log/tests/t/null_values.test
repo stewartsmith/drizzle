@@ -2,6 +2,12 @@
 # Tests inserting/deleting/updating null values
 #
 
+# Ignore startup/shutdown events
+--disable_query_log
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
+--enable_query_log
+
+
 # Populate log with some records...
 --source ../plugin/transaction_log/tests/t/null_values.inc
 

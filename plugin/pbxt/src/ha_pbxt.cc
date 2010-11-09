@@ -4348,7 +4348,7 @@ int ha_pbxt::analyze(THD *thd)
 	else
 		my_xn_id = db->db_xn_to_clean_id;
 
-	while ((!db->db_sw_idle || xt_xn_is_before(db->db_xn_to_clean_id, my_xn_id)) && !thd_killed(thd)) {
+	while ((!db->db_sw_idle || xt_xn_is_before(db->db_xn_to_clean_id, my_xn_id)) && not (thd->getKilled())) {
 		xt_busy_wait();
 
 		/*

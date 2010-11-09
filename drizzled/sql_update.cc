@@ -30,6 +30,7 @@
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/iocache.h"
 #include "drizzled/transaction_services.h"
+#include "drizzled/filesort.h"
 
 #include <boost/dynamic_bitset.hpp>
 #include <list>
@@ -128,7 +129,7 @@ static void prepare_record_for_error_message(int error, Table *table)
 
 int mysql_update(Session *session, TableList *table_list,
                  List<Item> &fields, List<Item> &values, COND *conds,
-                 uint32_t order_num, order_st *order,
+                 uint32_t order_num, Order *order,
                  ha_rows limit, enum enum_duplicates,
                  bool ignore)
 {
@@ -147,7 +148,7 @@ int mysql_update(Session *session, TableList *table_list,
   Select_Lex    *select_lex= &session->lex->select_lex;
   uint64_t     id;
   List<Item> all_fields;
-  Session::killed_state killed_status= Session::NOT_KILLED;
+  Session::killed_state_t killed_status= Session::NOT_KILLED;
 
   DRIZZLE_UPDATE_START(session->query.c_str());
   if (session->openTablesLock(table_list))
@@ -313,14 +314,14 @@ int mysql_update(Session *session, TableList *table_list,
       uint32_t         length= 0;
       SortField  *sortorder;
       ha_rows examined_rows;
+      FileSort filesort(*session);
 
-      table->sort.io_cache = new internal::IO_CACHE;
+      table->sort.io_cache= new internal::IO_CACHE;
 
       if (!(sortorder=make_unireg_sortorder(order, &length, NULL)) ||
-          (table->sort.found_records= filesort(session, table, sortorder, length,
-                                               select, limit, 1,
-                                               &examined_rows))
-          == HA_POS_ERROR)
+	  (table->sort.found_records= filesort.run(table, sortorder, length,
+						   select, limit, 1,
+						   examined_rows)) == HA_POS_ERROR)
       {
 	goto err;
       }
@@ -340,9 +341,10 @@ int mysql_update(Session *session, TableList *table_list,
       */
 
       internal::IO_CACHE tempfile;
-      if (open_cached_file(&tempfile, drizzle_tmpdir.c_str(),TEMP_PREFIX,
-			   DISK_BUFFER_SIZE, MYF(MY_WME)))
+      if (tempfile.open_cached_file(drizzle_tmpdir.c_str(),TEMP_PREFIX, DISK_BUFFER_SIZE, MYF(MY_WME)))
+      {
 	goto err;
+      }
 
       /* If quick select is used, initialize it before retrieving rows. */
       if (select && select->quick && select->quick->reset())
@@ -372,7 +374,7 @@ int mysql_update(Session *session, TableList *table_list,
       session->set_proc_info("Searching rows for update");
       ha_rows tmp_limit= limit;
 
-      while (!(error=info.read_record(&info)) && !session->killed)
+      while (not(error= info.read_record(&info)) && not session->getKilled())
       {
 	if (!(select && select->skip_record()))
 	{
@@ -395,7 +397,7 @@ int mysql_update(Session *session, TableList *table_list,
 	else
 	  table->cursor->unlock_row();
       }
-      if (session->killed && !error)
+      if (session->getKilled() && not error)
 	error= 1;				// Aborted
       limit= tmp_limit;
       table->cursor->try_semi_consistent_read(0);
@@ -415,7 +417,7 @@ int mysql_update(Session *session, TableList *table_list,
 	select= new optimizer::SqlSelect;
 	select->head=table;
       }
-      if (reinit_io_cache(&tempfile,internal::READ_CACHE,0L,0,0))
+      if (tempfile.reinit_io_cache(internal::READ_CACHE,0L,0,0))
 	error=1;
       // Read row ptrs from this cursor
       memcpy(select->file, &tempfile, sizeof(tempfile));
@@ -465,9 +467,9 @@ int mysql_update(Session *session, TableList *table_list,
   can_compare_record= (! (table->cursor->getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ)) ||
                        table->write_set->is_subset_of(*table->read_set));
 
-  while (! (error=info.read_record(&info)) && !session->killed)
+  while (not (error=info.read_record(&info)) && not session->getKilled())
   {
-    if (! (select && select->skip_record()))
+    if (not (select && select->skip_record()))
     {
       if (table->cursor->was_semi_consistent_read())
         continue;  /* repeat the read of the same row if it still exists */
@@ -544,7 +546,7 @@ int mysql_update(Session *session, TableList *table_list,
     It's assumed that if an error was set in combination with an effective
     killed status then the error is due to killing.
   */
-  killed_status= session->killed; // get the status of the volatile
+  killed_status= session->getKilled(); // get the status of the volatile
   // simulated killing after the loop must be ineffective for binlogging
   error= (killed_status == Session::NOT_KILLED)?  error : 1;
 
@@ -629,7 +631,7 @@ err:
     true  error
 */
 bool mysql_prepare_update(Session *session, TableList *table_list,
-			 Item **conds, uint32_t order_num, order_st *order)
+			 Item **conds, uint32_t order_num, Order *order)
 {
   List<Item> all_fields;
   Select_Lex *select_lex= &session->lex->select_lex;
