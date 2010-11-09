@@ -121,6 +121,30 @@ public:
   }
 };
 
+class ResetIterate : public unary_function<plugin::Logging *, bool>
+{
+  Session *session;
+public:
+  ResetIterate(Session *session_arg) :
+    unary_function<plugin::Logging *, bool>(),
+    session(session_arg) {}
+
+  inline result_type operator()(argument_type handler)
+  {
+    if (handler->resetGlobalScoreboard())
+    {
+      /* TRANSLATORS: The leading word "logging" is the name
+         of the plugin api, and so should not be translated. */
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("logging '%s' resetCurrentScoreboard() failed"),
+                    handler->getName().c_str());
+      return true;
+    }
+    return false;
+  }
+};
+
+
 /* This is the Logging::preDo entry point.
    This gets called by the rest of the Drizzle server code */
 bool plugin::Logging::preDo(Session *session)
@@ -162,6 +186,16 @@ bool plugin::Logging::postEndDo(Session *session)
    * false, which in this case means they all succeeded. Since we want to
    * return false on success, we return the value of the two being !=
    */
+  return iter != all_loggers.end();
+}
+
+/* Resets global stats for logging plugin */
+bool plugin::Logging::resetStats(Session *session)
+{
+  vector<plugin::Logging *>::iterator iter=
+    find_if(all_loggers.begin(), all_loggers.end(),
+            ResetIterate(session));
+
   return iter != all_loggers.end();
 }
 
