@@ -1244,6 +1244,20 @@ innobase_fast_mutex_init(
   return pthread_mutex_init(fast_mutex, MY_MUTEX_INIT_FAST);
 }
 
+/**********************************************************************//**
+Determines the current SQL statement.
+@return	SQL statement string */
+extern "C" UNIV_INTERN
+const char*
+innobase_get_stmt(
+/*==============*/
+	void*	session,	/*!< in: MySQL thread handle */
+	size_t*	length)		/*!< out: length of the SQL statement */
+{
+  *length= static_cast<Session*>(session)->query.length();
+  return static_cast<Session*>(session)->query.c_str();
+}
+
 #if defined (__WIN__) && defined (MYSQL_DYNAMIC_PLUGIN)
 /*******************************************************************//**
 Map an OS error to an errno value. The OS error number is stored in
@@ -1509,7 +1523,6 @@ innobase_trx_allocate(
   trx = trx_allocate_for_mysql();
 
   trx->mysql_thd = session;
-  trx->mysql_query_str = session->query.c_str();
 
   innobase_trx_init(session, trx);
 
@@ -5969,6 +5982,8 @@ InnobaseEngine::doCreateTable(
     modified by another thread while the table is being created. */
   const ulint file_format = srv_file_format;
   bool lex_identified_temp_table= (create_proto.type() == message::Table::TEMPORARY);
+  const char* stmt;
+  size_t stmt_len;
 
   const char *table_name= identifier.getPath().c_str();
 
@@ -6145,9 +6160,11 @@ InnobaseEngine::doCreateTable(
     }
   }
 
-  if (trx->mysql_query_str) {
+  stmt = innobase_get_stmt(&session, &stmt_len);
+
+  if (stmt) {
     string generated_create_table;
-    const char *query= trx->mysql_query_str;
+    const char *query= stmt;
 
     if (session_sql_command(&session) == SQLCOM_CREATE_TABLE)
     {
@@ -6158,7 +6175,7 @@ InnobaseEngine::doCreateTable(
     }
 
     error = row_table_add_foreign_constraints(trx,
-                                              query,
+                                              query, strlen(query),
                                               norm_name,
                                               lex_identified_temp_table);
 
@@ -6477,7 +6494,6 @@ void InnobaseEngine::dropTemporarySchema()
   trx = trx_allocate_for_mysql();
 
   trx->mysql_thd = NULL;
-  trx->mysql_query_str = NULL;
 
   trx->check_foreigns = false;
   trx->check_unique_secondary = false;
