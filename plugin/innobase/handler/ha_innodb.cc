@@ -8330,15 +8330,13 @@ uint64_t InnobaseEngine::doGetCurrentTransactionId(Session *session)
 
 uint64_t InnobaseEngine::doGetNewTransactionId(Session *session)
 {
-  trx_t *trx= innobase_trx_allocate(session);
+  trx_t *trx= check_trx_exists(session);
 
   mutex_enter(&kernel_mutex);
   trx->id= trx_sys_get_new_trx_id();
   mutex_exit(&kernel_mutex);
 
   uint64_t transaction_id= (ib_uint64_t) ut_conv_dulint_to_longlong(trx->id);
-
-  trx_free_for_mysql(trx);
 
   return transaction_id;
 }
