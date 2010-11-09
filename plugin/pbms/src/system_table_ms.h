@@ -179,8 +179,8 @@ public:
 	virtual void seqScanInit() { }
 	virtual bool seqScanNext(char *buf) { UNUSED(buf); return false; }
 	virtual int	getRefLen() { return 0; }
-	virtual void seqScanPos(uint8_t *pos) { UNUSED(pos);}
-	virtual void seqScanRead(uint8_t *pos , char *buf) {UNUSED(pos);UNUSED(buf); }
+	virtual void seqScanPos(unsigned char *pos) { UNUSED(pos);}
+	virtual void seqScanRead(unsigned char *pos , char *buf) {UNUSED(pos);UNUSED(buf); }
 	virtual void insertRow(char *buf) {UNUSED(buf); }
 	virtual void deleteRow(char *buf) {UNUSED(buf);  }
 	virtual void updateRow(char *old_data, char *new_data) {UNUSED(old_data);UNUSED(new_data); }
@@ -224,9 +224,9 @@ public:
 	virtual void seqScanInit();
 	virtual bool seqScanNext(char *buf);
 	virtual int	getRefLen();
-	virtual void seqScanPos(uint8_t *pos);
+	virtual void seqScanPos(unsigned char *pos);
 	virtual void seqScanRead(uint32_t repo, uint64_t offset, char *buf);
-	virtual void seqScanRead(uint8_t *pos, char *buf);
+	virtual void seqScanRead(unsigned char *pos, char *buf);
 
 	friend class MSReferenceTable;
 	friend class MSBlobDataTable;
@@ -277,9 +277,9 @@ public:
 	void unuse();
 	void seqScanInit();
 	int	getRefLen();
-	void seqScanPos(uint8_t *pos);
+	void seqScanPos(unsigned char *pos);
 	virtual void seqScanRead(uint32_t repo, uint64_t offset, char *buf) { return MSRepositoryTable::seqScanRead(repo, offset, buf);}
-	void seqScanRead(uint8_t *pos, char *buf);
+	void seqScanRead(unsigned char *pos, char *buf);
 	bool seqScanNext(char *buf);
 
 private:
@@ -318,9 +318,9 @@ public:
 	void unuse();
 	void seqScanInit();
 	int	getRefLen();
-	void seqScanPos(uint8_t *pos);
+	void seqScanPos(unsigned char *pos);
 	virtual void seqScanRead(uint32_t repo, uint64_t offset, char *buf) { return MSRepositoryTable::seqScanRead(repo, offset, buf);}
-	void seqScanRead(uint8_t *pos, char *buf);
+	void seqScanRead(unsigned char *pos, char *buf);
 	bool seqScanNext(char *buf);
 	void insertRow(char *buf);
 	void deleteRow(char *buf);

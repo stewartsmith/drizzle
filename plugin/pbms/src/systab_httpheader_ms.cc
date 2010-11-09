@@ -379,7 +379,7 @@ bool MSHTTPHeaderTable::seqScanNext(char *buf)
 	return_(true);
 }
 
-void MSHTTPHeaderTable::seqScanPos(uint8_t *pos)
+void MSHTTPHeaderTable::seqScanPos(unsigned char *pos)
 {
 	int32_t index = iHeaderIndex -1;
 	if (index < 0)
@@ -388,7 +388,7 @@ void MSHTTPHeaderTable::seqScanPos(uint8_t *pos)
 	mi_int4store(pos, index);
 }
 
-void MSHTTPHeaderTable::seqScanRead(uint8_t *pos, char *buf)
+void MSHTTPHeaderTable::seqScanRead(unsigned char *pos, char *buf)
 {
 	iHeaderIndex = mi_uint4korr(pos);
 	seqScanNext(buf);

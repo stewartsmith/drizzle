@@ -857,7 +857,7 @@ int	MSRepositoryTable::getRefLen()
 
 
 //-----------------------
-void MSRepositoryTable::seqScanPos(uint8_t *pos)
+void MSRepositoryTable::seqScanPos(unsigned char *pos)
 {
 	mi_int4store(pos, iRepoIndex); pos +=4;
 	mi_int8store(pos, iRepoCurrentOffset);
@@ -875,7 +875,7 @@ void MSRepositoryTable::seqScanRead(uint32_t repo, uint64_t offset, char *buf)
 }
 
 //-----------------------
-void MSRepositoryTable::seqScanRead(uint8_t *pos, char *buf)
+void MSRepositoryTable::seqScanRead(unsigned char *pos, char *buf)
 {
 	seqScanRead(mi_uint4korr( pos), mi_uint8korr(pos +4), buf);
 }
@@ -1345,7 +1345,7 @@ int	MSReferenceTable::getRefLen()
 	return sizeof(iRefDataUsed) + sizeof(iRefDataPos) + sizeof(iRefCurrentIndex) + sizeof(iRefCurrentOffset);
 }
 
-void MSReferenceTable::seqScanPos(uint8_t *pos)
+void MSReferenceTable::seqScanPos(unsigned char *pos)
 {
 	mi_int4store(pos, iRefCurrentDataPos); pos +=4;
 	mi_int4store(pos, iRefCurrentDataUsed);pos +=4;	
@@ -1353,7 +1353,7 @@ void MSReferenceTable::seqScanPos(uint8_t *pos)
 	mi_int8store(pos, iRefCurrentOffset);
 }
 
-void MSReferenceTable::seqScanRead(uint8_t *pos, char *buf)
+void MSReferenceTable::seqScanRead(unsigned char *pos, char *buf)
 {
 	iRefDataPos = mi_uint4korr( pos); pos +=4;
 	iRefDataUsed = mi_uint4korr(pos); pos +=4;
@@ -1810,7 +1810,7 @@ int	MSMetaDataTable::getRefLen()
 	return sizeof(iMetCurrentDataPos) + sizeof(iMetCurrentDataSize) + sizeof(iMetCurrentBlobRepo) + sizeof(iMetCurrentBlobOffset);
 }
 
-void MSMetaDataTable::seqScanPos(uint8_t *pos)
+void MSMetaDataTable::seqScanPos(unsigned char *pos)
 {
 	mi_int4store(pos, iMetCurrentDataPos); pos +=4;
 	mi_int4store(pos, iMetCurrentDataSize);pos +=4;	
@@ -1818,7 +1818,7 @@ void MSMetaDataTable::seqScanPos(uint8_t *pos)
 	mi_int8store(pos, iMetCurrentBlobOffset);
 }
 
-void MSMetaDataTable::seqScanRead(uint8_t *pos, char *buf)
+void MSMetaDataTable::seqScanRead(unsigned char *pos, char *buf)
 {
 	iMetStateSaved = false;
 	iMetDataPos = mi_uint4korr( pos); pos +=4;

@@ -598,7 +598,7 @@ bool MSVariableTable::seqScanNext(char *buf)
 	return_(true);
 }
 
-void MSVariableTable::seqScanPos(uint8_t *pos)
+void MSVariableTable::seqScanPos(unsigned char *pos)
 {
 	int32_t index = iVariableIndex -1;
 	if (index < 0)
@@ -607,7 +607,7 @@ void MSVariableTable::seqScanPos(uint8_t *pos)
 	mi_int4store(pos, index);
 }
 
-void MSVariableTable::seqScanRead(uint8_t *pos, char *buf)
+void MSVariableTable::seqScanRead(unsigned char *pos, char *buf)
 {
 	iVariableIndex = mi_uint4korr(pos);
 	seqScanNext(buf);

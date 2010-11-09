@@ -171,7 +171,7 @@ bool MSEnabledTable::seqScanNext(char *buf)
 }
 
 //-----------------------
-void MSEnabledTable::seqScanPos(uint8_t *pos)
+void MSEnabledTable::seqScanPos(unsigned char *pos )
 {
 	int32_t index = iEnabledIndex -1;
 	if (index < 0)
@@ -181,7 +181,7 @@ void MSEnabledTable::seqScanPos(uint8_t *pos)
 }
 
 //-----------------------
-void MSEnabledTable::seqScanRead(uint8_t *pos, char *buf)
+void MSEnabledTable::seqScanRead(unsigned char *pos , char *buf)
 {
 	iEnabledIndex = mi_uint4korr(pos);
 	seqScanNext(buf);

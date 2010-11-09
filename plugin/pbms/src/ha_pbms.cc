@@ -929,7 +929,7 @@ int ha_pbms::rnd_next(unsigned char *buf)
 //-------
 void ha_pbms::position(const unsigned char *)
 {
-	ha_open_tab->seqScanPos((uint8_t *) ref);
+	ha_open_tab->seqScanPos((unsigned char *) ref);
 }
 
 //-------
@@ -938,7 +938,7 @@ int ha_pbms::rnd_pos(unsigned char * buf, unsigned char *pos)
 	int err = 0;
 	enter_();
 	try_(a) {
-		ha_open_tab->seqScanRead((uint8_t *) pos, (char *) buf);
+		ha_open_tab->seqScanRead(pos, (char *) buf);
 	}
 	catch_(a) {
 		ha_error = MSEngine::exceptionToResult(&self->myException, &ha_result);
