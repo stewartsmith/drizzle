@@ -19,7 +19,6 @@
 
 #include "config.h"
 
-#include <stdio.h>
 #include <boost/lexical_cast.hpp>
 #include <string>
 
@@ -148,7 +147,6 @@ int set_var::check(Session *session)
 */
 int set_var::update(Session *session)
 {
-  /* TODO: Fix this to be typesafe once we have properly typed set_var */
   try
   {
     if (! value)
@@ -160,6 +158,7 @@ int set_var::update(Session *session)
   }
   catch (boost::exception &)
   {
+    /* TODO: Fix this to be typesafe once we have properly typed set_var */
     string new_val= boost::lexical_cast<string>(save_result.uint32_t_value);
     push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                         ER_TRUNCATED_WRONG_VALUE,
