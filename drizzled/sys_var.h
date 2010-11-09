@@ -31,7 +31,6 @@
 #include "drizzled/base.h"
 #include "drizzled/global_charset_info.h"
 #include "drizzled/lex_string.h"
-#include "drizzled/sql_error.h"
 
 namespace drizzled
 {
