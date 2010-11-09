@@ -400,6 +400,10 @@ Session::~Session()
   plugin::Logging::postEndDo(this);
   plugin::EventObserver::deregisterSessionEvents(*this); 
 
+  // Free all schema event observers.
+  for (std::map<std::string, plugin::EventObserverList *>::iterator it=schema_event_observers.begin() ; it != schema_event_observers.end(); it++ )
+    plugin::EventObserver::deregisterSchemaEvents(*this, it->first);
+
   for (PropertyMap::iterator iter= life_properties.begin(); iter != life_properties.end(); iter++)
   {
     delete (*iter).second;
