@@ -22,6 +22,7 @@
 
 using namespace std;
 using namespace drizzled;
+namespace po= boost::program_options;
 
 static pthread_mutex_t blitz_utility_mutex;
 
@@ -1429,6 +1430,8 @@ static int blitz_init(drizzled::module::Context &context) {
 
   pthread_mutex_init(&blitz_utility_mutex, NULL);
   context.add(blitz_engine);
+  context.registerVariable(new sys_var_uint64_t_ptr("estimated-rows",
+                                                    &blitz_estimated_rows));
   return 0;
 }
 
@@ -1448,22 +1451,11 @@ static bool str_is_numeric(const std::string &str) {
   return true;
 }
 
-static DRIZZLE_SYSVAR_ULONGLONG (
-  estimated_rows,
-  blitz_estimated_rows,
-  PLUGIN_VAR_RQCMDARG,
-  "Estimated number of rows that a BlitzDB table will store.",
-  NULL,
-  NULL,
-  0,
-  0,
-  UINT64_MAX,
-  0
-);
+static void blitz_init_options(drizzled::module::option_context &context)
+{
+  context("estimated-rows",
+          po::value<uint64_t>(&blitz_estimated_rows)->default_value(0),
+          N_("Estimated number of rows that a BlitzDB table will store."));
+}
 
-static drizzle_sys_var *blitz_system_variables[] = {
-  DRIZZLE_SYSVAR(estimated_rows),
-  NULL
-};
-
-DRIZZLE_PLUGIN(blitz_init, blitz_system_variables, NULL);
+DRIZZLE_PLUGIN(blitz_init, NULL, blitz_init_options);
