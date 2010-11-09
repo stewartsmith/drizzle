@@ -161,7 +161,7 @@ class PBMSBlobURLTools
 	public:
 	static bool couldBeURL(const char *blob_url, size_t size, MSBlobURLPtr blob)
 	{
-		if (blob_url && (size < PBMS_BLOB_URL_SIZE)) {
+		if (blob_url && (size < PBMS_BLOB_URL_SIZE) && (size > 16)) {
 			MSBlobURLRec ignored_blob;
 			char	buffer[PBMS_BLOB_URL_SIZE+1];
 			char	junk[5];
@@ -171,11 +171,12 @@ class PBMSBlobURLTools
 				blob = &ignored_blob;
 			
 			junk[0] = 0;
-			if (blob_url[size]) { // There is no guarantee that the URL will be null terminated.
-				memcpy(buffer, blob_url, size);
-				buffer[size] = 0;
-				blob_url = buffer;
-			}
+			
+			// There is no guarantee that the URL will be null terminated
+			// so always copy it into our own buffer to be safe.
+			memcpy(buffer, blob_url, size);
+			buffer[size] = 0;
+			blob_url = buffer;
 			
 			scanned = sscanf(blob_url, URL_FMT"%4s", 
 				&blob->bu_db_id, 
