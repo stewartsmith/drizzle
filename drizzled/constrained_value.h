@@ -37,12 +37,12 @@ template<class T>
 class constrained_value
 {
   T m_val;
-
-public:
+protected:
 
   virtual constrained_value<T>& set_value(const constrained_value<T>& rhs)= 0;
   virtual constrained_value<T>& set_value(T rhs)= 0;
 
+public:
   explicit constrained_value<T>(T in_value= 0) :
     m_val(in_value)
   { }
@@ -104,6 +104,7 @@ public:
     constrained_value<T>(in_value)
   { }
 
+protected:
   constrained_value<T>& set_value(const constrained_value<T>& rhs)
   {
     return set_value(rhs.getVal());

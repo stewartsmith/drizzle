@@ -438,7 +438,7 @@ public:
 
   bool update(Session *, set_var *var)
   {
-    value.set_value(var->save_result.uint32_t_value);
+    value= var->save_result.uint32_t_value;
     return false;
   }
 
@@ -449,7 +449,7 @@ public:
 
   void set_default(Session *, sql_var_t)
   {
-    value.set_value(default_value);
+    value= default_value;
   }
 
   unsigned char *value_ptr(Session *, sql_var_t, const LEX_STRING *)
