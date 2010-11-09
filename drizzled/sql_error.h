@@ -20,6 +20,7 @@
 #ifndef DRIZZLED_SQL_ERROR_H
 #define DRIZZLED_SQL_ERROR_H
 
+#include "drizzled/error.h"
 #include "drizzled/memory/sql_alloc.h"
 #include "drizzled/lex_string.h"
 

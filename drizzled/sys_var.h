@@ -31,6 +31,7 @@
 #include "drizzled/base.h"
 #include "drizzled/global_charset_info.h"
 #include "drizzled/lex_string.h"
+#include "drizzled/sql_error.h"
 
 namespace drizzled
 {
@@ -98,6 +99,7 @@ public:
     :
     name(name_arg),
     after_update(func),
+    option_limits(NULL),
     m_allow_empty_value(true)
   {}
   virtual ~sys_var() {}
@@ -228,16 +230,50 @@ public:
 class sys_var_uint64_t_ptr :public sys_var
 {
   uint64_t *value;
+  const uint64_t default_value;
+  bool have_default_value;
 public:
-  sys_var_uint64_t_ptr(const char *name_arg, uint64_t *value_ptr_arg)
-    :sys_var(name_arg),value(value_ptr_arg)
+  sys_var_uint64_t_ptr(const char *name_arg, uint64_t *value_ptr_arg) :
+    sys_var(name_arg),
+    value(value_ptr_arg),
+    default_value(0),
+    have_default_value(false)
   {  }
-  sys_var_uint64_t_ptr(const char *name_arg, uint64_t *value_ptr_arg,
-		       sys_after_update_func func)
-    :sys_var(name_arg,func), value(value_ptr_arg)
+
+  sys_var_uint64_t_ptr(const char *name_arg,
+                       uint64_t *value_ptr_arg,
+                       const uint64_t default_value_in) :
+    sys_var(name_arg),
+    value(value_ptr_arg),
+    default_value(default_value_in),
+    have_default_value(true)
   {  }
+
+  sys_var_uint64_t_ptr(const char *name_arg,
+                       uint64_t *value_ptr_arg,
+                       sys_after_update_func func) :
+    sys_var(name_arg,func),
+    value(value_ptr_arg),
+    default_value(0),
+    have_default_value(false)
+  {  }
+
+  sys_var_uint64_t_ptr(const char *name_arg,
+                       uint64_t *value_ptr_arg,
+                       sys_after_update_func func,
+                       const uint64_t default_value_in) :
+    sys_var(name_arg,func),
+    value(value_ptr_arg),
+    default_value(default_value_in),
+    have_default_value(true)
+  {  }
+
   bool update(Session *session, set_var *var);
   void set_default(Session *session, sql_var_t type);
+  virtual bool check_default(sql_var_t)
+  {
+    return (not have_default_value) && option_limits == 0;
+  }
   SHOW_TYPE show_type() { return SHOW_LONGLONG; }
   unsigned char *value_ptr(Session *, sql_var_t,
                            const LEX_STRING *)
@@ -402,7 +438,7 @@ public:
 
   bool update(Session *, set_var *var)
   {
-    value= var->save_result.uint32_t_value;
+    value.set_value(var->save_result.uint32_t_value);
     return false;
   }
 
@@ -413,7 +449,7 @@ public:
 
   void set_default(Session *, sql_var_t)
   {
-    value= default_value;
+    value.set_value(default_value);
   }
 
   unsigned char *value_ptr(Session *, sql_var_t, const LEX_STRING *)
