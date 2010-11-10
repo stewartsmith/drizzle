@@ -282,21 +282,10 @@ namespace plugin
 
   //----------
   /* Cleanup before freeing the Session object. */
-  void EventObserver::deregisterSchemaEvents(Session &session, const std::string &db)
+  void EventObserver::deregisterSchemaEvents(EventObserverList *observers)
   {
-    if (all_event_plugins.empty())
-      return;
-
-    EventObserverList *observers;
-
-    observers= session.getSchemaObservers(db);
-
-    if (observers) 
-    {
-      session.setSchemaObservers(db, NULL);
       delete observers;
-    }
-  }
+   }
 
   /*========================================================*/
   /*             Session Event Observer handling:           */
@@ -349,20 +338,9 @@ namespace plugin
 
   //----------
   /* Cleanup before freeing the session object. */
-  void EventObserver::deregisterSessionEvents(Session &session)
+  void EventObserver::deregisterSessionEvents(EventObserverList *observers)
   {
-    if (all_event_plugins.empty())
-      return;
-
-    EventObserverList *observers;
-
-    observers= session.getSessionObservers();
-
-    if (observers) 
-    {
-      session.setSessionObservers(NULL);
       delete observers;
-    }
   }
 
 
