@@ -70,6 +70,8 @@
 
 #include "drizzled/plugin/event_observer.h"
 
+#include "drizzled/message/cache.h"
+
 #include <google/protobuf/stubs/common.h>
 
 #if TIME_WITH_SYS_TIME
@@ -1639,7 +1641,9 @@ int init_server_components(module::Registry &plugins)
   }
 
   // Resize the definition Cache at startup
+  table::Cache::singleton().rehash(table_def_size);
   definition::Cache::singleton().rehash(table_def_size);
+  message::Cache::singleton().rehash(table_def_size);
 
   setup_fpu();
 
