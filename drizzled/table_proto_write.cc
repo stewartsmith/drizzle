@@ -96,6 +96,12 @@ static int fill_table_proto(message::Table &table_proto,
 
     message::Table::Field::FieldType parser_type= attribute->type();
 
+    if (field_arg->sql_type == DRIZZLE_TYPE_NULL)
+    {
+      my_error(ER_CANT_CREATE_TABLE, MYF(ME_BELL+ME_WAITTANG), table_proto.name().c_str(), -1);
+      return -1;
+    }
+
     attribute->set_type(message::internalFieldTypeToFieldProtoType(field_arg->sql_type));
 
     switch (attribute->type()) {
