@@ -23,11 +23,12 @@
 
 #include "drizzled/message/table.pb.h"
 #include "drizzled/message/schema.pb.h"
+#if 0
 #include "drizzled/message/transaction.pb.h"
+#include <google/protobuf/text_format.h>
+#endif
 
 #include <boost/shared_ptr.hpp>
-
-#include <google/protobuf/text_format.h>
 
 namespace drizzled {
 namespace message {
@@ -46,8 +47,10 @@ const std::string &type(drizzled::message::Table::ForeignKeyConstraint::ForeignK
 
 typedef boost::shared_ptr<drizzled::message::Schema> SchemaPtr;
 
+#if 0
 std::ostream& operator<<(std::ostream& output, const message::Transaction &message);
 std::ostream& operator<<(std::ostream& output, const message::Table &message);
+#endif
 
 
 } /* namespace message */

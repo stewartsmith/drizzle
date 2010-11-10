@@ -210,6 +210,7 @@ const std::string &type(drizzled::message::Table::ForeignKeyConstraint::ForeignK
   return MATCH_SIMPLE;
 }
 
+#if 0
 std::ostream& operator<<(std::ostream& output, const message::Transaction &message)
 { 
     std::string buffer;
@@ -229,6 +230,7 @@ std::ostream& operator<<(std::ostream& output, const message::Table &message)
 
   return output;
 }
+#endif
 
 
 } /* namespace message */
