@@ -35,7 +35,7 @@ public:
     int32_t index_iterator;
     int32_t index_part_iterator;
 
-    drizzled::message::Table table_proto;
+    drizzled::message::TablePtr table_proto;
     drizzled::message::Table::Index index;
     drizzled::message::Table::Index::IndexPart index_part;
 
@@ -43,7 +43,7 @@ public:
 
     const drizzled::message::Table& getTableProto()
     {
-      return table_proto;
+      return *table_proto;
     }
 
     const drizzled::message::Table::Index& getIndex()

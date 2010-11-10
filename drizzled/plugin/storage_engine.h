@@ -25,6 +25,7 @@
 #include <drizzled/plugin.h>
 #include <drizzled/handler_structs.h>
 #include <drizzled/message.h>
+#include <drizzled/message/cache.h>
 #include "drizzled/plugin/plugin.h"
 #include "drizzled/sql_string.h"
 #include "drizzled/identifier.h"
@@ -298,7 +299,7 @@ public:
 
   static int getTableDefinition(Session& session,
                                 const drizzled::TableIdentifier &identifier,
-                                message::Table &table_proto,
+                                message::TablePtr &table_proto,
                                 bool include_temporary_tables= true);
   static bool doesTableExist(Session &session,
                              const drizzled::TableIdentifier &identifier,

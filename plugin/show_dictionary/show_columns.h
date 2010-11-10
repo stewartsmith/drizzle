@@ -34,7 +34,7 @@ public:
     bool is_columns_primed;
 
     int32_t column_iterator;
-    drizzled::message::Table table_proto;
+    drizzled::message::TablePtr table_proto;
     drizzled::message::Table::Field column;
 
     bool nextColumnCore();
@@ -42,7 +42,7 @@ public:
 
     std::string table_name;
 
-    const drizzled::message::Table& getTableProto()
+    drizzled::message::TablePtr getTableProto()
     {
       return table_proto;
     }
