@@ -7345,7 +7345,7 @@ ha_innobase::check(
       is_ok = FALSE;
     }
 
-    if (user_session->killed) {
+    if (user_session->getKilled()) {
       break;
     }
 
@@ -7388,7 +7388,7 @@ ha_innobase::check(
   mutex_exit(&kernel_mutex);
 
   prebuilt->trx->op_info = "";
-  if (user_session->killed) {
+  if (user_session->getKilled()) {
     my_error(ER_QUERY_INTERRUPTED, MYF(0));
   }
 
