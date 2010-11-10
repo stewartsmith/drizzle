@@ -1363,13 +1363,13 @@ try
   N_("Append everything into outfile. See interactive help (\\h) also. Does not work in batch mode. Disable with --disable-tee. This option is disabled by default."))
   ("disable-tee", po::value<bool>()->default_value(false)->zero_tokens(), 
   N_("Disable outfile. See interactive help (\\h) also."))
-  ("connect_timeout", po::value<uint32_t>(&opt_connect_timeout)->default_value(0)->notifier(&check_timeout_value),
+  ("connect-timeout", po::value<uint32_t>(&opt_connect_timeout)->default_value(0)->notifier(&check_timeout_value),
   N_("Number of seconds before connection timeout."))
-  ("max_input_line", po::value<uint32_t>(&opt_max_input_line)->default_value(16*1024L*1024L)->notifier(&check_max_input_line),
+  ("max-input-line", po::value<uint32_t>(&opt_max_input_line)->default_value(16*1024L*1024L)->notifier(&check_max_input_line),
   N_("Max length of input line"))
-  ("select_limit", po::value<uint32_t>(&select_limit)->default_value(1000L),
+  ("select-limit", po::value<uint32_t>(&select_limit)->default_value(1000L),
   N_("Automatic limit for SELECT when using --safe-updates"))
-  ("max_join_size", po::value<uint32_t>(&max_join_size)->default_value(1000000L),
+  ("max-join-size", po::value<uint32_t>(&max_join_size)->default_value(1000000L),
   N_("Automatic limit for rows in a join when using --safe-updates"))
   ;
 
