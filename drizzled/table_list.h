@@ -527,6 +527,9 @@ public:
     return on_expr_dep_tables;
   }
 
+  void unlock_table_name();
+  void unlock_table_names(TableList *last_table= NULL);
+
 private:
 
   table_map dep_tables; ///< tables the table depends on

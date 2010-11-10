@@ -271,9 +271,9 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     if (! session->main_da.is_set())
       session->send_kill_message();
   }
-  if (session->killed == Session::KILL_QUERY || session->killed == Session::KILL_BAD_DATA)
+  if (session->getKilled() == Session::KILL_QUERY || session->getKilled() == Session::KILL_BAD_DATA)
   {
-    session->killed= Session::NOT_KILLED;
+    session->setKilled(Session::NOT_KILLED);
     session->setAbort(false);
   }
 

@@ -208,7 +208,7 @@ static int rr_quick(ReadRecord *info)
   int tmp;
   while ((tmp= info->select->quick->get_next()))
   {
-    if (info->session->killed)
+    if (info->session->getKilled())
     {
       my_error(ER_SERVER_SHUTDOWN, MYF(0));
       return 1;
@@ -272,7 +272,7 @@ int rr_sequential(ReadRecord *info)
   int tmp;
   while ((tmp= info->cursor->rnd_next(info->record)))
   {
-    if (info->session->killed)
+    if (info->session->getKilled())
     {
       info->session->send_kill_message();
       return 1;

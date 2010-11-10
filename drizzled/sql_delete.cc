@@ -57,7 +57,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
   ha_rows	deleted= 0;
   uint32_t usable_index= MAX_KEY;
   Select_Lex   *select_lex= &session->lex->select_lex;
-  Session::killed_state killed_status= Session::NOT_KILLED;
+  Session::killed_state_t killed_status= Session::NOT_KILLED;
 
   if (session->openTablesLock(table_list))
   {
@@ -252,7 +252,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
 
   table->mark_columns_needed_for_delete();
 
-  while (!(error=info.read_record(&info)) && !session->killed &&
+  while (!(error=info.read_record(&info)) && !session->getKilled() &&
 	 ! session->is_error())
   {
     // session->is_error() is tested to disallow delete row on error
@@ -285,7 +285,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
     else
       table->cursor->unlock_row();  // Row failed selection, release lock on it
   }
-  killed_status= session->killed;
+  killed_status= session->getKilled();
   if (killed_status != Session::NOT_KILLED || session->is_error())
     error= 1;					// Aborted
 

@@ -416,8 +416,7 @@ public:
   inline const char *getTableName()  const { return getShare()->getTableName(); }
 
   inline bool isDatabaseLowByteFirst() { return getShare()->db_low_byte_first; } /* Portable row format */
-  inline bool isNameLock() const { return getShare()->isNameLock(); }
-  inline bool isReplaceWithNameLock() { return getShare()->replace_with_name_lock; }
+  inline bool isNameLock() const { return open_placeholder; }
 
   uint32_t index_flags(uint32_t idx) const
   {

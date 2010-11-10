@@ -255,6 +255,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/lex_string.h \
 			      drizzled/lex_symbol.h \
 			      drizzled/lock.h \
+			      drizzled/locking/global.h \
 			      drizzled/lookup_symbol.h \
 			      drizzled/memory/multi_malloc.h \
 			      drizzled/memory/root.h \
@@ -649,7 +650,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/join_table.cc \
 				 drizzled/key.cc \
 				 drizzled/key_map.cc \
-				 drizzled/lock.cc \
+				 drizzled/locking/global.cc \
 				 drizzled/lookup_symbol.cc \
 				 drizzled/message.cc \
 				 drizzled/module/context.cc \

@@ -170,7 +170,8 @@ Session::Session(plugin::Client *client_arg) :
   first_successful_insert_id_in_prev_stmt(0),
   first_successful_insert_id_in_cur_stmt(0),
   limit_found_rows(0),
-  global_read_lock(0),
+  _global_read_lock(NONE),
+  _killed(NOT_KILLED),
   some_tables_deleted(false),
   no_errors(false),
   password(false),
@@ -197,7 +198,6 @@ Session::Session(plugin::Client *client_arg) :
   memory::init_sql_alloc(&main_mem_root, memory::ROOT_MIN_BLOCK_SIZE, 0);
   thread_stack= NULL;
   count_cuted_fields= CHECK_FIELD_ERROR_FOR_NULL;
-  killed= NOT_KILLED;
   col_access= 0;
   tmp_table= 0;
   used_tables= 0;
@@ -332,7 +332,7 @@ void Session::cleanup(void)
 {
   assert(cleanup_done == false);
 
-  killed= KILL_CONNECTION;
+  setKilled(KILL_CONNECTION);
 #ifdef ENABLE_WHEN_BINLOG_WILL_BE_ABLE_TO_PREPARE
   if (transaction.xid_state.xa_state == XA_PREPARED)
   {
@@ -358,7 +358,9 @@ void Session::cleanup(void)
   close_temporary_tables();
 
   if (global_read_lock)
-    unlock_global_read_lock(this);
+  {
+    unlockGlobalReadLock();
+  }
 
   cleanup_done= true;
 }
@@ -408,12 +410,12 @@ Session::~Session()
   LOCK_delete.unlock();
 }
 
-void Session::awake(Session::killed_state state_to_set)
+void Session::awake(Session::killed_state_t state_to_set)
 {
   this->checkSentry();
   safe_mutex_assert_owner(&LOCK_delete);
 
-  killed= state_to_set;
+  setKilled(state_to_set);
   if (state_to_set != Session::KILL_QUERY)
   {
     scheduler->killSession(this);
@@ -531,9 +533,9 @@ void Session::run()
 
   prepareForQueries();
 
-  while (! client->haveError() && killed != KILL_CONNECTION)
+  while (not client->haveError() && getKilled() != KILL_CONNECTION)
   {
-    if (! executeStatement())
+    if (not executeStatement())
       break;
   }
 
@@ -575,7 +577,7 @@ bool Session::schedule()
     DRIZZLE_CONNECTION_START(thread_id);
     char error_message_buff[DRIZZLE_ERRMSG_SIZE];
 
-    killed= Session::KILL_CONNECTION;
+    setKilled(Session::KILL_CONNECTION);
 
     status_var.aborted_connects++;
 
@@ -676,7 +678,7 @@ bool Session::executeStatement()
   if (client->readCommand(&l_packet, &packet_length) == false)
     return false;
 
-  if (killed == KILL_CONNECTION)
+  if (getKilled() == KILL_CONNECTION)
     return false;
 
   if (packet_length == 0)
@@ -762,9 +764,13 @@ bool Session::endTransaction(enum enum_mysql_completiontype completion)
   }
 
   if (result == false)
+  {
     my_error(killed_errno(), MYF(0));
+  }
   else if ((result == true) && do_release)
-    killed= Session::KILL_CONNECTION;
+  {
+    setKilled(Session::KILL_CONNECTION);
+  }
 
   return result;
 }
@@ -1606,14 +1612,14 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
   plugin_sessionvar_cleanup(this);
 
   /* If necessary, log any aborted or unauthorized connections */
-  if (killed || client->wasAborted())
+  if (getKilled() || client->wasAborted())
   {
     status_var.aborted_threads++;
   }
 
   if (client->wasAborted())
   {
-    if (! killed && variables.log_warnings > 1)
+    if (not getKilled() && variables.log_warnings > 1)
     {
       SecurityContext *sctx= &security_ctx;
 
@@ -1629,7 +1635,9 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
   /* Close out our connection to the client */
   if (should_lock)
     LOCK_thread_count.lock();
-  killed= Session::KILL_CONNECTION;
+
+  setKilled(Session::KILL_CONNECTION);
+
   if (client->isConnected())
   {
     if (errcode)
@@ -1639,8 +1647,11 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
     }
     client->close();
   }
+
   if (should_lock)
+  {
     (void) LOCK_thread_count.unlock();
+  }
 }
 
 void Session::reset_for_next_command()
@@ -1867,7 +1878,7 @@ void Session::close_thread_tables()
       handled either before writing a query log event (inside
       binlog_query()) or when preparing a pending event.
      */
-    mysql_unlock_tables(this, lock);
+    unlockTables(lock);
     lock= 0;
   }
   /*

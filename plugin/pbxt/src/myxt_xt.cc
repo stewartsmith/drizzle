@@ -663,7 +663,7 @@ static char *mx_get_length_and_data(STRUCT_TABLE *table, Field *field, char *des
 			memcpy(&data, ((char *) from)+packlength, sizeof(char*));
 			
 			//*len = ((Field_blob *) field)->get_length((byte *) from);
-			*len = ((Field_blob *) field)->get_length((byte *) from, packlength, GET_TABLE_SHARE(table)->db_low_byte_first);
+			*len = ((Field_blob *) field)->get_length((byte *) from, GET_TABLE_SHARE(table)->db_low_byte_first);
 			return data;
 		}
 #ifndef DRIZZLED
@@ -772,7 +772,7 @@ static void mx_set_length_and_data(STRUCT_TABLE *table, Field *field, char *dest
 			*/
 			xtWord4 packlength = ((Field_blob *) field)->pack_length_no_ptr();
 
-			((Field_blob *) field)->store_length((byte *) from, packlength, len, GET_TABLE_SHARE(table)->db_low_byte_first);
+			((Field_blob *) field)->store_length((byte *) from, len, GET_TABLE_SHARE(table)->db_low_byte_first);
 			memcpy_fixed(((char *) from)+packlength, &data, sizeof(char*));
 
 			if (data)
