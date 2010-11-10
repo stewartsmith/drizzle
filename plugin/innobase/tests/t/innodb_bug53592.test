@@ -2,7 +2,7 @@
 # table after fast alter table added unique key". The fix is to make
 # sure index number lookup should go through "index translation table".
 
---source include/have_innodb.inc
+--source include/have_innodb_plugin.inc
 
 # DRIZZLE NOTE: WE DON'T HAVE FAST INDEX CREATION TOGGLE.
 # I.E. THIS TEST IS WRONG
