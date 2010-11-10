@@ -398,11 +398,17 @@ Session::~Session()
   currentSession().release();
 
   plugin::Logging::postEndDo(this);
-  plugin::EventObserver::deregisterSessionEvents(*this); 
+  plugin::EventObserver::deregisterSessionEvents(session_event_observers); 
+  session_event_observers = NULL;
 
   // Free all schema event observers.
-  for (std::map<std::string, plugin::EventObserverList *>::iterator it=schema_event_observers.begin() ; it != schema_event_observers.end(); it++ )
-    plugin::EventObserver::deregisterSchemaEvents(*this, it->first);
+  std::map<std::string, plugin::EventObserverList *>::iterator it;
+  
+  for ( it= schema_event_observers.begin() ; it != schema_event_observers.end(); it++ )
+  {
+    plugin::EventObserver::deregisterSchemaEvents((*it).second);
+  }
+  schema_event_observers.clear();
 
   for (PropertyMap::iterator iter= life_properties.begin(); iter != life_properties.end(); iter++)
   {
