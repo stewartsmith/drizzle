@@ -5084,6 +5084,9 @@ ha_innobase::index_read(
     return(HA_ERR_CRASHED);
   }
 
+  if (UNIV_UNLIKELY(!prebuilt->index_usable)) {
+    return(HA_ERR_TABLE_DEF_CHANGED);
+  }
 
   /* Note that if the index for which the search template is built is not
   necessarily prebuilt->index, but can also be the clustered index */
@@ -5763,9 +5766,6 @@ create_table_def(
 
 		*buf_end = '\0';
 		my_error(ER_TABLE_EXISTS_ERROR, MYF(0), buf);
-	}
-	if (UNIV_UNLIKELY(!prebuilt->index_usable)) {
-		DBUG_RETURN(HA_ERR_TABLE_DEF_CHANGED);
 	}
 
 error_ret:
@@ -6690,6 +6690,11 @@ ha_innobase::records_in_range(
     goto func_exit;
   }
 
+  if (UNIV_UNLIKELY(!row_merge_is_index_usable(prebuilt->trx, index))) {
+    n_rows = HA_ERR_TABLE_DEF_CHANGED;
+    goto func_exit;
+  }
+
   heap = mem_heap_create(2 * (key->key_parts * sizeof(dfield_t)
             + sizeof(dtuple_t)));
 
@@ -6917,10 +6922,6 @@ innobase_get_mysql_key_number_for_index(
 		errmsg_printf(ERRMSG_LVL_ERROR,
                               "Cannot find index %s in InnoDB index "
 				"translation table.", index->name);
-	}
-	if (UNIV_UNLIKELY(!row_merge_is_index_usable(prebuilt->trx, index))) {
-		n_rows = HA_ERR_TABLE_DEF_CHANGED;
-		goto func_exit;
 	}
 
 	/* If we do not have an "index translation table", or not able
