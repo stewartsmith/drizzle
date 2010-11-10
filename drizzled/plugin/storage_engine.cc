@@ -370,7 +370,7 @@ bool plugin::StorageEngine::doDoesTableExist(Session&, const drizzled::TableIden
 */
 int StorageEngine::getTableDefinition(Session& session,
                                       const TableIdentifier &identifier,
-                                      message::Table &table_message,
+                                      message::TablePtr &table_message,
                                       bool include_temporary_tables)
 {
   int err= ENOENT;
@@ -380,7 +380,7 @@ int StorageEngine::getTableDefinition(Session& session,
     Table *table= session.find_temporary_table(identifier);
     if (table)
     {
-      table_message.CopyFrom(*table->getShare()->getTableProto());
+      table_message.reset(new message::Table(*table->getShare()->getTableProto()));
       return EEXIST;
     }
   }
@@ -388,17 +388,19 @@ int StorageEngine::getTableDefinition(Session& session,
   drizzled::message::TablePtr table_ptr;
   if ((table_ptr= drizzled::message::Cache::singleton().find(identifier)))
   {
-    table_message.CopyFrom(*(table_ptr.get()));
+    table_message= table_ptr;
   }
 
+  message::Table message;
   EngineVector::iterator iter=
     find_if(vector_of_engines.begin(), vector_of_engines.end(),
-            StorageEngineGetTableDefinition(session, identifier, table_message, err));
+            StorageEngineGetTableDefinition(session, identifier, message, err));
 
   if (iter == vector_of_engines.end())
   {
     return ENOENT;
   }
+  table_message.reset(new message::Table(message));
 
  drizzled::message::Cache::singleton().insert(identifier, table_message);
 
@@ -443,7 +445,7 @@ int StorageEngine::dropTable(Session& session,
 {
   int error= 0;
   int error_proto;
-  message::Table src_proto;
+  message::TablePtr src_proto;
   StorageEngine *engine;
 
   error_proto= StorageEngine::getTableDefinition(session, identifier, src_proto);
@@ -454,14 +456,17 @@ int StorageEngine::dropTable(Session& session,
 
     error_message.append(const_cast<TableIdentifier &>(identifier).getSQLPath());
     error_message.append(" : ");
-    error_message.append(src_proto.InitializationErrorString());
+    error_message.append(src_proto->InitializationErrorString());
 
     my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0), error_message.c_str());
 
     return ER_CORRUPT_TABLE_DEFINITION;
   }
 
-  engine= StorageEngine::findByName(session, src_proto.engine().name());
+  if (src_proto)
+    engine= StorageEngine::findByName(session, src_proto->engine().name());
+  else
+    engine= StorageEngine::findByName(session, "");
 
   if (not engine)
   {

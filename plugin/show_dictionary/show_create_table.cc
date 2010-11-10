@@ -63,7 +63,7 @@ bool ShowCreateTable::Generator::populate()
     return false;
 
   std::string create_sql;
-  transform_err= message::transformTableDefinitionToSql(table_message,
+  transform_err= message::transformTableDefinitionToSql(*table_message,
                                                         create_sql,
                                                         message::DRIZZLE,
                                                         false);
@@ -72,7 +72,7 @@ bool ShowCreateTable::Generator::populate()
     return false;
   }
 
-  push(table_message.name());
+  push(table_message->name());
   push(create_sql);
   is_primed= false;
 

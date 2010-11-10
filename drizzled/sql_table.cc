@@ -1979,12 +1979,12 @@ static bool create_table_wrapper(Session &session, const message::Table& create_
 {
   int protoerr= EEXIST;
   message::Table new_proto;
-  message::Table src_proto;
+  message::TablePtr src_proto;
 
   protoerr= plugin::StorageEngine::getTableDefinition(session,
                                                       src_table,
                                                       src_proto);
-  new_proto.CopyFrom(src_proto);
+  new_proto.CopyFrom(*src_proto);
 
   if (destination_identifier.isTmp())
   {

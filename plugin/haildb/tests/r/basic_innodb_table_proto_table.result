@@ -6,7 +6,7 @@ haildb_table_definitions	CREATE TABLE `haildb_table_definitions` (
   PRIMARY KEY (`table_name`) USING BTREE
 ) ENGINE=InnoDB COLLATE = binary
 select * from data_dictionary.haildb_table_definitions;
-table_name	message	table_name	message
+table_name	message
 use data_dictionary;
 show tables like 'haildb%';
 Tables_in_data_dictionary (haildb%)
