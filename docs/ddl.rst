@@ -1,5 +1,5 @@
 Data Description Language
-========
+=========================
 
 .. toctree::
    :maxdepth: 2

@@ -57,10 +57,9 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
 					/* Next/prev gives first/last */
     if (info->opt_flag & READ_CACHE_USED)
     {
-      reinit_io_cache(&info->rec_cache, internal::READ_CACHE,0,
-		      (bool) (info->lock_type != F_UNLCK),
-		      (bool) test(info->update & HA_STATE_ROW_CHANGED)
-		      );
+      info->rec_cache.reinit_io_cache(internal::READ_CACHE,0,
+                                      (bool) (info->lock_type != F_UNLCK),
+                                      (bool) test(info->update & HA_STATE_ROW_CHANGED));
     }
     info->update= ((info->update & HA_STATE_CHANGED) | HA_STATE_NEXT_FOUND |
 		   HA_STATE_PREV_FOUND);
@@ -78,7 +77,7 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
     if (info->opt_flag & WRITE_CACHE_USED)
     {
       info->opt_flag&= ~WRITE_CACHE_USED;
-      if ((error=end_io_cache(&info->rec_cache)))
+      if ((error= info->rec_cache.end_io_cache()))
 	break;
     }
     if (!(info->opt_flag &
@@ -86,11 +85,9 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
     {
       cache_size= (extra_arg ? *(uint32_t*) extra_arg :
 		   internal::my_default_record_cache_size);
-      if (!(init_io_cache(&info->rec_cache,info->dfile,
-			 (uint) min((uint32_t)info->state->data_file_length+1,
-				    cache_size),
-			  internal::READ_CACHE,0L,(bool) (info->lock_type != F_UNLCK),
-			  MYF(share->write_flag & MY_WAIT_IF_FULL))))
+      if (!(info->rec_cache.init_io_cache(info->dfile, (uint) min((uint32_t)info->state->data_file_length+1, cache_size),
+                                          internal::READ_CACHE,0L,(bool) (info->lock_type != F_UNLCK),
+                                          MYF(share->write_flag & MY_WAIT_IF_FULL))))
       {
 	info->opt_flag|=READ_CACHE_USED;
 	info->update&= ~HA_STATE_ROW_CHANGED;
@@ -102,7 +99,7 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
   case HA_EXTRA_REINIT_CACHE:
     if (info->opt_flag & READ_CACHE_USED)
     {
-      reinit_io_cache(&info->rec_cache,internal::READ_CACHE,info->nextpos,
+      info->rec_cache.reinit_io_cache(internal::READ_CACHE,info->nextpos,
 		      (bool) (info->lock_type != F_UNLCK),
 		      (bool) test(info->update & HA_STATE_ROW_CHANGED));
       info->update&= ~HA_STATE_ROW_CHANGED;
@@ -119,19 +116,19 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
 
     cache_size= (extra_arg ? *(uint32_t*) extra_arg :
 		 internal::my_default_record_cache_size);
-    if (!(info->opt_flag &
-	  (READ_CACHE_USED | WRITE_CACHE_USED | OPT_NO_ROWS)) &&
-	!share->state.header.uniques)
-      if (!(init_io_cache(&info->rec_cache,info->dfile, cache_size,
-			 internal::WRITE_CACHE,info->state->data_file_length,
-			  (bool) (info->lock_type != F_UNLCK),
-			  MYF(share->write_flag & MY_WAIT_IF_FULL))))
+    if (not (info->opt_flag & (READ_CACHE_USED | WRITE_CACHE_USED | OPT_NO_ROWS)) && !share->state.header.uniques)
+    {
+      if (not (info->rec_cache.init_io_cache(info->dfile, cache_size,
+                                             internal::WRITE_CACHE,info->state->data_file_length,
+                                             (bool) (info->lock_type != F_UNLCK),
+                                             MYF(share->write_flag & MY_WAIT_IF_FULL))))
       {
-	info->opt_flag|=WRITE_CACHE_USED;
-	info->update&= ~(HA_STATE_ROW_CHANGED |
+        info->opt_flag|=WRITE_CACHE_USED;
+        info->update&= ~(HA_STATE_ROW_CHANGED |
 			 HA_STATE_WRITE_AT_END |
 			 HA_STATE_EXTEND_BLOCK);
       }
+    }
     break;
   case HA_EXTRA_PREPARE_FOR_UPDATE:
     if (info->s->data_file_type != DYNAMIC_RECORD)
@@ -141,7 +138,7 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
     if (info->opt_flag & (READ_CACHE_USED | WRITE_CACHE_USED))
     {
       info->opt_flag&= ~(READ_CACHE_USED | WRITE_CACHE_USED);
-      error=end_io_cache(&info->rec_cache);
+      error= info->rec_cache.end_io_cache();
       /* Sergei will insert full text index caching here */
     }
 #if !defined(TARGET_OS_SOLARIS)
@@ -369,7 +366,7 @@ int mi_reset(MI_INFO *info)
   if (info->opt_flag & (READ_CACHE_USED | WRITE_CACHE_USED))
   {
     info->opt_flag&= ~(READ_CACHE_USED | WRITE_CACHE_USED);
-    error= end_io_cache(&info->rec_cache);
+    error= info->rec_cache.end_io_cache();
   }
   if (share->base.blobs)
     mi_alloc_rec_buff(info, SIZE_MAX, &info->rec_buff);

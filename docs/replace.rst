@@ -1,5 +1,5 @@
 Replacing Data
-========
+==============
 
 In Dizzle you can make use of REPLACE to insert a new record into a table or
 delete and insert a record in a table if a record matching the primary key

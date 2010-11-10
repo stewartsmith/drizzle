@@ -1,5 +1,5 @@
 Data Manipulation Language
-========
+==========================
 
 .. toctree::
    :maxdepth: 2

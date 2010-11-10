@@ -1,5 +1,5 @@
 Built in Column Types
-====================
+=====================
 
 ---------------------
 VARCHAR and VARBINARY

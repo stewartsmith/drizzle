@@ -30,6 +30,7 @@
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/iocache.h"
 #include "drizzled/transaction_services.h"
+#include "drizzled/filesort.h"
 
 #include <boost/dynamic_bitset.hpp>
 #include <list>
@@ -313,14 +314,14 @@ int mysql_update(Session *session, TableList *table_list,
       uint32_t         length= 0;
       SortField  *sortorder;
       ha_rows examined_rows;
+      FileSort filesort(*session);
 
-      table->sort.io_cache = new internal::IO_CACHE;
+      table->sort.io_cache= new internal::IO_CACHE;
 
       if (!(sortorder=make_unireg_sortorder(order, &length, NULL)) ||
-          (table->sort.found_records= filesort(session, table, sortorder, length,
-                                               select, limit, 1,
-                                               &examined_rows))
-          == HA_POS_ERROR)
+	  (table->sort.found_records= filesort.run(table, sortorder, length,
+						   select, limit, 1,
+						   examined_rows)) == HA_POS_ERROR)
       {
 	goto err;
       }
@@ -340,9 +341,10 @@ int mysql_update(Session *session, TableList *table_list,
       */
 
       internal::IO_CACHE tempfile;
-      if (open_cached_file(&tempfile, drizzle_tmpdir.c_str(),TEMP_PREFIX,
-			   DISK_BUFFER_SIZE, MYF(MY_WME)))
+      if (tempfile.open_cached_file(drizzle_tmpdir.c_str(),TEMP_PREFIX, DISK_BUFFER_SIZE, MYF(MY_WME)))
+      {
 	goto err;
+      }
 
       /* If quick select is used, initialize it before retrieving rows. */
       if (select && select->quick && select->quick->reset())
@@ -415,7 +417,7 @@ int mysql_update(Session *session, TableList *table_list,
 	select= new optimizer::SqlSelect;
 	select->head=table;
       }
-      if (reinit_io_cache(&tempfile,internal::READ_CACHE,0L,0,0))
+      if (tempfile.reinit_io_cache(internal::READ_CACHE,0L,0,0))
 	error=1;
       // Read row ptrs from this cursor
       memcpy(select->file, &tempfile, sizeof(tempfile));

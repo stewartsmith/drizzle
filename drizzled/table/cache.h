@@ -53,6 +53,7 @@ public:
   void removeSchema(const SchemaIdentifier &schema_identifier);
   bool removeTable(Session *session, TableIdentifier &identifier, uint32_t flags);
   void release(TableShare *share);
+  bool insert(table::Concurrent *arg);
 };
 
 CacheMap &getCache(void);

@@ -910,8 +910,8 @@ uint32_t pack_length_to_packflag(uint32_t type)
     case 1: return 1 << FIELDFLAG_PACK_SHIFT;
     case 2: assert(1);
     case 3: assert(1);
-    case 4: return f_settype((uint32_t) DRIZZLE_TYPE_LONG);
-    case 8: return f_settype((uint32_t) DRIZZLE_TYPE_LONGLONG);
+    case 4: return f_settype(DRIZZLE_TYPE_LONG);
+    case 8: return f_settype(DRIZZLE_TYPE_LONGLONG);
   }
   return 0;					// This shouldn't happen
 }

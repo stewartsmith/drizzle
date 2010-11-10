@@ -405,37 +405,6 @@ void notify_plugin_load(std::string in_plugin_load);
 */
 int mysql_tmpfile(const char *prefix);
 
-/**
-  Check the killed state of a connection
-
-  @details
-  In MySQL support for the KILL statement is cooperative. The KILL
-  statement only sets a "killed" flag. This function returns the value
-  of that flag.  A thread should check it often, especially inside
-  time-consuming loops, and gracefully abort the operation if it is
-  non-zero.
-
-  @param session  user thread connection handle
-  @retval 0  the connection is active
-  @retval 1  the connection has been killed
-*/
-int session_killed(const Session *session);
-
-
-const charset_info_st *session_charset(Session *session);
-
-/**
-  Invalidate the query cache for a given table.
-
-  @param session         user thread connection handle
-  @param key         databasename\\0tablename\\0
-  @param key_length  length of key in bytes, including the NUL bytes
-  @param using_trx   flag: TRUE if using transactions, FALSE otherwise
-*/
-void mysql_query_cache_invalidate4(Session *session,
-                                   const char *key, unsigned int key_length,
-                                   int using_trx);
-
 } /* namespace drizzled */
 
 #endif /* DRIZZLED_PLUGIN_H */

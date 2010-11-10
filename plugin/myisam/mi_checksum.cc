@@ -40,7 +40,7 @@ internal::ha_checksum mi_checksum(MI_INFO *info, const unsigned char *buf)
     }
     case FIELD_VARCHAR:
     {
-      uint32_t pack_length= HA_VARCHAR_PACKLENGTH(rec->length-1);
+      uint32_t pack_length= ha_varchar_packlength(rec->length-1);
       if (pack_length == 1)
         length= (ulong) *(unsigned char*) buf;
       else
