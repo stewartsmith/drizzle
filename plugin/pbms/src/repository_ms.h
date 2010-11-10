@@ -411,7 +411,7 @@ public:
 private:
 	bool			myRepoXLock;
 	/* The read file pool: */
-	MSRepoFile		*iFilePool;									/* A list of files currently not in use. */
+	MSRepoFile		*iFilePool;									/* A list of files currently not in use. THIS LIST DOESN'T COUNT AS A REFERENCE! YUK!!*/
 	CSLinkedList	iPoolFiles;									/* A list of all files in this pool */
 
 	CSPath *getRepoFilePath();

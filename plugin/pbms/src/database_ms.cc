@@ -529,8 +529,7 @@ MSRepoFile *MSDatabase::getRepoFileFromPool(uint32_t repo_id, bool missing_ok)
 	if (!file) {
 		file = repo->openRepoFile();
 		lock_(myRepostoryList);
-		repo->addRepoFile(file);
-		file->retain();
+		repo->addRepoFile(RETAIN(file));
 		unlock_(myRepostoryList);
 	}
 	return_(file);
@@ -545,11 +544,11 @@ void MSDatabase::returnRepoFileToPool(MSRepoFile *file)
 	push_(file);
 	if ((repo = file->myRepo)) {
 		if (repo->isRemovingFP) {
-			repo->removeRepoFile(RETAIN(file));
+			repo->removeRepoFile(file); // No retain expected
 			myRepostoryList->wakeup();
 		}
 		else
-			repo->returnRepoFile(RETAIN(file));
+			repo->returnRepoFile(file); // No retain expected
 		repo->release(); /* [++] here is the release.  */
 	}
 	release_(file);
