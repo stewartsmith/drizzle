@@ -1693,7 +1693,7 @@ int TableShare::open_table_def(Session& session, TableIdentifier &identifier)
   local_error= 1;
   error_given= 0;
 
-  message::Table table;
+  message::TablePtr table;
 
   local_error= plugin::StorageEngine::getTableDefinition(session, identifier, table);
 
@@ -1706,7 +1706,7 @@ int TableShare::open_table_def(Session& session, TableIdentifier &identifier)
     }
     else
     {
-      if (not table.IsInitialized())
+      if (not table->IsInitialized())
       {
         local_error= 4;
       }
@@ -1714,7 +1714,7 @@ int TableShare::open_table_def(Session& session, TableIdentifier &identifier)
     goto err_not_open;
   }
 
-  local_error= parse_table_proto(session, table);
+  local_error= parse_table_proto(session, *table);
 
   setTableCategory(TABLE_CATEGORY_USER);
 
