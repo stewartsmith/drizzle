@@ -2242,7 +2242,7 @@ innodb_log_group_home_dir: */
 
     errmsg_printf(ERRMSG_LVL_ERROR,
                   "InnoDB: invalid value "
-                  "innodb_file_format_check=%s",
+                  "innodb_change_buffering=%s",
                   vm["change-buffering"].as<string>().c_str());
     goto mem_free_and_error;
   }
@@ -9274,7 +9274,7 @@ innodb_old_blocks_pct_update(
 }
 
 /*************************************************************//**
-Check if it is a valid value of innodb_change_buffering.  This function is
+Check if it is a valid value of innodb_change_buffering. This function is
 registered as a callback with MySQL.
 @return 0 for valid innodb_change_buffering */
 static
@@ -9566,7 +9566,7 @@ static DRIZZLE_SYSVAR_STR(change_buffering, innobase_change_buffering,
   "Buffer changes to reduce random access: "
   "OFF, ON, none, inserts.",
   innodb_change_buffering_validate,
-  innodb_change_buffering_update, NULL);
+  innodb_change_buffering_update, "inserts"); 
 
 static DRIZZLE_SYSVAR_ULONG(read_ahead_threshold, srv_read_ahead_threshold,
   PLUGIN_VAR_RQCMDARG,
