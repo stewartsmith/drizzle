@@ -526,6 +526,7 @@ void CSPath::rename(const char *name)
 void CSPath::move(CSPath *to_path)
 {
 	enter_();
+	push_(to_path);
 	lock_(&iRename_lock); // protect against race condition when testing if the new name exists yet or not.	
 	if (to_path->exists())
 		CSException::throwFileError(CS_CONTEXT, to_path->getCString(), EEXIST);
@@ -533,6 +534,7 @@ void CSPath::move(CSPath *to_path)
 	/* Cannot move from TD to non-TD: */
 	sys_rename(iPath->getCString(), to_path->getCString());
 	unlock_(&iRename_lock);
+	release_(to_path);
 	exit_();
 }
 
