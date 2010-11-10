@@ -8335,14 +8335,14 @@ uint64_t InnobaseEngine::doGetNewTransactionId(Session *session)
   if (trx == NULL) 
   {
     trx = innobase_trx_allocate(session);
-  }
 
-  innobase_trx_init(session, trx);
+    innobase_trx_init(session, trx);
 
-  mutex_enter(&kernel_mutex);
-  trx->id= trx_sys_get_new_trx_id();
-  mutex_exit(&kernel_mutex);
-
+    mutex_enter(&kernel_mutex);
+    trx->id= trx_sys_get_new_trx_id();
+    mutex_exit(&kernel_mutex);
+  } 
+  
   uint64_t transaction_id= (ib_uint64_t) ut_conv_dulint_to_longlong(trx->id);
 
   return transaction_id;
