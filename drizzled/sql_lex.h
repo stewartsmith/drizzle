@@ -1006,13 +1006,16 @@ public:
   {
     return sum_expr_used;
   }
+
+  void start(Session *session);
+  void end();
+
 private: 
   bool cacheable;
   bool sum_expr_used;
 };
 
 extern void lex_start(Session *session);
-extern void lex_end(LEX *lex);
 extern void trim_whitespace(const CHARSET_INFO * const cs, LEX_STRING *str);
 extern bool is_lex_native_function(const LEX_STRING *name);
 

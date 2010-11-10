@@ -500,7 +500,7 @@ int TransactionServices::commitTransaction(Session *session, bool normal_transac
 
   if (resource_contexts.empty() == false)
   {
-    if (is_real_trans && wait_if_global_read_lock(session, 0, 0))
+    if (is_real_trans && session->wait_if_global_read_lock(false, false))
     {
       rollbackTransaction(session, normal_transaction);
       return 1;
@@ -560,7 +560,7 @@ int TransactionServices::commitTransaction(Session *session, bool normal_transac
     error= commitPhaseOne(session, normal_transaction) ? (cookie ? 2 : 1) : 0;
 end:
     if (is_real_trans)
-      start_waiting_global_read_lock(session);
+      session->startWaitingGlobalReadLock();
   }
   return error;
 }
@@ -707,7 +707,7 @@ int TransactionServices::rollbackTransaction(Session *session, bool normal_trans
    */
   if (is_real_trans &&
       session->transaction.all.hasModifiedNonTransData() &&
-      session->killed != Session::KILL_CONNECTION)
+      session->getKilled() != Session::KILL_CONNECTION)
   {
     push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                  ER_WARNING_NOT_COMPLETE_ROLLBACK,

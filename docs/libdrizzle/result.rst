@@ -2,7 +2,7 @@
 .. highlightlang:: c
 
 Result Object
-------------
+-------------
 
 .. index:: object: drizzle_result_st
 

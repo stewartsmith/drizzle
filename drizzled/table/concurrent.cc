@@ -63,7 +63,7 @@ bool Concurrent::reopen_name_locked_table(TableList* table_list, Session *sessio
 {
   safe_mutex_assert_owner(LOCK_open.native_handle());
 
-  if (session->killed)
+  if (session->getKilled())
     return true;
 
   TableIdentifier identifier(table_list->getSchemaName(), table_list->getTableName());
@@ -129,8 +129,10 @@ int table::Concurrent::open_unireg_entry(Session *session,
 retry:
   if (not (share= TableShare::getShareCreate(session,
                                              identifier,
-                                             &error)))
+                                             error)))
+  {
     return 1;
+  }
 
   while ((error= share->open_table_from_share(session,
                                               identifier,
@@ -177,7 +179,7 @@ retry:
       /* Free share and wait until it's released by all threads */
       TableShare::release(share);
 
-      if (!session->killed)
+      if (not session->getKilled())
       {
         drizzle_reset_errors(session, 1);         // Clear warnings
         session->clear_error();                 // Clear error message
@@ -192,6 +194,23 @@ retry:
   }
 
   return 0;
+}
+
+void table::Concurrent::release(void)
+{
+  // During an ALTER TABLE we could see the proto go away when the
+  // definition is pushed out of this table object. In this case we would
+  // not release from the cache because we were not in the cache. We just
+  // delete if this happens.
+  if (getShare()->getType() == message::Table::STANDARD)
+  {
+    TableShare::release(getMutableShare());
+  }
+  else
+  {
+    delete _share;
+  }
+  _share= NULL;
 }
 
 } /* namespace table */

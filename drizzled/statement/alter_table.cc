@@ -44,6 +44,8 @@
 
 #include "drizzled/transaction_services.h"
 
+#include "drizzled/filesort.h"
+
 #include "drizzled/message.h"
 
 using namespace std;
@@ -138,7 +140,7 @@ bool statement::AlterTable::execute()
     return true;
   }
 
-  if (not (need_start_waiting= ! wait_if_global_read_lock(session, 0, 1)))
+  if (not (need_start_waiting= not session->wait_if_global_read_lock(0, 1)))
   {
     return true;
   }
@@ -191,7 +193,8 @@ bool statement::AlterTable::execute()
      Release the protection against the global read lock and wake
      everyone, who might want to set a global read lock.
    */
-  start_waiting_global_read_lock(session);
+  session->startWaitingGlobalReadLock();
+
   return res;
 }
 
@@ -1198,7 +1201,7 @@ static bool internal_alter_table(Session *session,
     /* Close lock if this is a transactional table */
     if (session->lock)
     {
-      mysql_unlock_tables(session, session->lock);
+      session->unlockTables(session->lock);
       session->lock= 0;
     }
 
@@ -1441,7 +1444,7 @@ copy_data_between_tables(Session *session,
   /* 
    * LP Bug #552420 
    *
-   * Since open_temporary_table() doesn't invoke mysql_lock_tables(), we
+   * Since open_temporary_table() doesn't invoke lockTables(), we
    * don't get the usual automatic call to StorageEngine::startStatement(), so
    * we manually call it here...
    */
@@ -1494,6 +1497,7 @@ copy_data_between_tables(Session *session,
     }
     else
     {
+      FileSort filesort(*session);
       from->sort.io_cache= new internal::IO_CACHE;
 
       memset(&tables, 0, sizeof(tables));
@@ -1507,10 +1511,9 @@ copy_data_between_tables(Session *session,
           setup_order(session, session->lex->select_lex.ref_pointer_array,
                       &tables, fields, all_fields, order) ||
           !(sortorder= make_unireg_sortorder(order, &length, NULL)) ||
-          (from->sort.found_records= filesort(session, from, sortorder, length,
-                                              (optimizer::SqlSelect *) 0, HA_POS_ERROR,
-                                              1, &examined_rows)) ==
-          HA_POS_ERROR)
+          (from->sort.found_records= filesort.run(from, sortorder, length,
+                                                  (optimizer::SqlSelect *) 0, HA_POS_ERROR,
+                                                  1, examined_rows)) == HA_POS_ERROR)
       {
         goto err;
       }
@@ -1526,7 +1529,7 @@ copy_data_between_tables(Session *session,
   to->restoreRecordAsDefault();        // Create empty record
   while (!(error=info.read_record(&info)))
   {
-    if (session->killed)
+    if (session->getKilled())
     {
       session->send_kill_message();
       error= 1;

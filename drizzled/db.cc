@@ -101,7 +101,7 @@ bool mysql_create_db(Session *session, const message::Schema &schema_message, co
     has the global read lock and refuses the operation with
     ER_CANT_UPDATE_WITH_READLOCK if applicable.
   */
-  if (wait_if_global_read_lock(session, 0, 1))
+  if (session->wait_if_global_read_lock(false, true))
   {
     return false;
   }
@@ -141,7 +141,7 @@ bool mysql_create_db(Session *session, const message::Schema &schema_message, co
       session->my_ok(1);
     }
   }
-  start_waiting_global_read_lock(session);
+  session->startWaitingGlobalReadLock();
 
   return error;
 }
@@ -165,7 +165,7 @@ bool mysql_alter_db(Session *session, const message::Schema &schema_message)
     has the global read lock and refuses the operation with
     ER_CANT_UPDATE_WITH_READLOCK if applicable.
   */
-  if ((wait_if_global_read_lock(session, 0, 1)))
+  if ((session->wait_if_global_read_lock(false, true)))
     return false;
 
   bool success;
@@ -192,7 +192,7 @@ bool mysql_alter_db(Session *session, const message::Schema &schema_message)
       my_error(ER_ALTER_SCHEMA, MYF(0), schema_message.name().c_str());
     }
   }
-  start_waiting_global_read_lock(session);
+  session->startWaitingGlobalReadLock();
 
   return success;
 }
@@ -234,7 +234,7 @@ bool mysql_rm_db(Session *session, SchemaIdentifier &schema_identifier, const bo
     has the global read lock and refuses the operation with
     ER_CANT_UPDATE_WITH_READLOCK if applicable.
   */
-  if (wait_if_global_read_lock(session, 0, 1))
+  if (session->wait_if_global_read_lock(false, true))
   {
     return -1;
   }
@@ -343,7 +343,7 @@ exit:
       mysql_change_db_impl(session);
   }
 
-  start_waiting_global_read_lock(session);
+  session->startWaitingGlobalReadLock();
 
   return error;
 }
@@ -360,7 +360,7 @@ static int rm_table_part2(Session *session, TableList *tables)
 
   LOCK_open.lock(); /* Part 2 of rm a table */
 
-  if (lock_table_names_exclusively(session, tables))
+  if (session->lock_table_names_exclusively(tables))
   {
     LOCK_open.unlock();
     return 1;
@@ -384,7 +384,7 @@ static int rm_table_part2(Session *session, TableList *tables)
       continue;
     case -1:
       error= 1;
-      unlock_table_names(tables, NULL);
+      tables->unlock_table_names();
       LOCK_open.unlock();
       session->no_warnings_for_error= 0;
 
@@ -409,10 +409,10 @@ static int rm_table_part2(Session *session, TableList *tables)
       if ((locked_table= drop_locked_tables(session, identifier)))
         table->table= locked_table;
 
-      if (session->killed)
+      if (session->getKilled())
       {
         error= -1;
-        unlock_table_names(tables, NULL);
+        tables->unlock_table_names();
         LOCK_open.unlock();
         session->no_warnings_for_error= 0;
 
@@ -476,7 +476,7 @@ static int rm_table_part2(Session *session, TableList *tables)
   }
 
   LOCK_open.lock(); /* final bit in rm table lock */
-  unlock_table_names(tables, NULL);
+  tables->unlock_table_names();
   LOCK_open.unlock();
   session->no_warnings_for_error= 0;
 
@@ -526,7 +526,7 @@ static long drop_tables_via_filenames(Session *session,
     tot_list_next= &table_list->next_local;
     deleted++;
   }
-  if (session->killed)
+  if (session->getKilled())
     return -1;
 
   if (tot_list)

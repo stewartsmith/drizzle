@@ -81,7 +81,7 @@ int64_t BenchmarkFunction::val_int()
   null_value= false;
 
   uint64_t loop;
-  for (loop= 0 ; loop < loop_count && !session->killed; loop++)
+  for (loop= 0 ; loop < loop_count && not session->getKilled(); loop++)
   {
     switch (args[1]->result_type()) 
     {

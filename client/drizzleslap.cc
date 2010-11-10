@@ -103,7 +103,9 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 #include <boost/program_options.hpp>
+#include <drizzled/atomics.h>
 
+#define SLAP_NAME "drizzleslap"
 #define SLAP_VERSION "1.5"
 
 #define HUGE_STRING_LENGTH 8196
@@ -118,11 +120,6 @@ namespace po= boost::program_options;
 static char *shared_memory_base_name=0;
 #endif
 
-/* Global Thread counter */
-uint32_t thread_counter;
-boost::mutex counter_mutex;
-boost::condition_variable_any count_threshhold;
-
 client::Wakeup master_wakeup;
 
 /* Global Thread timer */
@@ -131,6 +128,9 @@ boost::mutex timer_alarm_mutex;
 boost::condition_variable_any timer_alarm_threshold;
 
 std::vector < std::string > primary_keys;
+
+drizzled::atomic<size_t> connection_count;
+drizzled::atomic<uint64_t> failed_update_for_transaction;
 
 static string host, 
   opt_password, 
@@ -301,6 +301,7 @@ limit_not_met:
     /*
       We have to execute differently based on query type. This should become a function.
     */
+    bool is_failed_update= false;
     if ((ptr->getType() == UPDATE_TYPE_REQUIRES_PREFIX) ||
         (ptr->getType() == SELECT_TYPE_REQUIRES_PREFIX))
     {
@@ -329,9 +330,20 @@ limit_not_met:
 
         if (run_query(con, &result, buffer, length))
         {
-          fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-                  internal::my_progname, (uint32_t)length, buffer, drizzle_con_error(&con));
-          abort();
+          if ((ptr->getType() == UPDATE_TYPE_REQUIRES_PREFIX) and commit_rate)
+          {
+            // Expand to check to see if Innodb, if so we should restart the
+            // transaction.  
+
+            is_failed_update= true;
+            failed_update_for_transaction.fetch_and_increment();
+          }
+          else
+          {
+            fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
+                    SLAP_NAME, (uint32_t)length, buffer, drizzle_con_error(&con));
+            abort();
+          }
         }
       }
     }
@@ -339,13 +351,24 @@ limit_not_met:
     {
       if (run_query(con, &result, ptr->getString(), ptr->getLength()))
       {
-        fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-                internal::my_progname, (uint32_t)ptr->getLength(), ptr->getString(), drizzle_con_error(&con));
-        abort();
+        if ((ptr->getType() == UPDATE_TYPE_REQUIRES_PREFIX) and commit_rate)
+        {
+          // Expand to check to see if Innodb, if so we should restart the
+          // transaction.
+
+          is_failed_update= true;
+          failed_update_for_transaction.fetch_and_increment();
+        }
+        else
+        {
+          fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
+                  SLAP_NAME, (uint32_t)ptr->getLength(), ptr->getString(), drizzle_con_error(&con));
+          abort();
+        }
       }
     }
 
-    if (not opt_only_print)
+    if (not opt_only_print and not is_failed_update)
     {
       while ((row = drizzle_row_next(&result)))
         counter++;
@@ -353,7 +376,7 @@ limit_not_met:
     }
     queries++;
 
-    if (commit_rate && (++commit_counter == commit_rate))
+    if (commit_rate && (++commit_counter == commit_rate) and not is_failed_update)
     {
       commit_counter= 0;
       run_query(con, NULL, "COMMIT", strlen("COMMIT"));
@@ -380,12 +403,6 @@ end:
     run_query(con, NULL, "COMMIT", strlen("COMMIT"));
 
   slap_close(con);
-
-  {
-    boost::mutex::scoped_lock scopedLock(counter_mutex);
-    thread_counter--;
-    count_threshhold.notify_one();
-  }
 
   delete ctx;
 }
@@ -568,7 +585,7 @@ int main(int argc, char **argv)
 
     if ( vm.count("help") || vm.count("info"))
     {
-      printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n",internal::my_progname, SLAP_VERSION,
+      printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n",SLAP_NAME, SLAP_VERSION,
           drizzle_version(),HOST_VENDOR,HOST_OS,HOST_CPU);
       puts("Copyright (C) 2008 Sun Microsystems");
       puts("This software comes with ABSOLUTELY NO WARRANTY. "
@@ -633,7 +650,7 @@ int main(int argc, char **argv)
 
     if ( vm.count("version") )
     {
-      printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n",internal::my_progname, SLAP_VERSION,
+      printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n",SLAP_NAME, SLAP_VERSION,
           drizzle_version(),HOST_VENDOR,HOST_OS,HOST_CPU);
       abort();
     }
@@ -764,15 +781,11 @@ void concurrency_loop(drizzle_con_st &con, uint32_t current, OptionString *eptr)
     if (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary)
       generate_primary_key_list(con, eptr);
 
-    if (commit_rate)
-      run_query(con, NULL, "SET AUTOCOMMIT=0", strlen("SET AUTOCOMMIT=0"));
-
     if (not pre_system.empty())
     {
       int ret= system(pre_system.c_str());
       assert(ret != -1);
     }
-       
 
     /*
       Pre statements are always run after all other logic so they can
@@ -1256,7 +1269,7 @@ process_options(void)
   {
     fprintf(stderr,
             "%s: Can't use --auto-generate-sql when create and query strings are specified!\n",
-            internal::my_progname);
+            SLAP_NAME);
     abort();
   }
 
@@ -1265,7 +1278,7 @@ process_options(void)
   {
     fprintf(stderr,
             "%s: Either auto-generate-sql-guid-primary or auto-generate-sql-add-autoincrement can be used!\n",
-            internal::my_progname);
+            SLAP_NAME);
     abort();
   }
 
@@ -1273,7 +1286,7 @@ process_options(void)
   {
     fprintf(stderr,
             "%s: Either auto-generate-sql-execute-number or number-of-queries can be used!\n",
-            internal::my_progname);
+            SLAP_NAME);
     abort();
   }
 
@@ -1293,7 +1306,7 @@ process_options(void)
                           S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) == -1)
       {
         fprintf(stderr,"%s: Could not open csv file: %sn\n",
-                internal::my_progname, opt_csv_str.c_str());
+                SLAP_NAME, opt_csv_str.c_str());
         abort();
       }
     }
@@ -1408,7 +1421,7 @@ process_options(void)
         {
           fprintf(stderr,
                   "%s: Can't perform key test without a primary key!\n",
-                  internal::my_progname);
+                  SLAP_NAME);
           abort();
         }
 
@@ -1444,7 +1457,7 @@ process_options(void)
         {
           fprintf(stderr,
                   "%s: Can't perform update test without a primary key!\n",
-                  internal::my_progname);
+                  SLAP_NAME);
           abort();
         }
 
@@ -1493,12 +1506,12 @@ process_options(void)
       if (not S_ISREG(sbuf.st_mode))
       {
         fprintf(stderr,"%s: Create file was not a regular file\n",
-                internal::my_progname);
+                SLAP_NAME);
         abort();
       }
       if ((data_file= open(create_string.c_str(), O_RDWR)) == -1)
       {
-        fprintf(stderr,"%s: Could not open create file\n", internal::my_progname);
+        fprintf(stderr,"%s: Could not open create file\n", SLAP_NAME);
         abort();
       }
       if ((uint64_t)(sbuf.st_size + 1) > SIZE_MAX)
@@ -1538,12 +1551,12 @@ process_options(void)
       if (not S_ISREG(sbuf.st_mode))
       {
         fprintf(stderr,"%s: User query supplied file was not a regular file\n",
-                internal::my_progname);
+                SLAP_NAME);
         abort();
       }
       if ((data_file= open(user_supplied_query.c_str(), O_RDWR)) == -1)
       {
-        fprintf(stderr,"%s: Could not open query supplied file\n", internal::my_progname);
+        fprintf(stderr,"%s: Could not open query supplied file\n", SLAP_NAME);
         abort();
       }
       if ((uint64_t)(sbuf.st_size + 1) > SIZE_MAX)
@@ -1579,12 +1592,12 @@ process_options(void)
     if (not S_ISREG(sbuf.st_mode))
     {
       fprintf(stderr,"%s: User query supplied file was not a regular file\n",
-              internal::my_progname);
+              SLAP_NAME);
       abort();
     }
     if ((data_file= open(user_supplied_pre_statements.c_str(), O_RDWR)) == -1)
     {
-      fprintf(stderr,"%s: Could not open query supplied file\n", internal::my_progname);
+      fprintf(stderr,"%s: Could not open query supplied file\n", SLAP_NAME);
       abort();
     }
     if ((uint64_t)(sbuf.st_size + 1) > SIZE_MAX)
@@ -1620,12 +1633,12 @@ process_options(void)
     if (not S_ISREG(sbuf.st_mode))
     {
       fprintf(stderr,"%s: User query supplied file was not a regular file\n",
-              internal::my_progname);
+              SLAP_NAME);
       abort();
     }
     if ((data_file= open(user_supplied_post_statements.c_str(), O_RDWR)) == -1)
     {
-      fprintf(stderr,"%s: Could not open query supplied file\n", internal::my_progname);
+      fprintf(stderr,"%s: Could not open query supplied file\n", SLAP_NAME);
       abort();
     }
 
@@ -1673,7 +1686,9 @@ static int run_query(drizzle_con_st &con, drizzle_result_st *result,
 
   if (opt_only_print)
   {
-    printf("%.*s;\n", len, query);
+    printf("/* CON: %lu */ %.*s;\n",
+           (size_t)drizzle_context(drizzle_con_drizzle(&con)),
+           len, query);
     return 0;
   }
 
@@ -1717,7 +1732,7 @@ generate_primary_key_list(drizzle_con_st &con, OptionString *engine_stmt)
   {
     if (run_query(con, &result, "SELECT id from t1", strlen("SELECT id from t1")))
     {
-      fprintf(stderr,"%s: Cannot select GUID primary keys. (%s)\n", internal::my_progname,
+      fprintf(stderr,"%s: Cannot select GUID primary keys. (%s)\n", SLAP_NAME,
               drizzle_con_error(&con));
       abort();
     }
@@ -1769,7 +1784,7 @@ static void create_schema(drizzle_con_st &con, const char *db, Statement *stmt, 
 
   if (run_query(con, NULL, query, len))
   {
-    fprintf(stderr,"%s: Cannot create schema %s : %s\n", internal::my_progname, db,
+    fprintf(stderr,"%s: Cannot create schema %s : %s\n", SLAP_NAME, db,
             drizzle_con_error(&con));
     abort();
   }
@@ -1780,7 +1795,9 @@ static void create_schema(drizzle_con_st &con, const char *db, Statement *stmt, 
 
   if (opt_only_print)
   {
-    printf("use %s;\n", db);
+    printf("/* CON: %lu */ use %s;\n",
+           (size_t)drizzle_context(drizzle_con_drizzle(&con)),
+           db);
   }
   else
   {
@@ -1793,7 +1810,7 @@ static void create_schema(drizzle_con_st &con, const char *db, Statement *stmt, 
     if (drizzle_select_db(&con,  &result, db, &ret) == NULL ||
         ret != DRIZZLE_RETURN_OK)
     {
-      fprintf(stderr,"%s: Cannot select schema '%s': %s\n",internal::my_progname, db,
+      fprintf(stderr,"%s: Cannot select schema '%s': %s\n",SLAP_NAME, db,
               ret == DRIZZLE_RETURN_ERROR_CODE ?
               drizzle_result_error(&result) : drizzle_con_error(&con));
       abort();
@@ -1808,7 +1825,7 @@ static void create_schema(drizzle_con_st &con, const char *db, Statement *stmt, 
                   engine_stmt->getString());
     if (run_query(con, NULL, query, len))
     {
-      fprintf(stderr,"%s: Cannot set default engine: %s\n", internal::my_progname,
+      fprintf(stderr,"%s: Cannot set default engine: %s\n", SLAP_NAME,
               drizzle_con_error(&con));
       abort();
     }
@@ -1833,7 +1850,7 @@ limit_not_met:
       if (run_query(con, NULL, buffer, strlen(buffer)))
       {
         fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-                internal::my_progname, (uint32_t)ptr->getLength(), ptr->getString(), drizzle_con_error(&con));
+                SLAP_NAME, (uint32_t)ptr->getLength(), ptr->getString(), drizzle_con_error(&con));
         if (not opt_ignore_sql_errors)
           abort();
       }
@@ -1844,7 +1861,7 @@ limit_not_met:
       if (run_query(con, NULL, ptr->getString(), ptr->getLength()))
       {
         fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-                internal::my_progname, (uint32_t)ptr->getLength(), ptr->getString(), drizzle_con_error(&con));
+                SLAP_NAME, (uint32_t)ptr->getLength(), ptr->getString(), drizzle_con_error(&con));
         if (not opt_ignore_sql_errors)
           abort();
       }
@@ -1874,7 +1891,7 @@ static void drop_schema(drizzle_con_st &con, const char *db)
   if (run_query(con, NULL, query, len))
   {
     fprintf(stderr,"%s: Cannot drop database '%s' ERROR : %s\n",
-            internal::my_progname, db, drizzle_con_error(&con));
+            SLAP_NAME, db, drizzle_con_error(&con));
     abort();
   }
 }
@@ -1886,7 +1903,7 @@ static void run_statements(drizzle_con_st &con, Statement *stmt)
     if (run_query(con, NULL, ptr->getString(), ptr->getLength()))
     {
       fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-              internal::my_progname, (uint32_t)ptr->getLength(), ptr->getString(), drizzle_con_error(&con));
+              SLAP_NAME, (uint32_t)ptr->getLength(), ptr->getString(), drizzle_con_error(&con));
       abort();
     }
   }
@@ -1917,16 +1934,17 @@ static void timer_thread()
   }
 }
 
+typedef boost::shared_ptr<boost::thread> Thread;
+typedef std::vector <Thread> Threads;
 static void run_scheduler(Stats *sptr, Statement **stmts, uint32_t concur, uint64_t limit)
 {
   uint32_t real_concurrency;
   struct timeval start_time, end_time;
 
-  {
-    boost::mutex::scoped_lock lock(counter_mutex);
+  Threads threads;
 
+  {
     OptionString *sql_type;
-    thread_counter= 0;
 
     master_wakeup.reset();
 
@@ -1963,8 +1981,10 @@ static void run_scheduler(Stats *sptr, Statement **stmts, uint32_t concur, uint6
           real_concurrency++;
 
           /* now you create the thread */
-          boost::thread new_thread(boost::bind(&run_task, con));
-          thread_counter++;
+          Thread thread;
+          thread= Thread(new boost::thread(boost::bind(&run_task, con)));
+          threads.push_back(thread);
+
         }
       }
     }
@@ -1980,7 +2000,9 @@ static void run_scheduler(Stats *sptr, Statement **stmts, uint32_t concur, uint6
         timer_alarm= true;
       }
 
-      boost::thread new_thread(&timer_thread);
+      Thread thread;
+      thread= Thread(new boost::thread(&timer_thread));
+      threads.push_back(thread);
     }
   }
 
@@ -1991,16 +2013,9 @@ static void run_scheduler(Stats *sptr, Statement **stmts, uint32_t concur, uint6
   /*
     We loop until we know that all children have cleaned up.
   */
+  for (Threads::iterator iter= threads.begin(); iter != threads.end(); iter++)
   {
-    boost::mutex::scoped_lock scopedLock(counter_mutex);
-    while (thread_counter)
-    {
-      boost::xtime xt; 
-      xtime_get(&xt, boost::TIME_UTC); 
-      xt.sec += 3;
-
-      count_threshhold.timed_wait(scopedLock, xt);
-    }
+    (*iter)->join();
   }
 
   gettimeofday(&end_time, NULL);
@@ -2197,6 +2212,11 @@ void print_conclusions(Conclusions &con)
          con.getUsers(), con.getRealUsers());
   printf("\tNumber of times test was run: %u\n", iterations);
   printf("\tAverage number of queries per client: %"PRIu64"\n", con.getAvgRows());
+
+  uint64_t temp_val= failed_update_for_transaction; 
+  if (temp_val)
+    printf("\tFailed number of updates %"PRIu64"\n", temp_val);
+
   printf("\n");
 }
 
@@ -2348,9 +2368,6 @@ void statement_cleanup(Statement *stmt)
 
 void slap_close(drizzle_con_st &con)
 {
-  if (opt_only_print)
-    return;
-
   drizzle_free(drizzle_con_drizzle(&con));
 }
 
@@ -2362,9 +2379,6 @@ void slap_connect(drizzle_con_st &con, bool connect_to_schema)
   drizzle_return_t ret;
   drizzle_st *drizzle;
 
-  if (opt_only_print)
-    return;
-
   if (opt_delayed_start)
     usleep(random()%opt_delayed_start);
 
@@ -2375,9 +2389,14 @@ void slap_connect(drizzle_con_st &con, bool connect_to_schema)
         connect_to_schema ? create_schema_string.c_str() : NULL,
         use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL) == NULL)
   {
-    fprintf(stderr,"%s: Error creating drizzle object\n", internal::my_progname);
+    fprintf(stderr,"%s: Error creating drizzle object\n", SLAP_NAME);
     abort();
   }
+
+  drizzle_set_context(drizzle, (void*)(connection_count.fetch_and_increment()));
+
+  if (opt_only_print)
+    return;
 
   for (uint32_t x= 0; x < 10; x++)
   {
@@ -2391,7 +2410,7 @@ void slap_connect(drizzle_con_st &con, bool connect_to_schema)
   }
   if (connect_error)
   {
-    fprintf(stderr,"%s: Error when connecting to server: %d %s\n", internal::my_progname,
+    fprintf(stderr,"%s: Error when connecting to server: %d %s\n", SLAP_NAME,
             ret, drizzle_con_error(&con));
     abort();
   }

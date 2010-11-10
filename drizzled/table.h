@@ -385,6 +385,8 @@ public:
   virtual bool hasShare() const= 0; /* Get rid of this long term */
   virtual void setShare(TableShare *new_share)= 0; /* Get rid of this long term */
 
+  virtual void release(void)= 0;
+
   uint32_t sizeKeys() { return getMutableShare()->sizeKeys(); }
   uint32_t sizeFields() { return getMutableShare()->sizeFields(); }
   uint32_t getRecordLength() const { return getShare()->getRecordLength(); }
@@ -414,8 +416,7 @@ public:
   inline const char *getTableName()  const { return getShare()->getTableName(); }
 
   inline bool isDatabaseLowByteFirst() { return getShare()->db_low_byte_first; } /* Portable row format */
-  inline bool isNameLock() const { return getShare()->isNameLock(); }
-  inline bool isReplaceWithNameLock() { return getShare()->replace_with_name_lock; }
+  inline bool isNameLock() const { return open_placeholder; }
 
   uint32_t index_flags(uint32_t idx) const
   {
@@ -444,6 +445,7 @@ public:
   void restoreRecord();
   void restoreRecordAsDefault();
   void emptyRecord();
+
 
   /* See if this can be blown away */
   inline uint32_t getDBStat () { return db_stat; }
@@ -629,13 +631,20 @@ public:
 
   friend std::ostream& operator<<(std::ostream& output, const Table &table)
   {
-    output << "Table:(";
-    output << table.getShare()->getSchemaName();
-    output << ", ";
-    output <<  table.getShare()->getTableName();
-    output << ", ";
-    output <<  table.getShare()->getTableTypeAsString();
-    output << ")";
+    if (table.getShare())
+    {
+      output << "Table:(";
+      output << table.getShare()->getSchemaName();
+      output << ", ";
+      output <<  table.getShare()->getTableName();
+      output << ", ";
+      output <<  table.getShare()->getTableTypeAsString();
+      output << ")";
+    }
+    else
+    {
+      output << "Table:(has no share)";
+    }
 
     return output;  // for multiple << operators.
   }
@@ -839,16 +848,6 @@ void change_byte(unsigned char *,uint,char,char);
 
 namespace optimizer { class SqlSelect; }
 
-ha_rows filesort(Session *session,
-                 Table *form,
-                 SortField *sortorder,
-                 uint32_t s_length,
-                 optimizer::SqlSelect *select,
-                 ha_rows max_rows,
-                 bool sort_positions,
-                 ha_rows *examined_rows);
-
-void filesort_free_buffers(Table *table, bool full);
 void change_double_for_sort(double nr,unsigned char *to);
 double my_double_round(double value, int64_t dec, bool dec_unsigned,
                        bool truncate);
@@ -858,7 +857,6 @@ void find_date(char *pos,uint32_t *vek,uint32_t flag);
 TYPELIB *convert_strings_to_array_type(char * *typelibs, char * *end);
 TYPELIB *typelib(memory::Root *mem_root, List<String> &strings);
 ulong get_form_pos(int file, unsigned char *head, TYPELIB *save_names);
-ulong next_io_size(ulong pos);
 void append_unescaped(String *res, const char *pos, uint32_t length);
 
 int rename_file_ext(const char * from,const char * to,const char * ext);

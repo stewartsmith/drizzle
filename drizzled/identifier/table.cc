@@ -29,6 +29,7 @@
 #include "drizzled/table.h"
 
 #include "drizzled/util/string.h"
+#include "drizzled/util/tablename_to_filename.h"
 
 #include <algorithm>
 #include <sstream>
@@ -45,8 +46,6 @@ extern std::string drizzle_tmpdir;
 extern pid_t current_pid;
 
 static const char hexchars[]= "0123456789abcdef";
-
-static bool tablename_to_filename(const string &from, string &to);
 
 /*
   Translate a cursor name to a table name (WL #1324).
@@ -207,7 +206,7 @@ size_t TableIdentifier::build_table_filename(std::string &in_path, const std::st
 {
   bool conversion_error= false;
 
-  conversion_error= tablename_to_filename(in_db, in_path);
+  conversion_error= util::tablename_to_filename(in_db, in_path);
   if (conversion_error)
   {
     errmsg_printf(ERRMSG_LVL_ERROR,
@@ -224,7 +223,7 @@ size_t TableIdentifier::build_table_filename(std::string &in_path, const std::st
   }
   else
   {
-    conversion_error= tablename_to_filename(in_table_name, in_path);
+    conversion_error= util::tablename_to_filename(in_table_name, in_path);
     if (conversion_error)
     {
       errmsg_printf(ERRMSG_LVL_ERROR,
@@ -235,57 +234,6 @@ size_t TableIdentifier::build_table_filename(std::string &in_path, const std::st
   }
    
   return in_path.length();
-}
-
-
-/*
-  Translate a table name to a cursor name (WL #1324).
-
-  SYNOPSIS
-    tablename_to_filename()
-      from                      The table name
-      to                OUT     The cursor name
-      to_length                 The size of the cursor name buffer.
-
-  RETURN
-    true if errors happen. false on success.
-*/
-static bool tablename_to_filename(const string &from, string &to)
-{
-  
-  string::const_iterator iter= from.begin();
-  for (; iter != from.end(); ++iter)
-  {
-    if (isascii(*iter))
-    {
-      if ((isdigit(*iter)) ||
-          (islower(*iter)) ||
-          (*iter == '_') ||
-          (*iter == ' ') ||
-          (*iter == '-'))
-      {
-        to.push_back(*iter);
-        continue;
-      }
-
-      if (isupper(*iter))
-      {
-        to.push_back(tolower(*iter));
-        continue;
-      }
-    }
-   
-    /* We need to escape this char in a way that can be reversed */
-    to.push_back('@');
-    to.push_back(hexchars[(*iter >> 4) & 15]);
-    to.push_back(hexchars[(*iter) & 15]);
-  }
-
-  if (internal::check_if_legal_tablename(to.c_str()))
-  {
-    to.append("@@@");
-  }
-  return false;
 }
 
 TableIdentifier::TableIdentifier(const drizzled::Table &table) :

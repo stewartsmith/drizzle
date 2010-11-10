@@ -170,7 +170,8 @@ Session::Session(plugin::Client *client_arg) :
   first_successful_insert_id_in_prev_stmt(0),
   first_successful_insert_id_in_cur_stmt(0),
   limit_found_rows(0),
-  global_read_lock(0),
+  _global_read_lock(NONE),
+  _killed(NOT_KILLED),
   some_tables_deleted(false),
   no_errors(false),
   password(false),
@@ -197,7 +198,6 @@ Session::Session(plugin::Client *client_arg) :
   memory::init_sql_alloc(&main_mem_root, memory::ROOT_MIN_BLOCK_SIZE, 0);
   thread_stack= NULL;
   count_cuted_fields= CHECK_FIELD_ERROR_FOR_NULL;
-  killed= NOT_KILLED;
   col_access= 0;
   tmp_table= 0;
   used_tables= 0;
@@ -332,7 +332,7 @@ void Session::cleanup(void)
 {
   assert(cleanup_done == false);
 
-  killed= KILL_CONNECTION;
+  setKilled(KILL_CONNECTION);
 #ifdef ENABLE_WHEN_BINLOG_WILL_BE_ABLE_TO_PREPARE
   if (transaction.xid_state.xa_state == XA_PREPARED)
   {
@@ -358,7 +358,9 @@ void Session::cleanup(void)
   close_temporary_tables();
 
   if (global_read_lock)
-    unlock_global_read_lock(this);
+  {
+    unlockGlobalReadLock();
+  }
 
   cleanup_done= true;
 }
@@ -408,12 +410,12 @@ Session::~Session()
   LOCK_delete.unlock();
 }
 
-void Session::awake(Session::killed_state state_to_set)
+void Session::awake(Session::killed_state_t state_to_set)
 {
   this->checkSentry();
   safe_mutex_assert_owner(&LOCK_delete);
 
-  killed= state_to_set;
+  setKilled(state_to_set);
   if (state_to_set != Session::KILL_QUERY)
   {
     scheduler->killSession(this);
@@ -531,9 +533,9 @@ void Session::run()
 
   prepareForQueries();
 
-  while (! client->haveError() && killed != KILL_CONNECTION)
+  while (not client->haveError() && getKilled() != KILL_CONNECTION)
   {
-    if (! executeStatement())
+    if (not executeStatement())
       break;
   }
 
@@ -575,7 +577,7 @@ bool Session::schedule()
     DRIZZLE_CONNECTION_START(thread_id);
     char error_message_buff[DRIZZLE_ERRMSG_SIZE];
 
-    killed= Session::KILL_CONNECTION;
+    setKilled(Session::KILL_CONNECTION);
 
     status_var.aborted_connects++;
 
@@ -618,7 +620,7 @@ void Session::exit_cond(const char* old_msg)
 
 bool Session::authenticate()
 {
-  lex_start(this);
+  lex->start(this);
   if (client->authenticate())
     return false;
 
@@ -676,7 +678,7 @@ bool Session::executeStatement()
   if (client->readCommand(&l_packet, &packet_length) == false)
     return false;
 
-  if (killed == KILL_CONNECTION)
+  if (getKilled() == KILL_CONNECTION)
     return false;
 
   if (packet_length == 0)
@@ -762,9 +764,13 @@ bool Session::endTransaction(enum enum_mysql_completiontype completion)
   }
 
   if (result == false)
+  {
     my_error(killed_errno(), MYF(0));
+  }
   else if ((result == true) && do_release)
-    killed= Session::KILL_CONNECTION;
+  {
+    setKilled(Session::KILL_CONNECTION);
+  }
 
   return result;
 }
@@ -923,7 +929,7 @@ void select_to_file::send_error(uint32_t errcode,const char *err)
   my_message(errcode, err, MYF(0));
   if (file > 0)
   {
-    (void) end_io_cache(cache);
+    (void) cache->end_io_cache();
     (void) internal::my_close(file, MYF(0));
     (void) internal::my_delete(path.file_string().c_str(), MYF(0));		// Delete file on error
     file= -1;
@@ -933,7 +939,7 @@ void select_to_file::send_error(uint32_t errcode,const char *err)
 
 bool select_to_file::send_eof()
 {
-  int error= test(end_io_cache(cache));
+  int error= test(cache->end_io_cache());
   if (internal::my_close(file, MYF(MY_WME)))
     error= 1;
   if (!error)
@@ -955,7 +961,7 @@ void select_to_file::cleanup()
   /* In case of error send_eof() may be not called: close the file here. */
   if (file >= 0)
   {
-    (void) end_io_cache(cache);
+    (void) cache->end_io_cache();
     (void) internal::my_close(file, MYF(0));
     file= -1;
   }
@@ -1053,7 +1059,7 @@ static int create_file(Session *session,
   if ((file= internal::my_create(target_path.file_string().c_str(), 0666, O_WRONLY|O_EXCL, MYF(MY_WME))) < 0)
     return file;
   (void) fchmod(file, 0666);			// Because of umask()
-  if (init_io_cache(cache, file, 0L, internal::WRITE_CACHE, 0L, 1, MYF(MY_WME)))
+  if (cache->init_io_cache(file, 0L, internal::WRITE_CACHE, 0L, 1, MYF(MY_WME)))
   {
     internal::my_close(file, MYF(0));
     internal::my_delete(target_path.file_string().c_str(), MYF(0));  // Delete file on error, it was just created
@@ -1520,7 +1526,7 @@ bool select_exists_subselect::send_data(List<Item> &)
 void Session::end_statement()
 {
   /* Cleanup SQL processing state to reuse this statement in next query. */
-  lex_end(lex);
+  lex->end();
   query_cache_key= ""; // reset the cache key
   resetResultsetMessage();
 }
@@ -1585,25 +1591,6 @@ bool Session::set_db(const std::string &new_db)
 }
 
 
-
-
-/**
-  Check the killed state of a user thread
-  @param session  user thread
-  @retval 0 the user thread is active
-  @retval 1 the user thread has been killed
-*/
-int session_killed(const Session *session)
-{
-  return(session->killed);
-}
-
-
-const struct charset_info_st *session_charset(Session *session)
-{
-  return(session->charset());
-}
-
 /**
   Mark transaction to rollback and mark error as fatal to a sub-statement.
 
@@ -1625,14 +1612,14 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
   plugin_sessionvar_cleanup(this);
 
   /* If necessary, log any aborted or unauthorized connections */
-  if (killed || client->wasAborted())
+  if (getKilled() || client->wasAborted())
   {
     status_var.aborted_threads++;
   }
 
   if (client->wasAborted())
   {
-    if (! killed && variables.log_warnings > 1)
+    if (not getKilled() && variables.log_warnings > 1)
     {
       SecurityContext *sctx= &security_ctx;
 
@@ -1648,7 +1635,9 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
   /* Close out our connection to the client */
   if (should_lock)
     LOCK_thread_count.lock();
-  killed= Session::KILL_CONNECTION;
+
+  setKilled(Session::KILL_CONNECTION);
+
   if (client->isConnected())
   {
     if (errcode)
@@ -1658,8 +1647,11 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
     }
     client->close();
   }
+
   if (should_lock)
+  {
     (void) LOCK_thread_count.unlock();
+  }
 }
 
 void Session::reset_for_next_command()
@@ -1886,7 +1878,7 @@ void Session::close_thread_tables()
       handled either before writing a query log event (inside
       binlog_query()) or when preparing a pending event.
      */
-    mysql_unlock_tables(this, lock);
+    unlockTables(lock);
     lock= 0;
   }
   /*

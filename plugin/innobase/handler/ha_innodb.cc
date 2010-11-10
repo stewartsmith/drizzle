@@ -1224,7 +1224,7 @@ innobase_get_charset(
 /*=================*/
   void* mysql_session)  /*!< in: MySQL thread handle */
 {
-  return session_charset(static_cast<Session*>(mysql_session));
+  return static_cast<Session*>(mysql_session)->charset();
 }
 
 extern "C" UNIV_INTERN
@@ -1752,7 +1752,7 @@ trx_is_interrupted(
 /*===============*/
   trx_t*  trx)  /*!< in: transaction */
 {
-  return(trx && trx->mysql_thd && session_killed((Session*) trx->mysql_thd));
+  return(trx && trx->mysql_thd && static_cast<Session*>(trx->mysql_thd)->getKilled());
 }
 
 /**********************************************************************//**
@@ -2732,11 +2732,11 @@ InnobaseEngine::close_connection(
 
   ut_a(trx);
 
-  assert(session->killed != Session::NOT_KILLED ||
+  assert(session->getKilled() != Session::NOT_KILLED ||
          trx->conc_state == TRX_NOT_STARTED);
 
   /* Warn if rolling back some things... */
-  if (session->killed != Session::NOT_KILLED &&
+  if (session->getKilled() != Session::NOT_KILLED &&
       trx->conc_state != TRX_NOT_STARTED &&
       trx->undo_no.low > 0 &&
       global_system_variables.log_warnings)
@@ -7352,7 +7352,7 @@ ha_innobase::check(
       is_ok = FALSE;
     }
 
-    if (session_killed(user_session)) {
+    if (user_session->getKilled()) {
       break;
     }
 
@@ -7395,7 +7395,7 @@ ha_innobase::check(
   mutex_exit(&kernel_mutex);
 
   prebuilt->trx->op_info = "";
-  if (session_killed(user_session)) {
+  if (user_session->getKilled()) {
     my_error(ER_QUERY_INTERRUPTED, MYF(0));
   }
 
@@ -8881,7 +8881,11 @@ uint64_t InnobaseEngine::doGetNewTransactionId(Session *session)
   trx->id= trx_sys_get_new_trx_id();
   mutex_exit(&kernel_mutex);
 
-  return (ib_uint64_t) ut_conv_dulint_to_longlong(trx->id);
+  uint64_t transaction_id= (ib_uint64_t) ut_conv_dulint_to_longlong(trx->id);
+
+  trx_free_for_mysql(trx);
+
+  return transaction_id;
 }
 
 /*******************************************************************//**

@@ -1650,12 +1650,11 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
   }
 
   table->reginfo.lock_type=TL_WRITE;
-  if (! ((*lock)= mysql_lock_tables(session, &table, 1,
-                                    DRIZZLE_LOCK_IGNORE_FLUSH, &not_used)))
+  if (! ((*lock)= session->lockTables(&table, 1, DRIZZLE_LOCK_IGNORE_FLUSH, &not_used)))
   {
     if (*lock)
     {
-      mysql_unlock_tables(session, *lock);
+      session->unlockTables(*lock);
       *lock= 0;
     }
 
@@ -1787,7 +1786,7 @@ bool select_create::send_eof()
     table->cursor->extra(HA_EXTRA_WRITE_CANNOT_REPLACE);
     if (m_plock)
     {
-      mysql_unlock_tables(session, *m_plock);
+      session->unlockTables(*m_plock);
       *m_plock= NULL;
       m_plock= NULL;
     }
@@ -1817,7 +1816,7 @@ void select_create::abort()
 
   if (m_plock)
   {
-    mysql_unlock_tables(session, *m_plock);
+    session->unlockTables(*m_plock);
     *m_plock= NULL;
     m_plock= NULL;
   }

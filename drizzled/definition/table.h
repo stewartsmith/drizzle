@@ -52,6 +52,7 @@ const static std::string STANDARD_STRING("STANDARD");
 const static std::string TEMPORARY_STRING("TEMPORARY");
 const static std::string INTERNAL_STRING("INTERNAL");
 const static std::string FUNCTION_STRING("FUNCTION");
+const static std::string NO_PROTOBUFFER_AVAILABLE("NO PROTOBUFFER AVAILABLE");
 
 namespace plugin
 {
@@ -172,7 +173,7 @@ public:
 
 private:
   memory::Root mem_root;
-public:
+
   void *alloc_root(size_t arg)
   {
     return mem_root.alloc_root(arg);
@@ -188,7 +189,6 @@ public:
     return &mem_root;
   }
 
-private:
   std::vector<std::string> _keynames;
 
   void addKeyName(std::string arg)
@@ -294,6 +294,7 @@ public:
     return private_key_for_cache.size();
   }
 
+private:
   void setPath(char *str_arg, uint32_t size_arg)
   {
     path.str= str_arg;
@@ -305,6 +306,7 @@ public:
     normalized_path.str= str_arg;
     normalized_path.length= size_arg;
   }
+public:
 
   const char *getTableName() const
   {
@@ -399,17 +401,24 @@ public:
 
   const std::string &getTableTypeAsString() const
   {
-    switch (table_proto->type())
+    if (table_proto)
     {
-    default:
-    case message::Table::STANDARD:
-      return STANDARD_STRING;
-    case message::Table::TEMPORARY:
-      return TEMPORARY_STRING;
-    case message::Table::INTERNAL:
-      return INTERNAL_STRING;
-    case message::Table::FUNCTION:
-      return FUNCTION_STRING;
+      switch (table_proto->type())
+      {
+      default:
+      case message::Table::STANDARD:
+        return STANDARD_STRING;
+      case message::Table::TEMPORARY:
+        return TEMPORARY_STRING;
+      case message::Table::INTERNAL:
+        return INTERNAL_STRING;
+      case message::Table::FUNCTION:
+        return FUNCTION_STRING;
+      }
+    }
+    else
+    {
+      return NO_PROTOBUFFER_AVAILABLE;
     }
   }
 
@@ -565,24 +574,6 @@ public:
   uint8_t blob_ptr_size;			/* 4 or 8 */
   bool db_low_byte_first;		/* Portable row format */
 
-private:
-  bool name_lock;
-public:
-  bool isNameLock() const
-  {
-    return name_lock;
-  }
-
-  bool replace_with_name_lock;
-
-private:
-  bool waiting_on_cond;                 /* Protection against free */
-public:
-  bool isWaitingOnCondition()
-  {
-    return waiting_on_cond;
-  }
-
   /*
     Set of keys in use, implemented as a Bitmap.
     Excludes keys disabled by ALTER Table ... DISABLE KEYS.
@@ -647,7 +638,7 @@ public:
   static TableSharePtr getShare(TableIdentifier &identifier);
   static TableSharePtr getShareCreate(Session *session, 
                                       TableIdentifier &identifier,
-                                      int *error);
+                                      int &error);
 
   friend std::ostream& operator<<(std::ostream& output, const TableShare &share)
   {

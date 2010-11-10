@@ -1,5 +1,5 @@
 CREATE TABLE
-===========
+============
 
 CREATE [TEMPORARY] TABLE [IF NOT EXISTS] table_name
     (create_definition, ...)

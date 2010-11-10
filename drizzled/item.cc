@@ -1192,10 +1192,6 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool)
   case DRIZZLE_TYPE_VARCHAR:
     return make_string_field(table);
   case DRIZZLE_TYPE_BLOB:
-    if (this->type() == Item::TYPE_HOLDER)
-      field= new Field_blob(max_length, maybe_null, name, collation.collation,
-                            1);
-    else
       field= new Field_blob(max_length, maybe_null, name, collation.collation);
     break;					// Blob handled outside of case
   }

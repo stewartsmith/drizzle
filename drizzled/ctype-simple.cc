@@ -679,14 +679,24 @@ cnv:
 **	 1 if matched with wildcard
 */
 
+inline static int likeconv(const charset_info_st *cs, const char c) 
+{
 #ifdef LIKE_CMP_TOUPPER
-#define likeconv(s,A) (unsigned char) my_toupper(s,A)
+  return (unsigned char) my_toupper(cs, c);
 #else
-#define likeconv(s,A) (unsigned char) (s)->sort_order[(unsigned char) (A)]
-#endif
+  return cs->sort_order[(unsigned char)c];
+#endif    
+}
 
-#define INC_PTR(cs,A,B) (A)++
 
+inline static const char* inc_ptr(const charset_info_st *cs, const char *str, const char *str_end)
+{
+  // (Strange this macro have been used. If str_end would actually
+  // have been used it would have made sense. /Gustaf)
+  (void)cs;
+  (void)str_end;
+  return str++; 
+}
 
 int my_wildcmp_8bit(const CHARSET_INFO * const cs,
 		    const char *str,const char *str_end,
@@ -714,7 +724,7 @@ int my_wildcmp_8bit(const CHARSET_INFO * const cs,
       {
 	if (str == str_end)			/* Skip one char if possible */
 	  return(result);
-	INC_PTR(cs,str,str_end);
+	inc_ptr(cs,str,str_end);
       } while (++wildstr < wildend && *wildstr == w_one);
       if (wildstr == wildend)
 	break;
@@ -733,7 +743,7 @@ int my_wildcmp_8bit(const CHARSET_INFO * const cs,
 	{
 	  if (str == str_end)
 	    return(-1);
-	  INC_PTR(cs,str,str_end);
+	  inc_ptr(cs,str,str_end);
 	  continue;
 	}
 	break;					/* Not a wild character */
@@ -746,7 +756,7 @@ int my_wildcmp_8bit(const CHARSET_INFO * const cs,
       if ((cmp= *wildstr) == escape && wildstr+1 != wildend)
 	cmp= *++wildstr;
 
-      INC_PTR(cs,wildstr,wildend);	/* This is compared trough cmp */
+      inc_ptr(cs,wildstr,wildend);	/* This is compared trough cmp */
       cmp=likeconv(cs,cmp);
       do
       {
@@ -976,7 +986,10 @@ typedef struct
 
 #define PLANE_SIZE	0x100
 #define PLANE_NUM	0x100
-#define PLANE_NUMBER(x)	(((x)>>8) % PLANE_NUM)
+inline static int plane_number(uint16_t x)
+{
+  return ((x >> 8) % PLANE_NUM);
+}
 
 static int pcmp(const void * f, const void * s)
 {
@@ -1010,7 +1023,7 @@ static bool create_fromuni(CHARSET_INFO *cs, cs_alloc_func alloc)
   for (i=0; i< 0x100; i++)
   {
     uint16_t wc=cs->tab_to_uni[i];
-    int pl= PLANE_NUMBER(wc);
+    int pl= plane_number(wc);
 
     if (wc || !i)
     {

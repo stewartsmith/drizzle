@@ -27,6 +27,7 @@
 #include "drizzled/current_session.h"
 #include "drizzled/internal/my_sys.h"
 
+#include "drizzled/util/tablename_to_filename.h"
 #include "drizzled/util/backtrace.h"
 
 #include <algorithm>
@@ -43,16 +44,12 @@ namespace drizzled
 extern string drizzle_tmpdir;
 extern pid_t current_pid;
 
-static const char hexchars[]= "0123456789abcdef";
-
-static bool tablename_to_filename(const string &from, string &to);
-
 static size_t build_schema_filename(string &path, const string &db)
 {
   path.append("");
   bool conversion_error= false;
 
-  conversion_error= tablename_to_filename(db, path);
+  conversion_error= util::tablename_to_filename(db, path);
   if (conversion_error)
   {
     errmsg_printf(ERRMSG_LVL_ERROR,
@@ -62,56 +59,6 @@ static size_t build_schema_filename(string &path, const string &db)
   }
 
   return path.length();
-}
-
-
-/*
-  Translate a table name to a cursor name (WL #1324).
-
-  SYNOPSIS
-    tablename_to_filename()
-      from                      The table name
-      to                OUT     The cursor name
-
-  RETURN
-    true if errors happen. false on success.
-*/
-static bool tablename_to_filename(const string &from, string &to)
-{
-  
-  string::const_iterator iter= from.begin();
-  for (; iter != from.end(); ++iter)
-  {
-    if (isascii(*iter))
-    {
-      if ((isdigit(*iter)) ||
-          (islower(*iter)) ||
-          (*iter == '_') ||
-          (*iter == ' ') ||
-          (*iter == '-'))
-      {
-        to.push_back(*iter);
-        continue;
-      }
-
-      if (isupper(*iter))
-      {
-        to.push_back(tolower(*iter));
-        continue;
-      }
-    }
-   
-    /* We need to escape this char in a way that can be reversed */
-    to.push_back('@');
-    to.push_back(hexchars[(*iter >> 4) & 15]);
-    to.push_back(hexchars[(*iter) & 15]);
-  }
-
-  if (internal::check_if_legal_tablename(to.c_str()))
-  {
-    to.append("@@@");
-  }
-  return false;
 }
 
 SchemaIdentifier::SchemaIdentifier(const std::string &db_arg) :

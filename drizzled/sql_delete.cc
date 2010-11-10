@@ -30,6 +30,7 @@
 #include "drizzled/records.h"
 #include "drizzled/internal/iocache.h"
 #include "drizzled/transaction_services.h"
+#include "drizzled/filesort.h"
 
 namespace drizzled
 {
@@ -56,7 +57,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
   ha_rows	deleted= 0;
   uint32_t usable_index= MAX_KEY;
   Select_Lex   *select_lex= &session->lex->select_lex;
-  Session::killed_state killed_status= Session::NOT_KILLED;
+  Session::killed_state_t killed_status= Session::NOT_KILLED;
 
   if (session->openTablesLock(table_list))
   {
@@ -204,15 +205,14 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
 
     if (usable_index == MAX_KEY)
     {
+      FileSort filesort(*session);
       table->sort.io_cache= new internal::IO_CACHE;
 
 
-      if (!(sortorder= make_unireg_sortorder((Order*) order->first,
-                                             &length, NULL)) ||
-	  (table->sort.found_records = filesort(session, table, sortorder, length,
-                                                select, HA_POS_ERROR, 1,
-                                                &examined_rows))
-	  == HA_POS_ERROR)
+      if (not (sortorder= make_unireg_sortorder((Order*) order->first, &length, NULL)) ||
+	  (table->sort.found_records = filesort.run(table, sortorder, length,
+						    select, HA_POS_ERROR, 1,
+						    examined_rows)) == HA_POS_ERROR)
       {
         delete select;
         free_underlaid_joins(session, &session->lex->select_lex);
@@ -252,7 +252,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
 
   table->mark_columns_needed_for_delete();
 
-  while (!(error=info.read_record(&info)) && !session->killed &&
+  while (!(error=info.read_record(&info)) && !session->getKilled() &&
 	 ! session->is_error())
   {
     // session->is_error() is tested to disallow delete row on error
@@ -285,7 +285,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
     else
       table->cursor->unlock_row();  // Row failed selection, release lock on it
   }
-  killed_status= session->killed;
+  killed_status= session->getKilled();
   if (killed_status != Session::NOT_KILLED || session->is_error())
     error= 1;					// Aborted
 
