@@ -90,7 +90,27 @@ public:
 
   virtual query_id_t getQueryId()  const= 0;
 
+private:
   Table *derived_tables;
+public:
+
+
+  Table *getDerivedTables()
+  {
+    return derived_tables;
+  }
+
+  void setDerivedTables(Table *arg)
+  {
+    derived_tables= arg;
+  }
+
+  void clearDerivedTables()
+  {
+    if (derived_tables)
+      derived_tables= NULL; // They should all be invalid by this point
+  }
+
   /*
     During a MySQL session, one can lock tables in two modes: automatic
     or manual. In automatic mode all necessary tables are locked just before

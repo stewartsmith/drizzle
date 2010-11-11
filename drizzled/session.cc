@@ -1844,8 +1844,7 @@ void Session::mark_used_tables_as_free_for_reuse(Table *table)
 */
 void Session::close_thread_tables()
 {
-  if (derived_tables)
-    derived_tables= NULL; // They should all be invalid by this point
+  clearDerivedTables();
 
   /*
     Mark all temporary tables used by this statement as free for reuse.
