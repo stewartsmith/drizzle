@@ -1,0 +1,28 @@
+SET @var="CREATE SCHEMA foomine";
+EXECUTE @var CONCURRENT;
+# YEs, this is a hack. Remember that foomine may or may not be around since
+# it happens at the same time.
+select sleep(2);
+show schemas LIKE "foomine";
+SET @var="DROP SCHEMA foomine";
+EXECUTE @var CONCURRENT;
+
+# Now lets see what the processlist shows.
+SET @var="SELECT SLEEP(3)";
+EXECUTE @var CONCURRENT;
+SELECT USER,INFO FROM DATA_DICTIONARY.PROCESSLIST;
+
+# Wait till we know the above is done (this will be replaced with broadcast() in the future)
+EXECUTE @var;
+
+# Check that a concurrent session cannot create one of itself, but can call
+# execute.
+SET @var="EXECUTE \"SELECT SLEEP(3)\"";
+EXECUTE @var CONCURRENT;
+SELECT USER,INFO FROM DATA_DICTIONARY.PROCESSLIST;
+
+# Wait till everything closes out
+EXECUTE @var;
+SET @var="EXECUTE \"SELECT SLEEP(3)\" CONCURRENT";
+EXECUTE @var CONCURRENT;
+SELECT USER,INFO FROM DATA_DICTIONARY.PROCESSLIST;

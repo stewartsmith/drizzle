@@ -68,6 +68,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/definitions.h \
 			      drizzled/diagnostics_area.h \
 			      drizzled/discrete_interval.h \
+			      drizzled/display.h \
 			      drizzled/drizzle_time.h \
 			      drizzled/drizzled.h \
 			      drizzled/dtcollation.h \
@@ -493,6 +494,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/definition/table.cc \
 				 drizzled/diagnostics_area.cc \
 				 drizzled/drizzle_time.cc \
+				 drizzled/display.cc \
 				 drizzled/drizzled.cc \
 				 drizzled/dtcollation.cc \
 				 drizzled/errmsg_print.cc \

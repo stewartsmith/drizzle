@@ -33,12 +33,13 @@ namespace statement
 class Execute : public Statement
 {
   bool is_quiet;
+  bool is_concurrent;
   drizzled::execute_string_t to_execute;
 
   bool parseVariable(void);
 
 public:
-  Execute(Session *in_session, drizzled::execute_string_t, bool is_quiet_arg);
+  Execute(Session *in_session, drizzled::execute_string_t, bool is_quiet_arg, bool is_concurrent);
 
 
   bool execute();

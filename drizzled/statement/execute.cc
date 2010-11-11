@@ -25,6 +25,7 @@
 #include "drizzled/user_var_entry.h"
 #include "drizzled/plugin/listen.h"
 #include "drizzled/plugin/client.h"
+#include "drizzled/plugin/null_client.h"
 
 namespace drizzled
 {
@@ -34,9 +35,13 @@ void mysql_parse(drizzled::Session *session, const char *inBuf, uint32_t length)
 namespace statement
 {
 
-Execute::Execute(Session *in_session, drizzled::execute_string_t to_execute_arg, bool is_quiet_arg) :
+Execute::Execute(Session *in_session,
+                 drizzled::execute_string_t to_execute_arg,
+                 bool is_quiet_arg,
+                 bool is_concurrent_arg) :
   Statement(in_session),
   is_quiet(is_quiet_arg),
+  is_concurrent(is_concurrent_arg),
   to_execute(to_execute_arg)
 {
 }
@@ -77,27 +82,55 @@ bool statement::Execute::execute()
     }
   }
 
-  if (is_quiet)
+  if (is_concurrent)
   {
-    plugin::Client *temp= getSession()->getClient();
-    plugin::Client *null_client= plugin::Listen::getNullClient();
 
-    getSession()->setClient(null_client);
-
-    mysql_parse(getSession(), to_execute.str, to_execute.length);
-
-    getSession()->setClient(temp);
-    if (getSession()->is_error())
+    if (getSession()->isConcurrentExecuteAllowed())
     {
-      getSession()->clear_error(true);
-      getSession()->my_ok();
+      plugin::NullClient *null_client= new plugin::NullClient;
+      null_client->pushSQL(std::string(to_execute.str, to_execute.length));
+      Session *new_session= new Session(null_client);
+
+      new_session->setConcurrentExecute(false);
+
+      // Overwrite the context in the next session, with what we have in our
+      // session. Eventually we will allow someone to change the effective
+      // user.
+      new_session->getSecurityContext()= getSession()->getSecurityContext();
+
+      if (new_session->schedule())
+        Session::unlink(new_session);
     }
-    null_client->close();
-    delete null_client;
+    else
+    {
+      my_error(ER_WRONG_ARGUMENTS, MYF(0), "A Concurrent Execution Session can not launch another session.");
+      return false;
+    }
   }
-  else
+  else 
   {
-    mysql_parse(getSession(), to_execute.str, to_execute.length);
+    if (is_quiet)
+    {
+      plugin::Client *temp= getSession()->getClient();
+      plugin::Client *null_client= plugin::Listen::getNullClient();
+
+      getSession()->setClient(null_client);
+
+      mysql_parse(getSession(), to_execute.str, to_execute.length);
+
+      getSession()->setClient(temp);
+      if (getSession()->is_error())
+      {
+        getSession()->clear_error(true);
+        getSession()->my_ok();
+      }
+      null_client->close();
+      delete null_client;
+    }
+    else
+    {
+      mysql_parse(getSession(), to_execute.str, to_execute.length);
+    }
   }
 
 

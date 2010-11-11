@@ -219,7 +219,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   }
   case COM_QUERY:
   {
-    if (! session->readAndStoreQuery(packet, packet_length))
+    if (not session->readAndStoreQuery(packet, packet_length))
       break;					// fatal error is set
     DRIZZLE_QUERY_START(session->query.c_str(),
                         session->thread_id,

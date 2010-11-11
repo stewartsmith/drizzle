@@ -830,6 +830,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         start_transaction_opts opt_chain opt_release
         union_opt select_derived_init option_type2
         opt_status
+        opt_concurrent
 
 %type <m_fk_option>
         delete_option
@@ -4473,10 +4474,10 @@ opt_temporary:
   */
 
 execute:
-       EXECUTE_SYM execute_var_or_string opt_status
+       EXECUTE_SYM execute_var_or_string opt_status opt_concurrent
        {
           LEX *lex= Lex;
-          statement::Execute *statement= new(std::nothrow) statement::Execute(YYSession, $2, $3);
+          statement::Execute *statement= new(std::nothrow) statement::Execute(YYSession, $2, $3, $4);
           lex->statement= statement;
           if (lex->statement == NULL)
             DRIZZLE_YYABORT;
@@ -4497,6 +4498,11 @@ execute_var_or_string:
 opt_status:
           /* empty */ { $$= 0; }
         | WITH NO_SYM RETURN_SYM { $$= 1; }
+        ;
+
+opt_concurrent:
+          /* empty */ { $$= 0; }
+        | CONCURRENT { $$= 1; }
         ;
 
 /*
