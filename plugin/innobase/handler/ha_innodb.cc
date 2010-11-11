@@ -9668,7 +9668,7 @@ static DRIZZLE_SYSVAR_STR(change_buffering, innobase_change_buffering,
   "Buffer changes to reduce random access: "
   "OFF, ON, inserting, deleting, changing or purging..",
   innodb_change_buffering_validate,
-  innodb_change_buffering_update, NULL);
+  innodb_change_buffering_update, "all");
 
 static DRIZZLE_SYSVAR_ULONG(read_ahead_threshold, srv_read_ahead_threshold,
   PLUGIN_VAR_RQCMDARG,
