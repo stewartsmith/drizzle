@@ -3266,6 +3266,9 @@ srv_purge_thread(
 		srv_sync_log_buffer_in_background();
 	}
 
+	/* Decrement the active count. */
+	srv_suspend_thread();
+
 	/* Free the thread local memory. */
 	thr_local_free(os_thread_get_curr_id());
 
