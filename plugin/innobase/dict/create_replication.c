@@ -40,6 +40,7 @@
 #include "trx0roll.h"
 #include "usr0sess.h"
 #include "ut0vec.h"
+#include "row0merge.h"
 
 UNIV_INTERN ulint dict_create_sys_replication_log(void)
 {
@@ -100,20 +101,55 @@ UNIV_INTERN ulint dict_create_sys_replication_log(void)
   return(error);
 }
 
+extern dtuple_t* row_get_prebuilt_insert_row(row_prebuilt_t*	prebuilt);
+
 ulint insert_replication_message(const char *message, size_t size, trx_t *trx)
 {
   ulint error;
-  pars_info_t *info= pars_info_create();
+  row_prebuilt_t*	prebuilt;	/* For reading rows */
+  dict_table_t *table;
+  que_thr_t*	thr;
 
-  pars_info_add_dulint_literal(info, "ID", trx->id);
-  pars_info_add_literal(info, "MESSAGE", message, size, DATA_FIXBINARY, DATA_ENGLISH);
+  table = dict_table_get("SYS_REPLICATION_LOG",TRUE);
 
-  error= que_eval_sql(info,
-                      "PROCEDURE P () IS\n"
-                      "BEGIN\n"
-                      "INSERT INTO SYS_REPLICATION_LOG VALUES (:ID, :MESSAGE);\n"
-                      "END;\n",
-                      FALSE, trx);
+  prebuilt = row_create_prebuilt(table);
+
+  row_update_prebuilt_trx(prebuilt, trx);
+  dtuple_t* dtuple= row_get_prebuilt_insert_row(prebuilt);
+  dfield_t *dfield;
+  dfield = dtuple_get_nth_field(dtuple, 0);
+  // NOTE: INNODB PARSER ONLY CREATES 4 BYTE INTEGERS!!!!! WE CAST AWAY
+  // THE HIGHER ONES.
+  //
+  // THIS IS A BUG.
+  ulint trx_id = *(ulint*)(&trx->id.low);
+  dfield_set_data(dfield, &trx_id, 4);
+  dfield = dtuple_get_nth_field(dtuple, 1);
+  dfield_set_data(dfield, message, size);
+
+  ins_node_t*	node		= prebuilt->ins_node;
+
+  thr = que_fork_get_first_thr(prebuilt->ins_graph);
+
+  if (prebuilt->sql_stat_start) {
+    node->state = INS_NODE_SET_IX_LOCK;
+    prebuilt->sql_stat_start = FALSE;
+  } else {
+    node->state = INS_NODE_ALLOC_ROW_ID;
+  }
+
+  que_thr_move_to_run_state_for_mysql(thr, trx);
+
+//run_again:
+  thr->run_node = node;
+  thr->prev_node = node;
+
+  row_ins_step(thr);
+
+  error = trx->error_state;
+
+  que_thr_stop_for_mysql_no_error(thr, trx);
+  row_prebuilt_free(prebuilt, FALSE);
 
   return error;
 }
