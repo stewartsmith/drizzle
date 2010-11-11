@@ -1580,22 +1580,6 @@ public:
   bool doesTableMessageExist(const TableIdentifier &identifier);
   bool renameTableMessage(const TableIdentifier &from, const TableIdentifier &to);
 
-  void doGetTableNames(CachedDirectory &directory,
-                       const SchemaIdentifier &schema_identifier,
-                       std::set<std::string>& set_of_names);
-  void doGetTableNames(const SchemaIdentifier &schema_identifier,
-                       std::set<std::string>& set_of_names);
-
-  void doGetTableIdentifiers(CachedDirectory &directory,
-                             const SchemaIdentifier &schema_identifier,
-                             TableIdentifiers &set_of_identifiers);
-  void doGetTableIdentifiers(const SchemaIdentifier &schema_identifier,
-                             TableIdentifiers &set_of_identifiers);
-
-  int doGetTableDefinition(const drizzled::TableIdentifier &identifier,
-                           message::Table &table_proto);
-  bool doDoesTableExist(const drizzled::TableIdentifier &identifier);
-
   /* Reopen operations */
   bool reopen_tables(bool get_locks, bool mark_share_as_old);
   bool close_cached_tables(TableList *tables, bool wait_for_refresh, bool wait_for_placeholders);

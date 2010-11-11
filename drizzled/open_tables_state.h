@@ -48,7 +48,14 @@ public:
     or for an intermediate table used in ALTER.
     XXX Why are internal temporary tables added to this list?
   */
+private:
   Table *temporary_tables;
+public:
+
+  Table *getTemporaryTables()
+  {
+    return temporary_tables;
+  }
 
   /**
     Mark all temporary tables which were used by the current statement or
@@ -123,6 +130,23 @@ public:
     current_tablenr(0)
   { }
   virtual ~Open_tables_state() {}
+
+  void doGetTableNames(CachedDirectory &directory,
+                       const SchemaIdentifier &schema_identifier,
+                       std::set<std::string>& set_of_names);
+  void doGetTableNames(const SchemaIdentifier &schema_identifier,
+                       std::set<std::string>& set_of_names);
+
+  void doGetTableIdentifiers(CachedDirectory &directory,
+                             const SchemaIdentifier &schema_identifier,
+                             TableIdentifiers &set_of_identifiers);
+  void doGetTableIdentifiers(const SchemaIdentifier &schema_identifier,
+                             TableIdentifiers &set_of_identifiers);
+
+  int doGetTableDefinition(const drizzled::TableIdentifier &identifier,
+                           message::Table &table_proto);
+  bool doDoesTableExist(const drizzled::TableIdentifier &identifier);
+
 
   Open_tables_state(uint64_t version_arg);
 };

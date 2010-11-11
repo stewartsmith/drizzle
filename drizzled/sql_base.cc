@@ -517,10 +517,10 @@ TableList* unique_table(TableList *table, TableList *table_list,
 }
 
 
-void Session::doGetTableNames(const SchemaIdentifier &schema_identifier,
-                              std::set<std::string>& set_of_names)
+void Open_tables_state::doGetTableNames(const SchemaIdentifier &schema_identifier,
+                                        std::set<std::string>& set_of_names)
 {
-  for (Table *table= temporary_tables ; table ; table= table->getNext())
+  for (Table *table= getTemporaryTables() ; table ; table= table->getNext())
   {
     if (schema_identifier.compare(table->getShare()->getSchemaName()))
     {
@@ -529,17 +529,17 @@ void Session::doGetTableNames(const SchemaIdentifier &schema_identifier,
   }
 }
 
-void Session::doGetTableNames(CachedDirectory &,
-			      const SchemaIdentifier &schema_identifier,
-                              std::set<std::string> &set_of_names)
+void Open_tables_state::doGetTableNames(CachedDirectory &,
+                                        const SchemaIdentifier &schema_identifier,
+                                        std::set<std::string> &set_of_names)
 {
   doGetTableNames(schema_identifier, set_of_names);
 }
 
-void Session::doGetTableIdentifiers(const SchemaIdentifier &schema_identifier,
-                                    TableIdentifiers &set_of_identifiers)
+void Open_tables_state::doGetTableIdentifiers(const SchemaIdentifier &schema_identifier,
+                                              TableIdentifiers &set_of_identifiers)
 {
-  for (Table *table= temporary_tables ; table ; table= table->getNext())
+  for (Table *table= getTemporaryTables() ; table ; table= table->getNext())
   {
     if (schema_identifier.compare(table->getShare()->getSchemaName()))
     {
@@ -550,16 +550,16 @@ void Session::doGetTableIdentifiers(const SchemaIdentifier &schema_identifier,
   }
 }
 
-void Session::doGetTableIdentifiers(CachedDirectory &,
+void Open_tables_state::doGetTableIdentifiers(CachedDirectory &,
                                     const SchemaIdentifier &schema_identifier,
                                     TableIdentifiers &set_of_identifiers)
 {
   doGetTableIdentifiers(schema_identifier, set_of_identifiers);
 }
 
-bool Session::doDoesTableExist(const TableIdentifier &identifier)
+bool Open_tables_state::doDoesTableExist(const TableIdentifier &identifier)
 {
-  for (Table *table= temporary_tables ; table ; table= table->getNext())
+  for (Table *table= getTemporaryTables() ; table ; table= table->getNext())
   {
     if (table->getShare()->getType() == message::Table::TEMPORARY)
     {
@@ -573,10 +573,10 @@ bool Session::doDoesTableExist(const TableIdentifier &identifier)
   return false;
 }
 
-int Session::doGetTableDefinition(const TableIdentifier &identifier,
+int Open_tables_state::doGetTableDefinition(const TableIdentifier &identifier,
                                   message::Table &table_proto)
 {
-  for (Table *table= temporary_tables ; table ; table= table->getNext())
+  for (Table *table= getTemporaryTables() ; table ; table= table->getNext())
   {
     if (table->getShare()->getType() == message::Table::TEMPORARY)
     {
@@ -924,7 +924,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
     TODO -> move this block into a separate function.
   */
   bool reset= false;
-  for (table= temporary_tables; table ; table=table->getNext())
+  for (table= getTemporaryTables(); table ; table=table->getNext())
   {
     if (table->getShare()->getCacheKey() == key)
     {
