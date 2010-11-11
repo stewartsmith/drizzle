@@ -43,7 +43,6 @@ typedef struct st_lex_symbol
   uint32_t   length;
 } LEX_SYMBOL;
 
-
 extern SYM_GROUP sym_group_common;
 extern SYM_GROUP sym_group_geom;
 extern SYM_GROUP sym_group_rtree;

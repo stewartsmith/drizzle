@@ -421,6 +421,14 @@ public:
 
   memory::Root warn_root; /**< Allocation area for warnings and errors */
   plugin::Client *client; /**< Pointer to client object */
+
+  void setClient(plugin::Client *client_arg);
+
+  plugin::Client *getClient()
+  {
+    return client;
+  }
+
   plugin::Scheduler *scheduler; /**< Pointer to scheduler object */
   void *scheduler_arg; /**< Pointer to the optional scheduler argument */
 private:
@@ -1153,11 +1161,15 @@ public:
     @todo: To silence an error, one should use Internal_error_handler
     mechanism. In future this function will be removed.
   */
-  inline void clear_error()
+  inline void clear_error(bool full= false)
   {
     if (main_da.is_error())
       main_da.reset_diagnostics_area();
-    return;
+
+    if (full)
+    {
+      drizzle_reset_errors(this, true);
+    }
   }
 
   /**

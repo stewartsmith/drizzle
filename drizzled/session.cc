@@ -410,6 +410,12 @@ Session::~Session()
   LOCK_delete.unlock();
 }
 
+void Session::setClient(plugin::Client *client_arg)
+{
+  client= client_arg;
+  client->setSession(this);
+}
+
 void Session::awake(Session::killed_state_t state_to_set)
 {
   this->checkSentry();

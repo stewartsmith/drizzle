@@ -32,23 +32,14 @@ namespace statement
 
 class Execute : public Statement
 {
-  bool is_var;
-  LEX_STRING to_execute;
+  bool is_quiet;
+  drizzled::execute_string_t to_execute;
 
   bool parseVariable(void);
 
 public:
-  Execute(Session *in_session);
+  Execute(Session *in_session, drizzled::execute_string_t, bool is_quiet_arg);
 
-  void setQuery(LEX_STRING &arg)
-  {
-    to_execute= arg;
-  }
-
-  void setVar()
-  {
-    is_var= true;
-  }
 
   bool execute();
 };

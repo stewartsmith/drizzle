@@ -373,6 +373,7 @@ using namespace drizzled;
   enum drizzled::enum_filetype filetype;
   enum drizzled::ha_build_method build_method;
   drizzled::message::Table::ForeignKeyConstraint::ForeignKeyOption m_fk_option;
+  drizzled::execute_string_t execute_string;
 }
 
 %{
@@ -803,8 +804,10 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         IDENT_sys TEXT_STRING_sys TEXT_STRING_literal
         opt_component
         BIN_NUM TEXT_STRING_filesystem ident_or_empty
-        execute_var_or_string
         opt_constraint constraint opt_ident
+
+%type <execute_string>
+        execute_var_or_string
 
 %type <lex_str_ptr>
         opt_table_alias
@@ -826,6 +829,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         union_option
         start_transaction_opts opt_chain opt_release
         union_opt select_derived_init option_type2
+        opt_status
 
 %type <m_fk_option>
         delete_option
@@ -4469,33 +4473,31 @@ opt_temporary:
   */
 
 execute:
-       EXECUTE_SYM execute_var_or_string
+       EXECUTE_SYM execute_var_or_string opt_status
        {
+          LEX *lex= Lex;
+          statement::Execute *statement= new(std::nothrow) statement::Execute(YYSession, $2, $3);
+          lex->statement= statement;
+          if (lex->statement == NULL)
+            DRIZZLE_YYABORT;
        }
 
 
 execute_var_or_string:
          ident_or_text
          {
-            LEX *lex= Lex;
-            statement::Execute *statement= new(std::nothrow) statement::Execute(YYSession);
-            lex->statement= statement;
-            if (lex->statement == NULL)
-              DRIZZLE_YYABORT;
-
-            statement->setQuery($1);
+            $$= $1;
          }
         | '@' ident_or_text
         {
-          LEX *lex= Lex;
-          statement::Execute *statement= new(std::nothrow) statement::Execute(YYSession);
-          lex->statement= statement;
-          if (lex->statement == NULL)
-            DRIZZLE_YYABORT;
-
-          statement->setVar();
-          statement->setQuery($2);
+            $$= $2;
+            $$.setVariable(true);
         }
+
+opt_status:
+          /* empty */ { $$= 0; }
+        | WITH NO_SYM RETURN_SYM { $$= 1; }
+        ;
 
 /*
 ** Insert : add new data to table

@@ -54,6 +54,12 @@ a
 2
 3
 execute @drop;
+execute @create WITH NO RETURN;
+execute @insert WITH NO RETURN;
+execute @insert WITH NO RETURN;
+execute @insert WITH NO RETURN;
+execute @select WITH NO RETURN;
+execute @drop WITH NO RETURN;
 EXECUTE @does_not_exist;
 ERROR HY000: Incorrect arguments to Invalid Variable
 EXECUTE "";
@@ -80,6 +86,17 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 3	SUBQUERY	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No tables used
 4	UNION	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No tables used
 NULL	UNION RESULT	<union3,4>	ALL	NULL	NULL	NULL	NULL	NULL	NULL	
+Warnings:
+Note	1249	Select 2 was reduced during optimization
+Note	1003	select (select 0 AS `0` union select 0 AS `0`) AS `(SELECT (SELECT 0 UNION SELECT 0))`
+EXECUTE "SELECT (SELECT 1) UNION SELECT (SELECT 2)" WITH NO RETURN;
+EXECUTE "explain extended SELECT (SELECT 1) UNION SELECT (SELECT 2)" WITH NO RETURN;
+Warnings:
+Note	1249	Select 2 was reduced during optimization
+Note	1249	Select 4 was reduced during optimization
+Note	1003	select 1 AS `(SELECT 1)` union select 2 AS `(SELECT 2)`
+EXECUTE "SELECT (SELECT (SELECT 0 UNION SELECT 0))" WITH NO RETURN;
+EXECUTE "explain extended SELECT (SELECT (SELECT 0 UNION SELECT 0))" WITH NO RETURN;
 Warnings:
 Note	1249	Select 2 was reduced during optimization
 Note	1003	select (select 0 AS `0` union select 0 AS `0`) AS `(SELECT (SELECT 0 UNION SELECT 0))`

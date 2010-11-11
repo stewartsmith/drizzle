@@ -23,6 +23,8 @@
 #include "drizzled/statement/execute.h"
 #include "drizzled/session.h"
 #include "drizzled/user_var_entry.h"
+#include "drizzled/plugin/listen.h"
+#include "drizzled/plugin/client.h"
 
 namespace drizzled
 {
@@ -32,16 +34,17 @@ void mysql_parse(drizzled::Session *session, const char *inBuf, uint32_t length)
 namespace statement
 {
 
-Execute::Execute(Session *in_session) :
+Execute::Execute(Session *in_session, drizzled::execute_string_t to_execute_arg, bool is_quiet_arg) :
   Statement(in_session),
-  is_var(false)
+  is_quiet(is_quiet_arg),
+  to_execute(to_execute_arg)
 {
 }
   
 
 bool statement::Execute::parseVariable()
 {
-  if (is_var)
+  if (to_execute.isVariable())
   {
     user_var_entry *var= getSession()->getVariable(to_execute, false);
 
@@ -65,7 +68,7 @@ bool statement::Execute::execute()
     my_error(ER_WRONG_ARGUMENTS, MYF(0), "Invalid Variable");
     return false;
   }
-  if (is_var)
+  if (to_execute.isVariable())
   {
     if (not parseVariable())
     {
@@ -74,9 +77,31 @@ bool statement::Execute::execute()
     }
   }
 
-  mysql_parse(getSession(), to_execute.str, to_execute.length);
+  if (is_quiet)
+  {
+    plugin::Client *temp= getSession()->getClient();
+    plugin::Client *null_client= plugin::Listen::getNullClient();
 
-  // We have to restore ourselves at the top for delete[] to work.
+    getSession()->setClient(null_client);
+
+    mysql_parse(getSession(), to_execute.str, to_execute.length);
+
+    getSession()->setClient(temp);
+    if (getSession()->is_error())
+    {
+      getSession()->clear_error(true);
+      getSession()->my_ok();
+    }
+    null_client->close();
+    delete null_client;
+  }
+  else
+  {
+    mysql_parse(getSession(), to_execute.str, to_execute.length);
+  }
+
+
+  // We have to restore ourselves at the top for delete() to work.
   getSession()->getLex()->statement= this;
 
   return true;
