@@ -1946,7 +1946,7 @@ func_start:
 	} else if (btr_page_get_split_rec_to_right(cursor, &split_rec)) {
 		direction = FSP_UP;
 		hint_page_no = page_no + 1;
-
+                insert_left = FALSE;
 	} else if (btr_page_get_split_rec_to_left(cursor, &split_rec)) {
 		direction = FSP_DOWN;
 		hint_page_no = page_no - 1;
@@ -1968,8 +1968,12 @@ func_start:
 				page_get_infimum_rec(page));
 		} else {
 			split_rec = NULL;
+                        insert_left = FALSE;
 		}
 	}
+
+	/* At this point, insert_left is initialized if split_rec == NULL
+	and may be uninitialized otherwise. */
 
 	/* 2. Allocate a new page to the index */
 	new_block = btr_page_alloc(cursor->index, hint_page_no, direction,
@@ -2006,7 +2010,6 @@ func_start:
 	} else {
 insert_empty:
 		ut_ad(!split_rec);
-		ut_ad(!insert_left);
 		buf = mem_alloc(rec_get_converted_size(cursor->index,
 						       tuple, n_ext));
 
