@@ -630,6 +630,13 @@ void
 srv_export_innodb_status(void);
 /*==========================*/
 
+/******************************************************************//**
+Increment the server activity counter. */
+UNIV_INTERN
+void
+srv_inc_activity_count(void);
+/*=========================*/
+
 /*********************************************************************//**
 Asynchronous purge thread.
 @return	a dummy parameter */
