@@ -98,6 +98,7 @@ CmpmemTool::CmpmemTool(bool in_reset) :
   plugin::TableFunction("DATA_DICTIONARY", in_reset ? "INNODB_CMPMEM_RESET" : "INNODB_CMPMEM"),
   outer_reset(in_reset)
 {
+  add_field("BUF_POOL", plugin::TableFunction::NUMBER, 0, false);
   add_field("PAGE_SIZE", plugin::TableFunction::NUMBER, 0, false);
   add_field("PAGES_USED", plugin::TableFunction::NUMBER, 0, false);
   add_field("PAGES_FREE", plugin::TableFunction::NUMBER, 0, false);
@@ -110,26 +111,37 @@ CmpmemTool::Generator::Generator(Field **arg, bool in_reset) :
   record_number(0),
   inner_reset(in_reset)
 {
-  buf_pool_mutex_enter();
+  buf_pool_mutex_enter_all();
 }
 
 CmpmemTool::Generator::~Generator()
 {
-  buf_pool_mutex_exit();
+  buf_pool_mutex_exit_all();
 }
 
 bool CmpmemTool::Generator::populate()
 {
-  if (record_number > BUF_BUDDY_SIZES)
+  if (record_number > BUF_BUDDY_SIZES*srv_buf_pool_instances)
   {
     return false;
   }
 
-  buf_buddy_stat_t* buddy_stat = &buf_buddy_stat[record_number];
+  uint32_t buf_pool_nr= record_number/srv_buf_pool_instances;
+  uint32_t buddy_nr= record_number%srv_buf_pool_instances;
 
-  push(static_cast<uint64_t>(BUF_BUDDY_LOW << record_number));
+  buf_pool_t *buf_pool= buf_pool_from_array(buf_pool_nr);
+
+  buf_pool_mutex_enter(buf_pool);
+
+  buf_buddy_stat_t* buddy_stat = &buf_pool->buddy_stat[buddy_nr];
+
+
+  push(static_cast<uint64_t>(buf_pool_nr));
+  push(static_cast<uint64_t>(BUF_BUDDY_LOW << buddy_nr));
   push(static_cast<uint64_t>(buddy_stat->used));
-  uint64_t pages_free= (UNIV_LIKELY(record_number < BUF_BUDDY_SIZES) ? UT_LIST_GET_LEN(buf_pool->zip_free[record_number]) : 0);
+
+
+  uint64_t pages_free= (UNIV_LIKELY(buddy_nr < BUF_BUDDY_SIZES) ? UT_LIST_GET_LEN(buf_pool->zip_free[buddy_nr]) : 0);
   push(pages_free);
 
   push(buddy_stat->relocated);
@@ -142,6 +154,7 @@ bool CmpmemTool::Generator::populate()
     buddy_stat->relocated_usec = 0;
   }
 
+  buf_pool_mutex_exit(buf_pool);
   record_number++;
 
   return true;

@@ -212,13 +212,6 @@ rec_get_n_extern_new(
 			const dict_col_t*	col
 				= dict_field_get_col(field);
 			len = *lens--;
-			/* If the maximum length of the field is up
-			to 255 bytes, the actual length is always
-			stored in one byte. If the maximum length is
-			more than 255 bytes, the actual length is
-			stored in one byte for 0..127.  The length
-			will be encoded in two bytes when it is 128 or
-			more, or when the field is stored externally. */
 			if (UNIV_UNLIKELY(col->len > 255)
 			    || UNIV_UNLIKELY(col->mtype == DATA_BLOB)) {
 				if (len & 0x80) {
@@ -301,13 +294,6 @@ rec_init_offsets_comp_ordinary(
 			const dict_col_t*	col
 				= dict_field_get_col(field);
 			len = *lens--;
-			/* If the maximum length of the field is up
-			to 255 bytes, the actual length is always
-			stored in one byte. If the maximum length is
-			more than 255 bytes, the actual length is
-			stored in one byte for 0..127.  The length
-			will be encoded in two bytes when it is 128 or
-			more, or when the field is stored externally. */
 			if (UNIV_UNLIKELY(col->len > 255)
 			    || UNIV_UNLIKELY(col->mtype
 					     == DATA_BLOB)) {
@@ -439,15 +425,6 @@ rec_init_offsets(
 				const dict_col_t*	col
 					= dict_field_get_col(field);
 				len = *lens--;
-				/* If the maximum length of the field
-				is up to 255 bytes, the actual length
-				is always stored in one byte. If the
-				maximum length is more than 255 bytes,
-				the actual length is stored in one
-				byte for 0..127.  The length will be
-				encoded in two bytes when it is 128 or
-				more, or when the field is stored
-				externally. */
 				if (UNIV_UNLIKELY(col->len > 255)
 				    || UNIV_UNLIKELY(col->mtype
 						     == DATA_BLOB)) {
@@ -670,13 +647,6 @@ rec_get_offsets_reverse(
 			const dict_col_t*	col
 				= dict_field_get_col(field);
 			len = *lens++;
-			/* If the maximum length of the field is up
-			to 255 bytes, the actual length is always
-			stored in one byte. If the maximum length is
-			more than 255 bytes, the actual length is
-			stored in one byte for 0..127.  The length
-			will be encoded in two bytes when it is 128 or
-			more, or when the field is stored externally. */
 			if (UNIV_UNLIKELY(col->len > 255)
 			    || UNIV_UNLIKELY(col->mtype == DATA_BLOB)) {
 				if (len & 0x80) {
@@ -811,20 +781,12 @@ rec_get_converted_size_comp_prefix(
 
 		ut_ad(len <= col->len || col->mtype == DATA_BLOB);
 
-		/* If the maximum length of a variable-length field
-		is up to 255 bytes, the actual length is always stored
-		in one byte. If the maximum length is more than 255
-		bytes, the actual length is stored in one byte for
-		0..127.  The length will be encoded in two bytes when
-		it is 128 or more, or when the field is stored externally. */
-
 		if (field->fixed_len) {
 			ut_ad(len == field->fixed_len);
 			/* dict_index_add_col() should guarantee this */
 			ut_ad(!field->prefix_len
 			      || field->fixed_len == field->prefix_len);
 		} else if (dfield_is_ext(&fields[i])) {
-			ut_ad(col->len >= 256 || col->mtype == DATA_BLOB);
 			extra_size += 2;
 		} else if (len < 128
 			   || (col->len < 256 && col->mtype != DATA_BLOB)) {
@@ -1124,8 +1086,6 @@ rec_convert_dtuple_to_rec_comp(
 	/* Store the data and the offsets */
 
 	for (i = 0, field = fields; i < n_fields; i++, field++) {
-		const dict_field_t*	ifield;
-
 		type = dfield_get_type(field);
 		len = dfield_get_len(field);
 
@@ -1160,20 +1120,12 @@ rec_convert_dtuple_to_rec_comp(
 		/* only nullable fields can be null */
 		ut_ad(!dfield_is_null(field));
 
-		ifield = dict_index_get_nth_field(index, i);
-		fixed_len = ifield->fixed_len;
-		/* If the maximum length of a variable-length field
-		is up to 255 bytes, the actual length is always stored
-		in one byte. If the maximum length is more than 255
-		bytes, the actual length is stored in one byte for
-		0..127.  The length will be encoded in two bytes when
-		it is 128 or more, or when the field is stored externally. */
+		fixed_len = dict_index_get_nth_field(index, i)->fixed_len;
+
 		if (fixed_len) {
 			ut_ad(len == fixed_len);
 			ut_ad(!dfield_is_ext(field));
 		} else if (dfield_is_ext(field)) {
-			ut_ad(ifield->col->len >= 256
-			      || ifield->col->mtype == DATA_BLOB);
 			ut_ad(len <= REC_MAX_INDEX_COL_LEN
 			      + BTR_EXTERN_FIELD_REF_SIZE);
 			*lens-- = (byte) (len >> 8) | 0xc0;
@@ -1263,20 +1215,11 @@ rec_convert_dtuple_to_rec(
 		mem_heap_t*	heap	= NULL;
 		ulint		offsets_[REC_OFFS_NORMAL_SIZE];
 		const ulint*	offsets;
-		ulint		i;
 		rec_offs_init(offsets_);
 
 		offsets = rec_get_offsets(rec, index,
 					  offsets_, ULINT_UNDEFINED, &heap);
 		ut_ad(rec_validate(rec, offsets));
-		ut_ad(dtuple_get_n_fields(dtuple)
-		      == rec_offs_n_fields(offsets));
-
-		for (i = 0; i < rec_offs_n_fields(offsets); i++) {
-			ut_ad(!dfield_is_ext(dtuple_get_nth_field(dtuple, i))
-			      == !rec_offs_nth_extern(offsets, i));
-		}
-
 		if (UNIV_LIKELY_NULL(heap)) {
 			mem_heap_free(heap);
 		}
@@ -1459,13 +1402,6 @@ rec_copy_prefix_to_buf(
 			prefix_len += field->fixed_len;
 		} else {
 			ulint	len = *lens--;
-			/* If the maximum length of the column is up
-			to 255 bytes, the actual length is always
-			stored in one byte. If the maximum length is
-			more than 255 bytes, the actual length is
-			stored in one byte for 0..127.  The length
-			will be encoded in two bytes when it is 128 or
-			more, or when the column is stored externally. */
 			if (col->len > 255 || col->mtype == DATA_BLOB) {
 				if (len & 0x80) {
 					/* 1exxxxxx */

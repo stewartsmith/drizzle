@@ -170,6 +170,7 @@ static long innobase_additional_mem_pool_size= 8*1024*1024L;
 static ulong innobase_commit_concurrency = 0;
 static ulong innobase_read_io_threads;
 static ulong innobase_write_io_threads;
+static long innobase_buffer_pool_instances = 1;
 
 /**
  * @TODO: Turn this into size_t as soon as we have a Variable<size_t>
@@ -231,7 +232,11 @@ bool nw_panic = FALSE;
 /** Allowed values of innodb_change_buffering */
 static const char* innobase_change_buffering_values[IBUF_USE_COUNT] = {
   "none",   /* IBUF_USE_NONE */
-  "inserts" /* IBUF_USE_INSERT */
+  "inserts",	/* IBUF_USE_INSERT */
+  "deletes",	/* IBUF_USE_DELETE_MARK */
+  "changes",	/* IBUF_USE_INSERT_DELETE_MARK */
+  "purges",	/* IBUF_USE_DELETE */
+  "all"		/* IBUF_USE_ALL */
 };
 
 /* "GEN_CLUST_INDEX" is the name reserved for Innodb default
@@ -1246,13 +1251,13 @@ innobase_fast_mutex_init(
 
 /**********************************************************************//**
 Determines the current SQL statement.
-@return	SQL statement string */
+@return        SQL statement string */
 extern "C" UNIV_INTERN
 const char*
 innobase_get_stmt(
 /*==============*/
-	void*	session,	/*!< in: MySQL thread handle */
-	size_t*	length)		/*!< out: length of the SQL statement */
+       void*   session,        /*!< in: MySQL thread handle */
+       size_t* length)         /*!< out: length of the SQL statement */
 {
   *length= static_cast<Session*>(session)->query.length();
   return static_cast<Session*>(session)->query.c_str();
@@ -1755,18 +1760,6 @@ trx_is_interrupted(
   return(trx && trx->mysql_thd && static_cast<Session*>(trx->mysql_thd)->getKilled());
 }
 
-/**********************************************************************//**
-Determines if the currently running transaction is in strict mode.
-@return	TRUE if strict */
-extern "C" UNIV_INTERN
-ibool
-trx_is_strict(
-/*==========*/
-	trx_t*	trx)	/*!< in: transaction */
-{
-  return(trx && trx->mysql_thd && true);
-}
-
 /**************************************************************//**
 Resets some fields of a prebuilt struct. The template is used in fast
 retrieval of just those column values MySQL needs in its processing. */
@@ -1917,6 +1910,16 @@ innobase_init(
     if (innobase_buffer_pool_size < 5*1024*1024)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for buffer-pool-size\n"));
+      exit(-1);
+    }
+    
+  }
+
+  if (vm.count("buffer-pool-instances"))
+  {
+    if (innobase_buffer_pool_instances > MAX_BUFFER_POOLS)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for buffer-pool-instances\n"));
       exit(-1);
     }
     
@@ -2191,6 +2194,26 @@ innodb_log_group_home_dir: */
     format_id = 0;
   }
 
+  if (vm.count("purge-batch-size"))
+  {
+    srv_purge_batch_size= vm["purge-batch-size"].as<unsigned long>();
+    if (srv_purge_batch_size < 1 || srv_purge_batch_size > 5000)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, "InnoDB: wrong purge-batch_size.");
+      goto mem_free_and_error;
+    }
+  }
+
+  if (vm.count("n-purge-threads"))
+  {
+    srv_n_purge_threads= vm["n-purge-threads"].as<unsigned long>();
+    if (srv_n_purge_threads > 1)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, "InnoDB: wrong n-purge-threads.");
+      goto mem_free_and_error;
+    }
+  }
+
   srv_file_format = format_id;
 
   /* Given the type of innobase_file_format_name we have little
@@ -2266,6 +2289,7 @@ innobase_change_buffering_inited_ok:
   srv_log_buffer_size = (ulint) innobase_log_buffer_size;
 
   srv_buf_pool_size = (ulint) innobase_buffer_pool_size;
+  srv_buf_pool_instances = (ulint) innobase_buffer_pool_instances;
 
   srv_mem_pool_size = (ulint) innobase_additional_mem_pool_size;
 
@@ -2296,9 +2320,6 @@ innobase_change_buffering_inited_ok:
 
   data_mysql_default_charset_coll = (ulint)default_charset_info->number;
 
-  innobase_old_blocks_pct = buf_LRU_old_ratio_update(innobase_old_blocks_pct,
-                                                     FALSE);
-
   innobase_commit_concurrency_init_default();
 
   /* Since we in this module access directly the fields of a trx
@@ -2312,6 +2333,9 @@ innobase_change_buffering_inited_ok:
   if (err != DB_SUCCESS) {
     goto mem_free_and_error;
   }
+
+  innobase_old_blocks_pct = buf_LRU_old_ratio_update(innobase_old_blocks_pct,
+                                                     TRUE);
 
   innobase_open_tables = hash_create(200);
   pthread_mutex_init(&innobase_share_mutex, MY_MUTEX_INIT_FAST);
@@ -2354,7 +2378,6 @@ innobase_change_buffering_inited_ok:
 
   /* Get the current high water mark format. */
   innobase_file_format_check = (char*) trx_sys_file_format_max_get();
-  btr_search_fully_disabled = (!btr_search_enabled);
 
   return(FALSE);
 error:
@@ -3001,6 +3024,8 @@ innobase_build_index_translation(
 	dict_index_t**	index_mapping;
 	ibool		ret = TRUE;
 
+        mutex_enter(&dict_sys->mutex);
+
 	mysql_num_index = table->getShare()->keys;
 	ib_num_index = UT_LIST_GET_LEN(ib_table->indexes);
 
@@ -3030,13 +3055,20 @@ innobase_build_index_translation(
                                                          sizeof(*index_mapping));
 
 		if (!index_mapping) {
+			/* Report an error if index_mapping continues to be
+			NULL and mysql_num_index is a non-zero value */
+			errmsg_printf(ERRMSG_LVL_ERROR,
+                                      "InnoDB: fail to allocate memory for "
+					"index translation table. Number of "
+					"Index:%lu, array size:%lu",
+					mysql_num_index,
+					share->idx_trans_tbl.array_size);
 			ret = FALSE;
 			goto func_exit;
 		}
 
 		share->idx_trans_tbl.array_size = mysql_num_index;
 	}
-
 
 	/* For each index in the mysql key_info array, fetch its
 	corresponding InnoDB index pointer into index_mapping
@@ -3082,6 +3114,8 @@ func_exit:
 	}
 
 	share->idx_trans_tbl.index_mapping = index_mapping;
+
+        mutex_exit(&dict_sys->mutex);
 
 	return(ret);
 }
@@ -3723,11 +3757,6 @@ get_innobase_type_from_mysql_type(
     return(DATA_DOUBLE);
   case DRIZZLE_TYPE_BLOB:
     return(DATA_BLOB);
-  case DRIZZLE_TYPE_NULL:
-    /* MySQL currently accepts "NULL" datatype, but will
-       reject such datatype in the next release. We will cope
-       with it and not trigger assertion failure in 5.1 */
-    break;
   default:
     ut_error;
   }
@@ -6200,7 +6229,7 @@ InnobaseEngine::doCreateTable(
     }
 
     error = row_table_add_foreign_constraints(trx,
-                                              query, strlen(query),
+                                              query,
                                               norm_name,
                                               lex_identified_temp_table);
 
@@ -7187,8 +7216,6 @@ ha_innobase::info(
           break;
         }
 
-        dict_index_stat_mutex_enter(index);
-
         if (index->stat_n_diff_key_vals[j + 1] == 0) {
 
           rec_per_key = stats.records;
@@ -7196,8 +7223,6 @@ ha_innobase::info(
           rec_per_key = (ha_rows)(stats.records /
            index->stat_n_diff_key_vals[j + 1]);
         }
-
-        dict_index_stat_mutex_exit(index);
 
         /* Since MySQL seems to favor table scans
         too much over index searches, we pretend
@@ -9392,6 +9417,23 @@ static DRIZZLE_SYSVAR_ULONG(io_capacity, srv_io_capacity,
   "Number of IOPs the server can do. Tunes the background IO rate",
   NULL, NULL, 200, 100, ~0L, 0);
 
+static DRIZZLE_SYSVAR_ULONG(purge_batch_size, srv_purge_batch_size,
+  PLUGIN_VAR_OPCMDARG,
+  "Number of UNDO logs to purge in one batch from the history list. "
+  "Default is 20",
+  NULL, NULL,
+  20,			/* Default setting */
+  1,			/* Minimum value */
+  5000, 0);		/* Maximum value */
+
+static DRIZZLE_SYSVAR_ULONG(purge_threads, srv_n_purge_threads,
+  PLUGIN_VAR_OPCMDARG | PLUGIN_VAR_READONLY,
+  "Purge threads can be either 0 or 1. Default is 0.",
+  NULL, NULL,
+  0,			/* Default setting */
+  0,			/* Minimum value */
+  1, 0);		/* Maximum value */
+
 static DRIZZLE_SYSVAR_ULONG(fast_shutdown, innobase_fast_shutdown,
   PLUGIN_VAR_OPCMDARG,
   "Speeds up the shutdown process of the InnoDB storage engine. Possible "
@@ -9498,6 +9540,11 @@ static DRIZZLE_SYSVAR_LONGLONG(buffer_pool_size, innobase_buffer_pool_size,
   "The size of the memory buffer InnoDB uses to cache data and indexes of its tables.",
   NULL, NULL, 128*1024*1024L, 5*1024*1024L, INT64_MAX, 1024*1024L);
 
+static DRIZZLE_SYSVAR_LONG(buffer_pool_instances, innobase_buffer_pool_instances,
+  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
+  "Number of buffer pool instances, set to higher value on high-end machines to increase scalability",
+  NULL, NULL, 1L, 1L, MAX_BUFFER_POOLS, 1L);
+
 static DRIZZLE_SYSVAR_ULONG(commit_concurrency, innobase_commit_concurrency,
   PLUGIN_VAR_RQCMDARG,
   "Helps in performance tuning in heavily concurrent environments.",
@@ -9594,12 +9641,17 @@ static DRIZZLE_SYSVAR_BOOL(use_sys_malloc, srv_use_sys_malloc,
   "Use OS memory allocator instead of InnoDB's internal memory allocator",
   NULL, NULL, TRUE);
 
+static DRIZZLE_SYSVAR_BOOL(use_native_aio, srv_use_native_aio,
+  PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
+  "Use native AIO if supported on this platform.",
+  NULL, NULL, TRUE);
+
 static DRIZZLE_SYSVAR_STR(change_buffering, innobase_change_buffering,
   PLUGIN_VAR_RQCMDARG,
   "Buffer changes to reduce random access: "
-  "OFF, ON, none, inserts.",
+  "OFF, ON, inserting, deleting, changing or purging..",
   innodb_change_buffering_validate,
-  innodb_change_buffering_update, "inserts"); 
+  innodb_change_buffering_update, NULL);
 
 static DRIZZLE_SYSVAR_ULONG(read_ahead_threshold, srv_read_ahead_threshold,
   PLUGIN_VAR_RQCMDARG,
@@ -9622,6 +9674,13 @@ static void init_options(drizzled::module::option_context &context)
   context("fast-shutdown",
           po::value<unsigned long>(&innobase_fast_shutdown)->default_value(1), 
           "Speeds up the shutdown process of the InnoDB storage engine. Possible values are 0, 1 (faster) or 2 (fastest - crash-like).");
+  context("purge-batch-size",
+          po::value<unsigned long>(&srv_purge_batch_size)->default_value(20),
+          "Number of UNDO logs to purge in one batch from the history list. "
+          "Default is 20.");
+  context("purge-threads",
+          po::value<unsigned long>(&srv_n_purge_threads)->default_value(0),
+          "Purge threads can be either 0 or 1. Defalut is 0.");
   context("file-per-table",
           po::value<bool>(&srv_file_per_table)->default_value(false)->zero_tokens(),
           "Stores each InnoDB table to an .ibd file in the database dir.");
@@ -9678,6 +9737,10 @@ static void init_options(drizzled::module::option_context &context)
   context("buffer-pool-size",
           po::value<int64_t>(&innobase_buffer_pool_size)->default_value(128*1024*1024L),
           "The size of the memory buffer InnoDB uses to cache data and indexes of its tables.");
+  context("buffer-pool-instances",
+          po::value<int64_t>(&innobase_buffer_pool_instances)->default_value(1),
+          "Number of buffer pool instances, set to higher value on high-end machines to increase scalability");
+
   context("commit-concurrency",
           po::value<unsigned long>(&innobase_commit_concurrency)->default_value(0),
           "Helps in performance tuning in heavily concurrent environments.");
@@ -9750,6 +9813,7 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(additional_mem_pool_size),
   DRIZZLE_SYSVAR(autoextend_increment),
   DRIZZLE_SYSVAR(buffer_pool_size),
+  DRIZZLE_SYSVAR(buffer_pool_instances),
   DRIZZLE_SYSVAR(checksums),
   DRIZZLE_SYSVAR(commit_concurrency),
   DRIZZLE_SYSVAR(concurrency_tickets),
@@ -9794,9 +9858,12 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(thread_sleep_delay),
   DRIZZLE_SYSVAR(version),
   DRIZZLE_SYSVAR(use_sys_malloc),
+  DRIZZLE_SYSVAR(use_native_aio),
   DRIZZLE_SYSVAR(change_buffering),
   DRIZZLE_SYSVAR(read_ahead_threshold),
   DRIZZLE_SYSVAR(io_capacity),
+  DRIZZLE_SYSVAR(purge_threads),
+  DRIZZLE_SYSVAR(purge_batch_size),
   NULL
 };
 

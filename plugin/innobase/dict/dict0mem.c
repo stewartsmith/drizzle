@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1996, 2009, Innobase Oy. All Rights Reserved.
+Copyright (c) 1996, 2010, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -40,6 +40,11 @@ Created 1/8/1996 Heikki Tuuri
 #define	DICT_HEAP_SIZE		100	/*!< initial memory heap size when
 					creating a table or index object */
 
+#ifdef UNIV_PFS_MUTEX
+/* Key to register autoinc_mutex with performance schema */
+UNIV_INTERN mysql_pfs_key_t	autoinc_mutex_key;
+#endif /* UNIV_PFS_MUTEX */
+
 /**********************************************************************//**
 Creates a table memory object.
 @return	own: table object */
@@ -68,8 +73,7 @@ dict_mem_table_create(
 	table->heap = heap;
 
 	table->flags = (unsigned int) flags;
-	table->name = ut_malloc(strlen(name) + 1);
-	memcpy(table->name, name, strlen(name) + 1);
+	table->name = mem_heap_strdup(heap, name);
 	table->space = (unsigned int) space;
 	table->n_cols = (unsigned int) (n_cols + DATA_N_SYS_COLS);
 
@@ -79,7 +83,8 @@ dict_mem_table_create(
 #ifndef UNIV_HOTBACKUP
 	table->autoinc_lock = mem_heap_alloc(heap, lock_get_size());
 
-	mutex_create(&table->autoinc_mutex, SYNC_DICT_AUTOINC_MUTEX);
+	mutex_create(autoinc_mutex_key,
+		     &table->autoinc_mutex, SYNC_DICT_AUTOINC_MUTEX);
 
 	table->autoinc = 0;
 
@@ -107,7 +112,6 @@ dict_mem_table_free(
 #ifndef UNIV_HOTBACKUP
 	mutex_free(&(table->autoinc_mutex));
 #endif /* UNIV_HOTBACKUP */
-	ut_free(table->name);
 	mem_heap_free(table->heap);
 }
 

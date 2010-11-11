@@ -239,34 +239,16 @@ dict_build_table_def_step(
 	const char*	path_or_name;
 	ibool		is_path;
 	mtr_t		mtr;
-	ulint		space = 0;
-	ibool		file_per_table;
 
 	ut_ad(mutex_own(&(dict_sys->mutex)));
 
 	table = node->table;
 
-	/* Cache the global variable "srv_file_per_table" to
-	a local variable before using it. Please note
-	"srv_file_per_table" is not under dict_sys mutex
-	protection, and could be changed while executing
-	this function. So better to cache the current value
-	to a local variable, and all future reference to
-	"srv_file_per_table" should use this local variable. */
-	file_per_table = srv_file_per_table;
-
-	dict_hdr_get_new_id(&table->id, NULL, NULL);
+	table->id = dict_hdr_get_new_id(DICT_HDR_TABLE_ID);
 
 	thr_get_trx(thr)->table_id = table->id;
 
-	if (file_per_table) {
-		/* Get a new space id if srv_file_per_table is set */
-		dict_hdr_get_new_id(NULL, NULL, &space);
-
-		if (UNIV_UNLIKELY(space == ULINT_UNDEFINED)) {
-			return(DB_ERROR);
-		}
-
+	if (srv_file_per_table) {
 		/* We create a new single-table tablespace for the table.
 		We initially let it be 4 pages:
 		- page 0 is the fsp header and an extent descriptor page,
@@ -274,6 +256,8 @@ dict_build_table_def_step(
 		- page 2 is the first inode page,
 		- page 3 will contain the root of the clustered index of the
 		table we create here. */
+
+		ulint	space = 0;	/* reset to zero for the call below */
 
 		if (table->dir_path_of_temp_table) {
 			/* We place tables created with CREATE TEMPORARY
@@ -292,7 +276,7 @@ dict_build_table_def_step(
 
 		flags = table->flags & ~(~0 << DICT_TF_BITS);
 		error = fil_create_new_single_table_tablespace(
-			space, path_or_name, is_path,
+			&space, path_or_name, is_path,
 			flags == DICT_TF_COMPACT ? 0 : flags,
 			FIL_IBD_FILE_INITIAL_SIZE);
 		table->space = (unsigned int) space;
@@ -577,7 +561,7 @@ dict_build_index_def_step(
 	ut_ad((UT_LIST_GET_LEN(table->indexes) > 0)
 	      || dict_index_is_clust(index));
 
-	dict_hdr_get_new_id(NULL, &index->id, NULL);
+	index->id = dict_hdr_get_new_id(DICT_HDR_INDEX_ID);
 
 	/* Inherit the space id from the table; we store all indexes of a
 	table in the same tablespace */
@@ -1121,11 +1105,8 @@ dict_create_index_step(
 
 		dulint	index_id = node->index->id;
 
-		err = dict_index_add_to_cache(
-			node->table, node->index, FIL_NULL,
-			trx_is_strict(trx)
-			|| dict_table_get_format(node->table)
-			>= DICT_TF_FORMAT_ZIP);
+		err = dict_index_add_to_cache(node->table, node->index,
+					      FIL_NULL, TRUE);
 
 		node->index = dict_index_get_if_in_cache_low(index_id);
 		ut_a(!node->index == (err != DB_SUCCESS));

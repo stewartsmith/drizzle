@@ -196,6 +196,15 @@ INFORMATION SCHEMA tables is fetched and later retrieved by the C++
 code in handler/i_s.cc. */
 UNIV_INTERN trx_i_s_cache_t*	trx_i_s_cache = &trx_i_s_cache_static;
 
+/* Key to register the lock/mutex with performance schema */
+#ifdef UNIV_PFS_RWLOCK
+UNIV_INTERN mysql_pfs_key_t	trx_i_s_cache_lock_key;
+#endif /* UNIV_PFS_RWLOCK */
+
+#ifdef UNIV_PFS_MUTEX
+UNIV_INTERN mysql_pfs_key_t	cache_last_read_mutex_key;
+#endif /* UNIV_PFS_MUTEX */
+
 /*******************************************************************//**
 For a record lock that is in waiting state retrieves the only bit that
 is set, for a table lock returns ULINT_UNDEFINED.
@@ -432,9 +441,6 @@ fill_trx_row(
 						which to copy volatile
 						strings */
 {
-	const char*	stmt;
-	size_t		stmt_len;
-
 	row->trx_id = trx_get_id(trx);
 	row->trx_started = (ib_time_t) trx->start_time;
 	row->trx_state = trx_get_que_state_str(trx);
@@ -455,32 +461,35 @@ fill_trx_row(
 
 	row->trx_weight = (ullint) ut_conv_dulint_to_longlong(TRX_WEIGHT(trx));
 
-	if (trx->mysql_thd == NULL) {
+        if (trx->mysql_thd != NULL) {
+		row->trx_mysql_thread_id
+			= session_get_thread_id(trx->mysql_thd);
+	} else {
 		/* For internal transactions e.g., purge and transactions
 		being recovered at startup there is no associated MySQL
 		thread data structure. */
 		row->trx_mysql_thread_id = 0;
-                row->trx_query = NULL;
-                return(TRUE);
 	}
 
-	row->trx_mysql_thread_id = session_get_thread_id(trx->mysql_thd);
-	stmt = innobase_get_stmt(trx->mysql_thd, &stmt_len);
+	if (trx->mysql_query_str != NULL && *trx->mysql_query_str != NULL) {
+		if (strlen(*trx->mysql_query_str)
+		    > TRX_I_S_TRX_QUERY_MAX_LEN) {
 
-	if (stmt != NULL) {
+			char	query[TRX_I_S_TRX_QUERY_MAX_LEN + 1];
 
-		char	query[TRX_I_S_TRX_QUERY_MAX_LEN + 1];
+			memcpy(query, *trx->mysql_query_str,
+			       TRX_I_S_TRX_QUERY_MAX_LEN);
+			query[TRX_I_S_TRX_QUERY_MAX_LEN] = '\0';
 
-		if (stmt_len > TRX_I_S_TRX_QUERY_MAX_LEN) {
-			stmt_len = TRX_I_S_TRX_QUERY_MAX_LEN;
+			row->trx_query = ha_storage_put_memlim(
+				cache->storage, query,
+				TRX_I_S_TRX_QUERY_MAX_LEN + 1,
+				MAX_ALLOWED_FOR_STORAGE(cache));
+		} else {
+			row->trx_query = ha_storage_put_str_memlim(
+				cache->storage, *trx->mysql_query_str,
+				MAX_ALLOWED_FOR_STORAGE(cache));
 		}
-
-		memcpy(query, stmt, stmt_len);
-		query[stmt_len] = '\0';
-
-		row->trx_query = ha_storage_put_memlim(
-			cache->storage, stmt, stmt_len + 1,
-			MAX_ALLOWED_FOR_STORAGE(cache));
 
 		if (row->trx_query == NULL) {
 
@@ -1254,11 +1263,13 @@ trx_i_s_cache_init(
 	release trx_i_s_cache_t::last_read_mutex
 	release trx_i_s_cache_t::rw_lock */
 
-	rw_lock_create(&cache->rw_lock, SYNC_TRX_I_S_RWLOCK);
+	rw_lock_create(trx_i_s_cache_lock_key, &cache->rw_lock,
+		       SYNC_TRX_I_S_RWLOCK);
 
 	cache->last_read = 0;
 
-	mutex_create(&cache->last_read_mutex, SYNC_TRX_I_S_LAST_READ);
+	mutex_create(cache_last_read_mutex_key,
+		     &cache->last_read_mutex, SYNC_TRX_I_S_LAST_READ);
 
 	table_cache_init(&cache->innodb_trx, sizeof(i_s_trx_row_t));
 	table_cache_init(&cache->innodb_locks, sizeof(i_s_locks_row_t));

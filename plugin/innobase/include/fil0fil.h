@@ -26,13 +26,13 @@ Created 10/25/1995 Heikki Tuuri
 #ifndef fil0fil_h
 #define fil0fil_h
 
-#include "univ.i"
-#ifndef UNIV_HOTBACKUP
-#include "sync0rw.h"
-#endif /* !UNIV_HOTBACKUP */
 #include "dict0types.h"
 #include "ut0byte.h"
 #include "os0file.h"
+#ifndef UNIV_HOTBACKUP
+#include "sync0rw.h"
+#include "ibuf0types.h"
+#endif /* !UNIV_HOTBACKUP */
 
 /** When mysqld is run, the default directory "." is the mysqld datadir,
 but in the MySQL Embedded Server Library and ibbackup it is not the default
@@ -224,16 +224,6 @@ fil_space_create(
 	ulint		zip_size,/*!< in: compressed page size, or
 				0 for uncompressed tablespaces */
 	ulint		purpose);/*!< in: FIL_TABLESPACE, or FIL_LOG if log */
-/*******************************************************************//**
-Assigns a new space id for a new single-table tablespace. This works simply by
-incrementing the global counter. If 4 billion id's is not enough, we may need
-to recycle id's.
-@return	TRUE if assigned, FALSE if not */
-UNIV_INTERN
-ibool
-fil_assign_new_space_id(
-/*====================*/
-	ulint*	space_id);	/*!< in/out: space id */
 /*******************************************************************//**
 Returns the size of the space in pages. The tablespace must be cached in the
 memory cache.
@@ -437,7 +427,9 @@ UNIV_INTERN
 ulint
 fil_create_new_single_table_tablespace(
 /*===================================*/
-	ulint		space_id,	/*!< in: space id */
+	ulint*		space_id,	/*!< in/out: space id; if this is != 0,
+					then this is an input parameter,
+					otherwise output */
 	const char*	tablename,	/*!< in: the table name in the usual
 					databasename/tablename format
 					of InnoDB, or a dir path to a temp
@@ -506,6 +498,16 @@ UNIV_INTERN
 ulint
 fil_load_single_table_tablespaces(void);
 /*===================================*/
+/********************************************************************//**
+If we need crash recovery, and we have called
+fil_load_single_table_tablespaces() and dict_load_single_table_tablespaces(),
+we can call this function to print an error message of orphaned .ibd files
+for which there is not a data dictionary entry with a matching table name
+and space id. */
+UNIV_INTERN
+void
+fil_print_orphaned_tablespaces(void);
+/*================================*/
 /*******************************************************************//**
 Returns TRUE if a single-table tablespace does not exist in the memory cache,
 or is being deleted there.

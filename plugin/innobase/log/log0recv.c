@@ -148,6 +148,14 @@ is bigger than the lsn we are able to scan up to, that is an indication that
 the recovery failed and the database may be corrupt. */
 UNIV_INTERN ib_uint64_t	recv_max_page_lsn;
 
+#ifdef UNIV_PFS_THREAD
+UNIV_INTERN mysql_pfs_key_t	trx_rollback_clean_thread_key;
+#endif /* UNIV_PFS_THREAD */
+
+#ifdef UNIV_PFS_MUTEX
+UNIV_INTERN mysql_pfs_key_t	recv_sys_mutex_key;
+#endif /* UNIV_PFS_MUTEX */
+
 /* prototypes */
 
 #ifndef UNIV_HOTBACKUP
@@ -175,7 +183,7 @@ recv_sys_create(void)
 	recv_sys = mem_alloc(sizeof(*recv_sys));
 	memset(recv_sys, 0x0, sizeof(*recv_sys));
 
-	mutex_create(&recv_sys->mutex, SYNC_RECV);
+	mutex_create(recv_sys_mutex_key, &recv_sys->mutex, SYNC_RECV);
 
 	recv_sys->heap = NULL;
 	recv_sys->addr_hash = NULL;
@@ -296,15 +304,17 @@ recv_sys_init(
 		return;
 	}
 
+#ifndef UNIV_HOTBACKUP
 	/* Initialize red-black tree for fast insertions into the
 	flush_list during recovery process.
 	As this initialization is done while holding the buffer pool
 	mutex we perform it before acquiring recv_sys->mutex. */
-#ifndef UNIV_HOTBACKUP
 	buf_flush_init_flush_rbt();
+#endif /* !UNIV_HOTBACKUP */
 
 	mutex_enter(&(recv_sys->mutex));
 
+#ifndef UNIV_HOTBACKUP
 	recv_sys->heap = mem_heap_create_in_buffer(256);
 #else /* !UNIV_HOTBACKUP */
 	recv_sys->heap = mem_heap_create(256);
@@ -321,7 +331,7 @@ recv_sys_init(
 	recv_sys->len = 0;
 	recv_sys->recovered_offset = 0;
 
-	recv_sys->addr_hash = hash_create(available_memory / 512);
+	recv_sys->addr_hash = hash_create(available_memory / 64);
 	recv_sys->n_addrs = 0;
 
 	recv_sys->apply_log_recs = FALSE;
@@ -361,7 +371,7 @@ recv_sys_empty_hash(void)
 	hash_table_free(recv_sys->addr_hash);
 	mem_heap_empty(recv_sys->heap);
 
-	recv_sys->addr_hash = hash_create(buf_pool_get_curr_size() / 512);
+	recv_sys->addr_hash = hash_create(buf_pool_get_curr_size() / 256);
 }
 
 #ifndef UNIV_HOTBACKUP
@@ -1649,9 +1659,15 @@ recv_recover_page_func(
 
 #ifndef UNIV_HOTBACKUP
 	if (modification_to_page) {
+		buf_pool_t*	buf_pool;
+
 		ut_a(block);
 
+		buf_pool = buf_pool_from_block(block);
+
+		log_flush_order_mutex_enter();
 		buf_flush_recv_note_modification(block, start_lsn, end_lsn);
+		log_flush_order_mutex_exit();
 	}
 #endif /* !UNIV_HOTBACKUP */
 
@@ -1836,11 +1852,10 @@ loop:
 		mutex_exit(&(recv_sys->mutex));
 		mutex_exit(&(log_sys->mutex));
 
-		n_pages = buf_flush_batch(BUF_FLUSH_LIST, ULINT_MAX,
-					  IB_ULONGLONG_MAX);
-		ut_a(n_pages != ULINT_UNDEFINED);
-
-		buf_flush_wait_batch_end(BUF_FLUSH_LIST);
+ 		n_pages = buf_flush_list(ULINT_MAX, IB_ULONGLONG_MAX);
+  		ut_a(n_pages != ULINT_UNDEFINED);
+  
+ 		buf_flush_wait_batch_end(NULL, BUF_FLUSH_LIST);
 
 		buf_pool_invalidate();
 
@@ -2750,8 +2765,8 @@ recv_scan_log_recs(
 		recv_parse_log_recs(store_to_hash);
 
 #ifndef UNIV_HOTBACKUP
-		if (store_to_hash && mem_heap_get_size(recv_sys->heap)
-		    > available_memory) {
+		if (store_to_hash
+		    && mem_heap_get_size(recv_sys->heap) > available_memory) {
 
 			/* Hash table of log records has grown too big:
 			empty it; FALSE means no ibuf operations
@@ -2803,8 +2818,10 @@ recv_group_scan_log_recs(
 				       group, start_lsn, end_lsn);
 
 		finished = recv_scan_log_recs(
-			(buf_pool->curr_size - recv_n_pool_free_frames)
-			* UNIV_PAGE_SIZE, TRUE, log_sys->buf, RECV_SCAN_SIZE,
+			(buf_pool_get_n_pages()
+			- (recv_n_pool_free_frames * srv_buf_pool_instances))
+			* UNIV_PAGE_SIZE,
+			TRUE, log_sys->buf, RECV_SCAN_SIZE,
 			start_lsn, contiguous_lsn, group_scanned_lsn);
 		start_lsn = end_lsn;
 	}
@@ -3424,8 +3441,10 @@ recv_reset_log_files_for_backup(
 		sprintf(name, "%s%s%lu", log_dir,
 			ib_logfile_basename, (ulong)i);
 
-		log_file = os_file_create_simple(name, OS_FILE_CREATE,
-						 OS_FILE_READ_WRITE, &success);
+		log_file = os_file_create_simple(innodb_file_log_key,
+						 name, OS_FILE_CREATE,
+						 OS_FILE_READ_WRITE,
+						 &success);
 		if (!success) {
 			fprintf(stderr,
 				"InnoDB: Cannot create %s. Check that"
@@ -3464,7 +3483,8 @@ recv_reset_log_files_for_backup(
 				      LOG_BLOCK_HDR_SIZE);
 	sprintf(name, "%s%s%lu", log_dir, ib_logfile_basename, (ulong)0);
 
-	log_file = os_file_create_simple(name, OS_FILE_OPEN,
+	log_file = os_file_create_simple(innodb_file_log_key,
+					 name, OS_FILE_OPEN,
 					 OS_FILE_READ_WRITE, &success);
 	if (!success) {
 		fprintf(stderr, "InnoDB: Cannot open %s.\n", name);
@@ -3482,6 +3502,7 @@ recv_reset_log_files_for_backup(
 #endif /* UNIV_HOTBACKUP */
 
 #ifdef UNIV_LOG_ARCHIVE
+/* Dead code */
 /******************************************************//**
 Reads from the archive of a log group and performs recovery.
 @return	TRUE if no more complete consistent archive files */
@@ -3514,7 +3535,8 @@ try_open_again:
 
 	log_archived_file_name_gen(name, group->id, group->archived_file_no);
 
-	file_handle = os_file_create(name, OS_FILE_OPEN,
+	file_handle = os_file_create(innodb_file_log_key,
+				     name, OS_FILE_OPEN,
 				     OS_FILE_LOG, OS_FILE_AIO, &ret);
 
 	if (ret == FALSE) {
@@ -3646,7 +3668,8 @@ ask_again:
 		       read_offset % UNIV_PAGE_SIZE, len, buf, NULL);
 
 		ret = recv_scan_log_recs(
-			(buf_pool->n_frames - recv_n_pool_free_frames)
+			(buf_pool_get_n_pages()
+			- (recv_n_pool_free_frames * srv_buf_pool_instances))
 			* UNIV_PAGE_SIZE, TRUE, buf, len, start_lsn,
 			&dummy_lsn, &scanned_lsn);
 

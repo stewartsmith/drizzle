@@ -51,8 +51,8 @@ Created 1/20/1994 Heikki Tuuri
 #endif /* UNIV_HOTBACKUP */
 
 #define INNODB_VERSION_MAJOR	1
-#define INNODB_VERSION_MINOR	0
-#define INNODB_VERSION_BUGFIX	11
+#define INNODB_VERSION_MINOR	1
+#define INNODB_VERSION_BUGFIX	1
 
 /* The following is the InnoDB version as shown in
 SELECT plugin_version FROM information_schema.plugins;
@@ -156,6 +156,23 @@ Sun Studio */
 
 #endif /* #if (defined(WIN32) || ... */
 
+/* Following defines are to enable performance schema
+instrumentation in each of four InnoDB modules if
+HAVE_PSI_INTERFACE is defined. */
+#ifdef HAVE_PSI_INTERFACE
+# define UNIV_PFS_MUTEX
+# define UNIV_PFS_RWLOCK
+/* For I/O instrumentation, performance schema rely
+on a native descriptor to identify the file, this
+descriptor could conflict with our OS level descriptor.
+Disable IO instrumentation on Windows until this is
+resolved */
+# ifndef __WIN__
+#  define UNIV_PFS_IO
+# endif
+# define UNIV_PFS_THREAD
+#endif /* HAVE_PSI_INTERFACE */
+
 /*			DEBUG VERSION CONTROL
 			===================== */
 
@@ -223,6 +240,9 @@ operations (very slow); also UNIV_DEBUG must be defined */
 						for compressed pages */
 #define UNIV_ZIP_COPY				/* call page_zip_copy_recs()
 						more often */
+#define UNIV_AIO_DEBUG				/* prints info about
+						submitted and reaped AIO
+						requests to the log. */
 #endif
 
 #define UNIV_BTR_DEBUG				/* check B-tree links */
@@ -301,12 +321,6 @@ management to ensure correct alignment for doubles etc. */
 
 /* Maximum number of parallel threads in a parallelized operation */
 #define UNIV_MAX_PARALLELISM	32
-
-/* The maximum length of a table name. This is the MySQL limit and is
-defined in mysql_com.h like NAME_CHAR_LEN*SYSTEM_CHARSET_MBMAXLEN, the
-number does not include a terminating '\0'. InnoDB probably can handle
-longer names internally */
-#define MAX_TABLE_NAME_LEN	192
 
 /*
 			UNIVERSAL TYPE DEFINITIONS

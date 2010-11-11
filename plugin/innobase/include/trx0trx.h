@@ -391,14 +391,6 @@ ibool
 trx_is_interrupted(
 /*===============*/
 	trx_t*	trx);	/*!< in: transaction */
-/**********************************************************************//**
-Determines if the currently running transaction is in strict mode.
-@return	TRUE if strict */
-UNIV_INTERN
-ibool
-trx_is_strict(
-/*==========*/
-	trx_t*	trx);	/*!< in: transaction */
 #else /* !UNIV_HOTBACKUP */
 #define trx_is_interrupted(trx) FALSE
 #endif /* !UNIV_HOTBACKUP */
@@ -560,6 +552,9 @@ struct trx_struct{
 	/*------------------------------*/
 	void*		mysql_thd;	/*!< MySQL thread handle corresponding
 					to this trx, or NULL */
+	char**		mysql_query_str;/* pointer to the field in mysqld_thd
+					which contains the pointer to the
+					current SQL query string */
 	const char*	mysql_log_file_name;
 					/* if MySQL binlog is used, this field
 					contains a pointer to the latest file

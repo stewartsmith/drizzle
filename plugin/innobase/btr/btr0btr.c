@@ -603,6 +603,7 @@ btr_page_get_father_node_ptr_func(
 	ulint		line,	/*!< in: line where called */
 	mtr_t*		mtr)	/*!< in: mtr */
 {
+	page_t*		page;
 	dtuple_t*	tuple;
 	rec_t*		user_rec;
 	rec_t*		node_ptr;
@@ -619,6 +620,8 @@ btr_page_get_father_node_ptr_func(
 	ut_ad(dict_index_get_page(index) != page_no);
 
 	level = btr_page_get_level(btr_cur_get_page(cursor), mtr);
+
+	page = btr_cur_get_page(cursor);
 	user_rec = btr_cur_get_rec(cursor);
 	ut_a(page_rec_is_user_rec(user_rec));
 	tuple = dict_index_build_node_ptr(index, user_rec, 0, heap, level);
@@ -949,6 +952,7 @@ btr_page_reorganize_low(
 	dict_index_t*	index,	/*!< in: record descriptor */
 	mtr_t*		mtr)	/*!< in: mtr */
 {
+	buf_pool_t*	buf_pool	= buf_pool_from_bpage(&block->page);
 	page_t*		page		= buf_block_get_frame(block);
 	page_zip_des_t*	page_zip	= buf_block_get_page_zip(block);
 	buf_block_t*	temp_block;
@@ -979,7 +983,7 @@ btr_page_reorganize_low(
 	log_mode = mtr_set_log_mode(mtr, MTR_LOG_NONE);
 
 #ifndef UNIV_HOTBACKUP
-	temp_block = buf_block_alloc(0);
+	temp_block = buf_block_alloc(buf_pool, 0);
 #else /* !UNIV_HOTBACKUP */
 	ut_ad(block == back_block1);
 	temp_block = back_block2;
@@ -1451,11 +1455,11 @@ Calculates a split record such that the tuple will certainly fit on
 its half-page when the split is performed. We assume in this function
 only that the cursor page has at least one user record.
 @return split record, or NULL if tuple will be the first record on
-the lower or upper half-page (determined by btr_page_tuple_smaller()) */
+upper half-page */
 static
 rec_t*
-btr_page_get_split_rec(
-/*===================*/
+btr_page_get_sure_split_rec(
+/*========================*/
 	btr_cur_t*	cursor,	/*!< in: cursor at which insert should be made */
 	const dtuple_t*	tuple,	/*!< in: tuple to insert */
 	ulint		n_ext)	/*!< in: number of externally stored columns */
@@ -1832,37 +1836,6 @@ btr_attach_half_pages(
 }
 
 /*************************************************************//**
-Determine if a tuple is smaller than any record on the page.
-@return TRUE if smaller */
-static
-ibool
-btr_page_tuple_smaller(
-/*===================*/
-	btr_cur_t*	cursor,	/*!< in: b-tree cursor */
-	const dtuple_t*	tuple,	/*!< in: tuple to consider */
-	ulint*		offsets,/*!< in/out: temporary storage */
-	ulint		n_uniq,	/*!< in: number of unique fields
-				in the index page records */
-	mem_heap_t**	heap)	/*!< in/out: heap for offsets */
-{
-	buf_block_t*	block;
-	const rec_t*	first_rec;
-	page_cur_t	pcur;
-
-	/* Read the first user record in the page. */
-	block = btr_cur_get_block(cursor);
-	page_cur_set_before_first(block, &pcur);
-	page_cur_move_to_next(&pcur);
-	first_rec = page_cur_get_rec(&pcur);
-
-	offsets = rec_get_offsets(
-		first_rec, cursor->index, offsets,
-		n_uniq, heap);
-
-	return(cmp_dtuple_rec(tuple, first_rec, offsets) < 0);
-}
-
-/*************************************************************//**
 Splits an index page to halves and inserts the tuple. It is assumed
 that mtr holds an x-latch to the index tree. NOTE: the tree x-latch is
 released within this function! NOTE that the operation of this
@@ -1932,17 +1905,12 @@ func_start:
 	/* 1. Decide the split record; split_rec == NULL means that the
 	tuple to be inserted should be the first record on the upper
 	half-page */
-	insert_left = FALSE;
 
 	if (n_iterations > 0) {
 		direction = FSP_UP;
 		hint_page_no = page_no + 1;
-		split_rec = btr_page_get_split_rec(cursor, tuple, n_ext);
+		split_rec = btr_page_get_sure_split_rec(cursor, tuple, n_ext);
 
-		if (UNIV_UNLIKELY(split_rec == NULL)) {
-			insert_left = btr_page_tuple_smaller(
-				cursor, tuple, offsets, n_uniq, &heap);
-		}
 	} else if (btr_page_get_split_rec_to_right(cursor, &split_rec)) {
 		direction = FSP_UP;
 		hint_page_no = page_no + 1;
@@ -1950,25 +1918,37 @@ func_start:
 	} else if (btr_page_get_split_rec_to_left(cursor, &split_rec)) {
 		direction = FSP_DOWN;
 		hint_page_no = page_no - 1;
-		ut_ad(split_rec);
 	} else {
 		direction = FSP_UP;
 		hint_page_no = page_no + 1;
 
-		/* If there is only one record in the index page, we
-		can't split the node in the middle by default. We need
-		to determine whether the new record will be inserted
-		to the left or right. */
+		if (page_get_n_recs(page) == 1) {
+			page_cur_t	pcur;
 
-		if (page_get_n_recs(page) > 1) {
-			split_rec = page_get_middle_rec(page);
-		} else if (btr_page_tuple_smaller(cursor, tuple,
-						  offsets, n_uniq, &heap)) {
-			split_rec = page_rec_get_next(
-				page_get_infimum_rec(page));
+			/* There is only one record in the index page
+			therefore we can't split the node in the middle
+			by default. We need to determine whether the
+			new record will be inserted to the left or right. */
+
+			/* Read the first (and only) record in the page. */
+			page_cur_set_before_first(block, &pcur);
+			page_cur_move_to_next(&pcur);
+			first_rec = page_cur_get_rec(&pcur);
+
+			offsets = rec_get_offsets(
+				first_rec, cursor->index, offsets,
+				n_uniq, &heap);
+
+			/* If the new record is less than the existing record
+			the split in the middle will copy the existing
+			record to the new node. */
+			if (cmp_dtuple_rec(tuple, first_rec, offsets) < 0) {
+				split_rec = page_get_middle_rec(page);
+			} else {
+				split_rec = NULL;
+			}
 		} else {
-			split_rec = NULL;
-                        insert_left = FALSE;
+                  split_rec = page_get_middle_rec(page);
 		}
 	}
 
@@ -2001,15 +1981,11 @@ func_start:
 			avoid further splits by inserting the record
 			to an empty page. */
 			split_rec = NULL;
-			goto insert_empty;
+			goto insert_right;
 		}
-	} else if (UNIV_UNLIKELY(insert_left)) {
-		ut_a(n_iterations > 0);
-		first_rec = page_rec_get_next(page_get_infimum_rec(page));
-		move_limit = page_rec_get_next(btr_cur_get_rec(cursor));
 	} else {
-insert_empty:
-		ut_ad(!split_rec);
+insert_right:
+		insert_left = FALSE;
 		buf = mem_alloc(rec_get_converted_size(cursor->index,
 						       tuple, n_ext));
 
@@ -2033,11 +2009,7 @@ insert_empty:
 			&& btr_page_insert_fits(cursor, split_rec,
 						offsets, tuple, n_ext, heap);
 	} else {
-		if (!insert_left) {
-			mem_free(buf);
-			buf = NULL;
-		}
-
+		mem_free(buf);
 		insert_will_fit = !new_page_zip
 			&& btr_page_insert_fits(cursor, NULL,
 						NULL, tuple, n_ext, heap);

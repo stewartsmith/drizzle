@@ -34,7 +34,6 @@ Created 5/12/1997 Heikki Tuuri
 #include "ut0lst.h"
 #include "ut0byte.h"
 #include "mem0mem.h"
-#include "srv0start.h"
 
 /* We would like to use also the buffer frames to allocate memory. This
 would be desirable, because then the memory consumption of the database
@@ -115,6 +114,11 @@ struct mem_pool_struct{
 /** The common memory pool */
 UNIV_INTERN mem_pool_t*	mem_comm_pool	= NULL;
 
+#ifdef UNIV_PFS_MUTEX
+/* Key to register mutex in mem_pool_struct with performance schema */
+UNIV_INTERN mysql_pfs_key_t	mem_pool_mutex_key;
+#endif /* UNIV_PFS_MUTEX */
+
 /* We use this counter to check that the mem pool mutex does not leak;
 this is to track a strange assertion failure reported at
 mysql@lists.mysql.com */
@@ -122,33 +126,23 @@ mysql@lists.mysql.com */
 UNIV_INTERN ulint	mem_n_threads_inside		= 0;
 
 /********************************************************************//**
-Reserves the mem pool mutex if we are not in server shutdown. Use
-this function only in memory free functions, since only memory
-free functions are used during server shutdown. */
-UNIV_INLINE
+Reserves the mem pool mutex. */
+UNIV_INTERN
 void
-mem_pool_mutex_enter(
-/*=================*/
-	mem_pool_t*	pool)		/*!< in: memory pool */
+mem_pool_mutex_enter(void)
+/*======================*/
 {
-	if (srv_shutdown_state < SRV_SHUTDOWN_EXIT_THREADS) {
-		mutex_enter(&(pool->mutex));
-	}
+	mutex_enter(&(mem_comm_pool->mutex));
 }
 
 /********************************************************************//**
-Releases the mem pool mutex if we are not in server shutdown. As
-its corresponding mem_pool_mutex_enter() function, use it only
-in memory free functions */
-UNIV_INLINE
+Releases the mem pool mutex. */
+UNIV_INTERN
 void
-mem_pool_mutex_exit(
-/*================*/
-	mem_pool_t*	pool)		/*!< in: memory pool */
+mem_pool_mutex_exit(void)
+/*=====================*/
 {
-	if (srv_shutdown_state < SRV_SHUTDOWN_EXIT_THREADS) {
-		mutex_exit(&(pool->mutex));
-	}
+	mutex_exit(&(mem_comm_pool->mutex));
 }
 
 /********************************************************************//**
@@ -230,7 +224,7 @@ mem_pool_create(
 	pool->buf = ut_malloc_low(size, FALSE, TRUE);
 	pool->size = size;
 
-	mutex_create(&pool->mutex, SYNC_MEM_POOL);
+	mutex_create(mem_pool_mutex_key, &pool->mutex, SYNC_MEM_POOL);
 
 	/* Initialize the free lists */
 
@@ -578,7 +572,7 @@ mem_area_free(
 
 	n = ut_2_log(size);
 
-	mem_pool_mutex_enter(pool);
+	mutex_enter(&(pool->mutex));
 	mem_n_threads_inside++;
 
 	ut_a(mem_n_threads_inside == 1);
@@ -606,7 +600,7 @@ mem_area_free(
 		pool->reserved += ut_2_exp(n);
 
 		mem_n_threads_inside--;
-		mem_pool_mutex_exit(pool);
+		mutex_exit(&(pool->mutex));
 
 		mem_area_free(new_ptr, pool);
 
@@ -622,7 +616,7 @@ mem_area_free(
 	}
 
 	mem_n_threads_inside--;
-	mem_pool_mutex_exit(pool);
+	mutex_exit(&(pool->mutex));
 
 	ut_ad(mem_pool_validate(pool));
 }
@@ -641,7 +635,7 @@ mem_pool_validate(
 	ulint		free;
 	ulint		i;
 
-	mem_pool_mutex_enter(pool);
+	mutex_enter(&(pool->mutex));
 
 	free = 0;
 
@@ -669,7 +663,7 @@ mem_pool_validate(
 
 	ut_a(free + pool->reserved == pool->size);
 
-	mem_pool_mutex_exit(pool);
+	mutex_exit(&(pool->mutex));
 
 	return(TRUE);
 }
