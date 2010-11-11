@@ -139,8 +139,6 @@ clean-local:
 	find . -name '*.gcno' | xargs rm -f 
 	-rm -rf docs/api docs/dev docs/_build docs/doctrees
 
-ChangeLog:
-	bzr log --gnu > ChangeLog
 include config/lint-source.am
 include config/lcov.am
 
