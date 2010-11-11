@@ -1679,7 +1679,7 @@ void Session::reset_for_next_command()
   Close all temporary tables created by 'CREATE TEMPORARY TABLE' for thread
 */
 
-void Session::close_temporary_tables()
+void Open_tables_state::close_temporary_tables()
 {
   Table *table;
   Table *tmp_next;
@@ -1699,7 +1699,7 @@ void Session::close_temporary_tables()
   unlink from session->temporary tables and close temporary table
 */
 
-void Session::close_temporary_table(Table *table)
+void Open_tables_state::close_temporary_table(Table *table)
 {
   if (table->getPrev())
   {
@@ -1735,7 +1735,7 @@ void Session::close_temporary_table(Table *table)
   If this is needed, use close_temporary_table()
 */
 
-void Session::nukeTable(Table *table)
+void Open_tables_state::nukeTable(Table *table)
 {
   plugin::StorageEngine *table_type= table->getShare()->db_type();
 
@@ -1809,11 +1809,11 @@ void Session::setVariable(const std::string &name, const std::string &value)
                               DERIVATION_IMPLICIT, false);
 }
 
-void Session::mark_temp_tables_as_free_for_reuse()
+void Open_tables_state::mark_temp_tables_as_free_for_reuse()
 {
   for (Table *table= temporary_tables ; table ; table= table->getNext())
   {
-    if (table->query_id == query_id)
+    if (table->query_id == getQueryId())
     {
       table->query_id= 0;
       table->cursor->ha_reset();
@@ -1825,7 +1825,7 @@ void Session::mark_used_tables_as_free_for_reuse(Table *table)
 {
   for (; table ; table= table->getNext())
   {
-    if (table->query_id == query_id)
+    if (table->query_id == getQueryId())
     {
       table->query_id= 0;
       table->cursor->ha_reset();
@@ -1936,9 +1936,9 @@ bool Session::openTablesLock(TableList *tables)
   might be an issue (lame engines).
 */
 
-bool Session::rm_temporary_table(TableIdentifier &identifier, bool best_effort)
+bool Open_tables_state::rm_temporary_table(TableIdentifier &identifier, bool best_effort)
 {
-  if (plugin::StorageEngine::dropTable(*this, identifier))
+  if (plugin::StorageEngine::dropTable(*static_cast<Session *>(this), identifier))
   {
     if (not best_effort)
     {
@@ -1952,11 +1952,11 @@ bool Session::rm_temporary_table(TableIdentifier &identifier, bool best_effort)
   return false;
 }
 
-bool Session::rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &identifier)
+bool Open_tables_state::rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &identifier)
 {
   assert(base);
 
-  if (plugin::StorageEngine::dropTable(*this, *base, identifier))
+  if (plugin::StorageEngine::dropTable(*static_cast<Session *>(this), *base, identifier))
   {
     errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
                   identifier.getSQLPath().c_str(), errno);
@@ -1971,7 +1971,7 @@ bool Session::rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &i
   @note this will be removed, I am looking through Hudson to see if it is finding
   any tables that are missed during cleanup.
 */
-void Session::dumpTemporaryTableNames(const char *foo)
+void Open_tables_state::dumpTemporaryTableNames(const char *foo)
 {
   Table *table;
 
