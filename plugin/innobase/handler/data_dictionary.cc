@@ -111,23 +111,21 @@ CmpmemTool::Generator::Generator(Field **arg, bool in_reset) :
   record_number(0),
   inner_reset(in_reset)
 {
-  buf_pool_mutex_enter_all();
 }
 
 CmpmemTool::Generator::~Generator()
 {
-  buf_pool_mutex_exit_all();
 }
 
 bool CmpmemTool::Generator::populate()
 {
-  if (record_number > BUF_BUDDY_SIZES*srv_buf_pool_instances)
+  if (record_number >= (BUF_BUDDY_SIZES+1)*srv_buf_pool_instances)
   {
     return false;
   }
 
-  uint32_t buf_pool_nr= record_number/srv_buf_pool_instances;
-  uint32_t buddy_nr= record_number%srv_buf_pool_instances;
+  uint32_t buddy_nr= record_number % (BUF_BUDDY_SIZES+1);
+  uint32_t buf_pool_nr= (record_number/(BUF_BUDDY_SIZES+1));
 
   buf_pool_t *buf_pool= buf_pool_from_array(buf_pool_nr);
 
@@ -178,6 +176,21 @@ InnodbTrxTool::InnodbTrxTool(const char* in_table_name) :
     add_field("TRX_WEIGHT", plugin::TableFunction::NUMBER, 0, false);
     add_field("TRX_DRIZZLE_THREAD_ID", plugin::TableFunction::NUMBER, 0, false);
     add_field("TRX_QUERY", plugin::TableFunction::STRING, TRX_I_S_TRX_QUERY_MAX_LEN, true);
+    add_field("TRX_OPERATION_STATE", plugin::TableFunction::STRING, TRX_I_S_TRX_OP_STATE_MAX_LEN, true);
+//    add_field("TRX_TABLES_IN_USE", plugin::TableFunction::NUMBER, 0, false);
+    add_field("TRX_TABLES_LOCKED", plugin::TableFunction::NUMBER, 0, false);
+    add_field("TRX_LOCK_STRUCTS", plugin::TableFunction::NUMBER, 0, false);
+    add_field("TRX_LOCK_MEMORY_BYTES", plugin::TableFunction::NUMBER, 0, false);
+    add_field("TRX_ROWS_LOCKED", plugin::TableFunction::NUMBER, 0, false);
+    add_field("TRX_ROWS_MODIFIED", plugin::TableFunction::NUMBER, 0, false);
+    add_field("TRX_CONCURRENCY_TICKETS", plugin::TableFunction::NUMBER, 0, false);
+    add_field("TRX_ISOLATION_LEVEL", plugin::TableFunction::STRING, TRX_I_S_TRX_ISOLATION_LEVEL_MAX_LEN, false);
+    add_field("TRX_UNIQUE_CHECKS", plugin::TableFunction::NUMBER, 0, false);
+    add_field("TRX_FOREIGN_KEY_CHECKS", plugin::TableFunction::NUMBER, 0, false);
+    add_field("TRX_LAST_FOREIGN_KEY_ERROR", plugin::TableFunction::STRING,
+              TRX_I_S_TRX_FK_ERROR_MAX_LEN, true);
+    add_field("TRX_ADAPTIVE_HASH_LATCHED", plugin::TableFunction::NUMBER, 0, false);
+    add_field("TRX_ADAPTIVE_HASH_TIMEOUT", plugin::TableFunction::NUMBER, 0, false);
   }
   else if (innobase_strcasecmp(table_name, "INNODB_LOCKS") == 0)
   {
@@ -357,6 +370,20 @@ void InnodbTrxTool::Generator::populate_innodb_trx()
     {
       push();
     }
+    push(row->trx_operation_state);
+//    push(row->trx_tables_in_use);
+    push(row->trx_tables_locked);
+    push(row->trx_lock_structs);
+    push(row->trx_lock_memory_bytes);
+    push(row->trx_rows_locked);
+    push(static_cast<uint64_t>(row->trx_rows_modified));
+    push(row->trx_concurrency_tickets);
+    push(row->trx_isolation_level);
+    push(row->trx_unique_checks);
+    push(row->trx_foreign_key_checks);
+    push(row->trx_foreign_key_error);
+    push(row->trx_has_search_latch);
+    push(row->trx_search_latch_timeout);
 }
 
 void InnodbTrxTool::Generator::populate_innodb_lock_waits()
