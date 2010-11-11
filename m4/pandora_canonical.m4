@@ -350,7 +350,10 @@ typedef unsigned long int ulong;
 #endif
 
 #if defined(__cplusplus)
-#include <cassert>
+# if defined(DEBUG)
+#  include <cassert>
+#  include <cstddef>
+# endif
 template<typename To, typename From>
 inline To implicit_cast(From const &f) {
   return f;
