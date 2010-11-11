@@ -50,6 +50,39 @@ public:
   */
   Table *temporary_tables;
 
+  /**
+    Mark all temporary tables which were used by the current statement or
+    substatement as free for reuse, but only if the query_id can be cleared.
+
+    @param session thread context
+
+    @remark For temp tables associated with a open SQL HANDLER the query_id
+            is not reset until the HANDLER is closed.
+  */
+  void mark_temp_tables_as_free_for_reuse();
+
+protected:
+  void close_temporary_tables();
+public:
+  void close_temporary_table(Table *table);
+  // The method below just handles the de-allocation of the table. In
+  // a better memory type world, this would not be needed.
+private:
+  void nukeTable(Table *table);
+public:
+
+  /* Work with temporary tables */
+  Table *find_temporary_table(const TableIdentifier &identifier);
+
+  void dumpTemporaryTableNames(const char *id);
+  int drop_temporary_table(const drizzled::TableIdentifier &identifier);
+  bool rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &identifier);
+  bool rm_temporary_table(TableIdentifier &identifier, bool best_effort= false);
+  Table *open_temporary_table(TableIdentifier &identifier,
+                              bool link_in_list= true);
+
+  virtual query_id_t getQueryId()  const= 0;
+
   Table *derived_tables;
   /*
     During a MySQL session, one can lock tables in two modes: automatic

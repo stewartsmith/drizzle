@@ -886,7 +886,7 @@ public:
   }
 
   /** Returns the current query ID */
-  inline query_id_t getQueryId()  const
+  query_id_t getQueryId()  const
   {
     return query_id;
   }
@@ -1475,16 +1475,6 @@ public:
    * set to query_id of original query.
    */
   void mark_used_tables_as_free_for_reuse(Table *table);
-  /**
-    Mark all temporary tables which were used by the current statement or
-    substatement as free for reuse, but only if the query_id can be cleared.
-
-    @param session thread context
-
-    @remark For temp tables associated with a open SQL HANDLER the query_id
-            is not reset until the HANDLER is closed.
-  */
-  void mark_temp_tables_as_free_for_reuse();
 
 public:
 
@@ -1590,9 +1580,6 @@ public:
   bool doesTableMessageExist(const TableIdentifier &identifier);
   bool renameTableMessage(const TableIdentifier &from, const TableIdentifier &to);
 
-  /* Work with temporary tables */
-  Table *find_temporary_table(const TableIdentifier &identifier);
-
   void doGetTableNames(CachedDirectory &directory,
                        const SchemaIdentifier &schema_identifier,
                        std::set<std::string>& set_of_names);
@@ -1608,23 +1595,6 @@ public:
   int doGetTableDefinition(const drizzled::TableIdentifier &identifier,
                            message::Table &table_proto);
   bool doDoesTableExist(const drizzled::TableIdentifier &identifier);
-
-private:
-  void close_temporary_tables();
-public:
-  void close_temporary_table(Table *table);
-  // The method below just handles the de-allocation of the table. In
-  // a better memory type world, this would not be needed.
-private:
-  void nukeTable(Table *table);
-public:
-
-  void dumpTemporaryTableNames(const char *id);
-  int drop_temporary_table(const drizzled::TableIdentifier &identifier);
-  bool rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &identifier);
-  bool rm_temporary_table(TableIdentifier &identifier, bool best_effort= false);
-  Table *open_temporary_table(TableIdentifier &identifier,
-                              bool link_in_list= true);
 
   /* Reopen operations */
   bool reopen_tables(bool get_locks, bool mark_share_as_old);

@@ -592,7 +592,7 @@ int Session::doGetTableDefinition(const TableIdentifier &identifier,
   return ENOENT;
 }
 
-Table *Session::find_temporary_table(const TableIdentifier &identifier)
+Table *Open_tables_state::find_temporary_table(const TableIdentifier &identifier)
 {
   for (Table *table= temporary_tables ; table ; table= table->getNext())
   {
@@ -630,7 +630,7 @@ Table *Session::find_temporary_table(const TableIdentifier &identifier)
   @retval -1  the table is in use by a outer query
 */
 
-int Session::drop_temporary_table(const drizzled::TableIdentifier &identifier)
+int Open_tables_state::drop_temporary_table(const drizzled::TableIdentifier &identifier)
 {
   Table *table;
 
@@ -638,7 +638,7 @@ int Session::drop_temporary_table(const drizzled::TableIdentifier &identifier)
     return 1;
 
   /* Table might be in use by some outer statement. */
-  if (table->query_id && table->query_id != query_id)
+  if (table->query_id && table->query_id != getQueryId())
   {
     my_error(ER_CANT_REOPEN_TABLE, MYF(0), table->getAlias());
     return -1;
@@ -1834,8 +1834,8 @@ RETURN
 #  Table object
 */
 
-Table *Session::open_temporary_table(TableIdentifier &identifier,
-                                     bool link_in_list)
+Table *Open_tables_state::open_temporary_table(TableIdentifier &identifier,
+                                               bool link_in_list)
 {
   assert(identifier.isTmp());
 
@@ -1850,8 +1850,8 @@ Table *Session::open_temporary_table(TableIdentifier &identifier,
   /*
     First open the share, and then open the table from the share we just opened.
   */
-  if (new_tmp_table->getMutableShare()->open_table_def(*this, identifier) ||
-      new_tmp_table->getMutableShare()->open_table_from_share(this, identifier, identifier.getTableName().c_str(),
+  if (new_tmp_table->getMutableShare()->open_table_def(*static_cast<Session *>(this), identifier) ||
+      new_tmp_table->getMutableShare()->open_table_from_share(static_cast<Session *>(this), identifier, identifier.getTableName().c_str(),
                                                               (uint32_t) (HA_OPEN_KEYFILE | HA_OPEN_RNDFILE |
                                                                           HA_GET_INDEX),
                                                               ha_open_options,
