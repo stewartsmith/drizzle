@@ -6242,7 +6242,7 @@ InnobaseEngine::doCreateTable(
     }
 
     error = row_table_add_foreign_constraints(trx,
-                                              query,
+                                              query, strlen(query),
                                               norm_name,
                                               lex_identified_temp_table);
 

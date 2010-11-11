@@ -441,6 +441,10 @@ fill_trx_row(
 						which to copy volatile
 						strings */
 {
+	const char*	stmt;
+	size_t		stmt_len;
+	const char*	s;
+
 	ut_ad(mutex_own(&kernel_mutex));
 
 	row->trx_id = trx_get_id(trx);
@@ -463,35 +467,32 @@ fill_trx_row(
 
 	row->trx_weight = (ullint) ut_conv_dulint_to_longlong(TRX_WEIGHT(trx));
 
-        if (trx->mysql_thd != NULL) {
-		row->trx_mysql_thread_id
-			= session_get_thread_id(trx->mysql_thd);
-	} else {
+	if (trx->mysql_thd == NULL) {
 		/* For internal transactions e.g., purge and transactions
 		being recovered at startup there is no associated MySQL
 		thread data structure. */
 		row->trx_mysql_thread_id = 0;
+		row->trx_query = NULL;
+		goto thd_done;
 	}
 
-	if (trx->mysql_query_str != NULL && *trx->mysql_query_str != NULL) {
-		if (strlen(*trx->mysql_query_str)
-		    > TRX_I_S_TRX_QUERY_MAX_LEN) {
+	row->trx_mysql_thread_id = session_get_thread_id(trx->mysql_thd);
+	stmt = innobase_get_stmt(trx->mysql_thd, &stmt_len);
 
-			char	query[TRX_I_S_TRX_QUERY_MAX_LEN + 1];
+	if (stmt != NULL) {
 
-			memcpy(query, *trx->mysql_query_str,
-			       TRX_I_S_TRX_QUERY_MAX_LEN);
-			query[TRX_I_S_TRX_QUERY_MAX_LEN] = '\0';
+		char	query[TRX_I_S_TRX_QUERY_MAX_LEN + 1];
 
-			row->trx_query = ha_storage_put_memlim(
-				cache->storage, query,
-				TRX_I_S_TRX_QUERY_MAX_LEN + 1,
-				MAX_ALLOWED_FOR_STORAGE(cache));
-		} else {
-			row->trx_query = ha_storage_put_str_memlim(
-				cache->storage, *trx->mysql_query_str,
-				MAX_ALLOWED_FOR_STORAGE(cache));
+		if (stmt_len > TRX_I_S_TRX_QUERY_MAX_LEN) {
+			stmt_len = TRX_I_S_TRX_QUERY_MAX_LEN;
 		}
+
+		memcpy(query, stmt, stmt_len);
+		query[stmt_len] = '\0';
+
+		row->trx_query = ha_storage_put_memlim(
+			cache->storage, stmt, stmt_len + 1,
+			MAX_ALLOWED_FOR_STORAGE(cache));
 
 		if (row->trx_query == NULL) {
 
@@ -502,9 +503,12 @@ fill_trx_row(
 		row->trx_query = NULL;
 	}
 
-	if (trx->op_info != NULL && trx->op_info[0] != '\0') {
+thd_done:
+	s = trx->op_info;
 
-		TRX_I_S_STRING_COPY(trx->op_info, row->trx_operation_state,
+	if (s != NULL && s[0] != '\0') {
+
+		TRX_I_S_STRING_COPY(s, row->trx_operation_state,
 				    TRX_I_S_TRX_OP_STATE_MAX_LEN, cache);
 
 		if (row->trx_operation_state == NULL) {
@@ -552,9 +556,11 @@ fill_trx_row(
 
 	row->trx_foreign_key_checks = (ibool) trx->check_foreigns;
 
-	if (trx->detailed_error != NULL && trx->detailed_error[0] != '\0') {
+	s = trx->detailed_error;
 
-		TRX_I_S_STRING_COPY(trx->detailed_error,
+	if (s != NULL && s[0] != '\0') {
+
+		TRX_I_S_STRING_COPY(s,
 				    row->trx_foreign_key_error,
 				    TRX_I_S_TRX_FK_ERROR_MAX_LEN, cache);
 
@@ -563,7 +569,7 @@ fill_trx_row(
 			return(FALSE);
 		}
 	} else {
-			row->trx_foreign_key_error = NULL;
+		row->trx_foreign_key_error = NULL;
 	}
 
 	row->trx_has_search_latch = (ibool) trx->has_search_latch;
