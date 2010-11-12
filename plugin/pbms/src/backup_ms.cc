@@ -469,7 +469,7 @@ bool MSBackup::doWork()
 		uint8_t				blob_storage_type;
 		uint16_t				tab_index;
 		uint32_t				mod_time;
-		char				transferBuffer[MS_BACKUP_BUFFER_SIZE];
+		char				*transferBuffer;
 		CloudKeyRec			cloud_key;
 
 	
@@ -486,6 +486,9 @@ bool MSBackup::doWork()
 		}
 	*/
 	
+		transferBuffer = (char*) cs_malloc(MS_BACKUP_BUFFER_SIZE);
+		push_ptr_(transferBuffer);
+		
 		new_(head, CSStringBuffer(100));
 		push_(head);
 
@@ -680,6 +683,7 @@ bool MSBackup::doWork()
 		}
 				
 		release_(head);
+		release_(transferBuffer);
 		if (myMustQuit)
 			bu_State = BU_TERMINATED; 
 		else
