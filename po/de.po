@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2010-07-20 16:06+0000\n"
-"PO-Revision-Date: 2010-09-23 11:48+0000\n"
-"Last-Translator: spaceflower <Unknown>\n"
+"PO-Revision-Date: 2010-11-11 13:48+0000\n"
+"Last-Translator: bpola <Unknown>\n"
 "Language-Team: German <de@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2010-09-24 04:40+0000\n"
+"X-Launchpad-Export-Date: 2010-11-12 04:44+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 msgid "Synonym for `help'."
@@ -708,13 +708,13 @@ msgid "Invalid mode to --compatible: %s\n"
 msgstr "Invalider modus bei --compatible: %s\n"
 
 msgid "Error: Invalid Value for opt_max_connect_retries"
-msgstr ""
+msgstr "Fehler: Ungültiger Wert für opt_max_connect_retries"
 
 msgid "Error: Invalid Value for opt_tail_lines"
-msgstr ""
+msgstr "Fehler: Ungültiger Wert für opt_tail_lines"
 
 msgid "Error: Invalid Value for opt_sleep"
-msgstr ""
+msgstr "Fehler: Ungültiger wert für opt_sleep"
 
 #, c-format
 msgid "Could not open '%s' for reading: errno = %d"
@@ -1806,7 +1806,7 @@ msgid "Got a packet bigger than 'max_allowed_packet' bytes"
 msgstr "Datenpacket größer als 'max_allowed_packet' erhalten"
 
 msgid "Got a read error from the connection pipe"
-msgstr ""
+msgstr "Lesefehler von der Verbindungs-pipe erhalten"
 
 msgid "Got an error from fcntl()"
 msgstr "Fehler von fcntl() erhalten"
@@ -1925,7 +1925,7 @@ msgid ""
 msgstr ""
 
 msgid "The storage engine for the table does not support binary table dump"
-msgstr ""
+msgstr "Das Einlagern von Tabellen unterstützt keinen binären Tabellen Dump"
 
 msgid "Binlog closed, cannot RESET MASTER"
 msgstr ""
@@ -1976,6 +1976,8 @@ msgstr ""
 msgid ""
 "This operation cannot be performed with a running slave; run STOP SLAVE first"
 msgstr ""
+"Dies Operation kann nicht mit einen laufenden slave ausgeführt werden; "
+"starte zu Erst STOP SLAVE"
 
 msgid ""
 "This operation requires a running slave; configure slave and do START SLAVE"
@@ -1983,14 +1985,17 @@ msgstr ""
 
 msgid "The server is not configured as slave; fix with CHANGE MASTER TO"
 msgstr ""
+"Der Server ist nicht als slave konfiguriert; ändern mit CHANGE MASTER TO"
 
 msgid ""
 "Could not initialize master info structure; more error messages can be found "
 "in the Drizzle error log"
 msgstr ""
+"Maste Info Struktur konnte nicht initialisiert werden; mehr Fehlermeldungen "
+"können in Drizzle error log gefunden werden"
 
 msgid "Could not create slave thread; check system resources"
-msgstr ""
+msgstr "Slave Thread konnte nicht erstellt werden; überprüfe Systemresourcen"
 
 #, c-format
 msgid ""
@@ -2145,7 +2150,7 @@ msgid "Incorrect foreign key definition for '%-.192s': %s"
 msgstr "Ungültige Fremdschlüsseldefinition für '%-.192s': %s"
 
 msgid "Key reference and table reference don't match"
-msgstr ""
+msgstr "Schlüssel Refferenzen und Tabellen Refferenzen stimmen nicht überein"
 
 #, c-format
 msgid "Operand should contain %d column(s)"
@@ -2170,7 +2175,7 @@ msgstr "Konvertiere Spalte '%s' von '%s' nach '%s'"
 
 #, c-format
 msgid "Reference '%-.64s' not supported (%s)"
-msgstr ""
+msgstr "Referrenz '%-.64s' nicht unterstützt (%s)"
 
 msgid "Every derived table must have its own alias"
 msgstr "Jede abgeleitete Tabelle muss ihren eigenen Alias haben"
@@ -2196,10 +2201,10 @@ msgid "COLLATION '%s' is not valid for CHARACTER SET '%s'"
 msgstr ""
 
 msgid "Slave is already running"
-msgstr ""
+msgstr "Slave wurde bereits gestartet"
 
 msgid "Slave already has been stopped"
-msgstr ""
+msgstr "Slave wurde bereits angehalten"
 
 #, c-format
 msgid ""
@@ -2288,6 +2293,8 @@ msgid ""
 "Server is running in --secure-auth mode, but '%s'@'%s' has a password in the "
 "old format; please change the password to the new format"
 msgstr ""
+"Server läuft im --secure-auth Modus, aber '%s'@'%s' hat ein Passwort im "
+"alten Format; bitte ändern Sie das Passwort in das neue Format"
 
 #, c-format
 msgid ""
@@ -2298,6 +2305,7 @@ msgstr ""
 msgid ""
 "Incorrect parameter or combination of parameters for START SLAVE UNTIL"
 msgstr ""
+"Ungültige Parameter oder Parameter Kombinationen für START SLAVE UNTIL"
 
 msgid ""
 "It is recommended to use --skip-slave-start when doing step-by-step "
@@ -2307,6 +2315,7 @@ msgstr ""
 
 msgid "SQL thread is not to be started so UNTIL options are ignored"
 msgstr ""
+"UNTIL Optionen wurden ignoriert, da das SQL Thread noch nicht gestartet wurde"
 
 #, c-format
 msgid "Incorrect index name '%-.100s'"
@@ -2326,7 +2335,7 @@ msgstr "Die Spalte '%-.192s' kann nicht Teil eines FULLTEXT Index sein"
 
 #, c-format
 msgid "Unknown key cache '%-.100s'"
-msgstr ""
+msgstr "Unbekannter Schlüssel Cache '%-.100s'"
 
 msgid ""
 "Drizzle is started in --skip-name-resolve mode; you must restart it without "
