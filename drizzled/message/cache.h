@@ -2,7 +2,6 @@
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2010 Brian Aker
- *  Copyright (C) 2010 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,22 +18,26 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_TABLE_CACHE_H
-#define DRIZZLED_TABLE_CACHE_H
+#ifndef DRIZZLED_MESSAGE_CACHE_H
+#define DRIZZLED_MESSAGE_CACHE_H
 
 #include <boost/unordered_map.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include "drizzled/message/table.pb.h"
+#include "drizzled/identifier/table.h"
 
 namespace drizzled {
-namespace table {
+namespace message {
 
-class Concurrent;
+typedef boost::shared_ptr<drizzled::message::Table> TablePtr;
 
-typedef boost::unordered_multimap< TableIdentifier::Key, Concurrent *> CacheMap;
-typedef std::pair< CacheMap::const_iterator, CacheMap::const_iterator > CacheRange;
+typedef boost::unordered_map< drizzled::TableIdentifier::Key, TablePtr> Map;
 
-class Cache 
+class Cache
 {
-  CacheMap cache;
+  boost::mutex _access;
+  Map cache;
 
 public:
   static inline Cache &singleton()
@@ -44,9 +47,9 @@ public:
     return open_cache;
   }
 
-  CacheMap &getCache()
+  size_t size() const
   {
-    return cache;
+    return cache.size();
   }
 
   void rehash(size_t arg)
@@ -54,17 +57,13 @@ public:
     cache.rehash(arg);
   }
 
-  bool areTablesUsed(Table *table, bool wait_for_name_lock);
-  void removeSchema(const SchemaIdentifier &schema_identifier);
-  bool removeTable(Session *session, TableIdentifier &identifier, uint32_t flags);
-  void release(TableShare *share);
-  bool insert(table::Concurrent *arg);
+  TablePtr find(const TableIdentifier &identifier);
+  void erase(const TableIdentifier &identifier);
+  bool insert(const TableIdentifier &identifier, TablePtr share);
+  bool insert(const TableIdentifier &identifier, message::Table &share);
 };
 
-CacheMap &getCache(void);
-void remove_table(table::Concurrent *arg);
+} /* namespace message */
+} /* namespace drizzled */
 
-} /* namepsace table */
-} /* namepsace drizzled */
-
-#endif /* DRIZZLED_TABLE_CACHE_H */
+#endif /* DRIZZLED_MESSAGE_CACHE_H */

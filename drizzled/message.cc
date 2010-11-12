@@ -210,5 +210,28 @@ const std::string &type(drizzled::message::Table::ForeignKeyConstraint::ForeignK
   return MATCH_SIMPLE;
 }
 
+#if 0
+std::ostream& operator<<(std::ostream& output, const message::Transaction &message)
+{ 
+    std::string buffer;
+
+    google::protobuf::TextFormat::PrintToString(message, &buffer);
+    output << buffer;
+
+    return output;
+}
+
+std::ostream& operator<<(std::ostream& output, const message::Table &message)
+{ 
+  std::string buffer;
+
+  google::protobuf::TextFormat::PrintToString(message, &buffer);
+  output << buffer;
+
+  return output;
+}
+#endif
+
+
 } /* namespace message */
 } /* namespace drizzled */

@@ -152,7 +152,7 @@ bool statement::RenameTable::rename(TableList *ren_table,
   }
 
   plugin::StorageEngine *engine= NULL;
-  message::Table table_proto;
+  message::TablePtr table_proto;
 
   TableIdentifier old_identifier(ren_table->getSchemaName(), old_alias, message::Table::STANDARD);
 
@@ -162,7 +162,7 @@ bool statement::RenameTable::rename(TableList *ren_table,
     return true;
   }
 
-  engine= plugin::StorageEngine::findByName(*session, table_proto.engine().name());
+  engine= plugin::StorageEngine::findByName(*session, table_proto->engine().name());
 
   TableIdentifier new_identifier(new_db, new_alias, message::Table::STANDARD);
   if (plugin::StorageEngine::doesTableExist(*session, new_identifier))

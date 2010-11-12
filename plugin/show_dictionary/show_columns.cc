@@ -85,10 +85,10 @@ bool ShowColumns::Generator::nextColumnCore()
     is_columns_primed= true;
   }
 
-  if (column_iterator >= getTableProto().field_size())
+  if (column_iterator >= getTableProto()->field_size())
     return false;
 
-  column= getTableProto().field(column_iterator);
+  column= getTableProto()->field(column_iterator);
 
   return true;
 }
