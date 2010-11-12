@@ -8,12 +8,12 @@ SET @var="DROP SCHEMA foomine";
 EXECUTE @var CONCURRENT;
 
 # Now lets see what the processlist shows.
-SET @var="SELECT SLEEP(3)";
-EXECUTE @var CONCURRENT;
+SET @sleep="SELECT SLEEP(3)";
+EXECUTE @sleep CONCURRENT;
 SELECT USER,INFO FROM DATA_DICTIONARY.PROCESSLIST;
 
 # Wait till we know the above is done (this will be replaced with broadcast() in the future)
-EXECUTE @var;
+EXECUTE @sleep;
 
 # Check that a concurrent session cannot create one of itself, but can call
 # execute.
@@ -22,7 +22,20 @@ EXECUTE @var CONCURRENT;
 SELECT USER,INFO FROM DATA_DICTIONARY.PROCESSLIST;
 
 # Wait till everything closes out
-EXECUTE @var;
+EXECUTE @sleep;
 SET @var="EXECUTE \"SELECT SLEEP(3)\" CONCURRENT";
 EXECUTE @var CONCURRENT;
 SELECT USER,INFO FROM DATA_DICTIONARY.PROCESSLIST;
+
+
+# Test multiple statements
+
+SET @var="CREATE SCHEMA d; CREATE SCHEMA e;";
+EXECUTE @var CONCURRENT;
+
+# Wait for a second...
+EXECUTE @sleep;
+show schemas LIKE "d";
+show schemas LIKE "e";
+DROP SCHEMA d;
+DROP SCHEMA e;

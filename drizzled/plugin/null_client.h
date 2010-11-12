@@ -21,6 +21,7 @@
 #define DRIZZLED_PLUGIN_NULL_CLIENT_H
 
 #include <drizzled/plugin/client.h>
+#include<boost/tokenizer.hpp>
 #include <vector>
 #include <queue>
 #include <string>
@@ -109,11 +110,16 @@ public:
   void pushSQL(const std::string &arg)
   {
     Bytes byte;
-    byte.resize(arg.size()+2); // +1 for the COM_QUERY
-    byte[0]= COM_QUERY;
-    memcpy(&byte[1], arg.c_str(), arg.size());
-    byte.push_back(';');
-    to_execute.push(byte);
+    typedef boost::tokenizer<boost::escaped_list_separator<char> > Tokenizer;
+    Tokenizer tok(arg, boost::escaped_list_separator<char>("\\", ";", "\""));
+
+    for (Tokenizer::iterator iter= tok.begin(); iter != tok.end(); ++iter)
+    {
+      byte.resize((*iter).size() +1); // +1 for the COM_QUERY
+      byte[0]= COM_QUERY;
+      memcpy(&byte[1], (*iter).c_str(), (*iter).size());
+      to_execute.push(byte);
+    }
   }
 };
 
