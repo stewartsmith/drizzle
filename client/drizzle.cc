@@ -1397,7 +1397,15 @@ try
   system_config_dir_client.append("/drizzle/client.cnf");
 
   std::string user_config_dir((getenv("XDG_CONFIG_HOME")? getenv("XDG_CONFIG_HOME"):"~/.config"));
-  
+ 
+  if (user_config_dir.compare(0, 2, "~/") == 0)
+  {
+    char *homedir;
+    homedir= getenv("HOME");
+    if (homedir != NULL)
+      user_config_dir.replace(0, 1, homedir);
+  }
+ 
   po::variables_map vm;
 
   po::positional_options_description p;

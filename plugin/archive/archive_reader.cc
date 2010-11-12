@@ -91,6 +91,14 @@ try
   system_config_dir_archive_reader.append("/drizzle/archive_reader.cnf");
 
   std::string user_config_dir((getenv("XDG_CONFIG_HOME")? getenv("XDG_CONFIG_HOME"):"~/.config"));
+
+  if (user_config_dir.compare(0, 2, "~/") == 0)
+  {
+    char *homedir;
+    homedir= getenv("HOME");
+    if (homedir != NULL)
+      user_config_dir.replace(0, 1, homedir);
+  }
   
   po::options_description long_options("Allowed Options");
   long_options.add(commandline_options).add(archive_reader_options);
