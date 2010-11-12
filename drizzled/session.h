@@ -1572,13 +1572,27 @@ public:
   bool lock_table_name_if_not_cached(TableIdentifier &identifier, Table **table);
 
   typedef boost::unordered_map<std::string, message::Table, util::insensitive_hash, util::insensitive_equal_to> TableMessageCache;
-  TableMessageCache table_message_cache;
 
-  bool storeTableMessage(const TableIdentifier &identifier, message::Table &table_message);
-  bool removeTableMessage(const TableIdentifier &identifier);
-  bool getTableMessage(const TableIdentifier &identifier, message::Table &table_message);
-  bool doesTableMessageExist(const TableIdentifier &identifier);
-  bool renameTableMessage(const TableIdentifier &from, const TableIdentifier &to);
+  class TableMessages
+  {
+    TableMessageCache table_message_cache;
+
+  public:
+    bool storeTableMessage(const TableIdentifier &identifier, message::Table &table_message);
+    bool removeTableMessage(const TableIdentifier &identifier);
+    bool getTableMessage(const TableIdentifier &identifier, message::Table &table_message);
+    bool doesTableMessageExist(const TableIdentifier &identifier);
+    bool renameTableMessage(const TableIdentifier &from, const TableIdentifier &to);
+
+  };
+private:
+  TableMessages _table_message_cache;
+
+public:
+  TableMessages &getMessageCache()
+  {
+    return _table_message_cache;
+  }
 
   /* Reopen operations */
   bool reopen_tables(bool get_locks, bool mark_share_as_old);

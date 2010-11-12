@@ -1998,14 +1998,14 @@ void Open_tables_state::dumpTemporaryTableNames(const char *foo)
   }
 }
 
-bool Session::storeTableMessage(const TableIdentifier &identifier, message::Table &table_message)
+bool Session::TableMessages::storeTableMessage(const TableIdentifier &identifier, message::Table &table_message)
 {
   table_message_cache.insert(make_pair(identifier.getPath(), table_message));
 
   return true;
 }
 
-bool Session::removeTableMessage(const TableIdentifier &identifier)
+bool Session::TableMessages::removeTableMessage(const TableIdentifier &identifier)
 {
   TableMessageCache::iterator iter;
 
@@ -2019,7 +2019,7 @@ bool Session::removeTableMessage(const TableIdentifier &identifier)
   return true;
 }
 
-bool Session::getTableMessage(const TableIdentifier &identifier, message::Table &table_message)
+bool Session::TableMessages::getTableMessage(const TableIdentifier &identifier, message::Table &table_message)
 {
   TableMessageCache::iterator iter;
 
@@ -2033,7 +2033,7 @@ bool Session::getTableMessage(const TableIdentifier &identifier, message::Table 
   return true;
 }
 
-bool Session::doesTableMessageExist(const TableIdentifier &identifier)
+bool Session::TableMessages::doesTableMessageExist(const TableIdentifier &identifier)
 {
   TableMessageCache::iterator iter;
 
@@ -2047,7 +2047,7 @@ bool Session::doesTableMessageExist(const TableIdentifier &identifier)
   return true;
 }
 
-bool Session::renameTableMessage(const TableIdentifier &from, const TableIdentifier &to)
+bool Session::TableMessages::renameTableMessage(const TableIdentifier &from, const TableIdentifier &to)
 {
   TableMessageCache::iterator iter;
 
