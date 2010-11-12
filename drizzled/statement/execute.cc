@@ -113,18 +113,43 @@ bool statement::Execute::execute()
     if (is_quiet)
     {
       plugin::Client *temp= getSession()->getClient();
-      plugin::Client *null_client= plugin::Listen::getNullClient();
+      plugin::NullClient *null_client= new plugin::NullClient;
 
       getSession()->setClient(null_client);
 
-      mysql_parse(getSession(), to_execute.str, to_execute.length);
+      // @note this is copied from code in NULL client, all of this belongs
+      // in the pluggable parser pieces.
+      {
+        typedef boost::tokenizer<boost::escaped_list_separator<char> > Tokenizer;
+        std::string full_string(to_execute.str, to_execute.length);
+        Tokenizer tok(full_string, boost::escaped_list_separator<char>("\\", ";", "\""));
+
+        std::cerr << "Execute String:" << full_string << "\n";
+
+        for (Tokenizer::iterator iter= tok.begin();
+             iter != tok.end() and not null_client->haveError() and getSession()->getKilled() != Session::KILL_CONNECTION;
+             ++iter)
+        {
+          null_client->pushSQL(*iter);
+          if (not getSession()->executeStatement())
+          {
+            break;
+          }
+        }
+      }
 
       getSession()->setClient(temp);
       if (getSession()->is_error())
       {
         getSession()->clear_error(true);
-        getSession()->my_ok();
       }
+      else
+      {
+        getSession()->clearDiagnostics();
+      }
+
+      getSession()->my_ok();
+
       null_client->close();
       delete null_client;
     }

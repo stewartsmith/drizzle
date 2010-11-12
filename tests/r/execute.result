@@ -34,6 +34,8 @@ t1	CREATE TABLE `t1` (
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 EXECUTE "INSERT INTO t1 VALUES ()";
 EXECUTE "DROP TABLE t1";
+SHOW TABLES;
+Tables_in_test
 EXECUTE "SELECT @t1, @t2, @t3, @t4 := @t1+@t2+@t3; SELECT @t1, @t2, @t3, @t4 := @t1+@t2+@t3";
 ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '; SELECT @t1, @t2, @t3, @t4 := @t1+@t2+@t3' at line 1
 set @foo="SELECT 1+2+3";
@@ -100,3 +102,13 @@ EXECUTE "explain extended SELECT (SELECT (SELECT 0 UNION SELECT 0))" WITH NO RET
 Warnings:
 Note	1249	Select 2 was reduced during optimization
 Note	1003	select (select 0 AS `0` union select 0 AS `0`) AS `(SELECT (SELECT 0 UNION SELECT 0))`
+SET @var="CREATE SCHEMA d; CREATE SCHEMA e;";
+EXECUTE @var WITH NO RETURN;
+show schemas LIKE "d";
+Database (d)
+d
+show schemas LIKE "e";
+Database (e)
+e
+DROP SCHEMA d;
+DROP SCHEMA e;

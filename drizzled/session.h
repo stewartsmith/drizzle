@@ -1188,6 +1188,11 @@ public:
     }
   }
 
+  void clearDiagnostics()
+  {
+    main_da.reset_diagnostics_area();
+  }
+
   /**
     Mark the current error as fatal. Warning: this does not
     set any error, it sets a property of the error, so must be
