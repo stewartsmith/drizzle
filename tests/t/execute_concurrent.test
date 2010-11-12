@@ -39,3 +39,30 @@ show schemas LIKE "d";
 show schemas LIKE "e";
 DROP SCHEMA d;
 DROP SCHEMA e;
+
+
+# We are now going to make sure that data is actually committed.
+CREATE TABLE foo (a serial);
+
+SET @var="INSERT INTO foo VALUES(); INSERT INTO foo VALUES ()";
+EXECUTE @var CONCURRENT;
+EXECUTE @sleep;
+SELECT * FROM foo;
+
+SET @var="SAVEPOINT mine; INSERT INTO foo VALUES(); INSERT INTO foo VALUES ()";
+EXECUTE @var CONCURRENT;
+EXECUTE @sleep;
+SELECT * FROM foo;
+
+SET @var="SAVEPOINT mine; INSERT INTO foo VALUES(); INSERT INTO foo VALUES (); RELEASE SAVEPOINT mine";
+EXECUTE @var CONCURRENT;
+EXECUTE @sleep;
+SELECT * FROM foo;
+
+SET @var="SAVEPOINT mine; INSERT INTO foo VALUES (); INSERT INTO foo VALUES (); ROLLBACK TO SAVEPOINT mine";
+EXECUTE @var CONCURRENT;
+EXECUTE @sleep;
+SELECT * FROM foo;
+
+DROP TABLE foo;
+

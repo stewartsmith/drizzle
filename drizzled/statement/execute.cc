@@ -26,6 +26,7 @@
 #include "drizzled/plugin/listen.h"
 #include "drizzled/plugin/client.h"
 #include "drizzled/plugin/null_client.h"
+#include "drizzled/plugin/client/concurrent.h"
 
 namespace drizzled
 {
@@ -85,12 +86,16 @@ bool statement::Execute::execute()
 
   if (is_concurrent)
   {
-
     if (getSession()->isConcurrentExecuteAllowed())
     {
-      plugin::NullClient *null_client= new plugin::NullClient;
-      null_client->pushSQL(std::string(to_execute.str, to_execute.length));
-      Session *new_session= new Session(null_client);
+      plugin::client::Concurrent *client= new plugin::client::Concurrent;
+      std::string execution_string(to_execute.str, to_execute.length);
+      client->pushSQL(execution_string);
+      Session *new_session= new Session(client);
+
+      // We set the current schema.  @todo do the same with catalog
+      if (not getSession()->getSchema().empty())
+        new_session->set_db(getSession()->getSchema());
 
       new_session->setConcurrentExecute(false);
 

@@ -226,6 +226,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
                         const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));
 
     plugin::QueryRewriter::rewriteQuery(session->db, session->query);
+    std::cerr << "SQL:" << session->query << "\n";
     mysql_parse(session, session->query.c_str(), session->query.length());
 
     break;

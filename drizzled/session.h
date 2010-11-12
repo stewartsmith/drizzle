@@ -408,6 +408,11 @@ public:
     only responsible for freeing this member.
   */
   std::string db;
+
+  const std::string &getSchema() const
+  {
+    return db;
+  }
   std::string catalog;
   /* current cache key */
   std::string query_cache_key;
