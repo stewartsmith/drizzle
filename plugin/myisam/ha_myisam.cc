@@ -163,14 +163,14 @@ void MyisamEngine::doGetTableIdentifiers(drizzled::CachedDirectory&,
 
 bool MyisamEngine::doDoesTableExist(Session &session, const TableIdentifier &identifier)
 {
-  return session.doesTableMessageExist(identifier);
+  return session.getMessageCache().doesTableMessageExist(identifier);
 }
 
 int MyisamEngine::doGetTableDefinition(Session &session,
                                        const TableIdentifier &identifier,
                                        message::Table &table_message)
 {
-  if (session.getTableMessage(identifier, table_message))
+  if (session.getMessageCache().getTableMessage(identifier, table_message))
     return EEXIST;
   return ENOENT;
 }
@@ -1328,7 +1328,7 @@ int ha_myisam::delete_all_rows()
 int MyisamEngine::doDropTable(Session &session,
                               const TableIdentifier &identifier)
 {
-  session.removeTableMessage(identifier);
+  session.getMessageCache().removeTableMessage(identifier);
 
   return mi_delete_table(identifier.getPath().c_str());
 }
@@ -1384,7 +1384,7 @@ int MyisamEngine::doCreateTable(Session &session,
                    &create_info, create_flags);
   free((unsigned char*) recinfo);
 
-  session.storeTableMessage(identifier, create_proto);
+  session.getMessageCache().storeTableMessage(identifier, create_proto);
 
   return error;
 }
@@ -1392,7 +1392,7 @@ int MyisamEngine::doCreateTable(Session &session,
 
 int MyisamEngine::doRenameTable(Session &session, const TableIdentifier &from, const TableIdentifier &to)
 {
-  session.renameTableMessage(from, to);
+  session.getMessageCache().renameTableMessage(from, to);
 
   return mi_rename(from.getPath().c_str(), to.getPath().c_str());
 }
