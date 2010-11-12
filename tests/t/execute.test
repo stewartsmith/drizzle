@@ -75,3 +75,10 @@ show schemas LIKE "d";
 show schemas LIKE "e";
 DROP SCHEMA d;
 DROP SCHEMA e;
+
+# Test error statement in mid query
+SET @var="CREATE SCHEMA d; SELECT fosdsd; CREATE SCHEMA e;";
+EXECUTE @var WITH NO RETURN;
+show schemas LIKE "d";
+show schemas LIKE "e";
+DROP SCHEMA d;

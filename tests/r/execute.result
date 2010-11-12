@@ -112,3 +112,11 @@ Database (e)
 e
 DROP SCHEMA d;
 DROP SCHEMA e;
+SET @var="CREATE SCHEMA d; SELECT fosdsd; CREATE SCHEMA e;";
+EXECUTE @var WITH NO RETURN;
+show schemas LIKE "d";
+Database (d)
+d
+show schemas LIKE "e";
+Database (e)
+DROP SCHEMA d;

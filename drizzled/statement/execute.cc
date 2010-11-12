@@ -124,17 +124,16 @@ bool statement::Execute::execute()
         std::string full_string(to_execute.str, to_execute.length);
         Tokenizer tok(full_string, boost::escaped_list_separator<char>("\\", ";", "\""));
 
-        std::cerr << "Execute String:" << full_string << "\n";
-
         for (Tokenizer::iterator iter= tok.begin();
-             iter != tok.end() and not null_client->haveError() and getSession()->getKilled() != Session::KILL_CONNECTION;
+             iter != tok.end() and getSession()->getKilled() != Session::KILL_CONNECTION;
              ++iter)
         {
           null_client->pushSQL(*iter);
           if (not getSession()->executeStatement())
-          {
             break;
-          }
+
+          if (getSession()->is_error())
+            break;
         }
       }
 
