@@ -9180,7 +9180,7 @@ static void init_options(drizzled::module::option_context &context)
           po::value<bool>()->default_value(false)->zero_tokens(),
           "Use strict mode when evaluating create options.");
   context("replication-log",
-          po::value<bool>()->default_value(false),
+          po::value<bool>()->default_value(true),
           "Enable internal replication log.");
   context("lock-wait-timeout",
           po::value<unsigned long>()->default_value(50),
