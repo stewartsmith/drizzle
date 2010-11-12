@@ -38,25 +38,20 @@ typedef struct drizzle_lex_string
 
 struct execute_string_t : public drizzle_lex_string
 {
+private:
   bool is_variable;
+public:
 
   bool isVariable() const
   {
     return is_variable;
   }
 
-  void setVariable(bool arg)
+  void set(const drizzle_lex_string& ptr, bool is_variable_arg= false)
   {
-    is_variable= arg;
-  }
-
-  execute_string_t& operator=(const drizzle_lex_string& ptr)
-  {
-    is_variable= false;
+    is_variable= is_variable_arg;
     str= ptr.str;
     length= ptr.length;
-
-    return *this;
   }
 
 };

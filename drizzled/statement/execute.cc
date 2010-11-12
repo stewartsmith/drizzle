@@ -58,7 +58,8 @@ bool statement::Execute::parseVariable()
       LEX_STRING tmp_for_var;
       tmp_for_var.str= var->value; 
       tmp_for_var.length= var->length; 
-      to_execute= tmp_for_var;
+      to_execute.set(tmp_for_var);
+
       return true;
     }
   }

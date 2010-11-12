@@ -4487,12 +4487,11 @@ execute:
 execute_var_or_string:
          ident_or_text
          {
-            $$= $1;
+            $$.set($1);
          }
         | '@' ident_or_text
         {
-            $$= $2;
-            $$.setVariable(true);
+            $$.set($2, true);
         }
 
 opt_status:
