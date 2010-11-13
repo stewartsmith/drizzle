@@ -1,5 +1,0 @@
-# 
-# Verify that the errmsg_notify plugin doesn't cause server crashes
-#
-
-SELECT "I love testing";
