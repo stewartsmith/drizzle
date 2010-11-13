@@ -2352,7 +2352,7 @@ static void fix_paths()
     pid_file_path= getDataHome();
     pid_file_path /= pid_file;
   }
-  pid_file= pid_file_path;
+  pid_file= fs::system_complete(pid_file_path);
 
   if (not opt_help)
   {
