@@ -423,12 +423,19 @@ public:
   plugin::Client *client; /**< Pointer to client object */
   plugin::Scheduler *scheduler; /**< Pointer to scheduler object */
   void *scheduler_arg; /**< Pointer to the optional scheduler argument */
-private:
+
   typedef boost::unordered_map< std::string, user_var_entry *, util::insensitive_hash, util::insensitive_equal_to> UserVars;
+private:
   typedef std::pair< UserVars::iterator, UserVars::iterator > UserVarsRange;
   UserVars user_vars; /**< Hash of user variables defined during the session's lifetime */
 
 public:
+
+  const UserVars &getUserVariables() const
+  {
+    return user_vars;
+  }
+
   drizzle_system_variables variables; /**< Mutable local variables local to the session */
   struct system_status_var status_var; /**< Session-local status counters */
   THR_LOCK_INFO lock_info; /**< Locking information for this session */
