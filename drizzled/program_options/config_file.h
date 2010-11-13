@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2002-2004 Vladimir Prus.
+ * Copyright (c) 2010 Monty Taylor
  *
  * Distributed under the Boost Software License, Version 1.0.
  * (See accompanying file LICENSE_1_0.txt or copy at
@@ -27,6 +28,73 @@ namespace drizzled
 {
 namespace program_options
 {
+
+std::string parse_suffix(const std::string& arg_val);
+std::pair<std::string, std::string> parse_size_suffixes(std::string s);
+std::pair<std::string, std::string> parse_size_arg(std::string s);
+
+std::string parse_suffix(const std::string& arg_val)
+{
+  try
+  {
+    size_t size_suffix_pos= arg_val.find_last_of("kmgKMG");
+    if (size_suffix_pos == arg_val.size()-1)
+    {
+      char suffix= arg_val[size_suffix_pos];
+      std::string size_val(arg_val.substr(0, size_suffix_pos));
+
+      uint64_t base_size= boost::lexical_cast<uint64_t>(size_val);
+      uint64_t new_size= 0;
+
+      switch (suffix)
+      {
+      case 'K':
+      case 'k':
+        new_size= base_size * 1024;
+        break;
+      case 'M':
+      case 'm':
+        new_size= base_size * 1024 * 1024;
+        break;
+      case 'G':
+      case 'g':
+        new_size= base_size * 1024 * 1024 * 1024;
+        break;
+      }
+      return boost::lexical_cast<std::string>(new_size);
+    }
+  }
+  catch (...)
+  {
+  }
+  return arg_val;
+}
+
+std::pair<std::string, std::string> parse_size_suffixes(std::string s)
+{
+  size_t equal_pos= s.find("=");
+  if (equal_pos != std::string::npos)
+  {
+    std::string arg_key(s.substr(0, equal_pos));
+    std::string arg_val(parse_suffix(s.substr(equal_pos+1)));
+
+    if (arg_val != s.substr(equal_pos+1))
+    {
+      return std::make_pair(arg_key, arg_val);
+    }
+  }
+
+  return std::make_pair(std::string(""), std::string(""));
+}
+
+std::pair<std::string, std::string> parse_size_arg(std::string s)
+{
+  if (s.find("--") == 0)
+  {
+    return parse_size_suffixes(s.substr(2));
+  }
+  return make_pair(std::string(""), std::string(""));
+}
 
 class invalid_syntax :
   public boost::program_options::error
@@ -190,10 +258,20 @@ public: // Method required by eof_iterator
           if (*m_prefix.rbegin() != '.')
             m_prefix += '.';
         }
-        else if ((n = s.find('=')) != std::string::npos) {
+        else {
+          
+          std::string name;
+          std::string option_value("true");
 
-          std::string name = m_prefix + boost::trim_copy(s.substr(0, n));
-          std::string option_value = boost::trim_copy(s.substr(n+1));
+          if ((n = s.find('=')) != std::string::npos) {
+
+            name = m_prefix + boost::trim_copy(s.substr(0, n));
+            option_value = boost::trim_copy(parse_suffix(s.substr(n+1)));
+
+          }
+          else {
+            name = m_prefix + boost::trim_copy(s);
+          }
 
           bool registered = allowed_option(name);
           if (!registered && !m_allow_unregistered)
@@ -209,8 +287,6 @@ public: // Method required by eof_iterator
           this->value().original_tokens.push_back(option_value);
           break;
 
-        } else {
-          boost::throw_exception(invalid_syntax(s, invalid_syntax::unrecognized_line));
         }
       }
     }
