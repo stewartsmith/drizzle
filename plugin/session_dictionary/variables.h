@@ -18,29 +18,35 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "plugin/session_dictionary/dictionary.h"
+#ifndef PLUGIN_SESSION_DICTIONARY_VARIABLES_H
+#define PLUGIN_SESSION_DICTIONARY_VARIABLES_H
 
-using namespace drizzled;
+namespace session_dictionary {
 
-static int init(drizzled::module::Context &context)
+class Variables : public drizzled::plugin::TableFunction
 {
-  context.add(new ProcesslistTool);
-  context.add(new session_dictionary::Variables);
-  
-  return 0;
-}
+public:
 
-DRIZZLE_DECLARE_PLUGIN
-{
-  DRIZZLE_VERSION_ID,
-  "session_dictionary",
-  "1.1",
-  "Brian Aker",
-  "Dictionary for session information, aka proccesslist, user defined variables, etc.",
-  PLUGIN_LICENSE_GPL,
-  init,
-  NULL,
-  NULL
-}
-DRIZZLE_DECLARE_PLUGIN_END;
+  Variables();
+
+  class Generator : public drizzled::plugin::TableFunction::Generator 
+  {
+    const drizzled::Session::UserVars &user_vars;
+    drizzled::Session::UserVars::const_iterator iter;
+
+  public:
+    Generator(drizzled::Field **arg);
+    ~Generator();
+
+    bool populate();
+  };
+
+  Generator *generator(drizzled::Field **arg)
+  {
+    return new Generator(arg);
+  }
+};
+
+} /* namespace session_dictionary */
+
+#endif /* PLUGIN_SESSION_DICTIONARY_VARIABLES_H */
