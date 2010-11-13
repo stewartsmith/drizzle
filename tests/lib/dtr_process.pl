@@ -692,7 +692,7 @@ sub dtr_server_shutdown($) {
     dtr_add_arg($args, "--port=%s", $srv->{'port'});
   }
 
-  dtr_add_arg($args, "--connect_timeout=5");
+  dtr_add_arg($args, "--connect-timeout=5");
 
   my $pid= dtr_spawn($::exe_drizzle, $args,
                      "", "", "", "", { append_log_file => 1 });

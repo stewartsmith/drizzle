@@ -1208,7 +1208,7 @@ int HailDBEngine::doCreateTable(Session &session,
 
   if (table_message.type() == message::Table::TEMPORARY)
   {
-    session.storeTableMessage(identifier, table_message);
+    session.getMessageCache().storeTableMessage(identifier, table_message);
     haildb_err= DB_SUCCESS;
   }
   else
@@ -1300,7 +1300,7 @@ int HailDBEngine::doDropTable(Session &session,
 
   if (identifier.getType() == message::Table::TEMPORARY)
   {
-      session.removeTableMessage(identifier);
+      session.getMessageCache().removeTableMessage(identifier);
       delete_table_message_from_haildb(haildb_schema_transaction,
                                        haildb_table_name.c_str());
   }
@@ -1458,7 +1458,7 @@ int HailDBEngine::doRenameTable(drizzled::Session &session,
   if (to.getType() == message::Table::TEMPORARY
       && from.getType() == message::Table::TEMPORARY)
   {
-    session.renameTableMessage(from, to);
+    session.getMessageCache().renameTableMessage(from, to);
     return 0;
   }
 
@@ -1729,7 +1729,7 @@ int HailDBEngine::doGetTableDefinition(Session &session,
   string haildb_table_name;
 
   /* Check temporary tables!? */
-  if (session.getTableMessage(identifier, table))
+  if (session.getMessageCache().getTableMessage(identifier, table))
     return EEXIST;
 
   TableIdentifier_to_haildb_name(identifier, &haildb_table_name);
@@ -2818,11 +2818,8 @@ free_err:
   return err;
 }
 
-static bool  innobase_use_checksums= true;
-static char*  innobase_data_home_dir      = NULL;
 static char*  innobase_log_group_home_dir   = NULL;
 static bool innobase_use_doublewrite= true;
-static unsigned long srv_io_capacity= 200;
 static unsigned long innobase_fast_shutdown= 1;
 static bool srv_file_per_table= false;
 static bool innobase_adaptive_hash_index;
@@ -2848,6 +2845,10 @@ typedef constrained_check<size_t, SIZE_MAX, 5242880, 1048576> buffer_pool_constr
 static buffer_pool_constraint innobase_buffer_pool_size;
 typedef constrained_check<size_t, SIZE_MAX, 512, 1024> additional_mem_pool_constraint;
 static additional_mem_pool_constraint innobase_additional_mem_pool_size;
+static bool  innobase_use_checksums= true;
+typedef constrained_check<unsigned int, UINT_MAX, 100> io_capacity_constraint;
+static io_capacity_constraint srv_io_capacity;
+
 static long innobase_open_files;
 static long innobase_force_recovery;
 static long innobase_log_buffer_size;
@@ -2876,15 +2877,6 @@ static int haildb_init(drizzled::module::Context &context)
   innobase_use_doublewrite= (vm.count("disable-doublewrite")) ? false : true;
   innobase_print_verbose_log= (vm.count("disable-print-verbose-log")) ? false : true;
   srv_use_sys_malloc= (vm.count("use-internal-malloc")) ? false : true;
-
-  if (vm.count("io-capacity"))
-  {
-    if (srv_io_capacity > (unsigned long)~0L || srv_io_capacity < 100)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of io-capacity"));
-      return 1;
-    }
-  }
 
   if (vm.count("fast-shutdown"))
   {
@@ -3016,11 +3008,6 @@ static int haildb_init(drizzled::module::Context &context)
     }
   }
 
-  if (vm.count("data-home-dir"))
-  {
-    innobase_data_home_dir= const_cast<char *>(vm["data-home-dir"].as<string>().c_str());
-  }
-
   if (vm.count("file-format"))
   {
     innobase_file_format_name= const_cast<char *>(vm["file-format"].as<string>().c_str());
@@ -3047,9 +3034,10 @@ static int haildb_init(drizzled::module::Context &context)
   if (err != DB_SUCCESS)
     goto haildb_error;
 
-  if (innobase_data_home_dir)
+
+  if (vm.count("data-home-dir"))
   {
-    err= ib_cfg_set_text("data_home_dir", innobase_data_home_dir);
+    err= ib_cfg_set_text("data_home_dir", vm["data-home-dir"].as<string>().c_str());
     if (err != DB_SUCCESS)
       goto haildb_error;
   }
@@ -3116,7 +3104,7 @@ static int haildb_init(drizzled::module::Context &context)
   if (err != DB_SUCCESS)
     goto haildb_error;
 
-  err= ib_cfg_set_int("io_capacity", srv_io_capacity);
+  err= ib_cfg_set_int("io_capacity", static_cast<unsigned int>(srv_io_capacity));
   if (err != DB_SUCCESS)
     goto haildb_error;
 
@@ -3214,6 +3202,13 @@ static int haildb_init(drizzled::module::Context &context)
   context.registerVariable(new sys_var_constrained_value_readonly<size_t>("additional_mem_pool_size",innobase_additional_mem_pool_size));
   context.registerVariable(new sys_var_constrained_value_readonly<unsigned int>("autoextend_increment", srv_auto_extend_increment));
   context.registerVariable(new sys_var_constrained_value_readonly<size_t>("buffer_pool_size", innobase_buffer_pool_size));
+  context.registerVariable(new sys_var_bool_ptr_readonly("checksums",
+                                                         &innobase_use_checksums));
+  context.registerVariable(new sys_var_bool_ptr_readonly("doublewrite",
+                                                         &innobase_use_doublewrite));
+  context.registerVariable(new sys_var_const_string_val("data_home_dir",
+                                                vm.count("data-home-dir") ?  vm["data-home-dir"].as<string>() : ""));
+  context.registerVariable(new sys_var_constrained_value_readonly<unsigned int>("io_capacity", srv_io_capacity));
 
   haildb_datadict_dump_func_initialize(context);
   config_table_function_initialize(context);
@@ -3343,28 +3338,6 @@ static void haildb_status_file_update(Session*, drizzle_sys_var*,
   if (err == DB_SUCCESS)
     innobase_create_status_file= status_file_enabled;
 }
-
-static DRIZZLE_SYSVAR_BOOL(checksums, innobase_use_checksums,
-  PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
-  "Enable HailDB checksums validation (enabled by default). "
-  "Disable with --skip-haildb-checksums.",
-  NULL, NULL, true);
-
-static DRIZZLE_SYSVAR_STR(data_home_dir, innobase_data_home_dir,
-  PLUGIN_VAR_READONLY,
-  "The common part for HailDB table spaces.",
-  NULL, NULL, NULL);
-
-static DRIZZLE_SYSVAR_BOOL(doublewrite, innobase_use_doublewrite,
-  PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
-  "Enable HailDB doublewrite buffer (enabled by default). "
-  "Disable with --skip-haildb-doublewrite.",
-  NULL, NULL, true);
-
-static DRIZZLE_SYSVAR_ULONG(io_capacity, srv_io_capacity,
-  PLUGIN_VAR_RQCMDARG,
-  "Number of IOPs the server can do. Tunes the background IO rate",
-  NULL, NULL, 200, 100, ~0L, 0);
 
 static DRIZZLE_SYSVAR_ULONG(fast_shutdown, innobase_fast_shutdown,
   PLUGIN_VAR_OPCMDARG,
@@ -3518,7 +3491,7 @@ static void init_options(drizzled::module::option_context &context)
   context("disable-doublewrite",
           N_("Disable HailDB doublewrite buffer (enabled by default)."));
   context("io-capacity",
-          po::value<unsigned long>(&srv_io_capacity)->default_value(200),
+          po::value<io_capacity_constraint>(&srv_io_capacity)->default_value(200),
           N_("Number of IOPs the server can do. Tunes the background IO rate"));
   context("fast-shutdown",
           po::value<unsigned long>(&innobase_fast_shutdown)->default_value(1),
@@ -3596,10 +3569,6 @@ static void init_options(drizzled::module::option_context &context)
 }
 
 static drizzle_sys_var* innobase_system_variables[]= {
-  DRIZZLE_SYSVAR(checksums),
-  DRIZZLE_SYSVAR(data_home_dir),
-  DRIZZLE_SYSVAR(doublewrite),
-  DRIZZLE_SYSVAR(io_capacity),
   DRIZZLE_SYSVAR(fast_shutdown),
   DRIZZLE_SYSVAR(file_per_table),
   DRIZZLE_SYSVAR(file_format),

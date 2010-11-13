@@ -262,6 +262,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/memory/root.h \
 			      drizzled/memory/sql_alloc.h \
 			      drizzled/message.h \
+			      drizzled/message/cache.h \
 			      drizzled/module/context.h \
 			      drizzled/module/library.h \
 			      drizzled/module/manifest.h \
@@ -656,6 +657,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/locking/global.cc \
 				 drizzled/lookup_symbol.cc \
 				 drizzled/message.cc \
+				 drizzled/message/cache.cc \
 				 drizzled/module/context.cc \
 				 drizzled/module/library.cc \
 				 drizzled/module/loader.cc \
