@@ -27,6 +27,10 @@ namespace drizzled
 {
 class Session;
 
+namespace plugin {
+class NullClient;
+}
+
 namespace statement
 {
 
@@ -37,6 +41,8 @@ class Execute : public Statement
   drizzled::execute_string_t to_execute;
 
   bool parseVariable(void);
+
+  bool runStatement(plugin::NullClient *client, const std::string &arg);
 
 public:
   Execute(Session *in_session, drizzled::execute_string_t, bool is_quiet_arg, bool is_concurrent);

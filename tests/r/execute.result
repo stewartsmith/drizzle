@@ -93,15 +93,8 @@ Note	1249	Select 2 was reduced during optimization
 Note	1003	select (select 0 AS `0` union select 0 AS `0`) AS `(SELECT (SELECT 0 UNION SELECT 0))`
 EXECUTE "SELECT (SELECT 1) UNION SELECT (SELECT 2)" WITH NO RETURN;
 EXECUTE "explain extended SELECT (SELECT 1) UNION SELECT (SELECT 2)" WITH NO RETURN;
-Warnings:
-Note	1249	Select 2 was reduced during optimization
-Note	1249	Select 4 was reduced during optimization
-Note	1003	select 1 AS `(SELECT 1)` union select 2 AS `(SELECT 2)`
 EXECUTE "SELECT (SELECT (SELECT 0 UNION SELECT 0))" WITH NO RETURN;
 EXECUTE "explain extended SELECT (SELECT (SELECT 0 UNION SELECT 0))" WITH NO RETURN;
-Warnings:
-Note	1249	Select 2 was reduced during optimization
-Note	1003	select (select 0 AS `0` union select 0 AS `0`) AS `(SELECT (SELECT 0 UNION SELECT 0))`
 SET @var="CREATE SCHEMA d; CREATE SCHEMA e;";
 EXECUTE @var WITH NO RETURN;
 show schemas LIKE "d";

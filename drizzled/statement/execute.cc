@@ -68,6 +68,20 @@ bool statement::Execute::parseVariable()
   return false;
 }
 
+
+bool statement::Execute::runStatement(plugin::NullClient *client, const std::string &arg)
+{
+  client->pushSQL(arg);
+  if (not getSession()->executeStatement())
+    return true;
+
+  if (getSession()->is_error())
+    return true;
+
+  return false;
+}
+
+
 bool statement::Execute::execute()
 {
   if (to_execute.length == 0)
@@ -121,9 +135,28 @@ bool statement::Execute::execute()
       plugin::NullClient *null_client= new plugin::NullClient;
 
       getSession()->setClient(null_client);
+      
+      bool error_occured= false;
+      bool is_savepoint= false;
+      {
+        std::string start_sql;
+        if (getSession()->inTransaction())
+        {
+          // @todo Figure out something a bit more solid then this.
+          start_sql.append("SAVEPOINT execute_internal_savepoint");
+          is_savepoint= true;
+        }
+        else
+        {
+          start_sql.append("START TRANSACTION");
+        }
+
+        error_occured= runStatement(null_client, start_sql);
+      }
 
       // @note this is copied from code in NULL client, all of this belongs
-      // in the pluggable parser pieces.
+      // in the pluggable parser pieces.  
+      if (not error_occured)
       {
         typedef boost::tokenizer<boost::escaped_list_separator<char> > Tokenizer;
         std::string full_string(to_execute.str, to_execute.length);
@@ -133,12 +166,42 @@ bool statement::Execute::execute()
              iter != tok.end() and getSession()->getKilled() != Session::KILL_CONNECTION;
              ++iter)
         {
-          null_client->pushSQL(*iter);
-          if (not getSession()->executeStatement())
+          if (runStatement(null_client, *iter))
+          {
+            error_occured= true;
             break;
+          }
+        }
 
-          if (getSession()->is_error())
-            break;
+        // @todo Encapsulate logic later to method
+        {
+          std::string final_sql;
+          if (is_savepoint)
+          {
+            if (error_occured)
+            {
+              final_sql.append("ROLLBACK TO SAVEPOINT execute_internal_savepoint");
+            }
+            else
+            {
+              final_sql.append("RELEASE SAVEPOINT execute_internal_savepoint");
+            }
+          }
+          else
+          {
+            if (error_occured)
+            {
+              final_sql.append("ROLLBACK");
+            }
+            else
+            {
+              final_sql.append("COMMIT");
+            }
+          }
+
+          // Run the cleanup command, we currently ignore if an error occurs
+          // here.
+          (void)runStatement(null_client, final_sql);
         }
       }
 
