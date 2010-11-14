@@ -29,9 +29,10 @@ namespace drizzled
 namespace program_options
 {
 
+typedef std::pair<std::string, std::string> option_result_pair;
 std::string parse_suffix(const std::string& arg_val);
-std::pair<std::string, std::string> parse_size_suffixes(std::string s);
-std::pair<std::string, std::string> parse_size_arg(std::string s);
+option_result_pair parse_size_suffixes(std::string s);
+option_result_pair parse_size_arg(std::string s);
 
 std::string parse_suffix(const std::string& arg_val)
 {
@@ -65,12 +66,12 @@ std::string parse_suffix(const std::string& arg_val)
     }
   }
   catch (...)
-  {
-  }
+  { }
+
   return arg_val;
 }
 
-std::pair<std::string, std::string> parse_size_suffixes(std::string s)
+option_result_pair parse_size_suffixes(std::string s)
 {
   size_t equal_pos= s.find("=");
   if (equal_pos != std::string::npos)
@@ -87,7 +88,7 @@ std::pair<std::string, std::string> parse_size_suffixes(std::string s)
   return std::make_pair(std::string(""), std::string(""));
 }
 
-std::pair<std::string, std::string> parse_size_arg(std::string s)
+option_result_pair parse_size_arg(std::string s)
 {
   if (s.find("--") == 0)
   {
@@ -100,7 +101,8 @@ class invalid_syntax :
   public boost::program_options::error
 {
 public:
-  enum kind_t {
+  enum kind_t
+  {
     long_not_allowed = 30,
     long_adjacent_not_allowed,
     short_adjacent_not_allowed,
@@ -174,10 +176,10 @@ private:
 
 invalid_syntax::invalid_syntax(const std::string& in_tokens,
                                invalid_syntax::kind_t in_kind) :
- boost::program_options::error(error_message(in_kind).append(" in '").append(in_tokens).append("'"))
-, m_tokens(in_tokens)
-  , m_kind(in_kind)
-{}
+  boost::program_options::error(error_message(in_kind).append(" in '").append(in_tokens).append("'")),
+  m_tokens(in_tokens),
+  m_kind(in_kind)
+{ }
 
 namespace detail
 {
@@ -253,23 +255,27 @@ public: // Method required by eof_iterator
 
       if (!s.empty()) {
         // Handle section name
-        if (*s.begin() == '[' && *s.rbegin() == ']') {
+        if (*s.begin() == '[' && *s.rbegin() == ']')
+        {
           m_prefix = s.substr(1, s.size()-2);
           if (*m_prefix.rbegin() != '.')
             m_prefix += '.';
         }
-        else {
+        else
+        {
           
           std::string name;
           std::string option_value("true");
 
-          if ((n = s.find('=')) != std::string::npos) {
+          if ((n = s.find('=')) != std::string::npos)
+          {
 
             name = m_prefix + boost::trim_copy(s.substr(0, n));
             option_value = boost::trim_copy(parse_suffix(s.substr(n+1)));
 
           }
-          else {
+          else
+          {
             name = m_prefix + boost::trim_copy(s);
           }
 
@@ -312,7 +318,8 @@ private:
   {
     std::string s(name);
     assert(!s.empty());
-    if (*s.rbegin() == '*') {
+    if (*s.rbegin() == '*')
+    {
       s.resize(s.size()-1);
       bool bad_prefixes(false);
       // If 's' is a prefix of one of allowed suffix, then
@@ -320,11 +327,13 @@ private:
       // If some element is prefix of 's', then lower_bound will
       // return the next element.
       std::set<std::string>::iterator i = allowed_prefixes.lower_bound(s);
-      if (i != allowed_prefixes.end()) {
+      if (i != allowed_prefixes.end())
+      {
         if (i->find(s) == 0)
           bad_prefixes = true;                    
       }
-      if (i != allowed_prefixes.begin()) {
+      if (i != allowed_prefixes.begin())
+      {
         --i;
         if (s.find(*i) == 0)
           bad_prefixes = true;
@@ -414,9 +423,12 @@ template<class charT>
 bool
 basic_config_file_iterator<charT>::getline(std::string& s)
 {
-  if (std::getline(*is, s)) {
+  if (std::getline(*is, s))
+  {
     return true;
-  } else {
+  }
+  else
+  {
     return false;
   }
 }
@@ -441,16 +453,16 @@ parse_config_file(std::basic_istream<charT>& is,
     const boost::program_options::option_description& d= *options[i];
 
     if (d.long_name().empty())
-      boost::throw_exception(
-                             boost::program_options::error("long name required for config file"));
+      boost::throw_exception(boost::program_options::error("long name required for config file"));
 
     allowed_options.insert(d.long_name());
   }
 
   // Parser return char strings
   boost::program_options::parsed_options result(&desc);        
-  std::copy(detail::basic_config_file_iterator<charT>(
-                                                      is, allowed_options, allow_unregistered), 
+  std::copy(detail::basic_config_file_iterator<charT>(is,
+                                                      allowed_options,
+                                                      allow_unregistered), 
        detail::basic_config_file_iterator<charT>(), 
        std::back_inserter(result.options));
   // Convert char strings into desired type.
