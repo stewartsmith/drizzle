@@ -95,6 +95,7 @@
 #include <iostream>
 #include <fstream>
 #include <drizzled/configmake.h>
+#include <memory>
 
 /* Added this for string translation. */
 #include <drizzled/gettext.h>
@@ -103,6 +104,7 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 #include <boost/program_options.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <drizzled/atomics.h>
 
 #define SLAP_NAME "drizzleslap"
@@ -270,7 +272,8 @@ static void run_task(ThreadContext *ctx)
   uint64_t counter= 0, queries;
   uint64_t detach_counter;
   uint32_t commit_counter;
-  drizzle_con_st con;
+  boost::scoped_ptr<drizzle_con_st> con_ap(new drizzle_con_st);
+  drizzle_con_st &con= *con_ap.get();
   drizzle_result_st result;
   drizzle_row_t row;
   Statement *ptr;
@@ -558,7 +561,8 @@ int main(int argc, char **argv)
     }
 
     uint64_t temp_drizzle_port= 0;
-    drizzle_con_st con;
+    boost::scoped_ptr<drizzle_con_st> con_ap(new drizzle_con_st);
+    drizzle_con_st &con= *con_ap.get();
     OptionString *eptr;
 
     // Disable allow_guessing

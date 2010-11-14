@@ -32,13 +32,19 @@ int main(int argc, char *argv[])
   size_t buffer_total= 0;
   ssize_t read_size= 0;
   drizzle_st drizzle;
-  drizzle_con_st con;
+  drizzle_con_st *con= (drizzle_con_st*)malloc(sizeof(drizzle_con_st));
   drizzle_result_st result;
   drizzle_return_t ret;
   drizzle_field_t field;
   size_t offset;
   size_t size;
   size_t total;
+
+  if (con == NULL)
+  {
+    printf("Failed to allocate memory for drizzle connection");
+    exit(1);
+  }
 
   /* The docs say this might fail, so check for errors. */
   if (drizzle_create(&drizzle) == NULL)
@@ -47,7 +53,7 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
-  if (drizzle_con_create(&drizzle, &con) == NULL)
+  if (drizzle_con_create(&drizzle, con) == NULL)
   {
     printf("drizzle_con_create:%s\n", drizzle_error(&drizzle));
     exit(1);
@@ -58,7 +64,7 @@ int main(int argc, char *argv[])
     switch(c)
     {
     case 'd':
-      drizzle_con_set_db(&con, optarg);
+      drizzle_con_set_db(con, optarg);
       break;
 
     case 'h':
@@ -66,7 +72,7 @@ int main(int argc, char *argv[])
       break;
 
     case 'm':
-      drizzle_con_add_options(&con, DRIZZLE_CON_MYSQL);
+      drizzle_con_add_options(con, DRIZZLE_CON_MYSQL);
       break;
 
     case 'p':
@@ -95,8 +101,8 @@ int main(int argc, char *argv[])
     }
   }
 
-  drizzle_con_set_tcp(&con, host, port);
-  drizzle_con_set_auth(&con, user, password);
+  drizzle_con_set_tcp(con, host, port);
+  drizzle_con_set_auth(con, user, password);
 
   do
   {
@@ -118,7 +124,7 @@ int main(int argc, char *argv[])
     buffer_total= buffer_size + BUFFER_CHUNK;
   } while ((read_size= read(0, buffer + buffer_size, BUFFER_CHUNK)) != 0);
 
-  (void)drizzle_query(&con, &result, buffer, buffer_size, &ret);
+  (void)drizzle_query(con, &result, buffer, buffer_size, &ret);
   if (ret != DRIZZLE_RETURN_OK)
   {
     printf("drizzle_query:%s\n", drizzle_error(&drizzle));
@@ -166,8 +172,9 @@ int main(int argc, char *argv[])
   }
 
   drizzle_result_free(&result);
-  drizzle_con_free(&con);
+  drizzle_con_free(con);
   drizzle_free(&drizzle);
 
+  free(con);
   return 0;
 }

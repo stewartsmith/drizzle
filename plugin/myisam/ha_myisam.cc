@@ -36,11 +36,13 @@
 #include "drizzled/plugin/daemon.h"
 
 #include <boost/algorithm/string.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <string>
 #include <sstream>
 #include <map>
 #include <algorithm>
+#include <memory>
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
 
@@ -903,7 +905,8 @@ int ha_myisam::enable_indexes(uint32_t mode)
   else if (mode == HA_KEY_SWITCH_NONUNIQ_SAVE)
   {
     Session *session= getTable()->in_use;
-    MI_CHECK param;
+    boost::scoped_ptr<MI_CHECK> param_ap(new MI_CHECK);
+    MI_CHECK &param= *param_ap.get();
     const char *save_proc_info= session->get_proc_info();
     session->set_proc_info("Creating index");
     myisamchk_init(&param);
