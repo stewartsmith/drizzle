@@ -17,11 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_NULL_CLIENT_H
-#define DRIZZLED_PLUGIN_NULL_CLIENT_H
+#ifndef DRIZZLED_PLUGIN_CLIENT_CONCURRENT_H
+#define DRIZZLED_PLUGIN_CLIENT_CONCURRENT_H
 
 #include <drizzled/plugin/client.h>
-#include<boost/tokenizer.hpp>
+#include <boost/tokenizer.hpp>
 #include <vector>
 #include <queue>
 #include <string>
@@ -30,11 +30,13 @@ namespace drizzled
 {
 namespace plugin
 {
+namespace client
+{
 
 /**
  * This class is an empty client implementation for internal used.
  */
-class NullClient: public Client
+class Concurrent: public Client
 {
   typedef std::vector<char> Bytes;
   typedef std::queue <Bytes> Queue;
@@ -44,7 +46,7 @@ class NullClient: public Client
 
 public:
 
-  NullClient() :
+  Concurrent() :
     is_dead(false)
   {
   }
@@ -113,6 +115,13 @@ public:
     typedef boost::tokenizer<boost::escaped_list_separator<char> > Tokenizer;
     Tokenizer tok(arg, boost::escaped_list_separator<char>("\\", ";", "\""));
 
+    {
+      byte.resize(sizeof("START TRANSACTION")); // +1 for the COM_QUERY, provided by null count from sizeof()
+      byte[0]= COM_QUERY;
+      memcpy(&byte[1], "START TRANSACTION", sizeof("START TRANSACTION") -1);
+      to_execute.push(byte);
+    }
+
     for (Tokenizer::iterator iter= tok.begin(); iter != tok.end(); ++iter)
     {
       byte.resize((*iter).size() +1); // +1 for the COM_QUERY
@@ -120,10 +129,18 @@ public:
       memcpy(&byte[1], (*iter).c_str(), (*iter).size());
       to_execute.push(byte);
     }
+
+    {
+      byte.resize(sizeof("COMMIT")); // +1 for the COM_QUERY, provided by null count from sizeof()
+      byte[0]= COM_QUERY;
+      memcpy(&byte[1], "COMMIT", sizeof("COMMIT") -1);
+      to_execute.push(byte);
+    }
   }
 };
 
+} /* namespace client */
 } /* namespace plugin */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_NULL_CLIENT_H */
+#endif /* DRIZZLED_PLUGIN_CLIENT_CONCURRENT_H */

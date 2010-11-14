@@ -57,6 +57,8 @@
 
 #include "drizzled/util/functors.h"
 
+#include "drizzled/display.h"
+
 #include <fcntl.h>
 #include <algorithm>
 #include <climits>
@@ -166,6 +168,7 @@ Session::Session(plugin::Client *client_arg) :
   lock_id(&main_lock_id),
   user_time(0),
   ha_data(plugin::num_trx_monitored_objects),
+  concurrent_execute_allowed(true),
   arg_of_last_insert_id_function(false),
   first_successful_insert_id_in_prev_stmt(0),
   first_successful_insert_id_in_cur_stmt(0),
@@ -408,6 +411,12 @@ Session::~Session()
 
   /* Ensure that no one is using Session */
   LOCK_delete.unlock();
+}
+
+void Session::setClient(plugin::Client *client_arg)
+{
+  client= client_arg;
+  client->setSession(this);
 }
 
 void Session::awake(Session::killed_state_t state_to_set)
@@ -676,7 +685,9 @@ bool Session::executeStatement()
   main_da.reset_diagnostics_area();
 
   if (client->readCommand(&l_packet, &packet_length) == false)
+  {
     return false;
+  }
 
   if (getKilled() == KILL_CONNECTION)
     return false;
@@ -684,13 +695,13 @@ bool Session::executeStatement()
   if (packet_length == 0)
     return true;
 
-  l_command= (enum enum_server_command) (unsigned char) l_packet[0];
+  l_command= static_cast<enum_server_command>(l_packet[0]);
 
   if (command >= COM_END)
     command= COM_END;                           // Wrong command
 
   assert(packet_length);
-  return ! dispatch_command(l_command, this, l_packet+1, (uint32_t) (packet_length-1));
+  return not dispatch_command(l_command, this, l_packet+1, (uint32_t) (packet_length-1));
 }
 
 bool Session::readAndStoreQuery(const char *in_packet, uint32_t in_packet_length)

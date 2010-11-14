@@ -408,6 +408,11 @@ public:
     only responsible for freeing this member.
   */
   std::string db;
+
+  const std::string &getSchema() const
+  {
+    return db;
+  }
   std::string catalog;
   /* current cache key */
   std::string query_cache_key;
@@ -421,6 +426,14 @@ public:
 
   memory::Root warn_root; /**< Allocation area for warnings and errors */
   plugin::Client *client; /**< Pointer to client object */
+
+  void setClient(plugin::Client *client_arg);
+
+  plugin::Client *getClient()
+  {
+    return client;
+  }
+
   plugin::Scheduler *scheduler; /**< Pointer to scheduler object */
   void *scheduler_arg; /**< Pointer to the optional scheduler argument */
 
@@ -620,8 +633,24 @@ public:
   Field *dup_field;
   sigset_t signals;
 
+  // As of right now we do not allow a concurrent execute to launch itself
+private:
+  bool concurrent_execute_allowed;
+public:
+
+  void setConcurrentExecute(bool arg)
+  {
+    concurrent_execute_allowed= arg;
+  }
+
+  bool isConcurrentExecuteAllowed() const
+  {
+    return concurrent_execute_allowed;
+  }
+
   /* Tells if LAST_INSERT_ID(#) was called for the current statement */
   bool arg_of_last_insert_id_function;
+
   /*
     ALL OVER THIS FILE, "insert_id" means "*automatically generated* value for
     insertion into an auto_increment column".
@@ -1160,11 +1189,20 @@ public:
     @todo: To silence an error, one should use Internal_error_handler
     mechanism. In future this function will be removed.
   */
-  inline void clear_error()
+  inline void clear_error(bool full= false)
   {
     if (main_da.is_error())
       main_da.reset_diagnostics_area();
-    return;
+
+    if (full)
+    {
+      drizzle_reset_errors(this, true);
+    }
+  }
+
+  void clearDiagnostics()
+  {
+    main_da.reset_diagnostics_area();
   }
 
   /**

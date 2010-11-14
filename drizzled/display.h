@@ -18,41 +18,20 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_EXECUTE_H
-#define DRIZZLED_STATEMENT_EXECUTE_H
+#ifndef DRIZZLED_DISPLAY_H
+#define DRIZZLED_DISPLAY_H
 
-#include <drizzled/statement.h>
+#include "drizzled/common.h"
+#include <string>
 
-namespace drizzled
-{
-class Session;
+namespace drizzled {
+namespace display {
 
-namespace plugin {
-class NullClient;
-}
+const std::string &type(drizzled::enum_server_command type);
+const std::string &type(drizzled::enum_field_types type);
+const std::string &type(bool type);
 
-namespace statement
-{
-
-class Execute : public Statement
-{
-  bool is_quiet;
-  bool is_concurrent;
-  drizzled::execute_string_t to_execute;
-
-  bool parseVariable(void);
-
-  bool runStatement(plugin::NullClient *client, const std::string &arg);
-
-public:
-  Execute(Session *in_session, drizzled::execute_string_t, bool is_quiet_arg, bool is_concurrent);
-
-
-  bool execute();
-};
-
-} /* namespace statement */
-
+} /* namespace display */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_STATEMENT_EXECUTE_H */
+#endif /* DRIZZLED_DISPLAY_H */
