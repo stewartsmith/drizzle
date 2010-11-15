@@ -35,7 +35,7 @@ bool statement::Flush::execute()
    * reloadCache() will tell us if we are allowed to write to the
    * binlog or not.
    */
-  if (! reloadCache())
+  if (not reloadCache())
   {
     /*
      * We WANT to write and we CAN write.
@@ -43,7 +43,7 @@ bool statement::Flush::execute()
      *
      * Presumably, RESET and binlog writing doesn't require synchronization
      */
-    write_bin_log(session, session->query.c_str());
+    write_bin_log(session, *session->getQueryString());
     session->my_ok();
   }
 
