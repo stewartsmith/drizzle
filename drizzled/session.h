@@ -393,15 +393,15 @@ public:
     return lex;
   }
   /** query associated with this statement */
-  typedef boost::shared_ptr<std::string> QueryString;
+  typedef boost::shared_ptr<const std::string> QueryString;
 private:
-  QueryString query;
+  boost::shared_ptr<std::string> query;
 
   // Never allow for a modification of this outside of the class. c_str()
   // requires under some setup non const, you must copy the QueryString in
   // order to use it.
 public:
-  const QueryString getQueryString() const
+  QueryString getQueryString() const
   {
     return query;
   }
