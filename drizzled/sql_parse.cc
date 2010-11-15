@@ -225,8 +225,8 @@ bool dispatch_command(enum enum_server_command command, Session *session,
                         session->thread_id,
                         const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));
 
-    plugin::QueryRewriter::rewriteQuery(session->db, session->query);
-    mysql_parse(session, session->query.c_str(), session->query.length());
+    plugin::QueryRewriter::rewriteQuery(session->getSchema(), session->getQueryString());
+    mysql_parse(session, session->getQueryString()->c_str(), session->getQueryString()->length());
 
     break;
   }
@@ -320,8 +320,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   /* Store temp state for processlist */
   session->set_proc_info("cleaning up");
   session->command= COM_SLEEP;
-  memset(session->process_list_info, 0, PROCESS_LIST_WIDTH);
-  session->query.clear();
+  session->resetQueryString();
 
   session->set_proc_info(NULL);
   session->mem_root->free_root(MYF(memory::KEEP_PREALLOC));
@@ -432,8 +431,7 @@ int prepare_new_schema_table(Session *session, LEX *lex,
     true        Error
 */
 
-static int
-mysql_execute_command(Session *session)
+static int mysql_execute_command(Session *session)
 {
   bool res= false;
   LEX  *lex= session->lex;
@@ -441,12 +439,6 @@ mysql_execute_command(Session *session)
   Select_Lex *select_lex= &lex->select_lex;
   /* list of all tables in query */
   TableList *all_tables;
-  /* A peek into the query string */
-  size_t proc_info_len= session->query.length() > PROCESS_LIST_WIDTH ?
-                        PROCESS_LIST_WIDTH : session->query.length();
-
-  memcpy(session->process_list_info, session->query.c_str(), proc_info_len);
-  session->process_list_info[proc_info_len]= '\0';
 
   /*
     In many cases first table of main Select_Lex have special meaning =>

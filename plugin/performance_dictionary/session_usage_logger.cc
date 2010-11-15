@@ -48,7 +48,7 @@ bool SessionUsageLogger::post(Session *session)
     session->setProperty("query_usage", usage_cache);
   }
 
-  usage_cache->push(session->getQueryString(), session->getUsage());
+  usage_cache->push(*session->getQueryString(), session->getUsage());
 
   return false;
 }
