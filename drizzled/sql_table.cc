@@ -105,8 +105,7 @@ void set_table_default_charset(HA_CREATE_INFO *create_info, const char *db)
     cursor
 */
 
-void write_bin_log(Session *session,
-                   char const *query)
+void write_bin_log(Session *session, const std::string &query)
 {
   TransactionServices &transaction_services= TransactionServices::singleton();
   transaction_services.rawStatement(session, query);

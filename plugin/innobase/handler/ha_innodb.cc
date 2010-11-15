@@ -1132,9 +1132,7 @@ innobase_mysql_print_thd(
           session->getSecurityContext().getIp().c_str(),
           session->getSecurityContext().getUser().c_str()
   );
-  fprintf(f,
-          "\n%s", session->getQueryString().c_str()
-  );
+  fprintf(f, "\n%s", session->getQueryString()->c_str());
   putc('\n', f);
 }
 
@@ -1254,8 +1252,7 @@ innobase_get_stmt(
 	void*	session,	/*!< in: MySQL thread handle */
 	size_t*	length)		/*!< out: length of the SQL statement */
 {
-  *length= static_cast<Session*>(session)->query.length();
-  return static_cast<Session*>(session)->query.c_str();
+  return static_cast<Session*>(session)->getQueryStringCopy(*length);
 }
 
 #if defined (__WIN__) && defined (MYSQL_DYNAMIC_PLUGIN)

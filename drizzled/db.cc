@@ -184,7 +184,7 @@ bool mysql_alter_db(Session *session, const message::Schema &schema_message)
 
     if (success)
     {
-      transaction_services.rawStatement(session, session->getQueryString());
+      transaction_services.rawStatement(session, *session->getQueryString());
       session->my_ok(1);
     }
     else
@@ -285,7 +285,7 @@ bool mysql_rm_db(Session *session, SchemaIdentifier &schema_identifier, const bo
     }
     if (deleted >= 0)
     {
-      assert(! session->query.empty());
+      assert(not session->getQueryString()->empty());
 
       TransactionServices &transaction_services= TransactionServices::singleton();
       transaction_services.dropSchema(session, schema_identifier.getSchemaName());
