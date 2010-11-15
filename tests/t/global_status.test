@@ -21,7 +21,6 @@ select * from t1;
 
 show global status like 'Handler%';
 
-connection default;
 flush global status;
 
 # should show reset counters;
