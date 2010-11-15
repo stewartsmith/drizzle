@@ -36,6 +36,26 @@ typedef struct drizzle_lex_string
   size_t length;
 } LEX_STRING;
 
+struct execute_string_t : public drizzle_lex_string
+{
+private:
+  bool is_variable;
+public:
+
+  bool isVariable() const
+  {
+    return is_variable;
+  }
+
+  void set(const drizzle_lex_string& ptr, bool is_variable_arg= false)
+  {
+    is_variable= is_variable_arg;
+    str= ptr.str;
+    length= ptr.length;
+  }
+
+};
+
 
 #define STRING_WITH_LEN(X) (X), (static_cast<size_t>((sizeof(X) - 1)))
 #define C_STRING_WITH_LEN(X) (const_cast<char *>((X))), (static_cast<size_t>((sizeof(X) - 1)))

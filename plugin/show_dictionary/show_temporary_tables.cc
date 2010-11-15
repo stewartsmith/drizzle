@@ -39,7 +39,7 @@ ShowTemporaryTables::Generator::Generator(Field **arg) :
   show_dictionary::Show::Generator(arg),
   session(getSession())
 {
-  table= session.temporary_tables;
+  table= session.getTemporaryTables();
 }
 
 bool ShowTemporaryTables::Generator::populate()

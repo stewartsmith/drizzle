@@ -36,11 +36,13 @@
 #include "drizzled/plugin/daemon.h"
 
 #include <boost/algorithm/string.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <string>
 #include <sstream>
 #include <map>
 #include <algorithm>
+#include <memory>
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
 
@@ -163,14 +165,14 @@ void MyisamEngine::doGetTableIdentifiers(drizzled::CachedDirectory&,
 
 bool MyisamEngine::doDoesTableExist(Session &session, const TableIdentifier &identifier)
 {
-  return session.doesTableMessageExist(identifier);
+  return session.getMessageCache().doesTableMessageExist(identifier);
 }
 
 int MyisamEngine::doGetTableDefinition(Session &session,
                                        const TableIdentifier &identifier,
                                        message::Table &table_message)
 {
-  if (session.getTableMessage(identifier, table_message))
+  if (session.getMessageCache().getTableMessage(identifier, table_message))
     return EEXIST;
   return ENOENT;
 }
@@ -903,7 +905,8 @@ int ha_myisam::enable_indexes(uint32_t mode)
   else if (mode == HA_KEY_SWITCH_NONUNIQ_SAVE)
   {
     Session *session= getTable()->in_use;
-    MI_CHECK param;
+    boost::scoped_ptr<MI_CHECK> param_ap(new MI_CHECK);
+    MI_CHECK &param= *param_ap.get();
     const char *save_proc_info= session->get_proc_info();
     session->set_proc_info("Creating index");
     myisamchk_init(&param);
@@ -1328,7 +1331,7 @@ int ha_myisam::delete_all_rows()
 int MyisamEngine::doDropTable(Session &session,
                               const TableIdentifier &identifier)
 {
-  session.removeTableMessage(identifier);
+  session.getMessageCache().removeTableMessage(identifier);
 
   return mi_delete_table(identifier.getPath().c_str());
 }
@@ -1384,7 +1387,7 @@ int MyisamEngine::doCreateTable(Session &session,
                    &create_info, create_flags);
   free((unsigned char*) recinfo);
 
-  session.storeTableMessage(identifier, create_proto);
+  session.getMessageCache().storeTableMessage(identifier, create_proto);
 
   return error;
 }
@@ -1392,7 +1395,7 @@ int MyisamEngine::doCreateTable(Session &session,
 
 int MyisamEngine::doRenameTable(Session &session, const TableIdentifier &from, const TableIdentifier &to)
 {
-  session.renameTableMessage(from, to);
+  session.getMessageCache().renameTableMessage(from, to);
 
   return mi_rename(from.getPath().c_str(), to.getPath().c_str());
 }
