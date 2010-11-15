@@ -168,6 +168,116 @@ static void printEvent(const message::Event &event)
   }
 }
 
+static void printTransactionSummary(const message::Transaction &transaction,
+                                    bool ignore_events)
+{
+  static uint64_t last_trx_id= 0;
+  const message::TransactionContext trx= transaction.transaction_context();
+
+  if (last_trx_id != trx.transaction_id())
+    cout << "\ntransaction_id = " << trx.transaction_id() << endl;
+
+  last_trx_id= trx.transaction_id();
+
+  if (transaction.has_event() && (not ignore_events))
+  {
+    cout << "\t";
+    printEvent(transaction.event());
+  }
+
+  size_t num_statements= transaction.statement_size();
+  size_t x;
+
+  for (x= 0; x < num_statements; ++x)
+  {
+    const message::Statement &statement= transaction.statement(x);
+
+    switch (statement.type())
+    {
+      case (message::Statement::ROLLBACK):
+      {
+        cout << "\tROLLBACK\n";
+        break;
+      }
+      case (message::Statement::INSERT):
+      {
+        const message::InsertHeader &header= statement.insert_header();
+        const message::TableMetadata &meta= header.table_metadata();
+        cout << "\tINSERT INTO `" << meta.table_name() << "`\n";
+        break;
+      }
+      case (message::Statement::DELETE):
+      {
+        const message::DeleteHeader &header= statement.delete_header();
+        const message::TableMetadata &meta= header.table_metadata();
+        cout << "\tDELETE FROM `" << meta.table_name() << "`\n";
+        break;
+      }
+      case (message::Statement::UPDATE):
+      {
+        const message::UpdateHeader &header= statement.update_header();
+        const message::TableMetadata &meta= header.table_metadata();
+        cout << "\tUPDATE `" << meta.table_name() << "`\n";
+        break;
+      }
+      case (message::Statement::TRUNCATE_TABLE):
+      {
+        const message::TableMetadata &meta= statement.truncate_table_statement().table_metadata();
+        cout << "\tTRUNCATE TABLE `" << meta.table_name() << "`\n";
+        break;
+      }
+      case (message::Statement::CREATE_SCHEMA):
+      {
+        const message::Schema &schema= statement.create_schema_statement().schema();
+        cout << "\tCREATE SCHEMA `" << schema.name() << "`\n";
+        break;
+      }
+      case (message::Statement::ALTER_SCHEMA):
+      {
+        const message::Schema &schema= statement.alter_schema_statement().before();
+        cout << "\tALTER SCHEMA `" << schema.name() << "`\n";
+        break;
+      }
+      case (message::Statement::DROP_SCHEMA):
+      {
+        cout << "\tDROP SCHEMA `" << statement.drop_schema_statement().schema_name() << "`\n";
+        break;
+      }
+      case (message::Statement::CREATE_TABLE):
+      {
+        const message::Table &table= statement.create_table_statement().table();
+        cout << "\tCREATE TABLE `" << table.name() << "`\n";
+        break;
+      }
+      case (message::Statement::ALTER_TABLE):
+      {
+        const message::Table &table= statement.alter_table_statement().before();
+        cout << "\tALTER TABLE `" << table.name() << "`\n";
+        break;
+      }
+      case (message::Statement::DROP_TABLE):
+      {
+        const message::TableMetadata &meta= statement.drop_table_statement().table_metadata();
+        cout << "\tDROP TABLE `" << meta.table_name() << "`\n";
+        break;
+      }
+      case (message::Statement::SET_VARIABLE):
+      {
+        const message::FieldMetadata &meta= statement.set_variable_statement().variable_metadata();
+        cout << "\tSET VARIABLE " << meta.name() << "\n";
+        break;
+      }
+      case (message::Statement::RAW_SQL):
+      {
+        cout << "\tRAW SQL\n";
+        break;
+      }
+      default:
+        cout << "\tUnhandled Statement Type\n";
+    }
+  }
+}
+
 static void printTransaction(const message::Transaction &transaction,
                              bool ignore_events,
                              bool print_as_raw)
@@ -262,7 +372,8 @@ int main(int argc, char* argv[])
       N_("Start reading from the given file position"))
     ("transaction-id",
       po::value<uint64_t>(&opt_transaction_id),
-      N_("Only output for the given transaction ID"));
+      N_("Only output for the given transaction ID"))
+    ("summarize", N_("Summarize message contents"));
 
   /*
    * We allow one positional argument that will be transaction file name
@@ -295,6 +406,12 @@ int main(int argc, char* argv[])
   if (vm.count("start-pos") && vm.count("transaction-id"))
   {
     cerr << _("Cannot use --start-pos and --transaction-id together\n");
+    return -1;
+  }
+
+  if (vm.count("summarize") && (vm.count("raw") || vm.count("transaction-id")))
+  {
+    cerr << _("Cannot use --summarize with either --raw or --transaction-id\n");
     return -1;
   }
 
@@ -359,7 +476,10 @@ int main(int argc, char* argv[])
           {
             message::Transaction new_trx;
             trx_mgr.getTransactionMessage(new_trx, transaction_id, idx);
-            printTransaction(new_trx, ignore_events, print_as_raw);
+            if (vm.count("summarize"))
+              printTransactionSummary(new_trx, ignore_events);
+            else
+              printTransaction(new_trx, ignore_events, print_as_raw);
             idx++;
           }
 
@@ -368,7 +488,10 @@ int main(int argc, char* argv[])
         }
         else
         {
-          printTransaction(transaction, ignore_events, print_as_raw);
+          if (vm.count("summarize"))
+            printTransactionSummary(transaction, ignore_events);
+          else
+            printTransaction(transaction, ignore_events, print_as_raw);
         }
       }
     } /* end ! vm.count("transaction-id") */
