@@ -17,7 +17,6 @@ drizzled/identifier/schema.cc
 drizzled/identifier/table.cc
 drizzled/internal/default.cc
 drizzled/main.cc
-drizzled/message/transaction_reader.cc
 drizzled/message/transaction_writer.cc
 drizzled/module/library.cc
 drizzled/module/loader.cc
@@ -100,3 +99,5 @@ plugin/transaction_log/print_transaction_message.cc
 plugin/transaction_log/transaction_log.cc
 plugin/transaction_log/transaction_log_reader.cc
 plugin/transaction_log/write_buffer.cc
+plugin/transaction_log/utilities/transaction_reader.cc
+plugin/transaction_log/utilities/transaction_file_reader.cc
