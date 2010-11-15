@@ -46,6 +46,9 @@ public:
   TableShare *getMutableShare() { return &_share; } /* Get rid of this long term */
   bool hasShare() const { return true; } /* Get rid of this long term */
   void setShare(TableShare *) { ; } /* Get rid of this long term */
+
+  void release() { assert(0); }; // This should never happen
+
 };
 
 } /* namespace table */

@@ -29,6 +29,7 @@
 #include "drizzled/table.h"
 
 #include "drizzled/util/string.h"
+#include "drizzled/util/tablename_to_filename.h"
 
 #include <algorithm>
 #include <sstream>
@@ -45,8 +46,6 @@ extern std::string drizzle_tmpdir;
 extern pid_t current_pid;
 
 static const char hexchars[]= "0123456789abcdef";
-
-static bool tablename_to_filename(const string &from, string &to);
 
 /*
   Translate a cursor name to a table name (WL #1324).
@@ -203,11 +202,11 @@ size_t TableIdentifier::build_tmptable_filename(std::vector<char> &buffer)
     path length on success, 0 on failure
 */
 
-size_t TableIdentifier::build_table_filename(std::string &path, const std::string &db, const std::string &table_name, bool is_tmp)
+size_t TableIdentifier::build_table_filename(std::string &in_path, const std::string &in_db, const std::string &in_table_name, bool is_tmp)
 {
   bool conversion_error= false;
 
-  conversion_error= tablename_to_filename(db, path);
+  conversion_error= util::tablename_to_filename(in_db, in_path);
   if (conversion_error)
   {
     errmsg_printf(ERRMSG_LVL_ERROR,
@@ -216,15 +215,15 @@ size_t TableIdentifier::build_table_filename(std::string &path, const std::strin
     return 0;
   }
 
-  path.append(FN_ROOTDIR);
+  in_path.append(FN_ROOTDIR);
 
   if (is_tmp) // It a conversion tmp
   {
-    path.append(table_name);
+    in_path.append(in_table_name);
   }
   else
   {
-    conversion_error= tablename_to_filename(table_name, path);
+    conversion_error= util::tablename_to_filename(in_table_name, in_path);
     if (conversion_error)
     {
       errmsg_printf(ERRMSG_LVL_ERROR,
@@ -234,58 +233,7 @@ size_t TableIdentifier::build_table_filename(std::string &path, const std::strin
     }
   }
    
-  return path.length();
-}
-
-
-/*
-  Translate a table name to a cursor name (WL #1324).
-
-  SYNOPSIS
-    tablename_to_filename()
-      from                      The table name
-      to                OUT     The cursor name
-      to_length                 The size of the cursor name buffer.
-
-  RETURN
-    true if errors happen. false on success.
-*/
-static bool tablename_to_filename(const string &from, string &to)
-{
-  
-  string::const_iterator iter= from.begin();
-  for (; iter != from.end(); ++iter)
-  {
-    if (isascii(*iter))
-    {
-      if ((isdigit(*iter)) ||
-          (islower(*iter)) ||
-          (*iter == '_') ||
-          (*iter == ' ') ||
-          (*iter == '-'))
-      {
-        to.push_back(*iter);
-        continue;
-      }
-
-      if (isupper(*iter))
-      {
-        to.push_back(tolower(*iter));
-        continue;
-      }
-    }
-   
-    /* We need to escape this char in a way that can be reversed */
-    to.push_back('@');
-    to.push_back(hexchars[(*iter >> 4) & 15]);
-    to.push_back(hexchars[(*iter) & 15]);
-  }
-
-  if (internal::check_if_legal_tablename(to.c_str()))
-  {
-    to.append("@@@");
-  }
-  return false;
+  return in_path.length();
 }
 
 TableIdentifier::TableIdentifier(const drizzled::Table &table) :
@@ -322,10 +270,7 @@ void TableIdentifier::init()
   util::insensitive_hash hasher;
   hash_value= hasher(path);
 
-  key.resize(getKeySize());
-
-  std::copy(getSchemaName().begin(), getSchemaName().end(), key.begin());
-  std::copy(getTableName().begin(), getTableName().end(), key.begin() + getSchemaName().length() + 1);
+  key.set(getKeySize(), getSchemaName(), getTableName());
 }
 
 
@@ -367,7 +312,23 @@ void TableIdentifier::copyToTableMessage(message::Table &message) const
   message.set_schema(getSchemaName());
 }
 
+void TableIdentifier::Key::set(size_t resize_arg, const std::string &a, const std::string &b)
+{
+  key_buffer.resize(resize_arg);
+
+  std::copy(a.begin(), a.end(), key_buffer.begin());
+  std::copy(b.begin(), b.end(), key_buffer.begin() + a.length() + 1);
+
+  util::sensitive_hash hasher;
+  hash_value= hasher(key_buffer);
+}
+
 std::size_t hash_value(TableIdentifier const& b)
+{
+  return b.getHashValue();
+}
+
+std::size_t hash_value(TableIdentifier::Key const& b)
 {
   return b.getHashValue();
 }

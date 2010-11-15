@@ -69,6 +69,7 @@
 #include "drizzled/plugin/monitored_in_transaction.h"
 #include "drizzled/plugin/transactional_storage_engine.h"
 #include "drizzled/plugin/xa_resource_manager.h"
+#include "drizzled/plugin/xa_storage_engine.h"
 #include "drizzled/internal/my_sys.h"
 
 #include <vector>
@@ -299,6 +300,19 @@ namespace drizzled
  * transaction after all DDLs, just like the statement transaction
  * is always committed at the end of all statements.
  */
+TransactionServices::TransactionServices()
+{
+  plugin::StorageEngine *engine= plugin::StorageEngine::findByName("InnoDB");
+  if (engine)
+  {
+    xa_storage_engine= (plugin::XaStorageEngine*)engine; 
+  }
+  else 
+  {
+    xa_storage_engine= NULL;
+  }
+}
+
 void TransactionServices::registerResourceForStatement(Session *session,
                                                        plugin::MonitoredInTransaction *monitored,
                                                        plugin::TransactionalStorageEngine *engine)
@@ -389,8 +403,6 @@ void TransactionServices::registerResourceForTransaction(Session *session,
   if (session->transaction.xid_state.xid.is_null())
     session->transaction.xid_state.xid.set(session->getQueryId());
 
-  engine->startTransaction(session, START_TRANS_NO_OPTIONS);
-
   /* Only true if user is executing a BEGIN WORK/START TRANSACTION */
   if (! session->getResourceContext(monitored, 0)->isStarted())
     registerResourceForStatement(session, monitored, engine);
@@ -426,6 +438,29 @@ void TransactionServices::registerResourceForTransaction(Session *session,
   /* Only true if user is executing a BEGIN WORK/START TRANSACTION */
   if (! session->getResourceContext(monitored, 0)->isStarted())
     registerResourceForStatement(session, monitored, engine, resource_manager);
+}
+
+void TransactionServices::allocateNewTransactionId()
+{
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  if (! replication_services.isActive())
+  {
+    return;
+  }
+
+  Session *my_session= current_session;
+  uint64_t xa_id= xa_storage_engine->getNewTransactionId(my_session);
+  my_session->setXaId(xa_id);
+}
+
+uint64_t TransactionServices::getCurrentTransactionId(Session *session)
+{
+  if (session->getXaId() == 0)
+  {
+    session->setXaId(xa_storage_engine->getNewTransactionId(session)); 
+  }
+
+  return session->getXaId();
 }
 
 /**
@@ -465,7 +500,7 @@ int TransactionServices::commitTransaction(Session *session, bool normal_transac
 
   if (resource_contexts.empty() == false)
   {
-    if (is_real_trans && wait_if_global_read_lock(session, 0, 0))
+    if (is_real_trans && session->wait_if_global_read_lock(false, false))
     {
       rollbackTransaction(session, normal_transaction);
       return 1;
@@ -525,7 +560,7 @@ int TransactionServices::commitTransaction(Session *session, bool normal_transac
     error= commitPhaseOne(session, normal_transaction) ? (cookie ? 2 : 1) : 0;
 end:
     if (is_real_trans)
-      start_waiting_global_read_lock(session);
+      session->startWaitingGlobalReadLock();
   }
   return error;
 }
@@ -672,7 +707,7 @@ int TransactionServices::rollbackTransaction(Session *session, bool normal_trans
    */
   if (is_real_trans &&
       session->transaction.all.hasModifiedNonTransData() &&
-      session->killed != Session::KILL_CONNECTION)
+      session->getKilled() != Session::KILL_CONNECTION)
   {
     push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                  ER_WARNING_NOT_COMPLETE_ROLLBACK,
@@ -695,8 +730,20 @@ int TransactionServices::rollbackTransaction(Session *session, bool normal_trans
 */
 int TransactionServices::autocommitOrRollback(Session *session, int error)
 {
+
   if (session->transaction.stmt.getResourceContexts().empty() == false)
   {
+    TransactionContext *trans = &session->transaction.stmt;
+    TransactionContext::ResourceContexts &resource_contexts= trans->getResourceContexts();
+    for (TransactionContext::ResourceContexts::iterator it= resource_contexts.begin();
+         it != resource_contexts.end();
+         ++it)
+    {
+      ResourceContext *resource_context= *it;
+
+      resource_context->getTransactionalStorageEngine()->endStatement(session);
+    }
+
     if (! error)
     {
       if (commitTransaction(session, false))
@@ -966,7 +1013,14 @@ void TransactionServices::initTransactionMessage(message::Transaction &in_transa
   trx->set_server_id(in_session->getServerId());
 
   if (should_inc_trx_id)
-    trx->set_transaction_id(getNextTransactionId());
+  {
+    trx->set_transaction_id(getCurrentTransactionId(in_session));
+    in_session->setXaId(0);
+  }  
+  else
+  { 
+    trx->set_transaction_id(0);
+  }
 
   trx->set_start_timestamp(in_session->getCurrentTimestamp());
 }
@@ -1019,7 +1073,6 @@ void TransactionServices::initStatementMessage(message::Statement &statement,
 {
   statement.set_type(in_type);
   statement.set_start_timestamp(in_session->getCurrentTimestamp());
-  /** @TODO Set sql string optionally */
 }
 
 void TransactionServices::finalizeStatementMessage(message::Statement &statement,

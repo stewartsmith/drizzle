@@ -1,0 +1,9 @@
+# Setup table for tests
+USE test;
+
+--source include/setup-global-constraints.inc
+
+create temporary table t3 (a varchar(255), b varchar(255)) engine=myisam;
+insert into t3 select * from t1;
+--error 1705
+select SQL_BIG_RESULT * from t3, (select * from t1) as t4;

@@ -59,16 +59,16 @@ ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
   {
     LOCK_open.lock(); /* Optionally lock for remove tables from open_cahe if not in use */
 
-    TableOpenCache &open_cache(get_open_cache());
+    table::CacheMap &open_cache(table::getCache());
 
-    for (TableOpenCache::const_iterator iter= open_cache.begin();
+    for (table::CacheMap::const_iterator iter= open_cache.begin();
          iter != open_cache.end();
          iter++)
     {
       table_list.push_back((*iter).second);
     }
 
-    for (drizzled::Table *tmp_table= getSession().temporary_tables; tmp_table; tmp_table= tmp_table->getNext())
+    for (drizzled::Table *tmp_table= getSession().getTemporaryTables(); tmp_table; tmp_table= tmp_table->getNext())
     {
       if (tmp_table->getShare())
       {

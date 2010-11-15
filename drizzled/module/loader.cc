@@ -59,9 +59,14 @@ using namespace std;
 /** These exist just to prevent symbols from being optimized out */
 typedef drizzled::module::Manifest drizzled_builtin_list[];
 extern drizzled_builtin_list PANDORA_BUILTIN_SYMBOLS_LIST;
+extern drizzled_builtin_list PANDORA_BUILTIN_LOAD_SYMBOLS_LIST;
 drizzled::module::Manifest *drizzled_builtins[]=
 {
   PANDORA_BUILTIN_SYMBOLS_LIST, NULL
+};
+drizzled::module::Manifest *drizzled_load_builtins[]=
+{
+  PANDORA_BUILTIN_LOAD_SYMBOLS_LIST, NULL
 };
 
 namespace drizzled
@@ -76,6 +81,7 @@ static PluginOptions opt_plugin_load;
 static PluginOptions opt_plugin_add;
 static PluginOptions opt_plugin_remove;
 const char *builtin_plugins= PANDORA_BUILTIN_LIST;
+const char *builtin_load_plugins= PANDORA_BUILTIN_LOAD_LIST;
 
 /* Note that 'int version' must be the first field of every plugin
    sub-structure (plugin->info).
@@ -349,6 +355,26 @@ static bool plugin_initialize(module::Registry &registry,
   return false;
 }
 
+
+inline static void dashes_to_underscores(std::string &name_in,
+                                         char from= '-', char to= '_')
+{
+  for (string::iterator p= name_in.begin();
+       p != name_in.end();
+       ++p)
+  {
+    if (*p == from)
+    {
+      *p= to;
+    }
+  }
+}
+
+inline static void underscores_to_dashes(std::string &name_in)
+{
+  return dashes_to_underscores(name_in, '_', '-');
+}
+
 static void compose_plugin_options(vector<string> &target,
                                    vector<string> options)
 {
@@ -357,6 +383,12 @@ static void compose_plugin_options(vector<string> &target,
        ++it)
   {
     tokenize(*it, target, ",", true);
+  }
+  for (vector<string>::iterator it= target.begin();
+       it != target.end();
+       ++it)
+  {
+    dashes_to_underscores(*it);
   }
 }
 
@@ -392,6 +424,9 @@ bool plugin_init(module::Registry &registry,
 
   initialized= 1;
 
+  PluginOptions builtin_load_list;
+  tokenize(builtin_load_plugins, builtin_load_list, ",", true);
+
   PluginOptions builtin_list;
   tokenize(builtin_plugins, builtin_list, ",", true);
 
@@ -399,22 +434,34 @@ bool plugin_init(module::Registry &registry,
 
   if (opt_plugin_add.size() > 0)
   {
-    opt_plugin_load.insert(opt_plugin_load.end(),
-                           opt_plugin_add.begin(),
-                           opt_plugin_add.end());
+    for (PluginOptions::iterator iter= opt_plugin_add.begin();
+         iter != opt_plugin_add.end();
+         ++iter)
+    {
+      if (find(builtin_list.begin(),
+               builtin_list.end(), *iter) != builtin_list.end())
+      {
+        builtin_load_list.push_back(*iter);
+      }
+      else
+      {
+        opt_plugin_load.push_back(*iter);
+      }
+    }
   }
 
   if (opt_plugin_remove.size() > 0)
   {
     plugin_prune_list(opt_plugin_load, opt_plugin_remove);
-    plugin_prune_list(builtin_list, opt_plugin_remove);
+    plugin_prune_list(builtin_load_list, opt_plugin_remove);
   }
 
 
   /*
     First we register builtin plugins
   */
-  const set<string> builtin_list_set(builtin_list.begin(), builtin_list.end());
+  const set<string> builtin_list_set(builtin_load_list.begin(),
+                                     builtin_load_list.end());
   load_failed= plugin_load_list(registry, &tmp_root,
                                 builtin_list_set, long_options, true);
   if (load_failed)
@@ -804,13 +851,7 @@ static const string make_bookmark_name(const string &plugin, const char *name)
   varname.push_back('_');
   varname.append(name);
 
-  for (string::iterator p= varname.begin() + 1; p != varname.end(); ++p)
-  {
-    if (*p == '-')
-    {
-      *p= '_';
-    }
-  }
+  dashes_to_underscores(varname);
   return varname;
 }
 
@@ -1401,11 +1442,7 @@ static int construct_options(memory::Root *mem_root, module::Module *tmp,
   string name(plugin_name);
   transform(name.begin(), name.end(), name.begin(), ::tolower);
 
-  for (string::iterator iter= name.begin(); iter != name.end(); ++iter)
-  {
-    if (*iter == '_')
-      *iter= '-';
-  }
+  underscores_to_dashes(name);
 
   /*
     Two passes as the 2nd pass will take pointer addresses for use
@@ -1670,13 +1707,7 @@ static int test_plugin_options(memory::Root *module_root,
         vname.push_back('-');
         vname.append(o->name);
         transform(vname.begin(), vname.end(), vname.begin(), ::tolower);
-        string::iterator p= vname.begin();      
-        while  (p != vname.end())
-        {
-          if (*p == '-')
-            *p= '_';
-          ++p;
-        }
+        dashes_to_underscores(vname);
 
         v= new sys_var_pluginvar(vname, o);
       }

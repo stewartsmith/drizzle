@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 2000, 2009, Innobase Oy. All Rights Reserved.
+Copyright (c) 2000, 2010, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -253,15 +253,6 @@ row_table_got_default_clust_index(
 /*==============================*/
 	const dict_table_t*	table);	/*!< in: table */
 /*********************************************************************//**
-Calculates the key number used inside MySQL for an Innobase index. We have
-to take into account if we generated a default clustered index for the table
-@return	the key number used inside MySQL */
-UNIV_INTERN
-ulint
-row_get_mysql_key_number_for_index(
-/*===============================*/
-	const dict_index_t*	index);	/*!< in: index */
-/*********************************************************************//**
 Does an update or delete of a row for MySQL.
 @return	error code or DB_SUCCESS */
 UNIV_INTERN
@@ -403,6 +394,7 @@ row_table_add_foreign_constraints(
 				FOREIGN KEY (a, b) REFERENCES table2(c, d),
 					table2 can be written also with the
 					database name before it: test.table2 */
+	size_t		sql_length,	/*!< in: length of sql_string */
 	const char*	name,		/*!< in: table full name in the
 					normalized form
 					database_name/table_name */
@@ -451,6 +443,12 @@ row_drop_table_for_mysql(
 	const char*	name,	/*!< in: table name */
 	trx_t*		trx,	/*!< in: transaction handle */
 	ibool		drop_db);/*!< in: TRUE=dropping whole database */
+/*********************************************************************//**
+Drop all temporary tables during crash recovery. */
+UNIV_INTERN
+void
+row_mysql_drop_temp_tables(void);
+/*============================*/
 
 /*********************************************************************//**
 Discards the tablespace of a table which stored in an .ibd file. Discarding
@@ -494,14 +492,19 @@ row_rename_table_for_mysql(
 	trx_t*		trx,		/*!< in: transaction handle */
 	ibool		commit);	/*!< in: if TRUE then commit trx */
 /*********************************************************************//**
-Checks a table for corruption.
-@return	DB_ERROR or DB_SUCCESS */
+Checks that the index contains entries in an ascending order, unique
+constraint is not broken, and calculates the number of index entries
+in the read view of the current transaction.
+@return	DB_SUCCESS if ok */
 UNIV_INTERN
 ulint
-row_check_table_for_mysql(
+row_check_index_for_mysql(
 /*======================*/
-	row_prebuilt_t*	prebuilt);	/*!< in: prebuilt struct in MySQL
-					handle */
+	row_prebuilt_t*		prebuilt,	/*!< in: prebuilt struct
+						in MySQL handle */
+	const dict_index_t*	index,		/*!< in: index */
+	ulint*			n_rows);	/*!< out: number of entries
+						seen in the consistent read */
 
 /*********************************************************************//**
 Determines if a table is a magic monitor table.

@@ -24,6 +24,7 @@
 #include <drizzled/lock.h>
 #include <drizzled/statement/flush.h>
 #include "drizzled/sql_table.h"
+#include "drizzled/plugin/logging.h"
 
 namespace drizzled
 {
@@ -69,16 +70,16 @@ bool statement::Flush::reloadCache()
   {
     if (session && flush_tables_with_read_lock)
     {
-      if (lock_global_read_lock(session))
+      if (session->lockGlobalReadLock())
       {
         return true; /* Killed */
       }
       result= session->close_cached_tables(tables, true, true);
 
-      if (make_global_read_lock_block_commit(session)) /* Killed */
+      if (session->makeGlobalReadLockBlockCommit()) /* Killed */
       {
         /* Don't leave things in a half-locked state */
-        unlock_global_read_lock(session);
+        session->unlockGlobalReadLock();
         return true;
       }
     }
@@ -93,7 +94,14 @@ bool statement::Flush::reloadCache()
     session->refresh_status();
   }
 
- return result;
+  if (session && flush_global_status)
+  {
+    memset(&current_global_counters, 0, sizeof(current_global_counters));
+    plugin::Logging::resetStats(session);
+    session->refresh_status();
+  }
+
+  return result;
 }
 
 }

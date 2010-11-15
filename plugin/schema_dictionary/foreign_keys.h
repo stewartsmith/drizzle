@@ -51,8 +51,6 @@ public:
     bool nextTable();
     bool fillFkey();
 
-    void pushType(drizzled::message::Table::Field::FieldType type);
-
     const std::string &table_name()
     {
       return table_message.name();
@@ -74,8 +72,6 @@ public:
     }
 
     bool populate();
-
-    std::string fkeyOption(drizzled::message::Table::ForeignKeyConstraint::ForeignKeyOption option);
 
   };
 

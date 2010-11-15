@@ -74,27 +74,27 @@ public:
 	}
 
 
-	static MSBackupInfo *findBackupInfo(uint32_t backupRefId)
+	static MSBackupInfo *findBackupInfo(uint32_t in_backupRefId)
 	{
 		MSBackupInfo *info;
 		enter_();
 		
 		lock_(gBackupInfo);
 		
-		info = (MSBackupInfo *) gBackupInfo->get(backupRefId);
+		info = (MSBackupInfo *) gBackupInfo->get(in_backupRefId);
 		if (info) 
 			info->retain();
 		unlock_(gBackupInfo);
 		return_(info);
 	}
 	
-	static MSBackupInfo *getBackupInfo(uint32_t backupRefId)
+	static MSBackupInfo *getBackupInfo(uint32_t in_backupRefId)
 	{
-		MSBackupInfo *info = findBackupInfo(backupRefId);
+		MSBackupInfo *info = findBackupInfo(in_backupRefId);
 		if (!info) {
 			enter_();
 			char msg[80];
-			snprintf(msg, 80, "Backup info with reference ID %"PRIu32" not found", backupRefId);
+			snprintf(msg, 80, "Backup info with reference ID %"PRIu32" not found", in_backupRefId);
 			CSException::throwException(CS_CONTEXT, CS_ERR_GENERIC_ERROR, msg);
 			outer_();
 		}

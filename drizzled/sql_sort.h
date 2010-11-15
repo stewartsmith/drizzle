@@ -36,12 +36,6 @@ class Field;
 class Table;
 class SortField;
 
-
-/* Defines used by filesort and uniques */
-
-#define MERGEBUFF		7
-#define MERGEBUFF2		15
-
 /*
    The structure sort_addon_field describes a fixed layout
    for field values appended to sorted values in records to be sorted
@@ -95,50 +89,6 @@ public:
   { }
 
 };
-
-class BUFFPEK_COMPARE_CONTEXT
-{
-public:
-  qsort_cmp2 key_compare;
-  void *key_compare_arg;
-};
-
-class sort_param {
-public:
-  uint32_t rec_length;          /* Length of sorted records */
-  uint32_t sort_length;			/* Length of sorted columns */
-  uint32_t ref_length;			/* Length of record ref. */
-  uint32_t addon_length;        /* Length of added packed fields */
-  uint32_t res_length;          /* Length of records in final sorted file/buffer */
-  uint32_t keys;				/* Max keys / buffer */
-  ha_rows max_rows,examined_rows;
-  Table *sort_form;			/* For quicker make_sortkey */
-  SortField *local_sortorder;
-  SortField *end;
-  sort_addon_field *addon_field; /* Descriptors for companion fields */
-  unsigned char *unique_buff;
-  bool not_killable;
-  char* tmp_buffer;
-  /* The fields below are used only by Unique class */
-  qsort2_cmp compare;
-  BUFFPEK_COMPARE_CONTEXT cmp_context;
-};
-
-typedef class sort_param SORTPARAM;
-
-
-int merge_many_buff(SORTPARAM *param, unsigned char *sort_buffer,
-                    buffpek *buffpek,
-                    uint32_t *maxbuffer, internal::IO_CACHE *t_file);
-
-uint32_t read_to_buffer(internal::IO_CACHE *fromfile, buffpek *buffpek,
-                        uint32_t sort_length);
-
-int merge_buffers(SORTPARAM *param,internal::IO_CACHE *from_file,
-                  internal::IO_CACHE *to_file, unsigned char *sort_buffer,
-                  buffpek *lastbuff,
-                  buffpek *Fb,
-                  buffpek *Tb,int flag);
 
 } /* namespace drizzled */
 

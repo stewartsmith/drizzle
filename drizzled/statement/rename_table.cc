@@ -68,11 +68,11 @@ bool statement::RenameTable::renameTables(TableList *table_list)
     return true;
   }
 
-  if (wait_if_global_read_lock(session, 0, 1))
+  if (session->wait_if_global_read_lock(false, true))
     return true;
 
   LOCK_open.lock(); /* Rename table lock for exclusive access */
-  if (lock_table_names_exclusively(session, table_list))
+  if (session->lock_table_names_exclusively(table_list))
   {
     LOCK_open.unlock();
     goto err;
@@ -115,11 +115,11 @@ bool statement::RenameTable::renameTables(TableList *table_list)
   }
 
   LOCK_open.lock(); /* unlock all tables held */
-  unlock_table_names(table_list, NULL);
+  table_list->unlock_table_names();
   LOCK_open.unlock();
 
 err:
-  start_waiting_global_read_lock(session);
+  session->startWaitingGlobalReadLock();
 
   return error;
 }
@@ -152,7 +152,7 @@ bool statement::RenameTable::rename(TableList *ren_table,
   }
 
   plugin::StorageEngine *engine= NULL;
-  message::Table table_proto;
+  message::TablePtr table_proto;
 
   TableIdentifier old_identifier(ren_table->getSchemaName(), old_alias, message::Table::STANDARD);
 
@@ -162,7 +162,7 @@ bool statement::RenameTable::rename(TableList *ren_table,
     return true;
   }
 
-  engine= plugin::StorageEngine::findByName(*session, table_proto.engine().name());
+  engine= plugin::StorageEngine::findByName(*session, table_proto->engine().name());
 
   TableIdentifier new_identifier(new_db, new_alias, message::Table::STANDARD);
   if (plugin::StorageEngine::doesTableExist(*session, new_identifier))

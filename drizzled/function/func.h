@@ -160,7 +160,7 @@ public:
     {Sum}Functype and Item_func::functype()/Item_sum::sum_func()
     instead.
   */
-  virtual const char *func_name() const { return NULL; };
+  virtual const char *func_name() const { return NULL; }
   virtual bool const_item() const { return const_item_cache; }
   Item **arguments() const { return args; }
   void set_arguments(List<Item> &list);

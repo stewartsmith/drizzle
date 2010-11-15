@@ -57,10 +57,10 @@ bool table_cache_dictionary::TableDefinitionCache::Generator::nextCore()
   else
   {
     is_primed= true;
-    table_share_iterator= TableShare::getCache().begin();
+    table_share_iterator= definition::Cache::singleton().getCache().begin();
   }
 
-  if (table_share_iterator == TableShare::getCache().end())
+  if (table_share_iterator == definition::Cache::singleton().getCache().end())
     return false;
 
   share= (*table_share_iterator).second;
@@ -72,7 +72,7 @@ bool table_cache_dictionary::TableDefinitionCache::Generator::next()
 {
   while (not nextCore())
   {
-    if (table_share_iterator != TableShare::getCache().end())
+    if (table_share_iterator != definition::Cache::singleton().getCache().end())
       continue;
 
     return false;
@@ -112,5 +112,5 @@ void table_cache_dictionary::TableDefinitionCache::Generator::fill()
   push(static_cast<uint64_t>(share->getTableCount()));
 
   /* IS_NAME_LOCKED */
-  push(share->isNameLock());
+  push(false);
 }

@@ -227,7 +227,7 @@ void generate_dump_db(void)
     }
     catch (...)
     {
-      std::cout << _("Error inserting into destnation database") << std::endl;
+      std::cout << _("Error inserting into destination database") << std::endl;
       if (not ignore_errors)
         maybe_exit(EX_DRIZZLEERR);
     }
@@ -357,8 +357,7 @@ void maybe_exit(int error)
   if (ignore_errors)
     return;
   delete db_connection;
-  if (destination_connection)
-    delete destination_connection;
+  delete destination_connection;
   free_resources();
   exit(error);
 }
@@ -575,6 +574,14 @@ try
   system_config_dir_client.append("/drizzle/client.cnf");
 
   std::string user_config_dir((getenv("XDG_CONFIG_HOME")? getenv("XDG_CONFIG_HOME"):"~/.config"));
+
+  if (user_config_dir.compare(0, 2, "~/") == 0)
+  {
+    char *homedir;
+    homedir= getenv("HOME");
+    if (homedir != NULL)
+      user_config_dir.replace(0, 1, homedir);
+  }
 
   po::positional_options_description p;
   p.add("database-used", 1);
@@ -838,8 +845,7 @@ try
   */
 err:
   delete db_connection;
-  if (destination_connection)
-    delete destination_connection;
+  delete destination_connection;
   if (path.empty())
     write_footer(md_result_file);
   free_resources();

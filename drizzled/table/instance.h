@@ -41,6 +41,8 @@ public:
   {
   }
 
+  Instance(Session *session, List<CreateField> &field_list);
+
   TableShare *getMutableShare(void)
   {
     return &_share;
@@ -57,6 +59,8 @@ public:
   }
 
   bool hasShare() const { return true; }
+
+  void release() {};
 
   bool hasVariableWidth() const
   {

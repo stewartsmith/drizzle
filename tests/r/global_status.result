@@ -1,0 +1,85 @@
+flush global status;
+use test;
+drop table if exists t1;
+create table t1 (a int);
+insert into t1 values (1),(2),(3);
+select * from t1;
+a
+1
+2
+3
+select * from t1;
+a
+1
+2
+3
+select * from t1;
+a
+1
+2
+3
+show global status like 'Handler%';
+Variable_name	Value
+Handler_commit	0
+Handler_delete	0
+Handler_prepare	0
+Handler_read_first	3
+Handler_read_key	6
+Handler_read_next	0
+Handler_read_prev	0
+Handler_read_rnd	0
+Handler_read_rnd_next	12
+Handler_rollback	0
+Handler_savepoint	0
+Handler_savepoint_rollback	0
+Handler_update	0
+Handler_write	3
+use test;
+select * from t1;
+a
+1
+2
+3
+select * from t1;
+a
+1
+2
+3
+select * from t1;
+a
+1
+2
+3
+show global status like 'Handler%';
+Variable_name	Value
+Handler_commit	0
+Handler_delete	0
+Handler_prepare	0
+Handler_read_first	6
+Handler_read_key	12
+Handler_read_next	0
+Handler_read_prev	0
+Handler_read_rnd	0
+Handler_read_rnd_next	39
+Handler_rollback	0
+Handler_savepoint	0
+Handler_savepoint_rollback	0
+Handler_update	0
+Handler_write	3
+flush global status;
+show global status like 'Handler%';
+Variable_name	Value
+Handler_commit	0
+Handler_delete	0
+Handler_prepare	0
+Handler_read_first	0
+Handler_read_key	0
+Handler_read_next	0
+Handler_read_prev	0
+Handler_read_rnd	0
+Handler_read_rnd_next	0
+Handler_rollback	0
+Handler_savepoint	0
+Handler_savepoint_rollback	0
+Handler_update	0
+Handler_write	0

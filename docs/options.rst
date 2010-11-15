@@ -178,8 +178,13 @@ Kernel Options
 
   The size of the buffer that is used for full joins.
 
+.. option:: --join-buffer-constraint arg (=0)
+
+  A global constraint for join-buffer-size for all clients, cannot be set lower
+  than --join-buffer-size.  Setting to 0 means unlimited.
+
 .. Why is this a core arg?
-.. option:: --max-allowed-packet arg (=1M)
+.. option:: --max-allowed-packet arg (=64M)
 
   Max packetlength to send/receive from to server.
 
@@ -257,13 +262,23 @@ Kernel Options
 
   Each thread that does a sequential scan allocates a buffer of this size for
   each table it scans. If you do many sequential scans, you may want to
-  increase this value.
+  increase this value.  Note that this only affect MyISAM.
+
+.. option:: --read-buffer-constraint arg (=0)
+
+  A global constraint for read-buffer-size for all clients, cannot be set lower
+  than --read-buffer-size.  Setting to 0 means unlimited.
 
 .. option:: --read-rnd-buffer-size arg (=262144)
 
   When reading rows in sorted order after a sort, the rows are read through
   this buffer to avoid a disk seeks. If not set, then it's set to the value of
   record_buffer.
+
+.. option:: --read-rnd-constraint arg (=0)
+
+  A global constraint for read-rnd-buffer-size for all clients, cannot be set
+  lower than --read-rnd-buffer-size.  Setting to 0 means unlimited.
 
 .. option:: --scheduler arg (=multi-thread)
 
@@ -272,6 +287,11 @@ Kernel Options
 .. option:: --sort-buffer-size arg (=2097144)
 
   Each thread that needs to do a sort allocates a buffer of this size.
+
+.. option:: --sort-buffer-constraint arg (=0)
+
+  A global constraint for sort-buffer-size for all clients, cannot be set lower
+  than --sort-buffer-size.  Setting to 0 means unlimited.
 
 .. option:: --table-definition-cache arg (=128)
 

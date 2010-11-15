@@ -364,9 +364,8 @@ void HailDBEngine::doStartStatement(Session *session)
                     statement_savepoint_name.length());
 }
 
-void HailDBEngine::doEndStatement(Session *session)
+void HailDBEngine::doEndStatement(Session *)
 {
-  doCommit(session, false);
 }
 
 int HailDBEngine::doSetSavepoint(Session* session,
@@ -1209,7 +1208,7 @@ int HailDBEngine::doCreateTable(Session &session,
 
   if (table_message.type() == message::Table::TEMPORARY)
   {
-    session.storeTableMessage(identifier, table_message);
+    session.getMessageCache().storeTableMessage(identifier, table_message);
     haildb_err= DB_SUCCESS;
   }
   else
@@ -1301,7 +1300,7 @@ int HailDBEngine::doDropTable(Session &session,
 
   if (identifier.getType() == message::Table::TEMPORARY)
   {
-      session.removeTableMessage(identifier);
+      session.getMessageCache().removeTableMessage(identifier);
       delete_table_message_from_haildb(haildb_schema_transaction,
                                        haildb_table_name.c_str());
   }
@@ -1459,7 +1458,7 @@ int HailDBEngine::doRenameTable(drizzled::Session &session,
   if (to.getType() == message::Table::TEMPORARY
       && from.getType() == message::Table::TEMPORARY)
   {
-    session.renameTableMessage(from, to);
+    session.getMessageCache().renameTableMessage(from, to);
     return 0;
   }
 
@@ -1730,7 +1729,7 @@ int HailDBEngine::doGetTableDefinition(Session &session,
   string haildb_table_name;
 
   /* Check temporary tables!? */
-  if (session.getTableMessage(identifier, table))
+  if (session.getMessageCache().getTableMessage(identifier, table))
     return EEXIST;
 
   TableIdentifier_to_haildb_name(identifier, &haildb_table_name);
@@ -2819,11 +2818,8 @@ free_err:
   return err;
 }
 
-static bool  innobase_use_checksums= true;
-static char*  innobase_data_home_dir      = NULL;
 static char*  innobase_log_group_home_dir   = NULL;
 static bool innobase_use_doublewrite= true;
-static unsigned long srv_io_capacity= 200;
 static unsigned long innobase_fast_shutdown= 1;
 static bool srv_file_per_table= false;
 static bool innobase_adaptive_hash_index;
@@ -2841,12 +2837,19 @@ static unsigned long innobase_lru_old_blocks_pct;
 static unsigned long innobase_lru_block_access_recency;
 static unsigned long innobase_read_io_threads;
 static unsigned long innobase_write_io_threads;
-static unsigned int srv_auto_extend_increment;
+typedef constrained_check<unsigned int, 1000, 1> autoextend_constraint;
+static autoextend_constraint srv_auto_extend_increment;
 static unsigned long innobase_lock_wait_timeout;
 static unsigned long srv_n_spin_wait_rounds;
-static int64_t innobase_buffer_pool_size;
+typedef constrained_check<size_t, SIZE_MAX, 5242880, 1048576> buffer_pool_constraint;
+static buffer_pool_constraint innobase_buffer_pool_size;
+typedef constrained_check<size_t, SIZE_MAX, 512, 1024> additional_mem_pool_constraint;
+static additional_mem_pool_constraint innobase_additional_mem_pool_size;
+static bool  innobase_use_checksums= true;
+typedef constrained_check<unsigned int, UINT_MAX, 100> io_capacity_constraint;
+static io_capacity_constraint srv_io_capacity;
+
 static long innobase_open_files;
-static long innobase_additional_mem_pool_size;
 static long innobase_force_recovery;
 static long innobase_log_buffer_size;
 static char  default_haildb_data_file_path[]= "ibdata1:10M:autoextend";
@@ -2875,52 +2878,12 @@ static int haildb_init(drizzled::module::Context &context)
   innobase_print_verbose_log= (vm.count("disable-print-verbose-log")) ? false : true;
   srv_use_sys_malloc= (vm.count("use-internal-malloc")) ? false : true;
 
-  if (vm.count("additional-mem-pool-size"))
-  {
-    if (innobase_additional_mem_pool_size > LONG_MAX || innobase_additional_mem_pool_size < 512*1024L)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of additional-mem-pool-size"));
-      exit(-1);
-    }
-    innobase_additional_mem_pool_size/= 1024;
-    innobase_additional_mem_pool_size*= 1024;
-  }
-
-  if (vm.count("autoextend-increment"))
-  {
-    if (srv_auto_extend_increment > 1000L || srv_auto_extend_increment < 1L)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of autoextend-increment"));
-      exit(-1);
-    }
-  }
-
-  if (vm.count("buffer-pool-size"))
-  {
-    if (innobase_buffer_pool_size > INT64_MAX || innobase_buffer_pool_size < 5*1024*1024L)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of buffer-pool-size"));
-      exit(-1);
-    }
-    innobase_buffer_pool_size/= 1024*1024L;
-    innobase_buffer_pool_size*= 1024*1024L;
-  }
-
-  if (vm.count("io-capacity"))
-  {
-    if (srv_io_capacity > (unsigned long)~0L || srv_io_capacity < 100)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of io-capacity"));
-      exit(-1);
-    }
-  }
-
   if (vm.count("fast-shutdown"))
   {
     if (innobase_fast_shutdown > 2)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of fast-shutdown"));
-      exit(-1);
+      return 1;
     }
   }
 
@@ -2929,7 +2892,7 @@ static int haildb_init(drizzled::module::Context &context)
     if (srv_flush_log_at_trx_commit > 2)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of flush-log-at-trx-commit"));
-      exit(-1);
+      return 1;
     }
   }
 
@@ -2938,7 +2901,7 @@ static int haildb_init(drizzled::module::Context &context)
     if (innobase_force_recovery > 6)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of force-recovery"));
-      exit(-1);
+      return 1;
     }
   }
 
@@ -2947,7 +2910,7 @@ static int haildb_init(drizzled::module::Context &context)
     if (haildb_log_file_size > INT64_MAX || haildb_log_file_size < 1*1024*1024L)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of log-file-size"));
-      exit(-1);
+      return 1;
     }
     haildb_log_file_size/= 1024*1024L;
     haildb_log_file_size*= 1024*1024L;
@@ -2958,7 +2921,7 @@ static int haildb_init(drizzled::module::Context &context)
     if (haildb_log_files_in_group > 100 || haildb_log_files_in_group < 2)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of log-files-in-group"));
-      exit(-1);
+      return 1;
     }
   }
 
@@ -2967,7 +2930,7 @@ static int haildb_init(drizzled::module::Context &context)
     if (innobase_lock_wait_timeout > 1024*1024*1024 || innobase_lock_wait_timeout < 1)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of lock-wait-timeout"));
-      exit(-1);
+      return 1;
     }
   }
 
@@ -2976,7 +2939,7 @@ static int haildb_init(drizzled::module::Context &context)
     if (innobase_log_buffer_size > LONG_MAX || innobase_log_buffer_size < 256*1024L)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of log-buffer-size"));
-      exit(-1);
+      return 1;
     }
     innobase_log_buffer_size/= 1024;
     innobase_log_buffer_size*= 1024;
@@ -2987,7 +2950,7 @@ static int haildb_init(drizzled::module::Context &context)
     if (innobase_lru_old_blocks_pct > 95 || innobase_lru_old_blocks_pct < 5)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of lru-old-blocks-pct"));
-      exit(-1);
+      return 1;
     }
   }
 
@@ -2996,7 +2959,7 @@ static int haildb_init(drizzled::module::Context &context)
     if (innobase_lru_block_access_recency > ULONG_MAX)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of lru-block-access-recency"));
-      exit(-1);
+      return 1;
     }
   }
 
@@ -3005,7 +2968,7 @@ static int haildb_init(drizzled::module::Context &context)
     if (srv_max_buf_pool_modified_pct > 99)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of max-dirty-pages-pct"));
-      exit(-1);
+      return 1;
     }
   }
 
@@ -3014,7 +2977,7 @@ static int haildb_init(drizzled::module::Context &context)
     if (srv_max_purge_lag > (unsigned long)~0L)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of max-purge-lag"));
-      exit(-1);
+      return 1;
     }
   }
 
@@ -3023,7 +2986,7 @@ static int haildb_init(drizzled::module::Context &context)
     if (innobase_open_files > LONG_MAX || innobase_open_files < 10L)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of open-files"));
-      exit(-1);
+      return 1;
     }
   }
 
@@ -3032,7 +2995,7 @@ static int haildb_init(drizzled::module::Context &context)
     if (innobase_read_io_threads > 64 || innobase_read_io_threads < 1)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of read-io-threads"));
-      exit(-1);
+      return 1;
     }
   }
 
@@ -3041,13 +3004,8 @@ static int haildb_init(drizzled::module::Context &context)
     if (srv_n_spin_wait_rounds > (unsigned long)~0L)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of sync_spin_loops"));
-      exit(-1);
+      return 1;
     }
-  }
-
-  if (vm.count("data-home-dir"))
-  {
-    innobase_data_home_dir= const_cast<char *>(vm["data-home-dir"].as<string>().c_str());
   }
 
   if (vm.count("file-format"))
@@ -3076,9 +3034,10 @@ static int haildb_init(drizzled::module::Context &context)
   if (err != DB_SUCCESS)
     goto haildb_error;
 
-  if (innobase_data_home_dir)
+
+  if (vm.count("data-home-dir"))
   {
-    err= ib_cfg_set_text("data_home_dir", innobase_data_home_dir);
+    err= ib_cfg_set_text("data_home_dir", vm["data-home-dir"].as<string>().c_str());
     if (err != DB_SUCCESS)
       goto haildb_error;
   }
@@ -3133,19 +3092,19 @@ static int haildb_init(drizzled::module::Context &context)
   if (err != DB_SUCCESS)
     goto haildb_error;
 
-  err= ib_cfg_set_int("additional_mem_pool_size", innobase_additional_mem_pool_size);
+  err= ib_cfg_set_int("additional_mem_pool_size", static_cast<size_t>(innobase_additional_mem_pool_size));
   if (err != DB_SUCCESS)
     goto haildb_error;
 
-  err= ib_cfg_set_int("autoextend_increment", srv_auto_extend_increment);
+  err= ib_cfg_set_int("autoextend_increment", static_cast<unsigned int>(srv_auto_extend_increment));
   if (err != DB_SUCCESS)
     goto haildb_error;
 
-  err= ib_cfg_set_int("buffer_pool_size", innobase_buffer_pool_size);
+  err= ib_cfg_set_int("buffer_pool_size", static_cast<size_t>(innobase_buffer_pool_size));
   if (err != DB_SUCCESS)
     goto haildb_error;
 
-  err= ib_cfg_set_int("io_capacity", srv_io_capacity);
+  err= ib_cfg_set_int("io_capacity", static_cast<unsigned int>(srv_io_capacity));
   if (err != DB_SUCCESS)
     goto haildb_error;
 
@@ -3236,6 +3195,20 @@ static int haildb_init(drizzled::module::Context &context)
 
   haildb_engine= new HailDBEngine("InnoDB");
   context.add(haildb_engine);
+  context.registerVariable(new sys_var_bool_ptr_readonly("adaptive_hash_index",
+                                                         &innobase_adaptive_hash_index));
+  context.registerVariable(new sys_var_bool_ptr_readonly("adaptive_flushing",
+                                                         &srv_adaptive_flushing));
+  context.registerVariable(new sys_var_constrained_value_readonly<size_t>("additional_mem_pool_size",innobase_additional_mem_pool_size));
+  context.registerVariable(new sys_var_constrained_value_readonly<unsigned int>("autoextend_increment", srv_auto_extend_increment));
+  context.registerVariable(new sys_var_constrained_value_readonly<size_t>("buffer_pool_size", innobase_buffer_pool_size));
+  context.registerVariable(new sys_var_bool_ptr_readonly("checksums",
+                                                         &innobase_use_checksums));
+  context.registerVariable(new sys_var_bool_ptr_readonly("doublewrite",
+                                                         &innobase_use_doublewrite));
+  context.registerVariable(new sys_var_const_string_val("data_home_dir",
+                                                vm.count("data-home-dir") ?  vm["data-home-dir"].as<string>() : ""));
+  context.registerVariable(new sys_var_constrained_value_readonly<unsigned int>("io_capacity", srv_io_capacity));
 
   haildb_datadict_dump_func_initialize(context);
   config_table_function_initialize(context);
@@ -3365,53 +3338,6 @@ static void haildb_status_file_update(Session*, drizzle_sys_var*,
   if (err == DB_SUCCESS)
     innobase_create_status_file= status_file_enabled;
 }
-
-static DRIZZLE_SYSVAR_BOOL(adaptive_hash_index, innobase_adaptive_hash_index,
-  PLUGIN_VAR_NOCMDARG,
-  "Enable HailDB adaptive hash index (enabled by default).  ",
-  NULL, NULL, true);
-
-static DRIZZLE_SYSVAR_BOOL(adaptive_flushing, srv_adaptive_flushing,
-  PLUGIN_VAR_NOCMDARG,
-  "Attempt flushing dirty pages to avoid IO bursts at checkpoints.",
-  NULL, NULL, true);
-
-static DRIZZLE_SYSVAR_LONG(additional_mem_pool_size, innobase_additional_mem_pool_size,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Size of a memory pool HailDB uses to store data dictionary information and other internal data structures.",
-  NULL, NULL, 8*1024*1024L, 512*1024L, LONG_MAX, 1024);
-
-static DRIZZLE_SYSVAR_UINT(autoextend_increment, srv_auto_extend_increment,
-  PLUGIN_VAR_RQCMDARG,
-  "Data file autoextend increment in megabytes",
-  NULL, NULL, 8L, 1L, 1000L, 0);
-
-static DRIZZLE_SYSVAR_LONGLONG(buffer_pool_size, innobase_buffer_pool_size,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "The size of the memory buffer HailDB uses to cache data and indexes of its tables.",
-  NULL, NULL, 128*1024*1024L, 5*1024*1024L, INT64_MAX, 1024*1024L);
-
-static DRIZZLE_SYSVAR_BOOL(checksums, innobase_use_checksums,
-  PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
-  "Enable HailDB checksums validation (enabled by default). "
-  "Disable with --skip-haildb-checksums.",
-  NULL, NULL, true);
-
-static DRIZZLE_SYSVAR_STR(data_home_dir, innobase_data_home_dir,
-  PLUGIN_VAR_READONLY,
-  "The common part for HailDB table spaces.",
-  NULL, NULL, NULL);
-
-static DRIZZLE_SYSVAR_BOOL(doublewrite, innobase_use_doublewrite,
-  PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
-  "Enable HailDB doublewrite buffer (enabled by default). "
-  "Disable with --skip-haildb-doublewrite.",
-  NULL, NULL, true);
-
-static DRIZZLE_SYSVAR_ULONG(io_capacity, srv_io_capacity,
-  PLUGIN_VAR_RQCMDARG,
-  "Number of IOPs the server can do. Tunes the background IO rate",
-  NULL, NULL, 200, 100, ~0L, 0);
 
 static DRIZZLE_SYSVAR_ULONG(fast_shutdown, innobase_fast_shutdown,
   PLUGIN_VAR_OPCMDARG,
@@ -3549,13 +3475,13 @@ static void init_options(drizzled::module::option_context &context)
   context("disable-adaptive-flushing",
           N_("Do not attempt to flush dirty pages to avoid IO bursts at checkpoints."));
   context("additional-mem-pool-size",
-          po::value<long>(&innobase_additional_mem_pool_size)->default_value(8*1024*1024L),
+          po::value<additional_mem_pool_constraint>(&innobase_additional_mem_pool_size)->default_value(8*1024*1024L),
           N_("Size of a memory pool HailDB uses to store data dictionary information and other internal data structures."));
   context("autoextend-increment",
-          po::value<unsigned int>(&srv_auto_extend_increment)->default_value(8L),
+          po::value<autoextend_constraint>(&srv_auto_extend_increment)->default_value(8),
           N_("Data file autoextend increment in megabytes"));
   context("buffer-pool-size",
-          po::value<int64_t>(&innobase_buffer_pool_size)->default_value(128*1024*1024L),
+          po::value<buffer_pool_constraint>(&innobase_buffer_pool_size)->default_value(128*1024*1024L),
           N_("The size of the memory buffer HailDB uses to cache data and indexes of its tables."));
   context("data-home-dir",
           po::value<string>(),
@@ -3565,7 +3491,7 @@ static void init_options(drizzled::module::option_context &context)
   context("disable-doublewrite",
           N_("Disable HailDB doublewrite buffer (enabled by default)."));
   context("io-capacity",
-          po::value<unsigned long>(&srv_io_capacity)->default_value(200),
+          po::value<io_capacity_constraint>(&srv_io_capacity)->default_value(200),
           N_("Number of IOPs the server can do. Tunes the background IO rate"));
   context("fast-shutdown",
           po::value<unsigned long>(&innobase_fast_shutdown)->default_value(1),
@@ -3643,15 +3569,6 @@ static void init_options(drizzled::module::option_context &context)
 }
 
 static drizzle_sys_var* innobase_system_variables[]= {
-  DRIZZLE_SYSVAR(adaptive_hash_index),
-  DRIZZLE_SYSVAR(adaptive_flushing),
-  DRIZZLE_SYSVAR(additional_mem_pool_size),
-  DRIZZLE_SYSVAR(autoextend_increment),
-  DRIZZLE_SYSVAR(buffer_pool_size),
-  DRIZZLE_SYSVAR(checksums),
-  DRIZZLE_SYSVAR(data_home_dir),
-  DRIZZLE_SYSVAR(doublewrite),
-  DRIZZLE_SYSVAR(io_capacity),
   DRIZZLE_SYSVAR(fast_shutdown),
   DRIZZLE_SYSVAR(file_per_table),
   DRIZZLE_SYSVAR(file_format),

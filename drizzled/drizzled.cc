@@ -66,8 +66,11 @@
 #include "drizzled/drizzled.h"
 #include "drizzled/module/registry.h"
 #include "drizzled/module/load_list.h"
+#include "drizzled/global_buffer.h"
 
 #include "drizzled/plugin/event_observer.h"
+
+#include "drizzled/message/cache.h"
 
 #include <google/protobuf/stubs/common.h>
 
@@ -352,6 +355,11 @@ passwd *user_info;
 
 atomic<uint32_t> connection_count;
 
+global_buffer_constraint<uint64_t> global_sort_buffer(0);
+global_buffer_constraint<uint64_t> global_join_buffer(0);
+global_buffer_constraint<uint64_t> global_read_rnd_buffer(0);
+global_buffer_constraint<uint64_t> global_read_buffer(0);
+
 /** 
   Refresh value. We use to test this to find out if a refresh even has happened recently.
 */
@@ -441,7 +449,7 @@ void close_connections(void)
     for( SessionList::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
     {
       tmp= *it;
-      tmp->killed= Session::KILL_CONNECTION;
+      tmp->setKilled(Session::KILL_CONNECTION);
       tmp->scheduler->killSession(tmp);
       DRIZZLE_CONNECTION_DONE(tmp->thread_id);
       tmp->lockOnSys();
@@ -538,7 +546,7 @@ passwd *check_user(const char *user)
     }
     return NULL;
   }
-  if (!user)
+  if (not user)
   {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Fatal error: Please read \"Security\" section of "
                       "the manual to find out how to run drizzled as root!\n"));
@@ -787,7 +795,7 @@ static void check_limits_join_buffer_size(uint64_t in_join_buffer_size)
 
 static void check_limits_map(uint32_t in_max_allowed_packet)
 {
-  global_system_variables.max_allowed_packet= (1024*1024L);
+  global_system_variables.max_allowed_packet= (64*1024*1024L);
   if (in_max_allowed_packet < 1024 || in_max_allowed_packet > 1024*1024L*1024L)
   {
     cout << N_("Error: Invalid Value for max_allowed_packet");
@@ -1140,7 +1148,16 @@ static void compose_defaults_file_list(vector<string> in_options)
        it != in_options.end();
        ++it)
   {
-    defaults_file_list.push_back(*it);
+    fs::path p(*it);
+    if (fs::is_regular_file(p))
+      defaults_file_list.push_back(*it);
+    else
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("Defaults file '%s' not found\n"), (*it).c_str());
+      unireg_abort(1);
+    }
+
   }
 }
 
@@ -1291,7 +1308,10 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   N_("The maximum length of the result of function  group_concat."))
   ("join-buffer-size", po::value<uint64_t>(&global_system_variables.join_buff_size)->default_value(128*1024L)->notifier(&check_limits_join_buffer_size),
   N_("The size of the buffer that is used for full joins."))
-  ("max-allowed-packet", po::value<uint32_t>(&global_system_variables.max_allowed_packet)->default_value(1024*1024L)->notifier(&check_limits_map),
+  ("join-heap-threshold",
+  po::value<uint64_t>()->default_value(0),
+  N_("A global cap on the amount of memory that can be allocated by session join buffers (0 means unlimited)"))
+  ("max-allowed-packet", po::value<uint32_t>(&global_system_variables.max_allowed_packet)->default_value(64*1024*1024L)->notifier(&check_limits_map),
   N_("Max packetlength to send/receive from to server."))
   ("max-connect-errors", po::value<uint64_t>(&max_connect_errors)->default_value(MAX_CONNECT_ERRORS)->notifier(&check_limits_mce),
   N_("If there is more than this number of interrupted connections from a "
@@ -1344,16 +1364,25 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   N_("Each thread that does a sequential scan allocates a buffer of this "
       "size for each table it scans. If you do many sequential scans, you may "
       "want to increase this value."))
+  ("read-buffer-threshold",
+  po::value<uint64_t>()->default_value(0),
+  N_("A global cap on the size of read-buffer-size (0 means unlimited)"))
   ("read-rnd-buffer-size",
   po::value<uint32_t>(&global_system_variables.read_rnd_buff_size)->default_value(256*1024L)->notifier(&check_limits_read_rnd_buffer_size),
   N_("When reading rows in sorted order after a sort, the rows are read "
      "through this buffer to avoid a disk seeks. If not set, then it's set "
      "to the value of record_buffer."))
+  ("read-rnd-threshold",
+  po::value<uint64_t>()->default_value(0),
+  N_("A global cap on the size of read-rnd-buffer-size (0 means unlimited)"))
   ("scheduler", po::value<string>(),
   N_("Select scheduler to be used (by default multi-thread)."))
   ("sort-buffer-size",
   po::value<size_t>(&global_system_variables.sortbuff_size)->default_value(MAX_SORT_MEMORY)->notifier(&check_limits_sort_buffer_size),
   N_("Each thread that needs to do a sort allocates a buffer of this size."))
+  ("sort-heap-threshold",
+  po::value<uint64_t>()->default_value(0),
+  N_("A global cap on the amount of memory that can be allocated by session sort buffers (0 means unlimited)"))
   ("table-definition-cache", po::value<size_t>(&table_def_size)->default_value(128)->notifier(&check_limits_tdc),
   N_("The number of cached table definitions."))
   ("table-open-cache", po::value<uint64_t>(&table_cache_size)->default_value(TABLE_OPEN_CACHE_DEFAULT)->notifier(&check_limits_toc),
@@ -1422,7 +1451,6 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
     }
   }
 
-  process_defaults_files();
   /* TODO: here is where we should add a process_env_vars */
 
   /* We need a notify here so that plugin_init will work properly */
@@ -1438,6 +1466,25 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
                   internal::my_progname, err.what());
     unireg_abort(1);
   }
+
+  process_defaults_files();
+
+  /* Process with notify a second time because a config file may contain
+     plugin loader options */
+
+  try
+  {
+    po::notify(vm);
+  }
+  catch (po::validation_error &err)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("%s: %s.\n"
+                    "Use --help to get a list of available options\n"),
+                  internal::my_progname, err.what());
+    unireg_abort(1);
+  }
+
   /* At this point, we've read all the options we need to read from files and
      collected most of them into unknown options - now let's load everything
   */
@@ -1592,7 +1639,11 @@ int init_server_components(module::Registry &plugins)
     errmsg_printf(ERRMSG_LVL_ERROR, _("Could not initialize table cache\n"));
     unireg_abort(1);
   }
-  TableShare::cacheStart();
+
+  // Resize the definition Cache at startup
+  table::Cache::singleton().rehash(table_def_size);
+  definition::Cache::singleton().rehash(table_def_size);
+  message::Cache::singleton().rehash(table_def_size);
 
   setup_fpu();
 
@@ -1899,7 +1950,7 @@ struct option my_long_options[] =
    N_("Max packetlength to send/receive from to server."),
    (char**) &global_system_variables.max_allowed_packet,
    (char**) &max_system_variables.max_allowed_packet, 0, GET_UINT32,
-   REQUIRED_ARG, 1024*1024L, 1024, 1024L*1024L*1024L, MALLOC_OVERHEAD, 1024, 0},
+   REQUIRED_ARG, 64*1024*1024L, 1024, 1024L*1024L*1024L, MALLOC_OVERHEAD, 1024, 0},
   {"max_connect_errors", OPT_MAX_CONNECT_ERRORS,
    N_("If there is more than this number of interrupted connections from a "
       "host this host will be blocked from further connections."),
@@ -2225,6 +2276,58 @@ static void get_options()
   {
     print_version();
     exit(0);
+  }
+
+  if (vm.count("sort-heap-threshold"))
+  {
+    if ((vm["sort-heap-threshold"].as<uint64_t>() > 0) and
+      (vm["sort-heap-threshold"].as<uint64_t>() < 
+      global_system_variables.sortbuff_size))
+    {
+      cout << N_("Error: sort-heap-threshold cannot be less than sort-buffer-size") << endl;
+      exit(-1);
+    }
+
+    global_sort_buffer.setMaxSize(vm["sort-heap-threshold"].as<uint64_t>());
+  }
+
+  if (vm.count("join-heap-threshold"))
+  {
+    if ((vm["join-heap-threshold"].as<uint64_t>() > 0) and
+      (vm["join-heap-threshold"].as<uint64_t>() <
+      global_system_variables.join_buff_size))
+    {
+      cout << N_("Error: join-heap-threshold cannot be less than join-buffer-size") << endl;
+      exit(-1);
+    }
+
+    global_join_buffer.setMaxSize(vm["join-heap-threshold"].as<uint64_t>());
+  }
+
+  if (vm.count("read-rnd-threshold"))
+  {
+    if ((vm["read-rnd-threshold"].as<uint64_t>() > 0) and
+      (vm["read-rnd-threshold"].as<uint64_t>() <
+      global_system_variables.read_rnd_buff_size))
+    {
+      cout << N_("Error: read-rnd-threshold cannot be less than read-rnd-buffer-size") << endl;
+      exit(-1);
+    }
+
+    global_read_rnd_buffer.setMaxSize(vm["read-rnd-threshold"].as<uint64_t>());
+  }
+
+  if (vm.count("read-buffer-threshold"))
+  {
+    if ((vm["read-buffer-threshold"].as<uint64_t>() > 0) and
+      (vm["read-buffer-threshold"].as<uint64_t>() <
+      global_system_variables.read_buff_size))
+    {
+      cout << N_("Error: read-buffer-threshold cannot be less than read-buffer-size") << endl;
+      exit(-1);
+    }
+
+    global_read_buffer.setMaxSize(vm["read-buffer-threshold"].as<uint64_t>());
   }
 
   if (vm.count("exit-info"))

@@ -73,9 +73,15 @@ class Transaction;
 class Statement;
 class Resultset;
 }
+
 namespace internal
 {
 struct st_my_thread_var;
+}
+
+namespace table
+{
+class Placeholder;
 }
 
 class Lex_input_stream;
@@ -113,8 +119,9 @@ typedef std::map <std::string, message::Table> ProtoCache;
       of the INSERT ... ON DUPLICATE KEY UPDATE no matter whether the row
       was actually changed or not.
 */
-struct CopyInfo 
+class CopyInfo 
 {
+public:
   ha_rows records; /**< Number of processed records */
   ha_rows deleted; /**< Number of deleted records */
   ha_rows updated; /**< Number of updated records */
@@ -162,7 +169,7 @@ class Time_zone;
 struct drizzle_system_variables
 {
   drizzle_system_variables()
-  {};
+  {}
   /*
     How dynamically allocated system variables are handled:
 
@@ -359,6 +366,19 @@ public:
   {
     return mem_root;
   }
+
+  uint64_t xa_id;
+
+  uint64_t getXaId()
+  {
+    return xa_id;
+  }
+
+  void setXaId(uint64_t in_xa_id)
+  {
+    xa_id= in_xa_id; 
+  }
+
   /**
    * Uniquely identifies each statement object in thread scope; change during
    * statement lifetime.
@@ -698,7 +718,51 @@ public:
   uint32_t row_count;
   session_id_t thread_id;
   uint32_t tmp_table;
-  uint32_t global_read_lock;
+  enum global_read_lock_t
+  {
+    NONE= 0,
+    GOT_GLOBAL_READ_LOCK= 1,
+    MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT= 2
+  };
+private:
+  global_read_lock_t _global_read_lock;
+
+public:
+
+  global_read_lock_t isGlobalReadLock() const
+  {
+    return _global_read_lock;
+  }
+
+  void setGlobalReadLock(global_read_lock_t arg)
+  {
+    _global_read_lock= arg;
+  }
+
+  DrizzleLock *lockTables(Table **tables, uint32_t count, uint32_t flags, bool *need_reopen);
+  bool lockGlobalReadLock();
+  bool lock_table_names(TableList *table_list);
+  bool lock_table_names_exclusively(TableList *table_list);
+  bool makeGlobalReadLockBlockCommit();
+  bool abortLockForThread(Table *table);
+  bool wait_if_global_read_lock(bool abort_on_refresh, bool is_not_commit);
+  int lock_table_name(TableList *table_list);
+  void abortLock(Table *table);
+  void removeLock(Table *table);
+  void unlockReadTables(DrizzleLock *sql_lock);
+  void unlockSomeTables(Table **table, uint32_t count);
+  void unlockTables(DrizzleLock *sql_lock);
+  void startWaitingGlobalReadLock();
+  void unlockGlobalReadLock();
+
+private:
+  int unlock_external(Table **table, uint32_t count);
+  int lock_external(Table **tables, uint32_t count);
+  bool wait_for_locked_table_names(TableList *table_list);
+  DrizzleLock *get_lock_data(Table **table_ptr, uint32_t count,
+                             bool should_lock, Table **write_lock_used);
+public:
+
   uint32_t server_status;
   uint32_t open_options;
   uint32_t select_number; /**< number of select (used for EXPLAIN) */
@@ -706,7 +770,7 @@ public:
   enum_tx_isolation session_tx_isolation;
   enum_check_fields count_cuted_fields;
 
-  enum killed_state
+  enum killed_state_t
   {
     NOT_KILLED,
     KILL_BAD_DATA,
@@ -714,7 +778,25 @@ public:
     KILL_QUERY,
     KILLED_NO_VALUE /* means none of the above states apply */
   };
-  killed_state volatile killed;
+private:
+  killed_state_t volatile _killed;
+
+public:
+
+  void setKilled(killed_state_t arg)
+  {
+    _killed= arg;
+  }
+
+  killed_state_t getKilled()
+  {
+    return _killed;
+  }
+
+  volatile killed_state_t *getKilledPtr() // Do not use this method, it is here for historical convience.
+  {
+    return &_killed;
+  }
 
   bool some_tables_deleted;
   bool no_errors;
@@ -804,7 +886,7 @@ public:
   }
 
   /** Returns the current query ID */
-  inline query_id_t getQueryId()  const
+  query_id_t getQueryId()  const
   {
     return query_id;
   }
@@ -929,7 +1011,7 @@ public:
    */
   void cleanup_after_query();
   bool storeGlobals();
-  void awake(Session::killed_state state_to_set);
+  void awake(Session::killed_state_t state_to_set);
   /**
    * Pulls thread-specific variables into Session state.
    *
@@ -1135,8 +1217,8 @@ public:
   void end_statement();
   inline int killed_errno() const
   {
-    killed_state killed_val; /* to cache the volatile 'killed' */
-    return (killed_val= killed) != KILL_BAD_DATA ? killed_val : 0;
+    killed_state_t killed_val; /* to cache the volatile 'killed' */
+    return (killed_val= _killed) != KILL_BAD_DATA ? killed_val : 0;
   }
   void send_kill_message() const;
   /* return true if we will abort query if we make a warning now */
@@ -1409,16 +1491,6 @@ public:
    * set to query_id of original query.
    */
   void mark_used_tables_as_free_for_reuse(Table *table);
-  /**
-    Mark all temporary tables which were used by the current statement or
-    substatement as free for reuse, but only if the query_id can be cleared.
-
-    @param session thread context
-
-    @remark For temp tables associated with a open SQL HANDLER the query_id
-            is not reset until the HANDLER is closed.
-  */
-  void mark_temp_tables_as_free_for_reuse();
 
 public:
 
@@ -1512,51 +1584,31 @@ public:
   void close_cached_table(Table *table);
 
   /* Create a lock in the cache */
-  Table *table_cache_insert_placeholder(const TableIdentifier &identifier);
+  table::Placeholder *table_cache_insert_placeholder(const TableIdentifier &identifier);
   bool lock_table_name_if_not_cached(TableIdentifier &identifier, Table **table);
 
   typedef boost::unordered_map<std::string, message::Table, util::insensitive_hash, util::insensitive_equal_to> TableMessageCache;
-  TableMessageCache table_message_cache;
 
-  bool storeTableMessage(const TableIdentifier &identifier, message::Table &table_message);
-  bool removeTableMessage(const TableIdentifier &identifier);
-  bool getTableMessage(const TableIdentifier &identifier, message::Table &table_message);
-  bool doesTableMessageExist(const TableIdentifier &identifier);
-  bool renameTableMessage(const TableIdentifier &from, const TableIdentifier &to);
+  class TableMessages
+  {
+    TableMessageCache table_message_cache;
 
-  /* Work with temporary tables */
-  Table *find_temporary_table(const TableIdentifier &identifier);
+  public:
+    bool storeTableMessage(const TableIdentifier &identifier, message::Table &table_message);
+    bool removeTableMessage(const TableIdentifier &identifier);
+    bool getTableMessage(const TableIdentifier &identifier, message::Table &table_message);
+    bool doesTableMessageExist(const TableIdentifier &identifier);
+    bool renameTableMessage(const TableIdentifier &from, const TableIdentifier &to);
 
-  void doGetTableNames(CachedDirectory &directory,
-                       const SchemaIdentifier &schema_identifier,
-                       std::set<std::string>& set_of_names);
-  void doGetTableNames(const SchemaIdentifier &schema_identifier,
-                       std::set<std::string>& set_of_names);
-
-  void doGetTableIdentifiers(CachedDirectory &directory,
-                             const SchemaIdentifier &schema_identifier,
-                             TableIdentifiers &set_of_identifiers);
-  void doGetTableIdentifiers(const SchemaIdentifier &schema_identifier,
-                             TableIdentifiers &set_of_identifiers);
-
-  int doGetTableDefinition(const drizzled::TableIdentifier &identifier,
-                           message::Table &table_proto);
-  bool doDoesTableExist(const drizzled::TableIdentifier &identifier);
-
-  void close_temporary_tables();
-  void close_temporary_table(Table *table);
-  // The method below just handles the de-allocation of the table. In
-  // a better memory type world, this would not be needed.
+  };
 private:
-  void nukeTable(Table *table);
-public:
+  TableMessages _table_message_cache;
 
-  void dumpTemporaryTableNames(const char *id);
-  int drop_temporary_table(const drizzled::TableIdentifier &identifier);
-  bool rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &identifier);
-  bool rm_temporary_table(TableIdentifier &identifier, bool best_effort= false);
-  Table *open_temporary_table(TableIdentifier &identifier,
-                              bool link_in_list= true);
+public:
+  TableMessages &getMessageCache()
+  {
+    return _table_message_cache;
+  }
 
   /* Reopen operations */
   bool reopen_tables(bool get_locks, bool mark_share_as_old);
@@ -1566,8 +1618,6 @@ public:
   int setup_conds(TableList *leaves, COND **conds);
   int lock_tables(TableList *tables, uint32_t count, bool *need_reopen);
 
-  Table *create_virtual_tmp_table(List<CreateField> &field_list);
-  
   drizzled::util::Storable *getProperty(const std::string &arg)
   {
     return life_properties[arg];
@@ -1594,13 +1644,14 @@ public:
     if (variables.storage_engine)
       return variables.storage_engine;
     return global_system_variables.storage_engine;
-  };
+  }
 
   static void unlink(Session *session);
 
   void get_xid(DRIZZLE_XID *xid); // Innodb only
 
   table::Instance *getInstanceTable();
+  table::Instance *getInstanceTable(List<CreateField> &field_list);
 
 private:
   bool resetUsage()
@@ -1658,8 +1709,9 @@ namespace drizzled
  * A structure used to describe sort information
  * for a field or item used in ORDER BY.
  */
-struct SortField 
+class SortField 
 {
+public:
   Field *field;	/**< Field to sort */
   Item	*item; /**< Item if not sorting fields */
   size_t length; /**< Length of sort field */

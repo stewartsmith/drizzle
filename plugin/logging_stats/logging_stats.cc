@@ -137,6 +137,36 @@ void LoggingStats::updateCurrentScoreboard(ScoreboardSlot *scoreboard_slot,
   scoreboard_slot->getStatusVars()->logStatusVar(session);
 }
 
+bool LoggingStats::resetGlobalScoreboard()
+{
+  cumulative_stats->getGlobalStatusVars()->reset();
+
+  vector<vector<ScoreboardSlot* >* > *vector_of_scoreboard_vectors=
+    current_scoreboard->getVectorOfScoreboardVectors();
+
+  vector<vector<ScoreboardSlot* >* >::iterator v_of_scoreboard_v_begin_it= vector_of_scoreboard_vectors->begin();
+
+  vector<vector<ScoreboardSlot* >* >::iterator v_of_scoreboard_v_end_it= vector_of_scoreboard_vectors->end();
+
+  for (; v_of_scoreboard_v_begin_it != v_of_scoreboard_v_end_it; ++v_of_scoreboard_v_begin_it)
+  {
+    vector<ScoreboardSlot* > *scoreboard_vector= *v_of_scoreboard_v_begin_it;
+
+    vector<ScoreboardSlot* >::iterator scoreboard_vector_it= scoreboard_vector->begin();
+    vector<ScoreboardSlot* >::iterator scoreboard_vector_end= scoreboard_vector->end();
+    for (; scoreboard_vector_it != scoreboard_vector_end; ++scoreboard_vector_it)
+    {
+      ScoreboardSlot *scoreboard_slot= *scoreboard_vector_it;
+      if (scoreboard_slot->isInUse())
+      {
+        scoreboard_slot->getStatusVars()->reset();
+      }
+    }
+  }
+
+  return false;
+}
+
 bool LoggingStats::post(Session *session)
 {
   if (! isEnabled() || (session->getSessionId() == 0))
@@ -313,7 +343,7 @@ static int init(drizzled::module::Context &context)
     if (sysvar_logging_stats_max_user_count < 100 || sysvar_logging_stats_max_user_count > 50000)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for max-user-count\n"));
-      exit(-1);
+      return 1;
     }
   }
   if (vm.count("bucket-count"))
@@ -321,7 +351,7 @@ static int init(drizzled::module::Context &context)
     if (sysvar_logging_stats_bucket_count < 5 || sysvar_logging_stats_bucket_count > 500)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for bucket-count\n"));
-      exit(-1);
+      return 1;
     }
   }
 
@@ -330,7 +360,7 @@ static int init(drizzled::module::Context &context)
     if (sysvar_logging_stats_scoreboard_size < 10 || sysvar_logging_stats_scoreboard_size > 50000)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for scoreboard-size\n"));
-      exit(-1);
+      return 1;
     }
     else
       sysvar_logging_stats_scoreboard_size= vm["scoreboard-size"].as<uint32_t>(); 

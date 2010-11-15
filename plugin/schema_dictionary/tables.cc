@@ -68,7 +68,7 @@ TablesTool::Generator::Generator(Field **arg) :
 
 bool TablesTool::Generator::nextTable()
 {
-  const drizzled::message::Table *table_ptr;
+  drizzled::message::TablePtr table_ptr;
   while ((table_ptr= all_tables_generator))
   {
     table_message.CopyFrom(*table_ptr);
@@ -87,44 +87,6 @@ bool TablesTool::Generator::populate()
   }
 
   return false;
-}
-
-void TablesTool::Generator::pushType(message::Table::Field::FieldType type)
-{
-  switch (type)
-  {
-  default:
-  case message::Table::Field::VARCHAR:
-    push(VARCHAR);
-    break;
-  case message::Table::Field::DOUBLE:
-    push(DOUBLE);
-    break;
-  case message::Table::Field::BLOB:
-    push(BLOB);
-    break;
-  case message::Table::Field::ENUM:
-    push(ENUM);
-    break;
-  case message::Table::Field::INTEGER:
-    push(INTEGER);
-    break;
-  case message::Table::Field::BIGINT:
-    push(BIGINT);
-    break;
-  case message::Table::Field::DECIMAL:
-    push(DECIMAL);
-    break;
-  case message::Table::Field::DATE:
-    push(DATE);
-    break;
-  case message::Table::Field::TIMESTAMP:
-    push(TIMESTAMP);
-    break;
-  case message::Table::Field::DATETIME:
-    push(DATETIME);
-    break;
-  }
 }
 
 void TablesTool::Generator::fill()

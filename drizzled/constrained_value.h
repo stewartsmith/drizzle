@@ -93,7 +93,9 @@ public:
   }
 };
 
-template<class T, uint64_t MAXVAL=UINT64_MAX, int64_t MINVAL=INT64_MIN, int ALIGN=1>
+template<class T,
+  T MAXVAL,
+  T MINVAL, unsigned int ALIGN= 1>
 class constrained_check :
   public constrained_value<T>
 {
@@ -115,7 +117,7 @@ protected:
       boost::throw_exception(boost::program_options::invalid_option_value(boost::lexical_cast<std::string>(rhs)));
     }
     rhs-= rhs % ALIGN;
-    setVal(rhs);
+    this->setVal(rhs);
     return *this;
   }
 

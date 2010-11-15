@@ -114,7 +114,7 @@ ERROR 23000: Column 'c' cannot be null
 UPDATE t1 SET d=NULL;
 ERROR 23000: Column 'd' cannot be null
 truncate table t1;
-LOAD DATA INFILE '../../std_data_ln/null_test.txt' INTO TABLE t1 FIELDS ENCLOSED BY '"';
+LOAD DATA INFILE 'DRIZZLETEST_VARDIR/std_data_ln/null_test.txt' INTO TABLE t1 FIELDS ENCLOSED BY '"';
 ERROR 22004: Column set to default value; NULL supplied to NOT NULL column 'a' at row 1
 drop table t1;
 create table t1 (a int not null, b int not null, index idx(a));

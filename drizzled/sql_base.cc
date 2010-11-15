@@ -55,6 +55,7 @@
 #include "drizzled/plugin/authorization.h"
 #include "drizzled/table/temporary.h"
 #include "drizzled/table/placeholder.h"
+#include "drizzled/table/unused.h"
 
 using namespace std;
 
@@ -63,149 +64,6 @@ namespace drizzled
 
 extern bool volatile shutdown_in_progress;
 
-TableOpenCache &get_open_cache()
-{
-  static TableOpenCache open_cache;				/* Used by mysql_test */
-
-  return open_cache;
-}
-
-static void free_cache_entry(table::Concurrent *entry);
-
-void remove_table(table::Concurrent *arg)
-{
-  TableOpenCacheRange ppp;
-  ppp= get_open_cache().equal_range(arg->getShare()->getCacheKey());
-
-  for (TableOpenCache::const_iterator iter= ppp.first;
-         iter != ppp.second; ++iter)
-  {
-    table::Concurrent *found_table= (*iter).second;
-
-    if (found_table == arg)
-    {
-      free_cache_entry(arg);
-      get_open_cache().erase(iter);
-      return;
-    }
-  }
-}
-
-static bool add_table(table::Concurrent *arg)
-{
-  TableOpenCache &open_cache(get_open_cache());
-
-  TableOpenCache::iterator returnable= open_cache.insert(make_pair(arg->getShare()->getCacheKey(), arg));
-
-  return not (returnable == open_cache.end());
-}
-
-class UnusedTables {
-  table::Concurrent *tables;				/* Used by mysql_test */
-
-  table::Concurrent *getTable() const
-  {
-    return tables;
-  }
-
-  table::Concurrent *setTable(Table *arg)
-  {
-    return tables= static_cast<table::Concurrent *>(arg);
-  }
-
-public:
-
-  void cull()
-  {
-    /* Free cache if too big */
-    while (cached_open_tables() > table_cache_size && getTable())
-      remove_table(getTable());
-  }
-
-  void cullByVersion()
-  {
-    while (getTable() && not getTable()->getShare()->getVersion())
-      remove_table(getTable());
-  }
-  
-  void link(table::Concurrent *table)
-  {
-    if (getTable())
-    {
-      table->setNext(getTable());		/* Link in last */
-      table->setPrev(getTable()->getPrev());
-      getTable()->setPrev(table);
-      table->getPrev()->setNext(table);
-    }
-    else
-    {
-      table->setPrev(setTable(table));
-      table->setNext(table->getPrev());
-      assert(table->getNext() == table && table->getPrev() == table);
-    }
-  }
-
-
-  void unlink(table::Concurrent *table)
-  {
-    table->unlink();
-
-    /* Unlink the table from "unused_tables" list. */
-    if (table == getTable())
-    {  // First unused
-      setTable(getTable()->getNext()); // Remove from link
-      if (table == getTable())
-        setTable(NULL);
-    }
-  }
-
-/* move table first in unused links */
-
-  void relink(table::Concurrent *table)
-  {
-    if (table != getTable())
-    {
-      table->unlink();
-
-      table->setNext(getTable());			/* Link in unused tables */
-      table->setPrev(getTable()->getPrev());
-      getTable()->getPrev()->setNext(table);
-      getTable()->setPrev(table);
-      setTable(table);
-    }
-  }
-
-
-  void clear()
-  {
-    while (getTable())
-      remove_table(getTable());
-  }
-
-  UnusedTables():
-    tables(NULL)
-  { }
-
-  ~UnusedTables()
-  { 
-  }
-};
-
-static UnusedTables unused_tables;
-
-unsigned char *table_cache_key(const unsigned char *record,
-                               size_t *length,
-                               bool );
-
-unsigned char *table_cache_key(const unsigned char *record,
-                               size_t *length,
-                               bool )
-{
-  Table *entry=(Table*) record;
-  *length= entry->getShare()->getCacheKey().size();
-  return (unsigned char*) &entry->getShare()->getCacheKey()[0];
-}
-
 bool table_cache_init(void)
 {
   return false;
@@ -213,15 +71,15 @@ bool table_cache_init(void)
 
 uint32_t cached_open_tables(void)
 {
-  return get_open_cache().size();
+  return table::getCache().size();
 }
 
 void table_cache_free(void)
 {
   refresh_version++;				// Force close of open tables
 
-  unused_tables.clear();
-  get_open_cache().clear();
+  table::getUnused().clear();
+  table::getCache().clear();
 }
 
 /*
@@ -235,7 +93,7 @@ void table_cache_free(void)
   By leaving the table in the table cache, it disallows any other thread
   to open the table
 
-  session->killed will be set if we run out of memory
+  session->getKilled() will be set if we run out of memory
 
   If closing a MERGE child, the calling function has to take care for
   closing the parent too, if necessary.
@@ -256,7 +114,7 @@ void close_handle_and_leave_table_as_lock(Table *table)
   const TableIdentifier::Key &key(identifier.getKey());
   TableShare *share= new TableShare(identifier.getType(),
                                     identifier,
-                                    const_cast<char *>(&key[0]),  static_cast<uint32_t>(table->getShare()->getCacheKeySize()));
+                                    const_cast<char *>(key.vector()),  static_cast<uint32_t>(table->getShare()->getCacheKeySize()));
 
   table->cursor->close();
   table->db_stat= 0;                            // Mark cursor closed
@@ -279,35 +137,13 @@ void Table::intern_close_table()
   }
 }
 
-/*
-  Remove table from the open table cache
-
-  SYNOPSIS
-  free_cache_entry()
-  entry		Table to remove
-
-  NOTE
-  We need to have a lock on LOCK_open when calling this
-*/
-
-void free_cache_entry(table::Concurrent *table)
-{
-  table->intern_close_table();
-  if (not table->in_use)
-  {
-    unused_tables.unlink(table);
-  }
-
-  delete table;
-}
-
 /* Free resources allocated by filesort() and read_record() */
 
 void Table::free_io_cache()
 {
   if (sort.io_cache)
   {
-    close_cached_file(sort.io_cache);
+    sort.io_cache->close_cached_file();
     delete sort.io_cache;
     sort.io_cache= 0;
   }
@@ -341,7 +177,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
     {
       refresh_version++;				// Force close of open tables
 
-      unused_tables.clear();
+      table::getUnused().clear();
 
       if (wait_for_refresh)
       {
@@ -372,7 +208,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
           again. There they will wait until we update all tables version
           below.
 
-          Setting some_tables_deleted is done by remove_table_from_cache()
+          Setting some_tables_deleted is done by table::Cache::singleton().removeTable()
           in the other branch.
 
           In other words (reviewer suggestion): You need this setting of
@@ -382,8 +218,8 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
           after the call to Session::close_old_data_files() i.e. after removal of
           current thread locks.
         */
-        for (TableOpenCache::const_iterator iter= get_open_cache().begin();
-             iter != get_open_cache().end();
+        for (table::CacheMap::const_iterator iter= table::getCache().begin();
+             iter != table::getCache().end();
              iter++)
         {
           Table *table= (*iter).second;
@@ -398,7 +234,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
       for (TableList *table= tables; table; table= table->next_local)
       {
         TableIdentifier identifier(table->getSchemaName(), table->getTableName());
-        if (remove_table_from_cache(session, identifier,
+        if (table::Cache::singleton().removeTable(session, identifier,
                                     RTFC_OWNED_BY_Session_FLAG))
         {
           found= true;
@@ -422,11 +258,11 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
 
       bool found= true;
       /* Wait until all threads has closed all the tables we had locked */
-      while (found && ! session->killed)
+      while (found && ! session->getKilled())
       {
         found= false;
-        for (TableOpenCache::const_iterator iter= get_open_cache().begin();
-             iter != get_open_cache().end();
+        for (table::CacheMap::const_iterator iter= table::getCache().begin();
+             iter != table::getCache().end();
              iter++)
         {
           Table *table= (*iter).second;
@@ -510,7 +346,7 @@ bool Session::free_cached_table()
   if (table->needs_reopen_or_name_lock() ||
       version != refresh_version || !table->db_stat)
   {
-    remove_table(table);
+    table::remove_table(table);
     found_old_table= true;
   }
   else
@@ -523,9 +359,9 @@ bool Session::free_cached_table()
 
     /* Free memory and reset for next loop */
     table->cursor->ha_reset();
-    table->in_use= false;
+    table->in_use= NULL;
 
-    unused_tables.link(table);
+    table::getUnused().link(table);
   }
 
   return found_old_table;
@@ -557,7 +393,7 @@ void Session::close_open_tables()
   if (found_old_table)
   {
     /* Tell threads waiting for refresh that something has happened */
-    broadcast_refresh();
+    locking::broadcast_refresh();
   }
 }
 
@@ -681,10 +517,10 @@ TableList* unique_table(TableList *table, TableList *table_list,
 }
 
 
-void Session::doGetTableNames(const SchemaIdentifier &schema_identifier,
-                              std::set<std::string>& set_of_names)
+void Open_tables_state::doGetTableNames(const SchemaIdentifier &schema_identifier,
+                                        std::set<std::string>& set_of_names)
 {
-  for (Table *table= temporary_tables ; table ; table= table->getNext())
+  for (Table *table= getTemporaryTables() ; table ; table= table->getNext())
   {
     if (schema_identifier.compare(table->getShare()->getSchemaName()))
     {
@@ -693,17 +529,17 @@ void Session::doGetTableNames(const SchemaIdentifier &schema_identifier,
   }
 }
 
-void Session::doGetTableNames(CachedDirectory &,
-			      const SchemaIdentifier &schema_identifier,
-                              std::set<std::string> &set_of_names)
+void Open_tables_state::doGetTableNames(CachedDirectory &,
+                                        const SchemaIdentifier &schema_identifier,
+                                        std::set<std::string> &set_of_names)
 {
   doGetTableNames(schema_identifier, set_of_names);
 }
 
-void Session::doGetTableIdentifiers(const SchemaIdentifier &schema_identifier,
-                                    TableIdentifiers &set_of_identifiers)
+void Open_tables_state::doGetTableIdentifiers(const SchemaIdentifier &schema_identifier,
+                                              TableIdentifiers &set_of_identifiers)
 {
-  for (Table *table= temporary_tables ; table ; table= table->getNext())
+  for (Table *table= getTemporaryTables() ; table ; table= table->getNext())
   {
     if (schema_identifier.compare(table->getShare()->getSchemaName()))
     {
@@ -714,16 +550,16 @@ void Session::doGetTableIdentifiers(const SchemaIdentifier &schema_identifier,
   }
 }
 
-void Session::doGetTableIdentifiers(CachedDirectory &,
+void Open_tables_state::doGetTableIdentifiers(CachedDirectory &,
                                     const SchemaIdentifier &schema_identifier,
                                     TableIdentifiers &set_of_identifiers)
 {
   doGetTableIdentifiers(schema_identifier, set_of_identifiers);
 }
 
-bool Session::doDoesTableExist(const TableIdentifier &identifier)
+bool Open_tables_state::doDoesTableExist(const TableIdentifier &identifier)
 {
-  for (Table *table= temporary_tables ; table ; table= table->getNext())
+  for (Table *table= getTemporaryTables() ; table ; table= table->getNext())
   {
     if (table->getShare()->getType() == message::Table::TEMPORARY)
     {
@@ -737,10 +573,10 @@ bool Session::doDoesTableExist(const TableIdentifier &identifier)
   return false;
 }
 
-int Session::doGetTableDefinition(const TableIdentifier &identifier,
+int Open_tables_state::doGetTableDefinition(const TableIdentifier &identifier,
                                   message::Table &table_proto)
 {
-  for (Table *table= temporary_tables ; table ; table= table->getNext())
+  for (Table *table= getTemporaryTables() ; table ; table= table->getNext())
   {
     if (table->getShare()->getType() == message::Table::TEMPORARY)
     {
@@ -756,7 +592,7 @@ int Session::doGetTableDefinition(const TableIdentifier &identifier,
   return ENOENT;
 }
 
-Table *Session::find_temporary_table(const TableIdentifier &identifier)
+Table *Open_tables_state::find_temporary_table(const TableIdentifier &identifier)
 {
   for (Table *table= temporary_tables ; table ; table= table->getNext())
   {
@@ -794,7 +630,7 @@ Table *Session::find_temporary_table(const TableIdentifier &identifier)
   @retval -1  the table is in use by a outer query
 */
 
-int Session::drop_temporary_table(const drizzled::TableIdentifier &identifier)
+int Open_tables_state::drop_temporary_table(const drizzled::TableIdentifier &identifier)
 {
   Table *table;
 
@@ -802,7 +638,7 @@ int Session::drop_temporary_table(const drizzled::TableIdentifier &identifier)
     return 1;
 
   /* Table might be in use by some outer statement. */
-  if (table->query_id && table->query_id != query_id)
+  if (table->query_id && table->query_id != getQueryId())
   {
     my_error(ER_CANT_REOPEN_TABLE, MYF(0), table->getAlias());
     return -1;
@@ -833,7 +669,7 @@ void Session::unlink_open_table(Table *find)
   /*
     Note that we need to hold LOCK_open while changing the
     open_tables list. Another thread may work on it.
-    (See: remove_table_from_cache(), mysql_wait_completed_table())
+    (See: table::Cache::singleton().removeTable(), mysql_wait_completed_table())
     Closing a MERGE child before the parent would be fatal if the
     other thread tries to abort the MERGE lock in between.
   */
@@ -847,7 +683,7 @@ void Session::unlink_open_table(Table *find)
       *prev= list->getNext();
 
       /* Close table. */
-      remove_table(static_cast<table::Concurrent *>(list));
+      table::remove_table(static_cast<table::Concurrent *>(list));
     }
     else
     {
@@ -857,7 +693,7 @@ void Session::unlink_open_table(Table *find)
   }
 
   // Notify any 'refresh' threads
-  broadcast_refresh();
+  locking::broadcast_refresh();
 }
 
 
@@ -930,7 +766,7 @@ void Session::wait_for_condition(boost::mutex &mutex, boost::condition_variable_
       mutex is unlocked
     */
     boost_unique_lock_t scopedLock(mutex, boost::adopt_lock_t());
-    if (not killed)
+    if (not getKilled())
     {
       cond.wait(scopedLock);
     }
@@ -955,7 +791,7 @@ void Session::wait_for_condition(boost::mutex &mutex, boost::condition_variable_
   case of failure.
 */
 
-Table *Session::table_cache_insert_placeholder(const drizzled::TableIdentifier &arg)
+table::Placeholder *Session::table_cache_insert_placeholder(const drizzled::TableIdentifier &arg)
 {
   safe_mutex_assert_owner(LOCK_open.native_handle());
 
@@ -965,7 +801,7 @@ Table *Session::table_cache_insert_placeholder(const drizzled::TableIdentifier &
   TableIdentifier identifier(arg.getSchemaName(), arg.getTableName(), message::Table::INTERNAL);
   table::Placeholder *table= new table::Placeholder(this, identifier);
 
-  if (not add_table(table))
+  if (not table::Cache::singleton().insert(table))
   {
     delete table;
 
@@ -1003,11 +839,11 @@ bool Session::lock_table_name_if_not_cached(TableIdentifier &identifier, Table *
 
   boost_unique_lock_t scope_lock(LOCK_open); /* Obtain a name lock even though table is not in cache (like for create table)  */
 
-  TableOpenCache::iterator iter;
+  table::CacheMap::iterator iter;
 
-  iter= get_open_cache().find(key);
+  iter= table::getCache().find(key);
 
-  if (iter != get_open_cache().end())
+  if (iter != table::getCache().end())
   {
     *table= 0;
     return false;
@@ -1073,12 +909,12 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
   if (check_stack_overrun(this, STACK_MIN_SIZE_FOR_OPEN, (unsigned char *)&alias))
     return NULL;
 
-  if (killed)
+  if (getKilled())
     return NULL;
 
   TableIdentifier identifier(table_list->getSchemaName(), table_list->getTableName());
   const TableIdentifier::Key &key(identifier.getKey());
-  TableOpenCacheRange ppp;
+  table::CacheRange ppp;
 
   /*
     Unless requested otherwise, try to resolve this table in the list
@@ -1088,7 +924,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
     TODO -> move this block into a separate function.
   */
   bool reset= false;
-  for (table= temporary_tables; table ; table=table->getNext())
+  for (table= getTemporaryTables(); table ; table=table->getNext())
   {
     if (table->getShare()->getCacheKey() == key)
     {
@@ -1176,10 +1012,10 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
         an implicit "pending locks queue" - see
         wait_for_locked_table_names for details.
       */
-      ppp= get_open_cache().equal_range(key);
+      ppp= table::getCache().equal_range(key);
 
       table= NULL;
-      for (TableOpenCache::const_iterator iter= ppp.first;
+      for (table::CacheMap::const_iterator iter= ppp.first;
            iter != ppp.second; ++iter, table= NULL)
       {
         table= (*iter).second;
@@ -1267,7 +1103,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
       }
       if (table)
       {
-        unused_tables.unlink(static_cast<table::Concurrent *>(table));
+        table::getUnused().unlink(static_cast<table::Concurrent *>(table));
         table->in_use= this;
       }
       else
@@ -1275,7 +1111,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
         /* Insert a new Table instance into the open cache */
         int error;
         /* Free cache if too big */
-        unused_tables.cull();
+        table::getUnused().cull();
 
         if (table_list->isCreate())
         {
@@ -1323,7 +1159,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
             LOCK_open.unlock();
             return NULL;
           }
-          (void)add_table(new_table);
+          (void)table::Cache::singleton().insert(new_table);
         }
       }
 
@@ -1396,7 +1232,7 @@ void Session::close_data_files_and_morph_locks(TableIdentifier &identifier)
       If we are not under LOCK TABLES we should have only one table
       open and locked so it makes sense to remove the lock at once.
     */
-    mysql_unlock_tables(this, lock);
+    unlockTables(lock);
     lock= 0;
   }
 
@@ -1475,7 +1311,7 @@ bool Session::reopen_tables(bool get_locks, bool)
     next= table->getNext();
 
     my_error(ER_CANT_REOPEN_TABLE, MYF(0), table->getAlias());
-    remove_table(static_cast<table::Concurrent *>(table));
+    table::remove_table(static_cast<table::Concurrent *>(table));
     error= 1;
   }
   *prev=0;
@@ -1489,8 +1325,8 @@ bool Session::reopen_tables(bool get_locks, bool)
     */
     some_tables_deleted= false;
 
-    if ((local_lock= mysql_lock_tables(this, tables, (uint32_t) (tables_ptr - tables),
-                                 flags, &not_used)))
+    if ((local_lock= lockTables(tables, (uint32_t) (tables_ptr - tables),
+                                       flags, &not_used)))
     {
       /* unused */
     }
@@ -1509,7 +1345,7 @@ bool Session::reopen_tables(bool get_locks, bool)
   if (get_locks && tables)
     delete [] tables;
 
-  broadcast_refresh();
+  locking::broadcast_refresh();
 
   return(error);
 }
@@ -1556,8 +1392,8 @@ void Session::close_old_data_files(bool morph_locks, bool send_refresh)
               lock on it. This will also give them a chance to close their
               instances of this table.
             */
-            mysql_lock_abort(this, ulcktbl);
-            mysql_lock_remove(this, ulcktbl);
+            abortLock(ulcktbl);
+            removeLock(ulcktbl);
             ulcktbl->lock_count= 0;
           }
           if ((ulcktbl != table) && ulcktbl->db_stat)
@@ -1597,44 +1433,7 @@ void Session::close_old_data_files(bool morph_locks, bool send_refresh)
     }
   }
   if (found)
-    broadcast_refresh();
-}
-
-
-/*
-  Wait until all threads has closed the tables in the list
-  We have also to wait if there is thread that has a lock on this table even
-  if the table is closed
-*/
-
-bool table_is_used(Table *table, bool wait_for_name_lock)
-{
-  do
-  {
-    const TableIdentifier::Key &key(table->getShare()->getCacheKey());
-
-    TableOpenCacheRange ppp;
-    ppp= get_open_cache().equal_range(key);
-
-    for (TableOpenCache::const_iterator iter= ppp.first;
-         iter != ppp.second; ++iter)
-    {
-      Table *search= (*iter).second;
-      if (search->in_use == table->in_use)
-        continue;                               // Name locked by this thread
-      /*
-        We can't use the table under any of the following conditions:
-        - There is an name lock on it (Table is to be deleted or altered)
-        - If we are in flush table and we didn't execute the flush
-        - If the table engine is open and it's an old version
-        (We must wait until all engines are shut down to use the table)
-      */
-      if ( (search->locked_by_name && wait_for_name_lock) ||
-           (search->is_name_opened() && search->needs_reopen_or_name_lock()))
-        return 1;
-    }
-  } while ((table=table->getNext()));
-  return 0;
+    locking::broadcast_refresh();
 }
 
 
@@ -1647,15 +1446,17 @@ bool wait_for_tables(Session *session)
   session->set_proc_info("Waiting for tables");
   {
     boost_unique_lock_t lock(LOCK_open);
-    while (!session->killed)
+    while (not session->getKilled())
     {
       session->some_tables_deleted= false;
       session->close_old_data_files(false, dropping_tables != 0);
-      if (!table_is_used(session->open_tables, 1))
+      if (not table::Cache::singleton().areTablesUsed(session->open_tables, 1))
+      {
         break;
+      }
       COND_refresh.wait(lock);
     }
-    if (session->killed)
+    if (session->getKilled())
       result= true;					// aborted
     else
     {
@@ -1703,7 +1504,7 @@ Table *drop_locked_tables(Session *session, const drizzled::TableIdentifier &ide
   /*
     Note that we need to hold LOCK_open while changing the
     open_tables list. Another thread may work on it.
-    (See: remove_table_from_cache(), mysql_wait_completed_table())
+    (See: table::Cache::singleton().removeTable(), mysql_wait_completed_table())
     Closing a MERGE child before the parent would be fatal if the
     other thread tries to abort the MERGE lock in between.
   */
@@ -1712,7 +1513,7 @@ Table *drop_locked_tables(Session *session, const drizzled::TableIdentifier &ide
     next=table->getNext();
     if (table->getShare()->getCacheKey() == identifier.getKey())
     {
-      mysql_lock_remove(session, table);
+      session->removeLock(table);
 
       if (!found)
       {
@@ -1727,7 +1528,7 @@ Table *drop_locked_tables(Session *session, const drizzled::TableIdentifier &ide
       else
       {
         /* We already have a name lock, remove copy */
-        remove_table(static_cast<table::Concurrent *>(table));
+        table::remove_table(static_cast<table::Concurrent *>(table));
       }
     }
     else
@@ -1738,7 +1539,7 @@ Table *drop_locked_tables(Session *session, const drizzled::TableIdentifier &ide
   }
   *prev=0;
   if (found)
-    broadcast_refresh();
+    locking::broadcast_refresh();
 
   return(found);
 }
@@ -1758,7 +1559,7 @@ void abort_locked_tables(Session *session, const drizzled::TableIdentifier &iden
     if (table->getShare()->getCacheKey() == identifier.getKey())
     {
       /* If MERGE child, forward lock handling to parent. */
-      mysql_lock_abort(session, table);
+      session->abortLock(table);
       break;
     }
   }
@@ -1941,7 +1742,7 @@ Table *Session::openTableLock(TableList *table_list, thr_lock_type lock_type)
 
     assert(lock == 0);	// You must lock everything at once
     if ((table->reginfo.lock_type= lock_type) != TL_UNLOCK)
-      if (! (lock= mysql_lock_tables(this, &table_list->table, 1, 0, &refresh)))
+      if (! (lock= lockTables(&table_list->table, 1, 0, &refresh)))
         table= 0;
   }
 
@@ -2004,8 +1805,7 @@ int Session::lock_tables(TableList *tables, uint32_t count, bool *need_reopen)
       *(ptr++)= table->table;
   }
 
-  if (!(session->lock= mysql_lock_tables(session, start, (uint32_t) (ptr - start),
-                                         lock_flag, need_reopen)))
+  if (!(session->lock= session->lockTables(start, (uint32_t) (ptr - start), lock_flag, need_reopen)))
   {
     return -1;
   }
@@ -2034,8 +1834,8 @@ RETURN
 #  Table object
 */
 
-Table *Session::open_temporary_table(TableIdentifier &identifier,
-                                     bool link_in_list)
+Table *Open_tables_state::open_temporary_table(TableIdentifier &identifier,
+                                               bool link_in_list)
 {
   assert(identifier.isTmp());
 
@@ -2050,8 +1850,8 @@ Table *Session::open_temporary_table(TableIdentifier &identifier,
   /*
     First open the share, and then open the table from the share we just opened.
   */
-  if (new_tmp_table->getMutableShare()->open_table_def(*this, identifier) ||
-      new_tmp_table->getMutableShare()->open_table_from_share(this, identifier, identifier.getTableName().c_str(),
+  if (new_tmp_table->getMutableShare()->open_table_def(*static_cast<Session *>(this), identifier) ||
+      new_tmp_table->getMutableShare()->open_table_from_share(static_cast<Session *>(this), identifier, identifier.getTableName().c_str(),
                                                               (uint32_t) (HA_OPEN_KEYFILE | HA_OPEN_RNDFILE |
                                                                           HA_GET_INDEX),
                                                               ha_open_options,
@@ -4159,165 +3959,7 @@ bool drizzle_rm_tmp_tables()
   unireg support functions
  *****************************************************************************/
 
-/*
-  Invalidate any cache entries that are for some DB
 
-  SYNOPSIS
-  remove_db_from_cache()
-  db		Database name. This will be in lower case if
-  lower_case_table_name is set
-
-NOTE:
-We can't use hash_delete when looping hash_elements. We mark them first
-and afterwards delete those marked unused.
-*/
-
-void remove_db_from_cache(const SchemaIdentifier &schema_identifier)
-{
-  safe_mutex_assert_owner(LOCK_open.native_handle());
-
-  for (TableOpenCache::const_iterator iter= get_open_cache().begin();
-       iter != get_open_cache().end();
-       iter++)
-  {
-    table::Concurrent *table= (*iter).second;
-
-    if (not schema_identifier.getPath().compare(table->getShare()->getSchemaName()))
-    {
-      table->getMutableShare()->resetVersion();			/* Free when thread is ready */
-      if (not table->in_use)
-        unused_tables.relink(table);
-    }
-  }
-
-  unused_tables.cullByVersion();
-}
-
-
-/*
-  Mark all entries with the table as deleted to force an reopen of the table
-
-  The table will be closed (not stored in cache) by the current thread when
-  close_thread_tables() is called.
-
-  PREREQUISITES
-  Lock on LOCK_open()
-
-  RETURN
-  0  This thread now have exclusive access to this table and no other thread
-  can access the table until close_thread_tables() is called.
-  1  Table is in use by another thread
-*/
-
-bool remove_table_from_cache(Session *session, TableIdentifier &identifier, uint32_t flags)
-{
-  const TableIdentifier::Key &key(identifier.getKey());
-  bool result= false; 
-  bool signalled= false;
-
-  for (;;)
-  {
-    result= signalled= false;
-
-    TableOpenCacheRange ppp;
-    ppp= get_open_cache().equal_range(key);
-
-    for (TableOpenCache::const_iterator iter= ppp.first;
-         iter != ppp.second; ++iter)
-    {
-      table::Concurrent *table= (*iter).second;
-      Session *in_use;
-
-      table->getMutableShare()->resetVersion();		/* Free when thread is ready */
-      if (not (in_use= table->in_use))
-      {
-        unused_tables.relink(table);
-      }
-      else if (in_use != session)
-      {
-        /*
-          Mark that table is going to be deleted from cache. This will
-          force threads that are in mysql_lock_tables() (but not yet
-          in thr_multi_lock()) to abort it's locks, close all tables and retry
-        */
-        in_use->some_tables_deleted= true;
-        if (table->is_name_opened())
-        {
-          result= true;
-        }
-        /*
-          Now we must abort all tables locks used by this thread
-          as the thread may be waiting to get a lock for another table.
-          Note that we need to hold LOCK_open while going through the
-          list. So that the other thread cannot change it. The other
-          thread must also hold LOCK_open whenever changing the
-          open_tables list. Aborting the MERGE lock after a child was
-          closed and before the parent is closed would be fatal.
-        */
-        for (Table *session_table= in_use->open_tables;
-             session_table ;
-             session_table= session_table->getNext())
-        {
-          /* Do not handle locks of MERGE children. */
-          if (session_table->db_stat)	// If table is open
-            signalled|= mysql_lock_abort_for_thread(session, session_table);
-        }
-      }
-      else
-      {
-        result= result || (flags & RTFC_OWNED_BY_Session_FLAG);
-      }
-    }
-
-    unused_tables.cullByVersion();
-
-    /* Remove table from table definition cache if it's not in use */
-    TableShare::release(identifier);
-
-    if (result && (flags & RTFC_WAIT_OTHER_THREAD_FLAG))
-    {
-      /*
-        Signal any thread waiting for tables to be freed to
-        reopen their tables
-      */
-      broadcast_refresh();
-      if (!(flags & RTFC_CHECK_KILLED_FLAG) || !session->killed)
-      {
-        dropping_tables++;
-        if (likely(signalled))
-        {
-          boost_unique_lock_t scoped(LOCK_open, boost::adopt_lock_t());
-          COND_refresh.wait(scoped);
-          scoped.release();
-        }
-        else
-        {
-          /*
-            It can happen that another thread has opened the
-            table but has not yet locked any table at all. Since
-            it can be locked waiting for a table that our thread
-            has done LOCK Table x WRITE on previously, we need to
-            ensure that the thread actually hears our signal
-            before we go to sleep. Thus we wait for a short time
-            and then we retry another loop in the
-            remove_table_from_cache routine.
-          */
-          boost::xtime xt; 
-          xtime_get(&xt, boost::TIME_UTC); 
-          xt.sec += 10; 
-          boost_unique_lock_t scoped(LOCK_open, boost::adopt_lock_t());
-          COND_refresh.timed_wait(scoped, xt);
-          scoped.release();
-        }
-        dropping_tables--;
-        continue;
-      }
-    }
-    break;
-  }
-
-  return result;
-}
 
 
 /**

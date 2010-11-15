@@ -1,10 +1,9 @@
 Data Description Language
-========
+=========================
 
-CREATE SCHEMA <>
-ALTER SCHEMA <>
-DROP SCHEMA <>
+.. toctree::
+   :maxdepth: 2
 
-CREATE TABLE <>
-ALTER TABLE <>
-DROP TABLE <>
+   tables
+   schemas
+   indexes

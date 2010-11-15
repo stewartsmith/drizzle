@@ -58,7 +58,8 @@ static uint32_t myisam_key_cache_size;
 static uint32_t myisam_key_cache_division_limit;
 static uint32_t myisam_key_cache_age_threshold;
 static uint64_t max_sort_file_size;
-static uint64_t sort_buffer_size;
+typedef constrained_check<size_t, SIZE_MAX, 1024, 1024> sort_buffer_constraint;
+static sort_buffer_constraint sort_buffer_size;
 
 void st_mi_isam_share::setKeyCache()
 {
@@ -162,14 +163,14 @@ void MyisamEngine::doGetTableIdentifiers(drizzled::CachedDirectory&,
 
 bool MyisamEngine::doDoesTableExist(Session &session, const TableIdentifier &identifier)
 {
-  return session.doesTableMessageExist(identifier);
+  return session.getMessageCache().doesTableMessageExist(identifier);
 }
 
 int MyisamEngine::doGetTableDefinition(Session &session,
                                        const TableIdentifier &identifier,
                                        message::Table &table_message)
 {
-  if (session.getTableMessage(identifier, table_message))
+  if (session.getMessageCache().getTableMessage(identifier, table_message))
     return EEXIST;
   return ENOENT;
 }
@@ -476,7 +477,7 @@ static int check_definition(MI_KEYDEF *t1_keyinfo, MI_COLUMNDEF *t1_recinfo,
 volatile int *killed_ptr(MI_CHECK *param)
 {
   /* In theory Unsafe conversion, but should be ok for now */
-  return (int*) &(((Session *)(param->session))->killed);
+  return (int*) (((Session *)(param->session))->getKilledPtr());
 }
 
 void mi_check_print_error(MI_CHECK *param, const char *fmt,...)
@@ -700,7 +701,7 @@ int ha_myisam::repair(Session *session, MI_CHECK &param, bool do_optimize)
   param.using_global_keycache = 1;
   param.session= session;
   param.out_flag= 0;
-  param.sort_buffer_length= (size_t)sort_buffer_size;
+  param.sort_buffer_length= static_cast<size_t>(sort_buffer_size);
   strcpy(fixed_name,file->filename);
 
   // Don't lock tables if we have used LOCK Table
@@ -910,7 +911,7 @@ int ha_myisam::enable_indexes(uint32_t mode)
     param.testflag= (T_SILENT | T_REP_BY_SORT | T_QUICK |
                      T_CREATE_MISSING_KEYS);
     param.myf_rw&= ~MY_WAIT_IF_FULL;
-    param.sort_buffer_length=  (size_t)sort_buffer_size;
+    param.sort_buffer_length=  static_cast<size_t>(sort_buffer_size);
     param.stats_method= MI_STATS_METHOD_NULLS_NOT_EQUAL;
     if ((error= (repair(session,param,0) != HA_ADMIN_OK)) && param.retry_repair)
     {
@@ -1327,7 +1328,7 @@ int ha_myisam::delete_all_rows()
 int MyisamEngine::doDropTable(Session &session,
                               const TableIdentifier &identifier)
 {
-  session.removeTableMessage(identifier);
+  session.getMessageCache().removeTableMessage(identifier);
 
   return mi_delete_table(identifier.getPath().c_str());
 }
@@ -1383,7 +1384,7 @@ int MyisamEngine::doCreateTable(Session &session,
                    &create_info, create_flags);
   free((unsigned char*) recinfo);
 
-  session.storeTableMessage(identifier, create_proto);
+  session.getMessageCache().storeTableMessage(identifier, create_proto);
 
   return error;
 }
@@ -1391,7 +1392,7 @@ int MyisamEngine::doCreateTable(Session &session,
 
 int MyisamEngine::doRenameTable(Session &session, const TableIdentifier &from, const TableIdentifier &to)
 {
-  session.renameTableMessage(from, to);
+  session.getMessageCache().renameTableMessage(from, to);
 
   return mi_rename(from.getPath().c_str(), to.getPath().c_str());
 }
@@ -1483,46 +1484,19 @@ uint32_t ha_myisam::checksum() const
   return (uint)file->state->checksum;
 }
 
-static MyisamEngine *engine= NULL;
-
 static int myisam_init(module::Context &context)
 { 
-  const module::option_map &vm= context.getOptions();
-
-  if (vm.count("max-sort-file-size"))
-  {
-    if (max_sort_file_size > UINT64_MAX)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for max-sort-file-size\n"));
-      exit(-1);
-    }
-  }
-
-  if (vm.count("sort-buffer-size"))
-  {
-    if (sort_buffer_size < 1024 || sort_buffer_size > SIZE_MAX)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for sort-buffer-size\n"));
-      exit(-1);
-    }
-  }
-
-  engine= new MyisamEngine(engine_name);
-  context.add(engine);
+  context.add(new MyisamEngine(engine_name));
+  context.registerVariable(new sys_var_constrained_value<size_t>("sort-buffer-size",
+                                                                 sort_buffer_size,
+                                                                 8196*1024));
+  context.registerVariable(new sys_var_uint64_t_ptr("max_sort_file_size",
+                                                    &max_sort_file_size,
+                                                    context.getOptions()["max-sort-file-size"].as<uint64_t>()));
 
   return 0;
 }
 
-
-static DRIZZLE_SYSVAR_ULONGLONG(max_sort_file_size, max_sort_file_size,
-                                PLUGIN_VAR_RQCMDARG,
-                                N_("Don't use the fast sort index method to created index if the temporary file would get bigger than this."),
-                                NULL, NULL, INT32_MAX, 0, UINT64_MAX, 0);
-
-static DRIZZLE_SYSVAR_ULONGLONG(sort_buffer_size, sort_buffer_size,
-                                PLUGIN_VAR_RQCMDARG,
-                                N_("The buffer that is allocated when sorting the index when doing a REPAIR or when creating indexes with CREATE INDEX or ALTER TABLE."),
-                                NULL, NULL, 8192*1024, 1024, SIZE_MAX, 0);
 
 static void init_options(drizzled::module::option_context &context)
 {
@@ -1530,15 +1504,9 @@ static void init_options(drizzled::module::option_context &context)
           po::value<uint64_t>(&max_sort_file_size)->default_value(INT32_MAX),
           N_("Don't use the fast sort index method to created index if the temporary file would get bigger than this."));
   context("sort-buffer-size",
-          po::value<uint64_t>(&sort_buffer_size)->default_value(8192*1024),
+          po::value<sort_buffer_constraint>(&sort_buffer_size)->default_value(8192*1024),
           N_("The buffer that is allocated when sorting the index when doing a REPAIR or when creating indexes with CREATE INDEX or ALTER TABLE."));
 }
-
-static drizzle_sys_var* sys_variables[]= {
-  DRIZZLE_SYSVAR(max_sort_file_size),
-  DRIZZLE_SYSVAR(sort_buffer_size),
-  NULL
-};
 
 
 DRIZZLE_DECLARE_PLUGIN
@@ -1550,7 +1518,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Default engine as of MySQL 3.23 with great performance",
   PLUGIN_LICENSE_GPL,
   myisam_init, /* Plugin Init */
-  sys_variables,           /* system variables */
+  NULL,           /* system variables */
   init_options                        /* config options                  */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

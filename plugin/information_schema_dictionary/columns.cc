@@ -54,143 +54,132 @@ Columns::Columns() :
 
 Columns::Generator::Generator(drizzled::Field **arg) :
   InformationSchema::Generator(arg),
-  generator(getSession()),
-  field_iterator(0)
+  field_generator(getSession())
 {
-  while (not (table_message= generator))
-  { };
 }
 
 bool Columns::Generator::populate()
 {
-  if (not table_message)
-    return false;
-
-  do 
+  drizzled::generator::FieldPair field_pair;
+  while (!!(field_pair= field_generator))
   {
-    if (field_iterator != table_message->field_size())
+    const drizzled::message::Table *table_message= field_pair.first;
+    int32_t field_iterator= field_pair.second;
+    const message::Table::Field &field(table_message->field(field_pair.second));
+
+    /* TABLE_CATALOG */
+    push(table_message->catalog());
+
+    /* TABLE_SCHEMA */
+    push(table_message->schema());
+
+    /* TABLE_NAME */
+    push(table_message->name());
+
+    /* COLUMN_NAME */
+    push(field.name());
+
+    /* ORDINAL_POSITION */
+    push(static_cast<int64_t>(field_iterator));
+
+    /* COLUMN_NAME */
+    if (field.options().has_default_value())
     {
-      drizzled::message::Table::Field field= table_message->field(field_iterator);
-
-      /* TABLE_CATALOG */
-      push(table_message->catalog());
-
-      /* TABLE_SCHEMA */
-      push(table_message->schema());
-
-      /* TABLE_NAME */
-      push(table_message->name());
-
-      /* COLUMN_NAME */
-      push(field.name());
-
-      /* ORDINAL_POSITION */
-      push(static_cast<int64_t>(field_iterator));
-
-      /* COLUMN_NAME */
-      if (field.options().has_default_value())
-      {
-        push(field.options().default_value());
-      }
-      else
-      {
-        push();
-      }
-
-      /* IS_NULLABLE */
-      push(field.constraints().is_nullable());
-
-      /* DATA_TYPE */
-      pushType(field.type());
-
-      /* "CHARACTER_MAXIMUM_LENGTH" */
-      if (field.string_options().has_length())
-      {
-        push(static_cast<int64_t>(field.string_options().length()));
-      }
-      else
-      {
-        push();
-      }
-
-      /* "CHARACTER_OCTET_LENGTH" */
-      if (field.string_options().has_length())
-      {
-        push(static_cast<int64_t>(field.string_options().length() * 4));
-      }
-      else
-      {
-        push();
-      }
-
-      /* "NUMERIC_PRECISION" */
-      if (field.numeric_options().has_precision())
-      {
-        push(static_cast<int64_t>(field.numeric_options().precision()));
-      }
-      else
-      {
-        push();
-      }
-
-      /* NUMERIC_PRECISION_RADIX */
+      push(field.options().default_value());
+    }
+    else
+    {
       push();
-
-      /* "NUMERIC_SCALE" */
-      if (field.numeric_options().has_scale())
-      {
-        push(static_cast<int64_t>(field.numeric_options().scale()));
-      }
-      else
-      {
-        push();
-      }
-
-      /* DATETIME_PRECISION */
-      push();
-
-      /* CHARACTER_SET_CATALOG */
-      push();
-
-      /* CHARACTER_SET_SCHEMA */
-      push();
-
-      /* CHARACTER_SET_NAME */
-      push();
-
-      /* COLLATION_CATALOG */
-      push();
-
-      /* COLLATION_SCHEMA */
-      push();
-
-      /* COLLATION_NAME */
-      if (field.string_options().has_collation())
-      {
-        push(field.string_options().collation());
-      }
-      else
-      {
-        push();
-      }
-
-      /* DOMAIN_CATALOG */
-      push();
-
-      /* DOMAIN_SCHEMA */
-      push();
-
-      /* DOMAIN_NAME */
-      push();
-
-      field_iterator++;
-
-      return true;
     }
 
-    field_iterator= 0;
+    /* IS_NULLABLE */
+    push(field.constraints().is_nullable());
 
-  } while ((table_message= generator));
+    /* DATA_TYPE */
+    push(drizzled::message::type(field.type()));
+
+    /* "CHARACTER_MAXIMUM_LENGTH" */
+    if (field.string_options().has_length())
+    {
+      push(static_cast<int64_t>(field.string_options().length()));
+    }
+    else
+    {
+      push();
+    }
+
+    /* "CHARACTER_OCTET_LENGTH" */
+    if (field.string_options().has_length())
+    {
+      push(static_cast<int64_t>(field.string_options().length() * 4));
+    }
+    else
+    {
+      push();
+    }
+
+    /* "NUMERIC_PRECISION" */
+    if (field.numeric_options().has_precision())
+    {
+      push(static_cast<int64_t>(field.numeric_options().precision()));
+    }
+    else
+    {
+      push();
+    }
+
+    /* NUMERIC_PRECISION_RADIX */
+    push();
+
+    /* "NUMERIC_SCALE" */
+    if (field.numeric_options().has_scale())
+    {
+      push(static_cast<int64_t>(field.numeric_options().scale()));
+    }
+    else
+    {
+      push();
+    }
+
+    /* DATETIME_PRECISION */
+    push();
+
+    /* CHARACTER_SET_CATALOG */
+    push();
+
+    /* CHARACTER_SET_SCHEMA */
+    push();
+
+    /* CHARACTER_SET_NAME */
+    push();
+
+    /* COLLATION_CATALOG */
+    push();
+
+    /* COLLATION_SCHEMA */
+    push();
+
+    /* COLLATION_NAME */
+    if (field.string_options().has_collation())
+    {
+      push(field.string_options().collation());
+    }
+    else
+    {
+      push();
+    }
+
+    /* DOMAIN_CATALOG */
+    push();
+
+    /* DOMAIN_SCHEMA */
+    push();
+
+    /* DOMAIN_NAME */
+    push();
+
+    return true;
+  }
 
   return false;
 }

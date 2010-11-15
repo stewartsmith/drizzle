@@ -35,6 +35,7 @@ AllFields::AllFields(Session &arg) :
   all_tables_generator(arg)
 {
   ((table_ptr= all_tables_generator));
+  table_setup();
 }
 
 bool AllFields::table_setup()
@@ -48,3 +49,11 @@ bool AllFields::table_setup()
 
 } /* namespace generator */
 } /* namespace drizzled */
+
+bool operator!(const drizzled::generator::FieldPair &arg)
+{
+  if (arg.first == 0 and arg.second == 0)
+    return true;
+
+  return false;
+}

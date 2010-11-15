@@ -34,7 +34,7 @@ bool statement::DropIndex::execute()
   TableList *all_tables= session->lex->query_tables;
 
   /* Chicken/Egg... we need to search for the table, to know if the table exists, so we can build a full identifier from it */
-  message::Table original_table_message;
+  message::TablePtr original_table_message;
   {
     TableIdentifier identifier(first_table->getSchemaName(), first_table->getTableName());
     if (plugin::StorageEngine::getTableDefinition(*session, identifier, original_table_message) != EEXIST)
@@ -65,7 +65,7 @@ bool statement::DropIndex::execute()
   create_info.db_type= 0;
 
   bool res;
-  if (original_table_message.type() == message::Table::STANDARD )
+  if (original_table_message->type() == message::Table::STANDARD )
   {
     TableIdentifier identifier(first_table->getSchemaName(), first_table->getTableName());
 
@@ -75,11 +75,11 @@ bool statement::DropIndex::execute()
                      identifier,
                      identifier,
                      &create_info, 
-                     original_table_message,
+                     *original_table_message,
                      create_table_proto, 
                      first_table,
                      &alter_info,
-                     0, (order_st*) 0, 0);
+                     0, (Order*) 0, 0);
   }
   else
   {
@@ -94,11 +94,11 @@ bool statement::DropIndex::execute()
                        identifier,
                        identifier,
                        &create_info, 
-                       original_table_message,
+                       *original_table_message,
                        create_table_proto, 
                        first_table,
                        &alter_info,
-                       0, (order_st*) 0, 0);
+                       0, (Order*) 0, 0);
     }
   }
   return res;

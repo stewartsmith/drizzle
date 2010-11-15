@@ -663,7 +663,7 @@ static char *mx_get_length_and_data(STRUCT_TABLE *table, Field *field, char *des
 			memcpy(&data, ((char *) from)+packlength, sizeof(char*));
 			
 			//*len = ((Field_blob *) field)->get_length((byte *) from);
-			*len = ((Field_blob *) field)->get_length((byte *) from, packlength, GET_TABLE_SHARE(table)->db_low_byte_first);
+			*len = ((Field_blob *) field)->get_length((byte *) from, GET_TABLE_SHARE(table)->db_low_byte_first);
 			return data;
 		}
 #ifndef DRIZZLED
@@ -772,7 +772,7 @@ static void mx_set_length_and_data(STRUCT_TABLE *table, Field *field, char *dest
 			*/
 			xtWord4 packlength = ((Field_blob *) field)->pack_length_no_ptr();
 
-			((Field_blob *) field)->store_length((byte *) from, packlength, len, GET_TABLE_SHARE(table)->db_low_byte_first);
+			((Field_blob *) field)->store_length((byte *) from, len, GET_TABLE_SHARE(table)->db_low_byte_first);
 			memcpy_fixed(((char *) from)+packlength, &data, sizeof(char*));
 
 			if (data)
@@ -2951,7 +2951,7 @@ xtPublic XTDDTable *myxt_create_table_from_table(XTThreadPtr self, STRUCT_TABLE 
 xtPublic void myxt_static_convert_identifier(XTThreadPtr XT_UNUSED(self), MX_CONST_CHARSET_INFO *cs, char *from, char *to, size_t to_len)
 {
 #ifdef DRIZZLED
-	((void *)cs);
+	((void)cs);
 	 xt_strcpy(to_len, to, from);
 #else
 	uint errors;
@@ -2973,7 +2973,7 @@ xtPublic char *myxt_convert_identifier(XTThreadPtr self, MX_CONST_CHARSET_INFO *
 {
 #ifdef DRIZZLED
 	char *to = xt_dup_string(self, from);
-	((void *)cs);
+	((void)cs);
 #else
 	uint	errors;
 	u_int	len;
@@ -3060,7 +3060,7 @@ xtPublic MX_CONST_CHARSET_INFO *myxt_getcharset(bool convert)
 		THD *thd = current_thd;
 
 		if (thd)
-			return (MX_CHARSET_INFO *)thd_charset(thd);
+			return (MX_CHARSET_INFO *)thd->charset();
 	}
 	return (MX_CHARSET_INFO *)&my_charset_utf8_general_ci;
 }

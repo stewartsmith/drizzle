@@ -397,7 +397,7 @@ void optimizer::SqlSelect::cleanup()
     delete cond;
     cond= 0;
   }
-  close_cached_file(file);
+  file->close_cached_file();
 }
 
 
@@ -464,11 +464,11 @@ optimizer::QuickSelectInterface::QuickSelectInterface()
     MAX_KEY if no such index was found.
 */
 
-uint32_t optimizer::get_index_for_order(Table *table, order_st *order, ha_rows limit)
+uint32_t optimizer::get_index_for_order(Table *table, Order *order, ha_rows limit)
 {
   uint32_t idx;
   uint32_t match_key= MAX_KEY, match_key_len= MAX_KEY_LENGTH + 1;
-  order_st *ord;
+  Order *ord;
 
   for (ord= order; ord; ord= ord->next)
     if (!ord->asc)
@@ -4578,7 +4578,7 @@ get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree)
   uint32_t key_infix_len= 0;          /* Length of key_infix. */
   optimizer::GroupMinMaxReadPlan *read_plan= NULL; /* The eventually constructed TRP. */
   uint32_t key_part_nr;
-  order_st *tmp_group= NULL;
+  Order *tmp_group= NULL;
   Item *item= NULL;
   Item_field *item_field= NULL;
 

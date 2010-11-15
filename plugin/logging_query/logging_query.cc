@@ -296,7 +296,7 @@ static int logging_query_plugin_init(drizzled::module::Context &context)
     if (sysvar_logging_query_threshold_slow > UINT32_MAX)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for threshold-slow"));
-      exit(-1);
+      return 1;
     }
   }
 
@@ -305,7 +305,7 @@ static int logging_query_plugin_init(drizzled::module::Context &context)
     if (sysvar_logging_query_threshold_big_resultset > UINT32_MAX)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for threshold-big-resultset"));
-      exit(-1);
+      return 1;
     }
   }
 
@@ -314,7 +314,7 @@ static int logging_query_plugin_init(drizzled::module::Context &context)
     if (sysvar_logging_query_threshold_big_examined > UINT32_MAX)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for threshold-big-examined"));
-      exit(-1);
+      return 1;
     }
   }
   handler= new Logging_query();

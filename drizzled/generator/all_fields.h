@@ -24,11 +24,13 @@
 namespace drizzled {
 namespace generator {
 
+typedef std::pair<const drizzled::message::Table *, int32_t> FieldPair;
+
 class AllFields
 {
   Session &session;
   message::Table table_message;
-  const drizzled::message::Table *table_ptr;
+  drizzled::message::TablePtr table_ptr;
   int32_t field_iterator;
 
   drizzled::generator::AllTables all_tables_generator;
@@ -57,9 +59,27 @@ public:
 
     return NULL;
   }
+
+  operator const FieldPair()
+  {
+    if (table_ptr)
+    {
+      do {
+        if (field_iterator != table_message.field_size())
+        {
+          return std::make_pair(&table_message, field_iterator++);
+        }
+      } while ((table_ptr= all_tables_generator) && table_setup());
+    }
+
+    FieldPair null_pair;
+    return null_pair;
+  }
 };
 
 } /* namespace generator */
 } /* namespace drizzled */
+
+bool operator!(const drizzled::generator::FieldPair &arg);
 
 #endif /* DRIZZLED_GENERATOR_ALL_FIELDS_H */

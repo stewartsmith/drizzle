@@ -28,10 +28,8 @@ using namespace std;
 using namespace drizzled;
 
 /* Configuration variables. */
-static uint32_t max_threads;
-
-/* Global's (TBR) */
-static MultiThreadScheduler *scheduler= NULL;
+typedef constrained_check<uint32_t, 4096, 1> max_threads_constraint;
+static max_threads_constraint max_threads;
 
 namespace drizzled
 {
@@ -130,38 +128,17 @@ MultiThreadScheduler::~MultiThreadScheduler()
 static int init(drizzled::module::Context &context)
 {
   
-  const module::option_map &vm= context.getOptions();
-  if (vm.count("max-threads"))
-  {
-    if (max_threads > 4096 || max_threads < 1)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for max-threads\n"));
-      exit(-1);
-    }
-  }
-
-  scheduler= new MultiThreadScheduler("multi_thread");
-  context.add(scheduler);
+  context.add(new MultiThreadScheduler("multi_thread"));
 
   return 0;
 }
 
-static DRIZZLE_SYSVAR_UINT(max_threads, max_threads,
-                           PLUGIN_VAR_RQCMDARG,
-                           N_("Maximum number of user threads available."),
-                           NULL, NULL, 2048, 1, 4096, 0);
-
 static void init_options(drizzled::module::option_context &context)
 {
   context("max-threads",
-          po::value<uint32_t>(&max_threads)->default_value(2048),
+          po::value<max_threads_constraint>(&max_threads)->default_value(2048),
           N_("Maximum number of user threads available."));
 }
-
-static drizzle_sys_var* sys_variables[]= {
-  DRIZZLE_SYSVAR(max_threads),
-  NULL
-};
 
 DRIZZLE_DECLARE_PLUGIN
 {
@@ -172,7 +149,7 @@ DRIZZLE_DECLARE_PLUGIN
   "One Thread Per Session Scheduler",
   PLUGIN_LICENSE_GPL,
   init, /* Plugin Init */
-  sys_variables,   /* system variables */
+  NULL,   /* system variables */
   init_options    /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

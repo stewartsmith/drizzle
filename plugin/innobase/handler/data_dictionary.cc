@@ -205,7 +205,12 @@ InnodbTrxTool::Generator::Generator(Field **arg, const char* in_table_name) :
 
   trx_i_s_cache_start_read(trx_i_s_cache);
 
-  number_rows= trx_i_s_cache_get_rows_used(trx_i_s_cache, I_S_INNODB_TRX);
+  if (innobase_strcasecmp(table_name, "INNODB_TRX") == 0)
+    number_rows= trx_i_s_cache_get_rows_used(trx_i_s_cache, I_S_INNODB_TRX);
+  else if (innobase_strcasecmp(table_name, "INNODB_LOCKS") == 0)
+    number_rows= trx_i_s_cache_get_rows_used(trx_i_s_cache, I_S_INNODB_LOCKS);
+  else if (innobase_strcasecmp(table_name, "INNODB_LOCK_WAITS") == 0)
+    number_rows= trx_i_s_cache_get_rows_used(trx_i_s_cache, I_S_INNODB_LOCK_WAITS);
 
   record_number= 0;
 }

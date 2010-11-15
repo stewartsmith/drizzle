@@ -178,10 +178,10 @@ public:
 
   Status(int in_exit_status, 
          uint32_t in_query_start_line,
-  	 char *in_file_name,
+         char *in_file_name,
          LineBuffer *in_line_buff,
-	 bool in_batch,
-	 bool in_add_to_history)
+         bool in_batch,
+         bool in_add_to_history)
     :
     exit_status(in_exit_status),
     query_start_line(in_query_start_line),
@@ -191,15 +191,14 @@ public:
     add_to_history(in_add_to_history)
     {}
 
-  Status()
-    :
-    exit_status(),
-    query_start_line(),
-    file_name(),
-    line_buff(),
-    batch(),        
-    add_to_history()
-    {}
+  Status() :
+    exit_status(0),
+    query_start_line(0),
+    file_name(NULL),
+    line_buff(NULL),
+    batch(false),        
+    add_to_history(false)
+  {}
   
   int getExitStatus() const
   {
@@ -340,7 +339,7 @@ static char *delimiter= NULL;
 static uint32_t delimiter_length= 1;
 unsigned short terminal_width= 80;
 
-int drizzleclient_real_query_for_lazy(const char *buf, int length,
+int drizzleclient_real_query_for_lazy(const char *buf, size_t length,
                                       drizzle_result_st *result,
                                       uint32_t *error_code);
 int drizzleclient_store_result_for_lazy(drizzle_result_st *result);
@@ -1364,13 +1363,13 @@ try
   N_("Append everything into outfile. See interactive help (\\h) also. Does not work in batch mode. Disable with --disable-tee. This option is disabled by default."))
   ("disable-tee", po::value<bool>()->default_value(false)->zero_tokens(), 
   N_("Disable outfile. See interactive help (\\h) also."))
-  ("connect_timeout", po::value<uint32_t>(&opt_connect_timeout)->default_value(0)->notifier(&check_timeout_value),
+  ("connect-timeout", po::value<uint32_t>(&opt_connect_timeout)->default_value(0)->notifier(&check_timeout_value),
   N_("Number of seconds before connection timeout."))
-  ("max_input_line", po::value<uint32_t>(&opt_max_input_line)->default_value(16*1024L*1024L)->notifier(&check_max_input_line),
+  ("max-input-line", po::value<uint32_t>(&opt_max_input_line)->default_value(16*1024L*1024L)->notifier(&check_max_input_line),
   N_("Max length of input line"))
-  ("select_limit", po::value<uint32_t>(&select_limit)->default_value(1000L),
+  ("select-limit", po::value<uint32_t>(&select_limit)->default_value(1000L),
   N_("Automatic limit for SELECT when using --safe-updates"))
-  ("max_join_size", po::value<uint32_t>(&max_join_size)->default_value(1000000L),
+  ("max-join-size", po::value<uint32_t>(&max_join_size)->default_value(1000000L),
   N_("Automatic limit for rows in a join when using --safe-updates"))
   ;
 
@@ -1398,7 +1397,15 @@ try
   system_config_dir_client.append("/drizzle/client.cnf");
 
   std::string user_config_dir((getenv("XDG_CONFIG_HOME")? getenv("XDG_CONFIG_HOME"):"~/.config"));
-  
+ 
+  if (user_config_dir.compare(0, 2, "~/") == 0)
+  {
+    char *homedir;
+    homedir= getenv("HOME");
+    if (homedir != NULL)
+      user_config_dir.replace(0, 1, homedir);
+  }
+ 
   po::variables_map vm;
 
   po::positional_options_description p;
@@ -1801,10 +1808,8 @@ void drizzle_end(int sig)
 
   if (sig >= 0)
     put_info(sig ? _("Aborted") : _("Bye"), INFO_RESULT,0,0);
-  if (glob_buffer)
-    delete glob_buffer;
-  if (processed_prompt)
-    delete processed_prompt;
+  delete glob_buffer;
+  delete processed_prompt;
   opt_password.erase();
   free(histfile);
   free(histfile_tmp);
@@ -2322,6 +2327,12 @@ static bool add_line(string *buffer, char *line, char *in_string,
   {
     *out++='\n';
     uint32_t length=(uint32_t) (out-line);
+    if ((buffer->length() + length) > opt_max_input_line)
+    {
+      status.setExitStatus(1);
+      put_info(_("Not found a delimiter within max_input_line of input"), INFO_ERROR, 0, 0);
+      return 1;
+    }
     if ((!*ml_comment || preserve_comments))
       buffer->append(line, length);
   }
@@ -2669,7 +2680,7 @@ static void get_current_db(void)
  The different commands
 ***************************************************************************/
 
-int drizzleclient_real_query_for_lazy(const char *buf, int length,
+int drizzleclient_real_query_for_lazy(const char *buf, size_t length,
                                       drizzle_result_st *result,
                                       uint32_t *error_code)
 {
@@ -3586,7 +3597,7 @@ com_pager(string *, const char *line)
   /* Skip the spaces between the command and the argument */
   while (param && isspace(*param))
     param++;
-  if (!param || !strlen(param)) // if pager was not given, use the default
+  if (!param || (*param == '\0')) // if pager was not given, use the default
   {
     if (!default_pager_set)
     {

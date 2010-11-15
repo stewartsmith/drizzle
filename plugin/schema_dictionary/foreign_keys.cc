@@ -51,7 +51,7 @@ ForeignKeysTool::Generator::Generator(Field **arg) :
 
 bool ForeignKeysTool::Generator::nextTable()
 {
-  const drizzled::message::Table *table_ptr;
+  drizzled::message::TablePtr table_ptr;
   while ((table_ptr= all_tables_generator))
   {
     table_message.CopyFrom(*table_ptr);
@@ -93,44 +93,6 @@ bool ForeignKeysTool::Generator::populate()
     return true;
 
   return false;
-}
-
-void ForeignKeysTool::Generator::pushType(message::Table::Field::FieldType type)
-{
-  switch (type)
-  {
-    default:
-      push("VARCHAR");
-      break;
-  }
-}
-
-std::string ForeignKeysTool::Generator::fkeyOption(message::Table::ForeignKeyConstraint::ForeignKeyOption option)
-{
-  std::string ret;
-  switch (option)
-  {
-    case message::Table::ForeignKeyConstraint::OPTION_UNDEF:
-      ret= "UNDEFINED";
-      break;
-    case message::Table::ForeignKeyConstraint::OPTION_RESTRICT:
-      ret= "RESTRICT";
-      break;
-    case message::Table::ForeignKeyConstraint::OPTION_CASCADE:
-      ret= "CASCADE";
-      break;
-    case message::Table::ForeignKeyConstraint::OPTION_SET_NULL:
-      ret= "SET NULL";
-      break;
-    case message::Table::ForeignKeyConstraint::OPTION_NO_ACTION:
-      ret= "NO ACTION";
-      break;
-    case message::Table::ForeignKeyConstraint::OPTION_DEFAULT:
-    default:
-      ret= "DEFAULT";
-      break;
-  }
-  return ret;
 }
 
 void ForeignKeysTool::Generator::fill()
@@ -176,25 +138,12 @@ void ForeignKeysTool::Generator::fill()
   push(destination);
 
   /* MATCH_OPTION */
-  switch (fkey.match())
-  {
-    case message::Table::ForeignKeyConstraint::MATCH_FULL:
-      push("FULL");
-      break;
-    case message::Table::ForeignKeyConstraint::MATCH_PARTIAL:
-      push("PARTIAL");
-      break;
-    case message::Table::ForeignKeyConstraint::MATCH_SIMPLE:
-      push("SIMPLE");
-      break;
-    default:
-      push("NONE");
-      break;
-  }
+  push(drizzled::message::type(fkey.match()));
+
   /* UPDATE_RULE */
-  push(fkeyOption(fkey.update_option()));
+  push(drizzled::message::type(fkey.update_option()));
 
   /* DELETE_RULE */
-  push(fkeyOption(fkey.delete_option()));
+  push(drizzled::message::type(fkey.delete_option()));
 
 }

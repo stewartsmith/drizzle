@@ -1,0 +1,4 @@
+create table t1 (a int not null) engine=storage_engine_api_tester;
+--error 1048
+insert into t1 values (1), (NULL), (2);
+drop table t1;

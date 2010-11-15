@@ -385,15 +385,12 @@ int ha_archive::init_archive_reader()
   {
     az_method method;
 
-    switch (archive_aio_state())
+    if (archive_aio_state())
     {
-    case false:
-      method= AZ_METHOD_BLOCK;
-      break;
-    case true:
       method= AZ_METHOD_AIO;
-      break;
-    default:
+    }
+    else
+    {
       method= AZ_METHOD_BLOCK;
     }
     if (!(azopen(&archive, share->data_file_name.c_str(), O_RDONLY,

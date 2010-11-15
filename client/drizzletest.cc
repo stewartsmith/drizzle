@@ -3318,7 +3318,7 @@ static int do_sleep(struct st_command *command, bool real_sleep)
   bool error= false;
   char *p= command->first_argument;
   char *sleep_start, *sleep_end= command->end;
-  double sleep_val;
+  double sleep_val= 0;
 
   while (my_isspace(charset_info, *p))
     p++;
@@ -5476,6 +5476,14 @@ try
   system_config_dir_client.append("/drizzle/client.cnf");
 
   std::string user_config_dir((getenv("XDG_CONFIG_HOME")? getenv("XDG_CONFIG_HOME"):"~/.config"));
+
+  if (user_config_dir.compare(0, 2, "~/") == 0)
+  {
+    char *homedir;
+    homedir= getenv("HOME");
+    if (homedir != NULL)
+      user_config_dir.replace(0, 1, homedir);
+  }
 
   po::variables_map vm;
 
