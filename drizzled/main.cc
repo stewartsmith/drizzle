@@ -232,7 +232,6 @@ int main(int argc, char **argv)
 
   module::Registry &modules= module::Registry::singleton();
   plugin::Client *client;
-  Session *session;
 
   MY_INIT(argv[0]);		// init my_sys library & pthreads
   /* nothing should come before this line ^^^ */
@@ -333,13 +332,17 @@ int main(int argc, char **argv)
   TransactionServices &transaction_services= TransactionServices::singleton();
 
   /* Send server startup event */
-  if ((session= new Session(plugin::Listen::getNullClient())))
   {
-    currentSession().release();
-    currentSession().reset(session);
-    transaction_services.sendStartupEvent(session);
-    session->lockForDelete();
-    delete session;
+    Session *session;
+
+    if ((session= new Session(plugin::Listen::getNullClient())))
+    {
+      currentSession().release();
+      currentSession().reset(session);
+      transaction_services.sendStartupEvent(session);
+      session->lockForDelete();
+      delete session;
+    }
   }
 
 
@@ -348,25 +351,31 @@ int main(int argc, char **argv)
      should be shutdown. */
   while ((client= plugin::Listen::getClient()) != NULL)
   {
-    if (!(session= new Session(client)))
+    Session::Ptr session(new Session(client));
+
+    if (not session)
     {
       delete client;
       continue;
     }
 
     /* If we error on creation we drop the connection and delete the session. */
-    if (session->schedule())
+    if (Session::schedule(session))
       Session::unlink(session);
   }
 
   /* Send server shutdown event */
-  if ((session= new Session(plugin::Listen::getNullClient())))
   {
-    currentSession().release();
-    currentSession().reset(session);
-    transaction_services.sendShutdownEvent(session);
-    session->lockForDelete();
-    delete session;
+    Session *session;
+
+    if ((session= new Session(plugin::Listen::getNullClient())))
+    {
+      currentSession().release();
+      currentSession().reset(session);
+      transaction_services.sendShutdownEvent(session);
+      session->lockForDelete();
+      delete session;
+    }
   }
 
   LOCK_thread_count.lock();

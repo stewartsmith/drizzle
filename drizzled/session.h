@@ -309,6 +309,7 @@ class Session : public Open_tables_state
 public:
   // Plugin storage in Session.
   typedef boost::unordered_map<std::string, util::Storable *, util::insensitive_hash, util::insensitive_equal_to> PropertyMap;
+  typedef Session* Ptr;
 
   /*
     MARK_COLUMNS_NONE:  Means mark_used_colums is not set and no indicator to
@@ -537,12 +538,7 @@ public:
   /**
    * Is this session viewable by the current user?
    */
-  bool isViewable() const
-  {
-    return plugin::Authorization::isAuthorized(current_session->getSecurityContext(),
-                                               this,
-                                               false);
-  }
+  bool isViewable() const;
 
   /**
     Used in error messages to tell user in what part of MySQL we found an
@@ -1139,7 +1135,9 @@ public:
   /**
    * Schedule a session to be run on the default scheduler.
    */
-  bool schedule();
+  static bool schedule(Session::Ptr);
+
+  static void unlink(Session*);
 
   /*
     For enter_cond() / exit_cond() to work the mutex must be got before
@@ -1683,8 +1681,6 @@ public:
       return variables.storage_engine;
     return global_system_variables.storage_engine;
   }
-
-  static void unlink(Session *session);
 
   void get_xid(DRIZZLE_XID *xid); // Innodb only
 

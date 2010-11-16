@@ -551,10 +551,10 @@ void Session::run()
   disconnect(0, true);
 }
 
-bool Session::schedule()
+bool Session::schedule(Session::Ptr arg)
 {
-  scheduler= plugin::Scheduler::getScheduler();
-  assert(scheduler);
+  arg->scheduler= plugin::Scheduler::getScheduler();
+  assert(arg->scheduler);
 
   connection_count.increment();
 
@@ -564,41 +564,52 @@ bool Session::schedule()
   }
 
   current_global_counters.connections++;
-  thread_id= variables.pseudo_thread_id= global_thread_id++;
+  arg->thread_id= arg->variables.pseudo_thread_id= global_thread_id++;
 
   {
     boost::mutex::scoped_lock scoped(LOCK_thread_count);
-    getSessionList().push_back(this);
+    session::Cache::singleton().getCache().push_back(arg);
   }
 
-  if (unlikely(plugin::EventObserver::connectSession(*this)))
+  if (unlikely(plugin::EventObserver::connectSession(*arg)))
   {
     // We should do something about an error...
   }
 
-  if (unlikely(plugin::EventObserver::connectSession(*this)))
+  if (unlikely(plugin::EventObserver::connectSession(*arg)))
   {
     // We should do something about an error...
   }
 
-  if (scheduler->addSession(this))
+  if (plugin::Scheduler::getScheduler()->addSession(arg))
   {
     DRIZZLE_CONNECTION_START(thread_id);
     char error_message_buff[DRIZZLE_ERRMSG_SIZE];
 
-    setKilled(Session::KILL_CONNECTION);
+    arg->setKilled(Session::KILL_CONNECTION);
 
-    status_var.aborted_connects++;
+    arg->status_var.aborted_connects++;
 
     /* Can't use my_error() since store_globals has not been called. */
     /* TODO replace will better error message */
     snprintf(error_message_buff, sizeof(error_message_buff),
              ER(ER_CANT_CREATE_THREAD), 1);
-    client->sendError(ER_CANT_CREATE_THREAD, error_message_buff);
+    arg->client->sendError(ER_CANT_CREATE_THREAD, error_message_buff);
     return true;
   }
 
   return false;
+}
+
+
+/*
+  Is this session viewable by the current user?
+*/
+bool Session::isViewable() const
+{
+  return plugin::Authorization::isAuthorized(current_session->getSecurityContext(),
+                                             this,
+                                             false);
 }
 
 

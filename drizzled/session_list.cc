@@ -26,18 +26,18 @@
 #include "drizzled/current_session.h"
 #include "drizzled/plugin/authorization.h"
 
-class Session;
-
 using namespace std;
 
 namespace drizzled
 {
 
-SessionList session_list;
-
-SessionList &getSessionList()
+namespace session
 {
-  return session_list;
+
+void Cache::erase(Session::Ptr arg)
+{
+  cache.erase(remove(cache.begin(), cache.end(), arg));
 }
 
+} /* namespace session */
 } /* namespace drizzled */

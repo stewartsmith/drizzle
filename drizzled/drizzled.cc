@@ -442,13 +442,13 @@ void close_connections(void)
     statements and inform their clients that the server is about to die.
   */
 
-  Session *tmp;
-
   {
     boost::mutex::scoped_lock scoped(LOCK_thread_count);
-    for( SessionList::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
+    session::Cache::List list= session::Cache::singleton().getCache();
+    for (session::Cache::List::iterator it= list.begin(); it != list.end(); ++it )
     {
-      tmp= *it;
+      Session::Ptr tmp= *it;
+
       tmp->setKilled(Session::KILL_CONNECTION);
       tmp->scheduler->killSession(tmp);
       DRIZZLE_CONNECTION_DONE(tmp->thread_id);
@@ -467,13 +467,13 @@ void close_connections(void)
   for (;;)
   {
     boost::mutex::scoped_lock scoped(LOCK_thread_count);
-    if (getSessionList().empty())
+    session::Cache::List list= session::Cache::singleton().getCache();
+    if (list.empty())
     {
       break;
     }
-    tmp= getSessionList().front();
     /* Close before unlock, avoiding crash. See LP bug#436685 */
-    tmp->client->close();
+    list.front()->client->close();
   }
 }
 
@@ -627,7 +627,7 @@ static void set_root(const char *path)
     LOCK_thread_count is locked and left locked
 */
 
-void Session::unlink(Session *session)
+void drizzled::Session::unlink(Session* session)
 {
   connection_count.decrement();
 
@@ -636,9 +636,7 @@ void Session::unlink(Session *session)
   boost::mutex::scoped_lock scoped(LOCK_thread_count);
   session->lockForDelete();
 
-  getSessionList().erase(remove(getSessionList().begin(),
-                         getSessionList().end(),
-                         session));
+  session::Cache::singleton().erase(session);
   if (unlikely(plugin::EventObserver::disconnectSession(*session)))
   {
     // We should do something about an error...
@@ -2139,7 +2137,7 @@ static void drizzle_init_variables(void)
   session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_SQL_NOTES);
   refresh_version= 1L;	/* Increments on each reload */
   global_thread_id= 1UL;
-  getSessionList().clear();
+  session::Cache::singleton().getCache().clear();
 
   /* Variables in libraries */
   default_character_set_name= "utf8";

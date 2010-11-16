@@ -29,15 +29,15 @@ namespace generator {
 
 class Session
 {
-  SessionList local_list;
-  SessionList::const_iterator iter;
+  session::Cache::List local_list;
+  session::Cache::List::const_iterator iter;
 
 public:
 
   Session()
   {
     LOCK_thread_count.lock();
-    local_list= getSessionList();
+    local_list= session::Cache::singleton().getCache();
     iter= local_list.begin();
   }
 
@@ -46,7 +46,7 @@ public:
     LOCK_thread_count.unlock();
   }
 
-  operator drizzled::SessionPtr()
+  operator drizzled::Session::Ptr()
   {
     while (iter != local_list.end())
     {
@@ -56,7 +56,7 @@ public:
         continue;
       }
 
-      drizzled::SessionPtr ret= *iter;
+      drizzled::Session::Ptr ret= *iter;
       iter++;
       return ret;
     }

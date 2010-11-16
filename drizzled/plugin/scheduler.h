@@ -29,6 +29,7 @@
 
 namespace drizzled
 {
+
 class Session;
 
 namespace plugin
@@ -54,7 +55,7 @@ public:
    * Add a session to the scheduler. When the scheduler is ready to run the
    * session, it should call session->run().
    */
-  virtual bool addSession(Session *session)= 0;
+  virtual bool addSession(Session* session)= 0;
 
   /**
    * Notify the scheduler that it should be killed gracefully.

@@ -1428,34 +1428,33 @@ void add_join_natural(TableList *a, TableList *b, List<String> *using_fields,
 static unsigned int
 kill_one_thread(Session *, session_id_t id, bool only_kill_query)
 {
-  Session *tmp= NULL;
+  boost::mutex::scoped_lock scoped(LOCK_thread_count);
+  session::Cache::List::iterator it;
   uint32_t error= ER_NO_SUCH_THREAD;
   
+  session::Cache::List list= session::Cache::singleton().getCache();
+
+  for (it= list.begin(); it != list.end(); ++it )
   {
-    boost::mutex::scoped_lock scoped(LOCK_thread_count);
-    for (SessionList::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
+    if ((*it)->thread_id == id)
     {
-      if ((*it)->thread_id == id)
-      {
-        tmp= *it;
-        tmp->lockForDelete();
-        break;
-      }
+      (*it)->lockForDelete();
+      break;
     }
   }
 
-  if (tmp)
+  if (it == list.end())
+    return error;
+
+  if ((*it)->isViewable())
   {
-
-    if (tmp->isViewable())
-    {
-      tmp->awake(only_kill_query ? Session::KILL_QUERY : Session::KILL_CONNECTION);
-      error= 0;
-    }
-
-    tmp->unlockForDelete();
+    (*it)->awake(only_kill_query ? Session::KILL_QUERY : Session::KILL_CONNECTION);
+    error= 0;
   }
-  return(error);
+
+  (*it)->unlockForDelete();
+
+  return error;
 }
 
 
