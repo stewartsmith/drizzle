@@ -54,6 +54,8 @@ public:
 
   virtual bool postEnd(drizzled::Session *session);
 
+  virtual bool resetGlobalScoreboard();
+
   bool isEnabled() const
   {
     return is_enabled;
@@ -87,5 +89,7 @@ private:
   drizzled::atomic<bool> is_enabled;
 
   void updateCurrentScoreboard(ScoreboardSlot *scoreboard_slot, drizzled::Session *session);
+
+  typedef std::vector<std::vector<ScoreboardSlot* >* > ScoreBoardVectors;
 };
 #endif /* PLUGIN_LOGGING_STATS_LOGGING_STATS_H */

@@ -18,6 +18,9 @@
  */
 
 #include "config.h"
+
+#include <boost/scoped_array.hpp>
+
 #include <drizzled/plugin/logging.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
@@ -31,6 +34,7 @@
 #include <fcntl.h>
 #include <cstdio>
 #include <cerrno>
+#include <memory>
 
 using namespace drizzled;
 namespace po= boost::program_options;
@@ -226,7 +230,7 @@ public:
 
   virtual bool post(Session *session)
   {
-    char msgbuf[MAX_MSG_LEN];
+    boost::scoped_array<char> msgbuf(new char[MAX_MSG_LEN]);
     int msgbuf_len= 0;
   
     assert(session != NULL);
@@ -251,7 +255,7 @@ public:
     const char *dbs= session->db.empty() ? "" : session->db.c_str();
   
     msgbuf_len=
-      snprintf(msgbuf, MAX_MSG_LEN,
+      snprintf(msgbuf.get(), MAX_MSG_LEN,
                "%"PRIu64",%"PRIu64",%"PRIu64",\"%.*s\",\"%s\",\"%.*s\","
                "%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64","
                "%"PRIu32",%"PRIu32",%"PRIu32",\"%s\"",
@@ -284,7 +288,7 @@ public:
     (void) gearman_client_do_background(&gearman_client,
                                         sysvar_logging_gearman_function,
                                         NULL,
-                                        (void *) msgbuf,
+                                        (void *) msgbuf.get(),
                                         (size_t) msgbuf_len,
                                         job_handle);
   

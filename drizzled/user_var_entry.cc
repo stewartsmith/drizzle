@@ -86,7 +86,7 @@ int64_t user_var_entry::val_int(bool *null_value) const
 /** Get the value of a variable as a string. */
 
 String *user_var_entry::val_str(bool *null_value, String *str,
-				uint32_t decimals)
+                                uint32_t decimals)
 {
   if ((*null_value= (value == 0)))
     return (String*) 0;

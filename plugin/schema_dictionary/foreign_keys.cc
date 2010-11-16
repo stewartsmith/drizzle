@@ -51,7 +51,7 @@ ForeignKeysTool::Generator::Generator(Field **arg) :
 
 bool ForeignKeysTool::Generator::nextTable()
 {
-  const drizzled::message::Table *table_ptr;
+  drizzled::message::TablePtr table_ptr;
   while ((table_ptr= all_tables_generator))
   {
     table_message.CopyFrom(*table_ptr);

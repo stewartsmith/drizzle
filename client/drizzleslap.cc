@@ -95,6 +95,7 @@
 #include <iostream>
 #include <fstream>
 #include <drizzled/configmake.h>
+#include <memory>
 
 /* Added this for string translation. */
 #include <drizzled/gettext.h>
@@ -103,6 +104,7 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 #include <boost/program_options.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <drizzled/atomics.h>
 
 #define SLAP_NAME "drizzleslap"
@@ -270,7 +272,8 @@ static void run_task(ThreadContext *ctx)
   uint64_t counter= 0, queries;
   uint64_t detach_counter;
   uint32_t commit_counter;
-  drizzle_con_st con;
+  boost::scoped_ptr<drizzle_con_st> con_ap(new drizzle_con_st);
+  drizzle_con_st &con= *con_ap.get();
   drizzle_result_st result;
   drizzle_row_t row;
   Statement *ptr;
@@ -549,8 +552,17 @@ int main(int argc, char **argv)
 
     std::string user_config_dir((getenv("XDG_CONFIG_HOME")? getenv("XDG_CONFIG_HOME"):"~/.config"));
 
+    if (user_config_dir.compare(0, 2, "~/") == 0)
+    {
+      char *homedir;
+      homedir= getenv("HOME");
+      if (homedir != NULL)
+        user_config_dir.replace(0, 1, homedir);
+    }
+
     uint64_t temp_drizzle_port= 0;
-    drizzle_con_st con;
+    boost::scoped_ptr<drizzle_con_st> con_ap(new drizzle_con_st);
+    drizzle_con_st &con= *con_ap.get();
     OptionString *eptr;
 
     // Disable allow_guessing

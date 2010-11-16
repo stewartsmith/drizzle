@@ -18,6 +18,8 @@
 #include "config.h"
 
 #include "plugin/archive/archive_engine.h"
+#include <memory>
+#include <boost/scoped_ptr.hpp>
 
 using namespace std;
 using namespace drizzled;
@@ -164,24 +166,24 @@ int ArchiveEngine::doGetTableDefinition(Session&,
     error= EEXIST;
 
   {
-    azio_stream proto_stream;
+    boost::scoped_ptr<azio_stream> proto_stream(new azio_stream);
     char* proto_string;
-    if (azopen(&proto_stream, proto_path.c_str(), O_RDONLY, AZ_METHOD_BLOCK) == 0)
+    if (azopen(proto_stream.get(), proto_path.c_str(), O_RDONLY, AZ_METHOD_BLOCK) == 0)
       return HA_ERR_CRASHED_ON_USAGE;
 
-    proto_string= (char*)malloc(sizeof(char) * proto_stream.frm_length);
+    proto_string= (char*)malloc(sizeof(char) * proto_stream->frm_length);
     if (proto_string == NULL)
     {
-      azclose(&proto_stream);
+      azclose(proto_stream.get());
       return ENOMEM;
     }
 
-    azread_frm(&proto_stream, proto_string);
+    azread_frm(proto_stream.get(), proto_string);
 
-    if (table_proto.ParseFromArray(proto_string, proto_stream.frm_length) == false)
+    if (table_proto.ParseFromArray(proto_string, proto_stream->frm_length) == false)
       error= HA_ERR_CRASHED_ON_USAGE;
 
-    azclose(&proto_stream);
+    azclose(proto_stream.get());
     free(proto_string);
   }
 
@@ -259,7 +261,7 @@ ArchiveShare::~ArchiveShare()
 
 bool ArchiveShare::prime(uint64_t *auto_increment)
 {
-  azio_stream archive_tmp;
+  boost::scoped_ptr<azio_stream> archive_tmp(new azio_stream);
 
   /*
     We read the meta file, but do not mark it dirty. Since we are not
@@ -267,19 +269,19 @@ bool ArchiveShare::prime(uint64_t *auto_increment)
     anything but reading... open it for write and we will generate null
     compression writes).
   */
-  if (!(azopen(&archive_tmp, data_file_name.c_str(), O_RDONLY,
+  if (!(azopen(archive_tmp.get(), data_file_name.c_str(), O_RDONLY,
                AZ_METHOD_BLOCK)))
     return false;
 
-  *auto_increment= archive_tmp.auto_increment + 1;
-  rows_recorded= (ha_rows)archive_tmp.rows;
-  crashed= archive_tmp.dirty;
+  *auto_increment= archive_tmp->auto_increment + 1;
+  rows_recorded= (ha_rows)archive_tmp->rows;
+  crashed= archive_tmp->dirty;
   if (version < global_version)
   {
     version_rows= rows_recorded;
     version= global_version;
   }
-  azclose(&archive_tmp);
+  azclose(archive_tmp.get());
 
   return true;
 }
@@ -501,7 +503,7 @@ int ArchiveEngine::doCreateTable(Session &,
                                  drizzled::message::Table& proto)
 {
   int error= 0;
-  azio_stream create_stream;            /* Archive file we are working with */
+  boost::scoped_ptr<azio_stream> create_stream(new azio_stream);
   uint64_t auto_increment_value;
   string serialized_proto;
 
@@ -528,7 +530,7 @@ int ArchiveEngine::doCreateTable(Session &,
   named_file.append(ARZ);
 
   errno= 0;
-  if (azopen(&create_stream, named_file.c_str(), O_CREAT|O_RDWR,
+  if (azopen(create_stream.get(), named_file.c_str(), O_CREAT|O_RDWR,
              AZ_METHOD_BLOCK) == 0)
   {
     error= errno;
@@ -547,7 +549,7 @@ int ArchiveEngine::doCreateTable(Session &,
     return(error ? error : -1);
   }
 
-  if (azwrite_frm(&create_stream, serialized_proto.c_str(),
+  if (azwrite_frm(create_stream.get(), serialized_proto.c_str(),
                   serialized_proto.length()))
   {
     unlink(named_file.c_str());
@@ -559,7 +561,7 @@ int ArchiveEngine::doCreateTable(Session &,
   {
     int write_length;
 
-    write_length= azwrite_comment(&create_stream,
+    write_length= azwrite_comment(create_stream.get(),
                                   proto.options().comment().c_str(),
                                   proto.options().comment().length());
 
@@ -576,10 +578,10 @@ int ArchiveEngine::doCreateTable(Session &,
     Yes you need to do this, because the starting value
     for the autoincrement may not be zero.
   */
-  create_stream.auto_increment= auto_increment_value ?
+  create_stream->auto_increment= auto_increment_value ?
     auto_increment_value - 1 : 0;
 
-  if (azclose(&create_stream))
+  if (azclose(create_stream.get()))
   {
     error= errno;
     unlink(named_file.c_str());
@@ -949,7 +951,7 @@ int ha_archive::repair()
 int ha_archive::optimize()
 {
   int rc= 0;
-  azio_stream writer;
+  boost::scoped_ptr<azio_stream> writer(new azio_stream);
 
   init_archive_reader();
 
@@ -972,13 +974,13 @@ int ha_archive::optimize()
   std::string writer_filename= share->table_name;
   writer_filename.append(ARN);
 
-  if (!(azopen(&writer, writer_filename.c_str(), O_CREAT|O_RDWR, AZ_METHOD_BLOCK)))
+  if (!(azopen(writer.get(), writer_filename.c_str(), O_CREAT|O_RDWR, AZ_METHOD_BLOCK)))
   {
     free(proto_string);
     return(HA_ERR_CRASHED_ON_USAGE);
   }
 
-  azwrite_frm(&writer, proto_string, archive.frm_length);
+  azwrite_frm(writer.get(), proto_string, archive.frm_length);
 
   /*
     An extended rebuild is a lot more effort. We open up each row and re-record it.
@@ -1016,7 +1018,7 @@ int ha_archive::optimize()
         if (rc != 0)
           break;
 
-        real_write_row(getTable()->getInsertRecord(), &writer);
+        real_write_row(getTable()->getInsertRecord(), writer.get());
         /*
           Long term it should be possible to optimize this so that
           it is not called on each row.
@@ -1036,7 +1038,7 @@ int ha_archive::optimize()
               (share->archive_write.auto_increment= auto_value) + 1;
         }
       }
-      share->rows_recorded= (ha_rows)writer.rows;
+      share->rows_recorded= (ha_rows)writer->rows;
     }
 
     if (rc && rc != HA_ERR_END_OF_FILE)
@@ -1045,7 +1047,7 @@ int ha_archive::optimize()
     }
   }
 
-  azclose(&writer);
+  azclose(writer.get());
   share->dirty= false;
 
   azclose(&archive);
@@ -1057,7 +1059,7 @@ int ha_archive::optimize()
   return(rc);
 error:
   free(proto_string);
-  azclose(&writer);
+  azclose(writer.get());
 
   return(rc);
 }

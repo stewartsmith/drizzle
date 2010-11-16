@@ -23,12 +23,10 @@
 
 using namespace drizzled;
 
-static ProcesslistTool *processlist;
-
 static int init(drizzled::module::Context &context)
 {
-  processlist= new(std::nothrow)ProcesslistTool;
-  context.add(processlist);
+  context.add(new ProcesslistTool);
+  context.add(new session_dictionary::Variables);
   
   return 0;
 }
@@ -37,9 +35,9 @@ DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
   "session_dictionary",
-  "1.0",
+  "1.1",
   "Brian Aker",
-  "Dictionary for session information, aka proccesslist, etc.",
+  "Dictionary for session information, aka proccesslist, user defined variables, etc.",
   PLUGIN_LICENSE_GPL,
   init,
   NULL,

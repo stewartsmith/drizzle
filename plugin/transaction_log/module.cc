@@ -63,7 +63,7 @@ static const char DEFAULT_LOG_FILE_PATH[]= "transaction.log"; /* In datadir... *
 static bool sysvar_transaction_log_enabled= false;
 
 /** Transaction Log plugin system variable - The path to the log file used */
-static char* sysvar_transaction_log_file= (char *)DEFAULT_LOG_FILE_PATH;
+static string sysvar_transaction_log_file;
 
 /** 
  * Transaction Log plugin system variable - A debugging variable to assist 
@@ -83,18 +83,20 @@ static bool sysvar_transaction_log_checksum_enabled= false;
  * TransactionLog::FLUSH_FREQUENCY_EVERY_WRITE == 1   ... sync on every write
  * TransactionLog::FLUSH_FREQUENCY_EVERY_SECOND == 2  ... sync at most once a second
  */
-static uint32_t sysvar_transaction_log_flush_frequency= 0;
+typedef constrained_check<int, 2, 0> flush_constraint;
+static flush_constraint sysvar_transaction_log_flush_frequency;
 /**
  * Transaction Log plugin system variable - Number of slots to create
  * for managing write buffers
  */
-static uint32_t sysvar_transaction_log_num_write_buffers= 8;
+typedef constrained_check<uint32_t, 8192, 4> write_buffers_constraint;
+static write_buffers_constraint sysvar_transaction_log_num_write_buffers;
 /**
  * Transaction Log plugin system variable - The name of the replicator plugin
  * to pair the transaction log's applier with.  Defaults to "default"
  */
 static const char DEFAULT_USE_REPLICATOR[]= "default";
-static char *sysvar_transaction_log_use_replicator= (char *)DEFAULT_USE_REPLICATOR;
+static string sysvar_transaction_log_use_replicator;
 
 /** DATA_DICTIONARY views */
 static TransactionLogTool *transaction_log_tool;
@@ -119,57 +121,47 @@ TransactionLog::~TransactionLog()
   {
     (void) close(log_file);
   }
+}
 
-  /* These get strdup'd below */
-  free(sysvar_transaction_log_file);
-  free(sysvar_transaction_log_use_replicator);
+static void set_truncate_debug(Session *, sql_var_t)
+{
+  if (transaction_log)
+  {
+    if (sysvar_transaction_log_truncate_debug)
+    {
+      transaction_log->truncate();
+      transaction_log_index->clear();
+      sysvar_transaction_log_truncate_debug= false;
+    }
+  }
 }
 
 static int init(drizzled::module::Context &context)
 {
-  const module::option_map &vm= context.getOptions();
+  context.registerVariable(new sys_var_bool_ptr_readonly("enable",
+                                                         &sysvar_transaction_log_enabled));
+  context.registerVariable(new sys_var_bool_ptr("truncate-debug",
+                                                &sysvar_transaction_log_truncate_debug,
+                                                set_truncate_debug));
 
-  if (vm.count("flush-frequency"))
-  {
-    if (sysvar_transaction_log_flush_frequency > 2)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for sync-method\n"));
-      exit(-1);
-    }
-  }
+  context.registerVariable(new sys_var_const_string("file",
+                                                    sysvar_transaction_log_file));
+  context.registerVariable(new sys_var_const_string("use-replicator",
+                                                    sysvar_transaction_log_use_replicator));
+  context.registerVariable(new sys_var_bool_ptr_readonly("enable-checksum",
+                                                         &sysvar_transaction_log_checksum_enabled));
+  context.registerVariable(new sys_var_constrained_value_readonly<int>("flush-frequency", sysvar_transaction_log_flush_frequency));
 
-  if (vm.count("num-write-buffers"))
-  {
-    if (sysvar_transaction_log_num_write_buffers < 4 || sysvar_transaction_log_num_write_buffers > 8192)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for num-write-buffers\n"));
-      exit(-1);
-    }
-  }
+  context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("num-write-buffers",
+                                                                            sysvar_transaction_log_num_write_buffers));
 
 
   /* Create and initialize the transaction log itself */
   if (sysvar_transaction_log_enabled)
   {
-    if (vm.count("file"))
-    {
-      sysvar_transaction_log_file= strdup(vm["file"].as<string>().c_str());
-    }
-    else
-    {
-      sysvar_transaction_log_file= strdup(DEFAULT_LOG_FILE_PATH);
-    }
   
-    if (vm.count("use-replicator"))
-    {
-      sysvar_transaction_log_use_replicator= strdup(vm["use-replicator"].as<string>().c_str());
-    }
-    else
-    {
-      sysvar_transaction_log_use_replicator= strdup(DEFAULT_USE_REPLICATOR);
-    }
-    transaction_log= new (nothrow) TransactionLog(string(sysvar_transaction_log_file),
-                                                  sysvar_transaction_log_flush_frequency,
+    transaction_log= new (nothrow) TransactionLog(sysvar_transaction_log_file,
+                                                  static_cast<int>(sysvar_transaction_log_flush_frequency),
                                                   sysvar_transaction_log_checksum_enabled);
 
     if (transaction_log == NULL)
@@ -216,7 +208,7 @@ static int init(drizzled::module::Context &context)
     transaction_log_applier= new (nothrow) TransactionLogApplier("transaction_log_applier",
                                                                  transaction_log, 
                                                                  transaction_log_index, 
-                                                                 sysvar_transaction_log_num_write_buffers);
+                                                                 static_cast<uint32_t>(sysvar_transaction_log_num_write_buffers));
     if (transaction_log_applier == NULL)
     {
       char errmsg[STRERROR_MAX];
@@ -227,8 +219,8 @@ static int init(drizzled::module::Context &context)
     }
     context.add(transaction_log_applier);
     ReplicationServices &replication_services= ReplicationServices::singleton();
-    string replicator_name(sysvar_transaction_log_use_replicator);
-    replication_services.attachApplier(transaction_log_applier, replicator_name);
+    replication_services.attachApplier(transaction_log_applier,
+                                       sysvar_transaction_log_use_replicator);
 
     /* Setup DATA_DICTIONARY views */
 
@@ -259,89 +251,6 @@ static int init(drizzled::module::Context &context)
 }
 
 
-static void set_truncate_debug(Session *,
-                               drizzle_sys_var *, 
-                               void *, 
-                               const void *save)
-{
-  /* 
-   * The const void * save comes directly from the check function, 
-   * which should simply return the result from the set statement. 
-   */
-  if (transaction_log)
-  {
-    if (*(bool *)save != false)
-    {
-      transaction_log->truncate();
-      transaction_log_index->clear();
-    }
-  }
-}
-
-static DRIZZLE_SYSVAR_BOOL(enable,
-                           sysvar_transaction_log_enabled,
-                           PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
-                           N_("Enable transaction log"),
-                           NULL, /* check func */
-                           NULL, /* update func */
-                           false /* default */);
-
-static DRIZZLE_SYSVAR_BOOL(truncate_debug,
-                           sysvar_transaction_log_truncate_debug,
-                           PLUGIN_VAR_NOCMDARG,
-                           N_("DEBUGGING - Truncate transaction log"),
-                           NULL, /* check func */
-                           set_truncate_debug, /* update func */
-                           false /* default */);
-
-static DRIZZLE_SYSVAR_STR(file,
-                          sysvar_transaction_log_file,
-                          PLUGIN_VAR_READONLY,
-                          N_("Path to the file to use for transaction log"),
-                          NULL, /* check func */
-                          NULL, /* update func*/
-                          DEFAULT_LOG_FILE_PATH /* default */);
-
-static DRIZZLE_SYSVAR_STR(use_replicator,
-                          sysvar_transaction_log_use_replicator,
-                          PLUGIN_VAR_READONLY,
-                          N_("Name of the replicator plugin to use (default='default_replicator')"),
-                          NULL, /* check func */
-                          NULL, /* update func*/
-                          DEFAULT_USE_REPLICATOR /* default */);
-
-static DRIZZLE_SYSVAR_BOOL(enable_checksum,
-                           sysvar_transaction_log_checksum_enabled,
-                           PLUGIN_VAR_NOCMDARG,
-                           N_("Enable CRC32 Checksumming of each written transaction log entry"),
-                           NULL, /* check func */
-                           NULL, /* update func */
-                           false /* default */);
-
-static DRIZZLE_SYSVAR_UINT(flush_frequency,
-                           sysvar_transaction_log_flush_frequency,
-                           PLUGIN_VAR_OPCMDARG,
-                           N_("0 == rely on operating system to sync log file (default), "
-                              "1 == sync file at each transaction write, "
-                              "2 == sync log file once per second"),
-                           NULL, /* check func */
-                           NULL, /* update func */
-                           0, /* default */
-                           0,
-                           2,
-                           0);
-
-static DRIZZLE_SYSVAR_UINT(num_write_buffers,
-                           sysvar_transaction_log_num_write_buffers,
-                           PLUGIN_VAR_OPCMDARG,
-                           N_("Number of slots for in-memory write buffers (default=8)."),
-                           NULL, /* check func */
-                           NULL, /* update func */
-                           8, /* default */
-                           4,
-                           8192,
-                           0);
-
 static void init_options(drizzled::module::option_context &context)
 {
   context("truncate-debug",
@@ -354,28 +263,17 @@ static void init_options(drizzled::module::option_context &context)
           po::value<bool>(&sysvar_transaction_log_enabled)->default_value(false)->zero_tokens(),
           N_("Enable transaction log"));
   context("file",
-          po::value<string>(),
+          po::value<string>(&sysvar_transaction_log_file)->default_value(DEFAULT_LOG_FILE_PATH),
           N_("Path to the file to use for transaction log"));
   context("use-replicator",
-          po::value<string>(),
+          po::value<string>(&sysvar_transaction_log_use_replicator)->default_value(DEFAULT_USE_REPLICATOR),
           N_("Name of the replicator plugin to use (default='default_replicator')")); 
   context("flush-frequency",
-          po::value<uint32_t>(&sysvar_transaction_log_flush_frequency)->default_value(0),
+          po::value<flush_constraint>(&sysvar_transaction_log_flush_frequency)->default_value(0),
           N_("0 == rely on operating system to sync log file (default), 1 == sync file at each transaction write, 2 == sync log file once per second"));
   context("num-write-buffers",
-          po::value<uint32_t>(&sysvar_transaction_log_num_write_buffers)->default_value(8),
+          po::value<write_buffers_constraint>(&sysvar_transaction_log_num_write_buffers)->default_value(8),
           N_("Number of slots for in-memory write buffers (default=8)."));
 }
 
-static drizzle_sys_var* sys_variables[]= {
-  DRIZZLE_SYSVAR(enable),
-  DRIZZLE_SYSVAR(truncate_debug),
-  DRIZZLE_SYSVAR(file),
-  DRIZZLE_SYSVAR(enable_checksum),
-  DRIZZLE_SYSVAR(flush_frequency),
-  DRIZZLE_SYSVAR(num_write_buffers),
-  DRIZZLE_SYSVAR(use_replicator),
-  NULL
-};
-
-DRIZZLE_PLUGIN(init, sys_variables, init_options);
+DRIZZLE_PLUGIN(init, NULL, init_options);

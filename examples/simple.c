@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
   const char *query= "SELECT TABLE_SCHEMA,TABLE_NAME FROM TABLES";
   drizzle_verbose_t verbose= DRIZZLE_VERBOSE_NEVER;
   drizzle_st drizzle;
-  drizzle_con_st con;
+  drizzle_con_st *con= (drizzle_con_st*)malloc(sizeof(drizzle_con_st));
   drizzle_result_st result;
   drizzle_return_t ret;
   int x;
@@ -82,29 +82,29 @@ int main(int argc, char *argv[])
 
   drizzle_set_verbose(&drizzle, verbose);
 
-  if (drizzle_con_create(&drizzle, &con) == NULL)
+  if (drizzle_con_create(&drizzle, con) == NULL)
   {
     printf("drizzle_con_create:NULL\n");
     return 1;
   }
 
   if (mysql)
-    drizzle_con_add_options(&con, DRIZZLE_CON_MYSQL);
+    drizzle_con_add_options(con, DRIZZLE_CON_MYSQL);
 
-  drizzle_con_set_tcp(&con, host, port);
-  drizzle_con_set_db(&con, db);
+  drizzle_con_set_tcp(con, host, port);
+  drizzle_con_set_db(con, db);
 
-  (void)drizzle_query_str(&con, &result, query, &ret);
+  (void)drizzle_query_str(con, &result, query, &ret);
   if (ret != DRIZZLE_RETURN_OK)
   {
-    printf("drizzle_query:%s\n", drizzle_con_error(&con));
+    printf("drizzle_query:%s\n", drizzle_con_error(con));
     return 1;
   }
 
   ret= drizzle_result_buffer(&result);
   if (ret != DRIZZLE_RETURN_OK)
   {
-    printf("drizzle_result_buffer:%s\n", drizzle_con_error(&con));
+    printf("drizzle_result_buffer:%s\n", drizzle_con_error(con));
     return 1;
   }
 
@@ -116,8 +116,9 @@ int main(int argc, char *argv[])
   }
 
   drizzle_result_free(&result);
-  drizzle_con_free(&con);
+  drizzle_con_free(con);
   drizzle_free(&drizzle);
 
+  free(con);
   return 0;
 }

@@ -154,8 +154,8 @@ exit:
       /* Force read of table stats in the optimizer */
       table->cursor->info(HA_STATUS_VARIABLE);
       /* Add new temporary table to list of open derived tables */
-      table->setNext(session->derived_tables);
-      session->derived_tables= table;
+      table->setNext(session->getDerivedTables());
+      session->setDerivedTables(table);
     }
   }
 

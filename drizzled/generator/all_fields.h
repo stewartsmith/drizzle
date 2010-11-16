@@ -30,7 +30,7 @@ class AllFields
 {
   Session &session;
   message::Table table_message;
-  const drizzled::message::Table *table_ptr;
+  drizzled::message::TablePtr table_ptr;
   int32_t field_iterator;
 
   drizzled::generator::AllTables all_tables_generator;

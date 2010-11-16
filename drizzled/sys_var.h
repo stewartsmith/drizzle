@@ -94,10 +94,11 @@ protected:
   struct option *option_limits; /**< Updated by by sys_var_init() */
   bool m_allow_empty_value; /**< Does variable allow an empty value? */
 public:
-  sys_var(const std::string name_arg, sys_after_update_func func= NULL)
+  sys_var(const std::string &name_arg, sys_after_update_func func= NULL)
     :
     name(name_arg),
     after_update(func),
+    option_limits(NULL),
     m_allow_empty_value(true)
   {}
   virtual ~sys_var() {}
@@ -228,16 +229,50 @@ public:
 class sys_var_uint64_t_ptr :public sys_var
 {
   uint64_t *value;
+  const uint64_t default_value;
+  bool have_default_value;
 public:
-  sys_var_uint64_t_ptr(const char *name_arg, uint64_t *value_ptr_arg)
-    :sys_var(name_arg),value(value_ptr_arg)
+  sys_var_uint64_t_ptr(const char *name_arg, uint64_t *value_ptr_arg) :
+    sys_var(name_arg),
+    value(value_ptr_arg),
+    default_value(0),
+    have_default_value(false)
   {  }
-  sys_var_uint64_t_ptr(const char *name_arg, uint64_t *value_ptr_arg,
-		       sys_after_update_func func)
-    :sys_var(name_arg,func), value(value_ptr_arg)
+
+  sys_var_uint64_t_ptr(const char *name_arg,
+                       uint64_t *value_ptr_arg,
+                       const uint64_t default_value_in) :
+    sys_var(name_arg),
+    value(value_ptr_arg),
+    default_value(default_value_in),
+    have_default_value(true)
   {  }
+
+  sys_var_uint64_t_ptr(const char *name_arg,
+                       uint64_t *value_ptr_arg,
+                       sys_after_update_func func) :
+    sys_var(name_arg,func),
+    value(value_ptr_arg),
+    default_value(0),
+    have_default_value(false)
+  {  }
+
+  sys_var_uint64_t_ptr(const char *name_arg,
+                       uint64_t *value_ptr_arg,
+                       sys_after_update_func func,
+                       const uint64_t default_value_in) :
+    sys_var(name_arg,func),
+    value(value_ptr_arg),
+    default_value(default_value_in),
+    have_default_value(true)
+  {  }
+
   bool update(Session *session, set_var *var);
   void set_default(Session *session, sql_var_t type);
+  virtual bool check_default(sql_var_t)
+  {
+    return (not have_default_value) && option_limits == 0;
+  }
   SHOW_TYPE show_type() { return SHOW_LONGLONG; }
   unsigned char *value_ptr(Session *, sql_var_t,
                            const LEX_STRING *)
@@ -266,9 +301,10 @@ class sys_var_bool_ptr :public sys_var
 {
 public:
   bool *value;
-  sys_var_bool_ptr(const char *name_arg, bool *value_arg)
-    :sys_var(name_arg),value(value_arg)
-  {  }
+  sys_var_bool_ptr(const std::string &name_arg, bool *value_arg,
+                   sys_after_update_func func= NULL) :
+    sys_var(name_arg, func), value(value_arg)
+  { }
   bool check(Session *session, set_var *var)
   {
     return check_enum(session, var, &bool_typelib);
