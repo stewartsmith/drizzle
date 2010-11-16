@@ -225,6 +225,17 @@ buf_flush_free_flush_rbt(void)
 
 		buf_flush_list_mutex_enter(buf_pool);
 
+#ifdef UNIV_DEBUG_VALGRIND
+	{
+		ulint	zip_size = buf_block_get_zip_size(block);
+
+		if (UNIV_UNLIKELY(zip_size)) {
+			UNIV_MEM_ASSERT_RW(block->page.zip.data, zip_size);
+		} else {
+			UNIV_MEM_ASSERT_RW(block->frame, UNIV_PAGE_SIZE);
+		}
+	}
+#endif /* UNIV_DEBUG_VALGRIND */
 #if defined UNIV_DEBUG || defined UNIV_BUF_DEBUG
 		ut_a(buf_flush_validate_low(buf_pool));
 #endif /* UNIV_DEBUG || UNIV_BUF_DEBUG */
@@ -330,6 +341,18 @@ buf_flush_insert_sorted_into_flush_list(
 	ut_ad(!block->page.in_flush_list);
 	ut_d(block->page.in_flush_list = TRUE);
 	block->page.oldest_modification = lsn;
+
+#ifdef UNIV_DEBUG_VALGRIND
+	{
+		ulint	zip_size = buf_block_get_zip_size(block);
+
+		if (UNIV_UNLIKELY(zip_size)) {
+			UNIV_MEM_ASSERT_RW(block->page.zip.data, zip_size);
+		} else {
+			UNIV_MEM_ASSERT_RW(block->frame, UNIV_PAGE_SIZE);
+		}
+	}
+#endif /* UNIV_DEBUG_VALGRIND */
 
 #ifdef UNIV_DEBUG_VALGRIND
 	{
