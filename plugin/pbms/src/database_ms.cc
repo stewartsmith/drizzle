@@ -1046,7 +1046,7 @@ MSDatabase *MSDatabase::getDatabase(const char *db_name, bool create)
 	return getDatabase(CSString::newString(db_name), create);
 }
 
-MSDatabase *MSDatabase::getDatabase(uint32_t db_id)
+MSDatabase *MSDatabase::getDatabase(uint32_t db_id, bool missing_ok)
 {
 	MSDatabase *db;
 	
@@ -1087,7 +1087,7 @@ MSDatabase *MSDatabase::getDatabase(uint32_t db_id)
 	}
 	unlock_(gDatabaseList);
 	
-	if (!db) {
+	if ((!db) && !missing_ok) {
 		char buffer[CS_EXC_MESSAGE_SIZE];
 
 		cs_strcpy(CS_EXC_MESSAGE_SIZE, buffer, "Unknown database #");

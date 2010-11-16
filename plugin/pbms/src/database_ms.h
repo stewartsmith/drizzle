@@ -203,7 +203,7 @@ public:
 	
 	static MSDatabase *getDatabase(CSString *db_name, bool create);
 	static MSDatabase *getDatabase(const char *db_name, bool create);
-	static MSDatabase *getDatabase(uint32_t db_id);
+	static MSDatabase *getDatabase(uint32_t db_id, bool missing_ok = false);
 	static uint32_t getDatabaseID(CSString *db_name, bool create);
 	static uint32_t getDatabaseID(const char *db_name, bool create);
 
