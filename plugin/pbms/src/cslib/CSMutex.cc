@@ -65,14 +65,29 @@ CSMutex::~CSMutex()
 
 void CSMutex::lock()
 {
-	int err;
+	int err = 0;
 
-	if ((err = pthread_mutex_lock(&iMutex)))
-		CSException::throwOSError(CS_CONTEXT, err);
 #ifdef DEBUG
+	int waiting = 2000;
+	while (((err = pthread_mutex_trylock(&iMutex)) == EBUSY) && (waiting > 0)) {
+		usleep(500);
+		waiting--;
+	}
+	if (err) {
+		if (err == EBUSY) {
+			CSL.logf(iLocker, CSLog::Protocol, "Thread holding lock.\n");
+		}
+		
+		if ((err) || (err = pthread_mutex_lock(&iMutex)))
+			CSException::throwOSError(CS_CONTEXT, err);
+	}
+
 	iLocker = CSThread::getSelf();
 	if (trace)
 		CSL.logf(iLocker, CSLog::Protocol, "Mutex locked\n");
+#else
+	if ((err = pthread_mutex_lock(&iMutex)))
+		CSException::throwOSError(CS_CONTEXT, err);
 #endif
 }
 
