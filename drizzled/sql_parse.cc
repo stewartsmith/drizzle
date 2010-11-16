@@ -170,8 +170,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   bool error= 0;
   Query_id &query_id= Query_id::get_query_id();
 
-  DRIZZLE_COMMAND_START(session->thread_id,
-                        command);
+  DRIZZLE_COMMAND_START(session->thread_id, command);
 
   session->command= command;
   session->lex->sql_command= SQLCOM_END; /* to avoid confusing VIEW detectors */
@@ -221,12 +220,12 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   {
     if (not session->readAndStoreQuery(packet, packet_length))
       break;					// fatal error is set
-    DRIZZLE_QUERY_START(session->query.c_str(),
+    DRIZZLE_QUERY_START(session->getQueryString()->c_str(),
                         session->thread_id,
                         const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));
 
-    plugin::QueryRewriter::rewriteQuery(session->db, session->query);
-    mysql_parse(session, session->query.c_str(), session->query.length());
+    plugin::QueryRewriter::rewriteQuery(session->getSchema(), session->getQueryString());
+    mysql_parse(session, session->getQueryString()->c_str(), session->getQueryString()->length());
 
     break;
   }
@@ -320,8 +319,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   /* Store temp state for processlist */
   session->set_proc_info("cleaning up");
   session->command= COM_SLEEP;
-  memset(session->process_list_info, 0, PROCESS_LIST_WIDTH);
-  session->query.clear();
+  session->resetQueryString();
 
   session->set_proc_info(NULL);
   session->mem_root->free_root(MYF(memory::KEEP_PREALLOC));
@@ -432,8 +430,7 @@ int prepare_new_schema_table(Session *session, LEX *lex,
     true        Error
 */
 
-static int
-mysql_execute_command(Session *session)
+static int mysql_execute_command(Session *session)
 {
   bool res= false;
   LEX  *lex= session->lex;
@@ -441,12 +438,6 @@ mysql_execute_command(Session *session)
   Select_Lex *select_lex= &lex->select_lex;
   /* list of all tables in query */
   TableList *all_tables;
-  /* A peek into the query string */
-  size_t proc_info_len= session->query.length() > PROCESS_LIST_WIDTH ?
-                        PROCESS_LIST_WIDTH : session->query.length();
-
-  memcpy(session->process_list_info, session->query.c_str(), proc_info_len);
-  session->process_list_info[proc_info_len]= '\0';
 
   /*
     In many cases first table of main Select_Lex have special meaning =>
@@ -748,9 +739,9 @@ void mysql_parse(Session *session, const char *inBuf, uint32_t length)
   if (!err)
   {
     {
-      if (! session->is_error())
+      if (not session->is_error())
       {
-        DRIZZLE_QUERY_EXEC_START(session->query.c_str(),
+        DRIZZLE_QUERY_EXEC_START(session->getQueryString()->c_str(),
                                  session->thread_id,
                                  const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));
         // Implement Views here --Brian
@@ -1771,7 +1762,7 @@ static bool parse_sql(Session *session, Lex_input_stream *lip)
 {
   assert(session->m_lip == NULL);
 
-  DRIZZLE_QUERY_PARSE_START(session->query.c_str());
+  DRIZZLE_QUERY_PARSE_START(session->getQueryString()->c_str());
 
   /* Set Lex_input_stream. */
 
