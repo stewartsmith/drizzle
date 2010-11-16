@@ -56,6 +56,8 @@ public:
   void erase(Session::Ptr);
   void erase(Session::shared_ptr);
 
+  Session::shared_ptr find(const session_id_t &id);
+
 private:
   List cache;
   boost::mutex _mutex;

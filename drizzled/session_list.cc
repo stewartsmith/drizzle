@@ -34,6 +34,20 @@ namespace drizzled
 namespace session
 {
 
+Session::shared_ptr Cache::find(const session_id_t &id)
+{
+  boost::mutex::scoped_lock scopedLock(_mutex);
+  for (List::iterator it= cache.begin(); it != cache.end(); ++it )
+  {
+    if ((*it)->thread_id == id)
+    {
+      return *it;
+    }
+  }
+
+  return Session::shared_ptr();
+}
+
 void Cache::erase(Session::Ptr arg)
 {
   for (List::iterator it= cache.begin(); it != cache.end(); it++)
