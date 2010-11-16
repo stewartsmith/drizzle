@@ -113,11 +113,27 @@ void MSTransactionThread::reportLostReference(MSTransPtr rec, MS_TxnState state)
 	MSDiskLostRec lrec;
 	const char *t_txt, *s_txt;
 	char b1[16], b2[16], msg[100];
+	MSDatabase *db;
+	MSTable *tab;
 	
 	//if (PBMSDaemon::isDaemonState(PBMSDaemon::DaemonStartUp) == true)
 		//return;
 
 	enter_();
+	// Do not report errors caused by missing databases or tables.
+	// This can happen if the transaction log is reread after a crash
+	// and transactions are found that belonged to dropped databases
+	// or tables.
+	db = MSDatabase::getDatabase(rec->tr_db_id, true);
+	if (!db)
+		goto dont_worry_about_it;
+		
+	push_(db);
+	tab = db->getTable(rec->tr_tab_id, true);
+	release_(db);
+	if (!tab)
+		goto dont_worry_about_it;
+	tab->release();
 	
 	switch (state) {
 		case MS_Committed:
@@ -173,6 +189,8 @@ void MSTransactionThread::reportLostReference(MSTransPtr rec, MS_TxnState state)
 	}
 	trt_lostLog->write(&lrec, trt_lostLog->getEOF(), sizeof(MSDiskLostRec));
 	trt_lostLog->sync();
+	
+dont_worry_about_it:
 	exit_();
 	
 }
