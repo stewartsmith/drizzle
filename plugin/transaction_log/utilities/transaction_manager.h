@@ -23,8 +23,8 @@
  * can be retrieved as a collection.
  */
 
-#ifndef DRIZZLED_MESSAGE_TRANSACTION_MANAGER_H
-#define DRIZZLED_MESSAGE_TRANSACTION_MANAGER_H
+#ifndef PLUGIN_TRANSACTION_LOG_UTILITIES_TRANSACTION_MANAGER_H
+#define PLUGIN_TRANSACTION_LOG_UTILITIES_TRANSACTION_MANAGER_H
 
 #include "drizzled/message/transaction.pb.h"
 #include <string>
@@ -33,10 +33,6 @@
 
 typedef std::vector<std::string> MsgBufferType;
 
-namespace drizzled
-{
-namespace message
-{
 
 /**
  * Simple (example) Transaction message buffer and content manager.
@@ -123,7 +119,4 @@ private:
   boost::unordered_map<uint64_t,MsgBufferType> cache;
 };
 
-} /* namespace message */
-} /* namespace drizzled */
-
-#endif /* DRIZZLED_MESSAGE_TRANSACTION_MANAGER_H */
+#endif /* PLUGIN_TRANSACTION_LOG_UTILITIES_TRANSACTION_MANAGER_H */
