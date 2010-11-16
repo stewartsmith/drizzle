@@ -1,0 +1,43 @@
+# List savepoints.
+
+start transaction;
+savepoint foo;
+select * from data_dictionary.user_savepoints;
+release savepoint foo;
+rollback;
+select * from data_dictionary.user_savepoints;
+
+start transaction;
+savepoint foo;
+select * from data_dictionary.user_savepoints;
+savepoint foo2;
+select * from data_dictionary.user_savepoints;
+rollback;
+select * from data_dictionary.user_savepoints;
+
+start transaction;
+savepoint foo;
+select * from data_dictionary.user_savepoints;
+savepoint foo2;
+release savepoint foo;
+select * from data_dictionary.user_savepoints;
+rollback;
+select * from data_dictionary.user_savepoints;
+
+start transaction;
+savepoint foo;
+select * from data_dictionary.user_savepoints;
+savepoint foo2;
+select * from data_dictionary.user_savepoints;
+release savepoint foo2;
+select * from data_dictionary.user_savepoints;
+rollback;
+select * from data_dictionary.user_savepoints;
+
+start transaction;
+savepoint foo;
+savepoint foo2;
+savepoint foo3;
+select * from data_dictionary.user_savepoints;
+commit;
+select * from data_dictionary.user_savepoints;

@@ -18,12 +18,35 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SESSION_DICTIONARY_DICTIONARY_H
-#define PLUGIN_SESSION_DICTIONARY_DICTIONARY_H
+#ifndef PLUGIN_SESSION_DICTIONARY_SAVEPOINTS_H
+#define PLUGIN_SESSION_DICTIONARY_SAVEPOINTS_H
 
-#include "drizzled/plugin/table_function.h"
-#include "plugin/session_dictionary/processlist.h"
-#include "plugin/session_dictionary/savepoints.h"
-#include "plugin/session_dictionary/variables.h"
+namespace session_dictionary {
 
-#endif /* PLUGIN_SESSION_DICTIONARY_DICTIONARY_H */
+class Savepoints : public drizzled::plugin::TableFunction
+{
+public:
+
+  Savepoints();
+
+  class Generator : public drizzled::plugin::TableFunction::Generator 
+  {
+    std::deque<drizzled::NamedSavepoint> &savepoints;
+    std::deque<drizzled::NamedSavepoint>::const_iterator iter;
+
+  public:
+    Generator(drizzled::Field **arg);
+    ~Generator();
+
+    bool populate();
+  };
+
+  Generator *generator(drizzled::Field **arg)
+  {
+    return new Generator(arg);
+  }
+};
+
+} /* namespace session_dictionary */
+
+#endif /* PLUGIN_SESSION_DICTIONARY_SAVEPOINTS_H */
