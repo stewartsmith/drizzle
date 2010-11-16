@@ -19,38 +19,19 @@
  */
 
 #include "config.h"
-
-#include "plugin/performance_dictionary/dictionary.h"
-
-#include <drizzled/session.h>
-
-#include <sys/resource.h>
-
-using namespace drizzled;
-using namespace std;
+#include "plugin/performance_dictionary/query_usage.h"
 
 namespace performance_dictionary {
 
-bool SessionUsageLogger::pre(Session *session)
-{
-  session->setUsage(true);
-
-  return false;
-}
-
-bool SessionUsageLogger::post(Session *session)
-{
-  QueryUsage *usage_cache= static_cast<QueryUsage *>(session->getProperty("query_usage"));
-
-  if (not usage_cache)
+  void QueryUsage::push(drizzled::Session::QueryString query_string, const struct rusage &arg)
   {
-    usage_cache= new QueryUsage;
-    session->setProperty("query_usage", usage_cache);
+    if (not query_string)
+      return;
+
+    Query_list::iterator it= query_list.end();
+    it--;
+    query_list.splice(query_list.begin(), query_list, it);
+    query_list.front().set(*query_string, arg);
   }
 
-  usage_cache->push(session->getQueryString(), session->getUsage());
-
-  return false;
-}
-
-} /* namespace performance_dictionary */
+} // performance_dictionary namespace

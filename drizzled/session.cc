@@ -161,6 +161,7 @@ Session::Session(plugin::Client *client_arg) :
   mem_root(&main_mem_root),
   xa_id(0),
   lex(&main_lex),
+  query(new std::string),
   catalog("LOCAL"),
   client(client_arg),
   scheduler(NULL),
