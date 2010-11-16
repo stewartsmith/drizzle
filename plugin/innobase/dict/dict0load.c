@@ -874,7 +874,7 @@ dict_load_column_low(
 	ulint		mtype;
 	ulint		prtype;
 	ulint		col_len;
-	ulint		pos;
+	ulint		pos = 0;
 
 	if (UNIV_UNLIKELY(rec_get_deleted_flag(rec, 0))) {
 		return("delete-marked record in SYS_COLUMNS");
