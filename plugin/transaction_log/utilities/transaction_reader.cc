@@ -24,22 +24,17 @@
 #include "config.h"
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
 #include <limits.h>
-#include <cerrno>
 #include <iostream>
 #include <string>
 #include <algorithm>
 #include <vector>
 #include <unistd.h>
-#include "drizzled/definitions.h"
 #include "drizzled/gettext.h"
-#include "drizzled/replication_services.h"
-#include "drizzled/algorithm/crc32.h"
 #include "drizzled/message/transaction.pb.h"
 #include "drizzled/message/statement_transform.h"
-#include "drizzled/message/transaction_manager.h"
-#include "drizzled/util/convert.h"
+#include "transaction_manager.h"
+#include "transaction_file_reader.h"
 
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
@@ -308,121 +303,21 @@ int main(int argc, char* argv[])
   bool print_as_raw= vm.count("raw") ? true : false;
 
   string filename= vm["input-file"].as< vector<string> >()[0];
-  int file= open(filename.c_str(), O_RDONLY);
-  if (file == -1)
+
+  TransactionFileReader fileReader;
+
+  if (not fileReader.openFile(filename, opt_start_pos))
   {
-    cerr << _("Cannot open file: ") << filename << endl;
+    cerr << fileReader.getErrorString() << endl;
     return -1;
   }
 
   message::Transaction transaction;
-  message::TransactionManager trx_mgr;
-
-  protobuf::io::ZeroCopyInputStream *raw_input= new protobuf::io::FileInputStream(file);
-
-  /* Skip ahead to user supplied position */
-  if (opt_start_pos)
-  {
-    if (not raw_input->Skip(opt_start_pos))
-    {
-      cerr << _("Could not skip to position ") << opt_start_pos
-           << _(" in file ") << filename << endl;
-      exit(-1);
-    }
-  }
-
-  char *buffer= NULL;
-  char *temp_buffer= NULL;
-  uint32_t length= 0;
-  uint32_t previous_length= 0;
+  TransactionManager trx_mgr;
   uint32_t checksum= 0;
-  bool result= true;
-  uint32_t message_type= 0;
 
-  while (result == true)
+  while (fileReader.getNextTransaction(transaction, &checksum))
   {
-   /*
-     * Odd thing to note about using CodedInputStream: This class wasn't
-     * intended to read large amounts of GPB messages. It has an upper
-     * limit on the number of bytes it will read (see Protobuf docs for
-     * this class for more info). A warning will be produced as you
-     * get close to this limit. Since this is a pretty lightweight class,
-     * we should be able to simply create a new one for each message we
-     * want to read.
-     */
-    protobuf::io::CodedInputStream coded_input(raw_input);
-
-    /* Read in the type and length of the command */
-    if (not coded_input.ReadLittleEndian32(&message_type) ||
-        not coded_input.ReadLittleEndian32(&length))
-    {
-      break;  /* EOF */
-    }
-
-    if (message_type != ReplicationServices::TRANSACTION)
-    {
-      cerr << _("Found a non-transaction message in log.  Currently, not supported.\n");
-      exit(-1);
-    }
-
-    if (length > INT_MAX)
-    {
-      cerr << _("Attempted to read record bigger than INT_MAX\n");
-      exit(-1);
-    }
-
-    if (buffer == NULL)
-    {
-      /*
-       * First time around...just malloc the length.  This block gets rid
-       * of a GCC warning about uninitialized temp_buffer.
-       */
-      temp_buffer= (char *) malloc(static_cast<size_t>(length));
-    }
-    /* No need to allocate if we have a buffer big enough... */
-    else if (length > previous_length)
-    {
-      temp_buffer= (char *) realloc(buffer, static_cast<size_t>(length));
-    }
-
-    if (temp_buffer == NULL)
-    {
-      cerr << _("Memory allocation failure trying to allocate ") << length << _(" bytes\n");
-      break;
-    }
-    else
-      buffer= temp_buffer;
-
-    /* Read the Command */
-    result= coded_input.ReadRaw(buffer, (int) length);
-    if (result == false)
-    {
-      char errmsg[STRERROR_MAX];
-      strerror_r(errno, errmsg, sizeof(errmsg));
-      cerr << _("Could not read transaction message.\n");
-      cerr << _("GPB ERROR: ") << errmsg << endl;;
-      string hexdump;
-      hexdump.reserve(length * 4);
-      bytesToHexdumpFormat(hexdump, reinterpret_cast<const unsigned char *>(buffer), length);
-      cerr << _("HEXDUMP:\n\n") << hexdump << endl;
-      break;
-    }
-
-    result= transaction.ParseFromArray(buffer, static_cast<int32_t>(length));
-    if (result == false)
-    {
-      cerr << _("Unable to parse command. Got error: ")
-           << transaction.InitializationErrorString() << endl;
-      if (buffer != NULL)
-      {
-        string hexdump;
-        hexdump.reserve(length * 4);
-        bytesToHexdumpFormat(hexdump, reinterpret_cast<const unsigned char *>(buffer), length);
-        cerr <<  _("HEXDUMP:\n\n") << hexdump << endl;
-      }
-      break;
-    }
-
     const message::TransactionContext trx= transaction.transaction_context();
     uint64_t transaction_id= trx.transaction_id();
 
@@ -433,16 +328,9 @@ int main(int argc, char* argv[])
     if (vm.count("transaction-id"))
     {
       if (opt_transaction_id == transaction_id)
-      {
         printTransaction(transaction, ignore_events, print_as_raw);
-      }
       else
-      {
-        /* Need to get the checksum bytes out of stream */
-        coded_input.ReadLittleEndian32(&checksum);
-        previous_length = length;
         continue;
-      }
     }
 
     /*
@@ -485,29 +373,28 @@ int main(int argc, char* argv[])
       }
     } /* end ! vm.count("transaction-id") */
 
-    /* Skip 4 byte checksum */
-    coded_input.ReadLittleEndian32(&checksum);
-
     if (do_checksum)
     {
-      if (checksum != drizzled::algorithm::crc32(buffer, static_cast<size_t>(length)))
+      uint32_t calculated= fileReader.checksumLastReadTransaction();
+      if (checksum != calculated)
       {
         cerr << _("Checksum failed. Wanted ")
              << checksum
              << _(" got ")
-             << drizzled::algorithm::crc32(buffer, static_cast<size_t>(length))
+             << calculated
              << endl;
       }
     }
 
-    previous_length= length;
   } /* end while */
 
-  if (buffer)
-    free(buffer);
+  string error= fileReader.getErrorString();
 
-  delete raw_input;
+  if (error != "EOF")
+  {
+    cerr << error << endl;
+    return 1;
+  }
 
-  return (result == true ? 0 : 1);
+  return 0;
 }
-

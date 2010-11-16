@@ -4,7 +4,7 @@
 # We create a table and insert some data then call truncate on the 
 # table.
 # 
-# We then use the transaction_reader in drizzled/message/ to read the events.
+# We then use the transaction_reader in plugin/transaction_log/utilities to read the events.
 #
 
 --disable_warnings
