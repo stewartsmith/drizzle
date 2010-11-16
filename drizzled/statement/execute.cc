@@ -23,6 +23,10 @@
 #include "drizzled/statement/execute.h"
 #include "drizzled/session.h"
 #include "drizzled/user_var_entry.h"
+#include "drizzled/plugin/listen.h"
+#include "drizzled/plugin/client.h"
+#include "drizzled/plugin/null_client.h"
+#include "drizzled/plugin/client/concurrent.h"
 
 namespace drizzled
 {
@@ -32,16 +36,21 @@ void mysql_parse(drizzled::Session *session, const char *inBuf, uint32_t length)
 namespace statement
 {
 
-Execute::Execute(Session *in_session) :
+Execute::Execute(Session *in_session,
+                 drizzled::execute_string_t to_execute_arg,
+                 bool is_quiet_arg,
+                 bool is_concurrent_arg) :
   Statement(in_session),
-  is_var(false)
+  is_quiet(is_quiet_arg),
+  is_concurrent(is_concurrent_arg),
+  to_execute(to_execute_arg)
 {
 }
   
 
 bool statement::Execute::parseVariable()
 {
-  if (is_var)
+  if (to_execute.isVariable())
   {
     user_var_entry *var= getSession()->getVariable(to_execute, false);
 
@@ -50,13 +59,28 @@ bool statement::Execute::parseVariable()
       LEX_STRING tmp_for_var;
       tmp_for_var.str= var->value; 
       tmp_for_var.length= var->length; 
-      to_execute= tmp_for_var;
+      to_execute.set(tmp_for_var);
+
       return true;
     }
   }
 
   return false;
 }
+
+
+bool statement::Execute::runStatement(plugin::NullClient *client, const std::string &arg)
+{
+  client->pushSQL(arg);
+  if (not getSession()->executeStatement())
+    return true;
+
+  if (getSession()->is_error())
+    return true;
+
+  return false;
+}
+
 
 bool statement::Execute::execute()
 {
@@ -65,7 +89,7 @@ bool statement::Execute::execute()
     my_error(ER_WRONG_ARGUMENTS, MYF(0), "Invalid Variable");
     return false;
   }
-  if (is_var)
+  if (to_execute.isVariable())
   {
     if (not parseVariable())
     {
@@ -74,9 +98,136 @@ bool statement::Execute::execute()
     }
   }
 
-  mysql_parse(getSession(), to_execute.str, to_execute.length);
+  if (is_concurrent)
+  {
+    if (getSession()->isConcurrentExecuteAllowed())
+    {
+      plugin::client::Concurrent *client= new plugin::client::Concurrent;
+      std::string execution_string(to_execute.str, to_execute.length);
+      client->pushSQL(execution_string);
+      Session *new_session= new Session(client);
 
-  // We have to restore ourselves at the top for delete[] to work.
+      // We set the current schema.  @todo do the same with catalog
+      if (not getSession()->getSchema().empty())
+        new_session->set_db(getSession()->getSchema());
+
+      new_session->setConcurrentExecute(false);
+
+      // Overwrite the context in the next session, with what we have in our
+      // session. Eventually we will allow someone to change the effective
+      // user.
+      new_session->getSecurityContext()= getSession()->getSecurityContext();
+
+      if (new_session->schedule())
+        Session::unlink(new_session);
+    }
+    else
+    {
+      my_error(ER_WRONG_ARGUMENTS, MYF(0), "A Concurrent Execution Session can not launch another session.");
+      return false;
+    }
+  }
+  else 
+  {
+    if (is_quiet)
+    {
+      plugin::Client *temp= getSession()->getClient();
+      plugin::NullClient *null_client= new plugin::NullClient;
+
+      getSession()->setClient(null_client);
+      
+      bool error_occured= false;
+      bool is_savepoint= false;
+      {
+        std::string start_sql;
+        if (getSession()->inTransaction())
+        {
+          // @todo Figure out something a bit more solid then this.
+          start_sql.append("SAVEPOINT execute_internal_savepoint");
+          is_savepoint= true;
+        }
+        else
+        {
+          start_sql.append("START TRANSACTION");
+        }
+
+        error_occured= runStatement(null_client, start_sql);
+      }
+
+      // @note this is copied from code in NULL client, all of this belongs
+      // in the pluggable parser pieces.  
+      if (not error_occured)
+      {
+        typedef boost::tokenizer<boost::escaped_list_separator<char> > Tokenizer;
+        std::string full_string(to_execute.str, to_execute.length);
+        Tokenizer tok(full_string, boost::escaped_list_separator<char>("\\", ";", "\""));
+
+        for (Tokenizer::iterator iter= tok.begin();
+             iter != tok.end() and getSession()->getKilled() != Session::KILL_CONNECTION;
+             ++iter)
+        {
+          if (runStatement(null_client, *iter))
+          {
+            error_occured= true;
+            break;
+          }
+        }
+
+        // @todo Encapsulate logic later to method
+        {
+          std::string final_sql;
+          if (is_savepoint)
+          {
+            if (error_occured)
+            {
+              final_sql.append("ROLLBACK TO SAVEPOINT execute_internal_savepoint");
+            }
+            else
+            {
+              final_sql.append("RELEASE SAVEPOINT execute_internal_savepoint");
+            }
+          }
+          else
+          {
+            if (error_occured)
+            {
+              final_sql.append("ROLLBACK");
+            }
+            else
+            {
+              final_sql.append("COMMIT");
+            }
+          }
+
+          // Run the cleanup command, we currently ignore if an error occurs
+          // here.
+          (void)runStatement(null_client, final_sql);
+        }
+      }
+
+      getSession()->setClient(temp);
+      if (getSession()->is_error())
+      {
+        getSession()->clear_error(true);
+      }
+      else
+      {
+        getSession()->clearDiagnostics();
+      }
+
+      getSession()->my_ok();
+
+      null_client->close();
+      delete null_client;
+    }
+    else
+    {
+      mysql_parse(getSession(), to_execute.str, to_execute.length);
+    }
+  }
+
+
+  // We have to restore ourselves at the top for delete() to work.
   getSession()->getLex()->statement= this;
 
   return true;

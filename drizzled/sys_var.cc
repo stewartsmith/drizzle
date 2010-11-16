@@ -541,11 +541,18 @@ bool sys_var_uint64_t_ptr::update(Session *session, set_var *var)
 
 void sys_var_uint64_t_ptr::set_default(Session *, sql_var_t)
 {
-  bool not_used;
-  LOCK_global_system_variables.lock();
-  *value= getopt_ull_limit_value((uint64_t) option_limits->def_value,
-                                 option_limits, &not_used);
-  LOCK_global_system_variables.unlock();
+  if (have_default_value)
+  {
+    *value= default_value;
+  }
+  else
+  {
+    bool not_used;
+    LOCK_global_system_variables.lock();
+    *value= getopt_ull_limit_value((uint64_t) option_limits->def_value,
+                                   option_limits, &not_used);
+    LOCK_global_system_variables.unlock();
+  }
 }
 
 

@@ -22,6 +22,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <cstdlib>
+#include <memory>
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -33,6 +34,8 @@
 #  include <time.h>
 # endif
 #endif
+
+#include <boost/scoped_ptr.hpp>
 
 #define COMMENT_STRING "Your bases"
 #define FRM_STRING "My bases"
@@ -111,7 +114,10 @@ int small_test(az_method method)
   int error;
   unsigned int x;
   int written_rows= 0;
-  azio_stream writer_handle, reader_handle;
+  boost::scoped_ptr<azio_stream> writer_handle_ap(new azio_stream);
+  boost::scoped_ptr<azio_stream> reader_handle_ap(new azio_stream);
+  azio_stream &writer_handle= *writer_handle_ap.get();
+  azio_stream &reader_handle= *reader_handle_ap.get();
 
   memcpy(test_string, TEST_STRING_INIT, 1024);
 
@@ -285,7 +291,10 @@ int small_test(az_method method)
 int size_test(uint64_t length, uint64_t rows_to_test_for,
               az_method method)
 {
-  azio_stream writer_handle, reader_handle;
+  boost::scoped_ptr<azio_stream> writer_handle_ap(new azio_stream);
+  boost::scoped_ptr<azio_stream> reader_handle_ap(new azio_stream);
+  azio_stream &writer_handle= *writer_handle_ap.get();
+  azio_stream &reader_handle= *reader_handle_ap.get();
   uint64_t write_length;
   uint64_t read_length;
   uint64_t count;

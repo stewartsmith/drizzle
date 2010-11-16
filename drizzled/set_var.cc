@@ -18,6 +18,10 @@
  */
 
 #include "config.h"
+
+#include <boost/lexical_cast.hpp>
+#include <string>
+
 #include "drizzled/session.h"
 #include "drizzled/item/string.h"
 #include "drizzled/sql_list.h"
@@ -143,12 +147,24 @@ int set_var::check(Session *session)
 */
 int set_var::update(Session *session)
 {
-  if (! value)
-    var->set_default(session, type);
-  else if (var->update(session, this))
-    return -1;				// should never happen
-  if (var->getAfterUpdateTrigger())
-    (*var->getAfterUpdateTrigger())(session, type);
+  try
+  {
+    if (! value)
+      var->set_default(session, type);
+    else if (var->update(session, this))
+      return -1;				// should never happen
+    if (var->getAfterUpdateTrigger())
+      (*var->getAfterUpdateTrigger())(session, type);
+  }
+  catch (boost::exception &)
+  {
+    /* TODO: Fix this to be typesafe once we have properly typed set_var */
+    string new_val= boost::lexical_cast<string>(save_result.uint32_t_value);
+    push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+                        ER_TRUNCATED_WRONG_VALUE,
+                        ER(ER_TRUNCATED_WRONG_VALUE), var->getName().c_str(),
+                        new_val.c_str());
+  }
   return 0;
 }
 

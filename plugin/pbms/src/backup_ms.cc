@@ -472,7 +472,8 @@ bool MSBackup::doWork()
 		char				*transferBuffer;
 		CloudKeyRec			cloud_key;
 
-	
+                transferBuffer= (char*)malloc(MS_BACKUP_BUFFER_SIZE);
+
 		bu_BackupRunning = true;
 		bu_State = BU_RUNNING; 
 
@@ -688,7 +689,8 @@ bool MSBackup::doWork()
 			bu_State = BU_TERMINATED; 
 		else
 			bu_State = BU_COMPLETED; 
-			
+
+                free(transferBuffer);
 	}	
 	
 	catch_(a) {

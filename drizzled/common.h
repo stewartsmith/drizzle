@@ -178,7 +178,8 @@ enum enum_server_command
 };
 
 
-enum enum_field_types { DRIZZLE_TYPE_LONG,
+enum enum_field_types { 
+                        DRIZZLE_TYPE_LONG,
                         DRIZZLE_TYPE_DOUBLE,
                         DRIZZLE_TYPE_NULL,
                         DRIZZLE_TYPE_TIMESTAMP,

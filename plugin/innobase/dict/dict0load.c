@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1996, 2009, Innobase Oy. All Rights Reserved.
+Copyright (c) 1996, 2010, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -339,7 +339,7 @@ dict_sys_tables_get_flags(
 		return(0);
 	}
 
-	field = rec_get_nth_field_old(rec, 4, &len);
+	field = rec_get_nth_field_old(rec, 4/*N_COLS*/, &len);
 	n_cols = mach_read_from_4(field);
 
 	if (UNIV_UNLIKELY(!(n_cols & 0x80000000UL))) {

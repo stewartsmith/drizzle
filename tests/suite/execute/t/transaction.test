@@ -1,0 +1,31 @@
+# 
+# Test for NON CONCURRENT transaction mix with EXECUTE
+
+CREATE TABLE t1 (a SERIAL);
+SET @insert_var= "INSERT INTO t1 VALUES()";
+EXECUTE @insert_var;
+SELECT a FROM t1;
+
+SET AUTOCOMMIT= 0;
+
+
+START TRANSACTION;
+EXECUTE @insert_var;
+COMMIT;
+SELECT a FROM t1;
+
+START TRANSACTION;
+EXECUTE @insert_var;
+ROLLBACK;
+SELECT a FROM t1;
+
+# We are generating an error in the EXECUTE, so the insert should be rolled
+# back.
+START TRANSACTION;
+SET @insert_var= "INSERT INTO t1 VALUES(); SELECT WILL_ERROR;";
+--error 1064
+EXECUTE @insert_var;
+COMMIT;
+SELECT a FROM t1;
+
+DROP TABLE t1;

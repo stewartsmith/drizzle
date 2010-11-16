@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1996, 2009, Innobase Oy. All Rights Reserved.
+Copyright (c) 1996, 2010, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -119,7 +119,7 @@ trx_create(
 	trx->table_id = ut_dulint_zero;
 
 	trx->mysql_thd = NULL;
-	trx->mysql_query_str = NULL;
+        trx->active_trans = 0;
 	trx->duplicates = 0;
 
 	trx->mysql_n_tables_locked = 0;
@@ -420,6 +420,7 @@ trx_lists_init_at_db_start(void)
 	trx_undo_t*	undo;
 	trx_t*		trx;
 
+	ut_ad(mutex_own(&kernel_mutex));
 	UT_LIST_INIT(trx_sys->trx_list);
 
 	/* Look from the rollback segments if there exist undo logs for
@@ -837,7 +838,7 @@ trx_commit_off_kernel(
 	recovery i.e.: back ground rollback thread is still active
 	then there is a chance that the rollback thread may see
 	this trx as COMMITTED_IN_MEMORY and goes adhead to clean it
-	up calling trx_cleanup_at_db_startup(). This can happen 
+	up calling trx_cleanup_at_db_startup(). This can happen
 	in the case we are committing a trx here that is left in
 	PREPARED state during the crash. Note that commit of the
 	rollback of a PREPARED trx happens in the recovery thread
@@ -934,7 +935,6 @@ trx_commit_off_kernel(
 	trx->rseg = NULL;
 	trx->undo_no = ut_dulint_zero;
 	trx->last_sql_stat_start.least_undo_no = ut_dulint_zero;
-	trx->mysql_query_str = NULL;
 
 	ut_ad(UT_LIST_GET_LEN(trx->wait_thrs) == 0);
 	ut_ad(UT_LIST_GET_LEN(trx->trx_locks) == 0);
@@ -1631,9 +1631,7 @@ trx_mark_sql_stat_end(
 
 /**********************************************************************//**
 Prints info about a transaction to the given file. The caller must own the
-kernel mutex and must have called
-innobase_mysql_prepare_print_arbitrary_thd(), unless he knows that MySQL
-or InnoDB cannot meanwhile change the info printed here. */
+kernel mutex. */
 UNIV_INTERN
 void
 trx_print(
