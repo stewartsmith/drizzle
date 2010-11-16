@@ -356,7 +356,7 @@ void MSRepoFile::update_blob_header(MSOpenTable *otab, uint64_t offset, uint64_t
 					tab_id = CS_GET_DISK_4(ptr.rp_tab_ref->tr_table_id_4);
 					blob_id = CS_GET_DISK_6(ptr.rp_tab_ref->tr_blob_id_6);
 
-					if (otab->getDBTable()->myTableID == tab_id)
+					if ((otab->haveTable()) && (otab->getDBTable()->myTableID == tab_id))
 						otab->getDBTable()->updateBlobHandle(otab, blob_id, otab->myWriteRepo->myRepoID, dst_offset, new_head_size);
 					else {
 						MSOpenTable *ref_otab;
@@ -708,7 +708,9 @@ void MSRepoFile::setBlobMetaData(MSOpenTable *otab, uint64_t offset, const char 
 		if (new_head_size > MS_OT_BUFFER_SIZE)
 			CSException::throwAssertion(CS_CONTEXT, "BLOB reference header overflow");
 
-		memset(ptr.rp_chars + head_size, 0, new_head_size - head_size);		
+		memset(ptr.rp_chars + head_size, 0, new_head_size - head_size);
+		CS_SET_DISK_2(ptr.rp_head->rb_head_size_2, new_head_size);
+		
 	}	
 				
 	// Meta data is placed at the end of the header.
@@ -720,8 +722,7 @@ void MSRepoFile::setBlobMetaData(MSOpenTable *otab, uint64_t offset, const char 
 		
 	
 	CS_SET_DISK_2(ptr.rp_head->rb_mdata_size_2, mdata_size);
-	CS_SET_DISK_2(ptr.rp_head->rb_mdata_offset_2, mdata_offset);
-	
+	CS_SET_DISK_2(ptr.rp_head->rb_mdata_offset_2, mdata_offset);	
 #ifdef HAVE_ALIAS_SUPPORT
 	uint32_t alias_hash = INVALID_ALIAS_HASH;
 	if (alias) {
@@ -1667,7 +1668,7 @@ void MSRepository::lockRepo(RepoLockState state)
 	CSMutex	*myLock;
 	enter_();
 	
-	myLock = &myRepoLock[0];
+	myLock = &myRepoWriteLock;
 	lock_(myLock);
 	
 	ASSERT(!myRepoXLock);
@@ -1695,7 +1696,7 @@ void MSRepository::unlockRepo(RepoLockState state)
 {
 	CSMutex	*myLock;
 	enter_();
-	myLock = &myRepoLock[0];
+	myLock = &myRepoWriteLock;
 	lock_(myLock);
 	
 	ASSERT(myRepoLockState & state);
@@ -1717,7 +1718,7 @@ void MSRepository::returnToPool()
 {
 	CSMutex	*myLock;
 	enter_();
-	myLock = &myRepoLock[0];
+	myLock = &myRepoWriteLock;
 	lock_(myLock);
 	this->myRepoLockState &= ~(REPO_COMPACTING | REPO_WRITE);
 	if ( this->myRepoLockState == REPO_UNLOCKED) {
@@ -1734,7 +1735,7 @@ void MSRepository::backupCompleted()
 {
 	CSMutex	*myLock;
 	enter_();
-	myLock = &myRepoLock[0];
+	myLock = &myRepoWriteLock;
 	lock_(myLock);
 	
 	
@@ -1756,7 +1757,7 @@ uint32_t MSRepository::initBackup()
 	uint32_t state;
 	enter_();
 	
-	myLock = &myRepoLock[0];
+	myLock = &myRepoWriteLock;
 	lock_(myLock);
 	state = this->myRepoLockState;
 	this->myRepoLockState |= REPO_BACKUP;

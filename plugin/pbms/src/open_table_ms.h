@@ -115,6 +115,7 @@ public:
 	void openForReading();
 	void closeForWriting();
 
+	bool haveTable() { return (myPool != NULL); }
 	uint32_t getTableID();
 	MSTable *getDBTable();
 	MSDatabase *getDB();
