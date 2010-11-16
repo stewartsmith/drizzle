@@ -29,10 +29,544 @@ extern "C" {
 #include "buf0buf.h" /* for buf_pool and PAGE_ZIP_MIN_SIZE */
 #include "ha_prototypes.h" /* for innobase_convert_name() */
 #include "srv0start.h" /* for srv_was_started */
+#include "btr0pcur.h"	/* for file sys_tables related info. */
+#include "btr0types.h"
+#include "dict0load.h"	/* for file sys_tables related info. */
+#include "dict0mem.h"
+#include "dict0types.h"
 }
 #include "handler0vars.h"
 
 using namespace drizzled;
+
+InnodbSysTablesTool::InnodbSysTablesTool() :
+  plugin::TableFunction("DATA_DICTIONARY", "INNODB_SYS_TABLES")
+{
+  add_field("TABLE_ID", plugin::TableFunction::NUMBER, 0, false);
+  add_field("NAME", plugin::TableFunction::STRING, NAME_LEN + 1, false);
+  add_field("FLAG", plugin::TableFunction::NUMBER, 0, false);
+  add_field("N_COLS", plugin::TableFunction::NUMBER, 0, false);
+  add_field("SPACE", plugin::TableFunction::NUMBER, 0, false);
+}
+
+InnodbSysTablesTool::Generator::Generator(Field **arg) :
+  plugin::TableFunction::Generator(arg)
+{
+  heap= NULL;
+}
+
+bool InnodbSysTablesTool::Generator::populate()
+{
+  if (heap == NULL)
+  {
+    heap = mem_heap_create(1000);
+    mutex_enter(&(dict_sys->mutex));
+    mtr_start(&mtr);
+
+    rec = dict_startscan_system(&pcur, &mtr, SYS_TABLES);
+  }
+  else
+  {
+    /* Get the next record */
+    mutex_enter(&dict_sys->mutex);
+    mtr_start(&mtr);
+    rec = dict_getnext_system(&pcur, &mtr);
+  }
+
+  if (! rec)
+  {
+    mtr_commit(&mtr);
+    mutex_exit(&dict_sys->mutex);
+    mem_heap_free(heap);
+    return false;
+  }
+
+  const char*	err_msg;
+  dict_table_t*	table_rec;
+
+  /* Create and populate a dict_table_t structure with
+     information from SYS_TABLES row */
+  err_msg = dict_process_sys_tables_rec(heap, rec, &table_rec,
+                                        DICT_TABLE_LOAD_FROM_RECORD);
+
+  mtr_commit(&mtr);
+  mutex_exit(&dict_sys->mutex);
+
+  if (!err_msg) {
+    push(ut_conv_dulint_to_longlong(table_rec->id));
+    push(table_rec->name);
+    push((uint64_t)table_rec->flags);
+    push((uint64_t)table_rec->n_cols);
+    push((uint64_t)table_rec->space);
+  } else {
+/*    push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                        ER_CANT_FIND_SYSTEM_REC,
+                        err_msg);
+*/  }
+
+  /* Since dict_process_sys_tables_rec() is called with
+     DICT_TABLE_LOAD_FROM_RECORD, the table_rec is created in
+     dict_process_sys_tables_rec(), we will need to free it */
+  if (table_rec) {
+    dict_mem_table_free(table_rec);
+  }
+
+  mem_heap_empty(heap);
+
+  return true;
+}
+
+InnodbSysTableStatsTool::InnodbSysTableStatsTool() :
+  plugin::TableFunction("DATA_DICTIONARY", "INNODB_SYS_TABLESTATS")
+{
+  add_field("TABLE_ID", plugin::TableFunction::NUMBER, 0, false);
+  add_field("NAME", plugin::TableFunction::STRING, NAME_LEN + 1, false);
+  add_field("STATS_INITIALIZED", plugin::TableFunction::STRING, NAME_LEN + 1, false);
+  add_field("NUM_ROWS", plugin::TableFunction::NUMBER, 0, false);
+  add_field("CLUST_INDEX_SIZE", plugin::TableFunction::NUMBER, 0, false);
+  add_field("OTHER_INDEX_SIZE", plugin::TableFunction::NUMBER, 0, false);
+  add_field("MODIFIED_COUNTER", plugin::TableFunction::NUMBER, 0, false);
+  add_field("AUTOINC", plugin::TableFunction::NUMBER, 0, false);
+  add_field("HANDLES_OPENED", plugin::TableFunction::NUMBER, 0, false);
+}
+
+InnodbSysTableStatsTool::Generator::Generator(Field **arg) :
+  plugin::TableFunction::Generator(arg)
+{
+  heap= NULL;
+}
+
+bool InnodbSysTableStatsTool::Generator::populate()
+{
+  if (heap == NULL)
+  {
+    heap = mem_heap_create(1000);
+    mutex_enter(&dict_sys->mutex);
+    mtr_start(&mtr);
+    rec = dict_startscan_system(&pcur, &mtr, SYS_TABLES);
+  }
+  else
+  {
+    /* Get the next record */
+    mutex_enter(&dict_sys->mutex);
+    mtr_start(&mtr);
+    rec = dict_getnext_system(&pcur, &mtr);
+  }
+
+  if (!rec)
+  {
+    mtr_commit(&mtr);
+    mutex_exit(&dict_sys->mutex);
+    mem_heap_free(heap);
+    return false;
+  }
+
+  const char*	err_msg;
+  dict_table_t*	table_rec;
+
+  /* Fetch the dict_table_t structure corresponding to
+     this SYS_TABLES record */
+  err_msg = dict_process_sys_tables_rec(heap, rec, &table_rec,
+                                        DICT_TABLE_LOAD_FROM_CACHE);
+
+  mtr_commit(&mtr);
+  mutex_exit(&dict_sys->mutex);
+
+  if (!err_msg) {
+    push(ut_conv_dulint_to_longlong(table_rec->id));
+    push(table_rec->name);
+    if (table_rec->stat_initialized)
+      push("Initialized");
+    else
+      push("Uninitialized");
+    push(table_rec->stat_n_rows);
+    push(table_rec->stat_clustered_index_size);
+    push(table_rec->stat_sum_of_other_index_sizes);
+    push(table_rec->stat_modified_counter);
+    push(table_rec->autoinc);
+    push(table_rec->n_mysql_handles_opened);
+  } else {
+    /*    push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+                        ER_CANT_FIND_SYSTEM_REC,
+                        err_msg);*/
+  }
+
+  mem_heap_empty(heap);
+
+  return true;
+}
+
+InnodbSysIndexesTool::InnodbSysIndexesTool() :
+  plugin::TableFunction("DATA_DICTIONARY", "INNODB_SYS_INDEXES")
+{
+  add_field("INDEX_ID", plugin::TableFunction::NUMBER, 0, false);
+  add_field("NAME", plugin::TableFunction::STRING, NAME_LEN + 1, false);
+  add_field("TABLE_ID", plugin::TableFunction::NUMBER, 0, false);
+  add_field("TYPE", plugin::TableFunction::NUMBER, 0, false);
+  add_field("N_FIELDS", plugin::TableFunction::NUMBER, 0, false);
+  add_field("PAGE_NO", plugin::TableFunction::NUMBER, 0, false);
+  add_field("SPACE", plugin::TableFunction::NUMBER, 0, false);
+}
+
+InnodbSysIndexesTool::Generator::Generator(Field **arg) :
+  plugin::TableFunction::Generator(arg)
+{
+  heap= NULL;
+}
+
+bool InnodbSysIndexesTool::Generator::populate()
+{
+  if (heap == NULL)
+  {
+    heap = mem_heap_create(1000);
+    mutex_enter(&dict_sys->mutex);
+    mtr_start(&mtr);
+
+    /* Start scan the SYS_INDEXES table */
+    rec = dict_startscan_system(&pcur, &mtr, SYS_INDEXES);
+  }
+  else
+  {
+    /* Get the next record */
+    mutex_enter(&dict_sys->mutex);
+    mtr_start(&mtr);
+    rec = dict_getnext_system(&pcur, &mtr);
+  }
+
+  if (! rec)
+  {
+    mtr_commit(&mtr);
+    mutex_exit(&dict_sys->mutex);
+    mem_heap_free(heap);
+    return false;
+  }
+
+  const char*	err_msg;;
+  dulint		table_id;
+  dict_index_t	index_rec;
+
+  /* Populate a dict_index_t structure with information from
+     a SYS_INDEXES row */
+  err_msg = dict_process_sys_indexes_rec(heap, rec, &index_rec,
+                                         &table_id);
+
+  mtr_commit(&mtr);
+  mutex_exit(&dict_sys->mutex);
+  if (!err_msg) {
+    push(ut_conv_dulint_to_longlong(index_rec.id));
+    push(index_rec.name);
+    push(ut_conv_dulint_to_longlong(table_id));
+    push((uint64_t)index_rec.type);
+    push((uint64_t)index_rec.n_fields);
+    push((uint64_t)index_rec.page);
+    push((uint64_t)index_rec.space);
+  } else {
+/*    push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+                        ER_CANT_FIND_SYSTEM_REC,
+                        err_msg);*/
+  }
+
+  mem_heap_empty(heap);
+
+  if (!rec)
+  {
+    mtr_commit(&mtr);
+    mutex_exit(&dict_sys->mutex);
+    mem_heap_free(heap);
+    return false;
+  }
+
+  return true;
+}
+
+InnodbSysColumnsTool::InnodbSysColumnsTool() :
+  plugin::TableFunction("DATA_DICTIONARY", "INNODB_SYS_COLUMNS")
+{
+  add_field("TABLE_ID", plugin::TableFunction::NUMBER, 0, false);
+  add_field("NAME", plugin::TableFunction::STRING, NAME_LEN + 1, false);
+  add_field("POS", plugin::TableFunction::NUMBER, 0, false);
+  add_field("MTYPE", plugin::TableFunction::NUMBER, 0, false);
+  add_field("PRTYPE", plugin::TableFunction::NUMBER, 0, false);
+  add_field("LEN", plugin::TableFunction::NUMBER, 0, false);
+}
+
+InnodbSysColumnsTool::Generator::Generator(Field **arg) :
+  plugin::TableFunction::Generator(arg)
+{
+  heap= NULL;
+}
+
+bool InnodbSysColumnsTool::Generator::populate()
+{
+  if (heap == NULL)
+  {
+    heap = mem_heap_create(1000);
+    mutex_enter(&dict_sys->mutex);
+    mtr_start(&mtr);
+    rec = dict_startscan_system(&pcur, &mtr, SYS_COLUMNS);
+  }
+  else
+  {
+    /* Get the next record */
+    mutex_enter(&dict_sys->mutex);
+    mtr_start(&mtr);
+    rec = dict_getnext_system(&pcur, &mtr);
+  }
+
+  if (! rec)
+  {
+    mtr_commit(&mtr);
+    mutex_exit(&dict_sys->mutex);
+    mem_heap_free(heap);
+    return false;
+  }
+
+  const char*	err_msg;
+  dict_col_t	column_rec;
+  dulint		table_id;
+  const char*	col_name;
+
+  /* populate a dict_col_t structure with information from
+     a SYS_COLUMNS row */
+  err_msg = dict_process_sys_columns_rec(heap, rec, &column_rec,
+						       &table_id, &col_name);
+
+  mtr_commit(&mtr);
+  mutex_exit(&dict_sys->mutex);
+
+  if (!err_msg) {
+    push(ut_conv_dulint_to_longlong(table_id));
+    push(col_name);
+    push((uint64_t)column_rec.ind);
+    push((uint64_t)column_rec.mtype);
+    push((uint64_t)column_rec.prtype);
+    push((uint64_t)column_rec.len);
+  } else {
+/*    push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+                        ER_CANT_FIND_SYSTEM_REC,
+                        err_msg);*/
+  }
+
+  mem_heap_empty(heap);
+
+  return true;
+}
+
+InnodbSysFieldsTool::InnodbSysFieldsTool() :
+  plugin::TableFunction("DATA_DICTIONARY", "INNODB_SYS_FIELDS")
+{
+  add_field("INDEX_ID", plugin::TableFunction::NUMBER, 0, false);
+  add_field("NAME", plugin::TableFunction::STRING, NAME_LEN + 1, false);
+  add_field("POS", plugin::TableFunction::NUMBER, 0, false);
+}
+
+InnodbSysFieldsTool::Generator::Generator(Field **arg) :
+  plugin::TableFunction::Generator(arg)
+{
+  heap= NULL;
+}
+
+bool InnodbSysFieldsTool::Generator::populate()
+{
+  if (heap == NULL)
+  {
+    heap = mem_heap_create(1000);
+    mutex_enter(&dict_sys->mutex);
+    mtr_start(&mtr);
+
+    /* will save last index id so that we know whether we move to
+       the next index. This is used to calculate prefix length */
+    last_id = ut_dulint_create(0, 0);
+
+    rec = dict_startscan_system(&pcur, &mtr, SYS_FIELDS);
+  }
+  else
+  {
+    /* Get the next record */
+    mutex_enter(&dict_sys->mutex);
+    mtr_start(&mtr);
+    rec = dict_getnext_system(&pcur, &mtr);
+  }
+
+  if (! rec)
+  {
+    mtr_commit(&mtr);
+    mutex_exit(&dict_sys->mutex);
+    mem_heap_free(heap);
+
+    return false;
+  }
+
+  ulint		pos;
+  const char*	err_msg;
+  dulint		index_id;
+  dict_field_t	field_rec;
+
+  /* Populate a dict_field_t structure with information from
+     a SYS_FIELDS row */
+  err_msg = dict_process_sys_fields_rec(heap, rec, &field_rec,
+                                        &pos, &index_id, last_id);
+
+  mtr_commit(&mtr);
+  mutex_exit(&dict_sys->mutex);
+
+  if (!err_msg) {
+    push(ut_conv_dulint_to_longlong(index_id));
+    push(field_rec.name);
+    push(pos);
+
+    last_id = index_id;
+  } else {
+/*    push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+                        ER_CANT_FIND_SYSTEM_REC,
+                        err_msg);*/
+  }
+
+  mem_heap_empty(heap);
+
+  return true;
+}
+
+InnodbSysForeignTool::InnodbSysForeignTool() :
+  plugin::TableFunction("DATA_DICTIONARY", "INNODB_SYS_FOREIGN")
+{
+  add_field("ID", plugin::TableFunction::STRING, NAME_LEN + 1, false);
+  add_field("FOR_NAME", plugin::TableFunction::STRING, NAME_LEN + 1, false);
+  add_field("REF_NAME", plugin::TableFunction::STRING, NAME_LEN + 1, false);
+  add_field("N_COLS", plugin::TableFunction::NUMBER, 0, false);
+  add_field("TYPE", plugin::TableFunction::NUMBER, 0, false);
+}
+
+InnodbSysForeignTool::Generator::Generator(Field **arg) :
+  plugin::TableFunction::Generator(arg)
+{
+  heap= NULL;
+}
+
+bool InnodbSysForeignTool::Generator::populate()
+{
+  if (heap == NULL)
+  {
+    heap = mem_heap_create(1000);
+    mutex_enter(&dict_sys->mutex);
+    mtr_start(&mtr);
+
+    rec = dict_startscan_system(&pcur, &mtr, SYS_FOREIGN);
+  }
+  else
+  {
+    /* Get the next record */
+    mtr_start(&mtr);
+    mutex_enter(&dict_sys->mutex);
+    rec = dict_getnext_system(&pcur, &mtr);
+  }
+
+  if (! rec)
+  {
+    mtr_commit(&mtr);
+    mutex_exit(&dict_sys->mutex);
+    mem_heap_free(heap);
+    return false;
+  }
+
+  const char*	err_msg;
+  dict_foreign_t	foreign_rec;
+
+  /* Populate a dict_foreign_t structure with information from
+     a SYS_FOREIGN row */
+  err_msg = dict_process_sys_foreign_rec(heap, rec, &foreign_rec);
+
+  mtr_commit(&mtr);
+  mutex_exit(&dict_sys->mutex);
+
+  if (!err_msg) {
+    push(foreign_rec.id);
+    push(foreign_rec.foreign_table_name);
+    push(foreign_rec.referenced_table_name);
+    push((uint64_t)foreign_rec.n_fields);
+    push((uint64_t)foreign_rec.type);
+  } else {
+/*    push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+                        ER_CANT_FIND_SYSTEM_REC,
+                        err_msg);
+*/  }
+
+  mem_heap_empty(heap);
+
+  return true;
+}
+
+InnodbSysForeignColsTool::InnodbSysForeignColsTool() :
+  plugin::TableFunction("DATA_DICTIONARY", "INNODB_SYS_FOREIGN_COLS")
+{
+  add_field("ID", plugin::TableFunction::STRING, NAME_LEN + 1, false);
+  add_field("FOR_COL_NAME", plugin::TableFunction::STRING, NAME_LEN + 1, false);
+  add_field("REF_COL_NAME", plugin::TableFunction::STRING, NAME_LEN + 1, false);
+  add_field("POS", plugin::TableFunction::NUMBER, 0, false);
+}
+
+InnodbSysForeignColsTool::Generator::Generator(Field **arg) :
+  plugin::TableFunction::Generator(arg)
+{
+  heap= NULL;
+}
+
+bool InnodbSysForeignColsTool::Generator::populate()
+{
+  if (heap == NULL)
+  {
+    heap = mem_heap_create(1000);
+    mutex_enter(&dict_sys->mutex);
+    mtr_start(&mtr);
+
+    rec = dict_startscan_system(&pcur, &mtr, SYS_FOREIGN_COLS);
+  }
+  else
+  {
+    /* Get the next record */
+    mutex_enter(&dict_sys->mutex);
+    mtr_start(&mtr);
+    rec = dict_getnext_system(&pcur, &mtr);
+  }
+
+  if (! rec)
+  {
+    mtr_commit(&mtr);
+    mutex_exit(&dict_sys->mutex);
+    mem_heap_free(heap);
+
+    return false;
+  }
+
+  const char*	err_msg;
+  const char*	name;
+  const char*	for_col_name;
+  const char*	ref_col_name;
+  ulint		pos;
+
+  /* Extract necessary information from a SYS_FOREIGN_COLS row */
+  err_msg = dict_process_sys_foreign_col_rec(heap, rec, &name, &for_col_name,
+                                             &ref_col_name, &pos);
+
+  mtr_commit(&mtr);
+  mutex_exit(&dict_sys->mutex);
+
+  if (!err_msg) {
+    push(name);
+    push(for_col_name);
+    push(ref_col_name);
+    push(pos);
+  } else {
+/*    push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+                        ER_CANT_FIND_SYSTEM_REC,
+                        err_msg);
+*/
+  }
+
+  mem_heap_empty(heap);
+
+  return true;
+}
 
 /*
  * Fill the dynamic table data_dictionary.INNODB_CMP and INNODB_CMP_RESET

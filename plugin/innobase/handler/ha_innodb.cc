@@ -162,6 +162,14 @@ static plugin::TableFunction* cmp_mem_reset_tool= NULL;
 static plugin::TableFunction* innodb_trx_tool= NULL;
 static plugin::TableFunction* innodb_locks_tool= NULL;
 static plugin::TableFunction* innodb_lock_waits_tool= NULL;
+static plugin::TableFunction* innodb_sys_tables_tool= NULL;
+static plugin::TableFunction* innodb_sys_tablestats_tool= NULL;
+
+static plugin::TableFunction* innodb_sys_indexes_tool= NULL;
+static plugin::TableFunction* innodb_sys_columns_tool= NULL;
+static plugin::TableFunction* innodb_sys_fields_tool= NULL;
+static plugin::TableFunction* innodb_sys_foreign_tool= NULL;
+static plugin::TableFunction* innodb_sys_foreign_cols_tool= NULL;
 
 static long innobase_mirrored_log_groups, innobase_log_files_in_group,
   innobase_log_buffer_size,
@@ -2386,6 +2394,27 @@ innobase_change_buffering_inited_ok:
 
   innodb_lock_waits_tool= new(std::nothrow)InnodbTrxTool("INNODB_LOCK_WAITS");
   context.add(innodb_lock_waits_tool);
+
+  innodb_sys_tables_tool= new(std::nothrow)InnodbSysTablesTool();
+  context.add(innodb_sys_tables_tool);
+
+  innodb_sys_tablestats_tool= new(std::nothrow)InnodbSysTableStatsTool();
+  context.add(innodb_sys_tablestats_tool);
+
+  innodb_sys_indexes_tool= new(std::nothrow)InnodbSysIndexesTool();
+  context.add(innodb_sys_indexes_tool);
+
+  innodb_sys_columns_tool= new(std::nothrow)InnodbSysColumnsTool();
+  context.add(innodb_sys_columns_tool);
+
+  innodb_sys_fields_tool= new(std::nothrow)InnodbSysFieldsTool();
+  context.add(innodb_sys_fields_tool);
+
+  innodb_sys_foreign_tool= new(std::nothrow)InnodbSysForeignTool();
+  context.add(innodb_sys_foreign_tool);
+
+  innodb_sys_foreign_cols_tool= new(std::nothrow)InnodbSysForeignColsTool();
+  context.add(innodb_sys_foreign_cols_tool);
 
   context.add(new(std::nothrow)InnodbInternalTables());
 
