@@ -46,7 +46,7 @@ public:
   {
   }
 
-  operator drizzled::Session::Ptr()
+  operator drizzled::Session::shared_ptr()
   {
     while (iter != local_list.end())
     {
@@ -56,12 +56,12 @@ public:
         continue;
       }
 
-      drizzled::Session::Ptr ret= *iter;
+      drizzled::Session::shared_ptr ret(*iter);
       iter++;
       return ret;
     }
 
-    return NULL;
+    return drizzled::Session::shared_ptr();
   }
 };
 

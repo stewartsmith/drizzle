@@ -33,10 +33,8 @@ namespace session
 
 class Cache 
 {
-  boost::mutex _mutex;
-
 public:
-  typedef std::list<Session::Ptr> List;
+  typedef std::list<Session::shared_ptr> List;
 
   static inline Cache &singleton()
   {
@@ -56,9 +54,11 @@ public:
   }
 
   void erase(Session::Ptr);
+  void erase(Session::shared_ptr);
 
 private:
   List cache;
+  boost::mutex _mutex;
 };
 
 } /* namespace session */

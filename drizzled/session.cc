@@ -551,7 +551,7 @@ void Session::run()
   disconnect(0, true);
 }
 
-bool Session::schedule(Session::Ptr arg)
+bool Session::schedule(Session::shared_ptr arg)
 {
   arg->scheduler= plugin::Scheduler::getScheduler();
   assert(arg->scheduler);
@@ -581,7 +581,7 @@ bool Session::schedule(Session::Ptr arg)
     // We should do something about an error...
   }
 
-  if (plugin::Scheduler::getScheduler()->addSession(arg))
+  if (plugin::Scheduler::getScheduler()->addSession(arg.get()))
   {
     DRIZZLE_CONNECTION_START(thread_id);
     char error_message_buff[DRIZZLE_ERRMSG_SIZE];

@@ -352,7 +352,7 @@ int main(int argc, char **argv)
      should be shutdown. */
   while ((client= plugin::Listen::getClient()) != NULL)
   {
-    Session::Ptr session(new Session(client));
+    Session::shared_ptr session(new Session(client));
 
     if (not session)
     {

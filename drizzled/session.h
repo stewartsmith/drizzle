@@ -310,6 +310,7 @@ public:
   // Plugin storage in Session.
   typedef boost::unordered_map<std::string, util::Storable *, util::insensitive_hash, util::insensitive_equal_to> PropertyMap;
   typedef Session* Ptr;
+  typedef boost::shared_ptr<Session> shared_ptr;
 
   /*
     MARK_COLUMNS_NONE:  Means mark_used_colums is not set and no indicator to
@@ -1135,9 +1136,10 @@ public:
   /**
    * Schedule a session to be run on the default scheduler.
    */
-  static bool schedule(Session::Ptr);
+  static bool schedule(Session::shared_ptr);
 
-  static void unlink(Session*);
+  static void unlink(Session::shared_ptr);
+  static void unlink(Session::Ptr);
 
   /*
     For enter_cond() / exit_cond() to work the mutex must be got before

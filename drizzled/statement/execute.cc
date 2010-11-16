@@ -105,7 +105,7 @@ bool statement::Execute::execute()
       plugin::client::Concurrent *client= new plugin::client::Concurrent;
       std::string execution_string(to_execute.str, to_execute.length);
       client->pushSQL(execution_string);
-      Session::Ptr new_session= new Session(client);
+      Session::shared_ptr new_session(new Session(client));
 
       // We set the current schema.  @todo do the same with catalog
       if (not getSession()->getSchema().empty())

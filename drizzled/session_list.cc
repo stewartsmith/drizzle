@@ -36,6 +36,18 @@ namespace session
 
 void Cache::erase(Session::Ptr arg)
 {
+  for (List::iterator it= cache.begin(); it != cache.end(); it++)
+  {
+    if ((*it).get() == arg)
+    {
+      cache.erase(it);
+      return;
+    }
+  }
+}
+
+void Cache::erase(Session::shared_ptr arg)
+{
   cache.erase(remove(cache.begin(), cache.end(), arg));
 }
 

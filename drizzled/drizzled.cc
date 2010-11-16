@@ -446,10 +446,10 @@ void close_connections(void)
     session::Cache::List list= session::Cache::singleton().getCache();
     for (session::Cache::List::iterator it= list.begin(); it != list.end(); ++it )
     {
-      Session::Ptr tmp= *it;
+      Session::shared_ptr tmp(*it);
 
       tmp->setKilled(Session::KILL_CONNECTION);
-      tmp->scheduler->killSession(tmp);
+      tmp->scheduler->killSession(tmp.get());
       DRIZZLE_CONNECTION_DONE(tmp->thread_id);
       tmp->lockOnSys();
     }
@@ -639,8 +639,22 @@ void drizzled::Session::unlink(Session* session)
   {
     // We should do something about an error...
   }
+}
 
-  delete session;
+void drizzled::Session::unlink(Session::shared_ptr session)
+{
+  connection_count.decrement();
+
+  session->cleanup();
+
+  boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
+  session->lockForDelete();
+
+  session::Cache::singleton().erase(session);
+  if (unlikely(plugin::EventObserver::disconnectSession(*session)))
+  {
+    // We should do something about an error...
+  }
 }
 
 
