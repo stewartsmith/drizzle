@@ -48,6 +48,13 @@ Session::shared_ptr Cache::find(const session_id_t &id)
   return Session::shared_ptr();
 }
 
+size_t Cache::count()
+{
+  boost::mutex::scoped_lock scopedLock(_mutex);
+
+  return cache.size();
+}
+
 void Cache::erase(Session::Ptr arg)
 {
   for (List::iterator it= cache.begin(); it != cache.end(); it++)

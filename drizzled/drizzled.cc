@@ -444,6 +444,7 @@ void close_connections(void)
   {
     boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
     session::Cache::List list= session::Cache::singleton().getCache();
+
     for (session::Cache::List::iterator it= list.begin(); it != list.end(); ++it )
     {
       Session::shared_ptr tmp(*it);
@@ -455,7 +456,7 @@ void close_connections(void)
     }
   }
 
-  if (connection_count)
+  if (session::Cache::singleton().count())
     sleep(2);                                   // Give threads time to die
 
   /*
@@ -467,6 +468,7 @@ void close_connections(void)
   {
     boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
     session::Cache::List list= session::Cache::singleton().getCache();
+
     if (list.empty())
     {
       break;

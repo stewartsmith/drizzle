@@ -55,6 +55,7 @@ public:
 
   void erase(Session::Ptr);
   void erase(Session::shared_ptr);
+  size_t count();
 
   Session::shared_ptr find(const session_id_t &id);
 
