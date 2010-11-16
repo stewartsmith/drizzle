@@ -20,6 +20,7 @@
 #include <drizzled/module/option_map.h>
 #include <drizzled/errmsg_print.h>
 #include "drizzled/session.h"
+#include "drizzled/session_list.h"
 
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
@@ -118,7 +119,7 @@ void MultiThreadScheduler::killSessionNow(Session *session)
 
 MultiThreadScheduler::~MultiThreadScheduler()
 {
-  boost::mutex::scoped_lock scopedLock(LOCK_thread_count);
+  boost::mutex::scoped_lock scopedLock(drizzled::session::Cache::singleton().mutex());
   while (thread_count)
   {
     COND_thread_count.wait(scopedLock);

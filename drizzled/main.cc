@@ -48,6 +48,7 @@
 #include "drizzled/gettext.h"
 #include "drizzled/configmake.h"
 #include "drizzled/session.h"
+#include "drizzled/session_list.h"
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/unireg.h"
 #include "drizzled/drizzled.h"
@@ -378,15 +379,16 @@ int main(int argc, char **argv)
     }
   }
 
-  LOCK_thread_count.lock();
-  select_thread_in_use=0;			// For close_connections
-  LOCK_thread_count.unlock();
+  {
+    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
+    select_thread_in_use= false;			// For close_connections
+  }
   COND_thread_count.notify_all();
 
   /* Wait until cleanup is done */
   {
-    boost::mutex::scoped_lock scopedLock(LOCK_thread_count);
-    while (!ready_to_exit)
+    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
+    while (not ready_to_exit)
       COND_server_end.wait(scopedLock);
   }
 

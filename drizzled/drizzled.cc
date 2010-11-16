@@ -340,7 +340,6 @@ SHOW_COMP_OPTION have_symlink;
 
 boost::mutex LOCK_open;
 boost::mutex LOCK_global_system_variables;
-boost::mutex LOCK_thread_count;
 
 boost::condition_variable_any COND_refresh;
 boost::condition_variable COND_thread_count;
@@ -418,7 +417,7 @@ void close_connections(void)
 
   /* kill connection thread */
   {
-    boost::mutex::scoped_lock scopedLock(LOCK_thread_count);
+    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
 
     while (select_thread_in_use)
     {
@@ -443,7 +442,7 @@ void close_connections(void)
   */
 
   {
-    boost::mutex::scoped_lock scoped(LOCK_thread_count);
+    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
     session::Cache::List list= session::Cache::singleton().getCache();
     for (session::Cache::List::iterator it= list.begin(); it != list.end(); ++it )
     {
@@ -466,7 +465,7 @@ void close_connections(void)
   */
   for (;;)
   {
-    boost::mutex::scoped_lock scoped(LOCK_thread_count);
+    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
     session::Cache::List list= session::Cache::singleton().getCache();
     if (list.empty())
     {
@@ -512,11 +511,13 @@ void clean_up(bool print_message)
 
   if (print_message && server_start_time)
     errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_SHUTDOWN_COMPLETE)),internal::my_progname);
-  LOCK_thread_count.lock();
-  ready_to_exit=1;
-  /* do the broadcast inside the lock to ensure that my_end() is not called */
-  COND_server_end.notify_all();
-  LOCK_thread_count.unlock();
+  {
+    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
+    ready_to_exit= true;
+
+    /* do the broadcast inside the lock to ensure that my_end() is not called */
+    COND_server_end.notify_all();
+  }
 
   /*
     The following lines may never be executed as the main thread may have
@@ -622,9 +623,6 @@ static void set_root(const char *path)
   SYNOPSIS
     Session::unlink()
     session		 Thread handler
-
-  NOTES
-    LOCK_thread_count is locked and left locked
 */
 
 void drizzled::Session::unlink(Session* session)
@@ -633,7 +631,7 @@ void drizzled::Session::unlink(Session* session)
 
   session->cleanup();
 
-  boost::mutex::scoped_lock scoped(LOCK_thread_count);
+  boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
   session->lockForDelete();
 
   session::Cache::singleton().erase(session);

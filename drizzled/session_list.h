@@ -33,6 +33,8 @@ namespace session
 
 class Cache 
 {
+  boost::mutex _mutex;
+
 public:
   typedef std::list<Session::Ptr> List;
 
@@ -46,6 +48,11 @@ public:
   List &getCache()
   {
     return cache;
+  }
+
+  boost::mutex &mutex()
+  {
+    return _mutex;
   }
 
   void erase(Session::Ptr);

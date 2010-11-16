@@ -1428,7 +1428,7 @@ void add_join_natural(TableList *a, TableList *b, List<String> *using_fields,
 static unsigned int
 kill_one_thread(Session *, session_id_t id, bool only_kill_query)
 {
-  boost::mutex::scoped_lock scoped(LOCK_thread_count);
+  boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
   session::Cache::List::iterator it;
   uint32_t error= ER_NO_SUCH_THREAD;
   

@@ -567,7 +567,7 @@ bool Session::schedule(Session::Ptr arg)
   arg->thread_id= arg->variables.pseudo_thread_id= global_thread_id++;
 
   {
-    boost::mutex::scoped_lock scoped(LOCK_thread_count);
+    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
     session::Cache::singleton().getCache().push_back(arg);
   }
 
@@ -1655,7 +1655,7 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
 
   /* Close out our connection to the client */
   if (should_lock)
-    LOCK_thread_count.lock();
+    session::Cache::singleton().mutex().lock();
 
   setKilled(Session::KILL_CONNECTION);
 
@@ -1671,7 +1671,7 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
 
   if (should_lock)
   {
-    (void) LOCK_thread_count.unlock();
+    session::Cache::singleton().mutex().unlock();
   }
 }
 
