@@ -1056,10 +1056,10 @@ bool MSRepositoryTable::returnRow(MSBlobHeadPtr	blob, char *buf)
 				break;
 			case 'M': // MD5_Checksum
 				if (storage_type == MS_STANDARD_STORAGE) {
-					char checksum[sizeof(Md5Digest) *2];
+					char checksum[sizeof(Md5Digest) *2 +1];
 					
 					ASSERT(strcmp(curr_field->field_name, "MD5_Checksum") == 0);
-					cs_bin_to_hex(sizeof(Md5Digest) *2, checksum, sizeof(Md5Digest), &(blob->rb_blob_checksum_md5d));
+					cs_bin_to_hex(sizeof(Md5Digest) *2 +1, checksum, sizeof(Md5Digest), &(blob->rb_blob_checksum_md5d));
 					curr_field->store(checksum, sizeof(Md5Digest) *2, system_charset_info);
 					setNotNullInRecord(curr_field, buf);
 					
