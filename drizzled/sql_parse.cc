@@ -1434,15 +1434,11 @@ static unsigned int kill_one_thread(session_id_t id, bool only_kill_query)
   if (not session)
     return error;
 
-  session->lockForDelete();
-
   if (session->isViewable())
   {
     session->awake(only_kill_query ? Session::KILL_QUERY : Session::KILL_CONNECTION);
     error= 0;
   }
-
-  session->unlockForDelete();
 
   return error;
 }

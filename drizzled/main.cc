@@ -341,7 +341,6 @@ int main(int argc, char **argv)
       currentSession().release();
       currentSession().reset(session);
       transaction_services.sendStartupEvent(session);
-      session->lockForDelete();
       delete session;
     }
   }
@@ -374,7 +373,6 @@ int main(int argc, char **argv)
       currentSession().release();
       currentSession().reset(session);
       transaction_services.sendShutdownEvent(session);
-      session->lockForDelete();
       delete session;
     }
   }

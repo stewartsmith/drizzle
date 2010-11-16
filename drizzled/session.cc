@@ -408,9 +408,6 @@ Session::~Session()
     delete (*iter).second;
   }
   life_properties.clear();
-
-  /* Ensure that no one is using Session */
-  LOCK_delete.unlock();
 }
 
 void Session::setClient(plugin::Client *client_arg)
@@ -422,7 +419,6 @@ void Session::setClient(plugin::Client *client_arg)
 void Session::awake(Session::killed_state_t state_to_set)
 {
   this->checkSentry();
-  safe_mutex_assert_owner(&LOCK_delete);
 
   setKilled(state_to_set);
   if (state_to_set != Session::KILL_QUERY)

@@ -486,19 +486,6 @@ public:
   THR_LOCK_INFO lock_info; /**< Locking information for this session */
   THR_LOCK_OWNER main_lock_id; /**< To use for conventional queries */
   THR_LOCK_OWNER *lock_id; /**< If not main_lock_id, points to the lock_id of a cursor. */
-private:
-  boost::mutex LOCK_delete; /**< Locked before session is deleted */
-public:
-
-  void lockForDelete()
-  {
-    LOCK_delete.lock();
-  }
-
-  void unlockForDelete()
-  {
-    LOCK_delete.unlock();
-  }
 
   /**
    * A pointer to the stack frame of the scheduler thread

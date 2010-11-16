@@ -3174,11 +3174,10 @@ xtPublic void myxt_destroy_thread(void *s, xtBool end_threads)
 {
 	Session *session = (Session *) s;
 
-	session->lockForDelete();
 	delete session;
 
 	if (end_threads)
-		drizzled::internal::my_thread_end();
+          drizzled::internal::my_thread_end();
 }
 #else
 xtPublic void myxt_destroy_thread(void *thread, xtBool end_threads)

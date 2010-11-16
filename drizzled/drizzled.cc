@@ -634,7 +634,6 @@ void drizzled::Session::unlink(Session* session)
   session->cleanup();
 
   boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
-  session->lockForDelete();
 
   session::Cache::singleton().erase(session);
   if (unlikely(plugin::EventObserver::disconnectSession(*session)))
@@ -650,7 +649,6 @@ void drizzled::Session::unlink(Session::shared_ptr session)
   session->cleanup();
 
   boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
-  session->lockForDelete();
 
   session::Cache::singleton().erase(session);
   if (unlikely(plugin::EventObserver::disconnectSession(*session)))
