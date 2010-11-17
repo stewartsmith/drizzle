@@ -5853,6 +5853,9 @@ create_table_def(
 		*buf_end = '\0';
 		my_error(ER_TABLE_EXISTS_ERROR, MYF(0), buf);
 	}
+	if (UNIV_UNLIKELY(!prebuilt->index_usable)) {
+		DBUG_RETURN(HA_ERR_TABLE_DEF_CHANGED);
+	}
 
 error_ret:
   error = convert_error_code_to_mysql(error, flags, NULL);
@@ -7027,6 +7030,10 @@ innobase_get_mysql_key_number_for_index(
 		errmsg_printf(ERRMSG_LVL_ERROR,
                               "Cannot find index %s in InnoDB index "
 				"translation table.", index->name);
+	}
+	if (UNIV_UNLIKELY(!row_merge_is_index_usable(prebuilt->trx, index))) {
+		n_rows = HA_ERR_TABLE_DEF_CHANGED;
+		goto func_exit;
 	}
 
 	/* If we do not have an "index translation table", or not able
