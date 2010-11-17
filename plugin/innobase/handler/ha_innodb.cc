@@ -3792,6 +3792,11 @@ get_innobase_type_from_mysql_type(
     return(DATA_DOUBLE);
   case DRIZZLE_TYPE_BLOB:
     return(DATA_BLOB);
+  case DRIZLE_TYPE_NULL:
+    /* MySQL currently accepts "NULL" datatype, but will
+       reject such datatype in the next release. We will cope
+       with it and not trigger assertion failure in 5.1 */
+    break;
   default:
     ut_error;
   }
