@@ -1035,6 +1035,8 @@ static bool internal_alter_table(Session *session,
 
       if (error == 0)
       {
+        TransactionServices &transaction_services= TransactionServices::singleton();
+        transaction_services.allocateNewTransactionId();
         write_bin_log(session, *session->getQueryString());
         session->my_ok();
       }
