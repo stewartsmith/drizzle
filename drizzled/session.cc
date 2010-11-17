@@ -576,7 +576,7 @@ bool Session::schedule(Session::shared_ptr arg)
 
   if (plugin::Scheduler::getScheduler()->addSession(arg.get()))
   {
-    DRIZZLE_CONNECTION_START(thread_id);
+    DRIZZLE_CONNECTION_START(arg->getSessionId());
     char error_message_buff[DRIZZLE_ERRMSG_SIZE];
 
     arg->setKilled(Session::KILL_CONNECTION);
@@ -588,6 +588,7 @@ bool Session::schedule(Session::shared_ptr arg)
     snprintf(error_message_buff, sizeof(error_message_buff),
              ER(ER_CANT_CREATE_THREAD), 1);
     arg->client->sendError(ER_CANT_CREATE_THREAD, error_message_buff);
+
     return true;
   }
 
