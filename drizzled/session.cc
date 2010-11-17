@@ -569,11 +569,6 @@ bool Session::schedule(Session::shared_ptr arg)
     // We should do something about an error...
   }
 
-  if (unlikely(plugin::EventObserver::connectSession(*arg)))
-  {
-    // We should do something about an error...
-  }
-
   if (plugin::Scheduler::getScheduler()->addSession(arg.get()))
   {
     DRIZZLE_CONNECTION_START(arg->getSessionId());
