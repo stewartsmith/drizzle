@@ -319,8 +319,10 @@ plugin_innobase_libpars_la_CFLAGS=	${AM_CFLAGS} ${NO_WERROR} \
 			-I$(top_builddir)/plugin/innobase/include \
 			-I$(top_srcdir)/plugin/innobase/include \
 			-DBUILD_DRIZZLE
-plugin_innobase_libpars_la_SOURCES= 	${top_builddir}/plugin/innobase/pars/pars0lex.c \
-			${top_builddir}/plugin/innobase/pars/pars0grm.c
+
+plugin_innobase_libpars_la_SOURCES= \
+				    plugin/innobase/pars/pars0lex.c \
+				    plugin/innobase/pars/pars0grm.c
 
 plugin_innobase_libinnobase_la_LIBADD=	plugin/innobase/libpars.la
 
