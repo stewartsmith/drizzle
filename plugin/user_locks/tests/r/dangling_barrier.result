@@ -1,4 +1,10 @@
-set @lock_name= "dangling_barrier";
-SELECT get_lock(@lock_name);
-get_lock(@lock_name)
+set @barrier_name= "dangling_barrier";
+SELECT create_barrier(@barrier_name);
+create_barrier(@barrier_name)
 1
+SELECT USER_BARRIER_NAME FROM DATA_DICTIONARY.USER_BARRIERS;
+USER_BARRIER_NAME
+dangling_barrier
+SELECT if ((SESSION_ID = CONNECTION_ID()), "YES", "NO") from DATA_DICTIONARY.USER_BARRIERS WHERE USER_BARRIER_NAME=@barrier_name;
+if ((SESSION_ID = CONNECTION_ID()), "YES", "NO")
+YES

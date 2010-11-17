@@ -41,7 +41,7 @@ int64_t Signal::val_int()
   if (not res->length())
     return 0;
 
-  client::Wakeup::shared_ptr barrier= Barriers::getInstance().find(Key(getSession().getSecurityContext(), res->c_str()));
+  Barrier::shared_ptr barrier= Barriers::getInstance().find(Key(getSession().getSecurityContext(), res->c_str()));
 
   if (barrier)
   {

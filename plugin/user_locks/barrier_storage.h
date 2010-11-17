@@ -36,12 +36,12 @@ const std::string property_key("user_barriers");
 
 class Storable : public drizzled::util::Storable {
   Keys list_of_locks;
-  drizzled::session_id_t id;
+  drizzled::session_id_t owner;
 
 public:
 
   Storable(drizzled::session_id_t id_arg) :
-    id(id_arg)
+    owner(id_arg)
   {
   }
 
@@ -69,7 +69,7 @@ public:
     for (Keys::iterator iter= list_of_locks.begin();
          iter != list_of_locks.end(); iter++)
     {
-      (void)user_locks::Barriers::getInstance().release(*iter);
+      (void)Barriers::getInstance().release(*iter, owner);
     }
     list_of_locks.clear();
 

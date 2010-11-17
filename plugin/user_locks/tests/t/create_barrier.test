@@ -12,9 +12,17 @@ SELECT release_barrier("foo1");
 SELECT * FROM DATA_DICTIONARY.USER_BARRIERS;
 
 # This should complain about a non-existant barrier
+--error 1707
 SELECT release_barrier("foo2");
 
 # foo2 does not exist, so we should not wait for it
 SELECT * FROM DATA_DICTIONARY.USER_BARRIERS;
+--error 1707
 SELECT wait("foo2");
 
+# Make sure we can not lock a barrier we have created.
+set @self_lock= "self_barrier";
+SELECT create_barrier(@self_lock);
+--error 1706
+SELECT wait(@self_lock);
+SELECT release_barrier(@self_lock);

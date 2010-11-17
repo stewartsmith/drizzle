@@ -31,6 +31,7 @@
 #include "plugin/user_locks/key.h"
 
 #include "plugin/user_locks/create_barrier.h"
+#include "plugin/user_locks/barrier.h"
 #include "plugin/user_locks/barriers.h"
 #include "plugin/user_locks/barrier_dictionary.h"
 #include "plugin/user_locks/release_barrier.h"

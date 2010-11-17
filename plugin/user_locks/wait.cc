@@ -41,16 +41,24 @@ int64_t Wait::val_int()
   if (not res->length())
     return 0;
 
-  client::Wakeup::shared_ptr barrier= Barriers::getInstance().find(Key(getSession().getSecurityContext(), res->c_str()));
+  Barrier::shared_ptr barrier= Barriers::getInstance().find(Key(getSession().getSecurityContext(), res->c_str()));
 
   if (barrier)
   {
-    std::cerr << "Going into wait() \n";
+    if (barrier->getOwner() == getSession().getSessionId())
+    {
+      my_error(drizzled::ER_USER_LOCKS_CANT_WAIT_ON_OWN_BARRIER, MYF(0));
+      null_value= true;
+
+      return 0;
+    }
+
     barrier->wait();
 
-    return 0;
+    return 1;
   }
 
+  my_error(drizzled::ER_USER_LOCKS_UNKNOWN_BARRIER, MYF(0));
   null_value= true;
 
   return 0;

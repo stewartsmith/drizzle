@@ -33,16 +33,15 @@
 #ifndef PLUGIN_USER_LOCKS_BARRIERS_H
 #define PLUGIN_USER_LOCKS_BARRIERS_H
 
-#include "client/wakeup.h"
-
 namespace user_locks {
+namespace barriers {
 
 const size_t LARGEST_BARRIER_NAME= 64;
 
 class Barriers
 {
 public:
-  typedef boost::unordered_map<user_locks::Key, client::Wakeup::shared_ptr> Map;
+  typedef boost::unordered_map<user_locks::Key, Barrier::shared_ptr> Map;
 
   static Barriers &getInstance(void)
   {
@@ -50,9 +49,9 @@ public:
     return instance;
   }
 
-  bool create(const user_locks::Key &arg);
-  boost::tribool release(const user_locks::Key &arg);
-  client::Wakeup::shared_ptr find(const user_locks::Key &arg);
+  bool create(const user_locks::Key &arg, drizzled::session_id_t owner);
+  boost::tribool release(const user_locks::Key &arg, drizzled::session_id_t owner);
+  Barrier::shared_ptr find(const user_locks::Key &arg);
   void Copy(Map &arg);
 
 private:
@@ -62,6 +61,7 @@ private:
 };
 
 
+} /* namespace barriers */
 } /* namespace user_locks */
 
 #endif /* PLUGIN_USER_LOCKS_BARRIERS_H */

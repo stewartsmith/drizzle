@@ -26,16 +26,24 @@
 #include <string>
 
 namespace user_locks {
+namespace barriers {
 
-bool Barriers::create(const user_locks::Key &arg)
+bool Barriers::create(const user_locks::Key &arg, drizzled::session_id_t owner)
 {
   boost::unique_lock<boost::mutex> scope(mutex);
-  return barrier_map.insert(std::make_pair(arg, new client::Wakeup())).second;
+  return barrier_map.insert(std::make_pair(arg, new Barrier(owner))).second;
 }
 
-boost::tribool Barriers::release(const user_locks::Key &arg)
+/*
+  @note return
+
+  true -> release happened.
+  false -> no release, we were not the owner
+  indeterminate -> barrier was not found.
+
+*/
+boost::tribool Barriers::release(const user_locks::Key &arg, drizzled::session_id_t owner)
 {
-  size_t elements= 0;
   boost::unique_lock<boost::mutex> scope(mutex);
   Map::iterator iter= barrier_map.find(arg);
 
@@ -43,16 +51,16 @@ boost::tribool Barriers::release(const user_locks::Key &arg)
   if ( iter == barrier_map.end())
     return boost::indeterminate;
 
+  if (not (*iter).second->getOwner() == owner)
+    return false;
+
   (*iter).second->start(); // We tell anyone left to start running
-  elements= barrier_map.erase(arg);
+  (void)barrier_map.erase(arg);
 
-  if (elements)
-    return true;
-
-  return false;
+  return true;
 }
 
-client::Wakeup::shared_ptr Barriers::find(const user_locks::Key &arg)
+Barrier::shared_ptr Barriers::find(const user_locks::Key &arg)
 {
   boost::unique_lock<boost::mutex> scope(mutex);
   Map::iterator iter= barrier_map.find(arg);
@@ -60,12 +68,14 @@ client::Wakeup::shared_ptr Barriers::find(const user_locks::Key &arg)
   if (iter != barrier_map.end())
     return (*iter).second;
 
-  return client::Wakeup::shared_ptr();
+  return Barrier::shared_ptr();
 }
 
 void Barriers::Copy(Map &arg)
 {
+  boost::unique_lock<boost::mutex> scope(mutex);
   arg= barrier_map;
 }
 
+} /* namespace barriers */
 } /* namespace user_locks */

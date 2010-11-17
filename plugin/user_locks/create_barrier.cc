@@ -25,6 +25,7 @@
 #include <string>
 
 namespace user_locks {
+namespace barriers {
 
 int64_t CreateBarrier::val_int()
 {
@@ -48,7 +49,7 @@ int64_t CreateBarrier::val_int()
 
   barriers::Storable *list= static_cast<barriers::Storable *>(getSession().getProperty(barriers::property_key));
 
-  boost::tribool result= user_locks::Barriers::getInstance().create(Key(getSession().getSecurityContext(), res->c_str()));
+  boost::tribool result= Barriers::getInstance().create(Key(getSession().getSecurityContext(), res->c_str()), getSession().getSessionId());
 
   if (boost::indeterminate(result))
     null_value= true;
@@ -69,4 +70,5 @@ int64_t CreateBarrier::val_int()
   return 0;
 }
 
+} /* namespace barriers */
 } /* namespace user_locks */

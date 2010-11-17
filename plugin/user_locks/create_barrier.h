@@ -22,6 +22,7 @@
 #define PLUGIN_USER_LOCKS_CREATE_BARRIER_H
 
 namespace user_locks {
+namespace barriers {
 
 class CreateBarrier : public drizzled::Item_int_func
 {
@@ -37,6 +38,7 @@ public:
   bool check_argument_count(int n) { return n < 3; }
 };
 
+} /* namespace barriers */
 } /* namespace user_locks */
 
 #endif /* PLUGIN_USER_LOCKS_CREATE_BARRIER_H */

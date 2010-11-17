@@ -2,13 +2,13 @@ SELECT create_barrier("foo");
 create_barrier("foo")
 1
 SELECT * FROM DATA_DICTIONARY.USER_BARRIERS;
-USER_BARRIERS
-foo
+USER_BARRIER_NAME	SESSION_ID	USER_NAME
+foo	1	root
 SELECT release_barrier("foo");
 release_barrier("foo")
 1
 SELECT * FROM DATA_DICTIONARY.USER_BARRIERS;
-USER_BARRIERS
+USER_BARRIER_NAME	SESSION_ID	USER_NAME
 SELECT create_barrier("foo1");
 create_barrier("foo1")
 1
@@ -16,20 +16,32 @@ SELECT create_barrier("foo2");
 create_barrier("foo2")
 1
 SELECT * FROM DATA_DICTIONARY.USER_BARRIERS;
-USER_BARRIERS
-foo1
-foo2
+USER_BARRIER_NAME	SESSION_ID	USER_NAME
+foo1	1	root
+foo2	1	root
 SELECT release_barrier("foo2");
 release_barrier("foo2")
 1
 SELECT * FROM DATA_DICTIONARY.USER_BARRIERS;
-USER_BARRIERS
-foo1
+USER_BARRIER_NAME	SESSION_ID	USER_NAME
+foo1	1	root
 SELECT release_barrier("foo1");
 release_barrier("foo1")
 1
 SELECT * FROM DATA_DICTIONARY.USER_BARRIERS;
-USER_BARRIERS
+USER_BARRIER_NAME	SESSION_ID	USER_NAME
 SELECT release_barrier("foo2");
-release_barrier("foo2")
-NULL
+ERROR HY000: Unknown barrier requested.
+SELECT * FROM DATA_DICTIONARY.USER_BARRIERS;
+USER_BARRIER_NAME	SESSION_ID	USER_NAME
+SELECT wait("foo2");
+ERROR HY000: Unknown barrier requested.
+set @self_lock= "self_barrier";
+SELECT create_barrier(@self_lock);
+create_barrier(@self_lock)
+1
+SELECT wait(@self_lock);
+ERROR HY000: wait() can not be called on session owning barrier.
+SELECT release_barrier(@self_lock);
+release_barrier(@self_lock)
+1

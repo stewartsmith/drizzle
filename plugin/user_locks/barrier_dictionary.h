@@ -22,6 +22,7 @@
 #define PLUGIN_USER_LOCKS_BARRIER_DICTIONARY_H
 
 namespace user_locks {
+namespace barriers {
 
 class UserBarriers : public  drizzled::plugin::TableFunction
 {
@@ -46,6 +47,7 @@ public:
   }
 };
 
+} /* namespace barriers */
 } /* namespace user_locks */
 
 #endif /* PLUGIN_USER_LOCKS_BARRIER_DICTIONARY_H */

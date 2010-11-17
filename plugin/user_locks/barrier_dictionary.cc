@@ -28,38 +28,37 @@
 using namespace drizzled;
 using namespace std;
 
-user_locks::UserBarriers::UserBarriers() :
+namespace user_locks {
+namespace barriers {
+
+UserBarriers::UserBarriers() :
   plugin::TableFunction("DATA_DICTIONARY", "USER_BARRIERS")
 {
-  add_field("USER_BARRIERS", plugin::TableFunction::STRING, user_locks::LARGEST_LOCK_NAME, false);
-#if 0
+  add_field("USER_BARRIER_NAME", plugin::TableFunction::STRING, LARGEST_LOCK_NAME, false);
   add_field("SESSION_ID", plugin::TableFunction::NUMBER, 0, false);
   add_field("USER_NAME", plugin::TableFunction::STRING);
-#endif
 }
 
-user_locks::UserBarriers::Generator::Generator(drizzled::Field **arg) :
+UserBarriers::Generator::Generator(drizzled::Field **arg) :
   drizzled::plugin::TableFunction::Generator(arg)
 {
-  user_locks::Barriers::getInstance().Copy(barrier_map);
+  Barriers::getInstance().Copy(barrier_map);
   iter= barrier_map.begin();
 }
 
-bool user_locks::UserBarriers::Generator::populate()
+bool UserBarriers::Generator::populate()
 {
 
   while (iter != barrier_map.end())
   {
-    // USER_LOCK_NAME
+    // USER_BARRIER_NAME
     push((*iter).first.getLockName());
 
-#if 0
     // SESSION_ID
-    push((*iter).second->id);
-    //
+    push((*iter).second->getOwner());
+     
     // USER_NAME
     push((*iter).first.getUser());
-#endif
 
     iter++;
     return true;
@@ -67,3 +66,6 @@ bool user_locks::UserBarriers::Generator::populate()
 
   return false;
 }
+
+} /* namespace barriers */
+} /* namespace user_locks */
