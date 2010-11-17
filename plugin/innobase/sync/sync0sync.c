@@ -1493,14 +1493,16 @@ sync_print_wait_info(
 	fprintf(file,
 		"Mutex spin waits %"PRId64", rounds %"PRId64", "
                 "OS waits %"PRId64"\n"
-		"RW-shared spins %"PRId64", OS waits %"PRId64";"
-		" RW-excl spins %"PRId64", OS waits %"PRId64"\n",
+		"RW-shared spins %"PRId64", rounds %"PRId64", OS waits %"PRId64";"
+		" RW-excl spins %"PRId64", rounds %"PRId64", OS waits %"PRId64"\n",
 		mutex_spin_wait_count,
 		mutex_spin_round_count,
 		mutex_os_wait_count,
 		rw_s_spin_wait_count,
+                rw_s_spin_round_count,
 		rw_s_os_wait_count,
 		rw_x_spin_wait_count,
+                rw_x_spin_round_count,
 		rw_x_os_wait_count);
 
 	fprintf(file,
