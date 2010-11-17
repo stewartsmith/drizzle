@@ -5868,7 +5868,9 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
   if (join->const_tables != join->tables)
   {
     optimize_keyuse(join, keyuse_array);
-    DRIZZLE_QUERY_OPT_CHOOSE_PLAN_START(join->session->query.c_str(), join->session->thread_id);
+    // @note c_str() is not likely to be valid here if dtrace expects it to
+    // exist for any period of time.
+    DRIZZLE_QUERY_OPT_CHOOSE_PLAN_START(join->session->getQueryString()->c_str(), join->session->thread_id);
     bool res= choose_plan(join, all_table_map & ~join->const_table_map);
     DRIZZLE_QUERY_OPT_CHOOSE_PLAN_DONE(res ? 1 : 0);
     if (res)

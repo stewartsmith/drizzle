@@ -8,7 +8,7 @@
 
 # Read in the transaction.log.
 
---exec ../drizzled/message/transaction_reader var/master-data/local/transaction.log
+--exec ../plugin/transaction_log/utilities/transaction_reader var/master-data/local/transaction.log
 
 # Truncate the log file to reset for the next test
 --source ../plugin/transaction_log/tests/t/truncate_log.inc

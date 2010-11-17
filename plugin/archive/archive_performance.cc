@@ -23,6 +23,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <memory>
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -35,6 +36,7 @@
 # endif
 #endif
 
+#include <boost/scoped_ptr.hpp>
 
 #define TEST_FILENAME "performance_test.az"
 
@@ -67,7 +69,8 @@ int main(int argc, char *argv[])
   for (method= AZ_METHOD_BLOCK; method < AZ_METHOD_MAX; method++)
   {
     unsigned int ret;
-    azio_stream reader_handle;
+    boost::scoped_ptr<azio_stream> reader_handle_ap(new azio_stream);
+    azio_stream &reader_handle= *reader_handle_ap.get();
 
     if (method)
       printf("Performing azio_read() test\n");
@@ -97,7 +100,8 @@ int main(int argc, char *argv[])
 
 static int generate_data(uint64_t rows_to_test)
 {
-  azio_stream writer_handle;
+  boost::scoped_ptr<azio_stream> writer_handle_ap(new azio_stream);
+  azio_stream &writer_handle= *writer_handle_ap.get();
   uint64_t x;
   unsigned int ret;
   struct timeval start_time, end_time;

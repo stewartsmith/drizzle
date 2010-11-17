@@ -510,7 +510,7 @@ bool InnobaseEngine::doDoesTableExist(Session &session, const TableIdentifier &i
   string proto_path(identifier.getPath());
   proto_path.append(DEFAULT_FILE_EXTENSION);
 
-  if (session.doesTableMessageExist(identifier))
+  if (session.getMessageCache().doesTableMessageExist(identifier))
     return true;
 
   if (access(proto_path.c_str(), F_OK))
@@ -529,7 +529,7 @@ int InnobaseEngine::doGetTableDefinition(Session &session,
   proto_path.append(DEFAULT_FILE_EXTENSION);
 
   // First we check the temporary tables.
-  if (session.getTableMessage(identifier, table_proto))
+  if (session.getMessageCache().getTableMessage(identifier, table_proto))
     return EEXIST;
 
   if (access(proto_path.c_str(), F_OK))
@@ -1132,9 +1132,7 @@ innobase_mysql_print_thd(
           session->getSecurityContext().getIp().c_str(),
           session->getSecurityContext().getUser().c_str()
   );
-  fprintf(f,
-          "\n%s", session->getQueryString().c_str()
-  );
+  fprintf(f, "\n%s", session->getQueryString()->c_str());
   putc('\n', f);
 }
 
@@ -1254,8 +1252,7 @@ innobase_get_stmt(
 	void*	session,	/*!< in: MySQL thread handle */
 	size_t*	length)		/*!< out: length of the SQL statement */
 {
-  *length= static_cast<Session*>(session)->query.length();
-  return static_cast<Session*>(session)->query.c_str();
+  return static_cast<Session*>(session)->getQueryStringCopy(*length);
 }
 
 #if defined (__WIN__) && defined (MYSQL_DYNAMIC_PLUGIN)
@@ -6245,7 +6242,7 @@ InnobaseEngine::doCreateTable(
 
   if (lex_identified_temp_table)
   {
-    session.storeTableMessage(identifier, create_proto);
+    session.getMessageCache().storeTableMessage(identifier, create_proto);
   }
   else
   {
@@ -6401,7 +6398,7 @@ InnobaseEngine::doDropTable(
   {
     if (identifier.getType() == message::Table::TEMPORARY)
     {
-      session.removeTableMessage(identifier);
+      session.getMessageCache().removeTableMessage(identifier);
       ulint sql_command = session_sql_command(&session);
 
       // If this was the final removal to an alter table then we will need
@@ -6577,7 +6574,7 @@ UNIV_INTERN int InnobaseEngine::doRenameTable(Session &session, const TableIdent
   // definition needs to be updated.
   if (to.getType() == message::Table::TEMPORARY && from.getType() == message::Table::TEMPORARY)
   {
-    session.renameTableMessage(from, to);
+    session.getMessageCache().renameTableMessage(from, to);
     return 0;
   }
 

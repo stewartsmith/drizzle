@@ -23,6 +23,7 @@ EXECUTE "CREATE TABLE t1 (a SERIAL)";
 SHOW CREATE TABLE t1;
 EXECUTE "INSERT INTO t1 VALUES ()";
 EXECUTE "DROP TABLE t1";
+SHOW TABLES;
 
 --error 1064
 EXECUTE "SELECT @t1, @t2, @t3, @t4 := @t1+@t2+@t3; SELECT @t1, @t2, @t3, @t4 := @t1+@t2+@t3";
@@ -42,6 +43,13 @@ execute @insert;
 execute @select;
 execute @drop;
 
+execute @create WITH NO RETURN;
+execute @insert WITH NO RETURN;
+execute @insert WITH NO RETURN;
+execute @insert WITH NO RETURN;
+execute @select WITH NO RETURN;
+execute @drop WITH NO RETURN;
+
 --error 1210
 EXECUTE @does_not_exist;
 
@@ -52,3 +60,25 @@ EXECUTE "SELECT (SELECT 1) UNION SELECT (SELECT 2)";
 EXECUTE "explain extended SELECT (SELECT 1) UNION SELECT (SELECT 2)";
 EXECUTE "SELECT (SELECT (SELECT 0 UNION SELECT 0))";
 EXECUTE "explain extended SELECT (SELECT (SELECT 0 UNION SELECT 0))";
+
+EXECUTE "SELECT (SELECT 1) UNION SELECT (SELECT 2)" WITH NO RETURN;
+EXECUTE "explain extended SELECT (SELECT 1) UNION SELECT (SELECT 2)" WITH NO RETURN;
+EXECUTE "SELECT (SELECT (SELECT 0 UNION SELECT 0))" WITH NO RETURN;
+EXECUTE "explain extended SELECT (SELECT (SELECT 0 UNION SELECT 0))" WITH NO RETURN;
+
+# Test multiple statements
+
+SET @var="CREATE SCHEMA d; CREATE SCHEMA e;";
+EXECUTE @var WITH NO RETURN;
+
+show schemas LIKE "d";
+show schemas LIKE "e";
+DROP SCHEMA d;
+DROP SCHEMA e;
+
+# Test error statement in mid query
+SET @var="CREATE SCHEMA d; SELECT fosdsd; CREATE SCHEMA e;";
+EXECUTE @var WITH NO RETURN;
+show schemas LIKE "d";
+show schemas LIKE "e";
+DROP SCHEMA d;

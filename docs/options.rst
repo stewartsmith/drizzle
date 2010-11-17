@@ -262,7 +262,7 @@ Kernel Options
 
   Each thread that does a sequential scan allocates a buffer of this size for
   each table it scans. If you do many sequential scans, you may want to
-  increase this value.
+  increase this value.  Note that this only affect MyISAM.
 
 .. option:: --read-buffer-constraint arg (=0)
 

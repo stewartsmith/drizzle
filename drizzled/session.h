@@ -393,7 +393,37 @@ public:
     return lex;
   }
   /** query associated with this statement */
-  std::string query;
+  typedef boost::shared_ptr<const std::string> QueryString;
+private:
+  boost::shared_ptr<std::string> query;
+
+  // Never allow for a modification of this outside of the class. c_str()
+  // requires under some setup non const, you must copy the QueryString in
+  // order to use it.
+public:
+  QueryString getQueryString() const
+  {
+    return query;
+  }
+
+  void resetQueryString()
+  {
+    return query.reset(new std::string);
+  }
+
+  /*
+    We need to copy the lock on the string in order to make sure we have a stable string.
+    Once this is done we can use it to build a const char* which can be handed off for
+    a method to use (Innodb is currently the only engine using this).
+  */
+  const char *getQueryStringCopy(size_t &length)
+  {
+    QueryString tmp_string(getQueryString());
+
+    length= tmp_string->length();
+    char *to_return= strmake(tmp_string->c_str(), tmp_string->length());
+    return to_return;
+  }
 
   /**
     Name of the current (default) database.
@@ -408,6 +438,11 @@ public:
     only responsible for freeing this member.
   */
   std::string db;
+
+  const std::string &getSchema() const
+  {
+    return db;
+  }
   std::string catalog;
   /* current cache key */
   std::string query_cache_key;
@@ -421,14 +456,29 @@ public:
 
   memory::Root warn_root; /**< Allocation area for warnings and errors */
   plugin::Client *client; /**< Pointer to client object */
+
+  void setClient(plugin::Client *client_arg);
+
+  plugin::Client *getClient()
+  {
+    return client;
+  }
+
   plugin::Scheduler *scheduler; /**< Pointer to scheduler object */
   void *scheduler_arg; /**< Pointer to the optional scheduler argument */
-private:
+
   typedef boost::unordered_map< std::string, user_var_entry *, util::insensitive_hash, util::insensitive_equal_to> UserVars;
+private:
   typedef std::pair< UserVars::iterator, UserVars::iterator > UserVarsRange;
   UserVars user_vars; /**< Hash of user variables defined during the session's lifetime */
 
 public:
+
+  const UserVars &getUserVariables() const
+  {
+    return user_vars;
+  }
+
   drizzle_system_variables variables; /**< Mutable local variables local to the session */
   struct system_status_var status_var; /**< Session-local status counters */
   THR_LOCK_INFO lock_info; /**< Locking information for this session */
@@ -447,12 +497,6 @@ public:
   {
     LOCK_delete.unlock();
   }
-
-  /**
-   * A peek into the query string for the session. This is a best effort
-   * delivery, there is no guarantee whether the content is meaningful.
-   */
-  char process_list_info[PROCESS_LIST_WIDTH+1];
 
   /**
    * A pointer to the stack frame of the scheduler thread
@@ -613,8 +657,24 @@ public:
   Field *dup_field;
   sigset_t signals;
 
+  // As of right now we do not allow a concurrent execute to launch itself
+private:
+  bool concurrent_execute_allowed;
+public:
+
+  void setConcurrentExecute(bool arg)
+  {
+    concurrent_execute_allowed= arg;
+  }
+
+  bool isConcurrentExecuteAllowed() const
+  {
+    return concurrent_execute_allowed;
+  }
+
   /* Tells if LAST_INSERT_ID(#) was called for the current statement */
   bool arg_of_last_insert_id_function;
+
   /*
     ALL OVER THIS FILE, "insert_id" means "*automatically generated* value for
     insertion into an auto_increment column".
@@ -886,7 +946,7 @@ public:
   }
 
   /** Returns the current query ID */
-  inline query_id_t getQueryId()  const
+  query_id_t getQueryId()  const
   {
     return query_id;
   }
@@ -902,21 +962,6 @@ public:
   inline query_id_t getWarningQueryId()  const
   {
     return warn_query_id;
-  }
-
-  /** Returns the current query text */
-  inline const std::string &getQueryString()  const
-  {
-    return query;
-  }
-
-  /** Returns the length of the current query text */
-  inline size_t getQueryLength() const
-  {
-    if (! query.empty())
-      return query.length();
-    else
-      return 0;
   }
 
   /** Accessor method returning the session's ID. */
@@ -1153,11 +1198,20 @@ public:
     @todo: To silence an error, one should use Internal_error_handler
     mechanism. In future this function will be removed.
   */
-  inline void clear_error()
+  inline void clear_error(bool full= false)
   {
     if (main_da.is_error())
       main_da.reset_diagnostics_area();
-    return;
+
+    if (full)
+    {
+      drizzle_reset_errors(this, true);
+    }
+  }
+
+  void clearDiagnostics()
+  {
+    main_da.reset_diagnostics_area();
   }
 
   /**
@@ -1475,16 +1529,6 @@ public:
    * set to query_id of original query.
    */
   void mark_used_tables_as_free_for_reuse(Table *table);
-  /**
-    Mark all temporary tables which were used by the current statement or
-    substatement as free for reuse, but only if the query_id can be cleared.
-
-    @param session thread context
-
-    @remark For temp tables associated with a open SQL HANDLER the query_id
-            is not reset until the HANDLER is closed.
-  */
-  void mark_temp_tables_as_free_for_reuse();
 
 public:
 
@@ -1582,49 +1626,27 @@ public:
   bool lock_table_name_if_not_cached(TableIdentifier &identifier, Table **table);
 
   typedef boost::unordered_map<std::string, message::Table, util::insensitive_hash, util::insensitive_equal_to> TableMessageCache;
-  TableMessageCache table_message_cache;
 
-  bool storeTableMessage(const TableIdentifier &identifier, message::Table &table_message);
-  bool removeTableMessage(const TableIdentifier &identifier);
-  bool getTableMessage(const TableIdentifier &identifier, message::Table &table_message);
-  bool doesTableMessageExist(const TableIdentifier &identifier);
-  bool renameTableMessage(const TableIdentifier &from, const TableIdentifier &to);
+  class TableMessages
+  {
+    TableMessageCache table_message_cache;
 
-  /* Work with temporary tables */
-  Table *find_temporary_table(const TableIdentifier &identifier);
+  public:
+    bool storeTableMessage(const TableIdentifier &identifier, message::Table &table_message);
+    bool removeTableMessage(const TableIdentifier &identifier);
+    bool getTableMessage(const TableIdentifier &identifier, message::Table &table_message);
+    bool doesTableMessageExist(const TableIdentifier &identifier);
+    bool renameTableMessage(const TableIdentifier &from, const TableIdentifier &to);
 
-  void doGetTableNames(CachedDirectory &directory,
-                       const SchemaIdentifier &schema_identifier,
-                       std::set<std::string>& set_of_names);
-  void doGetTableNames(const SchemaIdentifier &schema_identifier,
-                       std::set<std::string>& set_of_names);
-
-  void doGetTableIdentifiers(CachedDirectory &directory,
-                             const SchemaIdentifier &schema_identifier,
-                             TableIdentifiers &set_of_identifiers);
-  void doGetTableIdentifiers(const SchemaIdentifier &schema_identifier,
-                             TableIdentifiers &set_of_identifiers);
-
-  int doGetTableDefinition(const drizzled::TableIdentifier &identifier,
-                           message::Table &table_proto);
-  bool doDoesTableExist(const drizzled::TableIdentifier &identifier);
-
+  };
 private:
-  void close_temporary_tables();
-public:
-  void close_temporary_table(Table *table);
-  // The method below just handles the de-allocation of the table. In
-  // a better memory type world, this would not be needed.
-private:
-  void nukeTable(Table *table);
-public:
+  TableMessages _table_message_cache;
 
-  void dumpTemporaryTableNames(const char *id);
-  int drop_temporary_table(const drizzled::TableIdentifier &identifier);
-  bool rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &identifier);
-  bool rm_temporary_table(TableIdentifier &identifier, bool best_effort= false);
-  Table *open_temporary_table(TableIdentifier &identifier,
-                              bool link_in_list= true);
+public:
+  TableMessages &getMessageCache()
+  {
+    return _table_message_cache;
+  }
 
   /* Reopen operations */
   bool reopen_tables(bool get_locks, bool mark_share_as_old);
