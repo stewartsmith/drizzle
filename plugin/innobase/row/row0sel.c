@@ -2667,7 +2667,10 @@ Note that the template in prebuilt may advise us to copy only a few
 columns to mysql_rec, other columns are left blank. All columns may not
 be needed in the query.
 @return TRUE on success, FALSE if not all columns could be retrieved */
-static __attribute__((warn_unused_result))
+static
+#ifdef __GNUC__
+ __attribute__((warn_unused_result))
+#endif
 ibool
 row_sel_store_mysql_rec(
 /*====================*/
@@ -3172,7 +3175,10 @@ row_sel_pop_cached_row_for_mysql(
 /********************************************************************//**
 Pushes a row for MySQL to the fetch cache.
 @return TRUE on success, FALSE if the record contains incomplete BLOBs */
-UNIV_INLINE __attribute__((warn_unused_result))
+UNIV_INLINE
+#ifdef __GNUC__
+__attribute__((warn_unused_result))
+#endif
 ibool
 row_sel_push_cache_row_for_mysql(
 /*=============================*/
