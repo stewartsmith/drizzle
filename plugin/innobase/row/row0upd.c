@@ -959,7 +959,7 @@ row_upd_index_replace_new_col_val(
 		}
 
 		len = dtype_get_at_most_n_mbchars(col->prtype,
-						  col->mbminlen, col->mbmaxlen,
+						  col->mbminmaxlen,
 						  field->prefix_len, len,
 						  (const char*) data);
 
