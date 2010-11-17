@@ -562,10 +562,7 @@ bool Session::schedule(Session::shared_ptr arg)
   current_global_counters.connections++;
   arg->thread_id= arg->variables.pseudo_thread_id= global_thread_id++;
 
-  {
-    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
-    session::Cache::singleton().getCache().push_back(arg);
-  }
+  session::Cache::singleton().insert(arg);
 
   if (unlikely(plugin::EventObserver::connectSession(*arg)))
   {
