@@ -28,11 +28,11 @@ a	name	value
 delete from my_pbms_blob_ids;
 insert into my_pbms_blob_ids (select Repository_id, Repo_blob_offset, Blob_url from pbms_reference);
 insert into pbms_metadata (select id, offset, "Name2", "Test2.2" from my_pbms_blob_ids ref, t1  where t1.a = 2 and ref.url =  t1.b);
-select a, name, value from pbms_metadata meta, pbms_reference ref, t1 where t1.b = ref.Blob_url and ref.Repository_id = meta.Repository_id and ref.Repo_blob_offset = meta.Repo_blob_offset order by a;
+select a, name, value from pbms_metadata meta, pbms_reference ref, t1 where t1.b = ref.Blob_url and ref.Repository_id = meta.Repository_id and ref.Repo_blob_offset = meta.Repo_blob_offset order by a, name;
 a	name	value
 1	Name	Test1
-2	Name2	Test2.2
 2	Name	Test2
+2	Name2	Test2.2
 3	Name	Test3
 drop Temporary table my_pbms_blob_ids;
 drop table t1;
