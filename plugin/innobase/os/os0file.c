@@ -3799,9 +3799,6 @@ os_aio_simulated_wake_handler_thread(
 
 	ut_ad(!srv_use_native_aio);
 
-	/* Fix compiler warning */
-	*consecutive_ios = NULL;
-
 	segment = os_aio_get_array_and_local_segment(&array, global_segment);
 
 	n = array->n_slots / array->n_segments;
