@@ -199,10 +199,10 @@ static char*  innobase_log_group_home_dir   = NULL;
 static char*  innobase_file_format_name   = NULL;
 static char*  innobase_change_buffering   = NULL;
 
-/* Note: This variable can be set to on/off and any of the supported
-file formats in the configuration file, but can only be set to any
-of the supported file formats during runtime. */
-static char*  innobase_file_format_check    = NULL;
+/* The highest file format being used in the database. The value can be
+set by user, however, it will be adjusted to the newer file format if
+a table of such format is created/opened. */
+static char*	innobase_file_format_max		= NULL;
 
 static char*  innobase_file_flush_method   = NULL;
 
@@ -210,6 +210,7 @@ static char*  innobase_file_flush_method   = NULL;
 values */
 
 static ulong  innobase_fast_shutdown      = 1;
+static my_bool  innobase_file_format_check = TRUE;
 #ifdef UNIV_LOG_ARCHIVE
 static my_bool  innobase_log_archive      = FALSE;
 static char*  innobase_log_arch_dir     = NULL;
@@ -581,22 +582,13 @@ innobase_file_format_name_lookup(
             name */
 /************************************************************//**
 Validate the file format check config parameters, as a side effect it
-sets the srv_check_file_format_at_startup variable.
-@return true if one of  "on" or "off" */
-static
-bool
-innobase_file_format_check_on_off(
-/*==============================*/
-  const char* format_check);    /*!< in: parameter value */
-/************************************************************//**
-Validate the file format check config parameters, as a side effect it
-sets the srv_check_file_format_at_startup variable.
+sets the srv_max_file_format_at_startup variable.
 @return	the format_id if valid config value, otherwise, return -1 */
 static
 int
 innobase_file_format_validate_and_set(
 /*================================*/
-  const char* format_check);    /*!< in: parameter value */
+  const char* format_max);    /*!< in: parameter value */
 
 static const char innobase_engine_name[]= "InnoDB";
 
@@ -1851,9 +1843,14 @@ innobase_init(
     }
   }
 
+  if (vm.count("file-format-max"))
+  {
+    innobase_file_format_max= const_cast<char *>(vm["file-format-max"].as<string>().c_str());
+  }
+
   if (vm.count("file-format-check"))
   {
-    innobase_file_format_check= const_cast<char *>(vm["file-format-check"].as<string>().c_str());
+    innobase_file_format_check= vm["file-format-check"].as<bool>();
   }
 
   if (vm.count("flush-log-at-trx-commit"))
@@ -2242,31 +2239,30 @@ innodb_log_group_home_dir: */
     innobase_file_format_name is used in the MySQL set variable
     interface and so can't be const. */
 
-  innobase_file_format_name = 
+  innobase_file_format_name =
     (char*) trx_sys_file_format_id_to_name(format_id);
 
-  /* Process innobase_file_format_check variable */
-  ut_a(innobase_file_format_check != NULL);
+  /* Check innobase_file_format_check variable */
+  if (!innobase_file_format_check)
+  {
+    /* Set the value to disable checking. */
+    srv_max_file_format_at_startup = DICT_TF_FORMAT_MAX + 1;
+  } else {
+    /* Set the value to the lowest supported format. */
+    srv_max_file_format_at_startup = DICT_TF_FORMAT_MIN;
+  }
 
-  /* As a side effect it will set srv_check_file_format_at_startup
-    on valid input. First we check for "on"/"off". */
-  if (!innobase_file_format_check_on_off(innobase_file_format_check)) {
-
-    /* Did the user specify a format name that we support ?
-      As a side effect it will update the variable
-      srv_check_file_format_at_startup */
-    if (innobase_file_format_validate_and_set(
-				innobase_file_format_check) < 0) {
-      errmsg_printf(ERRMSG_LVL_ERROR, "InnoDB: invalid "
-                    "innodb_file_format_check value: "
-                    "should be either 'on' or 'off' or "
-                    "any value up to %s or its "
+  /* Did the user specify a format name that we support?
+     As a side effect it will update the variable
+     srv_max_file_format_at_startup */
+  if (innobase_file_format_validate_and_set(innobase_file_format_max) < 0)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR, "InnoDB: invalid "
+                    "innodb_file_format_max value: "
+                    "should be any value up to %s or its "
                     "equivalent numeric id",
-                    trx_sys_file_format_id_to_name(
-                                                   DICT_TF_FORMAT_MAX));
-
-      goto mem_free_and_error;
-    }
+                    trx_sys_file_format_id_to_name(DICT_TF_FORMAT_MAX));
+    goto mem_free_and_error;
   }
 
   if (vm.count("change-buffering"))
@@ -2419,7 +2415,7 @@ innobase_change_buffering_inited_ok:
   context.add(new(std::nothrow)InnodbInternalTables());
 
   /* Get the current high water mark format. */
-  innobase_file_format_check = (char*) trx_sys_file_format_max_get();
+  innobase_file_format_max = (char*) trx_sys_file_format_max_get();
 
   return(FALSE);
 error:
@@ -3524,7 +3520,7 @@ ha_innobase::doOpen(const TableIdentifier &identifier,
     space, if this table has higher file format setting. */
 
     trx_sys_file_format_max_upgrade(
-      (const char**) &innobase_file_format_check,
+      (const char**) &innobase_file_format_max,
       dict_table_get_format(prebuilt->table));
   }
 
@@ -6300,7 +6296,7 @@ InnobaseEngine::doCreateTable(
     /* We update the highest file format in the system table
       space, if this table has higher file format setting. */
 
-    trx_sys_file_format_max_upgrade((const char**) &innobase_file_format_check,
+    trx_sys_file_format_max_upgrade((const char**) &innobase_file_format_max,
                                     dict_table_get_format(innobase_table));
   }
 
@@ -9112,49 +9108,21 @@ innobase_file_format_name_lookup(
 }
 
 /************************************************************//**
-Validate the file format check value, is it one of "on" or "off",
-as a side effect it sets the srv_check_file_format_at_startup variable.
-@return true if config value one of "on" or  "off" */
-static
-bool
-innobase_file_format_check_on_off(
-/*==============================*/
-  const char* format_check) /*!< in: parameter value */
-{
-  bool    ret = true;
-
-  if (!innobase_strcasecmp(format_check, "off")) {
-
-    /* Set the value to disable checking. */
-    srv_check_file_format_at_startup = DICT_TF_FORMAT_MAX + 1;
-
-  } else if (!innobase_strcasecmp(format_check, "on")) {
-
-    /* Set the value to the lowest supported format. */
-    srv_check_file_format_at_startup = DICT_TF_FORMAT_51;
-  } else {
-    ret = FALSE;
-  }
-
-  return(ret);
-}
-
-/************************************************************//**
 Validate the file format check config parameters, as a side effect it
-sets the srv_check_file_format_at_startup variable.
+sets the srv_max_file_format_at_startup variable.
 @return the format_id if valid config value, otherwise, return -1 */
 static
 int
 innobase_file_format_validate_and_set(
 /*================================*/
-  const char* format_check) /*!< in: parameter value */
+  const char* format_max) /*!< in: parameter value */
 {
   uint    format_id;
 
-  format_id = innobase_file_format_name_lookup(format_check);
+  format_id = innobase_file_format_name_lookup(format_max);
 
   if (format_id < DICT_TF_FORMAT_MAX + 1) {
-    srv_check_file_format_at_startup = format_id;
+    srv_max_file_format_at_startup = format_id;
     return((int) format_id);
   } else {
     return(-1);
@@ -9242,12 +9210,12 @@ innodb_file_format_name_update(
 }
 
 /*************************************************************//**
-Check if valid argument to innodb_file_format_check. This
-function is registered as a callback with MySQL.
+Check if valid argument to innodb_file_format_max. This function
+is registered as a callback with MySQL.
 @return 0 for valid file format */
 static
 int
-innodb_file_format_check_validate(
+innodb_file_format_max_validate(
 /*==============================*/
   Session*      session, /*!< in: thread handle */
   drizzle_sys_var*  , /*!< in: pointer to system
@@ -9267,37 +9235,25 @@ innodb_file_format_check_validate(
   file_format_input = value->val_str(value, buff, &len);
 
   if (file_format_input != NULL) {
+    format_id = innobase_file_format_validate_and_set(file_format_input);
 
-    /* Check if user set on/off, we want to print a suitable
-    message if they did so. */
+    if (format_id >= 0) {
+      /* Save a pointer to the name in the
+         'file_format_name_map' constant array. */
+      *static_cast<const char**>(save) =
+        trx_sys_file_format_id_to_name((uint)format_id);
 
-    if (innobase_file_format_check_on_off(file_format_input)) {
-      push_warning_printf(session,
-                          DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                          ER_WRONG_ARGUMENTS,
-        "InnoDB: invalid innodb_file_format_check "
-        "value; on/off can only be set at startup or "
-        "in the configuration file");
+      return(0);
+
     } else {
-      format_id = innobase_file_format_validate_and_set(file_format_input);
-      if (format_id >= 0) {
-        /* Save a pointer to the name in the
-           'file_format_name_map' constant array. */
-        *static_cast<const char**>(save) =
-          trx_sys_file_format_id_to_name(
-                                         (uint)format_id);
-
-        return(0);
-
-      } else {
-        push_warning_printf(session,
-                            DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                            ER_WRONG_ARGUMENTS,
-                            "InnoDB: invalid innodb_file_format_check "
-                            "value; can be any format up to %s "
-                            "or its equivalent numeric id",
-                            trx_sys_file_format_id_to_name(DICT_TF_FORMAT_MAX));
-      }
+      push_warning_printf(session,
+			  DRIZZLE_ERROR::WARN_LEVEL_WARN,
+			  ER_WRONG_ARGUMENTS,
+			  "InnoDB: invalid innodb_file_format_max "
+			  "value; can be any format up to %s "
+			  "or equivalent id of %d",
+			  trx_sys_file_format_id_to_name(DICT_TF_FORMAT_MAX),
+			  DICT_TF_FORMAT_MAX);
     }
   }
 
@@ -9306,11 +9262,11 @@ innodb_file_format_check_validate(
 }
 
 /****************************************************************//**
-Update the system variable innodb_file_format_check using the "saved"
+Update the system variable innodb_file_format_max using the "saved"
 value. This function is registered as a callback with MySQL. */
 static
 void
-innodb_file_format_check_update(
+innodb_file_format_max_update(
 /*============================*/
   Session*      session,  /*!< in: thread handle */
   drizzle_sys_var*  ,   /*!< in: pointer to
@@ -9519,16 +9475,27 @@ static DRIZZLE_SYSVAR_STR(file_format, innobase_file_format_name,
   innodb_file_format_name_validate,
   innodb_file_format_name_update, "Antelope");
 
+/* "innobase_file_format_check" decides whether we would continue
+booting the server if the file format stamped on the system
+table space exceeds the maximum file format supported
+by the server. Can be set during server startup at command
+line or configure file, and a read only variable after
+server startup */
+static DRIZZLE_SYSVAR_BOOL(file_format_check, innobase_file_format_check,
+  PLUGIN_VAR_OPCMDARG | PLUGIN_VAR_READONLY,
+  "Whether to perform system file format check.",
+  NULL, NULL, TRUE);
+
 /* If a new file format is introduced, the file format
 name needs to be updated accordingly. Please refer to
 file_format_name_map[] defined in trx0sys.c for the next
 file format name. */
-static DRIZZLE_SYSVAR_STR(file_format_check, innobase_file_format_check,
+static DRIZZLE_SYSVAR_STR(file_format_max, innobase_file_format_max,
   PLUGIN_VAR_OPCMDARG,
   "The highest file format in the tablespace.",
-  innodb_file_format_check_validate,
-  innodb_file_format_check_update,
-  "Barracuda");
+  innodb_file_format_max_validate,
+  innodb_file_format_max_update,
+  "Antelope");
 
 static DRIZZLE_SYSVAR_ULONG(flush_log_at_trx_commit, srv_flush_log_at_trx_commit,
   PLUGIN_VAR_OPCMDARG,
@@ -9753,9 +9720,12 @@ static void init_options(drizzled::module::option_context &context)
   context("file-format",
           po::value<string>()->default_value("Antelope"),
           "File format to use for new tables in .ibd files.");
-  context("file-format-check",
-          po::value<string>()->default_value("on"),
+  context("file-format-max",
+          po::value<string>()->default_value("Antelope"),
           "The highest file format in the tablespace.");
+  context("file-format-check",
+          po::value<bool>(&innobase_file_format_check)->default_value(true)->zero_tokens(),
+          "Whether to perform system file format check.");
   context("flush-log-at-trx-commit",
           po::value<unsigned long>(&srv_flush_log_at_trx_commit)->default_value(1),
           "Set to 0 (write and flush once per second), 1 (write and flush at each commit) or 2 (write at commit, flush once per second).");
@@ -9892,6 +9862,7 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(file_per_table),
   DRIZZLE_SYSVAR(file_format),
   DRIZZLE_SYSVAR(file_format_check),
+  DRIZZLE_SYSVAR(file_format_max),
   DRIZZLE_SYSVAR(flush_log_at_trx_commit),
   DRIZZLE_SYSVAR(flush_method),
   DRIZZLE_SYSVAR(force_recovery),

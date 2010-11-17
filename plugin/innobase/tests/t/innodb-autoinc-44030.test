@@ -1,7 +1,7 @@
 -- source include/have_innodb.inc
 # embedded server ignores 'delayed', so skip this
 
-let $innodb_file_format_check_orig=`select @@innodb_file_format_check`;
+let $innodb_file_format_max_orig=`select @@innodb_file_format_max`;
 
 --disable_warnings
 drop table if exists t1;
@@ -39,4 +39,4 @@ DROP TABLE t1;
 #
 
 -- disable_query_log
-eval SET GLOBAL innodb_file_format_check=$innodb_file_format_check_orig;
+eval SET GLOBAL innodb_file_format_max=$innodb_file_format_max_orig;

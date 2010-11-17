@@ -1,4 +1,4 @@
-let $innodb_file_format_check_orig=`select @@innodb_file_format_check`;
+let $innodb_file_format_max_orig=`select @@innodb_file_format_max`;
 
 CREATE TABLE t1 (c1 INT AUTO_INCREMENT, c2 INT, PRIMARY KEY(c1)) AUTO_INCREMENT=10 ENGINE=InnoDB;
 CREATE INDEX i1 on t1(c2);
@@ -82,4 +82,4 @@ DROP TABLE t1;
 #
 
 -- disable_query_log
-eval SET GLOBAL innodb_file_format_check=$innodb_file_format_check_orig;
+eval SET GLOBAL innodb_file_format_max=$innodb_file_format_max_orig;
