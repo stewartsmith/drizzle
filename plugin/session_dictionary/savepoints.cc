@@ -24,10 +24,12 @@
 
 namespace session_dictionary {
 
+#define LARGEST_USER_SAVEPOINT_NAME 128
+
 Savepoints::Savepoints() :
   drizzled::plugin::TableFunction("DATA_DICTIONARY", "USER_SAVEPOINTS")
 {
-  add_field("SAVEPOINT_NAME", drizzled::plugin::TableFunction::STRING, LARGEST_USER_VARIABLE_NAME, false);
+  add_field("SAVEPOINT_NAME", drizzled::plugin::TableFunction::STRING, LARGEST_USER_SAVEPOINT_NAME, false);
 }
 
 Savepoints::Generator::Generator(drizzled::Field **arg) :
