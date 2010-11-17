@@ -2757,12 +2757,7 @@ row_sel_store_mysql_rec(
 
 			if (UNIV_UNLIKELY(!data)) {
 				/* The externally stored field
-				was not written yet. This is
-				only a valid condition when
-				the server crashed after the
-				time a record stub was freshly
-				inserted but before all its
-				columns were written. This
+				was not written yet. This
 				record should only be seen by
 				recv_recovery_rollback_active()
 				or any TRX_ISO_READ_UNCOMMITTED
