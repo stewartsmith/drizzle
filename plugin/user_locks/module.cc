@@ -25,7 +25,15 @@ using namespace drizzled;
 
 static int init(drizzled::module::Context &context)
 {
-  user_locks::Locks::getInstance(); // We are single threaded at this point, so we can use this to initialize.
+  // We are single threaded at this point, so we can use this to initialize.
+  user_locks::Locks::getInstance();
+  user_locks::Barriers::getInstance();
+
+  context.add(new plugin::Create_function<user_locks::CreateBarrier>("create_barrier"));
+  context.add(new plugin::Create_function<user_locks::barriers::Release>("release_barrier"));
+  context.add(new plugin::Create_function<user_locks::barriers::Wait>("wait"));
+  context.add(new plugin::Create_function<user_locks::barriers::Signal>("signal"));
+
   context.add(new plugin::Create_function<user_locks::GetLock>("get_lock"));
   context.add(new plugin::Create_function<user_locks::GetLocks>("get_locks"));
   context.add(new plugin::Create_function<user_locks::ReleaseLock>("release_lock"));
@@ -33,6 +41,7 @@ static int init(drizzled::module::Context &context)
   context.add(new plugin::Create_function<user_locks::IsFreeLock>("is_free_lock"));
   context.add(new plugin::Create_function<user_locks::IsUsedLock>("is_used_lock"));
   context.add(new user_locks::UserLocks);
+  context.add(new user_locks::UserBarriers);
 
   return 0;
 }

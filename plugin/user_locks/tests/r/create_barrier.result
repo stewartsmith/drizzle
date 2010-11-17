@@ -1,0 +1,35 @@
+SELECT create_barrier("foo");
+create_barrier("foo")
+1
+SELECT * FROM DATA_DICTIONARY.USER_BARRIERS;
+USER_BARRIERS
+foo
+SELECT release_barrier("foo");
+release_barrier("foo")
+1
+SELECT * FROM DATA_DICTIONARY.USER_BARRIERS;
+USER_BARRIERS
+SELECT create_barrier("foo1");
+create_barrier("foo1")
+1
+SELECT create_barrier("foo2");
+create_barrier("foo2")
+1
+SELECT * FROM DATA_DICTIONARY.USER_BARRIERS;
+USER_BARRIERS
+foo1
+foo2
+SELECT release_barrier("foo2");
+release_barrier("foo2")
+1
+SELECT * FROM DATA_DICTIONARY.USER_BARRIERS;
+USER_BARRIERS
+foo1
+SELECT release_barrier("foo1");
+release_barrier("foo1")
+1
+SELECT * FROM DATA_DICTIONARY.USER_BARRIERS;
+USER_BARRIERS
+SELECT release_barrier("foo2");
+release_barrier("foo2")
+NULL

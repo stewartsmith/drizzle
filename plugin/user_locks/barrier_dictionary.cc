@@ -1,0 +1,69 @@
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2010 Brian Aker
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+#include "config.h"
+
+#include "plugin/user_locks/module.h"
+
+#include <drizzled/atomics.h>
+#include <drizzled/session.h>
+
+using namespace drizzled;
+using namespace std;
+
+user_locks::UserBarriers::UserBarriers() :
+  plugin::TableFunction("DATA_DICTIONARY", "USER_BARRIERS")
+{
+  add_field("USER_BARRIERS", plugin::TableFunction::STRING, user_locks::LARGEST_LOCK_NAME, false);
+#if 0
+  add_field("SESSION_ID", plugin::TableFunction::NUMBER, 0, false);
+  add_field("USER_NAME", plugin::TableFunction::STRING);
+#endif
+}
+
+user_locks::UserBarriers::Generator::Generator(drizzled::Field **arg) :
+  drizzled::plugin::TableFunction::Generator(arg)
+{
+  user_locks::Barriers::getInstance().Copy(barrier_map);
+  iter= barrier_map.begin();
+}
+
+bool user_locks::UserBarriers::Generator::populate()
+{
+
+  while (iter != barrier_map.end())
+  {
+    // USER_LOCK_NAME
+    push((*iter).first.getLockName());
+
+#if 0
+    // SESSION_ID
+    push((*iter).second->id);
+    //
+    // USER_NAME
+    push((*iter).first.getUser());
+#endif
+
+    iter++;
+    return true;
+  }
+
+  return false;
+}

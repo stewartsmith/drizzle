@@ -20,53 +20,48 @@
 
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
-#include <boost/shared_ptr.hpp>
+#include <boost/unordered_map.hpp>
+#include <boost/logic/tribool.hpp>
+#include <boost/unordered/unordered_set.hpp>
 
-#ifndef CLIENT_WAKEUP_H
-#define CLIENT_WAKEUP_H
+#include <string>
 
-namespace client {
+#include "drizzled/session.h"
+#include "drizzled/util/string.h"
 
-// Wakeup starts in a blocking posistion
-class Wakeup {
+
+#ifndef PLUGIN_USER_LOCKS_BARRIERS_H
+#define PLUGIN_USER_LOCKS_BARRIERS_H
+
+#include "client/wakeup.h"
+
+namespace user_locks {
+
+const size_t LARGEST_BARRIER_NAME= 64;
+
+class Barriers
+{
 public:
-  typedef boost::shared_ptr<Wakeup> shared_ptr;
+  typedef boost::unordered_map<user_locks::Key, client::Wakeup::shared_ptr> Map;
 
-  Wakeup() :
-    sleeping(true)
-  { }
-
-  // Signal all of the waiters to start
-  void start()
+  static Barriers &getInstance(void)
   {
-    boost::mutex::scoped_lock scopedWakeup(sleeper_mutex);
-    sleeping= false;
-    sleep_threshhold.notify_all();
+    static Barriers instance;
+    return instance;
   }
 
-  // reset after the start of the signal so that we can reuse the wakeup
-  void reset()
-  {
-    boost::mutex::scoped_lock scopedWakeup(sleeper_mutex);
-    sleeping= true;
-  }
-
-  void wait() 
-  {
-    sleeper_mutex.lock();
-    while (sleeping)
-    {
-      sleep_threshhold.wait(sleeper_mutex);
-    }
-    sleeper_mutex.unlock();
-  }
+  bool create(const user_locks::Key &arg);
+  boost::tribool release(const user_locks::Key &arg);
+  client::Wakeup::shared_ptr find(const user_locks::Key &arg);
+  void Copy(Map &arg);
 
 private:
-  bool sleeping;
-  boost::mutex sleeper_mutex;
-  boost::condition_variable_any sleep_threshhold;
+
+  boost::mutex mutex;
+  Map barrier_map; 
 };
 
-} // namespace client
 
-#endif /* CLIENT_WAKEUP_H */
+} /* namespace user_locks */
+
+#endif /* PLUGIN_USER_LOCKS_BARRIERS_H */

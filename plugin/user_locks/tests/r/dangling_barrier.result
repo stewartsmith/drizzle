@@ -1,0 +1,4 @@
+set @lock_name= "dangling_barrier";
+SELECT get_lock(@lock_name);
+get_lock(@lock_name)
+1
