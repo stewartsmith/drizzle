@@ -67,6 +67,12 @@ void Cache::erase(Session::Ptr arg)
   }
 }
 
+void Cache::insert(Session::shared_ptr arg)
+{
+  boost::mutex::scoped_lock scopedLock(_mutex);
+  cache.push_back(arg);
+}
+
 void Cache::erase(Session::shared_ptr arg)
 {
   cache.erase(remove(cache.begin(), cache.end(), arg));
