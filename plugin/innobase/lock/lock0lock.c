@@ -3741,7 +3741,7 @@ lock_table_enqueue_waiting(
 		/* Deadlock resolution chose another transaction as a victim,
 		and we accidentally got our lock granted! */
 
-		return(DB_SUCCESS);
+		return(DB_SUCCESS_LOCKED_REC);
 	}
 
 	trx->que_state = TRX_QUE_LOCK_WAIT;
@@ -3810,7 +3810,7 @@ lock_table(
 
 	if (flags & BTR_NO_LOCKING_FLAG) {
 
-		return(DB_SUCCESS);
+		return(DB_SUCCESS_LOCKED_REC);
 	}
 
 	ut_a(flags == 0);
@@ -3986,6 +3986,16 @@ released:
 
 	mutex_exit(&kernel_mutex);
 }
+
+/** Record locking request status */
+enum lock_rec_req_status {
+	/** Failed to acquire a lock */
+	LOCK_REC_FAIL,
+	/** Succeeded in acquiring a lock (implicit or already acquired) */
+	LOCK_REC_SUCCESS,
+	/** Explicitly created a new lock */
+	LOCK_REC_SUCCESS_CREATED
+};
 
 /*********************************************************************//**
 Releases transaction locks, and releases possible other transactions waiting
@@ -5354,6 +5364,10 @@ lock_sec_rec_read_check_and_lock(
 	lock_mutex_exit_kernel();
 
 	ut_ad(lock_rec_queue_validate(block, rec, index, offsets));
+
+	if (UNIV_UNLIKELY(err == DB_SUCCESS_LOCKED_REC)) {
+		err = DB_SUCCESS;
+	}
 
 	return(err);
 }

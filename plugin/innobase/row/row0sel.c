@@ -1731,8 +1731,12 @@ skip_lock:
 					    &mtr);
 		mtr_has_extra_clust_latch = TRUE;
 
-		if (err != DB_SUCCESS) {
-
+		switch (err) {
+		case DB_SUCCESS_LOCKED_REC:
+			err = DB_SUCCESS;
+		case DB_SUCCESS:
+			break;
+		default:
 			goto lock_wait_or_error;
 		}
 
@@ -1917,6 +1921,7 @@ table_exhausted_no_mtr:
 			thr->run_node = que_node_get_parent(node);
 		}
 
+		err = DB_SUCCESS;
 		goto func_exit;
 	}
 
@@ -2074,6 +2079,8 @@ row_sel_step(
 			/* Reset the aggregate total values */
 			sel_reset_aggregate_vals(node);
 		}
+
+		err = DB_SUCCESS;
 	}
 
 	err = row_sel(node, thr);
@@ -4142,8 +4149,12 @@ no_gap_lock:
 				clust_index, prebuilt, rec,
 				&offsets, &heap, &old_vers, &mtr);
 
-			if (err != DB_SUCCESS) {
-
+			switch (err) {
+			case DB_SUCCESS_LOCKED_REC:
+				err = DB_SUCCESS;
+			case DB_SUCCESS:
+				break;
+			default:
 				goto lock_wait_or_error;
 			}
 
@@ -4213,8 +4224,11 @@ no_gap_lock:
 					prebuilt, rec, &offsets, &heap,
 					&old_vers, &mtr);
 
-				if (err != DB_SUCCESS) {
-
+				switch (err) {
+				case DB_SUCCESS_LOCKED_REC:
+				case DB_SUCCESS:
+					break;
+				default:
 					goto lock_wait_or_error;
 				}
 

@@ -2160,7 +2160,7 @@ row_ins_index_entry(
 	ibool		foreign,/*!< in: TRUE=check foreign key constraints */
 	que_thr_t*	thr)	/*!< in: query thread */
 {
-	ulint	err;
+	enum db_err	err;
 
 	if (foreign && UT_LIST_GET_FIRST(index->table->foreign_list)) {
 		err = row_ins_check_foreign_constraints(index->table, index,
@@ -2250,7 +2250,7 @@ row_ins_index_entry_step(
 	ins_node_t*	node,	/*!< in: row insert node */
 	que_thr_t*	thr)	/*!< in: query thread */
 {
-	ulint	err;
+	enum db_err	err;
 
 	ut_ad(dtuple_check_typed(node->row));
 
