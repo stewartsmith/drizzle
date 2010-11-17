@@ -2797,14 +2797,14 @@ InnobaseEngine::close_connection(
   /* Warn if rolling back some things... */
   if (session->getKilled() != Session::NOT_KILLED &&
       trx->conc_state != TRX_NOT_STARTED &&
-      trx->undo_no.low > 0 &&
+      trx->undo_no > 0 &&
       global_system_variables.log_warnings)
   {
-      errmsg_printf(ERRMSG_LVL_WARN, 
+      errmsg_printf(ERRMSG_LVL_WARN,
       "Drizzle is closing a connection during a KILL operation\n"
-      "that has an active InnoDB transaction.  %lu row modifications will "
+      "that has an active InnoDB transaction.  %llu row modifications will "
       "roll back.\n",
-      (ulong) trx->undo_no.low);
+      (ullint) trx->undo_no);
   }
 
   innobase_rollback_trx(trx);
@@ -4479,7 +4479,7 @@ no_commit:
 
   error = row_insert_for_mysql((byte*) record, prebuilt);
 
-  user_session->setXaId((ib_uint64_t) ut_conv_dulint_to_longlong(trx->id));
+  user_session->setXaId(trx->id);
 
   /* Handle duplicate key errors */
   if (auto_inc_used) {
@@ -4802,7 +4802,7 @@ ha_innobase::doUpdateRecord(
 
   error = row_update_for_mysql((byte*) old_row, prebuilt);
 
-  user_session->setXaId((ib_uint64_t) ut_conv_dulint_to_longlong(trx->id));
+  user_session->setXaId(trx->id);
 
   /* We need to do some special AUTOINC handling for the following case:
 
@@ -4894,7 +4894,7 @@ ha_innobase::doDeleteRecord(
 
   error = row_update_for_mysql((byte*) record, prebuilt);
 
-  user_session->setXaId((ib_uint64_t) ut_conv_dulint_to_longlong(trx->id));
+  user_session->setXaId(trx->id);
 
   innodb_srv_conc_exit_innodb(trx);
 
@@ -6212,7 +6212,7 @@ InnobaseEngine::doCreateTable(
                           lex_identified_temp_table ? name2 : NULL,
                           iflags);
 
-  session.setXaId((ib_uint64_t) ut_conv_dulint_to_longlong(trx->id));
+  session.setXaId(trx->id);
 
   if (error) {
     goto cleanup;
@@ -6466,7 +6466,7 @@ InnobaseEngine::doDropTable(
                                    session_sql_command(&session)
                                    == SQLCOM_DROP_DB);
 
-  session.setXaId((ib_uint64_t) ut_conv_dulint_to_longlong(trx->id));
+  session.setXaId(trx->id);
 
   /* Flush the log to reduce probability that the .frm files and
     the InnoDB data dictionary get out-of-sync if the user runs
@@ -6688,7 +6688,7 @@ UNIV_INTERN int InnobaseEngine::doRenameTable(Session &session, const TableIdent
 
   error = innobase_rename_table(trx, from.getPath().c_str(), to.getPath().c_str(), TRUE);
 
-  session.setXaId((ib_uint64_t) ut_conv_dulint_to_longlong(trx->id));
+  session.setXaId(trx->id);
 
   /* Tell the InnoDB server that there might be work for
     utility threads: */
@@ -8975,7 +8975,7 @@ InnobaseEngine::doXaPrepare(
 uint64_t InnobaseEngine::doGetCurrentTransactionId(Session *session)
 {
   trx_t *trx= session_to_trx(session);
-  return (ib_uint64_t) ut_conv_dulint_to_longlong(trx->id);
+  return (trx->id);
 }
 
 uint64_t InnobaseEngine::doGetNewTransactionId(Session *session)
@@ -8986,7 +8986,7 @@ uint64_t InnobaseEngine::doGetNewTransactionId(Session *session)
   trx->id= trx_sys_get_new_trx_id();
   mutex_exit(&kernel_mutex);
 
-  uint64_t transaction_id= (ib_uint64_t) ut_conv_dulint_to_longlong(trx->id);
+  uint64_t transaction_id= trx->id;
 
   trx_free_for_mysql(trx);
 
