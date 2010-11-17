@@ -109,6 +109,7 @@ void write_bin_log(Session *session,
                    char const *query)
 {
   TransactionServices &transaction_services= TransactionServices::singleton();
+  transaction_services.allocateNewTransactionId();
   transaction_services.rawStatement(session, query);
 }
 
