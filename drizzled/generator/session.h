@@ -31,13 +31,12 @@ class Session
 {
   session::Cache::List local_list;
   session::Cache::List::const_iterator iter;
-  boost::mutex::scoped_lock scopedLock;
 
 public:
 
-  Session() :
-    scopedLock(session::Cache::singleton().mutex())
+  Session()
   {
+    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
     local_list= session::Cache::singleton().getCache();
     iter= local_list.begin();
   }
