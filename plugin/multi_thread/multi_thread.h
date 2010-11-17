@@ -42,10 +42,10 @@ public:
   }
 
   ~MultiThreadScheduler();
-  bool addSession(drizzled::Session* session);
-  void killSessionNow(drizzled::Session *session);
+  bool addSession(drizzled::Session::shared_ptr &session);
+  void killSessionNow(drizzled::Session::shared_ptr &session);
   
-  void runSession(drizzled::Session* session);
+  void runSession(drizzled::session_id_t);
 private:
   void setStackSize();
 };

@@ -64,6 +64,8 @@
 #include <climits>
 #include <boost/filesystem.hpp>
 
+#include "drizzled/util/backtrace.h"
+
 using namespace std;
 
 namespace fs=boost::filesystem;
@@ -408,6 +410,10 @@ Session::~Session()
     delete (*iter).second;
   }
   life_properties.clear();
+
+#if 0
+  drizzled::util::custom_backtrace();
+#endif
 }
 
 void Session::setClient(plugin::Client *client_arg)
@@ -547,7 +553,7 @@ void Session::run()
   disconnect(0, true);
 }
 
-bool Session::schedule(Session::shared_ptr arg)
+bool Session::schedule(Session::shared_ptr &arg)
 {
   arg->scheduler= plugin::Scheduler::getScheduler();
   assert(arg->scheduler);
@@ -569,7 +575,7 @@ bool Session::schedule(Session::shared_ptr arg)
     // We should do something about an error...
   }
 
-  if (plugin::Scheduler::getScheduler()->addSession(arg.get()))
+  if (plugin::Scheduler::getScheduler()->addSession(arg))
   {
     DRIZZLE_CONNECTION_START(arg->getSessionId());
     char error_message_buff[DRIZZLE_ERRMSG_SIZE];

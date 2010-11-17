@@ -1123,10 +1123,9 @@ public:
   /**
    * Schedule a session to be run on the default scheduler.
    */
-  static bool schedule(Session::shared_ptr);
+  static bool schedule(Session::shared_ptr&);
 
-  static void unlink(Session::shared_ptr);
-  static void unlink(Session::Ptr);
+  static void unlink(Session::shared_ptr&);
 
   /*
     For enter_cond() / exit_cond() to work the mutex must be got before

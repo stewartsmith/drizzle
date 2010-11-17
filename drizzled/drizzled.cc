@@ -627,7 +627,7 @@ static void set_root(const char *path)
     session		 Thread handler
 */
 
-void drizzled::Session::unlink(Session* session)
+void drizzled::Session::unlink(Session::shared_ptr &session)
 {
   connection_count.decrement();
 
@@ -635,26 +635,11 @@ void drizzled::Session::unlink(Session* session)
 
   boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
 
-  session::Cache::singleton().erase(session);
   if (unlikely(plugin::EventObserver::disconnectSession(*session)))
   {
     // We should do something about an error...
   }
-}
-
-void drizzled::Session::unlink(Session::shared_ptr session)
-{
-  connection_count.decrement();
-
-  session->cleanup();
-
-  boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
-
   session::Cache::singleton().erase(session);
-  if (unlikely(plugin::EventObserver::disconnectSession(*session)))
-  {
-    // We should do something about an error...
-  }
 }
 
 

@@ -38,8 +38,17 @@ namespace drizzled
   extern size_t my_thread_stack_size;
 }
 
-void MultiThreadScheduler::runSession(drizzled::Session::Ptr session)
+void MultiThreadScheduler::runSession(drizzled::session_id_t id)
 {
+  char stack_dummy;
+  Session::shared_ptr session(session::Cache::singleton().find(id));
+
+  if (not session)
+  {
+    std::cerr << "Session killed before thread could execute\n";
+    return;
+  }
+
   if (drizzled::internal::my_thread_init())
   {
     session->disconnect(drizzled::ER_OUT_OF_RESOURCES, true);
@@ -48,9 +57,12 @@ void MultiThreadScheduler::runSession(drizzled::Session::Ptr session)
   }
   boost::this_thread::at_thread_exit(&internal::my_thread_end);
 
-  session->thread_stack= (char*) &session;
+  session->thread_stack= (char*) &stack_dummy;
   session->run();
   killSessionNow(session);
+  // @todo remove hard spin by disconnection the session first from the
+  // thread.
+  while (not session.unique()) {}
 }
 
 void MultiThreadScheduler::setStackSize()
@@ -91,14 +103,14 @@ void MultiThreadScheduler::setStackSize()
 #endif
 }
 
-bool MultiThreadScheduler::addSession(Session::Ptr session)
+bool MultiThreadScheduler::addSession(Session::shared_ptr &session)
 {
   if (thread_count >= max_threads)
     return true;
 
   thread_count.increment();
 
-  boost::thread new_thread(boost::bind(&MultiThreadScheduler::runSession, this, session));
+  boost::thread new_thread(boost::bind(&MultiThreadScheduler::runSession, this, session->getSessionId()));
 
   if (not new_thread.joinable())
   {
@@ -110,7 +122,7 @@ bool MultiThreadScheduler::addSession(Session::Ptr session)
 }
 
 
-void MultiThreadScheduler::killSessionNow(Session *session)
+void MultiThreadScheduler::killSessionNow(Session::shared_ptr &session)
 {
   /* Locks LOCK_thread_count and deletes session */
   Session::unlink(session);
