@@ -5629,7 +5629,8 @@ int PBXTStorageEngine::doCreateTable(Session&,
 
 		StorageEngine::writeDefinitionFromPath(ident, proto);
 
-		tab_def = xt_ri_create_table(self, true, (XTPathStrPtr) table_path, const_cast<char *>(thd->getQueryString().c_str()), myxt_create_table_from_table(self, table_arg.getMutableShare()), &source_dic);
+                Session::QueryString query_string(thd->getQueryString());
+		tab_def = xt_ri_create_table(self, true, (XTPathStrPtr) table_path, const_cast<char *>(query_string->c_str()), myxt_create_table_from_table(self, table_arg.getMutableShare()), &source_dic);
 		tab_def->checkForeignKeys(self, proto.type() == message::Table::TEMPORARY);
 
 		dic.dic_table = tab_def;

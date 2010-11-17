@@ -161,6 +161,7 @@ Session::Session(plugin::Client *client_arg) :
   mem_root(&main_mem_root),
   xa_id(0),
   lex(&main_lex),
+  query(new std::string),
   catalog("LOCAL"),
   client(client_arg),
   scheduler(NULL),
@@ -190,7 +191,6 @@ Session::Session(plugin::Client *client_arg) :
   session_event_observers(NULL),
   use_usage(false)
 {
-  memset(process_list_info, 0, PROCESS_LIST_WIDTH);
   client->setSession(this);
 
   /*
@@ -713,14 +713,13 @@ bool Session::readAndStoreQuery(const char *in_packet, uint32_t in_packet_length
     in_packet_length--;
   }
   const char *pos= in_packet + in_packet_length; /* Point at end null */
-  while (in_packet_length > 0 &&
-	 (pos[-1] == ';' || my_isspace(charset() ,pos[-1])))
+  while (in_packet_length > 0 && (pos[-1] == ';' || my_isspace(charset() ,pos[-1])))
   {
     pos--;
     in_packet_length--;
   }
 
-  query.assign(in_packet, in_packet + in_packet_length);
+  query.reset(new std::string(in_packet, in_packet + in_packet_length));
 
   return true;
 }
