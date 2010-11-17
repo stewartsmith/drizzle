@@ -2413,6 +2413,17 @@ row_merge_rename_tables(
 		ut_error;
 	}
 
+	/* store the old/current name to an automatic variable */
+	if (strlen(old_table->name) + 1 <= sizeof(old_name)) {
+		memcpy(old_name, old_table->name, strlen(old_table->name) + 1);
+	} else {
+		ut_print_timestamp(stderr);
+		fprintf(stderr, "InnoDB: too long table name: '%s', "
+			"max length is %d\n", old_table->name,
+			MAX_TABLE_NAME_LEN);
+		ut_error;
+	}
+
 	trx->op_info = "renaming tables";
 
 	/* We use the private SQL parser of Innobase to generate the query

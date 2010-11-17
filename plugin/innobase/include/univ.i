@@ -309,6 +309,12 @@ management to ensure correct alignment for doubles etc. */
 /* The following alignment is used in aligning lints etc. */
 #define UNIV_WORD_ALIGNMENT	UNIV_WORD_SIZE
 
+/* The maximum length of a table name. This is the MySQL limit and is
+defined in mysql_com.h like NAME_CHAR_LEN*SYSTEM_CHARSET_MBMAXLEN, the
+number does not include a terminating '\0'. InnoDB probably can handle
+longer names internally */
+#define MAX_TABLE_NAME_LEN	192
+
 /*
 			DATABASE VERSION CONTROL
 			========================
