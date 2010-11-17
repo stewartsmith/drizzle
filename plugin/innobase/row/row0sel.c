@@ -2755,6 +2755,26 @@ row_sel_store_mysql_rec(
 				return(FALSE);
 			}
 
+			if (UNIV_UNLIKELY(!data)) {
+				/* The externally stored field
+				was not written yet. This is
+				only a valid condition when
+				the server crashed after the
+				time a record stub was freshly
+				inserted but before all its
+				columns were written. This
+				record should only be seen by
+				recv_recovery_rollback_active()
+				or any TRX_ISO_READ_UNCOMMITTED
+				transactions. */
+
+				if (extern_field_heap) {
+					mem_heap_free(extern_field_heap);
+				}
+
+				return(FALSE);
+			}
+
 			ut_a(len != UNIV_SQL_NULL);
 		} else {
 			/* Field is stored in the row. */
