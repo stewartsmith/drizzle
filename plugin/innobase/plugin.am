@@ -222,8 +222,8 @@ noinst_LTLIBRARIES+= \
 		     plugin/innobase/libpars.la
 endif
 
-plugin_innobase_libinnobase_la_CFLAGS=	${AM_CFLAGS} ${INNOBASE_SKIP_WARNINGS} -I$(top_srcdir)/plugin/innobase/include -DBUILD_DRIZZLE
-plugin_innobase_libinnobase_la_CXXFLAGS=${AM_CXXFLAGS} ${INNOBASE_SKIP_WARNINGS} -I$(top_srcdir)/plugin/innobase/include -DBUILD_DRIZZLE
+plugin_innobase_libinnobase_la_CFLAGS=	${AM_CFLAGS} ${INNOBASE_SKIP_WARNINGS} -I${top_builddir}/plugin/innobase/include -I$(top_srcdir)/plugin/innobase/include -DBUILD_DRIZZLE
+plugin_innobase_libinnobase_la_CXXFLAGS=${AM_CXXFLAGS} ${INNOBASE_SKIP_WARNINGS} -I${top_builddir}/plugin/innobase/include -I$(top_srcdir)/plugin/innobase/include -DBUILD_DRIZZLE
 plugin_innobase_libinnobase_la_SOURCES= \
                                         plugin/innobase/btr/btr0btr.c \
                                         plugin/innobase/btr/btr0cur.c \
@@ -316,15 +316,19 @@ plugin_innobase_libinnobase_la_SOURCES= \
 # pars0lex.c and pars0grm.c have lots of redundant decls 
 # and unused/undefeind stuf, but are generated anyway 
 plugin_innobase_libpars_la_CFLAGS=	${AM_CFLAGS} ${NO_WERROR} \
+			-I$(top_builddir)/plugin/innobase/include \
 			-I$(top_srcdir)/plugin/innobase/include \
 			-DBUILD_DRIZZLE
-plugin_innobase_libpars_la_SOURCES= 	plugin/innobase/pars/pars0lex.c \
-			plugin/innobase/pars/pars0grm.c
+
+plugin_innobase_libpars_la_SOURCES= \
+				    plugin/innobase/pars/pars0lex.c \
+				    plugin/innobase/pars/pars0grm.c
 
 plugin_innobase_libinnobase_la_LIBADD=	plugin/innobase/libpars.la
 
 plugin/innobase/pars/pars0grm.c: plugin/innobase/pars/pars0grm.y
-	$(AM_V_GEN) $(YACC) -d plugin/innobase/pars/pars0grm.y -o plugin/innobase/pars/pars0grm.tab.c
+	$(AM_V_GEN) $(YACC) -d $< -o plugin/innobase/pars/pars0grm.tab.c
+	@mkdir -p plugin/innobase/include
 	@mv plugin/innobase/pars/pars0grm.tab.h plugin/innobase/include/pars0grm.h
 	@sed -e 's/pars0grm.tab.c/pars0grm.c/; s/^\(\(YYSTYPE\|int\) yy\(char\|nerrs\)\)/static \1/; s/\(\(YYSTYPE\|int\) yy\(lval\|parse\)\)/UNIV_INTERN \1/;' < plugin/innobase/pars/pars0grm.tab.c > plugin/innobase/pars/pars0grm.c
 	@rm plugin/innobase/pars/pars0grm.tab.c
