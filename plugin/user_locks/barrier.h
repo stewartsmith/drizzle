@@ -104,6 +104,11 @@ public:
   {
   }
 
+  ~Barrier()
+  {
+    wakeAll();
+  }
+
   // Signal all of the observers to start
   void signal()
   {
