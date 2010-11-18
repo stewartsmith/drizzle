@@ -101,14 +101,7 @@ bool Logging_syslog::post (Session *session)
   if ((t_mark - session->start_utime) < syslog_module::sysvar_logging_threshold_slow)
     return false;
   
-  /* to avoid trying to printf %s something that is potentially NULL */
-  
-  const char *dbs= session->db.empty() ? "" : session->db.c_str();
-  
-  const char *qys= (! session->getQueryString().empty()) ? session->getQueryString().c_str() : "";
-  int qyl= 0;
-  if (qys)
-    qyl= session->getQueryLength();
+  Session::QueryString query_string(session->getQueryString());
 
   WrapSyslog::singleton()
     .log(syslog_facility, syslog_priority,
@@ -121,8 +114,10 @@ bool Logging_syslog::post (Session *session)
          " tmp_table=%ld total_warn_count=%ld\n",
          (unsigned long) session->thread_id,
          (unsigned long) session->getQueryId(),
-         (int) session->db.length(), dbs,
-         qyl, qys,
+         (int) session->getSchema().length(),
+         session->getSchema().empty() ? "" : session->getSchema().c_str(),
+         (int) query_string->length(), 
+         query_string->empty() ? "" : query_string->c_str(),
          (int) command_name[session->command].length,
          command_name[session->command].str,
          (unsigned long long) (t_mark - session->getConnectMicroseconds()),

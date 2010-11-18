@@ -64,6 +64,8 @@
 #include <climits>
 #include <boost/filesystem.hpp>
 
+#include "drizzled/util/backtrace.h"
+
 using namespace std;
 
 namespace fs=boost::filesystem;
@@ -161,6 +163,7 @@ Session::Session(plugin::Client *client_arg) :
   mem_root(&main_mem_root),
   xa_id(0),
   lex(&main_lex),
+  query(new std::string),
   catalog("LOCAL"),
   client(client_arg),
   scheduler(NULL),
@@ -190,7 +193,6 @@ Session::Session(plugin::Client *client_arg) :
   session_event_observers(NULL),
   use_usage(false)
 {
-  memset(process_list_info, 0, PROCESS_LIST_WIDTH);
   client->setSession(this);
 
   /*
@@ -409,8 +411,9 @@ Session::~Session()
   }
   life_properties.clear();
 
-  /* Ensure that no one is using Session */
-  LOCK_delete.unlock();
+#if 0
+  drizzled::util::custom_backtrace();
+#endif
 }
 
 void Session::setClient(plugin::Client *client_arg)
@@ -422,7 +425,6 @@ void Session::setClient(plugin::Client *client_arg)
 void Session::awake(Session::killed_state_t state_to_set)
 {
   this->checkSentry();
-  safe_mutex_assert_owner(&LOCK_delete);
 
   setKilled(state_to_set);
   if (state_to_set != Session::KILL_QUERY)
@@ -551,10 +553,10 @@ void Session::run()
   disconnect(0, true);
 }
 
-bool Session::schedule()
+bool Session::schedule(Session::shared_ptr &arg)
 {
-  scheduler= plugin::Scheduler::getScheduler();
-  assert(scheduler);
+  arg->scheduler= plugin::Scheduler::getScheduler();
+  assert(arg->scheduler);
 
   connection_count.increment();
 
@@ -564,41 +566,45 @@ bool Session::schedule()
   }
 
   current_global_counters.connections++;
-  thread_id= variables.pseudo_thread_id= global_thread_id++;
+  arg->thread_id= arg->variables.pseudo_thread_id= global_thread_id++;
 
-  {
-    boost::mutex::scoped_lock scoped(LOCK_thread_count);
-    getSessionList().push_back(this);
-  }
+  session::Cache::singleton().insert(arg);
 
-  if (unlikely(plugin::EventObserver::connectSession(*this)))
+  if (unlikely(plugin::EventObserver::connectSession(*arg)))
   {
     // We should do something about an error...
   }
 
-  if (unlikely(plugin::EventObserver::connectSession(*this)))
+  if (plugin::Scheduler::getScheduler()->addSession(arg))
   {
-    // We should do something about an error...
-  }
-
-  if (scheduler->addSession(this))
-  {
-    DRIZZLE_CONNECTION_START(thread_id);
+    DRIZZLE_CONNECTION_START(arg->getSessionId());
     char error_message_buff[DRIZZLE_ERRMSG_SIZE];
 
-    setKilled(Session::KILL_CONNECTION);
+    arg->setKilled(Session::KILL_CONNECTION);
 
-    status_var.aborted_connects++;
+    arg->status_var.aborted_connects++;
 
     /* Can't use my_error() since store_globals has not been called. */
     /* TODO replace will better error message */
     snprintf(error_message_buff, sizeof(error_message_buff),
              ER(ER_CANT_CREATE_THREAD), 1);
-    client->sendError(ER_CANT_CREATE_THREAD, error_message_buff);
+    arg->client->sendError(ER_CANT_CREATE_THREAD, error_message_buff);
+
     return true;
   }
 
   return false;
+}
+
+
+/*
+  Is this session viewable by the current user?
+*/
+bool Session::isViewable() const
+{
+  return plugin::Authorization::isAuthorized(current_session->getSecurityContext(),
+                                             this,
+                                             false);
 }
 
 
@@ -713,14 +719,13 @@ bool Session::readAndStoreQuery(const char *in_packet, uint32_t in_packet_length
     in_packet_length--;
   }
   const char *pos= in_packet + in_packet_length; /* Point at end null */
-  while (in_packet_length > 0 &&
-	 (pos[-1] == ';' || my_isspace(charset() ,pos[-1])))
+  while (in_packet_length > 0 && (pos[-1] == ';' || my_isspace(charset() ,pos[-1])))
   {
     pos--;
     in_packet_length--;
   }
 
-  query.assign(in_packet, in_packet + in_packet_length);
+  query.reset(new std::string(in_packet, in_packet + in_packet_length));
 
   return true;
 }
@@ -1645,7 +1650,7 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
 
   /* Close out our connection to the client */
   if (should_lock)
-    LOCK_thread_count.lock();
+    session::Cache::singleton().mutex().lock();
 
   setKilled(Session::KILL_CONNECTION);
 
@@ -1661,7 +1666,7 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
 
   if (should_lock)
   {
-    (void) LOCK_thread_count.unlock();
+    session::Cache::singleton().mutex().unlock();
   }
 }
 

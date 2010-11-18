@@ -1132,9 +1132,7 @@ innobase_mysql_print_thd(
           session->getSecurityContext().getIp().c_str(),
           session->getSecurityContext().getUser().c_str()
   );
-  fprintf(f,
-          "\n%s", session->getQueryString().c_str()
-  );
+  fprintf(f, "\n%s", session->getQueryString()->c_str());
   putc('\n', f);
 }
 
@@ -1254,8 +1252,7 @@ innobase_get_stmt(
 	void*	session,	/*!< in: MySQL thread handle */
 	size_t*	length)		/*!< out: length of the SQL statement */
 {
-  *length= static_cast<Session*>(session)->query.length();
-  return static_cast<Session*>(session)->query.c_str();
+  return static_cast<Session*>(session)->getQueryStringCopy(*length);
 }
 
 #if defined (__WIN__) && defined (MYSQL_DYNAMIC_PLUGIN)
@@ -8868,15 +8865,20 @@ uint64_t InnobaseEngine::doGetCurrentTransactionId(Session *session)
 
 uint64_t InnobaseEngine::doGetNewTransactionId(Session *session)
 {
-  trx_t *trx= innobase_trx_allocate(session);
+  trx_t*& trx = session_to_trx(session);
+
+  if (trx == NULL)
+  {
+    trx = innobase_trx_allocate(session);
+
+    innobase_trx_init(session, trx);
+  }
 
   mutex_enter(&kernel_mutex);
   trx->id= trx_sys_get_new_trx_id();
   mutex_exit(&kernel_mutex);
 
   uint64_t transaction_id= (ib_uint64_t) ut_conv_dulint_to_longlong(trx->id);
-
-  trx_free_for_mysql(trx);
 
   return transaction_id;
 }

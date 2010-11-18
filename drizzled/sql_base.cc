@@ -3947,7 +3947,6 @@ bool drizzle_rm_tmp_tables()
 
   plugin::StorageEngine::removeLostTemporaryTables(*session, drizzle_tmpdir.c_str());
 
-  session->lockForDelete();
   delete session;
 
   return false;

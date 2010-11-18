@@ -21,7 +21,7 @@
 #ifndef DRIZZLED_GENERATOR_SESSION_H
 #define DRIZZLED_GENERATOR_SESSION_H
 
-#include "drizzled/pthread_globals.h"
+#include <boost/thread/mutex.hpp>
 #include "drizzled/session_list.h"
 
 namespace drizzled {
@@ -29,24 +29,23 @@ namespace generator {
 
 class Session
 {
-  SessionList local_list;
-  SessionList::const_iterator iter;
+  session::Cache::List local_list;
+  session::Cache::List::const_iterator iter;
 
 public:
 
   Session()
   {
-    LOCK_thread_count.lock();
-    local_list= getSessionList();
+    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
+    local_list= session::Cache::singleton().getCache();
     iter= local_list.begin();
   }
 
   ~Session()
   {
-    LOCK_thread_count.unlock();
   }
 
-  operator drizzled::SessionPtr()
+  operator drizzled::Session::shared_ptr()
   {
     while (iter != local_list.end())
     {
@@ -56,12 +55,12 @@ public:
         continue;
       }
 
-      drizzled::SessionPtr ret= *iter;
+      drizzled::Session::shared_ptr ret(*iter);
       iter++;
       return ret;
     }
 
-    return NULL;
+    return drizzled::Session::shared_ptr();
   }
 };
 

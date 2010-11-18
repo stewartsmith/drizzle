@@ -263,10 +263,9 @@ public:
                session->thread_id,
                session->getQueryId(),
                // dont need to quote the db name, always CSV safe
-               (int)session->db.length(), dbs,
+               (int)session->getSchema().length(), dbs,
                // do need to quote the query
-               quotify((const unsigned char *)session->getQueryString().c_str(),
-                       session->getQueryLength(), qs, sizeof(qs)),
+               quotify((const unsigned char *)session->getQueryString()->c_str(), session->getQueryString()->length(), qs, sizeof(qs)),
                // command_name is defined in drizzled/sql_parse.cc
                // dont need to quote the command name, always CSV safe
                (int)command_name[session->command].length,

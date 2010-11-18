@@ -340,7 +340,6 @@ SHOW_COMP_OPTION have_symlink;
 
 boost::mutex LOCK_open;
 boost::mutex LOCK_global_system_variables;
-boost::mutex LOCK_thread_count;
 
 boost::condition_variable_any COND_refresh;
 boost::condition_variable COND_thread_count;
@@ -418,7 +417,7 @@ void close_connections(void)
 
   /* kill connection thread */
   {
-    boost::mutex::scoped_lock scopedLock(LOCK_thread_count);
+    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
 
     while (select_thread_in_use)
     {
@@ -442,21 +441,22 @@ void close_connections(void)
     statements and inform their clients that the server is about to die.
   */
 
-  Session *tmp;
-
   {
-    boost::mutex::scoped_lock scoped(LOCK_thread_count);
-    for( SessionList::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
+    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
+    session::Cache::List list= session::Cache::singleton().getCache();
+
+    for (session::Cache::List::iterator it= list.begin(); it != list.end(); ++it )
     {
-      tmp= *it;
+      Session::shared_ptr tmp(*it);
+
       tmp->setKilled(Session::KILL_CONNECTION);
-      tmp->scheduler->killSession(tmp);
+      tmp->scheduler->killSession(tmp.get());
       DRIZZLE_CONNECTION_DONE(tmp->thread_id);
       tmp->lockOnSys();
     }
   }
 
-  if (connection_count)
+  if (session::Cache::singleton().count())
     sleep(2);                                   // Give threads time to die
 
   /*
@@ -466,14 +466,15 @@ void close_connections(void)
   */
   for (;;)
   {
-    boost::mutex::scoped_lock scoped(LOCK_thread_count);
-    if (getSessionList().empty())
+    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
+    session::Cache::List list= session::Cache::singleton().getCache();
+
+    if (list.empty())
     {
       break;
     }
-    tmp= getSessionList().front();
     /* Close before unlock, avoiding crash. See LP bug#436685 */
-    tmp->client->close();
+    list.front()->client->close();
   }
 }
 
@@ -512,11 +513,13 @@ void clean_up(bool print_message)
 
   if (print_message && server_start_time)
     errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_SHUTDOWN_COMPLETE)),internal::my_progname);
-  LOCK_thread_count.lock();
-  ready_to_exit=1;
-  /* do the broadcast inside the lock to ensure that my_end() is not called */
-  COND_server_end.notify_all();
-  LOCK_thread_count.unlock();
+  {
+    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
+    ready_to_exit= true;
+
+    /* do the broadcast inside the lock to ensure that my_end() is not called */
+    COND_server_end.notify_all();
+  }
 
   /*
     The following lines may never be executed as the main thread may have
@@ -622,29 +625,21 @@ static void set_root(const char *path)
   SYNOPSIS
     Session::unlink()
     session		 Thread handler
-
-  NOTES
-    LOCK_thread_count is locked and left locked
 */
 
-void Session::unlink(Session *session)
+void drizzled::Session::unlink(Session::shared_ptr &session)
 {
   connection_count.decrement();
 
   session->cleanup();
 
-  boost::mutex::scoped_lock scoped(LOCK_thread_count);
-  session->lockForDelete();
+  boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
 
-  getSessionList().erase(remove(getSessionList().begin(),
-                         getSessionList().end(),
-                         session));
   if (unlikely(plugin::EventObserver::disconnectSession(*session)))
   {
     // We should do something about an error...
   }
-
-  delete session;
+  session::Cache::singleton().erase(session);
 }
 
 
@@ -2139,7 +2134,7 @@ static void drizzle_init_variables(void)
   session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_SQL_NOTES);
   refresh_version= 1L;	/* Increments on each reload */
   global_thread_id= 1UL;
-  getSessionList().clear();
+  session::Cache::singleton().getCache().clear();
 
   /* Variables in libraries */
   default_character_set_name= "utf8";

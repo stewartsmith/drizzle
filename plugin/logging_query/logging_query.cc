@@ -257,10 +257,11 @@ public:
     if ((t_mark - session->start_utime) < (sysvar_logging_query_threshold_slow))
       return false;
 
+    Session::QueryString query_string(session->getQueryString());
     if (re)
     {
       int this_pcre_rc;
-      this_pcre_rc= pcre_exec(re, pe, session->query.c_str(), session->query.length(), 0, 0, NULL, 0);
+      this_pcre_rc= pcre_exec(re, pe, query_string->c_str(), query_string->length(), 0, 0, NULL, 0);
       if (this_pcre_rc < 0)
         return false;
     }
@@ -270,9 +271,9 @@ public:
     
     // Since quotify() builds the quoted string incrementally, we can
     // avoid some reallocating if we reserve some space up front.
-    qs.reserve(session->getQueryLength());
+    qs.reserve(query_string->length());
     
-    quotify(session->getQueryString(), qs);
+    quotify(*query_string, qs);
     
     // to avoid trying to printf %s something that is potentially NULL
     const char *dbs= session->db.empty() ? "" : session->db.c_str();

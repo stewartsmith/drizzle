@@ -24,6 +24,7 @@
 #include "drizzled/signal_handler.h"
 #include "drizzled/drizzled.h"
 #include "drizzled/session.h"
+#include "drizzled/session_list.h"
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/probes.h"
 #include "drizzled/plugin.h"
@@ -67,14 +68,19 @@ void drizzled_print_signal_warning(int sig)
 /** Called when a thread is aborted. */
 void drizzled_end_thread_signal(int )
 {
-  Session *session=current_session;
+  Session *session= current_session;
   if (session)
   {
+    Session::shared_ptr session_ptr(session::Cache::singleton().find(session->getSessionId()));
+    if (not session_ptr) // We need to make we have a lock on session before we do anything with it.
+      return;
+
     killed_threads++;
-    session->scheduler->killSessionNow(session);
-    DRIZZLE_CONNECTION_DONE(session->thread_id);
+
+    // We need to get the ID before we kill off the session
+    session_ptr->scheduler->killSessionNow(session_ptr);
+    DRIZZLE_CONNECTION_DONE(session_ptr->getSessionId());
   }
-  return;
 }
 
 static void write_core(int sig)
