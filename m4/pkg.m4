@@ -71,8 +71,11 @@ m4_define([_PKG_CONFIG],
         pkg_cv_[]$1="$$1"
     else
         PKG_CHECK_EXISTS([$3],
-                         [pkg_cv_[]$1=`$PKG_CONFIG --[]$2 "$3" 2>/dev/null`],
+                         [pkg_cv_[]$1=`$PKG_CONFIG --[]$2 "$3" 2>/dev/null | sed 's/-I/-isystem/g' `],
 			 [pkg_failed=yes])
+        if test "$GCC" = "yes"; then
+          pkg_cv_[]$1=`echo $pkg_cv_[]$1 | sed 's/-I/-isystem/g' `
+        fi
     fi
 else
 	pkg_failed=untried
