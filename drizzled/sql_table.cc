@@ -105,8 +105,7 @@ void set_table_default_charset(HA_CREATE_INFO *create_info, const char *db)
     cursor
 */
 
-void write_bin_log(Session *session,
-                   char const *query)
+void write_bin_log(Session *session, const std::string &query)
 {
   TransactionServices &transaction_services= TransactionServices::singleton();
   transaction_services.rawStatement(session, query);
@@ -1979,12 +1978,12 @@ static bool create_table_wrapper(Session &session, const message::Table& create_
 {
   int protoerr= EEXIST;
   message::Table new_proto;
-  message::Table src_proto;
+  message::TablePtr src_proto;
 
   protoerr= plugin::StorageEngine::getTableDefinition(session,
                                                       src_table,
                                                       src_proto);
-  new_proto.CopyFrom(src_proto);
+  new_proto.CopyFrom(*src_proto);
 
   if (destination_identifier.isTmp())
   {

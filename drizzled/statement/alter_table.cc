@@ -107,7 +107,7 @@ bool statement::AlterTable::execute()
   assert(select_lex->db);
 
   /* Chicken/Egg... we need to search for the table, to know if the table exists, so we can build a full identifier from it */
-  message::Table original_table_message;
+  message::TablePtr original_table_message;
   {
     TableIdentifier identifier(first_table->getSchemaName(), first_table->getTableName());
     if (plugin::StorageEngine::getTableDefinition(*session, identifier, original_table_message) != EEXIST)
@@ -119,7 +119,7 @@ bool statement::AlterTable::execute()
     if (not  create_info.db_type)
     {
       create_info.db_type= 
-        plugin::StorageEngine::findByName(*session, original_table_message.engine().name());
+        plugin::StorageEngine::findByName(*session, original_table_message->engine().name());
 
       if (not create_info.db_type)
       {
@@ -146,7 +146,7 @@ bool statement::AlterTable::execute()
   }
 
   bool res;
-  if (original_table_message.type() == message::Table::STANDARD )
+  if (original_table_message->type() == message::Table::STANDARD )
   {
     TableIdentifier identifier(first_table->getSchemaName(), first_table->getTableName());
     TableIdentifier new_identifier(select_lex->db ? select_lex->db : first_table->getSchemaName(),
@@ -156,7 +156,7 @@ bool statement::AlterTable::execute()
                      identifier,
                      new_identifier,
                      &create_info,
-                     original_table_message,
+                     *original_table_message,
                      create_table_message,
                      first_table,
                      &alter_info,
@@ -179,7 +179,7 @@ bool statement::AlterTable::execute()
                        identifier,
                        new_identifier,
                        &create_info,
-                       original_table_message,
+                       *original_table_message,
                        create_table_message,
                        first_table,
                        &alter_info,
@@ -416,7 +416,7 @@ static bool mysql_prepare_alter_table(Session *session,
       */
       if (alter_info->build_method == HA_BUILD_ONLINE)
       {
-        my_error(ER_NOT_SUPPORTED_YET, MYF(0), session->query.c_str());
+        my_error(ER_NOT_SUPPORTED_YET, MYF(0), session->getQueryString()->c_str());
         goto err;
       }
       alter_info->build_method= HA_BUILD_OFFLINE;
@@ -715,11 +715,13 @@ static int mysql_discard_or_import_tablespace(Session *session,
 
   /* The ALTER Table is always in its own transaction */
   error= transaction_services.autocommitOrRollback(session, false);
-  if (! session->endActiveTransaction())
+  if (not session->endActiveTransaction())
     error=1;
+
   if (error)
     goto err;
-  write_bin_log(session, session->query.c_str());
+
+  write_bin_log(session, *session->getQueryString());
 
 err:
   (void) transaction_services.autocommitOrRollback(session, error);
@@ -1033,7 +1035,9 @@ static bool internal_alter_table(Session *session,
 
       if (error == 0)
       {
-        write_bin_log(session, session->query.c_str());
+        TransactionServices &transaction_services= TransactionServices::singleton();
+        transaction_services.allocateNewTransactionId();
+        write_bin_log(session, *session->getQueryString());
         session->my_ok();
       }
       else if (error > 0)
@@ -1320,7 +1324,7 @@ static bool internal_alter_table(Session *session,
 
     session->set_proc_info("end");
 
-    write_bin_log(session, session->query.c_str());
+    write_bin_log(session, *session->getQueryString());
     table_list->table= NULL;
   }
 

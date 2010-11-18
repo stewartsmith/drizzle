@@ -49,6 +49,11 @@ public:
     return cache;
   }
 
+  void rehash(size_t arg)
+  {
+    cache.rehash(arg);
+  }
+
   bool areTablesUsed(Table *table, bool wait_for_name_lock);
   void removeSchema(const SchemaIdentifier &schema_identifier);
   bool removeTable(Session *session, TableIdentifier &identifier, uint32_t flags);

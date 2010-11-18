@@ -137,6 +137,35 @@ void LoggingStats::updateCurrentScoreboard(ScoreboardSlot *scoreboard_slot,
   scoreboard_slot->getStatusVars()->logStatusVar(session);
 }
 
+bool LoggingStats::resetGlobalScoreboard()
+{
+  cumulative_stats->getGlobalStatusVars()->reset();
+  cumulative_stats->getGlobalStats()->getUserCommands()->reset();
+
+  ScoreBoardVectors *vector_of_scoreboard_vectors=
+    current_scoreboard->getVectorOfScoreboardVectors();
+
+  ScoreBoardVectors::iterator v_of_scoreboard_v_begin_it= vector_of_scoreboard_vectors->begin();
+
+  ScoreBoardVectors::iterator v_of_scoreboard_v_end_it= vector_of_scoreboard_vectors->end();
+
+  for (; v_of_scoreboard_v_begin_it != v_of_scoreboard_v_end_it; ++v_of_scoreboard_v_begin_it)
+  {
+    vector<ScoreboardSlot* > *scoreboard_vector= *v_of_scoreboard_v_begin_it;
+
+    vector<ScoreboardSlot* >::iterator scoreboard_vector_it= scoreboard_vector->begin();
+    vector<ScoreboardSlot* >::iterator scoreboard_vector_end= scoreboard_vector->end();
+    for (; scoreboard_vector_it != scoreboard_vector_end; ++scoreboard_vector_it)
+    {
+      ScoreboardSlot *scoreboard_slot= *scoreboard_vector_it;
+      scoreboard_slot->getStatusVars()->reset();
+      scoreboard_slot->getUserCommands()->reset();
+    }
+  }
+
+  return false;
+}
+
 bool LoggingStats::post(Session *session)
 {
   if (! isEnabled() || (session->getSessionId() == 0))

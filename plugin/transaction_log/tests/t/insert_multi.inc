@@ -4,7 +4,7 @@
 # We create a table and insert some records
 # into it.
 # 
-# We then use the transaction_reader in drizzled/message/ to read the events.
+# We then use the transaction_reader in plugin/transaction_log/utilities to read the events.
 #
 
 --disable_warnings

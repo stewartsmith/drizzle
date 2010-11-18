@@ -167,14 +167,14 @@ int Tina::doRenameTable(Session &session,
     }
   }
 
-  session.renameTableMessage(from, to);
+  session.getMessageCache().renameTableMessage(from, to);
 
   return error;
 }
 
 bool Tina::doDoesTableExist(Session &session, const drizzled::TableIdentifier &identifier)
 {
-  return session.doesTableMessageExist(identifier);
+  return session.getMessageCache().doesTableMessageExist(identifier);
 }
 
 
@@ -201,7 +201,7 @@ int Tina::doDropTable(Session &session,
     error= enoent_or_zero;
   }
 
-  session.removeTableMessage(identifier);
+  session.getMessageCache().removeTableMessage(identifier);
 
   return error;
 }
@@ -232,7 +232,7 @@ int Tina::doGetTableDefinition(Session &session,
                                const drizzled::TableIdentifier &identifier,
                                drizzled::message::Table &table_message)
 {
-  if (session.getTableMessage(identifier, table_message))
+  if (session.getMessageCache().getTableMessage(identifier, table_message))
     return EEXIST;
 
   return ENOENT;
@@ -1308,7 +1308,7 @@ int Tina::doCreateTable(Session &session,
 
   internal::my_close(create_file, MYF(0));
 
-  session.storeTableMessage(identifier, create_proto);
+  session.getMessageCache().storeTableMessage(identifier, create_proto);
 
   return 0;
 }

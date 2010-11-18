@@ -66,11 +66,11 @@ int main(int argc, char *argv[])
   bool mysql= false;
   in_port_t port= 0;
   drizzle_return_t ret;
-  sqlite_server server;
-  drizzle_con_st con_listen;
+  sqlite_server *server= (sqlite_server*)malloc(sizeof(sqlite_server));
+  drizzle_con_st *con_listen= (drizzle_con_st*)malloc(sizeof(drizzle_con_st));
 
-  server.db= NULL;
-  server.verbose= DRIZZLE_VERBOSE_NEVER;
+  server->db= NULL;
+  server->verbose= DRIZZLE_VERBOSE_NEVER;
 
   while((c = getopt(argc, argv, "c:h:mp:v")) != -1)
   {
@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
       break;
 
     case 'v':
-      server.verbose++;
+      server->verbose++;
       break;
 
     default:
@@ -108,52 +108,52 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  sqlite3_open(argv[optind], &(server.db));
-  if (server.db == NULL)
+  sqlite3_open(argv[optind], &(server->db));
+  if (server->db == NULL)
   {
     printf("sqlite3_open: could not open sqlite3 db\n");
     return 1;
   }
 
-  if (drizzle_create(&server.drizzle) == NULL)
+  if (drizzle_create(&(server->drizzle)) == NULL)
   {
     printf("drizzle_create:NULL\n");
     return 1;
   }
 
-  drizzle_add_options(&server.drizzle, DRIZZLE_FREE_OBJECTS);
-  drizzle_set_verbose(&server.drizzle, server.verbose);
+  drizzle_add_options(&(server->drizzle), DRIZZLE_FREE_OBJECTS);
+  drizzle_set_verbose(&(server->drizzle), server->verbose);
 
-  if (drizzle_con_create(&server.drizzle, &con_listen) == NULL)
+  if (drizzle_con_create(&(server->drizzle), con_listen) == NULL)
   {
     printf("drizzle_con_create:NULL\n");
     return 1;
   }
 
-  drizzle_con_add_options(&con_listen, DRIZZLE_CON_LISTEN);
-  drizzle_con_set_tcp(&con_listen, host, port);
+  drizzle_con_add_options(con_listen, DRIZZLE_CON_LISTEN);
+  drizzle_con_set_tcp(con_listen, host, port);
 
   if (mysql)
-    drizzle_con_add_options(&con_listen, DRIZZLE_CON_MYSQL);
+    drizzle_con_add_options(con_listen, DRIZZLE_CON_MYSQL);
 
-  if (drizzle_con_listen(&con_listen) != DRIZZLE_RETURN_OK)
+  if (drizzle_con_listen(con_listen) != DRIZZLE_RETURN_OK)
   {
-    printf("drizzle_con_listen:%s\n", drizzle_error(&server.drizzle));
+    printf("drizzle_con_listen:%s\n", drizzle_error(&(server->drizzle)));
     return 1;
   }
 
   while (1)
   {
-    (void)drizzle_con_accept(&server.drizzle, &server.con, &ret);
+    (void)drizzle_con_accept(&(server->drizzle), &(server->con), &ret);
     if (ret != DRIZZLE_RETURN_OK)
     {
-      printf("drizzle_con_accept:%s\n", drizzle_error(&server.drizzle));
+      printf("drizzle_con_accept:%s\n", drizzle_error(&(server->drizzle)));
       return 1;
     }
 
-    server_run(&server);
+    server_run(server);
 
-    drizzle_con_free(&server.con);
+    drizzle_con_free(&(server->con));
 
     if (count > 0)
     {
@@ -164,9 +164,11 @@ int main(int argc, char *argv[])
     }
   }
 
-  drizzle_con_free(&con_listen);
-  drizzle_free(&server.drizzle);
-  sqlite3_close(server.db);
+  drizzle_con_free(con_listen);
+  drizzle_free(&(server->drizzle));
+  sqlite3_close(server->db);
+  free(con_listen);
+  free(server);
 
   return 0;
 }
@@ -308,7 +310,7 @@ static int row_cb(void *data, int field_count, char **fields, char **columns)
   sqlite_server *server= (sqlite_server *)data;
   drizzle_return_t ret;
   int x;
-  size_t sizes[8192];
+  size_t *sizes= (size_t*)malloc(sizeof(size_t)*8192);
 
   if (server->send_columns == true)
   {
@@ -374,6 +376,8 @@ static int row_cb(void *data, int field_count, char **fields, char **columns)
   }
 
   server->rows++;
+
+  free(sizes);
 
   return 0;
 }

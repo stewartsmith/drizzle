@@ -574,24 +574,6 @@ public:
   uint8_t blob_ptr_size;			/* 4 or 8 */
   bool db_low_byte_first;		/* Portable row format */
 
-private:
-  bool name_lock;
-public:
-  bool isNameLock() const
-  {
-    return name_lock;
-  }
-
-  bool replace_with_name_lock;
-
-private:
-  bool waiting_on_cond;                 /* Protection against free */
-public:
-  bool isWaitingOnCondition()
-  {
-    return waiting_on_cond;
-  }
-
   /*
     Set of keys in use, implemented as a Bitmap.
     Excludes keys disabled by ALTER Table ... DISABLE KEYS.
@@ -656,7 +638,7 @@ public:
   static TableSharePtr getShare(TableIdentifier &identifier);
   static TableSharePtr getShareCreate(Session *session, 
                                       TableIdentifier &identifier,
-                                      int *error);
+                                      int &error);
 
   friend std::ostream& operator<<(std::ostream& output, const TableShare &share)
   {

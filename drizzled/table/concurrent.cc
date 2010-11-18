@@ -129,8 +129,10 @@ int table::Concurrent::open_unireg_entry(Session *session,
 retry:
   if (not (share= TableShare::getShareCreate(session,
                                              identifier,
-                                             &error)))
+                                             error)))
+  {
     return 1;
+  }
 
   while ((error= share->open_table_from_share(session,
                                               identifier,

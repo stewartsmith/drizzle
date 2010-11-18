@@ -355,6 +355,26 @@ static bool plugin_initialize(module::Registry &registry,
   return false;
 }
 
+
+inline static void dashes_to_underscores(std::string &name_in,
+                                         char from= '-', char to= '_')
+{
+  for (string::iterator p= name_in.begin();
+       p != name_in.end();
+       ++p)
+  {
+    if (*p == from)
+    {
+      *p= to;
+    }
+  }
+}
+
+inline static void underscores_to_dashes(std::string &name_in)
+{
+  return dashes_to_underscores(name_in, '_', '-');
+}
+
 static void compose_plugin_options(vector<string> &target,
                                    vector<string> options)
 {
@@ -363,6 +383,12 @@ static void compose_plugin_options(vector<string> &target,
        ++it)
   {
     tokenize(*it, target, ",", true);
+  }
+  for (vector<string>::iterator it= target.begin();
+       it != target.end();
+       ++it)
+  {
+    dashes_to_underscores(*it);
   }
 }
 
@@ -825,13 +851,7 @@ static const string make_bookmark_name(const string &plugin, const char *name)
   varname.push_back('_');
   varname.append(name);
 
-  for (string::iterator p= varname.begin() + 1; p != varname.end(); ++p)
-  {
-    if (*p == '-')
-    {
-      *p= '_';
-    }
-  }
+  dashes_to_underscores(varname);
   return varname;
 }
 
@@ -1422,11 +1442,7 @@ static int construct_options(memory::Root *mem_root, module::Module *tmp,
   string name(plugin_name);
   transform(name.begin(), name.end(), name.begin(), ::tolower);
 
-  for (string::iterator iter= name.begin(); iter != name.end(); ++iter)
-  {
-    if (*iter == '_')
-      *iter= '-';
-  }
+  underscores_to_dashes(name);
 
   /*
     Two passes as the 2nd pass will take pointer addresses for use
@@ -1691,13 +1707,7 @@ static int test_plugin_options(memory::Root *module_root,
         vname.push_back('-');
         vname.append(o->name);
         transform(vname.begin(), vname.end(), vname.begin(), ::tolower);
-        string::iterator p= vname.begin();      
-        while  (p != vname.end())
-        {
-          if (*p == '-')
-            *p= '_';
-          ++p;
-        }
+        dashes_to_underscores(vname);
 
         v= new sys_var_pluginvar(vname, o);
       }

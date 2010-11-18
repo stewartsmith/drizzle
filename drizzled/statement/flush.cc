@@ -24,6 +24,7 @@
 #include <drizzled/lock.h>
 #include <drizzled/statement/flush.h>
 #include "drizzled/sql_table.h"
+#include "drizzled/plugin/logging.h"
 
 namespace drizzled
 {
@@ -34,7 +35,7 @@ bool statement::Flush::execute()
    * reloadCache() will tell us if we are allowed to write to the
    * binlog or not.
    */
-  if (! reloadCache())
+  if (not reloadCache())
   {
     /*
      * We WANT to write and we CAN write.
@@ -42,7 +43,7 @@ bool statement::Flush::execute()
      *
      * Presumably, RESET and binlog writing doesn't require synchronization
      */
-    write_bin_log(session, session->query.c_str());
+    write_bin_log(session, *session->getQueryString());
     session->my_ok();
   }
 
@@ -93,7 +94,14 @@ bool statement::Flush::reloadCache()
     session->refresh_status();
   }
 
- return result;
+  if (session && flush_global_status)
+  {
+    memset(&current_global_counters, 0, sizeof(current_global_counters));
+    plugin::Logging::resetStats(session);
+    session->refresh_status();
+  }
+
+  return result;
 }
 
 }

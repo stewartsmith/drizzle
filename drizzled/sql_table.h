@@ -44,9 +44,6 @@ class TableIdentifier;
 
 int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
                          bool drop_temporary);
-void write_bin_log_drop_table(Session *session,
-                              bool if_exists, const char *db_name,
-                              const char *table_name);
 bool quick_rm_table(Session& session,
                     TableIdentifier &identifier);
 void close_cached_table(Session *session, Table *table);
@@ -61,8 +58,7 @@ bool mysql_analyze_table(Session* session, TableList* table_list,
 bool mysql_optimize_table(Session* session, TableList* table_list,
                           HA_CHECK_OPT* check_opt);
 
-void write_bin_log(Session *session,
-                   char const *query);
+void write_bin_log(Session *session, const std::string &query);
 
 bool is_primary_key(KeyInfo *key_info);
 const char* is_primary_key_name(const char* key_name);

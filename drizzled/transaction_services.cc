@@ -1037,6 +1037,7 @@ void TransactionServices::cleanupTransactionMessage(message::Transaction *in_tra
   delete in_transaction;
   in_session->setStatementMessage(NULL);
   in_session->setTransactionMessage(NULL);
+  in_session->setXaId(0);
 }
 
 int TransactionServices::commitTransactionMessage(Session *in_session)
@@ -2161,7 +2162,7 @@ void TransactionServices::rawStatement(Session *in_session, const string &query)
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
     return;
-  
+ 
   message::Transaction *transaction= getActiveTransactionMessage(in_session);
   message::Statement *statement= transaction->add_statement();
 

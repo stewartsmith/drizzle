@@ -115,14 +115,14 @@ void HeapEngine::doGetTableIdentifiers(CachedDirectory&,
 
 bool HeapEngine::doDoesTableExist(Session& session, const TableIdentifier &identifier)
 {
-  return session.doesTableMessageExist(identifier);
+  return session.getMessageCache().doesTableMessageExist(identifier);
 }
 
 int HeapEngine::doGetTableDefinition(Session &session,
                                      const TableIdentifier &identifier,
                                      message::Table &table_proto)
 {
-  if (session.getTableMessage(identifier, table_proto))
+  if (session.getMessageCache().getTableMessage(identifier, table_proto))
     return EEXIST;
 
   return ENOENT;
@@ -133,7 +133,7 @@ int HeapEngine::doGetTableDefinition(Session &session,
 */
 int HeapEngine::doDropTable(Session &session, const TableIdentifier &identifier)
 {
-  session.removeTableMessage(identifier);
+  session.getMessageCache().removeTableMessage(identifier);
 
   int error= heap_delete_table(identifier.getPath().c_str());
 
@@ -626,7 +626,7 @@ void ha_heap::drop_table(const char *)
 
 int HeapEngine::doRenameTable(Session &session, const TableIdentifier &from, const TableIdentifier &to)
 {
-  session.renameTableMessage(from, to);
+  session.getMessageCache().renameTableMessage(from, to);
   return heap_rename(from.getPath().c_str(), to.getPath().c_str());
 }
 
@@ -667,7 +667,7 @@ int HeapEngine::doCreateTable(Session &session,
 
   if (error == 0)
   {
-    session.storeTableMessage(identifier, create_proto);
+    session.getMessageCache().storeTableMessage(identifier, create_proto);
   }
 
   return error;
