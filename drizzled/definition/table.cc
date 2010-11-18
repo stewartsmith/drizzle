@@ -77,6 +77,8 @@
 #include "drizzled/field/datetime.h"
 #include "drizzled/field/varstring.h"
 
+#include "drizzled/definition/cache.h"
+
 using namespace std;
 
 namespace drizzled
@@ -121,7 +123,7 @@ void TableShare::release(TableShare *share)
   share->unlock();
 }
 
-void TableShare::release(TableSharePtr &share)
+void TableShare::release(TableShare::shared_ptr &share)
 {
   bool to_be_deleted= false;
   safe_mutex_assert_owner(LOCK_open.native_handle);
@@ -144,7 +146,7 @@ void TableShare::release(TableSharePtr &share)
 
 void TableShare::release(TableIdentifier &identifier)
 {
-  TableSharePtr share= definition::Cache::singleton().find(identifier);
+  TableShare::shared_ptr share= definition::Cache::singleton().find(identifier);
   if (share)
   {
     share->version= 0;                          // Mark for delete
@@ -157,7 +159,7 @@ void TableShare::release(TableIdentifier &identifier)
 }
 
 
-static TableSharePtr foundTableShare(TableSharePtr share)
+static TableShare::shared_ptr foundTableShare(TableShare::shared_ptr share)
 {
   /*
     We found an existing table definition. Return it if we didn't get
@@ -170,7 +172,7 @@ static TableSharePtr foundTableShare(TableSharePtr share)
     /* Table definition contained an error */
     share->open_table_error(share->error, share->open_errno, share->errarg);
 
-    return TableSharePtr();
+    return TableShare::shared_ptr();
   }
 
   share->incrementTableCount();
@@ -201,11 +203,11 @@ static TableSharePtr foundTableShare(TableSharePtr share)
 #  Share for table
 */
 
-TableSharePtr TableShare::getShareCreate(Session *session, 
+TableShare::shared_ptr TableShare::getShareCreate(Session *session, 
                                          TableIdentifier &identifier,
                                          int &in_error)
 {
-  TableSharePtr share;
+  TableShare::shared_ptr share;
 
   in_error= 0;
 
@@ -224,14 +226,14 @@ TableSharePtr TableShare::getShareCreate(Session *session,
   bool ret= definition::Cache::singleton().insert(identifier, share);
 
   if (not ret)
-    return TableSharePtr();
+    return TableShare::shared_ptr();
 
   if (share->open_table_def(*session, identifier))
   {
     in_error= share->error;
     definition::Cache::singleton().erase(identifier);
 
-    return TableSharePtr();
+    return TableShare::shared_ptr();
   }
   share->ref_count++;				// Mark in use
   
@@ -255,7 +257,7 @@ TableSharePtr TableShare::getShareCreate(Session *session,
   0  Not cached
 #  TableShare for table
 */
-TableSharePtr TableShare::getShare(TableIdentifier &identifier)
+TableShare::shared_ptr TableShare::getShare(TableIdentifier &identifier)
 {
   safe_mutex_assert_owner(LOCK_open.native_handle);
 

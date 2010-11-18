@@ -21,13 +21,13 @@
 #ifndef DRIZZLED_DEFINITION_CACHE_H
 #define DRIZZLED_DEFINITION_CACHE_H
 
-namespace drizzled {
+#include "drizzled/definition/table.h"
 
-typedef boost::shared_ptr<TableShare> TableSharePtr;
+namespace drizzled {
 
 namespace definition {
 
-typedef boost::unordered_map< TableIdentifier::Key, TableSharePtr> CacheMap;
+typedef boost::unordered_map< TableIdentifier::Key, TableShare::shared_ptr> CacheMap;
 
 class Cache
 {
@@ -56,9 +56,9 @@ public:
     cache.rehash(arg);
   }
 
-  TableSharePtr find(const TableIdentifier &identifier);
+  TableShare::shared_ptr find(const TableIdentifier &identifier);
   void erase(const TableIdentifier &identifier);
-  bool insert(const TableIdentifier &identifier, TableSharePtr share);
+  bool insert(const TableIdentifier &identifier, TableShare::shared_ptr share);
 };
 
 } /* namespace definition */

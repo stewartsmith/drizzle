@@ -20,6 +20,7 @@
 #ifndef PLUGIN_TABLE_CACHE_DICTIONARY_TABLE_DEFINITION_CACHE_H
 #define PLUGIN_TABLE_CACHE_DICTIONARY_TABLE_DEFINITION_CACHE_H
 
+#include "drizzled/definition/cache.h"
 #include "drizzled/definition/table.h"
 
 namespace table_cache_dictionary {
@@ -32,7 +33,7 @@ public:
   class Generator : public drizzled::plugin::TableFunction::Generator 
   {
     bool is_primed;
-    drizzled::TableSharePtr share;
+    drizzled::TableShare::shared_ptr share;
     drizzled::definition::CacheMap::const_iterator table_share_iterator;
 
     void fill();

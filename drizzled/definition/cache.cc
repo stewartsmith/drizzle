@@ -23,13 +23,14 @@
 #include "drizzled/pthread_globals.h"
 #include "drizzled/session.h"
 #include "drizzled/identifier/table.h"
+#include "drizzled/definition/cache.h"
 #include "drizzled/definition/table.h"
 
 namespace drizzled {
 
 namespace definition {
 
-TableSharePtr Cache::find(const TableIdentifier &identifier)
+TableShare::shared_ptr Cache::find(const TableIdentifier &identifier)
 {
   //safe_mutex_assert_owner(LOCK_open.native_handle);
 
@@ -39,7 +40,7 @@ TableSharePtr Cache::find(const TableIdentifier &identifier)
     return (*iter).second;
   }
 
-  return TableSharePtr();
+  return TableShare::shared_ptr();
 }
 
 void Cache::erase(const TableIdentifier &identifier)
@@ -49,7 +50,7 @@ void Cache::erase(const TableIdentifier &identifier)
   cache.erase(identifier.getKey());
 }
 
-bool Cache::insert(const TableIdentifier &identifier, TableSharePtr share)
+bool Cache::insert(const TableIdentifier &identifier, TableShare::shared_ptr share)
 {
   std::pair<CacheMap::iterator, bool> ret=
     cache.insert(std::make_pair(identifier.getKey(), share));

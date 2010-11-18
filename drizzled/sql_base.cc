@@ -657,7 +657,7 @@ int Open_tables_state::drop_temporary_table(const drizzled::TableIdentifier &ide
   @param  session     Thread context
   @param  find    Table to remove
 
-  @note because we risk the chance of deleting the share, we can't assume that it will exist past, this should be modified once we can use a TableSharePtr here.
+  @note because we risk the chance of deleting the share, we can't assume that it will exist past, this should be modified once we can use a TableShare::shared_ptr here.
 */
 
 void Session::unlink_open_table(Table *find)

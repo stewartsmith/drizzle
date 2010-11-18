@@ -68,6 +68,8 @@
 #include "drizzled/module/load_list.h"
 #include "drizzled/global_buffer.h"
 
+#include "drizzled/definition/cache.h"
+
 #include "drizzled/plugin/event_observer.h"
 
 #include "drizzled/message/cache.h"
