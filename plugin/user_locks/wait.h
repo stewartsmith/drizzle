@@ -35,7 +35,7 @@ public:
 
   int64_t val_int();
   const char *func_name() const { return "wait"; }
-  bool check_argument_count(int n) { return n == 1; }
+  bool check_argument_count(int n) { return n == 2 or n == 1; }
 };
 
 } /* namespace barriers */

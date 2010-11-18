@@ -1,0 +1,57 @@
+# Check on bad wait names
+--error 1707
+SELECT WAIT("");
+--error 1707
+SELECT WAIT(NULL);
+
+set @signal_name= "foo";
+SELECT CREATE_BARRIER(@signal_name);
+--error 1707
+SELECT SIGNAL("FOO");
+--error 1707
+SELECT SIGNAL("FoO");
+SELECT SIGNAL(@signal_name);
+SELECT if ((SESSION_ID = CONNECTION_ID()), "YES", "NO"), GENERATION, WAIT_COUNT from DATA_DICTIONARY.USER_BARRIERS WHERE USER_BARRIER_NAME=@signal_name;
+SELECT RELEASE_BARRIER(@signal_name);
+SELECT if ((SESSION_ID = CONNECTION_ID()), "YES", "NO") from DATA_DICTIONARY.USER_BARRIERS WHERE USER_BARRIER_NAME=@signal_name;
+
+# Test creating a barrier with a number
+connect (con1,localhost,root,,);
+connect (con2,localhost,root,,);
+connect (con3,localhost,root,,);
+connect (con4,localhost,root,,);
+connect (con5,localhost,root,,);
+
+# Connection 1 will own everything.
+set @count_barrier= "count_barrier";
+set @signal_barrier= "signal_barrier";
+SELECT create_barrier(@count_barrier, 4);
+SELECT if ((SESSION_ID = CONNECTION_ID()), "YES", "NO"), GENERATION, WAIT_COUNT from DATA_DICTIONARY.USER_BARRIERS WHERE USER_BARRIER_NAME=@count_barrier;
+SELECT create_barrier(@signal_barrier);
+SELECT if ((SESSION_ID = CONNECTION_ID()), "YES", "NO"), GENERATION, WAIT_COUNT from DATA_DICTIONARY.USER_BARRIERS WHERE USER_BARRIER_NAME=@signal_barrier;
+
+connection con1;
+set @signal_barrier= "signal_barrier";
+set @count_barrier= "count_barrier";
+send SELECT wait(@signal_barrier);
+
+connection con2;
+set @count_barrier= "count_barrier";
+send SELECT wait(@count_barrier), "con2";
+
+connection con3;
+set @count_barrier= "count_barrier";
+send SELECT wait(@count_barrier), "con3";
+
+connection con4;
+set @count_barrier= "count_barrier";
+send SELECT wait(@count_barrier), "con4";
+
+connection con5;
+set @signal_barrier= "signal_barrier";
+set @count_barrier= "count_barrier";
+send SELECT IF ((signal(@signal_barrier)), wait(@count_barrier), "FAILED");
+
+connection con1;
+SELECT USER,INFO FROM DATA_DICTIONARY.PROCESSLIST;
+SELECT signal(@count_barrier);

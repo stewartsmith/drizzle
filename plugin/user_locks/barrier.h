@@ -89,6 +89,34 @@ public:
     }
   }
 
+  void wait(int64_t generation_arg)
+  {
+    boost::mutex::scoped_lock scopedLock(sleeper_mutex);
+    int64_t my_generation= generation;
+
+    // If the generation is newer  then we just return immediatly
+    if (my_generation > generation_arg)
+      return;
+
+    if (wait_count)
+    {
+      if (not --current_wait)
+      {
+        generation++;
+        current_wait= wait_count;
+        sleep_threshhold.notify_all();
+
+        return;
+      }
+
+    }
+
+    while (my_generation == generation)
+    {
+      sleep_threshhold.wait(sleeper_mutex);
+    }
+  }
+
   int64_t getGeneration() const
   {
     return generation;
