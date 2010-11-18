@@ -30,4 +30,4 @@ SELECT release_barrier(@self_lock);
 # Test creating a barrier with a number
 set @count_barrier= "count_barrier";
 SELECT create_barrier(@count_barrier, 4);
-SELECT if ((SESSION_ID = CONNECTION_ID()), "YES", "NO"), GENERATION, WAIT_COUNT from DATA_DICTIONARY.USER_BARRIERS WHERE USER_BARRIER_NAME=@count_barrier;
+SELECT if ((SESSION_ID = CONNECTION_ID()), "YES", "NO"), GENERATION, WAITER_LIMIT from DATA_DICTIONARY.USER_BARRIERS WHERE USER_BARRIER_NAME=@count_barrier;

@@ -1,60 +1,31 @@
-SELECT WAIT("");
-ERROR HY000: Unknown barrier requested.
-SELECT WAIT(NULL);
-ERROR HY000: Unknown barrier requested.
-set @signal_name= "foo";
-SELECT CREATE_BARRIER(@signal_name);
-CREATE_BARRIER(@signal_name)
-1
-SELECT SIGNAL("FOO");
-ERROR HY000: Unknown barrier requested.
-SELECT SIGNAL("FoO");
-ERROR HY000: Unknown barrier requested.
-SELECT SIGNAL(@signal_name);
-SIGNAL(@signal_name)
-1
-SELECT if ((SESSION_ID = CONNECTION_ID()), "YES", "NO"), GENERATION, WAIT_COUNT from DATA_DICTIONARY.USER_BARRIERS WHERE USER_BARRIER_NAME=@signal_name;
-if ((SESSION_ID = CONNECTION_ID()), "YES", "NO")	GENERATION	WAIT_COUNT
-YES	1	0
-SELECT RELEASE_BARRIER(@signal_name);
-RELEASE_BARRIER(@signal_name)
-1
-SELECT if ((SESSION_ID = CONNECTION_ID()), "YES", "NO") from DATA_DICTIONARY.USER_BARRIERS WHERE USER_BARRIER_NAME=@signal_name;
-if ((SESSION_ID = CONNECTION_ID()), "YES", "NO")
 set @count_barrier= "count_barrier";
-set @signal_barrier= "signal_barrier";
-SELECT create_barrier(@count_barrier, 4);
-create_barrier(@count_barrier, 4)
+set @barrier_limit= 6;
+SELECT create_barrier(@count_barrier, @barrier_limit);
+create_barrier(@count_barrier, @barrier_limit)
 1
-SELECT if ((SESSION_ID = CONNECTION_ID()), "YES", "NO"), GENERATION, WAIT_COUNT from DATA_DICTIONARY.USER_BARRIERS WHERE USER_BARRIER_NAME=@count_barrier;
-if ((SESSION_ID = CONNECTION_ID()), "YES", "NO")	GENERATION	WAIT_COUNT
-YES	0	4
-SELECT create_barrier(@signal_barrier);
-create_barrier(@signal_barrier)
-1
-SELECT if ((SESSION_ID = CONNECTION_ID()), "YES", "NO"), GENERATION, WAIT_COUNT from DATA_DICTIONARY.USER_BARRIERS WHERE USER_BARRIER_NAME=@signal_barrier;
-if ((SESSION_ID = CONNECTION_ID()), "YES", "NO")	GENERATION	WAIT_COUNT
-YES	0	0
-set @signal_barrier= "signal_barrier";
+SELECT if ((SESSION_ID = CONNECTION_ID()), "YES", "NO"), GENERATION, if ((WAITER_LIMIT = @barrier_limit), "YES", "NO") from DATA_DICTIONARY.USER_BARRIERS WHERE USER_BARRIER_NAME=@count_barrier;
+if ((SESSION_ID = CONNECTION_ID()), "YES", "NO")	GENERATION	if ((WAITER_LIMIT = @barrier_limit), "YES", "NO")
+YES	0	YES
 set @count_barrier= "count_barrier";
-SELECT wait(@signal_barrier);
+SELECT wait(@count_barrier), "con1";
 set @count_barrier= "count_barrier";
 SELECT wait(@count_barrier), "con2";
 set @count_barrier= "count_barrier";
 SELECT wait(@count_barrier), "con3";
 set @count_barrier= "count_barrier";
 SELECT wait(@count_barrier), "con4";
-set @signal_barrier= "signal_barrier";
 set @count_barrier= "count_barrier";
-SELECT IF ((signal(@signal_barrier)), wait(@count_barrier), "FAILED");
-SELECT USER,INFO FROM DATA_DICTIONARY.PROCESSLIST;
-wait(@signal_barrier)
+SELECT WAIT_UNTIL(@count_barrier, 4);
+WAIT_UNTIL(@count_barrier, 4)
 1
-SELECT signal(@count_barrier);
+SELECT USER,INFO FROM DATA_DICTIONARY.PROCESSLIST;
 USER	INFO
 root	NULL
-root	SELECT USER,INFO FROM DATA_DICTIONARY.PROCESSLIST
+root	SELECT wait(@count_barrier), "con1"
 root	SELECT wait(@count_barrier), "con2"
 root	SELECT wait(@count_barrier), "con3"
 root	SELECT wait(@count_barrier), "con4"
-root	NULL
+root	SELECT USER,INFO FROM DATA_DICTIONARY.PROCESSLIST
+SELECT signal(@count_barrier);
+signal(@count_barrier)
+1

@@ -37,8 +37,10 @@ UserBarriers::UserBarriers() :
   add_field("USER_BARRIER_NAME", plugin::TableFunction::STRING, LARGEST_LOCK_NAME, false);
   add_field("SESSION_ID", plugin::TableFunction::NUMBER, 0, false);
   add_field("USER_NAME", plugin::TableFunction::STRING);
-  add_field("WAIT_COUNT", plugin::TableFunction::NUMBER, 0, false);
+  add_field("WAITER_LIMIT", plugin::TableFunction::NUMBER, 0, false);
   add_field("GENERATION", plugin::TableFunction::NUMBER, 0, false);
+  add_field("WAITERS", plugin::TableFunction::NUMBER, 0, false);
+  add_field("OBSERVERS", plugin::TableFunction::NUMBER, 0, false);
 }
 
 UserBarriers::Generator::Generator(drizzled::Field **arg) :
@@ -62,11 +64,17 @@ bool UserBarriers::Generator::populate()
     // USER_NAME
     push((*iter).first.getUser());
     
-    // WAIT_COUNT
-    push((*iter).second->getWaitCount());
+    // WAITER_LIMIT
+    push((*iter).second->getLimit());
     
     // GENERATION
     push((*iter).second->getGeneration());
+    
+    // WAITERS
+    push((*iter).second->sizeWaiters());
+    
+    // OBSERVERS
+    push((*iter).second->sizeObservers());
 
     iter++;
     return true;
