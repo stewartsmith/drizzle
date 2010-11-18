@@ -7,18 +7,18 @@ SELECT CREATE_BARRIER(@my_barrier);
 connection default;
 set @my_barrier= "barrier";
 SELECT USER_BARRIER_NAME FROM DATA_DICTIONARY.USER_BARRIERS WHERE USER_BARRIER_NAME=@my_barrier;
-#SET @execute= CONCAT('SET @my_barrier=', '"', @my_barrier, '"');
-#SELECT @execute;
-#
-#EXECUTE @execute CONCURRENT;
-#EXECUTE @execute CONCURRENT;
-#EXECUTE @execute CONCURRENT;
-# 
-#SELECT WAIT_UNTIL(@my_barrier, 3);
-# 
+SET @execute= "SELECT WAIT('barrier')";
+SELECT SIGNAL(@my_barrier);
+
+EXECUTE @execute CONCURRENT;
+EXECUTE @execute CONCURRENT;
+EXECUTE @execute CONCURRENT;
+ 
+SELECT WAIT_UNTIL(@my_barrier, 3);
+ 
 ### Now lets see what the processlist shows.
-#SELECT USER,INFO FROM DATA_DICTIONARY.PROCESSLIST;
-#SELECT SIGNAL(@my_barrier);
+SELECT USER,INFO FROM DATA_DICTIONARY.PROCESSLIST;
+SELECT SIGNAL(@my_barrier);
 
 ## Wait till we know the above is done (this will be replaced with broadcast() in the future)
 #EXECUTE @sleep;

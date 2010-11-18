@@ -107,12 +107,8 @@ public:
   // Signal all of the observers to start
   void signal()
   {
-    {
-      boost::mutex::scoped_lock scopedBarrier(sleeper_mutex);
-      generation++;
-      current_wait= limit;
-    }
-    sleep_threshhold.notify_all();
+    boost::mutex::scoped_lock scopedBarrier(sleeper_mutex);
+    wakeAll();
   }
 
   drizzled::session_id_t getOwner() const
@@ -217,11 +213,7 @@ private:
     current_wait= limit;
     sleep_threshhold.notify_all();
 
-    BOOST_FOREACH(observer_st::list::const_reference iter, observers)
-    {
-      iter->wake();
-    }
-    observers.clear();
+    checkObservers();
   }
 
   struct isReady : public std::unary_function<observer_st::list::const_reference, bool>
@@ -234,7 +226,7 @@ private:
 
     result_type operator() (argument_type observer)
     {
-      if (observer->waiting_for <= count)
+      if (observer->waiting_for <= count or count == 0)
       {
         observer->wake();
         return true;
