@@ -1425,37 +1425,22 @@ void add_join_natural(TableList *a, TableList *b, List<String> *using_fields,
     This is written such that we have a short lock on LOCK_thread_count
 */
 
-static unsigned int
-kill_one_thread(Session *, session_id_t id, bool only_kill_query)
+static unsigned int kill_one_thread(session_id_t id, bool only_kill_query)
 {
-  Session *tmp= NULL;
   uint32_t error= ER_NO_SUCH_THREAD;
   
+  Session::shared_ptr session= session::Cache::singleton().find(id);
+
+  if (not session)
+    return error;
+
+  if (session->isViewable())
   {
-    boost::mutex::scoped_lock scoped(LOCK_thread_count);
-    for (SessionList::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
-    {
-      if ((*it)->thread_id == id)
-      {
-        tmp= *it;
-        tmp->lockForDelete();
-        break;
-      }
-    }
+    session->awake(only_kill_query ? Session::KILL_QUERY : Session::KILL_CONNECTION);
+    error= 0;
   }
 
-  if (tmp)
-  {
-
-    if (tmp->isViewable())
-    {
-      tmp->awake(only_kill_query ? Session::KILL_QUERY : Session::KILL_CONNECTION);
-      error= 0;
-    }
-
-    tmp->unlockForDelete();
-  }
-  return(error);
+  return error;
 }
 
 
@@ -1472,7 +1457,8 @@ kill_one_thread(Session *, session_id_t id, bool only_kill_query)
 void sql_kill(Session *session, int64_t id, bool only_kill_query)
 {
   uint32_t error;
-  if (!(error= kill_one_thread(session, id, only_kill_query)))
+
+  if (not (error= kill_one_thread(id, only_kill_query)))
     session->my_ok();
   else
     my_error(error, MYF(0), id);

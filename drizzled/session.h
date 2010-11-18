@@ -309,6 +309,8 @@ class Session : public Open_tables_state
 public:
   // Plugin storage in Session.
   typedef boost::unordered_map<std::string, util::Storable *, util::insensitive_hash, util::insensitive_equal_to> PropertyMap;
+  typedef Session* Ptr;
+  typedef boost::shared_ptr<Session> shared_ptr;
 
   /*
     MARK_COLUMNS_NONE:  Means mark_used_colums is not set and no indicator to
@@ -484,19 +486,6 @@ public:
   THR_LOCK_INFO lock_info; /**< Locking information for this session */
   THR_LOCK_OWNER main_lock_id; /**< To use for conventional queries */
   THR_LOCK_OWNER *lock_id; /**< If not main_lock_id, points to the lock_id of a cursor. */
-private:
-  boost::mutex LOCK_delete; /**< Locked before session is deleted */
-public:
-
-  void lockForDelete()
-  {
-    LOCK_delete.lock();
-  }
-
-  void unlockForDelete()
-  {
-    LOCK_delete.unlock();
-  }
 
   /**
    * A pointer to the stack frame of the scheduler thread
@@ -537,12 +526,7 @@ public:
   /**
    * Is this session viewable by the current user?
    */
-  bool isViewable() const
-  {
-    return plugin::Authorization::isAuthorized(current_session->getSecurityContext(),
-                                               this,
-                                               false);
-  }
+  bool isViewable() const;
 
   /**
     Used in error messages to tell user in what part of MySQL we found an
@@ -1139,7 +1123,9 @@ public:
   /**
    * Schedule a session to be run on the default scheduler.
    */
-  bool schedule();
+  static bool schedule(Session::shared_ptr&);
+
+  static void unlink(Session::shared_ptr&);
 
   /*
     For enter_cond() / exit_cond() to work the mutex must be got before
@@ -1683,8 +1669,6 @@ public:
       return variables.storage_engine;
     return global_system_variables.storage_engine;
   }
-
-  static void unlink(Session *session);
 
   void get_xid(DRIZZLE_XID *xid); // Innodb only
 

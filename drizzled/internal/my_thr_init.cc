@@ -21,7 +21,6 @@
 #include "config.h"
 
 #include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/my_pthread.h"
 #include "drizzled/internal/thread_var.h"
 #include "drizzled/internal/m_string.h"
 

@@ -20,16 +20,52 @@
 #ifndef DRIZZLED_SESSION_LIST_H
 #define DRIZZLED_SESSION_LIST_H
 
+#include "drizzled/session.h"
 #include <list>
 
 namespace drizzled
 {
 
 class Session;
-typedef Session* SessionPtr;
-typedef std::list<SessionPtr> SessionList;
-SessionList &getSessionList();
 
-}
+namespace session
+{
+
+class Cache 
+{
+public:
+  typedef std::list<Session::shared_ptr> List;
+
+  static inline Cache &singleton()
+  {
+    static Cache open_cache;
+
+    return open_cache;
+  }
+
+  List &getCache()
+  {
+    return cache;
+  }
+
+  boost::mutex &mutex()
+  {
+    return _mutex;
+  }
+
+  void erase(Session::Ptr);
+  void erase(Session::shared_ptr&);
+  size_t count();
+  void insert(Session::shared_ptr &arg);
+
+  Session::shared_ptr find(const session_id_t &id);
+
+private:
+  List cache;
+  boost::mutex _mutex;
+};
+
+} /* namespace session */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SESSION_LIST_H */
