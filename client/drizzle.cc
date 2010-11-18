@@ -2610,9 +2610,9 @@ static void build_completion_hash(bool rehash, bool write_info)
   {
     string query;
 
-    query.append("show fields in '");
+    query.append("show fields in `");
     query.append(table_row[0]);
-    query.append("'");
+    query.append("`");
     
     if (drizzle_query(&con, &fields, query.c_str(), query.length(),
                       &ret) != NULL)
