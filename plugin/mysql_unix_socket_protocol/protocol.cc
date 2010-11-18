@@ -72,7 +72,7 @@ static int init(drizzled::module::Context &context)
     context.add(new Protocol("mysql_unix_socket_protocol",
                              true,
                              uds_path));
-    context.registerVariable(new sys_var_fs_path("path", uds_path));
+    context.registerVariable(new sys_var_const_string_val("path", fs::system_complete(uds_path).file_string()));
   }
   else
   {
