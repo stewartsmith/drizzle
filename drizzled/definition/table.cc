@@ -530,7 +530,11 @@ TableShare::TableShare(TableIdentifier &identifier, const TableIdentifier::Key &
   path.str= (char *)"";
   normalized_path.str= path.str;
   path.length= normalized_path.length= 0;
-  assert(strcmp(identifier.getTableName().c_str(), table_name.str) == 0);
+
+  std::string tb_name(identifier.getTableName());
+  std::transform(tb_name.begin(), tb_name.end(), tb_name.begin(), ::tolower);
+  assert(strcmp(tb_name.c_str(), table_name.str) == 0);
+
   assert(strcmp(identifier.getSchemaName().c_str(), db.str) == 0);
 }
 

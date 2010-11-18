@@ -26,11 +26,11 @@ Table	Op	Msg_type	Msg_text
 test.t1	check	status	OK
 show index from t1;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def	data_dictionary	show_indexes	SHOW_INDEXES	Table	Table	8	1024	2	N	4097	0	45
-def	data_dictionary	show_indexes	SHOW_INDEXES	Unique	Unique	8	20	3	N	4097	0	45
-def	data_dictionary	show_indexes	SHOW_INDEXES	Key_name	Key_name	8	1024	7	N	4097	0	45
-def	data_dictionary	show_indexes	SHOW_INDEXES	Seq_in_index	Seq_in_index	5	20	1	N	36865	0	63
-def	data_dictionary	show_indexes	SHOW_INDEXES	Column_name	Column_name	8	1024	1	N	4097	0	45
+def	data_dictionary	SHOW_INDEXES	SHOW_INDEXES	Table	Table	8	1024	2	N	4097	0	45
+def	data_dictionary	SHOW_INDEXES	SHOW_INDEXES	Unique	Unique	8	20	3	N	4097	0	45
+def	data_dictionary	SHOW_INDEXES	SHOW_INDEXES	Key_name	Key_name	8	1024	7	N	4097	0	45
+def	data_dictionary	SHOW_INDEXES	SHOW_INDEXES	Seq_in_index	Seq_in_index	5	20	1	N	36865	0	63
+def	data_dictionary	SHOW_INDEXES	SHOW_INDEXES	Column_name	Column_name	8	1024	1	N	4097	0	45
 Table	Unique	Key_name	Seq_in_index	Column_name
 t1	YES	PRIMARY	1	a
 t1	NO	b	1	b
@@ -48,37 +48,37 @@ drop table t1;
 -- after Bug#29394 is implemented.
 show variables like "server_id%";
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def	data_dictionary	session_variables	SESSION_VARIABLES	VARIABLE_NAME	Variable_name	8	1024	9	N	4097	0	45
-def	data_dictionary	session_variables	SESSION_VARIABLES	VARIABLE_VALUE	Value	8	4096	1	N	4097	0	45
+def	data_dictionary	SESSION_VARIABLES	SESSION_VARIABLES	VARIABLE_NAME	Variable_name	8	1024	9	N	4097	0	45
+def	data_dictionary	SESSION_VARIABLES	SESSION_VARIABLES	VARIABLE_VALUE	Value	8	4096	1	N	4097	0	45
 Variable_name	Value
 server_id	1
 show variables like "SERVER_id%";
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def	data_dictionary	session_variables	SESSION_VARIABLES	VARIABLE_NAME	Variable_name	8	1024	9	N	4097	0	45
-def	data_dictionary	session_variables	SESSION_VARIABLES	VARIABLE_VALUE	Value	8	4096	1	N	4097	0	45
+def	data_dictionary	SESSION_VARIABLES	SESSION_VARIABLES	VARIABLE_NAME	Variable_name	8	1024	9	N	4097	0	45
+def	data_dictionary	SESSION_VARIABLES	SESSION_VARIABLES	VARIABLE_VALUE	Value	8	4096	1	N	4097	0	45
 Variable_name	Value
 server_id	1
 show variables like "this_doesn't_exists%";
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def	data_dictionary	session_variables	SESSION_VARIABLES	VARIABLE_NAME	Variable_name	8	1024	0	N	4097	0	45
-def	data_dictionary	session_variables	SESSION_VARIABLES	VARIABLE_VALUE	Value	8	4096	0	N	4097	0	45
+def	data_dictionary	SESSION_VARIABLES	SESSION_VARIABLES	VARIABLE_NAME	Variable_name	8	1024	0	N	4097	0	45
+def	data_dictionary	SESSION_VARIABLES	SESSION_VARIABLES	VARIABLE_VALUE	Value	8	4096	0	N	4097	0	45
 Variable_name	Value
 show table status from test like "this_doesn't_exists%";
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Session	Session	5	20	0	N	36865	0	63
-def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Schema	Schema	8	1024	0	N	4097	0	45
-def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Name	Name	8	1024	0	N	4097	0	45
-def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Type	Type	8	1024	0	N	4097	0	45
-def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Engine	Engine	8	1024	0	N	4097	0	45
-def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Version	Version	8	1024	0	N	4097	0	45
-def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Rows	Rows	8	1024	0	N	4097	0	45
-def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Avg_row_length	Avg_row_length	8	1024	0	N	4097	0	45
-def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Table_size	Table_size	8	1024	0	N	4097	0	45
-def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Auto_increment	Auto_increment	8	1024	0	N	4097	0	45
+def	data_dictionary	SHOW_TABLE_STATUS	SHOW_TABLE_STATUS	Session	Session	5	20	0	N	36865	0	63
+def	data_dictionary	SHOW_TABLE_STATUS	SHOW_TABLE_STATUS	Schema	Schema	8	1024	0	N	4097	0	45
+def	data_dictionary	SHOW_TABLE_STATUS	SHOW_TABLE_STATUS	Name	Name	8	1024	0	N	4097	0	45
+def	data_dictionary	SHOW_TABLE_STATUS	SHOW_TABLE_STATUS	Type	Type	8	1024	0	N	4097	0	45
+def	data_dictionary	SHOW_TABLE_STATUS	SHOW_TABLE_STATUS	Engine	Engine	8	1024	0	N	4097	0	45
+def	data_dictionary	SHOW_TABLE_STATUS	SHOW_TABLE_STATUS	Version	Version	8	1024	0	N	4097	0	45
+def	data_dictionary	SHOW_TABLE_STATUS	SHOW_TABLE_STATUS	Rows	Rows	8	1024	0	N	4097	0	45
+def	data_dictionary	SHOW_TABLE_STATUS	SHOW_TABLE_STATUS	Avg_row_length	Avg_row_length	8	1024	0	N	4097	0	45
+def	data_dictionary	SHOW_TABLE_STATUS	SHOW_TABLE_STATUS	Table_size	Table_size	8	1024	0	N	4097	0	45
+def	data_dictionary	SHOW_TABLE_STATUS	SHOW_TABLE_STATUS	Auto_increment	Auto_increment	8	1024	0	N	4097	0	45
 Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
 show databases;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def	data_dictionary	show_schemas	SHOW_SCHEMAS	SCHEMA_NAME	Database	8	1024	18	N	4097	0	45
+def	data_dictionary	SHOW_SCHEMAS	SHOW_SCHEMAS	SCHEMA_NAME	Database	8	1024	18	N	4097	0	45
 Database
 DATA_DICTIONARY
 INFORMATION_SCHEMA
@@ -86,7 +86,7 @@ mysql
 test
 show databases like "test%";
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def	data_dictionary	show_schemas	SHOW_SCHEMAS	SCHEMA_NAME	Database (test%)	8	1024	4	N	4097	0	45
+def	data_dictionary	SHOW_SCHEMAS	SHOW_SCHEMAS	SCHEMA_NAME	Database (test%)	8	1024	4	N	4097	0	45
 Database (test%)
 test
 create table t1 (f1 int not null, f2 int not null, f3 int not null, f4 int not null, primary key(f1,f2,f3,f4));
@@ -446,11 +446,11 @@ PRIMARY KEY(field1(180))
 );
 show index from t1;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def	data_dictionary	show_indexes	SHOW_INDEXES	Table	Table	8	1024	2	N	4097	0	45
-def	data_dictionary	show_indexes	SHOW_INDEXES	Unique	Unique	8	20	3	N	4097	0	45
-def	data_dictionary	show_indexes	SHOW_INDEXES	Key_name	Key_name	8	1024	7	N	4097	0	45
-def	data_dictionary	show_indexes	SHOW_INDEXES	Seq_in_index	Seq_in_index	5	20	1	N	36865	0	63
-def	data_dictionary	show_indexes	SHOW_INDEXES	Column_name	Column_name	8	1024	6	N	4097	0	45
+def	data_dictionary	SHOW_INDEXES	SHOW_INDEXES	Table	Table	8	1024	2	N	4097	0	45
+def	data_dictionary	SHOW_INDEXES	SHOW_INDEXES	Unique	Unique	8	20	3	N	4097	0	45
+def	data_dictionary	SHOW_INDEXES	SHOW_INDEXES	Key_name	Key_name	8	1024	7	N	4097	0	45
+def	data_dictionary	SHOW_INDEXES	SHOW_INDEXES	Seq_in_index	Seq_in_index	5	20	1	N	36865	0	63
+def	data_dictionary	SHOW_INDEXES	SHOW_INDEXES	Column_name	Column_name	8	1024	6	N	4097	0	45
 Table	Unique	Key_name	Seq_in_index	Column_name
 t1	YES	PRIMARY	1	field1
 drop table t1;
