@@ -31,6 +31,12 @@ LineBuffer::LineBuffer(uint32_t my_max_size,FILE *my_file)
     max_size(my_max_size)
 {
   if (my_file)
+
+  /*
+    if here beacuse the old way of using file_descriptor is deprecated in boost
+    1.44.  There is a #define to re-enable the function but this is broken in
+    Fedora 14. See https://bugzilla.redhat.com/show_bug.cgi?id=654480
+  */
 #if BOOST_VERSION < 104400
     file_stream = new boost::iostreams::stream<boost::iostreams::file_descriptor>(fileno(my_file), true);
 #else
