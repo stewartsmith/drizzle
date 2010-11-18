@@ -45,7 +45,7 @@ int64_t Signal::val_int()
 
   if (barrier)
   {
-    barrier->start();
+    barrier->signal();
 
     return 1;
   }

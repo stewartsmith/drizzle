@@ -34,23 +34,30 @@ public:
   typedef boost::shared_ptr<Barrier> shared_ptr;
 
   Barrier(drizzled::session_id_t owner_arg) :
-    sleeping(true),
-    owner(owner_arg)
+    owner(owner_arg),
+    wait_count(0),
+    current_wait(0),
+    generation(0)
   { }
 
-  // Signal all of the waiters to start
-  void start()
+  Barrier(drizzled::session_id_t owner_arg, int64_t wait_count_arg) :
+    owner(owner_arg),
+    wait_count(wait_count_arg),
+    current_wait(wait_count),
+    generation(0)
   {
-    boost::mutex::scoped_lock scopedBarrier(sleeper_mutex);
-    sleeping= false;
-    sleep_threshhold.notify_all();
   }
 
-  // reset after the start of the signal so that we can reuse the wakeup
-  void reset()
+
+  // Signal all of the waiters to start
+  void signal()
   {
-    boost::mutex::scoped_lock scopedBarrier(sleeper_mutex);
-    sleeping= true;
+    {
+      boost::mutex::scoped_lock scopedBarrier(sleeper_mutex);
+      generation++;
+      current_wait= wait_count;
+    }
+    sleep_threshhold.notify_all();
   }
 
   drizzled::session_id_t getOwner() const
@@ -58,19 +65,47 @@ public:
     return owner;
   }
 
-  void wait() 
+  void wait()
   {
-    sleeper_mutex.lock();
-    while (sleeping)
+    boost::mutex::scoped_lock scopedLock(sleeper_mutex);
+    int64_t my_generation= generation;
+
+    if (wait_count)
+    {
+      if (not --current_wait)
+      {
+        generation++;
+        current_wait= wait_count;
+        sleep_threshhold.notify_all();
+
+        return;
+      }
+
+    }
+
+    while (my_generation == generation)
     {
       sleep_threshhold.wait(sleeper_mutex);
     }
-    sleeper_mutex.unlock();
+  }
+
+  int64_t getGeneration() const
+  {
+    return generation;
+  }
+
+  int64_t getWaitCount() const
+  {
+    return wait_count;
   }
 
 private:
-  bool sleeping;
   drizzled::session_id_t owner;
+
+  const int64_t wait_count;
+  int64_t current_wait;
+  int64_t generation;
+
   boost::mutex sleeper_mutex;
   boost::condition_variable_any sleep_threshhold;
 };

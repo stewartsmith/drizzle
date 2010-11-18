@@ -30,12 +30,6 @@ namespace barriers {
 int64_t CreateBarrier::val_int()
 {
   drizzled::String *res= args[0]->val_str(&value);
-  int64_t wait_time= 0;
-
-  if (arg_count == 2)
-  {
-    wait_time= args[1]->val_int();
-  }
 
   if (not res)
   {
@@ -49,7 +43,20 @@ int64_t CreateBarrier::val_int()
 
   barriers::Storable *list= static_cast<barriers::Storable *>(getSession().getProperty(barriers::property_key));
 
-  boost::tribool result= Barriers::getInstance().create(Key(getSession().getSecurityContext(), res->c_str()), getSession().getSessionId());
+  boost::tribool result;
+
+  if (arg_count == 2)
+  {
+    int64_t wait_for;
+    wait_for= args[1]->val_int();
+
+    result= Barriers::getInstance().create(Key(getSession().getSecurityContext(), res->c_str()), getSession().getSessionId(), wait_for);
+  }
+  else
+  {
+    result= Barriers::getInstance().create(Key(getSession().getSecurityContext(), res->c_str()), getSession().getSessionId());
+  }
+
 
   if (boost::indeterminate(result))
     null_value= true;

@@ -50,6 +50,7 @@ public:
   }
 
   bool create(const user_locks::Key &arg, drizzled::session_id_t owner);
+  bool create(const user_locks::Key &arg, drizzled::session_id_t owner, int64_t wait_count);
   boost::tribool release(const user_locks::Key &arg, drizzled::session_id_t owner);
   Barrier::shared_ptr find(const user_locks::Key &arg);
   void Copy(Map &arg);

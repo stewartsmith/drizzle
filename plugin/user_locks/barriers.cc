@@ -34,6 +34,12 @@ bool Barriers::create(const user_locks::Key &arg, drizzled::session_id_t owner)
   return barrier_map.insert(std::make_pair(arg, new Barrier(owner))).second;
 }
 
+bool Barriers::create(const user_locks::Key &arg, drizzled::session_id_t owner, int64_t wait_count)
+{
+  boost::unique_lock<boost::mutex> scope(mutex);
+  return barrier_map.insert(std::make_pair(arg, new Barrier(owner, wait_count))).second;
+}
+
 /*
   @note return
 
@@ -54,7 +60,7 @@ boost::tribool Barriers::release(const user_locks::Key &arg, drizzled::session_i
   if (not (*iter).second->getOwner() == owner)
     return false;
 
-  (*iter).second->start(); // We tell anyone left to start running
+  (*iter).second->signal(); // We tell anyone left to start running
   (void)barrier_map.erase(arg);
 
   return true;
