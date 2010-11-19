@@ -1741,6 +1741,7 @@ function_exit:
 	}
 }
 
+#if defined UNIV_AHI_DEBUG || defined UNIV_DEBUG
 /********************************************************************//**
 Validates the search system.
 @return	TRUE if ok */
@@ -1908,3 +1909,4 @@ btr_search_validate(void)
 
 	return(ok);
 }
+#endif /* defined UNIV_AHI_DEBUG || defined UNIV_DEBUG */
