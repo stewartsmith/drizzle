@@ -95,9 +95,9 @@ bool InnodbSysTablesTool::Generator::populate()
   if (!err_msg) {
     push(ut_conv_dulint_to_longlong(table_rec->id));
     push(table_rec->name);
-    push((uint64_t)table_rec->flags);
-    push((uint64_t)table_rec->n_cols);
-    push((uint64_t)table_rec->space);
+    push(static_cast<uint64_t>(table_rec->flags));
+    push(static_cast<uint64_t>(table_rec->n_cols));
+    push(static_cast<uint64_t>(table_rec->space));
   } else {
 /*    push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                         ER_CANT_FIND_SYSTEM_REC,
@@ -180,11 +180,11 @@ bool InnodbSysTableStatsTool::Generator::populate()
     else
       push("Uninitialized");
     push(table_rec->stat_n_rows);
-    push(table_rec->stat_clustered_index_size);
-    push(table_rec->stat_sum_of_other_index_sizes);
+    push(static_cast<uint64_t>(table_rec->stat_clustered_index_size));
+    push(static_cast<uint64_t>(table_rec->stat_sum_of_other_index_sizes));
     push(table_rec->stat_modified_counter);
     push(table_rec->autoinc);
-    push(table_rec->n_mysql_handles_opened);
+    push(static_cast<uint64_t>(table_rec->n_mysql_handles_opened));
   } else {
     /*    push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
                         ER_CANT_FIND_SYSTEM_REC,
@@ -256,10 +256,10 @@ bool InnodbSysIndexesTool::Generator::populate()
     push(ut_conv_dulint_to_longlong(index_rec.id));
     push(index_rec.name);
     push(ut_conv_dulint_to_longlong(table_id));
-    push((uint64_t)index_rec.type);
-    push((uint64_t)index_rec.n_fields);
-    push((uint64_t)index_rec.page);
-    push((uint64_t)index_rec.space);
+    push(static_cast<uint64_t>(index_rec.type));
+    push(static_cast<uint64_t>(index_rec.n_fields));
+    push(static_cast<uint64_t>(index_rec.page));
+    push(static_cast<uint64_t>(index_rec.space));
   } else {
 /*    push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
                         ER_CANT_FIND_SYSTEM_REC,
@@ -337,10 +337,10 @@ bool InnodbSysColumnsTool::Generator::populate()
   if (!err_msg) {
     push(ut_conv_dulint_to_longlong(table_id));
     push(col_name);
-    push((uint64_t)column_rec.ind);
-    push((uint64_t)column_rec.mtype);
-    push((uint64_t)column_rec.prtype);
-    push((uint64_t)column_rec.len);
+    push(static_cast<uint64_t>(column_rec.ind));
+    push(static_cast<uint64_t>(column_rec.mtype));
+    push(static_cast<uint64_t>(column_rec.prtype));
+    push(static_cast<uint64_t>(column_rec.len));
   } else {
 /*    push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
                         ER_CANT_FIND_SYSTEM_REC,
@@ -413,7 +413,7 @@ bool InnodbSysFieldsTool::Generator::populate()
   if (!err_msg) {
     push(ut_conv_dulint_to_longlong(index_id));
     push(field_rec.name);
-    push(pos);
+    push(static_cast<uint64_t>(pos));
 
     last_id = index_id;
   } else {
@@ -483,8 +483,8 @@ bool InnodbSysForeignTool::Generator::populate()
     push(foreign_rec.id);
     push(foreign_rec.foreign_table_name);
     push(foreign_rec.referenced_table_name);
-    push((uint64_t)foreign_rec.n_fields);
-    push((uint64_t)foreign_rec.type);
+    push(static_cast<uint64_t>(foreign_rec.n_fields));
+    push(static_cast<uint64_t>(foreign_rec.type));
   } else {
 /*    push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
                         ER_CANT_FIND_SYSTEM_REC,
@@ -555,7 +555,7 @@ bool InnodbSysForeignColsTool::Generator::populate()
     push(name);
     push(for_col_name);
     push(ref_col_name);
-    push(pos);
+    push(static_cast<uint64_t>(pos));
   } else {
 /*    push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
                         ER_CANT_FIND_SYSTEM_REC,
@@ -906,18 +906,18 @@ void InnodbTrxTool::Generator::populate_innodb_trx()
     }
     push(row->trx_operation_state);
 //    push(row->trx_tables_in_use);
-    push(row->trx_tables_locked);
-    push(row->trx_lock_structs);
-    push(row->trx_lock_memory_bytes);
-    push(row->trx_rows_locked);
+    push(static_cast<uint64_t>(row->trx_tables_locked));
+    push(static_cast<uint64_t>(row->trx_lock_structs));
+    push(static_cast<uint64_t>(row->trx_lock_memory_bytes));
+    push(static_cast<uint64_t>(row->trx_rows_locked));
     push(static_cast<uint64_t>(row->trx_rows_modified));
-    push(row->trx_concurrency_tickets);
+    push(static_cast<uint64_t>(row->trx_concurrency_tickets));
     push(row->trx_isolation_level);
-    push(row->trx_unique_checks);
-    push(row->trx_foreign_key_checks);
+    push(static_cast<uint64_t>(row->trx_unique_checks));
+    push(static_cast<uint64_t>(row->trx_foreign_key_checks));
     push(row->trx_foreign_key_error);
-    push(row->trx_has_search_latch);
-    push(row->trx_search_latch_timeout);
+    push(static_cast<uint64_t>(row->trx_has_search_latch));
+    push(static_cast<uint64_t>(row->trx_search_latch_timeout));
 }
 
 void InnodbTrxTool::Generator::populate_innodb_lock_waits()
