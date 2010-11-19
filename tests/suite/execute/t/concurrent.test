@@ -17,7 +17,7 @@ EXECUTE @execute CONCURRENT;
 SELECT WAIT_UNTIL(@my_barrier, 3);
  
 ### Now lets see what the processlist shows.
-SELECT USER,INFO FROM DATA_DICTIONARY.PROCESSLIST;
+SELECT USER,INFO FROM DATA_DICTIONARY.PROCESSLIST ORDER BY ID;
 SELECT SIGNAL(@my_barrier);
 
 ## Wait till we know the above is done (this will be replaced with broadcast() in the future)
