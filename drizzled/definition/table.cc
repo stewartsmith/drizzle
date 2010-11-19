@@ -973,8 +973,8 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
   uint32_t local_null_fields= 0;
   reclength= 0;
 
-  vector<uint32_t> field_offsets;
-  vector<uint32_t> field_pack_length;
+  std::vector<uint32_t> field_offsets;
+  std::vector<uint32_t> field_pack_length;
 
   field_offsets.resize(fields);
   field_pack_length.resize(fields);

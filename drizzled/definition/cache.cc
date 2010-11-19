@@ -20,7 +20,9 @@
 
 #include "config.h"
 
-#include "drizzled/pthread_globals.h"
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/shared_mutex.hpp>
+
 #include "drizzled/session.h"
 #include "drizzled/identifier/table.h"
 #include "drizzled/definition/cache.h"
@@ -32,9 +34,9 @@ namespace definition {
 
 TableShare::shared_ptr Cache::find(const TableIdentifier &identifier)
 {
-  //safe_mutex_assert_owner(LOCK_open.native_handle);
+  boost::mutex::scoped_lock scopedLock(_mutex);
 
-  CacheMap::iterator iter= cache.find(identifier.getKey());
+  Map::iterator iter= cache.find(identifier.getKey());
   if (iter != cache.end())
   {
     return (*iter).second;
@@ -45,14 +47,15 @@ TableShare::shared_ptr Cache::find(const TableIdentifier &identifier)
 
 void Cache::erase(const TableIdentifier &identifier)
 {
-  //safe_mutex_assert_owner(LOCK_open.native_handle);
+  boost::mutex::scoped_lock scopedLock(_mutex);
   
   cache.erase(identifier.getKey());
 }
 
 bool Cache::insert(const TableIdentifier &identifier, TableShare::shared_ptr share)
 {
-  std::pair<CacheMap::iterator, bool> ret=
+  boost::mutex::scoped_lock scopedLock(_mutex);
+  std::pair<Map::iterator, bool> ret=
     cache.insert(std::make_pair(identifier.getKey(), share));
 
   return ret.second;

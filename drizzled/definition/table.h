@@ -61,8 +61,10 @@ class Field_blob;
 class TableShare
 {
   typedef std::vector<std::string> StringVector;
+
 public:
   typedef boost::shared_ptr<TableShare> shared_ptr;
+  typedef std::vector <shared_ptr> vector;
 
   TableShare(TableIdentifier::Type type_arg);
 

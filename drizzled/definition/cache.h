@@ -25,25 +25,23 @@
 
 namespace drizzled {
 
-namespace definition {
+namespace generator {
+class TableDefinitionCache;
+}
 
-typedef boost::unordered_map< TableIdentifier::Key, TableShare::shared_ptr> CacheMap;
+namespace definition {
 
 class Cache
 {
-  CacheMap cache;
-
 public:
+
+typedef boost::unordered_map< TableIdentifier::Key, TableShare::shared_ptr> Map;
+
   static inline Cache &singleton()
   {
     static Cache open_cache;
 
     return open_cache;
-  }
-
-  CacheMap &getCache()
-  {
-    return cache;
   }
 
   size_t size() const
@@ -56,9 +54,26 @@ public:
     cache.rehash(arg);
   }
 
+  boost::mutex &mutex()
+  {
+    return _mutex;
+  }
+
   TableShare::shared_ptr find(const TableIdentifier &identifier);
   void erase(const TableIdentifier &identifier);
   bool insert(const TableIdentifier &identifier, TableShare::shared_ptr share);
+
+protected:
+  friend class drizzled::generator::TableDefinitionCache;
+
+  Map &getCache()
+  {
+    return cache;
+  }
+
+private:
+  Map cache;
+  boost::mutex _mutex;
 };
 
 } /* namespace definition */
