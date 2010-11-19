@@ -1415,57 +1415,6 @@ void add_join_natural(TableList *a, TableList *b, List<String> *using_fields,
 
 
 /**
-  kill on thread.
-
-  @param session			Thread class
-  @param id			Thread id
-  @param only_kill_query        Should it kill the query or the connection
-
-  @note
-    This is written such that we have a short lock on LOCK_thread_count
-*/
-
-static unsigned int kill_one_thread(session_id_t id, bool only_kill_query)
-{
-  uint32_t error= ER_NO_SUCH_THREAD;
-  
-  Session::shared_ptr session= session::Cache::singleton().find(id);
-
-  if (not session)
-    return error;
-
-  if (session->isViewable())
-  {
-    session->awake(only_kill_query ? Session::KILL_QUERY : Session::KILL_CONNECTION);
-    error= 0;
-  }
-
-  return error;
-}
-
-
-/*
-  kills a thread and sends response
-
-  SYNOPSIS
-    sql_kill()
-    session			Thread class
-    id			Thread id
-    only_kill_query     Should it kill the query or the connection
-*/
-
-void sql_kill(Session *session, int64_t id, bool only_kill_query)
-{
-  uint32_t error;
-
-  if (not (error= kill_one_thread(id, only_kill_query)))
-    session->my_ok();
-  else
-    my_error(error, MYF(0), id);
-}
-
-
-/**
   Check if the select is a simple select (not an union).
 
   @retval
