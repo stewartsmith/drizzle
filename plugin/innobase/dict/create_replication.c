@@ -107,7 +107,8 @@ UNIV_INTERN ulint dict_create_sys_replication_log(void)
 
 extern dtuple_t* row_get_prebuilt_insert_row(row_prebuilt_t*	prebuilt);
 
-ulint insert_replication_message(const char *message, size_t size, trx_t *trx)
+ulint insert_replication_message(const char *message, size_t size, 
+                                 trx_t *trx, uint64_t trx_id)
 {
   ulint error;
   row_prebuilt_t*	prebuilt;	/* For reading rows */
@@ -123,7 +124,6 @@ ulint insert_replication_message(const char *message, size_t size, trx_t *trx)
   dfield_t *dfield;
   dfield = dtuple_get_nth_field(dtuple, 0);
 
-  uint64_t trx_id= (ib_uint64_t) ut_conv_dulint_to_longlong(trx->id);
   dfield_set_data(dfield, &trx_id, 8);
 
   dfield = dtuple_get_nth_field(dtuple, 1);

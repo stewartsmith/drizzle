@@ -958,7 +958,8 @@ plugin::ReplicationReturnCode ReplicationLog::apply(Session &session,
   }
   else
   {
-    ulint error= insert_replication_message(buffer.c_str(), buffer.size(), trx);
+    uint64_t trx_id= message.transaction_context().transaction_id();
+    ulint error= insert_replication_message(buffer.c_str(), buffer.size(), trx, trx_id);
     (void)error;
   }
 
