@@ -634,7 +634,7 @@ static DRIZZLE_SessionVAR_BOOL(table_locks, PLUGIN_VAR_OPCMDARG,
 
 static DRIZZLE_SessionVAR_BOOL(strict_mode, PLUGIN_VAR_OPCMDARG,
   "Use strict mode when evaluating create options.",
-  NULL, NULL, TRUE);
+  NULL, NULL, FALSE);
 
 static DRIZZLE_SessionVAR_ULONG(lock_wait_timeout, PLUGIN_VAR_RQCMDARG,
   "Timeout in seconds an InnoDB transaction may wait for a lock before being rolled back. Values above 100000000 disable the timeout.",
@@ -925,6 +925,20 @@ thd_lock_wait_timeout(
   /* According to <drizzle/plugin.h>, passing session == NULL
   returns the global value of the session variable. */
   return(SessionVAR((Session*) session, lock_wait_timeout));
+}
+
+/******************************************************************//**
+Set the time waited for the lock for the current query. */
+extern "C" UNIV_INTERN
+void
+thd_set_lock_wait_time(
+/*===================*/
+	void*	thd,	/*!< in: thread handle (THD*) */
+	ulint	value)	/*!< in: time waited for the lock */
+{
+	if (thd) {
+          static_cast<Session*>(thd)->utime_after_lock+= value;
+	}
 }
 
 /********************************************************************//**

@@ -278,6 +278,14 @@ thd_lock_wait_timeout(
 /*==================*/
 	void*	thd);	/*!< in: thread handle (THD*), or NULL to query
 			the global innodb_lock_wait_timeout */
+/******************************************************************//**
+Add up the time waited for the lock for the current query. */
+UNIV_INTERN
+void
+thd_set_lock_wait_time(
+/*===================*/
+        void*   thd,	/*!< in: thread handle (THD*) */
+        ulint   value);	/*!< in: time waited for the lock */
 
 UNIV_INTERN
 bool
