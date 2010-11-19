@@ -92,7 +92,16 @@ bool Protocol::getFileDescriptors(std::vector<int> &fds)
 
   servAddr.sun_family= AF_UNIX;
   strcpy(servAddr.sun_path, unix_socket_path.c_str());
-  (void) unlink(unix_socket_path.c_str());
+
+  // In case we restart and find something in our way we move it aside and
+  // then attempt to remove it.
+  {
+    std::string move_file(unix_socket_path);
+    move_file.append(".old");
+    std::rename(unix_socket_path.c_str(), move_file.c_str());
+    unlink(move_file.c_str());
+  }
+
 
   int arg= 1;
 
@@ -116,6 +125,7 @@ bool Protocol::getFileDescriptors(std::vector<int> &fds)
   {
     std::cerr << "Listening on " << unix_socket_path.c_str() << "\n";
   }
+  (void) unlink(unix_socket_path.c_str());
 
   fds.push_back(unix_sock);
 
