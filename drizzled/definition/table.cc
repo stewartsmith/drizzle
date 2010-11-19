@@ -1695,7 +1695,7 @@ int TableShare::open_table_def(Session& session, TableIdentifier &identifier)
   local_error= 1;
   error_given= 0;
 
-  message::TablePtr table;
+  message::table::shared_ptr table;
 
   local_error= plugin::StorageEngine::getTableDefinition(session, identifier, table);
 

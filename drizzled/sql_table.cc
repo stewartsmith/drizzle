@@ -1978,7 +1978,7 @@ static bool create_table_wrapper(Session &session, const message::Table& create_
 {
   int protoerr= EEXIST;
   message::Table new_proto;
-  message::TablePtr src_proto;
+  message::table::shared_ptr src_proto;
 
   protoerr= plugin::StorageEngine::getTableDefinition(session,
                                                       src_table,

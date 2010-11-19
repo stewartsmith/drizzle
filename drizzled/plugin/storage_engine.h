@@ -299,7 +299,7 @@ public:
 
   static int getTableDefinition(Session& session,
                                 const drizzled::TableIdentifier &identifier,
-                                message::TablePtr &table_proto,
+                                message::table::shared_ptr &table_proto,
                                 bool include_temporary_tables= true);
   static bool doesTableExist(Session &session,
                              const drizzled::TableIdentifier &identifier,
