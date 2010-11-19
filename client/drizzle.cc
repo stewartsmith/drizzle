@@ -304,7 +304,7 @@ static bool column_types_flag;
 static bool preserve_comments= false;
 static uint32_t opt_max_input_line;
 static uint32_t opt_drizzle_port= 0;
-static uint8_t  opt_silent, verbose= 0;
+static int  opt_silent, verbose= 0;
 static drizzle_capabilities_t connect_flag= DRIZZLE_CAPABILITIES_NONE;
 static char *histfile;
 static char *histfile_tmp;
@@ -321,6 +321,7 @@ std::string current_db,
   current_host,
   current_prompt,
   current_user,
+  opt_verbose,
   current_password,
   opt_password,
   opt_protocol;
@@ -1309,8 +1310,8 @@ try
   N_("Only allow UPDATE and DELETE that uses keys."))
   ("i-am-a-dummy,U", po::value<bool>(&safe_updates)->default_value(false)->zero_tokens(),
   N_("Synonym for option --safe-updates, -U."))
-  ("verbose,v", po::value<uint8_t>(&verbose)->default_value(0),
-  N_("Verbosity of output (0-3, anything above 3 imples 3)"))
+  ("verbose,v", po::value<string>(&opt_verbose)->default_value(""),
+  N_("-v vvv implies that verbose= 3, Used to specify verbose"))
   ("version,V", N_("Output version information and exit."))
   ("secure-auth", po::value<bool>(&opt_secure_auth)->default_value(false)->zero_tokens(),
   N_("Refuse client connecting to server if it uses old (pre-4.1.1) protocol"))
@@ -1636,6 +1637,12 @@ try
       tty_password= true;
   }
   
+
+  if (!opt_verbose.empty())
+  {
+    verbose= opt_verbose.length();
+  }
+
   if (vm.count("batch"))
   {
     status.setBatch(1);
