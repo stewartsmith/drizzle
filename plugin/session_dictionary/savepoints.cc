@@ -18,12 +18,44 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SESSION_DICTIONARY_DICTIONARY_H
-#define PLUGIN_SESSION_DICTIONARY_DICTIONARY_H
+#include "config.h"
 
-#include "drizzled/plugin/table_function.h"
-#include "plugin/session_dictionary/processlist.h"
-#include "plugin/session_dictionary/savepoints.h"
-#include "plugin/session_dictionary/variables.h"
+#include "plugin/session_dictionary/dictionary.h"
 
-#endif /* PLUGIN_SESSION_DICTIONARY_DICTIONARY_H */
+namespace session_dictionary {
+
+#define LARGEST_USER_SAVEPOINT_NAME 128
+
+Savepoints::Savepoints() :
+  drizzled::plugin::TableFunction("DATA_DICTIONARY", "USER_SAVEPOINTS")
+{
+  add_field("SAVEPOINT_NAME", drizzled::plugin::TableFunction::STRING, LARGEST_USER_SAVEPOINT_NAME, false);
+}
+
+Savepoints::Generator::Generator(drizzled::Field **arg) :
+  drizzled::plugin::TableFunction::Generator(arg),
+  savepoints(getSession().transaction.savepoints),
+  iter(savepoints.begin())
+{
+}
+
+Savepoints::Generator::~Generator()
+{
+}
+
+bool Savepoints::Generator::populate()
+{
+  while (iter != savepoints.end())
+  {
+    // SAVEPOINT_NAME
+    push((*iter).getName());
+
+    iter++;
+
+    return true;
+  }
+
+  return false;
+}
+
+} /* namespace session_dictionary */
