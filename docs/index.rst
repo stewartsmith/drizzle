@@ -45,6 +45,8 @@ SQL Language:
    dml
    columntypes 
    variables 
+   locks 
+   barriers 
    dynamic 
    getting_information 
    transactional 
