@@ -1146,7 +1146,6 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   pid_file.replace_extension(".pid");
 
   system_config_dir /= "drizzle";
-  std::string system_config_file_drizzle("drizzled.cnf");
 
   config_options.add_options()
   ("help,?", po::value<bool>(&opt_help)->default_value(false)->zero_tokens(),
@@ -1362,11 +1361,14 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
 
   if (not vm["no-defaults"].as<bool>())
   {
+    fs::path system_config_file_drizzle(system_config_dir);
+    system_config_file_drizzle /= "drizzled.cnf";
     defaults_file_list.insert(defaults_file_list.begin(),
-                              system_config_file_drizzle);
+                              system_config_file_drizzle.file_string());
 
     fs::path config_conf_d_location(system_config_dir);
     config_conf_d_location /= "conf.d";
+
 
     CachedDirectory config_conf_d(config_conf_d_location.file_string());
     if (not config_conf_d.fail())
