@@ -79,7 +79,7 @@ static int init(drizzled::module::Context &context)
     cerr << uds_path << _(" exists already. Do you have another Drizzle or "
                           "MySQL running? Or perhaps the file is stale and "
                           "should be removed?") << std::endl;
-    return 1;
+    return 0;
   }
 
   return 0;
