@@ -47,6 +47,8 @@ using namespace std;
 namespace mysql_unix_socket_protocol
 {
 
+static bool clobber= false;
+
 Protocol::~Protocol()
 {
   fs::remove(unix_socket_path);
@@ -73,6 +75,7 @@ static int init(drizzled::module::Context &context)
                              true,
                              uds_path));
     context.registerVariable(new sys_var_const_string_val("path", fs::system_complete(uds_path).file_string()));
+    context.registerVariable(new sys_var_bool_ptr_readonly("clobber", &clobber));
   }
   else
   {
@@ -104,6 +107,7 @@ bool Protocol::getFileDescriptors(std::vector<int> &fds)
 
   // In case we restart and find something in our way we move it aside and
   // then attempt to remove it.
+  if (clobber)
   {
     fs::path move_file(unix_socket_path.file_string() + ".old");
     fs::rename(unix_socket_path, move_file);
@@ -134,7 +138,7 @@ bool Protocol::getFileDescriptors(std::vector<int> &fds)
   {
     std::cerr << "Listening on " << unix_socket_path << "\n";
   }
-  (void) unlink(unix_socket_path.c_str());
+  (void) unlink(unix_socket_path.file_string().c_str());
 
   fds.push_back(unix_sock);
 
@@ -147,6 +151,9 @@ static void init_options(drizzled::module::option_context &context)
   context("path",
           po::value<fs::path>()->default_value(DRIZZLE_UNIX_SOCKET_PATH),
           N_("Path used for MySQL UNIX Socket Protocol."));
+  context("clobber",
+          N_("Clobber socket file if one is there already."));
+
 }
 
 } /* namespace mysql_unix_socket_protocol */
