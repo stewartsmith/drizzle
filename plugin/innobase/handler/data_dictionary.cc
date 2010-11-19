@@ -182,7 +182,7 @@ bool InnodbSysTableStatsTool::Generator::populate()
     push(table_rec->stat_n_rows);
     push(static_cast<uint64_t>(table_rec->stat_clustered_index_size));
     push(static_cast<uint64_t>(table_rec->stat_sum_of_other_index_sizes));
-    push(table_rec->stat_modified_counter);
+    push(static_cast<uint64_t>(table_rec->stat_modified_counter));
     push(table_rec->autoinc);
     push(static_cast<uint64_t>(table_rec->n_mysql_handles_opened));
   } else {

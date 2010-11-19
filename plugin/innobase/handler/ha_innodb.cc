@@ -178,7 +178,7 @@ static long innobase_additional_mem_pool_size= 8*1024*1024L;
 static ulong innobase_commit_concurrency = 0;
 static ulong innobase_read_io_threads;
 static ulong innobase_write_io_threads;
-static long innobase_buffer_pool_instances = 1;
+static int64_t innobase_buffer_pool_instances = 1;
 
 /**
  * @TODO: Turn this into size_t as soon as we have a Variable<size_t>
@@ -9570,7 +9570,7 @@ static DRIZZLE_SYSVAR_LONGLONG(buffer_pool_size, innobase_buffer_pool_size,
   "The size of the memory buffer InnoDB uses to cache data and indexes of its tables.",
   NULL, NULL, 128*1024*1024L, 5*1024*1024L, INT64_MAX, 1024*1024L);
 
-static DRIZZLE_SYSVAR_LONG(buffer_pool_instances, innobase_buffer_pool_instances,
+static DRIZZLE_SYSVAR_LONGLONG(buffer_pool_instances, innobase_buffer_pool_instances,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "Number of buffer pool instances, set to higher value on high-end machines to increase scalability",
   NULL, NULL, 1L, 1L, MAX_BUFFER_POOLS, 1L);
