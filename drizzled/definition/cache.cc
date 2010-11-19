@@ -32,11 +32,11 @@ namespace drizzled {
 
 namespace definition {
 
-TableShare::shared_ptr Cache::find(const TableIdentifier &identifier)
+TableShare::shared_ptr Cache::find(const TableIdentifier::Key &key)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
 
-  Map::iterator iter= cache.find(identifier.getKey());
+  Map::iterator iter= cache.find(key);
   if (iter != cache.end())
   {
     return (*iter).second;
@@ -45,18 +45,18 @@ TableShare::shared_ptr Cache::find(const TableIdentifier &identifier)
   return TableShare::shared_ptr();
 }
 
-void Cache::erase(const TableIdentifier &identifier)
+void Cache::erase(const TableIdentifier::Key &key)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
   
-  cache.erase(identifier.getKey());
+  cache.erase(key);
 }
 
-bool Cache::insert(const TableIdentifier &identifier, TableShare::shared_ptr share)
+bool Cache::insert(const TableIdentifier::Key &key, TableShare::shared_ptr share)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
   std::pair<Map::iterator, bool> ret=
-    cache.insert(std::make_pair(identifier.getKey(), share));
+    cache.insert(std::make_pair(key, share));
 
   return ret.second;
 }

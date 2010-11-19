@@ -59,9 +59,9 @@ typedef boost::unordered_map< TableIdentifier::Key, TableShare::shared_ptr> Map;
     return _mutex;
   }
 
-  TableShare::shared_ptr find(const TableIdentifier &identifier);
-  void erase(const TableIdentifier &identifier);
-  bool insert(const TableIdentifier &identifier, TableShare::shared_ptr share);
+  TableShare::shared_ptr find(const TableIdentifier::Key &identifier);
+  void erase(const TableIdentifier::Key &identifier);
+  bool insert(const TableIdentifier::Key &identifier, TableShare::shared_ptr share);
 
 protected:
   friend class drizzled::generator::TableDefinitionCache;

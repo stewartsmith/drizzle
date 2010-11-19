@@ -636,10 +636,9 @@ public:
   static void release(TableShare *share);
   static void release(TableShare::shared_ptr &share);
   static void release(TableIdentifier &identifier);
-  static TableShare::shared_ptr getShare(TableIdentifier &identifier);
   static TableShare::shared_ptr getShareCreate(Session *session, 
-                                      TableIdentifier &identifier,
-                                      int &error);
+                                               TableIdentifier &identifier,
+                                               int &error);
 
   friend std::ostream& operator<<(std::ostream& output, const TableShare &share)
   {

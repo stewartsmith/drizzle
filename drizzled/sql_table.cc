@@ -41,6 +41,8 @@
 #include "drizzled/global_charset_info.h"
 #include "drizzled/charset.h"
 
+#include "drizzled/definition/cache.h"
+
 
 #include "drizzled/statement/alter_table.h"
 #include "drizzled/sql_table.h"
@@ -1334,7 +1336,7 @@ static bool locked_create_event(Session *session,
       /*
         @todo improve this error condition.
       */
-      if (TableShare::getShare(identifier))
+      if (definition::Cache::singleton().find(identifier.getKey()))
       {
         my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getSQLPath().c_str());
         return error;
