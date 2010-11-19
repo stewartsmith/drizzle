@@ -634,7 +634,7 @@ static DRIZZLE_SessionVAR_BOOL(table_locks, PLUGIN_VAR_OPCMDARG,
 
 static DRIZZLE_SessionVAR_BOOL(strict_mode, PLUGIN_VAR_OPCMDARG,
   "Use strict mode when evaluating create options.",
-  NULL, NULL, TRUE);
+  NULL, NULL, FALSE);
 
 static DRIZZLE_SessionVAR_ULONG(lock_wait_timeout, PLUGIN_VAR_RQCMDARG,
   "Timeout in seconds an InnoDB transaction may wait for a lock before being rolled back. Values above 100000000 disable the timeout.",
