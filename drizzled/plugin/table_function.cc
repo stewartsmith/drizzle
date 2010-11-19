@@ -194,6 +194,10 @@ void plugin::TableFunction::Generator::push(const char *arg, uint32_t length)
   assert(arg);
   length= length ? length : strlen(arg);
 
+  std::cerr << "Found lengths of " << (*columns_iterator)->char_length() << " " << length << "\n";
+  if ((*columns_iterator)->char_length() < length)
+    length= (*columns_iterator)->char_length();
+
   (*columns_iterator)->store(arg, length, scs);
   (*columns_iterator)->set_notnull();
   columns_iterator++;
