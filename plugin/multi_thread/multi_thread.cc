@@ -48,6 +48,7 @@ void MultiThreadScheduler::runSession(drizzled::session_id_t id)
     std::cerr << "Session killed before thread could execute\n";
     return;
   }
+  session->setThreadId();
 
   if (drizzled::internal::my_thread_init())
   {

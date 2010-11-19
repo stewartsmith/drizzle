@@ -28,6 +28,7 @@ static int init(drizzled::module::Context &context)
   context.add(new ProcesslistTool);
   context.add(new session_dictionary::Variables);
   context.add(new session_dictionary::Savepoints);
+  context.add(new session_dictionary::Sessions);
   
   return 0;
 }

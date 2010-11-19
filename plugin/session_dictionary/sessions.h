@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Brian Aker
+ *  Copyright (C) 2010 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,13 +18,35 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SESSION_DICTIONARY_DICTIONARY_H
-#define PLUGIN_SESSION_DICTIONARY_DICTIONARY_H
+#include "drizzled/session.h"
+#include "drizzled/generator/session.h"
 
-#include "drizzled/plugin/table_function.h"
-#include "plugin/session_dictionary/processlist.h"
-#include "plugin/session_dictionary/savepoints.h"
-#include "plugin/session_dictionary/sessions.h"
-#include "plugin/session_dictionary/variables.h"
+#ifndef PLUGIN_SESSION_DICTIONARY_SESSIONS_H
+#define PLUGIN_SESSION_DICTIONARY_SESSIONS_H
 
-#endif /* PLUGIN_SESSION_DICTIONARY_DICTIONARY_H */
+namespace session_dictionary {
+class Sessions : public drizzled::plugin::TableFunction
+{
+public:
+
+  Sessions();
+
+  class Generator : public drizzled::plugin::TableFunction::Generator 
+  {
+    drizzled::generator::Session session_generator;
+
+  public:
+    Generator(drizzled::Field **arg);
+    ~Generator();
+
+    bool populate();
+  };
+
+  Generator *generator(drizzled::Field **arg)
+  {
+    return new Generator(arg);
+  }
+};
+} // namespace session_dictionary
+
+#endif /* PLUGIN_SESSION_DICTIONARY_SESSIONS_H */

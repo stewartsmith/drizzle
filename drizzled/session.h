@@ -51,6 +51,8 @@
 #include "drizzled/plugin/authorization.h"
 
 #include <boost/unordered_map.hpp>
+
+#include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/shared_mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
@@ -542,18 +544,26 @@ public:
   */
   uint32_t dbug_sentry; /**< watch for memory corruption */
 private:
+  boost::thread::id boost_thread_id;
+
   internal::st_my_thread_var *mysys_var;
 public:
+
+  const boost::thread::id &getThreadId() const
+  {
+    return boost_thread_id;
+  }
+
+  void setThreadId()
+  {
+    boost_thread_id= boost::this_thread::get_id();
+  }
 
   internal::st_my_thread_var *getThreadVar()
   {
     return mysys_var;
   }
 
-  void resetThreadVar()
-  {
-    mysys_var= NULL;
-  }
   /**
    * Type of current query: COM_STMT_PREPARE, COM_QUERY, etc. Set from
    * first byte of the packet in executeStatement()
