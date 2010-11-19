@@ -20,6 +20,7 @@
 
 #include "config.h"
 
+#include <boost/bind.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/shared_mutex.hpp>
 
@@ -59,6 +60,19 @@ bool Cache::insert(const TableIdentifier::Key &key, TableShare::shared_ptr share
     cache.insert(std::make_pair(key, share));
 
   return ret.second;
+}
+
+void Cache::CopyFrom(drizzled::TableShare::vector &vector)
+{
+  boost::mutex::scoped_lock scopedLock(_mutex);
+
+  vector.reserve(definition::Cache::singleton().size());
+
+  std::transform(cache.begin(),
+                 cache.end(),
+                 std::back_inserter(vector),
+                 boost::bind(&Map::value_type::second, _1) );
+  assert(vector.size() == cache.size());
 }
 
 } /* namespace definition */

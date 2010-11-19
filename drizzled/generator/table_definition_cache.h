@@ -21,8 +21,6 @@
 #ifndef DRIZZLED_GENERATOR_TABLE_DEFINITION_CACHE_H
 #define DRIZZLED_GENERATOR_TABLE_DEFINITION_CACHE_H
 
-#include <boost/bind.hpp>
-#include <boost/thread/mutex.hpp>
 #include "drizzled/definition/cache.h"
 
 namespace drizzled {
@@ -37,16 +35,7 @@ public:
 
   TableDefinitionCache()
   {
-    boost::mutex::scoped_lock scopedLock(definition::Cache::singleton().mutex());
-
-    local_vector.reserve(definition::Cache::singleton().size());
-
-    std::transform(definition::Cache::singleton().getCache().begin(),
-                   definition::Cache::singleton().getCache().end(),
-                   std::back_inserter(local_vector),
-                   boost::bind(&definition::Cache::Map::value_type::second, _1) );
-    assert(local_vector.size() == definition::Cache::singleton().getCache().size());
-
+    definition::Cache::singleton().CopyFrom(local_vector);
     iter= local_vector.begin();
   }
 

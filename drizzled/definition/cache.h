@@ -34,9 +34,6 @@ namespace definition {
 class Cache
 {
 public:
-
-typedef boost::unordered_map< TableIdentifier::Key, TableShare::shared_ptr> Map;
-
   static inline Cache &singleton()
   {
     static Cache open_cache;
@@ -54,11 +51,6 @@ typedef boost::unordered_map< TableIdentifier::Key, TableShare::shared_ptr> Map;
     cache.rehash(arg);
   }
 
-  boost::mutex &mutex()
-  {
-    return _mutex;
-  }
-
   TableShare::shared_ptr find(const TableIdentifier::Key &identifier);
   void erase(const TableIdentifier::Key &identifier);
   bool insert(const TableIdentifier::Key &identifier, TableShare::shared_ptr share);
@@ -66,12 +58,11 @@ typedef boost::unordered_map< TableIdentifier::Key, TableShare::shared_ptr> Map;
 protected:
   friend class drizzled::generator::TableDefinitionCache;
 
-  Map &getCache()
-  {
-    return cache;
-  }
+  void CopyFrom(TableShare::vector &vector);
 
 private:
+  typedef boost::unordered_map< TableIdentifier::Key, TableShare::shared_ptr> Map;
+
   Map cache;
   boost::mutex _mutex;
 };
