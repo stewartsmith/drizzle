@@ -50,7 +50,21 @@ int64_t GetLock::val_int()
   if (list) // To be compatible with MySQL, we will now release all other locks we might have.
     list->erase_all();
 
-  boost::tribool result= user_locks::Locks::getInstance().lock(getSession().getSessionId(), Key(getSession().getSecurityContext(), res->c_str()), wait_time);
+  boost::tribool result;
+  {
+    boost::this_thread::restore_interruption dl(getSession().getThreadInterupt());
+
+    try {
+      result= user_locks::Locks::getInstance().lock(getSession().getSessionId(), Key(getSession().getSecurityContext(), res->c_str()), wait_time);
+    }
+    catch(boost::thread_interrupted const& error)
+    {
+      my_error(drizzled::ER_QUERY_INTERRUPTED, MYF(0));
+      null_value= true;
+
+      return 0;
+    }
+  }
 
   if (boost::indeterminate(result))
     null_value= true;

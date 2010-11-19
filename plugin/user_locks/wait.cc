@@ -52,6 +52,7 @@ int64_t Wait::val_int()
       else
       {
         boost::this_thread::restore_interruption dl(getSession().getThreadInterupt());
+
         try {
           barrier->wait();
         }

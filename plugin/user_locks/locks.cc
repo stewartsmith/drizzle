@@ -40,10 +40,17 @@ bool Locks::lock(drizzled::session_id_t id_arg, const user_locks::Key &arg, int6
       // We own the lock, so we just exit.
       return true;
     }
-    bool success= cond.timed_wait(scope, timeout);
+    try {
+      bool success= cond.timed_wait(scope, timeout);
 
-    if (not success)
-      return false;
+      if (not success)
+        return false;
+    }
+    catch(boost::thread_interrupted const& error)
+    {
+      // Currently nothing is done here.
+      throw error;
+    }
   }
 
   if (iter == lock_map.end())

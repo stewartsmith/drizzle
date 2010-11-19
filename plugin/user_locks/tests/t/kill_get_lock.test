@@ -1,0 +1,22 @@
+# Test creating a barrier with a number
+connect (con1,localhost,root,,);
+connect (con2,localhost,root,,);
+connect (con3,localhost,root,,);
+connect (con4,localhost,root,,);
+connect (con5,localhost,root,,);
+
+# The default connection will own everything.
+connection default;
+set @lock_name= "_name";
+SELECT get_lock(@lock_name);
+SELECT if ((is_used_lock(@lock_name) = CONNECTION_ID()), "YES", "NO");
+
+connection con1;
+set @lock_name= "_name";
+send SELECT get_lock(@lock_name), "con1";
+
+# Since there is no timing mechanism on looks all we can do is kill, and
+# hope it reached it in time.
+connection default;
+SELECT if ((@id:=ID), "YES", "NO") FROM DATA_DICTIONARY.PROCESSLIST WHERE INFO LIKE "%con1%" AND ID != CONNECTION_ID();
+kill QUERY (@id);
