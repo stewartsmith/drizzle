@@ -223,21 +223,20 @@ TableShare::shared_ptr TableShare::getShareCreate(Session *session,
   */
   share->lock();
 
-  bool ret= definition::Cache::singleton().insert(identifier.getKey(), share);
-
-  if (not ret)
-    return TableShare::shared_ptr();
-
   if (share->open_table_def(*session, identifier))
   {
     in_error= share->error;
-    definition::Cache::singleton().erase(identifier.getKey());
 
     return TableShare::shared_ptr();
   }
   share->ref_count++;				// Mark in use
   
   plugin::EventObserver::registerTableEvents(*share);
+
+  bool ret= definition::Cache::singleton().insert(identifier.getKey(), share);
+
+  if (not ret)
+    return TableShare::shared_ptr();
   
   share->unlock();
 
