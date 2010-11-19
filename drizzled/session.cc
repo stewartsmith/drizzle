@@ -482,8 +482,6 @@ bool Session::storeGlobals()
   currentMemRoot().release();
   currentMemRoot().reset(&mem_root);
 
-  setThreadId();
-
   mysys_var=my_thread_var;
 
   /*

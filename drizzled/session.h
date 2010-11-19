@@ -36,6 +36,7 @@
 #include "drizzled/transaction_context.h"
 #include "drizzled/util/storable.h"
 #include "drizzled/my_hash.h"
+#include "drizzled/pthread_globals.h"
 
 #include <netdb.h>
 #include <map>
@@ -545,18 +546,14 @@ public:
   uint32_t dbug_sentry; /**< watch for memory corruption */
 private:
   boost::thread::id boost_thread_id;
+  boost_thread_shared_ptr _thread;
 
   internal::st_my_thread_var *mysys_var;
 public:
 
-  const boost::thread::id &getThreadId() const
+  boost_thread_shared_ptr &getThread()
   {
-    return boost_thread_id;
-  }
-
-  void setThreadId()
-  {
-    boost_thread_id= boost::this_thread::get_id();
+    return _thread;
   }
 
   internal::st_my_thread_var *getThreadVar()

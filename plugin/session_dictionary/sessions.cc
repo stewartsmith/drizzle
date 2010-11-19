@@ -122,7 +122,7 @@ bool Sessions::Generator::populate()
 
     /* THREAD_ID */
     std::stringstream stream;
-    stream <<  tmp->getThreadId();
+    stream <<  tmp->getThread()->get_id();
     push(stream.str());
 
     return true;
