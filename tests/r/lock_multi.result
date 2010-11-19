@@ -2,9 +2,6 @@ drop table if exists t1,t2;
 CREATE DATABASE mysqltest_1;
 FLUSH TABLES WITH READ LOCK;
 DROP DATABASE mysqltest_1;
-Timeout in wait_condition.inc for select count(*) = 1 from data_dictionary.processlist
-where state = "Waiting for release of readlock"
-  and info = "DROP DATABASE mysqltest_1"
 DROP DATABASE mysqltest_1;
 ERROR HY000: Can't execute the query because you have a conflicting read lock
 UNLOCK TABLES;
