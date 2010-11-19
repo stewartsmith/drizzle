@@ -55,7 +55,7 @@ bool Locks::lock(drizzled::session_id_t id_arg, const user_locks::Key &arg, int6
 
   if (iter == lock_map.end())
   {
-    return lock_map.insert(std::make_pair(arg, new lock_st(id_arg))).second;
+    return lock_map.insert(std::make_pair(arg, new Lock(id_arg))).second;
   }
 
   return false;
@@ -64,7 +64,7 @@ bool Locks::lock(drizzled::session_id_t id_arg, const user_locks::Key &arg, int6
 bool Locks::lock(drizzled::session_id_t id_arg, const user_locks::Key &arg)
 {
   boost::unique_lock<boost::mutex> scope(mutex);
-  return lock_map.insert(std::make_pair(arg, new lock_st(id_arg))).second;
+  return lock_map.insert(std::make_pair(arg, new Lock(id_arg))).second;
 }
 
 bool Locks::lock(drizzled::session_id_t id_arg, const user_locks::Keys &arg)
@@ -85,7 +85,7 @@ bool Locks::lock(drizzled::session_id_t id_arg, const user_locks::Keys &arg)
   for (Keys::iterator iter= arg.begin(); iter != arg.end(); iter++)
   {
     //is_locked can fail in cases where we already own the lock.
-    lock_map.insert(std::make_pair(*iter, new lock_st(id_arg)));
+    lock_map.insert(std::make_pair(*iter, new Lock(id_arg)));
   }
 
   return true;

@@ -1,27 +1,39 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Brian Aker
+ * Copyright (c) 2010, Brian Aker
+ * All rights reserved.
  *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name of the <organization> nor the
+ *       names of its contributors may be used to endorse or promote products
+ *       derived from this software without specific prior written permission.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/foreach.hpp>
+
+#include "observer.h"
 
 #ifndef PLUGIN_USER_LOCKS_BARRIER_H
 #define PLUGIN_USER_LOCKS_BARRIER_H
@@ -44,48 +56,6 @@ namespace barriers {
 
 // Barrier starts in a blocking posistion
 class Barrier {
-  struct observer_st {
-    typedef boost::shared_ptr<observer_st> shared_ptr;
-    typedef std::list <shared_ptr> list;
-
-    bool woken;
-    int64_t waiting_for;
-    int64_t generation;
-    boost::mutex _mutex;
-    boost::condition_variable_any cond;
-
-    observer_st(int64_t wait_until_arg, int64_t generation_arg) :
-      woken(false),
-      waiting_for(wait_until_arg),
-      generation(generation_arg)
-    { 
-      _mutex.lock();
-    }
-
-    void sleep()
-    {
-      while (not woken)
-      {
-        cond.wait(_mutex);
-      }
-      _mutex.unlock();
-    }
-
-    void wake()
-    {
-      {
-        boost::mutex::scoped_lock mutex;
-        woken= true;
-      }
-      cond.notify_all();
-    }
-
-
-    ~observer_st()
-    {
-    }
-  };
-
 public:
   typedef boost::shared_ptr<Barrier> shared_ptr;
 
@@ -158,14 +128,14 @@ public:
   // A call to either signal or a release will cause wait_for() to continue
   void wait_until(int64_t wait_until_arg)
   {
-    observer_st::shared_ptr observer;
+    Observer::shared_ptr observer;
     {
       boost::mutex::scoped_lock scopedLock(sleeper_mutex);
 
       if (wait_until_arg <= count())
         return;
 
-      observer.reset(new observer_st(wait_until_arg, generation));
+      observer.reset(new Observer(wait_until_arg));
       observers.push_back(observer);
     }
 
@@ -244,7 +214,7 @@ private:
     checkObservers();
   }
 
-  struct isReady : public std::unary_function<observer_st::list::const_reference, bool>
+  struct isReady : public std::unary_function<Observer::list::const_reference, bool>
   {
     const int64_t count;
 
@@ -254,7 +224,7 @@ private:
 
     result_type operator() (argument_type observer)
     {
-      if (observer->waiting_for <= count or count == 0)
+      if (observer->getLimit() <= count or count == 0)
       {
         observer->wake();
         return true;
@@ -285,7 +255,7 @@ private:
   int64_t current_wait;
   int64_t generation;
 
-  observer_st::list observers;
+  Observer::list observers;
 
   boost::mutex sleeper_mutex;
   boost::condition_variable_any sleep_threshhold;

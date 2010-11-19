@@ -10,6 +10,4 @@ SELECT get_lock(@lock_name), "con1";
 SELECT if ((@id:=ID), "YES", "NO") FROM DATA_DICTIONARY.PROCESSLIST WHERE INFO LIKE "%con1%" AND ID != CONNECTION_ID();
 if ((@id:=ID), "YES", "NO")
 YES
-Warnings:
-Error	1406	Data too long for column 'INFO' at row 0
 kill QUERY (@id);
