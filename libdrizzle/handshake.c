@@ -74,6 +74,8 @@ drizzle_return_t drizzle_handshake_client_read(drizzle_con_st *con)
 drizzle_return_t drizzle_state_handshake_server_read(drizzle_con_st *con)
 {
   uint8_t *ptr;
+  int extra_length;
+  unsigned char* packet_end;
 
   drizzle_log_debug(con->drizzle, "drizzle_state_handshake_server_read");
 
@@ -91,6 +93,7 @@ drizzle_return_t drizzle_state_handshake_server_read(drizzle_con_st *con)
     return DRIZZLE_RETURN_BAD_HANDSHAKE_PACKET;
   }
 
+  packet_end = con->buffer_ptr + con->packet_size;
   con->protocol_version= con->buffer_ptr[0];
   con->buffer_ptr++;
 
@@ -121,7 +124,7 @@ drizzle_return_t drizzle_state_handshake_server_read(drizzle_con_st *con)
     return DRIZZLE_RETURN_BAD_HANDSHAKE_PACKET;
   }
 
-  if (con->packet_size != (46 + (size_t)(ptr - con->buffer_ptr)))
+  if (con->packet_size < (46 + (size_t)(ptr - con->buffer_ptr)))
   {
     drizzle_set_error(con->drizzle, "drizzle_state_handshake_server_read",
                       "bad packet size:%zu:%zu",
@@ -165,6 +168,14 @@ drizzle_return_t drizzle_state_handshake_server_read(drizzle_con_st *con)
 
   memcpy(con->scramble + 8, con->buffer_ptr, 12);
   con->buffer_ptr+= 13;
+
+  /* MySQL 5.5 adds "mysql_native_password" after the server greeting. */
+  extra_length = packet_end - con->buffer_ptr;
+  assert(extra_length >= 0);
+  if (extra_length > DRIZZLE_MAX_SERVER_EXTRA_SIZE - 1)
+    extra_length = DRIZZLE_MAX_SERVER_EXTRA_SIZE - 1;
+  memcpy(con->server_extra, (char *)con->buffer_ptr, extra_length);
+  con->server_extra[extra_length] = 0;
 
   con->buffer_size-= con->packet_size;
   if (con->buffer_size != 0)
