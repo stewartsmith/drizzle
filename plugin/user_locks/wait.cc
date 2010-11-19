@@ -38,7 +38,6 @@ int64_t Wait::val_int()
     if (barrier and barrier->getOwner() == getSession().getSessionId())
     {
       my_error(drizzled::ER_USER_LOCKS_CANT_WAIT_ON_OWN_BARRIER, MYF(0));
-      null_value= false;
 
       return 0;
     }
@@ -52,7 +51,16 @@ int64_t Wait::val_int()
       }
       else
       {
-        barrier->wait();
+        boost::this_thread::restore_interruption dl(getSession().getThreadInterupt());
+        try {
+          barrier->wait();
+        }
+        catch(boost::thread_interrupted const&)
+        {
+          // We need to issue a different sort of error here
+          my_error(drizzled::ER_QUERY_INTERRUPTED, MYF(0));
+          return 0;
+        }
       }
       null_value= false;
 
@@ -61,7 +69,6 @@ int64_t Wait::val_int()
   }
 
   my_error(drizzled::ER_USER_LOCKS_UNKNOWN_BARRIER, MYF(0));
-  null_value= false;
 
   return 0;
 }

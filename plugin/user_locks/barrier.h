@@ -139,9 +139,19 @@ public:
     }
     checkObservers();
 
-    while (my_generation == generation)
+    // If we are interrupted we remove ourself from the list, and check on
+    // the observers.
+    try 
     {
-      sleep_threshhold.wait(sleeper_mutex);
+      while (my_generation == generation)
+      {
+        sleep_threshhold.wait(sleeper_mutex);
+      }
+    }
+    catch(boost::thread_interrupted const& error)
+    {
+      current_wait++;
+      checkObservers();
     }
   }
 
@@ -158,7 +168,20 @@ public:
       observer.reset(new observer_st(wait_until_arg, generation));
       observers.push_back(observer);
     }
-    observer->sleep();
+
+    try {
+      observer->sleep();
+    }
+    catch(boost::thread_interrupted const& error)
+    {
+      boost::mutex::scoped_lock scopedLock(sleeper_mutex);
+      // Someone has interrupted us, we now try to remove ourself from the
+      // observer chain ourself
+
+      observers.remove(observer);
+      
+      throw error;
+    }
   }
 
   void wait(int64_t generation_arg)

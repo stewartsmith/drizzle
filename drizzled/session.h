@@ -547,6 +547,7 @@ public:
 private:
   boost::thread::id boost_thread_id;
   boost_thread_shared_ptr _thread;
+  boost::this_thread::disable_interruption *interrupt;
 
   internal::st_my_thread_var *mysys_var;
 public:
@@ -554,6 +555,17 @@ public:
   boost_thread_shared_ptr &getThread()
   {
     return _thread;
+  }
+
+  void pushInterrupt(boost::this_thread::disable_interruption *interrupt_arg)
+  {
+    interrupt= interrupt_arg;
+  }
+
+  boost::this_thread::disable_interruption &getThreadInterupt()
+  {
+    assert(interrupt);
+    return *interrupt;
   }
 
   internal::st_my_thread_var *getThreadVar()

@@ -1,0 +1,48 @@
+set @count_barrier= "count_barrier";
+set @barrier_limit= 6;
+SELECT create_barrier(@count_barrier, @barrier_limit);
+create_barrier(@count_barrier, @barrier_limit)
+1
+SELECT if ((SESSION_ID = CONNECTION_ID()), "YES", "NO"), GENERATION, if ((WAITER_LIMIT = @barrier_limit), "YES", "NO") from DATA_DICTIONARY.USER_BARRIERS WHERE USER_BARRIER_NAME=@count_barrier;
+if ((SESSION_ID = CONNECTION_ID()), "YES", "NO")	GENERATION	if ((WAITER_LIMIT = @barrier_limit), "YES", "NO")
+YES	0	YES
+set @count_barrier= "count_barrier";
+SELECT wait(@count_barrier), "con1";
+set @count_barrier= "count_barrier";
+SELECT wait(@count_barrier), "con2";
+set @count_barrier= "count_barrier";
+SELECT wait(@count_barrier), "con3";
+set @count_barrier= "count_barrier";
+SELECT wait(@count_barrier), "con4";
+set @count_barrier= "count_barrier";
+SELECT WAIT_UNTIL(@count_barrier, 4);
+WAIT_UNTIL(@count_barrier, 4)
+1
+SELECT USER,INFO FROM DATA_DICTIONARY.PROCESSLIST ORDER BY ID;
+USER	INFO
+root	
+root	SELECT wait(@count_barrier), "con1"
+root	SELECT wait(@count_barrier), "con2"
+root	SELECT wait(@count_barrier), "con3"
+root	SELECT wait(@count_barrier), "con4"
+root	SELECT USER,INFO FROM DATA_DICTIONARY.PROCESSLIST ORDER BY ID
+SELECT if ((@id:=ID), "YES", "NO") FROM DATA_DICTIONARY.PROCESSLIST WHERE INFO LIKE "%con3%" AND ID != CONNECTION_ID();
+if ((@id:=ID), "YES", "NO")
+YES
+Warnings:
+Error	1406	Data too long for column 'INFO' at row 5
+kill QUERY (@id);
+SELECT USER,INFO FROM DATA_DICTIONARY.PROCESSLIST ORDER BY ID;
+USER	INFO
+root	
+root	SELECT wait(@count_barrier), "con1"
+root	SELECT wait(@count_barrier), "con2"
+root	
+root	SELECT wait(@count_barrier), "con4"
+root	SELECT USER,INFO FROM DATA_DICTIONARY.PROCESSLIST ORDER BY ID
+SELECT * FROM DATA_DICTIONARY.USER_BARRIERS;
+USER_BARRIER_NAME	SESSION_ID	USER_NAME	WAITER_LIMIT	GENERATION	WAITERS	OBSERVERS
+count_barrier	1	root	6	0	3	0
+SELECT signal(@count_barrier);
+signal(@count_barrier)
+1
