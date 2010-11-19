@@ -112,6 +112,7 @@ void TableShare::release(TableShare *share)
   {
     to_be_deleted= true;
   }
+  share->unlock();
 
   if (to_be_deleted)
   {
@@ -120,7 +121,6 @@ void TableShare::release(TableShare *share)
     definition::Cache::singleton().erase(identifier.getKey());
     return;
   }
-  share->unlock();
 }
 
 void TableShare::release(TableShare::shared_ptr &share)
@@ -133,6 +133,7 @@ void TableShare::release(TableShare::shared_ptr &share)
   {
     to_be_deleted= true;
   }
+  share->unlock();
 
   if (to_be_deleted)
   {
@@ -141,7 +142,6 @@ void TableShare::release(TableShare::shared_ptr &share)
     definition::Cache::singleton().erase(identifier.getKey());
     return;
   }
-  share->unlock();
 }
 
 void TableShare::release(TableIdentifier &identifier)
@@ -152,7 +152,6 @@ void TableShare::release(TableIdentifier &identifier)
     share->version= 0;                          // Mark for delete
     if (share->ref_count == 0)
     {
-      share->lock();
       definition::Cache::singleton().erase(identifier.getKey());
     }
   }
@@ -217,12 +216,6 @@ TableShare::shared_ptr TableShare::getShareCreate(Session *session,
 
   share.reset(new TableShare(message::Table::STANDARD, identifier));
   
-  /*
-    Lock mutex to be able to read table definition from file without
-    conflicts
-  */
-  share->lock();
-
   if (share->open_table_def(*session, identifier))
   {
     in_error= share->error;
@@ -237,8 +230,6 @@ TableShare::shared_ptr TableShare::getShareCreate(Session *session,
 
   if (not ret)
     return TableShare::shared_ptr();
-  
-  share->unlock();
 
   return share;
 }
@@ -703,16 +694,6 @@ void TableShare::init(const char *new_table_name,
 TableShare::~TableShare() 
 {
   assert(ref_count == 0);
-
-  /*
-    If someone is waiting for this to be deleted, inform it about this.
-    Don't do a delete until we know that no one is refering to this anymore.
-  */
-  if (tmp_table == message::Table::STANDARD)
-  {
-    /* No thread refers to this anymore */
-    mutex.unlock();
-  }
 
   storage_engine= NULL;
 

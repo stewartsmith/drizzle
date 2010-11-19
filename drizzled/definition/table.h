@@ -501,11 +501,6 @@ public:
     unlock();
   }
 
-  uint32_t decrementTableCount()
-  {
-    return --ref_count;
-  }
-
   uint32_t null_bytes;
   uint32_t last_null_bit_pos;
   uint32_t fields;				/* Number of fields */
