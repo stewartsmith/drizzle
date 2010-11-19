@@ -1046,62 +1046,6 @@ static void check_limits_transaction_message_threshold(size_t in_transaction_mes
   global_system_variables.transaction_message_threshold= in_transaction_message_threshold;
 }
 
-static pair<string, string> parse_size_suffixes(string s)
-{
-  size_t equal_pos= s.find("=");
-  if (equal_pos != string::npos)
-  {
-    string arg_key(s.substr(0, equal_pos));
-    string arg_val(s.substr(equal_pos+1));
-
-    try
-    {
-      size_t size_suffix_pos= arg_val.find_last_of("kmgKMG");
-      if (size_suffix_pos == arg_val.size()-1)
-      {
-        char suffix= arg_val[size_suffix_pos];
-        string size_val(arg_val.substr(0, size_suffix_pos));
-
-        uint64_t base_size= boost::lexical_cast<uint64_t>(size_val);
-        uint64_t new_size= 0;
-
-        switch (suffix)
-        {
-        case 'K':
-        case 'k':
-          new_size= base_size * 1024;
-          break;
-        case 'M':
-        case 'm':
-          new_size= base_size * 1024 * 1024;
-          break;
-        case 'G':
-        case 'g':
-          new_size= base_size * 1024 * 1024 * 1024;
-          break;
-        }
-        return make_pair(arg_key,
-                         boost::lexical_cast<string>(new_size));
-      }
-    }
-    catch (...)
-    {
-      /* Screw it, let the normal parser take over */
-    }
-  }
-
-  return make_pair(string(""), string(""));
-}
-
-static pair<string, string> parse_size_arg(string s)
-{
-  if (s.find("--") == 0)
-  {
-    return parse_size_suffixes(s.substr(2));
-  }
-  return make_pair(string(""), string(""));
-}
-
 static void process_defaults_files()
 {
   for (vector<string>::iterator iter= defaults_file_list.begin();
@@ -1502,7 +1446,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   {
     po::parsed_options final_parsed=
       po::command_line_parser(unknown_options).style(style).
-      options(full_options).extra_parser(parse_size_arg).run();
+      options(full_options).extra_parser(dpo::parse_size_arg).run();
 
     final_unknown_options=
       po::collect_unrecognized(final_parsed.options, po::include_positional);
@@ -2408,7 +2352,7 @@ static void fix_paths()
     pid_file_path= getDataHome();
     pid_file_path /= pid_file;
   }
-  pid_file= pid_file_path;
+  pid_file= fs::system_complete(pid_file_path);
 
   if (not opt_help)
   {

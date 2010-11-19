@@ -61,6 +61,7 @@
 #include <cassert>
 #include <stdarg.h>
 #include <math.h>
+#include <memory>
 #include "client/linebuffer.h"
 #include <signal.h>
 #include <sys/ioctl.h>
@@ -158,6 +159,7 @@ typedef Function drizzle_compentry_func_t;
 #define vidattr(A) {}      // Can't get this to work
 #endif
 #include <boost/program_options.hpp>
+#include <boost/scoped_ptr.hpp>
 #include "drizzled/program_options/config_file.h"
 
 using namespace std;
@@ -1362,13 +1364,13 @@ try
   N_("Append everything into outfile. See interactive help (\\h) also. Does not work in batch mode. Disable with --disable-tee. This option is disabled by default."))
   ("disable-tee", po::value<bool>()->default_value(false)->zero_tokens(), 
   N_("Disable outfile. See interactive help (\\h) also."))
-  ("connect_timeout", po::value<uint32_t>(&opt_connect_timeout)->default_value(0)->notifier(&check_timeout_value),
+  ("connect-timeout", po::value<uint32_t>(&opt_connect_timeout)->default_value(0)->notifier(&check_timeout_value),
   N_("Number of seconds before connection timeout."))
-  ("max_input_line", po::value<uint32_t>(&opt_max_input_line)->default_value(16*1024L*1024L)->notifier(&check_max_input_line),
+  ("max-input-line", po::value<uint32_t>(&opt_max_input_line)->default_value(16*1024L*1024L)->notifier(&check_max_input_line),
   N_("Max length of input line"))
-  ("select_limit", po::value<uint32_t>(&select_limit)->default_value(1000L),
+  ("select-limit", po::value<uint32_t>(&select_limit)->default_value(1000L),
   N_("Automatic limit for SELECT when using --safe-updates"))
-  ("max_join_size", po::value<uint32_t>(&max_join_size)->default_value(1000000L),
+  ("max-join-size", po::value<uint32_t>(&max_join_size)->default_value(1000000L),
   N_("Automatic limit for rows in a join when using --safe-updates"))
   ;
 
@@ -1396,7 +1398,15 @@ try
   system_config_dir_client.append("/drizzle/client.cnf");
 
   std::string user_config_dir((getenv("XDG_CONFIG_HOME")? getenv("XDG_CONFIG_HOME"):"~/.config"));
-  
+ 
+  if (user_config_dir.compare(0, 2, "~/") == 0)
+  {
+    char *homedir;
+    homedir= getenv("HOME");
+    if (homedir != NULL)
+      user_config_dir.replace(0, 1, homedir);
+  }
+ 
   po::variables_map vm;
 
   po::positional_options_description p;
@@ -1818,7 +1828,7 @@ extern "C"
 void handle_sigint(int sig)
 {
   char kill_buffer[40];
-  drizzle_con_st kill_drizzle;
+  boost::scoped_ptr<drizzle_con_st> kill_drizzle(new drizzle_con_st);
   drizzle_result_st res;
   drizzle_return_t ret;
 
@@ -1827,7 +1837,7 @@ void handle_sigint(int sig)
     goto err;
   }
 
-  if (drizzle_con_add_tcp(&drizzle, &kill_drizzle, current_host.c_str(),
+  if (drizzle_con_add_tcp(&drizzle, kill_drizzle.get(), current_host.c_str(),
     opt_drizzle_port, current_user.c_str(), opt_password.c_str(), NULL,
     use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL) == NULL)
   {
@@ -1838,10 +1848,10 @@ void handle_sigint(int sig)
   sprintf(kill_buffer, "KILL /*!50000 QUERY */ %u",
           drizzle_con_thread_id(&con));
 
-  if (drizzle_query_str(&kill_drizzle, &res, kill_buffer, &ret) != NULL)
+  if (drizzle_query_str(kill_drizzle.get(), &res, kill_buffer, &ret) != NULL)
     drizzle_result_free(&res);
 
-  drizzle_con_free(&kill_drizzle);
+  drizzle_con_free(kill_drizzle.get());
   tee_fprintf(stdout, _("Query aborted by Ctrl+C\n"));
 
   interrupted_query= 1;

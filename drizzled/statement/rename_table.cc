@@ -108,9 +108,9 @@ bool statement::RenameTable::renameTables(TableList *table_list)
   LOCK_open.unlock();
 
   /* Lets hope this doesn't fail as the result will be messy */
-  if (! error)
+  if (not error)
   {
-    write_bin_log(session, session->query.c_str());
+    write_bin_log(session, *session->getQueryString());
     session->my_ok();
   }
 

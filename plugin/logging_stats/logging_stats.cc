@@ -140,13 +140,14 @@ void LoggingStats::updateCurrentScoreboard(ScoreboardSlot *scoreboard_slot,
 bool LoggingStats::resetGlobalScoreboard()
 {
   cumulative_stats->getGlobalStatusVars()->reset();
+  cumulative_stats->getGlobalStats()->getUserCommands()->reset();
 
-  vector<vector<ScoreboardSlot* >* > *vector_of_scoreboard_vectors=
+  ScoreBoardVectors *vector_of_scoreboard_vectors=
     current_scoreboard->getVectorOfScoreboardVectors();
 
-  vector<vector<ScoreboardSlot* >* >::iterator v_of_scoreboard_v_begin_it= vector_of_scoreboard_vectors->begin();
+  ScoreBoardVectors::iterator v_of_scoreboard_v_begin_it= vector_of_scoreboard_vectors->begin();
 
-  vector<vector<ScoreboardSlot* >* >::iterator v_of_scoreboard_v_end_it= vector_of_scoreboard_vectors->end();
+  ScoreBoardVectors::iterator v_of_scoreboard_v_end_it= vector_of_scoreboard_vectors->end();
 
   for (; v_of_scoreboard_v_begin_it != v_of_scoreboard_v_end_it; ++v_of_scoreboard_v_begin_it)
   {
@@ -157,10 +158,8 @@ bool LoggingStats::resetGlobalScoreboard()
     for (; scoreboard_vector_it != scoreboard_vector_end; ++scoreboard_vector_it)
     {
       ScoreboardSlot *scoreboard_slot= *scoreboard_vector_it;
-      if (scoreboard_slot->isInUse())
-      {
-        scoreboard_slot->getStatusVars()->reset();
-      }
+      scoreboard_slot->getStatusVars()->reset();
+      scoreboard_slot->getUserCommands()->reset();
     }
   }
 

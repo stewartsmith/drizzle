@@ -116,8 +116,7 @@ bool ProcesslistTool::Generator::populate()
     val ? push(val) : push();
 
     /* INFO */
-    size_t length= strlen(tmp->process_list_info);
-    length ?  push(tmp->process_list_info, length) : push();
+    push(*getSession().getQueryString());
 
     return true;
   }

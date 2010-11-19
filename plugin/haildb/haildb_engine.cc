@@ -1208,7 +1208,7 @@ int HailDBEngine::doCreateTable(Session &session,
 
   if (table_message.type() == message::Table::TEMPORARY)
   {
-    session.storeTableMessage(identifier, table_message);
+    session.getMessageCache().storeTableMessage(identifier, table_message);
     haildb_err= DB_SUCCESS;
   }
   else
@@ -1300,7 +1300,7 @@ int HailDBEngine::doDropTable(Session &session,
 
   if (identifier.getType() == message::Table::TEMPORARY)
   {
-      session.removeTableMessage(identifier);
+      session.getMessageCache().removeTableMessage(identifier);
       delete_table_message_from_haildb(haildb_schema_transaction,
                                        haildb_table_name.c_str());
   }
@@ -1458,7 +1458,7 @@ int HailDBEngine::doRenameTable(drizzled::Session &session,
   if (to.getType() == message::Table::TEMPORARY
       && from.getType() == message::Table::TEMPORARY)
   {
-    session.renameTableMessage(from, to);
+    session.getMessageCache().renameTableMessage(from, to);
     return 0;
   }
 
@@ -1729,7 +1729,7 @@ int HailDBEngine::doGetTableDefinition(Session &session,
   string haildb_table_name;
 
   /* Check temporary tables!? */
-  if (session.getTableMessage(identifier, table))
+  if (session.getMessageCache().getTableMessage(identifier, table))
     return EEXIST;
 
   TableIdentifier_to_haildb_name(identifier, &haildb_table_name);

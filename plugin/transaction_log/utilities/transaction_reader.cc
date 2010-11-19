@@ -24,22 +24,17 @@
 #include "config.h"
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
 #include <limits.h>
-#include <cerrno>
 #include <iostream>
 #include <string>
 #include <algorithm>
 #include <vector>
 #include <unistd.h>
-#include "drizzled/definitions.h"
 #include "drizzled/gettext.h"
-#include "drizzled/replication_services.h"
-#include "drizzled/algorithm/crc32.h"
 #include "drizzled/message/transaction.pb.h"
 #include "drizzled/message/statement_transform.h"
-#include "drizzled/message/transaction_manager.h"
-#include "drizzled/util/convert.h"
+#include "transaction_manager.h"
+#include "transaction_file_reader.h"
 
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
@@ -173,6 +168,116 @@ static void printEvent(const message::Event &event)
   }
 }
 
+static void printTransactionSummary(const message::Transaction &transaction,
+                                    bool ignore_events)
+{
+  static uint64_t last_trx_id= 0;
+  const message::TransactionContext trx= transaction.transaction_context();
+
+  if (last_trx_id != trx.transaction_id())
+    cout << "\ntransaction_id = " << trx.transaction_id() << endl;
+
+  last_trx_id= trx.transaction_id();
+
+  if (transaction.has_event() && (not ignore_events))
+  {
+    cout << "\t";
+    printEvent(transaction.event());
+  }
+
+  size_t num_statements= transaction.statement_size();
+  size_t x;
+
+  for (x= 0; x < num_statements; ++x)
+  {
+    const message::Statement &statement= transaction.statement(x);
+
+    switch (statement.type())
+    {
+      case (message::Statement::ROLLBACK):
+      {
+        cout << "\tROLLBACK\n";
+        break;
+      }
+      case (message::Statement::INSERT):
+      {
+        const message::InsertHeader &header= statement.insert_header();
+        const message::TableMetadata &meta= header.table_metadata();
+        cout << "\tINSERT INTO `" << meta.table_name() << "`\n";
+        break;
+      }
+      case (message::Statement::DELETE):
+      {
+        const message::DeleteHeader &header= statement.delete_header();
+        const message::TableMetadata &meta= header.table_metadata();
+        cout << "\tDELETE FROM `" << meta.table_name() << "`\n";
+        break;
+      }
+      case (message::Statement::UPDATE):
+      {
+        const message::UpdateHeader &header= statement.update_header();
+        const message::TableMetadata &meta= header.table_metadata();
+        cout << "\tUPDATE `" << meta.table_name() << "`\n";
+        break;
+      }
+      case (message::Statement::TRUNCATE_TABLE):
+      {
+        const message::TableMetadata &meta= statement.truncate_table_statement().table_metadata();
+        cout << "\tTRUNCATE TABLE `" << meta.table_name() << "`\n";
+        break;
+      }
+      case (message::Statement::CREATE_SCHEMA):
+      {
+        const message::Schema &schema= statement.create_schema_statement().schema();
+        cout << "\tCREATE SCHEMA `" << schema.name() << "`\n";
+        break;
+      }
+      case (message::Statement::ALTER_SCHEMA):
+      {
+        const message::Schema &schema= statement.alter_schema_statement().before();
+        cout << "\tALTER SCHEMA `" << schema.name() << "`\n";
+        break;
+      }
+      case (message::Statement::DROP_SCHEMA):
+      {
+        cout << "\tDROP SCHEMA `" << statement.drop_schema_statement().schema_name() << "`\n";
+        break;
+      }
+      case (message::Statement::CREATE_TABLE):
+      {
+        const message::Table &table= statement.create_table_statement().table();
+        cout << "\tCREATE TABLE `" << table.name() << "`\n";
+        break;
+      }
+      case (message::Statement::ALTER_TABLE):
+      {
+        const message::Table &table= statement.alter_table_statement().before();
+        cout << "\tALTER TABLE `" << table.name() << "`\n";
+        break;
+      }
+      case (message::Statement::DROP_TABLE):
+      {
+        const message::TableMetadata &meta= statement.drop_table_statement().table_metadata();
+        cout << "\tDROP TABLE `" << meta.table_name() << "`\n";
+        break;
+      }
+      case (message::Statement::SET_VARIABLE):
+      {
+        const message::FieldMetadata &meta= statement.set_variable_statement().variable_metadata();
+        cout << "\tSET VARIABLE " << meta.name() << "\n";
+        break;
+      }
+      case (message::Statement::RAW_SQL):
+      {
+        cout << "\tRAW SQL\n";
+        break;
+      }
+      default:
+        cout << "\tUnhandled Statement Type\n";
+    }
+  }
+}
+
 static void printTransaction(const message::Transaction &transaction,
                              bool ignore_events,
                              bool print_as_raw)
@@ -267,7 +372,8 @@ int main(int argc, char* argv[])
       N_("Start reading from the given file position"))
     ("transaction-id",
       po::value<uint64_t>(&opt_transaction_id),
-      N_("Only output for the given transaction ID"));
+      N_("Only output for the given transaction ID"))
+    ("summarize", N_("Summarize message contents"));
 
   /*
    * We allow one positional argument that will be transaction file name
@@ -303,126 +409,32 @@ int main(int argc, char* argv[])
     return -1;
   }
 
+  if (vm.count("summarize") && (vm.count("raw") || vm.count("transaction-id")))
+  {
+    cerr << _("Cannot use --summarize with either --raw or --transaction-id\n");
+    return -1;
+  }
+
   bool do_checksum= vm.count("checksum") ? true : false;
   bool ignore_events= vm.count("ignore-events") ? true : false;
   bool print_as_raw= vm.count("raw") ? true : false;
 
   string filename= vm["input-file"].as< vector<string> >()[0];
-  int file= open(filename.c_str(), O_RDONLY);
-  if (file == -1)
+
+  TransactionFileReader fileReader;
+
+  if (not fileReader.openFile(filename, opt_start_pos))
   {
-    cerr << _("Cannot open file: ") << filename << endl;
+    cerr << fileReader.getErrorString() << endl;
     return -1;
   }
 
   message::Transaction transaction;
-  message::TransactionManager trx_mgr;
-
-  protobuf::io::ZeroCopyInputStream *raw_input= new protobuf::io::FileInputStream(file);
-
-  /* Skip ahead to user supplied position */
-  if (opt_start_pos)
-  {
-    if (not raw_input->Skip(opt_start_pos))
-    {
-      cerr << _("Could not skip to position ") << opt_start_pos
-           << _(" in file ") << filename << endl;
-      exit(-1);
-    }
-  }
-
-  char *buffer= NULL;
-  char *temp_buffer= NULL;
-  uint32_t length= 0;
-  uint32_t previous_length= 0;
+  TransactionManager trx_mgr;
   uint32_t checksum= 0;
-  bool result= true;
-  uint32_t message_type= 0;
 
-  while (result == true)
+  while (fileReader.getNextTransaction(transaction, &checksum))
   {
-   /*
-     * Odd thing to note about using CodedInputStream: This class wasn't
-     * intended to read large amounts of GPB messages. It has an upper
-     * limit on the number of bytes it will read (see Protobuf docs for
-     * this class for more info). A warning will be produced as you
-     * get close to this limit. Since this is a pretty lightweight class,
-     * we should be able to simply create a new one for each message we
-     * want to read.
-     */
-    protobuf::io::CodedInputStream coded_input(raw_input);
-
-    /* Read in the type and length of the command */
-    if (not coded_input.ReadLittleEndian32(&message_type) ||
-        not coded_input.ReadLittleEndian32(&length))
-    {
-      break;  /* EOF */
-    }
-
-    if (message_type != ReplicationServices::TRANSACTION)
-    {
-      cerr << _("Found a non-transaction message in log.  Currently, not supported.\n");
-      exit(-1);
-    }
-
-    if (length > INT_MAX)
-    {
-      cerr << _("Attempted to read record bigger than INT_MAX\n");
-      exit(-1);
-    }
-
-    if (buffer == NULL)
-    {
-      /*
-       * First time around...just malloc the length.  This block gets rid
-       * of a GCC warning about uninitialized temp_buffer.
-       */
-      temp_buffer= (char *) malloc(static_cast<size_t>(length));
-    }
-    /* No need to allocate if we have a buffer big enough... */
-    else if (length > previous_length)
-    {
-      temp_buffer= (char *) realloc(buffer, static_cast<size_t>(length));
-    }
-
-    if (temp_buffer == NULL)
-    {
-      cerr << _("Memory allocation failure trying to allocate ") << length << _(" bytes\n");
-      break;
-    }
-    else
-      buffer= temp_buffer;
-
-    /* Read the Command */
-    result= coded_input.ReadRaw(buffer, (int) length);
-    if (result == false)
-    {
-      char errmsg[STRERROR_MAX];
-      strerror_r(errno, errmsg, sizeof(errmsg));
-      cerr << _("Could not read transaction message.\n");
-      cerr << _("GPB ERROR: ") << errmsg << endl;;
-      string hexdump;
-      hexdump.reserve(length * 4);
-      bytesToHexdumpFormat(hexdump, reinterpret_cast<const unsigned char *>(buffer), length);
-      cerr << _("HEXDUMP:\n\n") << hexdump << endl;
-      break;
-    }
-
-    result= transaction.ParseFromArray(buffer, static_cast<int32_t>(length));
-    if (result == false)
-    {
-      cerr << _("Unable to parse command. Got error: ")
-           << transaction.InitializationErrorString() << endl;
-      if (buffer != NULL)
-      {
-        string hexdump;
-        hexdump.reserve(length * 4);
-        bytesToHexdumpFormat(hexdump, reinterpret_cast<const unsigned char *>(buffer), length);
-        cerr <<  _("HEXDUMP:\n\n") << hexdump << endl;
-      }
-      break;
-    }
-
     const message::TransactionContext trx= transaction.transaction_context();
     uint64_t transaction_id= trx.transaction_id();
 
@@ -433,16 +445,9 @@ int main(int argc, char* argv[])
     if (vm.count("transaction-id"))
     {
       if (opt_transaction_id == transaction_id)
-      {
         printTransaction(transaction, ignore_events, print_as_raw);
-      }
       else
-      {
-        /* Need to get the checksum bytes out of stream */
-        coded_input.ReadLittleEndian32(&checksum);
-        previous_length = length;
         continue;
-      }
     }
 
     /*
@@ -471,7 +476,10 @@ int main(int argc, char* argv[])
           {
             message::Transaction new_trx;
             trx_mgr.getTransactionMessage(new_trx, transaction_id, idx);
-            printTransaction(new_trx, ignore_events, print_as_raw);
+            if (vm.count("summarize"))
+              printTransactionSummary(new_trx, ignore_events);
+            else
+              printTransaction(new_trx, ignore_events, print_as_raw);
             idx++;
           }
 
@@ -480,34 +488,36 @@ int main(int argc, char* argv[])
         }
         else
         {
-          printTransaction(transaction, ignore_events, print_as_raw);
+          if (vm.count("summarize"))
+            printTransactionSummary(transaction, ignore_events);
+          else
+            printTransaction(transaction, ignore_events, print_as_raw);
         }
       }
     } /* end ! vm.count("transaction-id") */
 
-    /* Skip 4 byte checksum */
-    coded_input.ReadLittleEndian32(&checksum);
-
     if (do_checksum)
     {
-      if (checksum != drizzled::algorithm::crc32(buffer, static_cast<size_t>(length)))
+      uint32_t calculated= fileReader.checksumLastReadTransaction();
+      if (checksum != calculated)
       {
         cerr << _("Checksum failed. Wanted ")
              << checksum
              << _(" got ")
-             << drizzled::algorithm::crc32(buffer, static_cast<size_t>(length))
+             << calculated
              << endl;
       }
     }
 
-    previous_length= length;
   } /* end while */
 
-  if (buffer)
-    free(buffer);
+  string error= fileReader.getErrorString();
 
-  delete raw_input;
+  if (error != "EOF")
+  {
+    cerr << error << endl;
+    return 1;
+  }
 
-  return (result == true ? 0 : 1);
+  return 0;
 }
-
