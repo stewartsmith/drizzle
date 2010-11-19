@@ -116,7 +116,7 @@ bool Locks::isFree(const user_locks::Key &arg)
 
 void Locks::Copy(LockMap &lock_map_arg)
 {
-  //@todo add lock(?)
+  boost::unique_lock<boost::mutex> scope(mutex);
   lock_map_arg= lock_map;
 }
 
