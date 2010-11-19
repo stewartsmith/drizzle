@@ -1,7 +1,7 @@
 use data_dictionary;
 SELECT count(*) FROM columns;
 count(*)
-534
+535
 SELECT count(*) FROM indexes;
 count(*)
 0
