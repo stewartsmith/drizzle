@@ -206,6 +206,7 @@ struct drizzle_system_variables
   uint64_t preload_buff_size;
   uint32_t read_buff_size;
   uint32_t read_rnd_buff_size;
+  bool replicate_query;
   size_t sortbuff_size;
   uint32_t thread_handling;
   uint32_t tx_isolation;
