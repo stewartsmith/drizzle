@@ -18,57 +18,45 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_GENERATOR_TABLE_H
-#define DRIZZLED_GENERATOR_TABLE_H
+#ifndef DRIZZLED_GENERATOR_TABLE_DEFINITION_CACHE_H
+#define DRIZZLED_GENERATOR_TABLE_DEFINITION_CACHE_H
 
-#include "drizzled/session.h"
-#include "drizzled/plugin/storage_engine.h"
+#include "drizzled/definition/cache.h"
 
 namespace drizzled {
 namespace generator {
 
-class Table
+class TableDefinitionCache
 {
-  Session &session;
-  message::table::shared_ptr table;
-
-  TableIdentifiers table_names;
-  TableIdentifiers::const_iterator table_iterator;
+  drizzled::TableShare::vector local_vector;
+  drizzled::TableShare::vector::iterator iter;
 
 public:
 
-  Table(Session &arg, const SchemaIdentifier &schema_identifier);
-
-  operator const drizzled::message::table::shared_ptr()
+  TableDefinitionCache()
   {
-    while (table_iterator != table_names.end())
-    {
-      table->Clear();
-      bool is_table_parsed= plugin::StorageEngine::getTableDefinition(session, *table_iterator, table);
-      table_iterator++;
-
-      if (is_table_parsed)
-        return table;
-    }
-
-    return message::table::shared_ptr();
+    definition::Cache::singleton().CopyFrom(local_vector);
+    iter= local_vector.begin();
   }
 
-  operator const drizzled::TableIdentifier*()
+  ~TableDefinitionCache()
   {
-    while (table_iterator != table_names.end())
-    {
-      const drizzled::TableIdentifier *_ptr= &(*table_iterator);
-      table_iterator++;
+  }
 
-      return _ptr;
+  operator drizzled::TableShare::shared_ptr()
+  {
+    while (iter != local_vector.end())
+    {
+      drizzled::TableShare::shared_ptr ret(*iter);
+      iter++;
+      return ret;
     }
 
-    return NULL;
+    return drizzled::TableShare::shared_ptr();
   }
 };
 
 } /* namespace generator */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_GENERATOR_TABLE_H */
+#endif /* DRIZZLED_GENERATOR_TABLE_DEFINITION_CACHE_H */

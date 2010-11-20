@@ -68,7 +68,7 @@ TablesTool::Generator::Generator(Field **arg) :
 
 bool TablesTool::Generator::nextTable()
 {
-  drizzled::message::TablePtr table_ptr;
+  drizzled::message::table::shared_ptr table_ptr;
   while ((table_ptr= all_tables_generator))
   {
     table_message.CopyFrom(*table_ptr);

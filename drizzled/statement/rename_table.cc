@@ -152,7 +152,7 @@ bool statement::RenameTable::rename(TableList *ren_table,
   }
 
   plugin::StorageEngine *engine= NULL;
-  message::TablePtr table_proto;
+  message::table::shared_ptr table_proto;
 
   TableIdentifier old_identifier(ren_table->getSchemaName(), old_alias, message::Table::STANDARD);
 

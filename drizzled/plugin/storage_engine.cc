@@ -370,7 +370,7 @@ bool plugin::StorageEngine::doDoesTableExist(Session&, const drizzled::TableIden
 */
 int StorageEngine::getTableDefinition(Session& session,
                                       const TableIdentifier &identifier,
-                                      message::TablePtr &table_message,
+                                      message::table::shared_ptr &table_message,
                                       bool include_temporary_tables)
 {
   int err= ENOENT;
@@ -385,7 +385,7 @@ int StorageEngine::getTableDefinition(Session& session,
     }
   }
 
-  drizzled::message::TablePtr table_ptr;
+  drizzled::message::table::shared_ptr table_ptr;
   if ((table_ptr= drizzled::message::Cache::singleton().find(identifier)))
   {
     table_message= table_ptr;
@@ -445,7 +445,7 @@ int StorageEngine::dropTable(Session& session,
 {
   int error= 0;
   int error_proto;
-  message::TablePtr src_proto;
+  message::table::shared_ptr src_proto;
   StorageEngine *engine;
 
   error_proto= StorageEngine::getTableDefinition(session, identifier, src_proto);
