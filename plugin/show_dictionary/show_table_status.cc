@@ -44,7 +44,8 @@ ShowTableStatus::ShowTableStatus() :
 
 ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
   show_dictionary::Show::Generator(arg),
-  is_primed(false)
+  is_primed(false),
+  scopedLock(table::Cache::singleton().mutex())
 {
   statement::Show *select= static_cast<statement::Show *>(getSession().lex->statement);
 
@@ -57,8 +58,6 @@ ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
 
   if (not schema_predicate.empty())
   {
-    table::Cache::singleton().mutex().lock(); /* Optionally lock for remove tables from open_cahe if not in use */
-
     table::CacheMap &open_cache(table::getCache());
 
     for (table::CacheMap::const_iterator iter= open_cache.begin();
@@ -81,8 +80,6 @@ ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
 
 ShowTableStatus::Generator::~Generator()
 {
-  if (not schema_predicate.empty())
-    table::Cache::singleton().mutex().unlock(); /* Optionally lock for remove tables from open_cahe if not in use */
 }
 
 bool ShowTableStatus::Generator::nextCore()

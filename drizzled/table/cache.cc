@@ -138,7 +138,7 @@ and afterwards delete those marked unused.
 
 void Cache::removeSchema(const SchemaIdentifier &schema_identifier)
 {
-  //safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle());
+  boost::mutex::scoped_lock scopedLock(_mutex);
 
   for (table::CacheMap::const_iterator iter= table::getCache().begin();
        iter != table::getCache().end();

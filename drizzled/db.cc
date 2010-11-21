@@ -271,9 +271,8 @@ bool mysql_rm_db(Session *session, SchemaIdentifier &schema_identifier, const bo
     }
     else
     {
-      table::Cache::singleton().mutex().lock(); /* After deleting database, remove all cache entries related to schema */
+      /* After deleting database, remove all cache entries related to schema */
       table::Cache::singleton().removeSchema(schema_identifier);
-      table::Cache::singleton().mutex().unlock();
 
 
       error= -1;

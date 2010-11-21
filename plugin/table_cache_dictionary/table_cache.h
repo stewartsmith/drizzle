@@ -34,6 +34,7 @@ public:
     drizzled::Table *table;
     std::vector<drizzled::Table *> table_list;
     std::vector<drizzled::Table *>::iterator table_list_iterator;
+    boost::mutex::scoped_lock scopedLock;
 
     void fill();
 
