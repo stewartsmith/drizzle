@@ -1608,7 +1608,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 
       if (not identifier.isTmp())
       {
-        LOCK_open.lock(); /* CREATE TABLE... has found that the table already exists for insert and is adapting to use it */
+        table::Cache::singleton().mutex().lock(); /* CREATE TABLE... has found that the table already exists for insert and is adapting to use it */
 
         if (create_table->table)
         {
@@ -1628,7 +1628,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
           quick_rm_table(*session, identifier);
         }
 
-        LOCK_open.unlock();
+        table::Cache::singleton().mutex().unlock();
       }
       else
       {

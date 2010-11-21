@@ -57,7 +57,7 @@ ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
 
   if (not schema_predicate.empty())
   {
-    LOCK_open.lock(); /* Optionally lock for remove tables from open_cahe if not in use */
+    table::Cache::singleton().mutex().lock(); /* Optionally lock for remove tables from open_cahe if not in use */
 
     table::CacheMap &open_cache(table::getCache());
 
@@ -82,7 +82,7 @@ ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
 ShowTableStatus::Generator::~Generator()
 {
   if (not schema_predicate.empty())
-    LOCK_open.unlock(); /* Optionally lock for remove tables from open_cahe if not in use */
+    table::Cache::singleton().mutex().unlock(); /* Optionally lock for remove tables from open_cahe if not in use */
 }
 
 bool ShowTableStatus::Generator::nextCore()

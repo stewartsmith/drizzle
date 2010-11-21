@@ -271,9 +271,9 @@ bool mysql_rm_db(Session *session, SchemaIdentifier &schema_identifier, const bo
     }
     else
     {
-      LOCK_open.lock(); /* After deleting database, remove all cache entries related to schema */
+      table::Cache::singleton().mutex().lock(); /* After deleting database, remove all cache entries related to schema */
       table::Cache::singleton().removeSchema(schema_identifier);
-      LOCK_open.unlock();
+      table::Cache::singleton().mutex().unlock();
 
 
       error= -1;
@@ -358,11 +358,11 @@ static int rm_table_part2(Session *session, TableList *tables)
   int error= 0;
   bool foreign_key_error= false;
 
-  LOCK_open.lock(); /* Part 2 of rm a table */
+  table::Cache::singleton().mutex().lock(); /* Part 2 of rm a table */
 
   if (session->lock_table_names_exclusively(tables))
   {
-    LOCK_open.unlock();
+    table::Cache::singleton().mutex().unlock();
     return 1;
   }
 
@@ -385,7 +385,7 @@ static int rm_table_part2(Session *session, TableList *tables)
     case -1:
       error= 1;
       tables->unlock_table_names();
-      LOCK_open.unlock();
+      table::Cache::singleton().mutex().unlock();
       session->no_warnings_for_error= 0;
 
       return(error);
@@ -413,7 +413,7 @@ static int rm_table_part2(Session *session, TableList *tables)
       {
         error= -1;
         tables->unlock_table_names();
-        LOCK_open.unlock();
+        table::Cache::singleton().mutex().unlock();
         session->no_warnings_for_error= 0;
 
         return(error);
@@ -458,10 +458,10 @@ static int rm_table_part2(Session *session, TableList *tables)
     }
   }
   /*
-    It's safe to unlock LOCK_open: we have an exclusive lock
+    It's safe to unlock table::Cache::singleton().mutex(): we have an exclusive lock
     on the table name.
   */
-  LOCK_open.unlock();
+  table::Cache::singleton().mutex().unlock();
   error= 0;
   if (wrong_tables.length())
   {
@@ -475,9 +475,9 @@ static int rm_table_part2(Session *session, TableList *tables)
     error= 1;
   }
 
-  LOCK_open.lock(); /* final bit in rm table lock */
+  table::Cache::singleton().mutex().lock(); /* final bit in rm table lock */
   tables->unlock_table_names();
-  LOCK_open.unlock();
+  table::Cache::singleton().mutex().unlock();
   session->no_warnings_for_error= 0;
 
   return(error);

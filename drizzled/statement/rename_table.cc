@@ -71,10 +71,10 @@ bool statement::RenameTable::renameTables(TableList *table_list)
   if (session->wait_if_global_read_lock(false, true))
     return true;
 
-  LOCK_open.lock(); /* Rename table lock for exclusive access */
+  table::Cache::singleton().mutex().lock(); /* Rename table lock for exclusive access */
   if (session->lock_table_names_exclusively(table_list))
   {
-    LOCK_open.unlock();
+    table::Cache::singleton().mutex().unlock();
     goto err;
   }
 
@@ -101,11 +101,11 @@ bool statement::RenameTable::renameTables(TableList *table_list)
   /*
     An exclusive lock on table names is satisfactory to ensure
     no other thread accesses this table.
-    We still should unlock LOCK_open as early as possible, to provide
+    We still should unlock table::Cache::singleton().mutex() as early as possible, to provide
     higher concurrency - query_cache_invalidate can take minutes to
     complete.
   */
-  LOCK_open.unlock();
+  table::Cache::singleton().mutex().unlock();
 
   /* Lets hope this doesn't fail as the result will be messy */
   if (not error)
@@ -114,9 +114,9 @@ bool statement::RenameTable::renameTables(TableList *table_list)
     session->my_ok();
   }
 
-  LOCK_open.lock(); /* unlock all tables held */
+  table::Cache::singleton().mutex().lock(); /* unlock all tables held */
   table_list->unlock_table_names();
-  LOCK_open.unlock();
+  table::Cache::singleton().mutex().unlock();
 
 err:
   session->startWaitingGlobalReadLock();
