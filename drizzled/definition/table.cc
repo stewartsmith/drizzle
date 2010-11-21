@@ -116,10 +116,7 @@ void TableShare::release(TableShare *share)
 
   if (to_be_deleted)
   {
-    TableIdentifier identifier(share->getSchemaName(), share->getTableName());
-   
-    definition::Cache::singleton().erase(identifier.getKey());
-    return;
+    definition::Cache::singleton().erase(share->getCacheKey());
   }
 }
 
@@ -137,10 +134,7 @@ void TableShare::release(TableShare::shared_ptr &share)
 
   if (to_be_deleted)
   {
-    TableIdentifier identifier(share->getSchemaName(), share->getTableName());
-   
-    definition::Cache::singleton().erase(identifier.getKey());
-    return;
+    definition::Cache::singleton().erase(share->getCacheKey());
   }
 }
 
@@ -203,8 +197,8 @@ static TableShare::shared_ptr foundTableShare(TableShare::shared_ptr share)
 */
 
 TableShare::shared_ptr TableShare::getShareCreate(Session *session, 
-                                         TableIdentifier &identifier,
-                                         int &in_error)
+                                                  TableIdentifier &identifier,
+                                                  int &in_error)
 {
   TableShare::shared_ptr share;
 
