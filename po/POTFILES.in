@@ -87,6 +87,7 @@ plugin/pbms/src/parameters_ms.cc
 plugin/pbms/src/plugin_ms.cc
 plugin/rabbitmq/rabbitmq_log.cc
 plugin/session_dictionary/processlist.cc
+plugin/session_dictionary/sessions.cc
 plugin/signal_handler/signal_handler.cc
 plugin/syslog/errmsg.cc
 plugin/syslog/function.cc
@@ -98,6 +99,6 @@ plugin/transaction_log/module.cc
 plugin/transaction_log/print_transaction_message.cc
 plugin/transaction_log/transaction_log.cc
 plugin/transaction_log/transaction_log_reader.cc
-plugin/transaction_log/write_buffer.cc
-plugin/transaction_log/utilities/transaction_reader.cc
 plugin/transaction_log/utilities/transaction_file_reader.cc
+plugin/transaction_log/utilities/transaction_reader.cc
+plugin/transaction_log/write_buffer.cc
