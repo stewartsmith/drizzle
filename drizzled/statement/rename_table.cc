@@ -71,54 +71,44 @@ bool statement::RenameTable::renameTables(TableList *table_list)
   if (session->wait_if_global_read_lock(false, true))
     return true;
 
-  table::Cache::singleton().mutex().lock(); /* Rename table lock for exclusive access */
-  if (not session->lock_table_names_exclusively(table_list))
   {
-    error= false;
-    ren_table= renameTablesInList(table_list, false);
+    boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex()); /* Rename table lock for exclusive access */
 
-    if (ren_table)
+    if (not session->lock_table_names_exclusively(table_list))
     {
-      /* Rename didn't succeed;  rename back the tables in reverse order */
-      TableList *table;
+      error= false;
+      ren_table= renameTablesInList(table_list, false);
 
-      /* Reverse the table list */
-      table_list= reverseTableList(table_list);
+      if (ren_table)
+      {
+        /* Rename didn't succeed;  rename back the tables in reverse order */
+        TableList *table;
 
-      /* Find the last renamed table */
-      for (table= table_list;
-           table->next_local != ren_table;
-           table= table->next_local->next_local) 
-      { /* do nothing */ }
-      table= table->next_local->next_local;		// Skip error table
+        /* Reverse the table list */
+        table_list= reverseTableList(table_list);
 
-      /* Revert to old names */
-      renameTablesInList(table, true);
-      error= true;
+        /* Find the last renamed table */
+        for (table= table_list;
+             table->next_local != ren_table;
+             table= table->next_local->next_local) 
+        { /* do nothing */ }
+
+        table= table->next_local->next_local;		// Skip error table
+
+        /* Revert to old names */
+        renameTablesInList(table, true);
+        error= true;
+      }
+
+      table_list->unlock_table_names();
     }
-    /*
-      An exclusive lock on table names is satisfactory to ensure
-      no other thread accesses this table.
-      We still should unlock table::Cache::singleton().mutex() as early as possible, to provide
-      higher concurrency - query_cache_invalidate can take minutes to
-      complete.
-    */
-    table::Cache::singleton().mutex().unlock();
-
-    /* Lets hope this doesn't fail as the result will be messy */
-    if (not error)
-    {
-      write_bin_log(session, *session->getQueryString());
-      session->my_ok();
-    }
-
-    table::Cache::singleton().mutex().lock(); /* unlock all tables held */
-    table_list->unlock_table_names();
-    table::Cache::singleton().mutex().unlock();
   }
-  else
+
+  /* Lets hope this doesn't fail as the result will be messy */
+  if (not error)
   {
-    table::Cache::singleton().mutex().unlock();
+    write_bin_log(session, *session->getQueryString());
+    session->my_ok();
   }
 
   session->startWaitingGlobalReadLock();
