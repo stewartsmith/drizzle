@@ -122,7 +122,7 @@ int table::Concurrent::open_unireg_entry(Session *session,
                                          TableIdentifier &identifier)
 {
   int error;
-  TableSharePtr share;
+  TableShare::shared_ptr share;
   uint32_t discover_retry_count= 0;
 
   safe_mutex_assert_owner(LOCK_open.native_handle());

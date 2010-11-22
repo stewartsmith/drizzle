@@ -436,7 +436,7 @@ int main(int argc, char **argv)
     po::options_description commandline_options("Options used only in command line");
     commandline_options.add_options()
       ("help,?","Display this help and exit")
-      ("info,i","Gives information and exit")
+      ("info","Gives information and exit")
       ("burnin",po::value<bool>(&opt_burnin)->default_value(false)->zero_tokens(),
        "Run full test case in infinite loop")
       ("ignore-sql-errors", po::value<bool>(&opt_ignore_sql_errors)->default_value(false)->zero_tokens(),

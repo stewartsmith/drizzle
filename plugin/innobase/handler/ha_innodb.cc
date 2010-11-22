@@ -493,14 +493,21 @@ void InnobaseEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
     { }
     else
     {
-      char uname[NAME_LEN + 1];
-      uint32_t file_name_len;
+      std::string path;
+      path+= directory.getPath();
+      path+= FN_LIBCHAR;
+      path+= entry->filename;
 
-      file_name_len= TableIdentifier::filename_to_tablename(filename->c_str(), uname, sizeof(uname));
-      // TODO: Remove need for memory copy here
-      uname[file_name_len - sizeof(DEFAULT_FILE_EXTENSION) + 1]= '\0'; // Subtract ending, place NULL 
-
-      set_of_identifiers.push_back(TableIdentifier(schema_identifier, uname));
+      message::Table definition;
+      if (StorageEngine::readTableFile(path, definition))
+      {
+        /* 
+           Using schema_identifier here to stop unused warning, could use
+           definition.schema() instead
+        */
+        TableIdentifier identifier(schema_identifier.getSchemaName(), definition.name());
+        set_of_identifiers.push_back(identifier);
+      }
     }
   }
 }

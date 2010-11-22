@@ -29,7 +29,7 @@ namespace generator {
 class AllTables
 {
   Session &session;
-  message::TablePtr table;
+  message::table::shared_ptr table;
 
   TableIdentifiers table_names;
   TableIdentifiers::const_iterator table_iterator;
@@ -45,7 +45,7 @@ public:
 
   void reset();
 
-  operator const drizzled::message::TablePtr()
+  operator const drizzled::message::table::shared_ptr()
   {
     do {
       while (table_iterator != table_names.end())
@@ -58,7 +58,7 @@ public:
       }
     } while ((schema_ptr= schema_generator) && table_setup());
 
-    return message::TablePtr();
+    return message::table::shared_ptr();
   }
 
   operator const drizzled::TableIdentifier*()

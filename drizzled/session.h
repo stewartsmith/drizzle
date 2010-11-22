@@ -209,6 +209,7 @@ struct drizzle_system_variables
   uint64_t preload_buff_size;
   uint32_t read_buff_size;
   uint32_t read_rnd_buff_size;
+  bool replicate_query;
   size_t sortbuff_size;
   uint32_t thread_handling;
   uint32_t tx_isolation;
@@ -1157,27 +1158,43 @@ public:
   inline time_t query_start() { return start_time; }
   inline void set_time()
   {
+    boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::local_time());
+    boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
+    start_utime= utime_after_lock= (mytime-epoch).total_microseconds();
+
     if (user_time)
     {
       start_time= user_time;
-      connect_microseconds= start_utime= utime_after_lock= my_micro_time();
+      connect_microseconds= start_utime;
     }
-    else
-      start_utime= utime_after_lock= my_micro_time_and_time(&start_time);
+    else 
+      start_time= (mytime-epoch).total_seconds();
   }
   inline void	set_current_time()    { start_time= time(NULL); }
   inline void	set_time(time_t t)
   {
     start_time= user_time= t;
-    start_utime= utime_after_lock= my_micro_time();
+    boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::local_time());
+    boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
+    uint64_t t_mark= (mytime-epoch).total_microseconds();
+
+    start_utime= utime_after_lock= t_mark;
   }
-  void set_time_after_lock()  { utime_after_lock= my_micro_time(); }
+  void set_time_after_lock()  { 
+     boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::local_time());
+     boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
+     utime_after_lock= (mytime-epoch).total_microseconds();
+  }
   /**
    * Returns the current micro-timestamp
    */
   inline uint64_t getCurrentTimestamp()  
   { 
-    return my_micro_time(); 
+    boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::local_time());
+    boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
+    uint64_t t_mark= (mytime-epoch).total_microseconds();
+
+    return t_mark; 
   }
   inline uint64_t found_rows(void)
   {

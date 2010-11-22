@@ -29,7 +29,7 @@ public:
 
   class Generator : public InformationSchema::Generator 
   {
-    drizzled::message::TablePtr table_message;
+    drizzled::message::table::shared_ptr table_message;
     drizzled::generator::AllTables generator;
     int32_t index_iterator;
 

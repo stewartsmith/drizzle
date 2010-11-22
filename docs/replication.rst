@@ -6,6 +6,25 @@ Replication events are recorded using messages in the `Google Protocol Buffer
 sub-messages. There is a single main "envelope" message, Transaction, that
 is passed to plugins that subscribe to the replication stream.
 
+Configuration Options
+---------------------
+
+**transaction_message_threshold**
+
+    Controls the size, in bytes, of the Transaction messages. When a Transaction
+    message exceeds this size, a new Transaction message with the same
+    transaction ID will be created to continue the replication events.
+    See :ref:`bulk-operations` below.
+
+
+**replicate_query**
+
+    Controls whether the originating SQL query will be included within each
+    Statement message contained in the enclosing Transaction message. The
+    default global value is FALSE which will not include the query in the
+    messages. It can be controlled per session, as well. For example:
+
+    ``drizzle> set @@replicate_query = 1;``
 
 Message Definitions
 -------------------
@@ -102,6 +121,8 @@ Each Statement message contains a type member which indicates how readers
 of the Statement should construct the inner Statement subclass representing
 a data change.
 
+
+.. _bulk-operations:
 
 How Bulk Operations Work
 ------------------------
