@@ -105,7 +105,7 @@ extern size_t table_def_size;
 void TableShare::release(TableShare *share)
 {
   bool to_be_deleted= false;
-  safe_mutex_assert_owner(LOCK_open.native_handle);
+  safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle);
 
   share->lock();
   if (!--share->ref_count)
@@ -123,7 +123,7 @@ void TableShare::release(TableShare *share)
 void TableShare::release(TableShare::shared_ptr &share)
 {
   bool to_be_deleted= false;
-  safe_mutex_assert_owner(LOCK_open.native_handle);
+  safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle);
 
   share->lock();
   if (!--share->ref_count)
@@ -188,7 +188,7 @@ static TableShare::shared_ptr foundTableShare(TableShare::shared_ptr share)
   If it doesn't exist, create a new from the table definition file.
 
   NOTES
-  We must have wrlock on LOCK_open when we come here
+  We must have wrlock on table::Cache::singleton().mutex() when we come here
   (To be changed later)
 
   RETURN
