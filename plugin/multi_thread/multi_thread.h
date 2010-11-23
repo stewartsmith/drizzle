@@ -28,6 +28,8 @@ namespace drizzled {
 class Session;
 }
 
+namespace multi_thread {
+
 class MultiThreadScheduler: public drizzled::plugin::Scheduler
 {
 private:
@@ -49,5 +51,7 @@ public:
 private:
   void setStackSize();
 };
+
+} // namespace multi_thread
 
 #endif /* PLUGIN_MULTI_THREAD_MULTI_THREAD_H */

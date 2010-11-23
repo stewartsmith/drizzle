@@ -432,6 +432,10 @@ void Session::awake(Session::killed_state_t state_to_set)
     scheduler->killSession(this);
     DRIZZLE_CONNECTION_DONE(thread_id);
   }
+
+  assert(_thread);
+  _thread->interrupt();
+
   if (mysys_var)
   {
     boost_unique_lock_t scopedLock(mysys_var->mutex);

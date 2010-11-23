@@ -24,6 +24,8 @@
 #include <boost/logic/tribool.hpp>
 #include <boost/unordered/unordered_set.hpp>
 
+#include "plugin/user_locks/lock.h"
+
 #include <string>
 
 #include "drizzled/session.h"
@@ -40,18 +42,7 @@ const size_t LARGEST_LOCK_NAME= 64;
 class Locks
 {
 public:
-  struct lock_st {
-    drizzled::session_id_t id;
-
-    lock_st(drizzled::session_id_t id_arg) :
-      id(id_arg)
-    {
-    }
-  };
-
-  typedef boost::shared_ptr<lock_st> lock_st_ptr;
-
-  typedef boost::unordered_map<user_locks::Key, lock_st_ptr> LockMap;
+  typedef boost::unordered_map<user_locks::Key, user_locks::Lock::shared_ptr> LockMap;
 
   static Locks &getInstance(void)
   {

@@ -40,15 +40,22 @@ bool Locks::lock(drizzled::session_id_t id_arg, const user_locks::Key &arg, int6
       // We own the lock, so we just exit.
       return true;
     }
-    bool success= cond.timed_wait(scope, timeout);
+    try {
+      bool success= cond.timed_wait(scope, timeout);
 
-    if (not success)
-      return false;
+      if (not success)
+        return false;
+    }
+    catch(boost::thread_interrupted const& error)
+    {
+      // Currently nothing is done here.
+      throw error;
+    }
   }
 
   if (iter == lock_map.end())
   {
-    return lock_map.insert(std::make_pair(arg, new lock_st(id_arg))).second;
+    return lock_map.insert(std::make_pair(arg, new Lock(id_arg))).second;
   }
 
   return false;
@@ -57,7 +64,7 @@ bool Locks::lock(drizzled::session_id_t id_arg, const user_locks::Key &arg, int6
 bool Locks::lock(drizzled::session_id_t id_arg, const user_locks::Key &arg)
 {
   boost::unique_lock<boost::mutex> scope(mutex);
-  return lock_map.insert(std::make_pair(arg, new lock_st(id_arg))).second;
+  return lock_map.insert(std::make_pair(arg, new Lock(id_arg))).second;
 }
 
 bool Locks::lock(drizzled::session_id_t id_arg, const user_locks::Keys &arg)
@@ -78,7 +85,7 @@ bool Locks::lock(drizzled::session_id_t id_arg, const user_locks::Keys &arg)
   for (Keys::iterator iter= arg.begin(); iter != arg.end(); iter++)
   {
     //is_locked can fail in cases where we already own the lock.
-    lock_map.insert(std::make_pair(*iter, new lock_st(id_arg)));
+    lock_map.insert(std::make_pair(*iter, new Lock(id_arg)));
   }
 
   return true;
@@ -109,7 +116,7 @@ bool Locks::isFree(const user_locks::Key &arg)
 
 void Locks::Copy(LockMap &lock_map_arg)
 {
-  //@todo add lock(?)
+  boost::unique_lock<boost::mutex> scope(mutex);
   lock_map_arg= lock_map;
 }
 
