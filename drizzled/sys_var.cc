@@ -338,6 +338,22 @@ bool sys_var_str::check(Session *session, set_var *var)
   return res;
 }
 
+bool sys_var_std_string::check(Session *session, set_var *var)
+{
+  if (check_func == NULL)
+  {
+    return false;
+  }
+
+  int res= (*check_func)(session, var);
+  if (res != 0)
+  {
+    my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), getName().c_str(), var->value->str_value.ptr());
+    return true;
+  }
+  return false;
+}
+
 /*
   Functions to check and update variables
 */
