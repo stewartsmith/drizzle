@@ -28,11 +28,6 @@ static int init(drizzled::module::Context &context)
   context.add(new ProcesslistTool);
   context.add(new session_dictionary::Variables);
   context.add(new session_dictionary::Savepoints);
-  // There is not enough different yet that makes this valuable enough for
-  // enabling.
-#if 0
-  context.add(new session_dictionary::Sessions);
-#endif
   
   return 0;
 }
