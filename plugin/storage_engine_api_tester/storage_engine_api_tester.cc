@@ -33,9 +33,6 @@
 using namespace std;
 using namespace drizzled;
 
-typedef boost::unordered_map<std::string, message::Table, util::insensitive_hash, util::insensitive_equal_to> TableMessageMap;
-typedef boost::unordered_map<std::string, message::Table, util::insensitive_hash, util::insensitive_equal_to>::iterator TableMessageMapIterator;
-
 string engine_state;
 typedef multimap<string, string> state_multimap;
 typedef multimap<string, string>::value_type state_pair;
@@ -48,6 +45,13 @@ void load_cursor_state_transitions(state_multimap &states);
 
 /* This is a hack to make store_lock kinda work */
 drizzled::THR_LOCK share_lock;
+
+plugin::TransactionalStorageEngine *realEngine;
+
+static plugin::TransactionalStorageEngine *getRealEngine()
+{
+  return down_cast<plugin::TransactionalStorageEngine*>(plugin::StorageEngine::findByName("INNODB"));
+}
 
 static inline void ENGINE_NEW_STATE(const string &new_state)
 {
@@ -202,9 +206,10 @@ static const char *api_tester_exts[] = {
   NULL
 };
 
-
 class SEAPITester : public drizzled::plugin::TransactionalStorageEngine
 {
+  friend class drizzled::plugin::StorageEngine;
+  friend class drizzled::plugin::TransactionalStorageEngine;
 public:
   SEAPITester(const string &name_arg)
     : drizzled::plugin::TransactionalStorageEngine(name_arg,
@@ -235,10 +240,10 @@ public:
 
   int doDropTable(Session&, const TableIdentifier &identifier);
 
-  int doRenameTable(drizzled::Session&,
-                    const drizzled::TableIdentifier&,
-                    const drizzled::TableIdentifier&)
-    { return ENOENT; }
+  int doRenameTable(drizzled::Session& session,
+                    const drizzled::TableIdentifier& from,
+                    const drizzled::TableIdentifier& to)
+    { return getRealEngine()->renameTable(session, from, to); }
 
   int doGetTableDefinition(Session& ,
                            const TableIdentifier &,
@@ -267,86 +272,67 @@ public:
   virtual int doCommit(Session*, bool);
 
   virtual int doRollback(Session*, bool);
-
-
-private:
-  TableMessageMap table_messages;
 };
 
-bool SEAPITester::doDoesTableExist(Session&, const TableIdentifier &identifier)
+bool SEAPITester::doDoesTableExist(Session &session, const TableIdentifier &identifier)
 {
-  return table_messages.find(identifier.getPath()) != table_messages.end();
+  return getRealEngine()->doDoesTableExist(session, identifier);
 }
 
-void SEAPITester::doGetTableIdentifiers(drizzled::CachedDirectory &,
-                                        const drizzled::SchemaIdentifier &,
-                                        drizzled::TableIdentifiers &)
+void SEAPITester::doGetTableIdentifiers(drizzled::CachedDirectory &cd,
+                                        const drizzled::SchemaIdentifier &si,
+                                        drizzled::TableIdentifiers &ti)
 {
+  return getRealEngine()->doGetTableIdentifiers(cd, si, ti);
 }
 
-int SEAPITester::doCreateTable(Session&,
-                               Table&,
+int SEAPITester::doCreateTable(Session& session,
+                               Table& table,
                                const drizzled::TableIdentifier &identifier,
                                drizzled::message::Table& create_proto)
 {
   ENGINE_NEW_STATE("::doCreateTable()");
 
-  if (table_messages.find(identifier.getPath()) != table_messages.end())
-  {
-    ENGINE_NEW_STATE("::SEAPITester()");
-    return EEXIST;
-  }
+  int r= getRealEngine()->doCreateTable(session, table, identifier, create_proto);
 
-  table_messages.insert(make_pair(identifier.getPath(), create_proto));
   ENGINE_NEW_STATE("::SEAPITester()");
-  return 0;
+  return r;
 }
 
-int SEAPITester::doDropTable(Session&, const TableIdentifier &identifier)
+int SEAPITester::doDropTable(Session& session, const TableIdentifier &identifier)
 {
-  if (table_messages.find(identifier.getPath()) == table_messages.end())
-    return ENOENT;
-
-  table_messages.erase(identifier.getPath());
-  assert(table_messages.find(identifier.getPath()) == table_messages.end());
-  return 0;
+  return getRealEngine()->doDropTable(session, identifier);
 }
 
-int SEAPITester::doGetTableDefinition(Session& ,
+int SEAPITester::doGetTableDefinition(Session& session,
                                       const TableIdentifier &identifier,
                                       drizzled::message::Table &table)
 {
-  TableMessageMapIterator iter= table_messages.find(identifier.getPath());
-  if (iter == table_messages.end())
-  {
-    return ENOENT;
-  }
-
-  table= (*iter).second;
-
-  return EEXIST;
+  return getRealEngine()->doGetTableDefinition(session, identifier, table);
 }
 
-int SEAPITester::doStartTransaction(Session *,
-                                    start_transaction_option_t )
+int SEAPITester::doStartTransaction(Session *session,
+                                    start_transaction_option_t opt)
 {
   ENGINE_NEW_STATE("BEGIN");
   ENGINE_NEW_STATE("In Transaction");
 
-  return 0;
+  return getRealEngine()->startTransaction(session, opt);
 }
 
-void SEAPITester::doStartStatement(Session *)
+void SEAPITester::doStartStatement(Session *session)
 {
   ENGINE_NEW_STATE("START STATEMENT");
+  return getRealEngine()->startStatement(session);
 }
 
-void SEAPITester::doEndStatement(Session *)
+void SEAPITester::doEndStatement(Session *session)
 {
   ENGINE_NEW_STATE("END STATEMENT");
+  return getRealEngine()->endStatement(session);
 }
 
-int SEAPITester::doCommit(Session*, bool all)
+int SEAPITester::doCommit(Session *session, bool all)
 {
   if (all)
   {
@@ -358,10 +344,10 @@ int SEAPITester::doCommit(Session*, bool all)
     ENGINE_NEW_STATE("COMMIT STATEMENT");
     ENGINE_NEW_STATE("In Transaction");
   }
-  return 0;
+  return getRealEngine()->commit(session, all);
 }
 
-int SEAPITester::doRollback(Session*, bool all)
+int SEAPITester::doRollback(Session *session, bool all)
 {
   if (all)
   {
@@ -373,7 +359,7 @@ int SEAPITester::doRollback(Session*, bool all)
     ENGINE_NEW_STATE("ROLLBACK");
     ENGINE_NEW_STATE("::SEAPITester()");
   }
-  return 0;
+  return getRealEngine()->rollback(session, all);
 }
 
 static int seapi_tester_init(drizzled::module::Context &context)
@@ -384,7 +370,7 @@ static int seapi_tester_init(drizzled::module::Context &context)
 
   thr_lock_init(&share_lock); /* HACK for store_lock */
 
-  context.add(new SEAPITester(engine_name));
+  context.add(new SEAPITester::SEAPITester(engine_name));
   return 0;
 }
 

@@ -124,6 +124,7 @@ typedef std::set<std::string> TableNameList;
 extern const std::string UNKNOWN_STRING;
 extern const std::string DEFAULT_DEFINITION_FILE_EXT;
 
+
 /*
   StorageEngine is a singleton structure - one instance per storage engine -
   to provide access to storage engine functionality that works on the
@@ -273,7 +274,7 @@ public:
   */
   virtual const char **bas_ext() const =0;
 
-protected:
+public: // should be protected. Feel free to work out how to friend SEAPITester
   virtual int doCreateTable(Session &session,
                             Table &table_arg,
                             const drizzled::TableIdentifier &identifier,
