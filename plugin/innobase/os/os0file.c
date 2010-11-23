@@ -3991,7 +3991,9 @@ os_aio_func(
 	void*		dummy_mess2;
 	ulint		dummy_type;
 #endif /* WIN_ASYNC_IO */
+#if defined LINUX_NATIVE_AIO || defined WIN_ASYNC_IO
 	ibool		retry;
+#endif
 	ulint		wake_later;
 
 	ut_ad(file);
@@ -4026,7 +4028,9 @@ os_aio_func(
 		return(os_file_write(name, file, buf, offset, offset_high, n));
 	}
 
+#if defined LINUX_NATIVE_AIO || defined WIN_ASYNC_IO
 try_again:
+#endif
 	if (mode == OS_AIO_NORMAL) {
 		if (type == OS_FILE_READ) {
 			array = os_aio_read_array;
@@ -4133,7 +4137,6 @@ try_again:
 
 #if defined LINUX_NATIVE_AIO || defined WIN_ASYNC_IO
 err_exit:
-#endif /* LINUX_NATIVE_AIO || WIN_ASYNC_IO */
 	os_aio_array_free_slot(array, slot);
 
 	retry = os_file_handle_error(name,
@@ -4145,6 +4148,7 @@ err_exit:
 	}
 
 	return(FALSE);
+#endif /* LINUX_NATIVE_AIO || WIN_ASYNC_IO */
 }
 
 #ifdef WIN_ASYNC_IO
