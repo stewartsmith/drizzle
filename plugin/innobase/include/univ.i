@@ -150,6 +150,12 @@ Sun Studio */
 #  define UNIV_MUST_NOT_INLINE
 # endif
 
+# if defined(__GNUC__)
+#  define UNIV_WARN_UNUSED_RESULT __attribute__((warn_unused_result))
+#else
+#  define UNIV_WARN_UNUSED_RESULT
+#endif
+
 # ifdef HAVE_PREAD
 #  define HAVE_PWRITE
 # endif
