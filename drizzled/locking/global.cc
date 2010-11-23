@@ -414,7 +414,7 @@ void Session::unlockReadTables(DrizzleLock *sql_lock)
   /* unlock the read locked tables */
   if (i != found)
   {
-    sql_lock->unlock(i - found);
+    thr_multi_unlock(lock_local, i - found);
     sql_lock->lock_count= found;
   }
 
