@@ -90,8 +90,6 @@ static int init(drizzled::module::Context &context)
 
 bool Protocol::getFileDescriptors(std::vector<int> &fds)
 {
-  struct sockaddr_un servAddr;
-  socklen_t addrlen;
   int unix_sock;
 
   if ((unix_sock= socket(AF_UNIX, SOCK_STREAM, 0)) < 0)
@@ -99,11 +97,6 @@ bool Protocol::getFileDescriptors(std::vector<int> &fds)
     std::cerr << "Can't start server : UNIX Socket";
     return false;
   }
-
-  memset(&servAddr, 0, sizeof(servAddr));
-
-  servAddr.sun_family= AF_UNIX;
-  strcpy(servAddr.sun_path, unix_socket_path.file_string().c_str());
 
   // In case we restart and find something in our way we move it aside and
   // then attempt to remove it.
@@ -120,7 +113,19 @@ bool Protocol::getFileDescriptors(std::vector<int> &fds)
   (void) setsockopt(unix_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&arg, sizeof(arg));
   unlink(unix_socket_path.file_string().c_str());
 
-  addrlen= sizeof(servAddr);
+  struct sockaddr_un servAddr;
+  memset(&servAddr, 0, sizeof(servAddr));
+
+  servAddr.sun_family= AF_UNIX;
+  if (unix_socket_path.file_string().size() > sizeof(servAddr.sun_path))
+  {
+    std::cerr << "Unix Socket Path length too long. Must be under "
+      << sizeof(servAddr.sun_path) << " bytes." << endl;
+    return false;
+  }
+  memcpy(servAddr.sun_path, unix_socket_path.file_string().c_str(), sizeof(servAddr.sun_path)-1);
+
+  socklen_t addrlen= sizeof(servAddr);
   if (::bind(unix_sock, reinterpret_cast<sockaddr *>(&servAddr), addrlen) < 0)
   { 
     std::cerr << "Can't start server : Bind on unix socket." << std::endl;
