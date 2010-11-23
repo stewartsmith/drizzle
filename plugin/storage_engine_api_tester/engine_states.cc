@@ -37,17 +37,22 @@ void load_engine_state_transitions(state_multimap &states)
 /*  states.insert(state_pair("::SEAPITester()", "::create()"));
     states.insert(state_pair("::create()", "::SEAPITester()"));*/
   states.insert(state_pair("::SEAPITester()", "BEGIN"));
-  states.insert(state_pair("BEGIN", "START STATEMENT"));
+  states.insert(state_pair("BEGIN", "In Transaction"));
+  states.insert(state_pair("In Transaction", "START STATEMENT"));
 
   /* really a bug */
-  states.insert(state_pair("BEGIN", "END STATEMENT"));
+  states.insert(state_pair("In Transaction", "END STATEMENT"));
   /* also a bug */
   states.insert(state_pair("::SEAPITester()", "COMMIT"));
 
-  states.insert(state_pair("BEGIN", "COMMIT"));
-  states.insert(state_pair("BEGIN", "ROLLBACK"));
+  states.insert(state_pair("In Transaction", "COMMIT"));
+  states.insert(state_pair("In Transaction", "ROLLBACK"));
   states.insert(state_pair("START STATEMENT", "END STATEMENT"));
+  states.insert(state_pair("START STATEMENT", "ROLLBACK STATEMENT"));
+  states.insert(state_pair("ROLLBACK STATEMENT", "In Transaction"));
   states.insert(state_pair("END STATEMENT", "START STATEMENT"));
+  states.insert(state_pair("END STATEMENT", "COMMIT STATEMENT"));
+  states.insert(state_pair("COMMIT STATEMENT", "In Transaction"));
   states.insert(state_pair("END STATEMENT", "COMMIT"));
   states.insert(state_pair("END STATEMENT", "ROLLBACK"));
 

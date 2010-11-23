@@ -95,7 +95,7 @@ public:
   ~SEAPITesterCursor()
   {}
 
-  int close() { return 0; }
+  int close() { CURSOR_NEW_STATE("::close()"); CURSOR_NEW_STATE("Cursor()");return 0; }
   int rnd_next(unsigned char*) { CURSOR_NEW_STATE("::rnd_next()"); return HA_ERR_END_OF_FILE; }
   int rnd_pos(unsigned char*, unsigned char*) { CURSOR_NEW_STATE("::rnd_pos()"); return -1; }
   void position(const unsigned char*) { CURSOR_NEW_STATE("::position()"); return; }
@@ -331,6 +331,7 @@ int SEAPITester::doStartTransaction(Session *,
                                     start_transaction_option_t )
 {
   ENGINE_NEW_STATE("BEGIN");
+  ENGINE_NEW_STATE("In Transaction");
 
   return 0;
 }
@@ -345,17 +346,33 @@ void SEAPITester::doEndStatement(Session *)
   ENGINE_NEW_STATE("END STATEMENT");
 }
 
-int SEAPITester::doCommit(Session*, bool)
+int SEAPITester::doCommit(Session*, bool all)
 {
-  ENGINE_NEW_STATE("COMMIT");
-  ENGINE_NEW_STATE("::SEAPITester()");
+  if (all)
+  {
+    ENGINE_NEW_STATE("COMMIT");
+    ENGINE_NEW_STATE("::SEAPITester()");
+  }
+  else
+  {
+    ENGINE_NEW_STATE("COMMIT STATEMENT");
+    ENGINE_NEW_STATE("In Transaction");
+  }
   return 0;
 }
 
-int SEAPITester::doRollback(Session*, bool)
+int SEAPITester::doRollback(Session*, bool all)
 {
-  ENGINE_NEW_STATE("ROLLBACK");
-  ENGINE_NEW_STATE("::SEAPITester()");
+  if (all)
+  {
+    ENGINE_NEW_STATE("ROLLBACK STATEMENT");
+    ENGINE_NEW_STATE("In Transaction");
+  }
+  else
+  {
+    ENGINE_NEW_STATE("ROLLBACK");
+    ENGINE_NEW_STATE("::SEAPITester()");
+  }
   return 0;
 }
 
