@@ -27,6 +27,7 @@
 
 #include "net_serv.h"
 
+
 class ListenMySQLProtocol: public drizzled::plugin::ListenTcp
 {
 private:
@@ -65,6 +66,7 @@ public:
   static drizzled::atomic<uint64_t> connectionCount;
   static drizzled::atomic<uint64_t> failedConnections;
   static drizzled::atomic<uint64_t> connected;
+  static uint32_t max_connections;
 
   virtual int getFileDescriptor(void);
   virtual bool isConnected();

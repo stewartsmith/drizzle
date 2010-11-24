@@ -137,6 +137,8 @@ static int init(drizzled::module::Context &context)
   context.add(new StatusTable);
   context.add(new ListenDrizzleProtocol("drizzle_protocol", true));
 
+  context.registerVariable(new sys_var_uint32_t_ptr("max-connections", &ClientMySQLProtocol::max_connections));
+
   return 0;
 }
 
@@ -181,6 +183,9 @@ static void init_options(drizzled::module::option_context &context)
   context("bind-address",
           po::value<string>(),
           N_("Address to bind to."));
+  context("max-connections",
+          po::value<uint32_t>(&ClientMySQLProtocol::max_connections)->default_value(1000),
+          N_("Maximum simultaneous connections."));
 }
 
 static drizzle_sys_var* sys_variables[]= {
