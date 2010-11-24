@@ -213,9 +213,9 @@ DrizzleLock *Session::lockTables(Table **tables, uint32_t count, uint32_t flags,
      * Here, we advise all storage engines involved in the
      * statement that we are starting a new statement
      */
-    if (sql_lock->table_count)
+    if (sql_lock->sizeTable())
     {
-      size_t num_tables= sql_lock->table_count;
+      size_t num_tables= sql_lock->sizeTable();
       plugin::StorageEngine *engine;
       set<size_t> involved_slots;
       for (size_t x= 1; x <= num_tables; x++, tables++)
@@ -239,7 +239,7 @@ DrizzleLock *Session::lockTables(Table **tables, uint32_t count, uint32_t flags,
      * of the type of lock that Drizzle intends to take on a 
      * specific table.
      */
-    if (sql_lock->table_count && lock_external(sql_lock->getTable(), sql_lock->table_count))
+    if (sql_lock->sizeTable() && lock_external(sql_lock->getTable(), sql_lock->sizeTable()))
     {
       /* Clear the lock type of all lock data to avoid reusage. */
       reset_lock_data_and_free(&sql_lock);
@@ -257,8 +257,8 @@ DrizzleLock *Session::lockTables(Table **tables, uint32_t count, uint32_t flags,
                                                      this->lock_id)];
     if (rc > 1)                                 /* a timeout or a deadlock */
     {
-      if (sql_lock->table_count)
-        unlock_external(sql_lock->getTable(), sql_lock->table_count);
+      if (sql_lock->sizeTable())
+        unlock_external(sql_lock->getTable(), sql_lock->sizeTable());
       reset_lock_data_and_free(&sql_lock);
       my_error(rc, MYF(0));
       break;
@@ -289,8 +289,8 @@ DrizzleLock *Session::lockTables(Table **tables, uint32_t count, uint32_t flags,
     if (sql_lock->lock_count)
         sql_lock->unlock(sql_lock->lock_count);
 
-    if (sql_lock->table_count)
-      unlock_external(sql_lock->getTable(), sql_lock->table_count);
+    if (sql_lock->sizeTable())
+      unlock_external(sql_lock->getTable(), sql_lock->sizeTable());
 
     /*
       If thr_multi_lock fails it resets lock type for tables, which
@@ -371,8 +371,8 @@ void Session::unlockTables(DrizzleLock *sql_lock)
 {
   if (sql_lock->lock_count)
     sql_lock->unlock(sql_lock->lock_count);
-  if (sql_lock->table_count)
-    unlock_external(sql_lock->getTable(), sql_lock->table_count);
+  if (sql_lock->sizeTable())
+    unlock_external(sql_lock->getTable(), sql_lock->sizeTable());
   delete sql_lock;
 }
 
@@ -421,7 +421,7 @@ void Session::unlockReadTables(DrizzleLock *sql_lock)
   /* Then do the same for the external locks */
   /* Move all write locked tables first */
   Table **table= sql_lock->getTable();
-  for (i=found=0 ; i < sql_lock->table_count ; i++)
+  for (i=found=0 ; i < sql_lock->sizeTable() ; i++)
   {
     assert(sql_lock->getTable()[i]->lock_position == i);
     if ((uint32_t) sql_lock->getTable()[i]->reginfo.lock_type >= TL_WRITE_ALLOW_READ)
@@ -435,12 +435,12 @@ void Session::unlockReadTables(DrizzleLock *sql_lock)
   if (i != found)
   {
     unlock_external(table, i - found);
-    sql_lock->table_count=found;
+    sql_lock->resizeTable(found);
   }
   /* Fix the lock positions in Table */
   table= sql_lock->getTable();
   found= 0;
-  for (i= 0; i < sql_lock->table_count; i++)
+  for (i= 0; i < sql_lock->sizeTable(); i++)
   {
     Table *tbl= *table;
     tbl->lock_position= table - sql_lock->getTable();
@@ -564,7 +564,6 @@ DrizzleLock *Session::get_lock_data(Table **table_ptr, uint32_t count,
                                     bool should_lock, Table **write_lock_used)
 {
   uint32_t lock_count;
-  DrizzleLock *sql_lock;
   THR_LOCK_DATA **locks, **locks_buf, **locks_start;
   Table **to, **table_buf;
 
@@ -585,7 +584,7 @@ DrizzleLock *Session::get_lock_data(Table **table_ptr, uint32_t count,
     update the table values. So the second part of the array is copied
     from the first part immediately before calling thr_multi_lock().
   */
-  sql_lock= new DrizzleLock(lock_count, lock_count*2);
+  DrizzleLock *sql_lock= new DrizzleLock(lock_count);
 
   if (not sql_lock)
     return NULL;
