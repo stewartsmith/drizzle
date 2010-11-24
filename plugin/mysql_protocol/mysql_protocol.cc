@@ -49,6 +49,7 @@ static uint32_t buffer_length;
 static char* bind_address;
 static uint32_t random_seed1;
 static uint32_t random_seed2;
+static uint32_t max_connections;
 static const uint32_t random_max= 0x3FFFFFFF;
 static const double random_max_double= (double)0x3FFFFFFF;
 
@@ -149,6 +150,12 @@ void ClientMySQLProtocol::close(void)
 bool ClientMySQLProtocol::authenticate()
 {
   bool connection_is_valid;
+
+  if (connected >= max_connections)
+  {
+    std::string errmsg(ER(ER_CON_COUNT_ERROR));
+    sendError(ER_CON_COUNT_ERROR, errmsg.c_str());
+  }
 
   connectionCount.increment();
   connected.increment();
@@ -978,6 +985,8 @@ static int init(drizzled::module::Context &context)
   listen_obj= new ListenMySQLProtocol("mysql_protocol", true);
   context.add(listen_obj); 
 
+  context.registerVariable(new sys_var_uint32_t_ptr("max-connections", &max_connections));
+
   return 0;
 }
 
@@ -1024,6 +1033,9 @@ static void init_options(drizzled::module::option_context &context)
   context("bind-address",
           po::value<string>(),
           N_("Address to bind to."));
+  context("max-connections",
+          po::value<uint32_t>(&max_connections)->default_value(1000),
+          N_("Maximum simultaneous connections."));
 }
 
 static drizzle_sys_var* sys_variables[]= {
