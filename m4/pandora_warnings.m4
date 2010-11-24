@@ -92,19 +92,20 @@ AC_DEFUN([PANDORA_WARNINGS],[
       [save_CFLAGS="$CFLAGS"
        dnl Use -Werror here instead of ${W_FAIL} so that we don't spew
        dnl conversion warnings to all the tarball folks
-       CFLAGS="-Wconversion -Werror -pedantic ${AM_CFLAGS} ${CFLAGS}"
+       CFLAGS="-Wformat -Werror -pedantic ${AM_CFLAGS} ${CFLAGS}"
        AC_COMPILE_IFELSE(
          [AC_LANG_PROGRAM([[
 #include <stdio.h>
 #include <stdint.h>
 #include <inttypes.h>
-void foo(bool a)
+void foo();
+void foo()
 {
   uint64_t test_u= 0;
   printf("This is a %" PRIu64 "test\n", test_u);
 }
          ]],[[
-foo(0);
+foo();
          ]])],
          [ac_cv_safe_to_use_wformat_=yes],
          [ac_cv_safe_to_use_wformat_=no])
