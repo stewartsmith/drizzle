@@ -34,8 +34,6 @@ class TableList;
 class DrizzleLock
 {
 public:
-  uint32_t lock_count;
-
   Table **getTable()
   {
     return &table[0];
@@ -46,11 +44,6 @@ public:
     return &locks[0];
   }
 
-  size_t sizeLock()
-  {
-    return lock_count;
-  }
-
   size_t sizeTable() const
   {
     return table.size();
@@ -59,6 +52,11 @@ public:
   void resizeTable(size_t arg)
   {
     table.resize(arg);
+  }
+
+  size_t sizeLock() const
+  {
+    return lock_count;
   }
 
   void resetLock()
@@ -82,6 +80,8 @@ public:
   }
 
 private:
+  uint32_t lock_count;
+
   std::vector<Table *> table;
   std::vector<THR_LOCK_DATA *> locks;
   std::vector<THR_LOCK_DATA *> copy_of;

@@ -10,7 +10,7 @@ connection con1;
 insert into CONNECTION_ID VALUES (CONNECTION_ID());
 
 connection con2;
-SELECT @id:=id FROM CONNECTION_ID LIMIT 1;
+EXECUTE "SELECT @id:=id FROM CONNECTION_ID LIMIT 1" WITH NO RETURN;
 
 connection default;
 FLUSH TABLES WITH READ LOCK;

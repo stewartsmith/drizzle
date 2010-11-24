@@ -247,13 +247,13 @@ DrizzleLock *Session::lockTables(Table **tables, uint32_t count, uint32_t flags,
     }
     set_proc_info("Table lock");
     /* Copy the lock data array. thr_multi_lock() reorders its contens. */
-    memcpy(sql_lock->getLocks() + sql_lock->lock_count,
+    memcpy(sql_lock->getLocks() + sql_lock->sizeLock(),
            sql_lock->getLocks(),
-           sql_lock->lock_count * sizeof(*sql_lock->getLocks()));
+           sql_lock->sizeLock() * sizeof(*sql_lock->getLocks()));
     /* Lock on the copied half of the lock data array. */
     rc= thr_lock_errno_to_mysql[(int) thr_multi_lock(sql_lock->getLocks() +
-                                                     sql_lock->lock_count,
-                                                     sql_lock->lock_count,
+                                                     sql_lock->sizeLock(),
+                                                     sql_lock->sizeLock(),
                                                      this->lock_id)];
     if (rc > 1)                                 /* a timeout or a deadlock */
     {
@@ -265,8 +265,8 @@ DrizzleLock *Session::lockTables(Table **tables, uint32_t count, uint32_t flags,
     }
     else if (rc == 1)                           /* aborted */
     {
-      some_tables_deleted= 1;		// Try again
-      sql_lock->lock_count= 0;                  // Locks are already freed
+      some_tables_deleted= true;		// Try again
+      sql_lock->setLock(0);                  // Locks are already freed
       // Fall through: unlock, reset lock data, free and retry
     }
     else if (not some_tables_deleted || (flags & DRIZZLE_LOCK_IGNORE_FLUSH))
@@ -280,14 +280,14 @@ DrizzleLock *Session::lockTables(Table **tables, uint32_t count, uint32_t flags,
     else if (not open_tables)
     {
       // Only using temporary tables, no need to unlock
-      some_tables_deleted= 0;
+      some_tables_deleted= false;
       break;
     }
     set_proc_info(0);
 
     /* going to retry, unlock all tables */
-    if (sql_lock->lock_count)
-        sql_lock->unlock(sql_lock->lock_count);
+    if (sql_lock->sizeLock())
+        sql_lock->unlock(sql_lock->sizeLock());
 
     if (sql_lock->sizeTable())
       unlock_external(sql_lock->getTable(), sql_lock->sizeTable());
@@ -369,8 +369,8 @@ int Session::lock_external(Table **tables, uint32_t count)
 
 void Session::unlockTables(DrizzleLock *sql_lock)
 {
-  if (sql_lock->lock_count)
-    sql_lock->unlock(sql_lock->lock_count);
+  if (sql_lock->sizeLock())
+    sql_lock->unlock(sql_lock->sizeLock());
   if (sql_lock->sizeTable())
     unlock_external(sql_lock->getTable(), sql_lock->sizeTable());
   delete sql_lock;
@@ -402,7 +402,7 @@ void Session::unlockReadTables(DrizzleLock *sql_lock)
 
   /* Move all write locks first */
   THR_LOCK_DATA **lock_local= sql_lock->getLocks();
-  for (i=found=0 ; i < sql_lock->lock_count ; i++)
+  for (i=found=0 ; i < sql_lock->sizeLock(); i++)
   {
     if (sql_lock->getLocks()[i]->type >= TL_WRITE_ALLOW_READ)
     {
@@ -415,7 +415,7 @@ void Session::unlockReadTables(DrizzleLock *sql_lock)
   if (i != found)
   {
     thr_multi_unlock(lock_local, i - found);
-    sql_lock->lock_count= found;
+    sql_lock->setLock(found);
   }
 
   /* Then do the same for the external locks */
@@ -487,7 +487,7 @@ void Session::abortLock(Table *table)
   if ((locked= get_lock_data(&table, 1, false,
                              &write_lock_used)))
   {
-    for (uint32_t x= 0; x < locked->lock_count; x++)
+    for (uint32_t x= 0; x < locked->sizeLock(); x++)
       locked->getLocks()[x]->lock->abort_locks();
     delete locked;
   }
@@ -515,7 +515,7 @@ bool Session::abortLockForThread(Table *table)
   if ((locked= get_lock_data(&table, 1, false,
                              &write_lock_used)))
   {
-    for (uint32_t i= 0; i < locked->lock_count; i++)
+    for (uint32_t i= 0; i < locked->sizeLock(); i++)
     {
       if (locked->getLocks()[i]->lock->abort_locks_for_thread(table->in_use->thread_id))
         result= true;
@@ -610,7 +610,7 @@ DrizzleLock *Session::get_lock_data(Table **table_ptr, uint32_t count,
       {
 	my_error(ER_OPEN_AS_READONLY, MYF(0), table->getAlias());
         /* Clear the lock type of the lock data that are stored already. */
-        sql_lock->lock_count= locks - sql_lock->getLocks();
+        sql_lock->setLock(locks - sql_lock->getLocks());
         reset_lock_data_and_free(&sql_lock);
 	return NULL;
       }
@@ -640,7 +640,7 @@ DrizzleLock *Session::get_lock_data(Table **table_ptr, uint32_t count,
     we may allocate too much, but better safe than memory overrun.
     And in the FLUSH case, the memory is released quickly anyway.
   */
-  sql_lock->lock_count= locks - locks_buf;
+  sql_lock->setLock(locks - locks_buf);
 
   return sql_lock;
 }
