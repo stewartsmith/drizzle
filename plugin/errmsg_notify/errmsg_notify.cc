@@ -22,6 +22,7 @@
 #include <cstdio>  /* for vsnprintf */
 #include <stdarg.h>  /* for va_list */
 #include <unistd.h>  /* for write(2) */
+#include <iostream>
 #include <libnotifymm.h>
 #include <boost/scoped_ptr.hpp>
 
@@ -85,7 +86,7 @@ public:
      }
      catch (Glib::Error& err)
      {
-        fprintf(stderr, err.what().c_str());
+        cerr << err.what() << endl;
      }
 #endif
 

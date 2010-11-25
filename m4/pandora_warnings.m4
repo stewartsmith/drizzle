@@ -87,83 +87,6 @@ AC_DEFUN([PANDORA_WARNINGS],[
             F_DIAGNOSTICS_SHOW_OPTION="-fdiagnostics-show-option"
           ])
 
-    AC_CACHE_CHECK([whether it is safe to use -Wformat],
-      [ac_cv_safe_to_use_wformat_],
-      [save_CFLAGS="$CFLAGS"
-       dnl Use -Werror here instead of ${W_FAIL} so that we don't spew
-       dnl conversion warnings to all the tarball folks
-       CFLAGS="-Wconversion -Werror -pedantic ${AM_CFLAGS} ${CFLAGS}"
-       AC_COMPILE_IFELSE(
-         [AC_LANG_PROGRAM([[
-#include <stdio.h>
-#include <stdint.h>
-#include <inttypes.h>
-void foo(bool a)
-{
-  uint64_t test_u= 0;
-  printf("This is a %" PRIu64 "test\n", test_u);
-}
-         ]],[[
-foo(0);
-         ]])],
-         [ac_cv_safe_to_use_wformat_=yes],
-         [ac_cv_safe_to_use_wformat_=no])
-       CFLAGS="$save_CFLAGS"])
-    AS_IF([test "$ac_cv_safe_to_use_wformat_" = "yes"],[
-      W_FORMAT="-Wformat"
-      W_FORMAT_2="-Wformat=2"
-      NO_FORMAT="-Wno-format"
-      ],[
-      W_FORMAT="-Wno-format"
-      W_FORMAT_2="-Wno-format"
-      NO_FORMAT="-Wno-format"
-    ])
-
-
- 
-    AC_CACHE_CHECK([whether it is safe to use -Wconversion],
-      [ac_cv_safe_to_use_wconversion_],
-      [save_CFLAGS="$CFLAGS"
-       dnl Use -Werror here instead of ${W_FAIL} so that we don't spew
-       dnl conversion warnings to all the tarball folks
-       CFLAGS="-Wconversion -Werror -pedantic ${AM_CFLAGS} ${CFLAGS}"
-       AC_COMPILE_IFELSE(
-         [AC_LANG_PROGRAM([[
-#include <stdbool.h>
-void foo(bool a)
-{
-  (void)a;
-}
-         ]],[[
-foo(0);
-         ]])],
-         [ac_cv_safe_to_use_wconversion_=yes],
-         [ac_cv_safe_to_use_wconversion_=no])
-       CFLAGS="$save_CFLAGS"])
-
-    AS_IF([test "$ac_cv_safe_to_use_wconversion_" = "yes"],
-      [W_CONVERSION="-Wconversion"
-      AC_CACHE_CHECK([whether it is safe to use -Wconversion with htons],
-        [ac_cv_safe_to_use_Wconversion_],
-        [save_CFLAGS="$CFLAGS"
-         dnl Use -Werror here instead of ${W_FAIL} so that we don't spew
-         dnl conversion warnings to all the tarball folks
-         CFLAGS="-Wconversion -Werror -pedantic ${AM_CFLAGS} ${CFLAGS}"
-         AC_COMPILE_IFELSE(
-           [AC_LANG_PROGRAM(
-             [[
-#include <netinet/in.h>
-             ]],[[
-uint16_t x= htons(80);
-             ]])],
-           [ac_cv_safe_to_use_Wconversion_=yes],
-           [ac_cv_safe_to_use_Wconversion_=no])
-         CFLAGS="$save_CFLAGS"])
-
-      AS_IF([test "$ac_cv_safe_to_use_Wconversion_" = "no"],
-            [NO_CONVERSION="-Wno-conversion"])
-    ])
-
     NO_STRICT_ALIASING="-fno-strict-aliasing -Wno-strict-aliasing"
     NO_SHADOW="-Wno-shadow"
 
@@ -214,6 +137,84 @@ uint16_t x= htons(80);
             [BASE_WARNINGS="${BASE_WARNINGS} -Wextra"],
             [BASE_WARNINGS="${BASE_WARNINGS} -W"])
   
+      AC_CACHE_CHECK([whether it is safe to use -Wformat],
+        [ac_cv_safe_to_use_wformat_],
+        [save_CFLAGS="$CFLAGS"
+         dnl Use -Werror here instead of ${W_FAIL} so that we don't spew
+         dnl conversion warnings to all the tarball folks
+         CFLAGS="-Wformat -Werror -pedantic ${AM_CFLAGS} ${CFLAGS}"
+         AC_COMPILE_IFELSE(
+           [AC_LANG_PROGRAM([[
+#include <stdio.h>
+#include <stdint.h>
+#include <inttypes.h>
+void foo();
+void foo()
+{
+  uint64_t test_u= 0;
+  printf("This is a %" PRIu64 "test\n", test_u);
+}
+           ]],[[
+foo();
+           ]])],
+           [ac_cv_safe_to_use_wformat_=yes],
+           [ac_cv_safe_to_use_wformat_=no])
+         CFLAGS="$save_CFLAGS"])
+      AS_IF([test "$ac_cv_safe_to_use_wformat_" = "yes"],[
+        W_FORMAT="-Wformat -Wno-format-nonliteral -Wno-format-security"
+        W_FORMAT_2="-Wformat=2 -Wno-format-nonliteral -Wno-format-security"
+        NO_FORMAT="-Wno-format"
+        ],[
+        W_FORMAT="-Wno-format"
+        W_FORMAT_2="-Wno-format"
+        NO_FORMAT="-Wno-format"
+      ])
+
+
+ 
+      AC_CACHE_CHECK([whether it is safe to use -Wconversion],
+        [ac_cv_safe_to_use_wconversion_],
+        [save_CFLAGS="$CFLAGS"
+         dnl Use -Werror here instead of ${W_FAIL} so that we don't spew
+         dnl conversion warnings to all the tarball folks
+         CFLAGS="-Wconversion -Werror -pedantic ${AM_CFLAGS} ${CFLAGS}"
+         AC_COMPILE_IFELSE(
+           [AC_LANG_PROGRAM([[
+#include <stdbool.h>
+void foo(bool a)
+{
+  (void)a;
+}
+           ]],[[
+foo(0);
+           ]])],
+           [ac_cv_safe_to_use_wconversion_=yes],
+           [ac_cv_safe_to_use_wconversion_=no])
+         CFLAGS="$save_CFLAGS"])
+  
+      AS_IF([test "$ac_cv_safe_to_use_wconversion_" = "yes"],
+        [W_CONVERSION="-Wconversion"
+        AC_CACHE_CHECK([whether it is safe to use -Wconversion with htons],
+          [ac_cv_safe_to_use_Wconversion_],
+          [save_CFLAGS="$CFLAGS"
+           dnl Use -Werror here instead of ${W_FAIL} so that we don't spew
+           dnl conversion warnings to all the tarball folks
+           CFLAGS="-Wconversion -Werror -pedantic ${AM_CFLAGS} ${CFLAGS}"
+           AC_COMPILE_IFELSE(
+             [AC_LANG_PROGRAM(
+               [[
+#include <netinet/in.h>
+               ]],[[
+uint16_t x= htons(80);
+               ]])],
+             [ac_cv_safe_to_use_Wconversion_=yes],
+             [ac_cv_safe_to_use_Wconversion_=no])
+           CFLAGS="$save_CFLAGS"])
+  
+        AS_IF([test "$ac_cv_safe_to_use_Wconversion_" = "no"],
+              [NO_CONVERSION="-Wno-conversion"])
+      ])
+
       CC_WARNINGS="${BASE_WARNINGS} -Wstrict-prototypes -Wmissing-prototypes -Wredundant-decls -Wmissing-declarations -Wcast-align ${CC_WARNINGS_FULL}"
       CXX_WARNINGS="${BASE_WARNINGS} -Woverloaded-virtual -Wnon-virtual-dtor -Wctor-dtor-privacy -Wno-long-long ${CXX_WARNINGS_FULL}"
 
@@ -351,7 +352,7 @@ inline const EnumDescriptor* GetEnumDescriptor<Table_TableOptions_RowType>() {
       dnl TODO: Figure out a better way to deal with this:
       PROTOSKIP_WARNINGS="-Wno-effc++ -Wno-shadow -Wno-missing-braces ${NO_ATTRIBUTES}"
       NO_WERROR="-Wno-error"
-      INNOBASE_SKIP_WARNINGS="-Wno-shadow -Wno-cast-align -Wno-strict-prototypes"
+      INNOBASE_SKIP_WARNINGS="-Wno-shadow -Wno-cast-align"
       AS_IF([test "$host_vendor" = "apple"],[
         BOOSTSKIP_WARNINGS="-Wno-uninitialized"
       ])
