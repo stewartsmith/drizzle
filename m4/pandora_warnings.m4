@@ -111,8 +111,8 @@ foo();
          [ac_cv_safe_to_use_wformat_=no])
        CFLAGS="$save_CFLAGS"])
     AS_IF([test "$ac_cv_safe_to_use_wformat_" = "yes"],[
-      W_FORMAT="-Wformat"
-      W_FORMAT_2="-Wformat=2"
+      W_FORMAT="-Wformat -Wno-format-nonliteral -Wno-format-security"
+      W_FORMAT_2="-Wformat=2 -Wno-format-nonliteral -Wno-format-security"
       NO_FORMAT="-Wno-format"
       ],[
       W_FORMAT="-Wno-format"
