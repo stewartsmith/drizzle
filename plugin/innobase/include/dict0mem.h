@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1996, 2009, Innobase Oy. All Rights Reserved.
+Copyright (c) 1996, 2010, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -88,6 +88,10 @@ combination of types */
 						new BLOB treatment */
 /** Maximum supported file format */
 #define DICT_TF_FORMAT_MAX		DICT_TF_FORMAT_ZIP
+
+/** Minimum supported file format */
+#define DICT_TF_FORMAT_MIN		DICT_TF_FORMAT_51
+
 /* @} */
 #define DICT_TF_BITS			6	/*!< number of flag bits */
 #if (1 << (DICT_TF_BITS - DICT_TF_FORMAT_SHIFT)) <= DICT_TF_FORMAT_MAX
@@ -146,6 +150,36 @@ dict_mem_table_add_col(
 	ulint		mtype,	/*!< in: main datatype */
 	ulint		prtype,	/*!< in: precise type */
 	ulint		len);	/*!< in: precision */
+/**********************************************************************//**
+This function poplulates a dict_col_t memory structure with
+supplied information. */
+UNIV_INLINE
+void
+dict_mem_fill_column_struct(
+/*========================*/
+	dict_col_t*	column,		/*!< out: column struct to be
+					filled */
+	ulint		col_pos,	/*!< in: column position */
+	ulint		mtype,		/*!< in: main data type */
+	ulint		prtype,		/*!< in: precise type */
+	ulint		col_len);	/*!< in: column lenght */
+/**********************************************************************//**
+This function poplulates a dict_index_t index memory structure with
+supplied information. */
+UNIV_INLINE
+void
+dict_mem_fill_index_struct(
+/*=======================*/
+	dict_index_t*	index,		/*!< out: index to be filled */
+	mem_heap_t*	heap,		/*!< in: memory heap */
+	const char*	table_name,	/*!< in: table name */
+	const char*	index_name,	/*!< in: index name */
+	ulint		space,		/*!< in: space where the index tree is
+					placed, ignored if the index is of
+					the clustered type */
+	ulint		type,		/*!< in: DICT_UNIQUE,
+					DICT_CLUSTERED, ... ORed */
+	ulint		n_fields);	/*!< in: number of fields */
 /**********************************************************************//**
 Creates an index memory object.
 @return	own: index object */

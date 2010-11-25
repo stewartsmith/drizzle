@@ -1,5 +1,10 @@
 use data_dictionary;
 
+--disable_query_log
+--disable_result_log
+select * from INNODB_CMP_RESET;
+--enable_result_log
+--enable_query_log
 select * from INNODB_CMP_RESET;
 
 show create table INNODB_CMP_RESET;
