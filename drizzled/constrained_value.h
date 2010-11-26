@@ -93,6 +93,57 @@ public:
   }
 };
 
+namespace
+{
+template<class T, T min_val>
+bool less_than_min(T val_to_check)
+{
+  return val_to_check < min_val;
+}
+
+template<>
+inline bool less_than_min<uint16_t, 0>(uint16_t)
+{
+  return false;
+}
+
+template<>
+inline bool less_than_min<uint32_t, 0>(uint32_t)
+{
+  return false;
+}
+
+template<>
+inline bool less_than_min<uint64_t, 0>(uint64_t)
+{
+  return false;
+}
+
+template<class T, T min_val>
+bool greater_than_max(T val_to_check)
+{
+  return val_to_check > min_val;
+}
+
+template<>
+inline bool greater_than_max<uint16_t, UINT16_MAX>(uint16_t)
+{
+  return false;
+}
+
+template<>
+inline bool greater_than_max<uint32_t, UINT32_MAX>(uint32_t)
+{
+  return false;
+}
+
+template<>
+inline bool greater_than_max<uint64_t, UINT64_MAX>(uint64_t)
+{
+  return false;
+}
+} 
+
 template<class T,
   T MAXVAL,
   T MINVAL, unsigned int ALIGN= 1>
@@ -112,7 +163,7 @@ protected:
 
   constrained_value<T>& set_value(T rhs)
   {
-    if ((rhs > MAXVAL) || (rhs < MINVAL))
+    if (greater_than_max<T,MAXVAL>(rhs) || less_than_min<T,MINVAL>(rhs))
     {
       boost::throw_exception(boost::program_options::invalid_option_value(boost::lexical_cast<std::string>(rhs)));
     }

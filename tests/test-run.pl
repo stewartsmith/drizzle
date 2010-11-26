@@ -942,17 +942,6 @@ sub command_line_setup () {
     }
   }
 
-  # On QNX, /tmp/dir/master.sock and /tmp/dir//master.sock seem to be
-  # considered different, so avoid the extra slash (/) in the socket
-  # paths.
-  my $sockdir = $opt_tmpdir;
-  $sockdir =~ s|/+$||;
-
-  # On some operating systems, there is a limit to the length of a
-  # UNIX domain socket's path far below PATH_MAX, so try to avoid long
-  # socket path names.
-  $sockdir = tempdir(CLEANUP => 0) if ( length($sockdir) >= 70 );
-
   $master->[0]=
   {
    pid            => 0,
@@ -961,7 +950,7 @@ sub command_line_setup () {
    path_myddir    => "$opt_vardir/master-data",
    path_myerr     => "$opt_vardir/log/master.err",
    path_pid       => "$opt_vardir/run/master.pid",
-   path_sock      => "$sockdir/master.sock",
+   path_sock      => "$opt_vardir/master.sock",
    port           =>  $opt_master_myport,
    secondary_port =>  $opt_master_myport + $secondary_port_offset,
    start_timeout  =>  400, # enough time create innodb tables
@@ -977,7 +966,7 @@ sub command_line_setup () {
    path_myddir    => "$opt_vardir/master1-data",
    path_myerr     => "$opt_vardir/log/master1.err",
    path_pid       => "$opt_vardir/run/master1.pid",
-   path_sock      => "$sockdir/master1.sock",
+   path_sock      => "$opt_vardir/master1.sock",
    port           => $opt_master_myport + 1,
    secondary_port => $opt_master_myport + 1 + $secondary_port_offset,
    start_timeout  => 400, # enough time create innodb tables
@@ -993,7 +982,7 @@ sub command_line_setup () {
    path_myddir    => "$opt_vardir/slave-data",
    path_myerr     => "$opt_vardir/log/slave.err",
    path_pid       => "$opt_vardir/run/slave.pid",
-   path_sock      => "$sockdir/slave.sock",
+   path_sock      => "$opt_vardir/slave.sock",
    port           => $opt_slave_myport,
    secondary_port => $opt_slave_myport + $secondary_port_offset,
    start_timeout  => 400,
@@ -1009,7 +998,7 @@ sub command_line_setup () {
    path_myddir    => "$opt_vardir/slave1-data",
    path_myerr     => "$opt_vardir/log/slave1.err",
    path_pid       => "$opt_vardir/run/slave1.pid",
-   path_sock      => "$sockdir/slave1.sock",
+   path_sock      => "$opt_vardir/slave1.sock",
    port           => $opt_slave_myport + 1,
    secondary_port => $opt_slave_myport + 1 + $secondary_port_offset,
    start_timeout  => 300,
@@ -1025,7 +1014,7 @@ sub command_line_setup () {
    path_myddir    => "$opt_vardir/slave2-data",
    path_myerr     => "$opt_vardir/log/slave2.err",
    path_pid       => "$opt_vardir/run/slave2.pid",
-   path_sock      => "$sockdir/slave2.sock",
+   path_sock      => "$opt_vardir/slave2.sock",
    port           => $opt_slave_myport + 2,
    secondary_port => $opt_slave_myport + 2 + $secondary_port_offset,
    start_timeout  => 300,
@@ -2532,6 +2521,9 @@ sub drizzled_arguments ($$$$) {
 
   dtr_add_arg($args, "%s--datadir=%s", $prefix,
 	      $drizzled->{'path_myddir'});
+
+  dtr_add_arg($args, "%s--mysql-unix-socket-protocol.path=%s", $prefix,
+              $drizzled->{'path_sock'});
 
   # Check if "extra_opt" contains --skip-log-bin
   if ( $drizzled->{'type'} eq 'master' )

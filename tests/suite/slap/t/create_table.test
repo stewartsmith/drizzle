@@ -1,0 +1,15 @@
+# Test concurrency operation on create table
+
+# This is here so that something appears in the log, otherwise test-run
+# complains.
+SELECT 1;
+
+CREATE SCHEMA drizzleslap;
+
+--exec $DRIZZLE_SLAP --silent --iterations=20 --query="CREATE TABLE IF NOT EXISTS t1 (id int, name varchar(64)); INSERT INTO t1 VALUES (1, 'This is a test')" --delimiter=";"
+
+# We want to know that atleast one insert happened
+SELECT if((count(id) > 1), "YES", "NO") from drizzleslap.t1;
+
+drop table drizzleslap.t1;
+drop schema drizzleslap;

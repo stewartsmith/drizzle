@@ -21,29 +21,24 @@
 #ifndef DRIZZLED_DEFINITION_CACHE_H
 #define DRIZZLED_DEFINITION_CACHE_H
 
+#include "drizzled/definition/table.h"
+
 namespace drizzled {
 
-typedef boost::shared_ptr<TableShare> TableSharePtr;
+namespace generator {
+class TableDefinitionCache;
+}
 
 namespace definition {
 
-typedef boost::unordered_map< TableIdentifier::Key, TableSharePtr> CacheMap;
-
 class Cache
 {
-  CacheMap cache;
-
 public:
   static inline Cache &singleton()
   {
     static Cache open_cache;
 
     return open_cache;
-  }
-
-  CacheMap &getCache()
-  {
-    return cache;
   }
 
   size_t size() const
@@ -56,9 +51,20 @@ public:
     cache.rehash(arg);
   }
 
-  TableSharePtr find(const TableIdentifier &identifier);
-  void erase(const TableIdentifier &identifier);
-  bool insert(const TableIdentifier &identifier, TableSharePtr share);
+  TableShare::shared_ptr find(const TableIdentifier::Key &identifier);
+  void erase(const TableIdentifier::Key &identifier);
+  bool insert(const TableIdentifier::Key &identifier, TableShare::shared_ptr share);
+
+protected:
+  friend class drizzled::generator::TableDefinitionCache;
+
+  void CopyFrom(TableShare::vector &vector);
+
+private:
+  typedef boost::unordered_map< TableIdentifier::Key, TableShare::shared_ptr> Map;
+
+  Map cache;
+  boost::mutex _mutex;
 };
 
 } /* namespace definition */

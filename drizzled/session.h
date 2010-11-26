@@ -36,6 +36,7 @@
 #include "drizzled/transaction_context.h"
 #include "drizzled/util/storable.h"
 #include "drizzled/my_hash.h"
+#include "drizzled/pthread_globals.h"
 
 #include <netdb.h>
 #include <map>
@@ -51,6 +52,8 @@
 #include "drizzled/plugin/authorization.h"
 
 #include <boost/unordered_map.hpp>
+
+#include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/shared_mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
@@ -206,6 +209,7 @@ struct drizzle_system_variables
   uint64_t preload_buff_size;
   uint32_t read_buff_size;
   uint32_t read_rnd_buff_size;
+  bool replicate_query;
   size_t sortbuff_size;
   uint32_t thread_handling;
   uint32_t tx_isolation;
@@ -542,18 +546,34 @@ public:
   */
   uint32_t dbug_sentry; /**< watch for memory corruption */
 private:
+  boost::thread::id boost_thread_id;
+  boost_thread_shared_ptr _thread;
+  boost::this_thread::disable_interruption *interrupt;
+
   internal::st_my_thread_var *mysys_var;
 public:
+
+  boost_thread_shared_ptr &getThread()
+  {
+    return _thread;
+  }
+
+  void pushInterrupt(boost::this_thread::disable_interruption *interrupt_arg)
+  {
+    interrupt= interrupt_arg;
+  }
+
+  boost::this_thread::disable_interruption &getThreadInterupt()
+  {
+    assert(interrupt);
+    return *interrupt;
+  }
 
   internal::st_my_thread_var *getThreadVar()
   {
     return mysys_var;
   }
 
-  void resetThreadVar()
-  {
-    mysys_var= NULL;
-  }
   /**
    * Type of current query: COM_STMT_PREPARE, COM_QUERY, etc. Set from
    * first byte of the packet in executeStatement()
@@ -1138,27 +1158,43 @@ public:
   inline time_t query_start() { return start_time; }
   inline void set_time()
   {
+    boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::local_time());
+    boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
+    start_utime= utime_after_lock= (mytime-epoch).total_microseconds();
+
     if (user_time)
     {
       start_time= user_time;
-      connect_microseconds= start_utime= utime_after_lock= my_micro_time();
+      connect_microseconds= start_utime;
     }
-    else
-      start_utime= utime_after_lock= my_micro_time_and_time(&start_time);
+    else 
+      start_time= (mytime-epoch).total_seconds();
   }
   inline void	set_current_time()    { start_time= time(NULL); }
   inline void	set_time(time_t t)
   {
     start_time= user_time= t;
-    start_utime= utime_after_lock= my_micro_time();
+    boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::local_time());
+    boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
+    uint64_t t_mark= (mytime-epoch).total_microseconds();
+
+    start_utime= utime_after_lock= t_mark;
   }
-  void set_time_after_lock()  { utime_after_lock= my_micro_time(); }
+  void set_time_after_lock()  { 
+     boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::local_time());
+     boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
+     utime_after_lock= (mytime-epoch).total_microseconds();
+  }
   /**
    * Returns the current micro-timestamp
    */
   inline uint64_t getCurrentTimestamp()  
   { 
-    return my_micro_time(); 
+    boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::local_time());
+    boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
+    uint64_t t_mark= (mytime-epoch).total_microseconds();
+
+    return t_mark; 
   }
   inline uint64_t found_rows(void)
   {

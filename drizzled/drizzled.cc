@@ -68,6 +68,8 @@
 #include "drizzled/module/load_list.h"
 #include "drizzled/global_buffer.h"
 
+#include "drizzled/definition/cache.h"
+
 #include "drizzled/plugin/event_observer.h"
 
 #include "drizzled/message/cache.h"
@@ -337,8 +339,6 @@ MY_LOCALE *my_default_lc_time_names;
 SHOW_COMP_OPTION have_symlink;
 
 /* Thread specific variables */
-
-boost::mutex LOCK_open;
 boost::mutex LOCK_global_system_variables;
 
 boost::condition_variable_any COND_refresh;
@@ -1146,7 +1146,6 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   pid_file.replace_extension(".pid");
 
   system_config_dir /= "drizzle";
-  std::string system_config_file_drizzle("drizzled.cnf");
 
   config_options.add_options()
   ("help,?", po::value<bool>(&opt_help)->default_value(false)->zero_tokens(),
@@ -1209,6 +1208,8 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   N_("Pid file used by drizzled."))
   ("port-open-timeout", po::value<uint32_t>(&drizzled_bind_timeout)->default_value(0),
   N_("Maximum time in seconds to wait for the port to become free. "))
+  ("replicate-query", po::value<bool>(&global_system_variables.replicate_query)->default_value(false)->zero_tokens(),
+  N_("Include the SQL query in replicated protobuf messages."))
   ("secure-file-priv", po::value<fs::path>(&secure_file_priv)->notifier(expand_secure_file_priv),
   N_("Limit LOAD DATA, SELECT ... OUTFILE, and LOAD_FILE() to files "
      "within specified directory"))
@@ -1362,11 +1363,14 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
 
   if (not vm["no-defaults"].as<bool>())
   {
+    fs::path system_config_file_drizzle(system_config_dir);
+    system_config_file_drizzle /= "drizzled.cnf";
     defaults_file_list.insert(defaults_file_list.begin(),
-                              system_config_file_drizzle);
+                              system_config_file_drizzle.file_string());
 
     fs::path config_conf_d_location(system_config_dir);
     config_conf_d_location /= "conf.d";
+
 
     CachedDirectory config_conf_d(config_conf_d_location.file_string());
     if (not config_conf_d.fail())

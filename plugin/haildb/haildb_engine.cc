@@ -2818,9 +2818,7 @@ free_err:
   return err;
 }
 
-static char*  innobase_log_group_home_dir   = NULL;
 static bool innobase_use_doublewrite= true;
-static unsigned long innobase_fast_shutdown= 1;
 static bool srv_file_per_table= false;
 static bool innobase_adaptive_hash_index;
 static bool srv_adaptive_flushing;
@@ -2828,9 +2826,7 @@ static bool innobase_print_verbose_log;
 static bool innobase_rollback_on_timeout;
 static bool innobase_create_status_file;
 static bool srv_use_sys_malloc;
-static char*  innobase_file_format_name   = const_cast<char *>("Barracuda");
-static char*  innobase_unix_file_flush_method   = NULL;
-static unsigned long srv_flush_log_at_trx_commit;
+static string innobase_file_format_name;
 static unsigned long srv_max_buf_pool_modified_pct;
 static unsigned long srv_max_purge_lag;
 static unsigned long innobase_lru_old_blocks_pct;
@@ -2847,16 +2843,38 @@ typedef constrained_check<size_t, SIZE_MAX, 512, 1024> additional_mem_pool_const
 static additional_mem_pool_constraint innobase_additional_mem_pool_size;
 static bool  innobase_use_checksums= true;
 typedef constrained_check<unsigned int, UINT_MAX, 100> io_capacity_constraint;
+typedef constrained_check<uint16_t, 2, 0> trinary_constraint;
+static trinary_constraint innobase_fast_shutdown;
+static trinary_constraint srv_flush_log_at_trx_commit;
+typedef constrained_check<uint16_t, 6, 0> force_recovery_constraint;
+static force_recovery_constraint innobase_force_recovery;
 static io_capacity_constraint srv_io_capacity;
 
 static long innobase_open_files;
-static long innobase_force_recovery;
 static long innobase_log_buffer_size;
 static char  default_haildb_data_file_path[]= "ibdata1:10M:autoextend";
 static char* haildb_data_file_path= NULL;
 
 static int64_t haildb_log_file_size;
 static int64_t haildb_log_files_in_group;
+
+static int haildb_file_format_name_validate(Session*, set_var *var)
+{
+
+  const char *format= var->value->str_value.ptr();
+  if (format == NULL)
+    return 1;
+
+  ib_err_t err= ib_cfg_set_text("file_format", format);
+
+  if (err == DB_SUCCESS)
+  {
+    innobase_file_format_name= format;
+    return 0;
+  }
+  else
+    return 1;
+}
 
 static int haildb_init(drizzled::module::Context &context)
 {
@@ -2877,33 +2895,6 @@ static int haildb_init(drizzled::module::Context &context)
   innobase_use_doublewrite= (vm.count("disable-doublewrite")) ? false : true;
   innobase_print_verbose_log= (vm.count("disable-print-verbose-log")) ? false : true;
   srv_use_sys_malloc= (vm.count("use-internal-malloc")) ? false : true;
-
-  if (vm.count("fast-shutdown"))
-  {
-    if (innobase_fast_shutdown > 2)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of fast-shutdown"));
-      return 1;
-    }
-  }
-
-  if (vm.count("flush-log-at-trx-commit"))
-  {
-    if (srv_flush_log_at_trx_commit > 2)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of flush-log-at-trx-commit"));
-      return 1;
-    }
-  }
-
-  if (vm.count("force-recovery"))
-  {
-    if (innobase_force_recovery > 6)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of force-recovery"));
-      return 1;
-    }
-  }
 
   if (vm.count("log-file-size"))
   {
@@ -3008,21 +2999,6 @@ static int haildb_init(drizzled::module::Context &context)
     }
   }
 
-  if (vm.count("file-format"))
-  {
-    innobase_file_format_name= const_cast<char *>(vm["file-format"].as<string>().c_str());
-  }
-
-  if (vm.count("log-group-home-dir"))
-  {
-    innobase_log_group_home_dir= const_cast<char *>(vm["log-group-home-dir"].as<string>().c_str());
-  }
-
-  if (vm.count("flush-method"))
-  {
-    innobase_unix_file_flush_method= const_cast<char *>(vm["flush-method"].as<string>().c_str());
-  }
-
   if (vm.count("data-file-path"))
   {
     haildb_data_file_path= const_cast<char *>(vm["data-file-path"].as<string>().c_str());
@@ -3042,9 +3018,9 @@ static int haildb_init(drizzled::module::Context &context)
       goto haildb_error;
   }
 
-  if (innobase_log_group_home_dir)
+  if (vm.count("log-group-home-dir"))
   {
-    err= ib_cfg_set_text("log_group_home_dir", innobase_log_group_home_dir);
+    err= ib_cfg_set_text("log_group_home_dir", vm["log-group-home-dir"].as<string>().c_str());
     if (err != DB_SUCCESS)
       goto haildb_error;
   }
@@ -3116,18 +3092,21 @@ static int haildb_init(drizzled::module::Context &context)
   if (err != DB_SUCCESS)
     goto haildb_error;
 
-  err= ib_cfg_set_int("flush_log_at_trx_commit", srv_flush_log_at_trx_commit);
+  err= ib_cfg_set_int("flush_log_at_trx_commit",
+                      static_cast<uint16_t>(srv_flush_log_at_trx_commit));
   if (err != DB_SUCCESS)
     goto haildb_error;
 
-  if (innobase_unix_file_flush_method)
+  if (vm.count("flush-method") != 0)
   {
-    err= ib_cfg_set_text("flush_method", innobase_unix_file_flush_method);
+    err= ib_cfg_set_text("flush_method", 
+                         vm["flush-method"].as<string>().c_str());
     if (err != DB_SUCCESS)
       goto haildb_error;
   }
 
-  err= ib_cfg_set_int("force_recovery", innobase_force_recovery);
+  err= ib_cfg_set_int("force_recovery",
+                      static_cast<uint16_t>(innobase_force_recovery));
   if (err != DB_SUCCESS)
     goto haildb_error;
 
@@ -3187,7 +3166,7 @@ static int haildb_init(drizzled::module::Context &context)
   if (err != DB_SUCCESS)
     goto haildb_error;
 
-  err= ib_startup(innobase_file_format_name);
+  err= ib_startup(innobase_file_format_name.c_str());
   if (err != DB_SUCCESS)
     goto haildb_error;
 
@@ -3209,6 +3188,18 @@ static int haildb_init(drizzled::module::Context &context)
   context.registerVariable(new sys_var_const_string_val("data_home_dir",
                                                 vm.count("data-home-dir") ?  vm["data-home-dir"].as<string>() : ""));
   context.registerVariable(new sys_var_constrained_value_readonly<unsigned int>("io_capacity", srv_io_capacity));
+  context.registerVariable(new sys_var_constrained_value_readonly<uint16_t>("fast_shutdown", innobase_fast_shutdown));
+  context.registerVariable(new sys_var_bool_ptr_readonly("file_per_table",
+                                                         &srv_file_per_table));
+  context.registerVariable(new sys_var_std_string("file-format",
+                                                  innobase_file_format_name,
+                                                  haildb_file_format_name_validate));
+  context.registerVariable(new sys_var_constrained_value_readonly<uint16_t>("flush_log_at_trx_commit", srv_flush_log_at_trx_commit));
+  context.registerVariable(new sys_var_const_string_val("flush_method",
+                                                vm.count("flush-method") ?  vm["flush-method"].as<string>() : ""));
+  context.registerVariable(new sys_var_constrained_value_readonly<uint16_t>("force_recovery", innobase_force_recovery));
+  context.registerVariable(new sys_var_const_string_val("log_group_home_dir",
+                                                vm.count("log-group-home-dir") ?  vm["log-group-home-dir"].as<string>() : ""));
 
   haildb_datadict_dump_func_initialize(context);
   config_table_function_initialize(context);
@@ -3227,9 +3218,9 @@ HailDBEngine::~HailDBEngine()
   ib_err_t err;
   ib_shutdown_t shutdown_flag= IB_SHUTDOWN_NORMAL;
 
-  if (innobase_fast_shutdown == 1)
+  if (static_cast<unsigned int>(innobase_fast_shutdown) == 1)
     shutdown_flag= IB_SHUTDOWN_NO_IBUFMERGE_PURGE;
-  else if (innobase_fast_shutdown == 2)
+  else if (static_cast<unsigned int>(innobase_fast_shutdown) == 2)
     shutdown_flag= IB_SHUTDOWN_NO_BUFPOOL_FLUSH;
 
   err= ib_shutdown(shutdown_flag);
@@ -3241,54 +3232,6 @@ HailDBEngine::~HailDBEngine()
 
 }
 
-static char haildb_file_format_name_storage[100];
-
-static int haildb_file_format_name_validate(Session*, drizzle_sys_var*,
-                                            void *save,
-                                            drizzle_value *value)
-{
-  ib_err_t err;
-  char buff[100];
-  int len= sizeof(buff);
-  const char *format= value->val_str(value, buff, &len);
-
-  *static_cast<const char**>(save)= NULL;
-
-  if (format == NULL)
-    return 1;
-
-  err= ib_cfg_set_text("file_format", format);
-
-  if (err == DB_SUCCESS)
-  {
-    strncpy(haildb_file_format_name_storage, format, sizeof(haildb_file_format_name_storage));;
-    haildb_file_format_name_storage[sizeof(haildb_file_format_name_storage)-1]= 0;
-
-    *static_cast<const char**>(save)= haildb_file_format_name_storage;
-    return 0;
-  }
-  else
-    return 1;
-}
-
-static void haildb_file_format_name_update(Session*, drizzle_sys_var*,
-                                           void *var_ptr,
-                                           const void *save)
-
-{
-  const char* format;
-
-  assert(var_ptr != NULL);
-  assert(save != NULL);
-
-  format= *static_cast<const char*const*>(save);
-
-  /* Format is already set in validate */
-  memmove(haildb_file_format_name_storage, format, sizeof(haildb_file_format_name_storage));;
-  haildb_file_format_name_storage[sizeof(haildb_file_format_name_storage)-1]= 0;
-
-  *static_cast<const char**>(var_ptr)= haildb_file_format_name_storage;
-}
 
 static void haildb_lru_old_blocks_pct_update(Session*, drizzle_sys_var*,
                                              void *,
@@ -3339,49 +3282,10 @@ static void haildb_status_file_update(Session*, drizzle_sys_var*,
     innobase_create_status_file= status_file_enabled;
 }
 
-static DRIZZLE_SYSVAR_ULONG(fast_shutdown, innobase_fast_shutdown,
-  PLUGIN_VAR_OPCMDARG,
-  "Speeds up the shutdown process of the HailDB storage engine. Possible "
-  "values are 0, 1 (faster)"
-  " or 2 (fastest - crash-like)"
-  ".",
-  NULL, NULL, 1, 0, 2, 0);
-
-static DRIZZLE_SYSVAR_BOOL(file_per_table, srv_file_per_table,
-  PLUGIN_VAR_NOCMDARG,
-  "Stores each HailDB table to an .ibd file in the database dir.",
-  NULL, NULL, false);
-
-static DRIZZLE_SYSVAR_STR(file_format, innobase_file_format_name,
-  PLUGIN_VAR_RQCMDARG,
-  "File format to use for new tables in .ibd files.",
-  haildb_file_format_name_validate,
-  haildb_file_format_name_update, "Barracuda");
-
-static DRIZZLE_SYSVAR_ULONG(flush_log_at_trx_commit, srv_flush_log_at_trx_commit,
-  PLUGIN_VAR_OPCMDARG,
-  "Set to 0 (write and flush once per second),"
-  " 1 (write and flush at each commit)"
-  " or 2 (write at commit, flush once per second).",
-  NULL, NULL, 1, 0, 2, 0);
-
-static DRIZZLE_SYSVAR_STR(flush_method, innobase_unix_file_flush_method,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "With which method to flush data.", NULL, NULL, NULL);
-
-static DRIZZLE_SYSVAR_LONG(force_recovery, innobase_force_recovery,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Helps to save your data in case the disk image of the database becomes corrupt.",
-  NULL, NULL, 0, 0, 6, 0);
-
 static DRIZZLE_SYSVAR_STR(data_file_path, haildb_data_file_path,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "Path to individual files and their sizes.",
   NULL, NULL, NULL);
-
-static DRIZZLE_SYSVAR_STR(log_group_home_dir, innobase_log_group_home_dir,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Path to HailDB log files.", NULL, NULL, NULL);
 
 static DRIZZLE_SYSVAR_LONGLONG(log_file_size, haildb_log_file_size,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
@@ -3494,27 +3398,24 @@ static void init_options(drizzled::module::option_context &context)
           po::value<io_capacity_constraint>(&srv_io_capacity)->default_value(200),
           N_("Number of IOPs the server can do. Tunes the background IO rate"));
   context("fast-shutdown",
-          po::value<unsigned long>(&innobase_fast_shutdown)->default_value(1),
+          po::value<trinary_constraint>(&innobase_fast_shutdown)->default_value(1),
           N_("Speeds up the shutdown process of the HailDB storage engine. Possible values are 0, 1 (faster) or 2 (fastest - crash-like)."));
   context("file-per-table",
           po::value<bool>(&srv_file_per_table)->default_value(false)->zero_tokens(),
           N_("Stores each HailDB table to an .ibd file in the database dir."));
   context("file-format",
-          po::value<string>(),
+          po::value<string>(&innobase_file_format_name)->default_value("Barracuda"),
           N_("File format to use for new tables in .ibd files."));
   context("flush-log-at-trx-commit",
-          po::value<unsigned long>(&srv_flush_log_at_trx_commit)->default_value(1),
+          po::value<trinary_constraint>(&srv_flush_log_at_trx_commit)->default_value(1),
           N_("Set to 0 (write and flush once per second),1 (write and flush at each commit) or 2 (write at commit, flush once per second)."));
   context("flush-method",
           po::value<string>(),
           N_("With which method to flush data."));
   context("force-recovery",
-          po::value<long>(&innobase_force_recovery)->default_value(0),
+          po::value<force_recovery_constraint>(&innobase_force_recovery)->default_value(0),
           N_("Helps to save your data in case the disk image of the database becomes corrupt."));
   context("data-file-path",
-          po::value<string>(),
-          N_("Path to individual files and their sizes."));
-  context("log-group-home-dir",
           po::value<string>(),
           N_("Path to individual files and their sizes."));
   context("log-group-home-dir",
@@ -3569,13 +3470,6 @@ static void init_options(drizzled::module::option_context &context)
 }
 
 static drizzle_sys_var* innobase_system_variables[]= {
-  DRIZZLE_SYSVAR(fast_shutdown),
-  DRIZZLE_SYSVAR(file_per_table),
-  DRIZZLE_SYSVAR(file_format),
-  DRIZZLE_SYSVAR(flush_log_at_trx_commit),
-  DRIZZLE_SYSVAR(flush_method),
-  DRIZZLE_SYSVAR(force_recovery),
-  DRIZZLE_SYSVAR(log_group_home_dir),
   DRIZZLE_SYSVAR(data_file_path),
   DRIZZLE_SYSVAR(lock_wait_timeout),
   DRIZZLE_SYSVAR(log_file_size),

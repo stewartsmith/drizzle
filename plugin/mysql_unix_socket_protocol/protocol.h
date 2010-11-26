@@ -27,6 +27,8 @@
 #include <drizzled/atomics.h>
 #include "drizzled/plugin/table_function.h"
 
+#include <boost/filesystem.hpp>
+
 #include "plugin/mysql_protocol/mysql_protocol.h"
 
 namespace mysql_unix_socket_protocol
@@ -34,9 +36,13 @@ namespace mysql_unix_socket_protocol
 
 class Protocol: public ListenMySQLProtocol
 {
+  const boost::filesystem::path unix_socket_path;
 public:
-  Protocol(std::string name_arg, bool using_mysql41_protocol_arg):
-    ListenMySQLProtocol(name_arg, using_mysql41_protocol_arg)
+  Protocol(std::string name_arg,
+           bool using_mysql41_protocol_arg,
+           const boost::filesystem::path &unix_socket_path_arg) :
+    ListenMySQLProtocol(name_arg, using_mysql41_protocol_arg),
+    unix_socket_path(unix_socket_path_arg)
   { }
 
   ~Protocol();

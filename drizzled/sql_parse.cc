@@ -54,7 +54,7 @@
 
 #include <bitset>
 #include <algorithm>
-
+#include <boost/date_time.hpp>
 #include "drizzled/internal/my_sys.h"
 
 using namespace std;
@@ -717,8 +717,9 @@ void create_select_for_variable(const char *var_name)
 
 void mysql_parse(Session *session, const char *inBuf, uint32_t length)
 {
-  uint64_t start_time= my_getsystime();
+  boost::posix_time::ptime start_time=boost::posix_time::microsec_clock::local_time();
   session->lex->start(session);
+
   session->reset_for_next_command();
   /* Check if the Query is Cached if and return true if yes
    * TODO the plugin has to make sure that the query is cacheble
@@ -767,7 +768,8 @@ void mysql_parse(Session *session, const char *inBuf, uint32_t length)
   session->set_proc_info("freeing items");
   session->end_statement();
   session->cleanup_after_query();
-  session->status_var.execution_time_nsec+= my_getsystime() - start_time;
+  boost::posix_time::ptime end_time=boost::posix_time::microsec_clock::local_time();
+  session->status_var.execution_time_nsec+=(end_time-start_time).total_microseconds();
 }
 
 
@@ -957,8 +959,6 @@ TableList *Select_Lex::add_table_to_list(Session *session,
 
   ptr->alias= alias_str;
   ptr->setIsAlias(alias ? true : false);
-  if (table->table.length)
-    table->table.length= my_casedn_str(files_charset_info, table->table.str);
   ptr->setTableName(table->table.str);
   ptr->table_name_length=table->table.length;
   ptr->lock_type=   lock_type;
@@ -1411,57 +1411,6 @@ void add_join_natural(TableList *a, TableList *b, List<String> *using_fields,
 {
   b->natural_join= a;
   lex->prev_join_using= using_fields;
-}
-
-
-/**
-  kill on thread.
-
-  @param session			Thread class
-  @param id			Thread id
-  @param only_kill_query        Should it kill the query or the connection
-
-  @note
-    This is written such that we have a short lock on LOCK_thread_count
-*/
-
-static unsigned int kill_one_thread(session_id_t id, bool only_kill_query)
-{
-  uint32_t error= ER_NO_SUCH_THREAD;
-  
-  Session::shared_ptr session= session::Cache::singleton().find(id);
-
-  if (not session)
-    return error;
-
-  if (session->isViewable())
-  {
-    session->awake(only_kill_query ? Session::KILL_QUERY : Session::KILL_CONNECTION);
-    error= 0;
-  }
-
-  return error;
-}
-
-
-/*
-  kills a thread and sends response
-
-  SYNOPSIS
-    sql_kill()
-    session			Thread class
-    id			Thread id
-    only_kill_query     Should it kill the query or the connection
-*/
-
-void sql_kill(Session *session, int64_t id, bool only_kill_query)
-{
-  uint32_t error;
-
-  if (not (error= kill_one_thread(id, only_kill_query)))
-    session->my_ok();
-  else
-    my_error(error, MYF(0), id);
 }
 
 

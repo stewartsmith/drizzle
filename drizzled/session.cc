@@ -432,6 +432,10 @@ void Session::awake(Session::killed_state_t state_to_set)
     scheduler->killSession(this);
     DRIZZLE_CONNECTION_DONE(thread_id);
   }
+
+  assert(_thread);
+  _thread->interrupt();
+
   if (mysys_var)
   {
     boost_unique_lock_t scopedLock(mysys_var->mutex);
@@ -1897,7 +1901,7 @@ void Session::close_thread_tables()
     lock= 0;
   }
   /*
-    Note that we need to hold LOCK_open while changing the
+    Note that we need to hold table::Cache::singleton().mutex() while changing the
     open_tables list. Another thread may work on it.
     (See: table::Cache::singleton().removeTable(), mysql_wait_completed_table())
     Closing a MERGE child before the parent would be fatal if the

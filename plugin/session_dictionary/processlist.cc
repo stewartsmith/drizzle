@@ -116,7 +116,7 @@ bool ProcesslistTool::Generator::populate()
     val ? push(val) : push();
 
     /* INFO */
-    push(*getSession().getQueryString());
+    push(*tmp->getQueryString());
 
     return true;
   }

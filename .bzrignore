@@ -329,3 +329,7 @@ unittests/uwagi.txt
 virtual_column_info.gcno
 xid.gcno
 ylwrap
+po/drizzle7.pot
+plugin/transaction_log/utilities/transaction_reader
+plugin/storage_engine_api_tester/engine_states_to_dot
+plugin/storage_engine_api_tester/cursor_states_to_dot

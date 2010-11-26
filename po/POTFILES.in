@@ -98,6 +98,6 @@ plugin/transaction_log/module.cc
 plugin/transaction_log/print_transaction_message.cc
 plugin/transaction_log/transaction_log.cc
 plugin/transaction_log/transaction_log_reader.cc
-plugin/transaction_log/write_buffer.cc
-plugin/transaction_log/utilities/transaction_reader.cc
 plugin/transaction_log/utilities/transaction_file_reader.cc
+plugin/transaction_log/utilities/transaction_reader.cc
+plugin/transaction_log/write_buffer.cc

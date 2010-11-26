@@ -270,7 +270,10 @@ void TableIdentifier::init()
   util::insensitive_hash hasher;
   hash_value= hasher(path);
 
-  key.set(getKeySize(), getSchemaName(), getTableName());
+  std::string tb_name(getTableName());
+  std::transform(tb_name.begin(), tb_name.end(), tb_name.begin(), ::tolower);
+
+  key.set(getKeySize(), getSchemaName(), tb_name);
 }
 
 

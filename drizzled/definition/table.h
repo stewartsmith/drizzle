@@ -39,14 +39,11 @@
 #include "drizzled/util/string.h"
 
 #include "drizzled/table/cache.h"
-#include "drizzled/definition/cache.h"
 
 namespace drizzled
 {
 
 extern uint64_t refresh_version;
-
-typedef boost::shared_ptr<TableShare> TableSharePtr;
 
 const static std::string STANDARD_STRING("STANDARD");
 const static std::string TEMPORARY_STRING("TEMPORARY");
@@ -64,7 +61,11 @@ class Field_blob;
 class TableShare
 {
   typedef std::vector<std::string> StringVector;
+
 public:
+  typedef boost::shared_ptr<TableShare> shared_ptr;
+  typedef std::vector <shared_ptr> vector;
+
   TableShare(TableIdentifier::Type type_arg);
 
   TableShare(TableIdentifier &identifier, const TableIdentifier::Key &key); // Used by placeholder
@@ -500,11 +501,6 @@ public:
     unlock();
   }
 
-  uint32_t decrementTableCount()
-  {
-    return --ref_count;
-  }
-
   uint32_t null_bytes;
   uint32_t last_null_bit_pos;
   uint32_t fields;				/* Number of fields */
@@ -633,12 +629,11 @@ public:
   void open_table_error(int pass_error, int db_errno, int pass_errarg);
 
   static void release(TableShare *share);
-  static void release(TableSharePtr &share);
+  static void release(TableShare::shared_ptr &share);
   static void release(TableIdentifier &identifier);
-  static TableSharePtr getShare(TableIdentifier &identifier);
-  static TableSharePtr getShareCreate(Session *session, 
-                                      TableIdentifier &identifier,
-                                      int &error);
+  static TableShare::shared_ptr getShareCreate(Session *session, 
+                                               TableIdentifier &identifier,
+                                               int &error);
 
   friend std::ostream& operator<<(std::ostream& output, const TableShare &share)
   {

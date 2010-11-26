@@ -59,6 +59,14 @@ public:
   bool removeTable(Session *session, TableIdentifier &identifier, uint32_t flags);
   void release(TableShare *share);
   bool insert(table::Concurrent *arg);
+
+  boost::mutex &mutex()
+  {
+    return _mutex;
+  }
+
+private:
+  boost::mutex _mutex;
 };
 
 CacheMap &getCache(void);
