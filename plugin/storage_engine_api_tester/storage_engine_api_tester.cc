@@ -102,8 +102,8 @@ public:
 
   int close() { CURSOR_NEW_STATE("::close()"); CURSOR_NEW_STATE("Cursor()");return realCursor->close(); }
   int rnd_next(unsigned char *buf) { CURSOR_NEW_STATE("::rnd_next()"); return realCursor->rnd_next(buf); }
-  int rnd_pos(unsigned char*, unsigned char*) { CURSOR_NEW_STATE("::rnd_pos()"); return -1; }
-  void position(const unsigned char*) { CURSOR_NEW_STATE("::position()"); return; }
+  int rnd_pos(unsigned char* buf, unsigned char* pos) { CURSOR_NEW_STATE("::rnd_pos()"); return realCursor->rnd_pos(buf, pos); }
+  void position(const unsigned char *record) { CURSOR_NEW_STATE("::position()"); realCursor->position(record);}
   int info(uint32_t) { return 0; }
   void get_auto_increment(uint64_t, uint64_t, uint64_t, uint64_t*, uint64_t*) {}
   int doStartTableScan(bool scan) { CURSOR_NEW_STATE("::doStartTableScan()"); return realCursor->doStartTableScan(scan); }
@@ -121,6 +121,13 @@ public:
     CURSOR_NEW_STATE("::doInsertRecord()");
     CURSOR_NEW_STATE("::store_lock()");
     return realCursor->doInsertRecord(buf);
+  }
+
+  int doUpdateRecord(const unsigned char *old_row, unsigned char *new_row)
+  {
+    CURSOR_NEW_STATE("::doUpdateRecord()");
+    CURSOR_NEW_STATE("::store_lock()");
+    return realCursor->doUpdateRecord(old_row, new_row);
   }
 
 private:

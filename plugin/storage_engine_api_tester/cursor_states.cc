@@ -53,4 +53,7 @@ void load_cursor_state_transitions(state_multimap &states)
   states.insert(state_pair("::doEndTableScan()", "Cursor()"));
   states.insert(state_pair("::store_lock()", "::doInsertRecord()"));
   states.insert(state_pair("::doInsertRecord()", "::store_lock()"));
+
+  states.insert(state_pair("::store_lock()", "::doUpdateRecord()"));
+  states.insert(state_pair("::doUpdateRecord()", "::store_lock()"));
 }
