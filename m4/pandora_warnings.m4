@@ -92,13 +92,13 @@ AC_DEFUN([PANDORA_WARNINGS],[
 
     AS_IF([test "$INTELCC" = "yes"],[
       m4_if(PW_LESS_WARNINGS,[no],[
-        BASE_WARNINGS="-w1 -Werror -Wcheck ${W_FORMAT} -Wp64 -Woverloaded-virtual -Wcast-qual -diag-disable 188"
+        BASE_WARNINGS="-w1 -Werror -Wcheck -Wp64 -Woverloaded-virtual -Wcast-qual -diag-disable 188"
       ],[
         dnl 2203 is like old-style-cast
         dnl 1684 is like strict-aliasing
         dnl 188 is about using enums as bitfields
         dnl 1683 is a warning about _EXPLICIT_ casting, which we want
-        BASE_WARNINGS="-w1 -Werror -Wcheck ${W_FORMAT} -Wp64 -Woverloaded-virtual -Wcast-qual -diag-disable 188,981,2259,2203,1683,1684"
+        BASE_WARNINGS="-w1 -Werror -Wcheck -Wp64 -Woverloaded-virtual -Wcast-qual -diag-disable 188,981,2259,2203,1683,1684"
       ])
       CC_WARNINGS="${BASE_WARNINGS}"
       CXX_WARNINGS="${BASE_WARNINGS}"
@@ -106,13 +106,13 @@ AC_DEFUN([PANDORA_WARNINGS],[
       
     ],[
       m4_if(PW_LESS_WARNINGS,[no],[
-        BASE_WARNINGS_FULL="${W_FORMAT_2} ${W_CONVERSION} -Wstrict-aliasing"
+        BASE_WARNINGS_FULL="${W_CONVERSION} -Wstrict-aliasing"
         CC_WARNINGS_FULL="-Wswitch-default -Wswitch-enum -Wwrite-strings"
         CXX_WARNINGS_FULL="-Weffc++ -Wold-style-cast"
         NO_OLD_STYLE_CAST="-Wno-old-style-cast"
         NO_EFF_CXX="-Wno-effc++"
       ],[
-        BASE_WARNINGS_FULL="${W_FORMAT_2} ${NO_STRICT_ALIASING}"
+        BASE_WARNINGS_FULL="${NO_STRICT_ALIASING}"
       ])
 
       AS_IF([test "${ac_cv_assert}" = "no"],
@@ -161,13 +161,11 @@ foo();
            [ac_cv_safe_to_use_wformat_=no])
          CFLAGS="$save_CFLAGS"])
       AS_IF([test "$ac_cv_safe_to_use_wformat_" = "yes"],[
-        W_FORMAT="-Wformat -Wno-format-nonliteral -Wno-format-security"
-        W_FORMAT_2="-Wformat=2 -Wno-format-nonliteral -Wno-format-security"
-        NO_FORMAT="-Wno-format"
+        BASE_WARNINGS="${BASE_WARNINGS} -Wformat -Wno-format-nonliteral -Wno-format-security"
+        BASE_WARNINGS_FULL="${BASE_WARNINGS_FULL} -Wformat=2 -Wno-format-nonliteral -Wno-format-security"
         ],[
-        W_FORMAT="-Wno-format"
-        W_FORMAT_2="-Wno-format"
-        NO_FORMAT="-Wno-format"
+        BASE_WARNINGS="${BASE_WARNINGS} -Wno-format"
+        BASE_WARNINGS_FULL="${BASE_WARNINGS_FULL} -Wno-format"
       ])
 
 
