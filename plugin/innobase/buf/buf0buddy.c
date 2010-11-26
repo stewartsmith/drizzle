@@ -415,6 +415,8 @@ buf_buddy_relocate(
 	buf_page_t*	bpage;
 	const ulint	size	= BUF_BUDDY_LOW << i;
 	ullint		usec	= ut_time_us(NULL);
+        ulint		space;
+        ulint		page_no;
 
 	ut_ad(buf_pool_mutex_own(buf_pool));
 	ut_ad(!mutex_own(&buf_pool->zip_mutex));
@@ -446,9 +448,9 @@ buf_buddy_relocate(
 		pool), so there is nothing wrong about this.  The
 		mach_read_from_4() calls here will only trigger bogus
 		Valgrind memcheck warnings in UNIV_DEBUG_VALGRIND builds. */
-		ulint		space	= mach_read_from_4(
+		space	= mach_read_from_4(
 			(const byte*) src + FIL_PAGE_ARCH_LOG_NO_OR_SPACE_ID);
-		ulint		page_no	= mach_read_from_4(
+		page_no	= mach_read_from_4(
 			(const byte*) src + FIL_PAGE_OFFSET);
 		/* Suppress Valgrind warnings about conditional jump
 		on uninitialized value. */
