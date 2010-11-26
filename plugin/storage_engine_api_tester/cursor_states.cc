@@ -30,9 +30,9 @@ void load_cursor_state_transitions(state_multimap &states);
 
 void load_cursor_state_transitions(state_multimap &states)
 {
-  states.insert(state_pair("Cursor()", "::open()"));
-  states.insert(state_pair("::open()", "::store_lock()"));
-  states.insert(state_pair("::open()", "::close()"));
+  states.insert(state_pair("Cursor()", "::doOpen()"));
+  states.insert(state_pair("::doOpen()", "::store_lock()"));
+  states.insert(state_pair("::doOpen()", "::close()"));
   states.insert(state_pair("::close()", "Cursor()"));
 
   // we can always set a new lock
@@ -40,9 +40,11 @@ void load_cursor_state_transitions(state_multimap &states)
 
   states.insert(state_pair("::store_lock()", "::close()"));
   states.insert(state_pair("::store_lock()", "::doStartTableScan()"));
-  states.insert(state_pair("::open()", "::doStartTableScan()"));
+  states.insert(state_pair("::doOpen()", "::doStartTableScan()"));
   states.insert(state_pair("::doStartTableScan()", "::rnd_next()"));
   states.insert(state_pair("::rnd_next()", "::doEndTableScan()"));
+  states.insert(state_pair("::rnd_next()", "::rnd_next()"));
+  states.insert(state_pair("::doEndTableScan()", "::close()"));
 
   // below two are bugs - sholud call endtablescan
   states.insert(state_pair("::rnd_next()", "::store_lock()"));

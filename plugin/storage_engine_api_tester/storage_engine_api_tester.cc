@@ -43,9 +43,6 @@ state_multimap cursor_state_transitions;
 void load_engine_state_transitions(state_multimap &states);
 void load_cursor_state_transitions(state_multimap &states);
 
-/* This is a hack to make store_lock kinda work */
-drizzled::THR_LOCK share_lock;
-
 plugin::TransactionalStorageEngine *realEngine;
 
 static plugin::TransactionalStorageEngine *getRealEngine()
@@ -88,39 +85,42 @@ static inline void ENGINE_NEW_STATE(const string &new_state)
 }
 
 static const string engine_name("STORAGE_ENGINE_API_TESTER");
-
+namespace drizzled {
 class SEAPITesterCursor : public drizzled::Cursor
 {
+  friend class drizzled::Cursor;
 public:
+  drizzled::Cursor *realCursor;
+
   SEAPITesterCursor(drizzled::plugin::StorageEngine &engine_arg,
                     drizzled::Table &table_arg)
     : Cursor(engine_arg, table_arg)
-    { cursor_state= "Cursor()"; }
-  ~SEAPITesterCursor()
-  {}
+    { cursor_state= "Cursor()"; realCursor= NULL;}
 
-  int close() { CURSOR_NEW_STATE("::close()"); CURSOR_NEW_STATE("Cursor()");return 0; }
-  int rnd_next(unsigned char*) { CURSOR_NEW_STATE("::rnd_next()"); return HA_ERR_END_OF_FILE; }
+  ~SEAPITesterCursor()
+    { delete realCursor;}
+
+  int close() { CURSOR_NEW_STATE("::close()"); CURSOR_NEW_STATE("Cursor()");return realCursor->close(); }
+  int rnd_next(unsigned char *buf) { CURSOR_NEW_STATE("::rnd_next()"); return realCursor->rnd_next(buf); }
   int rnd_pos(unsigned char*, unsigned char*) { CURSOR_NEW_STATE("::rnd_pos()"); return -1; }
   void position(const unsigned char*) { CURSOR_NEW_STATE("::position()"); return; }
   int info(uint32_t) { return 0; }
   void get_auto_increment(uint64_t, uint64_t, uint64_t, uint64_t*, uint64_t*) {}
-  int doStartTableScan(bool) { CURSOR_NEW_STATE("::doStartTableScan()"); return HA_ERR_END_OF_FILE; }
+  int doStartTableScan(bool scan) { CURSOR_NEW_STATE("::doStartTableScan()"); return realCursor->doStartTableScan(scan); }
+  int doEndTableScan() { CURSOR_NEW_STATE("::doEndTableScan()"); return realCursor->doEndTableScan(); }
 
-  int open(const char*, int, uint32_t)
-    { CURSOR_NEW_STATE("::open()"); lock.init(&share_lock); return 0;}
-
-  drizzled::THR_LOCK_DATA lock;        /* MySQL lock */
+  int doOpen(const TableIdentifier &identifier, int mode, uint32_t test_if_locked)
+    { CURSOR_NEW_STATE("::doOpen()"); return realCursor->doOpen(identifier, mode, test_if_locked);}
 
   THR_LOCK_DATA **store_lock(Session *,
                                      THR_LOCK_DATA **to,
                              enum thr_lock_type);
 
-  int doInsertRecord(unsigned char *)
+  int doInsertRecord(unsigned char *buf)
   {
     CURSOR_NEW_STATE("::doInsertRecord()");
     CURSOR_NEW_STATE("::store_lock()");
-    return 0;
+    return realCursor->doInsertRecord(buf);
   }
 
 private:
@@ -135,37 +135,7 @@ THR_LOCK_DATA **SEAPITesterCursor::store_lock(Session *session,
 {
   CURSOR_NEW_STATE("::store_lock()");
 
-  if (lock_type != TL_IGNORE && lock.type == TL_UNLOCK)
-  {
-    /*
-      Here is where we get into the guts of a row level lock.
-      If TL_UNLOCK is set
-      If we are not doing a LOCK Table or DISCARD/IMPORT
-      TABLESPACE, then allow multiple writers
-    */
-
-    if ((lock_type >= TL_WRITE_CONCURRENT_INSERT &&
-         lock_type <= TL_WRITE)
-        && !session_tablespace_op(session))
-      lock_type = TL_WRITE_ALLOW_WRITE;
-
-    /*
-      In queries of type INSERT INTO t1 SELECT ... FROM t2 ...
-      MySQL would use the lock TL_READ_NO_INSERT on t2, and that
-      would conflict with TL_WRITE_ALLOW_WRITE, blocking all inserts
-      to t2. Convert the lock to a normal read lock to allow
-      concurrent inserts to t2.
-    */
-
-    if (lock_type == TL_READ_NO_INSERT)
-      lock_type = TL_READ;
-
-    lock.type=lock_type;
-  }
-
-  *to++= &lock;
-
-  return(to);
+  return realCursor->store_lock(session, to, lock_type);
 }
 
 void SEAPITesterCursor::CURSOR_NEW_STATE(const string &new_state)
@@ -202,6 +172,8 @@ void SEAPITesterCursor::CURSOR_NEW_STATE(const string &new_state)
   cerr << "\t\tCursor STATE : " << cursor_state << endl;
 }
 
+} /* namespace drizzled */
+
 static const char *api_tester_exts[] = {
   NULL
 };
@@ -210,6 +182,7 @@ class SEAPITester : public drizzled::plugin::TransactionalStorageEngine
 {
   friend class drizzled::plugin::StorageEngine;
   friend class drizzled::plugin::TransactionalStorageEngine;
+
 public:
   SEAPITester(const string &name_arg)
     : drizzled::plugin::TransactionalStorageEngine(name_arg,
@@ -230,7 +203,11 @@ public:
 
   virtual Cursor *create(Table &table)
   {
-    return new SEAPITesterCursor(*this, table);
+    SEAPITesterCursor *c= new SEAPITesterCursor(*this, table);
+    Cursor *realCursor= getRealEngine()->create(table);
+    c->realCursor= realCursor;
+
+    return c;
   }
 
   int doCreateTable(Session&,
@@ -367,8 +344,6 @@ static int seapi_tester_init(drizzled::module::Context &context)
   load_engine_state_transitions(engine_state_transitions);
   load_cursor_state_transitions(cursor_state_transitions);
   engine_state= "INIT";
-
-  thr_lock_init(&share_lock); /* HACK for store_lock */
 
   context.add(new SEAPITester::SEAPITester(engine_name));
   return 0;

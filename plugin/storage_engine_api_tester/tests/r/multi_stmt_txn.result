@@ -15,8 +15,15 @@ insert into t1 values (1);
 insert into t1 values (1);
 select * from t1;
 a
+1
+1
+1
 insert into t1 values (1);
 select * from t1;
 a
+1
+1
+1
+1
 commit;
 drop table t1;
