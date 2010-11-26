@@ -40,7 +40,6 @@ void load_cursor_state_transitions(state_multimap &states)
 
   states.insert(state_pair("::store_lock()", "::close()"));
   states.insert(state_pair("::store_lock()", "::doStartTableScan()"));
-  states.insert(state_pair("::doOpen()", "::doStartTableScan()"));
   states.insert(state_pair("::doStartTableScan()", "::rnd_next()"));
   states.insert(state_pair("::rnd_next()", "::doEndTableScan()"));
   states.insert(state_pair("::rnd_next()", "::rnd_next()"));
