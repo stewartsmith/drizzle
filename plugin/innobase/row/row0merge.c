@@ -58,6 +58,11 @@ Completed by Sunny Bains and Marko Makela
 #include "handler0alter.h"
 #include <unistd.h>
 
+/* Ignore posix_fadvise() on those platforms where it does not exist */
+#if defined __WIN__
+# define posix_fadvise(fd, offset, len, advice) /* nothing */
+#endif /* __WIN__ */
+
 #ifdef UNIV_DEBUG
 /** Set these in order ot enable debug printout. */
 /* @{ */
@@ -270,6 +275,7 @@ row_merge_buf_add(
 	const dict_index_t*	index;
 	dfield_t*		entry;
 	dfield_t*		field;
+	const dict_field_t*	ifield;
 
 	if (buf->n_tuples >= buf->max_tuples) {
 		return(FALSE);
@@ -288,14 +294,14 @@ row_merge_buf_add(
 	data_size = 0;
 	extra_size = UT_BITS_IN_BYTES(index->n_nullable);
 
-	for (i = 0; i < n_fields; i++, field++) {
-		const dict_field_t*	ifield;
+	ifield = dict_index_get_nth_field(index, 0);
+
+	for (i = 0; i < n_fields; i++, field++, ifield++) {
 		const dict_col_t*	col;
 		ulint			col_no;
 		const dfield_t*		row_field;
 		ulint			len;
 
-		ifield = dict_index_get_nth_field(index, i);
 		col = ifield->col;
 		col_no = dict_col_get_no(col);
 		row_field = dtuple_get_nth_field(row, col_no);
@@ -409,7 +415,7 @@ row_merge_buf_add(
 /** Structure for reporting duplicate records. */
 struct row_merge_dup_struct {
 	const dict_index_t*	index;		/*!< index being sorted */
-	TABLE*			table;		/*!< MySQL table object */
+	struct TABLE*		table;		/*!< MySQL table object */
 	ulint			n_dup;		/*!< number of duplicates */
 };
 
@@ -691,7 +697,9 @@ ibool
 row_merge_read(
 /*===========*/
 	int			fd,	/*!< in: file descriptor */
-	ulint			offset,	/*!< in: offset where to read */
+	ulint			offset,	/*!< in: offset where to read
+					in number of row_merge_block_t
+					elements */
 	row_merge_block_t*	buf)	/*!< out: data */
 {
 	ib_uint64_t	ofs = ((ib_uint64_t) offset) * sizeof *buf;
@@ -708,6 +716,11 @@ row_merge_read(
 						 (ulint) (ofs & 0xFFFFFFFF),
 						 (ulint) (ofs >> 32),
 						 sizeof *buf);
+#ifdef POSIX_FADV_DONTNEED
+	/* Each block is read exactly once.  Free up the file cache. */
+	posix_fadvise(fd, ofs, sizeof *buf, POSIX_FADV_DONTNEED);
+#endif /* POSIX_FADV_DONTNEED */
+
 	if (UNIV_UNLIKELY(!success)) {
 		ut_print_timestamp(stderr);
 		fprintf(stderr,
@@ -725,13 +738,18 @@ ibool
 row_merge_write(
 /*============*/
 	int		fd,	/*!< in: file descriptor */
-	ulint		offset,	/*!< in: offset where to read
-				in number of row_merge_block_t
-				elements */
+	ulint		offset,	/*!< in: offset where to write,
+				in number of row_merge_block_t elements */
 	const void*	buf)	/*!< in: data */
 {
-	ib_uint64_t	ofs = ((ib_uint64_t) offset)
-		* sizeof(row_merge_block_t);
+	size_t		buf_len = sizeof(row_merge_block_t);
+	ib_uint64_t	ofs = buf_len * (ib_uint64_t) offset;
+	ibool		ret;
+
+	ret = os_file_write("(merge)", OS_FILE_FROM_FD(fd), buf,
+			    (ulint) (ofs & 0xFFFFFFFF),
+			    (ulint) (ofs >> 32),
+			    buf_len);
 
 #ifdef UNIV_DEBUG
 	if (row_merge_print_block_write) {
@@ -740,10 +758,13 @@ row_merge_write(
 	}
 #endif /* UNIV_DEBUG */
 
-	return(UNIV_LIKELY(os_file_write("(merge)", OS_FILE_FROM_FD(fd), buf,
-					 (ulint) (ofs & 0xFFFFFFFF),
-					 (ulint) (ofs >> 32),
-					 sizeof(row_merge_block_t))));
+#ifdef POSIX_FADV_DONTNEED
+	/* The block will be needed on the next merge pass,
+	but it can be evicted from the file cache meanwhile. */
+	posix_fadvise(fd, ofs, buf_len, POSIX_FADV_DONTNEED);
+#endif /* POSIX_FADV_DONTNEED */
+
+	return(UNIV_LIKELY(ret));
 }
 
 /********************************************************************//**
@@ -1109,7 +1130,7 @@ ulint
 row_merge_read_clustered_index(
 /*===========================*/
 	trx_t*			trx,	/*!< in: transaction */
-	TABLE*			table,	/*!< in/out: MySQL table object,
+	struct TABLE*		table,	/*!< in/out: MySQL table object,
 					for reporting erroneous records */
 	const dict_table_t*	old_table,/*!< in: table where rows are
 					read from */
@@ -1397,7 +1418,7 @@ row_merge_blocks(
 	ulint*			foffs1,	/*!< in/out: offset of second
 					source list in the file */
 	merge_file_t*		of,	/*!< in/out: output file */
-	TABLE*			table)	/*!< in/out: MySQL table, for
+	struct TABLE*		table)	/*!< in/out: MySQL table, for
 					reporting erroneous key value
 					if applicable */
 {
@@ -1533,7 +1554,6 @@ row_merge_blocks_copy(
 #endif /* UNIV_DEBUG */
 
 	heap = row_merge_heap_create(index, &buf, &offsets0, &offsets1);
-
         buf = mem_heap_alloc(heap, sizeof(mrec_buf_t) * 3);
 
 	/* Write a record and read the next record.  Split the output
@@ -1586,7 +1606,7 @@ row_merge(
 	ulint*			half,	/*!< in/out: half the file */
 	row_merge_block_t*	block,	/*!< in/out: 3 buffers */
 	int*			tmpfd,	/*!< in/out: temporary file handle */
-	TABLE*			table)	/*!< in/out: MySQL table, for
+	struct TABLE*		table)	/*!< in/out: MySQL table, for
 					reporting erroneous key value
 					if applicable */
 {
@@ -1604,6 +1624,14 @@ row_merge(
 	of.fd = *tmpfd;
 	of.offset = 0;
 	of.n_rec = 0;
+
+#ifdef POSIX_FADV_SEQUENTIAL
+	/* The input file will be read sequentially, starting from the
+	beginning and the middle.  In Linux, the POSIX_FADV_SEQUENTIAL
+	affects the entire file.  Each block will be read exactly once. */
+	posix_fadvise(file->fd, 0, 0,
+		      POSIX_FADV_SEQUENTIAL | POSIX_FADV_NOREUSE);
+#endif /* POSIX_FADV_SEQUENTIAL */
 
 	/* Merge blocks to the output file. */
 	ohalf = 0;
@@ -1694,7 +1722,7 @@ row_merge_sort(
 					index entries */
 	row_merge_block_t*	block,	/*!< in/out: 3 buffers */
 	int*			tmpfd,	/*!< in/out: temporary file handle */
-	TABLE*			table)	/*!< in/out: MySQL table, for
+	struct TABLE*		table)	/*!< in/out: MySQL table, for
 					reporting erroneous key value
 					if applicable */
 {
@@ -2137,9 +2165,22 @@ row_merge_file_create(
 /*==================*/
 	merge_file_t*	merge_file)	/*!< out: merge file structure */
 {
+#ifdef UNIV_PFS_IO
+	/* This temp file open does not go through normal
+	file APIs, add instrumentation to register with
+	performance schema */
+	struct PSI_file_locker* locker = NULL;
+	register_pfs_file_open_begin(locker, innodb_file_temp_key,
+				     PSI_FILE_OPEN,
+				     "Innodb Merge Temp File",
+				     __FILE__, __LINE__);
+#endif
 	merge_file->fd = innobase_mysql_tmpfile();
 	merge_file->offset = 0;
 	merge_file->n_rec = 0;
+#ifdef UNIV_PFS_IO
+        register_pfs_file_open_end(locker, merge_file->fd);
+#endif
 }
 
 /*********************************************************************//**
@@ -2150,10 +2191,19 @@ row_merge_file_destroy(
 /*===================*/
 	merge_file_t*	merge_file)	/*!< out: merge file structure */
 {
+#ifdef UNIV_PFS_IO
+	struct PSI_file_locker* locker = NULL;
+	register_pfs_file_io_begin(locker, merge_file->fd, 0, PSI_FILE_CLOSE,
+				   __FILE__, __LINE__);
+#endif
 	if (merge_file->fd != -1) {
 		close(merge_file->fd);
 		merge_file->fd = -1;
 	}
+
+#ifdef UNIV_PFS_IO
+	register_pfs_file_io_end(locker, 0);
+#endif
 }
 
 /*********************************************************************//**
@@ -2509,7 +2559,7 @@ row_merge_build_indexes(
 					unless creating a PRIMARY KEY */
 	dict_index_t**	indexes,	/*!< in: indexes to be created */
 	ulint		n_indexes,	/*!< in: size of indexes[] */
-	TABLE*		table)		/*!< in/out: MySQL table, for
+	TABLE*	table)		/*!< in/out: MySQL table, for
 					reporting erroneous key value
 					if applicable */
 {

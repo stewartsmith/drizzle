@@ -100,6 +100,7 @@ noinst_HEADERS+= \
                  plugin/innobase/include/mtr0types.h \
                  plugin/innobase/include/mysql_addons.h \
                  plugin/innobase/include/os0file.h \
+		 plugin/innobase/include/os0file.ic \
                  plugin/innobase/include/os0proc.h \
                  plugin/innobase/include/os0proc.ic \
                  plugin/innobase/include/os0sync.h \
@@ -155,7 +156,6 @@ noinst_HEADERS+= \
                  plugin/innobase/include/row0upd.ic \
                  plugin/innobase/include/row0vers.h \
                  plugin/innobase/include/row0vers.ic \
-                 plugin/innobase/include/srv0que.h \
                  plugin/innobase/include/srv0srv.h \
                  plugin/innobase/include/srv0srv.ic \
                  plugin/innobase/include/srv0start.h \
@@ -287,7 +287,6 @@ plugin_innobase_libinnobase_la_SOURCES= \
                                         plugin/innobase/row/row0undo.c \
                                         plugin/innobase/row/row0upd.c \
                                         plugin/innobase/row/row0vers.c \
-                                        plugin/innobase/srv/srv0que.c \
                                         plugin/innobase/srv/srv0srv.c \
                                         plugin/innobase/srv/srv0start.c \
                                         plugin/innobase/sync/sync0arr.c \

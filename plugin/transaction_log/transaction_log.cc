@@ -216,7 +216,7 @@ off_t TransactionLog::writeEntry(const uint8_t *data, size_t data_length)
                     " bytes at offset %" PRId64 ", but only wrote %" PRId32 " bytes.  Error: %s\n"), 
                   static_cast<int64_t>(data_length),
                   static_cast<int64_t>(cur_offset),
-                  static_cast<int64_t>(written), 
+                  static_cast<int32_t>(written), 
                   errmsg);
     state= CRASHED;
     /* 
