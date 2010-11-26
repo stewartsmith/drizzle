@@ -178,11 +178,10 @@ static const char *api_tester_exts[] = {
   NULL
 };
 
+namespace drizzled {
+  namespace plugin {
 class SEAPITester : public drizzled::plugin::TransactionalStorageEngine
 {
-  friend class drizzled::plugin::StorageEngine;
-  friend class drizzled::plugin::TransactionalStorageEngine;
-
 public:
   SEAPITester(const string &name_arg)
     : drizzled::plugin::TransactionalStorageEngine(name_arg,
@@ -339,13 +338,16 @@ int SEAPITester::doRollback(Session *session, bool all)
   return getRealEngine()->rollback(session, all);
 }
 
+  } /* namespace plugin */
+} /* namespace drizzled */
+
 static int seapi_tester_init(drizzled::module::Context &context)
 {
   load_engine_state_transitions(engine_state_transitions);
   load_cursor_state_transitions(cursor_state_transitions);
   engine_state= "INIT";
 
-  context.add(new SEAPITester::SEAPITester(engine_name));
+  context.add(new plugin::SEAPITester(engine_name));
   return 0;
 }
 

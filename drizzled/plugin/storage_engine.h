@@ -137,6 +137,7 @@ extern const std::string DEFAULT_DEFINITION_FILE_EXT;
 class StorageEngine : public Plugin,
                       public MonitoredInTransaction
 {
+  friend class SEAPITester;
 public:
   typedef uint64_t Table_flags;
 
@@ -274,7 +275,7 @@ public:
   */
   virtual const char **bas_ext() const =0;
 
-public: // should be protected. Feel free to work out how to friend SEAPITester
+protected:
   virtual int doCreateTable(Session &session,
                             Table &table_arg,
                             const drizzled::TableIdentifier &identifier,
