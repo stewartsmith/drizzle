@@ -31,56 +31,45 @@ int64_t ReleaseAndWait::val_int()
 {
   drizzled::String *res= args[0]->val_str(&value);
 
-  if (not res)
+  if (not res || not res->length())
   {
-    null_value= true;
+    my_error(drizzled::ER_USER_LOCKS_INVALID_NAME_LOCK, MYF(0));
     return 0;
   }
-
-  if (not res->length())
-  {
-    null_value= true;
-    return 0;
-  }
+  null_value= false;
 
   drizzled::session_id_t id= getSession().getSessionId();
-
-  boost::tribool result;
+  locks::return_t result;
   {
     boost::this_thread::restore_interruption dl(getSession().getThreadInterupt());
-
     try {
       result= user_locks::Locks::getInstance().release(Key(getSession().getSecurityContext(), res->c_str()), id, true);
     }
     catch(boost::thread_interrupted const& error)
     {
       my_error(drizzled::ER_QUERY_INTERRUPTED, MYF(0));
-      null_value= true;
       return 0;
     }
   }
 
-  if (result)
+  switch (result)
   {
-    user_locks::Storable *list= static_cast<user_locks::Storable *>(getSession().getProperty("user_locks"));
-    assert(list);
-    if (list) // Just in case we ever blow the assert
-      list->erase(Key(getSession().getSecurityContext(), res->c_str()));
-
-    null_value= false;
-
-    return 1;
-  }
-  else if (not result)
-  {
-    my_error(drizzled::ER_USER_LOCKS_NOT_OWNER_OF_LOCK, MYF(0));
+  default:
+  case locks::SUCCESS:
+    {
+      user_locks::Storable *list= static_cast<user_locks::Storable *>(getSession().getProperty("user_locks"));
+      assert(list);
+      if (list) // Just in case we ever blow the assert
+        list->erase(Key(getSession().getSecurityContext(), res->c_str()));
+      return 1;
+    }
+  case locks::NOT_FOUND:
     null_value= true;
     return 0;
+  case locks::NOT_OWNED_BY:
+    my_error(drizzled::ER_USER_LOCKS_NOT_OWNER_OF_LOCK, MYF(0));
+    return 0;
   }
-
-  null_value= true;
-
-  return 0;
 }
 
 } /* namespace locks */

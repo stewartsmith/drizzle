@@ -30,15 +30,9 @@ int64_t WaitFor::val_int()
 {
   drizzled::String *res= args[0]->val_str(&value);
 
-  if (not res)
+  if (not res || not res->length())
   {
-    null_value= true;
-    return 0;
-  }
-
-  if (not res->length())
-  {
-    null_value= true;
+    my_error(drizzled::ER_USER_LOCKS_INVALID_NAME_LOCK, MYF(0));
     return 0;
   }
 
