@@ -22,6 +22,8 @@ connection con2;
 KILL @id;
 
 connection default;
+SELECT GLOBAL_READ_LOCK();
 UNLOCK tables;
+SELECT GLOBAL_READ_LOCK();
 #DROP TABLE t1_680028;
 #DROP TABLE CONNECTION_ID;
