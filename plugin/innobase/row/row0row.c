@@ -730,9 +730,9 @@ row_get_clust_rec(
 
 /***************************************************************//**
 Searches an index record.
-@return	TRUE if found */
+@return	whether the record was found or buffered */
 UNIV_INTERN
-ibool
+enum row_search_result
 row_search_index_entry(
 /*===================*/
 	dict_index_t*	index,	/*!< in: index */
@@ -749,13 +749,38 @@ row_search_index_entry(
 	ut_ad(dtuple_check_typed(entry));
 
 	btr_pcur_open(index, entry, PAGE_CUR_LE, mode, pcur, mtr);
+
+	switch (btr_pcur_get_btr_cur(pcur)->flag) {
+	case BTR_CUR_DELETE_REF:
+		ut_a(mode & BTR_DELETE);
+		return(ROW_NOT_DELETED_REF);
+
+	case BTR_CUR_DEL_MARK_IBUF:
+	case BTR_CUR_DELETE_IBUF:
+	case BTR_CUR_INSERT_TO_IBUF:
+		return(ROW_BUFFERED);
+
+	case BTR_CUR_HASH:
+	case BTR_CUR_HASH_FAIL:
+	case BTR_CUR_BINARY:
+		break;
+	}
+
 	low_match = btr_pcur_get_low_match(pcur);
 
 	rec = btr_pcur_get_rec(pcur);
 
 	n_fields = dtuple_get_n_fields(entry);
 
-	return(!page_rec_is_infimum(rec) && low_match == n_fields);
+	if (page_rec_is_infimum(rec)) {
+
+		return(ROW_NOT_FOUND);
+	} else if (low_match != n_fields) {
+
+		return(ROW_NOT_FOUND);
+	}
+
+	return(ROW_FOUND);
 }
 
 #if !defined(BUILD_DRIZZLE)

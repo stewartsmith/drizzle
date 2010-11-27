@@ -69,6 +69,17 @@ we need this; NOTE: a transaction which reserves this must keep book
 on the mode in trx_struct::dict_operation_lock_mode */
 UNIV_INTERN rw_lock_t	dict_operation_lock;
 
+/* Keys to register rwlocks and mutexes with performance schema */
+#ifdef UNIV_PFS_RWLOCK
+UNIV_INTERN mysql_pfs_key_t	dict_operation_lock_key;
+UNIV_INTERN mysql_pfs_key_t	index_tree_rw_lock_key;
+#endif /* UNIV_PFS_RWLOCK */
+
+#ifdef UNIV_PFS_MUTEX
+UNIV_INTERN mysql_pfs_key_t	dict_sys_mutex_key;
+UNIV_INTERN mysql_pfs_key_t	dict_foreign_err_mutex_key;
+#endif /* UNIV_PFS_MUTEX */
+
 #define	DICT_HEAP_SIZE		100	/*!< initial memory heap size when
 					creating a table or index object */
 #define DICT_POOL_PER_TABLE_HASH 512	/*!< buffer pool max size per table
@@ -81,7 +92,7 @@ static char	dict_ibfk[] = "_ibfk_";
 
 /** array of mutexes protecting dict_index_t::stat_n_diff_key_vals[] */
 #define DICT_INDEX_STAT_MUTEX_SIZE	32
-mutex_t	dict_index_stat_mutex[DICT_INDEX_STAT_MUTEX_SIZE];
+static mutex_t	dict_index_stat_mutex[DICT_INDEX_STAT_MUTEX_SIZE];
 
 /*******************************************************************//**
 Tries to find column names for the index and sets the col field of the
@@ -651,7 +662,7 @@ dict_init(void)
 
 	dict_sys = mem_alloc(sizeof(dict_sys_t));
 
-	mutex_create(&dict_sys->mutex, SYNC_DICT);
+	mutex_create(dict_sys_mutex_key, &dict_sys->mutex, SYNC_DICT);
 
 	dict_sys->table_hash = hash_create(buf_pool_get_curr_size()
 					   / (DICT_POOL_PER_TABLE_HASH
@@ -663,15 +674,18 @@ dict_init(void)
 
 	UT_LIST_INIT(dict_sys->table_LRU);
 
-	rw_lock_create(&dict_operation_lock, SYNC_DICT_OPERATION);
+	rw_lock_create(dict_operation_lock_key,
+		       &dict_operation_lock, SYNC_DICT_OPERATION);
 
 	dict_foreign_err_file = os_file_create_tmpfile();
 	ut_a(dict_foreign_err_file);
 
-	mutex_create(&dict_foreign_err_mutex, SYNC_ANY_LATCH);
+	mutex_create(dict_foreign_err_mutex_key,
+		     &dict_foreign_err_mutex, SYNC_ANY_LATCH);
 
 	for (i = 0; i < DICT_INDEX_STAT_MUTEX_SIZE; i++) {
-		mutex_create(&dict_index_stat_mutex[i], SYNC_INDEX_TREE);
+          mutex_create(PFS_NOT_INSTRUMENTED,
+                       &dict_index_stat_mutex[i], SYNC_INDEX_TREE);
 	}
 }
 
@@ -1615,7 +1629,8 @@ undo_size_ok:
 	new_index->stat_n_leaf_pages = 1;
 
 	new_index->page = page_no;
-	rw_lock_create(&new_index->lock, SYNC_INDEX_TREE);
+	rw_lock_create(index_tree_rw_lock_key, &new_index->lock,
+		       SYNC_INDEX_TREE);
 
 	if (!UNIV_UNLIKELY(new_index->type & DICT_UNIVERSAL)) {
 
@@ -3804,7 +3819,7 @@ dict_foreign_parse_drop_constraints(
 	dict_foreign_t*		foreign;
 	ibool			success;
 	char*			str;
-	size_t			len;
+        size_t			len;
 	const char*		ptr;
 	const char*		id;
 	FILE*			ef	= dict_foreign_err_file;
@@ -3819,9 +3834,9 @@ dict_foreign_parse_drop_constraints(
 
 	*constraints_to_drop = mem_heap_alloc(heap, 1000 * sizeof(char*));
 
-	ptr = innobase_get_stmt(trx->mysql_thd, &len);
+        ptr = innobase_get_stmt(trx->mysql_thd, &len);
 
-	str = dict_strip_comments(ptr, len);
+        str = dict_strip_comments(ptr, len);
 
 	ptr = str;
 
