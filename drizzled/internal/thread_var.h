@@ -37,7 +37,6 @@ struct st_my_thread_var
   boost::condition_variable_any * volatile current_cond;
   uint64_t id;
   int volatile abort;
-  struct st_my_thread_var *next,**prev;
   void *opt_info;
 
   st_my_thread_var() :
@@ -45,8 +44,6 @@ struct st_my_thread_var
     current_cond(0),
     id(0),
     abort(false),
-    next(0),
-    prev(0),
     opt_info(0)
   { 
   }
