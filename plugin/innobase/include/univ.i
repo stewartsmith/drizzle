@@ -51,8 +51,8 @@ Created 1/20/1994 Heikki Tuuri
 #endif /* UNIV_HOTBACKUP */
 
 #define INNODB_VERSION_MAJOR	1
-#define INNODB_VERSION_MINOR	0
-#define INNODB_VERSION_BUGFIX	9
+#define INNODB_VERSION_MINOR	1
+#define INNODB_VERSION_BUGFIX	1
 
 /* The following is the InnoDB version as shown in
 SELECT plugin_version FROM information_schema.plugins;
@@ -150,11 +150,34 @@ Sun Studio */
 #  define UNIV_MUST_NOT_INLINE
 # endif
 
+# if defined(__GNUC__)
+#  define UNIV_WARN_UNUSED_RESULT __attribute__((warn_unused_result))
+#else
+#  define UNIV_WARN_UNUSED_RESULT
+#endif
+
 # ifdef HAVE_PREAD
 #  define HAVE_PWRITE
 # endif
 
 #endif /* #if (defined(WIN32) || ... */
+
+/* Following defines are to enable performance schema
+instrumentation in each of four InnoDB modules if
+HAVE_PSI_INTERFACE is defined. */
+#ifdef HAVE_PSI_INTERFACE
+# define UNIV_PFS_MUTEX
+# define UNIV_PFS_RWLOCK
+/* For I/O instrumentation, performance schema rely
+on a native descriptor to identify the file, this
+descriptor could conflict with our OS level descriptor.
+Disable IO instrumentation on Windows until this is
+resolved */
+# ifndef __WIN__
+#  define UNIV_PFS_IO
+# endif
+# define UNIV_PFS_THREAD
+#endif /* HAVE_PSI_INTERFACE */
 
 /*			DEBUG VERSION CONTROL
 			===================== */
@@ -177,9 +200,9 @@ command. Not tested on Windows. */
 #define UNIV_COMPILE_TEST_FUNCS
 */
 
-#ifdef HAVE_purify
+#if defined HAVE_VALGRIND
 # define UNIV_DEBUG_VALGRIND
-#endif /* HAVE_purify */
+#endif /* HAVE_VALGRIND */
 #if 0
 #define UNIV_DEBUG_VALGRIND			/* Enable extra
 						Valgrind instrumentation */
@@ -217,16 +240,15 @@ operations (very slow); also UNIV_DEBUG must be defined */
 						adaptive hash index */
 #define UNIV_SRV_PRINT_LATCH_WAITS		/* enable diagnostic output
 						in sync0sync.c */
-#define UNIV_BTR_AVOID_COPY			/* when splitting B-tree nodes,
-						do not move any records when
-						all the records would
-						be moved */
 #define UNIV_BTR_PRINT				/* enable functions for
 						printing B-trees */
 #define UNIV_ZIP_DEBUG				/* extensive consistency checks
 						for compressed pages */
 #define UNIV_ZIP_COPY				/* call page_zip_copy_recs()
 						more often */
+#define UNIV_AIO_DEBUG				/* prints info about
+						submitted and reaped AIO
+						requests to the log. */
 #endif
 
 #define UNIV_BTR_DEBUG				/* check B-tree links */

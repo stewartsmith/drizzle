@@ -31,45 +31,44 @@ int64_t Release::val_int()
 {
   drizzled::String *res= args[0]->val_str(&value);
 
-  if (not res)
+  if (not res || not res->length())
   {
+    my_error(drizzled::ER_USER_LOCKS_INVALID_NAME_BARRIER, MYF(0));
     null_value= true;
     return 0;
   }
-  null_value= false;
 
-  if (not res->length())
-    return 0;
 
-  boost::tribool result= Barriers::getInstance().release(Key(getSession().getSecurityContext(), res->c_str()), getSession().getSessionId());
+  barriers::return_t result= Barriers::getInstance().release(Key(getSession().getSecurityContext(), res->c_str()), getSession().getSessionId());
 
-  if (result)
+  switch (result)
   {
-    Storable *list= static_cast<Storable *>(getSession().getProperty(property_key));
-    assert(list);
-    if (not list) // We should have been the owner if it was passed to us, this should never happen
+  default:
+  case barriers::SUCCESS:
     {
-      my_error(drizzled::ER_USER_LOCKS_NOT_OWNER_OF_BARRIER, MYF(0));
-      null_value= true;
+      Storable *list= static_cast<Storable *>(getSession().getProperty(property_key));
+      assert(list);
+      if (not list) // We should have been the owner if it was passed to us, this should never happen
+      {
+        my_error(drizzled::ER_USER_LOCKS_NOT_OWNER_OF_BARRIER, MYF(0));
+        null_value= true;
 
-      return 0;
+        return 0;
+      }
+      list->erase(Key(getSession().getSecurityContext(), res->c_str()));
+      null_value= false;
+
+      return 1;
     }
-    list->erase(Key(getSession().getSecurityContext(), res->c_str()));
-
-    return 1;
-  }
-  else if (not result)
-  {
-    my_error(drizzled::ER_USER_LOCKS_NOT_OWNER_OF_BARRIER, MYF(0));
-  }
-  else
-  {
+  case barriers::NOT_FOUND:
     my_error(drizzled::ER_USER_LOCKS_UNKNOWN_BARRIER, MYF(0));
+    null_value= true;
+    return 0;
+  case barriers::NOT_OWNED_BY:
+    my_error(drizzled::ER_USER_LOCKS_NOT_OWNER_OF_BARRIER, MYF(0));
+    null_value= true;
+    return 0;
   }
-
-  null_value= true;
-
-  return 0;
 }
 
 } /* namespace barriers */

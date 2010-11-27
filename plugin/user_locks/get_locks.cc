@@ -40,7 +40,7 @@ int64_t GetLocks::val_int()
     }
     else
     {
-      null_value= true;
+      my_error(drizzled::ER_USER_LOCKS_INVALID_NAME_LOCK, MYF(0));
       return 0;
     }
   }

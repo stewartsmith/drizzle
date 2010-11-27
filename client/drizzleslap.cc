@@ -1698,8 +1698,8 @@ static int run_query(drizzle_con_st &con, drizzle_result_st *result,
 
   if (opt_only_print)
   {
-    printf("/* CON: %lu */ %.*s;\n",
-           (size_t)drizzle_context(drizzle_con_drizzle(&con)),
+    printf("/* CON: %" PRIu64 " */ %.*s;\n",
+           (uint64_t)drizzle_context(drizzle_con_drizzle(&con)),
            len, query);
     return 0;
   }
@@ -1807,8 +1807,8 @@ static void create_schema(drizzle_con_st &con, const char *db, Statement *stmt, 
 
   if (opt_only_print)
   {
-    printf("/* CON: %lu */ use %s;\n",
-           (size_t)drizzle_context(drizzle_con_drizzle(&con)),
+    printf("/* CON: %" PRIu64 " */ use %s;\n",
+           (uint64_t)drizzle_context(drizzle_con_drizzle(&con)),
            db);
   }
   else

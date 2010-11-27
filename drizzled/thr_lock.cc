@@ -120,7 +120,6 @@ void thr_lock_init(THR_LOCK *lock)
 void THR_LOCK_INFO::init()
 {
   internal::st_my_thread_var *tmp= my_thread_var;
-  thread= tmp->pthread_self;
   thread_id= tmp->id;
   n_cursors= 0;
 }

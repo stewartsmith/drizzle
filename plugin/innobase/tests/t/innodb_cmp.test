@@ -1,5 +1,5 @@
 use data_dictionary;
 
-select * from INNODB_CMP;
+select PAGE_SIZE from INNODB_CMP;
 
 show create table INNODB_CMP;
