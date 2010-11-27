@@ -483,6 +483,8 @@ ErrorMap::ErrorMap()
   add(ER_USER_LOCKS_CANT_WAIT_ON_OWN_BARRIER, N_("wait() can not be called on session owning barrier."));
   add(ER_USER_LOCKS_UNKNOWN_BARRIER, N_("Unknown barrier requested."));
   add(ER_USER_LOCKS_NOT_OWNER_OF_BARRIER, N_("Session does not own barrier."));
+  add(ER_USER_LOCKS_CANT_WAIT_ON_OWN_LOCK, N_("Session can not wait on a lock owned by the session."));
+  add(ER_USER_LOCKS_NOT_OWNER_OF_LOCK, N_("Session does not own lock."));
 
   add(EE_CANTUNLOCK, N_("Can't unlock file (Errcode: %d)"));
   add(EE_CANT_CHSIZE, N_("Can't change size of file (Errcode: %d)"));

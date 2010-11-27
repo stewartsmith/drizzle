@@ -50,17 +50,20 @@ public:
     return instance;
   }
 
+  void waitCreate(int64_t wait_for= 2); // Default is to wait 2 seconds before returning
+
   bool lock(drizzled::session_id_t id_arg, const user_locks::Key &arg);
   bool lock(drizzled::session_id_t id_arg, const user_locks::Key &arg, int64_t wait_for= 0);
   bool lock(drizzled::session_id_t id_arg, const user_locks::Keys &arg);
-  boost::tribool release(const user_locks::Key &arg, drizzled::session_id_t &id_arg);
+  boost::tribool release(const user_locks::Key &arg, drizzled::session_id_t &id_arg, bool and_wait= false);
   bool isFree(const user_locks::Key &arg);
   bool isUsed(const user_locks::Key &arg, drizzled::session_id_t &id_arg);
   void Copy(LockMap &lock_map);
 
 private:
   boost::mutex mutex;
-  boost::condition_variable cond;
+  boost::condition_variable create_cond; // Signal next 
+  boost::condition_variable release_cond;
   LockMap lock_map; 
 };
 

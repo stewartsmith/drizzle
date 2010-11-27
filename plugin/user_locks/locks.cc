@@ -41,7 +41,7 @@ bool Locks::lock(drizzled::session_id_t id_arg, const user_locks::Key &arg, int6
       return true;
     }
     try {
-      bool success= cond.timed_wait(scope, timeout);
+      bool success= release_cond.timed_wait(scope, timeout);
 
       if (not success)
         return false;
@@ -55,15 +55,35 @@ bool Locks::lock(drizzled::session_id_t id_arg, const user_locks::Key &arg, int6
 
   if (iter == lock_map.end())
   {
+    create_cond.notify_all();
     return lock_map.insert(std::make_pair(arg, new Lock(id_arg))).second;
   }
 
   return false;
 }
 
+// Currently we just let timeouts occur, and the caller will need to know
+// what it is looking for/whether to go back into this.
+void Locks::waitCreate(int64_t wait_for)
+{
+  boost::system_time timeout= boost::get_system_time() + boost::posix_time::seconds(wait_for);
+  boost::unique_lock<boost::mutex> scope(mutex);
+  bool timed_out;
+
+  try {
+    timed_out= create_cond.timed_wait(scope, timeout);
+  }
+  catch(boost::thread_interrupted const& error)
+  {
+    // Currently nothing is done here.
+    throw error;
+  }
+}
+
 bool Locks::lock(drizzled::session_id_t id_arg, const user_locks::Key &arg)
 {
   boost::unique_lock<boost::mutex> scope(mutex);
+  create_cond.notify_all();
   return lock_map.insert(std::make_pair(arg, new Lock(id_arg))).second;
 }
 
@@ -85,6 +105,7 @@ bool Locks::lock(drizzled::session_id_t id_arg, const user_locks::Keys &arg)
   for (Keys::iterator iter= arg.begin(); iter != arg.end(); iter++)
   {
     //is_locked can fail in cases where we already own the lock.
+    create_cond.notify_all();
     lock_map.insert(std::make_pair(*iter, new Lock(id_arg)));
   }
 
@@ -120,7 +141,7 @@ void Locks::Copy(LockMap &lock_map_arg)
   lock_map_arg= lock_map;
 }
 
-boost::tribool Locks::release(const user_locks::Key &arg, drizzled::session_id_t &id_arg)
+boost::tribool Locks::release(const user_locks::Key &arg, drizzled::session_id_t &id_arg, bool and_wait)
 {
   size_t elements= 0;
   boost::unique_lock<boost::mutex> scope(mutex);
@@ -135,7 +156,21 @@ boost::tribool Locks::release(const user_locks::Key &arg, drizzled::session_id_t
 
   if (elements)
   {
-    cond.notify_one();
+    release_cond.notify_one();
+
+    if (and_wait)
+    {
+      assert(boost::this_thread::interruption_enabled());
+      try {
+        create_cond.wait(scope);
+      }
+      catch(boost::thread_interrupted const& error)
+      {
+        // Currently nothing is done here.
+        throw error;
+      }
+    }
+
     return true;
   }
 

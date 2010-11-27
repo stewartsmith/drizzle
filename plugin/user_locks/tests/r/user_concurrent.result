@@ -6,7 +6,9 @@ USER_NAME	USER_LOCK_NAME
 root	mine
 CREATE TABLE lock_state (a int);
 EXECUTE "INSERT INTO lock_state SELECT GET_LOCK(\"mine\", 20)" CONCURRENT;
-SELECT RELEASE_LOCK(@LOCK);
-RELEASE_LOCK(@LOCK)
+SELECT wait_for_lock("mine");
+ERROR HY000: Session can not wait on a lock owned by the session.
+SELECT RELEASE_LOCK_AND_WAIT(@LOCK);
+RELEASE_LOCK_AND_WAIT(@LOCK)
 NULL
 DROP TABLE lock_state;
