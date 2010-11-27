@@ -46,7 +46,7 @@ ProcesslistTool::ProcesslistTool() :
   add_field("TIME", plugin::TableFunction::NUMBER, 0, false);
   add_field("STATE", plugin::TableFunction::STRING, 256, true);
   add_field("INFO", plugin::TableFunction::STRING, PROCESS_LIST_WIDTH, true);
-  add_field("HAS_GLOBAL_LOCK", plugin::TableFunction::BOOLEAN, PROCESS_LIST_WIDTH, false);
+  add_field("HAS_GLOBAL_LOCK", plugin::TableFunction::BOOLEAN);
 }
 
 ProcesslistTool::Generator::Generator(Field **arg) :
@@ -120,7 +120,8 @@ bool ProcesslistTool::Generator::populate()
     push(*tmp->getQueryString());
 
     /* HAS_GLOBAL_LOCK */
-    push(static_cast<bool>(tmp->isGlobalReadLock()));
+    bool has_global_lock= tmp->isGlobalReadLock();
+    push(has_global_lock);
 
     return true;
   }
