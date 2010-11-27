@@ -123,13 +123,6 @@ bool my_thread_init(void)
 
 void my_thread_end(void)
 {
-  st_my_thread_var *tmp= THR_KEY_mysys.get();
-
-  if (tmp)
-  {
-    delete tmp;
-    THR_KEY_mysys.release();
-  }
 }
 
 struct st_my_thread_var *_my_thread_var(void)
