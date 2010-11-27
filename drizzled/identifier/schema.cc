@@ -83,9 +83,9 @@ SchemaIdentifier::SchemaIdentifier(const std::string &db_arg) :
   }
 }
 
-const std::string &SchemaIdentifier::getSQLPath()
+void SchemaIdentifier::getSQLPath(std::string &arg) const
 {
-  return getSchemaName();
+  arg.append(getSchemaName());
 }
 
 const std::string &SchemaIdentifier::getPath() const

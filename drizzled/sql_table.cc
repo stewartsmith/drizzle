@@ -1319,7 +1319,10 @@ static bool locked_create_event(Session *session,
         return error;
       }
 
-      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getSQLPath().c_str());
+      std::string path;
+      identifier.getSQLPath(path);
+      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), path.c_str());
+
       return error;
     }
 
@@ -1338,7 +1341,10 @@ static bool locked_create_event(Session *session,
       */
       if (definition::Cache::singleton().find(identifier.getKey()))
       {
-        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getSQLPath().c_str());
+        std::string path;
+        identifier.getSQLPath(path);
+        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), path.c_str());
+
         return error;
       }
     }
@@ -1493,7 +1499,9 @@ static bool drizzle_create_table(Session *session,
     }
     else
     {
-      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getSQLPath().c_str());
+      std::string path;
+      identifier.getSQLPath(path);
+      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), path.c_str());
       result= true;
     }
   }
@@ -1640,8 +1648,14 @@ mysql_rename_table(Session &session,
   }
   else if (error)
   {
-    const char *from_identifier= from.isTmp() ? "#sql-temporary" : from.getSQLPath().c_str();
-    const char *to_identifier= to.isTmp() ? "#sql-temporary" : to.getSQLPath().c_str();
+    std::string from_path;
+    std::string to_path;
+
+    from.getSQLPath(from_path);
+    to.getSQLPath(to_path);
+
+    const char *from_identifier= from.isTmp() ? "#sql-temporary" : from_path.c_str();
+    const char *to_identifier= to.isTmp() ? "#sql-temporary" : to_path.c_str();
 
     my_error(ER_ERROR_ON_RENAME, MYF(0), from_identifier, to_identifier, error);
   }

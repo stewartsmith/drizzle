@@ -256,16 +256,19 @@ bool mysql_rm_db(Session *session, SchemaIdentifier &schema_identifier, const bo
     /* See if the schema exists */
     if (not plugin::StorageEngine::doesSchemaExist(schema_identifier))
     {
+      std::string path;
+      schema_identifier.getSQLPath(path);
+
       if (if_exists)
       {
         push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                             ER_DB_DROP_EXISTS, ER(ER_DB_DROP_EXISTS),
-                            schema_identifier.getSQLPath().c_str());
+                            path.c_str());
       }
       else
       {
         error= -1;
-        my_error(ER_DB_DROP_EXISTS, MYF(0), schema_identifier.getSQLPath().c_str());
+        my_error(ER_DB_DROP_EXISTS, MYF(0), path.c_str());
         goto exit;
       }
     }
@@ -537,7 +540,10 @@ static long drop_tables_via_filenames(Session *session,
 
   if (not plugin::StorageEngine::dropSchema(schema_identifier))
   {
-    my_error(ER_DROP_SCHEMA, MYF(0), schema_identifier.getSQLPath().c_str());
+    std::string path;
+    schema_identifier.getSQLPath(path);
+    my_error(ER_DROP_SCHEMA, MYF(0), path.c_str());
+
     return -1;
   }
 
@@ -617,7 +623,9 @@ bool mysql_change_db(Session *session, SchemaIdentifier &schema_identifier)
 
   if (not check_db_name(session, schema_identifier))
   {
-    my_error(ER_WRONG_DB_NAME, MYF(0), schema_identifier.getSQLPath().c_str());
+    std::string path;
+    schema_identifier.getSQLPath(path);
+    my_error(ER_WRONG_DB_NAME, MYF(0), path.c_str());
 
     return true;
   }
@@ -625,8 +633,10 @@ bool mysql_change_db(Session *session, SchemaIdentifier &schema_identifier)
   if (not plugin::StorageEngine::doesSchemaExist(schema_identifier))
   {
     /* Report an error and free new_db_file_name. */
+    std::string path;
+    schema_identifier.getSQLPath(path);
 
-    my_error(ER_BAD_DB_ERROR, MYF(0), schema_identifier.getSQLPath().c_str());
+    my_error(ER_BAD_DB_ERROR, MYF(0), path.c_str());
 
     /* The operation failed. */
 

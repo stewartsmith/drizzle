@@ -282,30 +282,25 @@ const std::string &TableIdentifier::getPath() const
   return path;
 }
 
-const std::string &TableIdentifier::getSQLPath()  // @todo this is just used for errors, we should find a way to optimize it
+void TableIdentifier::getSQLPath(std::string &sql_path) const  // @todo this is just used for errors, we should find a way to optimize it
 {
-  if (sql_path.empty())
-  {
-    switch (type) {
-    case message::Table::FUNCTION:
-    case message::Table::STANDARD:
-      sql_path.append(getSchemaName());
-      sql_path.append(".");
-      sql_path.append(table_name);
-      break;
-    case message::Table::INTERNAL:
-      sql_path.append("temporary.");
-      sql_path.append(table_name);
-      break;
-    case message::Table::TEMPORARY:
-      sql_path.append(getSchemaName());
-      sql_path.append(".#");
-      sql_path.append(table_name);
-      break;
-    }
+  switch (type) {
+  case message::Table::FUNCTION:
+  case message::Table::STANDARD:
+    sql_path.append(getSchemaName());
+    sql_path.append(".");
+    sql_path.append(table_name);
+    break;
+  case message::Table::INTERNAL:
+    sql_path.append("temporary.");
+    sql_path.append(table_name);
+    break;
+  case message::Table::TEMPORARY:
+    sql_path.append(getSchemaName());
+    sql_path.append(".#");
+    sql_path.append(table_name);
+    break;
   }
-
-  return sql_path;
 }
 
 

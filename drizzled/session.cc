@@ -1961,8 +1961,10 @@ bool Open_tables_state::rm_temporary_table(TableIdentifier &identifier, bool bes
   {
     if (not best_effort)
     {
+      std::string path;
+      identifier.getSQLPath(path);
       errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
-                    identifier.getSQLPath().c_str(), errno);
+                    path.c_str(), errno);
     }
 
     return true;
@@ -1977,8 +1979,10 @@ bool Open_tables_state::rm_temporary_table(plugin::StorageEngine *base, TableIde
 
   if (plugin::StorageEngine::dropTable(*static_cast<Session *>(this), *base, identifier))
   {
+    std::string path;
+    identifier.getSQLPath(path);
     errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
-                  identifier.getSQLPath().c_str(), errno);
+                  path.c_str(), errno);
 
     return true;
   }

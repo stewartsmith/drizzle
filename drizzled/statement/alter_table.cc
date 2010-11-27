@@ -112,7 +112,9 @@ bool statement::AlterTable::execute()
     TableIdentifier identifier(first_table->getSchemaName(), first_table->getTableName());
     if (plugin::StorageEngine::getTableDefinition(*session, identifier, original_table_message) != EEXIST)
     {
-      my_error(ER_BAD_TABLE_ERROR, MYF(0), identifier.getSQLPath().c_str());
+      std::string path;
+      identifier.getSQLPath(path);
+      my_error(ER_BAD_TABLE_ERROR, MYF(0), path.c_str());
       return true;
     }
 
@@ -123,7 +125,9 @@ bool statement::AlterTable::execute()
 
       if (not create_info.db_type)
       {
-        my_error(ER_BAD_TABLE_ERROR, MYF(0), identifier.getSQLPath().c_str());
+        std::string path;
+        identifier.getSQLPath(path);
+        my_error(ER_BAD_TABLE_ERROR, MYF(0), path.c_str());
         return true;
       }
     }
@@ -794,7 +798,9 @@ static bool lockTableIfDifferent(Session &session,
 
       if (session.find_temporary_table(new_table_identifier))
       {
-        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_table_identifier.getSQLPath().c_str());
+        std::string path;
+        new_table_identifier.getSQLPath(path);
+        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), path.c_str());
         return false;
       }
     }
@@ -807,14 +813,19 @@ static bool lockTableIfDifferent(Session &session,
 
       if (not name_lock)
       {
-        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_table_identifier.getSQLPath().c_str());
+        std::string path;
+        new_table_identifier.getSQLPath(path);
+        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), path.c_str());
         return false;
       }
 
       if (plugin::StorageEngine::doesTableExist(session, new_table_identifier))
       {
+        std::string path;
+        new_table_identifier.getSQLPath(path);
+
         /* Table will be closed by Session::executeCommand() */
-        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_table_identifier.getSQLPath().c_str());
+        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), path.c_str());
 
         table::Cache::singleton().mutex().lock(); /* ALTER TABLe */
         session.unlink_open_table(name_lock);
@@ -924,7 +935,9 @@ static bool internal_alter_table(Session *session,
   if (original_engine->check_flag(HTON_BIT_ALTER_NOT_SUPPORTED) ||
       new_engine->check_flag(HTON_BIT_ALTER_NOT_SUPPORTED))
   {
-    my_error(ER_ILLEGAL_HA, MYF(0), new_table_identifier.getSQLPath().c_str());
+    std::string path;
+    new_table_identifier.getSQLPath(path);
+    my_error(ER_ILLEGAL_HA, MYF(0), path.c_str());
 
     return true;
   }
@@ -1013,7 +1026,9 @@ static bool internal_alter_table(Session *session,
         */
         if (plugin::StorageEngine::doesTableExist(*session, new_table_identifier))
         {
-          my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_table_identifier.getSQLPath().c_str());
+          std::string path;
+          new_table_identifier.getSQLPath(path);
+          my_error(ER_TABLE_EXISTS_ERROR, MYF(0), path.c_str());
           error= -1;
         }
         else
