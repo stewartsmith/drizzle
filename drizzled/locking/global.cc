@@ -1021,6 +1021,9 @@ void Session::unlockGlobalReadLock(void)
 {
   uint32_t tmp;
 
+  if (not isGlobalReadLock()) // If we have no personal stake in the global lock, just return
+    return;
+
   {
     boost_unique_lock_t scopedLock(LOCK_global_read_lock);
     tmp= --global_read_lock;
