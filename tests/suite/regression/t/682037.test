@@ -1,0 +1,21 @@
+--disable_warnings
+--disable_query_log
+DROP TABLE IF EXISTS t1;
+--enable_query_log
+--enable_warnings
+
+connect (con1, localhost, root,,);
+connect (con2, localhost, root,,);
+
+connection default;
+CREATE TABLE t1 (a serial);
+FLUSH TABLES WITH READ LOCK;
+
+connection con1;
+SEND select * from t1 for update;
+
+connection con2;
+SEND DROP TABLE t1;
+
+connection default;
+UNLOCK tables;

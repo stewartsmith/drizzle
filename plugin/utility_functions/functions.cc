@@ -29,6 +29,7 @@ static int init(drizzled::module::Context &context)
   context.add(new plugin::Create_function<utility_functions::Catalog>("catalog"));
   context.add(new plugin::Create_function<utility_functions::Schema>("database"));
   context.add(new plugin::Create_function<utility_functions::User>("user"));
+  context.add(new plugin::Create_function<utility_functions::GlobalReadLock>("global_read_lock"));
 
   return 0;
 }
@@ -37,7 +38,7 @@ DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
   "Utility Functions",
-  "1.0",
+  "1.1",
   "Brian Aker, Stewart Smith",
   "Utility Functions.",
   PLUGIN_LICENSE_GPL,

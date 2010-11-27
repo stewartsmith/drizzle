@@ -1,12 +1,12 @@
-/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2010 Brian Aker
+ *  Copyright (C) 2008 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ *  the Free Software Foundation; version 2 of the License.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -18,15 +18,19 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_UTILITY_FUNCTIONS_FUNCTIONS_H
-#define PLUGIN_UTILITY_FUNCTIONS_FUNCTIONS_H
+#include "config.h"
+#include "drizzled/lock.h"
 
-#include <drizzled/function/func.h>
-#include <drizzled/plugin/function.h>
+namespace drizzled
+{
 
-#include "plugin/utility_functions/catalog.h"
-#include "plugin/utility_functions/global_read_lock.h"
-#include "plugin/utility_functions/schema.h"
-#include "plugin/utility_functions/user.h"
+void DrizzleLock::reset(void)
+{
+  for (std::vector<THR_LOCK_DATA *>::iterator iter= locks.begin(); iter != locks.begin() + sizeLock() and iter != locks.end(); iter++)
+  {
+    (*iter)->type= TL_UNLOCK;
+  }
+}
 
-#endif /* PLUGIN_UTILITY_FUNCTIONS_FUNCTIONS_H */
+
+} /* namespace drizzled */

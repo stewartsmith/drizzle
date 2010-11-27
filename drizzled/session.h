@@ -1821,6 +1821,11 @@ static const std::bitset<CF_BIT_SIZE> CF_STATUS_COMMAND(1 << CF_BIT_STATUS_COMMA
 static const std::bitset<CF_BIT_SIZE> CF_SHOW_TABLE_COMMAND(1 << CF_BIT_SHOW_TABLE_COMMAND);
 static const std::bitset<CF_BIT_SIZE> CF_WRITE_LOGS_COMMAND(1 << CF_BIT_WRITE_LOGS_COMMAND);
 
+namespace display  {
+const std::string &type(drizzled::Session::global_read_lock_t type);
+size_t max_string_length(drizzled::Session::global_read_lock_t type);
+} /* namespace display */
+
 } /* namespace drizzled */
 
 #endif /* DRIZZLED_SESSION_H */

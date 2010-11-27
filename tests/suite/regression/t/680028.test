@@ -1,0 +1,29 @@
+# Kill a connection while flush table with read lock is occuring.
+connect (con1, localhost, root,,);
+connect (con2, localhost, root,,);
+
+CREATE TABLE CONNECTION_ID (id int);
+CREATE TABLE t1_680028 (a serial);
+
+# Jump to connection one and save our ID.
+connection con1;
+insert into CONNECTION_ID VALUES (CONNECTION_ID());
+
+connection con2;
+EXECUTE "SELECT @id:=id FROM CONNECTION_ID LIMIT 1" WITH NO RETURN;
+
+connection default;
+FLUSH TABLES WITH READ LOCK;
+
+connection con1;
+SEND select * from t1_680028 for update;
+
+connection con2;
+KILL @id;
+
+connection default;
+SELECT GLOBAL_READ_LOCK();
+UNLOCK tables;
+SELECT GLOBAL_READ_LOCK();
+DROP TABLE t1_680028;
+DROP TABLE CONNECTION_ID;
