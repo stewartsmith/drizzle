@@ -286,7 +286,7 @@ err_with_placeholders:
     != 0        Error
 */
 bool quick_rm_table(Session& session,
-                    TableIdentifier &identifier)
+                    const TableIdentifier &identifier)
 {
   return (plugin::StorageEngine::dropTable(session, identifier));
 }
@@ -1284,7 +1284,7 @@ static bool prepare_blob_field(Session *,
 }
 
 static bool locked_create_event(Session *session,
-                                TableIdentifier &identifier,
+                                const TableIdentifier &identifier,
                                 HA_CREATE_INFO *create_info,
                                 message::Table &table_proto,
                                 AlterInfo *alter_info,
@@ -1420,7 +1420,7 @@ static bool locked_create_event(Session *session,
 */
 
 bool mysql_create_table_no_lock(Session *session,
-                                TableIdentifier &identifier,
+                                const TableIdentifier &identifier,
                                 HA_CREATE_INFO *create_info,
 				message::Table &table_proto,
                                 AlterInfo *alter_info,
@@ -1472,7 +1472,7 @@ bool mysql_create_table_no_lock(Session *session,
   @note the following two methods implement create [temporary] table.
 */
 static bool drizzle_create_table(Session *session,
-                                 TableIdentifier &identifier,
+                                 const TableIdentifier &identifier,
                                  HA_CREATE_INFO *create_info,
                                  message::Table &table_proto,
                                  AlterInfo *alter_info,
@@ -1531,7 +1531,7 @@ static bool drizzle_create_table(Session *session,
   Database locking aware wrapper for mysql_create_table_no_lock(),
 */
 bool mysql_create_table(Session *session,
-                        TableIdentifier &identifier,
+                        const TableIdentifier &identifier,
                         HA_CREATE_INFO *create_info,
 			message::Table &table_proto,
                         AlterInfo *alter_info,
@@ -1627,8 +1627,8 @@ make_unique_key_name(const char *field_name,KeyInfo *start,KeyInfo *end)
 bool
 mysql_rename_table(Session &session,
                    plugin::StorageEngine *base,
-                   TableIdentifier &from,
-                   TableIdentifier &to)
+                   const TableIdentifier &from,
+                   const TableIdentifier &to)
 {
   int error= 0;
 
@@ -1988,8 +1988,8 @@ err:
     See bug #28614 for more info.
   */
 static bool create_table_wrapper(Session &session, const message::Table& create_table_proto,
-                                 TableIdentifier &destination_identifier,
-                                 TableIdentifier &src_table,
+                                 const TableIdentifier &destination_identifier,
+                                 const TableIdentifier &src_table,
                                  bool is_engine_set)
 {
   int protoerr= EEXIST;
@@ -2065,7 +2065,7 @@ static bool create_table_wrapper(Session &session, const message::Table& create_
 */
 
 bool mysql_create_like_table(Session* session,
-                             TableIdentifier &destination_identifier,
+                             const TableIdentifier &destination_identifier,
                              TableList* table, TableList* src_table,
                              message::Table &create_table_proto,
                              bool is_if_not_exists,
