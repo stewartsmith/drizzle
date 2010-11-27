@@ -18,42 +18,27 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "plugin/user_locks/module.h"
-#include "plugin/user_locks/barrier_storage.h"
-
-#include <string>
+#ifndef PLUGIN_USER_LOCKS_WAIT_FOR_LOCK_H
+#define PLUGIN_USER_LOCKS_WAIT_FOR_LOCK_H
 
 namespace user_locks {
-namespace barriers {
+namespace locks {
 
-int64_t Signal::val_int()
+class WaitFor : public drizzled::Item_int_func
 {
-  drizzled::String *res= args[0]->val_str(&value);
+  drizzled::String value;
 
-  if (res and res->length())
-  {
-    Barrier::shared_ptr barrier= Barriers::getInstance().find(Key(getSession().getSecurityContext(), res->c_str()));
+public:
+  WaitFor() :
+    drizzled::Item_int_func()
+  {}
 
-    if (barrier)
-    {
-      barrier->signal();
-      null_value= false;
+  int64_t val_int();
+  const char *func_name() const { return "wait_for_lock"; }
+  bool check_argument_count(int n) { return n == 1; }
+};
 
-      return 1;
-    }
-  }
-  else if (not res || not res->length())
-  {
-    my_error(drizzled::ER_USER_LOCKS_INVALID_NAME_BARRIER, MYF(0));
-    return 0;
-  }
-
-  my_error(drizzled::ER_USER_LOCKS_UNKNOWN_BARRIER, MYF(0));
-  null_value= true;
-
-  return 0;
-}
-
-} /* namespace barriers */
+} /* namespace locks */
 } /* namespace user_locks */
+
+#endif /* PLUGIN_USER_LOCKS_WAIT_FOR_LOCK_H */

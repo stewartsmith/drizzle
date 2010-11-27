@@ -20,59 +20,56 @@
 
 #include "config.h"
 #include "plugin/user_locks/module.h"
-#include "plugin/user_locks/barrier_storage.h"
 
 #include <string>
 
 namespace user_locks {
-namespace barriers {
+namespace locks {
 
-int64_t CreateBarrier::val_int()
+int64_t WaitFor::val_int()
 {
   drizzled::String *res= args[0]->val_str(&value);
 
   if (not res || not res->length())
   {
-    my_error(drizzled::ER_USER_LOCKS_INVALID_NAME_BARRIER, MYF(0));
+    my_error(drizzled::ER_USER_LOCKS_INVALID_NAME_LOCK, MYF(0));
     return 0;
   }
+
   null_value= false;
 
-  barriers::Storable *list= static_cast<barriers::Storable *>(getSession().getProperty(barriers::property_key));
+  drizzled::session_id_t id= getSession().getSessionId();
+  bool found= false;
 
-  boost::tribool result;
-
-  if (arg_count == 2)
+  while (not found)
   {
-    int64_t wait_for;
-    wait_for= args[1]->val_int();
-
-    result= Barriers::getInstance().create(Key(getSession().getSecurityContext(), res->c_str()), getSession().getSessionId(), wait_for);
-  }
-  else
-  {
-    result= Barriers::getInstance().create(Key(getSession().getSecurityContext(), res->c_str()), getSession().getSessionId());
-  }
-
-
-  if (boost::indeterminate(result))
-    null_value= true;
-
-  if (result)
-  {
-    if (not list)
+    found= user_locks::Locks::getInstance().isUsed(Key(getSession().getSecurityContext(), res->c_str()), id);
+    if (not found)
     {
-      list= new barriers::Storable(getSession().getSessionId());
-      getSession().setProperty(barriers::property_key, list);
+      boost::this_thread::restore_interruption dl(getSession().getThreadInterupt());
+      try {
+        user_locks::Locks::getInstance().waitCreate();
+      }
+      catch(boost::thread_interrupted const& error)
+      {
+        my_error(drizzled::ER_QUERY_INTERRUPTED, MYF(0));
+        null_value= true;
+        return 0;
+      }
     }
-
-    list->insert(Key(getSession().getSecurityContext(), res->c_str()));
-
-    return 1;
+    else
+    {
+      if (id == getSession().getSessionId())
+      {
+        my_error(drizzled::ER_USER_LOCKS_CANT_WAIT_ON_OWN_LOCK, MYF(0));
+        null_value= true;
+        return 0;
+      }
+    }
   }
 
-  return 0;
+  return id;
 }
 
-} /* namespace barriers */
+} /* namespace locks */
 } /* namespace user_locks */
