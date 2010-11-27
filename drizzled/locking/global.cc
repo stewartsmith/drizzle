@@ -163,15 +163,6 @@ static void reset_lock_data_and_free(DrizzleLock **mysql_lock)
   *mysql_lock= 0;
 }
 
-void DrizzleLock::reset(void)
-{
-  for (std::vector<THR_LOCK_DATA *>::iterator iter= locks.begin(); iter != locks.end(); iter++)
-  {
-    (*iter)->type= TL_UNLOCK;
-  }
-}
-
-
 DrizzleLock *Session::lockTables(Table **tables, uint32_t count, uint32_t flags, bool *need_reopen)
 {
   DrizzleLock *sql_lock;
