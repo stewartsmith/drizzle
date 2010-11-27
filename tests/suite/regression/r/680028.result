@@ -1,9 +1,8 @@
 CREATE TABLE CONNECTION_ID (id int);
-CREATE TABLE t1 (a serial);
+CREATE TABLE t1_680028 (a serial);
 insert into CONNECTION_ID VALUES (CONNECTION_ID());
 EXECUTE "SELECT @id:=id FROM CONNECTION_ID LIMIT 1" WITH NO RETURN;
 FLUSH TABLES WITH READ LOCK;
-select * from t1 for update;
+select * from t1_680028 for update;
 KILL @id;
 UNLOCK tables;
-DROP TABLE CONNECTION_ID;

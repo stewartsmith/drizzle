@@ -3,7 +3,7 @@ connect (con1, localhost, root,,);
 connect (con2, localhost, root,,);
 
 CREATE TABLE CONNECTION_ID (id int);
-CREATE TABLE t1 (a serial);
+CREATE TABLE t1_680028 (a serial);
 
 # Jump to connection one and save our ID.
 connection con1;
@@ -16,12 +16,12 @@ connection default;
 FLUSH TABLES WITH READ LOCK;
 
 connection con1;
-SEND select * from t1 for update;
+SEND select * from t1_680028 for update;
 
 connection con2;
 KILL @id;
 
 connection default;
 UNLOCK tables;
-#DROP TABLE t1;
-DROP TABLE CONNECTION_ID;
+#DROP TABLE t1_680028;
+#DROP TABLE CONNECTION_ID;
