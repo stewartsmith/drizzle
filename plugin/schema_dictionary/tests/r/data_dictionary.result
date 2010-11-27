@@ -1,11 +1,7 @@
 use data_dictionary;
 SELECT count(*) FROM columns;
 count(*)
-<<<<<<< TREE
-489
-=======
-542
->>>>>>> MERGE-SOURCE
+543
 SELECT count(*) FROM indexes;
 count(*)
 0
@@ -213,11 +209,8 @@ GRANTEE
 GRANTEE
 GRANTOR
 GRANTOR
-<<<<<<< TREE
-HAS_GLOBAL_LOCK
-=======
 HANDLES_OPENED
->>>>>>> MERGE-SOURCE
+HAS_GLOBAL_LOCK
 HOST
 ID
 ID
