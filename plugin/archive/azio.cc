@@ -52,8 +52,6 @@ extern "C" pthread_handler_t run_task(void *p)
   size_t offset;
   azio_stream *s= (azio_stream *)p;
 
-  internal::my_thread_init();
-
   while (1)
   {
     pthread_mutex_lock(&s->container.thresh_mutex);
@@ -76,8 +74,6 @@ extern "C" pthread_handler_t run_task(void *p)
     s->container.ready= AZ_THREAD_FINISHED;
     pthread_mutex_unlock(&s->container.thresh_mutex);
   }
-
-  internal::my_thread_end();
 
   return 0;
 }
