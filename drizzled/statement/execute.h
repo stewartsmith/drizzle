@@ -38,14 +38,16 @@ class Execute : public Statement
 {
   bool is_quiet;
   bool is_concurrent;
+  bool should_wait;
   drizzled::execute_string_t to_execute;
 
   bool parseVariable(void);
 
   bool runStatement(plugin::NullClient *client, const std::string &arg);
 
+  bool execute_shell();
 public:
-  Execute(Session *in_session, drizzled::execute_string_t, bool is_quiet_arg, bool is_concurrent);
+  Execute(Session *in_session, drizzled::execute_string_t, bool is_quiet_arg, bool is_concurrent, bool should_wait);
 
 
   bool execute();
