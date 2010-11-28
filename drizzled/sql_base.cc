@@ -730,7 +730,7 @@ void Session::drop_open_table(Table *table, const TableIdentifier &identifier)
       that something has happened.
     */
     unlink_open_table(table);
-    quick_rm_table(*this, identifier);
+    plugin::StorageEngine::dropTable(*this, identifier);
   }
 }
 

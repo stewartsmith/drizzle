@@ -270,27 +270,6 @@ err_with_placeholders:
   return error;
 }
 
-
-/*
-  Quickly remove a table.
-
-  SYNOPSIS
-    quick_rm_table()
-      base                      The plugin::StorageEngine handle.
-      db                        The database name.
-      table_name                The table name.
-      is_tmp                    If the table is temp.
-
-  RETURN
-    0           OK
-    != 0        Error
-*/
-bool quick_rm_table(Session& session,
-                    const TableIdentifier &identifier)
-{
-  return (plugin::StorageEngine::dropTable(session, identifier));
-}
-
 /*
   Sort keys in the following order:
   - PRIMARY KEY
@@ -2159,7 +2138,7 @@ bool mysql_create_like_table(Session* session,
       // anything that might have been created (read... it is a hack)
       if (not was_created)
       {
-        quick_rm_table(*session, destination_identifier);
+        plugin::StorageEngine::dropTable(*session, destination_identifier);
       } 
       else
       {

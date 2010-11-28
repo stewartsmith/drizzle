@@ -1106,7 +1106,7 @@ static bool internal_alter_table(Session *session,
 
   if (not new_table)
   {
-    quick_rm_table(*session, new_table_as_temporary);
+    plugin::StorageEngine::dropTable(*session, new_table_as_temporary);
     return true;
   }
 
@@ -1184,7 +1184,7 @@ static bool internal_alter_table(Session *session,
       }
       else
       {
-        quick_rm_table(*session, new_table_as_temporary);
+        plugin::StorageEngine::dropTable(*session, new_table_as_temporary);
       }
 
       return true;
@@ -1208,7 +1208,7 @@ static bool internal_alter_table(Session *session,
 
       table::Cache::singleton().mutex().lock(); /* ALTER TABLE */
 
-      quick_rm_table(*session, new_table_as_temporary);
+      plugin::StorageEngine::dropTable(*session, new_table_as_temporary);
       table::Cache::singleton().mutex().unlock();
 
       return true;
@@ -1301,7 +1301,7 @@ static bool internal_alter_table(Session *session,
     if (mysql_rename_table(*session, original_engine, original_table_identifier, original_table_to_drop))
     {
       error= 1;
-      quick_rm_table(*session, new_table_as_temporary);
+      plugin::StorageEngine::dropTable(*session, new_table_as_temporary);
     }
     else
     {
@@ -1310,15 +1310,15 @@ static bool internal_alter_table(Session *session,
         /* Try to get everything back. */
         error= 1;
 
-        quick_rm_table(*session, new_table_identifier);
+        plugin::StorageEngine::dropTable(*session, new_table_identifier);
 
-        quick_rm_table(*session, new_table_as_temporary);
+        plugin::StorageEngine::dropTable(*session, new_table_as_temporary);
 
         mysql_rename_table(*session, original_engine, original_table_to_drop, original_table_identifier);
       }
       else
       {
-        quick_rm_table(*session, original_table_to_drop);
+        plugin::StorageEngine::dropTable(*session, original_table_to_drop);
       }
     }
 
