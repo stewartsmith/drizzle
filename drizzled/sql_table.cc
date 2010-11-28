@@ -270,27 +270,6 @@ err_with_placeholders:
   return error;
 }
 
-
-/*
-  Quickly remove a table.
-
-  SYNOPSIS
-    quick_rm_table()
-      base                      The plugin::StorageEngine handle.
-      db                        The database name.
-      table_name                The table name.
-      is_tmp                    If the table is temp.
-
-  RETURN
-    0           OK
-    != 0        Error
-*/
-bool quick_rm_table(Session& session,
-                    TableIdentifier &identifier)
-{
-  return (plugin::StorageEngine::dropTable(session, identifier));
-}
-
 /*
   Sort keys in the following order:
   - PRIMARY KEY
@@ -1284,7 +1263,7 @@ static bool prepare_blob_field(Session *,
 }
 
 static bool locked_create_event(Session *session,
-                                TableIdentifier &identifier,
+                                const TableIdentifier &identifier,
                                 HA_CREATE_INFO *create_info,
                                 message::Table &table_proto,
                                 AlterInfo *alter_info,
@@ -1319,7 +1298,10 @@ static bool locked_create_event(Session *session,
         return error;
       }
 
-      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getSQLPath().c_str());
+      std::string path;
+      identifier.getSQLPath(path);
+      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), path.c_str());
+
       return error;
     }
 
@@ -1338,7 +1320,10 @@ static bool locked_create_event(Session *session,
       */
       if (definition::Cache::singleton().find(identifier.getKey()))
       {
-        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getSQLPath().c_str());
+        std::string path;
+        identifier.getSQLPath(path);
+        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), path.c_str());
+
         return error;
       }
     }
@@ -1414,7 +1399,7 @@ static bool locked_create_event(Session *session,
 */
 
 bool mysql_create_table_no_lock(Session *session,
-                                TableIdentifier &identifier,
+                                const TableIdentifier &identifier,
                                 HA_CREATE_INFO *create_info,
 				message::Table &table_proto,
                                 AlterInfo *alter_info,
@@ -1466,7 +1451,7 @@ bool mysql_create_table_no_lock(Session *session,
   @note the following two methods implement create [temporary] table.
 */
 static bool drizzle_create_table(Session *session,
-                                 TableIdentifier &identifier,
+                                 const TableIdentifier &identifier,
                                  HA_CREATE_INFO *create_info,
                                  message::Table &table_proto,
                                  AlterInfo *alter_info,
@@ -1493,7 +1478,9 @@ static bool drizzle_create_table(Session *session,
     }
     else
     {
-      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getSQLPath().c_str());
+      std::string path;
+      identifier.getSQLPath(path);
+      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), path.c_str());
       result= true;
     }
   }
@@ -1523,7 +1510,7 @@ static bool drizzle_create_table(Session *session,
   Database locking aware wrapper for mysql_create_table_no_lock(),
 */
 bool mysql_create_table(Session *session,
-                        TableIdentifier &identifier,
+                        const TableIdentifier &identifier,
                         HA_CREATE_INFO *create_info,
 			message::Table &table_proto,
                         AlterInfo *alter_info,
@@ -1619,8 +1606,8 @@ make_unique_key_name(const char *field_name,KeyInfo *start,KeyInfo *end)
 bool
 mysql_rename_table(Session &session,
                    plugin::StorageEngine *base,
-                   TableIdentifier &from,
-                   TableIdentifier &to)
+                   const TableIdentifier &from,
+                   const TableIdentifier &to)
 {
   int error= 0;
 
@@ -1640,8 +1627,14 @@ mysql_rename_table(Session &session,
   }
   else if (error)
   {
-    const char *from_identifier= from.isTmp() ? "#sql-temporary" : from.getSQLPath().c_str();
-    const char *to_identifier= to.isTmp() ? "#sql-temporary" : to.getSQLPath().c_str();
+    std::string from_path;
+    std::string to_path;
+
+    from.getSQLPath(from_path);
+    to.getSQLPath(to_path);
+
+    const char *from_identifier= from.isTmp() ? "#sql-temporary" : from_path.c_str();
+    const char *to_identifier= to.isTmp() ? "#sql-temporary" : to_path.c_str();
 
     my_error(ER_ERROR_ON_RENAME, MYF(0), from_identifier, to_identifier, error);
   }
@@ -1974,8 +1967,8 @@ err:
     See bug #28614 for more info.
   */
 static bool create_table_wrapper(Session &session, const message::Table& create_table_proto,
-                                 TableIdentifier &destination_identifier,
-                                 TableIdentifier &src_table,
+                                 const TableIdentifier &destination_identifier,
+                                 const TableIdentifier &src_table,
                                  bool is_engine_set)
 {
   int protoerr= EEXIST;
@@ -2051,7 +2044,7 @@ static bool create_table_wrapper(Session &session, const message::Table& create_
 */
 
 bool mysql_create_like_table(Session* session,
-                             TableIdentifier &destination_identifier,
+                             const TableIdentifier &destination_identifier,
                              TableList* table, TableList* src_table,
                              message::Table &create_table_proto,
                              bool is_if_not_exists,
@@ -2145,7 +2138,7 @@ bool mysql_create_like_table(Session* session,
       // anything that might have been created (read... it is a hack)
       if (not was_created)
       {
-        quick_rm_table(*session, destination_identifier);
+        plugin::StorageEngine::dropTable(*session, destination_identifier);
       } 
       else
       {

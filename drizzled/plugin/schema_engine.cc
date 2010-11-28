@@ -125,8 +125,11 @@ const CHARSET_INFO *StorageEngine::getSchemaCollation(const SchemaIdentifier &id
 
     if (not cs)
     {
+      std::string path;
+      identifier.getSQLPath(path);
+
       errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("Error while loading database options: '%s':"), const_cast<SchemaIdentifier &>(identifier).getSQLPath().c_str());
+                    _("Error while loading database options: '%s':"), path.c_str());
       errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_UNKNOWN_COLLATION), buffer.c_str());
 
       return default_charset_info;
