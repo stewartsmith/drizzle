@@ -65,6 +65,7 @@ extern "C" {
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/text_format.h>
+#include <string>
 
 using namespace drizzled;
 
@@ -76,7 +77,8 @@ InnodbReplicationTable::InnodbReplicationTable() :
   plugin::TableFunction("DATA_DICTIONARY", "INNODB_REPLICATION_LOG")
 {
   add_field("TRANSACTION_ID", plugin::TableFunction::NUMBER, 0, false);
-  add_field("TRANSACTION_MESSAGE", plugin::TableFunction::STRING, 512, false);
+  add_field("TRANSACTION_MESSAGE_STRING", plugin::TableFunction::STRING, 2048, false);
+  add_field("TRANSACTION_MESSAGE_BINARY", plugin::TableFunction::VARBINARY, 2048, false);
   add_field("TRANSACTION_LENGTH", plugin::TableFunction::NUMBER, 0, false);
 }
 
@@ -103,16 +105,20 @@ bool InnodbReplicationTable::Generator::populate()
 
   /* Message in viewable format */
   bool result= message.ParseFromArray(ret.message, ret.message_length);
+
   if (result == false)
   {
     fprintf(stderr, _("Unable to parse transaction. Got error: %s.\n"), message.InitializationErrorString().c_str());
+    push("error");
     push("error");
   }
   else
   {
     google::protobuf::TextFormat::PrintToString(message, &transaction_text);
     push(transaction_text);
+    push(ret.message, ret.message_length);
   }
+
   push(static_cast<int64_t>(ret.message_length));
 
   return true;

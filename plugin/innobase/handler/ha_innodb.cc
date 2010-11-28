@@ -947,10 +947,15 @@ session_to_trx(
 plugin::ReplicationReturnCode ReplicationLog::apply(Session &session,
                                                     const message::Transaction &message)
 {
-  std::string buffer;
+  char *data= new char[message.ByteSize()];
 
-  message.SerializeToString(&buffer);
+  message.SerializeToArray(data, message.ByteSize());
+
   trx_t *trx= session_to_trx(&session);
+
+  message::Transaction new_message;
+  new_message.ParseFromArray(data, message.ByteSize());
+  new_message.PrintDebugString();
 
   if (not trx)
   {
@@ -959,9 +964,11 @@ plugin::ReplicationReturnCode ReplicationLog::apply(Session &session,
   else
   {
     uint64_t trx_id= message.transaction_context().transaction_id();
-    ulint error= insert_replication_message(buffer.c_str(), buffer.size(), trx, trx_id);
+    ulint error= insert_replication_message(data, message.ByteSize(), trx, trx_id);
     (void)error;
   }
+
+  delete data;
 
   return plugin::SUCCESS;
 }
