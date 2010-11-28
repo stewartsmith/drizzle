@@ -18,6 +18,9 @@ If you want to launch the query in a separate session, you can do that with
 the following:
 EXECUTE "SELECT 1" CONCURRENT;
 
+By adding "WAIT" to a CONCURRENT execute, you can have the session that
+called EXECUTE wait till the child is finished before returning.
+
 The query will run in a new session and will execute as the user that
 launched it. It can be killed via KILL and the system limit on total number
 of sessions will be enforced.
