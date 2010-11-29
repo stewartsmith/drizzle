@@ -421,16 +421,18 @@ int SEAPITester::doCommit(Session *session, bool all)
 
 int SEAPITester::doRollback(Session *session, bool all)
 {
-  if (! all)
-  {
-    ENGINE_NEW_STATE("ROLLBACK STATEMENT");
-    ENGINE_NEW_STATE("In Transaction");
-  }
-  else
+  if (all
+    || !session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
   {
     ENGINE_NEW_STATE("ROLLBACK");
     ENGINE_NEW_STATE("::SEAPITester()");
   }
+  else
+  {
+    ENGINE_NEW_STATE("ROLLBACK STATEMENT");
+    ENGINE_NEW_STATE("In Transaction");
+  }
+
   return getRealEngine()->rollback(session, all);
 }
 
