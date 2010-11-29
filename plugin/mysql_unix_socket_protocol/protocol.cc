@@ -123,7 +123,7 @@ bool Protocol::getFileDescriptors(std::vector<int> &fds)
       << sizeof(servAddr.sun_path) << " bytes." << endl;
     return false;
   }
-  memcpy(servAddr.sun_path, unix_socket_path.file_string().c_str(), sizeof(servAddr.sun_path)-1);
+  memcpy(servAddr.sun_path, unix_socket_path.file_string().c_str(), min(sizeof(servAddr.sun_path)-1,unix_socket_path.file_string().size()));
 
   socklen_t addrlen= sizeof(servAddr);
   if (::bind(unix_sock, reinterpret_cast<sockaddr *>(&servAddr), addrlen) < 0)
