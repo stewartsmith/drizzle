@@ -242,7 +242,8 @@ DrizzleLock *Session::lockTables(Table **tables, uint32_t count, uint32_t flags,
            sql_lock->getLocks(),
            sql_lock->sizeLock() * sizeof(*sql_lock->getLocks()));
     /* Lock on the copied half of the lock data array. */
-    rc= thr_lock_errno_to_mysql[(int) thr_multi_lock(sql_lock->getLocks() +
+    rc= thr_lock_errno_to_mysql[(int) thr_multi_lock(*this,
+                                                     sql_lock->getLocks() +
                                                      sql_lock->sizeLock(),
                                                      sql_lock->sizeLock(),
                                                      this->lock_id)];
