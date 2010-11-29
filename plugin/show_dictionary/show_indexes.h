@@ -35,7 +35,7 @@ public:
     int32_t index_iterator;
     int32_t index_part_iterator;
 
-    drizzled::message::TablePtr table_proto;
+    drizzled::message::table::shared_ptr table_proto;
     drizzled::message::Table::Index index;
     drizzled::message::Table::Index::IndexPart index_part;
 

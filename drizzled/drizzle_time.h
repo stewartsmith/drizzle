@@ -185,10 +185,6 @@ enum interval_type
   INTERVAL_MINUTE_MICROSECOND, INTERVAL_SECOND_MICROSECOND, INTERVAL_LAST
 };
 
-extern uint64_t my_getsystime(void);
-extern uint64_t my_micro_time(void);
-extern uint64_t my_micro_time_and_time(time_t *time_arg);
-
 } /* namespace drizzled */
 
 #endif /* DRIZZLED_DRIZZLE_TIME_H */

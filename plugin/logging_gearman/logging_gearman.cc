@@ -24,11 +24,11 @@
 #include <drizzled/plugin/logging.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
+#include <boost/date_time.hpp>
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
 #include <libgearman/gearman.h>
 #include <limits.h>
-#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -45,27 +45,6 @@ static const int MAX_MSG_LEN= 32*1024;
 static bool sysvar_logging_gearman_enable;
 static char* sysvar_logging_gearman_host= NULL;
 static char* sysvar_logging_gearman_function= NULL;
-
-
-/* stolen from mysys/my_getsystime
-   until the Session has a good utime "now" we can use
-   will have to use this instead */
-
-static uint64_t get_microtime()
-{
-#if defined(HAVE_GETHRTIME)
-  return gethrtime()/1000;
-#else
-  uint64_t newtime;
-  struct timeval t;
-  /*
-    The following loop is here because gettimeofday may fail on some systems
-  */
-  while (gettimeofday(&t, NULL) != 0) {}
-  newtime= (uint64_t)t.tv_sec * 1000000 + t.tv_usec;
-  return newtime;
-#endif  /* defined(HAVE_GETHRTIME) */
-}
 
 /* quote a string to be safe to include in a CSV line
    that means backslash quoting all commas, doublequotes, backslashes,
@@ -246,8 +225,11 @@ public:
        inside itself, so be more accurate, and so this doesnt have to
        keep calling current_utime, which can be slow */
   
-    uint64_t t_mark= get_microtime();
+    boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::local_time());
+    boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
+    uint64_t t_mark= (mytime-epoch).total_microseconds();
   
+
     // buffer to quotify the query
     unsigned char qs[255];
   
@@ -263,10 +245,9 @@ public:
                session->thread_id,
                session->getQueryId(),
                // dont need to quote the db name, always CSV safe
-               (int)session->db.length(), dbs,
+               (int)session->getSchema().length(), dbs,
                // do need to quote the query
-               quotify((const unsigned char *)session->getQueryString().c_str(),
-                       session->getQueryLength(), qs, sizeof(qs)),
+               quotify((const unsigned char *)session->getQueryString()->c_str(), session->getQueryString()->length(), qs, sizeof(qs)),
                // command_name is defined in drizzled/sql_parse.cc
                // dont need to quote the command name, always CSV safe
                (int)command_name[session->command].length,

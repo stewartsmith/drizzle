@@ -23,14 +23,11 @@
  */
 
 #include "config.h"
-#include "drizzled/message/transaction_manager.h"
+#include "transaction_manager.h"
 
 using namespace std;
+using namespace drizzled;
 
-namespace drizzled
-{
-namespace message
-{
 
 bool TransactionManager::store(const message::Transaction &transaction)
 {
@@ -71,6 +68,3 @@ bool TransactionManager::getTransactionMessage(message::Transaction &trx,
   trx.ParseFromString(cache[trx_id].at(position));
   return true;
 }
-
-} /* namespace message */
-} /* namespace drizzled */

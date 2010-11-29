@@ -206,6 +206,7 @@ struct drizzle_system_variables
   uint64_t preload_buff_size;
   uint32_t read_buff_size;
   uint32_t read_rnd_buff_size;
+  bool replicate_query;
   size_t sortbuff_size;
   uint32_t thread_handling;
   uint32_t tx_isolation;
@@ -309,6 +310,8 @@ class Session : public Open_tables_state
 public:
   // Plugin storage in Session.
   typedef boost::unordered_map<std::string, util::Storable *, util::insensitive_hash, util::insensitive_equal_to> PropertyMap;
+  typedef Session* Ptr;
+  typedef boost::shared_ptr<Session> shared_ptr;
 
   /*
     MARK_COLUMNS_NONE:  Means mark_used_colums is not set and no indicator to
@@ -393,7 +396,37 @@ public:
     return lex;
   }
   /** query associated with this statement */
-  std::string query;
+  typedef boost::shared_ptr<const std::string> QueryString;
+private:
+  boost::shared_ptr<std::string> query;
+
+  // Never allow for a modification of this outside of the class. c_str()
+  // requires under some setup non const, you must copy the QueryString in
+  // order to use it.
+public:
+  QueryString getQueryString() const
+  {
+    return query;
+  }
+
+  void resetQueryString()
+  {
+    return query.reset(new std::string);
+  }
+
+  /*
+    We need to copy the lock on the string in order to make sure we have a stable string.
+    Once this is done we can use it to build a const char* which can be handed off for
+    a method to use (Innodb is currently the only engine using this).
+  */
+  const char *getQueryStringCopy(size_t &length)
+  {
+    QueryString tmp_string(getQueryString());
+
+    length= tmp_string->length();
+    char *to_return= strmake(tmp_string->c_str(), tmp_string->length());
+    return to_return;
+  }
 
   /**
     Name of the current (default) database.
@@ -454,25 +487,6 @@ public:
   THR_LOCK_INFO lock_info; /**< Locking information for this session */
   THR_LOCK_OWNER main_lock_id; /**< To use for conventional queries */
   THR_LOCK_OWNER *lock_id; /**< If not main_lock_id, points to the lock_id of a cursor. */
-private:
-  boost::mutex LOCK_delete; /**< Locked before session is deleted */
-public:
-
-  void lockForDelete()
-  {
-    LOCK_delete.lock();
-  }
-
-  void unlockForDelete()
-  {
-    LOCK_delete.unlock();
-  }
-
-  /**
-   * A peek into the query string for the session. This is a best effort
-   * delivery, there is no guarantee whether the content is meaningful.
-   */
-  char process_list_info[PROCESS_LIST_WIDTH+1];
 
   /**
    * A pointer to the stack frame of the scheduler thread
@@ -513,12 +527,7 @@ public:
   /**
    * Is this session viewable by the current user?
    */
-  bool isViewable() const
-  {
-    return plugin::Authorization::isAuthorized(current_session->getSecurityContext(),
-                                               this,
-                                               false);
-  }
+  bool isViewable() const;
 
   /**
     Used in error messages to tell user in what part of MySQL we found an
@@ -940,21 +949,6 @@ public:
     return warn_query_id;
   }
 
-  /** Returns the current query text */
-  inline const std::string &getQueryString()  const
-  {
-    return query;
-  }
-
-  /** Returns the length of the current query text */
-  inline size_t getQueryLength() const
-  {
-    if (! query.empty())
-      return query.length();
-    else
-      return 0;
-  }
-
   /** Accessor method returning the session's ID. */
   inline session_id_t getSessionId()  const
   {
@@ -1130,7 +1124,9 @@ public:
   /**
    * Schedule a session to be run on the default scheduler.
    */
-  bool schedule();
+  static bool schedule(Session::shared_ptr&);
+
+  static void unlink(Session::shared_ptr&);
 
   /*
     For enter_cond() / exit_cond() to work the mutex must be got before
@@ -1143,27 +1139,43 @@ public:
   inline time_t query_start() { return start_time; }
   inline void set_time()
   {
+    boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::local_time());
+    boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
+    start_utime= utime_after_lock= (mytime-epoch).total_microseconds();
+
     if (user_time)
     {
       start_time= user_time;
-      connect_microseconds= start_utime= utime_after_lock= my_micro_time();
+      connect_microseconds= start_utime;
     }
-    else
-      start_utime= utime_after_lock= my_micro_time_and_time(&start_time);
+    else 
+      start_time= (mytime-epoch).total_seconds();
   }
   inline void	set_current_time()    { start_time= time(NULL); }
   inline void	set_time(time_t t)
   {
     start_time= user_time= t;
-    start_utime= utime_after_lock= my_micro_time();
+    boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::local_time());
+    boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
+    uint64_t t_mark= (mytime-epoch).total_microseconds();
+
+    start_utime= utime_after_lock= t_mark;
   }
-  void set_time_after_lock()  { utime_after_lock= my_micro_time(); }
+  void set_time_after_lock()  { 
+     boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::local_time());
+     boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
+     utime_after_lock= (mytime-epoch).total_microseconds();
+  }
   /**
    * Returns the current micro-timestamp
    */
   inline uint64_t getCurrentTimestamp()  
   { 
-    return my_micro_time(); 
+    boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::local_time());
+    boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
+    uint64_t t_mark= (mytime-epoch).total_microseconds();
+
+    return t_mark; 
   }
   inline uint64_t found_rows(void)
   {
@@ -1674,8 +1686,6 @@ public:
       return variables.storage_engine;
     return global_system_variables.storage_engine;
   }
-
-  static void unlink(Session *session);
 
   void get_xid(DRIZZLE_XID *xid); // Innodb only
 

@@ -24,15 +24,13 @@
 #include <boost/unordered_map.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include "drizzled/message/table.pb.h"
+#include "drizzled/message.h"
 #include "drizzled/identifier/table.h"
 
 namespace drizzled {
 namespace message {
 
-typedef boost::shared_ptr<drizzled::message::Table> TablePtr;
-
-typedef boost::unordered_map< drizzled::TableIdentifier::Key, TablePtr> Map;
+typedef boost::unordered_map< drizzled::TableIdentifier::Key, drizzled::message::table::shared_ptr> Map;
 
 class Cache
 {
@@ -57,9 +55,9 @@ public:
     cache.rehash(arg);
   }
 
-  TablePtr find(const TableIdentifier &identifier);
+  drizzled::message::table::shared_ptr find(const TableIdentifier &identifier);
   void erase(const TableIdentifier &identifier);
-  bool insert(const TableIdentifier &identifier, TablePtr share);
+  bool insert(const TableIdentifier &identifier, drizzled::message::table::shared_ptr share);
   bool insert(const TableIdentifier &identifier, message::Table &share);
 };
 

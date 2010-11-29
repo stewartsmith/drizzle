@@ -26,18 +26,57 @@
 #include "drizzled/current_session.h"
 #include "drizzled/plugin/authorization.h"
 
-class Session;
-
 using namespace std;
 
 namespace drizzled
 {
 
-SessionList session_list;
-
-SessionList &getSessionList()
+namespace session
 {
-  return session_list;
+
+Session::shared_ptr Cache::find(const session_id_t &id)
+{
+  boost::mutex::scoped_lock scopedLock(_mutex);
+  for (List::iterator it= cache.begin(); it != cache.end(); ++it )
+  {
+    if ((*it)->thread_id == id)
+    {
+      return *it;
+    }
+  }
+
+  return Session::shared_ptr();
 }
 
+size_t Cache::count()
+{
+  boost::mutex::scoped_lock scopedLock(_mutex);
+
+  return cache.size();
+}
+
+void Cache::erase(Session::Ptr arg)
+{
+  for (List::iterator it= cache.begin(); it != cache.end(); it++)
+  {
+    if ((*it).get() == arg)
+    {
+      cache.erase(it);
+      return;
+    }
+  }
+}
+
+void Cache::insert(Session::shared_ptr &arg)
+{
+  boost::mutex::scoped_lock scopedLock(_mutex);
+  cache.push_back(arg);
+}
+
+void Cache::erase(Session::shared_ptr &arg)
+{
+  cache.erase(remove(cache.begin(), cache.end(), arg));
+}
+
+} /* namespace session */
 } /* namespace drizzled */

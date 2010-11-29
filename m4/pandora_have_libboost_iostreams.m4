@@ -33,7 +33,6 @@ AC_DEFUN([_PANDORA_SEARCH_BOOST_IOSTREAMS],[
     [test "x${ac_cv_libboost_iostreams}" = "xyes" -o "x${ac_cv_libboost_iostreams_mt}" = "xyes"])
   BOOST_LIBS="${BOOST_LIBS} ${LTLIBBOOST_IOSTREAMS_MT} ${LTLIBBOOST_IOSTREAMS}"
   AC_SUBST(BOOST_LIBS) 
-  AC_DEFINE(BOOST_IOSTREAMS_USE_DEPRECATED, [], [Used for client/linebuffer.cc, remove this and fix file when we require a newer boost])
 ])
 
 AC_DEFUN([PANDORA_HAVE_BOOST_IOSTREAMS],[

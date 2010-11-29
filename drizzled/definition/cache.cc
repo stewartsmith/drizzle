@@ -20,41 +20,59 @@
 
 #include "config.h"
 
-#include "drizzled/pthread_globals.h"
+#include <boost/bind.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/shared_mutex.hpp>
+
 #include "drizzled/session.h"
 #include "drizzled/identifier/table.h"
+#include "drizzled/definition/cache.h"
 #include "drizzled/definition/table.h"
 
 namespace drizzled {
 
 namespace definition {
 
-TableSharePtr Cache::find(const TableIdentifier &identifier)
+TableShare::shared_ptr Cache::find(const TableIdentifier::Key &key)
 {
-  //safe_mutex_assert_owner(LOCK_open.native_handle);
+  boost::mutex::scoped_lock scopedLock(_mutex);
 
-  CacheMap::iterator iter= cache.find(identifier.getKey());
+  Map::iterator iter= cache.find(key);
   if (iter != cache.end())
   {
     return (*iter).second;
   }
 
-  return TableSharePtr();
+  return TableShare::shared_ptr();
 }
 
-void Cache::erase(const TableIdentifier &identifier)
+void Cache::erase(const TableIdentifier::Key &key)
 {
-  //safe_mutex_assert_owner(LOCK_open.native_handle);
+  boost::mutex::scoped_lock scopedLock(_mutex);
   
-  cache.erase(identifier.getKey());
+  cache.erase(key);
 }
 
-bool Cache::insert(const TableIdentifier &identifier, TableSharePtr share)
+bool Cache::insert(const TableIdentifier::Key &key, TableShare::shared_ptr share)
 {
-  std::pair<CacheMap::iterator, bool> ret=
-    cache.insert(std::make_pair(identifier.getKey(), share));
+  boost::mutex::scoped_lock scopedLock(_mutex);
+  std::pair<Map::iterator, bool> ret=
+    cache.insert(std::make_pair(key, share));
 
   return ret.second;
+}
+
+void Cache::CopyFrom(drizzled::TableShare::vector &vector)
+{
+  boost::mutex::scoped_lock scopedLock(_mutex);
+
+  vector.reserve(definition::Cache::singleton().size());
+
+  std::transform(cache.begin(),
+                 cache.end(),
+                 std::back_inserter(vector),
+                 boost::bind(&Map::value_type::second, _1) );
+  assert(vector.size() == cache.size());
 }
 
 } /* namespace definition */

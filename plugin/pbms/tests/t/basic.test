@@ -2,6 +2,7 @@
 # it makes a lot of use of the system tables
 # which is frowned on in a real application.
 
+--source include/have_valgrind.inc
 CREATE TABLE t1 (a int primary key, b blob);
 insert into t1 values (1, "Hello World");
 insert into t1 values (2, "Hello PBMS");

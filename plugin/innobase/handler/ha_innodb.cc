@@ -493,14 +493,21 @@ void InnobaseEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
     { }
     else
     {
-      char uname[NAME_LEN + 1];
-      uint32_t file_name_len;
+      std::string path;
+      path+= directory.getPath();
+      path+= FN_LIBCHAR;
+      path+= entry->filename;
 
-      file_name_len= TableIdentifier::filename_to_tablename(filename->c_str(), uname, sizeof(uname));
-      // TODO: Remove need for memory copy here
-      uname[file_name_len - sizeof(DEFAULT_FILE_EXTENSION) + 1]= '\0'; // Subtract ending, place NULL 
-
-      set_of_identifiers.push_back(TableIdentifier(schema_identifier, uname));
+      message::Table definition;
+      if (StorageEngine::readTableFile(path, definition))
+      {
+        /* 
+           Using schema_identifier here to stop unused warning, could use
+           definition.schema() instead
+        */
+        TableIdentifier identifier(schema_identifier.getSchemaName(), definition.name());
+        set_of_identifiers.push_back(identifier);
+      }
     }
   }
 }
@@ -1132,9 +1139,7 @@ innobase_mysql_print_thd(
           session->getSecurityContext().getIp().c_str(),
           session->getSecurityContext().getUser().c_str()
   );
-  fprintf(f,
-          "\n%s", session->getQueryString().c_str()
-  );
+  fprintf(f, "\n%s", session->getQueryString()->c_str());
   putc('\n', f);
 }
 
@@ -1254,8 +1259,7 @@ innobase_get_stmt(
 	void*	session,	/*!< in: MySQL thread handle */
 	size_t*	length)		/*!< out: length of the SQL statement */
 {
-  *length= static_cast<Session*>(session)->query.length();
-  return static_cast<Session*>(session)->query.c_str();
+  return static_cast<Session*>(session)->getQueryStringCopy(*length);
 }
 
 #if defined (__WIN__) && defined (MYSQL_DYNAMIC_PLUGIN)
@@ -8868,15 +8872,20 @@ uint64_t InnobaseEngine::doGetCurrentTransactionId(Session *session)
 
 uint64_t InnobaseEngine::doGetNewTransactionId(Session *session)
 {
-  trx_t *trx= innobase_trx_allocate(session);
+  trx_t*& trx = session_to_trx(session);
+
+  if (trx == NULL)
+  {
+    trx = innobase_trx_allocate(session);
+
+    innobase_trx_init(session, trx);
+  }
 
   mutex_enter(&kernel_mutex);
   trx->id= trx_sys_get_new_trx_id();
   mutex_exit(&kernel_mutex);
 
   uint64_t transaction_id= (ib_uint64_t) ut_conv_dulint_to_longlong(trx->id);
-
-  trx_free_for_mysql(trx);
 
   return transaction_id;
 }

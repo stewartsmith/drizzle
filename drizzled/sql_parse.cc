@@ -54,7 +54,7 @@
 
 #include <bitset>
 #include <algorithm>
-
+#include <boost/date_time.hpp>
 #include "drizzled/internal/my_sys.h"
 
 using namespace std;
@@ -170,8 +170,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   bool error= 0;
   Query_id &query_id= Query_id::get_query_id();
 
-  DRIZZLE_COMMAND_START(session->thread_id,
-                        command);
+  DRIZZLE_COMMAND_START(session->thread_id, command);
 
   session->command= command;
   session->lex->sql_command= SQLCOM_END; /* to avoid confusing VIEW detectors */
@@ -221,12 +220,12 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   {
     if (not session->readAndStoreQuery(packet, packet_length))
       break;					// fatal error is set
-    DRIZZLE_QUERY_START(session->query.c_str(),
+    DRIZZLE_QUERY_START(session->getQueryString()->c_str(),
                         session->thread_id,
                         const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));
 
-    plugin::QueryRewriter::rewriteQuery(session->db, session->query);
-    mysql_parse(session, session->query.c_str(), session->query.length());
+    plugin::QueryRewriter::rewriteQuery(session->getSchema(), session->getQueryString());
+    mysql_parse(session, session->getQueryString()->c_str(), session->getQueryString()->length());
 
     break;
   }
@@ -320,8 +319,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   /* Store temp state for processlist */
   session->set_proc_info("cleaning up");
   session->command= COM_SLEEP;
-  memset(session->process_list_info, 0, PROCESS_LIST_WIDTH);
-  session->query.clear();
+  session->resetQueryString();
 
   session->set_proc_info(NULL);
   session->mem_root->free_root(MYF(memory::KEEP_PREALLOC));
@@ -432,8 +430,7 @@ int prepare_new_schema_table(Session *session, LEX *lex,
     true        Error
 */
 
-static int
-mysql_execute_command(Session *session)
+static int mysql_execute_command(Session *session)
 {
   bool res= false;
   LEX  *lex= session->lex;
@@ -441,12 +438,6 @@ mysql_execute_command(Session *session)
   Select_Lex *select_lex= &lex->select_lex;
   /* list of all tables in query */
   TableList *all_tables;
-  /* A peek into the query string */
-  size_t proc_info_len= session->query.length() > PROCESS_LIST_WIDTH ?
-                        PROCESS_LIST_WIDTH : session->query.length();
-
-  memcpy(session->process_list_info, session->query.c_str(), proc_info_len);
-  session->process_list_info[proc_info_len]= '\0';
 
   /*
     In many cases first table of main Select_Lex have special meaning =>
@@ -726,8 +717,9 @@ void create_select_for_variable(const char *var_name)
 
 void mysql_parse(Session *session, const char *inBuf, uint32_t length)
 {
-  uint64_t start_time= my_getsystime();
+  boost::posix_time::ptime start_time=boost::posix_time::microsec_clock::local_time();
   session->lex->start(session);
+
   session->reset_for_next_command();
   /* Check if the Query is Cached if and return true if yes
    * TODO the plugin has to make sure that the query is cacheble
@@ -748,9 +740,9 @@ void mysql_parse(Session *session, const char *inBuf, uint32_t length)
   if (!err)
   {
     {
-      if (! session->is_error())
+      if (not session->is_error())
       {
-        DRIZZLE_QUERY_EXEC_START(session->query.c_str(),
+        DRIZZLE_QUERY_EXEC_START(session->getQueryString()->c_str(),
                                  session->thread_id,
                                  const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));
         // Implement Views here --Brian
@@ -776,7 +768,8 @@ void mysql_parse(Session *session, const char *inBuf, uint32_t length)
   session->set_proc_info("freeing items");
   session->end_statement();
   session->cleanup_after_query();
-  session->status_var.execution_time_nsec+= my_getsystime() - start_time;
+  boost::posix_time::ptime end_time=boost::posix_time::microsec_clock::local_time();
+  session->status_var.execution_time_nsec+=(end_time-start_time).total_microseconds();
 }
 
 
@@ -966,8 +959,6 @@ TableList *Select_Lex::add_table_to_list(Session *session,
 
   ptr->alias= alias_str;
   ptr->setIsAlias(alias ? true : false);
-  if (table->table.length)
-    table->table.length= my_casedn_str(files_charset_info, table->table.str);
   ptr->setTableName(table->table.str);
   ptr->table_name_length=table->table.length;
   ptr->lock_type=   lock_type;
@@ -1434,37 +1425,22 @@ void add_join_natural(TableList *a, TableList *b, List<String> *using_fields,
     This is written such that we have a short lock on LOCK_thread_count
 */
 
-static unsigned int
-kill_one_thread(Session *, session_id_t id, bool only_kill_query)
+static unsigned int kill_one_thread(session_id_t id, bool only_kill_query)
 {
-  Session *tmp= NULL;
   uint32_t error= ER_NO_SUCH_THREAD;
   
+  Session::shared_ptr session= session::Cache::singleton().find(id);
+
+  if (not session)
+    return error;
+
+  if (session->isViewable())
   {
-    boost::mutex::scoped_lock scoped(LOCK_thread_count);
-    for (SessionList::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
-    {
-      if ((*it)->thread_id == id)
-      {
-        tmp= *it;
-        tmp->lockForDelete();
-        break;
-      }
-    }
+    session->awake(only_kill_query ? Session::KILL_QUERY : Session::KILL_CONNECTION);
+    error= 0;
   }
 
-  if (tmp)
-  {
-
-    if (tmp->isViewable())
-    {
-      tmp->awake(only_kill_query ? Session::KILL_QUERY : Session::KILL_CONNECTION);
-      error= 0;
-    }
-
-    tmp->unlockForDelete();
-  }
-  return(error);
+  return error;
 }
 
 
@@ -1481,7 +1457,8 @@ kill_one_thread(Session *, session_id_t id, bool only_kill_query)
 void sql_kill(Session *session, int64_t id, bool only_kill_query)
 {
   uint32_t error;
-  if (!(error= kill_one_thread(session, id, only_kill_query)))
+
+  if (not (error= kill_one_thread(id, only_kill_query)))
     session->my_ok();
   else
     my_error(error, MYF(0), id);
@@ -1771,7 +1748,7 @@ static bool parse_sql(Session *session, Lex_input_stream *lip)
 {
   assert(session->m_lip == NULL);
 
-  DRIZZLE_QUERY_PARSE_START(session->query.c_str());
+  DRIZZLE_QUERY_PARSE_START(session->getQueryString()->c_str());
 
   /* Set Lex_input_stream. */
 

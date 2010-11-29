@@ -49,26 +49,6 @@ static unsigned long sysvar_logging_query_threshold_slow= 0;
 static unsigned long sysvar_logging_query_threshold_big_resultset= 0;
 static unsigned long sysvar_logging_query_threshold_big_examined= 0;
 
-/* stolen from mysys/my_getsystime
-   until the Session has a good utime "now" we can use
-   will have to use this instead */
-
-static uint64_t get_microtime()
-{
-#if defined(HAVE_GETHRTIME)
-  return gethrtime()/1000;
-#else
-  uint64_t newtime;
-  struct timeval t;
-  /*
-    The following loop is here because gettimeofday may fail on some systems
-  */
-  while (gettimeofday(&t, NULL) != 0) {}
-  newtime= (uint64_t)t.tv_sec * 1000000 + t.tv_usec;
-  return newtime;
-#endif  /* defined(HAVE_GETHRTIME) */
-}
-
 /* quote a string to be safe to include in a CSV line
    that means backslash quoting all commas, doublequotes, backslashes,
    and all the ASCII unprintable characters
@@ -252,15 +232,18 @@ public:
        inside itself, so be more accurate, and so this doesnt have to
        keep calling current_utime, which can be slow */
   
-    uint64_t t_mark= get_microtime();
-  
+    boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::local_time());
+    boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
+    uint64_t t_mark= (mytime-epoch).total_microseconds();
+
     if ((t_mark - session->start_utime) < (sysvar_logging_query_threshold_slow))
       return false;
 
+    Session::QueryString query_string(session->getQueryString());
     if (re)
     {
       int this_pcre_rc;
-      this_pcre_rc= pcre_exec(re, pe, session->query.c_str(), session->query.length(), 0, 0, NULL, 0);
+      this_pcre_rc= pcre_exec(re, pe, query_string->c_str(), query_string->length(), 0, 0, NULL, 0);
       if (this_pcre_rc < 0)
         return false;
     }
@@ -270,9 +253,9 @@ public:
     
     // Since quotify() builds the quoted string incrementally, we can
     // avoid some reallocating if we reserve some space up front.
-    qs.reserve(session->getQueryLength());
+    qs.reserve(query_string->length());
     
-    quotify(session->getQueryString(), qs);
+    quotify(*query_string, qs);
     
     // to avoid trying to printf %s something that is potentially NULL
     const char *dbs= session->db.empty() ? "" : session->db.c_str();

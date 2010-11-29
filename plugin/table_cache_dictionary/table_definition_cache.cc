@@ -21,7 +21,6 @@
 #include "config.h"
 
 #include "plugin/table_cache_dictionary/dictionary.h"
-#include "drizzled/pthread_globals.h"
 
 using namespace drizzled;
 using namespace std;
@@ -37,80 +36,43 @@ table_cache_dictionary::TableDefinitionCache::TableDefinitionCache() :
 }
 
 table_cache_dictionary::TableDefinitionCache::Generator::Generator(drizzled::Field **arg) :
-  drizzled::plugin::TableFunction::Generator(arg),
-  is_primed(false)
+  drizzled::plugin::TableFunction::Generator(arg)
 {
-  LOCK_open.lock(); /* Optionally lock for remove tables from open_cahe if not in use */
 }
 
 table_cache_dictionary::TableDefinitionCache::Generator::~Generator()
 {
-  LOCK_open.unlock(); /* Optionally lock for remove tables from open_cahe if not in use */
-}
-
-bool table_cache_dictionary::TableDefinitionCache::Generator::nextCore()
-{
-  if (is_primed)
-  {
-    table_share_iterator++;
-  }
-  else
-  {
-    is_primed= true;
-    table_share_iterator= definition::Cache::singleton().getCache().begin();
-  }
-
-  if (table_share_iterator == definition::Cache::singleton().getCache().end())
-    return false;
-
-  share= (*table_share_iterator).second;
-
-  return true;
-}
-
-bool table_cache_dictionary::TableDefinitionCache::Generator::next()
-{
-  while (not nextCore())
-  {
-    if (table_share_iterator != definition::Cache::singleton().getCache().end())
-      continue;
-
-    return false;
-  }
-
-  return true;
 }
 
 bool table_cache_dictionary::TableDefinitionCache::Generator::populate()
 {
-  if (not next())
-    return false;
-  
-  fill();
+  drizzled::TableShare::shared_ptr share;
 
-  return true;
-}
+  while ((share= table_definition_cache_generator))
+  {
+    /**
+      For test cases use:
+      --replace_column 3 # 4 # 5 #
+    */
 
-void table_cache_dictionary::TableDefinitionCache::Generator::fill()
-{
-  /**
-    For test cases use:
-    --replace_column 3 # 4 # 5 #
-  */
+    /* TABLE_SCHEMA 1 */
+    string arg;
+    push(share->getSchemaName(arg));
 
-  /* TABLE_SCHEMA 1 */
-  string arg;
-  push(share->getSchemaName(arg));
+    /* TABLE_NAME  2 */
+    push(share->getTableName(arg));
 
-  /* TABLE_NAME  2 */
-  push(share->getTableName(arg));
+    /* VERSION 3 */
+    push(static_cast<int64_t>(share->getVersion()));
 
-  /* VERSION 3 */
-  push(static_cast<int64_t>(share->getVersion()));
+    /* TABLE_COUNT 4 */
+    push(static_cast<uint64_t>(share->getTableCount()));
 
-  /* TABLE_COUNT 4 */
-  push(static_cast<uint64_t>(share->getTableCount()));
+    /* IS_NAME_LOCKED */
+    push(false);
 
-  /* IS_NAME_LOCKED */
-  push(false);
+    return true;
+  }
+
+  return false;
 }

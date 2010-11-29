@@ -107,7 +107,7 @@ bool statement::AlterTable::execute()
   assert(select_lex->db);
 
   /* Chicken/Egg... we need to search for the table, to know if the table exists, so we can build a full identifier from it */
-  message::TablePtr original_table_message;
+  message::table::shared_ptr original_table_message;
   {
     TableIdentifier identifier(first_table->getSchemaName(), first_table->getTableName());
     if (plugin::StorageEngine::getTableDefinition(*session, identifier, original_table_message) != EEXIST)
@@ -416,7 +416,7 @@ static bool mysql_prepare_alter_table(Session *session,
       */
       if (alter_info->build_method == HA_BUILD_ONLINE)
       {
-        my_error(ER_NOT_SUPPORTED_YET, MYF(0), session->query.c_str());
+        my_error(ER_NOT_SUPPORTED_YET, MYF(0), session->getQueryString()->c_str());
         goto err;
       }
       alter_info->build_method= HA_BUILD_OFFLINE;
@@ -715,11 +715,13 @@ static int mysql_discard_or_import_tablespace(Session *session,
 
   /* The ALTER Table is always in its own transaction */
   error= transaction_services.autocommitOrRollback(session, false);
-  if (! session->endActiveTransaction())
+  if (not session->endActiveTransaction())
     error=1;
+
   if (error)
     goto err;
-  write_bin_log(session, session->query.c_str());
+
+  write_bin_log(session, *session->getQueryString());
 
 err:
   (void) transaction_services.autocommitOrRollback(session, error);
@@ -814,9 +816,9 @@ static bool lockTableIfDifferent(Session &session,
         /* Table will be closed by Session::executeCommand() */
         my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_table_identifier.getSQLPath().c_str());
 
-        LOCK_open.lock(); /* ALTER TABLe */
+        table::Cache::singleton().mutex().lock(); /* ALTER TABLe */
         session.unlink_open_table(name_lock);
-        LOCK_open.unlock();
+        table::Cache::singleton().mutex().unlock();
 
         return false;
       }
@@ -956,16 +958,16 @@ static bool internal_alter_table(Session *session,
           while the fact that the table is still open gives us protection
           from concurrent DDL statements.
         */
-        LOCK_open.lock(); /* DDL wait for/blocker */
+        table::Cache::singleton().mutex().lock(); /* DDL wait for/blocker */
         wait_while_table_is_used(session, table, HA_EXTRA_FORCE_REOPEN);
-        LOCK_open.unlock();
+        table::Cache::singleton().mutex().unlock();
         error= table->cursor->ha_enable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
         /* COND_refresh will be signaled in close_thread_tables() */
         break;
       case DISABLE:
-        LOCK_open.lock(); /* DDL wait for/blocker */
+        table::Cache::singleton().mutex().lock(); /* DDL wait for/blocker */
         wait_while_table_is_used(session, table, HA_EXTRA_FORCE_REOPEN);
-        LOCK_open.unlock();
+        table::Cache::singleton().mutex().unlock();
         error=table->cursor->ha_disable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
         /* COND_refresh will be signaled in close_thread_tables() */
         break;
@@ -983,13 +985,13 @@ static bool internal_alter_table(Session *session,
                             table->getAlias());
       }
 
-      LOCK_open.lock(); /* Lock to remove all instances of table from table cache before ALTER */
+      table::Cache::singleton().mutex().lock(); /* Lock to remove all instances of table from table cache before ALTER */
       /*
         Unlike to the above case close_cached_table() below will remove ALL
         instances of Table from table cache (it will also remove table lock
         held by this thread). So to make actual table renaming and writing
         to binlog atomic we have to put them into the same critical section
-        protected by LOCK_open mutex. This also removes gap for races between
+        protected by table::Cache::singleton().mutex() mutex. This also removes gap for races between
         access() and mysql_rename_table() calls.
       */
 
@@ -1033,7 +1035,9 @@ static bool internal_alter_table(Session *session,
 
       if (error == 0)
       {
-        write_bin_log(session, session->query.c_str());
+        TransactionServices &transaction_services= TransactionServices::singleton();
+        transaction_services.allocateNewTransactionId();
+        write_bin_log(session, *session->getQueryString());
         session->my_ok();
       }
       else if (error > 0)
@@ -1042,7 +1046,7 @@ static bool internal_alter_table(Session *session,
         error= -1;
       }
 
-      LOCK_open.unlock();
+      table::Cache::singleton().mutex().unlock();
       table_list->table= NULL;
 
       return error;
@@ -1187,10 +1191,10 @@ static bool internal_alter_table(Session *session,
         delete new_table;
       }
 
-      LOCK_open.lock(); /* ALTER TABLE */
+      table::Cache::singleton().mutex().lock(); /* ALTER TABLE */
 
       quick_rm_table(*session, new_table_as_temporary);
-      LOCK_open.unlock();
+      table::Cache::singleton().mutex().unlock();
 
       return true;
     }
@@ -1237,7 +1241,7 @@ static bool internal_alter_table(Session *session,
       delete new_table;
     }
 
-    LOCK_open.lock(); /* ALTER TABLE */
+    table::Cache::singleton().mutex().lock(); /* ALTER TABLE */
 
     /*
       Data is copied. Now we:
@@ -1311,16 +1315,16 @@ static bool internal_alter_table(Session *session,
         from list of open tables list and table cache.
       */
       session->unlink_open_table(table);
-      LOCK_open.unlock();
+      table::Cache::singleton().mutex().unlock();
 
       return true;
     }
 
-    LOCK_open.unlock();
+    table::Cache::singleton().mutex().unlock();
 
     session->set_proc_info("end");
 
-    write_bin_log(session, session->query.c_str());
+    write_bin_log(session, *session->getQueryString());
     table_list->table= NULL;
   }
 
@@ -1399,9 +1403,9 @@ bool alter_table(Session *session,
 
     if (name_lock)
     {
-      LOCK_open.lock(); /* ALTER TABLe */
+      table::Cache::singleton().mutex().lock(); /* ALTER TABLe */
       session->unlink_open_table(name_lock);
-      LOCK_open.unlock();
+      table::Cache::singleton().mutex().unlock();
     }
   }
 

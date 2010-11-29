@@ -43,9 +43,9 @@ table_cache_dictionary::TableCache::TableCache() :
 
 table_cache_dictionary::TableCache::Generator::Generator(drizzled::Field **arg) :
   drizzled::plugin::TableFunction::Generator(arg),
-  is_primed(false)
+  is_primed(false),
+  scopedLock(table::Cache::singleton().mutex())
 {
-  LOCK_open.lock(); /* Optionally lock for remove tables from open_cahe if not in use */
 
   for (table::CacheMap::const_iterator iter= table::getCache().begin();
        iter != table::getCache().end();
@@ -58,7 +58,6 @@ table_cache_dictionary::TableCache::Generator::Generator(drizzled::Field **arg) 
 
 table_cache_dictionary::TableCache::Generator::~Generator()
 {
-  LOCK_open.unlock(); /* Optionally lock for remove tables from open_cahe if not in use */
 }
 
 bool table_cache_dictionary::TableCache::Generator::nextCore()
