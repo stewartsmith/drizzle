@@ -32,7 +32,27 @@ void load_engine_state_transitions(state_multimap &states)
 {
   states.insert(state_pair("INIT", "::SEAPITester()"));
   states.insert(state_pair("::SEAPITester()", "::~SEAPITester()"));
-  states.insert(state_pair("::SEAPITester()", "::doCreateTable()"));
+  states.insert(state_pair("::SEAPITester()", "::max_supported_key_length()"));
+  states.insert(state_pair("::max_supported_key_length()", "::max_supported_keys()"));
+  states.insert(state_pair("::max_supported_key_length()", "::max_supported_key_parts()"));
+  states.insert(state_pair("::max_supported_keys()", "::doCreateTable()"));
+
+  states.insert(state_pair("::max_supported_keys()", "::max_supported_key_part_length()"));
+
+  // what the
+  states.insert(state_pair("::max_supported_keys()", "END STATEMENT"));
+
+  states.insert(state_pair("::max_supported_key_part_length()", "::max_supported_key_part_length()"));
+  states.insert(state_pair("::max_supported_key_part_length()", "::doCreateTable()"));
+
+  states.insert(state_pair("::max_supported_key_parts()", "::max_supported_keys()"));
+
+  // what the
+  states.insert(state_pair("START STATEMENT", "::max_supported_key_length()"));
+
+  // what the
+  states.insert(state_pair("In Transaction", "::max_supported_key_length()"));
+
   states.insert(state_pair("::doCreateTable()", "::SEAPITester()"));
 /*  states.insert(state_pair("::SEAPITester()", "::create()"));
     states.insert(state_pair("::create()", "::SEAPITester()"));*/

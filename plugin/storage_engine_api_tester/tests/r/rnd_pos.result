@@ -1,3 +1,4 @@
+set storage_engine=storage_engine_api_tester;
 CREATE TABLE t1 (
 aufnr varchar(12) NOT NULL default '',
 plnfl varchar(6) NOT NULL default '',

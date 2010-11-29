@@ -2,6 +2,7 @@
 #
 # test case for #570
 #
+set storage_engine=storage_engine_api_tester;
 
 # This failed because of syntax. Changed int(5) to int.
 CREATE TABLE t1 (

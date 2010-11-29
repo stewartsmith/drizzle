@@ -100,33 +100,35 @@ public:
   ~SEAPITesterCursor()
     { delete realCursor;}
 
-  int close() { CURSOR_NEW_STATE("::close()"); CURSOR_NEW_STATE("Cursor()");return realCursor->close(); }
+  int close();
   int rnd_next(unsigned char *buf) { CURSOR_NEW_STATE("::rnd_next()"); return realCursor->rnd_next(buf); }
   int rnd_pos(unsigned char* buf, unsigned char* pos) { CURSOR_NEW_STATE("::rnd_pos()"); return realCursor->rnd_pos(buf, pos); }
-  void position(const unsigned char *record) { CURSOR_NEW_STATE("::position()"); realCursor->position(record);}
-  int info(uint32_t) { return 0; }
+  void position(const unsigned char *record);
+  int info(uint32_t flag);
+
+  int reset();
+
   void get_auto_increment(uint64_t, uint64_t, uint64_t, uint64_t*, uint64_t*) {}
   int doStartTableScan(bool scan) { CURSOR_NEW_STATE("::doStartTableScan()"); return realCursor->doStartTableScan(scan); }
   int doEndTableScan() { CURSOR_NEW_STATE("::doEndTableScan()"); return realCursor->doEndTableScan(); }
 
-  int doOpen(const TableIdentifier &identifier, int mode, uint32_t test_if_locked)
-    { CURSOR_NEW_STATE("::doOpen()"); return realCursor->doOpen(identifier, mode, test_if_locked);}
+  int doOpen(const TableIdentifier &identifier, int mode, uint32_t test_if_locked);
 
   THR_LOCK_DATA **store_lock(Session *,
                                      THR_LOCK_DATA **to,
                              enum thr_lock_type);
 
+  int external_lock(Session *session, int lock_type);
+
   int doInsertRecord(unsigned char *buf)
   {
     CURSOR_NEW_STATE("::doInsertRecord()");
-    CURSOR_NEW_STATE("::store_lock()");
     return realCursor->doInsertRecord(buf);
   }
 
   int doUpdateRecord(const unsigned char *old_row, unsigned char *new_row)
   {
     CURSOR_NEW_STATE("::doUpdateRecord()");
-    CURSOR_NEW_STATE("::store_lock()");
     return realCursor->doUpdateRecord(old_row, new_row);
   }
 
@@ -134,6 +136,59 @@ private:
   string cursor_state;
   void CURSOR_NEW_STATE(const string &new_state);
 };
+
+int SEAPITesterCursor::doOpen(const TableIdentifier &identifier, int mode, uint32_t test_if_locked)
+{
+  CURSOR_NEW_STATE("::doOpen()");
+
+  int r= realCursor->doOpen(identifier, mode, test_if_locked);
+
+  ref_length= realCursor->ref_length;
+
+  return r;
+}
+
+int SEAPITesterCursor::reset()
+{
+  CURSOR_NEW_STATE("::reset()");
+  CURSOR_NEW_STATE("::doOpen()");
+
+  return realCursor->reset();
+}
+
+int SEAPITesterCursor::close()
+{
+  CURSOR_NEW_STATE("::close()");
+  CURSOR_NEW_STATE("Cursor()");
+
+  return realCursor->close();
+}
+
+void SEAPITesterCursor::position(const unsigned char *record)
+{
+  CURSOR_NEW_STATE("::position()");
+
+  /* We need to use the correct buffer for upper layer */
+  realCursor->ref= ref;
+
+  realCursor->position(record);
+}
+
+int SEAPITesterCursor::info(uint32_t flag)
+{
+  CURSOR_NEW_STATE("::info()");
+  CURSOR_NEW_STATE("locked");
+
+  return realCursor->info(flag);
+}
+
+int SEAPITesterCursor::external_lock(Session *session, int lock_type)
+{
+  CURSOR_NEW_STATE("::external_lock()");
+  CURSOR_NEW_STATE("locked");
+
+  return realCursor->external_lock(session, lock_type);
+}
 
 THR_LOCK_DATA **SEAPITesterCursor::store_lock(Session *session,
                                               THR_LOCK_DATA **to,
@@ -190,10 +245,18 @@ namespace drizzled {
 class SEAPITester : public drizzled::plugin::TransactionalStorageEngine
 {
 public:
+  /* BUG: Currently flags are just copy&pasted from innobase. Instead, we
+     need to have a call somewhere.
+   */
   SEAPITester(const string &name_arg)
     : drizzled::plugin::TransactionalStorageEngine(name_arg,
-//                                                   HTON_SKIP_STORE_LOCK |
-                                                   HTON_HAS_DOES_TRANSACTIONS)
+                            HTON_NULL_IN_KEY |
+                            HTON_CAN_INDEX_BLOBS |
+                            HTON_PRIMARY_KEY_IN_READ_INDEX |
+                            HTON_PARTIAL_COLUMN_READ |
+                            HTON_TABLE_SCAN_ON_INDEX |
+                            HTON_HAS_FOREIGN_KEYS |
+                            HTON_HAS_DOES_TRANSACTIONS)
   {
     ENGINE_NEW_STATE("::SEAPITester()");
   }
@@ -255,6 +318,32 @@ public:
   virtual int doCommit(Session*, bool);
 
   virtual int doRollback(Session*, bool);
+
+  uint32_t max_supported_record_length(void) const {
+    ENGINE_NEW_STATE("::max_supported_record_length()");
+    return getRealEngine()->max_supported_record_length();
+  }
+
+  uint32_t max_supported_keys(void) const {
+    ENGINE_NEW_STATE("::max_supported_keys()");
+    return getRealEngine()->max_supported_keys();
+  }
+
+  uint32_t max_supported_key_parts(void) const {
+    ENGINE_NEW_STATE("::max_supported_key_parts()");
+    return getRealEngine()->max_supported_key_parts();
+  }
+
+  uint32_t max_supported_key_length(void) const {
+    ENGINE_NEW_STATE("::max_supported_key_length()");
+    return getRealEngine()->max_supported_key_length();
+  }
+
+  uint32_t max_supported_key_part_length(void) const {
+    ENGINE_NEW_STATE("::max_supported_key_part_length()");
+    return getRealEngine()->max_supported_key_part_length();
+  }
+
 };
 
 bool SEAPITester::doDoesTableExist(Session &session, const TableIdentifier &identifier)
