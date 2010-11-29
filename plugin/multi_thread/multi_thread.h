@@ -46,6 +46,7 @@ public:
   ~MultiThreadScheduler();
   bool addSession(drizzled::Session::shared_ptr &session);
   void killSessionNow(drizzled::Session::shared_ptr &session);
+  void killSession(drizzled::Session*);
   
   void runSession(drizzled::session_id_t);
 private:

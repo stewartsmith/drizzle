@@ -452,6 +452,7 @@ void close_connections(void)
       tmp->setKilled(Session::KILL_CONNECTION);
       tmp->scheduler->killSession(tmp.get());
       DRIZZLE_CONNECTION_DONE(tmp->thread_id);
+
       tmp->lockOnSys();
     }
   }

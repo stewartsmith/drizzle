@@ -410,10 +410,6 @@ Session::~Session()
     delete (*iter).second;
   }
   life_properties.clear();
-
-#if 0
-  drizzled::util::custom_backtrace();
-#endif
 }
 
 void Session::setClient(plugin::Client *client_arg)
@@ -427,14 +423,12 @@ void Session::awake(Session::killed_state_t state_to_set)
   this->checkSentry();
 
   setKilled(state_to_set);
+  scheduler->killSession(this);
+
   if (state_to_set != Session::KILL_QUERY)
   {
-    scheduler->killSession(this);
     DRIZZLE_CONNECTION_DONE(thread_id);
   }
-
-  assert(_thread);
-  _thread->interrupt();
 
   if (mysys_var)
   {
