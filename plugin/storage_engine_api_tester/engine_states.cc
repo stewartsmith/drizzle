@@ -50,9 +50,6 @@ void load_engine_state_transitions(state_multimap &states)
   // what the
   states.insert(state_pair("START STATEMENT", "::max_supported_key_length()"));
 
-  // what the
-  states.insert(state_pair("In Transaction", "::max_supported_key_length()"));
-
   states.insert(state_pair("::doCreateTable()", "::SEAPITester()"));
 /*  states.insert(state_pair("::SEAPITester()", "::create()"));
     states.insert(state_pair("::create()", "::SEAPITester()"));*/
