@@ -432,6 +432,10 @@ void Session::awake(Session::killed_state_t state_to_set)
     scheduler->killSession(this);
     DRIZZLE_CONNECTION_DONE(thread_id);
   }
+
+  assert(_thread);
+  _thread->interrupt();
+
   if (mysys_var)
   {
     boost_unique_lock_t scopedLock(mysys_var->mutex);
@@ -2122,5 +2126,31 @@ table::Instance *Session::getInstanceTable(List<CreateField> &field_list)
 
   return tmp_share;
 }
+
+namespace display  {
+
+static const std::string NONE= "NONE";
+static const std::string GOT_GLOBAL_READ_LOCK= "HAS GLOBAL READ LOCK";
+static const std::string MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT= "HAS GLOBAL READ LOCK WITH BLOCKING COMMIT";
+
+const std::string &type(drizzled::Session::global_read_lock_t type)
+{
+  switch (type) {
+    default:
+    case Session::NONE:
+      return NONE;
+    case Session::GOT_GLOBAL_READ_LOCK:
+      return GOT_GLOBAL_READ_LOCK;
+    case Session::MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT:
+      return MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT;
+  }
+}
+
+size_t max_string_length(drizzled::Session::global_read_lock_t)
+{
+  return MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT.size();
+}
+
+} /* namespace display */
 
 } /* namespace drizzled */

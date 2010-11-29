@@ -29,8 +29,8 @@ namespace user_locks {
 
 bool Locks::lock(drizzled::session_id_t id_arg, const user_locks::Key &arg, int64_t wait_for)
 {
-  boost::system_time timeout= boost::get_system_time() + boost::posix_time::seconds(wait_for);
   boost::unique_lock<boost::mutex> scope(mutex);
+  boost::system_time timeout= boost::get_system_time() + boost::posix_time::seconds(wait_for);
   
   LockMap::iterator iter;
   while ((iter= lock_map.find(arg)) != lock_map.end())
@@ -40,46 +40,90 @@ bool Locks::lock(drizzled::session_id_t id_arg, const user_locks::Key &arg, int6
       // We own the lock, so we just exit.
       return true;
     }
-    bool success= cond.timed_wait(scope, timeout);
+    try {
+      if (wait_for)
+      {
+        bool success= release_cond.timed_wait(scope, timeout);
 
-    if (not success)
-      return false;
+        if (not success)
+          return false;
+      }
+      else
+      {
+        release_cond.wait(scope);
+      }
+    }
+    catch(boost::thread_interrupted const& error)
+    {
+      // Currently nothing is done here.
+      throw error;
+    }
   }
 
   if (iter == lock_map.end())
   {
-    return lock_map.insert(std::make_pair(arg, new lock_st(id_arg))).second;
+    create_cond.notify_all();
+    return lock_map.insert(std::make_pair(arg, new Lock(id_arg))).second;
   }
 
   return false;
 }
 
-bool Locks::lock(drizzled::session_id_t id_arg, const user_locks::Key &arg)
+// Currently we just let timeouts occur, and the caller will need to know
+// what it is looking for/whether to go back into this.
+void Locks::waitCreate(int64_t wait_for)
 {
   boost::unique_lock<boost::mutex> scope(mutex);
-  return lock_map.insert(std::make_pair(arg, new lock_st(id_arg))).second;
+  boost::system_time timeout= boost::get_system_time() + boost::posix_time::seconds(wait_for);
+  bool timed_out;
+
+  try {
+    timed_out= create_cond.timed_wait(scope, timeout);
+  }
+  catch(boost::thread_interrupted const& error)
+  {
+    // Currently nothing is done here.
+    throw error;
+  }
 }
 
 bool Locks::lock(drizzled::session_id_t id_arg, const user_locks::Keys &arg)
 {
   boost::unique_lock<boost::mutex> scope(mutex);
+  user_locks::Keys created;
+  bool error= false;
 
   for (user_locks::Keys::const_iterator iter= arg.begin(); iter != arg.end(); iter++)
   {
     LockMap::iterator record= lock_map.find(*iter);
 
-    if (record != lock_map.end())
+    if (record != lock_map.end()) // Found, so check ownership of the lock
     {
       if (id_arg != (*record).second->id)
-        return false;
+      {
+        // So it turns out the locks exist, and we can't grab them all
+        error= true;
+        break;
+      }
+    }
+    else
+    {
+      lock_map.insert(std::make_pair(*iter, new Lock(id_arg)));
+      created.insert(*iter);
     }
   }
 
-  for (Keys::iterator iter= arg.begin(); iter != arg.end(); iter++)
+  if (error)
   {
-    //is_locked can fail in cases where we already own the lock.
-    lock_map.insert(std::make_pair(*iter, new lock_st(id_arg)));
+    for (user_locks::Keys::const_iterator iter= created.begin(); iter != created.end(); iter++)
+    {
+      lock_map.erase(*iter);
+    }
+
+    return false;
   }
+
+  create_cond.notify_all();
 
   return true;
 }
@@ -109,11 +153,11 @@ bool Locks::isFree(const user_locks::Key &arg)
 
 void Locks::Copy(LockMap &lock_map_arg)
 {
-  //@todo add lock(?)
+  boost::unique_lock<boost::mutex> scope(mutex);
   lock_map_arg= lock_map;
 }
 
-boost::tribool Locks::release(const user_locks::Key &arg, drizzled::session_id_t &id_arg)
+locks::return_t Locks::release(const user_locks::Key &arg, drizzled::session_id_t &id_arg, bool and_wait)
 {
   size_t elements= 0;
   boost::unique_lock<boost::mutex> scope(mutex);
@@ -121,18 +165,43 @@ boost::tribool Locks::release(const user_locks::Key &arg, drizzled::session_id_t
 
   // Nothing is found
   if ( iter == lock_map.end())
-    return boost::indeterminate;
+    return locks::NOT_FOUND;
 
   if ((*iter).second->id == id_arg)
-    elements= lock_map.erase(arg);
-
-  if (elements)
   {
-    cond.notify_one();
-    return true;
+    elements= lock_map.erase(arg);
+    assert(elements); // If we can't find what we just found, then we are broken
+
+    if (elements)
+    {
+      release_cond.notify_one();
+
+      if (and_wait)
+      {
+        bool found= false;
+        while (not found)
+        {
+          assert(boost::this_thread::interruption_enabled());
+          try {
+            create_cond.wait(scope);
+          }
+          catch(boost::thread_interrupted const& error)
+          {
+            // Currently nothing is done here.
+            throw error;
+          }
+          iter= lock_map.find(arg);
+
+          if (iter != lock_map.end())
+            found= true;
+        }
+      }
+
+      return locks::SUCCESS;
+    }
   }
 
-  return false;
+  return locks::NOT_OWNED_BY;
 }
 
 } /* namespace user_locks */

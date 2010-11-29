@@ -1,0 +1,5 @@
+CREATE TABLE t1 (a serial);
+FLUSH TABLES WITH READ LOCK;
+select * from t1 for update;
+DROP TABLE t1;
+UNLOCK tables;

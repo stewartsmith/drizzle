@@ -40,15 +40,26 @@ int64_t GetLocks::val_int()
     }
     else
     {
-      null_value= true;
+      my_error(drizzled::ER_USER_LOCKS_INVALID_NAME_LOCK, MYF(0));
       return 0;
     }
   }
 
-  null_value= false;
+  boost::tribool result;
+  {
+    boost::this_thread::restore_interruption dl(getSession().getThreadInterupt());
 
+    try {
+      result= user_locks::Locks::getInstance().lock(getSession().getSessionId(), list_of_locks);
+    }
+    catch(boost::thread_interrupted const& error)
+    {
+      my_error(drizzled::ER_QUERY_INTERRUPTED, MYF(0));
+      null_value= true;
 
-  boost::tribool result= user_locks::Locks::getInstance().lock(getSession().getSessionId(), list_of_locks);
+      return 0;
+    }
+  }
 
   if (boost::indeterminate(result))
     null_value= true;
@@ -67,6 +78,8 @@ int64_t GetLocks::val_int()
     {
       list->insert(*iter);
     }
+
+    null_value= false;
 
     return 1;
   }

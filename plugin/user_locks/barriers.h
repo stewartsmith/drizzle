@@ -38,6 +38,12 @@ namespace barriers {
 
 const size_t LARGEST_BARRIER_NAME= 64;
 
+enum return_t {
+  SUCCESS,
+  NOT_FOUND,
+  NOT_OWNED_BY
+};
+
 class Barriers
 {
 public:
@@ -51,7 +57,7 @@ public:
 
   bool create(const user_locks::Key &arg, drizzled::session_id_t owner);
   bool create(const user_locks::Key &arg, drizzled::session_id_t owner, int64_t wait_count);
-  boost::tribool release(const user_locks::Key &arg, drizzled::session_id_t owner);
+  return_t release(const user_locks::Key &arg, drizzled::session_id_t owner);
   Barrier::shared_ptr find(const user_locks::Key &arg);
   void Copy(Map &arg);
 

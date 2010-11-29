@@ -31,17 +31,17 @@ release_barrier("foo1")
 SELECT * FROM DATA_DICTIONARY.USER_BARRIERS ORDER BY USER_BARRIER_NAME;
 USER_BARRIER_NAME	SESSION_ID	USER_NAME	WAITER_LIMIT	GENERATION	WAITERS	OBSERVERS
 SELECT release_barrier("foo2");
-ERROR HY000: Unknown barrier requested.
+ERROR HY000: Unknown user defined barrier requested.
 SELECT * FROM DATA_DICTIONARY.USER_BARRIERS ORDER BY USER_BARRIER_NAME;
 USER_BARRIER_NAME	SESSION_ID	USER_NAME	WAITER_LIMIT	GENERATION	WAITERS	OBSERVERS
 SELECT wait("foo2");
-ERROR HY000: Unknown barrier requested.
+ERROR HY000: Unknown user defined barrier requested.
 set @self_lock= "self_barrier";
 SELECT create_barrier(@self_lock);
 create_barrier(@self_lock)
 1
 SELECT wait(@self_lock);
-ERROR HY000: wait() can not be called on session owning barrier.
+ERROR HY000: wait() can not be called on session owning user defined barrier.
 SELECT release_barrier(@self_lock);
 release_barrier(@self_lock)
 1

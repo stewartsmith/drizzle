@@ -45,7 +45,7 @@ Created 2/17/1996 Heikki Tuuri
 
 /** Flag: has the search system been enabled?
 Protected by btr_search_latch and btr_search_enabled_mutex. */
-UNIV_INTERN bool		btr_search_enabled	= TRUE;
+UNIV_INTERN bool		btr_search_enabled = TRUE;
 
 /** Mutex protecting btr_search_enabled */
 static mutex_t			btr_search_enabled_mutex;
@@ -81,6 +81,11 @@ UNIV_INTERN byte		btr_sea_pad2[64];
 
 /** The adaptive hash index */
 UNIV_INTERN btr_search_sys_t*	btr_search_sys;
+
+#ifdef UNIV_PFS_RWLOCK
+/* Key to register btr_search_sys with performance schema */
+UNIV_INTERN mysql_pfs_key_t	btr_search_latch_key;
+#endif /* UNIV_PFS_RWLOCK */
 
 /** If the number of records on the page divided by this parameter
 would have been successfully accessed using a hash index, the index
@@ -140,7 +145,7 @@ btr_search_check_free_space_in_heap(void)
 	be enough free space in the hash table. */
 
 	if (heap->free_block == NULL) {
-		buf_block_t*	block = buf_block_alloc(0);
+		buf_block_t*	block = buf_block_alloc(NULL, 0);
 
 		rw_lock_x_lock(&btr_search_latch);
 
@@ -167,8 +172,10 @@ btr_search_sys_create(
 
 	btr_search_latch_temp = mem_alloc(sizeof(rw_lock_t));
 
-	rw_lock_create(&btr_search_latch, SYNC_SEARCH_SYS);
-	mutex_create(&btr_search_enabled_mutex, SYNC_SEARCH_SYS_CONF);
+	rw_lock_create(btr_search_latch_key, &btr_search_latch,
+		       SYNC_SEARCH_SYS);
+	mutex_create(btr_search_enabled_mutex_key,
+		     &btr_search_enabled_mutex, SYNC_SEARCH_SYS_CONF);
 
 	btr_search_sys = mem_alloc(sizeof(btr_search_sys_t));
 
@@ -814,6 +821,7 @@ btr_search_guess_on_hash(
 					RW_S_LATCH, RW_X_LATCH, or 0 */
 	mtr_t*		mtr)		/*!< in: mtr */
 {
+	buf_pool_t*	buf_pool;
 	buf_block_t*	block;
 	rec_t*		rec;
 	ulint		fold;
@@ -972,7 +980,7 @@ btr_search_guess_on_hash(
 
 	/* Increment the page get statistics though we did not really
 	fix the page: for user info only */
-
+	buf_pool = buf_pool_from_bpage(&block->page);
 	buf_pool->stat.n_page_gets++;
 
 	return(TRUE);
@@ -1749,7 +1757,7 @@ btr_search_validate(void)
 	rec_offs_init(offsets_);
 
 	rw_lock_x_lock(&btr_search_latch);
-	buf_pool_mutex_enter();
+	buf_pool_mutex_enter_all();
 
 	cell_count = hash_get_n_cells(btr_search_sys->hash_index);
 
@@ -1757,11 +1765,11 @@ btr_search_validate(void)
 		/* We release btr_search_latch every once in a while to
 		give other queries a chance to run. */
 		if ((i != 0) && ((i % chunk_size) == 0)) {
-			buf_pool_mutex_exit();
+			buf_pool_mutex_exit_all();
 			rw_lock_x_unlock(&btr_search_latch);
 			os_thread_yield();
 			rw_lock_x_lock(&btr_search_latch);
-			buf_pool_mutex_enter();
+			buf_pool_mutex_enter_all();
 		}
 
 		node = hash_get_nth_cell(btr_search_sys->hash_index, i)->node;
@@ -1770,6 +1778,9 @@ btr_search_validate(void)
 			const buf_block_t*	block
 				= buf_block_align(node->data);
 			const buf_block_t*	hash_block;
+			buf_pool_t*		buf_pool;
+
+			buf_pool = buf_pool_from_bpage((buf_page_t*) block);
 
 			if (UNIV_LIKELY(buf_block_get_state(block)
 					== BUF_BLOCK_FILE_PAGE)) {
@@ -1780,6 +1791,7 @@ btr_search_validate(void)
 				(BUF_BLOCK_REMOVE_HASH, see the
 				assertion and the comment below) */
 				hash_block = buf_block_hash_get(
+					buf_pool,
 					buf_block_get_space(block),
 					buf_block_get_page_no(block));
 			} else {
@@ -1868,11 +1880,11 @@ btr_search_validate(void)
 		/* We release btr_search_latch every once in a while to
 		give other queries a chance to run. */
 		if (i != 0) {
-			buf_pool_mutex_exit();
+			buf_pool_mutex_exit_all();
 			rw_lock_x_unlock(&btr_search_latch);
 			os_thread_yield();
 			rw_lock_x_lock(&btr_search_latch);
-			buf_pool_mutex_enter();
+			buf_pool_mutex_enter_all();
 		}
 
 		if (!ha_validate(btr_search_sys->hash_index, i, end_index)) {
@@ -1880,7 +1892,7 @@ btr_search_validate(void)
 		}
 	}
 
-	buf_pool_mutex_exit();
+	buf_pool_mutex_exit_all();
 	rw_lock_x_unlock(&btr_search_latch);
 	if (UNIV_LIKELY_NULL(heap)) {
 		mem_heap_free(heap);

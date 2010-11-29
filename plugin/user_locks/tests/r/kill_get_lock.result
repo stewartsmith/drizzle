@@ -1,0 +1,14 @@
+set @lock_name= "_name";
+SELECT get_lock(@lock_name);
+get_lock(@lock_name)
+1
+SELECT if ((is_used_lock(@lock_name) = CONNECTION_ID()), "YES", "NO");
+if ((is_used_lock(@lock_name) = CONNECTION_ID()), "YES", "NO")
+YES
+CREATE TABLE connection (id int);
+set @lock_name= "_name";
+insert into connection VALUES (CONNECTION_ID());
+SELECT get_lock(@lock_name), "con1";
+EXECUTE "SELECT @id:=ID FROM connection LIMIT 1" WITH NO RETURN;
+kill QUERY @id;
+DROP TABLE connection;

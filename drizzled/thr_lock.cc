@@ -92,7 +92,7 @@ static enum thr_lock_type thr_upgraded_concurrent_insert_lock = TL_WRITE;
 
 uint64_t max_write_lock_count= UINT64_MAX;
 
-static void thr_multi_unlock(THR_LOCK_DATA **data,uint32_t count);
+void thr_multi_unlock(THR_LOCK_DATA **data,uint32_t count);
 
 /*
 ** For the future (now the thread specific cond is alloced by my_pthread.c)
@@ -120,7 +120,6 @@ void thr_lock_init(THR_LOCK *lock)
 void THR_LOCK_INFO::init()
 {
   internal::st_my_thread_var *tmp= my_thread_var;
-  thread= tmp->pthread_self;
   thread_id= tmp->id;
   n_cursors= 0;
 }
@@ -632,7 +631,7 @@ thr_multi_lock(THR_LOCK_DATA **data, uint32_t count, THR_LOCK_OWNER *owner)
 
   /* free all locks */
 
-static void thr_multi_unlock(THR_LOCK_DATA **data,uint32_t count)
+void thr_multi_unlock(THR_LOCK_DATA **data,uint32_t count)
 {
   THR_LOCK_DATA **pos,**end;
 

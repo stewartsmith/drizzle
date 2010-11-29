@@ -44,11 +44,26 @@ int64_t WaitUntil::val_int()
     }
     else if (barrier)
     {
-      barrier->wait_until(wait_until);
+      boost::this_thread::restore_interruption dl(getSession().getThreadInterupt());
+      try {
+        barrier->wait_until(wait_until);
+      }
+      catch(boost::thread_interrupted const&)
+      {
+        // We need to issue a different sort of error here
+        my_error(drizzled::ER_QUERY_INTERRUPTED, MYF(0));
+        return 0;
+      }
+
       null_value= false;
 
       return 1;
     }
+  }
+  else if (not res || not res->length())
+  {
+    my_error(drizzled::ER_USER_LOCKS_INVALID_NAME_BARRIER, MYF(0));
+    return 0;
   }
 
   my_error(drizzled::ER_USER_LOCKS_UNKNOWN_BARRIER, MYF(0));
