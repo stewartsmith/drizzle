@@ -76,6 +76,7 @@ static int init(drizzled::module::Context &context)
                              uds_path));
     context.registerVariable(new sys_var_const_string_val("path", fs::system_complete(uds_path).file_string()));
     context.registerVariable(new sys_var_bool_ptr_readonly("clobber", &clobber));
+    context.registerVariable(new sys_var_uint32_t_ptr("max-connections", &ClientMySQLProtocol::max_connections));
   }
   else
   {
@@ -158,7 +159,9 @@ static void init_options(drizzled::module::option_context &context)
           N_("Path used for MySQL UNIX Socket Protocol."));
   context("clobber",
           N_("Clobber socket file if one is there already."));
-
+  context("max-connections",
+          po::value<uint32_t>(&ClientMySQLProtocol::max_connections)->default_value(1000),
+          N_("Maximum simultaneous connections."));
 }
 
 } /* namespace mysql_unix_socket_protocol */
