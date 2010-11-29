@@ -72,6 +72,7 @@ void load_engine_state_transitions(state_multimap &states)
   states.insert(state_pair("COMMIT STATEMENT", "In Transaction"));
   states.insert(state_pair("END STATEMENT", "COMMIT"));
   states.insert(state_pair("END STATEMENT", "ROLLBACK"));
+  states.insert(state_pair("END STATEMENT", "ROLLBACK STATEMENT"));
 
   states.insert(state_pair("COMMIT", "::SEAPITester()"));
   states.insert(state_pair("ROLLBACK", "::SEAPITester()"));
