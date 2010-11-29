@@ -18,10 +18,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
 
-#include <drizzled/session.h>
-#include "plugin/utility_functions/functions.h"
+#ifndef PLUGIN_UTILITY_FUNCTIONS_KILL_H
+#define PLUGIN_UTILITY_FUNCTIONS_KILL_H
+
+#include <drizzled/item/func.h>
 
 namespace drizzled
 {
@@ -29,31 +30,34 @@ namespace drizzled
 namespace utility_functions
 {
 
-int64_t GlobalReadLock::val_int()
+class Kill :public Item_int_func
 {
-  assert(fixed == 1);
-  null_value= false;
+public:
+  int64_t val_int();
+  Kill() : Item_int_func()
+  {
+    unsigned_flag= true;
+  }
 
-  if (getSession().isGlobalReadLock())
-    return 1;
+  const char *func_name() const
+  {
+    return "kill";
+  }
 
-  return 0;
-}
+  void fix_length_and_dec()
+  {
+    max_length= 1;
+  }
 
-String *GlobalReadLock::val_str(String *str)
-{
-  assert(fixed == 1);
-  null_value= false;
-  const std::string &global_state_for_session= display::type(getSession().isGlobalReadLock());
-  str->copy(global_state_for_session.c_str(), global_state_for_session.length(), system_charset_info);
+  bool check_argument_count(int n)
+  {
+    return (n == 2 or n == 1);
+  }
 
-  return str;
-}
-
-void GlobalReadLock::fix_length_and_dec()
-{
-  max_length= drizzled::display::max_string_length(getSession().isGlobalReadLock()) * system_charset_info->mbmaxlen;
-}
+private:
+};
 
 } /* namespace utility_functions */
 } /* namespace drizzled */
+
+#endif /* PLUGIN_UTILITY_FUNCTIONS_KILL_H */
