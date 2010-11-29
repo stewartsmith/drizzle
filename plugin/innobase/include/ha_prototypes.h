@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 2006, 2009, Innobase Oy. All Rights Reserved.
+Copyright (c) 2006, 2010, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -229,14 +229,15 @@ innobase_get_charset(
 
 /**********************************************************************//**
 Determines the current SQL statement.
-@return	SQL statement string */
+@return        SQL statement string */
 UNIV_INTERN
 const char*
 innobase_get_stmt(
 /*==============*/
-	void*	mysql_thd,	/*!< in: MySQL thread handle */
-	size_t*	length)		/*!< out: length of the SQL statement */
-	__attribute__((nonnull));
+       void*   mysql_thd,      /*!< in: MySQL thread handle */
+       size_t* length)         /*!< out: length of the SQL statement */
+       __attribute__((nonnull));
+
 
 /******************************************************************//**
 This function is used to find the storage length in bytes of the first n

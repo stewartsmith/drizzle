@@ -1,7 +1,7 @@
 # Check on bad wait names
---error 1707
+--error 1711
 SELECT WAIT("");
---error 1707
+--error 1711
 SELECT WAIT(NULL);
 
 set @signal_name= "foo";

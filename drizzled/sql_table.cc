@@ -148,102 +148,104 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
   int error= 0;
   bool foreign_key_error= false;
 
-  table::Cache::singleton().mutex().lock(); /* Part 2 of rm a table */
-
-  if (not drop_temporary && session->lock_table_names_exclusively(tables))
   {
-    table::Cache::singleton().mutex().unlock();
-    return 1;
-  }
+    table::Cache::singleton().mutex().lock(); /* Part 2 of rm a table */
 
-  /* Don't give warnings for not found errors, as we already generate notes */
-  session->no_warnings_for_error= 1;
-
-  for (table= tables; table; table= table->next_local)
-  {
-    TableIdentifier tmp_identifier(table->getSchemaName(), table->getTableName());
-
-    error= session->drop_temporary_table(tmp_identifier);
-
-    switch (error) {
-    case  0:
-      // removed temporary table
-      continue;
-    case -1:
-      error= 1;
-      goto err_with_placeholders;
-    default:
-      // temporary table not found
-      error= 0;
+    if (not drop_temporary && session->lock_table_names_exclusively(tables))
+    {
+      table::Cache::singleton().mutex().unlock();
+      return 1;
     }
 
-    if (drop_temporary == false)
-    {
-      Table *locked_table;
-      abort_locked_tables(session, tmp_identifier);
-      table::Cache::singleton().removeTable(session, tmp_identifier,
-                                            RTFC_WAIT_OTHER_THREAD_FLAG |
-                                            RTFC_CHECK_KILLED_FLAG);
-      /*
-        If the table was used in lock tables, remember it so that
-        unlock_table_names can free it
-      */
-      if ((locked_table= drop_locked_tables(session, tmp_identifier)))
-        table->table= locked_table;
+    /* Don't give warnings for not found errors, as we already generate notes */
+    session->no_warnings_for_error= 1;
 
-      if (session->getKilled())
-      {
-        error= -1;
-        goto err_with_placeholders;
-      }
-    }
-    TableIdentifier identifier(table->getSchemaName(), table->getTableName(), table->getInternalTmpTable() ? message::Table::INTERNAL : message::Table::STANDARD);
-
-    if (drop_temporary || not plugin::StorageEngine::doesTableExist(*session, identifier))
+    for (table= tables; table; table= table->next_local)
     {
-      // Table was not found on disk and table can't be created from engine
-      if (if_exists)
-        push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-                            ER_BAD_TABLE_ERROR, ER(ER_BAD_TABLE_ERROR),
-                            table->getTableName());
-      else
+      TableIdentifier tmp_identifier(table->getSchemaName(), table->getTableName());
+
+      error= session->drop_temporary_table(tmp_identifier);
+
+      switch (error) {
+      case  0:
+        // removed temporary table
+        continue;
+      case -1:
         error= 1;
-    }
-    else
-    {
-      error= plugin::StorageEngine::dropTable(*session, identifier);
-
-      if ((error == ENOENT || error == HA_ERR_NO_SUCH_TABLE) && if_exists)
-      {
+        goto err_with_placeholders;
+      default:
+        // temporary table not found
         error= 0;
-        session->clear_error();
       }
 
-      if (error == HA_ERR_ROW_IS_REFERENCED)
+      if (drop_temporary == false)
       {
-        /* the table is referenced by a foreign key constraint */
-        foreign_key_error= true;
+        Table *locked_table;
+        abort_locked_tables(session, tmp_identifier);
+        table::Cache::singleton().removeTable(session, tmp_identifier,
+                                              RTFC_WAIT_OTHER_THREAD_FLAG |
+                                              RTFC_CHECK_KILLED_FLAG);
+        /*
+          If the table was used in lock tables, remember it so that
+          unlock_table_names can free it
+        */
+        if ((locked_table= drop_locked_tables(session, tmp_identifier)))
+          table->table= locked_table;
+
+        if (session->getKilled())
+        {
+          error= -1;
+          goto err_with_placeholders;
+        }
+      }
+      TableIdentifier identifier(table->getSchemaName(), table->getTableName(), table->getInternalTmpTable() ? message::Table::INTERNAL : message::Table::STANDARD);
+
+      if (drop_temporary || not plugin::StorageEngine::doesTableExist(*session, identifier))
+      {
+        // Table was not found on disk and table can't be created from engine
+        if (if_exists)
+          push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+                              ER_BAD_TABLE_ERROR, ER(ER_BAD_TABLE_ERROR),
+                              table->getTableName());
+        else
+          error= 1;
+      }
+      else
+      {
+        error= plugin::StorageEngine::dropTable(*session, identifier);
+
+        if ((error == ENOENT || error == HA_ERR_NO_SUCH_TABLE) && if_exists)
+        {
+          error= 0;
+          session->clear_error();
+        }
+
+        if (error == HA_ERR_ROW_IS_REFERENCED)
+        {
+          /* the table is referenced by a foreign key constraint */
+          foreign_key_error= true;
+        }
+      }
+
+      if (error == 0 || (if_exists && foreign_key_error == false))
+      {
+        TransactionServices &transaction_services= TransactionServices::singleton();
+        transaction_services.dropTable(session, string(table->getSchemaName()), string(table->getTableName()), if_exists);
+      }
+
+      if (error)
+      {
+        if (wrong_tables.length())
+          wrong_tables.append(',');
+        wrong_tables.append(String(table->getTableName(), system_charset_info));
       }
     }
-
-    if (error == 0 || (if_exists && foreign_key_error == false))
-    {
-      TransactionServices &transaction_services= TransactionServices::singleton();
-      transaction_services.dropTable(session, string(table->getSchemaName()), string(table->getTableName()), if_exists);
-    }
-
-    if (error)
-    {
-      if (wrong_tables.length())
-        wrong_tables.append(',');
-      wrong_tables.append(String(table->getTableName(), system_charset_info));
-    }
+    /*
+      It's safe to unlock table::Cache::singleton().mutex(): we have an exclusive lock
+      on the table name.
+    */
+    table::Cache::singleton().mutex().unlock();
   }
-  /*
-    It's safe to unlock table::Cache::singleton().mutex(): we have an exclusive lock
-    on the table name.
-  */
-  table::Cache::singleton().mutex().unlock();
   error= 0;
 
   if (wrong_tables.length())
@@ -268,27 +270,6 @@ err_with_placeholders:
   session->no_warnings_for_error= 0;
 
   return error;
-}
-
-
-/*
-  Quickly remove a table.
-
-  SYNOPSIS
-    quick_rm_table()
-      base                      The plugin::StorageEngine handle.
-      db                        The database name.
-      table_name                The table name.
-      is_tmp                    If the table is temp.
-
-  RETURN
-    0           OK
-    != 0        Error
-*/
-bool quick_rm_table(Session& session,
-                    TableIdentifier &identifier)
-{
-  return (plugin::StorageEngine::dropTable(session, identifier));
 }
 
 /*
@@ -1284,7 +1265,7 @@ static bool prepare_blob_field(Session *,
 }
 
 static bool locked_create_event(Session *session,
-                                TableIdentifier &identifier,
+                                const TableIdentifier &identifier,
                                 HA_CREATE_INFO *create_info,
                                 message::Table &table_proto,
                                 AlterInfo *alter_info,
@@ -1319,7 +1300,10 @@ static bool locked_create_event(Session *session,
         return error;
       }
 
-      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getSQLPath().c_str());
+      std::string path;
+      identifier.getSQLPath(path);
+      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), path.c_str());
+
       return error;
     }
 
@@ -1338,7 +1322,10 @@ static bool locked_create_event(Session *session,
       */
       if (definition::Cache::singleton().find(identifier.getKey()))
       {
-        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getSQLPath().c_str());
+        std::string path;
+        identifier.getSQLPath(path);
+        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), path.c_str());
+
         return error;
       }
     }
@@ -1414,7 +1401,7 @@ static bool locked_create_event(Session *session,
 */
 
 bool mysql_create_table_no_lock(Session *session,
-                                TableIdentifier &identifier,
+                                const TableIdentifier &identifier,
                                 HA_CREATE_INFO *create_info,
 				message::Table &table_proto,
                                 AlterInfo *alter_info,
@@ -1466,7 +1453,7 @@ bool mysql_create_table_no_lock(Session *session,
   @note the following two methods implement create [temporary] table.
 */
 static bool drizzle_create_table(Session *session,
-                                 TableIdentifier &identifier,
+                                 const TableIdentifier &identifier,
                                  HA_CREATE_INFO *create_info,
                                  message::Table &table_proto,
                                  AlterInfo *alter_info,
@@ -1493,7 +1480,9 @@ static bool drizzle_create_table(Session *session,
     }
     else
     {
-      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getSQLPath().c_str());
+      std::string path;
+      identifier.getSQLPath(path);
+      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), path.c_str());
       result= true;
     }
   }
@@ -1523,7 +1512,7 @@ static bool drizzle_create_table(Session *session,
   Database locking aware wrapper for mysql_create_table_no_lock(),
 */
 bool mysql_create_table(Session *session,
-                        TableIdentifier &identifier,
+                        const TableIdentifier &identifier,
                         HA_CREATE_INFO *create_info,
 			message::Table &table_proto,
                         AlterInfo *alter_info,
@@ -1619,8 +1608,8 @@ make_unique_key_name(const char *field_name,KeyInfo *start,KeyInfo *end)
 bool
 mysql_rename_table(Session &session,
                    plugin::StorageEngine *base,
-                   TableIdentifier &from,
-                   TableIdentifier &to)
+                   const TableIdentifier &from,
+                   const TableIdentifier &to)
 {
   int error= 0;
 
@@ -1640,8 +1629,14 @@ mysql_rename_table(Session &session,
   }
   else if (error)
   {
-    const char *from_identifier= from.isTmp() ? "#sql-temporary" : from.getSQLPath().c_str();
-    const char *to_identifier= to.isTmp() ? "#sql-temporary" : to.getSQLPath().c_str();
+    std::string from_path;
+    std::string to_path;
+
+    from.getSQLPath(from_path);
+    to.getSQLPath(to_path);
+
+    const char *from_identifier= from.isTmp() ? "#sql-temporary" : from_path.c_str();
+    const char *to_identifier= to.isTmp() ? "#sql-temporary" : to_path.c_str();
 
     my_error(ER_ERROR_ON_RENAME, MYF(0), from_identifier, to_identifier, error);
   }
@@ -1974,8 +1969,8 @@ err:
     See bug #28614 for more info.
   */
 static bool create_table_wrapper(Session &session, const message::Table& create_table_proto,
-                                 TableIdentifier &destination_identifier,
-                                 TableIdentifier &src_table,
+                                 const TableIdentifier &destination_identifier,
+                                 const TableIdentifier &src_table,
                                  bool is_engine_set)
 {
   int protoerr= EEXIST;
@@ -2051,7 +2046,7 @@ static bool create_table_wrapper(Session &session, const message::Table& create_
 */
 
 bool mysql_create_like_table(Session* session,
-                             TableIdentifier &destination_identifier,
+                             const TableIdentifier &destination_identifier,
                              TableList* table, TableList* src_table,
                              message::Table &create_table_proto,
                              bool is_if_not_exists,
@@ -2145,7 +2140,7 @@ bool mysql_create_like_table(Session* session,
       // anything that might have been created (read... it is a hack)
       if (not was_created)
       {
-        quick_rm_table(*session, destination_identifier);
+        plugin::StorageEngine::dropTable(*session, destination_identifier);
       } 
       else
       {

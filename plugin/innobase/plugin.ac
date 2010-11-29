@@ -152,9 +152,6 @@ void testme() {  }
   # http://bugs.opensolaris.org/bugdatabase/printableBug.do?bug_id=6478684
   # We use ib_ prefix to avoid collisoins if this code is added to
   # mysql's configure.in.
-  dnl Must be done once we turn on warnings and such
-  save_CFLAGS="${CFLAGS}"
-  CFLAGS="${AM_CFLAGS} ${CFLAGS}"
   AC_RUN_IFELSE([AC_LANG_PROGRAM([[]],[[
         __asm__ __volatile__ ("pause");
     ]])],[
@@ -163,7 +160,6 @@ void testme() {  }
       ac_cv_plugin_innodb_has_pause=no
     ])
   ])
-  CFLAGS="${save_CFLAGS}"
   AS_IF([test "${ac_cv_plugin_innodb_has_pause}" = "yes"],[
     AC_DEFINE([IB_HAVE_PAUSE_INSTRUCTION], [1],
               [Does x86 PAUSE instruction exist])

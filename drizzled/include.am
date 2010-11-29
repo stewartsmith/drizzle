@@ -655,6 +655,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/join_table.cc \
 				 drizzled/key.cc \
 				 drizzled/key_map.cc \
+				 drizzled/lock.cc \
 				 drizzled/locking/global.cc \
 				 drizzled/lookup_symbol.cc \
 				 drizzled/message.cc \

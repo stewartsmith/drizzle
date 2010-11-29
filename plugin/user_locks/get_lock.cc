@@ -36,21 +36,34 @@ int64_t GetLock::val_int()
     wait_time= args[1]->val_int();
   }
 
-  if (not res)
+  if (not res || not res->length())
   {
-    null_value= true;
+    my_error(drizzled::ER_USER_LOCKS_INVALID_NAME_LOCK, MYF(0));
     return 0;
   }
   null_value= false;
 
-  if (not res->length())
-    return 0;
+  std::cerr << "Trying to create " << res->c_str() << "\n";
 
   user_locks::Storable *list= static_cast<user_locks::Storable *>(getSession().getProperty("user_locks"));
   if (list) // To be compatible with MySQL, we will now release all other locks we might have.
     list->erase_all();
 
-  boost::tribool result= user_locks::Locks::getInstance().lock(getSession().getSessionId(), Key(getSession().getSecurityContext(), res->c_str()), wait_time);
+  bool result;
+  {
+    boost::this_thread::restore_interruption dl(getSession().getThreadInterupt());
+
+    try {
+      result= user_locks::Locks::getInstance().lock(getSession().getSessionId(), Key(getSession().getSecurityContext(), res->c_str()), wait_time);
+    }
+    catch(boost::thread_interrupted const& error)
+    {
+      my_error(drizzled::ER_QUERY_INTERRUPTED, MYF(0));
+      null_value= true;
+
+      return 0;
+    }
+  }
 
   if (boost::indeterminate(result))
     null_value= true;

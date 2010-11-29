@@ -28,6 +28,8 @@ namespace drizzled {
 class Session;
 }
 
+namespace multi_thread {
+
 class MultiThreadScheduler: public drizzled::plugin::Scheduler
 {
 private:
@@ -44,10 +46,13 @@ public:
   ~MultiThreadScheduler();
   bool addSession(drizzled::Session::shared_ptr &session);
   void killSessionNow(drizzled::Session::shared_ptr &session);
+  void killSession(drizzled::Session*);
   
   void runSession(drizzled::session_id_t);
 private:
   void setStackSize();
 };
+
+} // namespace multi_thread
 
 #endif /* PLUGIN_MULTI_THREAD_MULTI_THREAD_H */

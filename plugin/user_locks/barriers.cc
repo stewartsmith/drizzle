@@ -48,22 +48,22 @@ bool Barriers::create(const user_locks::Key &arg, drizzled::session_id_t owner, 
   indeterminate -> barrier was not found.
 
 */
-boost::tribool Barriers::release(const user_locks::Key &arg, drizzled::session_id_t owner)
+return_t Barriers::release(const user_locks::Key &arg, drizzled::session_id_t owner)
 {
   boost::unique_lock<boost::mutex> scope(mutex);
   Map::iterator iter= barrier_map.find(arg);
 
   // Nothing is found
   if ( iter == barrier_map.end())
-    return boost::indeterminate;
+    return NOT_FOUND;
 
   if (not (*iter).second->getOwner() == owner)
-    return false;
+    return NOT_OWNED_BY;
 
   (*iter).second->signal(); // We tell anyone left to start running
   (void)barrier_map.erase(arg);
 
-  return true;
+  return SUCCESS;
 }
 
 Barrier::shared_ptr Barriers::find(const user_locks::Key &arg)

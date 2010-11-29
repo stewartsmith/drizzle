@@ -32,8 +32,8 @@ class Temporary : public Table
   TableShare *_share; /**< Pointer to the shared metadata about the table */
 
 public:
-  Temporary(TableIdentifier::Type type_arg,
-             TableIdentifier &identifier,
+  Temporary(const TableIdentifier::Type type_arg,
+            const TableIdentifier &identifier,
              char *path_arg, uint32_t path_length_arg) :
     Table()
   {

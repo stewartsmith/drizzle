@@ -716,7 +716,7 @@ void Session::unlink_open_table(Table *find)
   table that was locked with LOCK TABLES.
 */
 
-void Session::drop_open_table(Table *table, TableIdentifier &identifier)
+void Session::drop_open_table(Table *table, const TableIdentifier &identifier)
 {
   if (table->getShare()->getType())
   {
@@ -730,7 +730,7 @@ void Session::drop_open_table(Table *table, TableIdentifier &identifier)
       that something has happened.
     */
     unlink_open_table(table);
-    quick_rm_table(*this, identifier);
+    plugin::StorageEngine::dropTable(*this, identifier);
   }
 }
 
@@ -833,7 +833,7 @@ table::Placeholder *Session::table_cache_insert_placeholder(const drizzled::Tabl
   @retval  true   Error occured (OOM)
   @retval  false  Success. 'table' parameter set according to above rules.
 */
-bool Session::lock_table_name_if_not_cached(TableIdentifier &identifier, Table **table)
+bool Session::lock_table_name_if_not_cached(const TableIdentifier &identifier, Table **table)
 {
   const TableIdentifier::Key &key(identifier.getKey());
 
@@ -1222,7 +1222,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
   the strings are used in a loop even after the share may be freed.
 */
 
-void Session::close_data_files_and_morph_locks(TableIdentifier &identifier)
+void Session::close_data_files_and_morph_locks(const TableIdentifier &identifier)
 {
   safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle()); /* Adjust locks at the end of ALTER TABLEL */
 
@@ -1834,7 +1834,7 @@ RETURN
 #  Table object
 */
 
-Table *Open_tables_state::open_temporary_table(TableIdentifier &identifier,
+Table *Open_tables_state::open_temporary_table(const TableIdentifier &identifier,
                                                bool link_in_list)
 {
   assert(identifier.isTmp());
@@ -1842,7 +1842,7 @@ Table *Open_tables_state::open_temporary_table(TableIdentifier &identifier,
 
   table::Temporary *new_tmp_table= new table::Temporary(identifier.getType(),
                                                         identifier,
-                                                        const_cast<char *>(identifier.getPath().c_str()),
+                                                        const_cast<char *>(const_cast<TableIdentifier&>(identifier).getPath().c_str()),
                                                         static_cast<uint32_t>(identifier.getPath().length()));
   if (not new_tmp_table)
     return NULL;

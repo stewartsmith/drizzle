@@ -32,7 +32,7 @@ namespace drizzled {
 #define INDEX_COMMENT_MAXLEN 1024
 
 bool rea_create_table(Session *session,
-                      TableIdentifier &identifier,
+                      const TableIdentifier &identifier,
                       message::Table &table_proto,
                       HA_CREATE_INFO *create_info,
                       List<CreateField> &create_field,

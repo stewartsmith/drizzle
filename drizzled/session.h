@@ -36,6 +36,7 @@
 #include "drizzled/transaction_context.h"
 #include "drizzled/util/storable.h"
 #include "drizzled/my_hash.h"
+#include "drizzled/pthread_globals.h"
 
 #include <netdb.h>
 #include <map>
@@ -51,6 +52,8 @@
 #include "drizzled/plugin/authorization.h"
 
 #include <boost/unordered_map.hpp>
+
+#include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/shared_mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
@@ -543,18 +546,34 @@ public:
   */
   uint32_t dbug_sentry; /**< watch for memory corruption */
 private:
+  boost::thread::id boost_thread_id;
+  boost_thread_shared_ptr _thread;
+  boost::this_thread::disable_interruption *interrupt;
+
   internal::st_my_thread_var *mysys_var;
 public:
+
+  boost_thread_shared_ptr &getThread()
+  {
+    return _thread;
+  }
+
+  void pushInterrupt(boost::this_thread::disable_interruption *interrupt_arg)
+  {
+    interrupt= interrupt_arg;
+  }
+
+  boost::this_thread::disable_interruption &getThreadInterupt()
+  {
+    assert(interrupt);
+    return *interrupt;
+  }
 
   internal::st_my_thread_var *getThreadVar()
   {
     return mysys_var;
   }
 
-  void resetThreadVar()
-  {
-    mysys_var= NULL;
-  }
   /**
    * Type of current query: COM_STMT_PREPARE, COM_QUERY, etc. Set from
    * first byte of the packet in executeStatement()
@@ -1584,7 +1603,7 @@ public:
   void close_old_data_files(bool morph_locks= false,
                             bool send_refresh= false);
   void close_open_tables();
-  void close_data_files_and_morph_locks(TableIdentifier &identifier);
+  void close_data_files_and_morph_locks(const TableIdentifier &identifier);
 
 private:
   bool free_cached_table();
@@ -1621,12 +1640,12 @@ public:
   Table *openTable(TableList *table_list, bool *refresh, uint32_t flags= 0);
 
   void unlink_open_table(Table *find);
-  void drop_open_table(Table *table, TableIdentifier &identifier);
+  void drop_open_table(Table *table, const TableIdentifier &identifier);
   void close_cached_table(Table *table);
 
   /* Create a lock in the cache */
   table::Placeholder *table_cache_insert_placeholder(const TableIdentifier &identifier);
-  bool lock_table_name_if_not_cached(TableIdentifier &identifier, Table **table);
+  bool lock_table_name_if_not_cached(const TableIdentifier &identifier, Table **table);
 
   typedef boost::unordered_map<std::string, message::Table, util::insensitive_hash, util::insensitive_equal_to> TableMessageCache;
 
@@ -1801,6 +1820,11 @@ static const std::bitset<CF_BIT_SIZE> CF_HAS_ROW_COUNT(1 << CF_BIT_HAS_ROW_COUNT
 static const std::bitset<CF_BIT_SIZE> CF_STATUS_COMMAND(1 << CF_BIT_STATUS_COMMAND);
 static const std::bitset<CF_BIT_SIZE> CF_SHOW_TABLE_COMMAND(1 << CF_BIT_SHOW_TABLE_COMMAND);
 static const std::bitset<CF_BIT_SIZE> CF_WRITE_LOGS_COMMAND(1 << CF_BIT_WRITE_LOGS_COMMAND);
+
+namespace display  {
+const std::string &type(drizzled::Session::global_read_lock_t type);
+size_t max_string_length(drizzled::Session::global_read_lock_t type);
+} /* namespace display */
 
 } /* namespace drizzled */
 
