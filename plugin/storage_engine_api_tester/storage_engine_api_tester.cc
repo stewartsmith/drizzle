@@ -421,7 +421,7 @@ int SEAPITester::doCommit(Session *session, bool all)
 
 int SEAPITester::doRollback(Session *session, bool all)
 {
-  if (all)
+  if (! all)
   {
     ENGINE_NEW_STATE("ROLLBACK STATEMENT");
     ENGINE_NEW_STATE("In Transaction");
