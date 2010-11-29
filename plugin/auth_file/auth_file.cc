@@ -25,6 +25,7 @@
 #include <iostream>
 
 #include <boost/program_options.hpp>
+#include <boost/filesystem.hpp>
 
 #include "drizzled/configmake.h"
 #include "drizzled/plugin/authentication.h"
@@ -34,21 +35,23 @@
 #include "drizzled/module/option_map.h"
 
 namespace po= boost::program_options;
+namespace fs= boost::filesystem;
+
 using namespace std;
 using namespace drizzled;
 
 namespace auth_file
 {
 
-static const char DEFAULT_USERS_FILE[]= SYSCONFDIR "/drizzle.users";
+static const fs::path DEFAULT_USERS_FILE= SYSCONFDIR "/drizzle.users";
 
 class AuthFile: public plugin::Authentication
 {
-  const std::string users_file;
+  const fs::path users_file;
 
 public:
 
-  AuthFile(string name_arg, string users_file_arg);
+  AuthFile(string name_arg, fs::path users_file_arg);
 
   /**
    * Retrieve the last error encountered in the class.
@@ -93,7 +96,7 @@ private:
   map<string, string> users;
 };
 
-AuthFile::AuthFile(string name_arg, string users_file_arg):
+AuthFile::AuthFile(string name_arg, fs::path users_file_arg):
   plugin::Authentication(name_arg),
   users_file(users_file_arg),
   error(),
@@ -108,12 +111,12 @@ string& AuthFile::getError(void)
 
 bool AuthFile::loadFile(void)
 {
-  ifstream file(users_file.c_str());
+  ifstream file(users_file.string().c_str());
 
   if (!file.is_open())
   {
     error = "Could not open users file: ";
-    error += users_file;
+    error += users_file.string();
     return false;
   }
 
@@ -217,7 +220,7 @@ static int init(module::Context &context)
 {
   const module::option_map &vm= context.getOptions();
 
-  AuthFile *auth_file = new AuthFile("auth_file", vm["users"].as<string>());
+  AuthFile *auth_file = new AuthFile("auth_file", fs::path(vm["users"].as<string>()));
   if (!auth_file->loadFile())
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Could not load auth file: %s\n"),
@@ -235,7 +238,7 @@ static int init(module::Context &context)
 static void init_options(drizzled::module::option_context &context)
 {
   context("users", 
-          po::value<string>()->default_value(DEFAULT_USERS_FILE),
+          po::value<string>()->default_value(DEFAULT_USERS_FILE.string()),
           N_("File to load for usernames and passwords"));
 }
 
