@@ -151,12 +151,6 @@ bool ClientMySQLProtocol::authenticate()
 {
   bool connection_is_valid;
 
-  if (connected >= max_connections)
-  {
-    std::string errmsg(ER(ER_CON_COUNT_ERROR));
-    sendError(ER_CON_COUNT_ERROR, errmsg.c_str());
-  }
-
   connectionCount.increment();
   connected.increment();
 
@@ -167,13 +161,20 @@ bool ClientMySQLProtocol::authenticate()
   connection_is_valid= checkConnection();
 
   if (connection_is_valid)
-    sendOK();
+    if (connected >= max_connections)
+    {
+      std::string errmsg(ER(ER_CON_COUNT_ERROR));
+      sendError(ER_CON_COUNT_ERROR, errmsg.c_str());
+    }
+    else
+      sendOK();
   else
   {
     sendError(session->main_da.sql_errno(), session->main_da.message());
     failedConnections.increment();
     return false;
   }
+
   /* Connect completed, set read/write timeouts back to default */
   drizzleclient_net_set_read_timeout(&net, read_timeout);
   drizzleclient_net_set_write_timeout(&net, write_timeout);
