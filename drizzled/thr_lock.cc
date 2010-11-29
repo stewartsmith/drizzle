@@ -59,7 +59,6 @@ TL_WRITE_CONCURRENT_INSERT lock at the same time as multiple read locks.
 #include "drizzled/pthread_globals.h"
 
 #include "drizzled/session.h"
-#include "drizzled/current_session.h"
 
 #include "thr_lock.h"
 #include "drizzled/internal/m_string.h"
@@ -150,16 +149,14 @@ have_old_read_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner)
 static void wake_up_waiters(THR_LOCK *lock);
 
 
-static enum enum_thr_lock_result wait_for_lock(struct st_lock_list *wait, THR_LOCK_DATA *data, bool in_wait_list)
+static enum enum_thr_lock_result wait_for_lock(Session &session, struct st_lock_list *wait, THR_LOCK_DATA *data)
 {
-  Session *session= current_session;
-  internal::st_my_thread_var *thread_var= session->getThreadVar();
+  internal::st_my_thread_var *thread_var= session.getThreadVar();
 
   boost::condition_variable_any *cond= &thread_var->suspend;
   enum enum_thr_lock_result result= THR_LOCK_ABORTED;
   bool can_deadlock= test(data->owner->info->n_cursors);
 
-  if (!in_wait_list)
   {
     (*wait->last)=data;				/* Wait for lock */
     data->prev= wait->last;
@@ -173,7 +170,7 @@ static enum enum_thr_lock_result wait_for_lock(struct st_lock_list *wait, THR_LO
   thread_var->current_cond=  &thread_var->suspend;
   data->cond= &thread_var->suspend;;
 
-  while (!thread_var->abort || in_wait_list)
+  while (not thread_var->abort)
   {
     boost_unique_lock_t scoped(*data->lock->native_handle(), boost::adopt_lock_t());
 
@@ -239,7 +236,7 @@ static enum enum_thr_lock_result wait_for_lock(struct st_lock_list *wait, THR_LO
 }
 
 
-static enum enum_thr_lock_result thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner, enum thr_lock_type lock_type)
+static enum enum_thr_lock_result thr_lock(Session &session, THR_LOCK_DATA *data, THR_LOCK_OWNER *owner, enum thr_lock_type lock_type)
 {
   THR_LOCK *lock= data->lock;
   enum enum_thr_lock_result result= THR_LOCK_SUCCESS;
@@ -387,7 +384,7 @@ static enum enum_thr_lock_result thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *o
   }
 
   /* Can't get lock yet;  Wait for it */
-  return(wait_for_lock(wait_queue, data, 0));
+  return(wait_for_lock(session, wait_queue, data));
 end:
   lock->unlock();
 
@@ -594,7 +591,7 @@ static void sort_locks(THR_LOCK_DATA **data,uint32_t count)
 
 
 enum enum_thr_lock_result
-thr_multi_lock(THR_LOCK_DATA **data, uint32_t count, THR_LOCK_OWNER *owner)
+thr_multi_lock(Session &session, THR_LOCK_DATA **data, uint32_t count, THR_LOCK_OWNER *owner)
 {
   THR_LOCK_DATA **pos,**end;
   if (count > 1)
@@ -602,7 +599,7 @@ thr_multi_lock(THR_LOCK_DATA **data, uint32_t count, THR_LOCK_OWNER *owner)
   /* lock everything */
   for (pos=data,end=data+count; pos < end ; pos++)
   {
-    enum enum_thr_lock_result result= thr_lock(*pos, owner, (*pos)->type);
+    enum enum_thr_lock_result result= thr_lock(session, *pos, owner, (*pos)->type);
     if (result != THR_LOCK_SUCCESS)
     {						/* Aborted */
       thr_multi_unlock(data,(uint32_t) (pos-data));
