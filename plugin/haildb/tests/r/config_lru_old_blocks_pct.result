@@ -14,13 +14,13 @@ NAME	TYPE	VALUE
 lru_old_blocks_pct	ULINT	20
 SET GLOBAL innodb_lru_old_blocks_pct=200;
 Warnings:
-Error	1292	Truncated incorrect lru_old_blocks_pct value: '200'
+Error	1292	Truncated incorrect innodb_lru_old_blocks_pct value: '200'
 SHOW VARIABLES LIKE 'innodb_lru_old_blocks_pct';
 Variable_name	Value
-innodb_lru_old_blocks_pct	95
+innodb_lru_old_blocks_pct	20
 SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='lru_old_blocks_pct';
 NAME	TYPE	VALUE
-lru_old_blocks_pct	ULINT	95
+lru_old_blocks_pct	ULINT	20
 SET GLOBAL innodb_lru_old_blocks_pct=95;
 SHOW VARIABLES LIKE 'innodb_lru_old_blocks_pct';
 Variable_name	Value
