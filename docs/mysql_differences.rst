@@ -2,8 +2,8 @@
 Notable MySQL Differences
 =========================
 
-Drizzle was forked from the (now defunct) MySQL 6.0 tree. Since then there
-have been a lot of changes. Some areas are similar, others unrecognisable.
+Drizzle was forked from the (now defunct) MySQL 6.0 tree in 2008. Since then there
+have been a lot of changes. Some areas are similar, others unrecognizable.
 
 This section aims to explore some of the notable differences between MySQL
 and Drizzle.
@@ -52,9 +52,9 @@ MySQL client libraries) and the Drizzle protocol which is still under
 development but aims for several important differences:
 
  * Client sends first packet instead of server
- * built in sharding
- * multi statement support (without using a semicolon to separate them)
- * room for expansion to include NoSQL type commands inline with SQL.
+ * Built in sharding
+ * Multi statement support (without using a semicolon to separate them)
+ * Room for expansion to include NoSQL type commands inline with SQL.
 
 There is also a console plugin that instead of providing access over a network
 socket, allows access from the current tty.
@@ -66,7 +66,7 @@ Existing plugin APIs inherited from MySQL have been reworked.
 
  * User Defined Functions (UDFs) now follow the same API as within the
    server instead of a different C API. This means that UDFs are on the
-   exact same level as builtin functions.
+   exact same level as built-in functions.
  * Storage Engine API has had some parts extensively reworked, especially
    around transactions and DDL.
  * Logging is now pluggable
@@ -91,11 +91,11 @@ Fundamentally, stored procedures usually are not the correct architectural
 decision for applications that need to scale. Pushing more computation down
 into the database (which is the trickiest layer to scale) isn't a good idea.
 
-We do recognise that the ability to reduce the time row locks are held
+We do recognize that the ability to reduce the time row locks are held
 by using stored procedures is valuable, but think the same advantage can
 be gotten with improved batching of commands over the wire instead of adding
 administering stored procedures to the list of things that can go wrong in
-admisistering the database.
+administering the database.
 
 Triggers
 --------
@@ -108,7 +108,7 @@ Views
 -----
 
 SQL Views are not currently supported in Drizzle. We believe they should be
-implemented via a query rewrite plugin. See the `Query Rewrite Blueprint <https://blueprints.launchpad.net/drizzle/+spec/query-rewrite>`_ on launchpad.
+implemented via a query rewrite plugin. See the `Query Rewrite Blueprint <https://blueprints.launchpad.net/Drizzle/+spec/query-rewrite>`_ on launchpad.
 
 Partitioning
 ------------
@@ -139,7 +139,7 @@ We've stopped the confusion: -p means port and -P means password.
 No gotcha of using the unix socket when localhost is specified and then
 connecting you to the wrong database server.
 
-There is no drizzleadmin command.
+There is no Drizzle admin command.
 
 Storage Engines
 ---------------
