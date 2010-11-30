@@ -402,7 +402,10 @@ ErrorMap::ErrorMap()
   add(ER_UNKNOWN_COLLATION, N_("Unknown collation: '%-.64s'"));
   add(ER_WARN_FIELD_RESOLVED, N_("Field or reference '%-.192s%s%-.192s%s%-.192s' of SELECT #%d was resolved in SELECT #%d"));
   add(ER_WRONG_NAME_FOR_INDEX, N_("Incorrect index name '%-.100s'"));
-  add(ER_WRONG_NAME_FOR_CATALOG, N_("Incorrect catalog name '%-.100s'"));
+
+  // Catalog related errors
+  add(ER_WRONG_NAME_FOR_CATALOG, N_("Invalid catalog name"));
+
   add(ER_BAD_FT_COLUMN, N_("Column '%-.192s' cannot be part of FULLTEXT index"));
   add(ER_UNKNOWN_STORAGE_ENGINE, N_("Unknown table engine '%s'"));
   add(ER_NON_UPDATABLE_TABLE, N_("The target table %-.100s of the %s is not updatable"));
