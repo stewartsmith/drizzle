@@ -119,7 +119,24 @@ ulint insert_replication_message(const char *message, size_t size,
 
   prebuilt = row_create_prebuilt(table);
 
-  row_update_prebuilt_trx(prebuilt, trx);
+  if (prebuilt->trx != trx) 
+  {
+    row_update_prebuilt_trx(prebuilt, trx);
+  }
+
+  /* DDL operations create table/drop table call
+   * innobase_commit_low() which will commit the trx
+   * that leaves the operation of committing to the
+   * log in a new trx. If that is the case we need
+   * to keep track and commit the trx later in this
+   * function. 
+   */ 
+  bool is_started= true;
+  if (trx->conc_state == TRX_NOT_STARTED)
+  {
+    is_started= false;
+  }
+
   dtuple_t* dtuple= row_get_prebuilt_insert_row(prebuilt);
   dfield_t *dfield;
   dfield = dtuple_get_nth_field(dtuple, 0);
@@ -152,6 +169,11 @@ ulint insert_replication_message(const char *message, size_t size,
 
   que_thr_stop_for_mysql_no_error(thr, trx);
   row_prebuilt_free(prebuilt, FALSE);
+
+  if (! is_started)
+  {
+    trx_commit_for_mysql(trx);
+  }
 
   return error;
 }
