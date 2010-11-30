@@ -333,3 +333,7 @@ po/drizzle7.pot
 plugin/transaction_log/utilities/transaction_reader
 plugin/storage_engine_api_tester/engine_states_to_dot
 plugin/storage_engine_api_tester/cursor_states_to_dot
+drizzled/message/catalog.pb.cc
+drizzled/message/catalog.pb.h
+drizzled/message/catalog_reader
+drizzled/message/catalog_writer
