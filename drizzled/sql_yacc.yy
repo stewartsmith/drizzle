@@ -5479,11 +5479,11 @@ kill:
 
             if ($2)
             {
-              Lex->type= 0;
+              Lex->type= ONLY_KILL_QUERY;
             }
             else
             {
-              Lex->type= ONLY_KILL_QUERY;
+              Lex->type= 0;
             }
 
             lex->value_list.empty();
