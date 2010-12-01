@@ -64,8 +64,9 @@ nobase_nodist_include_HEADERS+= \
 				drizzled/message/table.pb.h 
 
 noinst_HEADERS+= \
-		drizzled/message/ioutil.h \
-		drizzled/message/all.h
+		 drizzled/message/catalog.h \
+		 drizzled/message/ioutil.h \
+		 drizzled/message/all.h
 
 drizzled_message_catalog_reader_SOURCES =  drizzled/message/catalog_reader.cc
 drizzled_message_catalog_reader_LDADD = ${MESSAGE_LDADD}

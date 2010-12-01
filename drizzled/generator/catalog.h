@@ -1,4 +1,4 @@
-/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2010 Brian Aker
@@ -18,25 +18,45 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_CATALOG_CREATE_H
-#define PLUGIN_CATALOG_CREATE_H
+#ifndef DRIZZLED_GENERATOR_CATALOG_H
+#define DRIZZLED_GENERATOR_CATALOG_H
 
-namespace catalog {
+#include "drizzled/catalog/cache.h"
 
-class Create : public drizzled::Item_int_func
+namespace drizzled {
+namespace generator {
+
+class Catalog
 {
-  drizzled::String value;
+  drizzled::catalog::Instance::vector local_vector;
+  drizzled::catalog::Instance::vector::iterator iter;
 
 public:
-  Create() :
-    drizzled::Item_int_func()
-  {}
 
-  int64_t val_int();
-  const char *func_name() const { return "create_catalog"; }
-  bool check_argument_count(int n) { return n == 1; }
+  Catalog()
+  {
+    catalog::Cache::singleton().CopyFrom(local_vector);
+    iter= local_vector.begin();
+  }
+
+  ~Catalog()
+  {
+  }
+
+  operator drizzled::catalog::Instance::shared_ptr()
+  {
+    while (iter != local_vector.end())
+    {
+      drizzled::catalog::Instance::shared_ptr ret(*iter);
+      iter++;
+      return ret;
+    }
+
+    return drizzled::catalog::Instance::shared_ptr();
+  }
 };
 
-} /* namespace catalog */
+} /* namespace generator */
+} /* namespace drizzled */
 
-#endif /* PLUGIN_CATALOG_CREATE_H */
+#endif /* DRIZZLED_GENERATOR_CATALOG_H */

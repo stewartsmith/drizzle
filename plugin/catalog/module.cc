@@ -21,12 +21,12 @@
 #include "config.h"
 #include "plugin/catalog/module.h"
 
-using namespace drizzled;
-
-static int init(module::Context &context)
+static int init(drizzled::module::Context &context)
 {
-  context.add(new plugin::Create_function<catalog::Create>("create_catalog"));
-  context.add(new plugin::Create_function<catalog::Drop>("drop_catalog"));
+  context.add(new drizzled::plugin::Create_function<catalog::functions::Create>("create_catalog"));
+  context.add(new drizzled::plugin::Create_function<catalog::functions::Drop>("drop_catalog"));
+  context.add(new catalog::Filesystem());
+  context.add(new catalog::tables::Catalogs());
 
   return 0;
 }
@@ -34,11 +34,11 @@ static int init(module::Context &context)
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "Catalog functions",
+  "Catalog System",
   "0.1",
   "Brian Aker",
-  "Alternative catalog functions",
-  PLUGIN_LICENSE_GPL,
+  "Basic Catalog functions, data dictionary, and system.",
+  drizzled::PLUGIN_LICENSE_GPL,
   init,
   NULL,
   NULL

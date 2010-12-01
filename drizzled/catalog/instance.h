@@ -18,19 +18,36 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_CATALOG_MODULE_H
-#define PLUGIN_CATALOG_MODULE_H
+#ifndef DRIZZLED_CATALOG_INSTANCE_H
+#define DRIZZLED_CATALOG_INSTANCE_H
 
-#include <drizzled/error.h>
-#include <drizzled/item/func.h>
-#include <drizzled/function/str/strfunc.h>
+#include "drizzled/message/catalog.h"
 
-#include <drizzled/plugin/function.h>
-#include <drizzled/plugin/table_function.h>
-#include <plugin/catalog/filesystem.h>
+namespace drizzled {
+namespace catalog {
 
-#include "plugin/catalog/functions/create.h"
-#include "plugin/catalog/functions/drop.h"
-#include "plugin/catalog/tables/catalogs.h"
+class Instance
+{
+  message::Catalog *message;
+#if 0
+  message::catalog::shared_ptr message;
+#endif
 
-#endif /* PLUGIN_CATALOG_MODULE_H */
+public:
+  typedef boost::shared_ptr<Instance> shared_ptr;
+  typedef std::vector<shared_ptr> vector;
+
+  Instance()
+  { };
+
+  const std::string &getName()
+  {
+    assert(message);
+    return message->name();
+  }
+};
+
+} /* namespace catalog */
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_CATALOG_INSTANCE_H */

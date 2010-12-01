@@ -18,19 +18,42 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_CATALOG_MODULE_H
-#define PLUGIN_CATALOG_MODULE_H
 
-#include <drizzled/error.h>
-#include <drizzled/item/func.h>
-#include <drizzled/function/str/strfunc.h>
+#ifndef DRIZZLED_PLUGIN_CATALOG_H
+#define DRIZZLED_PLUGIN_CATALOG_H
 
-#include <drizzled/plugin/function.h>
-#include <drizzled/plugin/table_function.h>
-#include <plugin/catalog/filesystem.h>
+#include <drizzled/plugin/plugin.h>
+#include <drizzled/identifier/catalog.h>
+#include <drizzled/catalog/instance.h>
 
-#include "plugin/catalog/functions/create.h"
-#include "plugin/catalog/functions/drop.h"
-#include "plugin/catalog/tables/catalogs.h"
+namespace drizzled
+{
+namespace plugin
+{
 
-#endif /* PLUGIN_CATALOG_MODULE_H */
+class Catalog : public Plugin {
+  /* Disable default constructors */
+  Catalog();
+  Catalog(const Catalog &);
+  Catalog& operator=(const Catalog &);
+
+public:
+  typedef std::vector<Catalog *> vector;
+
+  explicit Catalog(std::string name_arg) :
+    Plugin(name_arg, "Catalog")
+  {}
+  virtual ~Catalog();
+
+  static bool create(const identifier::Catalog &);
+  static bool drop(const identifier::Catalog &);
+
+  // Required for plugin interface
+  static bool addPlugin(plugin::Catalog *plugin);
+  static void removePlugin(plugin::Catalog *plugin);
+};
+
+} /* namespace plugin */
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_PLUGIN_CATALOG_H */

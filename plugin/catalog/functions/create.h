@@ -18,19 +18,27 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_CATALOG_MODULE_H
-#define PLUGIN_CATALOG_MODULE_H
+#ifndef PLUGIN_CATALOG_FUNCTIONS_CREATE_H
+#define PLUGIN_CATALOG_FUNCTIONS_CREATE_H
 
-#include <drizzled/error.h>
-#include <drizzled/item/func.h>
-#include <drizzled/function/str/strfunc.h>
+namespace catalog {
+namespace functions {
 
-#include <drizzled/plugin/function.h>
-#include <drizzled/plugin/table_function.h>
-#include <plugin/catalog/filesystem.h>
+class Create : public drizzled::Item_int_func
+{
+  drizzled::String value;
 
-#include "plugin/catalog/functions/create.h"
-#include "plugin/catalog/functions/drop.h"
-#include "plugin/catalog/tables/catalogs.h"
+public:
+  Create() :
+    drizzled::Item_int_func()
+  {}
 
-#endif /* PLUGIN_CATALOG_MODULE_H */
+  int64_t val_int();
+  const char *func_name() const { return "create_catalog"; }
+  bool check_argument_count(int n) { return n == 1; }
+};
+
+} /* namespace functions */
+} /* namespace catalog */
+
+#endif /* PLUGIN_CATALOG_FUNCTIONS_CREATE_H */

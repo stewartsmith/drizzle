@@ -18,22 +18,27 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "plugin/catalog/module.h"
+#ifndef PLUGIN_CATALOG_FUNCTIONS_DROP_H
+#define PLUGIN_CATALOG_FUNCTIONS_DROP_H
 
 namespace catalog {
+namespace functions {
 
-int64_t Create::val_int()
+class Drop : public drizzled::Item_int_func
 {
-  drizzled::String *res= args[0]->val_str(&value);
+  drizzled::String value;
 
-  if (not res || not res->length())
-  {
-    drizzled::my_error(drizzled::ER_WRONG_NAME_FOR_CATALOG, MYF(0));
-    return 0;
-  }
+public:
+  Drop() :
+    drizzled::Item_int_func()
+  {}
 
-  return 0;
-}
+  int64_t val_int();
+  const char *func_name() const { return "drop_catalog"; }
+  bool check_argument_count(int n) { return n == 1; }
+};
 
+} /* namespace functions */
 } /* namespace catalog */
+
+#endif /* PLUGIN_CATALOG_FUNCTIONS_DROP_H */
