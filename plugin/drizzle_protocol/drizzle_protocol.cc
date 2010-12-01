@@ -51,6 +51,8 @@ static char* bind_address;
 
 static const uint32_t DRIZZLE_TCP_PORT= 4427;
 
+uint32_t ListenDrizzleProtocol::drizzle_max_connections;
+
 ListenDrizzleProtocol::~ListenDrizzleProtocol()
 {
   /* This is strdup'd from the options */
@@ -137,7 +139,7 @@ static int init(drizzled::module::Context &context)
   context.add(new StatusTable);
   context.add(new ListenDrizzleProtocol("drizzle_protocol", true));
 
-  context.registerVariable(new sys_var_uint32_t_ptr("max-connections", &ClientMySQLProtocol::max_connections));
+  context.registerVariable(new sys_var_uint32_t_ptr("max-connections", &ListenDrizzleProtocol::drizzle_max_connections));
 
   return 0;
 }
@@ -184,7 +186,7 @@ static void init_options(drizzled::module::option_context &context)
           po::value<string>(),
           N_("Address to bind to."));
   context("max-connections",
-          po::value<uint32_t>(&ClientMySQLProtocol::max_connections)->default_value(1000),
+          po::value<uint32_t>(&ListenDrizzleProtocol::drizzle_max_connections)->default_value(1000),
           N_("Maximum simultaneous connections."));
 }
 

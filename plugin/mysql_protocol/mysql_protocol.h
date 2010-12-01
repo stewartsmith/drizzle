@@ -43,6 +43,8 @@ public:
   virtual const char* getHost(void) const;
   virtual in_port_t getPort(void) const;
   virtual drizzled::plugin::Client *getClient(int fd);
+  static uint32_t mysql_max_connections;
+  virtual uint32_t getMaxConnections(void) const { return mysql_max_connections; }
 };
 
 class ClientMySQLProtocol: public drizzled::plugin::Client
@@ -60,13 +62,13 @@ private:
   void makeScramble(char *scramble);
 
 public:
-  ClientMySQLProtocol(int fd, bool using_mysql41_protocol_arg);
+  ClientMySQLProtocol(int fd, bool using_mysql41_protocol_arg, uint32_t set_max_connections);
   virtual ~ClientMySQLProtocol();
 
   static drizzled::atomic<uint64_t> connectionCount;
   static drizzled::atomic<uint64_t> failedConnections;
   static drizzled::atomic<uint64_t> connected;
-  static uint32_t max_connections;
+  uint32_t max_connections;
 
   virtual int getFileDescriptor(void);
   virtual bool isConnected();

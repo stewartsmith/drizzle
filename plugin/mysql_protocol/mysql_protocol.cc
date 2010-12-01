@@ -77,16 +77,17 @@ plugin::Client *ListenMySQLProtocol::getClient(int fd)
   if (new_fd == -1)
     return NULL;
 
-  return new (nothrow) ClientMySQLProtocol(new_fd, using_mysql41_protocol);
+  return new (nothrow) ClientMySQLProtocol(new_fd, using_mysql41_protocol, getMaxConnections());
 }
 
 drizzled::atomic<uint64_t> ClientMySQLProtocol::connectionCount;
 drizzled::atomic<uint64_t> ClientMySQLProtocol::failedConnections;
 drizzled::atomic<uint64_t> ClientMySQLProtocol::connected;
-uint32_t ClientMySQLProtocol::max_connections;
+uint32_t ListenMySQLProtocol::mysql_max_connections;
 
-ClientMySQLProtocol::ClientMySQLProtocol(int fd, bool using_mysql41_protocol_arg):
-  using_mysql41_protocol(using_mysql41_protocol_arg)
+ClientMySQLProtocol::ClientMySQLProtocol(int fd, bool using_mysql41_protocol_arg, uint32_t set_max_connections):
+  using_mysql41_protocol(using_mysql41_protocol_arg),
+  max_connections(set_max_connections)
 {
   net.vio= 0;
 
@@ -161,7 +162,7 @@ bool ClientMySQLProtocol::authenticate()
   connection_is_valid= checkConnection();
 
   if (connection_is_valid)
-    if (connected >= max_connections)
+    if (connected > max_connections)
     {
       std::string errmsg(ER(ER_CON_COUNT_ERROR));
       sendError(ER_CON_COUNT_ERROR, errmsg.c_str());
@@ -986,7 +987,7 @@ static int init(drizzled::module::Context &context)
   listen_obj= new ListenMySQLProtocol("mysql_protocol", true);
   context.add(listen_obj); 
 
-  context.registerVariable(new sys_var_uint32_t_ptr("max-connections", &ClientMySQLProtocol::max_connections));
+  context.registerVariable(new sys_var_uint32_t_ptr("max-connections", &ListenMySQLProtocol::mysql_max_connections));
 
   return 0;
 }
@@ -1035,7 +1036,7 @@ static void init_options(drizzled::module::option_context &context)
           po::value<string>(),
           N_("Address to bind to."));
   context("max-connections",
-          po::value<uint32_t>(&ClientMySQLProtocol::max_connections)->default_value(1000),
+          po::value<uint32_t>(&ListenMySQLProtocol::mysql_max_connections)->default_value(1000),
           N_("Maximum simultaneous connections."));
 }
 
