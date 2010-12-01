@@ -953,22 +953,11 @@ plugin::ReplicationReturnCode ReplicationLog::apply(Session &session,
 
   trx_t *trx= session_to_trx(&session);
 
-  message::Transaction new_message;
-  new_message.ParseFromArray(data, message.ByteSize());
-  new_message.PrintDebugString();
+  uint64_t trx_id= message.transaction_context().transaction_id();
+  ulint error= insert_replication_message(data, message.ByteSize(), trx, trx_id);
+  (void)error;
 
-  if (not trx)
-  {
-    std::cerr << " No trx to use \n";
-  }
-  else
-  {
-    uint64_t trx_id= message.transaction_context().transaction_id();
-    ulint error= insert_replication_message(data, message.ByteSize(), trx, trx_id);
-    (void)error;
-  }
-
-  delete data;
+  delete[] data;
 
   return plugin::SUCCESS;
 }

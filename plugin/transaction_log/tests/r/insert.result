@@ -21,7 +21,6 @@ COMMIT;
 START TRANSACTION;
 DROP TABLE `test`.`t1`;
 COMMIT;
-SET GLOBAL transaction_log_truncate_debug= true;
 
 Generating statements for innodb replication log
 START TRANSACTION;
@@ -39,3 +38,4 @@ COMMIT;
 START TRANSACTION;
 DROP TABLE `test`.`t1`;
 COMMIT;
+SET GLOBAL transaction_log_truncate_debug= true;

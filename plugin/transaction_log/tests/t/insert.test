@@ -20,9 +20,9 @@ inc $max_transaction_id;
 
 --exec ../plugin/transaction_log/utilities/transaction_reader var/master-data/local/transaction.log
 
-# Truncate the log file to reset for the next test
---source ../plugin/transaction_log/tests/t/truncate_log.inc
-
 --echo
 --echo Generating statements for innodb replication log
 --exec ../plugin/transaction_log/utilities/transaction_reader --use-innodb-replication-log -p $MASTER_MYPORT --start-transaction-id $max_transaction_id --ignore-events
+
+# Truncate the log file to reset for the next test
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
