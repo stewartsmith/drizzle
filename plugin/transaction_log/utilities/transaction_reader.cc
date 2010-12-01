@@ -415,6 +415,7 @@ int main(int argc, char* argv[])
   GOOGLE_PROTOBUF_VERIFY_VERSION;
   int opt_start_pos= 0;
   uint64_t opt_transaction_id= 0;
+  uint64_t opt_start_transaction_id= 0;
   uint32_t opt_drizzle_port= 0; 
   string current_user, opt_password, opt_protocol, current_host;
   bool use_drizzle_protocol= false; 
@@ -441,6 +442,9 @@ int main(int argc, char* argv[])
     ("start-pos",
       po::value<int>(&opt_start_pos),
       N_("Start reading from the given file position"))
+    ("start-transaction-id",
+      po::value<uint64_t>(&opt_start_transaction_id),
+      N_("Only output for the given transaction ID and later"))
     ("transaction-id",
       po::value<uint64_t>(&opt_transaction_id),
       N_("Only output for the given transaction ID"))
@@ -502,7 +506,13 @@ int main(int argc, char* argv[])
     string query_string;
     if (vm.count("transaction-id"))
     {
-      query_string= "SELECT TRANSACTION_MESSAGE_BINARY, TRANSACTION_LENGTH FROM DATA_DICTIONARY.INNODB_REPLICATION_LOG WHERE TRANSACTION_ID= opt_transaction_id";
+      query_string.append("SELECT TRANSACTION_MESSAGE_BINARY, TRANSACTION_LENGTH FROM DATA_DICTIONARY.INNODB_REPLICATION_LOG WHERE TRANSACTION_ID=");
+      query_string.append(boost::lexical_cast<string>(opt_transaction_id));
+    }
+    else if (vm.count("start-transaction-id"))
+    {
+      query_string.append("SELECT TRANSACTION_MESSAGE_BINARY, TRANSACTION_LENGTH FROM DATA_DICTIONARY.INNODB_REPLICATION_LOG WHERE TRANSACTION_ID >=");
+      query_string.append(boost::lexical_cast<string>(opt_start_transaction_id));
     }
     else
     {
