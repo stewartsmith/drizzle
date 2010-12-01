@@ -20,6 +20,7 @@
 #include <drizzled/table.h>
 #include <drizzled/error.h>
 #include <drizzled/plugin/transactional_storage_engine.h>
+#include <drizzled/session.h> // for mark_transaction_to_rollback
 #include <string>
 #include <map>
 #include <fstream>
@@ -44,6 +45,56 @@ void load_engine_state_transitions(state_multimap &states);
 void load_cursor_state_transitions(state_multimap &states);
 
 plugin::TransactionalStorageEngine *realEngine;
+
+/* ERROR INJECTION For SEAPITESTER
+   -------------------------------
+
+   IF you add a new error injection, document it here!
+
+   Conflicting error inject numbers will lead to tears
+   (not Borsch, Vodka and Tears - that's quite nice).
+
+   1 - doInsertRecord(): every 2nd row, LOCK_WAIT_TIMEOUT.
+   2 - doInsertRecord(): every 2nd row, DEADLOCK.
+
+ */
+static uint32_t error_injected= 0;
+
+#include <drizzled/function/math/int.h>
+#include <drizzled/plugin/function.h>
+
+class SEAPITesterErrorInjectFunc :public Item_int_func
+{
+public:
+  int64_t val_int();
+  SEAPITesterErrorInjectFunc() :Item_int_func() {}
+
+  const char *func_name() const
+  {
+    return "seapitester_error_inject";
+  }
+
+  void fix_length_and_dec()
+  {
+    max_length= 4;
+  }
+
+  bool check_argument_count(int n)
+  {
+    return (n == 1);
+  }
+};
+
+
+int64_t SEAPITesterErrorInjectFunc::val_int()
+{
+  assert(fixed == true);
+  uint32_t err_to_inject= args[0]->val_int();
+
+  error_injected= err_to_inject;
+
+  return error_injected;
+}
 
 static plugin::TransactionalStorageEngine *getRealEngine()
 {
@@ -122,7 +173,21 @@ public:
 
   int doInsertRecord(unsigned char *buf)
   {
+    static int i=0;
     CURSOR_NEW_STATE("::doInsertRecord()");
+
+    if (error_injected == 1 && (i++ % 2))
+    {
+      mark_transaction_to_rollback(user_session, false);
+      return HA_ERR_LOCK_WAIT_TIMEOUT;
+    }
+
+    if (error_injected == 2 && (i++ % 2))
+    {
+      mark_transaction_to_rollback(user_session, true);
+      return HA_ERR_LOCK_DEADLOCK;
+    }
+
     return realCursor->doInsertRecord(buf);
   }
 
@@ -135,6 +200,7 @@ public:
 private:
   string cursor_state;
   void CURSOR_NEW_STATE(const string &new_state);
+  Session* user_session;
 };
 
 int SEAPITesterCursor::doOpen(const TableIdentifier &identifier, int mode, uint32_t test_if_locked)
@@ -186,6 +252,8 @@ int SEAPITesterCursor::external_lock(Session *session, int lock_type)
 {
   CURSOR_NEW_STATE("::external_lock()");
   CURSOR_NEW_STATE("locked");
+
+  user_session= session;
 
   return realCursor->external_lock(session, lock_type);
 }
@@ -446,6 +514,9 @@ static int seapi_tester_init(drizzled::module::Context &context)
   engine_state= "INIT";
 
   context.add(new plugin::SEAPITester(engine_name));
+
+  context.add(new plugin::Create_function<SEAPITesterErrorInjectFunc>("seapitester_error_inject"));
+
   return 0;
 }
 

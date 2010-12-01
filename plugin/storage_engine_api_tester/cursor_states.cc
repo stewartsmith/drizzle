@@ -75,11 +75,14 @@ void load_cursor_state_transitions(state_multimap &states)
 
   states.insert(state_pair("::rnd_next()", "::position()"));
   states.insert(state_pair("::position()", "::rnd_next()"));
+  states.insert(state_pair("::rnd_next()", "::doUpdateRecord()"));
 
   states.insert(state_pair("::doEndTableScan()", "Cursor()"));
   states.insert(state_pair("::doEndTableScan()", "::store_lock()"));
   states.insert(state_pair("locked", "::doInsertRecord()"));
   states.insert(state_pair("::doInsertRecord()", "::external_lock()"));
+  states.insert(state_pair("::doInsertRecord()", "::doInsertRecord()"));
 
   states.insert(state_pair("::doUpdateRecord()", "::doEndTableScan()"));
+  states.insert(state_pair("::doUpdateRecord()", "::rnd_next()"));
 }
