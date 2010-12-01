@@ -82,6 +82,7 @@ void load_cursor_state_transitions(state_multimap &states)
   states.insert(state_pair("locked", "::doInsertRecord()"));
   states.insert(state_pair("::doInsertRecord()", "::external_lock()"));
   states.insert(state_pair("::doInsertRecord()", "::doInsertRecord()"));
+  states.insert(state_pair("::doInsertRecord()", "::reset()"));
 
   states.insert(state_pair("::doUpdateRecord()", "::doEndTableScan()"));
   states.insert(state_pair("::doUpdateRecord()", "::rnd_next()"));

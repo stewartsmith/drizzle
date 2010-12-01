@@ -56,7 +56,7 @@ plugin::TransactionalStorageEngine *realEngine;
 
    1 - doInsertRecord(): every 2nd row, LOCK_WAIT_TIMEOUT.
    2 - doInsertRecord(): every 2nd row, DEADLOCK.
-
+   3 - rnd_next(): every 2nd row, LOCK_WAIT_TIMEOUT
  */
 static uint32_t error_injected= 0;
 
@@ -152,7 +152,18 @@ public:
     { delete realCursor;}
 
   int close();
-  int rnd_next(unsigned char *buf) { CURSOR_NEW_STATE("::rnd_next()"); return realCursor->rnd_next(buf); }
+  int rnd_next(unsigned char *buf) {
+    static int count= 0;
+    CURSOR_NEW_STATE("::rnd_next()");
+
+    if (error_injected == 3 && (count++ % 2))
+    {
+      mark_transaction_to_rollback(user_session, false);
+      return HA_ERR_LOCK_WAIT_TIMEOUT;
+    }
+    return realCursor->rnd_next(buf);
+  }
+
   int rnd_pos(unsigned char* buf, unsigned char* pos) { CURSOR_NEW_STATE("::rnd_pos()"); return realCursor->rnd_pos(buf, pos); }
   void position(const unsigned char *record);
   int info(uint32_t flag);
@@ -293,13 +304,14 @@ void SEAPITesterCursor::CURSOR_NEW_STATE(const string &new_state)
       || new_state.compare((*cur).second))
   {
     cerr << "ERROR: Invalid Cursor state transition!" << endl
-         << "Cannot go from " << cursor_state << " to " << new_state << endl;
+         << "Cursor " << this << "Cannot go from "
+         << cursor_state << " to " << new_state << endl;
     assert(false);
   }
 
   cursor_state= new_state;
 
-  cerr << "\t\tCursor STATE : " << cursor_state << endl;
+  cerr << "\t\tCursor " << this << " STATE : " << cursor_state << endl;
 }
 
 } /* namespace drizzled */
