@@ -99,7 +99,7 @@ void Schema::prime()
   mutex.unlock();
 }
 
-void Schema::doGetSchemaIdentifiers(SchemaIdentifiers &set_of_names)
+void Schema::doGetSchemaIdentifiers(SchemaIdentifier::vector &set_of_names)
 {
   mutex.lock_shared();
   {

@@ -78,7 +78,7 @@ public:
                            const drizzled::TableIdentifier &identifier,
                            drizzled::message::Table &table_message);
 
-  void doGetSchemaIdentifiers(drizzled::SchemaIdentifiers&);
+  void doGetSchemaIdentifiers(drizzled::SchemaIdentifier::vector&);
 
   bool doDoesTableExist(drizzled::Session& session, const drizzled::TableIdentifier &identifier);
 

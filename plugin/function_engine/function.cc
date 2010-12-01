@@ -70,7 +70,7 @@ int Function::doGetTableDefinition(Session &,
   return EEXIST;
 }
 
-void Function::doGetSchemaIdentifiers(SchemaIdentifiers& schemas)
+void Function::doGetSchemaIdentifiers(SchemaIdentifier::vector& schemas)
 {
   schemas.push_back(INFORMATION_SCHEMA_IDENTIFIER);
   schemas.push_back(DATA_DICTIONARY_IDENTIFIER);

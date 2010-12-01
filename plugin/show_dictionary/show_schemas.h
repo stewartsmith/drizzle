@@ -29,8 +29,8 @@ public:
 
   class Generator : public show_dictionary::Show::Generator 
   {
-    drizzled::SchemaIdentifiers schema_names;
-    drizzled::SchemaIdentifiers::const_iterator schema_iterator;
+    drizzled::SchemaIdentifier::vector schema_names;
+    drizzled::SchemaIdentifier::vector::const_iterator schema_iterator;
 
     bool is_schema_primed;
 

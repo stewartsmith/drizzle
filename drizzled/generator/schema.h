@@ -32,8 +32,8 @@ class Schema
   Session &session;
   message::schema::shared_ptr schema;
 
-  SchemaIdentifiers schema_names;
-  SchemaIdentifiers::const_iterator schema_iterator;
+  SchemaIdentifier::vector schema_names;
+  SchemaIdentifier::vector::const_iterator schema_iterator;
 
 public:
 

@@ -58,6 +58,7 @@ class TableIdentifier : public SchemaIdentifier
 {
 public:
   typedef message::Table::TableType Type;
+  typedef std::vector <TableIdentifier> vector;
 
   class Key
   {
