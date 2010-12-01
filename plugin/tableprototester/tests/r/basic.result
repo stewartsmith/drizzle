@@ -1,5 +1,5 @@
-SHOW TABLES;
-Tables_in_test
-invalid_table_collation
-t1
-too_many_enum_values
+SELECT TABLE_SCHEMA, TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA="test" ORDER BY TABLE_SCHEMA;
+TABLE_SCHEMA	TABLE_NAME
+test	t1
+test	too_many_enum_values
+test	invalid_table_collation
