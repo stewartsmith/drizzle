@@ -20,6 +20,7 @@
 #include "config.h"
 
 #include <boost/lexical_cast.hpp>
+#include <boost/exception/get_error_info.hpp>
 #include <string>
 
 #include "drizzled/session.h"
@@ -156,16 +157,43 @@ int set_var::update(Session *session)
     if (var->getAfterUpdateTrigger())
       (*var->getAfterUpdateTrigger())(session, type);
   }
-  catch (boost::program_options::validation_error &ex)
+  catch (invalid_option_value &ex)
   {
     /* TODO: Fix this to be typesafe once we have properly typed set_var */
     string new_val= boost::lexical_cast<string>(save_result.uint32_t_value);
-
-    push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
-                        ER_INVALID_OPTION_VALUE,
-                        ER(ER_INVALID_OPTION_VALUE),
-                        var->getName().c_str(),
-                        ex.what());
+    if (const uint64_t *max_val= boost::get_error_info<invalid_max_info>(ex))
+    { 
+      string explanation("(> ");
+      explanation.append(boost::lexical_cast<std::string>(*max_val));
+      explanation.push_back(')');
+      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+                          ER_INVALID_OPTION_VALUE,
+                          ER(ER_INVALID_OPTION_VALUE),
+                          var->getName().c_str(),
+                          new_val.c_str(),
+                          explanation.c_str());
+    }
+    else if (const int64_t *min_val= boost::get_error_info<invalid_min_info>(ex))
+    {
+      string explanation("(< ");
+      explanation.append(boost::lexical_cast<std::string>(*min_val));
+      explanation.push_back(')');
+      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+                          ER_INVALID_OPTION_VALUE,
+                          ER(ER_INVALID_OPTION_VALUE),
+                          var->getName().c_str(),
+                          new_val.c_str(),
+                          explanation.c_str());
+    }
+    else
+    {
+      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+                          ER_INVALID_OPTION_VALUE,
+                          ER(ER_INVALID_OPTION_VALUE),
+                          var->getName().c_str(),
+                          new_val.c_str(),
+                          "");
+    }
   }
   return 0;
 }
