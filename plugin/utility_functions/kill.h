@@ -1,4 +1,4 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2010 Brian Aker
@@ -18,16 +18,46 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* Only Linux defines getrusage's RUSAGE_THREAD */
 
-#ifndef DRIZZLED_INTERNAL_GETRUSAGE_H
-#define DRIZZLED_INTERNAL_GETRUSAGE_H
+#ifndef PLUGIN_UTILITY_FUNCTIONS_KILL_H
+#define PLUGIN_UTILITY_FUNCTIONS_KILL_H
 
-#include <sys/time.h>
-#include <sys/resource.h>
+#include <drizzled/item/func.h>
 
-#ifndef RUSAGE_THREAD
-#define RUSAGE_THREAD RUSAGE_SELF
-#endif
+namespace drizzled
+{
 
-#endif /* DRIZZLED_INTERNAL_GETRUSAGE_H */
+namespace utility_functions
+{
+
+class Kill :public Item_int_func
+{
+public:
+  int64_t val_int();
+  Kill() : Item_int_func()
+  {
+    unsigned_flag= true;
+  }
+
+  const char *func_name() const
+  {
+    return "kill";
+  }
+
+  void fix_length_and_dec()
+  {
+    max_length= 1;
+  }
+
+  bool check_argument_count(int n)
+  {
+    return (n == 2 or n == 1);
+  }
+
+private:
+};
+
+} /* namespace utility_functions */
+} /* namespace drizzled */
+
+#endif /* PLUGIN_UTILITY_FUNCTIONS_KILL_H */
