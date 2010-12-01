@@ -454,6 +454,7 @@ ErrorMap::ErrorMap()
   add(ER_NAME_BECOMES_EMPTY, N_("Name '%-.64s' has become ''"));
   add(ER_AMBIGUOUS_FIELD_TERM, N_("First character of the FIELDS TERMINATED string is ambiguous; please use non-optional and non-empty FIELDS ENCLOSED BY"));
   add(ER_ILLEGAL_HA_CREATE_OPTION, N_("Table storage engine '%-.64s' does not support the create option '%.64s'"));
+  add(ER_INVALID_OPTION_VALUE, N_("Error setting %-.32s: %-.128s"));
   add(ER_WRONG_VALUE, N_("Incorrect %-.32s value: '%-.128s'"));
   add(ER_NO_PARTITION_FOR_GIVEN_VALUE, N_("Table has no partition for value %-.64s"));
   add(ER_BINLOG_ROW_LOGGING_FAILED, N_("Writing one row to the row-based binary log failed"));

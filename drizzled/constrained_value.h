@@ -22,6 +22,7 @@
 
 #include <boost/program_options.hpp>
 #include <boost/program_options/errors.hpp>
+#include <boost/exception/all.hpp>
 #include <iostream>
 
 namespace drizzled
@@ -163,9 +164,14 @@ protected:
 
   constrained_value<T>& set_value(T rhs)
   {
-    if (greater_than_max<T,MAXVAL>(rhs) || less_than_min<T,MINVAL>(rhs))
+    if (greater_than_max<T,MAXVAL>(rhs))
     {
-      boost::throw_exception(boost::program_options::invalid_option_value(boost::lexical_cast<std::string>(rhs)));
+      boost::throw_exception(boost::program_options::invalid_option_value(boost::lexical_cast<std::string>(rhs) + " >" + boost::lexical_cast<std::string>(MAXVAL)));
+    }
+      
+    if (less_than_min<T,MINVAL>(rhs))
+    {
+      boost::throw_exception(boost::program_options::invalid_option_value(boost::lexical_cast<std::string>(rhs) + " <" + boost::lexical_cast<std::string>(MINVAL)));
     }
     rhs-= rhs % ALIGN;
     this->setVal(rhs);

@@ -156,14 +156,16 @@ int set_var::update(Session *session)
     if (var->getAfterUpdateTrigger())
       (*var->getAfterUpdateTrigger())(session, type);
   }
-  catch (boost::exception &)
+  catch (boost::program_options::validation_error &ex)
   {
     /* TODO: Fix this to be typesafe once we have properly typed set_var */
     string new_val= boost::lexical_cast<string>(save_result.uint32_t_value);
+
     push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
-                        ER_TRUNCATED_WRONG_VALUE,
-                        ER(ER_TRUNCATED_WRONG_VALUE), var->getName().c_str(),
-                        new_val.c_str());
+                        ER_INVALID_OPTION_VALUE,
+                        ER(ER_INVALID_OPTION_VALUE),
+                        var->getName().c_str(),
+                        ex.what());
   }
   return 0;
 }
