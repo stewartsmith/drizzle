@@ -329,8 +329,8 @@ public:
 
   // @note All schema methods defined here
   static void getIdentifiers(Session &session, SchemaIdentifiers &schemas);
-  static bool getSchemaDefinition(const drizzled::TableIdentifier &identifier, message::SchemaPtr &proto);
-  static bool getSchemaDefinition(const drizzled::SchemaIdentifier &identifier, message::SchemaPtr &proto);
+  static bool getSchemaDefinition(const drizzled::TableIdentifier &identifier, message::schema::shared_ptr &proto);
+  static bool getSchemaDefinition(const drizzled::SchemaIdentifier &identifier, message::schema::shared_ptr &proto);
   static bool doesSchemaExist(const drizzled::SchemaIdentifier &identifier);
   static const CHARSET_INFO *getSchemaCollation(const drizzled::SchemaIdentifier &identifier);
   static bool createSchema(const drizzled::message::Schema &schema_message);
@@ -341,7 +341,7 @@ public:
   virtual void doGetSchemaIdentifiers(SchemaIdentifiers&)
   { }
 
-  virtual bool doGetSchemaDefinition(const drizzled::SchemaIdentifier&, drizzled::message::SchemaPtr&)
+  virtual bool doGetSchemaDefinition(const drizzled::SchemaIdentifier&, drizzled::message::schema::shared_ptr&)
   { 
     return false; 
   }

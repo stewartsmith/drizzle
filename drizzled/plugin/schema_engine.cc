@@ -65,11 +65,11 @@ void StorageEngine::getIdentifiers(Session &session, SchemaIdentifiers &schemas)
 class StorageEngineGetSchemaDefinition: public unary_function<StorageEngine *, bool>
 {
   const SchemaIdentifier &identifier;
-  message::SchemaPtr &schema_proto;
+  message::schema::shared_ptr &schema_proto;
 
 public:
   StorageEngineGetSchemaDefinition(const SchemaIdentifier &identifier_arg,
-                                   message::SchemaPtr &schema_proto_arg) :
+                                   message::schema::shared_ptr &schema_proto_arg) :
     identifier(identifier_arg),
     schema_proto(schema_proto_arg) 
   {
@@ -84,12 +84,12 @@ public:
 /*
   Return value is "if parsed"
 */
-bool StorageEngine::getSchemaDefinition(const drizzled::TableIdentifier &identifier, message::SchemaPtr &proto)
+bool StorageEngine::getSchemaDefinition(const drizzled::TableIdentifier &identifier, message::schema::shared_ptr &proto)
 {
   return StorageEngine::getSchemaDefinition(identifier, proto);
 }
 
-bool StorageEngine::getSchemaDefinition(const SchemaIdentifier &identifier, message::SchemaPtr &proto)
+bool StorageEngine::getSchemaDefinition(const SchemaIdentifier &identifier, message::schema::shared_ptr &proto)
 {
   EngineVector::iterator iter=
     find_if(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
@@ -105,7 +105,7 @@ bool StorageEngine::getSchemaDefinition(const SchemaIdentifier &identifier, mess
 
 bool StorageEngine::doesSchemaExist(const SchemaIdentifier &identifier)
 {
-  message::SchemaPtr proto;
+  message::schema::shared_ptr proto;
 
   return StorageEngine::getSchemaDefinition(identifier, proto);
 }
@@ -113,7 +113,7 @@ bool StorageEngine::doesSchemaExist(const SchemaIdentifier &identifier)
 
 const CHARSET_INFO *StorageEngine::getSchemaCollation(const SchemaIdentifier &identifier)
 {
-  message::SchemaPtr schmema_proto;
+  message::schema::shared_ptr schmema_proto;
   bool found;
 
   found= StorageEngine::getSchemaDefinition(identifier, schmema_proto);

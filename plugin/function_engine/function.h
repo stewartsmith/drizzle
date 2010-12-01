@@ -35,8 +35,8 @@ static const char *function_exts[] = {
 
 class Function : public drizzled::plugin::StorageEngine
 {
-  drizzled::message::SchemaPtr information_message;
-  drizzled::message::SchemaPtr data_dictionary_message;
+  drizzled::message::schema::shared_ptr information_message;
+  drizzled::message::schema::shared_ptr data_dictionary_message;
 
 public:
   Function(const std::string &name_arg);
@@ -82,7 +82,7 @@ public:
 
   bool doDoesTableExist(drizzled::Session& session, const drizzled::TableIdentifier &identifier);
 
-  bool doGetSchemaDefinition(const drizzled::SchemaIdentifier &schema, drizzled::message::SchemaPtr &schema_message);
+  bool doGetSchemaDefinition(const drizzled::SchemaIdentifier &schema, drizzled::message::schema::shared_ptr &schema_message);
 
   int doRenameTable(drizzled::Session&, const drizzled::TableIdentifier &, const drizzled::TableIdentifier &)
   {

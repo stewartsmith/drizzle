@@ -44,7 +44,7 @@ SchemasTool::Generator::Generator(drizzled::Field **arg) :
 
 bool SchemasTool::Generator::populate()
 {
-  drizzled::message::SchemaPtr schema_ptr;
+  drizzled::message::schema::shared_ptr schema_ptr;
   while ((schema_ptr= schema_generator))
   {
     /* SCHEMA_NAME */

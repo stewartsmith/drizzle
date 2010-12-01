@@ -113,7 +113,7 @@ void Schema::doGetSchemaIdentifiers(SchemaIdentifiers &set_of_names)
   mutex.unlock_shared();
 }
 
-bool Schema::doGetSchemaDefinition(const SchemaIdentifier &schema_identifier, message::SchemaPtr &schema_message)
+bool Schema::doGetSchemaDefinition(const SchemaIdentifier &schema_identifier, message::schema::shared_ptr &schema_message)
 {
   mutex.lock_shared();
   SchemaCache::iterator iter= schema_cache.find(schema_identifier.getPath());
@@ -165,7 +165,7 @@ bool Schema::doCreateSchema(const drizzled::message::Schema &schema_message)
 
 bool Schema::doDropSchema(const SchemaIdentifier &schema_identifier)
 {
-  message::SchemaPtr schema_message;
+  message::schema::shared_ptr schema_message;
 
   string schema_file(schema_identifier.getPath());
   schema_file.append(1, FN_LIBCHAR);

@@ -39,7 +39,7 @@ class Schema : public drizzled::plugin::StorageEngine
 
   void prime();
 
-  typedef boost::unordered_map<std::string, drizzled::message::SchemaPtr> SchemaCache;
+  typedef boost::unordered_map<std::string, drizzled::message::schema::shared_ptr> SchemaCache;
   SchemaCache schema_cache;
   bool schema_cache_filled;
 
@@ -59,7 +59,7 @@ public:
   }
 
   void doGetSchemaIdentifiers(drizzled::SchemaIdentifiers &set_of_names);
-  bool doGetSchemaDefinition(const drizzled::SchemaIdentifier&, drizzled::message::SchemaPtr &proto);
+  bool doGetSchemaDefinition(const drizzled::SchemaIdentifier&, drizzled::message::schema::shared_ptr &proto);
 
   bool doCreateSchema(const drizzled::message::Schema &schema_message);
 

@@ -76,7 +76,7 @@ void Function::doGetSchemaIdentifiers(SchemaIdentifiers& schemas)
   schemas.push_back(DATA_DICTIONARY_IDENTIFIER);
 }
 
-bool Function::doGetSchemaDefinition(const SchemaIdentifier &schema_identifier, message::SchemaPtr &schema_message)
+bool Function::doGetSchemaDefinition(const SchemaIdentifier &schema_identifier, message::schema::shared_ptr &schema_message)
 {
   schema_message.reset(new message::Schema); // This should be fixed, we could just be using ones we built on startup.
 

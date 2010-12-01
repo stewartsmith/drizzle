@@ -30,7 +30,7 @@ namespace generator {
 class Schema
 {
   Session &session;
-  message::SchemaPtr schema;
+  message::schema::shared_ptr schema;
 
   SchemaIdentifiers schema_names;
   SchemaIdentifiers::const_iterator schema_iterator;
@@ -39,7 +39,7 @@ public:
 
   Schema(Session &arg);
 
-  operator const drizzled::message::SchemaPtr()
+  operator const drizzled::message::schema::shared_ptr()
   {
     while (schema_iterator != schema_names.end())
     {
@@ -51,7 +51,7 @@ public:
         return schema;
     }
 
-    return message::SchemaPtr();
+    return message::schema::shared_ptr();
   }
 
   operator const drizzled::SchemaIdentifier*()
