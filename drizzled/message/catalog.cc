@@ -18,29 +18,24 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_CATALOG_FUNCTIONS_DROP_H
-#define PLUGIN_CATALOG_FUNCTIONS_DROP_H
+#include "config.h"
+#include "drizzled/message/catalog.h"
 
-namespace plugin {
+#include <boost/make_shared.hpp>
+
+namespace drizzled {
+namespace message {
 namespace catalog {
-namespace functions {
 
-class Drop : public drizzled::Item_int_func
+
+shared_ptr create(const identifier::Catalog &identifier)
 {
-  drizzled::String value;
+  shared_ptr message= boost::make_shared< value_type>();
+  message->set_name(identifier.getName());
 
-public:
-  Drop() :
-    drizzled::Item_int_func()
-  {}
+  return message;
+}
 
-  int64_t val_int();
-  const char *func_name() const { return "drop_catalog"; }
-  bool check_argument_count(int n) { return n == 1; }
-};
-
-} /* namespace functions */
 } /* namespace catalog */
-} /* namespace plugin */
-
-#endif /* PLUGIN_CATALOG_FUNCTIONS_DROP_H */
+} /* namespace message */
+} /* namespace drizzled */

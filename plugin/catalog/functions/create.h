@@ -21,6 +21,7 @@
 #ifndef PLUGIN_CATALOG_FUNCTIONS_CREATE_H
 #define PLUGIN_CATALOG_FUNCTIONS_CREATE_H
 
+namespace plugin {
 namespace catalog {
 namespace functions {
 
@@ -40,5 +41,6 @@ public:
 
 } /* namespace functions */
 } /* namespace catalog */
+} /* namespace plugin */
 
 #endif /* PLUGIN_CATALOG_FUNCTIONS_CREATE_H */

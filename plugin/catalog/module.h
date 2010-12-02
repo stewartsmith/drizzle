@@ -27,10 +27,13 @@
 
 #include <drizzled/plugin/function.h>
 #include <drizzled/plugin/table_function.h>
-#include <plugin/catalog/filesystem.h>
+
+#include "plugin/catalog/filesystem.h"
 
 #include "plugin/catalog/functions/create.h"
 #include "plugin/catalog/functions/drop.h"
+
+#include "plugin/catalog/tables/catalog_cache.h"
 #include "plugin/catalog/tables/catalogs.h"
 
 #endif /* PLUGIN_CATALOG_MODULE_H */

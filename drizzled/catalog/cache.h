@@ -29,8 +29,11 @@
 namespace drizzled {
 
 namespace generator {
-class Catalog;
-}
+namespace catalog {
+class Cache;
+class Instance;
+} //namespace catalog
+} //namespace generator
 
 namespace catalog {
 
@@ -59,7 +62,8 @@ public:
   bool insert(const identifier::Catalog &identifier, catalog::Instance::shared_ptr share);
 
 protected:
-  friend class drizzled::generator::Catalog;
+  friend class drizzled::generator::catalog::Cache;
+  friend class drizzled::plugin::Catalog;
 
   void CopyFrom(catalog::Instance::vector &vector)
   {

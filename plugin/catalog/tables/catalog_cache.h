@@ -18,29 +18,39 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_CATALOG_FUNCTIONS_DROP_H
-#define PLUGIN_CATALOG_FUNCTIONS_DROP_H
+#ifndef PLUGIN_CATALOG_TABLES_CATALOG_CACHE_H
+#define PLUGIN_CATALOG_TABLES_CATALOG_CACHE_H
+
+#include <drizzled/generator/catalog/cache.h>
 
 namespace plugin {
 namespace catalog {
-namespace functions {
+namespace tables {
 
-class Drop : public drizzled::Item_int_func
+class Cache : public  drizzled::plugin::TableFunction
 {
-  drizzled::String value;
 
 public:
-  Drop() :
-    drizzled::Item_int_func()
-  {}
+  Cache();
 
-  int64_t val_int();
-  const char *func_name() const { return "drop_catalog"; }
-  bool check_argument_count(int n) { return n == 1; }
+  class Generator : public drizzled::plugin::TableFunction::Generator 
+  {
+    drizzled::generator::catalog::Cache catalog_generator;
+
+  public:
+    Generator(drizzled::Field **arg);
+
+    bool populate();
+  };
+
+  Generator *generator(drizzled::Field **arg)
+  {
+    return new Generator(arg);
+  }
 };
 
-} /* namespace functions */
+} /* namespace tables */
 } /* namespace catalog */
 } /* namespace plugin */
 
-#endif /* PLUGIN_CATALOG_FUNCTIONS_DROP_H */
+#endif /* PLUGIN_CATALOG_TABLES_CATALOG_CACHE_H */

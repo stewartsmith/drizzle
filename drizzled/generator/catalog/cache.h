@@ -18,29 +18,26 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_GENERATOR_CATALOG_H
-#define DRIZZLED_GENERATOR_CATALOG_H
+#ifndef DRIZZLED_GENERATOR_CATALOG_CACHE_H
+#define DRIZZLED_GENERATOR_CATALOG_CACHE_H
 
 #include "drizzled/catalog/cache.h"
 
 namespace drizzled {
 namespace generator {
+namespace catalog {
 
-class Catalog
+class Cache
 {
   drizzled::catalog::Instance::vector local_vector;
   drizzled::catalog::Instance::vector::iterator iter;
 
 public:
 
-  Catalog()
+  Cache()
   {
-    catalog::Cache::singleton().CopyFrom(local_vector);
+    drizzled::catalog::Cache::singleton().CopyFrom(local_vector);
     iter= local_vector.begin();
-  }
-
-  ~Catalog()
-  {
   }
 
   operator drizzled::catalog::Instance::shared_ptr()
@@ -56,7 +53,8 @@ public:
   }
 };
 
+} /* namespace catalog */
 } /* namespace generator */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_GENERATOR_CATALOG_H */
+#endif /* DRIZZLED_GENERATOR_CATALOG_CACHE_H */

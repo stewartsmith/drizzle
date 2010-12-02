@@ -18,29 +18,46 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_CATALOG_FUNCTIONS_DROP_H
-#define PLUGIN_CATALOG_FUNCTIONS_DROP_H
+#include "config.h"
+
+#include "plugin/catalog/module.h"
+
+#include <drizzled/atomics.h>
+#include <drizzled/session.h>
+
+using namespace std;
 
 namespace plugin {
 namespace catalog {
-namespace functions {
+namespace tables {
 
-class Drop : public drizzled::Item_int_func
+Cache::Cache() :
+  drizzled::plugin::TableFunction("DATA_DICTIONARY", "CATALOG_CACHE")
 {
-  drizzled::String value;
+  add_field("CATALOG_NAME", drizzled::plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+}
 
-public:
-  Drop() :
-    drizzled::Item_int_func()
-  {}
+Cache::Generator::Generator(drizzled::Field **arg) :
+  drizzled::plugin::TableFunction::Generator(arg)
+{
+}
 
-  int64_t val_int();
-  const char *func_name() const { return "drop_catalog"; }
-  bool check_argument_count(int n) { return n == 1; }
-};
+bool Cache::Generator::populate()
+{
 
-} /* namespace functions */
+  drizzled::catalog::Instance::shared_ptr tmp;
+
+  while ((tmp= catalog_generator))
+  {
+    // CATALOG_NAME
+    push(tmp->getName());
+
+    return true;
+  }
+
+  return false;
+}
+
+} /* namespace tables */
 } /* namespace catalog */
 } /* namespace plugin */
-
-#endif /* PLUGIN_CATALOG_FUNCTIONS_DROP_H */

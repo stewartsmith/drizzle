@@ -24,6 +24,7 @@
 #include <drizzled/plugin/catalog.h>
 #include "plugin/catalog/engine.h"
 
+namespace plugin {
 namespace catalog {
 
 class Filesystem : public drizzled::plugin::Catalog
@@ -44,5 +45,6 @@ public:
 };
 
 } /* namespace catalog */
+} /* namespace plugin */
 
 #endif /* PLUGIN_CATALOG_FILESYSTEM_H */

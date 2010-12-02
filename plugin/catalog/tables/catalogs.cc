@@ -22,19 +22,14 @@
 
 #include "plugin/catalog/module.h"
 
-#include <drizzled/atomics.h>
-#include <drizzled/session.h>
-
-using namespace drizzled;
-using namespace std;
-
+namespace plugin {
 namespace catalog {
 namespace tables {
 
 Catalogs::Catalogs() :
-  plugin::TableFunction("DATA_DICTIONARY", "CATALOGS")
+  drizzled::plugin::TableFunction("DATA_DICTIONARY", "CATALOGS")
 {
-  add_field("CATALOG_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("CATALOG_NAME", drizzled::plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
 }
 
 Catalogs::Generator::Generator(drizzled::Field **arg) :
@@ -44,13 +39,12 @@ Catalogs::Generator::Generator(drizzled::Field **arg) :
 
 bool Catalogs::Generator::populate()
 {
-
-  drizzled::catalog::Instance::shared_ptr tmp;
+  drizzled::message::catalog::shared_ptr tmp;
 
   while ((tmp= catalog_generator))
   {
     // CATALOG_NAME
-    push(tmp->getName());
+    push(tmp->name());
 
     return true;
   }
@@ -60,3 +54,4 @@ bool Catalogs::Generator::populate()
 
 } /* namespace tables */
 } /* namespace catalog */
+} /* namespace plugin */

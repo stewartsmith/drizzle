@@ -21,6 +21,7 @@
 #include "config.h"
 #include "plugin/catalog/module.h"
 
+namespace plugin {
 namespace catalog {
 namespace functions {
 
@@ -39,3 +40,4 @@ int64_t Drop::val_int()
 
 } /* namespace functions */
 } /* namespace catalog */
+} /* namespace plugin */

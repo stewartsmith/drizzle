@@ -1,4 +1,4 @@
-/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2010 Brian Aker
@@ -18,29 +18,45 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_CATALOG_FUNCTIONS_DROP_H
-#define PLUGIN_CATALOG_FUNCTIONS_DROP_H
+#ifndef DRIZZLED_GENERATOR_CATALOG_MESSAGE_H
+#define DRIZZLED_GENERATOR_CATALOG_MESSAGE_H
 
-namespace plugin {
+#include "drizzled/message/catalog.h"
+#include "drizzled/plugin/catalog.h"
+
+namespace drizzled {
+namespace generator {
 namespace catalog {
-namespace functions {
 
-class Drop : public drizzled::Item_int_func
+class Message
 {
-  drizzled::String value;
+  message::catalog::vector local_vector;
+  message::catalog::vector::iterator iter;
 
 public:
-  Drop() :
-    drizzled::Item_int_func()
-  {}
 
-  int64_t val_int();
-  const char *func_name() const { return "drop_catalog"; }
-  bool check_argument_count(int n) { return n == 1; }
+  Message()
+  {
+    plugin::Catalog::getMessages(local_vector);
+    iter= local_vector.begin();
+  }
+
+  operator message::catalog::shared_ptr()
+  {
+    while (iter != local_vector.end())
+    {
+      message::catalog::shared_ptr ret(*iter);
+      iter++;
+
+      return ret;
+    }
+
+    return message::catalog::shared_ptr();
+  }
 };
 
-} /* namespace functions */
 } /* namespace catalog */
-} /* namespace plugin */
+} /* namespace generator */
+} /* namespace drizzled */
 
-#endif /* PLUGIN_CATALOG_FUNCTIONS_DROP_H */
+#endif /* DRIZZLED_GENERATOR_CATALOG_MESSAGE_H */

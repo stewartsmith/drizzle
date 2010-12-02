@@ -23,10 +23,11 @@
 
 static int init(drizzled::module::Context &context)
 {
-  context.add(new drizzled::plugin::Create_function<catalog::functions::Create>("create_catalog"));
-  context.add(new drizzled::plugin::Create_function<catalog::functions::Drop>("drop_catalog"));
-  context.add(new catalog::Filesystem());
-  context.add(new catalog::tables::Catalogs());
+  context.add(new drizzled::plugin::Create_function<plugin::catalog::functions::Create>("create_catalog"));
+  context.add(new drizzled::plugin::Create_function<plugin::catalog::functions::Drop>("drop_catalog"));
+  context.add(new plugin::catalog::Filesystem());
+  context.add(new plugin::catalog::tables::Cache());
+  context.add(new plugin::catalog::tables::Catalogs());
 
   return 0;
 }

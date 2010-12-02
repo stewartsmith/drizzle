@@ -21,12 +21,13 @@
 #ifndef PLUGIN_CATALOG_TABLES_CATALOGS_H
 #define PLUGIN_CATALOG_TABLES_CATALOGS_H
 
-#include <drizzled/generator/catalog.h>
+#include <drizzled/generator/catalog/message.h>
 
+namespace plugin {
 namespace catalog {
 namespace tables {
 
-class Catalogs : public  drizzled::plugin::TableFunction
+class Catalogs : public drizzled::plugin::TableFunction
 {
 
 public:
@@ -34,7 +35,7 @@ public:
 
   class Generator : public drizzled::plugin::TableFunction::Generator 
   {
-    drizzled::generator::Catalog catalog_generator;
+    drizzled::generator::catalog::Message catalog_generator;
 
   public:
     Generator(drizzled::Field **arg);
@@ -50,5 +51,6 @@ public:
 
 } /* namespace tables */
 } /* namespace catalog */
+} /* namespace plugin */
 
 #endif /* PLUGIN_CATALOG_TABLES_CATALOGS_H */

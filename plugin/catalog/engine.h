@@ -24,6 +24,7 @@
 #include <boost/make_shared.hpp>
 #include <drizzled/catalog/engine.h>
 
+namespace plugin {
 namespace catalog {
 
 class Engine : public drizzled::catalog::Engine
@@ -78,7 +79,8 @@ public:
 
   void getMessages(drizzled::message::catalog::vector &messages)
   {
-    messages.push_back(boost::make_shared<drizzled::message::catalog::value_type>());
+    static drizzled::identifier::Catalog LOCAL_IDENTIFIER("local");
+    messages.push_back(drizzled::message::catalog::create(LOCAL_IDENTIFIER));
   }
 
   bool getInstance(const drizzled::identifier::Catalog &identifier, drizzled::catalog::Instance::shared_ptr &instance)
@@ -97,5 +99,6 @@ public:
 };
 
 } /* namespace catalog */
+} /* namespace plugin */
 
 #endif /* PLUGIN_CATALOG_ENGINE_H */
