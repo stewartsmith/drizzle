@@ -1,0 +1,15 @@
+# Check on bad signal types
+--error 1711
+SELECT SIGNAL("");
+--error 1711
+SELECT SIGNAL(NULL);
+
+set @signal_name= "foo";
+SELECT CREATE_BARRIER(@signal_name);
+--error 1707
+SELECT SIGNAL("FOO");
+--error 1707
+SELECT SIGNAL("FoO");
+SELECT SIGNAL(@signal_name);
+SELECT if ((SESSION_ID = CONNECTION_ID()), "YES", "NO"), GENERATION, WAITER_LIMIT from DATA_DICTIONARY.USER_BARRIERS WHERE USER_BARRIER_NAME=@signal_name;
+SELECT RELEASE_BARRIER(@signal_name);

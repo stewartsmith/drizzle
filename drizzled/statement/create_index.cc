@@ -34,12 +34,14 @@ bool statement::CreateIndex::execute()
   TableList *all_tables= session->lex->query_tables;
 
   /* Chicken/Egg... we need to search for the table, to know if the table exists, so we can build a full identifier from it */
-  message::TablePtr original_table_message;
+  message::table::shared_ptr original_table_message;
   {
     TableIdentifier identifier(first_table->getSchemaName(), first_table->getTableName());
     if (plugin::StorageEngine::getTableDefinition(*session, identifier, original_table_message) != EEXIST)
     {
-      my_error(ER_BAD_TABLE_ERROR, MYF(0), identifier.getSQLPath().c_str());
+      std::string path;
+      identifier.getSQLPath(path);
+      my_error(ER_BAD_TABLE_ERROR, MYF(0), path.c_str());
       return true;
     }
   }

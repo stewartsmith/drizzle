@@ -370,7 +370,7 @@ bool plugin::StorageEngine::doDoesTableExist(Session&, const drizzled::TableIden
 */
 int StorageEngine::getTableDefinition(Session& session,
                                       const TableIdentifier &identifier,
-                                      message::TablePtr &table_message,
+                                      message::table::shared_ptr &table_message,
                                       bool include_temporary_tables)
 {
   int err= ENOENT;
@@ -385,7 +385,7 @@ int StorageEngine::getTableDefinition(Session& session,
     }
   }
 
-  drizzled::message::TablePtr table_ptr;
+  drizzled::message::table::shared_ptr table_ptr;
   if ((table_ptr= drizzled::message::Cache::singleton().find(identifier)))
   {
     table_message= table_ptr;
@@ -445,7 +445,7 @@ int StorageEngine::dropTable(Session& session,
 {
   int error= 0;
   int error_proto;
-  message::TablePtr src_proto;
+  message::table::shared_ptr src_proto;
   StorageEngine *engine;
 
   error_proto= StorageEngine::getTableDefinition(session, identifier, src_proto);
@@ -453,8 +453,8 @@ int StorageEngine::dropTable(Session& session,
   if (error_proto == ER_CORRUPT_TABLE_DEFINITION)
   {
     string error_message;
+    identifier.getSQLPath(error_message);
 
-    error_message.append(const_cast<TableIdentifier &>(identifier).getSQLPath());
     error_message.append(" : ");
     error_message.append(src_proto->InitializationErrorString());
 
@@ -470,7 +470,9 @@ int StorageEngine::dropTable(Session& session,
 
   if (not engine)
   {
-    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0), const_cast<TableIdentifier &>(identifier).getSQLPath().c_str());
+    string error_message;
+    identifier.getSQLPath(error_message);
+    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0), error_message.c_str());
 
     return ER_CORRUPT_TABLE_DEFINITION;
   }
@@ -556,7 +558,9 @@ int StorageEngine::createTable(Session &session,
 
     if (error)
     {
-      my_error(ER_CANT_CREATE_TABLE, MYF(ME_BELL+ME_WAITTANG), const_cast<TableIdentifier &>(identifier).getSQLPath().c_str(), error);
+      std::string path;
+      identifier.getSQLPath(path);
+      my_error(ER_CANT_CREATE_TABLE, MYF(ME_BELL+ME_WAITTANG), path.c_str(), error);
     }
 
     table.delete_table();
@@ -610,9 +614,16 @@ void StorageEngine::getIdentifiers(Session &session, const SchemaIdentifier &sch
     {
       errno= directory.getError();
       if (errno == ENOENT)
-        my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), const_cast<SchemaIdentifier &>(schema_identifier).getSQLPath().c_str());
+      {
+        std::string path;
+        schema_identifier.getSQLPath(path);
+        my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), path.c_str());
+      }
       else
+      {
         my_error(ER_CANT_READ_DIR, MYF(ME_BELL+ME_WAITTANG), directory.getPath(), errno);
+      }
+
       return;
     }
   }

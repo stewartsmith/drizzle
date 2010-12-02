@@ -664,7 +664,7 @@ int prepare_create_field(CreateField *sql_field,
                          int *timestamps, int *timestamps_with_niladic);
 
 bool mysql_create_table(Session *session,
-                        TableIdentifier &identifier,
+                        const TableIdentifier &identifier,
                         HA_CREATE_INFO *create_info,
                         message::Table &table_proto,
                         AlterInfo *alter_info,
@@ -672,7 +672,7 @@ bool mysql_create_table(Session *session,
                         bool is_if_not_exists);
 
 bool mysql_create_table_no_lock(Session *session,
-                                TableIdentifier &identifier,
+                                const TableIdentifier &identifier,
                                 HA_CREATE_INFO *create_info,
                                 message::Table &table_proto,
                                 AlterInfo *alter_info,
@@ -680,7 +680,7 @@ bool mysql_create_table_no_lock(Session *session,
                                 bool is_if_not_exists);
 
 bool mysql_create_like_table(Session* session,
-                             TableIdentifier &destination_identifier,
+                             const TableIdentifier &destination_identifier,
                              TableList* table, TableList* src_table,
                              message::Table &create_table_proto,
                              bool is_if_not_exists,
@@ -688,8 +688,8 @@ bool mysql_create_like_table(Session* session,
 
 bool mysql_rename_table(Session &session,
                         plugin::StorageEngine *base,
-                        TableIdentifier &old_identifier,
-                        TableIdentifier &new_identifier);
+                        const TableIdentifier &old_identifier,
+                        const TableIdentifier &new_identifier);
 
 bool mysql_prepare_update(Session *session, TableList *table_list,
                           Item **conds, uint32_t order_num, Order *order);

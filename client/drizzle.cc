@@ -360,6 +360,7 @@ static int com_quit(string *str,const char*),
   com_help(string *str,const char*), com_clear(string *str,const char*),
   com_connect(string *str,const char*), com_status(string *str,const char*),
   com_use(string *str,const char*), com_source(string *str, const char*),
+  com_shutdown(string *str,const char*),
   com_rehash(string *str, const char*), com_tee(string *str, const char*),
   com_notee(string *str, const char*),
   com_prompt(string *str, const char*), com_delimiter(string *str, const char*),
@@ -491,6 +492,8 @@ static Commands commands[] = {
     N_("Set outfile [to_outfile]. Append everything into given outfile.") ),
   Commands( "use",    'u', com_use,    1,
     N_("Use another database. Takes database name as argument.") ),
+  Commands( "shutdown",    'u', com_shutdown,    1,
+    N_("Shutdown the instance you are connected too.") ),
   Commands( "warnings", 'W', com_warnings,  0,
     N_("Show warnings after every statement.") ),
   Commands( "nowarning", 'w', com_nowarnings, 0,
@@ -2610,9 +2613,9 @@ static void build_completion_hash(bool rehash, bool write_info)
   {
     string query;
 
-    query.append("show fields in '");
+    query.append("show fields in `");
     query.append(table_row[0]);
-    query.append("'");
+    query.append("`");
     
     if (drizzle_query(&con, &fields, query.c_str(), query.length(),
                       &ret) != NULL)
@@ -3902,6 +3905,44 @@ com_use(string *, const char *line)
 
   put_info(_("Database changed"),INFO_INFO, 0, 0);
   return 0;
+}
+
+static int com_shutdown(string *, const char *)
+{
+  drizzle_result_st result;
+  drizzle_return_t ret;
+
+  if (verbose)
+  {
+    printf(_("shutting down drizzled"));
+    if (opt_drizzle_port > 0)
+      printf(_(" on port %d"), opt_drizzle_port);
+    printf("... ");
+  }
+
+  if (drizzle_shutdown(&con, &result, DRIZZLE_SHUTDOWN_DEFAULT,
+                       &ret) == NULL || ret != DRIZZLE_RETURN_OK)
+  {
+    if (ret == DRIZZLE_RETURN_ERROR_CODE)
+    {
+      fprintf(stderr, _("shutdown failed; error: '%s'"),
+              drizzle_result_error(&result));
+      drizzle_result_free(&result);
+    }
+    else
+    {
+      fprintf(stderr, _("shutdown failed; error: '%s'"),
+              drizzle_con_error(&con));
+    }
+    return false;
+  }
+
+  drizzle_result_free(&result);
+
+  if (verbose)
+    printf(_("done\n"));
+
+  return false;
 }
 
 static int

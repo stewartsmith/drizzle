@@ -609,6 +609,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/generator/functions.cc \
 				 drizzled/generator/schema.cc \
 				 drizzled/generator/table.cc \
+				 drizzled/generator/table_definition_cache.h \
 				 drizzled/ha_commands.cc \
 				 drizzled/hybrid_type_traits.cc \
 				 drizzled/hybrid_type_traits_decimal.cc \
@@ -654,6 +655,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/join_table.cc \
 				 drizzled/key.cc \
 				 drizzled/key_map.cc \
+				 drizzled/lock.cc \
 				 drizzled/locking/global.cc \
 				 drizzled/lookup_symbol.cc \
 				 drizzled/message.cc \
@@ -665,7 +667,6 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/module/option_context.cc \
 				 drizzled/module/option_map.cc \
 				 drizzled/module/registry.cc \
-				 drizzled/my_getsystime.cc \
 				 drizzled/my_hash.cc \
 				 drizzled/name_resolution_context_state.cc \
 				 drizzled/named_savepoint.cc \

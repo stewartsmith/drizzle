@@ -68,6 +68,8 @@
 #include "drizzled/module/load_list.h"
 #include "drizzled/global_buffer.h"
 
+#include "drizzled/definition/cache.h"
+
 #include "drizzled/plugin/event_observer.h"
 
 #include "drizzled/message/cache.h"
@@ -337,10 +339,7 @@ MY_LOCALE *my_default_lc_time_names;
 SHOW_COMP_OPTION have_symlink;
 
 /* Thread specific variables */
-
-boost::mutex LOCK_open;
 boost::mutex LOCK_global_system_variables;
-boost::mutex LOCK_thread_count;
 
 boost::condition_variable_any COND_refresh;
 boost::condition_variable COND_thread_count;
@@ -418,7 +417,7 @@ void close_connections(void)
 
   /* kill connection thread */
   {
-    boost::mutex::scoped_lock scopedLock(LOCK_thread_count);
+    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
 
     while (select_thread_in_use)
     {
@@ -442,21 +441,23 @@ void close_connections(void)
     statements and inform their clients that the server is about to die.
   */
 
-  Session *tmp;
-
   {
-    boost::mutex::scoped_lock scoped(LOCK_thread_count);
-    for( SessionList::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
+    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
+    session::Cache::List list= session::Cache::singleton().getCache();
+
+    for (session::Cache::List::iterator it= list.begin(); it != list.end(); ++it )
     {
-      tmp= *it;
+      Session::shared_ptr tmp(*it);
+
       tmp->setKilled(Session::KILL_CONNECTION);
-      tmp->scheduler->killSession(tmp);
+      tmp->scheduler->killSession(tmp.get());
       DRIZZLE_CONNECTION_DONE(tmp->thread_id);
+
       tmp->lockOnSys();
     }
   }
 
-  if (connection_count)
+  if (session::Cache::singleton().count())
     sleep(2);                                   // Give threads time to die
 
   /*
@@ -466,14 +467,15 @@ void close_connections(void)
   */
   for (;;)
   {
-    boost::mutex::scoped_lock scoped(LOCK_thread_count);
-    if (getSessionList().empty())
+    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
+    session::Cache::List list= session::Cache::singleton().getCache();
+
+    if (list.empty())
     {
       break;
     }
-    tmp= getSessionList().front();
     /* Close before unlock, avoiding crash. See LP bug#436685 */
-    tmp->client->close();
+    list.front()->client->close();
   }
 }
 
@@ -512,11 +514,13 @@ void clean_up(bool print_message)
 
   if (print_message && server_start_time)
     errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_SHUTDOWN_COMPLETE)),internal::my_progname);
-  LOCK_thread_count.lock();
-  ready_to_exit=1;
-  /* do the broadcast inside the lock to ensure that my_end() is not called */
-  COND_server_end.notify_all();
-  LOCK_thread_count.unlock();
+  {
+    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
+    ready_to_exit= true;
+
+    /* do the broadcast inside the lock to ensure that my_end() is not called */
+    COND_server_end.notify_all();
+  }
 
   /*
     The following lines may never be executed as the main thread may have
@@ -622,29 +626,21 @@ static void set_root(const char *path)
   SYNOPSIS
     Session::unlink()
     session		 Thread handler
-
-  NOTES
-    LOCK_thread_count is locked and left locked
 */
 
-void Session::unlink(Session *session)
+void drizzled::Session::unlink(Session::shared_ptr &session)
 {
   connection_count.decrement();
 
   session->cleanup();
 
-  boost::mutex::scoped_lock scoped(LOCK_thread_count);
-  session->lockForDelete();
+  boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
 
-  getSessionList().erase(remove(getSessionList().begin(),
-                         getSessionList().end(),
-                         session));
   if (unlikely(plugin::EventObserver::disconnectSession(*session)))
   {
     // We should do something about an error...
   }
-
-  delete session;
+  session::Cache::singleton().erase(session);
 }
 
 
@@ -1151,7 +1147,6 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   pid_file.replace_extension(".pid");
 
   system_config_dir /= "drizzle";
-  std::string system_config_file_drizzle("drizzled.cnf");
 
   config_options.add_options()
   ("help,?", po::value<bool>(&opt_help)->default_value(false)->zero_tokens(),
@@ -1214,6 +1209,8 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   N_("Pid file used by drizzled."))
   ("port-open-timeout", po::value<uint32_t>(&drizzled_bind_timeout)->default_value(0),
   N_("Maximum time in seconds to wait for the port to become free. "))
+  ("replicate-query", po::value<bool>(&global_system_variables.replicate_query)->default_value(false)->zero_tokens(),
+  N_("Include the SQL query in replicated protobuf messages."))
   ("secure-file-priv", po::value<fs::path>(&secure_file_priv)->notifier(expand_secure_file_priv),
   N_("Limit LOAD DATA, SELECT ... OUTFILE, and LOAD_FILE() to files "
      "within specified directory"))
@@ -1367,11 +1364,14 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
 
   if (not vm["no-defaults"].as<bool>())
   {
+    fs::path system_config_file_drizzle(system_config_dir);
+    system_config_file_drizzle /= "drizzled.cnf";
     defaults_file_list.insert(defaults_file_list.begin(),
-                              system_config_file_drizzle);
+                              system_config_file_drizzle.file_string());
 
     fs::path config_conf_d_location(system_config_dir);
     config_conf_d_location /= "conf.d";
+
 
     CachedDirectory config_conf_d(config_conf_d_location.file_string());
     if (not config_conf_d.fail())
@@ -2139,7 +2139,7 @@ static void drizzle_init_variables(void)
   session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_SQL_NOTES);
   refresh_version= 1L;	/* Increments on each reload */
   global_thread_id= 1UL;
-  getSessionList().clear();
+  session::Cache::singleton().getCache().clear();
 
   /* Variables in libraries */
   default_character_set_name= "utf8";

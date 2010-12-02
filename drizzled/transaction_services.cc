@@ -1073,6 +1073,9 @@ void TransactionServices::initStatementMessage(message::Statement &statement,
 {
   statement.set_type(in_type);
   statement.set_start_timestamp(in_session->getCurrentTimestamp());
+
+  if (in_session->variables.replicate_query)
+    statement.set_sql(in_session->getQueryString()->c_str());
 }
 
 void TransactionServices::finalizeStatementMessage(message::Statement &statement,

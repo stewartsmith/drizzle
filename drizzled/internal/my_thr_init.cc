@@ -21,7 +21,6 @@
 #include "config.h"
 
 #include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/my_pthread.h"
 #include "drizzled/internal/thread_var.h"
 #include "drizzled/internal/m_string.h"
 
@@ -124,13 +123,6 @@ bool my_thread_init(void)
 
 void my_thread_end(void)
 {
-  st_my_thread_var *tmp= THR_KEY_mysys.get();
-
-  if (tmp)
-  {
-    delete tmp;
-    THR_KEY_mysys.release();
-  }
 }
 
 struct st_my_thread_var *_my_thread_var(void)

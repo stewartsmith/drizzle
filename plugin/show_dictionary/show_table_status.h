@@ -33,6 +33,7 @@ public:
     std::string schema_predicate;
     std::vector<drizzled::Table *> table_list;
     std::vector<drizzled::Table *>::iterator table_list_iterator;
+    boost::mutex::scoped_lock scopedLock;
 
     void fill();
 

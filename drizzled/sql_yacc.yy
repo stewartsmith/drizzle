@@ -770,6 +770,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  VARIANCE_SYM
 %token  VARYING                       /* SQL-2003-R */
 %token  VAR_SAMP_SYM
+%token  WAIT_SYM
 %token  WARNINGS
 %token  WEEK_SYM
 %token  WHEN_SYM                      /* SQL-2003-R */
@@ -831,6 +832,8 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         union_opt select_derived_init option_type2
         opt_status
         opt_concurrent
+        opt_wait
+        kill_option
 
 %type <m_fk_option>
         delete_option
@@ -3225,6 +3228,22 @@ function_call_conflict:
 	  }
         | IF '(' expr ',' expr ',' expr ')'
           { $$= new (YYSession->mem_root) Item_func_if($3,$5,$7); }
+        | KILL_SYM kill_option '(' expr ')'
+          {
+            std::string kill_str("kill");
+            List<Item> *args= new (YYSession->mem_root) List<Item>;
+            args->push_back($4);
+
+            if ($2)
+            {
+              args->push_back(new (YYSession->mem_root) Item_uint(1));
+            }
+
+            if (! ($$= reserved_keyword_function(YYSession, kill_str, args)))
+            {
+              DRIZZLE_YYABORT;
+            }
+          }
         | MICROSECOND_SYM '(' expr ')'
           { $$= new (YYSession->mem_root) Item_func_microsecond($3); }
         | MOD_SYM '(' expr ',' expr ')'
@@ -3247,6 +3266,27 @@ function_call_conflict:
           }
         | TRUNCATE_SYM '(' expr ',' expr ')'
           { $$= new (YYSession->mem_root) Item_func_round($3,$5,1); }
+        | WAIT_SYM '(' expr ')'
+          {
+            std::string wait_str("wait");
+            List<Item> *args= new (YYSession->mem_root) List<Item>;
+            args->push_back($3);
+            if (! ($$= reserved_keyword_function(YYSession, wait_str, args)))
+            {
+              DRIZZLE_YYABORT;
+            }
+          }
+        | WAIT_SYM '(' expr ',' expr ')'
+          {
+            std::string wait_str("wait");
+            List<Item> *args= new (YYSession->mem_root) List<Item>;
+            args->push_back($3);
+            args->push_back($5);
+            if (! ($$= reserved_keyword_function(YYSession, wait_str, args)))
+            {
+              DRIZZLE_YYABORT;
+            }
+          }
         ;
 
 /*
@@ -4474,10 +4514,10 @@ opt_temporary:
   */
 
 execute:
-       EXECUTE_SYM execute_var_or_string opt_status opt_concurrent
+       EXECUTE_SYM execute_var_or_string opt_status opt_concurrent opt_wait
        {
           LEX *lex= Lex;
-          statement::Execute *statement= new(std::nothrow) statement::Execute(YYSession, $2, $3, $4);
+          statement::Execute *statement= new(std::nothrow) statement::Execute(YYSession, $2, $3, $4, $5);
           lex->statement= statement;
           if (lex->statement == NULL)
             DRIZZLE_YYABORT;
@@ -4502,6 +4542,11 @@ opt_status:
 opt_concurrent:
           /* empty */ { $$= 0; }
         | CONCURRENT { $$= 1; }
+        ;
+
+opt_wait:
+          /* empty */ { $$= 0; }
+        | WAIT_SYM { $$= 1; }
         ;
 
 /*
@@ -5431,6 +5476,16 @@ kill:
           KILL_SYM kill_option expr
           {
             LEX *lex=Lex;
+
+            if ($2)
+            {
+              Lex->type= ONLY_KILL_QUERY;
+            }
+            else
+            {
+              Lex->type= 0;
+            }
+
             lex->value_list.empty();
             lex->value_list.push_front($3);
             lex->sql_command= SQLCOM_KILL;
@@ -5441,9 +5496,9 @@ kill:
         ;
 
 kill_option:
-          /* empty */ { Lex->type= 0; }
-        | CONNECTION_SYM { Lex->type= 0; }
-        | QUERY_SYM      { Lex->type= ONLY_KILL_QUERY; }
+          /* empty */ { $$= 0; }
+        | CONNECTION_SYM { $$= 0; }
+        | QUERY_SYM      { $$= 1; }
         ;
 
 /* change database */

@@ -82,3 +82,63 @@ EXECUTE @var WITH NO RETURN;
 show schemas LIKE "d";
 show schemas LIKE "e";
 DROP SCHEMA d;
+
+# Test recursion
+SET @var = "SET @var='test value'";
+EXECUTE @var;
+SELECT @var;
+
+# Alter table
+CREATE TABLE t1 (a int);
+SET @var = "ALTER TABLE t1 ADD COLUMN (b char(100))";
+EXECUTE @var;
+SHOW CREATE TABLE t1;
+DROP TABLE t1;
+
+# Insert
+CREATE TABLE t1 (a int, b char(20));
+SET @var = "INSERT INTO t1 VALUES (@a_val, @b_val)";
+SET @a_val = 1;
+SET @b_val = 'TNETENNBA';
+EXECUTE @var;
+SELECT * FROM t1;
+SET @a_val = 2;
+SET @b_val = 'OVERNUMEROUSNESS';
+EXECUTE @var;
+SELECT * FROM t1;
+DROP TABLE t1;
+
+# Update
+CREATE TABLE t1 (a int, b char(100), c char(100));
+INSERT INTO t1 VALUES (1, 'Moss', 'IT');
+INSERT INTO t1 VALUES (2, 'Roy', 'IT');
+INSERT INTO t1 VALUES (3, 'Jen', 'IT');
+SET @var = "UPDATE t1 SET c = @new_dept WHERE b = @name";
+SET @new_dept = "Relationship Manager";
+SET @name = 'Jen';
+EXECUTE @var;
+SELECT * FROM t1;
+DROP TABLE t1;
+
+# DELETE
+CREATE TABLE t1 (a int);
+INSERT INTO t1 VALUES (42);
+INSERT INTO t1 VALUES (9);
+INSERT INTO t1 VALUES (1);
+INSERT INTO t1 VALUES (0);
+INSERT INTO t1 VALUES (2);
+SET @var = "DELETE FROM t1 WHERE a%2=0";
+EXECUTE @var;
+SELECT * FROM t1;
+DROP TABLE t1;
+
+# INDEX
+CREATE TABLE t1 (a int);
+SET @var = "CREATE INDEX a_index ON t1 (a)";
+EXECUTE @var;
+SHOW CREATE TABLE t1;
+SET @var = "DROP INDEX a_index ON t1";
+EXECUTE @var;
+SHOW CREATE TABLE t1;
+DROP TABLE t1;
+

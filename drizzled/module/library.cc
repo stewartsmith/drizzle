@@ -150,7 +150,7 @@ module::Library *module::Library::loadLibrary(const string &plugin_name, bool bu
                     "which does not match the current running version of "
                     "Drizzle: %" PRIu64"."),
                  dlpath.c_str(), module_manifest->drizzle_version,
-                 DRIZZLE_VERSION_ID);
+                 static_cast<uint64_t>(DRIZZLE_VERSION_ID));
     return NULL;
   }
 

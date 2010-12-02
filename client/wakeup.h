@@ -20,6 +20,7 @@
 
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
+#include <boost/shared_ptr.hpp>
 
 #ifndef CLIENT_WAKEUP_H
 #define CLIENT_WAKEUP_H
@@ -28,15 +29,14 @@ namespace client {
 
 // Wakeup starts in a blocking posistion
 class Wakeup {
-  bool sleeping;
-  boost::mutex sleeper_mutex;
-  boost::condition_variable_any sleep_threshhold;
-
 public:
+  typedef boost::shared_ptr<Wakeup> shared_ptr;
+
   Wakeup() :
     sleeping(true)
   { }
 
+  // Signal all of the waiters to start
   void start()
   {
     boost::mutex::scoped_lock scopedWakeup(sleeper_mutex);
@@ -44,6 +44,7 @@ public:
     sleep_threshhold.notify_all();
   }
 
+  // reset after the start of the signal so that we can reuse the wakeup
   void reset()
   {
     boost::mutex::scoped_lock scopedWakeup(sleeper_mutex);
@@ -59,6 +60,11 @@ public:
     }
     sleeper_mutex.unlock();
   }
+
+private:
+  bool sleeping;
+  boost::mutex sleeper_mutex;
+  boost::condition_variable_any sleep_threshhold;
 };
 
 } // namespace client

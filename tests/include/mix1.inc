@@ -408,6 +408,7 @@ INSERT INTO t1(id, dept, age, name) VALUES
 EXPLAIN SELECT DISTINCT t1.name, t1.dept FROM t1 WHERE t1.name='rs5';
 SELECT DISTINCT t1.name, t1.dept FROM t1 WHERE t1.name='rs5';
 DELETE FROM t1;
+--replace_column 9 #
 EXPLAIN SELECT DISTINCT t1.name, t1.dept FROM t1 WHERE t1.name='rs5';
 SELECT DISTINCT t1.name, t1.dept FROM t1 WHERE t1.name='rs5';
 

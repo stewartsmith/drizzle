@@ -163,15 +163,6 @@ static void reset_lock_data_and_free(DrizzleLock **mysql_lock)
   *mysql_lock= 0;
 }
 
-void DrizzleLock::reset(void)
-{
-  for (std::vector<THR_LOCK_DATA *>::iterator iter= locks.begin(); iter != locks.end(); iter++)
-  {
-    (*iter)->type= TL_UNLOCK;
-  }
-}
-
-
 DrizzleLock *Session::lockTables(Table **tables, uint32_t count, uint32_t flags, bool *need_reopen)
 {
   DrizzleLock *sql_lock;
@@ -213,9 +204,9 @@ DrizzleLock *Session::lockTables(Table **tables, uint32_t count, uint32_t flags,
      * Here, we advise all storage engines involved in the
      * statement that we are starting a new statement
      */
-    if (sql_lock->table_count)
+    if (sql_lock->sizeTable())
     {
-      size_t num_tables= sql_lock->table_count;
+      size_t num_tables= sql_lock->sizeTable();
       plugin::StorageEngine *engine;
       set<size_t> involved_slots;
       for (size_t x= 1; x <= num_tables; x++, tables++)
@@ -239,7 +230,7 @@ DrizzleLock *Session::lockTables(Table **tables, uint32_t count, uint32_t flags,
      * of the type of lock that Drizzle intends to take on a 
      * specific table.
      */
-    if (sql_lock->table_count && lock_external(sql_lock->getTable(), sql_lock->table_count))
+    if (sql_lock->sizeTable() && lock_external(sql_lock->getTable(), sql_lock->sizeTable()))
     {
       /* Clear the lock type of all lock data to avoid reusage. */
       reset_lock_data_and_free(&sql_lock);
@@ -247,26 +238,27 @@ DrizzleLock *Session::lockTables(Table **tables, uint32_t count, uint32_t flags,
     }
     set_proc_info("Table lock");
     /* Copy the lock data array. thr_multi_lock() reorders its contens. */
-    memcpy(sql_lock->getLocks() + sql_lock->lock_count,
+    memcpy(sql_lock->getLocks() + sql_lock->sizeLock(),
            sql_lock->getLocks(),
-           sql_lock->lock_count * sizeof(*sql_lock->getLocks()));
+           sql_lock->sizeLock() * sizeof(*sql_lock->getLocks()));
     /* Lock on the copied half of the lock data array. */
-    rc= thr_lock_errno_to_mysql[(int) thr_multi_lock(sql_lock->getLocks() +
-                                                     sql_lock->lock_count,
-                                                     sql_lock->lock_count,
+    rc= thr_lock_errno_to_mysql[(int) thr_multi_lock(*this,
+                                                     sql_lock->getLocks() +
+                                                     sql_lock->sizeLock(),
+                                                     sql_lock->sizeLock(),
                                                      this->lock_id)];
     if (rc > 1)                                 /* a timeout or a deadlock */
     {
-      if (sql_lock->table_count)
-        unlock_external(sql_lock->getTable(), sql_lock->table_count);
+      if (sql_lock->sizeTable())
+        unlock_external(sql_lock->getTable(), sql_lock->sizeTable());
       reset_lock_data_and_free(&sql_lock);
       my_error(rc, MYF(0));
       break;
     }
     else if (rc == 1)                           /* aborted */
     {
-      some_tables_deleted= 1;		// Try again
-      sql_lock->lock_count= 0;                  // Locks are already freed
+      some_tables_deleted= true;		// Try again
+      sql_lock->setLock(0);                  // Locks are already freed
       // Fall through: unlock, reset lock data, free and retry
     }
     else if (not some_tables_deleted || (flags & DRIZZLE_LOCK_IGNORE_FLUSH))
@@ -280,17 +272,17 @@ DrizzleLock *Session::lockTables(Table **tables, uint32_t count, uint32_t flags,
     else if (not open_tables)
     {
       // Only using temporary tables, no need to unlock
-      some_tables_deleted= 0;
+      some_tables_deleted= false;
       break;
     }
     set_proc_info(0);
 
     /* going to retry, unlock all tables */
-    if (sql_lock->lock_count)
-        sql_lock->unlock(sql_lock->lock_count);
+    if (sql_lock->sizeLock())
+        sql_lock->unlock(sql_lock->sizeLock());
 
-    if (sql_lock->table_count)
-      unlock_external(sql_lock->getTable(), sql_lock->table_count);
+    if (sql_lock->sizeTable())
+      unlock_external(sql_lock->getTable(), sql_lock->sizeTable());
 
     /*
       If thr_multi_lock fails it resets lock type for tables, which
@@ -369,10 +361,10 @@ int Session::lock_external(Table **tables, uint32_t count)
 
 void Session::unlockTables(DrizzleLock *sql_lock)
 {
-  if (sql_lock->lock_count)
-    sql_lock->unlock(sql_lock->lock_count);
-  if (sql_lock->table_count)
-    unlock_external(sql_lock->getTable(), sql_lock->table_count);
+  if (sql_lock->sizeLock())
+    sql_lock->unlock(sql_lock->sizeLock());
+  if (sql_lock->sizeTable())
+    unlock_external(sql_lock->getTable(), sql_lock->sizeTable());
   delete sql_lock;
 }
 
@@ -402,7 +394,7 @@ void Session::unlockReadTables(DrizzleLock *sql_lock)
 
   /* Move all write locks first */
   THR_LOCK_DATA **lock_local= sql_lock->getLocks();
-  for (i=found=0 ; i < sql_lock->lock_count ; i++)
+  for (i=found=0 ; i < sql_lock->sizeLock(); i++)
   {
     if (sql_lock->getLocks()[i]->type >= TL_WRITE_ALLOW_READ)
     {
@@ -414,14 +406,14 @@ void Session::unlockReadTables(DrizzleLock *sql_lock)
   /* unlock the read locked tables */
   if (i != found)
   {
-    sql_lock->unlock(i - found);
-    sql_lock->lock_count= found;
+    thr_multi_unlock(lock_local, i - found);
+    sql_lock->setLock(found);
   }
 
   /* Then do the same for the external locks */
   /* Move all write locked tables first */
   Table **table= sql_lock->getTable();
-  for (i=found=0 ; i < sql_lock->table_count ; i++)
+  for (i=found=0 ; i < sql_lock->sizeTable() ; i++)
   {
     assert(sql_lock->getTable()[i]->lock_position == i);
     if ((uint32_t) sql_lock->getTable()[i]->reginfo.lock_type >= TL_WRITE_ALLOW_READ)
@@ -435,12 +427,12 @@ void Session::unlockReadTables(DrizzleLock *sql_lock)
   if (i != found)
   {
     unlock_external(table, i - found);
-    sql_lock->table_count=found;
+    sql_lock->resizeTable(found);
   }
   /* Fix the lock positions in Table */
   table= sql_lock->getTable();
   found= 0;
-  for (i= 0; i < sql_lock->table_count; i++)
+  for (i= 0; i < sql_lock->sizeTable(); i++)
   {
     Table *tbl= *table;
     tbl->lock_position= table - sql_lock->getTable();
@@ -487,7 +479,7 @@ void Session::abortLock(Table *table)
   if ((locked= get_lock_data(&table, 1, false,
                              &write_lock_used)))
   {
-    for (uint32_t x= 0; x < locked->lock_count; x++)
+    for (uint32_t x= 0; x < locked->sizeLock(); x++)
       locked->getLocks()[x]->lock->abort_locks();
     delete locked;
   }
@@ -515,7 +507,7 @@ bool Session::abortLockForThread(Table *table)
   if ((locked= get_lock_data(&table, 1, false,
                              &write_lock_used)))
   {
-    for (uint32_t i= 0; i < locked->lock_count; i++)
+    for (uint32_t i= 0; i < locked->sizeLock(); i++)
     {
       if (locked->getLocks()[i]->lock->abort_locks_for_thread(table->in_use->thread_id))
         result= true;
@@ -564,7 +556,6 @@ DrizzleLock *Session::get_lock_data(Table **table_ptr, uint32_t count,
                                     bool should_lock, Table **write_lock_used)
 {
   uint32_t lock_count;
-  DrizzleLock *sql_lock;
   THR_LOCK_DATA **locks, **locks_buf, **locks_start;
   Table **to, **table_buf;
 
@@ -585,7 +576,7 @@ DrizzleLock *Session::get_lock_data(Table **table_ptr, uint32_t count,
     update the table values. So the second part of the array is copied
     from the first part immediately before calling thr_multi_lock().
   */
-  sql_lock= new DrizzleLock(lock_count, lock_count*2);
+  DrizzleLock *sql_lock= new DrizzleLock(lock_count);
 
   if (not sql_lock)
     return NULL;
@@ -611,7 +602,7 @@ DrizzleLock *Session::get_lock_data(Table **table_ptr, uint32_t count,
       {
 	my_error(ER_OPEN_AS_READONLY, MYF(0), table->getAlias());
         /* Clear the lock type of the lock data that are stored already. */
-        sql_lock->lock_count= locks - sql_lock->getLocks();
+        sql_lock->setLock(locks - sql_lock->getLocks());
         reset_lock_data_and_free(&sql_lock);
 	return NULL;
       }
@@ -641,7 +632,7 @@ DrizzleLock *Session::get_lock_data(Table **table_ptr, uint32_t count,
     we may allocate too much, but better safe than memory overrun.
     And in the FLUSH case, the memory is released quickly anyway.
   */
-  sql_lock->lock_count= locks - locks_buf;
+  sql_lock->setLock(locks - locks_buf);
 
   return sql_lock;
 }
@@ -654,7 +645,7 @@ DrizzleLock *Session::get_lock_data(Table **table_ptr, uint32_t count,
   @param check_in_use           Do we need to check if table already in use by us
 
   @note
-    One must have a lock on LOCK_open!
+    One must have a lock on table::Cache::singleton().mutex()!
 
   @warning
     If you are going to update the table, you should use
@@ -750,7 +741,7 @@ bool Session::wait_for_locked_table_names(TableList *table_list)
   bool result= false;
 
 #if 0
-  assert(ownership of LOCK_open);
+  assert(ownership of table::Cache::singleton().mutex());
 #endif
 
   while (locked_named_table(table_list))
@@ -760,8 +751,8 @@ bool Session::wait_for_locked_table_names(TableList *table_list)
       result=1;
       break;
     }
-    wait_for_condition(LOCK_open, COND_refresh);
-    LOCK_open.lock(); /* Wait for a table to unlock and then lock it */
+    wait_for_condition(table::Cache::singleton().mutex(), COND_refresh);
+    table::Cache::singleton().mutex().lock(); /* Wait for a table to unlock and then lock it */
   }
   return result;
 }
@@ -771,7 +762,7 @@ bool Session::wait_for_locked_table_names(TableList *table_list)
   Lock all tables in list with a name lock.
 
   REQUIREMENTS
-  - One must have a lock on LOCK_open when calling this
+  - One must have a lock on table::Cache::singleton().mutex() when calling this
 
   @param table_list		Names of tables to lock
 
@@ -817,7 +808,7 @@ bool Session::lock_table_names(TableList *table_list)
   @param table_list Names of tables to lock.
 
   @note
-    This function needs to be protected by LOCK_open. If we're
+    This function needs to be protected by table::Cache::singleton().mutex(). If we're
     under LOCK TABLES, this function does not work as advertised. Namely,
     it does not exclude other threads from using this table and does not
     put an exclusive name lock on this table into the table cache.
@@ -856,7 +847,7 @@ bool Session::lock_table_names_exclusively(TableList *table_list)
 			        (default 0, which will unlock all tables)
 
   @note
-    One must have a lock on LOCK_open when calling this.
+    One must have a lock on table::Cache::singleton().mutex() when calling this.
 
   @note
     This function will broadcast refresh signals to inform other threads
@@ -931,12 +922,12 @@ static void print_lock_error(int error, const char *table)
 
   access to them is protected with a mutex LOCK_global_read_lock
 
-  (XXX: one should never take LOCK_open if LOCK_global_read_lock is
+  (XXX: one should never take table::Cache::singleton().mutex() if LOCK_global_read_lock is
   taken, otherwise a deadlock may occur. Other mutexes could be a
   problem too - grep the code for global_read_lock if you want to use
-  any other mutex here) Also one must not hold LOCK_open when calling
+  any other mutex here) Also one must not hold table::Cache::singleton().mutex() when calling
   wait_if_global_read_lock(). When the thread with the global read lock
-  tries to close its tables, it needs to take LOCK_open in
+  tries to close its tables, it needs to take table::Cache::singleton().mutex() in
   close_thread_table().
 
   How blocking of threads by global read lock is achieved: that's
@@ -1031,6 +1022,9 @@ void Session::unlockGlobalReadLock(void)
 {
   uint32_t tmp;
 
+  if (not isGlobalReadLock()) // If we have no personal stake in the global lock, just return
+    return;
+
   {
     boost_unique_lock_t scopedLock(LOCK_global_read_lock);
     tmp= --global_read_lock;
@@ -1058,11 +1052,11 @@ bool Session::wait_if_global_read_lock(bool abort_on_refresh, bool is_not_commit
   bool result= 0, need_exit_cond;
 
   /*
-    Assert that we do not own LOCK_open. If we would own it, other
+    Assert that we do not own table::Cache::singleton().mutex(). If we would own it, other
     threads could not close their tables. This would make a pretty
     deadlock.
   */
-  safe_mutex_assert_not_owner(LOCK_open.native_handle());
+  safe_mutex_assert_not_owner(table::Cache::singleton().mutex().native_handle());
 
   LOCK_global_read_lock.lock();
   if ((need_exit_cond= must_wait(is_not_commit)))
@@ -1171,9 +1165,9 @@ bool Session::makeGlobalReadLockBlockCommit()
     Due to a bug in a threading library it could happen that a signal
     did not reach its target. A condition for this was that the same
     condition variable was used with different mutexes in
-    pthread_cond_wait(). Some time ago we changed LOCK_open to
+    pthread_cond_wait(). Some time ago we changed table::Cache::singleton().mutex() to
     LOCK_global_read_lock in global read lock handling. So COND_refresh
-    was used with LOCK_open and LOCK_global_read_lock.
+    was used with table::Cache::singleton().mutex() and LOCK_global_read_lock.
 
     We did now also change from COND_refresh to COND_global_read_lock
     in global read lock handling. But now it is necessary to signal

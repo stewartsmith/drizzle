@@ -1,4 +1,4 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2010 Brian Aker
@@ -18,16 +18,27 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* Only Linux defines getrusage's RUSAGE_THREAD */
+#ifndef PLUGIN_USER_LOCKS_SIGNAL_H
+#define PLUGIN_USER_LOCKS_SIGNAL_H
 
-#ifndef DRIZZLED_INTERNAL_GETRUSAGE_H
-#define DRIZZLED_INTERNAL_GETRUSAGE_H
+namespace user_locks {
+namespace barriers {
 
-#include <sys/time.h>
-#include <sys/resource.h>
+class Signal : public drizzled::Item_int_func
+{
+  drizzled::String value;
 
-#ifndef RUSAGE_THREAD
-#define RUSAGE_THREAD RUSAGE_SELF
-#endif
+public:
+  Signal() :
+    drizzled::Item_int_func()
+  {}
 
-#endif /* DRIZZLED_INTERNAL_GETRUSAGE_H */
+  int64_t val_int();
+  const char *func_name() const { return "signal"; }
+  bool check_argument_count(int n) { return n == 1; }
+};
+
+} /* namespace barriers */
+} /* namespace user_locks */
+
+#endif /* PLUGIN_USER_LOCKS_SIGNAL_H */

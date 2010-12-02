@@ -41,6 +41,8 @@
 #include "drizzled/global_charset_info.h"
 #include "drizzled/charset.h"
 
+#include "drizzled/definition/cache.h"
+
 
 #include "drizzled/statement/alter_table.h"
 #include "drizzled/sql_table.h"
@@ -146,102 +148,104 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
   int error= 0;
   bool foreign_key_error= false;
 
-  LOCK_open.lock(); /* Part 2 of rm a table */
-
-  if (not drop_temporary && session->lock_table_names_exclusively(tables))
   {
-    LOCK_open.unlock();
-    return 1;
-  }
+    table::Cache::singleton().mutex().lock(); /* Part 2 of rm a table */
 
-  /* Don't give warnings for not found errors, as we already generate notes */
-  session->no_warnings_for_error= 1;
-
-  for (table= tables; table; table= table->next_local)
-  {
-    TableIdentifier tmp_identifier(table->getSchemaName(), table->getTableName());
-
-    error= session->drop_temporary_table(tmp_identifier);
-
-    switch (error) {
-    case  0:
-      // removed temporary table
-      continue;
-    case -1:
-      error= 1;
-      goto err_with_placeholders;
-    default:
-      // temporary table not found
-      error= 0;
+    if (not drop_temporary && session->lock_table_names_exclusively(tables))
+    {
+      table::Cache::singleton().mutex().unlock();
+      return 1;
     }
 
-    if (drop_temporary == false)
-    {
-      Table *locked_table;
-      abort_locked_tables(session, tmp_identifier);
-      table::Cache::singleton().removeTable(session, tmp_identifier,
-                                            RTFC_WAIT_OTHER_THREAD_FLAG |
-                                            RTFC_CHECK_KILLED_FLAG);
-      /*
-        If the table was used in lock tables, remember it so that
-        unlock_table_names can free it
-      */
-      if ((locked_table= drop_locked_tables(session, tmp_identifier)))
-        table->table= locked_table;
+    /* Don't give warnings for not found errors, as we already generate notes */
+    session->no_warnings_for_error= 1;
 
-      if (session->getKilled())
-      {
-        error= -1;
-        goto err_with_placeholders;
-      }
-    }
-    TableIdentifier identifier(table->getSchemaName(), table->getTableName(), table->getInternalTmpTable() ? message::Table::INTERNAL : message::Table::STANDARD);
-
-    if (drop_temporary || not plugin::StorageEngine::doesTableExist(*session, identifier))
+    for (table= tables; table; table= table->next_local)
     {
-      // Table was not found on disk and table can't be created from engine
-      if (if_exists)
-        push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-                            ER_BAD_TABLE_ERROR, ER(ER_BAD_TABLE_ERROR),
-                            table->getTableName());
-      else
+      TableIdentifier tmp_identifier(table->getSchemaName(), table->getTableName());
+
+      error= session->drop_temporary_table(tmp_identifier);
+
+      switch (error) {
+      case  0:
+        // removed temporary table
+        continue;
+      case -1:
         error= 1;
-    }
-    else
-    {
-      error= plugin::StorageEngine::dropTable(*session, identifier);
-
-      if ((error == ENOENT || error == HA_ERR_NO_SUCH_TABLE) && if_exists)
-      {
+        goto err_with_placeholders;
+      default:
+        // temporary table not found
         error= 0;
-        session->clear_error();
       }
 
-      if (error == HA_ERR_ROW_IS_REFERENCED)
+      if (drop_temporary == false)
       {
-        /* the table is referenced by a foreign key constraint */
-        foreign_key_error= true;
+        Table *locked_table;
+        abort_locked_tables(session, tmp_identifier);
+        table::Cache::singleton().removeTable(session, tmp_identifier,
+                                              RTFC_WAIT_OTHER_THREAD_FLAG |
+                                              RTFC_CHECK_KILLED_FLAG);
+        /*
+          If the table was used in lock tables, remember it so that
+          unlock_table_names can free it
+        */
+        if ((locked_table= drop_locked_tables(session, tmp_identifier)))
+          table->table= locked_table;
+
+        if (session->getKilled())
+        {
+          error= -1;
+          goto err_with_placeholders;
+        }
+      }
+      TableIdentifier identifier(table->getSchemaName(), table->getTableName(), table->getInternalTmpTable() ? message::Table::INTERNAL : message::Table::STANDARD);
+
+      if (drop_temporary || not plugin::StorageEngine::doesTableExist(*session, identifier))
+      {
+        // Table was not found on disk and table can't be created from engine
+        if (if_exists)
+          push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+                              ER_BAD_TABLE_ERROR, ER(ER_BAD_TABLE_ERROR),
+                              table->getTableName());
+        else
+          error= 1;
+      }
+      else
+      {
+        error= plugin::StorageEngine::dropTable(*session, identifier);
+
+        if ((error == ENOENT || error == HA_ERR_NO_SUCH_TABLE) && if_exists)
+        {
+          error= 0;
+          session->clear_error();
+        }
+
+        if (error == HA_ERR_ROW_IS_REFERENCED)
+        {
+          /* the table is referenced by a foreign key constraint */
+          foreign_key_error= true;
+        }
+      }
+
+      if (error == 0 || (if_exists && foreign_key_error == false))
+      {
+        TransactionServices &transaction_services= TransactionServices::singleton();
+        transaction_services.dropTable(session, string(table->getSchemaName()), string(table->getTableName()), if_exists);
+      }
+
+      if (error)
+      {
+        if (wrong_tables.length())
+          wrong_tables.append(',');
+        wrong_tables.append(String(table->getTableName(), system_charset_info));
       }
     }
-
-    if (error == 0 || (if_exists && foreign_key_error == false))
-    {
-      TransactionServices &transaction_services= TransactionServices::singleton();
-      transaction_services.dropTable(session, string(table->getSchemaName()), string(table->getTableName()), if_exists);
-    }
-
-    if (error)
-    {
-      if (wrong_tables.length())
-        wrong_tables.append(',');
-      wrong_tables.append(String(table->getTableName(), system_charset_info));
-    }
+    /*
+      It's safe to unlock table::Cache::singleton().mutex(): we have an exclusive lock
+      on the table name.
+    */
+    table::Cache::singleton().mutex().unlock();
   }
-  /*
-    It's safe to unlock LOCK_open: we have an exclusive lock
-    on the table name.
-  */
-  LOCK_open.unlock();
   error= 0;
 
   if (wrong_tables.length())
@@ -258,35 +262,14 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
     error= 1;
   }
 
-  LOCK_open.lock(); /* final bit in rm table lock */
+  table::Cache::singleton().mutex().lock(); /* final bit in rm table lock */
 
 err_with_placeholders:
   tables->unlock_table_names();
-  LOCK_open.unlock();
+  table::Cache::singleton().mutex().unlock();
   session->no_warnings_for_error= 0;
 
   return error;
-}
-
-
-/*
-  Quickly remove a table.
-
-  SYNOPSIS
-    quick_rm_table()
-      base                      The plugin::StorageEngine handle.
-      db                        The database name.
-      table_name                The table name.
-      is_tmp                    If the table is temp.
-
-  RETURN
-    0           OK
-    != 0        Error
-*/
-bool quick_rm_table(Session& session,
-                    TableIdentifier &identifier)
-{
-  return (plugin::StorageEngine::dropTable(session, identifier));
 }
 
 /*
@@ -1282,7 +1265,7 @@ static bool prepare_blob_field(Session *,
 }
 
 static bool locked_create_event(Session *session,
-                                TableIdentifier &identifier,
+                                const TableIdentifier &identifier,
                                 HA_CREATE_INFO *create_info,
                                 message::Table &table_proto,
                                 AlterInfo *alter_info,
@@ -1317,7 +1300,10 @@ static bool locked_create_event(Session *session,
         return error;
       }
 
-      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getSQLPath().c_str());
+      std::string path;
+      identifier.getSQLPath(path);
+      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), path.c_str());
+
       return error;
     }
 
@@ -1334,9 +1320,12 @@ static bool locked_create_event(Session *session,
       /*
         @todo improve this error condition.
       */
-      if (TableShare::getShare(identifier))
+      if (definition::Cache::singleton().find(identifier.getKey()))
       {
-        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getSQLPath().c_str());
+        std::string path;
+        identifier.getSQLPath(path);
+        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), path.c_str());
+
         return error;
       }
     }
@@ -1412,7 +1401,7 @@ static bool locked_create_event(Session *session,
 */
 
 bool mysql_create_table_no_lock(Session *session,
-                                TableIdentifier &identifier,
+                                const TableIdentifier &identifier,
                                 HA_CREATE_INFO *create_info,
 				message::Table &table_proto,
                                 AlterInfo *alter_info,
@@ -1443,7 +1432,7 @@ bool mysql_create_table_no_lock(Session *session,
                                      &key_info_buffer, &key_count,
                                      select_field_count))
   {
-    boost_unique_lock_t lock(LOCK_open); /* CREATE TABLE (some confussion on naming, double check) */
+    boost_unique_lock_t lock(table::Cache::singleton().mutex()); /* CREATE TABLE (some confussion on naming, double check) */
     error= locked_create_event(session,
                                identifier,
                                create_info,
@@ -1464,7 +1453,7 @@ bool mysql_create_table_no_lock(Session *session,
   @note the following two methods implement create [temporary] table.
 */
 static bool drizzle_create_table(Session *session,
-                                 TableIdentifier &identifier,
+                                 const TableIdentifier &identifier,
                                  HA_CREATE_INFO *create_info,
                                  message::Table &table_proto,
                                  AlterInfo *alter_info,
@@ -1491,7 +1480,9 @@ static bool drizzle_create_table(Session *session,
     }
     else
     {
-      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getSQLPath().c_str());
+      std::string path;
+      identifier.getSQLPath(path);
+      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), path.c_str());
       result= true;
     }
   }
@@ -1509,7 +1500,7 @@ static bool drizzle_create_table(Session *session,
 
   if (name_lock)
   {
-    boost_unique_lock_t lock(LOCK_open); /* Lock for removing name_lock during table create */
+    boost_unique_lock_t lock(table::Cache::singleton().mutex()); /* Lock for removing name_lock during table create */
     session->unlink_open_table(name_lock);
   }
 
@@ -1521,7 +1512,7 @@ static bool drizzle_create_table(Session *session,
   Database locking aware wrapper for mysql_create_table_no_lock(),
 */
 bool mysql_create_table(Session *session,
-                        TableIdentifier &identifier,
+                        const TableIdentifier &identifier,
                         HA_CREATE_INFO *create_info,
 			message::Table &table_proto,
                         AlterInfo *alter_info,
@@ -1617,8 +1608,8 @@ make_unique_key_name(const char *field_name,KeyInfo *start,KeyInfo *end)
 bool
 mysql_rename_table(Session &session,
                    plugin::StorageEngine *base,
-                   TableIdentifier &from,
-                   TableIdentifier &to)
+                   const TableIdentifier &from,
+                   const TableIdentifier &to)
 {
   int error= 0;
 
@@ -1638,8 +1629,14 @@ mysql_rename_table(Session &session,
   }
   else if (error)
   {
-    const char *from_identifier= from.isTmp() ? "#sql-temporary" : from.getSQLPath().c_str();
-    const char *to_identifier= to.isTmp() ? "#sql-temporary" : to.getSQLPath().c_str();
+    std::string from_path;
+    std::string to_path;
+
+    from.getSQLPath(from_path);
+    to.getSQLPath(to_path);
+
+    const char *from_identifier= from.isTmp() ? "#sql-temporary" : from_path.c_str();
+    const char *to_identifier= to.isTmp() ? "#sql-temporary" : to_path.c_str();
 
     my_error(ER_ERROR_ON_RENAME, MYF(0), from_identifier, to_identifier, error);
   }
@@ -1663,7 +1660,7 @@ mysql_rename_table(Session &session,
    the table is closed.
 
   PREREQUISITES
-    Lock on LOCK_open
+    Lock on table::Cache::singleton().mutex()
     Win32 clients must also have a WRITE LOCK on the table !
 */
 
@@ -1671,7 +1668,7 @@ void wait_while_table_is_used(Session *session, Table *table,
                               enum ha_extra_function function)
 {
 
-  safe_mutex_assert_owner(LOCK_open.native_handle());
+  safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle());
 
   table->cursor->extra(function);
   /* Mark all tables that are in use as 'old' */
@@ -1695,7 +1692,7 @@ void wait_while_table_is_used(Session *session, Table *table,
     reopen the table.
 
   PREREQUISITES
-    Lock on LOCK_open
+    Lock on table::Cache::singleton().mutex()
     Win32 clients must also have a WRITE LOCK on the table !
 */
 
@@ -1712,7 +1709,7 @@ void Session::close_cached_table(Table *table)
   /* Close all copies of 'table'.  This also frees all LOCK TABLES lock */
   unlink_open_table(table);
 
-  /* When lock on LOCK_open is freed other threads can continue */
+  /* When lock on table::Cache::singleton().mutex() is freed other threads can continue */
   locking::broadcast_refresh();
 }
 
@@ -1825,8 +1822,8 @@ static bool mysql_admin_table(Session* session, TableList* tables,
     /* Close all instances of the table to allow repair to rename files */
     if (lock_type == TL_WRITE && table->table->getShare()->getVersion())
     {
-      LOCK_open.lock(); /* Lock type is TL_WRITE and we lock to repair the table */
-      const char *old_message=session->enter_cond(COND_refresh, LOCK_open,
+      table::Cache::singleton().mutex().lock(); /* Lock type is TL_WRITE and we lock to repair the table */
+      const char *old_message=session->enter_cond(COND_refresh, table::Cache::singleton().mutex(),
                                                   "Waiting to get writelock");
       session->abortLock(table->table);
       TableIdentifier identifier(table->table->getShare()->getSchemaName(), table->table->getShare()->getTableName());
@@ -1930,7 +1927,7 @@ send_result:
         }
         else
         {
-          boost::unique_lock<boost::mutex> lock(LOCK_open);
+          boost::unique_lock<boost::mutex> lock(table::Cache::singleton().mutex());
 	  TableIdentifier identifier(table->table->getShare()->getSchemaName(), table->table->getShare()->getTableName());
           table::Cache::singleton().removeTable(session, identifier, RTFC_NO_FLAG);
         }
@@ -1962,23 +1959,23 @@ err:
     Altough exclusive name-lock on target table protects us from concurrent
     DML and DDL operations on it we still want to wrap .FRM creation and call
     to plugin::StorageEngine::createTable() in critical section protected by
-    LOCK_open in order to provide minimal atomicity against operations which
+    table::Cache::singleton().mutex() in order to provide minimal atomicity against operations which
     disregard name-locks, like I_S implementation, for example. This is a
     temporary and should not be copied. Instead we should fix our code to
     always honor name-locks.
 
-    Also some engines (e.g. NDB cluster) require that LOCK_open should be held
+    Also some engines (e.g. NDB cluster) require that table::Cache::singleton().mutex() should be held
     during the call to plugin::StorageEngine::createTable().
     See bug #28614 for more info.
   */
 static bool create_table_wrapper(Session &session, const message::Table& create_table_proto,
-                                 TableIdentifier &destination_identifier,
-                                 TableIdentifier &src_table,
+                                 const TableIdentifier &destination_identifier,
+                                 const TableIdentifier &src_table,
                                  bool is_engine_set)
 {
   int protoerr= EEXIST;
   message::Table new_proto;
-  message::TablePtr src_proto;
+  message::table::shared_ptr src_proto;
 
   protoerr= plugin::StorageEngine::getTableDefinition(session,
                                                       src_table,
@@ -2049,7 +2046,7 @@ static bool create_table_wrapper(Session &session, const message::Table& create_
 */
 
 bool mysql_create_like_table(Session* session,
-                             TableIdentifier &destination_identifier,
+                             const TableIdentifier &destination_identifier,
                              TableList* table, TableList* src_table,
                              message::Table &create_table_proto,
                              bool is_if_not_exists,
@@ -2115,7 +2112,7 @@ bool mysql_create_like_table(Session* session,
     {
       if (name_lock)
       {
-        boost_unique_lock_t lock(LOCK_open); /* unlink open tables for create table like*/
+        boost_unique_lock_t lock(table::Cache::singleton().mutex()); /* unlink open tables for create table like*/
         session->unlink_open_table(name_lock);
       }
 
@@ -2134,7 +2131,7 @@ bool mysql_create_like_table(Session* session,
     {
       bool was_created;
       {
-        boost_unique_lock_t lock(LOCK_open); /* We lock for CREATE TABLE LIKE to copy table definition */
+        boost_unique_lock_t lock(table::Cache::singleton().mutex()); /* We lock for CREATE TABLE LIKE to copy table definition */
         was_created= create_table_wrapper(*session, create_table_proto, destination_identifier,
                                                src_identifier, is_engine_set);
       }
@@ -2143,7 +2140,7 @@ bool mysql_create_like_table(Session* session,
       // anything that might have been created (read... it is a hack)
       if (not was_created)
       {
-        quick_rm_table(*session, destination_identifier);
+        plugin::StorageEngine::dropTable(*session, destination_identifier);
       } 
       else
       {
@@ -2153,7 +2150,7 @@ bool mysql_create_like_table(Session* session,
 
     if (name_lock)
     {
-      boost_unique_lock_t lock(LOCK_open); /* unlink open tables for create table like*/
+      boost_unique_lock_t lock(table::Cache::singleton().mutex()); /* unlink open tables for create table like*/
       session->unlink_open_table(name_lock);
     }
   }

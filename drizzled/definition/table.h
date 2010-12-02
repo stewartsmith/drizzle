@@ -39,14 +39,11 @@
 #include "drizzled/util/string.h"
 
 #include "drizzled/table/cache.h"
-#include "drizzled/definition/cache.h"
 
 namespace drizzled
 {
 
 extern uint64_t refresh_version;
-
-typedef boost::shared_ptr<TableShare> TableSharePtr;
 
 const static std::string STANDARD_STRING("STANDARD");
 const static std::string TEMPORARY_STRING("TEMPORARY");
@@ -64,15 +61,19 @@ class Field_blob;
 class TableShare
 {
   typedef std::vector<std::string> StringVector;
-public:
-  TableShare(TableIdentifier::Type type_arg);
 
-  TableShare(TableIdentifier &identifier, const TableIdentifier::Key &key); // Used by placeholder
+public:
+  typedef boost::shared_ptr<TableShare> shared_ptr;
+  typedef std::vector <shared_ptr> vector;
+
+  TableShare(const TableIdentifier::Type type_arg);
+
+  TableShare(const TableIdentifier &identifier, const TableIdentifier::Key &key); // Used by placeholder
 
   TableShare(const TableIdentifier &identifier); // Just used during createTable()
 
-  TableShare(TableIdentifier::Type type_arg,
-             TableIdentifier &identifier,
+  TableShare(const TableIdentifier::Type type_arg,
+             const TableIdentifier &identifier,
              char *path_arg= NULL, uint32_t path_length_arg= 0); // Shares for cache
 
   ~TableShare();
@@ -500,11 +501,6 @@ public:
     unlock();
   }
 
-  uint32_t decrementTableCount()
-  {
-    return --ref_count;
-  }
-
   uint32_t null_bytes;
   uint32_t last_null_bit_pos;
   uint32_t fields;				/* Number of fields */
@@ -607,7 +603,7 @@ public:
     NOTES
   */
 
-  void setIdentifier(TableIdentifier &identifier_arg);
+  void setIdentifier(const TableIdentifier &identifier_arg);
 
   /*
     Initialize share for temporary tables
@@ -633,12 +629,11 @@ public:
   void open_table_error(int pass_error, int db_errno, int pass_errarg);
 
   static void release(TableShare *share);
-  static void release(TableSharePtr &share);
-  static void release(TableIdentifier &identifier);
-  static TableSharePtr getShare(TableIdentifier &identifier);
-  static TableSharePtr getShareCreate(Session *session, 
-                                      TableIdentifier &identifier,
-                                      int &error);
+  static void release(TableShare::shared_ptr &share);
+  static void release(const TableIdentifier &identifier);
+  static TableShare::shared_ptr getShareCreate(Session *session, 
+                                               const TableIdentifier &identifier,
+                                               int &error);
 
   friend std::ostream& operator<<(std::ostream& output, const TableShare &share)
   {
@@ -667,7 +662,7 @@ public:
                     TYPELIB *interval,
                     const char *field_name);
 
-  int open_table_def(Session& session, TableIdentifier &identifier);
+  int open_table_def(Session& session, const TableIdentifier &identifier);
 
   int open_table_from_share(Session *session,
                             const TableIdentifier &identifier,

@@ -1608,7 +1608,8 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 
       if (not identifier.isTmp())
       {
-        LOCK_open.lock(); /* CREATE TABLE... has found that the table already exists for insert and is adapting to use it */
+        /* CREATE TABLE... has found that the table already exists for insert and is adapting to use it */
+        boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex());
 
         if (create_table->table)
         {
@@ -1616,7 +1617,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 
           if (concurrent_table->reopen_name_locked_table(create_table, session))
           {
-            quick_rm_table(*session, identifier);
+            plugin::StorageEngine::dropTable(*session, identifier);
           }
           else
           {
@@ -1625,10 +1626,8 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
         }
         else
         {
-          quick_rm_table(*session, identifier);
+          plugin::StorageEngine::dropTable(*session, identifier);
         }
-
-        LOCK_open.unlock();
       }
       else
       {
