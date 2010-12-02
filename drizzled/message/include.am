@@ -61,7 +61,8 @@ nobase_nodist_include_HEADERS+= \
 
 noinst_HEADERS+= \
 		drizzled/message/ioutil.h \
-		drizzled/message/all.h
+		drizzled/message/schema.h \
+		drizzled/message/table.h
 
 
 drizzled_message_schema_reader_SOURCES =  drizzled/message/schema_reader.cc

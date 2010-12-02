@@ -21,6 +21,7 @@
 #include "config.h"
 
 #include <drizzled/session.h>
+#include <drizzled/session/cache.h>
 #include "plugin/utility_functions/functions.h"
 
 namespace drizzled
@@ -29,30 +30,33 @@ namespace drizzled
 namespace utility_functions
 {
 
-int64_t GlobalReadLock::val_int()
+int64_t Kill::val_int()
 {
-  assert(fixed == 1);
-  null_value= false;
+  int64_t session_id_for_kill= args[0]->val_int();
 
-  if (getSession().isGlobalReadLock())
-    return 1;
+  if (getSession().getSessionId() == session_id_for_kill)
+  {
+    my_error(drizzled::ER_KILL_DENY_SELF_ERROR, MYF(0));
+    return 0;
+  }
 
-  return 0;
-}
+  Session::shared_ptr die_session(session::Cache::singleton().find(session_id_for_kill));
 
-String *GlobalReadLock::val_str(String *str)
-{
-  assert(fixed == 1);
-  null_value= false;
-  const std::string &global_state_for_session= display::type(getSession().isGlobalReadLock());
-  str->copy(global_state_for_session.c_str(), global_state_for_session.length(), system_charset_info);
+  if (not die_session)
+  {
+    my_error(drizzled::ER_NO_SUCH_THREAD, session_id_for_kill, MYF(0));
+    return 0;
+  }
 
-  return str;
-}
+  if (not die_session->isViewable())
+  {
+    my_error(drizzled::ER_KILL_DENIED_ERROR, session_id_for_kill, MYF(0));
+    return 0;
+  }
 
-void GlobalReadLock::fix_length_and_dec()
-{
-  max_length= drizzled::display::max_string_length(getSession().isGlobalReadLock()) * system_charset_info->mbmaxlen;
+  die_session->awake(arg_count == 2 ? Session::KILL_QUERY : Session::KILL_CONNECTION);
+
+  return session_id_for_kill;
 }
 
 } /* namespace utility_functions */

@@ -161,10 +161,11 @@ int set_var::update(Session *session)
   {
     /* TODO: Fix this to be typesafe once we have properly typed set_var */
     string new_val= boost::lexical_cast<string>(save_result.uint32_t_value);
-    if (const uint64_t *max_val= boost::get_error_info<invalid_max_info>(ex))
+    if (boost::get_error_info<invalid_max_info>(ex) != NULL)
     { 
+      const uint64_t max_val= *(boost::get_error_info<invalid_max_info>(ex));
       string explanation("(> ");
-      explanation.append(boost::lexical_cast<std::string>(*max_val));
+      explanation.append(boost::lexical_cast<std::string>(max_val));
       explanation.push_back(')');
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                           ER_INVALID_OPTION_VALUE,
@@ -173,10 +174,11 @@ int set_var::update(Session *session)
                           new_val.c_str(),
                           explanation.c_str());
     }
-    else if (const int64_t *min_val= boost::get_error_info<invalid_min_info>(ex))
-    {
+    else if (boost::get_error_info<invalid_min_info>(ex) != NULL)
+    { 
+      const int64_t min_val= *(boost::get_error_info<invalid_min_info>(ex));
       string explanation("(< ");
-      explanation.append(boost::lexical_cast<std::string>(*min_val));
+      explanation.append(boost::lexical_cast<std::string>(min_val));
       explanation.push_back(')');
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                           ER_INVALID_OPTION_VALUE,

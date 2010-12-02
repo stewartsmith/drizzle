@@ -23,7 +23,7 @@
 
 #include "config.h"
 #include "drizzled/session.h"
-#include "drizzled/session_list.h"
+#include "drizzled/session/cache.h"
 #include <sys/stat.h>
 #include "drizzled/error.h"
 #include "drizzled/gettext.h"

@@ -33,7 +33,7 @@ public:
     bool is_primed;
     bool if_not_exists;
     std::string schema_name;
-    drizzled::message::SchemaPtr schema_message;
+    drizzled::message::schema::shared_ptr schema_message;
 
   public:
     Generator(drizzled::Field **arg);

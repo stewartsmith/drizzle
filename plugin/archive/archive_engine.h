@@ -125,7 +125,7 @@ public:
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                              const drizzled::SchemaIdentifier &schema_identifier,
-                             drizzled::TableIdentifiers &set_of_identifiers);
+                             drizzled::TableIdentifier::vector &set_of_identifiers);
 };
 
 #endif /* PLUGIN_ARCHIVE_ARCHIVE_ENGINE_H */

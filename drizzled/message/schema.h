@@ -18,42 +18,21 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
 
-#include <drizzled/session.h>
-#include "plugin/utility_functions/functions.h"
+#ifndef DRIZZLED_MESSAGE_SCHEMA_H
+#define DRIZZLED_MESSAGE_SCHEMA_H
 
-namespace drizzled
-{
+#include <boost/shared_ptr.hpp>
+#include <drizzled/message/schema.pb.h>
 
-namespace utility_functions
-{
+namespace drizzled {
+namespace message {
+namespace schema {
 
-int64_t GlobalReadLock::val_int()
-{
-  assert(fixed == 1);
-  null_value= false;
+typedef boost::shared_ptr <message::Schema> shared_ptr;
 
-  if (getSession().isGlobalReadLock())
-    return 1;
+} // namespace schema
+} // namespace message
+} // namespace drizzled
 
-  return 0;
-}
-
-String *GlobalReadLock::val_str(String *str)
-{
-  assert(fixed == 1);
-  null_value= false;
-  const std::string &global_state_for_session= display::type(getSession().isGlobalReadLock());
-  str->copy(global_state_for_session.c_str(), global_state_for_session.length(), system_charset_info);
-
-  return str;
-}
-
-void GlobalReadLock::fix_length_and_dec()
-{
-  max_length= drizzled::display::max_string_length(getSession().isGlobalReadLock()) * system_charset_info->mbmaxlen;
-}
-
-} /* namespace utility_functions */
-} /* namespace drizzled */
+#endif /* DRIZZLED_MESSAGE_SCHEMA_H */
