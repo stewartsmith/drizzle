@@ -150,7 +150,7 @@ public:
 bool plugin::Logging::preDo(Session *session)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
-  vector<plugin::Logging *>::iterator iter=
+  std::vector<plugin::Logging *>::iterator iter=
     find_if(all_loggers.begin(), all_loggers.end(),
             PreIterate(session)); 
   /* If iter is == end() here, that means that all of the plugins returned
@@ -165,7 +165,7 @@ bool plugin::Logging::preDo(Session *session)
 bool plugin::Logging::postDo(Session *session)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
-  vector<plugin::Logging *>::iterator iter=
+  std::vector<plugin::Logging *>::iterator iter=
     find_if(all_loggers.begin(), all_loggers.end(),
             PostIterate(session)); 
   /* If iter is == end() here, that means that all of the plugins returned
@@ -179,7 +179,7 @@ bool plugin::Logging::postDo(Session *session)
 bool plugin::Logging::postEndDo(Session *session)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
-  vector<plugin::Logging *>::iterator iter=
+  std::vector<plugin::Logging *>::iterator iter=
     find_if(all_loggers.begin(), all_loggers.end(),
             PostEndIterate(session));
   /* If iter is == end() here, that means that all of the plugins returned
@@ -192,7 +192,7 @@ bool plugin::Logging::postEndDo(Session *session)
 /* Resets global stats for logging plugin */
 bool plugin::Logging::resetStats(Session *session)
 {
-  vector<plugin::Logging *>::iterator iter=
+  std::vector<plugin::Logging *>::iterator iter=
     find_if(all_loggers.begin(), all_loggers.end(),
             ResetIterate(session));
 

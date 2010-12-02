@@ -298,7 +298,7 @@ FilteredReplicator::replicate(plugin::TransactionApplier *in_applier,
 }
 
 void FilteredReplicator::populateFilter(std::string input,
-                                        vector<string> &filter)
+                                        std::vector<string> &filter)
 {
   /*
    * Convert the input string to lowercase so that all entries in the vector
@@ -320,9 +320,9 @@ void FilteredReplicator::populateFilter(std::string input,
 bool FilteredReplicator::isSchemaFiltered(const string &schema_name)
 {
   pthread_mutex_lock(&sch_vector_lock);
-  vector<string>::iterator it= find(schemas_to_filter.begin(),
-                                    schemas_to_filter.end(),
-                                    schema_name);
+  std::vector<string>::iterator it= find(schemas_to_filter.begin(),
+                                         schemas_to_filter.end(),
+                                         schema_name);
   if (it != schemas_to_filter.end())
   {
     pthread_mutex_unlock(&sch_vector_lock);
@@ -357,9 +357,9 @@ bool FilteredReplicator::isSchemaFiltered(const string &schema_name)
 bool FilteredReplicator::isTableFiltered(const string &table_name)
 {
   pthread_mutex_lock(&tab_vector_lock);
-  vector<string>::iterator it= find(tables_to_filter.begin(),
-                                    tables_to_filter.end(),
-                                    table_name);
+  std::vector<string>::iterator it= find(tables_to_filter.begin(),
+                                         tables_to_filter.end(),
+                                         table_name);
   if (it != tables_to_filter.end())
   {
     pthread_mutex_unlock(&tab_vector_lock);

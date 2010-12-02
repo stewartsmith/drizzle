@@ -36,7 +36,7 @@ namespace drizzled
 namespace plugin
 {
 
-vector<plugin::QueryRewriter *> all_rewriters;
+std::vector<plugin::QueryRewriter *> all_rewriters;
 
 
 bool QueryRewriter::addPlugin(QueryRewriter *in_rewriter)
@@ -66,7 +66,7 @@ void QueryRewriter::removePlugin(QueryRewriter *in_rewriter)
  */
 void QueryRewriter::rewriteQuery(const string &schema, Session::QueryString to_rewrite)
 {
-  for (vector<plugin::QueryRewriter *>::iterator iter= all_rewriters.begin();
+  for (std::vector<plugin::QueryRewriter *>::iterator iter= all_rewriters.begin();
        iter != all_rewriters.end();
        ++iter)
   {

@@ -36,7 +36,7 @@ namespace drizzled
 namespace plugin
 {
 
-static vector<TransactionalStorageEngine *> vector_of_transactional_engines;
+static std::vector<TransactionalStorageEngine *> vector_of_transactional_engines;
 
 TransactionalStorageEngine::TransactionalStorageEngine(const string name_arg,
                                                        const bitset<HTON_BIT_SIZE> &flags_arg)
@@ -112,7 +112,7 @@ int TransactionalStorageEngine::notifyStartTransaction(Session *session, start_t
   else
   {
     StartTransactionFunc functor(session, options);
-    vector<int> results;
+    std::vector<int> results;
     results.reserve(vector_of_transactional_engines.size());
     transform(vector_of_transactional_engines.begin(),
               vector_of_transactional_engines.end(),

@@ -59,7 +59,6 @@ Schema::Schema():
   schema_cache_filled(false)
 {
   table_definition_ext= DEFAULT_FILE_EXTENSION;
-  prime();
 }
 
 Schema::~Schema()

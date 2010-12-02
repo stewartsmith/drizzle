@@ -106,7 +106,7 @@ bool plugin::ErrorMessage::vprintf(Session *session, int priority,
   }
 
   /* Use find_if instead of foreach so that we can collect return codes */
-  vector<plugin::ErrorMessage *>::iterator iter=
+  std::vector<plugin::ErrorMessage *>::iterator iter=
     find_if(all_errmsg_handler.begin(), all_errmsg_handler.end(),
             Print(session, priority, format, ap)); 
   /* If iter is == end() here, that means that all of the plugins returned

@@ -34,7 +34,7 @@ using namespace std;
 namespace drizzled
 {
 
-vector<plugin::Authorization *> authorization_plugins;
+std::vector<plugin::Authorization *> authorization_plugins;
 
 
 bool plugin::Authorization::addPlugin(plugin::Authorization *auth)
@@ -141,7 +141,7 @@ bool plugin::Authorization::isAuthorized(const SecurityContext &user_ctx,
     return true;
 
   /* Use find_if instead of foreach so that we can collect return codes */
-  vector<plugin::Authorization *>::const_iterator iter=
+  std::vector<plugin::Authorization *>::const_iterator iter=
     find_if(authorization_plugins.begin(),
             authorization_plugins.end(),
             RestrictDbFunctor(user_ctx, schema_identifier));
@@ -178,7 +178,7 @@ bool plugin::Authorization::isAuthorized(const SecurityContext &user_ctx,
     return true;
 
   /* Use find_if instead of foreach so that we can collect return codes */
-  vector<plugin::Authorization *>::const_iterator iter=
+  std::vector<plugin::Authorization *>::const_iterator iter=
     find_if(authorization_plugins.begin(),
             authorization_plugins.end(),
             RestrictTableFunctor(user_ctx, table));
@@ -216,7 +216,7 @@ bool plugin::Authorization::isAuthorized(const SecurityContext &user_ctx,
     return true;
 
   /* Use find_if instead of foreach so that we can collect return codes */
-  vector<plugin::Authorization *>::const_iterator iter=
+  std::vector<plugin::Authorization *>::const_iterator iter=
     find_if(authorization_plugins.begin(),
             authorization_plugins.end(),
             RestrictProcessFunctor(user_ctx, session_ctx));

@@ -72,9 +72,9 @@ bool plugin::Authentication::isAuthenticated(const SecurityContext &sctx,
     return true;
 
   /* Use find_if instead of foreach so that we can collect return codes */
-  vector<plugin::Authentication *>::iterator iter=
-    find_if(all_authentication.begin(), all_authentication.end(),
-            AuthenticateBy(sctx, password));
+  std::vector<plugin::Authentication *>::iterator iter=
+    std::find_if(all_authentication.begin(), all_authentication.end(),
+                 AuthenticateBy(sctx, password));
 
   /* We only require one plugin to return success in order to authenticate.
    * If iter is == end() here, that means that all of the plugins returned

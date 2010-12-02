@@ -33,7 +33,7 @@ namespace drizzled
 
 extern size_t my_thread_stack_size;
 
-vector<plugin::Scheduler *> all_schedulers;
+std::vector<plugin::Scheduler *> all_schedulers;
 
 /* Globals (TBK) */
 static plugin::Scheduler *scheduler= NULL;
@@ -54,7 +54,7 @@ public:
 
 bool plugin::Scheduler::addPlugin(plugin::Scheduler *sched)
 {
-  vector<plugin::Scheduler *>::iterator iter=
+  std::vector<plugin::Scheduler *>::iterator iter=
     find_if(all_schedulers.begin(), all_schedulers.end(), 
             FindSchedulerByName(&sched->getName()));
 
@@ -84,7 +84,7 @@ void plugin::Scheduler::removePlugin(plugin::Scheduler *sched)
 
 bool plugin::Scheduler::setPlugin(const string& name)
 {
-  vector<plugin::Scheduler *>::iterator iter=
+  std::vector<plugin::Scheduler *>::iterator iter=
     find_if(all_schedulers.begin(), all_schedulers.end(), 
             FindSchedulerByName(&name));
 
