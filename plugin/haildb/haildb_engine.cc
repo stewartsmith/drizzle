@@ -2827,7 +2827,6 @@ static bool innobase_rollback_on_timeout;
 static bool innobase_create_status_file;
 static bool srv_use_sys_malloc;
 static string innobase_file_format_name;
-static unsigned long srv_max_purge_lag;
 static unsigned long innobase_read_io_threads;
 static unsigned long innobase_write_io_threads;
 typedef constrained_check<unsigned int, 1000, 1> autoextend_constraint;
@@ -2858,6 +2857,8 @@ typedef constrained_check<unsigned int, 97, 5> lru_old_blocks_constraint;
 static lru_old_blocks_constraint innobase_lru_old_blocks_pct;
 typedef constrained_check<unsigned int, 99, 0> max_dirty_pages_constraint;
 static max_dirty_pages_constraint haildb_max_dirty_pages_pct;
+typedef constrained_check<uint64_t, UINT64_MAX, 0> max_purge_lag_constraint;
+static max_purge_lag_constraint haildb_max_purge_lag;
 
 
 static uint32_t innobase_lru_block_access_recency;
@@ -2927,15 +2928,6 @@ static int haildb_init(drizzled::module::Context &context)
   innobase_print_verbose_log= (vm.count("disable-print-verbose-log")) ? false : true;
   srv_use_sys_malloc= (vm.count("use-internal-malloc")) ? false : true;
 
-
-  if (vm.count("max-purge-lag"))
-  {
-    if (srv_max_purge_lag > (unsigned long)~0L)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of max-purge-lag"));
-      return 1;
-    }
-  }
 
   if (vm.count("open-files"))
   {
@@ -3095,7 +3087,7 @@ static int haildb_init(drizzled::module::Context &context)
   if (err != DB_SUCCESS)
     goto haildb_error;
 
-  err= ib_cfg_set_int("max_purge_lag", srv_max_purge_lag);
+  err= ib_cfg_set_int("max_purge_lag", haildb_max_purge_lag.get());
   if (err != DB_SUCCESS)
     goto haildb_error;
 
@@ -3177,6 +3169,7 @@ static int haildb_init(drizzled::module::Context &context)
                                                     &innobase_lru_block_access_recency,
                                                     haildb_lru_block_access_recency_update));
   context.registerVariable(new sys_var_constrained_value_readonly<unsigned int>("max_dirty_pages_pct", haildb_max_dirty_pages_pct));
+  context.registerVariable(new sys_var_constrained_value_readonly<uint64_t>("max_purge_lag", haildb_max_purge_lag));
 
   haildb_datadict_dump_func_initialize(context);
   config_table_function_initialize(context);
@@ -3210,11 +3203,6 @@ HailDBEngine::~HailDBEngine()
 }
 
 
-
-static DRIZZLE_SYSVAR_ULONG(max_purge_lag, srv_max_purge_lag,
-  PLUGIN_VAR_RQCMDARG,
-  "Desired maximum length of the purge queue (0 = no limit)",
-  NULL, NULL, 0, 0, ~0L, 0);
 
 static DRIZZLE_SYSVAR_LONG(open_files, innobase_open_files,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
@@ -3307,7 +3295,7 @@ static void init_options(drizzled::module::option_context &context)
           po::value<max_dirty_pages_constraint>(&haildb_max_dirty_pages_pct)->default_value(75),
           N_("Percentage of dirty pages allowed in bufferpool."));
   context("max-purge-lag",
-          po::value<unsigned long>(&srv_max_purge_lag)->default_value(0),
+          po::value<max_purge_lag_constraint>(&haildb_max_purge_lag)->default_value(0),
           N_("Desired maximum length of the purge queue (0 = no limit)"));
   context("rollback-on-timeout",
           po::value<bool>(&innobase_rollback_on_timeout)->default_value(false)->zero_tokens(),
@@ -3334,7 +3322,6 @@ static void init_options(drizzled::module::option_context &context)
 }
 
 static drizzle_sys_var* innobase_system_variables[]= {
-  DRIZZLE_SYSVAR(max_purge_lag),
   DRIZZLE_SYSVAR(open_files),
   DRIZZLE_SYSVAR(read_io_threads),
   DRIZZLE_SYSVAR(write_io_threads),
