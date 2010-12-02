@@ -526,7 +526,7 @@ DrizzleDumpConnection::DrizzleDumpConnection(std::string &host, uint16_t port,
   if (ret != DRIZZLE_RETURN_OK)
   {
     errorHandler(NULL, ret, "when trying to connect");
-    throw 1;
+    throw std::exception();
   }
 
   boost::match_flag_type flags = boost::match_default; 

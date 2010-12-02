@@ -1356,7 +1356,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   {
     po::store(parsed, vm);
   }
-  catch (...)
+  catch (std::exception&)
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Duplicate entry for command line option\n"));
     unireg_abort(1);

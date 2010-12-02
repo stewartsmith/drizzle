@@ -262,7 +262,7 @@ class DrizzleStringBuf : public std::streambuf
     void writeString(std::string &str)
     {
       if (not connection->queryNoResult(str))
-        throw 1;
+        throw std::exception();
     }
 
     void setConnection(DrizzleDumpConnection *conn) { connection= conn; }
