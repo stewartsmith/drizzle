@@ -5,5 +5,5 @@ INSERT INTO replicate VALUES ();
 INSERT INTO replicate VALUES ();
 select count(*) from data_dictionary.INNODB_REPLICATION_LOG;
 count(*)
-5
+6
 DROP TABLE replicate;
