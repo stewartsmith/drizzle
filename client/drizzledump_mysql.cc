@@ -570,7 +570,7 @@ DrizzleDumpDataMySQL::DrizzleDumpDataMySQL(DrizzleDumpTable *dataTable,
 
   result= dcon->query(query);
   if (result == NULL)
-    throw 1;
+    throw std::exception();
 }
 
 DrizzleDumpDataMySQL::~DrizzleDumpDataMySQL()
