@@ -288,7 +288,7 @@ public:
 
   virtual void doGetTableIdentifiers(CachedDirectory &directory,
                                      const drizzled::SchemaIdentifier &schema_identifier,
-                                     TableIdentifiers &set_of_identifiers)= 0;
+                                     TableIdentifier::vector &set_of_identifiers)= 0;
 
   virtual int doDropTable(Session &session,
                           const drizzled::TableIdentifier &identifier)= 0;
@@ -320,7 +320,7 @@ public:
                        const drizzled::TableIdentifier &identifier);
   static void getIdentifiers(Session &session,
                              const SchemaIdentifier &schema_identifier,
-                             TableIdentifiers &set_of_identifiers);
+                             TableIdentifier::vector &set_of_identifiers);
 
   // Check to see if any SE objects to creation.
   static bool canCreateTable(const drizzled::TableIdentifier &identifier);

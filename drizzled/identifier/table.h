@@ -288,8 +288,6 @@ public:
 std::size_t hash_value(TableIdentifier const& b);
 std::size_t hash_value(TableIdentifier::Key const& b);
 
-typedef std::vector <TableIdentifier> TableIdentifiers;
-
 } /* namespace drizzled */
 
 #endif /* DRIZZLED_IDENTIFIER_TABLE_H */

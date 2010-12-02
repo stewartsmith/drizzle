@@ -59,7 +59,7 @@ namespace drizzled
 
 static long drop_tables_via_filenames(Session *session,
                                  SchemaIdentifier &schema_identifier,
-                                 TableIdentifiers &dropped_tables);
+                                 TableIdentifier::vector &dropped_tables);
 static void mysql_change_db_impl(Session *session);
 static void mysql_change_db_impl(Session *session, SchemaIdentifier &schema_identifier);
 
@@ -219,7 +219,7 @@ bool mysql_rm_db(Session *session, SchemaIdentifier &schema_identifier, const bo
 {
   long deleted=0;
   int error= false;
-  TableIdentifiers dropped_tables;
+  TableIdentifier::vector dropped_tables;
   message::Schema schema_proto;
 
   /*
@@ -306,7 +306,7 @@ bool mysql_rm_db(Session *session, SchemaIdentifier &schema_identifier, const bo
       query_end= query + MAX_DROP_TABLE_Q_LEN;
 
       TransactionServices &transaction_services= TransactionServices::singleton();
-      for (TableIdentifiers::iterator it= dropped_tables.begin();
+      for (TableIdentifier::vector::iterator it= dropped_tables.begin();
            it != dropped_tables.end();
            it++)
       {
@@ -496,7 +496,7 @@ static int rm_table_part2(Session *session, TableList *tables)
 
 static long drop_tables_via_filenames(Session *session,
                                       SchemaIdentifier &schema_identifier,
-                                      TableIdentifiers &dropped_tables)
+                                      TableIdentifier::vector &dropped_tables)
 {
   long deleted= 0;
   TableList *tot_list= NULL, **tot_list_next;
@@ -505,7 +505,7 @@ static long drop_tables_via_filenames(Session *session,
 
   plugin::StorageEngine::getIdentifiers(*session, schema_identifier, dropped_tables);
 
-  for (TableIdentifiers::iterator it= dropped_tables.begin();
+  for (TableIdentifier::vector::iterator it= dropped_tables.begin();
        it != dropped_tables.end();
        it++)
   {

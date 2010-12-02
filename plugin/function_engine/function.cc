@@ -124,7 +124,7 @@ bool Function::doDoesTableExist(Session&, const TableIdentifier &identifier)
 
 void Function::doGetTableIdentifiers(drizzled::CachedDirectory&,
                                      const drizzled::SchemaIdentifier &schema_identifier,
-                                     drizzled::TableIdentifiers &set_of_identifiers)
+                                     drizzled::TableIdentifier::vector &set_of_identifiers)
 {
   set<string> set_of_names;
   drizzled::plugin::TableFunction::getNames(schema_identifier.getSchemaName(), set_of_names);

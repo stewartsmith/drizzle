@@ -361,6 +361,6 @@ bool Schema::doCanCreateTable(const drizzled::TableIdentifier &identifier)
 
 void Schema::doGetTableIdentifiers(drizzled::CachedDirectory&,
                                    const drizzled::SchemaIdentifier&,
-                                   drizzled::TableIdentifiers&)
+                                   drizzled::TableIdentifier::vector&)
 {
 }

@@ -182,12 +182,12 @@ public:
 private:
   void getTableNamesInSchemaFromHailDB(const drizzled::SchemaIdentifier &schema,
                                        drizzled::plugin::TableNameList *set_of_names,
-                                       drizzled::TableIdentifiers *identifiers);
+                                       drizzled::TableIdentifier::vector *identifiers);
 
 public:
   void doGetTableIdentifiers(drizzled::CachedDirectory &,
                              const drizzled::SchemaIdentifier &schema,
-                             drizzled::TableIdentifiers &identifiers);
+                             drizzled::TableIdentifier::vector &identifiers);
 
   /* The following defines can be increased if necessary */
   uint32_t max_supported_keys()          const { return 1000; }
@@ -1504,7 +1504,7 @@ rollback:
 void HailDBEngine::getTableNamesInSchemaFromHailDB(
                                  const drizzled::SchemaIdentifier &schema,
                                  drizzled::plugin::TableNameList *set_of_names,
-                                 drizzled::TableIdentifiers *identifiers)
+                                 drizzled::TableIdentifier::vector *identifiers)
 {
   ib_trx_t   transaction;
   ib_crsr_t  cursor;
@@ -1597,7 +1597,7 @@ void HailDBEngine::getTableNamesInSchemaFromHailDB(
 
 void HailDBEngine::doGetTableIdentifiers(drizzled::CachedDirectory &,
                                                  const drizzled::SchemaIdentifier &schema,
-                                                 drizzled::TableIdentifiers &identifiers)
+                                                 drizzled::TableIdentifier::vector &identifiers)
 {
   getTableNamesInSchemaFromHailDB(schema, NULL, &identifiers);
 }
