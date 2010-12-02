@@ -31,8 +31,11 @@
 # include <syslog.h>
 #endif
 
+namespace drizzle_plugin
+{
+
 WrapSyslog::WrapSyslog () :
-  openlog_check(false)
+  _check(false)
 { }
 
 WrapSyslog::~WrapSyslog ()
@@ -40,11 +43,6 @@ WrapSyslog::~WrapSyslog ()
   ::closelog();
 }
 
-WrapSyslog& WrapSyslog::singleton()
-{
-  static WrapSyslog handle;
-  return handle;
-}
 
 /* TODO, for the sake of performance, scan through all the priority
    and facility names, and construct a stl hash, minimal perfect hash,
@@ -77,28 +75,28 @@ int WrapSyslog::getFacilityByName(const char *facility_name)
   return -1;
 }
 
-void WrapSyslog::openlog(char *ident)
+void WrapSyslog::openlog(const std::string &ident)
 {
-  if (openlog_check == false)
+  if (_check == false)
   {
-    memset(openlog_ident, 0, sizeof(openlog_ident));
-    strncpy(openlog_ident, ident, sizeof(openlog_ident)-1);
-    ::openlog(openlog_ident, LOG_PID, LOG_USER);
-    openlog_check= true;
+    ::openlog(ident.c_str(), LOG_PID, LOG_USER);
+    _check= true;
   }
 }
 
 void WrapSyslog::vlog(int facility, int priority, const char *format, va_list ap)
 {
-  assert(openlog_check == true);
+  assert(_check == true);
   vsyslog(facility | priority, format, ap);
 }
 
 void WrapSyslog::log (int facility, int priority, const char *format, ...)
 {
-  assert(openlog_check == true);
+  assert(_check == true);
   va_list ap;
   va_start(ap, format);
   vsyslog(facility | priority, format, ap);
   va_end(ap);
 }
+
+} /* namespace drizzle_plugin */

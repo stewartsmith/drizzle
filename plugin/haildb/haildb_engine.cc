@@ -2854,7 +2854,6 @@ typedef constrained_check<unsigned int, 97, 5> lru_old_blocks_constraint;
 static lru_old_blocks_constraint innobase_lru_old_blocks_pct;
 typedef constrained_check<unsigned int, 99, 0> max_dirty_pages_constraint;
 static max_dirty_pages_constraint haildb_max_dirty_pages_pct;
-typedef constrained_check<uint64_t, UINT64_MAX, 0> uint64_constraint;
 static uint64_constraint haildb_max_purge_lag;
 static uint64_constraint haildb_sync_spin_loops;
 typedef constrained_check<uint32_t, UINT32_MAX, 10> open_files_constraint;
