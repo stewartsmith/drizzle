@@ -498,7 +498,7 @@ void DrizzleDumpFieldMySQL::setType(const char* raw_type, const char* raw_collat
 
 void DrizzleDumpTableMySQL::setEngine(const char* newEngine)
 {
-  if (strcmp(newEngine, "MyISAM") == 0)
+  if ((strcmp(newEngine, "MyISAM") == 0) || (strcmp(newEngine, "MEMORY") == 0))
     engineName= "InnoDB";
   else
     engineName= newEngine; 
