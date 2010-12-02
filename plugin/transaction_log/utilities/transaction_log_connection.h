@@ -36,6 +36,8 @@ public:
 
   drizzle_result_st* query(std::string &str_query);
 
+  void errorHandler(drizzle_result_st *res,  drizzle_return_t ret, const char *when);
+
 private:
   drizzle_st drizzle;
   drizzle_con_st connection;

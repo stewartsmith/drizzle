@@ -46,7 +46,7 @@ TransactionLogConnection::TransactionLogConnection(string &host, uint16_t port,
   ret= drizzle_con_connect(&connection);
   if (ret != DRIZZLE_RETURN_OK)
   {
-    cerr << "Error trying to connect" << endl;
+    errorHandler(NULL, ret, "when trying to connect");
     throw 1;
   }
 }
@@ -60,20 +60,45 @@ drizzle_result_st* TransactionLogConnection::query(std::string &str_query)
   {
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
     {
-      cerr << "Error executing query" << endl;
+      cerr << "Error executing query: " <<
+        drizzle_result_error(result) << endl;
       drizzle_result_free(result);
     }
     else
     {
-      cerr << "Error executing query" << endl;
+      cerr << "Error executing query: " <<
+        drizzle_con_error(&connection) << endl;
     }
     return NULL;
   }
 
   if (drizzle_result_buffer(result) != DRIZZLE_RETURN_OK)
   {
-    cerr << "Could not buffer result" << endl;
+    cerr << "Could not buffer result: " <<
+        drizzle_con_error(&connection) << endl;
     return NULL;
   }
   return result;
+}
+
+void TransactionLogConnection::errorHandler(drizzle_result_st *res,
+  drizzle_return_t ret, const char *when)
+{
+  if (res == NULL)
+  {
+    cerr << "Got error: " << drizzle_con_error(&connection) << " "
+      << when << endl;
+  }
+  else if (ret == DRIZZLE_RETURN_ERROR_CODE)
+  {
+    cerr << "Got error: " << drizzle_result_error(res)
+      << " (" << drizzle_result_error_code(res) << ") " << when << endl;
+    drizzle_result_free(res);
+  }
+  else
+  {
+    cerr << "Got error: " << ret << " " << when << endl;
+  }
+
+  return;
 }
