@@ -506,17 +506,18 @@ int main(int argc, char* argv[])
     string query_string;
     if (vm.count("transaction-id"))
     {
-      query_string.append("SELECT TRANSACTION_MESSAGE_BINARY, TRANSACTION_LENGTH FROM DATA_DICTIONARY.INNODB_REPLICATION_LOG WHERE TRANSACTION_ID=");
+      query_string.append("SELECT transaction_message_binary, transaction_length FROM DATA_DICTIONARY.INNODB_REPLICATION_LOG WHERE transaction_id=");
       query_string.append(boost::lexical_cast<string>(opt_transaction_id));
     }
     else if (vm.count("start-transaction-id"))
     {
-      query_string.append("SELECT TRANSACTION_MESSAGE_BINARY, TRANSACTION_LENGTH FROM DATA_DICTIONARY.INNODB_REPLICATION_LOG WHERE TRANSACTION_ID >=");
+      query_string.append("SELECT transaction_message_binary, transaction_length FROM DATA_DICTIONARY.INNODB_REPLICATION_LOG WHERE transaction_id >=");
       query_string.append(boost::lexical_cast<string>(opt_start_transaction_id));
+      query_string.append(" ORDER BY transaction_id ASC");
     }
     else
     {
-      query_string= "SELECT TRANSACTION_MESSAGE_BINARY, TRANSACTION_LENGTH FROM DATA_DICTIONARY.INNODB_REPLICATION_LOG";
+      query_string= "SELECT transaction_message_binary, transaction_length FROM DATA_DICTIONARY.INNODB_REPLICATION_LOG";
     }
 
     drizzle_result_st *result= connection->query(query_string);
