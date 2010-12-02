@@ -456,7 +456,7 @@ trx_rollback_active(
 	fprintf(stderr,
 		"  InnoDB: Rolling back trx with id " TRX_ID_FMT ", %lu%s"
 		" rows to undo\n",
-		(ullint) trx->id,
+		trx->id,
 		(ulong) rows_to_undo, unit);
 	mutex_exit(&kernel_mutex);
 
@@ -480,7 +480,7 @@ trx_rollback_active(
 		fprintf(stderr,
 			"InnoDB: Waiting for rollback of trx id "
 			TRX_ID_FMT " to end\n",
-			(ullint) trx->id);
+			trx->id);
 		os_thread_sleep(100000);
 
 		mutex_enter(&kernel_mutex);
@@ -521,7 +521,7 @@ trx_rollback_active(
 
 	fprintf(stderr, "\nInnoDB: Rolling back of trx id " TRX_ID_FMT
 		" completed\n",
-		(ullint) trx->id);
+		trx->id);
 	mem_heap_free(heap);
 
 	trx_roll_crash_recv_trx	= NULL;
@@ -574,7 +574,7 @@ loop:
 			fprintf(stderr,
 				"InnoDB: Cleaning up trx with id "
 				TRX_ID_FMT "\n",
-				(ullint) trx->id);
+				trx->id);
 			trx_cleanup_at_db_startup(trx);
 			goto loop;
 
@@ -1267,7 +1267,7 @@ trx_finish_rollback_off_kernel(
 #ifdef UNIV_DEBUG
 	if (lock_print_waits) {
 		fprintf(stderr, "Trx " TRX_ID_FMT " rollback finished\n",
-			(ullint) trx->id);
+			trx->id);
 	}
 #endif /* UNIV_DEBUG */
 

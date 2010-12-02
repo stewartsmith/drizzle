@@ -1564,8 +1564,8 @@ trx_undo_prev_version_build(
 			", update rec trx id " TRX_ID_FMT "\n"
 			"InnoDB: Roll ptr in rec " TRX_ID_FMT
 			", in update rec" TRX_ID_FMT "\n",
-			(ullint) rec_trx_id, (ullint) trx_id,
-			(ullint) old_roll_ptr, (ullint) roll_ptr);
+			rec_trx_id, trx_id,
+			old_roll_ptr, roll_ptr);
 
 		trx_purge_sys_print();
 		return(DB_ERROR);

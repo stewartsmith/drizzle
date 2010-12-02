@@ -1013,7 +1013,7 @@ trx_sys_init_at_db_start(void)
 			(ulong) rows_to_undo, unit);
 
 		fprintf(stderr, "InnoDB: Trx id counter is " TRX_ID_FMT "\n",
-			(ullint) trx_sys->max_trx_id);
+			trx_sys->max_trx_id);
 	}
 
 	UT_LIST_INIT(trx_sys->view_list);

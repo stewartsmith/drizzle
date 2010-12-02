@@ -459,7 +459,7 @@ trx_lists_init_at_db_start(void)
 						TRX_ID_FMT
 						" was in the"
 						" XA prepared state.\n",
-						(ullint) trx->id);
+						trx->id);
 
 					if (srv_force_recovery == 0) {
 
@@ -534,7 +534,7 @@ trx_lists_init_at_db_start(void)
 							"InnoDB: Transaction "
 							TRX_ID_FMT " was in the"
 							" XA prepared state.\n",
-							(ullint) trx->id);
+							trx->id);
 
 						if (srv_force_recovery == 0) {
 
@@ -1643,7 +1643,7 @@ trx_print(
 {
 	ibool	newline;
 
-	fprintf(f, "TRANSACTION " TRX_ID_FMT, (ullint) trx->id);
+	fprintf(f, "TRANSACTION " TRX_ID_FMT, trx->id);
 
 	switch (trx->conc_state) {
 	case TRX_NOT_STARTED:
@@ -1964,7 +1964,7 @@ trx_recover_for_mysql(
 			fprintf(stderr,
 				"  InnoDB: Transaction " TRX_ID_FMT " in"
 				" prepared state after recovery\n",
-				(ullint) trx->id);
+				trx->id);
 
 			ut_print_timestamp(stderr);
 			fprintf(stderr,

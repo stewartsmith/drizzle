@@ -371,13 +371,13 @@ read_view_print(
 	}
 
 	fprintf(stderr, "Read view low limit trx n:o " TRX_ID_FMT "\n",
-		(ullint) view->low_limit_no);
+		view->low_limit_no);
 
 	fprintf(stderr, "Read view up limit trx id " TRX_ID_FMT "\n",
-		(ullint) view->up_limit_id);
+		view->up_limit_id);
 
 	fprintf(stderr, "Read view low limit trx id " TRX_ID_FMT "\n",
-		(ullint) view->low_limit_id);
+		view->low_limit_id);
 
 	fprintf(stderr, "Read view individually stored trx ids:\n");
 
@@ -385,7 +385,7 @@ read_view_print(
 
 	for (i = 0; i < n_ids; i++) {
 		fprintf(stderr, "Read view trx id " TRX_ID_FMT "\n",
-			(ullint) read_view_get_nth_trx_id(view, i));
+			read_view_get_nth_trx_id(view, i));
 	}
 }
 

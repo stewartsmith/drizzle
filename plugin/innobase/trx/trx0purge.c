@@ -1209,8 +1209,8 @@ trx_purge_sys_print(void)
 
 	fprintf(stderr, "InnoDB: Purge trx n:o " TRX_ID_FMT
 		", undo n:o " TRX_ID_FMT "\n",
-		(ullint) purge_sys->purge_trx_no,
-		(ullint) purge_sys->purge_undo_no);
+		purge_sys->purge_trx_no,
+		purge_sys->purge_undo_no);
 	fprintf(stderr,
 		"InnoDB: Purge next stored %lu, page_no %lu, offset %lu,\n"
 		"InnoDB: Purge hdr_page_no %lu, hdr_offset %lu\n",

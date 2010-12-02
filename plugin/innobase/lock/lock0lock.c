@@ -479,7 +479,7 @@ lock_check_trx_id_sanity(
 			" global trx id counter " TRX_ID_FMT "!\n"
 			"InnoDB: The table is corrupt. You have to do"
 			" dump + drop + reimport.\n",
-			(ullint) trx_id, (ullint) trx_sys->max_trx_id);
+			trx_id, trx_sys->max_trx_id);
 
 		is_ok = FALSE;
 	}
@@ -1817,7 +1817,7 @@ lock_rec_enqueue_waiting(
 #ifdef UNIV_DEBUG
 	if (lock_print_waits) {
 		fprintf(stderr, "Lock wait for trx " TRX_ID_FMT " in index ",
-			(ullint) trx->id);
+			trx->id);
 		ut_print_name(stderr, trx, FALSE, index->name);
 	}
 #endif /* UNIV_DEBUG */
@@ -2190,7 +2190,7 @@ lock_grant(
 #ifdef UNIV_DEBUG
 	if (lock_print_waits) {
 		fprintf(stderr, "Lock wait for trx " TRX_ID_FMT " ends\n",
-			(ullint) lock->trx->id);
+			lock->trx->id);
 	}
 #endif /* UNIV_DEBUG */
 
@@ -4213,7 +4213,7 @@ lock_table_print(
 	fputs("TABLE LOCK table ", file);
 	ut_print_name(file, lock->trx, TRUE,
 		      lock->un_member.tab_lock.table->name);
-	fprintf(file, " trx id " TRX_ID_FMT, (ullint) lock->trx->id);
+	fprintf(file, " trx id " TRX_ID_FMT, lock->trx->id);
 
 	if (lock_get_mode(lock) == LOCK_S) {
 		fputs(" lock mode S", file);
@@ -4266,7 +4266,7 @@ lock_rec_print(
 		(ulong) space, (ulong) page_no,
 		(ulong) lock_rec_get_n_bits(lock));
 	dict_index_name_print(file, lock->trx, lock->index);
-	fprintf(file, " trx id " TRX_ID_FMT, (ullint) lock->trx->id);
+	fprintf(file, " trx id " TRX_ID_FMT, lock->trx->id);
 
 	if (lock_get_mode(lock) == LOCK_S) {
 		fputs(" lock mode S", file);
@@ -4401,13 +4401,13 @@ lock_print_info_summary(
 	      "------------\n", file);
 
 	fprintf(file, "Trx id counter " TRX_ID_FMT "\n",
-		(ullint) trx_sys->max_trx_id);
+		trx_sys->max_trx_id);
 
 	fprintf(file,
 		"Purge done for trx's n:o < " TRX_ID_FMT
 		" undo n:o < " TRX_ID_FMT "\n",
-		(ullint) purge_sys->purge_trx_no,
-		(ullint) purge_sys->purge_undo_no);
+		purge_sys->purge_trx_no,
+		purge_sys->purge_undo_no);
 
 	fprintf(file,
 		"History list length %lu\n",
@@ -4484,8 +4484,8 @@ loop:
 				"Trx read view will not see trx with"
 				" id >= " TRX_ID_FMT
 				", sees < " TRX_ID_FMT "\n",
-				(ullint) trx->read_view->low_limit_id,
-				(ullint) trx->read_view->up_limit_id);
+				trx->read_view->low_limit_id,
+				trx->read_view->up_limit_id);
 		}
 
 		if (trx->que_state == TRX_QUE_LOCK_WAIT) {
