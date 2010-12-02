@@ -69,16 +69,10 @@ public:
 
 int64_t Item_func_sleep::val_int()
 {
-  int error= 0;
-
   /* int time in seconds, decimal allowed */
   double dtime;
 
-  struct timespec abstime;
-
-  pthread_cond_t cond;
-
-  Session *session= current_session;
+  Session &session(getSession());
 
   if ((arg_count != 1) || ! (dtime= args[0]->val_real()))
   {
@@ -98,40 +92,33 @@ int64_t Item_func_sleep::val_int()
   if (dtime < 0.00001)
     return 0;
 
-  /* need to obtain time value for passing to cond_timedwait */
-  set_timespec_nsec(abstime, (uint64_t)(dtime * 1000000000ULL));
-
-  pthread_mutex_init(&LOCK_sleep, MY_MUTEX_INIT_FAST);
-  pthread_cond_init(&cond, NULL);
-
-  /* don't run if not killed */
-  pthread_mutex_lock(&LOCK_sleep);
-  while (not session->getKilled())
   {
-    error= pthread_cond_timedwait(&cond, &LOCK_sleep, &abstime);
-    if (error == ETIMEDOUT || error == ETIME)
-    {
-      break;
-    }
-    error= 0;
-  }
-  pthread_mutex_unlock(&LOCK_sleep);
+    boost::this_thread::restore_interruption dl(session.getThreadInterupt());
 
-  /* relenquish pthread cond */
-  pthread_cond_destroy(&cond);
-  pthread_mutex_destroy(&LOCK_sleep);
+    try {
+      boost::xtime xt; 
+      xtime_get(&xt, boost::TIME_UTC); 
+      xt.nsec += (uint64_t)(dtime * 1000000000ULL); 
+      session.getThread()->sleep(xt);
+    }
+    catch(boost::thread_interrupted const& error)
+    {
+      my_error(drizzled::ER_QUERY_INTERRUPTED, MYF(0));
+      null_value= true;
+
+      return 0;
+    }
+  }
+
 
   null_value= false;
 
   return (int64_t) 0;
 }
 
-plugin::Create_function<Item_func_sleep> *sleep_udf= NULL;
-
 static int sleep_plugin_init(drizzled::module::Context &context)
 {
-  sleep_udf= new plugin::Create_function<Item_func_sleep>("sleep");
-  context.add(sleep_udf);
+  context.add(new plugin::Create_function<Item_func_sleep>("sleep"));
 
   return 0;
 }
