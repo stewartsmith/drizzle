@@ -1067,7 +1067,8 @@ int StorageEngine::writeDefinitionFromPath(const TableIdentifier &identifier, me
 
   bool success;
 
-  try {
+  try
+  {
     success= table_message.SerializeToZeroCopyStream(output);
   }
   catch (...)
