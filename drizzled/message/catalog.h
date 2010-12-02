@@ -21,13 +21,19 @@
 #ifndef DRIZZLED_MESSAGE_CATALOG_H
 #define DRIZZLED_MESSAGE_CATALOG_H
 
+#include <boost/shared_ptr.hpp>
+#include "drizzled/identifier/catalog.h"
 #include "drizzled/message/catalog.pb.h"
 
 namespace drizzled {
 namespace message {
 namespace catalog {
 
-typedef boost::shared_ptr<drizzled::message::Catalog> shared_ptr;
+typedef boost::shared_ptr<message::Catalog> shared_ptr;
+typedef std::vector< shared_ptr > vector;
+typedef message::Catalog value_type;
+
+shared_ptr create(const drizzled::identifier::Catalog &identifier);
 
 } /* namespace catalog */
 } /* namespace message */

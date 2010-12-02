@@ -21,24 +21,26 @@
 #include "config.h"
 
 #include "drizzled/plugin/catalog.h"
-
+#include <boost/foreach.hpp>
 
 namespace drizzled
 {
 namespace plugin
 {
 
-class Instances {
-  Catalog::vector _catalogs;
+// Private container we use for holding the instances of engines passed to
+// use from the catalog plugins.
+class Engines {
+  catalog::Engine::vector _catalogs;
 
 public:
-  static Instances& singleton()
+  static Engines& singleton()
   {
-    static Instances ptr;
+    static Engines ptr;
     return ptr;
   }
 
-  Catalog::vector &catalogs()
+  catalog::Engine::vector &catalogs()
   {
     return _catalogs;
   }
@@ -48,19 +50,73 @@ Catalog::~Catalog()
 {
 }
 
-bool Catalog::create(const identifier::Catalog &)
+bool Catalog::create(const identifier::Catalog &identifier)
 {
+  BOOST_FOREACH(catalog::Engine::vector::const_reference ref, Engines::singleton().catalogs())
+  {
+    if (ref->create(identifier))
+    {
+      return true;
+    }
+  }
+
   return false;
 }
 
-bool Catalog::drop(const identifier::Catalog &)
+bool Catalog::drop(const identifier::Catalog &identifier)
 {
+  BOOST_FOREACH(catalog::Engine::vector::const_reference ref, Engines::singleton().catalogs())
+  {
+    if (ref->drop(identifier))
+    {
+      return true;
+    }
+  }
+
   return false;
 }
 
 bool plugin::Catalog::addPlugin(plugin::Catalog *arg)
 {
-  Instances::singleton().catalogs().push_back(arg);
+  Engines::singleton().catalogs().push_back(arg->engine());
+
+  return false;
+}
+
+bool plugin::Catalog::exist(const identifier::Catalog &identifier)
+{
+  BOOST_FOREACH(catalog::Engine::vector::const_reference ref, Engines::singleton().catalogs())
+  {
+    if (ref->exist(identifier))
+      return true;
+  }
+
+  return false;
+}
+
+void plugin::Catalog::getIdentifiers(identifier::Catalog::vector &identifiers)
+{
+  BOOST_FOREACH(catalog::Engine::vector::const_reference ref, Engines::singleton().catalogs())
+  {
+    ref->getIdentifiers(identifiers);
+  }
+}
+
+void plugin::Catalog::getMessages(message::catalog::vector &messages)
+{
+  BOOST_FOREACH(catalog::Engine::vector::const_reference ref, Engines::singleton().catalogs())
+  {
+    ref->getMessages(messages);
+  }
+}
+
+bool plugin::Catalog::getMessage(const identifier::Catalog &identifier, message::catalog::shared_ptr &message)
+{
+  BOOST_FOREACH(catalog::Engine::vector::const_reference ref, Engines::singleton().catalogs())
+  {
+    if (ref->getMessage(identifier, message))
+      return true;
+  }
 
   return false;
 }
@@ -68,9 +124,9 @@ bool plugin::Catalog::addPlugin(plugin::Catalog *arg)
 
 void plugin::Catalog::removePlugin(plugin::Catalog *arg)
 {
-  Instances::singleton().catalogs().erase(find(Instances::singleton().catalogs().begin(),
-                                               Instances::singleton().catalogs().end(),
-                                               arg));
+  Engines::singleton().catalogs().erase(find(Engines::singleton().catalogs().begin(),
+                                             Engines::singleton().catalogs().end(),
+                                             arg->engine()));
 }
 
 } /* namespace plugin */

@@ -25,6 +25,7 @@
 #include <drizzled/plugin/plugin.h>
 #include <drizzled/identifier/catalog.h>
 #include <drizzled/catalog/instance.h>
+#include <drizzled/catalog/engine.h>
 
 namespace drizzled
 {
@@ -45,12 +46,20 @@ public:
   {}
   virtual ~Catalog();
 
+  virtual catalog::Engine::shared_ptr engine()= 0;
+
   static bool create(const identifier::Catalog &);
   static bool drop(const identifier::Catalog &);
 
   // Required for plugin interface
   static bool addPlugin(plugin::Catalog *plugin);
   static void removePlugin(plugin::Catalog *plugin);
+
+  // Get Meta information
+  static bool exist(const identifier::Catalog &identifier);
+  static void getIdentifiers(identifier::Catalog::vector &identifiers);
+  static void getMessages(message::catalog::vector &messages);
+  static bool getMessage(const identifier::Catalog &identifier, message::catalog::shared_ptr &message);
 };
 
 } /* namespace plugin */

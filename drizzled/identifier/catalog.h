@@ -50,6 +50,8 @@ class Catalog
 public:
 
 public:
+  typedef std::vector<Catalog> vector;
+
   Catalog(const std::string &name_arg);
 
   virtual ~Catalog()

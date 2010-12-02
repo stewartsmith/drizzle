@@ -22,6 +22,7 @@
 #define PLUGIN_CATALOG_FILESYSTEM_H
 
 #include <drizzled/plugin/catalog.h>
+#include "plugin/catalog/engine.h"
 
 namespace catalog {
 
@@ -32,6 +33,14 @@ public:
   Filesystem() :
     drizzled::plugin::Catalog("FilesystemCatalog")
   {}
+
+  catalog::Engine::shared_ptr engine()
+  {
+    Engine::shared_ptr ptr(new Engine());
+
+    return ptr;
+  }
+
 };
 
 } /* namespace catalog */

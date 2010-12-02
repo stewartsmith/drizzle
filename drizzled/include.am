@@ -52,6 +52,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/cached_item.h \
 			      drizzled/calendar.h \
 			      drizzled/catalog/cache.h \
+			      drizzled/catalog/engine.h \
 			      drizzled/catalog/instance.h \
 			      drizzled/charset.h \
 			      drizzled/charset_info.h \
@@ -666,6 +667,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/lookup_symbol.cc \
 				 drizzled/message.cc \
 				 drizzled/message/cache.cc \
+				 drizzled/message/catalog.cc \
 				 drizzled/module/context.cc \
 				 drizzled/module/library.cc \
 				 drizzled/module/loader.cc \

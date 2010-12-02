@@ -18,53 +18,43 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_CATALOG_INSTANCE_H
-#define DRIZZLED_CATALOG_INSTANCE_H
+#ifndef DRIZZLED_CATALOG_ENGINE_H
+#define DRIZZLED_CATALOG_ENGINE_H
 
-#include <boost/make_shared.hpp>
+#include <boost/shared_ptr.hpp>
+#include "drizzled/identifier/catalog.h"
 #include "drizzled/message/catalog.h"
 
 namespace drizzled {
 namespace catalog {
 
-class Instance
+class Engine
 {
-  Instance() { };
-  message::catalog::shared_ptr _message;
-
 public:
-  typedef boost::shared_ptr<Instance> shared_ptr;
+  typedef boost::shared_ptr<Engine> shared_ptr;
   typedef std::vector<shared_ptr> vector;
 
-  Instance(message::catalog::shared_ptr &message_arg)
-  {
-    _message= message_arg;
-  };
+  Engine()
+  { };
 
-  Instance(const message::catalog::shared_ptr &message_arg)
-  {
-    _message= message_arg;
-  };
+  virtual ~Engine()
+  { };
 
-  static shared_ptr create(message::catalog::shared_ptr &message_arg)
-  {
-    return boost::make_shared<Instance>(message_arg);
-  };
+  // DDL
+  virtual bool create(const identifier::Catalog &)= 0;
+  virtual bool drop(const identifier::Catalog &)= 0;
 
-  static shared_ptr create(const identifier::Catalog &identifier)
-  {
-    drizzled::message::catalog::shared_ptr new_message= drizzled::message::catalog::create(identifier);
-    return boost::make_shared<Instance>(new_message);
-  }
+  // Get Meta information
+  virtual bool exist(const identifier::Catalog &identifier)= 0;
+  virtual void getIdentifiers(identifier::Catalog::vector &identifiers)= 0;
+  virtual bool getMessage(const identifier::Catalog &identifier, message::catalog::shared_ptr &message)= 0;
+  virtual void getMessages(message::catalog::vector &messages)= 0;
 
-  const std::string &getName() const
-  {
-    assert(_message);
-    return _message->name();
-  }
+  // Retrieve an instance to work with
+  virtual bool getInstance(const identifier::Catalog &identifier, catalog::Instance::shared_ptr &instance)= 0;
 };
 
 } /* namespace catalog */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_CATALOG_INSTANCE_H */
+#endif /* DRIZZLED_CATALOG_ENGINE_H */
