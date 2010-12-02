@@ -2827,7 +2827,6 @@ static bool innobase_rollback_on_timeout;
 static bool innobase_create_status_file;
 static bool srv_use_sys_malloc;
 static string innobase_file_format_name;
-static unsigned long srv_max_buf_pool_modified_pct;
 static unsigned long srv_max_purge_lag;
 static unsigned long innobase_read_io_threads;
 static unsigned long innobase_write_io_threads;
@@ -2857,6 +2856,10 @@ typedef constrained_check<long, LONG_MAX, 256*1024, 1024> log_buffer_size_constr
 static log_buffer_size_constraint innobase_log_buffer_size;
 typedef constrained_check<unsigned int, 97, 5> lru_old_blocks_constraint;
 static lru_old_blocks_constraint innobase_lru_old_blocks_pct;
+typedef constrained_check<unsigned int, 99, 0> max_dirty_pages_constraint;
+static max_dirty_pages_constraint haildb_max_dirty_pages_pct;
+
+
 static uint32_t innobase_lru_block_access_recency;
 
 static long innobase_open_files;
@@ -2924,15 +2927,6 @@ static int haildb_init(drizzled::module::Context &context)
   innobase_print_verbose_log= (vm.count("disable-print-verbose-log")) ? false : true;
   srv_use_sys_malloc= (vm.count("use-internal-malloc")) ? false : true;
 
-
-  if (vm.count("max-dirty-pages-pct"))
-  {
-    if (srv_max_buf_pool_modified_pct > 99)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of max-dirty-pages-pct"));
-      return 1;
-    }
-  }
 
   if (vm.count("max-purge-lag"))
   {
@@ -3097,7 +3091,7 @@ static int haildb_init(drizzled::module::Context &context)
   if (err != DB_SUCCESS)
     goto haildb_error;
 
-  err= ib_cfg_set_int("max_dirty_pages_pct", srv_max_buf_pool_modified_pct);
+  err= ib_cfg_set_int("max_dirty_pages_pct", static_cast<unsigned int>(haildb_max_dirty_pages_pct));
   if (err != DB_SUCCESS)
     goto haildb_error;
 
@@ -3182,6 +3176,7 @@ static int haildb_init(drizzled::module::Context &context)
   context.registerVariable(new sys_var_uint32_t_ptr("lru_block_access_recency",
                                                     &innobase_lru_block_access_recency,
                                                     haildb_lru_block_access_recency_update));
+  context.registerVariable(new sys_var_constrained_value_readonly<unsigned int>("max_dirty_pages_pct", haildb_max_dirty_pages_pct));
 
   haildb_datadict_dump_func_initialize(context);
   config_table_function_initialize(context);
@@ -3215,11 +3210,6 @@ HailDBEngine::~HailDBEngine()
 }
 
 
-
-static DRIZZLE_SYSVAR_ULONG(max_dirty_pages_pct, srv_max_buf_pool_modified_pct,
-  PLUGIN_VAR_RQCMDARG,
-  "Percentage of dirty pages allowed in bufferpool.",
-  NULL, NULL, 75, 0, 99, 0);
 
 static DRIZZLE_SYSVAR_ULONG(max_purge_lag, srv_max_purge_lag,
   PLUGIN_VAR_RQCMDARG,
@@ -3314,7 +3304,7 @@ static void init_options(drizzled::module::option_context &context)
           po::value<uint32_t>(&innobase_lru_block_access_recency)->default_value(0),
           N_("Milliseconds between accesses to a block at which it is made young. 0=disabled (Advanced users)"));
   context("max-dirty-pages-pct",
-          po::value<unsigned long>(&srv_max_buf_pool_modified_pct)->default_value(75),
+          po::value<max_dirty_pages_constraint>(&haildb_max_dirty_pages_pct)->default_value(75),
           N_("Percentage of dirty pages allowed in bufferpool."));
   context("max-purge-lag",
           po::value<unsigned long>(&srv_max_purge_lag)->default_value(0),
@@ -3344,7 +3334,6 @@ static void init_options(drizzled::module::option_context &context)
 }
 
 static drizzle_sys_var* innobase_system_variables[]= {
-  DRIZZLE_SYSVAR(max_dirty_pages_pct),
   DRIZZLE_SYSVAR(max_purge_lag),
   DRIZZLE_SYSVAR(open_files),
   DRIZZLE_SYSVAR(read_io_threads),
