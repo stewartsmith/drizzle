@@ -2827,11 +2827,8 @@ static bool innobase_rollback_on_timeout;
 static bool innobase_create_status_file;
 static bool srv_use_sys_malloc;
 static string innobase_file_format_name;
-static unsigned long innobase_read_io_threads;
-static unsigned long innobase_write_io_threads;
 typedef constrained_check<unsigned int, 1000, 1> autoextend_constraint;
 static autoextend_constraint srv_auto_extend_increment;
-static unsigned long srv_n_spin_wait_rounds;
 typedef constrained_check<size_t, SIZE_MAX, 5242880, 1048576> buffer_pool_constraint;
 static buffer_pool_constraint innobase_buffer_pool_size;
 typedef constrained_check<size_t, SIZE_MAX, 512, 1024> additional_mem_pool_constraint;
@@ -2857,13 +2854,18 @@ typedef constrained_check<unsigned int, 97, 5> lru_old_blocks_constraint;
 static lru_old_blocks_constraint innobase_lru_old_blocks_pct;
 typedef constrained_check<unsigned int, 99, 0> max_dirty_pages_constraint;
 static max_dirty_pages_constraint haildb_max_dirty_pages_pct;
-typedef constrained_check<uint64_t, UINT64_MAX, 0> max_purge_lag_constraint;
-static max_purge_lag_constraint haildb_max_purge_lag;
+typedef constrained_check<uint64_t, UINT64_MAX, 0> uint64_constraint;
+static uint64_constraint haildb_max_purge_lag;
+static uint64_constraint haildb_sync_spin_loops;
+typedef constrained_check<uint32_t, UINT32_MAX, 10> open_files_constraint;
+static open_files_constraint haildb_open_files;
+typedef constrained_check<unsigned int, 64, 1> io_threads_constraint;
+static io_threads_constraint haildb_read_io_threads;
+static io_threads_constraint haildb_write_io_threads;
 
 
 static uint32_t innobase_lru_block_access_recency;
 
-static long innobase_open_files;
 
 
 static int haildb_file_format_name_validate(Session*, set_var *var)
@@ -2928,33 +2930,6 @@ static int haildb_init(drizzled::module::Context &context)
   innobase_print_verbose_log= (vm.count("disable-print-verbose-log")) ? false : true;
   srv_use_sys_malloc= (vm.count("use-internal-malloc")) ? false : true;
 
-
-  if (vm.count("open-files"))
-  {
-    if (innobase_open_files > LONG_MAX || innobase_open_files < 10L)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of open-files"));
-      return 1;
-    }
-  }
-
-  if (vm.count("read-io-threads"))
-  {
-    if (innobase_read_io_threads > 64 || innobase_read_io_threads < 1)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of read-io-threads"));
-      return 1;
-    }
-  }
-
-  if (vm.count("sync-spin-loops"))
-  {
-    if (srv_n_spin_wait_rounds > (unsigned long)~0L)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of sync_spin_loops"));
-      return 1;
-    }
-  }
 
   ib_err_t err;
 
@@ -3091,19 +3066,19 @@ static int haildb_init(drizzled::module::Context &context)
   if (err != DB_SUCCESS)
     goto haildb_error;
 
-  err= ib_cfg_set_int("open_files", innobase_open_files);
+  err= ib_cfg_set_int("open_files", haildb_open_files.get());
   if (err != DB_SUCCESS)
     goto haildb_error;
 
-  err= ib_cfg_set_int("read_io_threads", innobase_read_io_threads);
+  err= ib_cfg_set_int("read_io_threads", haildb_read_io_threads.get());
   if (err != DB_SUCCESS)
     goto haildb_error;
 
-  err= ib_cfg_set_int("write_io_threads", innobase_write_io_threads);
+  err= ib_cfg_set_int("write_io_threads", haildb_write_io_threads.get());
   if (err != DB_SUCCESS)
     goto haildb_error;
 
-  err= ib_cfg_set_int("sync_spin_loops", srv_n_spin_wait_rounds);
+  err= ib_cfg_set_int("sync_spin_loops", haildb_sync_spin_loops.get());
   if (err != DB_SUCCESS)
     goto haildb_error;
 
@@ -3170,6 +3145,10 @@ static int haildb_init(drizzled::module::Context &context)
                                                     haildb_lru_block_access_recency_update));
   context.registerVariable(new sys_var_constrained_value_readonly<unsigned int>("max_dirty_pages_pct", haildb_max_dirty_pages_pct));
   context.registerVariable(new sys_var_constrained_value_readonly<uint64_t>("max_purge_lag", haildb_max_purge_lag));
+  context.registerVariable(new sys_var_constrained_value_readonly<uint64_t>("sync_spin_loops", haildb_sync_spin_loops));
+  context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("open_files", haildb_open_files));
+  context.registerVariable(new sys_var_constrained_value_readonly<unsigned int>("read_io_threads", haildb_read_io_threads));
+  context.registerVariable(new sys_var_constrained_value_readonly<unsigned int>("write_io_threads", haildb_write_io_threads));
 
   haildb_datadict_dump_func_initialize(context);
   config_table_function_initialize(context);
@@ -3202,27 +3181,6 @@ HailDBEngine::~HailDBEngine()
 
 }
 
-
-
-static DRIZZLE_SYSVAR_LONG(open_files, innobase_open_files,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "How many files at the maximum HailDB keeps open at the same time.",
-  NULL, NULL, 300L, 10L, LONG_MAX, 0);
-
-static DRIZZLE_SYSVAR_ULONG(read_io_threads, innobase_read_io_threads,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Number of background read I/O threads in HailDB.",
-  NULL, NULL, 4, 1, 64, 0);
-
-static DRIZZLE_SYSVAR_ULONG(write_io_threads, innobase_write_io_threads,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Number of background write I/O threads in HailDB.",
-  NULL, NULL, 4, 1, 64, 0);
-
-static DRIZZLE_SYSVAR_ULONG(sync_spin_loops, srv_n_spin_wait_rounds,
-  PLUGIN_VAR_RQCMDARG,
-  "Count of spin-loop rounds in HailDB mutexes (30 by default)",
-  NULL, NULL, 30L, 0L, ~0L, 0);
 
 static void init_options(drizzled::module::option_context &context)
 {
@@ -3295,19 +3253,19 @@ static void init_options(drizzled::module::option_context &context)
           po::value<max_dirty_pages_constraint>(&haildb_max_dirty_pages_pct)->default_value(75),
           N_("Percentage of dirty pages allowed in bufferpool."));
   context("max-purge-lag",
-          po::value<max_purge_lag_constraint>(&haildb_max_purge_lag)->default_value(0),
+          po::value<uint64_constraint>(&haildb_max_purge_lag)->default_value(0),
           N_("Desired maximum length of the purge queue (0 = no limit)"));
   context("rollback-on-timeout",
           po::value<bool>(&innobase_rollback_on_timeout)->default_value(false)->zero_tokens(),
           N_("Roll back the complete transaction on lock wait timeout, for 4.x compatibility (disabled by default)"));
   context("open-files",
-          po::value<long>(&innobase_open_files)->default_value(300),
+          po::value<open_files_constraint>(&haildb_open_files)->default_value(300),
           N_("How many files at the maximum HailDB keeps open at the same time."));
   context("read-io-threads",
-          po::value<unsigned long>(&innobase_read_io_threads)->default_value(4),
+          po::value<io_threads_constraint>(&haildb_read_io_threads)->default_value(4),
           N_("Number of background read I/O threads in HailDB."));
   context("write-io-threads",
-          po::value<unsigned long>(&innobase_write_io_threads)->default_value(4),
+          po::value<io_threads_constraint>(&haildb_write_io_threads)->default_value(4),
           N_("Number of background write I/O threads in HailDB."));
   context("disable-print-verbose-log",
           N_("Disable if you want to reduce the number of messages written to the log (default: enabled)."));
@@ -3315,19 +3273,11 @@ static void init_options(drizzled::module::option_context &context)
           po::value<bool>(&innobase_create_status_file)->default_value(false)->zero_tokens(),
           N_("Enable SHOW HAILDB STATUS output in the log"));
   context("sync-spin-loops",
-          po::value<unsigned long>(&srv_n_spin_wait_rounds)->default_value(30L),
+          po::value<uint64_constraint>(&haildb_sync_spin_loops)->default_value(30L),
           N_("Count of spin-loop rounds in HailDB mutexes (30 by default)"));
   context("use-internal-malloc",
           N_("Use HailDB's internal memory allocator instead of the OS memory allocator"));
 }
-
-static drizzle_sys_var* innobase_system_variables[]= {
-  DRIZZLE_SYSVAR(open_files),
-  DRIZZLE_SYSVAR(read_io_threads),
-  DRIZZLE_SYSVAR(write_io_threads),
-  DRIZZLE_SYSVAR(sync_spin_loops),
-  NULL
-};
 
 DRIZZLE_DECLARE_PLUGIN
 {
@@ -3338,7 +3288,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Transactional Storage Engine using the HailDB Library",
   PLUGIN_LICENSE_GPL,
   haildb_init,     /* Plugin Init */
-  innobase_system_variables, /* system variables */
+  NULL, /* system variables */
   init_options                /* config options   */
 }
 DRIZZLE_DECLARE_PLUGIN_END;
