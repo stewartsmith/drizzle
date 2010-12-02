@@ -1015,6 +1015,7 @@ void TransactionServices::initTransactionMessage(message::Transaction &in_transa
   if (should_inc_trx_id)
   {
     trx->set_transaction_id(getCurrentTransactionId(in_session));
+    in_session->setXaId(0);
   }  
   else
   { 
