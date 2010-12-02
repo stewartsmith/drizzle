@@ -1139,7 +1139,7 @@ void drizzle_add_plugin_sysvar(sys_var_pluginvar *var);
 void drizzle_del_plugin_sysvar();
 void add_sys_var_to_list(sys_var *var, struct option *long_options);
 void add_sys_var_to_list(sys_var *var);
-sys_var *find_sys_var(Session *session, const char *str, uint32_t length=0);
+sys_var *find_sys_var(const char *str, uint32_t length=0);
 bool not_all_support_one_shot(List<set_var_base> *var_list);
 extern sys_var_session_time_zone sys_time_zone;
 extern sys_var_session_bit sys_autocommit;

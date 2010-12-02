@@ -40,8 +40,10 @@
 #include <map>
 
 namespace po=boost::program_options;
-using namespace std;
-using namespace drizzled;
+
+namespace drizzle_plugin
+{
+
 
 /*
  * DATA_DICTIONARY tables.
@@ -53,7 +55,7 @@ static StatsTableTool *stats_table_tool;
 /*
  * System variable related variables.
  */
-static char *sysvar_memcached_servers= NULL;
+static std::string sysvar_memcached_servers;
 
 /**
  * Initialize the memcached stats plugin.
@@ -61,87 +63,31 @@ static char *sysvar_memcached_servers= NULL;
  * @param[in] registry the drizzled::plugin::Registry singleton
  * @return false on success; true on failure.
  */
-static int init(module::Context &context)
+static int init(drizzled::module::Context &context)
 {
-  const module::option_map &vm= context.getOptions();
-
-  if(vm.count("servers"))
-  {
-    sysvar_memcached_servers= strdup(vm["servers"].as<string>().c_str());
-  }
-
-  else
-  {
-    sysvar_memcached_servers= strdup("");
-  }
-
-  SysvarHolder &sysvar_holder= SysvarHolder::singleton();
-  sysvar_holder.setServersString(sysvar_memcached_servers);
-  sysvar_holder.setMemoryPtr(sysvar_memcached_servers);
+  const drizzled::module::option_map &vm= context.getOptions();
 
   /* we are good to go */
-  stats_table_tool= new(std::nothrow)StatsTableTool; 
+  stats_table_tool= new StatsTableTool; 
   context.add(stats_table_tool);
 
-  analysis_table_tool= new(std::nothrow)AnalysisTableTool;
+  analysis_table_tool= new AnalysisTableTool;
   context.add(analysis_table_tool);
 
+  context.registerVariable(new sys_var_std_string("servers",
+                                                  sysvar_memcached_servers));
+                          
   return 0;
 }
-
-static int check_memc_servers(Session *,
-                              drizzle_sys_var *,
-                              void *save,
-                              drizzle_value *value)
-{
-  char buff[STRING_BUFFER_USUAL_SIZE];
-  int len= sizeof(buff);
-  const char *input= value->val_str(value, buff, &len);
-
-  if (input)
-  {
-    SysvarHolder &sysvar_holder= SysvarHolder::singleton();
-    sysvar_holder.setServersStringVar(input);
-    *(bool *) save= (bool) true;
-    return 0;
-  }
-
-  *(bool *) save= (bool) false;
-  return 1;
-}
-
-static void set_memc_servers(Session *,
-                             drizzle_sys_var *,
-                             void *var_ptr,
-                             const void *save)
-{
-  if (*(bool *) save != false)
-  {
-    SysvarHolder &sysvar_holder= SysvarHolder::singleton();
-    sysvar_holder.updateServersSysvar((const char **) var_ptr);
-  }
-}
-
-static DRIZZLE_SYSVAR_STR(servers,
-                          sysvar_memcached_servers,
-                          PLUGIN_VAR_OPCMDARG,
-                          N_("List of memcached servers."),
-                          check_memc_servers, /* check func */
-                          set_memc_servers, /* update func */
-                          ""); /* default value */
 
 static void init_options(drizzled::module::option_context &context)
 {
   context("servers",
-          po::value<string>(),
+          po::value<std::string>()->default_value(""),
           N_("List of memcached servers."));
 }
 
-static drizzle_sys_var *system_variables[]=
-{
-  DRIZZLE_SYSVAR(servers),
-  NULL
-};
+} /* namespace drizzle_plugin */
 
 DRIZZLE_DECLARE_PLUGIN
 {
@@ -151,8 +97,8 @@ DRIZZLE_DECLARE_PLUGIN
   "Padraig O'Sullivan",
   N_("Memcached Stats as I_S tables"),
   PLUGIN_LICENSE_BSD,
-  init,   /* Plugin Init      */
-  system_variables, /* system variables */
-  init_options    /* config options   */
+  drizzle_plugin::init,   /* Plugin Init      */
+  NULL, /* system variables */
+  drizzle_plugin::init_options    /* config options   */
 }
 DRIZZLE_DECLARE_PLUGIN_END;
