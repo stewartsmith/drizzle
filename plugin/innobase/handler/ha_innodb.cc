@@ -2423,7 +2423,6 @@ innobase_change_buffering_inited_ok:
  context.registerVariable(new sys_var_bool_ptr_readonly("file_per_table", &srv_file_per_table));
  context.registerVariable(new sys_var_bool_ptr_readonly("file_format_check", &innobase_file_format_check));
  context.registerVariable(new sys_var_bool_ptr_readonly("adaptive_flushing", &srv_adaptive_flushing));
- context.registerVariable(new sys_var_bool_ptr_readonly("adaptive_hash_index", &btr_search_enabled));
  context.registerVariable(new sys_var_bool_ptr_readonly("status_file", &innobase_create_status_file));
  context.registerVariable(new sys_var_bool_ptr_readonly("use_sys_malloc", &srv_use_sys_malloc));
  context.registerVariable(new sys_var_bool_ptr_readonly("use_native_aio", &srv_use_native_aio));
@@ -9537,6 +9536,11 @@ static DRIZZLE_SYSVAR_ULONGLONG(stats_sample_pages, srv_stats_sample_pages,
   "The number of index pages to sample when calculating statistics (default 8)",
   NULL, NULL, 8, 1, ~0ULL, 0);
 
+static DRIZZLE_SYSVAR_BOOL(adaptive_hash_index, btr_search_enabled,
+  PLUGIN_VAR_OPCMDARG,
+  "Enable InnoDB adaptive hash index (enabled by default).",
+  NULL, innodb_adaptive_hash_index_update, TRUE);
+
 static DRIZZLE_SYSVAR_ULONG(replication_delay, srv_replication_delay,
   PLUGIN_VAR_RQCMDARG,
   "Replication thread delay (ms) on the slave server if "
@@ -9853,6 +9857,7 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(old_blocks_time),
   DRIZZLE_SYSVAR(open_files),
   DRIZZLE_SYSVAR(stats_sample_pages),
+  DRIZZLE_SYSVAR(adaptive_hash_index),
   DRIZZLE_SYSVAR(replication_delay),
   DRIZZLE_SYSVAR(strict_mode),
   DRIZZLE_SYSVAR(support_xa),
