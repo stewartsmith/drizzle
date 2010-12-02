@@ -77,6 +77,8 @@
 #include "drizzled/field/datetime.h"
 #include "drizzled/field/varstring.h"
 
+#include "drizzled/definition/cache.h"
+
 using namespace std;
 
 namespace drizzled
@@ -103,61 +105,54 @@ extern size_t table_def_size;
 void TableShare::release(TableShare *share)
 {
   bool to_be_deleted= false;
-  safe_mutex_assert_owner(LOCK_open.native_handle);
+  safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle);
 
   share->lock();
   if (!--share->ref_count)
   {
     to_be_deleted= true;
   }
+  share->unlock();
 
   if (to_be_deleted)
   {
-    TableIdentifier identifier(share->getSchemaName(), share->getTableName());
-   
-    definition::Cache::singleton().erase(identifier);
-    return;
+    definition::Cache::singleton().erase(share->getCacheKey());
   }
-  share->unlock();
 }
 
-void TableShare::release(TableSharePtr &share)
+void TableShare::release(TableShare::shared_ptr &share)
 {
   bool to_be_deleted= false;
-  safe_mutex_assert_owner(LOCK_open.native_handle);
+  safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle);
 
   share->lock();
   if (!--share->ref_count)
   {
     to_be_deleted= true;
   }
+  share->unlock();
 
   if (to_be_deleted)
   {
-    TableIdentifier identifier(share->getSchemaName(), share->getTableName());
-   
-    definition::Cache::singleton().erase(identifier);
-    return;
+    definition::Cache::singleton().erase(share->getCacheKey());
   }
-  share->unlock();
 }
 
 void TableShare::release(TableIdentifier &identifier)
 {
-  TableSharePtr share= definition::Cache::singleton().find(identifier);
+  TableShare::shared_ptr share= definition::Cache::singleton().find(identifier.getKey());
   if (share)
   {
     share->version= 0;                          // Mark for delete
     if (share->ref_count == 0)
     {
-      share->lock();
-      definition::Cache::singleton().erase(identifier);
+      definition::Cache::singleton().erase(identifier.getKey());
     }
   }
 }
 
 
-static TableSharePtr foundTableShare(TableSharePtr share)
+static TableShare::shared_ptr foundTableShare(TableShare::shared_ptr share)
 {
   /*
     We found an existing table definition. Return it if we didn't get
@@ -170,7 +165,7 @@ static TableSharePtr foundTableShare(TableSharePtr share)
     /* Table definition contained an error */
     share->open_table_error(share->error, share->open_errno, share->errarg);
 
-    return TableSharePtr();
+    return TableShare::shared_ptr();
   }
 
   share->incrementTableCount();
@@ -193,7 +188,7 @@ static TableSharePtr foundTableShare(TableSharePtr share)
   If it doesn't exist, create a new from the table definition file.
 
   NOTES
-  We must have wrlock on LOCK_open when we come here
+  We must have wrlock on table::Cache::singleton().mutex() when we come here
   (To be changed later)
 
   RETURN
@@ -201,65 +196,36 @@ static TableSharePtr foundTableShare(TableSharePtr share)
 #  Share for table
 */
 
-TableSharePtr TableShare::getShareCreate(Session *session, 
-                                         TableIdentifier &identifier,
-                                         int &in_error)
+TableShare::shared_ptr TableShare::getShareCreate(Session *session, 
+                                                  TableIdentifier &identifier,
+                                                  int &in_error)
 {
-  TableSharePtr share;
+  TableShare::shared_ptr share;
 
   in_error= 0;
 
   /* Read table definition from cache */
-  if ((share= definition::Cache::singleton().find(identifier)))
+  if ((share= definition::Cache::singleton().find(identifier.getKey())))
     return foundTableShare(share);
 
   share.reset(new TableShare(message::Table::STANDARD, identifier));
   
-  /*
-    Lock mutex to be able to read table definition from file without
-    conflicts
-  */
-  share->lock();
-
-  bool ret= definition::Cache::singleton().insert(identifier, share);
-
-  if (not ret)
-    return TableSharePtr();
-
   if (share->open_table_def(*session, identifier))
   {
     in_error= share->error;
-    definition::Cache::singleton().erase(identifier);
 
-    return TableSharePtr();
+    return TableShare::shared_ptr();
   }
   share->ref_count++;				// Mark in use
   
   plugin::EventObserver::registerTableEvents(*share);
-  
-  share->unlock();
+
+  bool ret= definition::Cache::singleton().insert(identifier.getKey(), share);
+
+  if (not ret)
+    return TableShare::shared_ptr();
 
   return share;
-}
-
-
-/*
-  Check if table definition exits in cache
-
-  SYNOPSIS
-  get_cached_table_share()
-  db			Database name
-  table_name		Table name
-
-  RETURN
-  0  Not cached
-#  TableShare for table
-*/
-TableSharePtr TableShare::getShare(TableIdentifier &identifier)
-{
-  safe_mutex_assert_owner(LOCK_open.native_handle);
-
-  return definition::Cache::singleton().find(identifier);
 }
 
 static enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_type)
@@ -530,7 +496,11 @@ TableShare::TableShare(TableIdentifier &identifier, const TableIdentifier::Key &
   path.str= (char *)"";
   normalized_path.str= path.str;
   path.length= normalized_path.length= 0;
-  assert(strcmp(identifier.getTableName().c_str(), table_name.str) == 0);
+
+  std::string tb_name(identifier.getTableName());
+  std::transform(tb_name.begin(), tb_name.end(), tb_name.begin(), ::tolower);
+  assert(strcmp(tb_name.c_str(), table_name.str) == 0);
+
   assert(strcmp(identifier.getSchemaName().c_str(), db.str) == 0);
 }
 
@@ -722,16 +692,6 @@ void TableShare::init(const char *new_table_name,
 TableShare::~TableShare() 
 {
   assert(ref_count == 0);
-
-  /*
-    If someone is waiting for this to be deleted, inform it about this.
-    Don't do a delete until we know that no one is refering to this anymore.
-  */
-  if (tmp_table == message::Table::STANDARD)
-  {
-    /* No thread refers to this anymore */
-    mutex.unlock();
-  }
 
   storage_engine= NULL;
 
@@ -971,8 +931,8 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
   uint32_t local_null_fields= 0;
   reclength= 0;
 
-  vector<uint32_t> field_offsets;
-  vector<uint32_t> field_pack_length;
+  std::vector<uint32_t> field_offsets;
+  std::vector<uint32_t> field_pack_length;
 
   field_offsets.resize(fields);
   field_pack_length.resize(fields);
@@ -1693,7 +1653,7 @@ int TableShare::open_table_def(Session& session, TableIdentifier &identifier)
   local_error= 1;
   error_given= 0;
 
-  message::TablePtr table;
+  message::table::shared_ptr table;
 
   local_error= plugin::StorageEngine::getTableDefinition(session, identifier, table);
 

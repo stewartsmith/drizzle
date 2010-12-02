@@ -27,7 +27,7 @@ namespace drizzled {
 
 namespace message {
 
-TablePtr Cache::find(const TableIdentifier &identifier)
+table::shared_ptr Cache::find(const TableIdentifier &identifier)
 {
   boost_unique_lock_t scoped_lock(_access);
 
@@ -37,7 +37,7 @@ TablePtr Cache::find(const TableIdentifier &identifier)
     return (*iter).second;
   }
 
-  return TablePtr();
+  return table::shared_ptr();
 }
 
 void Cache::erase(const TableIdentifier &identifier)
@@ -47,7 +47,7 @@ void Cache::erase(const TableIdentifier &identifier)
   cache.erase(identifier.getKey());
 }
 
-bool Cache::insert(const TableIdentifier &identifier, TablePtr share)
+bool Cache::insert(const TableIdentifier &identifier, table::shared_ptr share)
 {
   boost_unique_lock_t scoped_lock(_access);
 
@@ -61,7 +61,7 @@ bool Cache::insert(const TableIdentifier &identifier, drizzled::message::Table &
 {
   boost_unique_lock_t scoped_lock(_access);
 
-  TablePtr share;
+  table::shared_ptr share;
   share.reset(new message::Table(message));
 
   std::pair<Map::iterator, bool> ret=

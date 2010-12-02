@@ -29,7 +29,7 @@ public:
   class Generator : public show_dictionary::Show::Generator 
   {
     bool is_primed;
-    drizzled::message::TablePtr table_message;
+    drizzled::message::table::shared_ptr table_message;
 
   public:
     Generator(drizzled::Field **arg);

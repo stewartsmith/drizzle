@@ -178,7 +178,7 @@ static long innobase_additional_mem_pool_size= 8*1024*1024L;
 static ulong innobase_commit_concurrency = 0;
 static ulong innobase_read_io_threads;
 static ulong innobase_write_io_threads;
-static long innobase_buffer_pool_instances = 1;
+static int64_t innobase_buffer_pool_instances = 1;
 
 /**
  * @TODO: Turn this into size_t as soon as we have a Variable<size_t>
@@ -507,14 +507,21 @@ void InnobaseEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
     { }
     else
     {
-      char uname[NAME_LEN + 1];
-      uint32_t file_name_len;
+      std::string path;
+      path+= directory.getPath();
+      path+= FN_LIBCHAR;
+      path+= entry->filename;
 
-      file_name_len= TableIdentifier::filename_to_tablename(filename->c_str(), uname, sizeof(uname));
-      // TODO: Remove need for memory copy here
-      uname[file_name_len - sizeof(DEFAULT_FILE_EXTENSION) + 1]= '\0'; // Subtract ending, place NULL 
-
-      set_of_identifiers.push_back(TableIdentifier(schema_identifier, uname));
+      message::Table definition;
+      if (StorageEngine::readTableFile(path, definition))
+      {
+        /* 
+           Using schema_identifier here to stop unused warning, could use
+           definition.schema() instead
+        */
+        TableIdentifier identifier(schema_identifier.getSchemaName(), definition.name());
+        set_of_identifiers.push_back(identifier);
+      }
     }
   }
 }
@@ -8995,15 +9002,20 @@ uint64_t InnobaseEngine::doGetCurrentTransactionId(Session *session)
 
 uint64_t InnobaseEngine::doGetNewTransactionId(Session *session)
 {
-  trx_t *trx= innobase_trx_allocate(session);
+  trx_t*& trx = session_to_trx(session);
+
+  if (trx == NULL)
+  {
+    trx = innobase_trx_allocate(session);
+
+    innobase_trx_init(session, trx);
+  }
 
   mutex_enter(&kernel_mutex);
   trx->id= trx_sys_get_new_trx_id();
   mutex_exit(&kernel_mutex);
 
   uint64_t transaction_id= trx->id;
-
-  trx_free_for_mysql(trx);
 
   return transaction_id;
 }
@@ -9584,7 +9596,7 @@ static DRIZZLE_SYSVAR_LONGLONG(buffer_pool_size, innobase_buffer_pool_size,
   "The size of the memory buffer InnoDB uses to cache data and indexes of its tables.",
   NULL, NULL, 128*1024*1024L, 5*1024*1024L, INT64_MAX, 1024*1024L);
 
-static DRIZZLE_SYSVAR_LONG(buffer_pool_instances, innobase_buffer_pool_instances,
+static DRIZZLE_SYSVAR_LONGLONG(buffer_pool_instances, innobase_buffer_pool_instances,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "Number of buffer pool instances, set to higher value on high-end machines to increase scalability",
   NULL, NULL, 1L, 1L, MAX_BUFFER_POOLS, 1L);

@@ -60,7 +60,7 @@ ProcesslistTool::Generator::~Generator()
 
 bool ProcesslistTool::Generator::populate()
 {
-  drizzled::SessionPtr tmp;
+  drizzled::Session::shared_ptr tmp;
 
   while ((tmp= session_generator))
   {
@@ -116,7 +116,7 @@ bool ProcesslistTool::Generator::populate()
     val ? push(val) : push();
 
     /* INFO */
-    push(*getSession().getQueryString());
+    push(*tmp->getQueryString());
 
     return true;
   }

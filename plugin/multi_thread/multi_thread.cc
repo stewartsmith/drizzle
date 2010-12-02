@@ -19,6 +19,8 @@
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
 #include <drizzled/errmsg_print.h>
+#include "drizzled/session.h"
+#include "drizzled/session_list.h"
 
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
@@ -36,8 +38,21 @@ namespace drizzled
   extern size_t my_thread_stack_size;
 }
 
-void MultiThreadScheduler::runSession(drizzled::Session *session)
+namespace multi_thread {
+
+void MultiThreadScheduler::runSession(drizzled::session_id_t id)
 {
+  char stack_dummy;
+  boost::this_thread::disable_interruption disable_by_default;
+  Session::shared_ptr session(session::Cache::singleton().find(id));
+
+  if (not session)
+  {
+    std::cerr << "Session killed before thread could execute\n";
+    return;
+  }
+  session->pushInterrupt(&disable_by_default);
+
   if (drizzled::internal::my_thread_init())
   {
     session->disconnect(drizzled::ER_OUT_OF_RESOURCES, true);
@@ -46,9 +61,12 @@ void MultiThreadScheduler::runSession(drizzled::Session *session)
   }
   boost::this_thread::at_thread_exit(&internal::my_thread_end);
 
-  session->thread_stack= (char*) &session;
+  session->thread_stack= (char*) &stack_dummy;
   session->run();
   killSessionNow(session);
+  // @todo remove hard spin by disconnection the session first from the
+  // thread.
+  while (not session.unique()) {}
 }
 
 void MultiThreadScheduler::setStackSize()
@@ -89,16 +107,22 @@ void MultiThreadScheduler::setStackSize()
 #endif
 }
 
-bool MultiThreadScheduler::addSession(Session *session)
+bool MultiThreadScheduler::addSession(Session::shared_ptr &session)
 {
   if (thread_count >= max_threads)
     return true;
 
   thread_count.increment();
 
-  boost::thread new_thread(boost::bind(&MultiThreadScheduler::runSession, this, session));
+  session->getThread().reset(new boost::thread((boost::bind(&MultiThreadScheduler::runSession, this, session->getSessionId()))));
 
-  if (not new_thread.joinable())
+  if (not session->getThread())
+  {
+    thread_count.decrement();
+    return true;
+  }
+
+  if (not session->getThread()->joinable())
   {
     thread_count.decrement();
     return true;
@@ -108,7 +132,7 @@ bool MultiThreadScheduler::addSession(Session *session)
 }
 
 
-void MultiThreadScheduler::killSessionNow(Session *session)
+void MultiThreadScheduler::killSessionNow(Session::shared_ptr &session)
 {
   /* Locks LOCK_thread_count and deletes session */
   Session::unlink(session);
@@ -117,18 +141,20 @@ void MultiThreadScheduler::killSessionNow(Session *session)
 
 MultiThreadScheduler::~MultiThreadScheduler()
 {
-  boost::mutex::scoped_lock scopedLock(LOCK_thread_count);
+  boost::mutex::scoped_lock scopedLock(drizzled::session::Cache::singleton().mutex());
   while (thread_count)
   {
     COND_thread_count.wait(scopedLock);
   }
 }
 
+} // multi_thread namespace
+
   
 static int init(drizzled::module::Context &context)
 {
   
-  context.add(new MultiThreadScheduler("multi_thread"));
+  context.add(new multi_thread::MultiThreadScheduler("multi_thread"));
 
   return 0;
 }

@@ -32,6 +32,9 @@
 
 namespace drizzled {
 namespace message {
+namespace table {
+typedef boost::shared_ptr<drizzled::message::Table> shared_ptr;
+}
 
 void init(drizzled::message::Schema &arg, const std::string &name_arg);
 void init(drizzled::message::Table &arg, const std::string &name_arg, const std::string &schema_arg, const std::string &engine_arg);

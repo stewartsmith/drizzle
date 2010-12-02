@@ -44,9 +44,6 @@ class TableIdentifier;
 
 int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
                          bool drop_temporary);
-void write_bin_log_drop_table(Session *session,
-                              bool if_exists, const char *db_name,
-                              const char *table_name);
 bool quick_rm_table(Session& session,
                     TableIdentifier &identifier);
 void close_cached_table(Session *session, Table *table);

@@ -22,8 +22,13 @@
 #include <drizzled/plugin/scheduler.h>
 #include "drizzled/internal/my_sys.h"
 #include <drizzled/sql_parse.h>
-#include <drizzled/session.h>
 #include <string>
+
+namespace drizzled {
+class Session;
+}
+
+namespace multi_thread {
 
 class MultiThreadScheduler: public drizzled::plugin::Scheduler
 {
@@ -39,12 +44,14 @@ public:
   }
 
   ~MultiThreadScheduler();
-  bool addSession(drizzled::Session *session);
-  void killSessionNow(drizzled::Session *session);
+  bool addSession(drizzled::Session::shared_ptr &session);
+  void killSessionNow(drizzled::Session::shared_ptr &session);
   
-  void runSession(drizzled::Session *session);
+  void runSession(drizzled::session_id_t);
 private:
   void setStackSize();
 };
+
+} // namespace multi_thread
 
 #endif /* PLUGIN_MULTI_THREAD_MULTI_THREAD_H */

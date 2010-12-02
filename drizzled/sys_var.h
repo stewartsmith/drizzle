@@ -519,6 +519,63 @@ public:
   }
 };
 
+class sys_var_std_string :
+  public sys_var
+{
+  std::string &value;
+  sys_check_func check_func;
+  sys_update_func update_func;
+  sys_set_default_func set_default_func;
+public:
+  sys_var_std_string(const std::string &name_arg,
+                     std::string &value_arg,
+                     sys_check_func check_func_arg= NULL,
+                     sys_update_func update_func_arg= NULL) :
+    sys_var(name_arg),
+    value(value_arg),
+    check_func(check_func_arg),
+    update_func(update_func_arg)
+  {  }
+
+  inline void set(char *val_in)
+  {
+    value= val_in; 
+  }
+
+  void set_check_func(sys_check_func check_func_arg= NULL)
+  {
+    check_func= check_func_arg;
+  }
+
+  void set_update_func(sys_update_func update_func_arg= NULL)
+  {
+    update_func= update_func_arg;
+  }
+
+  bool check(Session *session, set_var *var);
+    
+  bool update(Session *session, set_var *var)
+  {
+    if (update_func != NULL)
+    {
+      return (*update_func)(session, var);
+    }
+    return false;
+  }
+  SHOW_TYPE show_type() { return SHOW_CHAR; }
+  unsigned char *value_ptr(Session *, sql_var_t, const LEX_STRING *)
+  {
+    return (unsigned char*)(value.c_str());
+  }
+  bool check_update_type(Item_result type)
+  {
+    return type != STRING_RESULT;		/* Only accept strings */
+  }
+  bool check_default(sql_var_t)
+  { return true; }
+  bool is_readonly() const { return false; }
+};
+
 class sys_var_const_string :
   public sys_var
 {

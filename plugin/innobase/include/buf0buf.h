@@ -1116,7 +1116,7 @@ buf_pool_watch_is_sentinel(
 /*=======================*/
 	buf_pool_t*		buf_pool,	/*!< buffer pool instance */
 	const buf_page_t*	bpage)		/*!< in: block */
-	__attribute__((nonnull, warn_unused_result));
+  UNIV_WARN_UNUSED_RESULT;
 /****************************************************************//**
 Add watch for the given page to be read in. Caller must have the buffer pool
 @return NULL if watch set, block if the page is in the buffer pool */
@@ -1127,7 +1127,7 @@ buf_pool_watch_set(
 	ulint	space,	/*!< in: space id */
 	ulint	offset,	/*!< in: page number */
 	ulint	fold)	/*!< in: buf_page_address_fold(space, offset) */
-	__attribute__((warn_unused_result));
+  UNIV_WARN_UNUSED_RESULT;
 /****************************************************************//**
 Stop watching if the page has been read in.
 buf_pool_watch_set(space,offset) must have returned NULL before. */
@@ -1148,7 +1148,7 @@ buf_pool_watch_occurred(
 /*====================*/
 	ulint	space,	/*!< in: space id */
 	ulint	offset)	/*!< in: page number */
-	__attribute__((warn_unused_result));
+  UNIV_WARN_UNUSED_RESULT;
 /********************************************************************//**
 Get total buffer pool statistics. */
 UNIV_INTERN

@@ -197,6 +197,10 @@ static sys_var_session_uint32_t	sys_div_precincrement("div_precision_increment",
 
 static sys_var_session_size_t	sys_range_alloc_block_size("range_alloc_block_size",
                                                            &drizzle_system_variables::range_alloc_block_size);
+
+static sys_var_session_bool sys_replicate_query("replicate_query",
+                                                &drizzle_system_variables::replicate_query);
+
 static sys_var_session_uint32_t	sys_query_alloc_block_size("query_alloc_block_size",
                                                            &drizzle_system_variables::query_alloc_block_size,
                                                            NULL, fix_session_mem_root);
@@ -332,6 +336,22 @@ bool sys_var_str::check(Session *session, set_var *var)
   if ((res=(*check_func)(session, var)) < 0)
     my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), getName().c_str(), var->value->str_value.ptr());
   return res;
+}
+
+bool sys_var_std_string::check(Session *session, set_var *var)
+{
+  if (check_func == NULL)
+  {
+    return false;
+  }
+
+  int res= (*check_func)(session, var);
+  if (res != 0)
+  {
+    my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), getName().c_str(), var->value->str_value.ptr());
+    return true;
+  }
+  return false;
 }
 
 /*
@@ -1608,6 +1628,7 @@ int sys_var_init()
     add_sys_var_to_list(&sys_range_alloc_block_size, my_long_options);
     add_sys_var_to_list(&sys_read_buff_size, my_long_options);
     add_sys_var_to_list(&sys_read_rnd_buff_size, my_long_options);
+    add_sys_var_to_list(&sys_replicate_query, my_long_options);
     add_sys_var_to_list(&sys_scheduler, my_long_options);
     add_sys_var_to_list(&sys_secure_file_priv, my_long_options);
     add_sys_var_to_list(&sys_select_limit, my_long_options);

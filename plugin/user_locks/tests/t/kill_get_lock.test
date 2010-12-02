@@ -1,0 +1,25 @@
+# Test creating a barrier with a number
+connect (con1,localhost,root,,);
+connect (con2,localhost,root,,);
+connect (con3,localhost,root,,);
+connect (con4,localhost,root,,);
+connect (con5,localhost,root,,);
+
+# The default connection will own everything.
+connection default;
+set @lock_name= "_name";
+SELECT get_lock(@lock_name);
+SELECT if ((is_used_lock(@lock_name) = CONNECTION_ID()), "YES", "NO");
+CREATE TABLE connection (id int);
+
+connection con1;
+set @lock_name= "_name";
+insert into connection VALUES (CONNECTION_ID());
+send SELECT get_lock(@lock_name), "con1";
+
+# Since there is no timing mechanism on looks all we can do is kill, and
+# hope it reached it in time.
+connection default;
+EXECUTE "SELECT @id:=ID FROM connection LIMIT 1" WITH NO RETURN;
+kill QUERY @id;
+DROP TABLE connection;

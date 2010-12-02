@@ -124,6 +124,7 @@ struct drizzle_con_st
   char password[DRIZZLE_MAX_PASSWORD_SIZE];
   uint8_t scramble_buffer[DRIZZLE_MAX_SCRAMBLE_SIZE];
   char server_version[DRIZZLE_MAX_SERVER_VERSION_SIZE];
+  char server_extra[DRIZZLE_MAX_SERVER_EXTRA_SIZE];
   drizzle_state_fn *state_stack[DRIZZLE_STATE_STACK_SIZE];
   char user[DRIZZLE_MAX_USER_SIZE];
 };
