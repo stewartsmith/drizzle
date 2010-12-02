@@ -2461,7 +2461,6 @@ innobase_change_buffering_inited_ok:
 
   if (vm.count("replication-log") and vm["replication-log"].as<bool>())
   {
-    std::cerr << "Enable replication log\n";
     ReplicationLog::setup(static_cast<ReplicationLog *>(replication_logger));
   }
 

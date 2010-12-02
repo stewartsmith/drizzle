@@ -781,7 +781,6 @@ Gets pointer to a prebuilt dtuple used in insertions. If the insert graph
 has not yet been built in the prebuilt struct, then this function first
 builds it.
 @return	prebuilt dtuple; the column type information is also set in it */
-//static
 dtuple_t*
 row_get_prebuilt_insert_row(
 /*========================*/
