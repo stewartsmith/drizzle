@@ -338,9 +338,9 @@ public:
   sys_update_func update_func;
   sys_set_default_func set_default_func;
   sys_var_str(const char *name_arg,
-	      sys_check_func check_func_arg,
-	      sys_update_func update_func_arg,
-	      sys_set_default_func set_default_func_arg,
+              sys_check_func check_func_arg,
+              sys_update_func update_func_arg,
+              sys_set_default_func set_default_func_arg,
               char *value_arg)
     :sys_var(name_arg), value(value_arg), check_func(check_func_arg),
     update_func(update_func_arg),set_default_func(set_default_func_arg)
@@ -413,6 +413,15 @@ public:
   sys_var_constrained_value(const char *name_arg,
                             constrained_value<T> &value_arg) :
     sys_var(name_arg),
+    value(value_arg),
+    default_value(0),
+    have_default_value(false)
+  { }
+
+  sys_var_constrained_value(const char *name_arg,
+                            constrained_value<T> &value_arg,
+                            sys_after_update_func after_update_func_arg) :
+    sys_var(name_arg, after_update_func_arg),
     value(value_arg),
     default_value(0),
     have_default_value(false)

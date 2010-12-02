@@ -2829,13 +2829,10 @@ static bool srv_use_sys_malloc;
 static string innobase_file_format_name;
 static unsigned long srv_max_buf_pool_modified_pct;
 static unsigned long srv_max_purge_lag;
-static unsigned long innobase_lru_old_blocks_pct;
-static unsigned long innobase_lru_block_access_recency;
 static unsigned long innobase_read_io_threads;
 static unsigned long innobase_write_io_threads;
 typedef constrained_check<unsigned int, 1000, 1> autoextend_constraint;
 static autoextend_constraint srv_auto_extend_increment;
-static unsigned long innobase_lock_wait_timeout;
 static unsigned long srv_n_spin_wait_rounds;
 typedef constrained_check<size_t, SIZE_MAX, 5242880, 1048576> buffer_pool_constraint;
 static buffer_pool_constraint innobase_buffer_pool_size;
@@ -2848,15 +2845,22 @@ static trinary_constraint innobase_fast_shutdown;
 static trinary_constraint srv_flush_log_at_trx_commit;
 typedef constrained_check<uint16_t, 6, 0> force_recovery_constraint;
 static force_recovery_constraint innobase_force_recovery;
+typedef constrained_check<int64_t, INT64_MAX, 1024*1024, 1024*1024> log_file_constraint;
+static log_file_constraint haildb_log_file_size;
+
 static io_capacity_constraint srv_io_capacity;
+typedef constrained_check<unsigned int, 100, 2> log_files_in_group_constraint;
+static log_files_in_group_constraint haildb_log_files_in_group;
+typedef constrained_check<unsigned int, 1024*1024*1024, 1> lock_wait_constraint;
+static lock_wait_constraint innobase_lock_wait_timeout;
+typedef constrained_check<long, LONG_MAX, 256*1024, 1024> log_buffer_size_constraint;
+static log_buffer_size_constraint innobase_log_buffer_size;
+typedef constrained_check<unsigned int, 97, 5> lru_old_blocks_constraint;
+static lru_old_blocks_constraint innobase_lru_old_blocks_pct;
+static uint32_t innobase_lru_block_access_recency;
 
 static long innobase_open_files;
-static long innobase_log_buffer_size;
-static char  default_haildb_data_file_path[]= "ibdata1:10M:autoextend";
-static char* haildb_data_file_path= NULL;
 
-static int64_t haildb_log_file_size;
-static int64_t haildb_log_files_in_group;
 
 static int haildb_file_format_name_validate(Session*, set_var *var)
 {
@@ -2874,6 +2878,18 @@ static int haildb_file_format_name_validate(Session*, set_var *var)
   }
   else
     return 1;
+}
+
+static void haildb_lru_old_blocks_pct_update(Session*, sql_var_t)
+{
+  int ret= ib_cfg_set_int("lru_old_blocks_pct", static_cast<uint32_t>(innobase_lru_old_blocks_pct));
+  (void)ret;
+}
+
+static void haildb_lru_block_access_recency_update(Session*, sql_var_t)
+{
+  int ret= ib_cfg_set_int("lru_block_access_recency", static_cast<uint32_t>(innobase_lru_block_access_recency));
+  (void)ret;
 }
 
 static int haildb_init(drizzled::module::Context &context)
@@ -2896,63 +2912,6 @@ static int haildb_init(drizzled::module::Context &context)
   innobase_print_verbose_log= (vm.count("disable-print-verbose-log")) ? false : true;
   srv_use_sys_malloc= (vm.count("use-internal-malloc")) ? false : true;
 
-  if (vm.count("log-file-size"))
-  {
-    if (haildb_log_file_size > INT64_MAX || haildb_log_file_size < 1*1024*1024L)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of log-file-size"));
-      return 1;
-    }
-    haildb_log_file_size/= 1024*1024L;
-    haildb_log_file_size*= 1024*1024L;
-  }
-
-  if (vm.count("log-files-in-group"))
-  {
-    if (haildb_log_files_in_group > 100 || haildb_log_files_in_group < 2)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of log-files-in-group"));
-      return 1;
-    }
-  }
-
-  if (vm.count("lock-wait-timeout"))
-  {
-    if (innobase_lock_wait_timeout > 1024*1024*1024 || innobase_lock_wait_timeout < 1)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of lock-wait-timeout"));
-      return 1;
-    }
-  }
-
-  if (vm.count("log-buffer-size"))
-  {
-    if (innobase_log_buffer_size > LONG_MAX || innobase_log_buffer_size < 256*1024L)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of log-buffer-size"));
-      return 1;
-    }
-    innobase_log_buffer_size/= 1024;
-    innobase_log_buffer_size*= 1024;
-  }
-
-  if (vm.count("lru-old-blocks-pct"))
-  {
-    if (innobase_lru_old_blocks_pct > 95 || innobase_lru_old_blocks_pct < 5)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of lru-old-blocks-pct"));
-      return 1;
-    }
-  }
-
-  if (vm.count("lru-block-access-recency"))
-  {
-    if (innobase_lru_block_access_recency > ULONG_MAX)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of lru-block-access-recency"));
-      return 1;
-    }
-  }
 
   if (vm.count("max-dirty-pages-pct"))
   {
@@ -2999,11 +2958,6 @@ static int haildb_init(drizzled::module::Context &context)
     }
   }
 
-  if (vm.count("data-file-path"))
-  {
-    haildb_data_file_path= const_cast<char *>(vm["data-file-path"].as<string>().c_str());
-  }
-
   ib_err_t err;
 
   err= ib_init();
@@ -3011,7 +2965,7 @@ static int haildb_init(drizzled::module::Context &context)
     goto haildb_error;
 
 
-  if (vm.count("data-home-dir"))
+  if (not vm["data-home-dir"].as<string>().empty())
   {
     err= ib_cfg_set_text("data_home_dir", vm["data-home-dir"].as<string>().c_str());
     if (err != DB_SUCCESS)
@@ -3024,9 +2978,6 @@ static int haildb_init(drizzled::module::Context &context)
     if (err != DB_SUCCESS)
       goto haildb_error;
   }
-
-  if (haildb_data_file_path == NULL)
-    haildb_data_file_path= default_haildb_data_file_path;
 
   if (innobase_print_verbose_log)
     err= ib_cfg_set_bool_on("print_verbose_log");
@@ -3110,19 +3061,19 @@ static int haildb_init(drizzled::module::Context &context)
   if (err != DB_SUCCESS)
     goto haildb_error;
 
-  err= ib_cfg_set_text("data_file_path", haildb_data_file_path);
+  err= ib_cfg_set_text("data_file_path", vm["data-file-path"].as<string>().c_str());
   if (err != DB_SUCCESS)
     goto haildb_error;
 
-  err= ib_cfg_set_int("log_file_size", haildb_log_file_size);
+  err= ib_cfg_set_int("log_file_size", static_cast<int64_t>(haildb_log_file_size));
   if (err != DB_SUCCESS)
     goto haildb_error;
 
-  err= ib_cfg_set_int("log_buffer_size", innobase_log_buffer_size);
+  err= ib_cfg_set_int("log_buffer_size", static_cast<long>(innobase_log_buffer_size));
   if (err != DB_SUCCESS)
     goto haildb_error;
 
-  err= ib_cfg_set_int("log_files_in_group", haildb_log_files_in_group);
+  err= ib_cfg_set_int("log_files_in_group", static_cast<unsigned int>(haildb_log_files_in_group));
   if (err != DB_SUCCESS)
     goto haildb_error;
 
@@ -3130,7 +3081,7 @@ static int haildb_init(drizzled::module::Context &context)
   if (err != DB_SUCCESS)
     goto haildb_error;
 
-  err= ib_cfg_set_int("lock_wait_timeout", innobase_lock_wait_timeout);
+  err= ib_cfg_set_int("lock_wait_timeout", static_cast<unsigned int>(innobase_lock_wait_timeout));
   if (err != DB_SUCCESS)
     goto haildb_error;
 
@@ -3185,13 +3136,15 @@ static int haildb_init(drizzled::module::Context &context)
                                                          &innobase_use_checksums));
   context.registerVariable(new sys_var_bool_ptr_readonly("doublewrite",
                                                          &innobase_use_doublewrite));
+  context.registerVariable(new sys_var_const_string_val("data_file_path",
+                                                vm["data-file-path"].as<string>()));
   context.registerVariable(new sys_var_const_string_val("data_home_dir",
-                                                vm.count("data-home-dir") ?  vm["data-home-dir"].as<string>() : ""));
+                                                vm["data-home-dir"].as<string>()));
   context.registerVariable(new sys_var_constrained_value_readonly<unsigned int>("io_capacity", srv_io_capacity));
   context.registerVariable(new sys_var_constrained_value_readonly<uint16_t>("fast_shutdown", innobase_fast_shutdown));
   context.registerVariable(new sys_var_bool_ptr_readonly("file_per_table",
                                                          &srv_file_per_table));
-  context.registerVariable(new sys_var_std_string("file-format",
+  context.registerVariable(new sys_var_std_string("file_format",
                                                   innobase_file_format_name,
                                                   haildb_file_format_name_validate));
   context.registerVariable(new sys_var_constrained_value_readonly<uint16_t>("flush_log_at_trx_commit", srv_flush_log_at_trx_commit));
@@ -3200,6 +3153,14 @@ static int haildb_init(drizzled::module::Context &context)
   context.registerVariable(new sys_var_constrained_value_readonly<uint16_t>("force_recovery", innobase_force_recovery));
   context.registerVariable(new sys_var_const_string_val("log_group_home_dir",
                                                 vm.count("log-group-home-dir") ?  vm["log-group-home-dir"].as<string>() : ""));
+  context.registerVariable(new sys_var_constrained_value<int64_t>("log_file_size", haildb_log_file_size));
+  context.registerVariable(new sys_var_constrained_value_readonly<unsigned int>("log_files_in_group", haildb_log_files_in_group));
+  context.registerVariable(new sys_var_constrained_value_readonly<unsigned int>("lock_wait_timeout", innobase_lock_wait_timeout));
+  context.registerVariable(new sys_var_constrained_value_readonly<long>("log_buffer_size", innobase_log_buffer_size));
+  context.registerVariable(new sys_var_constrained_value<unsigned int>("lru_old_blocks_pct", innobase_lru_old_blocks_pct, haildb_lru_old_blocks_pct_update));
+  context.registerVariable(new sys_var_uint32_t_ptr("lru_block_access_recency",
+                                                    &innobase_lru_block_access_recency,
+                                                    haildb_lru_block_access_recency_update));
 
   haildb_datadict_dump_func_initialize(context);
   config_table_function_initialize(context);
@@ -3233,35 +3194,6 @@ HailDBEngine::~HailDBEngine()
 }
 
 
-static void haildb_lru_old_blocks_pct_update(Session*, drizzle_sys_var*,
-                                             void *,
-                                             const void *save)
-
-{
-  unsigned long pct;
-
-  pct= *static_cast<const unsigned long*>(save);
-
-  ib_err_t err= ib_cfg_set_int("lru_old_blocks_pct", pct);
-  if (err == DB_SUCCESS)
-    innobase_lru_old_blocks_pct= pct;
-}
-
-static void haildb_lru_block_access_recency_update(Session*, drizzle_sys_var*,
-                                                   void *,
-                                                   const void *save)
-
-{
-  unsigned long ms;
-
-  ms= *static_cast<const unsigned long*>(save);
-
-  ib_err_t err= ib_cfg_set_int("lru_block_access_recency", ms);
-
-  if (err == DB_SUCCESS)
-    innobase_lru_block_access_recency= ms;
-}
-
 static void haildb_status_file_update(Session*, drizzle_sys_var*,
                                       void *,
                                       const void *save)
@@ -3281,45 +3213,6 @@ static void haildb_status_file_update(Session*, drizzle_sys_var*,
   if (err == DB_SUCCESS)
     innobase_create_status_file= status_file_enabled;
 }
-
-static DRIZZLE_SYSVAR_STR(data_file_path, haildb_data_file_path,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Path to individual files and their sizes.",
-  NULL, NULL, NULL);
-
-static DRIZZLE_SYSVAR_LONGLONG(log_file_size, haildb_log_file_size,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Size of each log file in a log group.",
-  NULL, NULL, 20*1024*1024L, 1*1024*1024L, INT64_MAX, 1024*1024L);
-
-static DRIZZLE_SYSVAR_LONGLONG(log_files_in_group, haildb_log_files_in_group,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Number of log files in the log group. HailDB writes to the files in a circular fashion. Value 3 is recommended here.",
-  NULL, NULL, 2, 2, 100, 0);
-
-static DRIZZLE_SYSVAR_ULONG(lock_wait_timeout, innobase_lock_wait_timeout,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Timeout in seconds an HailDB transaction may wait for a lock before being rolled back. Values above 100000000 disable the timeout.",
-  NULL, NULL, 5, 1, 1024 * 1024 * 1024, 0);
-
-static DRIZZLE_SYSVAR_LONG(log_buffer_size, innobase_log_buffer_size,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "The size of the buffer which HailDB uses to write log to the log files on disk.",
-  NULL, NULL, 8*1024*1024L, 256*1024L, LONG_MAX, 1024);
-
-static DRIZZLE_SYSVAR_ULONG(lru_old_blocks_pct, innobase_lru_old_blocks_pct,
-  PLUGIN_VAR_RQCMDARG,
-  "Sets the point in the LRU list from where all pages are classified as "
-  "old (Advanced users)",
-  NULL,
-  haildb_lru_old_blocks_pct_update, 37, 5, 95, 0);
-
-static DRIZZLE_SYSVAR_ULONG(lru_block_access_recency, innobase_lru_block_access_recency,
-  PLUGIN_VAR_RQCMDARG,
-  "Milliseconds between accesses to a block at which it is made young. "
-  "0=disabled (Advanced users)",
-  NULL,
-  haildb_lru_block_access_recency_update, 0, 0, ULONG_MAX, 0);
 
 
 static DRIZZLE_SYSVAR_ULONG(max_dirty_pages_pct, srv_max_buf_pool_modified_pct,
@@ -3388,7 +3281,7 @@ static void init_options(drizzled::module::option_context &context)
           po::value<buffer_pool_constraint>(&innobase_buffer_pool_size)->default_value(128*1024*1024L),
           N_("The size of the memory buffer HailDB uses to cache data and indexes of its tables."));
   context("data-home-dir",
-          po::value<string>(),
+          po::value<string>()->default_value(""),
           N_("The common part for HailDB table spaces."));
   context("disable-checksums",
           N_("Disable HailDB checksums validation (enabled by default)."));
@@ -3416,28 +3309,28 @@ static void init_options(drizzled::module::option_context &context)
           po::value<force_recovery_constraint>(&innobase_force_recovery)->default_value(0),
           N_("Helps to save your data in case the disk image of the database becomes corrupt."));
   context("data-file-path",
-          po::value<string>(),
+          po::value<string>()->default_value("ibdata1:10M:autoextend"),
           N_("Path to individual files and their sizes."));
   context("log-group-home-dir",
           po::value<string>(),
           N_("Path to HailDB log files."));
   context("log-file-size",
-          po::value<int64_t>(&haildb_log_file_size)->default_value(20*1024*1024L),
+          po::value<log_file_constraint>(&haildb_log_file_size)->default_value(20*1024*1024L),
           N_("Size of each log file in a log group."));
   context("haildb-log-files-in-group",
-          po::value<int64_t>(&haildb_log_files_in_group)->default_value(2),
+          po::value<log_files_in_group_constraint>(&haildb_log_files_in_group)->default_value(2),
           N_("Number of log files in the log group. HailDB writes to the files in a circular fashion. Value 3 is recommended here."));
   context("lock-wait-timeout",
-          po::value<unsigned long>(&innobase_lock_wait_timeout)->default_value(5),
+          po::value<lock_wait_constraint>(&innobase_lock_wait_timeout)->default_value(5),
           N_("Timeout in seconds an HailDB transaction may wait for a lock before being rolled back. Values above 100000000 disable the timeout."));
   context("log-buffer-size",
-        po::value<long>(&innobase_log_buffer_size)->default_value(8*1024*1024L),
+        po::value<log_buffer_size_constraint>(&innobase_log_buffer_size)->default_value(8*1024*1024L),
         N_("The size of the buffer which HailDB uses to write log to the log files on disk."));
   context("lru-old-blocks-pct",
-          po::value<unsigned long>(&innobase_lru_old_blocks_pct)->default_value(37),
+          po::value<lru_old_blocks_constraint>(&innobase_lru_old_blocks_pct)->default_value(37),
           N_("Sets the point in the LRU list from where all pages are classified as old (Advanced users)"));
   context("lru-block-access-recency",
-          po::value<unsigned long>(&innobase_lru_block_access_recency)->default_value(0),
+          po::value<uint32_t>(&innobase_lru_block_access_recency)->default_value(0),
           N_("Milliseconds between accesses to a block at which it is made young. 0=disabled (Advanced users)"));
   context("max-dirty-pages-pct",
           po::value<unsigned long>(&srv_max_buf_pool_modified_pct)->default_value(75),
@@ -3470,13 +3363,6 @@ static void init_options(drizzled::module::option_context &context)
 }
 
 static drizzle_sys_var* innobase_system_variables[]= {
-  DRIZZLE_SYSVAR(data_file_path),
-  DRIZZLE_SYSVAR(lock_wait_timeout),
-  DRIZZLE_SYSVAR(log_file_size),
-  DRIZZLE_SYSVAR(log_files_in_group),
-  DRIZZLE_SYSVAR(log_buffer_size),
-  DRIZZLE_SYSVAR(lru_old_blocks_pct),
-  DRIZZLE_SYSVAR(lru_block_access_recency),
   DRIZZLE_SYSVAR(max_dirty_pages_pct),
   DRIZZLE_SYSVAR(max_purge_lag),
   DRIZZLE_SYSVAR(open_files),
