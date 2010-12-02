@@ -131,9 +131,16 @@ VERSION=$(PANDORA_RELEASE_VERSION)
 pkgplugindir=%(pkgplugindir)s
 EXTRA_DIST = plugin.ini
 
+noinst_HEADERS=
+nobase_include_HEADERS=
+check_PROGRAMS=
+noinst_LTLIBRARIES=
+bin_PROGRAMS=
+
+
 """ % plugin)
   if plugin['headers'] != "":
-    plugin_file.write("noinst_HEADERS = %(headers)s\n" % plugin)
+    plugin_file.write("noinst_HEADERS += %(headers)s\n" % plugin)
   if plugin['install_headers'] != "":
     plugin_file.write("nobase_include_HEADERS += %(install_headers)s\n" % plugin)
   if plugin['testsuite']:
@@ -367,17 +374,19 @@ def find_docs(plugin_dir):
     return os.path.join(plugin_dir, "docs")
 
 def read_plugin_ini(plugin_dir):
+    sources_default=""
     if plugin_dir == ".":
       plugin_name="**OUT-OF-TREE**"
+      module_name="**OUT-OF-TREE**"
     else:
-      short_name=os.path.basename(plugin_dir)
+      sources_default="%s.cc" % os.path.basename(plugin_dir)
       plugin_name = plugin_dir[plugin_dir.index(config['root_plugin_dir']) + len(config['root_plugin_dir']) + 1:]
       module_name = plugin_name.replace("/", config['module_name_separator']).replace("\\", config['module_name_separator'])
       plugin_name = plugin_name.replace("/", config['plugin_name_separator']).replace("\\", config['plugin_name_separator'])
 
 
     plugin_file= os.path.join(plugin_dir,config['plugin_ini_fname'])
-    plugin_defaults= dict(sources="%s.cc" % short_name,
+    plugin_defaults= dict(sources=sources_default,
                           headers="",
                           install_headers="",
                           cflags="",

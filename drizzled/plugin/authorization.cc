@@ -156,10 +156,13 @@ bool plugin::Authorization::isAuthorized(const SecurityContext &user_ctx,
   {
     if (send_error)
     {
+      std::string path;
+      schema_identifier.getSQLPath(path);
+
       my_error(ER_DBACCESS_DENIED_ERROR, MYF(0),
                user_ctx.getUser().c_str(),
                user_ctx.getIp().c_str(),
-               schema_identifier.getSQLPath().c_str());
+               path.c_str());
     }
     return false;
   }
@@ -189,10 +192,13 @@ bool plugin::Authorization::isAuthorized(const SecurityContext &user_ctx,
   {
     if (send_error)
     {
+      std::string path;
+      table.getSQLPath(path);
+
       my_error(ER_DBACCESS_DENIED_ERROR, MYF(0),
                user_ctx.getUser().c_str(),
                user_ctx.getIp().c_str(),
-               table.getSQLPath().c_str());
+               path.c_str());
     }
     return false;
   }

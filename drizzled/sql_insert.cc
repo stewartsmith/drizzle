@@ -1617,7 +1617,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 
           if (concurrent_table->reopen_name_locked_table(create_table, session))
           {
-            quick_rm_table(*session, identifier);
+            plugin::StorageEngine::dropTable(*session, identifier);
           }
           else
           {
@@ -1626,7 +1626,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
         }
         else
         {
-          quick_rm_table(*session, identifier);
+          plugin::StorageEngine::dropTable(*session, identifier);
         }
       }
       else

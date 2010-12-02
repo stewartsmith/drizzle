@@ -115,7 +115,6 @@ private:
   Type type;
   std::string path;
   std::string table_name;
-  std::string sql_path;
   Key key;
   size_t hash_value;
 
@@ -195,7 +194,7 @@ public:
     return type;
   }
 
-  const std::string &getSQLPath();
+  void getSQLPath(std::string &sql_path) const;
 
   const std::string &getPath() const;
 

@@ -83,9 +83,9 @@ public:
 
   void dumpTemporaryTableNames(const char *id);
   int drop_temporary_table(const drizzled::TableIdentifier &identifier);
-  bool rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &identifier);
-  bool rm_temporary_table(TableIdentifier &identifier, bool best_effort= false);
-  Table *open_temporary_table(TableIdentifier &identifier,
+  bool rm_temporary_table(plugin::StorageEngine *base, const TableIdentifier &identifier);
+  bool rm_temporary_table(const drizzled::TableIdentifier &identifier, bool best_effort= false);
+  Table *open_temporary_table(const drizzled::TableIdentifier &identifier,
                               bool link_in_list= true);
 
   virtual query_id_t getQueryId()  const= 0;

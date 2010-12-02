@@ -413,10 +413,10 @@ buf_buddy_relocate(
 					buf_pool->zip_free[] */
 {
 	buf_page_t*	bpage;
+        ulint           space= 0;
+        ulint           page_no= 0;
 	const ulint	size	= BUF_BUDDY_LOW << i;
 	ullint		usec	= ut_time_us(NULL);
-        ulint		space;
-        ulint		page_no;
 
 	ut_ad(buf_pool_mutex_own(buf_pool));
 	ut_ad(!mutex_own(&buf_pool->zip_mutex));

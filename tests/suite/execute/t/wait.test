@@ -1,0 +1,6 @@
+# Test that WAIT is working, if for some reason the results are wrong that
+# means that for some reason EXECUTE..WAIT is busted on the
+# platform/everywhere. 
+CREATE TABLE A (A SERIAL);
+execute "insert into a VALUES ()" CONCURRENT WAIT;
+SELECT a from a;

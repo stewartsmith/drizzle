@@ -39,10 +39,12 @@ namespace statement
 Execute::Execute(Session *in_session,
                  drizzled::execute_string_t to_execute_arg,
                  bool is_quiet_arg,
-                 bool is_concurrent_arg) :
+                 bool is_concurrent_arg,
+                 bool should_wait_arg) :
   Statement(in_session),
   is_quiet(is_quiet_arg),
   is_concurrent(is_concurrent_arg),
+  should_wait(should_wait_arg),
   to_execute(to_execute_arg)
 {
 }
@@ -84,11 +86,23 @@ bool statement::Execute::runStatement(plugin::NullClient *client, const std::str
 
 bool statement::Execute::execute()
 {
+  bool ret= execute_shell();
+
+  // We have to restore ourselves at the top for delete() to work.
+  getSession()->getLex()->statement= this;
+
+  return ret;
+}
+
+
+bool statement::Execute::execute_shell()
+{
   if (to_execute.length == 0)
   {
     my_error(ER_WRONG_ARGUMENTS, MYF(0), "Invalid Variable");
     return false;
   }
+
   if (to_execute.isVariable())
   {
     if (not parseVariable())
@@ -100,6 +114,8 @@ bool statement::Execute::execute()
 
   if (is_concurrent)
   {
+    boost_thread_shared_ptr thread;
+
     if (getSession()->isConcurrentExecuteAllowed())
     {
       plugin::client::Concurrent *client= new plugin::client::Concurrent;
@@ -119,12 +135,34 @@ bool statement::Execute::execute()
       new_session->getSecurityContext()= getSession()->getSecurityContext();
 
       if (Session::schedule(new_session))
+      {
         Session::unlink(new_session);
+      }
+      else if (should_wait)
+      {
+        thread= new_session->getThread();
+      }
     }
     else
     {
       my_error(ER_WRONG_ARGUMENTS, MYF(0), "A Concurrent Execution Session can not launch another session.");
       return false;
+    }
+
+    if (should_wait && thread && thread->joinable())
+    {
+      // We want to make sure that we can be killed
+      boost::this_thread::restore_interruption dl(getSession()->getThreadInterupt());
+      try {
+        thread->join();
+      }
+      catch(boost::thread_interrupted const&)
+      {
+        // Just surpress and return the error
+        my_error(drizzled::ER_QUERY_INTERRUPTED, MYF(0));
+
+        return false;
+      }
     }
   }
   else 
@@ -225,10 +263,6 @@ bool statement::Execute::execute()
       mysql_parse(getSession(), to_execute.str, to_execute.length);
     }
   }
-
-
-  // We have to restore ourselves at the top for delete() to work.
-  getSession()->getLex()->statement= this;
 
   return true;
 }

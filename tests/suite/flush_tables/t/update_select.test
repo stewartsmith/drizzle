@@ -1,0 +1,20 @@
+# Test that if we do a flush table, and in other connections do block like
+# tasks, that nothing crashes/etc.
+
+--disable_warnings
+--disable_query_log
+DROP TABLE IF EXISTS t1;
+--enable_query_log
+--enable_warnings
+
+connect (con1, localhost, root,,);
+connect (con2, localhost, root,,);
+
+connection default;
+CREATE TABLE t1 (a serial);
+
+connection con1;
+SEND select * from t1 for update;
+
+connection default;
+UNLOCK tables;
