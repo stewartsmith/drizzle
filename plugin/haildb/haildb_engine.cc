@@ -2892,6 +2892,18 @@ static void haildb_lru_block_access_recency_update(Session*, sql_var_t)
   (void)ret;
 }
 
+static void haildb_status_file_update(Session*, sql_var_t)
+{
+  ib_err_t err;
+
+  if (innobase_create_status_file)
+    err= ib_cfg_set_bool_on("status_file");
+  else
+    err= ib_cfg_set_bool_off("status_file");
+  (void)err;
+}
+
+
 static int haildb_init(drizzled::module::Context &context)
 {
   haildb_system_table_names.insert(std::string("HAILDB_SYS_TABLES"));
@@ -3144,6 +3156,15 @@ static int haildb_init(drizzled::module::Context &context)
   context.registerVariable(new sys_var_constrained_value_readonly<uint16_t>("fast_shutdown", innobase_fast_shutdown));
   context.registerVariable(new sys_var_bool_ptr_readonly("file_per_table",
                                                          &srv_file_per_table));
+  context.registerVariable(new sys_var_bool_ptr_readonly("rollback_on_timeout",
+                                                         &innobase_rollback_on_timeout));
+  context.registerVariable(new sys_var_bool_ptr_readonly("print_verbose_log",
+                                                         &innobase_print_verbose_log));
+  context.registerVariable(new sys_var_bool_ptr("status_file",
+                                                &innobase_create_status_file,
+                                                haildb_status_file_update));
+  context.registerVariable(new sys_var_bool_ptr_readonly("use_sys_malloc",
+                                                         &srv_use_sys_malloc));
   context.registerVariable(new sys_var_std_string("file_format",
                                                   innobase_file_format_name,
                                                   haildb_file_format_name_validate));
@@ -3194,26 +3215,6 @@ HailDBEngine::~HailDBEngine()
 }
 
 
-static void haildb_status_file_update(Session*, drizzle_sys_var*,
-                                      void *,
-                                      const void *save)
-
-{
-  bool status_file_enabled;
-  ib_err_t err;
-
-  status_file_enabled= *static_cast<const bool*>(save);
-
-
-  if (status_file_enabled)
-    err= ib_cfg_set_bool_on("status_file");
-  else
-    err= ib_cfg_set_bool_off("status_file");
-
-  if (err == DB_SUCCESS)
-    innobase_create_status_file= status_file_enabled;
-}
-
 
 static DRIZZLE_SYSVAR_ULONG(max_dirty_pages_pct, srv_max_buf_pool_modified_pct,
   PLUGIN_VAR_RQCMDARG,
@@ -3224,11 +3225,6 @@ static DRIZZLE_SYSVAR_ULONG(max_purge_lag, srv_max_purge_lag,
   PLUGIN_VAR_RQCMDARG,
   "Desired maximum length of the purge queue (0 = no limit)",
   NULL, NULL, 0, 0, ~0L, 0);
-
-static DRIZZLE_SYSVAR_BOOL(rollback_on_timeout, innobase_rollback_on_timeout,
-  PLUGIN_VAR_OPCMDARG | PLUGIN_VAR_READONLY,
-  "Roll back the complete transaction on lock wait timeout, for 4.x compatibility (disabled by default)",
-  NULL, NULL, false);
 
 static DRIZZLE_SYSVAR_LONG(open_files, innobase_open_files,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
@@ -3245,25 +3241,10 @@ static DRIZZLE_SYSVAR_ULONG(write_io_threads, innobase_write_io_threads,
   "Number of background write I/O threads in HailDB.",
   NULL, NULL, 4, 1, 64, 0);
 
-static DRIZZLE_SYSVAR_BOOL(print_verbose_log, innobase_print_verbose_log,
-  PLUGIN_VAR_NOCMDARG,
-  "Disable if you want to reduce the number of messages written to the log (default: enabled).",
-  NULL, NULL, true);
-
-static DRIZZLE_SYSVAR_BOOL(status_file, innobase_create_status_file,
-  PLUGIN_VAR_OPCMDARG,
-  "Enable SHOW HAILDB STATUS output in the log",
-  NULL, haildb_status_file_update, false);
-
 static DRIZZLE_SYSVAR_ULONG(sync_spin_loops, srv_n_spin_wait_rounds,
   PLUGIN_VAR_RQCMDARG,
   "Count of spin-loop rounds in HailDB mutexes (30 by default)",
   NULL, NULL, 30L, 0L, ~0L, 0);
-
-static DRIZZLE_SYSVAR_BOOL(use_sys_malloc, srv_use_sys_malloc,
-  PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
-  "Use OS memory allocator instead of HailDB's internal memory allocator",
-  NULL, NULL, true);
 
 static void init_options(drizzled::module::option_context &context)
 {
@@ -3367,12 +3348,8 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(max_purge_lag),
   DRIZZLE_SYSVAR(open_files),
   DRIZZLE_SYSVAR(read_io_threads),
-  DRIZZLE_SYSVAR(rollback_on_timeout),
   DRIZZLE_SYSVAR(write_io_threads),
-  DRIZZLE_SYSVAR(print_verbose_log),
-  DRIZZLE_SYSVAR(status_file),
   DRIZZLE_SYSVAR(sync_spin_loops),
-  DRIZZLE_SYSVAR(use_sys_malloc),
   NULL
 };
 
