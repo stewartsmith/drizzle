@@ -3025,19 +3025,19 @@ static int haildb_init(drizzled::module::Context &context)
   if (err != DB_SUCCESS)
     goto haildb_error;
 
-  err= ib_cfg_set_int("additional_mem_pool_size", static_cast<size_t>(innobase_additional_mem_pool_size));
+  err= ib_cfg_set_int("additional_mem_pool_size", innobase_additional_mem_pool_size.get());
   if (err != DB_SUCCESS)
     goto haildb_error;
 
-  err= ib_cfg_set_int("autoextend_increment", static_cast<unsigned int>(srv_auto_extend_increment));
+  err= ib_cfg_set_int("autoextend_increment", srv_auto_extend_increment.get());
   if (err != DB_SUCCESS)
     goto haildb_error;
 
-  err= ib_cfg_set_int("buffer_pool_size", static_cast<size_t>(innobase_buffer_pool_size));
+  err= ib_cfg_set_int("buffer_pool_size", innobase_buffer_pool_size.get());
   if (err != DB_SUCCESS)
     goto haildb_error;
 
-  err= ib_cfg_set_int("io_capacity", static_cast<unsigned int>(srv_io_capacity));
+  err= ib_cfg_set_int("io_capacity", srv_io_capacity.get());
   if (err != DB_SUCCESS)
     goto haildb_error;
 
@@ -3050,7 +3050,7 @@ static int haildb_init(drizzled::module::Context &context)
     goto haildb_error;
 
   err= ib_cfg_set_int("flush_log_at_trx_commit",
-                      static_cast<uint16_t>(srv_flush_log_at_trx_commit));
+                      srv_flush_log_at_trx_commit.get());
   if (err != DB_SUCCESS)
     goto haildb_error;
 
@@ -3063,7 +3063,7 @@ static int haildb_init(drizzled::module::Context &context)
   }
 
   err= ib_cfg_set_int("force_recovery",
-                      static_cast<uint16_t>(innobase_force_recovery));
+                      innobase_force_recovery.get());
   if (err != DB_SUCCESS)
     goto haildb_error;
 
@@ -3071,15 +3071,15 @@ static int haildb_init(drizzled::module::Context &context)
   if (err != DB_SUCCESS)
     goto haildb_error;
 
-  err= ib_cfg_set_int("log_file_size", static_cast<int64_t>(haildb_log_file_size));
+  err= ib_cfg_set_int("log_file_size", haildb_log_file_size.get());
   if (err != DB_SUCCESS)
     goto haildb_error;
 
-  err= ib_cfg_set_int("log_buffer_size", static_cast<long>(innobase_log_buffer_size));
+  err= ib_cfg_set_int("log_buffer_size", innobase_log_buffer_size.get());
   if (err != DB_SUCCESS)
     goto haildb_error;
 
-  err= ib_cfg_set_int("log_files_in_group", static_cast<unsigned int>(haildb_log_files_in_group));
+  err= ib_cfg_set_int("log_files_in_group", haildb_log_files_in_group.get());
   if (err != DB_SUCCESS)
     goto haildb_error;
 
@@ -3087,11 +3087,11 @@ static int haildb_init(drizzled::module::Context &context)
   if (err != DB_SUCCESS)
     goto haildb_error;
 
-  err= ib_cfg_set_int("lock_wait_timeout", static_cast<unsigned int>(innobase_lock_wait_timeout));
+  err= ib_cfg_set_int("lock_wait_timeout", innobase_lock_wait_timeout.get());
   if (err != DB_SUCCESS)
     goto haildb_error;
 
-  err= ib_cfg_set_int("max_dirty_pages_pct", static_cast<unsigned int>(haildb_max_dirty_pages_pct));
+  err= ib_cfg_set_int("max_dirty_pages_pct", haildb_max_dirty_pages_pct.get());
   if (err != DB_SUCCESS)
     goto haildb_error;
 
@@ -3195,9 +3195,9 @@ HailDBEngine::~HailDBEngine()
   ib_err_t err;
   ib_shutdown_t shutdown_flag= IB_SHUTDOWN_NORMAL;
 
-  if (static_cast<unsigned int>(innobase_fast_shutdown) == 1)
+  if (innobase_fast_shutdown.get() == 1)
     shutdown_flag= IB_SHUTDOWN_NO_IBUFMERGE_PURGE;
-  else if (static_cast<unsigned int>(innobase_fast_shutdown) == 2)
+  else if (innobase_fast_shutdown.get() == 2)
     shutdown_flag= IB_SHUTDOWN_NO_BUFPOOL_FLUSH;
 
   err= ib_shutdown(shutdown_flag);
