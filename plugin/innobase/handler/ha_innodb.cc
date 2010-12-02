@@ -2419,13 +2419,13 @@ innobase_change_buffering_inited_ok:
   context.add(new(std::nothrow)InnodbInternalTables());
 
   context.registerVariable(new sys_var_bool_ptr_readonly("checksums", &innobase_use_checksums));
- context.registerVariable(new sys_var_bool_ptr_readonly("doublewrite", &innobase_use_doublewrite));
- context.registerVariable(new sys_var_bool_ptr_readonly("file_per_table", &srv_file_per_table));
- context.registerVariable(new sys_var_bool_ptr_readonly("file_format_check", &innobase_file_format_check));
- context.registerVariable(new sys_var_bool_ptr_readonly("adaptive_flushing", &srv_adaptive_flushing));
- context.registerVariable(new sys_var_bool_ptr_readonly("status_file", &innobase_create_status_file));
- context.registerVariable(new sys_var_bool_ptr_readonly("use_sys_malloc", &srv_use_sys_malloc));
- context.registerVariable(new sys_var_bool_ptr_readonly("use_native_aio", &srv_use_native_aio));
+  context.registerVariable(new sys_var_bool_ptr_readonly("doublewrite", &innobase_use_doublewrite));
+  context.registerVariable(new sys_var_bool_ptr("file_per_table", &srv_file_per_table));
+  context.registerVariable(new sys_var_bool_ptr_readonly("file_format_check", &innobase_file_format_check));
+  context.registerVariable(new sys_var_bool_ptr("adaptive_flushing", &srv_adaptive_flushing));
+  context.registerVariable(new sys_var_bool_ptr("status_file", &innobase_create_status_file));
+  context.registerVariable(new sys_var_bool_ptr_readonly("use_sys_malloc", &srv_use_sys_malloc));
+  context.registerVariable(new sys_var_bool_ptr_readonly("use_native_aio", &srv_use_native_aio));
 
 
   /* Get the current high water mark format. */
