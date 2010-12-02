@@ -255,7 +255,7 @@ bool InnodbSysIndexesTool::Generator::populate()
   if (!err_msg) {
     push(index_rec.id);
     push(index_rec.name);
-    push(ut_conv_dulint_to_longlong(table_id));
+    push(static_cast<uint64_t>(table_id));
     push(static_cast<uint64_t>(index_rec.type));
     push(static_cast<uint64_t>(index_rec.n_fields));
     push(static_cast<uint64_t>(index_rec.page));
