@@ -61,6 +61,7 @@ nobase_nodist_include_HEADERS+= \
 
 noinst_HEADERS+= \
 		drizzled/message/ioutil.h \
+		drizzled/message/schema.h \
 		drizzled/message/table.h
 
 
