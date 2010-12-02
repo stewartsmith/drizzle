@@ -70,13 +70,13 @@ int Function::doGetTableDefinition(Session &,
   return EEXIST;
 }
 
-void Function::doGetSchemaIdentifiers(SchemaIdentifiers& schemas)
+void Function::doGetSchemaIdentifiers(SchemaIdentifier::vector& schemas)
 {
   schemas.push_back(INFORMATION_SCHEMA_IDENTIFIER);
   schemas.push_back(DATA_DICTIONARY_IDENTIFIER);
 }
 
-bool Function::doGetSchemaDefinition(const SchemaIdentifier &schema_identifier, message::SchemaPtr &schema_message)
+bool Function::doGetSchemaDefinition(const SchemaIdentifier &schema_identifier, message::schema::shared_ptr &schema_message)
 {
   schema_message.reset(new message::Schema); // This should be fixed, we could just be using ones we built on startup.
 
@@ -124,7 +124,7 @@ bool Function::doDoesTableExist(Session&, const TableIdentifier &identifier)
 
 void Function::doGetTableIdentifiers(drizzled::CachedDirectory&,
                                      const drizzled::SchemaIdentifier &schema_identifier,
-                                     drizzled::TableIdentifiers &set_of_identifiers)
+                                     drizzled::TableIdentifier::vector &set_of_identifiers)
 {
   set<string> set_of_names;
   drizzled::plugin::TableFunction::getNames(schema_identifier.getSchemaName(), set_of_names);

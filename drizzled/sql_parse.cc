@@ -39,7 +39,7 @@
 #include <drizzled/statement.h>
 #include <drizzled/statement/alter_table.h>
 #include "drizzled/probes.h"
-#include "drizzled/session_list.h"
+#include "drizzled/session/cache.h"
 #include "drizzled/global_charset_info.h"
 
 #include "drizzled/plugin/logging.h"
