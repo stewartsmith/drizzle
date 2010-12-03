@@ -48,7 +48,7 @@ nodist_drizzled_message_libdrizzledmessage_la_SOURCES = \
 							drizzled/message/engine.pb.cc \
 							drizzled/message/transaction.pb.cc \
 							drizzled/message/schema.pb.cc \
-                                                        drizzled/message/resultset.pb.cc \
+							drizzled/message/resultset.pb.cc \
 							drizzled/message/table.pb.cc
 
 nobase_nodist_include_HEADERS+= \
