@@ -56,7 +56,7 @@ nobase_nodist_include_HEADERS+= \
 				drizzled/message/engine.pb.h \
 				drizzled/message/transaction.pb.h \
 				drizzled/message/schema.pb.h \
-                drizzled/message/resultset.pb.h \
+				drizzled/message/resultset.pb.h \
 				drizzled/message/table.pb.h \
 				drizzled/message/schema.h \
 				drizzled/message/table.h
