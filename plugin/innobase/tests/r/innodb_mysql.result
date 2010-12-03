@@ -1353,3 +1353,23 @@ DROP TABLE t2;
 DROP TABLE t1;
 SET innodb_lock_wait_timeout=@orig_lock_wait_timeout ;
 End of 5.1 tests
+#
+# Test for bug #39932 "create table fails if column for FK is in different
+#                      case than in corr index".
+#
+drop tables if exists t1, t2;
+create table t1 (pk int primary key) engine=InnoDB;
+# Even although the below statement uses uppercased field names in
+# foreign key definition it still should be able to find explicitly
+# created supporting index. So it should succeed and should not
+# create any additional supporting indexes.
+create table t2 (fk int, key x (fk),
+constraint x foreign key (FK) references t1 (PK)) engine=InnoDB;
+show create table t2;
+Table	Create Table
+t2	CREATE TABLE `t2` (
+  `fk` INT DEFAULT NULL,
+  KEY `x` (`fk`),
+  CONSTRAINT `x` FOREIGN KEY (`FK`) REFERENCES `t1` (`PK`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+drop table t2, t1;
