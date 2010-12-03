@@ -796,9 +796,7 @@ row_purge_step(
 	que_thr_t*	thr)	/*!< in: query thread */
 {
 	purge_node_t*	node;
-#ifdef UNIV_DEBUG
 	ulint		err;
-#endif /* UNIV_DEBUG */
 
 	ut_ad(thr);
 
@@ -806,10 +804,7 @@ row_purge_step(
 
 	ut_ad(que_node_get_type(node) == QUE_NODE_PURGE);
 
-#ifdef UNIV_DEBUG
-	err =
-#endif /* UNIV_DEBUG */
-	row_purge(node, thr);
+	err = row_purge(node, thr);
 
 	ut_a(err == DB_SUCCESS);
 
