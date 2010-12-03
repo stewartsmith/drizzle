@@ -919,7 +919,7 @@ static int init(drizzled::module::Context &context)
   context.registerVariable(new sys_var_constrained_value<uint32_t>("read_timeout", read_timeout));
   context.registerVariable(new sys_var_constrained_value<uint32_t>("write_timeout", write_timeout));
   context.registerVariable(new sys_var_constrained_value<uint32_t>("retry_count", retry_count));
-  context.registerVariable(new sys_var_constrained_value<uint32_t>("buffer_length", buffer_length, 16384));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("buffer_length", buffer_length));
   context.registerVariable(new sys_var_const_string_val("bind_address",
                                                         vm["bind-address"].as<std::string>()));
 

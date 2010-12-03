@@ -429,14 +429,12 @@ class sys_var_constrained_value :
   constrained_value<T> &value;
   T basic_value;
   T default_value;
-  bool have_default_value;
 public:
   sys_var_constrained_value(const char *name_arg,
                             constrained_value<T> &value_arg) :
     sys_var(name_arg),
     value(value_arg),
-    default_value(0),
-    have_default_value(false)
+    default_value(value_arg.get())
   { }
 
   sys_var_constrained_value(const char *name_arg,
@@ -444,18 +442,9 @@ public:
                             sys_after_update_func after_update_func_arg) :
     sys_var(name_arg, after_update_func_arg),
     value(value_arg),
-    default_value(0),
-    have_default_value(false)
+    default_value(value_arg.get())
   { }
 
-  sys_var_constrained_value(const char *name_arg,
-                            constrained_value<T> &value_arg,
-                            T default_value_arg) :
-    sys_var(name_arg),
-    value(value_arg),
-    default_value(default_value_arg),
-    have_default_value(true)
-  { }
 
 public:
   bool is_readonly() const
@@ -473,7 +462,7 @@ public:
 
   bool check_default(sql_var_t)
   {
-    return not have_default_value;
+    return false;
   }
 
   void set_default(Session *, sql_var_t)
@@ -483,7 +472,7 @@ public:
 
   unsigned char *value_ptr(Session *, sql_var_t, const LEX_STRING *)
   {
-    basic_value= T(value);
+    basic_value= value.get();
     return (unsigned char*)&basic_value;
   }
 };
@@ -503,7 +492,7 @@ inline SHOW_TYPE sys_var_constrained_value<int64_t>::show_type()
 template<>
 inline SHOW_TYPE sys_var_constrained_value<uint32_t>::show_type()
 {
-  return SHOW_LONG;
+  return SHOW_INT;
 }
 
 template<>

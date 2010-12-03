@@ -1491,8 +1491,7 @@ static int myisam_init(module::Context &context)
 { 
   context.add(new MyisamEngine(engine_name));
   context.registerVariable(new sys_var_constrained_value<size_t>("sort-buffer-size",
-                                                                 sort_buffer_size,
-                                                                 8196*1024));
+                                                                 sort_buffer_size));
   context.registerVariable(new sys_var_uint64_t_ptr("max_sort_file_size",
                                                     &max_sort_file_size,
                                                     context.getOptions()["max-sort-file-size"].as<uint64_t>()));
