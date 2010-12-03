@@ -43,7 +43,7 @@ using namespace std;
 
 class Error_message_notify : public plugin::ErrorMessage
 {
-  vector<string> errmsg_tags;
+  std::vector<std::string> errmsg_tags;
 public:
   Error_message_notify()
    : plugin::ErrorMessage("Error_message_notify"),
