@@ -29,8 +29,6 @@
 #include "drizzled/session.h"
 #include "drizzled/gettext.h"
 
-using namespace std;
-
 namespace drizzled
 {
 
@@ -58,14 +56,14 @@ namespace
 {
 
 class RestrictDbFunctor :
-  public unary_function<plugin::Authorization *, bool>
+  public std::unary_function<plugin::Authorization *, bool>
 {
   const SecurityContext &user_ctx;
   SchemaIdentifier &schema;
 public:
   RestrictDbFunctor(const SecurityContext &user_ctx_arg,
                     SchemaIdentifier &schema_arg) :
-    unary_function<plugin::Authorization *, bool>(),
+    std::unary_function<plugin::Authorization *, bool>(),
     user_ctx(user_ctx_arg),
     schema(schema_arg)
   { }
@@ -77,14 +75,14 @@ public:
 };
 
 class RestrictTableFunctor :
-  public unary_function<plugin::Authorization *, bool>
+  public std::unary_function<plugin::Authorization *, bool>
 {
   const SecurityContext &user_ctx;
   TableIdentifier &table;
 public:
   RestrictTableFunctor(const SecurityContext &user_ctx_arg,
                        TableIdentifier &table_arg) :
-    unary_function<plugin::Authorization *, bool>(),
+    std::unary_function<plugin::Authorization *, bool>(),
     user_ctx(user_ctx_arg),
     table(table_arg)
   { }
@@ -96,14 +94,14 @@ public:
 };
 
 class RestrictProcessFunctor :
-  public unary_function<plugin::Authorization *, bool>
+  public std::unary_function<plugin::Authorization *, bool>
 {
   const SecurityContext &user_ctx;
   const SecurityContext &session_ctx;
 public:
   RestrictProcessFunctor(const SecurityContext &user_ctx_arg,
                          const SecurityContext &session_ctx_arg) :
-    unary_function<plugin::Authorization *, bool>(),
+    std::unary_function<plugin::Authorization *, bool>(),
     user_ctx(user_ctx_arg),
     session_ctx(session_ctx_arg)
   { }
@@ -115,12 +113,12 @@ public:
 };
 
 class PruneSchemaFunctor :
-  public unary_function<SchemaIdentifier&, bool>
+  public std::unary_function<SchemaIdentifier&, bool>
 {
   const SecurityContext &user_ctx;
 public:
   PruneSchemaFunctor(const SecurityContext &user_ctx_arg) :
-    unary_function<SchemaIdentifier&, bool>(),
+    std::unary_function<SchemaIdentifier&, bool>(),
     user_ctx(user_ctx_arg)
   { }
 
@@ -142,9 +140,9 @@ bool plugin::Authorization::isAuthorized(const SecurityContext &user_ctx,
 
   /* Use find_if instead of foreach so that we can collect return codes */
   std::vector<plugin::Authorization *>::const_iterator iter=
-    find_if(authorization_plugins.begin(),
-            authorization_plugins.end(),
-            RestrictDbFunctor(user_ctx, schema_identifier));
+    std::find_if(authorization_plugins.begin(),
+                 authorization_plugins.end(),
+                 RestrictDbFunctor(user_ctx, schema_identifier));
 
 
   /*

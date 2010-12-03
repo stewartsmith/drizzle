@@ -30,8 +30,6 @@
 
 #include <poll.h>
 
-using namespace std;
-
 namespace drizzled
 {
 

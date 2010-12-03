@@ -32,8 +32,6 @@
 #include <netinet/tcp.h>
 #include <cerrno>
 
-using namespace std;
-
 #define MAX_ACCEPT_RETRY	10	// Test accept this many times
 
 namespace drizzled

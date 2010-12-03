@@ -35,30 +35,28 @@
 #include <algorithm>
 #include <functional>
 
-using namespace std;
-
 namespace drizzled
 {
 
 namespace plugin
 {
 
-static vector<XaResourceManager *> xa_resource_managers;
+static std::vector<XaResourceManager *> xa_resource_managers;
 
 int XaResourceManager::commitOrRollbackXID(XID *xid, bool commit)
 {
-  vector<int> results;
+  std::vector<int> results;
   
   if (commit)
     transform(xa_resource_managers.begin(), xa_resource_managers.end(), results.begin(),
-              bind2nd(mem_fun(&XaResourceManager::xaCommitXid), xid));
+              std::bind2nd(std::mem_fun(&XaResourceManager::xaCommitXid), xid));
   else
     transform(xa_resource_managers.begin(), xa_resource_managers.end(), results.begin(),
-              bind2nd(mem_fun(&XaResourceManager::xaRollbackXid), xid));
+              std::bind2nd(std::mem_fun(&XaResourceManager::xaRollbackXid), xid));
 
-  if (find_if(results.begin(), results.end(), bind2nd(equal_to<int>(),0))
-         == results.end())
+  if (std::find_if(results.begin(), results.end(), std::bind2nd(std::equal_to<int>(),0)) == results.end())
     return 1;
+
   return 0;
 }
 
@@ -78,7 +76,7 @@ int XaResourceManager::commitOrRollbackXID(XID *xid, bool commit)
     in this case commit_list.size()==0, tc_heuristic_recover == 0
     there should be no prepared transactions in this case.
 */
-class XaRecover : unary_function<XaResourceManager *, void>
+class XaRecover : std::unary_function<XaResourceManager *, void>
 {
 private:
   int trans_len, found_foreign_xids, found_my_xids;

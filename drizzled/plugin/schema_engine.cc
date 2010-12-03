@@ -27,8 +27,6 @@
 #include "drizzled/plugin/storage_engine.h"
 #include "drizzled/plugin/authorization.h"
 
-using namespace std;
-
 namespace drizzled
 {
 
@@ -36,7 +34,7 @@ namespace plugin
 {
 
 class AddSchemaNames : 
-  public unary_function<StorageEngine *, void>
+  public std::unary_function<StorageEngine *, void>
 {
   SchemaIdentifier::vector &schemas;
 
@@ -62,7 +60,7 @@ void StorageEngine::getIdentifiers(Session &session, SchemaIdentifier::vector &s
   plugin::Authorization::pruneSchemaNames(session.getSecurityContext(), schemas);
 }
 
-class StorageEngineGetSchemaDefinition: public unary_function<StorageEngine *, bool>
+class StorageEngineGetSchemaDefinition: public std::unary_function<StorageEngine *, bool>
 {
   const SchemaIdentifier &identifier;
   message::schema::shared_ptr &schema_proto;
@@ -120,7 +118,7 @@ const CHARSET_INFO *StorageEngine::getSchemaCollation(const SchemaIdentifier &id
 
   if (found && schmema_proto->has_collation())
   {
-    const string buffer= schmema_proto->collation();
+    const std::string buffer= schmema_proto->collation();
     const CHARSET_INFO* cs= get_charset_by_name(buffer.c_str());
 
     if (not cs)
@@ -142,7 +140,7 @@ const CHARSET_INFO *StorageEngine::getSchemaCollation(const SchemaIdentifier &id
 }
 
 class CreateSchema : 
-  public unary_function<StorageEngine *, void>
+  public std::unary_function<StorageEngine *, void>
 {
   const drizzled::message::Schema &schema_message;
 
@@ -170,7 +168,7 @@ bool StorageEngine::createSchema(const drizzled::message::Schema &schema_message
 }
 
 class DropSchema : 
-  public unary_function<StorageEngine *, void>
+  public std::unary_function<StorageEngine *, void>
 {
   uint64_t &success_count;
   const SchemaIdentifier &identifier;
@@ -204,7 +202,7 @@ bool StorageEngine::dropSchema(const SchemaIdentifier &identifier)
 }
 
 class AlterSchema : 
-  public unary_function<StorageEngine *, void>
+  public std::unary_function<StorageEngine *, void>
 {
   uint64_t &success_count;
   const drizzled::message::Schema &schema_message;

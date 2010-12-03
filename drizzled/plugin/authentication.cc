@@ -26,8 +26,6 @@
 
 #include <vector>
 
-using namespace std;
-
 namespace drizzled
 {
 
@@ -49,13 +47,13 @@ void plugin::Authentication::removePlugin(plugin::Authentication *auth)
                                   auth));
 }
 
-class AuthenticateBy : public unary_function<plugin::Authentication *, bool>
+class AuthenticateBy : public std::unary_function<plugin::Authentication *, bool>
 {
   const SecurityContext &sctx;
-  const string &password;
+  const std::string &password;
 public:
-  AuthenticateBy(const SecurityContext &sctx_arg, const string &password_arg) :
-    unary_function<plugin::Authentication *, bool>(),
+  AuthenticateBy(const SecurityContext &sctx_arg, const std::string &password_arg) :
+    std::unary_function<plugin::Authentication *, bool>(),
     sctx(sctx_arg), password(password_arg) {}
 
   inline result_type operator()(argument_type auth)
@@ -65,7 +63,7 @@ public:
 };
 
 bool plugin::Authentication::isAuthenticated(const SecurityContext &sctx,
-                                             const string &password)
+                                             const std::string &password)
 {
   /* If we never loaded any auth plugins, just return true */
   if (all_authentication.empty())

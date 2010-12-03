@@ -36,8 +36,6 @@
 
 
 
-using namespace std;
-
 namespace drizzled
 {
 
@@ -81,11 +79,11 @@ namespace plugin
   {
 
   public:
-    typedef multimap<uint32_t, EventObserver *> ObserverMap;
+    typedef std::multimap<uint32_t, EventObserver *> ObserverMap;
 
   private:
     /* A list of lists indexed by event type. */
-    vector<ObserverMap *> event_observer_lists;
+    std::vector<ObserverMap *> event_observer_lists;
 
   public:
 
@@ -139,7 +137,7 @@ namespace plugin
         }
       }
 
-      observers->insert(pair<uint32_t, EventObserver *>(event_pos, eventObserver) );
+      observers->insert(std::pair<uint32_t, EventObserver *>(event_pos, eventObserver) );
     }
 
 
@@ -168,7 +166,7 @@ namespace plugin
   /* For each EventObserver plugin call its registerTableEventsDo() meathod so that it can
    * register what events, if any, it is interested in on this table.
    */ 
-  class RegisterTableEventsIterate : public unary_function<EventObserver *, void>
+  class RegisterTableEventsIterate : public std::unary_function<EventObserver *, void>
   {
     TableShare &table_share;
     EventObserverList &observers;
@@ -240,7 +238,7 @@ namespace plugin
   /* For each EventObserver plugin call its registerSchemaEventsDo() meathod so that it can
    * register what events, if any, it is interested in on the schema.
    */ 
-  class RegisterSchemaEventsIterate : public unary_function<EventObserver *, void>
+  class RegisterSchemaEventsIterate : public std::unary_function<EventObserver *, void>
   {
     const std::string &db;
     EventObserverList &observers;
@@ -306,7 +304,7 @@ namespace plugin
   /* For each EventObserver plugin call its registerSessionEventsDo() meathod so that it can
    * register what events, if any, it is interested in on this session.
    */ 
-  class RegisterSessionEventsIterate : public unary_function<EventObserver *, void>
+  class RegisterSessionEventsIterate : public std::unary_function<EventObserver *, void>
   {
     Session &session;
     EventObserverList &observers;
@@ -368,13 +366,13 @@ namespace plugin
 
   /* Event observer list iterator: */
   //----------
-  class EventIterate : public unary_function<pair<uint32_t, EventObserver *>, bool>
+  class EventIterate : public std::unary_function<std::pair<uint32_t, EventObserver *>, bool>
   {
     EventData &data;
 
   public:
     EventIterate(EventData &data_arg) :
-      unary_function<pair<uint32_t, EventObserver *>, bool>(),
+      std::unary_function<std::pair<uint32_t, EventObserver *>, bool>(),
       data(data_arg)
     {}
 

@@ -26,12 +26,10 @@
 #include <algorithm>
 #include <vector>
 
-using namespace std;
-
 namespace drizzled
 {
 
-vector<plugin::ErrorMessage *> all_errmsg_handler;
+std::vector<plugin::ErrorMessage *> all_errmsg_handler;
 bool errmsg_has= false;
 
 
@@ -49,7 +47,7 @@ void plugin::ErrorMessage::removePlugin(plugin::ErrorMessage *handler)
 }
 
 
-class Print : public unary_function<plugin::ErrorMessage *, bool>
+class Print : public std::unary_function<plugin::ErrorMessage *, bool>
 {
   Session *session;
   int priority;
@@ -57,9 +55,9 @@ class Print : public unary_function<plugin::ErrorMessage *, bool>
   va_list ap;
 public:
   Print(Session *session_arg, int priority_arg,
-        const char *format_arg, va_list ap_arg)
-    : unary_function<plugin::ErrorMessage *, bool>(), session(session_arg),
-      priority(priority_arg), format(format_arg)
+        const char *format_arg, va_list ap_arg) : 
+    std::unary_function<plugin::ErrorMessage *, bool>(), session(session_arg),
+    priority(priority_arg), format(format_arg)
     {
       va_copy(ap, ap_arg);
     }

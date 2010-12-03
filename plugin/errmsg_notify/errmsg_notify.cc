@@ -38,8 +38,6 @@
 #define MAX_MSG_LEN 8192
 
 using namespace drizzled;
-using namespace std;
-
 
 class Error_message_notify : public plugin::ErrorMessage
 {
