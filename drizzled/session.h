@@ -419,16 +419,6 @@ public:
     return query.reset(new std::string);
   }
 
-  void setQueryString(const std::string &new_query)
-  {
-    query.reset(new std::string(new_query));
-  }
-
-  void setQueryString(const char *new_query, uint32_t new_query_len)
-  {
-    query.reset(new std::string(new_query, new_query + new_query_len));
-  }
-
   /*
     We need to copy the lock on the string in order to make sure we have a stable string.
     Once this is done we can use it to build a const char* which can be handed off for
