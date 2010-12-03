@@ -8114,12 +8114,9 @@ innodb_show_status(
 
   mutex_exit(&srv_monitor_file_mutex);
 
-  bool result = FALSE;
+  stat_print(session, innobase_engine_name, strlen(innobase_engine_name),
+             STRING_WITH_LEN(""), str, flen);
 
-  if (stat_print(session, innobase_engine_name, strlen(innobase_engine_name),
-      STRING_WITH_LEN(""), str, flen)) {
-    result= TRUE;
-  }
   free(str);
 
   return(FALSE);
