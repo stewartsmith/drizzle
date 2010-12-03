@@ -4,6 +4,11 @@
 	Fix Bug #55832 selects crash too easily when innodb_force_recovery>3
 
 2010-08-03	The InnoDB Team
+	* include/dict0dict.h, include/dict0dict.ic, row/row0mysql.c:
+	Fix bug #54678, InnoDB, TRUNCATE, ALTER, I_S SELECT, crash or deadlock
+
+2010-08-03	The InnoDB Team
+
 
 	* include/ut0mem.h, ut/ut0mem.c:
 	Fix Bug #55627 segv in ut_free pars_lexer_close innobase_shutdown
