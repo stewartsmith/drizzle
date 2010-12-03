@@ -84,7 +84,7 @@ public:
      }
      catch (Glib::Error& err)
      {
-       std::cerr << err.what() << endl;
+       std::cerr << err.what() << std::endl;
      }
 #endif
 
