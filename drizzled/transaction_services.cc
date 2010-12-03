@@ -1213,6 +1213,20 @@ message::Statement &TransactionServices::getInsertStatement(Session *in_session,
       }
       else
       {
+        /* append this INSERT query string */
+        if (in_session->variables.replicate_query)
+        {
+          string s(statement->sql());
+          if (not s.empty())
+          {
+            s.append(" ; ");
+            s.append(in_session->getQueryString()->c_str());
+            statement->set_sql(s);
+          }
+          else
+            statement->set_sql(in_session->getQueryString()->c_str());
+        }
+
         /* carry forward the existing segment id */
         const message::InsertData &current_data= statement->insert_data();
         *next_segment_id= current_data.segment_id();
@@ -1400,6 +1414,20 @@ message::Statement &TransactionServices::getUpdateStatement(Session *in_session,
     {
       if (useExistingUpdateHeader(*statement, in_table, old_record, new_record))
       {
+        /* append this UPDATE query string */
+        if (in_session->variables.replicate_query)
+        {
+          string s(statement->sql());
+          if (not s.empty())
+          {
+            s.append(" ; ");
+            s.append(in_session->getQueryString()->c_str());
+            statement->set_sql(s);
+          }
+          else
+            statement->set_sql(in_session->getQueryString()->c_str());
+        }
+
         /* carry forward the existing segment id */
         const message::UpdateData &current_data= statement->update_data();
         *next_segment_id= current_data.segment_id();
@@ -1759,6 +1787,20 @@ message::Statement &TransactionServices::getDeleteStatement(Session *in_session,
       }
       else
       {
+        /* append this DELETE query string */
+        if (in_session->variables.replicate_query)
+        {
+          string s(statement->sql());
+          if (not s.empty())
+          {
+            s.append(" ; ");
+            s.append(in_session->getQueryString()->c_str());
+            statement->set_sql(s);
+          }
+          else
+            statement->set_sql(in_session->getQueryString()->c_str());
+        }
+
         /* carry forward the existing segment id */
         const message::DeleteData &current_data= statement->delete_data();
         *next_segment_id= current_data.segment_id();
