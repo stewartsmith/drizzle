@@ -30,4 +30,14 @@ create table t2 (fk int, key x (fk),
                  constraint x foreign key (FK) references t1 (PK)) engine=InnoDB;
 show create table t2;
 drop table t2, t1;
+--echo #
+--echo # Bug#55826: create table .. select crashes with when KILL_BAD_DATA 
+--echo #  is returned
+--echo #
 
+CREATE TABLE t1(a INT) ENGINE=innodb;
+INSERT INTO t1 VALUES (0);
+--error ER_TRUNCATED_WRONG_VALUE
+CREATE TABLE t2 
+  SELECT LEAST((SELECT '' FROM t1),NOW()) FROM `t1`;
+DROP TABLE IF EXISTS t1,t2;  
