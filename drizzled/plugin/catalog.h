@@ -49,6 +49,7 @@ public:
   virtual catalog::Engine::shared_ptr engine()= 0;
 
   static bool create(const identifier::Catalog &);
+  static bool create(const identifier::Catalog &, message::catalog::shared_ptr &);
   static bool drop(const identifier::Catalog &);
 
   // Required for plugin interface
@@ -60,6 +61,9 @@ public:
   static void getIdentifiers(identifier::Catalog::vector &identifiers);
   static void getMessages(message::catalog::vector &messages);
   static bool getMessage(const identifier::Catalog &identifier, message::catalog::shared_ptr &message);
+
+  // Get Instance
+  static bool getInstance(const identifier::Catalog &identifier, catalog::Instance::shared_ptr &instance);
 };
 
 } /* namespace plugin */

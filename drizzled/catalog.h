@@ -18,29 +18,23 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "plugin/catalog/module.h"
+#ifndef DRIZZLED_CATALOG_H
+#define DRIZZLED_CATALOG_H
 
-namespace plugin {
+#include "drizzled/identifier/catalog.h"
+
+namespace drizzled {
 namespace catalog {
-namespace functions {
 
-int64_t Drop::val_int()
-{
-  drizzled::String *res= args[0]->val_str(&value);
+enum error_t {
+  LOCKED,
+  FOUND,
+  NOT_FOUND
+};
 
-  if (not res || not res->length())
-  {
-    my_error(drizzled::ER_WRONG_NAME_FOR_CATALOG, MYF(0));
-    return 0;
-  }
+void error(error_t error, const identifier::Catalog &identifier);
 
-  return drizzled::plugin::Catalog::drop(drizzled::identifier::Catalog(res->c_str()));
-
-  null_value= false;
-  return 1;
-}
-
-} /* namespace functions */
 } /* namespace catalog */
-} /* namespace plugin */
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_CATALOG_H */

@@ -36,7 +36,7 @@ public:
 
   Cache()
   {
-    drizzled::catalog::Cache::singleton().CopyFrom(local_vector);
+    drizzled::catalog::Cache::singleton().copy(local_vector);
     iter= local_vector.begin();
   }
 

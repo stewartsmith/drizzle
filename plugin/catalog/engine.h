@@ -35,17 +35,8 @@ public:
     drizzled::catalog::Engine()
   {}
 
-  bool create(const drizzled::identifier::Catalog &identifier)
-  {
-    (void)identifier;
-    return false;
-  }
-
-  bool drop(const drizzled::identifier::Catalog &identifier)
-  {
-    (void)identifier;
-    return false;
-  }
+  bool create(const drizzled::identifier::Catalog &identifier, drizzled::message::catalog::shared_ptr &);
+  bool drop(const drizzled::identifier::Catalog &identifier);
 
   bool exist(const drizzled::identifier::Catalog &identifier)
   {
@@ -96,6 +87,11 @@ public:
 
     return false;
   }
+
+private:
+  bool readFile(const drizzled::identifier::Catalog &identifier, drizzled::message::catalog::shared_ptr &message);
+  bool writeFile(const drizzled::identifier::Catalog &identifier, drizzled::message::catalog::shared_ptr &message);
+
 };
 
 } /* namespace catalog */

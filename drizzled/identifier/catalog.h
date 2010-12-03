@@ -77,8 +77,7 @@ public:
     return  boost::algorithm::to_upper_copy(left.getName()) < boost::algorithm::to_upper_copy(right.getName());
   }
 
-  friend std::ostream& operator<<(std::ostream& output,
-                                  Catalog &identifier)
+  friend std::ostream& operator<<(std::ostream& output, const Catalog &identifier)
   {
     output << "Catalog:(";
     output <<  identifier.getName();

@@ -41,7 +41,7 @@ public:
   { };
 
   // DDL
-  virtual bool create(const identifier::Catalog &)= 0;
+  virtual bool create(const identifier::Catalog &, message::catalog::shared_ptr &)= 0;
   virtual bool drop(const identifier::Catalog &)= 0;
 
   // Get Meta information

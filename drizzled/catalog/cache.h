@@ -23,8 +23,12 @@
 
 #include <boost/bind.hpp>
 
+#include "drizzled/catalog.h"
 #include "drizzled/plugin/catalog.h"
 #include "drizzled/identifier/catalog.h"
+
+#include <boost/unordered_map.hpp>
+#include <boost/thread/mutex.hpp>
 
 namespace drizzled {
 
@@ -57,26 +61,18 @@ public:
     cache.rehash(arg);
   }
 
-  catalog::Instance::shared_ptr find(const identifier::Catalog &identifier);
-  void erase(const identifier::Catalog &identifier);
-  bool insert(const identifier::Catalog &identifier, catalog::Instance::shared_ptr share);
+  Instance::shared_ptr find(const identifier::Catalog &identifier, catalog::error_t &error);
+  bool exist(const identifier::Catalog &identifier);
+  bool erase(const identifier::Catalog &identifier, catalog::error_t &error);
+  bool insert(const identifier::Catalog &identifier, Instance::shared_ptr instance, catalog::error_t &error);
+  bool lock(const identifier::Catalog &identifier, catalog::error_t &error);
+  bool unlock(const identifier::Catalog &identifier, catalog::error_t &error);
 
 protected:
   friend class drizzled::generator::catalog::Cache;
   friend class drizzled::plugin::Catalog;
 
-  void CopyFrom(catalog::Instance::vector &vector)
-  {
-    boost::mutex::scoped_lock scopedLock(_mutex);
-
-    vector.reserve(catalog::Cache::singleton().size());
-
-    std::transform(cache.begin(),
-                   cache.end(),
-                   std::back_inserter(vector),
-                   boost::bind(&unordered_map::value_type::second, _1) );
-    assert(vector.size() == cache.size());
-  }
+  void copy(catalog::Instance::vector &vector);
 
 private:
   typedef boost::unordered_map< identifier::Catalog, catalog::Instance::shared_ptr> unordered_map;

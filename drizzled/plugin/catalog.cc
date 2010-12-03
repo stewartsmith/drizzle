@@ -21,6 +21,7 @@
 #include "config.h"
 
 #include "drizzled/plugin/catalog.h"
+#include "drizzled/catalog/cache.h"
 #include <boost/foreach.hpp>
 
 namespace drizzled
@@ -52,25 +53,65 @@ Catalog::~Catalog()
 
 bool Catalog::create(const identifier::Catalog &identifier)
 {
+  message::catalog::shared_ptr message= message::catalog::create(identifier);
+  return create(identifier, message);
+}
+
+bool Catalog::create(const identifier::Catalog &identifier, message::catalog::shared_ptr &message)
+{
+  catalog::error_t error;
+  bool success;
+
+  assert(message);
+
+  // We insert a lock into the cache, if this fails we bail.
+  if (not catalog::Cache::singleton().lock(identifier, error))
+  {
+    catalog::error(error, identifier);
+
+    return false;
+  }
+
   BOOST_FOREACH(catalog::Engine::vector::const_reference ref, Engines::singleton().catalogs())
   {
-    if (ref->create(identifier))
+    if (ref->create(identifier, message))
     {
-      return true;
+      success= true;
+      break;
     }
   }
 
-  return false;
+  if (not catalog::Cache::singleton().unlock(identifier, error))
+  {
+    catalog::error(error, identifier);
+  }
+
+  return success;
 }
 
 bool Catalog::drop(const identifier::Catalog &identifier)
 {
+  catalog::error_t error;
+  
+  // We insert a lock into the cache, if this fails we bail.
+  if (not catalog::Cache::singleton().lock(identifier, error))
+  {
+    catalog::error(error, identifier);
+
+    return false;
+  }
+
   BOOST_FOREACH(catalog::Engine::vector::const_reference ref, Engines::singleton().catalogs())
   {
     if (ref->drop(identifier))
     {
       return true;
     }
+  }
+
+  if (not catalog::Cache::singleton().unlock(identifier, error))
+  {
+    catalog::error(error, identifier);
   }
 
   return false;
@@ -85,6 +126,9 @@ bool plugin::Catalog::addPlugin(plugin::Catalog *arg)
 
 bool plugin::Catalog::exist(const identifier::Catalog &identifier)
 {
+  if (catalog::Cache::singleton().exist(identifier))
+    return true;
+
   BOOST_FOREACH(catalog::Engine::vector::const_reference ref, Engines::singleton().catalogs())
   {
     if (ref->exist(identifier))
@@ -112,6 +156,17 @@ void plugin::Catalog::getMessages(message::catalog::vector &messages)
 
 bool plugin::Catalog::getMessage(const identifier::Catalog &identifier, message::catalog::shared_ptr &message)
 {
+  catalog::error_t error;
+  catalog::Instance::shared_ptr instance= catalog::Cache::singleton().find(identifier, error);
+
+  if (instance and instance->message())
+  {
+    message= instance->message();
+
+    if (message)
+      return message;
+  }
+
   BOOST_FOREACH(catalog::Engine::vector::const_reference ref, Engines::singleton().catalogs())
   {
     if (ref->getMessage(identifier, message))
@@ -119,6 +174,26 @@ bool plugin::Catalog::getMessage(const identifier::Catalog &identifier, message:
   }
 
   return false;
+}
+
+bool plugin::Catalog::getInstance(const identifier::Catalog &identifier, catalog::Instance::shared_ptr &instance)
+{
+  catalog::error_t error;
+  instance= catalog::Cache::singleton().find(identifier, error);
+
+  if (instance)
+    return true;
+
+  BOOST_FOREACH(catalog::Engine::vector::const_reference ref, Engines::singleton().catalogs())
+  {
+    if (ref->getInstance(identifier, instance))
+      return true;
+  }
+
+  // If this should fail, we are in a world of pain.
+  catalog::Cache::singleton().insert(identifier, instance, error);
+
+  return true;
 }
 
 

@@ -405,6 +405,9 @@ ErrorMap::ErrorMap()
 
   // Catalog related errors
   add(ER_WRONG_NAME_FOR_CATALOG, N_("Invalid catalog name"));
+  add(ER_CORRUPT_CATALOG_DEFINITION, N_("Corrupt or invalid catalog definition for %s : %s"));
+  add(ER_CATALOG_DOES_NOT_EXIST, N_("Catalog does not exist: %s"));
+  add(ER_CATALOG_NO_LOCK, N_("Could not gain lock on %s"));
 
   add(ER_BAD_FT_COLUMN, N_("Column '%-.192s' cannot be part of FULLTEXT index"));
   add(ER_UNKNOWN_STORAGE_ENGINE, N_("Unknown table engine '%s'"));

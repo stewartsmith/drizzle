@@ -51,6 +51,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/cached_directory.h \
 			      drizzled/cached_item.h \
 			      drizzled/calendar.h \
+			      drizzled/catalog.h \
 			      drizzled/catalog/cache.h \
 			      drizzled/catalog/engine.h \
 			      drizzled/catalog/instance.h \
@@ -493,6 +494,8 @@ drizzled_drizzled_SOURCES= \
                            drizzled/main.cc \
 				 drizzled/alter_info.cc \
 				 drizzled/cached_item.cc \
+				 drizzled/catalog.cc \
+				 drizzled/catalog/cache.cc \
 				 drizzled/check_stack_overrun.cc \
 				 drizzled/comp_creator.cc \
 				 drizzled/create_field.cc \

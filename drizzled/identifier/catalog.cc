@@ -44,9 +44,9 @@ namespace drizzled
 namespace identifier
 {
 
-static size_t build_schema_filename(string &path, const string &name)
+static void build_schema_filename(string &path, const string &name)
 {
-  path.append("");
+  path.append("../");
   bool conversion_error= false;
 
   conversion_error= util::tablename_to_filename(name, path);
@@ -55,21 +55,16 @@ static size_t build_schema_filename(string &path, const string &name)
     errmsg_printf(ERRMSG_LVL_ERROR,
                   _("Catalog name cannot be encoded and fit within filesystem "
                     "name length restrictions."));
-    return 0;
   }
-
-  return path.length();
 }
 
 Catalog::Catalog(const std::string &name_arg) :
-  name(name_arg),
-  path("")
+  name(name_arg)
 { 
-  if (not name_arg.empty())
-  {
-    build_schema_filename(path, name);
-    assert(path.length()); // TODO throw exception, this is a possibility
-  }
+  assert(not name_arg.empty());
+
+  build_schema_filename(path, name);
+  assert(path.length()); // TODO throw exception, this is a possibility
 
   util::insensitive_hash hasher;
   hash_value= hasher(path);

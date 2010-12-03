@@ -20,6 +20,7 @@
 
 #include "config.h"
 #include "drizzled/message/catalog.h"
+#include <uuid/uuid.h>
 
 #include <boost/make_shared.hpp>
 
@@ -31,7 +32,21 @@ namespace catalog {
 shared_ptr create(const identifier::Catalog &identifier)
 {
   shared_ptr message= boost::make_shared< value_type>();
+  assert(not identifier.getName().empty());
   message->set_name(identifier.getName());
+
+  message->set_creation_timestamp(time(NULL));
+  message->set_update_timestamp(time(NULL));
+  message->mutable_engine()->set_name("default");
+
+  /* 36 characters for uuid string +1 for NULL */
+  uuid_t uu;
+  char uuid_string[37];
+  uuid_generate_random(uu);
+  uuid_unparse(uu, uuid_string);
+  message->set_uuid(uuid_string, 36);
+
+  message->set_version(1);
 
   return message;
 }

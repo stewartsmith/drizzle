@@ -62,6 +62,11 @@ public:
     assert(_message);
     return _message->name();
   }
+
+  message::catalog::shared_ptr message() const
+  {
+    return _message;
+  }
 };
 
 } /* namespace catalog */

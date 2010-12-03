@@ -27,6 +27,7 @@
 
 #include <drizzled/plugin/function.h>
 #include <drizzled/plugin/table_function.h>
+#include <drizzled/identifier/catalog.h>
 
 #include "plugin/catalog/filesystem.h"
 

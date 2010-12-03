@@ -19,28 +19,24 @@
  */
 
 #include "config.h"
-#include "plugin/catalog/module.h"
 
-namespace plugin {
+#include "drizzled/error.h"
+#include "drizzled/catalog.h"
+
+namespace drizzled {
 namespace catalog {
-namespace functions {
 
-int64_t Drop::val_int()
+void error(error_t error, const identifier::Catalog &identifier)
 {
-  drizzled::String *res= args[0]->val_str(&value);
-
-  if (not res || not res->length())
+  switch(error)
   {
-    my_error(drizzled::ER_WRONG_NAME_FOR_CATALOG, MYF(0));
-    return 0;
+  case LOCKED:
+  case FOUND:
+    my_error(ER_CATALOG_NO_LOCK, MYF(0), identifier.getName().c_str());
+  default:
+    my_error(ER_UNKNOWN_ERROR, MYF(0));
   }
-
-  return drizzled::plugin::Catalog::drop(drizzled::identifier::Catalog(res->c_str()));
-
-  null_value= false;
-  return 1;
 }
 
-} /* namespace functions */
 } /* namespace catalog */
-} /* namespace plugin */
+} /* namespace drizzled */
