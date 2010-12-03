@@ -56,14 +56,13 @@ nobase_nodist_include_HEADERS+= \
 				drizzled/message/engine.pb.h \
 				drizzled/message/transaction.pb.h \
 				drizzled/message/schema.pb.h \
-                                drizzled/message/resultset.pb.h \
-				drizzled/message/table.pb.h 
+                drizzled/message/resultset.pb.h \
+				drizzled/message/table.pb.h \
+				drizzled/message/schema.h \
+				drizzled/message/table.h
 
 noinst_HEADERS+= \
-		drizzled/message/ioutil.h \
-		drizzled/message/schema.h \
-		drizzled/message/table.h
-
+		drizzled/message/ioutil.h 
 
 drizzled_message_schema_reader_SOURCES =  drizzled/message/schema_reader.cc
 drizzled_message_schema_reader_LDADD = ${MESSAGE_LDADD}
