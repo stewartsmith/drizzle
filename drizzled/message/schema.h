@@ -18,32 +18,21 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SHOW_DICTIONARY_SHOW_CREATE_SCHEMA_H
-#define PLUGIN_SHOW_DICTIONARY_SHOW_CREATE_SCHEMA_H
 
-#include "drizzled/message.h"
+#ifndef DRIZZLED_MESSAGE_SCHEMA_H
+#define DRIZZLED_MESSAGE_SCHEMA_H
 
-class ShowCreateSchema : public show_dictionary::Show
-{
-public:
-  ShowCreateSchema();
+#include <boost/shared_ptr.hpp>
+#include <drizzled/message/schema.pb.h>
 
-  class Generator : public show_dictionary::Show::Generator 
-  {
-    bool is_primed;
-    bool if_not_exists;
-    std::string schema_name;
-    drizzled::message::schema::shared_ptr schema_message;
+namespace drizzled {
+namespace message {
+namespace schema {
 
-  public:
-    Generator(drizzled::Field **arg);
-    bool populate();
-  };
+typedef boost::shared_ptr <message::Schema> shared_ptr;
 
-  Generator *generator(drizzled::Field **arg)
-  {
-    return new Generator(arg);
-  }
-};
+} // namespace schema
+} // namespace message
+} // namespace drizzled
 
-#endif /* PLUGIN_SHOW_DICTIONARY_SHOW_CREATE_SCHEMA_H */
+#endif /* DRIZZLED_MESSAGE_SCHEMA_H */

@@ -80,7 +80,7 @@ public:
     return set_value(rhs);
   }
 
-  T getVal() const
+  T get() const
   {
     return m_val;
   }
@@ -103,7 +103,7 @@ public:
   friend
   std::ostream& operator<<(std::ostream& os, const constrained_value<T>& v)
   {
-    os << v.getVal();
+    os << v.get();
     return os;
   }
 };
@@ -176,7 +176,7 @@ public:
 protected:
   constrained_value<T>& set_value(const constrained_value<T>& rhs)
   {
-    return set_value(rhs.getVal());
+    return set_value(rhs.get());
   }
 
   constrained_value<T>& set_value(T rhs)

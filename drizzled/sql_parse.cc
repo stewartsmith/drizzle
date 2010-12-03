@@ -39,7 +39,7 @@
 #include <drizzled/statement.h>
 #include <drizzled/statement/alter_table.h>
 #include "drizzled/probes.h"
-#include "drizzled/session_list.h"
+#include "drizzled/session/cache.h"
 #include "drizzled/global_charset_info.h"
 
 #include "drizzled/plugin/logging.h"
@@ -755,6 +755,7 @@ void mysql_parse(Session *session, const char *inBuf, uint32_t length)
         {
           // Just try to catch any random failures that could have come
           // during execution.
+          unireg_abort(1);
         }
         DRIZZLE_QUERY_EXEC_DONE(0);
       }

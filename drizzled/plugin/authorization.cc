@@ -239,7 +239,7 @@ bool plugin::Authorization::isAuthorized(const SecurityContext &user_ctx,
 }
 
 void plugin::Authorization::pruneSchemaNames(const SecurityContext &user_ctx,
-                                             SchemaIdentifiers &set_of_schemas)
+                                             SchemaIdentifier::vector &set_of_schemas)
 {
   /* If we never loaded any authorization plugins, just return true */
   if (authorization_plugins.empty())

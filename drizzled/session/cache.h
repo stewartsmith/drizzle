@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SESSION_LIST_H
-#define DRIZZLED_SESSION_LIST_H
+#ifndef DRIZZLED_SESSION_CACHE_H
+#define DRIZZLED_SESSION_CACHE_H
 
 #include "drizzled/session.h"
 #include <list>
@@ -34,7 +34,7 @@ namespace session
 class Cache 
 {
 public:
-  typedef std::list<Session::shared_ptr> List;
+  typedef std::list<Session::shared_ptr> list;
 
   static inline Cache &singleton()
   {
@@ -43,7 +43,7 @@ public:
     return open_cache;
   }
 
-  List &getCache()
+  list &getCache()
   {
     return cache;
   }
@@ -61,11 +61,11 @@ public:
   Session::shared_ptr find(const session_id_t &id);
 
 private:
-  List cache;
+  list cache;
   boost::mutex _mutex;
 };
 
 } /* namespace session */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SESSION_LIST_H */
+#endif /* DRIZZLED_SESSION_CACHE_H */

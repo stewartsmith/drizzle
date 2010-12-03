@@ -200,7 +200,7 @@ void generate_dump_db(void)
       opt_destination_port, opt_destination_user, opt_destination_password,
       false);
   }
-  catch (...)
+  catch (std::exception&)
   {
     cerr << "Could not connect to destination database server" << endl;
     maybe_exit(EX_DRIZZLEERR);
@@ -225,7 +225,7 @@ void generate_dump_db(void)
       DrizzleDumpDatabase *database= *i;
       sout << *database;
     }
-    catch (...)
+    catch (std::exception&)
     {
       std::cout << _("Error inserting into destination database") << std::endl;
       if (not ignore_errors)
@@ -754,7 +754,7 @@ try
     db_connection = new DrizzleDumpConnection(current_host, opt_drizzle_port,
       current_user, opt_password, use_drizzle_protocol);
   }
-  catch (...)
+  catch (std::exception&)
   {
     maybe_exit(EX_DRIZZLEERR);
   }

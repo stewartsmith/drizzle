@@ -212,7 +212,7 @@ values */
 static ulong  innobase_fast_shutdown      = 1;
 static my_bool  innobase_file_format_check = TRUE;
 #ifdef UNIV_LOG_ARCHIVE
-static my_bool  innobase_log_archive      = FALSE;
+static my_bool  innobase_log_archive= FALSE;
 #endif /* UNIV_LOG_ARCHIVE */
 static my_bool  innobase_use_doublewrite    = TRUE;
 static my_bool  innobase_use_checksums      = TRUE;
@@ -454,7 +454,7 @@ public:
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                              const drizzled::SchemaIdentifier &schema_identifier,
-                             drizzled::TableIdentifiers &set_of_identifiers);
+                             drizzled::TableIdentifier::vector &set_of_identifiers);
   bool validateCreateTableOption(const std::string &key, const std::string &state);
   void dropTemporarySchema();
 
@@ -483,7 +483,7 @@ bool InnobaseEngine::validateCreateTableOption(const std::string &key, const std
 
 void InnobaseEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                                            const drizzled::SchemaIdentifier &schema_identifier,
-                                           drizzled::TableIdentifiers &set_of_identifiers)
+                                           drizzled::TableIdentifier::vector &set_of_identifiers)
 {
   CachedDirectory::Entries entries= directory.getEntries();
 
@@ -2398,10 +2398,23 @@ innobase_change_buffering_inited_ok:
   context.registerVariable(new sys_var_const_string_val("data-home-dir", innobase_data_home_dir));
   context.registerVariable(new sys_var_const_string_val("flush-method", 
                                                         vm.count("flush-method") ?  vm["flush-method"].as<string>() : ""));
-  context.registerVariable(new sys_var_const_string_val("log-arch-dir", innobase_log_arch_dir));
   context.registerVariable(new sys_var_const_string_val("log-group-home-dir", innobase_log_group_home_dir));
   context.registerVariable(new sys_var_const_string_val("data-file-path", innobase_data_file_path));
   context.registerVariable(new sys_var_const_string_val("version", vm["version"].as<string>()));
+
+  #ifdef UNIV_LOG_ARCHIVE
+  context.registerVariable(new sys_var_const_string_val("log-arch-dir", innobase_log_arch_dir));
+  context.registerVariable(new sys_var_bool_ptr_readonly("log-archive", &innobase_log_archive));
+  #endif /* UNIV_LOG_ARCHIVE */  
+
+  context.registerVariable(new sys_var_bool_ptr_readonly("checksums", &innobase_use_checksums));
+  context.registerVariable(new sys_var_bool_ptr_readonly("doublewrite", &innobase_use_doublewrite));
+  context.registerVariable(new sys_var_bool_ptr("file-per-table", &srv_file_per_table));
+  context.registerVariable(new sys_var_bool_ptr_readonly("file-format-check", &innobase_file_format_check));
+  context.registerVariable(new sys_var_bool_ptr("adaptive-flushing", &srv_adaptive_flushing));
+  context.registerVariable(new sys_var_bool_ptr("status-file", &innobase_create_status_file));
+  context.registerVariable(new sys_var_bool_ptr_readonly("use-sys-malloc", &srv_use_sys_malloc));
+  context.registerVariable(new sys_var_bool_ptr_readonly("use-native-aio", &srv_use_native_aio));
 
 
   /* Get the current high water mark format. */
@@ -9414,15 +9427,6 @@ innodb_change_buffering_update(
 }
 
 /* plugin options */
-static DRIZZLE_SYSVAR_BOOL(checksums, innobase_use_checksums,
-  PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
-  "Enable InnoDB checksums validation (enabled by default). ",
-  NULL, NULL, TRUE);
-
-static DRIZZLE_SYSVAR_BOOL(doublewrite, innobase_use_doublewrite,
-  PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
-  "Enable InnoDB doublewrite buffer (enabled by default). ",
-  NULL, NULL, TRUE);
 
 static DRIZZLE_SYSVAR_ULONG(io_capacity, srv_io_capacity,
   PLUGIN_VAR_RQCMDARG,
@@ -9454,11 +9458,6 @@ static DRIZZLE_SYSVAR_ULONG(fast_shutdown, innobase_fast_shutdown,
   ".",
   NULL, NULL, 1, 0, 2, 0);
 
-static DRIZZLE_SYSVAR_BOOL(file_per_table, srv_file_per_table,
-  PLUGIN_VAR_NOCMDARG,
-  "Stores each InnoDB table to an .ibd file in the database dir.",
-  NULL, NULL, TRUE);
-
 static DRIZZLE_SYSVAR_STR(file_format, innobase_file_format_name,
   PLUGIN_VAR_RQCMDARG,
   "File format to use for new tables in .ibd files.",
@@ -9471,10 +9470,6 @@ table space exceeds the maximum file format supported
 by the server. Can be set during server startup at command
 line or configure file, and a read only variable after
 server startup */
-static DRIZZLE_SYSVAR_BOOL(file_format_check, innobase_file_format_check,
-  PLUGIN_VAR_OPCMDARG | PLUGIN_VAR_READONLY,
-  "Whether to perform system file format check.",
-  NULL, NULL, TRUE);
 
 /* If a new file format is introduced, the file format
 name needs to be updated accordingly. Please refer to
@@ -9494,32 +9489,15 @@ static DRIZZLE_SYSVAR_ULONG(flush_log_at_trx_commit, srv_flush_log_at_trx_commit
   " or 2 (write at commit, flush once per second).",
   NULL, NULL, 1, 0, 2, 0);
 
-#ifdef UNIV_LOG_ARCHIVE
-
-static DRIZZLE_SYSVAR_BOOL(log_archive, innobase_log_archive,
-  PLUGIN_VAR_OPCMDARG | PLUGIN_VAR_READONLY,
-  "Set to 1 if you want to have logs archived.", NULL, NULL, FALSE);
-#endif /* UNIV_LOG_ARCHIVE */
-
 static DRIZZLE_SYSVAR_ULONG(max_dirty_pages_pct, srv_max_buf_pool_modified_pct,
   PLUGIN_VAR_RQCMDARG,
   "Percentage of dirty pages allowed in bufferpool.",
   NULL, NULL, 75, 0, 99, 0);
 
-static DRIZZLE_SYSVAR_BOOL(adaptive_flushing, srv_adaptive_flushing,
-  PLUGIN_VAR_NOCMDARG,
-  "Attempt flushing dirty pages to avoid IO bursts at checkpoints.",
-  NULL, NULL, TRUE);
-
 static DRIZZLE_SYSVAR_ULONG(max_purge_lag, srv_max_purge_lag,
   PLUGIN_VAR_RQCMDARG,
   "Desired maximum length of the purge queue (0 = no limit)",
   NULL, NULL, 0, 0, ~0L, 0);
-
-static DRIZZLE_SYSVAR_BOOL(status_file, innobase_create_status_file,
-  PLUGIN_VAR_OPCMDARG | PLUGIN_VAR_NOSYSVAR,
-  "Enable SHOW INNODB STATUS output in the innodb_status.<pid> file",
-  NULL, NULL, FALSE);
 
 static DRIZZLE_SYSVAR_ULONGLONG(stats_sample_pages, srv_stats_sample_pages,
   PLUGIN_VAR_RQCMDARG,
@@ -9638,16 +9616,6 @@ static DRIZZLE_SYSVAR_ULONG(thread_sleep_delay, srv_thread_sleep_delay,
   PLUGIN_VAR_RQCMDARG,
   "Time of innodb thread sleeping before joining InnoDB queue (usec). Value 0 disable a sleep",
   NULL, NULL, 10000L, 0L, ~0L, 0);
-
-static DRIZZLE_SYSVAR_BOOL(use_sys_malloc, srv_use_sys_malloc,
-  PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
-  "Use OS memory allocator instead of InnoDB's internal memory allocator",
-  NULL, NULL, TRUE);
-
-static DRIZZLE_SYSVAR_BOOL(use_native_aio, srv_use_native_aio,
-  PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
-  "Use native AIO if supported on this platform.",
-  NULL, NULL, TRUE);
 
 static DRIZZLE_SYSVAR_STR(change_buffering, innobase_change_buffering,
   PLUGIN_VAR_RQCMDARG,
@@ -9820,16 +9788,12 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(autoextend_increment),
   DRIZZLE_SYSVAR(buffer_pool_size),
   DRIZZLE_SYSVAR(buffer_pool_instances),
-  DRIZZLE_SYSVAR(checksums),
   DRIZZLE_SYSVAR(commit_concurrency),
   DRIZZLE_SYSVAR(concurrency_tickets),
-  DRIZZLE_SYSVAR(doublewrite),
   DRIZZLE_SYSVAR(fast_shutdown),
   DRIZZLE_SYSVAR(read_io_threads),
   DRIZZLE_SYSVAR(write_io_threads),
-  DRIZZLE_SYSVAR(file_per_table),
   DRIZZLE_SYSVAR(file_format),
-  DRIZZLE_SYSVAR(file_format_check),
   DRIZZLE_SYSVAR(file_format_max),
   DRIZZLE_SYSVAR(flush_log_at_trx_commit),
   DRIZZLE_SYSVAR(force_recovery),
@@ -9842,7 +9806,6 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(log_files_in_group),
   DRIZZLE_SYSVAR(max_dirty_pages_pct),
   DRIZZLE_SYSVAR(max_purge_lag),
-  DRIZZLE_SYSVAR(adaptive_flushing),
   DRIZZLE_SYSVAR(mirrored_log_groups),
   DRIZZLE_SYSVAR(old_blocks_pct),
   DRIZZLE_SYSVAR(old_blocks_time),
@@ -9850,7 +9813,6 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(stats_sample_pages),
   DRIZZLE_SYSVAR(adaptive_hash_index),
   DRIZZLE_SYSVAR(replication_delay),
-  DRIZZLE_SYSVAR(status_file),
   DRIZZLE_SYSVAR(strict_mode),
   DRIZZLE_SYSVAR(support_xa),
   DRIZZLE_SYSVAR(sync_spin_loops),
@@ -9858,8 +9820,6 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(table_locks),
   DRIZZLE_SYSVAR(thread_concurrency),
   DRIZZLE_SYSVAR(thread_sleep_delay),
-  DRIZZLE_SYSVAR(use_sys_malloc),
-  DRIZZLE_SYSVAR(use_native_aio),
   DRIZZLE_SYSVAR(change_buffering),
   DRIZZLE_SYSVAR(read_ahead_threshold),
   DRIZZLE_SYSVAR(io_capacity),

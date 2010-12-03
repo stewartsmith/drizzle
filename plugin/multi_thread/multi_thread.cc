@@ -20,7 +20,7 @@
 #include <drizzled/module/option_map.h>
 #include <drizzled/errmsg_print.h>
 #include "drizzled/session.h"
-#include "drizzled/session_list.h"
+#include "drizzled/session/cache.h"
 
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
