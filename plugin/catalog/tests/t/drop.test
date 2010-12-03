@@ -1,2 +1,5 @@
 SELECT CREATE_CATALOG("foo");
 SELECT DROP_CATALOG("foo");
+
+--error 1715
+SELECT drop_catalog("local");

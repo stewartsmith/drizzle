@@ -52,6 +52,9 @@ public:
   static bool create(const identifier::Catalog &, message::catalog::shared_ptr &);
   static bool drop(const identifier::Catalog &);
 
+  static bool lock(const identifier::Catalog &);
+  static bool unlock(const identifier::Catalog &);
+
   // Required for plugin interface
   static bool addPlugin(plugin::Catalog *plugin);
   static void removePlugin(plugin::Catalog *plugin);

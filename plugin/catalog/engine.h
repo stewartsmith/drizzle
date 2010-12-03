@@ -68,11 +68,7 @@ public:
     return false;
   }
 
-  void getMessages(drizzled::message::catalog::vector &messages)
-  {
-    static drizzled::identifier::Catalog LOCAL_IDENTIFIER("local");
-    messages.push_back(drizzled::message::catalog::create(LOCAL_IDENTIFIER));
-  }
+  void getMessages(drizzled::message::catalog::vector &messages);
 
   bool getInstance(const drizzled::identifier::Catalog &identifier, drizzled::catalog::Instance::shared_ptr &instance)
   {
@@ -91,6 +87,7 @@ public:
 private:
   bool readFile(const drizzled::identifier::Catalog &identifier, drizzled::message::catalog::shared_ptr &message);
   bool writeFile(const drizzled::identifier::Catalog &identifier, drizzled::message::catalog::shared_ptr &message);
+  void prime(drizzled::message::catalog::vector &messages);
 
 };
 

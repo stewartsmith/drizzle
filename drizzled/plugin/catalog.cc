@@ -22,6 +22,8 @@
 
 #include "drizzled/plugin/catalog.h"
 #include "drizzled/catalog/cache.h"
+#include "drizzled/error.h"
+
 #include <boost/foreach.hpp>
 
 namespace drizzled
@@ -92,6 +94,14 @@ bool Catalog::create(const identifier::Catalog &identifier, message::catalog::sh
 bool Catalog::drop(const identifier::Catalog &identifier)
 {
   catalog::error_t error;
+
+  static drizzled::identifier::Catalog LOCAL_IDENTIFIER("local");
+  if (identifier == LOCAL_IDENTIFIER)
+  {
+    my_error(drizzled::ER_CATALOG_NO_DROP_LOCAL, MYF(0));
+    return false;
+  }
+
   
   // We insert a lock into the cache, if this fails we bail.
   if (not catalog::Cache::singleton().lock(identifier, error))
@@ -109,6 +119,33 @@ bool Catalog::drop(const identifier::Catalog &identifier)
     }
   }
 
+  if (not catalog::Cache::singleton().unlock(identifier, error))
+  {
+    catalog::error(error, identifier);
+  }
+
+  return false;
+}
+
+bool Catalog::lock(const identifier::Catalog &identifier)
+{
+  catalog::error_t error;
+  
+  // We insert a lock into the cache, if this fails we bail.
+  if (not catalog::Cache::singleton().lock(identifier, error))
+  {
+    catalog::error(error, identifier);
+
+    return false;
+  }
+
+  return true;
+}
+
+
+bool Catalog::unlock(const identifier::Catalog &identifier)
+{
+  catalog::error_t error;
   if (not catalog::Cache::singleton().unlock(identifier, error))
   {
     catalog::error(error, identifier);

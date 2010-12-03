@@ -24,6 +24,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include "drizzled/display.h"
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 
@@ -31,6 +32,8 @@
 #include <fstream>
 #include <string>
 
+#include "drizzled/data_home.h"
+#include "drizzled/cached_directory.h"
 #include "plugin/catalog/module.h"
 
 namespace plugin {
@@ -80,6 +83,45 @@ bool Engine::drop(const drizzled::identifier::Catalog &identifier)
   }
 
   return true;
+}
+
+void Engine::getMessages(drizzled::message::catalog::vector &messages)
+{
+  prime(messages);
+}
+
+void Engine::prime(drizzled::message::catalog::vector &messages)
+{
+  bool found_local= false;
+  static drizzled::identifier::Catalog LOCAL_IDENTIFIER("local");
+  drizzled::CachedDirectory directory(drizzled::getFullDataHome().file_string(), drizzled::CachedDirectory::DIRECTORY, true);
+  drizzled::CachedDirectory::Entries files= directory.getEntries();
+
+
+  for (drizzled::CachedDirectory::Entries::iterator fileIter= files.begin();
+       fileIter != files.end(); fileIter++)
+  {
+    drizzled::CachedDirectory::Entry *entry= *fileIter;
+    drizzled::message::catalog::shared_ptr message;
+
+    if (not entry->filename.compare(GLOBAL_TEMPORARY_EXT))
+      continue;
+
+    drizzled::identifier::Catalog identifier(entry->filename);
+
+    if (readFile(identifier, message))
+    {
+      messages.push_back(message);
+
+      if (LOCAL_IDENTIFIER == identifier)
+        found_local= true;
+    }
+  }
+
+  if (not found_local)
+  {
+    messages.push_back(drizzled::message::catalog::create(LOCAL_IDENTIFIER));
+  }
 }
 
 bool Engine::writeFile(const drizzled::identifier::Catalog &identifier, drizzled::message::catalog::shared_ptr &message)
@@ -163,6 +205,7 @@ bool Engine::readFile(const drizzled::identifier::Catalog &identifier, drizzled:
 
   if (input.good())
   {
+    message= drizzled::message::catalog::create(identifier);
     if (message->ParseFromIstream(&input))
     {
       return true;

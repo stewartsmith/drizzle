@@ -18,25 +18,29 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_CATALOG_MODULE_H
-#define PLUGIN_CATALOG_MODULE_H
+#ifndef PLUGIN_CATALOG_FUNCTIONS_UNLOCK_H
+#define PLUGIN_CATALOG_FUNCTIONS_UNLOCK_H
 
-#include <drizzled/error.h>
-#include <drizzled/item/func.h>
-#include <drizzled/function/str/strfunc.h>
+namespace plugin {
+namespace catalog {
+namespace functions {
 
-#include <drizzled/plugin/function.h>
-#include <drizzled/plugin/table_function.h>
-#include <drizzled/identifier/catalog.h>
+class Unlock : public drizzled::Item_int_func
+{
+  drizzled::String value;
 
-#include "plugin/catalog/filesystem.h"
+public:
+  Unlock() :
+    drizzled::Item_int_func()
+  {}
 
-#include "plugin/catalog/functions/create.h"
-#include "plugin/catalog/functions/drop.h"
-#include "plugin/catalog/functions/lock.h"
-#include "plugin/catalog/functions/unlock.h"
+  int64_t val_int();
+  const char *func_name() const { return "unlock_catalog"; }
+  bool check_argument_count(int n) { return n == 1; }
+};
 
-#include "plugin/catalog/tables/catalog_cache.h"
-#include "plugin/catalog/tables/catalogs.h"
+} /* namespace functions */
+} /* namespace catalog */
+} /* namespace plugin */
 
-#endif /* PLUGIN_CATALOG_MODULE_H */
+#endif /* PLUGIN_CATALOG_FUNCTIONS_UNLOCK_H */
