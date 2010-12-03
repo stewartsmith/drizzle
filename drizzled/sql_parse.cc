@@ -224,7 +224,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
                         session->thread_id,
                         const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));
 
-    plugin::QueryRewriter::rewriteQuery(session->getSchema(), session->getQueryString());
+    plugin::QueryRewriter::rewriteQuery(session->getSchema(), session);
     mysql_parse(session, session->getQueryString()->c_str(), session->getQueryString()->length());
 
     break;
