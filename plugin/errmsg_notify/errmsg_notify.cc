@@ -77,14 +77,14 @@ public:
       if (!n.show(error))
 #endif
       {
-        fprintf(stderr, _("Failed to send error message to libnotify\n"));
+        std::cerr << _("Failed to send error message to libnotify\n");
         return true;
       }
 #ifdef GLIBMM_EXCEPTIONS_ENABLED
      }
      catch (Glib::Error& err)
      {
-        cerr << err.what() << endl;
+       std::cerr << err.what() << endl;
      }
 #endif
 
