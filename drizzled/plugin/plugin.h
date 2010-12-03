@@ -36,17 +36,17 @@ namespace plugin
 class Plugin
 {
 private:
-  const std::string name;
-  bool is_active;
-  module::Module *module;
-  const std::string type_name;
+  const std::string _name;
+  bool _is_active;
+  module::Module *_module;
+  const std::string _type_name;
 
   Plugin();
   Plugin(const Plugin&);
   Plugin& operator=(const Plugin &);
 public:
 
-  explicit Plugin(std::string in_name, std::string in_type_name);
+  explicit Plugin(const std::string &name, const std::string &type_name);
   virtual ~Plugin() {}
 
   /*
@@ -60,32 +60,32 @@ public:
  
   void activate()
   {
-    is_active= true;
+    _is_active= true;
   }
  
   void deactivate()
   {
-    is_active= false;
+    _is_active= false;
   }
  
   bool isActive() const
   {
-    return is_active;
+    return _is_active;
   }
 
   const std::string &getName() const
   {
-    return name;
+    return _name;
   } 
 
-  void setModule(module::Module *module_arg)
+  void setModule(module::Module *module)
   {
-    module= module_arg;
+    _module= module;
   }
 
   const std::string& getTypeName() const
   {
-    return type_name;
+    return _type_name;
   }
 
   const std::string& getModuleName() const;

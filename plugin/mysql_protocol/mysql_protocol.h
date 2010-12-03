@@ -27,19 +27,30 @@
 
 #include "net_serv.h"
 
+namespace drizzle_plugin
+{
+
+typedef drizzled::constrained_check<in_port_t, 65535, 0> port_constraint;
+typedef drizzled::constrained_check<uint32_t, 300, 1> timeout_constraint;
+typedef drizzled::constrained_check<uint32_t, 300, 1> retry_constraint;
+typedef drizzled::constrained_check<uint32_t, 1048576, 1024, 1024> buffer_constraint;
+
 class ListenMySQLProtocol: public drizzled::plugin::ListenTcp
 {
 private:
-  bool using_mysql41_protocol;
-  static drizzled::plugin::TableFunction* status_table_function_ptr;
+  const std::string _hostname;
+  bool _using_mysql41_protocol;
 
 public:
-  ListenMySQLProtocol(std::string name_arg, bool using_mysql41_protocol_arg):
-   drizzled::plugin::ListenTcp(name_arg),
-   using_mysql41_protocol(using_mysql41_protocol_arg)
+  ListenMySQLProtocol(std::string name,
+                      const std::string &hostname,
+                      bool using_mysql41_protocol):
+   drizzled::plugin::ListenTcp(name),
+   _hostname(hostname),
+   _using_mysql41_protocol(using_mysql41_protocol)
   { }
   virtual ~ListenMySQLProtocol();
-  virtual const char* getHost(void) const;
+  virtual const std::string getHost(void) const;
   virtual in_port_t getPort(void) const;
   virtual drizzled::plugin::Client *getClient(int fd);
 };
@@ -50,7 +61,7 @@ private:
   NET net;
   drizzled::String packet;
   uint32_t client_capabilities;
-  bool using_mysql41_protocol;
+  bool _using_mysql41_protocol;
 
   bool checkConnection(void);
   bool netStoreData(const unsigned char *from, size_t length);
@@ -59,7 +70,7 @@ private:
   void makeScramble(char *scramble);
 
 public:
-  ClientMySQLProtocol(int fd, bool using_mysql41_protocol_arg);
+  ClientMySQLProtocol(int fd, bool _using_mysql41_protocol);
   virtual ~ClientMySQLProtocol();
 
   static drizzled::atomic<uint64_t> connectionCount;
@@ -96,5 +107,7 @@ public:
   virtual bool haveMoreData(void);
   virtual bool wasAborted(void);
 };
+
+} /* namespace drizzle_plugin */
 
 #endif /* PLUGIN_MYSQL_PROTOCOL_MYSQL_PROTOCOL_H */

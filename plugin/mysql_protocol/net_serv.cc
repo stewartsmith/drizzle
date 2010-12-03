@@ -37,6 +37,9 @@
 #include "vio.h"
 #include "net_serv.h"
 
+namespace drizzle_plugin
+{
+
 using namespace std;
 using namespace drizzled;
 
@@ -898,3 +901,5 @@ void drizzleclient_drizzleclient_net_clear_error(NET *net)
   net->last_error[0]= '\0';
   strcpy(net->sqlstate, not_error_sqlstate);
 }
+
+} /* namespace drizzle_plugin */

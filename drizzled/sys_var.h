@@ -225,6 +225,27 @@ public:
   { return (unsigned char*) value; }
 };
 
+class sys_var_uint32_t_ptr_readonly :
+  public sys_var_uint32_t_ptr
+{
+public:
+  sys_var_uint32_t_ptr_readonly(const char *name_arg,
+                                uint32_t *value_ptr_arg) :
+    sys_var_uint32_t_ptr(name_arg, value_ptr_arg)
+  {}
+
+  sys_var_uint32_t_ptr_readonly(const char *name_arg,
+                                uint32_t *value_ptr_arg,
+                                sys_after_update_func func) :
+    sys_var_uint32_t_ptr(name_arg, value_ptr_arg, func)
+  {}
+
+  bool is_readonly() const
+  {
+    return true;
+  }
+};
+
 
 class sys_var_uint64_t_ptr :public sys_var
 {

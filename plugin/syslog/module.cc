@@ -100,7 +100,7 @@ static void init_options(drizzled::module::option_context &context)
           po::value<bool>(&sysvar_logging_enable)->default_value(false)->zero_tokens(),
           N_("Enable logging to syslog of the query log"));
   context("logging-priority",
-          po::value<string>(),
+          po::value<string>()->default_value("warning"),
           N_("Syslog Priority of query logging"));
   context("logging-threshold-slow",
           po::value<uint64_constraint>(&sysvar_logging_threshold_slow)->default_value(0),
