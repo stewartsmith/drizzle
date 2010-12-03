@@ -217,7 +217,7 @@ noinst_HEADERS+= \
                  plugin/innobase/handler/status_function.h \
                  plugin/innobase/handler/internal_dictionary.h \
                  plugin/innobase/handler/replication_dictionary.h \
-		 plugin/innobase/handler/replication_log.h \
+                 plugin/innobase/handler/replication_log.h \
                  plugin/innobase/handler/data_dictionary.h
 
 if BUILD_INNOBASE_PLUGIN

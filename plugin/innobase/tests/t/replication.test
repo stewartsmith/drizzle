@@ -1,7 +1,0 @@
-CREATE TABLE replicate (a SERIAL);
-INSERT INTO replicate VALUES ();
-INSERT INTO replicate VALUES ();
-INSERT INTO replicate VALUES ();
-INSERT INTO replicate VALUES ();
-select count(*) from data_dictionary.INNODB_REPLICATION_LOG;
-DROP TABLE replicate;
