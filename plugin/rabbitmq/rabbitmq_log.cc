@@ -155,8 +155,11 @@ static void init_options(drizzled::module::option_context &context)
           po::value<string>()->default_value("localhost"),
           N_("Host name to connect to"));
   context("port",
-          po::value<port_constraint>(&sysvar_rabbitmq_port)->default_value(5246),
+          po::value<port_constraint>(&sysvar_rabbitmq_port)->default_value(5672),
           N_("Port to connect to"));
+  context("virtualhost",
+          po::value<string>()->default_value("/"),
+          N_("RabbitMQ virtualhost"));
   context("username",
           po::value<string>()->default_value("guest"),
           N_("RabbitMQ username"));

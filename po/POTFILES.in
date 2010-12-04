@@ -85,6 +85,7 @@ plugin/mysql_protocol/mysql_protocol.cc
 plugin/mysql_unix_socket_protocol/protocol.cc
 plugin/pbms/src/parameters_ms.cc
 plugin/pbms/src/plugin_ms.cc
+plugin/rabbitmq/rabbitmq_handler.cc
 plugin/rabbitmq/rabbitmq_log.cc
 plugin/session_dictionary/processlist.cc
 plugin/signal_handler/signal_handler.cc

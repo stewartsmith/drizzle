@@ -199,6 +199,7 @@ protected:
 };
 
 typedef constrained_check<uint64_t, UINT64_MAX, 0> uint64_constraint;
+typedef constrained_check<uint32_t, UINT32_MAX, 0> uint32_constraint;
 
 typedef constrained_check<uint32_t,65535,1> back_log_constraints;
 

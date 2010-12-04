@@ -23,6 +23,9 @@
  */
 
 #include "config.h"
+
+#include <drizzled/gettext.h>
+
 #include "rabbitmq_handler.h"
 
 using namespace std;
@@ -47,19 +50,19 @@ RabbitMQHandler::RabbitMQHandler(const std::string &rabbitMQHost,
   /* open the socket to the rabbitmq server */
   if(sockfd < 0) 
   {
-    throw rabbitmq_handler_exception("Could not open socket, is rabbitmq running?");
+    throw rabbitmq_handler_exception(_("Could not open socket, is rabbitmq running?"));
   }
   amqp_set_sockfd(rabbitmqConnection, sockfd);
   /* login to rabbitmq, handleAMQPError throws exception if there is a problem */
   handleAMQPError(amqp_login(rabbitmqConnection, 
-			     virtualhost.c_str(), 
-			     0, 
-			     131072, 
-			     0, 
-			     AMQP_SASL_METHOD_PLAIN, 
-			     username.c_str(), 
-			     password.c_str()), 
-		  "rabbitmq login");
+                             virtualhost.c_str(), 
+                             0, 
+                             131072, 
+                             0, 
+                             AMQP_SASL_METHOD_PLAIN, 
+                             username.c_str(), 
+                             password.c_str()), 
+                  "rabbitmq login");
   /* open the channel */
   amqp_channel_open(rabbitmqConnection, 1);
 }
