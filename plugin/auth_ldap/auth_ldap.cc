@@ -33,6 +33,10 @@
 #include "drizzled/util/convert.h"
 #include "drizzled/algorithm/sha1.h"
 
+#include <drizzled/module/option_map.h>
+#include <boost/program_options.hpp>
+
+namespace po= boost::program_options;
 using namespace std;
 using namespace drizzled;
 
@@ -415,20 +419,36 @@ static int init(module::Context &context)
     return 1;
   }
 
-  context.registerVariable(new sys_var_const_string_val("uri", (not uri.empty())? uri : DEFAULT_URI));
-  context.registerVariable(new sys_var_const_string_val("bind_dn", bind_dn));
-  context.registerVariable(new sys_var_const_string_val("bind_password", bind_password));
-  context.registerVariable(new sys_var_const_string_val("base_dn", base_dn));
-  context.registerVariable(new sys_var_const_string_val("password_attribute", 
-                           (not password_attribute.empty())? password_attribute : DEFAULT_PASSWORD_ATTRIBUTE));
-  context.registerVariable(new sys_var_const_string_val("mysql_password_attribute", 
-                           (not mysql_password_attribute.empty())? mysql_password_attribute : DEFAULT_MYSQL_PASSWORD_ATTRIBUTE));
-  context.registerVariable(new sys_var_constrained_value_readonly<int>("cache_timeout", cache_timeout));
+  context.registerVariable(new sys_var_const_string_val("uri", uri));
+  context.registerVariable(new sys_var_const_string_val("bind-dn", bind_dn));
+  context.registerVariable(new sys_var_const_string_val("bind-password", bind_password));
+  context.registerVariable(new sys_var_const_string_val("base-dn", base_dn));
+  context.registerVariable(new sys_var_const_string_val("password-attribute",password_attribute));
+  context.registerVariable(new sys_var_const_string_val("mysql-password-attribute", mysql_password_attribute));
+  context.registerVariable(new sys_var_constrained_value_readonly<int>("cache-timeout", cache_timeout));
 
   context.add(auth_ldap);
   return 0;
 }
 
+static void init_options(drizzled::module::option_context &context)
+{
+  context("uri", po::value<string>(&uri)->default_value(DEFAULT_URI),
+          N_("URI of the LDAP server to contact"));
+  context("bind-db", po::value<string>(&bind_dn)->default_value(""),
+          N_("DN to use when binding to the LDAP server"));
+  context("bind-password", po::value<string>(&bind_password)->default_value(""),
+          N_("Password to use when binding the DN"));
+  context("base-dn", po::value<string>(&base_dn)->default_value(""),
+          N_("DN to use when searching"));
+  context("password-attribute", po::value<string>(&password_attribute)->default_value(DEFAULT_PASSWORD_ATTRIBUTE),
+          N_("Attribute in LDAP with plain text password"));
+  context("mysql-password-attribute", po::value<string>(&mysql_password_attribute)->default_value(DEFAULT_MYSQL_PASSWORD_ATTRIBUTE),
+          N_("Attribute in LDAP with MySQL hashed password"));
+  context("cache-timeout", po::value<cachetimeout_constraint>(&cache_timeout)->default_value(DEFAULT_CACHE_TIMEOUT),
+          N_("How often to empty the users cache, 0 to disable"));
+}
+
 } /* namespace auth_ldap */
 
-DRIZZLE_PLUGIN(auth_ldap::init, NULL, NULL);
+DRIZZLE_PLUGIN(auth_ldap::init, NULL, auth_ldap::init_options);
