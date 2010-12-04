@@ -102,11 +102,14 @@ using namespace std;
 
 static bool sysvar_logging_stats_enabled= true;
 
-static uint32_t sysvar_logging_stats_scoreboard_size= 2000;
+typedef constrained_check<uint32_t, 50000, 10> scoreboard_size_constraint;
+static scoreboard_size_constraint sysvar_logging_stats_scoreboard_size;
 
-static uint32_t sysvar_logging_stats_max_user_count= 500;
+typedef constrained_check<uint32_t, 50000, 100> max_user_count_constraint;
+static max_user_count_constraint sysvar_logging_stats_max_user_count;
 
-static uint32_t sysvar_logging_stats_bucket_count= 10;
+typedef constrained_check<uint32_t, 500, 5> bucket_count_constraint;
+static bucket_count_constraint sysvar_logging_stats_bucket_count;
 
 LoggingStats::LoggingStats(string name_arg) : Logging(name_arg)
 {
@@ -250,22 +253,17 @@ static CumulativeUserStatsTool *cumulative_user_stats_tool= NULL;
 
 static ScoreboardStatsTool *scoreboard_stats_tool= NULL;
 
-static void enable(Session *,
-                   drizzle_sys_var *,
-                   void *var_ptr,
-                   const void *save)
+static void enable(Session *, sql_var_t)
 {
   if (logging_stats)
   {
-    if (*(bool *)save != false)
+    if (sysvar_logging_stats_enabled)
     {
       logging_stats->enable();
-      *(bool *) var_ptr= (bool) true;
     }
     else
     {
       logging_stats->disable();
-      *(bool *) var_ptr= (bool) false;
     }
   }
 }
@@ -337,34 +335,6 @@ static int init(drizzled::module::Context &context)
 
   sysvar_logging_stats_enabled= (vm.count("disable")) ? false : true;
 
-  if (vm.count("max-user-count"))
-  {
-    if (sysvar_logging_stats_max_user_count < 100 || sysvar_logging_stats_max_user_count > 50000)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for max-user-count\n"));
-      return 1;
-    }
-  }
-  if (vm.count("bucket-count"))
-  {
-    if (sysvar_logging_stats_bucket_count < 5 || sysvar_logging_stats_bucket_count > 500)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for bucket-count\n"));
-      return 1;
-    }
-  }
-
-  if (vm.count("scoreboard-size"))
-  {
-    if (sysvar_logging_stats_scoreboard_size < 10 || sysvar_logging_stats_scoreboard_size > 50000)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for scoreboard-size\n"));
-      return 1;
-    }
-    else
-      sysvar_logging_stats_scoreboard_size= vm["scoreboard-size"].as<uint32_t>(); 
-  }
-
   logging_stats= new LoggingStats("logging_stats");
 
   if (initTable())
@@ -387,71 +357,28 @@ static int init(drizzled::module::Context &context)
     logging_stats->enable();
   }
 
+  context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("max_user_count", sysvar_logging_stats_max_user_count));
+  context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("bucket_count", sysvar_logging_stats_bucket_count));
+  context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("scoreboard_size", sysvar_logging_stats_scoreboard_size));
+  context.registerVariable(new sys_var_bool_ptr("enable", &sysvar_logging_stats_enabled, enable));
+
   return 0;
 }
 
-static DRIZZLE_SYSVAR_UINT(max_user_count,
-                           sysvar_logging_stats_max_user_count,
-                           PLUGIN_VAR_RQCMDARG,
-                           N_("Max number of users that will be logged"),
-                           NULL, /* check func */
-                           NULL, /* update func */
-                           500, /* default */
-                           100, /* minimum */
-                           50000,
-                           0);
-
-static DRIZZLE_SYSVAR_UINT(bucket_count,
-                           sysvar_logging_stats_bucket_count,
-                           PLUGIN_VAR_RQCMDARG,
-                           N_("Max number of range locks to use for Scoreboard"),
-                           NULL, /* check func */
-                           NULL, /* update func */
-                           10, /* default */
-                           5, /* minimum */
-                           500,
-                           0);
-
-static DRIZZLE_SYSVAR_UINT(scoreboard_size,
-                           sysvar_logging_stats_scoreboard_size,
-                           PLUGIN_VAR_RQCMDARG,
-                           N_("Max number of concurrent sessions that will be logged"),
-                           NULL, /* check func */
-                           NULL, /* update func */
-                           2000, /* default */
-                           10, /* minimum */
-                           50000, 
-                           0);
-
-static DRIZZLE_SYSVAR_BOOL(enable,
-                           sysvar_logging_stats_enabled,
-                           PLUGIN_VAR_NOCMDARG,
-                           N_("Enable Logging Statistics Collection"),
-                           NULL, /* check func */
-                           enable, /* update func */
-                           true /* default */);
 
 static void init_options(drizzled::module::option_context &context)
 {
   context("max-user-count",
-          po::value<uint32_t>(&sysvar_logging_stats_max_user_count)->default_value(500),
+          po::value<max_user_count_constraint>(&sysvar_logging_stats_max_user_count)->default_value(500),
           N_("Max number of users that will be logged"));
   context("bucket-count",
-          po::value<uint32_t>(&sysvar_logging_stats_bucket_count)->default_value(10),
+          po::value<bucket_count_constraint>(&sysvar_logging_stats_bucket_count)->default_value(10),
           N_("Max number of range locks to use for Scoreboard"));
   context("scoreboard-size",
-          po::value<uint32_t>(&sysvar_logging_stats_scoreboard_size)->default_value(2000),
+          po::value<scoreboard_size_constraint>(&sysvar_logging_stats_scoreboard_size)->default_value(2000),
           N_("Max number of concurrent sessions that will be logged"));
   context("disable", N_("Enable Logging Statistics Collection"));
 }
-
-static drizzle_sys_var* system_var[]= {
-  DRIZZLE_SYSVAR(max_user_count),
-  DRIZZLE_SYSVAR(bucket_count),
-  DRIZZLE_SYSVAR(scoreboard_size),
-  DRIZZLE_SYSVAR(enable),
-  NULL
-};
 
 DRIZZLE_DECLARE_PLUGIN
 {
@@ -462,7 +389,7 @@ DRIZZLE_DECLARE_PLUGIN
   N_("User Statistics as DATA_DICTIONARY tables"),
   PLUGIN_LICENSE_BSD,
   init,   /* Plugin Init      */
-  system_var, /* system variables */
+  NULL, /* system variables */
   init_options    /* config options   */
 }
 DRIZZLE_DECLARE_PLUGIN_END;
