@@ -770,12 +770,12 @@ EXPLAIN SELECT * FROM t1 WHERE b BETWEEN 1 AND 2 ORDER BY b,a;
 id	1
 select_type	SIMPLE
 table	t1
-type	range
+type	index
 possible_keys	bkey
 key	bkey
 key_len	5
 ref	NULL
-rows	16
+rows	32
 Extra	Using where; Using index
 SELECT * FROM t1 WHERE b BETWEEN 1 AND 2 ORDER BY b,a;
 a	b
@@ -854,7 +854,7 @@ possible_keys	bkey
 key	bkey
 key_len	10
 ref	const,const
-rows	8
+rows	16
 Extra	Using where; Using index
 SELECT * FROM t2 WHERE b=1 AND c=1 ORDER BY a;
 a	b	c
@@ -883,7 +883,7 @@ possible_keys	bkey
 key	bkey
 key_len	10
 ref	const,const
-rows	8
+rows	16
 Extra	Using where; Using index
 SELECT * FROM t2 WHERE b=1 AND c=1 ORDER BY b,c,a;
 a	b	c
@@ -912,7 +912,7 @@ possible_keys	bkey
 key	bkey
 key_len	10
 ref	const,const
-rows	8
+rows	16
 Extra	Using where; Using index
 SELECT * FROM t2 WHERE b=1 AND c=1 ORDER BY c,a;
 a	b	c
@@ -1023,7 +1023,7 @@ possible_keys	b
 key	b
 key_len	5
 ref	const
-rows	1
+rows	2
 Extra	Using where; Using index
 SELECT * FROM t1 WHERE b=2 ORDER BY a ASC;
 a	b
@@ -1038,7 +1038,7 @@ possible_keys	b
 key	b
 key_len	5
 ref	const
-rows	1
+rows	2
 Extra	Using where; Using index
 SELECT * FROM t1 WHERE b=2 ORDER BY a DESC;
 a	b
