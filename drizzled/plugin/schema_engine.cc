@@ -54,7 +54,7 @@ public:
 void StorageEngine::getIdentifiers(Session &session, SchemaIdentifier::vector &schemas)
 {
   // Add hook here for engines to register schema.
-  for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
+  std::for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
            AddSchemaNames(schemas));
 
   plugin::Authorization::pruneSchemaNames(session.getSecurityContext(), schemas);
@@ -90,8 +90,8 @@ bool StorageEngine::getSchemaDefinition(const drizzled::TableIdentifier &identif
 bool StorageEngine::getSchemaDefinition(const SchemaIdentifier &identifier, message::schema::shared_ptr &proto)
 {
   EngineVector::iterator iter=
-    find_if(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
-            StorageEngineGetSchemaDefinition(identifier, proto));
+    std::find_if(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
+                 StorageEngineGetSchemaDefinition(identifier, proto));
 
   if (iter != StorageEngine::getSchemaEngines().end())
   {
@@ -161,8 +161,8 @@ public:
 bool StorageEngine::createSchema(const drizzled::message::Schema &schema_message)
 {
   // Add hook here for engines to register schema.
-  for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
-           CreateSchema(schema_message));
+  std::for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
+                CreateSchema(schema_message));
 
   return true;
 }
@@ -195,8 +195,8 @@ bool StorageEngine::dropSchema(const SchemaIdentifier &identifier)
 {
   uint64_t counter= 0;
   // Add hook here for engines to register schema.
-  for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
-           DropSchema(identifier, counter));
+  std::for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
+                DropSchema(identifier, counter));
 
   return counter ? true : false;
 }
@@ -230,8 +230,8 @@ bool StorageEngine::alterSchema(const drizzled::message::Schema &schema_message)
 {
   uint64_t success_count= 0;
 
-  for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
-           AlterSchema(schema_message, success_count));
+  std::for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
+                AlterSchema(schema_message, success_count));
 
   return success_count ? true : false;
 }

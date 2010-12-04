@@ -95,10 +95,10 @@ namespace plugin
 
     ~EventObserverList()
     {
-      for_each(event_observer_lists.begin(),
-               event_observer_lists.end(),
-               SafeDeletePtr());
-			event_observer_lists.clear();
+      std::for_each(event_observer_lists.begin(),
+                    event_observer_lists.end(),
+                    SafeDeletePtr());
+      event_observer_lists.clear();
     }
 
     /* Add the observer to the observer list for the even, positioning it if required.
@@ -206,8 +206,8 @@ namespace plugin
 		table_share.setTableObservers(observers);
  
 
-    for_each(all_event_plugins.begin(), all_event_plugins.end(),
-             RegisterTableEventsIterate(table_share, *observers));
+    std::for_each(all_event_plugins.begin(), all_event_plugins.end(),
+                  RegisterTableEventsIterate(table_share, *observers));
 
   }
 
@@ -273,8 +273,8 @@ namespace plugin
       session.setSchemaObservers(db, observers);
    }
 
-    for_each(all_event_plugins.begin(), all_event_plugins.end(),
-             RegisterSchemaEventsIterate(db, *observers));
+    std::for_each(all_event_plugins.begin(), all_event_plugins.end(),
+                  RegisterSchemaEventsIterate(db, *observers));
 
   }
 
@@ -340,8 +340,8 @@ namespace plugin
 	observers= new EventObserverList();
 	session.setSessionObservers(observers);
 
-    for_each(all_event_plugins.begin(), all_event_plugins.end(),
-             RegisterSessionEventsIterate(session, *observers));
+  std::for_each(all_event_plugins.begin(), all_event_plugins.end(),
+                RegisterSessionEventsIterate(session, *observers));
 
   }
 
@@ -413,8 +413,8 @@ namespace plugin
 
     /* Use find_if instead of foreach so that we can collect return codes */
     EventObserverList::ObserverMap::iterator iter=
-      find_if(eventObservers->begin(), eventObservers->end(),
-              EventIterate(*this)); 
+      std::find_if(eventObservers->begin(), eventObservers->end(),
+                   EventIterate(*this)); 
     /* If iter is == end() here, that means that all of the plugins returned
      * false, which in this case means they all succeeded. Since we want to 
      * return false on success, we return the value of the two being !=.

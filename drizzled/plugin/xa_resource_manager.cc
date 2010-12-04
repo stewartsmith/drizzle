@@ -182,9 +182,9 @@ int XaResourceManager::recoverAllXids(const XaResourceManager::commit_list_set &
     errmsg_printf(ERRMSG_LVL_INFO, _("Starting crash recovery..."));
 
   XaRecover recover_func(trans_list, trans_len, commit_list, dry_run);
-  for_each(xa_resource_managers.begin(),
-           xa_resource_managers.end(),
-           recover_func);
+  std::for_each(xa_resource_managers.begin(),
+                xa_resource_managers.end(),
+                recover_func);
   free(trans_list);
  
   if (recover_func.getForeignXIDs())

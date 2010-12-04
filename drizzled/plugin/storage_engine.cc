@@ -210,9 +210,9 @@ public:
 
 StorageEngine *StorageEngine::findByName(const std::string &predicate)
 {
-  EngineVector::iterator iter= find_if(vector_of_engines.begin(),
-                                       vector_of_engines.end(),
-                                       FindEngineByName(predicate));
+  EngineVector::iterator iter= std::find_if(vector_of_engines.begin(),
+                                            vector_of_engines.end(),
+                                            FindEngineByName(predicate));
   if (iter != vector_of_engines.end())
   {
     StorageEngine *engine= *iter;
@@ -228,9 +228,9 @@ StorageEngine *StorageEngine::findByName(Session& session, const std::string &pr
   if (boost::iequals(predicate, DEFAULT_STRING))
     return session.getDefaultStorageEngine();
 
-  EngineVector::iterator iter= find_if(vector_of_engines.begin(),
-                                       vector_of_engines.end(),
-                                       FindEngineByName(predicate));
+  EngineVector::iterator iter= std::find_if(vector_of_engines.begin(),
+                                            vector_of_engines.end(),
+                                            FindEngineByName(predicate));
   if (iter != vector_of_engines.end())
   {
     StorageEngine *engine= *iter;
@@ -263,8 +263,8 @@ public:
 */
 void StorageEngine::closeConnection(Session* session)
 {
-  for_each(vector_of_engines.begin(), vector_of_engines.end(),
-           StorageEngineCloseConnection(session));
+  std::for_each(vector_of_engines.begin(), vector_of_engines.end(),
+                StorageEngineCloseConnection(session));
 }
 
 bool StorageEngine::flushLogs(StorageEngine *engine)
@@ -343,8 +343,8 @@ bool plugin::StorageEngine::doesTableExist(Session &session,
   }
 
   EngineVector::iterator iter=
-    find_if(vector_of_engines.begin(), vector_of_engines.end(),
-            StorageEngineDoesTableExist(session, identifier));
+    std::find_if(vector_of_engines.begin(), vector_of_engines.end(),
+                 StorageEngineDoesTableExist(session, identifier));
 
   if (iter == vector_of_engines.end())
   {
@@ -391,8 +391,8 @@ int StorageEngine::getTableDefinition(Session& session,
 
   message::Table message;
   EngineVector::iterator iter=
-    find_if(vector_of_engines.begin(), vector_of_engines.end(),
-            StorageEngineGetTableDefinition(session, identifier, message, err));
+    std::find_if(vector_of_engines.begin(), vector_of_engines.end(),
+                 StorageEngineGetTableDefinition(session, identifier, message, err));
 
   if (iter == vector_of_engines.end())
   {
@@ -626,8 +626,8 @@ void StorageEngine::getIdentifiers(Session &session, const SchemaIdentifier &sch
     }
   }
 
-  for_each(vector_of_engines.begin(), vector_of_engines.end(),
-           AddTableIdentifier(directory, schema_identifier, set_of_identifiers));
+  std::for_each(vector_of_engines.begin(), vector_of_engines.end(),
+                AddTableIdentifier(directory, schema_identifier, set_of_identifiers));
 
   session.doGetTableIdentifiers(directory, schema_identifier, set_of_identifiers);
 }
@@ -716,9 +716,9 @@ void StorageEngine::removeLostTemporaryTables(Session &session, const char *dire
     }
   }
 
-  for_each(vector_of_engines.begin(), vector_of_engines.end(),
-           DropTables(session, table_identifiers));
-  
+  std::for_each(vector_of_engines.begin(), vector_of_engines.end(),
+                DropTables(session, table_identifiers));
+
   /*
     Now we just clean up anything that might left over.
 
@@ -1138,8 +1138,8 @@ public:
 bool StorageEngine::canCreateTable(const TableIdentifier &identifier)
 {
   EngineVector::iterator iter=
-    find_if(vector_of_engines.begin(), vector_of_engines.end(),
-            CanCreateTable(identifier));
+    std::find_if(vector_of_engines.begin(), vector_of_engines.end(),
+                 CanCreateTable(identifier));
 
   if (iter == vector_of_engines.end())
   {
