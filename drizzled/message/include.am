@@ -41,7 +41,9 @@ drizzled_message_libdrizzledmessage_la_CXXFLAGS = ${MESSAGE_AM_CXXFLAGS} ${NO_WE
 drizzled_message_libdrizzledmessage_la_SOURCES = drizzled/message/statement_transform.cc
 drizzled_message_libdrizzledmessage_la_LIBADD= ${LTLIBPROTOBUF} $(GCOV_LIBS) drizzled/libcharset.la
 
-nobase_dist_include_HEADERS+= drizzled/message/statement_transform.h
+nobase_dist_include_HEADERS+= drizzled/message/statement_transform.h \
+						drizzled/message/schema.h \
+						drizzled/message/table.h
 
 nodist_drizzled_message_libdrizzledmessage_la_SOURCES = \
 							drizzled/message/event.pb.cc \
@@ -57,9 +59,7 @@ nobase_nodist_include_HEADERS+= \
 				drizzled/message/transaction.pb.h \
 				drizzled/message/schema.pb.h \
 				drizzled/message/resultset.pb.h \
-				drizzled/message/table.pb.h \
-				drizzled/message/schema.h \
-				drizzled/message/table.h
+				drizzled/message/table.pb.h 
 
 noinst_HEADERS+= \
 		drizzled/message/ioutil.h 
