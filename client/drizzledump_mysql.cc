@@ -190,7 +190,7 @@ bool DrizzleDumpTableMySQL::populateFields()
     if (field->type.compare("ENUM") == 0)
       field->isNull= true;
 
-    if (row[2])
+    if ((row[2]) and (field->type.compare("TEXT") != 0))
     {
       field->defaultValue= row[2];
       if (field->convertDateTime)
@@ -199,7 +199,9 @@ bool DrizzleDumpTableMySQL::populateFields()
       }
     }
     else
-     field->defaultValue= "";
+    {
+      field->defaultValue= "";
+    }
 
     field->isAutoIncrement= (strcmp(row[8], "auto_increment") == 0) ? true : false;
     field->defaultIsNull= field->isNull;
