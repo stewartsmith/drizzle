@@ -203,7 +203,11 @@ bool DrizzleDumpTableMySQL::populateFields()
 
     field->isAutoIncrement= (strcmp(row[8], "auto_increment") == 0) ? true : false;
     field->defaultIsNull= field->isNull;
-    field->length= (row[4]) ? boost::lexical_cast<uint32_t>(row[4]) : 0;
+    /* Seriously MySQL, why is BIT length in NUMERIC_PRECISION? */
+    if ((strncmp(row[1], "bit", 3) == 0) and (row[5] != NULL))
+      field->length= ((boost::lexical_cast<uint32_t>(row[5]) - 1) / 8) + 1;
+    else
+      field->length= (row[4]) ? boost::lexical_cast<uint32_t>(row[4]) : 0;
     if ((row[5] != NULL) and (row[6] != NULL))
     {
       field->decimalPrecision= boost::lexical_cast<uint32_t>(row[5]);
@@ -448,6 +452,12 @@ void DrizzleDumpFieldMySQL::setType(const char* raw_type, const char* raw_collat
   if (old_type.compare("FLOAT") == 0)
   {
     type= "DOUBLE";
+    return;
+  }
+
+  if (old_type.compare("BIT") == 0)
+  {
+    type= "VARBINARY";
     return;
   }
 

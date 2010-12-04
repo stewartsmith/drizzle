@@ -166,9 +166,20 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpField &obj)
   if (not obj.defaultValue.empty())
   {
     if (obj.defaultValue.compare("CURRENT_TIMESTAMP") != 0)
-     os << " DEFAULT '" << obj.defaultValue << "'";
+    {
+      if (obj.defaultValue.compare(0, 2, "b'") == 0)
+      {
+        os << " DEFAULT " << obj.defaultValue;
+      }
+      else
+      {
+        os << " DEFAULT '" << obj.defaultValue << "'";
+      }
+    }
     else
+    {
      os << " DEFAULT CURRENT_TIMESTAMP";
+    }
   }
   else if ((obj.defaultIsNull))
   {
