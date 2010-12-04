@@ -4006,7 +4006,8 @@ enum_nested_loop_state end_write_group(Join *join, JoinTable *, bool end_of_reco
     if (idx < (int) join->send_group_parts)
     {
       copy_fields(&join->tmp_table_param);
-      copy_funcs(join->tmp_table_param.items_to_copy);
+      if (copy_funcs(join->tmp_table_param.items_to_copy, join->session))
+        return NESTED_LOOP_ERROR;
       if (init_sum_functions(join->sum_funcs, join->sum_funcs_end[idx+1]))
         return NESTED_LOOP_ERROR;
       return NESTED_LOOP_OK;
@@ -6194,11 +6195,22 @@ bool update_sum_func(Item_sum **func_ptr)
 }
 
 /** Copy result of functions to record in tmp_table. */
-void copy_funcs(Item **func_ptr)
+bool copy_funcs(Item **func_ptr, const Session *session)
 {
   Item *func;
   for (; (func = *func_ptr) ; func_ptr++)
+  {
     func->save_in_result_field(1);
+    /*
+      Need to check the THD error state because Item::val_xxx() don't
+      return error code, but can generate errors
+      TODO: change it for a real status check when Item::val_xxx()
+      are extended to return status code.
+    */
+    if (session->is_error())
+      return true;
+  }
+  return false;
 }
 
 /**

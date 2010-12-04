@@ -93,7 +93,7 @@ bool InnodbSysTablesTool::Generator::populate()
   mutex_exit(&dict_sys->mutex);
 
   if (!err_msg) {
-    push(ut_conv_dulint_to_longlong(table_rec->id));
+    push(table_rec->id);
     push(table_rec->name);
     push(static_cast<uint64_t>(table_rec->flags));
     push(static_cast<uint64_t>(table_rec->n_cols));
@@ -173,7 +173,7 @@ bool InnodbSysTableStatsTool::Generator::populate()
   mutex_exit(&dict_sys->mutex);
 
   if (!err_msg) {
-    push(ut_conv_dulint_to_longlong(table_rec->id));
+    push(table_rec->id);
     push(table_rec->name);
     if (table_rec->stat_initialized)
       push("Initialized");
@@ -242,7 +242,7 @@ bool InnodbSysIndexesTool::Generator::populate()
   }
 
   const char*	err_msg;;
-  dulint		table_id;
+  table_id_t	table_id;
   dict_index_t	index_rec;
 
   /* Populate a dict_index_t structure with information from
@@ -253,9 +253,9 @@ bool InnodbSysIndexesTool::Generator::populate()
   mtr_commit(&mtr);
   mutex_exit(&dict_sys->mutex);
   if (!err_msg) {
-    push(ut_conv_dulint_to_longlong(index_rec.id));
+    push(index_rec.id);
     push(index_rec.name);
-    push(ut_conv_dulint_to_longlong(table_id));
+    push(static_cast<uint64_t>(table_id));
     push(static_cast<uint64_t>(index_rec.type));
     push(static_cast<uint64_t>(index_rec.n_fields));
     push(static_cast<uint64_t>(index_rec.page));
@@ -323,7 +323,7 @@ bool InnodbSysColumnsTool::Generator::populate()
 
   const char*	err_msg;
   dict_col_t	column_rec;
-  dulint		table_id;
+  table_id_t	table_id;
   const char*	col_name;
 
   /* populate a dict_col_t structure with information from
@@ -335,7 +335,7 @@ bool InnodbSysColumnsTool::Generator::populate()
   mutex_exit(&dict_sys->mutex);
 
   if (!err_msg) {
-    push(ut_conv_dulint_to_longlong(table_id));
+    push(table_id);
     push(col_name);
     push(static_cast<uint64_t>(column_rec.ind));
     push(static_cast<uint64_t>(column_rec.mtype));
@@ -376,7 +376,7 @@ bool InnodbSysFieldsTool::Generator::populate()
 
     /* will save last index id so that we know whether we move to
        the next index. This is used to calculate prefix length */
-    last_id = ut_dulint_create(0, 0);
+    last_id = 0;
 
     rec = dict_startscan_system(&pcur, &mtr, SYS_FIELDS);
   }
@@ -399,7 +399,7 @@ bool InnodbSysFieldsTool::Generator::populate()
 
   ulint		pos;
   const char*	err_msg;
-  dulint		index_id;
+  index_id_t	index_id;
   dict_field_t	field_rec;
 
   /* Populate a dict_field_t structure with information from
@@ -411,7 +411,7 @@ bool InnodbSysFieldsTool::Generator::populate()
   mutex_exit(&dict_sys->mutex);
 
   if (!err_msg) {
-    push(ut_conv_dulint_to_longlong(index_id));
+    push(index_id);
     push(field_rec.name);
     push(static_cast<uint64_t>(pos));
 

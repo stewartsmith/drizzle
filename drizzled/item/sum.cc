@@ -2714,7 +2714,8 @@ bool Item_sum_count_distinct::add()
   if (always_null)
     return 0;
   copy_fields(tmp_table_param);
-  copy_funcs(tmp_table_param->items_to_copy);
+  if (copy_funcs(tmp_table_param->items_to_copy, table->in_use))
+    return true;
 
   for (Field **field= table->getFields() ; *field ; field++)
   {
@@ -3109,7 +3110,8 @@ bool Item_func_group_concat::add()
   if (always_null)
     return 0;
   copy_fields(tmp_table_param);
-  copy_funcs(tmp_table_param->items_to_copy);
+  if (copy_funcs(tmp_table_param->items_to_copy, table->in_use))
+    return true;
 
   for (uint32_t i= 0; i < arg_count_field; i++)
   {

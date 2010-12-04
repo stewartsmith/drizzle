@@ -25,7 +25,7 @@
 #include "drizzled/plugin/daemon.h"
 #include "drizzled/signal_handler.h"
 
-#include "drizzled/session_list.h"
+#include "drizzled/session/cache.h"
 
 #include "drizzled/drizzled.h"
 

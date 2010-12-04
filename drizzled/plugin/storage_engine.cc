@@ -579,11 +579,11 @@ class AddTableIdentifier :
 {
   CachedDirectory &directory;
   const SchemaIdentifier &identifier;
-  TableIdentifiers &set_of_identifiers;
+  TableIdentifier::vector &set_of_identifiers;
 
 public:
 
-  AddTableIdentifier(CachedDirectory &directory_arg, const SchemaIdentifier &identifier_arg, TableIdentifiers &of_names) :
+  AddTableIdentifier(CachedDirectory &directory_arg, const SchemaIdentifier &identifier_arg, TableIdentifier::vector &of_names) :
     directory(directory_arg),
     identifier(identifier_arg),
     set_of_identifiers(of_names)
@@ -597,7 +597,7 @@ public:
 };
 
 
-void StorageEngine::getIdentifiers(Session &session, const SchemaIdentifier &schema_identifier, TableIdentifiers &set_of_identifiers)
+void StorageEngine::getIdentifiers(Session &session, const SchemaIdentifier &schema_identifier, TableIdentifier::vector &set_of_identifiers)
 {
   static SchemaIdentifier INFORMATION_SCHEMA_IDENTIFIER("information_schema");
   static SchemaIdentifier DATA_DICTIONARY_IDENTIFIER("data_dictionary");
@@ -656,11 +656,11 @@ public:
 class DropTables: public unary_function<StorageEngine *, void>
 {
   Session &session;
-  TableIdentifiers &table_identifiers;
+  TableIdentifier::vector &table_identifiers;
 
 public:
 
-  DropTables(Session &session_arg, TableIdentifiers &table_identifiers_arg) :
+  DropTables(Session &session_arg, TableIdentifier::vector &table_identifiers_arg) :
     session(session_arg),
     table_identifiers(table_identifiers_arg)
   { }
@@ -684,7 +684,7 @@ public:
 void StorageEngine::removeLostTemporaryTables(Session &session, const char *directory)
 {
   CachedDirectory dir(directory, set_of_table_definition_ext);
-  TableIdentifiers table_identifiers;
+  TableIdentifier::vector table_identifiers;
 
   if (dir.fail())
   {
@@ -1067,7 +1067,8 @@ int StorageEngine::writeDefinitionFromPath(const TableIdentifier &identifier, me
 
   bool success;
 
-  try {
+  try
+  {
     success= table_message.SerializeToZeroCopyStream(output);
   }
   catch (...)

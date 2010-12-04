@@ -1719,7 +1719,7 @@ static int test_plugin_options(memory::Root *module_root,
         add_sys_var_to_list(v);
         test_module->addSysVar(v);
       }
-      catch (...)
+      catch (std::exception&)
       {
         errmsg_printf(ERRMSG_LVL_ERROR,
                       _("Plugin '%s' has conflicting system variables"),

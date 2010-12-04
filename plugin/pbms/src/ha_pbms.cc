@@ -141,9 +141,9 @@ public:
 	
 	int doRenameTable(Session&, const TableIdentifier &from, const TableIdentifier &to);
 	
-	void doGetTableIdentifiers(drizzled::CachedDirectory &dir,
-                             const drizzled::SchemaIdentifier &schema,
-                             drizzled::TableIdentifiers &set_of_identifiers) 
+        void doGetTableIdentifiers(drizzled::CachedDirectory &dir,
+                                   const drizzled::SchemaIdentifier &schema,
+                                   drizzled::TableIdentifier::vector &set_of_identifiers) 
 	{
 		std::set<std::string> set_of_names;
 		

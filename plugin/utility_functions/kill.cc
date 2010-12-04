@@ -21,7 +21,7 @@
 #include "config.h"
 
 #include <drizzled/session.h>
-#include <drizzled/session_list.h>
+#include <drizzled/session/cache.h>
 #include "plugin/utility_functions/functions.h"
 
 namespace drizzled

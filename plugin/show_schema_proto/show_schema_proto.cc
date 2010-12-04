@@ -79,7 +79,7 @@ String *ShowSchemaProtoFunction::val_str(String *str)
   const char* db= db_sptr->c_ptr_safe();
 
   string proto_as_text("");
-  message::SchemaPtr proto;
+  message::schema::shared_ptr proto;
 
 
   SchemaIdentifier schema_identifier(db);
