@@ -2835,10 +2835,10 @@ typedef constrained_check<size_t, SIZE_MAX, 512, 1024> additional_mem_pool_const
 static additional_mem_pool_constraint innobase_additional_mem_pool_size;
 static bool  innobase_use_checksums= true;
 typedef constrained_check<unsigned int, UINT_MAX, 100> io_capacity_constraint;
-typedef constrained_check<uint16_t, 2, 0> trinary_constraint;
+typedef constrained_check<uint32_t, 2, 0> trinary_constraint;
 static trinary_constraint innobase_fast_shutdown;
 static trinary_constraint srv_flush_log_at_trx_commit;
-typedef constrained_check<uint16_t, 6, 0> force_recovery_constraint;
+typedef constrained_check<uint32_t, 6, 0> force_recovery_constraint;
 static force_recovery_constraint innobase_force_recovery;
 typedef constrained_check<int64_t, INT64_MAX, 1024*1024, 1024*1024> log_file_constraint;
 static log_file_constraint haildb_log_file_size;
@@ -3113,7 +3113,7 @@ static int haildb_init(drizzled::module::Context &context)
   context.registerVariable(new sys_var_const_string_val("data_home_dir",
                                                 vm["data-home-dir"].as<string>()));
   context.registerVariable(new sys_var_constrained_value_readonly<unsigned int>("io_capacity", srv_io_capacity));
-  context.registerVariable(new sys_var_constrained_value_readonly<uint16_t>("fast_shutdown", innobase_fast_shutdown));
+  context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("fast_shutdown", innobase_fast_shutdown));
   context.registerVariable(new sys_var_bool_ptr_readonly("file_per_table",
                                                          &srv_file_per_table));
   context.registerVariable(new sys_var_bool_ptr_readonly("rollback_on_timeout",
@@ -3128,10 +3128,10 @@ static int haildb_init(drizzled::module::Context &context)
   context.registerVariable(new sys_var_std_string("file_format",
                                                   innobase_file_format_name,
                                                   haildb_file_format_name_validate));
-  context.registerVariable(new sys_var_constrained_value_readonly<uint16_t>("flush_log_at_trx_commit", srv_flush_log_at_trx_commit));
+  context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("flush_log_at_trx_commit", srv_flush_log_at_trx_commit));
   context.registerVariable(new sys_var_const_string_val("flush_method",
                                                 vm.count("flush-method") ?  vm["flush-method"].as<string>() : ""));
-  context.registerVariable(new sys_var_constrained_value_readonly<uint16_t>("force_recovery", innobase_force_recovery));
+  context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("force_recovery", innobase_force_recovery));
   context.registerVariable(new sys_var_const_string_val("log_group_home_dir",
                                                 vm.count("log-group-home-dir") ?  vm["log-group-home-dir"].as<string>() : ""));
   context.registerVariable(new sys_var_constrained_value<int64_t>("log_file_size", haildb_log_file_size));
