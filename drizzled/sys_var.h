@@ -320,15 +320,20 @@ public:
 
 class sys_var_bool_ptr :public sys_var
 {
+  bool default_value;
 public:
   bool *value;
   sys_var_bool_ptr(const std::string &name_arg, bool *value_arg,
                    sys_after_update_func func= NULL) :
-    sys_var(name_arg, func), value(value_arg)
+    sys_var(name_arg, func), default_value(*value_arg), value(value_arg)
   { }
   bool check(Session *session, set_var *var)
   {
     return check_enum(session, var, &bool_typelib);
+  }
+  virtual bool check_default(sql_var_t)
+  {
+    return false;
   }
   bool update(Session *session, set_var *var);
   void set_default(Session *session, sql_var_t type);
