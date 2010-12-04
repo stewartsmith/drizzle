@@ -178,7 +178,7 @@ bool plugin::Authorization::isAuthorized(const SecurityContext &user_ctx,
 
   /* Use find_if instead of foreach so that we can collect return codes */
   std::vector<plugin::Authorization *>::const_iterator iter=
-    find_if(authorization_plugins.begin(),
+    std::find_if(authorization_plugins.begin(),
             authorization_plugins.end(),
             RestrictTableFunctor(user_ctx, table));
 
@@ -216,9 +216,9 @@ bool plugin::Authorization::isAuthorized(const SecurityContext &user_ctx,
 
   /* Use find_if instead of foreach so that we can collect return codes */
   std::vector<plugin::Authorization *>::const_iterator iter=
-    find_if(authorization_plugins.begin(),
-            authorization_plugins.end(),
-            RestrictProcessFunctor(user_ctx, session_ctx));
+    std::find_if(authorization_plugins.begin(),
+                 authorization_plugins.end(),
+                 RestrictProcessFunctor(user_ctx, session_ctx));
 
   /*
    * If iter is == end() here, that means that all of the plugins returned
@@ -244,9 +244,9 @@ void plugin::Authorization::pruneSchemaNames(const SecurityContext &user_ctx,
   if (authorization_plugins.empty())
     return;
 
-  set_of_schemas.erase(remove_if(set_of_schemas.begin(),
-                                 set_of_schemas.end(),
-                                 PruneSchemaFunctor(user_ctx)),
+  set_of_schemas.erase(std::remove_if(set_of_schemas.begin(),
+                                      set_of_schemas.end(),
+                                      PruneSchemaFunctor(user_ctx)),
                        set_of_schemas.end());
 }
 

@@ -667,9 +667,9 @@ public:
   {
     // True returning from DropTable means the table has been successfully
     // deleted, so it should be removed from the list of tables to drop
-    table_identifiers.erase(remove_if(table_identifiers.begin(),
-                                      table_identifiers.end(),
-                                      DropTable(session, engine)),
+    table_identifiers.erase(std::remove_if(table_identifiers.begin(),
+                                           table_identifiers.end(),
+                                           DropTable(session, engine)),
                             table_identifiers.end());
   }
 };
