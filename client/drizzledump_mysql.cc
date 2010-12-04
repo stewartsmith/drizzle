@@ -319,7 +319,7 @@ bool DrizzleDumpTableMySQL::populateFkeys()
   if ((row= drizzle_row_next(result)))
   {
     boost::match_flag_type flags = boost::match_default;
-    boost::regex constraint_regex("CONSTRAINT `(.*)` FOREIGN KEY \\((.*)\\) REFERENCES `(.*)` \\((.*)\\)( ON (UPDATE|DELETE) (CASCADE|RESTRICT|SET NULL))?( ON (UPDATE|DELETE) (CASCADE|RESTRICT|SET NULL))?");
+    boost::regex constraint_regex("CONSTRAINT `(.*?)` FOREIGN KEY \\((.*?)\\) REFERENCES `(.*?)` \\((.*?)\\)( ON (UPDATE|DELETE) (CASCADE|RESTRICT|SET NULL))?( ON (UPDATE|DELETE) (CASCADE|RESTRICT|SET NULL))?");
 
     boost::match_results<std::string::const_iterator> constraint_results;
 
