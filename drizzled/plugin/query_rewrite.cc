@@ -51,9 +51,9 @@ void QueryRewriter::removePlugin(QueryRewriter *in_rewriter)
 {
   if (in_rewriter != NULL)
   {
-    all_rewriters.erase(find(all_rewriters.begin(),
-                             all_rewriters.end(),
-                             in_rewriter));
+    all_rewriters.erase(std::find(all_rewriters.begin(),
+                                  all_rewriters.end(),
+                                  in_rewriter));
   }
 }
 

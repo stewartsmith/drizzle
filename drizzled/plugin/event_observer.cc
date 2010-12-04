@@ -63,7 +63,7 @@ namespace plugin
   void EventObserver::removePlugin(EventObserver *handler)
   {
     if (handler != NULL)
-      all_event_plugins.erase(find(all_event_plugins.begin(), all_event_plugins.end(), handler));
+      all_event_plugins.erase(std::find(all_event_plugins.begin(), all_event_plugins.end(), handler));
   }
 
 

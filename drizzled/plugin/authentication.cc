@@ -42,9 +42,9 @@ bool plugin::Authentication::addPlugin(plugin::Authentication *auth)
 void plugin::Authentication::removePlugin(plugin::Authentication *auth)
 {
   if (auth != NULL)
-    all_authentication.erase(find(all_authentication.begin(),
-                                  all_authentication.end(),
-                                  auth));
+    all_authentication.erase(std::find(all_authentication.begin(),
+                                       all_authentication.end(),
+                                       auth));
 }
 
 class AuthenticateBy : public std::unary_function<plugin::Authentication *, bool>

@@ -47,9 +47,9 @@ bool plugin::Listen::addPlugin(plugin::Listen *listen_obj)
 
 void plugin::Listen::removePlugin(plugin::Listen *listen_obj)
 {
-  listen_list.erase(remove(listen_list.begin(),
-                           listen_list.end(),
-                           listen_obj),
+  listen_list.erase(std::remove(listen_list.begin(),
+                                listen_list.end(),
+                                listen_obj),
                     listen_list.end());
 }
 

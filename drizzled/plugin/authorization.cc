@@ -39,6 +39,7 @@ bool plugin::Authorization::addPlugin(plugin::Authorization *auth)
 {
   if (auth != NULL)
     authorization_plugins.push_back(auth);
+
   return false;
 }
 
@@ -46,9 +47,9 @@ void plugin::Authorization::removePlugin(plugin::Authorization *auth)
 {
   if (auth != NULL)
   {
-    authorization_plugins.erase(find(authorization_plugins.begin(),
-                                     authorization_plugins.end(),
-                                     auth));
+    authorization_plugins.erase(std::find(authorization_plugins.begin(),
+                                          authorization_plugins.end(),
+                                          auth));
   }
 }
 
