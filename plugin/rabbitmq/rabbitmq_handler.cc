@@ -27,21 +27,24 @@
 
 using namespace std;
 
-RabbitMQHandler::RabbitMQHandler(const char* rabbitMQHost, 
-				 const int rabbitMQPort, 
-				 const char* rabbitMQUsername, 
-				 const char* rabbitMQPassword, 
-				 const char* rabbitMQVirtualhost) 
-  throw(rabbitmq_handler_exception):
-  hostname(rabbitMQHost),
-  port(rabbitMQPort),
-  username(rabbitMQUsername),
-  password(rabbitMQPassword),
-  virtualhost(rabbitMQVirtualhost)
+namespace drizzle_plugin
 {
-  rabbitmqConnection = amqp_new_connection();
+
+RabbitMQHandler::RabbitMQHandler(const std::string &rabbitMQHost, 
+                                 const in_port_t rabbitMQPort, 
+                                 const std::string &rabbitMQUsername, 
+                                 const std::string &rabbitMQPassword, 
+                                 const std::string &rabbitMQVirtualhost) 
+  throw(rabbitmq_handler_exception) :
+    rabbitmqConnection(amqp_new_connection()),
+    sockfd(amqp_open_socket(rabbitMQHost.c_str(), rabbitMQPort)),
+    hostname(rabbitMQHost),
+    port(rabbitMQPort),
+    username(rabbitMQUsername),
+    password(rabbitMQPassword),
+    virtualhost(rabbitMQVirtualhost)
+{
   /* open the socket to the rabbitmq server */
-  sockfd = amqp_open_socket(hostname, port);
   if(sockfd < 0) 
   {
     throw rabbitmq_handler_exception("Could not open socket, is rabbitmq running?");
@@ -49,13 +52,13 @@ RabbitMQHandler::RabbitMQHandler(const char* rabbitMQHost,
   amqp_set_sockfd(rabbitmqConnection, sockfd);
   /* login to rabbitmq, handleAMQPError throws exception if there is a problem */
   handleAMQPError(amqp_login(rabbitmqConnection, 
-			     virtualhost, 
+			     virtualhost.c_str(), 
 			     0, 
 			     131072, 
 			     0, 
 			     AMQP_SASL_METHOD_PLAIN, 
-			     username, 
-			     password), 
+			     username.c_str(), 
+			     password.c_str()), 
 		  "rabbitmq login");
   /* open the channel */
   amqp_channel_open(rabbitmqConnection, 1);
@@ -79,23 +82,24 @@ RabbitMQHandler::~RabbitMQHandler()
   close(sockfd);
 }
 
-void RabbitMQHandler::publish(const uint8_t *message, 
-			      const int length, 
-			      const char* exchangeName, 
-			      const char* routingKey) throw(rabbitmq_handler_exception)
+void RabbitMQHandler::publish(void *message, 
+                              const int length, 
+                              const std::string &exchangeName, 
+                              const std::string &routingKey)
+throw(rabbitmq_handler_exception)
 {
   amqp_bytes_t b;
-  b.bytes= (void*)message;
+  b.bytes= message;
   b.len= length;
   
-  if(amqp_basic_publish(rabbitmqConnection,
-			1,
-			amqp_cstring_bytes(exchangeName),
-			amqp_cstring_bytes(routingKey),
-			0,
-			0,
-			NULL,
-			b) < 0)
+  if (amqp_basic_publish(rabbitmqConnection,
+                         1,
+                         amqp_cstring_bytes(exchangeName.c_str()),
+                         amqp_cstring_bytes(routingKey.c_str()),
+                         0,
+                         0,
+                         NULL,
+                         b) < 0)
   {
     throw rabbitmq_handler_exception("Could not publish message");
   }
@@ -130,3 +134,5 @@ void RabbitMQHandler::handleAMQPError(amqp_rpc_reply_t x, string context) throw(
     }
   }
 }
+
+} /* namespace drizzle_plugin */
