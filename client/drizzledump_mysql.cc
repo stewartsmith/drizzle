@@ -208,6 +208,15 @@ bool DrizzleDumpTableMySQL::populateFields()
       field->length= ((boost::lexical_cast<uint32_t>(row[5]) - 1) / 8) + 1;
     else
       field->length= (row[4]) ? boost::lexical_cast<uint32_t>(row[4]) : 0;
+
+    /* Also, CHAR(0) is valid?? */
+    if (((field->type.compare("VARBINARY") == 0) 
+      or (field->type.compare("VARCHAR") == 0))
+      and (field->length == 0))
+    {
+      field->length= 1;
+    }
+
     if ((row[5] != NULL) and (row[6] != NULL))
     {
       field->decimalPrecision= boost::lexical_cast<uint32_t>(row[5]);
@@ -423,6 +432,7 @@ void DrizzleDumpFieldMySQL::setType(const char* raw_type, const char* raw_collat
   if (old_type.compare("BINARY") == 0)
   {
     type= "VARBINARY";
+    
     return;
   }
 
