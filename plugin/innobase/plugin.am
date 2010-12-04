@@ -189,7 +189,6 @@ noinst_HEADERS+= \
                  plugin/innobase/include/usr0sess.h \
                  plugin/innobase/include/usr0sess.ic \
                  plugin/innobase/include/usr0types.h \
-                 plugin/innobase/include/ut0auxconf.h \
                  plugin/innobase/include/ut0byte.h \
                  plugin/innobase/include/ut0byte.ic \
                  plugin/innobase/include/ut0dbg.h \
