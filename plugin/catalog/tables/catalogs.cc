@@ -30,6 +30,10 @@ Catalogs::Catalogs() :
   drizzled::plugin::TableFunction("DATA_DICTIONARY", "CATALOGS")
 {
   add_field("CATALOG_NAME", drizzled::plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("CATALOG_CREATION_TIME");
+  add_field("CATALOG_UPDATE_TIME");
+  add_field("CATALOG_UUID", drizzled::plugin::TableFunction::STRING, 36, true);
+  add_field("CATALOG_VERSION", drizzled::plugin::TableFunction::NUMBER, 0, true);
 }
 
 Catalogs::Generator::Generator(drizzled::Field **arg) :
@@ -45,6 +49,27 @@ bool Catalogs::Generator::populate()
   {
     // CATALOG_NAME
     push(tmp->name());
+
+    /* SCHEMA_CREATION_TIME */
+    time_t time_arg= tmp->creation_timestamp();
+    char buffer[40];
+    struct tm tm_buffer;
+
+    localtime_r(&time_arg, &tm_buffer);
+    strftime(buffer, sizeof(buffer), "%a %b %d %H:%M:%S %Y", &tm_buffer);
+    push(buffer);
+
+    /* SCHEMA_UPDATE_TIME */
+    time_arg= tmp->update_timestamp();
+    localtime_r(&time_arg, &tm_buffer);
+    strftime(buffer, sizeof(buffer), "%a %b %d %H:%M:%S %Y", &tm_buffer);
+    push(buffer);
+
+    /* SCHEMA_UUID */
+    push(tmp->uuid());
+
+    /* SCHEMA_VERSION */
+    push(tmp->version());
 
     return true;
   }
