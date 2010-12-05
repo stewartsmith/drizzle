@@ -1095,6 +1095,6 @@ ALTER TABLE t1 CHANGE id id2 INT;
 DROP TABLE t2;
 DROP TABLE t1;
 
-SET innodb_lock_wait_timeout=@orig_lock_wait_timeout ;
+SET GLOBAL innodb_lock_wait_timeout=@orig_lock_wait_timeout ;
 
 --echo End of 5.1 tests

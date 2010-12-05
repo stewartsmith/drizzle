@@ -183,12 +183,12 @@ protected:
   {
     if (greater_than_max<T,MAXVAL>(rhs))
     {
-      boost::throw_exception(invalid_option_value(boost::lexical_cast<std::string>(rhs)) << invalid_max_info(MAXVAL));
+      boost::throw_exception(invalid_option_value(boost::lexical_cast<std::string>(rhs)) << invalid_max_info(static_cast<uint64_t>(MAXVAL)));
     }
       
     if (less_than_min<T,MINVAL>(rhs))
     {
-      boost::throw_exception(invalid_option_value(boost::lexical_cast<std::string>(rhs)) << invalid_min_info(MINVAL));
+      boost::throw_exception(invalid_option_value(boost::lexical_cast<std::string>(rhs)) << invalid_min_info(static_cast<int64_t>(MINVAL)));
     }
     rhs-= rhs % ALIGN;
     this->setVal(rhs);
@@ -197,6 +197,9 @@ protected:
 
 
 };
+
+typedef constrained_check<uint64_t, UINT64_MAX, 0> uint64_constraint;
+typedef constrained_check<uint32_t, UINT32_MAX, 0> uint32_constraint;
 
 typedef constrained_check<uint32_t,65535,1> back_log_constraints;
 

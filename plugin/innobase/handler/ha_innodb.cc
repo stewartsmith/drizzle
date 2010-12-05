@@ -228,6 +228,10 @@ static my_bool  innobase_use_doublewrite    = TRUE;
 static my_bool  innobase_use_checksums      = TRUE;
 static my_bool  innobase_rollback_on_timeout    = FALSE;
 static my_bool  innobase_create_status_file   = FALSE;
+static bool support_xa;
+static bool strict_mode;
+typedef constrained_check<uint32_t, 1024*1024*1024, 1> lock_wait_constraint;
+static lock_wait_constraint lock_wait_timeout;
 
 static char*  internal_innobase_data_file_path  = NULL;
 
@@ -634,24 +638,6 @@ innobase_commit_concurrency_validate(
   return(!(!commit_concurrency == !innobase_commit_concurrency));
 }
 
-static DRIZZLE_SessionVAR_BOOL(support_xa, PLUGIN_VAR_OPCMDARG,
-  "Enable InnoDB support for the XA two-phase commit",
-  /* check_func */ NULL, /* update_func */ NULL,
-  /* default */ TRUE);
-
-static DRIZZLE_SessionVAR_BOOL(table_locks, PLUGIN_VAR_OPCMDARG,
-  "Enable InnoDB locking in LOCK TABLES",
-  /* check_func */ NULL, /* update_func */ NULL,
-  /* default */ TRUE);
-
-static DRIZZLE_SessionVAR_BOOL(strict_mode, PLUGIN_VAR_OPCMDARG,
-  "Use strict mode when evaluating create options.",
-  NULL, NULL, FALSE);
-
-static DRIZZLE_SessionVAR_ULONG(lock_wait_timeout, PLUGIN_VAR_RQCMDARG,
-  "Timeout in seconds an InnoDB transaction may wait for a lock before being rolled back. Values above 100000000 disable the timeout.",
-  NULL, NULL, 50, 1, 1024 * 1024 * 1024, 0);
-
 
 /*****************************************************************//**
 Commits a transaction in an InnoDB database. */
@@ -918,10 +904,11 @@ extern "C" UNIV_INTERN
 ibool
 thd_supports_xa(
 /*============*/
-  void* session)  /*!< in: thread handle (Session*), or NULL to query
+  void* )  /*!< in: thread handle (Session*), or NULL to query
         the global innodb_supports_xa */
 {
-  return(SessionVAR((Session*) session, support_xa));
+  /* TODO: Add support here for per-session value */
+  return(support_xa);
 }
 
 /******************************************************************//**
@@ -931,12 +918,13 @@ extern "C" UNIV_INTERN
 ulong
 thd_lock_wait_timeout(
 /*==================*/
-  void* session)  /*!< in: thread handle (Session*), or NULL to query
+  void*)  /*!< in: thread handle (Session*), or NULL to query
       the global innodb_lock_wait_timeout */
 {
+  /* TODO: Add support here for per-session value */
   /* According to <drizzle/plugin.h>, passing session == NULL
   returns the global value of the session variable. */
-  return(SessionVAR((Session*) session, lock_wait_timeout));
+  return((ulong)lock_wait_timeout.get());
 }
 
 /******************************************************************//**
@@ -1857,8 +1845,7 @@ innobase_init(
   innobase_use_doublewrite= (vm.count("disable-doublewrite")) ? false : true;
   srv_adaptive_flushing= (vm.count("disable-adaptive-flushing")) ? false : true;
   srv_use_sys_malloc= (vm.count("use-internal-malloc")) ? false : true;
-  (SessionVAR(NULL,support_xa))= (vm.count("disable-xa")) ? false : true;
-  (SessionVAR(NULL,table_locks))= (vm.count("disable-table-locks")) ? false : true;
+  support_xa= (vm.count("disable-xa")) ? false : true;
 
   if (vm.count("io-capacity"))
   {
@@ -2090,21 +2077,7 @@ innobase_init(
     }
   }
 
-  if (vm.count("strict-mode"))
-  {
-    (SessionVAR(NULL,strict_mode))= vm["strict-mode"].as<bool>();
-  }
 
-  if (vm.count("lock-wait-timeout"))
-  {
-    if (vm["lock-wait-timeout"].as<unsigned long>() < 1 || vm["lock-wait-timeout"].as<unsigned long>() > 1024*1024*1024)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for lock-wait-timeout\n"));
-      exit(-1);
-    }
-
-    (SessionVAR(NULL,lock_wait_timeout))= vm["lock-wait-timeout"].as<unsigned long>();
-  }
 
   innodb_engine_ptr= actuall_engine_ptr= new InnobaseEngine(innobase_engine_name);
 
@@ -2477,6 +2450,13 @@ innobase_change_buffering_inited_ok:
   context.registerVariable(new sys_var_bool_ptr("status-file", &innobase_create_status_file));
   context.registerVariable(new sys_var_bool_ptr_readonly("use-sys-malloc", &srv_use_sys_malloc));
   context.registerVariable(new sys_var_bool_ptr_readonly("use-native-aio", &srv_use_native_aio));
+
+#ifdef UNIV_LOG_ARCHIVE
+ context.registerVariable(new sys_var_bool_ptr_readonly("log_archive", &innobase_log_archive));
+#endif /* UNIV_LOG_ARCHIVE */
+  context.registerVariable(new sys_var_bool_ptr("support-xa", &support_xa));
+  context.registerVariable(new sys_var_bool_ptr("strict_mode", &strict_mode));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("lock-wait-timeout", lock_wait_timeout));
 
   /* Get the current high water mark format. */
   innobase_file_format_max = (char*) trx_sys_file_format_max_get();
@@ -6231,7 +6211,7 @@ InnobaseEngine::doCreateTable(
 # error "DICT_TF_ZSSIZE_MAX < 1"
 #endif
 
-    if (SessionVAR(&session, strict_mode))
+    if (strict_mode)
     {
       if (! srv_file_per_table)
       {
@@ -9835,13 +9815,13 @@ static void init_options(drizzled::module::option_context &context)
   context("disable-table-locks",
           "Disable InnoDB locking in LOCK TABLES");
   context("strict-mode",
-          po::value<bool>()->default_value(false)->zero_tokens(),
+          po::value<bool>(&strict_mode)->default_value(false)->zero_tokens(),
           "Use strict mode when evaluating create options.");
   context("replication-log",
           po::value<bool>()->default_value(false),
           "Enable internal replication log.");
   context("lock-wait-timeout",
-          po::value<unsigned long>()->default_value(50),
+          po::value<lock_wait_constraint>(&lock_wait_timeout)->default_value(50),
           "Timeout in seconds an InnoDB transaction may wait for a lock before being rolled back. Values above 100000000 disable the timeout.");
 }
 
@@ -9859,7 +9839,6 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(file_format_max),
   DRIZZLE_SYSVAR(flush_log_at_trx_commit),
   DRIZZLE_SYSVAR(force_recovery),
-  DRIZZLE_SYSVAR(lock_wait_timeout),
 #ifdef UNIV_LOG_ARCHIVE
   DRIZZLE_SYSVAR(log_archive),
 #endif /* UNIV_LOG_ARCHIVE */
@@ -9875,11 +9854,8 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(stats_sample_pages),
   DRIZZLE_SYSVAR(adaptive_hash_index),
   DRIZZLE_SYSVAR(replication_delay),
-  DRIZZLE_SYSVAR(strict_mode),
-  DRIZZLE_SYSVAR(support_xa),
   DRIZZLE_SYSVAR(sync_spin_loops),
   DRIZZLE_SYSVAR(spin_wait_delay),
-  DRIZZLE_SYSVAR(table_locks),
   DRIZZLE_SYSVAR(thread_concurrency),
   DRIZZLE_SYSVAR(thread_sleep_delay),
   DRIZZLE_SYSVAR(change_buffering),

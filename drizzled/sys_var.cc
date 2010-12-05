@@ -607,7 +607,7 @@ bool sys_var_bool_ptr::update(Session *, set_var *var)
 
 void sys_var_bool_ptr::set_default(Session *, sql_var_t)
 {
-  *value= (bool) option_limits->def_value;
+  *value= default_value;
 }
 
 

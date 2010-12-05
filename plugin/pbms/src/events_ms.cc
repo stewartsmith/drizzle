@@ -222,7 +222,7 @@ static bool insertRecord(const char *db, const char *table_name, char *possible_
 		char *blob = possible_blob_url; // This is the BLOB as the server currently sees it.
 		
 		if (length != org_length) {
-			field->store_length(blob_rec, packlength, length);
+			field->store_length(blob_rec, packlength);
 		}
 		
 		if (length > org_length) {

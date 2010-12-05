@@ -823,7 +823,7 @@ static void update_func_str(Session *, drizzle_sys_var *var,
 ****************************************************************************/
 
 
-sys_var *find_sys_var(Session *, const char *str, uint32_t length)
+sys_var *find_sys_var(const char *str, uint32_t length)
 {
   sys_var *var;
   sys_var_pluginvar *pi= NULL;
