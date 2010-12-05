@@ -35,6 +35,7 @@
 #include "drizzled/message/statement_transform.h"
 #include "transaction_manager.h"
 #include "transaction_file_reader.h"
+#include "transaction_log_connection.h"
 
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
@@ -351,11 +352,73 @@ static void printTransaction(const message::Transaction &transaction,
     cout << "COMMIT;" << endl;
 }
 
+static void processTransactionMessage(TransactionManager &trx_mgr, 
+                                      const message::Transaction &transaction, 
+                                      bool summarize,
+                                      bool ignore_events,
+                                      bool print_as_raw)
+{
+  if (not isEndTransaction(transaction))
+  {
+    trx_mgr.store(transaction);
+  }
+  else
+  {
+    const message::TransactionContext trx= transaction.transaction_context();
+    uint64_t transaction_id= trx.transaction_id();
+
+    /*
+     * If there are any previous Transaction messages for this transaction,
+     * store this one, then output all of them together.
+     */
+    if (trx_mgr.contains(transaction_id))
+    {
+      trx_mgr.store(transaction);
+
+      uint32_t size= trx_mgr.getTransactionBufferSize(transaction_id);
+      uint32_t idx= 0;
+
+      while (idx != size)
+      {
+        message::Transaction new_trx;
+        trx_mgr.getTransactionMessage(new_trx, transaction_id, idx);
+        if (summarize)
+        {
+          printTransactionSummary(new_trx, ignore_events);
+        }
+        else
+        {
+          printTransaction(new_trx, ignore_events, print_as_raw);
+        }
+        idx++;
+      }
+
+      /* No longer need this transaction */
+      trx_mgr.remove(transaction_id);
+    }
+    else
+    {
+      if (summarize)
+      {
+        printTransactionSummary(transaction, ignore_events);
+      }
+      else
+      {
+        printTransaction(transaction, ignore_events, print_as_raw);
+      }
+    }
+  }
+}
+
 int main(int argc, char* argv[])
 {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
   int opt_start_pos= 0;
   uint64_t opt_transaction_id= 0;
+  uint64_t opt_start_transaction_id= 0;
+  uint32_t opt_drizzle_port= 0; 
+  string current_user, opt_password, opt_protocol, current_host;
+  bool use_drizzle_protocol= false; 
 
   /*
    * Setup program options
@@ -363,6 +426,15 @@ int main(int argc, char* argv[])
   po::options_description desc("Program options");
   desc.add_options()
     ("help", N_("Display help and exit"))
+    ("use-innodb-replication-log", N_("Read from the innodb transaction log"))
+    ("user,u", po::value<string>(&current_user)->default_value(""), 
+      N_("User for login if not current user."))
+    ("port,p", po::value<uint32_t>(&opt_drizzle_port)->default_value(0), 
+      N_("Port number to use for connection."))
+    ("password,P", po::value<string>(&opt_password)->default_value(""), 
+      N_("Password to use when connecting to server"))
+    ("protocol",po::value<string>(&opt_protocol)->default_value("mysql"),
+      N_("The protocol of connection (mysql or drizzle)."))
     ("checksum", N_("Perform checksum"))
     ("ignore-events", N_("Ignore event messages"))
     ("input-file", po::value< vector<string> >(), N_("Transaction log file"))
@@ -370,6 +442,9 @@ int main(int argc, char* argv[])
     ("start-pos",
       po::value<int>(&opt_start_pos),
       N_("Start reading from the given file position"))
+    ("start-transaction-id",
+      po::value<uint64_t>(&opt_start_transaction_id),
+      N_("Only output for the given transaction ID and later"))
     ("transaction-id",
       po::value<uint64_t>(&opt_transaction_id),
       N_("Only output for the given transaction ID"))
@@ -389,11 +464,13 @@ int main(int argc, char* argv[])
             options(desc).positional(pos).run(), vm);
   po::notify(vm);
 
-  /*
-   * If the help option was given, or not input file was supplied,
-   * print out usage information.
-   */
-  if (vm.count("help") || not vm.count("input-file"))
+  if (vm.count("help"))
+  {
+    cerr << desc << endl;
+    return -1;
+  }
+
+  if (not vm.count("input-file") && not vm.count("use-innodb-replication-log"))
   {
     cerr << desc << endl;
     return -1;
@@ -416,107 +493,117 @@ int main(int argc, char* argv[])
   }
 
   bool do_checksum= vm.count("checksum") ? true : false;
+  bool use_innodb_replication_log= vm.count("use-innodb-replication-log") ? true : false;
   bool ignore_events= vm.count("ignore-events") ? true : false;
   bool print_as_raw= vm.count("raw") ? true : false;
+  bool summarize= vm.count("summarize") ? true : false;
 
-  string filename= vm["input-file"].as< vector<string> >()[0];
-
-  TransactionFileReader fileReader;
-
-  if (not fileReader.openFile(filename, opt_start_pos))
+  if (use_innodb_replication_log)
   {
-    cerr << fileReader.getErrorString() << endl;
-    return -1;
-  }
+    TransactionLogConnection *connection = new TransactionLogConnection(current_host, opt_drizzle_port,
+      current_user, opt_password, use_drizzle_protocol);
 
-  message::Transaction transaction;
-  TransactionManager trx_mgr;
-  uint32_t checksum= 0;
-
-  while (fileReader.getNextTransaction(transaction, &checksum))
-  {
-    const message::TransactionContext trx= transaction.transaction_context();
-    uint64_t transaction_id= trx.transaction_id();
-
-    /*
-     * If we are given a transaction ID, we only look for that one and
-     * print it out.
-     */
+    string query_string;
     if (vm.count("transaction-id"))
     {
-      if (opt_transaction_id == transaction_id)
-        printTransaction(transaction, ignore_events, print_as_raw);
-      else
-        continue;
+      query_string.append("SELECT transaction_message_binary, transaction_length FROM DATA_DICTIONARY.INNODB_REPLICATION_LOG WHERE transaction_id=");
+      query_string.append(boost::lexical_cast<string>(opt_transaction_id));
     }
-
-    /*
-     * No transaction ID given, so process all messages.
-     */
+    else if (vm.count("start-transaction-id"))
+    {
+      query_string.append("SELECT transaction_message_binary, transaction_length FROM DATA_DICTIONARY.INNODB_REPLICATION_LOG WHERE transaction_id >=");
+      query_string.append(boost::lexical_cast<string>(opt_start_transaction_id));
+      query_string.append(" ORDER BY transaction_id ASC");
+    }
     else
     {
-      if (not isEndTransaction(transaction))
+      query_string= "SELECT transaction_message_binary, transaction_length FROM DATA_DICTIONARY.INNODB_REPLICATION_LOG";
+    }
+
+    drizzle_result_st *result= connection->query(query_string);
+
+    drizzle_row_t row;
+    while ((row= drizzle_row_next(result)))
+    {
+      char* data= (char*)row[0];
+      uint64_t length= (row[1]) ? boost::lexical_cast<uint64_t>(row[1]) : 0;
+
+      message::Transaction transaction;
+      TransactionManager trx_mgr;
+
+      transaction.ParseFromArray(data, length);
+
+      processTransactionMessage(trx_mgr, transaction, 
+                                summarize, ignore_events, print_as_raw);
+    }    
+  }
+  else // file based transaction log 
+  {
+    string filename= vm["input-file"].as< vector<string> >()[0];
+
+    TransactionFileReader fileReader;
+
+    if (not fileReader.openFile(filename, opt_start_pos))
+    {
+      cerr << fileReader.getErrorString() << endl;
+      return -1;
+    }
+
+    message::Transaction transaction;
+    TransactionManager trx_mgr;
+    uint32_t checksum= 0;
+
+    while (fileReader.getNextTransaction(transaction, &checksum))
+    {
+      const message::TransactionContext trx= transaction.transaction_context();
+      uint64_t transaction_id= trx.transaction_id();
+    
+      /*
+       * If we are given a transaction ID, we only look for that one and
+       * print it out.
+       */
+      if (vm.count("transaction-id"))
       {
-        trx_mgr.store(transaction);
-      }
-      else
-      {
-        /*
-         * If there are any previous Transaction messages for this transaction,
-         * store this one, then output all of them together.
-         */
-        if (trx_mgr.contains(transaction_id))
+        if (opt_transaction_id == transaction_id)
         {
-          trx_mgr.store(transaction);
-
-          uint32_t size= trx_mgr.getTransactionBufferSize(transaction_id);
-          uint32_t idx= 0;
-
-          while (idx != size)
-          {
-            message::Transaction new_trx;
-            trx_mgr.getTransactionMessage(new_trx, transaction_id, idx);
-            if (vm.count("summarize"))
-              printTransactionSummary(new_trx, ignore_events);
-            else
-              printTransaction(new_trx, ignore_events, print_as_raw);
-            idx++;
-          }
-
-          /* No longer need this transaction */
-          trx_mgr.remove(transaction_id);
+          processTransactionMessage(trx_mgr, transaction, summarize, 
+                                    ignore_events, print_as_raw);
         }
         else
         {
-          if (vm.count("summarize"))
-            printTransactionSummary(transaction, ignore_events);
-          else
-            printTransaction(transaction, ignore_events, print_as_raw);
+          continue;
         }
       }
-    } /* end ! vm.count("transaction-id") */
-
-    if (do_checksum)
-    {
-      uint32_t calculated= fileReader.checksumLastReadTransaction();
-      if (checksum != calculated)
+      else 
       {
-        cerr << _("Checksum failed. Wanted ")
-             << checksum
-             << _(" got ")
-             << calculated
-             << endl;
+        /*
+         * No transaction ID given, so process all messages.
+         */
+        processTransactionMessage(trx_mgr, transaction, summarize,
+                                  ignore_events, print_as_raw);
+      }  
+
+      if (do_checksum)
+      {
+        uint32_t calculated= fileReader.checksumLastReadTransaction();
+        if (checksum != calculated)
+        {
+          cerr << _("Checksum failed. Wanted ")
+               << checksum
+               << _(" got ")
+               << calculated
+               << endl;
+        }
       }
+    } // end while
+
+    string error= fileReader.getErrorString();
+
+    if (error != "EOF")
+    {
+      cerr << error << endl;
+      return 1;
     }
-
-  } /* end while */
-
-  string error= fileReader.getErrorString();
-
-  if (error != "EOF")
-  {
-    cerr << error << endl;
-    return 1;
   }
 
   return 0;

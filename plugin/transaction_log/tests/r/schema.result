@@ -10,4 +10,15 @@ COMMIT;
 START TRANSACTION;
 DROP SCHEMA `my_new_warnings`;
 COMMIT;
+
+Generating statements for innodb replication log
+START TRANSACTION;
+DROP SCHEMA `my_new_schema`;
+COMMIT;
+START TRANSACTION;
+CREATE SCHEMA `my_new_warnings` COLLATE utf8_general_ci;
+COMMIT;
+START TRANSACTION;
+DROP SCHEMA `my_new_warnings`;
+COMMIT;
 SET GLOBAL transaction_log_truncate_debug= true;

@@ -102,6 +102,7 @@ extern "C" {
 #include "log0log.h"
 #include "lock0lock.h"
 #include "dict0crea.h"
+#include "create_replication.h"
 #include "btr0cur.h"
 #include "btr0btr.h"
 #include "fsp0fsp.h"
@@ -119,6 +120,7 @@ extern "C" {
 
 #include "ha_innodb.h"
 #include "data_dictionary.h"
+#include "replication_dictionary.h"
 #include "internal_dictionary.h"
 #include "handler0vars.h"
 
@@ -127,6 +129,12 @@ extern "C" {
 #include <string>
 
 #include "plugin/innobase/handler/status_function.h"
+#include "plugin/innobase/handler/replication_log.h"
+
+#include <google/protobuf/io/zero_copy_stream.h>
+#include <google/protobuf/io/zero_copy_stream_impl.h>
+#include <google/protobuf/io/coded_stream.h>
+#include <google/protobuf/text_format.h>
 
 using namespace std;
 using namespace drizzled;
@@ -170,6 +178,8 @@ static plugin::TableFunction* innodb_sys_columns_tool= NULL;
 static plugin::TableFunction* innodb_sys_fields_tool= NULL;
 static plugin::TableFunction* innodb_sys_foreign_tool= NULL;
 static plugin::TableFunction* innodb_sys_foreign_cols_tool= NULL;
+
+static plugin::TransactionApplier *replication_logger= NULL;
 
 static long innobase_mirrored_log_groups, innobase_log_files_in_group,
   innobase_log_buffer_size,
@@ -953,6 +963,25 @@ session_to_trx(
   Session*  session)  /*!< in: Drizzle Session */
 {
   return *(trx_t**) session->getEngineData(innodb_engine_ptr);
+}
+
+
+plugin::ReplicationReturnCode ReplicationLog::apply(Session &session,
+                                                    const message::Transaction &message)
+{
+  char *data= new char[message.ByteSize()];
+
+  message.SerializeToArray(data, message.ByteSize());
+
+  trx_t *trx= session_to_trx(&session);
+
+  uint64_t trx_id= message.transaction_context().transaction_id();
+  ulint error= insert_replication_message(data, message.ByteSize(), trx, trx_id);
+  (void)error;
+
+  delete[] data;
+
+  return plugin::SUCCESS;
 }
 
 /********************************************************************//**
@@ -2345,6 +2374,13 @@ innobase_change_buffering_inited_ok:
 
   err = innobase_start_or_create_for_mysql();
 
+  if (err != DB_SUCCESS)
+  {
+    goto mem_free_and_error;
+  }
+
+  err = dict_create_sys_replication_log();
+
   if (err != DB_SUCCESS) {
     goto mem_free_and_error;
   }
@@ -2423,6 +2459,16 @@ innobase_change_buffering_inited_ok:
   context.registerVariable(new sys_var_bool_ptr_readonly("log-archive", &innobase_log_archive));
   #endif /* UNIV_LOG_ARCHIVE */  
 
+  context.add(new(std::nothrow)InnodbReplicationTable());
+
+  replication_logger= new(std::nothrow)ReplicationLog();
+  context.add(replication_logger);
+
+  if (vm.count("replication-log") and vm["replication-log"].as<bool>())
+  {
+    ReplicationLog::setup(static_cast<ReplicationLog *>(replication_logger));
+  }
+
   context.registerVariable(new sys_var_bool_ptr_readonly("checksums", &innobase_use_checksums));
   context.registerVariable(new sys_var_bool_ptr_readonly("doublewrite", &innobase_use_doublewrite));
   context.registerVariable(new sys_var_bool_ptr("file-per-table", &srv_file_per_table));
@@ -2431,7 +2477,6 @@ innobase_change_buffering_inited_ok:
   context.registerVariable(new sys_var_bool_ptr("status-file", &innobase_create_status_file));
   context.registerVariable(new sys_var_bool_ptr_readonly("use-sys-malloc", &srv_use_sys_malloc));
   context.registerVariable(new sys_var_bool_ptr_readonly("use-native-aio", &srv_use_native_aio));
-
 
   /* Get the current high water mark format. */
   innobase_file_format_max = (char*) trx_sys_file_format_max_get();
@@ -9792,6 +9837,9 @@ static void init_options(drizzled::module::option_context &context)
   context("strict-mode",
           po::value<bool>()->default_value(false)->zero_tokens(),
           "Use strict mode when evaluating create options.");
+  context("replication-log",
+          po::value<bool>()->default_value(false),
+          "Enable internal replication log.");
   context("lock-wait-timeout",
           po::value<unsigned long>()->default_value(50),
           "Timeout in seconds an InnoDB transaction may wait for a lock before being rolled back. Values above 100000000 disable the timeout.");
