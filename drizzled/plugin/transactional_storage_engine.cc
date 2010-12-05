@@ -118,7 +118,7 @@ int TransactionalStorageEngine::notifyStartTransaction(Session *session, start_t
               vector_of_transactional_engines.end(),
               results.begin(),
               functor);
-    return *max_element(results.begin(), results.end());
+    return *std::max_element(results.begin(), results.end());
   }
 }
 
