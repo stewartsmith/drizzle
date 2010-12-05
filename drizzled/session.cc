@@ -41,6 +41,7 @@
 #include "drizzled/plugin/authentication.h"
 #include "drizzled/plugin/logging.h"
 #include "drizzled/plugin/transactional_storage_engine.h"
+#include "drizzled/plugin/query_rewrite.h"
 #include "drizzled/probes.h"
 #include "drizzled/table_proto.h"
 #include "drizzled/db.h"
@@ -723,7 +724,9 @@ bool Session::readAndStoreQuery(const char *in_packet, uint32_t in_packet_length
     in_packet_length--;
   }
 
-  query.reset(new std::string(in_packet, in_packet + in_packet_length));
+  std::string *new_query= new std::string(in_packet, in_packet + in_packet_length);
+  plugin::QueryRewriter::rewriteQuery(getSchema(), *new_query);
+  query.reset(new_query);
 
   return true;
 }
