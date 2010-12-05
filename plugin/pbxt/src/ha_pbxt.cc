@@ -198,10 +198,10 @@ static char				*pbxt_data_log_threshold;
 static char				*pbxt_data_file_grow_size;
 static char				*pbxt_row_file_grow_size;
 static char				*pbxt_record_write_threshold;
-static my_bool			pbxt_support_xa;
 
 #ifndef DRIZZLED
 // drizzle complains it's not used
+static my_bool			pbxt_support_xa;
 static XTXactEnumXARec	pbxt_xa_enum;
 #endif
 
@@ -6072,7 +6072,6 @@ struct st_mysql_storage_engine pbxt_storage_engine = {
 static st_mysql_information_schema pbxt_statitics = {
 	MYSQL_INFORMATION_SCHEMA_INTERFACE_VERSION
 };
-#endif
 
 #if MYSQL_VERSION_ID >= 50118
 static MYSQL_SYSVAR_STR(index_cache_size, pbxt_index_cache_size,
@@ -6205,6 +6204,7 @@ static struct st_mysql_sys_var* pbxt_system_variables[] = {
   NULL
 };
 #endif
+#endif
 
 #ifdef DRIZZLED
 DRIZZLE_DECLARE_PLUGIN
@@ -6216,7 +6216,7 @@ DRIZZLE_DECLARE_PLUGIN
         "High performance, multi-versioning transactional engine",
         PLUGIN_LICENSE_GPL,
         pbxt_init, /* Plugin Init */
-        pbxt_system_variables,          /* system variables                */
+        NULL,          /* system variables                */
         NULL                                            /* config options                  */
 }
 DRIZZLE_DECLARE_PLUGIN_END;
