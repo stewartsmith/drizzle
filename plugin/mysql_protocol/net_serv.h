@@ -23,14 +23,11 @@
 
 #include "vio.h"
 
-#include <stdint.h>
-
 #define LIBDRIZZLE_ERRMSG_SIZE 512
 #define LIBDRIZZLE_SQLSTATE_LENGTH 5
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+namespace drizzle_plugin
+{
 
 typedef struct st_net {
   Vio *vio;
@@ -69,28 +66,26 @@ typedef struct st_net {
   void *extension;
 } NET;
 
-  bool drizzleclient_net_init(NET *net, Vio* vio, uint32_t buffer_length);
-  void drizzleclient_net_end(NET *net);
-  void drizzleclient_net_clear(NET *net, bool clear_buffer);
-  bool drizzleclient_net_flush(NET *net);
-  bool drizzleclient_net_write(NET *net,const unsigned char *packet, size_t len);
-  bool drizzleclient_net_write_command(NET *net,unsigned char command,
-                         const unsigned char *header, size_t head_len,
-                         const unsigned char *packet, size_t len);
-  uint32_t drizzleclient_net_read(NET *net);
-  void drizzleclient_net_close(NET *net);
-  bool drizzleclient_net_init_sock(NET * net, int sock, uint32_t buffer_length);
-  bool drizzleclient_net_peer_addr(NET *net, char *buf, uint16_t *port, size_t buflen);
-  void drizzleclient_net_keepalive(NET *net, bool flag);
-  int drizzleclient_net_get_sd(NET *net);
-  bool drizzleclient_net_more_data(NET *net);
+bool drizzleclient_net_init(NET *net, Vio* vio, uint32_t buffer_length);
+void drizzleclient_net_end(NET *net);
+void drizzleclient_net_clear(NET *net, bool clear_buffer);
+bool drizzleclient_net_flush(NET *net);
+bool drizzleclient_net_write(NET *net,const unsigned char *packet, size_t len);
+bool drizzleclient_net_write_command(NET *net,unsigned char command,
+                                     const unsigned char *header, size_t head_len,
+                                     const unsigned char *packet, size_t len);
+uint32_t drizzleclient_net_read(NET *net);
+void drizzleclient_net_close(NET *net);
+bool drizzleclient_net_init_sock(NET * net, int sock, uint32_t buffer_length);
+bool drizzleclient_net_peer_addr(NET *net, char *buf, uint16_t *port, size_t buflen);
+void drizzleclient_net_keepalive(NET *net, bool flag);
+int drizzleclient_net_get_sd(NET *net);
+bool drizzleclient_net_more_data(NET *net);
 
-  void drizzleclient_net_set_write_timeout(NET *net, uint32_t timeout);
-  void drizzleclient_net_set_read_timeout(NET *net, uint32_t timeout);
-  void drizzleclient_drizzleclient_net_clear_error(NET *net);
+void drizzleclient_net_set_write_timeout(NET *net, uint32_t timeout);
+void drizzleclient_net_set_read_timeout(NET *net, uint32_t timeout);
+void drizzleclient_drizzleclient_net_clear_error(NET *net);
 
-#ifdef __cplusplus
-}
-#endif
+} /* namespace drizzle_plugin */
 
 #endif /* PLUGIN_MYSQL_PROTOCOL_NET_SERV_H */

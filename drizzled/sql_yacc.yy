@@ -6246,7 +6246,7 @@ sys_option_value:
             LEX *lex=Lex;
             lex->option_type= $1;
             lex->var_list.push_back(new set_var(lex->option_type,
-                                                find_sys_var(YYSession, "tx_isolation"),
+                                                find_sys_var("tx_isolation"),
                                                 &null_lex_str,
                                                 new Item_int((int32_t) $5)));
           }
@@ -6267,12 +6267,10 @@ option_value:
 internal_variable_name:
           ident
           {
-            Session *session= YYSession;
-
             /* We have to lookup here since local vars can shadow sysvars */
             {
               /* Not an SP local variable */
-              sys_var *tmp=find_sys_var(session, $1.str, $1.length);
+              sys_var *tmp=find_sys_var($1.str, $1.length);
               if (!tmp)
                 DRIZZLE_YYABORT;
               $$.var= tmp;

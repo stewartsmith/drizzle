@@ -23,6 +23,9 @@
 
 #include "drizzled/plugin/table_function.h"
 
+namespace drizzle_plugin
+{
+
 class MysqlProtocolStatus : public drizzled::plugin::TableFunction
 {
 public:
@@ -48,5 +51,7 @@ public:
     return new Generator(arg);
   }
 };
+
+} /* namespace drizzle_plugin */
 
 #endif /* PLUGIN_MYSQL_PROTOCOL_TABLE_FUNCTION_H */
