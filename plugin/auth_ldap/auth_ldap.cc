@@ -92,9 +92,9 @@ private:
     MYSQL_HASH
   } PasswordType;
 
-  typedef pair<PasswordType, string> PasswordEntry;
-  typedef pair<string, PasswordEntry> UserEntry;
-  typedef map<string, PasswordEntry> UserCache;
+  typedef std::pair<PasswordType, std::string> PasswordEntry;
+  typedef std::pair<std::string, PasswordEntry> UserEntry;
+  typedef std::map<std::string, PasswordEntry> UserCache;
 
   /**
    * Base class method to check authentication for a user.

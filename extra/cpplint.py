@@ -6,7 +6,12 @@
 # terms of either:
 #
 # a) the GNU General Public License as published by the Free Software
-# Foundation; either version 1, or (at your option) any later version, or
+# Foundation
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; version 2 of the License.
+#
+#  or
 #
 # b) the "Artistic License".
 

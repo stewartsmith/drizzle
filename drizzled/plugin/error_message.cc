@@ -26,12 +26,10 @@
 #include <algorithm>
 #include <vector>
 
-using namespace std;
-
 namespace drizzled
 {
 
-vector<plugin::ErrorMessage *> all_errmsg_handler;
+std::vector<plugin::ErrorMessage *> all_errmsg_handler;
 bool errmsg_has= false;
 
 
@@ -44,25 +42,27 @@ bool plugin::ErrorMessage::addPlugin(plugin::ErrorMessage *handler)
 
 void plugin::ErrorMessage::removePlugin(plugin::ErrorMessage *handler)
 {
-  all_errmsg_handler.erase(find(all_errmsg_handler.begin(),
-                                all_errmsg_handler.end(), handler));
+  all_errmsg_handler.erase(std::find(all_errmsg_handler.begin(),
+                                     all_errmsg_handler.end(), handler));
 }
 
 
-class Print : public unary_function<plugin::ErrorMessage *, bool>
+class Print : public std::unary_function<plugin::ErrorMessage *, bool>
 {
   Session *session;
   int priority;
   const char *format;
   va_list ap;
+
 public:
   Print(Session *session_arg, int priority_arg,
-        const char *format_arg, va_list ap_arg)
-    : unary_function<plugin::ErrorMessage *, bool>(), session(session_arg),
-      priority(priority_arg), format(format_arg)
-    {
-      va_copy(ap, ap_arg);
-    }
+        const char *format_arg, va_list ap_arg) : 
+    std::unary_function<plugin::ErrorMessage *, bool>(),
+    session(session_arg),
+    priority(priority_arg), format(format_arg)
+  {
+    va_copy(ap, ap_arg);
+  }
 
   ~Print()  { va_end(ap); }
 
@@ -106,9 +106,9 @@ bool plugin::ErrorMessage::vprintf(Session *session, int priority,
   }
 
   /* Use find_if instead of foreach so that we can collect return codes */
-  vector<plugin::ErrorMessage *>::iterator iter=
-    find_if(all_errmsg_handler.begin(), all_errmsg_handler.end(),
-            Print(session, priority, format, ap)); 
+  std::vector<plugin::ErrorMessage *>::iterator iter=
+    std::find_if(all_errmsg_handler.begin(), all_errmsg_handler.end(),
+                 Print(session, priority, format, ap)); 
   /* If iter is == end() here, that means that all of the plugins returned
    * false, which in this case means they all succeeded. Since we want to 
    * return false on success, we return the value of the two being != 

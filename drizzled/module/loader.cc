@@ -47,6 +47,8 @@
 #include "drizzled/pthread_globals.h"
 #include "drizzled/util/tokenize.h"
 
+#include <boost/foreach.hpp>
+
 /* FreeBSD 2.2.2 does not define RTLD_NOW) */
 #ifndef RTLD_NOW
 #define RTLD_NOW 1
@@ -490,7 +492,6 @@ bool plugin_init(module::Registry &registry,
 
 bool plugin_finalize(module::Registry &registry)
 {
-
   /*
     Now we initialize all remaining plugins
   */
@@ -513,6 +514,12 @@ bool plugin_finalize(module::Registry &registry)
       }
     }
   }
+
+  BOOST_FOREACH(plugin::Plugin::map::value_type value, registry.getPluginsMap())
+  {
+    value.second->prime();
+  }
+
   return false;
 }
 

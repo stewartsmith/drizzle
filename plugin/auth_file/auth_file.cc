@@ -93,7 +93,7 @@ private:
   /**
    * Cache or username:password entries from the file.
    */
-  map<string, string> users;
+  std::map<string, string> users;
 };
 
 AuthFile::AuthFile(string name_arg, fs::path users_file_arg):
@@ -140,8 +140,9 @@ bool AuthFile::loadFile(void)
       password = string(line, password_offset + 1);
     }
 
-    pair<map<string, string>::iterator, bool> result=
-      users.insert(pair<string, string>(username, password));
+    std::pair<std::map<std::string, std::string>::iterator, bool> result=
+      users.insert(std::pair<std::string, std::string>(username, password));
+
     if (result.second == false)
     {
       error = "Duplicate entry found in users file: ";
@@ -203,7 +204,7 @@ bool AuthFile::verifyMySQLHash(const string &password,
 
 bool AuthFile::authenticate(const SecurityContext &sctx, const string &password)
 {
-  map<string, string>::const_iterator user = users.find(sctx.getUser());
+  std::map<std::string, std::string>::const_iterator user= users.find(sctx.getUser());
   if (user == users.end())
     return false;
 

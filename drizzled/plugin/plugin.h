@@ -22,6 +22,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 namespace drizzled
 {
@@ -45,6 +46,8 @@ private:
   Plugin(const Plugin&);
   Plugin& operator=(const Plugin &);
 public:
+  typedef std::map<std::string, Plugin *> map;
+  typedef std::vector<Plugin *> vector;
 
   explicit Plugin(const std::string &name, const std::string &type_name);
   virtual ~Plugin() {}
@@ -55,6 +58,11 @@ public:
    * when shutdown code references other plug-ins.
    */
   virtual void shutdownPlugin()
+  {
+  }
+
+  // This is run after all plugins have been initialized.
+  virtual void prime()
   {
   }
  
