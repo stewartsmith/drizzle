@@ -166,9 +166,20 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpField &obj)
   if (not obj.defaultValue.empty())
   {
     if (obj.defaultValue.compare("CURRENT_TIMESTAMP") != 0)
-     os << " DEFAULT '" << obj.defaultValue << "'";
+    {
+      if (obj.defaultValue.compare(0, 2, "b'") == 0)
+      {
+        os << " DEFAULT " << obj.defaultValue;
+      }
+      else
+      {
+        os << " DEFAULT '" << obj.defaultValue << "'";
+      }
+    }
     else
+    {
      os << " DEFAULT CURRENT_TIMESTAMP";
+    }
   }
   else if ((obj.defaultIsNull))
   {
@@ -319,7 +330,20 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
       if (not row[i])
       {
         os << "NULL";
+        if (i != obj.table->fields.size() - 1)
+          os << ",";
+        continue;
       }
+
+      if ((obj.table->fields[i]->type.compare("BIGINT") == 0) and (boost::lexical_cast<uint64_t>(row[i]) > INT64_MAX))
+      {
+        std::cerr << "Error: Data for column " << obj.table->fields[i]->fieldName << " is greater than max BIGINT, cannot migrate automatically" << std::endl;
+        if (not ignore_errors)
+          maybe_exit(EX_DRIZZLEERR);
+        else
+          continue;
+      }
+
       /* time/date conversion for MySQL connections */
       else if (obj.table->fields[i]->convertDateTime)
       {
