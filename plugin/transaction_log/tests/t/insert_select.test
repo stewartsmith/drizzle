@@ -7,6 +7,11 @@
 --source ../plugin/transaction_log/tests/t/truncate_log.inc
 --enable_query_log
 
+# Determine the starting point for the inno transaction log
+--disable_query_log
+let $max_transaction_id= `SELECT MAX(TRANSACTION_ID) FROM DATA_DICTIONARY.INNODB_REPLICATION_LOG`;
+inc $max_transaction_id;
+--enable_query_log
 
 # Populate log with some records...
 --source ../plugin/transaction_log/tests/t/insert_select.inc
@@ -14,6 +19,10 @@
 # Read in the transaction.log.
 
 --exec ../plugin/transaction_log/utilities/transaction_reader var/master-data/local/transaction.log
+
+--echo
+--echo Generating statements for innodb replication log
+--exec ../plugin/transaction_log/utilities/transaction_reader --use-innodb-replication-log -p $MASTER_MYPORT --start-transaction-id $max_transaction_id --ignore-events
 
 # Truncate the log file to reset for the next test
 --source ../plugin/transaction_log/tests/t/truncate_log.inc
