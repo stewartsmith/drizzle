@@ -184,7 +184,11 @@ static plugin::TransactionApplier *replication_logger= NULL;
 static long innobase_mirrored_log_groups, innobase_log_files_in_group,
   innobase_log_buffer_size,
   innobase_force_recovery, innobase_open_files;
-static long innobase_additional_mem_pool_size= 8*1024*1024L;
+typedef constrained_check<size_t, SIZE_MAX, 512*1024, 1024> additional_mem_pool_constraint;
+static additional_mem_pool_constraint innobase_additional_mem_pool_size;
+typedef constrained_check<unsigned int, 1000, 1> autoextend_constraint;
+static autoextend_constraint innodb_auto_extend_increment;
+
 static ulong innobase_commit_concurrency = 0;
 static ulong innobase_read_io_threads;
 static ulong innobase_write_io_threads;
@@ -1824,6 +1828,11 @@ void align_value(T& value, size_t align_val= 1024)
   value= value - (value % align_val);
 }
 
+static void auto_extend_update(Session *, sql_var_t)
+{
+  srv_auto_extend_increment= innodb_auto_extend_increment.get();
+}
+
 /*********************************************************************//**
 Opens an InnoDB database.
 @return 0 on success, error code on failure */
@@ -1920,26 +1929,6 @@ innobase_init(
     }
   }
 
-  if (vm.count("additional-mem-pool-size"))
-  {
-    align_value(innobase_additional_mem_pool_size);
-
-    if (innobase_additional_mem_pool_size < 512*1024L)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for additional-mem-pool-size\n"));
-      exit(-1);
-    }
-
-  }
-
-  if (vm.count("autoextend-increment"))
-  {
-    if (srv_auto_extend_increment < 1 || srv_auto_extend_increment > 1000)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for autoextend-increment\n"));
-      exit(-1);
-    }
-  }
 
   if (vm.count("buffer-pool-size"))
   {
@@ -2458,6 +2447,10 @@ innobase_change_buffering_inited_ok:
   context.registerVariable(new sys_var_bool_ptr("strict_mode", &strict_mode));
   context.registerVariable(new sys_var_constrained_value<uint32_t>("lock-wait-timeout", lock_wait_timeout));
 
+  context.registerVariable(new sys_var_constrained_value_readonly<size_t>("additional_mem_pool_size",innobase_additional_mem_pool_size));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("autoextend_increment",
+                                                                   innodb_auto_extend_increment,
+                                                                   auto_extend_update));
   /* Get the current high water mark format. */
   innobase_file_format_max = (char*) trx_sys_file_format_max_get();
   btr_search_fully_disabled = (!btr_search_enabled);
@@ -9554,16 +9547,6 @@ static DRIZZLE_SYSVAR_ULONG(replication_delay, srv_replication_delay,
   "innodb_thread_concurrency is reached (0 by default)",
   NULL, NULL, 0, 0, ~0UL, 0);
 
-static DRIZZLE_SYSVAR_LONG(additional_mem_pool_size, innobase_additional_mem_pool_size,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Size of a memory pool InnoDB uses to store data dictionary information and other internal data structures.",
-  NULL, NULL, 8*1024*1024L, 512*1024L, LONG_MAX, 1024);
-
-static DRIZZLE_SYSVAR_UINT(autoextend_increment, srv_auto_extend_increment,
-  PLUGIN_VAR_RQCMDARG,
-  "Data file autoextend increment in megabytes",
-  NULL, NULL, 8L, 1L, 1000L, 0);
-
 static DRIZZLE_SYSVAR_LONGLONG(buffer_pool_size, innobase_buffer_pool_size,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "The size of the memory buffer InnoDB uses to cache data and indexes of its tables.",
@@ -9742,10 +9725,10 @@ static void init_options(drizzled::module::option_context &context)
           po::value<unsigned long>(&srv_replication_delay)->default_value(0),
           "Replication thread delay (ms) on the slave server if innodb_thread_concurrency is reached (0 by default)");
   context("additional-mem-pool-size",
-          po::value<long>(&innobase_additional_mem_pool_size)->default_value(8*1024*1024L),
+          po::value<additional_mem_pool_constraint>(&innobase_additional_mem_pool_size)->default_value(8*1024*1024L),
           "Size of a memory pool InnoDB uses to store data dictionary information and other internal data structures.");
   context("autoextend-increment",
-          po::value<uint32_t>(&srv_auto_extend_increment)->default_value(8L),
+          po::value<autoextend_constraint>(&innodb_auto_extend_increment)->default_value(8L),
           "Data file autoextend increment in megabytes");
   context("buffer-pool-size",
           po::value<int64_t>(&innobase_buffer_pool_size)->default_value(128*1024*1024L),
@@ -9826,8 +9809,6 @@ static void init_options(drizzled::module::option_context &context)
 }
 
 static drizzle_sys_var* innobase_system_variables[]= {
-  DRIZZLE_SYSVAR(additional_mem_pool_size),
-  DRIZZLE_SYSVAR(autoextend_increment),
   DRIZZLE_SYSVAR(buffer_pool_size),
   DRIZZLE_SYSVAR(buffer_pool_instances),
   DRIZZLE_SYSVAR(commit_concurrency),
