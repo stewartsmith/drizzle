@@ -28,15 +28,13 @@
 #include <algorithm>
 #include <vector>
 
-using namespace std;
-
 namespace drizzled
 {
 
 namespace plugin
 {
 
-vector<plugin::QueryRewriter *> all_rewriters;
+std::vector<plugin::QueryRewriter *> all_rewriters;
 
 
 bool QueryRewriter::addPlugin(QueryRewriter *in_rewriter)
@@ -53,9 +51,9 @@ void QueryRewriter::removePlugin(QueryRewriter *in_rewriter)
 {
   if (in_rewriter != NULL)
   {
-    all_rewriters.erase(find(all_rewriters.begin(),
-                             all_rewriters.end(),
-                             in_rewriter));
+    all_rewriters.erase(std::find(all_rewriters.begin(),
+                                  all_rewriters.end(),
+                                  in_rewriter));
   }
 }
 
@@ -66,7 +64,7 @@ void QueryRewriter::removePlugin(QueryRewriter *in_rewriter)
  */
 void QueryRewriter::rewriteQuery(const string &schema, string &to_rewrite)
 {
-  for (vector<plugin::QueryRewriter *>::iterator iter= all_rewriters.begin();
+  for (std::vector<plugin::QueryRewriter *>::iterator iter= all_rewriters.begin();
        iter != all_rewriters.end();
        ++iter)
   {

@@ -48,7 +48,7 @@ static const char *ha_blackhole_exts[] = {
 
 class BlackholeEngine : public drizzled::plugin::StorageEngine
 {
-  typedef map<string, BlackholeShare*> BlackholeMap;
+  typedef std::map<std::string, BlackholeShare*> BlackholeMap;
   BlackholeMap blackhole_open_tables;
 
 public:

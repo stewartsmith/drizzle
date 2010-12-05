@@ -12,8 +12,11 @@ extern "C" {
 
 /**
  * @addtogroup sha1 SHA-1 in C
- * By Steve Reid <steve@edmweb.com>
- * 100% Public Domain
+ *
+ * This file is based on public domain code.
+ * Initial source code is in the public domain, 
+ * so clarified by Steve Reid <steve@edmweb.com>
+ *
  * @{
  */
 

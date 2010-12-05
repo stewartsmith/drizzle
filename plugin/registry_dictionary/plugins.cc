@@ -22,7 +22,6 @@
 
 #include <plugin/registry_dictionary/dictionary.h>
 
-using namespace std;
 using namespace drizzled;
 
 PluginsTool::PluginsTool() :
@@ -38,7 +37,7 @@ PluginsTool::Generator::Generator(Field **arg) :
   plugin::TableFunction::Generator(arg)
 {
   module::Registry &registry= module::Registry::singleton();
-  const map<string, plugin::Plugin *> &plugin_map=
+  const std::map<std::string, plugin::Plugin *> &plugin_map=
     registry.getPluginsMap();
 
   it= plugin_map.begin();
