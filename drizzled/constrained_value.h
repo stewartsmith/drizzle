@@ -24,6 +24,7 @@
 #include <boost/program_options.hpp>
 #include <boost/program_options/errors.hpp>
 #include <iostream>
+#include <netinet/in.h> /* for in_port_t */
 
 namespace drizzled
 {
@@ -200,6 +201,7 @@ protected:
 
 typedef constrained_check<uint64_t, UINT64_MAX, 0> uint64_constraint;
 typedef constrained_check<uint32_t, UINT32_MAX, 0> uint32_constraint;
+typedef drizzled::constrained_check<in_port_t, 65535, 0> port_constraint;
 
 typedef constrained_check<uint32_t,65535,1> back_log_constraints;
 
