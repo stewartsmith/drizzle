@@ -28,13 +28,10 @@
 #include "drizzled/gettext.h"
 #include "drizzled/unireg.h"
 #include "drizzled/errmsg_print.h"
+#include "drizzled/plugin/plugin.h"
 
 namespace drizzled
 {
-namespace plugin
-{
-class Plugin;
-}
 
 namespace module
 {
@@ -63,6 +60,8 @@ public:
     static Registry *registry= new Registry();
     return *registry;
   }
+
+  void copy(plugin::Plugin::vector &arg);
 
   static void shutdown();
 

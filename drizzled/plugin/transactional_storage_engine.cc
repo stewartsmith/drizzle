@@ -28,18 +28,16 @@
 #include <algorithm>
 #include <functional>
 
-using namespace std;
-
 namespace drizzled
 {
 
 namespace plugin
 {
 
-static vector<TransactionalStorageEngine *> vector_of_transactional_engines;
+static std::vector<TransactionalStorageEngine *> vector_of_transactional_engines;
 
-TransactionalStorageEngine::TransactionalStorageEngine(const string name_arg,
-                                                       const bitset<HTON_BIT_SIZE> &flags_arg)
+TransactionalStorageEngine::TransactionalStorageEngine(const std::string name_arg,
+                                                       const std::bitset<HTON_BIT_SIZE> &flags_arg)
     : StorageEngine(name_arg, flags_arg)
 {
 }
@@ -86,12 +84,12 @@ void TransactionalStorageEngine::setTransactionReadWrite(Session& session)
 */
 int TransactionalStorageEngine::releaseTemporaryLatches(Session *session)
 {
-  for_each(vector_of_transactional_engines.begin(), vector_of_transactional_engines.end(),
-           bind2nd(mem_fun(&TransactionalStorageEngine::doReleaseTemporaryLatches),session));
+  std::for_each(vector_of_transactional_engines.begin(), vector_of_transactional_engines.end(),
+                std::bind2nd(std::mem_fun(&TransactionalStorageEngine::doReleaseTemporaryLatches),session));
   return 0;
 }
 
-struct StartTransactionFunc :public unary_function<TransactionalStorageEngine *, int>
+struct StartTransactionFunc :public std::unary_function<TransactionalStorageEngine *, int>
 {
   Session *session;
   start_transaction_option_t options;
@@ -108,11 +106,13 @@ struct StartTransactionFunc :public unary_function<TransactionalStorageEngine *,
 int TransactionalStorageEngine::notifyStartTransaction(Session *session, start_transaction_option_t options)
 {
   if (vector_of_transactional_engines.empty())
+  {
     return 0;
+  }
   else
   {
     StartTransactionFunc functor(session, options);
-    vector<int> results;
+    std::vector<int> results;
     results.reserve(vector_of_transactional_engines.size());
     transform(vector_of_transactional_engines.begin(),
               vector_of_transactional_engines.end(),

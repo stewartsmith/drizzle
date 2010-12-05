@@ -29,22 +29,20 @@
 
 class Session;
 
-using namespace std;
-
 namespace drizzled
 {
-typedef vector<plugin::QueryCache *> QueryCaches;
+typedef std::vector<plugin::QueryCache *> QueryCaches;
 QueryCaches all_query_cache;
 
 /* Namespaces are here to prevent global symbol clashes with these classes */
 
 class IsCachedIterate
- : public unary_function<plugin::QueryCache *, bool>
+ : public std::unary_function<plugin::QueryCache *, bool>
 {
   Session *session;
 public:
   IsCachedIterate(Session* session_arg) :
-    unary_function<plugin::QueryCache *, bool>(),
+    std::unary_function<plugin::QueryCache *, bool>(),
     session(session_arg) { }
 
   inline result_type operator()(argument_type handler)
@@ -57,7 +55,7 @@ bool plugin::QueryCache::isCached(Session *session)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
   QueryCaches::iterator iter=
-    find_if(all_query_cache.begin(), all_query_cache.end(),
+    std::find_if(all_query_cache.begin(), all_query_cache.end(),
             IsCachedIterate(session));
   /* If iter is == end() here, that means that all of the plugins returned
    * false, which in this case means they all succeeded. Since we want to 
@@ -68,12 +66,12 @@ bool plugin::QueryCache::isCached(Session *session)
 
 
 class SendCachedResultsetIterate
- : public unary_function<plugin::QueryCache *, bool>
+ : public std::unary_function<plugin::QueryCache *, bool>
 {
   Session *session;
 public:
   SendCachedResultsetIterate(Session *session_arg) :
-    unary_function<plugin::QueryCache *, bool>(),
+    std::unary_function<plugin::QueryCache *, bool>(),
     session(session_arg) { }
 
   inline result_type operator()(argument_type handler)
@@ -85,8 +83,8 @@ bool plugin::QueryCache::sendCachedResultset(Session *session)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
   QueryCaches::iterator iter=
-    find_if(all_query_cache.begin(), all_query_cache.end(),
-            SendCachedResultsetIterate(session));
+    std::find_if(all_query_cache.begin(), all_query_cache.end(),
+                 SendCachedResultsetIterate(session));
   /* If iter is == end() here, that means that all of the plugins returned
    * false, which in this case means they all succeeded. Since we want to 
    * return false on success, we return the value of the two being != 
@@ -94,13 +92,13 @@ bool plugin::QueryCache::sendCachedResultset(Session *session)
   return iter != all_query_cache.end();
 }
 
-class PrepareResultsetIterate
- : public unary_function<plugin::QueryCache *, bool>
+class PrepareResultsetIterate : public std::unary_function<plugin::QueryCache *, bool>
 {
   Session *session;
 public:
   PrepareResultsetIterate(Session *session_arg) :
-    unary_function<plugin::QueryCache *, bool>(), session(session_arg) { }
+    std::unary_function<plugin::QueryCache *, bool>(),
+    session(session_arg) { }
 
   inline result_type operator()(argument_type handler)
   {
@@ -111,8 +109,8 @@ bool plugin::QueryCache::prepareResultset(Session *session)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
   QueryCaches::iterator iter=
-    find_if(all_query_cache.begin(), all_query_cache.end(),
-            PrepareResultsetIterate(session));
+    std::find_if(all_query_cache.begin(), all_query_cache.end(),
+                 PrepareResultsetIterate(session));
   /* If iter is == end() here, that means that all of the plugins returned
    * false, which in this case means they all succeeded. Since we want to 
    * return false on success, we return the value of the two being != 
@@ -120,13 +118,12 @@ bool plugin::QueryCache::prepareResultset(Session *session)
   return iter != all_query_cache.end();
 }
 
-class SetResultsetIterate
- : public unary_function<plugin::QueryCache *, bool>
+class SetResultsetIterate : public std::unary_function<plugin::QueryCache *, bool>
 {
   Session *session;
 public:
   SetResultsetIterate(Session *session_arg) :
-    unary_function<plugin::QueryCache *, bool>(),
+    std::unary_function<plugin::QueryCache *, bool>(),
     session(session_arg) { }
 
   inline result_type operator()(argument_type handler)
@@ -139,8 +136,8 @@ bool plugin::QueryCache::setResultset(Session *session)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
   QueryCaches::iterator iter=
-    find_if(all_query_cache.begin(), all_query_cache.end(),
-            SetResultsetIterate(session));
+    std::find_if(all_query_cache.begin(), all_query_cache.end(),
+                 SetResultsetIterate(session));
   /* If iter is == end() here, that means that all of the plugins returned
    * false, which in this case means they all succeeded. Since we want to 
    * return false on success, we return the value of the two being != 
@@ -149,13 +146,13 @@ bool plugin::QueryCache::setResultset(Session *session)
 }
 
 class InsertRecordIterate
- : public unary_function<plugin::QueryCache *, bool>
+ : public std::unary_function<plugin::QueryCache *, bool>
 {
   Session *session;
   List<Item> &item;
 public:
   InsertRecordIterate(Session *session_arg, List<Item> &item_arg) :
-    unary_function<plugin::QueryCache *, bool>(),
+    std::unary_function<plugin::QueryCache *, bool>(),
     session(session_arg), item(item_arg) { }
 
   inline result_type operator()(argument_type handler)
@@ -167,8 +164,8 @@ bool plugin::QueryCache::insertRecord(Session *session, List<Item> &items)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
   QueryCaches::iterator iter=
-    find_if(all_query_cache.begin(), all_query_cache.end(),
-            InsertRecordIterate(session, items));
+    std::find_if(all_query_cache.begin(), all_query_cache.end(),
+                 InsertRecordIterate(session, items));
   /* If iter is == end() here, that means that all of the plugins returned
    * false, which in this case means they all succeeded. Since we want to 
    * return false on success, we return the value of the two being != 
@@ -186,8 +183,8 @@ bool plugin::QueryCache::addPlugin(plugin::QueryCache *handler)
 
 void plugin::QueryCache::removePlugin(plugin::QueryCache *handler)
 {
-  all_query_cache.erase(find(all_query_cache.begin(), all_query_cache.end(),
-                        handler));
+  all_query_cache.erase(std::find(all_query_cache.begin(), all_query_cache.end(),
+                                  handler));
 }
 
 } /* namespace drizzled */

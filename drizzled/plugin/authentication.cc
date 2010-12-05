@@ -26,8 +26,6 @@
 
 #include <vector>
 
-using namespace std;
-
 namespace drizzled
 {
 
@@ -44,18 +42,18 @@ bool plugin::Authentication::addPlugin(plugin::Authentication *auth)
 void plugin::Authentication::removePlugin(plugin::Authentication *auth)
 {
   if (auth != NULL)
-    all_authentication.erase(find(all_authentication.begin(),
-                                  all_authentication.end(),
-                                  auth));
+    all_authentication.erase(std::find(all_authentication.begin(),
+                                       all_authentication.end(),
+                                       auth));
 }
 
-class AuthenticateBy : public unary_function<plugin::Authentication *, bool>
+class AuthenticateBy : public std::unary_function<plugin::Authentication *, bool>
 {
   const SecurityContext &sctx;
-  const string &password;
+  const std::string &password;
 public:
-  AuthenticateBy(const SecurityContext &sctx_arg, const string &password_arg) :
-    unary_function<plugin::Authentication *, bool>(),
+  AuthenticateBy(const SecurityContext &sctx_arg, const std::string &password_arg) :
+    std::unary_function<plugin::Authentication *, bool>(),
     sctx(sctx_arg), password(password_arg) {}
 
   inline result_type operator()(argument_type auth)
@@ -65,16 +63,16 @@ public:
 };
 
 bool plugin::Authentication::isAuthenticated(const SecurityContext &sctx,
-                                             const string &password)
+                                             const std::string &password)
 {
   /* If we never loaded any auth plugins, just return true */
   if (all_authentication.empty())
     return true;
 
   /* Use find_if instead of foreach so that we can collect return codes */
-  vector<plugin::Authentication *>::iterator iter=
-    find_if(all_authentication.begin(), all_authentication.end(),
-            AuthenticateBy(sctx, password));
+  std::vector<plugin::Authentication *>::iterator iter=
+    std::find_if(all_authentication.begin(), all_authentication.end(),
+                 AuthenticateBy(sctx, password));
 
   /* We only require one plugin to return success in order to authenticate.
    * If iter is == end() here, that means that all of the plugins returned

@@ -22,8 +22,6 @@
 #include "drizzled/replication_services.h"
 #include "drizzled/plugin/transaction_applier.h"
 
-using namespace std;
-
 namespace drizzled
 {
 

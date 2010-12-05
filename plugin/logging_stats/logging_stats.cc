@@ -151,10 +151,10 @@ bool LoggingStats::resetGlobalScoreboard()
 
   for (; v_of_scoreboard_v_begin_it != v_of_scoreboard_v_end_it; ++v_of_scoreboard_v_begin_it)
   {
-    vector<ScoreboardSlot* > *scoreboard_vector= *v_of_scoreboard_v_begin_it;
+    std::vector<ScoreboardSlot* > *scoreboard_vector= *v_of_scoreboard_v_begin_it;
 
-    vector<ScoreboardSlot* >::iterator scoreboard_vector_it= scoreboard_vector->begin();
-    vector<ScoreboardSlot* >::iterator scoreboard_vector_end= scoreboard_vector->end();
+    std::vector<ScoreboardSlot* >::iterator scoreboard_vector_it= scoreboard_vector->begin();
+    std::vector<ScoreboardSlot* >::iterator scoreboard_vector_end= scoreboard_vector->end();
     for (; scoreboard_vector_it != scoreboard_vector_end; ++scoreboard_vector_it)
     {
       ScoreboardSlot *scoreboard_slot= *scoreboard_vector_it;

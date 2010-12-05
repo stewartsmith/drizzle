@@ -27,8 +27,6 @@
 #include "drizzled/plugin/storage_engine.h"
 #include "drizzled/plugin/authorization.h"
 
-using namespace std;
-
 namespace drizzled
 {
 
@@ -36,7 +34,7 @@ namespace plugin
 {
 
 class AddSchemaNames : 
-  public unary_function<StorageEngine *, void>
+  public std::unary_function<StorageEngine *, void>
 {
   SchemaIdentifier::vector &schemas;
 
@@ -56,13 +54,13 @@ public:
 void StorageEngine::getIdentifiers(Session &session, SchemaIdentifier::vector &schemas)
 {
   // Add hook here for engines to register schema.
-  for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
+  std::for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
            AddSchemaNames(schemas));
 
   plugin::Authorization::pruneSchemaNames(session.getSecurityContext(), schemas);
 }
 
-class StorageEngineGetSchemaDefinition: public unary_function<StorageEngine *, bool>
+class StorageEngineGetSchemaDefinition: public std::unary_function<StorageEngine *, bool>
 {
   const SchemaIdentifier &identifier;
   message::schema::shared_ptr &schema_proto;
@@ -92,8 +90,8 @@ bool StorageEngine::getSchemaDefinition(const drizzled::TableIdentifier &identif
 bool StorageEngine::getSchemaDefinition(const SchemaIdentifier &identifier, message::schema::shared_ptr &proto)
 {
   EngineVector::iterator iter=
-    find_if(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
-            StorageEngineGetSchemaDefinition(identifier, proto));
+    std::find_if(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
+                 StorageEngineGetSchemaDefinition(identifier, proto));
 
   if (iter != StorageEngine::getSchemaEngines().end())
   {
@@ -120,7 +118,7 @@ const CHARSET_INFO *StorageEngine::getSchemaCollation(const SchemaIdentifier &id
 
   if (found && schmema_proto->has_collation())
   {
-    const string buffer= schmema_proto->collation();
+    const std::string buffer= schmema_proto->collation();
     const CHARSET_INFO* cs= get_charset_by_name(buffer.c_str());
 
     if (not cs)
@@ -142,7 +140,7 @@ const CHARSET_INFO *StorageEngine::getSchemaCollation(const SchemaIdentifier &id
 }
 
 class CreateSchema : 
-  public unary_function<StorageEngine *, void>
+  public std::unary_function<StorageEngine *, void>
 {
   const drizzled::message::Schema &schema_message;
 
@@ -163,14 +161,14 @@ public:
 bool StorageEngine::createSchema(const drizzled::message::Schema &schema_message)
 {
   // Add hook here for engines to register schema.
-  for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
-           CreateSchema(schema_message));
+  std::for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
+                CreateSchema(schema_message));
 
   return true;
 }
 
 class DropSchema : 
-  public unary_function<StorageEngine *, void>
+  public std::unary_function<StorageEngine *, void>
 {
   uint64_t &success_count;
   const SchemaIdentifier &identifier;
@@ -197,14 +195,14 @@ bool StorageEngine::dropSchema(const SchemaIdentifier &identifier)
 {
   uint64_t counter= 0;
   // Add hook here for engines to register schema.
-  for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
-           DropSchema(identifier, counter));
+  std::for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
+                DropSchema(identifier, counter));
 
   return counter ? true : false;
 }
 
 class AlterSchema : 
-  public unary_function<StorageEngine *, void>
+  public std::unary_function<StorageEngine *, void>
 {
   uint64_t &success_count;
   const drizzled::message::Schema &schema_message;
@@ -232,8 +230,8 @@ bool StorageEngine::alterSchema(const drizzled::message::Schema &schema_message)
 {
   uint64_t success_count= 0;
 
-  for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
-           AlterSchema(schema_message, success_count));
+  std::for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
+                AlterSchema(schema_message, success_count));
 
   return success_count ? true : false;
 }
