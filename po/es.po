@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2010-07-20 16:06+0000\n"
-"PO-Revision-Date: 2010-12-04 10:36+0000\n"
-"Last-Translator: Emilio Balao <Unknown>\n"
+"PO-Revision-Date: 2010-12-05 17:23+0000\n"
+"Last-Translator: Mario Nachbaur <Unknown>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2010-12-05 04:47+0000\n"
+"X-Launchpad-Export-Date: 2010-12-06 04:48+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 msgid "Synonym for `help'."
@@ -2236,6 +2236,9 @@ msgid ""
 "Uncompressed data size too large; the maximum size is %d (based on "
 "max_allowed_packet). The length of uncompressed data may also be corrupted."
 msgstr ""
+"Inforación no comprimida demasiado grande; el tamaño máximo es %d (basado en "
+"max_allowed_packet). El tamaño de información no compimida puede estar "
+"corrupto."
 
 msgid "ZLIB: Not enough memory"
 msgstr "ZLIB: No hay suficiente memoria"
@@ -4408,6 +4411,8 @@ msgid ""
 "Plugin '%s' contains the name '%s' in its manifest, which has already been "
 "registered.\n"
 msgstr ""
+"El plugin '%s' contiene el nombre '%s' en su manifiesto, pero ya ha sido "
+"registrado.\n"
 
 #, c-format
 msgid "Plugin '%s' init function returned error.\n"
@@ -4580,18 +4585,18 @@ msgstr "setsockopt(TCP_NODELAY) fallo con error %d"
 
 #, c-format
 msgid "Retrying bind() on %u\n"
-msgstr ""
+msgstr "Reintentando bind() en %u\n"
 
 #, c-format
 msgid "bind() failed with errno: %d\n"
-msgstr ""
+msgstr "bind() falló con fallo número: %d\n"
 
 msgid "Do you already have another drizzled running?\n"
 msgstr "Tienes otra instancia de drizzled cargada?\n"
 
 #, c-format
 msgid "listen() failed with errno %d\n"
-msgstr ""
+msgstr "listen() falló con fallo número: %d\n"
 
 #, c-format
 msgid "Listening on %s:%s\n"
