@@ -1467,10 +1467,10 @@ Variable_name	Value
 innodb_concurrency_tickets	1000
 set global innodb_concurrency_tickets=0;
 Warnings:
-Error	1292	Truncated incorrect concurrency_tickets value: '0'
+Error	1524	Error setting innodb_concurrency_tickets. Given value 0 (< 1)
 show variables like "innodb_concurrency_tickets";
 Variable_name	Value
-innodb_concurrency_tickets	1
+innodb_concurrency_tickets	1000
 set global innodb_concurrency_tickets=500;
 show variables like "innodb_concurrency_tickets";
 Variable_name	Value

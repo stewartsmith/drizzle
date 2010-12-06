@@ -1846,13 +1846,14 @@ static int innodb_commit_concurrency_validate(Session *session, set_var *var)
 {
    uint32_t new_value= var->save_result.uint32_t_value;
 
-   if (innobase_commit_concurrency.get() == 0 && new_value != 0)
+   if ((innobase_commit_concurrency.get() == 0 && new_value != 0) ||
+       (innobase_commit_concurrency.get() != 0 && new_value == 0))
    {
      push_warning_printf(session,
                          DRIZZLE_ERROR::WARN_LEVEL_WARN,
                          ER_WRONG_ARGUMENTS,
                          _("Once InnoDB is running, innodb_commit_concurrency "
-                           "must not change from zero to nonzero."));
+                           "must not change between zero and nonzero."));
      return 1;
    }
    return 0;
