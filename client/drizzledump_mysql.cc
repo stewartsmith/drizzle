@@ -367,7 +367,8 @@ void DrizzleDumpFieldMySQL::setType(const char* raw_type, const char* raw_collat
   std::string extra;
   size_t pos;
   
-  if ((pos= old_type.find("(")) != std::string::npos)
+  if (((pos= old_type.find("(")) != std::string::npos) or
+    ((pos= old_type.find(" ")) != std::string::npos))
   {
     extra= old_type.substr(pos);
     old_type.erase(pos, std::string::npos);
