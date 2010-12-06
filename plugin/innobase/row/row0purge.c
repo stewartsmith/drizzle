@@ -811,7 +811,9 @@ row_purge_step(
 #endif /* UNIV_DEBUG */
 	row_purge(node, thr);
 
+#ifdef UNIV_DEBUG
 	ut_a(err == DB_SUCCESS);
+#endif /* UNIV_DEBUG */
 
 	return(thr);
 }
