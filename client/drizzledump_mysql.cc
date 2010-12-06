@@ -204,16 +204,8 @@ bool DrizzleDumpTableMySQL::populateFields()
     field->isAutoIncrement= (strcmp(row[8], "auto_increment") == 0) ? true : false;
     field->defaultIsNull= field->isNull;
     field->length= (row[4]) ? boost::lexical_cast<uint32_t>(row[4]) : 0;
-    if ((row[5] != NULL) and (row[6] != NULL))
-    {
-      field->decimalPrecision= boost::lexical_cast<uint32_t>(row[5]);
-      field->decimalScale= boost::lexical_cast<uint32_t>(row[6]);
-    }
-    else
-    {
-      field->decimalPrecision= 0;
-      field->decimalScale= 0;
-    }
+    field->decimalPrecision= (row[5] != NULL) ? boost::lexical_cast<uint32_t>(row[5]) : 0;
+    field->decimalScale= (row[6] != NULL) ? boost::lexical_cast<uint32_t>(row[6]) : 0;
 
     fields.push_back(field);
   }
