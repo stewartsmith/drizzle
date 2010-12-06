@@ -1860,6 +1860,16 @@ static void purge_threads_update(Session *, sql_var_t)
   srv_n_purge_threads= innodb_n_purge_threads.get();
 }
 
+static void innodb_adaptive_hash_index_update(Session *, sql_var_t)
+{
+  if (btr_search_enabled)
+  {
+    btr_search_enable();
+  } else {
+    btr_search_disable();
+  }
+}
+
 /*************************************************************//**
 Check if it is a valid file format. This function is registered as
 a callback with MySQL.
@@ -1978,6 +1988,7 @@ innobase_init(
   srv_adaptive_flushing= (vm.count("disable-adaptive-flushing")) ? false : true;
   srv_use_sys_malloc= (vm.count("use-internal-malloc")) ? false : true;
   support_xa= (vm.count("disable-xa")) ? false : true;
+  btr_search_enabled= (vm.count("disable-adaptive-hash-index")) ? false : true;
 
 
   if (vm.count("data-home-dir"))
@@ -2456,6 +2467,7 @@ innobase_change_buffering_inited_ok:
                                                   innodb_max_dirty_pages_pct));
   context.registerVariable(new sys_var_constrained_value_readonly<uint64_t>("max_purge_lag", innodb_max_purge_lag));
   context.registerVariable(new sys_var_constrained_value_readonly<uint64_t>("stats_sample_pages", innodb_stats_sample_pages));
+  context.registerVariable(new sys_var_bool_ptr("adaptive_hash_index", &btr_search_enabled, innodb_adaptive_hash_index_update));
 
 
   /* Get the current high water mark format. */
@@ -9182,28 +9194,6 @@ innobase_file_format_validate_and_set(
 }
 
 /****************************************************************//**
-Update the system variable innodb_adaptive_hash_index using the "saved"
-value. This function is registered as a callback with MySQL. */
-static
-void
-innodb_adaptive_hash_index_update(
-/*==============================*/
-  Session*      ,   /*!< in: thread handle */
-  drizzle_sys_var*  ,   /*!< in: pointer to
-              system variable */
-  void*       , /*!< out: where the
-              formal string goes */
-  const void*     save)   /*!< in: immediate result
-              from check function */
-{
-  if (*(bool*) save) {
-    btr_search_enable();
-  } else {
-    btr_search_disable();
-  }
-}
-
-/****************************************************************//**
 Update the system variable innodb_old_blocks_pct using the "saved"
 value. This function is registered as a callback with MySQL. */
 static
@@ -9300,11 +9290,6 @@ server startup */
 name needs to be updated accordingly. Please refer to
 file_format_name_map[] defined in trx0sys.c for the next
 file format name. */
-
-static DRIZZLE_SYSVAR_BOOL(adaptive_hash_index, btr_search_enabled,
-  PLUGIN_VAR_OPCMDARG,
-  "Enable InnoDB adaptive hash index (enabled by default).",
-  NULL, innodb_adaptive_hash_index_update, TRUE);
 
 static DRIZZLE_SYSVAR_ULONG(replication_delay, srv_replication_delay,
   PLUGIN_VAR_RQCMDARG,
@@ -9562,7 +9547,6 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(old_blocks_pct),
   DRIZZLE_SYSVAR(old_blocks_time),
   DRIZZLE_SYSVAR(open_files),
-  DRIZZLE_SYSVAR(adaptive_hash_index),
   DRIZZLE_SYSVAR(replication_delay),
   DRIZZLE_SYSVAR(sync_spin_loops),
   DRIZZLE_SYSVAR(spin_wait_delay),
