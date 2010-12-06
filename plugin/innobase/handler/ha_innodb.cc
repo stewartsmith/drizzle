@@ -208,7 +208,10 @@ static uint64_nonzero_constraint innodb_stats_sample_pages;
 
 
 
-static ulong innobase_commit_concurrency = 0;
+typedef constrained_check<uint32_t, 1000, 0> commit_concurrency_constraint;
+static commit_concurrency_constraint innobase_commit_concurrency;
+static uint32_nonzero_constraint innodb_concurrency_tickets;
+
 static ulong innobase_read_io_threads;
 static ulong innobase_write_io_threads;
 
@@ -238,6 +241,18 @@ values */
 
 typedef constrained_check<uint16_t, 2, 0> trinary_constraint;
 static trinary_constraint innobase_fast_shutdown;
+
+/* "innobase_file_format_check" decides whether we would continue
+booting the server if the file format stamped on the system
+table space exceeds the maximum file format supported
+by the server. Can be set during server startup at command
+line or configure file, and a read only variable after
+server startup */
+
+/* If a new file format is introduced, the file format
+name needs to be updated accordingly. Please refer to
+file_format_name_map[] defined in trx0sys.c for the next
+file format name. */
 
 static my_bool  innobase_file_format_check = TRUE;
 static my_bool  innobase_use_doublewrite    = TRUE;
@@ -589,19 +604,6 @@ int InnobaseEngine::doGetTableDefinition(Session &session,
   return ENOENT;
 }
 
-/** @brief Initialize the default value of innodb_commit_concurrency.
-
-Once InnoDB is running, the innodb_commit_concurrency must not change
-from zero to nonzero. (Bug #42101)
-
-The initial default value is 0, and without this extra initialization,
-SET GLOBAL innodb_commit_concurrency=DEFAULT would set the parameter
-to 0, even if it was initially set to nonzero at the command line
-or configuration file. */
-static
-void
-innobase_commit_concurrency_init_default(void);
-/*==========================================*/
 
 /************************************************************//**
 Validate the file format name and return its corresponding id.
@@ -623,36 +625,6 @@ innobase_file_format_validate_and_set(
   const char* format_max);    /*!< in: parameter value */
 
 static const char innobase_engine_name[]= "InnoDB";
-
-/*************************************************************//**
-Check for a valid value of innobase_commit_concurrency.
-@return 0 for valid innodb_commit_concurrency */
-static
-int
-innobase_commit_concurrency_validate(
-/*=================================*/
-  Session*      , /*!< in: thread handle */
-  drizzle_sys_var*  , /*!< in: pointer to system
-            variable */
-  void*       save, /*!< out: immediate result
-            for update function */
-  drizzle_value*    value)  /*!< in: incoming string */
-{
-  int64_t   intbuf;
-  ulong   commit_concurrency;
-
-  if (value->val_int(value, &intbuf)) {
-    /* The value is NULL. That is invalid. */
-    return(1);
-  }
-
-  *reinterpret_cast<ulong*>(save) = commit_concurrency
-    = static_cast<ulong>(intbuf);
-
-  /* Allow the value to be updated, as long as it remains zero
-  or nonzero. */
-  return(!(!commit_concurrency == !innobase_commit_concurrency));
-}
 
 
 /*****************************************************************//**
@@ -1870,6 +1842,22 @@ static void innodb_adaptive_hash_index_update(Session *, sql_var_t)
   }
 }
 
+static int innodb_commit_concurrency_validate(Session *session, set_var *var)
+{
+   uint32_t new_value= var->save_result.uint32_t_value;
+
+   if (innobase_commit_concurrency.get() == 0 && new_value != 0)
+   {
+     push_warning_printf(session,
+                         DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                         ER_WRONG_ARGUMENTS,
+                         _("Once InnoDB is running, innodb_commit_concurrency "
+                           "must not change from zero to nonzero."));
+     return 1;
+   }
+   return 0;
+}
+
 /*************************************************************//**
 Check if it is a valid file format. This function is registered as
 a callback with MySQL.
@@ -1980,6 +1968,7 @@ innobase_init(
   srv_max_buf_pool_modified_pct= innodb_max_dirty_pages_pct.get();
   srv_max_purge_lag= innodb_max_purge_lag.get();
   srv_stats_sample_pages= innodb_stats_sample_pages.get();
+  srv_n_free_tickets_to_enter= innodb_concurrency_tickets.get();
 
   /* Inverted Booleans */
 
@@ -1998,11 +1987,6 @@ innobase_init(
   else
   {
     innobase_data_home_dir= getDataHome().file_string();
-  }
-
-  if (vm.count("file-format-check"))
-  {
-    innobase_file_format_check= vm["file-format-check"].as<bool>();
   }
 
 
@@ -2325,8 +2309,6 @@ innobase_change_buffering_inited_ok:
 
   data_mysql_default_charset_coll = (ulint)default_charset_info->number;
 
-  innobase_commit_concurrency_init_default();
-
   /* Since we in this module access directly the fields of a trx
     struct, and due to different headers and flags it might happen that
     mutex_t has a different size in this module and in InnoDB
@@ -2469,6 +2451,11 @@ innobase_change_buffering_inited_ok:
   context.registerVariable(new sys_var_constrained_value_readonly<uint64_t>("stats_sample_pages", innodb_stats_sample_pages));
   context.registerVariable(new sys_var_bool_ptr("adaptive_hash_index", &btr_search_enabled, innodb_adaptive_hash_index_update));
 
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("commit_concurrency",
+                                                                   innobase_commit_concurrency,
+                                                                   innodb_commit_concurrency_validate));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("concurrency_tickets",
+                                                                   innodb_concurrency_tickets));
 
   /* Get the current high water mark format. */
   innobase_file_format_max = trx_sys_file_format_max_get();
@@ -2581,11 +2568,11 @@ InnobaseEngine::doCommit(
     Note, the position is current because of
     prepare_commit_mutex */
 retry:
-    if (innobase_commit_concurrency > 0) {
+    if (innobase_commit_concurrency.get() > 0) {
       pthread_mutex_lock(&commit_cond_m);
       commit_threads++;
 
-      if (commit_threads > innobase_commit_concurrency) {
+      if (commit_threads > innobase_commit_concurrency.get()) {
         commit_threads--;
         pthread_cond_wait(&commit_cond,
           &commit_cond_m);
@@ -2610,7 +2597,7 @@ retry:
     innobase_commit_low(trx);
     trx->flush_log_later = FALSE;
 
-    if (innobase_commit_concurrency > 0) {
+    if (innobase_commit_concurrency.get() > 0) {
       pthread_mutex_lock(&commit_cond_m);
       commit_threads--;
       pthread_cond_signal(&commit_cond);
@@ -9279,33 +9266,11 @@ innodb_change_buffering_update(
 
 /* plugin options */
 
-/* "innobase_file_format_check" decides whether we would continue
-booting the server if the file format stamped on the system
-table space exceeds the maximum file format supported
-by the server. Can be set during server startup at command
-line or configure file, and a read only variable after
-server startup */
-
-/* If a new file format is introduced, the file format
-name needs to be updated accordingly. Please refer to
-file_format_name_map[] defined in trx0sys.c for the next
-file format name. */
-
 static DRIZZLE_SYSVAR_ULONG(replication_delay, srv_replication_delay,
   PLUGIN_VAR_RQCMDARG,
   "Replication thread delay (ms) on the slave server if "
   "innodb_thread_concurrency is reached (0 by default)",
   NULL, NULL, 0, 0, ~0UL, 0);
-
-static DRIZZLE_SYSVAR_ULONG(commit_concurrency, innobase_commit_concurrency,
-  PLUGIN_VAR_RQCMDARG,
-  "Helps in performance tuning in heavily concurrent environments.",
-  innobase_commit_concurrency_validate, NULL, 0, 0, 1000, 0);
-
-static DRIZZLE_SYSVAR_ULONG(concurrency_tickets, srv_n_free_tickets_to_enter,
-  PLUGIN_VAR_RQCMDARG,
-  "Number of times a thread is allowed to enter InnoDB within the same SQL query after it has once got the ticket",
-  NULL, NULL, 500L, 1L, ~0L, 0);
 
 static DRIZZLE_SYSVAR_ULONG(read_io_threads, innobase_read_io_threads,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
@@ -9465,10 +9430,10 @@ static void init_options(drizzled::module::option_context &context)
           "Number of buffer pool instances, set to higher value on high-end machines to increase scalability");
 
   context("commit-concurrency",
-          po::value<unsigned long>(&innobase_commit_concurrency)->default_value(0),
+          po::value<commit_concurrency_constraint>(&innobase_commit_concurrency)->default_value(0),
           "Helps in performance tuning in heavily concurrent environments.");
   context("concurrency-tickets",
-          po::value<unsigned long>(&srv_n_free_tickets_to_enter)->default_value(500L),
+          po::value<uint32_nonzero_constraint>(&innodb_concurrency_tickets)->default_value(500L),
           "Number of times a thread is allowed to enter InnoDB within the same SQL query after it has once got the ticket");
   context("read-io-threads",
           po::value<unsigned long>(&innobase_read_io_threads)->default_value(4),
@@ -9536,8 +9501,6 @@ static void init_options(drizzled::module::option_context &context)
 }
 
 static drizzle_sys_var* innobase_system_variables[]= {
-  DRIZZLE_SYSVAR(commit_concurrency),
-  DRIZZLE_SYSVAR(concurrency_tickets),
   DRIZZLE_SYSVAR(read_io_threads),
   DRIZZLE_SYSVAR(write_io_threads),
   DRIZZLE_SYSVAR(force_recovery),
@@ -9592,24 +9555,6 @@ int ha_innobase::read_range_next()
   //if (res)
   //  in_range_read= FALSE;
   return res;
-}
-
-/** @brief Initialize the default value of innodb_commit_concurrency.
-
-Once InnoDB is running, the innodb_commit_concurrency must not change
-from zero to nonzero. (Bug #42101)
-
-The initial default value is 0, and without this extra initialization,
-SET GLOBAL innodb_commit_concurrency=DEFAULT would set the parameter
-to 0, even if it was initially set to nonzero at the command line
-or configuration file. */
-static
-void
-innobase_commit_concurrency_init_default(void)
-/*==========================================*/
-{
-  DRIZZLE_SYSVAR_NAME(commit_concurrency).def_val
-    = innobase_commit_concurrency;
 }
 
 /***********************************************************************
