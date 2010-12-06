@@ -8050,7 +8050,7 @@ innodb_show_status(
 {
   trx_t*      trx;
   static const char truncated_msg[] = "... truncated...\n";
-  const long    MAX_STATUS_SIZE = 64000;
+  const long    MAX_STATUS_SIZE = 1048576;
   ulint     trx_list_start = ULINT_UNDEFINED;
   ulint     trx_list_end = ULINT_UNDEFINED;
 
@@ -8079,6 +8079,7 @@ innodb_show_status(
 
   if (flen > MAX_STATUS_SIZE) {
     usable_len = MAX_STATUS_SIZE;
+    srv_truncated_status_writes++;
   } else {
     usable_len = flen;
   }
