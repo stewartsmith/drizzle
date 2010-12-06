@@ -321,18 +321,25 @@ sys_var_session_time_zone sys_time_zone("time_zone");
 /* Global read-only variable containing hostname */
 static sys_var_const_str        sys_hostname("hostname", glob_hostname);
 
-bool sys_var::check(Session *, set_var *var)
+bool sys_var::check(Session *session, set_var *var)
 {
+  if (check_func)
+  {
+    int res;
+    if ((res=(*check_func)(session, var)) < 0)
+      my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), getName().c_str(), var->value->str_value.ptr());
+    return res;
+  }
   var->save_result.uint64_t_value= var->value->val_int();
   return 0;
 }
 
 bool sys_var_str::check(Session *session, set_var *var)
 {
-  int res;
   if (!check_func)
     return 0;
 
+  int res;
   if ((res=(*check_func)(session, var)) < 0)
     my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), getName().c_str(), var->value->str_value.ptr());
   return res;
