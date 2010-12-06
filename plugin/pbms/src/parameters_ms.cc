@@ -77,7 +77,6 @@ static std::string my_http_metadata_headers;
 
 typedef drizzled::constrained_check<uint32_t, 100, 0> percent_constraint;
 static percent_constraint my_garbage_threshold;
-typedef drizzled::constrained_check<uint32_t, UINT32_MAX, 1> uint32_nonzero_constraint;
 static uint32_nonzero_constraint my_temp_blob_timeout;
 static uint32_nonzero_constraint my_max_keep_alive;
 static uint32_nonzero_constraint my_backup_db_id;

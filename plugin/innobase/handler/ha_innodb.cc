@@ -198,6 +198,14 @@ typedef constrained_check<uint32_t, 5000, 1> purge_batch_constraint;
 static purge_batch_constraint innodb_purge_batch_size;
 typedef constrained_check<uint32_t, 1, 0> purge_threads_constraint;
 static purge_threads_constraint innodb_n_purge_threads;
+typedef constrained_check<uint16_t, 2, 0> trinary_constraint;
+static trinary_constraint innodb_flush_log_at_trx_commit;
+typedef constrained_check<unsigned int, 99, 0> max_dirty_pages_constraint;
+static max_dirty_pages_constraint innodb_max_dirty_pages_pct;
+static uint64_constraint innodb_max_purge_lag;
+static uint64_nonzero_constraint innodb_stats_sample_pages;
+
+
 
 
 static ulong innobase_commit_concurrency = 0;
@@ -1963,6 +1971,10 @@ innobase_init(
   srv_io_capacity= innodb_io_capacity.get();
   srv_purge_batch_size= innodb_purge_batch_size.get();
   srv_n_purge_threads= innodb_n_purge_threads.get();
+  srv_flush_log_at_trx_commit= innodb_flush_log_at_trx_commit.get();
+  srv_max_buf_pool_modified_pct= innodb_max_dirty_pages_pct.get();
+  srv_max_purge_lag= innodb_max_purge_lag.get();
+  srv_stats_sample_pages= innodb_stats_sample_pages.get();
 
   /* Inverted Booleans */
 
@@ -1987,15 +1999,6 @@ innobase_init(
     innobase_file_format_check= vm["file-format-check"].as<bool>();
   }
 
-  if (vm.count("flush-log-at-trx-commit"))
-  {
-    if (srv_flush_log_at_trx_commit > 2)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for flush-log-at-trx-commit\n"));
-      exit(-1);
-    }
-  }
-
 
 #ifdef UNIV_LOG_ARCHIVE
   if (vm.count("log-arch-dir"))
@@ -2004,15 +2007,6 @@ innobase_init(
   }
 
 #endif /* UNIV_LOG_ARCHIVE */
-
-  if (vm.count("max-dirty-pages-pct"))
-  {
-    if (srv_max_buf_pool_modified_pct > 99)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for max-dirty-pages-pct\n"));
-      exit(-1);
-    }
-  }
 
   if (vm.count("stats-sample-pages"))
   {
@@ -2489,6 +2483,12 @@ innobase_change_buffering_inited_ok:
                                                   innodb_file_format_max_validate));
   context.registerVariable(new sys_var_constrained_value_readonly<size_t>("buffer_pool_size", innobase_buffer_pool_size));
   context.registerVariable(new sys_var_constrained_value_readonly<int64_t>("log_file_size", innobase_log_file_size));
+  context.registerVariable(new sys_var_constrained_value_readonly<uint16_t>("flush_log_at_trx_commit",
+                                                  innodb_flush_log_at_trx_commit));
+  context.registerVariable(new sys_var_constrained_value_readonly<unsigned int>("max_dirty_pages_pct",
+                                                  innodb_max_dirty_pages_pct));
+  context.registerVariable(new sys_var_constrained_value_readonly<uint64_t>("max_purge_lag", innodb_max_purge_lag));
+  context.registerVariable(new sys_var_constrained_value_readonly<uint64_t>("stats_sample_pages", innodb_stats_sample_pages));
 
 
   /* Get the current high water mark format. */
@@ -9334,28 +9334,6 @@ name needs to be updated accordingly. Please refer to
 file_format_name_map[] defined in trx0sys.c for the next
 file format name. */
 
-static DRIZZLE_SYSVAR_ULONG(flush_log_at_trx_commit, srv_flush_log_at_trx_commit,
-  PLUGIN_VAR_OPCMDARG,
-  "Set to 0 (write and flush once per second),"
-  " 1 (write and flush at each commit)"
-  " or 2 (write at commit, flush once per second).",
-  NULL, NULL, 1, 0, 2, 0);
-
-static DRIZZLE_SYSVAR_ULONG(max_dirty_pages_pct, srv_max_buf_pool_modified_pct,
-  PLUGIN_VAR_RQCMDARG,
-  "Percentage of dirty pages allowed in bufferpool.",
-  NULL, NULL, 75, 0, 99, 0);
-
-static DRIZZLE_SYSVAR_ULONG(max_purge_lag, srv_max_purge_lag,
-  PLUGIN_VAR_RQCMDARG,
-  "Desired maximum length of the purge queue (0 = no limit)",
-  NULL, NULL, 0, 0, ~0L, 0);
-
-static DRIZZLE_SYSVAR_ULONGLONG(stats_sample_pages, srv_stats_sample_pages,
-  PLUGIN_VAR_RQCMDARG,
-  "The number of index pages to sample when calculating statistics (default 8)",
-  NULL, NULL, 8, 1, ~0ULL, 0);
-
 static DRIZZLE_SYSVAR_BOOL(adaptive_hash_index, btr_search_enabled,
   PLUGIN_VAR_OPCMDARG,
   "Enable InnoDB adaptive hash index (enabled by default).",
@@ -9492,7 +9470,7 @@ static void init_options(drizzled::module::option_context &context)
           po::value<bool>(&innobase_file_format_check)->default_value(true)->zero_tokens(),
           "Whether to perform system file format check.");
   context("flush-log-at-trx-commit",
-          po::value<unsigned long>(&srv_flush_log_at_trx_commit)->default_value(1),
+          po::value<trinary_constraint>(&innodb_flush_log_at_trx_commit)->default_value(1),
           "Set to 0 (write and flush once per second), 1 (write and flush at each commit) or 2 (write at commit, flush once per second).");
   context("flush-method",
           po::value<string>(),
@@ -9509,12 +9487,12 @@ static void init_options(drizzled::module::option_context &context)
           po::value<string>(),
           "Path to InnoDB log files.");
   context("max-dirty-pages-pct",
-          po::value<unsigned long>(&srv_max_buf_pool_modified_pct)->default_value(75),
+          po::value<max_dirty_pages_constraint>(&innodb_max_dirty_pages_pct)->default_value(75),
           "Percentage of dirty pages allowed in bufferpool.");
   context("disable-adaptive-flushing",
           "Do not attempt flushing dirty pages to avoid IO bursts at checkpoints.");
   context("max-purge-lag",
-          po::value<unsigned long>(&srv_max_purge_lag)->default_value(0),
+          po::value<uint64_constraint>(&innodb_max_purge_lag)->default_value(0),
           "Desired maximum length of the purge queue (0 = no limit)");
   context("status-file",
           po::value<bool>(&innobase_create_status_file)->default_value(false)->zero_tokens(),
@@ -9522,7 +9500,7 @@ static void init_options(drizzled::module::option_context &context)
   context("disable-stats-on-metadata",
           "Disable statistics gathering for metadata commands such as SHOW TABLE STATUS (on by default)");
   context("stats-sample-pages",
-          po::value<uint64_t>(&srv_stats_sample_pages)->default_value(8),
+          po::value<uint64_nonzero_constraint>(&innodb_stats_sample_pages)->default_value(8),
           "The number of index pages to sample when calculating statistics (default 8)");
   context("disable-adaptive-hash-index",
           "Enable InnoDB adaptive hash index (enabled by default)");
@@ -9618,20 +9596,16 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(concurrency_tickets),
   DRIZZLE_SYSVAR(read_io_threads),
   DRIZZLE_SYSVAR(write_io_threads),
-  DRIZZLE_SYSVAR(flush_log_at_trx_commit),
   DRIZZLE_SYSVAR(force_recovery),
 #ifdef UNIV_LOG_ARCHIVE
   DRIZZLE_SYSVAR(log_archive),
 #endif /* UNIV_LOG_ARCHIVE */
   DRIZZLE_SYSVAR(log_buffer_size),
   DRIZZLE_SYSVAR(log_files_in_group),
-  DRIZZLE_SYSVAR(max_dirty_pages_pct),
-  DRIZZLE_SYSVAR(max_purge_lag),
   DRIZZLE_SYSVAR(mirrored_log_groups),
   DRIZZLE_SYSVAR(old_blocks_pct),
   DRIZZLE_SYSVAR(old_blocks_time),
   DRIZZLE_SYSVAR(open_files),
-  DRIZZLE_SYSVAR(stats_sample_pages),
   DRIZZLE_SYSVAR(adaptive_hash_index),
   DRIZZLE_SYSVAR(replication_delay),
   DRIZZLE_SYSVAR(sync_spin_loops),
