@@ -1053,15 +1053,6 @@ int TransactionServices::commitTransactionMessage(Session *in_session)
   if (! replication_services.isActive())
     return 0;
 
-  /* If there is an active statement message, finalize it */
-  message::Statement *statement= in_session->getStatementMessage();
-
-  /*
-   * Statement should always be NULL since we finalize each message
-   * in autocommitOrRollback()
-   */
-  assert(statement == NULL);
-
   /*
    * If no Transaction message was ever created, then no data modification
    * occurred inside the transaction, so nothing to do.
@@ -1069,8 +1060,28 @@ int TransactionServices::commitTransactionMessage(Session *in_session)
   if (in_session->getTransactionMessage() == NULL)
     return 0;
   
+  /* If there is an active statement message, finalize it. */
+  message::Statement *statement= in_session->getStatementMessage();
+
+  if (statement != NULL)
+  {
+    finalizeStatementMessage(*statement, in_session);
+  }
+
   message::Transaction* transaction= getActiveTransactionMessage(in_session);
 
+  /*
+   * It is possible that we could have a Transaction without any Statements
+   * if we had created a Statement but had to roll it back due to it failing
+   * mid-execution, and no subsequent Statements were added to the Transaction
+   * message. In this case, we simply clean up the message and not push it.
+   */
+  if (transaction->statement_size() == 0)
+  {
+    cleanupTransactionMessage(transaction, in_session);
+    return 0;
+  }
+  
   finalizeTransactionMessage(*transaction, in_session);
   
   plugin::ReplicationReturnCode result= replication_services.pushTransactionMessage(*in_session, *transaction);
@@ -1156,23 +1167,64 @@ void TransactionServices::rollbackStatementMessage(Session *in_session)
   if (! replication_services.isActive())
     return;
 
+  message::Statement *current_statement= in_session->getStatementMessage();
+
   /* If we never added a Statement message, nothing to undo. */
-  if (in_session->getStatementMessage() == NULL)
+  if (current_statement == NULL)
     return;
 
-  message::Transaction *transaction= getActiveTransactionMessage(in_session);
+  /*
+   * If the Statement has been segmented, then we've already pushed a portion
+   * of this Statement's row changes through the replication stream and we
+   * need to send a ROLLBACK_STATEMENT message. Otherwise, we can simply
+   * delete the current Statement message.
+   */
+  bool is_segmented= false;
 
+  switch (current_statement->type())
+  {
+    case message::Statement::INSERT:
+      if (current_statement->insert_data().segment_id() > 1)
+        is_segmented= true;
+      break;
+
+    case message::Statement::UPDATE:
+      if (current_statement->update_data().segment_id() > 1)
+        is_segmented= true;
+      break;
+
+    case message::Statement::DELETE:
+      if (current_statement->delete_data().segment_id() > 1)
+        is_segmented= true;
+      break;
+
+    default:
+      break;
+  }
+
+  /*
+   * Remove the Statement message we've been working with (same as
+   * current_statement).
+   */
+  message::Transaction *transaction= getActiveTransactionMessage(in_session);
   google::protobuf::RepeatedPtrField<message::Statement> *statements_in_txn;
   statements_in_txn= transaction->mutable_statement();
-  /*
-   TODO: Fix for segmented statements
-   message::Statement *statement= in_session->getStatementMessage();
-
-   if (statement->
-   */
   statements_in_txn->RemoveLast();
-
   in_session->setStatementMessage(NULL);
+  
+  /*
+   * Create the ROLLBACK_STATEMENT message, if we need to. This serves as
+   * an indicator to cancel the previous Statement message which should have
+   * had its end_segment attribute set to false.
+   */
+  if (is_segmented)
+  {
+    current_statement= transaction->add_statement();
+    initStatementMessage(*current_statement,
+                         message::Statement::ROLLBACK_STATEMENT,
+                         in_session);
+    finalizeStatementMessage(*current_statement, in_session);
+  }
 }
   
 message::Statement &TransactionServices::getInsertStatement(Session *in_session,
@@ -1250,20 +1302,6 @@ message::Statement &TransactionServices::getInsertStatement(Session *in_session,
       }
       else
       {
-        /* append this INSERT query string */
-        if (in_session->variables.replicate_query)
-        {
-          string s(statement->sql());
-          if (not s.empty())
-          {
-            s.append(" ; ");
-            s.append(in_session->getQueryString()->c_str());
-            statement->set_sql(s);
-          }
-          else
-            statement->set_sql(in_session->getQueryString()->c_str());
-        }
-
         /* carry forward the existing segment id */
         const message::InsertData &current_data= statement->insert_data();
         *next_segment_id= current_data.segment_id();
@@ -1451,20 +1489,6 @@ message::Statement &TransactionServices::getUpdateStatement(Session *in_session,
     {
       if (useExistingUpdateHeader(*statement, in_table, old_record, new_record))
       {
-        /* append this UPDATE query string */
-        if (in_session->variables.replicate_query)
-        {
-          string s(statement->sql());
-          if (not s.empty())
-          {
-            s.append(" ; ");
-            s.append(in_session->getQueryString()->c_str());
-            statement->set_sql(s);
-          }
-          else
-            statement->set_sql(in_session->getQueryString()->c_str());
-        }
-
         /* carry forward the existing segment id */
         const message::UpdateData &current_data= statement->update_data();
         *next_segment_id= current_data.segment_id();
@@ -1824,20 +1848,6 @@ message::Statement &TransactionServices::getDeleteStatement(Session *in_session,
       }
       else
       {
-        /* append this DELETE query string */
-        if (in_session->variables.replicate_query)
-        {
-          string s(statement->sql());
-          if (not s.empty())
-          {
-            s.append(" ; ");
-            s.append(in_session->getQueryString()->c_str());
-            statement->set_sql(s);
-          }
-          else
-            statement->set_sql(in_session->getQueryString()->c_str());
-        }
-
         /* carry forward the existing segment id */
         const message::DeleteData &current_data= statement->delete_data();
         *next_segment_id= current_data.segment_id();
