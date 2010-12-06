@@ -109,6 +109,8 @@ class DrizzleDumpField
     bool isAutoIncrement;
     bool defaultIsNull;
     bool convertDateTime;
+    bool rangeCheck;
+    bool isNumeric;
     std::string defaultValue;
     std::string collation;
 

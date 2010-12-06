@@ -393,6 +393,12 @@ void DrizzleDumpFieldMySQL::setType(const char* raw_type, const char* raw_collat
     (old_type.find("TEXT") != std::string::npos))
     setCollate(raw_collation);
 
+  if ((old_type.compare("BIGINT") == 0) and
+    ((extra.find("unsigned") != std::string::npos)))
+  {
+    rangeCheck= true;
+  }
+
   if ((old_type.compare("INT") == 0) and 
     ((extra.find("unsigned") != std::string::npos)))
   {
