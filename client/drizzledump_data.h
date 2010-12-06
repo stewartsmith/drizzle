@@ -110,7 +110,6 @@ class DrizzleDumpField
     bool defaultIsNull;
     bool convertDateTime;
     bool rangeCheck;
-    bool isNumeric;
     std::string defaultValue;
     std::string collation;
 
