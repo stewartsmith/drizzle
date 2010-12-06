@@ -40,10 +40,10 @@ public:
   { }
 
   ~ListenDrizzleProtocol();
-  static uint32_t drizzle_max_connections;
   const char* getHost(void) const;
   in_port_t getPort(void) const;
-  virtual uint32_t getMaxConnections(void) const { return drizzle_max_connections; }
+  static ProtocolCounters *drizzle_counters;
+  virtual ProtocolCounters *getCounters(void) const { return drizzle_counters; }
 };
 
 

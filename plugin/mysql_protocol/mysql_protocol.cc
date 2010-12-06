@@ -54,6 +54,8 @@ static const double random_max_double= (double)0x3FFFFFFF;
 
 static plugin::TableFunction* mysql_status_table_function_ptr= NULL;
 
+ProtocolCounters *ListenMySQLProtocol::mysql_counters= new ProtocolCounters();
+
 ListenMySQLProtocol::~ListenMySQLProtocol()
 {
   /* This is strdup'd from the options */
@@ -77,17 +79,12 @@ plugin::Client *ListenMySQLProtocol::getClient(int fd)
   if (new_fd == -1)
     return NULL;
 
-  return new (nothrow) ClientMySQLProtocol(new_fd, using_mysql41_protocol, getMaxConnections());
+  return new (nothrow) ClientMySQLProtocol(new_fd, using_mysql41_protocol, getCounters());
 }
 
-drizzled::atomic<uint64_t> ClientMySQLProtocol::connectionCount;
-drizzled::atomic<uint64_t> ClientMySQLProtocol::failedConnections;
-drizzled::atomic<uint64_t> ClientMySQLProtocol::connected;
-uint32_t ListenMySQLProtocol::mysql_max_connections;
-
-ClientMySQLProtocol::ClientMySQLProtocol(int fd, bool using_mysql41_protocol_arg, uint32_t set_max_connections):
+ClientMySQLProtocol::ClientMySQLProtocol(int fd, bool using_mysql41_protocol_arg, ProtocolCounters *set_counters):
   using_mysql41_protocol(using_mysql41_protocol_arg),
-  max_connections(set_max_connections)
+  counters(set_counters)
 {
   net.vio= 0;
 
@@ -144,7 +141,7 @@ void ClientMySQLProtocol::close(void)
   { 
     drizzleclient_net_close(&net);
     drizzleclient_net_end(&net);
-    connected.decrement();
+    counters->connected.decrement();
   }
 }
 
@@ -152,8 +149,8 @@ bool ClientMySQLProtocol::authenticate()
 {
   bool connection_is_valid;
 
-  connectionCount.increment();
-  connected.increment();
+  counters->connectionCount.increment();
+  counters->connected.increment();
 
   /* Use "connect_timeout" value during connection phase */
   drizzleclient_net_set_read_timeout(&net, connect_timeout);
@@ -162,7 +159,7 @@ bool ClientMySQLProtocol::authenticate()
   connection_is_valid= checkConnection();
 
   if (connection_is_valid)
-    if (connected > max_connections)
+    if (counters->connected > counters->max_connections)
     {
       std::string errmsg(ER(ER_CON_COUNT_ERROR));
       sendError(ER_CON_COUNT_ERROR, errmsg.c_str());
@@ -172,7 +169,7 @@ bool ClientMySQLProtocol::authenticate()
   else
   {
     sendError(session->main_da.sql_errno(), session->main_da.message());
-    failedConnections.increment();
+    counters->failedConnections.increment();
     return false;
   }
 
@@ -987,7 +984,7 @@ static int init(drizzled::module::Context &context)
   listen_obj= new ListenMySQLProtocol("mysql_protocol", true);
   context.add(listen_obj); 
 
-  context.registerVariable(new sys_var_uint32_t_ptr("max-connections", &ListenMySQLProtocol::mysql_max_connections));
+  context.registerVariable(new sys_var_uint32_t_ptr("max-connections", &ListenMySQLProtocol::mysql_counters->max_connections));
 
   return 0;
 }
@@ -1036,7 +1033,7 @@ static void init_options(drizzled::module::option_context &context)
           po::value<string>(),
           N_("Address to bind to."));
   context("max-connections",
-          po::value<uint32_t>(&ListenMySQLProtocol::mysql_max_connections)->default_value(1000),
+          po::value<uint32_t>(&ListenMySQLProtocol::mysql_counters->max_connections)->default_value(1000),
           N_("Maximum simultaneous connections."));
 }
 
@@ -1055,7 +1052,7 @@ static int mysql_protocol_connection_count_func(drizzle_show_var *var, char *buf
 {
   var->type= SHOW_LONGLONG;
   var->value= buff;
-  *((uint64_t *)buff)= ClientMySQLProtocol::connectionCount;
+  *((uint64_t *)buff)= ListenMySQLProtocol::mysql_counters->connectionCount;
   return 0;
 }
 
@@ -1063,7 +1060,7 @@ static int mysql_protocol_connected_count_func(drizzle_show_var *var, char *buff
 {
   var->type= SHOW_LONGLONG;
   var->value= buff;
-  *((uint64_t *)buff)= ClientMySQLProtocol::connected;
+  *((uint64_t *)buff)= ListenMySQLProtocol::mysql_counters->connected;
   return 0;
 }
 
@@ -1071,7 +1068,7 @@ static int mysql_protocol_failed_count_func(drizzle_show_var *var, char *buff)
 {
   var->type= SHOW_LONGLONG;
   var->value= buff;
-  *((uint64_t *)buff)= ClientMySQLProtocol::failedConnections;
+  *((uint64_t *)buff)= ListenMySQLProtocol::mysql_counters->failedConnections;
   return 0;
 }
 

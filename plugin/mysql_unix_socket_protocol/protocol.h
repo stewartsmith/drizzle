@@ -46,12 +46,12 @@ public:
   { }
 
   ~Protocol();
-  static uint32_t mysql_unix_max_connections;
   bool getFileDescriptors(std::vector<int> &fds);
 
   const char* getHost(void) const;
   in_port_t getPort(void) const;
-  virtual uint32_t getMaxConnections(void) const {return mysql_unix_max_connections; }
+  static ProtocolCounters *mysql_unix_counters;
+  virtual ProtocolCounters *getCounters(void) const {return mysql_unix_counters; }
 };
 
 
