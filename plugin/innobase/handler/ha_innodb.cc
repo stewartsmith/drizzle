@@ -188,6 +188,13 @@ typedef constrained_check<size_t, SIZE_MAX, 512*1024, 1024> additional_mem_pool_
 static additional_mem_pool_constraint innobase_additional_mem_pool_size;
 typedef constrained_check<unsigned int, 1000, 1> autoextend_constraint;
 static autoextend_constraint innodb_auto_extend_increment;
+typedef constrained_check<uint32_t, UINT32_MAX, 100> io_capacity_constraint;
+static io_capacity_constraint innodb_io_capacity;
+typedef constrained_check<uint32_t, 5000, 1> purge_batch_constraint;
+static purge_batch_constraint innodb_purge_batch_size;
+typedef constrained_check<uint32_t, 1, 0> purge_threads_constraint;
+static purge_threads_constraint innodb_n_purge_threads;
+
 
 static ulong innobase_commit_concurrency = 0;
 static ulong innobase_read_io_threads;
@@ -210,20 +217,22 @@ are determined in innobase_init below: */
 std::string innobase_data_home_dir;
 std::string innobase_data_file_path;
 std::string innobase_log_group_home_dir;
-static char* innobase_file_format_name= NULL;
+static string innobase_file_format_name;
 static char* innobase_change_buffering= NULL;
 
 /* The highest file format being used in the database. The value can be
 set by user, however, it will be adjusted to the newer file format if
 a table of such format is created/opened. */
-static char* innobase_file_format_max= NULL;
+static string innobase_file_format_max;
 
 std::string  innobase_log_arch_dir;
 
 /* Below we have boolean-valued start-up parameters, and their default
 values */
 
-static ulong  innobase_fast_shutdown      = 1;
+typedef constrained_check<uint16_t, 2, 0> trinary_constraint;
+static trinary_constraint innobase_fast_shutdown;
+
 static my_bool  innobase_file_format_check = TRUE;
 #ifdef UNIV_LOG_ARCHIVE
 static my_bool  innobase_log_archive= FALSE;
@@ -1833,6 +1842,108 @@ static void auto_extend_update(Session *, sql_var_t)
   srv_auto_extend_increment= innodb_auto_extend_increment.get();
 }
 
+static void io_capacity_update(Session *, sql_var_t)
+{
+  srv_io_capacity= innodb_io_capacity.get();
+}
+
+static void purge_batch_update(Session *, sql_var_t)
+{
+  srv_purge_batch_size= innodb_purge_batch_size.get();
+}
+
+static void purge_threads_update(Session *, sql_var_t)
+{
+  srv_n_purge_threads= innodb_n_purge_threads.get();
+}
+
+/*************************************************************//**
+Check if it is a valid file format. This function is registered as
+a callback with MySQL.
+@return 0 for valid file format */
+static
+int
+innodb_file_format_name_validate(
+/*=============================*/
+  Session*      , /*!< in: thread handle */
+  set_var *var)
+{
+  const char *file_format_input = var->value->str_value.ptr();
+  if (file_format_input == NULL)
+    return 1;
+
+  if (file_format_input != NULL) {
+    uint  format_id;
+
+    format_id = innobase_file_format_name_lookup(
+      file_format_input);
+
+    if (format_id <= DICT_TF_FORMAT_MAX) {
+      innobase_file_format_name =
+        trx_sys_file_format_id_to_name(format_id);
+
+      return(0);
+    }
+  }
+
+  return(1);
+}
+
+/*************************************************************//**
+Check if valid argument to innodb_file_format_max. This function
+is registered as a callback with MySQL.
+@return 0 for valid file format */
+static
+int
+innodb_file_format_max_validate(
+/*==============================*/
+  Session*   session, /*!< in: thread handle */
+  set_var *var)
+{
+  const char *file_format_input = var->value->str_value.ptr();
+  if (file_format_input == NULL)
+    return 1;
+
+  if (file_format_input != NULL) {
+    int format_id = innobase_file_format_validate_and_set(file_format_input);
+
+    if (format_id > DICT_TF_FORMAT_MAX) {
+      /* DEFAULT is "on", which is invalid at runtime. */
+      return 1;
+    }
+
+    if (format_id >= 0) {
+      innobase_file_format_max= 
+        trx_sys_file_format_id_to_name((uint)format_id);
+
+      /* Update the max format id in the system tablespace. */
+      char name_buff[100];
+      strcpy(name_buff, innobase_file_format_max.c_str());
+      if (trx_sys_file_format_max_set(format_id, (const char **)&name_buff))
+      {
+        errmsg_printf(ERRMSG_LVL_WARN,
+                      " [Info] InnoDB: the file format in the system "
+                      "tablespace is now set to %s.\n", name_buff);
+        innobase_file_format_max= name_buff;
+      }
+      return(0);
+
+    } else {
+      push_warning_printf(session,
+                          DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                          ER_WRONG_ARGUMENTS,
+                          "InnoDB: invalid innodb_file_format_max "
+                          "value; can be any format up to %s "
+                          "or equivalent id of %d",
+                          trx_sys_file_format_id_to_name(DICT_TF_FORMAT_MAX),
+                          DICT_TF_FORMAT_MAX);
+    }
+  }
+
+  return(1);
+}
+
+
 /*********************************************************************//**
 Opens an InnoDB database.
 @return 0 on success, error code on failure */
@@ -1848,6 +1959,11 @@ innobase_init(
   InnobaseEngine *actuall_engine_ptr;
   const module::option_map &vm= context.getOptions();
 
+  srv_auto_extend_increment= innodb_auto_extend_increment.get();
+  srv_io_capacity= innodb_io_capacity.get();
+  srv_purge_batch_size= innodb_purge_batch_size.get();
+  srv_n_purge_threads= innodb_n_purge_threads.get();
+
   /* Inverted Booleans */
 
   innobase_use_checksums= (vm.count("disable-checksums")) ? false : true;
@@ -1856,14 +1972,6 @@ innobase_init(
   srv_use_sys_malloc= (vm.count("use-internal-malloc")) ? false : true;
   support_xa= (vm.count("disable-xa")) ? false : true;
 
-  if (vm.count("io-capacity"))
-  {
-    if (srv_io_capacity < 100)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for io-capacity\n"));
-      exit(-1);
-    }
-  }
 
   if (vm.count("data-home-dir"))
   {
@@ -1872,20 +1980,6 @@ innobase_init(
   else
   {
     innobase_data_home_dir= getDataHome().file_string();
-  }
-
-  if (vm.count("fast-shutdown"))
-  {
-    if (innobase_fast_shutdown > 2)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for fast-shutdown\n"));
-      exit(-1);
-    }
-  }
-
-  if (vm.count("file-format-max"))
-  {
-    innobase_file_format_max= const_cast<char *>(vm["file-format-max"].as<string>().c_str());
   }
 
   if (vm.count("file-format-check"))
@@ -2198,35 +2292,10 @@ innodb_log_group_home_dir: */
     format_id = 0;
   }
 
-  if (vm.count("purge-batch-size"))
-  {
-    srv_purge_batch_size= vm["purge-batch-size"].as<unsigned long>();
-    if (srv_purge_batch_size < 1 || srv_purge_batch_size > 5000)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, "InnoDB: wrong purge-batch_size.");
-      goto mem_free_and_error;
-    }
-  }
-
-  if (vm.count("n-purge-threads"))
-  {
-    srv_n_purge_threads= vm["n-purge-threads"].as<unsigned long>();
-    if (srv_n_purge_threads > 1)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, "InnoDB: wrong n-purge-threads.");
-      goto mem_free_and_error;
-    }
-  }
-
   srv_file_format = format_id;
 
-  /* Given the type of innobase_file_format_name we have little
-    choice but to cast away the constness from the returned name.
-    innobase_file_format_name is used in the MySQL set variable
-    interface and so can't be const. */
-
   innobase_file_format_name =
-    (char*) trx_sys_file_format_id_to_name(format_id);
+    trx_sys_file_format_id_to_name(format_id);
 
   /* Check innobase_file_format_check variable */
   if (!innobase_file_format_check)
@@ -2241,12 +2310,12 @@ innodb_log_group_home_dir: */
   /* Did the user specify a format name that we support?
      As a side effect it will update the variable
      srv_max_file_format_at_startup */
-  if (innobase_file_format_validate_and_set(innobase_file_format_max) < 0)
+  if (innobase_file_format_validate_and_set(innobase_file_format_max.c_str()) < 0)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, "InnoDB: invalid "
+    errmsg_printf(ERRMSG_LVL_ERROR, _("InnoDB: invalid "
                     "innodb_file_format_max value: "
                     "should be any value up to %s or its "
-                    "equivalent numeric id",
+                    "equivalent numeric id"),
                     trx_sys_file_format_id_to_name(DICT_TF_FORMAT_MAX));
     goto mem_free_and_error;
   }
@@ -2445,14 +2514,31 @@ innobase_change_buffering_inited_ok:
 #endif /* UNIV_LOG_ARCHIVE */
   context.registerVariable(new sys_var_bool_ptr("support-xa", &support_xa));
   context.registerVariable(new sys_var_bool_ptr("strict_mode", &strict_mode));
-  context.registerVariable(new sys_var_constrained_value<uint32_t>("lock-wait-timeout", lock_wait_timeout));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("lock_wait_timeout", lock_wait_timeout));
 
   context.registerVariable(new sys_var_constrained_value_readonly<size_t>("additional_mem_pool_size",innobase_additional_mem_pool_size));
   context.registerVariable(new sys_var_constrained_value<uint32_t>("autoextend_increment",
                                                                    innodb_auto_extend_increment,
                                                                    auto_extend_update));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("io_capacity",
+                                                                   innodb_io_capacity,
+                                                                   io_capacity_update));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("purge_batch_size",
+                                                                   innodb_purge_batch_size,
+                                                                   purge_batch_update));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("purge_threads",
+                                                                   innodb_n_purge_threads,
+                                                                   purge_threads_update));
+  context.registerVariable(new sys_var_constrained_value<uint16_t>("fast_shutdown", innobase_fast_shutdown));
+  context.registerVariable(new sys_var_std_string("file_format",
+                                                  innobase_file_format_name,
+                                                  innodb_file_format_name_validate));
+  context.registerVariable(new sys_var_std_string("file_format_max",
+                                                  innobase_file_format_max,
+                                                  innodb_file_format_max_validate));
+
   /* Get the current high water mark format. */
-  innobase_file_format_max = (char*) trx_sys_file_format_max_get();
+  innobase_file_format_max = trx_sys_file_format_max_get();
   btr_search_fully_disabled = (!btr_search_enabled);
 
   return(FALSE);
@@ -3557,9 +3643,11 @@ ha_innobase::doOpen(const TableIdentifier &identifier,
     /* We update the highest file format in the system table
     space, if this table has higher file format setting. */
 
-    trx_sys_file_format_max_upgrade(
-      (const char**) &innobase_file_format_max,
+    char changed_file_format_max[100];
+    strcpy(changed_file_format_max, innobase_file_format_max.c_str());
+    trx_sys_file_format_max_upgrade((const char **)&changed_file_format_max,
       dict_table_get_format(prebuilt->table));
+    innobase_file_format_max= changed_file_format_max;
   }
 
   info(HA_STATUS_NO_LOCK | HA_STATUS_VARIABLE | HA_STATUS_CONST);
@@ -6332,8 +6420,11 @@ InnobaseEngine::doCreateTable(
     /* We update the highest file format in the system table
       space, if this table has higher file format setting. */
 
-    trx_sys_file_format_max_upgrade((const char**) &innobase_file_format_max,
-                                    dict_table_get_format(innobase_table));
+    char changed_file_format_max[100];
+    strcpy(changed_file_format_max, innobase_file_format_max.c_str());
+    trx_sys_file_format_max_upgrade((const char **)&changed_file_format_max,
+      dict_table_get_format(innobase_table));
+    innobase_file_format_max= changed_file_format_max;
   }
 
   /* Note: We can't call update_session() as prebuilt will not be
@@ -9169,189 +9260,6 @@ innobase_file_format_validate_and_set(
   }
 }
 
-/*************************************************************//**
-Check if it is a valid file format. This function is registered as
-a callback with MySQL.
-@return 0 for valid file format */
-static
-int
-innodb_file_format_name_validate(
-/*=============================*/
-  Session*      , /*!< in: thread handle */
-  drizzle_sys_var*  , /*!< in: pointer to system
-            variable */
-  void*       save, /*!< out: immediate result
-            for update function */
-  drizzle_value*    value)  /*!< in: incoming string */
-{
-  const char* file_format_input;
-  char    buff[STRING_BUFFER_USUAL_SIZE];
-  int   len = sizeof(buff);
-
-  ut_a(save != NULL);
-  ut_a(value != NULL);
-
-  file_format_input = value->val_str(value, buff, &len);
-
-  if (file_format_input != NULL) {
-    uint  format_id;
-
-    format_id = innobase_file_format_name_lookup(
-      file_format_input);
-
-    if (format_id <= DICT_TF_FORMAT_MAX) {
-      /* Save a pointer to the name in the
-         'file_format_name_map' constant array. */
-      *static_cast<const char**>(save) =
-        trx_sys_file_format_id_to_name(format_id);
-
-      return(0);
-    }
-  }
-
-  *static_cast<const char**>(save) = NULL;
-  return(1);
-}
-
-/****************************************************************//**
-Update the system variable innodb_file_format using the "saved"
-value. This function is registered as a callback with MySQL. */
-static
-void
-innodb_file_format_name_update(
-/*===========================*/
-  Session*      ,   /*!< in: thread handle */
-  drizzle_sys_var*  ,   /*!< in: pointer to
-              system variable */
-  void*       var_ptr,  /*!< out: where the
-              formal string goes */
-  const void*     save)   /*!< in: immediate result
-              from check function */
-{
-  const char* format_name;
-
-  ut_a(var_ptr != NULL);
-  ut_a(save != NULL);
-
-  format_name = *static_cast<const char*const*>(save);
-
-  if (format_name) {
-    uint  format_id;
-
-    format_id = innobase_file_format_name_lookup(format_name);
-
-    if (format_id <= DICT_TF_FORMAT_MAX) {
-      srv_file_format = format_id;
-    }
-  }
-
-  *static_cast<const char**>(var_ptr)
-    = trx_sys_file_format_id_to_name(srv_file_format);
-}
-
-/*************************************************************//**
-Check if valid argument to innodb_file_format_max. This function
-is registered as a callback with MySQL.
-@return 0 for valid file format */
-static
-int
-innodb_file_format_max_validate(
-/*==============================*/
-  Session*      session, /*!< in: thread handle */
-  drizzle_sys_var*  , /*!< in: pointer to system
-            variable */
-  void*       save, /*!< out: immediate result
-            for update function */
-  drizzle_value*    value)  /*!< in: incoming string */
-{
-  const char* file_format_input;
-  char    buff[STRING_BUFFER_USUAL_SIZE];
-  int   len = sizeof(buff);
-  int   format_id;
-
-  ut_a(save != NULL);
-  ut_a(value != NULL);
-
-  file_format_input = value->val_str(value, buff, &len);
-
-  if (file_format_input != NULL) {
-    format_id = innobase_file_format_validate_and_set(file_format_input);
-
-    if (format_id >= 0) {
-      /* Save a pointer to the name in the
-         'file_format_name_map' constant array. */
-      *static_cast<const char**>(save) =
-        trx_sys_file_format_id_to_name((uint)format_id);
-
-      return(0);
-
-    } else {
-      push_warning_printf(session,
-			  DRIZZLE_ERROR::WARN_LEVEL_WARN,
-			  ER_WRONG_ARGUMENTS,
-			  "InnoDB: invalid innodb_file_format_max "
-			  "value; can be any format up to %s "
-			  "or equivalent id of %d",
-			  trx_sys_file_format_id_to_name(DICT_TF_FORMAT_MAX),
-			  DICT_TF_FORMAT_MAX);
-    }
-  }
-
-  *static_cast<const char**>(save) = NULL;
-  return(1);
-}
-
-/****************************************************************//**
-Update the system variable innodb_file_format_max using the "saved"
-value. This function is registered as a callback with MySQL. */
-static
-void
-innodb_file_format_max_update(
-/*============================*/
-  Session*      session,  /*!< in: thread handle */
-  drizzle_sys_var*  ,   /*!< in: pointer to
-              system variable */
-  void*       var_ptr,  /*!< out: where the
-              formal string goes */
-  const void*     save)   /*!< in: immediate result
-              from check function */
-{
-  const char* format_name_in;
-  const char**  format_name_out;
-  uint    format_id;
-
-  ut_a(save != NULL);
-  ut_a(var_ptr != NULL);
-
-  format_name_in = *static_cast<const char*const*>(save);
-
-  if (!format_name_in) {
-
-    return;
-  }
-
-  format_id = innobase_file_format_name_lookup(format_name_in);
-
-  if (format_id > DICT_TF_FORMAT_MAX) {
-    /* DEFAULT is "on", which is invalid at runtime. */
-    push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-            ER_WRONG_ARGUMENTS,
-            "Ignoring SET innodb_file_format=%s",
-            format_name_in);
-    return;
-  }
-
-  format_name_out = static_cast<const char**>(var_ptr);
-
-  /* Update the max format id in the system tablespace. */
-  if (trx_sys_file_format_max_set(format_id, format_name_out)) {
-    ut_print_timestamp(stderr);
-    fprintf(stderr,
-      " [Info] InnoDB: the file format in the system "
-      "tablespace is now set to %s.\n", *format_name_out);
-  }
-}
-
 /****************************************************************//**
 Update the system variable innodb_adaptive_hash_index using the "saved"
 value. This function is registered as a callback with MySQL. */
@@ -9460,42 +9368,6 @@ innodb_change_buffering_update(
 
 /* plugin options */
 
-static DRIZZLE_SYSVAR_ULONG(io_capacity, srv_io_capacity,
-  PLUGIN_VAR_RQCMDARG,
-  "Number of IOPs the server can do. Tunes the background IO rate",
-  NULL, NULL, 200, 100, ~0L, 0);
-
-static DRIZZLE_SYSVAR_ULONG(purge_batch_size, srv_purge_batch_size,
-  PLUGIN_VAR_OPCMDARG,
-  "Number of UNDO logs to purge in one batch from the history list. "
-  "Default is 20",
-  NULL, NULL,
-  20,			/* Default setting */
-  1,			/* Minimum value */
-  5000, 0);		/* Maximum value */
-
-static DRIZZLE_SYSVAR_ULONG(purge_threads, srv_n_purge_threads,
-  PLUGIN_VAR_OPCMDARG | PLUGIN_VAR_READONLY,
-  "Purge threads can be either 0 or 1. Default is 0.",
-  NULL, NULL,
-  0,			/* Default setting */
-  0,			/* Minimum value */
-  1, 0);		/* Maximum value */
-
-static DRIZZLE_SYSVAR_ULONG(fast_shutdown, innobase_fast_shutdown,
-  PLUGIN_VAR_OPCMDARG,
-  "Speeds up the shutdown process of the InnoDB storage engine. Possible "
-  "values are 0, 1 (faster)"
-  " or 2 (fastest - crash-like)"
-  ".",
-  NULL, NULL, 1, 0, 2, 0);
-
-static DRIZZLE_SYSVAR_STR(file_format, innobase_file_format_name,
-  PLUGIN_VAR_RQCMDARG,
-  "File format to use for new tables in .ibd files.",
-  innodb_file_format_name_validate,
-  innodb_file_format_name_update, "Barracuda");
-
 /* "innobase_file_format_check" decides whether we would continue
 booting the server if the file format stamped on the system
 table space exceeds the maximum file format supported
@@ -9507,12 +9379,6 @@ server startup */
 name needs to be updated accordingly. Please refer to
 file_format_name_map[] defined in trx0sys.c for the next
 file format name. */
-static DRIZZLE_SYSVAR_STR(file_format_max, innobase_file_format_max,
-  PLUGIN_VAR_OPCMDARG,
-  "The highest file format in the tablespace.",
-  innodb_file_format_max_validate,
-  innodb_file_format_max_update,
-  "Antelope");
 
 static DRIZZLE_SYSVAR_ULONG(flush_log_at_trx_commit, srv_flush_log_at_trx_commit,
   PLUGIN_VAR_OPCMDARG,
@@ -9662,26 +9528,26 @@ static void init_options(drizzled::module::option_context &context)
   context("disable-doublewrite",
           "Disable InnoDB doublewrite buffer.");
   context("io-capacity",
-          po::value<unsigned long>(&srv_io_capacity)->default_value(200),
+          po::value<io_capacity_constraint>(&innodb_io_capacity)->default_value(200),
           "Number of IOPs the server can do. Tunes the background IO rate");
   context("fast-shutdown",
-          po::value<unsigned long>(&innobase_fast_shutdown)->default_value(1), 
+          po::value<trinary_constraint>(&innobase_fast_shutdown)->default_value(1), 
           "Speeds up the shutdown process of the InnoDB storage engine. Possible values are 0, 1 (faster) or 2 (fastest - crash-like).");
   context("purge-batch-size",
-          po::value<unsigned long>(&srv_purge_batch_size)->default_value(20),
+          po::value<purge_batch_constraint>(&innodb_purge_batch_size)->default_value(20),
           "Number of UNDO logs to purge in one batch from the history list. "
           "Default is 20.");
   context("purge-threads",
-          po::value<unsigned long>(&srv_n_purge_threads)->default_value(0),
+          po::value<purge_threads_constraint>(&innodb_n_purge_threads)->default_value(0),
           "Purge threads can be either 0 or 1. Defalut is 0.");
   context("file-per-table",
           po::value<bool>(&srv_file_per_table)->default_value(false)->zero_tokens(),
           "Stores each InnoDB table to an .ibd file in the database dir.");
   context("file-format",
-          po::value<string>()->default_value("Antelope"),
+          po::value<string>(&innobase_file_format_name)->default_value("Antelope"),
           "File format to use for new tables in .ibd files.");
   context("file-format-max",
-          po::value<string>()->default_value("Antelope"),
+          po::value<string>(&innobase_file_format_max)->default_value("Antelope"),
           "The highest file format in the tablespace.");
   context("file-format-check",
           po::value<bool>(&innobase_file_format_check)->default_value(true)->zero_tokens(),
@@ -9813,11 +9679,8 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(buffer_pool_instances),
   DRIZZLE_SYSVAR(commit_concurrency),
   DRIZZLE_SYSVAR(concurrency_tickets),
-  DRIZZLE_SYSVAR(fast_shutdown),
   DRIZZLE_SYSVAR(read_io_threads),
   DRIZZLE_SYSVAR(write_io_threads),
-  DRIZZLE_SYSVAR(file_format),
-  DRIZZLE_SYSVAR(file_format_max),
   DRIZZLE_SYSVAR(flush_log_at_trx_commit),
   DRIZZLE_SYSVAR(force_recovery),
 #ifdef UNIV_LOG_ARCHIVE
@@ -9841,9 +9704,6 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(thread_sleep_delay),
   DRIZZLE_SYSVAR(change_buffering),
   DRIZZLE_SYSVAR(read_ahead_threshold),
-  DRIZZLE_SYSVAR(io_capacity),
-  DRIZZLE_SYSVAR(purge_threads),
-  DRIZZLE_SYSVAR(purge_batch_size),
   NULL
 };
 
