@@ -188,6 +188,10 @@ typedef constrained_check<size_t, SIZE_MAX, 512*1024, 1024> additional_mem_pool_
 static additional_mem_pool_constraint innobase_additional_mem_pool_size;
 typedef constrained_check<unsigned int, 1000, 1> autoextend_constraint;
 static autoextend_constraint innodb_auto_extend_increment;
+typedef constrained_check<size_t, SIZE_MAX, 5242880, 1048576> buffer_pool_constraint;
+static buffer_pool_constraint innobase_buffer_pool_size;
+typedef constrained_check<uint32_t, MAX_BUFFER_POOLS, 1> buffer_pool_instances_constraint;
+static buffer_pool_instances_constraint innobase_buffer_pool_instances;
 typedef constrained_check<uint32_t, UINT32_MAX, 100> io_capacity_constraint;
 static io_capacity_constraint innodb_io_capacity;
 typedef constrained_check<uint32_t, 5000, 1> purge_batch_constraint;
@@ -199,13 +203,9 @@ static purge_threads_constraint innodb_n_purge_threads;
 static ulong innobase_commit_concurrency = 0;
 static ulong innobase_read_io_threads;
 static ulong innobase_write_io_threads;
-static int64_t innobase_buffer_pool_instances = 1;
 
-/**
- * @TODO: Turn this into size_t as soon as we have a Variable<size_t>
- */
-static int64_t innobase_buffer_pool_size= 128*1024*1024;
-static int64_t innobase_log_file_size;
+typedef constrained_check<int64_t, INT64_MAX, 1024*1024, 1024*1024> log_file_constraint;
+static log_file_constraint innobase_log_file_size;
 
 /** Percentage of the buffer pool to reserve for 'old' blocks.
 Connected to buf_LRU_old_ratio. */
@@ -2024,27 +2024,6 @@ innobase_init(
   }
 
 
-  if (vm.count("buffer-pool-size"))
-  {
-    align_value(innobase_buffer_pool_size, 1024*1024);
-    if (innobase_buffer_pool_size < 5*1024*1024)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for buffer-pool-size\n"));
-      exit(-1);
-    }
-    
-  }
-
-  if (vm.count("buffer-pool-instances"))
-  {
-    if (innobase_buffer_pool_instances > MAX_BUFFER_POOLS)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for buffer-pool-instances\n"));
-      exit(-1);
-    }
-    
-  }
-
   if (vm.count("commit-concurrency"))
   {
     if (srv_replication_delay > 1000)
@@ -2100,15 +2079,6 @@ innobase_init(
     }
   }
 
-  if (vm.count("log-file-size"))
-  {
-    align_value(innobase_log_file_size, 1024*1024);
-    if (innobase_log_file_size < 1*1024*1024L)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for log-file-size\n"));
-      exit(-1);
-    }
-  }
 
   if (vm.count("log-files-in-group"))
   {
@@ -2183,25 +2153,6 @@ innobase_init(
     goto error;
   }
 #endif /* UNIV_DEBUG */
-
-  /* Check that values don't overflow on 32-bit systems. */
-  if (sizeof(ulint) == 4) {
-    if (innobase_buffer_pool_size > UINT32_MAX) {
-      errmsg_printf(ERRMSG_LVL_ERROR, 
-                    "innobase_buffer_pool_size can't be over 4GB"
-                    " on 32-bit systems");
-
-      goto error;
-    }
-
-    if (innobase_log_file_size > UINT32_MAX) {
-      errmsg_printf(ERRMSG_LVL_ERROR, 
-                    "innobase_log_file_size can't be over 4GB"
-                    " on 32-bit systems");
-
-      goto error;
-    }
-  }
 
   os_innodb_umask = (ulint)internal::my_umask;
 
@@ -2536,6 +2487,9 @@ innobase_change_buffering_inited_ok:
   context.registerVariable(new sys_var_std_string("file_format_max",
                                                   innobase_file_format_max,
                                                   innodb_file_format_max_validate));
+  context.registerVariable(new sys_var_constrained_value_readonly<size_t>("buffer_pool_size", innobase_buffer_pool_size));
+  context.registerVariable(new sys_var_constrained_value_readonly<int64_t>("log_file_size", innobase_log_file_size));
+
 
   /* Get the current high water mark format. */
   innobase_file_format_max = trx_sys_file_format_max_get();
@@ -9413,16 +9367,6 @@ static DRIZZLE_SYSVAR_ULONG(replication_delay, srv_replication_delay,
   "innodb_thread_concurrency is reached (0 by default)",
   NULL, NULL, 0, 0, ~0UL, 0);
 
-static DRIZZLE_SYSVAR_LONGLONG(buffer_pool_size, innobase_buffer_pool_size,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "The size of the memory buffer InnoDB uses to cache data and indexes of its tables.",
-  NULL, NULL, 128*1024*1024L, 5*1024*1024L, INT64_MAX, 1024*1024L);
-
-static DRIZZLE_SYSVAR_LONGLONG(buffer_pool_instances, innobase_buffer_pool_instances,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Number of buffer pool instances, set to higher value on high-end machines to increase scalability",
-  NULL, NULL, 1L, 1L, MAX_BUFFER_POOLS, 1L);
-
 static DRIZZLE_SYSVAR_ULONG(commit_concurrency, innobase_commit_concurrency,
   PLUGIN_VAR_RQCMDARG,
   "Helps in performance tuning in heavily concurrent environments.",
@@ -9452,11 +9396,6 @@ static DRIZZLE_SYSVAR_LONG(log_buffer_size, innobase_log_buffer_size,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "The size of the buffer which InnoDB uses to write log to the log files on disk.",
   NULL, NULL, 8*1024*1024L, 256*1024L, LONG_MAX, 1024);
-
-static DRIZZLE_SYSVAR_LONGLONG(log_file_size, innobase_log_file_size,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Size of each log file in a log group.",
-  NULL, NULL, 20*1024*1024L, 1*1024*1024L, INT64_MAX, 1024*1024L);
 
 static DRIZZLE_SYSVAR_LONG(log_files_in_group, innobase_log_files_in_group,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
@@ -9597,10 +9536,10 @@ static void init_options(drizzled::module::option_context &context)
           po::value<autoextend_constraint>(&innodb_auto_extend_increment)->default_value(8L),
           "Data file autoextend increment in megabytes");
   context("buffer-pool-size",
-          po::value<int64_t>(&innobase_buffer_pool_size)->default_value(128*1024*1024L),
+          po::value<buffer_pool_constraint>(&innobase_buffer_pool_size)->default_value(128*1024*1024L),
           "The size of the memory buffer InnoDB uses to cache data and indexes of its tables.");
   context("buffer-pool-instances",
-          po::value<int64_t>(&innobase_buffer_pool_instances)->default_value(1),
+          po::value<buffer_pool_instances_constraint>(&innobase_buffer_pool_instances)->default_value(1),
           "Number of buffer pool instances, set to higher value on high-end machines to increase scalability");
 
   context("commit-concurrency",
@@ -9622,7 +9561,7 @@ static void init_options(drizzled::module::option_context &context)
           po::value<long>(&innobase_log_buffer_size)->default_value(8*1024*1024L),
           "The size of the buffer which InnoDB uses to write log to the log files on disk.");
   context("log-file-size",
-          po::value<int64_t>(&innobase_log_file_size)->default_value(20*1024*1024L),
+          po::value<log_file_constraint>(&innobase_log_file_size)->default_value(20*1024*1024L),
           "The size of the buffer which InnoDB uses to write log to the log files on disk.");
   context("log-files-in-group",
           po::value<long>(&innobase_log_files_in_group)->default_value(2),
@@ -9675,8 +9614,6 @@ static void init_options(drizzled::module::option_context &context)
 }
 
 static drizzle_sys_var* innobase_system_variables[]= {
-  DRIZZLE_SYSVAR(buffer_pool_size),
-  DRIZZLE_SYSVAR(buffer_pool_instances),
   DRIZZLE_SYSVAR(commit_concurrency),
   DRIZZLE_SYSVAR(concurrency_tickets),
   DRIZZLE_SYSVAR(read_io_threads),
@@ -9687,7 +9624,6 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(log_archive),
 #endif /* UNIV_LOG_ARCHIVE */
   DRIZZLE_SYSVAR(log_buffer_size),
-  DRIZZLE_SYSVAR(log_file_size),
   DRIZZLE_SYSVAR(log_files_in_group),
   DRIZZLE_SYSVAR(max_dirty_pages_pct),
   DRIZZLE_SYSVAR(max_purge_lag),
