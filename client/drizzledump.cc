@@ -816,6 +816,13 @@ try
     dump_databases(database_used);
     dump_all_tables();
   }
+
+  if (vm.count("database-used") && ! vm.count("Table-used"))
+  {
+    dump_databases(vm["database-used"].as< vector<string> >());
+    dump_all_tables();
+  }
+
   if (opt_destination == DESTINATION_STDOUT)
     generate_dump();
   else
