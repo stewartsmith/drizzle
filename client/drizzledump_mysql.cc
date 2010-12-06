@@ -167,7 +167,7 @@ bool DrizzleDumpTableMySQL::populateFields()
   if (verbose)
     std::cerr << _("-- Retrieving fields for ") << tableName << "..." << std::endl;
 
-  query="SELECT COLUMN_NAME, COLUMN_TYPE, COLUMN_DEFAULT, IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE, COLLATION_NAME, EXTRA FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='";
+  query="SELECT COLUMN_NAME, COLUMN_TYPE, COLUMN_DEFAULT, IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE, COLLATION_NAME, EXTRA, COLUMN_COMMENT FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='";
   query.append(database->databaseName);
   query.append("' AND TABLE_NAME='");
   query.append(tableName);
@@ -206,7 +206,7 @@ bool DrizzleDumpTableMySQL::populateFields()
     field->length= (row[4]) ? boost::lexical_cast<uint32_t>(row[4]) : 0;
     field->decimalPrecision= (row[5] != NULL) ? boost::lexical_cast<uint32_t>(row[5]) : 0;
     field->decimalScale= (row[6] != NULL) ? boost::lexical_cast<uint32_t>(row[6]) : 0;
-
+    field->comment= (row[9]) ? row[9] : "";
     fields.push_back(field);
   }
 

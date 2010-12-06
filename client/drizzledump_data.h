@@ -111,6 +111,7 @@ class DrizzleDumpField
     bool convertDateTime;
     std::string defaultValue;
     std::string collation;
+    std::string comment;
 
     /* For enum type */
     std::string enumValues;

@@ -171,7 +171,7 @@ bool DrizzleDumpTableDrizzle::populateFields()
   if (verbose)
     std::cerr << _("-- Retrieving fields for ") << tableName << "..." << std::endl;
 
-  query= "SELECT COLUMN_NAME, DATA_TYPE, COLUMN_DEFAULT, COLUMN_DEFAULT_IS_NULL, IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE, COLLATION_NAME, IS_AUTO_INCREMENT, ENUM_VALUES FROM DATA_DICTIONARY.COLUMNS WHERE TABLE_SCHEMA='";
+  query= "SELECT COLUMN_NAME, DATA_TYPE, COLUMN_DEFAULT, COLUMN_DEFAULT_IS_NULL, IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE, COLLATION_NAME, IS_AUTO_INCREMENT, ENUM_VALUES, COLUMN_COMMENT FROM DATA_DICTIONARY.COLUMNS WHERE TABLE_SCHEMA='";
   query.append(database->databaseName);
   query.append("' AND TABLE_NAME='");
   query.append(tableName);
@@ -202,7 +202,7 @@ bool DrizzleDumpTableDrizzle::populateFields()
     field->length= (row[5]) ? boost::lexical_cast<uint32_t>(row[5]) : 0;
     field->decimalPrecision= (row[6]) ? boost::lexical_cast<uint32_t>(row[6]) : 0;
     field->decimalScale= (row[7]) ? boost::lexical_cast<uint32_t>(row[7]) : 0;
-
+    field->comment= (row[11]) ? row[11] : "";
 
     fields.push_back(field);
   }

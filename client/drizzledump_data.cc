@@ -175,6 +175,11 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpField &obj)
     os << " DEFAULT NULL";
   }
 
+  if (not obj.comment.empty())
+  {
+    os << " COMMENT '" << DrizzleDumpData::escape(obj.comment.c_str(), obj.comment.length()) << "'";
+  }
+
   return os;
 }
 
