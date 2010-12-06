@@ -408,6 +408,7 @@ INSERT INTO t1(id, dept, age, name) VALUES
 EXPLAIN SELECT DISTINCT t1.name, t1.dept FROM t1 WHERE t1.name='rs5';
 SELECT DISTINCT t1.name, t1.dept FROM t1 WHERE t1.name='rs5';
 DELETE FROM t1;
+--replace_column 9 #
 EXPLAIN SELECT DISTINCT t1.name, t1.dept FROM t1 WHERE t1.name='rs5';
 SELECT DISTINCT t1.name, t1.dept FROM t1 WHERE t1.name='rs5';
 
@@ -1094,6 +1095,6 @@ ALTER TABLE t1 CHANGE id id2 INT;
 DROP TABLE t2;
 DROP TABLE t1;
 
-SET innodb_lock_wait_timeout=@orig_lock_wait_timeout ;
+SET GLOBAL innodb_lock_wait_timeout=@orig_lock_wait_timeout ;
 
 --echo End of 5.1 tests

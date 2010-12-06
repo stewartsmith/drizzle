@@ -46,23 +46,28 @@ bool statement::CreateSchema::execute()
   SchemaIdentifier schema_identifier(string(session->lex->name.str, session->lex->name.length));
   if (not check_db_name(session, schema_identifier))
   {
-    my_error(ER_WRONG_DB_NAME, MYF(0), schema_identifier.getSQLPath().c_str());
+    std::string path;
+    schema_identifier.getSQLPath(path);
+    my_error(ER_WRONG_DB_NAME, MYF(0), path.c_str());
     return false;
   }
 
   drizzled::message::init(schema_message, session->lex->name.str);
 
   bool res = false;
-  if (unlikely(plugin::EventObserver::beforeCreateDatabase(*session, schema_identifier.getSQLPath())))
+  std::string path;
+  schema_identifier.getSQLPath(path);
+
+  if (unlikely(plugin::EventObserver::beforeCreateDatabase(*session, path)))
   {
-    my_error(ER_EVENT_OBSERVER_PLUGIN, MYF(0), schema_identifier.getSQLPath().c_str());
+    my_error(ER_EVENT_OBSERVER_PLUGIN, MYF(0), path.c_str());
   }
   else
   {
     res= mysql_create_db(session, schema_message, is_if_not_exists);
-    if (unlikely(plugin::EventObserver::afterCreateDatabase(*session, schema_identifier.getSQLPath(), res)))
+    if (unlikely(plugin::EventObserver::afterCreateDatabase(*session, path, res)))
     {
-      my_error(ER_EVENT_OBSERVER_PLUGIN, MYF(0), schema_identifier.getSQLPath().c_str());
+      my_error(ER_EVENT_OBSERVER_PLUGIN, MYF(0), path.c_str());
       res = false;
     }
 

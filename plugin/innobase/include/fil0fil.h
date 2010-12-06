@@ -27,12 +27,13 @@ Created 10/25/1995 Heikki Tuuri
 #define fil0fil_h
 
 #include "univ.i"
-#ifndef UNIV_HOTBACKUP
-#include "sync0rw.h"
-#endif /* !UNIV_HOTBACKUP */
 #include "dict0types.h"
 #include "ut0byte.h"
 #include "os0file.h"
+#ifndef UNIV_HOTBACKUP
+#include "sync0rw.h"
+#include "ibuf0types.h"
+#endif /* !UNIV_HOTBACKUP */
 
 /** When mysqld is run, the default directory "." is the mysqld datadir,
 but in the MySQL Embedded Server Library and ibbackup it is not the default
@@ -506,16 +507,6 @@ UNIV_INTERN
 ulint
 fil_load_single_table_tablespaces(void);
 /*===================================*/
-/********************************************************************//**
-If we need crash recovery, and we have called
-fil_load_single_table_tablespaces() and dict_load_single_table_tablespaces(),
-we can call this function to print an error message of orphaned .ibd files
-for which there is not a data dictionary entry with a matching table name
-and space id. */
-UNIV_INTERN
-void
-fil_print_orphaned_tablespaces(void);
-/*================================*/
 /*******************************************************************//**
 Returns TRUE if a single-table tablespace does not exist in the memory cache,
 or is being deleted there.

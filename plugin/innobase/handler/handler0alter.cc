@@ -103,8 +103,10 @@ innobase_col_to_mysql(
 #ifdef UNIV_DEBUG
 	case DATA_MYSQL:
 		ut_ad(flen >= len);
-		ut_ad(col->mbmaxlen >= col->mbminlen);
-		ut_ad(col->mbmaxlen > col->mbminlen || flen == len);
+		ut_ad(DATA_MBMAXLEN(col->mbminmaxlen)
+		      >= DATA_MBMINLEN(col->mbminmaxlen));
+		ut_ad(DATA_MBMAXLEN(col->mbminmaxlen)
+		      > DATA_MBMINLEN(col->mbminmaxlen) || flen == len);
 		memcpy(dest, data, len);
 		break;
 
@@ -887,6 +889,8 @@ error:
 		prebuilt->trx->error_info = NULL;
 		/* fall through */
 	default:
+		trx->error_state = DB_SUCCESS;
+
 		if (new_primary) {
 			if (indexed_table != innodb_table) {
 				row_merge_drop_table(trx, indexed_table);

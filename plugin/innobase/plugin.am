@@ -43,6 +43,8 @@ noinst_HEADERS+= \
                  plugin/innobase/include/db0err.h \
                  plugin/innobase/include/dict0boot.h \
                  plugin/innobase/include/dict0boot.ic \
+                 plugin/innobase/include/create_replication.h \
+                 plugin/innobase/include/read_replication.h \
                  plugin/innobase/include/dict0crea.h \
                  plugin/innobase/include/dict0crea.ic \
                  plugin/innobase/include/dict0dict.h \
@@ -100,6 +102,7 @@ noinst_HEADERS+= \
                  plugin/innobase/include/mtr0types.h \
                  plugin/innobase/include/mysql_addons.h \
                  plugin/innobase/include/os0file.h \
+		 plugin/innobase/include/os0file.ic \
                  plugin/innobase/include/os0proc.h \
                  plugin/innobase/include/os0proc.ic \
                  plugin/innobase/include/os0sync.h \
@@ -155,7 +158,6 @@ noinst_HEADERS+= \
                  plugin/innobase/include/row0upd.ic \
                  plugin/innobase/include/row0vers.h \
                  plugin/innobase/include/row0vers.ic \
-                 plugin/innobase/include/srv0que.h \
                  plugin/innobase/include/srv0srv.h \
                  plugin/innobase/include/srv0srv.ic \
                  plugin/innobase/include/srv0start.h \
@@ -189,7 +191,6 @@ noinst_HEADERS+= \
                  plugin/innobase/include/usr0sess.h \
                  plugin/innobase/include/usr0sess.ic \
                  plugin/innobase/include/usr0types.h \
-                 plugin/innobase/include/ut0auxconf.h \
                  plugin/innobase/include/ut0byte.h \
                  plugin/innobase/include/ut0byte.ic \
                  plugin/innobase/include/ut0dbg.h \
@@ -214,6 +215,8 @@ noinst_HEADERS+= \
                  plugin/innobase/handler/handler0vars.h \
                  plugin/innobase/handler/status_function.h \
                  plugin/innobase/handler/internal_dictionary.h \
+                 plugin/innobase/handler/replication_dictionary.h \
+                 plugin/innobase/handler/replication_log.h \
                  plugin/innobase/handler/data_dictionary.h
 
 if BUILD_INNOBASE_PLUGIN
@@ -237,6 +240,7 @@ plugin_innobase_libinnobase_la_SOURCES= \
                                         plugin/innobase/data/data0data.c \
                                         plugin/innobase/data/data0type.c \
                                         plugin/innobase/dict/dict0boot.c \
+                                        plugin/innobase/dict/create_replication.c \
                                         plugin/innobase/dict/dict0crea.c \
                                         plugin/innobase/dict/dict0dict.c \
                                         plugin/innobase/dict/dict0load.c \
@@ -287,7 +291,6 @@ plugin_innobase_libinnobase_la_SOURCES= \
                                         plugin/innobase/row/row0undo.c \
                                         plugin/innobase/row/row0upd.c \
                                         plugin/innobase/row/row0vers.c \
-                                        plugin/innobase/srv/srv0que.c \
                                         plugin/innobase/srv/srv0srv.c \
                                         plugin/innobase/srv/srv0start.c \
                                         plugin/innobase/sync/sync0arr.c \

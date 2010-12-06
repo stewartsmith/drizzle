@@ -68,6 +68,11 @@ int64_t Wait::val_int()
       return 1;
     }
   }
+  else if (not res || not res->length())
+  {
+    my_error(drizzled::ER_USER_LOCKS_INVALID_NAME_BARRIER, MYF(0));
+    return 0;
+  }
 
   my_error(drizzled::ER_USER_LOCKS_UNKNOWN_BARRIER, MYF(0));
 

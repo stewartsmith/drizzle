@@ -58,6 +58,7 @@ class TableIdentifier : public SchemaIdentifier
 {
 public:
   typedef message::Table::TableType Type;
+  typedef std::vector <TableIdentifier> vector;
 
   class Key
   {
@@ -115,7 +116,6 @@ private:
   Type type;
   std::string path;
   std::string table_name;
-  std::string sql_path;
   Key key;
   size_t hash_value;
 
@@ -195,7 +195,7 @@ public:
     return type;
   }
 
-  const std::string &getSQLPath();
+  void getSQLPath(std::string &sql_path) const;
 
   const std::string &getPath() const;
 
@@ -287,8 +287,6 @@ public:
 
 std::size_t hash_value(TableIdentifier const& b);
 std::size_t hash_value(TableIdentifier::Key const& b);
-
-typedef std::vector <TableIdentifier> TableIdentifiers;
 
 } /* namespace drizzled */
 

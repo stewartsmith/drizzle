@@ -51,8 +51,8 @@ Created 1/20/1994 Heikki Tuuri
 #endif /* UNIV_HOTBACKUP */
 
 #define INNODB_VERSION_MAJOR	1
-#define INNODB_VERSION_MINOR	0
-#define INNODB_VERSION_BUGFIX	9
+#define INNODB_VERSION_MINOR	1
+#define INNODB_VERSION_BUGFIX	2
 
 /* The following is the InnoDB version as shown in
 SELECT plugin_version FROM information_schema.plugins;
@@ -84,17 +84,16 @@ the virtual method table (vtable) in GCC 3. */
 # define ha_innobase ha_innodb
 #endif /* MYSQL_DYNAMIC_PLUGIN */
 
-/* if any of the following macros is defined at this point this means
-that the code from the "right" plug.in was executed and we do not
-need to include ut0auxconf.h which would either define the same macros
-or will be empty */
+/* if any of the following macros are not defined we are missing fundamental
+ * and important symbols
+ */
 #if !defined(HAVE_GCC_ATOMIC_BUILTINS) \
  && !defined(HAVE_IB_ATOMIC_PTHREAD_T_GCC) \
  && !defined(HAVE_SOLARIS_ATOMICS) \
  && !defined(HAVE_IB_ATOMIC_PTHREAD_T_SOLARIS) \
  && !defined(SIZEOF_PTHREAD_T) \
  && !defined(IB_HAVE_PAUSE_INSTRUCTION)
-# include "ut0auxconf.h"
+# error There is a problem in the configure setup
 #endif
 
 #if (defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)) && !defined(MYSQL_SERVER) && !defined(__WIN__)
@@ -127,7 +126,7 @@ if we are compiling on Windows. */
 
 /* Include <sys/stat.h> to get S_I... macros defined for os0file.c */
 # include <sys/stat.h>
-# if !defined(__NETWARE__) && !defined(__WIN__) 
+# if !defined(__WIN__) 
 #  include <sys/mman.h> /* mmap() for os0proc.c */
 # endif
 
@@ -150,11 +149,34 @@ Sun Studio */
 #  define UNIV_MUST_NOT_INLINE
 # endif
 
+# if defined(__GNUC__)
+#  define UNIV_WARN_UNUSED_RESULT __attribute__((warn_unused_result))
+#else
+#  define UNIV_WARN_UNUSED_RESULT
+#endif
+
 # ifdef HAVE_PREAD
 #  define HAVE_PWRITE
 # endif
 
 #endif /* #if (defined(WIN32) || ... */
+
+/* Following defines are to enable performance schema
+instrumentation in each of four InnoDB modules if
+HAVE_PSI_INTERFACE is defined. */
+#ifdef HAVE_PSI_INTERFACE
+# define UNIV_PFS_MUTEX
+# define UNIV_PFS_RWLOCK
+/* For I/O instrumentation, performance schema rely
+on a native descriptor to identify the file, this
+descriptor could conflict with our OS level descriptor.
+Disable IO instrumentation on Windows until this is
+resolved */
+# ifndef __WIN__
+#  define UNIV_PFS_IO
+# endif
+# define UNIV_PFS_THREAD
+#endif /* HAVE_PSI_INTERFACE */
 
 /*			DEBUG VERSION CONTROL
 			===================== */
@@ -177,9 +199,9 @@ command. Not tested on Windows. */
 #define UNIV_COMPILE_TEST_FUNCS
 */
 
-#ifdef HAVE_purify
+#if defined HAVE_VALGRIND
 # define UNIV_DEBUG_VALGRIND
-#endif /* HAVE_purify */
+#endif /* HAVE_VALGRIND */
 #if 0
 #define UNIV_DEBUG_VALGRIND			/* Enable extra
 						Valgrind instrumentation */
@@ -217,16 +239,15 @@ operations (very slow); also UNIV_DEBUG must be defined */
 						adaptive hash index */
 #define UNIV_SRV_PRINT_LATCH_WAITS		/* enable diagnostic output
 						in sync0sync.c */
-#define UNIV_BTR_AVOID_COPY			/* when splitting B-tree nodes,
-						do not move any records when
-						all the records would
-						be moved */
 #define UNIV_BTR_PRINT				/* enable functions for
 						printing B-trees */
 #define UNIV_ZIP_DEBUG				/* extensive consistency checks
 						for compressed pages */
 #define UNIV_ZIP_COPY				/* call page_zip_copy_recs()
 						more often */
+#define UNIV_AIO_DEBUG				/* prints info about
+						submitted and reaped AIO
+						requests to the log. */
 #endif
 
 #define UNIV_BTR_DEBUG				/* check B-tree links */
@@ -293,6 +314,12 @@ management to ensure correct alignment for doubles etc. */
 /* The following alignment is used in aligning lints etc. */
 #define UNIV_WORD_ALIGNMENT	UNIV_WORD_SIZE
 
+/* The maximum length of a table name. This is the MySQL limit and is
+defined in mysql_com.h like NAME_CHAR_LEN*SYSTEM_CHARSET_MBMAXLEN, the
+number does not include a terminating '\0'. InnoDB probably can handle
+longer names internally */
+#define MAX_TABLE_NAME_LEN	192
+
 /*
 			DATABASE VERSION CONTROL
 			========================
@@ -305,6 +332,12 @@ management to ensure correct alignment for doubles etc. */
 
 /* Maximum number of parallel threads in a parallelized operation */
 #define UNIV_MAX_PARALLELISM	32
+
+/* The maximum length of a table name. This is the MySQL limit and is
+defined in mysql_com.h like NAME_CHAR_LEN*SYSTEM_CHARSET_MBMAXLEN, the
+number does not include a terminating '\0'. InnoDB probably can handle
+longer names internally */
+#define MAX_TABLE_NAME_LEN	192
 
 /*
 			UNIVERSAL TYPE DEFINITIONS
@@ -370,14 +403,19 @@ typedef unsigned long long int	ullint;
 /* The 'undefined' value for a ulint */
 #define ULINT_UNDEFINED		((ulint)(-1))
 
+/** The bitmask of 32-bit unsigned integer */
+#define ULINT32_MASK		0xFFFFFFFF
 /* The undefined 32-bit unsigned integer */
-#define	ULINT32_UNDEFINED	0xFFFFFFFF
+#define	ULINT32_UNDEFINED	ULINT32_MASK
 
 /* Maximum value for a ulint */
 #define ULINT_MAX		((ulint)(-2))
 
 /* Maximum value for ib_uint64_t */
 #define IB_ULONGLONG_MAX	((ib_uint64_t) (~0ULL))
+
+/** The generic InnoDB system object identifier data type */
+typedef ib_uint64_t	ib_id_t;
 
 /* This 'ibool' type is used within Innobase. Remember that different included
 headers may define 'bool' differently. Do not assume that 'bool' is a ulint! */

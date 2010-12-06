@@ -39,12 +39,14 @@
 #include "drizzled/pthread_globals.h"
 
 #include <netdb.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+
 #include <map>
 #include <string>
 #include <bitset>
 #include <deque>
 
-#include "drizzled/internal/getrusage.h"
 #include "drizzled/security_context.h"
 #include "drizzled/open_tables_state.h"
 #include "drizzled/internal_error_handler.h"
@@ -1603,7 +1605,7 @@ public:
   void close_old_data_files(bool morph_locks= false,
                             bool send_refresh= false);
   void close_open_tables();
-  void close_data_files_and_morph_locks(TableIdentifier &identifier);
+  void close_data_files_and_morph_locks(const TableIdentifier &identifier);
 
 private:
   bool free_cached_table();
@@ -1640,12 +1642,12 @@ public:
   Table *openTable(TableList *table_list, bool *refresh, uint32_t flags= 0);
 
   void unlink_open_table(Table *find);
-  void drop_open_table(Table *table, TableIdentifier &identifier);
+  void drop_open_table(Table *table, const TableIdentifier &identifier);
   void close_cached_table(Table *table);
 
   /* Create a lock in the cache */
   table::Placeholder *table_cache_insert_placeholder(const TableIdentifier &identifier);
-  bool lock_table_name_if_not_cached(TableIdentifier &identifier, Table **table);
+  bool lock_table_name_if_not_cached(const TableIdentifier &identifier, Table **table);
 
   typedef boost::unordered_map<std::string, message::Table, util::insensitive_hash, util::insensitive_equal_to> TableMessageCache;
 
@@ -1820,6 +1822,11 @@ static const std::bitset<CF_BIT_SIZE> CF_HAS_ROW_COUNT(1 << CF_BIT_HAS_ROW_COUNT
 static const std::bitset<CF_BIT_SIZE> CF_STATUS_COMMAND(1 << CF_BIT_STATUS_COMMAND);
 static const std::bitset<CF_BIT_SIZE> CF_SHOW_TABLE_COMMAND(1 << CF_BIT_SHOW_TABLE_COMMAND);
 static const std::bitset<CF_BIT_SIZE> CF_WRITE_LOGS_COMMAND(1 << CF_BIT_WRITE_LOGS_COMMAND);
+
+namespace display  {
+const std::string &type(drizzled::Session::global_read_lock_t type);
+size_t max_string_length(drizzled::Session::global_read_lock_t type);
+} /* namespace display */
 
 } /* namespace drizzled */
 

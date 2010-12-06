@@ -156,7 +156,7 @@ row_build_index_entry(
 		}
 
 		len = dtype_get_at_most_n_mbchars(
-			col->prtype, col->mbminlen, col->mbmaxlen,
+			col->prtype, col->mbminmaxlen,
 			ind_field->prefix_len, len, dfield_get_data(dfield));
 		dfield_set_len(dfield, len);
 	}
@@ -294,7 +294,13 @@ row_build(
 
 	ut_ad(dtuple_check_typed(row));
 
-	if (j) {
+	if (!ext) {
+		/* REDUNDANT and COMPACT formats store a local
+		768-byte prefix of each externally stored
+		column. No cache is needed. */
+		ut_ad(dict_table_get_format(index->table)
+		      < DICT_TF_FORMAT_ZIP);
+	} else if (j) {
 		*ext = row_ext_create(j, ext_cols, row,
 				      dict_table_zip_size(index->table),
 				      heap);
@@ -514,8 +520,7 @@ row_build_row_ref(
 				dfield_set_len(dfield,
 					       dtype_get_at_most_n_mbchars(
 						       dtype->prtype,
-						       dtype->mbminlen,
-						       dtype->mbmaxlen,
+						       dtype->mbminmaxlen,
 						       clust_col_prefix_len,
 						       len, (char*) field));
 			}
@@ -629,8 +634,7 @@ notfound:
 				dfield_set_len(dfield,
 					       dtype_get_at_most_n_mbchars(
 						       dtype->prtype,
-						       dtype->mbminlen,
-						       dtype->mbmaxlen,
+						       dtype->mbminmaxlen,
 						       clust_col_prefix_len,
 						       len, (char*) field));
 			}
@@ -730,9 +734,9 @@ row_get_clust_rec(
 
 /***************************************************************//**
 Searches an index record.
-@return	TRUE if found */
+@return	whether the record was found or buffered */
 UNIV_INTERN
-ibool
+enum row_search_result
 row_search_index_entry(
 /*===================*/
 	dict_index_t*	index,	/*!< in: index */
@@ -749,13 +753,38 @@ row_search_index_entry(
 	ut_ad(dtuple_check_typed(entry));
 
 	btr_pcur_open(index, entry, PAGE_CUR_LE, mode, pcur, mtr);
+
+	switch (btr_pcur_get_btr_cur(pcur)->flag) {
+	case BTR_CUR_DELETE_REF:
+		ut_a(mode & BTR_DELETE);
+		return(ROW_NOT_DELETED_REF);
+
+	case BTR_CUR_DEL_MARK_IBUF:
+	case BTR_CUR_DELETE_IBUF:
+	case BTR_CUR_INSERT_TO_IBUF:
+		return(ROW_BUFFERED);
+
+	case BTR_CUR_HASH:
+	case BTR_CUR_HASH_FAIL:
+	case BTR_CUR_BINARY:
+		break;
+	}
+
 	low_match = btr_pcur_get_low_match(pcur);
 
 	rec = btr_pcur_get_rec(pcur);
 
 	n_fields = dtuple_get_n_fields(entry);
 
-	return(!page_rec_is_infimum(rec) && low_match == n_fields);
+	if (page_rec_is_infimum(rec)) {
+
+		return(ROW_NOT_FOUND);
+	} else if (low_match != n_fields) {
+
+		return(ROW_NOT_FOUND);
+	}
+
+	return(ROW_FOUND);
 }
 
 #if !defined(BUILD_DRIZZLE)

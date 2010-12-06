@@ -543,7 +543,7 @@ static int fill_table_proto(message::Table &table_proto,
 */
 
 bool rea_create_table(Session *session,
-                      TableIdentifier &identifier,
+                      const TableIdentifier &identifier,
                       message::Table &table_proto,
                       HA_CREATE_INFO *create_info,
                       List<CreateField> &create_fields,

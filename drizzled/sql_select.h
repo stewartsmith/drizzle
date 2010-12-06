@@ -103,7 +103,7 @@ bool setup_copy_fields(Session *session, Tmp_Table_Param *param,
 		       List<Item> &new_list1, List<Item> &new_list2,
 		       uint32_t elements, List<Item> &fields);
 void copy_fields(Tmp_Table_Param *param);
-void copy_funcs(Item **func_ptr);
+bool copy_funcs(Item **func_ptr, const Session *session);
 Field* create_tmp_field_from_field(Session *session, Field* org_field,
                                    const char *name, Table *table,
                                    Item_field *item, uint32_t convert_blob_length);

@@ -1,7 +1,8 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2010 Brian Aker
+ *  Copyright (C) 2008 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,55 +18,19 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SESSION_LIST_H
-#define DRIZZLED_SESSION_LIST_H
-
-#include "drizzled/session.h"
-#include <list>
+#include "config.h"
+#include "drizzled/lock.h"
 
 namespace drizzled
 {
 
-class Session;
-
-namespace session
+void DrizzleLock::reset(void)
 {
-
-class Cache 
-{
-public:
-  typedef std::list<Session::shared_ptr> List;
-
-  static inline Cache &singleton()
+  for (std::vector<THR_LOCK_DATA *>::iterator iter= locks.begin(); iter != locks.begin() + sizeLock() and iter != locks.end(); iter++)
   {
-    static Cache open_cache;
-
-    return open_cache;
+    (*iter)->type= TL_UNLOCK;
   }
+}
 
-  List &getCache()
-  {
-    return cache;
-  }
 
-  boost::mutex &mutex()
-  {
-    return _mutex;
-  }
-
-  void erase(Session::Ptr);
-  void erase(Session::shared_ptr&);
-  size_t count();
-  void insert(Session::shared_ptr &arg);
-
-  Session::shared_ptr find(const session_id_t &id);
-
-private:
-  List cache;
-  boost::mutex _mutex;
-};
-
-} /* namespace session */
 } /* namespace drizzled */
-
-#endif /* DRIZZLED_SESSION_LIST_H */

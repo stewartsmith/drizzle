@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1996, 2009, Innobase Oy. All Rights Reserved.
+Copyright (c) 1996, 2010, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -88,6 +88,10 @@ combination of types */
 						new BLOB treatment */
 /** Maximum supported file format */
 #define DICT_TF_FORMAT_MAX		DICT_TF_FORMAT_ZIP
+
+/** Minimum supported file format */
+#define DICT_TF_FORMAT_MIN		DICT_TF_FORMAT_51
+
 /* @} */
 #define DICT_TF_BITS			6	/*!< number of flag bits */
 #if (1 << (DICT_TF_BITS - DICT_TF_FORMAT_SHIFT)) <= DICT_TF_FORMAT_MAX
@@ -146,6 +150,36 @@ dict_mem_table_add_col(
 	ulint		mtype,	/*!< in: main datatype */
 	ulint		prtype,	/*!< in: precise type */
 	ulint		len);	/*!< in: precision */
+/**********************************************************************//**
+This function populates a dict_col_t memory structure with
+supplied information. */
+UNIV_INTERN
+void
+dict_mem_fill_column_struct(
+/*========================*/
+	dict_col_t*	column,		/*!< out: column struct to be
+					filled */
+	ulint		col_pos,	/*!< in: column position */
+	ulint		mtype,		/*!< in: main data type */
+	ulint		prtype,		/*!< in: precise type */
+	ulint		col_len);	/*!< in: column length */
+/**********************************************************************//**
+This function poplulates a dict_index_t index memory structure with
+supplied information. */
+UNIV_INLINE
+void
+dict_mem_fill_index_struct(
+/*=======================*/
+	dict_index_t*	index,		/*!< out: index to be filled */
+	mem_heap_t*	heap,		/*!< in: memory heap */
+	const char*	table_name,	/*!< in: table name */
+	const char*	index_name,	/*!< in: index name */
+	ulint		space,		/*!< in: space where the index tree is
+					placed, ignored if the index is of
+					the clustered type */
+	ulint		type,		/*!< in: DICT_UNIQUE,
+					DICT_CLUSTERED, ... ORed */
+	ulint		n_fields);	/*!< in: number of fields */
 /**********************************************************************//**
 Creates an index memory object.
 @return	own: index object */
@@ -215,10 +249,11 @@ struct dict_col_struct{
 					the string, MySQL uses 1 or 2
 					bytes to store the string length) */
 
-	unsigned	mbminlen:2;	/*!< minimum length of a
-					character, in bytes */
-	unsigned	mbmaxlen:3;	/*!< maximum length of a
-					character, in bytes */
+	unsigned	mbminmaxlen:5;	/*!< minimum and maximum length of a
+					character, in bytes;
+					DATA_MBMINMAXLEN(mbminlen,mbmaxlen);
+					mbminlen=DATA_MBMINLEN(mbminmaxlen);
+					mbmaxlen=DATA_MBMINLEN(mbminmaxlen) */
 	/*----------------------*/
 	/* End of definitions copied from dtype_t */
 	/* @} */
@@ -259,7 +294,7 @@ struct dict_field_struct{
 /** Data structure for an index.  Most fields will be
 initialized to 0, NULL or FALSE in dict_mem_index_create(). */
 struct dict_index_struct{
-	dulint		id;	/*!< id of the index */
+	index_id_t	id;	/*!< id of the index */
 	mem_heap_t*	heap;	/*!< memory heap */
 	const char*	name;	/*!< index name */
 	const char*	table_name;/*!< table name */
@@ -315,7 +350,7 @@ struct dict_index_struct{
 	/* @} */
 	rw_lock_t	lock;	/*!< read-write lock protecting the
 				upper levels of the index tree */
-	ib_uint64_t	trx_id; /*!< id of the transaction that created this
+	trx_id_t	trx_id; /*!< id of the transaction that created this
 				index, or 0 if the index existed
 				when InnoDB was started up */
 #endif /* !UNIV_HOTBACKUP */
@@ -380,9 +415,9 @@ a foreign key constraint is enforced, therefore RESTRICT just means no flag */
 /** Data structure for a database table.  Most fields will be
 initialized to 0, NULL or FALSE in dict_mem_table_create(). */
 struct dict_table_struct{
-	dulint		id;	/*!< id of the table */
+	table_id_t	id;	/*!< id of the table */
 	mem_heap_t*	heap;	/*!< memory heap */
-	const char*	name;	/*!< table name */
+	char*		name;	/*!< table name */
 	const char*	dir_path_of_temp_table;/*!< NULL or the directory path
 				where a TEMPORARY table that was explicitly
 				created by a user should be placed if

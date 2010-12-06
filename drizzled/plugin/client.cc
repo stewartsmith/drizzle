@@ -21,8 +21,6 @@
 #include <cstdio>
 #include "drizzled/plugin/client.h"
 
-using namespace std;
-
 namespace drizzled
 {
 

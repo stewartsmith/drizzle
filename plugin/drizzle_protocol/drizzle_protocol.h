@@ -29,18 +29,21 @@
 
 #include "plugin/mysql_protocol/mysql_protocol.h"
 
+namespace drizzle_plugin
+{
 namespace drizzle_protocol
 {
 
 class ListenDrizzleProtocol: public ListenMySQLProtocol
 {
 public:
-  ListenDrizzleProtocol(std::string name_arg, bool using_mysql41_protocol_arg):
-    ListenMySQLProtocol(name_arg, using_mysql41_protocol_arg)
+  ListenDrizzleProtocol(std::string name, 
+                        const std::string &bind_address,
+                        bool using_mysql41_protocol):
+    ListenMySQLProtocol(name, bind_address, using_mysql41_protocol)
   { }
 
   ~ListenDrizzleProtocol();
-  const char* getHost(void) const;
   in_port_t getPort(void) const;
   static ProtocolCounters *drizzle_counters;
   virtual ProtocolCounters *getCounters(void) const { return drizzle_counters; }
@@ -48,5 +51,6 @@ public:
 
 
 } /* namespace drizzle_protocol */
-
+} /* namespace drizzle_plugin */
+ 
 #endif /* PLUGIN_DRIZZLE_PROTOCOL_DRIZZLE_PROTOCOL_H */

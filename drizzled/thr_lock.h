@@ -21,7 +21,6 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/shared_mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
-#include <pthread.h>
 
 namespace drizzled
 {
@@ -74,12 +73,10 @@ enum enum_thr_lock_result { THR_LOCK_SUCCESS= 0, THR_LOCK_ABORTED= 1,
 
 struct THR_LOCK_INFO
 {
-  pthread_t thread;
   uint64_t thread_id;
   uint32_t n_cursors;
 
   THR_LOCK_INFO() : 
-    thread(0),
     thread_id(0),
     n_cursors(0)
   { }
@@ -185,11 +182,13 @@ public:
   }
 };
 
+class Session; 
 
 #define thr_lock_owner_init(owner, info_arg) (owner)->info= (info_arg)
 void thr_lock_init(THR_LOCK *lock);
-enum enum_thr_lock_result thr_multi_lock(THR_LOCK_DATA **data,
+enum enum_thr_lock_result thr_multi_lock(Session &session, THR_LOCK_DATA **data,
                                          uint32_t count, THR_LOCK_OWNER *owner);
+void thr_multi_unlock(THR_LOCK_DATA **data,uint32_t count);
 
 } /* namespace drizzled */
 

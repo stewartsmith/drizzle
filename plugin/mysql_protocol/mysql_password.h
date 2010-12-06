@@ -19,7 +19,7 @@
 #include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>
 
-namespace drizzled
+namespace drizzle_plugin
 {
 
 extern const char* MySQLPasswordName;
@@ -34,6 +34,6 @@ public:
   drizzled::String *val_str(drizzled::String *);
 };
 
-} /* namespace drizzled */
+} /* namespace drizzle_plugin */
 
 #endif /* PLUGIN_MYSQL_PROTOCOL_MYSQL_PASSWORD_H */

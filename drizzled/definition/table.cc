@@ -138,7 +138,7 @@ void TableShare::release(TableShare::shared_ptr &share)
   }
 }
 
-void TableShare::release(TableIdentifier &identifier)
+void TableShare::release(const TableIdentifier &identifier)
 {
   TableShare::shared_ptr share= definition::Cache::singleton().find(identifier.getKey());
   if (share)
@@ -197,7 +197,7 @@ static TableShare::shared_ptr foundTableShare(TableShare::shared_ptr share)
 */
 
 TableShare::shared_ptr TableShare::getShareCreate(Session *session, 
-                                                  TableIdentifier &identifier,
+                                                  const TableIdentifier &identifier,
                                                   int &in_error)
 {
   TableShare::shared_ptr share;
@@ -363,7 +363,7 @@ bool TableShare::fieldInPrimaryKey(Field *in_field) const
   return false;
 }
 
-TableShare::TableShare(TableIdentifier::Type type_arg) :
+TableShare::TableShare(const TableIdentifier::Type type_arg) :
   table_category(TABLE_UNKNOWN_CATEGORY),
   found_next_number_field(NULL),
   timestamp_field(NULL),
@@ -429,7 +429,7 @@ TableShare::TableShare(TableIdentifier::Type type_arg) :
   }
 }
 
-TableShare::TableShare(TableIdentifier &identifier, const TableIdentifier::Key &key) :// Used by placeholder
+TableShare::TableShare(const TableIdentifier &identifier, const TableIdentifier::Key &key) :// Used by placeholder
   table_category(TABLE_UNKNOWN_CATEGORY),
   found_next_number_field(NULL),
   timestamp_field(NULL),
@@ -581,8 +581,8 @@ TableShare::TableShare(const TableIdentifier &identifier) : // Just used during 
 /*
   Used for shares that will go into the cache.
 */
-TableShare::TableShare(TableIdentifier::Type type_arg,
-                       TableIdentifier &identifier,
+TableShare::TableShare(const TableIdentifier::Type type_arg,
+                       const TableIdentifier &identifier,
                        char *path_arg,
                        uint32_t path_length_arg) :
   table_category(TABLE_UNKNOWN_CATEGORY),
@@ -703,7 +703,7 @@ TableShare::~TableShare()
   mem_root.free_root(MYF(0));                 // Free's share
 }
 
-void TableShare::setIdentifier(TableIdentifier &identifier_arg)
+void TableShare::setIdentifier(const TableIdentifier &identifier_arg)
 {
   private_key_for_cache= identifier_arg.getKey();
 
@@ -1645,7 +1645,7 @@ int TableShare::parse_table_proto(Session& session, message::Table &table)
   6    Unknown .frm version
 */
 
-int TableShare::open_table_def(Session& session, TableIdentifier &identifier)
+int TableShare::open_table_def(Session& session, const TableIdentifier &identifier)
 {
   int local_error;
   bool error_given;

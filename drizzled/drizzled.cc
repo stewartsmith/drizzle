@@ -60,7 +60,7 @@
 #include "drizzled/plugin/monitored_in_transaction.h"
 #include "drizzled/replication_services.h" /* For ReplicationServices::evaluateRegisteredPlugins() */
 #include "drizzled/probes.h"
-#include "drizzled/session_list.h"
+#include "drizzled/session/cache.h"
 #include "drizzled/charset.h"
 #include "plugin/myisam/myisam.h"
 #include "drizzled/drizzled.h"
@@ -443,15 +443,16 @@ void close_connections(void)
 
   {
     boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
-    session::Cache::List list= session::Cache::singleton().getCache();
+    session::Cache::list list= session::Cache::singleton().getCache();
 
-    for (session::Cache::List::iterator it= list.begin(); it != list.end(); ++it )
+    for (session::Cache::list::iterator it= list.begin(); it != list.end(); ++it )
     {
       Session::shared_ptr tmp(*it);
 
       tmp->setKilled(Session::KILL_CONNECTION);
       tmp->scheduler->killSession(tmp.get());
       DRIZZLE_CONNECTION_DONE(tmp->thread_id);
+
       tmp->lockOnSys();
     }
   }
@@ -467,7 +468,7 @@ void close_connections(void)
   for (;;)
   {
     boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
-    session::Cache::List list= session::Cache::singleton().getCache();
+    session::Cache::list list= session::Cache::singleton().getCache();
 
     if (list.empty())
     {
@@ -1355,7 +1356,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
   {
     po::store(parsed, vm);
   }
-  catch (...)
+  catch (std::exception&)
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Duplicate entry for command line option\n"));
     unireg_abort(1);

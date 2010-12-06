@@ -40,6 +40,9 @@ Created 9/5/1995 Heikki Tuuri
 #include "srv0srv.h"
 #include "buf0types.h"
 #include "os0sync.h" /* for HAVE_ATOMIC_BUILTINS */
+#ifdef UNIV_SYNC_DEBUG
+# include "srv0start.h" /* srv_is_being_started */
+#endif /* UNIV_SYNC_DEBUG */
 
 /*
 	REASONS FOR IMPLEMENTING THE SPIN LOCK MUTEX
@@ -198,6 +201,10 @@ UNIV_INTERN sync_thread_t*	sync_thread_level_arrays;
 
 /** Mutex protecting sync_thread_level_arrays */
 UNIV_INTERN mutex_t		sync_thread_mutex;
+
+# ifdef UNIV_PFS_MUTEX
+UNIV_INTERN mysql_pfs_key_t	sync_thread_mutex_key;
+# endif /* UNIV_PFS_MUTEX */
 #endif /* UNIV_SYNC_DEBUG */
 
 /** Global list of database mutexes (not OS mutexes) created. */
@@ -205,6 +212,10 @@ UNIV_INTERN ut_list_base_node_t  mutex_list;
 
 /** Mutex protecting the mutex_list variable */
 UNIV_INTERN mutex_t mutex_list_mutex;
+
+#ifdef UNIV_PFS_MUTEX
+UNIV_INTERN mysql_pfs_key_t	mutex_list_mutex_key;
+#endif /* UNIV_PFS_MUTEX */
 
 #ifdef UNIV_SYNC_DEBUG
 /** Latching order checks start when this is set TRUE */
@@ -302,13 +313,14 @@ mutex_create_func(
 }
 
 /******************************************************************//**
+NOTE! Use the corresponding macro mutex_free(), not directly this function!
 Calling this function is obligatory only if the memory buffer containing
 the mutex is freed. Removes a mutex object from the mutex list. The mutex
 is checked to be in the reset state. */
 UNIV_INTERN
 void
-mutex_free(
-/*=======*/
+mutex_free_func(
+/*============*/
 	mutex_t*	mutex)	/*!< in: mutex */
 {
 	ut_ad(mutex_validate(mutex));
@@ -1143,17 +1155,23 @@ sync_thread_add_level(
 	case SYNC_TREE_NODE_FROM_HASH:
 		/* Do no order checking */
 		break;
+	case SYNC_TRX_SYS_HEADER:
+		if (srv_is_being_started) {
+			/* This is violated during trx_sys_create_rsegs()
+			when creating additional rollback segments when
+			upgrading in innobase_start_or_create_for_mysql(). */
+			break;
+		}
 	case SYNC_MEM_POOL:
 	case SYNC_MEM_HASH:
 	case SYNC_RECV:
 	case SYNC_WORK_QUEUE:
 	case SYNC_LOG:
+	case SYNC_LOG_FLUSH_ORDER:
 	case SYNC_THR_LOCAL:
 	case SYNC_ANY_LATCH:
-	case SYNC_TRX_SYS_HEADER:
 	case SYNC_FILE_FORMAT_TAG:
 	case SYNC_DOUBLEWRITE:
-	case SYNC_BUF_POOL:
 	case SYNC_SEARCH_SYS:
 	case SYNC_SEARCH_SYS_CONF:
 	case SYNC_TRX_LOCK_HEAP:
@@ -1175,6 +1193,18 @@ sync_thread_add_level(
 			ut_error;
 		}
 		break;
+	case SYNC_BUF_FLUSH_LIST:
+	case SYNC_BUF_POOL:
+		/* We can have multiple mutexes of this type therefore we
+		can only check whether the greater than condition holds. */
+		if (!sync_thread_levels_g(array, level-1, TRUE)) {
+			fprintf(stderr,
+				"InnoDB: sync_thread_levels_g(array, %lu)"
+				" does not hold!\n", level-1);
+			ut_error;
+		}
+		break;
+
 	case SYNC_BUF_BLOCK:
 		/* Either the thread must own the buffer pool mutex
 		(buf_pool_mutex), or it is allowed to latch only ONE
@@ -1201,8 +1231,12 @@ sync_thread_add_level(
 			ut_a(sync_thread_levels_g(array, SYNC_IBUF_BITMAP - 1,
 						  TRUE));
 		} else {
-			ut_a(sync_thread_levels_g(array, SYNC_IBUF_BITMAP,
-						  TRUE));
+			/* This is violated during trx_sys_create_rsegs()
+			when creating additional rollback segments when
+			upgrading in innobase_start_or_create_for_mysql(). */
+			ut_a(srv_is_being_started
+			     || sync_thread_levels_g(array, SYNC_IBUF_BITMAP,
+						     TRUE));
 		}
 		break;
 	case SYNC_FSP_PAGE:
@@ -1398,18 +1432,22 @@ sync_init(void)
 	/* Init the mutex list and create the mutex to protect it. */
 
 	UT_LIST_INIT(mutex_list);
-	mutex_create(&mutex_list_mutex, SYNC_NO_ORDER_CHECK);
+	mutex_create(mutex_list_mutex_key, &mutex_list_mutex,
+		     SYNC_NO_ORDER_CHECK);
 #ifdef UNIV_SYNC_DEBUG
-	mutex_create(&sync_thread_mutex, SYNC_NO_ORDER_CHECK);
+	mutex_create(sync_thread_mutex_key, &sync_thread_mutex,
+		     SYNC_NO_ORDER_CHECK);
 #endif /* UNIV_SYNC_DEBUG */
 
 	/* Init the rw-lock list and create the mutex to protect it. */
 
 	UT_LIST_INIT(rw_lock_list);
-	mutex_create(&rw_lock_list_mutex, SYNC_NO_ORDER_CHECK);
+	mutex_create(rw_lock_list_mutex_key, &rw_lock_list_mutex,
+		     SYNC_NO_ORDER_CHECK);
 
 #ifdef UNIV_SYNC_DEBUG
-	mutex_create(&rw_lock_debug_mutex, SYNC_NO_ORDER_CHECK);
+	mutex_create(rw_lock_debug_mutex_key, &rw_lock_debug_mutex,
+		     SYNC_NO_ORDER_CHECK);
 
 	rw_lock_debug_event = os_event_create(NULL);
 	rw_lock_debug_waiters = FALSE;
@@ -1468,14 +1506,16 @@ sync_print_wait_info(
 	fprintf(file,
 		"Mutex spin waits %"PRId64", rounds %"PRId64", "
                 "OS waits %"PRId64"\n"
-		"RW-shared spins %"PRId64", OS waits %"PRId64";"
-		" RW-excl spins %"PRId64", OS waits %"PRId64"\n",
+		"RW-shared spins %"PRId64", rounds %"PRId64", OS waits %"PRId64";"
+		" RW-excl spins %"PRId64", rounds %"PRId64", OS waits %"PRId64"\n",
 		mutex_spin_wait_count,
 		mutex_spin_round_count,
 		mutex_os_wait_count,
 		rw_s_spin_wait_count,
+                rw_s_spin_round_count,
 		rw_s_os_wait_count,
 		rw_x_spin_wait_count,
+                rw_x_spin_round_count,
 		rw_x_os_wait_count);
 
 	fprintf(file,

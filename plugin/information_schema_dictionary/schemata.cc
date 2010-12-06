@@ -43,7 +43,7 @@ Schemata::Generator::Generator(drizzled::Field **arg) :
 
 bool Schemata::Generator::populate()
 {
-  drizzled::message::SchemaPtr schema_ptr;
+  drizzled::message::schema::shared_ptr schema_ptr;
 
   while ((schema_ptr= schema_generator))
   {

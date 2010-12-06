@@ -1,0 +1,13 @@
+SET GLOBAL innodb_file_format='Barracuda';
+SET GLOBAL innodb_file_per_table=on;
+CREATE TABLE bug53591(a text not null)
+ENGINE=InnoDB;
+ALTER TABLE bug53591 ADD PRIMARY KEY(a(500));
+Got one of the listed errors
+SHOW WARNINGS;
+Level	Code	Message
+Error	1071	Specified key was too long; max key length is 1023 bytes
+DROP TABLE bug53591;
+SET GLOBAL innodb_file_format=Antelope;
+SET GLOBAL innodb_file_format_max=Antelope;
+SET GLOBAL innodb_file_per_table=0;

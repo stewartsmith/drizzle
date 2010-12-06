@@ -34,18 +34,16 @@
 #include <algorithm>
 #include <functional>
 
-using namespace std;
-
 namespace drizzled
 {
 
 namespace plugin
 {
 
-static vector<XaStorageEngine *> vector_of_xa_engines;
+static std::vector<XaStorageEngine *> vector_of_xa_engines;
 
-XaStorageEngine::XaStorageEngine(const string name_arg,
-                                 const bitset<HTON_BIT_SIZE> &flags_arg) :
+XaStorageEngine::XaStorageEngine(const std::string name_arg,
+                                 const std::bitset<HTON_BIT_SIZE> &flags_arg) :
   TransactionalStorageEngine(name_arg, flags_arg)
 {}
 

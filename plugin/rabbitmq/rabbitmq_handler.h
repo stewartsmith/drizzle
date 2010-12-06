@@ -29,12 +29,16 @@
 #include <string>
 #include <amqp.h>
 #include <amqp_framing.h>
+#include <netinet/in.h>
+
+namespace drizzle_plugin
+{
 
 /**
  * exception thrown by the rabbitmq handler
  *
  */
-class rabbitmq_handler_exception: public std::exception
+class rabbitmq_handler_exception : public std::exception
 {
 private:
   const char* message;
@@ -58,11 +62,11 @@ private:
   amqp_connection_state_t rabbitmqConnection; 
   int sockfd; ///< the socket file desc to the rabbitmq server, 
               ///< need this to be able to close() it.
-  const char* hostname;
-  const int port;
-  const char* username;
-  const char* password;
-  const char* virtualhost;
+  const std::string &hostname;
+  const in_port_t port;
+  const std::string &username;
+  const std::string &password;
+  const std::string &virtualhost;
 public:
   /**
    * @brief
@@ -80,11 +84,13 @@ public:
    * @param[in] virtualhost the rabbitmq virtual host.
    * @throw exception if we cannot connect to rabbitmq server
    */
-  RabbitMQHandler(const char* hostname, 
-		  const int port, 
-		  const char* username, 
-		  const char* password, 
-		  const char* virtualhost) throw(rabbitmq_handler_exception);
+  RabbitMQHandler(const std::string &hostname, 
+                  const in_port_t port, 
+                  const std::string &username, 
+                  const std::string &password, 
+                  const std::string &virtualhost)
+    throw(rabbitmq_handler_exception);
+
   ~RabbitMQHandler();
 
   /**
@@ -100,13 +106,14 @@ public:
    * @param[in] routingKey the routing key to use
    * @throw exception if there is a problem publishing
    */
-  void publish(const uint8_t *message, 
-	       const int length, 
-	       const char* exchangeName, 
-	       const char* routingKey) throw(rabbitmq_handler_exception);
+  void publish(void *message, 
+               const int length, 
+               const std::string &exchangeName, 
+               const std::string &routingKey)
+    throw(rabbitmq_handler_exception);
 
 
- private:
+private:
   /**
    * @brief
    *   Handles errors produced by librabbitmq
@@ -121,5 +128,7 @@ public:
    */
   void handleAMQPError(amqp_rpc_reply_t x, std::string context) throw(rabbitmq_handler_exception);
 };
+
+} /* namespace drizzle_plugin */
 
 #endif /* PLUGIN_RABBITMQ_RABBITMQ_HANDLER_H */

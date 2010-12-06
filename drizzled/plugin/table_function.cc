@@ -28,8 +28,6 @@
 
 #include <vector>
 
-using namespace std;
-
 namespace drizzled
 {
 
@@ -61,13 +59,13 @@ bool plugin::TableFunction::addPlugin(plugin::TableFunction *tool)
   return false;
 }
 
-plugin::TableFunction *plugin::TableFunction::getFunction(const string &arg)
+plugin::TableFunction *plugin::TableFunction::getFunction(const std::string &arg)
 {
   return table_functions.getFunction(arg);
 }
 
-void plugin::TableFunction::getNames(const string &arg,
-                                     set<std::string> &set_of_names)
+void plugin::TableFunction::getNames(const std::string &arg,
+                                     std::set<std::string> &set_of_names)
 {
   table_functions.getNames(arg, set_of_names);
 }

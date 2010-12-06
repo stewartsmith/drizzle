@@ -603,6 +603,7 @@ btr_page_get_father_node_ptr_func(
 	ulint		line,	/*!< in: line where called */
 	mtr_t*		mtr)	/*!< in: mtr */
 {
+	page_t*		page;
 	dtuple_t*	tuple;
 	rec_t*		user_rec;
 	rec_t*		node_ptr;
@@ -619,6 +620,8 @@ btr_page_get_father_node_ptr_func(
 	ut_ad(dict_index_get_page(index) != page_no);
 
 	level = btr_page_get_level(btr_cur_get_page(cursor), mtr);
+
+	page = btr_cur_get_page(cursor);
 	user_rec = btr_cur_get_rec(cursor);
 	ut_a(page_rec_is_user_rec(user_rec));
 	tuple = dict_index_build_node_ptr(index, user_rec, 0, heap, level);
@@ -734,7 +737,7 @@ btr_create(
 	ulint		space,	/*!< in: space where created */
 	ulint		zip_size,/*!< in: compressed page size in bytes
 				or 0 for uncompressed pages */
-	dulint		index_id,/*!< in: index id */
+	index_id_t	index_id,/*!< in: index id */
 	dict_index_t*	index,	/*!< in: index */
 	mtr_t*		mtr)	/*!< in: mini-transaction handle */
 {
@@ -949,6 +952,7 @@ btr_page_reorganize_low(
 	dict_index_t*	index,	/*!< in: record descriptor */
 	mtr_t*		mtr)	/*!< in: mtr */
 {
+	buf_pool_t*	buf_pool	= buf_pool_from_bpage(&block->page);
 	page_t*		page		= buf_block_get_frame(block);
 	page_zip_des_t*	page_zip	= buf_block_get_page_zip(block);
 	buf_block_t*	temp_block;
@@ -979,7 +983,7 @@ btr_page_reorganize_low(
 	log_mode = mtr_set_log_mode(mtr, MTR_LOG_NONE);
 
 #ifndef UNIV_HOTBACKUP
-	temp_block = buf_block_alloc(0);
+	temp_block = buf_block_alloc(buf_pool, 0);
 #else /* !UNIV_HOTBACKUP */
 	ut_ad(block == back_block1);
 	temp_block = back_block2;
@@ -1016,7 +1020,7 @@ btr_page_reorganize_low(
 		/* In crash recovery, dict_index_is_sec_or_ibuf() always
 		returns TRUE, even for clustered indexes.  max_trx_id is
 		unused in clustered index pages. */
-		ut_ad(!ut_dulint_is_zero(max_trx_id) || recovery);
+		ut_ad(max_trx_id != 0 || recovery);
 	}
 
 	if (UNIV_LIKELY_NULL(page_zip)
@@ -1937,7 +1941,7 @@ func_start:
 	if (n_iterations > 0) {
 		direction = FSP_UP;
 		hint_page_no = page_no + 1;
-		split_rec = btr_page_get_split_rec(cursor, tuple, n_ext);
+                split_rec = btr_page_get_split_rec(cursor, tuple, n_ext);
 
 		if (UNIV_UNLIKELY(split_rec == NULL)) {
 			insert_left = btr_page_tuple_smaller(
@@ -1946,22 +1950,20 @@ func_start:
 	} else if (btr_page_get_split_rec_to_right(cursor, &split_rec)) {
 		direction = FSP_UP;
 		hint_page_no = page_no + 1;
-
 	} else if (btr_page_get_split_rec_to_left(cursor, &split_rec)) {
 		direction = FSP_DOWN;
 		hint_page_no = page_no - 1;
-		ut_ad(split_rec);
+                ut_ad(split_rec);
 	} else {
 		direction = FSP_UP;
 		hint_page_no = page_no + 1;
-
 		/* If there is only one record in the index page, we
 		can't split the node in the middle by default. We need
 		to determine whether the new record will be inserted
 		to the left or right. */
 
 		if (page_get_n_recs(page) > 1) {
-			split_rec = page_get_middle_rec(page);
+                  split_rec = page_get_middle_rec(page);
 		} else if (btr_page_tuple_smaller(cursor, tuple,
 						  offsets, n_uniq, &heap)) {
 			split_rec = page_rec_get_next(
@@ -2047,17 +2049,7 @@ insert_empty:
 	}
 
 	/* 5. Move then the records to the new page */
-	if (direction == FSP_DOWN
-#ifdef UNIV_BTR_AVOID_COPY
-	    && page_rec_is_supremum(move_limit)) {
-		/* Instead of moving all records, make the new page
-		the empty page. */
-
-		left_block = block;
-		right_block = new_block;
-	} else if (direction == FSP_DOWN
-#endif /* UNIV_BTR_AVOID_COPY */
-		   ) {
+	if (direction == FSP_DOWN) {
 		/*		fputs("Split left\n", stderr); */
 
 		if (0
@@ -2100,14 +2092,6 @@ insert_empty:
 		right_block = block;
 
 		lock_update_split_left(right_block, left_block);
-#ifdef UNIV_BTR_AVOID_COPY
-	} else if (!split_rec) {
-		/* Instead of moving all records, make the new page
-		the empty page. */
-
-		left_block = new_block;
-		right_block = block;
-#endif /* UNIV_BTR_AVOID_COPY */
 	} else {
 		/*		fputs("Split right\n", stderr); */
 
@@ -2897,7 +2881,7 @@ btr_discard_only_page_on_level(
 		ibuf_reset_free_bits(block);
 
 		if (page_is_leaf(buf_block_get_frame(block))) {
-			ut_a(!ut_dulint_is_zero(max_trx_id));
+			ut_a(max_trx_id);
 			page_set_max_trx_id(block,
 					    buf_block_get_page_zip(block),
 					    max_trx_id, mtr);

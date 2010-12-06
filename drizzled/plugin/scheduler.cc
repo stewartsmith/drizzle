@@ -26,24 +26,22 @@
 #include "drizzled/gettext.h"
 #include "drizzled/errmsg_print.h"
 
-using namespace std;
-
 namespace drizzled
 {
 
 extern size_t my_thread_stack_size;
 
-vector<plugin::Scheduler *> all_schedulers;
+std::vector<plugin::Scheduler *> all_schedulers;
 
 /* Globals (TBK) */
 static plugin::Scheduler *scheduler= NULL;
 
 
-class FindSchedulerByName : public unary_function<plugin::Scheduler *, bool>
+class FindSchedulerByName : public std::unary_function<plugin::Scheduler *, bool>
 {
-  const string *name;
+  const std::string *name;
 public:
-  FindSchedulerByName(const string *name_arg)
+  FindSchedulerByName(const std::string *name_arg)
     : name(name_arg) {}
   result_type operator() (argument_type sched)
   {
@@ -54,8 +52,8 @@ public:
 
 bool plugin::Scheduler::addPlugin(plugin::Scheduler *sched)
 {
-  vector<plugin::Scheduler *>::iterator iter=
-    find_if(all_schedulers.begin(), all_schedulers.end(), 
+  std::vector<plugin::Scheduler *>::iterator iter=
+    std::find_if(all_schedulers.begin(), all_schedulers.end(), 
             FindSchedulerByName(&sched->getName()));
 
   if (iter != all_schedulers.end())
@@ -76,16 +74,16 @@ bool plugin::Scheduler::addPlugin(plugin::Scheduler *sched)
 
 void plugin::Scheduler::removePlugin(plugin::Scheduler *sched)
 {
-  all_schedulers.erase(find(all_schedulers.begin(),
+  all_schedulers.erase(std::find(all_schedulers.begin(),
                             all_schedulers.end(),
                             sched));
 }
 
 
-bool plugin::Scheduler::setPlugin(const string& name)
+bool plugin::Scheduler::setPlugin(const std::string& name)
 {
-  vector<plugin::Scheduler *>::iterator iter=
-    find_if(all_schedulers.begin(), all_schedulers.end(), 
+  std::vector<plugin::Scheduler *>::iterator iter=
+    std::find_if(all_schedulers.begin(), all_schedulers.end(), 
             FindSchedulerByName(&name));
 
   if (iter != all_schedulers.end())

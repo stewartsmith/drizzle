@@ -31,15 +31,12 @@ int64_t CreateBarrier::val_int()
 {
   drizzled::String *res= args[0]->val_str(&value);
 
-  if (not res)
+  if (not res || not res->length())
   {
-    null_value= true;
+    my_error(drizzled::ER_USER_LOCKS_INVALID_NAME_BARRIER, MYF(0));
     return 0;
   }
   null_value= false;
-
-  if (not res->length())
-    return 0;
 
   barriers::Storable *list= static_cast<barriers::Storable *>(getSession().getProperty(barriers::property_key));
 

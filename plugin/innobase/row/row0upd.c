@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1996, 2009, Innobase Oy. All Rights Reserved.
+Copyright (c) 1996, 2010, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -91,6 +91,26 @@ this clustered index entry and mark them as deleted. When is
 the x-latch freed? The most efficient way for performing a
 searched delete is obviously to keep the x-latch for several
 steps of query graph execution. */
+
+/*************************************************************************
+IMPORTANT NOTE: Any operation that generates redo MUST check that there
+is enough space in the redo log before for that operation. This is
+done by calling log_free_check(). The reason for checking the
+availability of the redo log space before the start of the operation is
+that we MUST not hold any synchonization objects when performing the
+check.
+If you make a change in this module make sure that no codepath is
+introduced where a call to log_free_check() is bypassed. */
+
+/*************************************************************************
+IMPORTANT NOTE: Any operation that generates redo MUST check that there
+is enough space in the redo log before for that operation. This is
+done by calling log_free_check(). The reason for checking the
+availability of the redo log space before the start of the operation is
+that we MUST not hold any synchonization objects when performing the
+check.
+If you make a change in this module make sure that no codepath is
+introduced where a call to log_free_check() is bypassed. */
 
 /***********************************************************//**
 Checks if an update vector changes some of the first ordering fields of an
@@ -367,7 +387,7 @@ row_upd_index_entry_sys_field(
 				them */
 	dict_index_t*	index,	/*!< in: clustered index */
 	ulint		type,	/*!< in: DATA_TRX_ID or DATA_ROLL_PTR */
-	dulint		val)	/*!< in: value to write */
+	ib_uint64_t	val)	/*!< in: value to write */
 {
 	dfield_t*	dfield;
 	byte*		field;
@@ -526,7 +546,7 @@ row_upd_write_sys_vals_to_log(
 	trx_write_roll_ptr(log_ptr, roll_ptr);
 	log_ptr += DATA_ROLL_PTR_LEN;
 
-	log_ptr += mach_dulint_write_compressed(log_ptr, trx->id);
+	log_ptr += mach_ull_write_compressed(log_ptr, trx->id);
 
 	return(log_ptr);
 }
@@ -560,7 +580,7 @@ row_upd_parse_sys_vals(
 	*roll_ptr = trx_read_roll_ptr(ptr);
 	ptr += DATA_ROLL_PTR_LEN;
 
-	ptr = mach_dulint_parse_compressed(ptr, end_ptr, trx_id);
+	ptr = mach_ull_parse_compressed(ptr, end_ptr, trx_id);
 
 	return(ptr);
 }
@@ -939,7 +959,7 @@ row_upd_index_replace_new_col_val(
 		}
 
 		len = dtype_get_at_most_n_mbchars(col->prtype,
-						  col->mbminlen, col->mbmaxlen,
+						  col->mbminmaxlen,
 						  field->prefix_len, len,
 						  (const char*) data);
 
@@ -1388,6 +1408,7 @@ row_upd_store_row(
 	dict_index_t*	clust_index;
 	rec_t*		rec;
 	mem_heap_t*	heap		= NULL;
+	row_ext_t**	ext;
 	ulint		offsets_[REC_OFFS_NORMAL_SIZE];
 	const ulint*	offsets;
 	rec_offs_init(offsets_);
@@ -1404,8 +1425,22 @@ row_upd_store_row(
 
 	offsets = rec_get_offsets(rec, clust_index, offsets_,
 				  ULINT_UNDEFINED, &heap);
+
+	if (dict_table_get_format(node->table) >= DICT_TF_FORMAT_ZIP) {
+		/* In DYNAMIC or COMPRESSED format, there is no prefix
+		of externally stored columns in the clustered index
+		record. Build a cache of column prefixes. */
+		ext = &node->ext;
+	} else {
+		/* REDUNDANT and COMPACT formats store a local
+		768-byte prefix of each externally stored column.
+		No cache is needed. */
+		ext = NULL;
+		node->ext = NULL;
+	}
+
 	node->row = row_build(ROW_COPY_DATA, clust_index, rec, offsets,
-			      NULL, &node->ext, node->heap);
+			      NULL, ext, node->heap);
 	if (node->is_delete) {
 		node->upd_row = NULL;
 		node->upd_ext = NULL;
@@ -1431,21 +1466,22 @@ row_upd_sec_index_entry(
 	upd_node_t*	node,	/*!< in: row update node */
 	que_thr_t*	thr)	/*!< in: query thread */
 {
-	ibool		check_ref;
-	ibool		found;
-	dict_index_t*	index;
-	dtuple_t*	entry;
-	btr_pcur_t	pcur;
-	btr_cur_t*	btr_cur;
-	mem_heap_t*	heap;
-	rec_t*		rec;
-	ulint		err	= DB_SUCCESS;
-	mtr_t		mtr;
-	trx_t*		trx	= thr_get_trx(thr);
+	mtr_t			mtr;
+	const rec_t*		rec;
+	btr_pcur_t		pcur;
+	mem_heap_t*		heap;
+	dtuple_t*		entry;
+	dict_index_t*		index;
+	btr_cur_t*		btr_cur;
+	ibool			referenced;
+	ulint			err	= DB_SUCCESS;
+	trx_t*			trx	= thr_get_trx(thr);
+	ulint			mode	= BTR_MODIFY_LEAF;
+	enum row_search_result	search_result;
 
 	index = node->index;
 
-	check_ref = row_upd_index_is_referenced(index, trx);
+	referenced = row_upd_index_is_referenced(index, trx);
 
 	heap = mem_heap_create(1024);
 
@@ -1453,16 +1489,35 @@ row_upd_sec_index_entry(
 	entry = row_build_index_entry(node->row, node->ext, index, heap);
 	ut_a(entry);
 
-	log_free_check();
 	mtr_start(&mtr);
 
-	found = row_search_index_entry(index, entry, BTR_MODIFY_LEAF, &pcur,
-				       &mtr);
+	/* Set the query thread, so that ibuf_insert_low() will be
+	able to invoke thd_get_trx(). */
+	btr_pcur_get_btr_cur(&pcur)->thr = thr;
+
+	/* We can only try to use the insert/delete buffer to buffer
+	delete-mark operations if the index we're modifying has no foreign
+	key constraints referring to it. */
+	if (!referenced) {
+		mode |= BTR_DELETE_MARK;
+	}
+
+	search_result = row_search_index_entry(index, entry, mode,
+					       &pcur, &mtr);
+
 	btr_cur = btr_pcur_get_btr_cur(&pcur);
 
 	rec = btr_cur_get_rec(btr_cur);
 
-	if (UNIV_UNLIKELY(!found)) {
+	switch (search_result) {
+	case ROW_NOT_DELETED_REF:	/* should only occur for BTR_DELETE */
+		ut_error;
+		break;
+	case ROW_BUFFERED:
+		/* Entry was delete marked already. */
+		break;
+
+	case ROW_NOT_FOUND:
 		fputs("InnoDB: error in sec index entry update in\n"
 		      "InnoDB: ", stderr);
 		dict_index_name_print(stderr, trx, index);
@@ -1479,20 +1534,26 @@ row_upd_sec_index_entry(
 		fputs("\n"
 		      "InnoDB: Submit a detailed bug report"
 		      " to http://bugs.mysql.com\n", stderr);
-	} else {
+		break;
+	case ROW_FOUND:
 		/* Delete mark the old index record; it can already be
 		delete marked if we return after a lock wait in
 		row_ins_index_entry below */
 
-		if (!rec_get_deleted_flag(rec,
-					  dict_table_is_comp(index->table))) {
-			err = btr_cur_del_mark_set_sec_rec(0, btr_cur, TRUE,
-							   thr, &mtr);
-			if (err == DB_SUCCESS && check_ref) {
+		if (!rec_get_deleted_flag(
+			rec, dict_table_is_comp(index->table))) {
 
-				ulint*	offsets = rec_get_offsets(
-					rec, index, NULL,
-					ULINT_UNDEFINED, &heap);
+			err = btr_cur_del_mark_set_sec_rec(
+				0, btr_cur, TRUE, thr, &mtr);
+
+			if (err == DB_SUCCESS && referenced) {
+
+				ulint*	offsets;
+
+				offsets = rec_get_offsets(
+					rec, index, NULL, ULINT_UNDEFINED,
+					&heap);
+
 				/* NOTE that the following call loses
 				the position of pcur ! */
 				err = row_upd_check_references_constraints(
@@ -1500,6 +1561,7 @@ row_upd_sec_index_entry(
 					index, offsets, thr, &mtr);
 			}
 		}
+		break;
 	}
 
 	btr_pcur_close(&pcur);
@@ -1529,7 +1591,7 @@ Updates the secondary index record if it is changed in the row update or
 deletes it if this is a delete.
 @return DB_SUCCESS if operation successfully completed, else error
 code or DB_LOCK_WAIT */
-UNIV_INLINE
+static
 ulint
 row_upd_sec_step(
 /*=============*/
@@ -1563,7 +1625,7 @@ row_upd_clust_rec_by_insert(
 	upd_node_t*	node,	/*!< in: row update node */
 	dict_index_t*	index,	/*!< in: clustered index of the record */
 	que_thr_t*	thr,	/*!< in: query thread */
-	ibool		check_ref,/*!< in: TRUE if index may be referenced in
+	ibool		referenced,/*!< in: TRUE if index may be referenced in
 				a foreign key constraint */
 	mtr_t*		mtr)	/*!< in: mtr; gets committed here */
 {
@@ -1609,16 +1671,21 @@ row_upd_clust_rec_by_insert(
 		btr_cur_mark_extern_inherited_fields(
 			btr_cur_get_page_zip(btr_cur),
 			rec, index, offsets, node->update, mtr);
-		if (check_ref) {
+		if (referenced) {
 			/* NOTE that the following call loses
 			the position of pcur ! */
+
 			err = row_upd_check_references_constraints(
 				node, pcur, table, index, offsets, thr, mtr);
+
 			if (err != DB_SUCCESS) {
+
 				mtr_commit(mtr);
+
 				if (UNIV_LIKELY_NULL(heap)) {
 					mem_heap_free(heap);
 				}
+
 				return(err);
 			}
 		}
@@ -1773,7 +1840,8 @@ row_upd_del_mark_clust_rec(
 	ulint*		offsets,/*!< in/out: rec_get_offsets() for the
 				record under the cursor */
 	que_thr_t*	thr,	/*!< in: query thread */
-	ibool		check_ref,/*!< in: TRUE if index may be referenced in
+	ibool		referenced,
+				/*!< in: TRUE if index may be referenced in
 				a foreign key constraint */
 	mtr_t*		mtr)	/*!< in: mtr; gets committed here */
 {
@@ -1798,13 +1866,11 @@ row_upd_del_mark_clust_rec(
 
 	err = btr_cur_del_mark_set_clust_rec(BTR_NO_LOCKING_FLAG,
 					     btr_cur, TRUE, thr, mtr);
-	if (err == DB_SUCCESS && check_ref) {
+	if (err == DB_SUCCESS && referenced) {
 		/* NOTE that the following call loses the position of pcur ! */
 
-		err = row_upd_check_references_constraints(node,
-							   pcur, index->table,
-							   index, offsets,
-							   thr, mtr);
+		err = row_upd_check_references_constraints(
+			node, pcur, index->table, index, offsets, thr, mtr);
 	}
 
 	mtr_commit(mtr);
@@ -1826,7 +1892,6 @@ row_upd_clust_step(
 	dict_index_t*	index;
 	btr_pcur_t*	pcur;
 	ibool		success;
-	ibool		check_ref;
 	ulint		err;
 	mtr_t*		mtr;
 	mtr_t		mtr_buf;
@@ -1834,11 +1899,12 @@ row_upd_clust_step(
 	mem_heap_t*	heap		= NULL;
 	ulint		offsets_[REC_OFFS_NORMAL_SIZE];
 	ulint*		offsets;
+	ibool		referenced;
 	rec_offs_init(offsets_);
 
 	index = dict_table_get_first_index(node->table);
 
-	check_ref = row_upd_index_is_referenced(index, thr_get_trx(thr));
+	referenced = row_upd_index_is_referenced(index, thr_get_trx(thr));
 
 	pcur = node->pcur;
 
@@ -1871,8 +1937,7 @@ row_upd_clust_step(
 	then we have to free the file segments of the index tree associated
 	with the index */
 
-	if (node->is_delete
-	    && ut_dulint_cmp(node->table->id, DICT_INDEXES_ID) == 0) {
+	if (node->is_delete && node->table->id == DICT_INDEXES_ID) {
 
 		dict_drop_index_tree(btr_pcur_get_rec(pcur), mtr);
 
@@ -1908,8 +1973,9 @@ row_upd_clust_step(
 	/* NOTE: the following function calls will also commit mtr */
 
 	if (node->is_delete) {
-		err = row_upd_del_mark_clust_rec(node, index, offsets,
-						 thr, check_ref, mtr);
+		err = row_upd_del_mark_clust_rec(
+			node, index, offsets, thr, referenced, mtr);
+
 		if (err == DB_SUCCESS) {
 			node->state = UPD_NODE_UPDATE_ALL_SEC;
 			node->index = dict_table_get_next_index(index);
@@ -1957,8 +2023,9 @@ exit_func:
 		choosing records to update. MySQL solves now the problem
 		externally! */
 
-		err = row_upd_clust_rec_by_insert(node, index, thr, check_ref,
-						  mtr);
+		err = row_upd_clust_rec_by_insert(
+			node, index, thr, referenced, mtr);
+
 		if (err != DB_SUCCESS) {
 
 			return(err);
@@ -2015,6 +2082,7 @@ row_upd(
 	if (node->state == UPD_NODE_UPDATE_CLUSTERED
 	    || node->state == UPD_NODE_INSERT_CLUSTERED) {
 
+		log_free_check();
 		err = row_upd_clust_step(node, thr);
 
 		if (err != DB_SUCCESS) {
@@ -2029,6 +2097,8 @@ row_upd(
 	}
 
 	while (node->index != NULL) {
+
+		log_free_check();
 		err = row_upd_sec_step(node, thr);
 
 		if (err != DB_SUCCESS) {

@@ -148,6 +148,14 @@ is bigger than the lsn we are able to scan up to, that is an indication that
 the recovery failed and the database may be corrupt. */
 UNIV_INTERN ib_uint64_t	recv_max_page_lsn;
 
+#ifdef UNIV_PFS_THREAD
+UNIV_INTERN mysql_pfs_key_t	trx_rollback_clean_thread_key;
+#endif /* UNIV_PFS_THREAD */
+
+#ifdef UNIV_PFS_MUTEX
+UNIV_INTERN mysql_pfs_key_t	recv_sys_mutex_key;
+#endif /* UNIV_PFS_MUTEX */
+
 /* prototypes */
 
 #ifndef UNIV_HOTBACKUP
@@ -175,7 +183,7 @@ recv_sys_create(void)
 	recv_sys = mem_alloc(sizeof(*recv_sys));
 	memset(recv_sys, 0x0, sizeof(*recv_sys));
 
-	mutex_create(&recv_sys->mutex, SYNC_RECV);
+	mutex_create(recv_sys_mutex_key, &recv_sys->mutex, SYNC_RECV);
 
 	recv_sys->heap = NULL;
 	recv_sys->addr_hash = NULL;
@@ -296,12 +304,14 @@ recv_sys_init(
 		return;
 	}
 
+#ifndef UNIV_HOTBACKUP
 	/* Initialize red-black tree for fast insertions into the
 	flush_list during recovery process.
 	As this initialization is done while holding the buffer pool
 	mutex we perform it before acquiring recv_sys->mutex. */
 #ifndef UNIV_HOTBACKUP
 	buf_flush_init_flush_rbt();
+#endif /* !UNIV_HOTBACKUP */
 
 	mutex_enter(&(recv_sys->mutex));
 
@@ -694,11 +704,11 @@ recv_find_max_checkpoint(
 
 			group->state = LOG_GROUP_OK;
 
-			group->lsn = mach_read_ull(
+			group->lsn = mach_read_from_8(
 				buf + LOG_CHECKPOINT_LSN);
 			group->lsn_offset = mach_read_from_4(
 				buf + LOG_CHECKPOINT_OFFSET);
-			checkpoint_no = mach_read_ull(
+			checkpoint_no = mach_read_from_8(
 				buf + LOG_CHECKPOINT_NO);
 
 #ifdef UNIV_DEBUG
@@ -768,14 +778,14 @@ recv_read_cp_info_for_backup(
 	cp_buf = hdr + LOG_CHECKPOINT_1;
 
 	if (recv_check_cp_is_consistent(cp_buf)) {
-		max_cp_no = mach_read_ull(cp_buf + LOG_CHECKPOINT_NO);
+		max_cp_no = mach_read_from_8(cp_buf + LOG_CHECKPOINT_NO);
 		max_cp = LOG_CHECKPOINT_1;
 	}
 
 	cp_buf = hdr + LOG_CHECKPOINT_2;
 
 	if (recv_check_cp_is_consistent(cp_buf)) {
-		if (mach_read_ull(cp_buf + LOG_CHECKPOINT_NO) > max_cp_no) {
+		if (mach_read_from_8(cp_buf + LOG_CHECKPOINT_NO) > max_cp_no) {
 			max_cp = LOG_CHECKPOINT_2;
 		}
 	}
@@ -786,7 +796,7 @@ recv_read_cp_info_for_backup(
 
 	cp_buf = hdr + max_cp;
 
-	*lsn = mach_read_ull(cp_buf + LOG_CHECKPOINT_LSN);
+	*lsn = mach_read_from_8(cp_buf + LOG_CHECKPOINT_LSN);
 	*offset = mach_read_from_4(cp_buf + LOG_CHECKPOINT_OFFSET);
 
 	/* If the user is running a pre-3.23.50 version of InnoDB, its
@@ -806,9 +816,9 @@ recv_read_cp_info_for_backup(
 
 	/*	fprintf(stderr, "fsp limit %lu MB\n", *fsp_limit); */
 
-	*cp_no = mach_read_ull(cp_buf + LOG_CHECKPOINT_NO);
+	*cp_no = mach_read_from_8(cp_buf + LOG_CHECKPOINT_NO);
 
-	*first_header_lsn = mach_read_ull(hdr + LOG_FILE_START_LSN);
+	*first_header_lsn = mach_read_from_8(hdr + LOG_FILE_START_LSN);
 
 	return(TRUE);
 }
@@ -1531,7 +1541,7 @@ recv_recover_page_func(
 #endif /* !UNIV_HOTBACKUP */
 
 	/* Read the newest modification lsn from the page */
-	page_lsn = mach_read_ull(page + FIL_PAGE_LSN);
+	page_lsn = mach_read_from_8(page + FIL_PAGE_LSN);
 
 #ifndef UNIV_HOTBACKUP
 	/* It may be that the page has been modified in the buffer
@@ -1606,14 +1616,14 @@ recv_recover_page_func(
 							 block, &mtr);
 
 			end_lsn = recv->start_lsn + recv->len;
-			mach_write_ull(FIL_PAGE_LSN + page, end_lsn);
-			mach_write_ull(UNIV_PAGE_SIZE
-				       - FIL_PAGE_END_LSN_OLD_CHKSUM
-				       + page, end_lsn);
+			mach_write_to_8(FIL_PAGE_LSN + page, end_lsn);
+			mach_write_to_8(UNIV_PAGE_SIZE
+					- FIL_PAGE_END_LSN_OLD_CHKSUM
+					+ page, end_lsn);
 
 			if (page_zip) {
-				mach_write_ull(FIL_PAGE_LSN
-					       + page_zip->data, end_lsn);
+				mach_write_to_8(FIL_PAGE_LSN
+						+ page_zip->data, end_lsn);
 			}
 		}
 
@@ -1649,9 +1659,15 @@ recv_recover_page_func(
 
 #ifndef UNIV_HOTBACKUP
 	if (modification_to_page) {
+		buf_pool_t*	buf_pool;
+
 		ut_a(block);
 
+		buf_pool = buf_pool_from_block(block);
+
+		log_flush_order_mutex_enter();
 		buf_flush_recv_note_modification(block, start_lsn, end_lsn);
+		log_flush_order_mutex_exit();
 	}
 #endif /* !UNIV_HOTBACKUP */
 
@@ -1836,11 +1852,10 @@ loop:
 		mutex_exit(&(recv_sys->mutex));
 		mutex_exit(&(log_sys->mutex));
 
-		n_pages = buf_flush_batch(BUF_FLUSH_LIST, ULINT_MAX,
-					  IB_ULONGLONG_MAX);
-		ut_a(n_pages != ULINT_UNDEFINED);
-
-		buf_flush_wait_batch_end(BUF_FLUSH_LIST);
+ 		n_pages = buf_flush_list(ULINT_MAX, IB_ULONGLONG_MAX);
+  		ut_a(n_pages != ULINT_UNDEFINED);
+  
+ 		buf_flush_wait_batch_end(NULL, BUF_FLUSH_LIST);
 
 		buf_pool_invalidate();
 
@@ -1980,7 +1995,7 @@ recv_apply_log_recs_for_backup(void)
 
 			buf_flush_init_for_writing(
 				block->frame, buf_block_get_page_zip(block),
-				mach_read_ull(block->frame + FIL_PAGE_LSN));
+				mach_read_from_8(block->frame + FIL_PAGE_LSN));
 
 			if (zip_size) {
 				error = fil_io(OS_FILE_WRITE, TRUE,
@@ -2750,8 +2765,8 @@ recv_scan_log_recs(
 		recv_parse_log_recs(store_to_hash);
 
 #ifndef UNIV_HOTBACKUP
-		if (store_to_hash && mem_heap_get_size(recv_sys->heap)
-		    > available_memory) {
+		if (store_to_hash
+		    && mem_heap_get_size(recv_sys->heap) > available_memory) {
 
 			/* Hash table of log records has grown too big:
 			empty it; FALSE means no ibuf operations
@@ -2803,8 +2818,10 @@ recv_group_scan_log_recs(
 				       group, start_lsn, end_lsn);
 
 		finished = recv_scan_log_recs(
-			(buf_pool->curr_size - recv_n_pool_free_frames)
-			* UNIV_PAGE_SIZE, TRUE, log_sys->buf, RECV_SCAN_SIZE,
+			(buf_pool_get_n_pages()
+			- (recv_n_pool_free_frames * srv_buf_pool_instances))
+			* UNIV_PAGE_SIZE,
+			TRUE, log_sys->buf, RECV_SCAN_SIZE,
 			start_lsn, contiguous_lsn, group_scanned_lsn);
 		start_lsn = end_lsn;
 	}
@@ -2944,9 +2961,9 @@ recv_recovery_from_checkpoint_start_func(
 
 	buf = log_sys->checkpoint_buf;
 
-	checkpoint_lsn = mach_read_ull(buf + LOG_CHECKPOINT_LSN);
-	checkpoint_no = mach_read_ull(buf + LOG_CHECKPOINT_NO);
-	archived_lsn = mach_read_ull(buf + LOG_CHECKPOINT_ARCHIVED_LSN);
+	checkpoint_lsn = mach_read_from_8(buf + LOG_CHECKPOINT_LSN);
+	checkpoint_no = mach_read_from_8(buf + LOG_CHECKPOINT_NO);
+	archived_lsn = mach_read_from_8(buf + LOG_CHECKPOINT_ARCHIVED_LSN);
 
 	/* Read the first log file header to print a note if this is
 	a recovery from a restored InnoDB Hot Backup */
@@ -3424,8 +3441,10 @@ recv_reset_log_files_for_backup(
 		sprintf(name, "%s%s%lu", log_dir,
 			ib_logfile_basename, (ulong)i);
 
-		log_file = os_file_create_simple(name, OS_FILE_CREATE,
-						 OS_FILE_READ_WRITE, &success);
+		log_file = os_file_create_simple(innodb_file_log_key,
+						 name, OS_FILE_CREATE,
+						 OS_FILE_READ_WRITE,
+						 &success);
 		if (!success) {
 			fprintf(stderr,
 				"InnoDB: Cannot create %s. Check that"
@@ -3464,7 +3483,8 @@ recv_reset_log_files_for_backup(
 				      LOG_BLOCK_HDR_SIZE);
 	sprintf(name, "%s%s%lu", log_dir, ib_logfile_basename, (ulong)0);
 
-	log_file = os_file_create_simple(name, OS_FILE_OPEN,
+	log_file = os_file_create_simple(innodb_file_log_key,
+					 name, OS_FILE_OPEN,
 					 OS_FILE_READ_WRITE, &success);
 	if (!success) {
 		fprintf(stderr, "InnoDB: Cannot open %s.\n", name);
@@ -3482,6 +3502,7 @@ recv_reset_log_files_for_backup(
 #endif /* UNIV_HOTBACKUP */
 
 #ifdef UNIV_LOG_ARCHIVE
+/* Dead code */
 /******************************************************//**
 Reads from the archive of a log group and performs recovery.
 @return	TRUE if no more complete consistent archive files */
@@ -3514,7 +3535,8 @@ try_open_again:
 
 	log_archived_file_name_gen(name, group->id, group->archived_file_no);
 
-	file_handle = os_file_create(name, OS_FILE_OPEN,
+	file_handle = os_file_create(innodb_file_log_key,
+				     name, OS_FILE_OPEN,
 				     OS_FILE_LOG, OS_FILE_AIO, &ret);
 
 	if (ret == FALSE) {
@@ -3591,8 +3613,8 @@ ask_again:
 		return(TRUE);
 	}
 
-	start_lsn = mach_read_ull(buf + LOG_FILE_START_LSN);
-	file_end_lsn = mach_read_ull(buf + LOG_FILE_END_LSN);
+	start_lsn = mach_read_from_8(buf + LOG_FILE_START_LSN);
+	file_end_lsn = mach_read_from_8(buf + LOG_FILE_END_LSN);
 
 	if (!recv_sys->scanned_lsn) {
 
@@ -3646,7 +3668,8 @@ ask_again:
 		       read_offset % UNIV_PAGE_SIZE, len, buf, NULL);
 
 		ret = recv_scan_log_recs(
-			(buf_pool->n_frames - recv_n_pool_free_frames)
+			(buf_pool_get_n_pages()
+			- (recv_n_pool_free_frames * srv_buf_pool_instances))
 			* UNIV_PAGE_SIZE, TRUE, buf, len, start_lsn,
 			&dummy_lsn, &scanned_lsn);
 

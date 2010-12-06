@@ -33,10 +33,10 @@ namespace drizzled
 #define ERRMSG_LVL_WARN 3
 #define ERRMSG_LVL_ERROR 4
 
-// todo: add __attribute__((format(printf, 1, 2)))
-bool errmsg_printf (int priority, char const *format, ...);
+bool errmsg_printf(int priority, char const *format, ...)
+  __attribute__((format(printf, 2, 3)));
 
-void sql_perror (const char *message);
+void sql_perror(const char *message);
 
 } /* namespace drizzled */
 

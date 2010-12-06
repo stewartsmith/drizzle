@@ -63,12 +63,14 @@ class SchemaIdentifier
 public:
 
 public:
+  typedef std::vector <SchemaIdentifier> vector;
+
   SchemaIdentifier(const std::string &db_arg);
 
   virtual ~SchemaIdentifier()
   { }
 
-  virtual const std::string &getSQLPath();
+  virtual void getSQLPath(std::string &arg) const;
   const std::string &getPath() const;
 
   const std::string &getSchemaName() const
@@ -111,7 +113,6 @@ public:
 
 };
 
-typedef std::vector <SchemaIdentifier> SchemaIdentifiers;
 
 } /* namespace drizzled */
 

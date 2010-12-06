@@ -82,6 +82,18 @@ UNIV_INTERN ulint	log_fsp_current_free_limit		= 0;
 /* Global log system variable */
 UNIV_INTERN log_t*	log_sys	= NULL;
 
+#ifdef UNIV_PFS_RWLOCK
+UNIV_INTERN mysql_pfs_key_t	checkpoint_lock_key;
+# ifdef UNIV_LOG_ARCHIVE
+UNIV_INTERN mysql_pfs_key_t	archive_lock_key;
+# endif
+#endif /* UNIV_PFS_RWLOCK */
+
+#ifdef UNIV_PFS_MUTEX
+UNIV_INTERN mysql_pfs_key_t	log_sys_mutex_key;
+UNIV_INTERN mysql_pfs_key_t	log_flush_order_mutex_key;
+#endif /* UNIV_PFS_MUTEX */
+
 #ifdef UNIV_DEBUG
 UNIV_INTERN ibool	log_do_write = TRUE;
 #endif /* UNIV_DEBUG */
@@ -756,7 +768,11 @@ log_init(void)
 {
 	log_sys = mem_alloc(sizeof(log_t));
 
-	mutex_create(&log_sys->mutex, SYNC_LOG);
+	mutex_create(log_sys_mutex_key, &log_sys->mutex, SYNC_LOG);
+
+	mutex_create(log_flush_order_mutex_key,
+		     &log_sys->log_flush_order_mutex,
+		     SYNC_LOG_FLUSH_ORDER);
 
 	mutex_enter(&(log_sys->mutex));
 
@@ -812,7 +828,8 @@ log_init(void)
 	log_sys->last_checkpoint_lsn = log_sys->lsn;
 	log_sys->n_pending_checkpoint_writes = 0;
 
-	rw_lock_create(&log_sys->checkpoint_lock, SYNC_NO_ORDER_CHECK);
+	rw_lock_create(checkpoint_lock_key, &log_sys->checkpoint_lock,
+		       SYNC_NO_ORDER_CHECK);
 
 	log_sys->checkpoint_buf_ptr = mem_alloc(2 * OS_FILE_LOG_BLOCK_SIZE);
 	log_sys->checkpoint_buf = ut_align(log_sys->checkpoint_buf_ptr,
@@ -828,7 +845,8 @@ log_init(void)
 
 	log_sys->n_pending_archive_ios = 0;
 
-	rw_lock_create(&log_sys->archive_lock, SYNC_NO_ORDER_CHECK);
+	rw_lock_create(archive_lock_key, &log_sys->archive_lock,
+		       SYNC_NO_ORDER_CHECK);
 
 	log_sys->archive_buf = NULL;
 
@@ -1148,7 +1166,7 @@ log_group_file_header_flush(
 	buf = *(group->file_header_bufs + nth_file);
 
 	mach_write_to_4(buf + LOG_GROUP_ID, group->id);
-	mach_write_ull(buf + LOG_FILE_START_LSN, start_lsn);
+	mach_write_to_8(buf + LOG_FILE_START_LSN, start_lsn);
 
 	/* Wipe over possible label of ibbackup --restore */
 	memcpy(buf + LOG_FILE_WAS_CREATED_BY_HOT_BACKUP, "    ", 4);
@@ -1637,10 +1655,10 @@ log_preflush_pool_modified_pages(
 		recv_apply_hashed_log_recs(TRUE);
 	}
 
-	n_pages = buf_flush_batch(BUF_FLUSH_LIST, ULINT_MAX, new_oldest);
+	n_pages = buf_flush_list(ULINT_MAX, new_oldest);
 
 	if (sync) {
-		buf_flush_wait_batch_end(BUF_FLUSH_LIST);
+		buf_flush_wait_batch_end(NULL, BUF_FLUSH_LIST);
 	}
 
 	if (n_pages == ULINT_UNDEFINED) {
@@ -1751,8 +1769,8 @@ log_group_checkpoint(
 
 	buf = group->checkpoint_buf;
 
-	mach_write_ull(buf + LOG_CHECKPOINT_NO, log_sys->next_checkpoint_no);
-	mach_write_ull(buf + LOG_CHECKPOINT_LSN, log_sys->next_checkpoint_lsn);
+	mach_write_to_8(buf + LOG_CHECKPOINT_NO, log_sys->next_checkpoint_no);
+	mach_write_to_8(buf + LOG_CHECKPOINT_LSN, log_sys->next_checkpoint_lsn);
 
 	mach_write_to_4(buf + LOG_CHECKPOINT_OFFSET,
 			log_group_calc_lsn_offset(
@@ -1772,9 +1790,9 @@ log_group_checkpoint(
 		}
 	}
 
-	mach_write_ull(buf + LOG_CHECKPOINT_ARCHIVED_LSN, archived_lsn);
+	mach_write_to_8(buf + LOG_CHECKPOINT_ARCHIVED_LSN, archived_lsn);
 #else /* UNIV_LOG_ARCHIVE */
-	mach_write_ull(buf + LOG_CHECKPOINT_ARCHIVED_LSN, IB_ULONGLONG_MAX);
+	mach_write_to_8(buf + LOG_CHECKPOINT_ARCHIVED_LSN, IB_ULONGLONG_MAX);
 #endif /* UNIV_LOG_ARCHIVE */
 
 	for (i = 0; i < LOG_MAX_N_GROUPS; i++) {
@@ -1866,7 +1884,7 @@ log_reset_first_header_and_checkpoint(
 	ib_uint64_t	lsn;
 
 	mach_write_to_4(hdr_buf + LOG_GROUP_ID, 0);
-	mach_write_ull(hdr_buf + LOG_FILE_START_LSN, start);
+	mach_write_to_8(hdr_buf + LOG_FILE_START_LSN, start);
 
 	lsn = start + LOG_BLOCK_HDR_SIZE;
 
@@ -1878,15 +1896,15 @@ log_reset_first_header_and_checkpoint(
 				+ (sizeof "ibbackup ") - 1));
 	buf = hdr_buf + LOG_CHECKPOINT_1;
 
-	mach_write_ull(buf + LOG_CHECKPOINT_NO, 0);
-	mach_write_ull(buf + LOG_CHECKPOINT_LSN, lsn);
+	mach_write_to_8(buf + LOG_CHECKPOINT_NO, 0);
+	mach_write_to_8(buf + LOG_CHECKPOINT_LSN, lsn);
 
 	mach_write_to_4(buf + LOG_CHECKPOINT_OFFSET,
 			LOG_FILE_HDR_SIZE + LOG_BLOCK_HDR_SIZE);
 
 	mach_write_to_4(buf + LOG_CHECKPOINT_LOG_BUF_SIZE, 2 * 1024 * 1024);
 
-	mach_write_ull(buf + LOG_CHECKPOINT_ARCHIVED_LSN, IB_ULONGLONG_MAX);
+	mach_write_to_8(buf + LOG_CHECKPOINT_ARCHIVED_LSN, IB_ULONGLONG_MAX);
 
 	fold = ut_fold_binary(buf, LOG_CHECKPOINT_CHECKSUM_1);
 	mach_write_to_4(buf + LOG_CHECKPOINT_CHECKSUM_1, fold);
@@ -2254,7 +2272,7 @@ log_group_archive_file_header_write(
 	buf = *(group->archive_file_header_bufs + nth_file);
 
 	mach_write_to_4(buf + LOG_GROUP_ID, group->id);
-	mach_write_ull(buf + LOG_FILE_START_LSN, start_lsn);
+	mach_write_to_8(buf + LOG_FILE_START_LSN, start_lsn);
 	mach_write_to_4(buf + LOG_FILE_NO, file_no);
 
 	mach_write_to_4(buf + LOG_FILE_ARCH_COMPLETED, FALSE);
@@ -2290,7 +2308,7 @@ log_group_archive_completed_header_write(
 	buf = *(group->archive_file_header_bufs + nth_file);
 
 	mach_write_to_4(buf + LOG_FILE_ARCH_COMPLETED, TRUE);
-	mach_write_ull(buf + LOG_FILE_END_LSN, end_lsn);
+	mach_write_to_8(buf + LOG_FILE_END_LSN, end_lsn);
 
 	dest_offset = nth_file * group->file_size + LOG_FILE_ARCH_COMPLETED;
 
@@ -2354,13 +2372,15 @@ loop:
 		log_archived_file_name_gen(name, group->id,
 					   group->archived_file_no + n_files);
 
-		file_handle = os_file_create(name, open_mode, OS_FILE_AIO,
+		file_handle = os_file_create(innodb_file_log_key,
+					     name, open_mode,
+					     OS_FILE_AIO,
 					     OS_DATA_FILE, &ret);
 
 		if (!ret && (open_mode == OS_FILE_CREATE)) {
 			file_handle = os_file_create(
-				name, OS_FILE_OPEN, OS_FILE_AIO,
-				OS_DATA_FILE, &ret);
+				innodb_file_log_key, name, OS_FILE_OPEN,
+				OS_FILE_AIO, OS_DATA_FILE, &ret);
 		}
 
 		if (!ret) {
@@ -3111,16 +3131,13 @@ loop:
 		return; /* We SKIP ALL THE REST !! */
 	}
 
-	/* Check that the master thread is suspended */
+	mutex_exit(&kernel_mutex);
 
-	if (srv_n_threads_active[SRV_MASTER] != 0) {
+	/* Check that the background threads are suspended */
 
-		mutex_exit(&kernel_mutex);
-
+	if (srv_is_any_background_thread_active()) {
 		goto loop;
 	}
-
-	mutex_exit(&kernel_mutex);
 
 	mutex_enter(&(log_sys->mutex));
 
@@ -3179,18 +3196,14 @@ loop:
 
 	mutex_exit(&(log_sys->mutex));
 
-	mutex_enter(&kernel_mutex);
-	/* Check that the master thread has stayed suspended */
-	if (srv_n_threads_active[SRV_MASTER] != 0) {
+	/* Check that the background threads stay suspended */
+	if (srv_is_any_background_thread_active()) {
 		fprintf(stderr,
-			"InnoDB: Warning: the master thread woke up"
+			"InnoDB: Warning: some background thread woke up"
 			" during shutdown\n");
-
-		mutex_exit(&kernel_mutex);
 
 		goto loop;
 	}
-	mutex_exit(&kernel_mutex);
 
 	fil_flush_file_spaces(FIL_TABLESPACE);
 	fil_flush_file_spaces(FIL_LOG);
@@ -3208,7 +3221,8 @@ loop:
 	srv_shutdown_state = SRV_SHUTDOWN_LAST_PHASE;
 
 	/* Make some checks that the server really is quiet */
-	ut_a(srv_n_threads_active[SRV_MASTER] == 0);
+	ut_a(!srv_is_any_background_thread_active());
+
 	ut_a(buf_all_freed());
 	ut_a(lsn == log_sys->lsn);
 
@@ -3229,7 +3243,8 @@ loop:
 	fil_close_all_files();
 
 	/* Make some checks that the server really is quiet */
-	ut_a(srv_n_threads_active[SRV_MASTER] == 0);
+	ut_a(!srv_is_any_background_thread_active());
+
 	ut_a(buf_all_freed());
 	ut_a(lsn == log_sys->lsn);
 }
@@ -3270,9 +3285,9 @@ log_check_log_recs(
 
 	ut_memcpy(scan_buf, start, end - start);
 
-	recv_scan_log_recs((buf_pool->curr_size
-			    - recv_n_pool_free_frames) * UNIV_PAGE_SIZE,
-			   FALSE, scan_buf, end - start,
+	recv_scan_log_recs((buf_pool_get_n_pages()
+			   - (recv_n_pool_free_frames * srv_buf_pool_instances))
+			   * UNIV_PAGE_SIZE, FALSE, scan_buf, end - start,
 			   ut_uint64_align_down(buf_start_lsn,
 						OS_FILE_LOG_BLOCK_SIZE),
 			   &contiguous_lsn, &scanned_lsn);

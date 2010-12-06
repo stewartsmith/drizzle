@@ -1464,6 +1464,7 @@ page_zip_fields_free(
 		dict_table_t*	table = index->table;
 		mem_heap_free(index->heap);
 		mutex_free(&(table->autoinc_mutex));
+		ut_free(table->name);
 		mem_heap_free(table->heap);
 	}
 }
@@ -4421,6 +4422,7 @@ page_zip_reorganize(
 	dict_index_t*	index,	/*!< in: index of the B-tree node */
 	mtr_t*		mtr)	/*!< in: mini-transaction */
 {
+	buf_pool_t*	buf_pool	= buf_pool_from_block(block);
 	page_zip_des_t*	page_zip	= buf_block_get_page_zip(block);
 	page_t*		page		= buf_block_get_frame(block);
 	buf_block_t*	temp_block;
@@ -4438,7 +4440,7 @@ page_zip_reorganize(
 	log_mode = mtr_set_log_mode(mtr, MTR_LOG_NONE);
 
 #ifndef UNIV_HOTBACKUP
-	temp_block = buf_block_alloc(0);
+	temp_block = buf_block_alloc(buf_pool, 0);
 	btr_search_drop_page_hash_index(block);
 	block->check_index_page_at_flush = TRUE;
 #else /* !UNIV_HOTBACKUP */
@@ -4466,7 +4468,7 @@ page_zip_reorganize(
 		/* Copy max trx id to recreated page */
 		trx_id_t	max_trx_id = page_get_max_trx_id(temp_page);
 		page_set_max_trx_id(block, NULL, max_trx_id, NULL);
-		ut_ad(!ut_dulint_is_zero(max_trx_id));
+		ut_ad(max_trx_id != 0);
 	}
 
 	/* Restore logging. */
@@ -4526,7 +4528,7 @@ page_zip_copy_recs(
 	/* The PAGE_MAX_TRX_ID must be set on leaf pages of secondary
 	indexes.  It does not matter on other pages. */
 	ut_a(dict_index_is_clust(index) || !page_is_leaf(src)
-	     || !ut_dulint_is_zero(page_get_max_trx_id(src)));
+	     || page_get_max_trx_id(src));
 
 	UNIV_MEM_ASSERT_W(page, UNIV_PAGE_SIZE);
 	UNIV_MEM_ASSERT_W(page_zip->data, page_zip_get_size(page_zip));

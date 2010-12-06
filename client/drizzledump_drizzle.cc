@@ -351,7 +351,7 @@ DrizzleDumpDataDrizzle::DrizzleDumpDataDrizzle(DrizzleDumpTable *dataTable,
   result= dcon->query(query);
 
   if (result == NULL)
-    throw 1;
+    throw std::exception();
 }
 
 DrizzleDumpDataDrizzle::~DrizzleDumpDataDrizzle()
