@@ -233,8 +233,6 @@ set by user, however, it will be adjusted to the newer file format if
 a table of such format is created/opened. */
 static string innobase_file_format_max;
 
-std::string  innobase_log_arch_dir;
-
 /* Below we have boolean-valued start-up parameters, and their default
 values */
 
@@ -242,9 +240,6 @@ typedef constrained_check<uint16_t, 2, 0> trinary_constraint;
 static trinary_constraint innobase_fast_shutdown;
 
 static my_bool  innobase_file_format_check = TRUE;
-#ifdef UNIV_LOG_ARCHIVE
-static my_bool  innobase_log_archive= FALSE;
-#endif /* UNIV_LOG_ARCHIVE */
 static my_bool  innobase_use_doublewrite    = TRUE;
 static my_bool  innobase_use_checksums      = TRUE;
 static my_bool  innobase_rollback_on_timeout    = FALSE;
@@ -2000,14 +1995,6 @@ innobase_init(
   }
 
 
-#ifdef UNIV_LOG_ARCHIVE
-  if (vm.count("log-arch-dir"))
-  {
-    innobase_log_arch_dir= vm["log-arch-dir"].as<string>());
-  }
-
-#endif /* UNIV_LOG_ARCHIVE */
-
   if (vm.count("stats-sample-pages"))
   {
     if (srv_stats_sample_pages < 8)
@@ -2199,16 +2186,6 @@ mem_free_and_error:
     innobase_log_group_home_dir= getDataHome().file_string();
   }
 
-#ifdef UNIV_LOG_ARCHIVE
-  /* Since innodb_log_arch_dir has no relevance under MySQL,
-    starting from 4.0.6 we always set it the same as
-innodb_log_group_home_dir: */
-
-  innobase_log_arch_dir = (char *)innobase_log_group_home_dir.c_str();
-
-  srv_arch_dir = (char *)innobase_log_arch_dir.c_str();
-#endif /* UNIG_LOG_ARCHIVE */
-
   ret = (bool)
     srv_parse_log_group_home_dirs((char *)innobase_log_group_home_dir.c_str());
 
@@ -2303,9 +2280,6 @@ innobase_change_buffering_inited_ok:
   srv_n_log_files = (ulint) innobase_log_files_in_group;
   srv_log_file_size = (ulint) innobase_log_file_size;
 
-#ifdef UNIV_LOG_ARCHIVE
-  srv_log_archive_on = (ulint) innobase_log_archive;
-#endif /* UNIV_LOG_ARCHIVE */
   srv_log_buffer_size = (ulint) innobase_log_buffer_size;
 
   srv_buf_pool_size = (ulint) innobase_buffer_pool_size;
@@ -2430,10 +2404,6 @@ innobase_change_buffering_inited_ok:
   context.registerVariable(new sys_var_const_string_val("data-file-path", innobase_data_file_path));
   context.registerVariable(new sys_var_const_string_val("version", vm["version"].as<string>()));
 
-  #ifdef UNIV_LOG_ARCHIVE
-  context.registerVariable(new sys_var_const_string_val("log-arch-dir", innobase_log_arch_dir));
-  context.registerVariable(new sys_var_bool_ptr_readonly("log-archive", &innobase_log_archive));
-  #endif /* UNIV_LOG_ARCHIVE */  
 
   context.add(new(std::nothrow)InnodbReplicationTable());
 
@@ -2454,9 +2424,6 @@ innobase_change_buffering_inited_ok:
   context.registerVariable(new sys_var_bool_ptr_readonly("use-sys-malloc", &srv_use_sys_malloc));
   context.registerVariable(new sys_var_bool_ptr_readonly("use-native-aio", &srv_use_native_aio));
 
-#ifdef UNIV_LOG_ARCHIVE
- context.registerVariable(new sys_var_bool_ptr_readonly("log_archive", &innobase_log_archive));
-#endif /* UNIV_LOG_ARCHIVE */
   context.registerVariable(new sys_var_bool_ptr("support-xa", &support_xa));
   context.registerVariable(new sys_var_bool_ptr("strict_mode", &strict_mode));
   context.registerVariable(new sys_var_constrained_value<uint32_t>("lock_wait_timeout", lock_wait_timeout));
@@ -9475,14 +9442,6 @@ static void init_options(drizzled::module::option_context &context)
   context("flush-method",
           po::value<string>(),
           "With which method to flush data.");
-#ifdef UNIV_LOG_ARCHIVE
-  context("log-arch-dir",
-          po::value<string>(),
-          "Where full logs should be archived.");
-  context("log-archive",
-          po::value<bool>(&innobase_log_archive)->default_value(false)->zero_tokens(),
-          "Set to 1 if you want to have logs archived.");
-#endif /* UNIV_LOG_ARCHIVE */
   context("log-group-home-dir",
           po::value<string>(),
           "Path to InnoDB log files.");
@@ -9597,9 +9556,6 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(read_io_threads),
   DRIZZLE_SYSVAR(write_io_threads),
   DRIZZLE_SYSVAR(force_recovery),
-#ifdef UNIV_LOG_ARCHIVE
-  DRIZZLE_SYSVAR(log_archive),
-#endif /* UNIV_LOG_ARCHIVE */
   DRIZZLE_SYSVAR(log_buffer_size),
   DRIZZLE_SYSVAR(log_files_in_group),
   DRIZZLE_SYSVAR(mirrored_log_groups),
