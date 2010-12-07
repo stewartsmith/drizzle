@@ -225,7 +225,9 @@ static uint64_constraint innodb_replication_delay;
 
 /** Percentage of the buffer pool to reserve for 'old' blocks.
 Connected to buf_LRU_old_ratio. */
-static uint innobase_old_blocks_pct;
+typedef constrained_check<uint32_t, 95, 5> old_blocks_constraint;
+static old_blocks_constraint innobase_old_blocks_pct;
+
 
 /* The default values for the following char* start-up parameters
 are determined in innobase_init below: */
@@ -1848,6 +1850,11 @@ static void innodb_adaptive_hash_index_update(Session *, sql_var_t)
   }
 }
 
+static void innodb_old_blocks_pct_update(Session *, sql_var_t)
+{
+  innobase_old_blocks_pct= buf_LRU_old_ratio_update(innobase_old_blocks_pct.get(), TRUE);
+}
+
 static int innodb_commit_concurrency_validate(Session *session, set_var *var)
 {
    uint32_t new_value= var->save_result.uint32_t_value;
@@ -2254,7 +2261,8 @@ innobase_change_buffering_inited_ok:
     goto mem_free_and_error;
   }
 
-  innobase_old_blocks_pct = buf_LRU_old_ratio_update(innobase_old_blocks_pct,
+
+  innobase_old_blocks_pct = buf_LRU_old_ratio_update(innobase_old_blocks_pct.get(),
                                                      TRUE);
 
   innobase_open_tables = hash_create(200);
@@ -2391,6 +2399,10 @@ innobase_change_buffering_inited_ok:
   context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("log_files_in_group", innobase_log_files_in_group));
   context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("mirrored_log_groups", innobase_mirrored_log_groups));
   context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("open_files", innobase_open_files));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("old_blocks_pct",
+                                                                   innobase_old_blocks_pct,
+                                                                   innodb_old_blocks_pct_update));
+  context.registerVariable(new sys_var_uint32_t_ptr("old_blocks_time", &buf_LRU_old_threshold_ms));
 
 
   /* Get the current high water mark format. */
@@ -9116,24 +9128,6 @@ innobase_file_format_validate_and_set(
   }
 }
 
-/****************************************************************//**
-Update the system variable innodb_old_blocks_pct using the "saved"
-value. This function is registered as a callback with MySQL. */
-static
-void
-innodb_old_blocks_pct_update(
-/*=========================*/
-	Session*			,	/*!< in: thread handle */
-	drizzle_sys_var*	,	/*!< in: pointer to
-						system variable */
-	void*				,/*!< out: where the
-						formal string goes */
-	const void*			save)	/*!< in: immediate result
-						from check function */
-{
-	innobase_old_blocks_pct = buf_LRU_old_ratio_update(
-		*static_cast<const uint*>(save), TRUE);
-}
 
 /*************************************************************//**
 Check if it is a valid value of innodb_change_buffering. This function is
@@ -9201,18 +9195,6 @@ innodb_change_buffering_update(
 }
 
 /* plugin options */
-
-static DRIZZLE_SYSVAR_UINT(old_blocks_pct, innobase_old_blocks_pct,
-  PLUGIN_VAR_RQCMDARG,
-  "Percentage of the buffer pool to reserve for 'old' blocks.",
-  NULL, innodb_old_blocks_pct_update, 100 * 3 / 8, 5, 95, 0);
-
-static DRIZZLE_SYSVAR_UINT(old_blocks_time, buf_LRU_old_threshold_ms,
-  PLUGIN_VAR_RQCMDARG,
-  "Move blocks to the 'new' end of the buffer pool if the first access"
-  " was at least this many milliseconds ago."
-  " The timeout is disabled if 0 (the default).",
-  NULL, NULL, 0, 0, UINT32_MAX, 0);
 
 static DRIZZLE_SYSVAR_ULONG(sync_spin_loops, srv_n_spin_wait_rounds,
   PLUGIN_VAR_RQCMDARG,
@@ -9389,15 +9371,21 @@ static void init_options(drizzled::module::option_context &context)
           "Use strict mode when evaluating create options.");
   context("replication-log",
           po::value<bool>(&innobase_use_replication_log)->default_value(false),
-          "Enable internal replication log.");
+          _("Enable internal replication log."));
   context("lock-wait-timeout",
           po::value<lock_wait_constraint>(&lock_wait_timeout)->default_value(50),
-          "Timeout in seconds an InnoDB transaction may wait for a lock before being rolled back. Values above 100000000 disable the timeout.");
+          _("Timeout in seconds an InnoDB transaction may wait for a lock before being rolled back. Values above 100000000 disable the timeout."));
+  context("old-blocks-pct",
+          po::value<old_blocks_constraint>(&innobase_old_blocks_pct)->default_value(100 * 3 / 8),
+          _("Percentage of the buffer pool to reserve for 'old' blocks."));
+  context("old-blocks-time",
+          po::value<uint32_t>(&buf_LRU_old_threshold_ms)->default_value(0),
+          _("ove blocks to the 'new' end of the buffer pool if the first access"
+            " was at least this many milliseconds ago."
+            " The timeout is disabled if 0 (the default)."));
 }
 
 static drizzle_sys_var* innobase_system_variables[]= {
-  DRIZZLE_SYSVAR(old_blocks_pct),
-  DRIZZLE_SYSVAR(old_blocks_time),
   DRIZZLE_SYSVAR(sync_spin_loops),
   DRIZZLE_SYSVAR(spin_wait_delay),
   DRIZZLE_SYSVAR(thread_concurrency),
