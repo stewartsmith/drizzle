@@ -243,7 +243,7 @@ std::string innobase_data_home_dir;
 std::string innobase_data_file_path;
 std::string innobase_log_group_home_dir;
 static string innobase_file_format_name;
-static char* innobase_change_buffering= NULL;
+static string innobase_change_buffering;
 
 /* The highest file format being used in the database. The value can be
 set by user, however, it will be adjusted to the newer file format if
@@ -1938,6 +1938,39 @@ innodb_file_format_name_validate(
 }
 
 /*************************************************************//**
+Check if it is a valid value of innodb_change_buffering. This function is
+registered as a callback with MySQL.
+@return 0 for valid innodb_change_buffering */
+static
+int
+innodb_change_buffering_validate(
+/*=============================*/
+  Session*      , /*!< in: thread handle */
+  set_var *var)
+{
+  const char *change_buffering_input = var->value->str_value.ptr();
+
+  if (change_buffering_input == NULL)
+    return 1;
+
+  ulint use;
+
+  for (use = 0;
+       use < UT_ARR_SIZE(innobase_change_buffering_values);
+       ++use) {
+    if (!innobase_strcasecmp(change_buffering_input,
+                             innobase_change_buffering_values[use]))
+    {
+      ibuf_use= static_cast<ibuf_use_t>(use); 
+      return 0;
+    }
+  }
+
+  return 1;
+}
+
+
+/*************************************************************//**
 Check if valid argument to innodb_file_format_max. This function
 is registered as a callback with MySQL.
 @return 0 for valid file format */
@@ -2188,9 +2221,9 @@ mem_free_and_error:
          use < UT_ARR_SIZE(innobase_change_buffering_values);
          use++) {
       if (!innobase_strcasecmp(
-                               vm["change-buffering"].as<string>().c_str(),
+                               innobase_change_buffering.c_str(),
                                innobase_change_buffering_values[use])) {
-        ibuf_use = (ibuf_use_t) use;
+        ibuf_use = static_cast<ibuf_use_t>(use);
         goto innobase_change_buffering_inited_ok;
       }
     }
@@ -2204,8 +2237,7 @@ mem_free_and_error:
 
 innobase_change_buffering_inited_ok:
   ut_a((ulint) ibuf_use < UT_ARR_SIZE(innobase_change_buffering_values));
-  innobase_change_buffering = (char*)
-    innobase_change_buffering_values[ibuf_use];
+  innobase_change_buffering = innobase_change_buffering_values[ibuf_use];
 
   /* --------------------------------------------------*/
 
@@ -2383,6 +2415,9 @@ innobase_change_buffering_inited_ok:
   context.registerVariable(new sys_var_std_string("file_format",
                                                   innobase_file_format_name,
                                                   innodb_file_format_name_validate));
+  context.registerVariable(new sys_var_std_string("change_buffering",
+                                                  innobase_change_buffering,
+                                                  innodb_change_buffering_validate));
   context.registerVariable(new sys_var_std_string("file_format_max",
                                                   innobase_file_format_max,
                                                   innodb_file_format_max_validate));
@@ -9146,79 +9181,6 @@ innobase_file_format_validate_and_set(
 }
 
 
-/*************************************************************//**
-Check if it is a valid value of innodb_change_buffering. This function is
-registered as a callback with MySQL.
-@return 0 for valid innodb_change_buffering */
-static
-int
-innodb_change_buffering_validate(
-/*=============================*/
-  Session*      , /*!< in: thread handle */
-  drizzle_sys_var*  , /*!< in: pointer to system
-            variable */
-  void*       save, /*!< out: immediate result
-            for update function */
-  drizzle_value*    value)  /*!< in: incoming string */
-{
-  const char* change_buffering_input;
-  char    buff[STRING_BUFFER_USUAL_SIZE];
-  int   len = sizeof(buff);
-
-  ut_a(save != NULL);
-  ut_a(value != NULL);
-
-  change_buffering_input = value->val_str(value, buff, &len);
-
-  if (change_buffering_input != NULL) {
-    ulint use;
-
-    for (use = 0; use < UT_ARR_SIZE(innobase_change_buffering_values);
-         use++) {
-      if (!innobase_strcasecmp(
-            change_buffering_input,
-            innobase_change_buffering_values[use])) {
-        *(ibuf_use_t*) save = (ibuf_use_t) use;
-        return(0);
-      }
-    }
-  }
-
-  return(1);
-}
-
-/****************************************************************//**
-Update the system variable innodb_change_buffering using the "saved"
-value. This function is registered as a callback with MySQL. */
-static
-void
-innodb_change_buffering_update(
-/*===========================*/
-  Session*      ,   /*!< in: thread handle */
-  drizzle_sys_var*  ,   /*!< in: pointer to
-              system variable */
-  void*       var_ptr,  /*!< out: where the
-              formal string goes */
-  const void*     save)   /*!< in: immediate result
-              from check function */
-{
-  ut_a(var_ptr != NULL);
-  ut_a(save != NULL);
-  ut_a((*(ibuf_use_t*) save) < IBUF_USE_COUNT);
-
-  ibuf_use = *(const ibuf_use_t*) save;
-
-  *(const char**) var_ptr = innobase_change_buffering_values[ibuf_use];
-}
-
-/* plugin options */
-
-static DRIZZLE_SYSVAR_STR(change_buffering, innobase_change_buffering,
-  PLUGIN_VAR_RQCMDARG,
-  "Buffer changes to reduce random access: "
-  "OFF, ON, inserting, deleting, changing or purging..",
-  innodb_change_buffering_validate,
-  innodb_change_buffering_update, "all");
 
 static void init_options(drizzled::module::option_context &context)
 {
@@ -9348,7 +9310,7 @@ static void init_options(drizzled::module::option_context &context)
   context("use-internal-malloc",
           "Use InnoDB's internal memory allocator instal of the OS memory allocator.");
   context("change-buffering",
-          po::value<string>(),
+          po::value<string>(&innobase_change_buffering),
           "Buffer changes to reduce random access: OFF, ON, inserting, deleting, changing, or purging.");
   context("read-ahead-threshold",
           po::value<read_ahead_threshold_constraint>(&innodb_read_ahead_threshold)->default_value(56),
@@ -9376,10 +9338,7 @@ static void init_options(drizzled::module::option_context &context)
             " The timeout is disabled if 0 (the default)."));
 }
 
-static drizzle_sys_var* innobase_system_variables[]= {
-  DRIZZLE_SYSVAR(change_buffering),
-  NULL
-};
+
 
 DRIZZLE_DECLARE_PLUGIN
 {
@@ -9390,7 +9349,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Supports transactions, row-level locking, and foreign keys",
   PLUGIN_LICENSE_GPL,
   innobase_init, /* Plugin Init */
-  innobase_system_variables, /* system variables */
+  NULL, /* system variables */
   init_options /* reserved */
 }
 DRIZZLE_DECLARE_PLUGIN_END;
