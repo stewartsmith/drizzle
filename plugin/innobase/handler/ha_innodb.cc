@@ -2366,13 +2366,12 @@ innobase_change_buffering_inited_ok:
   context.add(innodb_sys_foreign_cols_tool);
 
   context.add(new(std::nothrow)InnodbInternalTables());
+  context.add(new(std::nothrow)InnodbReplicationTable());
+
   if (innobase_use_replication_log)
   {
-
-    context.add(new(std::nothrow)InnodbReplicationTable());
     replication_logger= new(std::nothrow)ReplicationLog();
     context.add(replication_logger);
-
     ReplicationLog::setup(replication_logger);
   }
 
