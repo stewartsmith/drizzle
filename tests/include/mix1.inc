@@ -916,6 +916,7 @@ set global innodb_autoextend_increment=8;
 set global innodb_autoextend_increment=@my_innodb_autoextend_increment;
 
 set @my_innodb_commit_concurrency=@@global.innodb_commit_concurrency;
+--error ER_WRONG_ARGUMENTS
 set global innodb_commit_concurrency=0;
 set global innodb_commit_concurrency=@my_innodb_commit_concurrency;
 
