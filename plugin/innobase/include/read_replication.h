@@ -1,5 +1,5 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
- *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ * vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2010 Brian Aker
  *
@@ -18,16 +18,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* Only Linux defines getrusage's RUSAGE_THREAD */
+#ifndef read_replication_h
+#define read_replication_h
 
-#ifndef DRIZZLED_INTERNAL_GETRUSAGE_H
-#define DRIZZLED_INTERNAL_GETRUSAGE_H
+struct read_replication_return_st {
+  unsigned long long id;
+  unsigned long long message_length;
+  const char *message;
+};
 
-#include <sys/time.h>
-#include <sys/resource.h>
-
-#ifndef RUSAGE_THREAD
-#define RUSAGE_THREAD RUSAGE_SELF
 #endif
-
-#endif /* DRIZZLED_INTERNAL_GETRUSAGE_H */

@@ -58,6 +58,7 @@ class TableIdentifier : public SchemaIdentifier
 {
 public:
   typedef message::Table::TableType Type;
+  typedef std::vector <TableIdentifier> vector;
 
   class Key
   {
@@ -286,8 +287,6 @@ public:
 
 std::size_t hash_value(TableIdentifier const& b);
 std::size_t hash_value(TableIdentifier::Key const& b);
-
-typedef std::vector <TableIdentifier> TableIdentifiers;
 
 } /* namespace drizzled */
 

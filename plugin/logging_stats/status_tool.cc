@@ -85,7 +85,7 @@ StatusTool::StatusTool(LoggingStats *in_logging_stats, bool inIsLocal) :
 
   drizzle_show_var *var= NULL;
   uint32_t count= 0;
-  vector<drizzle_show_var *>::iterator all_status_vars_iterator= all_status_vars.begin();
+  std::vector<drizzle_show_var *>::iterator all_status_vars_iterator= all_status_vars.begin();
   while (true)
   {
     var= &StatusHelper::status_vars_defs[count];
@@ -100,7 +100,7 @@ StatusTool::StatusTool(LoggingStats *in_logging_stats, bool inIsLocal) :
 }
 
 StatusTool::Generator::Generator(Field **arg, LoggingStats *in_logging_stats,
-                                 vector<drizzle_show_var *> *in_all_status_vars, 
+                                 std::vector<drizzle_show_var *> *in_all_status_vars, 
                                  bool inIsLocal) :
   TableFunction::Generator(arg),
   logging_stats(in_logging_stats),

@@ -1,9 +1,9 @@
-create database user1;
-create database user2;
-show databases;
-Database
-DATA_DICTIONARY
-INFORMATION_SCHEMA
+create schema user1;
+create schema user2;
+SELECT SCHEMA_NAME FROM DATA_DICTIONARY.SCHEMAS ORDER BY SCHEMA_NAME;
+SCHEMA_NAME
+data_dictionary
+information_schema
 mysql
 test
 user1
@@ -13,56 +13,56 @@ create table t1 (kill_id int);
 insert into t1 values(connection_id());
 SELECT * from user1.dont_exist;
 ERROR 42S02: Table 'user1.dont_exist' doesn't exist
-show databases;
-Database
-DATA_DICTIONARY
-INFORMATION_SCHEMA
+SELECT SCHEMA_NAME FROM DATA_DICTIONARY.SCHEMAS ORDER BY SCHEMA_NAME;
+SCHEMA_NAME
+data_dictionary
+information_schema
 user1
 SELECT * from user2.dont_exist;
 ERROR 42000: Access denied for user 'user1'@'LOCALHOST' to schema 'user2'
-create database authorize_fail;
+create schema authorize_fail;
 ERROR 42000: Access denied for user 'user1'@'LOCALHOST' to schema 'authorize_fail'
-drop database user2;
+drop schema user2;
 ERROR 42000: Access denied for user 'user1'@'LOCALHOST' to schema 'user2'
 create table t1 (kill_id int);
 insert into t1 values(connection_id());
-show processlist;
-ID	USER	HOST	DB	COMMAND	TIME	STATE	INFO	HAS_GLOBAL_LOCK
-2	user1	#	user1	#	#	#	#	NO
-3	user1	#	user1	#	#	#	#	NO
-select ((@id := kill_id) - kill_id) from t1;
-((@id := kill_id) - kill_id)
-0
+SELECT USER, DB FROM DATA_DICTIONARY.PROCESSLIST ORDER BY USER, DB;
+USER	DB
+user1	user1
+user1	user1
+select IF(((@id := kill_id) - kill_id), "NO", "YES") from t1;
+IF(((@id := kill_id) - kill_id), "NO", "YES")
+YES
 kill @id;
-select ((@id := kill_id) - kill_id) from t1;
-((@id := kill_id) - kill_id)
-0
+select IF(((@id := kill_id) - kill_id), "NO", "YES") from t1;
+IF(((@id := kill_id) - kill_id), "NO", "YES")
+YES
 select @id != connection_id();
 @id != connection_id()
 1
 update t1 set kill_id = connection_id();
-show processlist;
-ID	USER	HOST	DB	COMMAND	TIME	STATE	INFO	HAS_GLOBAL_LOCK
-4	user2	#	user2	#	#	#	#	NO
-select ((@id := kill_id) - kill_id) from t1;
-((@id := kill_id) - kill_id)
-0
+SELECT USER, DB FROM DATA_DICTIONARY.PROCESSLIST ORDER BY USER, DB;
+USER	DB
+user2	user2
+select IF(((@id := kill_id) - kill_id), "NO", "YES") from t1;
+IF(((@id := kill_id) - kill_id), "NO", "YES")
+YES
 kill @id;
-ERROR HY000: Unknown thread id: 1
-show processlist;
-ID	USER	HOST	DB	COMMAND	TIME	STATE	INFO	HAS_GLOBAL_LOCK
-1	root	#	user2	#	#	#	#	NO
-3	user1	#	user1	#	#	#	#	NO
-4	user2	#	user2	#	#	#	#	NO
-5	user1	#	user1	#	#	#	#	NO
+ERROR HY000: Unknown session id: 1
+SELECT USER, DB FROM DATA_DICTIONARY.PROCESSLIST ORDER BY USER, DB;
+USER	DB
+root	user2
+user1	user1
+user1	user1
+user2	user2
 use user1;
-select ((@id := kill_id) - kill_id) from t1;
-((@id := kill_id) - kill_id)
-0
+select IF(((@id := kill_id) - kill_id), "NO", "YES") from t1;
+IF(((@id := kill_id) - kill_id), "NO", "YES")
+YES
 kill @id;
-select ((@id := kill_id) - kill_id) from t1;
-((@id := kill_id) - kill_id)
-0
+select IF(((@id := kill_id) - kill_id), "NO", "YES") from t1;
+IF(((@id := kill_id) - kill_id), "NO", "YES")
+YES
 select @id != connection_id();
 @id != connection_id()
 1

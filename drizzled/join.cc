@@ -2814,7 +2814,8 @@ enum_nested_loop_state end_write(Join *join, JoinTable *, bool end_of_records)
   if (!end_of_records)
   {
     copy_fields(&join->tmp_table_param);
-    copy_funcs(join->tmp_table_param.items_to_copy);
+    if (copy_funcs(join->tmp_table_param.items_to_copy, join->session))
+      return NESTED_LOOP_ERROR;
     if (!join->having || join->having->val_int())
     {
       int error;
@@ -2899,7 +2900,8 @@ enum_nested_loop_state end_update(Join *join, JoinTable *, bool end_of_records)
       memcpy(table->getInsertRecord()+key_part->offset, group->buff, 1);
   }
   init_tmptable_sum_functions(join->sum_funcs);
-  copy_funcs(join->tmp_table_param.items_to_copy);
+  if (copy_funcs(join->tmp_table_param.items_to_copy, join->session))
+    return NESTED_LOOP_ERROR;
   if ((error=table->cursor->insertRecord(table->getInsertRecord())))
   {
     my_error(ER_USE_SQL_BIG_RESULT, MYF(0));
@@ -2925,7 +2927,8 @@ enum_nested_loop_state end_unique_update(Join *join, JoinTable *, bool end_of_re
 
   init_tmptable_sum_functions(join->sum_funcs);
   copy_fields(&join->tmp_table_param);		// Groups are copied twice.
-  copy_funcs(join->tmp_table_param.items_to_copy);
+  if (copy_funcs(join->tmp_table_param.items_to_copy, join->session))
+    return NESTED_LOOP_ERROR;
 
   if (!(error= table->cursor->insertRecord(table->getInsertRecord())))
     join->send_records++;			// New group

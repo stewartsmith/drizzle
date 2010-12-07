@@ -3,6 +3,7 @@ VARIABLE_NAME	VARIABLE_VALUE
 hello_events1_before_update_position	1
 hello_events1_before_write_position	1
 hello_events1_enable	ON
+hello_events1_post_drop_position	-1
 hello_events1_watch_databases	events
 hello_events1_watch_tables	t2
 select IF(@CONNECT_SESSION, "YES", "NO");

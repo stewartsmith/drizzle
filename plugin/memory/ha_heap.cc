@@ -104,12 +104,12 @@ public:
   bool doDoesTableExist(Session& session, const TableIdentifier &identifier);
   void doGetTableIdentifiers(CachedDirectory &directory,
                              const SchemaIdentifier &schema_identifier,
-                             TableIdentifiers &set_of_identifiers);
+                             TableIdentifier::vector &set_of_identifiers);
 };
 
 void HeapEngine::doGetTableIdentifiers(CachedDirectory&,
                                        const SchemaIdentifier&,
-                                       TableIdentifiers&)
+                                       TableIdentifier::vector&)
 {
 }
 

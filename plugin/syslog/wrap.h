@@ -22,27 +22,40 @@
 
 #include <stdarg.h>
 
+#include <string>
+
+namespace drizzle_plugin
+{
+
 class WrapSyslog
 {
- private:
+private:
+  bool _check;
+
   WrapSyslog(const WrapSyslog&);
   WrapSyslog& operator=(const WrapSyslog&);
 
   WrapSyslog();
 
-  bool openlog_check;
-  char openlog_ident[32];
 
- public:
+public:
   ~WrapSyslog();
   static WrapSyslog& singleton();
 
   static int getFacilityByName(const char *);
   static int getPriorityByName(const char *);
 
-  void openlog(char *ident);
+  void openlog(const std::string &ident);
   void vlog(int facility, int priority, const char *format, va_list ap);
   void log(int facility, int priority, const char *format, ...);
 };
+
+inline WrapSyslog& WrapSyslog::singleton()
+{
+  static WrapSyslog handle;
+  return handle;
+}
+
+} /* namespsace drizzle_plugin */
 
 #endif /* PLUGIN_SYSLOG_WRAP_H */

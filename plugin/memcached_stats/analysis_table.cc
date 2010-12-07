@@ -37,8 +37,8 @@
 #include <libmemcached/memcached.h>
 #include <libmemcached/server.h>
 
-using namespace std;
-using namespace drizzled;
+namespace drizzle_plugin
+{
 
 AnalysisTableTool::AnalysisTableTool() :
   plugin::TableFunction("DATA_DICTIONARY", "MEMCACHED_ANALYSIS")
@@ -68,8 +68,10 @@ bool AnalysisTableTool::Generator::populate()
   }
   is_done= true;
 
-  SysvarHolder &sysvar_holder= SysvarHolder::singleton();
-  const string servers_string= sysvar_holder.getServersString();
+  drizzled::sys_var *servers_var= drizzled::find_sys_var("memcached_stats_servers");
+  assert(servers_var != NULL);
+
+  const string servers_string(static_cast<char *>(servers_var.value_ptr(NULL, 0, NULL)));
 
   if (servers_string.empty()) 
   {       
@@ -109,3 +111,5 @@ bool AnalysisTableTool::Generator::populate()
 
   return true;
 }
+
+} /* namespace drizzle_plugin */

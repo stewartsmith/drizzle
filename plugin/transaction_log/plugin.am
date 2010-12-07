@@ -21,18 +21,21 @@ endif
 
 noinst_HEADERS += \
     plugin/transaction_log/utilities/transaction_file_reader.h \
-    plugin/transaction_log/utilities/transaction_manager.h
+    plugin/transaction_log/utilities/transaction_manager.h \
+    plugin/transaction_log/utilities/transaction_log_connection.h
 
 plugin_transaction_log_utilities_transaction_reader_SOURCES = \
     plugin/transaction_log/utilities/transaction_reader.cc \
     plugin/transaction_log/utilities/transaction_file_reader.cc \
-    plugin/transaction_log/utilities/transaction_manager.cc
+    plugin/transaction_log/utilities/transaction_manager.cc \
+    plugin/transaction_log/utilities/transaction_log_connection.cc
 
 plugin_transaction_log_utilities_transaction_reader_LDADD = \
     $(top_builddir)/drizzled/message/libdrizzledmessage.la \
     ${top_builddir}/drizzled/internal/libinternal.la \
     ${top_builddir}/drizzled/algorithm/libhash.la \
     ${top_builddir}/drizzled/util/libutil.la \
+    ${top_builddir}/libdrizzle/libdrizzle.la \
     ${LIBPROTOBUF} \
     ${LIBUUID} \
     ${LTLIBINTL} \

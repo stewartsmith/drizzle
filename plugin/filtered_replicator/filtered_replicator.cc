@@ -42,6 +42,7 @@
 #include <drizzled/message/transaction.pb.h>
 #include <drizzled/plugin.h>
 
+#include "drizzled/item/string.h"
 #include "filtered_replicator.h"
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
@@ -51,73 +52,73 @@ namespace po= boost::program_options;
 using namespace std;
 using namespace drizzled;
 
-static char *sysvar_filtered_replicator_sch_filters= NULL;
-static char *sysvar_filtered_replicator_tab_filters= NULL;
-static char *sysvar_filtered_replicator_sch_regex= NULL;
-static char *sysvar_filtered_replicator_tab_regex= NULL;
+namespace drizzle_plugin
+{
+
+static string sysvar_filtered_replicator_sch_filters;
+static string sysvar_filtered_replicator_tab_filters;
 
 FilteredReplicator::FilteredReplicator(string name_arg,
-                                       const char *in_sch_filters,
-                                       const char *in_tab_filters)
-  :
-    plugin::TransactionReplicator(name_arg),
-    schemas_to_filter(),
-    tables_to_filter(),
-    sch_filter_string(in_sch_filters),
-    tab_filter_string(in_tab_filters),
-    sch_regex_enabled(false),
-    tab_regex_enabled(false),
-    sch_re(NULL),
-    tab_re(NULL)
+                                       const std::string &sch_filter,
+                                       const std::string &tab_filter,
+                                       const std::string &sch_regex,
+                                       const std::string &tab_regex) :
+  plugin::TransactionReplicator(name_arg),
+  schemas_to_filter(),
+  tables_to_filter(),
+  _sch_filter(sch_filter),
+  _tab_filter(tab_filter),
+  _sch_regex(sch_regex),
+  _tab_regex(tab_regex),
+  sch_re(NULL),
+  tab_re(NULL)
 {
   /* 
    * Add each of the specified schemas to the vector of schemas
    * to filter.
    */
-  if (in_sch_filters)
+  if (not _sch_filter.empty())
   {
-    populateFilter(sch_filter_string, schemas_to_filter);
+    populateFilter(_sch_filter, schemas_to_filter);
   }
 
   /* 
    * Add each of the specified tables to the vector of tables
    * to filter.
    */
-  if (in_tab_filters)
+  if (not _tab_filter.empty())
   {
-    populateFilter(tab_filter_string, tables_to_filter);
+    populateFilter(_tab_filter, tables_to_filter);
   }
 
   /* 
    * Compile the regular expression for schema's to filter
    * if one is specified.
    */
-  if (sysvar_filtered_replicator_sch_regex)
+  if (not _sch_regex.empty())
   {
     const char *error= NULL;
     int32_t error_offset= 0;
-    sch_re= pcre_compile(sysvar_filtered_replicator_sch_regex,
+    sch_re= pcre_compile(_sch_regex.c_str(),
                          0,
                          &error,
                          &error_offset,
                          NULL);
-    sch_regex_enabled= true;
   }
 
   /* 
    * Compile the regular expression for table's to filter
    * if one is specified.
    */
-  if (sysvar_filtered_replicator_tab_regex)
+  if (not _tab_regex.empty())
   {
     const char *error= NULL;
     int32_t error_offset= 0;
-    tab_re= pcre_compile(sysvar_filtered_replicator_tab_regex,
+    tab_re= pcre_compile(_tab_regex.c_str(),
                          0,
                          &error,
                          &error_offset,
                          NULL);
-    tab_regex_enabled= true;
   }
 
   pthread_mutex_init(&sch_vector_lock, NULL);
@@ -298,7 +299,7 @@ FilteredReplicator::replicate(plugin::TransactionApplier *in_applier,
 }
 
 void FilteredReplicator::populateFilter(std::string input,
-                                        vector<string> &filter)
+                                        std::vector<string> &filter)
 {
   /*
    * Convert the input string to lowercase so that all entries in the vector
@@ -320,9 +321,9 @@ void FilteredReplicator::populateFilter(std::string input,
 bool FilteredReplicator::isSchemaFiltered(const string &schema_name)
 {
   pthread_mutex_lock(&sch_vector_lock);
-  vector<string>::iterator it= find(schemas_to_filter.begin(),
-                                    schemas_to_filter.end(),
-                                    schema_name);
+  std::vector<string>::iterator it= find(schemas_to_filter.begin(),
+                                         schemas_to_filter.end(),
+                                         schema_name);
   if (it != schemas_to_filter.end())
   {
     pthread_mutex_unlock(&sch_vector_lock);
@@ -335,7 +336,7 @@ bool FilteredReplicator::isSchemaFiltered(const string &schema_name)
    * we check to see if this schema name matches the regular expression that
    * has been specified. 
    */
-  if (sch_regex_enabled)
+  if (not _sch_regex.empty())
   {
     int32_t result= pcre_exec(sch_re,
                               NULL,
@@ -357,9 +358,9 @@ bool FilteredReplicator::isSchemaFiltered(const string &schema_name)
 bool FilteredReplicator::isTableFiltered(const string &table_name)
 {
   pthread_mutex_lock(&tab_vector_lock);
-  vector<string>::iterator it= find(tables_to_filter.begin(),
-                                    tables_to_filter.end(),
-                                    table_name);
+  std::vector<string>::iterator it= find(tables_to_filter.begin(),
+                                         tables_to_filter.end(),
+                                         table_name);
   if (it != tables_to_filter.end())
   {
     pthread_mutex_unlock(&tab_vector_lock);
@@ -372,7 +373,7 @@ bool FilteredReplicator::isTableFiltered(const string &table_name)
    * we check to see if this table name matches the regular expression that
    * has been specified. 
    */
-  if (tab_regex_enabled)
+  if (not _tab_regex.empty())
   {
     int32_t result= pcre_exec(tab_re,
                               NULL,
@@ -494,9 +495,9 @@ void FilteredReplicator::setSchemaFilter(const string &input)
 {
   pthread_mutex_lock(&sch_vector_lock);
   pthread_mutex_lock(&sysvar_sch_lock);
-  sch_filter_string.assign(input);
+  _sch_filter.assign(input);
   schemas_to_filter.clear();
-  populateFilter(sch_filter_string, schemas_to_filter);
+  populateFilter(_sch_filter, schemas_to_filter);
   pthread_mutex_unlock(&sch_vector_lock);
 }
 
@@ -504,58 +505,19 @@ void FilteredReplicator::setTableFilter(const string &input)
 {
   pthread_mutex_lock(&tab_vector_lock);
   pthread_mutex_lock(&sysvar_tab_lock);
-  tab_filter_string.assign(input);
+  _tab_filter.assign(input);
   tables_to_filter.clear();
-  populateFilter(tab_filter_string, tables_to_filter);
+  populateFilter(_tab_filter, tables_to_filter);
   pthread_mutex_unlock(&tab_vector_lock);
 }
 
 static FilteredReplicator *filtered_replicator= NULL; /* The singleton replicator */
 
-static int init(module::Context &context)
+static int filtered_schemas_validate(Session*, set_var *var)
 {
-  const module::option_map &vm= context.getOptions();
-  
-  if (vm.count("filteredschemas"))
-  {
-    sysvar_filtered_replicator_sch_filters= const_cast<char *>(vm["filteredschemas"].as<string>().c_str());
-  }
-
-  else
-  {
-    sysvar_filtered_replicator_sch_filters= const_cast<char *>("");
-  }
-
-  if (vm.count("filteredtables"))
-  {
-    sysvar_filtered_replicator_tab_filters= const_cast<char *>(vm["filteredtables"].as<string>().c_str());
-  }
-
-  else
-  {
-    sysvar_filtered_replicator_tab_filters= const_cast<char *>("");
-  }
-
-  filtered_replicator= new(std::nothrow) 
-    FilteredReplicator("filtered_replicator",
-                       sysvar_filtered_replicator_sch_filters,
-                       sysvar_filtered_replicator_tab_filters);
-  if (filtered_replicator == NULL)
-  {
+  const char *input= var->value->str_value.ptr();
+  if (input == NULL)
     return 1;
-  }
-  context.add(filtered_replicator);
-  return 0;
-}
-
-static int check_filtered_schemas(Session *, 
-                                  drizzle_sys_var *,
-                                  void *,
-                                  drizzle_value *value)
-{
-  char buff[STRING_BUFFER_USUAL_SIZE];
-  int len= sizeof(buff);
-  const char *input= value->val_str(value, buff, &len);
 
   if (input && filtered_replicator)
   {
@@ -565,100 +527,64 @@ static int check_filtered_schemas(Session *,
   return 1;
 }
 
-static void set_filtered_schemas(Session *,
-                                 drizzle_sys_var *,
-                                 void *var_ptr,
-                                 const void *save)
-{
-  if (filtered_replicator)
-  {
-    if (*(bool *)save != true)
-    {
-      /* update the value of the system variable */
-      filtered_replicator->updateSchemaSysvar((const char **) var_ptr);
-    }
-  }
-}
 
-static int check_filtered_tables(Session *, 
-                                 drizzle_sys_var *,
-                                 void *save,
-                                 drizzle_value *value)
+static int filtered_tables_validate(Session*, set_var *var)
 {
-  char buff[STRING_BUFFER_USUAL_SIZE];
-  int len= sizeof(buff);
-  const char *input= value->val_str(value, buff, &len);
+  const char *input= var->value->str_value.ptr();
+  if (input == NULL)
+    return 1;
 
   if (input && filtered_replicator)
   {
     filtered_replicator->setTableFilter(input);
-    *(bool *) save= (bool) true;
     return 0;
   }
-  *(bool *) save= (bool) false;
   return 1;
 }
 
-static void set_filtered_tables(Session *,
-                                drizzle_sys_var *,
-                                void *var_ptr,
-                                const void *save)
+
+static int init(module::Context &context)
 {
-  if (filtered_replicator)
-  {
-    if (*(bool *)save != false)
-    {
-      /* update the value of the system variable */
-      filtered_replicator->updateTableSysvar((const char **) var_ptr);
-    }
-  }
+  const module::option_map &vm= context.getOptions();
+  
+  filtered_replicator= new FilteredReplicator("filtered_replicator",
+                                              vm["filteredschemas"].as<string>(),
+                                              vm["filteredtables"].as<string>(),
+                                              vm["schemaregex"].as<string>(),
+                                              vm["tableregex"].as<string>());
+
+  context.add(filtered_replicator);
+  context.registerVariable(new sys_var_std_string("filteredschemas",
+                                                  sysvar_filtered_replicator_sch_filters,
+                                                  filtered_schemas_validate));
+  context.registerVariable(new sys_var_std_string("filteredtables",
+                                                  sysvar_filtered_replicator_tab_filters,
+                                                  filtered_tables_validate));
+
+  context.registerVariable(new sys_var_const_string_val("schemaregex",
+                                                        vm["schemaregex"].as<string>()));
+  context.registerVariable(new sys_var_const_string_val("tableregex",
+                                                        vm["tableregex"].as<string>()));
+
+  return 0;
 }
 
 static void init_options(drizzled::module::option_context &context)
 {
   context("filteredschemas",
-          po::value<string>(),
+          po::value<string>(&sysvar_filtered_replicator_sch_filters)->default_value(""),
           N_("List of schemas to filter"));
-  context("filteredtables", 
-          po::value<string>(),
+  context("filteredtables",
+          po::value<string>(&sysvar_filtered_replicator_tab_filters)->default_value(""),
           N_("List of tables to filter"));
+  context("schemaregex", 
+          po::value<string>()->default_value(""),
+          N_("Regular expression to apply to schemas to filter"));
+  context("tableregex", 
+          po::value<string>()->default_value(""),
+          N_("Regular expression to apply to tables to filter"));
 }
 
-static DRIZZLE_SYSVAR_STR(filteredschemas,
-                          sysvar_filtered_replicator_sch_filters,
-                          PLUGIN_VAR_OPCMDARG,
-                          N_("List of schemas to filter"),
-                          check_filtered_schemas,
-                          set_filtered_schemas,
-                          "");
-static DRIZZLE_SYSVAR_STR(filteredtables,
-                          sysvar_filtered_replicator_tab_filters,
-                          PLUGIN_VAR_OPCMDARG,
-                          N_("List of tables to filter"),
-                          check_filtered_tables,
-                          set_filtered_tables,
-                          "");
-static DRIZZLE_SYSVAR_STR(schemaregex,
-                          sysvar_filtered_replicator_sch_regex,
-                          PLUGIN_VAR_READONLY,
-                          N_("Regular expression to apply to schemas to filter"),
-                          NULL,
-                          NULL,
-                          NULL);
-static DRIZZLE_SYSVAR_STR(tableregex,
-                          sysvar_filtered_replicator_tab_regex,
-                          PLUGIN_VAR_READONLY,
-                          N_("Regular expression to apply to tables to filter"),
-                          NULL,
-                          NULL,
-                          NULL);
+} /* namespace drizzle_plugin */
 
-static drizzle_sys_var* filtered_replicator_system_variables[]= {
-  DRIZZLE_SYSVAR(filteredschemas),
-  DRIZZLE_SYSVAR(filteredtables),
-  DRIZZLE_SYSVAR(schemaregex),
-  DRIZZLE_SYSVAR(tableregex),
-  NULL
-};
-
-DRIZZLE_PLUGIN(init, filtered_replicator_system_variables, init_options);
+DRIZZLE_PLUGIN(drizzle_plugin::init, NULL, drizzle_plugin::init_options);

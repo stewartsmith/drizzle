@@ -31,8 +31,8 @@ class AllTables
   Session &session;
   message::table::shared_ptr table;
 
-  TableIdentifiers table_names;
-  TableIdentifiers::const_iterator table_iterator;
+  TableIdentifier::vector table_names;
+  TableIdentifier::vector::const_iterator table_iterator;
 
   drizzled::generator::Schema schema_generator;
   const drizzled::SchemaIdentifier *schema_ptr;

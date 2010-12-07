@@ -607,7 +607,7 @@ bool sys_var_bool_ptr::update(Session *, set_var *var)
 
 void sys_var_bool_ptr::set_default(Session *, sql_var_t)
 {
-  *value= (bool) option_limits->def_value;
+  *value= default_value;
 }
 
 
@@ -1657,7 +1657,7 @@ int sys_var_init()
     add_sys_var_to_list(&sys_version_compile_vendor, my_long_options);
     add_sys_var_to_list(&sys_warning_count, my_long_options);
   }
-  catch (...)
+  catch (std::exception&)
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize system variables"));
     return(1);

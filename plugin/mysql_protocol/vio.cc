@@ -40,16 +40,18 @@
 
 using namespace std;
 
-Vio::Vio(int nsd)
-: closed(false),
-sd(nsd),
-fcntl_mode(0),
-read_pos(NULL),
-read_end(NULL)
+namespace drizzle_plugin
 {
-  closed= false;
-  sd= nsd;
 
+Vio::Vio(int nsd) :
+  closed(false),
+  sd(nsd),
+  fcntl_mode(0),
+  local(),
+  remote(),
+  read_pos(NULL),
+  read_end(NULL)
+{
   /*
     We call fcntl() to set the flags and then immediately read them back
     to make sure that we and the system are in agreement on the state of
@@ -62,9 +64,6 @@ read_end(NULL)
   */
   fcntl(sd, F_SETFL, 0);
   fcntl_mode= fcntl(sd, F_GETFL);
-
-  memset(&local, 0, sizeof(local));
-  memset(&remote, 0, sizeof(remote));
 }
 
 Vio::~Vio()
@@ -252,3 +251,4 @@ char *Vio::get_read_end() const
   return read_end;
 }
 
+} /* namespace drizzle_plugin */

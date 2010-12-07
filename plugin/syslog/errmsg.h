@@ -20,23 +20,32 @@
 #ifndef PLUGIN_SYSLOG_ERRMSG_H
 #define PLUGIN_SYSLOG_ERRMSG_H
 
-#include "module.h"
 #include <stdarg.h>
 #include <drizzled/plugin/error_message.h>
 
-class ErrorMessage_syslog : public drizzled::plugin::ErrorMessage
+namespace drizzle_plugin
 {
- private:
-  int syslog_facility;
-  int syslog_priority;
+namespace error_message
+{
 
-  ErrorMessage_syslog(const ErrorMessage_syslog&);
-  ErrorMessage_syslog& operator=(const ErrorMessage_syslog&);
+class Syslog : public drizzled::plugin::ErrorMessage
+{
+private:
+  int _facility;
+  int _priority;
 
- public:
-  ErrorMessage_syslog();
+  Syslog();
+  Syslog(const Syslog&);
+  Syslog& operator=(const Syslog&);
+
+public:
+  explicit Syslog(const std::string& facility,
+                  const std::string& priority);
 
   virtual bool errmsg(drizzled::Session *, int, const char *format, va_list ap);
 };
+
+} /* namespace error_message */
+} /* namespace drizzle_plugin */
 
 #endif /* PLUGIN_SYSLOG_ERRMSG_H */

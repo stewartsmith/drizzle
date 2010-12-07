@@ -32,8 +32,6 @@
 #include <netinet/tcp.h>
 #include <cerrno>
 
-using namespace std;
-
 #define MAX_ACCEPT_RETRY	10	// Test accept this many times
 
 namespace drizzled
@@ -91,7 +89,7 @@ bool plugin::ListenTcp::getFileDescriptors(std::vector<int> &fds)
   hints.ai_socktype= SOCK_STREAM;
 
   snprintf(port_buf, NI_MAXSERV, "%d", getPort());
-  ret= getaddrinfo(getHost(), port_buf, &hints, &ai_list);
+  ret= getaddrinfo(getHost().empty() ? NULL : getHost().c_str(), port_buf, &hints, &ai_list);
   if (ret != 0)
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("getaddrinfo() failed with error %s"),
@@ -226,9 +224,9 @@ bool plugin::ListenTcp::getFileDescriptors(std::vector<int> &fds)
   return false;
 }
 
-const char* plugin::ListenTcp::getHost(void) const
+const std::string plugin::ListenTcp::getHost(void) const
 {
-  return NULL;
+  return "";
 }
 
 } /* namespace drizzled */

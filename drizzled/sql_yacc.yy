@@ -833,6 +833,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         opt_status
         opt_concurrent
         opt_wait
+        kill_option
 
 %type <m_fk_option>
         delete_option
@@ -3227,6 +3228,22 @@ function_call_conflict:
 	  }
         | IF '(' expr ',' expr ',' expr ')'
           { $$= new (YYSession->mem_root) Item_func_if($3,$5,$7); }
+        | KILL_SYM kill_option '(' expr ')'
+          {
+            std::string kill_str("kill");
+            List<Item> *args= new (YYSession->mem_root) List<Item>;
+            args->push_back($4);
+
+            if ($2)
+            {
+              args->push_back(new (YYSession->mem_root) Item_uint(1));
+            }
+
+            if (! ($$= reserved_keyword_function(YYSession, kill_str, args)))
+            {
+              DRIZZLE_YYABORT;
+            }
+          }
         | MICROSECOND_SYM '(' expr ')'
           { $$= new (YYSession->mem_root) Item_func_microsecond($3); }
         | MOD_SYM '(' expr ',' expr ')'
@@ -5459,6 +5476,16 @@ kill:
           KILL_SYM kill_option expr
           {
             LEX *lex=Lex;
+
+            if ($2)
+            {
+              Lex->type= ONLY_KILL_QUERY;
+            }
+            else
+            {
+              Lex->type= 0;
+            }
+
             lex->value_list.empty();
             lex->value_list.push_front($3);
             lex->sql_command= SQLCOM_KILL;
@@ -5469,9 +5496,9 @@ kill:
         ;
 
 kill_option:
-          /* empty */ { Lex->type= 0; }
-        | CONNECTION_SYM { Lex->type= 0; }
-        | QUERY_SYM      { Lex->type= ONLY_KILL_QUERY; }
+          /* empty */ { $$= 0; }
+        | CONNECTION_SYM { $$= 0; }
+        | QUERY_SYM      { $$= 1; }
         ;
 
 /* change database */
@@ -6219,7 +6246,7 @@ sys_option_value:
             LEX *lex=Lex;
             lex->option_type= $1;
             lex->var_list.push_back(new set_var(lex->option_type,
-                                                find_sys_var(YYSession, "tx_isolation"),
+                                                find_sys_var("tx_isolation"),
                                                 &null_lex_str,
                                                 new Item_int((int32_t) $5)));
           }
@@ -6240,12 +6267,10 @@ option_value:
 internal_variable_name:
           ident
           {
-            Session *session= YYSession;
-
             /* We have to lookup here since local vars can shadow sysvars */
             {
               /* Not an SP local variable */
-              sys_var *tmp=find_sys_var(session, $1.str, $1.length);
+              sys_var *tmp=find_sys_var($1.str, $1.length);
               if (!tmp)
                 DRIZZLE_YYABORT;
               $$.var= tmp;
