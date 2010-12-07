@@ -506,11 +506,13 @@ public:
     the Session of that thread); that thread is (and must remain, for now) the
     only responsible for freeing this member.
   */
-  std::string db;
+private:
+  util::string::shared_ptr _schema;
+public:
 
-  const std::string &getSchema() const
+  util::string::const_shared_ptr schema() const
   {
-    return db;
+    return _schema;
   }
   std::string catalog;
   /* current cache key */
@@ -1370,12 +1372,8 @@ public:
     database usually involves other actions, like switching other database
     attributes including security context. In the future, this operation
     will be made private and more convenient interface will be provided.
-
-    @return Operation status
-      @retval false Success
-      @retval true  Out-of-memory error
   */
-  bool set_db(const std::string &new_db);
+  void set_db(const std::string &new_db);
 
   /*
     Copy the current database to the argument. Use the current arena to

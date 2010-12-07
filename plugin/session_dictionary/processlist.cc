@@ -67,11 +67,9 @@ bool ProcesslistTool::Generator::populate()
   {
     drizzled::Session::State::const_shared_ptr state(tmp->state());
     const SecurityContext *tmp_sctx= &tmp->getSecurityContext();
-    const char *val;
 
     /* ID */
     push((int64_t) tmp->thread_id);
-
 
     /* USER */
     if (not tmp_sctx->getUser().empty())
@@ -83,9 +81,10 @@ bool ProcesslistTool::Generator::populate()
     push(tmp_sctx->getIp());
 
     /* DB */
-    if (! tmp->db.empty())
+    drizzled::util::string::const_shared_ptr schema(tmp->schema());
+    if (schema and not schema->empty())
     {
-      push(tmp->db);
+      push(*schema);
     }
     else
     {
@@ -93,7 +92,8 @@ bool ProcesslistTool::Generator::populate()
     }
 
     /* COMMAND */
-    if ((val= const_cast<char *>(tmp->getKilled() == Session::KILL_CONNECTION ? "Killed" : 0)))
+    const char *val= tmp->getKilled() == Session::KILL_CONNECTION ? "Killed" : NULL;
+    if (val)
     {
       push(val);
     }
@@ -106,15 +106,15 @@ bool ProcesslistTool::Generator::populate()
     push(static_cast<uint64_t>(tmp->start_time ?  now - tmp->start_time : 0));
 
     /* STATE */
-    val= (char*) (tmp->client->isWriting() ?
-                  "Writing to net" :
-                  tmp->client->isReading() ?
-                  (tmp->command == COM_SLEEP ?
-                   NULL : "Reading from net") :
-                  tmp->get_proc_info() ? tmp->get_proc_info() :
-                  tmp->getThreadVar() &&
-                  tmp->getThreadVar()->current_cond ?
-                  "Waiting on cond" : NULL);
+    val= (tmp->client->isWriting() ?
+          "Writing to net" :
+          tmp->client->isReading() ?
+          (tmp->command == COM_SLEEP ?
+           NULL : "Reading from net") :
+          tmp->get_proc_info() ? tmp->get_proc_info() :
+          tmp->getThreadVar() &&
+          tmp->getThreadVar()->current_cond ?
+          "Waiting on cond" : NULL);
     val ? push(val) : push();
 
     /* INFO */

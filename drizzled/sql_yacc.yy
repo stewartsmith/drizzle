@@ -4908,6 +4908,7 @@ show_param:
 
               std::string column_name= "Tables_in_";
 
+              util::string::const_shared_ptr schema(session->schema());
               if ($2)
               {
 		SchemaIdentifier identifier($2);
@@ -4919,14 +4920,15 @@ show_param:
                 }
                 select->setShowPredicate($2, "");
               }
-              else if (not session->db.empty())
+              else if (schema and not schema->empty())
               {
-                column_name.append(session->db);
-                select->setShowPredicate(session->db, "");
+                column_name.append(*schema);
+                select->setShowPredicate(*schema, "");
               }
               else
               {
-                 my_error(ER_NO_DB_ERROR, MYF(0));
+                my_error(ER_NO_DB_ERROR, MYF(0));
+                DRIZZLE_YYABORT;
               }
 
 
@@ -4994,6 +4996,7 @@ show_param:
 
              std::string column_name= "Tables_in_";
 
+             util::string::const_shared_ptr schema(session->schema());
              if ($3)
              {
                lex->select_lex.db= $3;
@@ -5006,9 +5009,14 @@ show_param:
 
                select->setShowPredicate($3, "");
              }
+             else if (schema)
+             {
+               select->setShowPredicate(*schema, "");
+             }
              else
              {
-               select->setShowPredicate(session->db, "");
+               my_error(ER_NO_DB_ERROR, MYF(0));
+               DRIZZLE_YYABORT;
              }
 
              if (prepare_new_schema_table(session, lex, "SHOW_TABLE_STATUS"))
@@ -5036,12 +5044,24 @@ show_param:
              if (lex->statement == NULL)
                DRIZZLE_YYABORT;
 
+             util::string::const_shared_ptr schema(session->schema());
              if ($4)
+             {
               select->setShowPredicate($4, $3->table.str);
+             }
              else if ($3->db.str)
+             {
               select->setShowPredicate($3->db.str, $3->table.str);
+             }
+             else if (schema)
+             {
+               select->setShowPredicate(*schema, $3->table.str);
+             }
              else
-              select->setShowPredicate(session->db, $3->table.str);
+             {
+               my_error(ER_NO_DB_ERROR, MYF(0));
+               DRIZZLE_YYABORT;
+             }
 
              {
                drizzled::TableIdentifier identifier(select->getShowSchema().c_str(), $3->table.str);
@@ -5079,12 +5099,24 @@ show_param:
              if (lex->statement == NULL)
                DRIZZLE_YYABORT;
 
+             util::string::const_shared_ptr schema(session->schema());
              if ($4)
+             {
               select->setShowPredicate($4, $3->table.str);
+             }
              else if ($3->db.str)
+             {
               select->setShowPredicate($3->db.str, $3->table.str);
+             }
+             else if (schema)
+             {
+               select->setShowPredicate(*schema, $3->table.str);
+             }
              else
-              select->setShowPredicate(session->db, $3->table.str);
+             {
+               my_error(ER_NO_DB_ERROR, MYF(0));
+               DRIZZLE_YYABORT;
+             }
 
              {
                drizzled::TableIdentifier identifier(select->getShowSchema().c_str(), $3->table.str);
@@ -5191,10 +5223,20 @@ show_param:
              if (prepare_new_schema_table(session, lex, "TABLE_SQL_DEFINITION"))
                DRIZZLE_YYABORT;
 
+             util::string::const_shared_ptr schema(session->schema());
              if ($3->db.str)
-              select->setShowPredicate($3->db.str, $3->table.str);
+             {
+               select->setShowPredicate($3->db.str, $3->table.str);
+             }
+             else if (schema)
+             {
+               select->setShowPredicate(*schema, $3->table.str);
+             }
              else
-              select->setShowPredicate(session->db, $3->table.str);
+             {
+               my_error(ER_NO_DB_ERROR, MYF(0));
+               DRIZZLE_YYABORT;
+             }
 
              std::string key("Table");
              std::string value("Create Table");
@@ -5291,10 +5333,20 @@ show_param:
              if (prepare_new_schema_table(session, lex, "SCHEMA_SQL_DEFINITION"))
                DRIZZLE_YYABORT;
 
+             util::string::const_shared_ptr schema(session->schema());
              if ($4.str)
+             {
               select->setShowPredicate($4.str);
+             }
+             else if (schema)
+             {
+               select->setShowPredicate(*schema);
+             }
              else
-              select->setShowPredicate(session->db);
+             {
+               my_error(ER_NO_DB_ERROR, MYF(0));
+               DRIZZLE_YYABORT;
+             }
 
              std::string key("Database");
              std::string value("Create Database");
@@ -5358,10 +5410,20 @@ describe:
               DRIZZLE_YYABORT;
             lex->select_lex.db= 0;
 
+             util::string::const_shared_ptr schema(session->schema());
              if ($2->db.str)
-              select->setShowPredicate($2->db.str, $2->table.str);
+             {
+               select->setShowPredicate($2->db.str, $2->table.str);
+             }
+             else if (schema)
+             {
+               select->setShowPredicate(*schema, $2->table.str);
+             }
              else
-              select->setShowPredicate(session->db, $2->table.str);
+             {
+               my_error(ER_NO_DB_ERROR, MYF(0));
+               DRIZZLE_YYABORT;
+             }
 
              {
                drizzled::TableIdentifier identifier(select->getShowSchema().c_str(), $2->table.str);
@@ -5379,7 +5441,9 @@ describe:
              if (session->add_item_to_list( new Item_field(&session->lex->current_select->
                                                            context,
                                                            NULL, NULL, "*")))
+             {
                DRIZZLE_YYABORT;
+             }
              (session->lex->current_select->with_wild)++;
 
           }

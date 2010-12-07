@@ -37,4 +37,4 @@ Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_incr
 #	schema_b	b	STANDARD	InnoDB	#	#	#	#	#
 drop schema schema_b;
 show table status;
-Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
+ERROR 3D000: No schema selected
