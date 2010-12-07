@@ -179,7 +179,7 @@ static plugin::TableFunction* innodb_sys_fields_tool= NULL;
 static plugin::TableFunction* innodb_sys_foreign_tool= NULL;
 static plugin::TableFunction* innodb_sys_foreign_cols_tool= NULL;
 
-static plugin::TransactionApplier *replication_logger= NULL;
+static ReplicationLog *replication_logger= NULL;
 
 static long innobase_mirrored_log_groups, innobase_log_files_in_group,
   innobase_log_buffer_size,
@@ -204,16 +204,13 @@ typedef constrained_check<unsigned int, 99, 0> max_dirty_pages_constraint;
 static max_dirty_pages_constraint innodb_max_dirty_pages_pct;
 static uint64_constraint innodb_max_purge_lag;
 static uint64_nonzero_constraint innodb_stats_sample_pages;
-
-
-
+typedef constrained_check<uint32_t, 64, 1> io_threads_constraint;
+static io_threads_constraint innobase_read_io_threads;
+static io_threads_constraint innobase_write_io_threads;
 
 typedef constrained_check<uint32_t, 1000, 0> commit_concurrency_constraint;
 static commit_concurrency_constraint innobase_commit_concurrency;
 static uint32_nonzero_constraint innodb_concurrency_tickets;
-
-static ulong innobase_read_io_threads;
-static ulong innobase_write_io_threads;
 
 typedef constrained_check<int64_t, INT64_MAX, 1024*1024, 1024*1024> log_file_constraint;
 static log_file_constraint innobase_log_file_size;
@@ -259,6 +256,7 @@ static my_bool  innobase_use_doublewrite    = TRUE;
 static my_bool  innobase_use_checksums      = TRUE;
 static my_bool  innobase_rollback_on_timeout    = FALSE;
 static my_bool  innobase_create_status_file   = FALSE;
+static bool innobase_use_replication_log;
 static bool support_xa;
 static bool strict_mode;
 typedef constrained_check<uint32_t, 1024*1024*1024, 1> lock_wait_constraint;
@@ -2019,23 +2017,6 @@ innobase_init(
     }
   }
 
-  if (vm.count("read-io-threads"))
-  {
-    if (innobase_read_io_threads < 1 || innobase_read_io_threads > 64)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for read-io-threads\n"));
-      exit(-1);
-    }
-  }
-
-  if (vm.count("write-io-threads"))
-  {
-    if (innobase_write_io_threads < 1 || innobase_write_io_threads > 64)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for write-io-threads\n"));
-      exit(-1);
-    }
-  }
 
   if (vm.count("force-recovery"))
   {
@@ -2391,6 +2372,16 @@ innobase_change_buffering_inited_ok:
   context.add(innodb_sys_foreign_cols_tool);
 
   context.add(new(std::nothrow)InnodbInternalTables());
+  if (innobase_use_replication_log)
+  {
+
+    context.add(new(std::nothrow)InnodbReplicationTable());
+    replication_logger= new(std::nothrow)ReplicationLog();
+    context.add(replication_logger);
+
+    ReplicationLog::setup(replication_logger);
+  }
+
   context.registerVariable(new sys_var_const_string_val("data-home-dir", innobase_data_home_dir));
   context.registerVariable(new sys_var_const_string_val("flush-method", 
                                                         vm.count("flush-method") ?  vm["flush-method"].as<string>() : ""));
@@ -2399,16 +2390,7 @@ innobase_change_buffering_inited_ok:
   context.registerVariable(new sys_var_const_string_val("version", vm["version"].as<string>()));
 
 
-  context.add(new(std::nothrow)InnodbReplicationTable());
-
-  replication_logger= new(std::nothrow)ReplicationLog();
-  context.add(replication_logger);
-
-  if (vm.count("replication-log") and vm["replication-log"].as<bool>())
-  {
-    ReplicationLog::setup(static_cast<ReplicationLog *>(replication_logger));
-  }
-
+  context.registerVariable(new sys_var_bool_ptr_readonly("replication_log", &innobase_use_replication_log));
   context.registerVariable(new sys_var_bool_ptr_readonly("checksums", &innobase_use_checksums));
   context.registerVariable(new sys_var_bool_ptr_readonly("doublewrite", &innobase_use_doublewrite));
   context.registerVariable(new sys_var_bool_ptr("file-per-table", &srv_file_per_table));
@@ -2457,6 +2439,9 @@ innobase_change_buffering_inited_ok:
                                                                    innodb_commit_concurrency_validate));
   context.registerVariable(new sys_var_constrained_value<uint32_t>("concurrency_tickets",
                                                                    innodb_concurrency_tickets));
+  context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("read_io_threads", innobase_read_io_threads));
+  context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("write_io_threads", innobase_write_io_threads));
+
 
   /* Get the current high water mark format. */
   innobase_file_format_max = trx_sys_file_format_max_get();
@@ -9273,16 +9258,6 @@ static DRIZZLE_SYSVAR_ULONG(replication_delay, srv_replication_delay,
   "innodb_thread_concurrency is reached (0 by default)",
   NULL, NULL, 0, 0, ~0UL, 0);
 
-static DRIZZLE_SYSVAR_ULONG(read_io_threads, innobase_read_io_threads,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Number of background read I/O threads in InnoDB.",
-  NULL, NULL, 4, 1, 64, 0);
-
-static DRIZZLE_SYSVAR_ULONG(write_io_threads, innobase_write_io_threads,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Number of background write I/O threads in InnoDB.",
-  NULL, NULL, 4, 1, 64, 0);
-
 static DRIZZLE_SYSVAR_LONG(force_recovery, innobase_force_recovery,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "Helps to save your data in case the disk image of the database becomes corrupt.",
@@ -9437,10 +9412,10 @@ static void init_options(drizzled::module::option_context &context)
           po::value<uint32_nonzero_constraint>(&innodb_concurrency_tickets)->default_value(500L),
           "Number of times a thread is allowed to enter InnoDB within the same SQL query after it has once got the ticket");
   context("read-io-threads",
-          po::value<unsigned long>(&innobase_read_io_threads)->default_value(4),
+          po::value<io_threads_constraint>(&innobase_read_io_threads)->default_value(4),
           "Number of background read I/O threads in InnoDB.");
   context("write-io-threads",
-          po::value<unsigned long>(&innobase_write_io_threads)->default_value(4),
+          po::value<io_threads_constraint>(&innobase_write_io_threads)->default_value(4),
           "Number of background write I/O threads in InnoDB.");
   context("force-recovery",
           po::value<long>(&innobase_force_recovery)->default_value(0),
@@ -9494,7 +9469,7 @@ static void init_options(drizzled::module::option_context &context)
           po::value<bool>(&strict_mode)->default_value(false)->zero_tokens(),
           "Use strict mode when evaluating create options.");
   context("replication-log",
-          po::value<bool>()->default_value(false),
+          po::value<bool>(&innobase_use_replication_log)->default_value(false),
           "Enable internal replication log.");
   context("lock-wait-timeout",
           po::value<lock_wait_constraint>(&lock_wait_timeout)->default_value(50),
@@ -9502,8 +9477,6 @@ static void init_options(drizzled::module::option_context &context)
 }
 
 static drizzle_sys_var* innobase_system_variables[]= {
-  DRIZZLE_SYSVAR(read_io_threads),
-  DRIZZLE_SYSVAR(write_io_threads),
   DRIZZLE_SYSVAR(force_recovery),
   DRIZZLE_SYSVAR(log_buffer_size),
   DRIZZLE_SYSVAR(log_files_in_group),
