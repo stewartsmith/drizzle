@@ -27,12 +27,10 @@
 
 class Session;
 
-using namespace std;
-
 namespace drizzled
 {
 
-vector<plugin::Logging *> all_loggers;
+std::vector<plugin::Logging *> all_loggers;
 
 
 bool plugin::Logging::addPlugin(plugin::Logging *handler)
@@ -45,16 +43,16 @@ bool plugin::Logging::addPlugin(plugin::Logging *handler)
 void plugin::Logging::removePlugin(plugin::Logging *handler)
 {
   if (handler != NULL)
-    all_loggers.erase(find(all_loggers.begin(), all_loggers.end(), handler));
+    all_loggers.erase(std::find(all_loggers.begin(), all_loggers.end(), handler));
 }
 
 
-class PreIterate : public unary_function<plugin::Logging *, bool>
+class PreIterate : public std::unary_function<plugin::Logging *, bool>
 {
   Session *session;
 public:
   PreIterate(Session *session_arg) :
-    unary_function<plugin::Logging *, bool>(),
+    std::unary_function<plugin::Logging *, bool>(),
     session(session_arg) {}
 
   inline result_type operator()(argument_type handler)
@@ -73,12 +71,12 @@ public:
 };
 
 
-class PostIterate : public unary_function<plugin::Logging *, bool>
+class PostIterate : public std::unary_function<plugin::Logging *, bool>
 {
   Session *session;
 public:
   PostIterate(Session *session_arg) :
-    unary_function<plugin::Logging *, bool>(),
+    std::unary_function<plugin::Logging *, bool>(),
     session(session_arg) {}
 
   /* This gets called once for each loaded logging plugin */
@@ -97,12 +95,12 @@ public:
   }
 };
 
-class PostEndIterate : public unary_function<plugin::Logging *, bool>
+class PostEndIterate : public std::unary_function<plugin::Logging *, bool>
 {
   Session *session;
 public:
   PostEndIterate(Session *session_arg) :
-    unary_function<plugin::Logging *, bool>(),
+    std::unary_function<plugin::Logging *, bool>(),
     session(session_arg) {}
 
   /* This gets called once for each loaded logging plugin */
@@ -121,12 +119,12 @@ public:
   }
 };
 
-class ResetIterate : public unary_function<plugin::Logging *, bool>
+class ResetIterate : public std::unary_function<plugin::Logging *, bool>
 {
   Session *session;
 public:
   ResetIterate(Session *session_arg) :
-    unary_function<plugin::Logging *, bool>(),
+    std::unary_function<plugin::Logging *, bool>(),
     session(session_arg) {}
 
   inline result_type operator()(argument_type handler)
@@ -150,9 +148,9 @@ public:
 bool plugin::Logging::preDo(Session *session)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
-  vector<plugin::Logging *>::iterator iter=
-    find_if(all_loggers.begin(), all_loggers.end(),
-            PreIterate(session)); 
+  std::vector<plugin::Logging *>::iterator iter=
+    std::find_if(all_loggers.begin(), all_loggers.end(),
+                 PreIterate(session)); 
   /* If iter is == end() here, that means that all of the plugins returned
    * false, which in this case means they all succeeded. Since we want to 
    * return false on success, we return the value of the two being != 
@@ -165,9 +163,9 @@ bool plugin::Logging::preDo(Session *session)
 bool plugin::Logging::postDo(Session *session)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
-  vector<plugin::Logging *>::iterator iter=
-    find_if(all_loggers.begin(), all_loggers.end(),
-            PostIterate(session)); 
+  std::vector<plugin::Logging *>::iterator iter=
+    std::find_if(all_loggers.begin(), all_loggers.end(),
+                 PostIterate(session)); 
   /* If iter is == end() here, that means that all of the plugins returned
    * false, which in this case means they all succeeded. Since we want to 
    * return false on success, we return the value of the two being != 
@@ -179,9 +177,9 @@ bool plugin::Logging::postDo(Session *session)
 bool plugin::Logging::postEndDo(Session *session)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
-  vector<plugin::Logging *>::iterator iter=
-    find_if(all_loggers.begin(), all_loggers.end(),
-            PostEndIterate(session));
+  std::vector<plugin::Logging *>::iterator iter=
+    std::find_if(all_loggers.begin(), all_loggers.end(),
+                 PostEndIterate(session));
   /* If iter is == end() here, that means that all of the plugins returned
    * false, which in this case means they all succeeded. Since we want to
    * return false on success, we return the value of the two being !=
@@ -192,9 +190,9 @@ bool plugin::Logging::postEndDo(Session *session)
 /* Resets global stats for logging plugin */
 bool plugin::Logging::resetStats(Session *session)
 {
-  vector<plugin::Logging *>::iterator iter=
-    find_if(all_loggers.begin(), all_loggers.end(),
-            ResetIterate(session));
+  std::vector<plugin::Logging *>::iterator iter=
+    std::find_if(all_loggers.begin(), all_loggers.end(),
+                 ResetIterate(session));
 
   return iter != all_loggers.end();
 }

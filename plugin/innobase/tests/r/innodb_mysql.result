@@ -1,5 +1,4 @@
 set global innodb_support_xa=default;
-set session innodb_support_xa=default;
 SET SESSION STORAGE_ENGINE = InnoDB;
 SET @orig_lock_wait_timeout= @@innodb_lock_wait_timeout;
 SET GLOBAL innodb_lock_wait_timeout=2;
@@ -1351,7 +1350,7 @@ ALTER TABLE t1 CHANGE id id2 INT;
 
 DROP TABLE t2;
 DROP TABLE t1;
-SET innodb_lock_wait_timeout=@orig_lock_wait_timeout ;
+SET GLOBAL innodb_lock_wait_timeout=@orig_lock_wait_timeout ;
 End of 5.1 tests
 #
 # Test for bug #39932 "create table fails if column for FK is in different

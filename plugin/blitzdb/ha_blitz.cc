@@ -81,7 +81,7 @@ public:
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                              const drizzled::SchemaIdentifier &schema_identifier,
-                             drizzled::TableIdentifiers &set_of_identifiers);
+                             drizzled::TableIdentifier::vector &set_of_identifiers);
 
   bool doDoesTableExist(drizzled::Session &session,
                         const drizzled::TableIdentifier &identifier);
@@ -325,7 +325,7 @@ int BlitzEngine::doGetTableDefinition(drizzled::Session &,
 
 void BlitzEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                                         const drizzled::SchemaIdentifier &schema_id,
-                                        drizzled::TableIdentifiers &ids) {
+                                        drizzled::TableIdentifier::vector &ids) {
   drizzled::CachedDirectory::Entries entries = directory.getEntries();
 
   for (drizzled::CachedDirectory::Entries::iterator entry_iter = entries.begin();

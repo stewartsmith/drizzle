@@ -83,7 +83,7 @@ static bool sysvar_transaction_log_checksum_enabled= false;
  * TransactionLog::FLUSH_FREQUENCY_EVERY_WRITE == 1   ... sync on every write
  * TransactionLog::FLUSH_FREQUENCY_EVERY_SECOND == 2  ... sync at most once a second
  */
-typedef constrained_check<int, 2, 0> flush_constraint;
+typedef constrained_check<uint32_t, 2, 0> flush_constraint;
 static flush_constraint sysvar_transaction_log_flush_frequency;
 /**
  * Transaction Log plugin system variable - Number of slots to create
@@ -150,7 +150,7 @@ static int init(drizzled::module::Context &context)
                                                     sysvar_transaction_log_use_replicator));
   context.registerVariable(new sys_var_bool_ptr_readonly("enable-checksum",
                                                          &sysvar_transaction_log_checksum_enabled));
-  context.registerVariable(new sys_var_constrained_value_readonly<int>("flush-frequency", sysvar_transaction_log_flush_frequency));
+  context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("flush-frequency", sysvar_transaction_log_flush_frequency));
 
   context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("num-write-buffers",
                                                                             sysvar_transaction_log_num_write_buffers));

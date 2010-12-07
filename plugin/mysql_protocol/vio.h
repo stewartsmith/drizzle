@@ -18,7 +18,10 @@
 #define PLUGIN_MYSQL_PROTOCOL_VIO_H
 
 #include <sys/socket.h>
-#include <errno.h>
+#include <cerrno>
+
+namespace drizzle_plugin
+{
 
 /**
  *@brief Virtual I/O layer, only used with TCP/IP sockets at the moment.
@@ -136,5 +139,6 @@ private:
 
 };
 
+} /* namespace drizzle_plugin */
 
 #endif /* PLUGIN_MYSQL_PROTOCOL_VIO_H */

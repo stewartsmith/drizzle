@@ -33,6 +33,9 @@
 #include "drizzled/plugin/table_function.h"
 #include "drizzled/field.h"
 
+namespace drizzle_plugin
+{
+
 class AnalysisTableTool : public drizzled::plugin::TableFunction
 {
 public:
@@ -54,5 +57,7 @@ public:
     return new Generator(arg);
   }
 };
+
+} /* namespace drizzle_plugin */
 
 #endif /* PLUGIN_MEMCACHED_STATS_ANALYSIS_TABLE_H */

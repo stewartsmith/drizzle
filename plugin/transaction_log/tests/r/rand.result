@@ -21,4 +21,21 @@ COMMIT;
 START TRANSACTION;
 DROP TABLE `test`.`t1`;
 COMMIT;
+
+Generating statements for innodb replication log
+START TRANSACTION;
+DROP TABLE IF EXISTS `test`.`t1`;
+COMMIT;
+START TRANSACTION;
+CREATE TABLE `test`.`t1` (   `id` INT NOT NULL,   PRIMARY KEY (`id`) ) ENGINE=InnoDB COLLATE = utf8_general_ci;
+COMMIT;
+START TRANSACTION;
+INSERT INTO `test`.`t1` (`id`) VALUES (1);
+COMMIT;
+START TRANSACTION;
+INSERT INTO `test`.`t1` (`id`) VALUES (17);
+COMMIT;
+START TRANSACTION;
+DROP TABLE `test`.`t1`;
+COMMIT;
 SET GLOBAL transaction_log_truncate_debug= true;

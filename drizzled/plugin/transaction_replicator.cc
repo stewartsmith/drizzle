@@ -23,8 +23,6 @@
 #include "drizzled/plugin/transaction_replicator.h"
 #include "drizzled/replication_services.h"
 
-using namespace std;
-
 namespace drizzled
 {
 

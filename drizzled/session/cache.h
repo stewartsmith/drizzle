@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Mark Atwood
+ *  Copyright (C) 2009 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,22 +17,55 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SYSLOG_MODULE_H
-#define PLUGIN_SYSLOG_MODULE_H
+#ifndef DRIZZLED_SESSION_CACHE_H
+#define DRIZZLED_SESSION_CACHE_H
 
-namespace syslog_module
+#include "drizzled/session.h"
+#include <list>
+
+namespace drizzled
 {
 
-extern char* sysvar_ident;
-extern char* sysvar_facility;
-extern bool sysvar_logging_enable;
-extern char* sysvar_logging_priority;
-extern unsigned long sysvar_logging_threshold_slow;
-extern unsigned long sysvar_logging_threshold_big_resultset;
-extern unsigned long sysvar_logging_threshold_big_examined;
-extern bool sysvar_errmsg_enable;
-extern char* sysvar_errmsg_priority;
+class Session;
 
-} // namespace syslog_module
+namespace session
+{
 
-#endif /* PLUGIN_SYSLOG_MODULE_H */
+class Cache 
+{
+public:
+  typedef std::list<Session::shared_ptr> list;
+
+  static inline Cache &singleton()
+  {
+    static Cache open_cache;
+
+    return open_cache;
+  }
+
+  list &getCache()
+  {
+    return cache;
+  }
+
+  boost::mutex &mutex()
+  {
+    return _mutex;
+  }
+
+  void erase(Session::Ptr);
+  void erase(Session::shared_ptr&);
+  size_t count();
+  void insert(Session::shared_ptr &arg);
+
+  Session::shared_ptr find(const session_id_t &id);
+
+private:
+  list cache;
+  boost::mutex _mutex;
+};
+
+} /* namespace session */
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_SESSION_CACHE_H */

@@ -44,6 +44,8 @@ namespace fs= boost::filesystem;
 using namespace drizzled;
 using namespace std;
 
+namespace drizzle_plugin
+{
 namespace mysql_unix_socket_protocol
 {
 
@@ -51,12 +53,7 @@ static bool clobber= false;
 
 Protocol::~Protocol()
 {
-  fs::remove(unix_socket_path);
-}
-
-const char* Protocol::getHost(void) const
-{
-  return unix_socket_path.file_string().c_str();
+  fs::remove(_unix_socket_path);
 }
 
 in_port_t Protocol::getPort(void) const
@@ -102,8 +99,8 @@ bool Protocol::getFileDescriptors(std::vector<int> &fds)
   // then attempt to remove it.
   if (clobber)
   {
-    fs::path move_file(unix_socket_path.file_string() + ".old");
-    fs::rename(unix_socket_path, move_file);
+    fs::path move_file(_unix_socket_path.file_string() + ".old");
+    fs::rename(_unix_socket_path, move_file);
     unlink(move_file.file_string().c_str());
   }
 
@@ -111,25 +108,25 @@ bool Protocol::getFileDescriptors(std::vector<int> &fds)
   int arg= 1;
 
   (void) setsockopt(unix_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&arg, sizeof(arg));
-  unlink(unix_socket_path.file_string().c_str());
+  unlink(_unix_socket_path.file_string().c_str());
 
   struct sockaddr_un servAddr;
   memset(&servAddr, 0, sizeof(servAddr));
 
   servAddr.sun_family= AF_UNIX;
-  if (unix_socket_path.file_string().size() > sizeof(servAddr.sun_path))
+  if (_unix_socket_path.file_string().size() > sizeof(servAddr.sun_path))
   {
     std::cerr << "Unix Socket Path length too long. Must be under "
       << sizeof(servAddr.sun_path) << " bytes." << endl;
     return false;
   }
-  memcpy(servAddr.sun_path, unix_socket_path.file_string().c_str(), min(sizeof(servAddr.sun_path)-1,unix_socket_path.file_string().size()));
+  memcpy(servAddr.sun_path, _unix_socket_path.file_string().c_str(), min(sizeof(servAddr.sun_path)-1,_unix_socket_path.file_string().size()));
 
   socklen_t addrlen= sizeof(servAddr);
   if (::bind(unix_sock, reinterpret_cast<sockaddr *>(&servAddr), addrlen) < 0)
   { 
     std::cerr << "Can't start server : Bind on unix socket." << std::endl;
-    std::cerr << "Do you already have another of drizzled or mysqld running on socket: " << unix_socket_path << "?" << std::endl;
+    std::cerr << "Do you already have another of drizzled or mysqld running on socket: " << _unix_socket_path << "?" << std::endl;
     std::cerr << "Can't start server : UNIX Socket" << std::endl;
 
     return false;
@@ -141,9 +138,9 @@ bool Protocol::getFileDescriptors(std::vector<int> &fds)
   }
   else
   {
-    std::cerr << "Listening on " << unix_socket_path << "\n";
+    std::cerr << "Listening on " << _unix_socket_path << "\n";
   }
-  (void) unlink(unix_socket_path.file_string().c_str());
+  (void) unlink(_unix_socket_path.file_string().c_str());
 
   fds.push_back(unix_sock);
 
@@ -162,5 +159,6 @@ static void init_options(drizzled::module::option_context &context)
 }
 
 } /* namespace mysql_unix_socket_protocol */
+} /* namespace drizzle_plugin */
 
-DRIZZLE_PLUGIN(mysql_unix_socket_protocol::init, NULL, mysql_unix_socket_protocol::init_options);
+DRIZZLE_PLUGIN(drizzle_plugin::mysql_unix_socket_protocol::init, NULL, drizzle_plugin::mysql_unix_socket_protocol::init_options);

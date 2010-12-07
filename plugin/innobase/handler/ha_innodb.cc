@@ -102,6 +102,7 @@ extern "C" {
 #include "log0log.h"
 #include "lock0lock.h"
 #include "dict0crea.h"
+#include "create_replication.h"
 #include "btr0cur.h"
 #include "btr0btr.h"
 #include "fsp0fsp.h"
@@ -119,6 +120,7 @@ extern "C" {
 
 #include "ha_innodb.h"
 #include "data_dictionary.h"
+#include "replication_dictionary.h"
 #include "internal_dictionary.h"
 #include "handler0vars.h"
 
@@ -127,6 +129,12 @@ extern "C" {
 #include <string>
 
 #include "plugin/innobase/handler/status_function.h"
+#include "plugin/innobase/handler/replication_log.h"
+
+#include <google/protobuf/io/zero_copy_stream.h>
+#include <google/protobuf/io/zero_copy_stream_impl.h>
+#include <google/protobuf/io/coded_stream.h>
+#include <google/protobuf/text_format.h>
 
 using namespace std;
 using namespace drizzled;
@@ -171,6 +179,8 @@ static plugin::TableFunction* innodb_sys_fields_tool= NULL;
 static plugin::TableFunction* innodb_sys_foreign_tool= NULL;
 static plugin::TableFunction* innodb_sys_foreign_cols_tool= NULL;
 
+static plugin::TransactionApplier *replication_logger= NULL;
+
 static long innobase_mirrored_log_groups, innobase_log_files_in_group,
   innobase_log_buffer_size,
   innobase_force_recovery, innobase_open_files;
@@ -193,18 +203,18 @@ static uint innobase_old_blocks_pct;
 /* The default values for the following char* start-up parameters
 are determined in innobase_init below: */
 
-static char*  innobase_data_home_dir      = NULL;
-static char*  innobase_data_file_path     = NULL;
-static char*  innobase_log_group_home_dir   = NULL;
-static char*  innobase_file_format_name   = NULL;
-static char*  innobase_change_buffering   = NULL;
+std::string innobase_data_home_dir;
+std::string innobase_data_file_path;
+std::string innobase_log_group_home_dir;
+static char* innobase_file_format_name= NULL;
+static char* innobase_change_buffering= NULL;
 
 /* The highest file format being used in the database. The value can be
 set by user, however, it will be adjusted to the newer file format if
 a table of such format is created/opened. */
-static char*	innobase_file_format_max		= NULL;
+static char* innobase_file_format_max= NULL;
 
-static char*  innobase_file_flush_method   = NULL;
+std::string  innobase_log_arch_dir;
 
 /* Below we have boolean-valued start-up parameters, and their default
 values */
@@ -212,17 +222,18 @@ values */
 static ulong  innobase_fast_shutdown      = 1;
 static my_bool  innobase_file_format_check = TRUE;
 #ifdef UNIV_LOG_ARCHIVE
-static my_bool  innobase_log_archive      = FALSE;
-static char*  innobase_log_arch_dir     = NULL;
+static my_bool  innobase_log_archive= FALSE;
 #endif /* UNIV_LOG_ARCHIVE */
 static my_bool  innobase_use_doublewrite    = TRUE;
 static my_bool  innobase_use_checksums      = TRUE;
 static my_bool  innobase_rollback_on_timeout    = FALSE;
 static my_bool  innobase_create_status_file   = FALSE;
+static bool support_xa;
+static bool strict_mode;
+typedef constrained_check<uint32_t, 1024*1024*1024, 1> lock_wait_constraint;
+static lock_wait_constraint lock_wait_timeout;
 
 static char*  internal_innobase_data_file_path  = NULL;
-
-static char*  innodb_version_str = (char*) INNODB_VERSION_STR;
 
 /* The following counter is used to convey information to InnoDB
 about server activity: in selects it is not sensible to call
@@ -303,8 +314,6 @@ public:
     }
     
     /* These get strdup'd from vm variables */
-    free(innobase_data_home_dir);
-    free(innobase_log_group_home_dir);
 
   }
 
@@ -459,7 +468,7 @@ public:
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                              const drizzled::SchemaIdentifier &schema_identifier,
-                             drizzled::TableIdentifiers &set_of_identifiers);
+                             drizzled::TableIdentifier::vector &set_of_identifiers);
   bool validateCreateTableOption(const std::string &key, const std::string &state);
   void dropTemporarySchema();
 
@@ -488,7 +497,7 @@ bool InnobaseEngine::validateCreateTableOption(const std::string &key, const std
 
 void InnobaseEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                                            const drizzled::SchemaIdentifier &schema_identifier,
-                                           drizzled::TableIdentifiers &set_of_identifiers)
+                                           drizzled::TableIdentifier::vector &set_of_identifiers)
 {
   CachedDirectory::Entries entries= directory.getEntries();
 
@@ -628,24 +637,6 @@ innobase_commit_concurrency_validate(
   or nonzero. */
   return(!(!commit_concurrency == !innobase_commit_concurrency));
 }
-
-static DRIZZLE_SessionVAR_BOOL(support_xa, PLUGIN_VAR_OPCMDARG,
-  "Enable InnoDB support for the XA two-phase commit",
-  /* check_func */ NULL, /* update_func */ NULL,
-  /* default */ TRUE);
-
-static DRIZZLE_SessionVAR_BOOL(table_locks, PLUGIN_VAR_OPCMDARG,
-  "Enable InnoDB locking in LOCK TABLES",
-  /* check_func */ NULL, /* update_func */ NULL,
-  /* default */ TRUE);
-
-static DRIZZLE_SessionVAR_BOOL(strict_mode, PLUGIN_VAR_OPCMDARG,
-  "Use strict mode when evaluating create options.",
-  NULL, NULL, FALSE);
-
-static DRIZZLE_SessionVAR_ULONG(lock_wait_timeout, PLUGIN_VAR_RQCMDARG,
-  "Timeout in seconds an InnoDB transaction may wait for a lock before being rolled back. Values above 100000000 disable the timeout.",
-  NULL, NULL, 50, 1, 1024 * 1024 * 1024, 0);
 
 
 /*****************************************************************//**
@@ -913,10 +904,11 @@ extern "C" UNIV_INTERN
 ibool
 thd_supports_xa(
 /*============*/
-  void* session)  /*!< in: thread handle (Session*), or NULL to query
+  void* )  /*!< in: thread handle (Session*), or NULL to query
         the global innodb_supports_xa */
 {
-  return(SessionVAR((Session*) session, support_xa));
+  /* TODO: Add support here for per-session value */
+  return(support_xa);
 }
 
 /******************************************************************//**
@@ -926,12 +918,13 @@ extern "C" UNIV_INTERN
 ulong
 thd_lock_wait_timeout(
 /*==================*/
-  void* session)  /*!< in: thread handle (Session*), or NULL to query
+  void*)  /*!< in: thread handle (Session*), or NULL to query
       the global innodb_lock_wait_timeout */
 {
+  /* TODO: Add support here for per-session value */
   /* According to <drizzle/plugin.h>, passing session == NULL
   returns the global value of the session variable. */
-  return(SessionVAR((Session*) session, lock_wait_timeout));
+  return((ulong)lock_wait_timeout.get());
 }
 
 /******************************************************************//**
@@ -958,6 +951,25 @@ session_to_trx(
   Session*  session)  /*!< in: Drizzle Session */
 {
   return *(trx_t**) session->getEngineData(innodb_engine_ptr);
+}
+
+
+plugin::ReplicationReturnCode ReplicationLog::apply(Session &session,
+                                                    const message::Transaction &message)
+{
+  char *data= new char[message.ByteSize()];
+
+  message.SerializeToArray(data, message.ByteSize());
+
+  trx_t *trx= session_to_trx(&session);
+
+  uint64_t trx_id= message.transaction_context().transaction_id();
+  ulint error= insert_replication_message(data, message.ByteSize(), trx, trx_id);
+  (void)error;
+
+  delete[] data;
+
+  return plugin::SUCCESS;
 }
 
 /********************************************************************//**
@@ -1845,8 +1857,7 @@ innobase_init(
   innobase_use_doublewrite= (vm.count("disable-doublewrite")) ? false : true;
   srv_adaptive_flushing= (vm.count("disable-adaptive-flushing")) ? false : true;
   srv_use_sys_malloc= (vm.count("use-internal-malloc")) ? false : true;
-  (SessionVAR(NULL,support_xa))= (vm.count("disable-xa")) ? false : true;
-  (SessionVAR(NULL,table_locks))= (vm.count("disable-table-locks")) ? false : true;
+  support_xa= (vm.count("disable-xa")) ? false : true;
 
   if (vm.count("io-capacity"))
   {
@@ -1859,11 +1870,11 @@ innobase_init(
 
   if (vm.count("data-home-dir"))
   {
-    innobase_data_home_dir= strdup(vm["data-home-dir"].as<string>().c_str());
+    innobase_data_home_dir= vm["data-home-dir"].as<string>();
   }
   else
   {
-    innobase_data_home_dir= strdup(getDataHome().file_string().c_str());
+    innobase_data_home_dir= getDataHome().file_string();
   }
 
   if (vm.count("fast-shutdown"))
@@ -1894,25 +1905,13 @@ innobase_init(
     }
   }
 
-  if (vm.count("flush-method"))
-  {
-    innobase_file_flush_method= const_cast<char *>(vm["flush-method"].as<string>().c_str());
-  }
-  else
-  {
-    innobase_file_flush_method= NULL;
-  }
 
 #ifdef UNIV_LOG_ARCHIVE
   if (vm.count("log-arch-dir"))
   {
-    innobase_log_arch_dir= const_cast<char *>(vm["log-arch-dir"].as<string>().c_str());
+    innobase_log_arch_dir= vm["log-arch-dir"].as<string>());
   }
 
-  else
-  {
-    innobase_log_arch_dir= NULL;
-  }
 #endif /* UNIV_LOG_ARCHIVE */
 
   if (vm.count("max-dirty-pages-pct"))
@@ -2078,16 +2077,7 @@ innobase_init(
 
   if (vm.count("data-file-path"))
   {
-    innobase_data_file_path= const_cast<char *>(vm["data-file-path"].as<string>().c_str());
-  }
-  else
-  {
-    innobase_data_file_path= NULL;
-  }
-
-  if (vm.count("version"))
-  {
-    innodb_version_str= const_cast<char *>(vm["version"].as<string>().c_str());
+    innobase_data_file_path= vm["data-file-path"].as<string>();
   }
 
   if (vm.count("read-ahead-threshold"))
@@ -2099,21 +2089,7 @@ innobase_init(
     }
   }
 
-  if (vm.count("strict-mode"))
-  {
-    (SessionVAR(NULL,strict_mode))= vm["strict-mode"].as<bool>();
-  }
 
-  if (vm.count("lock-wait-timeout"))
-  {
-    if (vm["lock-wait-timeout"].as<unsigned long>() < 1 || vm["lock-wait-timeout"].as<unsigned long>() > 1024*1024*1024)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for lock-wait-timeout\n"));
-      exit(-1);
-    }
-
-    (SessionVAR(NULL,lock_wait_timeout))= vm["lock-wait-timeout"].as<unsigned long>();
-  }
 
   innodb_engine_ptr= actuall_engine_ptr= new InnobaseEngine(innobase_engine_name);
 
@@ -2166,20 +2142,21 @@ innobase_init(
 
   /* The default dir for data files is the datadir of MySQL */
 
-  srv_data_home = (char *)innobase_data_home_dir;
+  srv_data_home = (char *)innobase_data_home_dir.c_str();
 
   /* Set default InnoDB data file size to 10 MB and let it be
     auto-extending. Thus users can use InnoDB in >= 4.0 without having
     to specify any startup options. */
 
-  if (!innobase_data_file_path) {
-    innobase_data_file_path = (char*) "ibdata1:10M:autoextend";
+  if (innobase_data_file_path.empty()) 
+  {
+    innobase_data_file_path= std::string("ibdata1:10M:autoextend");
   }
 
   /* Since InnoDB edits the argument in the next call, we make another
     copy of it: */
 
-  internal_innobase_data_file_path = strdup(innobase_data_file_path);
+  internal_innobase_data_file_path = strdup(innobase_data_file_path.c_str());
 
   ret = (bool) srv_parse_data_file_paths_and_sizes(
                                                    internal_innobase_data_file_path);
@@ -2199,11 +2176,11 @@ mem_free_and_error:
 
   if (vm.count("log-group-home-dir"))
   {
-    innobase_log_group_home_dir= strdup(vm["log-group-home-dir"].as<string>().c_str());
+    innobase_log_group_home_dir= vm["log-group-home-dir"].as<string>();
   }
   else
   {
-    innobase_log_group_home_dir = strdup(getDataHome().file_string().c_str());
+    innobase_log_group_home_dir= getDataHome().file_string();
   }
 
 #ifdef UNIV_LOG_ARCHIVE
@@ -2211,13 +2188,13 @@ mem_free_and_error:
     starting from 4.0.6 we always set it the same as
 innodb_log_group_home_dir: */
 
-  innobase_log_arch_dir = innobase_log_group_home_dir;
+  innobase_log_arch_dir = (char *)innobase_log_group_home_dir.c_str();
 
-  srv_arch_dir = innobase_log_arch_dir;
+  srv_arch_dir = (char *)innobase_log_arch_dir.c_str();
 #endif /* UNIG_LOG_ARCHIVE */
 
   ret = (bool)
-    srv_parse_log_group_home_dirs(innobase_log_group_home_dir);
+    srv_parse_log_group_home_dirs((char *)innobase_log_group_home_dir.c_str());
 
   if (ret == FALSE || innobase_mirrored_log_groups != 1) {
     errmsg_printf(ERRMSG_LVL_ERROR, "syntax error in innodb_log_group_home_dir, or a "
@@ -2326,7 +2303,10 @@ innobase_change_buffering_inited_ok:
 
   /* --------------------------------------------------*/
 
-  srv_file_flush_method_str = innobase_file_flush_method;
+  if (vm.count("flush-method") != 0)
+  {
+    srv_file_flush_method_str = (char *)vm["flush-method"].as<string>().c_str();
+  }
 
   srv_n_log_groups = (ulint) innobase_mirrored_log_groups;
   srv_n_log_files = (ulint) innobase_log_files_in_group;
@@ -2378,6 +2358,13 @@ innobase_change_buffering_inited_ok:
     these compilation modules. */
 
   err = innobase_start_or_create_for_mysql();
+
+  if (err != DB_SUCCESS)
+  {
+    goto mem_free_and_error;
+  }
+
+  err = dict_create_sys_replication_log();
 
   if (err != DB_SUCCESS) {
     goto mem_free_and_error;
@@ -2445,6 +2432,43 @@ innobase_change_buffering_inited_ok:
   context.add(innodb_sys_foreign_cols_tool);
 
   context.add(new(std::nothrow)InnodbInternalTables());
+  context.registerVariable(new sys_var_const_string_val("data-home-dir", innobase_data_home_dir));
+  context.registerVariable(new sys_var_const_string_val("flush-method", 
+                                                        vm.count("flush-method") ?  vm["flush-method"].as<string>() : ""));
+  context.registerVariable(new sys_var_const_string_val("log-group-home-dir", innobase_log_group_home_dir));
+  context.registerVariable(new sys_var_const_string_val("data-file-path", innobase_data_file_path));
+  context.registerVariable(new sys_var_const_string_val("version", vm["version"].as<string>()));
+
+  #ifdef UNIV_LOG_ARCHIVE
+  context.registerVariable(new sys_var_const_string_val("log-arch-dir", innobase_log_arch_dir));
+  context.registerVariable(new sys_var_bool_ptr_readonly("log-archive", &innobase_log_archive));
+  #endif /* UNIV_LOG_ARCHIVE */  
+
+  context.add(new(std::nothrow)InnodbReplicationTable());
+
+  replication_logger= new(std::nothrow)ReplicationLog();
+  context.add(replication_logger);
+
+  if (vm.count("replication-log") and vm["replication-log"].as<bool>())
+  {
+    ReplicationLog::setup(static_cast<ReplicationLog *>(replication_logger));
+  }
+
+  context.registerVariable(new sys_var_bool_ptr_readonly("checksums", &innobase_use_checksums));
+  context.registerVariable(new sys_var_bool_ptr_readonly("doublewrite", &innobase_use_doublewrite));
+  context.registerVariable(new sys_var_bool_ptr("file-per-table", &srv_file_per_table));
+  context.registerVariable(new sys_var_bool_ptr_readonly("file-format-check", &innobase_file_format_check));
+  context.registerVariable(new sys_var_bool_ptr("adaptive-flushing", &srv_adaptive_flushing));
+  context.registerVariable(new sys_var_bool_ptr("status-file", &innobase_create_status_file));
+  context.registerVariable(new sys_var_bool_ptr_readonly("use-sys-malloc", &srv_use_sys_malloc));
+  context.registerVariable(new sys_var_bool_ptr_readonly("use-native-aio", &srv_use_native_aio));
+
+#ifdef UNIV_LOG_ARCHIVE
+ context.registerVariable(new sys_var_bool_ptr_readonly("log_archive", &innobase_log_archive));
+#endif /* UNIV_LOG_ARCHIVE */
+  context.registerVariable(new sys_var_bool_ptr("support-xa", &support_xa));
+  context.registerVariable(new sys_var_bool_ptr("strict_mode", &strict_mode));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("lock-wait-timeout", lock_wait_timeout));
 
   /* Get the current high water mark format. */
   innobase_file_format_max = (char*) trx_sys_file_format_max_get();
@@ -6205,7 +6229,7 @@ InnobaseEngine::doCreateTable(
 # error "DICT_TF_ZSSIZE_MAX < 1"
 #endif
 
-    if (SessionVAR(&session, strict_mode))
+    if (strict_mode)
     {
       if (! srv_file_per_table)
       {
@@ -9464,20 +9488,6 @@ innodb_change_buffering_update(
 }
 
 /* plugin options */
-static DRIZZLE_SYSVAR_BOOL(checksums, innobase_use_checksums,
-  PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
-  "Enable InnoDB checksums validation (enabled by default). ",
-  NULL, NULL, TRUE);
-
-static DRIZZLE_SYSVAR_STR(data_home_dir, innobase_data_home_dir,
-  PLUGIN_VAR_READONLY,
-  "The common part for InnoDB table spaces.",
-  NULL, NULL, NULL);
-
-static DRIZZLE_SYSVAR_BOOL(doublewrite, innobase_use_doublewrite,
-  PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
-  "Enable InnoDB doublewrite buffer (enabled by default). ",
-  NULL, NULL, TRUE);
 
 static DRIZZLE_SYSVAR_ULONG(io_capacity, srv_io_capacity,
   PLUGIN_VAR_RQCMDARG,
@@ -9509,11 +9519,6 @@ static DRIZZLE_SYSVAR_ULONG(fast_shutdown, innobase_fast_shutdown,
   ".",
   NULL, NULL, 1, 0, 2, 0);
 
-static DRIZZLE_SYSVAR_BOOL(file_per_table, srv_file_per_table,
-  PLUGIN_VAR_NOCMDARG,
-  "Stores each InnoDB table to an .ibd file in the database dir.",
-  NULL, NULL, TRUE);
-
 static DRIZZLE_SYSVAR_STR(file_format, innobase_file_format_name,
   PLUGIN_VAR_RQCMDARG,
   "File format to use for new tables in .ibd files.",
@@ -9526,10 +9531,6 @@ table space exceeds the maximum file format supported
 by the server. Can be set during server startup at command
 line or configure file, and a read only variable after
 server startup */
-static DRIZZLE_SYSVAR_BOOL(file_format_check, innobase_file_format_check,
-  PLUGIN_VAR_OPCMDARG | PLUGIN_VAR_READONLY,
-  "Whether to perform system file format check.",
-  NULL, NULL, TRUE);
 
 /* If a new file format is introduced, the file format
 name needs to be updated accordingly. Please refer to
@@ -9549,43 +9550,15 @@ static DRIZZLE_SYSVAR_ULONG(flush_log_at_trx_commit, srv_flush_log_at_trx_commit
   " or 2 (write at commit, flush once per second).",
   NULL, NULL, 1, 0, 2, 0);
 
-static DRIZZLE_SYSVAR_STR(flush_method, innobase_file_flush_method,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "With which method to flush data.", NULL, NULL, NULL);
-
-#ifdef UNIV_LOG_ARCHIVE
-static DRIZZLE_SYSVAR_STR(log_arch_dir, innobase_log_arch_dir,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Where full logs should be archived.", NULL, NULL, NULL);
-
-static DRIZZLE_SYSVAR_BOOL(log_archive, innobase_log_archive,
-  PLUGIN_VAR_OPCMDARG | PLUGIN_VAR_READONLY,
-  "Set to 1 if you want to have logs archived.", NULL, NULL, FALSE);
-#endif /* UNIV_LOG_ARCHIVE */
-
-static DRIZZLE_SYSVAR_STR(log_group_home_dir, innobase_log_group_home_dir,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Path to InnoDB log files.", NULL, NULL, NULL);
-
 static DRIZZLE_SYSVAR_ULONG(max_dirty_pages_pct, srv_max_buf_pool_modified_pct,
   PLUGIN_VAR_RQCMDARG,
   "Percentage of dirty pages allowed in bufferpool.",
   NULL, NULL, 75, 0, 99, 0);
 
-static DRIZZLE_SYSVAR_BOOL(adaptive_flushing, srv_adaptive_flushing,
-  PLUGIN_VAR_NOCMDARG,
-  "Attempt flushing dirty pages to avoid IO bursts at checkpoints.",
-  NULL, NULL, TRUE);
-
 static DRIZZLE_SYSVAR_ULONG(max_purge_lag, srv_max_purge_lag,
   PLUGIN_VAR_RQCMDARG,
   "Desired maximum length of the purge queue (0 = no limit)",
   NULL, NULL, 0, 0, ~0L, 0);
-
-static DRIZZLE_SYSVAR_BOOL(status_file, innobase_create_status_file,
-  PLUGIN_VAR_OPCMDARG | PLUGIN_VAR_NOSYSVAR,
-  "Enable SHOW INNODB STATUS output in the innodb_status.<pid> file",
-  NULL, NULL, FALSE);
 
 static DRIZZLE_SYSVAR_ULONGLONG(stats_sample_pages, srv_stats_sample_pages,
   PLUGIN_VAR_RQCMDARG,
@@ -9704,25 +9677,6 @@ static DRIZZLE_SYSVAR_ULONG(thread_sleep_delay, srv_thread_sleep_delay,
   PLUGIN_VAR_RQCMDARG,
   "Time of innodb thread sleeping before joining InnoDB queue (usec). Value 0 disable a sleep",
   NULL, NULL, 10000L, 0L, ~0L, 0);
-
-static DRIZZLE_SYSVAR_STR(data_file_path, innobase_data_file_path,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Path to individual files and their sizes.",
-  NULL, NULL, NULL);
-
-static DRIZZLE_SYSVAR_STR(version, innodb_version_str,
-  PLUGIN_VAR_NOCMDOPT | PLUGIN_VAR_READONLY,
-  "InnoDB version", NULL, NULL, INNODB_VERSION_STR);
-
-static DRIZZLE_SYSVAR_BOOL(use_sys_malloc, srv_use_sys_malloc,
-  PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
-  "Use OS memory allocator instead of InnoDB's internal memory allocator",
-  NULL, NULL, TRUE);
-
-static DRIZZLE_SYSVAR_BOOL(use_native_aio, srv_use_native_aio,
-  PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
-  "Use native AIO if supported on this platform.",
-  NULL, NULL, TRUE);
 
 static DRIZZLE_SYSVAR_STR(change_buffering, innobase_change_buffering,
   PLUGIN_VAR_RQCMDARG,
@@ -9883,10 +9837,13 @@ static void init_options(drizzled::module::option_context &context)
   context("disable-table-locks",
           "Disable InnoDB locking in LOCK TABLES");
   context("strict-mode",
-          po::value<bool>()->default_value(false)->zero_tokens(),
+          po::value<bool>(&strict_mode)->default_value(false)->zero_tokens(),
           "Use strict mode when evaluating create options.");
+  context("replication-log",
+          po::value<bool>()->default_value(false),
+          "Enable internal replication log.");
   context("lock-wait-timeout",
-          po::value<unsigned long>()->default_value(50),
+          po::value<lock_wait_constraint>(&lock_wait_timeout)->default_value(50),
           "Timeout in seconds an InnoDB transaction may wait for a lock before being rolled back. Values above 100000000 disable the timeout.");
 }
 
@@ -9895,34 +9852,23 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(autoextend_increment),
   DRIZZLE_SYSVAR(buffer_pool_size),
   DRIZZLE_SYSVAR(buffer_pool_instances),
-  DRIZZLE_SYSVAR(checksums),
   DRIZZLE_SYSVAR(commit_concurrency),
   DRIZZLE_SYSVAR(concurrency_tickets),
-  DRIZZLE_SYSVAR(data_file_path),
-  DRIZZLE_SYSVAR(data_home_dir),
-  DRIZZLE_SYSVAR(doublewrite),
   DRIZZLE_SYSVAR(fast_shutdown),
   DRIZZLE_SYSVAR(read_io_threads),
   DRIZZLE_SYSVAR(write_io_threads),
-  DRIZZLE_SYSVAR(file_per_table),
   DRIZZLE_SYSVAR(file_format),
-  DRIZZLE_SYSVAR(file_format_check),
   DRIZZLE_SYSVAR(file_format_max),
   DRIZZLE_SYSVAR(flush_log_at_trx_commit),
-  DRIZZLE_SYSVAR(flush_method),
   DRIZZLE_SYSVAR(force_recovery),
-  DRIZZLE_SYSVAR(lock_wait_timeout),
 #ifdef UNIV_LOG_ARCHIVE
-  DRIZZLE_SYSVAR(log_arch_dir),
   DRIZZLE_SYSVAR(log_archive),
 #endif /* UNIV_LOG_ARCHIVE */
   DRIZZLE_SYSVAR(log_buffer_size),
   DRIZZLE_SYSVAR(log_file_size),
   DRIZZLE_SYSVAR(log_files_in_group),
-  DRIZZLE_SYSVAR(log_group_home_dir),
   DRIZZLE_SYSVAR(max_dirty_pages_pct),
   DRIZZLE_SYSVAR(max_purge_lag),
-  DRIZZLE_SYSVAR(adaptive_flushing),
   DRIZZLE_SYSVAR(mirrored_log_groups),
   DRIZZLE_SYSVAR(old_blocks_pct),
   DRIZZLE_SYSVAR(old_blocks_time),
@@ -9930,17 +9876,10 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(stats_sample_pages),
   DRIZZLE_SYSVAR(adaptive_hash_index),
   DRIZZLE_SYSVAR(replication_delay),
-  DRIZZLE_SYSVAR(status_file),
-  DRIZZLE_SYSVAR(strict_mode),
-  DRIZZLE_SYSVAR(support_xa),
   DRIZZLE_SYSVAR(sync_spin_loops),
   DRIZZLE_SYSVAR(spin_wait_delay),
-  DRIZZLE_SYSVAR(table_locks),
   DRIZZLE_SYSVAR(thread_concurrency),
   DRIZZLE_SYSVAR(thread_sleep_delay),
-  DRIZZLE_SYSVAR(version),
-  DRIZZLE_SYSVAR(use_sys_malloc),
-  DRIZZLE_SYSVAR(use_native_aio),
   DRIZZLE_SYSVAR(change_buffering),
   DRIZZLE_SYSVAR(read_ahead_threshold),
   DRIZZLE_SYSVAR(io_capacity),
