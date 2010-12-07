@@ -381,7 +381,6 @@ static bool mysql_prepare_alter_table(Session *session,
     */
     if (not (~def->flags & (NO_DEFAULT_VALUE_FLAG | NOT_NULL_FLAG)) and not def->change)
     {
-      std::cerr << "error_if_not_empty() " << def->field_name << "\n";
       alter_info->error_if_not_empty= true;
     }
     if (! def->after)
@@ -1549,10 +1548,6 @@ copy_data_between_tables(Session *session,
 
     for (CopyField *copy_ptr= copy; copy_ptr != copy_end ; copy_ptr++)
     {
-      std::cerr << "copy->to_field() " << copy->to_field->field_name << " " << drizzled::message::type(copy->to_field->hasDefault()) << "\n";
-      if (copy->from_null_ptr)
-        std::cerr << "\t" << drizzled::message::type(*copy->from_null_ptr & copy->from_bit) << "\n";
-
       if (not copy->to_field->hasDefault() and copy->from_null_ptr and  *copy->from_null_ptr & copy->from_bit)
       {
         copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,

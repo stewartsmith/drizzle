@@ -248,7 +248,6 @@ static void do_outer_field_null(CopyField *copy)
 
 static void do_copy_not_null(CopyField *copy)
 {
-  std::cerr << "hasDefault() " << drizzled::message::type(copy->to_field->hasDefault()) << "\n";
   if (copy->to_field->hasDefault() and *copy->from_null_ptr & copy->from_bit)
   {
     copy->to_field->set_default();
