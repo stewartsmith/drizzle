@@ -15,7 +15,7 @@ WAIT_UNTIL(@count_barrier, 1)
 1
 SELECT USER,INFO FROM DATA_DICTIONARY.PROCESSLIST;
 USER	INFO
-root	
+root	NULL
 root	SELECT wait(@count_barrier),
 "con1","llllllllllloooooooooooooooooooooooooooooooooooooooooooooooooooo
 root	SELECT USER,INFO FROM DATA_DICTIONARY.PROCESSLIST

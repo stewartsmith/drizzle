@@ -727,6 +727,7 @@ bool Session::readAndStoreQuery(const char *in_packet, uint32_t in_packet_length
   std::string *new_query= new std::string(in_packet, in_packet + in_packet_length);
   plugin::QueryRewriter::rewriteQuery(getSchema(), *new_query);
   query.reset(new_query);
+  _state.reset(new State(in_packet, in_packet_length));
 
   return true;
 }

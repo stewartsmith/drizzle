@@ -65,6 +65,7 @@ bool ProcesslistTool::Generator::populate()
 
   while ((tmp= session_generator))
   {
+    drizzled::Session::State::const_shared_ptr state(tmp->state());
     const SecurityContext *tmp_sctx= &tmp->getSecurityContext();
     const char *val;
 
@@ -117,7 +118,16 @@ bool ProcesslistTool::Generator::populate()
     val ? push(val) : push();
 
     /* INFO */
-    push(*tmp->getQueryString());
+    if (state)
+    {
+      size_t length;
+      const char *tmp_ptr= state->query(length);
+      push(tmp_ptr, length);
+    }
+    else
+    {
+      push();
+    }
 
     /* HAS_GLOBAL_LOCK */
     bool has_global_lock= tmp->isGlobalReadLock();
