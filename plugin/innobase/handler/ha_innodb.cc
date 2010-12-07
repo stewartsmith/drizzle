@@ -233,6 +233,9 @@ static uint32_constraint innodb_sync_spin_loops;
 static uint32_constraint innodb_spin_wait_delay;
 static uint32_constraint innodb_thread_sleep_delay;
 
+typedef constrained_check<uint32_t, 64, 0> read_ahead_threshold_constraint;
+static read_ahead_threshold_constraint innodb_read_ahead_threshold;
+
 /* The default values for the following char* start-up parameters
 are determined in innobase_init below: */
 
@@ -1879,6 +1882,12 @@ static void innodb_thread_sleep_delay_update(Session *, sql_var_t)
   srv_thread_sleep_delay= innodb_thread_sleep_delay.get();
 }
 
+static void innodb_read_ahead_threshold_update(Session *, sql_var_t)
+{
+  srv_read_ahead_threshold= innodb_read_ahead_threshold.get();
+}
+
+
 static int innodb_commit_concurrency_validate(Session *session, set_var *var)
 {
    uint32_t new_value= var->save_result.uint32_t_value;
@@ -2012,6 +2021,7 @@ innobase_init(
   srv_n_spin_wait_rounds= innodb_sync_spin_loops.get();
   srv_spin_wait_delay= innodb_spin_wait_delay.get();
   srv_thread_sleep_delay= innodb_thread_sleep_delay.get();
+  srv_read_ahead_threshold= innodb_read_ahead_threshold.get();
 
   /* Inverted Booleans */
 
@@ -2038,16 +2048,6 @@ innobase_init(
   {
     innobase_data_file_path= vm["data-file-path"].as<string>();
   }
-
-  if (vm.count("read-ahead-threshold"))
-  {
-    if (srv_read_ahead_threshold > 64)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for read-ahead-threshold\n"));
-      exit(-1);
-    }
-  }
-
 
 
   innodb_engine_ptr= actuall_engine_ptr= new InnobaseEngine(innobase_engine_name);
@@ -2419,7 +2419,9 @@ innobase_change_buffering_inited_ok:
   context.registerVariable(new sys_var_constrained_value<uint32_t>("thread_concurrency",
                                                                    innobase_thread_concurrency,
                                                                    innodb_thread_concurrency_update));
-
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("read_ahead_threshold",
+                                                                   innodb_read_ahead_threshold,
+                                                                   innodb_read_ahead_threshold_update));
   /* Get the current high water mark format. */
   innobase_file_format_max = trx_sys_file_format_max_get();
   btr_search_fully_disabled = (!btr_search_enabled);
@@ -9218,12 +9220,6 @@ static DRIZZLE_SYSVAR_STR(change_buffering, innobase_change_buffering,
   innodb_change_buffering_validate,
   innodb_change_buffering_update, "all");
 
-static DRIZZLE_SYSVAR_ULONG(read_ahead_threshold, srv_read_ahead_threshold,
-  PLUGIN_VAR_RQCMDARG,
-  "Number of pages that must be accessed sequentially for InnoDB to "
-  "trigger a readahead.",
-  NULL, NULL, 56, 0, 64, 0);
-
 static void init_options(drizzled::module::option_context &context)
 {
   context("disable-checksums",
@@ -9355,7 +9351,7 @@ static void init_options(drizzled::module::option_context &context)
           po::value<string>(),
           "Buffer changes to reduce random access: OFF, ON, inserting, deleting, changing, or purging.");
   context("read-ahead-threshold",
-          po::value<unsigned long>(&srv_read_ahead_threshold)->default_value(56),
+          po::value<read_ahead_threshold_constraint>(&innodb_read_ahead_threshold)->default_value(56),
           "Number of pages that must be accessed sequentially for InnoDB to trigger a readahead.");
   context("disable-xa",
           "Disable InnoDB support for the XA two-phase commit");
@@ -9382,7 +9378,6 @@ static void init_options(drizzled::module::option_context &context)
 
 static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(change_buffering),
-  DRIZZLE_SYSVAR(read_ahead_threshold),
   NULL
 };
 
