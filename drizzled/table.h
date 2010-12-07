@@ -437,7 +437,8 @@ public:
   size_t max_row_length(const unsigned char *data);
   uint32_t find_shortest_key(const key_map *usable_keys);
   bool compare_record(Field **ptr);
-  bool compare_record();
+  bool records_are_comparable();
+  bool compare_records();
   /* TODO: the (re)storeRecord's may be able to be further condensed */
   void storeRecord();
   void storeRecordAsInsert();

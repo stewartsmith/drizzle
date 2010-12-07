@@ -1472,13 +1472,69 @@ bool Table::compare_record(Field **ptr)
   return false;
 }
 
-/* Return false if row hasn't changed */
-
-bool Table::compare_record()
+/**
+   True if the table's input and output record buffers are comparable using
+   compare_records(TABLE*).
+ */
+bool Table::records_are_comparable()
 {
+  return ((getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ) == 0) ||
+          write_set->is_subset_of(*read_set));
+}
+
+/**
+   Compares the input and outbut record buffers of the table to see if a row
+   has changed. The algorithm iterates over updated columns and if they are
+   nullable compares NULL bits in the buffer before comparing actual
+   data. Special care must be taken to compare only the relevant NULL bits and
+   mask out all others as they may be undefined. The storage engine will not
+   and should not touch them.
+
+   @param table The table to evaluate.
+
+   @return true if row has changed.
+   @return false otherwise.
+*/
+bool Table::compare_records()
+{
+//  DBUG_ASSERT(records_are_comparable(table));
+
+  if (getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ) != 0)
+  {
+    /*
+      Storage engine may not have read all columns of the record.  Fields
+      (including NULL bits) not in the write_set may not have been read and
+      can therefore not be compared.
+    */
+    for (Field **ptr= this->field ; *ptr != NULL; ptr++)
+    {
+      Field *f= *ptr;
+      if (write_set->test(f->field_index))
+      {
+        if (f->real_maybe_null())
+        {
+          unsigned char null_byte_index= f->null_ptr - record[0];
+
+          if (((record[0][null_byte_index]) & f->null_bit) !=
+              ((record[1][null_byte_index]) & f->null_bit))
+            return true;
+        }
+        if (f->cmp_binary_offset(getShare()->rec_buff_length))
+          return true;
+      }
+    }
+    return false;
+  }
+
+  /*
+    The storage engine has read all columns, so it's safe to compare all bits
+    including those not in the write_set. This is cheaper than the
+    field-by-field comparison done above.
+  */
   if (not getShare()->blob_fields + getShare()->hasVariableWidth())
+    // Fixed-size record: do bitwise comparison of the records
     return memcmp(this->getInsertRecord(), this->getUpdateRecord(), (size_t) getShare()->getRecordLength());
-  
+
   /* Compare null bits */
   if (memcmp(null_flags, null_flags + getShare()->rec_buff_length, getShare()->null_bytes))
     return true; /* Diff in NULL value */
