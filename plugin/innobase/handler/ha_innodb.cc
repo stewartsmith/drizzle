@@ -214,8 +214,9 @@ typedef constrained_check<uint32_t, 64, 1> io_threads_constraint;
 static io_threads_constraint innobase_read_io_threads;
 static io_threads_constraint innobase_write_io_threads;
 
-typedef constrained_check<uint32_t, 1000, 0> commit_concurrency_constraint;
-static commit_concurrency_constraint innobase_commit_concurrency;
+typedef constrained_check<uint32_t, 1000, 0> concurrency_constraint;
+static concurrency_constraint innobase_commit_concurrency;
+static concurrency_constraint innobase_thread_concurrency;
 static uint32_nonzero_constraint innodb_concurrency_tickets;
 
 typedef constrained_check<int64_t, INT64_MAX, 1024*1024, 1024*1024> log_file_constraint;
@@ -228,6 +229,9 @@ Connected to buf_LRU_old_ratio. */
 typedef constrained_check<uint32_t, 95, 5> old_blocks_constraint;
 static old_blocks_constraint innobase_old_blocks_pct;
 
+static uint32_constraint innodb_sync_spin_loops;
+static uint32_constraint innodb_spin_wait_delay;
+static uint32_constraint innodb_thread_sleep_delay;
 
 /* The default values for the following char* start-up parameters
 are determined in innobase_init below: */
@@ -1855,6 +1859,26 @@ static void innodb_old_blocks_pct_update(Session *, sql_var_t)
   innobase_old_blocks_pct= buf_LRU_old_ratio_update(innobase_old_blocks_pct.get(), TRUE);
 }
 
+static void innodb_thread_concurrency_update(Session *, sql_var_t)
+{
+  srv_thread_concurrency= innobase_thread_concurrency.get();
+}
+
+static void innodb_sync_spin_loops_update(Session *, sql_var_t)
+{
+  srv_n_spin_wait_rounds= innodb_sync_spin_loops.get();
+}
+
+static void innodb_spin_wait_delay_update(Session *, sql_var_t)
+{
+  srv_spin_wait_delay= innodb_spin_wait_delay.get();
+}
+
+static void innodb_thread_sleep_delay_update(Session *, sql_var_t)
+{
+  srv_thread_sleep_delay= innodb_thread_sleep_delay.get();
+}
+
 static int innodb_commit_concurrency_validate(Session *session, set_var *var)
 {
    uint32_t new_value= var->save_result.uint32_t_value;
@@ -1984,6 +2008,10 @@ innobase_init(
   srv_stats_sample_pages= innodb_stats_sample_pages.get();
   srv_n_free_tickets_to_enter= innodb_concurrency_tickets.get();
   srv_replication_delay= innodb_replication_delay.get();
+  srv_thread_concurrency= innobase_thread_concurrency.get();
+  srv_n_spin_wait_rounds= innodb_sync_spin_loops.get();
+  srv_spin_wait_delay= innodb_spin_wait_delay.get();
+  srv_thread_sleep_delay= innodb_thread_sleep_delay.get();
 
   /* Inverted Booleans */
 
@@ -2005,24 +2033,6 @@ innobase_init(
     innobase_data_home_dir= getDataHome().file_string();
   }
 
-
-  if (vm.count("stats-sample-pages"))
-  {
-    if (srv_stats_sample_pages < 8)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for stats-sample-pages\n"));
-      exit(-1);
-    }
-  }
-
-  if (vm.count("thread-concurrency"))
-  {
-    if (srv_thread_concurrency > 1000)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for thread-concurrency\n"));
-      exit(-1);
-    }
-  }
 
   if (vm.count("data-file-path"))
   {
@@ -2403,7 +2413,12 @@ innobase_change_buffering_inited_ok:
                                                                    innobase_old_blocks_pct,
                                                                    innodb_old_blocks_pct_update));
   context.registerVariable(new sys_var_uint32_t_ptr("old_blocks_time", &buf_LRU_old_threshold_ms));
-
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("sync_spin_loops", innodb_sync_spin_loops, innodb_sync_spin_loops_update));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("spin_wait_delay", innodb_spin_wait_delay, innodb_spin_wait_delay_update));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("thread_sleep_delay", innodb_thread_sleep_delay, innodb_thread_sleep_delay_update));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("thread_concurrency",
+                                                                   innobase_thread_concurrency,
+                                                                   innodb_thread_concurrency_update));
 
   /* Get the current high water mark format. */
   innobase_file_format_max = trx_sys_file_format_max_get();
@@ -9196,26 +9211,6 @@ innodb_change_buffering_update(
 
 /* plugin options */
 
-static DRIZZLE_SYSVAR_ULONG(sync_spin_loops, srv_n_spin_wait_rounds,
-  PLUGIN_VAR_RQCMDARG,
-  "Count of spin-loop rounds in InnoDB mutexes (30 by default)",
-  NULL, NULL, 30L, 0L, ~0L, 0);
-
-static DRIZZLE_SYSVAR_ULONG(spin_wait_delay, srv_spin_wait_delay,
-  PLUGIN_VAR_OPCMDARG,
-  "Maximum delay between polling for a spin lock (6 by default)",
-  NULL, NULL, 6L, 0L, ~0L, 0);
-
-static DRIZZLE_SYSVAR_ULONG(thread_concurrency, srv_thread_concurrency,
-  PLUGIN_VAR_RQCMDARG,
-  "Helps in performance tuning in heavily concurrent environments. Sets the maximum number of threads allowed inside InnoDB. Value 0 will disable the thread throttling.",
-  NULL, NULL, 0, 0, 1000, 0);
-
-static DRIZZLE_SYSVAR_ULONG(thread_sleep_delay, srv_thread_sleep_delay,
-  PLUGIN_VAR_RQCMDARG,
-  "Time of innodb thread sleeping before joining InnoDB queue (usec). Value 0 disable a sleep",
-  NULL, NULL, 10000L, 0L, ~0L, 0);
-
 static DRIZZLE_SYSVAR_STR(change_buffering, innobase_change_buffering,
   PLUGIN_VAR_RQCMDARG,
   "Buffer changes to reduce random access: "
@@ -9307,7 +9302,7 @@ static void init_options(drizzled::module::option_context &context)
           "Number of buffer pool instances, set to higher value on high-end machines to increase scalability");
 
   context("commit-concurrency",
-          po::value<commit_concurrency_constraint>(&innobase_commit_concurrency)->default_value(0),
+          po::value<concurrency_constraint>(&innobase_commit_concurrency)->default_value(0),
           "Helps in performance tuning in heavily concurrent environments.");
   context("concurrency-tickets",
           po::value<uint32_nonzero_constraint>(&innodb_concurrency_tickets)->default_value(500L),
@@ -9337,16 +9332,16 @@ static void init_options(drizzled::module::option_context &context)
           po::value<open_files_constraint>(&innobase_open_files)->default_value(300L),
           "How many files at the maximum InnoDB keeps open at the same time.");
   context("sync-spin-loops",
-          po::value<unsigned long>(&srv_n_spin_wait_rounds)->default_value(30L),
+          po::value<uint32_constraint>(&innodb_sync_spin_loops)->default_value(30L),
           "Count of spin-loop rounds in InnoDB mutexes (30 by default)");
   context("spin-wait-delay",
-          po::value<unsigned long>(&srv_spin_wait_delay)->default_value(6L),
+          po::value<uint32_constraint>(&innodb_spin_wait_delay)->default_value(6L),
           "Maximum delay between polling for a spin lock (6 by default)");
   context("thread-concurrency",
-          po::value<unsigned long>(&srv_thread_concurrency)->default_value(0),
+          po::value<concurrency_constraint>(&innobase_thread_concurrency)->default_value(0),
           "Helps in performance tuning in heavily concurrent environments. Sets the maximum number of threads allowed inside InnoDB. Value 0 will disable the thread throttling.");
   context("thread-sleep-delay",
-          po::value<unsigned long>(&srv_thread_sleep_delay)->default_value(10000L),
+          po::value<uint32_constraint>(&innodb_thread_sleep_delay)->default_value(10000L),
           "Time of innodb thread sleeping before joining InnoDB queue (usec). Value 0 disable a sleep");
   context("data-file-path",
           po::value<string>(),
@@ -9386,10 +9381,6 @@ static void init_options(drizzled::module::option_context &context)
 }
 
 static drizzle_sys_var* innobase_system_variables[]= {
-  DRIZZLE_SYSVAR(sync_spin_loops),
-  DRIZZLE_SYSVAR(spin_wait_delay),
-  DRIZZLE_SYSVAR(thread_concurrency),
-  DRIZZLE_SYSVAR(thread_sleep_delay),
   DRIZZLE_SYSVAR(change_buffering),
   DRIZZLE_SYSVAR(read_ahead_threshold),
   NULL
