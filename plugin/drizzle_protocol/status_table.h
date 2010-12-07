@@ -22,6 +22,9 @@
 #define PLUGIN_DRIZZLE_PROTOCOL_STATUS_TABLE_H
 
 #include "drizzled/plugin/table_function.h"
+
+namespace drizzle_plugin
+{
 namespace drizzle_protocol
 {
 
@@ -57,6 +60,7 @@ public:
   }
 };
 
-}
+} /* namespace drizzle_protocol */
+} /* namespace drizzle_plugin */
 
 #endif /* PLUGIN_DRIZZLE_PROTOCOL_STATUS_TABLE_H */

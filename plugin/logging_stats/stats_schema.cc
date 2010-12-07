@@ -131,14 +131,14 @@ SessionStatementsTool::Generator::Generator(Field **arg, LoggingStats *in_loggin
 
   uint32_t bucket_number= current_scoreboard->getBucketNumber(&getSession());
 
-  vector<ScoreboardSlot* > *scoreboard_vector=
+  std::vector<ScoreboardSlot* > *scoreboard_vector=
      current_scoreboard->getVectorOfScoreboardVectors()->at(bucket_number);
 
-  vector<ScoreboardSlot *>::iterator scoreboard_vector_it= scoreboard_vector->begin();
-  vector<ScoreboardSlot *>::iterator scoreboard_vector_end= scoreboard_vector->end();
+  std::vector<ScoreboardSlot *>::iterator scoreboard_vector_it= scoreboard_vector->begin();
+  std::vector<ScoreboardSlot *>::iterator scoreboard_vector_end= scoreboard_vector->end();
 
   ScoreboardSlot *scoreboard_slot= NULL;
-  for (vector<ScoreboardSlot *>::iterator it= scoreboard_vector->begin();
+  for (std::vector<ScoreboardSlot *>::iterator it= scoreboard_vector->begin();
        it != scoreboard_vector->end(); ++it)
   {
     scoreboard_slot= *it;
@@ -260,7 +260,7 @@ CurrentCommandsTool::Generator::Generator(Field **arg, LoggingStats *logging_sta
 
 void CurrentCommandsTool::Generator::setVectorIteratorsAndLock(uint32_t bucket_number)
 {
-  vector<ScoreboardSlot* > *scoreboard_vector= 
+  std::vector<ScoreboardSlot* > *scoreboard_vector= 
     current_scoreboard->getVectorOfScoreboardVectors()->at(bucket_number); 
 
   current_lock= current_scoreboard->getVectorOfScoreboardLocks()->at(bucket_number);

@@ -366,7 +366,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/select_to_file.h \
 			      drizzled/select_union.h \
 			      drizzled/session.h \
-			      drizzled/session_list.h \
+			      drizzled/session/cache.h \
 			      drizzled/set_var.h \
 			      drizzled/show.h \
 			      drizzled/show_type.h \
@@ -730,7 +730,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/replication_services.cc \
 				 drizzled/resource_context.cc \
 				 drizzled/session.cc \
-				 drizzled/session_list.cc \
+				 drizzled/session/cache.cc \
 				 drizzled/set_var.cc \
 				 drizzled/show.cc \
 				 drizzled/signal_handler.cc \

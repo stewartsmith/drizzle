@@ -48,7 +48,7 @@
 #include "drizzled/gettext.h"
 #include "drizzled/configmake.h"
 #include "drizzled/session.h"
-#include "drizzled/session_list.h"
+#include "drizzled/session/cache.h"
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/unireg.h"
 #include "drizzled/drizzled.h"

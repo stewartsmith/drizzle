@@ -47,6 +47,8 @@
 #include "drizzled/pthread_globals.h"
 #include "drizzled/util/tokenize.h"
 
+#include <boost/foreach.hpp>
+
 /* FreeBSD 2.2.2 does not define RTLD_NOW) */
 #ifndef RTLD_NOW
 #define RTLD_NOW 1
@@ -490,7 +492,6 @@ bool plugin_init(module::Registry &registry,
 
 bool plugin_finalize(module::Registry &registry)
 {
-
   /*
     Now we initialize all remaining plugins
   */
@@ -513,6 +514,12 @@ bool plugin_finalize(module::Registry &registry)
       }
     }
   }
+
+  BOOST_FOREACH(plugin::Plugin::map::value_type value, registry.getPluginsMap())
+  {
+    value.second->prime();
+  }
+
   return false;
 }
 
@@ -816,7 +823,7 @@ static void update_func_str(Session *, drizzle_sys_var *var,
 ****************************************************************************/
 
 
-sys_var *find_sys_var(Session *, const char *str, uint32_t length)
+sys_var *find_sys_var(const char *str, uint32_t length)
 {
   sys_var *var;
   sys_var_pluginvar *pi= NULL;
@@ -1719,7 +1726,7 @@ static int test_plugin_options(memory::Root *module_root,
         add_sys_var_to_list(v);
         test_module->addSysVar(v);
       }
-      catch (...)
+      catch (std::exception&)
       {
         errmsg_printf(ERRMSG_LVL_ERROR,
                       _("Plugin '%s' has conflicting system variables"),

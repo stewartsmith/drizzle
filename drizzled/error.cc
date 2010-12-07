@@ -292,8 +292,13 @@ ErrorMap::ErrorMap()
   add(ER_CANT_DROP_FIELD_OR_KEY, N_("Can't DROP '%-.192s'; check that column/key exists"));
   add(ER_INSERT_INFO, N_("Records: %ld  Duplicates: %ld  Warnings: %ld"));
   add(ER_UPDATE_TABLE_USED, N_("You can't specify target table '%-.192s' for update in FROM clause"));
-  add(ER_NO_SUCH_THREAD, N_("Unknown thread id: %lu"));
-  add(ER_KILL_DENIED_ERROR, N_("You are not owner of thread %lu"));
+
+  // KILL session errors
+  add(ER_NO_SUCH_THREAD, N_("Unknown session id: %lu"));
+  add(ER_KILL_DENIED_ERROR, N_("You are not the owner of session %lu"));
+  add(ER_KILL_DENY_SELF_ERROR, N_("You cannot kill the session you are connected from."));
+
+
   add(ER_NO_TABLES_USED, N_("No tables used"));
   add(ER_BLOB_CANT_HAVE_DEFAULT, N_("BLOB/TEXT column '%-.192s' can't have a default value"));
   add(ER_WRONG_DB_NAME, N_("Incorrect schema name '%-.100s'"));
@@ -461,6 +466,7 @@ ErrorMap::ErrorMap()
   add(ER_NAME_BECOMES_EMPTY, N_("Name '%-.64s' has become ''"));
   add(ER_AMBIGUOUS_FIELD_TERM, N_("First character of the FIELDS TERMINATED string is ambiguous; please use non-optional and non-empty FIELDS ENCLOSED BY"));
   add(ER_ILLEGAL_HA_CREATE_OPTION, N_("Table storage engine '%-.64s' does not support the create option '%.64s'"));
+  add(ER_INVALID_OPTION_VALUE, N_("Error setting %-.32s. Given value %-.128s %-.128s"));
   add(ER_WRONG_VALUE, N_("Incorrect %-.32s value: '%-.128s'"));
   add(ER_NO_PARTITION_FOR_GIVEN_VALUE, N_("Table has no partition for value %-.64s"));
   add(ER_BINLOG_ROW_LOGGING_FAILED, N_("Writing one row to the row-based binary log failed"));

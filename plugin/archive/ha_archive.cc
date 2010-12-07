@@ -1280,7 +1280,7 @@ bool ArchiveEngine::doDoesTableExist(Session&,
 
 void ArchiveEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                                           const drizzled::SchemaIdentifier &schema_identifier,
-                                          drizzled::TableIdentifiers &set_of_identifiers)
+                                          drizzled::TableIdentifier::vector &set_of_identifiers)
 {
   drizzled::CachedDirectory::Entries entries= directory.getEntries();
 

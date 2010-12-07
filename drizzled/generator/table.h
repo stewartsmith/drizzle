@@ -32,8 +32,8 @@ class Table
   Session &session;
   message::table::shared_ptr table;
 
-  TableIdentifiers table_names;
-  TableIdentifiers::const_iterator table_iterator;
+  TableIdentifier::vector table_names;
+  TableIdentifier::vector::const_iterator table_iterator;
 
 public:
 

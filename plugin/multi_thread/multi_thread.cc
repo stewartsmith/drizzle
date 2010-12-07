@@ -20,7 +20,7 @@
 #include <drizzled/module/option_map.h>
 #include <drizzled/errmsg_print.h>
 #include "drizzled/session.h"
-#include "drizzled/session_list.h"
+#include "drizzled/session/cache.h"
 
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
@@ -132,8 +132,19 @@ bool MultiThreadScheduler::addSession(Session::shared_ptr &session)
 }
 
 
+void MultiThreadScheduler::killSession(Session *session)
+{
+  boost_thread_shared_ptr thread(session->getThread());
+
+  if (thread)
+  {
+    thread->interrupt();
+  }
+}
+
 void MultiThreadScheduler::killSessionNow(Session::shared_ptr &session)
 {
+  killSession(session.get());
   /* Locks LOCK_thread_count and deletes session */
   Session::unlink(session);
   thread_count.decrement();

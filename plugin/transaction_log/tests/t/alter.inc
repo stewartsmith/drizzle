@@ -1,7 +1,6 @@
 # 
 # Simple test of the transaction log for testing ALTER command 
 #
-
 --disable_warnings
 DROP TABLE IF EXISTS t1;
 --enable_warnings
@@ -22,3 +21,4 @@ ALTER TABLE t1 ADD dummy INT;
 ALTER TABLE t1 ADD INDEX ix_padding (padding(20));
 
 DROP TABLE t1;
+

@@ -225,6 +225,27 @@ public:
   { return (unsigned char*) value; }
 };
 
+class sys_var_uint32_t_ptr_readonly :
+  public sys_var_uint32_t_ptr
+{
+public:
+  sys_var_uint32_t_ptr_readonly(const char *name_arg,
+                                uint32_t *value_ptr_arg) :
+    sys_var_uint32_t_ptr(name_arg, value_ptr_arg)
+  {}
+
+  sys_var_uint32_t_ptr_readonly(const char *name_arg,
+                                uint32_t *value_ptr_arg,
+                                sys_after_update_func func) :
+    sys_var_uint32_t_ptr(name_arg, value_ptr_arg, func)
+  {}
+
+  bool is_readonly() const
+  {
+    return true;
+  }
+};
+
 
 class sys_var_uint64_t_ptr :public sys_var
 {
@@ -299,15 +320,20 @@ public:
 
 class sys_var_bool_ptr :public sys_var
 {
+  bool default_value;
 public:
   bool *value;
   sys_var_bool_ptr(const std::string &name_arg, bool *value_arg,
                    sys_after_update_func func= NULL) :
-    sys_var(name_arg, func), value(value_arg)
+    sys_var(name_arg, func), default_value(*value_arg), value(value_arg)
   { }
   bool check(Session *session, set_var *var)
   {
     return check_enum(session, var, &bool_typelib);
+  }
+  virtual bool check_default(sql_var_t)
+  {
+    return false;
   }
   bool update(Session *session, set_var *var);
   void set_default(Session *session, sql_var_t type);
@@ -338,9 +364,9 @@ public:
   sys_update_func update_func;
   sys_set_default_func set_default_func;
   sys_var_str(const char *name_arg,
-	      sys_check_func check_func_arg,
-	      sys_update_func update_func_arg,
-	      sys_set_default_func set_default_func_arg,
+              sys_check_func check_func_arg,
+              sys_update_func update_func_arg,
+              sys_set_default_func set_default_func_arg,
               char *value_arg)
     :sys_var(name_arg), value(value_arg), check_func(check_func_arg),
     update_func(update_func_arg),set_default_func(set_default_func_arg)
@@ -408,24 +434,22 @@ class sys_var_constrained_value :
   constrained_value<T> &value;
   T basic_value;
   T default_value;
-  bool have_default_value;
 public:
   sys_var_constrained_value(const char *name_arg,
                             constrained_value<T> &value_arg) :
     sys_var(name_arg),
     value(value_arg),
-    default_value(0),
-    have_default_value(false)
+    default_value(value_arg.get())
   { }
 
   sys_var_constrained_value(const char *name_arg,
                             constrained_value<T> &value_arg,
-                            T default_value_arg) :
-    sys_var(name_arg),
+                            sys_after_update_func after_update_func_arg) :
+    sys_var(name_arg, after_update_func_arg),
     value(value_arg),
-    default_value(default_value_arg),
-    have_default_value(true)
+    default_value(value_arg.get())
   { }
+
 
 public:
   bool is_readonly() const
@@ -443,7 +467,7 @@ public:
 
   bool check_default(sql_var_t)
   {
-    return not have_default_value;
+    return false;
   }
 
   void set_default(Session *, sql_var_t)
@@ -453,7 +477,7 @@ public:
 
   unsigned char *value_ptr(Session *, sql_var_t, const LEX_STRING *)
   {
-    basic_value= T(value);
+    basic_value= value.get();
     return (unsigned char*)&basic_value;
   }
 };
@@ -473,7 +497,7 @@ inline SHOW_TYPE sys_var_constrained_value<int64_t>::show_type()
 template<>
 inline SHOW_TYPE sys_var_constrained_value<uint32_t>::show_type()
 {
-  return SHOW_LONG;
+  return SHOW_INT;
 }
 
 template<>
@@ -1130,7 +1154,7 @@ void drizzle_add_plugin_sysvar(sys_var_pluginvar *var);
 void drizzle_del_plugin_sysvar();
 void add_sys_var_to_list(sys_var *var, struct option *long_options);
 void add_sys_var_to_list(sys_var *var);
-sys_var *find_sys_var(Session *session, const char *str, uint32_t length=0);
+sys_var *find_sys_var(const char *str, uint32_t length=0);
 bool not_all_support_one_shot(List<set_var_base> *var_list);
 extern sys_var_session_time_zone sys_time_zone;
 extern sys_var_session_bit sys_autocommit;

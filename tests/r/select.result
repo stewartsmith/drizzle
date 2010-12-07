@@ -2993,7 +2993,7 @@ INSERT INTO t2 VALUES
 EXPLAIN SELECT b FROM t1, t2 WHERE b=c AND a=1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	const	PRIMARY	PRIMARY	4	const	1	
-1	SIMPLE	t2	ref	idx	idx	4	const	7	Using index
+1	SIMPLE	t2	ref	idx	idx	4	const	8	Using index
 EXPLAIN SELECT b FROM t1, t2 WHERE b=c AND a=4;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	const	PRIMARY	PRIMARY	4	const	1	
@@ -3011,7 +3011,7 @@ WHERE t1.id=2;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	const	PRIMARY	PRIMARY	4	const	1	
 1	SIMPLE	t2	const	idx1	NULL	NULL	NULL	1	
-1	SIMPLE	t3	ref	idx1	idx1	5	const	2	Using where
+1	SIMPLE	t3	ALL	idx1	NULL	NULL	NULL	5	Using where
 SELECT * FROM t1 LEFT JOIN t2 ON t2.b=t1.a INNER JOIN t3 ON t3.d=t1.id
 WHERE t1.id=2;
 id	a	b	c	d	e
@@ -3225,7 +3225,7 @@ AND t1.ts BETWEEN t2.dt1 AND t2.dt2
 AND t1.ts BETWEEN "2006-01-01" AND "2006-12-31";
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t2	const	PRIMARY	PRIMARY	4	const	1	
-1	SIMPLE	t1	range	ts	ts	9	NULL	1	Using where
+1	SIMPLE	t1	range	ts	ts	9	NULL	2	Using where
 SELECT * FROM t1 LEFT JOIN t2 ON (t1.a=t2.a) WHERE t1.a=30
 AND t1.ts BETWEEN t2.dt1 AND t2.dt2
 AND t1.ts BETWEEN "2006-01-01" AND "2006-12-31";

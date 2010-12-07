@@ -63,6 +63,8 @@ class SchemaIdentifier
 public:
 
 public:
+  typedef std::vector <SchemaIdentifier> vector;
+
   SchemaIdentifier(const std::string &db_arg);
 
   virtual ~SchemaIdentifier()
@@ -111,7 +113,6 @@ public:
 
 };
 
-typedef std::vector <SchemaIdentifier> SchemaIdentifiers;
 
 } /* namespace drizzled */
 

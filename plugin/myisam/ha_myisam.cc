@@ -144,7 +144,7 @@ public:
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                              const drizzled::SchemaIdentifier &schema_identifier,
-                             drizzled::TableIdentifiers &set_of_identifiers);
+                             drizzled::TableIdentifier::vector &set_of_identifiers);
   bool validateCreateTableOption(const std::string &key, const std::string &state)
   {
     (void)state;
@@ -159,7 +159,7 @@ public:
 
 void MyisamEngine::doGetTableIdentifiers(drizzled::CachedDirectory&,
                                          const drizzled::SchemaIdentifier&,
-                                         drizzled::TableIdentifiers&)
+                                         drizzled::TableIdentifier::vector&)
 {
 }
 
@@ -1491,8 +1491,7 @@ static int myisam_init(module::Context &context)
 { 
   context.add(new MyisamEngine(engine_name));
   context.registerVariable(new sys_var_constrained_value<size_t>("sort-buffer-size",
-                                                                 sort_buffer_size,
-                                                                 8196*1024));
+                                                                 sort_buffer_size));
   context.registerVariable(new sys_var_uint64_t_ptr("max_sort_file_size",
                                                     &max_sort_file_size,
                                                     context.getOptions()["max-sort-file-size"].as<uint64_t>()));

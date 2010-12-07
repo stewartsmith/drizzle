@@ -144,7 +144,7 @@ public:
     btr_pcur_t pcur;
     const rec_t* rec;
     mem_heap_t*	heap;
-    dulint last_id;
+    index_id_t last_id;
     mtr_t mtr;
   };
 

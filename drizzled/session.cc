@@ -23,7 +23,7 @@
 
 #include "config.h"
 #include "drizzled/session.h"
-#include "drizzled/session_list.h"
+#include "drizzled/session/cache.h"
 #include <sys/stat.h>
 #include "drizzled/error.h"
 #include "drizzled/gettext.h"
@@ -41,6 +41,7 @@
 #include "drizzled/plugin/authentication.h"
 #include "drizzled/plugin/logging.h"
 #include "drizzled/plugin/transactional_storage_engine.h"
+#include "drizzled/plugin/query_rewrite.h"
 #include "drizzled/probes.h"
 #include "drizzled/table_proto.h"
 #include "drizzled/db.h"
@@ -410,10 +411,6 @@ Session::~Session()
     delete (*iter).second;
   }
   life_properties.clear();
-
-#if 0
-  drizzled::util::custom_backtrace();
-#endif
 }
 
 void Session::setClient(plugin::Client *client_arg)
@@ -427,14 +424,12 @@ void Session::awake(Session::killed_state_t state_to_set)
   this->checkSentry();
 
   setKilled(state_to_set);
+  scheduler->killSession(this);
+
   if (state_to_set != Session::KILL_QUERY)
   {
-    scheduler->killSession(this);
     DRIZZLE_CONNECTION_DONE(thread_id);
   }
-
-  assert(_thread);
-  _thread->interrupt();
 
   if (mysys_var)
   {
@@ -729,7 +724,9 @@ bool Session::readAndStoreQuery(const char *in_packet, uint32_t in_packet_length
     in_packet_length--;
   }
 
-  query.reset(new std::string(in_packet, in_packet + in_packet_length));
+  std::string *new_query= new std::string(in_packet, in_packet + in_packet_length);
+  plugin::QueryRewriter::rewriteQuery(getSchema(), *new_query);
+  query.reset(new_query);
 
   return true;
 }

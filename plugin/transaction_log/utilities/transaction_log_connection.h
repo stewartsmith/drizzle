@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2010 Joseph Daly <skinny.moey@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,55 +17,32 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SESSION_LIST_H
-#define DRIZZLED_SESSION_LIST_H
+#ifndef PLUGIN_TRANSACTION_LOG_UTILITIES_TRANSACTION_LOG_CONNECTION_H
+#define PLUGIN_TRANSACTION_LOG_UTILITIES_TRANSACTION_LOG_CONNECTION_H
 
-#include "drizzled/session.h"
-#include <list>
+#include "client/client_priv.h"
+#include <string>
 
-namespace drizzled
-{
 
-class Session;
-
-namespace session
-{
-
-class Cache 
+class TransactionLogConnection
 {
 public:
-  typedef std::list<Session::shared_ptr> List;
+  TransactionLogConnection(std::string &host, uint16_t port,
+                           std::string &username, std::string &password,
+                           bool drizzle_protocol);
 
-  static inline Cache &singleton()
-  {
-    static Cache open_cache;
+  ~TransactionLogConnection();
 
-    return open_cache;
-  }
 
-  List &getCache()
-  {
-    return cache;
-  }
+  drizzle_result_st* query(std::string &str_query);
 
-  boost::mutex &mutex()
-  {
-    return _mutex;
-  }
-
-  void erase(Session::Ptr);
-  void erase(Session::shared_ptr&);
-  size_t count();
-  void insert(Session::shared_ptr &arg);
-
-  Session::shared_ptr find(const session_id_t &id);
+  void errorHandler(drizzle_result_st *res,  drizzle_return_t ret, const char *when);
 
 private:
-  List cache;
-  boost::mutex _mutex;
+  drizzle_st drizzle;
+  drizzle_con_st connection;
+  std::string hostName;
+  bool drizzleProtocol;
 };
 
-} /* namespace session */
-} /* namespace drizzled */
-
-#endif /* DRIZZLED_SESSION_LIST_H */
+#endif /* PLUGIN_TRANSACTION_LOG_UTILITIES_TRANSACTION_LOG_CONNECTION_H */
