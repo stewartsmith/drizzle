@@ -146,7 +146,6 @@ private:
 };
 
 #ifdef DEBUG
-#define new			new(__FUNC__, __FILE__, __LINE__)
 
 #define retain()	retain(__FUNC__, __FILE__, __LINE__)
 #define release()	release(__FUNC__, __FILE__, __LINE__)
