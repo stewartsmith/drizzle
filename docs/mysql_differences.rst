@@ -112,6 +112,7 @@ Partitioning
 
 INFORMATION_SCHEMA
 ------------------
+The INFORMATION_SCHEMA provides access to database metadata.
 
 The INFORMATION_SCHEMA in Drizzle is strictly ANSI compliant. If you write
 a query to any of the tables in the INFORMATION_SCHEMA in Drizzle, you can
@@ -125,7 +126,7 @@ This allows developers to easily know if the query is portable or not.
 Authentication, Authorization and Access
 ----------------------------------------
 
-Plugins. Currently there are PAM and HTTP AUTH plugins for authentication.
+Authentication lies in Drizzle plugins. Currently there are PAM and HTTP AUTH plugins for authentication.
 Through the PAM plugin, you can use any PAM module (such as LDAP).
 
 Command line clients
