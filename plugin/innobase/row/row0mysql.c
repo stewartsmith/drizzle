@@ -1434,6 +1434,12 @@ run_again:
 
 	row_upd_step(thr);
 
+	/* The recursive call for cascading update/delete happens
+	in above row_upd_step(), reset the counter once we come
+	out of the recursive call, so it does not accumulate for
+	different row deletes */
+	thr->fk_cascade_depth = 0;
+
 	err = trx->error_state;
 
 	/* Reset fk_cascade_depth back to 0 */
@@ -1635,6 +1641,9 @@ row_update_cascade_for_mysql(
 
 	trx = thr_get_trx(thr);
 
+	/* Increment fk_cascade_depth to record the recursive call depth on
+	a single update/delete that affects multiple tables chained
+	together with foreign key relations. */
 	thr->fk_cascade_depth++;
 
 	if (thr->fk_cascade_depth > FK_MAX_CASCADE_DEL) {
@@ -1645,6 +1654,12 @@ run_again:
 	thr->prev_node = node;
 
 	row_upd_step(thr);
+
+	/* The recursive call for cascading update/delete happens
+	in above row_upd_step(), reset the counter once we come
+	out of the recursive call, so it does not accumulate for
+	different row deletes */
+	thr->fk_cascade_depth = 0;
 
 	err = trx->error_state;
 
