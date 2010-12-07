@@ -18,14 +18,40 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_STRING_FUNCTIONS_FUNCTIONS_H
-#define PLUGIN_STRING_FUNCTIONS_FUNCTIONS_H
+#ifndef PLUGIN_STRING_FUNCTIONS_REGEX_H
+#define PLUGIN_STRING_FUNCTIONS_REGEX_H
 
-#include "drizzled/plugin/function.h"
-#include "plugin/string_functions/elt.h"
-#include "plugin/string_functions/format.h"
-#include "plugin/string_functions/quote.h"
-#include "plugin/string_functions/regex.h"
+#include <drizzled/item/cmpfunc.h>
+#include <boost/regex.hpp>
 
+namespace drizzled
+{
+namespace string_functions
+{
 
-#endif /* PLUGIN_STRING_FUNCTIONS_FUNCTIONS_H */
+class Regex :public Item_bool_func
+{
+  bool is_negative;
+  boost::regex re;
+  drizzled::String _res;
+
+public:
+  Regex() :
+    is_negative(false)
+  {
+  }
+
+  bool val_bool();
+  int64_t val_int()
+  {
+    return val_bool();
+  }
+  const char *func_name() const { return "regex"; }
+  const char *fully_qualified_func_name() const { return "regex()"; }
+  bool check_argument_count(int n) { if (n == 3) is_negative= true; return n == 2 or n == 3; }
+};
+
+} // namespace string_functions
+} // namespace drizzled
+
+#endif /* PLUGIN_STRING_FUNCTIONS_REGEX_H */
