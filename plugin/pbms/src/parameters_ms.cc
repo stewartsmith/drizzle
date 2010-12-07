@@ -494,7 +494,7 @@ bool PBMSParameters::try_LocateDB(CSThread *self, const char *db, bool *found)
 //-----------------
 bool PBMSParameters::isBLOBDatabase(const char *db)
 {
-	CSThread *self;
+	CSThread *self= NULL;
 	int		err;
 	PBMSResultRec result;
 	bool found = false;
@@ -584,7 +584,7 @@ bool PBMSParameters::try_LocateTable(CSThread *self, const char *db, const char 
 //-----------------
 bool PBMSParameters::isBLOBTable(const char *db, const char *table)
 {
-	CSThread *self;
+	CSThread *self= NULL;
 	int		err;
 	PBMSResultRec result;
 	bool found = false;
