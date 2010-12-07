@@ -180,10 +180,16 @@ static plugin::TableFunction* innodb_sys_foreign_tool= NULL;
 static plugin::TableFunction* innodb_sys_foreign_cols_tool= NULL;
 
 static ReplicationLog *replication_logger= NULL;
-
-static long innobase_mirrored_log_groups, innobase_log_files_in_group,
-  innobase_log_buffer_size,
-  innobase_force_recovery, innobase_open_files;
+typedef constrained_check<uint32_t, UINT32_MAX, 10> open_files_constraint;
+static open_files_constraint innobase_open_files;
+typedef constrained_check<uint32_t, 10, 1> mirrored_log_groups_constraint;
+static mirrored_log_groups_constraint innobase_mirrored_log_groups;
+typedef constrained_check<uint32_t, 100, 2> log_files_in_group_constraint;
+static log_files_in_group_constraint innobase_log_files_in_group;
+typedef constrained_check<uint32_t, 6, 0> force_recovery_constraint;
+force_recovery_constraint innobase_force_recovery;
+typedef constrained_check<size_t, SIZE_MAX, 256*1024, 1024> log_buffer_constraint;
+static log_buffer_constraint innobase_log_buffer_size;
 typedef constrained_check<size_t, SIZE_MAX, 512*1024, 1024> additional_mem_pool_constraint;
 static additional_mem_pool_constraint innobase_additional_mem_pool_size;
 typedef constrained_check<unsigned int, 1000, 1> autoextend_constraint;
@@ -214,6 +220,8 @@ static uint32_nonzero_constraint innodb_concurrency_tickets;
 
 typedef constrained_check<int64_t, INT64_MAX, 1024*1024, 1024*1024> log_file_constraint;
 static log_file_constraint innobase_log_file_size;
+
+static uint64_constraint innodb_replication_delay;
 
 /** Percentage of the buffer pool to reserve for 'old' blocks.
 Connected to buf_LRU_old_ratio. */
@@ -1968,6 +1976,7 @@ innobase_init(
   srv_max_purge_lag= innodb_max_purge_lag.get();
   srv_stats_sample_pages= innodb_stats_sample_pages.get();
   srv_n_free_tickets_to_enter= innodb_concurrency_tickets.get();
+  srv_replication_delay= innodb_replication_delay.get();
 
   /* Inverted Booleans */
 
@@ -1979,6 +1988,7 @@ innobase_init(
   btr_search_enabled= (vm.count("disable-adaptive-hash-index")) ? false : true;
 
 
+  /* Hafta do this here because we need to late-bind the default value */
   if (vm.count("data-home-dir"))
   {
     innobase_data_home_dir= vm["data-home-dir"].as<string>();
@@ -1994,73 +2004,6 @@ innobase_init(
     if (srv_stats_sample_pages < 8)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for stats-sample-pages\n"));
-      exit(-1);
-    }
-  }
-
-
-  if (vm.count("commit-concurrency"))
-  {
-    if (srv_replication_delay > 1000)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for commit-concurrency\n"));
-      exit(-1);
-    }
-  }
-
-  if (vm.count("concurrency-tickets"))
-  {
-    if (srv_n_free_tickets_to_enter < 1)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for concurrency-tickets\n"));
-      exit(-1);
-    }
-  }
-
-
-  if (vm.count("force-recovery"))
-  {
-    if (innobase_force_recovery > 6)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for force-recovery\n"));
-      exit(-1);
-    }
-  }
-
-  if (vm.count("log-buffer-size"))
-  {
-    align_value(innobase_log_buffer_size);
-    if (innobase_log_buffer_size < 256*1024L)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for log-file-size\n"));
-      exit(-1);
-    }
-  }
-
-
-  if (vm.count("log-files-in-group"))
-  {
-    if (innobase_log_files_in_group < 2 || innobase_log_files_in_group > 100)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for log-files-in-group\n"));
-      exit(-1);
-    }
-  }
-
-  if (vm.count("mirrored-log-groups"))
-  {
-    if (innobase_mirrored_log_groups < 1 || innobase_mirrored_log_groups > 10)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for mirrored-log-groups\n"));
-      exit(-1);
-    }
-  }
-
-  if (vm.count("open-files"))
-  {
-    if (innobase_open_files < 10)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for open-files\n"));
       exit(-1);
     }
   }
@@ -2166,9 +2109,10 @@ mem_free_and_error:
   ret = (bool)
     srv_parse_log_group_home_dirs((char *)innobase_log_group_home_dir.c_str());
 
-  if (ret == FALSE || innobase_mirrored_log_groups != 1) {
-    errmsg_printf(ERRMSG_LVL_ERROR, "syntax error in innodb_log_group_home_dir, or a "
-                  "wrong number of mirrored log groups");
+  if (ret == FALSE || innobase_mirrored_log_groups.get() != 1) {
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("syntax error in innodb_log_group_home_dir, or a "
+                  "wrong number of mirrored log groups"));
 
     goto mem_free_and_error;
   }
@@ -2441,6 +2385,12 @@ innobase_change_buffering_inited_ok:
                                                                    innodb_concurrency_tickets));
   context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("read_io_threads", innobase_read_io_threads));
   context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("write_io_threads", innobase_write_io_threads));
+  context.registerVariable(new sys_var_constrained_value_readonly<uint64_t>("replication_delay", innodb_replication_delay));
+  context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("force_recovery", innobase_force_recovery));
+  context.registerVariable(new sys_var_constrained_value_readonly<size_t>("log_buffer_size", innobase_log_buffer_size));
+  context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("log_files_in_group", innobase_log_files_in_group));
+  context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("mirrored_log_groups", innobase_mirrored_log_groups));
+  context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("open_files", innobase_open_files));
 
 
   /* Get the current high water mark format. */
@@ -9252,32 +9202,6 @@ innodb_change_buffering_update(
 
 /* plugin options */
 
-static DRIZZLE_SYSVAR_ULONG(replication_delay, srv_replication_delay,
-  PLUGIN_VAR_RQCMDARG,
-  "Replication thread delay (ms) on the slave server if "
-  "innodb_thread_concurrency is reached (0 by default)",
-  NULL, NULL, 0, 0, ~0UL, 0);
-
-static DRIZZLE_SYSVAR_LONG(force_recovery, innobase_force_recovery,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Helps to save your data in case the disk image of the database becomes corrupt.",
-  NULL, NULL, 0, 0, 6, 0);
-
-static DRIZZLE_SYSVAR_LONG(log_buffer_size, innobase_log_buffer_size,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "The size of the buffer which InnoDB uses to write log to the log files on disk.",
-  NULL, NULL, 8*1024*1024L, 256*1024L, LONG_MAX, 1024);
-
-static DRIZZLE_SYSVAR_LONG(log_files_in_group, innobase_log_files_in_group,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Number of log files in the log group. InnoDB writes to the files in a circular fashion. Value 3 is recommended here.",
-  NULL, NULL, 2, 2, 100, 0);
-
-static DRIZZLE_SYSVAR_LONG(mirrored_log_groups, innobase_mirrored_log_groups,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Number of identical copies of log groups we keep for the database. Currently this should be set to 1.",
-  NULL, NULL, 1, 1, 10, 0);
-
 static DRIZZLE_SYSVAR_UINT(old_blocks_pct, innobase_old_blocks_pct,
   PLUGIN_VAR_RQCMDARG,
   "Percentage of the buffer pool to reserve for 'old' blocks.",
@@ -9289,11 +9213,6 @@ static DRIZZLE_SYSVAR_UINT(old_blocks_time, buf_LRU_old_threshold_ms,
   " was at least this many milliseconds ago."
   " The timeout is disabled if 0 (the default).",
   NULL, NULL, 0, 0, UINT32_MAX, 0);
-
-static DRIZZLE_SYSVAR_LONG(open_files, innobase_open_files,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "How many files at the maximum InnoDB keeps open at the same time.",
-  NULL, NULL, 300L, 10L, LONG_MAX, 0);
 
 static DRIZZLE_SYSVAR_ULONG(sync_spin_loops, srv_n_spin_wait_rounds,
   PLUGIN_VAR_RQCMDARG,
@@ -9390,7 +9309,7 @@ static void init_options(drizzled::module::option_context &context)
   context("disable-adaptive-hash-index",
           "Enable InnoDB adaptive hash index (enabled by default)");
   context("replication-delay",
-          po::value<unsigned long>(&srv_replication_delay)->default_value(0),
+          po::value<uint64_constraint>(&innodb_replication_delay)->default_value(0),
           "Replication thread delay (ms) on the slave server if innodb_thread_concurrency is reached (0 by default)");
   context("additional-mem-pool-size",
           po::value<additional_mem_pool_constraint>(&innobase_additional_mem_pool_size)->default_value(8*1024*1024L),
@@ -9418,22 +9337,22 @@ static void init_options(drizzled::module::option_context &context)
           po::value<io_threads_constraint>(&innobase_write_io_threads)->default_value(4),
           "Number of background write I/O threads in InnoDB.");
   context("force-recovery",
-          po::value<long>(&innobase_force_recovery)->default_value(0),
+          po::value<force_recovery_constraint>(&innobase_force_recovery)->default_value(0),
           "Helps to save your data in case the disk image of the database becomes corrupt.");
   context("log-buffer-size",
-          po::value<long>(&innobase_log_buffer_size)->default_value(8*1024*1024L),
+          po::value<log_buffer_constraint>(&innobase_log_buffer_size)->default_value(8*1024*1024L),
           "The size of the buffer which InnoDB uses to write log to the log files on disk.");
   context("log-file-size",
           po::value<log_file_constraint>(&innobase_log_file_size)->default_value(20*1024*1024L),
           "The size of the buffer which InnoDB uses to write log to the log files on disk.");
   context("log-files-in-group",
-          po::value<long>(&innobase_log_files_in_group)->default_value(2),
+          po::value<log_files_in_group_constraint>(&innobase_log_files_in_group)->default_value(2),
           "Number of log files in the log group. InnoDB writes to the files in a circular fashion.");
   context("mirrored-log-groups",
-          po::value<long>(&innobase_mirrored_log_groups)->default_value(1),
+          po::value<mirrored_log_groups_constraint>(&innobase_mirrored_log_groups)->default_value(1),
           "Number of identical copies of log groups we keep for the database. Currently this should be set to 1.");
   context("open-files",
-          po::value<long>(&innobase_open_files)->default_value(300L),
+          po::value<open_files_constraint>(&innobase_open_files)->default_value(300L),
           "How many files at the maximum InnoDB keeps open at the same time.");
   context("sync-spin-loops",
           po::value<unsigned long>(&srv_n_spin_wait_rounds)->default_value(30L),
@@ -9477,14 +9396,8 @@ static void init_options(drizzled::module::option_context &context)
 }
 
 static drizzle_sys_var* innobase_system_variables[]= {
-  DRIZZLE_SYSVAR(force_recovery),
-  DRIZZLE_SYSVAR(log_buffer_size),
-  DRIZZLE_SYSVAR(log_files_in_group),
-  DRIZZLE_SYSVAR(mirrored_log_groups),
   DRIZZLE_SYSVAR(old_blocks_pct),
   DRIZZLE_SYSVAR(old_blocks_time),
-  DRIZZLE_SYSVAR(open_files),
-  DRIZZLE_SYSVAR(replication_delay),
   DRIZZLE_SYSVAR(sync_spin_loops),
   DRIZZLE_SYSVAR(spin_wait_delay),
   DRIZZLE_SYSVAR(thread_concurrency),
