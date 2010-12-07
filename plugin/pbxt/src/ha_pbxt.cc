@@ -6021,6 +6021,7 @@ uint ha_pbxt::referenced_by_foreign_key()
 }
 #endif // DRI_IS
 
+#ifndef DRIZZLED
 struct st_mysql_sys_var
 {
 	MYSQL_PLUGIN_VAR_HEADER;
@@ -6035,11 +6036,13 @@ struct st_mysql_sys_var
 #define USE_CONST_SAVE
 #endif
 #endif
+#endif
 
 #ifdef DRIZZLED
 #define st_mysql_sys_var drizzled::drizzle_sys_var
 #endif
 
+#ifndef DRIZZLED
 #ifdef USE_CONST_SAVE
 static void pbxt_record_cache_size_func(THD *XT_UNUSED(thd), struct st_mysql_sys_var *var, void *tgt, const void *save)
 #else
@@ -6065,7 +6068,6 @@ static void pbxt_record_cache_size_func(THD *XT_UNUSED(thd), struct st_mysql_sys
 #endif
 }
 
-#ifndef DRIZZLED
 struct st_mysql_storage_engine pbxt_storage_engine = {
 	MYSQL_HANDLERTON_INTERFACE_VERSION
 };
