@@ -91,7 +91,8 @@ class DrizzleDumpField
       isUnsigned(false),
       isAutoIncrement(false),
       defaultIsNull(false),
-      convertDateTime(false)
+      convertDateTime(false),
+      rangeCheck(false)
     { }
 
     virtual ~DrizzleDumpField() { }
