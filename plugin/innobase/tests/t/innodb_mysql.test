@@ -12,3 +12,31 @@ let $other_engine_type= MEMORY;
 let $test_foreign_keys= 1;
 set global innodb_support_xa=default;
 --source include/mix1.inc
+
+--echo #
+--echo # Test for bug #39932 "create table fails if column for FK is in different
+--echo #                      case than in corr index".
+--echo #
+--disable_warnings
+drop tables if exists t1, t2;
+--enable_warnings
+create table t1 (pk int primary key) engine=InnoDB;
+--echo # Even although the below statement uses uppercased field names in
+--echo # foreign key definition it still should be able to find explicitly
+--echo # created supporting index. So it should succeed and should not
+--echo # create any additional supporting indexes.
+create table t2 (fk int, key x (fk),
+                 constraint x foreign key (FK) references t1 (PK)) engine=InnoDB;
+show create table t2;
+drop table t2, t1;
+--echo #
+--echo # Bug#55826: create table .. select crashes with when KILL_BAD_DATA 
+--echo #  is returned
+--echo #
+
+CREATE TABLE t1(a INT) ENGINE=innodb;
+INSERT INTO t1 VALUES (0);
+--error ER_TRUNCATED_WRONG_VALUE
+CREATE TABLE t2 
+  SELECT LEAST((SELECT '' FROM t1),NOW()) FROM `t1`;
+DROP TABLE IF EXISTS t1,t2;  

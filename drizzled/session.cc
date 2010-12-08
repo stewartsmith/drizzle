@@ -86,7 +86,7 @@ bool Key_part_spec::operator==(const Key_part_spec& other) const
 {
   return length == other.length &&
          field_name.length == other.field_name.length &&
-         !strcmp(field_name.str, other.field_name.str);
+    !my_strcasecmp(system_charset_info, field_name.str, other.field_name.str);
 }
 
 Open_tables_state::Open_tables_state(uint64_t version_arg) :
