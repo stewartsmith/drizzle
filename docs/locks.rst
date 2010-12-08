@@ -1,4 +1,4 @@
-User Definied Locks
+User Defined Locks
 ===================
 
 A user can create a "lock" which is scoped to their user space. Multiple
@@ -22,9 +22,9 @@ SELECT wait_for_lock();
 
 SELECT release_lock_and_wait();
 
-If a session should exit, whatever locks it was holdering will be deleted.
+If a session should exit, whatever locks it was holding will be deleted.
 
-Please note, get_lock() was designed to be compatible with MySQL, if you
+Please note, get_lock() was designed to be compatible with MySQL. If you
 hold any locks when calling get_lock() they will be released. For this
 reason you may want to consider calling get_locks() instead.
 
