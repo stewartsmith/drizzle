@@ -30,7 +30,6 @@
 namespace drizzle_plugin
 {
 
-typedef drizzled::constrained_check<in_port_t, 65535, 0> port_constraint;
 typedef drizzled::constrained_check<uint32_t, 300, 1> timeout_constraint;
 typedef drizzled::constrained_check<uint32_t, 300, 1> retry_constraint;
 typedef drizzled::constrained_check<uint32_t, 1048576, 1024, 1024> buffer_constraint;
