@@ -1778,20 +1778,28 @@ const char *HailDBCursor::index_type(uint32_t)
   return("BTREE");
 }
 
-static ib_err_t write_row_to_haildb_tuple(Field **fields, ib_tpl_t tuple)
+static ib_err_t write_row_to_haildb_tuple(unsigned char* buf,
+                                          Field **fields, ib_tpl_t tuple)
 {
   int colnr= 0;
   ib_err_t err= DB_ERROR;
+  ptrdiff_t row_offset= buf - (*fields)->getTable()->getInsertRecord();
 
   for (Field **field= fields; *field; field++, colnr++)
   {
+    (**field).move_field_offset(row_offset);
+
     if (! (**field).isWriteSet() && (**field).is_null())
+    {
+      (**field).move_field_offset(-row_offset);
       continue;
+    }
 
     if ((**field).is_null())
     {
       err= ib_col_set_value(tuple, colnr, NULL, IB_SQL_NULL);
       assert(err == DB_SUCCESS);
+      (**field).move_field_offset(-row_offset);
       continue;
     }
 
@@ -1829,6 +1837,8 @@ static ib_err_t write_row_to_haildb_tuple(Field **fields, ib_tpl_t tuple)
     }
 
     assert (err == DB_SUCCESS);
+
+    (**field).move_field_offset(-row_offset);
   }
 
   return err;
@@ -1936,7 +1946,7 @@ int HailDBCursor::doInsertRecord(unsigned char *record)
 
   }
 
-  write_row_to_haildb_tuple(getTable()->getFields(), tuple);
+  write_row_to_haildb_tuple(record, getTable()->getFields(), tuple);
 
   if (share->has_hidden_primary_key)
   {
@@ -1969,7 +1979,7 @@ int HailDBCursor::doInsertRecord(unsigned char *record)
       err= ib_cursor_first(cursor);
       assert(err == DB_SUCCESS || err == DB_END_OF_INDEX);
 
-      write_row_to_haildb_tuple(getTable()->getFields(), tuple);
+      write_row_to_haildb_tuple(record, getTable()->getFields(), tuple);
 
       err= ib_cursor_insert_row(cursor, tuple);
       assert(err==DB_SUCCESS); // probably be nice and process errors
@@ -1988,7 +1998,7 @@ int HailDBCursor::doInsertRecord(unsigned char *record)
 }
 
 int HailDBCursor::doUpdateRecord(const unsigned char *,
-                                         unsigned char *)
+                                 unsigned char *new_data)
 {
   ib_tpl_t update_tuple;
   ib_err_t err;
@@ -1998,7 +2008,7 @@ int HailDBCursor::doUpdateRecord(const unsigned char *,
   err= ib_tuple_copy(update_tuple, tuple);
   assert(err == DB_SUCCESS);
 
-  write_row_to_haildb_tuple(getTable()->getFields(), update_tuple);
+  write_row_to_haildb_tuple(new_data, getTable()->getFields(), update_tuple);
 
   err= ib_cursor_update_row(cursor, tuple, update_tuple);
 
