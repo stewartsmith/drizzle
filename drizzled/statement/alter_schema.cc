@@ -36,7 +36,7 @@ namespace drizzled
 bool statement::AlterSchema::execute()
 {
   LEX_STRING *db= &session->lex->name;
-  message::SchemaPtr old_definition;
+  message::schema::shared_ptr old_definition;
 
   if (not validateSchemaOptions())
     return true;
@@ -45,7 +45,10 @@ bool statement::AlterSchema::execute()
 
   if (not check_db_name(session, schema_identifier))
   {
-    my_error(ER_WRONG_DB_NAME, MYF(0), schema_identifier.getSQLPath().c_str());
+    std::string path;
+    schema_identifier.getSQLPath(path);
+    my_error(ER_WRONG_DB_NAME, MYF(0), path.c_str());
+
     return false;
   }
 

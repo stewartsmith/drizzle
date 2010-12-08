@@ -19,9 +19,6 @@
  */
 
 #include "config.h"
-#include <boost/date_time.hpp>
-#include <drizzled/gettext.h>
-#include <drizzled/session.h>
 
 #include <stdarg.h>
 #include <limits.h>
@@ -29,47 +26,55 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include <boost/date_time.hpp>
+
+#include <drizzled/gettext.h>
+#include <drizzled/session.h>
+
 #include "logging.h"
 #include "wrap.h"
 
-using namespace drizzled;
-
-Logging_syslog::Logging_syslog()
-  : drizzled::plugin::Logging("Logging_syslog")
+namespace drizzle_plugin
 {
-  syslog_facility= WrapSyslog::getFacilityByName(syslog_module::sysvar_facility);
-  if (syslog_facility < 0)
+
+logging::Syslog::Syslog(const std::string &facility,
+                        const std::string &priority,
+                        uint64_t threshold_slow,
+                        uint64_t threshold_big_resultset,
+                        uint64_t threshold_big_examined) :
+  drizzled::plugin::Logging("Syslog Logging"),
+  _facility(WrapSyslog::getFacilityByName(facility.c_str())),
+  _priority(WrapSyslog::getPriorityByName(priority.c_str())),
+  _threshold_slow(threshold_slow),
+  _threshold_big_resultset(threshold_big_resultset),
+  _threshold_big_examined(threshold_big_examined)
+{
+  if (_facility < 0)
   {
-    errmsg_printf(ERRMSG_LVL_WARN,
-                  _("syslog facility \"%s\" not known, using \"local0\""),
-                  syslog_module::sysvar_facility);
-    syslog_facility= WrapSyslog::getFacilityByName("local0");
+    drizzled::errmsg_printf(ERRMSG_LVL_WARN,
+                            _("syslog facility \"%s\" not known, using \"local0\""),
+                            facility.c_str());
+    _facility= WrapSyslog::getFacilityByName("local0");
   }
 
-  syslog_priority= WrapSyslog::getPriorityByName(syslog_module::sysvar_logging_priority);
-  if (syslog_priority < 0)
+  if (_priority < 0)
   {
-    errmsg_printf(ERRMSG_LVL_WARN,
-                  _("syslog priority \"%s\" not known, using \"info\""),
-                  syslog_module::sysvar_logging_priority);
-    syslog_priority= WrapSyslog::getPriorityByName("info");
+    drizzled::errmsg_printf(ERRMSG_LVL_WARN,
+                            _("syslog priority \"%s\" not known, using \"info\""),
+                            priority.c_str());
+    _priority= WrapSyslog::getPriorityByName("info");
   }
-
-  WrapSyslog::singleton().openlog(syslog_module::sysvar_ident);
 }
 
 
-bool Logging_syslog::post (Session *session)
+bool logging::Syslog::post(drizzled::Session *session)
 {
   assert(session != NULL);
 
-  if (syslog_module::sysvar_logging_enable == false)
-    return false;
-  
   // return if query was not too small
-  if (session->sent_row_count < syslog_module::sysvar_logging_threshold_big_resultset)
+  if (session->sent_row_count < _threshold_big_resultset)
     return false;
-  if (session->examined_row_count < syslog_module::sysvar_logging_threshold_big_examined)
+  if (session->examined_row_count < _threshold_big_examined)
     return false;
   
   /* TODO, the session object should have a "utime command completed"
@@ -81,13 +86,13 @@ bool Logging_syslog::post (Session *session)
   uint64_t t_mark= (mytime-epoch).total_microseconds();
 
   // return if query was not too slow
-  if ((t_mark - session->start_utime) < syslog_module::sysvar_logging_threshold_slow)
+  if ((t_mark - session->start_utime) < _threshold_slow)
     return false;
   
-  Session::QueryString query_string(session->getQueryString());
+  drizzled::Session::QueryString query_string(session->getQueryString());
 
   WrapSyslog::singleton()
-    .log(syslog_facility, syslog_priority,
+    .log(_facility, _priority,
          "thread_id=%ld query_id=%ld"
          " db=\"%.*s\""
          " query=\"%.*s\""
@@ -101,8 +106,8 @@ bool Logging_syslog::post (Session *session)
          session->getSchema().empty() ? "" : session->getSchema().c_str(),
          (int) query_string->length(), 
          query_string->empty() ? "" : query_string->c_str(),
-         (int) command_name[session->command].length,
-         command_name[session->command].str,
+         (int) drizzled::command_name[session->command].length,
+         drizzled::command_name[session->command].str,
          (unsigned long long) (t_mark - session->getConnectMicroseconds()),
          (unsigned long long) (t_mark - session->start_utime),
          (unsigned long long) (t_mark - session->utime_after_lock),
@@ -113,3 +118,5 @@ bool Logging_syslog::post (Session *session)
   
     return false;
 }
+
+} /* namespsace drizzle_plugin */

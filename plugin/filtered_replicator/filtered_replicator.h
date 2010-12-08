@@ -38,12 +38,18 @@
 #include <vector>
 #include <string>
 
-class FilteredReplicator: public drizzled::plugin::TransactionReplicator
+namespace drizzle_plugin
+{
+
+class FilteredReplicator :
+  public drizzled::plugin::TransactionReplicator
 {
 public:
   FilteredReplicator(std::string name_arg,
-                     const char *in_sch_filters,
-                     const char *in_tab_filters);
+                     const std::string &sch_filter,
+                     const std::string &tab_filter,
+                     const std::string &sch_regex,
+                     const std::string &tab_regex);
 
   /** Destructor */
   ~FilteredReplicator();
@@ -84,7 +90,7 @@ public:
    */
   const std::string &getSchemaFilter() const
   {
-    return sch_filter_string;
+    return _sch_filter;
   }
 
   /**
@@ -101,7 +107,7 @@ public:
    */
   const std::string &getTableFilter() const
   {
-    return tab_filter_string;
+    return _tab_filter;
   }
 
   /**
@@ -112,7 +118,7 @@ public:
    */
   void updateTableSysvar(const char **var_ptr)
   {
-    *var_ptr= tab_filter_string.c_str();
+    *var_ptr= _tab_filter.c_str();
     pthread_mutex_unlock(&sysvar_tab_lock);
   }
 
@@ -124,7 +130,7 @@ public:
    */
   void updateSchemaSysvar(const char **var_ptr)
   {
-    *var_ptr= sch_filter_string.c_str();
+    *var_ptr= _sch_filter.c_str();
     pthread_mutex_unlock(&sysvar_sch_lock);
   }
 
@@ -199,8 +205,11 @@ private:
    * Variables to contain the string representation of the
    * comma-separated lists of schemas and tables to filter.
    */
-  std::string sch_filter_string;
-  std::string tab_filter_string;
+  std::string _sch_filter;
+  std::string _tab_filter;
+
+  const std::string _sch_regex;
+  const std::string _tab_regex;
 
   /*
    * We need locks to protect the vectors when they are
@@ -220,11 +229,10 @@ private:
   pthread_mutex_t sysvar_sch_lock;
   pthread_mutex_t sysvar_tab_lock;
 
-  bool sch_regex_enabled;
-  bool tab_regex_enabled;
-
   pcre *sch_re;
   pcre *tab_re;
 };
+
+} /* namespace drizzle_plugin */
 
 #endif /* PLUGIN_FILTERED_REPLICATOR_FILTERED_REPLICATOR_H */

@@ -21,12 +21,12 @@
 
 #include <vector>
 
-#include "drizzled/session_list.h"
+#include "drizzled/session/cache.h"
 #include "drizzled/session.h"
 #include "drizzled/current_session.h"
 #include "drizzled/plugin/authorization.h"
 
-using namespace std;
+#include <boost/foreach.hpp>
 
 namespace drizzled
 {
@@ -37,11 +37,12 @@ namespace session
 Session::shared_ptr Cache::find(const session_id_t &id)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
-  for (List::iterator it= cache.begin(); it != cache.end(); ++it )
+
+  BOOST_FOREACH(list::const_reference it, cache)
   {
-    if ((*it)->thread_id == id)
+    if (it->thread_id == id)
     {
-      return *it;
+      return it;
     }
   }
 
@@ -57,11 +58,11 @@ size_t Cache::count()
 
 void Cache::erase(Session::Ptr arg)
 {
-  for (List::iterator it= cache.begin(); it != cache.end(); it++)
+  BOOST_FOREACH(list::const_reference it, cache)
   {
-    if ((*it).get() == arg)
+    if (it.get() == arg)
     {
-      cache.erase(it);
+      cache.remove(it);
       return;
     }
   }

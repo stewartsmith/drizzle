@@ -30,23 +30,21 @@
 #include "config.h"
 
 #include "stats_table.h"
-#include "sysvar_holder.h"
 
 #include "drizzled/error.h"
 #include <libmemcached/server.h>
-
-using namespace std;
-using namespace drizzled;
 
 #if !defined(HAVE_MEMCACHED_SERVER_FN)
 typedef memcached_server_function memcached_server_fn;
 #endif
 
+namespace drizzle_plugin
+{
+
 extern "C"
 memcached_return  server_function(const memcached_st *ptr,
                                   memcached_server_st *server,
                                   void *context);
-
 
 struct server_function_context
 {
@@ -125,7 +123,7 @@ StatsTableTool::StatsTableTool() :
 }
 
 
-StatsTableTool::Generator::Generator(Field **arg) :
+StatsTableTool::Generator::Generator(drizzled::Field **arg) :
   plugin::TableFunction::Generator(arg)
 {
   /* This will be set to the real number if we initialize properly below */
@@ -136,8 +134,10 @@ StatsTableTool::Generator::Generator(Field **arg) :
   /* set to NULL if we are not able to init we dont want to call delete on this */
   memc= NULL;
 
-  SysvarHolder &sysvar_holder= SysvarHolder::singleton();
-  const string servers_string= sysvar_holder.getServersString();
+  drizzled::sys_var *servers_var= drizzled::find_sys_var("memcached_stats_servers");
+  assert(servers_var != NULL);
+
+  const string servers_string(static_cast<char *>(servers_var.value_ptr(NULL, 0, NULL)));
 
   if (servers_string.empty())
   {
@@ -200,3 +200,5 @@ bool StatsTableTool::Generator::populate()
  
   return true;
 }
+
+} /* namespace drizzle_plugin */

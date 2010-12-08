@@ -26,6 +26,7 @@
 
 #include "plugin/utility_functions/catalog.h"
 #include "plugin/utility_functions/global_read_lock.h"
+#include "plugin/utility_functions/kill.h"
 #include "plugin/utility_functions/schema.h"
 #include "plugin/utility_functions/user.h"
 

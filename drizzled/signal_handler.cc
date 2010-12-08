@@ -24,7 +24,7 @@
 #include "drizzled/signal_handler.h"
 #include "drizzled/drizzled.h"
 #include "drizzled/session.h"
-#include "drizzled/session_list.h"
+#include "drizzled/session/cache.h"
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/probes.h"
 #include "drizzled/plugin.h"

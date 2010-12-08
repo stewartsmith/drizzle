@@ -379,7 +379,7 @@ public:
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &,
                              const drizzled::SchemaIdentifier &,
-                             drizzled::TableIdentifiers &);
+                             drizzled::TableIdentifier::vector &);
 
   virtual int doStartTransaction(Session *session,
                                  start_transaction_option_t options);
@@ -433,7 +433,7 @@ bool SEAPITester::doDoesTableExist(Session &session, const TableIdentifier &iden
 
 void SEAPITester::doGetTableIdentifiers(drizzled::CachedDirectory &cd,
                                         const drizzled::SchemaIdentifier &si,
-                                        drizzled::TableIdentifiers &ti)
+                                        drizzled::TableIdentifier::vector &ti)
 {
   return getRealEngine()->doGetTableIdentifiers(cd, si, ti);
 }

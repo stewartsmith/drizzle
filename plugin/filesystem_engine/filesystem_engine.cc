@@ -108,18 +108,18 @@ public:
   int doRenameTable(Session&, const TableIdentifier &, const TableIdentifier &);
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                              const drizzled::SchemaIdentifier &schema_identifier,
-                             drizzled::TableIdentifiers &set_of_identifiers);
+                             drizzled::TableIdentifier::vector &set_of_identifiers);
 private:
   void getTableNamesFromFilesystem(drizzled::CachedDirectory &directory,
                                    const drizzled::SchemaIdentifier &schema_identifier,
                                    drizzled::plugin::TableNameList *set_of_names,
-                                   drizzled::TableIdentifiers *set_of_identifiers);
+                                   drizzled::TableIdentifier::vector *set_of_identifiers);
 };
 
 void FilesystemEngine::getTableNamesFromFilesystem(drizzled::CachedDirectory &directory,
                                                    const drizzled::SchemaIdentifier &schema_identifier,
                                                    drizzled::plugin::TableNameList *set_of_names,
-                                                   drizzled::TableIdentifiers *set_of_identifiers)
+                                                   drizzled::TableIdentifier::vector *set_of_identifiers)
 {
   drizzled::CachedDirectory::Entries entries= directory.getEntries();
 
@@ -153,7 +153,7 @@ void FilesystemEngine::getTableNamesFromFilesystem(drizzled::CachedDirectory &di
 
 void FilesystemEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                                              const drizzled::SchemaIdentifier &schema_identifier,
-                                             drizzled::TableIdentifiers &set_of_identifiers)
+                                             drizzled::TableIdentifier::vector &set_of_identifiers)
 {
   getTableNamesFromFilesystem(directory, schema_identifier, NULL, &set_of_identifiers);
 }
@@ -317,13 +317,15 @@ int FilesystemEngine::doGetTableDefinition(Session &,
   // then columns of this table are added dynamically here.
   FormatInfo format;
   format.parseFromTable(&table_proto);
-  if (!format.isTagFormat() || !format.isFileGiven()) {
+  if (not format.isTagFormat() || not format.isFileGiven())
+  {
     close(fd);
     return EEXIST;
   }
 
-  vector< map<string, string> > vm;
-  if (parseTaggedFile(format, vm) != 0) {
+  std::vector< std::map<std::string, std::string> > vm;
+  if (parseTaggedFile(format, vm) != 0)
+  {
     close(fd);
 
     return EEXIST;
@@ -336,8 +338,8 @@ int FilesystemEngine::doGetTableDefinition(Session &,
   // we don't care what user provides, just clear them all
   table_proto.clear_field();
   // we take the first section as sample
-  map<string, string> kv= vm[0];
-  for (map<string, string>::iterator iter= kv.begin();
+  std::map<string, string> kv= vm[0];
+  for (std::map<string, string>::iterator iter= kv.begin();
        iter != kv.end();
        ++iter)
   {

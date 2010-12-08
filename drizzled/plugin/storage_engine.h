@@ -290,7 +290,7 @@ public:
 
   virtual void doGetTableIdentifiers(CachedDirectory &directory,
                                      const drizzled::SchemaIdentifier &schema_identifier,
-                                     TableIdentifiers &set_of_identifiers)= 0;
+                                     TableIdentifier::vector &set_of_identifiers)= 0;
 
   virtual int doDropTable(Session &session,
                           const drizzled::TableIdentifier &identifier)= 0;
@@ -322,7 +322,7 @@ public:
                        const drizzled::TableIdentifier &identifier);
   static void getIdentifiers(Session &session,
                              const SchemaIdentifier &schema_identifier,
-                             TableIdentifiers &set_of_identifiers);
+                             TableIdentifier::vector &set_of_identifiers);
 
   // Check to see if any SE objects to creation.
   static bool canCreateTable(const drizzled::TableIdentifier &identifier);
@@ -330,9 +330,9 @@ public:
   { (void)identifier;  return true; }
 
   // @note All schema methods defined here
-  static void getIdentifiers(Session &session, SchemaIdentifiers &schemas);
-  static bool getSchemaDefinition(const drizzled::TableIdentifier &identifier, message::SchemaPtr &proto);
-  static bool getSchemaDefinition(const drizzled::SchemaIdentifier &identifier, message::SchemaPtr &proto);
+  static void getIdentifiers(Session &session, SchemaIdentifier::vector &schemas);
+  static bool getSchemaDefinition(const drizzled::TableIdentifier &identifier, message::schema::shared_ptr &proto);
+  static bool getSchemaDefinition(const drizzled::SchemaIdentifier &identifier, message::schema::shared_ptr &proto);
   static bool doesSchemaExist(const drizzled::SchemaIdentifier &identifier);
   static const CHARSET_INFO *getSchemaCollation(const drizzled::SchemaIdentifier &identifier);
   static bool createSchema(const drizzled::message::Schema &schema_message);
@@ -340,10 +340,10 @@ public:
   static bool alterSchema(const drizzled::message::Schema &schema_message);
 
   // @note make private/protected
-  virtual void doGetSchemaIdentifiers(SchemaIdentifiers&)
+  virtual void doGetSchemaIdentifiers(SchemaIdentifier::vector&)
   { }
 
-  virtual bool doGetSchemaDefinition(const drizzled::SchemaIdentifier&, drizzled::message::SchemaPtr&)
+  virtual bool doGetSchemaDefinition(const drizzled::SchemaIdentifier&, drizzled::message::schema::shared_ptr&)
   { 
     return false; 
   }

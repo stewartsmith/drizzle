@@ -69,7 +69,7 @@ public:
    * Get the host address to bind to.
    * @retval The host address.
    */
-  virtual const char* getHost(void) const;
+  virtual const std::string getHost(void) const;
 
   /**
    * Get the port to bind to.

@@ -36,6 +36,9 @@
 
 #include <libmemcached/memcached.h>
 
+namespace drizzle_plugin
+{
+
 class StatsTableTool : public drizzled::plugin::TableFunction
 {
 public:
@@ -61,5 +64,7 @@ public:
     return new Generator(arg);
   }
 };
+
+} /* namespace drizzle_plugin */
 
 #endif /* PLUGIN_MEMCACHED_STATS_STATS_TABLE_H */

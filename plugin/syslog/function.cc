@@ -25,15 +25,14 @@
 #include "function.h"
 #include "wrap.h"
 
-using namespace drizzled;
-
-Function_syslog::Function_syslog()
-  : Item_str_func()
+namespace drizzle_plugin
 {
-  WrapSyslog::singleton().openlog(syslog_module::sysvar_ident);
-}
 
-String *Function_syslog::val_str(String *s)
+udf::Syslog::Syslog()
+  : Item_str_func()
+{ }
+
+drizzled::String *udf::Syslog::val_str(drizzled::String *s)
 {
 
   if (args[0]->null_value || args[1]->null_value || args[2]->null_value)
@@ -64,13 +63,14 @@ String *Function_syslog::val_str(String *s)
   return args[2]->val_str(s);
 }
 
-void Function_syslog::fix_length_and_dec()
+void udf::Syslog::fix_length_and_dec()
 {
   max_length= args[0]->max_length;
 }
 
-bool Function_syslog::check_argument_count(int n)
+bool udf::Syslog::check_argument_count(int n)
 {
   return (n == 3);
 }
 
+} /* namespace drizzle_plugin */
