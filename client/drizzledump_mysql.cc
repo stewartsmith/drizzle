@@ -190,7 +190,7 @@ bool DrizzleDumpTableMySQL::populateFields()
     if (field->type.compare("ENUM") == 0)
       field->isNull= true;
 
-    if (row[2])
+    if ((row[2]) and (field->type.compare("TEXT") != 0))
     {
       field->defaultValue= row[2];
       if (field->convertDateTime)
@@ -199,13 +199,29 @@ bool DrizzleDumpTableMySQL::populateFields()
       }
     }
     else
-     field->defaultValue= "";
+    {
+      field->defaultValue= "";
+    }
 
     field->isAutoIncrement= (strcmp(row[8], "auto_increment") == 0) ? true : false;
     field->defaultIsNull= field->isNull;
-    field->length= (row[4]) ? boost::lexical_cast<uint32_t>(row[4]) : 0;
-    field->decimalPrecision= (row[5] != NULL) ? boost::lexical_cast<uint32_t>(row[5]) : 0;
-    field->decimalScale= (row[6] != NULL) ? boost::lexical_cast<uint32_t>(row[6]) : 0;
+
+    /* Seriously MySQL, why is BIT length in NUMERIC_PRECISION? */
+    if ((strncmp(row[1], "bit", 3) == 0) and (row[5] != NULL))
+      field->length= ((boost::lexical_cast<uint32_t>(row[5]) - 1) / 8) + 1;
+    else
+      field->length= (row[4]) ? boost::lexical_cast<uint32_t>(row[4]) : 0;
+
+    /* Also, CHAR(0) is valid?? */
+    if (((field->type.compare("VARBINARY") == 0) 
+      or (field->type.compare("VARCHAR") == 0))
+      and (field->length == 0))
+    {
+      field->length= 1;
+    }
+
+    field->decimalPrecision= (row[5]) ? boost::lexical_cast<uint32_t>(row[5]) : 0;
+    field->decimalScale= (row[6]) ? boost::lexical_cast<uint32_t>(row[6]) : 0;
     field->comment= (row[9]) ? row[9] : "";
     fields.push_back(field);
   }
@@ -311,7 +327,7 @@ bool DrizzleDumpTableMySQL::populateFkeys()
   if ((row= drizzle_row_next(result)))
   {
     boost::match_flag_type flags = boost::match_default;
-    boost::regex constraint_regex("CONSTRAINT `(.*)` FOREIGN KEY \\((.*)\\) REFERENCES `(.*)` \\((.*)\\)( ON (UPDATE|DELETE) (CASCADE|RESTRICT|SET NULL))?( ON (UPDATE|DELETE) (CASCADE|RESTRICT|SET NULL))?");
+    boost::regex constraint_regex("CONSTRAINT `(.*?)` FOREIGN KEY \\((.*?)\\) REFERENCES `(.*?)` \\((.*?)\\)( ON (UPDATE|DELETE) (CASCADE|RESTRICT|SET NULL))?( ON (UPDATE|DELETE) (CASCADE|RESTRICT|SET NULL))?");
 
     boost::match_results<std::string::const_iterator> constraint_results;
 
@@ -371,6 +387,12 @@ void DrizzleDumpFieldMySQL::setType(const char* raw_type, const char* raw_collat
     (old_type.find("TEXT") != std::string::npos))
     setCollate(raw_collation);
 
+  if ((old_type.compare("BIGINT") == 0) and
+    ((extra.find("unsigned") != std::string::npos)))
+  {
+    rangeCheck= true;
+  }
+
   if ((old_type.compare("INT") == 0) and 
     ((extra.find("unsigned") != std::string::npos)))
   {
@@ -412,6 +434,7 @@ void DrizzleDumpFieldMySQL::setType(const char* raw_type, const char* raw_collat
   if (old_type.compare("BINARY") == 0)
   {
     type= "VARBINARY";
+    
     return;
   }
 
@@ -441,6 +464,12 @@ void DrizzleDumpFieldMySQL::setType(const char* raw_type, const char* raw_collat
   if (old_type.compare("FLOAT") == 0)
   {
     type= "DOUBLE";
+    return;
+  }
+
+  if (old_type.compare("BIT") == 0)
+  {
+    type= "VARBINARY";
     return;
   }
 

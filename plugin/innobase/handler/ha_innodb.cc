@@ -179,26 +179,62 @@ static plugin::TableFunction* innodb_sys_fields_tool= NULL;
 static plugin::TableFunction* innodb_sys_foreign_tool= NULL;
 static plugin::TableFunction* innodb_sys_foreign_cols_tool= NULL;
 
-static plugin::TransactionApplier *replication_logger= NULL;
+static ReplicationLog *replication_logger= NULL;
+typedef constrained_check<uint32_t, UINT32_MAX, 10> open_files_constraint;
+static open_files_constraint innobase_open_files;
+typedef constrained_check<uint32_t, 10, 1> mirrored_log_groups_constraint;
+static mirrored_log_groups_constraint innobase_mirrored_log_groups;
+typedef constrained_check<uint32_t, 100, 2> log_files_in_group_constraint;
+static log_files_in_group_constraint innobase_log_files_in_group;
+typedef constrained_check<uint32_t, 6, 0> force_recovery_constraint;
+force_recovery_constraint innobase_force_recovery;
+typedef constrained_check<size_t, SIZE_MAX, 256*1024, 1024> log_buffer_constraint;
+static log_buffer_constraint innobase_log_buffer_size;
+typedef constrained_check<size_t, SIZE_MAX, 512*1024, 1024> additional_mem_pool_constraint;
+static additional_mem_pool_constraint innobase_additional_mem_pool_size;
+typedef constrained_check<unsigned int, 1000, 1> autoextend_constraint;
+static autoextend_constraint innodb_auto_extend_increment;
+typedef constrained_check<size_t, SIZE_MAX, 5242880, 1048576> buffer_pool_constraint;
+static buffer_pool_constraint innobase_buffer_pool_size;
+typedef constrained_check<uint32_t, MAX_BUFFER_POOLS, 1> buffer_pool_instances_constraint;
+static buffer_pool_instances_constraint innobase_buffer_pool_instances;
+typedef constrained_check<uint32_t, UINT32_MAX, 100> io_capacity_constraint;
+static io_capacity_constraint innodb_io_capacity;
+typedef constrained_check<uint32_t, 5000, 1> purge_batch_constraint;
+static purge_batch_constraint innodb_purge_batch_size;
+typedef constrained_check<uint32_t, 1, 0> purge_threads_constraint;
+static purge_threads_constraint innodb_n_purge_threads;
+typedef constrained_check<uint16_t, 2, 0> trinary_constraint;
+static trinary_constraint innodb_flush_log_at_trx_commit;
+typedef constrained_check<unsigned int, 99, 0> max_dirty_pages_constraint;
+static max_dirty_pages_constraint innodb_max_dirty_pages_pct;
+static uint64_constraint innodb_max_purge_lag;
+static uint64_nonzero_constraint innodb_stats_sample_pages;
+typedef constrained_check<uint32_t, 64, 1> io_threads_constraint;
+static io_threads_constraint innobase_read_io_threads;
+static io_threads_constraint innobase_write_io_threads;
 
-static long innobase_mirrored_log_groups, innobase_log_files_in_group,
-  innobase_log_buffer_size,
-  innobase_force_recovery, innobase_open_files;
-static long innobase_additional_mem_pool_size= 8*1024*1024L;
-static ulong innobase_commit_concurrency = 0;
-static ulong innobase_read_io_threads;
-static ulong innobase_write_io_threads;
-static int64_t innobase_buffer_pool_instances = 1;
+typedef constrained_check<uint32_t, 1000, 0> concurrency_constraint;
+static concurrency_constraint innobase_commit_concurrency;
+static concurrency_constraint innobase_thread_concurrency;
+static uint32_nonzero_constraint innodb_concurrency_tickets;
 
-/**
- * @TODO: Turn this into size_t as soon as we have a Variable<size_t>
- */
-static int64_t innobase_buffer_pool_size= 128*1024*1024;
-static int64_t innobase_log_file_size;
+typedef constrained_check<int64_t, INT64_MAX, 1024*1024, 1024*1024> log_file_constraint;
+static log_file_constraint innobase_log_file_size;
+
+static uint64_constraint innodb_replication_delay;
 
 /** Percentage of the buffer pool to reserve for 'old' blocks.
 Connected to buf_LRU_old_ratio. */
-static uint innobase_old_blocks_pct;
+typedef constrained_check<uint32_t, 95, 5> old_blocks_constraint;
+static old_blocks_constraint innobase_old_blocks_pct;
+
+static uint32_constraint innodb_sync_spin_loops;
+static uint32_constraint innodb_spin_wait_delay;
+static uint32_constraint innodb_thread_sleep_delay;
+
+typedef constrained_check<uint32_t, 64, 0> read_ahead_threshold_constraint;
+static read_ahead_threshold_constraint innodb_read_ahead_threshold;
 
 /* The default values for the following char* start-up parameters
 are determined in innobase_init below: */
@@ -206,28 +242,38 @@ are determined in innobase_init below: */
 std::string innobase_data_home_dir;
 std::string innobase_data_file_path;
 std::string innobase_log_group_home_dir;
-static char* innobase_file_format_name= NULL;
-static char* innobase_change_buffering= NULL;
+static string innobase_file_format_name;
+static string innobase_change_buffering;
 
 /* The highest file format being used in the database. The value can be
 set by user, however, it will be adjusted to the newer file format if
 a table of such format is created/opened. */
-static char* innobase_file_format_max= NULL;
-
-std::string  innobase_log_arch_dir;
+static string innobase_file_format_max;
 
 /* Below we have boolean-valued start-up parameters, and their default
 values */
 
-static ulong  innobase_fast_shutdown      = 1;
+typedef constrained_check<uint16_t, 2, 0> trinary_constraint;
+static trinary_constraint innobase_fast_shutdown;
+
+/* "innobase_file_format_check" decides whether we would continue
+booting the server if the file format stamped on the system
+table space exceeds the maximum file format supported
+by the server. Can be set during server startup at command
+line or configure file, and a read only variable after
+server startup */
+
+/* If a new file format is introduced, the file format
+name needs to be updated accordingly. Please refer to
+file_format_name_map[] defined in trx0sys.c for the next
+file format name. */
+
 static my_bool  innobase_file_format_check = TRUE;
-#ifdef UNIV_LOG_ARCHIVE
-static my_bool  innobase_log_archive= FALSE;
-#endif /* UNIV_LOG_ARCHIVE */
 static my_bool  innobase_use_doublewrite    = TRUE;
 static my_bool  innobase_use_checksums      = TRUE;
 static my_bool  innobase_rollback_on_timeout    = FALSE;
 static my_bool  innobase_create_status_file   = FALSE;
+static bool innobase_use_replication_log;
 static bool support_xa;
 static bool strict_mode;
 typedef constrained_check<uint32_t, 1024*1024*1024, 1> lock_wait_constraint;
@@ -573,19 +619,6 @@ int InnobaseEngine::doGetTableDefinition(Session &session,
   return ENOENT;
 }
 
-/** @brief Initialize the default value of innodb_commit_concurrency.
-
-Once InnoDB is running, the innodb_commit_concurrency must not change
-from zero to nonzero. (Bug #42101)
-
-The initial default value is 0, and without this extra initialization,
-SET GLOBAL innodb_commit_concurrency=DEFAULT would set the parameter
-to 0, even if it was initially set to nonzero at the command line
-or configuration file. */
-static
-void
-innobase_commit_concurrency_init_default(void);
-/*==========================================*/
 
 /************************************************************//**
 Validate the file format name and return its corresponding id.
@@ -607,36 +640,6 @@ innobase_file_format_validate_and_set(
   const char* format_max);    /*!< in: parameter value */
 
 static const char innobase_engine_name[]= "InnoDB";
-
-/*************************************************************//**
-Check for a valid value of innobase_commit_concurrency.
-@return 0 for valid innodb_commit_concurrency */
-static
-int
-innobase_commit_concurrency_validate(
-/*=================================*/
-  Session*      , /*!< in: thread handle */
-  drizzle_sys_var*  , /*!< in: pointer to system
-            variable */
-  void*       save, /*!< out: immediate result
-            for update function */
-  drizzle_value*    value)  /*!< in: incoming string */
-{
-  int64_t   intbuf;
-  ulong   commit_concurrency;
-
-  if (value->val_int(value, &intbuf)) {
-    /* The value is NULL. That is invalid. */
-    return(1);
-  }
-
-  *reinterpret_cast<ulong*>(save) = commit_concurrency
-    = static_cast<ulong>(intbuf);
-
-  /* Allow the value to be updated, as long as it remains zero
-  or nonzero. */
-  return(!(!commit_concurrency == !innobase_commit_concurrency));
-}
 
 
 /*****************************************************************//**
@@ -1824,6 +1827,204 @@ void align_value(T& value, size_t align_val= 1024)
   value= value - (value % align_val);
 }
 
+static void auto_extend_update(Session *, sql_var_t)
+{
+  srv_auto_extend_increment= innodb_auto_extend_increment.get();
+}
+
+static void io_capacity_update(Session *, sql_var_t)
+{
+  srv_io_capacity= innodb_io_capacity.get();
+}
+
+static void purge_batch_update(Session *, sql_var_t)
+{
+  srv_purge_batch_size= innodb_purge_batch_size.get();
+}
+
+static void purge_threads_update(Session *, sql_var_t)
+{
+  srv_n_purge_threads= innodb_n_purge_threads.get();
+}
+
+static void innodb_adaptive_hash_index_update(Session *, sql_var_t)
+{
+  if (btr_search_enabled)
+  {
+    btr_search_enable();
+  } else {
+    btr_search_disable();
+  }
+}
+
+static void innodb_old_blocks_pct_update(Session *, sql_var_t)
+{
+  innobase_old_blocks_pct= buf_LRU_old_ratio_update(innobase_old_blocks_pct.get(), TRUE);
+}
+
+static void innodb_thread_concurrency_update(Session *, sql_var_t)
+{
+  srv_thread_concurrency= innobase_thread_concurrency.get();
+}
+
+static void innodb_sync_spin_loops_update(Session *, sql_var_t)
+{
+  srv_n_spin_wait_rounds= innodb_sync_spin_loops.get();
+}
+
+static void innodb_spin_wait_delay_update(Session *, sql_var_t)
+{
+  srv_spin_wait_delay= innodb_spin_wait_delay.get();
+}
+
+static void innodb_thread_sleep_delay_update(Session *, sql_var_t)
+{
+  srv_thread_sleep_delay= innodb_thread_sleep_delay.get();
+}
+
+static void innodb_read_ahead_threshold_update(Session *, sql_var_t)
+{
+  srv_read_ahead_threshold= innodb_read_ahead_threshold.get();
+}
+
+
+static int innodb_commit_concurrency_validate(Session *session, set_var *var)
+{
+   uint32_t new_value= var->save_result.uint32_t_value;
+
+   if ((innobase_commit_concurrency.get() == 0 && new_value != 0) ||
+       (innobase_commit_concurrency.get() != 0 && new_value == 0))
+   {
+     push_warning_printf(session,
+                         DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                         ER_WRONG_ARGUMENTS,
+                         _("Once InnoDB is running, innodb_commit_concurrency "
+                           "must not change between zero and nonzero."));
+     return 1;
+   }
+   return 0;
+}
+
+/*************************************************************//**
+Check if it is a valid file format. This function is registered as
+a callback with MySQL.
+@return 0 for valid file format */
+static
+int
+innodb_file_format_name_validate(
+/*=============================*/
+  Session*      , /*!< in: thread handle */
+  set_var *var)
+{
+  const char *file_format_input = var->value->str_value.ptr();
+  if (file_format_input == NULL)
+    return 1;
+
+  if (file_format_input != NULL) {
+    uint  format_id;
+
+    format_id = innobase_file_format_name_lookup(
+      file_format_input);
+
+    if (format_id <= DICT_TF_FORMAT_MAX) {
+      innobase_file_format_name =
+        trx_sys_file_format_id_to_name(format_id);
+
+      return(0);
+    }
+  }
+
+  return(1);
+}
+
+/*************************************************************//**
+Check if it is a valid value of innodb_change_buffering. This function is
+registered as a callback with MySQL.
+@return 0 for valid innodb_change_buffering */
+static
+int
+innodb_change_buffering_validate(
+/*=============================*/
+  Session*      , /*!< in: thread handle */
+  set_var *var)
+{
+  const char *change_buffering_input = var->value->str_value.ptr();
+
+  if (change_buffering_input == NULL)
+    return 1;
+
+  ulint use;
+
+  for (use = 0;
+       use < UT_ARR_SIZE(innobase_change_buffering_values);
+       ++use) {
+    if (!innobase_strcasecmp(change_buffering_input,
+                             innobase_change_buffering_values[use]))
+    {
+      ibuf_use= static_cast<ibuf_use_t>(use); 
+      return 0;
+    }
+  }
+
+  return 1;
+}
+
+
+/*************************************************************//**
+Check if valid argument to innodb_file_format_max. This function
+is registered as a callback with MySQL.
+@return 0 for valid file format */
+static
+int
+innodb_file_format_max_validate(
+/*==============================*/
+  Session*   session, /*!< in: thread handle */
+  set_var *var)
+{
+  const char *file_format_input = var->value->str_value.ptr();
+  if (file_format_input == NULL)
+    return 1;
+
+  if (file_format_input != NULL) {
+    int format_id = innobase_file_format_validate_and_set(file_format_input);
+
+    if (format_id > DICT_TF_FORMAT_MAX) {
+      /* DEFAULT is "on", which is invalid at runtime. */
+      return 1;
+    }
+
+    if (format_id >= 0) {
+      innobase_file_format_max= 
+        trx_sys_file_format_id_to_name((uint)format_id);
+
+      /* Update the max format id in the system tablespace. */
+      char name_buff[100];
+      strcpy(name_buff, innobase_file_format_max.c_str());
+      if (trx_sys_file_format_max_set(format_id, (const char **)&name_buff))
+      {
+        errmsg_printf(ERRMSG_LVL_WARN,
+                      " [Info] InnoDB: the file format in the system "
+                      "tablespace is now set to %s.\n", name_buff);
+        innobase_file_format_max= name_buff;
+      }
+      return(0);
+
+    } else {
+      push_warning_printf(session,
+                          DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                          ER_WRONG_ARGUMENTS,
+                          "InnoDB: invalid innodb_file_format_max "
+                          "value; can be any format up to %s "
+                          "or equivalent id of %d",
+                          trx_sys_file_format_id_to_name(DICT_TF_FORMAT_MAX),
+                          DICT_TF_FORMAT_MAX);
+    }
+  }
+
+  return(1);
+}
+
+
 /*********************************************************************//**
 Opens an InnoDB database.
 @return 0 on success, error code on failure */
@@ -1839,6 +2040,22 @@ innobase_init(
   InnobaseEngine *actuall_engine_ptr;
   const module::option_map &vm= context.getOptions();
 
+  srv_auto_extend_increment= innodb_auto_extend_increment.get();
+  srv_io_capacity= innodb_io_capacity.get();
+  srv_purge_batch_size= innodb_purge_batch_size.get();
+  srv_n_purge_threads= innodb_n_purge_threads.get();
+  srv_flush_log_at_trx_commit= innodb_flush_log_at_trx_commit.get();
+  srv_max_buf_pool_modified_pct= innodb_max_dirty_pages_pct.get();
+  srv_max_purge_lag= innodb_max_purge_lag.get();
+  srv_stats_sample_pages= innodb_stats_sample_pages.get();
+  srv_n_free_tickets_to_enter= innodb_concurrency_tickets.get();
+  srv_replication_delay= innodb_replication_delay.get();
+  srv_thread_concurrency= innobase_thread_concurrency.get();
+  srv_n_spin_wait_rounds= innodb_sync_spin_loops.get();
+  srv_spin_wait_delay= innodb_spin_wait_delay.get();
+  srv_thread_sleep_delay= innodb_thread_sleep_delay.get();
+  srv_read_ahead_threshold= innodb_read_ahead_threshold.get();
+
   /* Inverted Booleans */
 
   innobase_use_checksums= (vm.count("disable-checksums")) ? false : true;
@@ -1846,16 +2063,10 @@ innobase_init(
   srv_adaptive_flushing= (vm.count("disable-adaptive-flushing")) ? false : true;
   srv_use_sys_malloc= (vm.count("use-internal-malloc")) ? false : true;
   support_xa= (vm.count("disable-xa")) ? false : true;
+  btr_search_enabled= (vm.count("disable-adaptive-hash-index")) ? false : true;
 
-  if (vm.count("io-capacity"))
-  {
-    if (srv_io_capacity < 100)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for io-capacity\n"));
-      exit(-1);
-    }
-  }
 
+  /* Hafta do this here because we need to late-bind the default value */
   if (vm.count("data-home-dir"))
   {
     innobase_data_home_dir= vm["data-home-dir"].as<string>();
@@ -1865,218 +2076,11 @@ innobase_init(
     innobase_data_home_dir= getDataHome().file_string();
   }
 
-  if (vm.count("fast-shutdown"))
-  {
-    if (innobase_fast_shutdown > 2)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for fast-shutdown\n"));
-      exit(-1);
-    }
-  }
-
-  if (vm.count("file-format-max"))
-  {
-    innobase_file_format_max= const_cast<char *>(vm["file-format-max"].as<string>().c_str());
-  }
-
-  if (vm.count("file-format-check"))
-  {
-    innobase_file_format_check= vm["file-format-check"].as<bool>();
-  }
-
-  if (vm.count("flush-log-at-trx-commit"))
-  {
-    if (srv_flush_log_at_trx_commit > 2)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for flush-log-at-trx-commit\n"));
-      exit(-1);
-    }
-  }
-
-
-#ifdef UNIV_LOG_ARCHIVE
-  if (vm.count("log-arch-dir"))
-  {
-    innobase_log_arch_dir= vm["log-arch-dir"].as<string>());
-  }
-
-#endif /* UNIV_LOG_ARCHIVE */
-
-  if (vm.count("max-dirty-pages-pct"))
-  {
-    if (srv_max_buf_pool_modified_pct > 99)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for max-dirty-pages-pct\n"));
-      exit(-1);
-    }
-  }
-
-  if (vm.count("stats-sample-pages"))
-  {
-    if (srv_stats_sample_pages < 8)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for stats-sample-pages\n"));
-      exit(-1);
-    }
-  }
-
-  if (vm.count("additional-mem-pool-size"))
-  {
-    align_value(innobase_additional_mem_pool_size);
-
-    if (innobase_additional_mem_pool_size < 512*1024L)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for additional-mem-pool-size\n"));
-      exit(-1);
-    }
-
-  }
-
-  if (vm.count("autoextend-increment"))
-  {
-    if (srv_auto_extend_increment < 1 || srv_auto_extend_increment > 1000)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for autoextend-increment\n"));
-      exit(-1);
-    }
-  }
-
-  if (vm.count("buffer-pool-size"))
-  {
-    align_value(innobase_buffer_pool_size, 1024*1024);
-    if (innobase_buffer_pool_size < 5*1024*1024)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for buffer-pool-size\n"));
-      exit(-1);
-    }
-    
-  }
-
-  if (vm.count("buffer-pool-instances"))
-  {
-    if (innobase_buffer_pool_instances > MAX_BUFFER_POOLS)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for buffer-pool-instances\n"));
-      exit(-1);
-    }
-    
-  }
-
-  if (vm.count("commit-concurrency"))
-  {
-    if (srv_replication_delay > 1000)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for commit-concurrency\n"));
-      exit(-1);
-    }
-  }
-
-  if (vm.count("concurrency-tickets"))
-  {
-    if (srv_n_free_tickets_to_enter < 1)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for concurrency-tickets\n"));
-      exit(-1);
-    }
-  }
-
-  if (vm.count("read-io-threads"))
-  {
-    if (innobase_read_io_threads < 1 || innobase_read_io_threads > 64)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for read-io-threads\n"));
-      exit(-1);
-    }
-  }
-
-  if (vm.count("write-io-threads"))
-  {
-    if (innobase_write_io_threads < 1 || innobase_write_io_threads > 64)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for write-io-threads\n"));
-      exit(-1);
-    }
-  }
-
-  if (vm.count("force-recovery"))
-  {
-    if (innobase_force_recovery > 6)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for force-recovery\n"));
-      exit(-1);
-    }
-  }
-
-  if (vm.count("log-buffer-size"))
-  {
-    align_value(innobase_log_buffer_size);
-    if (innobase_log_buffer_size < 256*1024L)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for log-file-size\n"));
-      exit(-1);
-    }
-  }
-
-  if (vm.count("log-file-size"))
-  {
-    align_value(innobase_log_file_size, 1024*1024);
-    if (innobase_log_file_size < 1*1024*1024L)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for log-file-size\n"));
-      exit(-1);
-    }
-  }
-
-  if (vm.count("log-files-in-group"))
-  {
-    if (innobase_log_files_in_group < 2 || innobase_log_files_in_group > 100)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for log-files-in-group\n"));
-      exit(-1);
-    }
-  }
-
-  if (vm.count("mirrored-log-groups"))
-  {
-    if (innobase_mirrored_log_groups < 1 || innobase_mirrored_log_groups > 10)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for mirrored-log-groups\n"));
-      exit(-1);
-    }
-  }
-
-  if (vm.count("open-files"))
-  {
-    if (innobase_open_files < 10)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for open-files\n"));
-      exit(-1);
-    }
-  }
-
-  if (vm.count("thread-concurrency"))
-  {
-    if (srv_thread_concurrency > 1000)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for thread-concurrency\n"));
-      exit(-1);
-    }
-  }
 
   if (vm.count("data-file-path"))
   {
     innobase_data_file_path= vm["data-file-path"].as<string>();
   }
-
-  if (vm.count("read-ahead-threshold"))
-  {
-    if (srv_read_ahead_threshold > 64)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for read-ahead-threshold\n"));
-      exit(-1);
-    }
-  }
-
 
 
   innodb_engine_ptr= actuall_engine_ptr= new InnobaseEngine(innobase_engine_name);
@@ -2100,25 +2104,6 @@ innobase_init(
     goto error;
   }
 #endif /* UNIV_DEBUG */
-
-  /* Check that values don't overflow on 32-bit systems. */
-  if (sizeof(ulint) == 4) {
-    if (innobase_buffer_pool_size > UINT32_MAX) {
-      errmsg_printf(ERRMSG_LVL_ERROR, 
-                    "innobase_buffer_pool_size can't be over 4GB"
-                    " on 32-bit systems");
-
-      goto error;
-    }
-
-    if (innobase_log_file_size > UINT32_MAX) {
-      errmsg_printf(ERRMSG_LVL_ERROR, 
-                    "innobase_log_file_size can't be over 4GB"
-                    " on 32-bit systems");
-
-      goto error;
-    }
-  }
 
   os_innodb_umask = (ulint)internal::my_umask;
 
@@ -2171,22 +2156,13 @@ mem_free_and_error:
     innobase_log_group_home_dir= getDataHome().file_string();
   }
 
-#ifdef UNIV_LOG_ARCHIVE
-  /* Since innodb_log_arch_dir has no relevance under MySQL,
-    starting from 4.0.6 we always set it the same as
-innodb_log_group_home_dir: */
-
-  innobase_log_arch_dir = (char *)innobase_log_group_home_dir.c_str();
-
-  srv_arch_dir = (char *)innobase_log_arch_dir.c_str();
-#endif /* UNIG_LOG_ARCHIVE */
-
   ret = (bool)
     srv_parse_log_group_home_dirs((char *)innobase_log_group_home_dir.c_str());
 
-  if (ret == FALSE || innobase_mirrored_log_groups != 1) {
-    errmsg_printf(ERRMSG_LVL_ERROR, "syntax error in innodb_log_group_home_dir, or a "
-                  "wrong number of mirrored log groups");
+  if (ret == FALSE || innobase_mirrored_log_groups.get() != 1) {
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("syntax error in innodb_log_group_home_dir, or a "
+                  "wrong number of mirrored log groups"));
 
     goto mem_free_and_error;
   }
@@ -2209,35 +2185,10 @@ innodb_log_group_home_dir: */
     format_id = 0;
   }
 
-  if (vm.count("purge-batch-size"))
-  {
-    srv_purge_batch_size= vm["purge-batch-size"].as<unsigned long>();
-    if (srv_purge_batch_size < 1 || srv_purge_batch_size > 5000)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, "InnoDB: wrong purge-batch_size.");
-      goto mem_free_and_error;
-    }
-  }
-
-  if (vm.count("n-purge-threads"))
-  {
-    srv_n_purge_threads= vm["n-purge-threads"].as<unsigned long>();
-    if (srv_n_purge_threads > 1)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, "InnoDB: wrong n-purge-threads.");
-      goto mem_free_and_error;
-    }
-  }
-
   srv_file_format = format_id;
 
-  /* Given the type of innobase_file_format_name we have little
-    choice but to cast away the constness from the returned name.
-    innobase_file_format_name is used in the MySQL set variable
-    interface and so can't be const. */
-
   innobase_file_format_name =
-    (char*) trx_sys_file_format_id_to_name(format_id);
+    trx_sys_file_format_id_to_name(format_id);
 
   /* Check innobase_file_format_check variable */
   if (!innobase_file_format_check)
@@ -2252,12 +2203,12 @@ innodb_log_group_home_dir: */
   /* Did the user specify a format name that we support?
      As a side effect it will update the variable
      srv_max_file_format_at_startup */
-  if (innobase_file_format_validate_and_set(innobase_file_format_max) < 0)
+  if (innobase_file_format_validate_and_set(innobase_file_format_max.c_str()) < 0)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, "InnoDB: invalid "
+    errmsg_printf(ERRMSG_LVL_ERROR, _("InnoDB: invalid "
                     "innodb_file_format_max value: "
                     "should be any value up to %s or its "
-                    "equivalent numeric id",
+                    "equivalent numeric id"),
                     trx_sys_file_format_id_to_name(DICT_TF_FORMAT_MAX));
     goto mem_free_and_error;
   }
@@ -2270,9 +2221,9 @@ innodb_log_group_home_dir: */
          use < UT_ARR_SIZE(innobase_change_buffering_values);
          use++) {
       if (!innobase_strcasecmp(
-                               vm["change-buffering"].as<string>().c_str(),
+                               innobase_change_buffering.c_str(),
                                innobase_change_buffering_values[use])) {
-        ibuf_use = (ibuf_use_t) use;
+        ibuf_use = static_cast<ibuf_use_t>(use);
         goto innobase_change_buffering_inited_ok;
       }
     }
@@ -2286,8 +2237,7 @@ innodb_log_group_home_dir: */
 
 innobase_change_buffering_inited_ok:
   ut_a((ulint) ibuf_use < UT_ARR_SIZE(innobase_change_buffering_values));
-  innobase_change_buffering = (char*)
-    innobase_change_buffering_values[ibuf_use];
+  innobase_change_buffering = innobase_change_buffering_values[ibuf_use];
 
   /* --------------------------------------------------*/
 
@@ -2300,9 +2250,6 @@ innobase_change_buffering_inited_ok:
   srv_n_log_files = (ulint) innobase_log_files_in_group;
   srv_log_file_size = (ulint) innobase_log_file_size;
 
-#ifdef UNIV_LOG_ARCHIVE
-  srv_log_archive_on = (ulint) innobase_log_archive;
-#endif /* UNIV_LOG_ARCHIVE */
   srv_log_buffer_size = (ulint) innobase_log_buffer_size;
 
   srv_buf_pool_size = (ulint) innobase_buffer_pool_size;
@@ -2337,8 +2284,6 @@ innobase_change_buffering_inited_ok:
 
   data_mysql_default_charset_coll = (ulint)default_charset_info->number;
 
-  innobase_commit_concurrency_init_default();
-
   /* Since we in this module access directly the fields of a trx
     struct, and due to different headers and flags it might happen that
     mutex_t has a different size in this module and in InnoDB
@@ -2358,7 +2303,8 @@ innobase_change_buffering_inited_ok:
     goto mem_free_and_error;
   }
 
-  innobase_old_blocks_pct = buf_LRU_old_ratio_update(innobase_old_blocks_pct,
+
+  innobase_old_blocks_pct = buf_LRU_old_ratio_update(innobase_old_blocks_pct.get(),
                                                      TRUE);
 
   innobase_open_tables = hash_create(200);
@@ -2420,6 +2366,15 @@ innobase_change_buffering_inited_ok:
   context.add(innodb_sys_foreign_cols_tool);
 
   context.add(new(std::nothrow)InnodbInternalTables());
+  context.add(new(std::nothrow)InnodbReplicationTable());
+
+  if (innobase_use_replication_log)
+  {
+    replication_logger= new(std::nothrow)ReplicationLog();
+    context.add(replication_logger);
+    ReplicationLog::setup(replication_logger);
+  }
+
   context.registerVariable(new sys_var_const_string_val("data-home-dir", innobase_data_home_dir));
   context.registerVariable(new sys_var_const_string_val("flush-method", 
                                                         vm.count("flush-method") ?  vm["flush-method"].as<string>() : ""));
@@ -2427,21 +2382,8 @@ innobase_change_buffering_inited_ok:
   context.registerVariable(new sys_var_const_string_val("data-file-path", innobase_data_file_path));
   context.registerVariable(new sys_var_const_string_val("version", vm["version"].as<string>()));
 
-  #ifdef UNIV_LOG_ARCHIVE
-  context.registerVariable(new sys_var_const_string_val("log-arch-dir", innobase_log_arch_dir));
-  context.registerVariable(new sys_var_bool_ptr_readonly("log-archive", &innobase_log_archive));
-  #endif /* UNIV_LOG_ARCHIVE */  
 
-  context.add(new(std::nothrow)InnodbReplicationTable());
-
-  replication_logger= new(std::nothrow)ReplicationLog();
-  context.add(replication_logger);
-
-  if (vm.count("replication-log") and vm["replication-log"].as<bool>())
-  {
-    ReplicationLog::setup(static_cast<ReplicationLog *>(replication_logger));
-  }
-
+  context.registerVariable(new sys_var_bool_ptr_readonly("replication_log", &innobase_use_replication_log));
   context.registerVariable(new sys_var_bool_ptr_readonly("checksums", &innobase_use_checksums));
   context.registerVariable(new sys_var_bool_ptr_readonly("doublewrite", &innobase_use_doublewrite));
   context.registerVariable(new sys_var_bool_ptr("file-per-table", &srv_file_per_table));
@@ -2451,15 +2393,71 @@ innobase_change_buffering_inited_ok:
   context.registerVariable(new sys_var_bool_ptr_readonly("use-sys-malloc", &srv_use_sys_malloc));
   context.registerVariable(new sys_var_bool_ptr_readonly("use-native-aio", &srv_use_native_aio));
 
-#ifdef UNIV_LOG_ARCHIVE
- context.registerVariable(new sys_var_bool_ptr_readonly("log_archive", &innobase_log_archive));
-#endif /* UNIV_LOG_ARCHIVE */
   context.registerVariable(new sys_var_bool_ptr("support-xa", &support_xa));
   context.registerVariable(new sys_var_bool_ptr("strict_mode", &strict_mode));
-  context.registerVariable(new sys_var_constrained_value<uint32_t>("lock-wait-timeout", lock_wait_timeout));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("lock_wait_timeout", lock_wait_timeout));
 
+  context.registerVariable(new sys_var_constrained_value_readonly<size_t>("additional_mem_pool_size",innobase_additional_mem_pool_size));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("autoextend_increment",
+                                                                   innodb_auto_extend_increment,
+                                                                   auto_extend_update));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("io_capacity",
+                                                                   innodb_io_capacity,
+                                                                   io_capacity_update));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("purge_batch_size",
+                                                                   innodb_purge_batch_size,
+                                                                   purge_batch_update));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("purge_threads",
+                                                                   innodb_n_purge_threads,
+                                                                   purge_threads_update));
+  context.registerVariable(new sys_var_constrained_value<uint16_t>("fast_shutdown", innobase_fast_shutdown));
+  context.registerVariable(new sys_var_std_string("file_format",
+                                                  innobase_file_format_name,
+                                                  innodb_file_format_name_validate));
+  context.registerVariable(new sys_var_std_string("change_buffering",
+                                                  innobase_change_buffering,
+                                                  innodb_change_buffering_validate));
+  context.registerVariable(new sys_var_std_string("file_format_max",
+                                                  innobase_file_format_max,
+                                                  innodb_file_format_max_validate));
+  context.registerVariable(new sys_var_constrained_value_readonly<size_t>("buffer_pool_size", innobase_buffer_pool_size));
+  context.registerVariable(new sys_var_constrained_value_readonly<int64_t>("log_file_size", innobase_log_file_size));
+  context.registerVariable(new sys_var_constrained_value_readonly<uint16_t>("flush_log_at_trx_commit",
+                                                  innodb_flush_log_at_trx_commit));
+  context.registerVariable(new sys_var_constrained_value_readonly<unsigned int>("max_dirty_pages_pct",
+                                                  innodb_max_dirty_pages_pct));
+  context.registerVariable(new sys_var_constrained_value_readonly<uint64_t>("max_purge_lag", innodb_max_purge_lag));
+  context.registerVariable(new sys_var_constrained_value_readonly<uint64_t>("stats_sample_pages", innodb_stats_sample_pages));
+  context.registerVariable(new sys_var_bool_ptr("adaptive_hash_index", &btr_search_enabled, innodb_adaptive_hash_index_update));
+
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("commit_concurrency",
+                                                                   innobase_commit_concurrency,
+                                                                   innodb_commit_concurrency_validate));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("concurrency_tickets",
+                                                                   innodb_concurrency_tickets));
+  context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("read_io_threads", innobase_read_io_threads));
+  context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("write_io_threads", innobase_write_io_threads));
+  context.registerVariable(new sys_var_constrained_value_readonly<uint64_t>("replication_delay", innodb_replication_delay));
+  context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("force_recovery", innobase_force_recovery));
+  context.registerVariable(new sys_var_constrained_value_readonly<size_t>("log_buffer_size", innobase_log_buffer_size));
+  context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("log_files_in_group", innobase_log_files_in_group));
+  context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("mirrored_log_groups", innobase_mirrored_log_groups));
+  context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("open_files", innobase_open_files));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("old_blocks_pct",
+                                                                   innobase_old_blocks_pct,
+                                                                   innodb_old_blocks_pct_update));
+  context.registerVariable(new sys_var_uint32_t_ptr("old_blocks_time", &buf_LRU_old_threshold_ms));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("sync_spin_loops", innodb_sync_spin_loops, innodb_sync_spin_loops_update));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("spin_wait_delay", innodb_spin_wait_delay, innodb_spin_wait_delay_update));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("thread_sleep_delay", innodb_thread_sleep_delay, innodb_thread_sleep_delay_update));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("thread_concurrency",
+                                                                   innobase_thread_concurrency,
+                                                                   innodb_thread_concurrency_update));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("read_ahead_threshold",
+                                                                   innodb_read_ahead_threshold,
+                                                                   innodb_read_ahead_threshold_update));
   /* Get the current high water mark format. */
-  innobase_file_format_max = (char*) trx_sys_file_format_max_get();
+  innobase_file_format_max = trx_sys_file_format_max_get();
   btr_search_fully_disabled = (!btr_search_enabled);
 
   return(FALSE);
@@ -2569,11 +2567,11 @@ InnobaseEngine::doCommit(
     Note, the position is current because of
     prepare_commit_mutex */
 retry:
-    if (innobase_commit_concurrency > 0) {
+    if (innobase_commit_concurrency.get() > 0) {
       pthread_mutex_lock(&commit_cond_m);
       commit_threads++;
 
-      if (commit_threads > innobase_commit_concurrency) {
+      if (commit_threads > innobase_commit_concurrency.get()) {
         commit_threads--;
         pthread_cond_wait(&commit_cond,
           &commit_cond_m);
@@ -2598,7 +2596,7 @@ retry:
     innobase_commit_low(trx);
     trx->flush_log_later = FALSE;
 
-    if (innobase_commit_concurrency > 0) {
+    if (innobase_commit_concurrency.get() > 0) {
       pthread_mutex_lock(&commit_cond_m);
       commit_threads--;
       pthread_cond_signal(&commit_cond);
@@ -3564,9 +3562,11 @@ ha_innobase::doOpen(const TableIdentifier &identifier,
     /* We update the highest file format in the system table
     space, if this table has higher file format setting. */
 
-    trx_sys_file_format_max_upgrade(
-      (const char**) &innobase_file_format_max,
+    char changed_file_format_max[100];
+    strcpy(changed_file_format_max, innobase_file_format_max.c_str());
+    trx_sys_file_format_max_upgrade((const char **)&changed_file_format_max,
       dict_table_get_format(prebuilt->table));
+    innobase_file_format_max= changed_file_format_max;
   }
 
   info(HA_STATUS_NO_LOCK | HA_STATUS_VARIABLE | HA_STATUS_CONST);
@@ -6339,8 +6339,11 @@ InnobaseEngine::doCreateTable(
     /* We update the highest file format in the system table
       space, if this table has higher file format setting. */
 
-    trx_sys_file_format_max_upgrade((const char**) &innobase_file_format_max,
-                                    dict_table_get_format(innobase_table));
+    char changed_file_format_max[100];
+    strcpy(changed_file_format_max, innobase_file_format_max.c_str());
+    trx_sys_file_format_max_upgrade((const char **)&changed_file_format_max,
+      dict_table_get_format(innobase_table));
+    innobase_file_format_max= changed_file_format_max;
   }
 
   /* Note: We can't call update_session() as prebuilt will not be
@@ -9176,498 +9179,7 @@ innobase_file_format_validate_and_set(
   }
 }
 
-/*************************************************************//**
-Check if it is a valid file format. This function is registered as
-a callback with MySQL.
-@return 0 for valid file format */
-static
-int
-innodb_file_format_name_validate(
-/*=============================*/
-  Session*      , /*!< in: thread handle */
-  drizzle_sys_var*  , /*!< in: pointer to system
-            variable */
-  void*       save, /*!< out: immediate result
-            for update function */
-  drizzle_value*    value)  /*!< in: incoming string */
-{
-  const char* file_format_input;
-  char    buff[STRING_BUFFER_USUAL_SIZE];
-  int   len = sizeof(buff);
 
-  ut_a(save != NULL);
-  ut_a(value != NULL);
-
-  file_format_input = value->val_str(value, buff, &len);
-
-  if (file_format_input != NULL) {
-    uint  format_id;
-
-    format_id = innobase_file_format_name_lookup(
-      file_format_input);
-
-    if (format_id <= DICT_TF_FORMAT_MAX) {
-      /* Save a pointer to the name in the
-         'file_format_name_map' constant array. */
-      *static_cast<const char**>(save) =
-        trx_sys_file_format_id_to_name(format_id);
-
-      return(0);
-    }
-  }
-
-  *static_cast<const char**>(save) = NULL;
-  return(1);
-}
-
-/****************************************************************//**
-Update the system variable innodb_file_format using the "saved"
-value. This function is registered as a callback with MySQL. */
-static
-void
-innodb_file_format_name_update(
-/*===========================*/
-  Session*      ,   /*!< in: thread handle */
-  drizzle_sys_var*  ,   /*!< in: pointer to
-              system variable */
-  void*       var_ptr,  /*!< out: where the
-              formal string goes */
-  const void*     save)   /*!< in: immediate result
-              from check function */
-{
-  const char* format_name;
-
-  ut_a(var_ptr != NULL);
-  ut_a(save != NULL);
-
-  format_name = *static_cast<const char*const*>(save);
-
-  if (format_name) {
-    uint  format_id;
-
-    format_id = innobase_file_format_name_lookup(format_name);
-
-    if (format_id <= DICT_TF_FORMAT_MAX) {
-      srv_file_format = format_id;
-    }
-  }
-
-  *static_cast<const char**>(var_ptr)
-    = trx_sys_file_format_id_to_name(srv_file_format);
-}
-
-/*************************************************************//**
-Check if valid argument to innodb_file_format_max. This function
-is registered as a callback with MySQL.
-@return 0 for valid file format */
-static
-int
-innodb_file_format_max_validate(
-/*==============================*/
-  Session*      session, /*!< in: thread handle */
-  drizzle_sys_var*  , /*!< in: pointer to system
-            variable */
-  void*       save, /*!< out: immediate result
-            for update function */
-  drizzle_value*    value)  /*!< in: incoming string */
-{
-  const char* file_format_input;
-  char    buff[STRING_BUFFER_USUAL_SIZE];
-  int   len = sizeof(buff);
-  int   format_id;
-
-  ut_a(save != NULL);
-  ut_a(value != NULL);
-
-  file_format_input = value->val_str(value, buff, &len);
-
-  if (file_format_input != NULL) {
-    format_id = innobase_file_format_validate_and_set(file_format_input);
-
-    if (format_id >= 0) {
-      /* Save a pointer to the name in the
-         'file_format_name_map' constant array. */
-      *static_cast<const char**>(save) =
-        trx_sys_file_format_id_to_name((uint)format_id);
-
-      return(0);
-
-    } else {
-      push_warning_printf(session,
-			  DRIZZLE_ERROR::WARN_LEVEL_WARN,
-			  ER_WRONG_ARGUMENTS,
-			  "InnoDB: invalid innodb_file_format_max "
-			  "value; can be any format up to %s "
-			  "or equivalent id of %d",
-			  trx_sys_file_format_id_to_name(DICT_TF_FORMAT_MAX),
-			  DICT_TF_FORMAT_MAX);
-    }
-  }
-
-  *static_cast<const char**>(save) = NULL;
-  return(1);
-}
-
-/****************************************************************//**
-Update the system variable innodb_file_format_max using the "saved"
-value. This function is registered as a callback with MySQL. */
-static
-void
-innodb_file_format_max_update(
-/*============================*/
-  Session*      session,  /*!< in: thread handle */
-  drizzle_sys_var*  ,   /*!< in: pointer to
-              system variable */
-  void*       var_ptr,  /*!< out: where the
-              formal string goes */
-  const void*     save)   /*!< in: immediate result
-              from check function */
-{
-  const char* format_name_in;
-  const char**  format_name_out;
-  uint    format_id;
-
-  ut_a(save != NULL);
-  ut_a(var_ptr != NULL);
-
-  format_name_in = *static_cast<const char*const*>(save);
-
-  if (!format_name_in) {
-
-    return;
-  }
-
-  format_id = innobase_file_format_name_lookup(format_name_in);
-
-  if (format_id > DICT_TF_FORMAT_MAX) {
-    /* DEFAULT is "on", which is invalid at runtime. */
-    push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-            ER_WRONG_ARGUMENTS,
-            "Ignoring SET innodb_file_format=%s",
-            format_name_in);
-    return;
-  }
-
-  format_name_out = static_cast<const char**>(var_ptr);
-
-  /* Update the max format id in the system tablespace. */
-  if (trx_sys_file_format_max_set(format_id, format_name_out)) {
-    ut_print_timestamp(stderr);
-    fprintf(stderr,
-      " [Info] InnoDB: the file format in the system "
-      "tablespace is now set to %s.\n", *format_name_out);
-  }
-}
-
-/****************************************************************//**
-Update the system variable innodb_adaptive_hash_index using the "saved"
-value. This function is registered as a callback with MySQL. */
-static
-void
-innodb_adaptive_hash_index_update(
-/*==============================*/
-  Session*      ,   /*!< in: thread handle */
-  drizzle_sys_var*  ,   /*!< in: pointer to
-              system variable */
-  void*       , /*!< out: where the
-              formal string goes */
-  const void*     save)   /*!< in: immediate result
-              from check function */
-{
-  if (*(bool*) save) {
-    btr_search_enable();
-  } else {
-    btr_search_disable();
-  }
-}
-
-/****************************************************************//**
-Update the system variable innodb_old_blocks_pct using the "saved"
-value. This function is registered as a callback with MySQL. */
-static
-void
-innodb_old_blocks_pct_update(
-/*=========================*/
-	Session*			,	/*!< in: thread handle */
-	drizzle_sys_var*	,	/*!< in: pointer to
-						system variable */
-	void*				,/*!< out: where the
-						formal string goes */
-	const void*			save)	/*!< in: immediate result
-						from check function */
-{
-	innobase_old_blocks_pct = buf_LRU_old_ratio_update(
-		*static_cast<const uint*>(save), TRUE);
-}
-
-/*************************************************************//**
-Check if it is a valid value of innodb_change_buffering. This function is
-registered as a callback with MySQL.
-@return 0 for valid innodb_change_buffering */
-static
-int
-innodb_change_buffering_validate(
-/*=============================*/
-  Session*      , /*!< in: thread handle */
-  drizzle_sys_var*  , /*!< in: pointer to system
-            variable */
-  void*       save, /*!< out: immediate result
-            for update function */
-  drizzle_value*    value)  /*!< in: incoming string */
-{
-  const char* change_buffering_input;
-  char    buff[STRING_BUFFER_USUAL_SIZE];
-  int   len = sizeof(buff);
-
-  ut_a(save != NULL);
-  ut_a(value != NULL);
-
-  change_buffering_input = value->val_str(value, buff, &len);
-
-  if (change_buffering_input != NULL) {
-    ulint use;
-
-    for (use = 0; use < UT_ARR_SIZE(innobase_change_buffering_values);
-         use++) {
-      if (!innobase_strcasecmp(
-            change_buffering_input,
-            innobase_change_buffering_values[use])) {
-        *(ibuf_use_t*) save = (ibuf_use_t) use;
-        return(0);
-      }
-    }
-  }
-
-  return(1);
-}
-
-/****************************************************************//**
-Update the system variable innodb_change_buffering using the "saved"
-value. This function is registered as a callback with MySQL. */
-static
-void
-innodb_change_buffering_update(
-/*===========================*/
-  Session*      ,   /*!< in: thread handle */
-  drizzle_sys_var*  ,   /*!< in: pointer to
-              system variable */
-  void*       var_ptr,  /*!< out: where the
-              formal string goes */
-  const void*     save)   /*!< in: immediate result
-              from check function */
-{
-  ut_a(var_ptr != NULL);
-  ut_a(save != NULL);
-  ut_a((*(ibuf_use_t*) save) < IBUF_USE_COUNT);
-
-  ibuf_use = *(const ibuf_use_t*) save;
-
-  *(const char**) var_ptr = innobase_change_buffering_values[ibuf_use];
-}
-
-/* plugin options */
-
-static DRIZZLE_SYSVAR_ULONG(io_capacity, srv_io_capacity,
-  PLUGIN_VAR_RQCMDARG,
-  "Number of IOPs the server can do. Tunes the background IO rate",
-  NULL, NULL, 200, 100, ~0L, 0);
-
-static DRIZZLE_SYSVAR_ULONG(purge_batch_size, srv_purge_batch_size,
-  PLUGIN_VAR_OPCMDARG,
-  "Number of UNDO logs to purge in one batch from the history list. "
-  "Default is 20",
-  NULL, NULL,
-  20,			/* Default setting */
-  1,			/* Minimum value */
-  5000, 0);		/* Maximum value */
-
-static DRIZZLE_SYSVAR_ULONG(purge_threads, srv_n_purge_threads,
-  PLUGIN_VAR_OPCMDARG | PLUGIN_VAR_READONLY,
-  "Purge threads can be either 0 or 1. Default is 0.",
-  NULL, NULL,
-  0,			/* Default setting */
-  0,			/* Minimum value */
-  1, 0);		/* Maximum value */
-
-static DRIZZLE_SYSVAR_ULONG(fast_shutdown, innobase_fast_shutdown,
-  PLUGIN_VAR_OPCMDARG,
-  "Speeds up the shutdown process of the InnoDB storage engine. Possible "
-  "values are 0, 1 (faster)"
-  " or 2 (fastest - crash-like)"
-  ".",
-  NULL, NULL, 1, 0, 2, 0);
-
-static DRIZZLE_SYSVAR_STR(file_format, innobase_file_format_name,
-  PLUGIN_VAR_RQCMDARG,
-  "File format to use for new tables in .ibd files.",
-  innodb_file_format_name_validate,
-  innodb_file_format_name_update, "Barracuda");
-
-/* "innobase_file_format_check" decides whether we would continue
-booting the server if the file format stamped on the system
-table space exceeds the maximum file format supported
-by the server. Can be set during server startup at command
-line or configure file, and a read only variable after
-server startup */
-
-/* If a new file format is introduced, the file format
-name needs to be updated accordingly. Please refer to
-file_format_name_map[] defined in trx0sys.c for the next
-file format name. */
-static DRIZZLE_SYSVAR_STR(file_format_max, innobase_file_format_max,
-  PLUGIN_VAR_OPCMDARG,
-  "The highest file format in the tablespace.",
-  innodb_file_format_max_validate,
-  innodb_file_format_max_update,
-  "Antelope");
-
-static DRIZZLE_SYSVAR_ULONG(flush_log_at_trx_commit, srv_flush_log_at_trx_commit,
-  PLUGIN_VAR_OPCMDARG,
-  "Set to 0 (write and flush once per second),"
-  " 1 (write and flush at each commit)"
-  " or 2 (write at commit, flush once per second).",
-  NULL, NULL, 1, 0, 2, 0);
-
-static DRIZZLE_SYSVAR_ULONG(max_dirty_pages_pct, srv_max_buf_pool_modified_pct,
-  PLUGIN_VAR_RQCMDARG,
-  "Percentage of dirty pages allowed in bufferpool.",
-  NULL, NULL, 75, 0, 99, 0);
-
-static DRIZZLE_SYSVAR_ULONG(max_purge_lag, srv_max_purge_lag,
-  PLUGIN_VAR_RQCMDARG,
-  "Desired maximum length of the purge queue (0 = no limit)",
-  NULL, NULL, 0, 0, ~0L, 0);
-
-static DRIZZLE_SYSVAR_ULONGLONG(stats_sample_pages, srv_stats_sample_pages,
-  PLUGIN_VAR_RQCMDARG,
-  "The number of index pages to sample when calculating statistics (default 8)",
-  NULL, NULL, 8, 1, ~0ULL, 0);
-
-static DRIZZLE_SYSVAR_BOOL(adaptive_hash_index, btr_search_enabled,
-  PLUGIN_VAR_OPCMDARG,
-  "Enable InnoDB adaptive hash index (enabled by default).",
-  NULL, innodb_adaptive_hash_index_update, TRUE);
-
-static DRIZZLE_SYSVAR_ULONG(replication_delay, srv_replication_delay,
-  PLUGIN_VAR_RQCMDARG,
-  "Replication thread delay (ms) on the slave server if "
-  "innodb_thread_concurrency is reached (0 by default)",
-  NULL, NULL, 0, 0, ~0UL, 0);
-
-static DRIZZLE_SYSVAR_LONG(additional_mem_pool_size, innobase_additional_mem_pool_size,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Size of a memory pool InnoDB uses to store data dictionary information and other internal data structures.",
-  NULL, NULL, 8*1024*1024L, 512*1024L, LONG_MAX, 1024);
-
-static DRIZZLE_SYSVAR_UINT(autoextend_increment, srv_auto_extend_increment,
-  PLUGIN_VAR_RQCMDARG,
-  "Data file autoextend increment in megabytes",
-  NULL, NULL, 8L, 1L, 1000L, 0);
-
-static DRIZZLE_SYSVAR_LONGLONG(buffer_pool_size, innobase_buffer_pool_size,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "The size of the memory buffer InnoDB uses to cache data and indexes of its tables.",
-  NULL, NULL, 128*1024*1024L, 5*1024*1024L, INT64_MAX, 1024*1024L);
-
-static DRIZZLE_SYSVAR_LONGLONG(buffer_pool_instances, innobase_buffer_pool_instances,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Number of buffer pool instances, set to higher value on high-end machines to increase scalability",
-  NULL, NULL, 1L, 1L, MAX_BUFFER_POOLS, 1L);
-
-static DRIZZLE_SYSVAR_ULONG(commit_concurrency, innobase_commit_concurrency,
-  PLUGIN_VAR_RQCMDARG,
-  "Helps in performance tuning in heavily concurrent environments.",
-  innobase_commit_concurrency_validate, NULL, 0, 0, 1000, 0);
-
-static DRIZZLE_SYSVAR_ULONG(concurrency_tickets, srv_n_free_tickets_to_enter,
-  PLUGIN_VAR_RQCMDARG,
-  "Number of times a thread is allowed to enter InnoDB within the same SQL query after it has once got the ticket",
-  NULL, NULL, 500L, 1L, ~0L, 0);
-
-static DRIZZLE_SYSVAR_ULONG(read_io_threads, innobase_read_io_threads,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Number of background read I/O threads in InnoDB.",
-  NULL, NULL, 4, 1, 64, 0);
-
-static DRIZZLE_SYSVAR_ULONG(write_io_threads, innobase_write_io_threads,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Number of background write I/O threads in InnoDB.",
-  NULL, NULL, 4, 1, 64, 0);
-
-static DRIZZLE_SYSVAR_LONG(force_recovery, innobase_force_recovery,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Helps to save your data in case the disk image of the database becomes corrupt.",
-  NULL, NULL, 0, 0, 6, 0);
-
-static DRIZZLE_SYSVAR_LONG(log_buffer_size, innobase_log_buffer_size,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "The size of the buffer which InnoDB uses to write log to the log files on disk.",
-  NULL, NULL, 8*1024*1024L, 256*1024L, LONG_MAX, 1024);
-
-static DRIZZLE_SYSVAR_LONGLONG(log_file_size, innobase_log_file_size,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Size of each log file in a log group.",
-  NULL, NULL, 20*1024*1024L, 1*1024*1024L, INT64_MAX, 1024*1024L);
-
-static DRIZZLE_SYSVAR_LONG(log_files_in_group, innobase_log_files_in_group,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Number of log files in the log group. InnoDB writes to the files in a circular fashion. Value 3 is recommended here.",
-  NULL, NULL, 2, 2, 100, 0);
-
-static DRIZZLE_SYSVAR_LONG(mirrored_log_groups, innobase_mirrored_log_groups,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Number of identical copies of log groups we keep for the database. Currently this should be set to 1.",
-  NULL, NULL, 1, 1, 10, 0);
-
-static DRIZZLE_SYSVAR_UINT(old_blocks_pct, innobase_old_blocks_pct,
-  PLUGIN_VAR_RQCMDARG,
-  "Percentage of the buffer pool to reserve for 'old' blocks.",
-  NULL, innodb_old_blocks_pct_update, 100 * 3 / 8, 5, 95, 0);
-
-static DRIZZLE_SYSVAR_UINT(old_blocks_time, buf_LRU_old_threshold_ms,
-  PLUGIN_VAR_RQCMDARG,
-  "Move blocks to the 'new' end of the buffer pool if the first access"
-  " was at least this many milliseconds ago."
-  " The timeout is disabled if 0 (the default).",
-  NULL, NULL, 0, 0, UINT32_MAX, 0);
-
-static DRIZZLE_SYSVAR_LONG(open_files, innobase_open_files,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "How many files at the maximum InnoDB keeps open at the same time.",
-  NULL, NULL, 300L, 10L, LONG_MAX, 0);
-
-static DRIZZLE_SYSVAR_ULONG(sync_spin_loops, srv_n_spin_wait_rounds,
-  PLUGIN_VAR_RQCMDARG,
-  "Count of spin-loop rounds in InnoDB mutexes (30 by default)",
-  NULL, NULL, 30L, 0L, ~0L, 0);
-
-static DRIZZLE_SYSVAR_ULONG(spin_wait_delay, srv_spin_wait_delay,
-  PLUGIN_VAR_OPCMDARG,
-  "Maximum delay between polling for a spin lock (6 by default)",
-  NULL, NULL, 6L, 0L, ~0L, 0);
-
-static DRIZZLE_SYSVAR_ULONG(thread_concurrency, srv_thread_concurrency,
-  PLUGIN_VAR_RQCMDARG,
-  "Helps in performance tuning in heavily concurrent environments. Sets the maximum number of threads allowed inside InnoDB. Value 0 will disable the thread throttling.",
-  NULL, NULL, 0, 0, 1000, 0);
-
-static DRIZZLE_SYSVAR_ULONG(thread_sleep_delay, srv_thread_sleep_delay,
-  PLUGIN_VAR_RQCMDARG,
-  "Time of innodb thread sleeping before joining InnoDB queue (usec). Value 0 disable a sleep",
-  NULL, NULL, 10000L, 0L, ~0L, 0);
-
-static DRIZZLE_SYSVAR_STR(change_buffering, innobase_change_buffering,
-  PLUGIN_VAR_RQCMDARG,
-  "Buffer changes to reduce random access: "
-  "OFF, ON, inserting, deleting, changing or purging..",
-  innodb_change_buffering_validate,
-  innodb_change_buffering_update, "all");
-
-static DRIZZLE_SYSVAR_ULONG(read_ahead_threshold, srv_read_ahead_threshold,
-  PLUGIN_VAR_RQCMDARG,
-  "Number of pages that must be accessed sequentially for InnoDB to "
-  "trigger a readahead.",
-  NULL, NULL, 56, 0, 64, 0);
 
 static void init_options(drizzled::module::option_context &context)
 {
@@ -9679,54 +9191,46 @@ static void init_options(drizzled::module::option_context &context)
   context("disable-doublewrite",
           "Disable InnoDB doublewrite buffer.");
   context("io-capacity",
-          po::value<unsigned long>(&srv_io_capacity)->default_value(200),
+          po::value<io_capacity_constraint>(&innodb_io_capacity)->default_value(200),
           "Number of IOPs the server can do. Tunes the background IO rate");
   context("fast-shutdown",
-          po::value<unsigned long>(&innobase_fast_shutdown)->default_value(1), 
+          po::value<trinary_constraint>(&innobase_fast_shutdown)->default_value(1), 
           "Speeds up the shutdown process of the InnoDB storage engine. Possible values are 0, 1 (faster) or 2 (fastest - crash-like).");
   context("purge-batch-size",
-          po::value<unsigned long>(&srv_purge_batch_size)->default_value(20),
+          po::value<purge_batch_constraint>(&innodb_purge_batch_size)->default_value(20),
           "Number of UNDO logs to purge in one batch from the history list. "
           "Default is 20.");
   context("purge-threads",
-          po::value<unsigned long>(&srv_n_purge_threads)->default_value(0),
+          po::value<purge_threads_constraint>(&innodb_n_purge_threads)->default_value(0),
           "Purge threads can be either 0 or 1. Defalut is 0.");
   context("file-per-table",
           po::value<bool>(&srv_file_per_table)->default_value(false)->zero_tokens(),
           "Stores each InnoDB table to an .ibd file in the database dir.");
   context("file-format",
-          po::value<string>()->default_value("Antelope"),
+          po::value<string>(&innobase_file_format_name)->default_value("Antelope"),
           "File format to use for new tables in .ibd files.");
   context("file-format-max",
-          po::value<string>()->default_value("Antelope"),
+          po::value<string>(&innobase_file_format_max)->default_value("Antelope"),
           "The highest file format in the tablespace.");
   context("file-format-check",
           po::value<bool>(&innobase_file_format_check)->default_value(true)->zero_tokens(),
           "Whether to perform system file format check.");
   context("flush-log-at-trx-commit",
-          po::value<unsigned long>(&srv_flush_log_at_trx_commit)->default_value(1),
+          po::value<trinary_constraint>(&innodb_flush_log_at_trx_commit)->default_value(1),
           "Set to 0 (write and flush once per second), 1 (write and flush at each commit) or 2 (write at commit, flush once per second).");
   context("flush-method",
           po::value<string>(),
           "With which method to flush data.");
-#ifdef UNIV_LOG_ARCHIVE
-  context("log-arch-dir",
-          po::value<string>(),
-          "Where full logs should be archived.");
-  context("log-archive",
-          po::value<bool>(&innobase_log_archive)->default_value(false)->zero_tokens(),
-          "Set to 1 if you want to have logs archived.");
-#endif /* UNIV_LOG_ARCHIVE */
   context("log-group-home-dir",
           po::value<string>(),
           "Path to InnoDB log files.");
   context("max-dirty-pages-pct",
-          po::value<unsigned long>(&srv_max_buf_pool_modified_pct)->default_value(75),
+          po::value<max_dirty_pages_constraint>(&innodb_max_dirty_pages_pct)->default_value(75),
           "Percentage of dirty pages allowed in bufferpool.");
   context("disable-adaptive-flushing",
           "Do not attempt flushing dirty pages to avoid IO bursts at checkpoints.");
   context("max-purge-lag",
-          po::value<unsigned long>(&srv_max_purge_lag)->default_value(0),
+          po::value<uint64_constraint>(&innodb_max_purge_lag)->default_value(0),
           "Desired maximum length of the purge queue (0 = no limit)");
   context("status-file",
           po::value<bool>(&innobase_create_status_file)->default_value(false)->zero_tokens(),
@@ -9734,67 +9238,67 @@ static void init_options(drizzled::module::option_context &context)
   context("disable-stats-on-metadata",
           "Disable statistics gathering for metadata commands such as SHOW TABLE STATUS (on by default)");
   context("stats-sample-pages",
-          po::value<uint64_t>(&srv_stats_sample_pages)->default_value(8),
+          po::value<uint64_nonzero_constraint>(&innodb_stats_sample_pages)->default_value(8),
           "The number of index pages to sample when calculating statistics (default 8)");
   context("disable-adaptive-hash-index",
           "Enable InnoDB adaptive hash index (enabled by default)");
   context("replication-delay",
-          po::value<unsigned long>(&srv_replication_delay)->default_value(0),
+          po::value<uint64_constraint>(&innodb_replication_delay)->default_value(0),
           "Replication thread delay (ms) on the slave server if innodb_thread_concurrency is reached (0 by default)");
   context("additional-mem-pool-size",
-          po::value<long>(&innobase_additional_mem_pool_size)->default_value(8*1024*1024L),
+          po::value<additional_mem_pool_constraint>(&innobase_additional_mem_pool_size)->default_value(8*1024*1024L),
           "Size of a memory pool InnoDB uses to store data dictionary information and other internal data structures.");
   context("autoextend-increment",
-          po::value<uint32_t>(&srv_auto_extend_increment)->default_value(8L),
+          po::value<autoextend_constraint>(&innodb_auto_extend_increment)->default_value(8L),
           "Data file autoextend increment in megabytes");
   context("buffer-pool-size",
-          po::value<int64_t>(&innobase_buffer_pool_size)->default_value(128*1024*1024L),
+          po::value<buffer_pool_constraint>(&innobase_buffer_pool_size)->default_value(128*1024*1024L),
           "The size of the memory buffer InnoDB uses to cache data and indexes of its tables.");
   context("buffer-pool-instances",
-          po::value<int64_t>(&innobase_buffer_pool_instances)->default_value(1),
+          po::value<buffer_pool_instances_constraint>(&innobase_buffer_pool_instances)->default_value(1),
           "Number of buffer pool instances, set to higher value on high-end machines to increase scalability");
 
   context("commit-concurrency",
-          po::value<unsigned long>(&innobase_commit_concurrency)->default_value(0),
+          po::value<concurrency_constraint>(&innobase_commit_concurrency)->default_value(0),
           "Helps in performance tuning in heavily concurrent environments.");
   context("concurrency-tickets",
-          po::value<unsigned long>(&srv_n_free_tickets_to_enter)->default_value(500L),
+          po::value<uint32_nonzero_constraint>(&innodb_concurrency_tickets)->default_value(500L),
           "Number of times a thread is allowed to enter InnoDB within the same SQL query after it has once got the ticket");
   context("read-io-threads",
-          po::value<unsigned long>(&innobase_read_io_threads)->default_value(4),
+          po::value<io_threads_constraint>(&innobase_read_io_threads)->default_value(4),
           "Number of background read I/O threads in InnoDB.");
   context("write-io-threads",
-          po::value<unsigned long>(&innobase_write_io_threads)->default_value(4),
+          po::value<io_threads_constraint>(&innobase_write_io_threads)->default_value(4),
           "Number of background write I/O threads in InnoDB.");
   context("force-recovery",
-          po::value<long>(&innobase_force_recovery)->default_value(0),
+          po::value<force_recovery_constraint>(&innobase_force_recovery)->default_value(0),
           "Helps to save your data in case the disk image of the database becomes corrupt.");
   context("log-buffer-size",
-          po::value<long>(&innobase_log_buffer_size)->default_value(8*1024*1024L),
+          po::value<log_buffer_constraint>(&innobase_log_buffer_size)->default_value(8*1024*1024L),
           "The size of the buffer which InnoDB uses to write log to the log files on disk.");
   context("log-file-size",
-          po::value<int64_t>(&innobase_log_file_size)->default_value(20*1024*1024L),
+          po::value<log_file_constraint>(&innobase_log_file_size)->default_value(20*1024*1024L),
           "The size of the buffer which InnoDB uses to write log to the log files on disk.");
   context("log-files-in-group",
-          po::value<long>(&innobase_log_files_in_group)->default_value(2),
+          po::value<log_files_in_group_constraint>(&innobase_log_files_in_group)->default_value(2),
           "Number of log files in the log group. InnoDB writes to the files in a circular fashion.");
   context("mirrored-log-groups",
-          po::value<long>(&innobase_mirrored_log_groups)->default_value(1),
+          po::value<mirrored_log_groups_constraint>(&innobase_mirrored_log_groups)->default_value(1),
           "Number of identical copies of log groups we keep for the database. Currently this should be set to 1.");
   context("open-files",
-          po::value<long>(&innobase_open_files)->default_value(300L),
+          po::value<open_files_constraint>(&innobase_open_files)->default_value(300L),
           "How many files at the maximum InnoDB keeps open at the same time.");
   context("sync-spin-loops",
-          po::value<unsigned long>(&srv_n_spin_wait_rounds)->default_value(30L),
+          po::value<uint32_constraint>(&innodb_sync_spin_loops)->default_value(30L),
           "Count of spin-loop rounds in InnoDB mutexes (30 by default)");
   context("spin-wait-delay",
-          po::value<unsigned long>(&srv_spin_wait_delay)->default_value(6L),
+          po::value<uint32_constraint>(&innodb_spin_wait_delay)->default_value(6L),
           "Maximum delay between polling for a spin lock (6 by default)");
   context("thread-concurrency",
-          po::value<unsigned long>(&srv_thread_concurrency)->default_value(0),
+          po::value<concurrency_constraint>(&innobase_thread_concurrency)->default_value(0),
           "Helps in performance tuning in heavily concurrent environments. Sets the maximum number of threads allowed inside InnoDB. Value 0 will disable the thread throttling.");
   context("thread-sleep-delay",
-          po::value<unsigned long>(&srv_thread_sleep_delay)->default_value(10000L),
+          po::value<uint32_constraint>(&innodb_thread_sleep_delay)->default_value(10000L),
           "Time of innodb thread sleeping before joining InnoDB queue (usec). Value 0 disable a sleep");
   context("data-file-path",
           po::value<string>(),
@@ -9805,10 +9309,10 @@ static void init_options(drizzled::module::option_context &context)
   context("use-internal-malloc",
           "Use InnoDB's internal memory allocator instal of the OS memory allocator.");
   context("change-buffering",
-          po::value<string>(),
+          po::value<string>(&innobase_change_buffering),
           "Buffer changes to reduce random access: OFF, ON, inserting, deleting, changing, or purging.");
   context("read-ahead-threshold",
-          po::value<unsigned long>(&srv_read_ahead_threshold)->default_value(56),
+          po::value<read_ahead_threshold_constraint>(&innodb_read_ahead_threshold)->default_value(56),
           "Number of pages that must be accessed sequentially for InnoDB to trigger a readahead.");
   context("disable-xa",
           "Disable InnoDB support for the XA two-phase commit");
@@ -9818,53 +9322,22 @@ static void init_options(drizzled::module::option_context &context)
           po::value<bool>(&strict_mode)->default_value(false)->zero_tokens(),
           "Use strict mode when evaluating create options.");
   context("replication-log",
-          po::value<bool>()->default_value(false),
-          "Enable internal replication log.");
+          po::value<bool>(&innobase_use_replication_log)->default_value(false),
+          _("Enable internal replication log."));
   context("lock-wait-timeout",
           po::value<lock_wait_constraint>(&lock_wait_timeout)->default_value(50),
-          "Timeout in seconds an InnoDB transaction may wait for a lock before being rolled back. Values above 100000000 disable the timeout.");
+          _("Timeout in seconds an InnoDB transaction may wait for a lock before being rolled back. Values above 100000000 disable the timeout."));
+  context("old-blocks-pct",
+          po::value<old_blocks_constraint>(&innobase_old_blocks_pct)->default_value(100 * 3 / 8),
+          _("Percentage of the buffer pool to reserve for 'old' blocks."));
+  context("old-blocks-time",
+          po::value<uint32_t>(&buf_LRU_old_threshold_ms)->default_value(0),
+          _("ove blocks to the 'new' end of the buffer pool if the first access"
+            " was at least this many milliseconds ago."
+            " The timeout is disabled if 0 (the default)."));
 }
 
-static drizzle_sys_var* innobase_system_variables[]= {
-  DRIZZLE_SYSVAR(additional_mem_pool_size),
-  DRIZZLE_SYSVAR(autoextend_increment),
-  DRIZZLE_SYSVAR(buffer_pool_size),
-  DRIZZLE_SYSVAR(buffer_pool_instances),
-  DRIZZLE_SYSVAR(commit_concurrency),
-  DRIZZLE_SYSVAR(concurrency_tickets),
-  DRIZZLE_SYSVAR(fast_shutdown),
-  DRIZZLE_SYSVAR(read_io_threads),
-  DRIZZLE_SYSVAR(write_io_threads),
-  DRIZZLE_SYSVAR(file_format),
-  DRIZZLE_SYSVAR(file_format_max),
-  DRIZZLE_SYSVAR(flush_log_at_trx_commit),
-  DRIZZLE_SYSVAR(force_recovery),
-#ifdef UNIV_LOG_ARCHIVE
-  DRIZZLE_SYSVAR(log_archive),
-#endif /* UNIV_LOG_ARCHIVE */
-  DRIZZLE_SYSVAR(log_buffer_size),
-  DRIZZLE_SYSVAR(log_file_size),
-  DRIZZLE_SYSVAR(log_files_in_group),
-  DRIZZLE_SYSVAR(max_dirty_pages_pct),
-  DRIZZLE_SYSVAR(max_purge_lag),
-  DRIZZLE_SYSVAR(mirrored_log_groups),
-  DRIZZLE_SYSVAR(old_blocks_pct),
-  DRIZZLE_SYSVAR(old_blocks_time),
-  DRIZZLE_SYSVAR(open_files),
-  DRIZZLE_SYSVAR(stats_sample_pages),
-  DRIZZLE_SYSVAR(adaptive_hash_index),
-  DRIZZLE_SYSVAR(replication_delay),
-  DRIZZLE_SYSVAR(sync_spin_loops),
-  DRIZZLE_SYSVAR(spin_wait_delay),
-  DRIZZLE_SYSVAR(thread_concurrency),
-  DRIZZLE_SYSVAR(thread_sleep_delay),
-  DRIZZLE_SYSVAR(change_buffering),
-  DRIZZLE_SYSVAR(read_ahead_threshold),
-  DRIZZLE_SYSVAR(io_capacity),
-  DRIZZLE_SYSVAR(purge_threads),
-  DRIZZLE_SYSVAR(purge_batch_size),
-  NULL
-};
+
 
 DRIZZLE_DECLARE_PLUGIN
 {
@@ -9875,7 +9348,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Supports transactions, row-level locking, and foreign keys",
   PLUGIN_LICENSE_GPL,
   innobase_init, /* Plugin Init */
-  innobase_system_variables, /* system variables */
+  NULL, /* system variables */
   init_options /* reserved */
 }
 DRIZZLE_DECLARE_PLUGIN_END;
@@ -9901,24 +9374,6 @@ int ha_innobase::read_range_next()
   //if (res)
   //  in_range_read= FALSE;
   return res;
-}
-
-/** @brief Initialize the default value of innodb_commit_concurrency.
-
-Once InnoDB is running, the innodb_commit_concurrency must not change
-from zero to nonzero. (Bug #42101)
-
-The initial default value is 0, and without this extra initialization,
-SET GLOBAL innodb_commit_concurrency=DEFAULT would set the parameter
-to 0, even if it was initially set to nonzero at the command line
-or configuration file. */
-static
-void
-innobase_commit_concurrency_init_default(void)
-/*==========================================*/
-{
-  DRIZZLE_SYSVAR_NAME(commit_concurrency).def_val
-    = innobase_commit_concurrency;
 }
 
 /***********************************************************************

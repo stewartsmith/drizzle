@@ -91,7 +91,8 @@ class DrizzleDumpField
       isUnsigned(false),
       isAutoIncrement(false),
       defaultIsNull(false),
-      convertDateTime(false)
+      convertDateTime(false),
+      rangeCheck(false)
     { }
 
     virtual ~DrizzleDumpField() { }
@@ -109,6 +110,7 @@ class DrizzleDumpField
     bool isAutoIncrement;
     bool defaultIsNull;
     bool convertDateTime;
+    bool rangeCheck;
     std::string defaultValue;
     std::string collation;
     std::string comment;

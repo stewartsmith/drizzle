@@ -1446,10 +1446,10 @@ Variable_name	Value
 innodb_thread_concurrency	0
 set global innodb_thread_concurrency=1001;
 Warnings:
-Error	1292	Truncated incorrect thread_concurrency value: '1001'
+Error	1524	Error setting innodb_thread_concurrency. Given value 1001 (> 1000)
 show variables like "innodb_thread_concurrency";
 Variable_name	Value
-innodb_thread_concurrency	1000
+innodb_thread_concurrency	0
 set global innodb_thread_concurrency=0;
 show variables like "innodb_thread_concurrency";
 Variable_name	Value
@@ -1467,10 +1467,10 @@ Variable_name	Value
 innodb_concurrency_tickets	1000
 set global innodb_concurrency_tickets=0;
 Warnings:
-Error	1292	Truncated incorrect concurrency_tickets value: '0'
+Error	1524	Error setting innodb_concurrency_tickets. Given value 0 (< 1)
 show variables like "innodb_concurrency_tickets";
 Variable_name	Value
-innodb_concurrency_tickets	1
+innodb_concurrency_tickets	1000
 set global innodb_concurrency_tickets=500;
 show variables like "innodb_concurrency_tickets";
 Variable_name	Value
