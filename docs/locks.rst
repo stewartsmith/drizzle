@@ -25,4 +25,4 @@ hold any locks when calling get_lock() they will be released. For this
 reason you may want to consider calling get_locks() instead.
 
 Information on all barriers can be found in the DATA_DICTIONARY.USER_LOCKS
-table.
+table;
