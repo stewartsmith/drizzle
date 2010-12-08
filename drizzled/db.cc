@@ -341,7 +341,7 @@ exit:
       SELECT DATABASE() in the future). For this we free() session->db and set
       it to 0.
     */
-    if (schema_identifier.compare(session->db))
+    if (schema_identifier.compare(*session->schema()))
       mysql_change_db_impl(session);
   }
 

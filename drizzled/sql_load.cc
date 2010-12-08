@@ -138,7 +138,8 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
     If this is not set, we will use the directory where the table to be
     loaded is located
   */
-  const char *tdb= session->db.empty() ? table_list->getSchemaName()  : session->db.c_str();		// Result is never null
+  util::string::const_shared_ptr schema(session->schema());
+  const char *tdb= (schema and not schema->empty()) ? schema->c_str() : table_list->getSchemaName(); // Result should never be null
   assert(tdb);
   uint32_t skip_lines= ex->skip_lines;
   bool transactional_table;
@@ -316,7 +317,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
   info.handle_duplicates=handle_duplicates;
   info.escape_char=escaped->length() ? (*escaped)[0] : INT_MAX;
 
-  SchemaIdentifier identifier(session->db);
+  SchemaIdentifier identifier(*schema);
   READ_INFO read_info(file, tot_length,
                       ex->cs ? ex->cs : plugin::StorageEngine::getSchemaCollation(identifier),
 		      *field_term, *ex->line_start, *ex->line_term, *enclosed,

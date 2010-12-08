@@ -126,10 +126,10 @@ void Function::doGetTableIdentifiers(drizzled::CachedDirectory&,
                                      const drizzled::SchemaIdentifier &schema_identifier,
                                      drizzled::TableIdentifier::vector &set_of_identifiers)
 {
-  set<string> set_of_names;
+  set<std::string> set_of_names;
   drizzled::plugin::TableFunction::getNames(schema_identifier.getSchemaName(), set_of_names);
 
-  for (set<string>::iterator iter= set_of_names.begin(); iter != set_of_names.end(); iter++)
+  for (set<std::string>::iterator iter= set_of_names.begin(); iter != set_of_names.end(); iter++)
   {
     set_of_identifiers.push_back(TableIdentifier(schema_identifier, *iter, drizzled::message::Table::FUNCTION));
   }

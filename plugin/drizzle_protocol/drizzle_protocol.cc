@@ -102,7 +102,7 @@ static void init_options(drizzled::module::option_context &context)
           po::value<buffer_constraint>(&buffer_length)->default_value(16384),
           N_("Buffer length."));
   context("bind-address",
-          po::value<string>()->default_value(""),
+          po::value<std::string>()->default_value(""),
           N_("Address to bind to."));
 }
 
