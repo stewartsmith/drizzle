@@ -165,6 +165,7 @@ Session::Session(plugin::Client *client_arg) :
   xa_id(0),
   lex(&main_lex),
   query(new std::string),
+  _schema(new std::string("")),
   catalog("LOCAL"),
   client(client_arg),
   scheduler(NULL),
@@ -1556,6 +1557,7 @@ void Session::end_statement()
 
 bool Session::copy_db_to(char **p_db, size_t *p_db_length)
 {
+  assert(_schema);
   if (_schema and _schema->empty())
   {
     my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
@@ -1619,7 +1621,7 @@ void Session::set_db(const std::string &new_db)
   }
   else
   {
-    _schema.reset();
+    _schema.reset(new std::string(""));
   }
 }
 
@@ -2031,7 +2033,9 @@ void Open_tables_state::dumpTemporaryTableNames(const char *foo)
       cerr << "\t\t Proto " << proto->schema() << " " << proto->name() << "\n";
     }
     else
+    {
       cerr << "\tTabl;e Name " << table->getShare()->getSchemaName() << "." << table->getShare()->getTableName() << " : " << answer << "\n";
+    }
   }
 }
 

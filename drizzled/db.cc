@@ -341,8 +341,7 @@ exit:
       SELECT DATABASE() in the future). For this we free() session->db and set
       it to 0.
     */
-    util::string::const_shared_ptr schema(session->schema());
-    if (schema and schema_identifier.compare(*schema))
+    if (schema_identifier.compare(*session->schema()))
       mysql_change_db_impl(session);
   }
 

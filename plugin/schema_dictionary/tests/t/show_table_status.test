@@ -35,5 +35,4 @@ drop schema schema_a;
 show table status;
 
 drop schema schema_b;
---error 1046
 show table status;

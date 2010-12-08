@@ -37,7 +37,6 @@
 #include "drizzled/util/storable.h"
 #include "drizzled/my_hash.h"
 #include "drizzled/pthread_globals.h"
-
 #include <netdb.h>
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -60,6 +59,8 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/shared_mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
+#include <boost/make_shared.hpp>
+
 
 #define MIN_HANDSHAKE_SIZE      6
 
@@ -512,7 +513,10 @@ public:
 
   util::string::const_shared_ptr schema() const
   {
-    return _schema;
+    if (_schema)
+      return _schema;
+
+    return util::string::const_shared_ptr(new std::string(""));
   }
   std::string catalog;
   /* current cache key */
