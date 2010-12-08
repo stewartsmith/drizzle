@@ -2381,6 +2381,28 @@ int HailDBCursor::info(uint32_t flag)
 
   if (flag & HA_STATUS_AUTO)
     stats.auto_increment_value= 1;
+
+  if (flag & HA_STATUS_ERRKEY) {
+    const char *err_table_name;
+    const char *err_index_name;
+
+    ib_trx_t transaction= *get_trx(getTable()->in_use);
+
+    err= ib_get_duplicate_key(transaction, &err_table_name, &err_index_name);
+
+    errkey= -1;
+
+    for (unsigned int i = 0; i < getTable()->getShare()->keys; i++)
+    {
+      if (strcmp(err_index_name, getTable()->key_info[i].name) == 0)
+      {
+        errkey= i;
+        break;
+      }
+    }
+
+  }
+
   return(0);
 }
 
