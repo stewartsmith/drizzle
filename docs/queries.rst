@@ -12,8 +12,8 @@ A query includes a list of columns to be included in a result set; an example of
 
 SELECT * FROM is an example of using SELECT with a clause. Other keywords and clauses include:
 
-The FROM clause
-The WHERE clause
-The GROUP BY clause
-The HAVING clause
-The ORDER BY clause
+* The FROM clause
+* The WHERE clause
+* The GROUP BY clause
+* The HAVING clause
+* The ORDER BY clause
