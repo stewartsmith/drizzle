@@ -36,7 +36,6 @@ namespace drizzled
 {
 
 class sys_var;
-class sys_var_pluginvar; /* opaque */
 class Time_zone;
 typedef struct my_locale_st MY_LOCALE;
 
@@ -181,10 +180,6 @@ public:
   }
   Item *item(Session *session, sql_var_t type, const LEX_STRING *base);
   virtual bool is_readonly() const
-  {
-    return 0;
-  }
-  virtual sys_var_pluginvar *cast_pluginvar()
   {
     return 0;
   }
@@ -1162,8 +1157,6 @@ struct sys_var_with_base
 */
 
 drizzle_show_var* enumerate_sys_vars(Session *session);
-void drizzle_add_plugin_sysvar(sys_var_pluginvar *var);
-void drizzle_del_plugin_sysvar();
 void add_sys_var_to_list(sys_var *var, struct option *long_options);
 void add_sys_var_to_list(sys_var *var);
 sys_var *find_sys_var(const char *str, uint32_t length=0);

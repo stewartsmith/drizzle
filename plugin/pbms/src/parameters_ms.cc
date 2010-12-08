@@ -30,13 +30,7 @@
 #include <drizzled/common.h>
 #include <drizzled/plugin.h>
 #include <drizzled/session.h>
-using namespace std;
-using namespace drizzled;
-using namespace drizzled::plugin;
 
-#include <drizzled/module/option_map.h>
-#include <boost/program_options.hpp>
-namespace po= boost::program_options;
 
 #define my_strdup(a,b) strdup(a)
 
@@ -63,8 +57,20 @@ namespace po= boost::program_options;
 #include "database_ms.h"
 #include "parameters_ms.h"
 
+using namespace std;
+using namespace drizzled;
+using namespace drizzled::plugin;
+
+#include <drizzled/module/option_map.h>
+#include <boost/program_options.hpp>
+namespace po= boost::program_options;
 #ifndef PBMS_PORT
 #define PBMS_PORT 8080
+#endif
+
+/* Note: 'new' used here is NOT CSObject::new which is a DEBUG define*/
+#ifdef new
+#undef new
 #endif
 
 
