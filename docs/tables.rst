@@ -13,10 +13,11 @@ the columns may include information such as First Name, Last Name,
 Address, City, Country, Birth Date, and so on. As a result, tables have
 column headers, which specify the data types for that particular column.
 
-.. toctree:: :maxdepth: 2
+.. toctree:: 
+	:maxdepth: 2
 
-* :doc:`/alter_table`
-* :doc:`/create_table`
-* :doc:`/drop_table`
-* :doc:`/truncate`
-* :doc:`/rename`
+	alter_table
+	create_table
+	drop_table
+	truncate
+	rename
