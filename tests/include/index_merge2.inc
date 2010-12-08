@@ -53,16 +53,16 @@ select * from t1 where key1 < 3 or key2 > 195;
 
 # Primary key as case-sensitive string with \0s.
 # also make primary key be longer then max. index length of MyISAM.
-alter table t1 add str1 char (100) not null,
-                add zeroval int not null default 0,
-                add str2 char (100) not null,
-                add str3 char (100) not null;
+ALTER TABLE t1 ADD str1 CHAR (100) DEFAULT "catfood" NOT NULL,
+                ADD zeroval INT NOT NULL DEFAULT 0,
+                ADD str2 CHAR (100) DEFAULT "bird" NOT NULL,
+                ADD str3 CHAR (100) DEFAULT "dog" NOT NULL;
 
-update t1 set str1='aaa', str2='bbb', str3=concat(key2, '-', key1 div 2, '_' ,if(key1 mod 2 = 0, 'a', 'A'));
+UPDATE t1 SET str1='aaa', str2='bbb', str3=concat(key2, '-', key1 div 2, '_' ,if(key1 mod 2 = 0, 'a', 'A'));
 
-alter table t1 add primary key (str1, zeroval, str2, str3);
+ALTER TABLE t1 ADD PRIMARY KEY (str1, zeroval, str2, str3);
 
-explain select * from t1 where key1 < 5 or key2 > 197;
+EXPLAIN SELECT * FROM t1 WHERE key1 < 5 OR key2 > 197;
 
 select * from t1 where key1 < 5 or key2 > 197;
 
