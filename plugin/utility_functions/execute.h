@@ -61,7 +61,12 @@ public:
 
   bool check_argument_count(int n)
   {
-    return (n == 1);
+    if (n == 2)
+    {
+      execute.setWait();
+    }
+
+    return (n == 1 or n == 2);
   }
 };
 

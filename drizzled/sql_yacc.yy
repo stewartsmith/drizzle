@@ -3254,10 +3254,15 @@ function_call_conflict:
             }
             Lex->setCacheable(false);
 	  }
-        | EXECUTE_SYM '(' expr ')'
+        | EXECUTE_SYM '(' expr ')' opt_wait
           {
             List<Item> *args= new (YYSession->mem_root) List<Item>;
             args->push_back($3);
+
+            if ($5)
+            {
+              args->push_back(new (YYSession->mem_root) Item_int(1));
+            }
 
             if (! ($$= reserved_keyword_function(YYSession, "execute", args)))
             {

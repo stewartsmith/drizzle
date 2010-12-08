@@ -41,6 +41,11 @@ public:
     return _session;
   }
 
+  void setWait(bool arg= true)
+  {
+    wait= arg;
+  }
+
 private:
 };
 
