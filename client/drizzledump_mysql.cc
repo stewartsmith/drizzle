@@ -167,7 +167,7 @@ bool DrizzleDumpTableMySQL::populateFields()
   if (verbose)
     std::cerr << _("-- Retrieving fields for ") << tableName << "..." << std::endl;
 
-  query="SELECT COLUMN_NAME, COLUMN_TYPE, COLUMN_DEFAULT, IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE, COLLATION_NAME, EXTRA FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='";
+  query="SELECT COLUMN_NAME, COLUMN_TYPE, COLUMN_DEFAULT, IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE, COLLATION_NAME, EXTRA, COLUMN_COMMENT FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='";
   query.append(database->databaseName);
   query.append("' AND TABLE_NAME='");
   query.append(tableName);
@@ -205,6 +205,7 @@ bool DrizzleDumpTableMySQL::populateFields()
 
     field->isAutoIncrement= (strcmp(row[8], "auto_increment") == 0) ? true : false;
     field->defaultIsNull= field->isNull;
+
     /* Seriously MySQL, why is BIT length in NUMERIC_PRECISION? */
     if ((strncmp(row[1], "bit", 3) == 0) and (row[5] != NULL))
       field->length= ((boost::lexical_cast<uint32_t>(row[5]) - 1) / 8) + 1;
@@ -219,17 +220,9 @@ bool DrizzleDumpTableMySQL::populateFields()
       field->length= 1;
     }
 
-    if ((row[5] != NULL) and (row[6] != NULL))
-    {
-      field->decimalPrecision= boost::lexical_cast<uint32_t>(row[5]);
-      field->decimalScale= boost::lexical_cast<uint32_t>(row[6]);
-    }
-    else
-    {
-      field->decimalPrecision= 0;
-      field->decimalScale= 0;
-    }
-
+    field->decimalPrecision= (row[5]) ? boost::lexical_cast<uint32_t>(row[5]) : 0;
+    field->decimalScale= (row[6]) ? boost::lexical_cast<uint32_t>(row[6]) : 0;
+    field->comment= (row[9]) ? row[9] : "";
     fields.push_back(field);
   }
 
@@ -382,7 +375,8 @@ void DrizzleDumpFieldMySQL::setType(const char* raw_type, const char* raw_collat
   std::string extra;
   size_t pos;
   
-  if ((pos= old_type.find("(")) != std::string::npos)
+  if (((pos= old_type.find("(")) != std::string::npos) or
+    ((pos= old_type.find(" ")) != std::string::npos))
   {
     extra= old_type.substr(pos);
     old_type.erase(pos, std::string::npos);
