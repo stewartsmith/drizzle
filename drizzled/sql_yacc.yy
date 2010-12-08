@@ -3254,6 +3254,16 @@ function_call_conflict:
             }
             Lex->setCacheable(false);
 	  }
+        | EXECUTE_SYM '(' expr ')'
+          {
+            List<Item> *args= new (YYSession->mem_root) List<Item>;
+            args->push_back($3);
+
+            if (! ($$= reserved_keyword_function(YYSession, "execute", args)))
+            {
+              DRIZZLE_YYABORT;
+            }
+          }
         | IF '(' expr ',' expr ',' expr ')'
           { $$= new (YYSession->mem_root) Item_func_if($3,$5,$7); }
         | KILL_SYM kill_option '(' expr ')'
