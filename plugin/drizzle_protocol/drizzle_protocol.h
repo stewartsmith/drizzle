@@ -44,8 +44,9 @@ public:
   { }
 
   ~ListenDrizzleProtocol();
-
   in_port_t getPort(void) const;
+  static ProtocolCounters *drizzle_counters;
+  virtual ProtocolCounters *getCounters(void) const { return drizzle_counters; }
 };
 
 

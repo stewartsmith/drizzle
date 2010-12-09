@@ -29,6 +29,17 @@
 
 namespace drizzle_plugin
 {
+class ProtocolCounters
+{
+  public:
+    ProtocolCounters():
+      max_connections(1000)
+    { }
+    drizzled::atomic<uint64_t> connectionCount;
+    drizzled::atomic<uint64_t> failedConnections;
+    drizzled::atomic<uint64_t> connected;
+    uint32_t max_connections;
+};
 
 typedef drizzled::constrained_check<uint32_t, 300, 1> timeout_constraint;
 typedef drizzled::constrained_check<uint32_t, 300, 1> retry_constraint;
@@ -52,6 +63,8 @@ public:
   virtual const std::string getHost(void) const;
   virtual in_port_t getPort(void) const;
   virtual drizzled::plugin::Client *getClient(int fd);
+  static ProtocolCounters *mysql_counters;
+  virtual ProtocolCounters *getCounters(void) const { return mysql_counters; }
 };
 
 class ClientMySQLProtocol: public drizzled::plugin::Client
@@ -69,12 +82,10 @@ private:
   void makeScramble(char *scramble);
 
 public:
-  ClientMySQLProtocol(int fd, bool _using_mysql41_protocol);
+  ClientMySQLProtocol(int fd, bool _using_mysql41_protocol, ProtocolCounters *set_counters);
   virtual ~ClientMySQLProtocol();
 
-  static drizzled::atomic<uint64_t> connectionCount;
-  static drizzled::atomic<uint64_t> failedConnections;
-  static drizzled::atomic<uint64_t> connected;
+  ProtocolCounters *counters;
 
   virtual int getFileDescriptor(void);
   virtual bool isConnected();
