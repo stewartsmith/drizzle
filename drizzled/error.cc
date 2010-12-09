@@ -497,6 +497,7 @@ ErrorMap::ErrorMap()
 
   add(ER_INVALID_ALTER_TABLE_FOR_NOT_NULL, N_("Either a DEFAULt value or NULL NULL description is required for a new column if table is not empty"));
 
+  add(ER_ADMIN_ACCESS, N_("Admin access not allowed from this username/IP address."));
 
   add(EE_CANTUNLOCK, N_("Can't unlock file (Errcode: %d)"));
   add(EE_CANT_CHSIZE, N_("Can't change size of file (Errcode: %d)"));
