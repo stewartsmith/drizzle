@@ -222,7 +222,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
       break;					// fatal error is set
     DRIZZLE_QUERY_START(session->getQueryString()->c_str(),
                         session->thread_id,
-                        const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));
+                        const_cast<const char *>(session->schema()->c_str()));
 
     mysql_parse(session, session->getQueryString()->c_str(), session->getQueryString()->length());
 
@@ -743,7 +743,7 @@ void mysql_parse(Session *session, const char *inBuf, uint32_t length)
       {
         DRIZZLE_QUERY_EXEC_START(session->getQueryString()->c_str(),
                                  session->thread_id,
-                                 const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));
+                                 const_cast<const char *>(session->schema()->c_str()));
         // Implement Views here --Brian
         /* Actually execute the query */
         try 

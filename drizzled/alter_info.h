@@ -91,7 +91,6 @@ public:
   enum tablespace_op_type tablespace_op;
   uint32_t no_parts;
   enum ha_build_method build_method;
-  CreateField *datetime_field;
   bool error_if_not_empty;
 
   AlterInfo();

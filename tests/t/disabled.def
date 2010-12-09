@@ -1,0 +1,5 @@
+# disabled.def file
+# test cases listed here are skipped
+# This file should be empty/nonexistent most of the time
+
+drizzleslap :  Bug#684269  pcrews Drizzleslap timeout error

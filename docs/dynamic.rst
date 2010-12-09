@@ -1,7 +1,7 @@
 Dynamic SQL
 ===========
 
-In Drizzle you can use the EXECUTE command along with user defined variables
+In Drizzle you can use the EXECUTE command along with :doc:'user defined variables <variables>'
 to create SQL in a dynamic manner on the server. An exmaple of this is:
 
 SET @var= "SELECT 1";

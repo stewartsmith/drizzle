@@ -90,6 +90,7 @@ bool logging::Syslog::post(drizzled::Session *session)
     return false;
   
   drizzled::Session::QueryString query_string(session->getQueryString());
+  drizzled::util::string::const_shared_ptr schema(session->schema());
 
   WrapSyslog::singleton()
     .log(_facility, _priority,
@@ -102,8 +103,8 @@ bool logging::Syslog::post(drizzled::Session *session)
          " tmp_table=%ld total_warn_count=%ld\n",
          (unsigned long) session->thread_id,
          (unsigned long) session->getQueryId(),
-         (int) session->getSchema().length(),
-         session->getSchema().empty() ? "" : session->getSchema().c_str(),
+         (int) schema->size(),
+         schema->empty() ? "" : schema->c_str(),
          (int) query_string->length(), 
          query_string->empty() ? "" : query_string->c_str(),
          (int) drizzled::command_name[session->command].length,

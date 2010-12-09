@@ -352,7 +352,7 @@ insert into t1 values ('1','1'),('5','2'),('2','3'),('3','4'),('4','4');
 select * from t1;
 update t1 set col2='7' where col1='4';
 select * from t1;
-alter table t1 add co3 int not null;
+alter table t1 add co3 int DEFAULT 42 not null;
 select * from t1;
 update t1 set col2='9' where col1='2';
 select * from t1;

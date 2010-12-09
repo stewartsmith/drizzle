@@ -502,6 +502,9 @@ ErrorMap::ErrorMap()
   add(ER_USER_LOCKS_INVALID_NAME_BARRIER, N_("Invalid name for user defined barrier."));
   add(ER_USER_LOCKS_INVALID_NAME_LOCK, N_("Invalid name for user defined lock."));
 
+  add(ER_INVALID_ALTER_TABLE_FOR_NOT_NULL, N_("Either a DEFAULt value or NULL NULL description is required for a new column if table is not empty"));
+
+
   add(EE_CANTUNLOCK, N_("Can't unlock file (Errcode: %d)"));
   add(EE_CANT_CHSIZE, N_("Can't change size of file (Errcode: %d)"));
   add(EE_CANT_OPEN_STREAM, N_("Can't open stream from handle (Errcode: %d)"));

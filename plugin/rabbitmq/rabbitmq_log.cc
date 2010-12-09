@@ -46,7 +46,6 @@ namespace drizzle_plugin
 /**
  * rabbitmq port
  */
-typedef drizzled::constrained_check<in_port_t, 65535, 0> port_constraint;
 static port_constraint sysvar_rabbitmq_port;
 
 

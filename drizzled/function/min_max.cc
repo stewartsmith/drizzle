@@ -79,7 +79,7 @@ void Item_func_min_max::fix_length_and_dec()
     stored to the value pointer, if latter is provided.
 
   RETURN
-   0	If one of arguments is NULL
+   0	If one of arguments is NULL or there was a execution error
    #	index of the least/greatest argument
 */
 
@@ -94,6 +94,14 @@ uint32_t Item_func_min_max::cmp_datetimes(uint64_t *value)
     bool is_null_unused;
     uint64_t res= get_datetime_value(session, &arg, 0, datetime_item,
                                      &is_null_unused);
+
+    /* Check if we need to stop (because of error or KILL)  and stop the loop */
+    if (session->is_error())
+    {
+      null_value= 1;
+      return 0;
+    }
+
     if ((null_value= args[i]->null_value))
       return 0;
     if (i == 0 || (res < min_max ? cmp_sign : -cmp_sign) > 0)
@@ -122,6 +130,12 @@ String *Item_func_min_max::val_str(String *str)
     if (null_value)
       return 0;
     str_res= args[min_max_idx]->val_str(str);
+    if (args[min_max_idx]->null_value)
+    {
+      // check if the call to val_str() above returns a NULL value
+      null_value= 1;
+      return NULL;
+    }
     str_res->set_charset(collation.collation);
     return str_res;
   }
