@@ -18,17 +18,40 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_UTILITY_FUNCTIONS_FUNCTIONS_H
-#define PLUGIN_UTILITY_FUNCTIONS_FUNCTIONS_H
+#ifndef PLUGIN_STRING_FUNCTIONS_REGEX_H
+#define PLUGIN_STRING_FUNCTIONS_REGEX_H
 
-#include <drizzled/function/func.h>
-#include <drizzled/plugin/function.h>
+#include <drizzled/item/cmpfunc.h>
+#include <boost/regex.hpp>
 
-#include "plugin/utility_functions/catalog.h"
-#include "plugin/utility_functions/execute.h"
-#include "plugin/utility_functions/global_read_lock.h"
-#include "plugin/utility_functions/kill.h"
-#include "plugin/utility_functions/schema.h"
-#include "plugin/utility_functions/user.h"
+namespace drizzled
+{
+namespace string_functions
+{
 
-#endif /* PLUGIN_UTILITY_FUNCTIONS_FUNCTIONS_H */
+class Regex :public Item_bool_func
+{
+  bool is_negative;
+  boost::regex re;
+  drizzled::String _res;
+
+public:
+  Regex() :
+    is_negative(false)
+  {
+  }
+
+  bool val_bool();
+  int64_t val_int()
+  {
+    return val_bool();
+  }
+  const char *func_name() const { return "regex"; }
+  const char *fully_qualified_func_name() const { return "regex()"; }
+  bool check_argument_count(int n) { if (n == 3) is_negative= true; return n == 2 or n == 3; }
+};
+
+} // namespace string_functions
+} // namespace drizzled
+
+#endif /* PLUGIN_STRING_FUNCTIONS_REGEX_H */

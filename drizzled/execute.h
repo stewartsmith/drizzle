@@ -18,17 +18,37 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_UTILITY_FUNCTIONS_FUNCTIONS_H
-#define PLUGIN_UTILITY_FUNCTIONS_FUNCTIONS_H
+#ifndef DRIZZLED_EXECUTE_H
+#define DRIZZLED_EXECUTE_H
 
-#include <drizzled/function/func.h>
-#include <drizzled/plugin/function.h>
+namespace drizzled
+{
 
-#include "plugin/utility_functions/catalog.h"
-#include "plugin/utility_functions/execute.h"
-#include "plugin/utility_functions/global_read_lock.h"
-#include "plugin/utility_functions/kill.h"
-#include "plugin/utility_functions/schema.h"
-#include "plugin/utility_functions/user.h"
+class Execute
+{
+  bool wait;
+  Session &_session;
 
-#endif /* PLUGIN_UTILITY_FUNCTIONS_FUNCTIONS_H */
+public:
+  Execute(Session&, bool wait_arg);
+  ~Execute();
+
+  void run(std::string &to_execute);
+  void run(const char *arg, size_t length);
+
+  Session &session()
+  {
+    return _session;
+  }
+
+  void setWait(bool arg= true)
+  {
+    wait= arg;
+  }
+
+private:
+};
+
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_EXECUTE_H */

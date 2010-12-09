@@ -18,17 +18,34 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_UTILITY_FUNCTIONS_FUNCTIONS_H
-#define PLUGIN_UTILITY_FUNCTIONS_FUNCTIONS_H
+#include "config.h"
 
-#include <drizzled/function/func.h>
-#include <drizzled/plugin/function.h>
+#include <drizzled/session.h>
+#include <drizzled/session/cache.h>
+#include "plugin/utility_functions/functions.h"
 
-#include "plugin/utility_functions/catalog.h"
-#include "plugin/utility_functions/execute.h"
-#include "plugin/utility_functions/global_read_lock.h"
-#include "plugin/utility_functions/kill.h"
-#include "plugin/utility_functions/schema.h"
-#include "plugin/utility_functions/user.h"
+namespace drizzled
+{
 
-#endif /* PLUGIN_UTILITY_FUNCTIONS_FUNCTIONS_H */
+namespace utility_functions
+{
+
+bool Execute::val_bool()
+{
+  drizzled::String *res= args[0]->val_str(&_res);
+
+  if (not res or not res->length())
+  {
+    null_value= true;
+    return false;
+  }
+
+  execute.run(res->c_str(), res->length());
+
+  null_value= false;
+
+  return true;
+}
+
+} /* namespace utility_functions */
+} /* namespace drizzled */

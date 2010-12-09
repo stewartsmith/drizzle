@@ -18,17 +18,47 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_UTILITY_FUNCTIONS_FUNCTIONS_H
-#define PLUGIN_UTILITY_FUNCTIONS_FUNCTIONS_H
+#include "config.h"
 
-#include <drizzled/function/func.h>
-#include <drizzled/plugin/function.h>
+#include <drizzled/session.h>
+#include "plugin/string_functions/functions.h"
 
-#include "plugin/utility_functions/catalog.h"
-#include "plugin/utility_functions/execute.h"
-#include "plugin/utility_functions/global_read_lock.h"
-#include "plugin/utility_functions/kill.h"
-#include "plugin/utility_functions/schema.h"
-#include "plugin/utility_functions/user.h"
+namespace drizzled
+{
+namespace string_functions
+{
 
-#endif /* PLUGIN_UTILITY_FUNCTIONS_FUNCTIONS_H */
+bool Regex::val_bool()
+{
+  drizzled::String *res= args[0]->val_str(&_res);
+
+  if (re.empty())
+  {
+    drizzled::String _regex;
+    drizzled::String *regex= args[0]->val_str(&_regex);
+
+    if (not regex or not regex->length() or not res or not res->length())
+    {
+      null_value= true;
+      return false;
+    }
+
+    re.assign(res->c_str());
+  }
+
+  if (not res or not res->length())
+  {
+    null_value= true;
+    return false;
+  }
+
+  null_value= false;
+
+  if (is_negative)
+    return not boost::regex_match(res->c_str(), re);
+
+  return boost::regex_match(res->c_str(), re);
+}
+
+} // namespace string_functions
+} // namespace drizzled
