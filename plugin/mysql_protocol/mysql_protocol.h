@@ -51,6 +51,7 @@ private:
   drizzled::String packet;
   uint32_t client_capabilities;
   bool using_mysql41_protocol;
+  bool is_admin_connection;
 
   bool checkConnection(void);
   bool netStoreData(const unsigned char *from, size_t length);

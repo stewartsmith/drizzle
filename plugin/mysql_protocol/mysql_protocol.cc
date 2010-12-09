@@ -740,6 +740,9 @@ bool ClientMySQLProtocol::checkConnection(void)
   uint32_t user_len= passwd - user - 1;
   char *l_db= passwd;
 
+  if ((client_capabilities & CLIENT_ADMIN) && (strncmp(user, "root", 4) == 0))
+    is_admin_connection= true;
+
   /*
     Only support new password format.
 

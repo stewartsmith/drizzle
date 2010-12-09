@@ -862,6 +862,7 @@ public:
     return &_killed;
   }
 
+  bool is_admin_connection;
   bool some_tables_deleted;
   bool no_errors;
   bool password;
