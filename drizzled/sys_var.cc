@@ -88,7 +88,6 @@ extern struct option my_long_options[];
 extern const CHARSET_INFO *character_set_filesystem;
 extern size_t my_thread_stack_size;
 
-class sys_var_pluginvar;
 typedef map<string, sys_var *> SystemVariableMap;
 static SystemVariableMap system_variable_map;
 extern char *opt_drizzle_tmpdir;
@@ -321,18 +320,25 @@ sys_var_session_time_zone sys_time_zone("time_zone");
 /* Global read-only variable containing hostname */
 static sys_var_const_str        sys_hostname("hostname", glob_hostname);
 
-bool sys_var::check(Session *, set_var *var)
+bool sys_var::check(Session *session, set_var *var)
 {
+  if (check_func)
+  {
+    int res;
+    if ((res=(*check_func)(session, var)) < 0)
+      my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), getName().c_str(), var->value->str_value.ptr());
+    return res;
+  }
   var->save_result.uint64_t_value= var->value->val_int();
   return 0;
 }
 
 bool sys_var_str::check(Session *session, set_var *var)
 {
-  int res;
   if (!check_func)
     return 0;
 
+  int res;
   if ((res=(*check_func)(session, var)) < 0)
     my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), getName().c_str(), var->value->str_value.ptr());
   return res;
@@ -607,7 +613,7 @@ bool sys_var_bool_ptr::update(Session *, set_var *var)
 
 void sys_var_bool_ptr::set_default(Session *, sql_var_t)
 {
-  *value= (bool) option_limits->def_value;
+  *value= default_value;
 }
 
 
@@ -1657,7 +1663,7 @@ int sys_var_init()
     add_sys_var_to_list(&sys_version_compile_vendor, my_long_options);
     add_sys_var_to_list(&sys_warning_count, my_long_options);
   }
-  catch (...)
+  catch (std::exception&)
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize system variables"));
     return(1);

@@ -35,5 +35,4 @@ drop schema schema_a;
 show table status;
 
 drop schema schema_b;
---replace_column 1 #  6 # 7 # 8 # 9 # 10 #
 show table status;

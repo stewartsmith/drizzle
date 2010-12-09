@@ -456,9 +456,10 @@ btr_estimate_number_of_different_key_vals(
 Marks not updated extern fields as not-owned by this record. The ownership
 is transferred to the updated record which is inserted elsewhere in the
 index tree. In purge only the owner of externally stored field is allowed
-to free the field. */
+to free the field.
+@return TRUE if BLOB ownership was transferred */
 UNIV_INTERN
-void
+ibool
 btr_cur_mark_extern_inherited_fields(
 /*=================================*/
 	page_zip_des_t*	page_zip,/*!< in/out: compressed page whose uncompressed
@@ -558,7 +559,7 @@ btr_copy_externally_stored_field_prefix(
 	ulint		local_len);/*!< in: length of data, in bytes */
 /*******************************************************************//**
 Copies an externally stored field of a record to mem heap.
-@return	the field copied to heap */
+@return	the field copied to heap, or NULL if the field is incomplete */
 UNIV_INTERN
 byte*
 btr_rec_copy_externally_stored_field(
@@ -615,6 +616,11 @@ struct btr_path_struct{
 				order); value ULINT_UNDEFINED
 				denotes array end */
 	ulint	n_recs;		/*!< number of records on the page */
+	ulint	page_no;	/*!< no of the page containing the record */
+	ulint	page_level;	/*!< level of the page, if later we fetch
+				the page under page_no and it is no different
+				level then we know that the tree has been
+				reorganized */
 };
 
 #define BTR_PATH_ARRAY_N_SLOTS	250	/*!< size of path array (in slots) */

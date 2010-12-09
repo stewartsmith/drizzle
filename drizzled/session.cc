@@ -23,7 +23,7 @@
 
 #include "config.h"
 #include "drizzled/session.h"
-#include "drizzled/session_list.h"
+#include "drizzled/session/cache.h"
 #include <sys/stat.h>
 #include "drizzled/error.h"
 #include "drizzled/gettext.h"
@@ -41,6 +41,7 @@
 #include "drizzled/plugin/authentication.h"
 #include "drizzled/plugin/logging.h"
 #include "drizzled/plugin/transactional_storage_engine.h"
+#include "drizzled/plugin/query_rewrite.h"
 #include "drizzled/probes.h"
 #include "drizzled/table_proto.h"
 #include "drizzled/db.h"
@@ -85,7 +86,7 @@ bool Key_part_spec::operator==(const Key_part_spec& other) const
 {
   return length == other.length &&
          field_name.length == other.field_name.length &&
-         !strcmp(field_name.str, other.field_name.str);
+    !my_strcasecmp(system_charset_info, field_name.str, other.field_name.str);
 }
 
 Open_tables_state::Open_tables_state(uint64_t version_arg) :
@@ -164,6 +165,7 @@ Session::Session(plugin::Client *client_arg) :
   xa_id(0),
   lex(&main_lex),
   query(new std::string),
+  _schema(new std::string("")),
   catalog("LOCAL"),
   client(client_arg),
   scheduler(NULL),
@@ -410,10 +412,6 @@ Session::~Session()
     delete (*iter).second;
   }
   life_properties.clear();
-
-#if 0
-  drizzled::util::custom_backtrace();
-#endif
 }
 
 void Session::setClient(plugin::Client *client_arg)
@@ -427,14 +425,12 @@ void Session::awake(Session::killed_state_t state_to_set)
   this->checkSentry();
 
   setKilled(state_to_set);
+  scheduler->killSession(this);
+
   if (state_to_set != Session::KILL_QUERY)
   {
-    scheduler->killSession(this);
     DRIZZLE_CONNECTION_DONE(thread_id);
   }
-
-  assert(_thread);
-  _thread->interrupt();
 
   if (mysys_var)
   {
@@ -729,7 +725,14 @@ bool Session::readAndStoreQuery(const char *in_packet, uint32_t in_packet_length
     in_packet_length--;
   }
 
-  query.reset(new std::string(in_packet, in_packet + in_packet_length));
+  std::string *new_query= new std::string(in_packet, in_packet + in_packet_length);
+  // We can not be entirely sure _schema has a value
+  if (_schema)
+  {
+    plugin::QueryRewriter::rewriteQuery(*_schema, *new_query);
+  }
+  query.reset(new_query);
+  _state.reset(new State(in_packet, in_packet_length));
 
   return true;
 }
@@ -1040,7 +1043,8 @@ static int create_file(Session *session,
   if (not to_file.has_root_directory())
   {
     target_path= fs::system_complete(getDataHomeCatalog());
-    if (not session->db.empty())
+    util::string::const_shared_ptr schema(session->schema());
+    if (schema and not schema->empty())
     {
       int count_elements= 0;
       for (fs::path::iterator iter= to_file.begin();
@@ -1050,7 +1054,7 @@ static int create_file(Session *session,
 
       if (count_elements == 1)
       {
-        target_path /= session->db;
+        target_path /= *schema;
       }
     }
     target_path /= to_file;
@@ -1553,13 +1557,22 @@ void Session::end_statement()
 
 bool Session::copy_db_to(char **p_db, size_t *p_db_length)
 {
-  if (db.empty())
+  assert(_schema);
+  if (_schema and _schema->empty())
   {
     my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
     return true;
   }
-  *p_db= strmake(db.c_str(), db.length());
-  *p_db_length= db.length();
+  else if (not _schema)
+  {
+    my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
+    return true;
+  }
+  assert(_schema);
+
+  *p_db= strmake(_schema->c_str(), _schema->size());
+  *p_db_length= _schema->size();
+
   return false;
 }
 
@@ -1599,15 +1612,17 @@ void Session::set_status_var_init()
 }
 
 
-bool Session::set_db(const std::string &new_db)
+void Session::set_db(const std::string &new_db)
 {
   /* Do not reallocate memory if current chunk is big enough. */
   if (new_db.length())
-    db= new_db;
+  {
+    _schema.reset(new std::string(new_db));
+  }
   else
-    db.clear();
-
-  return false;
+  {
+    _schema.reset(new std::string(""));
+  }
 }
 
 
@@ -1645,7 +1660,7 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
 
       errmsg_printf(ERRMSG_LVL_WARN, ER(ER_NEW_ABORTING_CONNECTION)
                   , thread_id
-                  , (db.empty() ? "unconnected" : db.c_str())
+                  , (_schema->empty() ? "unconnected" : _schema->c_str())
                   , sctx->getUser().empty() == false ? sctx->getUser().c_str() : "unauthenticated"
                   , sctx->getIp().c_str()
                   , (main_da.is_error() ? main_da.message() : ER(ER_UNKNOWN_ERROR)));
@@ -2018,7 +2033,9 @@ void Open_tables_state::dumpTemporaryTableNames(const char *foo)
       cerr << "\t\t Proto " << proto->schema() << " " << proto->name() << "\n";
     }
     else
+    {
       cerr << "\tTabl;e Name " << table->getShare()->getSchemaName() << "." << table->getShare()->getTableName() << " : " << answer << "\n";
+    }
   }
 }
 

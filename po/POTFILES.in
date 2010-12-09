@@ -67,8 +67,8 @@ plugin/haildb/haildb_engine.cc
 plugin/hello_events/hello_events.cc
 plugin/innobase/handler/data_dictionary.cc
 plugin/innobase/handler/ha_innodb.cc
+plugin/innobase/handler/replication_dictionary.cc
 plugin/innobase/pars/pars0grm.c
-plugin/innobase/ut/ut0auxconf_pause.c
 plugin/logging_gearman/logging_gearman.cc
 plugin/logging_query/logging_query.cc
 plugin/logging_stats/logging_stats.cc
@@ -85,6 +85,7 @@ plugin/mysql_protocol/mysql_protocol.cc
 plugin/mysql_unix_socket_protocol/protocol.cc
 plugin/pbms/src/parameters_ms.cc
 plugin/pbms/src/plugin_ms.cc
+plugin/rabbitmq/rabbitmq_handler.cc
 plugin/rabbitmq/rabbitmq_log.cc
 plugin/session_dictionary/processlist.cc
 plugin/signal_handler/signal_handler.cc

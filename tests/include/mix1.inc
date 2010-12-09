@@ -915,9 +915,10 @@ set @my_innodb_autoextend_increment=@@global.innodb_autoextend_increment;
 set global innodb_autoextend_increment=8;
 set global innodb_autoextend_increment=@my_innodb_autoextend_increment;
 
-set @my_innodb_commit_concurrency=@@global.innodb_commit_concurrency;
-set global innodb_commit_concurrency=0;
-set global innodb_commit_concurrency=@my_innodb_commit_concurrency;
+# BUG: 
+# set @my_innodb_commit_concurrency=@@global.innodb_commit_concurrency;
+# set global innodb_commit_concurrency=0;
+# set global innodb_commit_concurrency=@my_innodb_commit_concurrency;
 
 --echo End of 5.0 tests
 
@@ -1095,6 +1096,6 @@ ALTER TABLE t1 CHANGE id id2 INT;
 DROP TABLE t2;
 DROP TABLE t1;
 
-SET innodb_lock_wait_timeout=@orig_lock_wait_timeout ;
+SET GLOBAL innodb_lock_wait_timeout=@orig_lock_wait_timeout ;
 
 --echo End of 5.1 tests

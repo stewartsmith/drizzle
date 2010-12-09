@@ -52,63 +52,11 @@ using namespace drizzled;
 using namespace std;
 namespace po= boost::program_options;
 
-static char* sysvar_memcached_servers= NULL;
-static ulong expiry_time;
+static uint64_constraint expiry_time;
 
 memcache::Memcache* MemcachedQueryCache::client;
 std::string MemcachedQueryCache::memcached_servers;
-
-static DRIZZLE_SessionVAR_BOOL(enable, 
-                               PLUGIN_VAR_SessionLOCAL,
-                               "Enable Memcached Query Cache",
-                               /* check_func */ NULL, 
-                               /* update_func */ NULL,
-                               /* default */ false);
-
-static int check_memc_servers(Session *,
-                              drizzle_sys_var *,
-                              void *save,
-                              drizzle_value *value)
-{
-  char buff[STRING_BUFFER_USUAL_SIZE];
-  int len= sizeof(buff);
-  const char *input= value->val_str(value, buff, &len);
-
-  if (input)
-  {
-    MemcachedQueryCache::setServers(input);
-    *(bool *) save= (bool) true;
-    return 0;
-  }
-
-  *(bool *) save= (bool) false;
-  return 1;
-}
-
-static void set_memc_servers(Session *,
-                             drizzle_sys_var *,
-                             void *var_ptr,
-                             const void *save)
-{
-  if (*(bool *) save != false)
-  {
-    *(const char **) var_ptr= MemcachedQueryCache::getServers();
-  }
-}
-
-static DRIZZLE_SYSVAR_STR(servers,
-                          sysvar_memcached_servers,
-                          PLUGIN_VAR_OPCMDARG,
-                          N_("List of memcached servers."),
-                          check_memc_servers, /* check func */
-                          set_memc_servers, /* update func */
-                          "127.0.0.1:11211"); /* default value */
-
-static DRIZZLE_SYSVAR_ULONG(expiry, 
-                            expiry_time,
-                            PLUGIN_VAR_OPCMDARG,
-                            "Expiry time of memcached entries",
-                             NULL, NULL, 1000, 0, ~0L, 0);
+bool sysvar_memcached_qc_enable;
 
 bool MemcachedQueryCache::isSelect(string query)
 {
@@ -139,10 +87,10 @@ bool MemcachedQueryCache::isSelect(string query)
 
 bool MemcachedQueryCache::doIsCached(Session *session)
 {
-  if (SessionVAR(session, enable) && isSelect(session->query))
+  if (sysvar_memcached_qc_enable && isSelect(session->query))
   {
     /* ToDo: Check against the cache content */
-    string query= session->query+session->db;
+    string query= session->query + *session->schema();
     char* key= md5_key(query.c_str());
     if(queryCacheService.isCached(key))
     {
@@ -240,10 +188,10 @@ void MemcachedQueryCache::checkTables(Session *session, TableList* in_table)
 bool MemcachedQueryCache::doPrepareResultset(Session *session)
 {		
   checkTables(session, session->lex->query_tables);
-  if (SessionVAR(session, enable) && session->lex->isCacheable())
+  if (sysvar_memcached_qc_enable && session->lex->isCacheable())
   {
     /* Prepare and set the key for the session */
-    string query= session->query+session->db;
+    string query= session->query + *session->schema();
     char* key= md5_key(query.c_str());
 
     /* make sure only one thread will cache the query 
@@ -261,7 +209,7 @@ bool MemcachedQueryCache::doPrepareResultset(Session *session)
   
       /* setting the resultset infos */
       resultset->set_key(session->query_cache_key);
-      resultset->set_schema(session->db);
+      resultset->set_schema(*session->schema());
       resultset->set_sql(session->query);
       pthread_mutex_unlock(&mutex);
       
@@ -279,7 +227,7 @@ bool MemcachedQueryCache::doPrepareResultset(Session *session)
 bool MemcachedQueryCache::doSetResultset(Session *session)
 {		
   message::Resultset *resultset= session->getResultsetMessage();
-  if (SessionVAR(session, enable) && (not session->is_error()) && resultset != NULL && session->lex->isCacheable())
+  if (sysvar_memcached_qc_enable && (not session->is_error()) && resultset != NULL && session->lex->isCacheable())
   {
     /* Generate the final Header */
     queryCacheService.setResultsetHeader(*resultset, session, session->lex->query_tables);
@@ -321,7 +269,7 @@ bool MemcachedQueryCache::doSetResultset(Session *session)
  */
 bool MemcachedQueryCache::doInsertRecord(Session *session, List<Item> &list)
 {		
-  if(SessionVAR(session, enable))
+  if(sysvar_memcached_qc_enable)
   {
     queryCacheService.addRecord(session, list);
     return true;
@@ -368,26 +316,7 @@ static int init(module::Context &context)
 {
   const module::option_map &vm= context.getOptions();
 
-  if (vm.count("expiry"))
-  { 
-    if (expiry_time > (ulong)~0L)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of expiry\n"));
-      exit(-1);
-    }
-  }
-
-  if (vm.count("servers"))
-  {
-    sysvar_memcached_servers= const_cast<char *>(vm["servers"].as<string>().c_str());
-  }
-
-  if (vm.count("enable"))
-  {
-    (SessionVAR(NULL,enable))= vm["enable"].as<bool>();
-  }
-
-  MemcachedQueryCache* memc= new MemcachedQueryCache("Memcached_Query_Cache", sysvar_memcached_servers);
+  MemcachedQueryCache* memc= new MemcachedQueryCache("Memcached_Query_Cache", vm["servers"].as<string>());
   context.add(memc);
 
   Invalidator* invalidator= new Invalidator("Memcached_Query_Cache_Invalidator");
@@ -412,15 +341,11 @@ static int init(module::Context &context)
   query_cached_tables= new (nothrow) CachedTables();
   context.add(query_cached_tables);
   
+  context.registerVariable(new sys_var_constrained_value<uint64_t>("expiry", expiry_time));
+  context.registerVariable(new sys_var_const_string_val("servers", vm["servers"].as<string>()));
+  context.registerVariable(new sys_var_bool_ptr("enable", &sysvar_memcached_qc_enable));
   return 0;
 }
-
-static drizzle_sys_var* vars[]= {
-  DRIZZLE_SYSVAR(enable),
-  DRIZZLE_SYSVAR(servers),
-  DRIZZLE_SYSVAR(expiry),
-  NULL
-};
 
 QueryCacheStatusTool::Generator::Generator(drizzled::Field **fields) :
   plugin::TableFunction::Generator(fields)
@@ -432,20 +357,17 @@ bool QueryCacheStatusTool::Generator::populate()
 {
   if (*status_var_ptr)
   {
-    std::ostringstream oss;
     string return_value;
 
     /* VARIABLE_NAME */
     push((*status_var_ptr)->name);
     if (strcmp((**status_var_ptr).name, "enable") == 0)
-      return_value= SessionVAR(&(getSession()), enable) ? "ON" : "OFF";
+      return_value= sysvar_memcached_qc_enable ? "ON" : "OFF";
     if (strcmp((**status_var_ptr).name, "servers") == 0) 
       return_value= MemcachedQueryCache::getServers();
     if (strcmp((**status_var_ptr).name, "expiry") == 0)
-    {
-      oss << expiry_time;
-      return_value= oss.str();
-    }
+      return_value= boost::lexical_cast<std::string>(expiry_time);
+
     /* VARIABLE_VALUE */
     if (return_value.length())
       push(return_value);
@@ -465,10 +387,10 @@ static void init_options(drizzled::module::option_context &context)
           po::value<string>()->default_value("127.0.0.1:11211"),
           N_("List of memcached servers."));
   context("expiry",
-          po::value<ulong>(&expiry_time)->default_value(1000),
+          po::value<uint64_constraint>(&expiry_time)->default_value(1000),
           N_("Expiry time of memcached entries"));
   context("enable",
-          po::value<bool>()->default_value(false)->zero_tokens(),
+          po::value<bool>(&sysvar_memcached_qc_enable)->default_value(false)->zero_tokens(),
           N_("Enable Memcached Query Cache"));
 }
 
@@ -481,7 +403,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Caches Select resultsets in Memcached",
   PLUGIN_LICENSE_BSD,
   init,   /* Plugin Init      */
-  vars, /* system variables */
+  NULL, /* system variables */
   init_options    /* config options   */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

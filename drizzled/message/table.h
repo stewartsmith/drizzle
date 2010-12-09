@@ -1,11 +1,12 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2010 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; version 2 of the License.
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,15 +18,25 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/*
-  This is a place holder for all proto includes.
-*/
 
-#ifndef DRIZZLED_MESSAGE_ALL_H
-#define DRIZZLED_MESSAGE_ALL_H
+#ifndef DRIZZLED_MESSAGE_TABLE_H
+#define DRIZZLED_MESSAGE_TABLE_H
 
-#include <drizzled/message/schema.pb.h>
+#include <boost/shared_ptr.hpp>
 #include <drizzled/message/table.pb.h>
-#include <drizzled/message/replication_event.pb.h>
 
-#endif /* DRIZZLED_MESSAGE_ALL_H */
+namespace drizzled {
+namespace message {
+namespace table {
+
+typedef boost::shared_ptr <message::Table> shared_ptr;
+
+class Foo {
+  shared_ptr foo;
+};
+
+} // namespace table
+} // namespace message
+} // namespace drizzled
+
+#endif /* DRIZZLED_MESSAGE_TABLE_H */

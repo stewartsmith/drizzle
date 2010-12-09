@@ -41,13 +41,14 @@ using namespace std;
 #define ESCAPE_CHAR      '\\'
 #define SEPARATOR_CHAR   ','
 
+namespace drizzle_plugin
+{
+
 static bool sysvar_logging_query_enable= false;
-static char* sysvar_logging_query_filename= NULL;
-static char* sysvar_logging_query_pcre= NULL;
 /* TODO fix these to not be unsigned long once we have sensible sys_var system */
-static unsigned long sysvar_logging_query_threshold_slow= 0;
-static unsigned long sysvar_logging_query_threshold_big_resultset= 0;
-static unsigned long sysvar_logging_query_threshold_big_examined= 0;
+static uint32_constraint sysvar_logging_query_threshold_slow;
+static uint32_constraint sysvar_logging_query_threshold_big_resultset;
+static uint32_constraint sysvar_logging_query_threshold_big_examined;
 
 /* quote a string to be safe to include in a CSV line
    that means backslash quoting all commas, doublequotes, backslashes,
@@ -142,6 +143,8 @@ static void quotify(const string &src, string &dst)
 
 class Logging_query: public drizzled::plugin::Logging
 {
+  const std::string _filename;
+  const std::string _query_pcre;
   int fd;
   pcre *re;
   pcre_extra *pe;
@@ -151,18 +154,21 @@ class Logging_query: public drizzled::plugin::Logging
 
 public:
 
-  Logging_query()
-    : drizzled::plugin::Logging("Logging_query"),
-      fd(-1), re(NULL), pe(NULL),
-      formatter("%1%,%2%,%3%,\"%4%\",\"%5%\",\"%6%\",%7%,%8%,"
-                "%9%,%10%,%11%,%12%,%13%,%14%,\"%15%\"\n")
+  Logging_query(const std::string &filename,
+                const std::string &query_pcre) :
+    drizzled::plugin::Logging("Logging_query"),
+    _filename(filename),
+    _query_pcre(query_pcre),
+    fd(-1), re(NULL), pe(NULL),
+    formatter("%1%,%2%,%3%,\"%4%\",\"%5%\",\"%6%\",%7%,%8%,"
+              "%9%,%10%,%11%,%12%,%13%,%14%,\"%15%\"\n")
   {
 
     /* if there is no destination filename, dont bother doing anything */
-    if (sysvar_logging_query_filename == NULL)
+    if (_filename.empty())
       return;
 
-    fd= open(sysvar_logging_query_filename,
+    fd= open(_filename.c_str(),
              O_WRONLY | O_APPEND | O_CREAT,
              S_IRUSR|S_IWUSR);
     if (fd < 0)
@@ -170,16 +176,16 @@ public:
       char errmsg[STRERROR_MAX];
       strerror_r(errno, errmsg, sizeof(errmsg));
       errmsg_printf(ERRMSG_LVL_ERROR, _("fail open() fn=%s er=%s\n"),
-                    sysvar_logging_query_filename,
+                    _filename.c_str(),
                     errmsg);
       return;
     }
 
-    if (sysvar_logging_query_pcre != NULL)
+    if (not _query_pcre.empty())
     {
       const char *this_pcre_error;
       int this_pcre_erroffset;
-      re= pcre_compile(sysvar_logging_query_pcre, 0, &this_pcre_error,
+      re= pcre_compile(_query_pcre.c_str(), 0, &this_pcre_error,
                        &this_pcre_erroffset, NULL);
       pe= pcre_study(re, 0, &this_pcre_error);
       /* TODO emit error messages if there is a problem */
@@ -223,9 +229,9 @@ public:
     // return if not enabled or query was too fast or resultset was too small
     if (sysvar_logging_query_enable == false)
       return false;
-    if (session->sent_row_count < sysvar_logging_query_threshold_big_resultset)
+    if (session->sent_row_count < sysvar_logging_query_threshold_big_resultset.get())
       return false;
-    if (session->examined_row_count < sysvar_logging_query_threshold_big_examined)
+    if (session->examined_row_count < sysvar_logging_query_threshold_big_examined.get())
       return false;
 
     /* TODO, the session object should have a "utime command completed"
@@ -236,7 +242,7 @@ public:
     boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
     uint64_t t_mark= (mytime-epoch).total_microseconds();
 
-    if ((t_mark - session->start_utime) < (sysvar_logging_query_threshold_slow))
+    if ((t_mark - session->start_utime) < (sysvar_logging_query_threshold_slow.get()))
       return false;
 
     Session::QueryString query_string(session->getQueryString());
@@ -258,7 +264,8 @@ public:
     quotify(*query_string, qs);
     
     // to avoid trying to printf %s something that is potentially NULL
-    const char *dbs= session->db.empty() ? "" : session->db.c_str();
+    util::string::const_shared_ptr schema(session->schema());
+    const char *dbs= (schema and not schema->empty()) ? schema->c_str() : "";
 
     formatter % t_mark
               % session->thread_id
@@ -286,40 +293,22 @@ public:
   }
 };
 
-static Logging_query *handler= NULL;
-
 static int logging_query_plugin_init(drizzled::module::Context &context)
 {
 
   const module::option_map &vm= context.getOptions();
-  if (vm.count("threshold-slow"))
-  {
-    if (sysvar_logging_query_threshold_slow > UINT32_MAX)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for threshold-slow"));
-      return 1;
-    }
-  }
 
-  if (vm.count("threshold-big-resultset"))
+  if (vm.count("filename") > 0)
   {
-    if (sysvar_logging_query_threshold_big_resultset > UINT32_MAX)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for threshold-big-resultset"));
-      return 1;
-    }
+    context.add(new Logging_query(vm["filename"].as<string>(),
+                                  vm["pcre"].as<string>()));
+    context.registerVariable(new sys_var_bool_ptr("enable", &sysvar_logging_query_enable));
+    context.registerVariable(new sys_var_const_string_val("filename", vm["filename"].as<string>()));
+    context.registerVariable(new sys_var_const_string_val("pcre", vm["pcre"].as<string>()));
+    context.registerVariable(new sys_var_constrained_value<uint32_t>("threshold_slow", sysvar_logging_query_threshold_slow));
+    context.registerVariable(new sys_var_constrained_value<uint32_t>("threshold_big_resultset", sysvar_logging_query_threshold_big_resultset));
+    context.registerVariable(new sys_var_constrained_value<uint32_t>("threshold_big_examined", sysvar_logging_query_threshold_big_examined));
   }
-
-  if (vm.count("threshold-big-examined"))
-  {
-    if (sysvar_logging_query_threshold_big_examined > UINT32_MAX)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for threshold-big-examined"));
-      return 1;
-    }
-  }
-  handler= new Logging_query();
-  context.add(handler);
 
   return 0;
 }
@@ -329,89 +318,24 @@ static void init_options(drizzled::module::option_context &context)
   context("enable",
           po::value<bool>(&sysvar_logging_query_enable)->default_value(false)->zero_tokens(),
           N_("Enable logging to CSV file"));
+  context("filename",
+          po::value<string>(),
+          N_("File to log to"));
+  context("pcre",
+          po::value<string>()->default_value(""),
+          N_("PCRE to match the query against"));
   context("threshold-slow",
-          po::value<unsigned long>(&sysvar_logging_query_threshold_slow)->default_value(0),
+          po::value<uint32_constraint>(&sysvar_logging_query_threshold_slow)->default_value(0),
           N_("Threshold for logging slow queries, in microseconds"));
   context("threshold-big-resultset",
-          po::value<unsigned long>(&sysvar_logging_query_threshold_big_resultset)->default_value(0),
+          po::value<uint32_constraint>(&sysvar_logging_query_threshold_big_resultset)->default_value(0),
           N_("Threshold for logging big queries, for rows returned"));
   context("threshold-big-examined",
-          po::value<unsigned long>(&sysvar_logging_query_threshold_big_examined)->default_value(0),
+          po::value<uint32_constraint>(&sysvar_logging_query_threshold_big_examined)->default_value(0),
           N_("Threshold for logging big queries, for rows examined"));
 }
 
-static DRIZZLE_SYSVAR_BOOL(
-  enable,
-  sysvar_logging_query_enable,
-  PLUGIN_VAR_NOCMDARG,
-  N_("Enable logging to CSV file"),
-  NULL, /* check func */
-  NULL, /* update func */
-  false /* default */);
-
-static DRIZZLE_SYSVAR_STR(
-  filename,
-  sysvar_logging_query_filename,
-  PLUGIN_VAR_READONLY,
-  N_("File to log to"),
-  NULL, /* check func */
-  NULL, /* update func*/
-  NULL /* default */);
-
-static DRIZZLE_SYSVAR_STR(
-  pcre,
-  sysvar_logging_query_pcre,
-  PLUGIN_VAR_READONLY,
-  N_("PCRE to match the query against"),
-  NULL, /* check func */
-  NULL, /* update func*/
-  NULL /* default */);
-
-static DRIZZLE_SYSVAR_ULONG(
-  threshold_slow,
-  sysvar_logging_query_threshold_slow,
-  PLUGIN_VAR_OPCMDARG,
-  N_("Threshold for logging slow queries, in microseconds"),
-  NULL, /* check func */
-  NULL, /* update func */
-  0, /* default */
-  0, /* min */
-  UINT32_MAX, /* max */
-  0 /* blksiz */);
-
-static DRIZZLE_SYSVAR_ULONG(
-  threshold_big_resultset,
-  sysvar_logging_query_threshold_big_resultset,
-  PLUGIN_VAR_OPCMDARG,
-  N_("Threshold for logging big queries, for rows returned"),
-  NULL, /* check func */
-  NULL, /* update func */
-  0, /* default */
-  0, /* min */
-  UINT32_MAX, /* max */
-  0 /* blksiz */);
-
-static DRIZZLE_SYSVAR_ULONG(
-  threshold_big_examined,
-  sysvar_logging_query_threshold_big_examined,
-  PLUGIN_VAR_OPCMDARG,
-  N_("Threshold for logging big queries, for rows examined"),
-  NULL, /* check func */
-  NULL, /* update func */
-  0, /* default */
-  0, /* min */
-  UINT32_MAX, /* max */
-  0 /* blksiz */);
-
-static drizzle_sys_var* logging_query_system_variables[]= {
-  DRIZZLE_SYSVAR(enable),
-  DRIZZLE_SYSVAR(filename),
-  DRIZZLE_SYSVAR(pcre),
-  DRIZZLE_SYSVAR(threshold_slow),
-  DRIZZLE_SYSVAR(threshold_big_resultset),
-  DRIZZLE_SYSVAR(threshold_big_examined),
-  NULL
-};
+} /* namespace drizzle_plugin */
 
 DRIZZLE_DECLARE_PLUGIN
 {
@@ -421,8 +345,8 @@ DRIZZLE_DECLARE_PLUGIN
   "Mark Atwood <mark@fallenpegasus.com>",
   N_("Log queries to a CSV file"),
   PLUGIN_LICENSE_GPL,
-  logging_query_plugin_init,
-  logging_query_system_variables,
-  init_options
+  drizzle_plugin::logging_query_plugin_init,
+  NULL,
+  drizzle_plugin::init_options
 }
 DRIZZLE_DECLARE_PLUGIN_END;

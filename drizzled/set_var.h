@@ -20,11 +20,6 @@
 #ifndef DRIZZLED_SET_VAR_H
 #define DRIZZLED_SET_VAR_H
 
-/*#include "drizzled/function/func.h"
-#include "drizzled/function/set_user_var.h"
-#include "drizzled/item/string.h"
-#include "drizzled/item/field.h"
-*/
 #include "drizzled/memory/sql_alloc.h"
 #include "drizzled/sql_list.h"
 #include "drizzled/lex_string.h"

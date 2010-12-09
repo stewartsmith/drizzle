@@ -166,13 +166,29 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpField &obj)
   if (not obj.defaultValue.empty())
   {
     if (obj.defaultValue.compare("CURRENT_TIMESTAMP") != 0)
-     os << " DEFAULT '" << obj.defaultValue << "'";
+    {
+      if (obj.defaultValue.compare(0, 2, "b'") == 0)
+      {
+        os << " DEFAULT " << obj.defaultValue;
+      }
+      else
+      {
+        os << " DEFAULT '" << obj.defaultValue << "'";
+      }
+    }
     else
+    {
      os << " DEFAULT CURRENT_TIMESTAMP";
+    }
   }
   else if ((obj.defaultIsNull))
   {
     os << " DEFAULT NULL";
+  }
+
+  if (not obj.comment.empty())
+  {
+    os << " COMMENT '" << DrizzleDumpData::escape(obj.comment.c_str(), obj.comment.length()) << "'";
   }
 
   return os;
@@ -319,7 +335,22 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
       if (not row[i])
       {
         os << "NULL";
+        if (i != obj.table->fields.size() - 1)
+          os << ",";
+        continue;
       }
+
+      if ((obj.table->fields[i]->rangeCheck) and
+        (obj.table->fields[i]->type.compare("BIGINT") == 0) and
+        (boost::lexical_cast<uint64_t>(row[i]) > INT64_MAX))
+      {
+        std::cerr << "Error: Data for column " << obj.table->fields[i]->fieldName << " is greater than max BIGINT, cannot migrate automatically" << std::endl;
+        if (not ignore_errors)
+          maybe_exit(EX_DRIZZLEERR);
+        else
+          continue;
+      }
+
       /* time/date conversion for MySQL connections */
       else if (obj.table->fields[i]->convertDateTime)
       {
@@ -327,7 +358,8 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
       }
       else
       {
-        if (obj.table->fields[i]->type.compare("INT") != 0)
+        if ((obj.table->fields[i]->type.compare("INT") != 0) and
+          (obj.table->fields[i]->type.compare("BIGINT") != 0))
         {
           /* Hex blob processing or escape text */
           if (((obj.table->fields[i]->type.compare("BLOB") == 0) or
@@ -526,7 +558,7 @@ DrizzleDumpConnection::DrizzleDumpConnection(std::string &host, uint16_t port,
   if (ret != DRIZZLE_RETURN_OK)
   {
     errorHandler(NULL, ret, "when trying to connect");
-    throw 1;
+    throw std::exception();
   }
 
   boost::match_flag_type flags = boost::match_default; 

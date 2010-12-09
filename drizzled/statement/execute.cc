@@ -124,8 +124,9 @@ bool statement::Execute::execute_shell()
       Session::shared_ptr new_session(new Session(client));
 
       // We set the current schema.  @todo do the same with catalog
-      if (not getSession()->getSchema().empty())
-        new_session->set_db(getSession()->getSchema());
+      util::string::const_shared_ptr schema(getSession()->schema());
+      if (not schema->empty())
+        new_session->set_db(*schema);
 
       new_session->setConcurrentExecute(false);
 

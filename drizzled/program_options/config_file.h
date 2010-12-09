@@ -65,7 +65,7 @@ std::string parse_suffix(const std::string& arg_val)
       return boost::lexical_cast<std::string>(new_size);
     }
   }
-  catch (...)
+  catch (std::exception&)
   { }
 
   return arg_val;

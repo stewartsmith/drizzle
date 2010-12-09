@@ -182,10 +182,11 @@ public:
   }
 };
 
+class Session; 
 
 #define thr_lock_owner_init(owner, info_arg) (owner)->info= (info_arg)
 void thr_lock_init(THR_LOCK *lock);
-enum enum_thr_lock_result thr_multi_lock(THR_LOCK_DATA **data,
+enum enum_thr_lock_result thr_multi_lock(Session &session, THR_LOCK_DATA **data,
                                          uint32_t count, THR_LOCK_OWNER *owner);
 void thr_multi_unlock(THR_LOCK_DATA **data,uint32_t count);
 

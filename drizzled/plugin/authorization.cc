@@ -29,18 +29,17 @@
 #include "drizzled/session.h"
 #include "drizzled/gettext.h"
 
-using namespace std;
-
 namespace drizzled
 {
 
-vector<plugin::Authorization *> authorization_plugins;
+std::vector<plugin::Authorization *> authorization_plugins;
 
 
 bool plugin::Authorization::addPlugin(plugin::Authorization *auth)
 {
   if (auth != NULL)
     authorization_plugins.push_back(auth);
+
   return false;
 }
 
@@ -48,9 +47,9 @@ void plugin::Authorization::removePlugin(plugin::Authorization *auth)
 {
   if (auth != NULL)
   {
-    authorization_plugins.erase(find(authorization_plugins.begin(),
-                                     authorization_plugins.end(),
-                                     auth));
+    authorization_plugins.erase(std::find(authorization_plugins.begin(),
+                                          authorization_plugins.end(),
+                                          auth));
   }
 }
 
@@ -58,14 +57,14 @@ namespace
 {
 
 class RestrictDbFunctor :
-  public unary_function<plugin::Authorization *, bool>
+  public std::unary_function<plugin::Authorization *, bool>
 {
   const SecurityContext &user_ctx;
   SchemaIdentifier &schema;
 public:
   RestrictDbFunctor(const SecurityContext &user_ctx_arg,
                     SchemaIdentifier &schema_arg) :
-    unary_function<plugin::Authorization *, bool>(),
+    std::unary_function<plugin::Authorization *, bool>(),
     user_ctx(user_ctx_arg),
     schema(schema_arg)
   { }
@@ -77,14 +76,14 @@ public:
 };
 
 class RestrictTableFunctor :
-  public unary_function<plugin::Authorization *, bool>
+  public std::unary_function<plugin::Authorization *, bool>
 {
   const SecurityContext &user_ctx;
   TableIdentifier &table;
 public:
   RestrictTableFunctor(const SecurityContext &user_ctx_arg,
                        TableIdentifier &table_arg) :
-    unary_function<plugin::Authorization *, bool>(),
+    std::unary_function<plugin::Authorization *, bool>(),
     user_ctx(user_ctx_arg),
     table(table_arg)
   { }
@@ -96,14 +95,14 @@ public:
 };
 
 class RestrictProcessFunctor :
-  public unary_function<plugin::Authorization *, bool>
+  public std::unary_function<plugin::Authorization *, bool>
 {
   const SecurityContext &user_ctx;
   const SecurityContext &session_ctx;
 public:
   RestrictProcessFunctor(const SecurityContext &user_ctx_arg,
                          const SecurityContext &session_ctx_arg) :
-    unary_function<plugin::Authorization *, bool>(),
+    std::unary_function<plugin::Authorization *, bool>(),
     user_ctx(user_ctx_arg),
     session_ctx(session_ctx_arg)
   { }
@@ -115,12 +114,12 @@ public:
 };
 
 class PruneSchemaFunctor :
-  public unary_function<SchemaIdentifier&, bool>
+  public std::unary_function<SchemaIdentifier&, bool>
 {
   const SecurityContext &user_ctx;
 public:
   PruneSchemaFunctor(const SecurityContext &user_ctx_arg) :
-    unary_function<SchemaIdentifier&, bool>(),
+    std::unary_function<SchemaIdentifier&, bool>(),
     user_ctx(user_ctx_arg)
   { }
 
@@ -141,10 +140,10 @@ bool plugin::Authorization::isAuthorized(const SecurityContext &user_ctx,
     return true;
 
   /* Use find_if instead of foreach so that we can collect return codes */
-  vector<plugin::Authorization *>::const_iterator iter=
-    find_if(authorization_plugins.begin(),
-            authorization_plugins.end(),
-            RestrictDbFunctor(user_ctx, schema_identifier));
+  std::vector<plugin::Authorization *>::const_iterator iter=
+    std::find_if(authorization_plugins.begin(),
+                 authorization_plugins.end(),
+                 RestrictDbFunctor(user_ctx, schema_identifier));
 
 
   /*
@@ -178,8 +177,8 @@ bool plugin::Authorization::isAuthorized(const SecurityContext &user_ctx,
     return true;
 
   /* Use find_if instead of foreach so that we can collect return codes */
-  vector<plugin::Authorization *>::const_iterator iter=
-    find_if(authorization_plugins.begin(),
+  std::vector<plugin::Authorization *>::const_iterator iter=
+    std::find_if(authorization_plugins.begin(),
             authorization_plugins.end(),
             RestrictTableFunctor(user_ctx, table));
 
@@ -216,10 +215,10 @@ bool plugin::Authorization::isAuthorized(const SecurityContext &user_ctx,
     return true;
 
   /* Use find_if instead of foreach so that we can collect return codes */
-  vector<plugin::Authorization *>::const_iterator iter=
-    find_if(authorization_plugins.begin(),
-            authorization_plugins.end(),
-            RestrictProcessFunctor(user_ctx, session_ctx));
+  std::vector<plugin::Authorization *>::const_iterator iter=
+    std::find_if(authorization_plugins.begin(),
+                 authorization_plugins.end(),
+                 RestrictProcessFunctor(user_ctx, session_ctx));
 
   /*
    * If iter is == end() here, that means that all of the plugins returned
@@ -239,15 +238,15 @@ bool plugin::Authorization::isAuthorized(const SecurityContext &user_ctx,
 }
 
 void plugin::Authorization::pruneSchemaNames(const SecurityContext &user_ctx,
-                                             SchemaIdentifiers &set_of_schemas)
+                                             SchemaIdentifier::vector &set_of_schemas)
 {
   /* If we never loaded any authorization plugins, just return true */
   if (authorization_plugins.empty())
     return;
 
-  set_of_schemas.erase(remove_if(set_of_schemas.begin(),
-                                 set_of_schemas.end(),
-                                 PruneSchemaFunctor(user_ctx)),
+  set_of_schemas.erase(std::remove_if(set_of_schemas.begin(),
+                                      set_of_schemas.end(),
+                                      PruneSchemaFunctor(user_ctx)),
                        set_of_schemas.end());
 }
 

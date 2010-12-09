@@ -167,7 +167,7 @@ bool DrizzleDumpTableMySQL::populateFields()
   if (verbose)
     std::cerr << _("-- Retrieving fields for ") << tableName << "..." << std::endl;
 
-  query="SELECT COLUMN_NAME, COLUMN_TYPE, COLUMN_DEFAULT, IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE, COLLATION_NAME, EXTRA FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='";
+  query="SELECT COLUMN_NAME, COLUMN_TYPE, COLUMN_DEFAULT, IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE, COLLATION_NAME, EXTRA, COLUMN_COMMENT FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='";
   query.append(database->databaseName);
   query.append("' AND TABLE_NAME='");
   query.append(tableName);
@@ -190,7 +190,7 @@ bool DrizzleDumpTableMySQL::populateFields()
     if (field->type.compare("ENUM") == 0)
       field->isNull= true;
 
-    if (row[2])
+    if ((row[2]) and (field->type.compare("TEXT") != 0))
     {
       field->defaultValue= row[2];
       if (field->convertDateTime)
@@ -199,22 +199,30 @@ bool DrizzleDumpTableMySQL::populateFields()
       }
     }
     else
-     field->defaultValue= "";
+    {
+      field->defaultValue= "";
+    }
 
     field->isAutoIncrement= (strcmp(row[8], "auto_increment") == 0) ? true : false;
     field->defaultIsNull= field->isNull;
-    field->length= (row[4]) ? boost::lexical_cast<uint32_t>(row[4]) : 0;
-    if ((row[5] != NULL) and (row[6] != NULL))
-    {
-      field->decimalPrecision= boost::lexical_cast<uint32_t>(row[5]);
-      field->decimalScale= boost::lexical_cast<uint32_t>(row[6]);
-    }
+
+    /* Seriously MySQL, why is BIT length in NUMERIC_PRECISION? */
+    if ((strncmp(row[1], "bit", 3) == 0) and (row[5] != NULL))
+      field->length= ((boost::lexical_cast<uint32_t>(row[5]) - 1) / 8) + 1;
     else
+      field->length= (row[4]) ? boost::lexical_cast<uint32_t>(row[4]) : 0;
+
+    /* Also, CHAR(0) is valid?? */
+    if (((field->type.compare("VARBINARY") == 0) 
+      or (field->type.compare("VARCHAR") == 0))
+      and (field->length == 0))
     {
-      field->decimalPrecision= 0;
-      field->decimalScale= 0;
+      field->length= 1;
     }
 
+    field->decimalPrecision= (row[5]) ? boost::lexical_cast<uint32_t>(row[5]) : 0;
+    field->decimalScale= (row[6]) ? boost::lexical_cast<uint32_t>(row[6]) : 0;
+    field->comment= (row[9]) ? row[9] : "";
     fields.push_back(field);
   }
 
@@ -306,96 +314,55 @@ bool DrizzleDumpTableMySQL::populateFkeys()
   if (verbose)
     std::cerr << _("-- Retrieving foreign keys for ") << tableName << "..." << std::endl;
 
-  query= "SHOW TABLES FROM INFORMATION_SCHEMA LIKE 'REFERENTIAL_CONSTRAINTS'";
-
+  query= "SHOW CREATE TABLE `";
+  query.append(database->databaseName);
+  query.append("`.`");
+  query.append(tableName);
+  query.append("`");
   result= dcon->query(query);
 
   if (result == NULL)
     return false;
 
-  uint64_t search_count = drizzle_result_row_count(result);
-
-  dcon->freeResult(result);
-
-  /* MySQL 5.0 will be 0 and MySQL 5.1 will be 1 */
-  if (search_count > 0)
+  if ((row= drizzle_row_next(result)))
   {
-    query= "select rc.constraint_name, rc.referenced_table_name, group_concat(distinct concat('`',kc.column_name,'`')), rc.update_rule, rc.delete_rule, rc.match_option, group_concat(distinct concat('`',kt.column_name,'`')) from information_schema.referential_constraints rc join information_schema.key_column_usage kt on (rc.constraint_schema = kt.constraint_schema and rc.constraint_name = kt.constraint_name) join information_schema.key_column_usage kc on (rc.constraint_schema = kc.constraint_schema and rc.referenced_table_name = kc.table_name and rc.unique_constraint_name = kc.constraint_name) where rc.constraint_schema='";
-    query.append(database->databaseName);
-    query.append("' and rc.table_name='");
-    query.append(tableName);
-    query.append("' group by rc.constraint_name");
+    boost::match_flag_type flags = boost::match_default;
+    boost::regex constraint_regex("CONSTRAINT `(.*?)` FOREIGN KEY \\((.*?)\\) REFERENCES `(.*?)` \\((.*?)\\)( ON (UPDATE|DELETE) (CASCADE|RESTRICT|SET NULL))?( ON (UPDATE|DELETE) (CASCADE|RESTRICT|SET NULL))?");
 
-    result= dcon->query(query);
+    boost::match_results<std::string::const_iterator> constraint_results;
 
-    if (result == NULL)
-      return false;
-
-    while ((row= drizzle_row_next(result)))
+    std::string search_body(row[1]);
+    std::string::const_iterator start, end;
+    start= search_body.begin();
+    end= search_body.end();
+    while (regex_search(start, end, constraint_results, constraint_regex, flags))
     {
-      fkey= new DrizzleDumpForeignKey(row[0], dcon);
-      fkey->parentColumns= row[6];
-      fkey->childTable= row[1];
-      fkey->childColumns= row[2];
-      fkey->updateRule= (strcmp(row[3], "RESTRICT") != 0) ? row[3] : "";
-      fkey->deleteRule= (strcmp(row[4], "RESTRICT") != 0) ? row[4] : "";
-      fkey->matchOption= (strcmp(row[5], "NONE") != 0) ? row[5] : "";
+      fkey= new DrizzleDumpForeignKey(constraint_results[1], dcon);
+      fkey->parentColumns= constraint_results[2];
+      fkey->childTable= constraint_results[3];
+      fkey->childColumns= constraint_results[4];
+        
+      if (constraint_results[5].compare("") != 0)
+      {
+        if (constraint_results[6].compare("UPDATE") == 0)
+          fkey->updateRule= constraint_results[7];
+        else if (constraint_results[6].compare("DELETE") == 0)
+          fkey->deleteRule= constraint_results[7];
+      }
+      if (constraint_results[8].compare("") != 0)
+      {
+        if (constraint_results[9].compare("UPDATE") == 0)
+          fkey->updateRule= constraint_results[10];
+        else if (constraint_results[9].compare("DELETE") == 0)
+          fkey->deleteRule= constraint_results[10];
+      }
+      fkey->matchOption= "";
 
       fkeys.push_back(fkey);
-    }
-  }
-  else
-  {
-    query= "SHOW CREATE TABLE `";
-    query.append(database->databaseName);
-    query.append("`.`");
-    query.append(tableName);
-    query.append("`");
-    result= dcon->query(query);
 
-    if (result == NULL)
-      return false;
-
-    if ((row= drizzle_row_next(result)))
-    {
-      boost::match_flag_type flags = boost::match_default;
-      boost::regex constraint_regex("CONSTRAINT `(.*)` FOREIGN KEY \\((.*)\\) REFERENCES `(.*)` \\((.*)\\)( ON (UPDATE|DELETE) (CASCADE|RESTRICT|SET NULL))?( ON (UPDATE|DELETE) (CASCADE|RESTRICT|SET NULL))?");
-
-      boost::match_results<std::string::const_iterator> constraint_results;
-
-      std::string search_body(row[1]);
-      std::string::const_iterator start, end;
-      start= search_body.begin();
-      end= search_body.end();
-      while (regex_search(start, end, constraint_results, constraint_regex, flags))
-      {
-        fkey= new DrizzleDumpForeignKey(constraint_results[1], dcon);
-        fkey->parentColumns= constraint_results[2];
-        fkey->childTable= constraint_results[3];
-        fkey->childColumns= constraint_results[4];
-        
-        if (constraint_results[5].compare("") != 0)
-        {
-          if (constraint_results[6].compare("UPDATE") == 0)
-            fkey->updateRule= constraint_results[7];
-          else if (constraint_results[6].compare("DELETE") == 0)
-            fkey->deleteRule= constraint_results[7];
-        }
-        if (constraint_results[8].compare("") != 0)
-        {
-          if (constraint_results[9].compare("UPDATE") == 0)
-            fkey->updateRule= constraint_results[10];
-          else if (constraint_results[9].compare("DELETE") == 0)
-            fkey->deleteRule= constraint_results[10];
-        }
-        fkey->matchOption= "";
-
-        fkeys.push_back(fkey);
-
-        start= constraint_results[0].second;
-        flags |= boost::match_prev_avail; 
-        flags |= boost::match_not_bob;
-      }
+      start= constraint_results[0].second;
+      flags |= boost::match_prev_avail; 
+      flags |= boost::match_not_bob;
     }
   }
   dcon->freeResult(result);
@@ -408,7 +375,8 @@ void DrizzleDumpFieldMySQL::setType(const char* raw_type, const char* raw_collat
   std::string extra;
   size_t pos;
   
-  if ((pos= old_type.find("(")) != std::string::npos)
+  if (((pos= old_type.find("(")) != std::string::npos) or
+    ((pos= old_type.find(" ")) != std::string::npos))
   {
     extra= old_type.substr(pos);
     old_type.erase(pos, std::string::npos);
@@ -418,6 +386,12 @@ void DrizzleDumpFieldMySQL::setType(const char* raw_type, const char* raw_collat
   if ((old_type.find("CHAR") != std::string::npos) or 
     (old_type.find("TEXT") != std::string::npos))
     setCollate(raw_collation);
+
+  if ((old_type.compare("BIGINT") == 0) and
+    ((extra.find("unsigned") != std::string::npos)))
+  {
+    rangeCheck= true;
+  }
 
   if ((old_type.compare("INT") == 0) and 
     ((extra.find("unsigned") != std::string::npos)))
@@ -460,6 +434,7 @@ void DrizzleDumpFieldMySQL::setType(const char* raw_type, const char* raw_collat
   if (old_type.compare("BINARY") == 0)
   {
     type= "VARBINARY";
+    
     return;
   }
 
@@ -492,13 +467,19 @@ void DrizzleDumpFieldMySQL::setType(const char* raw_type, const char* raw_collat
     return;
   }
 
+  if (old_type.compare("BIT") == 0)
+  {
+    type= "VARBINARY";
+    return;
+  }
+
   type= old_type;
   return;
 }
 
 void DrizzleDumpTableMySQL::setEngine(const char* newEngine)
 {
-  if (strcmp(newEngine, "MyISAM") == 0)
+  if ((strcmp(newEngine, "MyISAM") == 0) || (strcmp(newEngine, "MEMORY") == 0))
     engineName= "InnoDB";
   else
     engineName= newEngine; 
@@ -570,7 +551,7 @@ DrizzleDumpDataMySQL::DrizzleDumpDataMySQL(DrizzleDumpTable *dataTable,
 
   result= dcon->query(query);
   if (result == NULL)
-    throw 1;
+    throw std::exception();
 }
 
 DrizzleDumpDataMySQL::~DrizzleDumpDataMySQL()

@@ -38,12 +38,10 @@
 #define MAX_MSG_LEN 8192
 
 using namespace drizzled;
-using namespace std;
-
 
 class Error_message_notify : public plugin::ErrorMessage
 {
-  vector<string> errmsg_tags;
+  std::vector<std::string> errmsg_tags;
 public:
   Error_message_notify()
    : plugin::ErrorMessage("Error_message_notify"),
@@ -79,14 +77,14 @@ public:
       if (!n.show(error))
 #endif
       {
-        fprintf(stderr, _("Failed to send error message to libnotify\n"));
+        std::cerr << _("Failed to send error message to libnotify\n");
         return true;
       }
 #ifdef GLIBMM_EXCEPTIONS_ENABLED
      }
      catch (Glib::Error& err)
      {
-        cerr << err.what() << endl;
+       std::cerr << err.what() << std::endl;
      }
 #endif
 

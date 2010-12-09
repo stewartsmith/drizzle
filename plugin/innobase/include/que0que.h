@@ -381,6 +381,9 @@ struct que_thr_struct{
 					thus far */
 	ulint		lock_state;	/*!< lock state of thread (table or
 					row) */
+	ulint		fk_cascade_depth; /*!< maximum cascading call depth
+					supported for foreign key constraint
+					related delete/updates */
 };
 
 #define QUE_THR_MAGIC_N		8476583
@@ -421,9 +424,6 @@ struct que_fork_struct{
 	ibool		cur_on_row;	/*!< TRUE if cursor is on a row, i.e.,
 					it is not before the first row or
 					after the last row */
-	dulint		n_inserts;	/*!< number of rows inserted */
-	dulint		n_updates;	/*!< number of rows updated */
-	dulint		n_deletes;	/*!< number of rows deleted */
 	sel_node_t*	last_sel_node;	/*!< last executed select node, or NULL
 					if none */
 	UT_LIST_NODE_T(que_fork_t)

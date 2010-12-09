@@ -353,7 +353,7 @@ static bool mysql_prepare_alter_table(Session *session,
         if (def->sql_type == DRIZZLE_TYPE_BLOB)
         {
           my_error(ER_BLOB_CANT_HAVE_DEFAULT, MYF(0), def->change);
-                goto err;
+          return true;
         }
         if ((def->def= alter->def))
         {
@@ -361,7 +361,9 @@ static bool mysql_prepare_alter_table(Session *session,
           def->flags&= ~NO_DEFAULT_VALUE_FLAG;
         }
         else
+        {
           def->flags|= NO_DEFAULT_VALUE_FLAG;
+        }
         alter_it.remove();
       }
     }
@@ -372,27 +374,23 @@ static bool mysql_prepare_alter_table(Session *session,
     if (def->change && ! def->field)
     {
       my_error(ER_BAD_FIELD_ERROR, MYF(0), def->change, table->getMutableShare()->getTableName());
-      goto err;
+      return true;
     }
     /*
-      Check that the DATE/DATETIME not null field we are going to add is
-      either has a default value or the '0000-00-00' is allowed by the
-      set sql mode.
-      If the '0000-00-00' value isn't allowed then raise the error_if_not_empty
-      flag to allow ALTER Table only if the table to be altered is empty.
+      If we have been given a field which has no default value, and is not null then we need to bail.
     */
-    if ((def->sql_type == DRIZZLE_TYPE_DATE ||
-         def->sql_type == DRIZZLE_TYPE_DATETIME) &&
-        ! alter_info->datetime_field &&
-        ! (~def->flags & (NO_DEFAULT_VALUE_FLAG | NOT_NULL_FLAG)))
+    if (not (~def->flags & (NO_DEFAULT_VALUE_FLAG | NOT_NULL_FLAG)) and not def->change)
     {
-      alter_info->datetime_field= def;
       alter_info->error_if_not_empty= true;
     }
     if (! def->after)
+    {
       new_create_list.push_back(def);
+    }
     else if (def->after == first_keyword)
+    {
       new_create_list.push_front(def);
+    }
     else
     {
       CreateField *find;
@@ -405,7 +403,7 @@ static bool mysql_prepare_alter_table(Session *session,
       if (! find)
       {
         my_error(ER_BAD_FIELD_ERROR, MYF(0), def->after, table->getMutableShare()->getTableName());
-        goto err;
+        return true;
       }
       find_it.after(def); /* Put element after this */
       /*
@@ -421,7 +419,7 @@ static bool mysql_prepare_alter_table(Session *session,
       if (alter_info->build_method == HA_BUILD_ONLINE)
       {
         my_error(ER_NOT_SUPPORTED_YET, MYF(0), session->getQueryString()->c_str());
-        goto err;
+        return true;
       }
       alter_info->build_method= HA_BUILD_OFFLINE;
     }
@@ -432,14 +430,14 @@ static bool mysql_prepare_alter_table(Session *session,
              MYF(0),
              alter_info->alter_list.head()->name,
              table->getMutableShare()->getTableName());
-    goto err;
+    return true;
   }
   if (! new_create_list.elements)
   {
     my_message(ER_CANT_REMOVE_ALL_FIELDS,
                ER(ER_CANT_REMOVE_ALL_FIELDS),
                MYF(0));
-    goto err;
+    return true;
   }
 
   /*
@@ -576,7 +574,9 @@ static bool mysql_prepare_alter_table(Session *session,
       if (key->type == Key::FOREIGN_KEY)
       {
         if (((Foreign_key *)key)->validate(new_create_list))
-          goto err;
+        {
+          return true;
+        }
 
         Foreign_key *fkey= (Foreign_key*)key;
         add_foreign_key_to_table_message(&table_message,
@@ -597,7 +597,7 @@ static bool mysql_prepare_alter_table(Session *session,
         my_error(ER_WRONG_NAME_FOR_INDEX,
                  MYF(0),
                  key->name.str);
-        goto err;
+        return true;
       }
     }
   }
@@ -624,14 +624,14 @@ static bool mysql_prepare_alter_table(Session *session,
     my_error(ER_CANT_DROP_FIELD_OR_KEY,
              MYF(0),
              alter_info->drop_list.head()->name);
-    goto err;
+    return true;
   }
   if (alter_info->alter_list.elements)
   {
     my_error(ER_CANT_DROP_FIELD_OR_KEY,
              MYF(0),
              alter_info->alter_list.head()->name);
-    goto err;
+    return true;
   }
 
   if (not table_message.options().has_comment()
@@ -650,7 +650,6 @@ static bool mysql_prepare_alter_table(Session *session,
   rc= false;
   alter_info->create_list.swap(new_create_list);
   alter_info->key_list.swap(new_key_list);
-err:
 
   size_t num_engine_options= table_message.engine().options_size();
   size_t original_num_engine_options= original_proto.engine().options_size();
@@ -677,7 +676,7 @@ err:
 
   drizzled::message::update(table_message);
 
-  return rc;
+  return false;
 }
 
 /* table_list should contain just one table */
@@ -1150,29 +1149,7 @@ static bool internal_alter_table(Session *session,
     */
     if (alter_info->error_if_not_empty && session->row_count)
     {
-      const char *f_val= 0;
-      enum enum_drizzle_timestamp_type t_type= DRIZZLE_TIMESTAMP_DATE;
-
-      switch (alter_info->datetime_field->sql_type)
-      {
-      case DRIZZLE_TYPE_DATE:
-        f_val= "0000-00-00";
-        t_type= DRIZZLE_TIMESTAMP_DATE;
-        break;
-      case DRIZZLE_TYPE_DATETIME:
-        f_val= "0000-00-00 00:00:00";
-        t_type= DRIZZLE_TIMESTAMP_DATETIME;
-        break;
-      default:
-        /* Shouldn't get here. */
-        assert(0);
-      }
-      bool save_abort_on_warning= session->abort_on_warning;
-      session->abort_on_warning= true;
-      make_truncated_value_warning(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
-                                   f_val, internal::strlength(f_val), t_type,
-                                   alter_info->datetime_field->field_name);
-      session->abort_on_warning= save_abort_on_warning;
+      my_error(ER_INVALID_ALTER_TABLE_FOR_NOT_NULL, MYF(0));
     }
 
     if (original_table_identifier.isTmp())
@@ -1569,18 +1546,32 @@ copy_data_between_tables(Session *session,
         to->next_number_field->reset();
     }
 
-    for (CopyField *copy_ptr=copy ; copy_ptr != copy_end ; copy_ptr++)
+    for (CopyField *copy_ptr= copy; copy_ptr != copy_end ; copy_ptr++)
     {
+      if (not copy->to_field->hasDefault() and copy->from_null_ptr and  *copy->from_null_ptr & copy->from_bit)
+      {
+        copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                                    ER_WARN_DATA_TRUNCATED, 1);
+        copy->to_field->reset();
+        error= 1;
+        break;
+      }
+
       copy_ptr->do_copy(copy_ptr);
     }
+
+    if (error)
+    {
+      break;
+    }
+
     prev_insert_id= to->cursor->next_insert_id;
     error= to->cursor->insertRecord(to->record[0]);
     to->auto_increment_field_not_null= false;
 
     if (error)
     { 
-      if (!ignore ||
-          to->cursor->is_fatal_error(error, HA_CHECK_DUP))
+      if (!ignore || to->cursor->is_fatal_error(error, HA_CHECK_DUP))
       { 
         to->print_error(error, MYF(0));
         break;

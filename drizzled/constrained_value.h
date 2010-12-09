@@ -20,12 +20,28 @@
 #ifndef DRIZZLED_CONSTRAINED_VALUE_H
 #define DRIZZLED_CONSTRAINED_VALUE_H
 
+#include <boost/exception/info.hpp>
 #include <boost/program_options.hpp>
 #include <boost/program_options/errors.hpp>
 #include <iostream>
+#include <netinet/in.h> /* for in_port_t */
 
 namespace drizzled
 {
+
+/* We have to make this mixin exception class because boost program_option
+  exceptions don't derive from f-ing boost::exception. FAIL
+*/
+class invalid_option_value :
+  public boost::exception,
+  public boost::program_options::invalid_option_value
+{
+public:
+  invalid_option_value(const std::string &option_value) :
+    boost::exception(),
+    boost::program_options::invalid_option_value(option_value)
+  {}
+};
 
 template<class T> class constrained_value;
 template<class T>
@@ -65,7 +81,7 @@ public:
     return set_value(rhs);
   }
 
-  T getVal() const
+  T get() const
   {
     return m_val;
   }
@@ -88,7 +104,7 @@ public:
   friend
   std::ostream& operator<<(std::ostream& os, const constrained_value<T>& v)
   {
-    os << v.getVal();
+    os << v.get();
     return os;
   }
 };
@@ -144,6 +160,9 @@ inline bool greater_than_max<uint64_t, UINT64_MAX>(uint64_t)
 }
 } 
 
+typedef boost::error_info<struct tag_invalid_max,uint64_t> invalid_max_info;
+typedef boost::error_info<struct tag_invalid_min,int64_t> invalid_min_info;
+
 template<class T,
   T MAXVAL,
   T MINVAL, unsigned int ALIGN= 1>
@@ -158,14 +177,19 @@ public:
 protected:
   constrained_value<T>& set_value(const constrained_value<T>& rhs)
   {
-    return set_value(rhs.getVal());
+    return set_value(rhs.get());
   }
 
   constrained_value<T>& set_value(T rhs)
   {
-    if (greater_than_max<T,MAXVAL>(rhs) || less_than_min<T,MINVAL>(rhs))
+    if (greater_than_max<T,MAXVAL>(rhs))
     {
-      boost::throw_exception(boost::program_options::invalid_option_value(boost::lexical_cast<std::string>(rhs)));
+      boost::throw_exception(invalid_option_value(boost::lexical_cast<std::string>(rhs)) << invalid_max_info(static_cast<uint64_t>(MAXVAL)));
+    }
+      
+    if (less_than_min<T,MINVAL>(rhs))
+    {
+      boost::throw_exception(invalid_option_value(boost::lexical_cast<std::string>(rhs)) << invalid_min_info(static_cast<int64_t>(MINVAL)));
     }
     rhs-= rhs % ALIGN;
     this->setVal(rhs);
@@ -174,6 +198,12 @@ protected:
 
 
 };
+
+typedef constrained_check<uint64_t, UINT64_MAX, 0> uint64_constraint;
+typedef constrained_check<uint32_t, UINT32_MAX, 0> uint32_constraint;
+typedef constrained_check<uint64_t, UINT64_MAX, 1> uint64_nonzero_constraint;
+typedef constrained_check<uint32_t, UINT32_MAX, 1> uint32_nonzero_constraint;
+typedef drizzled::constrained_check<in_port_t, 65535, 0> port_constraint;
 
 typedef constrained_check<uint32_t,65535,1> back_log_constraints;
 

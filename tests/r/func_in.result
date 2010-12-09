@@ -254,7 +254,7 @@ select * from t2 where a NOT IN (
 '2006-04-25 10:00:00','2006-04-25 10:02:00','2006-04-25 10:04:00', 
 '2006-04-25 10:06:00', '2006-04-25 10:08:00');
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	range	a	a	9	NULL	20	Using where
+1	SIMPLE	t2	range	a	a	9	NULL	11	Using where
 select * from t2 where a NOT IN (
 '2006-04-25 10:00:00','2006-04-25 10:02:00','2006-04-25 10:04:00', 
 '2006-04-25 10:06:00', '2006-04-25 10:08:00');

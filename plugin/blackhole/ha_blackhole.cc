@@ -48,7 +48,7 @@ static const char *ha_blackhole_exts[] = {
 
 class BlackholeEngine : public drizzled::plugin::StorageEngine
 {
-  typedef map<string, BlackholeShare*> BlackholeMap;
+  typedef std::map<std::string, BlackholeShare*> BlackholeMap;
   BlackholeMap blackhole_open_tables;
 
 public:
@@ -110,13 +110,13 @@ public:
   int doRenameTable(Session&, const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to);
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                              const drizzled::SchemaIdentifier &schema_identifier,
-                             drizzled::TableIdentifiers &set_of_identifiers);
+                             drizzled::TableIdentifier::vector &set_of_identifiers);
 };
 
 
 void BlackholeEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                                             const drizzled::SchemaIdentifier &schema_identifier,
-                                            drizzled::TableIdentifiers &set_of_identifiers)
+                                            drizzled::TableIdentifier::vector &set_of_identifiers)
 {
   drizzled::CachedDirectory::Entries entries= directory.getEntries();
 

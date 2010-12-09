@@ -1,1 +1,1 @@
---transaction-log.enable --scheduler=multi_thread
+--transaction-log.enable --scheduler=multi_thread --innodb.replication-log=true

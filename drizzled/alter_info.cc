@@ -38,7 +38,6 @@ AlterInfo::AlterInfo() :
   tablespace_op(NO_TABLESPACE_OP),
   no_parts(0),
   build_method(HA_BUILD_DEFAULT),
-  datetime_field(NULL),
   error_if_not_empty(false)
 {}
 

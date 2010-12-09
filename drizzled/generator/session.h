@@ -22,15 +22,15 @@
 #define DRIZZLED_GENERATOR_SESSION_H
 
 #include <boost/thread/mutex.hpp>
-#include "drizzled/session_list.h"
+#include "drizzled/session/cache.h"
 
 namespace drizzled {
 namespace generator {
 
 class Session
 {
-  session::Cache::List local_list;
-  session::Cache::List::const_iterator iter;
+  session::Cache::list local_list;
+  session::Cache::list::const_iterator iter;
 
 public:
 

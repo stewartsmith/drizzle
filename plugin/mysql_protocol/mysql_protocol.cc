@@ -33,41 +33,41 @@
 #include "options.h"
 #include "table_function.h"
 
+#define PROTOCOL_VERSION 10
+
 namespace po= boost::program_options;
 using namespace std;
 using namespace drizzled;
 
-#define PROTOCOL_VERSION 10
+namespace drizzle_plugin
+{
 
 static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;
-static uint32_t port;
-static uint32_t connect_timeout;
-static uint32_t read_timeout;
-static uint32_t write_timeout;
-static uint32_t retry_count;
-static uint32_t buffer_length;
-static char* bind_address;
+
+static port_constraint port;
+static timeout_constraint connect_timeout;
+static timeout_constraint read_timeout;
+static timeout_constraint write_timeout;
+static retry_constraint retry_count;
+static buffer_constraint buffer_length;
+
 static uint32_t random_seed1;
 static uint32_t random_seed2;
 static const uint32_t random_max= 0x3FFFFFFF;
 static const double random_max_double= (double)0x3FFFFFFF;
 
-static plugin::TableFunction* mysql_status_table_function_ptr= NULL;
 
 ListenMySQLProtocol::~ListenMySQLProtocol()
-{
-  /* This is strdup'd from the options */
-  free(bind_address);
-}
+{ }
 
-const char* ListenMySQLProtocol::getHost(void) const
+const std::string ListenMySQLProtocol::getHost(void) const
 {
-  return bind_address;
+  return _hostname;
 }
 
 in_port_t ListenMySQLProtocol::getPort(void) const
 {
-  return (in_port_t) port;
+  return port.get();
 }
 
 plugin::Client *ListenMySQLProtocol::getClient(int fd)
@@ -77,27 +77,29 @@ plugin::Client *ListenMySQLProtocol::getClient(int fd)
   if (new_fd == -1)
     return NULL;
 
-  return new (nothrow) ClientMySQLProtocol(new_fd, using_mysql41_protocol);
+  return new ClientMySQLProtocol(new_fd, _using_mysql41_protocol);
 }
 
 drizzled::atomic<uint64_t> ClientMySQLProtocol::connectionCount;
 drizzled::atomic<uint64_t> ClientMySQLProtocol::failedConnections;
 drizzled::atomic<uint64_t> ClientMySQLProtocol::connected;
 
-ClientMySQLProtocol::ClientMySQLProtocol(int fd, bool using_mysql41_protocol_arg):
-  using_mysql41_protocol(using_mysql41_protocol_arg)
+ClientMySQLProtocol::ClientMySQLProtocol(int fd, bool using_mysql41_protocol):
+  is_admin_connection(false),
+  _using_mysql41_protocol(using_mysql41_protocol)
 {
+  
   net.vio= 0;
 
   if (fd == -1)
     return;
 
-  if (drizzleclient_net_init_sock(&net, fd, buffer_length))
+  if (drizzleclient_net_init_sock(&net, fd, buffer_length.get()))
     throw bad_alloc();
 
-  drizzleclient_net_set_read_timeout(&net, read_timeout);
-  drizzleclient_net_set_write_timeout(&net, write_timeout);
-  net.retry_count=retry_count;
+  drizzleclient_net_set_read_timeout(&net, read_timeout.get());
+  drizzleclient_net_set_write_timeout(&net, write_timeout.get());
+  net.retry_count=retry_count.get();
 }
 
 ClientMySQLProtocol::~ClientMySQLProtocol()
@@ -154,8 +156,8 @@ bool ClientMySQLProtocol::authenticate()
   connected.increment();
 
   /* Use "connect_timeout" value during connection phase */
-  drizzleclient_net_set_read_timeout(&net, connect_timeout);
-  drizzleclient_net_set_write_timeout(&net, connect_timeout);
+  drizzleclient_net_set_read_timeout(&net, connect_timeout.get());
+  drizzleclient_net_set_write_timeout(&net, connect_timeout.get());
 
   connection_is_valid= checkConnection();
 
@@ -168,8 +170,8 @@ bool ClientMySQLProtocol::authenticate()
     return false;
   }
   /* Connect completed, set read/write timeouts back to default */
-  drizzleclient_net_set_read_timeout(&net, read_timeout);
-  drizzleclient_net_set_write_timeout(&net, write_timeout);
+  drizzleclient_net_set_read_timeout(&net, read_timeout.get());
+  drizzleclient_net_set_write_timeout(&net, write_timeout.get());
   return true;
 }
 
@@ -225,7 +227,7 @@ bool ClientMySQLProtocol::readCommand(char **l_packet, uint32_t *packet_length)
     (*l_packet)[0]= (unsigned char) COM_SLEEP;
     *packet_length= 1;
   }
-  else if (using_mysql41_protocol)
+  else if (_using_mysql41_protocol)
   {
     /* Map from MySQL commands to Drizzle commands. */
     switch ((int)(*l_packet)[0])
@@ -365,7 +367,7 @@ void ClientMySQLProtocol::sendEOF()
     drizzleclient_net_flush(&net);
     session->main_da.can_overwrite_status= false;
   }
-  packet.shrink(buffer_length);
+  packet.shrink(buffer_length.get());
 }
 
 
@@ -475,7 +477,7 @@ bool ClientMySQLProtocol::sendFields(List<Item> *list)
     int2store(pos, field.charsetnr);
     int4store(pos+2, field.length);
 
-    if (using_mysql41_protocol)
+    if (_using_mysql41_protocol)
     {
       /* Switch to MySQL field numbering. */
       switch (field.type)
@@ -659,7 +661,7 @@ bool ClientMySQLProtocol::checkConnection(void)
 
     server_capabilites= CLIENT_BASIC_FLAGS;
 
-    if (using_mysql41_protocol)
+    if (_using_mysql41_protocol)
       server_capabilites|= CLIENT_PROTOCOL_MYSQL41;
 
 #ifdef HAVE_COMPRESS
@@ -707,7 +709,7 @@ bool ClientMySQLProtocol::checkConnection(void)
       return false;
     }
   }
-  if (packet.alloc(buffer_length))
+  if (packet.alloc(buffer_length.get()))
     return false; /* The error is set by alloc(). */
 
   client_capabilities= uint2korr(net.read_pos);
@@ -902,143 +904,57 @@ plugin::Create_function<MySQLPassword> *mysql_password= NULL;
 
 static int init(drizzled::module::Context &context)
 {  
-  mysql_status_table_function_ptr= new MysqlProtocolStatus;
+  context.add(new MysqlProtocolStatus);
 
-  context.add(mysql_status_table_function_ptr);
   /* Initialize random seeds for the MySQL algorithm with minimal changes. */
   time_t seed_time= time(NULL);
   random_seed1= seed_time % random_max;
   random_seed2= (seed_time / 2) % random_max;
 
   const module::option_map &vm= context.getOptions();
-  if (vm.count("port"))
-  { 
-    if (port > 65535)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of port\n"));
-      exit(-1);
-    }
-  }
-
-  if (vm.count("connect-timeout"))
-  {
-    if (connect_timeout < 1 || connect_timeout > 300)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for connect_timeout\n"));
-      exit(-1);
-    }
-  }
-
-  if (vm.count("read-timeout"))
-  {
-    if (read_timeout < 1 || read_timeout > 300)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for read_timeout\n"));
-      exit(-1);
-    }
-  }
-
-  if (vm.count("write-timeout"))
-  {
-    if (write_timeout < 1 || write_timeout > 300)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for write_timeout\n"));
-      exit(-1);
-    }
-  }
-
-  if (vm.count("retry-count"))
-  {
-    if (retry_count < 1 || retry_count > 100)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for retry_count"));
-      exit(-1);
-    }
-  }
-
-  if (vm.count("buffer-length"))
-  {
-    if (buffer_length < 1024 || buffer_length > 1024*1024)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for buffer_length\n"));
-      exit(-1);
-    }
-  }
-
-  if (vm.count("bind-address"))
-  {
-    bind_address= strdup(vm["bind-address"].as<string>().c_str());
-  }
-
-  else
-  {
-    bind_address= NULL;
-  }
 
   mysql_password= new plugin::Create_function<MySQLPassword>(MySQLPasswordName);
   context.add(mysql_password);
 
-  listen_obj= new ListenMySQLProtocol("mysql_protocol", true);
+  listen_obj= new ListenMySQLProtocol("mysql_protocol", vm["bind-address"].as<std::string>(), true);
   context.add(listen_obj); 
+  context.registerVariable(new sys_var_constrained_value_readonly<in_port_t>("port", port));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("connect_timeout", connect_timeout));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("read_timeout", read_timeout));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("write_timeout", write_timeout));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("retry_count", retry_count));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("buffer_length", buffer_length));
+  context.registerVariable(new sys_var_const_string_val("bind_address",
+                                                        vm["bind-address"].as<std::string>()));
 
   return 0;
 }
 
-static DRIZZLE_SYSVAR_UINT(port, port, PLUGIN_VAR_RQCMDARG,
-                           N_("Port number to use for connection or 0 for default to with MySQL "
-                              "protocol."),
-                           NULL, NULL, 3306, 0, 65535, 0);
-static DRIZZLE_SYSVAR_UINT(connect_timeout, connect_timeout,
-                           PLUGIN_VAR_RQCMDARG, N_("Connect Timeout."),
-                           NULL, NULL, 10, 1, 300, 0);
-static DRIZZLE_SYSVAR_UINT(read_timeout, read_timeout, PLUGIN_VAR_RQCMDARG,
-                           N_("Read Timeout."), NULL, NULL, 30, 1, 300, 0);
-static DRIZZLE_SYSVAR_UINT(write_timeout, write_timeout, PLUGIN_VAR_RQCMDARG,
-                           N_("Write Timeout."), NULL, NULL, 60, 1, 300, 0);
-static DRIZZLE_SYSVAR_UINT(retry_count, retry_count, PLUGIN_VAR_RQCMDARG,
-                           N_("Retry Count."), NULL, NULL, 10, 1, 100, 0);
-static DRIZZLE_SYSVAR_UINT(buffer_length, buffer_length, PLUGIN_VAR_RQCMDARG,
-                           N_("Buffer length."), NULL, NULL, 16384, 1024,
-                           1024*1024, 0);
-static DRIZZLE_SYSVAR_STR(bind_address, bind_address, PLUGIN_VAR_READONLY,
-                          N_("Address to bind to."), NULL, NULL, NULL);
-
 static void init_options(drizzled::module::option_context &context)
 {
   context("port",
-          po::value<uint32_t>(&port)->default_value(3306),
+          po::value<port_constraint>(&port)->default_value(3306),
           N_("Port number to use for connection or 0 for default to with MySQL "
                               "protocol."));
   context("connect-timeout",
-          po::value<uint32_t>(&connect_timeout)->default_value(10),
+          po::value<timeout_constraint>(&connect_timeout)->default_value(10),
           N_("Connect Timeout."));
   context("read-timeout",
-          po::value<uint32_t>(&read_timeout)->default_value(30),
+          po::value<timeout_constraint>(&read_timeout)->default_value(30),
           N_("Read Timeout."));
   context("write-timeout",
-          po::value<uint32_t>(&write_timeout)->default_value(60),
+          po::value<timeout_constraint>(&write_timeout)->default_value(60),
           N_("Write Timeout."));
   context("retry-count",
-          po::value<uint32_t>(&retry_count)->default_value(10),
+          po::value<retry_constraint>(&retry_count)->default_value(10),
           N_("Retry Count."));
   context("buffer-length",
-          po::value<uint32_t>(&buffer_length)->default_value(16384),
+          po::value<buffer_constraint>(&buffer_length)->default_value(16384),
           N_("Buffer length."));
   context("bind-address",
-          po::value<string>(),
+          po::value<string>()->default_value(""),
           N_("Address to bind to."));
 }
-
-static drizzle_sys_var* sys_variables[]= {
-  DRIZZLE_SYSVAR(port),
-  DRIZZLE_SYSVAR(connect_timeout),
-  DRIZZLE_SYSVAR(read_timeout),
-  DRIZZLE_SYSVAR(write_timeout),
-  DRIZZLE_SYSVAR(retry_count),
-  DRIZZLE_SYSVAR(buffer_length),
-  DRIZZLE_SYSVAR(bind_address),
-  NULL
-};
 
 static int mysql_protocol_connection_count_func(drizzle_show_var *var, char *buff)
 {
@@ -1137,6 +1053,8 @@ bool MysqlProtocolStatus::Generator::populate()
   return false;
 }
 
+} /* namespace drizzle_plugin */
+
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
@@ -1145,8 +1063,8 @@ DRIZZLE_DECLARE_PLUGIN
   "Eric Day",
   "MySQL Protocol Module",
   PLUGIN_LICENSE_GPL,
-  init,             /* Plugin Init */
-  sys_variables, /* system variables */
-  init_options    /* config options */
+  drizzle_plugin::init,             /* Plugin Init */
+  NULL, /* system variables */
+  drizzle_plugin::init_options    /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

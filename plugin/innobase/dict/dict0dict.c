@@ -255,8 +255,8 @@ dict_mutex_exit_for_mysql(void)
 
 /** Get the mutex that protects index->stat_n_diff_key_vals[] */
 #define GET_INDEX_STAT_MUTEX(index) \
-	(&dict_index_stat_mutex[ut_fold_dulint(index->id) \
-	 			% DICT_INDEX_STAT_MUTEX_SIZE])
+	(&dict_index_stat_mutex[ut_fold_ull(index->id) \
+				% DICT_INDEX_STAT_MUTEX_SIZE])
 
 /**********************************************************************//**
 Lock the appropriate mutex to protect index->stat_n_diff_key_vals[].
@@ -424,14 +424,14 @@ dict_index_t*
 dict_index_get_on_id_low(
 /*=====================*/
 	dict_table_t*	table,	/*!< in: table */
-	dulint		id)	/*!< in: index id */
+	index_id_t	id)	/*!< in: index id */
 {
 	dict_index_t*	index;
 
 	index = dict_table_get_first_index(table);
 
 	while (index) {
-		if (0 == ut_dulint_cmp(id, index->id)) {
+		if (id == index->id) {
 			/* Found */
 
 			return(index);
@@ -573,20 +573,17 @@ UNIV_INTERN
 dict_table_t*
 dict_table_get_on_id(
 /*=================*/
-	dulint	table_id,	/*!< in: table id */
-	trx_t*	trx)		/*!< in: transaction handle */
+	table_id_t	table_id,	/*!< in: table id */
+	trx_t*		trx)		/*!< in: transaction handle */
 {
 	dict_table_t*	table;
 
-	if (ut_dulint_cmp(table_id, DICT_FIELDS_ID) <= 0
-	    || trx->dict_operation_lock_mode == RW_X_LATCH) {
-		/* It is a system table which will always exist in the table
-		cache: we avoid acquiring the dictionary mutex, because
-		if we are doing a rollback to handle an error in TABLE
-		CREATE, for example, we already have the mutex! */
+	if (trx->dict_operation_lock_mode == RW_X_LATCH) {
 
-		ut_ad(mutex_own(&(dict_sys->mutex))
-		      || trx->dict_operation_lock_mode == RW_X_LATCH);
+		/* Note: An X latch implies that the transaction
+		already owns the dictionary mutex. */
+
+		ut_ad(mutex_own(&dict_sys->mutex));
 
 		return(dict_table_get_on_id_low(table_id));
 	}
@@ -799,7 +796,7 @@ dict_table_add_to_cache(
 	table->cached = TRUE;
 
 	fold = ut_fold_string(table->name);
-	id_fold = ut_fold_dulint(table->id);
+	id_fold = ut_fold_ull(table->id);
 
 	row_len = 0;
 	for (i = 0; i < table->n_def; i++) {
@@ -841,7 +838,7 @@ dict_table_add_to_cache(
 		dict_table_t*	table2;
 		HASH_SEARCH(id_hash, dict_sys->table_id_hash, id_fold,
 			    dict_table_t*, table2, ut_ad(table2->cached),
-			    ut_dulint_cmp(table2->id, table->id) == 0);
+			    table2->id == table->id);
 		ut_a(table2 == NULL);
 
 #ifdef UNIV_DEBUG
@@ -863,7 +860,8 @@ dict_table_add_to_cache(
 	/* Add table to LRU list of tables */
 	UT_LIST_ADD_FIRST(table_LRU, dict_sys->table_LRU, table);
 
-	dict_sys->size += mem_heap_get_size(table->heap);
+	dict_sys->size += mem_heap_get_size(table->heap)
+		+ strlen(table->name) + 1;
 }
 
 /**********************************************************************//**
@@ -875,7 +873,7 @@ UNIV_INTERN
 dict_index_t*
 dict_index_find_on_id_low(
 /*======================*/
-	dulint	id)	/*!< in: index id */
+	index_id_t	id)	/*!< in: index id */
 {
 	dict_table_t*	table;
 	dict_index_t*	index;
@@ -886,7 +884,7 @@ dict_index_find_on_id_low(
 		index = dict_table_get_first_index(table);
 
 		while (index) {
-			if (0 == ut_dulint_cmp(id, index->id)) {
+			if (id == index->id) {
 				/* Found */
 
 				return(index);
@@ -917,14 +915,21 @@ dict_table_rename_in_cache(
 	dict_foreign_t*	foreign;
 	dict_index_t*	index;
 	ulint		fold;
-	ulint		old_size;
-	const char*	old_name;
+	char		old_name[MAX_TABLE_NAME_LEN + 1];
 
 	ut_ad(table);
 	ut_ad(mutex_own(&(dict_sys->mutex)));
 
-	old_size = mem_heap_get_size(table->heap);
-	old_name = table->name;
+	/* store the old/current name to an automatic variable */
+	if (strlen(table->name) + 1 <= sizeof(old_name)) {
+		memcpy(old_name, table->name, strlen(table->name) + 1);
+	} else {
+		ut_print_timestamp(stderr);
+		fprintf(stderr, "InnoDB: too long table name: '%s', "
+			"max length is %d\n", table->name,
+			MAX_TABLE_NAME_LEN);
+		ut_error;
+	}
 
 	fold = ut_fold_string(new_name);
 
@@ -970,12 +975,22 @@ dict_table_rename_in_cache(
 	/* Remove table from the hash tables of tables */
 	HASH_DELETE(dict_table_t, name_hash, dict_sys->table_hash,
 		    ut_fold_string(old_name), table);
-	table->name = mem_heap_strdup(table->heap, new_name);
+
+	if (strlen(new_name) > strlen(table->name)) {
+		/* We allocate MAX_TABLE_NAME_LEN+1 bytes here to avoid
+		memory fragmentation, we assume a repeated calls of
+		ut_realloc() with the same size do not cause fragmentation */
+		ut_a(strlen(new_name) <= MAX_TABLE_NAME_LEN);
+		table->name = ut_realloc(table->name, MAX_TABLE_NAME_LEN + 1);
+	}
+	memcpy(table->name, new_name, strlen(new_name) + 1);
 
 	/* Add table to hash table of tables */
 	HASH_INSERT(dict_table_t, name_hash, dict_sys->table_hash, fold,
 		    table);
-	dict_sys->size += (mem_heap_get_size(table->heap) - old_size);
+
+	dict_sys->size += strlen(new_name) - strlen(old_name);
+	ut_a(dict_sys->size > 0);
 
 	/* Update the table_name field in indexes */
 	index = dict_table_get_first_index(table);
@@ -1125,7 +1140,7 @@ void
 dict_table_change_id_in_cache(
 /*==========================*/
 	dict_table_t*	table,	/*!< in/out: table object already in cache */
-	dulint		new_id)	/*!< in: new id to set */
+	table_id_t	new_id)	/*!< in: new id to set */
 {
 	ut_ad(table);
 	ut_ad(mutex_own(&(dict_sys->mutex)));
@@ -1134,12 +1149,12 @@ dict_table_change_id_in_cache(
 	/* Remove the table from the hash table of id's */
 
 	HASH_DELETE(dict_table_t, id_hash, dict_sys->table_id_hash,
-		    ut_fold_dulint(table->id), table);
+		    ut_fold_ull(table->id), table);
 	table->id = new_id;
 
 	/* Add the table back to the hash table */
 	HASH_INSERT(dict_table_t, id_hash, dict_sys->table_id_hash,
-		    ut_fold_dulint(table->id), table);
+		    ut_fold_ull(table->id), table);
 }
 
 /**********************************************************************//**
@@ -1195,12 +1210,12 @@ dict_table_remove_from_cache(
 	HASH_DELETE(dict_table_t, name_hash, dict_sys->table_hash,
 		    ut_fold_string(table->name), table);
 	HASH_DELETE(dict_table_t, id_hash, dict_sys->table_id_hash,
-		    ut_fold_dulint(table->id), table);
+		    ut_fold_ull(table->id), table);
 
 	/* Remove table from LRU list of tables */
 	UT_LIST_REMOVE(table_LRU, dict_sys->table_LRU, table);
 
-	size = mem_heap_get_size(table->heap);
+	size = mem_heap_get_size(table->heap) + strlen(table->name) + 1;
 
 	ut_ad(dict_sys->size >= size);
 
@@ -2457,8 +2472,7 @@ dict_table_get_index_by_max_id(
 				/* We found a matching index, select
 				the index with the higher id*/
 
-				if (!found
-				    || ut_dulint_cmp(index->id, found->id) > 0) {
+				if (!found || index->id > found->id) {
 
 					found = index;
 				}
@@ -3946,7 +3960,7 @@ UNIV_INTERN
 dict_index_t*
 dict_index_get_if_in_cache_low(
 /*===========================*/
-	dulint	index_id)	/*!< in: index id */
+	index_id_t	index_id)	/*!< in: index id */
 {
 	ut_ad(mutex_own(&(dict_sys->mutex)));
 
@@ -3961,7 +3975,7 @@ UNIV_INTERN
 dict_index_t*
 dict_index_get_if_in_cache(
 /*=======================*/
-	dulint	index_id)	/*!< in: index id */
+	index_id_t	index_id)	/*!< in: index id */
 {
 	dict_index_t*	index;
 
@@ -4190,7 +4204,6 @@ dict_update_statistics_low(
 					dictionary mutex */
 {
 	dict_index_t*	index;
-	ulint		size;
 	ulint		sum_of_index_sizes	= 0;
 
 	if (table->ibd_file_missing) {
@@ -4201,14 +4214,6 @@ dict_update_statistics_low(
 			" please refer to\n"
 			"InnoDB: " REFMAN "innodb-troubleshooting.html\n",
 			table->name);
-
-		return;
-	}
-
-	/* If we have set a high innodb_force_recovery level, do not calculate
-	statistics, as a badly corrupted index can cause a crash in it. */
-
-	if (srv_force_recovery >= SRV_FORCE_NO_IBUF_MERGE) {
 
 		return;
 	}
@@ -4224,26 +4229,48 @@ dict_update_statistics_low(
 		return;
 	}
 
-	while (index) {
-		size = btr_get_size(index, BTR_TOTAL_SIZE);
 
-		index->stat_index_size = size;
+	do {
+		if (UNIV_LIKELY
+		    (srv_force_recovery < SRV_FORCE_NO_IBUF_MERGE
+		     || (srv_force_recovery < SRV_FORCE_NO_LOG_REDO
+			 && dict_index_is_clust(index)))) {
+			ulint	size;
+			size = btr_get_size(index, BTR_TOTAL_SIZE);
 
-		sum_of_index_sizes += size;
+			index->stat_index_size = size;
 
-		size = btr_get_size(index, BTR_N_LEAF_PAGES);
+			sum_of_index_sizes += size;
 
-		if (size == 0) {
-			/* The root node of the tree is a leaf */
-			size = 1;
+			size = btr_get_size(index, BTR_N_LEAF_PAGES);
+
+			if (size == 0) {
+				/* The root node of the tree is a leaf */
+				size = 1;
+			}
+
+			index->stat_n_leaf_pages = size;
+
+			btr_estimate_number_of_different_key_vals(index);
+		} else {
+			/* If we have set a high innodb_force_recovery
+			level, do not calculate statistics, as a badly
+			corrupted index can cause a crash in it.
+			Initialize some bogus index cardinality
+			statistics, so that the data can be queried in
+			various means, also via secondary indexes. */
+			ulint	i;
+
+			sum_of_index_sizes++;
+			index->stat_index_size = index->stat_n_leaf_pages = 1;
+
+			for (i = dict_index_get_n_unique(index); i; ) {
+				index->stat_n_diff_key_vals[i--] = 1;
+			}
 		}
 
-		index->stat_n_leaf_pages = size;
-
-		btr_estimate_number_of_different_key_vals(index);
-
 		index = dict_table_get_next_index(index);
-	}
+	} while (index);
 
 	index = dict_table_get_first_index(table);
 
@@ -4357,12 +4384,11 @@ dict_table_print_low(
 
 	fprintf(stderr,
 		"--------------------------------------\n"
-		"TABLE: name %s, id %lu %lu, flags %lx, columns %lu,"
+		"TABLE: name %s, id %llu, flags %lx, columns %lu,"
 		" indexes %lu, appr.rows %lu\n"
 		"  COLUMNS: ",
 		table->name,
-		(ulong) ut_dulint_get_high(table->id),
-		(ulong) ut_dulint_get_low(table->id),
+		(ullint) table->id,
 		(ulong) table->flags,
 		(ulong) table->n_cols,
 		(ulong) UT_LIST_GET_LEN(table->indexes),
@@ -4427,7 +4453,6 @@ dict_index_print_low(
 {
 	ib_int64_t	n_vals;
 	ulint		i;
-	const char*	type_string;
 
 	ut_ad(mutex_own(&(dict_sys->mutex)));
 
@@ -4442,23 +4467,14 @@ dict_index_print_low(
 
 	dict_index_stat_mutex_exit(index);
 
-	if (dict_index_is_clust(index)) {
-		type_string = "clustered index";
-	} else if (dict_index_is_unique(index)) {
-		type_string = "unique index";
-	} else {
-		type_string = "secondary index";
-	}
-
 	fprintf(stderr,
-		"  INDEX: name %s, id %lu %lu, fields %lu/%lu,"
+		"  INDEX: name %s, id %llu, fields %lu/%lu,"
 		" uniq %lu, type %lu\n"
 		"   root page %lu, appr.key vals %lu,"
 		" leaf pages %lu, size pages %lu\n"
 		"   FIELDS: ",
 		index->name,
-		(ulong) ut_dulint_get_high(index->id),
-		(ulong) ut_dulint_get_low(index->id),
+		(ullint) index->id,
 		(ulong) index->n_user_defined_cols,
 		(ulong) index->n_fields,
 		(ulong) index->n_uniq,
@@ -4830,8 +4846,7 @@ dict_table_get_index_on_name_and_min_id(
 
 	while (index != NULL) {
 		if (ut_strcmp(index->name, name) == 0) {
-			if (!min_index
-			    || ut_dulint_cmp(index->id, min_index->id) < 0) {
+			if (!min_index || index->id < min_index->id) {
 
 				min_index = index;
 			}

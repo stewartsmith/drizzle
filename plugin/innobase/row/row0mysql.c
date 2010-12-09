@@ -249,6 +249,49 @@ row_mysql_read_blob_ref(
 }
 
 /**************************************************************//**
+Pad a column with spaces. */
+UNIV_INTERN
+void
+row_mysql_pad_col(
+/*==============*/
+	ulint	mbminlen,	/*!< in: minimum size of a character,
+				in bytes */
+	byte*	pad,		/*!< out: padded buffer */
+	ulint	len)		/*!< in: number of bytes to pad */
+{
+	const byte*	pad_end;
+
+	switch (UNIV_EXPECT(mbminlen, 1)) {
+	default:
+		ut_error;
+	case 1:
+		/* space=0x20 */
+		memset(pad, 0x20, len);
+		break;
+	case 2:
+		/* space=0x0020 */
+		pad_end = pad + len;
+		ut_a(!(len % 2));
+		do {
+			*pad++ = 0x00;
+			*pad++ = 0x20;
+		} while (pad < pad_end);
+		break;
+	case 4:
+		/* space=0x00000020 */
+		pad_end = pad + len;
+		ut_a(!(len % 4));
+		do {
+			*pad++ = 0x00;
+			*pad++ = 0x00;
+			*pad++ = 0x00;
+			*pad++ = 0x20;
+		} while (pad < pad_end);
+		break;
+	}
+}
+
+/**************************************************************//**
 Stores a non-SQL-NULL field given in the MySQL format in the InnoDB format.
 The counterpart of this function is row_sel_field_store_in_mysql_format() in
 row0sel.c.
@@ -340,12 +383,28 @@ row_mysql_store_col_in_innobase_format(
 			/* Remove trailing spaces from old style VARCHAR
 			columns. */
 
-			/* Handle UCS2 strings differently. */
+			/* Handle Unicode strings differently. */
 			ulint	mbminlen	= dtype_get_mbminlen(dtype);
 
 			ptr = mysql_data;
 
-			if (mbminlen == 2) {
+			switch (mbminlen) {
+			default:
+				ut_error;
+			case 4:
+				/* space=0x00000020 */
+				/* Trim "half-chars", just in case. */
+				col_len &= ~3;
+
+				while (col_len >= 4
+				       && ptr[col_len - 4] == 0x00
+				       && ptr[col_len - 3] == 0x00
+				       && ptr[col_len - 2] == 0x00
+				       && ptr[col_len - 1] == 0x20) {
+					col_len -= 4;
+				}
+				break;
+			case 2:
 				/* space=0x0020 */
 				/* Trim "half-chars", just in case. */
 				col_len &= ~1;
@@ -354,8 +413,8 @@ row_mysql_store_col_in_innobase_format(
 				       && ptr[col_len - 1] == 0x20) {
 					col_len -= 2;
 				}
-			} else {
-				ut_a(mbminlen == 1);
+				break;
+			case 1:
 				/* space=0x20 */
 				while (col_len > 0
 				       && ptr[col_len - 1] == 0x20) {
@@ -558,6 +617,13 @@ handle_new_error:
 		      "InnoDB: you dump the tables, look at\n"
 		      "InnoDB: " REFMAN "forcing-recovery.html"
 		      " for help.\n", stderr);
+		break;
+	case DB_FOREIGN_EXCEED_MAX_CASCADE:
+		fprintf(stderr, "InnoDB: Cannot delete/update rows with"
+			" cascading foreign key constraints that exceed max"
+			" depth of %lu\n"
+			"Please drop excessive foreign constraints"
+			" and try again\n", (ulong) DICT_FK_MAX_RECURSIVE_LOAD);
 		break;
 	default:
 		fprintf(stderr, "InnoDB: unknown error code %lu\n",
@@ -774,12 +840,13 @@ row_update_prebuilt_trx(
 	}
 }
 
+dtuple_t* row_get_prebuilt_insert_row(row_prebuilt_t*	prebuilt);
+
 /*********************************************************************//**
 Gets pointer to a prebuilt dtuple used in insertions. If the insert graph
 has not yet been built in the prebuilt struct, then this function first
 builds it.
 @return	prebuilt dtuple; the column type information is also set in it */
-static
 dtuple_t*
 row_get_prebuilt_insert_row(
 /*========================*/
@@ -1364,10 +1431,20 @@ row_update_for_mysql(
 run_again:
 	thr->run_node = node;
 	thr->prev_node = node;
+	thr->fk_cascade_depth = 0;
 
 	row_upd_step(thr);
 
+	/* The recursive call for cascading update/delete happens
+	in above row_upd_step(), reset the counter once we come
+	out of the recursive call, so it does not accumulate for
+	different row deletes */
+	thr->fk_cascade_depth = 0;
+
 	err = trx->error_state;
+
+	/* Reset fk_cascade_depth back to 0 */
+	thr->fk_cascade_depth = 0;
 
 	if (err != DB_SUCCESS) {
 		que_thr_stop_for_mysql(thr);
@@ -1405,7 +1482,12 @@ run_again:
 		srv_n_rows_updated++;
 	}
 
-	row_update_statistics_if_needed(prebuilt->table);
+	/* We update table statistics only if it is a DELETE or UPDATE
+	that changes indexed columns, UPDATEs that change only non-indexed
+	columns would not affect statistics. */
+	if (node->is_delete || !(node->cmpl_info & UPD_NODE_NO_ORD_CHANGE)) {
+		row_update_statistics_if_needed(prebuilt->table);
+	}
 
 	trx->op_info = "";
 
@@ -1515,7 +1597,7 @@ row_unlock_for_mysql(
 			}
 		}
 
-		if (ut_dulint_cmp(rec_trx_id, trx->id) != 0) {
+		if (rec_trx_id != trx->id) {
 			/* We did not update the record: unlock it */
 
 			rec = btr_pcur_get_rec(pcur);
@@ -1559,11 +1641,26 @@ row_update_cascade_for_mysql(
 	trx_t*	trx;
 
 	trx = thr_get_trx(thr);
+
+	/* Increment fk_cascade_depth to record the recursive call depth on
+	a single update/delete that affects multiple tables chained
+	together with foreign key relations. */
+	thr->fk_cascade_depth++;
+
+	if (thr->fk_cascade_depth > FK_MAX_CASCADE_DEL) {
+		return (DB_FOREIGN_EXCEED_MAX_CASCADE);
+	}
 run_again:
 	thr->run_node = node;
 	thr->prev_node = node;
 
 	row_upd_step(thr);
+
+	/* The recursive call for cascading update/delete happens
+	in above row_upd_step(), reset the counter once we come
+	out of the recursive call, so it does not accumulate for
+	different row deletes */
+	thr->fk_cascade_depth = 0;
 
 	err = trx->error_state;
 
@@ -2027,7 +2124,7 @@ row_table_add_foreign_constraints(
 					      name, reject_fks);
 	if (err == DB_SUCCESS) {
 		/* Check that also referencing constraints are ok */
-		err = dict_load_foreigns(name, TRUE);
+		err = dict_load_foreigns(name, FALSE, TRUE);
 	}
 
 	if (err != DB_SUCCESS) {
@@ -2254,7 +2351,7 @@ row_discard_tablespace_for_mysql(
 	trx_t*		trx)	/*!< in: transaction handle */
 {
 	dict_foreign_t*	foreign;
-	dulint		new_id;
+	table_id_t	new_id;
 	dict_table_t*	table;
 	ibool		success;
 	ulint		err;
@@ -2376,7 +2473,7 @@ row_discard_tablespace_for_mysql(
 	info = pars_info_create();
 
 	pars_info_add_str_literal(info, "table_name", name);
-	pars_info_add_dulint_literal(info, "new_id", new_id);
+	pars_info_add_ull_literal(info, "new_id", new_id);
 
 	err = que_eval_sql(info,
 			   "PROCEDURE DISCARD_TABLESPACE_PROC () IS\n"
@@ -2590,7 +2687,7 @@ row_truncate_table_for_mysql(
 	dict_index_t*	sys_index;
 	btr_pcur_t	pcur;
 	mtr_t		mtr;
-	dulint		new_id;
+	table_id_t	new_id;
 	ulint		recreate_space = 0;
 	pars_info_t*	info = NULL;
 
@@ -2720,6 +2817,15 @@ row_truncate_table_for_mysql(
 
 	trx->table_id = table->id;
 
+	/* Lock all index trees for this table, as we will
+	truncate the table/index and possibly change their metadata.
+	All DML/DDL are blocked by table level lock, with
+	a few exceptions such as queries into information schema
+	about the table, MySQL could try to access index stats
+	for this kind of query, we need to use index locks to
+	sync up */
+	dict_table_x_lock_indexes(table);
+
 	if (table->space && !table->dir_path_of_temp_table) {
 		/* Discard and create the single-table tablespace. */
 		ulint	space	= table->space;
@@ -2736,6 +2842,7 @@ row_truncate_table_for_mysql(
 			    || fil_create_new_single_table_tablespace(
 				    space, table->name, FALSE, flags,
 				    FIL_IBD_FILE_INITIAL_SIZE) != DB_SUCCESS) {
+				dict_table_x_unlock_indexes(table);
 				ut_print_timestamp(stderr);
 				fprintf(stderr,
 					"  InnoDB: TRUNCATE TABLE %s failed to"
@@ -2839,13 +2946,17 @@ next_rec:
 
 	mem_heap_free(heap);
 
+	/* Done with index truncation, release index tree locks,
+	subsequent work relates to table level metadata change */
+	dict_table_x_unlock_indexes(table);
+
 	dict_hdr_get_new_id(&new_id, NULL, NULL);
 
 	info = pars_info_create();
 
 	pars_info_add_int4_literal(info, "space", (lint) table->space);
-	pars_info_add_dulint_literal(info, "old_id", table->id);
-	pars_info_add_dulint_literal(info, "new_id", new_id);
+	pars_info_add_ull_literal(info, "old_id", table->id);
+	pars_info_add_ull_literal(info, "new_id", new_id);
 
 	err = que_eval_sql(info,
 			   "PROCEDURE RENUMBER_TABLESPACE_PROC () IS\n"
@@ -3890,7 +4001,7 @@ end:
 		an ALTER, not in a RENAME. */
 
 		err = dict_load_foreigns(
-			new_name, !old_is_tmp || trx->check_foreigns);
+			new_name, FALSE, !old_is_tmp || trx->check_foreigns);
 
 		if (err != DB_SUCCESS) {
 			ut_print_timestamp(stderr);

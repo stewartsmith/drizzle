@@ -257,3 +257,25 @@ Additionally :program:`drizzledump` can now dump from MySQL and import directly
 into a Drizzle server as follows::
 
      $ drizzledump --all-databases --host=mysql-host --user=mysql-user --password --destination-type=database --desination-host=drizzle-host
+
+When you migrate from MySQL to Drizzle, the following conversions are required:
+
+MyISAM -> InnoDB
+FullText -> drop it (with stderr warning)
+int unsigned -> bigint
+tinyint -> int
+smallint -> int
+mediumint -> int
+tinytext -> text
+mediumtext -> text
+longtext -> text
+tinyblob -> blob
+mediumblob -> blob
+longblob -> blob
+time -> int (of seconds)
+year -> int
+set -> text
+date/datetime default 0000-00-00 -> default NULL *(Currently, ALL date columns have their DEFAULT set to NULL on migration)
+date/datetime NOT NULL columns -> NULL
+any date data containing 0000-00-00 -> NULL
+enum-> DEFAULT NULL
