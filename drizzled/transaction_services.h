@@ -220,6 +220,14 @@ public:
    */
   void rollbackTransactionMessage(Session *in_session);
   /**
+   * Rolls back the current statement, deleting the last Statement out of
+   * the current Transaction message.
+   *
+   * @note This depends on having clear statement boundaries (i.e., one
+   * Statement message per actual SQL statement.
+   */
+  void rollbackStatementMessage(Session *in_session);
+  /**
    * Creates a new InsertRecord GPB message and pushes it to
    * replicators.
    *

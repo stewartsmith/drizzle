@@ -367,14 +367,6 @@ COMMIT;
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
 
-# check that these 2 updates are in the same statement
-START TRANSACTION;
-UPDATE t1 SET col0_int = 2000 WHERE id = 1;
-UPDATE t1 SET col0_int = 200 WHERE id = 2;
-COMMIT;
---source ../plugin/transaction_log/tests/t/check_transaction_log.inc
---echo
-
 # check that these 2 updates are not in the same statement, given the 2nd
 # updates columns are a subset of the first updates columns
 START TRANSACTION;
