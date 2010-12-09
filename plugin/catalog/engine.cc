@@ -120,7 +120,7 @@ void Engine::prime(drizzled::message::catalog::vector &messages)
 
   if (not found_local)
   {
-    messages.push_back(drizzled::message::catalog::create(LOCAL_IDENTIFIER));
+    messages.push_back(drizzled::message::catalog::make_shared(LOCAL_IDENTIFIER));
   }
 }
 
@@ -205,7 +205,7 @@ bool Engine::readFile(const drizzled::identifier::Catalog &identifier, drizzled:
 
   if (input.good())
   {
-    message= drizzled::message::catalog::create(identifier);
+    message= drizzled::message::catalog::make_shared(identifier);
     if (message->ParseFromIstream(&input))
     {
       return true;

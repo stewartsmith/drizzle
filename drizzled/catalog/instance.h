@@ -53,7 +53,7 @@ public:
 
   static shared_ptr create(const identifier::Catalog &identifier)
   {
-    drizzled::message::catalog::shared_ptr new_message= drizzled::message::catalog::create(identifier);
+    drizzled::message::catalog::shared_ptr new_message= drizzled::message::catalog::make_shared(identifier);
     return boost::make_shared<Instance>(new_message);
   }
 

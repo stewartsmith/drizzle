@@ -44,9 +44,7 @@ drizzled_message_libdrizzledmessage_la_SOURCES = drizzled/message/statement_tran
 drizzled_message_libdrizzledmessage_la_LIBADD= ${LTLIBPROTOBUF} $(GCOV_LIBS) drizzled/libcharset.la
 
 nobase_dist_include_HEADERS+= \
-			      drizzled/message/schema.h \
-			      drizzled/message/statement_transform.h \
-			      drizzled/message/table.h
+			      drizzled/message/statement_transform.h
 
 nodist_drizzled_message_libdrizzledmessage_la_SOURCES= \
 						       drizzled/message/catalog.pb.cc \
@@ -67,7 +65,6 @@ nobase_nodist_include_HEADERS+= \
 				drizzled/message/transaction.pb.h
 
 noinst_HEADERS+= \
-		 drizzled/message/catalog.h \
 		 drizzled/message/ioutil.h
 
 drizzled_message_catalog_reader_SOURCES =  drizzled/message/catalog_reader.cc

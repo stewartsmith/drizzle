@@ -30,7 +30,6 @@
 #include "drizzled/message/schema.pb.h"
 
 #include <string>
-#include <uuid/uuid.h>
 
 namespace drizzled {
 namespace message {
@@ -68,43 +67,6 @@ static const std::string FULLTEXT("FULLTEXT");
 static const std::string MATCH_FULL("FULL");
 static const std::string MATCH_PARTIAL("PARTIAL");
 static const std::string MATCH_SIMPLE("SIMPLE");
-
-void init(drizzled::message::Table &arg, const std::string &name_arg, const std::string &schema_arg, const std::string &engine_arg)
-{
-  arg.set_name(name_arg);
-  arg.set_schema(schema_arg);
-  arg.set_creation_timestamp(time(NULL));
-  arg.set_update_timestamp(time(NULL));
-  arg.mutable_engine()->set_name(engine_arg);
-
-  /* 36 characters for uuid string +1 for NULL */
-  uuid_t uu;
-  char uuid_string[37];
-  uuid_generate_random(uu);
-  uuid_unparse(uu, uuid_string);
-  arg.set_uuid(uuid_string, 36);
-
-  arg.set_version(1);
-}
-
-void init(drizzled::message::Schema &arg, const std::string &name_arg)
-{
-  arg.set_name(name_arg);
-  arg.mutable_engine()->set_name(std::string("filesystem")); // For the moment we have only one.
-  if (not arg.has_collation())
-  {
-    arg.set_collation(default_charset_info->name);
-  }
-
-  /* 36 characters for uuid string +1 for NULL */
-  uuid_t uu;
-  char uuid_string[37];
-  uuid_generate_random(uu);
-  uuid_unparse(uu, uuid_string);
-  arg.set_uuid(uuid_string, 36);
-
-  arg.set_version(1);
-}
 
 void update(drizzled::message::Schema &arg)
 {

@@ -60,7 +60,7 @@ public:
 
     if (LOCAL_IDENTIFIER == identifier)
     {
-      message= drizzled::message::catalog::create(identifier);
+      message= drizzled::message::catalog::make_shared(identifier);
 
       return true;
     }

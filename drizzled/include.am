@@ -270,6 +270,9 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/memory/sql_alloc.h \
 			      drizzled/message.h \
 			      drizzled/message/cache.h \
+			      drizzled/message/catalog.h \
+			      drizzled/message/schema.h \
+			      drizzled/message/table.h \
 			      drizzled/module/context.h \
 			      drizzled/module/library.h \
 			      drizzled/module/manifest.h \
@@ -672,6 +675,8 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/message.cc \
 				 drizzled/message/cache.cc \
 				 drizzled/message/catalog.cc \
+				 drizzled/message/schema.cc \
+				 drizzled/message/table.cc \
 				 drizzled/module/context.cc \
 				 drizzled/module/library.cc \
 				 drizzled/module/loader.cc \

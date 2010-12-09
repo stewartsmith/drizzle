@@ -33,7 +33,7 @@ typedef boost::shared_ptr<message::Catalog> shared_ptr;
 typedef std::vector< shared_ptr > vector;
 typedef message::Catalog value_type;
 
-shared_ptr create(const drizzled::identifier::Catalog &identifier);
+shared_ptr make_shared(const drizzled::identifier::Catalog &identifier);
 
 } /* namespace catalog */
 } /* namespace message */

@@ -52,7 +52,7 @@ bool statement::CreateSchema::execute()
     return false;
   }
 
-  drizzled::message::init(schema_message, session->lex->name.str);
+  drizzled::message::schema::init(schema_message, session->lex->name.str);
 
   bool res = false;
   std::string path;

@@ -18,39 +18,60 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+
 #include "config.h"
-#include "drizzled/message/catalog.h"
+
 #include <uuid/uuid.h>
 
-#include <boost/make_shared.hpp>
+#include "drizzled/show.h"
+#include "drizzled/message/schema.h"
+#include "drizzled/session.h"
 
 namespace drizzled {
 namespace message {
-namespace catalog {
+namespace schema {
 
-
-shared_ptr make_shared(const identifier::Catalog &identifier)
+shared_ptr make_shared(const std::string &name_arg)
 {
-  shared_ptr message= boost::make_shared< value_type>();
-  assert(not identifier.getName().empty());
-  message->set_name(identifier.getName());
+  shared_ptr shared(new message::Schema);
 
-  message->set_creation_timestamp(time(NULL));
-  message->set_update_timestamp(time(NULL));
-  message->mutable_engine()->set_name("default");
+  shared->set_name(name_arg);
+  shared->set_catalog("local");
+  shared->set_creation_timestamp(time(NULL));
+  shared->set_update_timestamp(time(NULL));
+  shared->mutable_engine()->set_name("filesystem");
 
   /* 36 characters for uuid string +1 for NULL */
   uuid_t uu;
   char uuid_string[37];
   uuid_generate_random(uu);
   uuid_unparse(uu, uuid_string);
-  message->set_uuid(uuid_string, 36);
+  shared->set_uuid(uuid_string, 36);
 
-  message->set_version(1);
+  shared->set_version(1);
 
-  return message;
+  return shared;
 }
 
-} /* namespace catalog */
-} /* namespace message */
-} /* namespace drizzled */
+void init(drizzled::message::Schema &arg, const std::string &name_arg)
+{
+  arg.set_name(name_arg);
+  arg.mutable_engine()->set_name(std::string("filesystem")); // For the moment we have only one.
+  if (not arg.has_collation())
+  {
+    arg.set_collation(default_charset_info->name);
+  }
+
+  /* 36 characters for uuid string +1 for NULL */
+  uuid_t uu;
+  char uuid_string[37];
+  uuid_generate_random(uu);
+  uuid_unparse(uu, uuid_string);
+  arg.set_uuid(uuid_string, 36);
+
+  arg.set_version(1);
+}
+
+} // namespace schema
+} // namespace message
+} // namespace drizzled
