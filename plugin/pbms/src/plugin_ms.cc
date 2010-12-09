@@ -57,35 +57,18 @@ namespace po= boost::program_options;
 #include "events_ms.h"
 static PBMSEvents *pbms_events= NULL;
 
-
 extern int pbms_init_func(module::Context &registry);
-extern struct drizzled::drizzle_sys_var* pbms_system_variables[];
 
-extern uint32_t pbms_port_number;
-
-static void init_options(drizzled::module::option_context &context)
+static void init_options(module::option_context &context)
 {
-  context("port",
-          po::value<uint32_t>(&pbms_port_number)->default_value(DEFAULT_PBMS_PORT),
-          N_("Port number to use for connection or 0 for default PBMS port "));
+	PBMSParameters::initOptions(context);
 }
-
 
 static int my_init(module::Context &context)
 {
 	int rtc;
-        const module::option_map &vm= context.getOptions();
 
-        if (vm.count("port"))
-        {
-          if (pbms_port_number > 65535)
-          {
-            errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid port number\n"));
-            return(-1);
-          }
-        }
-
-	PBMSParameters::startUp();
+	PBMSParameters::startUp(context);
 	rtc = pbms_init_func(context);
 	if (rtc == 0) {
 		pbms_events = new PBMSEvents();
@@ -104,7 +87,7 @@ DRIZZLE_DECLARE_PLUGIN
 	"The Media Stream daemon for Drizzle",
 	PLUGIN_LICENSE_GPL,
 	my_init, /* Plugin Init */
-	pbms_system_variables,          /* system variables                */
+	NULL,          /* system variables                */
 	init_options                                            /* config options                  */
 }
 DRIZZLE_DECLARE_PLUGIN_END;
@@ -142,3 +125,4 @@ mysql_declare_plugin_end;
 #endif //DRIZZLED
 
 
+// vim:noexpandtab:sts=8:sw=8:tabstop=8:smarttab:

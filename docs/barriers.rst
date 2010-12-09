@@ -12,10 +12,10 @@ SELECT wait_until();
 SELECT signal();
 
 A barrier is a synchronization objest which can be used to syncronize a
-group of session to a specific rendezvous by calling wait(). At which point
-any session of the user may call signal() and all sessions being held by wait() are allowed to proceed. 
+group of sessions to a specific rendezvous by calling wait(). When wait() is called,
+any session of the user may call signal(), allowing all sessions being held by wait() to proceed. 
 
-Barriers can optional be created with a limit so that once a set number of sessions have called wait() that all "waiters" are then allowed to proceed. 
+Barriers can optionally be created with a limit so that once a set number of sessions have called wait() that all "waiters" are then allowed to proceed. 
 
 The session that creates the barrier via create_barrier() is not allowed to
 call either wait() or wait_until().

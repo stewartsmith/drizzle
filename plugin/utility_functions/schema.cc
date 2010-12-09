@@ -32,16 +32,15 @@ namespace utility_functions
 String *Schema::val_str(String *str)
 {
   assert(fixed == 1);
-  Session *session= current_session;
-  if (session->db.empty())
+  util::string::const_shared_ptr schema= getSession().schema();
+  if (not schema or schema->empty())
   {
     null_value= 1;
     return 0;
   }
-  else
-  {
-    str->copy(session->db.c_str(), session->db.length(), system_charset_info);
-  }
+
+  str->copy(schema->c_str(), schema->size(), system_charset_info);
+
   return str;
 }
 

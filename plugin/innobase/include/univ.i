@@ -52,7 +52,7 @@ Created 1/20/1994 Heikki Tuuri
 
 #define INNODB_VERSION_MAJOR	1
 #define INNODB_VERSION_MINOR	1
-#define INNODB_VERSION_BUGFIX	2
+#define INNODB_VERSION_BUGFIX	3
 
 /* The following is the InnoDB version as shown in
 SELECT plugin_version FROM information_schema.plugins;
@@ -83,18 +83,6 @@ have not figured out how to apply the visibility=hidden attribute to
 the virtual method table (vtable) in GCC 3. */
 # define ha_innobase ha_innodb
 #endif /* MYSQL_DYNAMIC_PLUGIN */
-
-/* if any of the following macros are not defined we are missing fundamental
- * and important symbols
- */
-#if !defined(HAVE_GCC_ATOMIC_BUILTINS) \
- && !defined(HAVE_IB_ATOMIC_PTHREAD_T_GCC) \
- && !defined(HAVE_SOLARIS_ATOMICS) \
- && !defined(HAVE_IB_ATOMIC_PTHREAD_T_SOLARIS) \
- && !defined(SIZEOF_PTHREAD_T) \
- && !defined(IB_HAVE_PAUSE_INSTRUCTION)
-# error There is a problem in the configure setup
-#endif
 
 #if (defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)) && !defined(MYSQL_SERVER) && !defined(__WIN__)
 # undef __WIN__

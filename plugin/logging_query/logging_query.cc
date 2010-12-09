@@ -264,7 +264,8 @@ public:
     quotify(*query_string, qs);
     
     // to avoid trying to printf %s something that is potentially NULL
-    const char *dbs= session->db.empty() ? "" : session->db.c_str();
+    util::string::const_shared_ptr schema(session->schema());
+    const char *dbs= (schema and not schema->empty()) ? schema->c_str() : "";
 
     formatter % t_mark
               % session->thread_id

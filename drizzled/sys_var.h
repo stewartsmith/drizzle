@@ -36,7 +36,6 @@ namespace drizzled
 {
 
 class sys_var;
-class sys_var_pluginvar; /* opaque */
 class Time_zone;
 typedef struct my_locale_st MY_LOCALE;
 
@@ -90,13 +89,17 @@ class sys_var
 {
 protected:
   std::string name; /**< The name of the variable */
+  sys_check_func check_func;
   sys_after_update_func after_update; /**< Function pointer triggered after the variable's value is updated */
   struct option *option_limits; /**< Updated by by sys_var_init() */
   bool m_allow_empty_value; /**< Does variable allow an empty value? */
 public:
-  sys_var(const std::string &name_arg, sys_after_update_func func= NULL)
+  sys_var(const std::string &name_arg,
+          sys_after_update_func func= NULL,
+          sys_check_func check_func_arg= NULL)
     :
     name(name_arg),
+    check_func(check_func_arg),
     after_update(func),
     option_limits(NULL),
     m_allow_empty_value(true)
@@ -177,10 +180,6 @@ public:
   }
   Item *item(Session *session, sql_var_t type, const LEX_STRING *base);
   virtual bool is_readonly() const
-  {
-    return 0;
-  }
-  virtual sys_var_pluginvar *cast_pluginvar()
   {
     return 0;
   }
@@ -360,16 +359,17 @@ class sys_var_str :public sys_var
 public:
   char *value;					// Pointer to allocated string
   uint32_t value_length;
-  sys_check_func check_func;
   sys_update_func update_func;
   sys_set_default_func set_default_func;
   sys_var_str(const char *name_arg,
               sys_check_func check_func_arg,
               sys_update_func update_func_arg,
               sys_set_default_func set_default_func_arg,
-              char *value_arg)
-    :sys_var(name_arg), value(value_arg), check_func(check_func_arg),
-    update_func(update_func_arg),set_default_func(set_default_func_arg)
+              char *value_arg) :
+    sys_var(name_arg, NULL, check_func_arg),
+    value(value_arg),
+    update_func(update_func_arg),
+    set_default_func(set_default_func_arg)
   {  }
   bool check(Session *session, set_var *var);
   bool update(Session *session, set_var *var)
@@ -450,6 +450,13 @@ public:
     default_value(value_arg.get())
   { }
 
+  sys_var_constrained_value(const char *name_arg,
+                            constrained_value<T> &value_arg,
+                            sys_check_func check_func_arg) :
+    sys_var(name_arg, NULL, check_func_arg),
+    value(value_arg),
+    default_value(value_arg.get())
+  { }
 
 public:
   bool is_readonly() const
@@ -1150,8 +1157,6 @@ struct sys_var_with_base
 */
 
 drizzle_show_var* enumerate_sys_vars(Session *session);
-void drizzle_add_plugin_sysvar(sys_var_pluginvar *var);
-void drizzle_del_plugin_sysvar();
 void add_sys_var_to_list(sys_var *var, struct option *long_options);
 void add_sys_var_to_list(sys_var *var);
 sys_var *find_sys_var(const char *str, uint32_t length=0);

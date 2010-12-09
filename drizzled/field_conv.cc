@@ -248,14 +248,20 @@ static void do_outer_field_null(CopyField *copy)
 
 static void do_copy_not_null(CopyField *copy)
 {
-  if (*copy->from_null_ptr & copy->from_bit)
+  if (copy->to_field->hasDefault() and *copy->from_null_ptr & copy->from_bit)
+  {
+    copy->to_field->set_default();
+  }
+  else if (*copy->from_null_ptr & copy->from_bit)
   {
     copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                 ER_WARN_DATA_TRUNCATED, 1);
     copy->to_field->reset();
   }
   else
+  {
     (copy->do_copy2)(copy);
+  }
 }
 
 
@@ -594,7 +600,9 @@ void CopyField::set(Field *to,Field *from,bool save)
       to_null_ptr= to->null_ptr;
       to_bit= to->null_bit;
       if (from_null_ptr)
+      {
         do_copy= do_copy_null;
+      }
       else
       {
         null_row= &from->getTable()->null_row;
@@ -604,11 +612,17 @@ void CopyField::set(Field *to,Field *from,bool save)
     else
     {
       if (to_field->type() == DRIZZLE_TYPE_TIMESTAMP)
+      {
         do_copy= do_copy_timestamp;               // Automatic timestamp
+      }
       else if (to_field == to_field->getTable()->next_number_field)
+      {
         do_copy= do_copy_next_number;
+      }
       else
+      {
         do_copy= do_copy_not_null;
+      }
     }
   }
   else if (to_field->real_maybe_null())

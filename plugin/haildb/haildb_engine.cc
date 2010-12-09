@@ -76,8 +76,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <drizzled/error.h>
 #include "drizzled/internal/my_pthread.h"
 #include <drizzled/plugin/transactional_storage_engine.h>
+#include <drizzled/plugin/error_message.h>
 
 #include <fcntl.h>
+#include <stdarg.h>
 
 #include <string>
 #include <boost/algorithm/string.hpp>
@@ -2908,6 +2910,25 @@ static void haildb_status_file_update(Session*, sql_var_t)
   (void)err;
 }
 
+extern "C" int haildb_errmsg_callback(ib_msg_stream_t, const char *fmt, ...);
+namespace drizzled
+{
+extern bool volatile shutdown_in_progress;
+}
+
+extern "C" int haildb_errmsg_callback(ib_msg_stream_t, const char *fmt, ...)
+{
+  bool r= false;
+  va_list args;
+  va_start(args, fmt);
+  if (! shutdown_in_progress)
+    r= plugin::ErrorMessage::vprintf(NULL, ERRMSG_LVL_WARN, fmt, args);
+  else
+    vfprintf(stderr, fmt, args);
+  va_end(args);
+
+  return (! r==true);
+}
 
 static int haildb_init(drizzled::module::Context &context)
 {
@@ -2936,6 +2957,7 @@ static int haildb_init(drizzled::module::Context &context)
   if (err != DB_SUCCESS)
     goto haildb_error;
 
+  ib_logger_set(haildb_errmsg_callback, NULL);
 
   if (not vm["data-home-dir"].as<string>().empty())
   {

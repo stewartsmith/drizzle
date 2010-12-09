@@ -422,22 +422,22 @@ col1	col2
 3	4
 4	7
 5	2
-alter table t1 add co3 int not null;
+ALTER TABLE t1 ADD co3 INT DEFAULT 42 NOT NULL;
 select * from t1;
 col1	col2	co3
-1	1	0
-2	3	0
-3	4	0
-4	7	0
-5	2	0
+1	1	42
+2	3	42
+3	4	42
+4	7	42
+5	2	42
 update t1 set col2='9' where col1='2';
 select * from t1;
 col1	col2	co3
-1	1	0
-2	9	0
-3	4	0
-4	7	0
-5	2	0
+1	1	42
+2	9	42
+3	4	42
+4	7	42
+5	2	42
 drop table t1;
 create table t1 (a int not null , b int, primary key (a)) engine = innodb;
 create TEMPORARY table t2 (a int not null , b int, primary key (a)) engine = myisam;
@@ -1446,10 +1446,10 @@ Variable_name	Value
 innodb_thread_concurrency	0
 set global innodb_thread_concurrency=1001;
 Warnings:
-Error	1292	Truncated incorrect thread_concurrency value: '1001'
+Error	1524	Error setting innodb_thread_concurrency. Given value 1001 (> 1000)
 show variables like "innodb_thread_concurrency";
 Variable_name	Value
-innodb_thread_concurrency	1000
+innodb_thread_concurrency	0
 set global innodb_thread_concurrency=0;
 show variables like "innodb_thread_concurrency";
 Variable_name	Value
@@ -1467,10 +1467,10 @@ Variable_name	Value
 innodb_concurrency_tickets	1000
 set global innodb_concurrency_tickets=0;
 Warnings:
-Error	1292	Truncated incorrect concurrency_tickets value: '0'
+Error	1524	Error setting innodb_concurrency_tickets. Given value 0 (< 1)
 show variables like "innodb_concurrency_tickets";
 Variable_name	Value
-innodb_concurrency_tickets	1
+innodb_concurrency_tickets	1000
 set global innodb_concurrency_tickets=500;
 show variables like "innodb_concurrency_tickets";
 Variable_name	Value

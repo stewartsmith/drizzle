@@ -1,15 +1,9 @@
-Obtaining Information on the Contents of the Database
-=====================================================
+Obtaining Information on the Database Contents
+==============================================
 
-Drizzle provides two schema per catalog that contain data about the contents
-of the schema, the state of the database instance, and other additional
-information that might be useful to a user. In addition Drizzle supports
-"SHOW" commands, and DESCRIBE, which can be used by a user to gain
-additional information.
+Drizzle provides two schema per catalog that provide information about the contents of the database, the state of the database instance, and additional user-centric information. In addition, Drizzle supports SHOW and DESCRIBE commands, which can be used to obtain additional information.
 
-The INFORMATION_SCHEMA only contains data that is the SQL standard requires.
-More information can be gained by the tables found in the DATA_DICTIONARY
-schema.
+The INFORMATION_SCHEMA only contains data that the SQL standard requires. More information can be gained by the tables found in the DATA_DICTIONARY schema.
 
 .. toctree::
    :maxdepth: 2
