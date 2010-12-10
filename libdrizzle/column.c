@@ -364,14 +364,15 @@ drizzle_column_st *drizzle_column_create(drizzle_result_st *result,
       return NULL;
     }
 
-    column->options= DRIZZLE_COLUMN_ALLOCATED;
+    DRIZZLE_ZERO_COLUMN_ST(column);
+    column->options|= DRIZZLE_COLUMN_ALLOCATED;
+
   }
   else
   {
-    column->options= 0;
+    DRIZZLE_ZERO_COLUMN_ST(column);
   }
 
-  column->prev= NULL;
   column->result= result;
 
   if (result->column_list)
