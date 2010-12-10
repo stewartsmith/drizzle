@@ -72,8 +72,10 @@ AC_DEFUN([_PANDORA_SEARCH_BOOST],[
         pandora_cv_boost_profile=no
         ])
     ])
+    AS_IF([test "x${pandora_cv_boost_profile}" = "xyes"],[
+      AC_DEFINE([BOOST_DETAIL_NO_CONTAINER_FWD],[1],[Disable forward decl of stl in boost])
+    ])
   ])
-      
 
   AM_CONDITIONAL(HAVE_BOOST, [test "x${ac_cv_boost}" = "xyes"])
   

@@ -139,7 +139,7 @@ AS_IF([test "$lt_cv_prog_gnu_ld" = "yes"],[
   ])
 
 WITH_VALGRIND
-AS_IF([test "x${ac_gcc_profile_mode}" = "xyes" -a "x{pandora_cv_boost_profile}" = "xyes"],[
+AS_IF([test "x${ac_gcc_profile_mode}" = "xyes" -a "x${pandora_cv_boost_profile}" = "xyes"],[
     AC_DEFINE([_GLIBCXX_PROFILE],[1],[Enable GCC Profile Mode])
     ])
 
