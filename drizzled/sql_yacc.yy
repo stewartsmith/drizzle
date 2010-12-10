@@ -388,7 +388,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
   Currently there are 88 shift/reduce conflicts.
   We should not introduce new conflicts any more.
 */
-%expect 94
+%expect 95
 
 /*
    Comments for TOKENS.
@@ -664,6 +664,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  READ_WRITE_SYM
 %token  REAL                          /* SQL-2003-R */
 %token  REDUNDANT_SYM
+%token  REGEXP_SYM
 %token  REFERENCES                    /* SQL-2003-R */
 %token  RELEASE_SYM                   /* SQL-2003-R */
 %token  RENAME
@@ -791,7 +792,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %left   XOR
 %left   AND_SYM
 %left   BETWEEN_SYM CASE_SYM WHEN_SYM THEN_SYM ELSE
-%left   EQ EQUAL_SYM GE GT_SYM LE LT NE IS LIKE IN_SYM
+%left   EQ EQUAL_SYM GE GT_SYM LE LT NE IS LIKE REGEXP_SYM IN_SYM
 %left   '-' '+'
 %left   '*' '/' '%' DIV_SYM MOD_SYM
 %left   NEG
@@ -2860,7 +2861,9 @@ predicate:
             $$= item;
           }
         | bit_expr BETWEEN_SYM bit_expr AND_SYM predicate
-          { $$= new Item_func_between($1,$3,$5); }
+          {
+            $$= new Item_func_between($1,$3,$5);
+          }
         | bit_expr not BETWEEN_SYM bit_expr AND_SYM predicate
           {
             Item_func_between *item= new Item_func_between($1,$4,$6);
@@ -2868,9 +2871,34 @@ predicate:
             $$= item;
           }
         | bit_expr LIKE simple_expr opt_escape
-          { $$= new Item_func_like($1,$3,$4,Lex->escape_used); }
+          { 
+            $$= new Item_func_like($1,$3,$4,Lex->escape_used);
+          }
         | bit_expr not LIKE simple_expr opt_escape
-          { $$= new Item_func_not(new Item_func_like($1,$4,$5, Lex->escape_used)); }
+          { 
+            $$= new Item_func_not(new Item_func_like($1,$4,$5, Lex->escape_used));
+          }
+        | bit_expr REGEXP_SYM bit_expr
+          { 
+            List<Item> *args= new (YYSession->mem_root) List<Item>;
+            args->push_back($1);
+            args->push_back($3);
+            if (! ($$= reserved_keyword_function(YYSession, "regex", args)))
+            {
+              DRIZZLE_YYABORT;
+            }
+          }
+        | bit_expr not REGEXP_SYM bit_expr
+          { 
+            List<Item> *args= new (YYSession->mem_root) List<Item>;
+            args->push_back($1);
+            args->push_back($4);
+            args->push_back(new (YYSession->mem_root) Item_int(1));
+            if (! ($$= reserved_keyword_function(YYSession, "regex", args)))
+            {
+              DRIZZLE_YYABORT;
+            }
+          }
         | bit_expr
         ;
 
@@ -3226,6 +3254,21 @@ function_call_conflict:
             }
             Lex->setCacheable(false);
 	  }
+        | EXECUTE_SYM '(' expr ')' opt_wait
+          {
+            List<Item> *args= new (YYSession->mem_root) List<Item>;
+            args->push_back($3);
+
+            if ($5)
+            {
+              args->push_back(new (YYSession->mem_root) Item_int(1));
+            }
+
+            if (! ($$= reserved_keyword_function(YYSession, "execute", args)))
+            {
+              DRIZZLE_YYABORT;
+            }
+          }
         | IF '(' expr ',' expr ',' expr ')'
           { $$= new (YYSession->mem_root) Item_func_if($3,$5,$7); }
         | KILL_SYM kill_option '(' expr ')'

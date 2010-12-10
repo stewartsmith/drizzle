@@ -57,6 +57,8 @@ static const uint32_t random_max= 0x3FFFFFFF;
 static const double random_max_double= (double)0x3FFFFFFF;
 
 
+ProtocolCounters *ListenMySQLProtocol::mysql_counters= new ProtocolCounters();
+
 ListenMySQLProtocol::~ListenMySQLProtocol()
 { }
 
@@ -77,16 +79,13 @@ plugin::Client *ListenMySQLProtocol::getClient(int fd)
   if (new_fd == -1)
     return NULL;
 
-  return new ClientMySQLProtocol(new_fd, _using_mysql41_protocol);
+  return new ClientMySQLProtocol(new_fd, _using_mysql41_protocol, getCounters());
 }
 
-drizzled::atomic<uint64_t> ClientMySQLProtocol::connectionCount;
-drizzled::atomic<uint64_t> ClientMySQLProtocol::failedConnections;
-drizzled::atomic<uint64_t> ClientMySQLProtocol::connected;
-
-ClientMySQLProtocol::ClientMySQLProtocol(int fd, bool using_mysql41_protocol):
+ClientMySQLProtocol::ClientMySQLProtocol(int fd, bool using_mysql41_protocol, ProtocolCounters *set_counters):
   is_admin_connection(false),
-  _using_mysql41_protocol(using_mysql41_protocol)
+  _using_mysql41_protocol(using_mysql41_protocol),
+  counters(set_counters)
 {
   
   net.vio= 0;
@@ -144,7 +143,7 @@ void ClientMySQLProtocol::close(void)
   { 
     drizzleclient_net_close(&net);
     drizzleclient_net_end(&net);
-    connected.decrement();
+    counters->connected.decrement();
   }
 }
 
@@ -152,8 +151,8 @@ bool ClientMySQLProtocol::authenticate()
 {
   bool connection_is_valid;
 
-  connectionCount.increment();
-  connected.increment();
+  counters->connectionCount.increment();
+  counters->connected.increment();
 
   /* Use "connect_timeout" value during connection phase */
   drizzleclient_net_set_read_timeout(&net, connect_timeout.get());
@@ -162,13 +161,20 @@ bool ClientMySQLProtocol::authenticate()
   connection_is_valid= checkConnection();
 
   if (connection_is_valid)
-    sendOK();
+    if (counters->connected > counters->max_connections)
+    {
+      std::string errmsg(ER(ER_CON_COUNT_ERROR));
+      sendError(ER_CON_COUNT_ERROR, errmsg.c_str());
+    }
+    else
+      sendOK();
   else
   {
     sendError(session->main_da.sql_errno(), session->main_da.message());
-    failedConnections.increment();
+    counters->failedConnections.increment();
     return false;
   }
+
   /* Connect completed, set read/write timeouts back to default */
   drizzleclient_net_set_read_timeout(&net, read_timeout.get());
   drizzleclient_net_set_write_timeout(&net, write_timeout.get());
@@ -937,6 +943,8 @@ static int init(drizzled::module::Context &context)
   context.registerVariable(new sys_var_const_string_val("bind_address",
                                                         vm["bind-address"].as<std::string>()));
 
+  context.registerVariable(new sys_var_uint32_t_ptr("max-connections", &ListenMySQLProtocol::mysql_counters->max_connections));
+
   return 0;
 }
 
@@ -964,13 +972,16 @@ static void init_options(drizzled::module::option_context &context)
   context("bind-address",
           po::value<string>()->default_value(""),
           N_("Address to bind to."));
+  context("max-connections",
+          po::value<uint32_t>(&ListenMySQLProtocol::mysql_counters->max_connections)->default_value(1000),
+          N_("Maximum simultaneous connections."));
 }
 
 static int mysql_protocol_connection_count_func(drizzle_show_var *var, char *buff)
 {
   var->type= SHOW_LONGLONG;
   var->value= buff;
-  *((uint64_t *)buff)= ClientMySQLProtocol::connectionCount;
+  *((uint64_t *)buff)= ListenMySQLProtocol::mysql_counters->connectionCount;
   return 0;
 }
 
@@ -978,7 +989,7 @@ static int mysql_protocol_connected_count_func(drizzle_show_var *var, char *buff
 {
   var->type= SHOW_LONGLONG;
   var->value= buff;
-  *((uint64_t *)buff)= ClientMySQLProtocol::connected;
+  *((uint64_t *)buff)= ListenMySQLProtocol::mysql_counters->connected;
   return 0;
 }
 
@@ -986,7 +997,7 @@ static int mysql_protocol_failed_count_func(drizzle_show_var *var, char *buff)
 {
   var->type= SHOW_LONGLONG;
   var->value= buff;
-  *((uint64_t *)buff)= ClientMySQLProtocol::failedConnections;
+  *((uint64_t *)buff)= ListenMySQLProtocol::mysql_counters->failedConnections;
   return 0;
 }
 

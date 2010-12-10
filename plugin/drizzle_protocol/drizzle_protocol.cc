@@ -53,6 +53,8 @@ static buffer_constraint buffer_length;
 
 static const uint32_t DRIZZLE_TCP_PORT= 4427;
 
+ProtocolCounters *ListenDrizzleProtocol::drizzle_counters= new ProtocolCounters();
+
 ListenDrizzleProtocol::~ListenDrizzleProtocol()
 {
 }
@@ -76,6 +78,8 @@ static int init(drizzled::module::Context &context)
   context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("buffer_length", buffer_length));
   context.registerVariable(new sys_var_const_string_val("bind_address",
                                                         vm["bind-address"].as<std::string>()));
+
+  context.registerVariable(new sys_var_uint32_t_ptr("max-connections", &ListenDrizzleProtocol::drizzle_counters->max_connections));
 
   return 0;
 }
@@ -104,6 +108,9 @@ static void init_options(drizzled::module::option_context &context)
   context("bind-address",
           po::value<std::string>()->default_value(""),
           N_("Address to bind to."));
+  context("max-connections",
+          po::value<uint32_t>(&ListenDrizzleProtocol::drizzle_counters->max_connections)->default_value(1000),
+          N_("Maximum simultaneous connections."));
 }
 
 } /* namespace drizzle_protocol */

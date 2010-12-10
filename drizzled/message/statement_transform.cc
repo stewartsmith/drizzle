@@ -127,6 +127,10 @@ transformStatementToSql(const Statement &source,
 
   switch (source.type())
   {
+  case Statement::ROLLBACK_STATEMENT:
+    {
+      break;
+    }
   case Statement::ROLLBACK:
     {
       sql_strings.push_back("ROLLBACK");
