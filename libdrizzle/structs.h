@@ -238,16 +238,6 @@ struct drizzle_column_st
   size_t default_value_size;
 };
 
-#define DRIZZLE_ZERO_COLUMN_ST(column) \
-    memset((column), 0, sizeof(drizzle_result_st *) + sizeof(drizzle_column_st *) + sizeof(drizzle_column_st *) + sizeof(drizzle_column_options_t)); \
-    (column)->catalog[0]= '\0'; \
-    (column)->db[0]= '\0'; \
-    (column)->table[0]= '\0'; \
-    (column)->orig_table[0]= '\0'; \
-    (column)->name[0]= '\0'; \
-    (column)->orig_name[0]= '\0'; \
-    memset(&((column)->charset), 0, sizeof(drizzle_charset_t) + sizeof(uint32_t) + sizeof(size_t) + sizeof(drizzle_column_type_t) + sizeof(int) + sizeof(uint8_t) + sizeof(uint8_t) + sizeof(size_t));
-
 #ifdef __cplusplus
 }
 #endif
