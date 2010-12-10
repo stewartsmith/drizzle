@@ -367,7 +367,7 @@ static void printTransaction(const message::Transaction &transaction,
       /* A segmented statement that was successfully executed */
       else
       {
-        for (int y= 0; y < cached_statement_sql.size(); y++)
+        for (size_t y= 0; y < cached_statement_sql.size(); y++)
         {
           cout << cached_statement_sql[y];
         }
