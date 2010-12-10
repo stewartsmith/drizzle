@@ -112,7 +112,27 @@ int main(int argc, char *argv[])
       break;
 
     case 'v':
-      verbose++;
+      switch(verbose)
+      {
+      case DRIZZLE_VERBOSE_NEVER:
+        verbose= DRIZZLE_VERBOSE_FATAL;
+        break;
+      case DRIZZLE_VERBOSE_FATAL:
+        verbose= DRIZZLE_VERBOSE_ERROR;
+        break;
+      case DRIZZLE_VERBOSE_ERROR:
+        verbose= DRIZZLE_VERBOSE_INFO;
+        break;
+      case DRIZZLE_VERBOSE_INFO:
+        verbose= DRIZZLE_VERBOSE_DEBUG;
+        break;
+      case DRIZZLE_VERBOSE_DEBUG:
+        verbose= DRIZZLE_VERBOSE_CRAZY;
+        break;
+      case DRIZZLE_VERBOSE_CRAZY:
+      case DRIZZLE_VERBOSE_MAX:
+        break;
+      }
       break;
 
     default:
@@ -215,7 +235,7 @@ static void proxy(drizzle_st *drizzle, drizzle_con_st *server,
 {
   drizzle_return_t ret;
   drizzle_command_t command;
-  const uint8_t *data;
+  uint8_t *data;
   size_t offset;
   size_t size;
   size_t total;
@@ -268,7 +288,7 @@ static void proxy(drizzle_st *drizzle, drizzle_con_st *server,
 
     while (1)
     {
-      data= drizzle_con_command_read(server, &command, &offset, &size, &total,
+      data= (uint8_t *)drizzle_con_command_read(server, &command, &offset, &size, &total,
                                      &ret);
       if (ret == DRIZZLE_RETURN_LOST_CONNECTION)
         return;

@@ -3520,7 +3520,7 @@ btr_estimate_number_of_different_key_vals(
 
 	n_cols = dict_index_get_n_unique(index);
 
-	n_diff = mem_zalloc((n_cols + 1) * sizeof(ib_int64_t));
+	n_diff = (ib_int64_t *)mem_zalloc((n_cols + 1) * sizeof(ib_int64_t));
 
 	/* It makes no sense to test more pages than are contained
 	in the index, thus we lower the number if it is too high */
@@ -3851,7 +3851,7 @@ btr_cur_mark_dtuple_inherited_extern(
 			}
 		}
 
-		data = dfield_get_data(dfield);
+		data = (unsigned char *)dfield_get_data(dfield);
 		len = dfield_get_len(dfield);
 		data[len - BTR_EXTERN_FIELD_REF_SIZE + BTR_EXTERN_LEN]
 			|= BTR_EXTERN_INHERITED_FLAG;
@@ -3910,7 +3910,7 @@ btr_cur_unmark_dtuple_extern_fields(
 		dfield_t* dfield = dtuple_get_nth_field(entry, i);
 
 		if (dfield_is_ext(dfield)) {
-			byte*	data = dfield_get_data(dfield);
+			byte*	data = (unsigned char *)dfield_get_data(dfield);
 			ulint	len = dfield_get_len(dfield);
 
 			data[len - BTR_EXTERN_FIELD_REF_SIZE + BTR_EXTERN_LEN]
@@ -3976,10 +3976,10 @@ btr_push_update_extern_fields(
 				will have to be copied. */
 				ut_a(uf->orig_len > BTR_EXTERN_FIELD_REF_SIZE);
 
-				data = dfield_get_data(field);
+				data = (unsigned char *)dfield_get_data(field);
 				len = dfield_get_len(field);
 
-				buf = mem_heap_alloc(heap, uf->orig_len);
+				buf = (unsigned char *)mem_heap_alloc(heap, uf->orig_len);
 				/* Copy the locally stored prefix. */
 				memcpy(buf, data,
 				       uf->orig_len
@@ -4165,7 +4165,7 @@ btr_store_big_rec_extern_fields(
 			int	err = deflateReset(&c_stream);
 			ut_a(err == Z_OK);
 
-			c_stream.next_in = (void*) big_rec_vec->fields[i].data;
+			c_stream.next_in = (Bytef *) big_rec_vec->fields[i].data;
 			c_stream.avail_in = extern_len;
 		}
 
@@ -5087,7 +5087,7 @@ btr_copy_externally_stored_field(
 
 	extern_len = mach_read_from_4(data + local_len + BTR_EXTERN_LEN + 4);
 
-	buf = mem_heap_alloc(heap, local_len + extern_len);
+	buf = (unsigned char *)mem_heap_alloc(heap, local_len + extern_len);
 
 	memcpy(buf, data, local_len);
 	*len = local_len

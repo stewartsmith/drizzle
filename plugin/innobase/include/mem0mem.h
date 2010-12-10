@@ -232,7 +232,7 @@ the C compiler. Is like malloc of C. The buffer must be freed
 with mem_free.
 @return	own: free storage */
 UNIV_INLINE
-void*
+void *
 mem_alloc_func(
 /*===========*/
 	ulint		n,		/*!< in: requested size in bytes */

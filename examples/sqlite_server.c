@@ -120,7 +120,27 @@ int main(int argc, char *argv[])
       break;
 
     case 'v':
-      server->verbose++;
+      switch(server->verbose)
+      {
+      case DRIZZLE_VERBOSE_NEVER:
+        server->verbose= DRIZZLE_VERBOSE_FATAL;
+        break;
+      case DRIZZLE_VERBOSE_FATAL:
+        server->verbose= DRIZZLE_VERBOSE_ERROR;
+        break;
+      case DRIZZLE_VERBOSE_ERROR:
+        server->verbose= DRIZZLE_VERBOSE_INFO;
+        break;
+      case DRIZZLE_VERBOSE_INFO:
+        server->verbose= DRIZZLE_VERBOSE_DEBUG;
+        break;
+      case DRIZZLE_VERBOSE_DEBUG:
+        server->verbose= DRIZZLE_VERBOSE_CRAZY;
+        break;
+      case DRIZZLE_VERBOSE_CRAZY:
+      case DRIZZLE_VERBOSE_MAX:
+        break;
+      }
       break;
 
     default:
@@ -240,7 +260,7 @@ static void server_run(sqlite_server *server)
     if (data != NULL)
       free(data);
 
-    data= drizzle_con_command_buffer(&(server->con), &command, &total, &ret);
+    data= (uint8_t *)drizzle_con_command_buffer(&(server->con), &command, &total, &ret);
     if (ret == DRIZZLE_RETURN_LOST_CONNECTION ||
         (ret == DRIZZLE_RETURN_OK && command == DRIZZLE_COMMAND_QUIT))
     {
