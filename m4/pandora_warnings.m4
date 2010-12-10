@@ -87,6 +87,21 @@ AC_DEFUN([PANDORA_WARNINGS],[
             F_DIAGNOSTICS_SHOW_OPTION="-fdiagnostics-show-option"
           ])
 
+    AC_CACHE_CHECK([whether it is safe to use -floop-parallelize-all],
+      [ac_cv_safe_to_use_floop_parallelize_all_],
+      [save_CFLAGS="$CFLAGS"
+       CFLAGS="-floop-parallelize-all ${AM_CFLAGS} ${CFLAGS}"
+       AC_COMPILE_IFELSE(
+         [AC_LANG_PROGRAM([],[])],
+         [ac_cv_safe_to_use_floop_parallelize_all_=yes],
+         [ac_cv_safe_to_use_floop_parallelize_all_=no])
+       CFLAGS="$save_CFLAGS"])
+
+    AS_IF([test "$ac_cv_safe_to_use_floop_parallelize_all_" = "yes"],
+          [
+            F_LOOP_PARALLELIZE_ALL="-floop-parallelize-all"
+          ])
+
     NO_STRICT_ALIASING="-fno-strict-aliasing -Wno-strict-aliasing"
     NO_SHADOW="-Wno-shadow"
 
@@ -132,7 +147,7 @@ AC_DEFUN([PANDORA_WARNINGS],[
         [ac_cv_safe_to_use_Wextra_=no])
       CFLAGS="$save_CFLAGS"])
 
-      BASE_WARNINGS="${W_FAIL} -pedantic -Wall -Wundef -Wshadow ${NO_UNUSED} ${F_DIAGNOSTICS_SHOW_OPTION} ${BASE_WARNINGS_FULL}"
+      BASE_WARNINGS="${W_FAIL} -pedantic -Wall -Wundef -Wshadow ${NO_UNUSED} ${F_DIAGNOSTICS_SHOW_OPTION} ${F_LOOP_PARALLELIZE_ALL} ${BASE_WARNINGS_FULL}"
       AS_IF([test "$ac_cv_safe_to_use_Wextra_" = "yes"],
             [BASE_WARNINGS="${BASE_WARNINGS} -Wextra"],
             [BASE_WARNINGS="${BASE_WARNINGS} -W"])
