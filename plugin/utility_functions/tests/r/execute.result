@@ -1,0 +1,63 @@
+set @my_barrier= "barrier";
+SELECT CREATE_BARRIER(@my_barrier);
+CREATE_BARRIER(@my_barrier)
+1
+set @my_barrier= "barrier";
+SELECT CREATE_BARRIER(@my_barrier);
+CREATE_BARRIER(@my_barrier)
+0
+CREATE TABLE t1 (A VARCHAR(150));
+SET @execute= "SELECT WAIT('barrier')";
+INSERT INTO t1 VALUES (@execute), (@execute), (@execute);
+set @my_barrier= "barrier";
+SELECT USER_BARRIER_NAME FROM DATA_DICTIONARY.USER_BARRIERS WHERE USER_BARRIER_NAME=@my_barrier;
+USER_BARRIER_NAME
+barrier
+SELECT SIGNAL(@my_barrier);
+SIGNAL(@my_barrier)
+1
+SELECT EXECUTE(A) FROM t1;
+EXECUTE(A)
+1
+1
+1
+SELECT WAIT_UNTIL(@my_barrier, 3);
+WAIT_UNTIL(@my_barrier, 3)
+1
+SELECT USER,INFO FROM DATA_DICTIONARY.PROCESSLIST ORDER BY ID;
+USER	INFO
+root	SELECT USER,INFO FROM DATA_DICTIONARY.PROCESSLIST ORDER BY ID
+root	NULL
+root	SELECT WAIT('barrier')
+root	SELECT WAIT('barrier')
+root	SELECT WAIT('barrier')
+SELECT SIGNAL(@my_barrier);
+SIGNAL(@my_barrier)
+1
+TRUNCATE t1;
+SET @execute= "SELECT WAIT('barrier'), 2";
+INSERT INTO t1 VALUES (@execute), (@execute), (@execute);
+SELECT EXECUTE(A) FROM t1;
+EXECUTE(A)
+1
+1
+1
+SELECT WAIT_UNTIL(@my_barrier, 3);
+WAIT_UNTIL(@my_barrier, 3)
+1
+SELECT USER,INFO FROM DATA_DICTIONARY.PROCESSLIST ORDER BY ID;
+USER	INFO
+root	SELECT USER,INFO FROM DATA_DICTIONARY.PROCESSLIST ORDER BY ID
+root	NULL
+root	SELECT WAIT('barrier'), 2
+root	SELECT WAIT('barrier'), 2
+root	SELECT WAIT('barrier'), 2
+SELECT IF(KILL(ID), "YES", "NO") FROM DATA_DICTIONARY.PROCESSLIST WHERE INFO LIKE "%2";
+IF(KILL(ID), "YES", "NO")
+YES
+YES
+YES
+SELECT SIGNAL(@my_barrier);
+SIGNAL(@my_barrier)
+1
+DROP TABLE t1;

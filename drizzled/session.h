@@ -37,15 +37,15 @@
 #include "drizzled/util/storable.h"
 #include "drizzled/my_hash.h"
 #include "drizzled/pthread_globals.h"
-
 #include <netdb.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 
-#include <map>
-#include <string>
+#include <algorithm>
 #include <bitset>
 #include <deque>
+#include <map>
+#include <string>
 
 #include "drizzled/security_context.h"
 #include "drizzled/open_tables_state.h"
@@ -59,6 +59,8 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/shared_mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
+#include <boost/make_shared.hpp>
+
 
 #define MIN_HANDSHAKE_SIZE      6
 
@@ -416,7 +418,8 @@ public:
 
   void resetQueryString()
   {
-    return query.reset(new std::string);
+    query.reset();
+    _state.reset();
   }
 
   /*
@@ -428,9 +431,68 @@ public:
   {
     QueryString tmp_string(getQueryString());
 
+    assert(tmp_string);
+    if (not tmp_string)
+    {
+      length= 0;
+      return 0;
+    }
+
     length= tmp_string->length();
     char *to_return= strmake(tmp_string->c_str(), tmp_string->length());
     return to_return;
+  }
+
+  class State {
+    std::vector <char> _query;
+
+  public:
+    typedef boost::shared_ptr<State> const_shared_ptr;
+
+    State(const char *in_packet, size_t in_packet_length)
+    {
+      if (in_packet_length)
+      {
+        size_t minimum= std::min(in_packet_length, static_cast<size_t>(PROCESS_LIST_WIDTH));
+        _query.resize(minimum + 1);
+        memcpy(&_query[0], in_packet, minimum);
+      }
+      else
+      {
+        _query.resize(0);
+      }
+    }
+
+    const char *query() const
+    {
+      if (_query.size())
+        return &_query[0];
+
+      return "";
+    }
+
+    const char *query(size_t &size) const
+    {
+      if (_query.size())
+      {
+        size= _query.size() -1;
+        return &_query[0];
+      }
+
+      size= 0;
+      return "";
+    }
+  protected:
+    friend class Session;
+    typedef boost::shared_ptr<State> shared_ptr;
+  };
+private:
+  State::shared_ptr  _state; 
+public:
+
+  State::const_shared_ptr state()
+  {
+    return _state;
   }
 
   /**
@@ -445,11 +507,16 @@ public:
     the Session of that thread); that thread is (and must remain, for now) the
     only responsible for freeing this member.
   */
-  std::string db;
+private:
+  util::string::shared_ptr _schema;
+public:
 
-  const std::string &getSchema() const
+  util::string::const_shared_ptr schema() const
   {
-    return db;
+    if (_schema)
+      return _schema;
+
+    return util::string::const_shared_ptr(new std::string(""));
   }
   std::string catalog;
   /* current cache key */
@@ -1309,12 +1376,8 @@ public:
     database usually involves other actions, like switching other database
     attributes including security context. In the future, this operation
     will be made private and more convenient interface will be provided.
-
-    @return Operation status
-      @retval false Success
-      @retval true  Out-of-memory error
   */
-  bool set_db(const std::string &new_db);
+  void set_db(const std::string &new_db);
 
   /*
     Copy the current database to the argument. Use the current arena to

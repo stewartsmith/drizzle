@@ -897,14 +897,15 @@ void InnodbTrxTool::Generator::populate_innodb_trx()
     push(static_cast<int64_t>(row->trx_weight));
     push(static_cast<uint64_t>(row->trx_mysql_thread_id));
     if (row->trx_query)
-    {
       push(row->trx_query);
-    }
     else
-    {
       push();
-    }
-    push(row->trx_operation_state);
+
+    if (row->trx_operation_state)
+      push(row->trx_operation_state);
+    else
+      push();
+
 //    push(row->trx_tables_in_use);
     push(static_cast<uint64_t>(row->trx_tables_locked));
     push(static_cast<uint64_t>(row->trx_lock_structs));
@@ -915,7 +916,11 @@ void InnodbTrxTool::Generator::populate_innodb_trx()
     push(row->trx_isolation_level);
     push(static_cast<uint64_t>(row->trx_unique_checks));
     push(static_cast<uint64_t>(row->trx_foreign_key_checks));
-    push(row->trx_foreign_key_error);
+    if (row->trx_foreign_key_error)
+      push(row->trx_foreign_key_error);
+    else
+      push();
+
     push(static_cast<uint64_t>(row->trx_has_search_latch));
     push(static_cast<uint64_t>(row->trx_search_latch_timeout));
 }

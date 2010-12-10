@@ -100,7 +100,7 @@ Field_timestamp::Field_timestamp(unsigned char *ptr_arg,
   {
     /* This timestamp has auto-update */
     share->setTimestampField(this);
-    flags|= TIMESTAMP_FLAG;
+    flags|= FUNCTION_DEFAULT_FLAG;
     if (unireg_check != TIMESTAMP_DN_FIELD)
       flags|= ON_UPDATE_NOW_FLAG;
   }

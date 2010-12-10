@@ -6,12 +6,15 @@
 --source ../plugin/transaction_log/tests/t/truncate_log.inc
 --enable_query_log
 
-CREATE TABLE t (a INT NOT NULL PRIMARY KEY, b VARCHAR(100));
+CREATE TABLE t (a INT NOT NULL AUTO_INCREMENT PRIMARY KEY, b VARCHAR(16000));
 
 START TRANSACTION;
-
---source ../plugin/transaction_log/tests/t/bulk_insert.inc
-
+INSERT INTO t (b) VALUES
+  (REPEAT(".", 16000)), (REPEAT(".", 16000)),
+  (REPEAT(".", 16000)), (REPEAT(".", 16000)),
+  (REPEAT(".", 16000)), (REPEAT(".", 16000)), 
+  (REPEAT(".", 16000)), (REPEAT(".", 16000)),
+  (REPEAT(".", 16000)), (REPEAT(".", 16000));
 ROLLBACK;
 
 --echo

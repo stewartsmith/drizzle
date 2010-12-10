@@ -373,11 +373,5 @@ BUILT_MAINT_SRC+= \
 EXTRA_DIST+= \
              plugin/innobase/CMakeLists.txt \
              plugin/innobase/pars/pars0grm.y \
-             plugin/innobase/pars/pars0lex.l \
-             plugin/innobase/ut/ut0auxconf_atomic_pthread_t_gcc.c \
-             plugin/innobase/ut/ut0auxconf_atomic_pthread_t_solaris.c \
-             plugin/innobase/ut/ut0auxconf_have_solaris_atomics.c \
-             plugin/innobase/ut/ut0auxconf_pause.c \
-             plugin/innobase/ut/ut0auxconf_sizeof_pthread_t.c
-
+             plugin/innobase/pars/pars0lex.l
 

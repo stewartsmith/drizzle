@@ -52,6 +52,8 @@ public:
   bool getFileDescriptors(std::vector<int> &fds);
 
   in_port_t getPort(void) const;
+  static ProtocolCounters *mysql_unix_counters;
+  virtual ProtocolCounters *getCounters(void) const {return mysql_unix_counters; }
 };
 
 

@@ -23,6 +23,7 @@
 
 #include "drizzled/global_charset_info.h"
 #include "drizzled/charset.h"
+#include "drizzled/transaction_services.h"
 
 #include "drizzled/plugin/storage_engine.h"
 #include "drizzled/plugin/authorization.h"
@@ -154,7 +155,13 @@ public:
   result_type operator() (argument_type engine)
   {
     // @todo eomeday check that at least one engine said "true"
-    (void)engine->doCreateSchema(schema_message);
+    bool success= engine->doCreateSchema(schema_message);
+
+    if (success) 
+    {
+      TransactionServices &transaction_services= TransactionServices::singleton();
+      transaction_services.allocateNewTransactionId();
+    }
   }
 };
 
@@ -187,7 +194,11 @@ public:
     bool success= engine->doDropSchema(identifier);
 
     if (success)
+    {
       success_count++;
+      TransactionServices &transaction_services= TransactionServices::singleton();
+      transaction_services.allocateNewTransactionId();
+    }
   }
 };
 
@@ -222,7 +233,11 @@ public:
 
 
     if (success)
+    {
       success_count++;
+      TransactionServices &transaction_services= TransactionServices::singleton();
+      transaction_services.allocateNewTransactionId();
+    }
   }
 };
 

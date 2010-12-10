@@ -136,7 +136,6 @@ int mysql_update(Session *session, TableList *table_list,
   bool		using_limit= limit != HA_POS_ERROR;
   bool		used_key_is_modified;
   bool		transactional_table;
-  bool		can_compare_record;
   int		error;
   uint		used_index= MAX_KEY, dup_key_found;
   bool          need_sort= true;
@@ -459,14 +458,6 @@ int mysql_update(Session *session, TableList *table_list,
   if (table->cursor->getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ))
     table->prepare_for_position();
 
-  /*
-    We can use compare_record() to optimize away updates if
-    the table handler is returning all columns OR if
-    if all updated columns are read
-  */
-  can_compare_record= (! (table->cursor->getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ)) ||
-                       table->write_set->is_subset_of(*table->read_set));
-
   while (not (error=info.read_record(&info)) && not session->getKilled())
   {
     if (not (select && select->skip_record()))
@@ -476,24 +467,11 @@ int mysql_update(Session *session, TableList *table_list,
 
       table->storeRecord();
       if (fill_record(session, fields, values))
-      {
-        /*
-         * If we updated some rows before this one failed (updated > 0),
-         * then we will need to undo adding those records to the
-         * replication Statement message.
-         */
-        if (updated > 0)
-        {
-          TransactionServices &ts= TransactionServices::singleton();
-          ts.removeStatementRecords(session, updated);
-        }
-
         break;
-      }
 
       found++;
 
-      if (!can_compare_record || table->compare_record())
+      if (! table->records_are_comparable() || table->compare_records())
       {
         /* Non-batched update */
         error= table->cursor->updateRecord(table->getUpdateRecord(),

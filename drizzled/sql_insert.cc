@@ -846,9 +846,8 @@ int write_record(Session *session, Table *table,CopyInfo *info)
           table->cursor->adjust_next_insert_id_after_explicit_value(
             table->next_number_field->val_int());
         info->touched++;
-        if ((table->cursor->getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ) &&
-            ! table->write_set->is_subset_of(*table->read_set)) ||
-            table->compare_record())
+
+        if (! table->records_are_comparable() || table->compare_records())
         {
           if ((error=table->cursor->updateRecord(table->getUpdateRecord(),
                                                 table->getInsertRecord())) &&
@@ -1276,16 +1275,7 @@ bool select_insert::send_data(List<Item> &values)
   store_values(values);
   session->count_cuted_fields= CHECK_FIELD_IGNORE;
   if (session->is_error())
-  {
-    /*
-     * If we fail mid-way through INSERT..SELECT, we need to remove any
-     * records that we added to the current Statement message. We can
-     * use session->row_count to know how many records we have already added.
-     */
-    TransactionServices &ts= TransactionServices::singleton();
-    ts.removeStatementRecords(session, (session->row_count - 1));
     return(1);
-  }
 
   // Release latches in case bulk insert takes a long time
   plugin::TransactionalStorageEngine::releaseTemporaryLatches(session);

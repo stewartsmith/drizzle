@@ -230,7 +230,6 @@ bool String::copy(const char *str,size_t arg_length, const CHARSET_INFO * const 
   return false;
 }
 
-
 /*
   Checks that the source string can be just copied to the destination string
   without conversion.
