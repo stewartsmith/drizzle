@@ -21,6 +21,7 @@
 #include "config.h"
 
 #include "drizzled/display.h"
+#include "drizzled/item.h"
 
 #include <assert.h>
 
@@ -51,8 +52,34 @@ static const std::string DRIZZLE_TYPE_ENUM("DRIZZLE_TYPE_ENUM");
 static const std::string DRIZZLE_TYPE_BLOB("DRIZZLE_TYPE_BLOB"); 
 static const std::string DRIZZLE_TYPE_MAX("DRIZZLE_TYPE_MAX"); 
 
+static const std::string FIELD_ITEM("FIELD_ITEM");
+static const std::string FUNC_ITEM("FUNC_ITEM");
+static const std::string SUM_FUNC_ITEM("SUM_FUNC_ITEM");
+static const std::string STRING_ITEM("STRING_ITEM");
+static const std::string INT_ITEM("INT_ITEM");
+static const std::string REAL_ITEM("REAL_ITEM");
+static const std::string NULL_ITEM("NULL_ITEM");
+static const std::string VARBIN_ITEM("VARBIN_ITEM");
+static const std::string COPY_STR_ITEM("COPY_STR_ITEM");
+static const std::string FIELD_AVG_ITEM("FIELD_AVG_ITEM");
+static const std::string DEFAULT_VALUE_ITEM("DEFAULT_VALUE_ITEM");
+static const std::string PROC_ITEM("PROC_ITEM");
+static const std::string COND_ITEM("COND_ITEM");
+static const std::string REF_ITEM("REF_ITEM");
+static const std::string FIELD_STD_ITEM("FIELD_STD_ITEM");
+static const std::string FIELD_VARIANCE_ITEM("FIELD_VARIANCE_ITEM");
+static const std::string INSERT_VALUE_ITEM("INSERT_VALUE_ITEM");
+static const std::string SUBSELECT_ITEM("SUBSELECT_ITEM");
+static const std::string ROW_ITEM("ROW_ITEM");
+static const std::string CACHE_ITEM("CACHE_ITEM");
+static const std::string TYPE_HOLDER("TYPE_HOLDER");
+static const std::string PARAM_ITEM("PARAM_ITEM");
+static const std::string DECIMAL_ITEM("DECIMAL_ITEM");
+
+#if 0
 static const std::string YES("YES");
 static const std::string NO("NO");
+#endif
 
 
 const std::string &type(drizzled::enum_server_command type)
@@ -75,6 +102,62 @@ const std::string &type(drizzled::enum_server_command type)
     return COM_PING;
   case drizzled::COM_END : 
     return COM_END;
+  }
+
+  assert(0);
+  return PROGRAM_ERROR;
+}
+
+const std::string &type(drizzled::Item::Type type)
+{
+  switch (type)
+  {
+  case drizzled::Item::FIELD_ITEM :
+    return FIELD_ITEM;
+  case drizzled::Item::FUNC_ITEM :
+    return FUNC_ITEM;
+  case drizzled::Item::SUM_FUNC_ITEM :
+    return SUM_FUNC_ITEM;
+  case drizzled::Item::STRING_ITEM :
+    return STRING_ITEM;
+  case drizzled::Item::INT_ITEM :
+    return INT_ITEM;
+  case drizzled::Item::REAL_ITEM :
+    return REAL_ITEM;
+  case drizzled::Item::NULL_ITEM :
+    return NULL_ITEM;
+  case drizzled::Item::VARBIN_ITEM :
+    return VARBIN_ITEM;
+  case drizzled::Item::COPY_STR_ITEM :
+    return COPY_STR_ITEM;
+  case drizzled::Item::FIELD_AVG_ITEM :
+    return FIELD_AVG_ITEM;
+  case drizzled::Item::DEFAULT_VALUE_ITEM :
+    return DEFAULT_VALUE_ITEM;
+  case drizzled::Item::PROC_ITEM :
+    return PROC_ITEM;
+  case drizzled::Item::COND_ITEM :
+    return COND_ITEM;
+  case drizzled::Item::REF_ITEM :
+    return REF_ITEM;
+  case drizzled::Item::FIELD_STD_ITEM :
+    return FIELD_STD_ITEM;
+  case drizzled::Item::FIELD_VARIANCE_ITEM :
+    return FIELD_VARIANCE_ITEM;
+  case drizzled::Item::INSERT_VALUE_ITEM :
+    return INSERT_VALUE_ITEM;
+  case drizzled::Item::SUBSELECT_ITEM :
+    return SUBSELECT_ITEM;
+  case drizzled::Item::ROW_ITEM:
+    return ROW_ITEM;
+  case drizzled::Item::CACHE_ITEM :
+    return CACHE_ITEM;
+  case drizzled::Item::TYPE_HOLDER :
+    return TYPE_HOLDER;
+  case drizzled::Item::PARAM_ITEM :
+    return PARAM_ITEM;
+  case drizzled::Item::DECIMAL_ITEM :
+    return DECIMAL_ITEM;
   }
 
   assert(0);

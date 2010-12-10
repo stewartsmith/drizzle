@@ -33,6 +33,8 @@
 #include "drizzled/charset_info.h"
 #include "drizzled/item_result.h"
 
+#include "drizzled/function/field/default.h"
+
 #include <string>
 #include <vector>
 
@@ -80,6 +82,9 @@ class Field
   /* Prevent use of these */
   Field(const Field&);
   void operator=(Field &);
+
+  function::field::Default *default_function;
+
 public:
   unsigned char *ptr; /**< Position to field in record. Stores raw field value */
   unsigned char *null_ptr; /**< Byte where null_bit is */
@@ -725,6 +730,8 @@ public:
   void setReadSet(bool arg= true);
   void setWriteSet(bool arg= true);
 };
+
+std::ostream& operator<<(std::ostream& output, const Field &field);
 
 } /* namespace drizzled */
 

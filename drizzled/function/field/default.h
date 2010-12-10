@@ -18,20 +18,23 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_DISPLAY_H
-#define DRIZZLED_DISPLAY_H
-
-#include "drizzled/common.h"
-#include <string>
+#ifndef DRIZZLED_FUNCTION_FIELD_DEFAULT_H
+#define DRIZZLED_FUNCTION_FIELD_DEFAULT_H
 
 namespace drizzled {
+namespace function {
+namespace field {
 
-namespace display {
+class Default
+{
+public:
 
-const std::string &type(enum drizzled::enum_server_command type);
-const std::string &type(enum drizzled::enum_field_types type);
+  virtual ~Default()
+  { }
+};
 
-} /* namespace display */
+} /* namespace field */
+} /* namespace function */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_DISPLAY_H */
+#endif /* DRIZZLED_FUNCTION_FIELD_DEFAULT_H */

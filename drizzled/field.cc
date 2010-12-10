@@ -46,6 +46,8 @@
 #include "drizzled/time_functions.h"
 #include "drizzled/internal/m_string.h"
 
+#include "drizzled/display.h"
+
 namespace drizzled
 {
 
@@ -1013,6 +1015,17 @@ void Field::setWriteSet(bool arg)
     table->setWriteSet(field_index);
   else
     table->clearWriteSet(field_index);
+}
+
+std::ostream& operator<<(std::ostream& output, const Field &field)
+{
+  output << "Field:(";
+  output <<  field.field_name;
+  output << ", ";
+  output << drizzled::display::type(field.real_type());
+  output << ")";
+
+  return output;  // for multiple << operators.
 }
 
 } /* namespace drizzled */
