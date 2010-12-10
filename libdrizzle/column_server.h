@@ -124,7 +124,7 @@ void drizzle_column_set_type(drizzle_column_st *column,
  */
 DRIZZLE_API
 void drizzle_column_set_flags(drizzle_column_st *column,
-                              drizzle_column_flags_t flags);
+                              int flags);
 
 /**
  * Set the number of decimals for numeric columns.

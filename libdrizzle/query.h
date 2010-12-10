@@ -165,28 +165,28 @@ void drizzle_query_set_string(drizzle_query_st *query, const char *string,
  * Get options for a query. 
  */
 DRIZZLE_API
-drizzle_query_options_t drizzle_query_options(drizzle_query_st *query);
+int drizzle_query_options(drizzle_query_st *query);
 
 /**
  * Set options for a query.
  */
 DRIZZLE_API
 void drizzle_query_set_options(drizzle_query_st *query,
-                               drizzle_query_options_t options);
+                               int options);
 
 /**
  * Add options for a query.
  */
 DRIZZLE_API
 void drizzle_query_add_options(drizzle_query_st *query,
-                               drizzle_query_options_t options);
+                               int options);
 
 /**
  * Remove options for a query.
  */
 DRIZZLE_API
 void drizzle_query_remove_options(drizzle_query_st *query,
-                                  drizzle_query_options_t options);
+                                  int options);
 
 /**
  * Get application context for a query.

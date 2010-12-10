@@ -356,7 +356,7 @@ drizzle_column_st *drizzle_column_create(drizzle_result_st *result,
 {
   if (column == NULL)
   {
-    column= malloc(sizeof(drizzle_column_st));
+    column= (drizzle_column_st *)malloc(sizeof(drizzle_column_st));
     if (column == NULL)
     {
       drizzle_set_error(result->con->drizzle, "drizzle_column_create",
@@ -459,7 +459,7 @@ drizzle_column_type_drizzle(drizzle_column_st *column)
   return _column_type_drizzle_map_from[column->type];
 }
 
-drizzle_column_flags_t drizzle_column_flags(drizzle_column_st *column)
+int drizzle_column_flags(drizzle_column_st *column)
 {
   return column->flags;
 }
@@ -521,8 +521,8 @@ drizzle_return_t drizzle_column_buffer(drizzle_result_st *result)
       return DRIZZLE_RETURN_OK;
     }
 
-    result->column_buffer= malloc(sizeof(drizzle_column_st) *
-                                  result->column_count);
+    result->column_buffer= (drizzle_column_st *)malloc(sizeof(drizzle_column_st) *
+                                                       result->column_count);
     if (result->column_buffer == NULL)
     {
       drizzle_set_error(result->con->drizzle, "drizzle_column_buffer",
@@ -685,7 +685,7 @@ void drizzle_column_set_type(drizzle_column_st *column,
 }
 
 void drizzle_column_set_flags(drizzle_column_st *column,
-                              drizzle_column_flags_t flags)
+                              int flags)
 {
   column->flags= flags;
 }
@@ -742,7 +742,7 @@ drizzle_return_t drizzle_state_column_read(drizzle_con_st *con)
     /* EOF packet marking end of columns. */
     con->result->column= NULL;
     con->result->warning_count= drizzle_get_byte2(con->buffer_ptr + 1);
-    con->status= drizzle_get_byte2(con->buffer_ptr + 3);
+    con->status= (drizzle_con_status_t)drizzle_get_byte2(con->buffer_ptr + 3);
     con->buffer_ptr+= 5;
     con->buffer_size-= 5;
 
@@ -781,10 +781,10 @@ drizzle_return_t drizzle_state_column_read(drizzle_con_st *con)
     column->size= drizzle_get_byte4(con->buffer_ptr + 3);
 
     if (con->options & DRIZZLE_CON_MYSQL)
-      column->type= con->buffer_ptr[7];
+      column->type= (drizzle_column_type_t)con->buffer_ptr[7];
     else
     {
-      drizzle_type= con->buffer_ptr[7];
+      drizzle_type= (drizzle_column_type_drizzle_t)con->buffer_ptr[7];
       if (drizzle_type >= DRIZZLE_COLUMN_TYPE_DRIZZLE_MAX)
         drizzle_type= DRIZZLE_COLUMN_TYPE_DRIZZLE_MAX;
       column->type= _column_type_drizzle_map_to[drizzle_type];

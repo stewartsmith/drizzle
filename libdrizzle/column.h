@@ -154,7 +154,7 @@ drizzle_column_type_drizzle(drizzle_column_st *column);
  * Get flags for a column.
  */
 DRIZZLE_API
-drizzle_column_flags_t drizzle_column_flags(drizzle_column_st *column);
+int drizzle_column_flags(drizzle_column_st *column);
 
 /**
  * Get the number of decimals for numeric columns.

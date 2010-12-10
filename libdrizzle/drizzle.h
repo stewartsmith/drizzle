@@ -213,7 +213,7 @@ const char *drizzle_sqlstate(const drizzle_st *drizzle);
  * @return Options set for the drizzle structure.
  */
 DRIZZLE_API
-drizzle_options_t drizzle_options(const drizzle_st *drizzle);
+int drizzle_options(const drizzle_st *drizzle);
 
 /**
  * Set options for a drizzle structure.
@@ -223,7 +223,7 @@ drizzle_options_t drizzle_options(const drizzle_st *drizzle);
  * @param[in] options Available options for drizzle structure to set.
  */
 DRIZZLE_API
-void drizzle_set_options(drizzle_st *drizzle, drizzle_options_t options);
+void drizzle_set_options(drizzle_st *drizzle, int options);
 
 /**
  * Add options for a drizzle structure.
@@ -233,7 +233,7 @@ void drizzle_set_options(drizzle_st *drizzle, drizzle_options_t options);
  * @param[in] options Available options for drizzle structure to add.
  */
 DRIZZLE_API
-void drizzle_add_options(drizzle_st *drizzle, drizzle_options_t options);
+void drizzle_add_options(drizzle_st *drizzle, int options);
 
 /**
  * Remove options for a drizzle structure.

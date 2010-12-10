@@ -137,7 +137,7 @@ void drizzle_con_set_scramble(drizzle_con_st *con, const uint8_t *scramble);
  */
 DRIZZLE_API
 void drizzle_con_set_capabilities(drizzle_con_st *con,
-                                  drizzle_capabilities_t capabilities);
+                                  int capabilities);
 
 /**
  * Set charset for a connection.
