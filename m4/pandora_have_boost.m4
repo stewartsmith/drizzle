@@ -54,6 +54,25 @@ AC_DEFUN([_PANDORA_SEARCH_BOOST],[
       ac_cv_boost=no
     ])
   ])
+
+  AS_IF([test "x${ac_gcc_profile_mode}" = "xyes"],[
+    AC_CACHE_CHECK([if boost is recent enough for GCC Profile Mode],
+      [pandora_cv_boost_profile],[
+      pandora_need_boost_version=104300
+      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include <boost/version.hpp>
+
+#if BOOST_VERSION < ${pandora_need_boost_version}
+# error boost too old!
+#endif
+          ]],[[]])
+        ],[
+        pandora_cv_boost_profile=yes
+        ],[
+        pandora_cv_boost_profile=no
+        ])
+    ])
+  ])
       
 
   AM_CONDITIONAL(HAVE_BOOST, [test "x${ac_cv_boost}" = "xyes"])

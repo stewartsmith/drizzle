@@ -34,6 +34,12 @@ AC_DEFUN([PANDORA_WARNINGS],[
           [ac_cv_warnings_as_errors=yes],
           [ac_cv_warnings_as_errors=no]))
 
+  AC_ARG_ENABLE([gcc-profile-mode],
+      [AS_HELP_STRING([--enable-gcc-profile-mode],
+         [Toggle gcc profile mode @<:@default=off@:>@])],
+      [ac_gcc_profile_mode="$enableval"],
+      [ac_gcc_profile_mode="no"])
+
   AC_ARG_ENABLE([profiling],
       [AS_HELP_STRING([--enable-profiling],
          [Toggle profiling @<:@default=off@:>@])],
