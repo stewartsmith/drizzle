@@ -90,7 +90,7 @@ bool MemcachedQueryCache::doIsCached(Session *session)
   if (sysvar_memcached_qc_enable && isSelect(session->query))
   {
     /* ToDo: Check against the cache content */
-    string query= session->query+session->db;
+    string query= session->query + *session->schema();
     char* key= md5_key(query.c_str());
     if(queryCacheService.isCached(key))
     {
@@ -191,7 +191,7 @@ bool MemcachedQueryCache::doPrepareResultset(Session *session)
   if (sysvar_memcached_qc_enable && session->lex->isCacheable())
   {
     /* Prepare and set the key for the session */
-    string query= session->query+session->db;
+    string query= session->query + *session->schema();
     char* key= md5_key(query.c_str());
 
     /* make sure only one thread will cache the query 
@@ -209,7 +209,7 @@ bool MemcachedQueryCache::doPrepareResultset(Session *session)
   
       /* setting the resultset infos */
       resultset->set_key(session->query_cache_key);
-      resultset->set_schema(session->db);
+      resultset->set_schema(*session->schema());
       resultset->set_sql(session->query);
       pthread_mutex_unlock(&mutex);
       

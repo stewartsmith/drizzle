@@ -801,10 +801,8 @@ try
     dump_selected_tables(database_used, vm["Table-used"].as< vector<string> >());
   }
 
-  if (vm.count("Table-used") && opt_databases)
+  if (vm.count("Table-used") and opt_databases)
   {
-/*
- * This is not valid!
     vector<string> database_used= vm["database-used"].as< vector<string> >();
     vector<string> table_used= vm["Table-used"].as< vector<string> >();
 
@@ -814,16 +812,17 @@ try
     {
       database_used.insert(database_used.end(), *it);
     }
+
     dump_databases(database_used);
-    dump_tables();
-*/
+    dump_all_tables();
   }
-  
+
   if (vm.count("database-used") && ! vm.count("Table-used"))
   {
     dump_databases(vm["database-used"].as< vector<string> >());
     dump_all_tables();
   }
+
   if (opt_destination == DESTINATION_STDOUT)
     generate_dump();
   else

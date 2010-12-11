@@ -265,8 +265,8 @@ static enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_ty
     field_type= DRIZZLE_TYPE_BLOB;
     break;
   default:
-    field_type= DRIZZLE_TYPE_LONG; /* Set value to kill GCC warning */
-    assert(1);
+    assert(0);
+    abort(); // Programming error
   }
 
   return field_type;
@@ -300,7 +300,8 @@ static Item *default_value_item(enum_field_types field_type,
                                  default_value->length());
     break;
   case DRIZZLE_TYPE_NULL:
-    assert(false);
+    assert(0);
+    abort();
   case DRIZZLE_TYPE_TIMESTAMP:
   case DRIZZLE_TYPE_DATETIME:
   case DRIZZLE_TYPE_DATE:
@@ -671,6 +672,7 @@ TableShare::TableShare(const TableIdentifier::Type type_arg,
   else
   {
     assert(0); // We should throw here.
+    abort();
   }
 }
 
@@ -1132,7 +1134,10 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
         unireg_type= Field::TIMESTAMP_DN_FIELD;
       }
       else
-        assert(1); // Invalid update value.
+      {
+        assert(0); // Invalid update value.
+        abort();
+      }
     }
     else if (pfield.has_options() &&
              pfield.options().has_update_expression() &&

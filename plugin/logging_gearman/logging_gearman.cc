@@ -238,7 +238,7 @@ public:
     unsigned char qs[255];
   
     // to avoid trying to printf %s something that is potentially NULL
-    const char *dbs= session->db.empty() ? "" : session->db.c_str();
+    drizzled::util::string::const_shared_ptr dbs(session->schema());
   
     msgbuf_len=
       snprintf(msgbuf.get(), MAX_MSG_LEN,
@@ -249,7 +249,7 @@ public:
                session->thread_id,
                session->getQueryId(),
                // dont need to quote the db name, always CSV safe
-               (int)session->getSchema().length(), dbs,
+               (int)dbs->size(), dbs->c_str(),
                // do need to quote the query
                quotify((const unsigned char *)session->getQueryString()->c_str(), session->getQueryString()->length(), qs, sizeof(qs)),
                // command_name is defined in drizzled/sql_parse.cc

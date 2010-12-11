@@ -846,9 +846,8 @@ int write_record(Session *session, Table *table,CopyInfo *info)
           table->cursor->adjust_next_insert_id_after_explicit_value(
             table->next_number_field->val_int());
         info->touched++;
-        if ((table->cursor->getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ) &&
-            ! table->write_set->is_subset_of(*table->read_set)) ||
-            table->compare_record())
+
+        if (! table->records_are_comparable() || table->compare_records())
         {
           if ((error=table->cursor->updateRecord(table->getUpdateRecord(),
                                                 table->getInsertRecord())) &&
