@@ -7,16 +7,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2010-05-26 01:18+0000\n"
-"PO-Revision-Date: 2010-06-22 11:14+0000\n"
-"Last-Translator: Majd Aldin Almontaser <Unknown>\n"
+"POT-Creation-Date: 2010-07-20 16:06+0000\n"
+"PO-Revision-Date: 2010-12-11 01:19+0000\n"
+"Last-Translator: TaleAlkam <Unknown>\n"
 "Language-Team: Arabic <ar@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n % 100 >= "
 "3 && n % 100 <= 10 ? 3 : n % 100 >= 11 && n % 100 <= 99 ? 4 : 5;\n"
-"X-Launchpad-Export-Date: 2010-06-23 03:46+0000\n"
+"X-Launchpad-Export-Date: 2010-12-11 04:45+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 msgid "Synonym for `help'."
@@ -31,13 +31,13 @@ msgstr ""
 
 msgid ""
 "Set statement delimiter. NOTE: Takes the rest of the line as new delimiter."
-msgstr ""
+msgstr "تعيين بيان محدد. ملاحظة : تحيط بقية الخط الجديد على النحو المحدد"
 
 msgid "Send command to drizzle server, display result vertically."
 msgstr "إرسال الأمر إلى ملقم drizzle . وعرض النتيجة عمودياً."
 
 msgid "Exit drizzle. Same as quit."
-msgstr ""
+msgstr "أنهاء دريزل ,مثل الخروج"
 
 msgid "Send command to drizzle server."
 msgstr "إرسال الأمر إلى سيرفر drizzle ."
@@ -49,7 +49,7 @@ msgid "Disable pager, print to stdout."
 msgstr ""
 
 msgid "Don't write into outfile."
-msgstr ""
+msgstr "لا تكتب في الملف الخارج ."
 
 msgid "Set PAGER [to_pager]. Print the query results via PAGER."
 msgstr ""
@@ -79,14 +79,259 @@ msgid "Use another database. Takes database name as argument."
 msgstr ""
 
 msgid "Show warnings after every statement."
-msgstr ""
+msgstr "اعرض التحذيرات بعد كل تصريح ."
 
 msgid "Don't show warnings after every statement."
+msgstr ""
+
+msgid "Error: Invalid Value for connect_timeout"
+msgstr ""
+
+msgid "Error: Invalid Value for max_input_line"
+msgstr ""
+
+msgid "Displays this help and exit."
+msgstr ""
+
+msgid ""
+"Don't use history file. Disable interactive behavior. (Enables --silent)"
+msgstr ""
+
+msgid "Display column type information."
+msgstr ""
+
+msgid ""
+"Preserve comments. Send comments to the server. The default is --skip-"
+"comments (discard comments), enable with --comments"
+msgstr ""
+
+msgid "Use compression in server/client protocol."
+msgstr ""
+
+msgid "Print the output of a query (rows) vertically."
+msgstr ""
+
+msgid "Continue even if we get an sql error."
+msgstr "تابع الحدث اذا حصل خطاء في sql."
+
+msgid ""
+"Enable named commands. Named commands mean this program's internal commands; "
+"see drizzle> help . When enabled, the named commands can be used from any "
+"line of the query, otherwise only from the first line, before an enter. "
+"Disable with --disable-named-commands. This option is disabled by default."
+msgstr ""
+
+msgid ""
+"Named commands are disabled. Use \\* form only, or use named commands only "
+"in the beginning of a line ending with a semicolon (;) Since version 10.9 "
+"the client now starts with this option ENABLED by default! Disable with '-"
+"G'. Long format commands still work from the first line. WARNING: option "
+"deprecated; use --disable-named-commands instead."
+msgstr ""
+
+msgid "Ignore space after function names."
+msgstr ""
+
+msgid "Turn off beep on error."
+msgstr ""
+
+msgid "Write line numbers for errors."
+msgstr ""
+
+msgid ""
+"Don't write line number for errors. WARNING: -L is deprecated, use long "
+"version of this option instead."
+msgstr ""
+
+msgid "Write column names in results."
+msgstr ""
+
+msgid ""
+"Don't write column names in results. WARNING: -N is deprecated, use long "
+"version of this options instead."
+msgstr ""
+
+msgid ""
+"Change the value of a variable. Please note that this option is deprecated; "
+"you can set variables directly with --variable-name=value."
+msgstr ""
+
+msgid "Output in table format."
+msgstr ""
+
+msgid "Only allow UPDATE and DELETE that uses keys."
+msgstr ""
+
+msgid "Synonym for option --safe-updates, -U."
+msgstr ""
+
+msgid "-v vvv implies that verbose= 3, Used to specify verbose"
+msgstr ""
+
+msgid "Output version information and exit."
+msgstr ""
+
+msgid ""
+"Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
+msgstr ""
+
+msgid "Number of lines before each import progress report."
+msgstr ""
+
+msgid "Ping the server to check if it's alive."
+msgstr ""
+
+msgid "Configuration file defaults are not used if no-defaults is set"
+msgstr ""
+
+msgid ""
+"Enable automatic rehashing. One doesn't need to use 'rehash' to get table "
+"and field completion, but startup and reconnecting may take a longer time. "
+"Disable with --disable-auto-rehash."
+msgstr ""
+
+msgid ""
+"No automatic rehashing. One has to use 'rehash' to get table and field "
+"completion. This gives a quicker start of drizzle_st and disables rehashing "
+"on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
+msgstr ""
+
+msgid ""
+"Automatically switch to vertical output mode if the result is wider than the "
+"terminal width."
+msgstr ""
+
+msgid "Database to use."
+msgstr ""
+
+msgid "(not used)"
+msgstr ""
+
+msgid "Delimiter to be used."
+msgstr ""
+
+msgid "Execute command and quit. (Disables --force and history file)"
+msgstr ""
+
+msgid "Enable/disable LOAD DATA LOCAL INFILE."
+msgstr ""
+
+msgid "Flush buffer after each query."
+msgstr ""
+
+msgid "Ignore SIGINT (CTRL-C)"
+msgstr ""
+
+msgid ""
+"Only update the default database. This is useful for skipping updates to "
+"other database in the update log."
+msgstr ""
+
+msgid ""
+"Pager to use to display results. If you don't supply an option the default "
+"pager is taken from your ENV variable PAGER. Valid pagers are less, more, "
+"cat [> filename], etc. See interactive help (\\h) also. This option does not "
+"work in batch mode. Disable with --disable-pager. This option is disabled by "
+"default."
+msgstr ""
+
+msgid "Disable pager and print to stdout. See interactive help (\\h) also."
+msgstr ""
+
+msgid "Set the drizzle prompt to this value."
+msgstr ""
+
+msgid ""
+"Don't cache result, print it row by row. This may slow down the server if "
+"the output is suspended. Doesn't use history file."
+msgstr ""
+
+msgid "Write fields without conversion. Used with --batch."
+msgstr ""
+
+msgid ""
+"Reconnect if the connection is lost. Disable with --disable-reconnect. This "
+"option is enabled by default."
+msgstr ""
+
+msgid "Shutdown the server"
+msgstr ""
+
+msgid ""
+"Be more silent. Print results with a tab as separator, each row on new line."
+msgstr ""
+
+msgid ""
+"Append everything into outfile. See interactive help (\\h) also. Does not "
+"work in batch mode. Disable with --disable-tee. This option is disabled by "
+"default."
+msgstr ""
+
+msgid "Disable outfile. See interactive help (\\h) also."
+msgstr ""
+
+msgid "Wait and retry if connection is down."
+msgstr "الرجاء الإنتظار ، وإعادة محاولة الإتصال إن فشل في الإتصال"
+
+msgid "Number of seconds before connection timeout."
+msgstr ""
+
+msgid "Max length of input line"
+msgstr ""
+
+msgid "Automatic limit for SELECT when using --safe-updates"
+msgstr ""
+
+msgid "Automatic limit for rows in a join when using --safe-updates"
+msgstr ""
+
+msgid "Use MySQL Protocol."
+msgstr ""
+
+msgid "Connect to host"
+msgstr ""
+
+msgid ""
+"Password to use when connecting to server. If password is not given it's "
+"asked from the tty."
+msgstr ""
+
+msgid ""
+"Port number to use for connection or 0 for default to, in order of "
+"preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default"
+msgstr ""
+
+msgid "User for login if not current user."
+msgstr ""
+
+msgid "The protocol of connection (tcp,socket,pipe,memory)."
 msgstr ""
 
 #, c-format
 msgid ""
 "Memory allocation error while constructing initial prompt. Aborting.\n"
+msgstr ""
+
+msgid "DELIMITER cannot contain a backslash character"
+msgstr ""
+
+#, c-format
+msgid "Error: Value of %<PRIu32> supplied for port is not valid.\n"
+msgstr ""
+
+#, c-format
+msgid "drizzle  Ver %s Distrib %s, for %s-%s (%s) using readline %s\n"
+msgstr ""
+
+#, c-format
+msgid ""
+"Copyright (C) 2008 Sun Microsystems\n"
+"This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
+"and you are welcome to modify and redistribute it under the GPL license\n"
+msgstr ""
+
+#, c-format
+msgid "Usage: drizzle [OPTIONS] [database]\n"
 msgstr ""
 
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
@@ -120,265 +365,6 @@ msgid "Bye"
 msgstr "وداعاً"
 
 msgid "Query aborted by Ctrl+C\n"
-msgstr ""
-
-msgid "Display this help and exit."
-msgstr ""
-
-msgid "Synonym for -?"
-msgstr ""
-
-msgid ""
-"Enable automatic rehashing. One doesn't need to use 'rehash' to get table "
-"and field completion, but startup and reconnecting may take a longer time. "
-"Disable with --disable-auto-rehash."
-msgstr ""
-
-msgid ""
-"No automatic rehashing. One has to use 'rehash' to get table and field "
-"completion. This gives a quicker start of drizzle_st and disables rehashing "
-"on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
-msgstr ""
-
-msgid ""
-"Automatically switch to vertical output mode if the result is wider than the "
-"terminal width."
-msgstr ""
-
-msgid ""
-"Don't use history file. Disable interactive behavior. (Enables --silent)"
-msgstr ""
-
-msgid "Display column type information."
-msgstr ""
-
-msgid ""
-"Preserve comments. Send comments to the server. The default is --skip-"
-"comments (discard comments), enable with --comments"
-msgstr ""
-
-msgid "Use compression in server/client protocol."
-msgstr ""
-
-msgid "Database to use."
-msgstr ""
-
-msgid "(not used)"
-msgstr ""
-
-msgid "Delimiter to be used."
-msgstr ""
-
-msgid "Execute command and quit. (Disables --force and history file)"
-msgstr ""
-
-msgid "Print the output of a query (rows) vertically."
-msgstr ""
-
-msgid "Continue even if we get an sql error."
-msgstr ""
-
-msgid ""
-"Enable named commands. Named commands mean this program's internal commands; "
-"see drizzle> help . When enabled, the named commands can be used from any "
-"line of the query, otherwise only from the first line, before an enter. "
-"Disable with --disable-named-commands. This option is disabled by default."
-msgstr ""
-
-msgid ""
-"Named commands are disabled. Use \\* form only, or use named commands only "
-"in the beginning of a line ending with a semicolon (;) Since version 10.9 "
-"the client now starts with this option ENABLED by default! Disable with '-"
-"G'. Long format commands still work from the first line. WARNING: option "
-"deprecated; use --disable-named-commands instead."
-msgstr ""
-
-msgid "Ignore space after function names."
-msgstr ""
-
-msgid "Enable/disable LOAD DATA LOCAL INFILE."
-msgstr ""
-
-msgid "Turn off beep on error."
-msgstr ""
-
-msgid "Connect to host."
-msgstr ""
-
-msgid "Write line numbers for errors."
-msgstr ""
-
-msgid ""
-"Don't write line number for errors. WARNING: -L is deprecated, use long "
-"version of this option instead."
-msgstr ""
-
-msgid "Flush buffer after each query."
-msgstr ""
-
-msgid "Write column names in results."
-msgstr ""
-
-msgid ""
-"Don't write column names in results. WARNING: -N is deprecated, use long "
-"version of this options instead."
-msgstr ""
-
-msgid ""
-"Change the value of a variable. Please note that this option is deprecated; "
-"you can set variables directly with --variable-name=value."
-msgstr ""
-
-msgid "Ignore SIGINT (CTRL-C)"
-msgstr ""
-
-msgid ""
-"Only update the default database. This is useful for skipping updates to "
-"other database in the update log."
-msgstr ""
-
-msgid ""
-"Pager to use to display results. If you don't supply an option the default "
-"pager is taken from your ENV variable PAGER. Valid pagers are less, more, "
-"cat [> filename], etc. See interactive help (\\h) also. This option does not "
-"work in batch mode. Disable with --disable-pager. This option is disabled by "
-"default."
-msgstr ""
-
-msgid ""
-"Disable pager and print to stdout. See interactive help (\\h) also. WARNING: "
-"option deprecated; use --disable-pager instead."
-msgstr ""
-
-msgid ""
-"Password to use when connecting to server. If password is not given it's "
-"asked from the tty."
-msgstr ""
-
-msgid ""
-"Port number to use for connection or 0 for default to, in order of "
-"preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
-msgstr ""
-
-msgid "built-in default"
-msgstr ""
-
-msgid "Set the drizzle prompt to this value."
-msgstr ""
-
-msgid ""
-"Don't cache result, print it row by row. This may slow down the server if "
-"the output is suspended. Doesn't use history file."
-msgstr ""
-
-msgid "Write fields without conversion. Used with --batch."
-msgstr ""
-
-msgid ""
-"Reconnect if the connection is lost. Disable with --disable-reconnect. This "
-"option is enabled by default."
-msgstr ""
-
-msgid "Shutdown the server."
-msgstr ""
-
-msgid ""
-"Be more silent. Print results with a tab as separator, each row on new line."
-msgstr ""
-
-msgid "Output in table format."
-msgstr ""
-
-msgid ""
-"Append everything into outfile. See interactive help (\\h) also. Does not "
-"work in batch mode. Disable with --disable-tee. This option is disabled by "
-"default."
-msgstr ""
-
-msgid ""
-"Disable outfile. See interactive help (\\h) also. WARNING: option "
-"deprecated; use --disable-tee instead"
-msgstr ""
-
-msgid "User for login if not current user."
-msgstr ""
-
-msgid "Only allow UPDATE and DELETE that uses keys."
-msgstr ""
-
-msgid "Synonym for option --safe-updates, -U."
-msgstr ""
-
-msgid "Write more. (-v -v -v gives the table output format)."
-msgstr ""
-
-msgid "Output version information and exit."
-msgstr ""
-
-msgid "Wait and retry if connection is down."
-msgstr "الرجاء الإنتظار ، وإعادة محاولة الإتصال إن فشل في الإتصال"
-
-msgid "Number of seconds before connection timeout."
-msgstr ""
-
-msgid "Max length of input line"
-msgstr ""
-
-msgid "Automatic limit for SELECT when using --safe-updates"
-msgstr ""
-
-msgid "Automatic limit for rows in a join when using --safe-updates"
-msgstr ""
-
-msgid ""
-"Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
-msgstr ""
-
-msgid "Number of lines before each import progress report."
-msgstr ""
-
-msgid "Ping the server to check if it's alive."
-msgstr ""
-
-msgid "Use MySQL Protocol."
-msgstr ""
-
-#, c-format
-msgid "%s  Ver %s Distrib %s, for %s-%s (%s) using %s %s\n"
-msgstr ""
-
-#, c-format
-msgid ""
-"Copyright (C) 2008 Sun Microsystems\n"
-"This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
-"and you are welcome to modify and redistribute it under the GPL license\n"
-msgstr ""
-
-#, c-format
-msgid "Usage: %s [OPTIONS] [database]\n"
-msgstr ""
-
-msgid "DELIMITER cannot contain a backslash character"
-msgstr ""
-
-#, c-format
-msgid "WARNING: option deprecated; use --disable-tee instead.\n"
-msgstr ""
-
-#, c-format
-msgid "WARNING: option deprecated; use --disable-pager instead.\n"
-msgstr ""
-
-#, c-format
-msgid "WARNING: --server-arg option not supported in this configuration.\n"
-msgstr ""
-
-msgid ""
-"Non-integer value supplied for port.  If you are trying to enter a password "
-"please use --password instead."
-msgstr ""
-
-msgid "Value supplied for port is not valid."
 msgstr ""
 
 #, c-format
@@ -430,66 +416,8 @@ msgid_plural "Query OK, %ld rows affected"
 msgstr[0] ""
 msgstr[1] ""
 
-msgid ""
-"Number of rows before each output progress report (requires --verbose)."
-msgstr ""
-
 #, c-format
 msgid "Got errno %d on write"
-msgstr ""
-
-#, c-format
-msgid "%s  Drizzle %s libdrizzle %s, for %s-%s (%s)\n"
-msgstr ""
-
-#, c-format
-msgid "Usage: %s [OPTIONS] database [tables]\n"
-msgstr ""
-
-#, c-format
-msgid "OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"
-msgstr ""
-
-#, c-format
-msgid "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
-msgstr ""
-
-msgid ""
-"This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
-"and you are welcome to modify and redistribute it under the GPL license\n"
-msgstr ""
-
-msgid "Dumps definitions and data from a Drizzle database server"
-msgstr ""
-
-#, c-format
-msgid "For more options, use %s --help\n"
-msgstr ""
-
-#, c-format
-msgid ""
-"Non-integer value supplied for port.  If you are trying to enter a password "
-"please use --password instead.\n"
-msgstr ""
-
-#, c-format
-msgid "Value supplied for port is not valid.\n"
-msgstr ""
-
-#, c-format
-msgid "Memory allocation error while copying password. Aborting.\n"
-msgstr ""
-
-#, c-format
-msgid "Input filename too long: %s"
-msgstr ""
-
-#, c-format
-msgid "Illegal use of option --ignore-table=<database>.<table>\n"
-msgstr ""
-
-#, c-format
-msgid "Invalid mode to --compatible: %s\n"
 msgstr ""
 
 #, c-format
@@ -625,6 +553,59 @@ msgstr ""
 msgid "Error: Not enough memory to store ORDER BY clause\n"
 msgstr ""
 
+msgid ""
+"Number of rows before each output progress report (requires --verbose)."
+msgstr ""
+
+#, c-format
+msgid "Usage: %s [OPTIONS] database [tables]\n"
+msgstr ""
+
+#, c-format
+msgid "OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"
+msgstr ""
+
+#, c-format
+msgid "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
+msgstr ""
+
+#, c-format
+msgid "Value supplied for port is not valid.\n"
+msgstr ""
+
+#, c-format
+msgid "Input filename too long: %s"
+msgstr ""
+
+#, c-format
+msgid "%s  Drizzle %s libdrizzle %s, for %s-%s (%s)\n"
+msgstr ""
+
+msgid ""
+"This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
+"and you are welcome to modify and redistribute it under the GPL license\n"
+msgstr ""
+
+msgid "Dumps definitions and data from a Drizzle database server"
+msgstr ""
+
+#, c-format
+msgid "Illegal use of option --ignore-table=<database>.<table>\n"
+msgstr ""
+
+#, c-format
+msgid "Invalid mode to --compatible: %s\n"
+msgstr ""
+
+msgid "Error: Invalid Value for opt_max_connect_retries"
+msgstr ""
+
+msgid "Error: Invalid Value for opt_tail_lines"
+msgstr ""
+
+msgid "Error: Invalid Value for opt_sleep"
+msgstr ""
+
 #, c-format
 msgid "Could not open '%s' for reading: errno = %d"
 msgstr ""
@@ -675,6 +656,9 @@ msgstr ""
 
 #, c-format
 msgid "Unknown/unsupported storage engine: %s"
+msgstr ""
+
+msgid "Display this help and exit."
 msgstr ""
 
 msgid "Display this help and exit after initializing plugins."
@@ -1933,8 +1917,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Uncompressed data size too large; the maximum size is %d (probably, length "
-"of uncompressed data was corrupted)"
+"Uncompressed data size too large; the maximum size is %d (based on "
+"max_allowed_packet). The length of uncompressed data may also be corrupted."
 msgstr ""
 
 msgid "ZLIB: Not enough memory"
@@ -3658,6 +3642,10 @@ msgid "Corrupt or invalid table definition: %s"
 msgstr ""
 
 #, c-format
+msgid "Corrupt or invalid schema definition for %s : %s"
+msgstr ""
+
+#, c-format
 msgid "Schema does not exist: %s"
 msgstr ""
 
@@ -3678,6 +3666,9 @@ msgstr ""
 
 #, c-format
 msgid "Unknown schema engine option key/pair %s = %s."
+msgstr ""
+
+msgid "Implicit cartesian join attempted."
 msgstr ""
 
 #, c-format
@@ -3971,18 +3962,18 @@ msgid "setsockopt(TCP_NODELAY) failed with errno %d"
 msgstr ""
 
 #, c-format
-msgid "Retrying bind() on %u"
+msgid "Retrying bind() on %u\n"
 msgstr ""
 
 #, c-format
-msgid "bind() failed with errno: %d"
+msgid "bind() failed with errno: %d\n"
 msgstr ""
 
-msgid "Do you already have another drizzled running?"
+msgid "Do you already have another drizzled running?\n"
 msgstr ""
 
 #, c-format
-msgid "listen() failed with errno %d"
+msgid "listen() failed with errno %d\n"
 msgstr ""
 
 #, c-format
@@ -4096,9 +4087,11 @@ msgid "Got error %d when reading table '%s'"
 msgstr ""
 
 #, c-format
-msgid ""
-"'%s' had no or invalid character set, and default character set is multi-"
-"byte, so character column sizes may have changed"
+msgid "Table %s has invalid/unknown collation: %d,%s"
+msgstr ""
+
+#, c-format
+msgid "ENUM column %s has greater than %d possible values"
 msgstr ""
 
 #, c-format
@@ -4178,6 +4171,24 @@ msgid "Password to use for auth."
 msgstr ""
 
 msgid "Default database to use."
+msgstr ""
+
+msgid "Invalid value of port\n"
+msgstr ""
+
+msgid "Invalid value for connect_timeout\n"
+msgstr ""
+
+msgid "Invalid value for read_timeout\n"
+msgstr ""
+
+msgid "Invalid value for write_timeout\n"
+msgstr ""
+
+msgid "Invalid value for retry_count\n"
+msgstr ""
+
+msgid "Invalid value for buffer_length\n"
 msgstr ""
 
 msgid ""
@@ -4438,13 +4449,16 @@ msgstr ""
 msgid "fail open() fn=%s er=%s\n"
 msgstr ""
 
+msgid "Invalid value for threshold-slow"
+msgstr ""
+
+msgid "Invalid value for threshold-big-resultset"
+msgstr ""
+
+msgid "Invalid value for threshold-big-examined"
+msgstr ""
+
 msgid "Enable logging to CSV file"
-msgstr ""
-
-msgid "File to log to"
-msgstr ""
-
-msgid "PCRE to match the query against"
 msgstr ""
 
 msgid "Threshold for logging slow queries, in microseconds"
@@ -4456,30 +4470,13 @@ msgstr ""
 msgid "Threshold for logging big queries, for rows examined"
 msgstr ""
 
+msgid "File to log to"
+msgstr ""
+
+msgid "PCRE to match the query against"
+msgstr ""
+
 msgid "Log queries to a CSV file"
-msgstr ""
-
-#, c-format
-msgid "syslog facility \"%s\" not known, using \"local0\""
-msgstr ""
-
-#, c-format
-msgid "syslog priority \"%s\" not known, using \"info\""
-msgstr ""
-
-msgid "Enable logging to syslog"
-msgstr ""
-
-msgid "Syslog Ident"
-msgstr ""
-
-msgid "Syslog Facility"
-msgstr ""
-
-msgid "Syslog Priority"
-msgstr ""
-
-msgid "Log to syslog"
 msgstr ""
 
 msgid "List of memcached servers."
@@ -4715,12 +4712,27 @@ msgstr ""
 msgid "Tablespace not empty"
 msgstr ""
 
+msgid "Invalid value for retry_count"
+msgstr ""
+
 msgid ""
 "Port number to use for connection or 0 for default to with MySQL protocol."
 msgstr ""
 
 #, c-format
 msgid "Can't create interrupt-thread (error %d, errno: %d)"
+msgstr ""
+
+#, c-format
+msgid "syslog facility \"%s\" not known, using \"local0\""
+msgstr ""
+
+#, c-format
+msgid "syslog priority \"%s\" not known, using \"warn\""
+msgstr ""
+
+#, c-format
+msgid "syslog priority \"%s\" not known, using \"info\""
 msgstr ""
 
 #, c-format
