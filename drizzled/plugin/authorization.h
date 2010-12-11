@@ -56,7 +56,7 @@ public:
    * @returns true if the user cannot access the schema
    */
   virtual bool restrictSchema(const SecurityContext &user_ctx,
-                              SchemaIdentifier &schema)= 0;
+                              SchemaIdentifier::const_reference schema)= 0;
 
   /**
    * Should we restrict the current user's access to this table?
@@ -84,7 +84,7 @@ public:
 
   /** Server API method for checking schema authorization */
   static bool isAuthorized(const SecurityContext &user_ctx,
-                           SchemaIdentifier &schema_identifier,
+                           SchemaIdentifier::const_reference schema_identifier,
                            bool send_error= true);
 
   /** Server API method for checking table authorization */

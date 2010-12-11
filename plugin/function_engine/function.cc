@@ -80,11 +80,11 @@ bool Function::doGetSchemaDefinition(const SchemaIdentifier &schema_identifier, 
 {
   schema_message.reset(new message::Schema); // This should be fixed, we could just be using ones we built on startup.
 
-  if (schema_identifier == INFORMATION_SCHEMA_IDENTIFIER)
+  if (schema_identifier.compare(INFORMATION_SCHEMA_IDENTIFIER))
   {
     schema_message= information_message;
   }
-  else if (schema_identifier == DATA_DICTIONARY_IDENTIFIER)
+  else if (schema_identifier.compare(DATA_DICTIONARY_IDENTIFIER))
   {
     schema_message= data_dictionary_message;
   }
@@ -98,7 +98,7 @@ bool Function::doGetSchemaDefinition(const SchemaIdentifier &schema_identifier, 
 
 bool Function::doCanCreateTable(const drizzled::TableIdentifier &table_identifier)
 {
-  if (static_cast<const SchemaIdentifier&>(table_identifier) == INFORMATION_SCHEMA_IDENTIFIER)
+  if (static_cast<SchemaIdentifier::const_reference>(table_identifier) == INFORMATION_SCHEMA_IDENTIFIER)
   {
     return false;
   }
