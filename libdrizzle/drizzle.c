@@ -101,7 +101,7 @@ drizzle_st *drizzle_create(drizzle_st *drizzle)
 
   if (drizzle == NULL)
   {
-    drizzle= (drizzle_st *)malloc(sizeof(drizzle_st));
+    drizzle= malloc(sizeof(drizzle_st));
     if (drizzle == NULL)
       return NULL;
 
@@ -206,17 +206,17 @@ const char *drizzle_sqlstate(const drizzle_st *drizzle)
   return drizzle->sqlstate;
 }
 
-int drizzle_options(const drizzle_st *drizzle)
+drizzle_options_t drizzle_options(const drizzle_st *drizzle)
 {
   return drizzle->options;
 }
 
-void drizzle_set_options(drizzle_st *drizzle, int options)
+void drizzle_set_options(drizzle_st *drizzle, drizzle_options_t options)
 {
   drizzle->options= options;
 }
 
-void drizzle_add_options(drizzle_st *drizzle, int options)
+void drizzle_add_options(drizzle_st *drizzle, drizzle_options_t options)
 {
   drizzle->options|= options;
 }
@@ -281,7 +281,7 @@ drizzle_con_st *drizzle_con_create(drizzle_st *drizzle, drizzle_con_st *con)
 {
   if (con == NULL)
   {
-    con= (drizzle_con_st *)malloc(sizeof(drizzle_con_st));
+    con= malloc(sizeof(drizzle_con_st));
     if (con == NULL)
     {
       if (drizzle != NULL)
@@ -308,7 +308,7 @@ drizzle_con_st *drizzle_con_create(drizzle_st *drizzle, drizzle_con_st *con)
   con->revents= 0;
   con->capabilities= DRIZZLE_CAPABILITIES_NONE;
   con->charset= 0;
-  con->command= DRIZZLE_COMMAND_SLEEP;
+  con->command= 0;
   con->options|= DRIZZLE_CON_MYSQL;
   con->socket_type= DRIZZLE_CON_SOCKET_TCP;
   con->status= DRIZZLE_CON_STATUS_NONE;
@@ -426,7 +426,7 @@ drizzle_return_t drizzle_con_wait(drizzle_st *drizzle)
 
   if (drizzle->pfds_size < drizzle->con_count)
   {
-    pfds= (struct pollfd *)realloc(drizzle->pfds, drizzle->con_count * sizeof(struct pollfd));
+    pfds= realloc(drizzle->pfds, drizzle->con_count * sizeof(struct pollfd));
     if (pfds == NULL)
     {
       drizzle_set_error(drizzle, "drizzle_con_wait", "realloc");
@@ -596,7 +596,7 @@ drizzle_con_st *drizzle_con_add_tcp_listen(drizzle_st *drizzle,
 
   drizzle_con_set_tcp(con, host, port);
   drizzle_con_set_backlog(con, backlog);
-  drizzle_con_add_options(con, options | DRIZZLE_CON_LISTEN);
+  drizzle_con_add_options(con, DRIZZLE_CON_LISTEN | options);
 
   return con;
 }
@@ -612,7 +612,7 @@ drizzle_con_st *drizzle_con_add_uds_listen(drizzle_st *drizzle,
 
   drizzle_con_set_uds(con, uds);
   drizzle_con_set_backlog(con, backlog);
-  drizzle_con_add_options(con, options | DRIZZLE_CON_LISTEN);
+  drizzle_con_add_options(con, DRIZZLE_CON_LISTEN | options);
 
   return con;
 }
@@ -682,7 +682,7 @@ void drizzle_set_error(drizzle_st *drizzle, const char *function,
   va_list args;
 
   size= strlen(function);
-  ptr= (char *)memcpy(log_buffer, function, size);
+  ptr= memcpy(log_buffer, function, size);
   ptr+= size;
   ptr[0]= ':';
   size++;

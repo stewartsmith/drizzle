@@ -234,7 +234,7 @@ uint16_t x= htons(80);
               [NO_CONVERSION="-Wno-conversion"])
       ])
 
-      CC_WARNINGS="${BASE_WARNINGS} -Wstrict-prototypes -Wmissing-prototypes -Wredundant-decls -Wmissing-declarations -Wcast-align -Wc++-compat ${CC_WARNINGS_FULL}"
+      CC_WARNINGS="${BASE_WARNINGS} -Wstrict-prototypes -Wmissing-prototypes -Wredundant-decls -Wmissing-declarations -Wcast-align ${CC_WARNINGS_FULL}"
       CXX_WARNINGS="${BASE_WARNINGS} -Woverloaded-virtual -Wnon-virtual-dtor -Wctor-dtor-privacy -Wno-long-long ${CXX_WARNINGS_FULL}"
 
       AC_CACHE_CHECK([whether it is safe to use -Wmissing-declarations from C++],
@@ -371,7 +371,7 @@ inline const EnumDescriptor* GetEnumDescriptor<Table_TableOptions_RowType>() {
       dnl TODO: Figure out a better way to deal with this:
       PROTOSKIP_WARNINGS="-Wno-effc++ -Wno-shadow -Wno-missing-braces ${NO_ATTRIBUTES}"
       NO_WERROR="-Wno-error"
-      INNOBASE_SKIP_WARNINGS="-Wno-shadow -Wno-cast-align -Wno-c++-compat"
+      INNOBASE_SKIP_WARNINGS="-Wno-shadow -Wno-cast-align"
       AS_IF([test "$host_vendor" = "apple"],[
         BOOSTSKIP_WARNINGS="-Wno-uninitialized"
       ])

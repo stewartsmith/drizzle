@@ -50,7 +50,7 @@ drizzle_result_st *drizzle_result_create(drizzle_con_st *con,
 {
   if (result == NULL)
   {
-    result= (drizzle_result_st *)malloc(sizeof(drizzle_result_st));
+    result= malloc(sizeof(drizzle_result_st));
     if (result == NULL)
     {
       drizzle_set_error(con->drizzle, "drizzle_result_create", "malloc");
@@ -247,10 +247,9 @@ drizzle_return_t drizzle_result_buffer(drizzle_result_st *result)
 
     if (result->row_list_size < result->row_count)
     {
-      row_list= (drizzle_row_t *)realloc(result->row_list,
-                                         sizeof(drizzle_row_t) *
-                                         ((size_t)(result->row_list_size) +
-                                          DRIZZLE_ROW_GROW_SIZE));
+      row_list= realloc(result->row_list, sizeof(drizzle_row_t) *
+                        ((size_t)(result->row_list_size) +
+                         DRIZZLE_ROW_GROW_SIZE));
       if (row_list == NULL)
       {
         drizzle_row_free(result, row);
@@ -261,10 +260,9 @@ drizzle_return_t drizzle_result_buffer(drizzle_result_st *result)
 
       result->row_list= row_list;
 
-      field_sizes_list= (size_t **)realloc(result->field_sizes_list,
-                                           sizeof(size_t *) *
-                                           ((size_t)(result->row_list_size) +
-                                            DRIZZLE_ROW_GROW_SIZE));
+      field_sizes_list= realloc(result->field_sizes_list, sizeof(size_t *) *
+                                ((size_t)(result->row_list_size) +
+                                 DRIZZLE_ROW_GROW_SIZE));
       if (field_sizes_list == NULL)
       {
         drizzle_row_free(result, row);
@@ -428,7 +426,7 @@ drizzle_return_t drizzle_state_result_read(drizzle_con_st *con)
     /* We can ignore the returns since we've buffered the entire packet. */
     con->result->affected_rows= drizzle_unpack_length(con, &ret);
     con->result->insert_id= drizzle_unpack_length(con, &ret);
-    con->status= (drizzle_con_status_t)drizzle_get_byte2(con->buffer_ptr);
+    con->status= drizzle_get_byte2(con->buffer_ptr);
     con->result->warning_count= drizzle_get_byte2(con->buffer_ptr + 2);
     con->buffer_ptr+= 4;
     con->buffer_size-= 5;
@@ -446,7 +444,7 @@ drizzle_return_t drizzle_state_result_read(drizzle_con_st *con)
   {
     con->result->options= DRIZZLE_RESULT_EOF_PACKET;
     con->result->warning_count= drizzle_get_byte2(con->buffer_ptr + 1);
-    con->status= (drizzle_con_status_t)drizzle_get_byte2(con->buffer_ptr + 3);
+    con->status= drizzle_get_byte2(con->buffer_ptr + 3);
     con->buffer_ptr+= 5;
     con->buffer_size-= 5;
     con->packet_size-= 5;

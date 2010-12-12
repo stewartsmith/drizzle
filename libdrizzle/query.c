@@ -97,7 +97,7 @@ drizzle_query_st *drizzle_query_create(drizzle_st *drizzle,
 {
   if (query == NULL)
   {
-    query= (drizzle_query_st *)malloc(sizeof(drizzle_query_st));
+    query= malloc(sizeof(drizzle_query_st));
     if (query == NULL)
     {
       drizzle_set_error(drizzle, "drizzle_query_create", "malloc");
@@ -179,25 +179,25 @@ void drizzle_query_set_string(drizzle_query_st *query, const char *string,
   query->size= size;
 }
 
-int drizzle_query_options(drizzle_query_st *query)
+drizzle_query_options_t drizzle_query_options(drizzle_query_st *query)
 {
   return query->options;
 }
 
 void drizzle_query_set_options(drizzle_query_st *query,
-                               int options)
+                               drizzle_query_options_t options)
 {
   query->options= options;
 }
 
 void drizzle_query_add_options(drizzle_query_st *query,
-                               int options)
+                               drizzle_query_options_t options)
 {
   query->options|= options;
 }
 
 void drizzle_query_remove_options(drizzle_query_st *query,
-                                  int options)
+                                  drizzle_query_options_t options)
 {
   query->options&= ~options;
 }
@@ -259,7 +259,7 @@ static void drizzle_query_run_state(drizzle_query_st* query,
 drizzle_query_st *drizzle_query_run(drizzle_st *drizzle,
                                     drizzle_return_t *ret_ptr)
 {
-  int options;
+  drizzle_options_t options;
   drizzle_query_st *query;
   drizzle_con_st *con;
 

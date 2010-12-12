@@ -177,19 +177,19 @@ const char *drizzle_con_sqlstate(const drizzle_con_st *con)
   return drizzle_sqlstate(con->drizzle);
 }
 
-int drizzle_con_options(const drizzle_con_st *con)
+drizzle_con_options_t drizzle_con_options(const drizzle_con_st *con)
 {
   return con->options;
 }
 
 void drizzle_con_set_options(drizzle_con_st *con,
-                             int options)
+                             drizzle_con_options_t options)
 {
   con->options= options;
 }
 
 void drizzle_con_add_options(drizzle_con_st *con,
-                             int options)
+                             drizzle_con_options_t options)
 {
   con->options|= options;
 
@@ -199,7 +199,7 @@ void drizzle_con_add_options(drizzle_con_st *con,
 }
 
 void drizzle_con_remove_options(drizzle_con_st *con,
-                                int options)
+                                drizzle_con_options_t options)
 {
   con->options&= ~options;
 }
@@ -352,7 +352,7 @@ const uint8_t *drizzle_con_scramble(const drizzle_con_st *con)
   return con->scramble;
 }
 
-int drizzle_con_capabilities(const drizzle_con_st *con)
+drizzle_capabilities_t drizzle_con_capabilities(const drizzle_con_st *con)
 {
   return con->capabilities;
 }
@@ -594,7 +594,7 @@ void drizzle_con_set_scramble(drizzle_con_st *con, const uint8_t *scramble)
 }
 
 void drizzle_con_set_capabilities(drizzle_con_st *con,
-                                  int capabilities)
+                                  drizzle_capabilities_t capabilities)
 {
   con->capabilities= capabilities;
 }
@@ -666,8 +666,8 @@ void *drizzle_con_command_buffer(drizzle_con_st *con,
   size_t offset= 0;
   size_t size= 0;
 
-  command_data= (uint8_t *)drizzle_con_command_read(con, command, &offset,
-                                                    &size, total, ret_ptr);
+  command_data= drizzle_con_command_read(con, command, &offset, &size, total,
+                                         ret_ptr);
   if (*ret_ptr != DRIZZLE_RETURN_OK)
     return NULL;
 
@@ -679,7 +679,7 @@ void *drizzle_con_command_buffer(drizzle_con_st *con,
 
   if (con->command_buffer == NULL)
   {
-    con->command_buffer= (uint8_t *)malloc((*total) + 1);
+    con->command_buffer= malloc((*total) + 1);
     if (con->command_buffer == NULL)
     {
       drizzle_set_error(con->drizzle, "drizzle_command_buffer", "malloc");
@@ -692,8 +692,8 @@ void *drizzle_con_command_buffer(drizzle_con_st *con,
 
   while ((offset + size) != (*total))
   {
-    command_data= (uint8_t *)drizzle_con_command_read(con, command, &offset,
-                                                      &size, total, ret_ptr);
+    command_data= drizzle_con_command_read(con, command, &offset, &size, total,
+                                           ret_ptr);
     if (*ret_ptr != DRIZZLE_RETURN_OK)
       return NULL;
 
@@ -983,7 +983,7 @@ drizzle_return_t drizzle_state_read(drizzle_con_st *con)
       {
         ret= drizzle_con_set_events(con, POLLIN);
         if (ret != DRIZZLE_RETURN_OK)
-          return DRIZZLE_RETURN_OK;
+          return 0;
 
         if (con->drizzle->options & DRIZZLE_NON_BLOCKING)
           return DRIZZLE_RETURN_IO_WAIT;
@@ -1180,11 +1180,11 @@ drizzle_return_t drizzle_state_listen(drizzle_con_st *con)
     }
 
     /* Wait for read events on the listening socket. */
-    drizzle_return_t driz_ret= drizzle_con_set_events(new_con, POLLIN);
+    ret= drizzle_con_set_events(new_con, POLLIN);
     if (ret != DRIZZLE_RETURN_OK)
     {
       drizzle_con_free(new_con);
-      return driz_ret;
+      return ret;
     }
 
     drizzle_log_info(con->drizzle, "listening on %s:%s", host, port);

@@ -164,7 +164,7 @@ const char *drizzle_con_sqlstate(const drizzle_con_st *con);
  * @return Options set for the connection structure.
  */
 DRIZZLE_API
-int drizzle_con_options(const drizzle_con_st *con);
+drizzle_con_options_t drizzle_con_options(const drizzle_con_st *con);
 
 /**
  * Set options for a connection.
@@ -175,7 +175,7 @@ int drizzle_con_options(const drizzle_con_st *con);
  */
 DRIZZLE_API
 void drizzle_con_set_options(drizzle_con_st *con,
-                             int options);
+                             drizzle_con_options_t options);
 
 /**
  * Add options for a connection.
@@ -186,7 +186,7 @@ void drizzle_con_set_options(drizzle_con_st *con,
  */
 DRIZZLE_API
 void drizzle_con_add_options(drizzle_con_st *con,
-                             int options);
+                             drizzle_con_options_t options);
 
 /**
  * Remove options for a connection.
@@ -197,7 +197,7 @@ void drizzle_con_add_options(drizzle_con_st *con,
  */
 DRIZZLE_API
 void drizzle_con_remove_options(drizzle_con_st *con,
-                                int options);
+                                drizzle_con_options_t options);
 
 /**
  * Get TCP host for a connection.
@@ -392,7 +392,7 @@ const uint8_t *drizzle_con_scramble(const drizzle_con_st *con);
  * @return Capabilities for connection.
  */
 DRIZZLE_API
-int drizzle_con_capabilities(const drizzle_con_st *con);
+drizzle_capabilities_t drizzle_con_capabilities(const drizzle_con_st *con);
 
 /**
  * Get character set for a connection.

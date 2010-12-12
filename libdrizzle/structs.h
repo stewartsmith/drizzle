@@ -59,7 +59,7 @@ extern "C" {
 struct drizzle_st
 {
   uint16_t error_code;
-  int options;
+  drizzle_options_t options;
   drizzle_verbose_t verbose;
   uint32_t con_count;
   uint32_t pfds_size;
@@ -111,10 +111,10 @@ struct drizzle_con_st
   uint8_t state_current;
   short events;
   short revents;
-  int capabilities;
+  drizzle_capabilities_t capabilities;
   drizzle_charset_t charset;
   drizzle_command_t command;
-  int options;
+  drizzle_con_options_t options;
   drizzle_con_socket_t socket_type;
   drizzle_con_status_t status;
   uint32_t max_packet_size;
@@ -163,7 +163,7 @@ struct drizzle_query_st
   drizzle_st *drizzle;
   drizzle_query_st *next;
   drizzle_query_st *prev;
-  int options;
+  drizzle_query_options_t options;
   drizzle_query_state_t state;
   drizzle_con_st *con;
   drizzle_result_st *result;
@@ -181,7 +181,7 @@ struct drizzle_result_st
   drizzle_con_st *con;
   drizzle_result_st *next;
   drizzle_result_st *prev;
-  int options;
+  drizzle_result_options_t options;
 
   char info[DRIZZLE_MAX_INFO_SIZE];
   uint16_t error_code;
@@ -221,7 +221,7 @@ struct drizzle_column_st
   drizzle_result_st *result;
   drizzle_column_st *next;
   drizzle_column_st *prev;
-  int options;
+  drizzle_column_options_t options;
   char catalog[DRIZZLE_MAX_CATALOG_SIZE];
   char db[DRIZZLE_MAX_DB_SIZE];
   char table[DRIZZLE_MAX_TABLE_SIZE];
@@ -232,7 +232,7 @@ struct drizzle_column_st
   uint32_t size;
   size_t max_size;
   drizzle_column_type_t type;
-  int flags;
+  drizzle_column_flags_t flags;
   uint8_t decimals;
   uint8_t default_value[DRIZZLE_MAX_DEFAULT_VALUE_SIZE];
   size_t default_value_size;
