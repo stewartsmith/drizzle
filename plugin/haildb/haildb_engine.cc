@@ -354,7 +354,7 @@ int HailDBEngine::doStartTransaction(Session *session,
   isolation_level= tx_isolation_to_ib_trx_level((enum_tx_isolation)session_tx_isolation(session));
   *transaction= ib_trx_begin(isolation_level);
 
-  return 0;
+  return *transaction == NULL;
 }
 
 void HailDBEngine::doStartStatement(Session *session)
