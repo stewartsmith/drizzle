@@ -2057,12 +2057,7 @@ int HailDBCursor::doUpdateRecord(const unsigned char *old_data,
 
   advance_cursor= true;
 
-  if (err == DB_SUCCESS)
-    return 0;
-  else if (err == DB_DUPLICATE_KEY)
-    return HA_ERR_FOUND_DUPP_KEY;
-  else
-    return -1;
+  return ib_err_t_to_drizzle_error(err);
 }
 
 int HailDBCursor::doDeleteRecord(const unsigned char *)
@@ -2074,7 +2069,8 @@ int HailDBCursor::doDeleteRecord(const unsigned char *)
     return -1; // FIXME
 
   advance_cursor= true;
-  return 0;
+
+  return ib_err_t_to_drizzle_error(err);
 }
 
 int HailDBCursor::delete_all_rows(void)
