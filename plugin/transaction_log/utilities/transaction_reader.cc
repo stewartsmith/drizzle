@@ -50,7 +50,7 @@ namespace po= boost::program_options;
 
 static const char *replace_with_spaces= "\n\r";
 
-static void printStatement(const message::Statement &statement)
+static void printStatement(const message::Statement &statement, string &output)
 {
   vector<string> sql_strings;
 
@@ -91,7 +91,7 @@ static void printStatement(const message::Statement &statement)
       }
     }
 
-    cout << sql << ';' << endl;
+    output.append(sql + ";\n");
   }
 }
 
@@ -273,6 +273,11 @@ static void printTransactionSummary(const message::Transaction &transaction,
         cout << "\tRAW SQL\n";
         break;
       }
+      case (message::Statement::ROLLBACK_STATEMENT):
+      {
+        cout << "\tROLLBACK STATEMENT\n";
+        break;
+      }
       default:
         cout << "\tUnhandled Statement Type\n";
     }
@@ -322,6 +327,8 @@ static void printTransaction(const message::Transaction &transaction,
 
   last_trx_id= trx.transaction_id();
 
+  vector<string> cached_statement_sql;
+
   for (x= 0; x < num_statements; ++x)
   {
     const message::Statement &statement= transaction.statement(x);
@@ -338,7 +345,44 @@ static void printTransaction(const message::Transaction &transaction,
     if (statement.type() == message::Statement::ROLLBACK)
       should_commit= false;
 
-    printStatement(statement);
+    string output;
+    printStatement(statement, output);
+    
+    if (isEndStatement(statement))
+    {
+      /* A complete, non-segmented statement */
+      if (cached_statement_sql.empty() &&
+          (statement.type() != message::Statement::ROLLBACK_STATEMENT))
+      {
+        cout << output;
+      }
+      
+      /* A segmented statement that was rolled back */
+      else if (statement.type() == message::Statement::ROLLBACK_STATEMENT)
+      {
+        cached_statement_sql.clear();
+        cout << "-- Rollback statement\n";
+      }
+      
+      /* A segmented statement that was successfully executed */
+      else
+      {
+        for (size_t y= 0; y < cached_statement_sql.size(); y++)
+        {
+          cout << cached_statement_sql[y];
+        }
+        cached_statement_sql.clear();
+      }
+    }
+    
+    /*
+     * We cache segmented statements so we can support rolling back a
+     * statement that fails mid-execution.
+     */
+    else
+    {
+      cached_statement_sql.push_back(output);
+    }
   }
 
   /*

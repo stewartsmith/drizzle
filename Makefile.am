@@ -51,6 +51,7 @@ EXTRA_DIST= \
 	    config/autorun.sh \
 	    config/config.rpath \
 	    config/drizzle.ver \
+	    config/link-warning.h \
 	    config/make-lint.py \
 	    config/pandora_vc_revinfo \
 	    config/pre_hook.sh \

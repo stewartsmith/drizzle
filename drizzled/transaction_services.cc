@@ -690,6 +690,8 @@ int TransactionServices::rollbackTransaction(Session *session, bool normal_trans
      */
     if (normal_transaction)
       rollbackTransactionMessage(session);
+    else
+      rollbackStatementMessage(session);
 
     if (is_real_trans)
       session->transaction.xid_state.xid.null();
@@ -730,6 +732,10 @@ int TransactionServices::rollbackTransaction(Session *session, bool normal_trans
 */
 int TransactionServices::autocommitOrRollback(Session *session, int error)
 {
+  /* One GPB Statement message per SQL statement */
+  message::Statement *statement= session->getStatementMessage();
+  if ((statement != NULL) && (! error))
+    finalizeStatementMessage(*statement, session);
 
   if (session->transaction.stmt.getResourceContexts().empty() == false)
   {
@@ -1047,18 +1053,35 @@ int TransactionServices::commitTransactionMessage(Session *in_session)
   if (! replication_services.isActive())
     return 0;
 
-  /* If there is an active statement message, finalize it */
+  /*
+   * If no Transaction message was ever created, then no data modification
+   * occurred inside the transaction, so nothing to do.
+   */
+  if (in_session->getTransactionMessage() == NULL)
+    return 0;
+  
+  /* If there is an active statement message, finalize it. */
   message::Statement *statement= in_session->getStatementMessage();
 
   if (statement != NULL)
   {
     finalizeStatementMessage(*statement, in_session);
   }
-  else
-    return 0; /* No data modification occurred inside the transaction */
-  
+
   message::Transaction* transaction= getActiveTransactionMessage(in_session);
 
+  /*
+   * It is possible that we could have a Transaction without any Statements
+   * if we had created a Statement but had to roll it back due to it failing
+   * mid-execution, and no subsequent Statements were added to the Transaction
+   * message. In this case, we simply clean up the message and not push it.
+   */
+  if (transaction->statement_size() == 0)
+  {
+    cleanupTransactionMessage(transaction, in_session);
+    return 0;
+  }
+  
   finalizeTransactionMessage(*transaction, in_session);
   
   plugin::ReplicationReturnCode result= replication_services.pushTransactionMessage(*in_session, *transaction);
@@ -1138,6 +1161,72 @@ void TransactionServices::rollbackTransactionMessage(Session *in_session)
   cleanupTransactionMessage(transaction, in_session);
 }
 
+void TransactionServices::rollbackStatementMessage(Session *in_session)
+{
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  if (! replication_services.isActive())
+    return;
+
+  message::Statement *current_statement= in_session->getStatementMessage();
+
+  /* If we never added a Statement message, nothing to undo. */
+  if (current_statement == NULL)
+    return;
+
+  /*
+   * If the Statement has been segmented, then we've already pushed a portion
+   * of this Statement's row changes through the replication stream and we
+   * need to send a ROLLBACK_STATEMENT message. Otherwise, we can simply
+   * delete the current Statement message.
+   */
+  bool is_segmented= false;
+
+  switch (current_statement->type())
+  {
+    case message::Statement::INSERT:
+      if (current_statement->insert_data().segment_id() > 1)
+        is_segmented= true;
+      break;
+
+    case message::Statement::UPDATE:
+      if (current_statement->update_data().segment_id() > 1)
+        is_segmented= true;
+      break;
+
+    case message::Statement::DELETE:
+      if (current_statement->delete_data().segment_id() > 1)
+        is_segmented= true;
+      break;
+
+    default:
+      break;
+  }
+
+  /*
+   * Remove the Statement message we've been working with (same as
+   * current_statement).
+   */
+  message::Transaction *transaction= getActiveTransactionMessage(in_session);
+  google::protobuf::RepeatedPtrField<message::Statement> *statements_in_txn;
+  statements_in_txn= transaction->mutable_statement();
+  statements_in_txn->RemoveLast();
+  in_session->setStatementMessage(NULL);
+  
+  /*
+   * Create the ROLLBACK_STATEMENT message, if we need to. This serves as
+   * an indicator to cancel the previous Statement message which should have
+   * had its end_segment attribute set to false.
+   */
+  if (is_segmented)
+  {
+    current_statement= transaction->add_statement();
+    initStatementMessage(*current_statement,
+                         message::Statement::ROLLBACK_STATEMENT,
+                         in_session);
+    finalizeStatementMessage(*current_statement, in_session);
+  }
+}
+  
 message::Statement &TransactionServices::getInsertStatement(Session *in_session,
                                                             Table *in_table,
                                                             uint32_t *next_segment_id)
@@ -1213,20 +1302,6 @@ message::Statement &TransactionServices::getInsertStatement(Session *in_session,
       }
       else
       {
-        /* append this INSERT query string */
-        if (in_session->variables.replicate_query)
-        {
-          string s(statement->sql());
-          if (not s.empty())
-          {
-            s.append(" ; ");
-            s.append(in_session->getQueryString()->c_str());
-            statement->set_sql(s);
-          }
-          else
-            statement->set_sql(in_session->getQueryString()->c_str());
-        }
-
         /* carry forward the existing segment id */
         const message::InsertData &current_data= statement->insert_data();
         *next_segment_id= current_data.segment_id();
@@ -1414,20 +1489,6 @@ message::Statement &TransactionServices::getUpdateStatement(Session *in_session,
     {
       if (useExistingUpdateHeader(*statement, in_table, old_record, new_record))
       {
-        /* append this UPDATE query string */
-        if (in_session->variables.replicate_query)
-        {
-          string s(statement->sql());
-          if (not s.empty())
-          {
-            s.append(" ; ");
-            s.append(in_session->getQueryString()->c_str());
-            statement->set_sql(s);
-          }
-          else
-            statement->set_sql(in_session->getQueryString()->c_str());
-        }
-
         /* carry forward the existing segment id */
         const message::UpdateData &current_data= statement->update_data();
         *next_segment_id= current_data.segment_id();
@@ -1787,20 +1848,6 @@ message::Statement &TransactionServices::getDeleteStatement(Session *in_session,
       }
       else
       {
-        /* append this DELETE query string */
-        if (in_session->variables.replicate_query)
-        {
-          string s(statement->sql());
-          if (not s.empty())
-          {
-            s.append(" ; ");
-            s.append(in_session->getQueryString()->c_str());
-            statement->set_sql(s);
-          }
-          else
-            statement->set_sql(in_session->getQueryString()->c_str());
-        }
-
         /* carry forward the existing segment id */
         const message::DeleteData &current_data= statement->delete_data();
         *next_segment_id= current_data.segment_id();
@@ -1926,123 +1973,6 @@ void TransactionServices::deleteRecord(Session *in_session, Table *in_table, boo
     }
   }
 }
-
-
-/**
- * Template for removing Statement records of different types.
- *
- * The code for removing records from different Statement message types
- * is identical except for the class types that are embedded within the
- * Statement.
- *
- * There are 3 scenarios we need to look for:
- *   - We've been asked to remove more records than exist in the Statement
- *   - We've been asked to remove less records than exist in the Statement
- *   - We've been asked to remove ALL records that exist in the Statement
- *
- * If we are removing ALL records, then effectively we would be left with
- * an empty Statement message, so we should just remove it and clean up
- * message pointers in the Session object.
- */
-template <class DataType, class RecordType>
-static bool removeStatementRecordsWithType(Session *session,
-                                           DataType *data,
-                                           uint32_t count)
-{
-  uint32_t num_avail_recs= static_cast<uint32_t>(data->record_size());
-
-  /* If there aren't enough records to remove 'count' of them, error. */
-  if (num_avail_recs < count)
-    return false;
-
-  /*
-   * If we are removing all of the data records, we'll just remove this
-   * entire Statement message.
-   */
-  if (num_avail_recs == count)
-  {
-    message::Transaction *transaction= session->getTransactionMessage();
-    protobuf::RepeatedPtrField<message::Statement> *statements= transaction->mutable_statement();
-    statements->RemoveLast();
-
-    /*
-     * Now need to set the Session Statement pointer to either the previous
-     * Statement, or NULL if there isn't one.
-     */
-    if (statements->size() == 0)
-    {
-      session->setStatementMessage(NULL);
-    }
-    else
-    {
-      /*
-       * There isn't a great way to get a pointer to the previous Statement
-       * message using the RepeatedPtrField object, so we'll just get to it
-       * using the Transaction message.
-       */
-      int last_stmt_idx= transaction->statement_size() - 1;
-      session->setStatementMessage(transaction->mutable_statement(last_stmt_idx));
-    }
-  }
-  /* We only need to remove 'count' records */
-  else if (num_avail_recs > count)
-  {
-    protobuf::RepeatedPtrField<RecordType> *records= data->mutable_record();
-    while (count--)
-      records->RemoveLast();
-  }
-
-  return true;
-}
-
-
-bool TransactionServices::removeStatementRecords(Session *session,
-                                                 uint32_t count)
-{
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  if (! replication_services.isActive())
-    return false;
-
-  /* Get the most current Statement */
-  message::Statement *statement= session->getStatementMessage();
-
-  /* Make sure we have work to do */
-  if (statement == NULL)
-    return false;
-
-  bool retval= false;
-
-  switch (statement->type())
-  {
-    case message::Statement::INSERT:
-    {
-      message::InsertData *data= statement->mutable_insert_data();
-      retval= removeStatementRecordsWithType<message::InsertData, message::InsertRecord>(session, data, count);
-      break;
-    }
-
-    case message::Statement::UPDATE:
-    {
-      message::UpdateData *data= statement->mutable_update_data();
-      retval= removeStatementRecordsWithType<message::UpdateData, message::UpdateRecord>(session, data, count);
-      break;
-    }
-
-    case message::Statement::DELETE:  /* not sure if this one is possible... */
-    {
-      message::DeleteData *data= statement->mutable_delete_data();
-      retval= removeStatementRecordsWithType<message::DeleteData, message::DeleteRecord>(session, data, count);
-      break;
-    }
-
-    default:
-      retval= false;
-      break;
-  }
-
-  return retval;
-}
-
 
 void TransactionServices::createTable(Session *in_session,
                                       const message::Table &table)
