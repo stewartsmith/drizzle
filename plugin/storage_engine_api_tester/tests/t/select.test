@@ -3,3 +3,4 @@ start transaction with consistent snapshot;
 #--error 1146
 select * from t2;
 commit;
+drop table t2;
