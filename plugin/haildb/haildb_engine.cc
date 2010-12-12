@@ -2167,8 +2167,10 @@ int read_row_from_haildb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, T
 
   err= ib_cursor_read_row(cursor, tuple);
 
-  if (err != DB_SUCCESS) // FIXME
+  if (err == DB_RECORD_NOT_FOUND)
     return HA_ERR_END_OF_FILE;
+  if (err != DB_SUCCESS)
+    return ib_err_t_to_drizzle_error(err);
 
   int colnr= 0;
 
@@ -2233,6 +2235,8 @@ int read_row_from_haildb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, T
 
     (**field).move_field_offset(-row_offset);
 
+    if (err != DB_SUCCESS)
+      return ib_err_t_to_drizzle_error(err);
   }
 
   if (has_hidden_primary_key)
@@ -2240,7 +2244,7 @@ int read_row_from_haildb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, T
     err= ib_tuple_read_u64(tuple, colnr, hidden_pkey);
   }
 
-  return 0;
+  return ib_err_t_to_drizzle_error(err);
 }
 
 int HailDBCursor::rnd_next(unsigned char *buf)
