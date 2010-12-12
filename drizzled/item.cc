@@ -1769,4 +1769,15 @@ Field *create_tmp_field(Session *session,
   }
 }
 
+std::ostream& operator<<(std::ostream& output, const Item &item)
+{
+  output << "Item:(";
+  output <<  item.name;
+  output << ", ";
+  output << drizzled::display::type(item.type());
+  output << ")";
+
+  return output;  // for multiple << operators.
+}
+
 } /* namespace drizzled */

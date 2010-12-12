@@ -80,6 +80,7 @@ class Field
   /* Prevent use of these */
   Field(const Field&);
   void operator=(Field &);
+
 public:
   unsigned char *ptr; /**< Position to field in record. Stores raw field value */
   unsigned char *null_ptr; /**< Byte where null_bit is */
@@ -725,6 +726,8 @@ public:
   void setReadSet(bool arg= true);
   void setWriteSet(bool arg= true);
 };
+
+std::ostream& operator<<(std::ostream& output, const Field &field);
 
 } /* namespace drizzled */
 
