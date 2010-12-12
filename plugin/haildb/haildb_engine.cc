@@ -2256,7 +2256,11 @@ int HailDBCursor::rnd_next(unsigned char *buf)
     return previous_error;
 
   if (advance_cursor)
+  {
     err= ib_cursor_next(cursor);
+    if (err != DB_SUCCESS)
+      return ib_err_t_to_drizzle_error(err);
+  }
 
   tuple= ib_tuple_clear(tuple);
   ret= read_row_from_haildb(buf, cursor, tuple, getTable(),
@@ -2277,7 +2281,7 @@ int HailDBCursor::doEndTableScan()
   assert(err == DB_SUCCESS);
   in_table_scan= false;
   previous_error= 0;
-  return 0;
+  return ib_err_t_to_drizzle_error(err);
 }
 
 int HailDBCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
@@ -2291,6 +2295,8 @@ int HailDBCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
   {
     err= ib_col_set_value(search_tuple, 0,
                           ((uint64_t*)(pos)), sizeof(uint64_t));
+    if (err != DB_SUCCESS)
+      return ib_err_t_to_drizzle_error(err);
   }
   else
   {
@@ -2306,7 +2312,8 @@ int HailDBCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
   }
 
   err= ib_cursor_moveto(cursor, search_tuple, IB_CUR_GE, &res);
-  assert(err == DB_SUCCESS);
+  if (err != DB_SUCCESS)
+    return ib_err_t_to_drizzle_error(err);
 
   assert(res==0);
   if (res != 0)
@@ -2479,14 +2486,14 @@ int HailDBCursor::doStartIndexScan(uint32_t keynr, bool)
                          getShare()->getKeyInfo(keynr).name,
                          &index_id);
     if (err != DB_SUCCESS)
-      return -1;
+      return ib_err_t_to_drizzle_error(err);
 
     err= ib_cursor_close(cursor);
     assert(err == DB_SUCCESS);
     err= ib_cursor_open_index_using_id(index_id, transaction, &cursor);
 
     if (err != DB_SUCCESS)
-      return -1;
+      return ib_err_t_to_drizzle_error(err);
 
     tuple= ib_clust_read_tuple_create(cursor);
     ib_cursor_set_cluster_access(cursor);
@@ -2758,7 +2765,7 @@ int HailDBCursor::index_prev(unsigned char *buf)
       if (err == DB_END_OF_INDEX)
         return HA_ERR_END_OF_FILE;
       else
-        return -1; // FIXME
+        return ib_err_t_to_drizzle_error(err);
     }
   }
 
