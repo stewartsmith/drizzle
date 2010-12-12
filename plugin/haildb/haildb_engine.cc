@@ -2123,7 +2123,7 @@ err:
   ib_schema_unlock(transaction);
   ib_err_t rollback_err= ib_trx_rollback(transaction);
   assert(rollback_err == DB_SUCCESS);
-  return err;
+  return ib_err_t_to_drizzle_error(err);
 }
 
 int HailDBCursor::doStartTableScan(bool)
