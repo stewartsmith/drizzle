@@ -2112,7 +2112,7 @@ int HailDBCursor::delete_all_rows(void)
 {
   /* I *think* ib_truncate is non-transactional....
      so only support TRUNCATE and not DELETE FROM t;
-     (this is what ha_haildb does)
+     (this is what ha_innodb does)
   */
   if (session_sql_command(getTable()->in_use) != SQLCOM_TRUNCATE)
     return HA_ERR_WRONG_COMMAND;
