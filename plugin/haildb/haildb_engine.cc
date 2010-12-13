@@ -2102,8 +2102,6 @@ int HailDBCursor::doDeleteRecord(const unsigned char *)
 
   assert(ib_cursor_is_positioned(cursor) == IB_TRUE);
   err= ib_cursor_delete_row(cursor);
-  if (err != DB_SUCCESS)
-    return -1; // FIXME
 
   advance_cursor= true;
 
