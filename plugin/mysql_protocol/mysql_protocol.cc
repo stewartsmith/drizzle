@@ -143,16 +143,26 @@ void ClientMySQLProtocol::close(void)
   { 
     drizzleclient_net_close(&net);
     drizzleclient_net_end(&net);
-    counters->connected.decrement();
+    if (is_admin_connection)
+      counters->adminConnected.decrement();
+    else
+      counters->connected.decrement();
   }
 }
 
 bool ClientMySQLProtocol::authenticate()
 {
   bool connection_is_valid;
-
-  counters->connectionCount.increment();
-  counters->connected.increment();
+  if (is_admin_connection)
+  {
+    counters->adminConnectionCount.increment();
+    counters->adminConnected.increment();
+  }
+  else
+  {
+    counters->connectionCount.increment();
+    counters->connected.increment();
+  }
 
   /* Use "connect_timeout" value during connection phase */
   drizzleclient_net_set_read_timeout(&net, connect_timeout.get());
@@ -161,13 +171,18 @@ bool ClientMySQLProtocol::authenticate()
   connection_is_valid= checkConnection();
 
   if (connection_is_valid)
-    if (counters->connected > counters->max_connections)
+  {
+    if (not is_admin_connection and (counters->connected > counters->max_connections))
     {
       std::string errmsg(ER(ER_CON_COUNT_ERROR));
       sendError(ER_CON_COUNT_ERROR, errmsg.c_str());
+      counters->failedConnections.increment();
     }
     else
+    {
       sendOK();
+    }
+  }
   else
   {
     sendError(session->main_da.sql_errno(), session->main_da.message());

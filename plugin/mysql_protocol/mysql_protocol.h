@@ -36,8 +36,10 @@ class ProtocolCounters
       max_connections(1000)
     { }
     drizzled::atomic<uint64_t> connectionCount;
+    drizzled::atomic<uint64_t> adminConnectionCount;
     drizzled::atomic<uint64_t> failedConnections;
     drizzled::atomic<uint64_t> connected;
+    drizzled::atomic<uint64_t> adminConnected;
     uint32_t max_connections;
 };
 
