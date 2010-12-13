@@ -91,10 +91,10 @@ bool TableConstraints::Generator::populate()
 
 
         /* IS_DEFERRABLE */
-        push();
+        push(false);
 
         /* INITIALLY_DEFERRED */
-        push();
+        push(false);
 
         return true;
       }
