@@ -1,4 +1,3 @@
-connect(localhost,root,,test,9306,);
 ERROR 08004: Too many connections
 1
 1

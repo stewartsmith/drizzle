@@ -3,8 +3,10 @@
 
 connect (con1,localhost,root,,);
 # This next one should hit max-connections limit
+--disable_query_log
 --error 1040
 connect (con2,localhost,root,,);
+--enable_query_log
 
 # This should override max-connections and by allowed by ip address restriction
 --exec $DRIZZLE_ADMIN -e "SELECT 1;"
