@@ -765,19 +765,6 @@ bool ClientMySQLProtocol::checkConnection(void)
   uint32_t user_len= passwd - user - 1;
   char *l_db= passwd;
 
-  if (client_capabilities & CLIENT_ADMIN)
-  {
-    if ((strncmp(user, "root", 4) == 0) and isAdminAllowed())
-    {
-      is_admin_connection= true;
-    }
-    else
-    {
-      my_error(ER_ADMIN_ACCESS, MYF(0));
-      return false;
-    }
-  }
-
   /*
     Only support new password format.
 
@@ -821,6 +808,19 @@ bool ClientMySQLProtocol::checkConnection(void)
     user[user_len-1]= 0;
     user++;
     user_len-= 2;
+  }
+
+  if (client_capabilities & CLIENT_ADMIN)
+  {
+    if ((strncmp(user, "root", 4) == 0) and isAdminAllowed())
+    {
+      is_admin_connection= true;
+    }
+    else
+    {
+      my_error(ER_ADMIN_ACCESS, MYF(0));
+      return false;
+    }
   }
 
   session->getSecurityContext().setUser(user);
