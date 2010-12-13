@@ -490,6 +490,7 @@ uint64_t HailDBCursor::getHiddenPrimaryKeyInitialAutoIncrementValue()
     nr++;
   }
   ib_tuple_delete(tuple);
+  tuple= NULL;
   err= ib_cursor_reset(cursor);
   assert(err == DB_SUCCESS);
   return nr;
@@ -1778,20 +1779,28 @@ const char *HailDBCursor::index_type(uint32_t)
   return("BTREE");
 }
 
-static ib_err_t write_row_to_haildb_tuple(Field **fields, ib_tpl_t tuple)
+static ib_err_t write_row_to_haildb_tuple(const unsigned char* buf,
+                                          Field **fields, ib_tpl_t tuple)
 {
   int colnr= 0;
   ib_err_t err= DB_ERROR;
+  ptrdiff_t row_offset= buf - (*fields)->getTable()->getInsertRecord();
 
   for (Field **field= fields; *field; field++, colnr++)
   {
+    (**field).move_field_offset(row_offset);
+
     if (! (**field).isWriteSet() && (**field).is_null())
+    {
+      (**field).move_field_offset(-row_offset);
       continue;
+    }
 
     if ((**field).is_null())
     {
       err= ib_col_set_value(tuple, colnr, NULL, IB_SQL_NULL);
       assert(err == DB_SUCCESS);
+      (**field).move_field_offset(-row_offset);
       continue;
     }
 
@@ -1829,6 +1838,8 @@ static ib_err_t write_row_to_haildb_tuple(Field **fields, ib_tpl_t tuple)
     }
 
     assert (err == DB_SUCCESS);
+
+    (**field).move_field_offset(-row_offset);
   }
 
   return err;
@@ -1936,7 +1947,7 @@ int HailDBCursor::doInsertRecord(unsigned char *record)
 
   }
 
-  write_row_to_haildb_tuple(getTable()->getFields(), tuple);
+  write_row_to_haildb_tuple(record, getTable()->getFields(), tuple);
 
   if (share->has_hidden_primary_key)
   {
@@ -1969,7 +1980,7 @@ int HailDBCursor::doInsertRecord(unsigned char *record)
       err= ib_cursor_first(cursor);
       assert(err == DB_SUCCESS || err == DB_END_OF_INDEX);
 
-      write_row_to_haildb_tuple(getTable()->getFields(), tuple);
+      write_row_to_haildb_tuple(record, getTable()->getFields(), tuple);
 
       err= ib_cursor_insert_row(cursor, tuple);
       assert(err==DB_SUCCESS); // probably be nice and process errors
@@ -1982,27 +1993,67 @@ int HailDBCursor::doInsertRecord(unsigned char *record)
 
   tuple= ib_tuple_clear(tuple);
   ib_tuple_delete(tuple);
+  tuple= NULL;
   err= ib_cursor_reset(cursor);
 
   return ret;
 }
 
-int HailDBCursor::doUpdateRecord(const unsigned char *,
-                                         unsigned char *)
+int HailDBCursor::doUpdateRecord(const unsigned char *old_data,
+                                 unsigned char *new_data)
 {
   ib_tpl_t update_tuple;
   ib_err_t err;
+  bool created_tuple= false;
 
   update_tuple= ib_clust_read_tuple_create(cursor);
+
+  if (tuple == NULL)
+  {
+    ib_trx_t transaction= *get_trx(getTable()->in_use);
+    ib_cursor_attach_trx(cursor, transaction);
+
+    store_key_value_from_haildb(getTable()->key_info + getTable()->getShare()->getPrimaryKey(),
+                                  ref, ref_length, old_data);
+
+    ib_tpl_t search_tuple= ib_clust_search_tuple_create(cursor);
+
+    fill_ib_search_tpl_from_drizzle_key(search_tuple,
+                                        getTable()->key_info + 0,
+                                        ref, ref_length);
+
+    err= ib_cursor_set_lock_mode(cursor, IB_LOCK_X);
+    assert(err == DB_SUCCESS);
+
+    int res;
+    err= ib_cursor_moveto(cursor, search_tuple, IB_CUR_GE, &res);
+    assert(err == DB_SUCCESS);
+
+    tuple= ib_clust_read_tuple_create(cursor);
+
+    err= ib_cursor_read_row(cursor, tuple);
+    assert(err == DB_SUCCESS);// FIXME
+
+    created_tuple= true;
+  }
 
   err= ib_tuple_copy(update_tuple, tuple);
   assert(err == DB_SUCCESS);
 
-  write_row_to_haildb_tuple(getTable()->getFields(), update_tuple);
+  write_row_to_haildb_tuple(new_data, getTable()->getFields(), update_tuple);
 
   err= ib_cursor_update_row(cursor, tuple, update_tuple);
 
   ib_tuple_delete(update_tuple);
+
+  if (created_tuple)
+  {
+    ib_err_t ib_err= ib_cursor_reset(cursor); //fixme check error
+    assert(ib_err == DB_SUCCESS);
+    tuple= ib_tuple_clear(tuple);
+    ib_tuple_delete(tuple);
+    tuple= NULL;
+  }
 
   advance_cursor= true;
 
@@ -2142,6 +2193,7 @@ int read_row_from_haildb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, T
     if (length == IB_SQL_NULL)
     {
       (**field).set_null();
+      (**field).move_field_offset(-row_offset);
       continue;
     }
     else
@@ -2220,6 +2272,7 @@ int HailDBCursor::doEndTableScan()
   ib_err_t err;
 
   ib_tuple_delete(tuple);
+  tuple= NULL;
   err= ib_cursor_reset(cursor);
   assert(err == DB_SUCCESS);
   in_table_scan= false;
@@ -2381,6 +2434,28 @@ int HailDBCursor::info(uint32_t flag)
 
   if (flag & HA_STATUS_AUTO)
     stats.auto_increment_value= 1;
+
+  if (flag & HA_STATUS_ERRKEY) {
+    const char *err_table_name;
+    const char *err_index_name;
+
+    ib_trx_t transaction= *get_trx(getTable()->in_use);
+
+    err= ib_get_duplicate_key(transaction, &err_table_name, &err_index_name);
+
+    errkey= -1;
+
+    for (unsigned int i = 0; i < getTable()->getShare()->keys; i++)
+    {
+      if (strcmp(err_index_name, getTable()->key_info[i].name) == 0)
+      {
+        errkey= i;
+        break;
+      }
+    }
+
+  }
+
   return(0);
 }
 
