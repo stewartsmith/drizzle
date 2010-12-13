@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
+#include "drizzled/util/tokenize.h"
 #include "errmsg.h"
 #include "mysql_protocol.h"
 #include "mysql_password.h"
@@ -42,6 +43,7 @@ using namespace drizzled;
 namespace drizzle_plugin
 {
 
+std::vector<std::string> ClientMySQLProtocol::mysql_admin_ip_addresses;
 static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;
 
 static port_constraint port;
@@ -765,7 +767,7 @@ bool ClientMySQLProtocol::checkConnection(void)
 
   if (client_capabilities & CLIENT_ADMIN)
   {
-    if (strncmp(user, "root", 4) == 0)
+    if ((strncmp(user, "root", 4) == 0) and isAdminAllowed())
     {
       is_admin_connection= true;
     }
@@ -826,6 +828,14 @@ bool ClientMySQLProtocol::checkConnection(void)
   return session->checkUser(string(passwd, passwd_len),
                             string(l_db ? l_db : ""));
 
+}
+
+bool ClientMySQLProtocol::isAdminAllowed(void)
+{
+  if (std::find(mysql_admin_ip_addresses.begin(), mysql_admin_ip_addresses.end(), session->getSecurityContext().getIp()) != mysql_admin_ip_addresses.end())
+    return true;
+  else
+    return false;
 }
 
 bool ClientMySQLProtocol::netStoreData(const unsigned char *from, size_t length)
@@ -930,6 +940,16 @@ void ClientMySQLProtocol::makeScramble(char *scramble)
   }
 }
 
+void ClientMySQLProtocol::mysql_compose_ip_addresses(vector<string> options)
+{
+  for (vector<string>::iterator it= options.begin();
+       it != options.end();
+       ++it)
+  {
+    tokenize(*it, mysql_admin_ip_addresses, ",", true);
+  }
+}
+
 static ListenMySQLProtocol *listen_obj= NULL;
 plugin::Create_function<MySQLPassword> *mysql_password= NULL;
 
@@ -990,6 +1010,9 @@ static void init_options(drizzled::module::option_context &context)
   context("max-connections",
           po::value<uint32_t>(&ListenMySQLProtocol::mysql_counters->max_connections)->default_value(1000),
           N_("Maximum simultaneous connections."));
+  context("admin-ip-addresses",
+          po::value<vector<string> >()->composing()->notifier(&ClientMySQLProtocol::mysql_compose_ip_addresses),
+          N_("A restrictive IP address list for incoming admin connections."));
 }
 
 static int mysql_protocol_connection_count_func(drizzle_show_var *var, char *buff)

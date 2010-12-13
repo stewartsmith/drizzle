@@ -29,6 +29,8 @@
 
 namespace drizzle_plugin
 {
+void compose_ip_addresses(std::vector<std::string> options);
+
 class ProtocolCounters
 {
   public:
@@ -49,7 +51,7 @@ typedef drizzled::constrained_check<uint32_t, 1048576, 1024, 1024> buffer_constr
 
 class ListenMySQLProtocol: public drizzled::plugin::ListenTcp
 {
-private:
+protected:
   const std::string _hostname;
   bool _using_mysql41_protocol;
 
@@ -71,7 +73,7 @@ public:
 
 class ClientMySQLProtocol: public drizzled::plugin::Client
 {
-private:
+protected:
   NET net;
   drizzled::String packet;
   uint32_t client_capabilities;
@@ -119,6 +121,9 @@ public:
   virtual bool haveError(void);
   virtual bool haveMoreData(void);
   virtual bool wasAborted(void);
+  virtual bool isAdminAllowed(void);
+  static std::vector<std::string> mysql_admin_ip_addresses;
+  static void mysql_compose_ip_addresses(std::vector<std::string> options);
 };
 
 } /* namespace drizzle_plugin */
