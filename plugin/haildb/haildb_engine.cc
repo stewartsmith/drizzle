@@ -2244,7 +2244,7 @@ int read_row_from_haildb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, T
   for (Field **field= table->getFields() ; *field ; field++, colnr++)
   {
     if (! (**field).isReadSet())
-      continue;
+      (**field).setReadSet(); /* Fucking broken API screws us royally. */
 
     (**field).move_field_offset(row_offset);
 
