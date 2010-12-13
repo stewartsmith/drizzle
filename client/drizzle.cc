@@ -1446,9 +1446,15 @@ try
 
   po::notify(vm);
 
+#ifdef DRIZZLE_ADMIN_TOOL
+  default_prompt= strdup(getenv("DRIZZLE_PS1") ?
+                         getenv("DRIZZLE_PS1") :
+                         "drizzleadmin> ");
+#else
   default_prompt= strdup(getenv("DRIZZLE_PS1") ?
                          getenv("DRIZZLE_PS1") :
                          "drizzle> ");
+#endif
   if (default_prompt == NULL)
   {
     fprintf(stderr, _("Memory allocation error while constructing initial "
@@ -4035,10 +4041,17 @@ sql_connect(const string &host, const string &database, const string &user, cons
     drizzle_free(&drizzle);
   }
   drizzle_create(&drizzle);
+
+#ifdef DRIZZLE_ADMIN_TOOL
+  drizzle_con_options_t options= (drizzle_con_options_t) (DRIZZLE_CON_ADMIN | (use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL));
+#else
+  drizzle_con_options_t options= (drizzle_con_options_t) (use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL);
+#endif
+
   if (drizzle_con_add_tcp(&drizzle, &con, (char *)host.c_str(),
     opt_drizzle_port, (char *)user.c_str(),
     (char *)password.c_str(), (char *)database.c_str(),
-    use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL) == NULL)
+    options) == NULL)
   {
     (void) put_error(&con, NULL);
     (void) fflush(stdout);
