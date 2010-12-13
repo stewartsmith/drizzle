@@ -1386,7 +1386,11 @@ try
   N_("Password to use when connecting to server. If password is not given it's asked from the tty."))
   ("port,p", po::value<uint32_t>()->default_value(0),
   N_("Port number to use for connection or 0 for default to, in order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default"))
+#ifdef DRIZZLE_ADMIN_TOOL
+  ("user,u", po::value<string>(&current_user)->default_value("root"),
+#else
   ("user,u", po::value<string>(&current_user)->default_value(""),
+#endif
   N_("User for login if not current user."))
   ("protocol",po::value<string>(&opt_protocol)->default_value("mysql"),
   N_("The protocol of connection (mysql or drizzle)."))

@@ -1,0 +1,10 @@
+# Test uses max-connections of 2 to test drizzleadmin override of this setting
+# along with admin-ip-address of 127.0.0.1
+
+connect (con1,localhost,root,,);
+# This next one should hit max-connections limit
+--error 1040
+connect (con2,localhost,root,,);
+
+# This should override max-connections and by allowed by ip address restriction
+--exec $DRIZZLE_ADMIN -e "SELECT 1;"
