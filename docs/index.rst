@@ -24,10 +24,10 @@ Scope
 
 Introduction:
 -------------
-
+   
 .. toctree::
    :maxdepth: 2
-
+   
    preface
    what_is_drizzle
    brief_history_of_drizzle
