@@ -117,11 +117,13 @@ public:
   int reset();
 
 private:
+  ib_id_t table_id;
   ib_crsr_t cursor;
   ib_tpl_t tuple;
   bool advance_cursor;
   ib_lck_mode_t ib_lock_mode;
   int previous_error;
+  bool cursor_is_sec_index;
 
   bool write_can_replace;
   uint64_t hidden_autoinc_pkey_position;
