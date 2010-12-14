@@ -41,7 +41,7 @@ ProcesslistTool::ProcesslistTool() :
   add_field("ID", plugin::TableFunction::NUMBER, 0, false);
   add_field("USER", 16);
   add_field("HOST", NI_MAXHOST);
-  add_field("DB");
+  add_field("DB", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, true);
   add_field("COMMAND", 16);
   add_field("TIME", plugin::TableFunction::NUMBER, 0, false);
   add_field("STATE", plugin::TableFunction::STRING, 256, true);

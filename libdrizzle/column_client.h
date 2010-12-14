@@ -65,6 +65,11 @@ drizzle_return_t drizzle_column_skip(drizzle_result_st *result);
 
 /**
  * Read column information.
+ *
+ * @param[in,out] result pointer to the structure to read from.
+ * @param[out] column pointer to the structure to contain the information.
+ * @param[out] ret_ptr Standard libdrizzle return value.
+ * @return column if there is valid data, NULL if there are no more columns.
  */
 DRIZZLE_API
 drizzle_column_st *drizzle_column_read(drizzle_result_st *result,
