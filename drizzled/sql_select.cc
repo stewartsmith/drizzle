@@ -2491,7 +2491,7 @@ static void propagate_cond_constants(Session *session,
         Item **args= (*iter)->second->arguments();
         if (!args[0]->const_item())
         {
-          change_cond_ref_to_const( session, save, (*iter)->first,
+          change_cond_ref_to_const( session, save_list, (*iter)->first,
                                     (*iter)->first, args[0], args[1] );
         }
       }
