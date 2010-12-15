@@ -1,0 +1,43 @@
+CREATE TABLE t1 (a int primary key, b blob);
+insert into t1 values (1, "Hello World");
+insert into t1 values (2, "Hello PBMS");
+insert into t1 values (3, "Hello BLOB World");
+SELECT COUNT(*) FROM t1;
+COUNT(*)
+3
+select a, Table_name, Blob_size from pbms_reference ref, t1  where ref.Blob_url =  t1.b order by a;
+a	Table_name	Blob_size
+1	t1	11
+2	t1	10
+3	t1	16
+select a, MD5_Checksum from pbms_repository rep, pbms_reference ref, t1 where t1.b = ref.Blob_url and ref.Repository_id = rep.Repository_id and ref.Repo_blob_offset = rep.Repo_blob_offset order by a;
+a	MD5_Checksum
+1	B10A8DB164E0754105B7A99BE72E3FE5
+2	90D9BF084B48FBC92710E6807B8875B0
+3	6B230DE148EE7EA4A4454090784119E6
+CREATE Temporary TABLE my_pbms_blob_ids (id int, offset int, url varchar(120));
+insert into my_pbms_blob_ids (select Repository_id, Repo_blob_offset, Blob_url from pbms_reference);
+insert into pbms_metadata (select id, offset, "Name", "Test1" from my_pbms_blob_ids ref, t1  where t1.a = 1 and ref.url =  t1.b);
+insert into pbms_metadata (select id, offset, "Name", "Test2" from my_pbms_blob_ids ref, t1  where t1.a = 2 and ref.url =  t1.b);
+insert into pbms_metadata (select id, offset, "Name", "Test3" from my_pbms_blob_ids ref, t1  where t1.a = 3 and ref.url =  t1.b);
+select a, name, value from pbms_metadata meta, pbms_reference ref, t1 where t1.b = ref.Blob_url and ref.Repository_id = meta.Repository_id and ref.Repo_blob_offset = meta.Repo_blob_offset order by a;
+a	name	value
+1	Name	Test1
+2	Name	Test2
+3	Name	Test3
+delete from my_pbms_blob_ids;
+insert into my_pbms_blob_ids (select Repository_id, Repo_blob_offset, Blob_url from pbms_reference);
+insert into pbms_metadata (select id, offset, "Name2", "Test2.2" from my_pbms_blob_ids ref, t1  where t1.a = 2 and ref.url =  t1.b);
+select a, name, value from pbms_metadata meta, pbms_reference ref, t1 where t1.b = ref.Blob_url and ref.Repository_id = meta.Repository_id and ref.Repo_blob_offset = meta.Repo_blob_offset order by a, name;
+a	name	value
+1	Name	Test1
+2	Name	Test2
+2	Name2	Test2.2
+3	Name	Test3
+drop Temporary table my_pbms_blob_ids;
+drop table t1;
+create table autoincbug (id int not null primary key auto_increment, test varchar(10));
+alter table autoincbug auto_increment = 1000;
+insert into autoincbug values (null, 'hej');
+alter table autoincbug auto_increment = 32727;
+drop table autoincbug;
