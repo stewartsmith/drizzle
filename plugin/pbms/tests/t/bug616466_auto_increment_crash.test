@@ -3,7 +3,3 @@ alter table autoincbug auto_increment = 1000;
 insert into autoincbug values (null, 'hej');
 alter table autoincbug auto_increment = 32727;
 drop table autoincbug;
-
-CREATE TABLE t1 (a int primary key, b blob);
-insert into t1 values (1, "Hello World");
-drop table t1;
