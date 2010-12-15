@@ -472,7 +472,7 @@ drizzled_drizzled_LDADD= \
 				$(LDADD) \
 				$(LIBUUID) \
 				$(LIBDL_LIBS) \
-				$(LIBPCRE) \
+				$(LTLIBPCRE) \
 				$(LTLIBPROTOBUF) \
 				$(LIBTBB) \
 				$(BOOST_LIBS) \

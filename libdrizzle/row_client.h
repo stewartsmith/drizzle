@@ -60,6 +60,12 @@ extern "C" {
 /**
  * Get next row number for unbuffered results. Use the drizzle_field* functions
  * to read individual fields after this function succeeds.
+ *
+ * @param[in,out] result pointer to the structure to read from.
+ * @param[out] ret_ptr Standard libdrizzle return value. May be set to
+ *      DRIZZLE_RESULT_ERROR_CODE if the server return an error, such as a
+ *      deadlock.
+ * @return the row id if there is a valid row, or 0 if there are no more rows or an error.
  */
 DRIZZLE_API
 uint64_t drizzle_row_read(drizzle_result_st *result, drizzle_return_t *ret_ptr);
