@@ -43,7 +43,9 @@ extern error_handler_func error_handler_hook;
 const char * error_message(unsigned int err_index);
 
 // Adds the message to the global error dictionary.
-void add_error_message(uint32_t error_code, std::string const& message);
+void add_error_message(uint32_t error_code, const std::string &error_name,
+                       const std::string& message);
+#define DRIZZLE_ADD_ERROR_MESSAGE(code, msg) add_error_message(code, STRINGIFY_ARG(code), msg)
 
 void my_error(int nr, myf MyFlags, ...);
 void my_message(uint32_t my_err, const char *str, myf MyFlags);
