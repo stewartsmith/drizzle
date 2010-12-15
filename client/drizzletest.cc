@@ -1462,7 +1462,7 @@ static int string_cmp(string* ds, const char *fname)
   int fd;
   char temp_file_path[FN_REFLEN];
 
-  if ((fd= internal::create_temp_file(temp_file_path, NULL,
+  if ((fd= internal::create_temp_file(temp_file_path, TMPDIR,
                             "tmp", MYF(MY_WME))) < 0)
     die("Failed to create temporary file for ds");
 
