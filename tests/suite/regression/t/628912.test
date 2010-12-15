@@ -1,0 +1,49 @@
+# COND_CMP vector gets messed up causing segfault
+--disable_warnings
+DROP TABLE IF EXISTS `aa`;
+DROP TABLE IF EXISTS `bb`;
+DROP TABLE IF EXISTS `cc`;
+--enable_warnings
+
+CREATE TABLE `aa` (
+  `pk` int NOT NULL DEFAULT '0',
+  `col_int_not_null` int NOT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci;
+
+INSERT INTO `aa` VALUES (1,-1974206464),(2,3),(3,-274595840),(4,295501824),(5,9),(6,2),(7,-1601306624),(8,-1770323968),(9,256311296),(10,4);
+
+CREATE TABLE `bb` (
+  `pk` int NOT NULL DEFAULT '0',
+  `col_char_1024_not_null` varchar(1024) NOT NULL,
+  `col_text` text,
+  `col_char_10_not_null_key` varchar(10) NOT NULL,
+  `col_char_1024_not_null_key` varchar(1024) NOT NULL,
+  `col_int_not_null_key` int NOT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci;
+
+INSERT INTO `bb` VALUES (1,'o',NULL,'DCJRX','IHTVZ',1),(2,'a',NULL,'x','a',1),(3,'have',NULL,'ZMHDL','s',-1536425984),(4,'u',NULL,'SJGHS','d',-1443495936),(5,'o',NULL,'his','TTNNK',2),(6,'r',NULL,'m','GKTRR',0),(7,'on',NULL,'i','ZZDWO',8),(8,'IMULJ',NULL,'d','up',476315648),(9,'DXSXG',NULL,'from','would',5),(10,'y',NULL,'h','JNAFV',5);
+
+CREATE TABLE `cc` (
+  `pk` int NOT NULL DEFAULT '0',
+  `col_char_10_key` varchar(10) DEFAULT NULL,
+  `col_bigint_key` bigint DEFAULT NULL,
+  `col_char_1024_not_null_key` varchar(1024) NOT NULL,
+  `col_int_key` int DEFAULT NULL,
+  `col_char_10` varchar(10) DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci;
+
+INSERT INTO `cc` VALUES (1,'the',3,'i',-1463025664,'YUGVN'),(2,'f',NULL,'XECLG',1,'v'),(3,'CHXCP',8,'d',NULL,'DXDTX'),(4,'o',NULL,'t',6,'KPDSD'),(5,'then',-8566972391165526016,'u',6,'good'),(6,'PUPFZ',3465238438284886016,'o',-1792737280,'i'),(7,'GBRLW',5,'c',NULL,'f'),(8,'JIOBF',5086534304138264576,'at',NULL,'hey'),(9,'t',-5575456338684674048,'ZNRQD',-697434112,'oh'),(10,'GSUJC',4584101470709743616,'here',5,'LTSIE'),(11,'h',4,'o',NULL,'do'),(12,'e',-562387003467890688,'x',-590413824,'y'),(13,'IICAV',-4543569074063409152,'u',-1361444864,'AUKYO'),(14,'ICGLZ',NULL,'LDJHS',4,'up'),(15,'s',5726326926201585664,'UPJBO',-1007222784,'got'),(16,'SLJVT',NULL,'m',1,'will'),(17,'h',2685552752796368896,'good',1218904064,'get'),(18,'e',4,'some',-173867008,'t'),(19,'of',5556878990221770752,'your',1303904256,'n'),(20,'CMAUM',NULL,'BDKSY',NULL,'DKZIN'),(21,'p',5,'HOAIC',4,'about'),(22,'there',5,'it\'s',NULL,'h'),(23,'FROKO',8,'EFUWM',-1373306880,'r'),(24,'q',NULL,'h',-1661861888,'c'),(25,'USSFF',6,'back',NULL,'v'),(26,'MHEWI',8460574849968898048,'ZGLZY',NULL,'okay'),(27,'MGUNW',NULL,'h',1,'ARMAV'),(28,'I',8,'SUIER',NULL,'y'),(29,'would',NULL,'h',2,'NJMOR'),(30,'w',5,'yeah',1109327872,'XPTLS'),(31,'QQRWR',-8727694602867310592,'f',-118751232,'z'),(32,'MILUI',2,'b',NULL,'want'),(33,'think',NULL,'e',NULL,'WJNIY'),(34,'OLMSJ',NULL,'TYOJE',1,'just'),(35,'he',NULL,'l',NULL,'NXTLD'),(36,'PRZKV',9,'s',-758710272,'well'),(37,'XSTUZ',4,'TJUWY',NULL,'you\'re'),(38,'AQEZP',4537095149599064064,'i',NULL,'and'),(39,'she',4,'he\'s',7,'FLKCN'),(40,'ASQVK',3300294101932441600,'they',4,'but'),(41,'n',1509550300099248128,'EOKCZ',1064828928,'RYFVG'),(42,'PWKPB',NULL,'have',-228655104,'u'),(43,'SLXQG',1423700432202498048,'AILLJ',1790443520,'of'),(44,'BJDGL',7180145180912123904,'when',1,'y'),(45,'they',NULL,'z',NULL,'HVBAT'),(46,'UYZTE',9,'how',NULL,'at'),(47,'XPRML',3,'PLXXM',-184877056,'he'),(48,'q',NULL,'I\'m',NULL,'it'),(49,'GQCUF',NULL,'j',NULL,'a'),(50,'no',6,'p',1216348160,'RAWAA'),(51,'i',-1346294813607067648,'MAYVO',3,'XRWZK'),(52,'ACZBN',3,'but',NULL,'VDKIB'),(53,'we',NULL,'LTNZB',-927203328,'FLKLA'),(54,'SQXDZ',1,'w',NULL,'it'),(55,'up',NULL,'p',NULL,'SWVIZ'),(56,'ULTKC',2282199111169998848,'NIEKA',NULL,'QKGPF'),(57,'and',5,'you\'re',NULL,'d'),(58,'g',NULL,'you\'re',NULL,'SAMGC'),(59,'something',NULL,'HOCZS',-902955008,'GTYIM'),(60,'GKJRD',NULL,'for',6,'z'),(61,'about',7144960808823291904,'IVLTX',-1673199616,'i'),(62,'who',5246693565886627840,'k',NULL,'m'),(63,'he',-1391330809880772608,'EREVA',437256192,'z'),(64,'they',NULL,'his',NULL,'w'),(65,'now',NULL,'o',NULL,'IWNIK'),(66,'y',NULL,'EBVAW',NULL,'ARIIT'),(67,'XENHX',688206318057553920,'r',NULL,'x'),(68,'NLQCE',NULL,'b',9,'LEWQN'),(69,'VPNNH',2,'TSTUG',663027712,'NDWUZ'),(70,'y',-1628332740271144960,'THLWB',7,'ONPMP'),(71,'CSCMR',5,'FQGXL',-946601984,'go'),(72,'like',NULL,'q',4,'with'),(73,'or',-2474165045286666240,'k',1440546816,'p'),(74,'be',4961277939502022656,'x',NULL,'QDVDA'),(75,'e',NULL,'b',NULL,'g'),(76,'r',-18577348462903296,'her',NULL,'about'),(77,'d',NULL,'just',-1573847040,'or'),(78,'KXXSH',6,'l',5,'y'),(79,'p',7026459843628105728,'JTMZC',NULL,'y'),(80,'YAFIS',-2624472682850156544,'MBXTA',7,'IXRJA'),(81,'q',2,'SNZJB',1601765376,'have'),(82,'NKXQI',NULL,'good',NULL,'e'),(83,'a',NULL,'KSSFV',3,'his'),(84,'b',9,'YLRKV',2,'it\'s'),(85,'think',5849894440977563648,'get',2,'k'),(86,'DFSPQ',2431943798780067840,'oh',NULL,'KBOSL'),(87,'DGWPO',3,'s',-1942159360,'z'),(88,'o',0,'s',0,'HCLTG'),(89,'o',NULL,'m',329711616,'look'),(90,'right',NULL,'come',NULL,'yeah'),(91,'her',5,'but',1573584896,'from'),(92,'v',8,'EFENG',3,'in'),(93,'will',-8458886000108634112,'BQJKP',NULL,'e'),(94,'oh',0,'HIQES',1155465216,'all'),(95,'mean',966585070024392704,'b',NULL,'she'),(96,'d',3,'z',0,'o'),(97,'ok',NULL,'come',1,'BNQEN'),(98,'BCJXG',2,'s',8,'is'),(99,'j',NULL,'to',-142409728,'want'),(100,'k',-573364527559606272,'LFFMZ',-1333723136,'WUHSW');
+
+SELECT SQL_SMALL_RESULT table1 . `col_bigint_key` AS field1
+FROM ( CC AS table1 RIGHT JOIN ( ( BB AS table2 LEFT JOIN BB AS table3
+ON (table3 . `col_char_10_not_null_key` = table2 . `col_char_1024_not_null` ) ) )
+ON (table3 . `col_char_10_not_null_key` = table2 . `col_text` ) )
+WHERE
+( EXISTS ( ( SELECT SUBQUERY1_t1 . `col_char_10` AS SUBQUERY1_field1
+FROM ( CC AS SUBQUERY1_t1 STRAIGHT_JOIN AA AS SUBQUERY1_t2 ON (SUBQUERY1_t2 . `col_int_not_null` = SUBQUERY1_t1 . `pk` ) ) ) ) )
+AND ( table1 . `col_char_1024_not_null_key` = 'o' AND table1 . `col_char_1024_not_null_key` = table3 . `col_char_10_not_null_key` )
+AND ( table1 . `col_int_key` != table3 . `col_int_not_null_key`
+AND table3 . `col_char_1024_not_null_key` > 'h' )
+ORDER BY table1 . `col_char_10_key` , table2 .`pk` DESC , field1 , table1 . `col_bigint_key` DESC, field1 LIMIT 1 OFFSET 3;
+
+DROP TABLE `aa`, `bb`, `cc`;
