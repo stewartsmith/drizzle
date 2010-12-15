@@ -32,7 +32,7 @@ namespace user_locks {
 namespace barriers {
 
 UserBarriers::UserBarriers() :
-  plugin::TableFunction("DATA_DICTIONARY", "USER_BARRIERS")
+  plugin::TableFunction("DATA_DICTIONARY", "USER_DEFINED_BARRIERS")
 {
   add_field("USER_BARRIER_NAME", plugin::TableFunction::STRING, LARGEST_LOCK_NAME, false);
   add_field("SESSION_ID", plugin::TableFunction::NUMBER, 0, false);
