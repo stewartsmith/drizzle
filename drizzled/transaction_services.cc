@@ -1687,7 +1687,7 @@ void TransactionServices::updateRecord(Session *in_session,
       bool is_read_set= current_field->isReadSet();
 
       /* We need to mark that we will "read" this field... */
-      in_table->setReadSet(current_field->field_index);
+      in_table->setReadSet(current_field->position());
 
       /* Read the string value of this field's contents */
       string_value= current_field->val_str_internal(string_value);

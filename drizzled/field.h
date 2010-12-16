@@ -141,7 +141,10 @@ public:
   utype	unireg_check;
   uint32_t field_length; /**< Length of this field in bytes */
   uint32_t flags;
+private:
   uint16_t field_index; /**< Index of this Field in Table::fields array */
+
+public:
 
   uint16_t position() const
   {

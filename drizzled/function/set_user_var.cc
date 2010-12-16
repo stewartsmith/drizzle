@@ -91,7 +91,7 @@ bool Item_func_set_user_var::register_field_in_read_map(unsigned char *arg)
   {
     Table *table= (Table *) arg;
     if (result_field->getTable() == table || !table)
-      result_field->getTable()->setReadSet(result_field->field_index);
+      result_field->getTable()->setReadSet(result_field->position());
   }
   return 0;
 }
