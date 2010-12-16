@@ -21,6 +21,8 @@
 #define DRIZZLED_ERROR_H
 
 #include <string>
+#include <boost/unordered_map.hpp>
+
 #include "drizzled/definitions.h"
 
 namespace drizzled
@@ -32,6 +34,34 @@ namespace drizzled
 #define NRERRBUFFS	(2)	/* Buffers for parameters */
 #define MY_FILE_ERROR	((size_t) -1)
 #define ME_FATALERROR   1024    /* Fatal statement error */
+
+/*
+ * Provides a mapping from the error enum values to std::strings.
+ */
+class ErrorMap
+{
+public:
+  typedef std::pair<std::string, std::string> value_type;
+  typedef boost::unordered_map<uint32_t, value_type> ErrorMessageMap;
+
+  ErrorMap();
+
+  // Insert the message for the error.  If the error already has an existing
+  // mapping, an error is logged, but the function continues.
+  void add(uint32_t error_num, const std::string &error_name, const std::string &message);
+
+  // If there is no error mapping for the error_num, ErrorStringNotFound is raised.
+  const std::string &find(uint32_t error_num) const;
+
+  static const ErrorMessageMap& get_error_message_map();
+private:
+  // Disable copy and assignment.
+  ErrorMap(const ErrorMap &e);
+  ErrorMap& operator=(const ErrorMap &e);
+
+  ErrorMessageMap mapping_;
+};
+
 
 typedef void (*error_handler_func)(uint32_t my_err,
                                    const char *str,

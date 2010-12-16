@@ -43,31 +43,6 @@ public:
   {}
 };
 
-/*
- * Provides a mapping from the error enum values to std::strings.
- */
-class ErrorMap
-{
-public:
-  ErrorMap();
-
-  // Insert the message for the error.  If the error already has an existing
-  // mapping, an error is logged, but the function continues.
-  void add(uint32_t error_num, const std::string &error_name, const std::string &message);
-
-  // If there is no error mapping for the error_num, ErrorStringNotFound is raised.
-  const std::string &find(uint32_t error_num) const;
-
-private:
-  // Disable copy and assignment.
-  ErrorMap(const ErrorMap &e);
-  ErrorMap& operator=(const ErrorMap &e);
-
-  typedef std::pair<std::string, std::string> value_type;
-  typedef boost::unordered_map<uint32_t, value_type> ErrorMessageMap;
-  ErrorMessageMap mapping_;
-};
-
 ErrorMap& get_error_map()
 {
   static ErrorMap errors;
@@ -75,6 +50,11 @@ ErrorMap& get_error_map()
 }
 
 } // anonymous namespace
+
+const ErrorMap::ErrorMessageMap& ErrorMap::get_error_message_map()
+{
+  return get_error_map().mapping_;
+}
 
 void add_error_message(uint32_t error_code,
                        const std::string &error_name,
@@ -174,9 +154,6 @@ void my_message(uint32_t error, const char *str, register myf MyFlags)
   (*error_handler_hook)(error, str, MyFlags);
 }
 
-
-namespace
-{
 
 // Insert the message for the error.  If the error already has an existing
 // mapping, an error is logged, but the function continues.
@@ -532,8 +509,6 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(EE_DIR, find(ER_CANT_READ_DIR));
   ADD_ERROR_MESSAGE(EE_STAT, find(ER_CANT_GET_STAT));
   ADD_ERROR_MESSAGE(EE_DISK_FULL, find(ER_DISK_FULL));
-
-}
 
 }
 
