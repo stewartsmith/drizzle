@@ -126,7 +126,7 @@
 /* The following are only sent to new clients */
 #define ENUM_FLAG	256		/* field is an enum */
 #define AUTO_INCREMENT_FLAG 512		/* field is a autoincrement field */
-#define TIMESTAMP_FLAG	1024		/* Field is a timestamp */
+#define FUNCTION_DEFAULT_FLAG	1024		/* Field is a timestamp, uses a function to generate the value. */
 #define NO_DEFAULT_VALUE_FLAG 4096	/* Field doesn't have default value */
 #define ON_UPDATE_NOW_FLAG 8192         /* Field is set to NOW on UPDATE */
 #define PART_KEY_FLAG	16384		/* Intern; Part of some key */

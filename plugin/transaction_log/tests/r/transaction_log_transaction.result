@@ -172,6 +172,29 @@ statement {
       after_value: "1000"
       is_null: false
     }
+  }
+}
+statement {
+  type: UPDATE
+  START_TIMESTAMP
+  END_TIMESTAMP
+  update_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    key_field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    set_field_metadata {
+      type: INTEGER
+      name: "b"
+    }
+  }
+  update_data {
+    segment_id: 1
+    end_segment: true
     record {
       key_value: "2"
       after_value: "2"
@@ -1294,12 +1317,12 @@ COMMIT;
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-6
+5
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-6
+5
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -1316,7 +1339,7 @@ statement {
   insert_header {
     table_metadata {
       schema_name: "test"
-      table_name: "t2"
+      table_name: "t1"
     }
     field_metadata {
       type: INTEGER
@@ -1332,26 +1355,127 @@ statement {
     end_segment: true
     record {
       insert_value: "1"
-      insert_value: "100"
+      insert_value: "1"
       is_null: false
       is_null: false
     }
     record {
       insert_value: "2"
-      insert_value: "1000"
+      insert_value: "2"
       is_null: false
       is_null: false
     }
     record {
       insert_value: "3"
-      insert_value: "10"
+      insert_value: "3"
       is_null: false
       is_null: false
     }
     record {
       insert_value: "4"
-      insert_value: "50"
+      insert_value: "4"
       is_null: false
+      is_null: false
+    }
+    record {
+      insert_value: "5"
+      insert_value: "5"
+      is_null: false
+      is_null: false
+    }
+    record {
+      insert_value: "6"
+      insert_value: "6"
+      is_null: false
+      is_null: false
+    }
+    record {
+      insert_value: "7"
+      insert_value: "7"
+      is_null: false
+      is_null: false
+    }
+    record {
+      insert_value: "8"
+      insert_value: "8"
+      is_null: false
+      is_null: false
+    }
+    record {
+      insert_value: "9"
+      insert_value: "9"
+      is_null: false
+      is_null: false
+    }
+    record {
+      insert_value: "10"
+      insert_value: "10"
+      is_null: false
+      is_null: false
+    }
+    record {
+      insert_value: "11"
+      insert_value: "100"
+      is_null: false
+      is_null: false
+    }
+    record {
+      insert_value: "12"
+      insert_value: "101"
+      is_null: false
+      is_null: false
+    }
+  }
+}
+statement {
+  type: UPDATE
+  START_TIMESTAMP
+  END_TIMESTAMP
+  update_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    key_field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    set_field_metadata {
+      type: INTEGER
+      name: "b"
+    }
+  }
+  update_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      key_value: "2"
+      after_value: "20"
+      is_null: false
+    }
+    record {
+      key_value: "4"
+      after_value: "40"
+      is_null: false
+    }
+    record {
+      key_value: "6"
+      after_value: "60"
+      is_null: false
+    }
+    record {
+      key_value: "8"
+      after_value: "80"
+      is_null: false
+    }
+    record {
+      key_value: "10"
+      after_value: "100"
+      is_null: false
+    }
+    record {
+      key_value: "11"
+      after_value: "1000"
       is_null: false
     }
   }

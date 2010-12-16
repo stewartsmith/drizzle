@@ -1497,8 +1497,6 @@ bool Table::records_are_comparable()
 */
 bool Table::compare_records()
 {
-//  DBUG_ASSERT(records_are_comparable(table));
-
   if (getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ) != 0)
   {
     /*

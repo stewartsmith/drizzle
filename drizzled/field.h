@@ -166,6 +166,12 @@ public:
         utype unireg_check_arg,
         const char *field_name_arg);
   virtual ~Field() {}
+
+  bool hasDefault() const
+  {
+    return not (flags & NO_DEFAULT_VALUE_FLAG);
+  }
+
   /* Store functions returns 1 on overflow and -1 on fatal error */
   virtual int store(const char *to,
                     uint32_t length,

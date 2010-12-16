@@ -41,7 +41,7 @@ ProcesslistTool::ProcesslistTool() :
   add_field("ID", plugin::TableFunction::NUMBER, 0, false);
   add_field("USER", 16);
   add_field("HOST", NI_MAXHOST);
-  add_field("DB");
+  add_field("DB", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, true);
   add_field("COMMAND", 16);
   add_field("TIME", plugin::TableFunction::NUMBER, 0, false);
   add_field("STATE", plugin::TableFunction::STRING, 256, true);
@@ -65,12 +65,11 @@ bool ProcesslistTool::Generator::populate()
 
   while ((tmp= session_generator))
   {
+    drizzled::Session::State::const_shared_ptr state(tmp->state());
     const SecurityContext *tmp_sctx= &tmp->getSecurityContext();
-    const char *val;
 
     /* ID */
     push((int64_t) tmp->thread_id);
-
 
     /* USER */
     if (not tmp_sctx->getUser().empty())
@@ -82,9 +81,10 @@ bool ProcesslistTool::Generator::populate()
     push(tmp_sctx->getIp());
 
     /* DB */
-    if (! tmp->db.empty())
+    drizzled::util::string::const_shared_ptr schema(tmp->schema());
+    if (schema and not schema->empty())
     {
-      push(tmp->db);
+      push(*schema);
     }
     else
     {
@@ -92,7 +92,8 @@ bool ProcesslistTool::Generator::populate()
     }
 
     /* COMMAND */
-    if ((val= const_cast<char *>(tmp->getKilled() == Session::KILL_CONNECTION ? "Killed" : 0)))
+    const char *val= tmp->getKilled() == Session::KILL_CONNECTION ? "Killed" : NULL;
+    if (val)
     {
       push(val);
     }
@@ -105,19 +106,28 @@ bool ProcesslistTool::Generator::populate()
     push(static_cast<uint64_t>(tmp->start_time ?  now - tmp->start_time : 0));
 
     /* STATE */
-    val= (char*) (tmp->client->isWriting() ?
-                  "Writing to net" :
-                  tmp->client->isReading() ?
-                  (tmp->command == COM_SLEEP ?
-                   NULL : "Reading from net") :
-                  tmp->get_proc_info() ? tmp->get_proc_info() :
-                  tmp->getThreadVar() &&
-                  tmp->getThreadVar()->current_cond ?
-                  "Waiting on cond" : NULL);
+    val= (tmp->client->isWriting() ?
+          "Writing to net" :
+          tmp->client->isReading() ?
+          (tmp->command == COM_SLEEP ?
+           NULL : "Reading from net") :
+          tmp->get_proc_info() ? tmp->get_proc_info() :
+          tmp->getThreadVar() &&
+          tmp->getThreadVar()->current_cond ?
+          "Waiting on cond" : NULL);
     val ? push(val) : push();
 
     /* INFO */
-    push(*tmp->getQueryString());
+    if (state)
+    {
+      size_t length;
+      const char *tmp_ptr= state->query(length);
+      push(tmp_ptr, length);
+    }
+    else
+    {
+      push();
+    }
 
     /* HAS_GLOBAL_LOCK */
     bool has_global_lock= tmp->isGlobalReadLock();

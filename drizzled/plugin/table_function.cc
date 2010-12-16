@@ -202,9 +202,8 @@ void plugin::TableFunction::Generator::push(const char *arg, uint32_t length)
 
 void plugin::TableFunction::Generator::push()
 {
-#if 0 // @note this needs to be rewritten such that a drizzled::Field object can determine if it should ever be null
-  assert((*columns_iterator)->getTable()->getShare()->getTableProto()->field((*columns_iterator)->getTable()->getFields() - columns_iterator).constraints().is_nullable());
-#endif
+  /* Only accept NULLs */
+  assert((*columns_iterator)->maybe_null());
   (*columns_iterator)->set_null();
   columns_iterator++;
 }

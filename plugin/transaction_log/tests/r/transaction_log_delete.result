@@ -749,6 +749,29 @@ statement {
       is_null: false
       is_null: false
     }
+  }
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "id"
+    }
+    field_metadata {
+      type: VARCHAR
+      name: "padding"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
     record {
       insert_value: "2"
       insert_value: "I hate testing."
