@@ -422,9 +422,6 @@ void Session::setClient(plugin::Client *client_arg)
 
 void Session::awake(Session::killed_state_t state_to_set)
 {
-  if ((state_to_set == Session::KILL_QUERY) and (command == COM_SLEEP))
-    return;
-
   this->checkSentry();
 
   setKilled(state_to_set);
