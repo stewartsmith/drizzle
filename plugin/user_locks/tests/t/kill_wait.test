@@ -10,7 +10,7 @@ connection default;
 set @count_barrier= "count_barrier";
 set @barrier_limit= 6;
 SELECT create_barrier(@count_barrier, @barrier_limit);
-SELECT if ((SESSION_ID = CONNECTION_ID()), "YES", "NO"), GENERATION, if ((WAITER_LIMIT = @barrier_limit), "YES", "NO") from DATA_DICTIONARY.USER_BARRIERS WHERE USER_BARRIER_NAME=@count_barrier;
+SELECT if ((SESSION_ID = CONNECTION_ID()), "YES", "NO"), GENERATION, if ((WAITER_LIMIT = @barrier_limit), "YES", "NO") from DATA_DICTIONARY.USER_DEFINED_BARRIERS WHERE USER_BARRIER_NAME=@count_barrier;
 
 connection con1;
 set @count_barrier= "count_barrier";
@@ -37,5 +37,5 @@ SELECT if ((@id:=ID), "YES", "NO") FROM DATA_DICTIONARY.PROCESSLIST WHERE INFO L
 kill QUERY (@id);
 SELECT WAIT_UNTIL(@count_barrier, 3);
 SELECT USER,INFO FROM DATA_DICTIONARY.PROCESSLIST WHERE INFO LIKE "%con%" AND INFO NOT LIKE "%con3%" ORDER BY ID;
-SELECT USER_BARRIER_NAME FROM DATA_DICTIONARY.USER_BARRIERS;
+SELECT USER_BARRIER_NAME FROM DATA_DICTIONARY.USER_DEFINED_BARRIERS;
 SELECT signal(@count_barrier);

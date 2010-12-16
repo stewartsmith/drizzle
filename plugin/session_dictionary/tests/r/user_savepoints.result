@@ -1,64 +1,64 @@
-start transaction;
-savepoint foo;
-select * from data_dictionary.user_savepoints;
+START TRANSACTION;
+SAVEPOINT foo;
+SELECT * from DATA_DICTIONARY.USER_DEFINED_SAVEPOINTS;
 SAVEPOINT_NAME
 foo
-release savepoint foo;
-rollback;
-select * from data_dictionary.user_savepoints;
+RELEASE SAVEPOINT foo;
+ROLLBACK;
+SELECT * from DATA_DICTIONARY.USER_DEFINED_SAVEPOINTS;
 SAVEPOINT_NAME
-start transaction;
-savepoint foo;
-select * from data_dictionary.user_savepoints;
+START TRANSACTION;
+SAVEPOINT foo;
+SELECT * from DATA_DICTIONARY.USER_DEFINED_SAVEPOINTS;
 SAVEPOINT_NAME
 foo
-savepoint foo2;
-select * from data_dictionary.user_savepoints;
+SAVEPOINT foo2;
+SELECT * from DATA_DICTIONARY.USER_DEFINED_SAVEPOINTS;
 SAVEPOINT_NAME
 foo2
 foo
-rollback;
-select * from data_dictionary.user_savepoints;
+ROLLBACK;
+SELECT * from DATA_DICTIONARY.USER_DEFINED_SAVEPOINTS;
 SAVEPOINT_NAME
-start transaction;
-savepoint foo;
-select * from data_dictionary.user_savepoints;
+START TRANSACTION;
+SAVEPOINT foo;
+SELECT * from DATA_DICTIONARY.USER_DEFINED_SAVEPOINTS;
 SAVEPOINT_NAME
 foo
-savepoint foo2;
-release savepoint foo;
-select * from data_dictionary.user_savepoints;
+SAVEPOINT foo2;
+RELEASE SAVEPOINT foo;
+SELECT * from DATA_DICTIONARY.USER_DEFINED_SAVEPOINTS;
 SAVEPOINT_NAME
 foo2
-rollback;
-select * from data_dictionary.user_savepoints;
+ROLLBACK;
+SELECT * from DATA_DICTIONARY.USER_DEFINED_SAVEPOINTS;
 SAVEPOINT_NAME
-start transaction;
-savepoint foo;
-select * from data_dictionary.user_savepoints;
+START TRANSACTION;
+SAVEPOINT foo;
+SELECT * from DATA_DICTIONARY.USER_DEFINED_SAVEPOINTS;
 SAVEPOINT_NAME
 foo
-savepoint foo2;
-select * from data_dictionary.user_savepoints;
+SAVEPOINT foo2;
+SELECT * from DATA_DICTIONARY.USER_DEFINED_SAVEPOINTS;
 SAVEPOINT_NAME
 foo2
 foo
-release savepoint foo2;
-select * from data_dictionary.user_savepoints;
+RELEASE SAVEPOINT foo2;
+SELECT * from DATA_DICTIONARY.USER_DEFINED_SAVEPOINTS;
 SAVEPOINT_NAME
 foo
-rollback;
-select * from data_dictionary.user_savepoints;
+ROLLBACK;
+SELECT * from DATA_DICTIONARY.USER_DEFINED_SAVEPOINTS;
 SAVEPOINT_NAME
-start transaction;
-savepoint foo;
-savepoint foo2;
-savepoint foo3;
-select * from data_dictionary.user_savepoints;
+START TRANSACTION;
+SAVEPOINT foo;
+SAVEPOINT foo2;
+SAVEPOINT foo3;
+SELECT * from DATA_DICTIONARY.USER_DEFINED_SAVEPOINTS;
 SAVEPOINT_NAME
 foo3
 foo2
 foo
-commit;
-select * from data_dictionary.user_savepoints;
+COMMIT;
+SELECT * from DATA_DICTIONARY.USER_DEFINED_SAVEPOINTS;
 SAVEPOINT_NAME
