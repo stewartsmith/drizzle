@@ -522,7 +522,6 @@ public:
   uint32_t uniques;                         /* Number of UNIQUE index */
   uint32_t null_fields;			/* number of null fields */
   uint32_t blob_fields;			/* number of blob fields */
-  uint32_t timestamp_field_offset;		/* Field number for timestamp field */
 private:
   bool has_variable_width;                  /* number of varchar fields */
 public:

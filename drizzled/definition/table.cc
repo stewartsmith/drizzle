@@ -1,4 +1,4 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; i/dent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2010 Brian Aker
@@ -361,7 +361,7 @@ bool TableShare::fieldInPrimaryKey(Field *in_field) const
       size_t num_parts= index.index_part_size();
       for (size_t y= 0; y < num_parts; ++y)
       {
-        if (index.index_part(y).fieldnr() == in_field->field_index)
+        if (index.index_part(y).fieldnr() == in_field->position())
           return true;
       }
     }
@@ -398,7 +398,6 @@ TableShare::TableShare(const TableIdentifier::Type type_arg) :
   uniques(0),
   null_fields(0),
   blob_fields(0),
-  timestamp_field_offset(0),
   has_variable_width(false),
   db_create_options(0),
   db_options_in_use(0),
@@ -464,7 +463,6 @@ TableShare::TableShare(const TableIdentifier &identifier, const TableIdentifier:
   uniques(0),
   null_fields(0),
   blob_fields(0),
-  timestamp_field_offset(0),
   has_variable_width(false),
   db_create_options(0),
   db_options_in_use(0),
@@ -540,7 +538,6 @@ TableShare::TableShare(const TableIdentifier &identifier) : // Just used during 
   uniques(0),
   null_fields(0),
   blob_fields(0),
-  timestamp_field_offset(0),
   has_variable_width(false),
   db_create_options(0),
   db_options_in_use(0),
@@ -619,7 +616,6 @@ TableShare::TableShare(const TableIdentifier::Type type_arg,
   uniques(0),
   null_fields(0),
   blob_fields(0),
-  timestamp_field_offset(0),
   has_variable_width(false),
   db_create_options(0),
   db_options_in_use(0),
@@ -1404,7 +1400,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     f->setTable(NULL);
     f->orig_table= NULL;
 
-    f->field_index= fieldnr;
+    f->setPosition(fieldnr);
     f->comment= comment;
     if (! default_value &&
         ! (f->unireg_check==Field::NEXT_NUMBER) &&
@@ -1416,9 +1412,6 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
     if (f->unireg_check == Field::NEXT_NUMBER)
       found_next_number_field= &(field[fieldnr]);
-
-    if (timestamp_field == f)
-      timestamp_field_offset= fieldnr;
 
     if (use_hash) /* supposedly this never fails... but comments lie */
     {
@@ -1854,7 +1847,7 @@ int TableShare::open_table_from_share_inner(Session *session,
     outparam.found_next_number_field=
       outparam.getField(positionFields(found_next_number_field));
   if (timestamp_field)
-    outparam.timestamp_field= (Field_timestamp*) outparam.getField(timestamp_field_offset);
+    outparam.timestamp_field= (Field_timestamp*) outparam.getField(timestamp_field->position());
 
   /* Fix key->name and key_part->field */
   if (key_parts)

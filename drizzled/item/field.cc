@@ -111,7 +111,7 @@ bool Item_field::register_field_in_read_map(unsigned char *arg)
 {
   Table *table= (Table *) arg;
   if (field->getTable() == table || !table)
-    field->getTable()->setReadSet(field->field_index);
+    field->getTable()->setReadSet(field->position());
 
   return 0;
 }
@@ -902,10 +902,10 @@ bool Item_field::fix_fields(Session *session, Item **reference)
       current_bitmap= table->write_set;
       other_bitmap=   table->read_set;
     }
-    //if (! current_bitmap->testAndSet(field->field_index))
-    if (! current_bitmap->test(field->field_index))
+    //if (! current_bitmap->testAndSet(field->position()))
+    if (! current_bitmap->test(field->position()))
     {
-      if (! other_bitmap->test(field->field_index))
+      if (! other_bitmap->test(field->position()))
       {
         /* First usage of column */
         table->used_fields++;                     // Used to optimize loops

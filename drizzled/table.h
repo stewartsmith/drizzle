@@ -603,26 +603,7 @@ public:
   */
   bool operator<(const Table &right) const
   {
-    int result= strcasecmp(this->getShare()->getSchemaName(), right.getShare()->getSchemaName());
-
-    if (result <  0)
-      return true;
-
-    if (result >  0)
-      return false;
-
-    result= strcasecmp(this->getShare()->getTableName(), right.getShare()->getTableName());
-
-    if (result <  0)
-      return true;
-
-    if (result >  0)
-      return false;
-
-    if (this->getShare()->getTableProto()->type()  < right.getShare()->getTableProto()->type())
-      return true;
-
-    return false;
+    return getShare()->getCacheKey() < right.getShare()->getCacheKey();
   }
 
   static bool compare(const Table *a, const Table *b)
