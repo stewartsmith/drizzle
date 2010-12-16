@@ -2489,7 +2489,7 @@ static void propagate_cond_constants(Session *session,
         Item **args= iter->cmp_func->arguments();
         if (!args[0]->const_item())
         {
-          change_cond_ref_to_const( session, save, iter->and_level,
+          change_cond_ref_to_const( session, save_list, iter->and_level,
                                     iter->and_level, args[0], args[1] );
         }
       }
