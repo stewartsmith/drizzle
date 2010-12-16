@@ -496,8 +496,8 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(EE_FILE_NOT_CLOSED, N_("File '%s' (fileno: %d) was not closed"));
 
   // For UUID type
-  add(ER_INVALID_UUID_VALUE, N_("Received an invalid UUID value"));
-  add(ER_INVALID_UUID_TIME, N_("The UUID was not created with a valid time"));
+  ADD_ERROR_MESSAGE(ER_INVALID_UUID_VALUE, N_("Received an invalid UUID value"));
+  ADD_ERROR_MESSAGE(ER_INVALID_UUID_TIME, N_("The UUID was not created with a valid time"));
 
   // Some old error values use the same strings as some new error values.
   ADD_ERROR_MESSAGE(EE_FILENOTFOUND, find(ER_FILE_NOT_FOUND));
