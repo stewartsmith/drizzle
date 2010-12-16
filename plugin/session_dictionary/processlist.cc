@@ -106,16 +106,16 @@ bool ProcesslistTool::Generator::populate()
     push(static_cast<uint64_t>(tmp->start_time ?  now - tmp->start_time : 0));
 
     /* STATE */
-    val= (tmp->client->isWriting() ?
-          "Writing to net" :
-          tmp->client->isReading() ?
-          (tmp->command == COM_SLEEP ?
-           NULL : "Reading from net") :
-          tmp->get_proc_info() ? tmp->get_proc_info() :
-          tmp->getThreadVar() &&
-          tmp->getThreadVar()->current_cond ?
-          "Waiting on cond" : NULL);
-    val ? push(val) : push();
+    const char *step= tmp->get_proc_info();
+
+    if (step)
+    {
+      push(step);
+    }
+    else
+    {
+      push();
+    }
 
     /* INFO */
     if (state)
