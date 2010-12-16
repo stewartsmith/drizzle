@@ -2749,7 +2749,6 @@ void Item_func_case::fix_length_and_dec()
   */
   if (first_expr_num != -1)
   {
-    uint32_t i;
     agg[0]= args[first_expr_num];
     left_result_type= agg[0]->result_type();
 
@@ -2759,7 +2758,7 @@ void Item_func_case::fix_length_and_dec()
     if (!(found_types= collect_cmp_types(agg, nagg)))
       return;
 
-    for (i= 0; i <= (uint32_t)DECIMAL_RESULT; i++)
+    for (int i= STRING_RESULT; i <= DECIMAL_RESULT; i++)
     {
       if (found_types & (1 << i) && !cmp_items[i])
       {
@@ -2845,14 +2844,12 @@ void Item_func_case::print(String *str, enum_query_type query_type)
 
 void Item_func_case::cleanup()
 {
-  uint32_t i;
   Item_func::cleanup();
-  for (i= 0; i <= (uint32_t)DECIMAL_RESULT; i++)
+  for (int i= STRING_RESULT; i <= DECIMAL_RESULT; i++)
   {
     delete cmp_items[i];
     cmp_items[i]= 0;
   }
-  return;
 }
 
 
@@ -3545,7 +3542,7 @@ void Item_func_in::fix_length_and_dec()
   bool compare_as_datetime= false;
   Item *date_arg= 0;
   uint32_t found_types= 0;
-  uint32_t type_cnt= 0, i;
+  uint32_t type_cnt= 0;
   Item_result cmp_type= STRING_RESULT;
   left_result_type= args[0]->result_type();
   if (!(found_types= collect_cmp_types(args, arg_count, true)))
@@ -3559,7 +3556,7 @@ void Item_func_in::fix_length_and_dec()
       break;
     }
   }
-  for (i= 0; i <= (uint32_t)DECIMAL_RESULT; i++)
+  for (int i= STRING_RESULT; i <= DECIMAL_RESULT; i++)
   {
     if (found_types & 1 << i)
     {
@@ -3742,7 +3739,7 @@ void Item_func_in::fix_length_and_dec()
       cmp_items[STRING_RESULT]= new cmp_item_datetime(date_arg);
     else
     {
-      for (i= 0; i <= (uint32_t) DECIMAL_RESULT; i++)
+      for (int i= STRING_RESULT; i <= DECIMAL_RESULT; i++)
       {
         if (found_types & (1 << i) && !cmp_items[i])
         {
