@@ -3445,31 +3445,6 @@ static void fill_global_error_names()
   drizzle_result_free(&res);
 }
 
-static void reset_status()
-{
-  drizzle_result_st res;
-  drizzle_return_t ret;
-  drizzle_con_st *con= &cur_con->con;
-
-  const std::string ds_query("FLUSH GLOBAL STATUS ");
-  if (drizzle_query_str(con, &res, ds_query.c_str(), &ret) == NULL ||
-      ret != DRIZZLE_RETURN_OK)
-  {
-    if (ret == DRIZZLE_RETURN_ERROR_CODE)
-    {
-      die("Error running query '%s': %d %s", ds_query.c_str(),
-          drizzle_result_error_code(&res), drizzle_result_error(&res));
-      drizzle_result_free(&res);
-    }
-    else
-    {
-      die("Error running query '%s': %d %s", ds_query.c_str(), ret,
-          drizzle_con_error(con));
-    }
-  }
-  drizzle_result_free(&res);
-}
-
 static uint32_t get_errcode_from_name(char *error_name, char *error_end)
 {
   size_t err_name_len= error_end - error_name;
@@ -5780,7 +5755,6 @@ try
                opt_db, opt_port);
 
   fill_global_error_names();
-  reset_status();
 
   /* Use all time until exit if no explicit 'start_timer' */
   timer_start= timer_now();

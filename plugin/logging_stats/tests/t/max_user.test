@@ -37,6 +37,7 @@ SELECT
 SHOW CREATE TABLE data_dictionary.GLOBAL_STATEMENTS;
 --replace_column 1 #
 SELECT count(*) FROM data_dictionary.GLOBAL_STATEMENTS;
+--replace_column 2 #
 SELECT * FROM data_dictionary.GLOBAL_STATEMENTS;
 
 DROP TABLE a;
