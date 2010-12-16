@@ -199,7 +199,7 @@ public:
 
     char buff[MAX_FIELD_WIDTH];
     String str(buff, sizeof(buff), &my_charset_bin);
-    from->val_str(&str);
+    from->val_str_internal(&str);
     return store(str.ptr(), str.length());
   }
 

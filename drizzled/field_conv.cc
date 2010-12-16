@@ -307,7 +307,7 @@ static void do_copy_blob(CopyField *copy)
 
 static void do_conv_blob(CopyField *copy)
 {
-  copy->from_field->val_str(&copy->tmp);
+  copy->from_field->val_str_internal(&copy->tmp);
   ((Field_blob *) copy->to_field)->store(copy->tmp.ptr(),
                                          copy->tmp.length(),
                                          copy->tmp.charset());
@@ -319,7 +319,7 @@ static void do_save_blob(CopyField *copy)
 {
   char buff[MAX_FIELD_WIDTH];
   String res(buff, sizeof(buff), copy->tmp.charset());
-  copy->from_field->val_str(&res);
+  copy->from_field->val_str_internal(&res);
   copy->tmp.copy(res);
   ((Field_blob *) copy->to_field)->store(copy->tmp.ptr(),
                                          copy->tmp.length(),
@@ -331,7 +331,7 @@ static void do_field_string(CopyField *copy)
 {
   char buff[MAX_FIELD_WIDTH];
   copy->tmp.set_quick(buff,sizeof(buff),copy->tmp.charset());
-  copy->from_field->val_str(&copy->tmp);
+  copy->from_field->val_str_internal(&copy->tmp);
   copy->to_field->store(copy->tmp.c_ptr_quick(),copy->tmp.length(),
                         copy->tmp.charset());
 }
@@ -805,7 +805,7 @@ int field_conv(Field *to,Field *from)
   if (to->type() == DRIZZLE_TYPE_BLOB)
   {						// Be sure the value is stored
     Field_blob *blob=(Field_blob*) to;
-    from->val_str(&blob->value);
+    from->val_str_internal(&blob->value);
     /*
       Copy value if copy_blobs is set, or source is not a string and
       we have a pointer to its internal string conversion buffer.
@@ -829,7 +829,7 @@ int field_conv(Field *to,Field *from)
   {
     char buff[MAX_FIELD_WIDTH];
     String result(buff,sizeof(buff),from->charset());
-    from->val_str(&result);
+    from->val_str_internal(&result);
     /*
       We use c_ptr_quick() here to make it easier if to is a float/double
       as the conversion routines will do a copy of the result doesn't

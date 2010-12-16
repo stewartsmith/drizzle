@@ -146,7 +146,7 @@ Cached_item_field::Cached_item_field(Field *arg_field)
 bool Cached_item_field::cmp(void)
 {
   // This is not a blob!
-  bool tmp= field->cmp(buff) != 0;
+  bool tmp= field->cmp_internal(buff) != 0;
 
   if (tmp)
     field->get_image(buff,length,field->charset());

@@ -763,6 +763,12 @@ public:
   bool eq_by_collation(Item *item, bool binary_cmp, const CHARSET_INFO * const cs);
 };
 
+namespace display {
+const std::string &type(Item::Type type);
+} /* namespace display */
+
+std::ostream& operator<<(std::ostream& output, const Item &item);
+
 } /* namespace drizzled */
 
 /** @TODO Why is this in the middle? */

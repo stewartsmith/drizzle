@@ -30,6 +30,7 @@ namespace display {
 const std::string &type(drizzled::enum_server_command type);
 const std::string &type(drizzled::enum_field_types type);
 const std::string &type(bool type);
+std::string hexdump(const unsigned char *str, size_t length);
 
 } /* namespace display */
 } /* namespace drizzled */

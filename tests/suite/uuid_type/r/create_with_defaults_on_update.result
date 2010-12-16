@@ -1,0 +1,74 @@
+CREATE TABLE `t3` (
+`a` UUID DEFAULT UUID,
+`b` UUID DEFAULT UUID ON UPDATE UUID,
+`c` INT DEFAULT NULL
+);
+insert into t3 VALUES ();
+insert into t3 VALUES ();
+insert into t3 VALUES ();
+SELECT COUNT(A) FROM t3;
+COUNT(A)
+3
+SELECT IF((a = b), "YES", "NO") FROM t3;
+IF((a = b), "YES", "NO")
+YES
+YES
+YES
+UPDATE t3 SET c=0;
+SELECT IF((a != b), "YES", "NO") FROM t3;
+IF((a != b), "YES", "NO")
+YES
+YES
+YES
+DROP TABLE t3;
+CREATE TABLE `t3` (
+`a` UUID DEFAULT UUID,
+`b` UUID DEFAULT UUID ON UPDATE UUID,
+`c` INT DEFAULT NULL
+);
+insert into t3 VALUES ();
+insert into t3 VALUES ();
+insert into t3 VALUES ();
+SELECT COUNT(A) FROM t3;
+COUNT(A)
+3
+SELECT IF((a = b), "YES", "NO") FROM t3;
+IF((a = b), "YES", "NO")
+YES
+YES
+YES
+UPDATE t3 SET c=0;
+SELECT IF((a != b), "YES", "NO") FROM t3;
+IF((a != b), "YES", "NO")
+YES
+YES
+YES
+DROP TABLE t3;
+CREATE TABLE `t3` (
+`a` UUID,
+`b` UUID DEFAULT UUID ON UPDATE UUID,
+`c` INT DEFAULT NULL
+);
+insert into t3 VALUES ();
+insert into t3 VALUES ();
+insert into t3 VALUES ();
+SELECT COUNT(A) FROM t3;
+COUNT(A)
+0
+SELECT a from t3;
+a
+NULL
+NULL
+NULL
+SELECT IF((a != b), "YES", "NO"), IF((A IS NULL), "YES", "NO") FROM t3;
+IF((a != b), "YES", "NO")	IF((A IS NULL), "YES", "NO")
+NO	YES
+NO	YES
+NO	YES
+UPDATE t3 SET c=0;
+SELECT IF((a != b), "YES", "NO"), IF((A IS NULL), "YES", "NO") FROM t3;
+IF((a != b), "YES", "NO")	IF((A IS NULL), "YES", "NO")
+NO	YES
+NO	YES
+NO	YES
+DROP TABLE t3;

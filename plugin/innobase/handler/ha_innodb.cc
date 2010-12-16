@@ -3853,12 +3853,15 @@ get_innobase_type_from_mysql_type(
   case DRIZZLE_TYPE_DATETIME:
   case DRIZZLE_TYPE_DATE:
   case DRIZZLE_TYPE_TIMESTAMP:
+  case DRIZZLE_TYPE_ENUM:
     return(DATA_INT);
   case DRIZZLE_TYPE_DOUBLE:
     return(DATA_DOUBLE);
   case DRIZZLE_TYPE_BLOB:
     return(DATA_BLOB);
-  default:
+  case DRIZZLE_TYPE_UUID:
+    return(DATA_FIXBINARY);
+  case DRIZZLE_TYPE_NULL:
     ut_error;
   }
 

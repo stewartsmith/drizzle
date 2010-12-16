@@ -106,7 +106,7 @@ bool Item::val_bool()
     case ROW_RESULT:
     default:
       assert(0);
-      return false;
+      abort();
   }
 }
 
@@ -1046,7 +1046,7 @@ enum_field_types Item::field_type() const
   case ROW_RESULT:
   default:
     assert(0);
-    return DRIZZLE_TYPE_VARCHAR;
+    abort();
   }
 }
 
@@ -1058,10 +1058,20 @@ bool Item::is_datetime()
     case DRIZZLE_TYPE_DATETIME:
     case DRIZZLE_TYPE_TIMESTAMP:
       return true;
-    default:
-      break;
+    case DRIZZLE_TYPE_BLOB:
+    case DRIZZLE_TYPE_VARCHAR:
+    case DRIZZLE_TYPE_DOUBLE:
+    case DRIZZLE_TYPE_DECIMAL:
+    case DRIZZLE_TYPE_ENUM:
+    case DRIZZLE_TYPE_LONG:
+    case DRIZZLE_TYPE_LONGLONG:
+    case DRIZZLE_TYPE_NULL:
+    case DRIZZLE_TYPE_UUID:
+      return false;
   }
-  return false;
+
+  assert(0);
+  abort();
 }
 
 String *Item::check_well_formed_result(String *str, bool send_error)
@@ -1146,7 +1156,7 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool)
     The field functions defines a field to be not null if null_ptr is not 0
   */
   unsigned char *null_ptr= maybe_null ? (unsigned char*) "" : 0;
-  Field *field;
+  Field *field= NULL;
 
   switch (field_type()) {
   case DRIZZLE_TYPE_DECIMAL:
@@ -1184,10 +1194,7 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool)
   case DRIZZLE_TYPE_DATETIME:
     field= new Field_datetime(maybe_null, name, &my_charset_bin);
     break;
-  default:
-    /* This case should never be chosen */
-    assert(0);
-    /* Fall through to make_string_field() */
+  case DRIZZLE_TYPE_UUID:
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_VARCHAR:
     return make_string_field(table);
@@ -1195,6 +1202,8 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool)
       field= new Field_blob(max_length, maybe_null, name, collation.collation);
     break;					// Blob handled outside of case
   }
+  assert(field);
+
   if (field)
     field->init(table);
   return field;
@@ -1329,58 +1338,60 @@ bool Item::send(plugin::Client *client, String *buffer)
   enum_field_types f_type;
 
   switch ((f_type=field_type())) {
-  default:
+  case DRIZZLE_TYPE_DATE:
   case DRIZZLE_TYPE_NULL:
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_BLOB:
   case DRIZZLE_TYPE_VARCHAR:
+  case DRIZZLE_TYPE_UUID:
   case DRIZZLE_TYPE_DECIMAL:
-  {
-    String *res;
-    if ((res=val_str(buffer)))
-      result= client->store(res->ptr(),res->length());
-    break;
-  }
-  case DRIZZLE_TYPE_LONG:
-  {
-    int64_t nr;
-    nr= val_int();
-    if (!null_value)
-      result= client->store((int32_t)nr);
-    break;
-  }
-  case DRIZZLE_TYPE_LONGLONG:
-  {
-    int64_t nr;
-    nr= val_int();
-    if (!null_value)
     {
-      if (unsigned_flag)
-        result= client->store((uint64_t)nr);
-      else
-        result= client->store((int64_t)nr);
+      String *res;
+      if ((res=val_str(buffer)))
+        result= client->store(res->ptr(),res->length());
+      break;
     }
-    break;
-  }
+  case DRIZZLE_TYPE_LONG:
+    {
+      int64_t nr;
+      nr= val_int();
+      if (!null_value)
+        result= client->store((int32_t)nr);
+      break;
+    }
+  case DRIZZLE_TYPE_LONGLONG:
+    {
+      int64_t nr;
+      nr= val_int();
+      if (!null_value)
+      {
+        if (unsigned_flag)
+          result= client->store((uint64_t)nr);
+        else
+          result= client->store((int64_t)nr);
+      }
+      break;
+    }
   case DRIZZLE_TYPE_DOUBLE:
-  {
-    double nr= val_real();
-    if (!null_value)
-      result= client->store(nr, decimals, buffer);
-    break;
-  }
+    {
+      double nr= val_real();
+      if (!null_value)
+        result= client->store(nr, decimals, buffer);
+      break;
+    }
   case DRIZZLE_TYPE_DATETIME:
   case DRIZZLE_TYPE_TIMESTAMP:
-  {
-    DRIZZLE_TIME tm;
-    get_date(&tm, TIME_FUZZY_DATE);
-    if (!null_value)
-      result= client->store(&tm);
-    break;
-  }
+    {
+      DRIZZLE_TIME tm;
+      get_date(&tm, TIME_FUZZY_DATE);
+      if (!null_value)
+        result= client->store(&tm);
+      break;
+    }
   }
   if (null_value)
     result= client->store();
+
   return result;
 }
 
@@ -1504,8 +1515,8 @@ bool field_is_equal_to_item(Field *field,Item *item)
     item_result=item->val_str(&item_tmp);
     if (item->null_value)
       return 1;					// This must be true
-    field->val_str(&field_tmp);
-    return !stringcmp(&field_tmp,item_result);
+    field->val_str_internal(&field_tmp);
+    return not stringcmp(&field_tmp,item_result);
   }
   if (res_type == INT_RESULT)
     return 1;					// Both where of type int
@@ -1655,8 +1666,7 @@ static Field *create_tmp_field_from_item(Session *,
   default:
     // This case should never be choosen
     assert(0);
-    new_field= 0;
-    break;
+    abort();
   }
   if (new_field)
     new_field->init(table);
@@ -1723,6 +1733,7 @@ Field *create_tmp_field(Session *session,
         field->result_field= result;
     }
     else
+    {
       result= create_tmp_field_from_field(session, (*from_field= field->field),
                                           orig_item ? orig_item->name :
                                           item->name,
@@ -1730,6 +1741,7 @@ Field *create_tmp_field(Session *session,
                                           modify_item ? field :
                                           NULL,
                                           convert_blob_length);
+    }
     if (orig_type == Item::REF_ITEM && orig_modify)
       ((Item_ref*)orig_item)->set_result_field(result);
     if (field->field->eq_def(result))
@@ -1767,6 +1779,17 @@ Field *create_tmp_field(Session *session,
   default:					// Dosen't have to be stored
     return NULL;
   }
+}
+
+std::ostream& operator<<(std::ostream& output, const Item &item)
+{
+  output << "Item:(";
+  output <<  item.name;
+  output << ", ";
+  output << drizzled::display::type(item.type());
+  output << ")";
+
+  return output;  // for multiple << operators.
 }
 
 } /* namespace drizzled */
