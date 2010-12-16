@@ -5,7 +5,7 @@ DROP TABLE IF EXISTS a;
 --enable_warnings
 CREATE TABLE a (i int,  PRIMARY KEY (i));
 
---echo Create 750 users  
+--echo Create 750 users
 --disable_query_log
 let $1=750;
 let $2=0;
@@ -14,13 +14,24 @@ while ($1)
   inc $2;
   connect (con3, localhost, $2,,);
   eval INSERT INTO a VALUES ($2);
-  connection default; 
+  connection default;
   disconnect con3;
   dec $1;
 }
 --enable_query_log
 --sleep 1
-SELECT * FROM DATA_DICTIONARY.CUMULATIVE_SQL_COMMANDS ORDER BY USER + 0 ASC;
+SELECT
+  IF(COUNT_SELECT, "NO", "YES"),
+  IF(COUNT_DELETE, "NO", "YES"),
+  IF(COUNT_UPDATE, "NO", "YES"),
+  IF(COUNT_INSERT, "YES", "NO"),
+  IF(COUNT_ROLLBACK, "NO", "YES"),
+  IF(COUNT_COMMIT, "NO", "YES"),
+  IF(COUNT_CREATE, "NO", "YES"),
+  IF(COUNT_ALTER, "NO", "YES"),
+  IF(COUNT_DROP, "NO", "YES"),
+  IF(COUNT_ADMIN, "NO", "YES")
+  FROM DATA_DICTIONARY.CUMULATIVE_SQL_COMMANDS ORDER BY USER + 0 ASC;
 
 
 SHOW CREATE TABLE data_dictionary.GLOBAL_STATEMENTS;
