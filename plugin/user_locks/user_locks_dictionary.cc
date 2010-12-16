@@ -29,7 +29,7 @@ using namespace drizzled;
 using namespace std;
 
 user_locks::UserLocks::UserLocks() :
-  plugin::TableFunction("DATA_DICTIONARY", "USER_LOCKS")
+  plugin::TableFunction("DATA_DICTIONARY", "USER_DEFINED_LOCKS")
 {
   add_field("USER_LOCK_NAME", plugin::TableFunction::STRING, user_locks::LARGEST_LOCK_NAME, false);
   add_field("SESSION_ID", plugin::TableFunction::NUMBER, 0, false);

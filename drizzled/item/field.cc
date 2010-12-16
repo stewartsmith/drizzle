@@ -1263,7 +1263,7 @@ void Item_field::print(String *str, enum_query_type query_type)
   {
     char buff[MAX_FIELD_WIDTH];
     String tmp(buff,sizeof(buff),str->charset());
-    field->val_str(&tmp);
+    field->val_str_internal(&tmp);
     if (field->is_null())  {
       str->append("NULL");
     }

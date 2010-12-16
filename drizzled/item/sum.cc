@@ -2231,7 +2231,7 @@ Item_sum_hybrid::min_max_update_str_field()
 
   if (!args[0]->null_value)
   {
-    result_field->val_str(&tmp_value);
+    result_field->val_str_internal(&tmp_value);
 
     if (result_field->is_null() ||
 	(cmp_sign * sortcmp(res_str,&tmp_value,collation.collation)) < 0)
@@ -2913,7 +2913,7 @@ int dump_leaf_key(unsigned char* key, uint32_t ,
       uint32_t offset= (field->offset(field->getTable()->record[0]) -
                     table->getShare()->null_bytes);
       assert(offset < table->getShare()->getRecordLength());
-      res= field->val_str(&tmp, key + offset);
+      res= field->val_str_internal(&tmp, key + offset);
     }
     else
       res= (*arg)->val_str(&tmp);

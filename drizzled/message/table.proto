@@ -76,6 +76,7 @@ message Table {
       DATE = 7;
       TIMESTAMP = 9;
       DATETIME = 10;
+      UUID = 11;
     }
 
     message FieldOptions {

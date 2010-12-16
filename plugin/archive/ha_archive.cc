@@ -1031,8 +1031,8 @@ int ha_archive::optimize()
           field->setReadSet();
 
           uint64_t auto_value=
-            (uint64_t) field->val_int(getTable()->getInsertRecord() +
-                                       field->offset(getTable()->getInsertRecord()));
+            (uint64_t) field->val_int_internal(getTable()->getInsertRecord() +
+                                               field->offset(getTable()->getInsertRecord()));
           if (share->archive_write.auto_increment < auto_value)
             stats.auto_increment_value=
               (share->archive_write.auto_increment= auto_value) + 1;

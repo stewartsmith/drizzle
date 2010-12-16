@@ -35,7 +35,7 @@ bool Regex::val_bool()
   if (re.empty())
   {
     drizzled::String _regex;
-    drizzled::String *regex= args[0]->val_str(&_regex);
+    drizzled::String *regex= args[1]->val_str(&_regex);
 
     if (not regex or not regex->length() or not res or not res->length())
     {
@@ -43,7 +43,7 @@ bool Regex::val_bool()
       return false;
     }
 
-    re.assign(res->c_str());
+    re.assign(regex->c_str());
   }
 
   if (not res or not res->length())

@@ -403,7 +403,7 @@ let $FCT=updatexml;
 -- source include/parser_bug21114.inc
 let $FCT=upper;
 -- source include/parser_bug21114.inc
-let $FCT=uuid;
+let $FCT=uuid_t;
 -- source include/parser_bug21114.inc
 let $FCT=version;
 -- source include/parser_bug21114.inc

@@ -355,7 +355,7 @@ void key_unpack(String *to, Table *table, uint32_t idx)
     {
       const CHARSET_INFO * const cs= field->charset();
       field->setReadSet();
-      field->val_str(&tmp);
+      field->val_str_internal(&tmp);
       if (cs->mbmaxlen > 1 &&
           table->getField(key_part->fieldnr - 1)->field_length !=
           key_part->length)
