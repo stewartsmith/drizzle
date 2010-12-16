@@ -1236,6 +1236,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
     uint32_t field_length= 0; //Assignment is for compiler complaint.
 
+    // We set field_length in this loop.
     switch (field_type)
     {
     case DRIZZLE_TYPE_BLOB:
@@ -1281,7 +1282,6 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
                                                      false);
         break;
       }
-    case DRIZZLE_TYPE_TIMESTAMP:
     case DRIZZLE_TYPE_DATETIME:
       field_length= DateTime::MAX_STRING_LENGTH;
       break;
@@ -1318,6 +1318,9 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
       break;
     case DRIZZLE_TYPE_UUID:
       field_length= field::Uuid::max_string_length();
+      break;
+    case DRIZZLE_TYPE_TIMESTAMP:
+      field_length= Field_timestamp::max_string_length();
       break;
     case DRIZZLE_TYPE_NULL:
       abort(); // Programming error
@@ -2048,12 +2051,12 @@ Field *TableShare::make_field(unsigned char *ptr,
   {
   case DRIZZLE_TYPE_ENUM:
     return new (&mem_root) Field_enum(ptr,
-                                 field_length,
-                                 null_pos,
-                                 null_bit,
-                                 field_name,
-                                 interval,
-                                 field_charset);
+                                      field_length,
+                                      null_pos,
+                                      null_bit,
+                                      field_name,
+                                      interval,
+                                      field_charset);
   case DRIZZLE_TYPE_VARCHAR:
     setVariableWidth();
     return new (&mem_root) Field_varstring(ptr,field_length,

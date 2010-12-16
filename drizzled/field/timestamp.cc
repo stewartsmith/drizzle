@@ -164,7 +164,7 @@ int Field_timestamp::store(const char *from,
 
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
-  if (! temporal.from_string(from, (size_t) len))
+  if (not temporal.from_string(from, (size_t) len))
   {
     my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(ME_FATALERROR), from);
     return 1;
@@ -403,6 +403,11 @@ void Field_timestamp::store_timestamp(int64_t timestamp)
   else
 #endif
     int64_tstore(ptr, timestamp);
+}
+
+size_t Field_timestamp::max_string_length()
+{
+  return sizeof(time_t);
 }
 
 } /* namespace drizzled */

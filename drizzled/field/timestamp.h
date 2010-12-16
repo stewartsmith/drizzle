@@ -73,8 +73,10 @@ private:
   void store_timestamp(int64_t timestamp);
   bool get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
   bool get_time(DRIZZLE_TIME *ltime);
+
 public:
   timestamp_auto_set_type get_auto_set_type() const;
+  static size_t max_string_length();
 };
 
 } /* namespace drizzled */
