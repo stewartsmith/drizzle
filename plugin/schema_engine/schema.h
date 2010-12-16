@@ -51,8 +51,6 @@ public:
   ~Schema();
 
 
-  bool doCanCreateTable(const drizzled::TableIdentifier &identifier);
-
   drizzled::Cursor *create(drizzled::Table &)
   {
     return NULL;

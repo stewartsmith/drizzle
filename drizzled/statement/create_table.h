@@ -33,6 +33,8 @@ namespace statement
 
 class CreateTable : public Statement
 {
+  virtual bool check(const TableIdentifier&);
+
 public:
   CreateTable(Session *in_session)
     :

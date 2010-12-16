@@ -37,14 +37,14 @@ public:
   { }
 
   virtual bool restrictSchema(const drizzled::SecurityContext &user_ctx,
-                              drizzled::SchemaIdentifier &db);
+                              drizzled::SchemaIdentifier::const_reference schema);
 
   virtual bool restrictProcess(const drizzled::SecurityContext &user_ctx,
                                const drizzled::SecurityContext &session_ctx);
 };
 
 inline bool Policy::restrictSchema(const drizzled::SecurityContext &user_ctx,
-                                   drizzled::SchemaIdentifier &schema)
+                                   drizzled::SchemaIdentifier::const_reference schema)
 {
   if ((user_ctx.getUser() == "root")
       || schema.compare("data_dictionary")

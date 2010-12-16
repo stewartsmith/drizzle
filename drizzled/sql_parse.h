@@ -46,7 +46,6 @@ bool mysql_insert_select_prepare(Session *session);
 bool update_precheck(Session *session, TableList *tables);
 bool delete_precheck(Session *session, TableList *tables);
 bool insert_precheck(Session *session, TableList *tables);
-bool create_table_precheck(TableIdentifier &identifier);
 
 Item *negate_expression(Session *session, Item *expr);
 

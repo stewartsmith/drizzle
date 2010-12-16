@@ -134,20 +134,14 @@ bool statement::AlterTable::execute()
   }
 
   if (not validateCreateTableOption())
-  {
     return true;
-  }
 
   /* ALTER TABLE ends previous transaction */
   if (not session->endActiveTransaction())
-  {
     return true;
-  }
 
   if (not (need_start_waiting= not session->wait_if_global_read_lock(0, 1)))
-  {
     return true;
-  }
 
   bool res;
   if (original_table_message->type() == message::Table::STANDARD )
@@ -898,6 +892,12 @@ static bool internal_alter_table(Session *session,
   char old_name[32];
   ha_rows copied= 0;
   ha_rows deleted= 0;
+
+  if (not original_table_identifier.isValid())
+    return true;
+
+  if (not new_table_identifier.isValid())
+    return true;
 
   session->set_proc_info("init");
 
