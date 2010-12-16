@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 MySQL
+ *  Copyright (C) 2010 Monty Taylor
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,22 +18,38 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef CLIENT_ERRNAME_H
-#define CLIENT_ERRNAME_H
+#include "config.h"
 
-/* List of error names to error codes, available from 5.0 */
+#include "plugin/error_dictionary/errors.h"
 
-#include <string>
-#include <map>
-
-class ErrorCodes 
+namespace drizzle_plugin
 {
-public:
-  ErrorCodes();
 
-  uint32_t getErrorCode(const std::string &error_msg);
-private:
-  std::map<std::string, uint32_t> error_code_map;
-};
+error_dictionary::Errors::Errors() :
+  drizzled::plugin::TableFunction("DATA_DICTIONARY", "ERRORS")
+{
+  add_field("ERROR_CODE", drizzled::plugin::TableFunction::NUMBER);
+  add_field("ERROR_NAME");
+  add_field("ERROR_MESSAGE");
+}
 
-#endif /* CLIENT_ERRNAME_H */
+error_dictionary::Errors::Generator::Generator(drizzled::Field **arg) :
+  drizzled::plugin::TableFunction::Generator(arg),
+  _error_map(drizzled::ErrorMap::get_error_message_map()),
+  _iter(drizzled::ErrorMap::get_error_message_map().begin())
+{ }
+
+bool error_dictionary::Errors::Generator::populate()
+{
+  if (_iter == _error_map.end())
+    return false;
+
+  push(uint64_t((*_iter).first));
+  push((*_iter).second.first);
+  push((*_iter).second.second);
+
+  ++_iter;
+  return true;
+}
+
+}
