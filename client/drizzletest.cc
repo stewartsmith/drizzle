@@ -3451,13 +3451,6 @@ static uint32_t get_errcode_from_name(char *error_name, char *error_end)
   size_t err_name_len= error_end - error_name;
   string error_name_s(error_name, err_name_len);
 
-  if (global_error_names.size() == 0)
-  {
-    fill_global_error_names();
-  }
-
-  return global_error_names[error_name_s];
-  /*
   ErrorCodes::iterator it= global_error_names.find(error_name_s);
   if (it != global_error_names.end())
   {
@@ -3466,7 +3459,6 @@ static uint32_t get_errcode_from_name(char *error_name, char *error_end)
 
   die("Unknown SQL error name '%s'", error_name_s.c_str());
   return 0;
-*/
 }
 
 static void do_get_errcodes(struct st_command *command)
@@ -5762,6 +5754,8 @@ try
     die("Out of memory");
   safe_connect(&cur_con->con, cur_con->name, opt_host, opt_user, opt_pass,
                opt_db, opt_port);
+
+  fill_global_error_names();
 
   /* Use all time until exit if no explicit 'start_timer' */
   timer_start= timer_now();
