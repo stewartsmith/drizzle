@@ -142,6 +142,17 @@ public:
   uint32_t field_length; /**< Length of this field in bytes */
   uint32_t flags;
   uint16_t field_index; /**< Index of this Field in Table::fields array */
+
+  uint16_t position() const
+  {
+    return field_index;
+  }
+
+  void setPosition(uint32_t arg)
+  {
+    field_index= arg;
+  }
+
   unsigned char null_bit; /**< Bit used to test null bit */
   /**
      If true, this field was created in create_tmp_field_from_item from a NULL
