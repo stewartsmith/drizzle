@@ -98,31 +98,64 @@ bool SchemaIdentifier::compare(const std::string &arg) const
   return boost::iequals(arg, db);
 }
 
+bool SchemaIdentifier::compare(SchemaIdentifier::const_reference arg) const
+{
+  return boost::iequals(arg.getSchemaName(), db);
+}
+
 bool SchemaIdentifier::isValid() const
 {
-  if (db.empty())
-    return false;
+  bool error= false;
 
-  if (db.size() > NAME_LEN)
-    return false;
-
-  if (db.at(db.length() -1) == ' ')
-    return false;
-
-  const CHARSET_INFO * const cs= &my_charset_utf8mb4_general_ci;
-
-  int well_formed_error;
-  uint32_t res= cs->cset->well_formed_len(cs, db.c_str(), db.c_str() + db.length(),
-                                          NAME_CHAR_LEN, &well_formed_error);
-
-  if (well_formed_error)
+  do
   {
-    my_error(ER_INVALID_CHARACTER_STRING, MYF(0), "identifier", db.c_str());
+    if (db.empty())
+    {
+      error= true;
+      break;
+    }
+
+    if (db.size() > NAME_LEN)
+    {
+      error= true;
+      break;
+    }
+
+    if (db.at(db.length() -1) == ' ')
+    {
+      error= true;
+      break;
+    }
+
+    if (db.at(0) == '.')
+    {
+      error= true;
+      break;
+    }
+
+    {
+      const CHARSET_INFO * const cs= &my_charset_utf8mb4_general_ci;
+
+      int well_formed_error;
+      uint32_t res= cs->cset->well_formed_len(cs, db.c_str(), db.c_str() + db.length(),
+                                              NAME_CHAR_LEN, &well_formed_error);
+      if (well_formed_error or db.length() != res)
+      {
+        error= true;
+        break;
+      }
+    }
+  } while (0);
+
+  if (error)
+  {
+    std::string name;
+
+    getSQLPath(name);
+    my_error(ER_WRONG_DB_NAME, MYF(0), name.c_str());
+
     return false;
   }
-
-  if (db.length() != res)
-    return false;
 
   return true;
 }
