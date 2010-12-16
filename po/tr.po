@@ -8,18 +8,18 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2010-07-20 16:06+0000\n"
-"PO-Revision-Date: 2010-09-01 19:21+0000\n"
-"Last-Translator: boracasli <Unknown>\n"
+"PO-Revision-Date: 2010-12-15 15:09+0000\n"
+"Last-Translator: Cemal Dalar <cemal@dalar.net>\n"
 "Language-Team: Turkish <tr@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Launchpad-Export-Date: 2010-09-02 03:50+0000\n"
+"X-Launchpad-Export-Date: 2010-12-16 04:33+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 msgid "Synonym for `help'."
-msgstr "`help' için eşanlamlı."
+msgstr "yardım"
 
 msgid "Clear command."
 msgstr "Komutu temizle."
@@ -32,13 +32,13 @@ msgid ""
 msgstr "Ayraç belirleyin. NOT: Satırın geri kalanını yeni ayraç olarak alır."
 
 msgid "Send command to drizzle server, display result vertically."
-msgstr "Drizzle sunucusuna emir gönder, sonuclari dikey olarak göster."
+msgstr "Drizzle sunucusuna komut gönder, sonuçları dikey olarak göster."
 
 msgid "Exit drizzle. Same as quit."
-msgstr "drizzle den çıkış.(quit)"
+msgstr "Drizzle'dan çık. (quit)"
 
 msgid "Send command to drizzle server."
-msgstr "Drizzle sunucusuna emir gönder."
+msgstr "Drizzle sunucusuna komut gönder."
 
 msgid "Display this help."
 msgstr "Bu yardımı göster."
@@ -47,7 +47,7 @@ msgid "Disable pager, print to stdout."
 msgstr "Pager iptal edildi, stdout a yönlendirildi"
 
 msgid "Don't write into outfile."
-msgstr ""
+msgstr "Outfile'a yazma."
 
 msgid "Set PAGER [to_pager]. Print the query results via PAGER."
 msgstr "PAGER [tp_pager] a ayarlandı. Sorgu sonuçlarını PAGER ile göster."
@@ -85,10 +85,10 @@ msgid "Don't show warnings after every statement."
 msgstr "Her ifadeden sonra uyarı gösterme"
 
 msgid "Error: Invalid Value for connect_timeout"
-msgstr ""
+msgstr "Hata: connect_timeout için geçersiz değer"
 
 msgid "Error: Invalid Value for max_input_line"
-msgstr ""
+msgstr "Hata: max_input_line için geçersiz değer"
 
 msgid "Displays this help and exit."
 msgstr "Bu yardımı gösterir ve çıkar."
@@ -195,6 +195,8 @@ msgstr "Sunucunun açık olduğunu anlamak için ping at."
 
 msgid "Configuration file defaults are not used if no-defaults is set"
 msgstr ""
+"Eğer no-defaults tanımlandıysa, ayar dosyası öntanımlamaları devre dışı "
+"kalır."
 
 msgid ""
 "Enable automatic rehashing. One doesn't need to use 'rehash' to get table "
@@ -276,7 +278,7 @@ msgstr ""
 "edilebilir. Bu seçenek öntanımlı olarak açıktır."
 
 msgid "Shutdown the server"
-msgstr ""
+msgstr "Sunucuyu Kapat"
 
 msgid ""
 "Be more silent. Print results with a tab as separator, each row on new line."
@@ -313,7 +315,7 @@ msgid "Use MySQL Protocol."
 msgstr "MySQL protokolünü kullan."
 
 msgid "Connect to host"
-msgstr ""
+msgstr "Sunucuya bağlan."
 
 msgid ""
 "Password to use when connecting to server. If password is not given it's "
@@ -331,7 +333,7 @@ msgid "User for login if not current user."
 msgstr "Eğer şu anki kullanıcı değilse login olacak kullanıcı"
 
 msgid "The protocol of connection (tcp,socket,pipe,memory)."
-msgstr ""
+msgstr "Bağlantı protokolü (tcp,socket,pipe,memory)."
 
 #, c-format
 msgid ""
