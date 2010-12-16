@@ -1818,7 +1818,7 @@ static ib_err_t write_row_to_haildb_tuple(const unsigned char* buf,
       */
       String str;
       (**field).setReadSet();
-      (**field).val_str(&str);
+      (**field).val_str_internal(&str);
       err= ib_col_set_value(tuple, colnr, str.ptr(), str.length());
     }
     else if ((**field).type() == DRIZZLE_TYPE_ENUM)
@@ -2425,7 +2425,7 @@ static void store_key_value_from_haildb(KeyInfo *key_info, unsigned char* ref, i
       }
 
       String str;
-      field->val_str(&str);
+      field->val_str_internal(&str);
 
       *ref++= (char)(str.length() & 0x000000ff);
       *ref++= (char)((str.length()>>8) & 0x000000ff);

@@ -727,6 +727,7 @@ static char *mx_get_length_and_data(STRUCT_TABLE *table, Field *field, char *des
 		case DRIZZLE_TYPE_DATE:
 		case DRIZZLE_TYPE_DECIMAL:
 		case DRIZZLE_TYPE_ENUM:
+		case DRIZZLE_TYPE_UUID:
 #endif
 			break;
 	}
@@ -840,6 +841,7 @@ static void mx_set_length_and_data(STRUCT_TABLE *table, Field *field, char *dest
 		case DRIZZLE_TYPE_DATE:
 		case DRIZZLE_TYPE_DECIMAL:
 		case DRIZZLE_TYPE_ENUM:
+		case DRIZZLE_TYPE_UUID:
 #endif
 			break;
 	}
@@ -1841,7 +1843,7 @@ xtPublic void myxt_get_column_as_string(XTOpenTablePtr ot, char *buffer, u_int c
 		xt_lock_mutex(self, &tab->tab_dic_field_lock);
 		pushr_(xt_unlock_mutex, &tab->tab_dic_field_lock);
 		field->ptr = (byte *) buffer + field->offset(table->getDefaultValues());
-		field->val_str(&val);
+		field->val_str_internal(&val);
 		field->ptr = save;					// Restore org row pointer
 		freer_(); // xt_unlock_mutex(&tab->tab_dic_field_lock)
 		xt_strcpy(len, value, val.c_ptr());

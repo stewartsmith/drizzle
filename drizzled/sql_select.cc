@@ -135,9 +135,11 @@ bool handle_select(Session *session, LEX *lex, select_result *result,
       every PS/SP execution new, we will not need reset this flag if
       setup_tables_done_option changed for next rexecution
     */
-    res= mysql_select(session, &select_lex->ref_pointer_array,
+    res= mysql_select(session,
+                      &select_lex->ref_pointer_array,
 		      (TableList*) select_lex->table_list.first,
-		      select_lex->with_wild, select_lex->item_list,
+		      select_lex->with_wild,
+                      select_lex->item_list,
 		      select_lex->where,
 		      select_lex->order_list.elements +
 		      select_lex->group_list.elements,
@@ -2375,6 +2377,7 @@ static void change_cond_ref_to_const(Session *session,
     Item *item;
     while ((item=li++))
       change_cond_ref_to_const(session, save_list, and_level ? cond : item, item, field, value);
+
     return;
   }
   if (cond->eq_cmp_result() == Item::COND_OK)

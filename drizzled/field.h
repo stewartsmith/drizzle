@@ -80,6 +80,7 @@ class Field
   /* Prevent use of these */
   Field(const Field&);
   void operator=(Field &);
+
 public:
   unsigned char *ptr; /**< Position to field in record. Stores raw field value */
   unsigned char *null_ptr; /**< Byte where null_bit is */
@@ -179,10 +180,10 @@ public:
   virtual int store(double nr)=0;
   virtual int store(int64_t nr, bool unsigned_val)=0;
   virtual int store_decimal(const my_decimal *d)=0;
-  int store(const char *to,
-            uint32_t length,
-            const CHARSET_INFO * const cs,
-            enum_check_fields check_level);
+  int store_and_check(enum_check_fields check_level,
+                      const char *to,
+                      uint32_t length,
+                      const CHARSET_INFO * const cs);
   /**
     This is called when storing a date in a string.
 
@@ -190,10 +191,10 @@ public:
       Needs to be changed if/when we want to support different time formats.
   */
   virtual int store_time(DRIZZLE_TIME *ltime, enum enum_drizzle_timestamp_type t_type);
-  virtual double val_real(void)=0;
-  virtual int64_t val_int(void)=0;
+  virtual double val_real()=0;
+  virtual int64_t val_int()=0;
   virtual my_decimal *val_decimal(my_decimal *);
-  inline String *val_str(String *str)
+  String *val_str_internal(String *str)
   {
     return val_str(str, str);
   }
@@ -307,10 +308,9 @@ public:
   virtual uint32_t key_length() const;
   virtual enum_field_types type() const =0;
   virtual enum_field_types real_type() const;
-  inline  int cmp(const unsigned char *str) { return cmp(ptr,str); }
-  virtual int cmp_max(const unsigned char *a, const unsigned char *b,
-                      uint32_t max_len);
+  virtual int cmp_max(const unsigned char *a, const unsigned char *b, uint32_t max_len);
   virtual int cmp(const unsigned char *,const unsigned char *)=0;
+  int cmp_internal(const unsigned char *str) { return cmp(ptr,str); }
   virtual int cmp_binary(const unsigned char *a,const unsigned char *b,
                          uint32_t max_length=UINT32_MAX);
   virtual int cmp_offset(uint32_t row_offset);
@@ -362,13 +362,13 @@ public:
                                uint32_t new_null_bit);
   /** This is used to generate a field in Table from TableShare */
   Field *clone(memory::Root *mem_root, Table *new_table);
-  inline void move_field(unsigned char *ptr_arg,unsigned char *null_ptr_arg,unsigned char null_bit_arg)
+  void move_field(unsigned char *ptr_arg,unsigned char *null_ptr_arg,unsigned char null_bit_arg)
   {
     ptr= ptr_arg;
     null_ptr= null_ptr_arg;
     null_bit= null_bit_arg;
   }
-  inline void move_field(unsigned char *ptr_arg) { ptr=ptr_arg; }
+  void move_field(unsigned char *ptr_arg) { ptr=ptr_arg; }
   virtual void move_field_offset(ptrdiff_t ptr_diff)
   {
     ptr= ADD_TO_PTR(ptr,ptr_diff, unsigned char*);
@@ -426,7 +426,7 @@ public:
   {
     set_image(buff,length, &my_charset_bin);
   }
-  inline int64_t val_int_offset(uint32_t row_offset)
+  int64_t val_int_offset(uint32_t row_offset)
   {
     ptr+=row_offset;
     int64_t tmp=val_int();
@@ -434,7 +434,7 @@ public:
     return tmp;
   }
 
-  inline int64_t val_int(const unsigned char *new_ptr)
+  int64_t val_int_internal(const unsigned char *new_ptr)
   {
     unsigned char *old_ptr= ptr;
     int64_t return_value;
@@ -443,11 +443,12 @@ public:
     ptr= old_ptr;
     return return_value;
   }
-  inline String *val_str(String *str, const unsigned char *new_ptr)
+
+  String *val_str_internal(String *str, const unsigned char *new_ptr)
   {
     unsigned char *old_ptr= ptr;
     ptr= const_cast<unsigned char*>(new_ptr);
-    val_str(str);
+    val_str_internal(str);
     ptr= old_ptr;
     return str;
   }
@@ -556,7 +557,7 @@ public:
     return max_length;
   }
 
-  inline uint32_t offset(const unsigned char *record)
+  uint32_t offset(const unsigned char *record)
   {
     return (uint32_t) (ptr - record);
   }
@@ -654,7 +655,7 @@ public:
                             const uint32_t code,
                             double nr,
                             enum enum_drizzle_timestamp_type ts_type);
-  inline bool check_overflow(int op_result)
+  bool check_overflow(int op_result)
   {
     return (op_result == E_DEC_OVERFLOW);
   }
@@ -692,12 +693,12 @@ public:
                                   bool unsigned_flag,
                                   int *err);
   /* The max. number of characters */
-  inline uint32_t char_length() const
+  uint32_t char_length() const
   {
     return field_length / charset()->mbmaxlen;
   }
 
-  inline enum column_format_type column_format() const
+  enum column_format_type column_format() const
   {
     return (enum column_format_type)
       ((flags >> COLUMN_FORMAT_FLAGS) & COLUMN_FORMAT_MASK);
@@ -725,6 +726,8 @@ public:
   void setReadSet(bool arg= true);
   void setWriteSet(bool arg= true);
 };
+
+std::ostream& operator<<(std::ostream& output, const Field &field);
 
 } /* namespace drizzled */
 

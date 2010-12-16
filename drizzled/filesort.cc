@@ -28,6 +28,7 @@
 
 #include <queue>
 #include <algorithm>
+#include <iostream>
 
 #include "drizzled/drizzled.h"
 #include "drizzled/sql_sort.h"
@@ -51,7 +52,6 @@ using namespace std;
 
 namespace drizzled
 {
-
 
 /* Defines used by filesort and uniques */
 #define MERGEBUFF		7
@@ -381,8 +381,8 @@ ha_rows FileSort::run(Table *table, SortField *sortorder, uint32_t s_length,
       Use also the space previously used by string pointers in sort_buffer
       for temporary key storage.
     */
-    param.keys=((param.keys*(param.rec_length+sizeof(char*))) /
-		param.rec_length-1);
+    param.keys=((param.keys*(param.rec_length+sizeof(char*))) / param.rec_length-1);
+
     maxbuffer--;				// Offset from 0
     if (merge_many_buff(&param,(unsigned char*) sort_keys,buffpek_inst,&maxbuffer, &tempfile))
     {
@@ -418,6 +418,7 @@ ha_rows FileSort::run(Table *table, SortField *sortorder, uint32_t s_length,
 
   tempfile.close_cached_file();
   buffpek_pointers.close_cached_file();
+
   if (my_b_inited(outfile))
   {
     if (flush_io_cache(outfile))
@@ -425,7 +426,7 @@ ha_rows FileSort::run(Table *table, SortField *sortorder, uint32_t s_length,
       error=1;
     }
     {
-      internal::my_off_t save_pos=outfile->pos_in_file;
+      internal::my_off_t save_pos= outfile->pos_in_file;
       /* For following reads */
       if (outfile->reinit_io_cache(internal::READ_CACHE,0L,0,0))
       {
@@ -434,6 +435,7 @@ ha_rows FileSort::run(Table *table, SortField *sortorder, uint32_t s_length,
       outfile->end_of_file=save_pos;
     }
   }
+
   if (error)
   {
     my_message(ER_FILSORT_ABORT, ER(ER_FILSORT_ABORT),
@@ -683,9 +685,12 @@ ha_rows FileSort::find_all_keys(SortParam *param,
     sort_form->print_error(error,MYF(ME_ERROR | ME_WAITTANG));
     return(HA_POS_ERROR);
   }
-  if (indexpos && idx &&
-      param->write_keys(sort_keys,idx,buffpek_pointers,tempfile))
+
+  if (indexpos && idx && param->write_keys(sort_keys,idx,buffpek_pointers,tempfile))
+  {
     return(HA_POS_ERROR);
+  }
+
   return(my_b_inited(tempfile) ?
 	      (ha_rows) (my_b_tell(tempfile)/param->rec_length) :
 	      idx);
@@ -1048,18 +1053,18 @@ void SortParam::register_used_fields()
 }
 
 
-bool SortParam::save_index(unsigned char **sort_keys, uint32_t count,
-                           filesort_info *table_sort)
+bool SortParam::save_index(unsigned char **sort_keys, uint32_t count, filesort_info *table_sort)
 {
   uint32_t offset;
   unsigned char *to;
 
   internal::my_string_ptr_sort((unsigned char*) sort_keys, (uint32_t) count, sort_length);
   offset= rec_length - res_length;
+
   if ((ha_rows) count > max_rows)
     count=(uint32_t) max_rows;
-  if (!(to= table_sort->record_pointers=
-        (unsigned char*) malloc(res_length*count)))
+
+  if (!(to= table_sort->record_pointers= (unsigned char*) malloc(res_length*count)))
     return true;
 
   for (unsigned char **end_ptr= sort_keys+count ; sort_keys != end_ptr ; sort_keys++)
@@ -1067,6 +1072,7 @@ bool SortParam::save_index(unsigned char **sort_keys, uint32_t count,
     memcpy(to, *sort_keys+offset, res_length);
     to+= res_length;
   }
+
   return false;
 }
 
@@ -1171,13 +1177,17 @@ class compare_functor
 {
   qsort2_cmp key_compare;
   void *key_compare_arg;
+
   public:
-  compare_functor(qsort2_cmp in_key_compare, void *in_compare_arg)
-    : key_compare(in_key_compare), key_compare_arg(in_compare_arg) { }
+  compare_functor(qsort2_cmp in_key_compare, void *in_compare_arg) :
+    key_compare(in_key_compare),
+    key_compare_arg(in_compare_arg)
+  { }
+  
   inline bool operator()(const buffpek *i, const buffpek *j) const
   {
-    int val= key_compare(key_compare_arg,
-                      &i->key, &j->key);
+    int val= key_compare(key_compare_arg, &i->key, &j->key);
+
     return (val >= 0);
   }
 };

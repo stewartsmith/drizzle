@@ -174,7 +174,7 @@ int64_t Item_ident_for_show::val_int()
 
 String *Item_ident_for_show::val_str(String *str)
 {
-  return field->val_str(str);
+  return field->val_str_internal(str);
 }
 
 

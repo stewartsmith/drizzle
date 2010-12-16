@@ -192,7 +192,10 @@ int Join::prepare(Item ***rref_pointer_array,
   for (table_ptr= select_lex->leaf_tables;
        table_ptr;
        table_ptr= table_ptr->next_leaf)
+  {
     tables++;
+  }
+
 
   if (setup_wild(session, fields_list, &all_fields, wild_num) ||
       select_lex->setup_ref_array(session, og_num) ||
