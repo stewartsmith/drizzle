@@ -4,7 +4,7 @@ dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
 dnl Which version of the canonical setup we're using
-AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.163])
+AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.165])
 
 AC_DEFUN([PANDORA_FORCE_DEPEND_TRACKING],[
   AC_ARG_ENABLE([fat-binaries],
@@ -38,6 +38,7 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   m4_define([PCT_REQUIRE_CXX],[no])
   m4_define([PCT_FORCE_GCC42],[no])
   m4_define([PCT_DONT_SUPPRESS_INCLUDE],[no])
+  m4_define([PCT_NO_VC_CHANGELOG],[no])
   m4_define([PCT_VERSION_FROM_VC],[no])
   m4_define([PCT_USE_VISIBILITY],[yes])
   m4_foreach([pct_arg],[$*],[
@@ -57,6 +58,10 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
       [dont-suppress-include], [
         m4_undefine([PCT_DONT_SUPPRESS_INCLUDE])
         m4_define([PCT_DONT_SUPPRESS_INCLUDE],[yes])
+      ],
+      [no-vc-changelog], [
+        m4_undefine([PCT_NO_VC_CHANGELOG])
+        m4_define([PCT_NO_VC_CHANGELOG],[yes])
       ],
       [version-from-vc], [
         m4_undefine([PCT_VERSION_FROM_VC])
@@ -104,6 +109,11 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   ])
   AC_REQUIRE([PANDORA_64BIT])
 
+  m4_if(PCT_NO_VC_CHANGELOG,yes,[
+    vc_changelog=no
+  ],[
+    vc_changelog=yes
+  ])
   m4_if(PCT_VERSION_FROM_VC,yes,[
     PANDORA_VC_VERSION
   ],[
@@ -244,12 +254,10 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
 
   PANDORA_HAVE_GCC_ATOMICS
 
-  save_CFLAGS="${CFLAGS}"
-  CFLAGS="${CFLAGS} -Werror"
-  PANDORA_CHECK_VISIBILITY
-  CFLAGS="${save_CFLAGS}"
   m4_if(PCT_USE_VISIBILITY,[yes],[
     PANDORA_ENABLE_VISIBILITY
+    ],[
+    PANDORA_CHECK_VISIBILITY
   ])
 
   PANDORA_HEADER_ASSERT
@@ -347,6 +355,7 @@ EOF_CONFIG_TOP
 #endif
 
 #if !defined(HAVE_ULONG) && !defined(__USE_MISC)
+# define HAVE_ULONG 1
 typedef unsigned long int ulong;
 #endif
 
