@@ -9,7 +9,7 @@
 
 2010-08-03	The InnoDB Team
 	* include/dict0dict.h, include/dict0dict.ic, row/row0mysql.c:
-	Fix bug #54678, InnoDB, TRUNCATE, ALTER, I_S SELECT, crash or deadlock
+	Fix Bug#54678 InnoDB, TRUNCATE, ALTER, I_S SELECT, crash or deadlock
 
 2010-08-03	The InnoDB Team
 
@@ -86,7 +86,7 @@
 
 	* dict/dict0load.c, fil/fil0fil.c:
 	Fix Bug#54658: InnoDB: Warning: allocated tablespace %lu,
-	old maximum was 0 (introduced in Bug #53578 fix)
+	old maximum was 0 (introduced in Bug#53578 fix)
 
 2010-06-16	The InnoDB Team
 
