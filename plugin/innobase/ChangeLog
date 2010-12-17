@@ -48,8 +48,8 @@
 
 2010-06-29	The InnoDB Team
 
-	* btr/btr0cur.c, include/btr0cur.h,
-	include/row0mysql.h, row/row0merge.c, row/row0sel.c:
+	* btr/btr0cur.c, include/btr0cur.h, include/row0mysql.h,
+	row/row0merge.c, row/row0sel.c:
 	Fix Bug#54358 READ UNCOMMITTED access failure of off-page DYNAMIC
 	or COMPRESSED columns
 
@@ -454,6 +454,12 @@
 	transactions will cause assert.
 
 2009-12-02	The InnoDB Team
+
+	* handler/ha_innodb.cc, innodb_bug56143.result, innodb_bug56143.test:
+	Fix Bug#56143 too many foreign keys causes output of show create
+	table to become invalid
+
+2010-10-14	The InnoDB Team
 
 	* srv/srv0start.c:
 	Display the zlib version number at startup.
