@@ -742,7 +742,7 @@ public:
 
 protected:
 
-  void pack_num(int64_t arg, unsigned char *destination= NULL)
+  void pack_num(uint64_t arg, unsigned char *destination= NULL)
   {
     if (not destination)
       destination= ptr;
@@ -757,7 +757,7 @@ protected:
       int64_tstore(destination, arg);
   }
 
-  int64_t unpack_num(int64_t &destination, const unsigned char *arg= NULL) const
+  uint64_t unpack_num(uint64_t &destination, const unsigned char *arg= NULL) const
   {
     if (not arg)
       arg= ptr;

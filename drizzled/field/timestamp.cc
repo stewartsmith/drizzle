@@ -85,13 +85,13 @@ Field_timestamp::Field_timestamp(unsigned char *ptr_arg,
                                  enum utype unireg_check_arg,
                                  const char *field_name_arg,
                                  TableShare *share,
-                                 const CHARSET_INFO * const cs)
-  :Field_str(ptr_arg,
-             DateTime::MAX_STRING_LENGTH - 1 /* no \0 */,
-             null_ptr_arg,
-             null_bit_arg,
-             field_name_arg,
-             cs)
+                                 const CHARSET_INFO * const cs) :
+  Field_str(ptr_arg,
+            DateTime::MAX_STRING_LENGTH - 1 /* no \0 */,
+            null_ptr_arg,
+            null_bit_arg,
+            field_name_arg,
+            cs)
 {
   /* For 4.0 MYD and 4.0 InnoDB compatibility */
   flags|= UNSIGNED_FLAG;
@@ -108,13 +108,13 @@ Field_timestamp::Field_timestamp(unsigned char *ptr_arg,
 
 Field_timestamp::Field_timestamp(bool maybe_null_arg,
                                  const char *field_name_arg,
-                                 const CHARSET_INFO * const cs)
-  :Field_str((unsigned char*) NULL,
-             DateTime::MAX_STRING_LENGTH - 1 /* no \0 */,
-             maybe_null_arg ? (unsigned char*) "": 0,
-             0,
-             field_name_arg,
-             cs)
+                                 const CHARSET_INFO * const cs) :
+  Field_str((unsigned char*) NULL,
+            DateTime::MAX_STRING_LENGTH - 1 /* no \0 */,
+            maybe_null_arg ? (unsigned char*) "": 0,
+            0,
+            field_name_arg,
+            cs)
 {
   /* For 4.0 MYD and 4.0 InnoDB compatibility */
   flags|= UNSIGNED_FLAG;
@@ -170,10 +170,10 @@ int Field_timestamp::store(const char *from,
     return 1;
   }
 
-  time_t tmp;
-  temporal.to_time_t(&tmp);
+  uint64_t tmp;
+  temporal.to_time_t((time_t*)&tmp);
 
-  store_timestamp(tmp);
+  pack_num(tmp);
   return 0;
 }
 
@@ -214,10 +214,11 @@ int Field_timestamp::store(int64_t from, bool)
     return 2;
   }
 
-  time_t tmp;
-  temporal.to_time_t(&tmp);
+  uint64_t tmp;
+  temporal.to_time_t((time_t*)&tmp);
 
-  store_timestamp(tmp);
+  pack_num(tmp);
+
   return 0;
 }
 
@@ -232,12 +233,7 @@ int64_t Field_timestamp::val_int(void)
 
   ASSERT_COLUMN_MARKED_FOR_READ;
 
-#ifdef WORDS_BIGENDIAN
-  if (getTable() && getTable()->getShare()->db_low_byte_first)
-    temp= uint8korr(ptr);
-  else
-#endif
-    int64_tget(temp, ptr);
+  unpack_num(temp);
 
   Timestamp temporal;
   (void) temporal.from_time_t((time_t) temp);
@@ -250,7 +246,7 @@ int64_t Field_timestamp::val_int(void)
 
 String *Field_timestamp::val_str(String *val_buffer, String *)
 {
-  int64_t temp= 0;
+  uint64_t temp= 0;
   char *to;
   int to_len= field_length + 1;
 
@@ -276,12 +272,7 @@ bool Field_timestamp::get_date(DRIZZLE_TIME *ltime, uint32_t)
 {
   uint64_t temp;
 
-#ifdef WORDS_BIGENDIAN
-  if (getTable() && getTable()->getShare()->db_low_byte_first)
-    temp= uint8korr(ptr);
-  else
-#endif
-    int64_tget(temp, ptr);
+  unpack_num(temp);
   
   memset(ltime, 0, sizeof(*ltime));
 
@@ -308,12 +299,12 @@ bool Field_timestamp::get_time(DRIZZLE_TIME *ltime)
 
 int Field_timestamp::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
-  int64_t a,b;
+  uint64_t a,b;
 
   unpack_num(a, a_ptr);
   unpack_num(b, b_ptr);
 
-  return ((uint64_t) a < (uint64_t) b) ? -1 : ((uint64_t) a > (uint64_t) b) ? 1 : 0;
+  return (a < b) ? -1 : (a > b) ? 1 : 0;
 }
 
 
@@ -355,16 +346,20 @@ void Field_timestamp::set_time()
   Session *session= getTable() ? getTable()->in_use : current_session;
   time_t tmp= session->query_start();
   set_notnull();
-  store_timestamp(tmp);
+  pack_num(tmp);
 }
 
 void Field_timestamp::set_default()
 {
   if (getTable()->timestamp_field == this &&
       unireg_check != TIMESTAMP_UN_FIELD)
+  {
     set_time();
+  }
   else
+  {
     Field::set_default();
+  }
 }
 
 long Field_timestamp::get_timestamp(bool *null_value)
@@ -372,18 +367,13 @@ long Field_timestamp::get_timestamp(bool *null_value)
   if ((*null_value= is_null()))
     return 0;
 
-  int64_t tmp;
+  uint64_t tmp;
   return unpack_num(tmp);
-}
-
-void Field_timestamp::store_timestamp(int64_t timestamp)
-{
-  pack_num(timestamp);
 }
 
 size_t Field_timestamp::max_string_length()
 {
-  return sizeof(time_t);
+  return sizeof(uint64_t);
 }
 
 } /* namespace drizzled */
