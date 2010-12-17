@@ -2200,7 +2200,7 @@ static XTIndexPtr my_create_index(XTThreadPtr self, STRUCT_TABLE *table_arg, u_i
 			}
 		}
 
-		seg->col_idx = field->field_index;
+		seg->col_idx = field->position();
 		seg->is_recs_in_range = 1;
 		seg->is_selectivity = 1;
 		seg->type = (int) type;
@@ -2314,9 +2314,9 @@ static XTIndexPtr my_create_index(XTThreadPtr self, STRUCT_TABLE *table_arg, u_i
 		/* NOTE: do not set if the field is only partially in the index!!! */
 		if (!partial_field)
 #ifdef DRIZZLED
-			MX_BIT_FAST_TEST_AND_SET(&mi_col_map, field->field_index);
+			MX_BIT_FAST_TEST_AND_SET(&mi_col_map, field->position());
 #else
-			MX_BIT_FAST_TEST_AND_SET(&ind->mi_col_map, field->field_index);
+			MX_BIT_FAST_TEST_AND_SET(&ind->mi_col_map, field->position());
 #endif
 	}
 
@@ -2440,8 +2440,8 @@ xtPublic void myxt_setup_dictionary(XTThreadPtr self, XTDictionaryPtr dic)
 		for (key_part = index->key_part; key_part != key_part_end; key_part++) {
 			curr_field = key_part->field;
 
-			if ((u_int) curr_field->field_index+1 > dic->dic_ind_cols_req)
-				dic->dic_ind_cols_req = curr_field->field_index+1;
+			if ((u_int) curr_field->position()+1 > dic->dic_ind_cols_req)
+				dic->dic_ind_cols_req = curr_field->position()+1;
 		}
 	}
 
@@ -2478,8 +2478,8 @@ xtPublic void myxt_setup_dictionary(XTThreadPtr self, XTDictionaryPtr dic)
 				else
 					max_ave_row_size = 200;
 				large_blob_field_count++;
-				if ((u_int) curr_field->field_index+1 > dic->dic_blob_cols_req)
-					dic->dic_blob_cols_req = curr_field->field_index+1;
+				if ((u_int) curr_field->position()+1 > dic->dic_blob_cols_req)
+					dic->dic_blob_cols_req = curr_field->position()+1;
 				dic->dic_blob_count++;
 				xt_realloc(self, (void **) &dic->dic_blob_cols, sizeof(Field *) * dic->dic_blob_count);
 				dic->dic_blob_cols[dic->dic_blob_count-1] = curr_field;

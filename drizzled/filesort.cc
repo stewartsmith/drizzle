@@ -1029,7 +1029,7 @@ void SortParam::register_used_fields()
     if ((field= sort_field->field))
     {
       if (field->getTable() == table)
-        table->setReadSet(field->field_index);
+        table->setReadSet(field->position());
     }
     else
     {						// Item
@@ -1043,7 +1043,7 @@ void SortParam::register_used_fields()
     sort_addon_field *addonf= addon_field;
     Field *field;
     for ( ; (field= addonf->field) ; addonf++)
-      table->setReadSet(field->field_index);
+      table->setReadSet(field->position());
   }
   else
   {
