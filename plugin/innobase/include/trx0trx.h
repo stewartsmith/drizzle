@@ -500,9 +500,6 @@ struct trx_struct{
 					in that case we must flush the log
 					in trx_commit_complete_for_mysql() */
 	ulint		duplicates;	/*!< TRX_DUP_IGNORE | TRX_DUP_REPLACE */
-	ulint		active_trans;	/*!< 1 - if a transaction in MySQL
- 					is active. 2 - if prepare_commit_mutex
- 					was taken */
 	unsigned	has_search_latch;
 					/* TRUE if this trx has latched the
 					search system latch in S-mode */
