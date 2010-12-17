@@ -1231,7 +1231,6 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     }
 
 
-    db_low_byte_first= true; //Cursor->low_byte_first();
     blob_ptr_size= portable_sizeof_char_ptr;
 
     uint32_t field_length= 0; //Assignment is for compiler complaint.
@@ -1618,7 +1617,6 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     }
   }
 
-  db_low_byte_first= true; // @todo Question this.
   all_set.clear();
   all_set.resize(fields);
   all_set.set();
