@@ -13,4 +13,4 @@ create table t1 (a int);
 start transaction;
 connection con2;
 sleep 0.1;
-select * from data_dictionary.INNODB_TRX;
+select TRX_STATE,TRX_QUERY from data_dictionary.INNODB_TRX;
