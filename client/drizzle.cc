@@ -491,7 +491,7 @@ static Commands commands[] = {
   Commands( "tee",    'T', com_tee,    1,
     N_("Set outfile [to_outfile]. Append everything into given outfile.") ),
   Commands( "use",    'u', com_use,    1,
-    N_("Use another database. Takes database name as argument.") ),
+    N_("Use another schema. Takes schema name as argument.") ),
   Commands( "shutdown",    'u', com_shutdown,    1,
     N_("Shutdown the instance you are connected too.") ),
   Commands( "warnings", 'W', com_warnings,  0,
@@ -1673,7 +1673,7 @@ try
            "This is free software,\n"
            "and you are welcome to modify and redistribute it "
            "under the GPL license\n"));
-    printf(_("Usage: drizzle [OPTIONS] [database]\n"));
+    printf(_("Usage: drizzle [OPTIONS] [schema]\n"));
     cout << long_options;
     exit(0);
   }
@@ -3046,7 +3046,7 @@ print_field_types(drizzle_result_st *result)
   {
     tee_fprintf(PAGER, _("Field %3u:  `%s`\n"
                 "Catalog:    `%s`\n"
-                "Database:   `%s`\n"
+                "Schema:     `%s`\n"
                 "Table:      `%s`\n"
                 "Org_table:  `%s`\n"
                 "Type:       UTF-8\n"
@@ -3692,7 +3692,7 @@ com_connect(string *buffer, const char *line)
   {
     sprintf(buff, _("Connection id:    %u"), drizzle_con_thread_id(&con));
     put_info(buff,INFO_INFO,0,0);
-    sprintf(buff, _("Current database: %.128s\n"),
+    sprintf(buff, _("Current schema: %.128s\n"),
             !current_db.empty() ? current_db.c_str() : _("*** NONE ***"));
     put_info(buff,INFO_INFO,0,0);
   }
@@ -3805,7 +3805,7 @@ com_use(string *, const char *line)
   tmp= get_arg(buff, 0);
   if (!tmp || !*tmp)
   {
-    put_info(_("USE must be followed by a database name"), INFO_ERROR, 0, 0);
+    put_info(_("USE must be followed by a schema name"), INFO_ERROR, 0, 0);
     return 0;
   }
   /*
@@ -3873,7 +3873,7 @@ com_use(string *, const char *line)
       build_completion_hash(opt_rehash, 1);
   }
 
-  put_info(_("Database changed"),INFO_INFO, 0, 0);
+  put_info(_("Schema changed"),INFO_INFO, 0, 0);
   return 0;
 }
 
@@ -4083,7 +4083,7 @@ com_status(string *, const char *)
       drizzle_row_t cur=drizzle_row_next(&result);
       if (cur)
       {
-        tee_fprintf(stdout, _("Current database:\t%s\n"), cur[0] ? cur[0] : "");
+        tee_fprintf(stdout, _("Current schema:\t%s\n"), cur[0] ? cur[0] : "");
         tee_fprintf(stdout, _("Current user:\t\t%s\n"), cur[1]);
       }
       drizzle_result_free(&result);
@@ -4102,7 +4102,7 @@ com_status(string *, const char *)
   if (skip_updates)
   {
     vidattr(A_BOLD);
-    tee_fprintf(stdout, _("\nAll updates ignored to this database\n"));
+    tee_fprintf(stdout, _("\nAll updates ignored to this schema\n"));
     vidattr(A_NORMAL);
   }
   tee_fprintf(stdout, _("Current pager:\t\t%s\n"), pager.c_str());
