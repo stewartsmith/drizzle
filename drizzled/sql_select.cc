@@ -2490,10 +2490,10 @@ static void propagate_cond_constants(Session *session,
       for (vector<COND_CMP>::iterator iter= save.begin(); iter != save.end(); ++iter)
       {
         Item **args= iter->cmp_func->arguments();
-        if (!args[0]->const_item())
+        if (not args[0]->const_item())
         {
-          change_cond_ref_to_const( session, save, iter->and_level,
-                                    iter->and_level, args[0], args[1] );
+          change_cond_ref_to_const(session, save_list, iter->and_level,
+                                   iter->and_level, args[0], args[1] );
         }
       }
     }
