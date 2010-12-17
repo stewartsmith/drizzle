@@ -23,6 +23,9 @@ synchronization primitives.
 
 Created 9/6/1995 Heikki Tuuri
 *******************************************************/
+#include "univ.i"
+
+#include <errno.h>
 
 #include "os0sync.h"
 #ifdef UNIV_NONINL
