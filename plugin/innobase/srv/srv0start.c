@@ -499,8 +499,6 @@ io_handler_thread(
 		mutex_exit(&ios_mutex);
 	}
 
-	thr_local_free(os_thread_get_curr_id());
-
 	/* We count the number of threads in os_thread_exit(). A created
 	thread should always use that to exit and not use return() to exit.
 	The thread actually never comes here because it is exited in an
