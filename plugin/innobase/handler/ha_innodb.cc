@@ -1307,7 +1307,11 @@ innobase_get_stmt(
        void*   session,        /*!< in: MySQL thread handle */
        size_t* length)         /*!< out: length of the SQL statement */
 {
-  return static_cast<Session*>(session)->getQueryStringCopy(*length);
+  Session* sess= static_cast<Session*>(session);
+  if (sess->getQueryString() != NULL)
+    return sess->getQueryStringCopy(*length);
+  else
+    return NULL;
 }
 
 #if defined (__WIN__) && defined (MYSQL_DYNAMIC_PLUGIN)

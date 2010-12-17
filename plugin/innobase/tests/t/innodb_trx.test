@@ -3,3 +3,14 @@ use data_dictionary;
 select * from INNODB_TRX;
 
 show create table INNODB_TRX;
+
+# Make sure we don't hit a bad assert() with an empty transaction
+connect (con1,localhost,root,,);
+connect (con2,localhost,root,,);
+connection con1;
+use test;
+create table t1 (a int);
+start transaction;
+connection con2;
+sleep 0.1;
+select * from data_dictionary.INNODB_TRX;
