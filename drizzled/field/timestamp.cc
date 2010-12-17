@@ -250,19 +250,14 @@ int64_t Field_timestamp::val_int(void)
 
 String *Field_timestamp::val_str(String *val_buffer, String *)
 {
-  uint64_t temp;
+  int64_t temp= 0;
   char *to;
   int to_len= field_length + 1;
 
   val_buffer->alloc(to_len);
   to= (char *) val_buffer->ptr();
 
-#ifdef WORDS_BIGENDIAN
-  if (getTable() && getTable()->getShare()->db_low_byte_first)
-    temp= uint8korr(ptr);
-  else
-#endif
-    int64_tget(temp, ptr);
+  unpack_num(temp);
 
   val_buffer->set_charset(&my_charset_bin);	/* Safety */
 
@@ -314,18 +309,10 @@ bool Field_timestamp::get_time(DRIZZLE_TIME *ltime)
 int Field_timestamp::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   int64_t a,b;
-#ifdef WORDS_BIGENDIAN
-  if (getTable() && getTable()->getShare()->db_low_byte_first)
-  {
-    a=sint8korr(a_ptr);
-    b=sint8korr(b_ptr);
-  }
-  else
-#endif
-  {
-    int64_tget(a, a_ptr);
-    int64_tget(b, b_ptr);
-  }
+
+  unpack_num(a, a_ptr);
+  unpack_num(b, b_ptr);
+
   return ((uint64_t) a < (uint64_t) b) ? -1 : ((uint64_t) a > (uint64_t) b) ? 1 : 0;
 }
 
@@ -384,25 +371,14 @@ long Field_timestamp::get_timestamp(bool *null_value)
 {
   if ((*null_value= is_null()))
     return 0;
-#ifdef WORDS_BIGENDIAN
-  if (getTable() && getTable()->getShare()->db_low_byte_first)
-    return sint8korr(ptr);
-#endif
+
   int64_t tmp;
-  int64_tget(tmp, ptr);
-  return tmp;
+  return unpack_num(tmp);
 }
 
 void Field_timestamp::store_timestamp(int64_t timestamp)
 {
-#ifdef WORDS_BIGENDIAN
-  if (getTable() && getTable()->getShare()->db_low_byte_first)
-  {
-    int8store(ptr, timestamp);
-  }
-  else
-#endif
-    int64_tstore(ptr, timestamp);
+  pack_num(timestamp);
 }
 
 size_t Field_timestamp::max_string_length()
