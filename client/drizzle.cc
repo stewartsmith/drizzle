@@ -2527,8 +2527,8 @@ static void build_completion_hash(bool rehash, bool write_info)
   drizzle_return_t ret;
   drizzle_result_st databases,tables,fields;
   drizzle_row_t database_row,table_row;
-  drizzle_column_st *sql_field;
   string tmp_str, tmp_str_lower;
+  std::string query;
 
   if (status.getBatch() || quick || current_db.empty())
     return;      // We don't need completion in batches
@@ -2548,7 +2548,7 @@ static void build_completion_hash(bool rehash, bool write_info)
   /* hash Drizzle functions (to be implemented) */
 
   /* hash all database names */
-  if (drizzle_query_str(&con, &databases, "show databases", &ret) != NULL)
+  if (drizzle_query_str(&con, &databases, "select schema_name from information_schema.schemata", &ret) != NULL)
   {
     if (ret == DRIZZLE_RETURN_OK)
     {
@@ -2568,18 +2568,15 @@ static void build_completion_hash(bool rehash, bool write_info)
     drizzle_result_free(&databases);
   }
 
-  /* hash all table names */
-  if (drizzle_query_str(&con, &tables, "show tables", &ret) != NULL)
+  query= "select table_name, column_name from information_schema.columns where table_schema='";
+  query.append(current_db);
+  query.append("' order by table_name");
+  
+  if (drizzle_query(&con, &fields, query.c_str(), query.length(),
+                    &ret) != NULL)
   {
-    if (ret != DRIZZLE_RETURN_OK)
-    {
-      drizzle_result_free(&tables);
-      return;
-    }
-
-    if (drizzle_result_buffer(&tables) != DRIZZLE_RETURN_OK)
-      put_info(drizzle_error(&drizzle),INFO_INFO,0,0);
-    else
+    if (ret == DRIZZLE_RETURN_OK &&
+        drizzle_result_buffer(&fields) == DRIZZLE_RETURN_OK)
     {
       if (drizzle_result_row_count(&tables) > 0 && !opt_silent && write_info)
       {
@@ -2589,57 +2586,30 @@ static void build_completion_hash(bool rehash, bool write_info)
                       "You can turn off this feature to get a quicker "
                       "startup with -A\n\n"));
       }
-      while ((table_row=drizzle_row_next(&tables)))
+
+      std::string table_name;
+      while ((table_row=drizzle_row_next(&fields)))
       {
+        if (table_name.compare(table_row[0]) != 0)
+        {
+          tmp_str= table_row[0];
+          tmp_str_lower= lower_string(tmp_str);
+          completion_map[tmp_str_lower]= tmp_str;
+          table_name= table_row[0];
+        }
         tmp_str= table_row[0];
+        tmp_str.append(".");
+        tmp_str.append(table_row[1]);
+        tmp_str_lower= lower_string(tmp_str);
+        completion_map[tmp_str_lower]= tmp_str;
+
+        tmp_str= table_row[1];
         tmp_str_lower= lower_string(tmp_str);
         completion_map[tmp_str_lower]= tmp_str;
       }
     }
   }
-  else
-    return;
-
-  /* hash all field names, both with the table prefix and without it */
-  if (drizzle_result_row_count(&tables) == 0)
-  {
-    drizzle_result_free(&tables);
-    return;
-  }
-
-  drizzle_row_seek(&tables, 0);
-
-  while ((table_row=drizzle_row_next(&tables)))
-  {
-    string query;
-
-    query.append("show fields in `");
-    query.append(table_row[0]);
-    query.append("`");
-    
-    if (drizzle_query(&con, &fields, query.c_str(), query.length(),
-                      &ret) != NULL)
-    {
-      if (ret == DRIZZLE_RETURN_OK &&
-          drizzle_result_buffer(&fields) == DRIZZLE_RETURN_OK)
-      {
-        while ((sql_field=drizzle_column_next(&fields)))
-        {
-          tmp_str=table_row[0];
-          tmp_str.append(".");
-          tmp_str.append(drizzle_column_name(sql_field));
-          tmp_str_lower= lower_string(tmp_str);
-          completion_map[tmp_str_lower]= tmp_str;
-
-          tmp_str=drizzle_column_name(sql_field);
-          tmp_str_lower= lower_string(tmp_str);
-          completion_map[tmp_str_lower]= tmp_str;
-        }
-      }
-      drizzle_result_free(&fields);
-    }
-  }
-  drizzle_result_free(&tables);
+  drizzle_result_free(&fields);
   completion_iter= completion_map.begin();
 }
 
