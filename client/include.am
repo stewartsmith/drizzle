@@ -17,6 +17,7 @@ noinst_PROGRAMS+= \
 
 bin_PROGRAMS+= \
 	       client/drizzle \
+               client/drizzleadmin \
 	       client/drizzledump \
 	       client/drizzleimport \
 	       client/drizzleslap
@@ -49,6 +50,14 @@ client_drizzle_LDADD=		${READLINE_LIBS} ${BOOST_LIBS} \
 				$(LIBINTL) \
 				$(LIBZ) \
 				client/libgetpassword.la
+
+client_drizzleadmin_CXXFLAGS=   ${AM_CXXFLAGS} -DDRIZZLE_ADMIN_TOOL
+client_drizzleadmin_SOURCES=    client/drizzle.cc client/linebuffer.cc
+client_drizzleadmin_LDADD=      ${READLINE_LIBS} ${BOOST_LIBS} \
+                                libdrizzle/libdrizzle.la \
+                                $(LIBINTL) \
+                                $(LIBZ) \
+                                client/libgetpassword.la
 
 client_drizzledump_SOURCES= \
 			    client/drizzledump.cc \

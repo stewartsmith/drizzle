@@ -43,6 +43,7 @@ BAD_DB = 1049
 WRONG_DB_NAME = 1102
 PACKET_TOO_LARGE = 1153
 PACKETS_OUT_OF_ORDER = 1156
+ADMIN_ACCESS = 1715
 
 # This is a comment range that is used in a number of tests for
 # testing various interesting boundaries.
@@ -99,7 +100,7 @@ class TestHandshake(unittest.TestCase):
 
       self.reconnect()
 
-  def testMaxRangeClientHandshake(self):
+  def testAdminHandshake(self):
     for x in common_range:
       self.verifyServerHandshake()
       self.s.send(Packet(size=x, sequence=1).pack())
@@ -116,7 +117,7 @@ class TestHandshake(unittest.TestCase):
 
       result = ErrorResult(data, version_40=True)
       if result.error_code != BAD_HANDSHAKE:
-        self.assertEqual(result.error_code, PACKET_TOO_LARGE)
+        self.assertEqual(result.error_code, ADMIN_ACCESS)
 
       self.reconnect()
 

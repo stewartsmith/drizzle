@@ -467,6 +467,8 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_UNKNOWN_ENGINE_OPTION, N_("Unknown table engine option key/pair %s = %s."));
   ADD_ERROR_MESSAGE(ER_UNKNOWN_SCHEMA_OPTION, N_("Unknown schema engine option key/pair %s = %s."));
 
+  ADD_ERROR_MESSAGE(ER_ADMIN_ACCESS, N_("Admin access not allowed from this username/IP address."));
+
   // User lock/barrier error messages
   ADD_ERROR_MESSAGE(ER_USER_LOCKS_CANT_WAIT_ON_OWN_BARRIER, N_("wait() can not be called on session owning user defined barrier."));
   ADD_ERROR_MESSAGE(ER_USER_LOCKS_UNKNOWN_BARRIER, N_("Unknown user defined barrier requested."));

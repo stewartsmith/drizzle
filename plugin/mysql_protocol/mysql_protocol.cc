@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
+#include "drizzled/util/tokenize.h"
 #include "errmsg.h"
 #include "mysql_protocol.h"
 #include "mysql_password.h"
@@ -42,6 +43,7 @@ using namespace drizzled;
 namespace drizzle_plugin
 {
 
+std::vector<std::string> ClientMySQLProtocol::mysql_admin_ip_addresses;
 static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;
 
 static port_constraint port;
@@ -83,6 +85,7 @@ plugin::Client *ListenMySQLProtocol::getClient(int fd)
 }
 
 ClientMySQLProtocol::ClientMySQLProtocol(int fd, bool using_mysql41_protocol, ProtocolCounters *set_counters):
+  is_admin_connection(false),
   _using_mysql41_protocol(using_mysql41_protocol),
   counters(set_counters)
 {
@@ -142,16 +145,26 @@ void ClientMySQLProtocol::close(void)
   { 
     drizzleclient_net_close(&net);
     drizzleclient_net_end(&net);
-    counters->connected.decrement();
+    if (is_admin_connection)
+      counters->adminConnected.decrement();
+    else
+      counters->connected.decrement();
   }
 }
 
 bool ClientMySQLProtocol::authenticate()
 {
   bool connection_is_valid;
-
-  counters->connectionCount.increment();
-  counters->connected.increment();
+  if (is_admin_connection)
+  {
+    counters->adminConnectionCount.increment();
+    counters->adminConnected.increment();
+  }
+  else
+  {
+    counters->connectionCount.increment();
+    counters->connected.increment();
+  }
 
   /* Use "connect_timeout" value during connection phase */
   drizzleclient_net_set_read_timeout(&net, connect_timeout.get());
@@ -160,13 +173,18 @@ bool ClientMySQLProtocol::authenticate()
   connection_is_valid= checkConnection();
 
   if (connection_is_valid)
-    if (counters->connected > counters->max_connections)
+  {
+    if (not is_admin_connection and (counters->connected > counters->max_connections))
     {
       std::string errmsg(ER(ER_CON_COUNT_ERROR));
       sendError(ER_CON_COUNT_ERROR, errmsg.c_str());
+      counters->failedConnections.increment();
     }
     else
+    {
       sendOK();
+    }
+  }
   else
   {
     sendError(session->main_da.sql_errno(), session->main_da.message());
@@ -796,11 +814,32 @@ bool ClientMySQLProtocol::checkConnection(void)
     user_len-= 2;
   }
 
+  if (client_capabilities & CLIENT_ADMIN)
+  {
+    if ((strncmp(user, "root", 4) == 0) and isAdminAllowed())
+    {
+      is_admin_connection= true;
+    }
+    else
+    {
+      my_error(ER_ADMIN_ACCESS, MYF(0));
+      return false;
+    }
+  }
+
   session->getSecurityContext().setUser(user);
 
   return session->checkUser(string(passwd, passwd_len),
                             string(l_db ? l_db : ""));
 
+}
+
+bool ClientMySQLProtocol::isAdminAllowed(void)
+{
+  if (std::find(mysql_admin_ip_addresses.begin(), mysql_admin_ip_addresses.end(), session->getSecurityContext().getIp()) != mysql_admin_ip_addresses.end())
+    return true;
+  else
+    return false;
 }
 
 bool ClientMySQLProtocol::netStoreData(const unsigned char *from, size_t length)
@@ -905,6 +944,16 @@ void ClientMySQLProtocol::makeScramble(char *scramble)
   }
 }
 
+void ClientMySQLProtocol::mysql_compose_ip_addresses(vector<string> options)
+{
+  for (vector<string>::iterator it= options.begin();
+       it != options.end();
+       ++it)
+  {
+    tokenize(*it, mysql_admin_ip_addresses, ",", true);
+  }
+}
+
 static ListenMySQLProtocol *listen_obj= NULL;
 plugin::Create_function<MySQLPassword> *mysql_password= NULL;
 
@@ -965,6 +1014,9 @@ static void init_options(drizzled::module::option_context &context)
   context("max-connections",
           po::value<uint32_t>(&ListenMySQLProtocol::mysql_counters->max_connections)->default_value(1000),
           N_("Maximum simultaneous connections."));
+  context("admin-ip-addresses",
+          po::value<vector<string> >()->composing()->notifier(&ClientMySQLProtocol::mysql_compose_ip_addresses),
+          N_("A restrictive IP address list for incoming admin connections."));
 }
 
 static int mysql_protocol_connection_count_func(drizzle_show_var *var, char *buff)

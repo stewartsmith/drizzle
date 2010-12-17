@@ -90,6 +90,8 @@ struct st_drizzleclient_options {
 #define CLIENT_MULTI_STATEMENTS (1UL << 16) /* Enable/disable multi-stmt support */
 #define CLIENT_MULTI_RESULTS    (1UL << 17) /* Enable/disable multi-results */
 
+#define CLIENT_ADMIN            (1UL << 25) /* Admin client connection */
+
 #define CLIENT_SSL_VERIFY_SERVER_CERT (1UL << 30)
 #define CLIENT_REMEMBER_OPTIONS (1UL << 31)
 
@@ -108,6 +110,7 @@ struct st_drizzleclient_options {
                            CLIENT_SECURE_CONNECTION | \
                            CLIENT_MULTI_STATEMENTS | \
                            CLIENT_MULTI_RESULTS | \
+                           CLIENT_ADMIN | \
                            CLIENT_SSL_VERIFY_SERVER_CERT | \
                            CLIENT_REMEMBER_OPTIONS)
 

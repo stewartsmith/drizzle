@@ -31,6 +31,7 @@
 #include <iostream>
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
+#include "drizzled/util/tokenize.h"
 #include "drizzle_protocol.h"
 #include "plugin/drizzle_protocol/status_table.h"
 
@@ -43,7 +44,7 @@ namespace drizzle_plugin
 namespace drizzle_protocol
 {
 
-
+std::vector<std::string> ClientDrizzleProtocol::drizzle_admin_ip_addresses;
 static port_constraint port;
 static timeout_constraint connect_timeout;
 static timeout_constraint read_timeout;
@@ -62,6 +63,34 @@ ListenDrizzleProtocol::~ListenDrizzleProtocol()
 in_port_t ListenDrizzleProtocol::getPort(void) const
 {
   return port;
+}
+
+void ClientDrizzleProtocol::drizzle_compose_ip_addresses(vector<string> options)
+{
+  for (vector<string>::iterator it= options.begin();
+       it != options.end();
+       ++it)
+  {
+    tokenize(*it, drizzle_admin_ip_addresses, ",", true);
+  }
+}
+
+bool ClientDrizzleProtocol::isAdminAllowed(void)
+{
+  if (std::find(drizzle_admin_ip_addresses.begin(), drizzle_admin_ip_addresses.end(), session->getSecurityContext().getIp()) != drizzle_admin_ip_addresses.end())
+    return true;
+  else
+    return false;
+}
+
+plugin::Client *ListenDrizzleProtocol::getClient(int fd)
+{
+  int new_fd;
+  new_fd= acceptTcp(fd);
+  if (new_fd == -1)
+    return NULL;
+
+  return new ClientDrizzleProtocol(new_fd, getCounters());
 }
 
 static int init(drizzled::module::Context &context)
@@ -111,6 +140,9 @@ static void init_options(drizzled::module::option_context &context)
   context("max-connections",
           po::value<uint32_t>(&ListenDrizzleProtocol::drizzle_counters->max_connections)->default_value(1000),
           N_("Maximum simultaneous connections."));
+  context("admin-ip-addresses",
+          po::value<vector<string> >()->composing()->notifier(&ClientDrizzleProtocol::drizzle_compose_ip_addresses),
+          N_("A restrictive IP address list for incoming admin connections."));
 }
 
 } /* namespace drizzle_protocol */
