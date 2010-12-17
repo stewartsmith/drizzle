@@ -48,6 +48,7 @@ static const std::string DECIMAL("DECIMAL");
 static const std::string DATE("DATE");
 static const std::string TIMESTAMP("TIMESTAMP");
 static const std::string DATETIME("DATETIME");
+static const std::string UUID("UUID");
 
 static const std::string UNDEFINED("UNDEFINED");
 static const std::string RESTRICT("RESTRICT");
@@ -142,6 +143,8 @@ const std::string &type(drizzled::message::Table::Field::FieldType type)
     return TIMESTAMP;
   case message::Table::Field::DATETIME:
     return DATETIME;
+  case message::Table::Field::UUID:
+    return UUID;
   }
 
   assert(0);

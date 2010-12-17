@@ -1,4 +1,4 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; i/dent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2010 Brian Aker
@@ -76,6 +76,7 @@
 #include "drizzled/field/timestamp.h"
 #include "drizzled/field/datetime.h"
 #include "drizzled/field/varstring.h"
+#include "drizzled/field/uuid.h"
 
 #include "drizzled/definition/cache.h"
 
@@ -264,6 +265,9 @@ static enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_ty
   case message::Table::Field::BLOB:
     field_type= DRIZZLE_TYPE_BLOB;
     break;
+  case message::Table::Field::UUID:
+    field_type= DRIZZLE_TYPE_UUID;
+    break;
   default:
     assert(0);
     abort(); // Programming error
@@ -306,6 +310,7 @@ static Item *default_value_item(enum_field_types field_type,
   case DRIZZLE_TYPE_DATETIME:
   case DRIZZLE_TYPE_DATE:
   case DRIZZLE_TYPE_ENUM:
+  case DRIZZLE_TYPE_UUID:
     default_item= new Item_string(default_value->c_str(),
                                   default_value->length(),
                                   system_charset_info);
@@ -356,7 +361,7 @@ bool TableShare::fieldInPrimaryKey(Field *in_field) const
       size_t num_parts= index.index_part_size();
       for (size_t y= 0; y < num_parts; ++y)
       {
-        if (index.index_part(y).fieldnr() == in_field->field_index)
+        if (index.index_part(y).fieldnr() == in_field->position())
           return true;
       }
     }
@@ -393,7 +398,6 @@ TableShare::TableShare(const TableIdentifier::Type type_arg) :
   uniques(0),
   null_fields(0),
   blob_fields(0),
-  timestamp_field_offset(0),
   has_variable_width(false),
   db_create_options(0),
   db_options_in_use(0),
@@ -459,7 +463,6 @@ TableShare::TableShare(const TableIdentifier &identifier, const TableIdentifier:
   uniques(0),
   null_fields(0),
   blob_fields(0),
-  timestamp_field_offset(0),
   has_variable_width(false),
   db_create_options(0),
   db_options_in_use(0),
@@ -535,7 +538,6 @@ TableShare::TableShare(const TableIdentifier &identifier) : // Just used during 
   uniques(0),
   null_fields(0),
   blob_fields(0),
-  timestamp_field_offset(0),
   has_variable_width(false),
   db_create_options(0),
   db_options_in_use(0),
@@ -614,7 +616,6 @@ TableShare::TableShare(const TableIdentifier::Type type_arg,
   uniques(0),
   null_fields(0),
   blob_fields(0),
-  timestamp_field_offset(0),
   has_variable_width(false),
   db_create_options(0),
   db_options_in_use(0),
@@ -1315,25 +1316,46 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     case DRIZZLE_TYPE_LONGLONG:
       field_length= MAX_BIGINT_WIDTH;
       break;
+    case DRIZZLE_TYPE_UUID:
+      field_length= field::Uuid::max_string_length();
+      break;
     case DRIZZLE_TYPE_NULL:
       abort(); // Programming error
     }
 
+    assert(enum_field_types_size == 12);
+
     Field* f= make_field(record + field_offsets[fieldnr] + data_offset,
-                                field_length,
-                                pfield.constraints().is_nullable(),
-                                null_pos,
-                                null_bit_pos,
-                                decimals,
-                                field_type,
-                                charset,
-                                MTYP_TYPENR(unireg_type),
-                                ((field_type == DRIZZLE_TYPE_ENUM) ?
-                                 &intervals[interval_nr++]
-                                 : (TYPELIB*) 0),
-                                getTableProto()->field(fieldnr).name().c_str());
+                         field_length,
+                         pfield.constraints().is_nullable(),
+                         null_pos,
+                         null_bit_pos,
+                         decimals,
+                         field_type,
+                         charset,
+                         MTYP_TYPENR(unireg_type),
+                         ((field_type == DRIZZLE_TYPE_ENUM) ?  &intervals[interval_nr++] : (TYPELIB*) 0),
+                         getTableProto()->field(fieldnr).name().c_str());
 
     field[fieldnr]= f;
+
+    // Insert post make_field code here.
+    switch (field_type)
+    {
+    case DRIZZLE_TYPE_BLOB:
+    case DRIZZLE_TYPE_VARCHAR:
+    case DRIZZLE_TYPE_DOUBLE:
+    case DRIZZLE_TYPE_DECIMAL:
+    case DRIZZLE_TYPE_TIMESTAMP:
+    case DRIZZLE_TYPE_DATETIME:
+    case DRIZZLE_TYPE_DATE:
+    case DRIZZLE_TYPE_ENUM:
+    case DRIZZLE_TYPE_LONG:
+    case DRIZZLE_TYPE_LONGLONG:
+    case DRIZZLE_TYPE_NULL:
+    case DRIZZLE_TYPE_UUID:
+      break;
+    }
 
     // This needs to go, we should be setting the "use" on the field so that
     // it does not reference the share/table.
@@ -1364,8 +1386,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
         return local_error;
       }
     }
-    else if (f->real_type() == DRIZZLE_TYPE_ENUM &&
-             (f->flags & NOT_NULL_FLAG))
+    else if (f->real_type() == DRIZZLE_TYPE_ENUM && (f->flags & NOT_NULL_FLAG))
     {
       f->set_notnull();
       f->store((int64_t) 1, true);
@@ -1379,7 +1400,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     f->setTable(NULL);
     f->orig_table= NULL;
 
-    f->field_index= fieldnr;
+    f->setPosition(fieldnr);
     f->comment= comment;
     if (! default_value &&
         ! (f->unireg_check==Field::NEXT_NUMBER) &&
@@ -1392,15 +1413,11 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     if (f->unireg_check == Field::NEXT_NUMBER)
       found_next_number_field= &(field[fieldnr]);
 
-    if (timestamp_field == f)
-      timestamp_field_offset= fieldnr;
-
     if (use_hash) /* supposedly this never fails... but comments lie */
     {
       const char *local_field_name= field[fieldnr]->field_name;
       name_hash.insert(make_pair(local_field_name, &(field[fieldnr])));
     }
-
   }
 
   keyinfo= key_info;
@@ -1425,7 +1442,6 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     We need to set the unused bits to 1. If the number of bits is a multiple
     of 8 there are no unused bits.
   */
-
   if (null_count & 7)
     *(record + null_count / 8)|= ~(((unsigned char) 1 << (null_count & 7)) - 1);
 
@@ -1831,8 +1847,7 @@ int TableShare::open_table_from_share_inner(Session *session,
     outparam.found_next_number_field=
       outparam.getField(positionFields(found_next_number_field));
   if (timestamp_field)
-    outparam.timestamp_field= (Field_timestamp*) outparam.getField(timestamp_field_offset);
-
+    outparam.timestamp_field= (Field_timestamp*) outparam.getField(timestamp_field->position());
 
   /* Fix key->name and key_part->field */
   if (key_parts)
@@ -2024,6 +2039,7 @@ Field *TableShare::make_field(unsigned char *ptr,
   case DRIZZLE_TYPE_DATE:
   case DRIZZLE_TYPE_DATETIME:
   case DRIZZLE_TYPE_TIMESTAMP:
+  case DRIZZLE_TYPE_UUID:
     field_charset= &my_charset_bin;
   default: break;
   }
@@ -2072,6 +2088,12 @@ Field *TableShare::make_field(unsigned char *ptr,
                                    decimals,
                                    false,
                                    false /* is_unsigned */);
+  case DRIZZLE_TYPE_UUID:
+    return new (&mem_root) field::Uuid(ptr,
+                                       field_length,
+                                       null_pos,
+                                       null_bit,
+                                       field_name);
   case DRIZZLE_TYPE_LONG:
     return new (&mem_root) Field_long(ptr,
                                  field_length,
@@ -2116,10 +2138,9 @@ Field *TableShare::make_field(unsigned char *ptr,
                                  field_length,
                                  field_name,
                                  field_charset);
-  default: // Impossible (Wrong version)
-    break;
   }
-  return 0;
+  assert(0);
+  abort();
 }
 
 

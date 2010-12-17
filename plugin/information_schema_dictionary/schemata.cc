@@ -29,10 +29,10 @@ Schemata::Schemata() :
 {
   add_field("CATALOG_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
   add_field("SCHEMA_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
-  add_field("SCHEMA_OWNER");
-  add_field("DEFAULT_CHARACTER_SET_CATALOG");
-  add_field("DEFAULT_CHARACTER_SET_SCHEMA");
-  add_field("DEFAULT_CHARACTER_SET_NAME");
+  add_field("SCHEMA_OWNER", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, true);
+  add_field("DEFAULT_CHARACTER_SET_CATALOG", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, true);
+  add_field("DEFAULT_CHARACTER_SET_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, true);
+  add_field("DEFAULT_CHARACTER_SET_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, true);
 }
 
 Schemata::Generator::Generator(drizzled::Field **arg) :

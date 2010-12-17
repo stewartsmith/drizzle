@@ -32,7 +32,6 @@ client_libgetpassword_la_SOURCES= client/get_password.cc
 
 noinst_HEADERS+= \
 		 client/client_priv.h \
-		 client/errname.h \
 		 client/get_password.h \
 		 client/linebuffer.h \
                  client/conclusions.h \
@@ -75,7 +74,7 @@ client_drizzleslap_SOURCES=	client/drizzleslap.cc
 client_drizzleslap_LDADD=	${CLIENT_LDADD} ${BOOST_LIBS}
 client_drizzleslap_CXXFLAGS=	${AM_CXXFLAGS} ${BOOSTSKIP_WARNINGS}
 
-client_drizzletest_SOURCES=	client/drizzletest.cc client/errname.cc
+client_drizzletest_SOURCES=	client/drizzletest.cc
 client_drizzletest_LDADD=	${CLIENT_LDADD} ${BOOST_LIBS} ${LIBPCRE} 
  
 

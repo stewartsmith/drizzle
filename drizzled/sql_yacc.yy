@@ -763,6 +763,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  USING                         /* SQL-2003-R */
 %token  UTC_DATE_SYM
 %token  UTC_TIMESTAMP_SYM
+%token  UUID_SYM
 %token  VALUES                        /* SQL-2003-R */
 %token  VALUE_SYM                     /* SQL-2003-R */
 %token  VARBINARY
@@ -1691,6 +1692,16 @@ type:
 
             if (statement->current_proto_field)
               statement->current_proto_field->set_type(message::Table::Field::ENUM);
+          }
+          | UUID_SYM
+          {
+            $$=DRIZZLE_TYPE_UUID;
+
+            statement::CreateTable *statement=
+              (statement::CreateTable *)Lex->statement;
+
+            if (statement->current_proto_field)
+              statement->current_proto_field->set_type(message::Table::Field::UUID);
           }
         | SERIAL_SYM
           {
@@ -3319,6 +3330,14 @@ function_call_conflict:
               DRIZZLE_YYABORT;
             }
           }
+        | UUID_SYM '(' ')'
+          {
+            if (! ($$= reserved_keyword_function(YYSession, "uuid", NULL)))
+            {
+              DRIZZLE_YYABORT;
+            }
+            Lex->setCacheable(false);
+	  }
         | WAIT_SYM '(' expr ',' expr ')'
           {
             std::string wait_str("wait");

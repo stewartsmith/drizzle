@@ -1919,8 +1919,8 @@ static void update_field_dependencies(Session *session, Field *field, Table *tab
       current_bitmap= table->write_set;
     }
 
-    //if (current_bitmap->testAndSet(field->field_index))
-    if (current_bitmap->test(field->field_index))
+    //if (current_bitmap->testAndSet(field->position()))
+    if (current_bitmap->test(field->position()))
     {
       if (session->mark_used_columns == MARK_COLUMNS_WRITE)
         session->dup_field= field;
@@ -2230,9 +2230,9 @@ find_field_in_table_ref(Session *session, TableList *table_list,
       {
         Table *table= field_to_set->getTable();
         if (session->mark_used_columns == MARK_COLUMNS_READ)
-          table->setReadSet(field_to_set->field_index);
+          table->setReadSet(field_to_set->position());
         else
-          table->setWriteSet(field_to_set->field_index);
+          table->setWriteSet(field_to_set->position());
       }
     }
   }
@@ -2904,7 +2904,7 @@ mark_common_columns(Session *session, TableList *table_ref_1, TableList *table_r
       {
         Table *table_1= nj_col_1->table_ref->table;
         /* Mark field_1 used for table cache. */
-        table_1->setReadSet(field_1->field_index);
+        table_1->setReadSet(field_1->position());
         table_1->covering_keys&= field_1->part_of_key;
         table_1->merge_keys|= field_1->part_of_key;
       }
@@ -2912,7 +2912,7 @@ mark_common_columns(Session *session, TableList *table_ref_1, TableList *table_r
       {
         Table *table_2= nj_col_2->table_ref->table;
         /* Mark field_2 used for table cache. */
-        table_2->setReadSet(field_2->field_index);
+        table_2->setReadSet(field_2->position());
         table_2->covering_keys&= field_2->part_of_key;
         table_2->merge_keys|= field_2->part_of_key;
       }
@@ -3658,7 +3658,7 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
       if ((field= field_iterator.field()))
       {
         /* Mark fields as used to allow storage engine to optimze access */
-        field->getTable()->setReadSet(field->field_index);
+        field->getTable()->setReadSet(field->position());
         if (table)
         {
           table->covering_keys&= field->part_of_key;

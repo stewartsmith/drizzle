@@ -93,6 +93,8 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/field/str.h \
 			      drizzled/field/timestamp.h \
 			      drizzled/field/varstring.h \
+			      drizzled/field/uuid.h \
+			      drizzled/field/uuid_st.h \
 			      drizzled/field_iterator.h \
 			      drizzled/file_exchange.h \
 			      drizzled/filesort.h \
@@ -472,7 +474,7 @@ drizzled_drizzled_LDADD= \
 				$(LDADD) \
 				$(LIBUUID) \
 				$(LIBDL_LIBS) \
-				$(LIBPCRE) \
+				$(LTLIBPCRE) \
 				$(LTLIBPROTOBUF) \
 				$(LIBTBB) \
 				$(BOOST_LIBS) \
@@ -517,6 +519,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/field/str.cc \
 				 drizzled/field/timestamp.cc \
 				 drizzled/field/varstring.cc \
+				 drizzled/field/uuid.cc \
 				 drizzled/field_conv.cc \
 				 drizzled/field_iterator.cc \
 				 drizzled/file_exchange.cc \

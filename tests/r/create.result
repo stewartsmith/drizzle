@@ -441,6 +441,22 @@ a	b	c	d	e	f	h
 2	-2	2	1825-12-14	a	2003-01-01 03:02:01	binary data
 drop table t1, t2;
 create table t1 (a int, b int, d int, e bigint, f float(3,2), g double(4,3), h decimal(5,4), j date, k timestamp, l datetime, m enum('a','b'), o char(10));
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` INT DEFAULT NULL,
+  `b` INT DEFAULT NULL,
+  `d` INT DEFAULT NULL,
+  `e` BIGINT DEFAULT NULL,
+  `f` DOUBLE(3,2) DEFAULT NULL,
+  `g` DOUBLE(4,3) DEFAULT NULL,
+  `h` DECIMAL(5,4) DEFAULT NULL,
+  `j` DATE DEFAULT NULL,
+  `k` TIMESTAMP NULL DEFAULT NULL,
+  `l` DATETIME DEFAULT NULL,
+  `m` ENUM('a','b') DEFAULT NULL,
+  `o` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 create table t2 select ifnull(a,a), ifnull(b,b), ifnull(d,d), ifnull(e,e), ifnull(f,f), ifnull(g,g), ifnull(h,h), ifnull(j,j), ifnull(k,k), ifnull(l,l), ifnull(m,m), ifnull(o,o) from t1;
 show create table t2;
 Table	Create Table
@@ -1452,7 +1468,7 @@ t1	CREATE TABLE `t1` (
   `ID` BIGINT NOT NULL,
   `USER` VARCHAR(16) NOT NULL,
   `HOST` VARCHAR(1025) NOT NULL,
-  `DB` VARCHAR(256) NOT NULL,
+  `DB` VARCHAR(256) DEFAULT NULL,
   `COMMAND` VARCHAR(16) NOT NULL,
   `TIME` BIGINT NOT NULL,
   `STATE` VARCHAR(256) DEFAULT NULL,
@@ -1469,7 +1485,7 @@ t1	CREATE TEMPORARY TABLE `t1` (
   `ID` BIGINT NOT NULL,
   `USER` VARCHAR(16) NOT NULL,
   `HOST` VARCHAR(1025) NOT NULL,
-  `DB` VARCHAR(256) NOT NULL,
+  `DB` VARCHAR(256) DEFAULT NULL,
   `COMMAND` VARCHAR(16) NOT NULL,
   `TIME` BIGINT NOT NULL,
   `STATE` VARCHAR(256) DEFAULT NULL,

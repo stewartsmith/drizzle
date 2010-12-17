@@ -41,7 +41,7 @@ ProcesslistTool::ProcesslistTool() :
   add_field("ID", plugin::TableFunction::NUMBER, 0, false);
   add_field("USER", 16);
   add_field("HOST", NI_MAXHOST);
-  add_field("DB");
+  add_field("DB", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, true);
   add_field("COMMAND", 16);
   add_field("TIME", plugin::TableFunction::NUMBER, 0, false);
   add_field("STATE", plugin::TableFunction::STRING, 256, true);
@@ -106,16 +106,16 @@ bool ProcesslistTool::Generator::populate()
     push(static_cast<uint64_t>(tmp->start_time ?  now - tmp->start_time : 0));
 
     /* STATE */
-    val= (tmp->client->isWriting() ?
-          "Writing to net" :
-          tmp->client->isReading() ?
-          (tmp->command == COM_SLEEP ?
-           NULL : "Reading from net") :
-          tmp->get_proc_info() ? tmp->get_proc_info() :
-          tmp->getThreadVar() &&
-          tmp->getThreadVar()->current_cond ?
-          "Waiting on cond" : NULL);
-    val ? push(val) : push();
+    const char *step= tmp->get_proc_info();
+
+    if (step)
+    {
+      push(step);
+    }
+    else
+    {
+      push();
+    }
 
     /* INFO */
     if (state)

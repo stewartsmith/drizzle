@@ -537,6 +537,10 @@ bool ClientMySQLProtocol::sendFields(List<Item> *list)
         pos[6]= 15;
         break;
 
+      case DRIZZLE_TYPE_UUID:
+        pos[6]= 15;
+        break;
+
       case DRIZZLE_TYPE_DECIMAL:
         pos[6]= (char)246;
         break;
@@ -588,7 +592,7 @@ bool ClientMySQLProtocol::store(Field *from)
   char buff[MAX_FIELD_WIDTH];
   String str(buff,sizeof(buff), &my_charset_bin);
 
-  from->val_str(&str);
+  from->val_str_internal(&str);
 
   return netStoreData((const unsigned char *)str.ptr(), str.length());
 }

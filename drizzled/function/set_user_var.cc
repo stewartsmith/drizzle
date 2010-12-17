@@ -91,7 +91,7 @@ bool Item_func_set_user_var::register_field_in_read_map(unsigned char *arg)
   {
     Table *table= (Table *) arg;
     if (result_field->getTable() == table || !table)
-      result_field->getTable()->setReadSet(result_field->field_index);
+      result_field->getTable()->setReadSet(result_field->position());
   }
   return 0;
 }
@@ -155,8 +155,8 @@ Item_func_set_user_var::check(bool use_result_field)
   }
   case STRING_RESULT:
   {
-    save_result.vstr= use_result_field ? result_field->val_str(&value) :
-                       args[0]->val_str(&value);
+    save_result.vstr= use_result_field ? result_field->val_str_internal(&value) :
+      args[0]->val_str(&value);
     break;
   }
   case DECIMAL_RESULT:
