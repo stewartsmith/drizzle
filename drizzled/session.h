@@ -431,11 +431,10 @@ public:
   {
     QueryString tmp_string(getQueryString());
 
-    assert(tmp_string);
     if (not tmp_string)
     {
       length= 0;
-      return 0;
+      return NULL;
     }
 
     length= tmp_string->length();
