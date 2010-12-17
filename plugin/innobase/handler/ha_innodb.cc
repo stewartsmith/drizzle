@@ -4283,16 +4283,17 @@ include_field:
     n_requested_fields++;
 
     templ->col_no = i;
+    templ->clust_rec_field_no = dict_col_get_clust_pos(col, clust_index);
+    ut_ad(templ->clust_rec_field_no != ULINT_UNDEFINED);
 
     if (index == clust_index) {
-      templ->rec_field_no = dict_col_get_clust_pos(col, index);
+      templ->rec_field_no = templ->clust_rec_field_no;
     } else {
       templ->rec_field_no = dict_index_get_nth_col_pos(
                 index, i);
-    }
-
-    if (templ->rec_field_no == ULINT_UNDEFINED) {
-      prebuilt->need_to_access_clustered = TRUE;
+      if (templ->rec_field_no == ULINT_UNDEFINED) {
+        prebuilt->need_to_access_clustered = TRUE;
+      }
     }
 
     if (field->null_ptr) {
@@ -4342,9 +4343,7 @@ skip_field:
     for (i = 0; i < n_requested_fields; i++) {
       templ = prebuilt->mysql_template + i;
 
-      templ->rec_field_no = dict_col_get_clust_pos(
-        &index->table->cols[templ->col_no],
-        clust_index);
+      templ->rec_field_no = templ->clust_rec_field_no;
     }
   }
 }
