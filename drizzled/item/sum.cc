@@ -33,7 +33,7 @@
 #include <drizzled/item/sum.h>
 #include <drizzled/field/decimal.h>
 #include <drizzled/field/double.h>
-#include <drizzled/field/int64_t.h>
+#include <drizzled/field/int64.h>
 #include <drizzled/field/date.h>
 #include <drizzled/field/datetime.h>
 
@@ -514,7 +514,7 @@ Field *Item_sum::create_tmp_field(bool ,
     field= new Field_double(max_length, maybe_null, name, decimals, true);
     break;
   case INT_RESULT:
-    field= new Field_int64_t(max_length, maybe_null, name, unsigned_flag);
+    field= new field::Int64(max_length, maybe_null, name, unsigned_flag);
     break;
   case STRING_RESULT:
     if (max_length/collation.collation->mbmaxlen <= 255 ||

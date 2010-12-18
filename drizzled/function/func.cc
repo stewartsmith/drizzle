@@ -23,8 +23,8 @@
 #include <drizzled/sql_list.h>
 
 #include <drizzled/function/math/int.h>
-#include <drizzled/field/int64_t.h>
-#include <drizzled/field/long.h>
+#include <drizzled/field/int32.h>
+#include <drizzled/field/int64.h>
 #include <drizzled/field/double.h>
 #include <drizzled/field/decimal.h>
 #include <drizzled/session.h>
@@ -459,9 +459,9 @@ Field *Item_func::tmp_table_field(Table *table)
   switch (result_type()) {
   case INT_RESULT:
     if (max_length > MY_INT32_NUM_DECIMAL_DIGITS)
-      field= new Field_int64_t(max_length, maybe_null, name, unsigned_flag);
+      field= new field::Int64(max_length, maybe_null, name, unsigned_flag);
     else
-      field= new Field_long(max_length, maybe_null, name, unsigned_flag);
+      field= new field::Int32(max_length, maybe_null, name, unsigned_flag);
     break;
   case REAL_RESULT:
     field= new Field_double(max_length, maybe_null, name, decimals);

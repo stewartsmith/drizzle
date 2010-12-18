@@ -38,8 +38,8 @@
 #include <drizzled/field/decimal.h>
 #include <drizzled/field/real.h>
 #include <drizzled/field/double.h>
-#include <drizzled/field/long.h>
-#include <drizzled/field/int64_t.h>
+#include <drizzled/field/int32.h>
+#include <drizzled/field/int64.h>
 #include <drizzled/field/num.h>
 #include <drizzled/field/timestamp.h>
 #include <drizzled/field/datetime.h>

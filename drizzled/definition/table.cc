@@ -70,8 +70,8 @@
 #include "drizzled/field/decimal.h"
 #include "drizzled/field/real.h"
 #include "drizzled/field/double.h"
-#include "drizzled/field/long.h"
-#include "drizzled/field/int64_t.h"
+#include "drizzled/field/int32.h"
+#include "drizzled/field/int64.h"
 #include "drizzled/field/num.h"
 #include "drizzled/field/timestamp.h"
 #include "drizzled/field/datetime.h"
@@ -2093,23 +2093,19 @@ Field *TableShare::make_field(unsigned char *ptr,
                                        null_bit,
                                        field_name);
   case DRIZZLE_TYPE_LONG:
-    return new (&mem_root) Field_long(ptr,
-                                 field_length,
-                                 null_pos,
-                                 null_bit,
-                                 unireg_check,
-                                 field_name,
-                                 false,
-                                 false /* is_unsigned */);
+    return new (&mem_root) field::Int32(ptr,
+                                        field_length,
+                                        null_pos,
+                                        null_bit,
+                                        unireg_check,
+                                        field_name);
   case DRIZZLE_TYPE_LONGLONG:
-    return new (&mem_root) Field_int64_t(ptr,
-                                    field_length,
-                                    null_pos,
-                                    null_bit,
-                                    unireg_check,
-                                    field_name,
-                                    false,
-                                    false /* is_unsigned */);
+    return new (&mem_root) field::Int64(ptr,
+                                        field_length,
+                                        null_pos,
+                                        null_bit,
+                                        unireg_check,
+                                        field_name);
   case DRIZZLE_TYPE_TIMESTAMP:
     return new (&mem_root) Field_timestamp(ptr,
                                       field_length,

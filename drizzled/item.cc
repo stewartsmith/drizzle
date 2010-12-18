@@ -41,8 +41,8 @@
 #include "drizzled/field/decimal.h"
 #include "drizzled/field/real.h"
 #include "drizzled/field/double.h"
-#include "drizzled/field/long.h"
-#include "drizzled/field/int64_t.h"
+#include "drizzled/field/int32.h"
+#include "drizzled/field/int64.h"
 #include "drizzled/field/num.h"
 #include "drizzled/field/timestamp.h"
 #include "drizzled/field/datetime.h"
@@ -1171,16 +1171,14 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool)
                                  unsigned_flag);
     break;
   case DRIZZLE_TYPE_LONG:
-    field= new Field_long((unsigned char*) 0, max_length, null_ptr, 0, Field::NONE,
-			  name, 0, unsigned_flag);
+    field= new field::Int32((unsigned char*) 0, max_length, null_ptr, 0, Field::NONE, name);
     break;
   case DRIZZLE_TYPE_LONGLONG:
-    field= new Field_int64_t((unsigned char*) 0, max_length, null_ptr, 0, Field::NONE,
-			      name, 0, unsigned_flag);
+    field= new field::Int64((unsigned char*) 0, max_length, null_ptr, 0, Field::NONE, name);
     break;
   case DRIZZLE_TYPE_DOUBLE:
     field= new Field_double((unsigned char*) 0, max_length, null_ptr, 0, Field::NONE,
-			    name, decimals, 0, unsigned_flag);
+                            name, decimals, 0, unsigned_flag);
     break;
   case DRIZZLE_TYPE_NULL:
     field= new Field_null((unsigned char*) 0, max_length, name, &my_charset_bin);
@@ -1580,14 +1578,14 @@ static Field *create_tmp_field_from_item(Session *,
       Select an integer type with the minimal fit precision.
       MY_INT32_NUM_DECIMAL_DIGITS is sign inclusive, don't consider the sign.
       Values with MY_INT32_NUM_DECIMAL_DIGITS digits may or may not fit into
-      Field_long : make them Field_int64_t.
+      Int32 : make them field::Int64.
     */
     if (item->max_length >= (MY_INT32_NUM_DECIMAL_DIGITS - 1))
-      new_field=new Field_int64_t(item->max_length, maybe_null,
-                                   item->name, item->unsigned_flag);
+      new_field=new field::Int64(item->max_length, maybe_null,
+                                 item->name, item->unsigned_flag);
     else
-      new_field=new Field_long(item->max_length, maybe_null,
-                               item->name, item->unsigned_flag);
+      new_field=new field::Int32(item->max_length, maybe_null,
+                                 item->name, item->unsigned_flag);
     break;
   case STRING_RESULT:
     assert(item->collation.collation);
