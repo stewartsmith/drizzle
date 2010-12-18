@@ -25,7 +25,7 @@
 #include <drizzled/probes.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/sql_load.h>
-#include <drizzled/field/timestamp.h>
+#include <drizzled/field/epoch.h>
 #include <drizzled/lock.h>
 #include "drizzled/sql_table.h"
 #include "drizzled/pthread_globals.h"

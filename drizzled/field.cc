@@ -41,7 +41,7 @@
 #include "drizzled/field/int64_t.h"
 #include "drizzled/field/num.h"
 #include "drizzled/field/time.h"
-#include "drizzled/field/timestamp.h"
+#include "drizzled/field/epoch.h"
 #include "drizzled/field/datetime.h"
 #include "drizzled/field/varstring.h"
 #include "drizzled/field/uuid.h"

@@ -45,7 +45,7 @@
 #include "drizzled/field/int64_t.h"
 #include "drizzled/field/num.h"
 #include "drizzled/field/time.h"
-#include "drizzled/field/timestamp.h"
+#include "drizzled/field/epoch.h"
 #include "drizzled/field/datetime.h"
 #include "drizzled/field/varstring.h"
 #include "drizzled/internal/m_string.h"
@@ -1191,7 +1191,7 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool)
     field= new Field_date(maybe_null, name, &my_charset_bin);
     break;
   case DRIZZLE_TYPE_TIMESTAMP:
-    field= new Field_timestamp(maybe_null, name, &my_charset_bin);
+    field= new field::Epoch(maybe_null, name, &my_charset_bin);
     break;
   case DRIZZLE_TYPE_DATETIME:
     field= new Field_datetime(maybe_null, name, &my_charset_bin);

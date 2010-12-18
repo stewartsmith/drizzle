@@ -85,6 +85,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/field/decimal.h \
 			      drizzled/field/double.h \
 			      drizzled/field/enum.h \
+			      drizzled/field/epoch.h \
 			      drizzled/field/int64_t.h \
 			      drizzled/field/long.h \
 			      drizzled/field/null.h \
@@ -92,7 +93,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/field/real.h \
 			      drizzled/field/str.h \
 			      drizzled/field/time.h \
-			      drizzled/field/timestamp.h \
 			      drizzled/field/varstring.h \
 			      drizzled/field/uuid.h \
 			      drizzled/field/uuid_st.h \
@@ -513,6 +513,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/field/decimal.cc \
 				 drizzled/field/double.cc \
 				 drizzled/field/enum.cc \
+				 drizzled/field/epoch.cc \
 				 drizzled/field/int64_t.cc \
 				 drizzled/field/long.cc \
 				 drizzled/field/null.cc \
@@ -520,7 +521,6 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/field/real.cc \
 				 drizzled/field/str.cc \
 				 drizzled/field/time.cc \
-				 drizzled/field/timestamp.cc \
 				 drizzled/field/varstring.cc \
 				 drizzled/field/uuid.cc \
 				 drizzled/field_conv.cc \

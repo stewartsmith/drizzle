@@ -74,7 +74,7 @@
 #include "drizzled/field/int64_t.h"
 #include "drizzled/field/num.h"
 #include "drizzled/field/time.h"
-#include "drizzled/field/timestamp.h"
+#include "drizzled/field/epoch.h"
 #include "drizzled/field/datetime.h"
 #include "drizzled/field/varstring.h"
 #include "drizzled/field/uuid.h"
@@ -1325,10 +1325,10 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
       field_length= field::Uuid::max_string_length();
       break;
     case DRIZZLE_TYPE_TIMESTAMP:
-      field_length= Field_timestamp::max_string_length();
+      field_length= field::Epoch::max_string_length();
       break;
     case DRIZZLE_TYPE_TIME:
-      field_length= Field_timestamp::max_string_length();
+      field_length= field::Epoch::max_string_length();
       break;
     case DRIZZLE_TYPE_NULL:
       abort(); // Programming error
@@ -1859,7 +1859,7 @@ int TableShare::open_table_from_share_inner(Session *session,
     outparam.found_next_number_field=
       outparam.getField(positionFields(found_next_number_field));
   if (timestamp_field)
-    outparam.timestamp_field= (Field_timestamp*) outparam.getField(timestamp_field->position());
+    outparam.timestamp_field= (field::Epoch*) outparam.getField(timestamp_field->position());
 
   /* Fix key->name and key_part->field */
   if (key_parts)
@@ -2125,14 +2125,14 @@ Field *TableShare::make_field(unsigned char *ptr,
                                     false,
                                     false /* is_unsigned */);
   case DRIZZLE_TYPE_TIMESTAMP:
-    return new (&mem_root) Field_timestamp(ptr,
-                                      field_length,
-                                      null_pos,
-                                      null_bit,
-                                      unireg_check,
-                                      field_name,
-                                      this,
-                                      field_charset);
+    return new (&mem_root) field::Epoch(ptr,
+                                        field_length,
+                                        null_pos,
+                                        null_bit,
+                                        unireg_check,
+                                        field_name,
+                                        this,
+                                        field_charset);
   case DRIZZLE_TYPE_TIME:
     return new (&mem_root) field::Time(ptr,
                                        field_length,
