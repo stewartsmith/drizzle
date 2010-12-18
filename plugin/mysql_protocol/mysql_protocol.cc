@@ -34,6 +34,8 @@
 #include "options.h"
 #include "table_function.h"
 
+#include "drizzled/identifier.h"
+
 #define PROTOCOL_VERSION 10
 
 namespace po= boost::program_options;
@@ -844,8 +846,8 @@ bool ClientMySQLProtocol::isAdminAllowed(void)
 {
   if (std::find(mysql_admin_ip_addresses.begin(), mysql_admin_ip_addresses.end(), session->user()->address()) != mysql_admin_ip_addresses.end())
     return true;
-  else
-    return false;
+
+  return false;
 }
 
 bool ClientMySQLProtocol::netStoreData(const unsigned char *from, size_t length)

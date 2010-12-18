@@ -49,6 +49,8 @@
 #include "drizzled/transaction_services.h"
 #include "drizzled/drizzled.h"
 
+#include "drizzled/identifier.h"
+
 #include "drizzled/table/instance.h"
 
 #include "plugin/myisam/myisam.h"

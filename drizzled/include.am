@@ -621,6 +621,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/hybrid_type_traits_integer.cc \
 			   drizzled/identifier/schema.cc \
 			   drizzled/identifier/table.cc \
+			   drizzled/identifier/user.cc \
 			   drizzled/index_hint.cc \
 			   drizzled/item.cc \
 			   drizzled/item/bin_string.cc \
