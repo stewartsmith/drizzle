@@ -73,6 +73,7 @@
 #include "drizzled/field/long.h"
 #include "drizzled/field/int64_t.h"
 #include "drizzled/field/num.h"
+#include "drizzled/field/time.h"
 #include "drizzled/field/timestamp.h"
 #include "drizzled/field/datetime.h"
 #include "drizzled/field/varstring.h"
@@ -268,6 +269,9 @@ static enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_ty
   case message::Table::Field::UUID:
     field_type= DRIZZLE_TYPE_UUID;
     break;
+  case message::Table::Field::TIME:
+    field_type= DRIZZLE_TYPE_TIME;
+    break;
   default:
     assert(0);
     abort(); // Programming error
@@ -308,6 +312,7 @@ static Item *default_value_item(enum_field_types field_type,
     abort();
   case DRIZZLE_TYPE_TIMESTAMP:
   case DRIZZLE_TYPE_DATETIME:
+  case DRIZZLE_TYPE_TIME:
   case DRIZZLE_TYPE_DATE:
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_UUID:
@@ -1322,11 +1327,14 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     case DRIZZLE_TYPE_TIMESTAMP:
       field_length= Field_timestamp::max_string_length();
       break;
+    case DRIZZLE_TYPE_TIME:
+      field_length= Field_timestamp::max_string_length();
+      break;
     case DRIZZLE_TYPE_NULL:
       abort(); // Programming error
     }
 
-    assert(enum_field_types_size == 12);
+    assert(enum_field_types_size == 13);
 
     Field* f= make_field(record + field_offsets[fieldnr] + data_offset,
                          field_length,
@@ -1350,6 +1358,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     case DRIZZLE_TYPE_DOUBLE:
     case DRIZZLE_TYPE_DECIMAL:
     case DRIZZLE_TYPE_TIMESTAMP:
+    case DRIZZLE_TYPE_TIME:
     case DRIZZLE_TYPE_DATETIME:
     case DRIZZLE_TYPE_DATE:
     case DRIZZLE_TYPE_ENUM:
@@ -2124,6 +2133,13 @@ Field *TableShare::make_field(unsigned char *ptr,
                                       field_name,
                                       this,
                                       field_charset);
+  case DRIZZLE_TYPE_TIME:
+    return new (&mem_root) field::Time(ptr,
+                                       field_length,
+                                       null_pos,
+                                       null_bit,
+                                       field_name,
+                                       field_charset);
   case DRIZZLE_TYPE_DATE:
     return new (&mem_root) Field_date(ptr,
                                  null_pos,

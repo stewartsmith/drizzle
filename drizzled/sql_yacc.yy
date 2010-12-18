@@ -737,6 +737,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  TEXT_STRING
 %token  TEXT_SYM
 %token  THEN_SYM                      /* SQL-2003-R */
+%token  TIME_SYM                 /* SQL-2003-R */
 %token  TIMESTAMP_SYM                 /* SQL-2003-R */
 %token  TIMESTAMP_ADD
 %token  TIMESTAMP_DIFF
@@ -1600,6 +1601,16 @@ type:
 
             if (statement->current_proto_field)
               statement->current_proto_field->set_type(message::Table::Field::DATE);
+          }
+          | TIME_SYM
+          {
+            $$=DRIZZLE_TYPE_TIME;
+
+            statement::CreateTable *statement=
+              (statement::CreateTable *)Lex->statement;
+
+            if (statement->current_proto_field)
+              statement->current_proto_field->set_type(message::Table::Field::TIME);
           }
           | TIMESTAMP_SYM
           {
@@ -6269,6 +6280,7 @@ keyword_sp:
         | TEMPORARY_SYM            {}
         | TEXT_SYM                 {}
         | TRANSACTION_SYM          {}
+        | TIME_SYM                 {}
         | TIMESTAMP_SYM            {}
         | TIMESTAMP_ADD            {}
         | TIMESTAMP_DIFF           {}

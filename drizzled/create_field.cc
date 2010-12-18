@@ -357,6 +357,9 @@ bool CreateField::init(Session *,
     case DRIZZLE_TYPE_DATETIME:
       length= DateTime::MAX_STRING_LENGTH;
       break;
+    case DRIZZLE_TYPE_TIME:
+      length= DateTime::MAX_STRING_LENGTH;
+      break;
     case DRIZZLE_TYPE_ENUM:
       {
         /* Should be safe. */

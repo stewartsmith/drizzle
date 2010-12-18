@@ -45,6 +45,7 @@ static const std::string DRIZZLE_TYPE_NULL("DRIZZLE_TYPE_NULL");
 static const std::string DRIZZLE_TYPE_TIMESTAMP("DRIZZLE_TYPE_TIMESTAMP"); 
 static const std::string DRIZZLE_TYPE_LONGLONG("DRIZZLE_TYPE_LONGLONG"); 
 static const std::string DRIZZLE_TYPE_DATETIME("DRIZZLE_TYPE_DATETIME"); 
+static const std::string DRIZZLE_TYPE_TIME("DRIZZLE_TYPE_TIME"); 
 static const std::string DRIZZLE_TYPE_DATE("DRIZZLE_TYPE_DATE"); 
 static const std::string DRIZZLE_TYPE_VARCHAR("DRIZZLE_TYPE_VARCHAR"); 
 static const std::string DRIZZLE_TYPE_DECIMAL("DRIZZLE_TYPE_DECIMAL"); 
@@ -178,6 +179,8 @@ const std::string &type(drizzled::enum_field_types type)
     return DRIZZLE_TYPE_LONGLONG;
   case drizzled::DRIZZLE_TYPE_DATETIME : 
     return DRIZZLE_TYPE_DATETIME;
+  case drizzled::DRIZZLE_TYPE_TIME : 
+    return DRIZZLE_TYPE_TIME;
   case drizzled::DRIZZLE_TYPE_DATE : 
     return DRIZZLE_TYPE_DATE;
   case drizzled::DRIZZLE_TYPE_VARCHAR : 

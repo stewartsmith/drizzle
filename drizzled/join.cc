@@ -3033,6 +3033,7 @@ static void calc_group_buffer(Join *join, Order *group)
           by 8 as maximum pack length of such fields.
         */
         if (type == DRIZZLE_TYPE_DATE ||
+            type == DRIZZLE_TYPE_TIME ||
             type == DRIZZLE_TYPE_DATETIME ||
             type == DRIZZLE_TYPE_TIMESTAMP)
         {

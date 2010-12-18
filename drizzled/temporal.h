@@ -530,6 +530,15 @@ public:
   void to_int32_t(int32_t *to) const;
 
   /**
+   * Fills a supplied 8-byte integer pointer with an
+   * integer representation of the Time
+   * value. It is assume seconds past unix epoch
+   *
+   * @param Integer to fill.
+   */
+  void to_uint64_t(uint64_t &to) const;
+
+  /**
    * Attempts to populate the Time instance based
    * on the contents of a supplied 4-byte integer.
    *

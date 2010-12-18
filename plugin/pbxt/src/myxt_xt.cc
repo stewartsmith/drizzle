@@ -724,6 +724,7 @@ static char *mx_get_length_and_data(STRUCT_TABLE *table, Field *field, char *des
 		case DRIZZLE_TYPE_TIMESTAMP:
 		case DRIZZLE_TYPE_LONGLONG:
 		case DRIZZLE_TYPE_DATETIME:
+		case DRIZZLE_TYPE_TIME:
 		case DRIZZLE_TYPE_DATE:
 		case DRIZZLE_TYPE_DECIMAL:
 		case DRIZZLE_TYPE_ENUM:
@@ -838,6 +839,7 @@ static void mx_set_length_and_data(STRUCT_TABLE *table, Field *field, char *dest
 		case DRIZZLE_TYPE_TIMESTAMP:
 		case DRIZZLE_TYPE_LONGLONG:
 		case DRIZZLE_TYPE_DATETIME:
+		case DRIZZLE_TYPE_TIME:
 		case DRIZZLE_TYPE_DATE:
 		case DRIZZLE_TYPE_DECIMAL:
 		case DRIZZLE_TYPE_ENUM:

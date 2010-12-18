@@ -1380,6 +1380,9 @@ transformFieldDefinitionToSql(const Table::Field &field,
   case Table::Field::DATETIME:
     destination.append(" DATETIME",  9);
     break;
+  case Table::Field::TIME:
+    destination.append(" TIME",  9);
+    break;
   }
 
   if (field.type() == Table::Field::INTEGER || 
@@ -1500,6 +1503,8 @@ Table::Field::FieldType internalFieldTypeToFieldProtoType(enum enum_field_types 
     return Table::Field::BIGINT;
   case DRIZZLE_TYPE_DATETIME:
     return Table::Field::DATETIME;
+  case DRIZZLE_TYPE_TIME:
+    return Table::Field::TIME;
   case DRIZZLE_TYPE_DATE:
     return Table::Field::DATE;
   case DRIZZLE_TYPE_VARCHAR:
