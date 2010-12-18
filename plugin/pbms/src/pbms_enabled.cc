@@ -1,4 +1,4 @@
-/* Copyright (c) 2010 PrimeBase Technologies GmbH
+/* Copyright (C) 2010 PrimeBase Technologies GmbH
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without 

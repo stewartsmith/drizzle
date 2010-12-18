@@ -1,7 +1,7 @@
 /*****************************************************************************
 
-Copyright (c) 1995, 2010, Innobase Oy. All Rights Reserved.
-Copyright (c) 2009, Google Inc.
+Copyright (C) 1995, 2010, Innobase Oy. All Rights Reserved.
+Copyright (C) 2009 Google Inc.
 
 Portions of this file contain modifications contributed and copyrighted by
 Google, Inc. Those modifications are gratefully acknowledged and are described

@@ -1,7 +1,7 @@
 dnl -*- bash -*-
 dnl Process this file with autoconf to produce a configure script.
 
-dnl  Copyright (C) 2009 Sun Microsystems
+dnl  Copyright (C) 2009 Sun Microsystems, Inc.
 dnl
 dnl  This program is free software; you can redistribute it and/or modify
 dnl  it under the terms of the GNU General Public License as published by
