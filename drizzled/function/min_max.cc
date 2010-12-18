@@ -141,60 +141,64 @@ String *Item_func_min_max::val_str(String *str)
   }
   switch (cmp_type) {
   case INT_RESULT:
-  {
-    int64_t nr=val_int();
-    if (null_value)
-      return 0;
-    str->set_int(nr, unsigned_flag, &my_charset_bin);
-    return str;
-  }
-  case DECIMAL_RESULT:
-  {
-    my_decimal dec_buf, *dec_val= val_decimal(&dec_buf);
-    if (null_value)
-      return 0;
-    my_decimal2string(E_DEC_FATAL_ERROR, dec_val, 0, 0, 0, str);
-    return str;
-  }
-  case REAL_RESULT:
-  {
-    double nr= val_real();
-    if (null_value)
-      return 0;
-    str->set_real(nr,decimals,&my_charset_bin);
-    return str;
-  }
-  case STRING_RESULT:
-  {
-    String *res= NULL;
-
-    for (uint32_t i=0; i < arg_count ; i++)
     {
-      if (i == 0)
-	res=args[i]->val_str(str);
-      else
-      {
-	String *res2;
-	res2= args[i]->val_str(res == str ? &tmp_value : str);
-	if (res2)
-	{
-	  int cmp= sortcmp(res,res2,collation.collation);
-	  if ((cmp_sign < 0 ? cmp : -cmp) < 0)
-	    res=res2;
-	}
-      }
-      if ((null_value= args[i]->null_value))
+      int64_t nr=val_int();
+      if (null_value)
         return 0;
+      str->set_int(nr, unsigned_flag, &my_charset_bin);
+      return str;
     }
-    res->set_charset(collation.collation);
-    return res;
-  }
+
+  case DECIMAL_RESULT:
+    {
+      my_decimal dec_buf, *dec_val= val_decimal(&dec_buf);
+      if (null_value)
+        return 0;
+      my_decimal2string(E_DEC_FATAL_ERROR, dec_val, 0, 0, 0, str);
+      return str;
+    }
+
+  case REAL_RESULT:
+    {
+      double nr= val_real();
+      if (null_value)
+        return 0;
+      str->set_real(nr,decimals,&my_charset_bin);
+      return str;
+    }
+
+  case STRING_RESULT:
+    {
+      String *res= NULL;
+
+      for (uint32_t i=0; i < arg_count ; i++)
+      {
+        if (i == 0)
+          res=args[i]->val_str(str);
+        else
+        {
+          String *res2;
+          res2= args[i]->val_str(res == str ? &tmp_value : str);
+          if (res2)
+          {
+            int cmp= sortcmp(res,res2,collation.collation);
+            if ((cmp_sign < 0 ? cmp : -cmp) < 0)
+              res=res2;
+          }
+        }
+        if ((null_value= args[i]->null_value))
+          return 0;
+      }
+      res->set_charset(collation.collation);
+      return res;
+    }
+
   case ROW_RESULT:
-  default:
     // This case should never be chosen
     assert(0);
     return 0;
   }
+
   return 0;					// Keep compiler happy
 }
 

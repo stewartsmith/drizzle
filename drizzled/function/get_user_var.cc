@@ -88,6 +88,7 @@ void Item_func_get_user_var::fix_length_and_dec()
     case REAL_RESULT:
       max_length= DBL_DIG + 8;
       break;
+
     case INT_RESULT:
       max_length= MAX_BIGINT_WIDTH;
       decimals=0;
@@ -95,12 +96,13 @@ void Item_func_get_user_var::fix_length_and_dec()
     case STRING_RESULT:
       max_length= MAX_BLOB_WIDTH;
       break;
+
     case DECIMAL_RESULT:
       max_length= DECIMAL_MAX_STR_LENGTH;
       decimals= DECIMAL_MAX_SCALE;
       break;
+
     case ROW_RESULT:                            // Keep compiler happy
-    default:
       assert(0);
       break;
     }

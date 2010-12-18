@@ -48,6 +48,7 @@ Cached_item *new_Cached_item(Session *session, Item *item)
     Field *cached_field= real_item->field;
     return new Cached_item_field(cached_field);
   }
+
   switch (item->result_type()) {
   case STRING_RESULT:
     return new Cached_item_str(session, (Item_field *) item);
@@ -58,10 +59,11 @@ Cached_item *new_Cached_item(Session *session, Item *item)
   case DECIMAL_RESULT:
     return new Cached_item_decimal(item);
   case ROW_RESULT:
-  default:
     assert(0);
     return 0;
   }
+
+  abort();
 }
 
 Cached_item::~Cached_item() {}

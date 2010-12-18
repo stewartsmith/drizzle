@@ -38,17 +38,19 @@ void Item_func_num1::find_num_type()
   case INT_RESULT:
     unsigned_flag= args[0]->unsigned_flag;
     break;
+
   case STRING_RESULT:
   case REAL_RESULT:
     hybrid_type= REAL_RESULT;
     max_length= float_length(decimals);
     break;
+
   case DECIMAL_RESULT:
     break;
-  default:
+
+  case ROW_RESULT:
     assert(0);
   }
-  return;
 }
 
 void Item_func_num1::fix_num_length_and_dec()

@@ -682,11 +682,11 @@ CopyField::get_copy_func(Field *to,Field *from)
           {
             return do_field_int;  // Convert SET to number
           }
-          
+
           return do_field_string;
         }
       }
-      
+
       if (to->real_type() == DRIZZLE_TYPE_ENUM)
       {
         if (!to->eq_def(from))
@@ -703,12 +703,12 @@ CopyField::get_copy_func(Field *to,Field *from)
       else if (to->real_type() == DRIZZLE_TYPE_VARCHAR)
       {
         /* Field_blob is not part of the Field_varstring hierarchy,
-           and casting to varstring for calling pack_length_no_ptr()
-           is always incorrect. Previously the below comparison has
-           always evaluated to false as pack_length_no_ptr() for BLOB
-           will return 4 and varstring can only be <= 2.
-           If your brain slightly bleeds as to why this worked for
-           so many years, you are in no way alone.
+          and casting to varstring for calling pack_length_no_ptr()
+          is always incorrect. Previously the below comparison has
+          always evaluated to false as pack_length_no_ptr() for BLOB
+          will return 4 and varstring can only be <= 2.
+          If your brain slightly bleeds as to why this worked for
+          so many years, you are in no way alone.
         */
         if (from->flags & BLOB_FLAG)
           return do_field_string;
@@ -718,14 +718,14 @@ CopyField::get_copy_func(Field *to,Field *from)
         {
           return do_field_string;
         }
-        
+
         if (to_length != from_length)
         {
           return (((Field_varstring*) to)->pack_length_no_ptr() == 1 ?
                   (from->charset()->mbmaxlen == 1 ? do_varstring1 :
-                                                    do_varstring1_mb) :
+                   do_varstring1_mb) :
                   (from->charset()->mbmaxlen == 1 ? do_varstring2 :
-                                                    do_varstring2_mb));
+                   do_varstring2_mb));
         }
       }
       else if (to_length < from_length)

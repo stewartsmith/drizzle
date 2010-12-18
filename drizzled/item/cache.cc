@@ -34,19 +34,22 @@ Item_cache* Item_cache::get_cache(const Item *item)
   switch (item->result_type()) {
   case INT_RESULT:
     return new Item_cache_int();
+
   case REAL_RESULT:
     return new Item_cache_real();
+
   case DECIMAL_RESULT:
     return new Item_cache_decimal();
+
   case STRING_RESULT:
     return new Item_cache_str(item);
+
   case ROW_RESULT:
     return new Item_cache_row();
-  default:
-    // should never be in real life
-    assert(0);
-    return 0;
   }
+
+  assert(0);
+  abort();
 }
 
 

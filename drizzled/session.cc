@@ -1115,9 +1115,10 @@ select_export::prepare(List<Item> &list, Select_Lex_Unit *u)
     {
       if (item->max_length >= MAX_BLOB_WIDTH)
       {
-	blob_flag=1;
-	break;
+        blob_flag=1;
+        break;
       }
+
       if (item->result_type() == STRING_RESULT)
         string_results= true;
       else

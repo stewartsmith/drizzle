@@ -454,7 +454,7 @@ bool Item_func::is_null()
 
 Field *Item_func::tmp_table_field(Table *table)
 {
-  Field *field;
+  Field *field= NULL;
 
   switch (result_type()) {
   case INT_RESULT:
@@ -463,11 +463,14 @@ Field *Item_func::tmp_table_field(Table *table)
     else
       field= new field::Int32(max_length, maybe_null, name, unsigned_flag);
     break;
+
   case REAL_RESULT:
     field= new Field_double(max_length, maybe_null, name, decimals);
     break;
+
   case STRING_RESULT:
     return make_string_field(table);
+
   case DECIMAL_RESULT:
     field= new Field_decimal(my_decimal_precision_to_length(decimal_precision(),
                                                             decimals,
@@ -478,14 +481,14 @@ Field *Item_func::tmp_table_field(Table *table)
                              unsigned_flag);
     break;
   case ROW_RESULT:
-  default:
     // This case should never be chosen
     assert(0);
-    field= 0;
     break;
   }
+
   if (field)
     field->init(table);
+
   return field;
 }
 

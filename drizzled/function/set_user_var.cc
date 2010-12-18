@@ -140,39 +140,39 @@ Item_func_set_user_var::check(bool use_result_field)
 
   switch (cached_result_type) {
   case REAL_RESULT:
-  {
-    save_result.vreal= use_result_field ? result_field->val_real() :
-                        args[0]->val_real();
-    break;
-  }
+    {
+      save_result.vreal= use_result_field ? result_field->val_real() :
+        args[0]->val_real();
+      break;
+    }
   case INT_RESULT:
-  {
-    save_result.vint= use_result_field ? result_field->val_int() :
-                       args[0]->val_int();
-    unsigned_flag= use_result_field ? ((Field_num*)result_field)->unsigned_flag:
-                    args[0]->unsigned_flag;
-    break;
-  }
+    {
+      save_result.vint= use_result_field ? result_field->val_int() :
+        args[0]->val_int();
+      unsigned_flag= use_result_field ? ((Field_num*)result_field)->unsigned_flag:
+        args[0]->unsigned_flag;
+      break;
+    }
   case STRING_RESULT:
-  {
-    save_result.vstr= use_result_field ? result_field->val_str_internal(&value) :
-      args[0]->val_str(&value);
-    break;
-  }
+    {
+      save_result.vstr= use_result_field ? result_field->val_str_internal(&value) :
+        args[0]->val_str(&value);
+      break;
+    }
   case DECIMAL_RESULT:
-  {
-    save_result.vdec= use_result_field ?
-                       result_field->val_decimal(&decimal_buff) :
-                       args[0]->val_decimal(&decimal_buff);
-    break;
-  }
+    {
+      save_result.vdec= use_result_field ?
+        result_field->val_decimal(&decimal_buff) :
+        args[0]->val_decimal(&decimal_buff);
+      break;
+    }
   case ROW_RESULT:
-  default:
     // This case should never be chosen
     assert(0);
     break;
   }
-  return(false);
+
+  return false;
 }
 
 /**
@@ -197,47 +197,51 @@ Item_func_set_user_var::update()
 
   switch (cached_result_type) {
   case REAL_RESULT:
-  {
-    res= update_hash((void*) &save_result.vreal,sizeof(save_result.vreal),
-                     REAL_RESULT, &my_charset_bin, DERIVATION_IMPLICIT, 0);
-    break;
-  }
+    {
+      res= update_hash((void*) &save_result.vreal,sizeof(save_result.vreal),
+                       REAL_RESULT, &my_charset_bin, DERIVATION_IMPLICIT, 0);
+      break;
+    }
+
   case INT_RESULT:
-  {
-    res= update_hash((void*) &save_result.vint, sizeof(save_result.vint),
-                     INT_RESULT, &my_charset_bin, DERIVATION_IMPLICIT,
-                     unsigned_flag);
-    break;
-  }
+    {
+      res= update_hash((void*) &save_result.vint, sizeof(save_result.vint),
+                       INT_RESULT, &my_charset_bin, DERIVATION_IMPLICIT,
+                       unsigned_flag);
+      break;
+    }
+
   case STRING_RESULT:
-  {
-    if (!save_result.vstr)                                      // Null value
-      res= update_hash((void*) 0, 0, STRING_RESULT, &my_charset_bin,
-                       DERIVATION_IMPLICIT, 0);
-    else
-      res= update_hash((void*) save_result.vstr->ptr(),
-                       save_result.vstr->length(), STRING_RESULT,
-                       save_result.vstr->charset(),
-                       DERIVATION_IMPLICIT, 0);
-    break;
-  }
+    {
+      if (!save_result.vstr)                                      // Null value
+        res= update_hash((void*) 0, 0, STRING_RESULT, &my_charset_bin,
+                         DERIVATION_IMPLICIT, 0);
+      else
+        res= update_hash((void*) save_result.vstr->ptr(),
+                         save_result.vstr->length(), STRING_RESULT,
+                         save_result.vstr->charset(),
+                         DERIVATION_IMPLICIT, 0);
+      break;
+    }
+
   case DECIMAL_RESULT:
-  {
-    if (!save_result.vdec)                                      // Null value
-      res= update_hash((void*) 0, 0, DECIMAL_RESULT, &my_charset_bin,
-                       DERIVATION_IMPLICIT, 0);
-    else
-      res= update_hash((void*) save_result.vdec,
-                       sizeof(my_decimal), DECIMAL_RESULT,
-                       &my_charset_bin, DERIVATION_IMPLICIT, 0);
-    break;
-  }
+    {
+      if (!save_result.vdec)                                      // Null value
+        res= update_hash((void*) 0, 0, DECIMAL_RESULT, &my_charset_bin,
+                         DERIVATION_IMPLICIT, 0);
+      else
+        res= update_hash((void*) save_result.vdec,
+                         sizeof(my_decimal), DECIMAL_RESULT,
+                         &my_charset_bin, DERIVATION_IMPLICIT, 0);
+      break;
+    }
+
   case ROW_RESULT:
-  default:
     // This case should never be chosen
     assert(0);
     break;
   }
+
   return(res);
 }
 
