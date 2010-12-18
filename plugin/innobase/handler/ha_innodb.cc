@@ -1177,13 +1177,15 @@ innobase_mysql_print_thd(
            use the default max length */
 {
   Session *session= reinterpret_cast<Session *>(in_session);
+  drizzled::identifier::User::const_shared_ptr user_identifier(session->user());
+
   fprintf(f,
           "Drizzle thread %"PRIu64", query id %"PRIu64", %s, %s, %s ",
           static_cast<uint64_t>(session->getSessionId()),
           static_cast<uint64_t>(session->getQueryId()),
           glob_hostname,
-          session->getSecurityContext().getIp().c_str(),
-          session->getSecurityContext().getUser().c_str()
+          user_identifier->address().c_str(),
+          user_identifier->username().c_str()
   );
   fprintf(f, "\n%s", session->getQueryString()->c_str());
   putc('\n', f);

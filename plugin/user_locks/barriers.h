@@ -21,7 +21,6 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 #include <boost/unordered_map.hpp>
-#include <boost/logic/tribool.hpp>
 #include <boost/unordered/unordered_set.hpp>
 
 #include <string>

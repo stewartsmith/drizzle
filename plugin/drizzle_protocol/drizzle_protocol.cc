@@ -77,10 +77,10 @@ void ClientDrizzleProtocol::drizzle_compose_ip_addresses(vector<string> options)
 
 bool ClientDrizzleProtocol::isAdminAllowed(void)
 {
-  if (std::find(drizzle_admin_ip_addresses.begin(), drizzle_admin_ip_addresses.end(), session->getSecurityContext().getIp()) != drizzle_admin_ip_addresses.end())
+  if (std::find(drizzle_admin_ip_addresses.begin(), drizzle_admin_ip_addresses.end(), session->user()->address()) != drizzle_admin_ip_addresses.end())
     return true;
-  else
-    return false;
+
+  return false;
 }
 
 plugin::Client *ListenDrizzleProtocol::getClient(int fd)

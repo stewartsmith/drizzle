@@ -33,15 +33,16 @@ namespace utility_functions
 String *User::val_str(String *str)
 {
   assert(fixed == 1);
-  Session *session= current_session;
-  if (session->getSecurityContext().getUser().empty())
+  identifier::User::const_shared_ptr user= getSession().user();
+  assert(user);
+  if (user->username().empty())
   {
     null_value= 1;
     return 0;
   }
   else
   {
-    str->copy(session->getSecurityContext().getUser().c_str(), session->getSecurityContext().getUser().length(), system_charset_info);
+    str->copy(user->username().c_str(), user->username().length(), system_charset_info);
   }
   return str;
 }

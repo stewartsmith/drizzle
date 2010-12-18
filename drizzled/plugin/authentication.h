@@ -26,10 +26,14 @@
 
 #include "drizzled/plugin.h"
 #include "drizzled/plugin/plugin.h"
+#include "drizzled/identifier.h"
 
 namespace drizzled
 {
-class SecurityContext;
+
+namespace identifier {
+class User;
+} 
 
 namespace plugin
 {
@@ -45,12 +49,12 @@ public:
   {}
   virtual ~Authentication() {}
 
-  virtual bool authenticate(const SecurityContext &sctx,
+  virtual bool authenticate(const identifier::User &sctx,
                             const std::string &passwd)= 0;
 
   static bool addPlugin(plugin::Authentication *auth);
   static void removePlugin(plugin::Authentication *auth);
-  static bool isAuthenticated(const SecurityContext &sctx,
+  static bool isAuthenticated(drizzled::identifier::User::const_shared_ptr sctx,
                               const std::string &password);
 };
 

@@ -43,7 +43,7 @@ int64_t WaitFor::val_int()
 
   while (not found)
   {
-    found= user_locks::Locks::getInstance().isUsed(Key(getSession().getSecurityContext(), res->c_str()), id);
+    found= user_locks::Locks::getInstance().isUsed(Key(*getSession().user(), res->c_str()), id);
     if (not found)
     {
       boost::this_thread::restore_interruption dl(getSession().getThreadInterupt());
