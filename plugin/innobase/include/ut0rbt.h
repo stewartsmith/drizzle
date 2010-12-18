@@ -1,6 +1,6 @@
 /***************************************************************************//**
 
-Copyright (c) 2007, 2010, Innobase Oy. All Rights Reserved.
+Copyright (C) 2007, 2010, Innobase Oy. All Rights Reserved.
 
 Portions of this file contain modifications contributed and copyrighted by
 Sun Microsystems, Inc. Those modifications are gratefully acknowledged and

@@ -1,5 +1,5 @@
 # Albanian translation for drizzle
-# Copyright (c) 2009 Rosetta Contributors and Canonical Ltd 2009
+# Copyright (C) 2009 Rosetta Contributors and Canonical Ltd 2009
 # This file is distributed under the same license as the drizzle package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2009.
 #
