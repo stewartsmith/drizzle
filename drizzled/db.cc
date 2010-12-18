@@ -619,7 +619,7 @@ static long drop_tables_via_filenames(Session *session,
 bool mysql_change_db(Session *session, SchemaIdentifier &schema_identifier)
 {
 
-  if (not plugin::Authorization::isAuthorized(session->getSecurityContext(), schema_identifier))
+  if (not plugin::Authorization::isAuthorized(session->user(), schema_identifier))
   {
     /* Error message is set in isAuthorized */
     return true;

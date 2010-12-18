@@ -64,7 +64,7 @@ void Execute::run(std::string &execution_string)
     // Overwrite the context in the next session, with what we have in our
     // session. Eventually we will allow someone to change the effective
     // user.
-    new_session->getSecurityContext()= _session.getSecurityContext();
+    new_session->user()= _session.user();
 
     if (Session::schedule(new_session))
     {

@@ -1,12 +1,11 @@
-/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2010 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ *  the Free Software Foundation; version 2 of the License.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -19,33 +18,19 @@
  */
 
 #include "config.h"
-#include "plugin/user_locks/module.h"
 
-#include <string>
+#include "drizzled/identifier/user.h"
 
-namespace user_locks {
-
-int64_t IsUsedLock::val_int()
+namespace drizzled
 {
-  drizzled::String *res= args[0]->val_str(&value);
+namespace identifier
+{
 
-  if (not res || not res->length())
-  {
-    my_error(drizzled::ER_USER_LOCKS_INVALID_NAME_LOCK, MYF(0));
-    return 0;
-  }
-  null_value= false;
-
-  drizzled::session_id_t id;
-  bool result= user_locks::Locks::getInstance().isUsed(Key(*getSession().user(), res->c_str()), id);
-
-  if (not result)
-  {
-    null_value= true;
-    return id;
-  }
-
-  return id;
+User::shared_ptr User::make_shared()
+{
+  return shared_ptr(new User);
 }
 
-} /* namespace user_locks */
+
+} /* namespace identifier */
+} /* namespace drizzled */

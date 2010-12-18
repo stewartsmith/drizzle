@@ -231,7 +231,7 @@ public:
     authenticate_return = value;
   }
 
-  virtual bool authenticate(const drizzled::SecurityContext &sctx, const std::string &passwd)
+  virtual bool authenticate(const drizzled::identifier::User &sctx, const std::string &passwd)
   {
     (void)sctx;
     (void)passwd;

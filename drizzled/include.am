@@ -206,6 +206,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/identifier.h \
 			      drizzled/identifier/schema.h \
 			      drizzled/identifier/table.h \
+			      drizzled/identifier/user.h \
 			      drizzled/index_hint.h \
 			      drizzled/internal_error_handler.h \
 			      drizzled/item.h \
@@ -345,7 +346,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/records.h \
 			      drizzled/replication_services.h \
 			      drizzled/resource_context.h \
-			      drizzled/security_context.h \
 			      drizzled/select_create.h \
 			      drizzled/select_dump.h \
 			      drizzled/select_dumpvar.h \

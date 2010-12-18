@@ -171,6 +171,8 @@ Session::Session(plugin::Client *client_arg) :
   scheduler(NULL),
   scheduler_arg(NULL),
   lock_id(&main_lock_id),
+  thread_stack(NULL),
+  security_ctx(identifier::User::make_shared()),
   user_time(0),
   ha_data(plugin::num_trx_monitored_objects),
   concurrent_execute_allowed(true),
@@ -203,7 +205,6 @@ Session::Session(plugin::Client *client_arg) :
     will be re-initialized in init_for_queries().
   */
   memory::init_sql_alloc(&main_mem_root, memory::ROOT_MIN_BLOCK_SIZE, 0);
-  thread_stack= NULL;
   count_cuted_fields= CHECK_FIELD_ERROR_FOR_NULL;
   col_access= 0;
   tmp_table= 0;
@@ -378,11 +379,15 @@ Session::~Session()
 
   if (client->isConnected())
   {
+    assert(security_ctx);
     if (global_system_variables.log_warnings)
-        errmsg_printf(ERRMSG_LVL_WARN, ER(ER_FORCING_CLOSE),internal::my_progname,
-                      thread_id,
-                      (getSecurityContext().getUser().c_str() ?
-                       getSecurityContext().getUser().c_str() : ""));
+    {
+      errmsg_printf(ERRMSG_LVL_WARN, ER(ER_FORCING_CLOSE),
+                    internal::my_progname,
+                    thread_id,
+                    security_ctx->username().c_str());
+    }
+
     disconnect(0, false);
   }
 
@@ -605,7 +610,7 @@ bool Session::schedule(Session::shared_ptr &arg)
 */
 bool Session::isViewable() const
 {
-  return plugin::Authorization::isAuthorized(current_session->getSecurityContext(),
+  return plugin::Authorization::isAuthorized(current_session->user(),
                                              this,
                                              false);
 }
@@ -651,8 +656,7 @@ bool Session::checkUser(const std::string &passwd_str,
                         const std::string &in_db)
 {
   bool is_authenticated=
-    plugin::Authentication::isAuthenticated(getSecurityContext(),
-                                            passwd_str);
+    plugin::Authentication::isAuthenticated(user(), passwd_str);
 
   if (is_authenticated != true)
   {
@@ -1660,13 +1664,11 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
   {
     if (not getKilled() && variables.log_warnings > 1)
     {
-      SecurityContext *sctx= &security_ctx;
-
       errmsg_printf(ERRMSG_LVL_WARN, ER(ER_NEW_ABORTING_CONNECTION)
                   , thread_id
                   , (_schema->empty() ? "unconnected" : _schema->c_str())
-                  , sctx->getUser().empty() == false ? sctx->getUser().c_str() : "unauthenticated"
-                  , sctx->getIp().c_str()
+                  , security_ctx->username().empty() == false ? security_ctx->username().c_str() : "unauthenticated"
+                  , security_ctx->address().c_str()
                   , (main_da.is_error() ? main_da.message() : ER(ER_UNKNOWN_ERROR)));
     }
   }

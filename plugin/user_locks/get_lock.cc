@@ -43,18 +43,17 @@ int64_t GetLock::val_int()
   }
   null_value= false;
 
-  std::cerr << "Trying to create " << res->c_str() << "\n";
-
   user_locks::Storable *list= static_cast<user_locks::Storable *>(getSession().getProperty("user_locks"));
   if (list) // To be compatible with MySQL, we will now release all other locks we might have.
     list->erase_all();
 
   bool result;
+  drizzled::identifier::User::const_shared_ptr user_identifier(getSession().user());
   {
     boost::this_thread::restore_interruption dl(getSession().getThreadInterupt());
 
     try {
-      result= user_locks::Locks::getInstance().lock(getSession().getSessionId(), Key(getSession().getSecurityContext(), res->c_str()), wait_time);
+      result= user_locks::Locks::getInstance().lock(getSession().getSessionId(), Key(*user_identifier, res->c_str()), wait_time);
     }
     catch(boost::thread_interrupted const& error)
     {
@@ -65,9 +64,6 @@ int64_t GetLock::val_int()
     }
   }
 
-  if (boost::indeterminate(result))
-    null_value= true;
-
   if (result)
   {
     if (not list)
@@ -76,7 +72,7 @@ int64_t GetLock::val_int()
       getSession().setProperty("user_locks", list);
     }
 
-    list->insert(Key(getSession().getSecurityContext(), res->c_str()));
+    list->insert(Key(*user_identifier, res->c_str()));
 
     return 1;
   }

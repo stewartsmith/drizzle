@@ -58,7 +58,7 @@ void StorageEngine::getIdentifiers(Session &session, SchemaIdentifier::vector &s
   std::for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
            AddSchemaNames(schemas));
 
-  plugin::Authorization::pruneSchemaNames(session.getSecurityContext(), schemas);
+  plugin::Authorization::pruneSchemaNames(session.user(), schemas);
 }
 
 class StorageEngineGetSchemaDefinition: public std::unary_function<StorageEngine *, bool>

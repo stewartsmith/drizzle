@@ -23,5 +23,6 @@
 
 #include "drizzled/identifier/schema.h"
 #include "drizzled/identifier/table.h"
+#include "drizzled/identifier/user.h"
 
 #endif /* DRIZZLED_IDENTIFIER_H */

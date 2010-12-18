@@ -663,6 +663,7 @@ bool ClientMySQLProtocol::checkConnection(void)
   uint32_t pkt_len= 0;
   char *end;
   char scramble[SCRAMBLE_LENGTH];
+  identifier::User::shared_ptr user_identifier= identifier::User::make_shared();
 
   makeScramble(scramble);
 
@@ -673,11 +674,11 @@ bool ClientMySQLProtocol::checkConnection(void)
 
     if (drizzleclient_net_peer_addr(&net, ip, &peer_port, NI_MAXHOST))
     {
-      my_error(ER_BAD_HOST_ERROR, MYF(0), session->getSecurityContext().getIp().c_str());
+      my_error(ER_BAD_HOST_ERROR, MYF(0), ip);
       return false;
     }
 
-    session->getSecurityContext().setIp(ip);
+    user_identifier->setAddress(ip);
   }
   drizzleclient_net_keepalive(&net, true);
 
@@ -732,7 +733,7 @@ bool ClientMySQLProtocol::checkConnection(void)
         ||    (pkt_len= drizzleclient_net_read(&net)) == packet_error 
         || pkt_len < MIN_HANDSHAKE_SIZE)
     {
-      my_error(ER_HANDSHAKE_ERROR, MYF(0), session->getSecurityContext().getIp().c_str());
+      my_error(ER_HANDSHAKE_ERROR, MYF(0), user_identifier->address().c_str());
       return false;
     }
   }
@@ -742,7 +743,7 @@ bool ClientMySQLProtocol::checkConnection(void)
   client_capabilities= uint2korr(net.read_pos);
   if (!(client_capabilities & CLIENT_PROTOCOL_MYSQL41))
   {
-    my_error(ER_HANDSHAKE_ERROR, MYF(0), session->getSecurityContext().getIp().c_str());
+    my_error(ER_HANDSHAKE_ERROR, MYF(0), user_identifier->address().c_str());
     return false;
   }
 
@@ -758,7 +759,7 @@ bool ClientMySQLProtocol::checkConnection(void)
 
   if (end >= (char*) net.read_pos + pkt_len + 2)
   {
-    my_error(ER_HANDSHAKE_ERROR, MYF(0), session->getSecurityContext().getIp().c_str());
+    my_error(ER_HANDSHAKE_ERROR, MYF(0), user_identifier->address().c_str());
     return false;
   }
 
@@ -782,12 +783,14 @@ bool ClientMySQLProtocol::checkConnection(void)
     passwd_len= (unsigned char)(*passwd++);
     if (passwd_len > 0)
     {
-      session->getSecurityContext().setPasswordType(SecurityContext::MYSQL_HASH);
-      session->getSecurityContext().setPasswordContext(scramble, SCRAMBLE_LENGTH);
+      user_identifier->setPasswordType(identifier::User::MYSQL_HASH);
+      user_identifier->setPasswordContext(scramble, SCRAMBLE_LENGTH);
     }
   }
   else
+  {
     passwd_len= 0;
+  }
 
   if (client_capabilities & CLIENT_CONNECT_WITH_DB &&
       passwd < (char *) net.read_pos + pkt_len)
@@ -795,14 +798,16 @@ bool ClientMySQLProtocol::checkConnection(void)
     l_db= l_db + passwd_len + 1;
   }
   else
+  {
     l_db= NULL;
+  }
 
   /* strlen() can't be easily deleted without changing client */
   uint32_t db_len= l_db ? strlen(l_db) : 0;
 
   if (passwd + passwd_len + db_len > (char *) net.read_pos + pkt_len)
   {
-    my_error(ER_HANDSHAKE_ERROR, MYF(0), session->getSecurityContext().getIp().c_str());
+    my_error(ER_HANDSHAKE_ERROR, MYF(0), user_identifier->address().c_str());
     return false;
   }
 
@@ -827,7 +832,8 @@ bool ClientMySQLProtocol::checkConnection(void)
     }
   }
 
-  session->getSecurityContext().setUser(user);
+  user_identifier->setUser(user);
+  session->setUser(user_identifier);
 
   return session->checkUser(string(passwd, passwd_len),
                             string(l_db ? l_db : ""));
@@ -836,7 +842,7 @@ bool ClientMySQLProtocol::checkConnection(void)
 
 bool ClientMySQLProtocol::isAdminAllowed(void)
 {
-  if (std::find(mysql_admin_ip_addresses.begin(), mysql_admin_ip_addresses.end(), session->getSecurityContext().getIp()) != mysql_admin_ip_addresses.end())
+  if (std::find(mysql_admin_ip_addresses.begin(), mysql_admin_ip_addresses.end(), session->user()->address()) != mysql_admin_ip_addresses.end())
     return true;
   else
     return false;

@@ -38,12 +38,14 @@ int64_t ReleaseAndWait::val_int()
   }
   null_value= false;
 
+  drizzled::identifier::User::const_shared_ptr user_identifier(getSession().user());
   drizzled::session_id_t id= getSession().getSessionId();
   locks::return_t result;
+
   {
     boost::this_thread::restore_interruption dl(getSession().getThreadInterupt());
     try {
-      result= user_locks::Locks::getInstance().release(Key(getSession().getSecurityContext(), res->c_str()), id, true);
+      result= user_locks::Locks::getInstance().release(Key(*user_identifier, res->c_str()), id, true);
     }
     catch(boost::thread_interrupted const& error)
     {
@@ -60,7 +62,7 @@ int64_t ReleaseAndWait::val_int()
       user_locks::Storable *list= static_cast<user_locks::Storable *>(getSession().getProperty("user_locks"));
       assert(list);
       if (list) // Just in case we ever blow the assert
-        list->erase(Key(getSession().getSecurityContext(), res->c_str()));
+        list->erase(Key(*user_identifier, res->c_str()));
       return 1;
     }
   case locks::NOT_FOUND:

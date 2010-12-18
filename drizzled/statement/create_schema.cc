@@ -76,7 +76,7 @@ bool statement::CreateSchema::check(const SchemaIdentifier &identifier)
   if (not identifier.isValid())
     return false;
 
-  if (not plugin::Authorization::isAuthorized(getSession()->getSecurityContext(), identifier))
+  if (not plugin::Authorization::isAuthorized(getSession()->user(), identifier))
     return false;
 
   if (not is_if_not_exists)

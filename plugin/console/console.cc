@@ -99,7 +99,9 @@ public:
   virtual bool authenticate(void)
   {
     printDebug("authenticate");
-    session->getSecurityContext().setUser(username);
+    identifier::User::shared_ptr user= identifier::User::make_shared();
+    user->setUser(username);
+    session->setUser(user);
     return session->checkUser(password, db);
   }
 

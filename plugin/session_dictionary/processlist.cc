@@ -66,19 +66,19 @@ bool ProcesslistTool::Generator::populate()
   while ((tmp= session_generator))
   {
     drizzled::Session::State::const_shared_ptr state(tmp->state());
-    const SecurityContext *tmp_sctx= &tmp->getSecurityContext();
+    identifier::User::const_shared_ptr tmp_sctx= tmp->user();
 
     /* ID */
     push((int64_t) tmp->thread_id);
 
     /* USER */
-    if (not tmp_sctx->getUser().empty())
-      push(tmp_sctx->getUser());
+    if (not tmp_sctx->username().empty())
+      push(tmp_sctx->username());
     else 
       push(_("no user"));
 
     /* HOST */
-    push(tmp_sctx->getIp());
+    push(tmp_sctx->address());
 
     /* DB */
     drizzled::util::string::const_shared_ptr schema(tmp->schema());
