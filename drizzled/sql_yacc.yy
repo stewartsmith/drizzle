@@ -3598,6 +3598,8 @@ cast_type:
           { $$=ITEM_CAST_CHAR; Lex->dec= 0; }
         | DATE_SYM
           { $$=ITEM_CAST_DATE; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
+        | TIME_SYM
+          { $$=ITEM_CAST_TIME; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
         | DATETIME_SYM
           { $$=ITEM_CAST_DATETIME; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
         | DECIMAL_SYM float_options

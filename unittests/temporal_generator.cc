@@ -157,7 +157,7 @@ drizzled::TemporalFormat *TemporalGenerator::TemporalFormatGen::make_temporal_fo
                                                                   int32_t nsecond_part_index)
 {
   drizzled::TemporalFormat *temporal_format= new drizzled::TemporalFormat(regexp);
-  
+
   temporal_format->set_year_part_index(year_part_index);
   temporal_format->set_month_part_index(month_part_index);
   temporal_format->set_day_part_index(day_part_index);
@@ -171,14 +171,14 @@ drizzled::TemporalFormat *TemporalGenerator::TemporalFormatGen::make_temporal_fo
 }
 
 drizzled::TemporalInterval *TemporalGenerator::TemporalIntervalGen::make_temporal_interval(
-                                                              uint32_t  year,
-                                                              uint32_t  month,
-                                                              uint32_t  day,
-                                                              uint32_t  hour,
-                                                              uint64_t  minute,
-                                                              uint64_t  second,
-                                                              uint64_t  second_part,
-                                                              bool neg)
+                                                                                           uint32_t  year,
+                                                                                           uint32_t  month,
+                                                                                           uint32_t  day,
+                                                                                           uint32_t  hour,
+                                                                                           uint64_t  minute,
+                                                                                           uint64_t  second,
+                                                                                           uint64_t  second_part,
+                                                                                           bool neg)
 {
   drizzled::TemporalInterval *interval= new drizzled::TemporalInterval();
 

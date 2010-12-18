@@ -1020,7 +1020,7 @@ void set_zero_time(DRIZZLE_TIME *tm, enum enum_drizzle_timestamp_type time_type)
     number of characters written to 'to'
 */
 
-static int my_time_to_str(const DRIZZLE_TIME *l_time, char *to)
+int my_time_to_str(const DRIZZLE_TIME *l_time, char *to)
 {
   uint32_t extra_hours= 0;
   return sprintf(to, "%s%02u:%02u:%02u",
