@@ -56,19 +56,17 @@ int Int64::store(const char *from,uint32_t len, const CHARSET_INFO * const cs)
     set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
     error= 1;
   }
-  else if (getTable()->in_use->count_cuted_fields &&
-           check_int(cs, from, len, end, error))
-    error= 1;
-  else
-    error= 0;
-#ifdef WORDS_BIGENDIAN
-  if (getTable()->getShare()->db_low_byte_first)
+  else if (getTable()->in_use->count_cuted_fields && check_int(cs, from, len, end, error))
   {
-    int8store(ptr,tmp);
+    error= 1;
   }
   else
-#endif
-    int64_tstore(ptr,tmp);
+  {
+    error= 0;
+  }
+
+  int64_tstore(ptr,tmp);
+
   return error;
 }
 
@@ -93,37 +91,36 @@ int Int64::store(double nr)
     error= (nr > (double) INT64_MAX);
   }
   else
+  {
     res=(int64_t) nr;
+  }
 
   if (error)
     set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
 
-#ifdef WORDS_BIGENDIAN
-  if (getTable()->getShare()->db_low_byte_first)
-  {
-    int8store(ptr,res);
-  }
-  else
-#endif
-    int64_tstore(ptr,res);
+  int64_tstore(ptr, res);
+
   return error;
 }
 
 
-int Int64::store(int64_t nr, bool )
+int Int64::store(int64_t nr, bool arg)
 {
   int error= 0;
+  (void)arg;
 
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
-#ifdef WORDS_BIGENDIAN
-  if (getTable()->getShare()->db_low_byte_first)
+#if 0
+  if (arg and (nr < 0)) // Only a partial fix for overflow
   {
-    int8store(ptr,nr);
+    set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+    error= 1;
   }
-  else
 #endif
-    int64_tstore(ptr,nr);
+
+  int64_tstore(ptr,nr);
+
   return error;
 }
 
@@ -134,15 +131,9 @@ double Int64::val_real(void)
 
   ASSERT_COLUMN_MARKED_FOR_READ;
 
-#ifdef WORDS_BIGENDIAN
-  if (getTable()->getShare()->db_low_byte_first)
-  {
-    j=sint8korr(ptr);
-  }
-  else
-#endif
-    int64_tget(j,ptr);
+  int64_tget(j,ptr);
   /* The following is open coded to avoid a bug in gcc 3.3 */
+
   return (double) j;
 }
 
@@ -153,18 +144,13 @@ int64_t Int64::val_int(void)
 
   ASSERT_COLUMN_MARKED_FOR_READ;
 
-#ifdef WORDS_BIGENDIAN
-  if (getTable()->getShare()->db_low_byte_first)
-    j=sint8korr(ptr);
-  else
-#endif
-    int64_tget(j,ptr);
+  int64_tget(j,ptr);
+
   return j;
 }
 
 
-String *Int64::val_str(String *val_buffer,
-                       String *)
+String *Int64::val_str(String *val_buffer, String *)
 {
   const CHARSET_INFO * const cs= &my_charset_bin;
   uint32_t length;
@@ -175,12 +161,7 @@ String *Int64::val_str(String *val_buffer,
 
   ASSERT_COLUMN_MARKED_FOR_READ;
 
-#ifdef WORDS_BIGENDIAN
-  if (getTable()->getShare()->db_low_byte_first)
-    j=sint8korr(ptr);
-  else
-#endif
-    int64_tget(j,ptr);
+  int64_tget(j,ptr);
 
   length=(uint32_t) (cs->cset->int64_t10_to_str)(cs,to,mlength, -10, j);
   val_buffer->length(length);
@@ -191,25 +172,16 @@ String *Int64::val_str(String *val_buffer,
 int Int64::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   int64_t a,b;
-#ifdef WORDS_BIGENDIAN
-  if (getTable()->getShare()->db_low_byte_first)
-  {
-    a=sint8korr(a_ptr);
-    b=sint8korr(b_ptr);
-  }
-  else
-#endif
-  {
-    int64_tget(a,a_ptr);
-    int64_tget(b,b_ptr);
-  }
+
+  int64_tget(a,a_ptr);
+  int64_tget(b,b_ptr);
+
   return (a < b) ? -1 : (a > b) ? 1 : 0;
 }
 
 void Int64::sort_string(unsigned char *to,uint32_t )
 {
 #ifdef WORDS_BIGENDIAN
-  if (!getTable()->getShare()->db_low_byte_first)
   {
     to[0] = (char) (ptr[0] ^ 128);		/* Revers signbit */
     to[1]   = ptr[1];
@@ -220,8 +192,7 @@ void Int64::sort_string(unsigned char *to,uint32_t )
     to[6]   = ptr[6];
     to[7]   = ptr[7];
   }
-  else
-#endif
+#else
   {
     to[0] = (char) (ptr[7] ^ 128);		/* Revers signbit */
     to[1]   = ptr[6];
@@ -232,6 +203,7 @@ void Int64::sort_string(unsigned char *to,uint32_t )
     to[6]   = ptr[1];
     to[7]   = ptr[0];
   }
+#endif
 }
 
 
@@ -242,55 +214,24 @@ void Int64::sql_type(String &res) const
 }
 
 
-unsigned char *Int64::pack(unsigned char* to, const unsigned char *from,
-                           uint32_t,
-#ifdef WORDS_BIGENDIAN
-                           bool low_byte_first
-#else
-                           bool
-#endif
-                          )
+unsigned char *Int64::pack(unsigned char* to, const unsigned char *from, uint32_t, bool)
 {
   int64_t val;
-#ifdef WORDS_BIGENDIAN
-  if (getTable()->getShare()->db_low_byte_first)
-    val = sint8korr(from);
-  else
-#endif
-    int64_tget(val, from);
 
-#ifdef WORDS_BIGENDIAN
-  if (low_byte_first)
-    int8store(to, val);
-  else
-#endif
-    int64_tstore(to, val);
+  int64_tget(val, from);
+  int64_tstore(to, val);
+
   return to + sizeof(val);
 }
 
 
-const unsigned char *Int64::unpack(unsigned char* to, const unsigned char *from, uint32_t,
-#ifdef WORDS_BIGENDIAN
-                                   bool low_byte_first
-#else
-                                   bool
-#endif
-                                  )
+const unsigned char *Int64::unpack(unsigned char* to, const unsigned char *from, uint32_t, bool)
 {
   int64_t val;
-#ifdef WORDS_BIGENDIAN
-  if (low_byte_first)
-    val = sint8korr(from);
-  else
-#endif
-    int64_tget(val, from);
 
-#ifdef WORDS_BIGENDIAN
-  if (getTable()->getShare()->db_low_byte_first)
-    int8store(to, val);
-  else
-#endif
-    int64_tstore(to, val);
+  int64_tget(val, from);
+  int64_tstore(to, val);
+
   return from + sizeof(val);
 }
 
