@@ -9,7 +9,7 @@ Using transactions
    rollback 
    savepoints
 
-Drizzle is a transactional database by default and by design, meaning that changes and queries to the database appear to be Atomic, Consistent, Isolated, and Durable (ACID). This means that Drizzle implements `serializable <http://en.wikipedia.org/wiki/Serializability>`_, ACID transactions, even if the transaction is interrupted. Interruptions could include a program crash, an operating system failure, or loss of power to a computer. 
+The essence of a transaction is that it groups multiple steps into a single, all-or-nothing operation. Drizzle is a transactional database by default and by design, meaning that changes and queries to the database appear to be Atomic, Consistent, Isolated, and Durable (ACID). This means that Drizzle implements `serializable <http://en.wikipedia.org/wiki/Serializability>`_, ACID transactions, even if the transaction is interrupted.
 
 It collects operations that form tasks and stores them as a single operation, or if that operation is not possible it removes all changes attempted. Transactions are controlled via START TRANSACTION, ROLLBACK, and COMMIT. Savepoints are implemented to allow for a low leverl of granulairty.
 
