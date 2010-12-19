@@ -242,7 +242,7 @@ static enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_ty
   case message::Table::Field::DOUBLE:
     field_type= DRIZZLE_TYPE_DOUBLE;
     break;
-  case message::Table::Field::TIMESTAMP:
+  case message::Table::Field::EPOCH:
     field_type= DRIZZLE_TYPE_TIMESTAMP;
     break;
   case message::Table::Field::BIGINT:

@@ -340,7 +340,7 @@ statement {
       }
       field {
         name: "d"
-        type: TIMESTAMP
+        type: EPOCH
         constraints {
           is_nullable: false
         }
@@ -450,7 +450,7 @@ statement {
       }
       field {
         name: "d"
-        type: TIMESTAMP
+        type: EPOCH
         options {
           default_null: true
         }
@@ -553,7 +553,7 @@ statement {
       }
       field {
         name: "d"
-        type: TIMESTAMP
+        type: EPOCH
         options {
           default_null: true
         }
@@ -681,7 +681,7 @@ statement {
       }
       field {
         name: "d"
-        type: TIMESTAMP
+        type: EPOCH
         options {
           default_null: true
         }
@@ -1797,7 +1797,7 @@ statement {
       }
       field {
         name: "null_timestamp_field"
-        type: TIMESTAMP
+        type: EPOCH
         options {
           default_null: true
         }
@@ -1807,7 +1807,7 @@ statement {
       }
       field {
         name: "not_null_timestamp_field"
-        type: TIMESTAMP
+        type: EPOCH
         constraints {
           is_nullable: false
         }

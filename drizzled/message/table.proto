@@ -74,7 +74,7 @@ message Table {
       BIGINT = 5;
       DECIMAL = 6;
       DATE = 7;
-      TIMESTAMP = 9;
+      EPOCH = 9;
       DATETIME = 10;
       UUID = 11;
       TIME = 12;

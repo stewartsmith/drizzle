@@ -1620,7 +1620,7 @@ type:
               (statement::CreateTable *)Lex->statement;
 
             if (statement->current_proto_field)
-              statement->current_proto_field->set_type(message::Table::Field::TIMESTAMP);
+              statement->current_proto_field->set_type(message::Table::Field::EPOCH);
           }
           | DATETIME_SYM
           {
