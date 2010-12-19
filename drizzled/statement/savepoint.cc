@@ -19,9 +19,9 @@
  */
 
 #include "config.h"
-#include <drizzled/show.h>
-#include <drizzled/session.h>
-#include <drizzled/statement/savepoint.h>
+#include "drizzled/show.h"
+#include "drizzled/session.h"
+#include "drizzled/statement/savepoint.h"
 #include "drizzled/transaction_services.h"
 #include "drizzled/named_savepoint.h"
 
@@ -37,10 +37,26 @@ bool statement::Savepoint::execute()
 {
   if (! (session->options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)))
   {
+    /* AUTOCOMMIT is on and not in a BEGIN */
     session->my_ok();
   }
   else
   {
+    /*
+     * If AUTOCOMMIT is off and resource contexts are empty then we need
+     * to start a transaction. It will be empty when SAVEPOINT starts the
+     * transaction. Table affecting statements do this work in lockTables()
+     * by calling startStatement().
+     */
+    if ( (session->options & OPTION_NOT_AUTOCOMMIT) &&
+         (session->transaction.all.getResourceContexts().empty() == true) )
+    {
+      if (session->startTransaction() == false)
+      {
+        return false;
+      }
+    }
+
     /*
      * Look through the savepoints.  If we find one with
      * the same name, delete it.
