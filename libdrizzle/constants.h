@@ -298,6 +298,7 @@ typedef enum
  */
 typedef enum
 {
+  DRIZZLE_QUERY_NONE,
   DRIZZLE_QUERY_ALLOCATED= (1 << 0)
 } drizzle_query_options_t;
 

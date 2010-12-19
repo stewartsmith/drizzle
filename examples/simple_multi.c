@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
     }
 
     if (drizzle_query_add(&drizzle, &(ql[x]), &(con[x]), &(result[x]), query,
-                          strlen(query), 0, NULL) == NULL)
+                          strlen(query), DRIZZLE_QUERY_NONE, NULL) == NULL)
     {
       printf("drizzle_query_add:%s\n", drizzle_error(&drizzle));
       return 1;
