@@ -37,6 +37,7 @@ ColumnsTool::ColumnsTool() :
   add_field("COLUMN_DEFAULT", plugin::TableFunction::VARBINARY, 65535, true);
   add_field("COLUMN_DEFAULT_IS_NULL", plugin::TableFunction::BOOLEAN, 0, false);
   add_field("COLUMN_DEFAULT_UPDATE");
+  add_field("IS_SIGNED", plugin::TableFunction::BOOLEAN, 0, true);
   add_field("IS_AUTO_INCREMENT", plugin::TableFunction::BOOLEAN, 0, false);
   add_field("IS_NULLABLE", plugin::TableFunction::BOOLEAN, 0, false);
   add_field("IS_INDEXED", plugin::TableFunction::BOOLEAN, 0, false);
@@ -46,10 +47,7 @@ ColumnsTool::ColumnsTool() :
   add_field("IS_FIRST_IN_MULTI", plugin::TableFunction::BOOLEAN, 0, false);
   add_field("INDEXES_FOUND_IN", plugin::TableFunction::NUMBER, 0, false);
   add_field("DATA_TYPE");
-#if 0
   add_field("DATA_ARCHETYPE");
-#endif
-
   add_field("CHARACTER_MAXIMUM_LENGTH", plugin::TableFunction::NUMBER);
   add_field("CHARACTER_OCTET_LENGTH", plugin::TableFunction::NUMBER);
   add_field("NUMERIC_PRECISION", plugin::TableFunction::NUMBER);
@@ -118,6 +116,16 @@ bool ColumnsTool::Generator::populate()
     /* COLUMN_DEFAULT_UPDATE */
     push(column.options().update_expression());
 
+    /* IS_SIGNED */
+    if (drizzled::message::is_numeric(column))
+    {
+      push(true);
+    }
+    else 
+    {
+      push();
+    }
+
     /* IS_AUTO_INCREMENT */
     push(column.numeric_options().is_autoincrement());
 
@@ -171,10 +179,8 @@ bool ColumnsTool::Generator::populate()
     /* DATA_TYPE <-- display the type that the user is going to expect, which is not the same as the type we store internally */
     push(drizzled::message::type(column));
 
-#if 0
     /* DATA_ARCHETYPE */
     push(drizzled::message::type(column.type()));
-#endif
 
     /* "CHARACTER_MAXIMUM_LENGTH" */
     push(static_cast<int64_t>(column.string_options().length()));

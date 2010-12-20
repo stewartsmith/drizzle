@@ -123,6 +123,31 @@ void update(drizzled::message::Table &arg)
   arg.set_update_timestamp(time(NULL));
 }
 
+bool is_numeric(const message::Table::Field &field)
+{
+  message::Table::Field::FieldType type= field.type();
+
+  switch (type)
+  {
+  case message::Table::Field::DOUBLE:
+  case message::Table::Field::INTEGER:
+  case message::Table::Field::BIGINT:
+  case message::Table::Field::DECIMAL:
+    return true;
+  case message::Table::Field::BLOB:
+  case message::Table::Field::VARCHAR:
+  case message::Table::Field::ENUM:
+  case message::Table::Field::DATE:
+  case message::Table::Field::EPOCH:
+  case message::Table::Field::DATETIME:
+  case message::Table::Field::TIME:
+  case message::Table::Field::UUID:
+    break;
+  }
+
+  return false;
+}
+
 const std::string &type(const message::Table::Field &field)
 {
   message::Table::Field::FieldType type= field.type();

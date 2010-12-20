@@ -46,7 +46,7 @@ ProcesslistTool::ProcesslistTool() :
   add_field("TIME", plugin::TableFunction::NUMBER, 0, false);
   add_field("STATE", plugin::TableFunction::STRING, 256, true);
   add_field("INFO", plugin::TableFunction::STRING, PROCESS_LIST_WIDTH, true);
-  add_field("HAS_GLOBAL_LOCK", plugin::TableFunction::BOOLEAN);
+  add_field("HAS_GLOBAL_LOCK", plugin::TableFunction::BOOLEAN, 0, false);
 }
 
 ProcesslistTool::Generator::Generator(Field **arg) :
