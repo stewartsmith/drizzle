@@ -405,6 +405,9 @@ typedef unsigned long long int	ullint;
 /** The generic InnoDB system object identifier data type */
 typedef ib_uint64_t	ib_id_t;
 
+/* THe 'undefined' value for ullint */
+#define ULLINT_UNDEFINED        ((ullint)(-1))
+
 /* This 'ibool' type is used within Innobase. Remember that different included
 headers may define 'bool' differently. Do not assume that 'bool' is a ulint! */
 #define ibool			ulint

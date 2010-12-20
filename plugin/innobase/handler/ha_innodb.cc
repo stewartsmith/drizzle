@@ -7246,19 +7246,11 @@ ha_innobase::info(
          innodb_crash_recovery is set to a high value. */
       stats.delete_length = 0;
     } else {
-      /* lock the data dictionary to avoid races with
-      ibd_file_missing and tablespace_discarded */
-      row_mysql_lock_data_dictionary(prebuilt->trx);
+      ullint	avail_space;
 
-      /* ib_table->space must be an existent tablespace */
-      if (!ib_table->ibd_file_missing
-          && !ib_table->tablespace_discarded) {
+      avail_space = fsp_get_available_space_in_free_extents(ib_table->space);
 
-        stats.delete_length =
-          fsp_get_available_space_in_free_extents(
-            ib_table->space) * 1024;
-      } else {
-
+      if (avail_space == ULLINT_UNDEFINED) {
         Session*  session;
 
         session= getTable()->in_use;
@@ -7276,9 +7268,9 @@ ha_innobase::info(
           ib_table->name);
 
         stats.delete_length = 0;
+      } else {
+        stats.delete_length = avail_space * 1024;
       }
-
-      row_mysql_unlock_data_dictionary(prebuilt->trx);
     }
 
     stats.check_time = 0;
