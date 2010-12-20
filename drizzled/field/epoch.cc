@@ -20,7 +20,7 @@
 
 #include "config.h"
 #include <boost/lexical_cast.hpp>
-#include <drizzled/field/timestamp.h>
+#include <drizzled/field/epoch.h>
 #include <drizzled/error.h>
 #include <drizzled/tztime.h>
 #include <drizzled/table.h>
@@ -33,6 +33,9 @@
 #include "drizzled/temporal.h"
 
 namespace drizzled
+{
+
+namespace field
 {
 
 /**
@@ -78,20 +81,20 @@ namespace drizzled
   course is non-standard.) In most cases user won't notice any change, only
   exception is different behavior of old/new timestamps during ALTER TABLE.
  */
-Field_timestamp::Field_timestamp(unsigned char *ptr_arg,
-                                 uint32_t,
-                                 unsigned char *null_ptr_arg,
-                                 unsigned char null_bit_arg,
-                                 enum utype unireg_check_arg,
-                                 const char *field_name_arg,
-                                 TableShare *share,
-                                 const CHARSET_INFO * const cs)
-  :Field_str(ptr_arg,
-             DateTime::MAX_STRING_LENGTH - 1 /* no \0 */,
-             null_ptr_arg,
-             null_bit_arg,
-             field_name_arg,
-             cs)
+  Epoch::Epoch(unsigned char *ptr_arg,
+               uint32_t,
+               unsigned char *null_ptr_arg,
+               unsigned char null_bit_arg,
+               enum utype unireg_check_arg,
+               const char *field_name_arg,
+               drizzled::TableShare *share,
+               const drizzled::CHARSET_INFO * const cs) :
+  Field_str(ptr_arg,
+            DateTime::MAX_STRING_LENGTH - 1 /* no \0 */,
+            null_ptr_arg,
+            null_bit_arg,
+            field_name_arg,
+            cs)
 {
   /* For 4.0 MYD and 4.0 InnoDB compatibility */
   flags|= UNSIGNED_FLAG;
@@ -106,15 +109,15 @@ Field_timestamp::Field_timestamp(unsigned char *ptr_arg,
   }
 }
 
-Field_timestamp::Field_timestamp(bool maybe_null_arg,
-                                 const char *field_name_arg,
-                                 const CHARSET_INFO * const cs)
-  :Field_str((unsigned char*) NULL,
-             DateTime::MAX_STRING_LENGTH - 1 /* no \0 */,
-             maybe_null_arg ? (unsigned char*) "": 0,
-             0,
-             field_name_arg,
-             cs)
+Epoch::Epoch(bool maybe_null_arg,
+             const char *field_name_arg,
+             const CHARSET_INFO * const cs) :
+  Field_str((unsigned char*) NULL,
+            DateTime::MAX_STRING_LENGTH - 1 /* no \0 */,
+            maybe_null_arg ? (unsigned char*) "": 0,
+            0,
+            field_name_arg,
+            cs)
 {
   /* For 4.0 MYD and 4.0 InnoDB compatibility */
   flags|= UNSIGNED_FLAG;
@@ -128,7 +131,7 @@ Field_timestamp::Field_timestamp(bool maybe_null_arg,
   Returns value indicating during which operations this TIMESTAMP field
   should be auto-set to current timestamp.
 */
-timestamp_auto_set_type Field_timestamp::get_auto_set_type() const
+timestamp_auto_set_type Epoch::get_auto_set_type() const
 {
   switch (unireg_check)
   {
@@ -156,7 +159,7 @@ timestamp_auto_set_type Field_timestamp::get_auto_set_type() const
   }
 }
 
-int Field_timestamp::store(const char *from,
+int Epoch::store(const char *from,
                            uint32_t len,
                            const CHARSET_INFO * const )
 {
@@ -164,20 +167,20 @@ int Field_timestamp::store(const char *from,
 
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
-  if (! temporal.from_string(from, (size_t) len))
+  if (not temporal.from_string(from, (size_t) len))
   {
     my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(ME_FATALERROR), from);
     return 1;
   }
 
-  time_t tmp;
-  temporal.to_time_t(&tmp);
+  uint64_t tmp;
+  temporal.to_time_t((time_t*)&tmp);
 
-  store_timestamp(tmp);
+  pack_num(tmp);
   return 0;
 }
 
-int Field_timestamp::store(double from)
+int Epoch::store(double from)
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
@@ -193,10 +196,10 @@ int Field_timestamp::store(double from)
     my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(ME_FATALERROR), tmp.c_str());
     return 2;
   }
-  return Field_timestamp::store((int64_t) rint(from), false);
+  return Epoch::store((int64_t) rint(from), false);
 }
 
-int Field_timestamp::store(int64_t from, bool)
+int Epoch::store(int64_t from, bool)
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
@@ -214,30 +217,26 @@ int Field_timestamp::store(int64_t from, bool)
     return 2;
   }
 
-  time_t tmp;
-  temporal.to_time_t(&tmp);
+  uint64_t tmp;
+  temporal.to_time_t((time_t*)&tmp);
 
-  store_timestamp(tmp);
+  pack_num(tmp);
+
   return 0;
 }
 
-double Field_timestamp::val_real(void)
+double Epoch::val_real(void)
 {
-  return (double) Field_timestamp::val_int();
+  return (double) Epoch::val_int();
 }
 
-int64_t Field_timestamp::val_int(void)
+int64_t Epoch::val_int(void)
 {
   uint64_t temp;
 
   ASSERT_COLUMN_MARKED_FOR_READ;
 
-#ifdef WORDS_BIGENDIAN
-  if (getTable() && getTable()->getShare()->db_low_byte_first)
-    temp= uint8korr(ptr);
-  else
-#endif
-    int64_tget(temp, ptr);
+  unpack_num(temp);
 
   Timestamp temporal;
   (void) temporal.from_time_t((time_t) temp);
@@ -248,21 +247,16 @@ int64_t Field_timestamp::val_int(void)
   return result;
 }
 
-String *Field_timestamp::val_str(String *val_buffer, String *)
+String *Epoch::val_str(String *val_buffer, String *)
 {
-  uint64_t temp;
+  uint64_t temp= 0;
   char *to;
   int to_len= field_length + 1;
 
   val_buffer->alloc(to_len);
   to= (char *) val_buffer->ptr();
 
-#ifdef WORDS_BIGENDIAN
-  if (getTable() && getTable()->getShare()->db_low_byte_first)
-    temp= uint8korr(ptr);
-  else
-#endif
-    int64_tget(temp, ptr);
+  unpack_num(temp);
 
   val_buffer->set_charset(&my_charset_bin);	/* Safety */
 
@@ -277,16 +271,11 @@ String *Field_timestamp::val_str(String *val_buffer, String *)
   return val_buffer;
 }
 
-bool Field_timestamp::get_date(DRIZZLE_TIME *ltime, uint32_t)
+bool Epoch::get_date(DRIZZLE_TIME *ltime, uint32_t)
 {
   uint64_t temp;
 
-#ifdef WORDS_BIGENDIAN
-  if (getTable() && getTable()->getShare()->db_low_byte_first)
-    temp= uint8korr(ptr);
-  else
-#endif
-    int64_tget(temp, ptr);
+  unpack_num(temp);
   
   memset(ltime, 0, sizeof(*ltime));
 
@@ -306,31 +295,23 @@ bool Field_timestamp::get_date(DRIZZLE_TIME *ltime, uint32_t)
   return 0;
 }
 
-bool Field_timestamp::get_time(DRIZZLE_TIME *ltime)
+bool Epoch::get_time(DRIZZLE_TIME *ltime)
 {
-  return Field_timestamp::get_date(ltime,0);
+  return Epoch::get_date(ltime,0);
 }
 
-int Field_timestamp::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
+int Epoch::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
-  int64_t a,b;
-#ifdef WORDS_BIGENDIAN
-  if (getTable() && getTable()->getShare()->db_low_byte_first)
-  {
-    a=sint8korr(a_ptr);
-    b=sint8korr(b_ptr);
-  }
-  else
-#endif
-  {
-    int64_tget(a, a_ptr);
-    int64_tget(b, b_ptr);
-  }
-  return ((uint64_t) a < (uint64_t) b) ? -1 : ((uint64_t) a > (uint64_t) b) ? 1 : 0;
+  uint64_t a,b;
+
+  unpack_num(a, a_ptr);
+  unpack_num(b, b_ptr);
+
+  return (a < b) ? -1 : (a > b) ? 1 : 0;
 }
 
 
-void Field_timestamp::sort_string(unsigned char *to,uint32_t )
+void Epoch::sort_string(unsigned char *to,uint32_t )
 {
 #ifdef WORDS_BIGENDIAN
   if (!getTable() || !getTable()->getShare()->db_low_byte_first)
@@ -358,51 +339,45 @@ void Field_timestamp::sort_string(unsigned char *to,uint32_t )
   }
 }
 
-void Field_timestamp::sql_type(String &res) const
+void Epoch::sql_type(String &res) const
 {
   res.set_ascii(STRING_WITH_LEN("timestamp"));
 }
 
-void Field_timestamp::set_time()
+void Epoch::set_time()
 {
   Session *session= getTable() ? getTable()->in_use : current_session;
   time_t tmp= session->query_start();
   set_notnull();
-  store_timestamp(tmp);
+  pack_num(tmp);
 }
 
-void Field_timestamp::set_default()
+void Epoch::set_default()
 {
   if (getTable()->timestamp_field == this &&
       unireg_check != TIMESTAMP_UN_FIELD)
+  {
     set_time();
+  }
   else
+  {
     Field::set_default();
+  }
 }
 
-long Field_timestamp::get_timestamp(bool *null_value)
+long Epoch::get_timestamp(bool *null_value)
 {
   if ((*null_value= is_null()))
     return 0;
-#ifdef WORDS_BIGENDIAN
-  if (getTable() && getTable()->getShare()->db_low_byte_first)
-    return sint8korr(ptr);
-#endif
-  int64_t tmp;
-  int64_tget(tmp, ptr);
-  return tmp;
+
+  uint64_t tmp;
+  return unpack_num(tmp);
 }
 
-void Field_timestamp::store_timestamp(int64_t timestamp)
+size_t Epoch::max_string_length()
 {
-#ifdef WORDS_BIGENDIAN
-  if (getTable() && getTable()->getShare()->db_low_byte_first)
-  {
-    int8store(ptr, timestamp);
-  }
-  else
-#endif
-    int64_tstore(ptr, timestamp);
+  return sizeof(uint64_t);
 }
 
+} /* namespace field */
 } /* namespace drizzled */

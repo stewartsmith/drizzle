@@ -85,13 +85,14 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/field/decimal.h \
 			      drizzled/field/double.h \
 			      drizzled/field/enum.h \
+			      drizzled/field/epoch.h \
 			      drizzled/field/int32.h \
 			      drizzled/field/int64.h \
 			      drizzled/field/null.h \
 			      drizzled/field/num.h \
 			      drizzled/field/real.h \
 			      drizzled/field/str.h \
-			      drizzled/field/timestamp.h \
+			      drizzled/field/time.h \
 			      drizzled/field/varstring.h \
 			      drizzled/field/uuid.h \
 			      drizzled/field/uuid_st.h \
@@ -102,6 +103,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/foreign_key.h \
 			      drizzled/function_container.h \
 			      drizzled/function/additive_op.h \
+			      drizzled/function/cast/time.h \
 			      drizzled/function/field.h \
 			      drizzled/function/find_in_set.h \
 			      drizzled/function/found_rows.h \
@@ -486,7 +488,6 @@ drizzled_drizzled_DEPENDENCIES= \
                                       $(pandora_plugin_libs)
 
 drizzled_drizzled_SOURCES= \
-			   drizzled/main.cc \
 			   drizzled/alter_info.cc \
 			   drizzled/cached_item.cc \
 			   drizzled/check_stack_overrun.cc \
@@ -498,8 +499,8 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/definition/cache.cc \
 			   drizzled/definition/table.cc \
 			   drizzled/diagnostics_area.cc \
-			   drizzled/drizzle_time.cc \
 			   drizzled/display.cc \
+			   drizzled/drizzle_time.cc \
 			   drizzled/drizzled.cc \
 			   drizzled/dtcollation.cc \
 			   drizzled/errmsg_print.cc \
@@ -511,22 +512,23 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/field/decimal.cc \
 			   drizzled/field/double.cc \
 			   drizzled/field/enum.cc \
+			   drizzled/field/epoch.cc \
 			   drizzled/field/int32.cc \
 			   drizzled/field/int64.cc \
 			   drizzled/field/null.cc \
 			   drizzled/field/num.cc \
 			   drizzled/field/real.cc \
 			   drizzled/field/str.cc \
-			   drizzled/field/timestamp.cc \
-			   drizzled/field/varstring.cc \
+			   drizzled/field/time.cc \
 			   drizzled/field/uuid.cc \
+			   drizzled/field/varstring.cc \
 			   drizzled/field_conv.cc \
 			   drizzled/field_iterator.cc \
 			   drizzled/file_exchange.cc \
 			   drizzled/filesort.cc \
 			   drizzled/foreign_key.cc \
-			   drizzled/function_container.cc \
 			   drizzled/function/additive_op.cc \
+			   drizzled/function/cast/time.cc \
 			   drizzled/function/field.cc \
 			   drizzled/function/find_in_set.cc \
 			   drizzled/function/found_rows.cc \
@@ -606,6 +608,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/function/time/year.cc \
 			   drizzled/function/units.cc \
 			   drizzled/function/user_var_as_out_param.cc \
+			   drizzled/function_container.cc \
 			   drizzled/generator/all_fields.cc \
 			   drizzled/generator/all_foreign_keys.cc \
 			   drizzled/generator/all_indexes.cc \
@@ -664,6 +667,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/lock.cc \
 			   drizzled/locking/global.cc \
 			   drizzled/lookup_symbol.cc \
+			   drizzled/main.cc \
 			   drizzled/message.cc \
 			   drizzled/message/cache.cc \
 			   drizzled/module/context.cc \

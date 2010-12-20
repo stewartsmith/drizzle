@@ -34,8 +34,8 @@ TableConstraints::TableConstraints() :
   add_field("TABLE_SCHEMA");
   add_field("TABLE_NAME");
   add_field("CONSTRAINT_TYPE");
-  add_field("IS_DEFERRABLE", plugin::TableFunction::BOOLEAN, 0, true);
-  add_field("INITIALLY_DEFERRED", plugin::TableFunction::BOOLEAN, 0, true);
+  add_field("IS_DEFERRABLE", plugin::TableFunction::BOOLEAN, 0, false);
+  add_field("INITIALLY_DEFERRED", plugin::TableFunction::BOOLEAN, 0, false);
 }
 
 TableConstraints::Generator::Generator(drizzled::Field **arg) :
@@ -83,12 +83,18 @@ bool TableConstraints::Generator::populate()
 
         /* CONSTRAINT_TYPE */
         if (index.is_primary())
+        {
           push("PRIMARY KEY");
+        }
         else if (index.is_unique())
+        {
           push("UNIQUE");
+        }
         else
+        {
           assert(0);
-
+          push("UNIQUE");
+        }
 
         /* IS_DEFERRABLE */
         push(false);

@@ -60,7 +60,6 @@ St, Fifth Floor, Boston, MA 02110-1301 USA
 #include "drizzled/table.h"
 #include "drizzled/field/blob.h"
 #include "drizzled/field/varstring.h"
-#include "drizzled/field/timestamp.h"
 #include "drizzled/plugin/xa_storage_engine.h"
 #include "drizzled/plugin/daemon.h"
 #include "drizzled/memory/multi_malloc.h"
@@ -3853,6 +3852,7 @@ get_innobase_type_from_mysql_type(
   case DRIZZLE_TYPE_LONG:
   case DRIZZLE_TYPE_LONGLONG:
   case DRIZZLE_TYPE_DATETIME:
+  case DRIZZLE_TYPE_TIME:
   case DRIZZLE_TYPE_DATE:
   case DRIZZLE_TYPE_TIMESTAMP:
   case DRIZZLE_TYPE_ENUM:

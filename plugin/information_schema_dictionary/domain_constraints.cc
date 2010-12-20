@@ -33,8 +33,8 @@ DomainConstraints::DomainConstraints() :
   add_field("DOMAIN_CATALOG");
   add_field("DOMAIN_SCHEMA");
   add_field("DOMAIN_NAME");
-  add_field("IS_DEFERRABLE");
-  add_field("INITIALLY_DEFERRED");
+  add_field("IS_DEFERRABLE", plugin::TableFunction::BOOLEAN, 0, false);
+  add_field("INITIALLY_DEFERRED", plugin::TableFunction::BOOLEAN, 0, false);
 }
 
 void DomainConstraints::Generator::fill()

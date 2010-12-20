@@ -44,7 +44,8 @@
 #include "drizzled/field/int32.h"
 #include "drizzled/field/int64.h"
 #include "drizzled/field/num.h"
-#include "drizzled/field/timestamp.h"
+#include "drizzled/field/time.h"
+#include "drizzled/field/epoch.h"
 #include "drizzled/field/datetime.h"
 #include "drizzled/field/varstring.h"
 #include "drizzled/internal/m_string.h"
@@ -1059,6 +1060,7 @@ bool Item::is_datetime()
 {
   switch (field_type())
   {
+    case DRIZZLE_TYPE_TIME:
     case DRIZZLE_TYPE_DATE:
     case DRIZZLE_TYPE_DATETIME:
     case DRIZZLE_TYPE_TIMESTAMP:
@@ -1192,10 +1194,13 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool)
     field= new Field_date(maybe_null, name, &my_charset_bin);
     break;
   case DRIZZLE_TYPE_TIMESTAMP:
-    field= new Field_timestamp(maybe_null, name, &my_charset_bin);
+    field= new field::Epoch(maybe_null, name, &my_charset_bin);
     break;
   case DRIZZLE_TYPE_DATETIME:
     field= new Field_datetime(maybe_null, name, &my_charset_bin);
+    break;
+  case DRIZZLE_TYPE_TIME:
+    field= new field::Time(maybe_null, name, &my_charset_bin);
     break;
   case DRIZZLE_TYPE_UUID:
   case DRIZZLE_TYPE_ENUM:
@@ -1380,6 +1385,14 @@ bool Item::send(plugin::Client *client, String *buffer)
       double nr= val_real();
       if (!null_value)
         result= client->store(nr, decimals, buffer);
+      break;
+    }
+  case DRIZZLE_TYPE_TIME:
+    {
+      DRIZZLE_TIME tm;
+      get_time(&tm);
+      if (not null_value)
+        result= client->store(&tm);
       break;
     }
   case DRIZZLE_TYPE_DATETIME:
@@ -1609,6 +1622,7 @@ static Field *create_tmp_field_from_item(Session *,
       To preserve type they needed to be handled separately.
     */
     if ((type= item->field_type()) == DRIZZLE_TYPE_DATETIME ||
+        type == DRIZZLE_TYPE_TIME ||
         type == DRIZZLE_TYPE_DATE ||
         type == DRIZZLE_TYPE_TIMESTAMP)
     {

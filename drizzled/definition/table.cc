@@ -73,7 +73,8 @@
 #include "drizzled/field/int32.h"
 #include "drizzled/field/int64.h"
 #include "drizzled/field/num.h"
-#include "drizzled/field/timestamp.h"
+#include "drizzled/field/time.h"
+#include "drizzled/field/epoch.h"
 #include "drizzled/field/datetime.h"
 #include "drizzled/field/varstring.h"
 #include "drizzled/field/uuid.h"
@@ -241,7 +242,7 @@ static enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_ty
   case message::Table::Field::DOUBLE:
     field_type= DRIZZLE_TYPE_DOUBLE;
     break;
-  case message::Table::Field::TIMESTAMP:
+  case message::Table::Field::EPOCH:
     field_type= DRIZZLE_TYPE_TIMESTAMP;
     break;
   case message::Table::Field::BIGINT:
@@ -267,6 +268,9 @@ static enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_ty
     break;
   case message::Table::Field::UUID:
     field_type= DRIZZLE_TYPE_UUID;
+    break;
+  case message::Table::Field::TIME:
+    field_type= DRIZZLE_TYPE_TIME;
     break;
   default:
     assert(0);
@@ -308,6 +312,7 @@ static Item *default_value_item(enum_field_types field_type,
     abort();
   case DRIZZLE_TYPE_TIMESTAMP:
   case DRIZZLE_TYPE_DATETIME:
+  case DRIZZLE_TYPE_TIME:
   case DRIZZLE_TYPE_DATE:
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_UUID:
@@ -1235,6 +1240,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
     uint32_t field_length= 0; //Assignment is for compiler complaint.
 
+    // We set field_length in this loop.
     switch (field_type)
     {
     case DRIZZLE_TYPE_BLOB:
@@ -1280,7 +1286,6 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
                                                      false);
         break;
       }
-    case DRIZZLE_TYPE_TIMESTAMP:
     case DRIZZLE_TYPE_DATETIME:
       field_length= DateTime::MAX_STRING_LENGTH;
       break;
@@ -1318,11 +1323,17 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     case DRIZZLE_TYPE_UUID:
       field_length= field::Uuid::max_string_length();
       break;
+    case DRIZZLE_TYPE_TIMESTAMP:
+      field_length= field::Epoch::max_string_length();
+      break;
+    case DRIZZLE_TYPE_TIME:
+      field_length= field::Epoch::max_string_length();
+      break;
     case DRIZZLE_TYPE_NULL:
       abort(); // Programming error
     }
 
-    assert(enum_field_types_size == 12);
+    assert(enum_field_types_size == 13);
 
     Field* f= make_field(record + field_offsets[fieldnr] + data_offset,
                          field_length,
@@ -1346,6 +1357,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     case DRIZZLE_TYPE_DOUBLE:
     case DRIZZLE_TYPE_DECIMAL:
     case DRIZZLE_TYPE_TIMESTAMP:
+    case DRIZZLE_TYPE_TIME:
     case DRIZZLE_TYPE_DATETIME:
     case DRIZZLE_TYPE_DATE:
     case DRIZZLE_TYPE_ENUM:
@@ -1845,7 +1857,7 @@ int TableShare::open_table_from_share_inner(Session *session,
     outparam.found_next_number_field=
       outparam.getField(positionFields(found_next_number_field));
   if (timestamp_field)
-    outparam.timestamp_field= (Field_timestamp*) outparam.getField(timestamp_field->position());
+    outparam.timestamp_field= (field::Epoch*) outparam.getField(timestamp_field->position());
 
   /* Fix key->name and key_part->field */
   if (key_parts)
@@ -2046,12 +2058,12 @@ Field *TableShare::make_field(unsigned char *ptr,
   {
   case DRIZZLE_TYPE_ENUM:
     return new (&mem_root) Field_enum(ptr,
-                                 field_length,
-                                 null_pos,
-                                 null_bit,
-                                 field_name,
-                                 interval,
-                                 field_charset);
+                                      field_length,
+                                      null_pos,
+                                      null_bit,
+                                      field_name,
+                                      interval,
+                                      field_charset);
   case DRIZZLE_TYPE_VARCHAR:
     setVariableWidth();
     return new (&mem_root) Field_varstring(ptr,field_length,
@@ -2107,14 +2119,21 @@ Field *TableShare::make_field(unsigned char *ptr,
                                         unireg_check,
                                         field_name);
   case DRIZZLE_TYPE_TIMESTAMP:
-    return new (&mem_root) Field_timestamp(ptr,
-                                      field_length,
-                                      null_pos,
-                                      null_bit,
-                                      unireg_check,
-                                      field_name,
-                                      this,
-                                      field_charset);
+    return new (&mem_root) field::Epoch(ptr,
+                                        field_length,
+                                        null_pos,
+                                        null_bit,
+                                        unireg_check,
+                                        field_name,
+                                        this,
+                                        field_charset);
+  case DRIZZLE_TYPE_TIME:
+    return new (&mem_root) field::Time(ptr,
+                                       field_length,
+                                       null_pos,
+                                       null_bit,
+                                       field_name,
+                                       field_charset);
   case DRIZZLE_TYPE_DATE:
     return new (&mem_root) Field_date(ptr,
                                  null_pos,

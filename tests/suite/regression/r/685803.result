@@ -1,0 +1,15 @@
+/*
+https://bugs.launchpad.net/drizzle/+bug/685803
+When inserting into a bigint column, vaues > max bigint (64bit signed max)
+are accepted, but when the values are in quotes an out of range error is
+hit. I would expect out of range for both instances:
+*/
+create table t6 (a bigint);
+INSERT INTO `t6` VALUES (9223372036854775807),(18446744073709551615);
+INSERT INTO `t6` VALUES ('9223372036854775807'),('18446744073709551615');
+ERROR 22003: Out of range value for column 'a' at row 2
+SELECT a FROM t6;
+a
+9223372036854775807
+-1
+DROP TABLE t6;

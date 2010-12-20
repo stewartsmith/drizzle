@@ -18,33 +18,36 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FIELD_TIMESTAMP_H
-#define DRIZZLED_FIELD_TIMESTAMP_H
+#ifndef DRIZZLED_FIELD_TIME_H
+#define DRIZZLED_FIELD_TIME_H
 
 #include <drizzled/field/str.h>
 
 namespace drizzled
 {
 
+class Time;
+
+namespace field
+{
+
 class TableShare;
 typedef struct charset_info_st CHARSET_INFO;
 
-class Field_timestamp :public Field_str {
+class Time :public Field_str {
 public:
 
   using Field::val_int;
   using Field::val_str;
   using Field::cmp;
   using Field::store;
-  Field_timestamp(unsigned char *ptr_arg,
+  Time(unsigned char *ptr_arg,
                   uint32_t len_arg,
                   unsigned char *null_ptr_arg,
                   unsigned char null_bit_arg,
-                  enum utype unireg_check_arg,
                   const char *field_name_arg,
-                  TableShare *share,
                   const CHARSET_INFO * const cs);
-  Field_timestamp(bool maybe_null_arg,
+  Time(bool maybe_null_arg,
                   const char *field_name_arg,
                   const CHARSET_INFO * const cs);
   enum_field_types type() const { return DRIZZLE_TYPE_TIMESTAMP;}
@@ -64,20 +67,23 @@ public:
   void sql_type(String &str) const;
   bool can_be_compared_as_int64_t() const { return true; }
   bool zero_pack() const { return 0; }
-  void set_time();
-  virtual void set_default();
 
-  /* Get TIMESTAMP field value as seconds since begging of Unix Epoch */
+  /* Get TIME field value as seconds since begging of Unix Epoch */
   long get_timestamp(bool *null_value);
 private:
-  void store_timestamp(int64_t timestamp);
   bool get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
   bool get_time(DRIZZLE_TIME *ltime);
+
 public:
   timestamp_auto_set_type get_auto_set_type() const;
+  static size_t max_string_length();
+  void pack_time(drizzled::Time &arg);
+  void unpack_time(drizzled::Time &arg);
+  void unpack_time(int32_t &destination, const unsigned char *source);
 };
 
+} /* namespace field */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FIELD_TIMESTAMP_H */
+#endif /* DRIZZLED_FIELD_TIME_H */
 

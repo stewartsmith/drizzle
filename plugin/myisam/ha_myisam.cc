@@ -31,7 +31,6 @@
 #include "drizzled/plugin.h"
 #include "drizzled/plugin/client.h"
 #include "drizzled/table.h"
-#include "drizzled/field/timestamp.h"
 #include "drizzled/memory/multi_malloc.h"
 #include "drizzled/plugin/daemon.h"
 

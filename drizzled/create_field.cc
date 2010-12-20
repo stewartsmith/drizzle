@@ -40,7 +40,7 @@
 #include "drizzled/field/int32.h"
 #include "drizzled/field/int64.h"
 #include "drizzled/field/num.h"
-#include "drizzled/field/timestamp.h"
+#include "drizzled/field/epoch.h"
 #include "drizzled/field/datetime.h"
 #include "drizzled/field/varstring.h"
 #include "drizzled/field/uuid.h"
@@ -355,6 +355,9 @@ bool CreateField::init(Session *,
       length= field::Uuid::max_string_length();
       break;
     case DRIZZLE_TYPE_DATETIME:
+      length= DateTime::MAX_STRING_LENGTH;
+      break;
+    case DRIZZLE_TYPE_TIME:
       length= DateTime::MAX_STRING_LENGTH;
       break;
     case DRIZZLE_TYPE_ENUM:
