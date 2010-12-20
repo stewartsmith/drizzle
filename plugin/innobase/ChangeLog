@@ -218,6 +218,13 @@
 	Fix Bug#53046 dict_update_statistics_low can still be run
 	concurrently on same table
 
+2010-11-03	The InnoDB Team
+
+	* fil/fil0fil.c, fsp/fsp0fsp.c, handler/ha_innodb.cc,
+	include/fil0fil.h, include/univ.i:
+	Fix Bug #54538 - use of exclusive innodb dictionary lock limits
+	performance.
+
 2010-11-02	The InnoDB Team
 
 	* row/row0sel.c:
