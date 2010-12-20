@@ -42,31 +42,11 @@ public:
         unsigned char *null_ptr_arg,
         unsigned char null_bit_arg,
         enum utype unireg_check_arg,
-        const char *field_name_arg) :
-    Field_num(ptr_arg,
-              len_arg,
-              null_ptr_arg,
-              null_bit_arg,
-              unireg_check_arg,
-              field_name_arg,
-              0, false, true)
-  {
-  }
+        const char *field_name_arg);
 
   Size(uint32_t len_arg,bool maybe_null_arg,
         const char *field_name_arg,
-        bool unsigned_arg) :
-    Field_num((unsigned char*) 0,
-              len_arg, maybe_null_arg ? (unsigned char*) "": 0,
-              0,
-              NONE,
-              field_name_arg,
-              0,
-              0,
-              unsigned_arg)
-    {
-      assert(unsigned_arg);
-    }
+        bool unsigned_arg);
 
   enum Item_result result_type () const { return INT_RESULT; }
   enum_field_types type() const { return DRIZZLE_TYPE_LONGLONG;}

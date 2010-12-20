@@ -141,8 +141,12 @@ void plugin::TableFunction::add_field(const char *label,
       string_field_options->set_collation_id(my_charset_bin.number);
     }
     break;
-  case TableFunction::NUMBER: // Currently NUMBER always has a value
+  case TableFunction::NUMBER:
     field->set_type(drizzled::message::Table::Field::BIGINT);
+    break;
+  case TableFunction::SIZE:
+    field->set_type(drizzled::message::Table::Field::BIGINT);
+    field_constraints->set_is_unsigned(true);
     break;
   }
 }

@@ -108,6 +108,8 @@ INSERT IGNORE INTO t1 VALUES (-9223372036854775809);
 Warnings:
 Warning	1264	Out of range value for column 'col1' at row 1
 INSERT IGNORE INTO t1 VALUES (9223372036854775808);
+Warnings:
+Warning	1264	Out of range value for column 'col1' at row 1
 INSERT IGNORE INTO t1 VALUES ('-9223372036854775809');
 Warnings:
 Warning	1264	Out of range value for column 'col1' at row 1

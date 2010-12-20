@@ -110,13 +110,11 @@ int Int64::store(int64_t nr, bool arg)
   (void)arg;
 
   ASSERT_COLUMN_MARKED_FOR_WRITE;
-#if 0
   if (arg and (nr < 0)) // Only a partial fix for overflow
   {
     set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
     error= 1;
   }
-#endif
 
   int64_tstore(ptr,nr);
 

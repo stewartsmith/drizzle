@@ -42,6 +42,38 @@ namespace field
   Field type Size int (8 bytes)
  ****************************************************************************/
 
+Size::Size(unsigned char *ptr_arg, uint32_t len_arg,
+           unsigned char *null_ptr_arg,
+           unsigned char null_bit_arg,
+           enum utype unireg_check_arg,
+           const char *field_name_arg) :
+  Field_num(ptr_arg,
+            len_arg,
+            null_ptr_arg,
+            null_bit_arg,
+            unireg_check_arg,
+            field_name_arg,
+            0, false, true)
+{
+  flags|= UNSIGNED_FLAG;
+}
+
+Size::Size(uint32_t len_arg,bool maybe_null_arg,
+           const char *field_name_arg,
+           bool unsigned_arg) :
+  Field_num((unsigned char*) 0,
+            len_arg, maybe_null_arg ? (unsigned char*) "": 0,
+            0,
+            NONE,
+            field_name_arg,
+            0,
+            0,
+            unsigned_arg)
+{
+  flags|= UNSIGNED_FLAG;
+  assert(unsigned_arg);
+}
+
 int Size::store(const char *from,uint32_t len, const CHARSET_INFO * const cs)
 {
   int error= 0;

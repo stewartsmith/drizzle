@@ -83,10 +83,18 @@ static int fill_table_proto(message::Table &table_proto,
 
       if (field_arg->flags & NOT_NULL_FLAG)
       {
-        message::Table::Field::FieldConstraints *constraints;
+        attribute->mutable_constraints()->set_is_nullable(false);
+      }
+      else
+      {
+        attribute->mutable_constraints()->set_is_nullable(true);
+      }
 
-        constraints= attribute->mutable_constraints();
-        constraints->set_is_nullable(false);
+      if (field_arg->flags & UNSIGNED_FLAG and 
+          (field_arg->sql_type == DRIZZLE_TYPE_LONGLONG or field_arg->sql_type == DRIZZLE_TYPE_LONG))
+      {
+        field_arg->sql_type= DRIZZLE_TYPE_LONGLONG;
+        attribute->mutable_constraints()->set_is_unsigned(true);
       }
 
       attribute->set_name(field_arg->field_name);
@@ -203,7 +211,6 @@ static int fill_table_proto(message::Table &table_proto,
       break;
     }
 
-    std::cerr << " Look at " << message::type(use_existing_fields) << " " << message::type(parser_type) << " " << message::type(attribute->type()) << "\n";
     assert (!use_existing_fields || parser_type == attribute->type());
 
 #ifdef NOTDONE

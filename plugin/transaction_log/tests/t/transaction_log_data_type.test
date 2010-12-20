@@ -105,7 +105,7 @@ INSERT INTO t1 (b) VALUES(-9223372036854775809);
 
 --echo Testing MAX+1 BIGINT
 --echo NOTE: Bug#316221 - 2**63 incorrectly inserted into bigint
-#--ERROR ER_WARN_DATA_OUT_OF_RANGE
+--ERROR ER_WARN_DATA_OUT_OF_RANGE
 INSERT INTO t1 (b) VALUES(9223372036854775808);
 --source ../plugin/transaction_log/tests/t/check_transaction_log.inc
 --echo
