@@ -77,8 +77,36 @@ static const std::string TYPE_HOLDER("TYPE_HOLDER");
 static const std::string PARAM_ITEM("PARAM_ITEM");
 static const std::string DECIMAL_ITEM("DECIMAL_ITEM");
 
+static const std::string ITEM_CAST_BINARY("ITEM_CAST_BINARY");
+static const std::string ITEM_CAST_DATE("ITEM_CAST_DATE");
+static const std::string ITEM_CAST_TIME("ITEM_CAST_TIME");
+static const std::string ITEM_CAST_DATETIME("ITEM_CAST_DATETIME");
+static const std::string ITEM_CAST_CHAR("ITEM_CAST_CHAR");
+static const std::string ITEM_CAST_DECIMAL("ITEM_CAST_DECIMAL");
+
 static const std::string YES("YES");
 static const std::string NO("NO");
+
+const std::string &type(drizzled::Cast_target type)
+{
+  switch (type)
+  {
+  case drizzled::ITEM_CAST_BINARY:
+    return ITEM_CAST_BINARY;
+  case drizzled::ITEM_CAST_DATE:
+    return ITEM_CAST_DATE;
+  case drizzled::ITEM_CAST_TIME:
+    return ITEM_CAST_TIME;
+  case drizzled::ITEM_CAST_DATETIME:
+    return ITEM_CAST_DATETIME;
+  case drizzled::ITEM_CAST_CHAR:
+    return ITEM_CAST_CHAR;
+  case drizzled::ITEM_CAST_DECIMAL:
+    return ITEM_CAST_DECIMAL;
+  }
+
+  abort();
+}
 
 const std::string &type(drizzled::enum_server_command type)
 {

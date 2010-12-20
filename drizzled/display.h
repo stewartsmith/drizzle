@@ -24,9 +24,12 @@
 #include "drizzled/common.h"
 #include <string>
 
+#include "drizzled/item/func.h"
+
 namespace drizzled {
 namespace display {
 
+const std::string &type(drizzled::Cast_target type);
 const std::string &type(drizzled::enum_server_command type);
 const std::string &type(drizzled::enum_field_types type);
 const std::string &type(bool type);

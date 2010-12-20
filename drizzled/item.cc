@@ -1385,6 +1385,13 @@ bool Item::send(plugin::Client *client, String *buffer)
       break;
     }
   case DRIZZLE_TYPE_TIME:
+    {
+      DRIZZLE_TIME tm;
+      get_time(&tm);
+      if (not null_value)
+        result= client->store(&tm);
+      break;
+    }
   case DRIZZLE_TYPE_DATETIME:
   case DRIZZLE_TYPE_TIMESTAMP:
     {

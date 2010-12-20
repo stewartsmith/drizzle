@@ -27,19 +27,16 @@ namespace drizzled {
 namespace function {
 namespace cast {
 
-bool Time::get_date(DRIZZLE_TIME *ltime, uint32_t )
-{
-  bool res= get_arg0_date(ltime, TIME_FUZZY_DATE);
-  ltime->hour= ltime->minute= ltime->second= ltime->second_part= 0;
-  ltime->time_type= DRIZZLE_TIMESTAMP_DATE;
-  return res;
-}
-
-
 bool Time::get_time(DRIZZLE_TIME *ltime)
 {
-  memset(ltime, 0, sizeof(DRIZZLE_TIME));
-  return args[0]->null_value;
+  bool res= get_arg0_time(ltime);
+
+  if (ltime->time_type == DRIZZLE_TIMESTAMP_DATETIME)
+    ltime->year= ltime->month= ltime->day= 0;
+
+  ltime->time_type= DRIZZLE_TIMESTAMP_TIME;
+
+  return res;
 }
 
 String *Time::val_str(String *str)
@@ -47,8 +44,9 @@ String *Time::val_str(String *str)
   assert(fixed == 1);
   DRIZZLE_TIME ltime;
 
-  if (not get_arg0_date(&ltime, TIME_FUZZY_DATE) && not str->alloc(MAX_DATE_STRING_REP_LENGTH))
+  if (not get_arg0_time(&ltime))
   {
+    null_value= 0;
     make_time(&ltime, str);
     return str;
   }
@@ -62,10 +60,10 @@ int64_t Time::val_int()
   assert(fixed == 1);
   DRIZZLE_TIME ltime;
 
-  if ((null_value= args[0]->get_time(&ltime)))
+  if (get_time(&ltime))
     return 0;
 
-  return TIME_to_uint64_t(&ltime);
+  return (ltime.neg ? -1 : 1) * (int64_t)((ltime.hour)*10000 + ltime.minute*100 + ltime.second);
 }
 
 } // namespace cast

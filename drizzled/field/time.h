@@ -26,6 +26,8 @@
 namespace drizzled
 {
 
+class Time;
+
 namespace field
 {
 
@@ -75,6 +77,9 @@ private:
 public:
   timestamp_auto_set_type get_auto_set_type() const;
   static size_t max_string_length();
+  void pack_time(drizzled::Time &arg);
+  void unpack_time(drizzled::Time &arg);
+  void unpack_time(int32_t &destination, const unsigned char *source);
 };
 
 } /* namespace field */

@@ -600,7 +600,9 @@ fractional:
     date[4]= (uint32_t) value;
   }
   else
+  {
     date[4]=0;
+  }
 
   /* Check for exponent part: E<gigit> | E<sign><digit> */
   /* (may occur as result of %g formatting of time value) */
@@ -646,7 +648,9 @@ fractional:
 
   /* Check if the value is valid and fits into DRIZZLE_TIME range */
   if (check_time_range(l_time, warning))
+  {
     return 1;
+  }
 
   /* Check if there is garbage at end of the DRIZZLE_TIME specification */
   if (str != end)

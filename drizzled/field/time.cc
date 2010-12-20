@@ -90,10 +90,7 @@ int Time::store(const char *from,
     return 1;
   }
 
-  uint64_t tmp;
-  temporal.to_uint64_t(tmp);
-
-  pack_num(tmp);
+  pack_time(temporal);
 
   return 0;
 }
@@ -125,8 +122,8 @@ int Time::store(int64_t from, bool)
    * Try to create a DateTime from the supplied integer.  Throw an error
    * if unable to create a valid DateTime.  
    */
-  Timestamp temporal;
-  if (! temporal.from_int64_t(from))
+  drizzled::Time temporal;
+  if (! temporal.from_time_t(from))
   {
     /* Convert the integer to a string using boost::lexical_cast */
     std::string tmp(boost::lexical_cast<std::string>(from));
@@ -135,12 +132,33 @@ int Time::store(int64_t from, bool)
     return 2;
   }
 
-  uint64_t tmp;
-  temporal.to_time_t((time_t*)&tmp);
-
-  pack_num(tmp);
+  pack_time(temporal);
 
   return 0;
+}
+
+void Time::pack_time(drizzled::Time &temporal)
+{
+  int32_t tmp;
+  temporal.to_int32_t(&tmp);
+  tmp= htonl(tmp);
+  memcpy(ptr, &tmp, sizeof(int32_t));
+}
+
+void Time::unpack_time(drizzled::Time &temporal)
+{
+  int32_t tmp;
+
+  memcpy(&tmp, ptr, sizeof(int32_t));
+  tmp= htonl(tmp);
+
+  temporal.from_int32_t(tmp);
+}
+
+void Time::unpack_time(int32_t &destination, const unsigned char *source)
+{
+  memcpy(&destination, source, sizeof(int32_t));
+  destination= htonl(destination);
 }
 
 double Time::val_real(void)
@@ -150,36 +168,29 @@ double Time::val_real(void)
 
 int64_t Time::val_int(void)
 {
-  uint64_t temp;
-
   ASSERT_COLUMN_MARKED_FOR_READ;
 
-  unpack_num(temp);
-
-  Timestamp temporal;
-  (void) temporal.from_time_t((time_t) temp);
+  drizzled::Time temporal;
+  unpack_time(temporal);
 
   /* We must convert into a "timestamp-formatted integer" ... */
-  int64_t result;
-  temporal.to_int64_t(&result);
+  uint64_t result;
+  temporal.to_uint64_t(result);
   return result;
 }
 
 String *Time::val_str(String *val_buffer, String *)
 {
-  uint64_t temp= 0;
   char *to;
   int to_len= field_length + 1;
 
   val_buffer->alloc(to_len);
   to= (char *) val_buffer->ptr();
 
-  unpack_num(temp);
-
   val_buffer->set_charset(&my_charset_bin);	/* Safety */
 
-  Timestamp temporal;
-  (void) temporal.from_time_t((time_t) temp);
+  drizzled::Time temporal;
+  unpack_time(temporal);
 
   int rlen;
   rlen= temporal.to_string(to, to_len);
@@ -191,16 +202,10 @@ String *Time::val_str(String *val_buffer, String *)
 
 bool Time::get_date(DRIZZLE_TIME *ltime, uint32_t)
 {
-  uint64_t temp;
-
-  unpack_num(temp);
-  
   memset(ltime, 0, sizeof(*ltime));
 
-  Timestamp temporal;
-  (void) temporal.from_time_t((time_t) temp);
-
-  /* @TODO Goodbye the below code when DRIZZLE_TIME is finally gone.. */
+  drizzled::Time temporal;
+  unpack_time(temporal);
 
   ltime->time_type= DRIZZLE_TIMESTAMP_DATETIME;
   ltime->year= temporal.years();
@@ -215,15 +220,15 @@ bool Time::get_date(DRIZZLE_TIME *ltime, uint32_t)
 
 bool Time::get_time(DRIZZLE_TIME *ltime)
 {
-  return Time::get_date(ltime,0);
+  return Time::get_date(ltime, 0);
 }
 
 int Time::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
-  uint64_t a,b;
+  int32_t a,b;
 
-  unpack_num(a, a_ptr);
-  unpack_num(b, b_ptr);
+  unpack_time(a, a_ptr);
+  unpack_time(b, b_ptr);
 
   return (a < b) ? -1 : (a > b) ? 1 : 0;
 }
@@ -238,22 +243,14 @@ void Time::sort_string(unsigned char *to,uint32_t )
     to[1] = ptr[1];
     to[2] = ptr[2];
     to[3] = ptr[3];
-    to[4] = ptr[4];
-    to[5] = ptr[5];
-    to[6] = ptr[6];
-    to[7] = ptr[7];
   }
   else
 #endif
   {
-    to[0] = ptr[7];
-    to[1] = ptr[6];
-    to[2] = ptr[5];
-    to[3] = ptr[4];
-    to[4] = ptr[3];
-    to[5] = ptr[2];
-    to[6] = ptr[1];
-    to[7] = ptr[0];
+    to[0] = ptr[3];
+    to[1] = ptr[2];
+    to[2] = ptr[1];
+    to[3] = ptr[0];
   }
 }
 
