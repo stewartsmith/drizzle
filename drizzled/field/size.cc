@@ -20,7 +20,7 @@
 
 
 #include "config.h"
-#include <drizzled/field/int64.h>
+#include <drizzled/field/size.h>
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
@@ -39,10 +39,10 @@ namespace field
 {
 
 /****************************************************************************
-  Field type Int64 int (8 bytes)
+  Field type Size int (8 bytes)
  ****************************************************************************/
 
-int Int64::store(const char *from,uint32_t len, const CHARSET_INFO * const cs)
+int Size::store(const char *from,uint32_t len, const CHARSET_INFO * const cs)
 {
   int error= 0;
   char *end;
@@ -71,7 +71,7 @@ int Int64::store(const char *from,uint32_t len, const CHARSET_INFO * const cs)
 }
 
 
-int Int64::store(double nr)
+int Size::store(double nr)
 {
   int error= 0;
   int64_t res;
@@ -96,7 +96,10 @@ int Int64::store(double nr)
   }
 
   if (error)
+  {
     set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+    return 0;
+  }
 
   int64_tstore(ptr, res);
 
@@ -104,19 +107,17 @@ int Int64::store(double nr)
 }
 
 
-int Int64::store(int64_t nr, bool arg)
+int Size::store(int64_t nr, bool arg)
 {
   int error= 0;
-  (void)arg;
 
   ASSERT_COLUMN_MARKED_FOR_WRITE;
-#if 0
-  if (arg and (nr < 0)) // Only a partial fix for overflow
+
+  if (not arg and nr < 0)
   {
     set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
-    error= 1;
+    return 0;
   }
-#endif
 
   int64_tstore(ptr,nr);
 
@@ -124,20 +125,19 @@ int Int64::store(int64_t nr, bool arg)
 }
 
 
-double Int64::val_real(void)
+double Size::val_real(void)
 {
   int64_t j;
 
   ASSERT_COLUMN_MARKED_FOR_READ;
 
   int64_tget(j,ptr);
-  /* The following is open coded to avoid a bug in gcc 3.3 */
 
   return (double) j;
 }
 
 
-int64_t Int64::val_int(void)
+int64_t Size::val_int(void)
 {
   int64_t j;
 
@@ -149,7 +149,7 @@ int64_t Int64::val_int(void)
 }
 
 
-String *Int64::val_str(String *val_buffer, String *)
+String *Size::val_str(String *val_buffer, String *)
 {
   const CHARSET_INFO * const cs= &my_charset_bin;
   uint32_t length;
@@ -168,7 +168,7 @@ String *Int64::val_str(String *val_buffer, String *)
   return val_buffer;
 }
 
-int Int64::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
+int Size::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   int64_t a,b;
 
@@ -178,7 +178,7 @@ int Int64::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
   return (a < b) ? -1 : (a > b) ? 1 : 0;
 }
 
-void Int64::sort_string(unsigned char *to,uint32_t )
+void Size::sort_string(unsigned char *to,uint32_t )
 {
 #ifdef WORDS_BIGENDIAN
   {
@@ -206,14 +206,14 @@ void Int64::sort_string(unsigned char *to,uint32_t )
 }
 
 
-void Int64::sql_type(String &res) const
+void Size::sql_type(String &res) const
 {
   const CHARSET_INFO * const cs=res.charset();
-  res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(), "bigint"));
+  res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(), "unsigned integer"));
 }
 
 
-unsigned char *Int64::pack(unsigned char* to, const unsigned char *from, uint32_t, bool)
+unsigned char *Size::pack(unsigned char* to, const unsigned char *from, uint32_t, bool)
 {
   int64_t val;
 
@@ -224,7 +224,7 @@ unsigned char *Int64::pack(unsigned char* to, const unsigned char *from, uint32_
 }
 
 
-const unsigned char *Int64::unpack(unsigned char* to, const unsigned char *from, uint32_t, bool)
+const unsigned char *Size::unpack(unsigned char* to, const unsigned char *from, uint32_t, bool)
 {
   int64_t val;
 

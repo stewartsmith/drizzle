@@ -2043,7 +2043,7 @@ bool Join::make_sum_func_list(List<Item> &field_list,
   {
     rollup.state= ROLLUP::STATE_READY;
     if (rollup_make_fields(field_list, send_fields, &func))
-      return(true);     // Should never happen
+      return true;     // Should never happen
   }
   else if (rollup.state == ROLLUP::STATE_NONE)
   {
@@ -2072,11 +2072,13 @@ bool Join::rollup_init()
   tmp_table_param.group_parts= send_group_parts;
 
   if (!(rollup.null_items= (Item_null_result**) session->alloc((sizeof(Item*) +
-                                                sizeof(Item**) +
-                                                sizeof(List<Item>) +
-                        ref_pointer_array_size)
-                        * send_group_parts )))
+                                                                sizeof(Item**) +
+                                                                sizeof(List<Item>) +
+                                                                ref_pointer_array_size)
+                                                               * send_group_parts )))
+  {
     return 1;
+  }
 
   rollup.fields= (List<Item>*) (rollup.null_items + send_group_parts);
   rollup.ref_pointer_arrays= (Item***) (rollup.fields + send_group_parts);

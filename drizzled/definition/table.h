@@ -649,7 +649,8 @@ public:
     return output;  // for multiple << operators.
   }
 
-  Field *make_field(unsigned char *ptr,
+  Field *make_field(message::Table::Field &pfield,
+                    unsigned char *ptr,
                     uint32_t field_length,
                     bool is_nullable,
                     unsigned char *null_pos,
@@ -660,6 +661,19 @@ public:
                     Field::utype unireg_check,
                     TYPELIB *interval,
                     const char *field_name);
+
+  Field *make_field(unsigned char *ptr,
+                    uint32_t field_length,
+                    bool is_nullable,
+                    unsigned char *null_pos,
+                    unsigned char null_bit,
+                    uint8_t decimals,
+                    enum_field_types field_type,
+                    const CHARSET_INFO * field_charset,
+                    Field::utype unireg_check,
+                    TYPELIB *interval,
+                    const char *field_name, 
+                    bool is_unsigned);
 
   int open_table_def(Session& session, const TableIdentifier &identifier);
 

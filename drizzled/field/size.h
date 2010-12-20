@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FIELD_INT64_H
-#define DRIZZLED_FIELD_INT64_H
+#ifndef DRIZZLED_FIELD_SIZE_H
+#define DRIZZLED_FIELD_SIZE_H
 
 #include <drizzled/field/num.h>
 
@@ -28,7 +28,7 @@ namespace drizzled
 namespace field
 {
 
-class Int64 :public Field_num {
+class Size :public Field_num {
 public:
 
   using Field::val_int;
@@ -38,7 +38,7 @@ public:
   using Field::pack;
   using Field::unpack;
 
-  Int64(unsigned char *ptr_arg, uint32_t len_arg,
+  Size(unsigned char *ptr_arg, uint32_t len_arg,
         unsigned char *null_ptr_arg,
         unsigned char null_bit_arg,
         enum utype unireg_check_arg,
@@ -49,11 +49,11 @@ public:
               null_bit_arg,
               unireg_check_arg,
               field_name_arg,
-              0, false, false)
+              0, false, true)
   {
   }
 
-  Int64(uint32_t len_arg,bool maybe_null_arg,
+  Size(uint32_t len_arg,bool maybe_null_arg,
         const char *field_name_arg,
         bool unsigned_arg) :
     Field_num((unsigned char*) 0,
@@ -65,7 +65,7 @@ public:
               0,
               unsigned_arg)
     {
-      assert(not unsigned_arg);
+      assert(unsigned_arg);
     }
 
   enum Item_result result_type () const { return INT_RESULT; }
@@ -102,4 +102,4 @@ public:
 } /* namespace field */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FIELD_INT64_H */
+#endif /* DRIZZLED_FIELD_SIZE_H */
