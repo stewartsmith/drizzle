@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1150,7 +1150,7 @@ class Item_func_case :public Item_func
   Item_result cmp_type;
   DTCollation cmp_collation;
   enum_field_types cached_field_type;
-  cmp_item *cmp_items[5]; /* For all result types */
+  cmp_item *cmp_items[DECIMAL_RESULT+1]; /* For all result types */
   cmp_item *case_item;
 public:
   Item_func_case(List<Item> &list, Item *first_expr_arg, Item *else_expr_arg)
@@ -1235,11 +1235,10 @@ public:
   uint32_t decimal_precision() const { return 1; }
   void cleanup()
   {
-    uint32_t i;
     Item_int_func::cleanup();
     delete array;
     array= 0;
-    for (i= 0; i <= (uint32_t)DECIMAL_RESULT + 1; i++)
+    for (int i= STRING_RESULT; i <= DECIMAL_RESULT; i++)
     {
       delete cmp_items[i];
       cmp_items[i]= 0;

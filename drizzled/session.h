@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -47,7 +47,7 @@
 #include <map>
 #include <string>
 
-#include "drizzled/security_context.h"
+#include "drizzled/identifier.h"
 #include "drizzled/open_tables_state.h"
 #include "drizzled/internal_error_handler.h"
 #include "drizzled/diagnostics_area.h"
@@ -431,11 +431,10 @@ public:
   {
     QueryString tmp_string(getQueryString());
 
-    assert(tmp_string);
     if (not tmp_string)
     {
       length= 0;
-      return 0;
+      return NULL;
     }
 
     length= tmp_string->length();
@@ -567,7 +566,7 @@ public:
   char *thread_stack;
 
 private:
-  SecurityContext security_ctx;
+  identifier::User::shared_ptr security_ctx;
 
   int32_t scoreboard_index;
 
@@ -576,14 +575,17 @@ private:
     assert(this->dbug_sentry == Session_SENTRY_MAGIC);
   }
 public:
-  const SecurityContext& getSecurityContext() const
+  identifier::User::const_shared_ptr user() const
   {
-    return security_ctx;
+    if (security_ctx)
+      return security_ctx;
+
+    return identifier::User::const_shared_ptr();
   }
 
-  SecurityContext& getSecurityContext()
+  void setUser(identifier::User::shared_ptr arg)
   {
-    return security_ctx;
+    security_ctx= arg;
   }
 
   int32_t getScoreboardIndex()
@@ -931,6 +933,7 @@ public:
     return &_killed;
   }
 
+  bool is_admin_connection;
   bool some_tables_deleted;
   bool no_errors;
   bool password;

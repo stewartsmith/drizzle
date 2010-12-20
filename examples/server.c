@@ -96,7 +96,27 @@ int main(int argc, char *argv[])
       break;
 
     case 'v':
-      verbose++;
+      switch(verbose)
+      {
+      case DRIZZLE_VERBOSE_NEVER:
+        verbose= DRIZZLE_VERBOSE_FATAL;
+        break;
+      case DRIZZLE_VERBOSE_FATAL:
+        verbose= DRIZZLE_VERBOSE_ERROR;
+        break;
+      case DRIZZLE_VERBOSE_ERROR:
+        verbose= DRIZZLE_VERBOSE_INFO;
+        break;
+      case DRIZZLE_VERBOSE_INFO:
+        verbose= DRIZZLE_VERBOSE_DEBUG;
+        break;
+      case DRIZZLE_VERBOSE_DEBUG:
+        verbose= DRIZZLE_VERBOSE_CRAZY;
+        break;
+      case DRIZZLE_VERBOSE_CRAZY:
+      case DRIZZLE_VERBOSE_MAX:
+        break;
+      }
       break;
 
     default:
@@ -214,7 +234,7 @@ static void server(drizzle_st *drizzle, drizzle_con_st *con,
     if (data != NULL)
       free(data);
 
-    data= drizzle_con_command_buffer(con, &command, &total, &ret);
+    data= (uint8_t *)drizzle_con_command_buffer(con, &command, &total, &ret);
     if (ret == DRIZZLE_RETURN_LOST_CONNECTION ||
         (ret == DRIZZLE_RETURN_OK && command == DRIZZLE_COMMAND_QUIT))
     {

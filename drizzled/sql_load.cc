@@ -206,11 +206,13 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
     */
     if (table->timestamp_field)
     {
-      if (table->isWriteSet(table->timestamp_field->field_index))
+      if (table->isWriteSet(table->timestamp_field->position()))
+      {
         table->timestamp_field_type= TIMESTAMP_NO_AUTO_SET;
+      }
       else
       {
-        table->setWriteSet(table->timestamp_field->field_index);
+        table->setWriteSet(table->timestamp_field->position());
       }
     }
     /* Fix the expressions in SET clause */

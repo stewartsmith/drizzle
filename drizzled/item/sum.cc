@@ -33,7 +33,7 @@
 #include <drizzled/item/sum.h>
 #include <drizzled/field/decimal.h>
 #include <drizzled/field/double.h>
-#include <drizzled/field/int64_t.h>
+#include <drizzled/field/int64.h>
 #include <drizzled/field/date.h>
 #include <drizzled/field/datetime.h>
 
@@ -508,36 +508,44 @@ Field *Item_sum::create_tmp_field(bool ,
                                   Table *table,
                                   uint32_t convert_blob_length)
 {
-  Field *field;
+  Field *field= NULL;
+
   switch (result_type()) {
   case REAL_RESULT:
     field= new Field_double(max_length, maybe_null, name, decimals, true);
     break;
+
   case INT_RESULT:
-    field= new Field_int64_t(max_length, maybe_null, name, unsigned_flag);
+    field= new field::Int64(max_length, maybe_null, name, unsigned_flag);
     break;
+
   case STRING_RESULT:
     if (max_length/collation.collation->mbmaxlen <= 255 ||
         convert_blob_length > Field_varstring::MAX_SIZE ||
         !convert_blob_length)
+    {
       return make_string_field(table);
+    }
 
     table->setVariableWidth();
     field= new Field_varstring(convert_blob_length, maybe_null,
                                name, collation.collation);
     break;
+
   case DECIMAL_RESULT:
     field= new Field_decimal(max_length, maybe_null, name,
-                                 decimals, unsigned_flag);
+                             decimals, unsigned_flag);
     break;
+
   case ROW_RESULT:
-  default:
     // This case should never be choosen
     assert(0);
     return 0;
   }
+
   if (field)
     field->init(table);
+
   return field;
 }
 
@@ -647,7 +655,6 @@ Item_sum_hybrid::Item_sum_hybrid(Session *session, Item_sum_hybrid *item)
     */
     break;
   case ROW_RESULT:
-  default:
     assert(0);
   }
   collation.set(item->collation);
@@ -686,7 +693,6 @@ Item_sum_hybrid::fix_fields(Session *session, Item **ref)
     max_length= item->max_length;
     break;
   case ROW_RESULT:
-  default:
     assert(0);
   };
   /* MIN/MAX can return NULL for empty set indepedent of the used column */
@@ -798,21 +804,19 @@ void Item_sum_sum::fix_length_and_dec()
     break;
   case INT_RESULT:
   case DECIMAL_RESULT:
-  {
-    /* SUM result can't be longer than length(arg) + length(MAX_ROWS) */
-    int precision= args[0]->decimal_precision() + DECIMAL_LONGLONG_DIGITS;
-    max_length= my_decimal_precision_to_length(precision, decimals,
-                                               unsigned_flag);
-    curr_dec_buff= 0;
-    hybrid_type= DECIMAL_RESULT;
-    my_decimal_set_zero(dec_buffs);
-    break;
-  }
+    {
+      /* SUM result can't be longer than length(arg) + length(MAX_ROWS) */
+      int precision= args[0]->decimal_precision() + DECIMAL_LONGLONG_DIGITS;
+      max_length= my_decimal_precision_to_length(precision, decimals,
+                                                 unsigned_flag);
+      curr_dec_buff= 0;
+      hybrid_type= DECIMAL_RESULT;
+      my_decimal_set_zero(dec_buffs);
+      break;
+    }
   case ROW_RESULT:
-  default:
     assert(0);
   }
-  return;
 }
 
 
@@ -966,29 +970,29 @@ void Item_sum_distinct::fix_length_and_dec()
     table_field_type= DRIZZLE_TYPE_DOUBLE;
     break;
   case INT_RESULT:
-  /*
-    Preserving int8, int16, int32 field types gives ~10% performance boost
-    as the size of result tree becomes significantly smaller.
-    Another speed up we gain by using int64_t for intermediate
-    calculations. The range of int64 is enough to hold sum 2^32 distinct
-    integers each <= 2^32.
-  */
-  if (table_field_type == DRIZZLE_TYPE_LONG)
-  {
-    val.traits= Hybrid_type_traits_fast_decimal::instance();
-    break;
-  }
-  table_field_type= DRIZZLE_TYPE_LONGLONG;
-  /* fallthrough */
+    /*
+      Preserving int8, int16, int32 field types gives ~10% performance boost
+      as the size of result tree becomes significantly smaller.
+      Another speed up we gain by using int64_t for intermediate
+      calculations. The range of int64 is enough to hold sum 2^32 distinct
+      integers each <= 2^32.
+    */
+    if (table_field_type == DRIZZLE_TYPE_LONG)
+    {
+      val.traits= Hybrid_type_traits_fast_decimal::instance();
+      break;
+    }
+    table_field_type= DRIZZLE_TYPE_LONGLONG;
+    /* fallthrough */
   case DECIMAL_RESULT:
     val.traits= Hybrid_type_traits_decimal::instance();
     if (table_field_type != DRIZZLE_TYPE_LONGLONG)
       table_field_type= DRIZZLE_TYPE_DECIMAL;
     break;
   case ROW_RESULT:
-  default:
     assert(0);
   }
+
   val.traits->fix_length_and_dec(this, args[0]);
 }
 
@@ -1436,19 +1440,17 @@ void Item_sum_variance::fix_length_and_dec()
     break;
   case INT_RESULT:
   case DECIMAL_RESULT:
-  {
-    int precision= args[0]->decimal_precision()*2 + prec_increment;
-    decimals= min(args[0]->decimals + prec_increment, (unsigned int) DECIMAL_MAX_SCALE);
-    max_length= my_decimal_precision_to_length(precision, decimals,
-                                               unsigned_flag);
+    {
+      int precision= args[0]->decimal_precision()*2 + prec_increment;
+      decimals= min(args[0]->decimals + prec_increment, (unsigned int) DECIMAL_MAX_SCALE);
+      max_length= my_decimal_precision_to_length(precision, decimals,
+                                                 unsigned_flag);
 
-    break;
-  }
+      break;
+    }
   case ROW_RESULT:
-  default:
     assert(0);
   }
-  return;
 }
 
 
@@ -1617,15 +1619,16 @@ double Item_sum_hybrid::val_real()
   assert(fixed == 1);
   if (null_value)
     return 0.0;
+
   switch (hybrid_type) {
   case STRING_RESULT:
-  {
-    char *end_not_used;
-    int err_not_used;
-    String *res;  res=val_str(&str_value);
-    return (res ? my_strntod(res->charset(), (char*) res->ptr(), res->length(),
-			     &end_not_used, &err_not_used) : 0.0);
-  }
+    {
+      char *end_not_used;
+      int err_not_used;
+      String *res;  res=val_str(&str_value);
+      return (res ? my_strntod(res->charset(), (char*) res->ptr(), res->length(),
+                               &end_not_used, &err_not_used) : 0.0);
+    }
   case INT_RESULT:
     return (double) sum_int;
   case DECIMAL_RESULT:
@@ -1634,11 +1637,12 @@ double Item_sum_hybrid::val_real()
   case REAL_RESULT:
     return sum;
   case ROW_RESULT:
-  default:
     // This case should never be choosen
-    assert(0);
-    return 0;
+    break;
   }
+
+  assert(0);
+  return 0;
 }
 
 int64_t Item_sum_hybrid::val_int()
@@ -1666,6 +1670,7 @@ my_decimal *Item_sum_hybrid::val_decimal(my_decimal *val)
   assert(fixed == 1);
   if (null_value)
     return 0;
+
   switch (hybrid_type) {
   case STRING_RESULT:
     string2my_decimal(E_DEC_FATAL_ERROR, &value, val);
@@ -1680,11 +1685,11 @@ my_decimal *Item_sum_hybrid::val_decimal(my_decimal *val)
     int2my_decimal(E_DEC_FATAL_ERROR, sum_int, unsigned_flag, val);
     break;
   case ROW_RESULT:
-  default:
     // This case should never be choosen
     assert(0);
     break;
   }
+
   return val;					// Keep compiler happy
 }
 
@@ -1695,6 +1700,7 @@ Item_sum_hybrid::val_str(String *str)
   assert(fixed == 1);
   if (null_value)
     return 0;
+
   switch (hybrid_type) {
   case STRING_RESULT:
     return &value;
@@ -1710,9 +1716,9 @@ Item_sum_hybrid::val_str(String *str)
   case ROW_RESULT:
   default:
     // This case should never be choosen
-    assert(0);
     break;
   }
+
   return str;					// Keep compiler happy
 }
 
@@ -1750,52 +1756,51 @@ bool Item_sum_min::add()
 {
   switch (hybrid_type) {
   case STRING_RESULT:
-  {
-    String *result=args[0]->val_str(&tmp_value);
-    if (!args[0]->null_value &&
-	(null_value || sortcmp(&value,result,collation.collation) > 0))
     {
-      value.copy(*result);
-      null_value=0;
+      String *result=args[0]->val_str(&tmp_value);
+      if (!args[0]->null_value &&
+          (null_value || sortcmp(&value,result,collation.collation) > 0))
+      {
+        value.copy(*result);
+        null_value=0;
+      }
     }
-  }
-  break;
+    break;
   case INT_RESULT:
-  {
-    int64_t nr=args[0]->val_int();
-    if (!args[0]->null_value && (null_value ||
-				 (unsigned_flag &&
-				  (uint64_t) nr < (uint64_t) sum_int) ||
-				 (!unsigned_flag && nr < sum_int)))
     {
-      sum_int=nr;
-      null_value=0;
+      int64_t nr=args[0]->val_int();
+      if (!args[0]->null_value && (null_value ||
+                                   (unsigned_flag &&
+                                    (uint64_t) nr < (uint64_t) sum_int) ||
+                                   (!unsigned_flag && nr < sum_int)))
+      {
+        sum_int=nr;
+        null_value=0;
+      }
     }
-  }
-  break;
+    break;
   case DECIMAL_RESULT:
-  {
-    my_decimal value_buff, *val= args[0]->val_decimal(&value_buff);
-    if (!args[0]->null_value &&
-        (null_value || (my_decimal_cmp(&sum_dec, val) > 0)))
     {
-      my_decimal2decimal(val, &sum_dec);
-      null_value= 0;
+      my_decimal value_buff, *val= args[0]->val_decimal(&value_buff);
+      if (!args[0]->null_value &&
+          (null_value || (my_decimal_cmp(&sum_dec, val) > 0)))
+      {
+        my_decimal2decimal(val, &sum_dec);
+        null_value= 0;
+      }
     }
-  }
-  break;
+    break;
   case REAL_RESULT:
-  {
-    double nr= args[0]->val_real();
-    if (!args[0]->null_value && (null_value || nr < sum))
     {
-      sum=nr;
-      null_value=0;
+      double nr= args[0]->val_real();
+      if (!args[0]->null_value && (null_value || nr < sum))
+      {
+        sum=nr;
+        null_value=0;
+      }
     }
-  }
-  break;
+    break;
   case ROW_RESULT:
-  default:
     // This case should never be choosen
     assert(0);
     break;
@@ -1814,56 +1819,56 @@ bool Item_sum_max::add()
 {
   switch (hybrid_type) {
   case STRING_RESULT:
-  {
-    String *result=args[0]->val_str(&tmp_value);
-    if (!args[0]->null_value &&
-	(null_value || sortcmp(&value,result,collation.collation) < 0))
     {
-      value.copy(*result);
-      null_value=0;
+      String *result=args[0]->val_str(&tmp_value);
+      if (!args[0]->null_value &&
+          (null_value || sortcmp(&value,result,collation.collation) < 0))
+      {
+        value.copy(*result);
+        null_value=0;
+      }
     }
-  }
-  break;
+    break;
   case INT_RESULT:
-  {
-    int64_t nr=args[0]->val_int();
-    if (!args[0]->null_value && (null_value ||
-				 (unsigned_flag &&
-				  (uint64_t) nr > (uint64_t) sum_int) ||
-				 (!unsigned_flag && nr > sum_int)))
     {
-      sum_int=nr;
-      null_value=0;
+      int64_t nr=args[0]->val_int();
+      if (!args[0]->null_value && (null_value ||
+                                   (unsigned_flag &&
+                                    (uint64_t) nr > (uint64_t) sum_int) ||
+                                   (!unsigned_flag && nr > sum_int)))
+      {
+        sum_int=nr;
+        null_value=0;
+      }
     }
-  }
-  break;
+    break;
   case DECIMAL_RESULT:
-  {
-    my_decimal value_buff, *val= args[0]->val_decimal(&value_buff);
-    if (!args[0]->null_value &&
-        (null_value || (my_decimal_cmp(val, &sum_dec) > 0)))
     {
-      my_decimal2decimal(val, &sum_dec);
-      null_value= 0;
+      my_decimal value_buff, *val= args[0]->val_decimal(&value_buff);
+      if (!args[0]->null_value &&
+          (null_value || (my_decimal_cmp(val, &sum_dec) > 0)))
+      {
+        my_decimal2decimal(val, &sum_dec);
+        null_value= 0;
+      }
     }
-  }
-  break;
+    break;
   case REAL_RESULT:
-  {
-    double nr= args[0]->val_real();
-    if (!args[0]->null_value && (null_value || nr > sum))
     {
-      sum=nr;
-      null_value=0;
+      double nr= args[0]->val_real();
+      if (!args[0]->null_value && (null_value || nr > sum))
+      {
+        sum=nr;
+        null_value=0;
+      }
     }
-  }
-  break;
+    break;
   case ROW_RESULT:
-  default:
     // This case should never be choosen
     assert(0);
     break;
   }
+
   return 0;
 }
 
@@ -1951,79 +1956,78 @@ void Item_sum_hybrid::reset_field()
 {
   switch(hybrid_type) {
   case STRING_RESULT:
-  {
-    char buff[MAX_FIELD_WIDTH];
-    String tmp(buff,sizeof(buff),result_field->charset()),*res;
+    {
+      char buff[MAX_FIELD_WIDTH];
+      String tmp(buff,sizeof(buff),result_field->charset()),*res;
 
-    res=args[0]->val_str(&tmp);
-    if (args[0]->null_value)
-    {
-      result_field->set_null();
-      result_field->reset();
-    }
-    else
-    {
-      result_field->set_notnull();
-      result_field->store(res->ptr(),res->length(),tmp.charset());
-    }
-    break;
-  }
-  case INT_RESULT:
-  {
-    int64_t nr=args[0]->val_int();
-
-    if (maybe_null)
-    {
+      res=args[0]->val_str(&tmp);
       if (args[0]->null_value)
       {
-	nr=0;
-	result_field->set_null();
-      }
-      else
-	result_field->set_notnull();
-    }
-    result_field->store(nr, unsigned_flag);
-    break;
-  }
-  case REAL_RESULT:
-  {
-    double nr= args[0]->val_real();
-
-    if (maybe_null)
-    {
-      if (args[0]->null_value)
-      {
-	nr=0.0;
-	result_field->set_null();
-      }
-      else
-	result_field->set_notnull();
-    }
-    result_field->store(nr);
-    break;
-  }
-  case DECIMAL_RESULT:
-  {
-    my_decimal value_buff, *arg_dec= args[0]->val_decimal(&value_buff);
-
-    if (maybe_null)
-    {
-      if (args[0]->null_value)
         result_field->set_null();
+        result_field->reset();
+      }
       else
+      {
         result_field->set_notnull();
+        result_field->store(res->ptr(),res->length(),tmp.charset());
+      }
+      break;
     }
-    /*
-      We must store zero in the field as we will use the field value in
-      add()
-    */
-    if (!arg_dec)                               // Null
-      arg_dec= &decimal_zero;
-    result_field->store_decimal(arg_dec);
-    break;
-  }
+  case INT_RESULT:
+    {
+      int64_t nr=args[0]->val_int();
+
+      if (maybe_null)
+      {
+        if (args[0]->null_value)
+        {
+          nr=0;
+          result_field->set_null();
+        }
+        else
+          result_field->set_notnull();
+      }
+      result_field->store(nr, unsigned_flag);
+      break;
+    }
+  case REAL_RESULT:
+    {
+      double nr= args[0]->val_real();
+
+      if (maybe_null)
+      {
+        if (args[0]->null_value)
+        {
+          nr=0.0;
+          result_field->set_null();
+        }
+        else
+          result_field->set_notnull();
+      }
+      result_field->store(nr);
+      break;
+    }
+  case DECIMAL_RESULT:
+    {
+      my_decimal value_buff, *arg_dec= args[0]->val_decimal(&value_buff);
+
+      if (maybe_null)
+      {
+        if (args[0]->null_value)
+          result_field->set_null();
+        else
+          result_field->set_notnull();
+      }
+      /*
+        We must store zero in the field as we will use the field value in
+        add()
+      */
+      if (!arg_dec)                               // Null
+        arg_dec= &decimal_zero;
+      result_field->store_decimal(arg_dec);
+      break;
+    }
   case ROW_RESULT:
-  default:
     assert(0);
   }
 }
@@ -2218,7 +2222,8 @@ void Item_sum_hybrid::update_field()
   case DECIMAL_RESULT:
     min_max_update_decimal_field();
     break;
-  default:
+  case REAL_RESULT:
+  case ROW_RESULT:
     min_max_update_real_field();
   }
 }
@@ -2231,7 +2236,7 @@ Item_sum_hybrid::min_max_update_str_field()
 
   if (!args[0]->null_value)
   {
-    result_field->val_str(&tmp_value);
+    result_field->val_str_internal(&tmp_value);
 
     if (result_field->is_null() ||
 	(cmp_sign * sortcmp(res_str,&tmp_value,collation.collation)) < 0)
@@ -2913,7 +2918,7 @@ int dump_leaf_key(unsigned char* key, uint32_t ,
       uint32_t offset= (field->offset(field->getTable()->record[0]) -
                     table->getShare()->null_bytes);
       assert(offset < table->getShare()->getRecordLength());
-      res= field->val_str(&tmp, key + offset);
+      res= field->val_str_internal(&tmp, key + offset);
     }
     else
       res= (*arg)->val_str(&tmp);

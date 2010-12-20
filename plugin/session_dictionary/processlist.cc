@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -66,19 +66,19 @@ bool ProcesslistTool::Generator::populate()
   while ((tmp= session_generator))
   {
     drizzled::Session::State::const_shared_ptr state(tmp->state());
-    const SecurityContext *tmp_sctx= &tmp->getSecurityContext();
+    identifier::User::const_shared_ptr tmp_sctx= tmp->user();
 
     /* ID */
     push((int64_t) tmp->thread_id);
 
     /* USER */
-    if (not tmp_sctx->getUser().empty())
-      push(tmp_sctx->getUser());
+    if (not tmp_sctx->username().empty())
+      push(tmp_sctx->username());
     else 
       push(_("no user"));
 
     /* HOST */
-    push(tmp_sctx->getIp());
+    push(tmp_sctx->address());
 
     /* DB */
     drizzled::util::string::const_shared_ptr schema(tmp->schema());
@@ -106,16 +106,16 @@ bool ProcesslistTool::Generator::populate()
     push(static_cast<uint64_t>(tmp->start_time ?  now - tmp->start_time : 0));
 
     /* STATE */
-    val= (tmp->client->isWriting() ?
-          "Writing to net" :
-          tmp->client->isReading() ?
-          (tmp->command == COM_SLEEP ?
-           NULL : "Reading from net") :
-          tmp->get_proc_info() ? tmp->get_proc_info() :
-          tmp->getThreadVar() &&
-          tmp->getThreadVar()->current_cond ?
-          "Waiting on cond" : NULL);
-    val ? push(val) : push();
+    const char *step= tmp->get_proc_info();
+
+    if (step)
+    {
+      push(step);
+    }
+    else
+    {
+      push();
+    }
 
     /* INFO */
     if (state)

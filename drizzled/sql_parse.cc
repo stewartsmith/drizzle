@@ -1542,37 +1542,6 @@ bool insert_precheck(Session *session, TableList *)
 
 
 /**
-  CREATE TABLE query pre-check.
-
-  @param session			Thread handler
-  @param tables		Global table list
-  @param create_table	        Table which will be created
-
-  @retval
-    false   OK
-  @retval
-    true   Error
-*/
-
-bool create_table_precheck(TableIdentifier &identifier)
-{
-  if (not plugin::StorageEngine::canCreateTable(identifier))
-  {
-    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", identifier.getSchemaName().c_str());
-    return true;
-  }
-
-  if (not plugin::StorageEngine::doesSchemaExist(identifier))
-  {
-    my_error(ER_BAD_DB_ERROR, MYF(0), identifier.getSchemaName().c_str());
-    return true;
-  }
-
-  return false;
-}
-
-
-/**
   negate given expression.
 
   @param session  thread handler

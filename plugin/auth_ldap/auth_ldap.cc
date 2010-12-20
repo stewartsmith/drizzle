@@ -29,7 +29,7 @@
 #include <string>
 
 #include "drizzled/plugin/authentication.h"
-#include "drizzled/security_context.h"
+#include "drizzled/identifier.h"
 #include "drizzled/util/convert.h"
 #include "drizzled/algorithm/sha1.h"
 
@@ -99,7 +99,7 @@ private:
   /**
    * Base class method to check authentication for a user.
    */
-  bool authenticate(const SecurityContext &sctx, const string &password);
+  bool authenticate(const identifier::User &sctx, const string &password);
 
   /**
    * Lookup a user in LDAP.
@@ -200,7 +200,7 @@ string& AuthLDAP::getError(void)
   return error;
 }
 
-bool AuthLDAP::authenticate(const SecurityContext &sctx, const string &password)
+bool AuthLDAP::authenticate(const identifier::User &sctx, const string &password)
 {
   /* See if cache should be emptied. */
   if (cache_timeout > 0)
@@ -222,7 +222,7 @@ bool AuthLDAP::authenticate(const SecurityContext &sctx, const string &password)
 
   pthread_rwlock_rdlock(&lock);
 
-  AuthLDAP::UserCache::const_iterator user= users.find(sctx.getUser());
+  AuthLDAP::UserCache::const_iterator user= users.find(sctx.username());
   if (user == users.end())
   {
     pthread_rwlock_unlock(&lock);
@@ -230,16 +230,16 @@ bool AuthLDAP::authenticate(const SecurityContext &sctx, const string &password)
     pthread_rwlock_wrlock(&lock);
 
     /* Make sure the user was not added while we unlocked. */
-    user= users.find(sctx.getUser());
+    user= users.find(sctx.username());
     if (user == users.end())
-      lookupUser(sctx.getUser());
+      lookupUser(sctx.username());
 
     pthread_rwlock_unlock(&lock);
 
     pthread_rwlock_rdlock(&lock);
 
     /* Get user again because map may have changed while unlocked. */
-    user= users.find(sctx.getUser());
+    user= users.find(sctx.username());
     if (user == users.end())
     {
       pthread_rwlock_unlock(&lock);
@@ -253,7 +253,7 @@ bool AuthLDAP::authenticate(const SecurityContext &sctx, const string &password)
     return false;
   }
 
-  if (sctx.getPasswordType() == SecurityContext::MYSQL_HASH)
+  if (sctx.getPasswordType() == identifier::User::MYSQL_HASH)
   {
     bool allow= verifyMySQLHash(user->second, sctx.getPasswordContext(), password);
     pthread_rwlock_unlock(&lock);

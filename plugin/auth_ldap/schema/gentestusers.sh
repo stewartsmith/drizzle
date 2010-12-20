@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (c) 2010 Edward "Koko" Konetzko <konetzed@quixoticagony.com>
+# Copyright (C) 2010 Edward "Koko" Konetzko <konetzed@quixoticagony.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without

@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -762,6 +762,12 @@ public:
    */
   bool eq_by_collation(Item *item, bool binary_cmp, const CHARSET_INFO * const cs);
 };
+
+namespace display {
+const std::string &type(Item::Type type);
+} /* namespace display */
+
+std::ostream& operator<<(std::ostream& output, const Item &item);
 
 } /* namespace drizzled */
 

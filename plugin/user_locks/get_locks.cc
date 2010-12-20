@@ -36,7 +36,7 @@ int64_t GetLocks::val_int()
 
     if (res && res->length())
     {
-      list_of_locks.insert(Key(getSession().getSecurityContext(), res->c_str()));
+      list_of_locks.insert(Key(*getSession().user(), res->c_str()));
     }
     else
     {
@@ -45,7 +45,7 @@ int64_t GetLocks::val_int()
     }
   }
 
-  boost::tribool result;
+  bool result;
   {
     boost::this_thread::restore_interruption dl(getSession().getThreadInterupt());
 
@@ -60,9 +60,6 @@ int64_t GetLocks::val_int()
       return 0;
     }
   }
-
-  if (boost::indeterminate(result))
-    null_value= true;
 
   if (result)
   {

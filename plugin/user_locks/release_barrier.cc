@@ -39,7 +39,9 @@ int64_t Release::val_int()
   }
 
 
-  barriers::return_t result= Barriers::getInstance().release(Key(getSession().getSecurityContext(), res->c_str()), getSession().getSessionId());
+  drizzled::identifier::User::const_shared_ptr user_identifier(getSession().user());
+
+  barriers::return_t result= Barriers::getInstance().release(Key(*user_identifier, res->c_str()), getSession().getSessionId());
 
   switch (result)
   {
@@ -55,7 +57,7 @@ int64_t Release::val_int()
 
         return 0;
       }
-      list->erase(Key(getSession().getSecurityContext(), res->c_str()));
+      list->erase(Key(*user_identifier, res->c_str()));
       null_value= false;
 
       return 1;

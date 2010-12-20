@@ -18,15 +18,17 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FIELD_INT64_T_H
-#define DRIZZLED_FIELD_INT64_T_H
+#ifndef DRIZZLED_FIELD_INT64_H
+#define DRIZZLED_FIELD_INT64_H
 
 #include <drizzled/field/num.h>
 
 namespace drizzled
 {
+namespace field
+{
 
-class Field_int64_t :public Field_num {
+class Int64 :public Field_num {
 public:
 
   using Field::val_int;
@@ -36,25 +38,33 @@ public:
   using Field::pack;
   using Field::unpack;
 
-  Field_int64_t(unsigned char *ptr_arg, uint32_t len_arg,
-                unsigned char *null_ptr_arg,
-                unsigned char null_bit_arg,
-                enum utype unireg_check_arg, const char *field_name_arg,
-                bool zero_arg, bool unsigned_arg)
-    :Field_num(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
-               unireg_check_arg, field_name_arg,
-               0, zero_arg,unsigned_arg)
-    {}
-  Field_int64_t(uint32_t len_arg,bool maybe_null_arg,
-                const char *field_name_arg,
-                bool unsigned_arg)
-    :Field_num((unsigned char*) 0, len_arg, maybe_null_arg ? (unsigned char*) "": 0,0,
-               NONE, field_name_arg,0,0,unsigned_arg)
-    {}
+  Int64(unsigned char *ptr_arg, uint32_t len_arg,
+        unsigned char *null_ptr_arg,
+        unsigned char null_bit_arg,
+        enum utype unireg_check_arg,
+        const char *field_name_arg) :
+    Field_num(ptr_arg,
+              len_arg,
+              null_ptr_arg,
+              null_bit_arg,
+              unireg_check_arg,
+              field_name_arg,
+              0, false, false)
+  {
+  }
+
+  Int64(uint32_t len_arg,bool maybe_null_arg,
+        const char *field_name_arg,
+        bool unsigned_arg) :
+    Field_num((unsigned char*) 0, len_arg, maybe_null_arg ? (unsigned char*) "": 0,0,
+              NONE, field_name_arg,0,0,unsigned_arg)
+    {
+    }
+
   enum Item_result result_type () const { return INT_RESULT; }
   enum_field_types type() const { return DRIZZLE_TYPE_LONGLONG;}
   enum ha_base_keytype key_type() const
-    { return unsigned_flag ? HA_KEYTYPE_ULONGLONG : HA_KEYTYPE_LONGLONG; }
+  { return unsigned_flag ? HA_KEYTYPE_ULONGLONG : HA_KEYTYPE_LONGLONG; }
   int store(const char *to,uint32_t length, const CHARSET_INFO * const charset);
   int store(double nr);
   int store(int64_t nr, bool unsigned_val);
@@ -77,11 +87,12 @@ public:
                               bool low_byte_first);
 
   virtual const unsigned char *unpack(unsigned char* to, const unsigned char *from,
-                              uint32_t param_data,
-                              bool low_byte_first);
+                                      uint32_t param_data,
+                                      bool low_byte_first);
 
 };
 
+} /* namespace field */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FIELD_INT64_T_H */
+#endif /* DRIZZLED_FIELD_INT64_H */

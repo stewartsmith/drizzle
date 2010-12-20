@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,8 +23,8 @@
 #include <drizzled/sql_list.h>
 
 #include <drizzled/function/math/int.h>
-#include <drizzled/field/int64_t.h>
-#include <drizzled/field/long.h>
+#include <drizzled/field/int32.h>
+#include <drizzled/field/int64.h>
 #include <drizzled/field/double.h>
 #include <drizzled/field/decimal.h>
 #include <drizzled/session.h>
@@ -454,20 +454,23 @@ bool Item_func::is_null()
 
 Field *Item_func::tmp_table_field(Table *table)
 {
-  Field *field;
+  Field *field= NULL;
 
   switch (result_type()) {
   case INT_RESULT:
     if (max_length > MY_INT32_NUM_DECIMAL_DIGITS)
-      field= new Field_int64_t(max_length, maybe_null, name, unsigned_flag);
+      field= new field::Int64(max_length, maybe_null, name, unsigned_flag);
     else
-      field= new Field_long(max_length, maybe_null, name, unsigned_flag);
+      field= new field::Int32(max_length, maybe_null, name, unsigned_flag);
     break;
+
   case REAL_RESULT:
     field= new Field_double(max_length, maybe_null, name, decimals);
     break;
+
   case STRING_RESULT:
     return make_string_field(table);
+
   case DECIMAL_RESULT:
     field= new Field_decimal(my_decimal_precision_to_length(decimal_precision(),
                                                             decimals,
@@ -478,14 +481,14 @@ Field *Item_func::tmp_table_field(Table *table)
                              unsigned_flag);
     break;
   case ROW_RESULT:
-  default:
     // This case should never be chosen
     assert(0);
-    field= 0;
     break;
   }
+
   if (field)
     field->init(table);
+
   return field;
 }
 

@@ -36,29 +36,30 @@ public:
     drizzled::plugin::Authorization("Simple User Policy")
   { }
 
-  virtual bool restrictSchema(const drizzled::SecurityContext &user_ctx,
-                              drizzled::SchemaIdentifier &db);
+  virtual bool restrictSchema(const drizzled::identifier::User &user_ctx,
+                              drizzled::SchemaIdentifier::const_reference schema);
 
-  virtual bool restrictProcess(const drizzled::SecurityContext &user_ctx,
-                               const drizzled::SecurityContext &session_ctx);
+  virtual bool restrictProcess(const drizzled::identifier::User &user_ctx,
+                               const drizzled::identifier::User &session_ctx);
 };
 
-inline bool Policy::restrictSchema(const drizzled::SecurityContext &user_ctx,
-                                   drizzled::SchemaIdentifier &schema)
+inline bool Policy::restrictSchema(const drizzled::identifier::User &user_ctx,
+                                   drizzled::SchemaIdentifier::const_reference schema)
 {
-  if ((user_ctx.getUser() == "root")
+  if ((user_ctx.username() == "root")
       || schema.compare("data_dictionary")
       || schema.compare("information_schema"))
     return false;
-  return not schema.compare(user_ctx.getUser());
+  return not schema.compare(user_ctx.username());
 }
 
-inline bool Policy::restrictProcess(const drizzled::SecurityContext &user_ctx,
-                                    const drizzled::SecurityContext &session_ctx)
+inline bool Policy::restrictProcess(const drizzled::identifier::User &user_ctx,
+                                    const drizzled::identifier::User &session_ctx)
 {
-  if (user_ctx.getUser() == "root")
+  if (user_ctx.username() == "root")
     return false;
-  return user_ctx.getUser() != session_ctx.getUser();
+
+  return user_ctx.username() != session_ctx.username();
 }
 
 } /* namespace simple_user_policy */

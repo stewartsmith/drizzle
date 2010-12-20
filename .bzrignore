@@ -333,3 +333,5 @@ unittests/uwagi.txt
 virtual_column_info.gcno
 xid.gcno
 ylwrap
+docs/man
+.pc

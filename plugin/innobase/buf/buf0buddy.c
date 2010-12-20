@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 2006, 2010, Innobase Oy. All Rights Reserved.
+Copyright (C) 2006, 2010, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -146,7 +146,7 @@ buf_buddy_alloc_zip(
 		buf_buddy_remove_from_free(buf_pool, bpage, i);
 	} else if (i + 1 < BUF_BUDDY_SIZES) {
 		/* Attempt to split. */
-		bpage = buf_buddy_alloc_zip(buf_pool, i + 1);
+		bpage = (buf_page_t *)buf_buddy_alloc_zip(buf_pool, i + 1);
 
 		if (bpage) {
 			buf_page_t*	buddy = (buf_page_t*)
@@ -305,7 +305,7 @@ buf_buddy_alloc_low(
 
 	if (i < BUF_BUDDY_SIZES) {
 		/* Try to allocate from the buddy system. */
-		block = buf_buddy_alloc_zip(buf_pool, i);
+		block = (buf_block_t *)buf_buddy_alloc_zip(buf_pool, i);
 
 		if (block) {
 			goto func_exit;
@@ -334,8 +334,8 @@ buf_buddy_alloc_low(
 alloc_big:
 	buf_buddy_block_register(block);
 
-	block = buf_buddy_alloc_from(
-		buf_pool, block->frame, i, BUF_BUDDY_SIZES);
+	block = (buf_block_t *)buf_buddy_alloc_from(buf_pool, block->frame,
+                                                    i, BUF_BUDDY_SIZES);
 
 func_exit:
 	buf_pool->buddy_stat[i].used++;
@@ -490,7 +490,7 @@ buf_buddy_relocate(
 			/* Relocate the compressed page. */
 			ut_a(bpage->zip.data == src);
 			memcpy(dst, src, size);
-			bpage->zip.data = dst;
+			bpage->zip.data = (page_zip_t *)dst;
 			mutex_exit(mutex);
 success:
 			UNIV_MEM_INVALID(src, size);
@@ -513,7 +513,7 @@ success:
 		about uninitialized pad bytes. */
 		UNIV_MEM_ASSERT_RW(src, size);
 #endif
-		if (buf_buddy_relocate_block(src, dst)) {
+		if (buf_buddy_relocate_block((buf_page_t *)src, (buf_page_t *)dst)) {
 
 			goto success;
 		}
@@ -655,7 +655,7 @@ buddy_nonfree:
 	}
 
 	/* Free the block to the buddy list. */
-	bpage = buf;
+	bpage = (buf_page_t *)buf;
 #ifdef UNIV_DEBUG
 	if (i < buf_buddy_get_slot(PAGE_ZIP_MIN_SIZE)) {
 		/* This area has most likely been allocated for at

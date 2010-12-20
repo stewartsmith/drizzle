@@ -570,101 +570,102 @@ int Arg_comparator::set_compare_func(Item_bool_func2 *item, Item_result type)
 {
   owner= item;
   func= comparator_matrix[type]
-                         [test(owner->functype() == Item_func::EQUAL_FUNC)];
+    [test(owner->functype() == Item_func::EQUAL_FUNC)];
+
   switch (type) {
   case ROW_RESULT:
-  {
-    uint32_t n= (*a)->cols();
-    if (n != (*b)->cols())
     {
-      my_error(ER_OPERAND_COLUMNS, MYF(0), n);
-      comparators= 0;
-      return 1;
-    }
-    if (!(comparators= new Arg_comparator[n]))
-      return 1;
-    for (uint32_t i=0; i < n; i++)
-    {
-      if ((*a)->element_index(i)->cols() != (*b)->element_index(i)->cols())
+      uint32_t n= (*a)->cols();
+      if (n != (*b)->cols())
       {
-	my_error(ER_OPERAND_COLUMNS, MYF(0), (*a)->element_index(i)->cols());
-	return 1;
+        my_error(ER_OPERAND_COLUMNS, MYF(0), n);
+        comparators= 0;
+        return 1;
       }
-      comparators[i].set_cmp_func(owner, (*a)->addr(i), (*b)->addr(i));
+      if (!(comparators= new Arg_comparator[n]))
+        return 1;
+      for (uint32_t i=0; i < n; i++)
+      {
+        if ((*a)->element_index(i)->cols() != (*b)->element_index(i)->cols())
+        {
+          my_error(ER_OPERAND_COLUMNS, MYF(0), (*a)->element_index(i)->cols());
+          return 1;
+        }
+        comparators[i].set_cmp_func(owner, (*a)->addr(i), (*b)->addr(i));
+      }
+      break;
     }
-    break;
-  }
-  case STRING_RESULT:
-  {
-    /*
-      We must set cmp_charset here as we may be called from for an automatic
-      generated item, like in natural join
-    */
-    if (cmp_collation.set((*a)->collation, (*b)->collation) ||
-	cmp_collation.derivation == DERIVATION_NONE)
-    {
-      my_coll_agg_error((*a)->collation, (*b)->collation, owner->func_name());
-      return 1;
-    }
-    if (cmp_collation.collation == &my_charset_bin)
-    {
-      /*
-	We are using BLOB/BINARY/VARBINARY, change to compare byte by byte,
-	without removing end space
-      */
-      if (func == &Arg_comparator::compare_string)
-	func= &Arg_comparator::compare_binary_string;
-      else if (func == &Arg_comparator::compare_e_string)
-	func= &Arg_comparator::compare_e_binary_string;
 
+  case STRING_RESULT:
+    {
       /*
-        As this is binary compassion, mark all fields that they can't be
-        transformed. Otherwise we would get into trouble with comparisons
-        like:
-        WHERE col= 'j' AND col LIKE BINARY 'j'
-        which would be transformed to:
-        WHERE col= 'j'
+        We must set cmp_charset here as we may be called from for an automatic
+        generated item, like in natural join
       */
-      (*a)->walk(&Item::set_no_const_sub, false, (unsigned char*) 0);
-      (*b)->walk(&Item::set_no_const_sub, false, (unsigned char*) 0);
+      if (cmp_collation.set((*a)->collation, (*b)->collation) ||
+          cmp_collation.derivation == DERIVATION_NONE)
+      {
+        my_coll_agg_error((*a)->collation, (*b)->collation, owner->func_name());
+        return 1;
+      }
+      if (cmp_collation.collation == &my_charset_bin)
+      {
+        /*
+          We are using BLOB/BINARY/VARBINARY, change to compare byte by byte,
+          without removing end space
+        */
+        if (func == &Arg_comparator::compare_string)
+          func= &Arg_comparator::compare_binary_string;
+        else if (func == &Arg_comparator::compare_e_string)
+          func= &Arg_comparator::compare_e_binary_string;
+
+        /*
+          As this is binary compassion, mark all fields that they can't be
+          transformed. Otherwise we would get into trouble with comparisons
+like:
+WHERE col= 'j' AND col LIKE BINARY 'j'
+which would be transformed to:
+WHERE col= 'j'
+      */
+        (*a)->walk(&Item::set_no_const_sub, false, (unsigned char*) 0);
+        (*b)->walk(&Item::set_no_const_sub, false, (unsigned char*) 0);
+      }
+      break;
     }
-    break;
-  }
   case INT_RESULT:
-  {
-    if (func == &Arg_comparator::compare_int_signed)
     {
-      if ((*a)->unsigned_flag)
-        func= (((*b)->unsigned_flag)?
-               &Arg_comparator::compare_int_unsigned :
-               &Arg_comparator::compare_int_unsigned_signed);
-      else if ((*b)->unsigned_flag)
-        func= &Arg_comparator::compare_int_signed_unsigned;
+      if (func == &Arg_comparator::compare_int_signed)
+      {
+        if ((*a)->unsigned_flag)
+          func= (((*b)->unsigned_flag)?
+                 &Arg_comparator::compare_int_unsigned :
+                 &Arg_comparator::compare_int_unsigned_signed);
+        else if ((*b)->unsigned_flag)
+          func= &Arg_comparator::compare_int_signed_unsigned;
+      }
+      else if (func== &Arg_comparator::compare_e_int)
+      {
+        if ((*a)->unsigned_flag ^ (*b)->unsigned_flag)
+          func= &Arg_comparator::compare_e_int_diff_signedness;
+      }
+      break;
     }
-    else if (func== &Arg_comparator::compare_e_int)
-    {
-      if ((*a)->unsigned_flag ^ (*b)->unsigned_flag)
-        func= &Arg_comparator::compare_e_int_diff_signedness;
-    }
-    break;
-  }
   case DECIMAL_RESULT:
     break;
   case REAL_RESULT:
-  {
-    if ((*a)->decimals < NOT_FIXED_DEC && (*b)->decimals < NOT_FIXED_DEC)
     {
-      precision= 5 / log_10[max((*a)->decimals, (*b)->decimals) + 1];
-      if (func == &Arg_comparator::compare_real)
-        func= &Arg_comparator::compare_real_fixed;
-      else if (func == &Arg_comparator::compare_e_real)
-        func= &Arg_comparator::compare_e_real_fixed;
+      if ((*a)->decimals < NOT_FIXED_DEC && (*b)->decimals < NOT_FIXED_DEC)
+      {
+        precision= 5 / log_10[max((*a)->decimals, (*b)->decimals) + 1];
+        if (func == &Arg_comparator::compare_real)
+          func= &Arg_comparator::compare_real_fixed;
+        else if (func == &Arg_comparator::compare_e_real)
+          func= &Arg_comparator::compare_e_real_fixed;
+      }
+      break;
     }
-    break;
   }
-  default:
-    assert(0);
-  }
+
   return 0;
 }
 
@@ -2195,23 +2196,28 @@ Item_func_ifnull::fix_length_and_dec()
     max_length= max(len0, len1) + decimals + (unsigned_flag ? 0 : 1);
   }
   else
+  {
     max_length= max(args[0]->max_length, args[1]->max_length);
+  }
 
   switch (hybrid_type)
   {
   case STRING_RESULT:
     agg_arg_charsets(collation, args, arg_count, MY_COLL_CMP_CONV, 1);
     break;
+
   case DECIMAL_RESULT:
   case REAL_RESULT:
     break;
+
   case INT_RESULT:
     decimals= 0;
     break;
+
   case ROW_RESULT:
-  default:
     assert(0);
   }
+
   cached_field_type= agg_field_type(args, 2);
 }
 
@@ -2749,7 +2755,6 @@ void Item_func_case::fix_length_and_dec()
   */
   if (first_expr_num != -1)
   {
-    uint32_t i;
     agg[0]= args[first_expr_num];
     left_result_type= agg[0]->result_type();
 
@@ -2759,7 +2764,7 @@ void Item_func_case::fix_length_and_dec()
     if (!(found_types= collect_cmp_types(agg, nagg)))
       return;
 
-    for (i= 0; i <= (uint32_t)DECIMAL_RESULT; i++)
+    for (int i= STRING_RESULT; i <= DECIMAL_RESULT; i++)
     {
       if (found_types & (1 << i) && !cmp_items[i])
       {
@@ -2845,14 +2850,12 @@ void Item_func_case::print(String *str, enum_query_type query_type)
 
 void Item_func_case::cleanup()
 {
-  uint32_t i;
   Item_func::cleanup();
-  for (i= 0; i <= (uint32_t)DECIMAL_RESULT; i++)
+  for (int i= STRING_RESULT; i <= DECIMAL_RESULT; i++)
   {
     delete cmp_items[i];
     cmp_items[i]= 0;
   }
-  return;
 }
 
 
@@ -2922,24 +2925,28 @@ void Item_func_coalesce::fix_length_and_dec()
 {
   cached_field_type= agg_field_type(args, arg_count);
   agg_result_type(&hybrid_type, args, arg_count);
+
   switch (hybrid_type) {
   case STRING_RESULT:
     count_only_length();
     decimals= NOT_FIXED_DEC;
     agg_arg_charsets(collation, args, arg_count, MY_COLL_ALLOW_CONV, 1);
     break;
+
   case DECIMAL_RESULT:
     count_decimal_length();
     break;
+
   case REAL_RESULT:
     count_real_length();
     break;
+
   case INT_RESULT:
     count_only_length();
     decimals= 0;
     break;
+
   case ROW_RESULT:
-  default:
     assert(0);
   }
 }
@@ -3263,18 +3270,20 @@ cmp_item* cmp_item::get_comparator(Item_result type,
   switch (type) {
   case STRING_RESULT:
     return new cmp_item_sort_string(cs);
+
   case INT_RESULT:
     return new cmp_item_int;
+
   case REAL_RESULT:
     return new cmp_item_real;
+
   case ROW_RESULT:
     return new cmp_item_row;
+
   case DECIMAL_RESULT:
     return new cmp_item_decimal;
-  default:
-    assert(0);
-    break;
   }
+
   return 0; // to satisfy compiler :)
 }
 
@@ -3545,7 +3554,7 @@ void Item_func_in::fix_length_and_dec()
   bool compare_as_datetime= false;
   Item *date_arg= 0;
   uint32_t found_types= 0;
-  uint32_t type_cnt= 0, i;
+  uint32_t type_cnt= 0;
   Item_result cmp_type= STRING_RESULT;
   left_result_type= args[0]->result_type();
   if (!(found_types= collect_cmp_types(args, arg_count, true)))
@@ -3559,7 +3568,7 @@ void Item_func_in::fix_length_and_dec()
       break;
     }
   }
-  for (i= 0; i <= (uint32_t)DECIMAL_RESULT; i++)
+  for (int i= STRING_RESULT; i <= DECIMAL_RESULT; i++)
   {
     if (found_types & 1 << i)
     {
@@ -3666,7 +3675,9 @@ void Item_func_in::fix_length_and_dec()
   if (type_cnt == 1 && const_itm && !nulls_in_row())
   {
     if (compare_as_datetime)
+    {
       array= new in_datetime(date_arg, arg_count - 1);
+    }
     else
     {
       /*
@@ -3692,17 +3703,21 @@ void Item_func_in::fix_length_and_dec()
             cmp_type= INT_RESULT;
         }
       }
+
       switch (cmp_type) {
       case STRING_RESULT:
         array=new in_string(arg_count-1,(qsort2_cmp) srtcmp_in,
                             cmp_collation.collation);
         break;
+
       case INT_RESULT:
         array= new in_int64_t(arg_count-1);
         break;
+
       case REAL_RESULT:
         array= new in_double(arg_count-1);
         break;
+
       case ROW_RESULT:
         /*
           The row comparator was created at the beginning but only DATETIME
@@ -3711,29 +3726,28 @@ void Item_func_in::fix_length_and_dec()
         */
         ((in_row*)array)->tmp.store_value(args[0]);
         break;
+
       case DECIMAL_RESULT:
         array= new in_decimal(arg_count - 1);
         break;
-      default:
-        assert(0);
-        return;
       }
     }
+
     if (array && !(session->is_fatal_error))		// If not EOM
     {
       uint32_t j=0;
       for (uint32_t arg_num=1 ; arg_num < arg_count ; arg_num++)
       {
-	if (!args[arg_num]->null_value)			// Skip NULL values
+        if (!args[arg_num]->null_value)			// Skip NULL values
         {
           array->set(j,args[arg_num]);
-	  j++;
+          j++;
         }
-	else
-	  have_null= 1;
+        else
+          have_null= 1;
       }
       if ((array->used_count= j))
-	array->sort();
+        array->sort();
     }
   }
   else
@@ -3742,7 +3756,7 @@ void Item_func_in::fix_length_and_dec()
       cmp_items[STRING_RESULT]= new cmp_item_datetime(date_arg);
     else
     {
-      for (i= 0; i <= (uint32_t) DECIMAL_RESULT; i++)
+      for (int i= STRING_RESULT; i <= DECIMAL_RESULT; i++)
       {
         if (found_types & (1 << i) && !cmp_items[i])
         {
