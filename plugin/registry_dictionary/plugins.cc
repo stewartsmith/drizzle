@@ -29,7 +29,7 @@ PluginsTool::PluginsTool() :
 {
   add_field("PLUGIN_NAME");
   add_field("PLUGIN_TYPE");
-  add_field("IS_ACTIVE", plugin::TableFunction::BOOLEAN);
+  add_field("IS_ACTIVE", plugin::TableFunction::BOOLEAN, 0, false);
   add_field("MODULE_NAME");
 }
 

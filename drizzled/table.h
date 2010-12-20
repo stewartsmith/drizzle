@@ -47,7 +47,9 @@ class Select_Lex;
 class COND_EQUAL;
 class SecurityContext;
 class TableList;
-class Field_timestamp;
+namespace field {
+class Epoch;
+}
 class Field_blob;
 
 extern uint64_t refresh_version;
@@ -158,7 +160,7 @@ public:
   KeyInfo  *key_info; /**< data of keys in database */
   Field *next_number_field; /**< Set if next_number is activated. @TODO What the heck is the difference between this and the next member? */
   Field *found_next_number_field; /**< Points to the "next-number" field (autoincrement field) */
-  Field_timestamp *timestamp_field; /**< Points to the auto-setting timestamp field, if any */
+  field::Epoch *timestamp_field; /**< Points to the auto-setting timestamp field, if any */
 
   TableList *pos_in_table_list; /* Element referring to this table */
   Order *group;
