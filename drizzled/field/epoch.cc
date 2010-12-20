@@ -96,8 +96,6 @@ namespace field
             field_name_arg,
             cs)
 {
-  /* For 4.0 MYD and 4.0 InnoDB compatibility */
-  flags|= UNSIGNED_FLAG;
   unireg_check= unireg_check_arg;
   if (! share->getTimestampField() && unireg_check != NONE)
   {
@@ -119,8 +117,6 @@ Epoch::Epoch(bool maybe_null_arg,
             field_name_arg,
             cs)
 {
-  /* For 4.0 MYD and 4.0 InnoDB compatibility */
-  flags|= UNSIGNED_FLAG;
   if (unireg_check != TIMESTAMP_DN_FIELD)
     flags|= ON_UPDATE_NOW_FLAG;
 }
