@@ -1098,6 +1098,8 @@ convert_error_code_to_mysql(
     return(HA_ERR_ROW_IS_REFERENCED);
 
   case DB_CANNOT_ADD_CONSTRAINT:
+  case DB_CHILD_NO_INDEX:
+  case DB_PARENT_NO_INDEX:
     return(HA_ERR_CANNOT_ADD_FOREIGN);
 
   case DB_CANNOT_DROP_CONSTRAINT:
@@ -6330,6 +6332,28 @@ InnobaseEngine::doCreateTable(
                                               query, strlen(query),
                                               norm_name,
                                               lex_identified_temp_table);
+    switch (error) {
+
+    case DB_PARENT_NO_INDEX:
+      push_warning_printf(
+                          &session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                          HA_ERR_CANNOT_ADD_FOREIGN,
+                          "Create table '%s' with foreign key constraint"
+                          " failed. There is no index in the referenced"
+                          " table where the referenced columns appear"
+                          " as the first columns.\n", norm_name);
+      break;
+
+    case DB_CHILD_NO_INDEX:
+      push_warning_printf(
+                          &session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                          HA_ERR_CANNOT_ADD_FOREIGN,
+                          "Create table '%s' with foreign key constraint"
+                          " failed. There is no index in the referencing"
+                          " table where referencing columns appear"
+                          " as the first columns.\n", norm_name);
+      break;
+    }
 
     error = convert_error_code_to_mysql(error, iflags, NULL);
 
