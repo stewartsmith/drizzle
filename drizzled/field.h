@@ -742,35 +742,8 @@ public:
 
 protected:
 
-  void pack_num(uint64_t arg, unsigned char *destination= NULL)
-  {
-    if (not destination)
-      destination= ptr;
-
-#ifdef WORDS_BIGENDIAN
-    if (getTable() && getTable()->getShare()->db_low_byte_first)
-    {
-      int8store(destination, arg);
-    }
-    else
-#endif
-      int64_tstore(destination, arg);
-  }
-
-  uint64_t unpack_num(uint64_t &destination, const unsigned char *arg= NULL) const
-  {
-    if (not arg)
-      arg= ptr;
-
-#ifdef WORDS_BIGENDIAN
-    if (getTable() && getTable()->getShare()->db_low_byte_first)
-      destination= uint8korr(arg);
-    else
-#endif
-      int64_tget(destination, arg);
-
-    return destination;
-  }
+  void pack_num(uint64_t arg, unsigned char *destination= NULL);
+  uint64_t unpack_num(uint64_t &destination, const unsigned char *arg= NULL) const;
 };
 
 std::ostream& operator<<(std::ostream& output, const Field &field);

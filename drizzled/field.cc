@@ -1134,6 +1134,36 @@ void Field::setWriteSet(bool arg)
     table->clearWriteSet(field_index);
 }
 
+void Field::pack_num(uint64_t arg, unsigned char *destination)
+{
+  if (not destination)
+    destination= ptr;
+
+#ifdef WORDS_BIGENDIAN
+  if (getTable() && getTable()->getShare()->db_low_byte_first)
+  {
+    int8store(destination, arg);
+  }
+  else
+#endif
+    int64_tstore(destination, arg);
+}
+
+uint64_t Field::unpack_num(uint64_t &destination, const unsigned char *arg) const
+{
+  if (not arg)
+    arg= ptr;
+
+#ifdef WORDS_BIGENDIAN
+  if (getTable() && getTable()->getShare()->db_low_byte_first)
+    destination= uint8korr(arg);
+  else
+#endif
+    int64_tget(destination, arg);
+
+  return destination;
+}
+
 std::ostream& operator<<(std::ostream& output, const Field &field)
 {
   output << "Field:(";
