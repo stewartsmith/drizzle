@@ -337,11 +337,13 @@ static bool mysql_prepare_alter_table(Session *session,
       new_create_list.push_back(def);
       alter_it.rewind(); /* Change default if ALTER */
       AlterColumn *alter;
+
       while ((alter= alter_it++))
       {
         if (! my_strcasecmp(system_charset_info,field->field_name, alter->name))
           break;
       }
+
       if (alter)
       {
         if (def->sql_type == DRIZZLE_TYPE_BLOB)
@@ -349,6 +351,7 @@ static bool mysql_prepare_alter_table(Session *session,
           my_error(ER_BLOB_CANT_HAVE_DEFAULT, MYF(0), def->change);
           return true;
         }
+
         if ((def->def= alter->def))
         {
           /* Use new default */
@@ -620,6 +623,7 @@ static bool mysql_prepare_alter_table(Session *session,
              alter_info->drop_list.head()->name);
     return true;
   }
+
   if (alter_info->alter_list.elements)
   {
     my_error(ER_CANT_DROP_FIELD_OR_KEY,

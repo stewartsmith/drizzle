@@ -341,7 +341,9 @@ void Item_func_set_user_var::make_field(SendField *tmp_field)
       tmp_field->col_name=Item::name;               // Use user supplied name
   }
   else
+  {
     Item::make_field(tmp_field);
+  }
 }
 
 /*

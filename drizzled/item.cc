@@ -39,14 +39,15 @@
 #include "drizzled/field/null.h"
 #include "drizzled/field/date.h"
 #include "drizzled/field/decimal.h"
-#include "drizzled/field/real.h"
 #include "drizzled/field/double.h"
 #include "drizzled/field/int32.h"
 #include "drizzled/field/int64.h"
-#include "drizzled/field/num.h"
+#include "drizzled/field/real.h"
+#include "drizzled/field/size.h"
 #include "drizzled/field/timestamp.h"
 #include "drizzled/field/datetime.h"
 #include "drizzled/field/varstring.h"
+
 #include "drizzled/internal/m_string.h"
 
 #include <cstdio>
@@ -1007,7 +1008,7 @@ Item** resolve_ref_in_select_and_group(Session *session, Item_ident *ref, Select
 }
 
 void Item::init_make_field(SendField *tmp_field,
-			   enum enum_field_types field_type_arg)
+                           enum enum_field_types field_type_arg)
 {
   char *empty_name= (char*) "";
   tmp_field->db_name=	empty_name;
@@ -1592,12 +1593,22 @@ static Field *create_tmp_field_from_item(Session *,
       Values with MY_INT32_NUM_DECIMAL_DIGITS digits may or may not fit into
       Int32 -> make them field::Int64.
     */
-    if (item->max_length >= (MY_INT32_NUM_DECIMAL_DIGITS - 1))
-      new_field=new field::Int64(item->max_length, maybe_null,
-                                 item->name, item->unsigned_flag);
+    if (item->unsigned_flag)
+    {
+      new_field= new field::Size(item->max_length, maybe_null,
+                                  item->name, item->unsigned_flag);
+    }
+    else if (item->max_length >= (MY_INT32_NUM_DECIMAL_DIGITS - 1))
+    {
+      new_field= new field::Int64(item->max_length, maybe_null,
+                                  item->name, item->unsigned_flag);
+    }
     else
-      new_field=new field::Int32(item->max_length, maybe_null,
-                                 item->name, item->unsigned_flag);
+    {
+      new_field= new field::Int32(item->max_length, maybe_null,
+                                  item->name, item->unsigned_flag);
+    }
+
     break;
 
   case STRING_RESULT:

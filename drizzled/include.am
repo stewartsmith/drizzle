@@ -90,6 +90,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/field/null.h \
 			      drizzled/field/num.h \
 			      drizzled/field/real.h \
+			      drizzled/field/size.h \
 			      drizzled/field/str.h \
 			      drizzled/field/timestamp.h \
 			      drizzled/field/varstring.h \
@@ -516,6 +517,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/field/null.cc \
 			   drizzled/field/num.cc \
 			   drizzled/field/real.cc \
+			   drizzled/field/size.cc \
 			   drizzled/field/str.cc \
 			   drizzled/field/timestamp.cc \
 			   drizzled/field/varstring.cc \

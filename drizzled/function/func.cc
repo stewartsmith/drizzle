@@ -25,8 +25,9 @@
 #include <drizzled/function/math/int.h>
 #include <drizzled/field/int32.h>
 #include <drizzled/field/int64.h>
-#include <drizzled/field/double.h>
 #include <drizzled/field/decimal.h>
+#include <drizzled/field/double.h>
+#include <drizzled/field/size.h>
 #include <drizzled/session.h>
 #include <drizzled/error.h>
 #include <drizzled/check_stack_overrun.h>
@@ -458,10 +459,19 @@ Field *Item_func::tmp_table_field(Table *table)
 
   switch (result_type()) {
   case INT_RESULT:
-    if (max_length > MY_INT32_NUM_DECIMAL_DIGITS)
-      field= new field::Int64(max_length, maybe_null, name, unsigned_flag);
+    if (unsigned_flag)
+    {
+      field= new field::Size(max_length, maybe_null, name, true);
+    } 
+    else if (max_length > MY_INT32_NUM_DECIMAL_DIGITS)
+    {
+      field= new field::Int64(max_length, maybe_null, name, false);
+    }
     else
-      field= new field::Int32(max_length, maybe_null, name, unsigned_flag);
+    {
+      field= new field::Int32(max_length, maybe_null, name, false);
+    }
+
     break;
 
   case REAL_RESULT:

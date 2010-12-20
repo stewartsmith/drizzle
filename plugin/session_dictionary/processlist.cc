@@ -43,7 +43,7 @@ ProcesslistTool::ProcesslistTool() :
   add_field("HOST", NI_MAXHOST);
   add_field("DB", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, true);
   add_field("COMMAND", 16);
-  add_field("TIME", plugin::TableFunction::NUMBER, 0, false);
+  add_field("TIME", plugin::TableFunction::SIZE, 0, false);
   add_field("STATE", plugin::TableFunction::STRING, 256, true);
   add_field("INFO", plugin::TableFunction::STRING, PROCESS_LIST_WIDTH, true);
   add_field("HAS_GLOBAL_LOCK", plugin::TableFunction::BOOLEAN);

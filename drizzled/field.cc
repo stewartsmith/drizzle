@@ -1084,6 +1084,29 @@ std::ostream& operator<<(std::ostream& output, const Field &field)
   output <<  field.field_name;
   output << ", ";
   output << drizzled::display::type(field.real_type());
+  output << ", { ";
+
+  if (field.flags & NOT_NULL_FLAG)
+    output << " NOT_NULL";
+
+  if (field.flags & PRI_KEY_FLAG)
+    output << ", PRIMARY KEY";
+
+  if (field.flags & UNIQUE_KEY_FLAG)
+    output << ", UNIQUE KEY";
+
+  if (field.flags & MULTIPLE_KEY_FLAG)
+    output << ", MULTIPLE KEY";
+
+  if (field.flags & BLOB_FLAG)
+    output << ", BLOB";
+
+  if (field.flags & UNSIGNED_FLAG)
+    output << ", UNSIGNED";
+
+  if (field.flags & BINARY_FLAG)
+    output << ", BINARY";
+  output << "}, ";
   output << ")";
 
   return output;  // for multiple << operators.

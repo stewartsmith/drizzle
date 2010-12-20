@@ -72,6 +72,7 @@
 #include "drizzled/field/double.h"
 #include "drizzled/field/int32.h"
 #include "drizzled/field/int64.h"
+#include "drizzled/field/size.h"
 #include "drizzled/field/num.h"
 #include "drizzled/field/timestamp.h"
 #include "drizzled/field/datetime.h"
@@ -1324,7 +1325,8 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
     assert(enum_field_types_size == 12);
 
-    Field* f= make_field(record + field_offsets[fieldnr] + data_offset,
+    Field* f= make_field(pfield,
+                         record + field_offsets[fieldnr] + data_offset,
                          field_length,
                          pfield.constraints().is_nullable(),
                          null_pos,
@@ -2010,7 +2012,8 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
   return;
 } /* open_table_error */
 
-Field *TableShare::make_field(unsigned char *ptr,
+Field *TableShare::make_field(message::Table::Field &pfield,
+                              unsigned char *ptr,
                               uint32_t field_length,
                               bool is_nullable,
                               unsigned char *null_pos,
@@ -2021,6 +2024,33 @@ Field *TableShare::make_field(unsigned char *ptr,
                               Field::utype unireg_check,
                               TYPELIB *interval,
                               const char *field_name)
+{
+  return make_field(ptr,
+                    field_length,
+                    is_nullable,
+                    null_pos,
+                    null_bit,
+                    decimals,
+                    field_type,
+                    field_charset,
+                    unireg_check,
+                    interval,
+                    field_name,
+                    pfield.constraints().is_unsigned());
+}
+
+Field *TableShare::make_field(unsigned char *ptr,
+                              uint32_t field_length,
+                              bool is_nullable,
+                              unsigned char *null_pos,
+                              unsigned char null_bit,
+                              uint8_t decimals,
+                              enum_field_types field_type,
+                              const CHARSET_INFO * field_charset,
+                              Field::utype unireg_check,
+                              TYPELIB *interval,
+                              const char *field_name, 
+                              bool is_unsigned)
 {
   if (! is_nullable)
   {
@@ -2100,12 +2130,24 @@ Field *TableShare::make_field(unsigned char *ptr,
                                         unireg_check,
                                         field_name);
   case DRIZZLE_TYPE_LONGLONG:
-    return new (&mem_root) field::Int64(ptr,
-                                        field_length,
-                                        null_pos,
-                                        null_bit,
-                                        unireg_check,
-                                        field_name);
+    {
+      if (is_unsigned)
+      {
+        return new (&mem_root) field::Size(ptr,
+                                           field_length,
+                                           null_pos,
+                                           null_bit,
+                                           unireg_check,
+                                           field_name);
+      }
+
+      return new (&mem_root) field::Int64(ptr,
+                                          field_length,
+                                          null_pos,
+                                          null_bit,
+                                          unireg_check,
+                                          field_name);
+    }
   case DRIZZLE_TYPE_TIMESTAMP:
     return new (&mem_root) Field_timestamp(ptr,
                                       field_length,

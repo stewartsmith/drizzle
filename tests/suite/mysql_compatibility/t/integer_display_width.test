@@ -1,0 +1,6 @@
+#
+# We ignore the display width, so this would be allowed
+#
+CREATE TABLE t1 (a INT(256));
+SHOW CREATE TABLE t1;
+DROP TABLE t1;

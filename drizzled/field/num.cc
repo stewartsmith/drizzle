@@ -135,6 +135,7 @@ bool Field_num::get_int(const CHARSET_INFO * const cs, const char *from, uint32_
   if (getTable()->in_use->count_cuted_fields &&
       check_int(cs, from, len, end, error))
     return 1;
+
   return 0;
 
 out_of_range:

@@ -699,6 +699,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  SET_VAR
 %token  SHARE_SYM
 %token  SHOW
+%token  SIGNED_SYM
 %token  SIMPLE_SYM                    /* SQL-2003-N */
 %token  SNAPSHOT_SYM
 %token  SPECIFIC_SYM                  /* SQL-2003-R */
@@ -756,6 +757,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  UNIQUE_SYM
 %token  UNKNOWN_SYM                   /* SQL-2003-R */
 %token  UNLOCK_SYM
+%token  UNSIGNED_SYM
 %token  UPDATE_SYM                    /* SQL-2003-R */
 %token  USAGE                         /* SQL-2003-N */
 %token  USER                          /* SQL-2003-R */
@@ -784,6 +786,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  XOR
 %token  YEAR_MONTH_SYM
 %token  YEAR_SYM                      /* SQL-2003-R */
+%token  ZEROFILL_SYM
 
 %left   JOIN_SYM INNER_SYM STRAIGHT_JOIN CROSS LEFT RIGHT
 /* A dummy token to force the priority of table_ref production in a join. */
@@ -835,6 +838,8 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         opt_status
         opt_concurrent
         opt_wait
+        opt_zerofill
+        opt_field_number_signed
         kill_option
 
 %type <m_fk_option>
@@ -1492,22 +1497,36 @@ field_def:
         ;
 
 type:
-        int_type
-        {
-          $$=$1;
-          Lex->length=(char*) 0; /* use default length */
-          statement::CreateTable *statement=
-            (statement::CreateTable *)Lex->statement;
+          int_type ignored_field_number_length opt_field_number_signed opt_zerofill
+          { 
+            $$= $1;
+            Lex->length=(char*) 0; /* use default length */
+            statement::CreateTable *statement=
+              (statement::CreateTable *)Lex->statement;
 
-          if (statement->current_proto_field)
-          {
-            if ($1 == DRIZZLE_TYPE_LONG)
-              statement->current_proto_field->set_type(message::Table::Field::INTEGER);
-            else if ($1 == DRIZZLE_TYPE_LONGLONG)
-              statement->current_proto_field->set_type(message::Table::Field::BIGINT);
-            else
-              abort();
-          }
+            if ($3 or $4)
+            {
+              $1= DRIZZLE_TYPE_LONGLONG;
+            }
+
+            if (statement->current_proto_field)
+            {
+              assert ($1 == DRIZZLE_TYPE_LONG or $1 == DRIZZLE_TYPE_LONGLONG);
+              // We update the type for unsigned types
+              if ($3 or $4)
+              {
+                statement->current_proto_field->set_type(message::Table::Field::BIGINT);
+                statement->current_proto_field->mutable_constraints()->set_is_unsigned(true);
+              }
+              if ($1 == DRIZZLE_TYPE_LONG)
+              {
+                statement->current_proto_field->set_type(message::Table::Field::INTEGER);
+              }
+              else if ($1 == DRIZZLE_TYPE_LONGLONG)
+              {
+                statement->current_proto_field->set_type(message::Table::Field::BIGINT);
+              }
+            }
           }
         | real_type opt_precision
           {
@@ -1766,6 +1785,22 @@ precision:
 opt_len:
           /* empty */ { Lex->length=(char*) 0; /* use default length */ }
         | '(' NUM ')' { Lex->length= $2.str; }
+        ;
+
+opt_field_number_signed:
+          /* empty */ { $$= 0; }
+        | SIGNED_SYM { $$= 0; }
+        | UNSIGNED_SYM { $$= 1; Lex->type|= UNSIGNED_FLAG; }
+        ;
+
+ignored_field_number_length:
+          /* empty */ { }
+        | '(' NUM ')' { }
+        ;
+
+opt_zerofill:
+          /* empty */ { $$= 0; }
+        | ZEROFILL_SYM { $$= 1; Lex->type|= UNSIGNED_FLAG; }
         ;
 
 opt_precision:
