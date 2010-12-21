@@ -1356,19 +1356,21 @@ bool DateTime::from_time_t(const time_t from)
     return false;
 }
 
-void Date::to_time_t(time_t *to) const
+void Date::to_time_t(time_t &to) const
 {
   if (in_unix_epoch())
   {
-    *to= _epoch_seconds;
+    to= _epoch_seconds;
   }
   else
-    *to= 0;
+  {
+    to= 0;
+  }
 }
 
-void Timestamp::to_time_t(time_t *to) const
+void Timestamp::to_time_t(time_t &to) const
 {
-  *to= _epoch_seconds;
+  to= _epoch_seconds;
 }
 
 void MicroTimestamp::to_timeval(struct timeval *to) const

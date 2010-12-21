@@ -1139,14 +1139,7 @@ void Field::pack_num(uint64_t arg, unsigned char *destination)
   if (not destination)
     destination= ptr;
 
-#ifdef WORDS_BIGENDIAN
-  if (getTable() && getTable()->getShare()->db_low_byte_first)
-  {
-    int8store(destination, arg);
-  }
-  else
-#endif
-    int64_tstore(destination, arg);
+  int64_tstore(destination, arg);
 }
 
 uint64_t Field::unpack_num(uint64_t &destination, const unsigned char *arg) const
@@ -1154,12 +1147,7 @@ uint64_t Field::unpack_num(uint64_t &destination, const unsigned char *arg) cons
   if (not arg)
     arg= ptr;
 
-#ifdef WORDS_BIGENDIAN
-  if (getTable() && getTable()->getShare()->db_low_byte_first)
-    destination= uint8korr(arg);
-  else
-#endif
-    int64_tget(destination, arg);
+  int64_tget(destination, arg);
 
   return destination;
 }

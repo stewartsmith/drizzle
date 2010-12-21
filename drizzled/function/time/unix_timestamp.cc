@@ -76,7 +76,7 @@ int64_t Item_func_unix_timestamp::val_int()
   }
 
   time_t tmp;
-  temporal.to_time_t(&tmp);
+  temporal.to_time_t(tmp);
 
   return (int64_t) tmp;
 }

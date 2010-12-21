@@ -156,8 +156,8 @@ timestamp_auto_set_type Epoch::get_auto_set_type() const
 }
 
 int Epoch::store(const char *from,
-                           uint32_t len,
-                           const CHARSET_INFO * const )
+                 uint32_t len,
+                 const CHARSET_INFO * const )
 {
   Timestamp temporal;
 
@@ -169,8 +169,8 @@ int Epoch::store(const char *from,
     return 1;
   }
 
-  uint64_t tmp;
-  temporal.to_time_t((time_t*)&tmp);
+  time_t tmp;
+  temporal.to_time_t(tmp);
 
   pack_num(tmp);
   return 0;
@@ -213,8 +213,8 @@ int Epoch::store(int64_t from, bool)
     return 2;
   }
 
-  uint64_t tmp;
-  temporal.to_time_t((time_t*)&tmp);
+  time_t tmp;
+  temporal.to_time_t(tmp);
 
   pack_num(tmp);
 

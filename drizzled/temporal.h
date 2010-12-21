@@ -419,7 +419,7 @@ public:
    *
    * @param Pointer to a time_t to convert to
    */
-  virtual void to_time_t(time_t *to) const;
+  virtual void to_time_t(time_t &to) const;
 
   /**
    * Attempts to populate the Date instance based
@@ -747,7 +747,7 @@ public:
    *
    * @param Pointer to a time_t to convert to
    */
-  void to_time_t(time_t *to) const;
+  void to_time_t(time_t &to) const;
 };
 
 /**

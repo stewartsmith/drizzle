@@ -243,7 +243,7 @@ TEST_F(TimestampTest, to_time_t)
   time_t time;
   TemporalGenerator::TimestampGen::make_timestamp(&timestamp, 2009, 6, 3, 4, 59, 1);
   
-  timestamp.to_time_t(&time);
+  timestamp.to_time_t(time);
   
   ASSERT_EQ(1244005141, time);
 }
