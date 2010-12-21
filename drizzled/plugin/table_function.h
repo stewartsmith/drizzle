@@ -3,7 +3,7 @@
  *
  *  Definitions required for TableFunction plugin
  *
- *  Copyright (C) 2010 Sun Microsystems
+ *  Copyright (C) 2010 Sun Microsystems, Inc.
  *  Copyright (C) 2010 Monty Taylor
  *
  *  This program is free software; you can redistribute it and/or modify

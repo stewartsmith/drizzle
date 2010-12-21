@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *  Copyright (C) 2010 Stewart Smith
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -26,26 +26,28 @@
 
 #define UUID_LENGTH (8+1+4+1+4+1+4+1+12)
 
-using namespace drizzled;
+namespace plugin {
+namespace uuid {
 
-class UuidFunction: public Item_str_func
+class Generate: public drizzled::Item_str_func
 {
 public:
-  UuidFunction(): Item_str_func() {}
-  void fix_length_and_dec() {
-    collation.set(system_charset_info);
+  Generate(): drizzled::Item_str_func() {}
+  void fix_length_and_dec()
+  {
+    collation.set(drizzled::system_charset_info);
     /*
        NOTE! uuid() should be changed to use 'ascii'
        charset when hex(), format(), md5(), etc, and implicit
        number-to-string conversion will use 'ascii'
     */
-    max_length= UUID_LENGTH * system_charset_info->mbmaxlen;
+    max_length= UUID_LENGTH * drizzled::system_charset_info->mbmaxlen;
   }
   const char *func_name() const{ return "uuid"; }
-  String *val_str(String *);
+  drizzled::String *val_str(drizzled::String *);
 };
 
-String *UuidFunction::val_str(String *str)
+drizzled::String *Generate::val_str(drizzled::String *str)
 {
   uuid_t uu;
   char *uuid_string;
@@ -53,20 +55,21 @@ String *UuidFunction::val_str(String *str)
   /* 36 characters for uuid string +1 for NULL */
   str->realloc(UUID_LENGTH+1);
   str->length(UUID_LENGTH);
-  str->set_charset(system_charset_info);
+  str->set_charset(drizzled::system_charset_info);
   uuid_string= (char *) str->ptr();
-  uuid_generate_random(uu);
+  uuid_generate(uu);
   uuid_unparse(uu, uuid_string);
 
   return str;
 }
 
-plugin::Create_function<UuidFunction> *uuid_function= NULL;
+} // uuid
+} // plugin
 
 static int initialize(drizzled::module::Context &context)
 {
-  uuid_function= new plugin::Create_function<UuidFunction>("uuid");
-  context.add(uuid_function);
+  context.add(new drizzled::plugin::Create_function<plugin::uuid::Generate>("uuid"));
+
   return 0;
 }
 
@@ -74,10 +77,10 @@ DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
   "uuid",
-  "1.0",
-  "Stewart Smith",
+  "1.1",
+  "Stewart Smith, Brian Aker",
   "UUID() function using libuuid",
-  PLUGIN_LICENSE_GPL,
+  drizzled::PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
   NULL,   /* system variables */
   NULL    /* config options */

@@ -18,15 +18,18 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FIELD_LONG_H
-#define DRIZZLED_FIELD_LONG_H
+#ifndef DRIZZLED_FIELD_INT32_H
+#define DRIZZLED_FIELD_INT32_H
 
 #include <drizzled/field/num.h>
 
 namespace drizzled
 {
 
-class Field_long :public Field_num {
+namespace field
+{
+
+class Int32 :public Field_num {
 public:
 
   using Field::val_int;
@@ -36,23 +39,25 @@ public:
   using Field::store;
   using Field::unpack;
 
-  Field_long(unsigned char *ptr_arg, uint32_t len_arg, unsigned char *null_ptr_arg,
-	     unsigned char null_bit_arg,
-	     enum utype unireg_check_arg, const char *field_name_arg,
-	     bool zero_arg, bool unsigned_arg)
-    :Field_num(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
-	       unireg_check_arg, field_name_arg,
-	       0, zero_arg,unsigned_arg)
+  Int32(unsigned char *ptr_arg, uint32_t len_arg, unsigned char *null_ptr_arg,
+        unsigned char null_bit_arg,
+        enum utype unireg_check_arg,
+        const char *field_name_arg) :
+    Field_num(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
+              unireg_check_arg, field_name_arg,
+              0, false, false)
+  {}
+
+  Int32(uint32_t len_arg,bool maybe_null_arg, const char *field_name_arg,
+        bool unsigned_arg) :
+    Field_num((unsigned char*) 0, len_arg, maybe_null_arg ? (unsigned char*) "": 0,0,
+              NONE, field_name_arg,0,0,unsigned_arg)
     {}
-  Field_long(uint32_t len_arg,bool maybe_null_arg, const char *field_name_arg,
-	     bool unsigned_arg)
-    :Field_num((unsigned char*) 0, len_arg, maybe_null_arg ? (unsigned char*) "": 0,0,
-	       NONE, field_name_arg,0,0,unsigned_arg)
-    {}
+
   enum Item_result result_type () const { return INT_RESULT; }
   enum_field_types type() const { return DRIZZLE_TYPE_LONG;}
   enum ha_base_keytype key_type() const
-    { return unsigned_flag ? HA_KEYTYPE_ULONG_INT : HA_KEYTYPE_LONG_INT; }
+  { return unsigned_flag ? HA_KEYTYPE_ULONG_INT : HA_KEYTYPE_LONG_INT; }
   int store(const char *to,uint32_t length, const CHARSET_INFO * const charset);
   int store(double nr);
   int store(int64_t nr, bool unsigned_val);
@@ -66,15 +71,16 @@ public:
   void sql_type(String &str) const;
   uint32_t max_display_length() { return MY_INT32_NUM_DECIMAL_DIGITS; }
   virtual unsigned char *pack(unsigned char* to, const unsigned char *from,
-                      uint32_t max_length,
-                      bool low_byte_first);
+                              uint32_t max_length,
+                              bool low_byte_first);
 
   virtual const unsigned char *unpack(unsigned char* to, const unsigned char *from,
-                              uint32_t param_data,
-                              bool low_byte_first);
+                                      uint32_t param_data,
+                                      bool low_byte_first);
 };
 
+} /* namespace field */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FIELD_LONG_H */
+#endif /* DRIZZLED_FIELD_INT32_H */
 

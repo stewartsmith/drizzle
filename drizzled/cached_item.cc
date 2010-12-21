@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -48,6 +48,7 @@ Cached_item *new_Cached_item(Session *session, Item *item)
     Field *cached_field= real_item->field;
     return new Cached_item_field(cached_field);
   }
+
   switch (item->result_type()) {
   case STRING_RESULT:
     return new Cached_item_str(session, (Item_field *) item);
@@ -58,10 +59,11 @@ Cached_item *new_Cached_item(Session *session, Item *item)
   case DECIMAL_RESULT:
     return new Cached_item_decimal(item);
   case ROW_RESULT:
-  default:
     assert(0);
     return 0;
   }
+
+  abort();
 }
 
 Cached_item::~Cached_item() {}
@@ -146,7 +148,7 @@ Cached_item_field::Cached_item_field(Field *arg_field)
 bool Cached_item_field::cmp(void)
 {
   // This is not a blob!
-  bool tmp= field->cmp(buff) != 0;
+  bool tmp= field->cmp_internal(buff) != 0;
 
   if (tmp)
     field->get_image(buff,length,field->charset());

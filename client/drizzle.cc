@@ -491,7 +491,7 @@ static Commands commands[] = {
   Commands( "tee",    'T', com_tee,    1,
     N_("Set outfile [to_outfile]. Append everything into given outfile.") ),
   Commands( "use",    'u', com_use,    1,
-    N_("Use another database. Takes database name as argument.") ),
+    N_("Use another schema. Takes schema name as argument.") ),
   Commands( "shutdown",    'u', com_shutdown,    1,
     N_("Shutdown the instance you are connected too.") ),
   Commands( "warnings", 'W', com_warnings,  0,
@@ -1386,7 +1386,11 @@ try
   N_("Password to use when connecting to server. If password is not given it's asked from the tty."))
   ("port,p", po::value<uint32_t>()->default_value(0),
   N_("Port number to use for connection or 0 for default to, in order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default"))
+#ifdef DRIZZLE_ADMIN_TOOL
+  ("user,u", po::value<string>(&current_user)->default_value("root"),
+#else
   ("user,u", po::value<string>(&current_user)->default_value(""),
+#endif
   N_("User for login if not current user."))
   ("protocol",po::value<string>(&opt_protocol)->default_value("mysql"),
   N_("The protocol of connection (mysql or drizzle)."))
@@ -1446,9 +1450,15 @@ try
 
   po::notify(vm);
 
+#ifdef DRIZZLE_ADMIN_TOOL
+  default_prompt= strdup(getenv("DRIZZLE_PS1") ?
+                         getenv("DRIZZLE_PS1") :
+                         "drizzleadmin> ");
+#else
   default_prompt= strdup(getenv("DRIZZLE_PS1") ?
                          getenv("DRIZZLE_PS1") :
                          "drizzle> ");
+#endif
   if (default_prompt == NULL)
   {
     fprintf(stderr, _("Memory allocation error while constructing initial "
@@ -1673,7 +1683,7 @@ try
            "This is free software,\n"
            "and you are welcome to modify and redistribute it "
            "under the GPL license\n"));
-    printf(_("Usage: drizzle [OPTIONS] [database]\n"));
+    printf(_("Usage: drizzle [OPTIONS] [schema]\n"));
     cout << long_options;
     exit(0);
   }
@@ -2527,8 +2537,8 @@ static void build_completion_hash(bool rehash, bool write_info)
   drizzle_return_t ret;
   drizzle_result_st databases,tables,fields;
   drizzle_row_t database_row,table_row;
-  drizzle_column_st *sql_field;
   string tmp_str, tmp_str_lower;
+  std::string query;
 
   if (status.getBatch() || quick || current_db.empty())
     return;      // We don't need completion in batches
@@ -2548,7 +2558,7 @@ static void build_completion_hash(bool rehash, bool write_info)
   /* hash Drizzle functions (to be implemented) */
 
   /* hash all database names */
-  if (drizzle_query_str(&con, &databases, "show databases", &ret) != NULL)
+  if (drizzle_query_str(&con, &databases, "select schema_name from information_schema.schemata", &ret) != NULL)
   {
     if (ret == DRIZZLE_RETURN_OK)
     {
@@ -2568,18 +2578,15 @@ static void build_completion_hash(bool rehash, bool write_info)
     drizzle_result_free(&databases);
   }
 
-  /* hash all table names */
-  if (drizzle_query_str(&con, &tables, "show tables", &ret) != NULL)
+  query= "select table_name, column_name from information_schema.columns where table_schema='";
+  query.append(current_db);
+  query.append("' order by table_name");
+  
+  if (drizzle_query(&con, &fields, query.c_str(), query.length(),
+                    &ret) != NULL)
   {
-    if (ret != DRIZZLE_RETURN_OK)
-    {
-      drizzle_result_free(&tables);
-      return;
-    }
-
-    if (drizzle_result_buffer(&tables) != DRIZZLE_RETURN_OK)
-      put_info(drizzle_error(&drizzle),INFO_INFO,0,0);
-    else
+    if (ret == DRIZZLE_RETURN_OK &&
+        drizzle_result_buffer(&fields) == DRIZZLE_RETURN_OK)
     {
       if (drizzle_result_row_count(&tables) > 0 && !opt_silent && write_info)
       {
@@ -2589,57 +2596,30 @@ static void build_completion_hash(bool rehash, bool write_info)
                       "You can turn off this feature to get a quicker "
                       "startup with -A\n\n"));
       }
-      while ((table_row=drizzle_row_next(&tables)))
+
+      std::string table_name;
+      while ((table_row=drizzle_row_next(&fields)))
       {
+        if (table_name.compare(table_row[0]) != 0)
+        {
+          tmp_str= table_row[0];
+          tmp_str_lower= lower_string(tmp_str);
+          completion_map[tmp_str_lower]= tmp_str;
+          table_name= table_row[0];
+        }
         tmp_str= table_row[0];
+        tmp_str.append(".");
+        tmp_str.append(table_row[1]);
+        tmp_str_lower= lower_string(tmp_str);
+        completion_map[tmp_str_lower]= tmp_str;
+
+        tmp_str= table_row[1];
         tmp_str_lower= lower_string(tmp_str);
         completion_map[tmp_str_lower]= tmp_str;
       }
     }
   }
-  else
-    return;
-
-  /* hash all field names, both with the table prefix and without it */
-  if (drizzle_result_row_count(&tables) == 0)
-  {
-    drizzle_result_free(&tables);
-    return;
-  }
-
-  drizzle_row_seek(&tables, 0);
-
-  while ((table_row=drizzle_row_next(&tables)))
-  {
-    string query;
-
-    query.append("show fields in `");
-    query.append(table_row[0]);
-    query.append("`");
-    
-    if (drizzle_query(&con, &fields, query.c_str(), query.length(),
-                      &ret) != NULL)
-    {
-      if (ret == DRIZZLE_RETURN_OK &&
-          drizzle_result_buffer(&fields) == DRIZZLE_RETURN_OK)
-      {
-        while ((sql_field=drizzle_column_next(&fields)))
-        {
-          tmp_str=table_row[0];
-          tmp_str.append(".");
-          tmp_str.append(drizzle_column_name(sql_field));
-          tmp_str_lower= lower_string(tmp_str);
-          completion_map[tmp_str_lower]= tmp_str;
-
-          tmp_str=drizzle_column_name(sql_field);
-          tmp_str_lower= lower_string(tmp_str);
-          completion_map[tmp_str_lower]= tmp_str;
-        }
-      }
-      drizzle_result_free(&fields);
-    }
-  }
-  drizzle_result_free(&tables);
+  drizzle_result_free(&fields);
   completion_iter= completion_map.begin();
 }
 
@@ -3076,7 +3056,7 @@ print_field_types(drizzle_result_st *result)
   {
     tee_fprintf(PAGER, _("Field %3u:  `%s`\n"
                 "Catalog:    `%s`\n"
-                "Database:   `%s`\n"
+                "Schema:     `%s`\n"
                 "Table:      `%s`\n"
                 "Org_table:  `%s`\n"
                 "Type:       UTF-8\n"
@@ -3722,7 +3702,7 @@ com_connect(string *buffer, const char *line)
   {
     sprintf(buff, _("Connection id:    %u"), drizzle_con_thread_id(&con));
     put_info(buff,INFO_INFO,0,0);
-    sprintf(buff, _("Current database: %.128s\n"),
+    sprintf(buff, _("Current schema: %.128s\n"),
             !current_db.empty() ? current_db.c_str() : _("*** NONE ***"));
     put_info(buff,INFO_INFO,0,0);
   }
@@ -3835,7 +3815,7 @@ com_use(string *, const char *line)
   tmp= get_arg(buff, 0);
   if (!tmp || !*tmp)
   {
-    put_info(_("USE must be followed by a database name"), INFO_ERROR, 0, 0);
+    put_info(_("USE must be followed by a schema name"), INFO_ERROR, 0, 0);
     return 0;
   }
   /*
@@ -3903,7 +3883,7 @@ com_use(string *, const char *line)
       build_completion_hash(opt_rehash, 1);
   }
 
-  put_info(_("Database changed"),INFO_INFO, 0, 0);
+  put_info(_("Schema changed"),INFO_INFO, 0, 0);
   return 0;
 }
 
@@ -4035,10 +4015,17 @@ sql_connect(const string &host, const string &database, const string &user, cons
     drizzle_free(&drizzle);
   }
   drizzle_create(&drizzle);
+
+#ifdef DRIZZLE_ADMIN_TOOL
+  drizzle_con_options_t options= (drizzle_con_options_t) (DRIZZLE_CON_ADMIN | (use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL));
+#else
+  drizzle_con_options_t options= (drizzle_con_options_t) (use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL);
+#endif
+
   if (drizzle_con_add_tcp(&drizzle, &con, (char *)host.c_str(),
     opt_drizzle_port, (char *)user.c_str(),
     (char *)password.c_str(), (char *)database.c_str(),
-    use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL) == NULL)
+    options) == NULL)
   {
     (void) put_error(&con, NULL);
     (void) fflush(stdout);
@@ -4113,7 +4100,7 @@ com_status(string *, const char *)
       drizzle_row_t cur=drizzle_row_next(&result);
       if (cur)
       {
-        tee_fprintf(stdout, _("Current database:\t%s\n"), cur[0] ? cur[0] : "");
+        tee_fprintf(stdout, _("Current schema:\t%s\n"), cur[0] ? cur[0] : "");
         tee_fprintf(stdout, _("Current user:\t\t%s\n"), cur[1]);
       }
       drizzle_result_free(&result);
@@ -4132,7 +4119,7 @@ com_status(string *, const char *)
   if (skip_updates)
   {
     vidattr(A_BOLD);
-    tee_fprintf(stdout, _("\nAll updates ignored to this database\n"));
+    tee_fprintf(stdout, _("\nAll updates ignored to this schema\n"));
     vidattr(A_NORMAL);
   }
   tee_fprintf(stdout, _("Current pager:\t\t%s\n"), pager.c_str());

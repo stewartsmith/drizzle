@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2010, Djellel Eddine Difallah
+ * Copyright (C) 2010 Djellel Eddine Difallah
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

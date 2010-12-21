@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -34,16 +34,20 @@ double user_var_entry::val_real(bool *null_value)
   switch (type) {
   case REAL_RESULT:
     return *(double*) value;
+
   case INT_RESULT:
     return (double) *(int64_t*) value;
+
   case DECIMAL_RESULT:
-  {
-    double result;
-    my_decimal2double(E_DEC_FATAL_ERROR, (my_decimal *)value, &result);
-    return result;
-  }
+    {
+      double result;
+      my_decimal2double(E_DEC_FATAL_ERROR, (my_decimal *)value, &result);
+      return result;
+    }
+
   case STRING_RESULT:
     return internal::my_atof(value);                      // This is null terminated
+
   case ROW_RESULT:
     assert(1);				// Impossible
     break;
@@ -62,23 +66,28 @@ int64_t user_var_entry::val_int(bool *null_value) const
   switch (type) {
   case REAL_RESULT:
     return (int64_t) *(double*) value;
+
   case INT_RESULT:
     return *(int64_t*) value;
+
   case DECIMAL_RESULT:
-  {
-    int64_t result;
-    my_decimal2int(E_DEC_FATAL_ERROR, (my_decimal *)value, 0, &result);
-    return result;
-  }
+    {
+      int64_t result;
+      my_decimal2int(E_DEC_FATAL_ERROR, (my_decimal *)value, 0, &result);
+      return result;
+    }
+
   case STRING_RESULT:
-  {
-    int error;
-    return internal::my_strtoll10(value, (char**) 0, &error);// String is null terminated
-  }
+    {
+      int error;
+      return internal::my_strtoll10(value, (char**) 0, &error);// String is null terminated
+    }
+
   case ROW_RESULT:
     assert(1);				// Impossible
     break;
   }
+
   return 0L;					// Impossible
 }
 
@@ -95,22 +104,27 @@ String *user_var_entry::val_str(bool *null_value, String *str,
   case REAL_RESULT:
     str->set_real(*(double*) value, decimals, &my_charset_bin);
     break;
+
   case INT_RESULT:
     if (!unsigned_flag)
       str->set(*(int64_t*) value, &my_charset_bin);
     else
       str->set(*(uint64_t*) value, &my_charset_bin);
     break;
+
   case DECIMAL_RESULT:
     my_decimal2string(E_DEC_FATAL_ERROR, (my_decimal *)value, 0, 0, 0, str);
     break;
+
   case STRING_RESULT:
     if (str->copy(value, length, collation.collation))
       str= 0;					// EOM error
+
   case ROW_RESULT:
     assert(1);				// Impossible
     break;
   }
+
   return(str);
 }
 
@@ -125,19 +139,24 @@ my_decimal *user_var_entry::val_decimal(bool *null_value, my_decimal *val)
   case REAL_RESULT:
     double2my_decimal(E_DEC_FATAL_ERROR, *(double*) value, val);
     break;
+
   case INT_RESULT:
     int2my_decimal(E_DEC_FATAL_ERROR, *(int64_t*) value, 0, val);
     break;
+
   case DECIMAL_RESULT:
     val= (my_decimal *)value;
     break;
+
   case STRING_RESULT:
     str2my_decimal(E_DEC_FATAL_ERROR, value, length, collation.collation, val);
     break;
+
   case ROW_RESULT:
     assert(1);				// Impossible
     break;
   }
+
   return(val);
 }
 

@@ -1,6 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
+ *  Copyright (C) 2010 Brian Aker
  *  Copyright (C) 2008 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -18,49 +19,58 @@
  */
 
 
-#ifndef DRIZZLED_SECURITY_CONTEXT_H
-#define DRIZZLED_SECURITY_CONTEXT_H
+#ifndef DRIZZLED_IDENTIFIER_USER_H
+#define DRIZZLED_IDENTIFIER_USER_H
 
 #include <string>
+#include <boost/shared_ptr.hpp>
 
 namespace drizzled
 {
+namespace identifier
+{
 
 /**
-  @class SecurityContext
+  @class User
   @brief A set of Session members describing the current authenticated user.
 */
 
-class SecurityContext {
+class User {
 public:
+  typedef boost::shared_ptr<User> shared_ptr;
+  typedef boost::shared_ptr<const User> const_shared_ptr;
+  static shared_ptr make_shared();
+
   enum PasswordType
   {
     PLAIN_TEXT,
     MYSQL_HASH
   };
 
-  SecurityContext():
-    password_type(PLAIN_TEXT)
+  User():
+    password_type(PLAIN_TEXT),
+    _user(""),
+    _address("")
   { }
 
-  const std::string& getIp() const
+  const std::string& address() const
   {
-    return ip;
+    return _address;
   }
 
-  void setIp(const char *newip)
+  void setAddress(const char *newip)
   {
-    ip.assign(newip);
+    _address.assign(newip);
   }
 
-  const std::string& getUser() const
+  const std::string& username() const
   {
-    return user;
+    return _user;
   }
 
   void setUser(const std::string &newuser)
   {
-    user.assign(newuser);
+    _user.assign(newuser);
   }
 
   PasswordType getPasswordType(void) const
@@ -85,11 +95,12 @@ public:
 
 private:
   PasswordType password_type;
-  std::string user;
-  std::string ip;
+  std::string _user;
+  std::string _address;
   std::string password_context;
 };
 
+} /* namespace identifier */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SECURITY_CONTEXT_H */
+#endif /* DRIZZLED_IDENTIFIER_USER_H */

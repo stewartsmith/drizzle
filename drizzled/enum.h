@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1057,8 +1057,11 @@ enum drizzled_error_code {
   ER_USER_LOCKS_INVALID_NAME_LOCK,
   ER_KILL_DENY_SELF_ERROR,
   ER_INVALID_ALTER_TABLE_FOR_NOT_NULL,
+  ER_ADMIN_ACCESS,
+  ER_INVALID_UUID_VALUE,
+  ER_INVALID_UUID_TIME,
 
-  ER_ERROR_LAST= ER_INVALID_ALTER_TABLE_FOR_NOT_NULL
+  ER_ERROR_LAST= ER_INVALID_UUID_TIME
 };
 
 enum drizzle_exit_codes {

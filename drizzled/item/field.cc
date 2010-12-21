@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -111,7 +111,7 @@ bool Item_field::register_field_in_read_map(unsigned char *arg)
 {
   Table *table= (Table *) arg;
   if (field->getTable() == table || !table)
-    field->getTable()->setReadSet(field->field_index);
+    field->getTable()->setReadSet(field->position());
 
   return 0;
 }
@@ -323,22 +323,27 @@ bool Item_field::val_bool_result()
   switch (result_field->result_type()) {
   case INT_RESULT:
     return result_field->val_int() != 0;
+
   case DECIMAL_RESULT:
-  {
-    my_decimal decimal_value;
-    my_decimal *val= result_field->val_decimal(&decimal_value);
-    if (val)
-      return !my_decimal_is_zero(val);
-    return 0;
-  }
+    {
+      my_decimal decimal_value;
+      my_decimal *val= result_field->val_decimal(&decimal_value);
+      if (val)
+        return !my_decimal_is_zero(val);
+      return 0;
+    }
+
   case REAL_RESULT:
   case STRING_RESULT:
     return result_field->val_real() != 0.0;
+
   case ROW_RESULT:
-  default:
     assert(0);
     return 0;                                   // Shut up compiler
   }
+
+  assert(0);
+  return 0;                                   // Shut up compiler
 }
 
 
@@ -902,10 +907,10 @@ bool Item_field::fix_fields(Session *session, Item **reference)
       current_bitmap= table->write_set;
       other_bitmap=   table->read_set;
     }
-    //if (! current_bitmap->testAndSet(field->field_index))
-    if (! current_bitmap->test(field->field_index))
+    //if (! current_bitmap->testAndSet(field->position()))
+    if (! current_bitmap->test(field->position()))
     {
-      if (! other_bitmap->test(field->field_index))
+      if (! other_bitmap->test(field->position()))
       {
         /* First usage of column */
         table->used_fields++;                     // Used to optimize loops
@@ -1263,7 +1268,7 @@ void Item_field::print(String *str, enum_query_type query_type)
   {
     char buff[MAX_FIELD_WIDTH];
     String tmp(buff,sizeof(buff),str->charset());
-    field->val_str(&tmp);
+    field->val_str_internal(&tmp);
     if (field->is_null())  {
       str->append("NULL");
     }

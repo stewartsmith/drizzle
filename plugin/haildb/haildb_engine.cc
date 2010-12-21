@@ -21,8 +21,8 @@
 
 /*****************************************************************************
 
-Copyright (c) 2000, 2009, MySQL AB & Innobase Oy. All Rights Reserved.
-Copyright (c) 2008, 2009 Google Inc.
+Copyright (C) 2000, 2009, MySQL AB & Innobase Oy. All Rights Reserved.
+Copyright (C) 2008, 2009 Google Inc.
 
 Portions of this file contain modifications contributed and copyrighted by
 Google, Inc. Those modifications are gratefully acknowledged and are described
@@ -45,8 +45,8 @@ St, Fifth Floor, Boston, MA 02110-1301 USA
 *****************************************************************************/
 /***********************************************************************
 
-Copyright (c) 1995, 2009, Innobase Oy. All Rights Reserved.
-Copyright (c) 2009, Percona Inc.
+Copyright (C) 1995, 2009, Innobase Oy. All Rights Reserved.
+Copyright (C) 2009, Percona Inc.
 
 Portions of this file contain modifications contributed and copyrighted
 by Percona Inc.. Those modifications are
@@ -1818,7 +1818,7 @@ static ib_err_t write_row_to_haildb_tuple(const unsigned char* buf,
       */
       String str;
       (**field).setReadSet();
-      (**field).val_str(&str);
+      (**field).val_str_internal(&str);
       err= ib_col_set_value(tuple, colnr, str.ptr(), str.length());
     }
     else if ((**field).type() == DRIZZLE_TYPE_ENUM)
@@ -2425,7 +2425,7 @@ static void store_key_value_from_haildb(KeyInfo *key_info, unsigned char* ref, i
       }
 
       String str;
-      field->val_str(&str);
+      field->val_str_internal(&str);
 
       *ref++= (char)(str.length() & 0x000000ff);
       *ref++= (char)((str.length()>>8) & 0x000000ff);

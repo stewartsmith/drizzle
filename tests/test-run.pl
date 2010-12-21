@@ -156,6 +156,7 @@ our $opt_repeat_test= 1;
 
 our $exe_master_drizzled;
 our $exe_drizzle;
+our $exe_drizzleadmin;
 our $exe_drizzle_client_test;
 our $exe_bug25714;
 our $exe_drizzled;
@@ -1266,6 +1267,7 @@ sub executable_setup () {
   $exe_drizzledump= dtr_exe_exists("$path_client_bindir/drizzledump");
   $exe_drizzleimport= dtr_exe_exists("$path_client_bindir/drizzleimport");
   $exe_drizzle=          dtr_exe_exists("$path_client_bindir/drizzle");
+  $exe_drizzleadmin= dtr_exe_exists("$path_client_bindir/drizzleadmin");
 
   if (!$opt_extern)
   {
@@ -1320,6 +1322,12 @@ sub generate_cmdline_drizzle ($) {
     " -uroot --port=$drizzled->{'port'} ";
 }
 
+sub generate_cmdline_drizzleadmin ($) {
+  my($drizzled) = @_;
+  return
+    dtr_native_path($exe_drizzleadmin) .
+    " -uroot --port=$drizzled->{'port'} ";
+}
 
 ##############################################################################
 #
@@ -1473,6 +1481,7 @@ sub environment_setup () {
   # ----------------------------------------------------
   # Setup env to childs can execute myqldump
   # ----------------------------------------------------
+  my $cmdline_drizzleadmin= generate_cmdline_drizzleadmin($master->[0]);
   my $cmdline_drizzledump= generate_cmdline_drizzledump($master->[0]);
   my $cmdline_drizzledumpslave= generate_cmdline_drizzledump($slave->[0]);
   my $cmdline_drizzledump_secondary= dtr_native_path($exe_drizzledump) .
@@ -1488,6 +1497,7 @@ sub environment_setup () {
     $cmdline_drizzledump_secondary .=
       " --debug=d:t:A,$path_vardir_trace/log/drizzledump-drizzle.trace";
   }
+  $ENV{'DRIZZLE_ADMIN'}= $cmdline_drizzleadmin;
   $ENV{'DRIZZLE_DUMP'}= $cmdline_drizzledump;
   $ENV{'DRIZZLE_DUMP_SLAVE'}= $cmdline_drizzledumpslave;
   $ENV{'DRIZZLE_DUMP_SECONDARY'}= $cmdline_drizzledump_secondary;

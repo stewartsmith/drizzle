@@ -13,7 +13,7 @@
 #
 # LICENSE
 #
-#   Copyright (c) 2008 Benjamin Kosnik <bkoz@redhat.com>
+#   Copyright (C) 2008 Benjamin Kosnik <bkoz@redhat.com>
 #
 #   Copying and distribution of this file, with or without modification, are
 #   permitted in any medium without royalty provided the copyright notice

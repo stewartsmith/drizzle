@@ -17,6 +17,7 @@ noinst_PROGRAMS+= \
 
 bin_PROGRAMS+= \
 	       client/drizzle \
+               client/drizzleadmin \
 	       client/drizzledump \
 	       client/drizzleimport \
 	       client/drizzleslap
@@ -31,7 +32,6 @@ client_libgetpassword_la_SOURCES= client/get_password.cc
 
 noinst_HEADERS+= \
 		 client/client_priv.h \
-		 client/errname.h \
 		 client/get_password.h \
 		 client/linebuffer.h \
                  client/conclusions.h \
@@ -51,6 +51,14 @@ client_drizzle_LDADD=		${READLINE_LIBS} ${BOOST_LIBS} \
 				$(LIBZ) \
 				client/libgetpassword.la
 
+client_drizzleadmin_CXXFLAGS=   ${AM_CXXFLAGS} -DDRIZZLE_ADMIN_TOOL
+client_drizzleadmin_SOURCES=    client/drizzle.cc client/linebuffer.cc
+client_drizzleadmin_LDADD=      ${READLINE_LIBS} ${BOOST_LIBS} \
+                                libdrizzle/libdrizzle.la \
+                                $(LIBINTL) \
+                                $(LIBZ) \
+                                client/libgetpassword.la
+
 client_drizzledump_SOURCES= \
 			    client/drizzledump.cc \
 			    client/drizzledump_data.cc \
@@ -66,7 +74,7 @@ client_drizzleslap_SOURCES=	client/drizzleslap.cc
 client_drizzleslap_LDADD=	${CLIENT_LDADD} ${BOOST_LIBS}
 client_drizzleslap_CXXFLAGS=	${AM_CXXFLAGS} ${BOOSTSKIP_WARNINGS}
 
-client_drizzletest_SOURCES=	client/drizzletest.cc client/errname.cc
+client_drizzletest_SOURCES=	client/drizzletest.cc
 client_drizzletest_LDADD=	${CLIENT_LDADD} ${BOOST_LIBS} ${LIBPCRE} 
  
 

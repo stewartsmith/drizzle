@@ -22,7 +22,7 @@
 #include <string>
 
 #include "drizzled/plugin/authentication.h"
-#include "drizzled/security_context.h"
+#include "drizzled/identifier.h"
 #include "drizzled/util/convert.h"
 #include "drizzled/algorithm/sha1.h"
 
@@ -42,23 +42,23 @@ public:
     plugin::Authentication(name_arg)
   { }
 
-  virtual bool authenticate(const SecurityContext &sctx, const string &password)
+  virtual bool authenticate(const identifier::User &sctx, const string &password)
   {
     /* The "root" user always succeeds for drizzletest to get in. */
-    if (sctx.getUser() == "root" && password.empty())
+    if (sctx.username() == "root" && password.empty())
       return true;
 
     /* Any password succeeds. */
-    if (sctx.getUser() == "password_ok" && !password.empty())
+    if (sctx.username() == "password_ok" && !password.empty())
       return true;
 
     /* No password succeeds. */
-    if (sctx.getUser() == "no_password_ok" && password.empty())
+    if (sctx.username() == "no_password_ok" && password.empty())
       return true;
 
     /* Check if MySQL password scramble succeeds. */
-    if (sctx.getUser() == "scramble_ok" &&
-        sctx.getPasswordType() == SecurityContext::MYSQL_HASH &&
+    if (sctx.username() == "scramble_ok" &&
+        sctx.getPasswordType() == identifier::User::MYSQL_HASH &&
         sctx.getPasswordContext().size() == SHA1_DIGEST_LENGTH &&
         password.size() == SHA1_DIGEST_LENGTH)
     {
