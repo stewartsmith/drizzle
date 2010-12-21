@@ -58,8 +58,6 @@ namespace field
               field_name_arg,
               cs)
 {
-  /* For 4.0 MYD and 4.0 InnoDB compatibility */
-  flags|= UNSIGNED_FLAG;
 }
 
 Time::Time(bool maybe_null_arg,
@@ -72,8 +70,6 @@ Time::Time(bool maybe_null_arg,
             field_name_arg,
             cs)
 {
-  /* For 4.0 MYD and 4.0 InnoDB compatibility */
-  flags|= UNSIGNED_FLAG;
 }
 
 int Time::store(const char *from,
@@ -96,22 +92,46 @@ int Time::store(const char *from,
 }
 
 int Time::store(double from)
-{
+{ 
   ASSERT_COLUMN_MARKED_FOR_WRITE;
+  int64_t tmp;
+  int error= 0;
 
-  if (from < 0 || from > 99991231235959.0)
-  {
-    /* Convert the double to a string using stringstream */
-    std::stringstream ss;
-    std::string tmp;
-    ss.precision(18); /* 18 places should be fine for error display of double input. */
-    ss << from; 
-    ss >> tmp;
-
-    my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(ME_FATALERROR), tmp.c_str());
-    return 2;
+  if (from > (double)TIME_MAX_VALUE)
+  { 
+    tmp= TIME_MAX_VALUE;
+    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                         ER_WARN_DATA_OUT_OF_RANGE, from, DRIZZLE_TIMESTAMP_TIME);
+    error= 1;
   }
-  return Time::store((int64_t) rint(from), false);
+  else if (from < (double) - TIME_MAX_VALUE)
+  { 
+    tmp= -TIME_MAX_VALUE;
+    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                         ER_WARN_DATA_OUT_OF_RANGE, from, DRIZZLE_TIMESTAMP_TIME);
+    error= 1;
+  }
+  else
+  { 
+    tmp=(long) floor(fabs(from));                 // Remove fractions
+
+    if (from < 0)
+      tmp= -tmp;
+
+    if (tmp % 100 > 59 || tmp/100 % 100 > 59)
+    { 
+      tmp=0;
+      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                           ER_WARN_DATA_OUT_OF_RANGE, from,
+                           DRIZZLE_TIMESTAMP_TIME);
+      error= 1;
+    }
+  }
+
+  if (not error)
+    return store(tmp, false);
+
+  return error;
 }
 
 int Time::store(int64_t from, bool)

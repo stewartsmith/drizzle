@@ -52,13 +52,13 @@ public:
              const CHARSET_INFO * const charset);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
-  int  reset(void) { ptr[0]=ptr[1]=ptr[2]=ptr[3]=ptr[4]=ptr[5]=ptr[6]=ptr[7]=0; return 0; }
+  int  reset(void) { ptr[0]= ptr[1]= ptr[2]= ptr[3]= 0; return 0; }
   double val_real(void);
   int64_t val_int(void);
   String *val_str(String*,String *);
   int cmp(const unsigned char *,const unsigned char *);
   void sort_string(unsigned char *buff,uint32_t length);
-  uint32_t pack_length() const { return 8; }
+  uint32_t pack_length() const { return 4; }
   void sql_type(String &str) const;
   bool can_be_compared_as_int64_t() const { return true; }
   bool zero_pack() const { return 0; }
