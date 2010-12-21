@@ -290,7 +290,7 @@ long Time::get_timestamp(bool *null_value)
 
 size_t Time::max_string_length()
 {
-  return sizeof(uint64_t);
+  return sizeof(int64_t);
 }
 
 } /* namespace field */

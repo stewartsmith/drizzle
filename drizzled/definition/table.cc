@@ -1328,7 +1328,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
       field_length= field::Epoch::max_string_length();
       break;
     case DRIZZLE_TYPE_TIME:
-      field_length= field::Epoch::max_string_length();
+      field_length= field::Time::max_string_length();
       break;
     case DRIZZLE_TYPE_NULL:
       abort(); // Programming error

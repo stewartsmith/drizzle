@@ -46,7 +46,7 @@ public:
                   const char *field_name_arg,
                   const CHARSET_INFO * const cs);
   enum_field_types type() const { return DRIZZLE_TYPE_TIMESTAMP;}
-  enum ha_base_keytype key_type() const { return HA_KEYTYPE_ULONGLONG; }
+  enum ha_base_keytype key_type() const { return HA_KEYTYPE_LONG_INT; }
   enum Item_result cmp_type () const { return INT_RESULT; }
   int  store(const char *to,uint32_t length,
              const CHARSET_INFO * const charset);
