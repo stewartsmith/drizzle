@@ -37,11 +37,6 @@ public:
 
   typedef Epoch* pointer;
 
-  using Field::val_int;
-  using Field::val_str;
-  using Field::cmp;
-  using Field::store;
-
   Epoch(unsigned char *ptr_arg,
         uint32_t len_arg,
         unsigned char *null_ptr_arg,

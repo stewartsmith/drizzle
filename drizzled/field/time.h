@@ -36,11 +36,6 @@ typedef struct charset_info_st CHARSET_INFO;
 
 class Time :public Field_str {
 public:
-
-  using Field::val_int;
-  using Field::val_str;
-  using Field::cmp;
-  using Field::store;
   Time(unsigned char *ptr_arg,
                   uint32_t len_arg,
                   unsigned char *null_ptr_arg,
