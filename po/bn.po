@@ -1,107 +1,99 @@
-# Norwegian Bokmal translation for drizzle
-# Copyright (C) 2008 Rosetta Contributors and Canonical Ltd 2008
+# Bengali translation for drizzle
+# Copyright (c) 2010 Rosetta Contributors and Canonical Ltd 2010
 # This file is distributed under the same license as the drizzle package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2008.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2010.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-12-21 11:41-0500\n"
-"PO-Revision-Date: 2010-09-11 06:12+0000\n"
-"Last-Translator: Tor Syversen <sol-moe@online.no>\n"
-"Language-Team: Norwegian Bokmal <nb@li.org>\n"
+"PO-Revision-Date: 2010-12-14 00:33+0000\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: Bengali <bn@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: nb\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2010-09-12 04:53+0000\n"
+"X-Launchpad-Export-Date: 2010-12-15 04:37+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: ../client/drizzle.cc:469
 msgid "Synonym for `help'."
-msgstr "Synonymt med `help'."
+msgstr ""
 
 #: ../client/drizzle.cc:470
 msgid "Clear command."
-msgstr "Slett kommando."
+msgstr ""
 
 #: ../client/drizzle.cc:472
 msgid "Reconnect to the server. Optional arguments are db and host."
 msgstr ""
-"Gjenopprett tilkobling til tjener. Databasenavn og vertsmaskinnavn er "
-"valgfrie argumenter."
 
 #: ../client/drizzle.cc:474
 msgid ""
 "Set statement delimiter. NOTE: Takes the rest of the line as new delimiter."
 msgstr ""
-"Angi kommandoskilletegn. Merk: Bruker resten av linjen som nytt skilletegn."
 
 #: ../client/drizzle.cc:476
 msgid "Send command to drizzle server, display result vertically."
-msgstr "Send kommando til drizzle-tjener, presentér resultat vertikalt."
+msgstr ""
 
 #: ../client/drizzle.cc:477
 msgid "Exit drizzle. Same as quit."
-msgstr "Gå ut av drizzle. Det samme som avslutt."
+msgstr ""
 
 #: ../client/drizzle.cc:478
 msgid "Send command to drizzle server."
-msgstr "Send kommando til drizzle-tjener."
+msgstr ""
 
 #: ../client/drizzle.cc:479
 msgid "Display this help."
-msgstr "Vis denne hjelpeteksten."
+msgstr ""
 
 #: ../client/drizzle.cc:480
 msgid "Disable pager, print to stdout."
-msgstr "Skru av sidevisning, skriv til stdout."
+msgstr ""
 
 #: ../client/drizzle.cc:481
 msgid "Don't write into outfile."
-msgstr "Ikke skriv til utfilen."
+msgstr ""
 
 #: ../client/drizzle.cc:483
 msgid "Set PAGER [to_pager]. Print the query results via PAGER."
 msgstr ""
-"Sett PAGER [to_pager]. Resultatet av en spørring blir skrevet ut via PAGER."
 
 #: ../client/drizzle.cc:484
 msgid "Print current command."
-msgstr "Vis gjeldende kommando."
+msgstr ""
 
 #: ../client/drizzle.cc:485
 msgid "Change your drizzle prompt."
-msgstr "Endre ditt drizzle-beredskapstegn."
+msgstr ""
 
 #: ../client/drizzle.cc:486
 msgid "Quit drizzle."
-msgstr "Avslutt drizzle."
+msgstr ""
 
 #: ../client/drizzle.cc:487
 msgid "Rebuild completion hash."
-msgstr "Gjenoppbygg hashtabell for kommandofullførelse."
+msgstr ""
 
 #: ../client/drizzle.cc:489
 msgid "Execute an SQL script file. Takes a file name as an argument."
-msgstr "Utfør en SQL-skriptfil. Tar et filnavn som argument."
+msgstr ""
 
 #: ../client/drizzle.cc:490
 msgid "Get status information from the server."
-msgstr "Hent statusinformasjon fra tjeneren."
+msgstr ""
 
 #: ../client/drizzle.cc:492
 msgid "Set outfile [to_outfile]. Append everything into given outfile."
 msgstr ""
-"Sett utfil til [to_outfile]. Legger alt til i slutten av den oppgitte "
-"utfilen."
 
 #: ../client/drizzle.cc:494
-#, fuzzy
 msgid "Use another schema. Takes schema name as argument."
-msgstr "Bruk en annen database. Tar databasenavnet som argument."
+msgstr ""
 
 #: ../client/drizzle.cc:496
 msgid "Shutdown the instance you are connected too."
@@ -109,11 +101,11 @@ msgstr ""
 
 #: ../client/drizzle.cc:498 ../client/drizzle.cc:1322
 msgid "Show warnings after every statement."
-msgstr "Vis advarsler etter hvert uttrykk."
+msgstr ""
 
 #: ../client/drizzle.cc:500
 msgid "Don't show warnings after every statement."
-msgstr "Ikke vis advarsler etter hvert uttrykk."
+msgstr ""
 
 #: ../client/drizzle.cc:1150 ../client/drizzle.cc:3897
 #, c-format
@@ -165,87 +157,73 @@ msgstr ""
 
 #: ../client/drizzle.cc:1290
 msgid "Displays this help and exit."
-msgstr "Viser denne hjelp og avslutter."
+msgstr ""
 
 #: ../client/drizzle.cc:1291
 msgid ""
 "Don't use history file. Disable interactive behavior. (Enables --silent)"
-msgstr "Ikke bruk en historiefil. Skru av interaktivitet. (Skrur på --silent)"
+msgstr ""
 
 #: ../client/drizzle.cc:1293
 msgid "Display column type information."
-msgstr "Vis typeinformasjon for kolonnene"
+msgstr ""
 
 #: ../client/drizzle.cc:1295
 msgid ""
 "Preserve comments. Send comments to the server. The default is --skip-"
 "comments (discard comments), enable with --comments"
 msgstr ""
-"Bevarer kommentarer. Sender kommentarene til serveren. Standardverdi er --"
-"skip-comments (hopp over kommentarer), skru på med --comments"
 
 #: ../client/drizzle.cc:1297
 msgid "Print the output of a query (rows) vertically."
-msgstr "Vis resultatet av en spørring (radene) vertikalt."
+msgstr ""
 
 #: ../client/drizzle.cc:1299
 msgid "Continue even if we get an sql error."
-msgstr "Fortsett selv om vi får en SQL-feil."
+msgstr ""
 
 #: ../client/drizzle.cc:1301
-#, fuzzy
 msgid ""
 "Enable named commands. Named commands mean this program's internal commands; "
 "see drizzle> help . When enabled, the named commands can be used from any "
 "line of the query, otherwise only from the first line, before an enter."
 msgstr ""
-"Skru på navngitte kommandoer. Navngitte kommandoer betyr dette programmets "
-"egne kommandoer; se drizzle> help. Når denne er aktiv, kan navngitte "
-"kommandoer brukes hvor som helst i en spørring, i motsetning til kun på "
-"første linje (før du trykker enter). Skrus av med --disable-named-commands. "
-"Denne egenskapen er skrudd av som standard."
 
 #: ../client/drizzle.cc:1303
 msgid "Turn off beep on error."
-msgstr "Skru av at maskinen piper ved en feil"
+msgstr ""
 
 #: ../client/drizzle.cc:1304
-#, fuzzy
 msgid "Do not write line numbers for errors."
-msgstr "Skriv linjenummer for feilmeldinger"
+msgstr ""
 
 #: ../client/drizzle.cc:1305
-#, fuzzy
 msgid "Do not write column names in results."
-msgstr "Skriv kolonnenavnene i resultatet"
+msgstr ""
 
 #: ../client/drizzle.cc:1307
 msgid ""
 "Don't write column names in results. WARNING: -N is deprecated, use long "
 "version of this options instead."
 msgstr ""
-"Ikke skriv kolonnenavn i resultatet. ADVARSEL: -N er utgått, bruk den lange "
-"versjonen av denne egenskapen i stedet."
 
 #: ../client/drizzle.cc:1309
 msgid ""
 "Change the value of a variable. Please note that this option is deprecated; "
 "you can set variables directly with --variable-name=value."
 msgstr ""
-"Bytter verdien til en variabel. Denne egenskapen er utgått; du kan angi "
-"variabelverdier direkte med --variabelnavn=verdi."
 
 #: ../client/drizzle.cc:1311
 msgid "Output in table format."
-msgstr "Skriv ut i tabellformat"
+msgstr ""
 
 #: ../client/drizzle.cc:1313
 msgid "Only allow UPDATE and DELETE that uses keys."
-msgstr "Tillat bare UPDATE og DELETE-spørringer som bruker nøkkelverdier."
+msgstr ""
 
 #: ../client/drizzle.cc:1315
 msgid "Synonym for option --safe-updates, -U."
-msgstr "Synonymt med --safe-updates, -U."
+msgstr ""
 
 #: ../client/drizzle.cc:1317
 msgid "-v vvv implies that verbose= 3, Used to specify verbose"
@@ -254,13 +232,11 @@ msgstr ""
 #: ../client/drizzle.cc:1318 ../client/drizzledump.cc:499
 #: ../drizzled/drizzled.cc:1236 ../drizzled/drizzled.cc:1861
 msgid "Output version information and exit."
-msgstr "Skriv ut versjonsnummeret og avslutt."
+msgstr ""
 
 #: ../client/drizzle.cc:1320
 msgid "Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
 msgstr ""
-"Avbryt tilkoblingen til serveren dersom den bruker den gamle (før 4.1.1) "
-"protokollen."
 
 #: ../client/drizzle.cc:1324
 msgid "Number of lines before each import progress report."
@@ -279,26 +255,20 @@ msgid "Options specific to the drizzle client"
 msgstr ""
 
 #: ../client/drizzle.cc:1334
-#, fuzzy
 msgid ""
 "Disable automatic rehashing. One doesn't need to use 'rehash' to get table "
 "and field completion, but startup and reconnecting may take a longer time."
 msgstr ""
-"Skrur på automatisk rehashing. Du trenger ikke lenger å bruke 'rehash' for å "
-"få utfylt tabell- og feltnavn, men oppstart og tilkobling kan ta lengre tid. "
-"Skrus av med --disable-auto-rehash."
 
 #: ../client/drizzle.cc:1336
 msgid ""
 "Automatically switch to vertical output mode if the result is wider than the "
 "terminal width."
 msgstr ""
-"Bytter automatisk til vertikal utskriftsmodus hvis resultatet er bredere enn "
-"terminalvidden."
 
 #: ../client/drizzle.cc:1338
 msgid "Database to use."
-msgstr "Databasen som skal brukes."
+msgstr ""
 
 #: ../client/drizzle.cc:1340
 msgid "(not used)"
@@ -306,32 +276,29 @@ msgstr ""
 
 #: ../client/drizzle.cc:1342
 msgid "Delimiter to be used."
-msgstr "Inndelingstegn som skal brukes."
+msgstr ""
 
 #: ../client/drizzle.cc:1344
 msgid "Execute command and quit. (Disables --force and history file)"
-msgstr "Utfør kommandoen og avslutt. (Skrur av --force og historiefilen)"
+msgstr ""
 
 #: ../client/drizzle.cc:1346
-#, fuzzy
 msgid "Enable LOAD DATA LOCAL INFILE."
-msgstr "Skru på/av LOAD DATA LOCAL INFILE."
+msgstr ""
 
 #: ../client/drizzle.cc:1348
 msgid "Flush buffer after each query."
-msgstr "Tøm bufferet etter hver spørring."
+msgstr ""
 
 #: ../client/drizzle.cc:1350
 msgid "Ignore SIGINT (CTRL-C)"
-msgstr "Ignorer SIGINT (Ctrl-C)"
+msgstr ""
 
 #: ../client/drizzle.cc:1352
 msgid ""
 "Only update the default database. This is useful for skipping updates to "
 "other database in the update log."
 msgstr ""
-"Bare oppdater standarddatabasen. Dette kan brukes for å hoppe over "
-"oppdateringer til andre databaser i oppdateringsloggen."
 
 #: ../client/drizzle.cc:1354
 msgid ""
@@ -341,12 +308,6 @@ msgid ""
 "work in batch mode. Disable with --disable-pager. This option is disabled by "
 "default."
 msgstr ""
-"Sidehåndteringsprogram som skal brukes for å vise resultatene. Hvis du ikke "
-"angir denne egenskapen blir standardprogrammet brukt fra miljøvariabelen "
-"PAGER. Brukbare program er 'less', 'more', 'cat [> filename]', etc. Les mer "
-"under den interaktive hjelpefunksjonen (\\h). Denne egenskapen virker ikke i "
-"batchmodus. Skrus av med --disable-pager. Denne egenskapen er skrudd av som "
-"standard."
 
 #: ../client/drizzle.cc:1356
 msgid "Disable pager and print to stdout. See interactive help (\\h) also."
@@ -354,36 +315,30 @@ msgstr ""
 
 #: ../client/drizzle.cc:1358
 msgid "Set the drizzle prompt to this value."
-msgstr "Setter drizzle-promptet til denne verdien."
+msgstr ""
 
 #: ../client/drizzle.cc:1360
 msgid ""
 "Don't cache result, print it row by row. This may slow down the server if "
 "the output is suspended. Doesn't use history file."
 msgstr ""
-"Ikke lagre resultatet i hurtigbufferet (cache), men skriv ut resultatet rad "
-"etter rad. Dette kan gjøre serveren treigere dersom utskriften er satt på "
-"vent. Ikke bruk historiefilen."
 
 #: ../client/drizzle.cc:1362
 msgid "Write fields without conversion. Used with --batch."
-msgstr "Skriv feltnavn uten konvertering. Brukes sammen med --batch."
+msgstr ""
 
 #: ../client/drizzle.cc:1363
-#, fuzzy
 msgid "Do not reconnect if the connection is lost."
-msgstr "Vent og prøv tilkoblingen på nytt dersom den er nede."
+msgstr ""
 
 #: ../client/drizzle.cc:1365
 msgid "Shutdown the server"
-msgstr "Steng ned serveren"
+msgstr ""
 
 #: ../client/drizzle.cc:1366
 msgid ""
 "Be more silent. Print results with a tab as separator, each row on new line."
 msgstr ""
-"Vær enda mer stille. Skriv ut resultatene med TAB som skilletegn og med hver "
-"rad på en ny linje."
 
 #: ../client/drizzle.cc:1368
 msgid ""
@@ -391,9 +346,6 @@ msgid ""
 "work in batch mode. Disable with --disable-tee. This option is disabled by "
 "default."
 msgstr ""
-"Legg alt til i slutten av utfilen. Les mer i hjelpefunksjonen (\\h). Virker "
-"ikke sammen i batch-modus. Skrus av med --disable-tee. Denne egenskapen er "
-"skrudd av som standard."
 
 #: ../client/drizzle.cc:1370
 msgid "Disable outfile. See interactive help (\\h) also."
@@ -401,7 +353,7 @@ msgstr ""
 
 #: ../client/drizzle.cc:1372
 msgid "Number of seconds before connection timeout."
-msgstr "Antall sekunder før en tilkobling får tidsavbrudd."
+msgstr ""
 
 #: ../client/drizzle.cc:1374
 msgid "Max length of input line"
@@ -410,14 +362,10 @@ msgstr ""
 #: ../client/drizzle.cc:1376
 msgid "Automatic limit for SELECT when using --safe-updates"
 msgstr ""
-"Automatisk begrensning av antall (LIMIT) for SELECT når --safe-updates er "
-"skrudd på."
 
 #: ../client/drizzle.cc:1378
 msgid "Automatic limit for rows in a join when using --safe-updates"
 msgstr ""
-"Automatisk begrensning av antall (LIMIT) rader i en JOIN når --safe-updates "
-"er skrudd på."
 
 #: ../client/drizzle.cc:1381 ../client/drizzledump.cc:544
 msgid "Options specific to the client"
@@ -425,15 +373,13 @@ msgstr ""
 
 #: ../client/drizzle.cc:1384
 msgid "Connect to host"
-msgstr "Koble til vert"
+msgstr ""
 
 #: ../client/drizzle.cc:1386
 msgid ""
 "Password to use when connecting to server. If password is not given it's "
 "asked from the tty."
 msgstr ""
-"Passordet som skal brukes for å koble til serveren. Hvis passordet ikke er "
-"angitt, vil du bli spurt om det i terminalvinduet."
 
 #: ../client/drizzle.cc:1388
 msgid ""
@@ -445,7 +391,6 @@ msgstr ""
 #: ../plugin/transaction_log/utilities/transaction_reader.cc:475
 msgid "User for login if not current user."
 msgstr ""
-"Brukernavn for innlogging dersom det ikke er det nåværende brukernavnet"
 
 #: ../client/drizzle.cc:1396 ../client/drizzledump.cc:555
 #: ../plugin/transaction_log/utilities/transaction_reader.cc:481
@@ -463,7 +408,7 @@ msgstr ""
 
 #: ../client/drizzle.cc:1536 ../client/drizzle.cc:3793
 msgid "DELIMITER cannot contain a backslash character"
-msgstr "Skilletegn kan ikke inneholde en backlash (\\)."
+msgstr ""
 
 #: ../client/drizzle.cc:1615 ../client/drizzledump.cc:666
 #: ../client/drizzleimport.cc:471 ../client/drizzleslap.cc:623
@@ -477,9 +422,9 @@ msgid "Error: Value of %<PRIu32> supplied for port is not valid.\n"
 msgstr ""
 
 #: ../client/drizzle.cc:1675 ../client/drizzle.cc:4084
-#, fuzzy, c-format
+#, c-format
 msgid "Drizzle client %s build %s, for %s-%s (%s) using readline %s\n"
-msgstr "%s Ver %s Distrib %s, for %s (%s) bruker %s %s\n"
+msgstr ""
 
 #: ../client/drizzle.cc:1681
 #, c-format
@@ -490,40 +435,36 @@ msgid ""
 msgstr ""
 
 #: ../client/drizzle.cc:1686
-#, fuzzy, c-format
+#, c-format
 msgid "Usage: drizzle [OPTIONS] [schema]\n"
-msgstr "Bruk: %s [egenskaper] [databasenavn]\n"
+msgstr ""
 
 #: ../client/drizzle.cc:1740
-#, fuzzy, c-format
+#, c-format
 msgid "Welcome to the Drizzle client..  Commands end with %s or \\g."
-msgstr "Velkommen til Drizzle-klienten. Kommandoer slutter med ; eller \\g."
+msgstr ""
 
 #: ../client/drizzle.cc:1749
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Your Drizzle connection id is %u\n"
 "Connection protocol: %s\n"
 "Server version: %s\n"
 msgstr ""
-"Din Drizzle-tilkoblingsid er %u\n"
-"Serverversjon: %s\n"
 
 #: ../client/drizzle.cc:1783
 #, c-format
 msgid "Reading history-file %s\n"
-msgstr "Leser historiefilen %s\n"
+msgstr ""
 
 #: ../client/drizzle.cc:1787
 #, c-format
 msgid "Couldn't allocate memory for temp histfile!\n"
-msgstr "Kunne ikke allokere minne for den midlertidige historiefilen!\n"
+msgstr ""
 
 #: ../client/drizzle.cc:1794
 msgid "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"
 msgstr ""
-"Skriv 'help;' eller '\\h' for hjelp. Skriv '\\c' for å tømme "
-"skjermbufferet.\n"
 
 #: ../client/drizzle.cc:1804
 msgid "Error:"
@@ -532,19 +473,19 @@ msgstr ""
 #: ../client/drizzle.cc:1817
 #, c-format
 msgid "Writing history-file %s\n"
-msgstr "Skriver historiefilen %s\n"
+msgstr ""
 
 #: ../client/drizzle.cc:1825
 msgid "Aborted"
-msgstr "Avbrutt"
+msgstr ""
 
 #: ../client/drizzle.cc:1825
 msgid "Bye"
-msgstr "Adjø"
+msgstr ""
 
 #: ../client/drizzle.cc:1875
 msgid "Query aborted by Ctrl+C\n"
-msgstr "Spørringen ble avbrutt med Ctrl+C\n"
+msgstr ""
 
 #: ../client/drizzle.cc:1959
 #, c-format
@@ -568,53 +509,51 @@ msgstr ""
 
 #: ../client/drizzle.cc:2633
 msgid "No connection. Trying to reconnect..."
-msgstr "Ingen tilkobling. Prøver å koble til på nytt..."
+msgstr ""
 
 #: ../client/drizzle.cc:2639
 msgid "Can't connect to the server\n"
-msgstr "Klarte ikke å koble til serveren\n"
+msgstr ""
 
 #: ../client/drizzle.cc:2723
 msgid "List of all Drizzle commands:"
-msgstr "Oversikt over alle Drizzle-kommandoer:"
+msgstr ""
 
 #: ../client/drizzle.cc:2727
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Note that all text commands must be first on line and end with '%s' or \\g"
 msgstr ""
-"Husk at alle tekstkommandoer må være i starten av en linje og må slutte med "
-"';'"
 
 #: ../client/drizzle.cc:2785
 msgid "No query specified\n"
-msgstr "Ingen spørring oppgitt\n"
+msgstr ""
 
 #: ../client/drizzle.cc:2800
 msgid "Ignoring query to other database"
-msgstr "Overser spørring til annen database"
+msgstr ""
 
 #: ../client/drizzle.cc:2850
 msgid "Empty set"
-msgstr "Tomt sett"
+msgstr ""
 
 #: ../client/drizzle.cc:2863
 #, c-format
 msgid "%ld row in set"
 msgid_plural "%ld rows in set"
-msgstr[0] "%ld rad i settet"
-msgstr[1] "%ld rader i settet"
+msgstr[0] ""
+msgstr[1] ""
 
 #: ../client/drizzle.cc:2872
 msgid "Query OK"
-msgstr "Spørring OK"
+msgstr ""
 
 #: ../client/drizzle.cc:2874
 #, c-format
 msgid "Query OK, %ld row affected"
 msgid_plural "Query OK, %ld rows affected"
-msgstr[0] "Spørring OK, %ld rad påvirket"
-msgstr[1] "Spørring OK, %ld rader påvirket"
+msgstr[0] ""
+msgstr[1] ""
 
 #: ../client/drizzle.cc:2946
 msgid "popen() failed! defaulting PAGER to stdout!\n"
@@ -626,9 +565,9 @@ msgid "Error logging to file '%s'\n"
 msgstr ""
 
 #: ../client/drizzle.cc:2973
-#, fuzzy, c-format
+#, c-format
 msgid "Logging to file '%s'\n"
-msgstr "Leser historiefilen %s\n"
+msgstr ""
 
 #: ../client/drizzle.cc:3057
 #, c-format
@@ -658,18 +597,17 @@ msgid "Currently logging to file '%s'\n"
 msgstr ""
 
 #: ../client/drizzle.cc:3549
-#, fuzzy, c-format
+#, c-format
 msgid "No outfile specified!\n"
-msgstr "Ingen spørring oppgitt\n"
+msgstr ""
 
 #: ../client/drizzle.cc:3562
 msgid "Outfile disabled.\n"
 msgstr ""
 
 #: ../client/drizzle.cc:3589
-#, fuzzy
 msgid "Default pager wasn't set, using stdout.\n"
-msgstr "Skru av sidevisning, skriv til stdout."
+msgstr ""
 
 #: ../client/drizzle.cc:3609
 #, c-format
@@ -700,9 +638,9 @@ msgid "Usage: \\. <filename> | source <filename>"
 msgstr ""
 
 #: ../client/drizzle.cc:3741
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to open file '%s', error: %d"
-msgstr "Lesingen av '%s' mislykkes (Feilkode: %d)"
+msgstr ""
 
 #: ../client/drizzle.cc:3749
 msgid "Can't initialize LineBuffer"
@@ -717,19 +655,16 @@ msgid "USE must be followed by a schema name"
 msgstr ""
 
 #: ../client/drizzle.cc:3886
-#, fuzzy
 msgid "Schema changed"
-msgstr "Databasen som skal brukes."
+msgstr ""
 
 #: ../client/drizzle.cc:3932
-#, fuzzy
 msgid "Show warnings enabled."
-msgstr "Vis advarsler etter hvert uttrykk."
+msgstr ""
 
 #: ../client/drizzle.cc:3940
-#, fuzzy
 msgid "Show warnings disabled."
-msgstr "Vis advarsler etter hvert uttrykk."
+msgstr ""
 
 #: ../client/drizzle.cc:4091
 #, c-format
@@ -831,7 +766,7 @@ msgstr ""
 #: ../client/drizzle.cc:4209 ../drizzled/option.cc:339
 #, c-format
 msgid "ERROR"
-msgstr "FEIL"
+msgstr ""
 
 #: ../client/drizzle.cc:4252
 #, c-format
@@ -839,14 +774,13 @@ msgid "ERROR %d (%s): "
 msgstr ""
 
 #: ../client/drizzle.cc:4254
-#, fuzzy, c-format
+#, c-format
 msgid "ERROR %d: "
-msgstr "FEIL"
+msgstr ""
 
 #: ../client/drizzle.cc:4257
-#, fuzzy
 msgid "ERROR: "
-msgstr "FEIL"
+msgstr ""
 
 #: ../client/drizzle.cc:4390
 msgid " hours "
@@ -933,14 +867,12 @@ msgid ""
 msgstr ""
 
 #: ../client/drizzledump.cc:486
-#, fuzzy
 msgid "Continue even if we get an sql-error."
-msgstr "Fortsett selv om vi får en SQL-feil."
+msgstr ""
 
 #: ../client/drizzledump.cc:487
-#, fuzzy
 msgid "Display this help message and exit."
-msgstr "Vis denne hjelpeteksten og avslutt."
+msgstr ""
 
 #: ../client/drizzledump.cc:489
 msgid ""
@@ -984,9 +916,8 @@ msgid "Turn off Comments"
 msgstr ""
 
 #: ../client/drizzledump.cc:501
-#, fuzzy
 msgid "Turn off create-options"
-msgstr "Egenskapene for å opprette en ny er feil"
+msgstr ""
 
 #: ../client/drizzledump.cc:502
 msgid "Turn off extended-insert"
@@ -1091,22 +1022,18 @@ msgstr ""
 
 #: ../client/drizzledump.cc:547
 msgid "Connect to host."
-msgstr "Koble til en maskin"
+msgstr ""
 
 #: ../client/drizzledump.cc:549
-#, fuzzy
 msgid ""
 "Password to use when connecting to server. If password is not given it's "
 "solicited on the tty."
 msgstr ""
-"Passordet som skal brukes for å koble til serveren. Hvis passordet ikke er "
-"angitt, vil du bli spurt om det i terminalvinduet."
 
 #: ../client/drizzledump.cc:551
 #: ../plugin/transaction_log/utilities/transaction_reader.cc:477
-#, fuzzy
 msgid "Port number to use for connection."
-msgstr "Socket-fil som skal brukes for tilkobling"
+msgstr ""
 
 #: ../client/drizzledump.cc:558
 msgid "Hidden Options"
@@ -1134,8 +1061,6 @@ msgid ""
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
 "and you are welcome to modify and redistribute it under the GPL license\n"
 msgstr ""
-"This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
-"and you are welcome to modify and redistribute it under the GPL license\n"
 
 #: ../client/drizzledump.cc:634
 msgid "Dumps definitions and data from a Drizzle database server"
@@ -1176,9 +1101,8 @@ msgid " rows dumped for table "
 msgstr ""
 
 #: ../client/drizzledump_data.cc:547
-#, fuzzy
 msgid "-- Connecting to "
-msgstr "Koble til vert"
+msgstr ""
 
 #: ../client/drizzledump_data.cc:547
 msgid " using protocol "
@@ -1248,7 +1172,7 @@ msgstr ""
 #: ../client/drizzletest.cc:5640
 #, c-format
 msgid "Out of memory"
-msgstr "Ikke mer minne"
+msgstr ""
 
 #: ../drizzled/definition/table.cc:767
 #, c-format
@@ -1263,7 +1187,7 @@ msgstr ""
 #: ../drizzled/definition/table.cc:1993
 #, c-format
 msgid "Unknown collation '%s' in table '%-.64s' definition"
-msgstr "Ukjent sorteringsangivelse '%s' i tabelldefinisjonen for '%-.64s'"
+msgstr ""
 
 #: ../drizzled/definition/table.cc:2000
 #, c-format
@@ -1427,7 +1351,7 @@ msgstr ""
 
 #: ../drizzled/drizzled.cc:1153 ../drizzled/drizzled.cc:1744
 msgid "Display this help and exit."
-msgstr "Vis denne hjelpeteksten og avslutt."
+msgstr ""
 
 #: ../drizzled/drizzled.cc:1157
 msgid "Configuration file to use"
@@ -1749,9 +1673,8 @@ msgid ""
 msgstr ""
 
 #: ../drizzled/drizzled.cc:1361
-#, fuzzy
 msgid "Duplicate entry for command line option\n"
-msgstr "Duplikatnøkkel ved skriving eller oppdatering"
+msgstr ""
 
 #: ../drizzled/drizzled.cc:1408 ../drizzled/drizzled.cc:1426
 #: ../drizzled/drizzled.cc:1460 ../drizzled/drizzled.cc:1468
@@ -1774,9 +1697,8 @@ msgid ""
 msgstr ""
 
 #: ../drizzled/drizzled.cc:1525
-#, fuzzy
 msgid "Error getting default charset"
-msgstr "Setter standardtegnsett."
+msgstr ""
 
 #: ../drizzled/drizzled.cc:1555
 msgid "Error setting collation"
@@ -1823,15 +1745,12 @@ msgid ""
 msgstr ""
 
 #: ../drizzled/drizzled.cc:2084
-#, fuzzy
 msgid ""
 "Copyright (C) 2008 Sun Microsystems\n"
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
 "and you are welcome to modify and redistribute it under the GPL license\n"
 "\n"
 msgstr ""
-"This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
-"and you are welcome to modify and redistribute it under the GPL license\n"
 
 #: ../drizzled/drizzled.cc:2091
 #, c-format
@@ -1864,15 +1783,15 @@ msgstr ""
 #: ../drizzled/error.cc:114
 #, c-format
 msgid "Unknown error %d"
-msgstr "Ukjent feil %d"
+msgstr ""
 
 #: ../drizzled/error.cc:189
 msgid "NO"
-msgstr "NEI"
+msgstr ""
 
 #: ../drizzled/error.cc:190
 msgid "YES"
-msgstr "JA"
+msgstr ""
 
 #: ../drizzled/error.cc:191
 #, c-format
@@ -1885,19 +1804,19 @@ msgid "Can't create table '%-.200s' (errno: %d)"
 msgstr ""
 
 #: ../drizzled/error.cc:193
-#, fuzzy, c-format
+#, c-format
 msgid "Can't create schema '%-.192s' (errno: %d)"
-msgstr "Kan ikke lage katalogen '%s' (Feilkode: %d)"
+msgstr ""
 
 #: ../drizzled/error.cc:194
-#, fuzzy, c-format
+#, c-format
 msgid "Can't create schema '%-.192s'; schema exists"
-msgstr "Kan ikke lage databasen '%-.192s'; databasen finnes allerede"
+msgstr ""
 
 #: ../drizzled/error.cc:195
-#, fuzzy, c-format
+#, c-format
 msgid "Can't drop schema '%-.192s'; schema doesn't exist"
-msgstr "Kan ikke fjerne databasen '%-.192s'; databasen finnes ikke"
+msgstr ""
 
 #: ../drizzled/error.cc:196
 #, c-format
@@ -1932,7 +1851,7 @@ msgstr ""
 #: ../drizzled/error.cc:202
 #, c-format
 msgid "Record has changed since last read in table '%-.192s'"
-msgstr "Raden har blitt endret siden den sist ble lest fra tabellen '%-192s'"
+msgstr ""
 
 #: ../drizzled/error.cc:203
 #, c-format
@@ -1942,7 +1861,7 @@ msgstr ""
 #: ../drizzled/error.cc:204
 #, c-format
 msgid "Can't write; duplicate key in table '%-.192s'"
-msgstr "Kunne ikke skrive; nøkkelen er ikke unik i tabellen '%-.192s'"
+msgstr ""
 
 #: ../drizzled/error.cc:205
 #, c-format
@@ -1967,7 +1886,7 @@ msgstr ""
 #: ../drizzled/error.cc:209
 #, c-format
 msgid "'%-.192s' is locked against change"
-msgstr "'%-192s' er låst for endringer"
+msgstr ""
 
 #: ../drizzled/error.cc:210
 msgid "Sort aborted"
@@ -1981,27 +1900,27 @@ msgstr ""
 #: ../drizzled/error.cc:212
 #, c-format
 msgid "Table storage engine for '%-.192s' doesn't have this option"
-msgstr "Tabellmotoren for '%-.192s' har ikke denne innstillingen"
+msgstr ""
 
 #: ../drizzled/error.cc:213
 #, c-format
 msgid "Can't find record in '%-.192s'"
-msgstr "Klarte ikke å finne raden i '%-192s'"
+msgstr ""
 
 #: ../drizzled/error.cc:214
 #, c-format
 msgid "Incorrect information in file: '%-.200s'"
-msgstr "Feil informasjon i filen '%-.200s'"
+msgstr ""
 
 #: ../drizzled/error.cc:215
 #, c-format
 msgid "Incorrect key file for table '%-.200s'; try to repair it"
-msgstr "Feil nøkkelfil for tabellen '%-.200s'; prøv å reparere den"
+msgstr ""
 
 #: ../drizzled/error.cc:216
 #, c-format
 msgid "Old key file for table '%-.192s'; repair it!"
-msgstr "Gammel nøkkelfil for tabellen '%-.192s'; reparer den!"
+msgstr ""
 
 #: ../drizzled/error.cc:217
 #, c-format
@@ -2016,7 +1935,6 @@ msgstr ""
 #: ../drizzled/error.cc:219
 msgid "Out of sort memory; increase server sort buffer size"
 msgstr ""
-"Tom for sorteringsminne; øk størrelsen på sorteringsbufferen på serveren"
 
 #: ../drizzled/error.cc:220
 msgid "Global sort memory constraint hit; increase sort-heap-threshold"
@@ -2082,9 +2000,9 @@ msgid "Column '%-.192s' cannot be null"
 msgstr ""
 
 #: ../drizzled/error.cc:234
-#, fuzzy, c-format
+#, c-format
 msgid "Unknown schema '%-.192s'"
-msgstr "Ukjent kommando '\\%c'."
+msgstr ""
 
 #: ../drizzled/error.cc:235
 #, c-format
@@ -2303,9 +2221,9 @@ msgstr ""
 
 #. KILL session errors
 #: ../drizzled/error.cc:279
-#, fuzzy, c-format
+#, c-format
 msgid "Unknown session id: %lu"
-msgstr "Ukjent feil %d"
+msgstr ""
 
 #: ../drizzled/error.cc:280
 #, c-format
@@ -2326,9 +2244,9 @@ msgid "BLOB/TEXT column '%-.192s' can't have a default value"
 msgstr ""
 
 #: ../drizzled/error.cc:286
-#, fuzzy, c-format
+#, c-format
 msgid "Incorrect schema name '%-.100s'"
-msgstr "Feil informasjon i filen '%-.200s'"
+msgstr ""
 
 #: ../drizzled/error.cc:287
 #, c-format
@@ -3239,9 +3157,8 @@ msgid "wait() can not be called on session owning user defined barrier."
 msgstr ""
 
 #: ../drizzled/error.cc:474
-#, fuzzy
 msgid "Unknown user defined barrier requested."
-msgstr "Ukjent feil %d"
+msgstr ""
 
 #: ../drizzled/error.cc:475
 msgid "Session does not own user defined barrier."
@@ -3272,32 +3189,32 @@ msgstr ""
 #: ../drizzled/error.cc:485
 #, c-format
 msgid "Can't unlock file (Errcode: %d)"
-msgstr "Kan ikke låse opp filen (Feilkode: %d)"
+msgstr ""
 
 #: ../drizzled/error.cc:486
 #, c-format
 msgid "Can't change size of file (Errcode: %d)"
-msgstr "Kan ikke endre størrelsen på filen (Feilkode: %d)"
+msgstr ""
 
 #: ../drizzled/error.cc:487
 #, c-format
 msgid "Can't open stream from handle (Errcode: %d)"
-msgstr "Kan ikke åpne strømmen fra pekeren (Feilkode: %d)"
+msgstr ""
 
 #: ../drizzled/error.cc:488
 #, c-format
 msgid "Warning: '%s' had %d links"
-msgstr "Advarsel: '%s' hadde %d lenker."
+msgstr ""
 
 #: ../drizzled/error.cc:489
 #, c-format
 msgid "Warning: %d files and %d streams is left open\n"
-msgstr "Advarsel: %d filer og %d strømmer er fortsatt åpne\n"
+msgstr ""
 
 #: ../drizzled/error.cc:490
 #, c-format
 msgid "Can't create directory '%s' (Errcode: %d)"
-msgstr "Kan ikke lage katalogen '%s' (Feilkode: %d)"
+msgstr ""
 
 #: ../drizzled/error.cc:491
 #, c-format
@@ -3305,32 +3222,31 @@ msgid ""
 "Character set '%s' is not a compiled character set and is not specified in "
 "the %s file"
 msgstr ""
-"Tegnsettet '%s' er ikke et kompilert tegnsett og er ikke spesifisert i %s"
 
 #: ../drizzled/error.cc:492
 #, c-format
 msgid "Out of resources when opening file '%s' (Errcode: %d)"
-msgstr "Tomt for ressurser når vi prøvde å åpne '%s' (Feilkode: %d)"
+msgstr ""
 
 #: ../drizzled/error.cc:493
 #, c-format
 msgid "Can't read value for symlink '%s' (Error %d)"
-msgstr "Kan ikke lese verdien av symlinken '%s' (Error: %d)"
+msgstr ""
 
 #: ../drizzled/error.cc:494
 #, c-format
 msgid "Can't create symlink '%s' pointing at '%s' (Error %d)"
-msgstr "Kan ikke opprette symlinken '%s' som peker til '%s' (Feilkode: %d)"
+msgstr ""
 
 #: ../drizzled/error.cc:495
 #, c-format
 msgid "Error on realpath() on '%s' (Error %d)"
-msgstr "Feil ved kall til realpath() på '%s' (Feilkode: %d)"
+msgstr ""
 
 #: ../drizzled/error.cc:496
 #, c-format
 msgid "Can't sync file '%s' to disk (Errcode: %d)"
-msgstr "Kan ikke synkronisere '%s' mot disk (Feilkode: %d)"
+msgstr ""
 
 #: ../drizzled/error.cc:497
 #, c-format
@@ -3338,13 +3254,11 @@ msgid ""
 "Collation '%s' is not a compiled collation and is not specified in the %s "
 "file"
 msgstr ""
-"Sorteringsrekkefølgen '%s' er ikke en kompilert sorteringsrekkefølge og er "
-"ikke spesifisert i filen %s"
 
 #: ../drizzled/error.cc:498
 #, c-format
 msgid "File '%s' (fileno: %d) was not closed"
-msgstr "Filen '%s' (filnummer: %d) ble ikke lukket"
+msgstr ""
 
 #. For UUID type
 #: ../drizzled/error.cc:501
@@ -3446,40 +3360,40 @@ msgstr ""
 
 #: ../drizzled/option.cc:84
 msgid "Warning: "
-msgstr "Advarsel: "
+msgstr ""
 
 #: ../drizzled/option.cc:86
 msgid "Info: "
-msgstr "Informasjon: "
+msgstr ""
 
 #: ../drizzled/option.cc:337
 #, c-format
 msgid "%s: %s: Option '%s' used, but is disabled\n"
-msgstr "%s: %s: Valget '%s' ble brukt, men er ikke tilgjengelig\n"
+msgstr ""
 
 #: ../drizzled/option.cc:339
 msgid "WARNING"
-msgstr "ADVARSEL"
+msgstr ""
 
 #: ../drizzled/option.cc:441
 #, c-format
 msgid "%s: ERROR: Option '-%c' used, but is disabled\n"
-msgstr "%s: FEIL: Valget '-%c' ble brukt, men er ikke tilgjengelig\n"
+msgstr ""
 
 #: ../drizzled/option.cc:769
 #, c-format
 msgid "Unknown suffix '%c' used for variable '%s' (value '%s')\n"
-msgstr "Ukjent endelse '%c' brukt for variabelen '%s' (verdi '%s')\n"
+msgstr ""
 
 #: ../drizzled/option.cc:962
 #, c-format
 msgid "%s: ERROR: Invalid decimal value for option '%s'\n"
-msgstr "%s: FEIL: Ugyldig desimalverdi for egenskapen '%s'\n"
+msgstr ""
 
 #: ../drizzled/option.cc:1194
 #, c-format
 msgid "%*s(Defaults to on; use --skip-%s to disable.)\n"
-msgstr "%*s(Standardverdi er på; bruk --skip-%s for å skru av.)\n"
+msgstr ""
 
 #: ../drizzled/option.cc:1214
 #, c-format
@@ -3489,27 +3403,23 @@ msgid ""
 "and boolean options {false|true}  Value (after reading options)\n"
 "--------------------------------- -----------------------------\n"
 msgstr ""
-"\n"
-"Variabler (--variabelnavn=verdi)\n"
-"og boolske egenskaper {false|true}  Verdi (etter å ha lest brukervalg)\n"
-"--------------------------------- -----------------------------\n"
 
 #: ../drizzled/option.cc:1230 ../drizzled/option.cc:1246
 msgid "(No default value)"
-msgstr "(Ingen standardverdi)"
+msgstr ""
 
 #: ../drizzled/option.cc:1249
 msgid "true"
-msgstr "sann"
+msgstr ""
 
 #: ../drizzled/option.cc:1249
 msgid "false"
-msgstr "usann"
+msgstr ""
 
 #: ../drizzled/option.cc:1282
 #, c-format
 msgid "(Disabled)\n"
-msgstr "(Skrudd av)\n"
+msgstr ""
 
 #: ../drizzled/plugin/error_message.cc:81
 #, c-format
@@ -3795,7 +3705,7 @@ msgstr ""
 #: ../drizzled/tztime.cc:173
 #, c-format
 msgid "Fatal error: Illegal or unknown default time zone '%s'"
-msgstr "Fatal feil: ugyldig eller ukjent standardtidssone '%s'."
+msgstr ""
 
 #: ../plugin/auth_file/auth_file.cc:227
 #, c-format
@@ -3957,28 +3867,28 @@ msgstr ""
 #: ../plugin/haildb/haildb_engine.cc:1072
 #: ../plugin/haildb/haildb_engine.cc:1210
 #: ../plugin/haildb/haildb_engine.cc:1240
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot create table %s. HailDB Error %d (%s)\n"
-msgstr "Kan ikke lage/skrive til filen '%s' (Feilkode: %d)"
+msgstr ""
 
 #: ../plugin/haildb/haildb_engine.cc:1091
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot create field %s on table %s. HailDB Error %d (%s)\n"
-msgstr "Kan ikke opprette symlinken '%s' som peker til '%s' (Feilkode: %d)"
+msgstr ""
 
 #: ../plugin/haildb/haildb_engine.cc:1189
 #: ../plugin/haildb/haildb_engine.cc:1302
 #: ../plugin/haildb/haildb_engine.cc:1483
 #: ../plugin/haildb/haildb_engine.cc:2148
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot Lock HailDB Data Dictionary. HailDB Error %d (%s)\n"
-msgstr "Kan ikke lage/skrive til filen '%s' (Feilkode: %d)"
+msgstr ""
 
 #: ../plugin/haildb/haildb_engine.cc:1341
 #: ../plugin/haildb/haildb_engine.cc:1357
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot DROP table %s. HailDB Error %d (%s)\n"
-msgstr "Kan ikke lage/skrive til filen '%s' (Feilkode: %d)"
+msgstr ""
 
 #: ../plugin/haildb/haildb_engine.cc:3343
 #, c-format
@@ -4218,7 +4128,7 @@ msgstr ""
 #: ../plugin/transaction_log/transaction_log_reader.cc:161
 #, c-format
 msgid "Unable to parse transaction. Got error: %s.\n"
-msgstr "Klarte ikke analysere transaksjonen. Feil: %s.\n"
+msgstr ""
 
 #: ../plugin/logging_gearman/logging_gearman.cc:186
 #, c-format
@@ -4375,222 +4285,213 @@ msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:42
 msgid "Didn't find key on read or update"
-msgstr "Fant ikke nøkkelen ved lesing eller oppdatering"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:43
 msgid "Duplicate key on write or update"
-msgstr "Duplikatnøkkel ved skriving eller oppdatering"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:44
 msgid "Internal (unspecified) error in handler"
-msgstr "Intern (uspesifisert) feil i håndteringen"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:46
 msgid ""
 "Someone has changed the row since it was read (while the table was locked to "
 "prevent it)"
 msgstr ""
-"Noen har endret raden siden den ble lest (mens tabellen var låst for å "
-"forhindre endringer)"
 
 #: ../plugin/myisam/my_handler_errors.cc:48
 msgid "Wrong index given to function"
-msgstr "Feil indeks gitt til funksjonen"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:49
 msgid "Index file is crashed"
-msgstr "Indeksfilen har kræsjet"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:50
 msgid "Record file is crashed"
-msgstr "Radfilen har kræsjet"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:51
 msgid "Out of memory in engine"
-msgstr "Databasemotoren er tom for minne"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:52
 msgid "Incorrect file format"
-msgstr "Feil filformat"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:53
 msgid "Command not supported by database"
-msgstr "Kommandoen er ikke støttet av databasen"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:54
 msgid "Old database file"
-msgstr "Gammel databasefil"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:55
 msgid "No record read before update"
-msgstr "Ingen rad ble lest før oppdateringen"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:56
 msgid "Record was already deleted (or record file crashed)"
-msgstr "Raden var allerede slettet (eller så kræsjet radfilen)"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:57
 msgid "No more room in record file"
-msgstr "Ikke mer plass i radfilen"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:58
 msgid "No more room in index file"
-msgstr "Ikke mer plass i indeksfilen"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:59
 msgid "No more records (read after end of file)"
-msgstr "Ingen flere rader (leste etter slutten på filen)"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:60
 msgid "Unsupported extension used for table"
-msgstr "En utvidelse som ikke er støttet er brukt på tabellen"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:61
 msgid "Too big row"
-msgstr "Raden er for stor"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:62
 msgid "Wrong create options"
-msgstr "Egenskapene for å opprette en ny er feil"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:63
 msgid "Duplicate unique key or constraint on write or update"
 msgstr ""
-"Det er duplikater av en unik nøkkel eller begrensning ved skriving eller "
-"oppdatering"
 
 #: ../plugin/myisam/my_handler_errors.cc:64
 msgid "Unknown character set used in table"
-msgstr "Ukjent tegnsett er brukt i tabellen"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:65
 msgid "Conflicting table definitions in sub-tables of MERGE table"
 msgstr ""
-"Uoverensstemmelse i tabelldefinisjonene mellom deltabellene av en MERGE-"
-"tabell"
 
 #: ../plugin/myisam/my_handler_errors.cc:66
 msgid "Table is crashed and last repair failed"
-msgstr "Tabellen har kræsjet og siste repareringsforsøk feilet"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:67
 msgid "Table was marked as crashed and should be repaired"
-msgstr "Tabellen var merket som kræsjet og bør bli reparert"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:68
 msgid "Lock timed out; Retry transaction"
-msgstr "Låsen timet ut; prøv transaksjonen på nytt"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:69
 msgid "Lock table is full;  Restart program with a larger locktable"
 msgstr ""
-"Låsetabellen er full; start programmet på nytt med en større låsetabell"
 
 #: ../plugin/myisam/my_handler_errors.cc:70
 msgid "Updates are not allowed under a read only transactions"
-msgstr "Oppdateringer er ikke tillatt i en bare-lese transaksjon"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:71
 msgid "Lock deadlock; Retry transaction"
-msgstr "Deadlock mellom låsene; prøv transaksjonen på nytt"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:72
 msgid "Foreign key constraint is incorrectly formed"
-msgstr "Fremmednøkkelbegrensningen er på feil format"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:73
 msgid "Cannot add a child row"
-msgstr "Kan ikke legge til en barnerad"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:74
 msgid "Cannot delete a parent row"
-msgstr "Kan ikke slette en foreldrerad"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:75
 msgid "No savepoint with that name"
-msgstr "Det er ikke noe lagringspunkt med det navnet"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:76
 msgid "Non unique key block size"
-msgstr "Størrelse på blokken for ikke-unike nøkler"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:77
 msgid "The table does not exist in engine"
-msgstr "Tabellen eksisterer ikke i databasemotoren"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:78
 msgid "The table already existed in storage engine"
-msgstr "Tabellen eksisterer allerede i lagringsmotoren"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:79
 msgid "Could not connect to storage engine"
-msgstr "Kunne ikke koble til lagringsmotoren"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:80
 msgid "Unexpected null pointer found when using spatial index"
-msgstr "Uventet nullpeker ble funnet i romindeksen (spatial index)"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:81
 msgid "The table changed in storage engine"
-msgstr "Tabellen ble endret i lagringsmotoren"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:82
 msgid "There's no partition in table for the given value"
-msgstr "Det er ikke partisjon i tabellen for den angitte verdien"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:83
 msgid "Row-based binlogging of row failed"
-msgstr "Radbasert binærlogging av raden feilet"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:84
 msgid "Index needed in foreign key constraint"
-msgstr "En indeks er nødvendig for en fremmednøkkelbegrensning"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:85
 msgid "Upholding foreign key constraints would lead to a duplicate key error"
 msgstr ""
-"Det å beholde fremmednøkkelbegrensningen ville ha gitt en feil med duplikate "
-"nøkler"
 
 #: ../plugin/myisam/my_handler_errors.cc:86
 msgid "Table needs to be upgraded before it can be used"
-msgstr "Tabellen må oppgraderes før den kan brukes"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:87
 msgid "Table is read only"
-msgstr "Tabellen er i bare-lese-modus"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:88
 msgid "Failed to get next auto increment value"
-msgstr "Kunne ikke hente neste auto increment-verdi"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:89
 msgid "Failed to set row auto increment value"
-msgstr "Kunne ikke sette radens auto increment-verdi"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:90
 msgid "Unknown (generic) error from engine"
-msgstr "Ukjent (generell) feil fra motoren"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:91
 msgid "Record is the same"
-msgstr "Raden er den samme"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:92
 msgid "It is not possible to log this statement"
-msgstr "Det er ikke mulig å logge denne spørringen"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:93
 msgid "Tablespace exists"
-msgstr "Tabellplassen eksisterer"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:94
 msgid "The event was corrupt, leading to illegal data being read"
-msgstr "Hendelsen var ugyldig, og dette førte til at ulovlig data ble lest"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:95
 msgid "The table is of a new format not supported by this version"
-msgstr "Tabellen har et nytt format som ikke er støttet av denne versjonen"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:96
 msgid "The event could not be processed no other handler error happened"
@@ -4602,24 +4503,24 @@ msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:98
 msgid "File to short; Expected more data in file"
-msgstr "Filen er for kort; forventet å finne mer data i filen"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:99
 msgid "Read page with wrong checksum"
-msgstr "Leste en side med feil sjekksum"
+msgstr ""
 
 #. TODO: get a better message for these
 #: ../plugin/myisam/my_handler_errors.cc:101
 msgid "Lock or active transaction"
-msgstr "Lås eller aktiv transaksjon"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:102
 msgid "No such table space"
-msgstr "Ingen slik tabellplass"
+msgstr ""
 
 #: ../plugin/myisam/my_handler_errors.cc:103
 msgid "Tablespace not empty"
-msgstr "Tabellplassen er ikke tom"
+msgstr ""
 
 #: ../plugin/mysql_protocol/mysql_protocol.cc:1002
 msgid ""
@@ -4641,9 +4542,8 @@ msgid "Clobber socket file if one is there already."
 msgstr ""
 
 #: ../plugin/pbms/src/parameters_ms.cc:426
-#, fuzzy
 msgid "Port number to use for connection or 0 for default PBMS port "
-msgstr "Socket-fil som skal brukes for tilkobling"
+msgstr ""
 
 #: ../plugin/pbms/src/parameters_ms.cc:429
 msgid "The maximum size of a BLOB repository file."
@@ -4698,28 +4598,26 @@ msgid "Could not open socket, is rabbitmq running?"
 msgstr ""
 
 #: ../plugin/rabbitmq/rabbitmq_log.cc:72
-#, fuzzy
 msgid "Failed to allocate enough memory to transaction message\n"
-msgstr "Åpning av transaksjonsloggen feilet "
+msgstr ""
 
 #: ../plugin/rabbitmq/rabbitmq_log.cc:117
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to allocate the RabbitMQHandler.  Got error: %s\n"
-msgstr "Klarte ikke analysere transaksjonen. Feil: %s.\n"
+msgstr ""
 
 #: ../plugin/rabbitmq/rabbitmq_log.cc:130
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to allocate the RabbitMQLog instance.  Got error: %s\n"
-msgstr "Klarte ikke analysere transaksjonen. Feil: %s.\n"
+msgstr ""
 
 #: ../plugin/rabbitmq/rabbitmq_log.cc:155
 msgid "Host name to connect to"
 msgstr ""
 
 #: ../plugin/rabbitmq/rabbitmq_log.cc:158
-#, fuzzy
 msgid "Port to connect to"
-msgstr "Socket-fil som skal brukes for tilkobling"
+msgstr ""
 
 #: ../plugin/rabbitmq/rabbitmq_log.cc:161
 msgid "RabbitMQ virtualhost"
@@ -4828,7 +4726,7 @@ msgstr ""
 #: ../plugin/transaction_log/transaction_log_reader.cc:163
 #, c-format
 msgid "BUFFER: %s\n"
-msgstr "BUFFER: %s\n"
+msgstr ""
 
 #: ../plugin/transaction_log/module.cc:171
 #, c-format
@@ -4869,7 +4767,7 @@ msgstr ""
 
 #: ../plugin/transaction_log/module.cc:267
 msgid "Path to the file to use for transaction log"
-msgstr "Sti til filen du vil bruke som transaksjonslogg"
+msgstr ""
 
 #: ../plugin/transaction_log/module.cc:273
 msgid ""
@@ -4893,7 +4791,7 @@ msgstr ""
 
 #: ../plugin/transaction_log/transaction_log.cc:114
 msgid "Failed to open transaction log file "
-msgstr "Åpning av transaksjonsloggen feilet "
+msgstr ""
 
 #: ../plugin/transaction_log/transaction_log.cc:215
 #, c-format
@@ -4944,9 +4842,8 @@ msgid " bytes\n"
 msgstr ""
 
 #: ../plugin/transaction_log/utilities/transaction_file_reader.cc:156
-#, fuzzy
 msgid "GPB ERROR: "
-msgstr "FEIL"
+msgstr ""
 
 #: ../plugin/transaction_log/utilities/transaction_file_reader.cc:162
 msgid ""
@@ -4955,9 +4852,8 @@ msgid ""
 msgstr ""
 
 #: ../plugin/transaction_log/utilities/transaction_file_reader.cc:170
-#, fuzzy
 msgid "Unable to parse command. Got error: "
-msgstr "Klarte ikke analysere transaksjonen. Feil: %s.\n"
+msgstr ""
 
 #: ../plugin/transaction_log/utilities/transaction_file_reader.cc:179
 msgid ""
@@ -4967,21 +4863,16 @@ msgid ""
 msgstr ""
 
 #: ../plugin/transaction_log/utilities/transaction_reader.cc:472
-#, fuzzy
 msgid "Display help and exit"
-msgstr "Vis denne hjelpeteksten og avslutt."
+msgstr ""
 
 #: ../plugin/transaction_log/utilities/transaction_reader.cc:473
-#, fuzzy
 msgid "Read from the innodb transaction log"
-msgstr "Sti til filen du vil bruke som transaksjonslogg"
+msgstr ""
 
 #: ../plugin/transaction_log/utilities/transaction_reader.cc:479
-#, fuzzy
 msgid "Password to use when connecting to server"
 msgstr ""
-"Passordet som skal brukes for å koble til serveren. Hvis passordet ikke er "
-"angitt, vil du bli spurt om det i terminalvinduet."
 
 #: ../plugin/transaction_log/utilities/transaction_reader.cc:482
 msgid "Perform checksum"
@@ -4992,9 +4883,8 @@ msgid "Ignore event messages"
 msgstr ""
 
 #: ../plugin/transaction_log/utilities/transaction_reader.cc:484
-#, fuzzy
 msgid "Transaction log file"
-msgstr "Åpning av transaksjonsloggen feilet "
+msgstr ""
 
 #: ../plugin/transaction_log/utilities/transaction_reader.cc:485
 msgid "Print raw Protobuf messages instead of SQL"
@@ -5005,14 +4895,12 @@ msgid "Start reading from the given file position"
 msgstr ""
 
 #: ../plugin/transaction_log/utilities/transaction_reader.cc:491
-#, fuzzy
 msgid "Only output for the given transaction ID and later"
-msgstr "Lås eller aktiv transaksjon"
+msgstr ""
 
 #: ../plugin/transaction_log/utilities/transaction_reader.cc:494
-#, fuzzy
 msgid "Only output for the given transaction ID"
-msgstr "Lås eller aktiv transaksjon"
+msgstr ""
 
 #: ../plugin/transaction_log/utilities/transaction_reader.cc:495
 msgid "Summarize message contents"
@@ -5033,223 +4921,3 @@ msgstr ""
 #: ../plugin/transaction_log/utilities/transaction_reader.cc:637
 msgid " got "
 msgstr ""
-
-#, fuzzy
-#~ msgid "--help           :  Display help and exit\n"
-#~ msgstr "Vis denne hjelpeteksten og avslutt."
-
-#~ msgid "Use compression in server/client protocol."
-#~ msgstr "Bruk kompresjon i klient/server-protokollen."
-
-#, fuzzy
-#~ msgid "Deprecated. Use --skip-set-charset instead."
-#~ msgstr "ADVARSEL: egenskapen er utgått; bruk --disable-pager i stedet.\n"
-
-#~ msgid "Unknown Drizzle error"
-#~ msgstr "Ukjent Drizzle-feil"
-
-#~ msgid "Can't create UNIX socket (%d)"
-#~ msgstr "Klarte ikke å lage UNIX-socketen (%d)"
-
-#~ msgid "Can't connect to local Drizzle server through socket '%-.100s' (%d)"
-#~ msgstr ""
-#~ "Klarer ikke å koble til den lokale Drizzle-serveren gjennom socketen "
-#~ "'%-.100s' (%d)"
-
-#~ msgid "Can't create TCP/IP socket (%d)"
-#~ msgstr "Klarer ikke å lage en TCP/IP-socket (%d)"
-
-#~ msgid "Unknown Drizzle server host '%-.100s' (%d)"
-#~ msgstr "Ukjent Drizzle-serverhost '%-.100s' (%d)"
-
-#~ msgid "Drizzle server has gone away"
-#~ msgstr "Drizzle-serveren har forsvunnet"
-
-#, fuzzy
-#~ msgid "Can't create completion port thread (error %d)"
-#~ msgstr "Kan ikke opprette symlinken '%s' som peker til '%s' (Feilkode: %d)"
-
-#~ msgid ""
-#~ "Named commands are disabled. Use \\* form only, or use named commands "
-#~ "only in the beginning of a line ending with a semicolon (;) Since version "
-#~ "10.9 the client now starts with this option ENABLED by default! Disable "
-#~ "with '-G'. Long format commands still work from the first line. WARNING: "
-#~ "option deprecated; use --disable-named-commands instead."
-#~ msgstr ""
-#~ "Navngitte kommandoer er skrudd av. Bare \\*-formen kan brukes, eller bruk "
-#~ "navngitte kommandoer bare i starten av en linje som slutter med et "
-#~ "semikolon (;). Siden versjon 10.9 er denne egenskapen skrudd på som "
-#~ "standard! Bruk '-G' for å skru den av. Lange kommandonavn fungerer "
-#~ "fortsatt på første linje. ADVARSEL: egenskapen er utgått; bruk --disable-"
-#~ "named-commands i stedet."
-
-#~ msgid "Ignore space after function names."
-#~ msgstr "Overse mellomrom etter funksjonsnavn."
-
-#~ msgid ""
-#~ "Don't write line number for errors. WARNING: -L is deprecated, use long "
-#~ "version of this option instead."
-#~ msgstr ""
-#~ "Ikke skriv linjenummer for feilmeldinger. ADVARSEL: -L er utgått, bruk "
-#~ "det lange navnet på denne egenskapen i stedet."
-
-#~ msgid ""
-#~ "Reconnect if the connection is lost. Disable with --disable-reconnect. "
-#~ "This option is enabled by default."
-#~ msgstr ""
-#~ "Gjenopprett automatisk en tilkobling dersom den blir avbrutt. Skrus av "
-#~ "med --disable-reconnect. Denne egenskapen er skrudd på som standard."
-
-#, fuzzy
-#~ msgid "Print the default settings and exit"
-#~ msgstr "Vis litt debug-informasjon og avslutt."
-
-#~ msgid "Error dropping database (can't rmdir '%-.192s', errno: %d)"
-#~ msgstr ""
-#~ "Feil ved fjerning av databasen (klarte ikke å kjøre rmdir '%-.192s', "
-#~ "feilnummer: %d)"
-
-#~ msgid "Can't read record in system table"
-#~ msgstr "Klarte ikke å lese raden fra systemtabellen"
-
-#~ msgid "View '%-.192s' doesn't exist for '%-.192s'"
-#~ msgstr "View-et '%-.192s' eksisterer ikke i '%-.192s'"
-
-#~ msgid "Synonym for -?"
-#~ msgstr "Synonymt med -?"
-
-#~ msgid "Check memory and open file usage at exit ."
-#~ msgstr "Sjekk minnebruk og bruk av åpne filer ved avslutning"
-
-#~ msgid "built-in default"
-#~ msgstr "innebygd standardverdi"
-
-#~ msgid ""
-#~ "Disable outfile. See interactive help (\\h) also. WARNING: option "
-#~ "deprecated; use --disable-tee instead"
-#~ msgstr ""
-#~ "Skrur av utskrift til fil. Les mer i hjelpefunksjonen (\\h). ADVARSEL: "
-#~ "egenskapen er utgått; bruk --disable-tee i stedet."
-
-#~ msgid "Write more. (-v -v -v gives the table output format)."
-#~ msgstr "Skriv ut mer. (-v -v -v gir tabellformat på utskriften)"
-
-#~ msgid "WARNING: option deprecated; use --disable-tee instead.\n"
-#~ msgstr "ADVARSEL: egenskapen er utgått; bruk --disable-tee i stedet.\n"
-
-#~ msgid "Error writing file '%s' (Errcode: %d)"
-#~ msgstr "Skrivingen av '%s' mislykkes (Feilkode: %d)"
-
-#~ msgid "Error on delete of '%s' (Errcode: %d)"
-#~ msgstr "Feil ved slettingen av '%s' (Feilkode: %d)"
-
-#~ msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
-#~ msgstr "Klarte ikke å bytte navn på '%s' til '%s' (Feilkode: %d)"
-
-#~ msgid "Out of memory (Needed %u bytes)"
-#~ msgstr "Tomt for minne (Trengte %u bytes)"
-
-#~ msgid "Can't lock file (Errcode: %d)"
-#~ msgstr "Kan ikke låse filen (Feilkode: %d)"
-
-#~ msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
-#~ msgstr "Uventet slutt-på-fil (EOF) inntraff da vi leste '%s' (Feilkode: %d)"
-
-#~ msgid "Can't read dir of '%s' (Errcode: %d)"
-#~ msgstr "Kan ikke lese katalogen '%s' (Feilkode: %d)"
-
-#~ msgid "Can't get stat of '%s' (Errcode: %d)"
-#~ msgstr "Kan ikke 'stat'-e '%s' (Feilkode: %d)"
-
-#~ msgid "Disk is full writing '%s'. Waiting for someone to free space..."
-#~ msgstr ""
-#~ "Disken er full når vi prøver å skrive '%s'. Venter på at noen skal frigi "
-#~ "plass..."
-
-#~ msgid "Can't change dir to '%s' (Errcode: %d)"
-#~ msgstr "Kunne ikke bytte katalog til '%s' (Feilkode: %d)"
-
-#~ msgid "Can't get working dirctory (Errcode: %d)"
-#~ msgstr "Fikk ikke tak i arbeidskatalogen (Feilkode: %d)"
-
-#~ msgid "File '%s' not found (Errcode: %d)"
-#~ msgstr "Filen '%s' ble ikke funnet (Feilkode: %d)"
-
-#~ msgid "Undefined handler error 129"
-#~ msgstr "Udefinert håndteringsfeil 129"
-
-#~ msgid "Undefined handler error 125"
-#~ msgstr "Udefinert håndteringsfeil 125"
-
-#~ msgid ""
-#~ "Incorrect definition of table %s.%s: expected column '%s' at position %d "
-#~ "to have type %s  but the column is not found."
-#~ msgstr ""
-#~ "Gal definisjon av tabellen %s.%s: forventet at kolonnen '%s' i posisjon %"
-#~ "d hadde typen %s, men kolonna ble ikke funnet."
-
-#~ msgid ""
-#~ "Incorrect definition of table %s.%s: expected column '%s' at position %d, "
-#~ "found '%s'."
-#~ msgstr ""
-#~ "Gal definisjon av tabellen %s.%s: forventet kolonnen '%s' i posisjon %d, "
-#~ "fant '%s'."
-
-#~ msgid ""
-#~ "Incorrect definition of table %s.%s: expected the type of column '%s' at "
-#~ "position %d to have character set '%s' but the type has no character set."
-#~ msgstr ""
-#~ "Gal definisjon av tabellen %s.%s: forventet at tegnsettet til kolonnen '%"
-#~ "s' i posisjon %d hadde tegnsettet '%s', men kolonnen har ikke noe "
-#~ "tegnsett."
-
-#~ msgid ""
-#~ "Incorrect definition of table %s.%s: expected column '%s' at position %d "
-#~ "to have type %s, found type %s."
-#~ msgstr ""
-#~ "Gal definisjon av tabellen %s.%s: forventet at kolonnen '%s' i posisjon %"
-#~ "d hadde typen %s, fant typen %s."
-
-#~ msgid ""
-#~ "'%s' had no or invalid character set, and default character set is multi-"
-#~ "byte, so character column sizes may have changed"
-#~ msgstr ""
-#~ "'%s' har manglende eller ugyldig tegnsett, og standardtegnsettet er "
-#~ "multibyte, så kolonnetyper basert på tegn kan ha blitt endret"
-
-#~ msgid ""
-#~ "Incorrect definition of table %s.%s: expected the type of column '%s' at "
-#~ "position %d to have character set '%s' but found character set '%s'."
-#~ msgstr ""
-#~ "Gal definisjon av tabellen %s.%s: forventet at tegnsettet til kolonnen '%"
-#~ "s' i posisjon %d hadde tegnsettet '%s', men fant tegnsettet '%s'."
-
-#~ msgid "WARNING: --server-arg option not supported in this configuration.\n"
-#~ msgstr ""
-#~ "ADVARSEL: --server-arg-egenskapen er ikke støttet under denne "
-#~ "konfigurasjonen\n"
-
-#~ msgid ""
-#~ "Disable pager and print to stdout. See interactive help (\\h) also. "
-#~ "WARNING: option deprecated; use --disable-pager instead."
-#~ msgstr ""
-#~ "Skrur av sidehåndtering og skriver til stdout. Les mer under den "
-#~ "interaktive hjelpefunksjonen (\\h). ADVARSEL: Egenskapen er utgått; bruk "
-#~ "--disable-pager i stedet."
-
-#~ msgid ""
-#~ "Reading table information for completion of table and column names\n"
-#~ "    You can turn off this feature to get a quicker startup with -A\n"
-#~ "\n"
-#~ msgstr ""
-#~ "Leser tabellinformasjon for automatisk utfylling av tabell- og "
-#~ "kolonnenavn\n"
-#~ "    Du kan skru av denne egenskapen ved å angi -A for å få en raskere "
-#~ "oppstart.\n"
-#~ "\n"
-
-#~ msgid "hashchk"
-#~ msgstr "hashchk"
-
-#~ msgid "isamchk"
-#~ msgstr "isamchk"
