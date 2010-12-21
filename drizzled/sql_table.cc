@@ -214,6 +214,13 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
       {
         error= plugin::StorageEngine::dropTable(*session, identifier);
 
+        /* Generate transaction event ONLY when we successfully drop */ 
+        if (error == 0)
+        {
+          TransactionServices &transaction_services= TransactionServices::singleton();
+          transaction_services.dropTable(session, string(table->getSchemaName()), string(table->getTableName()));
+        }
+
         if ((error == ENOENT || error == HA_ERR_NO_SUCH_TABLE) && if_exists)
         {
           error= 0;
@@ -225,12 +232,6 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
           /* the table is referenced by a foreign key constraint */
           foreign_key_error= true;
         }
-      }
-
-      if (error == 0 || (if_exists && foreign_key_error == false))
-      {
-        TransactionServices &transaction_services= TransactionServices::singleton();
-        transaction_services.dropTable(session, string(table->getSchemaName()), string(table->getTableName()), if_exists);
       }
 
       if (error)

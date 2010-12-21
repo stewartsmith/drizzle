@@ -2064,8 +2064,7 @@ void TransactionServices::dropSchema(Session *in_session, const string &schema_n
 
 void TransactionServices::dropTable(Session *in_session,
                                     const string &schema_name,
-                                    const string &table_name,
-                                    bool if_exists)
+                                    const string &table_name)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
@@ -2081,8 +2080,6 @@ void TransactionServices::dropTable(Session *in_session,
    * it to the generic Statement message
    */
   message::DropTableStatement *drop_table_statement= statement->mutable_drop_table_statement();
-
-  drop_table_statement->set_if_exists_clause(if_exists);
 
   message::TableMetadata *table_metadata= drop_table_statement->mutable_table_metadata();
 
