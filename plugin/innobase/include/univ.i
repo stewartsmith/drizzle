@@ -138,9 +138,11 @@ Sun Studio */
 # endif
 
 # if defined(__GNUC__)
+#  define UNIV_WARN_UNUSED_RESULT_NONNULL __attribute__((nonnull, warn_unused_result))
 #  define UNIV_WARN_UNUSED_RESULT __attribute__((warn_unused_result))
 #else
 #  define UNIV_WARN_UNUSED_RESULT
+#  define UNIV_WARN_UNUSED_RESULT_NONNULL
 #endif
 
 # ifdef HAVE_PREAD
