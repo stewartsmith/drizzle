@@ -293,9 +293,9 @@ bool init_temporal_formats()
       if (current_format_args.second_part_index == 0) /* A time must have seconds. */
         known_date_formats.push_back(tmp);
     }
+
     if (current_format_args.second_part_index > 0) /* A time must have seconds, but may not have minutes or hours */
-      if (current_format_args.year_part_index == 0) /* A time may not have a date part, and date parts must have a year */
-        known_time_formats.push_back(tmp);
+      known_time_formats.push_back(tmp);
   }
   return true;
 }

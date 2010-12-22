@@ -16,7 +16,6 @@ ERROR HY000: Received an invalid value '20 10:22:33' for a UNIX timestamp.
 INSERT INTO t1 VALUES ("-10  1:22:33.45");
 ERROR HY000: Received an invalid value '-10  1:22:33.45' for a UNIX timestamp.
 INSERT INTO t1 VALUES ("1999-02-03 20:33:34");
-ERROR HY000: Received an invalid value '1999-02-03 20:33:34' for a UNIX timestamp.
 insert t1 values (30);
 insert t1 values (1230);
 insert t1 values ("1230");
@@ -35,6 +34,7 @@ t
 00:01:23
 01:23:45
 00:00:10
+20:33:34
 00:00:30
 00:20:30
 00:12:30
@@ -61,6 +61,7 @@ t
 00:01:23
 01:23:45
 00:00:10
+20:33:34
 00:00:30
 00:20:30
 00:12:30

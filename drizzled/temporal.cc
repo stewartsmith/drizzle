@@ -1025,10 +1025,14 @@ bool Time::from_string(const char *from, size_t from_len)
     current++;
   }
 
-  if (! matched)
+  _years= 0;
+  _months= 0;
+  _days= 0;
+
+  if (not matched)
     return false;
-  else
-    return is_valid();
+
+  return is_valid();
 }
 
 int Time::to_string(char *to, size_t to_len) const
