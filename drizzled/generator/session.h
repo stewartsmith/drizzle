@@ -23,6 +23,7 @@
 
 #include <boost/thread/mutex.hpp>
 #include "drizzled/session/cache.h"
+#include "drizzled/identifier/user.h"
 
 namespace drizzled {
 namespace generator {
@@ -31,10 +32,12 @@ class Session
 {
   session::Cache::list local_list;
   session::Cache::list::const_iterator iter;
+  identifier::User::const_reference user;
 
 public:
 
-  Session()
+  Session(identifier::User::const_reference arg) :
+    user(arg)
   {
     boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
     local_list= session::Cache::singleton().getCache();
@@ -49,7 +52,7 @@ public:
   {
     while (iter != local_list.end())
     {
-      if (not (*iter)->isViewable())
+      if (not (*iter)->isViewable(user))
       {
         iter++;
         continue;
@@ -57,6 +60,7 @@ public:
 
       drizzled::Session::shared_ptr ret(*iter);
       iter++;
+
       return ret;
     }
 

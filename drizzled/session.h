@@ -319,6 +319,9 @@ public:
   typedef boost::unordered_map<std::string, util::Storable *, util::insensitive_hash, util::insensitive_equal_to> PropertyMap;
   typedef Session* Ptr;
   typedef boost::shared_ptr<Session> shared_ptr;
+  typedef const Session& const_reference;
+  typedef const Session* const_pointer;
+  typedef Session* pointer;
 
   /*
     MARK_COLUMNS_NONE:  Means mark_used_colums is not set and no indicator to
@@ -529,7 +532,10 @@ public:
   static const char * const DEFAULT_WHERE;
 
   memory::Root warn_root; /**< Allocation area for warnings and errors */
+private:
   plugin::Client *client; /**< Pointer to client object */
+
+public:
 
   void setClient(plugin::Client *client_arg);
 
@@ -601,7 +607,7 @@ public:
   /**
    * Is this session viewable by the current user?
    */
-  bool isViewable() const;
+  bool isViewable(identifier::User::const_reference) const;
 
   /**
     Used in error messages to tell user in what part of MySQL we found an

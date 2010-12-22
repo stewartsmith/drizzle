@@ -475,7 +475,7 @@ void close_connections(void)
       break;
     }
     /* Close before unlock, avoiding crash. See LP bug#436685 */
-    list.front()->client->close();
+    list.front()->getClient()->close();
   }
 }
 

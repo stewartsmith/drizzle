@@ -50,7 +50,8 @@ ProcesslistTool::ProcesslistTool() :
 }
 
 ProcesslistTool::Generator::Generator(Field **arg) :
-  plugin::TableFunction::Generator(arg)
+  plugin::TableFunction::Generator(arg),
+  session_generator(*getSession().user())
 {
   now= time(NULL);
 }

@@ -214,7 +214,7 @@ bool mysqld_show_warnings(Session *session,
   field_list.push_back(new Item_return_int("Code",4, DRIZZLE_TYPE_LONG));
   field_list.push_back(new Item_empty_string("Message",DRIZZLE_ERRMSG_SIZE));
 
-  if (session->client->sendFields(&field_list))
+  if (session->getClient()->sendFields(&field_list))
     return true;
 
   DRIZZLE_ERROR *err;
@@ -234,11 +234,11 @@ bool mysqld_show_warnings(Session *session,
       continue;
     if (idx > unit->select_limit_cnt)
       break;
-    session->client->store(warning_level_names[err->level].str,
-		           warning_level_names[err->level].length);
-    session->client->store((uint32_t) err->code);
-    session->client->store(err->msg, strlen(err->msg));
-    if (session->client->flush())
+    session->getClient()->store(warning_level_names[err->level].str,
+                                warning_level_names[err->level].length);
+    session->getClient()->store((uint32_t) err->code);
+    session->getClient()->store(err->msg, strlen(err->msg));
+    if (session->getClient()->flush())
       return(true);
   }
   session->my_eof();
