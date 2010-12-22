@@ -48,23 +48,22 @@ public:
   {
   }
 
-  operator drizzled::Session::shared_ptr()
+  operator drizzled::Session::pointer()
   {
     while (iter != local_list.end())
     {
-      if (not (*iter)->isViewable(user))
+      drizzled::Session::pointer ret= (*iter).get();
+      iter++;
+
+      if (not ret->isViewable(user))
       {
-        iter++;
         continue;
       }
-
-      drizzled::Session::shared_ptr ret(*iter);
-      iter++;
 
       return ret;
     }
 
-    return drizzled::Session::shared_ptr();
+    return drizzled::Session::pointer();
   }
 };
 
