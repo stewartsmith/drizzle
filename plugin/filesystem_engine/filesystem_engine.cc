@@ -305,7 +305,9 @@ int FilesystemEngine::doGetTableDefinition(Session &,
     if (not table_proto.IsInitialized())
     {
       my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
+               table_proto.name().empty() ? " " : table_proto.name().c_str(),
                table_proto.InitializationErrorString().c_str());
+
       return ER_CORRUPT_TABLE_DEFINITION;
     }
 

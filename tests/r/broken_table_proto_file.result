@@ -2,6 +2,6 @@ flush tables;
 SHOW TABLE STATUS like 't1';
 Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
 show create table t1;
-ERROR HY000: Corrupt or invalid table definition: name, schema, type, engine, creation_timestamp, update_timestamp
+ERROR HY000: Corrupt or invalid table definition for test/t1.dfe: name, schema, type, engine, creation_timestamp, update_timestamp
 drop table if exists t1;
-ERROR HY000: Corrupt or invalid table definition: name, schema, type, engine, creation_timestamp, update_timestamp
+ERROR HY000: Corrupt or invalid table definition for test/t1.dfe: name, schema, type, engine, creation_timestamp, update_timestamp

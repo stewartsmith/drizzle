@@ -730,7 +730,10 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
   if (! table.IsInitialized())
   {
-    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0), table.InitializationErrorString().c_str());
+    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
+             table.name().empty() ? " " :  table.name().c_str(),
+             table.InitializationErrorString().c_str());
+
     return ER_CORRUPT_TABLE_DEFINITION;
   }
 
@@ -762,16 +765,11 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
   if (! table_charset)
   {
-    char errmsg[100];
-    snprintf(errmsg, sizeof(errmsg),
-             _("Table %s has invalid/unknown collation: %d,%s"),
-             getPath(),
-             table_options.collation_id(),
-             table_options.collation().c_str());
-    errmsg[99]='\0';
+    my_error(ER_CORRUPT_TABLE_DEFINITION_UNKNOWN_COLLATION, MYF(0),
+             table_options.collation().c_str(),
+             table.name().c_str());
 
-    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0), errmsg);
-    return ER_CORRUPT_TABLE_DEFINITION;
+    return ER_CORRUPT_TABLE_DEFINITION; // Historical
   }
 
   db_record_offset= 1;
@@ -1054,15 +1052,9 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
     if (field_options.field_value_size() > Field_enum::max_supported_elements)
     {
-      char errmsg[100];
-      snprintf(errmsg, sizeof(errmsg),
-               _("ENUM column %s has greater than %d possible values"),
-               pfield.name().c_str(),
-               Field_enum::max_supported_elements);
-      errmsg[99]='\0';
+      my_error(ER_CORRUPT_TABLE_DEFINITION_ENUM, MYF(0), table.name().c_str());
 
-      my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0), errmsg);
-      return ER_CORRUPT_TABLE_DEFINITION;
+      return ER_CORRUPT_TABLE_DEFINITION; // Historical
     }
 
 
