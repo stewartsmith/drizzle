@@ -109,7 +109,9 @@ String *Item_date_add_interval::val_str(String *str)
     return 0;
 
   if (ltime.time_type == DRIZZLE_TIMESTAMP_DATE)
+  {
     make_date(&ltime, str);
+  }
   else if (ltime.second_part)
   {
     /* Ensure we've got enough room for our timestamp string. */
@@ -127,7 +129,9 @@ String *Item_date_add_interval::val_str(String *str)
     str->set_charset(&my_charset_bin);
   }
   else
+  {
     make_datetime(&ltime, str);
+  }
 
   return str;
 }

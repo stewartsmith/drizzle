@@ -81,3 +81,4 @@ INSERT INTO t1 ( a, b ) VALUES ( 1 , 9 );
 ROLLBACK TO SAVEPOINT A;
 
 --echo End Test of Bug 542299
+DROP TABLE t1;

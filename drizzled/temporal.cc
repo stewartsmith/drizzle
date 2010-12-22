@@ -1125,6 +1125,14 @@ void Time::to_int32_t(int32_t *to) const
      + _seconds;
 }
 
+// We fill the structure based on just int
+void Time::to_uint64_t(uint64_t &to) const
+{
+  to= _hours * 24
+     + _minutes * 60
+     + _seconds;
+}
+
 void DateTime::to_int64_t(int64_t *to) const
 {
   *to= ((
@@ -1348,19 +1356,21 @@ bool DateTime::from_time_t(const time_t from)
     return false;
 }
 
-void Date::to_time_t(time_t *to) const
+void Date::to_time_t(time_t &to) const
 {
   if (in_unix_epoch())
   {
-    *to= _epoch_seconds;
+    to= _epoch_seconds;
   }
   else
-    *to= 0;
+  {
+    to= 0;
+  }
 }
 
-void Timestamp::to_time_t(time_t *to) const
+void Timestamp::to_time_t(time_t &to) const
 {
-  *to= _epoch_seconds;
+  to= _epoch_seconds;
 }
 
 void MicroTimestamp::to_timeval(struct timeval *to) const

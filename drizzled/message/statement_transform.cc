@@ -1374,11 +1374,14 @@ transformFieldDefinitionToSql(const Table::Field &field,
   case Table::Field::DATE:
     destination.append(" DATE", 5);
     break;
-  case Table::Field::TIMESTAMP:
+  case Table::Field::EPOCH:
     destination.append(" TIMESTAMP",  10);
     break;
   case Table::Field::DATETIME:
     destination.append(" DATETIME",  9);
+    break;
+  case Table::Field::TIME:
+    destination.append(" TIME",  9);
     break;
   }
 
@@ -1409,7 +1412,7 @@ transformFieldDefinitionToSql(const Table::Field &field,
   {
     destination.append(" NOT NULL", 9);
   }
-  else if (field.type() == Table::Field::TIMESTAMP)
+  else if (field.type() == Table::Field::EPOCH)
     destination.append(" NULL", 5);
 
   if (field.type() == Table::Field::INTEGER || 
@@ -1495,11 +1498,13 @@ Table::Field::FieldType internalFieldTypeToFieldProtoType(enum enum_field_types 
     assert(false); /* Not a user definable type */
     return Table::Field::INTEGER; /* unreachable */
   case DRIZZLE_TYPE_TIMESTAMP:
-    return Table::Field::TIMESTAMP;
+    return Table::Field::EPOCH;
   case DRIZZLE_TYPE_LONGLONG:
     return Table::Field::BIGINT;
   case DRIZZLE_TYPE_DATETIME:
     return Table::Field::DATETIME;
+  case DRIZZLE_TYPE_TIME:
+    return Table::Field::TIME;
   case DRIZZLE_TYPE_DATE:
     return Table::Field::DATE;
   case DRIZZLE_TYPE_VARCHAR:

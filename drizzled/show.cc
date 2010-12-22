@@ -34,7 +34,7 @@
 #include <drizzled/item/return_date_time.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/db.h>
-#include <drizzled/field/timestamp.h>
+#include <drizzled/field/epoch.h>
 #include <drizzled/field/decimal.h>
 #include <drizzled/lock.h>
 #include <drizzled/item/return_date_time.h>

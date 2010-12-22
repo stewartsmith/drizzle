@@ -144,7 +144,7 @@ void ShowColumns::Generator::pushType(message::Table::Field::FieldType type, con
   case message::Table::Field::DATE:
     push(DATE);
     break;
-  case message::Table::Field::TIMESTAMP:
+  case message::Table::Field::EPOCH:
     push(TIMESTAMP);
     break;
   case message::Table::Field::DATETIME:

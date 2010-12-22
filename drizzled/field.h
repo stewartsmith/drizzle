@@ -739,6 +739,11 @@ public:
   bool isWriteSet();
   void setReadSet(bool arg= true);
   void setWriteSet(bool arg= true);
+
+protected:
+
+  void pack_num(uint64_t arg, unsigned char *destination= NULL);
+  uint64_t unpack_num(uint64_t &destination, const unsigned char *arg= NULL) const;
 };
 
 std::ostream& operator<<(std::ostream& output, const Field &field);
