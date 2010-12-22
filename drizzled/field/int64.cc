@@ -107,7 +107,6 @@ int Int64::store(double nr)
 int Int64::store(int64_t nr, bool arg)
 {
   int error= 0;
-  (void)arg;
 
   ASSERT_COLUMN_MARKED_FOR_WRITE;
   if (arg and (nr < 0)) // Only a partial fix for overflow

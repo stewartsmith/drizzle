@@ -156,6 +156,7 @@ void set_zero_time(DRIZZLE_TIME *tm, enum enum_drizzle_timestamp_type time_type)
 */
 #define MAX_DATE_STRING_REP_LENGTH 30
 
+int my_time_to_str(const DRIZZLE_TIME *l_time, char *to);
 int my_date_to_str(const DRIZZLE_TIME *l_time, char *to);
 int my_datetime_to_str(const DRIZZLE_TIME *l_time, char *to);
 int my_TIME_to_str(const DRIZZLE_TIME *l_time, char *to);

@@ -41,7 +41,7 @@ ModulesTool::ModulesTool() :
   add_field("MODULE_NAME");
   add_field("MODULE_VERSION", 20);
   add_field("MODULE_AUTHOR");
-  add_field("IS_BUILTIN", plugin::TableFunction::BOOLEAN);
+  add_field("IS_BUILTIN", plugin::TableFunction::BOOLEAN, 0, false);
   add_field("MODULE_LIBRARY", 254);
   add_field("MODULE_DESCRIPTION", 254);
   add_field("MODULE_LICENSE", 80);

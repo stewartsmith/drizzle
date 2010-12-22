@@ -41,7 +41,7 @@
 #include <drizzled/field/int32.h>
 #include <drizzled/field/int64.h>
 #include <drizzled/field/num.h>
-#include <drizzled/field/timestamp.h>
+#include <drizzled/field/epoch.h>
 #include <drizzled/field/datetime.h>
 #include <drizzled/field/varstring.h>
 
@@ -180,6 +180,7 @@ set_field_to_null_with_conversions(Field *field, bool no_conversions)
     field->reset();
     return 0;
   }
+
   if (no_conversions)
     return -1;
 
@@ -190,22 +191,26 @@ set_field_to_null_with_conversions(Field *field, bool no_conversions)
   */
   if (field->type() == DRIZZLE_TYPE_TIMESTAMP)
   {
-    ((Field_timestamp*) field)->set_time();
+    ((field::Epoch::pointer) field)->set_time();
     return 0;					// Ok to set time to NULL
   }
+
   field->reset();
   if (field == field->getTable()->next_number_field)
   {
     field->getTable()->auto_increment_field_not_null= false;
     return 0;				  // field is set in fill_record()
   }
+
   if (field->getTable()->in_use->count_cuted_fields == CHECK_FIELD_WARN)
   {
     field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_BAD_NULL_ERROR, 1);
     return 0;
   }
+
   if (!field->getTable()->in_use->no_errors)
     my_error(ER_BAD_NULL_ERROR, MYF(0), field->field_name);
+
   return -1;
 }
 
@@ -278,10 +283,12 @@ static void do_copy_timestamp(CopyField *copy)
   if (*copy->from_null_ptr & copy->from_bit)
   {
     /* Same as in set_field_to_null_with_conversions() */
-    ((Field_timestamp*) copy->to_field)->set_time();
+    ((field::Epoch::pointer) copy->to_field)->set_time();
   }
   else
+  {
     (copy->do_copy2)(copy);
+  }
 }
 
 
@@ -294,7 +301,9 @@ static void do_copy_next_number(CopyField *copy)
     copy->to_field->reset();
   }
   else
+  {
     (copy->do_copy2)(copy);
+  }
 }
 
 

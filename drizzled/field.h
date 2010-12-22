@@ -141,6 +141,12 @@ public:
   utype	unireg_check;
   uint32_t field_length; /**< Length of this field in bytes */
   uint32_t flags;
+
+  bool isUnsigned() const
+  {
+    return flags & UNSIGNED_FLAG;
+  }
+
 private:
   uint16_t field_index; /**< Index of this Field in Table::fields array */
 
@@ -739,6 +745,11 @@ public:
   bool isWriteSet();
   void setReadSet(bool arg= true);
   void setWriteSet(bool arg= true);
+
+protected:
+
+  void pack_num(uint64_t arg, unsigned char *destination= NULL);
+  uint64_t unpack_num(uint64_t &destination, const unsigned char *arg= NULL) const;
 };
 
 std::ostream& operator<<(std::ostream& output, const Field &field);

@@ -19,7 +19,6 @@
 #include "config.h"
 #include <drizzled/field.h>
 #include <drizzled/field/blob.h>
-#include <drizzled/field/timestamp.h>
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>

@@ -110,8 +110,6 @@ void plugin::TableFunction::add_field(const char *label,
   default:
   case TableFunction::BOOLEAN: // Currently BOOLEAN always has a value
     field_length= 5;
-    field_options->set_default_null(false);
-    field_constraints->set_is_nullable(false);
   case TableFunction::STRING:
     {
       drizzled::message::Table::Field::StringFieldOptions *string_field_options;

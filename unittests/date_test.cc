@@ -439,7 +439,7 @@ TEST_F(DateTest, to_time_t)
   time_t time;
   TemporalGenerator::DateGen::make_date(&date, 1990, 9, 9);
   
-  date.to_time_t(&time);
+  date.to_time_t(time);
   
   ASSERT_EQ(652838400, time);
 }
