@@ -44,6 +44,7 @@
 
 #include <boost/filesystem.hpp>
 
+#include "drizzled/abort_exception.h"
 #include "drizzled/plugin.h"
 #include "drizzled/gettext.h"
 #include "drizzled/configmake.h"
@@ -339,23 +340,41 @@ int main(int argc, char **argv)
     }
   }
 
-
-  /* Listen for new connections and start new session for each connection
-     accepted. The listen.getClient() method will return NULL when the server
-     should be shutdown. */
-  while ((client= plugin::Listen::getClient()) != NULL)
+  try
   {
-    Session::shared_ptr session(new Session(client));
 
-    if (not session)
+    /* Listen for new connections and start new session for each connection
+      accepted. The listen.getClient() method will return NULL when the server
+      should be shutdown. */
+    while ((client= plugin::Listen::getClient()) != NULL)
     {
-      delete client;
-      continue;
+      Session::shared_ptr session(new Session(client));
+
+      if (not session)
+      {
+        delete client;
+        continue;
+      }
+
+      /* If we error on creation we drop the connection and delete the
+        session. */
+      if (Session::schedule(session))
+        Session::unlink(session);
     }
 
-    /* If we error on creation we drop the connection and delete the session. */
-    if (Session::schedule(session))
-      Session::unlink(session);
+  }
+  catch (abort_exception& ex)
+  {
+    cout << _("Drizzle has receieved an abort event.") << endl;
+    cout << _("In Function: ") << *::boost::get_error_info<boost::throw_function>(ex) << endl;
+    cout << _("In File: ") << *::boost::get_error_info<boost::throw_file>(ex) << endl;
+    cout << _("On Line: ") << *::boost::get_error_info<boost::throw_line>(ex) << endl;
+
+  }
+  catch (std::exception& ex)
+  {
+    cout << _("Drizzle has recieved an unknown error, shutting down") << endl;
+    cout << _("Error: ") << ex.what() << endl;
   }
 
   /* Send server shutdown event */

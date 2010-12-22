@@ -3,6 +3,7 @@
 # All paths should be given relative to the root
 
 #  Copyright (C) 2008 Sun Microsystems, Inc.
+#  Copyright (C) 2010 Monty Taylor
 # 
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -40,6 +41,7 @@ DTRACEFILES= \
 	     drizzled/statement/insert_select.o
 
 nobase_dist_include_HEADERS+= \
+			      drizzled/abort_exception.h \
 			      drizzled/alter_column.h \
 			      drizzled/alter_drop.h \
 			      drizzled/alter_info.h \
