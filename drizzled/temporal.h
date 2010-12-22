@@ -485,8 +485,10 @@ public:
   bool is_valid_datetime() const {return false;}
   bool is_valid_time() const {return is_valid();}
   bool is_valid_timestamp() const {return false;}
+
   /** Returns whether the temporal value is valid date. */
   bool is_valid() const;
+  bool is_fuzzy_valid() const;
 
   /**
    * Fills a supplied char string with a

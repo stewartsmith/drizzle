@@ -266,9 +266,8 @@ bool init_temporal_formats()
   /* Compile all the regular expressions for the datetime formats */
   TemporalFormat *tmp;
   struct temporal_format_args current_format_args;
-  int32_t x;
   
-  for (x= 0; x<COUNT_KNOWN_FORMATS; ++x)
+  for (int32_t x= 0; x < COUNT_KNOWN_FORMATS; ++x)
   {
     current_format_args= __format_args[x];
     tmp= new TemporalFormat(current_format_args.pattern);
