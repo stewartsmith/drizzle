@@ -1223,6 +1223,7 @@ public:
    */
   static bool schedule(Session::shared_ptr&);
 
+  static void unlink(session_id_t &session_id);
   static void unlink(Session::shared_ptr&);
 
   /*
@@ -1436,11 +1437,10 @@ public:
    * updates any status variables necessary.
    *
    * @param errcode	Error code to print to console
-   * @param should_lock 1 if we have have to lock LOCK_thread_count
    *
    * @note  For the connection that is doing shutdown, this is called twice
    */
-  void disconnect(uint32_t errcode, bool lock);
+  void disconnect(enum drizzled_error_code errcode= EE_OK);
 
   /**
    * Check if user exists and the password supplied is correct.

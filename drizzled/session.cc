@@ -379,7 +379,7 @@ Session::~Session()
 {
   this->checkSentry();
 
-  if (client->isConnected())
+  if (client and client->isConnected())
   {
     assert(security_ctx);
     if (global_system_variables.log_warnings)
@@ -390,12 +390,15 @@ Session::~Session()
                     security_ctx->username().c_str());
     }
 
-    disconnect(0, false);
+    disconnect();
   }
 
   /* Close connection */
-  client->close();
-  delete client;
+  if (client)
+  {
+    client->close();
+    delete client;
+  }
 
   if (cleanup_done == false)
     cleanup();
@@ -537,7 +540,7 @@ bool Session::initGlobals()
 {
   if (storeGlobals())
   {
-    disconnect(ER_OUT_OF_RESOURCES, true);
+    disconnect(ER_OUT_OF_RESOURCES);
     status_var.aborted_connects++;
     return true;
   }
@@ -548,7 +551,7 @@ void Session::run()
 {
   if (initGlobals() || authenticate())
   {
-    disconnect(0, true);
+    disconnect();
     return;
   }
 
@@ -560,7 +563,7 @@ void Session::run()
       break;
   }
 
-  disconnect(0, true);
+  disconnect();
 }
 
 bool Session::schedule(Session::shared_ptr &arg)
@@ -1649,7 +1652,7 @@ void mark_transaction_to_rollback(Session *session, bool all)
   }
 }
 
-void Session::disconnect(uint32_t errcode, bool should_lock)
+void Session::disconnect(enum drizzled_error_code errcode)
 {
   /* Allow any plugins to cleanup their session variables */
   plugin_sessionvar_cleanup(this);
@@ -1673,25 +1676,16 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
     }
   }
 
-  /* Close out our connection to the client */
-  if (should_lock)
-    session::Cache::singleton().mutex().lock();
-
   setKilled(Session::KILL_CONNECTION);
 
   if (client->isConnected())
   {
-    if (errcode)
+    if (errcode != EE_OK)
     {
       /*my_error(errcode, ER(errcode));*/
       client->sendError(errcode, ER(errcode));
     }
     client->close();
-  }
-
-  if (should_lock)
-  {
-    session::Cache::singleton().mutex().unlock();
   }
 }
 

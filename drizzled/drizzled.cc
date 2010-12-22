@@ -628,6 +628,14 @@ static void set_root(const char *path)
     session		 Thread handler
 */
 
+void drizzled::Session::unlink(session_id_t &session_id)
+{
+  Session::shared_ptr session= session::Cache::singleton().find(session_id);
+
+  if (session)
+    unlink(session);
+}
+
 void drizzled::Session::unlink(Session::shared_ptr &session)
 {
   connection_count.decrement();
