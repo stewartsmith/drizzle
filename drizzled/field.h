@@ -141,6 +141,12 @@ public:
   utype	unireg_check;
   uint32_t field_length; /**< Length of this field in bytes */
   uint32_t flags;
+
+  bool isUnsigned() const
+  {
+    return flags & UNSIGNED_FLAG;
+  }
+
 private:
   uint16_t field_index; /**< Index of this Field in Table::fields array */
 

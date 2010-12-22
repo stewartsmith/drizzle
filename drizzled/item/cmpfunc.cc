@@ -463,7 +463,10 @@ static bool convert_constant_item(Session *session, Item_field *field_item,
       the call to save_in_field below overrides that value.
     */
     if (field_item->depended_from)
+    {
       orig_field_val= field->val_int();
+    }
+
     if (!(*item)->is_null() && !(*item)->save_in_field(field, 1))
     {
       Item *tmp= new Item_int_with_ref(field->val_int(), *item,
@@ -472,10 +475,11 @@ static bool convert_constant_item(Session *session, Item_field *field_item,
         session->change_item_tree(item, tmp);
       result= 1;					// Item was replaced
     }
+
     /* Restore the original field value. */
     if (field_item->depended_from)
     {
-      result= field->store(orig_field_val, true);
+      result= field->store(orig_field_val, field->isUnsigned());
       /* orig_field_val must be a valid value that can be restored back. */
       assert(!result);
     }
