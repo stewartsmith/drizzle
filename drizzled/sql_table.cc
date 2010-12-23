@@ -1749,7 +1749,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
   item->maybe_null = 1;
   field_list.push_back(item = new Item_empty_string("Msg_text", 255, cs));
   item->maybe_null = 1;
-  if (session->client->sendFields(&field_list))
+  if (session->getClient()->sendFields(&field_list))
     return true;
 
   for (table= tables; table; table= table->next_local)
@@ -1804,18 +1804,18 @@ static bool mysql_admin_table(Session* session, TableList* tables,
     {
       char buff[FN_REFLEN + DRIZZLE_ERRMSG_SIZE];
       uint32_t length;
-      session->client->store(table_name);
-      session->client->store(operator_name);
-      session->client->store(STRING_WITH_LEN("error"));
+      session->getClient()->store(table_name);
+      session->getClient()->store(operator_name);
+      session->getClient()->store(STRING_WITH_LEN("error"));
       length= snprintf(buff, sizeof(buff), ER(ER_OPEN_AS_READONLY),
                        table_name);
-      session->client->store(buff, length);
+      session->getClient()->store(buff, length);
       transaction_services.autocommitOrRollback(session, false);
       session->endTransaction(COMMIT);
       session->close_thread_tables();
       lex->reset_query_tables_list(false);
       table->table=0;				// For query cache
-      if (session->client->flush())
+      if (session->getClient()->flush())
 	goto err;
       continue;
     }
@@ -1846,18 +1846,18 @@ send_result:
       DRIZZLE_ERROR *err;
       while ((err= it++))
       {
-        session->client->store(table_name);
-        session->client->store(operator_name);
-        session->client->store(warning_level_names[err->level].str,
+        session->getClient()->store(table_name);
+        session->getClient()->store(operator_name);
+        session->getClient()->store(warning_level_names[err->level].str,
                                warning_level_names[err->level].length);
-        session->client->store(err->msg);
-        if (session->client->flush())
+        session->getClient()->store(err->msg);
+        if (session->getClient()->flush())
           goto err;
       }
       drizzle_reset_errors(session, true);
     }
-    session->client->store(table_name);
-    session->client->store(operator_name);
+    session->getClient()->store(table_name);
+    session->getClient()->store(operator_name);
 
     switch (result_code) {
     case HA_ADMIN_NOT_IMPLEMENTED:
@@ -1865,41 +1865,41 @@ send_result:
 	char buf[ERRMSGSIZE+20];
 	uint32_t length=snprintf(buf, ERRMSGSIZE,
                              ER(ER_CHECK_NOT_IMPLEMENTED), operator_name);
-	session->client->store(STRING_WITH_LEN("note"));
-	session->client->store(buf, length);
+	session->getClient()->store(STRING_WITH_LEN("note"));
+	session->getClient()->store(buf, length);
       }
       break;
 
     case HA_ADMIN_OK:
-      session->client->store(STRING_WITH_LEN("status"));
-      session->client->store(STRING_WITH_LEN("OK"));
+      session->getClient()->store(STRING_WITH_LEN("status"));
+      session->getClient()->store(STRING_WITH_LEN("OK"));
       break;
 
     case HA_ADMIN_FAILED:
-      session->client->store(STRING_WITH_LEN("status"));
-      session->client->store(STRING_WITH_LEN("Operation failed"));
+      session->getClient()->store(STRING_WITH_LEN("status"));
+      session->getClient()->store(STRING_WITH_LEN("Operation failed"));
       break;
 
     case HA_ADMIN_REJECT:
-      session->client->store(STRING_WITH_LEN("status"));
-      session->client->store(STRING_WITH_LEN("Operation need committed state"));
+      session->getClient()->store(STRING_WITH_LEN("status"));
+      session->getClient()->store(STRING_WITH_LEN("Operation need committed state"));
       open_for_modify= false;
       break;
 
     case HA_ADMIN_ALREADY_DONE:
-      session->client->store(STRING_WITH_LEN("status"));
-      session->client->store(STRING_WITH_LEN("Table is already up to date"));
+      session->getClient()->store(STRING_WITH_LEN("status"));
+      session->getClient()->store(STRING_WITH_LEN("Table is already up to date"));
       break;
 
     case HA_ADMIN_CORRUPT:
-      session->client->store(STRING_WITH_LEN("error"));
-      session->client->store(STRING_WITH_LEN("Corrupt"));
+      session->getClient()->store(STRING_WITH_LEN("error"));
+      session->getClient()->store(STRING_WITH_LEN("Corrupt"));
       fatal_error=1;
       break;
 
     case HA_ADMIN_INVALID:
-      session->client->store(STRING_WITH_LEN("error"));
-      session->client->store(STRING_WITH_LEN("Invalid argument"));
+      session->getClient()->store(STRING_WITH_LEN("error"));
+      session->getClient()->store(STRING_WITH_LEN("Invalid argument"));
       break;
 
     default:				// Probably HA_ADMIN_INTERNAL_ERROR
@@ -1908,8 +1908,8 @@ send_result:
         uint32_t length=snprintf(buf, ERRMSGSIZE,
                              _("Unknown - internal error %d during operation"),
                              result_code);
-        session->client->store(STRING_WITH_LEN("error"));
-        session->client->store(buf, length);
+        session->getClient()->store(STRING_WITH_LEN("error"));
+        session->getClient()->store(buf, length);
         fatal_error=1;
         break;
       }
@@ -1938,7 +1938,7 @@ send_result:
     session->endTransaction(COMMIT);
     session->close_thread_tables();
     table->table=0;				// For query cache
-    if (session->client->flush())
+    if (session->getClient()->flush())
       goto err;
   }
 

@@ -311,6 +311,7 @@ enum enum_duplicates
 
 enum drizzled_error_code {
 
+  EE_OK=0,
   EE_ERROR_FIRST=1,
   EE_CANTCREATEFILE,
   EE_READ,

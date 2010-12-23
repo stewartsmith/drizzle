@@ -475,7 +475,7 @@ void close_connections(void)
       break;
     }
     /* Close before unlock, avoiding crash. See LP bug#436685 */
-    list.front()->client->close();
+    list.front()->getClient()->close();
   }
 }
 
@@ -627,6 +627,14 @@ static void set_root(const char *path)
     Session::unlink()
     session		 Thread handler
 */
+
+void drizzled::Session::unlink(session_id_t &session_id)
+{
+  Session::shared_ptr session= session::Cache::singleton().find(session_id);
+
+  if (session)
+    unlink(session);
+}
 
 void drizzled::Session::unlink(Session::shared_ptr &session)
 {
