@@ -96,6 +96,11 @@ public:
                            const Session *session,
                            bool send_error= true);
 
+  /** Server API method for checking process authorization */
+  static bool isAuthorized(drizzled::identifier::User::const_reference user_ctx,
+                           const Session *session,
+                           bool send_error= true);
+
   /**
    * Server API helper method for applying authorization tests
    * to a set of schema names (for use in the context of getSchemaNames
