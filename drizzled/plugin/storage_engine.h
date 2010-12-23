@@ -282,16 +282,28 @@ protected:
   virtual int doRenameTable(Session &session,
                             const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to)= 0;
 
-public:
-
-  int renameTable(Session &session, const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to);
+  virtual int doDropTable(Session &session,
+                          const drizzled::TableIdentifier &identifier)= 0;
 
   virtual void doGetTableIdentifiers(CachedDirectory &directory,
                                      const drizzled::SchemaIdentifier &schema_identifier,
                                      TableIdentifier::vector &set_of_identifiers)= 0;
 
-  virtual int doDropTable(Session &session,
-                          const drizzled::TableIdentifier &identifier)= 0;
+  virtual bool doDoesTableExist(Session& session, const drizzled::TableIdentifier &identifier);
+
+public:
+
+  friend class AddTableIdentifier;
+  friend class CanCreateTable;
+  friend class DropTable;
+  friend class DropTables;
+  friend class FindEngineByName;
+  friend class Ha_delete_table_error_handler;
+  friend class StorageEngineCloseConnection;
+  friend class StorageEngineDoesTableExist;
+  friend class StorageEngineGetTableDefinition;
+
+  int renameTable(Session &session, const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to);
 
   /* Class Methods for operating on plugin */
   static bool addPlugin(plugin::StorageEngine *engine);
@@ -304,8 +316,6 @@ public:
   static bool doesTableExist(Session &session,
                              const drizzled::TableIdentifier &identifier,
                              bool include_temporary_tables= true);
-
-  virtual bool doDoesTableExist(Session& session, const drizzled::TableIdentifier &identifier);
 
   static plugin::StorageEngine *findByName(const std::string &find_str);
   static plugin::StorageEngine *findByName(Session& session, const std::string &find_str);

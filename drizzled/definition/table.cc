@@ -1054,7 +1054,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     {
       my_error(ER_CORRUPT_TABLE_DEFINITION_ENUM, MYF(0), table.name().c_str());
 
-      return ER_CORRUPT_TABLE_DEFINITION; // Historical
+      return ER_CORRUPT_TABLE_DEFINITION_ENUM; // Historical
     }
 
 
@@ -1670,28 +1670,29 @@ int TableShare::open_table_def(Session& session, const TableIdentifier &identifi
 
   local_error= plugin::StorageEngine::getTableDefinition(session, identifier, table);
 
-  if (local_error != EEXIST)
-  {
-    if (local_error > 0)
+  do {
+    if (local_error != EEXIST)
     {
-      errno= local_error;
-      local_error= 1;
-    }
-    else
-    {
-      if (not table->IsInitialized())
+      if (local_error > 0)
       {
-        local_error= 4;
+        errno= local_error;
+        local_error= 1;
       }
+      else
+      {
+        if (not table->IsInitialized())
+        {
+          local_error= 4;
+        }
+      }
+      break;
     }
-    goto err_not_open;
-  }
 
-  local_error= parse_table_proto(session, *table);
+    local_error= parse_table_proto(session, *table);
 
-  setTableCategory(TABLE_CATEGORY_USER);
+    setTableCategory(TABLE_CATEGORY_USER);
+  } while (0);
 
-err_not_open:
   if (local_error && !error_given)
   {
     error= local_error;
