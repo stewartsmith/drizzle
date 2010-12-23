@@ -124,6 +124,7 @@ typedef std::set<std::string> TableNameList;
 extern const std::string UNKNOWN_STRING;
 extern const std::string DEFAULT_DEFINITION_FILE_EXT;
 
+
 /*
   StorageEngine is a singleton structure - one instance per storage engine -
   to provide access to storage engine functionality that works on the
@@ -136,6 +137,7 @@ extern const std::string DEFAULT_DEFINITION_FILE_EXT;
 class StorageEngine : public Plugin,
                       public MonitoredInTransaction
 {
+  friend class SEAPITester;
 public:
   typedef uint64_t Table_flags;
 
