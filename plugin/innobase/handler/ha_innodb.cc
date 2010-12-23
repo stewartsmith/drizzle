@@ -60,7 +60,6 @@ St, Fifth Floor, Boston, MA 02110-1301 USA
 #include "drizzled/table.h"
 #include "drizzled/field/blob.h"
 #include "drizzled/field/varstring.h"
-#include "drizzled/field/timestamp.h"
 #include "drizzled/plugin/xa_storage_engine.h"
 #include "drizzled/plugin/daemon.h"
 #include "drizzled/memory/multi_malloc.h"
@@ -1098,6 +1097,8 @@ convert_error_code_to_mysql(
     return(HA_ERR_ROW_IS_REFERENCED);
 
   case DB_CANNOT_ADD_CONSTRAINT:
+  case DB_CHILD_NO_INDEX:
+  case DB_PARENT_NO_INDEX:
     return(HA_ERR_CANNOT_ADD_FOREIGN);
 
   case DB_CANNOT_DROP_CONSTRAINT:
@@ -3853,6 +3854,7 @@ get_innobase_type_from_mysql_type(
   case DRIZZLE_TYPE_LONG:
   case DRIZZLE_TYPE_LONGLONG:
   case DRIZZLE_TYPE_DATETIME:
+  case DRIZZLE_TYPE_TIME:
   case DRIZZLE_TYPE_DATE:
   case DRIZZLE_TYPE_TIMESTAMP:
   case DRIZZLE_TYPE_ENUM:
@@ -4288,16 +4290,17 @@ include_field:
     n_requested_fields++;
 
     templ->col_no = i;
+    templ->clust_rec_field_no = dict_col_get_clust_pos(col, clust_index);
+    ut_ad(templ->clust_rec_field_no != ULINT_UNDEFINED);
 
     if (index == clust_index) {
-      templ->rec_field_no = dict_col_get_clust_pos(col, index);
+      templ->rec_field_no = templ->clust_rec_field_no;
     } else {
       templ->rec_field_no = dict_index_get_nth_col_pos(
                 index, i);
-    }
-
-    if (templ->rec_field_no == ULINT_UNDEFINED) {
-      prebuilt->need_to_access_clustered = TRUE;
+      if (templ->rec_field_no == ULINT_UNDEFINED) {
+        prebuilt->need_to_access_clustered = TRUE;
+      }
     }
 
     if (field->null_ptr) {
@@ -4347,9 +4350,7 @@ skip_field:
     for (i = 0; i < n_requested_fields; i++) {
       templ = prebuilt->mysql_template + i;
 
-      templ->rec_field_no = dict_col_get_clust_pos(
-        &index->table->cols[templ->col_no],
-        clust_index);
+      templ->rec_field_no = templ->clust_rec_field_no;
     }
   }
 }
@@ -6336,6 +6337,28 @@ InnobaseEngine::doCreateTable(
                                               query, strlen(query),
                                               norm_name,
                                               lex_identified_temp_table);
+    switch (error) {
+
+    case DB_PARENT_NO_INDEX:
+      push_warning_printf(
+                          &session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                          HA_ERR_CANNOT_ADD_FOREIGN,
+                          "Create table '%s' with foreign key constraint"
+                          " failed. There is no index in the referenced"
+                          " table where the referenced columns appear"
+                          " as the first columns.\n", norm_name);
+      break;
+
+    case DB_CHILD_NO_INDEX:
+      push_warning_printf(
+                          &session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                          HA_ERR_CANNOT_ADD_FOREIGN,
+                          "Create table '%s' with foreign key constraint"
+                          " failed. There is no index in the referencing"
+                          " table where referencing columns appear"
+                          " as the first columns.\n", norm_name);
+      break;
+    }
 
     error = convert_error_code_to_mysql(error, iflags, NULL);
 
@@ -6926,6 +6949,7 @@ ha_innobase::estimate_rows_upper_bound(void)
   dict_index_t* index;
   uint64_t  estimate;
   uint64_t  local_data_file_length;
+  ulint stat_n_leaf_pages;
 
   /* We do not know if MySQL can call this function before calling
   external_lock(). To be safe, update the session of the current table
@@ -6943,10 +6967,12 @@ ha_innobase::estimate_rows_upper_bound(void)
 
   index = dict_table_get_first_index(prebuilt->table);
 
-  ut_a(index->stat_n_leaf_pages > 0);
+  stat_n_leaf_pages = index->stat_n_leaf_pages;
+
+  ut_a(stat_n_leaf_pages > 0);
 
   local_data_file_length =
-    ((uint64_t) index->stat_n_leaf_pages) * UNIV_PAGE_SIZE;
+    ((uint64_t) stat_n_leaf_pages) * UNIV_PAGE_SIZE;
 
 
   /* Calculate a minimum length for a clustered index record and from
@@ -7159,7 +7185,10 @@ ha_innobase::info(
 
     prebuilt->trx->op_info = "updating table statistics";
 
-    dict_update_statistics(ib_table);
+    dict_update_statistics(ib_table,
+                           FALSE /* update even if stats
+                                    are initialized */);
+
 
     prebuilt->trx->op_info = "returning various info to MySQL";
 
@@ -7176,6 +7205,9 @@ ha_innobase::info(
   }
 
   if (flag & HA_STATUS_VARIABLE) {
+
+    dict_table_stats_lock(ib_table, RW_S_LATCH);
+
     n_rows = ib_table->stat_n_rows;
 
     /* Because we do not protect stat_n_rows by any mutex in a
@@ -7225,6 +7257,8 @@ ha_innobase::info(
         ib_table->stat_sum_of_other_index_sizes)
           * UNIV_PAGE_SIZE;
 
+    dict_table_stats_unlock(ib_table, RW_S_LATCH);
+
     /* Since fsp_get_available_space_in_free_extents() is
     acquiring latches inside InnoDB, we do not call it if we
     are asked by MySQL to avoid locking. Another reason to
@@ -7241,19 +7275,11 @@ ha_innobase::info(
          innodb_crash_recovery is set to a high value. */
       stats.delete_length = 0;
     } else {
-      /* lock the data dictionary to avoid races with
-      ibd_file_missing and tablespace_discarded */
-      row_mysql_lock_data_dictionary(prebuilt->trx);
+      ullint	avail_space;
 
-      /* ib_table->space must be an existent tablespace */
-      if (!ib_table->ibd_file_missing
-          && !ib_table->tablespace_discarded) {
+      avail_space = fsp_get_available_space_in_free_extents(ib_table->space);
 
-        stats.delete_length =
-          fsp_get_available_space_in_free_extents(
-            ib_table->space) * 1024;
-      } else {
-
+      if (avail_space == ULLINT_UNDEFINED) {
         Session*  session;
 
         session= getTable()->in_use;
@@ -7271,9 +7297,9 @@ ha_innobase::info(
           ib_table->name);
 
         stats.delete_length = 0;
+      } else {
+        stats.delete_length = avail_space * 1024;
       }
-
-      row_mysql_unlock_data_dictionary(prebuilt->trx);
     }
 
     stats.check_time = 0;
@@ -7300,6 +7326,8 @@ ha_innobase::info(
                       ib_table->name, num_innodb_index,
                       getTable()->getShare()->keys);
     }
+
+    dict_table_stats_lock(ib_table, RW_S_LATCH);
 
     for (i = 0; i < getTable()->getShare()->sizeKeys(); i++) {
       ulong j;
@@ -7338,8 +7366,6 @@ ha_innobase::info(
           break;
         }
 
-        dict_index_stat_mutex_enter(index);
-
         if (index->stat_n_diff_key_vals[j + 1] == 0) {
 
           rec_per_key = stats.records;
@@ -7347,8 +7373,6 @@ ha_innobase::info(
           rec_per_key = (ha_rows)(stats.records /
            index->stat_n_diff_key_vals[j + 1]);
         }
-
-        dict_index_stat_mutex_exit(index);
 
         /* Since MySQL seems to favor table scans
         too much over index searches, we pretend
@@ -7366,6 +7390,8 @@ ha_innobase::info(
           (ulong) rec_per_key;
       }
     }
+
+    dict_table_stats_unlock(ib_table, RW_S_LATCH);
   }
 
   if (srv_force_recovery >= SRV_FORCE_NO_IBUF_MERGE) {
@@ -7695,8 +7721,6 @@ ha_innobase::get_foreign_key_create_info(void)
   flen = ftell(srv_dict_tmpfile);
   if (flen < 0) {
     flen = 0;
-  } else if (flen > 64000 - 1) {
-    flen = 64000 - 1;
   }
 
   /* allocate buffer for the string, and

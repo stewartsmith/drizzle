@@ -531,6 +531,10 @@ bool ClientMySQLProtocol::sendFields(List<Item> *list)
         pos[6]= 12;
         break;
 
+      case DRIZZLE_TYPE_TIME:
+        pos[6]= 13;
+        break;
+
       case DRIZZLE_TYPE_DATE:
         pos[6]= 14;
         break;

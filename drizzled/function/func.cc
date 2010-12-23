@@ -442,7 +442,7 @@ bool Item_func::get_arg0_date(DRIZZLE_TIME *ltime, uint32_t fuzzy_date)
 
 bool Item_func::get_arg0_time(DRIZZLE_TIME *ltime)
 {
-  return (null_value=args[0]->get_time(ltime));
+  return (null_value= args[0]->get_time(ltime));
 }
 
 

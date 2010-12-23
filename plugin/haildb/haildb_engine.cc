@@ -101,7 +101,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "haildb_engine.h"
 
 #include <drizzled/field.h>
-#include "drizzled/field/timestamp.h" // needed for UPDATE NOW()
 #include "drizzled/field/blob.h"
 #include "drizzled/field/enum.h"
 #include <drizzled/session.h>
@@ -927,7 +926,7 @@ static int create_table_add_field(ib_tbl_sch_t schema,
     *err= ib_table_schema_add_col(schema, field.name().c_str(), IB_INT,
                                   column_attr, 0, 4);
     break;
-  case message::Table::Field::TIMESTAMP:
+  case message::Table::Field::EPOCH:
     *err= ib_table_schema_add_col(schema, field.name().c_str(), IB_INT,
                                   column_attr, 0, 8);
     break;

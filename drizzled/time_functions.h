@@ -95,6 +95,8 @@ bool str_to_time_with_warn(const char *str, uint32_t length, DRIZZLE_TIME *l_tim
 */
 void localtime_to_TIME(DRIZZLE_TIME *to, struct tm *from);
 
+void make_time(const DRIZZLE_TIME *l_time, String *str);
+
 void make_date(const DRIZZLE_TIME *l_time, String *str);
 
 void make_datetime(const DRIZZLE_TIME *l_time, String *str);

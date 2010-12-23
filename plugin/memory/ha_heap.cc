@@ -17,7 +17,6 @@
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
-#include <drizzled/field/timestamp.h>
 #include <drizzled/field/varstring.h>
 #include "drizzled/plugin/daemon.h"
 

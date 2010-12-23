@@ -22,7 +22,7 @@
 #include <drizzled/data_home.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
-#include <drizzled/field/timestamp.h>
+#include <drizzled/field/epoch.h>
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/iocache.h"
 #include <drizzled/db.h>
@@ -484,8 +484,9 @@ read_fixed_length(Session *session, CopyInfo &info, TableList *table_list,
         push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                             ER_WARN_TOO_FEW_RECORDS,
                             ER(ER_WARN_TOO_FEW_RECORDS), session->row_count);
+
         if (!field->maybe_null() && field->type() == DRIZZLE_TYPE_TIMESTAMP)
-            ((Field_timestamp*) field)->set_time();
+            ((field::Epoch::pointer) field)->set_time();
       }
       else
       {
@@ -604,10 +605,13 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
           if (!field->maybe_null())
           {
             if (field->type() == DRIZZLE_TYPE_TIMESTAMP)
-              ((Field_timestamp*) field)->set_time();
+            {
+              ((field::Epoch::pointer) field)->set_time();
+            }
             else if (field != table->next_number_field)
-              field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                                 ER_WARN_NULL_TO_NOTNULL, 1);
+            {
+              field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_NULL_TO_NOTNULL, 1);
+            }
           }
 	}
         else if (item->type() == Item::STRING_ITEM)
@@ -669,7 +673,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
             return(1);
           }
           if (!field->maybe_null() && field->type() == DRIZZLE_TYPE_TIMESTAMP)
-              ((Field_timestamp*) field)->set_time();
+              ((field::Epoch::pointer) field)->set_time();
           /*
             QQ: We probably should not throw warning for each field.
             But how about intention to always have the same number

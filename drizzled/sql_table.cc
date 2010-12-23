@@ -483,6 +483,7 @@ int prepare_create_field(CreateField *sql_field,
       return 1;
     break;
   case DRIZZLE_TYPE_DATE:  // Rest of string types
+  case DRIZZLE_TYPE_TIME:
   case DRIZZLE_TYPE_DATETIME:
   case DRIZZLE_TYPE_NULL:
     break;
