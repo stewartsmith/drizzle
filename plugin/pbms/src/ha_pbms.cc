@@ -1,4 +1,4 @@
-/* Copyright (c) 2008 PrimeBase Technologies GmbH, Germany
+/* Copyright (C) 2008 PrimeBase Technologies GmbH, Germany
  *
  * PrimeBase Media Stream for MySQL
  *
@@ -40,7 +40,6 @@
 #include <drizzled/data_home.h>
 #include <drizzled/error.h>
 #include <drizzled/table.h>
-#include <drizzled/field/timestamp.h>
 #include <drizzled/plugin/transactional_storage_engine.h>
 
 #define my_strdup(a,b) strdup(a)

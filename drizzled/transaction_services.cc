@@ -1,8 +1,8 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
- *  Copyright (c) 2010 Jay Pipes <jaypipes@gmail.com>
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
+ *  Copyright (C) 2010 Jay Pipes <jaypipes@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -64,7 +64,7 @@
 #include "drizzled/lock.h"
 #include "drizzled/item/int.h"
 #include "drizzled/item/empty_string.h"
-#include "drizzled/field/timestamp.h"
+#include "drizzled/field/epoch.h"
 #include "drizzled/plugin/client.h"
 #include "drizzled/plugin/monitored_in_transaction.h"
 #include "drizzled/plugin/transactional_storage_engine.h"
@@ -1414,7 +1414,7 @@ bool TransactionServices::insertRecord(Session *in_session, Table *in_table)
     } 
     else 
     {
-      string_value= current_field->val_str(string_value);
+      string_value= current_field->val_str_internal(string_value);
       record->add_is_null(false);
       record->add_insert_value(string_value->c_ptr(), string_value->length());
       string_value->free();
@@ -1687,10 +1687,10 @@ void TransactionServices::updateRecord(Session *in_session,
       bool is_read_set= current_field->isReadSet();
 
       /* We need to mark that we will "read" this field... */
-      in_table->setReadSet(current_field->field_index);
+      in_table->setReadSet(current_field->position());
 
       /* Read the string value of this field's contents */
-      string_value= current_field->val_str(string_value);
+      string_value= current_field->val_str_internal(string_value);
 
       /* 
        * Reset the read bit after reading field to its original state.  This 
@@ -1723,9 +1723,9 @@ void TransactionServices::updateRecord(Session *in_session,
        * 
        * @todo Move this crap into a real Record API.
        */
-      string_value= current_field->val_str(string_value,
-                                           old_record + 
-                                           current_field->offset(const_cast<unsigned char *>(new_record)));
+      string_value= current_field->val_str_internal(string_value,
+                                                    old_record + 
+                                                    current_field->offset(const_cast<unsigned char *>(new_record)));
       record->add_key_value(string_value->c_ptr(), string_value->length());
       string_value->free();
     }
@@ -1958,12 +1958,12 @@ void TransactionServices::deleteRecord(Session *in_session, Table *in_table, boo
          */
         const unsigned char *old_ptr= current_field->ptr;
         current_field->ptr= in_table->getUpdateRecord() + static_cast<ptrdiff_t>(old_ptr - in_table->getInsertRecord());
-        string_value= current_field->val_str(string_value);
+        string_value= current_field->val_str_internal(string_value);
         current_field->ptr= const_cast<unsigned char *>(old_ptr);
       }
       else
       {
-        string_value= current_field->val_str(string_value);
+        string_value= current_field->val_str_internal(string_value);
         /**
          * @TODO Store optional old record value in the before data member
          */

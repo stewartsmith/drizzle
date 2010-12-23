@@ -1,0 +1,7 @@
+CREATE TABLE t1 (a UUID);
+show create table t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` UUID DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+DROP TABLE t1;

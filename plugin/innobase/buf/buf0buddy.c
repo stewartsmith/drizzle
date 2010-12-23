@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 2006, 2010, Innobase Oy. All Rights Reserved.
+Copyright (C) 2006, 2010, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -281,7 +281,7 @@ buf_buddy_alloc_from(
 
 /**********************************************************************//**
 Allocate a block.  The thread calling this function must hold
-buf_pool->mutex and must not hold buf_pool_zip_mutex or any block->mutex.
+buf_pool->mutex and must not hold buf_pool->zip_mutex or any block->mutex.
 The buf_pool->mutex may only be released and reacquired if lru != NULL.
 @return	allocated block, possibly NULL if lru==NULL */
 UNIV_INTERN

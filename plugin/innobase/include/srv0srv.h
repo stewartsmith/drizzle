@@ -1,8 +1,8 @@
 /*****************************************************************************
 
-Copyright (c) 1995, 2010, Innobase Oy. All Rights Reserved.
-Copyright (c) 2008, 2009, Google Inc.
-Copyright (c) 2009, Percona Inc.
+Copyright (C) 1995, 2010, Innobase Oy. All Rights Reserved.
+Copyright (C) 2008, 2009, Google Inc.
+Copyright (C) 2009, Percona Inc.
 
 Portions of this file contain modifications contributed and copyrighted by
 Google, Inc. Those modifications are gratefully acknowledged and are described
@@ -56,6 +56,15 @@ extern const char	srv_mysql50_table_name_prefix[9];
 /* When this event is set the lock timeout and InnoDB monitor
 thread starts running */
 extern os_event_t	srv_lock_timeout_thread_event;
+
+/* The monitor thread waits on this event. */
+extern os_event_t	srv_monitor_event;
+
+/* The lock timeout thread waits on this event. */
+extern os_event_t	srv_timeout_event;
+
+/* The error monitor thread waits on this event. */
+extern os_event_t	srv_error_event;
 
 /* If the last data file is auto-extended, we add this many pages to it
 at a time */

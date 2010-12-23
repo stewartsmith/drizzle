@@ -1,4 +1,4 @@
-/* Copyright (c) 2005 PrimeBase Technologies GmbH
+/* Copyright (C) 2005 PrimeBase Technologies GmbH
  *
  * Derived from ha_example.h
  * Copyright (C) 2003 MySQL AB
@@ -47,7 +47,6 @@
 #include <drizzled/data_home.h>
 #include <drizzled/error.h>
 #include <drizzled/table.h>
-#include <drizzled/field/timestamp.h>
 #include <drizzled/session.h>
 
 #include <string>
@@ -2505,19 +2504,19 @@ xtPublic void ha_set_auto_increment(XTOpenTablePtr ot, Field *nr)
 	nr_int_val = nr->val_int();
 	tab = ot->ot_table;
 
-	if (nr->cmp((const unsigned char *)&tab->tab_auto_inc) > 0) {
+	if (nr->cmp_internal((const unsigned char *)&tab->tab_auto_inc) > 0) {
 		xt_spinlock_lock(&tab->tab_ainc_lock);
 
-		if (nr->cmp((const unsigned char *)&tab->tab_auto_inc) > 0) {
-			/* {PRE-INC}
-			 * We increment later, so just set the value!
-			MX_ULONGLONG_T nr_int_val_plus_one = nr_int_val + 1;
-			if (nr->cmp((const unsigned char *)&nr_int_val_plus_one) < 0)
-				tab->tab_auto_inc = nr_int_val_plus_one;
-			else
-			 */
-			tab->tab_auto_inc = nr_int_val;
-		}
+                if (nr->cmp_internal((const unsigned char *)&tab->tab_auto_inc) > 0) {
+                  /* {PRE-INC}
+                   * We increment later, so just set the value!
+                   MX_ULONGLONG_T nr_int_val_plus_one = nr_int_val + 1;
+                   if (nr->cmp((const unsigned char *)&nr_int_val_plus_one) < 0)
+                   tab->tab_auto_inc = nr_int_val_plus_one;
+                   else
+                 */
+                  tab->tab_auto_inc = nr_int_val;
+                }
 		xt_spinlock_unlock(&tab->tab_ainc_lock);
 	}
 

@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008-2009 Sun Microsystems
+ *  Copyright (C) 2008-2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -94,6 +94,8 @@ bool str_to_time_with_warn(const char *str, uint32_t length, DRIZZLE_TIME *l_tim
   Convert a system time structure to TIME
 */
 void localtime_to_TIME(DRIZZLE_TIME *to, struct tm *from);
+
+void make_time(const DRIZZLE_TIME *l_time, String *str);
 
 void make_date(const DRIZZLE_TIME *l_time, String *str);
 

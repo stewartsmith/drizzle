@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -134,20 +134,14 @@ bool statement::AlterTable::execute()
   }
 
   if (not validateCreateTableOption())
-  {
     return true;
-  }
 
   /* ALTER TABLE ends previous transaction */
   if (not session->endActiveTransaction())
-  {
     return true;
-  }
 
   if (not (need_start_waiting= not session->wait_if_global_read_lock(0, 1)))
-  {
     return true;
-  }
 
   bool res;
   if (original_table_message->type() == message::Table::STANDARD )
@@ -343,11 +337,13 @@ static bool mysql_prepare_alter_table(Session *session,
       new_create_list.push_back(def);
       alter_it.rewind(); /* Change default if ALTER */
       AlterColumn *alter;
+
       while ((alter= alter_it++))
       {
         if (! my_strcasecmp(system_charset_info,field->field_name, alter->name))
           break;
       }
+
       if (alter)
       {
         if (def->sql_type == DRIZZLE_TYPE_BLOB)
@@ -355,6 +351,7 @@ static bool mysql_prepare_alter_table(Session *session,
           my_error(ER_BLOB_CANT_HAVE_DEFAULT, MYF(0), def->change);
           return true;
         }
+
         if ((def->def= alter->def))
         {
           /* Use new default */
@@ -626,6 +623,7 @@ static bool mysql_prepare_alter_table(Session *session,
              alter_info->drop_list.head()->name);
     return true;
   }
+
   if (alter_info->alter_list.elements)
   {
     my_error(ER_CANT_DROP_FIELD_OR_KEY,
@@ -898,6 +896,12 @@ static bool internal_alter_table(Session *session,
   char old_name[32];
   ha_rows copied= 0;
   ha_rows deleted= 0;
+
+  if (not original_table_identifier.isValid())
+    return true;
+
+  if (not new_table_identifier.isValid())
+    return true;
 
   session->set_proc_info("init");
 

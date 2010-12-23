@@ -1,4 +1,4 @@
-/* Copyright (C) 2009 Sun Microsystems
+/* Copyright (C) 2009 Sun Microsystems, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -99,7 +99,9 @@ public:
   virtual bool authenticate(void)
   {
     printDebug("authenticate");
-    session->getSecurityContext().setUser(username);
+    identifier::User::shared_ptr user= identifier::User::make_shared();
+    user->setUser(username);
+    session->setUser(user);
     return session->checkUser(password, db);
   }
 
@@ -199,7 +201,7 @@ public:
 
     char buff[MAX_FIELD_WIDTH];
     String str(buff, sizeof(buff), &my_charset_bin);
-    from->val_str(&str);
+    from->val_str_internal(&str);
     return store(str.ptr(), str.length());
   }
 

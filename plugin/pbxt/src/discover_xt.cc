@@ -1,4 +1,4 @@
-/* Copyright (c) 2008 PrimeBase Technologies GmbH, Germany
+/* Copyright (C) 2008 PrimeBase Technologies GmbH, Germany
  * Derived from code Copyright (C) 2000-2004 MySQL AB
  *
  * PrimeBase XT

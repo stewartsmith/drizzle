@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1996, 2009, Innobase Oy. All Rights Reserved.
+Copyright (C) 1996, 2009, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -84,9 +84,10 @@ ulint
 row_ins_index_entry(
 /*================*/
 	dict_index_t*	index,	/*!< in: index */
-	dtuple_t*	entry,	/*!< in: index entry to insert */
+	dtuple_t*	entry,	/*!< in/out: index entry to insert */
 	ulint		n_ext,	/*!< in: number of externally stored columns */
-	ibool		foreign,/*!< in: TRUE=check foreign key constraints */
+	ibool		foreign,/*!< in: TRUE=check foreign key constraints
+				(foreign=FALSE only during CREATE INDEX) */
 	que_thr_t*	thr);	/*!< in: query thread */
 /***********************************************************//**
 Inserts a row to a table. This is a high-level function used in

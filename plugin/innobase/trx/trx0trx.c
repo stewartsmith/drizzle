@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1996, 2010, Innobase Oy. All Rights Reserved.
+Copyright (C) 1996, 2010, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -124,7 +124,6 @@ trx_create(
 	trx->table_id = 0;
 
 	trx->mysql_thd = NULL;
-        trx->active_trans = 0;
 	trx->duplicates = 0;
 
 	trx->mysql_n_tables_locked = 0;
@@ -746,8 +745,7 @@ trx_commit_off_kernel(
 		mutex_enter(&(rseg->mutex));
 
 		if (trx->insert_undo != NULL) {
-			trx_undo_set_state_at_finish(
-				rseg, trx, trx->insert_undo, &mtr);
+			trx_undo_set_state_at_finish(trx->insert_undo, &mtr);
 		}
 
 		undo = trx->update_undo;
@@ -762,7 +760,7 @@ trx_commit_off_kernel(
 			transaction commit for this transaction. */
 
 			update_hdr_page = trx_undo_set_state_at_finish(
-				rseg, trx, undo, &mtr);
+				undo, &mtr);
 
 			/* We have to do the cleanup for the update log while
 			holding the rseg mutex because update log headers

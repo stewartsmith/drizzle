@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -522,7 +522,6 @@ public:
   uint32_t uniques;                         /* Number of UNIQUE index */
   uint32_t null_fields;			/* number of null fields */
   uint32_t blob_fields;			/* number of blob fields */
-  uint32_t timestamp_field_offset;		/* Field number for timestamp field */
 private:
   bool has_variable_width;                  /* number of varchar fields */
 public:
@@ -650,7 +649,8 @@ public:
     return output;  // for multiple << operators.
   }
 
-  Field *make_field(unsigned char *ptr,
+  Field *make_field(message::Table::Field &pfield,
+                    unsigned char *ptr,
                     uint32_t field_length,
                     bool is_nullable,
                     unsigned char *null_pos,
@@ -661,6 +661,19 @@ public:
                     Field::utype unireg_check,
                     TYPELIB *interval,
                     const char *field_name);
+
+  Field *make_field(unsigned char *ptr,
+                    uint32_t field_length,
+                    bool is_nullable,
+                    unsigned char *null_pos,
+                    unsigned char null_bit,
+                    uint8_t decimals,
+                    enum_field_types field_type,
+                    const CHARSET_INFO * field_charset,
+                    Field::utype unireg_check,
+                    TYPELIB *interval,
+                    const char *field_name, 
+                    bool is_unsigned);
 
   int open_table_def(Session& session, const TableIdentifier &identifier);
 

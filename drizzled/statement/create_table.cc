@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -86,7 +86,7 @@ bool statement::CreateTable::execute()
                                        create_table->getTableName(),
                                        create_table_message.type());
 
-  if (create_table_precheck(new_table_identifier))
+  if (not check(new_table_identifier))
   {
     /* put tables back for PS rexecuting */
     session->lex->link_first_table_back(create_table, link_to_local);
@@ -228,6 +228,32 @@ bool statement::CreateTable::execute()
   session->startWaitingGlobalReadLock();
 
   return res;
+}
+
+bool statement::CreateTable::check(const TableIdentifier &identifier)
+{
+  // Check table name for validity
+  if (not identifier.isValid())
+    return false;
+
+  // See if any storage engine objects to the name of the file
+  if (not plugin::StorageEngine::canCreateTable(identifier))
+  {
+    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", identifier.getSchemaName().c_str());
+
+    return false;
+  }
+
+  // Make sure the schema exists, we will do this again during the actual
+  // create for the table.
+  if (not plugin::StorageEngine::doesSchemaExist(identifier))
+  {
+    my_error(ER_BAD_DB_ERROR, MYF(0), identifier.getSchemaName().c_str());
+
+    return false;
+  }
+
+  return true;
 }
 
 bool statement::CreateTable::validateCreateTableOption()

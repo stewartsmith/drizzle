@@ -17,7 +17,6 @@
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
-#include <drizzled/field/timestamp.h>
 #include <drizzled/field/varstring.h>
 #include "drizzled/plugin/daemon.h"
 
@@ -770,10 +769,10 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
         auto_key= key+ 1;
 	auto_key_type= field->key_type();
       }
-      if ((uint)field->field_index + 1 > max_key_fieldnr)
+      if ((uint)field->position() + 1 > max_key_fieldnr)
       {
         /* Do not use seg->fieldnr as it's not reliable in case of temp tables */
-        max_key_fieldnr= field->field_index + 1;
+        max_key_fieldnr= field->position() + 1;
       }
     }
   }

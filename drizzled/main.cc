@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -200,14 +200,17 @@ static void init_signals(void)
 }
 
 static void GoogleProtoErrorThrower(google::protobuf::LogLevel level, const char* filename,
-                       int line, const string& message) throw(const char *)
+                                    int line, const string& message) throw(const char *)
 {
+  (void)level;
   (void)filename;
   (void)line;
   (void)message;
+#if 0
   std::cerr << "\n";
   drizzled::util::custom_backtrace();
   std::cerr << "\n";
+#endif
   switch(level)
   {
   case google::protobuf::LOGLEVEL_INFO:
@@ -216,7 +219,9 @@ static void GoogleProtoErrorThrower(google::protobuf::LogLevel level, const char
   case google::protobuf::LOGLEVEL_ERROR:
   case google::protobuf::LOGLEVEL_FATAL:
   default:
+#if 0
     std::cerr << "GoogleProtoErrorThrower(" << filename << ", " << line << ", " << message << ")";
+#endif
     throw("error in google protocol buffer parsing");
   }
 }

@@ -612,6 +612,59 @@ statement {
 Testing MAX+1 BIGINT
 NOTE: Bug#316221 - 2**63 incorrectly inserted into bigint
 INSERT INTO t1 (b) VALUES(9223372036854775808);
+ERROR 22003: Out of range value for column 'b' at row 1
+Check transaction_log_entries
+SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+COUNT(*)
+4
+
+Check transaction_log_transactions
+SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+COUNT(*)
+4
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  TRANSACTION_ID
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: BIGINT
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "2"
+      insert_value: "9223372036854775807"
+      is_null: false
+      is_null: false
+    }
+  }
+}
+
+
+
+Testing NULL BIGINT
+INSERT INTO t1 (b) VALUES(NULL);
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
@@ -653,58 +706,6 @@ statement {
     end_segment: true
     record {
       insert_value: "3"
-      insert_value: "-9223372036854775808"
-      is_null: false
-      is_null: false
-    }
-  }
-}
-
-
-
-Testing NULL BIGINT
-INSERT INTO t1 (b) VALUES(NULL);
-Check transaction_log_entries
-SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
-COUNT(*)
-6
-
-Check transaction_log_transactions
-SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
-COUNT(*)
-6
-Check transaction log contents
-SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
-PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
-transaction_context {
-  server_id: 1
-  TRANSACTION_ID
-  START_TIMESTAMP
-  END_TIMESTAMP
-}
-statement {
-  type: INSERT
-  START_TIMESTAMP
-  END_TIMESTAMP
-  insert_header {
-    table_metadata {
-      schema_name: "test"
-      table_name: "t1"
-    }
-    field_metadata {
-      type: INTEGER
-      name: "a"
-    }
-    field_metadata {
-      type: BIGINT
-      name: "b"
-    }
-  }
-  insert_data {
-    segment_id: 1
-    end_segment: true
-    record {
-      insert_value: "4"
       insert_value: ""
       is_null: false
       is_null: true
@@ -720,12 +721,12 @@ ERROR HY000: Incorrect integer value: 'abbazabba' for column 'b' at row 1
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-6
+5
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-6
+5
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -757,7 +758,7 @@ statement {
     segment_id: 1
     end_segment: true
     record {
-      insert_value: "4"
+      insert_value: "3"
       insert_value: ""
       is_null: false
       is_null: true
@@ -773,12 +774,12 @@ ERROR HY000: Incorrect integer value: 'a' for column 'b' at row 1
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 COUNT(*)
-6
+5
 
 Check transaction_log_transactions
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 COUNT(*)
-6
+5
 Check transaction log contents
 SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
 PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
@@ -810,7 +811,7 @@ statement {
     segment_id: 1
     end_segment: true
     record {
-      insert_value: "4"
+      insert_value: "3"
       insert_value: ""
       is_null: false
       is_null: true
@@ -3210,7 +3211,7 @@ statement {
       name: "a"
     }
     field_metadata {
-      type: TIMESTAMP
+      type: EPOCH
       name: "b"
     }
   }
@@ -3262,7 +3263,7 @@ statement {
       name: "a"
     }
     field_metadata {
-      type: TIMESTAMP
+      type: EPOCH
       name: "b"
     }
   }
@@ -3315,7 +3316,7 @@ statement {
       name: "a"
     }
     field_metadata {
-      type: TIMESTAMP
+      type: EPOCH
       name: "b"
     }
   }
@@ -3368,7 +3369,7 @@ statement {
       name: "a"
     }
     field_metadata {
-      type: TIMESTAMP
+      type: EPOCH
       name: "b"
     }
   }
@@ -3420,7 +3421,7 @@ statement {
       name: "a"
     }
     field_metadata {
-      type: TIMESTAMP
+      type: EPOCH
       name: "b"
     }
   }
@@ -3472,7 +3473,7 @@ statement {
       name: "a"
     }
     field_metadata {
-      type: TIMESTAMP
+      type: EPOCH
       name: "b"
     }
   }
@@ -3524,7 +3525,7 @@ statement {
       name: "a"
     }
     field_metadata {
-      type: TIMESTAMP
+      type: EPOCH
       name: "b"
     }
   }
@@ -3577,7 +3578,7 @@ statement {
       name: "a"
     }
     field_metadata {
-      type: TIMESTAMP
+      type: EPOCH
       name: "b"
     }
   }
@@ -3630,7 +3631,7 @@ statement {
       name: "a"
     }
     field_metadata {
-      type: TIMESTAMP
+      type: EPOCH
       name: "b"
     }
   }
@@ -3683,7 +3684,7 @@ statement {
       name: "a"
     }
     field_metadata {
-      type: TIMESTAMP
+      type: EPOCH
       name: "b"
     }
   }

@@ -1,4 +1,4 @@
-/* Copyright (c) 2008 PrimeBase Technologies GmbH, Germany
+/* Copyright (C) 2008 PrimeBase Technologies GmbH, Germany
  *
  * PrimeBase Media Stream for MySQL
  *
@@ -354,7 +354,7 @@ static int pbms_create_proto_table(const char *engine_name, const char *name, DT
 				break;
 				
 			case DRIZZLE_TYPE_TIMESTAMP:
-				field->set_type(message::Table::Field::TIMESTAMP);
+				field->set_type(message::Table::Field::EPOCH);
 				break;
 				
 			case DRIZZLE_TYPE_BLOB:

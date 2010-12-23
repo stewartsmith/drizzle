@@ -73,7 +73,9 @@ static int fill_table_proto(message::Table &table_proto,
        filled out Field messages */
 
     if (use_existing_fields)
+    {
       attribute= table_proto.mutable_field(field_number++);
+    }
     else
     {
       /* Other code paths still have to fill out the proto */
@@ -81,10 +83,18 @@ static int fill_table_proto(message::Table &table_proto,
 
       if (field_arg->flags & NOT_NULL_FLAG)
       {
-        message::Table::Field::FieldConstraints *constraints;
+        attribute->mutable_constraints()->set_is_nullable(false);
+      }
+      else
+      {
+        attribute->mutable_constraints()->set_is_nullable(true);
+      }
 
-        constraints= attribute->mutable_constraints();
-        constraints->set_is_nullable(false);
+      if (field_arg->flags & UNSIGNED_FLAG and 
+          (field_arg->sql_type == DRIZZLE_TYPE_LONGLONG or field_arg->sql_type == DRIZZLE_TYPE_LONG))
+      {
+        field_arg->sql_type= DRIZZLE_TYPE_LONGLONG;
+        attribute->mutable_constraints()->set_is_unsigned(true);
       }
 
       attribute->set_name(field_arg->field_name);
@@ -100,6 +110,24 @@ static int fill_table_proto(message::Table &table_proto,
     {
       my_error(ER_CANT_CREATE_TABLE, MYF(ME_BELL+ME_WAITTANG), table_proto.name().c_str(), -1);
       return -1;
+    }
+
+    if (field_arg->flags & UNSIGNED_FLAG and 
+       (field_arg->sql_type == DRIZZLE_TYPE_LONGLONG or field_arg->sql_type == DRIZZLE_TYPE_LONG))
+    {
+      message::Table::Field::FieldConstraints *constraints= attribute->mutable_constraints();
+
+      field_arg->sql_type= DRIZZLE_TYPE_LONGLONG;
+      constraints->set_is_unsigned(true);
+
+      if (field_arg->flags & NOT_NULL_FLAG)
+      {
+        constraints->set_is_nullable(false);
+      }
+      else
+      {
+        constraints->set_is_nullable(true);
+      }
     }
 
     attribute->set_type(message::internalFieldTypeToFieldProtoType(field_arg->sql_type));
@@ -269,6 +297,7 @@ static int fill_table_proto(message::Table &table_proto,
 	}
 
         if (field_arg->sql_type == DRIZZLE_TYPE_DATE
+            || field_arg->sql_type == DRIZZLE_TYPE_TIME
             || field_arg->sql_type == DRIZZLE_TYPE_DATETIME
             || field_arg->sql_type == DRIZZLE_TYPE_TIMESTAMP)
         {

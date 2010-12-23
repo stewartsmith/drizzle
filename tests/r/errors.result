@@ -23,8 +23,6 @@ ERROR 42S22: Unknown column 't1.b' in 'order clause'
 select count(*),b from t1;
 ERROR 42S22: Unknown column 'b' in 'field list'
 drop table t1;
-create table t1 (a int(256));
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '(256))' at line 1
 create table t1 (a varchar(66000));
 ERROR 42000: Column length too big for column 'a' (max = 16383); use BLOB or TEXT instead
 CREATE TABLE t1 (a INT);

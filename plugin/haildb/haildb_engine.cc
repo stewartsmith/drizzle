@@ -21,8 +21,8 @@
 
 /*****************************************************************************
 
-Copyright (c) 2000, 2009, MySQL AB & Innobase Oy. All Rights Reserved.
-Copyright (c) 2008, 2009 Google Inc.
+Copyright (C) 2000, 2009, MySQL AB & Innobase Oy. All Rights Reserved.
+Copyright (C) 2008, 2009 Google Inc.
 
 Portions of this file contain modifications contributed and copyrighted by
 Google, Inc. Those modifications are gratefully acknowledged and are described
@@ -45,8 +45,8 @@ St, Fifth Floor, Boston, MA 02110-1301 USA
 *****************************************************************************/
 /***********************************************************************
 
-Copyright (c) 1995, 2009, Innobase Oy. All Rights Reserved.
-Copyright (c) 2009, Percona Inc.
+Copyright (C) 1995, 2009, Innobase Oy. All Rights Reserved.
+Copyright (C) 2009, Percona Inc.
 
 Portions of this file contain modifications contributed and copyrighted
 by Percona Inc.. Those modifications are
@@ -101,7 +101,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "haildb_engine.h"
 
 #include <drizzled/field.h>
-#include "drizzled/field/timestamp.h" // needed for UPDATE NOW()
 #include "drizzled/field/blob.h"
 #include "drizzled/field/enum.h"
 #include <drizzled/session.h>
@@ -354,7 +353,7 @@ int HailDBEngine::doStartTransaction(Session *session,
   isolation_level= tx_isolation_to_ib_trx_level((enum_tx_isolation)session_tx_isolation(session));
   *transaction= ib_trx_begin(isolation_level);
 
-  return 0;
+  return *transaction == NULL;
 }
 
 void HailDBEngine::doStartStatement(Session *session)
@@ -490,6 +489,7 @@ uint64_t HailDBCursor::getHiddenPrimaryKeyInitialAutoIncrementValue()
     nr++;
   }
   ib_tuple_delete(tuple);
+  tuple= NULL;
   err= ib_cursor_reset(cursor);
   assert(err == DB_SUCCESS);
   return nr;
@@ -820,9 +820,15 @@ static unsigned int get_first_unique_index(drizzled::Table &table)
 int HailDBCursor::open(const char *name, int, uint32_t)
 {
   const char* haildb_table_name= table_path_to_haildb_name(name);
-  ib_err_t err= ib_cursor_open_table(haildb_table_name, NULL, &cursor);
+  ib_err_t err= ib_table_get_id(haildb_table_name, &table_id);
   bool has_hidden_primary_key= false;
   ib_id_t idx_id;
+
+  if (err != DB_SUCCESS)
+    return ib_err_t_to_drizzle_error(err);
+
+  err= ib_cursor_open_table_using_id(table_id, NULL, &cursor);
+  cursor_is_sec_index= false;
 
   if (err != DB_SUCCESS)
     return ib_err_t_to_drizzle_error(err);
@@ -920,7 +926,7 @@ static int create_table_add_field(ib_tbl_sch_t schema,
     *err= ib_table_schema_add_col(schema, field.name().c_str(), IB_INT,
                                   column_attr, 0, 4);
     break;
-  case message::Table::Field::TIMESTAMP:
+  case message::Table::Field::EPOCH:
     *err= ib_table_schema_add_col(schema, field.name().c_str(), IB_INT,
                                   column_attr, 0, 8);
     break;
@@ -1778,20 +1784,28 @@ const char *HailDBCursor::index_type(uint32_t)
   return("BTREE");
 }
 
-static ib_err_t write_row_to_haildb_tuple(Field **fields, ib_tpl_t tuple)
+static ib_err_t write_row_to_haildb_tuple(const unsigned char* buf,
+                                          Field **fields, ib_tpl_t tuple)
 {
   int colnr= 0;
   ib_err_t err= DB_ERROR;
+  ptrdiff_t row_offset= buf - (*fields)->getTable()->getInsertRecord();
 
   for (Field **field= fields; *field; field++, colnr++)
   {
+    (**field).move_field_offset(row_offset);
+
     if (! (**field).isWriteSet() && (**field).is_null())
+    {
+      (**field).move_field_offset(-row_offset);
       continue;
+    }
 
     if ((**field).is_null())
     {
       err= ib_col_set_value(tuple, colnr, NULL, IB_SQL_NULL);
       assert(err == DB_SUCCESS);
+      (**field).move_field_offset(-row_offset);
       continue;
     }
 
@@ -1803,7 +1817,7 @@ static ib_err_t write_row_to_haildb_tuple(Field **fields, ib_tpl_t tuple)
       */
       String str;
       (**field).setReadSet();
-      (**field).val_str(&str);
+      (**field).val_str_internal(&str);
       err= ib_col_set_value(tuple, colnr, str.ptr(), str.length());
     }
     else if ((**field).type() == DRIZZLE_TYPE_ENUM)
@@ -1829,6 +1843,8 @@ static ib_err_t write_row_to_haildb_tuple(Field **fields, ib_tpl_t tuple)
     }
 
     assert (err == DB_SUCCESS);
+
+    (**field).move_field_offset(-row_offset);
   }
 
   return err;
@@ -1877,7 +1893,22 @@ int HailDBCursor::doInsertRecord(unsigned char *record)
 
   tuple= ib_clust_read_tuple_create(cursor);
 
-  ib_cursor_attach_trx(cursor, transaction);
+  if (cursor_is_sec_index)
+  {
+    err= ib_cursor_close(cursor);
+    assert(err == DB_SUCCESS);
+
+    err= ib_cursor_open_table_using_id(table_id, transaction, &cursor);
+
+    if (err != DB_SUCCESS)
+      return ib_err_t_to_drizzle_error(err);
+
+    cursor_is_sec_index= false;
+  }
+  else
+  {
+    ib_cursor_attach_trx(cursor, transaction);
+  }
 
   err= ib_cursor_first(cursor);
   if (current_session->lex->sql_command == SQLCOM_CREATE_TABLE
@@ -1936,7 +1967,7 @@ int HailDBCursor::doInsertRecord(unsigned char *record)
 
   }
 
-  write_row_to_haildb_tuple(getTable()->getFields(), tuple);
+  write_row_to_haildb_tuple(record, getTable()->getFields(), tuple);
 
   if (share->has_hidden_primary_key)
   {
@@ -1969,7 +2000,7 @@ int HailDBCursor::doInsertRecord(unsigned char *record)
       err= ib_cursor_first(cursor);
       assert(err == DB_SUCCESS || err == DB_END_OF_INDEX);
 
-      write_row_to_haildb_tuple(getTable()->getFields(), tuple);
+      write_row_to_haildb_tuple(record, getTable()->getFields(), tuple);
 
       err= ib_cursor_insert_row(cursor, tuple);
       assert(err==DB_SUCCESS); // probably be nice and process errors
@@ -1982,55 +2013,105 @@ int HailDBCursor::doInsertRecord(unsigned char *record)
 
   tuple= ib_tuple_clear(tuple);
   ib_tuple_delete(tuple);
+  tuple= NULL;
   err= ib_cursor_reset(cursor);
 
   return ret;
 }
 
-int HailDBCursor::doUpdateRecord(const unsigned char *,
-                                         unsigned char *)
+int HailDBCursor::doUpdateRecord(const unsigned char *old_data,
+                                 unsigned char *new_data)
 {
   ib_tpl_t update_tuple;
   ib_err_t err;
+  bool created_tuple= false;
 
   update_tuple= ib_clust_read_tuple_create(cursor);
+
+  if (tuple == NULL)
+  {
+    ib_trx_t transaction= *get_trx(getTable()->in_use);
+
+    if (cursor_is_sec_index)
+    {
+      err= ib_cursor_close(cursor);
+      assert(err == DB_SUCCESS);
+
+      err= ib_cursor_open_table_using_id(table_id, transaction, &cursor);
+
+      if (err != DB_SUCCESS)
+        return ib_err_t_to_drizzle_error(err);
+      cursor_is_sec_index= false;
+    }
+    else
+    {
+      ib_cursor_attach_trx(cursor, transaction);
+    }
+
+    store_key_value_from_haildb(getTable()->key_info + getTable()->getShare()->getPrimaryKey(),
+                                  ref, ref_length, old_data);
+
+    ib_tpl_t search_tuple= ib_clust_search_tuple_create(cursor);
+
+    fill_ib_search_tpl_from_drizzle_key(search_tuple,
+                                        getTable()->key_info + 0,
+                                        ref, ref_length);
+
+    err= ib_cursor_set_lock_mode(cursor, IB_LOCK_X);
+    assert(err == DB_SUCCESS);
+
+    int res;
+    err= ib_cursor_moveto(cursor, search_tuple, IB_CUR_GE, &res);
+    assert(err == DB_SUCCESS);
+
+    tuple= ib_clust_read_tuple_create(cursor);
+
+    err= ib_cursor_read_row(cursor, tuple);
+    assert(err == DB_SUCCESS);// FIXME
+
+    created_tuple= true;
+  }
 
   err= ib_tuple_copy(update_tuple, tuple);
   assert(err == DB_SUCCESS);
 
-  write_row_to_haildb_tuple(getTable()->getFields(), update_tuple);
+  write_row_to_haildb_tuple(new_data, getTable()->getFields(), update_tuple);
 
   err= ib_cursor_update_row(cursor, tuple, update_tuple);
 
   ib_tuple_delete(update_tuple);
 
+  if (created_tuple)
+  {
+    ib_err_t ib_err= ib_cursor_reset(cursor); //fixme check error
+    assert(ib_err == DB_SUCCESS);
+    tuple= ib_tuple_clear(tuple);
+    ib_tuple_delete(tuple);
+    tuple= NULL;
+  }
+
   advance_cursor= true;
 
-  if (err == DB_SUCCESS)
-    return 0;
-  else if (err == DB_DUPLICATE_KEY)
-    return HA_ERR_FOUND_DUPP_KEY;
-  else
-    return -1;
+  return ib_err_t_to_drizzle_error(err);
 }
 
 int HailDBCursor::doDeleteRecord(const unsigned char *)
 {
   ib_err_t err;
 
+  assert(ib_cursor_is_positioned(cursor) == IB_TRUE);
   err= ib_cursor_delete_row(cursor);
-  if (err != DB_SUCCESS)
-    return -1; // FIXME
 
   advance_cursor= true;
-  return 0;
+
+  return ib_err_t_to_drizzle_error(err);
 }
 
 int HailDBCursor::delete_all_rows(void)
 {
   /* I *think* ib_truncate is non-transactional....
      so only support TRUNCATE and not DELETE FROM t;
-     (this is what ha_haildb does)
+     (this is what ha_innodb does)
   */
   if (session_sql_command(getTable()->in_use) != SQLCOM_TRUNCATE)
     return HA_ERR_WRONG_COMMAND;
@@ -2040,7 +2121,21 @@ int HailDBCursor::delete_all_rows(void)
 
   ib_trx_t transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
 
-  ib_cursor_attach_trx(cursor, transaction);
+  if (cursor_is_sec_index)
+  {
+    err= ib_cursor_close(cursor);
+    assert(err == DB_SUCCESS);
+
+    err= ib_cursor_open_table_using_id(table_id, transaction, &cursor);
+
+    if (err != DB_SUCCESS)
+      return ib_err_t_to_drizzle_error(err);
+    cursor_is_sec_index= false;
+  }
+  else
+  {
+    ib_cursor_attach_trx(cursor, transaction);
+  }
 
   err= ib_schema_lock_exclusive(transaction);
   if (err != DB_SUCCESS)
@@ -2076,12 +2171,12 @@ err:
   ib_schema_unlock(transaction);
   ib_err_t rollback_err= ib_trx_rollback(transaction);
   assert(rollback_err == DB_SUCCESS);
-  return err;
+  return ib_err_t_to_drizzle_error(err);
 }
 
 int HailDBCursor::doStartTableScan(bool)
 {
-  ib_err_t err;
+  ib_err_t err= DB_SUCCESS;
   ib_trx_t transaction;
 
   if (in_table_scan)
@@ -2092,7 +2187,21 @@ int HailDBCursor::doStartTableScan(bool)
 
   assert(transaction != NULL);
 
-  ib_cursor_attach_trx(cursor, transaction);
+  if (cursor_is_sec_index)
+  {
+    err= ib_cursor_close(cursor);
+    assert(err == DB_SUCCESS);
+
+    err= ib_cursor_open_table_using_id(table_id, transaction, &cursor);
+    cursor_is_sec_index= false;
+  }
+  else
+  {
+    ib_cursor_attach_trx(cursor, transaction);
+  }
+
+  if (err != DB_SUCCESS)
+    return ib_err_t_to_drizzle_error(err);
 
   err= ib_cursor_set_lock_mode(cursor, ib_lock_mode);
   assert(err == DB_SUCCESS); // FIXME
@@ -2120,8 +2229,10 @@ int read_row_from_haildb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, T
 
   err= ib_cursor_read_row(cursor, tuple);
 
-  if (err != DB_SUCCESS) // FIXME
+  if (err == DB_RECORD_NOT_FOUND)
     return HA_ERR_END_OF_FILE;
+  if (err != DB_SUCCESS)
+    return ib_err_t_to_drizzle_error(err);
 
   int colnr= 0;
 
@@ -2132,7 +2243,7 @@ int read_row_from_haildb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, T
   for (Field **field= table->getFields() ; *field ; field++, colnr++)
   {
     if (! (**field).isReadSet())
-      continue;
+      (**field).setReadSet(); /* Fucking broken API screws us royally. */
 
     (**field).move_field_offset(row_offset);
 
@@ -2142,6 +2253,7 @@ int read_row_from_haildb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, T
     if (length == IB_SQL_NULL)
     {
       (**field).set_null();
+      (**field).move_field_offset(-row_offset);
       continue;
     }
     else
@@ -2185,6 +2297,8 @@ int read_row_from_haildb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, T
 
     (**field).move_field_offset(-row_offset);
 
+    if (err != DB_SUCCESS)
+      return ib_err_t_to_drizzle_error(err);
   }
 
   if (has_hidden_primary_key)
@@ -2192,7 +2306,7 @@ int read_row_from_haildb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, T
     err= ib_tuple_read_u64(tuple, colnr, hidden_pkey);
   }
 
-  return 0;
+  return ib_err_t_to_drizzle_error(err);
 }
 
 int HailDBCursor::rnd_next(unsigned char *buf)
@@ -2204,7 +2318,11 @@ int HailDBCursor::rnd_next(unsigned char *buf)
     return previous_error;
 
   if (advance_cursor)
+  {
     err= ib_cursor_next(cursor);
+    if (err != DB_SUCCESS)
+      return ib_err_t_to_drizzle_error(err);
+  }
 
   tuple= ib_tuple_clear(tuple);
   ret= read_row_from_haildb(buf, cursor, tuple, getTable(),
@@ -2220,11 +2338,12 @@ int HailDBCursor::doEndTableScan()
   ib_err_t err;
 
   ib_tuple_delete(tuple);
+  tuple= NULL;
   err= ib_cursor_reset(cursor);
   assert(err == DB_SUCCESS);
   in_table_scan= false;
   previous_error= 0;
-  return 0;
+  return ib_err_t_to_drizzle_error(err);
 }
 
 int HailDBCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
@@ -2238,6 +2357,8 @@ int HailDBCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
   {
     err= ib_col_set_value(search_tuple, 0,
                           ((uint64_t*)(pos)), sizeof(uint64_t));
+    if (err != DB_SUCCESS)
+      return ib_err_t_to_drizzle_error(err);
   }
   else
   {
@@ -2253,7 +2374,8 @@ int HailDBCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
   }
 
   err= ib_cursor_moveto(cursor, search_tuple, IB_CUR_GE, &res);
-  assert(err == DB_SUCCESS);
+  if (err != DB_SUCCESS)
+    return ib_err_t_to_drizzle_error(err);
 
   assert(res==0);
   if (res != 0)
@@ -2302,7 +2424,7 @@ static void store_key_value_from_haildb(KeyInfo *key_info, unsigned char* ref, i
       }
 
       String str;
-      field->val_str(&str);
+      field->val_str_internal(&str);
 
       *ref++= (char)(str.length() & 0x000000ff);
       *ref++= (char)((str.length()>>8) & 0x000000ff);
@@ -2381,43 +2503,83 @@ int HailDBCursor::info(uint32_t flag)
 
   if (flag & HA_STATUS_AUTO)
     stats.auto_increment_value= 1;
+
+  if (flag & HA_STATUS_ERRKEY) {
+    const char *err_table_name;
+    const char *err_index_name;
+
+    ib_trx_t transaction= *get_trx(getTable()->in_use);
+
+    err= ib_get_duplicate_key(transaction, &err_table_name, &err_index_name);
+
+    errkey= -1;
+
+    for (unsigned int i = 0; i < getTable()->getShare()->keys; i++)
+    {
+      if (strcmp(err_index_name, getTable()->key_info[i].name) == 0)
+      {
+        errkey= i;
+        break;
+      }
+    }
+
+  }
+
   return(0);
 }
 
 int HailDBCursor::doStartIndexScan(uint32_t keynr, bool)
 {
+  ib_err_t err;
   ib_trx_t transaction= *get_trx(getTable()->in_use);
 
   active_index= keynr;
 
-  ib_cursor_attach_trx(cursor, transaction);
-
   if (active_index == 0 && ! share->has_hidden_primary_key)
   {
+    if (cursor_is_sec_index)
+    {
+      err= ib_cursor_close(cursor);
+      assert(err == DB_SUCCESS);
+
+      err= ib_cursor_open_table_using_id(table_id, transaction, &cursor);
+
+      if (err != DB_SUCCESS)
+        return ib_err_t_to_drizzle_error(err);
+
+    }
+    else
+    {
+      ib_cursor_attach_trx(cursor, transaction);
+    }
+
+    cursor_is_sec_index= false;
     tuple= ib_clust_read_tuple_create(cursor);
   }
   else
   {
-    ib_err_t err;
     ib_id_t index_id;
     err= ib_index_get_id(table_path_to_haildb_name(getShare()->getPath()),
                          getShare()->getKeyInfo(keynr).name,
                          &index_id);
     if (err != DB_SUCCESS)
-      return -1;
+      return ib_err_t_to_drizzle_error(err);
 
     err= ib_cursor_close(cursor);
     assert(err == DB_SUCCESS);
+
     err= ib_cursor_open_index_using_id(index_id, transaction, &cursor);
 
     if (err != DB_SUCCESS)
-      return -1;
+      return ib_err_t_to_drizzle_error(err);
+
+    cursor_is_sec_index= true;
 
     tuple= ib_clust_read_tuple_create(cursor);
     ib_cursor_set_cluster_access(cursor);
   }
 
-  ib_err_t err= ib_cursor_set_lock_mode(cursor, ib_lock_mode);
+  err= ib_cursor_set_lock_mode(cursor, ib_lock_mode);
   assert(err == DB_SUCCESS);
 
   advance_cursor= false;
@@ -2683,7 +2845,7 @@ int HailDBCursor::index_prev(unsigned char *buf)
       if (err == DB_END_OF_INDEX)
         return HA_ERR_END_OF_FILE;
       else
-        return -1; // FIXME
+        return ib_err_t_to_drizzle_error(err);
     }
   }
 

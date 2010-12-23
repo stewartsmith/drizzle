@@ -395,7 +395,7 @@ drop table t1,t2;
 
 # Fix for bug#4488 
 #
-create table t1 (x bigint not null);
+create table t1 (x bigint unsigned not null);
 insert into t1(x) values (0x0ffffffffffffff0);
 insert into t1(x) values (0x0ffffffffffffff1);
 select * from t1;
@@ -440,8 +440,12 @@ drop table t1;
 #
 # Bug #11185 incorrect comparison of int to signed constant
 #
-create table t1 (a bigint);
+create table t1 (a bigint unsigned);
+show create table t1;
 create index t1i on t1(a);
+show create table t1;
+insert into t1 values (9223372036854775807);
+truncate t1;
 insert into t1 select 18446744073709551615;
 insert into t1 select 18446744073709551614;
 

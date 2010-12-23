@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008-2009 Sun Microsystems
+ *  Copyright (C) 2008-2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -192,7 +192,10 @@ int Join::prepare(Item ***rref_pointer_array,
   for (table_ptr= select_lex->leaf_tables;
        table_ptr;
        table_ptr= table_ptr->next_leaf)
+  {
     tables++;
+  }
+
 
   if (setup_wild(session, fields_list, &all_fields, wild_num) ||
       select_lex->setup_ref_array(session, og_num) ||
@@ -2040,7 +2043,7 @@ bool Join::make_sum_func_list(List<Item> &field_list,
   {
     rollup.state= ROLLUP::STATE_READY;
     if (rollup_make_fields(field_list, send_fields, &func))
-      return(true);     // Should never happen
+      return true;     // Should never happen
   }
   else if (rollup.state == ROLLUP::STATE_NONE)
   {
@@ -2069,11 +2072,13 @@ bool Join::rollup_init()
   tmp_table_param.group_parts= send_group_parts;
 
   if (!(rollup.null_items= (Item_null_result**) session->alloc((sizeof(Item*) +
-                                                sizeof(Item**) +
-                                                sizeof(List<Item>) +
-                        ref_pointer_array_size)
-                        * send_group_parts )))
+                                                                sizeof(Item**) +
+                                                                sizeof(List<Item>) +
+                                                                ref_pointer_array_size)
+                                                               * send_group_parts )))
+  {
     return 1;
+  }
 
   rollup.fields= (List<Item>*) (rollup.null_items + send_group_parts);
   rollup.ref_pointer_arrays= (Item***) (rollup.fields + send_group_parts);
@@ -3013,49 +3018,58 @@ static void calc_group_buffer(Join *join, Order *group)
       case REAL_RESULT:
         key_length+= sizeof(double);
         break;
+
       case INT_RESULT:
         key_length+= sizeof(int64_t);
         break;
+
       case DECIMAL_RESULT:
         key_length+= my_decimal_get_binary_size(group_item->max_length -
                                                 (group_item->decimals ? 1 : 0),
                                                 group_item->decimals);
         break;
+
       case STRING_RESULT:
-      {
-        enum enum_field_types type= group_item->field_type();
-        /*
-          As items represented as DATE/TIME fields in the group buffer
-          have STRING_RESULT result type, we increase the length
-          by 8 as maximum pack length of such fields.
-        */
-        if (type == DRIZZLE_TYPE_DATE ||
-            type == DRIZZLE_TYPE_DATETIME ||
-            type == DRIZZLE_TYPE_TIMESTAMP)
         {
-          key_length+= 8;
-        }
-        else
-        {
+          enum enum_field_types type= group_item->field_type();
           /*
-            Group strings are taken as varstrings and require an length field.
-            A field is not yet created by create_tmp_field()
-            and the sizes should match up.
+            As items represented as DATE/TIME fields in the group buffer
+            have STRING_RESULT result type, we increase the length
+            by 8 as maximum pack length of such fields.
           */
-          key_length+= group_item->max_length + HA_KEY_BLOB_LENGTH;
+          if (type == DRIZZLE_TYPE_DATE ||
+              type == DRIZZLE_TYPE_TIME ||
+              type == DRIZZLE_TYPE_DATETIME ||
+              type == DRIZZLE_TYPE_TIMESTAMP)
+          {
+            key_length+= 8;
+          }
+          else
+          {
+            /*
+              Group strings are taken as varstrings and require an length field.
+              A field is not yet created by create_tmp_field()
+              and the sizes should match up.
+            */
+            key_length+= group_item->max_length + HA_KEY_BLOB_LENGTH;
+          }
+
+          break;
         }
-        break;
-      }
-      default:
+
+      case ROW_RESULT:
         /* This case should never be choosen */
         assert(0);
         my_error(ER_OUT_OF_RESOURCES, MYF(ME_FATALERROR));
       }
     }
+
     parts++;
+
     if (group_item->maybe_null)
       null_parts++;
   }
+
   join->tmp_table_param.group_length=key_length+null_parts;
   join->tmp_table_param.group_parts=parts;
   join->tmp_table_param.group_null_parts=null_parts;

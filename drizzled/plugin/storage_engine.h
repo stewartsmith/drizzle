@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -124,6 +124,7 @@ typedef std::set<std::string> TableNameList;
 extern const std::string UNKNOWN_STRING;
 extern const std::string DEFAULT_DEFINITION_FILE_EXT;
 
+
 /*
   StorageEngine is a singleton structure - one instance per storage engine -
   to provide access to storage engine functionality that works on the
@@ -136,6 +137,7 @@ extern const std::string DEFAULT_DEFINITION_FILE_EXT;
 class StorageEngine : public Plugin,
                       public MonitoredInTransaction
 {
+  friend class SEAPITester;
 public:
   typedef uint64_t Table_flags;
 

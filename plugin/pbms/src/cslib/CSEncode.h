@@ -1,6 +1,6 @@
  #ifndef __CSENCODE_H__
 #define __CSENCODE_H__
-/* Copyright (c) 2008 PrimeBase Technologies GmbH, Germany
+/* Copyright (C) 2008 PrimeBase Technologies GmbH, Germany
  *
  * PrimeBase S3Daemon
  *

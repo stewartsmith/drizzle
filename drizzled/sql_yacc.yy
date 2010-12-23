@@ -699,6 +699,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  SET_VAR
 %token  SHARE_SYM
 %token  SHOW
+%token  SIGNED_SYM
 %token  SIMPLE_SYM                    /* SQL-2003-N */
 %token  SNAPSHOT_SYM
 %token  SPECIFIC_SYM                  /* SQL-2003-R */
@@ -737,6 +738,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  TEXT_STRING
 %token  TEXT_SYM
 %token  THEN_SYM                      /* SQL-2003-R */
+%token  TIME_SYM                 /* SQL-2003-R */
 %token  TIMESTAMP_SYM                 /* SQL-2003-R */
 %token  TIMESTAMP_ADD
 %token  TIMESTAMP_DIFF
@@ -756,6 +758,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  UNIQUE_SYM
 %token  UNKNOWN_SYM                   /* SQL-2003-R */
 %token  UNLOCK_SYM
+%token  UNSIGNED_SYM
 %token  UPDATE_SYM                    /* SQL-2003-R */
 %token  USAGE                         /* SQL-2003-N */
 %token  USER                          /* SQL-2003-R */
@@ -763,6 +766,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  USING                         /* SQL-2003-R */
 %token  UTC_DATE_SYM
 %token  UTC_TIMESTAMP_SYM
+%token  UUID_SYM
 %token  VALUES                        /* SQL-2003-R */
 %token  VALUE_SYM                     /* SQL-2003-R */
 %token  VARBINARY
@@ -783,6 +787,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  XOR
 %token  YEAR_MONTH_SYM
 %token  YEAR_SYM                      /* SQL-2003-R */
+%token  ZEROFILL_SYM
 
 %left   JOIN_SYM INNER_SYM STRAIGHT_JOIN CROSS LEFT RIGHT
 /* A dummy token to force the priority of table_ref production in a join. */
@@ -834,6 +839,8 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         opt_status
         opt_concurrent
         opt_wait
+        opt_zerofill
+        opt_field_number_signed
         kill_option
 
 %type <m_fk_option>
@@ -1491,22 +1498,36 @@ field_def:
         ;
 
 type:
-        int_type
-        {
-          $$=$1;
-          Lex->length=(char*) 0; /* use default length */
-          statement::CreateTable *statement=
-            (statement::CreateTable *)Lex->statement;
+          int_type ignored_field_number_length opt_field_number_signed opt_zerofill
+          { 
+            $$= $1;
+            Lex->length=(char*) 0; /* use default length */
+            statement::CreateTable *statement=
+              (statement::CreateTable *)Lex->statement;
 
-          if (statement->current_proto_field)
-          {
-            if ($1 == DRIZZLE_TYPE_LONG)
-              statement->current_proto_field->set_type(message::Table::Field::INTEGER);
-            else if ($1 == DRIZZLE_TYPE_LONGLONG)
-              statement->current_proto_field->set_type(message::Table::Field::BIGINT);
-            else
-              abort();
-          }
+            if ($3 or $4)
+            {
+              $1= DRIZZLE_TYPE_LONGLONG;
+            }
+
+            if (statement->current_proto_field)
+            {
+              assert ($1 == DRIZZLE_TYPE_LONG or $1 == DRIZZLE_TYPE_LONGLONG);
+              // We update the type for unsigned types
+              if ($3 or $4)
+              {
+                statement->current_proto_field->set_type(message::Table::Field::BIGINT);
+                statement->current_proto_field->mutable_constraints()->set_is_unsigned(true);
+              }
+              if ($1 == DRIZZLE_TYPE_LONG)
+              {
+                statement->current_proto_field->set_type(message::Table::Field::INTEGER);
+              }
+              else if ($1 == DRIZZLE_TYPE_LONGLONG)
+              {
+                statement->current_proto_field->set_type(message::Table::Field::BIGINT);
+              }
+            }
           }
         | real_type opt_precision
           {
@@ -1600,6 +1621,16 @@ type:
             if (statement->current_proto_field)
               statement->current_proto_field->set_type(message::Table::Field::DATE);
           }
+          | TIME_SYM
+          {
+            $$=DRIZZLE_TYPE_TIME;
+
+            statement::CreateTable *statement=
+              (statement::CreateTable *)Lex->statement;
+
+            if (statement->current_proto_field)
+              statement->current_proto_field->set_type(message::Table::Field::TIME);
+          }
           | TIMESTAMP_SYM
           {
             $$=DRIZZLE_TYPE_TIMESTAMP;
@@ -1608,7 +1639,7 @@ type:
               (statement::CreateTable *)Lex->statement;
 
             if (statement->current_proto_field)
-              statement->current_proto_field->set_type(message::Table::Field::TIMESTAMP);
+              statement->current_proto_field->set_type(message::Table::Field::EPOCH);
           }
           | DATETIME_SYM
           {
@@ -1692,6 +1723,16 @@ type:
             if (statement->current_proto_field)
               statement->current_proto_field->set_type(message::Table::Field::ENUM);
           }
+          | UUID_SYM
+          {
+            $$=DRIZZLE_TYPE_UUID;
+
+            statement::CreateTable *statement=
+              (statement::CreateTable *)Lex->statement;
+
+            if (statement->current_proto_field)
+              statement->current_proto_field->set_type(message::Table::Field::UUID);
+          }
         | SERIAL_SYM
           {
             $$=DRIZZLE_TYPE_LONGLONG;
@@ -1755,6 +1796,22 @@ precision:
 opt_len:
           /* empty */ { Lex->length=(char*) 0; /* use default length */ }
         | '(' NUM ')' { Lex->length= $2.str; }
+        ;
+
+opt_field_number_signed:
+          /* empty */ { $$= 0; }
+        | SIGNED_SYM { $$= 0; }
+        | UNSIGNED_SYM { $$= 1; Lex->type|= UNSIGNED_FLAG; }
+        ;
+
+ignored_field_number_length:
+          /* empty */ { }
+        | '(' NUM ')' { }
+        ;
+
+opt_zerofill:
+          /* empty */ { $$= 0; }
+        | ZEROFILL_SYM { $$= 1; Lex->type|= UNSIGNED_FLAG; }
         ;
 
 opt_precision:
@@ -3319,6 +3376,14 @@ function_call_conflict:
               DRIZZLE_YYABORT;
             }
           }
+        | UUID_SYM '(' ')'
+          {
+            if (! ($$= reserved_keyword_function(YYSession, "uuid", NULL)))
+            {
+              DRIZZLE_YYABORT;
+            }
+            Lex->setCacheable(false);
+	  }
         | WAIT_SYM '(' expr ',' expr ')'
           {
             std::string wait_str("wait");
@@ -3568,6 +3633,8 @@ cast_type:
           { $$=ITEM_CAST_CHAR; Lex->dec= 0; }
         | DATE_SYM
           { $$=ITEM_CAST_DATE; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
+        | TIME_SYM
+          { $$=ITEM_CAST_TIME; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
         | DATETIME_SYM
           { $$=ITEM_CAST_DATETIME; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
         | DECIMAL_SYM float_options
@@ -6250,6 +6317,7 @@ keyword_sp:
         | TEMPORARY_SYM            {}
         | TEXT_SYM                 {}
         | TRANSACTION_SYM          {}
+        | TIME_SYM                 {}
         | TIMESTAMP_SYM            {}
         | TIMESTAMP_ADD            {}
         | TIMESTAMP_DIFF           {}

@@ -1,4 +1,4 @@
-/* Copyright (c) 2005 PrimeBase Technologies GmbH, Germany
+/* Copyright (C) 2005 PrimeBase Technologies GmbH, Germany
  *
  * PrimeBase XT
  *

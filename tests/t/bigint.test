@@ -23,7 +23,7 @@ select -1,-11,-101,-1001,-10001,-100001,-1000001,-10000001,-100000001,-100000000
 # This will work on 4.0 as we then have internal handling of bigint variables.
 #
 
-create table t1 (a bigint not null, primary key(a));
+create table t1 (a bigint unsigned not null, primary key(a));
 insert into t1 values (9223372036854775808);
 insert into t1 values (0x7000000000000000);
 select * from t1;
@@ -33,14 +33,19 @@ delete from t1 where a=18446744073709551615;
 select * from t1;
 drop table t1;
 
-create table t1 ( a int not null default 1, big bigint );
+create table t1 ( a int not null default 1, big bigint unsigned);
+--error ER_WARN_DATA_OUT_OF_RANGE
 insert into t1 (big) values (-1),(9223372036854775808),(9223372036854775807),(9223372036854775808);
+--error ER_WARN_DATA_OUT_OF_RANGE
+insert into t1 (big) values (-1);
+insert into t1 (big) values (9223372036854775808),(9223372036854775807),(9223372036854775808);
 select * from t1;
 select min(big),max(big),max(big)-1 from t1;
 select min(big),max(big),max(big)-1 from t1 group by a;
 alter table t1 modify big bigint not null;
 select min(big),max(big),max(big)-1 from t1;
 select min(big),max(big),max(big)-1 from t1 group by a;
+--error ER_WARN_DATA_OUT_OF_RANGE
 insert into t1 (big) values (9223372036854775808);
 select * from t1;
 select min(big),max(big),max(big)-1 from t1;
@@ -82,13 +87,13 @@ SELECT '0x8000000000000001'+0;
 
 # Test for BUG#8562: joins over BIGINT value + constant propagation
 create table t1 (
- value64  bigint  not null,
+ value64  bigint  unsigned not null,
  value32  integer          not null,
  primary key(value64, value32)
 );
 
 create table t2 (
- value64  bigint  not null,
+ value64  bigint unsigned not null,
  value32  integer          not null,
  primary key(value64, value32)
 );
@@ -98,18 +103,18 @@ insert into t1 values( 9223372036854775807, 2);
 insert into t2 values(17156792991891826145, 3);
 insert into t2 values( 9223372036854775807, 4);
 
-select * from t1;
-select * from t2;
+select * from t1 ORDER BY value32;
+select * from t2 ORDER BY value32;
 
-select * from t1, t2 where t1.value64=17156792991891826145 and
-t2.value64=17156792991891826145;
-select * from t1, t2 where t1.value64=17156792991891826145 and
-t2.value64=t1.value64;
+--sorted_result
+select * from t1, t2 where t1.value64=17156792991891826145 and t2.value64=17156792991891826145;
+--sorted_result
+select * from t1, t2 where t1.value64=17156792991891826145 and t2.value64=t1.value64;
 
-select * from t1, t2 where t1.value64= 9223372036854775807 and
-t2.value64=9223372036854775807;
-select * from t1, t2 where t1.value64= 9223372036854775807 and
-t2.value64=t1.value64;
+--sorted_result
+select * from t1, t2 where t1.value64= 9223372036854775807 and t2.value64=9223372036854775807;
+--sorted_result
+select * from t1, t2 where t1.value64= 9223372036854775807 and t2.value64=t1.value64;
 
 drop table t1, t2;
 
@@ -132,11 +137,18 @@ create table t1 select 1 as 'a';
 --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
+
 create table t1 select 9223372036854775809 as 'a';
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
+show create table t1;
+drop table t1;
+
+create table t1 select 72036854775809 as 'a';
 --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 select * from t1;
 drop table t1;
+
 DROP DATABASE IF EXISTS `scott`;
 
 
@@ -151,11 +163,13 @@ insert into t1 values(
 );
 
 insert into t1 values (-1,-1,-1,-1);
+--sorted_result
 select * from t1;
 drop table t1;
 
 create table t1 ( quantity decimal(2));
 insert into t1 values (50), (-50), (0), (-1);
+--sorted_result
 select * from t1;
 drop table t1;
 
@@ -279,11 +293,12 @@ VALUES (9, 99, 999, 9999, 99999, 999999, 9999999, 99999999, 999999999,
 999999999.99999999999999999999999999999,
 99999999.999999999999999999999999999999);
 
+--sorted_result
 SELECT * FROM t1;
 DROP TABLE t1;
 
 #bug #9088 BIGINT WHERE CLAUSE
-create table t1 (bigint_col bigint);
+create table t1 (bigint_col bigint unsigned);
 insert into t1 values (17666000000000000000);
 select * from t1 where bigint_col=17666000000000000000;
 select * from t1 where bigint_col='17666000000000000000';
@@ -294,7 +309,7 @@ drop table t1;
 
 select 10000002383263201056 mod 50 as result;
 
-create table t1 (c1 bigint);
+create table t1 (c1 bigint unsigned);
 insert into t1 values (10000002383263201056);
 select c1 mod 50 as result from t1;
 drop table t1;

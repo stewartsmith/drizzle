@@ -19,7 +19,6 @@
 #include "config.h"
 #include <drizzled/field.h>
 #include <drizzled/field/blob.h>
-#include <drizzled/field/timestamp.h>
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
@@ -563,13 +562,15 @@ int FilesystemCursor::find_current_row(unsigned char *buf)
         if ((*field)->isReadSet() || (*field)->isWriteSet())
         {
           (*field)->setWriteSet();
-          (*field)->store(content.c_str(),
-                          (uint32_t)content.length(),
-                          &my_charset_bin,
-                          CHECK_FIELD_WARN);
+          (*field)->store_and_check(CHECK_FIELD_WARN,
+                                    content.c_str(),
+                                    (uint32_t)content.length(),
+                                    &my_charset_bin);
         }
         else
+        {
           (*field)->set_default();
+        }
       }
       else
         (*field)->set_null();
@@ -631,10 +632,10 @@ int FilesystemCursor::rnd_next(unsigned char *buf)
         if ((*field)->isReadSet() || (*field)->isWriteSet())
         {
           (*field)->setWriteSet();
-          (*field)->store(content.c_str(),
-                          (uint32_t)content.length(),
-                          &my_charset_bin,
-                          CHECK_FIELD_WARN);
+          (*field)->store_and_check(CHECK_FIELD_WARN,
+                                    content.c_str(),
+                                    (uint32_t)content.length(),
+                                    &my_charset_bin);
         }
         else
         {

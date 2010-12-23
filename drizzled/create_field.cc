@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008-2009 Sun Microsystems
+ *  Copyright (C) 2008-2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -37,14 +37,17 @@
 #include "drizzled/field/decimal.h"
 #include "drizzled/field/real.h"
 #include "drizzled/field/double.h"
-#include "drizzled/field/long.h"
-#include "drizzled/field/int64_t.h"
+#include "drizzled/field/int32.h"
+#include "drizzled/field/int64.h"
 #include "drizzled/field/num.h"
-#include "drizzled/field/timestamp.h"
+#include "drizzled/field/epoch.h"
 #include "drizzled/field/datetime.h"
 #include "drizzled/field/varstring.h"
+#include "drizzled/field/uuid.h"
 #include "drizzled/temporal.h"
 #include "drizzled/item/string.h"
+
+#include "drizzled/display.h"
 
 #include <algorithm>
 
@@ -111,7 +114,7 @@ CreateField::CreateField(Field *old_field, Field *orig_field)
     {
       char buff[MAX_FIELD_WIDTH], *pos;
       String tmp(buff, sizeof(buff), charset), *res;
-      res= orig_field->val_str(&tmp);
+      res= orig_field->val_str_internal(&tmp);
       pos= (char*) memory::sql_strmake(res->ptr(), res->length());
       def= new Item_string(pos, res->length(), charset);
     }
@@ -350,7 +353,13 @@ bool CreateField::init(Session *,
     case DRIZZLE_TYPE_DATE:
       length= Date::MAX_STRING_LENGTH;
       break;
+    case DRIZZLE_TYPE_UUID:
+      length= field::Uuid::max_string_length();
+      break;
     case DRIZZLE_TYPE_DATETIME:
+      length= DateTime::MAX_STRING_LENGTH;
+      break;
+    case DRIZZLE_TYPE_TIME:
       length= DateTime::MAX_STRING_LENGTH;
       break;
     case DRIZZLE_TYPE_ENUM:
@@ -388,6 +397,42 @@ bool CreateField::init(Session *,
   }
 
   return false; /* success */
+}
+
+std::ostream& operator<<(std::ostream& output, const CreateField &field)
+{
+  output << "CreateField:(";
+  output <<  field.field_name;
+  output << ", ";
+  output << drizzled::display::type(field.type());
+  output << ", { ";
+
+  if (field.flags & NOT_NULL_FLAG)
+    output << " NOT_NULL";
+
+  if (field.flags & PRI_KEY_FLAG)
+    output << ", PRIMARY KEY";
+
+  if (field.flags & UNIQUE_KEY_FLAG)
+    output << ", UNIQUE KEY";
+
+  if (field.flags & MULTIPLE_KEY_FLAG)
+    output << ", MULTIPLE KEY";
+
+  if (field.flags & BLOB_FLAG)
+    output << ", BLOB";
+
+  if (field.flags & UNSIGNED_FLAG)
+    output << ", UNSIGNED";
+
+  if (field.flags & BINARY_FLAG)
+    output << ", BINARY";
+  output << "}, ";
+  if (field.field)
+    output << *field.field;
+  output << ")";
+
+  return output;  // for multiple << operators.
 }
 
 } /* namespace drizzled */

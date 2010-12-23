@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  Authors:
  *
@@ -367,7 +367,7 @@ static void printTransaction(const message::Transaction &transaction,
       /* A segmented statement that was successfully executed */
       else
       {
-        for (int y= 0; y < cached_statement_sql.size(); y++)
+        for (size_t y= 0; y < cached_statement_sql.size(); y++)
         {
           cout << cached_statement_sql[y];
         }

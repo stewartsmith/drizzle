@@ -33,7 +33,7 @@ int64_t Wait::val_int()
 
   if (res and res->length())
   {
-    Barrier::shared_ptr barrier= Barriers::getInstance().find(Key(getSession().getSecurityContext(), res->c_str()));
+    Barrier::shared_ptr barrier= Barriers::getInstance().find(Key(*getSession().user(), res->c_str()));
 
     if (barrier and barrier->getOwner() == getSession().getSessionId())
     {

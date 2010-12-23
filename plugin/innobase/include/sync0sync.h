@@ -1,7 +1,7 @@
 /*****************************************************************************
 
-Copyright (c) 1995, 2010, Innobase Oy. All Rights Reserved.
-Copyright (c) 2008, Google Inc.
+Copyright (C) 1995, 2010, Innobase Oy. All Rights Reserved.
+Copyright (C) 2008, Google Inc.
 
 Portions of this file contain modifications contributed and copyrighted by
 Google, Inc. Those modifications are gratefully acknowledged and are described
@@ -85,7 +85,6 @@ extern mysql_pfs_key_t	hash_table_mutex_key;
 extern mysql_pfs_key_t	ibuf_bitmap_mutex_key;
 extern mysql_pfs_key_t	ibuf_mutex_key;
 extern mysql_pfs_key_t	ibuf_pessimistic_insert_mutex_key;
-extern mysql_pfs_key_t	ios_mutex_key;
 extern mysql_pfs_key_t	log_sys_mutex_key;
 extern mysql_pfs_key_t	log_flush_order_mutex_key;
 extern mysql_pfs_key_t	kernel_mutex_key;

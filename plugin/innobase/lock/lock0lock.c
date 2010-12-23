@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1996, 2010, Innobase Oy. All Rights Reserved.
+Copyright (C) 1996, 2010, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -4853,11 +4853,11 @@ loop:
 			ut_a(rec);
 			offsets = rec_get_offsets(rec, index, offsets,
 						  ULINT_UNDEFINED, &heap);
-
+#if 0
 			fprintf(stderr,
 				"Validating %lu %lu\n",
 				(ulong) space, (ulong) page_no);
-
+#endif
 			lock_mutex_exit_kernel();
 
 			/* If this thread is holding the file space

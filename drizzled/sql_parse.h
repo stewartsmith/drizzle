@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -46,7 +46,6 @@ bool mysql_insert_select_prepare(Session *session);
 bool update_precheck(Session *session, TableList *tables);
 bool delete_precheck(Session *session, TableList *tables);
 bool insert_precheck(Session *session, TableList *tables);
-bool create_table_precheck(TableIdentifier &identifier);
 
 Item *negate_expression(Session *session, Item *expr);
 

@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 2005, 2010, Innobase Oy. All Rights Reserved.
+Copyright (C) 2005, 2010, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -2076,7 +2076,7 @@ row_merge_drop_index(
 	/* Replace this index with another equivalent index for all
 	foreign key constraints on this table where this index is used */
 
-	dict_table_replace_index_in_foreign_list(table, index);
+	dict_table_replace_index_in_foreign_list(table, index, trx);
 	dict_index_remove_from_cache(table, index);
 
 	trx->op_info = "";

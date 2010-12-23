@@ -1,7 +1,7 @@
 /*****************************************************************************
 
-Copyright (c) 1995, 2010, Innobase Oy. All Rights Reserved.
-Copyright (c) 2009, Google Inc.
+Copyright (C) 1995, 2010, Innobase Oy. All Rights Reserved.
+Copyright (C) 2009 Google Inc.
 
 Portions of this file contain modifications contributed and copyrighted by
 Google, Inc. Those modifications are gratefully acknowledged and are described
@@ -3098,9 +3098,14 @@ loop:
 
 	if (srv_fast_shutdown < 2
 	   && (srv_error_monitor_active
-	      || srv_lock_timeout_active || srv_monitor_active)) {
+	      || srv_lock_timeout_active
+	      || srv_monitor_active)) {
 
 		mutex_exit(&kernel_mutex);
+
+		os_event_set(srv_error_event);
+		os_event_set(srv_monitor_event);
+		os_event_set(srv_timeout_event);
 
 		goto loop;
 	}
@@ -3127,6 +3132,8 @@ loop:
 		clean. */
 
 		log_buffer_flush_to_disk();
+
+		mutex_exit(&kernel_mutex);
 
 		return; /* We SKIP ALL THE REST !! */
 	}

@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -57,13 +57,9 @@ class SchemaIdentifier
   std::string db_path;
   std::string catalog;
 
-
-  // @note this should be changed to protected once Session contains an
-  // identifier for current db.
-public:
-
 public:
   typedef std::vector <SchemaIdentifier> vector;
+  typedef const SchemaIdentifier& const_reference;
 
   SchemaIdentifier(const std::string &db_arg);
 
@@ -83,16 +79,18 @@ public:
     return catalog;
   }
 
-  bool isValid() const;
-  bool compare(const std::string &arg) const;
+  virtual bool isValid() const;
 
-  friend bool operator<(const SchemaIdentifier &left, const SchemaIdentifier &right)
+  bool compare(const std::string &arg) const;
+  bool compare(SchemaIdentifier::const_reference) const;
+
+  friend bool operator<(SchemaIdentifier::const_reference left, SchemaIdentifier::const_reference right)
   {
     return  boost::algorithm::to_upper_copy(left.getSchemaName()) < boost::algorithm::to_upper_copy(right.getSchemaName());
   }
 
   friend std::ostream& operator<<(std::ostream& output,
-                                  SchemaIdentifier &identifier)
+                                  SchemaIdentifier::const_reference identifier)
   {
     output << "SchemaIdentifier:(";
     output <<  identifier.catalog;
@@ -105,12 +103,11 @@ public:
     return output;  // for multiple << operators.
   }
 
-  friend bool operator==(const SchemaIdentifier &left,
-                         const SchemaIdentifier &right)
+  friend bool operator==(SchemaIdentifier::const_reference left,
+                         SchemaIdentifier::const_reference right)
   {
     return boost::iequals(left.getSchemaName(), right.getSchemaName());
   }
-
 };
 
 

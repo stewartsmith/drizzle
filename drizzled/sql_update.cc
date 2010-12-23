@@ -23,7 +23,7 @@
 #include "drizzled/error.h"
 #include "drizzled/probes.h"
 #include "drizzled/sql_base.h"
-#include "drizzled/field/timestamp.h"
+#include "drizzled/field/epoch.h"
 #include "drizzled/sql_parse.h"
 #include "drizzled/optimizer/range.h"
 #include "drizzled/records.h"
@@ -98,7 +98,7 @@ static void prepare_record_for_error_message(int error, Table *table)
   /* Copy the newly read columns into the new record. */
   for (field_p= table->getFields(); (field= *field_p); field_p++)
   {
-    if (unique_map.test(field->field_index))
+    if (unique_map.test(field->position()))
     {
       field->copy_from_tmp(table->getShare()->rec_buff_length);
     }
@@ -189,7 +189,7 @@ int mysql_update(Session *session, TableList *table_list,
       if (table->timestamp_field_type == TIMESTAMP_AUTO_SET_ON_UPDATE ||
           table->timestamp_field_type == TIMESTAMP_AUTO_SET_ON_BOTH)
       {
-        table->setWriteSet(table->timestamp_field->field_index);
+        table->setWriteSet(table->timestamp_field->position());
       }
     }
   }

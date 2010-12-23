@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1994, 2010, Innobase Oy. All Rights Reserved.
+Copyright (C) 1994, 2010, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -1749,9 +1749,9 @@ UNIV_INTERN
 void
 rec_print(
 /*======*/
-	FILE*		file,	/*!< in: file where to print */
-	const rec_t*	rec,	/*!< in: physical record */
-	dict_index_t*	index)	/*!< in: record descriptor */
+	FILE*			file,	/*!< in: file where to print */
+	const rec_t*		rec,	/*!< in: physical record */
+	const dict_index_t*	index)	/*!< in: record descriptor */
 {
 	ut_ad(index);
 

@@ -28,6 +28,7 @@
 
 #include <queue>
 #include <algorithm>
+#include <iostream>
 
 #include "drizzled/drizzled.h"
 #include "drizzled/sql_sort.h"
@@ -51,7 +52,6 @@ using namespace std;
 
 namespace drizzled
 {
-
 
 /* Defines used by filesort and uniques */
 #define MERGEBUFF		7
@@ -381,8 +381,8 @@ ha_rows FileSort::run(Table *table, SortField *sortorder, uint32_t s_length,
       Use also the space previously used by string pointers in sort_buffer
       for temporary key storage.
     */
-    param.keys=((param.keys*(param.rec_length+sizeof(char*))) /
-		param.rec_length-1);
+    param.keys=((param.keys*(param.rec_length+sizeof(char*))) / param.rec_length-1);
+
     maxbuffer--;				// Offset from 0
     if (merge_many_buff(&param,(unsigned char*) sort_keys,buffpek_inst,&maxbuffer, &tempfile))
     {
@@ -418,6 +418,7 @@ ha_rows FileSort::run(Table *table, SortField *sortorder, uint32_t s_length,
 
   tempfile.close_cached_file();
   buffpek_pointers.close_cached_file();
+
   if (my_b_inited(outfile))
   {
     if (flush_io_cache(outfile))
@@ -425,7 +426,7 @@ ha_rows FileSort::run(Table *table, SortField *sortorder, uint32_t s_length,
       error=1;
     }
     {
-      internal::my_off_t save_pos=outfile->pos_in_file;
+      internal::my_off_t save_pos= outfile->pos_in_file;
       /* For following reads */
       if (outfile->reinit_io_cache(internal::READ_CACHE,0L,0,0))
       {
@@ -434,6 +435,7 @@ ha_rows FileSort::run(Table *table, SortField *sortorder, uint32_t s_length,
       outfile->end_of_file=save_pos;
     }
   }
+
   if (error)
   {
     my_message(ER_FILSORT_ABORT, ER(ER_FILSORT_ABORT),
@@ -683,9 +685,12 @@ ha_rows FileSort::find_all_keys(SortParam *param,
     sort_form->print_error(error,MYF(ME_ERROR | ME_WAITTANG));
     return(HA_POS_ERROR);
   }
-  if (indexpos && idx &&
-      param->write_keys(sort_keys,idx,buffpek_pointers,tempfile))
+
+  if (indexpos && idx && param->write_keys(sort_keys,idx,buffpek_pointers,tempfile))
+  {
     return(HA_POS_ERROR);
+  }
+
   return(my_b_inited(tempfile) ?
 	      (ha_rows) (my_b_tell(tempfile)/param->rec_length) :
 	      idx);
@@ -812,76 +817,77 @@ void SortParam::make_sortkey(register unsigned char *to, unsigned char *ref_pos)
     {						// Item
       Item *item=sort_field->item;
       maybe_null= item->maybe_null;
+
       switch (sort_field->result_type) {
       case STRING_RESULT:
-      {
-        const CHARSET_INFO * const cs=item->collation.collation;
-        char fill_char= ((cs->state & MY_CS_BINSORT) ? (char) 0 : ' ');
-        int diff;
-        uint32_t sort_field_length;
-
-        if (maybe_null)
-          *to++=1;
-        /* All item->str() to use some extra byte for end null.. */
-        String tmp((char*) to,sort_field->length+4,cs);
-        String *res= item->str_result(&tmp);
-        if (!res)
         {
+          const CHARSET_INFO * const cs=item->collation.collation;
+          char fill_char= ((cs->state & MY_CS_BINSORT) ? (char) 0 : ' ');
+          int diff;
+          uint32_t sort_field_length;
+
           if (maybe_null)
-            memset(to-1, 0, sort_field->length+1);
+            *to++=1;
+          /* All item->str() to use some extra byte for end null.. */
+          String tmp((char*) to,sort_field->length+4,cs);
+          String *res= item->str_result(&tmp);
+          if (!res)
+          {
+            if (maybe_null)
+              memset(to-1, 0, sort_field->length+1);
+            else
+            {
+              /*
+                This should only happen during extreme conditions if we run out
+                of memory or have an item marked not null when it can be null.
+                This code is here mainly to avoid a hard crash in this case.
+              */
+              assert(0);
+              memset(to, 0, sort_field->length);	// Avoid crash
+            }
+            break;
+          }
+          length= res->length();
+          sort_field_length= sort_field->length - sort_field->suffix_length;
+          diff=(int) (sort_field_length - length);
+          if (diff < 0)
+          {
+            diff=0;
+            length= sort_field_length;
+          }
+          if (sort_field->suffix_length)
+          {
+            /* Store length last in result_string */
+            store_length(to + sort_field_length, length,
+                         sort_field->suffix_length);
+          }
+          if (sort_field->need_strxnfrm)
+          {
+            char *from=(char*) res->ptr();
+            uint32_t tmp_length;
+            if ((unsigned char*) from == to)
+            {
+              set_if_smaller(length,sort_field->length);
+              memcpy(tmp_buffer,from,length);
+              from= tmp_buffer;
+            }
+            tmp_length= my_strnxfrm(cs,to,sort_field->length,
+                                    (unsigned char*) from, length);
+            assert(tmp_length == sort_field->length);
+          }
           else
           {
-            /*
-              This should only happen during extreme conditions if we run out
-              of memory or have an item marked not null when it can be null.
-              This code is here mainly to avoid a hard crash in this case.
-            */
-            assert(0);
-            memset(to, 0, sort_field->length);	// Avoid crash
+            my_strnxfrm(cs,(unsigned char*)to,length,(const unsigned char*)res->ptr(),length);
+            cs->cset->fill(cs, (char *)to+length,diff,fill_char);
           }
           break;
         }
-        length= res->length();
-        sort_field_length= sort_field->length - sort_field->suffix_length;
-        diff=(int) (sort_field_length - length);
-        if (diff < 0)
-        {
-          diff=0;
-          length= sort_field_length;
-        }
-        if (sort_field->suffix_length)
-        {
-          /* Store length last in result_string */
-          store_length(to + sort_field_length, length,
-                       sort_field->suffix_length);
-        }
-        if (sort_field->need_strxnfrm)
-        {
-          char *from=(char*) res->ptr();
-          uint32_t tmp_length;
-          if ((unsigned char*) from == to)
-          {
-            set_if_smaller(length,sort_field->length);
-            memcpy(tmp_buffer,from,length);
-            from= tmp_buffer;
-          }
-          tmp_length= my_strnxfrm(cs,to,sort_field->length,
-                                  (unsigned char*) from, length);
-          assert(tmp_length == sort_field->length);
-        }
-        else
-        {
-          my_strnxfrm(cs,(unsigned char*)to,length,(const unsigned char*)res->ptr(),length);
-          cs->cset->fill(cs, (char *)to+length,diff,fill_char);
-        }
-        break;
-      }
       case INT_RESULT:
-	{
+        {
           int64_t value= item->val_int_result();
           if (maybe_null)
           {
-	    *to++=1;
+            *to++=1;
             if (item->null_value)
             {
               if (maybe_null)
@@ -893,19 +899,19 @@ void SortParam::make_sortkey(register unsigned char *to, unsigned char *ref_pos)
               break;
             }
           }
-	  to[7]= (unsigned char) value;
-	  to[6]= (unsigned char) (value >> 8);
-	  to[5]= (unsigned char) (value >> 16);
-	  to[4]= (unsigned char) (value >> 24);
-	  to[3]= (unsigned char) (value >> 32);
-	  to[2]= (unsigned char) (value >> 40);
-	  to[1]= (unsigned char) (value >> 48);
+          to[7]= (unsigned char) value;
+          to[6]= (unsigned char) (value >> 8);
+          to[5]= (unsigned char) (value >> 16);
+          to[4]= (unsigned char) (value >> 24);
+          to[3]= (unsigned char) (value >> 32);
+          to[2]= (unsigned char) (value >> 40);
+          to[1]= (unsigned char) (value >> 48);
           if (item->unsigned_flag)                    /* Fix sign */
             to[0]= (unsigned char) (value >> 56);
           else
             to[0]= (unsigned char) (value >> 56) ^ 128;	/* Reverse signbit */
-	  break;
-	}
+          break;
+        }
       case DECIMAL_RESULT:
         {
           my_decimal dec_buf, *dec_val= item->val_decimal_result(&dec_buf);
@@ -922,12 +928,12 @@ void SortParam::make_sortkey(register unsigned char *to, unsigned char *ref_pos)
           my_decimal2binary(E_DEC_FATAL_ERROR, dec_val, to,
                             item->max_length - (item->decimals ? 1:0),
                             item->decimals);
-         break;
+          break;
         }
       case REAL_RESULT:
-	{
+        {
           double value= item->val_result();
-	  if (maybe_null)
+          if (maybe_null)
           {
             if (item->null_value)
             {
@@ -935,18 +941,19 @@ void SortParam::make_sortkey(register unsigned char *to, unsigned char *ref_pos)
               to++;
               break;
             }
-	    *to++=1;
+            *to++=1;
           }
-	  change_double_for_sort(value,(unsigned char*) to);
-	  break;
-	}
+          change_double_for_sort(value,(unsigned char*) to);
+          break;
+        }
       case ROW_RESULT:
       default:
-	// This case should never be choosen
-	assert(0);
-	break;
+        // This case should never be choosen
+        assert(0);
+        break;
       }
     }
+
     if (sort_field->reverse)
     {							/* Revers key */
       if (maybe_null)
@@ -959,7 +966,9 @@ void SortParam::make_sortkey(register unsigned char *to, unsigned char *ref_pos)
       }
     }
     else
+    {
       to+= sort_field->length;
+    }
   }
 
   if (addon_field)
@@ -1024,7 +1033,7 @@ void SortParam::register_used_fields()
     if ((field= sort_field->field))
     {
       if (field->getTable() == table)
-        table->setReadSet(field->field_index);
+        table->setReadSet(field->position());
     }
     else
     {						// Item
@@ -1038,7 +1047,7 @@ void SortParam::register_used_fields()
     sort_addon_field *addonf= addon_field;
     Field *field;
     for ( ; (field= addonf->field) ; addonf++)
-      table->setReadSet(field->field_index);
+      table->setReadSet(field->position());
   }
   else
   {
@@ -1048,18 +1057,18 @@ void SortParam::register_used_fields()
 }
 
 
-bool SortParam::save_index(unsigned char **sort_keys, uint32_t count,
-                           filesort_info *table_sort)
+bool SortParam::save_index(unsigned char **sort_keys, uint32_t count, filesort_info *table_sort)
 {
   uint32_t offset;
   unsigned char *to;
 
   internal::my_string_ptr_sort((unsigned char*) sort_keys, (uint32_t) count, sort_length);
   offset= rec_length - res_length;
+
   if ((ha_rows) count > max_rows)
     count=(uint32_t) max_rows;
-  if (!(to= table_sort->record_pointers=
-        (unsigned char*) malloc(res_length*count)))
+
+  if (!(to= table_sort->record_pointers= (unsigned char*) malloc(res_length*count)))
     return true;
 
   for (unsigned char **end_ptr= sort_keys+count ; sort_keys != end_ptr ; sort_keys++)
@@ -1067,6 +1076,7 @@ bool SortParam::save_index(unsigned char **sort_keys, uint32_t count,
     memcpy(to, *sort_keys+offset, res_length);
     to+= res_length;
   }
+
   return false;
 }
 
@@ -1171,13 +1181,17 @@ class compare_functor
 {
   qsort2_cmp key_compare;
   void *key_compare_arg;
+
   public:
-  compare_functor(qsort2_cmp in_key_compare, void *in_compare_arg)
-    : key_compare(in_key_compare), key_compare_arg(in_compare_arg) { }
+  compare_functor(qsort2_cmp in_key_compare, void *in_compare_arg) :
+    key_compare(in_key_compare),
+    key_compare_arg(in_compare_arg)
+  { }
+  
   inline bool operator()(const buffpek *i, const buffpek *j) const
   {
-    int val= key_compare(key_compare_arg,
-                      &i->key, &j->key);
+    int val= key_compare(key_compare_arg, &i->key, &j->key);
+
     return (val >= 0);
   }
 };
@@ -1486,27 +1500,28 @@ uint32_t FileSort::sortlength(SortField *sortorder, uint32_t s_length, bool *mul
       sortorder->result_type= sortorder->item->result_type();
       if (sortorder->item->result_as_int64_t())
         sortorder->result_type= INT_RESULT;
+
       switch (sortorder->result_type) {
       case STRING_RESULT:
-	sortorder->length=sortorder->item->max_length;
+        sortorder->length=sortorder->item->max_length;
         set_if_smaller(sortorder->length,
                        getSession().variables.max_sort_length);
-	if (use_strnxfrm((cs=sortorder->item->collation.collation)))
-	{
+        if (use_strnxfrm((cs=sortorder->item->collation.collation)))
+        {
           sortorder->length= cs->coll->strnxfrmlen(cs, sortorder->length);
-	  sortorder->need_strxnfrm= 1;
-	  *multi_byte_charset= 1;
-	}
+          sortorder->need_strxnfrm= 1;
+          *multi_byte_charset= 1;
+        }
         else if (cs == &my_charset_bin)
         {
           /* Store length last to be able to sort blob/varbinary */
           sortorder->suffix_length= suffix_length(sortorder->length);
           sortorder->length+= sortorder->suffix_length;
         }
-	break;
+        break;
       case INT_RESULT:
-	sortorder->length=8;			// Size of intern int64_t
-	break;
+        sortorder->length=8;			// Size of intern int64_t
+        break;
       case DECIMAL_RESULT:
         sortorder->length=
           my_decimal_get_binary_size(sortorder->item->max_length -
@@ -1514,16 +1529,15 @@ uint32_t FileSort::sortlength(SortField *sortorder, uint32_t s_length, bool *mul
                                      sortorder->item->decimals);
         break;
       case REAL_RESULT:
-	sortorder->length=sizeof(double);
-	break;
+        sortorder->length=sizeof(double);
+        break;
       case ROW_RESULT:
-      default:
-	// This case should never be choosen
-	assert(0);
-	break;
+        // This case should never be choosen
+        assert(0);
+        break;
       }
       if (sortorder->item->maybe_null)
-	length++;				// Place for NULL marker
+        length++;				// Place for NULL marker
     }
     set_if_smaller(sortorder->length, (size_t)getSession().variables.max_sort_length);
     length+=sortorder->length;

@@ -29,7 +29,7 @@
 
 #include "drizzled/configmake.h"
 #include "drizzled/plugin/authentication.h"
-#include "drizzled/security_context.h"
+#include "drizzled/identifier.h"
 #include "drizzled/util/convert.h"
 #include "drizzled/algorithm/sha1.h"
 #include "drizzled/module/option_map.h"
@@ -71,7 +71,7 @@ private:
   /**
    * Base class method to check authentication for a user.
    */
-  bool authenticate(const SecurityContext &sctx, const string &password);
+  bool authenticate(const identifier::User &sctx, const string &password);
 
   /**
    * Verify the local and remote scrambled password match using the MySQL
@@ -202,13 +202,13 @@ bool AuthFile::verifyMySQLHash(const string &password,
   return memcmp(local_scrambled_password, scrambled_password_check, SHA1_DIGEST_LENGTH) == 0;
 }
 
-bool AuthFile::authenticate(const SecurityContext &sctx, const string &password)
+bool AuthFile::authenticate(const identifier::User &sctx, const string &password)
 {
-  std::map<std::string, std::string>::const_iterator user= users.find(sctx.getUser());
+  std::map<std::string, std::string>::const_iterator user= users.find(sctx.username());
   if (user == users.end())
     return false;
 
-  if (sctx.getPasswordType() == SecurityContext::MYSQL_HASH)
+  if (sctx.getPasswordType() == identifier::User::MYSQL_HASH)
     return verifyMySQLHash(user->second, sctx.getPasswordContext(), password);
 
   if (password == user->second)

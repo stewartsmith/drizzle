@@ -35,8 +35,6 @@ drop table t1;
 #
 # Bug #6080: Error message for a field with a display width that is too long
 #
---error ER_PARSE_ERROR
-create table t1 (a int(256));
 --error ER_TOO_BIG_FIELDLENGTH
 create table t1 (a varchar(66000));
 

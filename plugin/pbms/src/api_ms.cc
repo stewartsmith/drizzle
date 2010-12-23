@@ -1,6 +1,6 @@
 #ifdef NOT_USED_IN_ANY_THING
 
-/* Copyright (c) 2008 PrimeBase Technologies GmbH, Germany
+/* Copyright (C) 2008 PrimeBase Technologies GmbH, Germany
  *
  * PrimeBase Media Stream for MySQL
  *

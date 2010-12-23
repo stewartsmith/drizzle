@@ -39,15 +39,20 @@ static const std::string PROGRAM_ERROR("PROGRAM_ERROR");
 
 // These are used to generate strings for types
 static const std::string VARCHAR("VARCHAR");
+static const std::string VARBINARY("VARBINARY");
 static const std::string DOUBLE("DOUBLE");
+static const std::string TEXT("TEXT");
 static const std::string BLOB("BLOB");
 static const std::string ENUM("ENUM");
 static const std::string INTEGER("INTEGER");
 static const std::string BIGINT("BIGINT");
 static const std::string DECIMAL("DECIMAL");
 static const std::string DATE("DATE");
+static const std::string EPOCH("EPOCH");
 static const std::string TIMESTAMP("TIMESTAMP");
 static const std::string DATETIME("DATETIME");
+static const std::string TIME("TIME");
+static const std::string UUID("UUID");
 
 static const std::string UNDEFINED("UNDEFINED");
 static const std::string RESTRICT("RESTRICT");
@@ -118,6 +123,66 @@ void update(drizzled::message::Table &arg)
   arg.set_update_timestamp(time(NULL));
 }
 
+bool is_numeric(const message::Table::Field &field)
+{
+  message::Table::Field::FieldType type= field.type();
+
+  switch (type)
+  {
+  case message::Table::Field::DOUBLE:
+  case message::Table::Field::INTEGER:
+  case message::Table::Field::BIGINT:
+  case message::Table::Field::DECIMAL:
+    return true;
+  case message::Table::Field::BLOB:
+  case message::Table::Field::VARCHAR:
+  case message::Table::Field::ENUM:
+  case message::Table::Field::DATE:
+  case message::Table::Field::EPOCH:
+  case message::Table::Field::DATETIME:
+  case message::Table::Field::TIME:
+  case message::Table::Field::UUID:
+    break;
+  }
+
+  return false;
+}
+
+const std::string &type(const message::Table::Field &field)
+{
+  message::Table::Field::FieldType type= field.type();
+
+  switch (type)
+  {
+  case message::Table::Field::VARCHAR:
+    return field.string_options().collation().compare("binary") ? VARCHAR : VARBINARY;
+  case message::Table::Field::DOUBLE:
+    return DOUBLE;
+  case message::Table::Field::BLOB:
+    return field.string_options().collation().compare("binary") ? TEXT : BLOB;
+  case message::Table::Field::ENUM:
+    return ENUM;
+  case message::Table::Field::INTEGER:
+    return INTEGER;
+  case message::Table::Field::BIGINT:
+    return BIGINT;
+  case message::Table::Field::DECIMAL:
+    return DECIMAL;
+  case message::Table::Field::DATE:
+    return DATE;
+  case message::Table::Field::EPOCH:
+    return TIMESTAMP;
+  case message::Table::Field::DATETIME:
+    return DATETIME;
+  case message::Table::Field::TIME:
+    return TIME;
+  case message::Table::Field::UUID:
+    return UUID;
+  }
+
+  abort();
+}
+
 const std::string &type(drizzled::message::Table::Field::FieldType type)
 {
   switch (type)
@@ -138,14 +203,17 @@ const std::string &type(drizzled::message::Table::Field::FieldType type)
     return DECIMAL;
   case message::Table::Field::DATE:
     return DATE;
-  case message::Table::Field::TIMESTAMP:
-    return TIMESTAMP;
+  case message::Table::Field::EPOCH:
+    return EPOCH;
   case message::Table::Field::DATETIME:
     return DATETIME;
+  case message::Table::Field::TIME:
+    return TIME;
+  case message::Table::Field::UUID:
+    return UUID;
   }
 
-  assert(0);
-  return PROGRAM_ERROR;
+  abort();
 }
 
 const std::string &type(drizzled::message::Table::ForeignKeyConstraint::ForeignKeyOption type)

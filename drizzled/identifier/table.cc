@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -41,6 +41,8 @@ using namespace std;
 
 namespace drizzled
 {
+
+class SchemaIdentifier;
 
 extern std::string drizzle_tmpdir;
 extern pid_t current_pid;
@@ -301,6 +303,65 @@ void TableIdentifier::getSQLPath(std::string &sql_path) const  // @todo this is 
     sql_path.append(table_name);
     break;
   }
+}
+
+bool TableIdentifier::isValid() const
+{
+  if (not SchemaIdentifier::isValid())
+    return false;
+
+  bool error= false;
+  do
+  {
+    if (table_name.empty())
+    {
+      error= true;
+      break;
+    }
+
+    if (table_name.size() > NAME_LEN)
+    {
+      error= true;
+      break;
+    }
+
+    if (table_name.at(table_name.length() -1) == ' ')
+    {
+      error= true;
+      break;
+    }
+
+    if (table_name.at(0) == '.')
+    {
+      error= true;
+      break;
+    }
+
+    {
+      const CHARSET_INFO * const cs= &my_charset_utf8mb4_general_ci;
+
+      int well_formed_error;
+      uint32_t res= cs->cset->well_formed_len(cs, table_name.c_str(), table_name.c_str() + table_name.length(),
+                                              NAME_CHAR_LEN, &well_formed_error);
+      if (well_formed_error or table_name.length() != res)
+      {
+        error= true;
+        break;
+      }
+    }
+  } while (0);
+
+  if (error)
+  {
+    std::string name;
+
+    getSQLPath(name);
+    my_error(ER_WRONG_TABLE_NAME, MYF(0), name.c_str());
+
+    return false;
+  }
+
+  return true;
 }
 
 

@@ -203,7 +203,7 @@ select @a;
 @a
 18446744071710965857
 CREATE TABLE `bigfailure` (
-`afield` BIGINT NOT NULL
+`afield` BIGINT UNSIGNED NOT NULL
 );
 INSERT INTO `bigfailure` VALUES (18446744071710965857);
 SELECT * FROM bigfailure;
@@ -226,15 +226,15 @@ afield
 SET @a := (SELECT afield FROM bigfailure);
 SELECT @a;
 @a
--1998585759
+18446744071710965857
 SET @a := (select afield from (SELECT afield FROM bigfailure) as b);
 SELECT @a;
 @a
--1998585759
+18446744071710965857
 SET @a := (select * from bigfailure where afield = (SELECT afield FROM bigfailure));
 SELECT @a;
 @a
--1998585759
+18446744071710965857
 drop table bigfailure;
 create table t1(f1 int, f2 int);
 insert into t1 values (1,2),(2,3),(3,1);

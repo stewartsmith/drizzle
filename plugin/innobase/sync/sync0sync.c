@@ -1,7 +1,7 @@
 /*****************************************************************************
 
-Copyright (c) 1995, 2010, Innobase Oy. All Rights Reserved.
-Copyright (c) 2008, Google Inc.
+Copyright (C) 1995, 2010, Innobase Oy. All Rights Reserved.
+Copyright (C) 2008, Google Inc.
 
 Portions of this file contain modifications contributed and copyrighted by
 Google, Inc. Those modifications are gratefully acknowledged and are described
@@ -1207,8 +1207,8 @@ sync_thread_add_level(
 
 	case SYNC_BUF_BLOCK:
 		/* Either the thread must own the buffer pool mutex
-		(buf_pool_mutex), or it is allowed to latch only ONE
-		buffer block (block->mutex or buf_pool_zip_mutex). */
+		(buf_pool->mutex), or it is allowed to latch only ONE
+		buffer block (block->mutex or buf_pool->zip_mutex). */
 		if (!sync_thread_levels_g(array, level, FALSE)) {
 			ut_a(sync_thread_levels_g(array, level - 1, TRUE));
 			ut_a(sync_thread_levels_contain(array, SYNC_BUF_POOL));

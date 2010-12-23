@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1994, 2010, Innobase Oy. All Rights Reserved.
+Copyright (C) 1994, 2010, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -242,6 +242,22 @@ btr_cur_pessimistic_insert(
 	ulint		n_ext,	/*!< in: number of externally stored columns */
 	que_thr_t*	thr,	/*!< in: query thread or NULL */
 	mtr_t*		mtr);	/*!< in: mtr */
+/*************************************************************//**
+See if there is enough place in the page modification log to log
+an update-in-place.
+@return	TRUE if enough place */
+UNIV_INTERN
+ibool
+btr_cur_update_alloc_zip(
+/*=====================*/
+	page_zip_des_t*	page_zip,/*!< in/out: compressed page */
+	buf_block_t*	block,	/*!< in/out: buffer page */
+	dict_index_t*	index,	/*!< in: the index corresponding to the block */
+	ulint		length,	/*!< in: size needed */
+	ibool		create,	/*!< in: TRUE=delete-and-insert,
+				FALSE=update-in-place */
+	mtr_t*		mtr)	/*!< in: mini-transaction */
+	UNIV_WARN_UNUSED_RESULT_NONNULL;
 /*************************************************************//**
 Updates a record when the update causes no size changes in its fields.
 @return	DB_SUCCESS or error number */
@@ -492,7 +508,7 @@ Stores the fields in big_rec_vec to the tablespace and puts pointers to
 them in rec.  The extern flags in rec will have to be set beforehand.
 The fields are stored on pages allocated from leaf node
 file segment of the index tree.
-@return	DB_SUCCESS or error */
+@return	DB_SUCCESS or DB_OUT_OF_FILE_SPACE */
 UNIV_INTERN
 ulint
 btr_store_big_rec_extern_fields(

@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008-2009 Sun Microsystems
+ *  Copyright (C) 2008-2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -168,6 +168,14 @@ void localtime_to_TIME(DRIZZLE_TIME *to, struct tm *from)
   to->hour=	(int) from->tm_hour;
   to->minute=	(int) from->tm_min;
   to->second=   (int) from->tm_sec;
+}
+
+void make_time(const DRIZZLE_TIME *l_time, String *str)
+{
+  str->alloc(MAX_DATE_STRING_REP_LENGTH);
+  uint32_t length= (uint32_t) my_time_to_str(l_time, str->c_ptr());
+  str->length(length);
+  str->set_charset(&my_charset_bin);
 }
 
 void make_date(const DRIZZLE_TIME *l_time, String *str)

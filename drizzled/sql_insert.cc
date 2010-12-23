@@ -25,7 +25,7 @@
 #include <drizzled/probes.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/sql_load.h>
-#include <drizzled/field/timestamp.h>
+#include <drizzled/field/epoch.h>
 #include <drizzled/lock.h>
 #include "drizzled/sql_table.h"
 #include "drizzled/pthread_globals.h"
@@ -129,7 +129,7 @@ static int check_insert_fields(Session *session, TableList *table_list,
       }
       else
       {
-        table->setWriteSet(table->timestamp_field->field_index);
+        table->setWriteSet(table->timestamp_field->position());
       }
     }
   }
@@ -170,8 +170,8 @@ static int check_update_fields(Session *session, TableList *insert_table_list,
       Unmark the timestamp field so that we can check if this is modified
       by update_fields
     */
-    timestamp_mark= table->write_set->test(table->timestamp_field->field_index);
-    table->write_set->reset(table->timestamp_field->field_index);
+    timestamp_mark= table->write_set->test(table->timestamp_field->position());
+    table->write_set->reset(table->timestamp_field->position());
   }
 
   /* Check the fields we are going to modify */
@@ -189,7 +189,7 @@ static int check_update_fields(Session *session, TableList *insert_table_list,
 
     if (timestamp_mark)
     {
-      table->setWriteSet(table->timestamp_field->field_index);
+      table->setWriteSet(table->timestamp_field->position());
     }
   }
   return 0;
@@ -1704,7 +1704,9 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
 
   /* Mark all fields that are given values */
   for (Field **f= field ; *f ; f++)
-    table->setWriteSet((*f)->field_index);
+  {
+    table->setWriteSet((*f)->position());
+  }
 
   /* Don't set timestamp if used */
   table->timestamp_field_type= TIMESTAMP_NO_AUTO_SET;

@@ -520,7 +520,7 @@ const unsigned char *Field_blob::unpack(unsigned char *,
                                         bool low_byte_first)
 {
   uint32_t const length= get_length(from, low_byte_first);
-  getTable()->setWriteSet(field_index);
+  getTable()->setWriteSet(position());
   store(reinterpret_cast<const char*>(from) + sizeof(uint32_t),
         length, field_charset);
   return(from + sizeof(uint32_t) + length);

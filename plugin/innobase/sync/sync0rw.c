@@ -1,7 +1,7 @@
 /*****************************************************************************
 
-Copyright (c) 1995, 2009, Innobase Oy. All Rights Reserved.
-Copyright (c) 2008, Google Inc.
+Copyright (C) 1995, 2009, Innobase Oy. All Rights Reserved.
+Copyright (C) 2008, Google Inc.
 
 Portions of this file contain modifications contributed and copyrighted by
 Google, Inc. Those modifications are gratefully acknowledged and are described
@@ -1002,7 +1002,7 @@ rw_lock_debug_print(
 
 	rwt	  = info->lock_type;
 
-	fprintf(stderr, "Locked: thread %ld file %s line %ld  ",
+	fprintf(stderr, "Locked: thread %lu file %s line %lu  ",
 		(ulong) os_thread_pf(info->thread_id), info->file_name,
 		(ulong) info->line);
 	if (rwt == RW_LOCK_SHARED) {

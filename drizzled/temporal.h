@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008-2009 Sun Microsystems
+ *  Copyright (C) 2008-2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -419,7 +419,7 @@ public:
    *
    * @param Pointer to a time_t to convert to
    */
-  virtual void to_time_t(time_t *to) const;
+  virtual void to_time_t(time_t &to) const;
 
   /**
    * Attempts to populate the Date instance based
@@ -485,8 +485,10 @@ public:
   bool is_valid_datetime() const {return false;}
   bool is_valid_time() const {return is_valid();}
   bool is_valid_timestamp() const {return false;}
+
   /** Returns whether the temporal value is valid date. */
   bool is_valid() const;
+  bool is_fuzzy_valid() const;
 
   /**
    * Fills a supplied char string with a
@@ -528,6 +530,15 @@ public:
    * @param Integer to fill.
    */
   void to_int32_t(int32_t *to) const;
+
+  /**
+   * Fills a supplied 8-byte integer pointer with an
+   * integer representation of the Time
+   * value. It is assume seconds past unix epoch
+   *
+   * @param Integer to fill.
+   */
+  void to_uint64_t(uint64_t &to) const;
 
   /**
    * Attempts to populate the Time instance based
@@ -738,7 +749,7 @@ public:
    *
    * @param Pointer to a time_t to convert to
    */
-  void to_time_t(time_t *to) const;
+  void to_time_t(time_t &to) const;
 };
 
 /**

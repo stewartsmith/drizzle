@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@
 #include "drizzled/lock.h"
 #include "drizzled/item/int.h"
 #include "drizzled/item/empty_string.h"
-#include "drizzled/field/timestamp.h"
+#include "drizzled/field/epoch.h"
 #include "drizzled/message/table.pb.h"
 #include "drizzled/plugin/client.h"
 #include "drizzled/internal/my_sys.h"

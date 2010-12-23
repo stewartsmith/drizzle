@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Sun Microsystems
+ *  Copyright (C) 2010 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -37,6 +37,7 @@ ColumnsTool::ColumnsTool() :
   add_field("COLUMN_DEFAULT", plugin::TableFunction::VARBINARY, 65535, true);
   add_field("COLUMN_DEFAULT_IS_NULL", plugin::TableFunction::BOOLEAN, 0, false);
   add_field("COLUMN_DEFAULT_UPDATE");
+  add_field("IS_SIGNED", plugin::TableFunction::BOOLEAN, 0, true);
   add_field("IS_AUTO_INCREMENT", plugin::TableFunction::BOOLEAN, 0, false);
   add_field("IS_NULLABLE", plugin::TableFunction::BOOLEAN, 0, false);
   add_field("IS_INDEXED", plugin::TableFunction::BOOLEAN, 0, false);
@@ -46,7 +47,7 @@ ColumnsTool::ColumnsTool() :
   add_field("IS_FIRST_IN_MULTI", plugin::TableFunction::BOOLEAN, 0, false);
   add_field("INDEXES_FOUND_IN", plugin::TableFunction::NUMBER, 0, false);
   add_field("DATA_TYPE");
-
+  add_field("DATA_ARCHETYPE");
   add_field("CHARACTER_MAXIMUM_LENGTH", plugin::TableFunction::NUMBER);
   add_field("CHARACTER_OCTET_LENGTH", plugin::TableFunction::NUMBER);
   add_field("NUMERIC_PRECISION", plugin::TableFunction::NUMBER);
@@ -115,6 +116,16 @@ bool ColumnsTool::Generator::populate()
     /* COLUMN_DEFAULT_UPDATE */
     push(column.options().update_expression());
 
+    /* IS_SIGNED */
+    if (drizzled::message::is_numeric(column))
+    {
+      push(true);
+    }
+    else 
+    {
+      push();
+    }
+
     /* IS_AUTO_INCREMENT */
     push(column.numeric_options().is_autoincrement());
 
@@ -165,7 +176,10 @@ bool ColumnsTool::Generator::populate()
     push(is_multi_first);
     push(indexes_found_in);
 
-    /* DATATYPE */
+    /* DATA_TYPE <-- display the type that the user is going to expect, which is not the same as the type we store internally */
+    push(drizzled::message::type(column));
+
+    /* DATA_ARCHETYPE */
     push(drizzled::message::type(column.type()));
 
     /* "CHARACTER_MAXIMUM_LENGTH" */

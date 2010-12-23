@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 2000, 2010, Innobase Oy. All Rights Reserved.
+Copyright (C) 2000, 2010, Innobase Oy. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -536,6 +536,10 @@ struct mysql_row_templ_struct {
 	ulint	col_no;			/*!< column number of the column */
 	ulint	rec_field_no;		/*!< field number of the column in an
 					Innobase record in the current index;
+					not defined if template_type is
+					ROW_MYSQL_WHOLE_ROW */
+	ulint	clust_rec_field_no;	/*!< field number of the column in an
+					Innobase record in the clustered index;
 					not defined if template_type is
 					ROW_MYSQL_WHOLE_ROW */
 	ulint	mysql_col_offset;	/*!< offset of the column in the MySQL

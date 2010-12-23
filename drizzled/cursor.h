@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -145,6 +145,7 @@ inline key_part_map make_prev_keypart_map(T a)
 */
 class Cursor
 {
+  friend class SEAPITesterCursor;
   Table &table;               /* The current open table */
   plugin::StorageEngine &engine;      /* storage engine of this Cursor */
 

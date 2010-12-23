@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ namespace drizzled
 */
 
 static bool make_date_time(String *format, DRIZZLE_TIME *l_time,
-		    enum enum_drizzle_timestamp_type type, String *str)
+                           enum enum_drizzle_timestamp_type type, String *str)
 {
   char intbuff[15];
   uint32_t hours_i;
@@ -399,7 +399,7 @@ String *Item_func_date_format::val_str(String *str)
   {
     String *res;
     if (!(res=args[0]->val_str(str)) ||
-	(str_to_time_with_warn(res->ptr(), res->length(), &l_time)))
+        (str_to_time_with_warn(res->ptr(), res->length(), &l_time)))
       goto null_date;
 
     l_time.year=l_time.month=l_time.day=0;
@@ -419,19 +419,21 @@ String *Item_func_date_format::val_str(String *str)
 
   if (format == str)
     str= &value;				// Save result here
+
   if (str->alloc(size))
     goto null_date;
 
   /* Create the result string */
   str->set_charset(collation.collation);
-  if (!make_date_time(format, &l_time,
-                      is_time_format ? DRIZZLE_TIMESTAMP_TIME :
-                                       DRIZZLE_TIMESTAMP_DATE,
-                      str))
+  if (not make_date_time(format, &l_time,
+                         is_time_format ? DRIZZLE_TIMESTAMP_TIME :
+                         DRIZZLE_TIMESTAMP_DATE,
+                         str))
     return str;
 
 null_date:
   null_value=1;
+
   return 0;
 }
 
