@@ -1,0 +1,53 @@
+#
+# Tests simple INSERT statements and the transaction log
+#
+
+# Ignore startup/shutdown events
+--disable_query_log
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
+--enable_query_log
+
+
+# Populate log with some records...
+##--source ../plugin/transaction_log/tests/t/insert.inc
+#
+# Simple test of the transaction log for single INSERT statements
+#
+# We create a table and insert some records
+# into it.
+#
+# We then use the transaction_reader in plugin/transaction_log/utilities to read the events.
+#
+
+--disable_warnings
+DROP TABLE IF EXISTS t1;
+--enable_warnings
+CREATE TABLE source (
+  pk int auto_increment primary key,
+  d varchar(16000)
+) engine=storage_engine_api_tester;
+CREATE TABLE dest (
+  pk int primary key,
+  d varchar(16000)
+) engine=storage_engine_api_tester;
+
+insert into source (d) values (repeat("B",16000));
+insert into source (d) values (repeat("B",16000));
+insert into source (d) values (repeat("B",16000));
+insert into source (d) values (repeat("B",16000));
+insert into source (d) values (repeat("B",16000));
+#enable error inject
+SELECT seapitester_error_inject(3);
+--error 1205
+INSERT into dest SELECT * from source;
+DROP TABLE source;
+drop table dest;
+# disable err inject
+select seapitester_error_inject(0);
+# Read in the transaction.log.
+
+--exec ../plugin/transaction_log/utilities/transaction_reader var/master-data/local/transaction.log
+
+# Truncate the log file to reset for the next test
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
+

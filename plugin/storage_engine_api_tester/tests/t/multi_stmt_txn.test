@@ -1,0 +1,18 @@
+create table t1 (a int) engine=storage_engine_api_tester;
+begin;
+select * from t1;
+select * from t1;
+commit;
+drop table t1;
+
+create table t1 (a int) engine=storage_engine_api_tester;
+begin;
+select * from t1;
+insert into t1 values (1);
+insert into t1 values (1);
+insert into t1 values (1);
+select * from t1;
+insert into t1 values (1);
+select * from t1;
+commit;
+drop table t1;

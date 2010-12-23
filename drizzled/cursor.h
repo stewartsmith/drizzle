@@ -145,6 +145,7 @@ inline key_part_map make_prev_keypart_map(T a)
 */
 class Cursor
 {
+  friend class SEAPITesterCursor;
   Table &table;               /* The current open table */
   plugin::StorageEngine &engine;      /* storage engine of this Cursor */
 
