@@ -50,7 +50,8 @@ ProcesslistTool::ProcesslistTool() :
 }
 
 ProcesslistTool::Generator::Generator(Field **arg) :
-  plugin::TableFunction::Generator(arg)
+  plugin::TableFunction::Generator(arg),
+  session_generator(*getSession().user())
 {
   now= time(NULL);
 }
@@ -61,7 +62,7 @@ ProcesslistTool::Generator::~Generator()
 
 bool ProcesslistTool::Generator::populate()
 {
-  drizzled::Session::shared_ptr tmp;
+  drizzled::Session::pointer tmp;
 
   while ((tmp= session_generator))
   {

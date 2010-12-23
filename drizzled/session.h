@@ -319,6 +319,9 @@ public:
   typedef boost::unordered_map<std::string, util::Storable *, util::insensitive_hash, util::insensitive_equal_to> PropertyMap;
   typedef Session* Ptr;
   typedef boost::shared_ptr<Session> shared_ptr;
+  typedef const Session& const_reference;
+  typedef const Session* const_pointer;
+  typedef Session* pointer;
 
   /*
     MARK_COLUMNS_NONE:  Means mark_used_colums is not set and no indicator to
@@ -529,7 +532,10 @@ public:
   static const char * const DEFAULT_WHERE;
 
   memory::Root warn_root; /**< Allocation area for warnings and errors */
+private:
   plugin::Client *client; /**< Pointer to client object */
+
+public:
 
   void setClient(plugin::Client *client_arg);
 
@@ -601,7 +607,7 @@ public:
   /**
    * Is this session viewable by the current user?
    */
-  bool isViewable() const;
+  bool isViewable(identifier::User::const_reference) const;
 
   /**
     Used in error messages to tell user in what part of MySQL we found an
@@ -1217,6 +1223,7 @@ public:
    */
   static bool schedule(Session::shared_ptr&);
 
+  static void unlink(session_id_t &session_id);
   static void unlink(Session::shared_ptr&);
 
   /*
@@ -1430,11 +1437,10 @@ public:
    * updates any status variables necessary.
    *
    * @param errcode	Error code to print to console
-   * @param should_lock 1 if we have have to lock LOCK_thread_count
    *
    * @note  For the connection that is doing shutdown, this is called twice
    */
-  void disconnect(uint32_t errcode, bool lock);
+  void disconnect(enum drizzled_error_code errcode= EE_OK);
 
   /**
    * Check if user exists and the password supplied is correct.

@@ -282,16 +282,16 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   {
   case Diagnostics_area::DA_ERROR:
     /* The query failed, send error to log and abort bootstrap. */
-    session->client->sendError(session->main_da.sql_errno(),
+    session->getClient()->sendError(session->main_da.sql_errno(),
                                session->main_da.message());
     break;
 
   case Diagnostics_area::DA_EOF:
-    session->client->sendEOF();
+    session->getClient()->sendEOF();
     break;
 
   case Diagnostics_area::DA_OK:
-    session->client->sendOK();
+    session->getClient()->sendOK();
     break;
 
   case Diagnostics_area::DA_DISABLED:
@@ -299,7 +299,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
   case Diagnostics_area::DA_EMPTY:
   default:
-    session->client->sendOK();
+    session->getClient()->sendOK();
     break;
   }
 
