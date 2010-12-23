@@ -364,11 +364,47 @@ drizzle_column_st *drizzle_column_create(drizzle_result_st *result,
       return NULL;
     }
 
-    memset(column, 0, sizeof(drizzle_column_st));
-    column->options|= DRIZZLE_COLUMN_ALLOCATED;
+    column->result = result;
+    /* SET BELOW: column->next */
+    column->prev = NULL;
+    column->options= DRIZZLE_COLUMN_ALLOCATED;
+    column->catalog[0] = '\0';
+    column->db[0] = '\0';
+    column->table[0] = '\0';
+    column->orig_table[0] = '\0';
+    column->name[0] = '\0';
+    column->orig_name[0] = '\0';
+    column->charset = 0;
+    column->size = 0;
+    column->max_size = 0;
+    column->type = 0;
+    column->flags = 0;
+    column->decimals = 0;
+    /* UNSET: column->default_value */
+    column->default_value_size = 0;
+
   }
   else
-    memset(column, 0, sizeof(drizzle_column_st));
+  {
+    column->result = result;
+    /* SET BELOW: column->next */
+    column->prev = NULL;
+    column->options= 0;
+    column->catalog[0] = '\0';
+    column->db[0] = '\0';
+    column->table[0] = '\0';
+    column->orig_table[0] = '\0';
+    column->name[0] = '\0';
+    column->orig_name[0] = '\0';
+    column->charset = 0;
+    column->size = 0;
+    column->max_size = 0;
+    column->type = 0;
+    column->flags = 0;
+    column->decimals = 0;
+    /* UNSET: column->default_value */
+    column->default_value_size = 0;
+  }
 
   column->result= result;
 
