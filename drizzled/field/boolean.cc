@@ -132,16 +132,23 @@ int  Boolean::store(double nr)
   return 0;
 }
 
-int Boolean::store_decimal(const drizzled::my_decimal*)
+int Boolean::store_decimal(const drizzled::my_decimal *dec)
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
-  my_error(ER_INVALID_BOOLEAN_VALUE, MYF(ME_FATALERROR), " ");
-  return 1;
+  if (my_decimal_is_zero(dec))
+  {
+    setFalse();
+    return 0;
+  }
+
+  setTrue();
+
+  return 0;
 }
 
 void Boolean::sql_type(String &res) const
 {
-  res.set_ascii(STRING_WITH_LEN("bool"));
+  res.set_ascii(STRING_WITH_LEN("boolean"));
 }
 
 double Boolean::val_real()
@@ -193,6 +200,19 @@ String *Boolean::val_str(String *val_buffer, String *)
   }
 
   return val_buffer;
+}
+
+my_decimal *Boolean::val_decimal(my_decimal *dec)
+{
+  if (isTrue())
+  {
+    int2my_decimal(E_DEC_OK, 1, false, dec);
+    return dec;
+  }
+
+  my_decimal_set_zero(dec);
+
+  return dec;
 }
 
 void Boolean::sort_string(unsigned char *to, uint32_t length_arg)

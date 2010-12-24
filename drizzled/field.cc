@@ -524,7 +524,7 @@ static Item_result field_types_result_type [enum_field_types_size]=
   //DRIZZLE_TYPE_TIME
   STRING_RESULT,
   //DRIZZLE_TYPE_BOOLEAN
-  INT_RESULT,
+  STRING_RESULT,
   //DRIZZLE_TYPE_UUID
   STRING_RESULT,
 };

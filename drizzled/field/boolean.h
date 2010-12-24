@@ -55,9 +55,11 @@ public:
   String *val_str(String*,String *);
   double val_real();
   int64_t val_int();
+  my_decimal *val_decimal(my_decimal *);
+
   void sql_type(drizzled::String&) const;
 
-  Item_result result_type () const { return INT_RESULT; }
+  Item_result result_type () const { return STRING_RESULT; }
   int cmp(const unsigned char*, const unsigned char*);
   void sort_string(unsigned char*, uint32_t);
   uint32_t max_display_length() { return 5; } // longest string is "false"

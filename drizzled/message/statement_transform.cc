@@ -1357,7 +1357,7 @@ transformFieldDefinitionToSql(const Table::Field &field,
     destination.append(" UUID", 5);
     break;
   case Table::Field::BOOLEAN:
-    destination.append(" BOOLEAN", 5);
+    destination.append(" BOOLEAN", 8);
     break;
   case Table::Field::INTEGER:
     destination.append(" INT", 4);
@@ -1384,7 +1384,7 @@ transformFieldDefinitionToSql(const Table::Field &field,
     destination.append(" DATETIME",  9);
     break;
   case Table::Field::TIME:
-    destination.append(" TIME",  9);
+    destination.append(" TIME",  5);
     break;
   }
 
