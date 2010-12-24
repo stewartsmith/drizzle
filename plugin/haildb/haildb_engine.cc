@@ -2526,6 +2526,46 @@ int HailDBCursor::info(uint32_t flag)
 
   }
 
+  if (flag & HA_STATUS_CONST)
+  {
+    for (unsigned int i = 0; i < getTable()->getShare()->sizeKeys(); i++)
+    {
+      const char* index_name= getTable()->key_info[i].name;
+      uint64_t ncols;
+      int64_t *n_diff;
+      ha_rows rec_per_key;
+
+      err= ib_get_index_stat_n_diff_key_vals(cursor, index_name,
+                                             &ncols, &n_diff);
+
+      if (err != DB_SUCCESS)
+        return ib_err_t_to_drizzle_error(err);
+
+      for (unsigned int j=0; j < getTable()->key_info[i].key_parts; j++)
+      {
+        if (n_diff[j+1] == 0)
+          rec_per_key= stats.records;
+        else
+          rec_per_key= stats.records / n_diff[j+1];
+
+        /* We import this heuristic from ha_innodb, which says
+           that MySQL favours table scans too much over index searches,
+           so we pretend our index selectivity is 2 times better. */
+
+        rec_per_key= rec_per_key / 2;
+
+        if (rec_per_key == 0)
+          rec_per_key= 1;
+
+        getTable()->key_info[i].rec_per_key[j]=
+          rec_per_key >= ~(ulong) 0 ? ~(ulong) 0 :
+          (ulong) rec_per_key;
+      }
+
+      free(n_diff);
+    }
+  }
+
   return(0);
 }
 
