@@ -17,7 +17,7 @@
   @file
 
   @brief
-  mysql_select and join optimization
+  select_query and join optimization
 
   @defgroup Query_Optimizer  Query Optimizer
   @{
@@ -131,11 +131,11 @@ bool handle_select(Session *session, LEX *lex, select_result *result,
     unit->set_limit(unit->global_parameters);
     session->session_marker= 0;
     /*
-      'options' of mysql_select will be set in JOIN, as far as JOIN for
+      'options' of select_query will be set in JOIN, as far as JOIN for
       every PS/SP execution new, we will not need reset this flag if
       setup_tables_done_option changed for next rexecution
     */
-    res= mysql_select(session,
+    res= select_query(session,
                       &select_lex->ref_pointer_array,
 		      (TableList*) select_lex->table_list.first,
 		      select_lex->with_wild,
@@ -270,7 +270,7 @@ bool fix_inner_refs(Session *session,
 
 /*****************************************************************************
   Check fields, find best join, do the select and output fields.
-  mysql_select assumes that all tables are already opened
+  select_query assumes that all tables are already opened
 *****************************************************************************/
 
 /*
@@ -350,7 +350,7 @@ void save_index_subquery_explain_info(JoinTable *join_tab, Item* where)
   @retval
     true   an error
 */
-bool mysql_select(Session *session,
+bool select_query(Session *session,
                   Item ***rref_pointer_array,
                   TableList *tables, 
                   uint32_t wild_num, 
@@ -931,7 +931,7 @@ bool store_val_in_field(Field *field, Item *item, enum_check_fields check_flag)
 
   /*
     we should restore old value of count_cuted_fields because
-    store_val_in_field can be called from mysql_insert
+    store_val_in_field can be called from insert_query
     with select_insert, which make count_cuted_fields= 1
    */
   enum_check_fields old_count_cuted_fields= session->count_cuted_fields;

@@ -81,7 +81,7 @@ public:
 
   /*
     Either this method, or we need to make cache public
-    Arg must be set from mysql_load() since constructor does not see
+    Arg must be set from load() since constructor does not see
     either the table or Session value
   */
   void set_io_cache_arg(void* arg) { cache.arg = arg; }
@@ -103,7 +103,7 @@ static int read_sep_field(Session *session, CopyInfo &info, TableList *table_lis
   Execute LOAD DATA query
 
   SYNOPSYS
-    mysql_load()
+    load()
       session - current thread
       ex  - file_exchange object representing source cursor and its parsing rules
       table_list  - list of tables to which we are loading data
@@ -119,7 +119,7 @@ static int read_sep_field(Session *session, CopyInfo &info, TableList *table_lis
     true - error / false - success
 */
 
-int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
+int load(Session *session,file_exchange *ex,TableList *table_list,
 	        List<Item> &fields_vars, List<Item> &set_fields,
                 List<Item> &set_values,
                 enum enum_duplicates handle_duplicates, bool ignore)

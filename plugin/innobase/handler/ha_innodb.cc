@@ -1411,7 +1411,7 @@ innobase_mysql_tmpfile(void)
 /*========================*/
 {
   int fd2 = -1;
-  int fd = mysql_tmpfile("ib");
+  int fd = ::drizzled::tmpfile("ib");
   if (fd >= 0) {
     /* Copy the file descriptor, so that the additional resources
     allocated by create_temp_file() can be freed by invoking

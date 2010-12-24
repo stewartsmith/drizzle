@@ -268,9 +268,9 @@ static bool add_select_to_union_list(Session *session, LEX *lex, bool is_union_d
   }
   /* This counter shouldn't be incremented for UNION parts */
   lex->nest_level--;
-  if (mysql_new_select(lex, 0))
+  if (new_select(lex, 0))
     return true;
-  mysql_init_select(lex);
+  init_select(lex);
   lex->current_select->linkage=UNION_TYPE;
   if (is_union_distinct) /* UNION DISTINCT - remember position */
     lex->current_select->master_unit()->union_distinct=
@@ -1195,7 +1195,7 @@ create_select:
               is created correctly in this case
             */
             lex->current_select->table_list.save_and_clear(&lex->save_list);
-            mysql_init_select(lex);
+            init_select(lex);
             lex->current_select->parsing_place= SELECT_LIST;
           }
           select_options select_item_list
@@ -2605,7 +2605,7 @@ select_part2:
             LEX *lex= Lex;
             Select_Lex *sel= lex->current_select;
             if (sel->linkage != UNION_TYPE)
-              mysql_init_select(lex);
+              init_select(lex);
             lex->current_select->parsing_place= SELECT_LIST;
           }
           select_options select_item_list
@@ -4026,7 +4026,7 @@ select_part2_derived:
             LEX *lex= Lex;
             Select_Lex *sel= lex->current_select;
             if (sel->linkage != UNION_TYPE)
-              mysql_init_select(lex);
+              init_select(lex);
             lex->current_select->parsing_place= SELECT_LIST;
           }
           select_options select_item_list
@@ -4072,9 +4072,9 @@ select_derived2:
               DRIZZLE_YYABORT;
             }
             if (lex->current_select->linkage == GLOBAL_OPTIONS_TYPE ||
-                mysql_new_select(lex, 1))
+                new_select(lex, 1))
               DRIZZLE_YYABORT;
-            mysql_init_select(lex);
+            init_select(lex);
             lex->current_select->linkage= DERIVED_TABLE_TYPE;
             lex->current_select->parsing_place= SELECT_LIST;
           }
@@ -4680,7 +4680,7 @@ insert:
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
             lex->duplicates= DUP_ERROR;
-            mysql_init_select(lex);
+            init_select(lex);
             /* for subselects */
             lex->lock_option= TL_READ;
           }
@@ -4702,7 +4702,7 @@ replace:
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
             lex->duplicates= DUP_REPLACE;
-            mysql_init_select(lex);
+            init_select(lex);
           }
           insert2
           {
@@ -4836,7 +4836,7 @@ update:
           UPDATE_SYM opt_ignore table_ident
           {
             LEX *lex= Lex;
-            mysql_init_select(lex);
+            init_select(lex);
             lex->sql_command= SQLCOM_UPDATE;
             lex->statement= new(std::nothrow) statement::Update(YYSession);
             if (lex->statement == NULL)
@@ -4859,7 +4859,7 @@ update:
             /*
               In case of multi-update setting write lock for all tables may
               be too pessimistic. We will decrease lock level if possible in
-              mysql_multi_update().
+              multi_update().
             */
             Lex->current_select->set_lock_for_tables(TL_WRITE_DEFAULT);
           }
@@ -4904,7 +4904,7 @@ delete:
             lex->statement= new(std::nothrow) statement::Delete(YYSession);
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
-            mysql_init_select(lex);
+            init_select(lex);
             lex->lock_option= TL_WRITE_DEFAULT;
             lex->ignore= 0;
             lex->select_lex.init_order();
@@ -4958,7 +4958,7 @@ show:
             LEX *lex=Lex;
             lex->wild=0;
             lex->lock_option= TL_READ;
-            mysql_init_select(lex);
+            init_select(lex);
             lex->current_select->parsing_place= SELECT_LIST;
           }
           show_param
@@ -5519,7 +5519,7 @@ describe:
             statement::Show *select;
             LEX *lex= Lex;
             lex->lock_option= TL_READ;
-            mysql_init_select(lex);
+            init_select(lex);
             lex->current_select->parsing_place= SELECT_LIST;
             lex->sql_command= SQLCOM_SELECT;
             select= new(std::nothrow) statement::Show(session);
@@ -6354,7 +6354,7 @@ set:
             lex->statement= statement;
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
-            mysql_init_select(lex);
+            init_select(lex);
             lex->option_type=OPT_SESSION;
             lex->var_list.empty();
           }
@@ -6710,7 +6710,7 @@ subselect_start:
               (SELECT .. ) UNION ...  becomes
               SELECT * FROM ((SELECT ...) UNION ...)
             */
-            if (mysql_new_select(Lex, 1))
+            if (new_select(Lex, 1))
               DRIZZLE_YYABORT;
           }
         ;

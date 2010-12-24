@@ -39,7 +39,7 @@ bool statement::Update::execute()
   }
   assert(select_lex->offset_limit == 0);
   unit->set_limit(select_lex);
-  bool res= mysql_update(session, 
+  bool res= update_query(session, 
                          all_tables,
                          select_lex->item_list,
                          session->lex->value_list,

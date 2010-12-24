@@ -42,7 +42,7 @@ typedef struct charset_info_st CHARSET_INFO;
 extern const LEX_STRING command_name[];
 
 bool execute_sqlcom_select(Session *session, TableList *all_tables);
-bool mysql_insert_select_prepare(Session *session);
+bool insert_select_prepare(Session *session);
 bool update_precheck(Session *session, TableList *tables);
 bool delete_precheck(Session *session, TableList *tables);
 bool insert_precheck(Session *session, TableList *tables);
@@ -60,10 +60,10 @@ bool check_string_char_length(LEX_STRING *str, const char *err_msg,
                               bool no_error);
 
 
-bool mysql_test_parse_for_slave(Session *session, char *inBuf,
+bool test_parse_for_slave(Session *session, char *inBuf,
                                 uint32_t length);
 
-void mysql_reset_session_for_next_command(Session *session);
+void reset_session_for_next_command(Session *session);
 
 void create_select_for_variable(const char *var_name);
 
@@ -74,8 +74,8 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
 bool check_simple_select();
 
-void mysql_init_select(LEX *lex);
-bool mysql_new_select(LEX *lex, bool move_down);
+void init_select(LEX *lex);
+bool new_select(LEX *lex, bool move_down);
 
 int prepare_new_schema_table(Session *session, LEX *lex,
                              const std::string& schema_table_name);
