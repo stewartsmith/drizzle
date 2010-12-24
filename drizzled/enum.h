@@ -1060,8 +1060,12 @@ enum drizzled_error_code {
   ER_ADMIN_ACCESS,
   ER_INVALID_UUID_VALUE,
   ER_INVALID_UUID_TIME,
+  ER_INVALID_CAST_TO_SIGNED,
+  ER_INVALID_CAST_TO_UNSIGNED,
 
-  ER_ERROR_LAST= ER_INVALID_UUID_TIME
+  // Leave UUID as LAST, and force people to use tags instead of numbers in
+  // error messages in test.
+  ER_ERROR_LAST= ER_INVALID_CAST_TO_UNSIGNED
 };
 
 enum drizzle_exit_codes {

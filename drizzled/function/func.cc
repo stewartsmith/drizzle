@@ -637,5 +637,19 @@ Item *Item_func::get_tmp_table_item(Session *session)
   return copy_or_same(session);
 }
 
+const char *Item_func::full_name() const
+{
+  return func_name();
+}
+
+std::ostream& operator<<(std::ostream& output, const Item_func &item)
+{
+  output << "Item_func:(";
+  output <<  item.func_name();
+  output << ")";
+
+  return output;  // for multiple << operators.
+}
+
 
 } /* namespace drizzled */

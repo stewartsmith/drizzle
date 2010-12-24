@@ -1,0 +1,65 @@
+SELECT CAST("12" AS UNSIGNED);
+CAST("12" AS UNSIGNED)
+12
+SELECT CAST(12 AS UNSIGNED);
+CAST(12 AS UNSIGNED)
+12
+SELECT CAST(0 AS UNSIGNED);
+CAST(0 AS UNSIGNED)
+0
+SELECT CAST("0" AS UNSIGNED);
+CAST("0" AS UNSIGNED)
+0
+SELECT CAST(0.0 AS UNSIGNED);
+CAST(0.0 AS UNSIGNED)
+0
+SELECT CAST(0.1 AS UNSIGNED);
+CAST(0.1 AS UNSIGNED)
+0
+SELECT CAST(0.4 AS UNSIGNED);
+CAST(0.4 AS UNSIGNED)
+0
+SELECT CAST(0.5 AS UNSIGNED);
+CAST(0.5 AS UNSIGNED)
+1
+SELECT CAST(0.9 AS UNSIGNED);
+CAST(0.9 AS UNSIGNED)
+1
+SELECT CAST(10.1 AS UNSIGNED);
+CAST(10.1 AS UNSIGNED)
+10
+SELECT CAST("18446744073709551615" AS UNSIGNED);
+CAST("18446744073709551615" AS UNSIGNED)
+18446744073709551615
+SELECT CAST(18446744073709551615 AS UNSIGNED);
+CAST(18446744073709551615 AS UNSIGNED)
+18446744073709551615
+SELECT CAST(-1 AS UNSIGNED);
+ERROR HY000: Cast to unsigned converted negative integer to it's positive complement: -1
+SELECT CAST(-18446744073709551614 AS UNSIGNED);
+ERROR HY000: Cast to unsigned converted negative integer to it's positive complement: -18446744073709551614
+SELECT CAST(-18446744073709551615 AS UNSIGNED);
+ERROR HY000: Cast to unsigned converted negative integer to it's positive complement: -18446744073709551615
+SELECT CAST("-1" AS UNSIGNED);
+ERROR HY000: Cast to unsigned converted negative integer to it's positive complement: -1
+SELECT CAST("-18446744073709551614" AS UNSIGNED);
+ERROR HY000: Cast to unsigned converted negative integer to it's positive complement: -18446744073709551614
+SELECT CAST("-18446744073709551615" AS UNSIGNED);
+ERROR HY000: Cast to unsigned converted negative integer to it's positive complement: -18446744073709551615
+SELECT CAST(-1.1 AS UNSIGNED);
+ERROR HY000: Cast to unsigned converted negative integer to it's positive complement: -1.1
+SELECT CAST(-18446744073709551614.1 AS UNSIGNED);
+ERROR HY000: Cast to unsigned converted negative integer to it's positive complement: -18446744073709551614.1
+SELECT CAST(-18446744073709551615.1 AS UNSIGNED);
+ERROR HY000: Cast to unsigned converted negative integer to it's positive complement: -18446744073709551615.1
+SELECT CAST("-1.1" AS UNSIGNED);
+ERROR HY000: Cast to unsigned converted negative integer to it's positive complement: -1.1
+SELECT CAST("-18446744073709551614.1" AS UNSIGNED);
+ERROR HY000: Cast to unsigned converted negative integer to it's positive complement: -18446744073709551614.1
+SELECT CAST("-18446744073709551615.1" AS UNSIGNED);
+ERROR HY000: Cast to unsigned converted negative integer to it's positive complement: -18446744073709551615.1
+SELECT CAST("-18446744073709551615.1" AS UNSIGNED);
+ERROR HY000: Cast to unsigned converted negative integer to it's positive complement: -18446744073709551615.1
+SELECT CAST(-(-1) AS UNSIGNED);
+CAST(-(-1) AS UNSIGNED)
+1

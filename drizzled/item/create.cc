@@ -83,7 +83,9 @@
 #include <drizzled/function/math/tan.h>
 #include <drizzled/function/units.h>
 
+#include "drizzled/function/cast/signed.h"
 #include "drizzled/function/cast/time.h"
+#include "drizzled/function/cast/unsigned.h"
 
 using namespace std;
 
@@ -2090,6 +2092,14 @@ create_func_cast(Session *session, Item *a, Cast_target cast_type,
   uint32_t dec;
 
   switch (cast_type) {
+  case ITEM_CAST_SIGNED:
+    res= new (session->mem_root) function::cast::Signed(a);
+    break;
+
+  case ITEM_CAST_UNSIGNED:
+    res= new (session->mem_root) function::cast::Unsigned(a);
+    break;
+
   case ITEM_CAST_BINARY:
     res= new (session->mem_root) Item_func_binary(a);
     break;

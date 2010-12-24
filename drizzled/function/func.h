@@ -45,6 +45,8 @@ public:
 
   using Item::split_sum_func;
 
+  virtual const char *full_name() const;
+
   uint32_t arg_count;
   table_map used_tables_cache, not_null_tables_cache;
   bool const_item_cache;
@@ -223,6 +225,8 @@ public:
   }
 
 };
+
+std::ostream& operator<<(std::ostream& output, const Item_func &item);
 
 } /* namespace drizzled */
 
