@@ -372,6 +372,7 @@ inline const EnumDescriptor* GetEnumDescriptor<Table_TableOptions_RowType>() {
       PROTOSKIP_WARNINGS="-Wno-effc++ -Wno-shadow -Wno-missing-braces ${NO_ATTRIBUTES}"
       NO_WERROR="-Wno-error"
       INNOBASE_SKIP_WARNINGS="-Wno-shadow -Wno-cast-align"
+      PERMISSIVE_WARNINGS="-Wno-error -fpermissive"
       AS_IF([test "$host_vendor" = "apple"],[
         BOOSTSKIP_WARNINGS="-Wno-uninitialized"
       ])
@@ -430,6 +431,7 @@ inline const EnumDescriptor* GetEnumDescriptor<Table_TableOptions_RowType>() {
   AC_SUBST(NO_OLD_STYLE_CAST)
   AC_SUBST(PROTOSKIP_WARNINGS)
   AC_SUBST(BOOSTSKIP_WARNINGS)
+  AC_SUBST(PERMISSIVE_WARNINGS)
   AC_SUBST(INNOBASE_SKIP_WARNINGS)
   AC_SUBST(NO_WERROR)
   AC_SUBST([GCOV_LIBS])

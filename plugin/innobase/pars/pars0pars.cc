@@ -41,7 +41,7 @@ on 1/27/1998 */
 #include "que0que.h"
 #ifndef PARS0GRM_H
 # define PARS0GRM_H
-# include "pars0grm.h"
+# include "pars0grm.hh"
 #endif
 #include "pars0opt.h"
 #include "data0data.h"
@@ -164,7 +164,7 @@ pars_func_low(
 
 	node->func = func;
 
-	node->class = pars_func_get_class(func);
+	node->func_class = pars_func_get_class(func);
 
 	node->args = arg;
 
@@ -689,7 +689,7 @@ pars_check_aggregate(
 
 			func_node = exp_node;
 
-			if (func_node->class == PARS_FUNC_AGGREGATE) {
+			if (func_node->func_class == PARS_FUNC_AGGREGATE) {
 
 				n_aggregate_nodes++;
 			}

@@ -4175,7 +4175,7 @@ buf_pool_invalidate_instance(
 	buf_pool_t*	buf_pool)	/*!< in: buffer pool instance */
 {
 	ibool		freed;
-	enum buf_flush	i;
+	int	i;
 
 	buf_pool_mutex_enter(buf_pool);
 

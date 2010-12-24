@@ -28,7 +28,7 @@ Created 12/29/1997 Heikki Tuuri
 #include "rem0cmp.h"
 #ifndef PARS0GRM_H
 # define PARS0GRM_H
-# include "pars0grm.h"
+# include "pars0grm.hh"
 #endif
 
 /*****************************************************************//**

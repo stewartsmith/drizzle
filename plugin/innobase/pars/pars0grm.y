@@ -38,8 +38,7 @@ que_node_t */
 
 /* #define __STDC__ */
 
-int
-yylex(void);
+extern "C" int yylex(void);
 %}
 
 %expect 27

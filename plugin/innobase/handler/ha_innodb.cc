@@ -82,7 +82,6 @@ using namespace std;
 /** @file ha_innodb.cc */
 
 /* Include necessary InnoDB headers */
-extern "C" {
 #include "univ.i"
 #include "buf0lru.h"
 #include "btr0sea.h"
@@ -115,7 +114,6 @@ extern "C" {
 #include "ut0mem.h"
 #include "ibuf0ibuf.h"
 #include "mysql_addons.h"
-}
 
 #include "ha_innodb.h"
 #include "data_dictionary.h"
@@ -803,7 +801,7 @@ srv_conc_force_exit_innodb().
 DRIZZLE: Note, we didn't change this name to avoid more ifdef forking 
          in non-Cursor code.
 @return true if session is the replication thread */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 ibool
 thd_is_replication_slave_thread(
 /*============================*/
@@ -877,7 +875,7 @@ rolling back transactions that have edited non-transactional tables.
 DRIZZLE: Note, we didn't change this name to avoid more ifdef forking 
          in non-Cursor code.
 @return true if non-transactional tables have been edited */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 ibool
 thd_has_edited_nontrans_tables(
 /*===========================*/
@@ -889,7 +887,7 @@ thd_has_edited_nontrans_tables(
 /******************************************************************//**
 Returns true if the thread is executing a SELECT statement.
 @return true if session is executing SELECT */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 ibool
 thd_is_select(
 /*==========*/
@@ -902,7 +900,7 @@ thd_is_select(
 Returns true if the thread supports XA,
 global value of innodb_supports_xa if session is NULL.
 @return true if session has XA support */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 ibool
 thd_supports_xa(
 /*============*/
@@ -916,7 +914,7 @@ thd_supports_xa(
 /******************************************************************//**
 Returns the lock wait timeout for the current connection.
 @return the lock wait timeout, in seconds */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 ulong
 thd_lock_wait_timeout(
 /*==================*/
@@ -931,7 +929,7 @@ thd_lock_wait_timeout(
 
 /******************************************************************//**
 Set the time waited for the lock for the current query. */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 void
 thd_set_lock_wait_time(
 /*===================*/
@@ -1023,7 +1021,7 @@ Converts an InnoDB error code to a MySQL error code and also tells to MySQL
 about a possible transaction rollback inside InnoDB caused by a lock wait
 timeout or a deadlock.
 @return MySQL error code */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 int
 convert_error_code_to_mysql(
 /*========================*/
@@ -1168,7 +1166,7 @@ convert_error_code_to_mysql(
 
 /*************************************************************//**
 Prints info of a Session object (== user session thread) to the given file. */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 void
 innobase_mysql_print_thd(
 /*=====================*/
@@ -1194,7 +1192,7 @@ innobase_mysql_print_thd(
 
 /******************************************************************//**
 Get the variable length bounds of the given character set. */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 void
 innobase_get_cset_width(
 /*====================*/
@@ -1221,7 +1219,7 @@ innobase_get_cset_width(
 
 /******************************************************************//**
 Converts an identifier to a table name. */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 void
 innobase_convert_from_table_id(
 /*===========================*/
@@ -1235,7 +1233,7 @@ innobase_convert_from_table_id(
 
 /******************************************************************//**
 Converts an identifier to UTF-8. */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 void
 innobase_convert_from_id(
 /*=====================*/
@@ -1250,7 +1248,7 @@ innobase_convert_from_id(
 /******************************************************************//**
 Compares NUL-terminated UTF-8 strings case insensitively.
 @return 0 if a=b, <0 if a<b, >1 if a>b */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 int
 innobase_strcasecmp(
 /*================*/
@@ -1262,7 +1260,7 @@ innobase_strcasecmp(
 
 /******************************************************************//**
 Makes all characters in a NUL-terminated UTF-8 string lower case. */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 void
 innobase_casedn_str(
 /*================*/
@@ -1274,7 +1272,7 @@ innobase_casedn_str(
 /**********************************************************************//**
 Determines the connection character set.
 @return connection character set */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 const void*
 innobase_get_charset(
 /*=================*/
@@ -1283,7 +1281,7 @@ innobase_get_charset(
   return static_cast<Session*>(mysql_session)->charset();
 }
 
-extern "C" UNIV_INTERN
+UNIV_INTERN
 bool
 innobase_isspace(
   const void *cs,
@@ -1303,7 +1301,7 @@ innobase_fast_mutex_init(
 /**********************************************************************//**
 Determines the current SQL statement.
 @return        SQL statement string */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 const char*
 innobase_get_stmt(
 /*==============*/
@@ -1317,7 +1315,6 @@ innobase_get_stmt(
 /*******************************************************************//**
 Map an OS error to an errno value. The OS error number is stored in
 _doserrno and the mapped value is stored in errno) */
-extern "C"
 void __cdecl
 _dosmaperr(
   unsigned long); /*!< in: OS error value */
@@ -1325,7 +1322,7 @@ _dosmaperr(
 /*********************************************************************//**
 Creates a temporary file.
 @return temporary file descriptor, or < 0 on error */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 int
 innobase_mysql_tmpfile(void)
 /*========================*/
@@ -1405,7 +1402,7 @@ innobase_mysql_tmpfile(void)
 /*********************************************************************//**
 Creates a temporary file.
 @return temporary file descriptor, or < 0 on error */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 int
 innobase_mysql_tmpfile(void)
 /*========================*/
@@ -1444,7 +1441,7 @@ The result is always NUL-terminated (provided buf_size > 0) and the
 number of bytes that were written to "buf" is returned (including the
 terminating NUL).
 @return number of bytes that were written */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 ulint
 innobase_raw_format(
 /*================*/
@@ -1564,7 +1561,7 @@ innobase_trx_init(
 /*********************************************************************//**
 Allocates an InnoDB transaction for a MySQL Cursor object.
 @return InnoDB transaction handle */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 trx_t*
 innobase_trx_allocate(
 /*==================*/
@@ -1745,7 +1742,7 @@ innobase_convert_identifier(
 Convert a table or index name to the MySQL system_charset_info (UTF-8)
 and quote it if needed.
 @return pointer to the end of buf */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 char*
 innobase_convert_name(
 /*==================*/
@@ -1801,7 +1798,7 @@ no_db_name:
 /**********************************************************************//**
 Determines if the currently running transaction has been interrupted.
 @return TRUE if interrupted */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 ibool
 trx_is_interrupted(
 /*===============*/
@@ -1813,7 +1810,7 @@ trx_is_interrupted(
 /**********************************************************************//**
 Determines if the currently running transaction is in strict mode.
 @return	TRUE if strict */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 ibool
 trx_is_strict(
 /*==========*/
@@ -3718,8 +3715,7 @@ is such that we must use MySQL code to compare them. NOTE that the prototype
 of this function is in rem0cmp.c in InnoDB source code! If you change this
 function, remember to update the prototype there!
 @return 1, 0, -1, if a is greater, equal, less than b, respectively */
-extern "C" UNIV_INTERN
-int
+UNIV_INTERN int
 innobase_mysql_cmp(
 /*===============*/
   int   mysql_type, /*!< in: MySQL type */
@@ -3801,7 +3797,7 @@ Converts a MySQL type to an InnoDB type. Note that this function returns
 the 'mtype' of InnoDB. InnoDB differentiates between MySQL's old <= 4.1
 VARCHAR and the new true VARCHAR in >= 5.0.3 by the 'prtype'.
 @return DATA_BINARY, DATA_VARCHAR, ... */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 ulint
 get_innobase_type_from_mysql_type(
 /*==============================*/
@@ -8895,7 +8891,7 @@ characters for prefix indexes using a multibyte character set. The function
 finds charset information and returns length of prefix_len characters in the
 index field in bytes.
 @return number of bytes occupied by the first n characters */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 ulint
 innobase_get_at_most_n_mbchars(
 /*===========================*/
@@ -9431,7 +9427,7 @@ int ha_innobase::read_range_next()
 This function checks each index name for a table against reserved
 system default primary index name 'GEN_CLUST_INDEX'. If a name matches,
 this function pushes an warning message to the client, and returns true. */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 bool
 innobase_index_name_is_reserved(
 /*============================*/

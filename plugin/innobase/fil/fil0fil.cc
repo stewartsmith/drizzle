@@ -1338,7 +1338,7 @@ fil_space_free(
 					in X mode */
 {
 	fil_space_t*	space;
-	fil_space_t*	namespace;
+	fil_space_t*	tablespace;
 	fil_node_t*	fil_node;
 
 	ut_ad(mutex_own(&fil_system->mutex));
@@ -1357,9 +1357,9 @@ fil_space_free(
 
 	HASH_DELETE(fil_space_t, hash, fil_system->spaces, id, space);
 
-	namespace = fil_space_get_by_name(space->name);
-	ut_a(namespace);
-	ut_a(space == namespace);
+	tablespace = fil_space_get_by_name(space->name);
+	ut_a(tablespace);
+	ut_a(space == tablespace);
 
 	HASH_DELETE(fil_space_t, name_hash, fil_system->name_hash,
 		    ut_fold_string(space->name), space);
@@ -3698,7 +3698,7 @@ fil_space_for_table_exists_in_mem(
 					matching tablespace is not found from
 					memory */
 {
-	fil_space_t*	namespace;
+	fil_space_t*	tablespace;
 	fil_space_t*	space;
 	char*		path;
 
@@ -3715,8 +3715,8 @@ fil_space_for_table_exists_in_mem(
 	/* Look if there is a space with the same name; the name is the
 	directory path from the datadir to the file */
 
-	namespace = fil_space_get_by_name(path);
-	if (space && space == namespace) {
+	tablespace = fil_space_get_by_name(path);
+	if (space && space == tablespace) {
 		/* Found */
 
 		if (mark_space) {
@@ -3738,7 +3738,7 @@ fil_space_for_table_exists_in_mem(
 	}
 
 	if (space == NULL) {
-		if (namespace == NULL) {
+		if (tablespace == NULL) {
 			ut_print_timestamp(stderr);
 			fputs("  InnoDB: Error: table ", stderr);
 			ut_print_filename(stderr, name);
@@ -3767,8 +3767,8 @@ fil_space_for_table_exists_in_mem(
 				"InnoDB: a tablespace of name %s and id %lu,"
 				" though. Have\n"
 				"InnoDB: you deleted or moved .ibd files?\n",
-				(ulong) id, namespace->name,
-				(ulong) namespace->id);
+				(ulong) id, tablespace->name,
+				(ulong) tablespace->id);
 		}
 error_exit:
 		fputs("InnoDB: Please refer to\n"
@@ -3793,13 +3793,13 @@ error_exit:
 			"InnoDB: Have you deleted or moved .ibd files?\n",
 			(ulong) id, space->name);
 
-		if (namespace != NULL) {
+		if (tablespace != NULL) {
 			fputs("InnoDB: There is a tablespace"
 			      " with the right name\n"
 			      "InnoDB: ", stderr);
-			ut_print_filename(stderr, namespace->name);
+			ut_print_filename(stderr, tablespace->name);
 			fprintf(stderr, ", but its id is %lu.\n",
-				(ulong) namespace->id);
+				(ulong) tablespace->id);
 		}
 
 		goto error_exit;
@@ -3822,7 +3822,7 @@ fil_get_space_id_for_table(
 	const char*	name)	/*!< in: table name in the standard
 				'databasename/tablename' format */
 {
-	fil_space_t*	namespace;
+	fil_space_t*	tablespace;
 	ulint		id		= ULINT_UNDEFINED;
 	char*		path;
 
@@ -3835,10 +3835,10 @@ fil_get_space_id_for_table(
 	/* Look if there is a space with the same name; the name is the
 	directory path to the file */
 
-	namespace = fil_space_get_by_name(path);
+	tablespace = fil_space_get_by_name(path);
 
-	if (namespace) {
-		id = namespace->id;
+	if (tablespace) {
+		id = tablespace->id;
 	}
 
 	mem_free(path);

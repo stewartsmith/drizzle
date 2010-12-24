@@ -787,12 +787,12 @@ eval_func(
 	func_node_t*	func_node)	/*!< in: function node */
 {
 	que_node_t*	arg;
-	ulint		class;
+	ulint		func_class;
 	ulint		func;
 
 	ut_ad(que_node_get_type(func_node) == QUE_NODE_FUNC);
 
-	class = func_node->class;
+	func_class = func_node->func_class;
 	func = func_node->func;
 
 	arg = func_node->args;
@@ -805,7 +805,7 @@ eval_func(
 		values, except for eval_cmp and notfound */
 
 		if (dfield_is_null(que_node_get_val(arg))
-		    && (class != PARS_FUNC_CMP)
+		    && (func_class != PARS_FUNC_CMP)
 		    && (func != PARS_NOTFOUND_TOKEN)
 		    && (func != PARS_PRINTF_TOKEN)) {
 			ut_error;
@@ -814,13 +814,13 @@ eval_func(
 		arg = que_node_get_next(arg);
 	}
 
-	if (class == PARS_FUNC_CMP) {
+	if (func_class == PARS_FUNC_CMP) {
 		eval_cmp(func_node);
-	} else if (class == PARS_FUNC_ARITH) {
+	} else if (func_class == PARS_FUNC_ARITH) {
 		eval_arith(func_node);
-	} else if (class == PARS_FUNC_AGGREGATE) {
+	} else if (func_class == PARS_FUNC_AGGREGATE) {
 		eval_aggregate(func_node);
-	} else if (class == PARS_FUNC_PREDEFINED) {
+	} else if (func_class == PARS_FUNC_PREDEFINED) {
 
 		if (func == PARS_NOTFOUND_TOKEN) {
 			eval_notfound(func_node);
@@ -840,7 +840,7 @@ eval_func(
 			eval_predefined(func_node);
 		}
 	} else {
-		ut_ad(class == PARS_FUNC_LOGICAL);
+		ut_ad(func_class == PARS_FUNC_LOGICAL);
 
 		eval_logical(func_node);
 	}

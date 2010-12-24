@@ -24,7 +24,6 @@
 #include "drizzled/plugin/table_function.h"
 #include "drizzled/field.h"
 
-extern "C" {
 #include "trx0i_s.h"
 #include "trx0trx.h" /* for TRX_QUE_STATE_STR_MAX_LEN */
 #include "buf0buddy.h" /* for i_s_cmpmem */
@@ -36,7 +35,6 @@ extern "C" {
 #include "dict0load.h"	/* for file sys_tables related info. */
 #include "dict0mem.h"
 #include "dict0types.h"
-}
 
 class InnodbSysTablesTool : public drizzled::plugin::TableFunction
 {

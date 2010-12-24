@@ -34,7 +34,7 @@ Created 12/15/1997 Heikki Tuuri
 #include "data0data.h"
 #ifndef PARS0GRM_H
 # define PARS0GRM_H
-# include "pars0grm.h"
+# include "pars0grm.hh"
 #endif
 #include "pars0pars.h"
 #include "que0que.h"

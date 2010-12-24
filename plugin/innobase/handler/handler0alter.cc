@@ -29,7 +29,6 @@ Smart ALTER TABLE
 #include <drizzled/field/varstring.h>
 #include "drizzled/internal/my_sys.h"
 
-extern "C" {
 #include "log0log.h"
 #include "row0merge.h"
 #include "srv0srv.h"
@@ -37,7 +36,6 @@ extern "C" {
 #include "trx0roll.h"
 #include "ha_prototypes.h"
 #include "handler0alter.h"
-}
 
 #include "ha_innodb.h"
 #include "handler0vars.h"
@@ -132,7 +130,7 @@ innobase_col_to_mysql(
 
 /*************************************************************//**
 Copies an InnoDB record to table->getInsertRecord(). */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 void
 innobase_rec_to_mysql(
 /*==================*/
@@ -182,7 +180,7 @@ null_field:
 
 /*************************************************************//**
 Resets table->getInsertRecord(). */
-extern "C" UNIV_INTERN
+UNIV_INTERN
 void
 innobase_rec_reset(
 /*===============*/

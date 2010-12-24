@@ -35,7 +35,7 @@ Created 12/21/1997 Heikki Tuuri
 #include "dict0dict.h"
 #include "dict0mem.h"
 #include "que0que.h"
-#include "pars0grm.h"
+#include "pars0grm.hh"
 #include "pars0pars.h"
 #include "lock0lock.h"
 
@@ -717,7 +717,7 @@ opt_find_test_conds(
 					conditions or NULL */
 {
 	func_node_t*	new_cond;
-	ulint		class;
+	ulint		func_class;
 	plan_t*		plan;
 
 	if (cond == NULL) {
@@ -739,12 +739,12 @@ opt_find_test_conds(
 
 	plan = sel_node_get_nth_plan(sel_node, i);
 
-	class = opt_classify_comparison(sel_node, i, cond);
+	func_class = opt_classify_comparison(sel_node, i, cond);
 
-	if (class == OPT_END_COND) {
+	if (func_class == OPT_END_COND) {
 		UT_LIST_ADD_LAST(cond_list, plan->end_conds, cond);
 
-	} else if (class == OPT_TEST_COND) {
+	} else if (func_class == OPT_TEST_COND) {
 		UT_LIST_ADD_LAST(cond_list, plan->other_conds, cond);
 
 	}
