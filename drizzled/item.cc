@@ -944,8 +944,8 @@ static Item** find_field_in_group_list(Item *find_item, Order *group_list)
 
   if (found_group)
     return found_group->item;
-  else
-    return NULL;
+
+  return NULL;
 }
 
 Item** resolve_ref_in_select_and_group(Session *session, Item_ident *ref, Select_Lex *select)
@@ -1825,11 +1825,40 @@ Field *create_tmp_field(Session *session,
 
 std::ostream& operator<<(std::ostream& output, const Item &item)
 {
-  output << "Item:(";
-  output <<  item.name;
-  output << ", ";
-  output << drizzled::display::type(item.type());
-  output << ")";
+  switch (item.type())
+  {
+  case drizzled::Item::SUBSELECT_ITEM :
+  case drizzled::Item::FIELD_ITEM :
+  case drizzled::Item::SUM_FUNC_ITEM :
+  case drizzled::Item::STRING_ITEM :
+  case drizzled::Item::INT_ITEM :
+  case drizzled::Item::REAL_ITEM :
+  case drizzled::Item::NULL_ITEM :
+  case drizzled::Item::VARBIN_ITEM :
+  case drizzled::Item::COPY_STR_ITEM :
+  case drizzled::Item::FIELD_AVG_ITEM :
+  case drizzled::Item::DEFAULT_VALUE_ITEM :
+  case drizzled::Item::PROC_ITEM :
+  case drizzled::Item::COND_ITEM :
+  case drizzled::Item::REF_ITEM :
+  case drizzled::Item::FIELD_STD_ITEM :
+  case drizzled::Item::FIELD_VARIANCE_ITEM :
+  case drizzled::Item::INSERT_VALUE_ITEM :
+  case drizzled::Item::ROW_ITEM:
+  case drizzled::Item::CACHE_ITEM :
+  case drizzled::Item::TYPE_HOLDER :
+  case drizzled::Item::PARAM_ITEM :
+  case drizzled::Item::DECIMAL_ITEM :
+  case drizzled::Item::FUNC_ITEM :
+    {
+      output << "Item:(";
+      output <<  item.full_name();
+      output << ", ";
+      output << drizzled::display::type(item.type());
+      output << ")";
+    }
+    break;
+  }
 
   return output;  // for multiple << operators.
 }

@@ -2533,6 +2533,19 @@ int decimal_mod(const decimal_t *from1, const decimal_t *from2, decimal_t *to)
   return do_div_mod(from1, from2, 0, to, 0);
 }
 
+std::ostream& operator<<(std::ostream& output, const my_decimal &dec)
+{
+  drizzled::String str;
+
+  my_decimal2string(E_DEC_OK, &dec, 0, 20, ' ', &str);
+
+  output << "my_decimal:(";
+  output <<  str.c_ptr();
+  output << ")";
+
+  return output;  // for multiple << operators.
+}
+
 } /* namespace drizzled */
 
 #ifdef MAIN
@@ -3266,4 +3279,5 @@ int main()
 
   return 0;
 }
+
 #endif

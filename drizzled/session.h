@@ -857,6 +857,12 @@ public:
     create_sort_index(); may differ from examined_row_count.
   */
   uint32_t row_count;
+
+  uint32_t getRowCount() const
+  {
+    return row_count;
+  }
+
   session_id_t thread_id;
   uint32_t tmp_table;
   enum global_read_lock_t

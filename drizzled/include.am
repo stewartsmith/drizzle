@@ -104,7 +104,9 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/foreign_key.h \
 			      drizzled/function_container.h \
 			      drizzled/function/additive_op.h \
+			      drizzled/function/cast/signed.h \
 			      drizzled/function/cast/time.h \
+			      drizzled/function/cast/unsigned.h \
 			      drizzled/function/field.h \
 			      drizzled/function/find_in_set.h \
 			      drizzled/function/found_rows.h \
@@ -530,7 +532,9 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/filesort.cc \
 			   drizzled/foreign_key.cc \
 			   drizzled/function/additive_op.cc \
+			   drizzled/function/cast/signed.cc \
 			   drizzled/function/cast/time.cc \
+			   drizzled/function/cast/unsigned.cc \
 			   drizzled/function/field.cc \
 			   drizzled/function/find_in_set.cc \
 			   drizzled/function/found_rows.cc \
