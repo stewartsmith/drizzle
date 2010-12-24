@@ -547,7 +547,7 @@ bool ClientMySQLProtocol::sendFields(List<Item> *list)
         pos[6]= 15;
         break;
 
-      case DRIZZLE_TYPE_BOOL:
+      case DRIZZLE_TYPE_BOOLEAN:
         pos[6]= 15;
         break;
 

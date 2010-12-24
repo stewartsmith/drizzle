@@ -1,4 +1,4 @@
-CREATE TABLE t1 (A BOOL);
+CREATE TABLE t1 (A BOOLEAN);
 insert into t1 VALUES ("no");
 insert into t1 VALUES ("false");
 
@@ -17,7 +17,7 @@ insert into t1 VALUES ("f");
 insert into t1 VALUES ("t");
 insert into t1 VALUES ("y");
 
---error ER_INVALID_BOOL_VALUE
+--error ER_INVALID_BOOLEAN_VALUE
 insert into t1 VALUES ("from");
 
 SELECT A from t1 ORDER BY a;

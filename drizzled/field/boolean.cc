@@ -23,7 +23,7 @@
 
 #include <algorithm>
 
-#include "drizzled/field/bool.h"
+#include "drizzled/field/boolean.h"
 
 #include "drizzled/error.h"
 #include "drizzled/internal/my_sys.h"
@@ -46,27 +46,27 @@ namespace drizzled
 namespace field
 {
 
-Bool::Bool(unsigned char *ptr_arg,
-           uint32_t len_arg,
-           unsigned char *null_ptr_arg,
-           unsigned char null_bit_arg,
-           const char *field_name_arg,
-           bool ansi_display_arg) :
+Boolean::Boolean(unsigned char *ptr_arg,
+                 uint32_t len_arg,
+                 unsigned char *null_ptr_arg,
+                 unsigned char null_bit_arg,
+                 const char *field_name_arg,
+                 bool ansi_display_arg) :
   Field(ptr_arg, len_arg,
         null_ptr_arg,
         null_bit_arg,
         Field::NONE,
         field_name_arg),
   ansi_display(ansi_display_arg)
-{
-}
+  {
+  }
 
-int Bool::cmp(const unsigned char *a, const unsigned char *b)
+int Boolean::cmp(const unsigned char *a, const unsigned char *b)
 { 
   return memcmp(a, b, sizeof(unsigned char));
 }
 
-int Bool::store(const char *from, uint32_t length, const CHARSET_INFO * const )
+int Boolean::store(const char *from, uint32_t length, const CHARSET_INFO * const )
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
@@ -85,7 +85,7 @@ int Bool::store(const char *from, uint32_t length, const CHARSET_INFO * const )
       return 0;
 
     default:
-      my_error(ER_INVALID_BOOL_VALUE, MYF(0), from);
+      my_error(ER_INVALID_BOOLEAN_VALUE, MYF(0), from);
       return 1; // invalid
     }
   }
@@ -111,52 +111,52 @@ int Bool::store(const char *from, uint32_t length, const CHARSET_INFO * const )
   }
   else
   {
-    my_error(ER_INVALID_BOOL_VALUE, MYF(0), from);
+    my_error(ER_INVALID_BOOLEAN_VALUE, MYF(0), from);
     return 1; // invalid
   }
 
   return 0;
 }
 
-int Bool::store(int64_t nr, bool )
+int Boolean::store(int64_t nr, bool )
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
   nr == 0 ? setFalse() : setTrue();
   return 0;
 }
 
-int  Bool::store(double nr)
+int  Boolean::store(double nr)
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
   nr == 0 ? setFalse() : setTrue();
   return 0;
 }
 
-int Bool::store_decimal(const drizzled::my_decimal*)
+int Boolean::store_decimal(const drizzled::my_decimal*)
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
-  my_error(ER_INVALID_BOOL_VALUE, MYF(ME_FATALERROR), " ");
+  my_error(ER_INVALID_BOOLEAN_VALUE, MYF(ME_FATALERROR), " ");
   return 1;
 }
 
-void Bool::sql_type(String &res) const
+void Boolean::sql_type(String &res) const
 {
   res.set_ascii(STRING_WITH_LEN("bool"));
 }
 
-double Bool::val_real()
+double Boolean::val_real()
 {
   ASSERT_COLUMN_MARKED_FOR_READ;
   return isTrue();
 }
 
-int64_t Bool::val_int()
+int64_t Boolean::val_int()
 {
   ASSERT_COLUMN_MARKED_FOR_READ;
   return isTrue();
 }
 
-String *Bool::val_str(String *val_buffer, String *)
+String *Boolean::val_str(String *val_buffer, String *)
 {
   ASSERT_COLUMN_MARKED_FOR_READ;
   const CHARSET_INFO * const cs= &my_charset_bin;
@@ -195,12 +195,12 @@ String *Bool::val_str(String *val_buffer, String *)
   return val_buffer;
 }
 
-void Bool::sort_string(unsigned char *to, uint32_t length_arg)
+void Boolean::sort_string(unsigned char *to, uint32_t length_arg)
 {
   memcpy(to, ptr, length_arg);
 }
 
-void Bool::setTrue()
+void Boolean::setTrue()
 {
   ptr[0]= set_true.byte;
 }

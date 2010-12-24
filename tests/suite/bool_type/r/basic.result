@@ -1,4 +1,4 @@
-CREATE TABLE t1 (A BOOL);
+CREATE TABLE t1 (A BOOLEAN);
 insert into t1 VALUES ("no");
 insert into t1 VALUES ("false");
 insert into t1 VALUES ("true");

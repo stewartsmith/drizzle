@@ -64,7 +64,7 @@
 #include "drizzled/field/str.h"
 #include "drizzled/field/num.h"
 #include "drizzled/field/blob.h"
-#include "drizzled/field/bool.h"
+#include "drizzled/field/boolean.h"
 #include "drizzled/field/enum.h"
 #include "drizzled/field/null.h"
 #include "drizzled/field/date.h"
@@ -271,8 +271,8 @@ static enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_ty
   case message::Table::Field::UUID:
     field_type= DRIZZLE_TYPE_UUID;
     break;
-  case message::Table::Field::BOOL:
-    field_type= DRIZZLE_TYPE_BOOL;
+  case message::Table::Field::BOOLEAN:
+    field_type= DRIZZLE_TYPE_BOOLEAN;
     break;
   case message::Table::Field::TIME:
     field_type= DRIZZLE_TYPE_TIME;
@@ -321,7 +321,7 @@ static Item *default_value_item(enum_field_types field_type,
   case DRIZZLE_TYPE_DATE:
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_UUID:
-  case DRIZZLE_TYPE_BOOL:
+  case DRIZZLE_TYPE_BOOLEAN:
     default_item= new Item_string(default_value->c_str(),
                                   default_value->length(),
                                   system_charset_info);
@@ -1329,8 +1329,8 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     case DRIZZLE_TYPE_UUID:
       field_length= field::Uuid::max_string_length();
       break;
-    case DRIZZLE_TYPE_BOOL:
-      field_length= field::Bool::max_string_length();
+    case DRIZZLE_TYPE_BOOLEAN:
+      field_length= field::Boolean::max_string_length();
       break;
     case DRIZZLE_TYPE_TIMESTAMP:
       field_length= field::Epoch::max_string_length();
@@ -1375,7 +1375,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     case DRIZZLE_TYPE_LONGLONG:
     case DRIZZLE_TYPE_NULL:
     case DRIZZLE_TYPE_UUID:
-    case DRIZZLE_TYPE_BOOL:
+    case DRIZZLE_TYPE_BOOLEAN:
       break;
     }
 
@@ -2143,13 +2143,13 @@ Field *TableShare::make_field(unsigned char *ptr,
                                        null_pos,
                                        null_bit,
                                        field_name);
-  case DRIZZLE_TYPE_BOOL:
-    return new (&mem_root) field::Bool(ptr,
-                                       field_length,
-                                       null_pos,
-                                       null_bit,
-                                       field_name,
-                                       is_unsigned);
+  case DRIZZLE_TYPE_BOOLEAN:
+    return new (&mem_root) field::Boolean(ptr,
+                                          field_length,
+                                          null_pos,
+                                          null_bit,
+                                          field_name,
+                                          is_unsigned);
   case DRIZZLE_TYPE_LONG:
     return new (&mem_root) field::Int32(ptr,
                                         field_length,

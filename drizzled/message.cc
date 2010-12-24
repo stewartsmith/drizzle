@@ -53,7 +53,7 @@ static const std::string TIMESTAMP("TIMESTAMP");
 static const std::string DATETIME("DATETIME");
 static const std::string TIME("TIME");
 static const std::string UUID("UUID");
-static const std::string BOOL("BOOL");
+static const std::string BOOLEAN("BOOLEAN");
 
 static const std::string UNDEFINED("UNDEFINED");
 static const std::string RESTRICT("RESTRICT");
@@ -143,7 +143,7 @@ bool is_numeric(const message::Table::Field &field)
   case message::Table::Field::DATETIME:
   case message::Table::Field::TIME:
   case message::Table::Field::UUID:
-  case message::Table::Field::BOOL:
+  case message::Table::Field::BOOLEAN:
     break;
   }
 
@@ -180,8 +180,8 @@ const std::string &type(const message::Table::Field &field)
     return TIME;
   case message::Table::Field::UUID:
     return UUID;
-  case message::Table::Field::BOOL:
-    return BOOL;
+  case message::Table::Field::BOOLEAN:
+    return BOOLEAN;
   }
 
   abort();
@@ -215,8 +215,8 @@ const std::string &type(drizzled::message::Table::Field::FieldType type)
     return TIME;
   case message::Table::Field::UUID:
     return UUID;
-  case message::Table::Field::BOOL:
-    return BOOL;
+  case message::Table::Field::BOOLEAN:
+    return BOOLEAN;
   }
 
   abort();

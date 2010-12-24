@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FIELD_BOOL_H
-#define DRIZZLED_FIELD_BOOL_H
+#ifndef DRIZZLED_FIELD_BOOLEAN_H
+#define DRIZZLED_FIELD_BOOLEAN_H
 
 #include <drizzled/field.h>
 #include <string>
@@ -29,18 +29,18 @@ namespace drizzled
 namespace field
 {
 
-class Bool :public Field {
+class Boolean :public Field {
   bool ansi_display;
 
 public:
-  Bool(unsigned char *ptr_arg,
-       uint32_t len_arg,
-       unsigned char *null_ptr_arg,
-       unsigned char null_bit_arg,
-       const char *field_name_arg,
-       bool ansi_display= false);
+  Boolean(unsigned char *ptr_arg,
+          uint32_t len_arg,
+          unsigned char *null_ptr_arg,
+          unsigned char null_bit_arg,
+          const char *field_name_arg,
+          bool ansi_display= false);
 
-  enum_field_types type() const { return DRIZZLE_TYPE_BOOL; }
+  enum_field_types type() const { return DRIZZLE_TYPE_BOOLEAN; }
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_BINARY; }
   bool zero_pack() const { return 0; }
   int  reset(void) { ptr[0]= 0; return 0; }
@@ -87,5 +87,5 @@ private:
 } /* namespace field */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FIELD_BOOL_H */
+#endif /* DRIZZLED_FIELD_BOOLEAN_H */
 

@@ -1735,23 +1735,23 @@ type:
           }
         | BOOL_SYM
         {
-          $$=DRIZZLE_TYPE_BOOL;
+          $$=DRIZZLE_TYPE_BOOLEAN;
 
           statement::CreateTable *statement=
             (statement::CreateTable *)Lex->statement;
 
           if (statement->current_proto_field)
-            statement->current_proto_field->set_type(message::Table::Field::BOOL);
+            statement->current_proto_field->set_type(message::Table::Field::BOOLEAN);
         }
         | BOOLEAN_SYM
         {
-          $$=DRIZZLE_TYPE_BOOL;
+          $$=DRIZZLE_TYPE_BOOLEAN;
 
           statement::CreateTable *statement=
             (statement::CreateTable *)Lex->statement;
 
           if (statement->current_proto_field)
-            statement->current_proto_field->set_type(message::Table::Field::BOOL);
+            statement->current_proto_field->set_type(message::Table::Field::BOOLEAN);
         }
         | SERIAL_SYM
           {
