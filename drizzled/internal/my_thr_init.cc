@@ -117,8 +117,8 @@ bool my_thread_init(void)
 
   NOTE
     This may be called multiple times for a thread.
-    This happens for example when one calls 'mysql_server_init()'
-    mysql_server_end() and then ends with a mysql_end().
+    This happens for example when one calls 'server_init()'
+    server_end() and then ends with a end().
 */
 
 void my_thread_end(void)

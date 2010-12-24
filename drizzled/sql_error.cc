@@ -185,7 +185,7 @@ void push_warning_printf(Session *session, DRIZZLE_ERROR::enum_warning_level lev
   Send all notes, errors or warnings to the client in a result set
 
   SYNOPSIS
-    mysqld_show_warnings()
+    show_warnings()
     session			Thread handler
     levels_to_show	Bitmap for which levels to show
 
@@ -205,8 +205,8 @@ const LEX_STRING warning_level_names[]=
   { C_STRING_WITH_LEN("?") }
 };
 
-bool mysqld_show_warnings(Session *session,
-                          bitset<DRIZZLE_ERROR::NUM_ERRORS> &levels_to_show)
+bool show_warnings(Session *session,
+                   bitset<DRIZZLE_ERROR::NUM_ERRORS> &levels_to_show)
 {
   List<Item> field_list;
 

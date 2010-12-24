@@ -112,7 +112,7 @@ static void prepare_record_for_error_message(int error, Table *table)
   Process usual UPDATE
 
   SYNOPSIS
-    mysql_update()
+    update_query()
     session			thread handler
     fields		fields for update
     values		values of fields for update
@@ -127,7 +127,7 @@ static void prepare_record_for_error_message(int error, Table *table)
     1  - error
 */
 
-int mysql_update(Session *session, TableList *table_list,
+int update_query(Session *session, TableList *table_list,
                  List<Item> &fields, List<Item> &values, COND *conds,
                  uint32_t order_num, Order *order,
                  ha_rows limit, enum enum_duplicates,
@@ -163,7 +163,7 @@ int mysql_update(Session *session, TableList *table_list,
   table->covering_keys= table->getShare()->keys_in_use;
   table->quick_keys.reset();
 
-  if (mysql_prepare_update(session, table_list, &conds, order_num, order))
+  if (prepare_update(session, table_list, &conds, order_num, order))
   {
     DRIZZLE_UPDATE_DONE(1, 0, 0);
     return 1;
@@ -597,7 +597,7 @@ err:
   Prepare items in UPDATE statement
 
   SYNOPSIS
-    mysql_prepare_update()
+    prepare_update()
     session			- thread handler
     table_list		- global/local table list
     conds		- conditions
@@ -608,7 +608,7 @@ err:
     false OK
     true  error
 */
-bool mysql_prepare_update(Session *session, TableList *table_list,
+bool prepare_update(Session *session, TableList *table_list,
 			 Item **conds, uint32_t order_num, Order *order)
 {
   List<Item> all_fields;

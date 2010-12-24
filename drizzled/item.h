@@ -526,7 +526,7 @@ public:
 
     For more information about view definition query, INFORMATION_SCHEMA
     query and why they should be generated from the Item-tree, @see
-    mysql_register_view().
+    register_view().
   */
   virtual void print(String *str, enum_query_type query_type);
 

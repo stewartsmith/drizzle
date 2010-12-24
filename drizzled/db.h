@@ -25,10 +25,10 @@ namespace drizzled {
 
 namespace message { class Schema; }
 
-bool mysql_create_db(Session *session, const message::Schema &schema_message, const bool is_if_not_exists);
-bool mysql_alter_db(Session *session, const message::Schema &schema_message);
-bool mysql_rm_db(Session *session, SchemaIdentifier &identifier, const bool if_exists);
-bool mysql_change_db(Session *session, SchemaIdentifier &identifier);
+bool create_db(Session *session, const message::Schema &schema_message, const bool is_if_not_exists);
+bool alter_db(Session *session, const message::Schema &schema_message);
+bool rm_db(Session *session, SchemaIdentifier &identifier, const bool if_exists);
+bool change_db(Session *session, SchemaIdentifier &identifier);
 
 } /* namespace drizzled */
 

@@ -141,7 +141,7 @@ public:
 
   Session	*session;
   List<Item> *fields;
-  List<Item> &fields_list; /**< hold field list passed to mysql_select */
+  List<Item> &fields_list; /**< hold field list passed to select_query */
   List<TableList> *join_list; /**< list of joined tables in reverse order */
   /** unit structure (with global parameters) for this select */
   Select_Lex_Unit *unit;
@@ -196,10 +196,10 @@ public:
   int error;
 
   Order *order;
-  Order *group_list; /**< hold parameters of mysql_select */
+  Order *group_list; /**< hold parameters of select_query */
   COND *conds;                            // ---"---
   Item *conds_history; /**< store WHERE for explain */
-  TableList *tables_list; /**< hold 'tables' parameter of mysql_select */
+  TableList *tables_list; /**< hold 'tables' parameter of select_query */
   COND_EQUAL *cond_equal;
   JoinTable *return_tab; /**< used only for outer joins */
   Item **ref_pointer_array; /**< used pointer reference for this select */

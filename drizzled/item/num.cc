@@ -29,7 +29,7 @@ namespace drizzled
 
 /**
   @details
-  Created mostly for mysql_prepare_table(). Important
+  Created mostly for prepare_table(). Important
   when a string ENUM/SET column is described with a numeric default value:
 
   CREATE TABLE t1(a SET('a') DEFAULT 1);

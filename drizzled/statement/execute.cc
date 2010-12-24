@@ -32,7 +32,7 @@
 namespace drizzled
 {
 
-void mysql_parse(drizzled::Session *session, const char *inBuf, uint32_t length);
+void parse(drizzled::Session *session, const char *inBuf, uint32_t length);
 
 namespace statement
 {
@@ -219,7 +219,7 @@ bool statement::Execute::execute_shell()
     }
     else
     {
-      mysql_parse(getSession(), to_execute.str, to_execute.length);
+      parse(getSession(), to_execute.str, to_execute.length);
     }
   }
 

@@ -155,7 +155,6 @@ namespace dpo=drizzled::program_options;
 namespace drizzled
 {
 
-#define mysqld_charset &my_charset_utf8_general_ci
 inline void setup_fpu()
 {
 #if defined(__FreeBSD__) && defined(HAVE_IEEEFP_H)
@@ -563,7 +562,7 @@ passwd *check_user(const char *user)
   {
     // Allow a numeric uid to be used
     const char *pos;
-    for (pos= user; my_isdigit(mysqld_charset,*pos); pos++) ;
+    for (pos= user; my_isdigit(&my_charset_utf8_general_ci,*pos); pos++) ;
     if (*pos)                                   // Not numeric id
       goto err;
     if (!(tmp_user_info= getpwuid(atoi(user))))

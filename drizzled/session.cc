@@ -101,7 +101,7 @@ Open_tables_state::Open_tables_state(uint64_t version_arg) :
 /*
   The following functions form part of the C plugin API
 */
-int mysql_tmpfile(const char *prefix)
+int tmpfile(const char *prefix)
 {
   char filename[FN_REFLEN];
   int fd = internal::create_temp_file(filename, drizzle_tmpdir.c_str(), prefix, MYF(MY_WME));
@@ -672,9 +672,9 @@ bool Session::checkUser(const std::string &passwd_str,
   if (not in_db.empty())
   {
     SchemaIdentifier identifier(in_db);
-    if (mysql_change_db(this, identifier))
+    if (change_db(this, identifier))
     {
-      /* mysql_change_db() has pushed the error message. */
+      /* change_db() has pushed the error message. */
       return false;
     }
   }
@@ -1918,7 +1918,7 @@ void Session::close_thread_tables()
   /*
     Note that we need to hold table::Cache::singleton().mutex() while changing the
     open_tables list. Another thread may work on it.
-    (See: table::Cache::singleton().removeTable(), mysql_wait_completed_table())
+    (See: table::Cache::singleton().removeTable(), wait_completed_table())
     Closing a MERGE child before the parent would be fatal if the
     other thread tries to abort the MERGE lock in between.
   */
@@ -1956,9 +1956,9 @@ bool Session::openTablesLock(TableList *tables)
       return true;
     close_tables_for_reopen(&tables);
   }
-  if ((mysql_handle_derived(lex, &mysql_derived_prepare) ||
+  if ((handle_derived(lex, &derived_prepare) ||
        (
-        mysql_handle_derived(lex, &mysql_derived_filling))))
+        handle_derived(lex, &derived_filling))))
     return true;
 
   return false;

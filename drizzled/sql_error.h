@@ -54,8 +54,8 @@ DRIZZLE_ERROR *push_warning(Session *session, DRIZZLE_ERROR::enum_warning_level 
 void push_warning_printf(Session *session, DRIZZLE_ERROR::enum_warning_level level,
 			 uint32_t code, const char *format, ...);
 void drizzle_reset_errors(Session *session, bool force);
-bool mysqld_show_warnings(Session *session, 
-                          std::bitset<DRIZZLE_ERROR::NUM_ERRORS> &levels_to_show);
+bool show_warnings(Session *session, 
+                   std::bitset<DRIZZLE_ERROR::NUM_ERRORS> &levels_to_show);
 
 extern const LEX_STRING warning_level_names[];
 
