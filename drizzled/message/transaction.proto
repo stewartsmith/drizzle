@@ -507,7 +507,6 @@ message AlterTableStatement
 message DropTableStatement
 {
   required TableMetadata table_metadata = 1; /* Minimal metadata about the table to be dropped */
-  optional bool if_exists_clause = 2; /* Did the user specify an IF EXISTS clause? */
 }
 
 /*

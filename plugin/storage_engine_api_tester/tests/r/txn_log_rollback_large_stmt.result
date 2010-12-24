@@ -23,9 +23,6 @@ select seapitester_error_inject(0);
 seapitester_error_inject(0)
 0
 START TRANSACTION;
-DROP TABLE IF EXISTS `test`.`t1`;
-COMMIT;
-START TRANSACTION;
 CREATE TABLE `test`.`source` (   `pk` INT NOT NULL AUTO_INCREMENT,   `d` VARCHAR(16000) COLLATE utf8_general_ci DEFAULT NULL,   PRIMARY KEY (`pk`) ) ENGINE=STORAGE_ENGINE_API_TESTER COLLATE = utf8_general_ci;
 COMMIT;
 START TRANSACTION;

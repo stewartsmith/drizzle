@@ -277,20 +277,19 @@ bool mysql_rm_db(Session *session, SchemaIdentifier &schema_identifier, const bo
       /* After deleting database, remove all cache entries related to schema */
       table::Cache::singleton().removeSchema(schema_identifier);
 
-
       error= -1;
       deleted= drop_tables_via_filenames(session, schema_identifier, dropped_tables);
       if (deleted >= 0)
       {
         error= 0;
+        
+        /* We've already verified that the schema does exist, so safe to log it */
+        TransactionServices &transaction_services= TransactionServices::singleton();
+        transaction_services.dropSchema(session, schema_identifier.getSchemaName());
       }
     }
     if (deleted >= 0)
     {
-      assert(not session->getQueryString()->empty());
-
-      TransactionServices &transaction_services= TransactionServices::singleton();
-      transaction_services.dropSchema(session, schema_identifier.getSchemaName());
       session->clear_error();
       session->server_status|= SERVER_STATUS_DB_DROPPED;
       session->my_ok((uint32_t) deleted);
@@ -435,6 +434,12 @@ static int rm_table_part2(Session *session, TableList *tables)
       {
         error= plugin::StorageEngine::dropTable(*session, identifier);
 
+        /* Generate transaction event ONLY when we successfully drop */ 
+        if (error == 0)
+        {
+          transaction_services.dropTable(session, string(db), string(table->getTableName()));
+        }
+
         if ((error == ENOENT || error == HA_ERR_NO_SUCH_TABLE))
         {
           error= 0;
@@ -446,11 +451,6 @@ static int rm_table_part2(Session *session, TableList *tables)
           /* the table is referenced by a foreign key constraint */
           foreign_key_error= true;
         }
-      }
-
-      if (error == 0 || (foreign_key_error == false))
-      {
-        transaction_services.dropTable(session, string(db), string(table->getTableName()), true);
       }
 
       if (error)

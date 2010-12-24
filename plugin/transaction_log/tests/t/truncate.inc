@@ -20,3 +20,5 @@ INSERT INTO t1 VALUES (1, "I love testing.");
 INSERT INTO t1 VALUES (2, "I hate testing.");
 
 TRUNCATE TABLE t1;
+
+DROP TABLE t1;
