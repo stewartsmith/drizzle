@@ -453,10 +453,9 @@ int StorageEngine::dropTable(Session& session,
     std::string error_message;
     identifier.getSQLPath(error_message);
 
-    error_message.append(" : ");
-    error_message.append(src_proto->InitializationErrorString());
-
-    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0), error_message.c_str());
+    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
+             error_message.c_str(),
+             src_proto->InitializationErrorString().c_str());
 
     return ER_CORRUPT_TABLE_DEFINITION;
   }
@@ -470,7 +469,8 @@ int StorageEngine::dropTable(Session& session,
   {
     std::string error_message;
     identifier.getSQLPath(error_message);
-    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0), error_message.c_str());
+
+    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0), error_message.c_str(), "");
 
     return ER_CORRUPT_TABLE_DEFINITION;
   }
@@ -1076,7 +1076,11 @@ int StorageEngine::writeDefinitionFromPath(const TableIdentifier &identifier, me
 
   if (not success)
   {
+    std::string error_message;
+    identifier.getSQLPath(error_message);
+
     my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
+             error_message.c_str(),
              table_message.InitializationErrorString().c_str());
     delete output;
 
@@ -1164,6 +1168,7 @@ bool StorageEngine::readTableFile(const std::string &path, message::Table &table
     catch (...)
     {
       my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
+               table_message.name().empty() ? path.c_str() : table_message.name().c_str(),
                table_message.InitializationErrorString().empty() ? "": table_message.InitializationErrorString().c_str());
     }
   }
