@@ -1,0 +1,11 @@
+CREATE TABLE t1 (A BOOLEAN, PRIMARY KEY (A));
+insert into t1 VALUES ("no");
+insert into t1 VALUES ("true");
+
+--error ER_DUP_ENTRY_WITH_KEY_NAME,ER_DUP_ENTRY
+insert into t1 VALUES ("true");
+
+SELECT A from t1 ORDER BY a ASC;
+SELECT A from t1 ORDER BY a DESC;
+
+DROP TABLE t1;

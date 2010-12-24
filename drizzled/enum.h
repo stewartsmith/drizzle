@@ -1065,10 +1065,11 @@ enum drizzled_error_code {
   ER_CORRUPT_TABLE_DEFINITION_UNKNOWN_COLLATION,
   ER_INVALID_CAST_TO_SIGNED,
   ER_INVALID_CAST_TO_UNSIGNED,
+  ER_INVALID_BOOLEAN_VALUE,
 
-  // Leave UUID as LAST, and force people to use tags instead of numbers in
-  // error messages in test.
-  ER_ERROR_LAST= ER_INVALID_CAST_TO_UNSIGNED
+  // Leave ER_INVALID_BOOLEAN_VALUE as LAST, and force people to use tags
+  // instead of numbers in error messages in test.
+  ER_ERROR_LAST= ER_INVALID_BOOLEAN_VALUE
 };
 
 enum drizzle_exit_codes {

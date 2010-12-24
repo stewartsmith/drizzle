@@ -1349,6 +1349,9 @@ transformFieldDefinitionToSql(const Table::Field &field,
   case Table::Field::UUID:
     destination.append(" UUID", 5);
     break;
+  case Table::Field::BOOLEAN:
+    destination.append(" BOOLEAN", 8);
+    break;
   case Table::Field::INTEGER:
     destination.append(" INT", 4);
     break;
@@ -1374,7 +1377,7 @@ transformFieldDefinitionToSql(const Table::Field &field,
     destination.append(" DATETIME",  9);
     break;
   case Table::Field::TIME:
-    destination.append(" TIME",  9);
+    destination.append(" TIME",  5);
     break;
   }
 
@@ -1510,6 +1513,8 @@ Table::Field::FieldType internalFieldTypeToFieldProtoType(enum enum_field_types 
     return Table::Field::BLOB;
   case DRIZZLE_TYPE_UUID:
     return Table::Field::UUID;
+  case DRIZZLE_TYPE_BOOLEAN:
+    return Table::Field::BOOLEAN;
   }
 
   assert(false);

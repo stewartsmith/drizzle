@@ -509,6 +509,9 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_INVALID_UUID_VALUE, N_("Received an invalid UUID value"));
   ADD_ERROR_MESSAGE(ER_INVALID_UUID_TIME, N_("The UUID was not created with a valid time"));
 
+  // For BOOL type
+  ADD_ERROR_MESSAGE(ER_INVALID_BOOLEAN_VALUE, N_("Received an invalid BOOLEAN value '%s'."));
+
   // Some old error values use the same strings as some new error values.
   ADD_ERROR_MESSAGE(EE_FILENOTFOUND, find(ER_FILE_NOT_FOUND));
   ADD_ERROR_MESSAGE(EE_CANTCREATEFILE, find(ER_CANT_CREATE_FILE));

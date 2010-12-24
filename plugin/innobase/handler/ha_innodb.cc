@@ -3863,6 +3863,7 @@ get_innobase_type_from_mysql_type(
     return(DATA_DOUBLE);
   case DRIZZLE_TYPE_BLOB:
     return(DATA_BLOB);
+  case DRIZZLE_TYPE_BOOLEAN:
   case DRIZZLE_TYPE_UUID:
     return(DATA_FIXBINARY);
   case DRIZZLE_TYPE_NULL:

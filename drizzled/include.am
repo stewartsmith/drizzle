@@ -80,6 +80,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/execute.h \
 			      drizzled/field.h \
 			      drizzled/field/blob.h \
+			      drizzled/field/boolean.h \
 			      drizzled/field/date.h \
 			      drizzled/field/datetime.h \
 			      drizzled/field/decimal.h \
@@ -94,9 +95,9 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/field/size.h \
 			      drizzled/field/str.h \
 			      drizzled/field/time.h \
-			      drizzled/field/varstring.h \
 			      drizzled/field/uuid.h \
 			      drizzled/field/uuid_st.h \
+			      drizzled/field/varstring.h \
 			      drizzled/field_iterator.h \
 			      drizzled/file_exchange.h \
 			      drizzled/filesort.h \
@@ -510,6 +511,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/execute.cc \
 			   drizzled/field.cc \
 			   drizzled/field/blob.cc \
+			   drizzled/field/boolean.cc \
 			   drizzled/field/date.cc \
 			   drizzled/field/datetime.cc \
 			   drizzled/field/decimal.cc \

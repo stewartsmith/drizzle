@@ -52,6 +52,7 @@ static const std::string DRIZZLE_TYPE_DECIMAL("DRIZZLE_TYPE_DECIMAL");
 static const std::string DRIZZLE_TYPE_ENUM("DRIZZLE_TYPE_ENUM"); 
 static const std::string DRIZZLE_TYPE_BLOB("DRIZZLE_TYPE_BLOB"); 
 static const std::string DRIZZLE_TYPE_UUID("DRIZZLE_TYPE_UUID"); 
+static const std::string DRIZZLE_TYPE_BOOLEAN("DRIZZLE_TYPE_BOOLEAN"); 
 
 static const std::string FIELD_ITEM("FIELD_ITEM");
 static const std::string FUNC_ITEM("FUNC_ITEM");
@@ -227,6 +228,8 @@ const std::string &type(drizzled::enum_field_types type)
     return DRIZZLE_TYPE_BLOB;
   case drizzled::DRIZZLE_TYPE_UUID : 
     return DRIZZLE_TYPE_UUID;
+  case drizzled::DRIZZLE_TYPE_BOOLEAN : 
+    return DRIZZLE_TYPE_BOOLEAN;
   }
 
   assert(0);
