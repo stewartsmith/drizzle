@@ -106,6 +106,9 @@ pars_sql(
 	const char*	str);	/*!< in: SQL string */
 /*************************************************************//**
 Retrieves characters to the lexical analyzer. */
+#ifdef __cplusplus
+extern "C"
+#endif
 UNIV_INTERN
 void
 pars_get_lex_chars(
@@ -585,7 +588,7 @@ pars_info_get_bound_id(
 
 /******************************************************************//**
 Release any resources used by the lexer. */
-#ifdef _cplusplus
+#ifdef __cplusplus
 extern "C"
 #endif
 UNIV_INTERN

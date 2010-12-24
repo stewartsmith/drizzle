@@ -103,6 +103,9 @@ sym_tab_free_private(
 /******************************************************************//**
 Adds an integer literal to a symbol table.
 @return	symbol table node */
+#ifdef __cplusplus
+extern "C"
+#endif
 UNIV_INTERN
 sym_node_t*
 sym_tab_add_int_lit(
@@ -143,6 +146,9 @@ sym_tab_add_int_lit(
 /******************************************************************//**
 Adds a string literal to a symbol table.
 @return	symbol table node */
+#ifdef __cplusplus
+extern "C"
+#endif
 UNIV_INTERN
 sym_node_t*
 sym_tab_add_str_lit(
@@ -190,6 +196,9 @@ sym_tab_add_str_lit(
 /******************************************************************//**
 Add a bound literal to a symbol table.
 @return	symbol table node */
+#ifdef __cplusplus
+extern "C"
+#endif
 UNIV_INTERN
 sym_node_t*
 sym_tab_add_bound_lit(
@@ -266,6 +275,9 @@ sym_tab_add_bound_lit(
 /******************************************************************//**
 Adds an SQL null literal to a symbol table.
 @return	symbol table node */
+#ifdef __cplusplus
+extern "C"
+#endif
 UNIV_INTERN
 sym_node_t*
 sym_tab_add_null_lit(
@@ -301,6 +313,9 @@ sym_tab_add_null_lit(
 /******************************************************************//**
 Adds an identifier to a symbol table.
 @return	symbol table node */
+#ifdef __cplusplus
+extern "C"
+#endif
 UNIV_INTERN
 sym_node_t*
 sym_tab_add_id(
@@ -337,6 +352,9 @@ sym_tab_add_id(
 /******************************************************************//**
 Add a bound identifier to a symbol table.
 @return	symbol table node */
+#ifdef __cplusplus
+extern "C"
+#endif
 UNIV_INTERN
 sym_node_t*
 sym_tab_add_bound_id(

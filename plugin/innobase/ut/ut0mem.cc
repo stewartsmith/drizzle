@@ -229,6 +229,7 @@ retry:
 Allocates memory. Sets it also to zero if UNIV_SET_MEM_TO_ZERO is
 defined.
 @return	own: allocated memory */
+extern "C"
 UNIV_INTERN
 void*
 ut_malloc(
@@ -287,6 +288,7 @@ ut_test_malloc(
 /**********************************************************************//**
 Frees a memory block allocated with ut_malloc. Freeing a NULL pointer is
 a nop. */
+extern "C"
 UNIV_INTERN
 void
 ut_free(
@@ -347,6 +349,7 @@ RETURN VALUE
        original	 block	is  left  untouched  - it is not freed or
        moved.
 @return	own: pointer to new mem block or NULL */
+extern "C"
 UNIV_INTERN
 void*
 ut_realloc(

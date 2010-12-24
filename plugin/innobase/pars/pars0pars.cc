@@ -1782,6 +1782,9 @@ pars_stored_procedure_call(
 
 /*************************************************************//**
 Retrieves characters to the lexical analyzer. */
+#ifdef __cplusplus
+extern "C"
+#endif
 UNIV_INTERN
 void
 pars_get_lex_chars(

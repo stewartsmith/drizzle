@@ -44,6 +44,9 @@ UNIV_INTERN ulint*	ut_dbg_null_ptr		= NULL;
 
 /*************************************************************//**
 Report a failed assertion. */
+#ifdef __cplusplus
+extern "C"
+#endif
 UNIV_INTERN
 void
 ut_dbg_assertion_failed(

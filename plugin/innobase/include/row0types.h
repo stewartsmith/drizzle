@@ -55,7 +55,7 @@ typedef struct row_ext_struct row_ext_t;
 
 /* MySQL data types */
 #if defined(BUILD_DRIZZLE)
-#if defined(_cplusplus)
+#if defined(__cplusplus)
 namespace drizzled
 {
 class Table;
