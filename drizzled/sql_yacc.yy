@@ -3649,6 +3649,8 @@ in_sum_expr:
 cast_type:
           BINARY opt_len
           { $$=ITEM_CAST_CHAR; Lex->charset= &my_charset_bin; Lex->dec= 0; }
+        | BOOLEAN_SYM
+          { $$=ITEM_CAST_BOOLEAN; Lex->charset= &my_charset_bin; Lex->dec= 0; }
         | CHAR_SYM opt_len
           { $$=ITEM_CAST_CHAR; Lex->dec= 0; }
         | DATE_SYM

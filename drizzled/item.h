@@ -362,6 +362,7 @@ public:
    *   If value is not null null_value flag will be reset to false.
    */
   virtual String *val_str(String *str)=0;
+
   /**
    * Return decimal representation of item with fixed point.
    *
@@ -381,6 +382,7 @@ public:
    * to true.
    */
   virtual my_decimal *val_decimal(my_decimal *decimal_buffer)= 0;
+
   /**
    * Return boolean value of item.
    *
@@ -390,6 +392,7 @@ public:
    * true value is true (not equal to 0)
    */
   virtual bool val_bool();
+
   /* Helper functions, see item_sum.cc */
   String *val_string_from_real(String *str);
   String *val_string_from_int(String *str);
