@@ -247,7 +247,7 @@ create table if not exists t1 select 3 as 'a',4 as 'b';
 create table if not exists t1 select 3 as 'a',3 as 'b';
 show warnings;
 --replace_column 3 # 4 # 5 #
-select * from DATA_DICTIONARY.TABLE_DEFINITION_CACHE WHERE TABLE_COUNT > 1 ORDER BY TABLE_SCHEMA, TABLE_NAME;
+select * from DATA_DICTIONARY.TABLE_DEFINITION_CACHE WHERE TABLE_COUNT AND TABLE_SCHEMA = SCHEMA() > 1 ORDER BY TABLE_SCHEMA, TABLE_NAME;
 select * from t1;
 drop table t1;
 
