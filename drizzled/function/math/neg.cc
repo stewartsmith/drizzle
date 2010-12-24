@@ -36,6 +36,7 @@ int64_t Item_func_neg::int_op()
 {
   int64_t value= args[0]->val_int();
   null_value= args[0]->null_value;
+
   return -value;
 }
 
@@ -85,8 +86,7 @@ void Item_func_neg::fix_length_and_dec()
       hybrid_type= DECIMAL_RESULT;
     }
   }
-  unsigned_flag= 0;
-  return;
+  unsigned_flag= false;
 }
 
 } /* namespace drizzled */

@@ -3629,6 +3629,14 @@ in_sum_expr:
 cast_type:
           BINARY opt_len
           { $$=ITEM_CAST_CHAR; Lex->charset= &my_charset_bin; Lex->dec= 0; }
+        | SIGNED_SYM
+          { $$=ITEM_CAST_SIGNED; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
+        | SIGNED_SYM INT_SYM
+          { $$=ITEM_CAST_SIGNED; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
+        | UNSIGNED_SYM
+          { $$=ITEM_CAST_UNSIGNED; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
+        | UNSIGNED_SYM INT_SYM
+          { $$=ITEM_CAST_UNSIGNED; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
         | CHAR_SYM opt_len
           { $$=ITEM_CAST_CHAR; Lex->dec= 0; }
         | DATE_SYM

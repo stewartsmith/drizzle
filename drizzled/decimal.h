@@ -175,6 +175,7 @@ public:
 		  buffer[i]= i;
 	#endif
   }
+
   my_decimal()
   {
     init();
@@ -184,6 +185,8 @@ public:
   void sign(bool s) { decimal_t::sign= s; }
   uint32_t precision() const { return intg + frac; }
 };
+
+std::ostream& operator<<(std::ostream& output, const my_decimal &dec);
 
 int decimal_operation_results(int result);
 
