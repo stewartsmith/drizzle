@@ -199,18 +199,10 @@ static void init_signals(void)
   return;
 }
 
-static void GoogleProtoErrorThrower(google::protobuf::LogLevel level, const char* filename,
-                                    int line, const string& message) throw(const char *)
+static void GoogleProtoErrorThrower(google::protobuf::LogLevel level,
+                                    const char* ,
+                                    int, const string& ) throw(const char *)
 {
-  (void)level;
-  (void)filename;
-  (void)line;
-  (void)message;
-#if 0
-  std::cerr << "\n";
-  drizzled::util::custom_backtrace();
-  std::cerr << "\n";
-#endif
   switch(level)
   {
   case google::protobuf::LOGLEVEL_INFO:
@@ -219,9 +211,6 @@ static void GoogleProtoErrorThrower(google::protobuf::LogLevel level, const char
   case google::protobuf::LOGLEVEL_ERROR:
   case google::protobuf::LOGLEVEL_FATAL:
   default:
-#if 0
-    std::cerr << "GoogleProtoErrorThrower(" << filename << ", " << line << ", " << message << ")";
-#endif
     throw("error in google protocol buffer parsing");
   }
 }
