@@ -78,6 +78,7 @@ message Table {
       DATETIME = 10;
       UUID = 11;
       TIME = 12;
+      BOOL = 13;
     }
 
     message FieldOptions {

@@ -31,6 +31,7 @@
 #include "drizzled/field/str.h"
 #include "drizzled/field/num.h"
 #include "drizzled/field/blob.h"
+#include "drizzled/field/bool.h"
 #include "drizzled/field/enum.h"
 #include "drizzled/field/null.h"
 #include "drizzled/field/date.h"
@@ -355,6 +356,9 @@ bool CreateField::init(Session *,
       break;
     case DRIZZLE_TYPE_UUID:
       length= field::Uuid::max_string_length();
+      break;
+    case DRIZZLE_TYPE_BOOL:
+      length= field::Bool::max_string_length();
       break;
     case DRIZZLE_TYPE_DATETIME:
       length= DateTime::MAX_STRING_LENGTH;

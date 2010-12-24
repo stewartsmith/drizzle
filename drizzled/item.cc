@@ -1076,6 +1076,7 @@ bool Item::is_datetime()
     case DRIZZLE_TYPE_LONGLONG:
     case DRIZZLE_TYPE_NULL:
     case DRIZZLE_TYPE_UUID:
+    case DRIZZLE_TYPE_BOOL:
       return false;
   }
 
@@ -1204,6 +1205,7 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool)
   case DRIZZLE_TYPE_TIME:
     field= new field::Time(maybe_null, name, &my_charset_bin);
     break;
+  case DRIZZLE_TYPE_BOOL:
   case DRIZZLE_TYPE_UUID:
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_VARCHAR:
@@ -1353,6 +1355,7 @@ bool Item::send(plugin::Client *client, String *buffer)
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_BLOB:
   case DRIZZLE_TYPE_VARCHAR:
+  case DRIZZLE_TYPE_BOOL:
   case DRIZZLE_TYPE_UUID:
   case DRIZZLE_TYPE_DECIMAL:
     {

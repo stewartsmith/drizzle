@@ -339,6 +339,8 @@ public:
 bool check_if_only_end_space(const CHARSET_INFO * const cs, char *str,
                              char *end);
 
+std::ostream& operator<<(std::ostream& output, const String &str);
+
 } /* namespace drizzled */
 
 bool operator==(const drizzled::String &s1, const drizzled::String &s2);

@@ -191,6 +191,7 @@ enum enum_field_types {
                         DRIZZLE_TYPE_ENUM,
                         DRIZZLE_TYPE_BLOB,
                         DRIZZLE_TYPE_TIME,
+                        DRIZZLE_TYPE_BOOL,
                         DRIZZLE_TYPE_UUID
 };
 const int enum_field_types_size= DRIZZLE_TYPE_UUID + 1;

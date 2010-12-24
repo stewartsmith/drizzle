@@ -1733,6 +1733,26 @@ type:
             if (statement->current_proto_field)
               statement->current_proto_field->set_type(message::Table::Field::UUID);
           }
+        | BOOL_SYM
+        {
+          $$=DRIZZLE_TYPE_BOOL;
+
+          statement::CreateTable *statement=
+            (statement::CreateTable *)Lex->statement;
+
+          if (statement->current_proto_field)
+            statement->current_proto_field->set_type(message::Table::Field::BOOL);
+        }
+        | BOOLEAN_SYM
+        {
+          $$=DRIZZLE_TYPE_BOOL;
+
+          statement::CreateTable *statement=
+            (statement::CreateTable *)Lex->statement;
+
+          if (statement->current_proto_field)
+            statement->current_proto_field->set_type(message::Table::Field::BOOL);
+        }
         | SERIAL_SYM
           {
             $$=DRIZZLE_TYPE_LONGLONG;
