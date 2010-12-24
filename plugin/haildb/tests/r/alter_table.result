@@ -292,7 +292,7 @@ t1	YES	a	2	b
 t1	NO	b	1	b
 analyze table t1;
 Table	Op	Msg_type	Msg_text
-test.t1	analyze	note	The storage engine for the table doesn't support analyze
+test.t1	analyze	status	OK
 show keys from t1;
 Table	Unique	Key_name	Seq_in_index	Column_name
 t1	YES	a	1	a

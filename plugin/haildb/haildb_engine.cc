@@ -2806,6 +2806,15 @@ int HailDBCursor::reset()
   return 0;
 }
 
+int HailDBCursor::analyze(Session*)
+{
+  ib_err_t err;
+
+  err= ib_update_table_statistics(cursor);
+
+  return ib_err_t_to_drizzle_error(err);
+}
+
 int HailDBCursor::index_next(unsigned char *buf)
 {
   int ret= HA_ERR_END_OF_FILE;
