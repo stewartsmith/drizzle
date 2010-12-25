@@ -40,7 +40,7 @@ public:
   void fix_length_and_dec();
   enum_field_types field_type() const { return cached_field_type; }
   int64_t val_int();
-  bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
+  bool get_date(type::Time *res, uint32_t fuzzy_date);
   bool eq(const Item *item, bool binary_cmp) const;
   virtual void print(String *str, enum_query_type query_type);
 };

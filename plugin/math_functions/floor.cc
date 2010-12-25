@@ -34,9 +34,9 @@ int64_t Item_func_floor::int_op()
     break;
   case DECIMAL_RESULT:
   {
-    my_decimal dec_buf, *dec;
+    type::Decimal dec_buf, *dec;
     if ((dec= Item_func_floor::decimal_op(&dec_buf)))
-      my_decimal2int(E_DEC_FATAL_ERROR, dec, unsigned_flag, &result);
+      class_decimal2int(E_DEC_FATAL_ERROR, dec, unsigned_flag, &result);
     else
       result= 0;
     break;
@@ -59,11 +59,11 @@ double Item_func_floor::real_op()
 }
 
 
-my_decimal *Item_func_floor::decimal_op(my_decimal *decimal_value)
+type::Decimal *Item_func_floor::decimal_op(type::Decimal *decimal_value)
 {
-  my_decimal val, *value= args[0]->val_decimal(&val);
+  type::Decimal val, *value= args[0]->val_decimal(&val);
   if (!(null_value= (args[0]->null_value ||
-                     my_decimal_floor(E_DEC_FATAL_ERROR, value,
+                     class_decimal_floor(E_DEC_FATAL_ERROR, value,
                                       decimal_value) > 1)))
     return decimal_value;
   return 0;

@@ -27,7 +27,7 @@ namespace drizzled
 
 int64_t Item_func_timestamp_diff::val_int()
 {
-  DRIZZLE_TIME ltime1, ltime2;
+  type::Time ltime1, ltime2;
   int64_t seconds;
   long microseconds;
   long months= 0;

@@ -1000,7 +1000,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
       {
         message::Table::Field::NumericFieldOptions fo= pfield.numeric_options();
 
-        field_pack_length[fieldnr]= my_decimal_get_binary_size(fo.precision(), fo.scale());
+        field_pack_length[fieldnr]= class_decimal_get_binary_size(fo.precision(), fo.scale());
       }
       break;
     default:
@@ -1280,7 +1280,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
       {
         message::Table::Field::NumericFieldOptions fo= pfield.numeric_options();
 
-        field_length= my_decimal_precision_to_length(fo.precision(), fo.scale(),
+        field_length= class_decimal_precision_to_length(fo.precision(), fo.scale(),
                                                      false);
         break;
       }

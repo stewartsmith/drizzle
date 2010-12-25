@@ -877,7 +877,7 @@ const unsigned char *Field::unpack(unsigned char* to, const unsigned char *from)
   return(result);
 }
 
-my_decimal *Field::val_decimal(my_decimal *)
+type::Decimal *Field::val_decimal(type::Decimal *)
 {
   /* This never have to be called */
   assert(0);
@@ -912,10 +912,10 @@ void Field::make_field(SendField *field)
   field->decimals= 0;
 }
 
-int64_t Field::convert_decimal2int64_t(const my_decimal *val, bool, int *err)
+int64_t Field::convert_decimal2int64_t(const type::Decimal *val, bool, int *err)
 {
   int64_t i;
-  if (warn_if_overflow(my_decimal2int(E_DEC_ERROR &
+  if (warn_if_overflow(class_decimal2int(E_DEC_ERROR &
                                       ~E_DEC_OVERFLOW & ~E_DEC_TRUNCATED,
                                       val, false, &i)))
   {
@@ -946,7 +946,7 @@ uint32_t Field::fill_cache_field(CacheField *copy)
   return copy->length+ store_length;
 }
 
-bool Field::get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
+bool Field::get_date(type::Time *ltime,uint32_t fuzzydate)
 {
   char buff[40];
   String tmp(buff,sizeof(buff),&my_charset_bin),*res;
@@ -959,7 +959,7 @@ bool Field::get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
   return 0;
 }
 
-bool Field::get_time(DRIZZLE_TIME *ltime)
+bool Field::get_time(type::Time *ltime)
 {
   char buff[40];
   String tmp(buff,sizeof(buff),&my_charset_bin),*res;
@@ -972,7 +972,7 @@ bool Field::get_time(DRIZZLE_TIME *ltime)
   return 0;
 }
 
-int Field::store_time(DRIZZLE_TIME *ltime, enum enum_drizzle_timestamp_type)
+int Field::store_time(type::Time *ltime, enum enum_drizzle_timestamp_type)
 {
   char buff[MAX_DATE_STRING_REP_LENGTH];
   uint32_t length= (uint32_t) my_TIME_to_str(ltime, buff);

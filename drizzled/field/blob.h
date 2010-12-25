@@ -76,7 +76,7 @@ public:
   double val_real(void);
   int64_t val_int(void);
   String *val_str(String*,String *);
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
   int cmp_max(const unsigned char *, const unsigned char *, uint32_t max_length);
   int cmp(const unsigned char *a,const unsigned char *b)
     { return cmp_max(a, b, UINT32_MAX); }

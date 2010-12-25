@@ -59,7 +59,7 @@ public:
 
   double val_real() { assert(fixed == 1); return (double) value; }
 
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
 
   String *val_str(String*);
 

@@ -59,7 +59,7 @@ void Item_func_min_max::fix_length_and_dec()
     }
   }
   else if ((cmp_type == DECIMAL_RESULT) || (cmp_type == INT_RESULT))
-    max_length= my_decimal_precision_to_length(max_int_part+decimals, decimals,
+    max_length= class_decimal_precision_to_length(max_int_part+decimals, decimals,
                                             unsigned_flag);
   cached_field_type= agg_field_type(args, arg_count);
 }
@@ -151,10 +151,10 @@ String *Item_func_min_max::val_str(String *str)
 
   case DECIMAL_RESULT:
     {
-      my_decimal dec_buf, *dec_val= val_decimal(&dec_buf);
+      type::Decimal dec_buf, *dec_val= val_decimal(&dec_buf);
       if (null_value)
         return 0;
-      my_decimal2string(E_DEC_FATAL_ERROR, dec_val, 0, 0, 0, str);
+      class_decimal2string(E_DEC_FATAL_ERROR, dec_val, 0, 0, 0, str);
       return str;
     }
 
@@ -257,10 +257,10 @@ int64_t Item_func_min_max::val_int()
 }
 
 
-my_decimal *Item_func_min_max::val_decimal(my_decimal *dec)
+type::Decimal *Item_func_min_max::val_decimal(type::Decimal *dec)
 {
   assert(fixed == 1);
-  my_decimal tmp_buf, *tmp, *res= NULL;
+  type::Decimal tmp_buf, *tmp, *res= NULL;
 
   if (compare_as_dates)
   {
@@ -276,12 +276,12 @@ my_decimal *Item_func_min_max::val_decimal(my_decimal *dec)
     else
     {
       tmp= args[i]->val_decimal(&tmp_buf);      // Zero if NULL
-      if (tmp && (my_decimal_cmp(tmp, res) * cmp_sign) < 0)
+      if (tmp && (class_decimal_cmp(tmp, res) * cmp_sign) < 0)
       {
         if (tmp == &tmp_buf)
         {
           /* Move value out of tmp_buf as this will be reused on next loop */
-          my_decimal2decimal(tmp, dec);
+          class_decimal2decimal(tmp, dec);
           res= dec;
         }
         else

@@ -27,10 +27,10 @@ namespace drizzled
 {
 
 /**
-    Converts current time in time_t to DRIZZLE_TIME represenatation for local
+    Converts current time in time_t to type::Time represenatation for local
     time zone. Defines time zone (local) used for whole SYSDATE function.
 */
-void Item_func_sysdate_local::store_now_in_TIME(DRIZZLE_TIME *now_time)
+void Item_func_sysdate_local::store_now_in_TIME(type::Time *now_time)
 {
   Session *session= current_session;
   session->variables.time_zone->gmt_sec_to_TIME(now_time, time(NULL));
@@ -70,7 +70,7 @@ void Item_func_sysdate_local::fix_length_and_dec()
 }
 
 
-bool Item_func_sysdate_local::get_date(DRIZZLE_TIME *res,
+bool Item_func_sysdate_local::get_date(type::Time *res,
                                        uint32_t )
 {
   store_now_in_TIME(&ltime);

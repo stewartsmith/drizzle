@@ -434,13 +434,13 @@ bool Item_func::eq(const Item *item, bool binary_cmp) const
 }
 
 
-bool Item_func::get_arg0_date(DRIZZLE_TIME *ltime, uint32_t fuzzy_date)
+bool Item_func::get_arg0_date(type::Time *ltime, uint32_t fuzzy_date)
 {
   return (null_value=args[0]->get_date(ltime, fuzzy_date));
 }
 
 
-bool Item_func::get_arg0_time(DRIZZLE_TIME *ltime)
+bool Item_func::get_arg0_time(type::Time *ltime)
 {
   return (null_value= args[0]->get_time(ltime));
 }
@@ -482,7 +482,7 @@ Field *Item_func::tmp_table_field(Table *table)
     return make_string_field(table);
 
   case DECIMAL_RESULT:
-    field= new Field_decimal(my_decimal_precision_to_length(decimal_precision(),
+    field= new Field_decimal(class_decimal_precision_to_length(decimal_precision(),
                                                             decimals,
                                                             unsigned_flag),
                              maybe_null,
@@ -503,10 +503,10 @@ Field *Item_func::tmp_table_field(Table *table)
 }
 
 
-my_decimal *Item_func::val_decimal(my_decimal *decimal_value)
+type::Decimal *Item_func::val_decimal(type::Decimal *decimal_value)
 {
   assert(fixed);
-  int2my_decimal(E_DEC_FATAL_ERROR, val_int(), unsigned_flag, decimal_value);
+  int2_class_decimal(E_DEC_FATAL_ERROR, val_int(), unsigned_flag, decimal_value);
   return decimal_value;
 }
 
@@ -580,7 +580,7 @@ void Item_func::count_decimal_length()
     set_if_smaller(unsigned_flag, args[i]->unsigned_flag);
   }
   int precision= min(max_int_part + decimals, DECIMAL_MAX_PRECISION);
-  max_length= my_decimal_precision_to_length(precision, decimals,
+  max_length= class_decimal_precision_to_length(precision, decimals,
                                              unsigned_flag);
 }
 

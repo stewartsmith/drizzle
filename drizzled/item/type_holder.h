@@ -25,7 +25,9 @@ namespace drizzled
 
 typedef struct st_typelib TYPELIB;
 class String;
-class my_decimal;
+namespace type {
+class Decimal;
+}
 class Session;
 class Item;
 
@@ -67,7 +69,7 @@ public:
   enum Type type() const { return TYPE_HOLDER; }
   double val_real();
   int64_t val_int();
-  my_decimal *val_decimal(my_decimal *val);
+  type::Decimal *val_decimal(type::Decimal *val);
   String *val_str(String* val);
 
   /**

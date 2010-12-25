@@ -267,7 +267,7 @@ String *Epoch::val_str(String *val_buffer, String *)
   return val_buffer;
 }
 
-bool Epoch::get_date(DRIZZLE_TIME *ltime, uint32_t)
+bool Epoch::get_date(type::Time *ltime, uint32_t)
 {
   uint64_t temp;
 
@@ -278,7 +278,7 @@ bool Epoch::get_date(DRIZZLE_TIME *ltime, uint32_t)
   Timestamp temporal;
   (void) temporal.from_time_t((time_t) temp);
 
-  /* @TODO Goodbye the below code when DRIZZLE_TIME is finally gone.. */
+  /* @TODO Goodbye the below code when type::Time is finally gone.. */
 
   ltime->time_type= DRIZZLE_TIMESTAMP_DATETIME;
   ltime->year= temporal.years();
@@ -291,7 +291,7 @@ bool Epoch::get_date(DRIZZLE_TIME *ltime, uint32_t)
   return 0;
 }
 
-bool Epoch::get_time(DRIZZLE_TIME *ltime)
+bool Epoch::get_time(type::Time *ltime)
 {
   return Epoch::get_date(ltime,0);
 }

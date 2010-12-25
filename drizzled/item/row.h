@@ -68,7 +68,7 @@ public:
     illegal_method_call((const char*)"val_str");
     return 0;
   };
-  my_decimal *val_decimal(my_decimal *)
+  type::Decimal *val_decimal(type::Decimal *)
   {
     illegal_method_call((const char*)"val_decimal");
     return 0;

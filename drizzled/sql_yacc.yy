@@ -409,12 +409,12 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
 %token  ABORT_SYM                     /* INTERNAL (used in lex) */
 %token  ACTION                        /* SQL-2003-N */
-%token  ADD                           /* SQL-2003-R */
+%token  ADD_SYM                           /* SQL-2003-R */
 %token  ADDDATE_SYM                   /* MYSQL-FUNC */
 %token  AFTER_SYM                     /* SQL-2003-N */
 %token  AGGREGATE_SYM
 %token  ALL                           /* SQL-2003-R */
-%token  ALTER                         /* SQL-2003-R */
+%token  ALTER_SYM                         /* SQL-2003-R */
 %token  ANALYZE_SYM
 %token  AND_SYM                       /* SQL-2003-R */
 %token  ANY_SYM                       /* SQL-2003-R */
@@ -445,7 +445,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  CASE_SYM                      /* SQL-2003-R */
 %token  CAST_SYM                      /* SQL-2003-R */
 %token  CHAIN_SYM                     /* SQL-2003-N */
-%token  CHANGE
+%token  CHANGE_SYM
 %token  CHAR_SYM                      /* SQL-2003-R */
 %token  CHECKSUM_SYM
 %token  CHECK_SYM                     /* SQL-2003-R */
@@ -695,7 +695,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  SESSION_SYM                   /* SQL-2003-N */
 %token  SERVER_SYM
 %token  SERVER_OPTIONS
-%token  SET                           /* SQL-2003-R */
+%token  SET_SYM                           /* SQL-2003-R */
 %token  SET_VAR
 %token  SHARE_SYM
 %token  SHOW
@@ -2077,9 +2077,9 @@ opt_on_update_delete:
 delete_option:
           RESTRICT      { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_RESTRICT; }
         | CASCADE       { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_CASCADE; }
-        | SET NULL_SYM  { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_SET_NULL; }
+        | SET_SYM NULL_SYM  { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_SET_NULL; }
         | NO_SYM ACTION { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_NO_ACTION; }
-        | SET DEFAULT   { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_SET_DEFAULT;  }
+        | SET_SYM DEFAULT   { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_SET_DEFAULT;  }
         ;
 
 key_type:
@@ -2194,7 +2194,7 @@ string_list:
 */
 
 alter:
-          ALTER build_method opt_ignore TABLE_SYM table_ident
+          ALTER_SYM build_method opt_ignore TABLE_SYM table_ident
           {
             Session *session= YYSession;
             LEX *lex= session->lex;
@@ -2216,7 +2216,7 @@ alter:
           }
           alter_commands
           {}
-        | ALTER DATABASE ident_or_empty
+        | ALTER_SYM DATABASE ident_or_empty
           {
             LEX *lex=Lex;
             lex->sql_command=SQLCOM_ALTER_DB;
@@ -2275,7 +2275,7 @@ alter_list:
         ;
 
 add_column:
-          ADD opt_column
+          ADD_SYM opt_column
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
 
@@ -2286,7 +2286,7 @@ add_column:
 
 alter_list_item:
           add_column column_def opt_place { }
-        | ADD key_def
+        | ADD_SYM key_def
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
 
@@ -2299,7 +2299,7 @@ alter_list_item:
             statement->alter_info.flags.set(ALTER_ADD_COLUMN);
             statement->alter_info.flags.set(ALTER_ADD_INDEX);
           }
-        | CHANGE opt_column field_ident
+        | CHANGE_SYM opt_column field_ident
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
             statement->change= $3.str;
@@ -2380,14 +2380,14 @@ alter_list_item:
             statement->alter_info.keys_onoff= ENABLE;
             statement->alter_info.flags.set(ALTER_KEYS_ONOFF);
           }
-        | ALTER opt_column field_ident SET DEFAULT signed_literal
+        | ALTER_SYM opt_column field_ident SET_SYM DEFAULT signed_literal
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
 
             statement->alter_info.alter_list.push_back(new AlterColumn($3.str,$6));
             statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
           }
-        | ALTER opt_column field_ident DROP DEFAULT
+        | ALTER_SYM opt_column field_ident DROP DEFAULT
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
 
@@ -4751,7 +4751,7 @@ insert_field_spec:
           insert_values {}
         | '(' ')' insert_values {}
         | '(' fields ')' insert_values {}
-        | SET
+        | SET_SYM
           {
             LEX *lex=Lex;
             if (!(lex->insert_list = new List_item) ||
@@ -4866,7 +4866,7 @@ update:
             if (!lex->select_lex.add_table_to_list(YYSession, $3, NULL,0))
               DRIZZLE_YYABORT;
           }
-          SET update_list
+          SET_SYM update_list
           {
             LEX *lex= Lex;
             if (lex->select_lex.get_table_list()->derived)
@@ -5875,7 +5875,7 @@ field_or_var:
 
 opt_load_data_set_spec:
           /* empty */ {}
-        | SET insert_update_list {}
+        | SET_SYM insert_update_list {}
         ;
 
 /* Common definitions */
@@ -6366,7 +6366,7 @@ keyword_sp:
 /* Option functions */
 
 set:
-          SET opt_option
+          SET_SYM opt_option
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_SET_OPTION;

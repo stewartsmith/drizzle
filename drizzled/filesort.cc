@@ -914,7 +914,7 @@ void SortParam::make_sortkey(register unsigned char *to, unsigned char *ref_pos)
         }
       case DECIMAL_RESULT:
         {
-          my_decimal dec_buf, *dec_val= item->val_decimal_result(&dec_buf);
+          type::Decimal dec_buf, *dec_val= item->val_decimal_result(&dec_buf);
           if (maybe_null)
           {
             if (item->null_value)
@@ -925,7 +925,7 @@ void SortParam::make_sortkey(register unsigned char *to, unsigned char *ref_pos)
             }
             *to++=1;
           }
-          my_decimal2binary(E_DEC_FATAL_ERROR, dec_val, to,
+          class_decimal2binary(E_DEC_FATAL_ERROR, dec_val, to,
                             item->max_length - (item->decimals ? 1:0),
                             item->decimals);
           break;
@@ -1524,7 +1524,7 @@ uint32_t FileSort::sortlength(SortField *sortorder, uint32_t s_length, bool *mul
         break;
       case DECIMAL_RESULT:
         sortorder->length=
-          my_decimal_get_binary_size(sortorder->item->max_length -
+          class_decimal_get_binary_size(sortorder->item->max_length -
                                      (sortorder->item->decimals ? 1 : 0),
                                      sortorder->item->decimals);
         break;

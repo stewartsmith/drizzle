@@ -162,7 +162,7 @@ int64_t Item_string::val_int()
   return tmp;
 }
 
-my_decimal *Item_string::val_decimal(my_decimal *decimal_value)
+type::Decimal *Item_string::val_decimal(type::Decimal *decimal_value)
 {
   return val_decimal_from_string(decimal_value);
 }

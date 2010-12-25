@@ -51,7 +51,7 @@ public:
   double val_real() { assert(fixed == 1); return value; }
   int64_t val_int();
   String *val_str(String*);
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
   bool basic_const_item() const { return 1; }
   Item *clone_item()
   { return new Item_float(name, value, decimals, max_length); }

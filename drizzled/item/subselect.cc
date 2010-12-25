@@ -668,7 +668,7 @@ String *Item_singlerow_subselect::val_str(String *str)
 }
 
 
-my_decimal *Item_singlerow_subselect::val_decimal(my_decimal *decimal_value)
+type::Decimal *Item_singlerow_subselect::val_decimal(type::Decimal *decimal_value)
 {
   if (!exec() && !value->null_value)
   {
@@ -818,7 +818,7 @@ String *Item_exists_subselect::val_str(String *str)
 }
 
 
-my_decimal *Item_exists_subselect::val_decimal(my_decimal *decimal_value)
+type::Decimal *Item_exists_subselect::val_decimal(type::Decimal *decimal_value)
 {
   assert(fixed == 1);
   if (exec())
@@ -826,7 +826,7 @@ my_decimal *Item_exists_subselect::val_decimal(my_decimal *decimal_value)
     reset();
     return 0;
   }
-  int2my_decimal(E_DEC_FATAL_ERROR, value, 0, decimal_value);
+  int2_class_decimal(E_DEC_FATAL_ERROR, value, 0, decimal_value);
   return decimal_value;
 }
 
@@ -929,7 +929,7 @@ bool Item_in_subselect::val_bool()
   return value;
 }
 
-my_decimal *Item_in_subselect::val_decimal(my_decimal *decimal_value)
+type::Decimal *Item_in_subselect::val_decimal(type::Decimal *decimal_value)
 {
   /*
     As far as Item_in_subselect called only from Item_in_optimizer this
@@ -946,7 +946,7 @@ my_decimal *Item_in_subselect::val_decimal(my_decimal *decimal_value)
   }
   if (was_null && !value)
     null_value= 1;
-  int2my_decimal(E_DEC_FATAL_ERROR, value, 0, decimal_value);
+  int2_class_decimal(E_DEC_FATAL_ERROR, value, 0, decimal_value);
   return decimal_value;
 }
 

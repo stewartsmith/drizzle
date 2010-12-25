@@ -42,7 +42,7 @@ public:
   double val_real() { return args[0]->val_real(); }
   int64_t val_int() { return args[0]->val_int(); }
   String *val_str(String *str) { return args[0]->val_str(str); }
-  my_decimal *val_decimal(my_decimal *dec) { return args[0]->val_decimal(dec); }
+  type::Decimal *val_decimal(type::Decimal *dec) { return args[0]->val_decimal(dec); }
   const char *func_name() const { return "rollup_const"; }
   bool const_item() const { return 0; }
   Item_result result_type() const { return args[0]->result_type(); }

@@ -47,7 +47,7 @@ double Item_func_get_user_var::val_real()
 }
 
 
-my_decimal *Item_func_get_user_var::val_decimal(my_decimal *dec)
+type::Decimal *Item_func_get_user_var::val_decimal(type::Decimal *dec)
 {
   assert(fixed == 1);
   if (!var_entry)

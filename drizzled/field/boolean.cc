@@ -132,10 +132,10 @@ int  Boolean::store(double nr)
   return 0;
 }
 
-int Boolean::store_decimal(const drizzled::my_decimal *dec)
+int Boolean::store_decimal(const drizzled::type::Decimal *dec)
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
-  if (my_decimal_is_zero(dec))
+  if (class_decimal_is_zero(dec))
   {
     setFalse();
     return 0;
@@ -202,15 +202,15 @@ String *Boolean::val_str(String *val_buffer, String *)
   return val_buffer;
 }
 
-my_decimal *Boolean::val_decimal(my_decimal *dec)
+type::Decimal *Boolean::val_decimal(type::Decimal *dec)
 {
   if (isTrue())
   {
-    int2my_decimal(E_DEC_OK, 1, false, dec);
+    int2_class_decimal(E_DEC_OK, 1, false, dec);
     return dec;
   }
 
-  my_decimal_set_zero(dec);
+  class_decimal_set_zero(dec);
 
   return dec;
 }

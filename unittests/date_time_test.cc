@@ -298,7 +298,7 @@ TEST_F(DateTimeTest, DISABLED_to_tm)
 
 TEST_F(DateTimeTest, to_decimal)
 {
-  drizzled::my_decimal to;
+  drizzled::type::Decimal to;
   TemporalGenerator::DateTimeGen::make_datetime(&datetime, 1987, 6, 13, 5, 10, 13, 456);
 
   datetime.to_decimal(&to);

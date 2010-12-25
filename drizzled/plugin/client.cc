@@ -24,7 +24,7 @@
 namespace drizzled
 {
 
-bool plugin::Client::store(const DRIZZLE_TIME *from)
+bool plugin::Client::store(const type::Time *from)
 {
   const size_t buff_len= 40;
   char buff[buff_len];

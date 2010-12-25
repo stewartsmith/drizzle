@@ -461,7 +461,7 @@ TEST_F(DateTest, from_time_t)
 
 TEST_F(DateTest, to_decimal)
 {
-  drizzled::my_decimal to;
+  drizzled::type::Decimal to;
   TemporalGenerator::DateGen::make_date(&date, 1987, 5, 6);
 
   date.to_decimal(&to);
