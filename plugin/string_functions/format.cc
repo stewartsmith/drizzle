@@ -75,7 +75,7 @@ String *Item_func_format::val_str(String *str)
   if (args[0]->result_type() == DECIMAL_RESULT ||
       args[0]->result_type() == INT_RESULT)
   {
-    my_decimal dec_val, rnd_dec, *res;
+    type::Decimal dec_val, rnd_dec, *res;
     res= args[0]->val_decimal(&dec_val);
     if ((null_value=args[0]->null_value))
       return 0;

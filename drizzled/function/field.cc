@@ -56,7 +56,7 @@ int64_t Item_func_field::val_int()
   }
   else if (cmp_type == DECIMAL_RESULT)
   {
-    my_decimal dec_arg_buf, *dec_arg,
+    type::Decimal dec_arg_buf, *dec_arg,
                dec_buf, *dec= args[0]->val_decimal(&dec_buf);
     if (args[0]->null_value)
       return 0;

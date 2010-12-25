@@ -35,7 +35,7 @@ public:
   const char *func_name() const { return truncate ? "truncate" : "round"; }
   double real_op();
   int64_t int_op();
-  my_decimal *decimal_op(my_decimal *);
+  type::Decimal *decimal_op(type::Decimal *);
   void fix_length_and_dec();
 };
 

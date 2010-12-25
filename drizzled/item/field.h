@@ -64,12 +64,12 @@ public:
   bool eq(const Item *item, bool binary_cmp) const;
   double val_real();
   int64_t val_int();
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
   String *val_str(String*);
   double val_result();
   int64_t val_int_result();
   String *str_result(String* tmp);
-  my_decimal *val_decimal_result(my_decimal *);
+  type::Decimal *val_decimal_result(type::Decimal *);
   bool val_bool_result();
   bool send(plugin::Client *client, String *str_arg);
   void reset_field(Field *f);

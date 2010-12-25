@@ -46,7 +46,7 @@ public:
     Hybrid_type+= arg is implemented as dec_buf[1]= dec_buf[0] + arg.
     The third decimal is used as a handy temporary storage.
   */
-  my_decimal dec_buf[3];
+  type::Decimal dec_buf[3];
   int used_dec_buf_no;
 
   /*

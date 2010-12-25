@@ -97,8 +97,8 @@ Hybrid_type_traits_decimal::val_real(Hybrid_type *val) const
 }
 
 
-my_decimal *Hybrid_type_traits_decimal::val_decimal(Hybrid_type *val,
-                                                    my_decimal *) const
+type::Decimal *Hybrid_type_traits_decimal::val_decimal(Hybrid_type *val,
+                                                    type::Decimal *) const
 { return &val->dec_buf[val->used_dec_buf_no]; }
 
 

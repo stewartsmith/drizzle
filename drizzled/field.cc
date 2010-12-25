@@ -877,7 +877,7 @@ const unsigned char *Field::unpack(unsigned char* to, const unsigned char *from)
   return(result);
 }
 
-my_decimal *Field::val_decimal(my_decimal *)
+type::Decimal *Field::val_decimal(type::Decimal *)
 {
   /* This never have to be called */
   assert(0);
@@ -912,7 +912,7 @@ void Field::make_field(SendField *field)
   field->decimals= 0;
 }
 
-int64_t Field::convert_decimal2int64_t(const my_decimal *val, bool, int *err)
+int64_t Field::convert_decimal2int64_t(const type::Decimal *val, bool, int *err)
 {
   int64_t i;
   if (warn_if_overflow(class_decimal2int(E_DEC_ERROR &

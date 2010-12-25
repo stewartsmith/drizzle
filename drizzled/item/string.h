@@ -77,7 +77,7 @@ public:
     assert(fixed == 1);
     return (String*) &str_value;
   }
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
   int save_in_field(Field *field, bool no_conversions);
   enum Item_result result_type () const { return STRING_RESULT; }
   enum_field_types field_type() const { return DRIZZLE_TYPE_VARCHAR; }

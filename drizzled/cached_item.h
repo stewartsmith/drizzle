@@ -73,7 +73,7 @@ public:
 class Cached_item_decimal :public Cached_item
 {
   Item *item;
-  my_decimal value;
+  type::Decimal value;
 public:
   Cached_item_decimal(Item *item_par);
   bool cmp(void);

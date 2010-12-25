@@ -299,7 +299,7 @@ int64_t Item_type_holder::val_int()
   return 0;
 }
 
-my_decimal *Item_type_holder::val_decimal(my_decimal *)
+type::Decimal *Item_type_holder::val_decimal(type::Decimal *)
 {
   assert(0); // should never be called
   return 0;

@@ -199,7 +199,7 @@ public:
                     const CHARSET_INFO * const cs)=0;
   virtual int store(double nr)=0;
   virtual int store(int64_t nr, bool unsigned_val)=0;
-  virtual int store_decimal(const my_decimal *d)=0;
+  virtual int store_decimal(const type::Decimal *d)=0;
   int store_and_check(enum_check_fields check_level,
                       const char *to,
                       uint32_t length,
@@ -213,7 +213,7 @@ public:
   virtual int store_time(DRIZZLE_TIME *ltime, enum enum_drizzle_timestamp_type t_type);
   virtual double val_real()=0;
   virtual int64_t val_int()=0;
-  virtual my_decimal *val_decimal(my_decimal *);
+  virtual type::Decimal *val_decimal(type::Decimal *);
   String *val_str_internal(String *str)
   {
     return val_str(str, str);
@@ -709,7 +709,7 @@ public:
     @return
       value converted from val
   */
-  int64_t convert_decimal2int64_t(const my_decimal *val,
+  int64_t convert_decimal2int64_t(const type::Decimal *val,
                                   bool unsigned_flag,
                                   int *err);
   /* The max. number of characters */

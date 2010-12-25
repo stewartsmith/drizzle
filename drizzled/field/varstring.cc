@@ -165,7 +165,7 @@ String *Field_varstring::val_str(String *,
 }
 
 
-my_decimal *Field_varstring::val_decimal(my_decimal *decimal_value)
+type::Decimal *Field_varstring::val_decimal(type::Decimal *decimal_value)
 {
   uint32_t length;
 

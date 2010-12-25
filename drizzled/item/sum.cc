@@ -46,7 +46,7 @@ using namespace std;
 namespace drizzled
 {
 
-extern my_decimal decimal_zero;
+extern type::Decimal decimal_zero;
 extern plugin::StorageEngine *heap_engine;
 
 /**
@@ -583,7 +583,7 @@ int64_t Item_sum_num::val_int()
 }
 
 
-my_decimal *Item_sum_num::val_decimal(my_decimal *decimal_value)
+type::Decimal *Item_sum_num::val_decimal(type::Decimal *decimal_value)
 {
   return val_decimal_from_real(decimal_value);
 }
@@ -596,7 +596,7 @@ Item_sum_int::val_str(String *str)
 }
 
 
-my_decimal *Item_sum_int::val_decimal(my_decimal *decimal_value)
+type::Decimal *Item_sum_int::val_decimal(type::Decimal *decimal_value)
 {
   return val_decimal_from_int(decimal_value);
 }
@@ -824,7 +824,7 @@ bool Item_sum_sum::add()
 {
   if (hybrid_type == DECIMAL_RESULT)
   {
-    my_decimal value, *val= args[0]->val_decimal(&value);
+    type::Decimal value, *val= args[0]->val_decimal(&value);
     if (!args[0]->null_value)
     {
       class_decimal_add(E_DEC_FATAL_ERROR, dec_buffs + (curr_dec_buff^1),
@@ -874,7 +874,7 @@ String *Item_sum_sum::val_str(String *str)
 }
 
 
-my_decimal *Item_sum_sum::val_decimal(my_decimal *val)
+type::Decimal *Item_sum_sum::val_decimal(type::Decimal *val)
 {
   if (hybrid_type == DECIMAL_RESULT)
     return (dec_buffs + curr_dec_buff);
@@ -1131,7 +1131,7 @@ double Item_sum_distinct::val_real()
 }
 
 
-my_decimal *Item_sum_distinct::val_decimal(my_decimal *to)
+type::Decimal *Item_sum_distinct::val_decimal(type::Decimal *to)
 {
   calculate_val_and_count();
   if (null_value)
@@ -1311,10 +1311,10 @@ int64_t Item_sum_avg::val_int()
 }
 
 
-my_decimal *Item_sum_avg::val_decimal(my_decimal *val)
+type::Decimal *Item_sum_avg::val_decimal(type::Decimal *val)
 {
-  my_decimal sum_buff, cnt;
-  const my_decimal *sum_dec;
+  type::Decimal sum_buff, cnt;
+  const type::Decimal *sum_dec;
   assert(fixed == 1);
   if (!count)
   {
@@ -1539,7 +1539,7 @@ int64_t Item_sum_variance::val_int()
 }
 
 
-my_decimal *Item_sum_variance::val_decimal(my_decimal *dec_buf)
+type::Decimal *Item_sum_variance::val_decimal(type::Decimal *dec_buf)
 {
   assert(fixed == 1);
   return val_decimal_from_real(dec_buf);
@@ -1665,7 +1665,7 @@ int64_t Item_sum_hybrid::val_int()
 }
 
 
-my_decimal *Item_sum_hybrid::val_decimal(my_decimal *val)
+type::Decimal *Item_sum_hybrid::val_decimal(type::Decimal *val)
 {
   assert(fixed == 1);
   if (null_value)
@@ -1781,7 +1781,7 @@ bool Item_sum_min::add()
     break;
   case DECIMAL_RESULT:
     {
-      my_decimal value_buff, *val= args[0]->val_decimal(&value_buff);
+      type::Decimal value_buff, *val= args[0]->val_decimal(&value_buff);
       if (!args[0]->null_value &&
           (null_value || (class_decimal_cmp(&sum_dec, val) > 0)))
       {
@@ -1844,7 +1844,7 @@ bool Item_sum_max::add()
     break;
   case DECIMAL_RESULT:
     {
-      my_decimal value_buff, *val= args[0]->val_decimal(&value_buff);
+      type::Decimal value_buff, *val= args[0]->val_decimal(&value_buff);
       if (!args[0]->null_value &&
           (null_value || (class_decimal_cmp(val, &sum_dec) > 0)))
       {
@@ -2009,7 +2009,7 @@ void Item_sum_hybrid::reset_field()
     }
   case DECIMAL_RESULT:
     {
-      my_decimal value_buff, *arg_dec= args[0]->val_decimal(&value_buff);
+      type::Decimal value_buff, *arg_dec= args[0]->val_decimal(&value_buff);
 
       if (maybe_null)
       {
@@ -2037,7 +2037,7 @@ void Item_sum_sum::reset_field()
 {
   if (hybrid_type == DECIMAL_RESULT)
   {
-    my_decimal value, *arg_val= args[0]->val_decimal(&value);
+    type::Decimal value, *arg_val= args[0]->val_decimal(&value);
     if (!arg_val)                               // Null
       arg_val= &decimal_zero;
     result_field->store_decimal(arg_val);
@@ -2072,7 +2072,7 @@ void Item_sum_avg::reset_field()
   if (hybrid_type == DECIMAL_RESULT)
   {
     int64_t tmp;
-    my_decimal value, *arg_dec= args[0]->val_decimal(&value);
+    type::Decimal value, *arg_dec= args[0]->val_decimal(&value);
     if (args[0]->null_value)
     {
       arg_dec= &decimal_zero;
@@ -2124,12 +2124,12 @@ void Item_sum_sum::update_field()
 {
   if (hybrid_type == DECIMAL_RESULT)
   {
-    my_decimal value, *arg_val= args[0]->val_decimal(&value);
+    type::Decimal value, *arg_val= args[0]->val_decimal(&value);
     if (!args[0]->null_value)
     {
       if (!result_field->is_null())
       {
-        my_decimal field_value,
+        type::Decimal field_value,
                    *field_val= result_field->val_decimal(&field_value);
         class_decimal_add(E_DEC_FATAL_ERROR, dec_buffs, arg_val, field_val);
         result_field->store_decimal(dec_buffs);
@@ -2176,7 +2176,7 @@ void Item_sum_avg::update_field()
   unsigned char *res=result_field->ptr;
   if (hybrid_type == DECIMAL_RESULT)
   {
-    my_decimal value, *arg_val= args[0]->val_decimal(&value);
+    type::Decimal value, *arg_val= args[0]->val_decimal(&value);
     if (!args[0]->null_value)
     {
       binary2_class_decimal(E_DEC_FATAL_ERROR, res,
@@ -2302,9 +2302,9 @@ void
 Item_sum_hybrid::min_max_update_decimal_field()
 {
   /* TODO: optimize: do not get result_field in case of args[0] is NULL */
-  my_decimal old_val, nr_val;
-  const my_decimal *old_nr= result_field->val_decimal(&old_val);
-  const my_decimal *nr= args[0]->val_decimal(&nr_val);
+  type::Decimal old_val, nr_val;
+  const type::Decimal *old_nr= result_field->val_decimal(&old_val);
+  const type::Decimal *nr= args[0]->val_decimal(&nr_val);
   if (!args[0]->null_value)
   {
     if (result_field->is_null(0))
@@ -2368,7 +2368,7 @@ int64_t Item_avg_field::val_int()
 }
 
 
-my_decimal *Item_avg_field::val_decimal(my_decimal *dec_buf)
+type::Decimal *Item_avg_field::val_decimal(type::Decimal *dec_buf)
 {
   // fix_fields() never calls for this Item
   if (hybrid_type == REAL_RESULT)
@@ -2378,7 +2378,7 @@ my_decimal *Item_avg_field::val_decimal(my_decimal *dec_buf)
   if ((null_value= !count))
     return 0;
 
-  my_decimal dec_count, dec_field;
+  type::Decimal dec_count, dec_field;
   binary2_class_decimal(E_DEC_FATAL_ERROR,
                     field->ptr, &dec_field, f_precision, f_scale);
   int2_class_decimal(E_DEC_FATAL_ERROR, count, 0, &dec_count);
@@ -2413,13 +2413,13 @@ double Item_std_field::val_real()
 }
 
 
-my_decimal *Item_std_field::val_decimal(my_decimal *dec_buf)
+type::Decimal *Item_std_field::val_decimal(type::Decimal *dec_buf)
 {
   /*
     We can't call val_decimal_from_real() for DECIMAL_RESULT as
     Item_variance_field::val_real() would cause an infinite loop
   */
-  my_decimal tmp_dec, *dec;
+  type::Decimal tmp_dec, *dec;
   double nr;
   if (hybrid_type == REAL_RESULT)
     return val_decimal_from_real(dec_buf);

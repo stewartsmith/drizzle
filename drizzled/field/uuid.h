@@ -55,7 +55,7 @@ public:
   int64_t val_int();
   String *val_str(String*,String *);
   void sql_type(drizzled::String&) const;
-  int store_decimal(const drizzled::my_decimal*);
+  int store_decimal(const drizzled::type::Decimal*);
 
   Item_result result_type () const { return STRING_RESULT; }
   int cmp(const unsigned char*, const unsigned char*);

@@ -102,7 +102,7 @@ Field_str::report_if_important_data(const char *field_ptr, const char *end)
     !=0  error
 */
 
-int Field_str::store_decimal(const my_decimal *d)
+int Field_str::store_decimal(const type::Decimal *d)
 {
   char buff[DECIMAL_MAX_STR_LENGTH+1];
   String str(buff, sizeof(buff), &my_charset_bin);
@@ -110,7 +110,7 @@ int Field_str::store_decimal(const my_decimal *d)
   return store(str.ptr(), str.length(), str.charset());
 }
 
-my_decimal *Field_str::val_decimal(my_decimal *decimal_value)
+type::Decimal *Field_str::val_decimal(type::Decimal *decimal_value)
 {
   int64_t nr= val_int();
   int2_class_decimal(E_DEC_FATAL_ERROR, nr, 0, decimal_value);

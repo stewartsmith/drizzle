@@ -1511,8 +1511,8 @@ bool select_max_min_finder_subselect::cmp_int()
 bool select_max_min_finder_subselect::cmp_decimal()
 {
   Item *maxmin= ((Item_singlerow_subselect *)item)->element_index(0);
-  my_decimal cval, *cvalue= cache->val_decimal(&cval);
-  my_decimal mval, *mvalue= maxmin->val_decimal(&mval);
+  type::Decimal cval, *cvalue= cache->val_decimal(&cval);
+  type::Decimal mval, *mvalue= maxmin->val_decimal(&mval);
   if (fmax)
     return (cache->null_value && !maxmin->null_value) ||
       (!cache->null_value && !maxmin->null_value &&

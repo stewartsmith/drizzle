@@ -371,7 +371,7 @@ static void do_field_real(CopyField *copy)
 
 static void do_field_decimal(CopyField *copy)
 {
-  my_decimal value;
+  type::Decimal value;
   copy->to_field->store_decimal(copy->from_field->val_decimal(&value));
 }
 
@@ -851,7 +851,7 @@ int field_conv(Field *to,Field *from)
     return to->store(from->val_real());
   else if (from->result_type() == DECIMAL_RESULT)
   {
-    my_decimal buff;
+    type::Decimal buff;
     return to->store_decimal(from->val_decimal(&buff));
   }
   else

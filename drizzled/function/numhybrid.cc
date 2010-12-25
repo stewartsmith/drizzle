@@ -39,7 +39,7 @@ String *Item_func_numhybrid::val_str(String *str)
   switch (hybrid_type) {
   case DECIMAL_RESULT:
     {
-      my_decimal decimal_value, *val;
+      type::Decimal decimal_value, *val;
       if (!(val= decimal_op(&decimal_value)))
         return 0;                                 // null is set
       class_decimal_round(E_DEC_FATAL_ERROR, val, decimals, false, val);
@@ -77,7 +77,7 @@ double Item_func_numhybrid::val_real()
   switch (hybrid_type) {
   case DECIMAL_RESULT:
     {
-      my_decimal decimal_value, *val;
+      type::Decimal decimal_value, *val;
       double result;
       if (!(val= decimal_op(&decimal_value)))
         return 0.0;                               // null is set
@@ -113,7 +113,7 @@ int64_t Item_func_numhybrid::val_int()
   switch (hybrid_type) {
   case DECIMAL_RESULT:
     {
-      my_decimal decimal_value, *val;
+      type::Decimal decimal_value, *val;
       if (!(val= decimal_op(&decimal_value)))
         return 0;                                 // null is set
       int64_t result;
@@ -142,9 +142,9 @@ int64_t Item_func_numhybrid::val_int()
 }
 
 
-my_decimal *Item_func_numhybrid::val_decimal(my_decimal *decimal_value)
+type::Decimal *Item_func_numhybrid::val_decimal(type::Decimal *decimal_value)
 {
-  my_decimal *val= decimal_value;
+  type::Decimal *val= decimal_value;
   assert(fixed == 1);
 
   switch (hybrid_type) {

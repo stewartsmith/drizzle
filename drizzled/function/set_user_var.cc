@@ -231,7 +231,7 @@ Item_func_set_user_var::update()
                          DERIVATION_IMPLICIT, 0);
       else
         res= update_hash((void*) save_result.vdec,
-                         sizeof(my_decimal), DECIMAL_RESULT,
+                         sizeof(type::Decimal), DECIMAL_RESULT,
                          &my_charset_bin, DERIVATION_IMPLICIT, 0);
       break;
     }
@@ -270,7 +270,7 @@ String *Item_func_set_user_var::val_str(String *str)
 }
 
 
-my_decimal *Item_func_set_user_var::val_decimal(my_decimal *val)
+type::Decimal *Item_func_set_user_var::val_decimal(type::Decimal *val)
 {
   assert(fixed == 1);
   check(0);
@@ -303,7 +303,7 @@ String *Item_func_set_user_var::str_result(String *str)
 }
 
 
-my_decimal *Item_func_set_user_var::val_decimal_result(my_decimal *val)
+type::Decimal *Item_func_set_user_var::val_decimal_result(type::Decimal *val)
 {
   assert(fixed == 1);
   check(true);
@@ -426,8 +426,8 @@ int Item_func_set_user_var::save_in_field(Field *field, bool no_conversions,
   }
   else if (result_type() == DECIMAL_RESULT)
   {
-    my_decimal decimal_value;
-    my_decimal *val= entry->val_decimal(&null_value, &decimal_value);
+    type::Decimal decimal_value;
+    type::Decimal *val= entry->val_decimal(&null_value, &decimal_value);
     if (null_value)
       return set_field_to_null(field);
     field->set_notnull();

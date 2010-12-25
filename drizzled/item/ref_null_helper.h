@@ -45,7 +45,7 @@ public:
   double val_real();
   int64_t val_int();
   String* val_str(String* s);
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
   bool val_bool();
   bool get_date(DRIZZLE_TIME *ltime, uint32_t fuzzydate);
   virtual void print(String *str, enum_query_type query_type);

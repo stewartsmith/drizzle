@@ -76,7 +76,7 @@ int64_t Item_cache_str::val_int()
     return (int64_t)0;
 }
 
-my_decimal *Item_cache_str::val_decimal(my_decimal *decimal_val)
+type::Decimal *Item_cache_str::val_decimal(type::Decimal *decimal_val)
 {
   assert(fixed == 1);
   if (value)

@@ -503,7 +503,7 @@ Field *Item_func::tmp_table_field(Table *table)
 }
 
 
-my_decimal *Item_func::val_decimal(my_decimal *decimal_value)
+type::Decimal *Item_func::val_decimal(type::Decimal *decimal_value)
 {
   assert(fixed);
   int2_class_decimal(E_DEC_FATAL_ERROR, val_int(), unsigned_flag, decimal_value);

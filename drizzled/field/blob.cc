@@ -272,7 +272,7 @@ String *Field_blob::val_str(String *,
 }
 
 
-my_decimal *Field_blob::val_decimal(my_decimal *decimal_value)
+type::Decimal *Field_blob::val_decimal(type::Decimal *decimal_value)
 {
   const char *blob;
   size_t length;

@@ -170,8 +170,8 @@ Cached_item_decimal::Cached_item_decimal(Item *it)
 
 bool Cached_item_decimal::cmp()
 {
-  my_decimal tmp;
-  my_decimal *ptmp= item->val_decimal(&tmp);
+  type::Decimal tmp;
+  type::Decimal *ptmp= item->val_decimal(&tmp);
   if (null_value != item->null_value ||
       (!item->null_value && class_decimal_cmp(&value, ptmp)))
   {

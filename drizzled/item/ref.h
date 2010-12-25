@@ -67,7 +67,7 @@ public:
   }
   double val_real();
   int64_t val_int();
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
   bool val_bool();
   String *val_str(String* tmp);
   bool is_null();
@@ -75,7 +75,7 @@ public:
   double val_result();
   int64_t val_int_result();
   String *str_result(String* tmp);
-  my_decimal *val_decimal_result(my_decimal *);
+  type::Decimal *val_decimal_result(type::Decimal *);
   bool val_bool_result();
   bool send(plugin::Client *client, String *tmp);
   void make_field(SendField *field);

@@ -36,7 +36,7 @@ String *Item_real_func::val_str(String *str)
 }
 
 
-my_decimal *Item_real_func::val_decimal(my_decimal *decimal_value)
+type::Decimal *Item_real_func::val_decimal(type::Decimal *decimal_value)
 {
   assert(fixed);
   double nr= val_real();

@@ -40,7 +40,7 @@ Item_int::Item_int(const char *str_arg, uint32_t length)
   fixed= 1;
 }
 
-my_decimal *Item_int::val_decimal(my_decimal *decimal_value)
+type::Decimal *Item_int::val_decimal(type::Decimal *decimal_value)
 {
   int2_class_decimal(E_DEC_FATAL_ERROR, value, unsigned_flag, decimal_value);
   return decimal_value;

@@ -151,7 +151,7 @@ String *Item_func_min_max::val_str(String *str)
 
   case DECIMAL_RESULT:
     {
-      my_decimal dec_buf, *dec_val= val_decimal(&dec_buf);
+      type::Decimal dec_buf, *dec_val= val_decimal(&dec_buf);
       if (null_value)
         return 0;
       class_decimal2string(E_DEC_FATAL_ERROR, dec_val, 0, 0, 0, str);
@@ -257,10 +257,10 @@ int64_t Item_func_min_max::val_int()
 }
 
 
-my_decimal *Item_func_min_max::val_decimal(my_decimal *dec)
+type::Decimal *Item_func_min_max::val_decimal(type::Decimal *dec)
 {
   assert(fixed == 1);
-  my_decimal tmp_buf, *tmp, *res= NULL;
+  type::Decimal tmp_buf, *tmp, *res= NULL;
 
   if (compare_as_dates)
   {

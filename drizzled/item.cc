@@ -98,8 +98,8 @@ bool Item::val_bool()
 
     case DECIMAL_RESULT:
     {
-      my_decimal decimal_value;
-      my_decimal *val= val_decimal(&decimal_value);
+      type::Decimal decimal_value;
+      type::Decimal *val= val_decimal(&decimal_value);
       if (val)
         return !class_decimal_is_zero(val);
       return false;
@@ -140,7 +140,7 @@ String *Item::val_string_from_int(String *str)
 
 String *Item::val_string_from_decimal(String *str)
 {
-  my_decimal dec_buf, *dec= val_decimal(&dec_buf);
+  type::Decimal dec_buf, *dec= val_decimal(&dec_buf);
   if (null_value)
     return NULL;
 
@@ -149,7 +149,7 @@ String *Item::val_string_from_decimal(String *str)
   return str;
 }
 
-my_decimal *Item::val_decimal_from_real(my_decimal *decimal_value)
+type::Decimal *Item::val_decimal_from_real(type::Decimal *decimal_value)
 {
   double nr= val_real();
   if (null_value)
@@ -159,7 +159,7 @@ my_decimal *Item::val_decimal_from_real(my_decimal *decimal_value)
   return (decimal_value);
 }
 
-my_decimal *Item::val_decimal_from_int(my_decimal *decimal_value)
+type::Decimal *Item::val_decimal_from_int(type::Decimal *decimal_value)
 {
   int64_t nr= val_int();
   if (null_value)
@@ -169,7 +169,7 @@ my_decimal *Item::val_decimal_from_int(my_decimal *decimal_value)
   return decimal_value;
 }
 
-my_decimal *Item::val_decimal_from_string(my_decimal *decimal_value)
+type::Decimal *Item::val_decimal_from_string(type::Decimal *decimal_value)
 {
   String *res;
   char *end_ptr;
@@ -192,7 +192,7 @@ my_decimal *Item::val_decimal_from_string(my_decimal *decimal_value)
   return decimal_value;
 }
 
-my_decimal *Item::val_decimal_from_date(my_decimal *decimal_value)
+type::Decimal *Item::val_decimal_from_date(type::Decimal *decimal_value)
 {
   assert(fixed);
   DRIZZLE_TIME ltime;
@@ -205,7 +205,7 @@ my_decimal *Item::val_decimal_from_date(my_decimal *decimal_value)
   return date2_class_decimal(&ltime, decimal_value);
 }
 
-my_decimal *Item::val_decimal_from_time(my_decimal *decimal_value)
+type::Decimal *Item::val_decimal_from_time(type::Decimal *decimal_value)
 {
   assert(fixed);
   DRIZZLE_TIME ltime;
@@ -221,7 +221,7 @@ double Item::val_real_from_decimal()
 {
   /* Note that fix_fields may not be called for Item_avg_field items */
   double result;
-  my_decimal value_buff, *dec_val= val_decimal(&value_buff);
+  type::Decimal value_buff, *dec_val= val_decimal(&value_buff);
   if (null_value)
     return 0.0;
   class_decimal2double(E_DEC_FATAL_ERROR, dec_val, &result);
@@ -232,7 +232,7 @@ int64_t Item::val_int_from_decimal()
 {
   /* Note that fix_fields may not be called for Item_avg_field items */
   int64_t result;
-  my_decimal value, *dec_val= val_decimal(&value);
+  type::Decimal value, *dec_val= val_decimal(&value);
   if (null_value)
     return 0;
   class_decimal2int(E_DEC_FATAL_ERROR, dec_val, unsigned_flag, &result);
@@ -1267,8 +1267,8 @@ int Item::save_in_field(Field *field, bool no_conversions)
   }
   else if (result_type() == DECIMAL_RESULT)
   {
-    my_decimal decimal_value;
-    my_decimal *value= val_decimal(&decimal_value);
+    type::Decimal decimal_value;
+    type::Decimal *value= val_decimal(&decimal_value);
     if (null_value)
       return set_field_to_null_with_conversions(field, no_conversions);
     field->set_notnull();
@@ -1509,8 +1509,8 @@ void resolve_const_item(Session *session, Item **ref, Item *comp_item)
     }
   case DECIMAL_RESULT:
     {
-      my_decimal decimal_value;
-      my_decimal *result= item->val_decimal(&decimal_value);
+      type::Decimal decimal_value;
+      type::Decimal *result= item->val_decimal(&decimal_value);
       uint32_t length= item->max_length, decimals= item->decimals;
       bool null_value= item->null_value;
       new_item= (null_value ?
@@ -1547,7 +1547,7 @@ bool field_is_equal_to_item(Field *field,Item *item)
 
   if (res_type == DECIMAL_RESULT)
   {
-    my_decimal item_buf, *item_val,
+    type::Decimal item_buf, *item_val,
                field_buf, *field_val;
     item_val= item->val_decimal(&item_buf);
     if (item->null_value)

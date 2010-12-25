@@ -178,7 +178,7 @@ int decimal_operation_results(int result)
 /**
   @brief Converting decimal to string
 
-  @details Convert given my_decimal to String; allocate buffer as needed.
+  @details Convert given type::Decimal to String; allocate buffer as needed.
 
   @param[in]   mask        what problems to warn on (mask of E_DEC_* values)
   @param[in]   d           the decimal to print
@@ -194,7 +194,7 @@ int decimal_operation_results(int result)
     @retval E_DEC_OOM
 */
 
-int class_decimal2string(uint32_t mask, const my_decimal *d,
+int class_decimal2string(uint32_t mask, const type::Decimal *d,
                       uint32_t fixed_prec, uint32_t fixed_dec,
                       char filler, String *str)
 {
@@ -242,11 +242,11 @@ int class_decimal2string(uint32_t mask, const my_decimal *d,
    @retval E_DEC_OVERFLOW
 */
 
-int class_decimal2binary(uint32_t mask, const my_decimal *d, unsigned char *bin, int prec,
+int class_decimal2binary(uint32_t mask, const type::Decimal *d, unsigned char *bin, int prec,
 		      int scale)
 {
   int err1= E_DEC_OK, err2;
-  my_decimal rounded;
+  type::Decimal rounded;
   class_decimal2decimal(d, &rounded);
   rounded.frac= decimal_actual_fraction(&rounded);
   if (scale < rounded.frac)
@@ -280,7 +280,7 @@ int class_decimal2binary(uint32_t mask, const my_decimal *d, unsigned char *bin,
 */
 
 int str2_class_decimal(uint32_t mask, const char *from, uint32_t length,
-                   const CHARSET_INFO * charset, my_decimal *decimal_value)
+                   const CHARSET_INFO * charset, type::Decimal *decimal_value)
 {
   char *end, *from_end;
   int err;
@@ -313,7 +313,7 @@ int str2_class_decimal(uint32_t mask, const char *from, uint32_t length,
 }
 
 
-my_decimal *date2_class_decimal(DRIZZLE_TIME *ltime, my_decimal *dec)
+type::Decimal *date2_class_decimal(DRIZZLE_TIME *ltime, type::Decimal *dec)
 {
   int64_t date;
   date = (ltime->year*100L + ltime->month)*100L + ltime->day;
@@ -2533,13 +2533,13 @@ int decimal_mod(const decimal_t *from1, const decimal_t *from2, decimal_t *to)
   return do_div_mod(from1, from2, 0, to, 0);
 }
 
-std::ostream& operator<<(std::ostream& output, const my_decimal &dec)
+std::ostream& operator<<(std::ostream& output, const type::Decimal &dec)
 {
   drizzled::String str;
 
   class_decimal2string(E_DEC_OK, &dec, 0, 20, ' ', &str);
 
-  output << "my_decimal:(";
+  output << "type::Decimal:(";
   output <<  str.c_ptr();
   output << ")";
 

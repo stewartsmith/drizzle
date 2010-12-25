@@ -1173,12 +1173,12 @@ int Arg_comparator::compare_real()
 
 int Arg_comparator::compare_decimal()
 {
-  my_decimal value1;
-  my_decimal *val1= (*a)->val_decimal(&value1);
+  type::Decimal value1;
+  type::Decimal *val1= (*a)->val_decimal(&value1);
   if (!(*a)->null_value)
   {
-    my_decimal value2;
-    my_decimal *val2= (*b)->val_decimal(&value2);
+    type::Decimal value2;
+    type::Decimal *val2= (*b)->val_decimal(&value2);
     if (!(*b)->null_value)
     {
       owner->null_value= 0;
@@ -1200,9 +1200,9 @@ int Arg_comparator::compare_e_real()
 
 int Arg_comparator::compare_e_decimal()
 {
-  my_decimal value1, value2;
-  my_decimal *val1= (*a)->val_decimal(&value1);
-  my_decimal *val2= (*b)->val_decimal(&value2);
+  type::Decimal value1, value2;
+  type::Decimal *val1= (*a)->val_decimal(&value1);
+  type::Decimal *val2= (*b)->val_decimal(&value2);
   if ((*a)->null_value || (*b)->null_value)
     return test((*a)->null_value && (*b)->null_value);
   return test(class_decimal_cmp(val1, val2) == 0);
@@ -1823,7 +1823,7 @@ void Item_func_interval::fix_length_and_dec()
           {
             range->type= DECIMAL_RESULT;
             range->dec.init();
-            my_decimal *dec= el->val_decimal(&range->dec);
+            type::Decimal *dec= el->val_decimal(&range->dec);
             if (dec != &range->dec)
             {
               range->dec= *dec;
@@ -1873,7 +1873,7 @@ int64_t Item_func_interval::val_int()
 {
   assert(fixed == 1);
   double value;
-  my_decimal dec_buf, *dec= NULL;
+  type::Decimal dec_buf, *dec= NULL;
   uint32_t i;
 
   if (use_decimal_comparison)
@@ -1927,7 +1927,7 @@ int64_t Item_func_interval::val_int()
         ((el->result_type() == DECIMAL_RESULT) ||
          (el->result_type() == INT_RESULT)))
     {
-      my_decimal e_dec_buf, *e_dec= el->val_decimal(&e_dec_buf);
+      type::Decimal e_dec_buf, *e_dec= el->val_decimal(&e_dec_buf);
       /* Skip NULL ranges. */
       if (el->null_value)
         continue;
@@ -2128,7 +2128,7 @@ int64_t Item_func_between::val_int()
   }
   else if (cmp_type == DECIMAL_RESULT)
   {
-    my_decimal dec_buf, *dec= args[0]->val_decimal(&dec_buf),
+    type::Decimal dec_buf, *dec= args[0]->val_decimal(&dec_buf),
                a_buf, *a_dec, b_buf, *b_dec;
     if ((null_value=args[0]->null_value))
       return 0;
@@ -2276,10 +2276,10 @@ Item_func_ifnull::int_op()
 }
 
 
-my_decimal *Item_func_ifnull::decimal_op(my_decimal *decimal_value)
+type::Decimal *Item_func_ifnull::decimal_op(type::Decimal *decimal_value)
 {
   assert(fixed == 1);
-  my_decimal *value= args[0]->val_decimal(decimal_value);
+  type::Decimal *value= args[0]->val_decimal(decimal_value);
   if (!args[0]->null_value)
   {
     null_value= 0;
@@ -2449,12 +2449,12 @@ Item_func_if::val_str(String *str)
 }
 
 
-my_decimal *
-Item_func_if::val_decimal(my_decimal *decimal_value)
+type::Decimal *
+Item_func_if::val_decimal(type::Decimal *decimal_value)
 {
   assert(fixed == 1);
   Item *arg= args[0]->val_bool() ? args[1] : args[2];
-  my_decimal *value= arg->val_decimal(decimal_value);
+  type::Decimal *value= arg->val_decimal(decimal_value);
   null_value= arg->null_value;
   return value;
 }
@@ -2534,11 +2534,11 @@ Item_func_nullif::val_str(String *str)
 }
 
 
-my_decimal *
-Item_func_nullif::val_decimal(my_decimal * decimal_value)
+type::Decimal *
+Item_func_nullif::val_decimal(type::Decimal * decimal_value)
 {
   assert(fixed == 1);
-  my_decimal *res;
+  type::Decimal *res;
   if (!cmp.compare())
   {
     null_value=1;
@@ -2671,13 +2671,13 @@ double Item_func_case::val_real()
 }
 
 
-my_decimal *Item_func_case::val_decimal(my_decimal *decimal_value)
+type::Decimal *Item_func_case::val_decimal(type::Decimal *decimal_value)
 {
   assert(fixed == 1);
   char buff[MAX_FIELD_WIDTH];
   String dummy_str(buff, sizeof(buff), default_charset());
   Item *item= find_item(&dummy_str);
-  my_decimal *res;
+  type::Decimal *res;
 
   if (!item)
   {
@@ -2910,13 +2910,13 @@ double Item_func_coalesce::real_op()
 }
 
 
-my_decimal *Item_func_coalesce::decimal_op(my_decimal *decimal_value)
+type::Decimal *Item_func_coalesce::decimal_op(type::Decimal *decimal_value)
 {
   assert(fixed == 1);
   null_value= 0;
   for (uint32_t i= 0; i < arg_count; i++)
   {
-    my_decimal *res= args[i]->val_decimal(decimal_value);
+    type::Decimal *res= args[i]->val_decimal(decimal_value);
     if (!args[i]->null_value)
       return res;
   }
@@ -3065,7 +3065,7 @@ static int cmp_row(void *, cmp_item_row *a, cmp_item_row *b)
 }
 
 
-static int cmp_decimal(void *, my_decimal *a, my_decimal *b)
+static int cmp_decimal(void *, type::Decimal *a, type::Decimal *b)
 {
   /*
     We need call of fixing buffer pointer, because fast sort just copy
@@ -3242,17 +3242,17 @@ unsigned char *in_double::get_value(Item *item)
 
 
 in_decimal::in_decimal(uint32_t elements)
-  :in_vector(elements, sizeof(my_decimal),(qsort2_cmp) cmp_decimal, 0)
+  :in_vector(elements, sizeof(type::Decimal),(qsort2_cmp) cmp_decimal, 0)
 {}
 
 
 void in_decimal::set(uint32_t pos, Item *item)
 {
-  /* as far as 'item' is constant, we can store reference on my_decimal */
-  my_decimal *dec= ((my_decimal *)base) + pos;
+  /* as far as 'item' is constant, we can store reference on type::Decimal */
+  type::Decimal *dec= ((type::Decimal *)base) + pos;
   dec->len= DECIMAL_BUFF_LENGTH;
   dec->fix_buffer_pointer();
-  my_decimal *res= item->val_decimal(dec);
+  type::Decimal *res= item->val_decimal(dec);
   /* if item->val_decimal() is evaluated to NULL then res == 0 */
   if (!item->null_value && res != dec)
     class_decimal2decimal(res, dec);
@@ -3261,7 +3261,7 @@ void in_decimal::set(uint32_t pos, Item *item)
 
 unsigned char *in_decimal::get_value(Item *item)
 {
-  my_decimal *result= item->val_decimal(&val);
+  type::Decimal *result= item->val_decimal(&val);
   if (item->null_value)
     return 0;
   return (unsigned char *)result;
@@ -3420,7 +3420,7 @@ int cmp_item_row::compare(cmp_item *c)
 
 void cmp_item_decimal::store_value(Item *item)
 {
-  my_decimal *val= item->val_decimal(&value);
+  type::Decimal *val= item->val_decimal(&value);
   /* val may be zero if item is nnull */
   if (val && val != &value)
     class_decimal2decimal(val, &value);
@@ -3429,7 +3429,7 @@ void cmp_item_decimal::store_value(Item *item)
 
 int cmp_item_decimal::cmp(Item *arg)
 {
-  my_decimal tmp_buf, *tmp= arg->val_decimal(&tmp_buf);
+  type::Decimal tmp_buf, *tmp= arg->val_decimal(&tmp_buf);
   if (arg->null_value)
     return 1;
   return class_decimal_cmp(&value, tmp);

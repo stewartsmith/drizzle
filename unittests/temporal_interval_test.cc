@@ -61,7 +61,7 @@ class ItemStub : public Item
       (void) str;
       return string_to_return;
     };
-    virtual my_decimal *val_decimal(my_decimal *decimal_buffer)
+    virtual type::Decimal *val_decimal(type::Decimal *decimal_buffer)
     {
       (void) decimal_buffer;
       return NULL;

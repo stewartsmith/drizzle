@@ -178,7 +178,7 @@ String *Item_ident_for_show::val_str(String *str)
 }
 
 
-my_decimal *Item_ident_for_show::val_decimal(my_decimal *dec)
+type::Decimal *Item_ident_for_show::val_decimal(type::Decimal *dec)
 {
   return field->val_decimal(dec);
 }

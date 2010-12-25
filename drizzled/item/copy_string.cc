@@ -42,7 +42,7 @@ String *Item_copy_string::val_str(String *)
 }
 
 
-my_decimal *Item_copy_string::val_decimal(my_decimal *decimal_value)
+type::Decimal *Item_copy_string::val_decimal(type::Decimal *decimal_value)
 {
   // Item_copy_string is used without fix_fields call
   if (null_value)

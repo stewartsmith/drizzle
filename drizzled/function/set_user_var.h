@@ -35,14 +35,14 @@ class Item_func_set_user_var :public Item_func
   user_var_entry *entry;
   char buffer[MAX_FIELD_WIDTH];
   String value;
-  my_decimal decimal_buff;
+  type::Decimal decimal_buff;
   bool null_item;
   union
   {
     int64_t vint;
     double vreal;
     String *vstr;
-    my_decimal *vdec;
+    type::Decimal *vdec;
   } save_result;
 
 public:
@@ -54,11 +54,11 @@ public:
   double val_real();
   int64_t val_int();
   String *val_str(String *str);
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
   double val_result();
   int64_t val_int_result();
   String *str_result(String *str);
-  my_decimal *val_decimal_result(my_decimal *);
+  type::Decimal *val_decimal_result(type::Decimal *);
   bool update_hash(void *ptr, uint32_t length, enum Item_result type,
   		   const CHARSET_INFO * const cs, Derivation dv, bool unsigned_arg);
   bool send(plugin::Client *client, String *str_arg);

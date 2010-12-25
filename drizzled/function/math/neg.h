@@ -38,7 +38,7 @@ public:
 
   double real_op();
   int64_t int_op();
-  my_decimal *decimal_op(my_decimal *);
+  type::Decimal *decimal_op(type::Decimal *);
   const char *func_name() const { return "-"; }
   enum Functype functype() const   { return NEG_FUNC; }
   void fix_length_and_dec();

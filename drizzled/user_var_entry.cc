@@ -41,7 +41,7 @@ double user_var_entry::val_real(bool *null_value)
   case DECIMAL_RESULT:
     {
       double result;
-      class_decimal2double(E_DEC_FATAL_ERROR, (my_decimal *)value, &result);
+      class_decimal2double(E_DEC_FATAL_ERROR, (type::Decimal *)value, &result);
       return result;
     }
 
@@ -73,7 +73,7 @@ int64_t user_var_entry::val_int(bool *null_value) const
   case DECIMAL_RESULT:
     {
       int64_t result;
-      class_decimal2int(E_DEC_FATAL_ERROR, (my_decimal *)value, 0, &result);
+      class_decimal2int(E_DEC_FATAL_ERROR, (type::Decimal *)value, 0, &result);
       return result;
     }
 
@@ -113,7 +113,7 @@ String *user_var_entry::val_str(bool *null_value, String *str,
     break;
 
   case DECIMAL_RESULT:
-    class_decimal2string(E_DEC_FATAL_ERROR, (my_decimal *)value, 0, 0, 0, str);
+    class_decimal2string(E_DEC_FATAL_ERROR, (type::Decimal *)value, 0, 0, 0, str);
     break;
 
   case STRING_RESULT:
@@ -130,7 +130,7 @@ String *user_var_entry::val_str(bool *null_value, String *str,
 
 /** Get the value of a variable as a decimal. */
 
-my_decimal *user_var_entry::val_decimal(bool *null_value, my_decimal *val)
+type::Decimal *user_var_entry::val_decimal(bool *null_value, type::Decimal *val)
 {
   if ((*null_value= (value == 0)))
     return 0;
@@ -145,7 +145,7 @@ my_decimal *user_var_entry::val_decimal(bool *null_value, my_decimal *val)
     break;
 
   case DECIMAL_RESULT:
-    val= (my_decimal *)value;
+    val= (type::Decimal *)value;
     break;
 
   case STRING_RESULT:
@@ -217,7 +217,7 @@ bool user_var_entry::update_hash(bool set_null, void *ptr, uint32_t arg_length,
 
     memcpy(value, ptr, arg_length);
     if (arg_type == DECIMAL_RESULT)
-      ((my_decimal*)value)->fix_buffer_pointer();
+      ((type::Decimal*)value)->fix_buffer_pointer();
     length= arg_length;
     collation.set(cs, dv);
     unsigned_flag= unsigned_arg;

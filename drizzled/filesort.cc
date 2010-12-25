@@ -914,7 +914,7 @@ void SortParam::make_sortkey(register unsigned char *to, unsigned char *ref_pos)
         }
       case DECIMAL_RESULT:
         {
-          my_decimal dec_buf, *dec_val= item->val_decimal_result(&dec_buf);
+          type::Decimal dec_buf, *dec_val= item->val_decimal_result(&dec_buf);
           if (maybe_null)
           {
             if (item->null_value)

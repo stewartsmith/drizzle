@@ -54,7 +54,7 @@ Item_decimal::Item_decimal(double val, int, int)
                                              decimals, unsigned_flag);
 }
 
-Item_decimal::Item_decimal(const char *str, const my_decimal *val_arg,
+Item_decimal::Item_decimal(const char *str, const type::Decimal *val_arg,
                            uint32_t decimal_par, uint32_t length)
 {
   class_decimal2decimal(val_arg, &decimal_value);
@@ -65,7 +65,7 @@ Item_decimal::Item_decimal(const char *str, const my_decimal *val_arg,
 }
 
 
-Item_decimal::Item_decimal(my_decimal *value_par)
+Item_decimal::Item_decimal(type::Decimal *value_par)
 {
   class_decimal2decimal(value_par, &decimal_value);
   decimals= (uint8_t) decimal_value.frac;
@@ -123,14 +123,14 @@ bool Item_decimal::eq(const Item *item, bool) const
       storage and ignore the argument.
     */
     Item *arg= (Item*) item;
-    my_decimal *value= arg->val_decimal(0);
+    type::Decimal *value= arg->val_decimal(0);
     return !class_decimal_cmp(&decimal_value, value);
   }
   return 0;
 }
 
 
-void Item_decimal::set_decimal_value(my_decimal *value_par)
+void Item_decimal::set_decimal_value(type::Decimal *value_par)
 {
   class_decimal2decimal(value_par, &decimal_value);
   decimals= (uint8_t) decimal_value.frac;

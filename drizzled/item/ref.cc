@@ -430,7 +430,7 @@ String *Item_ref::str_result(String* str)
 }
 
 
-my_decimal *Item_ref::val_decimal_result(my_decimal *decimal_value)
+type::Decimal *Item_ref::val_decimal_result(type::Decimal *decimal_value)
 {
   if (result_field)
   {
@@ -454,8 +454,8 @@ bool Item_ref::val_bool_result()
 
     case DECIMAL_RESULT:
       {
-        my_decimal decimal_value;
-        my_decimal *val= result_field->val_decimal(&decimal_value);
+        type::Decimal decimal_value;
+        type::Decimal *val= result_field->val_decimal(&decimal_value);
         if (val)
           return !class_decimal_is_zero(val);
         return 0;
@@ -523,9 +523,9 @@ bool Item_ref::get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
 }
 
 
-my_decimal *Item_ref::val_decimal(my_decimal *decimal_value)
+type::Decimal *Item_ref::val_decimal(type::Decimal *decimal_value)
 {
-  my_decimal *val= (*ref)->val_decimal_result(decimal_value);
+  type::Decimal *val= (*ref)->val_decimal_result(decimal_value);
   null_value= (*ref)->null_value;
   return val;
 }

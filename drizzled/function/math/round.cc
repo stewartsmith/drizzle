@@ -212,9 +212,9 @@ int64_t Item_func_round::int_op()
 }
 
 
-my_decimal *Item_func_round::decimal_op(my_decimal *decimal_value)
+type::Decimal *Item_func_round::decimal_op(type::Decimal *decimal_value)
 {
-  my_decimal val, *value= args[0]->val_decimal(&val);
+  type::Decimal val, *value= args[0]->val_decimal(&val);
   int64_t dec= args[1]->val_int();
 
   if (dec >= 0 || args[1]->unsigned_flag)

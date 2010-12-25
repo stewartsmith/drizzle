@@ -42,7 +42,7 @@ public:
   double val_real();
   int64_t val_int();
   String *val_str(String *str);
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
   int save_in_field(Field *field, bool no_conversions);
   int save_safe_in_field(Field *field);
   bool send(plugin::Client *client, String *str);

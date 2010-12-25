@@ -60,7 +60,7 @@ public:
   int64_t val_int();
   double val_real() { return (double) val_int(); }
 
-  my_decimal *val_decimal(my_decimal *decimal_value)
+  type::Decimal *val_decimal(type::Decimal *decimal_value)
   {
     assert(fixed == 1);
     return  val_decimal_from_date(decimal_value);

@@ -246,7 +246,7 @@ int64_t Item_field::val_int()
 }
 
 
-my_decimal *Item_field::val_decimal(my_decimal *decimal_value)
+type::Decimal *Item_field::val_decimal(type::Decimal *decimal_value)
 {
   if ((null_value= field->is_null()))
     return 0;
@@ -308,7 +308,7 @@ int64_t Item_field::val_int_result()
 }
 
 
-my_decimal *Item_field::val_decimal_result(my_decimal *decimal_value)
+type::Decimal *Item_field::val_decimal_result(type::Decimal *decimal_value)
 {
   if ((null_value= result_field->is_null()))
     return 0;
@@ -326,8 +326,8 @@ bool Item_field::val_bool_result()
 
   case DECIMAL_RESULT:
     {
-      my_decimal decimal_value;
-      my_decimal *val= result_field->val_decimal(&decimal_value);
+      type::Decimal decimal_value;
+      type::Decimal *val= result_field->val_decimal(&decimal_value);
       if (val)
         return !class_decimal_is_zero(val);
       return 0;

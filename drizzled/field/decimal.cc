@@ -28,7 +28,7 @@
 namespace drizzled
 {
 
-extern my_decimal decimal_zero;
+extern type::Decimal decimal_zero;
 
 /****************************************************************************
  ** File_decimal
@@ -96,10 +96,10 @@ int Field_decimal::reset(void)
   @param sign              sign of value which caused overflow
 */
 
-void Field_decimal::set_value_on_overflow(my_decimal *decimal_value,
+void Field_decimal::set_value_on_overflow(type::Decimal *decimal_value,
                                           bool sign)
 {
-  max_my_decimal(decimal_value, precision, decimals());
+  max_Decimal(decimal_value, precision, decimals());
   if (sign)
     decimal_value->sign(true);
 
@@ -114,7 +114,7 @@ void Field_decimal::set_value_on_overflow(my_decimal *decimal_value,
   If it does, stores the decimal in the buffer using binary format.
   Otherwise sets maximal number that can be stored in the field.
 
-  @param decimal_value   my_decimal
+  @param decimal_value   type::Decimal
 
   @retval
   0 ok
@@ -122,7 +122,7 @@ void Field_decimal::set_value_on_overflow(my_decimal *decimal_value,
   1 error
 */
 
-bool Field_decimal::store_value(const my_decimal *decimal_value)
+bool Field_decimal::store_value(const type::Decimal *decimal_value)
 {
   int error= class_decimal2binary(E_DEC_FATAL_ERROR & ~E_DEC_OVERFLOW,
                                          decimal_value, ptr, precision, dec);
@@ -130,7 +130,7 @@ bool Field_decimal::store_value(const my_decimal *decimal_value)
   {
     if (error != E_DEC_TRUNCATED)
     {
-      my_decimal buff;
+      type::Decimal buff;
       set_value_on_overflow(&buff, decimal_value->sign());
       class_decimal2binary(E_DEC_FATAL_ERROR, &buff, ptr, precision, dec);
     }
@@ -144,7 +144,7 @@ int Field_decimal::store(const char *from, uint32_t length,
                          const CHARSET_INFO * const charset_arg)
 {
   int err;
-  my_decimal decimal_value;
+  type::Decimal decimal_value;
 
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
@@ -206,7 +206,7 @@ int Field_decimal::store(const char *from, uint32_t length,
 
 int Field_decimal::store(double nr)
 {
-  my_decimal decimal_value;
+  type::Decimal decimal_value;
   int err;
 
   ASSERT_COLUMN_MARKED_FOR_WRITE;
@@ -230,7 +230,7 @@ int Field_decimal::store(double nr)
 
 int Field_decimal::store(int64_t nr, bool unsigned_val)
 {
-  my_decimal decimal_value;
+  type::Decimal decimal_value;
   int err;
 
   ASSERT_COLUMN_MARKED_FOR_WRITE;
@@ -251,7 +251,7 @@ int Field_decimal::store(int64_t nr, bool unsigned_val)
 }
 
 
-int Field_decimal::store_decimal(const my_decimal *decimal_value)
+int Field_decimal::store_decimal(const type::Decimal *decimal_value)
 {
   return store_value(decimal_value);
 }
@@ -260,7 +260,7 @@ int Field_decimal::store_decimal(const my_decimal *decimal_value)
 int Field_decimal::store_time(DRIZZLE_TIME *ltime,
                               enum enum_drizzle_timestamp_type )
 {
-  my_decimal decimal_value;
+  type::Decimal decimal_value;
   return store_value(date2_class_decimal(ltime, &decimal_value));
 }
 
@@ -268,7 +268,7 @@ int Field_decimal::store_time(DRIZZLE_TIME *ltime,
 double Field_decimal::val_real(void)
 {
   double dbl;
-  my_decimal decimal_value;
+  type::Decimal decimal_value;
 
   ASSERT_COLUMN_MARKED_FOR_READ;
 
@@ -281,7 +281,7 @@ double Field_decimal::val_real(void)
 int64_t Field_decimal::val_int(void)
 {
   int64_t i;
-  my_decimal decimal_value;
+  type::Decimal decimal_value;
 
   ASSERT_COLUMN_MARKED_FOR_READ;
 
@@ -291,7 +291,7 @@ int64_t Field_decimal::val_int(void)
 }
 
 
-my_decimal* Field_decimal::val_decimal(my_decimal *decimal_value)
+type::Decimal* Field_decimal::val_decimal(type::Decimal *decimal_value)
 {
   ASSERT_COLUMN_MARKED_FOR_READ;
 
@@ -304,7 +304,7 @@ my_decimal* Field_decimal::val_decimal(my_decimal *decimal_value)
 String *Field_decimal::val_str(String *val_buffer,
                                String *)
 {
-  my_decimal decimal_value;
+  type::Decimal decimal_value;
 
   ASSERT_COLUMN_MARKED_FOR_READ;
 

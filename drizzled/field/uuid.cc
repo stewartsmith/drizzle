@@ -92,7 +92,7 @@ int Uuid::store(int64_t , bool )
   return 1;
 }
 
-int Uuid::store_decimal(const drizzled::my_decimal*)
+int Uuid::store_decimal(const drizzled::type::Decimal*)
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
   my_error(ER_INVALID_UUID_VALUE, MYF(ME_FATALERROR));

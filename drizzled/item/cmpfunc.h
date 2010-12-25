@@ -651,7 +651,7 @@ struct interval_range
 {
   Item_result type;
   double dbl;
-  my_decimal dec;
+  type::Decimal dec;
 };
 
 class Item_func_interval :public Item_int_func
@@ -682,7 +682,7 @@ public:
   double real_op();
   int64_t int_op();
   String *str_op(String *);
-  my_decimal *decimal_op(my_decimal *);
+  type::Decimal *decimal_op(type::Decimal *);
   void fix_length_and_dec();
   void find_num_type() {}
   enum Item_result result_type () const { return hybrid_type; }
@@ -701,7 +701,7 @@ public:
   double real_op();
   int64_t int_op();
   String *str_op(String *str);
-  my_decimal *decimal_op(my_decimal *);
+  type::Decimal *decimal_op(type::Decimal *);
   enum_field_types field_type() const;
   void fix_length_and_dec();
   const char *func_name() const { return "ifnull"; }
@@ -725,7 +725,7 @@ public:
   double val_real();
   int64_t val_int();
   String *val_str(String *str);
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
   enum Item_result result_type () const { return cached_result_type; }
   enum_field_types field_type() const { return cached_field_type; }
   bool fix_fields(Session *, Item **);
@@ -745,7 +745,7 @@ public:
   double val_real();
   int64_t val_int();
   String *val_str(String *str);
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
   enum Item_result result_type () const { return cached_result_type; }
   void fix_length_and_dec();
   uint32_t decimal_precision() const { return args[0]->decimal_precision(); }
@@ -920,7 +920,7 @@ public:
 
 class in_decimal :public in_vector
 {
-  my_decimal val;
+  type::Decimal val;
 public:
   in_decimal(uint32_t elements);
   void set(uint32_t pos, Item *item);
@@ -931,7 +931,7 @@ public:
   }
   void value_to_item(uint32_t pos, Item *item)
   {
-    my_decimal *dec= ((my_decimal *)base) + pos;
+    type::Decimal *dec= ((type::Decimal *)base) + pos;
     Item_decimal *item_dec= (Item_decimal*)item;
     item_dec->set_decimal_value(dec);
   }
@@ -1079,7 +1079,7 @@ public:
 
 class cmp_item_decimal :public cmp_item
 {
-  my_decimal value;
+  type::Decimal value;
 public:
   cmp_item_decimal() {}                       /* Remove gcc warning */
   void store_value(Item *item);
@@ -1174,7 +1174,7 @@ public:
   double val_real();
   int64_t val_int();
   String *val_str(String *);
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
   bool fix_fields(Session *session, Item **ref);
   void fix_length_and_dec();
   uint32_t decimal_precision() const;

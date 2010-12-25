@@ -129,14 +129,14 @@ end:
 }
 
 
-int Field_real::store_decimal(const my_decimal *dm)
+int Field_real::store_decimal(const type::Decimal *dm)
 {
   double dbl;
   class_decimal2double(E_DEC_FATAL_ERROR, dm, &dbl);
   return store(dbl);
 }
 
-my_decimal *Field_real::val_decimal(my_decimal *decimal_value)
+type::Decimal *Field_real::val_decimal(type::Decimal *decimal_value)
 {
   ASSERT_COLUMN_MARKED_FOR_READ;
 

@@ -26,7 +26,7 @@ namespace drizzled
 
 void Item_cache_decimal::store(Item *item)
 {
-  my_decimal *val= item->val_decimal_result(&decimal_value);
+  type::Decimal *val= item->val_decimal_result(&decimal_value);
   if (!(null_value= item->null_value) && val != &decimal_value)
     class_decimal2decimal(val, &decimal_value);
 }
@@ -56,7 +56,7 @@ String* Item_cache_decimal::val_str(String *str)
   return str;
 }
 
-my_decimal *Item_cache_decimal::val_decimal(my_decimal *)
+type::Decimal *Item_cache_decimal::val_decimal(type::Decimal *)
 {
   assert(fixed);
   return &decimal_value;

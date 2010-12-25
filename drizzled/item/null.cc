@@ -52,7 +52,7 @@ String *Item_null::val_str(String *)
   return 0;
 }
 
-my_decimal *Item_null::val_decimal(my_decimal *)
+type::Decimal *Item_null::val_decimal(type::Decimal *)
 {
   return 0;
 }

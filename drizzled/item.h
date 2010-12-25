@@ -387,12 +387,12 @@ public:
    *
    * @retval
    *
-   * Return pointer on my_decimal (it can be other then passed via argument)
+   * Return pointer on type::Decimal (it can be other then passed via argument)
    * if value is not NULL (null_value flag will be reset to false).
    * In case of NULL value it return 0 pointer and set null_value flag
    * to true.
    */
-  virtual my_decimal *val_decimal(my_decimal *decimal_buffer)= 0;
+  virtual type::Decimal *val_decimal(type::Decimal *decimal_buffer)= 0;
 
   /**
    * Return boolean value of item.
@@ -408,11 +408,11 @@ public:
   String *val_string_from_real(String *str);
   String *val_string_from_int(String *str);
   String *val_string_from_decimal(String *str);
-  my_decimal *val_decimal_from_real(my_decimal *decimal_value);
-  my_decimal *val_decimal_from_int(my_decimal *decimal_value);
-  my_decimal *val_decimal_from_string(my_decimal *decimal_value);
-  my_decimal *val_decimal_from_date(my_decimal *decimal_value);
-  my_decimal *val_decimal_from_time(my_decimal *decimal_value);
+  type::Decimal *val_decimal_from_real(type::Decimal *decimal_value);
+  type::Decimal *val_decimal_from_int(type::Decimal *decimal_value);
+  type::Decimal *val_decimal_from_string(type::Decimal *decimal_value);
+  type::Decimal *val_decimal_from_date(type::Decimal *decimal_value);
+  type::Decimal *val_decimal_from_time(type::Decimal *decimal_value);
   int64_t val_int_from_decimal();
   double val_real_from_decimal();
 
@@ -463,7 +463,7 @@ public:
   {
     return val_str(tmp);
   }
-  virtual my_decimal *val_decimal_result(my_decimal *val)
+  virtual type::Decimal *val_decimal_result(type::Decimal *val)
   {
     return val_decimal(val);
   }

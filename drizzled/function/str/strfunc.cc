@@ -53,7 +53,7 @@ bool Item_str_func::fix_fields(Session *session, Item **ref)
 }
 
 
-my_decimal *Item_str_func::val_decimal(my_decimal *decimal_value)
+type::Decimal *Item_str_func::val_decimal(type::Decimal *decimal_value)
 {
   assert(fixed == 1);
   char buff[64];

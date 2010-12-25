@@ -28,7 +28,7 @@ namespace drizzled
 
 String *Item_decimal_typecast::val_str(String *str)
 {
-  my_decimal tmp_buf, *tmp= val_decimal(&tmp_buf);
+  type::Decimal tmp_buf, *tmp= val_decimal(&tmp_buf);
   if (null_value)
     return NULL;
   class_decimal2string(E_DEC_FATAL_ERROR, tmp, 0, 0, 0, str);
@@ -38,7 +38,7 @@ String *Item_decimal_typecast::val_str(String *str)
 
 double Item_decimal_typecast::val_real()
 {
-  my_decimal tmp_buf, *tmp= val_decimal(&tmp_buf);
+  type::Decimal tmp_buf, *tmp= val_decimal(&tmp_buf);
   double res;
   if (null_value)
     return 0.0;
@@ -49,7 +49,7 @@ double Item_decimal_typecast::val_real()
 
 int64_t Item_decimal_typecast::val_int()
 {
-  my_decimal tmp_buf, *tmp= val_decimal(&tmp_buf);
+  type::Decimal tmp_buf, *tmp= val_decimal(&tmp_buf);
   int64_t res;
   if (null_value)
     return 0;
@@ -58,9 +58,9 @@ int64_t Item_decimal_typecast::val_int()
 }
 
 
-my_decimal *Item_decimal_typecast::val_decimal(my_decimal *dec)
+type::Decimal *Item_decimal_typecast::val_decimal(type::Decimal *dec)
 {
-  my_decimal tmp_buf, *tmp= args[0]->val_decimal(&tmp_buf);
+  type::Decimal tmp_buf, *tmp= args[0]->val_decimal(&tmp_buf);
   bool sign;
   uint32_t precision;
 
@@ -80,7 +80,7 @@ my_decimal *Item_decimal_typecast::val_decimal(my_decimal *dec)
                                             decimals, unsigned_flag);
   if (precision - decimals < (uint) class_decimal_intg(dec))
   {
-    max_my_decimal(dec, precision, decimals);
+    max_Decimal(dec, precision, decimals);
     dec->sign(sign);
     goto err;
   }

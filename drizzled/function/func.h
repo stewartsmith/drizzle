@@ -195,7 +195,7 @@ public:
 
   Item *get_tmp_table_item(Session *session);
 
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
 
   bool agg_arg_collations(DTCollation &c, Item **items, uint32_t nitems,
                           uint32_t flags);

@@ -75,7 +75,7 @@ int64_t Item_hex_string::val_int()
 }
 
 
-my_decimal *Item_hex_string::val_decimal(my_decimal *decimal_value)
+type::Decimal *Item_hex_string::val_decimal(type::Decimal *decimal_value)
 {
   // following assert is redundant, because fixed=1 assigned in constructor
   assert(fixed == 1);

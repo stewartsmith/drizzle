@@ -28,7 +28,11 @@ namespace drizzled
 class Item;
 class Field;
 class Hybrid_type;
-class my_decimal;
+
+namespace type {
+class Decimal;
+}
+
 class String;
 
 class Hybrid_type_traits_integer: public Hybrid_type_traits
@@ -46,7 +50,7 @@ public:
 
   virtual int64_t val_int(Hybrid_type *val, bool unsigned_flag) const;
   virtual double val_real(Hybrid_type *val) const;
-  virtual my_decimal *val_decimal(Hybrid_type *val, my_decimal *buf) const;
+  virtual type::Decimal *val_decimal(Hybrid_type *val, type::Decimal *buf) const;
   virtual String *val_str(Hybrid_type *val, String *buf,
                           uint8_t decimals) const;
 
