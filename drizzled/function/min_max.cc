@@ -59,7 +59,7 @@ void Item_func_min_max::fix_length_and_dec()
     }
   }
   else if ((cmp_type == DECIMAL_RESULT) || (cmp_type == INT_RESULT))
-    max_length= my_decimal_precision_to_length(max_int_part+decimals, decimals,
+    max_length= class_decimal_precision_to_length(max_int_part+decimals, decimals,
                                             unsigned_flag);
   cached_field_type= agg_field_type(args, arg_count);
 }
@@ -276,7 +276,7 @@ my_decimal *Item_func_min_max::val_decimal(my_decimal *dec)
     else
     {
       tmp= args[i]->val_decimal(&tmp_buf);      // Zero if NULL
-      if (tmp && (my_decimal_cmp(tmp, res) * cmp_sign) < 0)
+      if (tmp && (class_decimal_cmp(tmp, res) * cmp_sign) < 0)
       {
         if (tmp == &tmp_buf)
         {

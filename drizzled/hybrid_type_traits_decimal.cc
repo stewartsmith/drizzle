@@ -47,14 +47,14 @@ Hybrid_type_traits_decimal::fix_length_and_dec(Item *item, Item *arg) const
 
 void Hybrid_type_traits_decimal::set_zero(Hybrid_type *val) const
 {
-  my_decimal_set_zero(&val->dec_buf[0]);
+  class_decimal_set_zero(&val->dec_buf[0]);
   val->used_dec_buf_no= 0;
 }
 
 
 void Hybrid_type_traits_decimal::add(Hybrid_type *val, Field *f) const
 {
-  my_decimal_add(E_DEC_FATAL_ERROR,
+  class_decimal_add(E_DEC_FATAL_ERROR,
                  &val->dec_buf[val->used_dec_buf_no ^ 1],
                  &val->dec_buf[val->used_dec_buf_no],
                  f->val_decimal(&val->dec_buf[2]));
@@ -70,7 +70,7 @@ void Hybrid_type_traits_decimal::div(Hybrid_type *val, uint64_t u) const
 {
   int2my_decimal(E_DEC_FATAL_ERROR, u, true, &val->dec_buf[2]);
   /* XXX: what is '4' for scale? */
-  my_decimal_div(E_DEC_FATAL_ERROR,
+  class_decimal_div(E_DEC_FATAL_ERROR,
                  &val->dec_buf[val->used_dec_buf_no ^ 1],
                  &val->dec_buf[val->used_dec_buf_no],
                  &val->dec_buf[2], 4);
@@ -106,7 +106,7 @@ String *
 Hybrid_type_traits_decimal::val_str(Hybrid_type *val, String *to,
                                     uint8_t decimals) const
 {
-  my_decimal_round(E_DEC_FATAL_ERROR, &val->dec_buf[val->used_dec_buf_no],
+  class_decimal_round(E_DEC_FATAL_ERROR, &val->dec_buf[val->used_dec_buf_no],
                    decimals, false, &val->dec_buf[2]);
   my_decimal2string(E_DEC_FATAL_ERROR, &val->dec_buf[2], 0, 0, 0, to);
   return to;

@@ -56,7 +56,7 @@ public:
   virtual void print(String *str, enum_query_type query_type);
   Item_num *neg()
   {
-    my_decimal_neg(&decimal_value);
+    class_decimal_neg(&decimal_value);
     unsigned_flag= !decimal_value.sign();
     return this;
   }

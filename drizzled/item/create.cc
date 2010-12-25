@@ -2120,7 +2120,7 @@ create_func_cast(Session *session, Item *a, Cast_target cast_type,
     {
       len= c_len ? atoi(c_len) : 0;
       dec= c_dec ? atoi(c_dec) : 0;
-      my_decimal_trim(&len, &dec);
+      class_decimal_trim(&len, &dec);
       if (len < dec)
       {
         my_error(ER_M_BIGGER_THAN_D, MYF(0), "");

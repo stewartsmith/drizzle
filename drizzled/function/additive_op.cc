@@ -44,7 +44,7 @@ void Item_func_additive_op::result_precision()
   else
     unsigned_flag= args[0]->unsigned_flag & args[1]->unsigned_flag;
 
-  max_length= my_decimal_precision_to_length(precision, decimals,
+  max_length= class_decimal_precision_to_length(precision, decimals,
                                              unsigned_flag);
 }
 

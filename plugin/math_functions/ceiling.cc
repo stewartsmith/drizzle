@@ -62,7 +62,7 @@ my_decimal *Item_func_ceiling::decimal_op(my_decimal *decimal_value)
 {
   my_decimal val, *value= args[0]->val_decimal(&val);
   if (!(null_value= (args[0]->null_value ||
-                     my_decimal_ceiling(E_DEC_FATAL_ERROR, value,
+                     class_decimal_ceiling(E_DEC_FATAL_ERROR, value,
                                         decimal_value) > 1)))
     return decimal_value;
   return 0;

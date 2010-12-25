@@ -130,7 +130,7 @@ bool Item_type_holder::join_types(Session *, Item *item)
     int precision= min(max(prev_decimal_int_part, item->decimal_int_part())
                        + decimals, DECIMAL_MAX_PRECISION);
     unsigned_flag&= item->unsigned_flag;
-    max_length= my_decimal_precision_to_length(precision, decimals,
+    max_length= class_decimal_precision_to_length(precision, decimals,
                                                unsigned_flag);
   }
 

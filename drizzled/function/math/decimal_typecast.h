@@ -32,7 +32,7 @@ public:
   Item_decimal_typecast(Item *a, int len, int dec) :Item_func(a)
   {
     decimals= dec;
-    max_length= my_decimal_precision_to_length(len, dec, unsigned_flag);
+    max_length= class_decimal_precision_to_length(len, dec, unsigned_flag);
   }
   String *val_str(String *str);
   double val_real();

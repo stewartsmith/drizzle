@@ -31,7 +31,7 @@ Item_decimal::Item_decimal(const char *str_arg, uint32_t length,
   name= (char*) str_arg;
   decimals= (uint8_t) decimal_value.frac;
   fixed= 1;
-  max_length= my_decimal_precision_to_length(decimal_value.intg + decimals,
+  max_length= class_decimal_precision_to_length(decimal_value.intg + decimals,
                                              decimals, unsigned_flag);
 }
 
@@ -40,7 +40,7 @@ Item_decimal::Item_decimal(int64_t val, bool unsig)
   int2my_decimal(E_DEC_FATAL_ERROR, val, unsig, &decimal_value);
   decimals= (uint8_t) decimal_value.frac;
   fixed= 1;
-  max_length= my_decimal_precision_to_length(decimal_value.intg + decimals,
+  max_length= class_decimal_precision_to_length(decimal_value.intg + decimals,
                                              decimals, unsigned_flag);
 }
 
@@ -50,7 +50,7 @@ Item_decimal::Item_decimal(double val, int, int)
   double2my_decimal(E_DEC_FATAL_ERROR, val, &decimal_value);
   decimals= (uint8_t) decimal_value.frac;
   fixed= 1;
-  max_length= my_decimal_precision_to_length(decimal_value.intg + decimals,
+  max_length= class_decimal_precision_to_length(decimal_value.intg + decimals,
                                              decimals, unsigned_flag);
 }
 
@@ -70,7 +70,7 @@ Item_decimal::Item_decimal(my_decimal *value_par)
   my_decimal2decimal(value_par, &decimal_value);
   decimals= (uint8_t) decimal_value.frac;
   fixed= 1;
-  max_length= my_decimal_precision_to_length(decimal_value.intg + decimals,
+  max_length= class_decimal_precision_to_length(decimal_value.intg + decimals,
                                              decimals, unsigned_flag);
 }
 
@@ -81,7 +81,7 @@ Item_decimal::Item_decimal(const unsigned char *bin, int precision, int scale)
                     &decimal_value, precision, scale);
   decimals= (uint8_t) decimal_value.frac;
   fixed= 1;
-  max_length= my_decimal_precision_to_length(precision, decimals,
+  max_length= class_decimal_precision_to_length(precision, decimals,
                                              unsigned_flag);
 }
 
@@ -124,7 +124,7 @@ bool Item_decimal::eq(const Item *item, bool) const
     */
     Item *arg= (Item*) item;
     my_decimal *value= arg->val_decimal(0);
-    return !my_decimal_cmp(&decimal_value, value);
+    return !class_decimal_cmp(&decimal_value, value);
   }
   return 0;
 }
@@ -135,7 +135,7 @@ void Item_decimal::set_decimal_value(my_decimal *value_par)
   my_decimal2decimal(value_par, &decimal_value);
   decimals= (uint8_t) decimal_value.frac;
   unsigned_flag= !decimal_value.sign();
-  max_length= my_decimal_precision_to_length(decimal_value.intg + decimals,
+  max_length= class_decimal_precision_to_length(decimal_value.intg + decimals,
                                              decimals, unsigned_flag);
 }
 

@@ -42,7 +42,7 @@ String *Item_func_numhybrid::val_str(String *str)
       my_decimal decimal_value, *val;
       if (!(val= decimal_op(&decimal_value)))
         return 0;                                 // null is set
-      my_decimal_round(E_DEC_FATAL_ERROR, val, decimals, false, val);
+      class_decimal_round(E_DEC_FATAL_ERROR, val, decimals, false, val);
       my_decimal2string(E_DEC_FATAL_ERROR, val, 0, 0, 0, str);
       break;
     }

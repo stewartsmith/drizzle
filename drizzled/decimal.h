@@ -145,7 +145,7 @@ inline void decimal_neg(decimal_t *dec)
 */
 #define DECIMAL_MAX_FIELD_SIZE DECIMAL_MAX_PRECISION
 
-inline int my_decimal_int_part(uint32_t precision, uint32_t decimals)
+inline int class_decimal_int_part(uint32_t precision, uint32_t decimals)
 {
   return precision - ((decimals == DECIMAL_NOT_SPECIFIED) ? 0 : decimals);
 }
@@ -221,13 +221,13 @@ inline int check_result_and_overflow(uint32_t mask, int result, my_decimal *val)
   return result;
 }
 
-inline uint32_t my_decimal_length_to_precision(uint32_t length, uint32_t scale,
+inline uint32_t class_decimal_length_to_precision(uint32_t length, uint32_t scale,
                                            bool unsigned_flag)
 {
   return (uint32_t) (length - (scale>0 ? 1:0) - (unsigned_flag ? 0:1));
 }
 
-inline uint32_t my_decimal_precision_to_length(uint32_t precision, uint8_t scale,
+inline uint32_t class_decimal_precision_to_length(uint32_t precision, uint8_t scale,
                                              bool unsigned_flag)
 {
   set_if_smaller(precision, (uint32_t)DECIMAL_MAX_PRECISION);
@@ -235,14 +235,14 @@ inline uint32_t my_decimal_precision_to_length(uint32_t precision, uint8_t scale
 }
 
 inline
-int my_decimal_string_length(const my_decimal *d)
+int class_decimal_string_length(const my_decimal *d)
 {
   return decimal_string_size(d);
 }
 
 
 inline
-int my_decimal_max_length(const my_decimal *d)
+int class_decimal_max_length(const my_decimal *d)
 {
   /* -1 because we do not count \0 */
   return decimal_string_size(d) - 1;
@@ -250,7 +250,7 @@ int my_decimal_max_length(const my_decimal *d)
 
 
 inline
-int my_decimal_get_binary_size(uint32_t precision, uint32_t scale)
+int class_decimal_get_binary_size(uint32_t precision, uint32_t scale)
 {
   return decimal_bin_size(static_cast<int>(precision), static_cast<int>(scale));
 }
@@ -277,7 +277,7 @@ int binary2my_decimal(uint32_t mask, const unsigned char *bin, my_decimal *d, in
 
 
 inline
-int my_decimal_set_zero(my_decimal *d)
+int class_decimal_set_zero(my_decimal *d)
 {
   decimal_make_zero(static_cast<decimal_t*> (d));
   return 0;
@@ -285,14 +285,14 @@ int my_decimal_set_zero(my_decimal *d)
 
 
 inline
-bool my_decimal_is_zero(const my_decimal *decimal_value)
+bool class_decimal_is_zero(const my_decimal *decimal_value)
 {
   return decimal_is_zero(static_cast<const decimal_t*>(decimal_value));
 }
 
 
 inline
-int my_decimal_round(uint32_t mask, const my_decimal *from, int scale,
+int class_decimal_round(uint32_t mask, const my_decimal *from, int scale,
                      bool truncate, my_decimal *to)
 {
   return check_result(mask, decimal_round(static_cast<const decimal_t*>(from), to, scale,
@@ -301,14 +301,14 @@ int my_decimal_round(uint32_t mask, const my_decimal *from, int scale,
 
 
 inline
-int my_decimal_floor(uint32_t mask, const my_decimal *from, my_decimal *to)
+int class_decimal_floor(uint32_t mask, const my_decimal *from, my_decimal *to)
 {
   return check_result(mask, decimal_round(static_cast<const decimal_t*>(from), to, 0, FLOOR));
 }
 
 
 inline
-int my_decimal_ceiling(uint32_t mask, const my_decimal *from, my_decimal *to)
+int class_decimal_ceiling(uint32_t mask, const my_decimal *from, my_decimal *to)
 {
   return check_result(mask, decimal_round(static_cast<const decimal_t*>(from), to, 0, CEILING));
 }
@@ -376,7 +376,7 @@ int int2my_decimal(uint32_t mask, int64_t i, bool unsigned_flag, my_decimal *d)
 
 
 inline
-void my_decimal_neg(decimal_t *arg)
+void class_decimal_neg(decimal_t *arg)
 {
   if (decimal_is_zero(arg))
   {
@@ -388,7 +388,7 @@ void my_decimal_neg(decimal_t *arg)
 
 
 inline
-int my_decimal_add(uint32_t mask, my_decimal *res, const my_decimal *a,
+int class_decimal_add(uint32_t mask, my_decimal *res, const my_decimal *a,
 		   const my_decimal *b)
 {
   return check_result_and_overflow(mask,
@@ -399,7 +399,7 @@ int my_decimal_add(uint32_t mask, my_decimal *res, const my_decimal *a,
 
 
 inline
-int my_decimal_sub(uint32_t mask, my_decimal *res, const my_decimal *a,
+int class_decimal_sub(uint32_t mask, my_decimal *res, const my_decimal *a,
 		   const my_decimal *b)
 {
   return check_result_and_overflow(mask,
@@ -410,7 +410,7 @@ int my_decimal_sub(uint32_t mask, my_decimal *res, const my_decimal *a,
 
 
 inline
-int my_decimal_mul(uint32_t mask, my_decimal *res, const my_decimal *a,
+int class_decimal_mul(uint32_t mask, my_decimal *res, const my_decimal *a,
 		   const my_decimal *b)
 {
   return check_result_and_overflow(mask,
@@ -421,7 +421,7 @@ int my_decimal_mul(uint32_t mask, my_decimal *res, const my_decimal *a,
 
 
 inline
-int my_decimal_div(uint32_t mask, my_decimal *res, const my_decimal *a,
+int class_decimal_div(uint32_t mask, my_decimal *res, const my_decimal *a,
 		   const my_decimal *b, int div_scale_inc)
 {
   return check_result_and_overflow(mask,
@@ -433,7 +433,7 @@ int my_decimal_div(uint32_t mask, my_decimal *res, const my_decimal *a,
 
 
 inline
-int my_decimal_mod(uint32_t mask, my_decimal *res, const my_decimal *a,
+int class_decimal_mod(uint32_t mask, my_decimal *res, const my_decimal *a,
 		   const my_decimal *b)
 {
   return check_result_and_overflow(mask,
@@ -448,7 +448,7 @@ int my_decimal_mod(uint32_t mask, my_decimal *res, const my_decimal *a,
     -1 if a<b, 1 if a>b and 0 if a==b
 */
 inline
-int my_decimal_cmp(const my_decimal *a, const my_decimal *b)
+int class_decimal_cmp(const my_decimal *a, const my_decimal *b)
 {
   return decimal_cmp(static_cast<const decimal_t*>(a),
                      static_cast<const decimal_t*>(b));
@@ -456,13 +456,13 @@ int my_decimal_cmp(const my_decimal *a, const my_decimal *b)
 
 
 inline
-int my_decimal_intg(const my_decimal *a)
+int class_decimal_intg(const my_decimal *a)
 {
   return decimal_intg(static_cast<const decimal_t*>(a));
 }
 
 
-void my_decimal_trim(uint32_t *precision, uint32_t *scale);
+void class_decimal_trim(uint32_t *precision, uint32_t *scale);
 
 } /* namespace drizzled */
 

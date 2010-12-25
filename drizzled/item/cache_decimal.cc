@@ -50,7 +50,7 @@ int64_t Item_cache_decimal::val_int()
 String* Item_cache_decimal::val_str(String *str)
 {
   assert(fixed);
-  my_decimal_round(E_DEC_FATAL_ERROR, &decimal_value, decimals, false,
+  class_decimal_round(E_DEC_FATAL_ERROR, &decimal_value, decimals, false,
                    &decimal_value);
   my_decimal2string(E_DEC_FATAL_ERROR, &decimal_value, 0, 0, 0, str);
   return str;

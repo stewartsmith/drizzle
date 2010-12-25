@@ -52,11 +52,11 @@ Field_decimal::Field_decimal(unsigned char *ptr_arg,
            dec_arg, zero_arg,
            unsigned_arg)
 {
-  precision= my_decimal_length_to_precision(len_arg, dec_arg, unsigned_arg);
+  precision= class_decimal_length_to_precision(len_arg, dec_arg, unsigned_arg);
   set_if_smaller(precision, (uint32_t)DECIMAL_MAX_PRECISION);
   assert((precision <= DECIMAL_MAX_PRECISION) &&
          (dec <= DECIMAL_MAX_SCALE));
-  bin_size= my_decimal_get_binary_size(precision, dec);
+  bin_size= class_decimal_get_binary_size(precision, dec);
 }
 
 Field_decimal::Field_decimal(uint32_t len_arg,
@@ -74,11 +74,11 @@ Field_decimal::Field_decimal(uint32_t len_arg,
            0,
            unsigned_arg)
 {
-  precision= my_decimal_length_to_precision(len_arg, dec_arg, unsigned_arg);
+  precision= class_decimal_length_to_precision(len_arg, dec_arg, unsigned_arg);
   set_if_smaller(precision, (uint32_t)DECIMAL_MAX_PRECISION);
   assert((precision <= DECIMAL_MAX_PRECISION) &&
          (dec <= DECIMAL_MAX_SCALE));
-  bin_size= my_decimal_get_binary_size(precision, dec);
+  bin_size= class_decimal_get_binary_size(precision, dec);
 }
 
 
@@ -187,7 +187,7 @@ int Field_decimal::store(const char *from, uint32_t length,
                           ER(ER_TRUNCATED_WRONG_VALUE_FOR_FIELD),
                           "decimal", from_as_str.c_ptr(), field_name,
                           (uint32_t) getTable()->in_use->row_count);
-      my_decimal_set_zero(&decimal_value);
+      class_decimal_set_zero(&decimal_value);
 
       break;
     }
@@ -352,7 +352,7 @@ uint32_t Field_decimal::pack_length_from_metadata(uint32_t field_metadata)
 {
   uint32_t const source_precision= (field_metadata >> 8U) & 0x00ff;
   uint32_t const source_decimal= field_metadata & 0x00ff;
-  uint32_t const source_size= my_decimal_get_binary_size(source_precision,
+  uint32_t const source_size= class_decimal_get_binary_size(source_precision,
                                                          source_decimal);
   return (source_size);
 }
@@ -394,7 +394,7 @@ Field_decimal::unpack(unsigned char* to,
   uint32_t from_precision= (param_data & 0xff00) >> 8U;
   uint32_t from_decimal= param_data & 0x00ff;
   uint32_t length=pack_length();
-  uint32_t from_pack_len= my_decimal_get_binary_size(from_precision, from_decimal);
+  uint32_t from_pack_len= class_decimal_get_binary_size(from_precision, from_decimal);
   uint32_t len= (param_data && (from_pack_len < length)) ?
     from_pack_len : length;
   if ((from_pack_len && (from_pack_len < length)) ||

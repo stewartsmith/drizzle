@@ -48,7 +48,7 @@ my_decimal *Item_func_abs::decimal_op(my_decimal *decimal_value)
   {
     my_decimal2decimal(value, decimal_value);
     if (decimal_value->sign())
-      my_decimal_neg(decimal_value);
+      class_decimal_neg(decimal_value);
     return decimal_value;
   }
   return 0;

@@ -164,7 +164,7 @@ bool Cached_item_field::cmp(void)
 Cached_item_decimal::Cached_item_decimal(Item *it)
   :item(it)
 {
-  my_decimal_set_zero(&value);
+  class_decimal_set_zero(&value);
 }
 
 
@@ -173,7 +173,7 @@ bool Cached_item_decimal::cmp()
   my_decimal tmp;
   my_decimal *ptmp= item->val_decimal(&tmp);
   if (null_value != item->null_value ||
-      (!item->null_value && my_decimal_cmp(&value, ptmp)))
+      (!item->null_value && class_decimal_cmp(&value, ptmp)))
   {
     null_value= item->null_value;
     /* Save only not null values */

@@ -329,7 +329,7 @@ bool Item_field::val_bool_result()
       my_decimal decimal_value;
       my_decimal *val= result_field->val_decimal(&decimal_value);
       if (val)
-        return !my_decimal_is_zero(val);
+        return !class_decimal_is_zero(val);
       return 0;
     }
 

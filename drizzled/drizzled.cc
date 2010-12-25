@@ -1112,7 +1112,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
 {
   time_t curr_time;
   umask(((~internal::my_umask) & 0666));
-  my_decimal_set_zero(&decimal_zero); // set decimal_zero constant;
+  class_decimal_set_zero(&decimal_zero); // set decimal_zero constant;
   tzset();			// Set tzname
 
   curr_time= time(NULL);

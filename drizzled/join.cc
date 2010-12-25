@@ -3024,7 +3024,7 @@ static void calc_group_buffer(Join *join, Order *group)
         break;
 
       case DECIMAL_RESULT:
-        key_length+= my_decimal_get_binary_size(group_item->max_length -
+        key_length+= class_decimal_get_binary_size(group_item->max_length -
                                                 (group_item->decimals ? 1 : 0),
                                                 group_item->decimals);
         break;

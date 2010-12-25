@@ -683,7 +683,7 @@ Item_sum_hybrid::fix_fields(Session *session, Item **ref)
     break;
   case DECIMAL_RESULT:
     max_length= item->max_length;
-    my_decimal_set_zero(&sum_dec);
+    class_decimal_set_zero(&sum_dec);
     break;
   case REAL_RESULT:
     max_length= float_length(decimals);
@@ -784,7 +784,7 @@ void Item_sum_sum::clear()
   if (hybrid_type == DECIMAL_RESULT)
   {
     curr_dec_buff= 0;
-    my_decimal_set_zero(dec_buffs);
+    class_decimal_set_zero(dec_buffs);
   }
   else
     sum= 0.0;
@@ -807,11 +807,11 @@ void Item_sum_sum::fix_length_and_dec()
     {
       /* SUM result can't be longer than length(arg) + length(MAX_ROWS) */
       int precision= args[0]->decimal_precision() + DECIMAL_LONGLONG_DIGITS;
-      max_length= my_decimal_precision_to_length(precision, decimals,
+      max_length= class_decimal_precision_to_length(precision, decimals,
                                                  unsigned_flag);
       curr_dec_buff= 0;
       hybrid_type= DECIMAL_RESULT;
-      my_decimal_set_zero(dec_buffs);
+      class_decimal_set_zero(dec_buffs);
       break;
     }
   case ROW_RESULT:
@@ -827,7 +827,7 @@ bool Item_sum_sum::add()
     my_decimal value, *val= args[0]->val_decimal(&value);
     if (!args[0]->null_value)
     {
-      my_decimal_add(E_DEC_FATAL_ERROR, dec_buffs + (curr_dec_buff^1),
+      class_decimal_add(E_DEC_FATAL_ERROR, dec_buffs + (curr_dec_buff^1),
                      val, dec_buffs + curr_dec_buff);
       curr_dec_buff^= 1;
       null_value= 0;
@@ -1231,11 +1231,11 @@ void Item_sum_avg::fix_length_and_dec()
   {
     int precision= args[0]->decimal_precision() + prec_increment;
     decimals= min(args[0]->decimals + prec_increment, (unsigned int) DECIMAL_MAX_SCALE);
-    max_length= my_decimal_precision_to_length(precision, decimals,
+    max_length= class_decimal_precision_to_length(precision, decimals,
                                                unsigned_flag);
     f_precision= min(precision+DECIMAL_LONGLONG_DIGITS, DECIMAL_MAX_PRECISION);
     f_scale=  args[0]->decimals;
-    dec_bin_size= my_decimal_get_binary_size(f_precision, f_scale);
+    dec_bin_size= class_decimal_get_binary_size(f_precision, f_scale);
   }
   else {
     decimals= min(args[0]->decimals + prec_increment, (unsigned int) NOT_FIXED_DEC);
@@ -1331,7 +1331,7 @@ my_decimal *Item_sum_avg::val_decimal(my_decimal *val)
 
   sum_dec= dec_buffs + curr_dec_buff;
   int2my_decimal(E_DEC_FATAL_ERROR, count, 0, &cnt);
-  my_decimal_div(E_DEC_FATAL_ERROR, val, sum_dec, &cnt, prec_increment);
+  class_decimal_div(E_DEC_FATAL_ERROR, val, sum_dec, &cnt, prec_increment);
   return val;
 }
 
@@ -1443,7 +1443,7 @@ void Item_sum_variance::fix_length_and_dec()
     {
       int precision= args[0]->decimal_precision()*2 + prec_increment;
       decimals= min(args[0]->decimals + prec_increment, (unsigned int) DECIMAL_MAX_SCALE);
-      max_length= my_decimal_precision_to_length(precision, decimals,
+      max_length= class_decimal_precision_to_length(precision, decimals,
                                                  unsigned_flag);
 
       break;
@@ -1603,7 +1603,7 @@ void Item_sum_hybrid::clear()
     sum_int= 0;
     break;
   case DECIMAL_RESULT:
-    my_decimal_set_zero(&sum_dec);
+    class_decimal_set_zero(&sum_dec);
     break;
   case REAL_RESULT:
     sum= 0.0;
@@ -1783,7 +1783,7 @@ bool Item_sum_min::add()
     {
       my_decimal value_buff, *val= args[0]->val_decimal(&value_buff);
       if (!args[0]->null_value &&
-          (null_value || (my_decimal_cmp(&sum_dec, val) > 0)))
+          (null_value || (class_decimal_cmp(&sum_dec, val) > 0)))
       {
         my_decimal2decimal(val, &sum_dec);
         null_value= 0;
@@ -1846,7 +1846,7 @@ bool Item_sum_max::add()
     {
       my_decimal value_buff, *val= args[0]->val_decimal(&value_buff);
       if (!args[0]->null_value &&
-          (null_value || (my_decimal_cmp(val, &sum_dec) > 0)))
+          (null_value || (class_decimal_cmp(val, &sum_dec) > 0)))
       {
         my_decimal2decimal(val, &sum_dec);
         null_value= 0;
@@ -2131,7 +2131,7 @@ void Item_sum_sum::update_field()
       {
         my_decimal field_value,
                    *field_val= result_field->val_decimal(&field_value);
-        my_decimal_add(E_DEC_FATAL_ERROR, dec_buffs, arg_val, field_val);
+        class_decimal_add(E_DEC_FATAL_ERROR, dec_buffs, arg_val, field_val);
         result_field->store_decimal(dec_buffs);
       }
       else
@@ -2182,7 +2182,7 @@ void Item_sum_avg::update_field()
       binary2my_decimal(E_DEC_FATAL_ERROR, res,
                         dec_buffs + 1, f_precision, f_scale);
       field_count= sint8korr(res + dec_bin_size);
-      my_decimal_add(E_DEC_FATAL_ERROR, dec_buffs, arg_val, dec_buffs + 1);
+      class_decimal_add(E_DEC_FATAL_ERROR, dec_buffs, arg_val, dec_buffs + 1);
       my_decimal2binary(E_DEC_FATAL_ERROR, dec_buffs,
                         res, f_precision, f_scale);
       res+= dec_bin_size;
@@ -2311,7 +2311,7 @@ Item_sum_hybrid::min_max_update_decimal_field()
       old_nr=nr;
     else
     {
-      bool res= my_decimal_cmp(old_nr, nr) > 0;
+      bool res= class_decimal_cmp(old_nr, nr) > 0;
       /* (cmp_sign > 0 && res) || (!(cmp_sign > 0) && !res) */
       if ((cmp_sign > 0) ^ (!res))
         old_nr=nr;
@@ -2382,7 +2382,7 @@ my_decimal *Item_avg_field::val_decimal(my_decimal *dec_buf)
   binary2my_decimal(E_DEC_FATAL_ERROR,
                     field->ptr, &dec_field, f_precision, f_scale);
   int2my_decimal(E_DEC_FATAL_ERROR, count, 0, &dec_count);
-  my_decimal_div(E_DEC_FATAL_ERROR, dec_buf,
+  class_decimal_div(E_DEC_FATAL_ERROR, dec_buf,
                  &dec_field, &dec_count, prec_increment);
   return dec_buf;
 }
@@ -2431,7 +2431,7 @@ my_decimal *Item_std_field::val_decimal(my_decimal *dec_buf)
   assert(nr >= 0.0);
   nr= sqrt(nr);
   double2my_decimal(E_DEC_FATAL_ERROR, nr, &tmp_dec);
-  my_decimal_round(E_DEC_FATAL_ERROR, &tmp_dec, decimals, false, dec_buf);
+  class_decimal_round(E_DEC_FATAL_ERROR, &tmp_dec, decimals, false, dec_buf);
   return dec_buf;
 }
 

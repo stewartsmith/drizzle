@@ -57,7 +57,7 @@ my_decimal *Item_func_div::decimal_op(my_decimal *decimal_value)
   val2= args[1]->val_decimal(&value2);
   if ((null_value= args[1]->null_value))
     return 0;
-  if ((err= my_decimal_div(E_DEC_FATAL_ERROR & ~E_DEC_DIV_ZERO, decimal_value,
+  if ((err= class_decimal_div(E_DEC_FATAL_ERROR & ~E_DEC_DIV_ZERO, decimal_value,
                            val1, val2, prec_increment)) > 3)
   {
     if (err == E_DEC_DIV_ZERO)
@@ -80,7 +80,7 @@ void Item_func_div::result_precision()
     unsigned_flag= args[0]->unsigned_flag & args[1]->unsigned_flag;
 
   decimals= min(args[0]->decimals + prec_increment, (unsigned int)DECIMAL_MAX_SCALE);
-  max_length= my_decimal_precision_to_length(precision, decimals,
+  max_length= class_decimal_precision_to_length(precision, decimals,
                                              unsigned_flag);
 }
 

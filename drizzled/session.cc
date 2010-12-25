@@ -1516,10 +1516,10 @@ bool select_max_min_finder_subselect::cmp_decimal()
   if (fmax)
     return (cache->null_value && !maxmin->null_value) ||
       (!cache->null_value && !maxmin->null_value &&
-       my_decimal_cmp(cvalue, mvalue) > 0) ;
+       class_decimal_cmp(cvalue, mvalue) > 0) ;
   return (maxmin->null_value && !cache->null_value) ||
     (!cache->null_value && !maxmin->null_value &&
-     my_decimal_cmp(cvalue,mvalue) < 0);
+     class_decimal_cmp(cvalue,mvalue) < 0);
 }
 
 bool select_max_min_finder_subselect::cmp_str()

@@ -66,19 +66,19 @@ my_decimal *Item_decimal_typecast::val_decimal(my_decimal *dec)
 
   if ((null_value= args[0]->null_value))
     return NULL;
-  my_decimal_round(E_DEC_FATAL_ERROR, tmp, decimals, false, dec);
+  class_decimal_round(E_DEC_FATAL_ERROR, tmp, decimals, false, dec);
   sign= dec->sign();
   if (unsigned_flag)
   {
     if (sign)
     {
-      my_decimal_set_zero(dec);
+      class_decimal_set_zero(dec);
       goto err;
     }
   }
-  precision= my_decimal_length_to_precision(max_length,
+  precision= class_decimal_length_to_precision(max_length,
                                             decimals, unsigned_flag);
-  if (precision - decimals < (uint) my_decimal_intg(dec))
+  if (precision - decimals < (uint) class_decimal_intg(dec))
   {
     max_my_decimal(dec, precision, decimals);
     dec->sign(sign);
@@ -100,7 +100,7 @@ void Item_decimal_typecast::print(String *str, enum_query_type query_type)
   char len_buf[20*3 + 1];
   char *end;
 
-  uint32_t precision= my_decimal_length_to_precision(max_length, decimals,
+  uint32_t precision= class_decimal_length_to_precision(max_length, decimals,
                                                  unsigned_flag);
   str->append(STRING_WITH_LEN("cast("));
   args[0]->print(str, query_type);

@@ -63,7 +63,7 @@ int64_t Item_func_field::val_int()
     for (uint32_t i=1; i < arg_count; i++)
     {
       dec_arg= args[i]->val_decimal(&dec_arg_buf);
-      if (!args[i]->null_value && !my_decimal_cmp(dec_arg, dec))
+      if (!args[i]->null_value && !class_decimal_cmp(dec_arg, dec))
         return (int64_t) (i);
     }
   }

@@ -206,12 +206,12 @@ int my_decimal2string(uint32_t mask, const my_decimal *d,
     one if the user only wanted decimal places, but we force a leading
     zero on them. Because the type is implicitly UNSIGNED, we do not
     need to reserve a character for the sign. For all other cases,
-    fixed_prec will be 0, and my_decimal_string_length() will be called
+    fixed_prec will be 0, and class_decimal_string_length() will be called
     instead to calculate the required size of the buffer.
   */
   int length= (int)(fixed_prec
                     ? (uint32_t)(fixed_prec + ((fixed_prec == fixed_dec) ? 1 : 0) + 1)
-                    : (uint32_t)my_decimal_string_length(d));
+                    : (uint32_t)class_decimal_string_length(d));
   int result;
   if (str->alloc(length))
     return check_result(mask, E_DEC_OOM);
@@ -330,7 +330,7 @@ my_decimal *date2my_decimal(DRIZZLE_TIME *ltime, my_decimal *dec)
 }
 
 
-void my_decimal_trim(uint32_t *precision, uint32_t *scale)
+void class_decimal_trim(uint32_t *precision, uint32_t *scale)
 {
   if (!(*precision) && !(*scale))
   {

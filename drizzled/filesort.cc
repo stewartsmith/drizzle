@@ -1524,7 +1524,7 @@ uint32_t FileSort::sortlength(SortField *sortorder, uint32_t s_length, bool *mul
         break;
       case DECIMAL_RESULT:
         sortorder->length=
-          my_decimal_get_binary_size(sortorder->item->max_length -
+          class_decimal_get_binary_size(sortorder->item->max_length -
                                      (sortorder->item->decimals ? 1 : 0),
                                      sortorder->item->decimals);
         break;

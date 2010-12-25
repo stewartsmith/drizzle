@@ -80,7 +80,7 @@ my_decimal *Item_func_mod::decimal_op(my_decimal *decimal_value)
   val2= args[1]->val_decimal(&value2);
   if ((null_value= args[1]->null_value))
     return 0;
-  switch (my_decimal_mod(E_DEC_FATAL_ERROR & ~E_DEC_DIV_ZERO, decimal_value,
+  switch (class_decimal_mod(E_DEC_FATAL_ERROR & ~E_DEC_DIV_ZERO, decimal_value,
                          val1, val2)) {
   case E_DEC_TRUNCATED:
   case E_DEC_OK:

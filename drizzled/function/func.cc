@@ -482,7 +482,7 @@ Field *Item_func::tmp_table_field(Table *table)
     return make_string_field(table);
 
   case DECIMAL_RESULT:
-    field= new Field_decimal(my_decimal_precision_to_length(decimal_precision(),
+    field= new Field_decimal(class_decimal_precision_to_length(decimal_precision(),
                                                             decimals,
                                                             unsigned_flag),
                              maybe_null,
@@ -580,7 +580,7 @@ void Item_func::count_decimal_length()
     set_if_smaller(unsigned_flag, args[i]->unsigned_flag);
   }
   int precision= min(max_int_part + decimals, DECIMAL_MAX_PRECISION);
-  max_length= my_decimal_precision_to_length(precision, decimals,
+  max_length= class_decimal_precision_to_length(precision, decimals,
                                              unsigned_flag);
 }
 

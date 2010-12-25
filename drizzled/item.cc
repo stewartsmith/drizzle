@@ -101,7 +101,7 @@ bool Item::val_bool()
       my_decimal decimal_value;
       my_decimal *val= val_decimal(&decimal_value);
       if (val)
-        return !my_decimal_is_zero(val);
+        return !class_decimal_is_zero(val);
       return false;
     }
 
@@ -144,7 +144,7 @@ String *Item::val_string_from_decimal(String *str)
   if (null_value)
     return NULL;
 
-  my_decimal_round(E_DEC_FATAL_ERROR, dec, decimals, false, &dec_buf);
+  class_decimal_round(E_DEC_FATAL_ERROR, dec, decimals, false, &dec_buf);
   my_decimal2string(E_DEC_FATAL_ERROR, &dec_buf, 0, 0, 0, str);
   return str;
 }
@@ -198,7 +198,7 @@ my_decimal *Item::val_decimal_from_date(my_decimal *decimal_value)
   DRIZZLE_TIME ltime;
   if (get_date(&ltime, TIME_FUZZY_DATE))
   {
-    my_decimal_set_zero(decimal_value);
+    class_decimal_set_zero(decimal_value);
     null_value= 1;                               // set NULL, stop processing
     return NULL;
   }
@@ -211,7 +211,7 @@ my_decimal *Item::val_decimal_from_time(my_decimal *decimal_value)
   DRIZZLE_TIME ltime;
   if (get_time(&ltime))
   {
-    my_decimal_set_zero(decimal_value);
+    class_decimal_set_zero(decimal_value);
     return NULL;
   }
   return date2my_decimal(&ltime, decimal_value);
@@ -340,14 +340,14 @@ uint32_t Item::decimal_precision() const
   Item_result restype= result_type();
 
   if ((restype == DECIMAL_RESULT) || (restype == INT_RESULT))
-    return min(my_decimal_length_to_precision(max_length, decimals, unsigned_flag),
+    return min(class_decimal_length_to_precision(max_length, decimals, unsigned_flag),
                (uint32_t) DECIMAL_MAX_PRECISION);
   return min(max_length, (uint32_t) DECIMAL_MAX_PRECISION);
 }
 
 int Item::decimal_int_part() const
 {
-  return my_decimal_int_part(decimal_precision(), decimals);
+  return class_decimal_int_part(decimal_precision(), decimals);
 }
 
 void Item::print(String *str, enum_query_type)
@@ -1553,7 +1553,7 @@ bool field_is_equal_to_item(Field *field,Item *item)
     if (item->null_value)
       return 1;					// This must be true
     field_val= field->val_decimal(&field_buf);
-    return !my_decimal_cmp(item_val, field_val);
+    return !class_decimal_cmp(item_val, field_val);
   }
 
   double result= item->val_real();
@@ -1687,7 +1687,7 @@ static Field *create_tmp_field_from_item(Session *,
           +1: for decimal point
         */
 
-        overflow= my_decimal_precision_to_length(intg + dec, dec,
+        overflow= class_decimal_precision_to_length(intg + dec, dec,
                                                  item->unsigned_flag) - len;
 
         if (overflow > 0)
