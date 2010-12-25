@@ -702,7 +702,7 @@ get_date_from_str(Session *session, String *str, enum enum_drizzle_timestamp_typ
 {
   uint64_t value= 0;
   int error;
-  DRIZZLE_TIME l_time;
+  type::Time l_time;
   enum enum_drizzle_timestamp_type ret;
 
   ret= str_to_datetime(str->ptr(), str->length(), &l_time,

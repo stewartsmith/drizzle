@@ -63,7 +63,7 @@ public:
   int  store(const char *to,uint32_t length, const CHARSET_INFO * const charset);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
-  int store_time(DRIZZLE_TIME *ltime, enum enum_drizzle_timestamp_type type);
+  int store_time(type::Time *ltime, enum enum_drizzle_timestamp_type type);
   int reset(void)
   {
     ptr[0]=ptr[1]=ptr[2]=ptr[3]=ptr[4]=ptr[5]=ptr[6]=ptr[7]=0;
@@ -78,8 +78,8 @@ public:
   void sql_type(String &str) const;
   bool can_be_compared_as_int64_t() const { return true; }
   bool zero_pack() const { return 1; }
-  bool get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
-  bool get_time(DRIZZLE_TIME *ltime);
+  bool get_date(type::Time *ltime,uint32_t fuzzydate);
+  bool get_time(type::Time *ltime);
 };
 
 } /* namespace drizzled */

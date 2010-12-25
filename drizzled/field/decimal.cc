@@ -257,7 +257,7 @@ int Field_decimal::store_decimal(const type::Decimal *decimal_value)
 }
 
 
-int Field_decimal::store_time(DRIZZLE_TIME *ltime,
+int Field_decimal::store_time(type::Time *ltime,
                               enum enum_drizzle_timestamp_type )
 {
   type::Decimal decimal_value;

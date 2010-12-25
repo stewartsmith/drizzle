@@ -574,17 +574,17 @@ public:
                       bool skip_registered);
 
   /**
-    Get the value of the function as a DRIZZLE_TIME structure.
+    Get the value of the function as a type::Time structure.
     As a extra convenience the time structure is reset on error!
   */
-  virtual bool get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
+  virtual bool get_date(type::Time *ltime,uint32_t fuzzydate);
   /**
     Get time of first argument.
 
     As a extra convenience the time structure is reset on error!
   */
-  virtual bool get_time(DRIZZLE_TIME *ltime);
-  virtual bool get_date_result(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
+  virtual bool get_time(type::Time *ltime);
+  virtual bool get_date_result(type::Time *ltime,uint32_t fuzzydate);
 
   /**
     The method allows to determine nullness of a complex expression

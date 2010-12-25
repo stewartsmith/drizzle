@@ -301,7 +301,7 @@ static int fill_table_proto(message::Table &table_proto,
             || field_arg->sql_type == DRIZZLE_TYPE_DATETIME
             || field_arg->sql_type == DRIZZLE_TYPE_TIMESTAMP)
         {
-          DRIZZLE_TIME ltime;
+          type::Time ltime;
 
           if (field_arg->def->get_date(&ltime, TIME_FUZZY_DATE))
           {

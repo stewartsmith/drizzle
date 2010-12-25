@@ -60,7 +60,7 @@ int calc_weekday(long daynr, bool sunday_first_day_of_week);
 	Otherwise it is the last week of the previous year, and the
 	next week is week 1.
 */
-uint32_t calc_week(DRIZZLE_TIME *l_time, uint32_t week_behaviour, uint32_t *year);
+uint32_t calc_week(type::Time *l_time, uint32_t week_behaviour, uint32_t *year);
 
 /* Change a daynr to year, month and day */
 /* Daynr 0 is returned as date 00.00.00 */
@@ -70,7 +70,7 @@ void get_date_from_daynr(long daynr,
                          uint32_t *day);
 
 /*
-  Convert a timestamp string to a DRIZZLE_TIME value and produce a warning
+  Convert a timestamp string to a type::Time value and produce a warning
   if string was truncated during conversion.
 
   NOTE
@@ -78,28 +78,28 @@ void get_date_from_daynr(long daynr,
 */
 enum enum_drizzle_timestamp_type str_to_datetime_with_warn(const char *str, 
                                                            uint32_t length,
-                                                           DRIZZLE_TIME *l_time, 
+                                                           type::Time *l_time, 
                                                            uint32_t flags);
 
 /*
-  Convert a time string to a DRIZZLE_TIME struct and produce a warning
+  Convert a time string to a type::Time struct and produce a warning
   if string was cut during conversion.
 
   NOTE
     See str_to_time() for more info.
 */
-bool str_to_time_with_warn(const char *str, uint32_t length, DRIZZLE_TIME *l_time);
+bool str_to_time_with_warn(const char *str, uint32_t length, type::Time *l_time);
 
 /*
   Convert a system time structure to TIME
 */
-void localtime_to_TIME(DRIZZLE_TIME *to, struct tm *from);
+void localtime_to_TIME(type::Time *to, struct tm *from);
 
-void make_time(const DRIZZLE_TIME *l_time, String *str);
+void make_time(const type::Time *l_time, String *str);
 
-void make_date(const DRIZZLE_TIME *l_time, String *str);
+void make_date(const type::Time *l_time, String *str);
 
-void make_datetime(const DRIZZLE_TIME *l_time, String *str);
+void make_datetime(const type::Time *l_time, String *str);
 
 void make_truncated_value_warning(Session *session, 
                                   DRIZZLE_ERROR::enum_warning_level level,
@@ -125,7 +125,7 @@ void make_truncated_value_warning(Session *session,
   NOTE
     This function calculates difference between l_time1 and l_time2 absolute
     values. So one should set l_sign and correct result if he want to take
-    signs into account (i.e. for DRIZZLE_TIME values).
+    signs into account (i.e. for type::Time values).
 
   RETURN VALUES
     Returns sign of difference.
@@ -133,8 +133,8 @@ void make_truncated_value_warning(Session *session,
     0 means positive result
 
 */
-bool calc_time_diff(DRIZZLE_TIME *l_time1, 
-                    DRIZZLE_TIME *l_time2, 
+bool calc_time_diff(type::Time *l_time1, 
+                    type::Time *l_time2, 
                     int l_sign,
                     int64_t *seconds_out, 
                     long *microseconds_out);

@@ -36,13 +36,13 @@ public:
   Item_func_sysdate_local(Item *a) :Item_func_now(a) {}
   bool const_item() const { return 0; }
   const char *func_name() const { return "sysdate"; }
-  void store_now_in_TIME(DRIZZLE_TIME *now_time);
+  void store_now_in_TIME(type::Time *now_time);
   double val_real();
   int64_t val_int();
   int save_in_field(Field *to, bool no_conversions);
   String *val_str(String *str);
   void fix_length_and_dec();
-  bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
+  bool get_date(type::Time *res, uint32_t fuzzy_date);
   void update_used_tables()
   {
     Item_func_now::update_used_tables();

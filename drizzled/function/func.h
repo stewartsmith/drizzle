@@ -183,8 +183,8 @@ public:
   void count_real_length();
   void count_decimal_length();
 
-  bool get_arg0_date(DRIZZLE_TIME *ltime, uint32_t fuzzy_date);
-  bool get_arg0_time(DRIZZLE_TIME *ltime);
+  bool get_arg0_date(type::Time *ltime, uint32_t fuzzy_date);
+  bool get_arg0_time(type::Time *ltime);
 
   bool is_null();
 

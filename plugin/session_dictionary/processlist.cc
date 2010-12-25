@@ -103,7 +103,7 @@ bool ProcesslistTool::Generator::populate()
       push(command_name[tmp->command].str, command_name[tmp->command].length);
     }
 
-    /* DRIZZLE_TIME */
+    /* type::Time */
     push(static_cast<uint64_t>(tmp->start_time ?  now - tmp->start_time : 0));
 
     /* STATE */

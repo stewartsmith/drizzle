@@ -359,7 +359,7 @@ int string2_class_decimal(uint32_t mask, const String *str, type::Decimal *d)
 }
 
 
-type::Decimal *date2_class_decimal(DRIZZLE_TIME *ltime, type::Decimal *dec);
+type::Decimal *date2_class_decimal(type::Time *ltime, type::Decimal *dec);
 
 
 inline

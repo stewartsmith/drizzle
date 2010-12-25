@@ -313,7 +313,7 @@ int str2_class_decimal(uint32_t mask, const char *from, uint32_t length,
 }
 
 
-type::Decimal *date2_class_decimal(DRIZZLE_TIME *ltime, type::Decimal *dec)
+type::Decimal *date2_class_decimal(type::Time *ltime, type::Decimal *dec)
 {
   int64_t date;
   date = (ltime->year*100L + ltime->month)*100L + ltime->day;

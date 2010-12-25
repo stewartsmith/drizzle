@@ -159,7 +159,7 @@ void Uuid::sort_string(unsigned char *to, uint32_t length_arg)
   memcpy(to, ptr, length_arg);
 }
 
-bool Uuid::get_date(DRIZZLE_TIME *ltime, uint32_t )
+bool Uuid::get_date(type::Time *ltime, uint32_t )
 {
   uuid_st uu;
 
@@ -187,12 +187,12 @@ bool Uuid::get_date(DRIZZLE_TIME *ltime, uint32_t )
 
     return false;
   }
-  memset(ltime, 0, sizeof(DRIZZLE_TIME));
+  memset(ltime, 0, sizeof(type::Time));
 
   return true;
 }
 
-bool Uuid::get_time(DRIZZLE_TIME *ltime)
+bool Uuid::get_time(type::Time *ltime)
 {
   return get_date(ltime, 0);
 }

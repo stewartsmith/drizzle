@@ -90,8 +90,8 @@ public:
   Item_date_typecast(Item *a) :Item_typecast_maybe_null(a) {}
   const char *func_name() const { return "cast_as_date"; }
   String *val_str(String *str);
-  bool get_date(DRIZZLE_TIME *ltime, uint32_t fuzzy_date);
-  bool get_time(DRIZZLE_TIME *ltime);
+  bool get_date(type::Time *ltime, uint32_t fuzzy_date);
+  bool get_time(type::Time *ltime);
   const char *cast_type() const { return "date"; }
   enum_field_types field_type() const { return DRIZZLE_TYPE_DATE; }
   Field *tmp_table_field(Table *table)

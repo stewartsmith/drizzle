@@ -175,7 +175,7 @@ public:
     (void)buffer;
     return store_ret_val;
   };
-  virtual bool store(const drizzled::DRIZZLE_TIME *from)
+  virtual bool store(const drizzled::type::Time *from)
   {
     return Client::store(from);
   }

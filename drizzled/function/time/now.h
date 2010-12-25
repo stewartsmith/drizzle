@@ -35,7 +35,7 @@ protected:
   int64_t value;
   char buff[20*2+32];   // +32 to make my_snprintf_{8bit|ucs2} happy
   uint32_t buff_length;
-  DRIZZLE_TIME ltime;
+  type::Time ltime;
   DateTime cached_temporal;
 public:
   Item_func_now() :Item_date_func() {}
@@ -55,8 +55,8 @@ public:
    * @param Reference to a DateTime to populate
    */
   bool get_temporal(DateTime &temporal);
-  bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
-  virtual void store_now_in_TIME(DRIZZLE_TIME *now_time)=0;
+  bool get_date(type::Time *res, uint32_t fuzzy_date);
+  virtual void store_now_in_TIME(type::Time *now_time)=0;
 };
 
 class Item_func_now_local :public Item_func_now
@@ -65,7 +65,7 @@ public:
   Item_func_now_local() :Item_func_now() {}
   Item_func_now_local(Item *a) :Item_func_now(a) {}
   const char *func_name() const { return "now"; }
-  virtual void store_now_in_TIME(DRIZZLE_TIME *now_time);
+  virtual void store_now_in_TIME(type::Time *now_time);
   virtual enum Functype functype() const { return NOW_FUNC; }
 };
 
@@ -76,7 +76,7 @@ public:
   Item_func_now_utc() :Item_func_now() {}
   Item_func_now_utc(Item *a) :Item_func_now(a) {}
   const char *func_name() const { return "utc_timestamp"; }
-  virtual void store_now_in_TIME(DRIZZLE_TIME *now_time);
+  virtual void store_now_in_TIME(type::Time *now_time);
 };
 
 } /* namespace drizzled */

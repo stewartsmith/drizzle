@@ -85,9 +85,9 @@ public:
   int64_t val_int_endpoint(bool left_endp, bool *incl_endp);
   Field *get_tmp_table_field() { return result_field; }
   Field *tmp_table_field(Table *) { return result_field; }
-  bool get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
-  bool get_date_result(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
-  bool get_time(DRIZZLE_TIME *ltime);
+  bool get_date(type::Time *ltime,uint32_t fuzzydate);
+  bool get_date_result(type::Time *ltime,uint32_t fuzzydate);
+  bool get_time(type::Time *ltime);
   bool is_null();
   void update_null_value();
   Item *get_tmp_table_item(Session *session);

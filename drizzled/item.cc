@@ -195,7 +195,7 @@ type::Decimal *Item::val_decimal_from_string(type::Decimal *decimal_value)
 type::Decimal *Item::val_decimal_from_date(type::Decimal *decimal_value)
 {
   assert(fixed);
-  DRIZZLE_TIME ltime;
+  type::Time ltime;
   if (get_date(&ltime, TIME_FUZZY_DATE))
   {
     class_decimal_set_zero(decimal_value);
@@ -208,7 +208,7 @@ type::Decimal *Item::val_decimal_from_date(type::Decimal *decimal_value)
 type::Decimal *Item::val_decimal_from_time(type::Decimal *decimal_value)
 {
   assert(fixed);
-  DRIZZLE_TIME ltime;
+  type::Time ltime;
   if (get_time(&ltime))
   {
     class_decimal_set_zero(decimal_value);
@@ -241,7 +241,7 @@ int64_t Item::val_int_from_decimal()
 
 int Item::save_time_in_field(Field *field)
 {
-  DRIZZLE_TIME ltime;
+  type::Time ltime;
   if (get_time(&ltime))
     return set_field_to_null(field);
   field->set_notnull();
@@ -250,7 +250,7 @@ int Item::save_time_in_field(Field *field)
 
 int Item::save_date_in_field(Field *field)
 {
-  DRIZZLE_TIME ltime;
+  type::Time ltime;
   if (get_date(&ltime, TIME_FUZZY_DATE))
     return set_field_to_null(field);
   field->set_notnull();
@@ -460,7 +460,7 @@ Item *Item::safe_charset_converter(const CHARSET_INFO * const tocs)
   return conv->safe ? conv : NULL;
 }
 
-bool Item::get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
+bool Item::get_date(type::Time *ltime,uint32_t fuzzydate)
 {
   if (result_type() == STRING_RESULT)
   {
@@ -492,7 +492,7 @@ err:
   return true;
 }
 
-bool Item::get_time(DRIZZLE_TIME *ltime)
+bool Item::get_time(type::Time *ltime)
 {
   char buff[40];
   String tmp(buff,sizeof(buff),&my_charset_bin),*res;
@@ -505,7 +505,7 @@ bool Item::get_time(DRIZZLE_TIME *ltime)
   return false;
 }
 
-bool Item::get_date_result(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
+bool Item::get_date_result(type::Time *ltime,uint32_t fuzzydate)
 {
   return get_date(ltime,fuzzydate);
 }
@@ -1394,7 +1394,7 @@ bool Item::send(plugin::Client *client, String *buffer)
     }
   case DRIZZLE_TYPE_TIME:
     {
-      DRIZZLE_TIME tm;
+      type::Time tm;
       get_time(&tm);
       if (not null_value)
         result= client->store(&tm);
@@ -1403,7 +1403,7 @@ bool Item::send(plugin::Client *client, String *buffer)
   case DRIZZLE_TYPE_DATETIME:
   case DRIZZLE_TYPE_TIMESTAMP:
     {
-      DRIZZLE_TIME tm;
+      type::Time tm;
       get_date(&tm, TIME_FUZZY_DATE);
       if (!null_value)
         result= client->store(&tm);

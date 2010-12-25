@@ -946,7 +946,7 @@ uint32_t Field::fill_cache_field(CacheField *copy)
   return copy->length+ store_length;
 }
 
-bool Field::get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
+bool Field::get_date(type::Time *ltime,uint32_t fuzzydate)
 {
   char buff[40];
   String tmp(buff,sizeof(buff),&my_charset_bin),*res;
@@ -959,7 +959,7 @@ bool Field::get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
   return 0;
 }
 
-bool Field::get_time(DRIZZLE_TIME *ltime)
+bool Field::get_time(type::Time *ltime)
 {
   char buff[40];
   String tmp(buff,sizeof(buff),&my_charset_bin),*res;
@@ -972,7 +972,7 @@ bool Field::get_time(DRIZZLE_TIME *ltime)
   return 0;
 }
 
-int Field::store_time(DRIZZLE_TIME *ltime, enum enum_drizzle_timestamp_type)
+int Field::store_time(type::Time *ltime, enum enum_drizzle_timestamp_type)
 {
   char buff[MAX_DATE_STRING_REP_LENGTH];
   uint32_t length= (uint32_t) my_TIME_to_str(ltime, buff);

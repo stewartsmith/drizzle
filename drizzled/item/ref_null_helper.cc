@@ -68,7 +68,7 @@ String* Item_ref_null_helper::val_str(String* s)
   return tmp;
 }
 
-bool Item_ref_null_helper::get_date(DRIZZLE_TIME *ltime, uint32_t fuzzydate)
+bool Item_ref_null_helper::get_date(type::Time *ltime, uint32_t fuzzydate)
 {
   return (owner->was_null|= null_value= (*ref)->get_date(ltime, fuzzydate));
 }

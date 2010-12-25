@@ -40,7 +40,7 @@ public:
 
   const char *func_name() const { return "cast_as_time"; }
   String *val_str(String *str);
-  bool get_time(DRIZZLE_TIME *ltime);
+  bool get_time(type::Time *ltime);
   const char *cast_type() const { return "time"; }
   enum_field_types field_type() const { return DRIZZLE_TYPE_TIME; }
 

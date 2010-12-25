@@ -66,8 +66,8 @@ public:
   inline String *val_str(String *str) { return val_str(str, str); }
   uint32_t size_of() const { return sizeof(*this); }
 
-  bool get_date(DRIZZLE_TIME *ltime, uint32_t);
-  bool get_time(DRIZZLE_TIME *ltime);
+  bool get_date(type::Time *ltime, uint32_t);
+  bool get_time(type::Time *ltime);
 
 #ifdef NOT_YET
   void generate();
