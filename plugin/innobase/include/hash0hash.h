@@ -314,10 +314,10 @@ do {\
 	cell_count2222 = hash_get_n_cells(OLD_TABLE);\
 \
 	for (i2222 = 0; i2222 < cell_count2222; i2222++) {\
-		NODE_TYPE*	node2222 = HASH_GET_FIRST((OLD_TABLE), i2222);\
+		NODE_TYPE*	node2222 = static_cast<NODE_TYPE *>(HASH_GET_FIRST((OLD_TABLE), i2222));\
 \
 		while (node2222) {\
-			NODE_TYPE*	next2222 = node2222->PTR_NAME;\
+			NODE_TYPE*	next2222 = static_cast<NODE_TYPE *>(node2222->PTR_NAME);\
 			ulint		fold2222 = FOLD_FUNC(node2222);\
 \
 			HASH_INSERT(NODE_TYPE, PTR_NAME, (NEW_TABLE),\

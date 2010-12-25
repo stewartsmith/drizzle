@@ -941,14 +941,14 @@ buf_chunk_init(
 
 	/* Allocate the block descriptors from
 	the start of the memory block. */
-	chunk->blocks = chunk->mem;
+	chunk->blocks = static_cast<buf_block_struct *>(chunk->mem);
 
 	/* Align a pointer to the first frame.  Note that when
 	os_large_page_size is smaller than UNIV_PAGE_SIZE,
 	we may allocate one fewer block than requested.  When
 	it is bigger, we may allocate more blocks than requested. */
 
-	frame = ut_align(chunk->mem, UNIV_PAGE_SIZE);
+	frame = static_cast<unsigned char *>(ut_align(chunk->mem, UNIV_PAGE_SIZE));
 	chunk->size = chunk->mem_size / UNIV_PAGE_SIZE
 		- (frame != chunk->mem);
 
@@ -1213,7 +1213,8 @@ buf_pool_init_instance(
 
 	if (buf_pool_size > 0) {
 		buf_pool->n_chunks = 1;
-		buf_pool->chunks = chunk = mem_zalloc(sizeof *chunk);
+                void *chunk_ptr= mem_zalloc((sizeof *chunk));
+		buf_pool->chunks = chunk = static_cast<buf_chunk_t *>(chunk_ptr);
 
 		UT_LIST_INIT(buf_pool->free);
 
@@ -1302,7 +1303,8 @@ buf_pool_init(
 	/* We create an extra buffer pool instance, this instance is used
 	for flushing the flush lists, to keep track of n_flush for all
 	the buffer pools and also used as a waiting object during flushing. */
-	buf_pool_ptr = mem_zalloc(n_instances * sizeof *buf_pool_ptr);
+        void *buf_pool_void_ptr= mem_zalloc(n_instances * sizeof *buf_pool_ptr);
+	buf_pool_ptr = static_cast<buf_pool_struct *>(buf_pool_void_ptr);
 
 	for (i = 0; i < n_instances; i++) {
 		buf_pool_t*	ptr	= &buf_pool_ptr[i];
@@ -1655,7 +1657,7 @@ shrink_again:
 	buf_pool->old_pool_size = buf_pool->curr_pool_size;
 
 	/* Rewrite buf_pool->chunks.  Copy everything but max_chunk. */
-	chunks = mem_alloc((buf_pool->n_chunks - 1) * sizeof *chunks);
+	chunks = static_cast<buf_chunk_t *>(mem_alloc((buf_pool->n_chunks - 1) * sizeof *chunks));
 	memcpy(chunks, buf_pool->chunks,
 	       (max_chunk - buf_pool->chunks) * sizeof *chunks);
 	memcpy(chunks + (max_chunk - buf_pool->chunks),
@@ -1940,7 +1942,7 @@ buf_pool_increase_instance(
 	buf_chunk_t*	chunk;
 
 	buf_pool_mutex_enter(buf_pool);
-	chunks = mem_alloc((buf_pool->n_chunks + 1) * sizeof *chunks);
+	chunks = static_cast<buf_chunk_t *>(mem_alloc((buf_pool->n_chunks + 1) * sizeof *chunks));
 
 	memcpy(chunks, buf_pool->chunks, buf_pool->n_chunks * sizeof *chunks);
 
@@ -3657,7 +3659,7 @@ err_exit:
 			mutex_exit(&block->mutex);
 			data = buf_buddy_alloc(buf_pool, zip_size, &lru);
 			mutex_enter(&block->mutex);
-			block->page.zip.data = data;
+			block->page.zip.data = static_cast<unsigned char *>(data);
 
 			/* To maintain the invariant
 			block->in_unzip_LRU_list
@@ -3680,7 +3682,7 @@ err_exit:
 		invocation of buf_buddy_relocate_block() on
 		uninitialized data. */
 		data = buf_buddy_alloc(buf_pool, zip_size, &lru);
-		bpage = buf_buddy_alloc(buf_pool, sizeof *bpage, &lru);
+		bpage = static_cast<buf_page_struct *>(buf_buddy_alloc(buf_pool, sizeof *bpage, &lru));
 
 		/* Initialize the buf_pool pointer. */
 		bpage->buf_pool_index = buf_pool_index(buf_pool);
@@ -3709,7 +3711,7 @@ err_exit:
 
 		page_zip_des_init(&bpage->zip);
 		page_zip_set_size(&bpage->zip, zip_size);
-		bpage->zip.data = data;
+		bpage->zip.data = static_cast<unsigned char *>(data);
 
 		mutex_enter(&buf_pool->zip_mutex);
 		UNIV_MEM_DESC(bpage->zip.data,
@@ -3863,7 +3865,7 @@ buf_page_create(
 		has been added to buf_pool->LRU and buf_pool->page_hash. */
 		data = buf_buddy_alloc(buf_pool, zip_size, &lru);
 		mutex_enter(&block->mutex);
-		block->page.zip.data = data;
+		block->page.zip.data = static_cast<unsigned char *>(data);
 
 		/* To maintain the invariant
 		block->in_unzip_LRU_list
@@ -4194,7 +4196,7 @@ buf_pool_invalidate_instance(
 		write activity happening. */
 		if (buf_pool->n_flush[i] > 0) {
 			buf_pool_mutex_exit(buf_pool);
-			buf_flush_wait_batch_end(buf_pool, i);
+			buf_flush_wait_batch_end(buf_pool, static_cast<buf_flush>(i));
 			buf_pool_mutex_enter(buf_pool);
 		}
 	}
