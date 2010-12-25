@@ -1881,7 +1881,7 @@ int64_t Item_func_interval::val_int()
     dec= row->element_index(0)->val_decimal(&dec_buf);
     if (row->element_index(0)->null_value)
       return -1;
-    my_decimal2double(E_DEC_FATAL_ERROR, dec, &value);
+    class_decimal2double(E_DEC_FATAL_ERROR, dec, &value);
   }
   else
   {
@@ -3255,7 +3255,7 @@ void in_decimal::set(uint32_t pos, Item *item)
   my_decimal *res= item->val_decimal(dec);
   /* if item->val_decimal() is evaluated to NULL then res == 0 */
   if (!item->null_value && res != dec)
-    my_decimal2decimal(res, dec);
+    class_decimal2decimal(res, dec);
 }
 
 
@@ -3423,7 +3423,7 @@ void cmp_item_decimal::store_value(Item *item)
   my_decimal *val= item->val_decimal(&value);
   /* val may be zero if item is nnull */
   if (val && val != &value)
-    my_decimal2decimal(val, &value);
+    class_decimal2decimal(val, &value);
 }
 
 

@@ -76,7 +76,7 @@ double Hybrid_type_traits::val_real(Hybrid_type *val) const
 my_decimal *
 Hybrid_type_traits::val_decimal(Hybrid_type *val, my_decimal *) const
 {
-  double2my_decimal(E_DEC_FATAL_ERROR, val->real, val->dec_buf);
+  double2_class_decimal(E_DEC_FATAL_ERROR, val->real, val->dec_buf);
   return val->dec_buf;
 }
 

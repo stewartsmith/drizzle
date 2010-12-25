@@ -42,7 +42,7 @@ my_decimal *Item_real_func::val_decimal(my_decimal *decimal_value)
   double nr= val_real();
   if (null_value)
     return 0;
-  double2my_decimal(E_DEC_FATAL_ERROR, nr, decimal_value);
+  double2_class_decimal(E_DEC_FATAL_ERROR, nr, decimal_value);
   return decimal_value;
 }
 

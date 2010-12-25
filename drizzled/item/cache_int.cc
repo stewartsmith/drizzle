@@ -50,7 +50,7 @@ String *Item_cache_int::val_str(String *str)
 my_decimal *Item_cache_int::val_decimal(my_decimal *decimal_val)
 {
   assert(fixed == 1);
-  int2my_decimal(E_DEC_FATAL_ERROR, value, unsigned_flag, decimal_val);
+  int2_class_decimal(E_DEC_FATAL_ERROR, value, unsigned_flag, decimal_val);
   return decimal_val;
 }
 

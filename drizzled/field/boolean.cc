@@ -206,7 +206,7 @@ my_decimal *Boolean::val_decimal(my_decimal *dec)
 {
   if (isTrue())
   {
-    int2my_decimal(E_DEC_OK, 1, false, dec);
+    int2_class_decimal(E_DEC_OK, 1, false, dec);
     return dec;
   }
 

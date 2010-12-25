@@ -179,7 +179,7 @@ bool Cached_item_decimal::cmp()
     /* Save only not null values */
     if (!null_value)
     {
-      my_decimal2decimal(ptmp, &value);
+      class_decimal2decimal(ptmp, &value);
       return true;
     }
     return false;

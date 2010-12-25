@@ -194,7 +194,7 @@ int decimal_operation_results(int result)
     @retval E_DEC_OOM
 */
 
-int my_decimal2string(uint32_t mask, const my_decimal *d,
+int class_decimal2string(uint32_t mask, const my_decimal *d,
                       uint32_t fixed_prec, uint32_t fixed_dec,
                       char filler, String *str)
 {
@@ -242,12 +242,12 @@ int my_decimal2string(uint32_t mask, const my_decimal *d,
    @retval E_DEC_OVERFLOW
 */
 
-int my_decimal2binary(uint32_t mask, const my_decimal *d, unsigned char *bin, int prec,
+int class_decimal2binary(uint32_t mask, const my_decimal *d, unsigned char *bin, int prec,
 		      int scale)
 {
   int err1= E_DEC_OK, err2;
   my_decimal rounded;
-  my_decimal2decimal(d, &rounded);
+  class_decimal2decimal(d, &rounded);
   rounded.frac= decimal_actual_fraction(&rounded);
   if (scale < rounded.frac)
   {
@@ -279,7 +279,7 @@ int my_decimal2binary(uint32_t mask, const my_decimal *d, unsigned char *bin, in
    @retval E_DEC_OOM
 */
 
-int str2my_decimal(uint32_t mask, const char *from, uint32_t length,
+int str2_class_decimal(uint32_t mask, const char *from, uint32_t length,
                    const CHARSET_INFO * charset, my_decimal *decimal_value)
 {
   char *end, *from_end;
@@ -313,13 +313,13 @@ int str2my_decimal(uint32_t mask, const char *from, uint32_t length,
 }
 
 
-my_decimal *date2my_decimal(DRIZZLE_TIME *ltime, my_decimal *dec)
+my_decimal *date2_class_decimal(DRIZZLE_TIME *ltime, my_decimal *dec)
 {
   int64_t date;
   date = (ltime->year*100L + ltime->month)*100L + ltime->day;
   if (ltime->time_type > DRIZZLE_TIMESTAMP_DATE)
     date= ((date*100L + ltime->hour)*100L+ ltime->minute)*100L + ltime->second;
-  if (int2my_decimal(E_DEC_FATAL_ERROR, date, false, dec))
+  if (int2_class_decimal(E_DEC_FATAL_ERROR, date, false, dec))
     return dec;
   if (ltime->second_part)
   {
@@ -2537,7 +2537,7 @@ std::ostream& operator<<(std::ostream& output, const my_decimal &dec)
 {
   drizzled::String str;
 
-  my_decimal2string(E_DEC_OK, &dec, 0, 20, ' ', &str);
+  class_decimal2string(E_DEC_OK, &dec, 0, 20, ' ', &str);
 
   output << "my_decimal:(";
   output <<  str.c_ptr();

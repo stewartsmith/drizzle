@@ -28,14 +28,14 @@ void Item_cache_decimal::store(Item *item)
 {
   my_decimal *val= item->val_decimal_result(&decimal_value);
   if (!(null_value= item->null_value) && val != &decimal_value)
-    my_decimal2decimal(val, &decimal_value);
+    class_decimal2decimal(val, &decimal_value);
 }
 
 double Item_cache_decimal::val_real()
 {
   assert(fixed);
   double res;
-  my_decimal2double(E_DEC_FATAL_ERROR, &decimal_value, &res);
+  class_decimal2double(E_DEC_FATAL_ERROR, &decimal_value, &res);
   return res;
 }
 
@@ -43,7 +43,7 @@ int64_t Item_cache_decimal::val_int()
 {
   assert(fixed);
   int64_t res;
-  my_decimal2int(E_DEC_FATAL_ERROR, &decimal_value, unsigned_flag, &res);
+  class_decimal2int(E_DEC_FATAL_ERROR, &decimal_value, unsigned_flag, &res);
   return res;
 }
 
@@ -52,7 +52,7 @@ String* Item_cache_decimal::val_str(String *str)
   assert(fixed);
   class_decimal_round(E_DEC_FATAL_ERROR, &decimal_value, decimals, false,
                    &decimal_value);
-  my_decimal2string(E_DEC_FATAL_ERROR, &decimal_value, 0, 0, 0, str);
+  class_decimal2string(E_DEC_FATAL_ERROR, &decimal_value, 0, 0, 0, str);
   return str;
 }
 

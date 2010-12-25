@@ -1078,7 +1078,7 @@ int MicroTimestamp::to_string(char *to, size_t to_len) const
 void Time::to_decimal(my_decimal *to) const
 {
   int64_t time_portion= (((_hours * 100L) + _minutes) * 100L) + _seconds;
-  (void) int2my_decimal(E_DEC_FATAL_ERROR, time_portion, false, to);
+  (void) int2_class_decimal(E_DEC_FATAL_ERROR, time_portion, false, to);
   if (_useconds > 0)
   {
     to->buf[(to->intg-1) / 9 + 1]= _useconds * 1000;
@@ -1089,14 +1089,14 @@ void Time::to_decimal(my_decimal *to) const
 void Date::to_decimal(my_decimal *to) const
 {
   int64_t date_portion= (((_years * 100L) + _months) * 100L) + _days;
-  (void) int2my_decimal(E_DEC_FATAL_ERROR, date_portion, false, to);
+  (void) int2_class_decimal(E_DEC_FATAL_ERROR, date_portion, false, to);
 }
 
 void DateTime::to_decimal(my_decimal *to) const
 {
   int64_t date_portion= (((_years * 100L) + _months) * 100L) + _days;
   int64_t time_portion= (((((date_portion * 100L) + _hours) * 100L) + _minutes) * 100L) + _seconds;
-  (void) int2my_decimal(E_DEC_FATAL_ERROR, time_portion, false, to);
+  (void) int2_class_decimal(E_DEC_FATAL_ERROR, time_portion, false, to);
   if (_useconds > 0)
   {
     to->buf[(to->intg-1) / 9 + 1]= _useconds * 1000;

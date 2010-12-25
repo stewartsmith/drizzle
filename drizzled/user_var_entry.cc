@@ -41,7 +41,7 @@ double user_var_entry::val_real(bool *null_value)
   case DECIMAL_RESULT:
     {
       double result;
-      my_decimal2double(E_DEC_FATAL_ERROR, (my_decimal *)value, &result);
+      class_decimal2double(E_DEC_FATAL_ERROR, (my_decimal *)value, &result);
       return result;
     }
 
@@ -73,7 +73,7 @@ int64_t user_var_entry::val_int(bool *null_value) const
   case DECIMAL_RESULT:
     {
       int64_t result;
-      my_decimal2int(E_DEC_FATAL_ERROR, (my_decimal *)value, 0, &result);
+      class_decimal2int(E_DEC_FATAL_ERROR, (my_decimal *)value, 0, &result);
       return result;
     }
 
@@ -113,7 +113,7 @@ String *user_var_entry::val_str(bool *null_value, String *str,
     break;
 
   case DECIMAL_RESULT:
-    my_decimal2string(E_DEC_FATAL_ERROR, (my_decimal *)value, 0, 0, 0, str);
+    class_decimal2string(E_DEC_FATAL_ERROR, (my_decimal *)value, 0, 0, 0, str);
     break;
 
   case STRING_RESULT:
@@ -137,11 +137,11 @@ my_decimal *user_var_entry::val_decimal(bool *null_value, my_decimal *val)
 
   switch (type) {
   case REAL_RESULT:
-    double2my_decimal(E_DEC_FATAL_ERROR, *(double*) value, val);
+    double2_class_decimal(E_DEC_FATAL_ERROR, *(double*) value, val);
     break;
 
   case INT_RESULT:
-    int2my_decimal(E_DEC_FATAL_ERROR, *(int64_t*) value, 0, val);
+    int2_class_decimal(E_DEC_FATAL_ERROR, *(int64_t*) value, 0, val);
     break;
 
   case DECIMAL_RESULT:
@@ -149,7 +149,7 @@ my_decimal *user_var_entry::val_decimal(bool *null_value, my_decimal *val)
     break;
 
   case STRING_RESULT:
-    str2my_decimal(E_DEC_FATAL_ERROR, value, length, collation.collation, val);
+    str2_class_decimal(E_DEC_FATAL_ERROR, value, length, collation.collation, val);
     break;
 
   case ROW_RESULT:

@@ -124,7 +124,7 @@ void Field_decimal::set_value_on_overflow(my_decimal *decimal_value,
 
 bool Field_decimal::store_value(const my_decimal *decimal_value)
 {
-  int error= my_decimal2binary(E_DEC_FATAL_ERROR & ~E_DEC_OVERFLOW,
+  int error= class_decimal2binary(E_DEC_FATAL_ERROR & ~E_DEC_OVERFLOW,
                                          decimal_value, ptr, precision, dec);
   if (warn_if_overflow(error))
   {
@@ -132,7 +132,7 @@ bool Field_decimal::store_value(const my_decimal *decimal_value)
     {
       my_decimal buff;
       set_value_on_overflow(&buff, decimal_value->sign());
-      my_decimal2binary(E_DEC_FATAL_ERROR, &buff, ptr, precision, dec);
+      class_decimal2binary(E_DEC_FATAL_ERROR, &buff, ptr, precision, dec);
     }
     error= 1;
   }
@@ -148,7 +148,7 @@ int Field_decimal::store(const char *from, uint32_t length,
 
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
-  if ((err= str2my_decimal(E_DEC_FATAL_ERROR &
+  if ((err= str2_class_decimal(E_DEC_FATAL_ERROR &
                            ~(E_DEC_OVERFLOW | E_DEC_BAD_NUM),
                            from, length, charset_arg,
                            &decimal_value)) &&
@@ -200,7 +200,7 @@ int Field_decimal::store(const char *from, uint32_t length,
 
 /**
   @todo
-  Fix following when double2my_decimal when double2decimal
+  Fix following when double2_class_decimal when double2decimal
   will return E_DEC_TRUNCATED always correctly
 */
 
@@ -211,7 +211,7 @@ int Field_decimal::store(double nr)
 
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
-  err= double2my_decimal(E_DEC_FATAL_ERROR & ~E_DEC_OVERFLOW, nr,
+  err= double2_class_decimal(E_DEC_FATAL_ERROR & ~E_DEC_OVERFLOW, nr,
                          &decimal_value);
   if (err)
   {
@@ -235,7 +235,7 @@ int Field_decimal::store(int64_t nr, bool unsigned_val)
 
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
-  if ((err= int2my_decimal(E_DEC_FATAL_ERROR & ~E_DEC_OVERFLOW,
+  if ((err= int2_class_decimal(E_DEC_FATAL_ERROR & ~E_DEC_OVERFLOW,
                            nr, unsigned_val, &decimal_value)))
   {
     if (check_overflow(err))
@@ -261,7 +261,7 @@ int Field_decimal::store_time(DRIZZLE_TIME *ltime,
                               enum enum_drizzle_timestamp_type )
 {
   my_decimal decimal_value;
-  return store_value(date2my_decimal(ltime, &decimal_value));
+  return store_value(date2_class_decimal(ltime, &decimal_value));
 }
 
 
@@ -272,7 +272,7 @@ double Field_decimal::val_real(void)
 
   ASSERT_COLUMN_MARKED_FOR_READ;
 
-  my_decimal2double(E_DEC_FATAL_ERROR, val_decimal(&decimal_value), &dbl);
+  class_decimal2double(E_DEC_FATAL_ERROR, val_decimal(&decimal_value), &dbl);
 
   return dbl;
 }
@@ -285,7 +285,7 @@ int64_t Field_decimal::val_int(void)
 
   ASSERT_COLUMN_MARKED_FOR_READ;
 
-  my_decimal2int(E_DEC_FATAL_ERROR, val_decimal(&decimal_value), false, &i);
+  class_decimal2int(E_DEC_FATAL_ERROR, val_decimal(&decimal_value), false, &i);
 
   return i;
 }
@@ -295,7 +295,7 @@ my_decimal* Field_decimal::val_decimal(my_decimal *decimal_value)
 {
   ASSERT_COLUMN_MARKED_FOR_READ;
 
-  binary2my_decimal(E_DEC_FATAL_ERROR, ptr, decimal_value,
+  binary2_class_decimal(E_DEC_FATAL_ERROR, ptr, decimal_value,
                     precision, dec);
   return(decimal_value);
 }
@@ -309,7 +309,7 @@ String *Field_decimal::val_str(String *val_buffer,
   ASSERT_COLUMN_MARKED_FOR_READ;
 
   uint32_t fixed_precision= decimal_precision ? precision : 0;
-  my_decimal2string(E_DEC_FATAL_ERROR, val_decimal(&decimal_value),
+  class_decimal2string(E_DEC_FATAL_ERROR, val_decimal(&decimal_value),
                     fixed_precision, dec, '0', val_buffer);
   return val_buffer;
 }

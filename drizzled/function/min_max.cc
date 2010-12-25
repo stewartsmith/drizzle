@@ -154,7 +154,7 @@ String *Item_func_min_max::val_str(String *str)
       my_decimal dec_buf, *dec_val= val_decimal(&dec_buf);
       if (null_value)
         return 0;
-      my_decimal2string(E_DEC_FATAL_ERROR, dec_val, 0, 0, 0, str);
+      class_decimal2string(E_DEC_FATAL_ERROR, dec_val, 0, 0, 0, str);
       return str;
     }
 
@@ -281,7 +281,7 @@ my_decimal *Item_func_min_max::val_decimal(my_decimal *dec)
         if (tmp == &tmp_buf)
         {
           /* Move value out of tmp_buf as this will be reused on next loop */
-          my_decimal2decimal(tmp, dec);
+          class_decimal2decimal(tmp, dec);
           res= dec;
         }
         else

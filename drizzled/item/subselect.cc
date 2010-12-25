@@ -826,7 +826,7 @@ my_decimal *Item_exists_subselect::val_decimal(my_decimal *decimal_value)
     reset();
     return 0;
   }
-  int2my_decimal(E_DEC_FATAL_ERROR, value, 0, decimal_value);
+  int2_class_decimal(E_DEC_FATAL_ERROR, value, 0, decimal_value);
   return decimal_value;
 }
 
@@ -946,7 +946,7 @@ my_decimal *Item_in_subselect::val_decimal(my_decimal *decimal_value)
   }
   if (was_null && !value)
     null_value= 1;
-  int2my_decimal(E_DEC_FATAL_ERROR, value, 0, decimal_value);
+  int2_class_decimal(E_DEC_FATAL_ERROR, value, 0, decimal_value);
   return decimal_value;
 }
 

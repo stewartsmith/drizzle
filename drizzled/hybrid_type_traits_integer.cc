@@ -80,7 +80,7 @@ double Hybrid_type_traits_integer::val_real(Hybrid_type *val) const
 my_decimal *Hybrid_type_traits_integer::val_decimal(Hybrid_type *val,
                                                     my_decimal *) const
 {
-  int2my_decimal(E_DEC_FATAL_ERROR, val->integer, 0, &val->dec_buf[2]);
+  int2_class_decimal(E_DEC_FATAL_ERROR, val->integer, 0, &val->dec_buf[2]);
   return &val->dec_buf[2];
 }
 

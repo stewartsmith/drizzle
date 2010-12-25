@@ -915,7 +915,7 @@ void Field::make_field(SendField *field)
 int64_t Field::convert_decimal2int64_t(const my_decimal *val, bool, int *err)
 {
   int64_t i;
-  if (warn_if_overflow(my_decimal2int(E_DEC_ERROR &
+  if (warn_if_overflow(class_decimal2int(E_DEC_ERROR &
                                       ~E_DEC_OVERFLOW & ~E_DEC_TRUNCATED,
                                       val, false, &i)))
   {

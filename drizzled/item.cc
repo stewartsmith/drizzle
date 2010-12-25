@@ -145,7 +145,7 @@ String *Item::val_string_from_decimal(String *str)
     return NULL;
 
   class_decimal_round(E_DEC_FATAL_ERROR, dec, decimals, false, &dec_buf);
-  my_decimal2string(E_DEC_FATAL_ERROR, &dec_buf, 0, 0, 0, str);
+  class_decimal2string(E_DEC_FATAL_ERROR, &dec_buf, 0, 0, 0, str);
   return str;
 }
 
@@ -155,7 +155,7 @@ my_decimal *Item::val_decimal_from_real(my_decimal *decimal_value)
   if (null_value)
     return NULL;
 
-  double2my_decimal(E_DEC_FATAL_ERROR, nr, decimal_value);
+  double2_class_decimal(E_DEC_FATAL_ERROR, nr, decimal_value);
   return (decimal_value);
 }
 
@@ -165,7 +165,7 @@ my_decimal *Item::val_decimal_from_int(my_decimal *decimal_value)
   if (null_value)
     return NULL;
 
-  int2my_decimal(E_DEC_FATAL_ERROR, nr, unsigned_flag, decimal_value);
+  int2_class_decimal(E_DEC_FATAL_ERROR, nr, unsigned_flag, decimal_value);
   return decimal_value;
 }
 
@@ -177,7 +177,7 @@ my_decimal *Item::val_decimal_from_string(my_decimal *decimal_value)
     return NULL;
 
   end_ptr= (char*) res->ptr()+ res->length();
-  if (str2my_decimal(E_DEC_FATAL_ERROR & ~E_DEC_BAD_NUM,
+  if (str2_class_decimal(E_DEC_FATAL_ERROR & ~E_DEC_BAD_NUM,
                      res->ptr(), 
                      res->length(), 
                      res->charset(),
@@ -202,7 +202,7 @@ my_decimal *Item::val_decimal_from_date(my_decimal *decimal_value)
     null_value= 1;                               // set NULL, stop processing
     return NULL;
   }
-  return date2my_decimal(&ltime, decimal_value);
+  return date2_class_decimal(&ltime, decimal_value);
 }
 
 my_decimal *Item::val_decimal_from_time(my_decimal *decimal_value)
@@ -214,7 +214,7 @@ my_decimal *Item::val_decimal_from_time(my_decimal *decimal_value)
     class_decimal_set_zero(decimal_value);
     return NULL;
   }
-  return date2my_decimal(&ltime, decimal_value);
+  return date2_class_decimal(&ltime, decimal_value);
 }
 
 double Item::val_real_from_decimal()
@@ -224,7 +224,7 @@ double Item::val_real_from_decimal()
   my_decimal value_buff, *dec_val= val_decimal(&value_buff);
   if (null_value)
     return 0.0;
-  my_decimal2double(E_DEC_FATAL_ERROR, dec_val, &result);
+  class_decimal2double(E_DEC_FATAL_ERROR, dec_val, &result);
   return result;
 }
 
@@ -235,7 +235,7 @@ int64_t Item::val_int_from_decimal()
   my_decimal value, *dec_val= val_decimal(&value);
   if (null_value)
     return 0;
-  my_decimal2int(E_DEC_FATAL_ERROR, dec_val, unsigned_flag, &result);
+  class_decimal2int(E_DEC_FATAL_ERROR, dec_val, unsigned_flag, &result);
   return result;
 }
 

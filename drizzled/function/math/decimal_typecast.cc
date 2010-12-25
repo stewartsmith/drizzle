@@ -31,7 +31,7 @@ String *Item_decimal_typecast::val_str(String *str)
   my_decimal tmp_buf, *tmp= val_decimal(&tmp_buf);
   if (null_value)
     return NULL;
-  my_decimal2string(E_DEC_FATAL_ERROR, tmp, 0, 0, 0, str);
+  class_decimal2string(E_DEC_FATAL_ERROR, tmp, 0, 0, 0, str);
   return str;
 }
 
@@ -42,7 +42,7 @@ double Item_decimal_typecast::val_real()
   double res;
   if (null_value)
     return 0.0;
-  my_decimal2double(E_DEC_FATAL_ERROR, tmp, &res);
+  class_decimal2double(E_DEC_FATAL_ERROR, tmp, &res);
   return res;
 }
 
@@ -53,7 +53,7 @@ int64_t Item_decimal_typecast::val_int()
   int64_t res;
   if (null_value)
     return 0;
-  my_decimal2int(E_DEC_FATAL_ERROR, tmp, unsigned_flag, &res);
+  class_decimal2int(E_DEC_FATAL_ERROR, tmp, unsigned_flag, &res);
   return res;
 }
 

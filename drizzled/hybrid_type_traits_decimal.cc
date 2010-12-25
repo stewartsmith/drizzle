@@ -68,7 +68,7 @@ void Hybrid_type_traits_decimal::add(Hybrid_type *val, Field *f) const
 */
 void Hybrid_type_traits_decimal::div(Hybrid_type *val, uint64_t u) const
 {
-  int2my_decimal(E_DEC_FATAL_ERROR, u, true, &val->dec_buf[2]);
+  int2_class_decimal(E_DEC_FATAL_ERROR, u, true, &val->dec_buf[2]);
   /* XXX: what is '4' for scale? */
   class_decimal_div(E_DEC_FATAL_ERROR,
                  &val->dec_buf[val->used_dec_buf_no ^ 1],
@@ -82,7 +82,7 @@ int64_t
 Hybrid_type_traits_decimal::val_int(Hybrid_type *val, bool unsigned_flag) const
 {
   int64_t result;
-  my_decimal2int(E_DEC_FATAL_ERROR, &val->dec_buf[val->used_dec_buf_no],
+  class_decimal2int(E_DEC_FATAL_ERROR, &val->dec_buf[val->used_dec_buf_no],
                  unsigned_flag, &result);
   return result;
 }
@@ -91,7 +91,7 @@ Hybrid_type_traits_decimal::val_int(Hybrid_type *val, bool unsigned_flag) const
 double
 Hybrid_type_traits_decimal::val_real(Hybrid_type *val) const
 {
-  my_decimal2double(E_DEC_FATAL_ERROR, &val->dec_buf[val->used_dec_buf_no],
+  class_decimal2double(E_DEC_FATAL_ERROR, &val->dec_buf[val->used_dec_buf_no],
                     &val->real);
   return val->real;
 }
@@ -108,7 +108,7 @@ Hybrid_type_traits_decimal::val_str(Hybrid_type *val, String *to,
 {
   class_decimal_round(E_DEC_FATAL_ERROR, &val->dec_buf[val->used_dec_buf_no],
                    decimals, false, &val->dec_buf[2]);
-  my_decimal2string(E_DEC_FATAL_ERROR, &val->dec_buf[2], 0, 0, 0, to);
+  class_decimal2string(E_DEC_FATAL_ERROR, &val->dec_buf[2], 0, 0, 0, to);
   return to;
 }
 

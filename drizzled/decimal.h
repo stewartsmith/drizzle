@@ -257,19 +257,19 @@ int class_decimal_get_binary_size(uint32_t precision, uint32_t scale)
 
 
 inline
-void my_decimal2decimal(const my_decimal *from, my_decimal *to)
+void class_decimal2decimal(const my_decimal *from, my_decimal *to)
 {
   *to= *from;
   to->fix_buffer_pointer();
 }
 
 
-int my_decimal2binary(uint32_t mask, const my_decimal *d, unsigned char *bin, int prec,
+int class_decimal2binary(uint32_t mask, const my_decimal *d, unsigned char *bin, int prec,
 		      int scale);
 
 
 inline
-int binary2my_decimal(uint32_t mask, const unsigned char *bin, my_decimal *d, int prec,
+int binary2_class_decimal(uint32_t mask, const unsigned char *bin, my_decimal *d, int prec,
 		      int scale)
 {
   return check_result(mask, bin2decimal(bin, static_cast<decimal_t*>(d), prec, scale));
@@ -314,11 +314,11 @@ int class_decimal_ceiling(uint32_t mask, const my_decimal *from, my_decimal *to)
 }
 
 
-int my_decimal2string(uint32_t mask, const my_decimal *d, uint32_t fixed_prec,
+int class_decimal2string(uint32_t mask, const my_decimal *d, uint32_t fixed_prec,
                       uint32_t fixed_dec, char filler, String *str);
 
 inline
-int my_decimal2int(uint32_t mask, const my_decimal *d, bool unsigned_flag,
+int class_decimal2int(uint32_t mask, const my_decimal *d, bool unsigned_flag,
                    int64_t *l)
 {
   my_decimal rounded;
@@ -331,7 +331,7 @@ int my_decimal2int(uint32_t mask, const my_decimal *d, bool unsigned_flag,
 
 
 inline
-int my_decimal2double(uint32_t, const my_decimal *d, double *result)
+int class_decimal2double(uint32_t, const my_decimal *d, double *result)
 {
   /* No need to call check_result as this will always succeed */
   return decimal2double(static_cast<const decimal_t*>(d), result);
@@ -339,35 +339,35 @@ int my_decimal2double(uint32_t, const my_decimal *d, double *result)
 
 
 inline
-int str2my_decimal(uint32_t mask, char *str, my_decimal *d, char **end)
+int str2_class_decimal(uint32_t mask, char *str, my_decimal *d, char **end)
 {
   return check_result_and_overflow(mask, string2decimal(str, static_cast<decimal_t*>(d),end),
                                    d);
 }
 
 
-int str2my_decimal(uint32_t mask, const char *from, uint32_t length,
+int str2_class_decimal(uint32_t mask, const char *from, uint32_t length,
                    const CHARSET_INFO * charset, my_decimal *decimal_value);
 
 inline
-int string2my_decimal(uint32_t mask, const String *str, my_decimal *d)
+int string2_class_decimal(uint32_t mask, const String *str, my_decimal *d)
 {
-  return str2my_decimal(mask, str->ptr(), str->length(), str->charset(), d);
+  return str2_class_decimal(mask, str->ptr(), str->length(), str->charset(), d);
 }
 
 
-my_decimal *date2my_decimal(DRIZZLE_TIME *ltime, my_decimal *dec);
+my_decimal *date2_class_decimal(DRIZZLE_TIME *ltime, my_decimal *dec);
 
 
 inline
-int double2my_decimal(uint32_t mask, double val, my_decimal *d)
+int double2_class_decimal(uint32_t mask, double val, my_decimal *d)
 {
   return check_result_and_overflow(mask, double2decimal(val, static_cast<decimal_t*>(d)), d);
 }
 
 
 inline
-int int2my_decimal(uint32_t mask, int64_t i, bool unsigned_flag, my_decimal *d)
+int int2_class_decimal(uint32_t mask, int64_t i, bool unsigned_flag, my_decimal *d)
 {
   return check_result(mask, (unsigned_flag ?
 			     uint64_t2decimal(static_cast<uint64_t>(i), d) :

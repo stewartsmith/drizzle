@@ -43,7 +43,7 @@ String *Item_func_numhybrid::val_str(String *str)
       if (!(val= decimal_op(&decimal_value)))
         return 0;                                 // null is set
       class_decimal_round(E_DEC_FATAL_ERROR, val, decimals, false, val);
-      my_decimal2string(E_DEC_FATAL_ERROR, val, 0, 0, 0, str);
+      class_decimal2string(E_DEC_FATAL_ERROR, val, 0, 0, 0, str);
       break;
     }
   case INT_RESULT:
@@ -81,7 +81,7 @@ double Item_func_numhybrid::val_real()
       double result;
       if (!(val= decimal_op(&decimal_value)))
         return 0.0;                               // null is set
-      my_decimal2double(E_DEC_FATAL_ERROR, val, &result);
+      class_decimal2double(E_DEC_FATAL_ERROR, val, &result);
       return result;
     }
   case INT_RESULT:
@@ -117,7 +117,7 @@ int64_t Item_func_numhybrid::val_int()
       if (!(val= decimal_op(&decimal_value)))
         return 0;                                 // null is set
       int64_t result;
-      my_decimal2int(E_DEC_FATAL_ERROR, val, unsigned_flag, &result);
+      class_decimal2int(E_DEC_FATAL_ERROR, val, unsigned_flag, &result);
       return result;
     }
   case INT_RESULT:
@@ -154,13 +154,13 @@ my_decimal *Item_func_numhybrid::val_decimal(my_decimal *decimal_value)
   case INT_RESULT:
     {
       int64_t result= int_op();
-      int2my_decimal(E_DEC_FATAL_ERROR, result, unsigned_flag, decimal_value);
+      int2_class_decimal(E_DEC_FATAL_ERROR, result, unsigned_flag, decimal_value);
       break;
     }
   case REAL_RESULT:
     {
       double result= (double)real_op();
-      double2my_decimal(E_DEC_FATAL_ERROR, result, decimal_value);
+      double2_class_decimal(E_DEC_FATAL_ERROR, result, decimal_value);
       break;
     }
   case STRING_RESULT:
@@ -169,7 +169,7 @@ my_decimal *Item_func_numhybrid::val_decimal(my_decimal *decimal_value)
       if (!(res= str_op(&str_value)))
         return NULL;
 
-      str2my_decimal(E_DEC_FATAL_ERROR, (char*) res->ptr(),
+      str2_class_decimal(E_DEC_FATAL_ERROR, (char*) res->ptr(),
                      res->length(), res->charset(), decimal_value);
       break;
     }

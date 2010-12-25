@@ -106,14 +106,14 @@ int Field_str::store_decimal(const my_decimal *d)
 {
   char buff[DECIMAL_MAX_STR_LENGTH+1];
   String str(buff, sizeof(buff), &my_charset_bin);
-  my_decimal2string(E_DEC_FATAL_ERROR, d, 0, 0, 0, &str);
+  class_decimal2string(E_DEC_FATAL_ERROR, d, 0, 0, 0, &str);
   return store(str.ptr(), str.length(), str.charset());
 }
 
 my_decimal *Field_str::val_decimal(my_decimal *decimal_value)
 {
   int64_t nr= val_int();
-  int2my_decimal(E_DEC_FATAL_ERROR, nr, 0, decimal_value);
+  int2_class_decimal(E_DEC_FATAL_ERROR, nr, 0, decimal_value);
   return decimal_value;
 }
 

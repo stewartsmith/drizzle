@@ -36,7 +36,7 @@ int64_t Item_func_floor::int_op()
   {
     my_decimal dec_buf, *dec;
     if ((dec= Item_func_floor::decimal_op(&dec_buf)))
-      my_decimal2int(E_DEC_FATAL_ERROR, dec, unsigned_flag, &result);
+      class_decimal2int(E_DEC_FATAL_ERROR, dec, unsigned_flag, &result);
     else
       result= 0;
     break;

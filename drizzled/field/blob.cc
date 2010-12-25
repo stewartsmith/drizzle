@@ -288,7 +288,7 @@ my_decimal *Field_blob::val_decimal(my_decimal *decimal_value)
   else
     length= get_length(ptr);
 
-  str2my_decimal(E_DEC_FATAL_ERROR, blob, length, charset(),
+  str2_class_decimal(E_DEC_FATAL_ERROR, blob, length, charset(),
                  decimal_value);
   return decimal_value;
 }
