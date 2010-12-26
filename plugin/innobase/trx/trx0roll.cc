@@ -93,7 +93,7 @@ trx_general_rollback_for_mysql(
 
 	thr = pars_complete_graph_for_exec(roll_node, trx, heap);
 
-	ut_a(thr == que_fork_start_command(que_node_get_parent(thr)));
+        ut_a(thr == que_fork_start_command(static_cast<que_fork_t *>(que_node_get_parent(thr))));
 	que_run_threads(thr);
 
 	mutex_enter(&kernel_mutex);
@@ -336,7 +336,7 @@ trx_savepoint_for_mysql(
 
 	/* Create a new savepoint and add it as the last in the list */
 
-	savep = mem_alloc(sizeof(trx_named_savept_t));
+        savep = static_cast<trx_named_savept_t *>(mem_alloc(sizeof(trx_named_savept_t)));
 
 	savep->name = mem_strdup(savepoint_name);
 
@@ -642,10 +642,10 @@ trx_undo_arr_create(void)
 
 	heap = mem_heap_create(1024);
 
-	arr = mem_heap_alloc(heap, sizeof(trx_undo_arr_t));
+        arr = static_cast<trx_undo_arr_t *>(mem_heap_alloc(heap, sizeof(trx_undo_arr_t)));
 
-	arr->infos = mem_heap_alloc(heap, sizeof(trx_undo_inf_t)
-				    * UNIV_MAX_PARALLELISM);
+        arr->infos = static_cast<trx_undo_inf_t *>(mem_heap_alloc(heap, sizeof(trx_undo_inf_t)
+                                                                  * UNIV_MAX_PARALLELISM));
 	arr->n_cells = UNIV_MAX_PARALLELISM;
 	arr->n_used = 0;
 
@@ -1298,7 +1298,8 @@ roll_node_create(
 {
 	roll_node_t*	node;
 
-	node = mem_heap_alloc(heap, sizeof(roll_node_t));
+        
+        node = static_cast<roll_node_t *>(mem_heap_alloc(heap, sizeof(roll_node_t)));
 	node->common.type = QUE_NODE_ROLLBACK;
 	node->state = ROLL_NODE_SEND;
 
@@ -1320,7 +1321,7 @@ trx_rollback_step(
 	ulint		sig_no;
 	trx_savept_t*	savept;
 
-	node = thr->run_node;
+        node = static_cast<roll_node_t *>(thr->run_node);
 
 	ut_ad(que_node_get_type(node) == QUE_NODE_ROLLBACK);
 

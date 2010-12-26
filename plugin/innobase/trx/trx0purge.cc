@@ -224,7 +224,7 @@ trx_purge_sys_create(void)
 {
 	ut_ad(mutex_own(&kernel_mutex));
 
-	purge_sys = static_cast<trx_pruge_t *>(mem_alloc(sizeof(trx_purge_t)));
+	purge_sys = static_cast<trx_purge_t *>(mem_alloc(sizeof(trx_purge_t)));
 
 	purge_sys->state = TRX_STOP_PURGE;
 
