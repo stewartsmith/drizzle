@@ -659,7 +659,7 @@ row_create_prebuilt(
 
 	heap = mem_heap_create(sizeof *prebuilt + 128);
 
-	prebuilt = mem_heap_zalloc(heap, sizeof *prebuilt);
+	prebuilt = static_cast<row_prebuilt_t *>(mem_heap_zalloc(heap, sizeof *prebuilt));
 
 	prebuilt->magic_n = ROW_PREBUILT_ALLOCATED;
 	prebuilt->magic_n2 = ROW_PREBUILT_ALLOCATED;
@@ -869,8 +869,8 @@ row_get_prebuilt_insert_row(
 		prebuilt->ins_node = node;
 
 		if (prebuilt->ins_upd_rec_buff == NULL) {
-			prebuilt->ins_upd_rec_buff = mem_heap_alloc(
-				prebuilt->heap, prebuilt->mysql_row_len);
+			prebuilt->ins_upd_rec_buff = static_cast<byte *>(mem_heap_alloc(
+				prebuilt->heap, prebuilt->mysql_row_len));
 		}
 
 		row = dtuple_create(prebuilt->heap,
@@ -880,10 +880,10 @@ row_get_prebuilt_insert_row(
 
 		ins_node_set_new_row(node, row);
 
-		prebuilt->ins_graph = que_node_get_parent(
+		prebuilt->ins_graph = static_cast<que_fork_t *>(que_node_get_parent(
 			pars_complete_graph_for_exec(node,
 						     prebuilt->trx,
-						     prebuilt->heap));
+						     prebuilt->heap)));
 		prebuilt->ins_graph->state = QUE_FORK_ACTIVE;
 	}
 
@@ -1066,10 +1066,10 @@ run_again:
 	trx_start_if_not_started(trx);
 
 	if (table) {
-		err = lock_table(0, table, mode, thr);
+		err = lock_table(0, table, static_cast<lock_mode>(mode), thr);
 	} else {
 		err = lock_table(0, prebuilt->table,
-				 prebuilt->select_lock_type, thr);
+				 static_cast<lock_mode>(prebuilt->select_lock_type), thr);
 	}
 
 	trx->error_state = err;
@@ -1244,10 +1244,10 @@ row_prebuild_sel_graph(
 
 		node = sel_node_create(prebuilt->heap);
 
-		prebuilt->sel_graph = que_node_get_parent(
+		prebuilt->sel_graph = static_cast<que_fork_t *>(que_node_get_parent(
 			pars_complete_graph_for_exec(node,
 						     prebuilt->trx,
-						     prebuilt->heap));
+						     prebuilt->heap)));
 
 		prebuilt->sel_graph->state = QUE_FORK_ACTIVE;
 	}
@@ -1315,10 +1315,10 @@ row_get_prebuilt_update_vector(
 
 		prebuilt->upd_node = node;
 
-		prebuilt->upd_graph = que_node_get_parent(
+		prebuilt->upd_graph = static_cast<que_fork_t *>(que_node_get_parent(
 			pars_complete_graph_for_exec(node,
 						     prebuilt->trx,
-						     prebuilt->heap));
+						     prebuilt->heap)));
 		prebuilt->upd_graph->state = QUE_FORK_ACTIVE;
 	}
 
@@ -1605,7 +1605,7 @@ row_unlock_for_mysql(
 			index = btr_pcur_get_btr_cur(pcur)->index;
 
 			lock_rec_unlock(trx, btr_pcur_get_block(pcur),
-					rec, prebuilt->select_lock_type);
+					rec, static_cast<lock_mode>(prebuilt->select_lock_type));
 
 			if (prebuilt->new_rec_locks >= 2) {
 				rec = btr_pcur_get_rec(clust_pcur);
@@ -1614,7 +1614,7 @@ row_unlock_for_mysql(
 				lock_rec_unlock(trx,
 						btr_pcur_get_block(clust_pcur),
 						rec,
-						prebuilt->select_lock_type);
+						static_cast<lock_mode>(prebuilt->select_lock_type));
 			}
 		}
 no_unlock:
@@ -1912,7 +1912,7 @@ row_create_table_for_mysql(
 
 	thr = pars_complete_graph_for_exec(node, trx, heap);
 
-	ut_a(thr == que_fork_start_command(que_node_get_parent(thr)));
+	ut_a(thr == que_fork_start_command(static_cast<que_fork_t *>(que_node_get_parent(thr))));
 	que_run_threads(thr);
 
 	err = trx->error_state;
@@ -2053,7 +2053,7 @@ row_create_index_for_mysql(
 
 	thr = pars_complete_graph_for_exec(node, trx, heap);
 
-	ut_a(thr == que_fork_start_command(que_node_get_parent(thr)));
+	ut_a(thr == que_fork_start_command(static_cast<que_fork_t *>(que_node_get_parent(thr))));
 	que_run_threads(thr);
 
 	err = trx->error_state;
@@ -2326,7 +2326,7 @@ row_add_table_to_background_drop_list(
 		drop = UT_LIST_GET_NEXT(row_mysql_drop_list, drop);
 	}
 
-	drop = mem_alloc(sizeof(row_mysql_drop_t));
+	drop = static_cast<row_mysql_drop_t *>(mem_alloc(sizeof(row_mysql_drop_t)));
 
 	drop->table_name = mem_strdup(name);
 
@@ -2887,7 +2887,7 @@ row_truncate_table_for_mysql(
 	tuple = dtuple_create(heap, 1);
 	dfield = dtuple_get_nth_field(tuple, 0);
 
-	buf = mem_heap_alloc(heap, 8);
+	buf = static_cast<byte *>(mem_heap_alloc(heap, 8));
 	mach_write_to_8(buf, table->id);
 
 	dfield_set_data(dfield, buf, 8);
@@ -4095,7 +4095,7 @@ row_check_index_for_mysql(
 
 	*n_rows = 0;
 
-	buf = mem_alloc(UNIV_PAGE_SIZE);
+	buf = static_cast<byte *>(mem_alloc(UNIV_PAGE_SIZE));
 	heap = mem_heap_create(100);
 
 	cnt = 1000;
@@ -4196,7 +4196,7 @@ not_ok:
 				* sizeof *offsets;
 
 			tmp_heap = mem_heap_create(size);
-			offsets = mem_heap_dup(tmp_heap, offsets, size);
+			offsets = static_cast<ulint *>(mem_heap_dup(tmp_heap, offsets, size));
 		}
 
 		mem_heap_empty(heap);

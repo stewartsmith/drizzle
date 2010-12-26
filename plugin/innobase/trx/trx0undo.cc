@@ -1457,7 +1457,7 @@ trx_undo_mem_create(
 		ut_error;
 	}
 
-	undo = mem_alloc(sizeof(trx_undo_t));
+	undo = static_cast<trx_undo_t *>(mem_alloc(sizeof(trx_undo_t)));
 
 	if (undo == NULL) {
 

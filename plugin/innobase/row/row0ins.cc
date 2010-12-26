@@ -2170,7 +2170,7 @@ row_ins_index_entry(
 
 	/* Try first optimistic descent to the B-tree */
 
-	err = static_Cast<db_err>(row_ins_index_entry_low(BTR_MODIFY_LEAF, index, entry,
+	err = static_cast<db_err>(row_ins_index_entry_low(BTR_MODIFY_LEAF, index, entry,
 				      n_ext, thr));
 	if (err != DB_FAIL) {
 

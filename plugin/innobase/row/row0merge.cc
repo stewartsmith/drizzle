@@ -187,12 +187,12 @@ row_merge_buf_create_low(
 	ut_ad(max_tuples <= sizeof(row_merge_block_t));
 	ut_ad(max_tuples < buf_size);
 
-	buf = mem_heap_zalloc(heap, buf_size);
+	buf = static_cast<row_merge_buf_t *>(mem_heap_zalloc(heap, buf_size));
 	buf->heap = heap;
 	buf->index = index;
 	buf->max_tuples = max_tuples;
-	buf->tuples = mem_heap_alloc(heap,
-				     2 * max_tuples * sizeof *buf->tuples);
+	buf->tuples = static_cast<dfield_t **>(mem_heap_alloc(heap,
+				     2 * max_tuples * sizeof *buf->tuples));
 	buf->tmp_tuples = buf->tuples + max_tuples;
 
 	return(buf);
@@ -287,7 +287,7 @@ row_merge_buf_add(
 
 	n_fields = dict_index_get_n_fields(index);
 
-	entry = mem_heap_alloc(buf->heap, n_fields * sizeof *entry);
+	entry = static_cast<dfield_t *>(mem_heap_alloc(buf->heap, n_fields * sizeof *entry));
 	buf->tuples[buf->n_tuples] = entry;
 	field = entry;
 
@@ -341,7 +341,7 @@ row_merge_buf_add(
 				col->prtype,
 				col->mbminmaxlen,
 				ifield->prefix_len,
-				len, dfield_get_data(field));
+				len, static_cast<const char *>(dfield_get_data(field)));
 			dfield_set_len(field, len);
 		}
 
@@ -452,7 +452,7 @@ row_merge_dup_report(
 			       * sizeof *offsets
 			       + sizeof *buf);
 
-	buf = mem_heap_alloc(heap, sizeof *buf);
+	buf = static_cast<mrec_buf_t *>(mem_heap_alloc(heap, sizeof *buf));
 
 	tuple = dtuple_from_fields(&tuple_store, entry, n_fields);
 	n_ext = dict_index_is_clust(index) ? dtuple_get_n_ext(tuple) : 0;
@@ -650,9 +650,9 @@ row_merge_heap_create(
 	mem_heap_t*	heap	= mem_heap_create(2 * i * sizeof **offsets1
 						  + 3 * sizeof **buf);
 
-	*buf = mem_heap_alloc(heap, 3 * sizeof **buf);
-	*offsets1 = mem_heap_alloc(heap, i * sizeof **offsets1);
-	*offsets2 = mem_heap_alloc(heap, i * sizeof **offsets2);
+	*buf = static_cast<mrec_buf_t**>(mem_heap_alloc(heap, 3 * sizeof **buf));
+	*offsets1 = static_cast<ulint*>(mem_heap_alloc(heap, i * sizeof **offsets1));
+	*offsets2 = static_cast<ulint*>(mem_heap_alloc(heap, i * sizeof **offsets2));
 
 	(*offsets1)[0] = (*offsets2)[0] = i;
 	(*offsets1)[1] = (*offsets2)[1] = dict_index_get_n_fields(index);
@@ -675,7 +675,7 @@ row_merge_dict_table_get_index(
 	dict_index_t*	index;
 	const char**	column_names;
 
-	column_names = mem_alloc(index_def->n_fields * sizeof *column_names);
+	column_names = static_cast<const char **>(mem_alloc(index_def->n_fields * sizeof *column_names));
 
 	for (i = 0; i < index_def->n_fields; ++i) {
 		column_names[i] = index_def->fields[i].field_name;
@@ -1165,7 +1165,7 @@ row_merge_read_clustered_index(
 
 	/* Create and initialize memory for record buffers */
 
-	merge_buf = mem_alloc(n_index * sizeof *merge_buf);
+	merge_buf = static_cast<row_merge_buf_t *>(mem_alloc(n_index * sizeof *merge_buf));
 
 	for (i = 0; i < n_index; i++) {
 		merge_buf[i] = row_merge_buf_create(index[i]);
@@ -1192,7 +1192,7 @@ row_merge_read_clustered_index(
 
 		ut_a(n_cols == dict_table_get_n_cols(new_table));
 
-		nonnull = mem_alloc(n_cols * sizeof *nonnull);
+		nonnull = static_cast<ulint*>(mem_alloc(n_cols * sizeof *nonnull));
 
 		for (i = 0; i < n_cols; i++) {
 			if (dict_table_get_nth_col(old_table, i)->prtype
@@ -1447,7 +1447,7 @@ row_merge_blocks(
 
 	heap = row_merge_heap_create(index, &buf, &offsets0, &offsets1);
 
-        buf = mem_heap_alloc(heap, sizeof(mrec_buf_t) * 3);
+        buf = static_cast<mrec_buf_t *>(mem_heap_alloc(heap, sizeof(mrec_buf_t) * 3));
 
 	/* Write a record and read the next record.  Split the output
 	file in two halves, which can be merged on the following pass. */
@@ -1554,7 +1554,7 @@ row_merge_blocks_copy(
 #endif /* UNIV_DEBUG */
 
 	heap = row_merge_heap_create(index, &buf, &offsets0, &offsets1);
-        buf = mem_heap_alloc(heap, sizeof(mrec_buf_t) * 3);
+        buf = static_cast<mrec_buf_t *>(mem_heap_alloc(heap, sizeof(mrec_buf_t) * 3));
 
 	/* Write a record and read the next record.  Split the output
 	file in two halves, which can be merged on the following pass. */
@@ -1869,7 +1869,7 @@ row_merge_insert_index_tuples(
 	{
 		ulint i	= 1 + REC_OFFS_HEADER_SIZE
 			+ dict_index_get_n_fields(index);
-		offsets = mem_heap_alloc(graph_heap, i * sizeof *offsets);
+		offsets = static_cast<ulint *>(mem_heap_alloc(graph_heap, i * sizeof *offsets));
 		offsets[0] = i;
 		offsets[1] = dict_index_get_n_fields(index);
 	}
@@ -1879,7 +1879,7 @@ row_merge_insert_index_tuples(
 	if (!row_merge_read(fd, foffs, block)) {
 		error = DB_CORRUPTION;
 	} else {
-		mrec_buf_t*	buf = mem_heap_alloc(graph_heap, sizeof *buf);
+		mrec_buf_t*	buf = static_cast<mrec_buf_t *>(mem_heap_alloc(graph_heap, sizeof *buf));
 
 		for (;;) {
 			const mrec_t*	mrec;
@@ -1977,7 +1977,7 @@ row_merge_lock_table(
 	/* We use the select query graph as the dummy graph needed
 	in the lock module call */
 
-	thr = que_fork_get_first_thr(que_node_get_parent(thr));
+	thr = que_fork_get_first_thr(static_cast<que_fork_t *>(que_node_get_parent(thr)));
 	que_thr_move_to_run_state_for_mysql(thr, trx);
 
 run_again:
@@ -2007,7 +2007,7 @@ run_again:
 			que_node_t*	parent;
 
 			parent = que_node_get_parent(thr);
-			run_thr = que_fork_start_command(parent);
+			run_thr = que_fork_start_command(static_cast<que_fork_t *>(parent));
 
 			ut_a(run_thr == thr);
 
@@ -2504,7 +2504,7 @@ row_merge_create_index_graph(
 	node = ind_create_graph_create(index, heap);
 	thr = pars_complete_graph_for_exec(node, trx, heap);
 
-	ut_a(thr == que_fork_start_command(que_node_get_parent(thr)));
+	ut_a(thr == que_fork_start_command(static_cast<que_fork_t *>(que_node_get_parent(thr))));
 
 	que_run_threads(thr);
 
@@ -2637,9 +2637,9 @@ row_merge_build_indexes(
 	/* Allocate memory for merge file data structure and initialize
 	fields */
 
-	merge_files = mem_alloc(n_indexes * sizeof *merge_files);
+	merge_files = static_cast<merge_file_t *>(mem_alloc(n_indexes * sizeof *merge_files));
 	block_size = 3 * sizeof *block;
-	block = os_mem_alloc_large(&block_size);
+	block = static_cast<byte *>(os_mem_alloc_large(&block_size));
 
 	for (i = 0; i < n_indexes; i++) {
 

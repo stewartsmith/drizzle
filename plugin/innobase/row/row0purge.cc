@@ -78,7 +78,7 @@ row_purge_node_create(
 
 	ut_ad(parent && heap);
 
-	node = mem_heap_alloc(heap, sizeof(purge_node_t));
+	node = static_cast<purge_node_t *>(mem_heap_alloc(heap, sizeof(purge_node_t)));
 
 	node->common.type = QUE_NODE_PURGE;
 	node->common.parent = parent;
@@ -380,7 +380,7 @@ row_purge_remove_sec_if_poss_leaf(
 	pcur.btr_cur.purge_node = node;
 	/* Set the query thread, so that ibuf_insert_low() will be
 	able to invoke thd_get_trx(). */
-	pcur.btr_cur.thr = que_node_get_parent(node);
+	pcur.btr_cur.thr = static_cast<que_thr_t *>(que_node_get_parent(node));
 
 	search_result = row_search_index_entry(
 		index, entry, BTR_MODIFY_LEAF | BTR_DELETE, &pcur, &mtr);
@@ -802,7 +802,7 @@ row_purge_step(
 
 	ut_ad(thr);
 
-	node = thr->run_node;
+	node = static_cast<purge_node_t *>(thr->run_node);
 
 	ut_ad(que_node_get_type(node) == QUE_NODE_PURGE);
 

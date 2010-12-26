@@ -197,7 +197,8 @@ trx_rseg_mem_create(
 
 	ut_ad(mutex_own(&kernel_mutex));
 
-	rseg = mem_zalloc(sizeof(trx_rseg_t));
+        void *rseg_buf= mem_zalloc(sizeof(trx_rseg_t);
+	rseg = static_cast<trx_rseg_t *>(rseg_buf);
 
 	rseg->id = id;
 	rseg->space = space;

@@ -135,7 +135,7 @@ row_undo_node_create(
 
 	ut_ad(trx && parent && heap);
 
-	undo = mem_heap_alloc(heap, sizeof(undo_node_t));
+	undo = static_cast<undo_node_t *>(mem_heap_alloc(heap, sizeof(undo_node_t)));
 
 	undo->common.type = QUE_NODE_UNDO;
 	undo->common.parent = parent;
@@ -360,7 +360,7 @@ row_undo_step(
 
 	trx = thr_get_trx(thr);
 
-	node = thr->run_node;
+	node = static_cast<undo_node_t *>(thr->run_node);
 
 	ut_ad(que_node_get_type(node) == QUE_NODE_UNDO);
 
