@@ -220,6 +220,11 @@ class Decimal :public decimal_t
                                  decimal2uint64_t(&rounded, reinterpret_cast<uint64_t *>(l)) :
                                  decimal2int64_t(&rounded, l)));
     }
+
+    int string_length() const
+    {
+      return decimal_string_size(this);
+    }
   };
 
 } // type
@@ -239,22 +244,16 @@ inline int check_result_and_overflow(uint32_t mask, int result, type::Decimal *v
 }
 
 inline uint32_t class_decimal_length_to_precision(uint32_t length, uint32_t scale,
-                                           bool unsigned_flag)
+                                                  bool unsigned_flag)
 {
   return (uint32_t) (length - (scale>0 ? 1:0) - (unsigned_flag ? 0:1));
 }
 
 inline uint32_t class_decimal_precision_to_length(uint32_t precision, uint8_t scale,
-                                             bool unsigned_flag)
+                                                  bool unsigned_flag)
 {
   set_if_smaller(precision, (uint32_t)DECIMAL_MAX_PRECISION);
   return static_cast<uint32_t>(precision + (scale>0 ? 1:0) + (unsigned_flag ? 0:1));
-}
-
-inline
-int class_decimal_string_length(const type::Decimal *d)
-{
-  return decimal_string_size(d);
 }
 
 

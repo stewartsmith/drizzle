@@ -211,7 +211,7 @@ int class_decimal2string(uint32_t mask, const type::Decimal *d,
   */
   int length= (int)(fixed_prec
                     ? (uint32_t)(fixed_prec + ((fixed_prec == fixed_dec) ? 1 : 0) + 1)
-                    : (uint32_t)class_decimal_string_length(d));
+                    : (uint32_t)d->string_length());
   int result;
   if (str->alloc(length))
     return check_result(mask, E_DEC_OOM);
