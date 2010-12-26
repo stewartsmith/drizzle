@@ -39,14 +39,12 @@ ib_vector_create(
 	mem_heap_t*	heap,	/*!< in: heap */
 	ulint		size)	/*!< in: initial size */
 {
-	ib_vector_t*	vec;
-
 	ut_a(size > 0);
 
-	vec = mem_heap_alloc(heap, sizeof(*vec));
+	ib_vector_t *vec = static_cast<ib_vector_t*>(mem_heap_alloc(heap, sizeof(*vec)));
 
 	vec->heap = heap;
-	vec->data = mem_heap_alloc(heap, sizeof(void*) * size);
+	vec->data = static_cast<void **>(mem_heap_alloc(heap, sizeof(void*) * size));
 	vec->used = 0;
 	vec->total = size;
 
@@ -66,11 +64,11 @@ ib_vector_push(
 		void**	new_data;
 		ulint	new_total = vec->total * 2;
 
-		new_data = mem_heap_alloc(vec->heap,
-					  sizeof(void*) * new_total);
+		new_data = static_cast<void **>(mem_heap_alloc(vec->heap,
+					sizeof(void*) * new_total));
 		memcpy(new_data, vec->data, sizeof(void*) * vec->total);
 
-		vec->data = new_data;
+		vec->data = static_cast<void **>(new_data);
 		vec->total = new_total;
 	}
 

@@ -207,7 +207,7 @@ thr_local_create(void)
 		thr_local_init();
 	}
 
-	local = mem_alloc(sizeof(thr_local_t));
+	local = static_cast<thr_local_t *>(mem_alloc(sizeof(thr_local_t)));
 
 	local->id = os_thread_get_curr_id();
 	local->handle = os_thread_get_curr();
@@ -290,12 +290,12 @@ thr_local_close(void)
 	for (i = 0; i < hash_get_n_cells(thr_local_hash); i++) {
 		thr_local_t*	local;
 
-		local = HASH_GET_FIRST(thr_local_hash, i);
+		local = static_cast<thr_local_t *>(HASH_GET_FIRST(thr_local_hash, i));
 
 		while (local) {
 			thr_local_t*	prev_local = local;
 
-			local = HASH_GET_NEXT(hash, prev_local);
+			local = static_cast<thr_local_t *>(HASH_GET_NEXT(hash, prev_local));
 			ut_a(prev_local->magic_n == THR_LOCAL_MAGIC_N);
 			ut_ad(thr_local_validate(prev_local));
 			mem_free(prev_local);

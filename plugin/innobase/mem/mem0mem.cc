@@ -24,6 +24,7 @@ Created 6/9/1994 Heikki Tuuri
 *************************************************************************/
 
 #include "mem0mem.h"
+
 #ifdef UNIV_NONINL
 #include "mem0mem.ic"
 #endif
@@ -108,7 +109,7 @@ mem_heap_strdup(
 	mem_heap_t*	heap,	/*!< in: memory heap where string is allocated */
 	const char*	str)	/*!< in: string to be copied */
 {
-	return(mem_heap_dup(heap, str, strlen(str) + 1));
+	return(static_cast<char *>(mem_heap_dup(heap, str, strlen(str) + 1)));
 }
 
 /**********************************************************************//**
@@ -140,7 +141,7 @@ mem_heap_strcat(
 	ulint	s1_len = strlen(s1);
 	ulint	s2_len = strlen(s2);
 
-	s = mem_heap_alloc(heap, s1_len + s2_len + 1);
+	s = static_cast<char *>(mem_heap_alloc(heap, s1_len + s2_len + 1));
 
 	memcpy(s, s1, s1_len);
 	memcpy(s + s1_len, s2, s2_len);
@@ -285,7 +286,7 @@ mem_heap_printf(
 	va_end(ap);
 
 	/* Now create it for real. */
-	str = mem_heap_alloc(heap, len);
+	str = static_cast<char *>(mem_heap_alloc(heap, len));
 	va_start(ap, format);
 	mem_heap_printf_low(str, format, ap);
 	va_end(ap);
@@ -330,7 +331,7 @@ mem_heap_create_block(
 
 		ut_ad(type == MEM_HEAP_DYNAMIC || n <= MEM_MAX_ALLOC_IN_BUF);
 
-		block = mem_area_alloc(&len, mem_comm_pool);
+		block = static_cast<mem_block_info_t *>(mem_area_alloc(&len, mem_comm_pool));
 	} else {
 		len = UNIV_PAGE_SIZE;
 
@@ -339,7 +340,7 @@ mem_heap_create_block(
 			buffer pool, but must get the free block from
 			the heap header free block field */
 
-			buf_block = heap->free_block;
+			buf_block = static_cast<buf_block_t *>(heap->free_block);
 			heap->free_block = NULL;
 
 			if (UNIV_UNLIKELY(!buf_block)) {
@@ -469,7 +470,7 @@ mem_heap_block_free(
 	ulint		type;
 	ulint		len;
 #ifndef UNIV_HOTBACKUP
-	buf_block_t*	buf_block	= block->buf_block;
+	buf_block_t*	buf_block	= static_cast<buf_block_t *>(block->buf_block);
 #endif /* !UNIV_HOTBACKUP */
 
 	if (block->magic_n != MEM_BLOCK_MAGIC_N) {
@@ -536,7 +537,7 @@ mem_heap_free_block_free(
 {
 	if (UNIV_LIKELY_NULL(heap->free_block)) {
 
-		buf_block_free(heap->free_block);
+		buf_block_free(static_cast<buf_block_t *>(heap->free_block));
 
 		heap->free_block = NULL;
 	}

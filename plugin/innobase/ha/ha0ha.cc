@@ -77,7 +77,7 @@ ha_create_func(
 #ifndef UNIV_HOTBACKUP
 	hash_create_mutexes(table, n_mutexes, mutex_level);
 
-	table->heaps = mem_alloc(n_mutexes * sizeof(void*));
+	table->heaps = static_cast<mem_block_info_t **>(mem_alloc(n_mutexes * sizeof(mem_block_info_t *));
 
 	for (i = 0; i < n_mutexes; i++) {
 		table->heaps[i] = mem_heap_create_in_btr_search(4096);
@@ -159,7 +159,7 @@ ha_insert_for_fold_func(
 
 	cell = hash_get_nth_cell(table, hash);
 
-	prev_node = cell->node;
+	prev_node = static_cast<ha_node_t *>(cell->node);
 
 	while (prev_node != NULL) {
 		if (prev_node->fold == fold) {

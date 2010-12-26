@@ -40,7 +40,7 @@ Created 12/14/1997 Heikki Tuuri
 
 #include "univ.i"
 #include "pars0pars.h"
-#include "pars0grm.h"
+#include "pars0grm.hh"
 #include "pars0sym.h"
 #include "mem0mem.h"
 #include "os0proc.h"

@@ -406,10 +406,10 @@ inline const EnumDescriptor* GetEnumDescriptor<Table_TableOptions_RowType>() {
 
 
     m4_if(PW_LESS_WARNINGS, [no],[
-      CC_WARNINGS_FULL="-erroff=E_INTEGER_OVERFLOW_DETECTED${W_PASTE_RESULT}"
+      CC_WARNINGS_FULL="-erroff=E_STATEMENT_NOT_REACHED,E_INTEGER_OVERFLOW_DETECTED${W_PASTE_RESULT}"
       CXX_WARNINGS_FULL="-erroff=inllargeuse"
     ],[
-      CC_WARNINGS_FULL="-erroff=E_ATTRIBUTE_NOT_VAR"
+      CC_WARNINGS_FULL="-erroff=E_ATTRIBUTE_NOT_VAR,E_STATEMENT_NOT_REACHED"
       CXX_WARNINGS_FULL="-erroff=attrskipunsup,doubunder,reftotemp,inllargeuse,truncwarn1,signextwarn,inllargeint"
     ])
 

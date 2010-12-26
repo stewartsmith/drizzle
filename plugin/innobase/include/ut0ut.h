@@ -71,7 +71,7 @@ typedef time_t	ib_time_t;
 #elif defined(HAVE_ATOMIC_BUILTINS)
 #  define UT_RELAX_CPU() do { \
      volatile lint	volatile_var; \
-     os_compare_and_swap_lint(&volatile_var, 0, 1); \
+     if (os_compare_and_swap_lint(&volatile_var, 0, 1)) ((void)0); \
    } while (0)
 #else
 #  define UT_RELAX_CPU() ((void)0) /* avoid warning for an empty statement */

@@ -43,7 +43,7 @@ sess_open(void)
 
 	ut_ad(mutex_own(&kernel_mutex));
 
-	sess = mem_alloc(sizeof(sess_t));
+	sess = static_cast<sess_t *>(mem_alloc(sizeof(sess_t)));
 
 	sess->state = SESS_ACTIVE;
 

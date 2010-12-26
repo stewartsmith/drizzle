@@ -306,12 +306,10 @@ dfield_print(
 /*=========*/
 	const dfield_t*	dfield)	/*!< in: dfield */
 {
-	const byte*	data;
-	ulint		len;
 	ulint		i;
 
-	len = dfield_get_len(dfield);
-	data = dfield_get_data(dfield);
+	ulint len = dfield_get_len(dfield);
+	const byte *data = static_cast<const byte *>(dfield_get_data(dfield));
 
 	if (dfield_is_null(dfield)) {
 		fputs("NULL", stderr);

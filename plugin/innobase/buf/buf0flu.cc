@@ -992,7 +992,7 @@ buf_flush_init_for_writing(
 	ut_ad(page);
 
 	if (page_zip_) {
-		page_zip_des_t*	page_zip = page_zip_;
+		page_zip_des_t*	page_zip = static_cast<page_zip_des_t *>(page_zip_);
 		ulint		zip_size = page_zip_get_size(page_zip);
 		ut_ad(zip_size);
 		ut_ad(ut_is_2pow(zip_size));

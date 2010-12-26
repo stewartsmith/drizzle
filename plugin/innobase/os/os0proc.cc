@@ -218,7 +218,7 @@ os_mem_free_large(
 #elif !defined OS_MAP_ANON
 	ut_free(ptr);
 #else
-	if (munmap(ptr, size)) {
+	if (munmap(static_cast<char *>(ptr), size)) {
 		fprintf(stderr, "InnoDB: munmap(%p, %lu) failed;"
 			" errno %lu\n",
 			ptr, (ulong) size, (ulong) errno);

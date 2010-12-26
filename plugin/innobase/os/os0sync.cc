@@ -390,7 +390,7 @@ os_event_create(
 	{
 		UT_NOT_USED(name);
 
-		event = ut_malloc(sizeof(struct os_event_struct));
+		event = static_cast<os_event_struct*>(ut_malloc(sizeof(struct os_event_struct)));
 
 		os_fast_mutex_init(&(event->os_mutex));
 
@@ -777,10 +777,10 @@ os_mutex_create(void)
 	os_fast_mutex_t*	mutex;
 	os_mutex_t		mutex_str;
 
-	mutex = ut_malloc(sizeof(os_fast_mutex_t));
+	mutex = static_cast<os_fast_mutex_t*>(ut_malloc(sizeof(os_fast_mutex_t)));
 
 	os_fast_mutex_init(mutex);
-	mutex_str = ut_malloc(sizeof(os_mutex_str_t));
+	mutex_str = static_cast<os_mutex_t>(ut_malloc(sizeof(os_mutex_str_t)));
 
 	mutex_str->handle = mutex;
 	mutex_str->count = 0;
@@ -810,7 +810,7 @@ os_mutex_enter(
 /*===========*/
 	os_mutex_t	mutex)	/*!< in: mutex to acquire */
 {
-	os_fast_mutex_lock(mutex->handle);
+	os_fast_mutex_lock(static_cast<os_fast_mutex_t *>(mutex->handle));
 
 	(mutex->count)++;
 
@@ -830,7 +830,7 @@ os_mutex_exit(
 	ut_a(mutex->count == 1);
 
 	(mutex->count)--;
-	os_fast_mutex_unlock(mutex->handle);
+	os_fast_mutex_unlock(static_cast<os_fast_mutex_t *>(mutex->handle));
 }
 
 /**********************************************************//**
@@ -859,7 +859,7 @@ os_mutex_free(
 		os_mutex_exit(os_sync_mutex);
 	}
 
-	os_fast_mutex_free(mutex->handle);
+	os_fast_mutex_free(static_cast<os_fast_mutex_t *>(mutex->handle));
 	ut_free(mutex->handle);
 	ut_free(mutex);
 }

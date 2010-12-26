@@ -149,10 +149,10 @@ read_view_create_low(
 {
 	read_view_t*	view;
 
-	view = mem_heap_alloc(heap, sizeof(read_view_t));
+	view = static_cast<read_view_t *>(mem_heap_alloc(heap, sizeof(read_view_t)));
 
 	view->n_trx_ids = n;
-	view->trx_ids = mem_heap_alloc(heap, n * sizeof *view->trx_ids);
+	view->trx_ids = static_cast<unsigned long *>(mem_heap_alloc(heap, n * sizeof *view->trx_ids));
 
 	return(view);
 }

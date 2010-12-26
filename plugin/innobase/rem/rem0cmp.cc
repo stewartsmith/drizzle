@@ -527,7 +527,7 @@ cmp_dtuple_rec_with_match(
 			!= DATA_MYSQL_LATIN1_SWEDISH_CHARSET_COLL)) {
 
 			ret = cmp_whole_field(mtype, prtype,
-					      dfield_get_data(dtuple_field),
+					      static_cast<const unsigned char *>(dfield_get_data(dtuple_field)),
 					      (unsigned) dtuple_f_len,
 					      rec_b_ptr, (unsigned) rec_f_len);
 

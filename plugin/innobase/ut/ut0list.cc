@@ -36,7 +36,7 @@ ib_list_t*
 ib_list_create(void)
 /*=================*/
 {
-	ib_list_t*	list = mem_alloc(sizeof(ib_list_t));
+	ib_list_t*	list = static_cast<ib_list_t*>(mem_alloc(sizeof(ib_list_t)));
 
 	list->first = NULL;
 	list->last = NULL;
@@ -55,7 +55,7 @@ ib_list_create_heap(
 /*================*/
 	mem_heap_t*	heap)	/*!< in: memory heap to use */
 {
-	ib_list_t*	list = mem_heap_alloc(heap, sizeof(ib_list_t));
+	ib_list_t*	list = static_cast<ib_list_t *>(mem_heap_alloc(heap, sizeof(ib_list_t)));
 
 	list->first = NULL;
 	list->last = NULL;
@@ -122,7 +122,7 @@ ib_list_add_after(
 	void*		data,		/*!< in: data */
 	mem_heap_t*	heap)		/*!< in: memory heap to use */
 {
-	ib_list_node_t*	node = mem_heap_alloc(heap, sizeof(ib_list_node_t));
+	ib_list_node_t*	node = static_cast<ib_list_node_t *>(mem_heap_alloc(heap, sizeof(ib_list_node_t)));
 
 	node->data = data;
 

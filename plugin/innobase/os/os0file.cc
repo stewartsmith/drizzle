@@ -940,7 +940,7 @@ next_file:
 
 	strcpy(info->name, ent->d_name);
 
-	full_path = ut_malloc(strlen(dirname) + strlen(ent->d_name) + 10);
+	full_path = static_cast<char* >(ut_malloc(strlen(dirname) + strlen(ent->d_name) + 10));
 
 	sprintf(full_path, "%s/%s", dirname, ent->d_name);
 
@@ -1939,10 +1939,10 @@ os_file_set_size(
 	/* Write up to 1 megabyte at a time. */
 	buf_size = ut_min(64, (ulint) (desired_size / UNIV_PAGE_SIZE))
 		* UNIV_PAGE_SIZE;
-	buf2 = ut_malloc(buf_size + UNIV_PAGE_SIZE);
+	buf2 = static_cast<unsigned char *>(ut_malloc(buf_size + UNIV_PAGE_SIZE));
 
 	/* Align the buffer for possible raw i/o */
-	buf = ut_align(buf2, UNIV_PAGE_SIZE);
+	buf = static_cast<unsigned char *>(ut_align(buf2, UNIV_PAGE_SIZE));
 
 	/* Write buffer full of zeros */
 	memset(buf, 0, buf_size);
@@ -3222,7 +3222,7 @@ os_aio_array_create(
 	ut_a(n > 0);
 	ut_a(n_segments > 0);
 
-	array = ut_malloc(sizeof(os_aio_array_t));
+	array = static_cast<os_aio_array_t *>(ut_malloc(sizeof(os_aio_array_t)));
 
 	array->mutex		= os_mutex_create();
 	array->not_full		= os_event_create(NULL);
@@ -3234,7 +3234,7 @@ os_aio_array_create(
 	array->n_segments	= n_segments;
 	array->n_reserved	= 0;
 	array->cur_seg		= 0;
-	array->slots		= ut_malloc(n * sizeof(os_aio_slot_t));
+	array->slots		= static_cast<os_aio_slot_t *>(ut_malloc(n * sizeof(os_aio_slot_t)));
 #ifdef __WIN__
 	array->handles		= ut_malloc(n * sizeof(HANDLE));
 #endif
@@ -3412,7 +3412,7 @@ os_aio_init(
 
 	os_aio_validate();
 
-	os_aio_segment_wait_events = ut_malloc(n_segments * sizeof(void*));
+	os_aio_segment_wait_events = static_cast<os_event_t *>(ut_malloc(n_segments * sizeof(void*)));
 
 	for (i = 0; i < n_segments; i++) {
 		os_aio_segment_wait_events[i] = os_event_create(NULL);
@@ -3704,7 +3704,7 @@ found:
 	slot->name     = name;
 	slot->len      = len;
 	slot->type     = type;
-	slot->buf      = buf;
+	slot->buf      = static_cast<unsigned char *>(buf);
 	slot->offset   = offset;
 	slot->offset_high = offset_high;
 	slot->io_already_done = FALSE;
@@ -4799,11 +4799,11 @@ consecutive_loop:
 		combined_buf = slot->buf;
 		combined_buf2 = NULL;
 	} else {
-		combined_buf2 = ut_malloc(total_len + UNIV_PAGE_SIZE);
+		combined_buf2 = static_cast<unsigned char *>(ut_malloc(total_len + UNIV_PAGE_SIZE));
 
 		ut_a(combined_buf2);
 
-		combined_buf = ut_align(combined_buf2, UNIV_PAGE_SIZE);
+		combined_buf = static_cast<unsigned char *>(ut_align(combined_buf2, UNIV_PAGE_SIZE));
 	}
 
 	/* We release the array mutex for the time of the i/o: NOTE that

@@ -109,9 +109,9 @@ hash_create(
 
 	prime = ut_find_prime(n);
 
-	table = mem_alloc(sizeof(hash_table_t));
+	table = static_cast<hash_table_t*>(mem_alloc(sizeof(hash_table_t)));
 
-	array = ut_malloc(sizeof(hash_cell_t) * prime);
+	array = static_cast<hash_cell_t*>(ut_malloc(sizeof(hash_cell_t) * prime));
 
 	table->array = array;
 	table->n_cells = prime;
@@ -172,7 +172,7 @@ hash_create_mutexes_func(
 	ut_a(n_mutexes > 0);
 	ut_a(ut_is_2pow(n_mutexes));
 
-	table->mutexes = mem_alloc(n_mutexes * sizeof(mutex_t));
+	table->mutexes = static_cast<mutex_struct *>(mem_alloc(n_mutexes * sizeof(mutex_t)));
 
 	for (i = 0; i < n_mutexes; i++) {
 		mutex_create(hash_table_mutex_key,

@@ -238,11 +238,11 @@ sync_array_create(
 	ut_a(n_cells > 0);
 
 	/* Allocate memory for the data structures */
-	arr = ut_malloc(sizeof(sync_array_t));
+	arr = static_cast<sync_array_t *>(ut_malloc(sizeof(sync_array_t)));
 	memset(arr, 0x0, sizeof(*arr));
 
 	sz = sizeof(sync_cell_t) * n_cells;
-	arr->array = ut_malloc(sz);
+	arr->array = static_cast<sync_cell_t *>(ut_malloc(sz));
 	memset(arr->array, 0x0, sz);
 
 	arr->n_cells = n_cells;
@@ -372,9 +372,9 @@ sync_array_reserve_cell(
 			cell->wait_object = object;
 
 			if (type == SYNC_MUTEX) {
-				cell->old_wait_mutex = object;
+				cell->old_wait_mutex = static_cast<mutex_struct *>(object);
 			} else {
-				cell->old_wait_rw_lock = object;
+				cell->old_wait_rw_lock = static_cast<rw_lock_struct *>(object);
 			}
 
 			cell->request_type = type;
@@ -783,7 +783,7 @@ sync_arr_cell_can_wake_up(
 
 	if (cell->request_type == SYNC_MUTEX) {
 
-		mutex = cell->wait_object;
+		mutex = static_cast<mutex_t *>(cell->wait_object);
 
 		if (mutex_get_lock_word(mutex) == 0) {
 
@@ -792,7 +792,7 @@ sync_arr_cell_can_wake_up(
 
 	} else if (cell->request_type == RW_LOCK_EX) {
 
-		lock = cell->wait_object;
+		lock = static_cast<rw_lock_t *>(cell->wait_object);
 
 		if (lock->lock_word > 0) {
 		/* Either unlocked or only read locked. */
@@ -802,7 +802,7 @@ sync_arr_cell_can_wake_up(
 
         } else if (cell->request_type == RW_LOCK_WAIT_EX) {
 
-		lock = cell->wait_object;
+		lock = static_cast<rw_lock_t *>(cell->wait_object);
 
                 /* lock_word == 0 means all readers have left */
 		if (lock->lock_word == 0) {
@@ -810,7 +810,7 @@ sync_arr_cell_can_wake_up(
 			return(TRUE);
 		}
 	} else if (cell->request_type == RW_LOCK_SHARED) {
-		lock = cell->wait_object;
+		lock = static_cast<rw_lock_t *>(cell->wait_object);
 
                 /* lock_word > 0 means no writer or reserved writer */
 		if (lock->lock_word > 0) {
