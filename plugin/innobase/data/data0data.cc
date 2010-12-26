@@ -365,9 +365,11 @@ dfield_print_also_hex(
 	prtype = dtype_get_prtype(dfield_get_type(dfield));
 
 	ib_id_t	id= 0;
+        ulint val= 0;
+	static const ulint UNSIGNED_MASK= 0x80000000;
+
 	switch (dtype_get_mtype(dfield_get_type(dfield))) {
 	case DATA_INT:
-		ulint	val= 0;
 		switch (len) {
 		case 1:
 			val = mach_read_from_1(data);
@@ -404,8 +406,6 @@ dfield_print_also_hex(
 
 		case 4:
 			val = mach_read_from_4(data);
-
-                        static const ulint UNSIGNED_MASK= 0x80000000;
 
 			if (!(prtype & DATA_UNSIGNED)) {
 				val &= ~UNSIGNED_MASK;

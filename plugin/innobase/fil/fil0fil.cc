@@ -581,7 +581,7 @@ fil_node_create(
 
 	mutex_enter(&fil_system->mutex);
 
-	node = mem_alloc(sizeof(fil_node_t));
+	node = static_cast<fil_node_t *>(mem_alloc(sizeof(fil_node_t)));
 
 	node->name = mem_strdup(name);
 	node->open = FALSE;
@@ -711,10 +711,10 @@ fil_node_open_file(
 
 		/* Read the first page of the tablespace */
 
-		buf2 = ut_malloc(2 * UNIV_PAGE_SIZE);
+		buf2 = static_cast<unsigned char *>(ut_malloc(2 * UNIV_PAGE_SIZE));
 		/* Align the memory for file i/o if we might have O_DIRECT
 		set */
-		page = ut_align(buf2, UNIV_PAGE_SIZE);
+		page = static_cast<unsigned char *>(ut_align(buf2, UNIV_PAGE_SIZE));
 
 		success = os_file_read(node->handle, page, 0, 0,
 				       UNIV_PAGE_SIZE);
@@ -1208,7 +1208,7 @@ try_again:
 		return(FALSE);
 	}
 
-	space = mem_alloc(sizeof(fil_space_t));
+	space = static_cast<fil_space_t *>(mem_alloc(sizeof(fil_space_t)));
 
 	space->name = mem_strdup(name);
 	space->id = id;
@@ -1553,7 +1553,8 @@ fil_init(
 	ut_a(hash_size > 0);
 	ut_a(max_n_open > 0);
 
-	fil_system = mem_zalloc(sizeof(fil_system_t));
+        void *fil_system_ptr= mem_zalloc(sizeof(fil_system_t));
+	fil_system = static_cast<fil_system_t *>(fil_system_ptr);
 
 	mutex_create(fil_system_mutex_key,
 		     &fil_system->mutex, SYNC_ANY_LATCH);
@@ -1702,8 +1703,8 @@ fil_write_lsn_and_arch_no_to_file(
 	byte*	buf1;
 	byte*	buf;
 
-	buf1 = mem_alloc(2 * UNIV_PAGE_SIZE);
-	buf = ut_align(buf1, UNIV_PAGE_SIZE);
+	buf1 = static_cast<byte *>(mem_alloc(2 * UNIV_PAGE_SIZE));
+	buf = static_cast<byte *>(ut_align(buf1, UNIV_PAGE_SIZE));
 
 	fil_read(TRUE, 0, 0, sum_of_sizes, 0, UNIV_PAGE_SIZE, buf, NULL);
 
@@ -1795,9 +1796,9 @@ fil_read_flushed_lsn_and_arch_log_no(
 	byte*		buf2;
 	ib_uint64_t	flushed_lsn;
 
-	buf2 = ut_malloc(2 * UNIV_PAGE_SIZE);
+	buf2 = static_cast<byte *>(ut_malloc(2 * UNIV_PAGE_SIZE));
 	/* Align the memory for a possible read from a raw device */
-	buf = ut_align(buf2, UNIV_PAGE_SIZE);
+	buf = static_cast<byte *>(ut_align(buf2, UNIV_PAGE_SIZE));
 
 	os_file_read(data_file, buf, 0, 0, UNIV_PAGE_SIZE);
 
@@ -1915,7 +1916,7 @@ fil_create_directory_for_tablename(
 	len = strlen(fil_path_to_mysql_datadir);
 	namend = strchr(name, '/');
 	ut_a(namend);
-	path = mem_alloc(len + (namend - name) + 2);
+	path = static_cast<char *>(mem_alloc(len + (namend - name) + 2));
 
 	memcpy(path, fil_path_to_mysql_datadir, len);
 	path[len] = '/';
@@ -2462,7 +2463,7 @@ fil_make_ibd_name(
 {
 	ulint	namelen		= strlen(name);
 	ulint	dirlen		= strlen(fil_path_to_mysql_datadir);
-	char*	filename	= mem_alloc(namelen + dirlen + sizeof "/.ibd");
+	char*	filename	= static_cast<char *>(mem_alloc(namelen + dirlen + sizeof "/.ibd"));
 
 	if (is_temp) {
 		memcpy(filename, name, namelen);
@@ -2744,9 +2745,9 @@ error_exit2:
 	with zeros from the call of os_file_set_size(), until a buffer pool
 	flush would write to it. */
 
-	buf2 = ut_malloc(3 * UNIV_PAGE_SIZE);
+	buf2 = static_cast<byte *>(ut_malloc(3 * UNIV_PAGE_SIZE));
 	/* Align the memory for file i/o if we might have O_DIRECT set */
-	page = ut_align(buf2, UNIV_PAGE_SIZE);
+	page = static_cast<byte *>(ut_align(buf2, UNIV_PAGE_SIZE));
 
 	memset(page, '\0', UNIV_PAGE_SIZE);
 
@@ -2884,9 +2885,9 @@ fil_reset_too_high_lsns(
 
 	/* Read the first page of the tablespace */
 
-	buf2 = ut_malloc(3 * UNIV_PAGE_SIZE);
+	buf2 = static_cast<byte *>(ut_malloc(3 * UNIV_PAGE_SIZE));
 	/* Align the memory for file i/o if we might have O_DIRECT set */
-	page = ut_align(buf2, UNIV_PAGE_SIZE);
+	page = static_cast<byte *>(ut_align(buf2, UNIV_PAGE_SIZE));
 
 	success = os_file_read(file, page, 0, 0, UNIV_PAGE_SIZE);
 	if (!success) {
@@ -3086,9 +3087,9 @@ fil_open_single_table_tablespace(
 
 	/* Read the first page of the tablespace */
 
-	buf2 = ut_malloc(2 * UNIV_PAGE_SIZE);
+	buf2 = static_cast<byte *>(ut_malloc(2 * UNIV_PAGE_SIZE));
 	/* Align the memory for file i/o if we might have O_DIRECT set */
-	page = ut_align(buf2, UNIV_PAGE_SIZE);
+	page = static_cast<byte *>(ut_align(buf2, UNIV_PAGE_SIZE));
 
 	success = os_file_read(file, page, 0, 0, UNIV_PAGE_SIZE);
 
@@ -3188,8 +3189,8 @@ fil_load_single_table_tablespace(
 #ifdef UNIV_HOTBACKUP
 	fil_space_t*	space;
 #endif
-	filepath = mem_alloc(strlen(dbname) + strlen(filename)
-			     + strlen(fil_path_to_mysql_datadir) + 3);
+	filepath = static_cast<char *>(mem_alloc(strlen(dbname) + strlen(filename)
+			     + strlen(fil_path_to_mysql_datadir) + 3));
 
 	sprintf(filepath, "%s/%s/%s", fil_path_to_mysql_datadir, dbname,
 		filename);
@@ -3323,9 +3324,9 @@ fil_load_single_table_tablespace(
 #endif
 	/* Read the first page of the tablespace if the size big enough */
 
-	buf2 = ut_malloc(2 * UNIV_PAGE_SIZE);
+	buf2 = static_cast<byte *>(ut_malloc(2 * UNIV_PAGE_SIZE));
 	/* Align the memory for file i/o if we might have O_DIRECT set */
-	page = ut_align(buf2, UNIV_PAGE_SIZE);
+	page = static_cast<byte *>(ut_align(buf2, UNIV_PAGE_SIZE));
 
 	if (size >= FIL_IBD_FILE_INITIAL_SIZE * UNIV_PAGE_SIZE) {
 		success = os_file_read(file, page, 0, 0, UNIV_PAGE_SIZE);
@@ -3512,7 +3513,7 @@ fil_load_single_table_tablespaces(void)
 		return(DB_ERROR);
 	}
 
-	dbpath = mem_alloc(dbpath_len);
+	dbpath = static_cast<char *>(mem_alloc(dbpath_len));
 
 	/* Scan all directories under the datadir. They are the database
 	directories of MySQL. */
@@ -3541,7 +3542,7 @@ fil_load_single_table_tablespaces(void)
 				mem_free(dbpath);
 			}
 
-			dbpath = mem_alloc(dbpath_len);
+			dbpath = static_cast<char *>(mem_alloc(dbpath_len));
 		}
 		sprintf(dbpath, "%s/%s", fil_path_to_mysql_datadir,
 			dbinfo.name);
@@ -3906,8 +3907,8 @@ fil_extend_space_to_desired_size(
 
 	/* Extend at most 64 pages at a time */
 	buf_size = ut_min(64, size_after_extend - start_page_no) * page_size;
-	buf2 = mem_alloc(buf_size + page_size);
-	buf = ut_align(buf2, page_size);
+	buf2 = static_cast<byte *>(mem_alloc(buf_size + page_size));
+	buf = static_cast<byte *>(ut_align(buf2, page_size));
 
 	memset(buf, 0, buf_size);
 
@@ -4531,10 +4532,10 @@ fil_aio_wait(
 
 	if (fil_node->space->purpose == FIL_TABLESPACE) {
 		srv_set_io_thread_op_info(segment, "complete io for buf page");
-		buf_page_io_complete(message);
+		buf_page_io_complete(static_cast<buf_page_t *>(message));
 	} else {
 		srv_set_io_thread_op_info(segment, "complete io for log");
-		log_io_complete(message);
+		log_io_complete(static_cast<log_group_t *>(message));
 	}
 }
 #endif /* UNIV_HOTBACKUP */
@@ -4681,7 +4682,7 @@ fil_flush_file_spaces(
 	traversed fil_system->unflushed_spaces and called UT_LIST_GET_NEXT()
 	on a space that was just removed from the list by fil_flush().
 	Thus, the space could be dropped and the memory overwritten. */
-	space_ids = mem_alloc(n_space_ids * sizeof *space_ids);
+	space_ids = static_cast<unsigned long *>(mem_alloc(n_space_ids * sizeof *space_ids));
 
 	n_space_ids = 0;
 
@@ -4726,7 +4727,7 @@ fil_validate(void)
 
 	for (i = 0; i < hash_get_n_cells(fil_system->spaces); i++) {
 
-		space = HASH_GET_FIRST(fil_system->spaces, i);
+		space = static_cast<fil_space_t *>(HASH_GET_FIRST(fil_system->spaces, i));
 
 		while (space != NULL) {
 			UT_LIST_VALIDATE(chain, fil_node_t, space->chain,
@@ -4745,7 +4746,7 @@ fil_validate(void)
 				}
 				fil_node = UT_LIST_GET_NEXT(chain, fil_node);
 			}
-			space = HASH_GET_NEXT(hash, space);
+			space = static_cast<fil_space_t *>(HASH_GET_NEXT(hash, space));
 		}
 	}
 

@@ -77,7 +77,7 @@ ha_create_func(
 #ifndef UNIV_HOTBACKUP
 	hash_create_mutexes(table, n_mutexes, mutex_level);
 
-	table->heaps = static_cast<mem_block_info_t **>(mem_alloc(n_mutexes * sizeof(mem_block_info_t *));
+	table->heaps = static_cast<mem_block_info_t **>(mem_alloc(n_mutexes * sizeof(mem_block_info_t *)));
 
 	for (i = 0; i < n_mutexes; i++) {
 		table->heaps[i] = mem_heap_create_in_btr_search(4096);
@@ -195,7 +195,7 @@ ha_insert_for_fold_func(
 
 	/* We have to allocate a new chain node */
 
-	node = mem_heap_alloc(hash_get_heap(table, fold), sizeof(ha_node_t));
+	node = static_cast<ha_node_t *>(mem_heap_alloc(hash_get_heap(table, fold), sizeof(ha_node_t)));
 
 	if (node == NULL) {
 		/* It was a btr search type memory heap and at the moment
@@ -220,7 +220,7 @@ ha_insert_for_fold_func(
 
 	node->next = NULL;
 
-	prev_node = cell->node;
+	prev_node = static_cast<ha_node_t *>(cell->node);
 
 	if (prev_node == NULL) {
 

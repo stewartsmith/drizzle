@@ -284,11 +284,11 @@ do {\
 		} else {\
 			/* We have to look for the predecessor of the top\
 			node */\
-			node111 = cell111->node;\
+			node111 = static_cast<TYPE *>(cell111->node);\
 \
 			while (top_node111 != HASH_GET_NEXT(NAME, node111)) {\
 \
-				node111 = HASH_GET_NEXT(NAME, node111);\
+				node111 = static_cast<TYPE *>(HASH_GET_NEXT(NAME, node111));\
 			}\
 \
 			/* Now we have the predecessor node */\
