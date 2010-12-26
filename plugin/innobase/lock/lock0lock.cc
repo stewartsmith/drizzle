@@ -566,7 +566,7 @@ lock_sys_create(
 /*============*/
 	ulint	n_cells)	/*!< in: number of slots in lock hash table */
 {
-	lock_sys = mem_alloc(sizeof(lock_sys_t));
+	lock_sys = static_cast<lock_sys_t *>(mem_alloc(sizeof(lock_sys_t)));
 
 	lock_sys->rec_hash = hash_create(n_cells);
 
@@ -615,7 +615,7 @@ lock_get_mode(
 {
 	ut_ad(lock);
 
-	return(lock->type_mode & LOCK_MODE_MASK);
+	return static_cast<lock_mode>(lock->type_mode & LOCK_MODE_MASK);
 }
 
 /*********************************************************************//**
@@ -918,7 +918,7 @@ lock_rec_has_to_wait(
 	ut_ad(lock_get_type_low(lock2) == LOCK_REC);
 
 	if (trx != lock2->trx
-	    && !lock_mode_compatible(LOCK_MODE_MASK & type_mode,
+	    && !lock_mode_compatible(static_cast<lock_mode>(LOCK_MODE_MASK & type_mode),
 				     lock_get_mode(lock2))) {
 
 		/* We have somewhat complex rules when gap type record locks
@@ -1113,7 +1113,7 @@ lock_rec_get_next_on_page(
 	page_no = lock->un_member.rec_lock.page_no;
 
 	for (;;) {
-		lock = HASH_GET_NEXT(hash, lock);
+		lock = static_cast<lock_t *>(HASH_GET_NEXT(hash, lock));
 
 		if (!lock) {
 
@@ -1145,8 +1145,8 @@ lock_rec_get_first_on_page_addr(
 
 	ut_ad(mutex_own(&kernel_mutex));
 
-	lock = HASH_GET_FIRST(lock_sys->rec_hash,
-			      lock_rec_hash(space, page_no));
+	lock = static_cast<lock_t *>(HASH_GET_FIRST(lock_sys->rec_hash,
+			      lock_rec_hash(space, page_no)));
 	while (lock) {
 		if ((lock->un_member.rec_lock.space == space)
 		    && (lock->un_member.rec_lock.page_no == page_no)) {
@@ -1154,7 +1154,7 @@ lock_rec_get_first_on_page_addr(
 			break;
 		}
 
-		lock = HASH_GET_NEXT(hash, lock);
+		lock = static_cast<lock_t *>(HASH_GET_NEXT(hash, lock));
 	}
 
 	return(lock);
@@ -1204,7 +1204,7 @@ lock_rec_get_first_on_page(
 
 	hash = buf_block_get_lock_hash_val(block);
 
-	lock = HASH_GET_FIRST(lock_sys->rec_hash, hash);
+	lock = static_cast<lock_t *>(HASH_GET_FIRST(lock_sys->rec_hash, hash));
 
 	while (lock) {
 		if ((lock->un_member.rec_lock.space == space)
@@ -1213,7 +1213,7 @@ lock_rec_get_first_on_page(
 			break;
 		}
 
-		lock = HASH_GET_NEXT(hash, lock);
+		lock = static_cast<lock_t *>(HASH_GET_NEXT(hash, lock));
 	}
 
 	return(lock);
@@ -1303,7 +1303,7 @@ lock_rec_copy(
 
 	size = sizeof(lock_t) + lock_rec_get_n_bits(lock) / 8;
 
-	return(mem_heap_dup(heap, lock, size));
+	return static_cast<lock_t>(mem_heap_dup(heap, lock, size));
 }
 
 /*********************************************************************//**
@@ -1694,7 +1694,7 @@ lock_rec_create(
 	n_bits = page_dir_get_n_heap(page) + LOCK_PAGE_BITMAP_MARGIN;
 	n_bytes = 1 + n_bits / 8;
 
-	lock = mem_heap_alloc(trx->lock_heap, sizeof(lock_t) + n_bytes);
+	lock = static_cast<lock_t *>(mem_heap_alloc(trx->lock_heap, sizeof(lock_t) + n_bytes));
 
 	UT_LIST_ADD_LAST(trx_locks, trx->trx_locks, lock);
 
@@ -2050,7 +2050,7 @@ lock_rec_lock_slow(
 		/* The trx already has a strong enough lock on rec: do
 		nothing */
 
-	} else if (lock_rec_other_has_conflicting(mode, block, heap_no, trx)) {
+	} else if (lock_rec_other_has_conflicting(static_cast<lock_mode>(mode), block, heap_no, trx)) {
 
 		/* If another transaction has a non-gap conflicting request in
 		the queue, as this transaction does not have a lock strong
@@ -3656,7 +3656,7 @@ lock_table_remove_low(
 		    && !ib_vector_is_empty(trx->autoinc_locks)) {
 			lock_t*	autoinc_lock;
 
-			autoinc_lock = ib_vector_pop(trx->autoinc_locks);
+			autoinc_lock = static_cast<lock_t>(ib_vector_pop(trx->autoinc_locks));
 			ut_a(autoinc_lock == lock);
 		}
 
@@ -5052,7 +5052,7 @@ lock_rec_insert_check_and_lock(
 	on the successor, which produced an unnecessary deadlock. */
 
 	if (lock_rec_other_has_conflicting(
-		    LOCK_X | LOCK_GAP | LOCK_INSERT_INTENTION,
+		    static_cast<lock_mode>(LOCK_X | LOCK_GAP | LOCK_INSERT_INTENTION),
 		    block, next_rec_heap_no, trx)) {
 
 		/* Note that we may get DB_SUCCESS also here! */
@@ -5492,7 +5492,7 @@ lock_release_autoinc_last_lock(
 
 	/* The lock to be release must be the last lock acquired. */
 	last = ib_vector_size(autoinc_locks) - 1;
-	lock = ib_vector_get(autoinc_locks, last);
+	lock = static_cast<lock_t>(ib_vector_get(autoinc_locks, last));
 
 	/* Should have only AUTOINC locks in the vector. */
 	ut_a(lock_get_mode(lock) == LOCK_AUTO_INC);

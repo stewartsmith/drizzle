@@ -926,12 +926,12 @@ log_group_init(
 #endif /* UNIV_LOG_ARCHIVE */
 
 	for (i = 0; i < n_files; i++) {
-		group->file_header_bufs_ptr[i] = static_cast<mem_block_info_t *>(mem_alloc(
+		group->file_header_bufs_ptr[i] = static_cast<unsigned char *>(mem_alloc(
 			LOG_FILE_HDR_SIZE + OS_FILE_LOG_BLOCK_SIZE));
 
-		group->file_header_bufs[i] = ut_align(
+		group->file_header_bufs[i] = static_cast<unsigned char *>(ut_align(
 			group->file_header_bufs_ptr[i],
-			OS_FILE_LOG_BLOCK_SIZE);
+			OS_FILE_LOG_BLOCK_SIZE));
 
 		memset(*(group->file_header_bufs + i), '\0',
 		       LOG_FILE_HDR_SIZE);
@@ -957,8 +957,8 @@ log_group_init(
 #endif /* UNIV_LOG_ARCHIVE */
 
 	group->checkpoint_buf_ptr = static_cast<unsigned char *>(mem_alloc(2 * OS_FILE_LOG_BLOCK_SIZE));
-	group->checkpoint_buf = ut_align(group->checkpoint_buf_ptr,
-					 OS_FILE_LOG_BLOCK_SIZE);
+	group->checkpoint_buf = static_cast<unsigned char*>(ut_align(group->checkpoint_buf_ptr,
+					 OS_FILE_LOG_BLOCK_SIZE));
 
 	memset(group->checkpoint_buf, '\0', OS_FILE_LOG_BLOCK_SIZE);
 
