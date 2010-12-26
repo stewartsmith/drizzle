@@ -867,7 +867,7 @@ pars_column_assignment(
 {
 	col_assign_node_t*	node;
 
-	node = static_cast<col_assign_mode_t *>(mem_heap_alloc(pars_sym_tab_global->heap,
+	node = static_cast<col_assign_node_t *>(mem_heap_alloc(pars_sym_tab_global->heap,
 			      sizeof(col_assign_node_t)));
 	node->common.type = QUE_NODE_COL_ASSIGNMENT;
 
@@ -1217,7 +1217,7 @@ pars_set_parent_in_list(
 	while (common) {
 		common->parent = parent;
 
-		common = static_cast<que_common_t>(que_node_get_next(common));
+		common = static_cast<que_common_t *>(que_node_get_next(common));
 	}
 }
 
@@ -1276,7 +1276,7 @@ pars_if_statement(
 		/* There is a list of elsif conditions */
 
 		node->else_part = NULL;
-		node->elsif_list = static_cast<elsif_node_t>(else_part);
+		node->elsif_list = static_cast<elsif_node_t *>(else_part);
 
 		elsif_node = static_cast<elsif_node_t *>(else_part);
 
@@ -1405,8 +1405,8 @@ pars_assignment_statement(
 {
 	assign_node_t*	node;
 
-	node = mem_heap_alloc(pars_sym_tab_global->heap,
-			      sizeof(assign_node_t));
+	node = static_cast<assign_node_t *>(mem_heap_alloc(pars_sym_tab_global->heap,
+			      sizeof(assign_node_t)));
 	node->common.type = QUE_NODE_ASSIGNMENT;
 
 	node->var = var;
@@ -1458,7 +1458,7 @@ pars_fetch_statement(
 	/* Logical XOR. */
 	ut_a(!into_list != !user_func);
 
-	node = mem_heap_alloc(pars_sym_tab_global->heap, sizeof(fetch_node_t));
+	node = static_cast<fetch_node_t *>(mem_heap_alloc(pars_sym_tab_global->heap, sizeof(fetch_node_t)));
 
 	node->common.type = QUE_NODE_FETCH;
 
@@ -1506,7 +1506,7 @@ pars_open_statement(
 	sym_node_t*	cursor_decl;
 	open_node_t*	node;
 
-	node = mem_heap_alloc(pars_sym_tab_global->heap, sizeof(open_node_t));
+	node = static_cast<open_node_t *>(mem_heap_alloc(pars_sym_tab_global->heap, sizeof(open_node_t)));
 
 	node->common.type = QUE_NODE_OPEN;
 
@@ -1516,7 +1516,7 @@ pars_open_statement(
 
 	ut_a(cursor_decl->token_type == SYM_CURSOR);
 
-	node->op_type = type;
+	node->op_type = static_cast<open_node_op>(type);
 	node->cursor_def = cursor_decl->cursor_def;
 
 	return(node);
@@ -1533,8 +1533,8 @@ pars_row_printf_statement(
 {
 	row_printf_node_t*	node;
 
-	node = mem_heap_alloc(pars_sym_tab_global->heap,
-			      sizeof(row_printf_node_t));
+	node = static_cast<row_printf_node_t *>(mem_heap_alloc(pars_sym_tab_global->heap,
+			      sizeof(row_printf_node_t)));
 	node->common.type = QUE_NODE_ROW_PRINTF;
 
 	node->sel_node = sel_node;
@@ -1648,7 +1648,7 @@ pars_create_table(
 		column->resolved = TRUE;
 		column->token_type = SYM_COLUMN;
 
-		column = que_node_get_next(column);
+		column = static_cast<sym_node_t *>(que_node_get_next(column));
 	}
 
 	node = tab_create_graph_create(table, pars_sym_tab_global->heap);
@@ -1702,7 +1702,7 @@ pars_create_index(
 		column->resolved = TRUE;
 		column->token_type = SYM_COLUMN;
 
-		column = que_node_get_next(column);
+		column = static_cast<sym_node_t *>(que_node_get_next(column));
 	}
 
 	node = ind_create_graph_create(index, pars_sym_tab_global->heap);
@@ -1740,7 +1740,7 @@ pars_procedure_definition(
 
 	thr = que_thr_create(fork, heap);
 
-	node = mem_heap_alloc(heap, sizeof(proc_node_t));
+	node = static_cast<proc_node_t *>(mem_heap_alloc(heap, sizeof(proc_node_t)));
 
 	node->common.type = QUE_NODE_PROC;
 	node->common.parent = thr;
@@ -1871,8 +1871,8 @@ pars_sql(
 	pars_sym_tab_global = sym_tab_create(heap);
 
 	pars_sym_tab_global->string_len = strlen(str);
-	pars_sym_tab_global->sql_string = mem_heap_dup(
-		heap, str, pars_sym_tab_global->string_len + 1);
+	pars_sym_tab_global->sql_string = static_cast<const char *>(mem_heap_dup(
+		heap, str, pars_sym_tab_global->string_len + 1));
 	pars_sym_tab_global->next_char_pos = 0;
 	pars_sym_tab_global->info = info;
 
@@ -1940,7 +1940,7 @@ pars_info_create(void)
 
 	heap = mem_heap_create(512);
 
-	info = mem_heap_alloc(heap, sizeof(*info));
+	info = static_cast<pars_info_t *>(mem_heap_alloc(heap, sizeof(*info)));
 
 	info->heap = heap;
 	info->funcs = NULL;
@@ -1980,7 +1980,7 @@ pars_info_add_literal(
 
 	ut_ad(!pars_info_get_bound_lit(info, name));
 
-	pbl = mem_heap_alloc(info->heap, sizeof(*pbl));
+	pbl = static_cast<pars_bound_lit_t *>(mem_heap_alloc(info->heap, sizeof(*pbl)));
 
 	pbl->name = name;
 	pbl->address = address;
@@ -2027,7 +2027,7 @@ pars_info_add_int4_literal(
 	const char*	name,		/*!< in: name */
 	lint		val)		/*!< in: value */
 {
-	byte*	buf = mem_heap_alloc(info->heap, 4);
+	byte*	buf = static_cast<byte *>(mem_heap_alloc(info->heap, 4));
 
 	mach_write_to_4(buf, val);
 	pars_info_add_literal(info, name, buf, 4, DATA_INT, 0);
@@ -2050,7 +2050,7 @@ pars_info_add_ull_literal(
 	const char*	name,		/*!< in: name */
 	ib_uint64_t	val)		/*!< in: value */
 {
-	byte*	buf = mem_heap_alloc(info->heap, 8);
+	byte*	buf = static_cast<byte *>(mem_heap_alloc(info->heap, 8));
 
 	mach_write_to_8(buf, val);
 
@@ -2072,7 +2072,7 @@ pars_info_add_function(
 
 	ut_ad(!pars_info_get_user_func(info, name));
 
-	puf = mem_heap_alloc(info->heap, sizeof(*puf));
+	puf = static_cast<pars_user_func_t *>(mem_heap_alloc(info->heap, sizeof(*puf)));
 
 	puf->name = name;
 	puf->func = func;
@@ -2099,7 +2099,7 @@ pars_info_add_id(
 
 	ut_ad(!pars_info_get_bound_id(info, name));
 
-	bid = mem_heap_alloc(info->heap, sizeof(*bid));
+	bid = static_cast<pars_bound_id_t *>(mem_heap_alloc(info->heap, sizeof(*bid)));
 
 	bid->name = name;
 	bid->id = id;
@@ -2131,7 +2131,7 @@ pars_info_get_user_func(
 	vec = info->funcs;
 
 	for (i = 0; i < ib_vector_size(vec); i++) {
-		pars_user_func_t*	puf = ib_vector_get(vec, i);
+		pars_user_func_t*	puf = static_cast<pars_user_func_t *>(ib_vector_get(vec, i));
 
 		if (strcmp(puf->name, name) == 0) {
 			return(puf);
@@ -2161,7 +2161,7 @@ pars_info_get_bound_lit(
 	vec = info->bound_lits;
 
 	for (i = 0; i < ib_vector_size(vec); i++) {
-		pars_bound_lit_t*	pbl = ib_vector_get(vec, i);
+		pars_bound_lit_t*	pbl = static_cast<pars_bound_lit_t *>(ib_vector_get(vec, i));
 
 		if (strcmp(pbl->name, name) == 0) {
 			return(pbl);
@@ -2191,7 +2191,7 @@ pars_info_get_bound_id(
 	vec = info->bound_ids;
 
 	for (i = 0; i < ib_vector_size(vec); i++) {
-		pars_bound_id_t*	bid = ib_vector_get(vec, i);
+		pars_bound_id_t*	bid = static_cast<pars_bound_id_t *>(ib_vector_get(vec, i));
 
 		if (strcmp(bid->name, name) == 0) {
 			return(bid);

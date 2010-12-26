@@ -540,7 +540,7 @@ que_graph_free_recursive(
 		break;
 	case QUE_NODE_THR:
 
-		thr = static_cast<que_fork_t *>(node);
+		thr = static_cast<que_thr_t *>(node);
 
 		if (thr->magic_n != QUE_THR_MAGIC_N) {
 			fprintf(stderr,
@@ -558,7 +558,7 @@ que_graph_free_recursive(
 		break;
 	case QUE_NODE_UNDO:
 
-		undo = static_cast<undo_node_tr *>(node);
+		undo = static_cast<undo_node_t *>(node);
 
 		mem_heap_free(undo->heap);
 

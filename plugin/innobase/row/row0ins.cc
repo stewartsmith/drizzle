@@ -74,7 +74,7 @@ ins_node_create(
 {
 	ins_node_t*	node;
 
-	node = mem_heap_alloc(heap, sizeof(ins_node_t));
+	node = static_cast<ins_node_t *>(mem_heap_alloc(heap, sizeof(ins_node_t)));
 
 	node->common.type = QUE_NODE_INSERT;
 
@@ -150,7 +150,7 @@ row_ins_alloc_sys_fields(
 
 	dfield = dtuple_get_nth_field(row, dict_col_get_no(col));
 
-	ptr = mem_heap_zalloc(heap, DATA_ROW_ID_LEN);
+	ptr = static_cast<byte *>(mem_heap_zalloc(heap, DATA_ROW_ID_LEN));
 
 	dfield_set_data(dfield, ptr, DATA_ROW_ID_LEN);
 
@@ -161,7 +161,7 @@ row_ins_alloc_sys_fields(
 	col = dict_table_get_sys_col(table, DATA_TRX_ID);
 
 	dfield = dtuple_get_nth_field(row, dict_col_get_no(col));
-	ptr = mem_heap_zalloc(heap, DATA_TRX_ID_LEN);
+	ptr = static_cast<byte *>(mem_heap_zalloc(heap, DATA_TRX_ID_LEN));
 
 	dfield_set_data(dfield, ptr, DATA_TRX_ID_LEN);
 
@@ -172,7 +172,7 @@ row_ins_alloc_sys_fields(
 	col = dict_table_get_sys_col(table, DATA_ROLL_PTR);
 
 	dfield = dtuple_get_nth_field(row, dict_col_get_no(col));
-	ptr = mem_heap_zalloc(heap, DATA_ROLL_PTR_LEN);
+	ptr = static_cast<byte *>(mem_heap_zalloc(heap, DATA_ROLL_PTR_LEN));
 
 	dfield_set_data(dfield, ptr, DATA_ROLL_PTR_LEN);
 }
@@ -371,7 +371,7 @@ row_ins_cascade_ancestor_updates_table(
 
 	while (que_node_get_type(parent) == QUE_NODE_UPDATE) {
 
-		upd_node = parent;
+		upd_node = static_cast<upd_node_t *>(parent);
 
 		if (upd_node->table == table && upd_node->is_delete == FALSE) {
 
@@ -518,7 +518,7 @@ row_ins_cascade_calc_update_vec(
 					col->prtype, col->mbminmaxlen,
 					col->len,
 					ufield_len,
-					dfield_get_data(&ufield->new_val))
+					static_cast<const char *>(dfield_get_data(&ufield->new_val)))
 				    < ufield_len) {
 
 					return(ULINT_UNDEFINED);
@@ -543,8 +543,8 @@ row_ins_cascade_calc_update_vec(
 					byte*	padded_data;
 					ulint	mbminlen;
 
-					padded_data = mem_heap_alloc(
-						heap, min_size);
+					padded_data = static_cast<unsigned char *>(mem_heap_alloc(
+						heap, min_size));
 
 					pad = padded_data + ufield_len;
 					pad_len = min_size - ufield_len;
@@ -801,7 +801,7 @@ row_ins_foreign_check_on_constraint(
 
 	row_ins_invalidate_query_cache(thr, table->name);
 
-	node = thr->run_node;
+	node = static_cast<upd_node_t *>(thr->run_node);
 
 	if (node->is_delete && 0 == (foreign->type
 				     & (DICT_FOREIGN_ON_DELETE_CASCADE
@@ -1238,7 +1238,7 @@ run_again:
 	}
 
 	if (que_node_get_type(thr->run_node) == QUE_NODE_UPDATE) {
-		upd_node = thr->run_node;
+		upd_node = static_cast<upd_node_t *>(thr->run_node);
 
 		if (!(upd_node->is_delete) && upd_node->foreign == foreign) {
 			/* If a cascaded update is done as defined by a
@@ -2160,8 +2160,8 @@ row_ins_index_entry(
 	enum db_err	err;
 
 	if (foreign && UT_LIST_GET_FIRST(index->table->foreign_list)) {
-		err = row_ins_check_foreign_constraints(index->table, index,
-							entry, thr);
+		err = static_cast<db_err>(row_ins_check_foreign_constraints(index->table, index,
+							entry, thr));
 		if (err != DB_SUCCESS) {
 
 			return(err);
@@ -2170,8 +2170,8 @@ row_ins_index_entry(
 
 	/* Try first optimistic descent to the B-tree */
 
-	err = row_ins_index_entry_low(BTR_MODIFY_LEAF, index, entry,
-				      n_ext, thr);
+	err = static_Cast<db_err>(row_ins_index_entry_low(BTR_MODIFY_LEAF, index, entry,
+				      n_ext, thr));
 	if (err != DB_FAIL) {
 
 		return(err);
@@ -2179,8 +2179,8 @@ row_ins_index_entry(
 
 	/* Try then pessimistic descent to the B-tree */
 
-	err = row_ins_index_entry_low(BTR_MODIFY_TREE, index, entry,
-				      n_ext, thr);
+	err = static_cast<db_err>(row_ins_index_entry_low(BTR_MODIFY_TREE, index, entry,
+				      n_ext, thr));
 	return(err);
 }
 
@@ -2223,7 +2223,7 @@ row_ins_index_entry_set_vals(
 			len = dtype_get_at_most_n_mbchars(
 				col->prtype, col->mbminmaxlen,
 				ind_field->prefix_len,
-				len, dfield_get_data(row_field));
+				len, static_cast<const char *>(dfield_get_data(row_field)));
 
 			ut_ad(!dfield_is_ext(row_field));
 		}
@@ -2255,7 +2255,7 @@ row_ins_index_entry_step(
 
 	ut_ad(dtuple_check_typed(node->entry));
 
-	err = row_ins_index_entry(node->index, node->entry, 0, TRUE, thr);
+	err = static_cast<db_err>(row_ins_index_entry(node->index, node->entry, 0, TRUE, thr));
 
 	return(err);
 }
@@ -2427,7 +2427,7 @@ row_ins_step(
 
 	trx_start_if_not_started(trx);
 
-	node = thr->run_node;
+	node = static_cast<ins_node_t *>(thr->run_node);
 
 	ut_ad(que_node_get_type(node) == QUE_NODE_INSERT);
 
