@@ -225,6 +225,10 @@ class Decimal :public decimal_t
     {
       return decimal_string_size(this);
     }
+
+    int val_binary(uint32_t mask, unsigned char *bin, int prec, int scale) const;
+
+
   };
 
 } // type
@@ -278,10 +282,6 @@ void class_decimal2decimal(const type::Decimal *from, type::Decimal *to)
   *to= *from;
   to->fix_buffer_pointer();
 }
-
-
-int class_decimal2binary(uint32_t mask, const type::Decimal *d, unsigned char *bin, int prec,
-		      int scale);
 
 
 inline

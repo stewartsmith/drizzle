@@ -124,18 +124,19 @@ void Field_decimal::set_value_on_overflow(type::Decimal *decimal_value,
 
 bool Field_decimal::store_value(const type::Decimal *decimal_value)
 {
-  int error= class_decimal2binary(E_DEC_FATAL_ERROR & ~E_DEC_OVERFLOW,
-                                         decimal_value, ptr, precision, dec);
+  int error= decimal_value->val_binary(E_DEC_FATAL_ERROR & ~E_DEC_OVERFLOW, ptr, precision, dec);
+
   if (warn_if_overflow(error))
   {
     if (error != E_DEC_TRUNCATED)
     {
       type::Decimal buff;
       set_value_on_overflow(&buff, decimal_value->sign());
-      class_decimal2binary(E_DEC_FATAL_ERROR, &buff, ptr, precision, dec);
+      buff.val_binary(E_DEC_FATAL_ERROR, ptr, precision, dec);
     }
     error= 1;
   }
+
   return(error);
 }
 

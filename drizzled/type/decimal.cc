@@ -242,12 +242,13 @@ int class_decimal2string(uint32_t mask, const type::Decimal *d,
    @retval E_DEC_OVERFLOW
 */
 
-int class_decimal2binary(uint32_t mask, const type::Decimal *d, unsigned char *bin, int prec,
-		      int scale)
+namespace type {
+
+int Decimal::val_binary(uint32_t mask, unsigned char *bin, int prec, int scale) const
 {
   int err1= E_DEC_OK, err2;
   type::Decimal rounded;
-  class_decimal2decimal(d, &rounded);
+  class_decimal2decimal(this, &rounded);
   rounded.frac= decimal_actual_fraction(&rounded);
   if (scale < rounded.frac)
   {
@@ -260,6 +261,8 @@ int class_decimal2binary(uint32_t mask, const type::Decimal *d, unsigned char *b
     err2= err1;
   return check_result(mask, err2);
 }
+
+} // namespace type
 
 
 /**

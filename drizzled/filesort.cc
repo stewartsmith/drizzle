@@ -925,9 +925,9 @@ void SortParam::make_sortkey(register unsigned char *to, unsigned char *ref_pos)
             }
             *to++=1;
           }
-          class_decimal2binary(E_DEC_FATAL_ERROR, dec_val, to,
-                            item->max_length - (item->decimals ? 1:0),
-                            item->decimals);
+          dec_val->val_binary(E_DEC_FATAL_ERROR, to,
+                              item->max_length - (item->decimals ? 1:0),
+                              item->decimals);
           break;
         }
       case REAL_RESULT:

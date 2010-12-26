@@ -2079,7 +2079,7 @@ void Item_sum_avg::reset_field()
     }
     else
       tmp= 1;
-    class_decimal2binary(E_DEC_FATAL_ERROR, arg_dec, res, f_precision, f_scale);
+    arg_dec->val_binary(E_DEC_FATAL_ERROR, res, f_precision, f_scale);
     res+= dec_bin_size;
     int8store(res, tmp);
   }
@@ -2182,8 +2182,7 @@ void Item_sum_avg::update_field()
                         dec_buffs + 1, f_precision, f_scale);
       field_count= sint8korr(res + dec_bin_size);
       class_decimal_add(E_DEC_FATAL_ERROR, dec_buffs, arg_val, dec_buffs + 1);
-      class_decimal2binary(E_DEC_FATAL_ERROR, dec_buffs,
-                        res, f_precision, f_scale);
+      dec_buffs->val_binary(E_DEC_FATAL_ERROR, res, f_precision, f_scale);
       res+= dec_bin_size;
       field_count++;
       int8store(res, field_count);
