@@ -2315,6 +2315,7 @@ page_validate(
 	ulint		i= 0;
 	ulint*		offsets		= NULL;
 	ulint*		old_offsets	= NULL;
+        void* buf_ptr= NULL;
 
 	if (UNIV_UNLIKELY((ibool) !!page_is_comp(page)
 			  != dict_table_is_comp(index->table))) {
@@ -2336,7 +2337,7 @@ page_validate(
 	/* The following buffer is used to check that the
 	records in the page record heap do not overlap */
 
-        void *buf_ptr= mem_heap_zalloc(heap, UNIV_PAGE_SIZE);
+        buf_ptr= mem_heap_zalloc(heap, UNIV_PAGE_SIZE);
 	buf = static_cast<byte *>(buf_ptr);
 
 	/* Check first that the record heap and the directory do not

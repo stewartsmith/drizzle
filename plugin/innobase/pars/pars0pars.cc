@@ -156,7 +156,7 @@ pars_func_low(
 {
 	func_node_t*	node;
 
-	node = mem_heap_alloc(pars_sym_tab_global->heap, sizeof(func_node_t));
+	node = static_cast<func_node_t *>(mem_heap_alloc(pars_sym_tab_global->heap, sizeof(func_node_t)));
 
 	node->common.type = QUE_NODE_FUNC;
 	dfield_set_data(&(node->common.val), NULL, 0);
@@ -219,7 +219,7 @@ pars_order_by(
 {
 	order_node_t*	node;
 
-	node = mem_heap_alloc(pars_sym_tab_global->heap, sizeof(order_node_t));
+	node = static_cast<order_node_t *>(mem_heap_alloc(pars_sym_tab_global->heap, sizeof(order_node_t)));
 
 	node->common.type = QUE_NODE_ORDER;
 
@@ -368,7 +368,7 @@ pars_resolve_exp_variables_and_types(
 	ut_a(exp_node);
 
 	if (que_node_get_type(exp_node) == QUE_NODE_FUNC) {
-		func_node = exp_node;
+		func_node = static_cast<func_node_t *>(exp_node);
 
 		arg = func_node->args;
 
@@ -385,7 +385,7 @@ pars_resolve_exp_variables_and_types(
 
 	ut_a(que_node_get_type(exp_node) == QUE_NODE_SYMBOL);
 
-	sym_node = exp_node;
+	sym_node = static_cast<sym_node_t *>(exp_node);
 
 	if (sym_node->resolved) {
 
@@ -476,7 +476,7 @@ pars_resolve_exp_columns(
 	ut_a(exp_node);
 
 	if (que_node_get_type(exp_node) == QUE_NODE_FUNC) {
-		func_node = exp_node;
+		func_node = static_cast<func_node_t *>(exp_node);
 
 		arg = func_node->args;
 
@@ -491,7 +491,7 @@ pars_resolve_exp_columns(
 
 	ut_a(que_node_get_type(exp_node) == QUE_NODE_SYMBOL);
 
-	sym_node = exp_node;
+	sym_node = static_cast<sym_node_t *>(exp_node);
 
 	if (sym_node->resolved) {
 
@@ -533,7 +533,7 @@ pars_resolve_exp_columns(
 			}
 		}
 
-		t_node = que_node_get_next(t_node);
+		t_node = static_cast<sym_node_t *>(que_node_get_next(t_node));
 	}
 }
 
@@ -598,7 +598,7 @@ pars_retrieve_table_list_defs(
 
 		count++;
 
-		sym_node = que_node_get_next(sym_node);
+		sym_node = static_cast<sym_node_t *>(que_node_get_next(sym_node));
 	}
 
 	return(count);
@@ -637,7 +637,7 @@ pars_select_all_columns(
 				select_node->select_list, col_node);
 		}
 
-		table_node = que_node_get_next(table_node);
+		table_node = static_cast<sym_node_t *>(que_node_get_next(table_node));
 	}
 }
 
@@ -687,7 +687,7 @@ pars_check_aggregate(
 
 		if (que_node_get_type(exp_node) == QUE_NODE_FUNC) {
 
-			func_node = exp_node;
+			func_node = static_cast<func_node_t *>(exp_node);
 
 			if (func_node->func_class == PARS_FUNC_AGGREGATE) {
 
@@ -867,8 +867,8 @@ pars_column_assignment(
 {
 	col_assign_node_t*	node;
 
-	node = mem_heap_alloc(pars_sym_tab_global->heap,
-			      sizeof(col_assign_node_t));
+	node = static_cast<col_assign_mode_t *>(mem_heap_alloc(pars_sym_tab_global->heap,
+			      sizeof(col_assign_node_t)));
 	node->common.type = QUE_NODE_COL_ASSIGNMENT;
 
 	node->col = column;
@@ -897,7 +897,7 @@ pars_process_assign_list(
 	ulint			i;
 
 	table_sym = node->table_sym;
-	col_assign_list = node->col_assign_list;
+	col_assign_list = static_cast<col_assign_node_t *>(node->col_assign_list);
 	clust_index = dict_table_get_first_index(node->table);
 
 	assign_node = col_assign_list;
@@ -923,7 +923,7 @@ pars_process_assign_list(
 				  assign_node->val);
 		n_assigns++;
 
-		assign_node = que_node_get_next(assign_node);
+		assign_node = static_cast<col_assign_node_t *>(que_node_get_next(assign_node));
 	}
 
 	node->update = upd_create(n_assigns, pars_sym_tab_global->heap);
@@ -949,7 +949,7 @@ pars_process_assign_list(
 			changes_field_size = 0;
 		}
 
-		assign_node = que_node_get_next(assign_node);
+		assign_node = static_cast<col_assign_node_t *>(que_node_get_next(assign_node));
 	}
 
 	/* Find out if the update can modify an ordering field in any index */
@@ -1212,12 +1212,12 @@ pars_set_parent_in_list(
 {
 	que_common_t*	common;
 
-	common = node_list;
+	common = static_cast<que_common_t *>(node_list);
 
 	while (common) {
 		common->parent = parent;
 
-		common = que_node_get_next(common);
+		common = static_cast<que_common_t>(que_node_get_next(common));
 	}
 }
 
@@ -1233,7 +1233,7 @@ pars_elsif_element(
 {
 	elsif_node_t*	node;
 
-	node = mem_heap_alloc(pars_sym_tab_global->heap, sizeof(elsif_node_t));
+	node = static_cast<elsif_node_t *>(mem_heap_alloc(pars_sym_tab_global->heap, sizeof(elsif_node_t)));
 
 	node->common.type = QUE_NODE_ELSIF;
 
@@ -1261,7 +1261,7 @@ pars_if_statement(
 	if_node_t*	node;
 	elsif_node_t*	elsif_node;
 
-	node = mem_heap_alloc(pars_sym_tab_global->heap, sizeof(if_node_t));
+	node = static_cast<if_node_t *>(mem_heap_alloc(pars_sym_tab_global->heap, sizeof(if_node_t)));
 
 	node->common.type = QUE_NODE_IF;
 
@@ -1276,14 +1276,14 @@ pars_if_statement(
 		/* There is a list of elsif conditions */
 
 		node->else_part = NULL;
-		node->elsif_list = else_part;
+		node->elsif_list = static_cast<elsif_node_t>(else_part);
 
-		elsif_node = else_part;
+		elsif_node = static_cast<elsif_node_t *>(else_part);
 
 		while (elsif_node) {
 			pars_set_parent_in_list(elsif_node->stat_list, node);
 
-			elsif_node = que_node_get_next(elsif_node);
+			elsif_node = static_cast<elsif_node_t *>(que_node_get_next(elsif_node));
 		}
 	} else {
 		node->else_part = else_part;
@@ -1309,7 +1309,7 @@ pars_while_statement(
 {
 	while_node_t*	node;
 
-	node = mem_heap_alloc(pars_sym_tab_global->heap, sizeof(while_node_t));
+	node = static_cast<while_node_t *>(mem_heap_alloc(pars_sym_tab_global->heap, sizeof(while_node_t)));
 
 	node->common.type = QUE_NODE_WHILE;
 
@@ -1338,7 +1338,7 @@ pars_for_statement(
 {
 	for_node_t*	node;
 
-	node = mem_heap_alloc(pars_sym_tab_global->heap, sizeof(for_node_t));
+	node = static_cast<for_node_t *>(mem_heap_alloc(pars_sym_tab_global->heap, sizeof(for_node_t)));
 
 	node->common.type = QUE_NODE_FOR;
 
@@ -1370,7 +1370,7 @@ pars_exit_statement(void)
 {
 	exit_node_t*	node;
 
-	node = mem_heap_alloc(pars_sym_tab_global->heap, sizeof(exit_node_t));
+	node = static_cast<exit_node_t *>(mem_heap_alloc(pars_sym_tab_global->heap, sizeof(exit_node_t)));
 	node->common.type = QUE_NODE_EXIT;
 
 	return(node);
@@ -1386,8 +1386,8 @@ pars_return_statement(void)
 {
 	return_node_t*	node;
 
-	node = mem_heap_alloc(pars_sym_tab_global->heap,
-			      sizeof(return_node_t));
+	node = static_cast<return_node_t *>(mem_heap_alloc(pars_sym_tab_global->heap,
+			      sizeof(return_node_t)));
 	node->common.type = QUE_NODE_RETURN;
 
 	return(node);
