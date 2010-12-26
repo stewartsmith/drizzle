@@ -919,7 +919,7 @@ ind_create_graph_create(
 {
 	ind_node_t*	node;
 
-	node = static_cast<tab_node_t *>(mem_heap_alloc(heap, sizeof(ind_node_t)));
+	node = static_cast<ind_node_t *>(mem_heap_alloc(heap, sizeof(ind_node_t)));
 
 	node->common.type = QUE_NODE_CREATE_INDEX;
 

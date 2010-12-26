@@ -65,7 +65,7 @@ eval_node_alloc_val_buf(
 
 	dfield = que_node_get_val(node);
 
-	data = dfield_get_data(dfield);
+	data = static_cast<unsigned char *>(dfield_get_data(dfield));
 
 	if (data && data != &eval_dummy) {
 		mem_free(data);
@@ -74,7 +74,7 @@ eval_node_alloc_val_buf(
 	if (size == 0) {
 		data = &eval_dummy;
 	} else {
-		data = mem_alloc(size);
+		data = static_cast<unsigned char *>(mem_alloc(size));
 	}
 
 	que_node_set_val_buf_size(node, size);
@@ -102,7 +102,7 @@ eval_node_free_val_buf(
 
 	dfield = que_node_get_val(node);
 
-	data = dfield_get_data(dfield);
+	data = static_cast<unsigned char *>(dfield_get_data(dfield));
 
 	if (que_node_get_val_buf_size(node) > 0) {
 		ut_a(data);
@@ -390,7 +390,7 @@ eval_notfound(
 
 	ut_ad(func_node->func == PARS_NOTFOUND_TOKEN);
 
-	cursor = func_node->args;
+	cursor = static_cast<sym_node_t *>(func_node->args);
 
 	ut_ad(que_node_get_type(cursor) == QUE_NODE_SYMBOL);
 
@@ -436,7 +436,7 @@ eval_substr(
 
 	arg3 = que_node_get_next(arg2);
 
-	str1 = dfield_get_data(que_node_get_val(arg1));
+	str1 = static_cast<unsigned char *>(dfield_get_data(que_node_get_val(arg1)));
 
 	len1 = (ulint)eval_node_get_int_val(arg2);
 	len2 = (ulint)eval_node_get_int_val(arg3);
@@ -471,8 +471,8 @@ eval_replstr(
 	arg3 = que_node_get_next(arg2);
 	arg4 = que_node_get_next(arg3);
 
-	str1 = dfield_get_data(que_node_get_val(arg1));
-	str2 = dfield_get_data(que_node_get_val(arg2));
+	str1 = static_cast<unsigned char *>(dfield_get_data(que_node_get_val(arg1)));
+	str2 = static_cast<unsigned char *>(dfield_get_data(que_node_get_val(arg2)));
 
 	len1 = (ulint)eval_node_get_int_val(arg3);
 	len2 = (ulint)eval_node_get_int_val(arg4);
@@ -513,8 +513,8 @@ eval_instr(
 	dfield1 = que_node_get_val(arg1);
 	dfield2 = que_node_get_val(arg2);
 
-	str1 = dfield_get_data(dfield1);
-	str2 = dfield_get_data(dfield2);
+	str1 = static_cast<unsigned char *>(dfield_get_data(dfield1));
+	str2 = static_cast<unsigned char *>(dfield_get_data(dfield2));
 
 	len1 = dfield_get_len(dfield1);
 	len2 = dfield_get_len(dfield2);
@@ -577,7 +577,7 @@ eval_binary_to_number(
 
 	dfield = que_node_get_val(arg1);
 
-	str1 = dfield_get_data(dfield);
+	str1 = static_cast<unsigned char *>(dfield_get_data(dfield));
 	len1 = dfield_get_len(dfield);
 
 	if (len1 > 4) {
@@ -659,7 +659,7 @@ eval_to_binary(
 
 	arg1 = func_node->args;
 
-	str1 = dfield_get_data(que_node_get_val(arg1));
+	str1 = static_cast<unsigned char *>(dfield_get_data(que_node_get_val(arg1)));
 
 	if (dtype_get_mtype(que_node_get_data_type(arg1)) != DATA_INT) {
 

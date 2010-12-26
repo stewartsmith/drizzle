@@ -68,21 +68,21 @@ dict_mem_table_create(
 
 	heap = mem_heap_create(DICT_HEAP_SIZE);
 
-	table = mem_heap_zalloc(heap, sizeof(dict_table_t));
+	table = static_cast<dict_table_struct *>(mem_heap_zalloc(heap, sizeof(dict_table_t)));
 
 	table->heap = heap;
 
 	table->flags = (unsigned int) flags;
-	table->name = ut_malloc(strlen(name) + 1);
+	table->name = static_cast<char *>(ut_malloc(strlen(name) + 1));
 	memcpy(table->name, name, strlen(name) + 1);
 	table->space = (unsigned int) space;
 	table->n_cols = (unsigned int) (n_cols + DATA_N_SYS_COLS);
 
-	table->cols = mem_heap_alloc(heap, (n_cols + DATA_N_SYS_COLS)
-				     * sizeof(dict_col_t));
+	table->cols = static_cast<dict_col_t *>(mem_heap_alloc(heap, (n_cols + DATA_N_SYS_COLS)
+				     * sizeof(dict_col_t)));
 
 #ifndef UNIV_HOTBACKUP
-	table->autoinc_lock = mem_heap_alloc(heap, lock_get_size());
+	table->autoinc_lock = static_cast<lock_t *>(mem_heap_alloc(heap, lock_get_size()));
 
 	mutex_create(autoinc_mutex_key,
 		     &table->autoinc_mutex, SYNC_DICT_AUTOINC_MUTEX);
@@ -154,7 +154,7 @@ dict_add_col_name(
 	new_len = strlen(name) + 1;
 	total_len = old_len + new_len;
 
-	res = mem_heap_alloc(heap, total_len);
+	res = static_cast<char *>(mem_heap_alloc(heap, total_len));
 
 	if (old_len > 0) {
 		memcpy(res, col_names, old_len);
@@ -193,7 +193,7 @@ dict_mem_table_add_col(
 		}
 		if (UNIV_LIKELY(i) && UNIV_UNLIKELY(!table->col_names)) {
 			/* All preceding column names are empty. */
-			char* s = mem_heap_zalloc(heap, table->n_def);
+			char* s = static_cast<char *>(mem_heap_zalloc(heap, table->n_def));
 			table->col_names = s;
 		}
 
@@ -259,7 +259,7 @@ dict_mem_index_create(
 	ut_ad(table_name && index_name);
 
 	heap = mem_heap_create(DICT_HEAP_SIZE);
-	index = mem_heap_zalloc(heap, sizeof(dict_index_t));
+	index = static_cast<dict_index_t *>(mem_heap_zalloc(heap, sizeof(dict_index_t)));
 
 	dict_mem_fill_index_struct(index, heap, table_name, index_name,
 				   space, type, n_fields);
@@ -280,7 +280,7 @@ dict_mem_foreign_create(void)
 
 	heap = mem_heap_create(100);
 
-	foreign = mem_heap_zalloc(heap, sizeof(dict_foreign_t));
+	foreign = static_cast<dict_foreign_t *>(mem_heap_zalloc(heap, sizeof(dict_foreign_t)));
 
 	foreign->heap = heap;
 

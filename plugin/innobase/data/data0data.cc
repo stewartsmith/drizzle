@@ -364,11 +364,11 @@ dfield_print_also_hex(
 
 	prtype = dtype_get_prtype(dfield_get_type(dfield));
 
+	ib_id_t	id= 0;
 	switch (dtype_get_mtype(dfield_get_type(dfield))) {
-		ib_id_t	id;
 	case DATA_INT:
+		ulint	val= 0;
 		switch (len) {
-			ulint	val= 0;
 		case 1:
 			val = mach_read_from_1(data);
 
@@ -607,7 +607,7 @@ dtuple_convert_big_rec(
 	heap = mem_heap_create(size + dtuple_get_n_fields(entry)
 			       * sizeof(big_rec_field_t) + 1000);
 
-	vector = static_cast<big_rec_t>(mem_heap_alloc(heap, sizeof(big_rec_t)));
+	vector = static_cast<big_rec_t *>(mem_heap_alloc(heap, sizeof(big_rec_t)));
 
 	vector->heap = heap;
 	vector->fields = static_cast<big_rec_field_t *>(mem_heap_alloc(heap, dtuple_get_n_fields(entry)

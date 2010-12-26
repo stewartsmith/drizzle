@@ -2063,7 +2063,8 @@ dict_index_build_internal_clust(
 	}
 
 	/* Remember the table columns already contained in new_index */
-	indexed = static_cast<unsigned long *>(mem_zalloc(table->n_cols * sizeof *indexed));
+        void *indexed_ptr= mem_zalloc(table->n_cols * sizeof *indexed);
+	indexed = static_cast<unsigned long *>(indexed_ptr);
 
 	/* Mark the table columns already contained in new_index */
 	for (i = 0; i < new_index->n_def; i++) {
@@ -2147,7 +2148,8 @@ dict_index_build_internal_non_clust(
 	dict_index_copy(new_index, index, table, 0, index->n_fields);
 
 	/* Remember the table columns already contained in new_index */
-	indexed = static_cast<unsigned long *>(mem_zalloc(table->n_cols * sizeof *indexed));
+        void *indexed_ptr= mem_zalloc(table->n_cols * sizeof *indexed);
+	indexed = static_cast<unsigned long *>(indexed_ptr);
 
 	/* Mark the table columns already contained in new_index */
 	for (i = 0; i < new_index->n_def; i++) {
@@ -3876,7 +3878,7 @@ dict_foreign_parse_drop_constraints(
 
 	*n = 0;
 
-	*constraints_to_drop = mem_heap_alloc(heap, 1000 * sizeof(char*));
+	*constraints_to_drop = static_cast<const char **>(mem_heap_alloc(heap, 1000 * sizeof(char*)));
 
         ptr = innobase_get_stmt(trx->mysql_thd, &len);
 
