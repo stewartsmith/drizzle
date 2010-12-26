@@ -53,7 +53,9 @@ int64_t Item_decimal_typecast::val_int()
   int64_t res;
   if (null_value)
     return 0;
-  class_decimal2int(E_DEC_FATAL_ERROR, tmp, unsigned_flag, &res);
+
+  tmp->val_int32(E_DEC_FATAL_ERROR, unsigned_flag, &res);
+
   return res;
 }
 

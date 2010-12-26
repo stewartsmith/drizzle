@@ -145,51 +145,14 @@ inline void decimal_neg(decimal_t *dec)
 */
 #define DECIMAL_MAX_FIELD_SIZE DECIMAL_MAX_PRECISION
 
+namespace type {
+class Decimal;
+}
+
 inline int class_decimal_int_part(uint32_t precision, uint32_t decimals)
 {
   return precision - ((decimals == DECIMAL_NOT_SPECIFIED) ? 0 : decimals);
 }
-
-
-namespace type {
-/**
-  type::Decimal class limits 'decimal_t' type to what we need in MySQL.
-
-  It contains internally all necessary space needed by the instance so
-  no extra memory is needed. One should call fix_buffer_pointer() function
-  when he moves type::Decimal objects in memory.
-*/
-
-class Decimal :public decimal_t
-{
-  decimal_digit_t buffer[DECIMAL_BUFF_LENGTH];
-
-public:
-
-  void init()
-  {
-    len= DECIMAL_BUFF_LENGTH;
-    buf= buffer;
-	#if !defined (HAVE_VALGRIND)
-		/* Set buffer to 'random' value to find wrong buffer usage */
-		for (uint32_t i= 0; i < DECIMAL_BUFF_LENGTH; i++)
-		  buffer[i]= i;
-	#endif
-  }
-
-  Decimal()
-  {
-    init();
-  }
-  void fix_buffer_pointer() { buf= buffer; }
-  bool sign() const { return decimal_t::sign; }
-  void sign(bool s) { decimal_t::sign= s; }
-  uint32_t precision() const { return intg + frac; }
-};
-
-} // type
-
-std::ostream& operator<<(std::ostream& output, const type::Decimal &dec);
 
 int decimal_operation_results(int result);
 
@@ -211,6 +174,57 @@ inline int check_result(uint32_t mask, int result)
     decimal_operation_results(result);
   return result;
 }
+
+
+namespace type {
+/**
+  type::Decimal class limits 'decimal_t' type to what we need in MySQL.
+
+  It contains internally all necessary space needed by the instance so
+  no extra memory is needed. One should call fix_buffer_pointer() function
+  when he moves type::Decimal objects in memory.
+*/
+
+class Decimal :public decimal_t
+  {
+    decimal_digit_t buffer[DECIMAL_BUFF_LENGTH];
+
+  public:
+
+    void init()
+    {
+      len= DECIMAL_BUFF_LENGTH;
+      buf= buffer;
+#if !defined (HAVE_VALGRIND)
+      /* Set buffer to 'random' value to find wrong buffer usage */
+      for (uint32_t i= 0; i < DECIMAL_BUFF_LENGTH; i++)
+        buffer[i]= i;
+#endif
+    }
+
+    Decimal()
+    {
+      init();
+    }
+    void fix_buffer_pointer() { buf= buffer; }
+    bool sign() const { return decimal_t::sign; }
+    void sign(bool s) { decimal_t::sign= s; }
+    uint32_t precision() const { return intg + frac; }
+
+    int val_int32(uint32_t mask, bool unsigned_flag, int64_t *l) const
+    {
+      type::Decimal rounded;
+      /* decimal_round can return only E_DEC_TRUNCATED */
+      decimal_round(static_cast<const decimal_t*>(this), &rounded, 0, HALF_UP);
+      return check_result(mask, (unsigned_flag ?
+                                 decimal2uint64_t(&rounded, reinterpret_cast<uint64_t *>(l)) :
+                                 decimal2int64_t(&rounded, l)));
+    }
+  };
+
+} // type
+
+std::ostream& operator<<(std::ostream& output, const type::Decimal &dec);
 
 inline int check_result_and_overflow(uint32_t mask, int result, type::Decimal *val)
 {
@@ -319,18 +333,6 @@ int class_decimal_ceiling(uint32_t mask, const type::Decimal *from, type::Decima
 
 int class_decimal2string(uint32_t mask, const type::Decimal *d, uint32_t fixed_prec,
                       uint32_t fixed_dec, char filler, String *str);
-
-inline
-int class_decimal2int(uint32_t mask, const type::Decimal *d, bool unsigned_flag,
-                   int64_t *l)
-{
-  type::Decimal rounded;
-  /* decimal_round can return only E_DEC_TRUNCATED */
-  decimal_round(static_cast<const decimal_t*>(d), &rounded, 0, HALF_UP);
-  return check_result(mask, (unsigned_flag ?
-			     decimal2uint64_t(&rounded, reinterpret_cast<uint64_t *>(l)) :
-			     decimal2int64_t(&rounded, l)));
-}
 
 
 inline

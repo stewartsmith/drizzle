@@ -117,7 +117,7 @@ int64_t Item_func_numhybrid::val_int()
       if (!(val= decimal_op(&decimal_value)))
         return 0;                                 // null is set
       int64_t result;
-      class_decimal2int(E_DEC_FATAL_ERROR, val, unsigned_flag, &result);
+      val->val_int32(E_DEC_FATAL_ERROR, unsigned_flag, &result);
       return result;
     }
   case INT_RESULT:

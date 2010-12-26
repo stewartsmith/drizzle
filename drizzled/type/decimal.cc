@@ -195,8 +195,8 @@ int decimal_operation_results(int result)
 */
 
 int class_decimal2string(uint32_t mask, const type::Decimal *d,
-                      uint32_t fixed_prec, uint32_t fixed_dec,
-                      char filler, String *str)
+                         uint32_t fixed_prec, uint32_t fixed_dec,
+                         char filler, String *str)
 {
   /*
     Calculate the size of the string: For DECIMAL(a,b), fixed_prec==a

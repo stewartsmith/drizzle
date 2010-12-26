@@ -285,7 +285,7 @@ int64_t Field_decimal::val_int(void)
 
   ASSERT_COLUMN_MARKED_FOR_READ;
 
-  class_decimal2int(E_DEC_FATAL_ERROR, val_decimal(&decimal_value), false, &i);
+  val_decimal(&decimal_value)->val_int32(E_DEC_FATAL_ERROR, false, &i);
 
   return i;
 }

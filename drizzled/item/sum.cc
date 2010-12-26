@@ -849,8 +849,7 @@ int64_t Item_sum_sum::val_int()
   if (hybrid_type == DECIMAL_RESULT)
   {
     int64_t result;
-    class_decimal2int(E_DEC_FATAL_ERROR, dec_buffs + curr_dec_buff, unsigned_flag,
-                   &result);
+    (dec_buffs + curr_dec_buff)->val_int32(E_DEC_FATAL_ERROR, unsigned_flag, &result);
     return result;
   }
   return (int64_t) rint(val_real());
@@ -1656,7 +1655,7 @@ int64_t Item_sum_hybrid::val_int()
   case DECIMAL_RESULT:
   {
     int64_t result;
-    class_decimal2int(E_DEC_FATAL_ERROR, &sum_dec, unsigned_flag, &result);
+    sum_dec.val_int32(E_DEC_FATAL_ERROR, unsigned_flag, &result);
     return sum_int;
   }
   default:

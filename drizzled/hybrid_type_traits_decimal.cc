@@ -82,8 +82,8 @@ int64_t
 Hybrid_type_traits_decimal::val_int(Hybrid_type *val, bool unsigned_flag) const
 {
   int64_t result;
-  class_decimal2int(E_DEC_FATAL_ERROR, &val->dec_buf[val->used_dec_buf_no],
-                 unsigned_flag, &result);
+  val->dec_buf[val->used_dec_buf_no].val_int32(E_DEC_FATAL_ERROR, unsigned_flag, &result);
+
   return result;
 }
 

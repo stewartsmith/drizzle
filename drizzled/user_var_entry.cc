@@ -73,7 +73,7 @@ int64_t user_var_entry::val_int(bool *null_value) const
   case DECIMAL_RESULT:
     {
       int64_t result;
-      class_decimal2int(E_DEC_FATAL_ERROR, (type::Decimal *)value, 0, &result);
+      ((type::Decimal *)(value))->val_int32(E_DEC_FATAL_ERROR, 0, &result);
       return result;
     }
 

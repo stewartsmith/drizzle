@@ -43,7 +43,7 @@ int64_t Item_cache_decimal::val_int()
 {
   assert(fixed);
   int64_t res;
-  class_decimal2int(E_DEC_FATAL_ERROR, &decimal_value, unsigned_flag, &res);
+  decimal_value.val_int32(E_DEC_FATAL_ERROR, unsigned_flag, &res);
   return res;
 }
 
