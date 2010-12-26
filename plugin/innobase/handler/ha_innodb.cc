@@ -2077,6 +2077,7 @@ innobase_init(
   innobase_use_doublewrite= (vm.count("disable-doublewrite")) ? false : true;
   srv_adaptive_flushing= (vm.count("disable-adaptive-flushing")) ? false : true;
   srv_use_sys_malloc= (vm.count("use-internal-malloc")) ? false : true;
+  srv_use_native_aio= (vm.count("disable-native-aio")) ? false : true;
   support_xa= (vm.count("disable-xa")) ? false : true;
   btr_search_enabled= (vm.count("disable-adaptive-hash-index")) ? false : true;
 
@@ -9360,6 +9361,8 @@ static void init_options(drizzled::module::option_context &context)
           "InnoDB version");
   context("use-internal-malloc",
           "Use InnoDB's internal memory allocator instal of the OS memory allocator.");
+  context("disable-native-aio",
+          _("Do not use Native AIO library for IO, even if available"));
   context("change-buffering",
           po::value<string>(&innobase_change_buffering),
           "Buffer changes to reduce random access: OFF, ON, inserting, deleting, changing, or purging.");

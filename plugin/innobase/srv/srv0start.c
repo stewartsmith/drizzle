@@ -92,6 +92,8 @@ Created 2/16/1996 Heikki Tuuri
 #include <errno.h>
 #include <unistd.h>
 
+#include <drizzled/gettext.h> 
+
 /** Log sequence number immediately after startup */
 UNIV_INTERN ib_uint64_t	srv_start_lsn;
 /** Log sequence number at shutdown */
@@ -1025,25 +1027,25 @@ innobase_start_or_create_for_mysql(void)
 	on Mac OS X 10.3 or later. */
 	struct utsname utsname;
 	if (uname(&utsname)) {
-		fputs("InnoDB: cannot determine Mac OS X version!\n", stderr);
+		fputs(_("InnoDB: cannot determine Mac OS X version!\n"), stderr);
 	} else {
 		srv_have_fullfsync = strcmp(utsname.release, "7.") >= 0;
 	}
 	if (!srv_have_fullfsync) {
-		fputs("InnoDB: On Mac OS X, fsync() may be"
-		      " broken on internal drives,\n"
-		      "InnoDB: making transactions unsafe!\n", stderr);
+		fputs(_("InnoDB: On Mac OS X, fsync() may be"
+                        " broken on internal drives,\n"
+                        "InnoDB: making transactions unsafe!\n"), stderr);
 	}
 # endif /* F_FULLFSYNC */
 #endif /* HAVE_DARWIN_THREADS */
 
 	if (sizeof(ulint) != sizeof(void*)) {
 		fprintf(stderr,
-			"InnoDB: Error: size of InnoDB's ulint is %lu,"
-			" but size of void* is %lu.\n"
-			"InnoDB: The sizes should be the same"
-			" so that on a 64-bit platform you can\n"
-			"InnoDB: allocate more than 4 GB of memory.",
+			_("InnoDB: Error: size of InnoDB's ulint is %lu,"
+                          " but size of void* is %lu.\n"
+                          "InnoDB: The sizes should be the same"
+                          " so that on a 64-bit platform you can\n"
+                          "InnoDB: allocate more than 4 GB of memory."),
 			(ulong)sizeof(ulint), (ulong)sizeof(void*));
 	}
 
@@ -1054,45 +1056,45 @@ innobase_start_or_create_for_mysql(void)
 	srv_file_per_table = FALSE;
 #ifdef UNIV_DEBUG
 	fprintf(stderr,
-		"InnoDB: !!!!!!!! UNIV_DEBUG switched on !!!!!!!!!\n");
+		_("InnoDB: !!!!!!!! UNIV_DEBUG switched on !!!!!!!!!\n"));
 #endif
 
 #ifdef UNIV_IBUF_DEBUG
 	fprintf(stderr,
-		"InnoDB: !!!!!!!! UNIV_IBUF_DEBUG switched on !!!!!!!!!\n"
+		_("InnoDB: !!!!!!!! UNIV_IBUF_DEBUG switched on !!!!!!!!!\n"
 # ifdef UNIV_IBUF_COUNT_DEBUG
-		"InnoDB: !!!!!!!! UNIV_IBUF_COUNT_DEBUG switched on !!!!!!!!!\n"
-		"InnoDB: Crash recovery will fail with UNIV_IBUF_COUNT_DEBUG\n"
+                  "InnoDB: !!!!!!!! UNIV_IBUF_COUNT_DEBUG switched on !!!!!!!!!\n"
+                  "InnoDB: Crash recovery will fail with UNIV_IBUF_COUNT_DEBUG\n"
 # endif
-		);
+		));
 #endif
 
 #ifdef UNIV_SYNC_DEBUG
 	fprintf(stderr,
-		"InnoDB: !!!!!!!! UNIV_SYNC_DEBUG switched on !!!!!!!!!\n");
+		_("InnoDB: !!!!!!!! UNIV_SYNC_DEBUG switched on !!!!!!!!!\n"));
 #endif
 
 #ifdef UNIV_SEARCH_DEBUG
 	fprintf(stderr,
-		"InnoDB: !!!!!!!! UNIV_SEARCH_DEBUG switched on !!!!!!!!!\n");
+		_("InnoDB: !!!!!!!! UNIV_SEARCH_DEBUG switched on !!!!!!!!!\n"));
 #endif
 
 #ifdef UNIV_LOG_LSN_DEBUG
 	fprintf(stderr,
-		"InnoDB: !!!!!!!! UNIV_LOG_LSN_DEBUG switched on !!!!!!!!!\n");
+		_("InnoDB: !!!!!!!! UNIV_LOG_LSN_DEBUG switched on !!!!!!!!!\n"));
 #endif /* UNIV_LOG_LSN_DEBUG */
 #ifdef UNIV_MEM_DEBUG
 	fprintf(stderr,
-		"InnoDB: !!!!!!!! UNIV_MEM_DEBUG switched on !!!!!!!!!\n");
+		_("InnoDB: !!!!!!!! UNIV_MEM_DEBUG switched on !!!!!!!!!\n"));
 #endif
 
 	if (UNIV_LIKELY(srv_use_sys_malloc)) {
 		fprintf(stderr,
-			"InnoDB: The InnoDB memory heap is disabled\n");
+			_("InnoDB: The InnoDB memory heap is disabled\n"));
 	}
 
 	fputs("InnoDB: " IB_ATOMICS_STARTUP_MSG
-	      "\nInnoDB: Compressed tables use zlib " ZLIB_VERSION
+                "\nInnoDB: Compressed tables use zlib " ZLIB_VERSION
 #ifdef UNIV_ZIP_DEBUG
 	      " with validation"
 #endif /* UNIV_ZIP_DEBUG */
@@ -1158,7 +1160,7 @@ innobase_start_or_create_for_mysql(void)
 	if (srv_use_native_aio) {
 		ut_print_timestamp(stderr);
 		fprintf(stderr,
-			"  InnoDB: Using Linux native AIO\n");
+			_("  InnoDB: Using Linux native AIO\n"));
 	}
 #else
 	/* Currently native AIO is supported only on windows and linux
