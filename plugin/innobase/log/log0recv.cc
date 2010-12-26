@@ -1405,7 +1405,7 @@ recv_add_to_hash_table(
 			len = RECV_DATA_BLOCK_SIZE;
 		}
 
-		recv_data = static_cast<recv_addr_t>(mem_heap_alloc(recv_sys->heap,
+		recv_data = static_cast<recv_addr_t *>(mem_heap_alloc(recv_sys->heap,
 					   sizeof(recv_data_t) + len));
 		*prev_field = recv_data;
 

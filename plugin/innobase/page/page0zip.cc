@@ -651,27 +651,24 @@ page_zip_dir_encode(
 
 /**********************************************************************//**
 Allocate memory for zlib. */
-static
-void*
-page_zip_malloc(
+extern "C" void* page_zip_malloc(void* opaque, uInt items, uInt size);
+
+extern "C" void* page_zip_malloc
+(
 /*============*/
 	void*	opaque,	/*!< in/out: memory heap */
 	uInt	items,	/*!< in: number of items to allocate */
 	uInt	size)	/*!< in: size of an item in bytes */
 {
-	return(mem_heap_alloc(opaque, items * size));
+	return(mem_heap_alloc(static_cast<mem_block_info_t *>(opaque), items * size));
 }
 
 /**********************************************************************//**
 Deallocate memory for zlib. */
-static
-void
-page_zip_free(
-/*==========*/
-	void*	opaque __attribute__((unused)),	/*!< in: memory heap */
-	void*	address __attribute__((unused)))/*!< in: object to free */
-{
-}
+extern "C" void page_zip_free(void *opaque, void *address);
+
+extern "C" void page_zip_free(void *, void *)
+{ }
 
 /**********************************************************************//**
 Configure the zlib allocator to use the given memory heap. */
@@ -682,7 +679,7 @@ page_zip_set_alloc(
 	void*		stream,		/*!< in/out: zlib stream */
 	mem_heap_t*	heap)		/*!< in: memory heap to use */
 {
-	z_stream*	strm = stream;
+	z_stream*	strm = static_cast<z_stream *>(stream);
 
 	strm->zalloc = page_zip_malloc;
 	strm->zfree = page_zip_free;
@@ -1229,11 +1226,11 @@ page_zip_compress(
 			       + UNIV_PAGE_SIZE * 4
 			       + (512 << MAX_MEM_LEVEL));
 
-	recs = mem_heap_zalloc(heap, n_dense * sizeof *recs);
+	recs = static_cast<const unsigned char **>(mem_heap_zalloc(heap, n_dense * sizeof *recs));
 
-	fields = mem_heap_alloc(heap, (n_fields + 1) * 2);
+	fields = static_cast<byte *>(mem_heap_alloc(heap, (n_fields + 1) * 2));
 
-	buf = mem_heap_alloc(heap, page_zip_get_size(page_zip) - PAGE_DATA);
+	buf = static_cast<byte *>(mem_heap_alloc(heap, page_zip_get_size(page_zip) - PAGE_DATA));
 	buf_end = buf + page_zip_get_size(page_zip) - PAGE_DATA;
 
 	/* Compress the data payload. */
@@ -2854,7 +2851,7 @@ page_zip_decompress(
 	}
 
 	heap = mem_heap_create(n_dense * (3 * sizeof *recs) + UNIV_PAGE_SIZE);
-	recs = mem_heap_alloc(heap, n_dense * (2 * sizeof *recs));
+	recs = static_cast<byte **>(mem_heap_alloc(heap, n_dense * (2 * sizeof *recs)));
 
 	if (all) {
 		/* Copy the page header. */
@@ -2957,7 +2954,7 @@ zlib_error:
 		/* Pre-allocate the offsets for rec_get_offsets_reverse(). */
 		ulint	n = 1 + 1/* node ptr */ + REC_OFFS_HEADER_SIZE
 			+ dict_index_get_n_fields(index);
-		offsets = mem_heap_alloc(heap, n * sizeof(ulint));
+		offsets = static_cast<unsigned long *>(mem_heap_alloc(heap, n * sizeof(ulint)));
 		*offsets = n;
 	}
 
@@ -4659,7 +4656,7 @@ page_zip_calc_checksum(
 	/* Exclude FIL_PAGE_SPACE_OR_CHKSUM, FIL_PAGE_LSN,
 	and FIL_PAGE_FILE_FLUSH_LSN from the checksum. */
 
-	const Bytef*	s	= data;
+	const Bytef*	s	= static_cast<const Bytef *>(data);
 	uLong		adler;
 
 	ut_ad(size > FIL_PAGE_ARCH_LOG_NO_OR_SPACE_ID);

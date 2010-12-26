@@ -2299,20 +2299,20 @@ page_validate(
 	dict_index_t*	index)	/*!< in: data dictionary index containing
 				the page record type definition */
 {
-	page_dir_slot_t*slot;
-	mem_heap_t*	heap;
-	byte*		buf;
-	ulint		count;
-	ulint		own_count;
-	ulint		rec_own_count;
-	ulint		slot_no;
-	ulint		data_size;
-	rec_t*		rec;
+	page_dir_slot_t*slot= NULL;
+	mem_heap_t*	heap= NULL;
+	byte*		buf= NULL;
+	ulint		count= 0;
+	ulint		own_count= 0;
+	ulint		rec_own_count= 0;
+	ulint		slot_no= 0;
+	ulint		data_size= 0;
+	rec_t*		rec= NULL;
 	rec_t*		old_rec		= NULL;
-	ulint		offs;
-	ulint		n_slots;
+	ulint		offs= 0;
+	ulint		n_slots= 0;
 	ibool		ret		= FALSE;
-	ulint		i;
+	ulint		i= 0;
 	ulint*		offsets		= NULL;
 	ulint*		old_offsets	= NULL;
 

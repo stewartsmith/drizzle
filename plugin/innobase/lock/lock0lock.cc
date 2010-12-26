@@ -1303,7 +1303,7 @@ lock_rec_copy(
 
 	size = sizeof(lock_t) + lock_rec_get_n_bits(lock) / 8;
 
-	return static_cast<lock_t>(mem_heap_dup(heap, lock, size));
+	return static_cast<lock_t *>(mem_heap_dup(heap, lock, size));
 }
 
 /*********************************************************************//**
@@ -1418,7 +1418,7 @@ lock_rec_has_expl(
 	while (lock) {
 		if (lock->trx == trx
 		    && lock_mode_stronger_or_eq(lock_get_mode(lock),
-						precise_mode & LOCK_MODE_MASK)
+						static_cast<lock_mode>(precise_mode & LOCK_MODE_MASK))
 		    && !lock_get_wait(lock)
 		    && (!lock_rec_get_rec_not_gap(lock)
 			|| (precise_mode & LOCK_REC_NOT_GAP)
@@ -3595,7 +3595,7 @@ lock_table_create(
 
 		ib_vector_push(trx->autoinc_locks, lock);
 	} else {
-		lock = mem_heap_alloc(trx->lock_heap, sizeof(lock_t));
+		lock = static_cast<lock_t *>(mem_heap_alloc(trx->lock_heap, sizeof(lock_t)));
 	}
 
 	UT_LIST_ADD_LAST(trx_locks, trx->trx_locks, lock);
@@ -3656,7 +3656,7 @@ lock_table_remove_low(
 		    && !ib_vector_is_empty(trx->autoinc_locks)) {
 			lock_t*	autoinc_lock;
 
-			autoinc_lock = static_cast<lock_t>(ib_vector_pop(trx->autoinc_locks));
+			autoinc_lock = static_cast<lock_t *>(ib_vector_pop(trx->autoinc_locks));
 			ut_a(autoinc_lock == lock);
 		}
 
@@ -5492,7 +5492,7 @@ lock_release_autoinc_last_lock(
 
 	/* The lock to be release must be the last lock acquired. */
 	last = ib_vector_size(autoinc_locks) - 1;
-	lock = static_cast<lock_t>(ib_vector_get(autoinc_locks, last));
+	lock = static_cast<lock_t *>(ib_vector_get(autoinc_locks, last));
 
 	/* Should have only AUTOINC locks in the vector. */
 	ut_a(lock_get_mode(lock) == LOCK_AUTO_INC);
