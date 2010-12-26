@@ -191,7 +191,7 @@ row_merge_buf_create_low(
 	buf->heap = heap;
 	buf->index = index;
 	buf->max_tuples = max_tuples;
-	buf->tuples = static_cast<dfield_t **>(mem_heap_alloc(heap,
+	buf->tuples = static_cast<const dfield_t **>(mem_heap_alloc(heap,
 				     2 * max_tuples * sizeof *buf->tuples));
 	buf->tmp_tuples = buf->tuples + max_tuples;
 
@@ -650,7 +650,7 @@ row_merge_heap_create(
 	mem_heap_t*	heap	= mem_heap_create(2 * i * sizeof **offsets1
 						  + 3 * sizeof **buf);
 
-	*buf = static_cast<mrec_buf_t**>(mem_heap_alloc(heap, 3 * sizeof **buf));
+	*buf = static_cast<mrec_buf_t*>(mem_heap_alloc(heap, 3 * sizeof **buf));
 	*offsets1 = static_cast<ulint*>(mem_heap_alloc(heap, i * sizeof **offsets1));
 	*offsets2 = static_cast<ulint*>(mem_heap_alloc(heap, i * sizeof **offsets2));
 
@@ -1165,7 +1165,7 @@ row_merge_read_clustered_index(
 
 	/* Create and initialize memory for record buffers */
 
-	merge_buf = static_cast<row_merge_buf_t *>(mem_alloc(n_index * sizeof *merge_buf));
+	merge_buf = static_cast<row_merge_buf_t **>(mem_alloc(n_index * sizeof *merge_buf));
 
 	for (i = 0; i < n_index; i++) {
 		merge_buf[i] = row_merge_buf_create(index[i]);
@@ -2639,7 +2639,7 @@ row_merge_build_indexes(
 
 	merge_files = static_cast<merge_file_t *>(mem_alloc(n_indexes * sizeof *merge_files));
 	block_size = 3 * sizeof *block;
-	block = static_cast<byte *>(os_mem_alloc_large(&block_size));
+	block = static_cast<row_merge_block_t *>(os_mem_alloc_large(&block_size));
 
 	for (i = 0; i < n_indexes; i++) {
 

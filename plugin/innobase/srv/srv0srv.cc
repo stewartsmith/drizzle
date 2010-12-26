@@ -106,9 +106,6 @@ UNIV_INTERN ibool	srv_error_monitor_active = FALSE;
 
 UNIV_INTERN const char*	srv_main_thread_op_info = "";
 
-/** Prefix used by MySQL to indicate pre-5.1 table name encoding */
-UNIV_INTERN const char	srv_mysql50_table_name_prefix[9] = "#mysql50#";
-
 /* Server parameters which are read from the initfile */
 
 /* The following three are dir paths which are catenated before file
@@ -910,7 +907,7 @@ srv_suspend_thread(void)
 
 	slot = srv_table_get_nth_slot(slot_no);
 
-	type = slot->type;
+        type = static_cast<srv_thread_type>(slot->type);
 
 	ut_ad(type >= SRV_WORKER);
 	ut_ad(type <= SRV_MASTER);
@@ -953,7 +950,9 @@ srv_release_threads(
 
 		slot = srv_table_get_nth_slot(i);
 
-		if (slot->in_use && slot->type == type && slot->suspended) {
+                if (slot->in_use &&
+                    (static_cast<srv_thread_type>(slot->type) == type) &&
+                    slot->suspended) {
 
 			slot->suspended = FALSE;
 
@@ -998,7 +997,7 @@ srv_get_thread_type(void)
 
 	slot = srv_table_get_nth_slot(slot_no);
 
-	type = slot->type;
+        type = static_cast<srv_thread_type>(slot->type);
 
 	ut_ad(type >= SRV_WORKER);
 	ut_ad(type <= SRV_MASTER);
@@ -1019,15 +1018,15 @@ srv_init(void)
 	srv_slot_t*		slot;
 	ulint			i;
 
-	srv_sys = mem_alloc(sizeof(srv_sys_t));
+        srv_sys = static_cast<srv_sys_t *>(mem_alloc(sizeof(srv_sys_t)));
 
-	kernel_mutex_temp = mem_alloc(sizeof(mutex_t));
+        kernel_mutex_temp = static_cast<ib_mutex_t *>(mem_alloc(sizeof(mutex_t)));
 	mutex_create(kernel_mutex_key, &kernel_mutex, SYNC_KERNEL);
 
 	mutex_create(srv_innodb_monitor_mutex_key,
 		     &srv_innodb_monitor_mutex, SYNC_NO_ORDER_CHECK);
 
-	srv_sys->threads = mem_alloc(OS_THREAD_MAX_N * sizeof(srv_slot_t));
+        srv_sys->threads = static_cast<srv_table_t *>(mem_alloc(OS_THREAD_MAX_N * sizeof(srv_slot_t)));
 
 	for (i = 0; i < OS_THREAD_MAX_N; i++) {
 		slot = srv_table_get_nth_slot(i);
@@ -1037,7 +1036,7 @@ srv_init(void)
 		ut_a(slot->event);
 	}
 
-	srv_mysql_table = mem_alloc(OS_THREAD_MAX_N * sizeof(srv_slot_t));
+        srv_mysql_table = static_cast<srv_slot_t *>(mem_alloc(OS_THREAD_MAX_N * sizeof(srv_slot_t)));
 
 	for (i = 0; i < OS_THREAD_MAX_N; i++) {
 		slot = srv_mysql_table + i;
@@ -1079,7 +1078,7 @@ srv_init(void)
 
 	UT_LIST_INIT(srv_conc_queue);
 
-	srv_conc_slots = mem_alloc(OS_THREAD_MAX_N * sizeof(srv_conc_slot_t));
+        srv_conc_slots = static_cast<srv_conc_slot_t *>(mem_alloc(OS_THREAD_MAX_N * sizeof(srv_conc_slot_t)));
 
 	for (i = 0; i < OS_THREAD_MAX_N; i++) {
 		conc_slot = srv_conc_slots + i;

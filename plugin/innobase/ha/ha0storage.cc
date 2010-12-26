@@ -35,6 +35,8 @@ Created September 22, 2007 Vasil Dimov
 #include "ha0storage.ic"
 #endif
 
+#include <cassert>
+
 /*******************************************************************//**
 Retrieves a data from a storage. If it is present, a pointer to the
 stored copy of data is returned, otherwise NULL is returned. */
@@ -62,7 +64,7 @@ ha_storage_get(
 		fold,			/* key */
 		ha_storage_node_t*,	/* type of node->next */
 		node,			/* auxiliary variable */
-		,			/* assertion */
+                assert(true),			/* assertion */
 		IS_FOUND);		/* search criteria */
 
 	if (node == NULL) {

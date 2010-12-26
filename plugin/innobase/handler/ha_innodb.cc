@@ -71,6 +71,7 @@ St, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>
+#include <boost/scoped_array.hpp>
 #include <boost/filesystem.hpp>
 #include <drizzled/module/option_map.h>
 #include <iostream>
@@ -1670,7 +1671,8 @@ innobase_convert_identifier(
         FALSE=id is an UTF-8 string */
 {
   char nz[NAME_LEN + 1];
-  char nz2[NAME_LEN + 1 + sizeof srv_mysql50_table_name_prefix];
+  const size_t nz2_size= NAME_LEN + 1 + srv_mysql50_table_name_prefix.size();
+  boost::scoped_array<char> nz2(new char[nz2_size]);
 
   const char* s = id;
   int   q;
@@ -1687,8 +1689,8 @@ innobase_convert_identifier(
     memcpy(nz, id, idlen);
     nz[idlen] = 0;
 
-    s = nz2;
-    idlen = TableIdentifier::filename_to_tablename(nz, nz2, sizeof nz2);
+    s = nz2.get();
+    idlen = TableIdentifier::filename_to_tablename(nz, nz2.get(), nz2_size);
   }
 
   /* See if the identifier needs to be quoted. */
@@ -2101,16 +2103,17 @@ innobase_init(
 
 #ifdef UNIV_DEBUG
   static const char test_filename[] = "-@";
-  char      test_tablename[sizeof test_filename
-    + sizeof srv_mysql50_table_name_prefix];
-  if ((sizeof test_tablename) - 1
-      != filename_to_tablename(test_filename, test_tablename,
-                               sizeof test_tablename)
-      || strncmp(test_tablename,
-                 srv_mysql50_table_name_prefix,
-                 sizeof srv_mysql50_table_name_prefix)
-      || strcmp(test_tablename
-                + sizeof srv_mysql50_table_name_prefix,
+  const size_t test_tablename_size= sizeof test_filename
+    + srv_mysql50_table_name_prefix.size();
+  boost::scoped_array test_tablename(new char[test_tablename_size]);
+  if ((test_tablename_size) - 1
+      != filename_to_tablename(test_filename, test_tablename.get(),
+                               test_tablename_size)
+      || strncmp(test_tablename.get(),
+                 srv_mysql50_table_name_prefix.c_str(),
+                 srv_mysql50_table_name_prefix.size())
+      || strcmp(test_tablename.get()
+                + srv_mysql50_table_name_prefix.size(),
                 test_filename)) {
     errmsg_printf(ERRMSG_LVL_ERROR, "tablename encoding has been changed");
     goto error;

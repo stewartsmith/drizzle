@@ -39,12 +39,15 @@ as the two-way list base node. The base node contains pointers
 to both ends of the list and a count of nodes in the list (excluding
 the base node from the count).
 @param TYPE	the name of the list node data type */
-#define UT_LIST_BASE_NODE_T(TYPE)\
-struct {\
-	ulint	count;	/*!< count of nodes in list */\
-	TYPE *	start;	/*!< pointer to list start, NULL if empty */\
-	TYPE *	end;	/*!< pointer to list end, NULL if empty */\
-}\
+template<class T>
+class ut_list_base_node
+{
+public:
+  size_t count;	/*!< count of nodes in list */\
+  T *	start;	/*!< pointer to list start, NULL if empty */\
+  T *	end;	/*!< pointer to list end, NULL if empty */\
+};
+#define UT_LIST_BASE_NODE_T(TYPE) ut_list_base_node<TYPE>
 
 /*******************************************************************//**
 This macro expands to the unnamed type definition of a struct which
