@@ -21,7 +21,7 @@
 #include "config.h"
 
 #include <drizzled/plugin/client.h>
-#include <drizzled/drizzle_time.h>
+#include <drizzled/type/time.h>
 #include <gtest/gtest.h>
 #include <string.h>
 

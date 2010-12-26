@@ -22,7 +22,7 @@
 
 #include "drizzled/memory/sql_alloc.h"
 #include "drizzled/sql_string.h"
-#include "drizzled/decimal.h"
+#include "drizzled/type/decimal.h"
 
 namespace drizzled
 {

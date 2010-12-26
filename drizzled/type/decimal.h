@@ -18,7 +18,7 @@
 #include <assert.h>
 #include <drizzled/sql_string.h>
 #include "drizzled/definitions.h"
-#include "drizzled/drizzle_time.h"
+#include "drizzled/type/time.h"
 namespace drizzled
 {
 

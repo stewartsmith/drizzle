@@ -21,13 +21,10 @@
 #define DRIZZLED_TIME_FUNCTIONS_H
 
 #include "drizzled/sql_error.h"
-#include "drizzled/drizzle_time.h"
+#include "drizzled/type/time.h"
 
 namespace drizzled
 {
-
-typedef struct st_drizzle_time DRIZZLE_TIME;
-
 /* Calc weekday from daynr */
 /* Returns 0 for monday, 1 for tuesday .... */
 int calc_weekday(long daynr, bool sunday_first_day_of_week);

@@ -37,7 +37,7 @@
 #include "config.h"
 
 #include "drizzled/charset_info.h"
-#include "drizzled/decimal.h"
+#include "drizzled/type/decimal.h"
 #include "drizzled/calendar.h"
 #include "drizzled/temporal.h"
 #include "drizzled/temporal_format.h"

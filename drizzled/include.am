@@ -69,7 +69,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/diagnostics_area.h \
 			      drizzled/discrete_interval.h \
 			      drizzled/display.h \
-			      drizzled/drizzle_time.h \
 			      drizzled/drizzled.h \
 			      drizzled/dtcollation.h \
 			      drizzled/dynamic_array.h \
@@ -103,7 +102,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/filesort.h \
 			      drizzled/filesort_info.h \
 			      drizzled/foreign_key.h \
-			      drizzled/function_container.h \
 			      drizzled/function/additive_op.h \
 			      drizzled/function/cast/signed.h \
 			      drizzled/function/cast/time.h \
@@ -189,14 +187,15 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/function/time/year.h  \
 			      drizzled/function/units.h \
 			      drizzled/function/user_var_as_out_param.h \
+			      drizzled/function_container.h \
 			      drizzled/function_hash.h \
 			      drizzled/generator.h \
 			      drizzled/generator/all_fields.h \
 			      drizzled/generator/all_foreign_keys.h \
 			      drizzled/generator/all_indexes.h \
 			      drizzled/generator/all_tables.h \
-			      drizzled/generator/functions.h \
 			      drizzled/generator/event_observers.h \
+			      drizzled/generator/functions.h \
 			      drizzled/generator/schema.h \
 			      drizzled/generator/session.h \
 			      drizzled/generator/table.h \
@@ -422,6 +421,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/statement/truncate.h \
 			      drizzled/statement/unlock_tables.h \
 			      drizzled/statement/update.h \
+			      drizzled/statistics_variables.h \
 			      drizzled/status_helper.h \
 			      drizzled/stored_key.h \
 			      drizzled/strfunc.h \
@@ -450,12 +450,12 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/transaction_context.h \
 			      drizzled/transaction_services.h \
 			      drizzled/tree.h \
+			      drizzled/type/time.h \
 			      drizzled/typelib.h \
 			      drizzled/tzfile.h \
 			      drizzled/tztime.h \
 			      drizzled/unique.h \
 			      drizzled/unireg.h \
- 			      drizzled/statistics_variables.h \
 			      drizzled/user_var_entry.h \
 			      drizzled/utf8/checked.h \
 			      drizzled/utf8/core.h \
@@ -499,12 +499,10 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/create_field.cc \
 			   drizzled/current_session.cc \
 			   drizzled/cursor.cc \
-			   drizzled/decimal.cc \
 			   drizzled/definition/cache.cc \
 			   drizzled/definition/table.cc \
 			   drizzled/diagnostics_area.cc \
 			   drizzled/display.cc \
-			   drizzled/drizzle_time.cc \
 			   drizzled/drizzled.cc \
 			   drizzled/dtcollation.cc \
 			   drizzled/errmsg_print.cc \
@@ -807,6 +805,8 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/time_functions.cc \
 			   drizzled/transaction_services.cc \
 			   drizzled/tree.cc \
+			   drizzled/type/decimal.cc \
+			   drizzled/type/time.cc \
 			   drizzled/tztime.cc \
 			   drizzled/unique.cc \
 			   drizzled/user_var_entry.cc \

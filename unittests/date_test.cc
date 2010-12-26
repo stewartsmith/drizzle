@@ -21,7 +21,7 @@
 #include "config.h"
 
 #include <gtest/gtest.h>
-#include <drizzled/decimal.h>
+#include <drizzled/type/decimal.h>
 #include <drizzled/temporal.h>
 #include <drizzled/temporal_format.h>
 

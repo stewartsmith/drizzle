@@ -15,7 +15,7 @@
 
 #include "config.h"
 
-#include "drizzled/drizzle_time.h"
+#include "drizzled/type/time.h"
 
 #include "drizzled/internal/m_string.h"
 #include "drizzled/charset_info.h"
