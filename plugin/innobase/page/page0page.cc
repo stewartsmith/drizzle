@@ -2475,9 +2475,9 @@ page_validate(
 
 		/* set old_offsets to offsets; recycle offsets */
 		{
-			ulint* offs = old_offsets;
+			ulint* tmp_offs = old_offsets;
 			old_offsets = offsets;
-			offsets = offs;
+			offsets = tmp_offs;
 		}
 	}
 

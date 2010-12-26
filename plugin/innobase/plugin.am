@@ -225,8 +225,7 @@ noinst_LTLIBRARIES+= \
 		     plugin/innobase/libpars.la
 endif
 
-plugin_innobase_libinnobase_la_CFLAGS=	${AM_CFLAGS} ${INNOBASE_SKIP_WARNINGS} -I${top_builddir}/plugin/innobase/include -I$(top_srcdir)/plugin/innobase/include -DBUILD_DRIZZLE
-plugin_innobase_libinnobase_la_CXXFLAGS=${AM_CXXFLAGS} ${PERMISSIVE_WARNINGS} ${INNOBASE_SKIP_WARNINGS} -I${top_builddir}/plugin/innobase/include -I$(top_srcdir)/plugin/innobase/include -DBUILD_DRIZZLE
+plugin_innobase_libinnobase_la_CXXFLAGS=${AM_CXXFLAGS} -I${top_builddir}/plugin/innobase/include -I$(top_srcdir)/plugin/innobase/include -DBUILD_DRIZZLE
 plugin_innobase_libinnobase_la_SOURCES= \
                                         plugin/innobase/btr/btr0btr.cc \
                                         plugin/innobase/btr/btr0cur.cc \

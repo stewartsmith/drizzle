@@ -2771,13 +2771,13 @@ fseg_alloc_free_page_low(
 		can be obtained immediately with buf_page_get without need
 		for a disk read */
 		buf_block_t*	block;
-		ulint		zip_size = dict_table_flags_to_zip_size(
+		ulint		page_zip_size = dict_table_flags_to_zip_size(
 			mach_read_from_4(FSP_SPACE_FLAGS + space_header));
 
-		block = buf_page_create(space, ret_page, zip_size, mtr);
+		block = buf_page_create(space, ret_page, page_zip_size, mtr);
 		buf_block_dbg_add_level(block, SYNC_FSP_PAGE);
 
-		if (UNIV_UNLIKELY(block != buf_page_get(space, zip_size,
+		if (UNIV_UNLIKELY(block != buf_page_get(space, page_zip_size,
 							ret_page, RW_X_LATCH,
 							mtr))) {
 			ut_error;
@@ -2790,12 +2790,12 @@ fseg_alloc_free_page_low(
 		The extent is still in the appropriate list (FSEG_NOT_FULL
 		or FSEG_FREE), and the page is not yet marked as used. */
 
-		ut_ad(xdes_get_descriptor(space, zip_size, ret_page, mtr)
+		ut_ad(xdes_get_descriptor(space, page_zip_size, ret_page, mtr)
 		      == ret_descr);
 		ut_ad(xdes_get_bit(ret_descr, XDES_FREE_BIT,
 				   ret_page % FSP_EXTENT_SIZE, mtr) == TRUE);
 
-		fseg_mark_page_used(seg_inode, space, zip_size, ret_page, mtr);
+		fseg_mark_page_used(seg_inode, space, page_zip_size, ret_page, mtr);
 	}
 
 	buf_reset_check_index_page_at_flush(space, ret_page);

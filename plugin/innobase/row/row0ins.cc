@@ -2110,20 +2110,20 @@ function_exit:
 	mtr_commit(&mtr);
 
 	if (UNIV_LIKELY_NULL(big_rec)) {
-		rec_t*	rec;
+		rec_t*	exit_rec;
 		ulint*	offsets;
 		mtr_start(&mtr);
 
 		btr_cur_search_to_nth_level(index, 0, entry, PAGE_CUR_LE,
 					    BTR_MODIFY_TREE, &cursor, 0,
 					    __FILE__, __LINE__, &mtr);
-		rec = btr_cur_get_rec(&cursor);
-		offsets = rec_get_offsets(rec, index, NULL,
+		exit_rec = btr_cur_get_rec(&cursor);
+		offsets = rec_get_offsets(exit_rec, index, NULL,
 					  ULINT_UNDEFINED, &heap);
 
 		err = btr_store_big_rec_extern_fields(
 			index, btr_cur_get_block(&cursor),
-			rec, offsets, big_rec, &mtr);
+			exit_rec, offsets, big_rec, &mtr);
 
 		if (modify) {
 			dtuple_big_rec_free(big_rec);

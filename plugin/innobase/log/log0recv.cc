@@ -1589,7 +1589,7 @@ recv_recover_page_func(
 
 		if (recv->start_lsn >= page_lsn) {
 
-			ib_uint64_t	end_lsn;
+			ib_uint64_t	page_end_lsn;
 
 			if (!modification_to_page) {
 
@@ -1613,15 +1613,15 @@ recv_recover_page_func(
 							 buf + recv->len,
 							 block, &mtr);
 
-			end_lsn = recv->start_lsn + recv->len;
-			mach_write_to_8(FIL_PAGE_LSN + page, end_lsn);
+			page_end_lsn = recv->start_lsn + recv->len;
+			mach_write_to_8(FIL_PAGE_LSN + page, page_end_lsn);
 			mach_write_to_8(UNIV_PAGE_SIZE
 					- FIL_PAGE_END_LSN_OLD_CHKSUM
-					+ page, end_lsn);
+					+ page, page_end_lsn);
 
 			if (page_zip) {
 				mach_write_to_8(FIL_PAGE_LSN
-						+ page_zip->data, end_lsn);
+						+ page_zip->data, page_end_lsn);
 			}
 		}
 

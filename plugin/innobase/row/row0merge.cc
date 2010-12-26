@@ -314,23 +314,23 @@ row_merge_buf_add(
 		} else if (UNIV_LIKELY(!ext)) {
 		} else if (dict_index_is_clust(index)) {
 			/* Flag externally stored fields. */
-			const byte*	buf = row_ext_lookup(ext, col_no,
+			const byte*	row_buf = row_ext_lookup(ext, col_no,
 							     &len);
-			if (UNIV_LIKELY_NULL(buf)) {
-				ut_a(buf != field_ref_zero);
+			if (UNIV_LIKELY_NULL(row_buf)) {
+				ut_a(row_buf != field_ref_zero);
 				if (i < dict_index_get_n_unique(index)) {
-					dfield_set_data(field, buf, len);
+					dfield_set_data(field, row_buf, len);
 				} else {
 					dfield_set_ext(field);
 					len = dfield_get_len(field);
 				}
 			}
 		} else {
-			const byte*	buf = row_ext_lookup(ext, col_no,
+			const byte*	row_buf = row_ext_lookup(ext, col_no,
 							     &len);
-			if (UNIV_LIKELY_NULL(buf)) {
-				ut_a(buf != field_ref_zero);
-				dfield_set_data(field, buf, len);
+			if (UNIV_LIKELY_NULL(row_buf)) {
+				ut_a(row_buf != field_ref_zero);
+				dfield_set_data(field, row_buf, len);
 			}
 		}
 
@@ -1290,7 +1290,7 @@ row_merge_read_clustered_index(
 		for (i = 0; i < n_index; i++) {
 			row_merge_buf_t*	buf	= merge_buf[i];
 			merge_file_t*		file	= &files[i];
-			const dict_index_t*	index	= buf->index;
+			const dict_index_t*	buf_index	= buf->index;
 
 			if (UNIV_LIKELY
 			    (row && row_merge_buf_add(buf, row, ext))) {
@@ -1306,7 +1306,7 @@ row_merge_read_clustered_index(
 			Sort them and write to disk. */
 
 			if (buf->n_tuples) {
-				if (dict_index_is_unique(index)) {
+				if (dict_index_is_unique(buf_index)) {
 					row_merge_dup_t	dup;
 					dup.index = buf->index;
 					dup.table = table;

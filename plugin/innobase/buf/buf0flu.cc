@@ -1845,11 +1845,9 @@ buf_flush_wait_batch_end(
 		ulint	i;
 
 		for (i = 0; i < srv_buf_pool_instances; ++i) {
-			buf_pool_t*	buf_pool;
+			buf_pool_t*	i_buf_pool = buf_pool_from_array(i);
 
-			buf_pool = buf_pool_from_array(i);
-
-			os_event_wait(buf_pool->no_flush[type]);
+			os_event_wait(i_buf_pool->no_flush[type]);
 		}
 	} else {
 		os_event_wait(buf_pool->no_flush[type]);

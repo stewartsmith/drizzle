@@ -1651,7 +1651,7 @@ row_upd_clust_rec_by_insert(
 
 	if (node->state != UPD_NODE_INSERT_CLUSTERED) {
 		rec_t*		rec;
-		dict_index_t*	index;
+		dict_index_t*	node_index;
 		ulint		offsets_[REC_OFFS_NORMAL_SIZE];
 		ulint*		offsets;
 		rec_offs_init(offsets_);
@@ -1669,18 +1669,18 @@ row_upd_clust_rec_by_insert(
 		record is removed from the index tree, or updated. */
 
 		rec = btr_cur_get_rec(btr_cur);
-		index = dict_table_get_first_index(table);
-		offsets = rec_get_offsets(rec, index, offsets_,
+		node_index = dict_table_get_first_index(table);
+		offsets = rec_get_offsets(rec, node_index, offsets_,
 					  ULINT_UNDEFINED, &heap);
 		change_ownership = btr_cur_mark_extern_inherited_fields(
-			btr_cur_get_page_zip(btr_cur), rec, index, offsets,
+			btr_cur_get_page_zip(btr_cur), rec, node_index, offsets,
 			node->update, mtr);
 		if (referenced) {
 			/* NOTE that the following call loses
 			the position of pcur ! */
 
 			err = row_upd_check_references_constraints(
-				node, pcur, table, index, offsets, thr, mtr);
+				node, pcur, table, node_index, offsets, thr, mtr);
 
 			if (err != DB_SUCCESS) {
 

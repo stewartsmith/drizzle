@@ -3526,13 +3526,13 @@ bitmap_fail:
 		/* If this is the root page, update ibuf->empty. */
 		if (UNIV_UNLIKELY(buf_block_get_page_no(block)
 				  == FSP_IBUF_TREE_ROOT_PAGE_NO)) {
-			const page_t*	root = buf_block_get_frame(block);
+			const page_t*	page_root = buf_block_get_frame(block);
 
-			ut_ad(page_get_space_id(root) == IBUF_SPACE_ID);
-			ut_ad(page_get_page_no(root)
+			ut_ad(page_get_space_id(page_root) == IBUF_SPACE_ID);
+			ut_ad(page_get_page_no(page_root)
 			      == FSP_IBUF_TREE_ROOT_PAGE_NO);
 
-			ibuf->empty = (page_get_n_recs(root) == 0);
+			ibuf->empty = (page_get_n_recs(page_root) == 0);
 		}
 	} else {
 		ut_ad(mode == BTR_MODIFY_TREE);

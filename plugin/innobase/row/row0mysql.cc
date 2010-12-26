@@ -3213,16 +3213,16 @@ check_next_foreign:
 
 	if (table->n_foreign_key_checks_running > 0) {
 
-		const char*	table_name = table->name;
+		const char*	i_table_name = table->name;
 		ibool		added;
 
-		added = row_add_table_to_background_drop_list(table_name);
+		added = row_add_table_to_background_drop_list(i_table_name);
 
 		if (added) {
 			ut_print_timestamp(stderr);
 			fputs("  InnoDB: You are trying to drop table ",
 			      stderr);
-			ut_print_name(stderr, trx, TRUE, table_name);
+			ut_print_name(stderr, trx, TRUE, i_table_name);
 			fputs("\n"
 			      "InnoDB: though there is a"
 			      " foreign key check running on it.\n"
