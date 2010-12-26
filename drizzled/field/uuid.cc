@@ -60,7 +60,7 @@ int Uuid::cmp(const unsigned char *a, const unsigned char *b)
 int Uuid::store(const char *from, uint32_t length, const CHARSET_INFO * const )
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
-  uuid_st uu;
+  type::Uuid uu;
 
   if (is_set)
   {
@@ -68,7 +68,7 @@ int Uuid::store(const char *from, uint32_t length, const CHARSET_INFO * const )
     return 0;
   }
 
-  if (length != uuid_st::DISPLAY_LENGTH)
+  if (length != type::Uuid::DISPLAY_LENGTH)
   {
     my_error(ER_INVALID_UUID_VALUE, MYF(ME_FATALERROR));
     return 1;
@@ -137,8 +137,8 @@ void Uuid::set(const unsigned char *arg)
 String *Uuid::val_str(String *val_buffer, String *)
 {
   const CHARSET_INFO * const cs= &my_charset_bin;
-  uint32_t mlength= (uuid_st::DISPLAY_BUFFER_LENGTH) * cs->mbmaxlen;
-  uuid_st uu;
+  uint32_t mlength= (type::Uuid::DISPLAY_BUFFER_LENGTH) * cs->mbmaxlen;
+  type::Uuid uu;
 
   val_buffer->alloc(mlength);
   char *buffer=(char*) val_buffer->ptr();
@@ -148,20 +148,20 @@ String *Uuid::val_str(String *val_buffer, String *)
   uu.unpack(ptr);
   uu.unparse(buffer);
 
-  val_buffer->length(uuid_st::DISPLAY_LENGTH);
+  val_buffer->length(type::Uuid::DISPLAY_LENGTH);
 
   return val_buffer;
 }
 
 void Uuid::sort_string(unsigned char *to, uint32_t length_arg)
 {
-  assert(length_arg == uuid_st::LENGTH);
+  assert(length_arg == type::Uuid::LENGTH);
   memcpy(to, ptr, length_arg);
 }
 
 bool Uuid::get_date(type::Time *ltime, uint32_t )
 {
-  uuid_st uu;
+  type::Uuid uu;
 
   uu.unpack(ptr);
 

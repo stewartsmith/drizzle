@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_DRIZZLE_TIME_H
-#define DRIZZLED_DRIZZLE_TIME_H
+#ifndef DRIZZLED_TYPE_TIME_H
+#define DRIZZLED_TYPE_TIME_H
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -191,4 +191,4 @@ enum interval_type
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_DRIZZLE_TIME_H */
+#endif /* DRIZZLED_TYPE_TIME_H */

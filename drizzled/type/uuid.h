@@ -62,25 +62,27 @@
  * %End-Header%
  */
 
-#ifndef DRIZZLED_FIELD_UUID_ST_H
-#define DRIZZLED_FIELD_UUID_ST_H
+#ifndef DRIZZLED_TYPE_UUID_H
+#define DRIZZLED_TYPE_UUID_H
 
 #include <cstdio>
 #include <iostream>
 
 namespace drizzled
 {
-namespace field
+namespace type
 {
 
-struct uuid_st {
+class Uuid {
 	uint32_t	time_low;
 	uint16_t	time_mid;
 	uint16_t	time_hi_and_version;
 	uint16_t	clock_seq;
 	uint8_t	node[6];
 
-  uuid_st() :
+public:
+
+  Uuid() :
     time_low(0),
     time_mid(0),
     time_hi_and_version(0),
@@ -226,8 +228,8 @@ struct uuid_st {
   static const size_t DISPLAY_BUFFER_LENGTH= DISPLAY_LENGTH+1;
 };
 
-} /* namespace field */
+} /* namespace type */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FIELD_UUID_ST_H */
+#endif /* DRIZZLED_TYPE_UUID_H */
 

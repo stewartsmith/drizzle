@@ -13,8 +13,8 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#ifndef DRIZZLED_DECIMAL_H
-#define DRIZZLED_DECIMAL_H
+#ifndef DRIZZLED_TYPE_DECIMAL_H
+#define DRIZZLED_TYPE_DECIMAL_H
 #include <assert.h>
 #include <drizzled/sql_string.h>
 #include "drizzled/definitions.h"
@@ -469,5 +469,5 @@ void class_decimal_trim(uint32_t *precision, uint32_t *scale);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_DECIMAL_H */
+#endif /* DRIZZLED_TYPE_DECIMAL_H */
 

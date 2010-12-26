@@ -95,7 +95,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/field/str.h \
 			      drizzled/field/time.h \
 			      drizzled/field/uuid.h \
-			      drizzled/field/uuid_st.h \
 			      drizzled/field/varstring.h \
 			      drizzled/field_iterator.h \
 			      drizzled/file_exchange.h \
@@ -451,6 +450,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/transaction_services.h \
 			      drizzled/tree.h \
 			      drizzled/type/time.h \
+			      drizzled/type/uuid.h \
 			      drizzled/typelib.h \
 			      drizzled/tzfile.h \
 			      drizzled/tztime.h \
