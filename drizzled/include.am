@@ -62,7 +62,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/cursor.h \
 			      drizzled/data_home.h \
 			      drizzled/db.h \
-			      drizzled/decimal.h \
 			      drizzled/definition/cache.h \
 			      drizzled/definition/table.h \
 			      drizzled/definitions.h \
@@ -449,6 +448,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/transaction_context.h \
 			      drizzled/transaction_services.h \
 			      drizzled/tree.h \
+			      drizzled/type/decimal.h \
 			      drizzled/type/time.h \
 			      drizzled/type/uuid.h \
 			      drizzled/typelib.h \
