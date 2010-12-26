@@ -48,8 +48,10 @@ public:
   T *	start;	/*!< pointer to list start, NULL if empty */\
   T *	end;	/*!< pointer to list end, NULL if empty */\
 };
-#endif
 #define UT_LIST_BASE_NODE_T(TYPE) ut_list_base_node<TYPE>
+#else
+#define UT_LIST_BASE_NODE_T(TYPE) int
+#endif
 
 /*******************************************************************//**
 This macro expands to the unnamed type definition of a struct which
@@ -225,8 +227,12 @@ Gets the first node in a two-way list.
 Gets the last node in a two-way list.
 @param BASE	the base node (not a pointer to it)
 @return		last node, or NULL if the list is empty */
+#ifdef __cplusplus
 #define UT_LIST_GET_LAST(BASE)\
 	(BASE).end
+#else
+#define UT_LIST_GET_LAST(BASE) (BASE= NULL)
+#endif
 
 /********************************************************************//**
 Checks the consistency of a two-way list.

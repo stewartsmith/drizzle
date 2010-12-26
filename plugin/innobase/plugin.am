@@ -321,12 +321,13 @@ plugin_innobase_libinnobase_la_SOURCES= \
 plugin_innobase_libpars_la_CFLAGS= \
 				   ${AM_CFLAGS} \
 				   ${NO_WERROR} \
+				   ${PERMISSIVE_WARNINGS} \
+				   -DUNIV_NONINL \
 				   -I$(top_builddir)/plugin/innobase/include \
 				   -I$(top_srcdir)/plugin/innobase/include \
 				   -DBUILD_DRIZZLE
 plugin_innobase_libpars_la_CXXFLAGS= \
 				     ${AM_CXXFLAGS} \
-				     ${PERMISSIVE_WARNINGS} \
 				     ${INNOBASE_SKIP_WARNINGS} \
 				     ${NO_WERROR} \
 				     -I$(top_builddir)/plugin/innobase/include \
