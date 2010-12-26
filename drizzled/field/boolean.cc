@@ -135,7 +135,7 @@ int  Boolean::store(double nr)
 int Boolean::store_decimal(const drizzled::type::Decimal *dec)
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
-  if (class_decimal_is_zero(dec))
+  if (dec->is_zero())
   {
     setFalse();
     return 0;
@@ -210,7 +210,7 @@ type::Decimal *Boolean::val_decimal(type::Decimal *dec)
     return dec;
   }
 
-  class_decimal_set_zero(dec);
+  dec->set_zero();
 
   return dec;
 }

@@ -101,7 +101,7 @@ bool Item::val_bool()
       type::Decimal decimal_value;
       type::Decimal *val= val_decimal(&decimal_value);
       if (val)
-        return !class_decimal_is_zero(val);
+        return not val->is_zero();
       return false;
     }
 
@@ -198,7 +198,7 @@ type::Decimal *Item::val_decimal_from_date(type::Decimal *decimal_value)
   type::Time ltime;
   if (get_date(&ltime, TIME_FUZZY_DATE))
   {
-    class_decimal_set_zero(decimal_value);
+    decimal_value->set_zero();
     null_value= 1;                               // set NULL, stop processing
     return NULL;
   }
@@ -211,7 +211,7 @@ type::Decimal *Item::val_decimal_from_time(type::Decimal *decimal_value)
   type::Time ltime;
   if (get_time(&ltime))
   {
-    class_decimal_set_zero(decimal_value);
+    decimal_value->set_zero();
     return NULL;
   }
   return date2_class_decimal(&ltime, decimal_value);

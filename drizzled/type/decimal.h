@@ -229,6 +229,19 @@ class Decimal :public decimal_t
     int val_binary(uint32_t mask, unsigned char *bin, int prec, int scale) const;
 
 
+    int set_zero()
+    {
+      decimal_make_zero(static_cast<decimal_t*> (this));
+      return 0;
+    }
+
+
+    bool is_zero() const
+    {
+      return decimal_is_zero(static_cast<const decimal_t*>(this));
+    }
+
+
   };
 
 } // type
@@ -289,21 +302,6 @@ int binary2_class_decimal(uint32_t mask, const unsigned char *bin, type::Decimal
 		      int scale)
 {
   return check_result(mask, bin2decimal(bin, static_cast<decimal_t*>(d), prec, scale));
-}
-
-
-inline
-int class_decimal_set_zero(type::Decimal *d)
-{
-  decimal_make_zero(static_cast<decimal_t*> (d));
-  return 0;
-}
-
-
-inline
-bool class_decimal_is_zero(const type::Decimal *decimal_value)
-{
-  return decimal_is_zero(static_cast<const decimal_t*>(decimal_value));
 }
 
 

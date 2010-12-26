@@ -74,7 +74,7 @@ type::Decimal *Item_decimal_typecast::val_decimal(type::Decimal *dec)
   {
     if (sign)
     {
-      class_decimal_set_zero(dec);
+      dec->set_zero();
       goto err;
     }
   }

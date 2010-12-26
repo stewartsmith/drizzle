@@ -683,7 +683,7 @@ Item_sum_hybrid::fix_fields(Session *session, Item **ref)
     break;
   case DECIMAL_RESULT:
     max_length= item->max_length;
-    class_decimal_set_zero(&sum_dec);
+    sum_dec.set_zero();
     break;
   case REAL_RESULT:
     max_length= float_length(decimals);
@@ -784,7 +784,7 @@ void Item_sum_sum::clear()
   if (hybrid_type == DECIMAL_RESULT)
   {
     curr_dec_buff= 0;
-    class_decimal_set_zero(dec_buffs);
+    dec_buffs->set_zero();
   }
   else
     sum= 0.0;
@@ -811,7 +811,7 @@ void Item_sum_sum::fix_length_and_dec()
                                                  unsigned_flag);
       curr_dec_buff= 0;
       hybrid_type= DECIMAL_RESULT;
-      class_decimal_set_zero(dec_buffs);
+      dec_buffs->set_zero();
       break;
     }
   case ROW_RESULT:
@@ -1602,7 +1602,7 @@ void Item_sum_hybrid::clear()
     sum_int= 0;
     break;
   case DECIMAL_RESULT:
-    class_decimal_set_zero(&sum_dec);
+    sum_dec.set_zero();
     break;
   case REAL_RESULT:
     sum= 0.0;

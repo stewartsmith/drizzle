@@ -47,7 +47,7 @@ Hybrid_type_traits_decimal::fix_length_and_dec(Item *item, Item *arg) const
 
 void Hybrid_type_traits_decimal::set_zero(Hybrid_type *val) const
 {
-  class_decimal_set_zero(&val->dec_buf[0]);
+  val->dec_buf[0].set_zero();
   val->used_dec_buf_no= 0;
 }
 

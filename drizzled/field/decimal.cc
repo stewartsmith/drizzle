@@ -188,7 +188,7 @@ int Field_decimal::store(const char *from, uint32_t length,
                           ER(ER_TRUNCATED_WRONG_VALUE_FOR_FIELD),
                           "decimal", from_as_str.c_ptr(), field_name,
                           (uint32_t) getTable()->in_use->row_count);
-      class_decimal_set_zero(&decimal_value);
+      decimal_value.set_zero();
 
       break;
     }
