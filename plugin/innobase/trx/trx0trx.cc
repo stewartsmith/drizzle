@@ -96,7 +96,7 @@ trx_create(
 	ut_ad(mutex_own(&kernel_mutex));
 	ut_ad(sess);
 
-	trx = mem_alloc(sizeof(trx_t));
+        trx = static_cast<trx_t *>(mem_alloc(sizeof(trx_t)));
 
 	trx->magic_n = TRX_MAGIC_N;
 
@@ -1243,7 +1243,7 @@ trx_sig_send(
 		/* It might be that the 'sig' slot is unused also in this
 		case, but we choose the easy way of using mem_alloc */
 
-		sig = mem_alloc(sizeof(trx_sig_t));
+          sig = static_cast<trx_sig_t *>(mem_alloc(sizeof(trx_sig_t)));
 	}
 
 	UT_LIST_ADD_LAST(signals, trx->signals, sig);
@@ -1478,7 +1478,7 @@ commit_node_create(
 {
 	commit_node_t*	node;
 
-	node = mem_heap_alloc(heap, sizeof(commit_node_t));
+        node = static_cast<commit_node_t *>(mem_heap_alloc(heap, sizeof(commit_node_t)));
 	node->common.type  = QUE_NODE_COMMIT;
 	node->state = COMMIT_NODE_SEND;
 
@@ -1497,7 +1497,7 @@ trx_commit_step(
 	commit_node_t*	node;
 	que_thr_t*	next_thr;
 
-	node = thr->run_node;
+        node = static_cast<commit_node_t *>(thr->run_node);
 
 	ut_ad(que_node_get_type(node) == QUE_NODE_COMMIT);
 

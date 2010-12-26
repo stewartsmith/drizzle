@@ -178,7 +178,7 @@ trx_doublewrite_init(
 	byte*	doublewrite)	/*!< in: pointer to the doublewrite buf
 				header on trx sys page */
 {
-	trx_doublewrite = mem_alloc(sizeof(trx_doublewrite_t));
+  trx_doublewrite = static_cast<trx_doublewrite_t *>(mem_alloc(sizeof(trx_doublewrite_t)));
 
 	/* Since we now start to use the doublewrite buffer, no need to call
 	fsync() after every write to a data file */
@@ -195,13 +195,13 @@ trx_doublewrite_init(
 		doublewrite + TRX_SYS_DOUBLEWRITE_BLOCK1);
 	trx_doublewrite->block2 = mach_read_from_4(
 		doublewrite + TRX_SYS_DOUBLEWRITE_BLOCK2);
-	trx_doublewrite->write_buf_unaligned = ut_malloc(
-		(1 + 2 * TRX_SYS_DOUBLEWRITE_BLOCK_SIZE) * UNIV_PAGE_SIZE);
+        trx_doublewrite->write_buf_unaligned = static_cast<byte *>(ut_malloc(
+                                                                             (1 + 2 * TRX_SYS_DOUBLEWRITE_BLOCK_SIZE) * UNIV_PAGE_SIZE));
 
-	trx_doublewrite->write_buf = ut_align(
-		trx_doublewrite->write_buf_unaligned, UNIV_PAGE_SIZE);
-	trx_doublewrite->buf_block_arr = mem_alloc(
-		2 * TRX_SYS_DOUBLEWRITE_BLOCK_SIZE * sizeof(void*));
+        trx_doublewrite->write_buf = static_cast<byte *>(ut_align(
+                                                                  trx_doublewrite->write_buf_unaligned, UNIV_PAGE_SIZE));
+        trx_doublewrite->buf_block_arr = static_cast<buf_page_t **>(mem_alloc(
+                                                                             2 * TRX_SYS_DOUBLEWRITE_BLOCK_SIZE * sizeof(void*)));
 }
 
 /****************************************************************//**
@@ -440,8 +440,8 @@ trx_sys_doublewrite_init_or_restore_pages(
 
 	/* We do the file i/o past the buffer pool */
 
-	unaligned_read_buf = ut_malloc(2 * UNIV_PAGE_SIZE);
-	read_buf = ut_align(unaligned_read_buf, UNIV_PAGE_SIZE);
+        unaligned_read_buf = static_cast<byte *>(ut_malloc(2 * UNIV_PAGE_SIZE));
+        read_buf = static_cast<byte *>(ut_align(unaligned_read_buf, UNIV_PAGE_SIZE));
 
 	/* Read the trx sys header to check if we are using the doublewrite
 	buffer */
@@ -965,7 +965,7 @@ trx_sys_init_at_db_start(void)
 
 	mutex_enter(&kernel_mutex);
 
-	trx_sys = mem_alloc(sizeof(trx_sys_t));
+        trx_sys = static_cast<trx_sys_t *>(mem_alloc(sizeof(trx_sys_t)));
 
 	sys_header = trx_sysf_get(&mtr);
 

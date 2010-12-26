@@ -39,6 +39,7 @@ as the two-way list base node. The base node contains pointers
 to both ends of the list and a count of nodes in the list (excluding
 the base node from the count).
 @param TYPE	the name of the list node data type */
+#ifdef __cplusplus
 template<class T>
 class ut_list_base_node
 {
@@ -47,6 +48,7 @@ public:
   T *	start;	/*!< pointer to list start, NULL if empty */\
   T *	end;	/*!< pointer to list end, NULL if empty */\
 };
+#endif
 #define UT_LIST_BASE_NODE_T(TYPE) ut_list_base_node<TYPE>
 
 /*******************************************************************//**
