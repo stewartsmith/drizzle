@@ -171,7 +171,7 @@ btr_search_sys_create(
 	/* We allocate the search latch from dynamic memory:
 	see above at the global variable definition */
 
-	btr_search_latch_temp = mem_alloc(sizeof(rw_lock_t));
+	btr_search_latch_temp = static_cast<rw_lock_t *>(mem_alloc(sizeof(rw_lock_t)));
 
 	rw_lock_create(btr_search_latch_key, &btr_search_latch,
 		       SYNC_SEARCH_SYS);

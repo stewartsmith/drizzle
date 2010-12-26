@@ -178,9 +178,9 @@ ulint insert_replication_message(const char *message, size_t size,
   return error;
 }
 
-UNIV_INTERN struct read_replication_state_st *replication_read_init(void)
+UNIV_INTERN read_replication_state_st *replication_read_init(void)
 {
-  struct read_replication_state_st *state= calloc(1, sizeof(struct read_replication_state_st));
+  read_replication_state_st *state= new read_replication_state_st;
 
   mutex_enter(&(dict_sys->mutex));
 
@@ -199,7 +199,7 @@ UNIV_INTERN void replication_read_deinit(struct read_replication_state_st *state
 {
   btr_pcur_close(&state->pcur);
   mtr_commit(&state->mtr);
-  free(state);
+  delete state;
 }
 
 UNIV_INTERN struct read_replication_return_st replication_read_next(struct read_replication_state_st *state)

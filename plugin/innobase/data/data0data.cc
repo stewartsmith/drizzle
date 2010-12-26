@@ -354,7 +354,7 @@ dfield_print_also_hex(
 	ibool		print_also_hex;
 
 	len = dfield_get_len(dfield);
-	data = dfield_get_data(dfield);
+	data = static_cast<const byte *>(dfield_get_data(dfield));
 
 	if (dfield_is_null(dfield)) {
 		fputs("NULL", stderr);
@@ -368,7 +368,7 @@ dfield_print_also_hex(
 		ib_id_t	id;
 	case DATA_INT:
 		switch (len) {
-			ulint	val;
+			ulint	val= 0;
 		case 1:
 			val = mach_read_from_1(data);
 
@@ -484,7 +484,7 @@ dfield_print_also_hex(
 			break;
 		}
 
-		data = dfield_get_data(dfield);
+		data = static_cast<const byte *>(dfield_get_data(dfield));
 		/* fall through */
 
 	case DATA_BINARY:
@@ -607,11 +607,11 @@ dtuple_convert_big_rec(
 	heap = mem_heap_create(size + dtuple_get_n_fields(entry)
 			       * sizeof(big_rec_field_t) + 1000);
 
-	vector = mem_heap_alloc(heap, sizeof(big_rec_t));
+	vector = static_cast<big_rec_t>(mem_heap_alloc(heap, sizeof(big_rec_t)));
 
 	vector->heap = heap;
-	vector->fields = mem_heap_alloc(heap, dtuple_get_n_fields(entry)
-					* sizeof(big_rec_field_t));
+	vector->fields = static_cast<big_rec_field_t *>(mem_heap_alloc(heap, dtuple_get_n_fields(entry)
+					* sizeof(big_rec_field_t)));
 
 	/* Decide which fields to shorten: the algorithm is to look for
 	a variable-length field that yields the biggest savings when
@@ -732,7 +732,7 @@ skip_field:
 		b->data = (char*) dfield_get_data(dfield) + local_prefix_len;
 
 		/* Allocate the locally stored part of the column. */
-		data = mem_heap_alloc(heap, local_len);
+		data = static_cast<unsigned char *>(mem_heap_alloc(heap, local_len));
 
 		/* Copy the local prefix. */
 		memcpy(data, dfield_get_data(dfield), local_prefix_len);

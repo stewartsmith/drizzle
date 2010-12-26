@@ -244,8 +244,8 @@ buf_LRU_drop_page_hash_for_tablespace(
 		return;
 	}
 
-	page_arr = ut_malloc(
-		sizeof(ulint) * BUF_LRU_DROP_SEARCH_HASH_SIZE);
+	page_arr = static_cast<unsigned long *>(ut_malloc(
+		sizeof(ulint) * BUF_LRU_DROP_SEARCH_HASH_SIZE));
 
 	buf_pool_mutex_enter(buf_pool);
 
@@ -952,8 +952,8 @@ loop:
 			ibool	lru;
 			page_zip_set_size(&block->page.zip, zip_size);
 
-			block->page.zip.data = buf_buddy_alloc(
-				buf_pool, zip_size, &lru);
+			block->page.zip.data = static_cast<unsigned char *>(buf_buddy_alloc(
+				buf_pool, zip_size, &lru));
 
 			UNIV_MEM_DESC(block->page.zip.data, zip_size, block);
 		} else {
@@ -1513,7 +1513,7 @@ buf_LRU_free_block(
 		from the LRU list), refuse to free bpage. */
 alloc:
 		buf_pool_mutex_exit_forbid(buf_pool);
-		b = buf_buddy_alloc(buf_pool, sizeof *b, NULL);
+		b = static_cast<buf_page_t *>(buf_buddy_alloc(buf_pool, sizeof *b, NULL));
 		buf_pool_mutex_exit_allow(buf_pool);
 
 		if (UNIV_UNLIKELY(!b)) {
