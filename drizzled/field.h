@@ -239,6 +239,7 @@ public:
   virtual Item_result result_type () const=0;
   virtual Item_result cmp_type () const { return result_type(); }
   virtual Item_result cast_to_int_type () const { return result_type(); }
+
   /**
      Check whether a field type can be partially indexed by a key.
 

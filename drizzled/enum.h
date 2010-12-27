@@ -1066,10 +1066,11 @@ enum drizzled_error_code {
   ER_INVALID_CAST_TO_SIGNED,
   ER_INVALID_CAST_TO_UNSIGNED,
   ER_INVALID_BOOLEAN_VALUE,
-
+  ER_INVALID_CAST_TO_BOOLEAN,
+  
   // Leave ER_INVALID_BOOLEAN_VALUE as LAST, and force people to use tags
   // instead of numbers in error messages in test.
-  ER_ERROR_LAST= ER_INVALID_BOOLEAN_VALUE
+  ER_ERROR_LAST= ER_INVALID_CAST_TO_BOOLEAN
 };
 
 enum drizzle_exit_codes {

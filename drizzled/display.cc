@@ -76,11 +76,13 @@ static const std::string ROW_ITEM("ROW_ITEM");
 static const std::string CACHE_ITEM("CACHE_ITEM");
 static const std::string TYPE_HOLDER("TYPE_HOLDER");
 static const std::string PARAM_ITEM("PARAM_ITEM");
+static const std::string BOOLEAN_ITEM("BOOLEAN_ITEM");
 static const std::string DECIMAL_ITEM("DECIMAL_ITEM");
 
 static const std::string ITEM_CAST_SIGNED("ITEM_CAST_SIGNED");
 static const std::string ITEM_CAST_UNSIGNED("ITEM_CAST_UNSIGNED");
 static const std::string ITEM_CAST_BINARY("ITEM_CAST_BINARY");
+static const std::string ITEM_CAST_BOOLEAN("ITEM_CAST_BOOLEAN");
 static const std::string ITEM_CAST_DATE("ITEM_CAST_DATE");
 static const std::string ITEM_CAST_TIME("ITEM_CAST_TIME");
 static const std::string ITEM_CAST_DATETIME("ITEM_CAST_DATETIME");
@@ -100,6 +102,8 @@ const std::string &type(drizzled::Cast_target type)
     return ITEM_CAST_UNSIGNED;
   case drizzled::ITEM_CAST_BINARY:
     return ITEM_CAST_BINARY;
+  case drizzled::ITEM_CAST_BOOLEAN:
+    return ITEM_CAST_BOOLEAN;
   case drizzled::ITEM_CAST_DATE:
     return ITEM_CAST_DATE;
   case drizzled::ITEM_CAST_TIME:
@@ -189,6 +193,8 @@ const std::string &type(drizzled::Item::Type type)
     return TYPE_HOLDER;
   case drizzled::Item::PARAM_ITEM :
     return PARAM_ITEM;
+  case drizzled::Item::BOOLEAN_ITEM :
+    return BOOLEAN_ITEM;
   case drizzled::Item::DECIMAL_ITEM :
     return DECIMAL_ITEM;
   }
