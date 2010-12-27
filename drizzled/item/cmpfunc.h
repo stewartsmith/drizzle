@@ -34,6 +34,7 @@
 #include "drizzled/session.h"
 #include "drizzled/common.h"
 #include "drizzled/qsort_cmp.h"
+#include "drizzled/item/function/boolean.h"
 
 namespace drizzled
 {
@@ -125,25 +126,13 @@ public:
   friend class Item_func;
 };
 
-class Item_bool_func :public Item_int_func
-{
-public:
-  Item_bool_func() :Item_int_func() {}
-  Item_bool_func(Item *a) :Item_int_func(a) {}
-  Item_bool_func(Item *a,Item *b) :Item_int_func(a,b) {}
-  Item_bool_func(Session *session, Item_bool_func *item) :Item_int_func(session, item) {}
-  bool is_bool_func() { return 1; }
-  void fix_length_and_dec() { decimals=0; max_length=1; }
-  uint32_t decimal_precision() const { return 1; }
-};
-
 
 /**
   Abstract Item class, to represent <code>X IS [NOT] (TRUE | FALSE)</code>
   boolean predicates.
 */
 
-class Item_func_truth : public Item_bool_func
+class Item_func_truth : public item::function::Boolean
 {
 public:
   virtual bool val_bool();
@@ -153,7 +142,7 @@ public:
 
 protected:
   Item_func_truth(Item *a, bool a_value, bool a_affirmative)
-  : Item_bool_func(a), value(a_value), affirmative(a_affirmative)
+  : item::function::Boolean(a), value(a_value), affirmative(a_affirmative)
   {}
 
   ~Item_func_truth()
@@ -242,7 +231,7 @@ class Item_cache;
     placed into a separate class called 'Item_in_optimizer'.
 */
 
-class Item_in_optimizer: public Item_bool_func
+class Item_in_optimizer: public item::function::Boolean
 {
 protected:
   Item_cache *cache;
@@ -256,7 +245,7 @@ protected:
   bool result_for_null_param;
 public:
   Item_in_optimizer(Item *a, Item_in_subselect *b):
-    Item_bool_func(a, reinterpret_cast<Item *>(b)), cache(0),
+    item::function::Boolean(a, reinterpret_cast<Item *>(b)), cache(0),
     save_cache(0), result_for_null_param(UNKNOWN)
   { with_subselect= true; }
   bool fix_fields(Session *, Item **);
@@ -388,10 +377,10 @@ public:
   { return true; }
 };
 
-class Item_func_not :public Item_bool_func
+class Item_func_not :public item::function::Boolean
 {
 public:
-  Item_func_not(Item *a) :Item_bool_func(a) {}
+  Item_func_not(Item *a) :item::function::Boolean(a) {}
   int64_t val_int();
   enum Functype functype() const { return NOT_FUNC; }
   const char *func_name() const { return "not"; }
@@ -430,11 +419,11 @@ class Item_maxmin_subselect;
    - To wrap condition that is pushed down into subquery
 */
 
-class Item_func_trig_cond: public Item_bool_func
+class Item_func_trig_cond: public item::function::Boolean
 {
   bool *trig_var;
 public:
-  Item_func_trig_cond(Item *a, bool *f) : Item_bool_func(a) { trig_var= f; }
+  Item_func_trig_cond(Item *a, bool *f) : item::function::Boolean(a) { trig_var= f; }
   int64_t val_int() { return *trig_var ? args[0]->val_int() : 1; }
   enum Functype functype() const { return TRIG_COND_FUNC; };
   const char *func_name() const { return "trigcond"; };
@@ -1286,12 +1275,12 @@ public:
 
 /* Functions used by where clause */
 
-class Item_func_isnull :public Item_bool_func
+class Item_func_isnull :public item::function::Boolean
 {
 protected:
   int64_t cached_value;
 public:
-  Item_func_isnull(Item *a) :Item_bool_func(a) {}
+  Item_func_isnull(Item *a) :item::function::Boolean(a) {}
   int64_t val_int();
   enum Functype functype() const { return ISNULL_FUNC; }
   void fix_length_and_dec()
@@ -1353,11 +1342,11 @@ public:
 };
 
 
-class Item_func_isnotnull :public Item_bool_func
+class Item_func_isnotnull :public item::function::Boolean
 {
   bool abort_on_null;
 public:
-  Item_func_isnotnull(Item *a) :Item_bool_func(a), abort_on_null(0) {}
+  Item_func_isnotnull(Item *a) :item::function::Boolean(a), abort_on_null(0) {}
   int64_t val_int();
   enum Functype functype() const { return ISNOTNULL_FUNC; }
   void fix_length_and_dec()
@@ -1417,7 +1406,7 @@ public:
 
 typedef class Item COND;
 
-class Item_cond :public Item_bool_func
+class Item_cond :public item::function::Boolean
 {
 protected:
   List<Item> list;
@@ -1429,17 +1418,17 @@ public:
   using Item::split_sum_func;
 
   /* Item_cond() is only used to create top level items */
-  Item_cond(): Item_bool_func(), abort_on_null(1)
+  Item_cond(): item::function::Boolean(), abort_on_null(1)
   { const_item_cache=0; }
   Item_cond(Item *i1,Item *i2)
-    :Item_bool_func(), abort_on_null(0)
+    :item::function::Boolean(), abort_on_null(0)
   {
     list.push_back(i1);
     list.push_back(i2);
   }
   Item_cond(Session *session, Item_cond *item);
   Item_cond(List<Item> &nlist)
-    :Item_bool_func(), list(nlist), abort_on_null(0) {}
+    :item::function::Boolean(), list(nlist), abort_on_null(0) {}
   bool add(Item *item) { return list.push_back(item); }
   bool add_at_head(Item *item) { return list.push_front(item); }
   void add_at_head(List<Item> *nlist) { list.prepand(nlist); }
@@ -1543,16 +1532,23 @@ public:
   object represents f1=f2= ...=fn to the projection of known fields fi1=...=fik.
 */
 
-class Item_equal: public Item_bool_func
+class Item_equal: public item::function::Boolean
 {
   List<Item_field> fields; /* list of equal field items                    */
   Item *const_item;        /* optional constant item equal to fields items */
   cmp_item *eval_item;
   bool cond_false;
+
 public:
-  inline Item_equal()
-    : Item_bool_func(), const_item(0), eval_item(0), cond_false(0)
-  { const_item_cache=0 ;}
+  inline Item_equal() :
+    item::function::Boolean(),
+    const_item(0),
+    eval_item(0),
+    cond_false(0)
+  {
+    const_item_cache=0;
+  }
+
   Item_equal(Item_field *f1, Item_field *f2);
   Item_equal(Item *c, Item_field *f);
   Item_equal(Item_equal *item_equal);

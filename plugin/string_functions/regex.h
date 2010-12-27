@@ -21,7 +21,7 @@
 #ifndef PLUGIN_STRING_FUNCTIONS_REGEX_H
 #define PLUGIN_STRING_FUNCTIONS_REGEX_H
 
-#include <drizzled/item/cmpfunc.h>
+#include <drizzled/item/function/boolean.h>
 #include <boost/regex.hpp>
 
 namespace drizzled
@@ -29,7 +29,7 @@ namespace drizzled
 namespace string_functions
 {
 
-class Regex :public Item_bool_func
+class Regex :public drizzled::item::function::Boolean
 {
   bool is_negative;
   boost::regex re;

@@ -2,6 +2,7 @@
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2010 Brian Aker
+ *  Copyright (C) 2010 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,58 +20,58 @@
  */
 
 
-#ifndef PLUGIN_UTILITY_FUNCTIONS_EXECUTE_H
-#define PLUGIN_UTILITY_FUNCTIONS_EXECUTE_H
+#ifndef DRIZZLED_ITEM_FUNCTION_BOOLEAN_H
+#define DRIZZLED_ITEM_FUNCTION_BOOLEAN_H
 
-#include <drizzled/item/function/boolean.h>
-#include <drizzled/execute.h>
-#include <iostream>
+#include "drizzled/function/math/int.h"
 
 namespace drizzled
 {
 
-namespace utility_functions
+namespace item
 {
 
-class Execute :public drizzled::item::function::Boolean
+namespace function
 {
-  drizzled::String _res;
-  drizzled::Execute execute;
 
+class Boolean :public Item_int_func
+{
 public:
-  Execute() :
-    drizzled::item::function::Boolean(),
-    execute(getSession(), false)
-  {
-    unsigned_flag= true;
-  }
+  Boolean() :
+    Item_int_func()
+  {}
 
-  bool val_bool();
+  Boolean(Item *a) :
+    Item_int_func(a)
+  {}
 
-  int64_t val_int()
+  Boolean(Item *a,Item *b) :
+    Item_int_func(a,b)
+  {}
+
+  Boolean(Session *session, Boolean *item) :
+    Item_int_func(session, item)
+  {}
+
+  bool is_bool_func()
   {
-    return val_bool();
+    return true;
   }
-  const char *func_name() const { return "execute"; }
-  const char *fully_qualified_func_name() const { return "execute()"; }
 
   void fix_length_and_dec()
   {
+    decimals= 0;
     max_length= 1;
   }
 
-  bool check_argument_count(int n)
+  uint32_t decimal_precision() const
   {
-    if (n == 2)
-    {
-      execute.setWait();
-    }
-
-    return (n == 1 or n == 2);
+    return 1;
   }
 };
 
-} /* namespace utility_functions */
+} /* namespace function */
+} /* namespace item */
 } /* namespace drizzled */
 
-#endif /* PLUGIN_UTILITY_FUNCTIONS_EXECUTE_H */
+#endif /* DRIZZLED_ITEM_FUNCTION_BOOLEAN_H */

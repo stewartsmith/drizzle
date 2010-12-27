@@ -1615,7 +1615,7 @@ void Item_in_optimizer::keep_top_level_cache()
 
 void Item_in_optimizer::cleanup()
 {
-  Item_bool_func::cleanup();
+  item::function::Boolean::cleanup();
   if (!save_cache)
     cache= 0;
   return;
@@ -3853,7 +3853,7 @@ int64_t Item_func_in::val_int()
 
 
 Item_cond::Item_cond(Session *session, Item_cond *item)
-  :Item_bool_func(session, item),
+  :item::function::Boolean(session, item),
    abort_on_null(item->abort_on_null),
    and_tables_cache(item->and_tables_cache)
 {
@@ -4886,7 +4886,7 @@ Item *Item_bool_rowready_func2::negated_item()
 }
 
 Item_equal::Item_equal(Item_field *f1, Item_field *f2)
-  : Item_bool_func(), const_item(0), eval_item(0), cond_false(0)
+  : item::function::Boolean(), const_item(0), eval_item(0), cond_false(0)
 {
   const_item_cache= 0;
   fields.push_back(f1);
@@ -4894,7 +4894,7 @@ Item_equal::Item_equal(Item_field *f1, Item_field *f2)
 }
 
 Item_equal::Item_equal(Item *c, Item_field *f)
-  : Item_bool_func(), eval_item(0), cond_false(0)
+  : item::function::Boolean(), eval_item(0), cond_false(0)
 {
   const_item_cache= 0;
   fields.push_back(f);
@@ -4903,7 +4903,7 @@ Item_equal::Item_equal(Item *c, Item_field *f)
 
 
 Item_equal::Item_equal(Item_equal *item_equal)
-  : Item_bool_func(), eval_item(0), cond_false(0)
+  : item::function::Boolean(), eval_item(0), cond_false(0)
 {
   const_item_cache= 0;
   List_iterator_fast<Item_field> li(item_equal->fields);
