@@ -36,7 +36,14 @@ AC_DEFUN([PANDORA_TEST_VC_DIR],[
 ])
 
 AC_DEFUN([PANDORA_BUILDING_FROM_VC],[
-  m4_syscmd(PANDORA_TEST_VC_DIR [
+  m4_syscmd(PANDORA_TEST_VC_DIR
+    m4_if(PCT_NO_VC_CHANGELOG,yes,[
+      vc_changelog=no
+      ],[
+      vc_changelog=yes
+      ])
+  
+    [
 
     PANDORA_RELEASE_DATE=`date +%Y.%m`
     PANDORA_RELEASE_NODOTS_DATE=`date +%Y%m`
