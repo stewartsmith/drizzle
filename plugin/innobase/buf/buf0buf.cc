@@ -4905,8 +4905,8 @@ buf_print_io_instance(
 	fprintf(file,
 		"LRU len: %lu, unzip_LRU len: %lu\n"
 		"I/O sum[%lu]:cur[%lu], unzip sum[%lu]:cur[%lu]\n",
-		UT_LIST_GET_LEN(buf_pool->LRU),
-		UT_LIST_GET_LEN(buf_pool->unzip_LRU),
+		static_cast<ulint>(UT_LIST_GET_LEN(buf_pool->LRU)),
+		static_cast<ulint>(UT_LIST_GET_LEN(buf_pool->unzip_LRU)),
 		buf_LRU_stat_sum.io, buf_LRU_stat_cur.io,
 		buf_LRU_stat_sum.unzip, buf_LRU_stat_cur.unzip);
 

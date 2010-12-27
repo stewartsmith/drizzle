@@ -1931,7 +1931,7 @@ srv_printf_innodb_monitor(
 		(ulong) srv_conc_n_waiting_threads);
 
 	fprintf(file, "%lu read views open inside InnoDB\n",
-		UT_LIST_GET_LEN(trx_sys->view_list));
+		static_cast<ulint>(UT_LIST_GET_LEN(trx_sys->view_list)));
 
 	n_reserved = fil_space_get_n_reserved_extents(0);
 	if (n_reserved > 0) {

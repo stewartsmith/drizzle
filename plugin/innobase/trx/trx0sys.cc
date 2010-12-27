@@ -1595,7 +1595,7 @@ trx_sys_close(void)
 			"InnoDB: Error: all read views were not closed"
 			" before shutdown:\n"
 			"InnoDB: %lu read views open \n",
-			UT_LIST_GET_LEN(trx_sys->view_list) - 1);
+			static_cast<ulint>(UT_LIST_GET_LEN(trx_sys->view_list)) - 1);
 	}
 
 	sess_close(trx_dummy_sess);
