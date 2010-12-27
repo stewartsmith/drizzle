@@ -53,7 +53,7 @@ bool Item_str_func::fix_fields(Session *session, Item **ref)
 }
 
 
-my_decimal *Item_str_func::val_decimal(my_decimal *decimal_value)
+type::Decimal *Item_str_func::val_decimal(type::Decimal *decimal_value)
 {
   assert(fixed == 1);
   char buff[64];
@@ -61,7 +61,7 @@ my_decimal *Item_str_func::val_decimal(my_decimal *decimal_value)
   res= val_str(&tmp);
   if (!res)
     return 0;
-  (void)str2my_decimal(E_DEC_FATAL_ERROR, (char*) res->ptr(),
+  (void)str2_class_decimal(E_DEC_FATAL_ERROR, (char*) res->ptr(),
                        res->length(), res->charset(), decimal_value);
   return decimal_value;
 }

@@ -39,6 +39,9 @@ public:
   {}
 
   bool execute();
+
+private:
+  bool kill(session_id_t id, bool only_kill_query);
 };
 
 } /* namespace statement */

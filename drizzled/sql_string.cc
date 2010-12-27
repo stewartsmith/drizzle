@@ -819,6 +819,17 @@ bool check_if_only_end_space(const CHARSET_INFO * const cs, char *str,
   return str+ cs->cset->scan(cs, str, end, MY_SEQ_SPACES) == end;
 }
 
+std::ostream& operator<<(std::ostream& output, const String &str)
+{
+  output << "String:(";
+  output <<  const_cast<String&>(str).c_str();
+  output << ", ";
+  output << str.length();
+  output << ")";
+
+  return output;  // for multiple << operators.
+}
+
 } /* namespace drizzled */
 
 bool operator==(const drizzled::String &s1, const drizzled::String &s2)

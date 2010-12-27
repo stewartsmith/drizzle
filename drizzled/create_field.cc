@@ -31,6 +31,7 @@
 #include "drizzled/field/str.h"
 #include "drizzled/field/num.h"
 #include "drizzled/field/blob.h"
+#include "drizzled/field/boolean.h"
 #include "drizzled/field/enum.h"
 #include "drizzled/field/null.h"
 #include "drizzled/field/date.h"
@@ -142,7 +143,7 @@ void CreateField::create_length_to_internal_length(void)
       break;
     case DRIZZLE_TYPE_DECIMAL:
       key_length= pack_length=
-        my_decimal_get_binary_size(my_decimal_length_to_precision(length,
+        class_decimal_get_binary_size(class_decimal_length_to_precision(length,
                   decimals,
                   flags &
                   UNSIGNED_FLAG),
@@ -248,7 +249,7 @@ bool CreateField::init(Session *,
     case DRIZZLE_TYPE_NULL:
       break;
     case DRIZZLE_TYPE_DECIMAL:
-      my_decimal_trim(&length, &decimals);
+      class_decimal_trim(&length, &decimals);
       if (length > DECIMAL_MAX_PRECISION)
       {
         my_error(ER_TOO_BIG_PRECISION, MYF(0), length, fld_name,
@@ -260,8 +261,8 @@ bool CreateField::init(Session *,
         my_error(ER_M_BIGGER_THAN_D, MYF(0), fld_name);
         return(true);
       }
-      length= my_decimal_precision_to_length(length, decimals, fld_type_modifier & UNSIGNED_FLAG);
-      pack_length= my_decimal_get_binary_size(length, decimals);
+      length= class_decimal_precision_to_length(length, decimals, fld_type_modifier & UNSIGNED_FLAG);
+      pack_length= class_decimal_get_binary_size(length, decimals);
       break;
     case DRIZZLE_TYPE_VARCHAR:
       /*
@@ -355,6 +356,9 @@ bool CreateField::init(Session *,
       break;
     case DRIZZLE_TYPE_UUID:
       length= field::Uuid::max_string_length();
+      break;
+    case DRIZZLE_TYPE_BOOLEAN:
+      length= field::Boolean::max_string_length();
       break;
     case DRIZZLE_TYPE_DATETIME:
       length= DateTime::MAX_STRING_LENGTH;

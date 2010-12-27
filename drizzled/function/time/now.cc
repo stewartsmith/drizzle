@@ -40,7 +40,7 @@ void Item_func_now::fix_length_and_dec()
   decimals= DATETIME_DEC;
   collation.set(&my_charset_bin);
   
-  memset(&ltime, 0, sizeof(DRIZZLE_TIME));
+  memset(&ltime, 0, sizeof(type::Time));
 
   ltime.time_type= DRIZZLE_TIMESTAMP_DATETIME;
 
@@ -52,10 +52,10 @@ void Item_func_now::fix_length_and_dec()
 }
 
 /**
-    Converts current time in time_t to DRIZZLE_TIME represenatation for local
+    Converts current time in time_t to type::Time represenatation for local
     time zone. Defines time zone (local) used for whole NOW function.
 */
-void Item_func_now_local::store_now_in_TIME(DRIZZLE_TIME *now_time)
+void Item_func_now_local::store_now_in_TIME(type::Time *now_time)
 {
   Session *session= current_session;
   time_t tmp= session->query_start();
@@ -72,10 +72,10 @@ void Item_func_now_local::store_now_in_TIME(DRIZZLE_TIME *now_time)
 
 
 /**
-    Converts current time in time_t to DRIZZLE_TIME represenatation for UTC
+    Converts current time in time_t to type::Time represenatation for UTC
     time zone. Defines time zone (UTC) used for whole UTC_TIMESTAMP function.
 */
-void Item_func_now_utc::store_now_in_TIME(DRIZZLE_TIME *now_time)
+void Item_func_now_utc::store_now_in_TIME(type::Time *now_time)
 {
   Session *session= current_session;
   time_t tmp= session->query_start();
@@ -96,7 +96,7 @@ bool Item_func_now::get_temporal(DateTime &to)
   return true;
 }
 
-bool Item_func_now::get_date(DRIZZLE_TIME *res,
+bool Item_func_now::get_date(type::Time *res,
                              uint32_t )
 {
   *res= ltime;

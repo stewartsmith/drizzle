@@ -282,7 +282,7 @@ public:
     statement then the variable contains TIMESTAMP_NO_AUTO_SET (i.e. 0).
 
     Value of this variable is set for each statement in open_table() and
-    if needed cleared later in statement processing code (see mysql_update()
+    if needed cleared later in statement processing code (see update_query()
     as example).
   */
   timestamp_auto_set_type timestamp_field_type;

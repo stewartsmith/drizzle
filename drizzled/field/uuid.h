@@ -24,7 +24,7 @@
 #include <drizzled/field.h>
 #include <string>
 
-#include "drizzled/field/uuid_st.h"
+#include "drizzled/type/uuid.h"
 
 namespace drizzled
 {
@@ -45,9 +45,9 @@ public:
   enum_field_types type() const { return DRIZZLE_TYPE_UUID; }
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_BINARY; }
   bool zero_pack() const { return 0; }
-  int  reset(void) { memset(ptr, 0, uuid_st::LENGTH); return 0; }
-  uint32_t pack_length() const { return uuid_st::LENGTH; }
-  uint32_t key_length() const { return uuid_st::LENGTH; }
+  int  reset(void) { memset(ptr, 0, type::Uuid::LENGTH); return 0; }
+  uint32_t pack_length() const { return type::Uuid::LENGTH; }
+  uint32_t key_length() const { return type::Uuid::LENGTH; }
 
   int store(const char *to, uint32_t length, const CHARSET_INFO * const charset);
   int store(int64_t nr, bool unsigned_val);
@@ -55,19 +55,19 @@ public:
   int64_t val_int();
   String *val_str(String*,String *);
   void sql_type(drizzled::String&) const;
-  int store_decimal(const drizzled::my_decimal*);
+  int store_decimal(const drizzled::type::Decimal*);
 
   Item_result result_type () const { return STRING_RESULT; }
   int cmp(const unsigned char*, const unsigned char*);
   void sort_string(unsigned char*, uint32_t);
-  uint32_t max_display_length() { return uuid_st::DISPLAY_LENGTH; }
+  uint32_t max_display_length() { return type::Uuid::DISPLAY_LENGTH; }
 
   int  store(double ) { return 0; }
   inline String *val_str(String *str) { return val_str(str, str); }
   uint32_t size_of() const { return sizeof(*this); }
 
-  bool get_date(DRIZZLE_TIME *ltime, uint32_t);
-  bool get_time(DRIZZLE_TIME *ltime);
+  bool get_date(type::Time *ltime, uint32_t);
+  bool get_time(type::Time *ltime);
 
 #ifdef NOT_YET
   void generate();
@@ -76,7 +76,7 @@ public:
 
   static size_t max_string_length()
   {
-    return uuid_st::LENGTH;
+    return type::Uuid::LENGTH;
   }
 };
 

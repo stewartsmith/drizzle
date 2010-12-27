@@ -78,7 +78,7 @@ String* Item_user_var_as_out_param::val_str(String *)
   return 0;
 }
 
-my_decimal* Item_user_var_as_out_param::val_decimal(my_decimal *)
+type::Decimal* Item_user_var_as_out_param::val_decimal(type::Decimal *)
 {
   assert(0);
   return 0;

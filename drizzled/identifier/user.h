@@ -39,6 +39,7 @@ class User {
 public:
   typedef boost::shared_ptr<User> shared_ptr;
   typedef boost::shared_ptr<const User> const_shared_ptr;
+  typedef const User& const_reference;
   static shared_ptr make_shared();
 
   enum PasswordType

@@ -32,7 +32,7 @@ public:
   Item_func_mod(Item *a,Item *b) :Item_num_op(a,b) {}
   int64_t int_op();
   double real_op();
-  my_decimal *decimal_op(my_decimal *);
+  type::Decimal *decimal_op(type::Decimal *);
   const char *func_name() const { return "%"; }
   void result_precision();
   void fix_length_and_dec();

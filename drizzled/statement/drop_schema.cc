@@ -64,7 +64,7 @@ bool statement::DropSchema::execute()
   }
   else
   {
-    res= mysql_rm_db(session, schema_identifier, drop_if_exists);
+    res= rm_db(session, schema_identifier, drop_if_exists);
     if (unlikely(plugin::EventObserver::afterDropDatabase(*session, path, res)))
     {
       my_error(ER_EVENT_OBSERVER_PLUGIN, MYF(0), path.c_str());

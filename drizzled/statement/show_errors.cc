@@ -34,7 +34,7 @@ bool statement::ShowErrors::execute()
 {
   bitset<DRIZZLE_ERROR::NUM_ERRORS> warning_levels;
   warning_levels.set(DRIZZLE_ERROR::WARN_LEVEL_ERROR);
-  bool res= mysqld_show_warnings(session, warning_levels);
+  bool res= show_warnings(session, warning_levels);
   return res;
 }
 

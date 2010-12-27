@@ -324,7 +324,9 @@ Instance::~Instance()
     }
 
     TableIdentifier identifier(getShare()->getSchemaName(), getShare()->getTableName(), getShare()->getTableName());
-    getShare()->getEngine()->doDropTable(*in_use, identifier);
+    plugin::StorageEngine::dropTable(*in_use,
+                                     *getShare()->getEngine(),
+                                     identifier);
 
     delete cursor;
   }

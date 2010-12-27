@@ -163,7 +163,7 @@ bool statement::RenameTable::rename(TableList *ren_table,
     return 1; // This can't be skipped
   }
 
-  rc= mysql_rename_table(*session, engine, old_identifier, new_identifier);
+  rc= rename_table(*session, engine, old_identifier, new_identifier);
   if (rc && ! skip_error)
     return true;
 

@@ -311,6 +311,7 @@ enum enum_duplicates
 
 enum drizzled_error_code {
 
+  EE_OK=0,
   EE_ERROR_FIRST=1,
   EE_CANTCREATEFILE,
   EE_READ,
@@ -1060,8 +1061,15 @@ enum drizzled_error_code {
   ER_ADMIN_ACCESS,
   ER_INVALID_UUID_VALUE,
   ER_INVALID_UUID_TIME,
+  ER_CORRUPT_TABLE_DEFINITION_ENUM,
+  ER_CORRUPT_TABLE_DEFINITION_UNKNOWN_COLLATION,
+  ER_INVALID_CAST_TO_SIGNED,
+  ER_INVALID_CAST_TO_UNSIGNED,
+  ER_INVALID_BOOLEAN_VALUE,
 
-  ER_ERROR_LAST= ER_INVALID_UUID_TIME
+  // Leave ER_INVALID_BOOLEAN_VALUE as LAST, and force people to use tags
+  // instead of numbers in error messages in test.
+  ER_ERROR_LAST= ER_INVALID_BOOLEAN_VALUE
 };
 
 enum drizzle_exit_codes {

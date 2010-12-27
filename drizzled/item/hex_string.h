@@ -39,7 +39,7 @@ public:
   int64_t val_int();
   bool basic_const_item() const { return 1; }
   String *val_str(String*) { assert(fixed == 1); return &str_value; }
-  my_decimal *val_decimal(my_decimal *);
+  type::Decimal *val_decimal(type::Decimal *);
   int save_in_field(Field *field, bool no_conversions);
   enum Item_result result_type () const { return STRING_RESULT; }
   enum Item_result cast_to_int_type() const { return INT_RESULT; }

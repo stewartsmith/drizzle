@@ -76,11 +76,11 @@ int64_t Item_cache_str::val_int()
     return (int64_t)0;
 }
 
-my_decimal *Item_cache_str::val_decimal(my_decimal *decimal_val)
+type::Decimal *Item_cache_str::val_decimal(type::Decimal *decimal_val)
 {
   assert(fixed == 1);
   if (value)
-    string2my_decimal(E_DEC_FATAL_ERROR, value, decimal_val);
+    string2_class_decimal(E_DEC_FATAL_ERROR, value, decimal_val);
   else
     decimal_val= 0;
   return decimal_val;

@@ -64,7 +64,7 @@ public:
     return tmp_table_field_from_field_type(table, 0);
   }
   bool result_as_int64_t() { return true; }
-  my_decimal *val_decimal(my_decimal *decimal_value)
+  type::Decimal *val_decimal(type::Decimal *decimal_value)
   {
     assert(fixed == 1);
     return  val_decimal_from_date(decimal_value);
@@ -92,7 +92,7 @@ public:
   }
   bool result_as_int64_t() { return true; }
   double val_real() { return (double) val_int(); }
-  my_decimal *val_decimal(my_decimal *decimal_value)
+  type::Decimal *val_decimal(type::Decimal *decimal_value)
   {
     assert(fixed == 1);
     return  val_decimal_from_date(decimal_value);

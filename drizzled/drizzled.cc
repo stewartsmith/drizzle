@@ -155,7 +155,6 @@ namespace dpo=drizzled::program_options;
 namespace drizzled
 {
 
-#define mysqld_charset &my_charset_utf8_general_ci
 inline void setup_fpu()
 {
 #if defined(__FreeBSD__) && defined(HAVE_IEEEFP_H)
@@ -321,7 +320,7 @@ const char *in_left_expr_name= "<left expr>";
 const char *in_additional_cond= "<IN COND>";
 const char *in_having_cond= "<IN HAVING>";
 
-my_decimal decimal_zero;
+type::Decimal decimal_zero;
 /* classes for comparation parsing/processing */
 
 FILE *stderror_file=0;
@@ -475,7 +474,7 @@ void close_connections(void)
       break;
     }
     /* Close before unlock, avoiding crash. See LP bug#436685 */
-    list.front()->client->close();
+    list.front()->getClient()->close();
   }
 }
 
@@ -563,7 +562,7 @@ passwd *check_user(const char *user)
   {
     // Allow a numeric uid to be used
     const char *pos;
-    for (pos= user; my_isdigit(mysqld_charset,*pos); pos++) ;
+    for (pos= user; my_isdigit(&my_charset_utf8_general_ci,*pos); pos++) ;
     if (*pos)                                   // Not numeric id
       goto err;
     if (!(tmp_user_info= getpwuid(atoi(user))))
@@ -627,6 +626,14 @@ static void set_root(const char *path)
     Session::unlink()
     session		 Thread handler
 */
+
+void drizzled::Session::unlink(session_id_t &session_id)
+{
+  Session::shared_ptr session= session::Cache::singleton().find(session_id);
+
+  if (session)
+    unlink(session);
+}
 
 void drizzled::Session::unlink(Session::shared_ptr &session)
 {
@@ -1105,7 +1112,7 @@ int init_common_variables(int argc, char **argv, module::Registry &plugins)
 {
   time_t curr_time;
   umask(((~internal::my_umask) & 0666));
-  my_decimal_set_zero(&decimal_zero); // set decimal_zero constant;
+  class_decimal_set_zero(&decimal_zero); // set decimal_zero constant;
   tzset();			// Set tzname
 
   curr_time= time(NULL);

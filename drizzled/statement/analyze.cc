@@ -33,7 +33,7 @@ bool statement::Analyze::execute()
   TableList *all_tables= session->lex->query_tables;
   assert(first_table == all_tables && first_table != 0);
   Select_Lex *select_lex= &session->lex->select_lex;
-  bool res= mysql_analyze_table(session, first_table, &check_opt);
+  bool res= analyze_table(session, first_table, &check_opt);
   /* ! we write after unlocking the table */
   write_bin_log(session, *session->getQueryString());
   select_lex->table_list.first= (unsigned char*) first_table;

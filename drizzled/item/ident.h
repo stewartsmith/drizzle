@@ -92,7 +92,7 @@ public:
   double val_real();
   int64_t val_int();
   String *val_str(String *str);
-  my_decimal *val_decimal(my_decimal *dec);
+  type::Decimal *val_decimal(type::Decimal *dec);
   void make_field(SendField *tmp_field);
 };
 

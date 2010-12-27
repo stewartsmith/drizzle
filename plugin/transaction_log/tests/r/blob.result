@@ -19,12 +19,6 @@ UPDATE t2 SET padding = NULL WHERE padding = 'test\0you';
 DELETE FROM t2 WHERE padding IS NULL;
 DROP TABLE t1, t2;
 START TRANSACTION;
-DROP TABLE IF EXISTS `test`.`t1`;
-COMMIT;
-START TRANSACTION;
-DROP TABLE IF EXISTS `test`.`t2`;
-COMMIT;
-START TRANSACTION;
 CREATE TABLE `test`.`t1` (   `id` INT NOT NULL,   `padding` BLOB NOT NULL,   PRIMARY KEY (`id`) ) ENGINE=InnoDB COLLATE = utf8_general_ci;
 COMMIT;
 START TRANSACTION;
@@ -64,12 +58,6 @@ DROP TABLE `test`.`t2`;
 COMMIT;
 
 Generating statements for innodb replication log
-START TRANSACTION;
-DROP TABLE IF EXISTS `test`.`t1`;
-COMMIT;
-START TRANSACTION;
-DROP TABLE IF EXISTS `test`.`t2`;
-COMMIT;
 START TRANSACTION;
 CREATE TABLE `test`.`t1` (   `id` INT NOT NULL,   `padding` BLOB NOT NULL,   PRIMARY KEY (`id`) ) ENGINE=InnoDB COLLATE = utf8_general_ci;
 COMMIT;

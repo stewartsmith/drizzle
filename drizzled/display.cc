@@ -52,6 +52,7 @@ static const std::string DRIZZLE_TYPE_DECIMAL("DRIZZLE_TYPE_DECIMAL");
 static const std::string DRIZZLE_TYPE_ENUM("DRIZZLE_TYPE_ENUM"); 
 static const std::string DRIZZLE_TYPE_BLOB("DRIZZLE_TYPE_BLOB"); 
 static const std::string DRIZZLE_TYPE_UUID("DRIZZLE_TYPE_UUID"); 
+static const std::string DRIZZLE_TYPE_BOOLEAN("DRIZZLE_TYPE_BOOLEAN"); 
 
 static const std::string FIELD_ITEM("FIELD_ITEM");
 static const std::string FUNC_ITEM("FUNC_ITEM");
@@ -77,6 +78,8 @@ static const std::string TYPE_HOLDER("TYPE_HOLDER");
 static const std::string PARAM_ITEM("PARAM_ITEM");
 static const std::string DECIMAL_ITEM("DECIMAL_ITEM");
 
+static const std::string ITEM_CAST_SIGNED("ITEM_CAST_SIGNED");
+static const std::string ITEM_CAST_UNSIGNED("ITEM_CAST_UNSIGNED");
 static const std::string ITEM_CAST_BINARY("ITEM_CAST_BINARY");
 static const std::string ITEM_CAST_DATE("ITEM_CAST_DATE");
 static const std::string ITEM_CAST_TIME("ITEM_CAST_TIME");
@@ -91,6 +94,10 @@ const std::string &type(drizzled::Cast_target type)
 {
   switch (type)
   {
+  case drizzled::ITEM_CAST_SIGNED:
+    return ITEM_CAST_SIGNED;
+  case drizzled::ITEM_CAST_UNSIGNED:
+    return ITEM_CAST_UNSIGNED;
   case drizzled::ITEM_CAST_BINARY:
     return ITEM_CAST_BINARY;
   case drizzled::ITEM_CAST_DATE:
@@ -221,6 +228,8 @@ const std::string &type(drizzled::enum_field_types type)
     return DRIZZLE_TYPE_BLOB;
   case drizzled::DRIZZLE_TYPE_UUID : 
     return DRIZZLE_TYPE_UUID;
+  case drizzled::DRIZZLE_TYPE_BOOLEAN : 
+    return DRIZZLE_TYPE_BOOLEAN;
   }
 
   assert(0);

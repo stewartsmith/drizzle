@@ -101,7 +101,7 @@ Open_tables_state::Open_tables_state(uint64_t version_arg) :
 /*
   The following functions form part of the C plugin API
 */
-int mysql_tmpfile(const char *prefix)
+int tmpfile(const char *prefix)
 {
   char filename[FN_REFLEN];
   int fd = internal::create_temp_file(filename, drizzle_tmpdir.c_str(), prefix, MYF(MY_WME));
@@ -379,7 +379,7 @@ Session::~Session()
 {
   this->checkSentry();
 
-  if (client->isConnected())
+  if (client and client->isConnected())
   {
     assert(security_ctx);
     if (global_system_variables.log_warnings)
@@ -390,12 +390,15 @@ Session::~Session()
                     security_ctx->username().c_str());
     }
 
-    disconnect(0, false);
+    disconnect();
   }
 
   /* Close connection */
-  client->close();
-  delete client;
+  if (client)
+  {
+    client->close();
+    delete client;
+  }
 
   if (cleanup_done == false)
     cleanup();
@@ -537,7 +540,7 @@ bool Session::initGlobals()
 {
   if (storeGlobals())
   {
-    disconnect(ER_OUT_OF_RESOURCES, true);
+    disconnect(ER_OUT_OF_RESOURCES);
     status_var.aborted_connects++;
     return true;
   }
@@ -548,7 +551,7 @@ void Session::run()
 {
   if (initGlobals() || authenticate())
   {
-    disconnect(0, true);
+    disconnect();
     return;
   }
 
@@ -560,7 +563,7 @@ void Session::run()
       break;
   }
 
-  disconnect(0, true);
+  disconnect();
 }
 
 bool Session::schedule(Session::shared_ptr &arg)
@@ -610,11 +613,9 @@ bool Session::schedule(Session::shared_ptr &arg)
 /*
   Is this session viewable by the current user?
 */
-bool Session::isViewable() const
+bool Session::isViewable(identifier::User::const_reference user_arg) const
 {
-  return plugin::Authorization::isAuthorized(current_session->user(),
-                                             this,
-                                             false);
+  return plugin::Authorization::isAuthorized(user_arg, this, false);
 }
 
 
@@ -671,9 +672,9 @@ bool Session::checkUser(const std::string &passwd_str,
   if (not in_db.empty())
   {
     SchemaIdentifier identifier(in_db);
-    if (mysql_change_db(this, identifier))
+    if (change_db(this, identifier))
     {
-      /* mysql_change_db() has pushed the error message. */
+      /* change_db() has pushed the error message. */
       return false;
     }
   }
@@ -1510,15 +1511,15 @@ bool select_max_min_finder_subselect::cmp_int()
 bool select_max_min_finder_subselect::cmp_decimal()
 {
   Item *maxmin= ((Item_singlerow_subselect *)item)->element_index(0);
-  my_decimal cval, *cvalue= cache->val_decimal(&cval);
-  my_decimal mval, *mvalue= maxmin->val_decimal(&mval);
+  type::Decimal cval, *cvalue= cache->val_decimal(&cval);
+  type::Decimal mval, *mvalue= maxmin->val_decimal(&mval);
   if (fmax)
     return (cache->null_value && !maxmin->null_value) ||
       (!cache->null_value && !maxmin->null_value &&
-       my_decimal_cmp(cvalue, mvalue) > 0) ;
+       class_decimal_cmp(cvalue, mvalue) > 0) ;
   return (maxmin->null_value && !cache->null_value) ||
     (!cache->null_value && !maxmin->null_value &&
-     my_decimal_cmp(cvalue,mvalue) < 0);
+     class_decimal_cmp(cvalue,mvalue) < 0);
 }
 
 bool select_max_min_finder_subselect::cmp_str()
@@ -1651,7 +1652,7 @@ void mark_transaction_to_rollback(Session *session, bool all)
   }
 }
 
-void Session::disconnect(uint32_t errcode, bool should_lock)
+void Session::disconnect(enum drizzled_error_code errcode)
 {
   /* Allow any plugins to cleanup their session variables */
   plugin_sessionvar_cleanup(this);
@@ -1675,25 +1676,16 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
     }
   }
 
-  /* Close out our connection to the client */
-  if (should_lock)
-    session::Cache::singleton().mutex().lock();
-
   setKilled(Session::KILL_CONNECTION);
 
   if (client->isConnected())
   {
-    if (errcode)
+    if (errcode != EE_OK)
     {
       /*my_error(errcode, ER(errcode));*/
       client->sendError(errcode, ER(errcode));
     }
     client->close();
-  }
-
-  if (should_lock)
-  {
-    session::Cache::singleton().mutex().unlock();
   }
 }
 
@@ -1926,7 +1918,7 @@ void Session::close_thread_tables()
   /*
     Note that we need to hold table::Cache::singleton().mutex() while changing the
     open_tables list. Another thread may work on it.
-    (See: table::Cache::singleton().removeTable(), mysql_wait_completed_table())
+    (See: table::Cache::singleton().removeTable(), wait_completed_table())
     Closing a MERGE child before the parent would be fatal if the
     other thread tries to abort the MERGE lock in between.
   */
@@ -1964,9 +1956,9 @@ bool Session::openTablesLock(TableList *tables)
       return true;
     close_tables_for_reopen(&tables);
   }
-  if ((mysql_handle_derived(lex, &mysql_derived_prepare) ||
+  if ((handle_derived(lex, &derived_prepare) ||
        (
-        mysql_handle_derived(lex, &mysql_derived_filling))))
+        handle_derived(lex, &derived_filling))))
     return true;
 
   return false;

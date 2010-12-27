@@ -105,7 +105,7 @@ struct drizzle_value;
 
 /*
   SYNOPSIS
-    (*mysql_var_check_func)()
+    (*var_check_func)()
       session               thread handle
       var               dynamic variable being altered
       save              pointer to temporary storage
@@ -122,13 +122,13 @@ struct drizzle_value;
   automatically at the end of the statement.
 */
 
-typedef int (*mysql_var_check_func)(Session *session,
+typedef int (*var_check_func)(Session *session,
                                     drizzle_sys_var *var,
                                     void *save, drizzle_value *value);
 
 /*
   SYNOPSIS
-    (*mysql_var_update_func)()
+    (*var_update_func)()
       session               thread handle
       var               dynamic variable being altered
       var_ptr           pointer to dynamic variable
@@ -140,7 +140,7 @@ typedef int (*mysql_var_check_func)(Session *session,
    and persist it in the provided pointer to the dynamic variable.
    For example, strings may require memory to be allocated.
 */
-typedef void (*mysql_var_update_func)(Session *session,
+typedef void (*var_update_func)(Session *session,
                                       drizzle_sys_var *var,
                                       void *var_ptr, const void *save);
 
@@ -202,7 +202,7 @@ void notify_plugin_load(std::string in_plugin_load);
   @retval -1    error
   @retval >= 0  a file handle that can be passed to dup or internal::my_close
 */
-int mysql_tmpfile(const char *prefix);
+int tmpfile(const char *prefix);
 
 } /* namespace drizzled */
 

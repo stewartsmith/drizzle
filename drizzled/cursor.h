@@ -655,16 +655,16 @@ bool handle_select(Session *session, LEX *lex, select_result *result,
                    uint64_t setup_tables_done_option);
 void free_underlaid_joins(Session *session, Select_Lex *select);
 
-bool mysql_handle_derived(LEX *lex, bool (*processor)(Session *session,
+bool handle_derived(LEX *lex, bool (*processor)(Session *session,
                                                       LEX *lex,
                                                       TableList *table));
-bool mysql_derived_prepare(Session *session, LEX *lex, TableList *t);
-bool mysql_derived_filling(Session *session, LEX *lex, TableList *t);
+bool derived_prepare(Session *session, LEX *lex, TableList *t);
+bool derived_filling(Session *session, LEX *lex, TableList *t);
 int prepare_create_field(CreateField *sql_field,
                          uint32_t *blob_columns,
                          int *timestamps, int *timestamps_with_niladic);
 
-bool mysql_create_table(Session *session,
+bool create_table(Session *session,
                         const TableIdentifier &identifier,
                         HA_CREATE_INFO *create_info,
                         message::Table &table_proto,
@@ -672,7 +672,7 @@ bool mysql_create_table(Session *session,
                         bool tmp_table, uint32_t select_field_count,
                         bool is_if_not_exists);
 
-bool mysql_create_table_no_lock(Session *session,
+bool create_table_no_lock(Session *session,
                                 const TableIdentifier &identifier,
                                 HA_CREATE_INFO *create_info,
                                 message::Table &table_proto,
@@ -680,41 +680,41 @@ bool mysql_create_table_no_lock(Session *session,
                                 bool tmp_table, uint32_t select_field_count,
                                 bool is_if_not_exists);
 
-bool mysql_create_like_table(Session* session,
+bool create_like_table(Session* session,
                              const TableIdentifier &destination_identifier,
                              TableList* table, TableList* src_table,
                              message::Table &create_table_proto,
                              bool is_if_not_exists,
                              bool is_engine_set);
 
-bool mysql_rename_table(Session &session,
+bool rename_table(Session &session,
                         plugin::StorageEngine *base,
                         const TableIdentifier &old_identifier,
                         const TableIdentifier &new_identifier);
 
-bool mysql_prepare_update(Session *session, TableList *table_list,
+bool prepare_update(Session *session, TableList *table_list,
                           Item **conds, uint32_t order_num, Order *order);
-int mysql_update(Session *session,TableList *tables,List<Item> &fields,
+int update_query(Session *session,TableList *tables,List<Item> &fields,
                  List<Item> &values,COND *conds,
                  uint32_t order_num, Order *order, ha_rows limit,
                  enum enum_duplicates handle_duplicates, bool ignore);
-bool mysql_prepare_insert(Session *session, TableList *table_list, Table *table,
+bool prepare_insert(Session *session, TableList *table_list, Table *table,
                           List<Item> &fields, List_item *values,
                           List<Item> &update_fields,
                           List<Item> &update_values, enum_duplicates duplic,
                           COND **where, bool select_insert,
                           bool check_fields, bool abort_on_warning);
-bool mysql_insert(Session *session,TableList *table,List<Item> &fields,
+bool insert_query(Session *session,TableList *table,List<Item> &fields,
                   List<List_item> &values, List<Item> &update_fields,
                   List<Item> &update_values, enum_duplicates flag,
                   bool ignore);
 int check_that_all_fields_are_given_values(Session *session, Table *entry,
                                            TableList *table_list);
-int mysql_prepare_delete(Session *session, TableList *table_list, Item **conds);
-bool mysql_delete(Session *session, TableList *table_list, COND *conds,
+int prepare_delete(Session *session, TableList *table_list, Item **conds);
+bool delete_query(Session *session, TableList *table_list, COND *conds,
                   SQL_LIST *order, ha_rows rows, uint64_t options,
                   bool reset_auto_increment);
-bool mysql_truncate(Session& session, TableList *table_list);
+bool truncate(Session& session, TableList *table_list);
 TableShare *get_table_share(Session *session, TableList *table_list, char *key,
                              uint32_t key_length, uint32_t db_flags, int *error);
 TableShare *get_cached_table_share(const char *db, const char *table_name);

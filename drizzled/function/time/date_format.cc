@@ -35,7 +35,7 @@ namespace drizzled
   Create a formated date/time value in a string.
 */
 
-static bool make_date_time(String *format, DRIZZLE_TIME *l_time,
+static bool make_date_time(String *format, type::Time *l_time,
                            enum enum_drizzle_timestamp_type type, String *str)
 {
   char intbuff[15];
@@ -386,7 +386,7 @@ uint32_t Item_func_date_format::format_length(const String *format)
 String *Item_func_date_format::val_str(String *str)
 {
   String *format;
-  DRIZZLE_TIME l_time;
+  type::Time l_time;
   uint32_t size;
   assert(fixed == 1);
 

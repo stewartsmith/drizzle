@@ -107,9 +107,6 @@ void plugin::TableFunction::add_field(const char *label,
 
   switch (type) 
   {
-  default:
-  case TableFunction::BOOLEAN: // Currently BOOLEAN always has a value
-    field_length= 5;
   case TableFunction::STRING:
     {
       drizzled::message::Table::Field::StringFieldOptions *string_field_options;
@@ -144,6 +141,10 @@ void plugin::TableFunction::add_field(const char *label,
     break;
   case TableFunction::SIZE:
     field->set_type(drizzled::message::Table::Field::BIGINT);
+    field_constraints->set_is_unsigned(true);
+    break;
+  case TableFunction::BOOLEAN: // Currently BOOLEAN always has a value
+    field->set_type(drizzled::message::Table::Field::BOOLEAN);
     field_constraints->set_is_unsigned(true);
     break;
   }

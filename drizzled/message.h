@@ -27,6 +27,7 @@
 #include "drizzled/message/transaction.pb.h"
 #include <google/protobuf/text_format.h>
 #endif
+#include "drizzled/identifier.h"
 
 #include <boost/shared_ptr.hpp>
 
