@@ -76,6 +76,7 @@ static const std::string ROW_ITEM("ROW_ITEM");
 static const std::string CACHE_ITEM("CACHE_ITEM");
 static const std::string TYPE_HOLDER("TYPE_HOLDER");
 static const std::string PARAM_ITEM("PARAM_ITEM");
+static const std::string BOOLEAN_ITEM("BOOLEAN_ITEM");
 static const std::string DECIMAL_ITEM("DECIMAL_ITEM");
 
 static const std::string ITEM_CAST_BINARY("ITEM_CAST_BINARY");
@@ -186,6 +187,8 @@ const std::string &type(drizzled::Item::Type type)
     return TYPE_HOLDER;
   case drizzled::Item::PARAM_ITEM :
     return PARAM_ITEM;
+  case drizzled::Item::BOOLEAN_ITEM :
+    return BOOLEAN_ITEM;
   case drizzled::Item::DECIMAL_ITEM :
     return DECIMAL_ITEM;
   }

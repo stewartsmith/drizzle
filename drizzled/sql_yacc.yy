@@ -5934,8 +5934,8 @@ literal:
             $$ = new Item_null();
             YYSession->m_lip->next_state=MY_LEX_OPERATOR_OR_IDENT;
           }
-        | FALSE_SYM { $$= new Item_int((char*) "FALSE",0,1); }
-        | TRUE_SYM { $$= new Item_int((char*) "TRUE",1,1); }
+        | FALSE_SYM { $$= new item::False(); }
+        | TRUE_SYM { $$= new item::True(); }
         | HEX_NUM { $$ = new Item_hex_string($1.str, $1.length);}
         | BIN_NUM { $$= new Item_bin_string($1.str, $1.length); }
         | DATE_SYM text_literal { $$ = $2; }

@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems, Inc.
+ *  Copyright (C) 2010 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,35 +17,34 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ITEM_BASIC_CONSTANT_H
-#define DRIZZLED_ITEM_BASIC_CONSTANT_H
+#ifndef DRIZZLED_ITEM_FALSE_H
+#define DRIZZLED_ITEM_FALSE_H
 
-#include <drizzled/item.h>
+#include "drizzled/item/boolean.h"
 
 namespace drizzled
 {
 
-class Item_basic_constant :public Item
+namespace item
+{
+
+class Boolean;
+
+class False: public Boolean
 {
 public:
-  Item_basic_constant() :
-    Item()
+  False() :
+    Boolean(false)
   {
   }
 
-  /* to prevent drop fixed flag (no need parent cleanup call) */
-  void cleanup()
+  False(const char *str_arg) :
+    Boolean(str_arg, false)
   {
-    /*
-      Restore the original field name as it might not have been allocated
-      in the statement memory. If the name is auto generated, it must be
-      done again between subsequent executions of a prepared statement.
-    */
-    if (orig_name)
-      name= orig_name;
   }
 };
 
+} /* namespace item */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ITEM_BASIC_CONSTANT_H */
+#endif /* DRIZZLED_ITEM_FALSE_H */

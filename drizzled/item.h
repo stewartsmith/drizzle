@@ -111,6 +111,7 @@ public:
     ROW_ITEM, CACHE_ITEM,
     TYPE_HOLDER,
     PARAM_ITEM,
+    BOOLEAN_ITEM,
     DECIMAL_ITEM
   };
   enum traverse_order
@@ -165,6 +166,7 @@ public:
    * Alloc & destruct is done as start of select using memory::sql_alloc
    */
   Item();
+
   /**
    * Constructor used by Item_field, Item_ref & aggregate (sum) functions.
    *
@@ -179,7 +181,7 @@ public:
   virtual ~Item()
   {
 #ifdef EXTRA_DEBUG
-    name=0;
+    name= NULL;
 #endif
   }
 
