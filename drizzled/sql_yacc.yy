@@ -82,6 +82,13 @@ class Table_ident;
 class Item;
 class Item_num;
 
+namespace item
+{
+class Boolean;
+class True;
+class False;
+}
+
 
 static bool check_reserved_words(LEX_STRING *name)
 {
@@ -5942,8 +5949,8 @@ literal:
             $$ = new Item_null();
             YYSession->m_lip->next_state=MY_LEX_OPERATOR_OR_IDENT;
           }
-        | FALSE_SYM { $$= new item::False(); }
-        | TRUE_SYM { $$= new item::True(); }
+        | FALSE_SYM { $$= new drizzled::item::False(); }
+        | TRUE_SYM { $$= new drizzled::item::True(); }
         | HEX_NUM { $$ = new Item_hex_string($1.str, $1.length);}
         | BIN_NUM { $$= new Item_bin_string($1.str, $1.length); }
         | DATE_SYM text_literal { $$ = $2; }
