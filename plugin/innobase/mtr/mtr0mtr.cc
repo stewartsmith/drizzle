@@ -362,7 +362,7 @@ mtr_read_ulint(
 /*===========*/
 	const byte*	ptr,	/*!< in: pointer from where to read */
 	ulint		type,	/*!< in: MLOG_1BYTE, MLOG_2BYTES, MLOG_4BYTES */
-	mtr_t*		mtr __attribute__((unused)))
+	mtr_t*		/*mtr __attribute__((unused))*/)
 				/*!< in: mini-transaction handle */
 {
 	ut_ad(mtr->state == MTR_ACTIVE);

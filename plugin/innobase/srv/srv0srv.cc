@@ -2081,7 +2081,7 @@ UNIV_INTERN
 os_thread_ret_t
 srv_monitor_thread(
 /*===============*/
-	void*	arg __attribute__((unused)))
+	void*	/*arg __attribute__((unused))*/)
 			/*!< in: a dummy parameter required by
 			os_thread_create */
 {
@@ -2103,7 +2103,6 @@ srv_monitor_thread(
 	pfs_register_thread(srv_monitor_thread_key);
 #endif
 
-	UT_NOT_USED(arg);
 	srv_last_monitor_time = ut_time();
 	last_table_monitor_time = ut_time();
 	last_tablespace_monitor_time = ut_time();
@@ -2247,7 +2246,7 @@ UNIV_INTERN
 os_thread_ret_t
 srv_lock_timeout_thread(
 /*====================*/
-	void*	arg __attribute__((unused)))
+	void*	/*arg __attribute__((unused))*/)
 			/* in: a dummy parameter required by
 			os_thread_create */
 {
@@ -2355,7 +2354,7 @@ UNIV_INTERN
 os_thread_ret_t
 srv_error_monitor_thread(
 /*=====================*/
-	void*	arg __attribute__((unused)))
+	void*	/*arg __attribute__((unused))*/)
 			/*!< in: a dummy parameter required by
 			os_thread_create */
 {
@@ -2620,7 +2619,7 @@ UNIV_INTERN
 os_thread_ret_t
 srv_master_thread(
 /*==============*/
-	void*	arg __attribute__((unused)))
+	void*	/*arg __attribute__((unused))*/)
 			/*!< in: a dummy parameter required by
 			os_thread_create */
 {
@@ -3068,7 +3067,7 @@ suspend_thread:
 	goto loop;
 
 
-#if (!defined(__SUNPRO_C) && !defined(__SUNPRO_CC))
+#if !defined(__SUNPRO_C)
 	OS_THREAD_DUMMY_RETURN;	/* Not reached, avoid compiler warning */
 #endif
 }
@@ -3080,7 +3079,7 @@ UNIV_INTERN
 os_thread_ret_t
 srv_purge_thread(
 /*=============*/
-	void*	arg __attribute__((unused)))	/*!< in: a dummy parameter
+	void*	/*arg __attribute__((unused))*/)	/*!< in: a dummy parameter
 						required by os_thread_create */
 {
 	srv_slot_t*	slot;

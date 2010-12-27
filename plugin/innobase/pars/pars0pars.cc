@@ -1607,7 +1607,7 @@ pars_create_table(
 	sym_node_t*	table_sym,	/*!< in: table name node in the symbol
 					table */
 	sym_node_t*	column_defs,	/*!< in: list of column names */
-	void*		not_fit_in_memory __attribute__((unused)))
+	void*		/*not_fit_in_memory __attribute__((unused))*/)
 					/*!< in: a non-NULL pointer means that
 					this is a table which in simulations
 					should be simulated as not fitting
@@ -1773,7 +1773,7 @@ UNIV_INTERN
 que_fork_t*
 pars_stored_procedure_call(
 /*=======================*/
-	sym_node_t*	sym_node __attribute__((unused)))
+	sym_node_t*	/*sym_node __attribute__((unused))*/)
 					/*!< in: stored procedure name */
 {
 	ut_error;
@@ -1837,7 +1837,7 @@ UNIV_INTERN
 void
 yyerror(
 /*====*/
-	const char*	s __attribute__((unused)))
+	const char*	/*s __attribute__((unused))*/)
 				/*!< in: error message string */
 {
 	ut_ad(s);

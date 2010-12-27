@@ -461,7 +461,11 @@ srv_free_paths_and_sizes(void)
 /********************************************************************//**
 I/o-handler thread function.
 @return	OS_THREAD_DUMMY_RETURN */
-static
+extern "C"
+os_thread_ret_t
+io_handler_thread(void*	arg);
+
+extern "C"
 os_thread_ret_t
 io_handler_thread(
 /*==============*/
@@ -505,7 +509,7 @@ UNIV_INTERN
 void
 srv_normalize_path_for_win(
 /*=======================*/
-	char*	str __attribute__((unused)))	/*!< in/out: null-terminated
+	char*	/*str __attribute__((unused))*/)	/*!< in/out: null-terminated
 						character string */
 {
 #ifdef __WIN__

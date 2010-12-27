@@ -101,7 +101,6 @@ os_thread_create(
 						function */
 	os_thread_id_t*		thread_id);	/*!< out: id of the created
 						thread, or NULL */
-
 /*****************************************************************//**
 Exits the current thread. */
 UNIV_INTERN

@@ -313,7 +313,7 @@ byte*
 page_parse_create(
 /*==============*/
 	byte*		ptr,	/*!< in: buffer */
-	byte*		end_ptr __attribute__((unused)), /*!< in: buffer end */
+	byte*		/*end_ptr __attribute__((unused))*/, /*!< in: buffer end */
 	ulint		comp,	/*!< in: nonzero=compact page format */
 	buf_block_t*	block,	/*!< in: block or NULL */
 	mtr_t*		mtr)	/*!< in: mtr or NULL */

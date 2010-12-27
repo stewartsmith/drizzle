@@ -381,10 +381,10 @@ ulint
 mutex_enter_nowait_func(
 /*====================*/
 	mutex_t*	mutex,		/*!< in: pointer to mutex */
-	const char*	file_name __attribute__((unused)),
+	const char*	/*file_name __attribute__((unused))*/,
 					/*!< in: file name where mutex
 					requested */
-	ulint		line __attribute__((unused)))
+	ulint		/*line __attribute__((unused))*/)
 					/*!< in: line where requested */
 {
 	ut_ad(mutex_validate(mutex));

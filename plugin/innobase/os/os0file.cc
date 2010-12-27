@@ -1297,11 +1297,9 @@ UNIV_INTERN
 void
 os_file_set_nocache(
 /*================*/
-	int		fd		/*!< in: file descriptor to alter */
-	__attribute__((unused)),
-	const char*	file_name	/*!< in: used in the diagnostic message */
-	__attribute__((unused)),
-	const char*	operation_name __attribute__((unused)))
+	int		fd,		/*!< in: file descriptor to alter */
+	const char*	file_name,	/*!< in: used in the diagnostic message */
+	const char*	operation_name)
 					/*!< in: "open" or "create"; used in the
 					diagnostic message */
 {

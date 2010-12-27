@@ -1120,7 +1120,7 @@ byte*
 btr_parse_page_reorganize(
 /*======================*/
 	byte*		ptr,	/*!< in: buffer */
-	byte*		end_ptr __attribute__((unused)),
+	byte*		/*end_ptr __attribute__((unused))*/,
 				/*!< in: buffer end */
 	dict_index_t*	index,	/*!< in: record descriptor */
 	buf_block_t*	block,	/*!< in: page to be reorganized, or NULL */

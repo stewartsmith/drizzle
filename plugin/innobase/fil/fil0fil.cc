@@ -1697,7 +1697,7 @@ fil_write_lsn_and_arch_no_to_file(
 	ulint		sum_of_sizes,	/*!< in: combined size of previous files
 					in space, in database pages */
 	ib_uint64_t	lsn,		/*!< in: lsn to write */
-	ulint		arch_log_no __attribute__((unused)))
+	ulint		/*arch_log_no __attribute__((unused))*/)
 					/*!< in: archived log number to write */
 {
 	byte*	buf1;

@@ -537,7 +537,7 @@ row_upd_write_sys_vals_to_log(
 	roll_ptr_t	roll_ptr,/*!< in: roll ptr of the undo log record */
 	byte*		log_ptr,/*!< pointer to a buffer of size > 20 opened
 				in mlog */
-	mtr_t*		mtr __attribute__((unused))) /*!< in: mtr */
+	mtr_t*		/*mtr __attribute__((unused))*/) /*!< in: mtr */
 {
 	ut_ad(dict_index_is_clust(index));
 	ut_ad(mtr);

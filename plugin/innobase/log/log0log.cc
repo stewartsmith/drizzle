@@ -895,7 +895,7 @@ log_group_init(
 	ulint	space_id,		/*!< in: space id of the file space
 					which contains the log files of this
 					group */
-	ulint	archive_space_id __attribute__((unused)))
+	ulint	/*archive_space_id __attribute__((unused))*/)
 					/*!< in: space id of the file space
 					which contains some archived log
 					files for this group; currently, only
@@ -2241,7 +2241,7 @@ void
 log_archived_file_name_gen(
 /*=======================*/
 	char*	buf,	/*!< in: buffer where to write */
-	ulint	id __attribute__((unused)),
+	ulint	/*id __attribute__((unused))*/,
 			/*!< in: group id;
 			currently we only archive the first group */
 	ulint	file_no)/*!< in: file number */

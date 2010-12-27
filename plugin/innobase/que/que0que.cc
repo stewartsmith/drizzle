@@ -425,7 +425,7 @@ UNIV_INTERN
 void
 que_fork_error_handle(
 /*==================*/
-	trx_t*	trx __attribute__((unused)),	/*!< in: trx */
+	trx_t*	/*trx __attribute__((unused))*/,	/*!< in: trx */
 	que_t*	fork)	/*!< in: query graph which was run before signal
 			handling started, NULL not allowed */
 {

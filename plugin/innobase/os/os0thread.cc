@@ -315,7 +315,7 @@ UNIV_INTERN
 ulint
 os_thread_get_priority(
 /*===================*/
-	os_thread_t	handle __attribute__((unused)))
+	os_thread_t	/*handle __attribute__((unused))*/)
 				/*!< in: OS handle to the thread */
 {
 #ifdef __WIN__

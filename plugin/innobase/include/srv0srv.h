@@ -662,7 +662,7 @@ UNIV_INTERN
 os_thread_ret_t
 srv_purge_thread(
 /*=============*/
-	void*	arg __attribute__((unused))); /*!< in: a dummy parameter
+	void*	/*arg __attribute__((unused))*/); /*!< in: a dummy parameter
 					      required by os_thread_create */
 
 /**********************************************************************//**

@@ -899,7 +899,7 @@ byte*
 fsp_parse_init_file_page(
 /*=====================*/
 	byte*		ptr,	/*!< in: buffer */
-	byte*		end_ptr __attribute__((unused)), /*!< in: buffer end */
+	byte*		/*end_ptr __attribute__((unused))*/, /*!< in: buffer end */
 	buf_block_t*	block)	/*!< in: block or NULL */
 {
 	ut_ad(ptr && end_ptr);
@@ -1810,9 +1810,9 @@ fsp_seg_inode_page_get_nth_inode(
 /*=============================*/
 	page_t*	page,	/*!< in: segment inode page */
 	ulint	i,	/*!< in: inode index on page */
-	ulint	zip_size __attribute__((unused)),
+	ulint	/*zip_size __attribute__((unused))*/,
 			/*!< in: compressed page size, or 0 */
-	mtr_t*	mtr __attribute__((unused)))
+	mtr_t*	/*mtr __attribute__((unused))*/)
 			/*!< in: mini-transaction handle */
 {
 	ut_ad(i < FSP_SEG_INODES_PER_PAGE(zip_size));
@@ -2111,7 +2111,7 @@ fseg_get_nth_frag_page_no(
 /*======================*/
 	fseg_inode_t*	inode,	/*!< in: segment inode */
 	ulint		n,	/*!< in: slot index */
-	mtr_t*		mtr __attribute__((unused))) /*!< in: mtr handle */
+	mtr_t*		/*mtr __attribute__((unused))*/) /*!< in: mtr handle */
 {
 	ut_ad(inode && mtr);
 	ut_ad(n < FSEG_FRAG_ARR_N_SLOTS);

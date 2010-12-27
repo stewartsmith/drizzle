@@ -55,7 +55,7 @@ UNIV_INTERN
 ulint
 row_get_trx_id_offset(
 /*==================*/
-	const rec_t*	rec __attribute__((unused)),
+	const rec_t*	/*rec __attribute__((unused))*/,
 				/*!< in: record */
 	dict_index_t*	index,	/*!< in: clustered index */
 	const ulint*	offsets)/*!< in: rec_get_offsets(rec, index) */

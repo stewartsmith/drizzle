@@ -4084,7 +4084,7 @@ btr_store_big_rec_extern_fields(
 					this function returns */
 	big_rec_t*	big_rec_vec,	/*!< in: vector containing fields
 					to be stored externally */
-	mtr_t*		local_mtr __attribute__((unused))) /*!< in: mtr
+	mtr_t*		/*local_mtr __attribute__((unused))*/) /*!< in: mtr
 					containing the latch to rec and to the
 					tree */
 {
@@ -4499,7 +4499,7 @@ btr_free_externally_stored_field(
 	ulint		i,		/*!< in: field number of field_ref;
 					ignored if rec == NULL */
 	enum trx_rb_ctx	rb_ctx,		/*!< in: rollback context */
-	mtr_t*		local_mtr __attribute__((unused))) /*!< in: mtr
+	mtr_t*		/*local_mtr __attribute__((unused))*/) /*!< in: mtr
 					containing the latch to data an an
 					X-latch to the index tree */
 {

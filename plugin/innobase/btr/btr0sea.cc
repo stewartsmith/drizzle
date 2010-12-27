@@ -444,7 +444,7 @@ btr_search_update_block_hash_info(
 /*==============================*/
 	btr_search_t*	info,	/*!< in: search info */
 	buf_block_t*	block,	/*!< in: buffer block */
-	btr_cur_t*	cursor __attribute__((unused)))
+	btr_cur_t*	/*cursor __attribute__((unused))*/)
 				/*!< in: cursor */
 {
 #ifdef UNIV_SYNC_DEBUG
