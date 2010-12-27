@@ -511,6 +511,7 @@ ErrorMap::ErrorMap()
 
   // For BOOL type
   ADD_ERROR_MESSAGE(ER_INVALID_BOOLEAN_VALUE, N_("Received an invalid BOOLEAN value '%s'."));
+  ADD_ERROR_MESSAGE(ER_INVALID_CAST_TO_BOOLEAN, N_("Invalid cast to BOOLEAN: '%s'."));
 
   // Some old error values use the same strings as some new error values.
   ADD_ERROR_MESSAGE(EE_FILENOTFOUND, find(ER_FILE_NOT_FOUND));

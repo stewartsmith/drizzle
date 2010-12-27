@@ -105,4 +105,6 @@
 #include "drizzled/charset.h"
 #include "drizzled/internal/m_string.h"
 
+#include "drizzled/item/boolean.h"
+
 #endif /* DRIZZLED_PARSER_H */

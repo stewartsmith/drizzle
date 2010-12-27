@@ -1,4 +1,4 @@
-/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c++ c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2010 Brian Aker
@@ -18,40 +18,38 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_STRING_FUNCTIONS_REGEX_H
-#define PLUGIN_STRING_FUNCTIONS_REGEX_H
+#ifndef DRIZZLED_FUNCTION_CAST_BOOLEAN_H
+#define DRIZZLED_FUNCTION_CAST_BOOLEAN_H
 
-#include <drizzled/item/function/boolean.h>
-#include <boost/regex.hpp>
+#include "drizzled/function/str/strfunc.h"
 
-namespace drizzled
+namespace drizzled {
+namespace function {
+namespace cast {
+
+class Boolean : public Item_str_func
 {
-namespace string_functions
-{
-
-class Regex :public drizzled::item::function::Boolean
-{
-  bool is_negative;
-  boost::regex re;
-  drizzled::String _res;
-
 public:
-  Regex() :
-    is_negative(false)
-  {
-  }
+  Boolean(Item *a) :
+    Item_str_func(a)
+  {}
 
-  bool val_bool();
-  int64_t val_int()
+  drizzled::String *val_str(drizzled::String *value);
+
+  void fix_length_and_dec()
   {
-    return val_bool();
+    collation.set(&my_charset_bin);
+    max_length=args[0]->max_length;
   }
-  const char *func_name() const { return "regex"; }
-  const char *fully_qualified_func_name() const { return "regex()"; }
-  bool check_argument_count(int n) { if (n == 3) is_negative= true; return n == 2 or n == 3; }
+  virtual void print(String *str, enum_query_type query_type);
+  const char *func_name() const { return "cast_as_boolean"; }
+
+private:
+  String *evaluate(const bool &result, String *val_buffer);
 };
 
-} // namespace string_functions
+} // namespace cast
+} // namespace function
 } // namespace drizzled
 
-#endif /* PLUGIN_STRING_FUNCTIONS_REGEX_H */
+#endif /* DRIZZLED_FUNCTION_CAST_BOOLEAN_H */

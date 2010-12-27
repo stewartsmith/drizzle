@@ -217,13 +217,13 @@ public:
       char *new_ptr;
       if (!(new_ptr= reinterpret_cast<char*>(::realloc(Ptr,arg_length))))
       {
-	Alloced_length = 0;
-	real_alloc(arg_length);
+        Alloced_length = 0;
+        real_alloc(arg_length);
       }
       else
       {
-	Ptr=new_ptr;
-	Alloced_length=arg_length;
+        Ptr=new_ptr;
+        Alloced_length=arg_length;
       }
     }
   }
@@ -272,7 +272,7 @@ public:
     else
     {
       if (realloc(str_length+1))
-	return 1;
+        return 1;
       Ptr[str_length++]=chr;
     }
     return 0;
